@@ -1,0 +1,62 @@
+﻿  g_as_gametypes.cpp
+  g_as_maps.cpp
+  g_ascript.cpp
+  g_awards.cpp
+  g_callvotes.cpp
+  g_chase.cpp
+  g_clip.cpp
+  g_cmds.cpp
+  g_combat.cpp
+  g_frame.cpp
+  g_func.cpp
+  g_gameteams.cpp
+  g_gametypes.cpp
+  g_items.cpp
+  g_main.cpp
+  g_misc.cpp
+  g_mm.cpp
+  g_phys.cpp
+  g_spawn.cpp
+  g_spawnpoints.cpp
+  Generating Code...
+  Compiling...
+  g_svcmds.cpp
+  g_syscalls.cpp
+  g_target.cpp
+  g_trigger.cpp
+  g_utils.cpp
+  g_weapon.cpp
+  gs_gameteams.c
+  gs_items.c
+  gs_misc.c
+  gs_players.c
+  gs_pmove.c
+  gs_slidebox.c
+  gs_weapondefs.c
+  gs_weapons.c
+  mm_rating.c
+..\matchmaker\mm_rating.c(47): warning C4505: 'rating_getExpectedList' : unreferenced local function has been removed
+  p_client.cpp
+p_client.cpp(591): warning C4309: 'static_cast' : truncation of constant value
+  p_hud.cpp
+  p_view.cpp
+  p_weapon.cpp
+  q_math.c
+  Generating Code...
+  Compiling...
+  q_shared.c
+  ai_class_dmbot.cpp
+  ai_common.cpp
+  ai_dropnodes.cpp
+  ai_items.cpp
+  ai_links.cpp
+  ai_main.cpp
+  ai_movement.cpp
+  ai_navigation.cpp
+  ai_nodes.cpp
+  ai_tools.cpp
+  AStar.cpp
+  bot_spawn.cpp
+  Generating Code...
+     Creating library .\Debug\x86\game_x86.lib and object .\Debug\x86\game_x86.exp
+  game.vcxproj -> D:\Projects\qfusion\source\game\..\Debug\x86\base\game_x86.dll

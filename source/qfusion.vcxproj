@@ -1,0 +1,422 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>qfusion</ProjectName>
+    <ProjectGuid>{6C704AF6-412B-46F5-BAEA-F868C71C9187}</ProjectGuid>
+    <RootNamespace>qfusion</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\$(PlatformShortName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</IntDir>
+    <LinkIncreqfusion Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncreqfusion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\$(PlatformShortName)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</IntDir>
+    <LinkIncreqfusion Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncreqfusion>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)_$(PlatformShortName)</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectName)_$(PlatformShortName)</TargetName>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DXSDK_DIR)Lib\x86;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DXSDK_DIR)Include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DXSDK_DIR)Lib\x86;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\debug/qfusion.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>win32\include\msvc;win32\include;..\libsrcs\zlib;..\libsrcs\libcurl\include;..\libsrcs\libjpeg;..\libsrcs\libogg\include;..\libsrcs\libvorbis\include;..\libsrcs\libtheora\include;..\libsrcs\libpng;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;CURL_STATICLIB;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\Debug\$(PlatformShortName)\qfusion.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</AssemblerListingLocation>
+      <ObjectFileName>build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</ObjectFileName>
+      <ProgramDataBaseFileName>build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+      <ResourceOutputFileName>$(IntDir)%(Filename).res</ResourceOutputFileName>
+    </ResourceCompile>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <Link>
+      <AdditionalDependencies>winmm.lib;ws2_32.lib;zlibstat.lib;libjpegstat.lib;dxguid.lib;libcurlstat.lib;libpngstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>win32\$(PlatformShortName)\lib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ManifestFile>$(IntDir)$(TargetFileName).intermediate.manifest</ManifestFile>
+      <IgnoreSpecificDefaultLibraries>libcmt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug\$(PlatformShortName)\qfusion.pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\Debug\$(PlatformShortName)\qfusion.map</MapFileName>
+      <SubSystem>Windows</SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\release/qfusion.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>win32\include\msvc;win32\include;..\libsrcs\zlib;..\libsrcs\libcurl\include;..\libsrcs\libjpeg;..\libsrcs\libogg\include;..\libsrcs\libvorbis\include;..\libsrcs\libtheora\include;..\libsrcs\libpng\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;CURL_STATICLIB;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FloatingPointModel>Precise</FloatingPointModel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\Release\$(PlatformShortName)\qfusion.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</AssemblerListingLocation>
+      <ObjectFileName>build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</ObjectFileName>
+      <ProgramDataBaseFileName>build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <Link>
+      <AdditionalDependencies>winmm.lib;ws2_32.lib;zlibstat.lib;libjpegstat.lib;dxguid.lib;libcurlstat.lib;libpngstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>win32\$(PlatformShortName)\lib\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ManifestFile>$(IntDir)$(TargetFileName).intermediate.manifest</ManifestFile>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ProgramDatabaseFile>.\Release\$(PlatformShortName)\qfusion.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="qcommon\anticheat.c" />
+    <ClCompile Include="qcommon\ascript.c" />
+    <ClCompile Include="qcommon\asyncstream.c" />
+    <ClCompile Include="qcommon\base64.c" />
+    <ClCompile Include="client\cin.c" />
+    <ClCompile Include="qcommon\cjson.c" />
+    <ClCompile Include="client\cl_cin.c" />
+    <ClCompile Include="client\cl_demo.c" />
+    <ClCompile Include="client\cl_game.c" />
+    <ClCompile Include="client\cl_input.c" />
+    <ClCompile Include="client\cl_main.c" />
+    <ClCompile Include="client\cl_mm.c" />
+    <ClCompile Include="client\cl_parse.c" />
+    <ClCompile Include="client\cl_screen.c" />
+    <ClCompile Include="client\cl_serverlist.c" />
+    <ClCompile Include="client\cl_sound.c" />
+    <ClCompile Include="client\cl_ui.c" />
+    <ClCompile Include="client\cl_vid.c" />
+    <ClCompile Include="qcommon\cm_main.c" />
+    <ClCompile Include="qcommon\cm_q3bsp.c" />
+    <ClCompile Include="qcommon\cm_trace.c" />
+    <ClCompile Include="qcommon\cmd.c" />
+    <ClCompile Include="qcommon\common.c">
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">svnrev.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
+    </ClCompile>
+    <ClCompile Include="ref_gl\r_backend_program.c" />
+    <ClCompile Include="ref_gl\r_portals.c" />
+    <ClCompile Include="ref_gl\r_scene.c" />
+    <ClCompile Include="ref_gl\r_trace.c" />
+    <ClCompile Include="win32\conproc.c" />
+    <ClCompile Include="client\console.c" />
+    <ClCompile Include="qcommon\cvar.c" />
+    <ClCompile Include="qcommon\dynvar.c" />
+    <ClCompile Include="qcommon\files.c" />
+    <ClCompile Include="client\ftlib.c" />
+    <ClCompile Include="qcommon\glob.c" />
+    <ClCompile Include="qcommon\irc.c" />
+    <ClCompile Include="client\keys.c" />
+    <ClCompile Include="client\libmumblelink.c" />
+    <ClCompile Include="qcommon\library.c" />
+    <ClCompile Include="qcommon\md5.c" />
+    <ClCompile Include="qcommon\mem.c" />
+    <ClCompile Include="qcommon\mlist.c" />
+    <ClCompile Include="matchmaker\mm_common.c" />
+    <ClCompile Include="matchmaker\mm_query.c" />
+    <ClCompile Include="matchmaker\mm_rating.c" />
+    <ClCompile Include="qcommon\msg.c" />
+    <ClCompile Include="qcommon\net.c" />
+    <ClCompile Include="qcommon\net_chan.c" />
+    <ClCompile Include="qcommon\patch.c" />
+    <ClCompile Include="gameshared\q_math.c" />
+    <ClCompile Include="gameshared\q_shared.c" />
+    <ClCompile Include="ref_gl\r_alias.c" />
+    <ClCompile Include="ref_gl\r_backend.c" />
+    <ClCompile Include="ref_gl\r_cin.c" />
+    <ClCompile Include="ref_gl\r_cull.c" />
+    <ClCompile Include="ref_gl\r_framebuffer.c" />
+    <ClCompile Include="ref_gl\r_image.c" />
+    <ClCompile Include="ref_gl\r_light.c" />
+    <ClCompile Include="ref_gl\r_main.c" />
+    <ClCompile Include="ref_gl\r_math.c" />
+    <ClCompile Include="ref_gl\r_mesh.c" />
+    <ClCompile Include="ref_gl\r_model.c" />
+    <ClCompile Include="ref_gl\r_poly.c" />
+    <ClCompile Include="ref_gl\r_program.c" />
+    <ClCompile Include="ref_gl\r_q3bsp.c" />
+    <ClCompile Include="ref_gl\r_register.c" />
+    <ClCompile Include="ref_gl\r_shader.c" />
+    <ClCompile Include="ref_gl\r_shadow.c" />
+    <ClCompile Include="ref_gl\r_skin.c" />
+    <ClCompile Include="ref_gl\r_skm.c" />
+    <ClCompile Include="ref_gl\r_sky.c" />
+    <ClCompile Include="ref_gl\r_surf.c" />
+    <ClCompile Include="ref_gl\r_vbo.c" />
+    <ClCompile Include="qcommon\snap_demos.c" />
+    <ClCompile Include="qcommon\snap_read.c" />
+    <ClCompile Include="qcommon\snap_write.c" />
+    <ClCompile Include="server\sv_ccmds.c" />
+    <ClCompile Include="server\sv_client.c" />
+    <ClCompile Include="server\sv_demos.c" />
+    <ClCompile Include="server\sv_game.c" />
+    <ClCompile Include="server\sv_init.c" />
+    <ClCompile Include="server\sv_main.c" />
+    <ClCompile Include="server\sv_mm.c" />
+    <ClCompile Include="server\sv_motd.c" />
+    <ClCompile Include="server\sv_oob.c" />
+    <ClCompile Include="server\sv_send.c" />
+    <ClCompile Include="qcommon\svnrev.c" />
+    <ClCompile Include="qcommon\trie.c" />
+    <ClCompile Include="qcommon\webdownload.c" />
+    <ClCompile Include="win32\win_fs.c" />
+    <ClCompile Include="win32\win_glw.c" />
+    <ClCompile Include="win32\win_input.c" />
+    <ClCompile Include="win32\win_lib.c" />
+    <ClCompile Include="win32\win_net.c" />
+    <ClCompile Include="win32\win_qgl.c" />
+    <ClCompile Include="win32\win_sys.c" />
+    <ClCompile Include="win32\win_vid.c" />
+    <ClCompile Include="qcommon\wswcurl.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ftlib\ftlib_public.h" />
+    <ClInclude Include="qcommon\anticheat.h" />
+    <ClInclude Include="qcommon\asyncstream.h" />
+    <ClInclude Include="qcommon\base64.h" />
+    <ClInclude Include="cgame\cg_public.h" />
+    <ClInclude Include="client\cin.h" />
+    <ClInclude Include="qcommon\cjson.h" />
+    <ClInclude Include="client\client.h" />
+    <ClInclude Include="qcommon\cm_local.h" />
+    <ClInclude Include="qcommon\cmodel.h" />
+    <ClInclude Include="gameshared\config.h" />
+    <ClInclude Include="qcommon\patch_eval_inc.h" />
+    <ClInclude Include="ref_gl\r_image.h" />
+    <ClInclude Include="ref_gl\r_program.h" />
+    <ClInclude Include="ref_gl\r_surface.h" />
+    <ClInclude Include="ref_gl\r_trace.h" />
+    <ClInclude Include="ref_gl\r_vattribs.h" />
+    <ClInclude Include="win32\conproc.h" />
+    <ClInclude Include="client\console.h" />
+    <ClInclude Include="qcommon\cvar.h" />
+    <ClInclude Include="qcommon\dynvar.h" />
+    <ClInclude Include="client\ftlib.h" />
+    <ClInclude Include="qcommon\glob.h" />
+    <ClInclude Include="client\input.h" />
+    <ClInclude Include="ref_gl\iqm.h" />
+    <ClInclude Include="client\keys.h" />
+    <ClInclude Include="client\libmumblelink.h" />
+    <ClInclude Include="qcommon\md5.h" />
+    <ClInclude Include="matchmaker\mm_common.h" />
+    <ClInclude Include="matchmaker\mm_query.h" />
+    <ClInclude Include="matchmaker\mm_rating.h" />
+    <ClInclude Include="gameshared\q_angelwrap.h" />
+    <ClInclude Include="gameshared\q_arch.h" />
+    <ClInclude Include="gameshared\q_collision.h" />
+    <ClInclude Include="gameshared\q_comref.h" />
+    <ClInclude Include="gameshared\q_cvar.h" />
+    <ClInclude Include="gameshared\q_dynvar.h" />
+    <ClInclude Include="gameshared\q_keycodes.h" />
+    <ClInclude Include="gameshared\q_math.h" />
+    <ClInclude Include="gameshared\q_shared.h" />
+    <ClInclude Include="qcommon\qcommon.h" />
+    <ClInclude Include="qcommon\qfiles.h" />
+    <ClInclude Include="ref_gl\qgl.h" />
+    <ClInclude Include="ref_gl\r_backend.h" />
+    <ClInclude Include="ref_gl\r_backend_local.h" />
+    <ClInclude Include="ref_gl\r_glimp.h" />
+    <ClInclude Include="ref_gl\r_local.h" />
+    <ClInclude Include="ref_gl\r_math.h" />
+    <ClInclude Include="ref_gl\r_mesh.h" />
+    <ClInclude Include="ref_gl\r_model.h" />
+    <ClInclude Include="ref_gl\r_public.h" />
+    <ClInclude Include="ref_gl\r_shader.h" />
+    <ClInclude Include="ref_gl\r_shadow.h" />
+    <ClInclude Include="cgame\ref.h" />
+    <ClInclude Include="win32\resource.h" />
+    <ClInclude Include="server\server.h" />
+    <ClInclude Include="qcommon\snap_read.h" />
+    <ClInclude Include="qcommon\snap_write.h" />
+    <ClInclude Include="client\snd_public.h" />
+    <ClInclude Include="qcommon\svnrev.h" />
+    <ClInclude Include="qcommon\sys_fs.h" />
+    <ClInclude Include="qcommon\sys_library.h" />
+    <ClInclude Include="qcommon\sys_net.h" />
+    <ClInclude Include="qcommon\trie.h" />
+    <ClInclude Include="ui\ui_public.h" />
+    <ClInclude Include="qcommon\version.h" />
+    <ClInclude Include="client\vid.h" />
+    <ClInclude Include="qcommon\webdownload.h" />
+    <ClInclude Include="win32\win_glw.h" />
+    <ClInclude Include="win32\winquake.h" />
+    <ClInclude Include="qcommon\wswcurl.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="win32\qfusion.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="win32\qfusion.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="angelwrap\angelwrap.vcxproj">
+      <Project>{946c5dd5-c3ee-43db-b66e-f0a5ad19391c}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="cgame\cgame.vcxproj">
+      <Project>{d96e7ba7-d2fe-4d14-9089-e467b8ed6c1a}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="game\game.vcxproj">
+      <Project>{bb62470b-2570-4a00-aa33-c556b1dd15d7}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="irc\irc.vcxproj">
+      <Project>{8243957c-b7b7-4f5f-90e2-2b67cb7a1bc8}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="snd_openal\snd_openal.vcxproj">
+      <Project>{638603cc-ff29-402e-841d-2c8186189f59}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="snd_qf\snd_qf.vcxproj">
+      <Project>{a9144809-0a60-4931-bcb5-6a7607b76980}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="ui\ui.vcxproj">
+      <Project>{60a290d9-675f-4d5b-b503-6bd30c274433}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

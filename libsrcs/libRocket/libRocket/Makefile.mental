@@ -1,0 +1,55 @@
+DEBUG_BUILD?=NO
+
+CXX?=g++
+AR?=ar
+LOCALBASE?=/usr/local
+FREETYPE_INC?=$(shell freetype-config --cflags)
+
+CXXFLAGS:=$(subst -I../libsrcs/,-I../../../libsrcs/,$(CXXFLAGS))
+CXXFLAGS+=-DSTATIC_LIB -IInclude
+
+ifneq ($(USE_MINGW),YES)
+CXXFLAGS+=-I$(LOCALBASE)/include -fPIC $(FREETYPE_INC)
+endif
+
+ifeq ($(DEBUG_BUILD),YES)
+	CXXFLAGS += -g -DROCKET_DEBUG
+else
+	CXXFLAGS += -O2
+endif
+
+BUILDDIR=Build/obj
+BINDIR=lib
+
+LIBROCKET=$(BINDIR)/libRocketWSW.a	# just this
+LIBCORE=libRocketCore.a
+LIBCONTROLS=libRocketControls.a
+
+CPPFILES_CORE=$(wildcard Source/Core/*.cpp)
+CPPFILES_CORE_WITHOUT_PATH=$(notdir  $(CPPFILES_CORE))
+OFILES_CORE=$(CPPFILES_CORE_WITHOUT_PATH:.cpp=.o)
+OBJS_CORE=$(addprefix $(BUILDDIR)/core_, $(OFILES_CORE) )
+
+CPPFILES_CONTROLS=$(wildcard Source/Controls/*.cpp)
+CPPFILES_CONTROLS_WITHOUT_PATH=$(notdir  $(CPPFILES_CONTROLS))
+OFILES_CONTROLS=$(CPPFILES_CONTROLS_WITHOUT_PATH:.cpp=.o)
+OBJS_CONTROLS=$(addprefix $(BUILDDIR)/controls_, $(OFILES_CONTROLS) )
+
+all : $(BUILDDIR) $(BINDIR) $(LIBROCKET)
+clean :
+	$(RM) $(OBJS_CORE) $(OBJS_CONTROLS) $(LIBROCKET)
+
+$(BUILDDIR):
+	@mkdir -p $@
+
+$(BINDIR):
+	@mkdir -p $@
+
+$(LIBROCKET) : $(OBJS_CORE) $(OBJS_CONTROLS)
+	$(AR) rcs $(LIBROCKET) $(OBJS_CORE) $(OBJS_CONTROLS)
+
+$(BUILDDIR)/core_%.o : Source/Core/%.cpp
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+$(BUILDDIR)/controls_%.o : Source/Controls/%.cpp
+	$(CXX) -c $(CXXFLAGS) $< -o $@
