@@ -1,0 +1,261 @@
+04.05.2011
+
+so i gots me
+
+
+FIXME (game) :
+
+	- calling "map mapname" in server (or through rcon) doesnt produce matchresults,
+		just shutdowns game and starts up the next map.
+	
+	- timeplayed doesnt exactly match with players and game (??)
+			
+	- BUG??	
+	SV_Begin_f: 'Begin' from already spawned client: toukkapoukka.
+	Connecting client toukkapoukka disconnected (Error: Begin while connected)
+
+	- wsw: remove cl_mm_session from userinfo after storing it to gclient_t in ClientUserinfoChanged
+		also there are few places that grab the sessionid from the userinfo.. FIX IT
+	
+FIXME (mm) :
+
+	- gametype is '' in loaduserstats:gametype=0 (??)
+	
+TODO (game) :
+		
+	- clients should be able to fetch ratings every once in a while
+	 and not only when they log in.
+	
+	- fetch race records, player and server-specific and global.
+	
+	- do something in qcommon/mm_common.c/h
+	
+	- login name of the user from ServerClientConnect -> gclient (PRIOR)
+	 
+	- export session-id and ratings from gclient_t to angelscript (as side teamshuffle and whatnots)
+	- export functionality to angelscript to create match/player-reports (or what?)
+		(considering racemode, where the whole mod seems to be AS only, and functionality
+		for report generation is totally different than in any other gametype)
+	
+	- utility functions to disable MM on error (PRIOR)
+	- connection-break utilities to client+server (PRIOR)
+	
+	- Tie sv+cl inits and whatnots to MM_Init so that they are all commonly initialized
+		(or not..) (NO!)
+		
+	- MERGE heartbeat to single sv+cl, or if do it separately,
+		at least merge the code to avoid duplication
+				  
+	
+	CURL:
+		cookies
+		https
+		x error string (curl_easy_strerror or CURLOPT_ERRORBUFFER)
+		x error status defined
+		
+TODO (mm) :
+
+	- fetch race records, player and server-specific and global.
+	
+	- IPV6 !!!!
+		(preliminary support done.. ipv4_ipv6 function that returns both versions
+		except ipv4 for ipv6.. both forms in database.. just need to check them both
+		and thats the real TODO) (eh, done?)
+	
+	- benchmark stuff in MM (sql queries maybe in cursor or function)
+	 (response times in cgi-handlers?)
+	
+	- clients should be able to fetch ratings every once in a while
+	 and not only when they log in. (mm side request)
+
+	- script to stop CGI process
+		
+	- add a digest to login_user (PRIOR)
+
+	- act upon the response text from auth POST, its MM_AUTH_SENT if everythings ok
+	- auth post implemented, but passwd is in plain text .. redo that or redo wsw pw-storing and handling?
+	
+	
+	- few optimized database routines like LoadClientServerSessions( server, client ) (NO! not that "optimized" tbh)
+	- dont get playerstats from -sessionId players (uuid=0) (done?)
+		
+	
+~DONE (game)
+
+	x racemode wont do anything
+	
+	x change the 'suppported gametypes' into flag in anglescripts gametype info
+	
+	x proper handling of ragequits in duel.. now quitter gets a quit and loser takes a loss if
+	quitter had higher score (?) same goes for all modes.. i.e take into account if the
+	player quit (fixed?)
+	
+	x login wont work after failed login attempt (fixed?)
+	
+	X make sure there are players to report in SendReport
+	
+	X TODO BUILD:
+		X MM NULL BACK IN, DONT BUILD MM FOR TV SERVER ETC..
+		
+	x eliminate support for all unsupported gametypes (block calls to AddPlayerReport, SendReport..)
+	 (dont block calls to clientconnect/disconnect cause gametypes can change and we should know
+	 who's where)
+	
+	x mm_parseResponse freezes sometimes on wswcurl_getsize()
+	x session and ticket parsed in SVC_DirectConnect (game)
+	
+	x SV_MM_Init - login (game)
+	x CL_MM_Init			(game)
+	
+	x Gen local session
+	
+	x Client for session
+	
+	x client login check
+	
+	x client session-ids NOT unsigned so negative session-ids are local?
+	
+	x SV_MM_Frame checks state of sv_mm_enable to enable/disable MM
+	
+	x acknowledgements for sv + cl, preparing for heartbeat to MM
+	x server sends its full ip:port (or just port)
+	  so you can ID server from clients connection call by full IP
+	  
+	x put gameawards_t where it belongs
+	x quit_stats_t
+	
+	x clients session-id into cvar (readonly + userinfo)
+	x client connection procedure (x but ^^ missing)
+	
+	x matchresult, store quitted / teamchange players data somewhere
+
+	x debug report bots
+	x bots dont have their userinfo changed.. mm_session ..
+	
+	x added csjson.c/h
+	x added base64.c/h
+	
+	x wswcurl_formraw  
+
+	x match reports are compressed and base64'd out and come out fine
+	
+	x heartbeat to MM (server side)
+	
+	x added safeint to cl_mm.c which returns qfalse on error and qtrue on success
+	 (TODO: move this to q_shared or something
+	
+	x new warmama sends different responses (no port in login etc..)
+	  fix these at gameside, send authkey from server to get server login working
+	  
+	x 2 step login for client
+	
+	x logout
+	  X both nice and warm logout AND force logout (loop until ack'd)
+	  X put the logout into SV_MM_SHUTDOWN somehow.. otherwise the protocol is working nice
+	
+	X FIGGER OUT IF SV_MM_SHUTDOWN IS CALLED EVERYTIME GAME ENDS??  
+	  
+	X add quit marker to match report in GAME SIDE (similar to how warmama-3.0 did it, 
+		outcome variable to quit_stats_t, 0 when quit, -1 for loss and 1 for winning
+	
+	X client connect + disconnect on both sv cl
+	
+	X when client disconnects, server sends a flag if this player should be marked
+		purgable (ie, server has a game on and client will show up in the results)
+		( make MM_GameStarted function so sv_mm can figure this out itself )  
+	
+	X add qcommon/mm_common.c/h
+	
+	X actually put the awards into the list!! (G_Award or what was it?)
+	
+	X heartbeat to MM
+	
+	X migrate cl_mm_url and sv_mm_url into mm_url
+	
+	X client login/logout commands
+	x removed cl_mm_enable in favor of just loggin in/out with commands
+	x store the clients user/pass into a file and read it from there..
+	x login command instead of "mm_enable monitor"
+	
+	x merge anon players by name in G_AddPlayerReport or smth..)
+	
+	X match reports after warmup etc.. are being sent.. send only ones that had
+	real game ended that actually lasted for some time!
+	
+	X disable login/logout when connected to game server
+	 (ie login/logout only in offline)
+	
+	X connect on the cmdline connects before LOGGING IN to MM so fix that dude..
+	 (make a barrier to CL_MM which is on when cl_mm_loginState != 0)
+		
+	X sv_mm_enable and sv_mm_loginonly -> CVAR_SERVERINFO
+	
+	x Rating_ lib to qcommon.h/common.c, added game/g_ratings.c to handle rating stuff on game-side
+
+	x game handles -> MM sends the clients rating on ServerClientConnect (and the login name)
+	x game handles -> MM sends new ratings on MatchResult
+	x game handles -> MM send the client ratings to client on ClientLogin step 2
+	
+	x svn branch (half done)
+	
+	X possible bugs on logging out and in rapidly
+	
+	x rating stuff
+		x export some functions in rating (done)
+		x clientconnect: create default rating
+		x	on response : update rating
+		x clientdisconnect : remove clients ratings
+		x gametype change : transfer ratings (half done, implement G_TransferRatings)
+		x matchresult response : update all ratings (done)
+		
+	x add mm_debug_reportbots
+	
+~DONE (mm)
+
+	x updated skill algo to v2
+	
+	x all globals either to web.ctx or to separate importable module
+		
+	x simple http server
+		x slogin ( server login )
+		x clogin ( client login )
+		x scc		( server's client connect )
+		x scd		( server's client disconnect )
+		x sreport ( server's reporting something )
+
+	x Warmama is still being recreated at points!! (DOESNT MATTER ANYMORE!)
+
+	X brought dbpool module from http://jonpy.sourceforge.net/dbpool.html
+		to help out with the cl-login thread issues
+	
+	X warmama utility functions to transform IP's around (ip_port, ipv4_ipv6)
+
+	x winnerplayer in matchresults points into the match_player, not the player table !!  
+	x also add matchresult_id into match_teams..
+		winnerteam and winnerplayer will be 'update'd into match_results after
+		storing the teams and players
+		
+	X database enter/leave funcs use threading.Lock now instead of constantly opening
+		connection and cursors.
+		
+	x LoadUserStats can take gametypeId=0 where it loads stats for all gametypes
+		add gametype name to the tuples in the returned list
+	
+	x read/save Users into the table after authentication
+	x fix the uuids list len 1 issue in sessionHandler.GetUUIDs
+	
+	X AUTH version no 2.. :
+		spawn an independent thread (no db, no anything) which just makes a POST request to auth server
+		( first of course create the handle )
+		implement a POST to fetch an auth from auth server and put that to db from the main process/thread!
+		POST : login=xx pw=xx handle=xx secret=xx
+		
+	x LoadUserRatings function to only load ratings for all gametypes
+	x added URL parameter to getauth call, in which URL auth-server responds to
+	
+	x MM sends the clients rating on ServerClientConnect (and the login name)
+	x MM sends new ratings on MatchResult
+	x MM send the client ratings to client on ClientLogin step 2
+	
+	x purge_players are basically implemented
+	

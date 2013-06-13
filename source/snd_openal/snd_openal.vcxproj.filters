@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{07bfca49-7915-4089-abf3-296b77bf46f5}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{deb5139f-88b6-49d5-94fa-4b4877f405b5}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{741ed3e6-17f5-443b-8aad-7bc20ba2c3ac}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\gameshared\q_math.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gameshared\q_shared.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qal.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_buffers.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_decoder.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_decoder_ogg.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_decoder_wav.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_music.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_sources.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_stream.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_syscalls.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\gameshared\q_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_shared.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snd_decoder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snd_local.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\client\snd_public.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snd_syscalls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

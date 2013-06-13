@@ -1,0 +1,517 @@
+/*
+Copyright (C) 2002-2003 Victor Luchits
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+
+#include "cg_local.h"
+
+cgs_media_handle_t *sfx_headnode;
+
+/*
+* CG_RegisterMediaSfx
+*/
+static cgs_media_handle_t *CG_RegisterMediaSfx( const char *name, bool precache )
+{
+	cgs_media_handle_t *mediasfx;
+
+	for( mediasfx = sfx_headnode; mediasfx; mediasfx = mediasfx->next )
+	{
+		if( !Q_stricmp( mediasfx->name, name ) )
+			return mediasfx;
+	}
+
+	mediasfx = ( cgs_media_handle_t * )CG_Malloc( sizeof( cgs_media_handle_t ) );
+	mediasfx->name = CG_CopyString( name );
+	mediasfx->next = sfx_headnode;
+	sfx_headnode = mediasfx;
+
+	if( precache )
+		mediasfx->data = ( void * )trap_S_RegisterSound( mediasfx->name );
+
+	return mediasfx;
+}
+
+/*
+* CG_MediaSfx
+*/
+struct sfx_s *CG_MediaSfx( cgs_media_handle_t *mediasfx )
+{
+	if( !mediasfx->data )
+		mediasfx->data = ( void * )trap_S_RegisterSound( mediasfx->name );
+	return ( struct sfx_s * )mediasfx->data;
+}
+
+/*
+* CG_RegisterMediaSounds
+*/
+void CG_RegisterMediaSounds( void )
+{
+	int i;
+
+	sfx_headnode = NULL;
+
+	cgs.media.sfxChat = CG_RegisterMediaSfx( S_CHAT, true );
+	//timer sounds
+	cgs.media.sfxTimerBipBip = CG_RegisterMediaSfx( S_TIMER_BIP_BIP, true );
+	cgs.media.sfxTimerPloink = CG_RegisterMediaSfx( S_TIMER_PLOINK, true );
+
+	for( i = 0; i < 3; i++ )
+		cgs.media.sfxRic[i] = CG_RegisterMediaSfx( va( "sounds/weapons/ric%i", i+1 ), true );
+
+	// weapon
+	for( i = 0; i < 4; i++ )
+		cgs.media.sfxWeaponHit[i] = CG_RegisterMediaSfx( va( S_WEAPON_HITS, i ), true );
+	cgs.media.sfxWeaponKill = CG_RegisterMediaSfx( S_WEAPON_KILL, true );
+	cgs.media.sfxWeaponHitTeam = CG_RegisterMediaSfx( S_WEAPON_HIT_TEAM, true );
+	cgs.media.sfxWeaponUp = CG_RegisterMediaSfx( S_WEAPON_SWITCH, true );
+	cgs.media.sfxWeaponUpNoAmmo = CG_RegisterMediaSfx( S_WEAPON_NOAMMO, true );
+
+	cgs.media.sfxWalljumpFailed = CG_RegisterMediaSfx( "sounds/world/ft_walljump_failed", true );
+
+	cgs.media.sfxItemRespawn = CG_RegisterMediaSfx( S_ITEM_RESPAWN, true );
+
+	cgs.media.sfxTeleportIn = CG_RegisterMediaSfx( S_TELEPORT, true );
+	cgs.media.sfxTeleportOut = CG_RegisterMediaSfx( S_TELEPORT, true );
+	//	cgs.media.sfxJumpPad = CG_RegisterMediaSfx ( S_JUMPPAD, true );
+	cgs.media.sfxShellHit = CG_RegisterMediaSfx( S_SHELL_HIT, true );
+
+	// Gunblade sounds (weak is blade):
+	for( i = 0; i < 3; i++ ) cgs.media.sfxGunbladeWeakShot[i] = CG_RegisterMediaSfx( va( S_WEAPON_GUNBLADE_W_SHOT_1_to_3, i + 1 ), true );
+	for( i = 0; i < 3; i++ ) cgs.media.sfxBladeFleshHit[i] = CG_RegisterMediaSfx( va( S_WEAPON_GUNBLADE_W_HIT_FLESH_1_to_3, i+1 ), true );
+	for( i = 0; i < 2; i++ ) cgs.media.sfxBladeWallHit[i] = CG_RegisterMediaSfx( va( S_WEAPON_GUNBLADE_W_HIT_WALL_1_to_2, i+1 ), false );
+	cgs.media.sfxGunbladeStrongShot = CG_RegisterMediaSfx( S_WEAPON_GUNBLADE_S_SHOT, true );
+	for( i = 0; i < 3; i++ ) cgs.media.sfxGunbladeStrongHit[i] = CG_RegisterMediaSfx( va( S_WEAPON_GUNBLADE_S_HIT_1_to_2, i + 1 ), true );
+
+	// Riotgun sounds :
+	cgs.media.sfxRiotgunWeakHit = CG_RegisterMediaSfx( S_WEAPON_RIOTGUN_W_HIT, true );
+	cgs.media.sfxRiotgunStrongHit = CG_RegisterMediaSfx( S_WEAPON_RIOTGUN_S_HIT, true );
+
+	// Grenade launcher sounds :
+	for( i = 0; i < 2; i++ ) cgs.media.sfxGrenadeWeakBounce[i] = CG_RegisterMediaSfx( va( S_WEAPON_GRENADE_W_BOUNCE_1_to_2, i+1 ), true );
+	for( i = 0; i < 2; i++ ) cgs.media.sfxGrenadeStrongBounce[i] = CG_RegisterMediaSfx( va( S_WEAPON_GRENADE_S_BOUNCE_1_to_2, i+1 ), true );
+	cgs.media.sfxGrenadeWeakExplosion = CG_RegisterMediaSfx( S_WEAPON_GRENADE_W_HIT, true );
+	cgs.media.sfxGrenadeStrongExplosion = CG_RegisterMediaSfx( S_WEAPON_GRENADE_S_HIT, true );
+
+	// Rocket launcher sounds :
+	cgs.media.sfxRocketLauncherWeakHit = CG_RegisterMediaSfx( S_WEAPON_ROCKET_W_HIT, true );
+	cgs.media.sfxRocketLauncherStrongHit = CG_RegisterMediaSfx( S_WEAPON_ROCKET_S_HIT, true );
+
+	// Plasmagun sounds :
+	cgs.media.sfxPlasmaWeakHit = CG_RegisterMediaSfx( S_WEAPON_PLASMAGUN_W_HIT, true );
+	cgs.media.sfxPlasmaStrongHit = CG_RegisterMediaSfx( S_WEAPON_PLASMAGUN_S_HIT, true );
+
+	// Lasergun sounds
+	cgs.media.sfxLasergunWeakHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_W_HUM, true );
+	cgs.media.sfxLasergunWeakQuadHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_W_QUAD_HUM, true );
+	cgs.media.sfxLasergunStrongHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_S_HUM, true );
+	cgs.media.sfxLasergunStrongQuadHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_S_QUAD_HUM, true );
+
+	cgs.media.sfxQuadFireSound = CG_RegisterMediaSfx( S_QUAD_FIRE, true );
+
+	//VSAY sounds
+	cgs.media.sfxVSaySounds[VSAY_GENERIC] = CG_RegisterMediaSfx( S_CHAT, true );
+	cgs.media.sfxVSaySounds[VSAY_NEEDHEALTH] = CG_RegisterMediaSfx( S_VSAY_NEEDHEALTH, true );
+	cgs.media.sfxVSaySounds[VSAY_NEEDWEAPON] = CG_RegisterMediaSfx( S_VSAY_NEEDWEAPON, true );
+	cgs.media.sfxVSaySounds[VSAY_NEEDARMOR] = CG_RegisterMediaSfx( S_VSAY_NEEDARMOR, true );
+	cgs.media.sfxVSaySounds[VSAY_AFFIRMATIVE] = CG_RegisterMediaSfx( S_VSAY_AFFIRMATIVE, true );
+	cgs.media.sfxVSaySounds[VSAY_NEGATIVE] = CG_RegisterMediaSfx( S_VSAY_NEGATIVE, true );
+	cgs.media.sfxVSaySounds[VSAY_YES] = CG_RegisterMediaSfx( S_VSAY_YES, true );
+	cgs.media.sfxVSaySounds[VSAY_NO] = CG_RegisterMediaSfx( S_VSAY_NO, true );
+	cgs.media.sfxVSaySounds[VSAY_ONDEFENSE] = CG_RegisterMediaSfx( S_VSAY_ONDEFENSE, true );
+	cgs.media.sfxVSaySounds[VSAY_ONOFFENSE] = CG_RegisterMediaSfx( S_VSAY_ONOFFENSE, true );
+	cgs.media.sfxVSaySounds[VSAY_OOPS] = CG_RegisterMediaSfx( S_VSAY_OOPS, true );
+	cgs.media.sfxVSaySounds[VSAY_SORRY] = CG_RegisterMediaSfx( S_VSAY_SORRY, true );
+	cgs.media.sfxVSaySounds[VSAY_THANKS] = CG_RegisterMediaSfx( S_VSAY_THANKS, true );
+	cgs.media.sfxVSaySounds[VSAY_NOPROBLEM] = CG_RegisterMediaSfx( S_VSAY_NOPROBLEM, true );
+	cgs.media.sfxVSaySounds[VSAY_YEEHAA] = CG_RegisterMediaSfx( S_VSAY_YEEHAA, true );
+	cgs.media.sfxVSaySounds[VSAY_GOODGAME] = CG_RegisterMediaSfx( S_VSAY_GOODGAME, true );
+	cgs.media.sfxVSaySounds[VSAY_DEFEND] = CG_RegisterMediaSfx( S_VSAY_DEFEND, true );
+	cgs.media.sfxVSaySounds[VSAY_ATTACK] = CG_RegisterMediaSfx( S_VSAY_ATTACK, true );
+	cgs.media.sfxVSaySounds[VSAY_NEEDBACKUP] = CG_RegisterMediaSfx( S_VSAY_NEEDBACKUP, true );
+	cgs.media.sfxVSaySounds[VSAY_BOOO] = CG_RegisterMediaSfx( S_VSAY_BOOO, true );
+	cgs.media.sfxVSaySounds[VSAY_NEEDDEFENSE] = CG_RegisterMediaSfx( S_VSAY_NEEDDEFENSE, true );
+	cgs.media.sfxVSaySounds[VSAY_NEEDOFFENSE] = CG_RegisterMediaSfx( S_VSAY_NEEDOFFENSE, true );
+	cgs.media.sfxVSaySounds[VSAY_NEEDHELP] = CG_RegisterMediaSfx( S_VSAY_NEEDHELP, true );
+	cgs.media.sfxVSaySounds[VSAY_ROGER] = CG_RegisterMediaSfx( S_VSAY_ROGER, true );
+	cgs.media.sfxVSaySounds[VSAY_ARMORFREE] = CG_RegisterMediaSfx( S_VSAY_ARMORFREE, true );
+	cgs.media.sfxVSaySounds[VSAY_AREASECURED] = CG_RegisterMediaSfx( S_VSAY_AREASECURED, true );
+	cgs.media.sfxVSaySounds[VSAY_SHUTUP] = CG_RegisterMediaSfx( S_VSAY_SHUTUP, true );
+	cgs.media.sfxVSaySounds[VSAY_BOOMSTICK] = CG_RegisterMediaSfx( S_VSAY_BOOMSTICK, true );
+	cgs.media.sfxVSaySounds[VSAY_GOTOPOWERUP] = CG_RegisterMediaSfx( S_VSAY_GOTOPOWERUP, true );
+	cgs.media.sfxVSaySounds[VSAY_GOTOQUAD] = CG_RegisterMediaSfx( S_VSAY_GOTOQUAD, true );
+	cgs.media.sfxVSaySounds[VSAY_OK] = CG_RegisterMediaSfx( S_VSAY_OK, true );
+}
+
+//======================================================================
+
+cgs_media_handle_t *model_headnode;
+
+/*
+* CG_RegisterModel
+*/
+struct model_s *CG_RegisterModel( const char *name )
+{
+	struct model_s *model;
+
+	model = trap_R_RegisterModel( name );
+
+	// precache bones
+	if( trap_R_SkeletalGetNumBones( model, NULL ) )
+		CG_SkeletonForModel( model );
+
+	return model;
+}
+
+/*
+* CG_RegisterMediaModel
+*/
+static cgs_media_handle_t *CG_RegisterMediaModel( char *name, bool precache )
+{
+	cgs_media_handle_t *mediamodel;
+
+	for( mediamodel = model_headnode; mediamodel; mediamodel = mediamodel->next )
+	{
+		if( !Q_stricmp( mediamodel->name, name ) )
+			return mediamodel;
+	}
+
+	mediamodel = ( cgs_media_handle_t * )CG_Malloc( sizeof( cgs_media_handle_t ) );
+	mediamodel->name = CG_CopyString( name );
+	mediamodel->next = model_headnode;
+	model_headnode = mediamodel;
+
+	if( precache )
+		mediamodel->data = ( void * )CG_RegisterModel( mediamodel->name );
+
+	return mediamodel;
+}
+
+/*
+* CG_MediaModel
+*/
+struct model_s *CG_MediaModel( cgs_media_handle_t *mediamodel )
+{
+	if( !mediamodel )
+		return NULL;
+
+	if( !mediamodel->data )
+		mediamodel->data = ( void * )CG_RegisterModel( mediamodel->name );
+	return ( struct model_s * )mediamodel->data;
+}
+
+/*
+* CG_RegisterMediaModels
+*/
+void CG_RegisterMediaModels( void )
+{
+	int i;
+	model_headnode = NULL;
+
+	//	cgs.media.modGrenadeExplosion = CG_RegisterMediaModel( PATH_GRENADE_EXPLOSION_MODEL, true );
+	cgs.media.modRocketExplosion = CG_RegisterMediaModel( PATH_ROCKET_EXPLOSION_MODEL, true );
+	cgs.media.modPlasmaExplosion = CG_RegisterMediaModel( PATH_PLASMA_EXPLOSION_MODEL, true );
+	//	cgs.media.modBoltExplosion = CG_RegisterMediaModel( "models/weapon_hits/electrobolt/hit_electrobolt.md3", true );
+	//	cgs.media.modInstaExplosion = CG_RegisterMediaModel( "models/weapon_hits/instagun/hit_instagun.md3", true );
+	//	cgs.media.modTeleportEffect = CG_RegisterMediaModel( "models/misc/telep.md3", false );
+
+	cgs.media.modDash = CG_RegisterMediaModel( "models/effects/dash_burst.md3", true );
+	cgs.media.modHeadStun = CG_RegisterMediaModel( "models/effects/head_stun.md3", true );
+
+	cgs.media.modBulletExplode = CG_RegisterMediaModel( PATH_BULLET_EXPLOSION_MODEL, true );
+	cgs.media.modBladeWallHit = CG_RegisterMediaModel( PATH_GUNBLADEBLAST_IMPACT_MODEL, true );
+	cgs.media.modBladeWallExplo = CG_RegisterMediaModel( PATH_GUNBLADEBLAST_EXPLOSION_MODEL, true );
+	cgs.media.modElectroBoltWallHit = CG_RegisterMediaModel( PATH_ELECTROBLAST_IMPACT_MODEL, true );
+	cgs.media.modInstagunWallHit = CG_RegisterMediaModel( PATH_INSTABLAST_IMPACT_MODEL, true );
+
+
+	// gibs models
+	for( i = 0; i < MAX_TECHY_GIBS; i++ )
+		cgs.media.modTechyGibs[i] = CG_RegisterMediaModel( va( "models/objects/gibs/gib%i/gib%i.md3", i+1, i+1 ), true );
+
+	for( i = 0; i < MAX_MEATY_GIBS; i++ )
+		cgs.media.modMeatyGibs[i] = CG_RegisterMediaModel( va( "models/objects/oldgibs/gib%i/gib%i.md3", i+1, i+1 ), true );
+}
+
+//======================================================================
+
+cgs_media_handle_t *shader_headnode;
+
+/*
+* CG_RegisterMediaShader
+*/
+static cgs_media_handle_t *CG_RegisterMediaShader( char *name, bool precache )
+{
+	cgs_media_handle_t *mediashader;
+
+	for( mediashader = shader_headnode; mediashader; mediashader = mediashader->next )
+	{
+		if( !Q_stricmp( mediashader->name, name ) )
+			return mediashader;
+	}
+
+	mediashader = ( cgs_media_handle_t * )CG_Malloc( sizeof( cgs_media_handle_t ) );
+	mediashader->name = CG_CopyString( name );
+	mediashader->next = shader_headnode;
+	shader_headnode = mediashader;
+
+	if( precache )
+		mediashader->data = ( void * )trap_R_RegisterPic( mediashader->name );
+
+	return mediashader;
+}
+
+/*
+* CG_MediaShader
+*/
+struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader )
+{
+	if( !mediashader->data )
+		mediashader->data = ( void * )trap_R_RegisterPic( mediashader->name );
+	return ( struct shader_s * )mediashader->data;
+}
+
+char *sb_nums[11] =
+{
+	"gfx/hud/0", "gfx/hud/1",
+	"gfx/hud/2", "gfx/hud/3",
+	"gfx/hud/4", "gfx/hud/5",
+	"gfx/hud/6", "gfx/hud/7",
+	"gfx/hud/8", "gfx/hud/9",
+	"gfx/hud/minus"
+};
+
+
+/*
+* CG_RegisterMediaShaders
+*/
+void CG_RegisterMediaShaders( void )
+{
+	int i;
+
+	shader_headnode = NULL;
+
+	cgs.media.shaderParticle = CG_RegisterMediaShader( "particle", true );
+
+	cgs.media.shaderNet = CG_RegisterMediaShader( "gfx/hud/net", true );
+	cgs.media.shaderBackTile = CG_RegisterMediaShader( "gfx/ui/backtile", true );
+	cgs.media.shaderSelect = CG_RegisterMediaShader( "gfx/hud/select", true );
+	cgs.media.shaderChatBalloon = CG_RegisterMediaShader( PATH_BALLONCHAT_ICON, true );
+	cgs.media.shaderDownArrow = CG_RegisterMediaShader( "gfx/2d/arrow_down", true );
+
+	cgs.media.shaderPlayerShadow = CG_RegisterMediaShader( "gfx/decals/shadow", true );
+
+	cgs.media.shaderWaterBubble = CG_RegisterMediaShader( "gfx/misc/waterBubble", true );
+	cgs.media.shaderSmokePuff = CG_RegisterMediaShader( "gfx/misc/smokepuff", true );
+
+	cgs.media.shaderSmokePuff1 = CG_RegisterMediaShader( "gfx/misc/smokepuff1", true );
+	cgs.media.shaderSmokePuff2 = CG_RegisterMediaShader( "gfx/misc/smokepuff2", true );
+	cgs.media.shaderSmokePuff3 = CG_RegisterMediaShader( "gfx/misc/smokepuff3", true );
+
+	cgs.media.shaderStrongRocketFireTrailPuff = CG_RegisterMediaShader( "gfx/misc/strong_rocket_fire", true );
+	cgs.media.shaderWeakRocketFireTrailPuff = CG_RegisterMediaShader( "gfx/misc/weak_rocket_fire", true );
+	cgs.media.shaderTeleporterSmokePuff = CG_RegisterMediaShader( "TeleporterSmokePuff", true );
+	cgs.media.shaderGrenadeTrailSmokePuff = CG_RegisterMediaShader( "gfx/grenadetrail_smoke_puf", true );
+	cgs.media.shaderRocketTrailSmokePuff = CG_RegisterMediaShader( "gfx/misc/rocketsmokepuff", true );
+	cgs.media.shaderBloodTrailPuff = CG_RegisterMediaShader( "gfx/misc/bloodtrail_puff", true );
+	cgs.media.shaderBloodTrailLiquidPuff = CG_RegisterMediaShader( "gfx/misc/bloodtrailliquid_puff", true );
+	cgs.media.shaderBloodImpactPuff = CG_RegisterMediaShader( "gfx/misc/bloodimpact_puff", true );
+	cgs.media.shaderCartoonHit = CG_RegisterMediaShader( "gfx/misc/cartoonhit", true );
+	cgs.media.shaderCartoonHit2 = CG_RegisterMediaShader( "gfx/misc/cartoonhit2", true );
+	cgs.media.shaderCartoonHit3 = CG_RegisterMediaShader( "gfx/misc/cartoonhit3", true );
+	cgs.media.shaderTeamMateIndicator = CG_RegisterMediaShader( "gfx/misc/teammate_indicator", true );
+
+	cgs.media.shaderAdditiveParticleShine = CG_RegisterMediaShader( "additiveParticleShine", true );
+
+	//	cgs.media.shaderBladeMark = CG_RegisterMediaShader( "gfx/decals/d_blade_hit" );
+	cgs.media.shaderBulletMark = CG_RegisterMediaShader( "gfx/decals/d_bullet_hit", true );
+	cgs.media.shaderExplosionMark = CG_RegisterMediaShader( "gfx/decals/d_explode_hit", true );
+	cgs.media.shaderPlasmaMark = CG_RegisterMediaShader( "gfx/decals/d_plasma_hit", true );
+	cgs.media.shaderElectroboltMark = CG_RegisterMediaShader( "gfx/decals/d_electrobolt_hit", true );
+	cgs.media.shaderInstagunMark = CG_RegisterMediaShader( "gfx/decals/d_instagun_hit", true );
+
+	cgs.media.shaderElectroBeamOld = CG_RegisterMediaShader( "gfx/misc/electro", true );
+	cgs.media.shaderElectroBeamOldAlpha = CG_RegisterMediaShader( "gfx/misc/electro_alpha", true );
+	cgs.media.shaderElectroBeamOldBeta = CG_RegisterMediaShader( "gfx/misc/electro_beta", true );
+	cgs.media.shaderElectroBeamA = CG_RegisterMediaShader( "gfx/misc/electro2a", true );
+	cgs.media.shaderElectroBeamAAlpha = CG_RegisterMediaShader( "gfx/misc/electro2a_alpha", true );
+	cgs.media.shaderElectroBeamABeta = CG_RegisterMediaShader( "gfx/misc/electro2a_beta", true );
+	cgs.media.shaderElectroBeamB = CG_RegisterMediaShader( "gfx/misc/electro2b", true );
+	cgs.media.shaderElectroBeamBAlpha = CG_RegisterMediaShader( "gfx/misc/electro2b_alpha", true );
+	cgs.media.shaderElectroBeamBBeta = CG_RegisterMediaShader( "gfx/misc/electro2b_beta", true );
+	cgs.media.shaderInstaBeam = CG_RegisterMediaShader( "gfx/misc/instagun", true );
+	cgs.media.shaderLaserGunBeam = CG_RegisterMediaShader( "gfx/misc/laserbeam", true );
+	cgs.media.shaderLaserGunBeamOld = CG_RegisterMediaShader( "gfx/misc/laserbeam_old", true );
+	cgs.media.shaderRocketExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE, true );
+	cgs.media.shaderRocketExplosionRing = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_RING_SPRITE, true );
+
+	cgs.media.shaderLaser = CG_RegisterMediaShader( "gfx/misc/laser", false );
+
+	cgs.media.shaderFlagFlare = CG_RegisterMediaShader( PATH_FLAG_FLARE_SHADER, false ); // load only in ctf
+
+	cgs.media.shaderRaceGhostEffect = CG_RegisterMediaShader( "gfx/raceghost", false );
+
+	// Kurim : weapon icons
+	cgs.media.shaderWeaponIcon[WEAP_GUNBLADE-1] = CG_RegisterMediaShader( PATH_GUNBLADE_ICON, true );
+	cgs.media.shaderWeaponIcon[WEAP_MACHINEGUN-1] = CG_RegisterMediaShader( PATH_MACHINEGUN_ICON, true );
+	cgs.media.shaderWeaponIcon[WEAP_RIOTGUN-1] = CG_RegisterMediaShader( PATH_RIOTGUN_ICON, true );
+	cgs.media.shaderWeaponIcon[WEAP_GRENADELAUNCHER-1] = CG_RegisterMediaShader( PATH_GRENADELAUNCHER_ICON, true );
+	cgs.media.shaderWeaponIcon[WEAP_ROCKETLAUNCHER-1] = CG_RegisterMediaShader( PATH_ROCKETLAUNCHER_ICON, true );
+	cgs.media.shaderWeaponIcon[WEAP_PLASMAGUN-1] = CG_RegisterMediaShader( PATH_PLASMAGUN_ICON, true );
+	cgs.media.shaderWeaponIcon[WEAP_LASERGUN-1] = CG_RegisterMediaShader( PATH_LASERGUN_ICON, true );
+	cgs.media.shaderWeaponIcon[WEAP_ELECTROBOLT-1] = CG_RegisterMediaShader( PATH_ELECTROBOLT_ICON, true );
+	cgs.media.shaderWeaponIcon[WEAP_INSTAGUN-1] = CG_RegisterMediaShader( PATH_INSTAGUN_ICON, true );
+
+	cgs.media.shaderNoGunWeaponIcon[WEAP_GUNBLADE-1] = CG_RegisterMediaShader( PATH_NG_GUNBLADE_ICON, true );
+	cgs.media.shaderNoGunWeaponIcon[WEAP_MACHINEGUN-1] = CG_RegisterMediaShader( PATH_NG_MACHINEGUN_ICON, true );
+	cgs.media.shaderNoGunWeaponIcon[WEAP_RIOTGUN-1] = CG_RegisterMediaShader( PATH_NG_RIOTGUN_ICON, true );
+	cgs.media.shaderNoGunWeaponIcon[WEAP_GRENADELAUNCHER-1] = CG_RegisterMediaShader( PATH_NG_GRENADELAUNCHER_ICON, true );
+	cgs.media.shaderNoGunWeaponIcon[WEAP_ROCKETLAUNCHER-1] = CG_RegisterMediaShader( PATH_NG_ROCKETLAUNCHER_ICON, true );
+	cgs.media.shaderNoGunWeaponIcon[WEAP_PLASMAGUN-1] = CG_RegisterMediaShader( PATH_NG_PLASMAGUN_ICON, true );
+	cgs.media.shaderNoGunWeaponIcon[WEAP_LASERGUN-1] = CG_RegisterMediaShader( PATH_NG_LASERGUN_ICON, true );
+	cgs.media.shaderNoGunWeaponIcon[WEAP_ELECTROBOLT-1] = CG_RegisterMediaShader( PATH_NG_ELECTROBOLT_ICON, true );
+	cgs.media.shaderNoGunWeaponIcon[WEAP_INSTAGUN-1] = CG_RegisterMediaShader( PATH_NG_INSTAGUN_ICON, true );
+
+	// Kurim : keyicons
+	cgs.media.shaderKeyIconOn[KEYICON_FORWARD] = CG_RegisterMediaShader( PATH_KEYICON_FORWARD_ON, true );
+	cgs.media.shaderKeyIconOn[KEYICON_BACKWARD] = CG_RegisterMediaShader( PATH_KEYICON_BACKWARD_ON, true );
+	cgs.media.shaderKeyIconOn[KEYICON_LEFT] = CG_RegisterMediaShader( PATH_KEYICON_LEFT_ON, true );
+	cgs.media.shaderKeyIconOn[KEYICON_RIGHT] = CG_RegisterMediaShader( PATH_KEYICON_RIGHT_ON, true );
+	cgs.media.shaderKeyIconOn[KEYICON_FIRE] = CG_RegisterMediaShader( PATH_KEYICON_FIRE_ON, true );
+	cgs.media.shaderKeyIconOn[KEYICON_JUMP] = CG_RegisterMediaShader( PATH_KEYICON_JUMP_ON, true );
+	cgs.media.shaderKeyIconOn[KEYICON_CROUCH] = CG_RegisterMediaShader( PATH_KEYICON_CROUCH_ON, true );
+	cgs.media.shaderKeyIconOn[KEYICON_SPECIAL] = CG_RegisterMediaShader( PATH_KEYICON_SPECIAL_ON, true );
+	cgs.media.shaderKeyIconOff[KEYICON_FORWARD] = CG_RegisterMediaShader( PATH_KEYICON_FORWARD_OFF, true );
+	cgs.media.shaderKeyIconOff[KEYICON_BACKWARD] = CG_RegisterMediaShader( PATH_KEYICON_BACKWARD_OFF, true );
+	cgs.media.shaderKeyIconOff[KEYICON_LEFT] = CG_RegisterMediaShader( PATH_KEYICON_LEFT_OFF, true );
+	cgs.media.shaderKeyIconOff[KEYICON_RIGHT] = CG_RegisterMediaShader( PATH_KEYICON_RIGHT_OFF, true );
+	cgs.media.shaderKeyIconOff[KEYICON_FIRE] = CG_RegisterMediaShader( PATH_KEYICON_FIRE_OFF, true );
+	cgs.media.shaderKeyIconOff[KEYICON_JUMP] = CG_RegisterMediaShader( PATH_KEYICON_JUMP_OFF, true );
+	cgs.media.shaderKeyIconOff[KEYICON_CROUCH] = CG_RegisterMediaShader( PATH_KEYICON_CROUCH_OFF, true );
+	cgs.media.shaderKeyIconOff[KEYICON_SPECIAL] = CG_RegisterMediaShader( PATH_KEYICON_SPECIAL_OFF, true );
+
+	for( i = 0; i < 11; i++ )
+	{
+		cgs.media.sbNums[i] = CG_RegisterMediaShader( sb_nums[i], true );
+	}
+
+	for( i = 0; i < NUM_CROSSHAIRS; i++ )
+		cgs.media.shaderCrosshair[i] = CG_RegisterMediaShader( va( "gfx/hud/crosshair%i", i ), true );
+
+	// VSAY icons
+	cgs.media.shaderVSayIcon[VSAY_GENERIC] = CG_RegisterMediaShader( PATH_VSAY_GENERIC_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NEEDHEALTH] = CG_RegisterMediaShader( PATH_VSAY_NEEDHEALTH_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NEEDWEAPON] = CG_RegisterMediaShader( PATH_VSAY_NEEDWEAPON_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NEEDARMOR] = CG_RegisterMediaShader( PATH_VSAY_NEEDARMOR_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_AFFIRMATIVE] = CG_RegisterMediaShader( PATH_VSAY_AFFIRMATIVE_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NEGATIVE] = CG_RegisterMediaShader( PATH_VSAY_NEGATIVE_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_YES] = CG_RegisterMediaShader( PATH_VSAY_YES_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NO] = CG_RegisterMediaShader( PATH_VSAY_NO_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_ONDEFENSE] = CG_RegisterMediaShader( PATH_VSAY_ONDEFENSE_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_ONOFFENSE] = CG_RegisterMediaShader( PATH_VSAY_ONOFFENSE_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_OOPS] = CG_RegisterMediaShader( PATH_VSAY_OOPS_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_SORRY] = CG_RegisterMediaShader( PATH_VSAY_SORRY_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_THANKS] = CG_RegisterMediaShader( PATH_VSAY_THANKS_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NOPROBLEM] = CG_RegisterMediaShader( PATH_VSAY_NOPROBLEM_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_YEEHAA] = CG_RegisterMediaShader( PATH_VSAY_YEEHAA_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_GOODGAME] = CG_RegisterMediaShader( PATH_VSAY_GOODGAME_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_DEFEND] = CG_RegisterMediaShader( PATH_VSAY_DEFEND_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_ATTACK] = CG_RegisterMediaShader( PATH_VSAY_ATTACK_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NEEDBACKUP] = CG_RegisterMediaShader( PATH_VSAY_NEEDBACKUP_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_BOOO] = CG_RegisterMediaShader( PATH_VSAY_BOOO_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NEEDDEFENSE] = CG_RegisterMediaShader( PATH_VSAY_NEEDDEFENSE_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NEEDOFFENSE] = CG_RegisterMediaShader( PATH_VSAY_NEEDOFFENSE_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_NEEDHELP] = CG_RegisterMediaShader( PATH_VSAY_NEEDHELP_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_ROGER] = CG_RegisterMediaShader( PATH_VSAY_ROGER_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_ARMORFREE] = CG_RegisterMediaShader( PATH_VSAY_ARMORFREE_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_AREASECURED] = CG_RegisterMediaShader( PATH_VSAY_AREASECURED_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_SHUTUP] = CG_RegisterMediaShader( PATH_VSAY_SHUTUP_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_BOOMSTICK] = CG_RegisterMediaShader( PATH_VSAY_BOOMSTICK_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_GOTOPOWERUP] = CG_RegisterMediaShader( PATH_VSAY_GOTOPOWERUP_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_GOTOQUAD] = CG_RegisterMediaShader( PATH_VSAY_GOTOQUAD_ICON, true );
+	cgs.media.shaderVSayIcon[VSAY_OK] = CG_RegisterMediaShader( PATH_VSAY_OK_ICON, true );
+}
+
+void CG_RegisterLevelMinimap( void )
+{
+	int file;
+	char *name, minimap[MAX_QPATH];
+
+	cgs.shaderMiniMap = NULL;
+
+	name = cgs.configStrings[CS_MAPNAME];
+
+	Q_snprintfz( minimap, sizeof( minimap ), "minimaps/%s.tga", name );
+	file = trap_FS_FOpenFile( minimap, NULL, FS_READ );
+
+	if( file == -1 )
+	{
+		Q_snprintfz( minimap, sizeof( minimap ), "minimaps/%s.jpg", name );
+		file = trap_FS_FOpenFile( minimap, NULL, FS_READ );
+	}
+
+	if( file != -1 )
+		cgs.shaderMiniMap = trap_R_RegisterPic( minimap );
+}
+
+/*
+* CG_RegisterFonts
+*/
+void CG_RegisterFonts( void )
+{
+	cvar_t *con_fontSystemFamily = trap_Cvar_Get( "con_fontSystemFamily", DEFAULT_SYSTEM_FONT_FAMILY, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	cvar_t *con_fontSystemSmallSize = trap_Cvar_Get( "con_fontSystemSmallSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_SMALL_SIZE ), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	cvar_t *con_fontSystemMediumSize = trap_Cvar_Get( "con_fontSystemMediumSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_MEDIUM_SIZE ), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	cvar_t *con_fontSystemBigSize = trap_Cvar_Get( "con_fontSystemBigSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_BIG_SIZE ), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+
+	// register system fonts
+	Q_strncpyz( cgs.fontSystemFamily, con_fontSystemFamily->string, sizeof( cgs.fontSystemFamily ) );
+	if( !con_fontSystemSmallSize->integer ) {
+		trap_Cvar_Set( con_fontSystemSmallSize->name, con_fontSystemSmallSize->dvalue );
+	}
+	if( !con_fontSystemMediumSize->integer ) {
+		trap_Cvar_Set( con_fontSystemMediumSize->name, con_fontSystemMediumSize->dvalue );
+	}
+	if( !con_fontSystemBigSize->integer ) {
+		trap_Cvar_Set( con_fontSystemBigSize->name, con_fontSystemBigSize->dvalue );
+	}
+
+	cgs.fontSystemSmallSize = con_fontSystemSmallSize->integer;
+	cgs.fontSystemSmall = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemSmallSize );
+	if( !cgs.fontSystemSmall )
+	{
+		Q_strncpyz( cgs.fontSystemFamily, DEFAULT_SYSTEM_FONT_FAMILY, sizeof( cgs.fontSystemFamily ) );
+		cgs.fontSystemSmallSize = DEFAULT_SYSTEM_FONT_SMALL_SIZE;
+
+		cgs.fontSystemSmall = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemSmallSize );
+		if( !cgs.fontSystemSmall )
+			CG_Error( "Couldn't load default font \"%s\"", cgs.fontSystemFamily );
+	}
+
+	cgs.fontSystemMediumSize = con_fontSystemMediumSize->integer;
+	cgs.fontSystemMedium = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemMediumSize );
+	if( !cgs.fontSystemMedium ) {
+		cgs.fontSystemMediumSize = DEFAULT_SYSTEM_FONT_MEDIUM_SIZE;
+		cgs.fontSystemMedium = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemMediumSize );
+	}
+
+	cgs.fontSystemBigSize = con_fontSystemBigSize->integer;
+	cgs.fontSystemSmall = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemBigSize );
+	if( !cgs.fontSystemBig )
+		cgs.fontSystemBigSize = DEFAULT_SYSTEM_FONT_BIG_SIZE;
+		cgs.fontSystemBig = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemBigSize );
+}

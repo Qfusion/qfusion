@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{6125745b-5e75-417c-bc16-95c3c04f0e58}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\addon">
+      <UniqueIdentifier>{8b3d7008-e4b5-4ec6-8a02-8dfe175b0d6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{5572a32f-81bd-4d39-8dde-ae50e659b4ce}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Header Files\addon">
+      <UniqueIdentifier>{56897440-604d-44e2-a52a-a2152b41af2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{d7c649bf-1d30-46e9-bfcf-1fb0658a4941}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\gameshared\q_math.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gameshared\q_shared.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qas_angelwrap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qas_main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qas_syscalls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_any.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_cvar.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_dictionary.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_math.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_scriptarray.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_string.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_stringutils.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_time.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="addon\addon_vec3.cpp">
+      <Filter>Source Files\addon</Filter>
+    </ClCompile>
+    <ClCompile Include="qas_precompiled.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\libsrcs\angelscript\angelSVN\sdk\angelscript\include\angelscript.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_shared.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qas_local.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qas_public.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qas_syscalls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_any.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_cvar.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_dictionary.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_math.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_scriptarray.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_string.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_stringutils.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_time.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="addon\addon_vec3.h">
+      <Filter>Header Files\addon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_angeliface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qas_precompiled.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,45 @@
+﻿  cin.c
+  cin_main.c
+  cin_ogg.c
+  cin_roq.c
+  cin_syscalls.c
+  q_math.c
+  q_shared.c
+  Generating Code...
+     Creating library .\Debug\x86\cin_x86.lib and object .\Debug\x86\cin_x86.exp
+libogg_static.lib(bitwise.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libogg_static.lib(bitwise.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libogg_static.lib(framing.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libogg_static.lib(framing.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(bitrate.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(bitrate.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(block.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(block.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(codebook.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(codebook.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(envelope.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(envelope.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(floor0.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(floor0.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(floor1.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(floor1.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(info.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(info.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(lpc.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(lpc.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(lsp.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(lsp.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(mapping0.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(mapping0.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(mdct.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(mdct.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(psy.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(psy.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(registry.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(registry.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(res0.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(res0.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(sharedbook.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(sharedbook.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(smallft.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(smallft.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(synthesis.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(synthesis.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libvorbis_static.lib(window.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libvorbis_static.lib(window.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(bitpack.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(bitpack.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(decinfo.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(decinfo.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(dequant.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(dequant.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(fragment.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(fragment.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(huffdec.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(huffdec.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(info.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(info.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(internal.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(internal.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(state.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(state.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(mmxfrag.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(mmxfrag.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(mmxidct.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(mmxidct.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(mmxstate.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(mmxstate.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(x86state.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(x86state.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(decode1.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(decode1.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(idct1.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(idct1.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+libtheora_static.lib(quant1.obj) : warning LNK4099: PDB 'vc100.pdb' was not found with 'libtheora_static.lib(quant1.obj)' or at 'D:\Projects\qfusion\source\cin\Debug\x86\vc100.pdb'; linking object as if no debug info
+  cin.vcxproj -> D:\Projects\qfusion\source\cin\..\Debug\x86\libs\cin_x86.dll

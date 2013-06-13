@@ -1,0 +1,329 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>ui</ProjectName>
+    <ProjectGuid>{60A290D9-675F-4D5B-B503-6BD30C274433}</ProjectGuid>
+    <RootNamespace>ui</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\$(Configuration)\$(PlatformShortName)\base\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\$(Configuration)\$(PlatformShortName)\base\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)_$(PlatformShortName)</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectName)_$(PlatformShortName)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <CustomBuildStep>
+      <Message>Performing Custom Build Step</Message>
+    </CustomBuildStep>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Debug/ui.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.;..\win32\include\msvc;..\..\libsrcs\libRocket\libRocket\Include;..\..\libsrcs\angelscript\angelSVN\sdk\angelscript\include;..\win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;STATIC_LIB;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>.\Debug\$(PlatformShortName)\ui.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>..\build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</AssemblerListingLocation>
+      <ObjectFileName>..\build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</ObjectFileName>
+      <ProgramDataBaseFileName>..\build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</ProgramDataBaseFileName>
+      <BrowseInformation>true</BrowseInformation>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <PrecompiledHeaderFile>ui_precompiled.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0419</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>winmm.lib;RocketCore.lib;RocketControls.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>..\win32\$(PlatformShortName)\lib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ManifestFile>$(IntDir)$(TargetFileName).intermediate.manifest</ManifestFile>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug\$(PlatformShortName)\ui_$(PlatformShortName).pdb</ProgramDatabaseFile>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapFileName>.\Debug\$(PlatformShortName)\ui_$(PlatformShortName).map</MapFileName>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\Debug\$(PlatformShortName)\ui_$(PlatformShortName).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Release/ui.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>.;..\win32\include\msvc;..\..\libsrcs\libRocket\libRocket\Include;..\..\libsrcs\angelscript\angelSVN\sdk\angelscript\include;..\win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;STATIC_LIB;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>ui_precompiled.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>.\Release\$(PlatformShortName)\ui.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>..\build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</AssemblerListingLocation>
+      <ObjectFileName>..\build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</ObjectFileName>
+      <ProgramDataBaseFileName>..\build$(PlatformShortName)\$(ProjectName)\$(Configuration)\</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0419</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>winmm.lib;RocketCore.lib;RocketControls.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <AdditionalLibraryDirectories>..\win32\$(PlatformShortName)\lib\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ManifestFile>$(IntDir)$(TargetFileName).intermediate.manifest</ManifestFile>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
+      <ProgramDatabaseFile>.\Release\$(PlatformShortName)\ui_$(PlatformShortName).pdb</ProgramDatabaseFile>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention>
+      </DataExecutionPrevention>
+      <ImportLibrary>.\Release\$(PlatformShortName)\ui_$(PlatformShortName).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="ui_public.cpp" />
+    <ClCompile Include="widgets\ui_anchor.cpp" />
+    <ClCompile Include="widgets\ui_colorselector.cpp" />
+    <ClCompile Include="widgets\ui_dataspinner.cpp" />
+    <ClCompile Include="widgets\ui_field.cpp" />
+    <ClCompile Include="widgets\ui_idiv.cpp" />
+    <ClCompile Include="widgets\ui_image.cpp" />
+    <ClCompile Include="widgets\ui_irc.cpp" />
+    <ClCompile Include="widgets\ui_keyselect.cpp" />
+    <ClCompile Include="widgets\ui_levelshot.cpp" />
+    <ClCompile Include="widgets\ui_modelview.cpp" />
+    <ClCompile Include="widgets\ui_optionsform.cpp" />
+    <ClCompile Include="widgets\ui_selectable_datagrid.cpp" />
+    <ClCompile Include="widgets\ui_video.cpp" />
+    <ClCompile Include="widgets\ui_worldview.cpp" />
+    <ClCompile Include="kernel\ui_boneposes.cpp" />
+    <ClCompile Include="kernel\ui_common.cpp" />
+    <ClCompile Include="kernel\ui_demoinfo.cpp" />
+    <ClCompile Include="kernel\ui_documentloader.cpp" />
+    <ClCompile Include="kernel\ui_eventlistener.cpp" />
+    <ClCompile Include="kernel\ui_fileinterface.cpp" />
+    <ClCompile Include="kernel\ui_keyconverter.cpp" />
+    <ClCompile Include="kernel\ui_main.cpp" />
+    <ClCompile Include="kernel\ui_polyallocator.cpp" />
+    <ClCompile Include="kernel\ui_renderinterface.cpp" />
+    <ClCompile Include="kernel\ui_rocketmodule.cpp" />
+    <ClCompile Include="kernel\ui_streamcache.cpp" />
+    <ClCompile Include="kernel\ui_systeminterface.cpp" />
+    <ClCompile Include="kernel\ui_utils.cpp" />
+    <ClCompile Include="as\as_bind_datasource.cpp" />
+    <ClCompile Include="as\as_bind_demoinfo.cpp" />
+    <ClCompile Include="as\as_bind_dom.cpp" />
+    <ClCompile Include="as\as_bind_downloadinfo.cpp" />
+    <ClCompile Include="as\as_bind_game.cpp" />
+    <ClCompile Include="as\as_bind_irc.cpp" />
+    <ClCompile Include="as\as_bind_main.cpp" />
+    <ClCompile Include="as\as_bind_mm.cpp" />
+    <ClCompile Include="as\as_bind_options.cpp" />
+    <ClCompile Include="as\as_bind_serverbrowser.cpp" />
+    <ClCompile Include="as\as_bind_url.cpp" />
+    <ClCompile Include="as\as_bind_window.cpp" />
+    <ClCompile Include="as\asmodule.cpp" />
+    <ClCompile Include="as\asui_scheduled.cpp" />
+    <ClCompile Include="as\asui_scriptdocument.cpp" />
+    <ClCompile Include="as\asui_scriptevent.cpp" />
+    <ClCompile Include="..\gameshared\q_math.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\gameshared\q_shared.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="decorators\ui_gradient_decorator.cpp" />
+    <ClCompile Include="datasources\ui_crosshair_datasource.cpp" />
+    <ClCompile Include="datasources\ui_demos_datasource.cpp" />
+    <ClCompile Include="datasources\ui_gametypes_datasource.cpp" />
+    <ClCompile Include="datasources\ui_huds_datasource.cpp" />
+    <ClCompile Include="datasources\ui_ircchannels_datasource.cpp" />
+    <ClCompile Include="datasources\ui_maps_datasource.cpp" />
+    <ClCompile Include="datasources\ui_models_datasource.cpp" />
+    <ClCompile Include="datasources\ui_mods_datasource.cpp" />
+    <ClCompile Include="datasources\ui_profiles_datasource.cpp" />
+    <ClCompile Include="datasources\ui_serverbrowser_datasource.cpp" />
+    <ClCompile Include="datasources\ui_tvchannels_datasource.cpp" />
+    <ClCompile Include="datasources\ui_video_datasource.cpp" />
+    <ClCompile Include="ui_precompiled.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ui_precompiled.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ui_precompiled.h</PrecompiledHeaderFile>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ui_public.h" />
+    <ClInclude Include="as\asbind.h" />
+    <ClInclude Include="as\asmodule.h" />
+    <ClInclude Include="as\asui.h" />
+    <ClInclude Include="as\asui_loadingscreen.h" />
+    <ClInclude Include="as\asui_local.h" />
+    <ClInclude Include="as\asui_scheduled.h" />
+    <ClInclude Include="as\asui_url.h" />
+    <ClInclude Include="kernel\ui_boneposes.h" />
+    <ClInclude Include="kernel\ui_common.h" />
+    <ClInclude Include="kernel\ui_demoinfo.h" />
+    <ClInclude Include="kernel\ui_documentloader.h" />
+    <ClInclude Include="kernel\ui_downloadinfo.h" />
+    <ClInclude Include="kernel\ui_eventlistener.h" />
+    <ClInclude Include="kernel\ui_fileinterface.h" />
+    <ClInclude Include="kernel\ui_keyconverter.h" />
+    <ClInclude Include="kernel\ui_main.h" />
+    <ClInclude Include="kernel\ui_polyallocator.h" />
+    <ClInclude Include="kernel\ui_renderinterface.h" />
+    <ClInclude Include="kernel\ui_rocketmodule.h" />
+    <ClInclude Include="kernel\ui_streamcache.h" />
+    <ClInclude Include="kernel\ui_syscalls.h" />
+    <ClInclude Include="kernel\ui_systeminterface.h" />
+    <ClInclude Include="kernel\ui_utils.h" />
+    <ClInclude Include="kernel\uimodule.h" />
+    <ClInclude Include="widgets\ui_field.h" />
+    <ClInclude Include="widgets\ui_idiv.h" />
+    <ClInclude Include="widgets\ui_image.h" />
+    <ClInclude Include="widgets\ui_keyselect.h" />
+    <ClInclude Include="widgets\ui_levelshot.h" />
+    <ClInclude Include="widgets\ui_optionsform.h" />
+    <ClInclude Include="widgets\ui_video.h" />
+    <ClInclude Include="widgets\ui_widgets.h" />
+    <ClInclude Include="..\gameshared\config.h" />
+    <ClInclude Include="..\gameshared\gs_qrespath.h" />
+    <ClInclude Include="..\gameshared\gs_ref.h" />
+    <ClInclude Include="..\gameshared\q_arch.h" />
+    <ClInclude Include="..\gameshared\q_cvar.h" />
+    <ClInclude Include="..\gameshared\q_dynvar.h" />
+    <ClInclude Include="..\gameshared\q_keycodes.h" />
+    <ClInclude Include="..\gameshared\q_math.h" />
+    <ClInclude Include="..\gameshared\q_shared.h" />
+    <ClInclude Include="decorators\ui_decorators.h" />
+    <ClInclude Include="datasources\ui_crosshair_datasource.h" />
+    <ClInclude Include="datasources\ui_demos_datasource.h" />
+    <ClInclude Include="datasources\ui_gametypes_datasource.h" />
+    <ClInclude Include="datasources\ui_huds_datasource.h" />
+    <ClInclude Include="datasources\ui_ircchannels_datasource.h" />
+    <ClInclude Include="datasources\ui_maps_datasource.h" />
+    <ClInclude Include="datasources\ui_models_datasource.h" />
+    <ClInclude Include="datasources\ui_mods_datasource.h" />
+    <ClInclude Include="datasources\ui_profiles_datasource.h" />
+    <ClInclude Include="datasources\ui_serverbrowser_datasource.h" />
+    <ClInclude Include="datasources\ui_tvchannels_datasource.h" />
+    <ClInclude Include="datasources\ui_video_datasource.h" />
+    <ClInclude Include="formatters\ui_colorcode_formatter.h" />
+    <ClInclude Include="formatters\ui_crosshair_formatter.h" />
+    <ClInclude Include="formatters\ui_datetime_formatter.h" />
+    <ClInclude Include="formatters\ui_duration_formatter.h" />
+    <ClInclude Include="formatters\ui_empty_formatter.h" />
+    <ClInclude Include="formatters\ui_filetype_formatter.h" />
+    <ClInclude Include="formatters\ui_levelshot_formatter.h" />
+    <ClInclude Include="ui_precompiled.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

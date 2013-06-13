@@ -1,0 +1,438 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{a91aef6d-019c-4437-8337-2c61fa35c39a}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\widgets">
+      <UniqueIdentifier>{32e0c36c-c6b2-4ed2-965f-349a6f97089f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\kernel">
+      <UniqueIdentifier>{38acd451-2932-446a-af9c-7a4ee8077206}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\as">
+      <UniqueIdentifier>{bb5d865b-d191-4202-92a6-2abcc1108db9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gameshared">
+      <UniqueIdentifier>{9342a15b-a9c9-4c15-b645-fd497985a10a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\decorators">
+      <UniqueIdentifier>{943c4030-667f-460b-836c-e53b43f247f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\datasources">
+      <UniqueIdentifier>{1ff0df12-a390-48d8-b721-d0b44f983e43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\precompiled">
+      <UniqueIdentifier>{d9217100-42d6-4503-a5e6-2214392d718b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{38314ab8-354e-4ad3-b93d-c1cceb1192f6}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Header Files\as">
+      <UniqueIdentifier>{3027dd75-d78b-4f1e-b1c8-c9df377abb57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\kernel">
+      <UniqueIdentifier>{c36c051c-ce4c-4b79-879b-c15151746677}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\widgets">
+      <UniqueIdentifier>{244b81f6-abae-43bf-86d4-c8b5d92d5434}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gameshared">
+      <UniqueIdentifier>{e217ea24-4f3d-4cb5-8d2d-12dff28d3b88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\decorators">
+      <UniqueIdentifier>{cea77b39-a3f5-498b-a140-1e2a0eca4431}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\datasources">
+      <UniqueIdentifier>{3ff36149-5a88-483f-985c-37c1b3b54265}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\formatters">
+      <UniqueIdentifier>{c83310b8-a8af-49f6-89a1-a157bb780131}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\precompiled">
+      <UniqueIdentifier>{87588413-c1c2-4577-9f58-4241a5e8c94a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{dab41428-b974-477a-9a09-6acefad7718a}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ui_public.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_anchor.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_colorselector.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_dataspinner.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_field.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_idiv.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_image.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_irc.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_keyselect.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_levelshot.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_modelview.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_optionsform.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_selectable_datagrid.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_video.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="widgets\ui_worldview.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_boneposes.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_common.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_demoinfo.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_documentloader.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_eventlistener.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_fileinterface.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_keyconverter.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_main.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_polyallocator.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_renderinterface.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_rocketmodule.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_streamcache.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_systeminterface.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="kernel\ui_utils.cpp">
+      <Filter>Source Files\kernel</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_datasource.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_demoinfo.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_dom.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_downloadinfo.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_game.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_irc.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_main.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_mm.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_options.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_serverbrowser.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_url.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\as_bind_window.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\asmodule.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\asui_scheduled.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\asui_scriptdocument.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="as\asui_scriptevent.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gameshared\q_math.c">
+      <Filter>Source Files\gameshared</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gameshared\q_shared.c">
+      <Filter>Source Files\gameshared</Filter>
+    </ClCompile>
+    <ClCompile Include="decorators\ui_gradient_decorator.cpp">
+      <Filter>Source Files\decorators</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_crosshair_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_demos_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_gametypes_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_huds_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_ircchannels_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_maps_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_models_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_mods_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_profiles_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_serverbrowser_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_tvchannels_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="datasources\ui_video_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
+    <ClCompile Include="ui_precompiled.cpp">
+      <Filter>Source Files\precompiled</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ui_public.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="as\asbind.h">
+      <Filter>Header Files\as</Filter>
+    </ClInclude>
+    <ClInclude Include="as\asmodule.h">
+      <Filter>Header Files\as</Filter>
+    </ClInclude>
+    <ClInclude Include="as\asui.h">
+      <Filter>Header Files\as</Filter>
+    </ClInclude>
+    <ClInclude Include="as\asui_loadingscreen.h">
+      <Filter>Header Files\as</Filter>
+    </ClInclude>
+    <ClInclude Include="as\asui_local.h">
+      <Filter>Header Files\as</Filter>
+    </ClInclude>
+    <ClInclude Include="as\asui_scheduled.h">
+      <Filter>Header Files\as</Filter>
+    </ClInclude>
+    <ClInclude Include="as\asui_url.h">
+      <Filter>Header Files\as</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_boneposes.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_common.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_demoinfo.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_documentloader.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_downloadinfo.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_eventlistener.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_fileinterface.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_keyconverter.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_main.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_polyallocator.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_renderinterface.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_rocketmodule.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_streamcache.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_syscalls.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_systeminterface.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\ui_utils.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="kernel\uimodule.h">
+      <Filter>Header Files\kernel</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_field.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_idiv.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_image.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_keyselect.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_levelshot.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_optionsform.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_video.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_widgets.h">
+      <Filter>Header Files\widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\config.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\gs_qrespath.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\gs_ref.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_arch.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_cvar.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_dynvar.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_keycodes.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_math.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_shared.h">
+      <Filter>Header Files\gameshared</Filter>
+    </ClInclude>
+    <ClInclude Include="decorators\ui_decorators.h">
+      <Filter>Header Files\decorators</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_crosshair_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_demos_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_gametypes_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_huds_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_ircchannels_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_maps_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_models_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_mods_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_profiles_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_serverbrowser_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_tvchannels_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_video_datasource.h">
+      <Filter>Header Files\datasources</Filter>
+    </ClInclude>
+    <ClInclude Include="formatters\ui_colorcode_formatter.h">
+      <Filter>Header Files\formatters</Filter>
+    </ClInclude>
+    <ClInclude Include="formatters\ui_crosshair_formatter.h">
+      <Filter>Header Files\formatters</Filter>
+    </ClInclude>
+    <ClInclude Include="formatters\ui_datetime_formatter.h">
+      <Filter>Header Files\formatters</Filter>
+    </ClInclude>
+    <ClInclude Include="formatters\ui_duration_formatter.h">
+      <Filter>Header Files\formatters</Filter>
+    </ClInclude>
+    <ClInclude Include="formatters\ui_empty_formatter.h">
+      <Filter>Header Files\formatters</Filter>
+    </ClInclude>
+    <ClInclude Include="formatters\ui_filetype_formatter.h">
+      <Filter>Header Files\formatters</Filter>
+    </ClInclude>
+    <ClInclude Include="formatters\ui_levelshot_formatter.h">
+      <Filter>Header Files\formatters</Filter>
+    </ClInclude>
+    <ClInclude Include="ui_precompiled.h">
+      <Filter>Header Files\precompiled</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
