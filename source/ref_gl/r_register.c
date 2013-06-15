@@ -41,7 +41,6 @@ cvar_t *r_dynamiclight;
 cvar_t *r_coronascale;
 cvar_t *r_detailtextures;
 cvar_t *r_subdivisions;
-cvar_t *r_faceplanecull;
 cvar_t *r_showtris;
 cvar_t *r_shownormals;
 cvar_t *r_draworder;
@@ -629,7 +628,6 @@ void R_Register( void )
 	r_dynamiclight = Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
 	r_coronascale = Cvar_Get( "r_coronascale", "0.2", 0 );
 	r_subdivisions = Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_faceplanecull = Cvar_Get( "r_faceplanecull", "1", CVAR_ARCHIVE );
 	r_shownormals = Cvar_Get( "r_shownormals", "0", CVAR_CHEAT );
 	r_draworder = Cvar_Get( "r_draworder", "0", CVAR_CHEAT );
 

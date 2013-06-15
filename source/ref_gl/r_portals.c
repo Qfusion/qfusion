@@ -206,7 +206,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	h = ri.refdef.height;
 
 	dist = PlaneDiff( ri.viewOrigin, portal_plane );
-	if( ( r_faceplanecull->integer && (dist <= BACKFACE_EPSILON) ) || !doReflection )
+	if( dist <= BACKFACE_EPSILON || !doReflection )
 	{
 		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) || !doRefraction )
 			return;

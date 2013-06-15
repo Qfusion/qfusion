@@ -78,30 +78,6 @@ qboolean R_CullSurface( const entity_t *e, const msurface_t *surf, unsigned int 
 	if( ( shader->flags & SHADER_ALLDETAIL ) && !r_detailtextures->integer )
 		return qtrue;
 
-	if( surf->facetype == FACETYPE_PLANAR && r_faceplanecull->integer
-		&& (!e->outlineHeight || (ri.params & RP_CLIPPLANE))
-		&& ( shader->flags & ( SHADER_CULL_FRONT|SHADER_CULL_BACK ) )
-		)
-	{
-		// Vic: I hate q3map2. I really do.
-		if( !VectorCompare( surf->plane->normal, vec3_origin ) )
-		{
-			float dist;
-
-			dist = PlaneDiff( modelOrg, surf->plane );
-			if( ( shader->flags & SHADER_CULL_FRONT ) || ( ri.params & RP_MIRRORVIEW ) )
-			{
-				if( dist <= BACKFACE_EPSILON )
-					return qtrue;
-			}
-			else
-			{
-				if( dist >= -BACKFACE_EPSILON )
-					return qtrue;
-			}
-		}
-	}
-
 	return ( clipflags && R_CullBox( surf->mins, surf->maxs, clipflags ) );
 }
 
