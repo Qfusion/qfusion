@@ -65,7 +65,7 @@ typedef struct sv_http_query_chunk_s
 	size_t rem_size;
 	size_t max_size;
 	char data[0x8000];
-	struct sv_http_query_chunk_s *next;
+	struct sv_http_query_chunk_s *next, *prev;
 } sv_http_query_chunk_t;
 
 typedef struct {
@@ -85,7 +85,7 @@ typedef struct {
 	qboolean close_after_resp;
 
 	size_t size;
-	sv_http_query_chunk_t *chunks;
+	sv_http_query_chunk_t *chunk_tail, *chunk_head;
 } sv_http_request_t;
 
 typedef struct {
@@ -97,7 +97,7 @@ typedef struct {
 	size_t content_length;
 
 	size_t size;
-	sv_http_query_chunk_t *chunks;
+	sv_http_query_chunk_t *chunk_tail, *chunk_head;
 } sv_http_response_t;
 
 typedef struct sv_http_connection_s
@@ -143,7 +143,7 @@ static sv_http_query_chunk_t *SV_Web_AllocChunk( void )
 */
 static void SV_Web_StoreChunk( sv_http_query_chunk_t **list, size_t *list_data_size, const char *data, size_t size )
 {
-	sv_http_query_chunk_t *chunk;
+	sv_http_query_chunk_t *chunk, *next;
 	size_t remaining;
 
 	if( !size ) {
@@ -160,10 +160,13 @@ static void SV_Web_StoreChunk( sv_http_query_chunk_t **list, size_t *list_data_s
 		memcpy( chunk->data + chunk->size, data, rem_size );
 		chunk->rem_size = 0;
 		chunk->size = chunk->max_size;
+		data += rem_size;
 		remaining -= rem_size;
 
-		chunk = SV_Web_AllocChunk();
-		chunk->next = *list;
+		next = SV_Web_AllocChunk();
+		chunk->next = next;
+		next->prev = chunk;
+		chunk = next;
 		*list = chunk;
 		*list_data_size += rem_size;
 	}
@@ -191,7 +194,7 @@ static void SV_Web_FreeChunks( sv_http_query_chunk_t **list, size_t *list_data_s
 
 	while( *list ) {
 		chunk = *list;
-		*list = chunk->next;
+		*list = chunk->prev;
 		SV_Web_FreeChunk( chunk );
 	}
 	*list_data_size = 0;
@@ -227,10 +230,10 @@ static sv_http_connection_t *SV_Web_AllocConnection( void )
 
 	memset( &con->request, 0, sizeof( con->request ) );
 	Trie_Create( TRIE_CASE_INSENSITIVE, &con->request.headers );
-	con->request.chunks = SV_Web_AllocChunk();
+	con->request.chunk_tail = con->request.chunk_head = SV_Web_AllocChunk();
 
 	memset( &con->response, 0, sizeof( con->response ) );
-	con->response.chunks = SV_Web_AllocChunk();
+	con->response.chunk_tail = con->response.chunk_head = SV_Web_AllocChunk();
 
 	return con;
 }
@@ -244,7 +247,7 @@ static void SV_Web_FreeConnection( sv_http_connection_t *con )
 	sv_http_response_t *response = &con->response;
 
 	// free incoming data
-	SV_Web_FreeChunks( &request->chunks, &request->size );
+	SV_Web_FreeChunks( &request->chunk_head, &request->size );
 
 	Trie_Destroy( request->headers );
 
@@ -259,7 +262,7 @@ static void SV_Web_FreeConnection( sv_http_connection_t *con )
 	}
 
 	// free outgoing data
-	SV_Web_FreeChunks( &request->chunks, &request->size );
+	SV_Web_FreeChunks( &request->chunk_head, &request->size );
 
 	if( response->file ) {
 		FS_FCloseFile( response->file );
@@ -327,7 +330,7 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 	trie_t *trie;
 
 	// free incoming data
-	SV_Web_FreeChunks( &request->chunks, &request->size );
+	SV_Web_FreeChunks( &request->chunk_head, &request->size );
 
 	trie = request->headers;
 	Trie_Clear( request->headers );
@@ -344,7 +347,7 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 	
 	memset( request, 0, sizeof( *request ) );
 	request->headers = trie;
-	request->chunks = SV_Web_AllocChunk();
+	request->chunk_tail = request->chunk_head = SV_Web_AllocChunk();
 }
 
 /*
@@ -477,9 +480,9 @@ static void SV_Web_CompactRequestBody( sv_http_request_t *request )
 	data = Mem_ZoneMalloc( data_size + 1 );
 
 	if( request->size ) {
-		while( request->chunks ) {
-			chunk = request->chunks;
-			request->chunks = chunk->next;
+		while( request->chunk_head ) {
+			chunk = request->chunk_head;
+			request->chunk_head = chunk->next;
 
 			memcpy( data + data_p, chunk->data, chunk->size );
 			data_p += chunk->size;
@@ -487,7 +490,7 @@ static void SV_Web_CompactRequestBody( sv_http_request_t *request )
 			SV_Web_FreeChunk( chunk );
 		}
 		request->size = 0;
-		request->chunks = SV_Web_AllocChunk();
+		request->chunk_tail = request->chunk_head = SV_Web_AllocChunk();
 	}
 
 	data[data_p] = '\0';
@@ -538,7 +541,7 @@ static void SV_Web_GetHeaders( sv_http_request_t *request )
 	SV_Web_ParseRequestHeaders( request, headers );
 
 	body = sep_p + strlen( sep );
-	SV_Web_StoreChunk( &request->chunks, &request->size, body, data_size - (body - data) );
+	SV_Web_StoreChunk( &request->chunk_tail, &request->size, body, data_size - (body - data) );
 
 	Mem_ZoneFree( data );
 }
@@ -555,14 +558,14 @@ static void SV_Web_ReceiveRequest( sv_http_connection_t *con )
 	sv_http_request_t *request;
 
 	request = &con->request;
-	chunk = request->chunks;
+	chunk = request->chunk_head;
 
 	data[0] = '\0';
 	if( request->size >= 2 ) {
 		if( chunk->size < 2 ) {
-			chunk = request->chunks->next;
+			chunk = request->chunk_head->prev;
 			data[0] = chunk->data[chunk->size-1];
-			chunk = request->chunks;
+			chunk = request->chunk_head;
 			data[1] = chunk->data[0];
 		}
 		else {
@@ -584,7 +587,7 @@ static void SV_Web_ReceiveRequest( sv_http_connection_t *con )
 		con->last_active = Sys_Milliseconds();
 
 		recvbuf[ret] = '\0';
-		SV_Web_StoreChunk( &request->chunks, &request->size, recvbuf, ret );
+		SV_Web_StoreChunk( &request->chunk_tail, &request->size, recvbuf, ret );
 	}
 
 	if( !request->got_headers ) {
@@ -621,7 +624,7 @@ static void SV_Web_ReceiveRequest( sv_http_connection_t *con )
 */
 static void SV_Web_AddToResponse( sv_http_response_t *response, const void *data, size_t size )
 {
-	SV_Web_StoreChunk( &response->chunks, &response->size, data, size );
+	SV_Web_StoreChunk( &response->chunk_tail, &response->size, data, size );
 }
 
 /*
@@ -695,11 +698,11 @@ static void SV_Web_SendResponse( sv_http_connection_t *con )
 	sv_http_response_t *response = &con->response;
 
 send_data:
-	while( response->chunks && response->size ) {
+	while( response->chunk_head && response->size ) {
 		int sent;
 
-		chunk = response->chunks;
-		response->chunks = chunk->next;
+		chunk = response->chunk_head;
+		response->chunk_head = chunk->next;
 
 		sent = NET_Send( &con->socket, chunk->data, chunk->size, &con->address );
 		if( sent < 0 ) {
@@ -721,8 +724,8 @@ send_data:
 		}
 	}
 
-	if( !response->chunks ) {
-		response->chunks = SV_Web_AllocChunk();
+	if( !response->chunk_head ) {
+		response->chunk_tail = response->chunk_head = SV_Web_AllocChunk();
 	}
 
 	// send at least HTTP_SENDBUF_SIZE bytes, if possible
@@ -873,6 +876,10 @@ void SV_Web_Frame( void )
 						SV_Web_ResetRequest( &con->request );
 					}
 				}
+				break;
+			default:
+				Com_DPrintf( "Bad connection state: %i\n", con->state );
+				con->open = qfalse;
 				break;
 		}
 	}
