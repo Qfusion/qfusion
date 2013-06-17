@@ -131,7 +131,7 @@ static int CL_GameModule_NET_GetCurrentUserCmdNum( void ) {
 static void CL_GameModule_NET_GetCurrentState( int *incomingAcknowledged, int *outgoingSequence, int *outgoingSent )
 {
 	if( incomingAcknowledged )
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 		*incomingAcknowledged = cls.ucmdHead;
 #else
 		*incomingAcknowledged = cls.ucmdAcknowledged;

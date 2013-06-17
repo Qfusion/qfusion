@@ -54,7 +54,7 @@ struct edict_s
 	entity_shared_t	r;
 };
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 #define MAX_INCOMING_CONNECTIONS 256
 typedef struct
 {
@@ -210,14 +210,14 @@ typedef struct
 	tv_lobby_t lobby;
 
 	// downstream
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	socket_t socket_tcp;
 #endif
 	socket_t socket_udp;
 	socket_t socket_udp6;
 
 	challenge_t challenges[MAX_CHALLENGES];
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	incoming_t incoming[MAX_INCOMING_CONNECTIONS];
 #endif
 

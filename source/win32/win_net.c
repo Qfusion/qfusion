@@ -32,7 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 net_error_t Sys_NET_GetLastError( void )
 {
-	switch( WSAGetLastError() )
+	int error = WSAGetLastError();
+	switch( error )
 	{
 	case 0:					return NET_ERR_NONE;
 	case WSAEMSGSIZE:		return NET_ERR_MSGSIZE;

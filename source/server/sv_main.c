@@ -49,9 +49,17 @@ cvar_t *sv_pure_forcemodulepk3;
 
 cvar_t *sv_maxclients;
 cvar_t *sv_maxmvclients;
-#ifdef TCP_SUPPORT
+
+#ifdef TCP_ALLOW_CONNECT
 cvar_t *sv_tcp;
 #endif
+
+#ifdef HTTP_SUPPORT
+cvar_t *sv_http;
+cvar_t *sv_http_port;
+cvar_t *sv_http_port6;
+#endif
+
 cvar_t *sv_showclamp;
 cvar_t *sv_showRcon;
 cvar_t *sv_showChallenge;
@@ -171,9 +179,8 @@ static void SV_ReadPackets( void )
 {
 	int i, socketind, ret;
 	client_t *cl;
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	socket_t newsocket;
-	netadr_t mmserver;
 #endif
 	int game_port;
 	socket_t *socket;
@@ -189,10 +196,7 @@ static void SV_ReadPackets( void )
 		&svs.socket_udp6,
 	};
 
-#ifdef TCP_SUPPORT
-
-	if( SV_MM_Initialized() ) 
-		SV_MM_NetAddress( &mmserver );
+#ifdef TCP_ALLOW_CONNECT
 
 	if( svs.socket_tcp.open )
 	{
@@ -238,14 +242,6 @@ static void SV_ReadPackets( void )
 		}
 		else if( ret == 1 )
 		{
-			if( SV_MM_Initialized() && NET_CompareBaseAddress( &mmserver, &address ) )
-			{
-				Com_DPrintf( "TCP packet from matchmaker\n" );
-				SV_MM_SetConnection( &svs.incoming[i] );
-				SV_MM_Packet( &msg );
-				SV_MM_SetConnection( NULL );
-				continue;
-			}
 			if( *(int *)msg.data != -1 )
 			{
 				Com_Printf( "Sequence packet without connection\n" );
@@ -374,7 +370,7 @@ static void SV_CheckTimeouts( void )
 	client_t *cl;
 	int i;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	// timeout incoming connections
 	for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
 	{
@@ -744,6 +740,9 @@ void SV_Frame( int realmsec, int gamemsec )
 		ge->ClearSnap();
 	}
 
+	// handle HTTP connections
+	SV_Web_Frame();
+
 	SV_CheckAutoUpdate();
 }
 
@@ -870,10 +869,18 @@ void SV_Init( void )
 
 	sv_ip =			    Cvar_Get( "sv_ip", "", CVAR_ARCHIVE | CVAR_LATCH );
 	sv_port =		    Cvar_Get( "sv_port", va( "%i", PORT_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
+
 	sv_ip6 =			Cvar_Get( "sv_ip6", "::", CVAR_ARCHIVE | CVAR_LATCH );
 	sv_port6 =		    Cvar_Get( "sv_port6", va( "%i", PORT_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
-#ifdef TCP_SUPPORT
-	sv_tcp =		    Cvar_Get( "sv_tcp", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+
+#ifdef TCP_ALLOW_CONNECT
+	sv_tcp =		    Cvar_Get( "sv_tcp", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+#endif
+
+#ifdef HTTP_SUPPORT
+	sv_http =		    Cvar_Get( "sv_http", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+	sv_http_port =		Cvar_Get( "sv_http_port", va( "%i", PORT_HTTP_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
+	sv_http_port6 =		Cvar_Get( "sv_http_port6", va( "%i", PORT_HTTP_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
 #endif
 
 	rcon_password =		    Cvar_Get( "rcon_password", "", 0 );
@@ -995,6 +1002,8 @@ void SV_Init( void )
 
 	ML_Init();
 
+	SV_Web_Init();
+
 	sv_initialized = qtrue;
 }
 
@@ -1008,6 +1017,7 @@ void SV_Shutdown( const char *finalmsg )
 	if( !sv_initialized )
 		return;
 
+	SV_Web_Shutdown();
 	ML_Shutdown();
 	SV_MM_Shutdown( qtrue );
 	SV_ShutdownGame( finalmsg, qfalse );
