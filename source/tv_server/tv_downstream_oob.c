@@ -299,7 +299,7 @@ static qboolean TV_Downstream_ClientConnect( const socket_t *socket, const netad
 
 	switch( socket->type )
 	{
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	case SOCKET_TCP:
 		client->reliable = qtrue;
 		client->individual_socket = qtrue;
@@ -347,7 +347,7 @@ static qboolean TV_Downstream_ClientConnect( const socket_t *socket, const netad
 */
 static void TV_Downstream_DirectConnect( const socket_t *socket, const netadr_t *address )
 {
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	int incoming = 0;
 #endif
 	char userinfo[MAX_INFO_STRING], *name;
@@ -410,7 +410,7 @@ static void TV_Downstream_DirectConnect( const socket_t *socket, const netadr_t 
 		return;
 	}
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	if( socket->type == SOCKET_TCP )
 	{
 		// find the upstream
@@ -512,7 +512,7 @@ static void TV_Downstream_DirectConnect( const socket_t *socket, const netadr_t 
 	Netchan_OutOfBandPrint( socket, address, "client_connect" );
 
 	// free the incoming entry
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	if( socket->type == SOCKET_TCP )
 	{
 		tvs.incoming[incoming].active = qfalse;

@@ -94,7 +94,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 	{
 		switch( socket->type )
 		{
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 		case SOCKET_TCP:
 			client->reliable = qtrue;
 			client->individual_socket = qtrue;

@@ -582,7 +582,7 @@ static int NET_TCP_GetPacket( const socket_t *socket, netadr_t *address, msg_t *
 	}
 
 	ret = NET_TCP_Get( socket, NULL, message->data, len );
-	if( ret == -1 )
+	if( ret == SOCKET_ERROR )
 		return -1;
 	if( ret != (int)len )
 	{
@@ -602,7 +602,7 @@ static int NET_TCP_GetPacket( const socket_t *socket, netadr_t *address, msg_t *
 /*
 * NET_TCP_Send
 */
-static qboolean NET_TCP_Send( const socket_t *socket, const void *data, size_t length )
+static int NET_TCP_Send( const socket_t *socket, const void *data, size_t length )
 {
 #ifdef USE_TCP_NOSIGPIPE
 	int opt_val = 1;
@@ -630,16 +630,10 @@ static qboolean NET_TCP_Send( const socket_t *socket, const void *data, size_t l
 	if( ret == SOCKET_ERROR )
 	{
 		NET_SetErrorStringFromLastError( "send" );
-		return qfalse;
+		return -1;
 	}
 
-	if( ret != (int)length )
-	{
-		NET_SetErrorString( "Couldn't send all data" );
-		return qfalse;
-	}
-
-	return qtrue;
+	return ret;
 }
 
 /*
@@ -1063,7 +1057,7 @@ qboolean NET_SendPacket( const socket_t *socket, const void *data, size_t length
 /*
 * NET_Send
 */
-qboolean NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address )
+int NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address )
 {
 	assert( socket->open );
 
@@ -1078,7 +1072,7 @@ qboolean NET_Send( const socket_t *socket, const void *data, size_t length, cons
 	case SOCKET_LOOPBACK:
 	case SOCKET_UDP:
 		NET_SetErrorString( "Operation not supported by the socket type" );
-		return qfalse;
+		return -1;
 
 #ifdef TCP_SUPPORT
 	case SOCKET_TCP:
@@ -1088,7 +1082,7 @@ qboolean NET_Send( const socket_t *socket, const void *data, size_t length, cons
 	default:
 		assert( qfalse );
 		NET_SetErrorString( "Unknown socket type" );
-		return qfalse;
+		return -1;
 	}
 }
 

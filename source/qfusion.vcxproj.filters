@@ -306,6 +306,9 @@
     <ClCompile Include="ref_gl\r_trace.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="server\sv_web.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="qcommon\anticheat.h">
