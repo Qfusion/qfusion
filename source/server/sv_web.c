@@ -653,15 +653,16 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 			response->code = HTTP_RESP_PARTIAL_CONTENT;
 		}
 
-		if( request->method == HTTP_METHOD_HEAD ) {
+		if( request->method == HTTP_METHOD_HEAD && response->file ) {
 			FS_FCloseFile( response->file );
 			response->file = 0;
 		}
 	}
 	else {
 		response->code = HTTP_RESP_OK;
-		content = req_stream->content;
-		content_length = req_stream->content_p;
+		// test echo
+		//content = req_stream->content;
+		//content_length = req_stream->content_p;
 	}
 
 	Q_snprintfz( resp_stream->header_buf, sizeof( resp_stream->header_buf ), 
