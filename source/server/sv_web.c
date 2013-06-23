@@ -452,13 +452,14 @@ static size_t SV_Web_ParseHeaders( sv_http_request_t *request, char *data )
 /*
 * SV_Web_ReceiveRequest
 */
-static void SV_Web_ReceiveRequest( sv_http_connection_t *con )
+static size_t SV_Web_ReceiveRequest( sv_http_connection_t *con )
 {
 	int ret = 0;
 	netadr_t address;
 	char *recvbuf;
 	size_t recvbuf_size;
 	sv_http_request_t *request = &con->request;
+	size_t total_received = 0;
 
 	while( !request->stream.header_done ) {
 		char *end;
@@ -477,6 +478,7 @@ static void SV_Web_ReceiveRequest( sv_http_connection_t *con )
 			break;
 		}
 
+		total_received += ret;
 		con->last_active = Sys_Milliseconds();
 
 		recvbuf[ret] = '\0';
@@ -526,6 +528,8 @@ static void SV_Web_ReceiveRequest( sv_http_connection_t *con )
 			if( ret <= 0 ) {
 				break;
 			}
+
+			total_received += ret;
 			con->last_active = Sys_Milliseconds();
 			request->stream.content_p += ret;
 		}
@@ -548,6 +552,8 @@ static void SV_Web_ReceiveRequest( sv_http_connection_t *con )
 		con->open = qfalse;
 		Com_DPrintf( "HTTP connection error from %s\n", NET_AddressToString( &con->address ) );
 	}
+
+	return total_received;
 }
 
 // ============================================================================
@@ -691,7 +697,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 *
 * Attempts to send up to HTTP_SENDBUF_SIZE bytes
 */
-static void SV_Web_SendResponse( sv_http_connection_t *con )
+static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 {
 	int sent;
 	char *sendbuf;
@@ -780,6 +786,8 @@ static void SV_Web_SendResponse( sv_http_connection_t *con )
 	if( stream->header_done && stream->content_p >= stream->content_length && !response->file ) {
 		con->state = HTTP_CONN_STATE_RECV;
 	}
+
+	return total_sent;
 }
 
 /*
@@ -829,10 +837,14 @@ void SV_Web_Init( void )
 */
 void SV_Web_Frame( void )
 {
+	int i;
 	int ret;
 	socket_t socket;
 	netadr_t address;
 	sv_http_connection_t *con, *next, *hnode;
+	size_t received;
+	socket_t *sleep_sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
+	int num_sleep_sockets = 0;
 
 	if( !sv_http_initialized ) {
 		return;
@@ -841,7 +853,7 @@ void SV_Web_Frame( void )
 	// accept new connections
 	while( ( ret = NET_Accept( &svs.socket_http, &socket, &address ) ) )
 	{
-		int i;
+
 		client_t *cl;
 
 		if( ret == -1 )
@@ -890,7 +902,7 @@ void SV_Web_Frame( void )
 
 		switch( con->state ) {
 			case HTTP_CONN_STATE_RECV:
-				SV_Web_ReceiveRequest( con );
+				received = SV_Web_ReceiveRequest( con );
 
 				if( con->state == HTTP_CONN_STATE_SEND ) {
 					SV_Web_ResetResponse( &con->response );
@@ -899,6 +911,9 @@ void SV_Web_Frame( void )
 					// fallthrough to HTTP_CONN_STATE_SEND here
 				}
 				else {
+					if( !received && con->open ) {
+						sleep_sockets[num_sleep_sockets++] = &con->socket;
+					}
 					break;
 				}
 			case HTTP_CONN_STATE_SEND:
@@ -919,6 +934,10 @@ void SV_Web_Frame( void )
 				break;
 		}
 	}
+	
+	// call sleep on idling sockets
+	sleep_sockets[num_sleep_sockets] = NULL;
+	NET_Sleep( 50, sleep_sockets );
 
 	// close dead connections
 	hnode = &sv_http_connection_headnode;
