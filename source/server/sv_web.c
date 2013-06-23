@@ -99,6 +99,7 @@ typedef struct {
 	sv_http_stream_t stream;
 
 	int file;
+	char *resource;
 } sv_http_response_t;
 
 typedef struct sv_http_connection_s
@@ -173,6 +174,10 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 */
 static void SV_Web_ResetResponse( sv_http_response_t *response )
 {
+	if( response->resource ) {
+		Mem_Free( response->resource );
+		response->resource = NULL;
+	}
 	if( response->file ) {
 		FS_FCloseFile( response->file );
 		response->file = 0;
@@ -508,7 +513,6 @@ static size_t SV_Web_ReceiveRequest( sv_http_connection_t *con )
 		}
 
 		total_received += ret;
-		con->last_active = Sys_Milliseconds();
 
 		recvbuf[ret] = '\0';
 		advance = SV_Web_ParseHeaders( request, request->stream.header_buf );
@@ -559,13 +563,16 @@ static size_t SV_Web_ReceiveRequest( sv_http_connection_t *con )
 			}
 
 			total_received += ret;
-			con->last_active = Sys_Milliseconds();
 			request->stream.content_p += ret;
 		}
 		if( request->stream.content_p >= request->stream.content_length ) {
 			request->stream.content_p = request->stream.content_length;
 			request->stream.content[request->stream.content_p] = '\0';
 		}
+	}
+
+	if( total_received > 0 ) {
+		con->last_active = Sys_Milliseconds();
 	}
 
 	if( request->error ) {
@@ -596,10 +603,66 @@ static const char *SV_Web_ResponseCodeMessage( sv_http_response_code_t code )
 		case HTTP_RESP_OK: return "OK";
 		case HTTP_RESP_PARTIAL_CONTENT: return "Partial Content";
 		case HTTP_RESP_BAD_REQUEST: return "Bad Request";
+		case HTTP_RESP_FORBIDDEN: return "Forbidden";
 		case HTTP_RESP_NOT_FOUND: return "Not Found";
 		case HTTP_RESP_REQUEST_TOO_LARGE: return "Request Entity Too Large";
 		case HTTP_RESP_REQUESTED_RANGE_NOT_SATISFIABLE: return "Requested range not satisfiable";
 		default: return "Unknown Error";
+	}
+}
+
+/*
+* SV_Web_RouteRequest
+*/
+static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_response_t *response, 
+	char **content, size_t *content_length )
+{
+	const char *resource = request->resource;
+
+	*content = NULL;
+	*content_length = 0;
+
+	if( !Q_strnicmp( resource, "game/", 5 ) ) {
+		// request to game module
+		response->resource = ZoneCopyString( resource + 5 );
+		response->code = HTTP_RESP_OK;
+	} else if( !Q_strnicmp( resource, "files/", 6 ) ) {
+		const char *filename, *extension;
+		
+		response->resource = ZoneCopyString( resource + 6 );
+		filename = response->resource;
+		
+		if( request->method == HTTP_METHOD_GET || request->method == HTTP_METHOD_HEAD ) {
+			// check for malicious URL's
+			if( !COM_ValidateRelativeFilename( filename ) ) {
+				response->code = HTTP_RESP_FORBIDDEN;
+				return;
+			}
+
+			// only serve GET requests for pack and demo files
+			extension = COM_FileExtension( filename );
+			if( !extension || !*extension || 
+				!(FS_CheckPakExtension( filename ) || !Q_stricmp( extension, APP_DEMO_EXTENSION_STR ) ) ) {
+				response->code = HTTP_RESP_FORBIDDEN;
+				return;
+			}
+
+			*content_length = FS_FOpenBaseFile( response->resource, &response->file, FS_READ );
+			if( !response->file ) {
+				response->code = HTTP_RESP_NOT_FOUND;
+				*content_length = 0;
+			}
+			else {
+				response->code = HTTP_RESP_OK;
+			}
+		}
+		else {
+			response->code = HTTP_RESP_BAD_REQUEST;
+		}
+	}
+	else {
+		response->resource = ZoneCopyString( resource );
+		response->code = HTTP_RESP_NOT_FOUND;
 	}
 }
 
@@ -609,28 +672,18 @@ static const char *SV_Web_ResponseCodeMessage( sv_http_response_code_t code )
 static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 {
 	char err_body[1024];
-	const char *content = NULL;
+	char *content = NULL;
 	size_t header_length = 0;
 	size_t content_length = 0;
 	sv_http_request_t *request = &con->request;
 	sv_http_response_t *response = &con->response;
-	sv_http_stream_t *req_stream = &request->stream;
 	sv_http_stream_t *resp_stream = &response->stream;
 
 	if( request->error ) {
 		response->code = request->error;
 	}
-	else if( request->method == HTTP_METHOD_GET || request->method == HTTP_METHOD_HEAD ) {
-		content = NULL;
-		content_length = FS_FOpenBaseFile( request->resource, &response->file, FS_READ );
-
-		if( !response->file ) {
-			response->code = HTTP_RESP_NOT_FOUND;
-			content_length = 0;
-		}
-		else {
-			response->code = HTTP_RESP_OK;
-		}
+	else {
+		SV_Web_RouteRequest( request, response, &content, &content_length );
 
 		// serve range requests
 		if( request->partial && response->file ) {
@@ -640,7 +693,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 				// range.end may be set to 0 for 'bytes=100-' style requests
 				response->stream.content_range.end = request->partial_content_range.end 
 					? request->partial_content_range.end : content_length;
-					
+
 			} else if( request->partial_content_range.end < 0 ) {
 				// seek to N last bytes in the file
 				FS_Seek( response->file, request->partial_content_range.end, FS_SEEK_END );
@@ -657,12 +710,6 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 			FS_FCloseFile( response->file );
 			response->file = 0;
 		}
-	}
-	else {
-		response->code = HTTP_RESP_OK;
-		// test echo
-		//content = req_stream->content;
-		//content_length = req_stream->content_p;
 	}
 
 	Q_snprintfz( resp_stream->header_buf, sizeof( resp_stream->header_buf ), 
@@ -690,19 +737,24 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 		content_length = response->stream.content_range.end - response->stream.content_range.begin;
 	}
 
-	if( response->code >= HTTP_RESP_BAD_REQUEST ) {
+	if( response->code >= HTTP_RESP_BAD_REQUEST || !content_length ) {
+		// error response or empty response: just return response code + description
+		Q_strncatz( resp_stream->header_buf, "Content-Type: text/plain\r\n",
+				sizeof( resp_stream->header_buf ) );
+
 		Q_snprintfz( err_body, sizeof( err_body ), 
 			va( "%i %s\n", response->code, SV_Web_ResponseCodeMessage( response->code ) ) );
 		content = err_body;
 		content_length = strlen( err_body );
 	}
 
+	// resource length
 	Q_strncatz( resp_stream->header_buf, va( "Content-Length: %i\r\n", content_length ),
 			sizeof( resp_stream->header_buf ) );
 
 	if( response->file ) {
 		Q_strncatz( resp_stream->header_buf, 
-			va( "Content-Disposition: attachment; filename=\"%s\"\r\n", COM_FileBase( request->resource ) ),
+			va( "Content-Disposition: attachment; filename=\"%s\"\r\n", COM_FileBase( response->resource ) ),
 			sizeof( resp_stream->header_buf ) );
 	}
 
@@ -798,7 +850,10 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 		con->last_active = Sys_Milliseconds();
 	}
 
-	if( stream->header_done && stream->content_p >= stream->content_length && !response->file ) {
+	// if done sending content body, make the transition to recieving state
+	if( stream->header_done 
+		&& (!stream->content || stream->content_p >= stream->content_length) 
+		&& !response->file ) {
 		con->state = HTTP_CONN_STATE_RECV;
 	}
 
