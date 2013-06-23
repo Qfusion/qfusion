@@ -609,6 +609,55 @@ static void SV_DenyDownload( client_t *client, const char *reason )
 	SV_SendMessageToClient( client, &tmpMessage );
 }
 
+static qboolean SV_FilenameForDownloadRequest( const char *requestname, qboolean requestpak,
+	const char **uploadname, const char **errormsg )
+{
+	if( FS_CheckPakExtension( requestname ) )
+	{
+		if( !requestpak )
+		{
+			*errormsg = "Pak file requested as a non pak file";
+			return qfalse;
+		}
+		if( FS_FOpenBaseFile( requestname, NULL, FS_READ ) == -1 )
+		{
+			*errormsg = "File not found";
+			return qfalse;
+		}
+
+		*uploadname = requestname;
+	}
+	else
+	{
+		if( FS_FOpenFile( requestname, NULL, FS_READ ) == -1 )
+		{
+			*errormsg = "File not found";
+			return qfalse;
+		}
+
+		// check if file is inside a PAK
+		if( requestpak )
+		{
+			*uploadname = FS_PakNameForFile( requestname );
+			if( !*uploadname )
+			{
+				*errormsg = "File not available in pack";
+				return qfalse;
+			}
+		}
+		else
+		{
+			*uploadname = FS_BaseNameForFile( requestname );
+			if( !*uploadname )
+			{
+				*errormsg = "File only available in pack";
+				return qfalse;
+			}
+		}
+	}
+	return qtrue;
+}
+
 /*
 * SV_BeginDownload_f
 * Responds to reliable download packet with reliable initdownload packet
@@ -620,6 +669,7 @@ static void SV_BeginDownload_f( client_t *client )
 	size_t alloc_size;
 	unsigned checksum;
 	char *url;
+	const char *errormsg = NULL;
 	qboolean allow, requestpak;
 
 	if( !sv_uploads->integer || ( !sv_uploads_from_server->integer && ( sv_uploads_baseurl->string[0] == '\0' ) ) )
@@ -637,49 +687,10 @@ static void SV_BeginDownload_f( client_t *client )
 		return;
 	}
 
-	if( FS_CheckPakExtension( requestname ) )
-	{
-		if( !requestpak )
-		{
-			SV_DenyDownload( client, "Pak file requested as a non pak file" );
-			return;
-		}
-
-		if( FS_FOpenBaseFile( requestname, NULL, FS_READ ) == -1 )
-		{
-			SV_DenyDownload( client, "File not found" );
-			return;
-		}
-
-		uploadname = requestname;
-	}
-	else
-	{
-		if( FS_FOpenFile( requestname, NULL, FS_READ ) == -1 )
-		{
-			SV_DenyDownload( client, "File not found" );
-			return;
-		}
-
-		// check if file is inside a PAK
-		if( requestpak )
-		{
-			uploadname = FS_PakNameForFile( requestname );
-			if( !uploadname )
-			{
-				SV_DenyDownload( client, "File not available in pack" );
-				return;
-			}
-		}
-		else
-		{
-			uploadname = FS_BaseNameForFile( requestname );
-			if( !uploadname )
-			{
-				SV_DenyDownload( client, "File only available in pack" );
-				return;
-			}
-		}
+	if( !SV_FilenameForDownloadRequest( requestname, requestpak, &uploadname, &errormsg ) ) {
+		assert( errormsg != NULL );
+		SV_DenyDownload( client, errormsg );
+		return;
 	}
 
 	if( FS_CheckPakExtension( uploadname ) )
