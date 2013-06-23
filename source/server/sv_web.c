@@ -267,6 +267,36 @@ static void SV_Web_ShutdownConnections( void )
 	}
 }
 
+/*
+* SV_Web_Get
+*/
+static int SV_Web_Get( sv_http_connection_t *con, void *recvbuf, size_t recvbuf_size )
+{
+	int read;
+
+	read = NET_Get( &con->socket, NULL, recvbuf, recvbuf_size - 1 );
+	if( read < 0 ) {
+		con->open = qfalse;
+		Com_DPrintf( "HTTP connection recv error from %s\n", NET_AddressToString( &con->address ) );
+	}
+	return read;
+}
+
+/*
+* SV_Web_Send
+*/
+static int SV_Web_Send( sv_http_connection_t *con, void *sendbuf, size_t sendbuf_size )
+{
+	int sent;
+
+	sent = NET_Send( &con->socket, sendbuf, sendbuf_size, &con->address );
+	if( sent < 0 ) {
+		Com_DPrintf( "HTTP transmission error to %s\n", NET_AddressToString( &con->address ) );
+		con->open = qfalse;
+	}
+	return sent;
+}
+
 // ============================================================================
 
 /*
@@ -455,7 +485,6 @@ static size_t SV_Web_ParseHeaders( sv_http_request_t *request, char *data )
 static size_t SV_Web_ReceiveRequest( sv_http_connection_t *con )
 {
 	int ret = 0;
-	netadr_t address;
 	char *recvbuf;
 	size_t recvbuf_size;
 	sv_http_request_t *request = &con->request;
@@ -473,7 +502,7 @@ static size_t SV_Web_ReceiveRequest( sv_http_connection_t *con )
 			break;
 		}
 
-		ret = NET_Get( &con->socket, &address, recvbuf, recvbuf_size - 1 );
+		ret = SV_Web_Get( con, recvbuf, recvbuf_size - 1 );
 		if( ret <= 0 ) {
 			break;
 		}
@@ -524,7 +553,7 @@ static size_t SV_Web_ReceiveRequest( sv_http_connection_t *con )
 			recvbuf = request->stream.content + request->stream.content_p;
 			recvbuf_size = request->stream.content_length - request->stream.content_p;
 
-			ret = NET_Get( &con->socket, &address, recvbuf, recvbuf_size );
+			ret = SV_Web_Get( con, recvbuf, recvbuf_size );
 			if( ret <= 0 ) {
 				break;
 			}
@@ -710,13 +739,8 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 		sendbuf = stream->header_buf + stream->header_buf_p;
 		sendbuf_size = stream->header_length - stream->header_buf_p;
 
-		sent = NET_Send( &con->socket, sendbuf, min( total_rem, sendbuf_size ), &con->address );
-		if( !sent ) {
-			break;
-		}
-		if( sent < 0 ) {
-			Com_DPrintf( "HTTP transmission error to %s\n", NET_AddressToString( &con->address ) );
-			con->open = qfalse;
+		sent = SV_Web_Send( con, sendbuf, min( total_rem, sendbuf_size ) );
+		if( sent <= 0 ) {
 			break;
 		}
 
@@ -743,13 +767,8 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 				}
 
 				if( read ) {
-					sent = NET_Send( &con->socket, buf, read, &con->address );
-					if( sent < 0 ) {
-						Com_DPrintf( "HTTP transmission error to %s\n", NET_AddressToString( &con->address ) );
-						con->open = qfalse;
-						break;
-					}
-					if( !sent ) {
+					sent = SV_Web_Send( con, buf, read );
+					if( sent <= 0 ) {
 						break;
 					}
 					total_rem -= sent;
@@ -762,13 +781,8 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 				sendbuf = stream->content + stream->content_p;
 				sendbuf_size = stream->content_length - stream->content_p;
 
-				sent = NET_Send( &con->socket, sendbuf, min( total_rem, sendbuf_size ), &con->address );
-				if( sent < 0 ) {
-					Com_DPrintf( "HTTP transmission error to %s\n", NET_AddressToString( &con->address ) );
-					con->open = qfalse;
-					break;
-				}
-				if( !sent ) {
+				sent = SV_Web_Send( con, sendbuf, min( total_rem, sendbuf_size ) );
+				if( sent <= 0 ) {
 					break;
 				}
 
