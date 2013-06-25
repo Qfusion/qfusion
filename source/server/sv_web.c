@@ -24,20 +24,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef HTTP_SUPPORT
 
-#define MAX_INCOMING_HTTP_CONNECTIONS		32
+#define MAX_INCOMING_HTTP_CONNECTIONS			32
+#define MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR	2
 
-#define MAX_INCOMING_CONTENT_LENGTH			0x2800
+#define MAX_INCOMING_CONTENT_LENGTH				0x2800
 
-#define INCOMING_HTTP_CONNECTION_TIMEOUT	5 // seconds
-
-#define HTTP_SENDBUF_SIZE					0x8000
-#define HTTP_RECVBUF_SIZE					0x8000
+#define INCOMING_HTTP_CONNECTION_RECV_TIMEOUT	5 // seconds
+#define INCOMING_HTTP_CONNECTION_SEND_TIMEOUT	15 // seconds
 
 typedef enum
 {
 	HTTP_CONN_STATE_NONE = 0,
 	HTTP_CONN_STATE_RECV = 1,
-	HTTP_CONN_STATE_SEND = 2
+	HTTP_CONN_STATE_RESP = 2,
+	HTTP_CONN_STATE_SEND = 3
 } sv_http_connstate_t;
 
 typedef enum
@@ -99,6 +99,8 @@ typedef struct {
 	sv_http_stream_t stream;
 
 	int file;
+	size_t file_send_pos;
+	size_t file_chunk_size;
 	char *resource;
 } sv_http_response_t;
 
@@ -182,6 +184,8 @@ static void SV_Web_ResetResponse( sv_http_response_t *response )
 		FS_FCloseFile( response->file );
 		response->file = 0;
 	}
+	response->file_send_pos = 0;
+	response->file_chunk_size = 0;
 
 	SV_Web_ResetStream( &response->stream );
 
@@ -197,7 +201,7 @@ static sv_http_connection_t *SV_Web_AllocConnection( void )
 
 	if( sv_free_http_connections )
 	{
-		// take a free decal if possible
+		// take a free connection if possible
 		con = sv_free_http_connections;
 		sv_free_http_connections = con->next;
 	}
@@ -264,7 +268,7 @@ static void SV_Web_ShutdownConnections( void )
 	hnode = &sv_http_connection_headnode;
 	for( con = hnode->prev; con != hnode; con = next )
 	{
-		next = con->next;
+		next = con->prev;
 		if( con->open ) {
 			NET_CloseSocket( &con->socket );
 			SV_Web_FreeConnection( con );
@@ -487,7 +491,7 @@ static size_t SV_Web_ParseHeaders( sv_http_request_t *request, char *data )
 /*
 * SV_Web_ReceiveRequest
 */
-static size_t SV_Web_ReceiveRequest( sv_http_connection_t *con )
+static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 {
 	int ret = 0;
 	char *recvbuf;
@@ -577,19 +581,17 @@ static size_t SV_Web_ReceiveRequest( sv_http_connection_t *con )
 
 	if( request->error ) {
 		con->close_after_resp = qtrue;
-		con->state = HTTP_CONN_STATE_SEND;
+		con->state = HTTP_CONN_STATE_RESP;
 	}
 	else if( request->stream.header_done && request->stream.content_p >= request->stream.content_length ) {
 		// yay, fully got the request
-		con->state = HTTP_CONN_STATE_SEND;
+		con->state = HTTP_CONN_STATE_RESP;
 	}
 
 	if( ret == -1 ) {
 		con->open = qfalse;
 		Com_DPrintf( "HTTP connection error from %s\n", NET_AddressToString( &con->address ) );
 	}
-
-	return total_received;
 }
 
 // ============================================================================
@@ -776,23 +778,21 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 
 /*
 * SV_Web_SendResponse
-*
-* Attempts to send up to HTTP_SENDBUF_SIZE bytes
 */
 static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 {
 	int sent;
 	char *sendbuf;
 	size_t sendbuf_size;
-	size_t total_sent = 0, total_rem = HTTP_SENDBUF_SIZE;
+	size_t total_sent = 0;
 	sv_http_response_t *response = &con->response;
 	sv_http_stream_t *stream = &response->stream;
 
-	while( !stream->header_done && total_rem > 0 ) {
+	while( !stream->header_done ) {
 		sendbuf = stream->header_buf + stream->header_buf_p;
 		sendbuf_size = stream->header_length - stream->header_buf_p;
 
-		sent = SV_Web_Send( con, sendbuf, min( total_rem, sendbuf_size ) );
+		sent = SV_Web_Send( con, sendbuf, sendbuf_size );
 		if( sent <= 0 ) {
 			break;
 		}
@@ -801,47 +801,50 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 		if( stream->header_buf_p >= stream->header_length ) {
 			stream->header_done = qtrue;
 		}
-		total_rem -= sent;
+
 		total_sent += sent;
 	}
 
 	if( stream->header_done && stream->content_length ) {
-		if( response->file ) {
-			while( response->file && total_rem > 0 ) {
-				// read from file
-				qbyte buf[HTTP_SENDBUF_SIZE];
-				int read, max_read;
-
-				max_read = min( sizeof( buf ), total_rem );
-				read = FS_Read( buf, max_read, response->file );
-				if( read < max_read || FS_Eof( response->file ) ) {
-					FS_FCloseFile( response->file );
-					response->file = 0;
-				}
-
-				if( read ) {
-					sent = SV_Web_Send( con, buf, read );
-					if( sent <= 0 ) {
+		while( stream->content_p < stream->content_length ) {
+			if( response->file ) {
+				if( response->file_send_pos >= response->file_chunk_size ) {
+					// read from file
+					int read_size;
+					
+					if( FS_Eof( response->file ) ){
+						Com_Printf( "HTTP file streaming error: premature EOF on %s to %s\n", 
+							response->resource, NET_AddressToString( &con->address ) );
+						con->open = qfalse;
 						break;
 					}
-					total_rem -= sent;
-					total_sent += sent;
+
+					read_size = min( sizeof( stream->header_buf ), stream->content_length - stream->content_p );
+					read_size = FS_Read( stream->header_buf, read_size, response->file );
+
+					response->file_chunk_size = read_size;
+					response->file_send_pos = 0;
 				}
+				sendbuf = stream->header_buf + response->file_send_pos;
+				sendbuf_size = response->file_chunk_size - response->file_send_pos;
 			}
-		}
-		else if( stream->content ) {
-			while( stream->content_p < stream->content_length && total_rem > 0 ) {
+			else if( stream->content ) {
 				sendbuf = stream->content + stream->content_p;
 				sendbuf_size = stream->content_length - stream->content_p;
+			}
+			else {
+				break;
+			}
 
-				sent = SV_Web_Send( con, sendbuf, min( total_rem, sendbuf_size ) );
-				if( sent <= 0 ) {
-					break;
-				}
+			sent = SV_Web_Send( con, sendbuf, sendbuf_size );
+			if( sent <= 0 ) {
+				break;
+			}
 
-				stream->content_p += sent;
-				total_rem -= sent;
-				total_sent += sent;
+			stream->content_p += sent;
+			total_sent += sent;
+			if( response->file ) {
+				response->file_send_pos += sent;
 			}
 		}
 	}
@@ -911,10 +914,10 @@ void SV_Web_Frame( void )
 	int ret;
 	socket_t socket;
 	netadr_t address;
-	sv_http_connection_t *con, *next, *hnode;
-	size_t received;
-	socket_t *sleep_sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
-	int num_sleep_sockets = 0;
+	sv_http_connection_t *con, *next, *hnode = &sv_http_connection_headnode;
+	socket_t *sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
+	void *connections[MAX_INCOMING_HTTP_CONNECTIONS];
+	int num_sockets = 0;
 
 	if( !sv_http_initialized ) {
 		return;
@@ -923,7 +926,6 @@ void SV_Web_Frame( void )
 	// accept new connections
 	while( ( ret = NET_Accept( &svs.socket_http, &socket, &address ) ) )
 	{
-
 		client_t *cl;
 
 		if( ret == -1 )
@@ -944,52 +946,75 @@ void SV_Web_Frame( void )
 			if( NET_CompareAddress( &address, &cl->netchan.remoteAddress ) )
 #endif
 			{
-				Com_DPrintf( "HTTP connection accepted from %s\n", NET_AddressToString( &address ) );
-				con = SV_Web_AllocConnection();
-				if( !con ) {
+				int cnt = 0;
+
+				// only accept up to two HTTP connections per address
+				for( con = hnode->prev; con != hnode; con = next )
+				{
+					next = con->prev;
+					if( NET_CompareAddress( &address, &con->address ) ) {
+						if( cnt >= MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
+							break;
+						}
+						cnt++;
+					}
+				}
+
+				if( cnt < MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
+					Com_Printf( "HTTP connection accepted from %s\n", NET_AddressToString( &address ) );
+					con = SV_Web_AllocConnection();
+					if( !con ) {
+						break;
+					}
+					con->socket = socket;
+					con->address = address;
+					con->last_active = Sys_Milliseconds();
+					con->open = qtrue;
+					con->state = HTTP_CONN_STATE_RECV;
 					break;
 				}
-				con->socket = socket;
-				con->address = address;
-				con->last_active = Sys_Milliseconds();
-				con->open = qtrue;
-				con->state = HTTP_CONN_STATE_RECV;
-				break;
 			}
 		}
 
 		if( !con ) {
-			Com_DPrintf( "Refused HTTP connection from %s\n", NET_AddressToString( &address ) );
+			Com_Printf( "HTTP connection refused for %s\n", NET_AddressToString( &address ) );
 			NET_CloseSocket( &socket );
 		}
 	}
 
 	// handle incoming data
-	hnode = &sv_http_connection_headnode;
+	num_sockets = 0;
 	for( con = hnode->prev; con != hnode; con = next )
 	{
-		next = con->next;
+		next = con->prev;
+		switch( con->state ) {
+			case HTTP_CONN_STATE_RECV:
+				sockets[num_sockets] = &con->socket;
+				connections[num_sockets] = con;
+				num_sockets++;
+				break;
+		}
+	}
+	sockets[num_sockets] = NULL;
+
+	NET_Monitor( 50, sockets, SV_Web_ReceiveRequest, NULL, connections );
+
+	for( con = hnode->prev; con != hnode; con = next )
+	{
+		next = con->prev;
 
 		switch( con->state ) {
 			case HTTP_CONN_STATE_RECV:
-				received = SV_Web_ReceiveRequest( con );
+				break;
+			case HTTP_CONN_STATE_RESP:
+				con->state = HTTP_CONN_STATE_SEND;
+				SV_Web_RespondToQuery( con );
 
-				if( con->state == HTTP_CONN_STATE_SEND ) {
-					SV_Web_ResetResponse( &con->response );
-
-					SV_Web_RespondToQuery( con );
-					// fallthrough to HTTP_CONN_STATE_SEND here
-				}
-				else {
-					if( !received && con->open ) {
-						sleep_sockets[num_sleep_sockets++] = &con->socket;
-					}
-					break;
-				}
 			case HTTP_CONN_STATE_SEND:
 				SV_Web_SendResponse( con );
 
-				if( con->state != HTTP_CONN_STATE_SEND ) {
+				if( con->state == HTTP_CONN_STATE_RECV ) {
+					SV_Web_ResetResponse( &con->response );
 					if( con->close_after_resp ) {
 						con->open = qfalse;
 					}
@@ -999,25 +1024,33 @@ void SV_Web_Frame( void )
 				}
 				break;
 			default:
-				Com_DPrintf( "Bad connection state: %i\n", con->state );
+				Com_DPrintf( "Bad connection state %i\n", con->state );
 				con->open = qfalse;
 				break;
 		}
 	}
-	
-	// call sleep on idling sockets
-	sleep_sockets[num_sleep_sockets] = NULL;
-	NET_Sleep( 50, sleep_sockets );
 
 	// close dead connections
-	hnode = &sv_http_connection_headnode;
 	for( con = hnode->prev; con != hnode; con = next )
 	{
-		next = con->next;
+		next = con->prev;
 
-		if( Sys_Milliseconds() > con->last_active + INCOMING_HTTP_CONNECTION_TIMEOUT*1000 ) {
-			con->open = qfalse;
-			Com_DPrintf( "HTTP connection timeout from %s\n", NET_AddressToString( &con->address ) );
+		if( con->open ) {
+			unsigned int timeout = 0;
+
+			switch( con->state ) {
+				case HTTP_CONN_STATE_RECV:
+					timeout = INCOMING_HTTP_CONNECTION_RECV_TIMEOUT;
+					break;
+				case HTTP_CONN_STATE_SEND:
+					timeout = INCOMING_HTTP_CONNECTION_SEND_TIMEOUT;
+					break;
+			}
+
+			if( Sys_Milliseconds() > con->last_active + timeout*1000 ) {
+				con->open = qfalse;
+				Com_Printf( "HTTP connection timeout from %s\n", NET_AddressToString( &con->address ) );
+			}
 		}
 
 		if( !con->open ) {
