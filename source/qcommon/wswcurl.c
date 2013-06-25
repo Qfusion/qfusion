@@ -32,7 +32,7 @@
 
 // Curl setopt wrapper
 #define CURLSETOPT(c,r,o,v) { if (c) { r = curl_easy_setopt(c,o,v); if (r) { printf("\nCURL ERROR: %d: %s\n", r, curl_easy_strerror(r)); curl_easy_cleanup(c) ; c = NULL; } } }
-#define CURLDBG(x)			Com_DPrintf x
+#define CURLDBG(x)			
 
 #define WCONNECTTIMEOUT		0
 #define WTIMEOUT			15
@@ -540,6 +540,24 @@ int wswcurl_header( wswcurl_req *req, const char *key, const char *value, ...)
 	return (req->txhead == NULL);
 }
 
+static int wswcurl_debug_callback( CURL *curl, curl_infotype infotype, char *buf, size_t buf_size, wswcurl_req *req )
+{
+	char *temp;
+	
+	if( infotype != CURLINFO_TEXT ) {
+		return 0;
+	}
+
+	temp = Mem_TempMalloc( buf_size + 1 );
+	memcpy( temp, buf, buf_size );
+
+	Com_DPrintf( "%s\n", temp );
+
+	Mem_TempFree( temp );
+
+	return 0;
+}
+
 wswcurl_req *wswcurl_create( const char *furl, ... )
 {
 	wswcurl_req *retreq;
@@ -580,6 +598,12 @@ wswcurl_req *wswcurl_create( const char *furl, ... )
 	CURLSETOPT( curl, res, CURLOPT_WRITEDATA, ( void * )retreq );
 	CURLSETOPT( curl, res, CURLOPT_WRITEHEADER, ( void * )retreq );
 	CURLSETOPT( curl, res, CURLOPT_PRIVATE, ( void * )retreq );
+
+	if( developer->integer ) {
+		CURLSETOPT( curl, res, CURLOPT_DEBUGFUNCTION, &wswcurl_debug_callback );
+		CURLSETOPT( curl, res, CURLOPT_DEBUGDATA, ( void * )retreq );
+		CURLSETOPT( curl, res, CURLOPT_VERBOSE, 1 );
+	}
 
 	// HTTP proxy settings
 	if( proxy && *proxy ) {
