@@ -630,6 +630,8 @@ static int NET_TCP_Send( const socket_t *socket, const void *data, size_t length
 	if( ret == SOCKET_ERROR )
 	{
 		NET_SetErrorStringFromLastError( "send" );
+		if( Sys_NET_GetLastError() == NET_ERR_WOULDBLOCK )  // would block
+			return 0;
 		return -1;
 	}
 
@@ -1809,7 +1811,7 @@ void NET_Sleep( int msec, socket_t *sockets[] )
 * For both callbacks, NULL can be passed. When NULL is passed for the exception_cb, no exception detection is performed
 * Incoming data is always detected, even if the 'read_cb' callback was NULL.
 */
-int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *socket), void (*exception_cb)(socket_t *socket) )
+int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void*), void (*exception_cb)(socket_t *, void*), void *privatep[] )
 {
 	struct timeval timeout;
 	fd_set fdsetr, fdsete;
@@ -1861,10 +1863,10 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *socket
 			case SOCKET_TCP:
 #endif
 				if ( (exception_cb) && (p_fdsete) && (FD_ISSET(sockets[i]->handle, p_fdsete )) ) {
-					exception_cb(sockets[i]);
+					exception_cb(sockets[i], privatep ? privatep[i] : NULL);
 				}
 				if ( (read_cb) && (FD_ISSET(sockets[i]->handle, &fdsetr )) ) {
-					read_cb(sockets[i]);
+					read_cb(sockets[i], privatep ? privatep[i] : NULL);
 				}
 				break;
 			case SOCKET_LOOPBACK:

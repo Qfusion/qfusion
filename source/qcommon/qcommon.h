@@ -672,7 +672,8 @@ int			NET_Get( const socket_t *socket, netadr_t *address, void *data, size_t len
 int         NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
 
 void	    NET_Sleep( int msec, socket_t *sockets[] );
-int         NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *socket), void (*exception_cb)(socket_t *socket) );
+int         NET_Monitor( int msec, socket_t *sockets[], 
+	void (*read_cb)(socket_t *socket, void*), void (*exception_cb)(socket_t *socket, void*), void *privatep[] );
 const char *NET_ErrorString( void );
 void	    NET_SetErrorString( const char *format, ... );
 void		NET_SetErrorStringFromLastError( const char *function );
