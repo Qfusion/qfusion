@@ -751,7 +751,7 @@ static connection_status_t NET_TCP_CheckConnect( socket_t *socket )
 */
 static int NET_TCP_Accept( const socket_t *socket, socket_t *newsocket, netadr_t *address )
 {
-	struct sockaddr sockaddress;
+	struct sockaddr_storage sockaddress;
 	socklen_t sockaddress_size;
 	int handle;
 
@@ -760,7 +760,7 @@ static int NET_TCP_Accept( const socket_t *socket, socket_t *newsocket, netadr_t
 	assert( address );
 
 	sockaddress_size = sizeof( sockaddress );
-	handle = accept( socket->handle, &sockaddress, &sockaddress_size );
+	handle = accept( socket->handle, (struct sockaddr *)&sockaddress, &sockaddress_size );
 	if( handle == SOCKET_ERROR )
 	{
 		NET_SetErrorStringFromLastError( "accept" );
@@ -769,7 +769,7 @@ static int NET_TCP_Accept( const socket_t *socket, socket_t *newsocket, netadr_t
 		return -1;
 	}
 
-	if( !SockaddressToAddress( &sockaddress, address ) )
+	if( !SockaddressToAddress( (struct sockaddr *)&sockaddress, address ) )
 		return -1;
 
 	// make the new socket non-blocking
