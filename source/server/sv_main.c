@@ -39,8 +39,7 @@ cvar_t *sv_zombietime;         // seconds to sink messages after disconnect
 
 cvar_t *rcon_password;         // password for remote server commands
 
-cvar_t *sv_uploads;
-cvar_t *sv_uploads_from_server;
+cvar_t *sv_uploads_http;
 cvar_t *sv_uploads_baseurl;
 cvar_t *sv_uploads_demos_baseurl;
 
@@ -57,7 +56,6 @@ cvar_t *sv_tcp;
 #ifdef HTTP_SUPPORT
 cvar_t *sv_http;
 cvar_t *sv_http_port;
-cvar_t *sv_http_port6;
 #endif
 
 cvar_t *sv_showclamp;
@@ -880,7 +878,6 @@ void SV_Init( void )
 #ifdef HTTP_SUPPORT
 	sv_http =		    Cvar_Get( "sv_http", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 	sv_http_port =		Cvar_Get( "sv_http_port", va( "%i", PORT_HTTP_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
-	sv_http_port6 =		Cvar_Get( "sv_http_port6", va( "%i", PORT_HTTP_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
 #endif
 
 	rcon_password =		    Cvar_Get( "rcon_password", "", 0 );
@@ -894,12 +891,11 @@ void SV_Init( void )
 	sv_showInfoQueries =	Cvar_Get( "sv_showInfoQueries", "0", 0 );
 	sv_highchars =			Cvar_Get( "sv_highchars", "1", 0 );
 
-	sv_uploads_baseurl =	    Cvar_Get( "sv_uploads_baseurl", "", CVAR_ARCHIVE );
+	sv_uploads_http	=       Cvar_Get( "sv_uploads_http", "1", CVAR_READONLY );
+	sv_uploads_baseurl =	Cvar_Get( "sv_uploads_baseurl", "", CVAR_ARCHIVE );
 	sv_uploads_demos_baseurl =	Cvar_Get( "sv_uploads_demos_baseurl", "", CVAR_ARCHIVE );
 	if( dedicated->integer )
 	{
-		sv_uploads =		    Cvar_Get( "sv_uploads", "1", CVAR_READONLY );
-		sv_uploads_from_server = Cvar_Get( "sv_uploads_from_server", "1", CVAR_READONLY );
 		sv_autoUpdate = Cvar_Get( "sv_autoUpdate", "1", CVAR_ARCHIVE );
 
 		sv_pure =		Cvar_Get( "sv_pure", "1", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
@@ -912,8 +908,6 @@ void SV_Init( void )
 	}
 	else
 	{
-		sv_uploads =		    Cvar_Get( "sv_uploads", "1", CVAR_ARCHIVE );
-		sv_uploads_from_server = Cvar_Get( "sv_uploads_from_server", "1", CVAR_ARCHIVE );
 		sv_autoUpdate = Cvar_Get( "sv_autoUpdate", "0", CVAR_READONLY );
 
 		sv_pure =		Cvar_Get( "sv_pure", "0", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );

@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef HTTP_SUPPORT
 
 #define MAX_INCOMING_HTTP_CONNECTIONS			32
-#define MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR	2
+#define MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR	3
 
 #define MAX_INCOMING_CONTENT_LENGTH				0x2800
 
@@ -318,6 +318,8 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 
 	ptr = line;
 
+	// FIXME: don't use COM_Parse for this!
+
 	token = COM_ParseExt( &ptr, qfalse );
 	if( !Q_stricmp( token, "GET" ) ) {
 		request->method = HTTP_METHOD_GET;
@@ -331,10 +333,11 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 		request->error = HTTP_RESP_BAD_REQUEST;
 	}
 
-	token = COM_ParseExt( &ptr, qfalse );
-	while( *token == '/' ) {
-		token++;
+	// COM_Parse may get confused about double slash and treat it as single-line comment
+	while( *ptr <= ' ' || *ptr == '/' ) {
+		ptr++;
 	}
+	token = COM_ParseExt( &ptr, qfalse );
 	request->resource = ZoneCopyString( *token ? token : "/" );
 
 	token = COM_ParseExt( &ptr, qfalse );
@@ -429,6 +432,8 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 
 /*
 * SV_Web_ParseHeaderLine
+*
+* Parses and splits the header line into key-value pair
 */
 static void SV_Web_ParseHeaderLine( sv_http_request_t *request, char *line )
 {
@@ -452,7 +457,7 @@ static void SV_Web_ParseHeaderLine( sv_http_request_t *request, char *line )
 	value = line + offset + 1;
 
 	// ltrim
-	while( *value == ' ' ) {
+	while( *value <= ' ' ) {
 		value++;
 	}
 	SV_Web_AnalyzeHeader( request, key, value );
@@ -630,13 +635,20 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 		response->code = HTTP_RESP_OK;
 	} else if( !Q_strnicmp( resource, "files/", 6 ) ) {
 		const char *filename, *extension;
+		char *delim;
 		
 		response->resource = ZoneCopyString( resource + 6 );
+
+		// strip query string
+		delim = strstr( response->resource, "?" );
+		if( delim ) {
+			*delim = '\0';
+		}
 		filename = response->resource;
 		
 		if( request->method == HTTP_METHOD_GET || request->method == HTTP_METHOD_HEAD ) {
 			// check for malicious URL's
-			if( !COM_ValidateRelativeFilename( filename ) ) {
+			if( !sv_uploads_http->integer || !COM_ValidateRelativeFilename( filename ) ) {
 				response->code = HTTP_RESP_FORBIDDEN;
 				return;
 			}
@@ -687,6 +699,10 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 	else {
 		SV_Web_RouteRequest( request, response, &content, &content_length );
 
+		if( response->file ) {
+			Com_Printf( "HTTP serving file '%s' to '%s'\n", response->resource, NET_AddressToString( &con->address ) );
+		}
+
 		// serve range requests
 		if( request->partial && response->file ) {
 			// seek to first byte pos and clamp the last byte pos to content length
@@ -717,6 +733,9 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 	Q_snprintfz( resp_stream->header_buf, sizeof( resp_stream->header_buf ), 
 		"%s %i %s\r\nServer: " APPLICATION " v" APP_VERSION_STR "\r\n", 
 		request->http_ver, response->code, SV_Web_ResponseCodeMessage( response->code ) );
+
+	Q_strncatz( resp_stream->header_buf, "Accept-Ranges: bytes\r\n", 
+			sizeof( resp_stream->header_buf ) );
 
 	if( response->code == HTTP_RESP_REQUESTED_RANGE_NOT_SATISFIABLE ) {
 		int file_length = FS_FOpenBaseFile( request->resource, NULL, FS_READ );
@@ -864,95 +883,75 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 }
 
 /*
-* SV_Web_Init
+* SV_Web_InitSocket
 */
-void SV_Web_Init( void )
+static void SV_Web_InitSocket( const char *addrstr, netadrtype_t adrtype, socket_t *socket )
 {
 	netadr_t address;
-	netadr_t ipv6_address;
-
-	sv_http_initialized = qfalse;
-
-	SV_Web_InitConnections();
-
-	if( !sv_http->integer ) {
-		return;
-	}
 
 	address.type = NA_NOTRANSMIT;
-	ipv6_address.type = NA_NOTRANSMIT;
 
-	NET_StringToAddress( sv_ip->string, &address );
+	NET_StringToAddress( addrstr, &address );
 	NET_SetAddressPort( &address, sv_http_port->integer );
 
-	if( dedicated->integer || sv_maxclients->integer > 1 )
+	if( address.type == adrtype )
 	{
-		if( !NET_OpenSocket( &svs.socket_http, SOCKET_TCP, &address, qtrue ) )
+		if( !NET_OpenSocket( socket, SOCKET_TCP, &address, qtrue ) )
 		{
 			Com_Printf( "Error: Couldn't open TCP socket: %s", NET_ErrorString() );
 		}
-		else if( !NET_Listen( &svs.socket_http ) )
+		else if( !NET_Listen( socket ) )
 		{
 			Com_Printf( "Error: Couldn't listen to TCP socket: %s", NET_ErrorString() );
-			NET_CloseSocket( &svs.socket_http );
+			NET_CloseSocket( socket );
 		}
 		else
 		{
 			Com_Printf( "Web server started on %s\n", NET_AddressToString( &address ) );
 		}
 	}
-
-	sv_http_initialized = (svs.socket_http.type == NA_IP || svs.socket_http6.type == NA_IP6);
 }
 
 /*
-* SV_Web_Frame
+* SV_Web_Listen
 */
-void SV_Web_Frame( void )
+static void SV_Web_Listen( socket_t *socket )
 {
 	int i;
 	int ret;
-	socket_t socket;
-	netadr_t address;
+	socket_t newsocket;
+	netadr_t newaddress;
 	sv_http_connection_t *con, *next, *hnode = &sv_http_connection_headnode;
-	socket_t *sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
-	void *connections[MAX_INCOMING_HTTP_CONNECTIONS];
-	int num_sockets = 0;
-
-	if( !sv_http_initialized ) {
-		return;
-	}
 
 	// accept new connections
-	while( ( ret = NET_Accept( &svs.socket_http, &socket, &address ) ) )
+	while( ( ret = NET_Accept( socket, &newsocket, &newaddress ) ) )
 	{
 		client_t *cl;
 
 		if( ret == -1 )
 		{
-			Com_Printf( "NET_Accept: Error: %s", NET_ErrorString() );
+			Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
 			continue;
 		}
 
-		// only accept connections from existing clients
+		// only accept connections from connected clients
 		con = NULL;
 		for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
 		{
-			// TODO: only allow 2 simultaneous connections from each client
 #if 0
 	 		if( cl->state == CS_FREE )
 				continue;
 
-			if( NET_CompareAddress( &address, &cl->netchan.remoteAddress ) )
+			if( NET_CompareBaseAddress( &newaddress, &cl->netchan.remoteAddress ) )
 #endif
 			{
 				int cnt = 0;
 
-				// only accept up to two HTTP connections per address
+				// only accept up to three HTTP connections per address
 				for( con = hnode->prev; con != hnode; con = next )
 				{
 					next = con->prev;
-					if( NET_CompareAddress( &address, &con->address ) ) {
+					if( NET_CompareAddress( &newaddress, &con->address ) ) {
 						if( cnt >= MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
 							break;
 						}
@@ -961,13 +960,13 @@ void SV_Web_Frame( void )
 				}
 
 				if( cnt < MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
-					Com_Printf( "HTTP connection accepted from %s\n", NET_AddressToString( &address ) );
+					Com_Printf( "HTTP connection accepted from %s\n", NET_AddressToString( &newaddress ) );
 					con = SV_Web_AllocConnection();
 					if( !con ) {
 						break;
 					}
-					con->socket = socket;
-					con->address = address;
+					con->socket = newsocket;
+					con->address = newaddress;
 					con->last_active = Sys_Milliseconds();
 					con->open = qtrue;
 					con->state = HTTP_CONN_STATE_RECV;
@@ -977,9 +976,53 @@ void SV_Web_Frame( void )
 		}
 
 		if( !con ) {
-			Com_Printf( "HTTP connection refused for %s\n", NET_AddressToString( &address ) );
-			NET_CloseSocket( &socket );
+			Com_Printf( "HTTP connection refused for %s\n", NET_AddressToString( &newaddress ) );
+			NET_CloseSocket( &newsocket );
 		}
+	}
+}
+
+/*
+* SV_Web_Init
+*/
+void SV_Web_Init( void )
+{
+	sv_http_initialized = qfalse;
+
+	SV_Web_InitConnections();
+
+	if( !sv_http->integer ) {
+		return;
+	}
+
+	SV_Web_InitSocket( sv_ip->string, NA_IP, &svs.socket_http );
+	SV_Web_InitSocket( sv_ip6->string, NA_IP6, &svs.socket_http6 );
+
+	sv_http_initialized = (svs.socket_http.address.type == NA_IP || svs.socket_http6.address.type == NA_IP6);
+}
+
+/*
+* SV_Web_Frame
+*/
+void SV_Web_Frame( void )
+{
+	sv_http_connection_t *con, *next, *hnode = &sv_http_connection_headnode;
+	socket_t *sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
+	void *connections[MAX_INCOMING_HTTP_CONNECTIONS];
+	int num_sockets = 0;
+
+	return;
+
+	if( !sv_http_initialized ) {
+		return;
+	}
+
+	// accept new connections
+	if( svs.socket_http.address.type == NA_IP ) {
+		SV_Web_Listen( &svs.socket_http );
+	}
+	if( svs.socket_http6.address.type == NA_IP6 ) {
+		SV_Web_Listen( &svs.socket_http6 );
 	}
 
 	// handle incoming data
@@ -1058,6 +1101,15 @@ void SV_Web_Frame( void )
 			SV_Web_FreeConnection( con );
 		}
 	}
+}
+
+/*
+* SV_Web_Running
+*/
+qboolean SV_Web_Running( void )
+{
+	return qtrue;
+	return sv_http_initialized;
 }
 
 /*
