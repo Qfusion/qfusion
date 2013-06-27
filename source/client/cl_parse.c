@@ -328,9 +328,8 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	const char *url;
 	int size, alloc_size;
 	unsigned checksum;
-	qboolean allow_serverdownload;
+	qboolean allow_localhttpdownload;
 	download_list_t	*dl;
-
 	// ignore download commands coming from demo files
 	if( cls.demo.playing )		
 		return;
@@ -339,7 +338,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	filename = Cmd_Argv( 1 );
 	size = atoi( Cmd_Argv( 2 ) );
 	checksum = strtoul( Cmd_Argv( 3 ), NULL, 10 );
-	allow_serverdownload = ( atoi( Cmd_Argv( 4 ) ) != 0 );
+	allow_localhttpdownload = ( atoi( Cmd_Argv( 4 ) ) != 0 ) && cls.httpbaseurl != NULL;
 	url = Cmd_Argv( 5 );
 
 	if( !cls.download.requestname )
@@ -362,13 +361,6 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		return;
 	}
 
-	if( allow_serverdownload == qfalse && url[0] == '\0' )
-	{
-		Com_Printf( "Neither server or web download provided by the server\n" );
-		CL_DownloadDone();
-		return;
-	}
-
 	if( size <= 0 )
 	{
 		Com_Printf( "Server gave invalid size, not downloading\n" );
@@ -386,13 +378,6 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	if( !COM_ValidateRelativeFilename( filename ) )
 	{
 		Com_Printf( "Not downloading, invalid filename: %s\n", filename );
-		CL_DownloadDone();
-		return;
-	}
-
-	if( !cl_downloads_from_web->integer && !allow_serverdownload )
-	{
-		Com_Printf( "Not downloading, server only provided web download\n" );
 		CL_DownloadDone();
 		return;
 	}
@@ -513,17 +498,15 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		cls.download.list = dl;
 	}
 
-	if( cl_downloads_from_web->integer && url && url[0] != 0 ) {
+	if( cl_downloads_from_web->integer && allow_localhttpdownload && url && url[0] != 0 ) {
 		cls.download.web = qtrue;
-
-		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, url, filename );
+		Com_Printf( "Web download: %s from %s%s\n", cls.download.tempname, cls.httpbaseurl, url );
+	}
+	else if( cl_downloads_from_web->integer && url && url[0] != 0 ) {
+		cls.download.web = qtrue;
+		Com_Printf( "Web download: %s from %s\n", cls.download.tempname, url );
 	}
 	else {
-		if( !allow_serverdownload ) {
-			CL_DownloadDone();
-			return;
-		}
-
 		Com_Printf( "Server download: %s\n", cls.download.tempname );
 	}
 
@@ -553,19 +536,25 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		Q_snprintfz( referer, alloc_size, APP_URI_SCHEME "%s", NET_AddressToString( &cls.serveraddress ) );
 		Q_strlwr( referer );
 
-		alloc_size = strlen( url ) + 1 + strlen( filename ) + 1;
-		fullurl = Mem_ZoneMalloc( alloc_size );
-		Q_snprintfz( fullurl, alloc_size, "%s/%s", url, filename );
+		if( allow_localhttpdownload ) {
+			alloc_size = strlen( cls.httpbaseurl ) + 1 + strlen( url ) + 1;
+			fullurl = Mem_ZoneMalloc( alloc_size );
+			Q_snprintfz( fullurl, alloc_size, "%s/%s", cls.httpbaseurl, url );
+		}
+		else {
+			alloc_size = strlen( url ) + 1 + strlen( filename ) + 1;
+			fullurl = Mem_ZoneMalloc( alloc_size );
+			Q_snprintfz( fullurl, alloc_size, "%s/%s", url, filename );
+		}
 
 		headers[0] = "Referer";
 		headers[1] = referer;
 
-		CL_AsyncStreamRequest( fullurl, headers, cl_downloads_from_web_timeout->integer, cls.download.offset, 
-			CL_WebDownloadReadCb, CL_WebDownloadDoneCb, NULL, NULL, qtrue );
+		CL_AsyncStreamRequest( fullurl, headers, cl_downloads_from_web_timeout->integer / 100, cls.download.offset, 
+			CL_WebDownloadReadCb, CL_WebDownloadDoneCb, NULL, NULL, qfalse );
 
 		Mem_ZoneFree( fullurl );
 		Mem_ZoneFree( referer );
-
 		return;
 	}
 
@@ -797,6 +786,7 @@ static void CL_ParseServerData( msg_t *msg )
 {
 	const char *str, *gamedir;
 	int i, sv_bitflags, numpure;
+	int http_portnum;
 
 	Com_DPrintf( "Serverdata packet received.\n" );
 
@@ -865,6 +855,25 @@ static void CL_ParseServerData( msg_t *msg )
 	{
 		if( cls.reliable != ( ( sv_bitflags & SV_BITFLAGS_RELIABLE ) != 0 ) )
 			Com_Error( ERR_DROP, "Server and client disagree about connection reliability" );
+	}
+
+	// builting HTTP server port
+	http_portnum = MSG_ReadShort( msg ) & 0xffff;
+	cls.httpaddress = cls.serveraddress;
+	if( cls.httpaddress.type == NA_IP6 ) {
+		cls.httpaddress.address.ipv6.port = BigShort( http_portnum );
+	} else {
+		cls.httpaddress.address.ipv4.port = BigShort( http_portnum );
+	}
+
+	if( cls.httpbaseurl ) {
+		Mem_Free( cls.httpbaseurl );
+	}
+	if( http_portnum ) {
+		cls.httpbaseurl = ZoneCopyString( va( "http://%s/", NET_AddressToString( &cls.httpaddress ) ) );
+	}
+	else {
+		cls.httpbaseurl = NULL;
 	}
 
 	// pure list

@@ -148,6 +148,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 		}
 	}
 
+	
 	// create default rating for the client and current gametype
 	ge->AddDefaultRating( ent, NULL );
 
@@ -318,6 +319,8 @@ static void SV_New_f( client_t *client )
 			sv_bitflags |= SV_BITFLAGS_RELIABLE;
 		MSG_WriteByte( &tmpMessage, sv_bitflags );
 	}
+
+	MSG_WriteShort( &tmpMessage, SV_Web_Running() ? sv_http_port->integer : 0 ); // HTTP port number
 
 	// always write purelist
 	numpure = Com_CountPureListFiles( svs.purelist );
@@ -671,12 +674,7 @@ static void SV_BeginDownload_f( client_t *client )
 	char *url;
 	const char *errormsg = NULL;
 	qboolean allow, requestpak;
-
-	if( !sv_uploads->integer || ( !sv_uploads_from_server->integer && ( sv_uploads_baseurl->string[0] == '\0' ) ) )
-	{
-		SV_DenyDownload( client, "Downloading is not allowed on this server" );
-		return;
-	}
+	qboolean local_http = SV_Web_Running() && sv_uploads_http->integer != 0;
 
 	requestpak = ( atoi( Cmd_Argv( 1 ) ) == 1 );
 	requestname = Cmd_Argv( 2 );
@@ -764,19 +762,33 @@ static void SV_BeginDownload_f( client_t *client )
 
 	Com_Printf( "Offering %s to %s\n", client->download.name, client->name );
 
-	if( FS_CheckPakExtension( uploadname ) && sv_uploads_baseurl->string[0] != 0 )
+	if( FS_CheckPakExtension( uploadname ) && ( local_http || sv_uploads_baseurl->string[0] != 0 ) )
 	{
 		// .pk3 and .pak download from the web
-		alloc_size = sizeof( char ) * ( strlen( sv_uploads_baseurl->string ) + 1 );
-		url = Mem_TempMalloc( alloc_size );
-		Q_snprintfz( url, alloc_size, "%s/", sv_uploads_baseurl->string );
+		if( local_http )
+		{
+			url = TempCopyString( va( "files/%s", uploadname ) );
+		}
+		else
+		{
+			alloc_size = sizeof( char ) * ( strlen( sv_uploads_baseurl->string ) + 1 );
+			url = Mem_TempMalloc( alloc_size );
+			Q_snprintfz( url, alloc_size, "%s/", sv_uploads_baseurl->string );
+		}
 	}
-	else if( SV_IsDemoDownloadRequest( requestname ) && sv_uploads_demos_baseurl->string[0] != 0 )
+	else if( SV_IsDemoDownloadRequest( requestname ) && ( local_http || sv_uploads_demos_baseurl->string[0] != 0 ) )
 	{
 		// demo file download from the web
-		alloc_size = sizeof( char ) * ( strlen( sv_uploads_demos_baseurl->string ) + 1 );
-		url = Mem_TempMalloc( alloc_size );
-		Q_snprintfz( url, alloc_size, "%s/", sv_uploads_demos_baseurl->string );
+		if( local_http )
+		{
+			url = TempCopyString( va( "files/%s", uploadname ) );
+		}
+		else
+		{
+			alloc_size = sizeof( char ) * ( strlen( sv_uploads_demos_baseurl->string ) + 1 );
+			url = Mem_TempMalloc( alloc_size );
+			Q_snprintfz( url, alloc_size, "%s/", sv_uploads_demos_baseurl->string );
+		}
 	}
 	else
 	{
@@ -786,7 +798,7 @@ static void SV_BeginDownload_f( client_t *client )
 	// start the download
 	SV_InitClientMessage( client, &tmpMessage, NULL, 0 );
 	SV_SendServerCommand( client, "initdownload \"%s\" %i %u %i \"%s\"", client->download.name,
-		client->download.size, checksum, ( sv_uploads_from_server->integer != 0 ), ( url ? url : "" ) );
+		client->download.size, checksum, local_http ? 1 : 0, ( url ? url : "" ) );
 	SV_AddReliableCommandsToMessage( client, &tmpMessage );
 	SV_SendMessageToClient( client, &tmpMessage );
 

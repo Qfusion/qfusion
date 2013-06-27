@@ -321,7 +321,6 @@ extern cvar_t *sv_tcp;
 #ifdef HTTP_SUPPORT
 extern cvar_t *sv_http;
 extern cvar_t *sv_http_port;
-extern cvar_t *sv_http_port6;
 #endif
 
 extern cvar_t *sv_skilllevel;
@@ -342,8 +341,7 @@ extern cvar_t *sv_public;         // should heartbeats be sent
 // wsw : debug netcode
 extern cvar_t *sv_debug_serverCmd;
 
-extern cvar_t *sv_uploads;
-extern cvar_t *sv_uploads_from_server;
+extern cvar_t *sv_uploads_http;
 extern cvar_t *sv_uploads_baseurl;
 extern cvar_t *sv_uploads_demos_baseurl;
 
@@ -542,3 +540,4 @@ void SV_MM_GetMatchUUID( void (*callback_fn)( const char *uuid ) );
 void SV_Web_Init( void );
 void SV_Web_Frame( void );
 void SV_Web_Shutdown( void );
+qboolean SV_Web_Running( void );

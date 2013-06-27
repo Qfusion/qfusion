@@ -847,6 +847,11 @@ void CL_Disconnect( const char *message )
 	cls.reliable = qfalse;
 	cls.mv = qfalse;
 
+	if( cls.httpbaseurl ) {
+		Mem_Free( cls.httpbaseurl );
+		cls.httpbaseurl = NULL;
+	}
+
 	CL_RestartMedia( qfalse );
 
 	CL_Mumble_Unlink();
