@@ -1011,8 +1011,6 @@ void SV_Web_Frame( void )
 	void *connections[MAX_INCOMING_HTTP_CONNECTIONS];
 	int num_sockets = 0;
 
-	return;
-
 	if( !sv_http_initialized ) {
 		return;
 	}
