@@ -162,6 +162,9 @@
     <ClCompile Include="win32\win_lib.c">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="server\sv_web.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="qcommon\anticheat.h">
@@ -177,9 +180,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qcommon\cmodel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="game\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win32\conproc.h">
@@ -273,6 +273,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="win32\winquake.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gameshared\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

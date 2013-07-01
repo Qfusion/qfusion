@@ -297,14 +297,13 @@ void CL_SoundModule_Init( qboolean verbose )
 */
 void CL_SoundModule_Shutdown( qboolean verbose )
 {
-	if( !se )
-		return;
-
-	se->Shutdown( verbose );
+	if( se && se->API() == SOUND_API_VERSION ) {
+		se->Shutdown( verbose );
+		se = NULL;
+	}
 
 	Com_UnloadLibrary( &sound_library );
 	Mem_FreePool( &cl_soundmodulepool );
-	se = NULL;
 }
 
 /*

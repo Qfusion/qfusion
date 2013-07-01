@@ -433,7 +433,7 @@ void G_Shutdown( void )
 */
 qboolean G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname )
 {
-	// allow uploading of demos
+	// allow downloading demos
 	if( g_uploads_demos->integer )
 	{
 		if( !Q_stricmp( COM_FileExtension( uploadname ), va( ".wd%i", game.protocol ) ) )

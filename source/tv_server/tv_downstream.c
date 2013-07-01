@@ -622,7 +622,7 @@ void TV_Downstream_ReadPackets( void )
 {
 	int i, socketind, ret, game_port;
 	client_t *cl;
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	socket_t newsocket;
 #endif
 	socket_t *socket;
@@ -636,7 +636,7 @@ void TV_Downstream_ReadPackets( void )
 		&tvs.socket_udp6,
 	};
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	if( tvs.socket_tcp.open )
 	{
 		while( qtrue )
@@ -797,7 +797,7 @@ void TV_Downstream_CheckTimeouts( void )
 	client_t *client;
 	int i;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	// timeout incoming upstreams
 	for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
 	{

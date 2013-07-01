@@ -39,8 +39,7 @@ cvar_t *sv_zombietime;         // seconds to sink messages after disconnect
 
 cvar_t *rcon_password;         // password for remote server commands
 
-cvar_t *sv_uploads;
-cvar_t *sv_uploads_from_server;
+cvar_t *sv_uploads_http;
 cvar_t *sv_uploads_baseurl;
 cvar_t *sv_uploads_demos_baseurl;
 
@@ -49,9 +48,16 @@ cvar_t *sv_pure_forcemodulepk3;
 
 cvar_t *sv_maxclients;
 cvar_t *sv_maxmvclients;
-#ifdef TCP_SUPPORT
+
+#ifdef TCP_ALLOW_CONNECT
 cvar_t *sv_tcp;
 #endif
+
+#ifdef HTTP_SUPPORT
+cvar_t *sv_http;
+cvar_t *sv_http_port;
+#endif
+
 cvar_t *sv_showclamp;
 cvar_t *sv_showRcon;
 cvar_t *sv_showChallenge;
@@ -171,9 +177,8 @@ static void SV_ReadPackets( void )
 {
 	int i, socketind, ret;
 	client_t *cl;
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	socket_t newsocket;
-	netadr_t mmserver;
 #endif
 	int game_port;
 	socket_t *socket;
@@ -189,10 +194,7 @@ static void SV_ReadPackets( void )
 		&svs.socket_udp6,
 	};
 
-#ifdef TCP_SUPPORT
-
-	if( SV_MM_Initialized() ) 
-		SV_MM_NetAddress( &mmserver );
+#ifdef TCP_ALLOW_CONNECT
 
 	if( svs.socket_tcp.open )
 	{
@@ -238,14 +240,6 @@ static void SV_ReadPackets( void )
 		}
 		else if( ret == 1 )
 		{
-			if( SV_MM_Initialized() && NET_CompareBaseAddress( &mmserver, &address ) )
-			{
-				Com_DPrintf( "TCP packet from matchmaker\n" );
-				SV_MM_SetConnection( &svs.incoming[i] );
-				SV_MM_Packet( &msg );
-				SV_MM_SetConnection( NULL );
-				continue;
-			}
 			if( *(int *)msg.data != -1 )
 			{
 				Com_Printf( "Sequence packet without connection\n" );
@@ -374,7 +368,7 @@ static void SV_CheckTimeouts( void )
 	client_t *cl;
 	int i;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	// timeout incoming connections
 	for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
 	{
@@ -744,6 +738,9 @@ void SV_Frame( int realmsec, int gamemsec )
 		ge->ClearSnap();
 	}
 
+	// handle HTTP connections
+	SV_Web_Frame();
+
 	SV_CheckAutoUpdate();
 }
 
@@ -870,10 +867,17 @@ void SV_Init( void )
 
 	sv_ip =			    Cvar_Get( "sv_ip", "", CVAR_ARCHIVE | CVAR_LATCH );
 	sv_port =		    Cvar_Get( "sv_port", va( "%i", PORT_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
+
 	sv_ip6 =			Cvar_Get( "sv_ip6", "::", CVAR_ARCHIVE | CVAR_LATCH );
 	sv_port6 =		    Cvar_Get( "sv_port6", va( "%i", PORT_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
-#ifdef TCP_SUPPORT
-	sv_tcp =		    Cvar_Get( "sv_tcp", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+
+#ifdef TCP_ALLOW_CONNECT
+	sv_tcp =		    Cvar_Get( "sv_tcp", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+#endif
+
+#ifdef HTTP_SUPPORT
+	sv_http =		    Cvar_Get( "sv_http", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+	sv_http_port =		Cvar_Get( "sv_http_port", va( "%i", PORT_HTTP_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
 #endif
 
 	rcon_password =		    Cvar_Get( "rcon_password", "", 0 );
@@ -887,12 +891,11 @@ void SV_Init( void )
 	sv_showInfoQueries =	Cvar_Get( "sv_showInfoQueries", "0", 0 );
 	sv_highchars =			Cvar_Get( "sv_highchars", "1", 0 );
 
-	sv_uploads_baseurl =	    Cvar_Get( "sv_uploads_baseurl", "", CVAR_ARCHIVE );
+	sv_uploads_http	=       Cvar_Get( "sv_uploads_http", "1", CVAR_READONLY );
+	sv_uploads_baseurl =	Cvar_Get( "sv_uploads_baseurl", "", CVAR_ARCHIVE );
 	sv_uploads_demos_baseurl =	Cvar_Get( "sv_uploads_demos_baseurl", "", CVAR_ARCHIVE );
 	if( dedicated->integer )
 	{
-		sv_uploads =		    Cvar_Get( "sv_uploads", "1", CVAR_READONLY );
-		sv_uploads_from_server = Cvar_Get( "sv_uploads_from_server", "1", CVAR_READONLY );
 		sv_autoUpdate = Cvar_Get( "sv_autoUpdate", "1", CVAR_ARCHIVE );
 
 		sv_pure =		Cvar_Get( "sv_pure", "1", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
@@ -905,8 +908,6 @@ void SV_Init( void )
 	}
 	else
 	{
-		sv_uploads =		    Cvar_Get( "sv_uploads", "1", CVAR_ARCHIVE );
-		sv_uploads_from_server = Cvar_Get( "sv_uploads_from_server", "1", CVAR_ARCHIVE );
 		sv_autoUpdate = Cvar_Get( "sv_autoUpdate", "0", CVAR_READONLY );
 
 		sv_pure =		Cvar_Get( "sv_pure", "0", CVAR_ARCHIVE | CVAR_LATCH | CVAR_SERVERINFO );
@@ -995,6 +996,8 @@ void SV_Init( void )
 
 	ML_Init();
 
+	SV_Web_Init();
+
 	sv_initialized = qtrue;
 }
 
@@ -1008,6 +1011,7 @@ void SV_Shutdown( const char *finalmsg )
 	if( !sv_initialized )
 		return;
 
+	SV_Web_Shutdown();
 	ML_Shutdown();
 	SV_MM_Shutdown( qtrue );
 	SV_ShutdownGame( finalmsg, qfalse );

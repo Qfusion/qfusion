@@ -1230,12 +1230,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 	Q_snprintfz( message, sizeof( message ), "%s%s connected", ent->r.client->netname, S_COLOR_WHITE );
 	G_PrintMsg( NULL, "%s\n", message );
 
-#ifdef TCP_SUPPORT
-	G_Printf( "%s%s connected from %s (%s)\n", ent->r.client->netname, S_COLOR_WHITE,
-		ent->r.client->ip, ent->r.client->socket );
-#else
 	G_Printf( "%s%s connected from %s\n", ent->r.client->netname, S_COLOR_WHITE, ent->r.client->ip );
-#endif
 
 	// let the gametype scripts know this client just connected
 	G_Gametype_ScoreEvent( ent->r.client, "connect", NULL );

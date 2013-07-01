@@ -315,7 +315,7 @@ void SV_InitGame( void )
 {
 	int i;
 	edict_t	*ent;
-	netadr_t address;
+	netadr_t address, ipv6_address;
 
 	// make sure the client is down
 	CL_Disconnect( NULL );
@@ -353,6 +353,10 @@ void SV_InitGame( void )
 	svs.client_entities.entities = Mem_Alloc( sv_mempool, sizeof( entity_state_t ) * svs.client_entities.num_entities );
 
 	// init network stuff
+
+	address.type = NA_NOTRANSMIT;
+	ipv6_address.type = NA_NOTRANSMIT;
+
 	if( !dedicated->integer )
 	{
 		NET_InitAddress( &address, NA_LOOPBACK );
@@ -373,11 +377,11 @@ void SV_InitGame( void )
 			socket_opened = qtrue;
 
 		// IPv6
-		NET_StringToAddress( sv_ip6->string, &address );
-		if( address.type == NA_IP6 )
+		NET_StringToAddress( sv_ip6->string, &ipv6_address );
+		if( ipv6_address.type == NA_IP6 )
 		{
-			NET_SetAddressPort( &address, sv_port6->integer );
-			if( !NET_OpenSocket( &svs.socket_udp6, SOCKET_UDP, &address, qtrue ) )
+			NET_SetAddressPort( &ipv6_address, sv_port6->integer );
+			if( !NET_OpenSocket( &svs.socket_udp6, SOCKET_UDP, &ipv6_address, qtrue ) )
 				Com_Printf( "Error: Couldn't open UDP6 socket: %s\n", NET_ErrorString() );
 			else
 				socket_opened = qtrue;
@@ -389,7 +393,7 @@ void SV_InitGame( void )
 			Com_Error( ERR_FATAL, "Couldn't open any socket\n" );
 	}
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	if( sv_tcp->integer && ( dedicated->integer || sv_maxclients->integer > 1 ) )
 	{
 		if( !NET_OpenSocket( &svs.socket_tcp, SOCKET_TCP, &address, qtrue ) )
@@ -483,7 +487,7 @@ void SV_ShutdownGame( const char *finalmsg, qboolean reconnect )
 	NET_CloseSocket( &svs.socket_loopback );
 	NET_CloseSocket( &svs.socket_udp );
 	NET_CloseSocket( &svs.socket_udp6 );
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	if( sv_tcp->integer )
 		NET_CloseSocket( &svs.socket_tcp );
 #endif

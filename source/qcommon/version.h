@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APPLICATION_UTF8				"Qfusion"
 #endif
 
-#define	DEFAULT_BASEGAME				"baseqf"
+#define	DEFAULT_BASEGAME				"base"
 
 #ifndef APP_VERSION_MAJOR
 #define APP_VERSION_MAJOR				0
