@@ -582,7 +582,7 @@ static int NET_TCP_GetPacket( const socket_t *socket, netadr_t *address, msg_t *
 	}
 
 	ret = NET_TCP_Get( socket, NULL, message->data, len );
-	if( ret == -1 )
+	if( ret == SOCKET_ERROR )
 		return -1;
 	if( ret != (int)len )
 	{
@@ -602,7 +602,7 @@ static int NET_TCP_GetPacket( const socket_t *socket, netadr_t *address, msg_t *
 /*
 * NET_TCP_Send
 */
-static qboolean NET_TCP_Send( const socket_t *socket, const void *data, size_t length )
+static int NET_TCP_Send( const socket_t *socket, const void *data, size_t length )
 {
 #ifdef USE_TCP_NOSIGPIPE
 	int opt_val = 1;
@@ -630,16 +630,12 @@ static qboolean NET_TCP_Send( const socket_t *socket, const void *data, size_t l
 	if( ret == SOCKET_ERROR )
 	{
 		NET_SetErrorStringFromLastError( "send" );
-		return qfalse;
+		if( Sys_NET_GetLastError() == NET_ERR_WOULDBLOCK )  // would block
+			return 0;
+		return -1;
 	}
 
-	if( ret != (int)length )
-	{
-		NET_SetErrorString( "Couldn't send all data" );
-		return qfalse;
-	}
-
-	return qtrue;
+	return ret;
 }
 
 /*
@@ -755,7 +751,7 @@ static connection_status_t NET_TCP_CheckConnect( socket_t *socket )
 */
 static int NET_TCP_Accept( const socket_t *socket, socket_t *newsocket, netadr_t *address )
 {
-	struct sockaddr sockaddress;
+	struct sockaddr_storage sockaddress;
 	socklen_t sockaddress_size;
 	int handle;
 
@@ -764,7 +760,7 @@ static int NET_TCP_Accept( const socket_t *socket, socket_t *newsocket, netadr_t
 	assert( address );
 
 	sockaddress_size = sizeof( sockaddress );
-	handle = accept( socket->handle, &sockaddress, &sockaddress_size );
+	handle = accept( socket->handle, (struct sockaddr *)&sockaddress, &sockaddress_size );
 	if( handle == SOCKET_ERROR )
 	{
 		NET_SetErrorStringFromLastError( "accept" );
@@ -773,7 +769,7 @@ static int NET_TCP_Accept( const socket_t *socket, socket_t *newsocket, netadr_t
 		return -1;
 	}
 
-	if( !SockaddressToAddress( &sockaddress, address ) )
+	if( !SockaddressToAddress( (struct sockaddr *)&sockaddress, address ) )
 		return -1;
 
 	// make the new socket non-blocking
@@ -1063,7 +1059,7 @@ qboolean NET_SendPacket( const socket_t *socket, const void *data, size_t length
 /*
 * NET_Send
 */
-qboolean NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address )
+int NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address )
 {
 	assert( socket->open );
 
@@ -1078,7 +1074,7 @@ qboolean NET_Send( const socket_t *socket, const void *data, size_t length, cons
 	case SOCKET_LOOPBACK:
 	case SOCKET_UDP:
 		NET_SetErrorString( "Operation not supported by the socket type" );
-		return qfalse;
+		return -1;
 
 #ifdef TCP_SUPPORT
 	case SOCKET_TCP:
@@ -1088,7 +1084,7 @@ qboolean NET_Send( const socket_t *socket, const void *data, size_t length, cons
 	default:
 		assert( qfalse );
 		NET_SetErrorString( "Unknown socket type" );
-		return qfalse;
+		return -1;
 	}
 }
 
@@ -1815,7 +1811,7 @@ void NET_Sleep( int msec, socket_t *sockets[] )
 * For both callbacks, NULL can be passed. When NULL is passed for the exception_cb, no exception detection is performed
 * Incoming data is always detected, even if the 'read_cb' callback was NULL.
 */
-int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *socket), void (*exception_cb)(socket_t *socket) )
+int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void*), void (*exception_cb)(socket_t *, void*), void *privatep[] )
 {
 	struct timeval timeout;
 	fd_set fdsetr, fdsete;
@@ -1867,10 +1863,10 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *socket
 			case SOCKET_TCP:
 #endif
 				if ( (exception_cb) && (p_fdsete) && (FD_ISSET(sockets[i]->handle, p_fdsete )) ) {
-					exception_cb(sockets[i]);
+					exception_cb(sockets[i], privatep ? privatep[i] : NULL);
 				}
 				if ( (read_cb) && (FD_ISSET(sockets[i]->handle, &fdsetr )) ) {
-					read_cb(sockets[i]);
+					read_cb(sockets[i], privatep ? privatep[i] : NULL);
 				}
 				break;
 			case SOCKET_LOOPBACK:

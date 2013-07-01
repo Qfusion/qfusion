@@ -235,13 +235,14 @@ typedef struct
 
 	netadr_t rconaddress;       // address where we are sending rcon messages, to ignore other print packets
 
+	netadr_t httpaddress;           // address of the builtin HTTP server
+	char *httpbaseurl;              // http://<httpaddress>/
+
 	qboolean rejected;          // these are used when the server rejects our connection
 	int rejecttype;
 	char rejectmessage[80];
 
 	netchan_t netchan;
-
-	char *statusbar;
 
 	int challenge;              // from the server to use for connecting
 

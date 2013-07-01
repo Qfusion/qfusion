@@ -277,7 +277,7 @@ static void CL_CheckForResend( void )
 		if( realtime - cls.connect_time < 3000 )
 			return;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 		if( cls.socket->type == SOCKET_TCP && !cls.socket->connected )
 		{
 			connection_status_t status;
@@ -350,7 +350,7 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 		cls.reliable = qfalse;
 		break;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	case SOCKET_TCP:
 		socketaddress.type = NA_IP;
 		socketaddress.ip[0] = socketaddress.ip[1] = socketaddress.ip[2] = socketaddress.ip[3] = 0;
@@ -490,7 +490,7 @@ static void CL_Connect_f( void )
 /*
 * CL_TCPConnect_f
 */
-#if defined(TCP_SUPPORT) && defined(TCP_ALLOW_CONNECT)
+#if defined(TCP_ALLOW_CONNECT)
 static void CL_TCPConnect_f( void )
 {
 	CL_Connect_Cmd_f( SOCKET_TCP );
@@ -847,6 +847,11 @@ void CL_Disconnect( const char *message )
 	cls.reliable = qfalse;
 	cls.mv = qfalse;
 
+	if( cls.httpbaseurl ) {
+		Mem_Free( cls.httpbaseurl );
+		cls.httpbaseurl = NULL;
+	}
+
 	CL_RestartMedia( qfalse );
 
 	CL_Mumble_Unlink();
@@ -950,7 +955,7 @@ void CL_ServerReconnect_f( void )
 
 	Com_Printf( "Reconnecting...\n" );
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	cls.connect_time = Sys_Milliseconds();
 #else
 	cls.connect_time = Sys_Milliseconds() - 1500;
@@ -1258,7 +1263,7 @@ void CL_ReadPackets( void )
 		&cls.socket_loopback,
 		&cls.socket_udp,
 		&cls.socket_udp6,
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 		&cls.socket_tcp
 #endif
 	};
@@ -1269,7 +1274,7 @@ void CL_ReadPackets( void )
 	{
 		socket = sockets[socketind];
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 		if( socket->type == SOCKET_TCP && !socket->connected )
 			continue;
 #endif
@@ -1326,7 +1331,7 @@ void CL_ReadPackets( void )
 			CL_ParseServerMessage( &msg );
 			cls.lastPacketReceivedTime = cls.realtime;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 			// we might have just been disconnected
 			if( socket->type == SOCKET_TCP && !socket->connected )
 				break;
@@ -2009,7 +2014,7 @@ static void CL_InitLocal( void )
 	Cmd_AddCommand( "stop", CL_Stop_f );
 	Cmd_AddCommand( "quit", CL_Quit_f );
 	Cmd_AddCommand( "connect", CL_Connect_f );
-#if defined(TCP_SUPPORT) && defined(TCP_ALLOW_CONNECT)
+#if defined(TCP_ALLOW_CONNECT)
 	Cmd_AddCommand( "tcpconnect", CL_TCPConnect_f );
 #endif
 	Cmd_AddCommand( "reconnect", CL_Reconnect_f );
@@ -2046,7 +2051,7 @@ static void CL_ShutdownLocal( void )
 	Cmd_RemoveCommand( "stop" );
 	Cmd_RemoveCommand( "quit" );
 	Cmd_RemoveCommand( "connect" );
-#if defined(TCP_SUPPORT) && defined(TCP_ALLOW_CONNECT)
+#if defined(TCP_ALLOW_CONNECT)
 	Cmd_RemoveCommand( "tcpconnect" );
 #endif
 	Cmd_RemoveCommand( "reconnect" );

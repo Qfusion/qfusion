@@ -211,6 +211,7 @@
     <ClCompile Include="qcommon\cm_trace.c" />
     <ClCompile Include="qcommon\cmd.c" />
     <ClCompile Include="qcommon\common.c" />
+    <ClCompile Include="server\sv_web.c" />
     <ClCompile Include="win32\conproc.c" />
     <ClCompile Include="qcommon\cvar.c" />
     <ClCompile Include="qcommon\dynvar.c" />
@@ -252,12 +253,12 @@
     <ClCompile Include="win32\win_lib.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gameshared\config.h" />
     <ClInclude Include="qcommon\anticheat.h" />
     <ClInclude Include="qcommon\base64.h" />
     <ClInclude Include="qcommon\cjson.h" />
     <ClInclude Include="qcommon\cm_local.h" />
     <ClInclude Include="qcommon\cmodel.h" />
-    <ClInclude Include="game\config.h" />
     <ClInclude Include="win32\conproc.h" />
     <ClInclude Include="qcommon\cvar.h" />
     <ClInclude Include="qcommon\dynvar.h" />

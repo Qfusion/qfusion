@@ -220,7 +220,7 @@ typedef struct
 
 typedef server_static_demo_t demorec_t;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 #define MAX_INCOMING_CONNECTIONS 256
 typedef struct
 {
@@ -256,8 +256,12 @@ typedef struct
 	socket_t socket_udp;
 	socket_t socket_udp6;
 	socket_t socket_loopback;
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	socket_t socket_tcp;
+#endif
+#ifdef HTTP_SUPPORT
+	socket_t socket_http;
+	socket_t socket_http6;
 #endif
 
 	char mapcmd[MAX_TOKEN_CHARS];       // ie: *intro.cin+base
@@ -269,7 +273,7 @@ typedef struct
 	client_entities_t client_entities;
 
 	challenge_t challenges[MAX_CHALLENGES]; // to prevent invalid IPs from connecting
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	incoming_t incoming[MAX_INCOMING_CONNECTIONS]; // holds socket while tcp client is connecting
 #endif
 
@@ -308,9 +312,16 @@ extern server_t	sv;                 // local server
 
 extern cvar_t *sv_ip;
 extern cvar_t *sv_port;
+
 extern cvar_t *sv_ip6;
 extern cvar_t *sv_port6;
+
 extern cvar_t *sv_tcp;
+
+#ifdef HTTP_SUPPORT
+extern cvar_t *sv_http;
+extern cvar_t *sv_http_port;
+#endif
 
 extern cvar_t *sv_skilllevel;
 extern cvar_t *sv_maxclients;
@@ -330,8 +341,7 @@ extern cvar_t *sv_public;         // should heartbeats be sent
 // wsw : debug netcode
 extern cvar_t *sv_debug_serverCmd;
 
-extern cvar_t *sv_uploads;
-extern cvar_t *sv_uploads_from_server;
+extern cvar_t *sv_uploads_http;
 extern cvar_t *sv_uploads_baseurl;
 extern cvar_t *sv_uploads_demos_baseurl;
 
@@ -508,10 +518,6 @@ void SV_MOTD_Get_f( client_t *client );
 //
 // sv_mm.c
 //
-#ifdef TCP_SUPPORT
-void SV_MM_SetConnection( incoming_t *connection );
-#endif
-
 void SV_MM_Init( void );
 void SV_MM_Shutdown( qboolean logout );
 void SV_MM_Frame( void );
@@ -527,3 +533,11 @@ int SV_MM_GenerateLocalSession( void );
 void SV_MM_SendQuery( stat_query_t *query );
 void SV_MM_GameState( qboolean state );
 void SV_MM_GetMatchUUID( void (*callback_fn)( const char *uuid ) );
+
+// 
+// sv_web.c
+//
+void SV_Web_Init( void );
+void SV_Web_Frame( void );
+void SV_Web_Shutdown( void );
+qboolean SV_Web_Running( void );

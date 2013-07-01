@@ -534,7 +534,7 @@ static void SVC_GetChallenge( const socket_t *socket, const netadr_t *address )
 */
 static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 {
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	int incoming = 0;
 #endif
 	char userinfo[MAX_INFO_STRING];
@@ -611,7 +611,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 		session_id = 0;
 	}
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	if( socket->type == SOCKET_TCP )
 	{
 		// find the connection
@@ -758,7 +758,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	Netchan_OutOfBandPrint( socket, address, "client_connect" );
 
 	// free the incoming entry
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	if( socket->type == SOCKET_TCP )
 	{
 		svs.incoming[incoming].active = qfalse;

@@ -289,7 +289,7 @@ static void TV_Upstream_CheckForResend( upstream_t *upstream )
 		if( tvs.realtime - upstream->connect_time < 3000 )
 			return;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 		if( upstream->socket->type == SOCKET_TCP && !upstream->socket->connected )
 		{
 			connection_status_t status;
@@ -316,7 +316,7 @@ static void TV_Upstream_CheckForResend( upstream_t *upstream )
 			Netchan_OutOfBandPrint( upstream->socket, &upstream->serveraddress, "getchallenge\n" );
 			return;
 		}
-#endif // TCP_SUPPORT
+#endif // TCP_ALLOW_CONNECT
 
 		if( tvs.realtime - upstream->connect_time < 10000 )
 			return;
@@ -507,7 +507,7 @@ static void TV_Upstream_ReadPackets( upstream_t *upstream )
 
 	assert( upstream->state > CA_UNINITIALIZED );
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	if( upstream->socket->type == SOCKET_TCP && !upstream->socket->connected )
 		return;
 #endif
@@ -542,7 +542,7 @@ static void TV_Upstream_ReadPackets( upstream_t *upstream )
 			TV_Upstream_SavePacket( upstream, &msg, 0 );
 			TV_Upstream_ParseServerMessage( upstream, &msg );
 			upstream->lastPacketReceivedTime = tvs.realtime;
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 			// we might have just been disconnected
 			if( upstream->socket->type == SOCKET_TCP && !upstream->socket->connected )
 				break;
@@ -920,7 +920,7 @@ void TV_Upstream_Connect( upstream_t *upstream, const char *servername, const ch
 		upstream->individual_socket = qtrue;
 		break;
 
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	case SOCKET_TCP:
 		socketaddress.type = NA_IP;
 		socketaddress.ip[0] = socketaddress.ip[1] = socketaddress.ip[2] = socketaddress.ip[3] = 0;

@@ -94,7 +94,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 	{
 		switch( socket->type )
 		{
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 		case SOCKET_TCP:
 			client->reliable = qtrue;
 			client->individual_socket = qtrue;
@@ -148,6 +148,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 		}
 	}
 
+	
 	// create default rating for the client and current gametype
 	ge->AddDefaultRating( ent, NULL );
 
@@ -318,6 +319,8 @@ static void SV_New_f( client_t *client )
 			sv_bitflags |= SV_BITFLAGS_RELIABLE;
 		MSG_WriteByte( &tmpMessage, sv_bitflags );
 	}
+
+	MSG_WriteShort( &tmpMessage, SV_Web_Running() ? sv_http_port->integer : 0 ); // HTTP port number
 
 	// always write purelist
 	numpure = Com_CountPureListFiles( svs.purelist );
@@ -609,6 +612,55 @@ static void SV_DenyDownload( client_t *client, const char *reason )
 	SV_SendMessageToClient( client, &tmpMessage );
 }
 
+static qboolean SV_FilenameForDownloadRequest( const char *requestname, qboolean requestpak,
+	const char **uploadname, const char **errormsg )
+{
+	if( FS_CheckPakExtension( requestname ) )
+	{
+		if( !requestpak )
+		{
+			*errormsg = "Pak file requested as a non pak file";
+			return qfalse;
+		}
+		if( FS_FOpenBaseFile( requestname, NULL, FS_READ ) == -1 )
+		{
+			*errormsg = "File not found";
+			return qfalse;
+		}
+
+		*uploadname = requestname;
+	}
+	else
+	{
+		if( FS_FOpenFile( requestname, NULL, FS_READ ) == -1 )
+		{
+			*errormsg = "File not found";
+			return qfalse;
+		}
+
+		// check if file is inside a PAK
+		if( requestpak )
+		{
+			*uploadname = FS_PakNameForFile( requestname );
+			if( !*uploadname )
+			{
+				*errormsg = "File not available in pack";
+				return qfalse;
+			}
+		}
+		else
+		{
+			*uploadname = FS_BaseNameForFile( requestname );
+			if( !*uploadname )
+			{
+				*errormsg = "File only available in pack";
+				return qfalse;
+			}
+		}
+	}
+	return qtrue;
+}
+
 /*
 * SV_BeginDownload_f
 * Responds to reliable download packet with reliable initdownload packet
@@ -620,13 +672,9 @@ static void SV_BeginDownload_f( client_t *client )
 	size_t alloc_size;
 	unsigned checksum;
 	char *url;
+	const char *errormsg = NULL;
 	qboolean allow, requestpak;
-
-	if( !sv_uploads->integer || ( !sv_uploads_from_server->integer && ( sv_uploads_baseurl->string[0] == '\0' ) ) )
-	{
-		SV_DenyDownload( client, "Downloading is not allowed on this server" );
-		return;
-	}
+	qboolean local_http = SV_Web_Running() && sv_uploads_http->integer != 0;
 
 	requestpak = ( atoi( Cmd_Argv( 1 ) ) == 1 );
 	requestname = Cmd_Argv( 2 );
@@ -637,49 +685,10 @@ static void SV_BeginDownload_f( client_t *client )
 		return;
 	}
 
-	if( FS_CheckPakExtension( requestname ) )
-	{
-		if( !requestpak )
-		{
-			SV_DenyDownload( client, "Pak file requested as a non pak file" );
-			return;
-		}
-
-		if( FS_FOpenBaseFile( requestname, NULL, FS_READ ) == -1 )
-		{
-			SV_DenyDownload( client, "File not found" );
-			return;
-		}
-
-		uploadname = requestname;
-	}
-	else
-	{
-		if( FS_FOpenFile( requestname, NULL, FS_READ ) == -1 )
-		{
-			SV_DenyDownload( client, "File not found" );
-			return;
-		}
-
-		// check if file is inside a PAK
-		if( requestpak )
-		{
-			uploadname = FS_PakNameForFile( requestname );
-			if( !uploadname )
-			{
-				SV_DenyDownload( client, "File not available in pack" );
-				return;
-			}
-		}
-		else
-		{
-			uploadname = FS_BaseNameForFile( requestname );
-			if( !uploadname )
-			{
-				SV_DenyDownload( client, "File only available in pack" );
-				return;
-			}
-		}
+	if( !SV_FilenameForDownloadRequest( requestname, requestpak, &uploadname, &errormsg ) ) {
+		assert( errormsg != NULL );
+		SV_DenyDownload( client, errormsg );
+		return;
 	}
 
 	if( FS_CheckPakExtension( uploadname ) )
@@ -753,19 +762,33 @@ static void SV_BeginDownload_f( client_t *client )
 
 	Com_Printf( "Offering %s to %s\n", client->download.name, client->name );
 
-	if( FS_CheckPakExtension( uploadname ) && sv_uploads_baseurl->string[0] != 0 )
+	if( FS_CheckPakExtension( uploadname ) && ( local_http || sv_uploads_baseurl->string[0] != 0 ) )
 	{
 		// .pk3 and .pak download from the web
-		alloc_size = sizeof( char ) * ( strlen( sv_uploads_baseurl->string ) + 1 );
-		url = Mem_TempMalloc( alloc_size );
-		Q_snprintfz( url, alloc_size, "%s/", sv_uploads_baseurl->string );
+		if( local_http )
+		{
+			url = TempCopyString( va( "files/%s", uploadname ) );
+		}
+		else
+		{
+			alloc_size = sizeof( char ) * ( strlen( sv_uploads_baseurl->string ) + 1 );
+			url = Mem_TempMalloc( alloc_size );
+			Q_snprintfz( url, alloc_size, "%s/", sv_uploads_baseurl->string );
+		}
 	}
-	else if( SV_IsDemoDownloadRequest( requestname ) && sv_uploads_demos_baseurl->string[0] != 0 )
+	else if( SV_IsDemoDownloadRequest( requestname ) && ( local_http || sv_uploads_demos_baseurl->string[0] != 0 ) )
 	{
 		// demo file download from the web
-		alloc_size = sizeof( char ) * ( strlen( sv_uploads_demos_baseurl->string ) + 1 );
-		url = Mem_TempMalloc( alloc_size );
-		Q_snprintfz( url, alloc_size, "%s/", sv_uploads_demos_baseurl->string );
+		if( local_http )
+		{
+			url = TempCopyString( va( "files/%s", uploadname ) );
+		}
+		else
+		{
+			alloc_size = sizeof( char ) * ( strlen( sv_uploads_demos_baseurl->string ) + 1 );
+			url = Mem_TempMalloc( alloc_size );
+			Q_snprintfz( url, alloc_size, "%s/", sv_uploads_demos_baseurl->string );
+		}
 	}
 	else
 	{
@@ -775,7 +798,7 @@ static void SV_BeginDownload_f( client_t *client )
 	// start the download
 	SV_InitClientMessage( client, &tmpMessage, NULL, 0 );
 	SV_SendServerCommand( client, "initdownload \"%s\" %i %u %i \"%s\"", client->download.name,
-		client->download.size, checksum, ( sv_uploads_from_server->integer != 0 ), ( url ? url : "" ) );
+		client->download.size, checksum, local_http ? 1 : 0, ( url ? url : "" ) );
 	SV_AddReliableCommandsToMessage( client, &tmpMessage );
 	SV_SendMessageToClient( client, &tmpMessage );
 

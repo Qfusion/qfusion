@@ -187,7 +187,7 @@ static void TV_Upstream_ServerReconnect_f( upstream_t *upstream )
 
 	upstream->connect_count = 0;
 	upstream->rejected = 0;
-#ifdef TCP_SUPPORT
+#ifdef TCP_ALLOW_CONNECT
 	upstream->connect_time = tvs.realtime;
 #else
 	upstream->connect_time = tvs.realtime - 1500;

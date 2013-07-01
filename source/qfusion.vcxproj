@@ -236,6 +236,7 @@
     <ClCompile Include="ref_gl\r_portals.c" />
     <ClCompile Include="ref_gl\r_scene.c" />
     <ClCompile Include="ref_gl\r_trace.c" />
+    <ClCompile Include="server\sv_web.c" />
     <ClCompile Include="win32\conproc.c" />
     <ClCompile Include="client\console.c" />
     <ClCompile Include="qcommon\cvar.c" />

@@ -252,9 +252,11 @@ PROTOCOL
 
 //=========================================
 
-#define	PORT_MASTER	    27950
-#define	PORT_SERVER	    44400
-#define PORT_MATCHMAKER 46002
+#define	PORT_MASTER			27950
+#define	PORT_SERVER			44400
+#define	PORT_HTTP_SERVER	44400
+#define PORT_TV_SERVER		44440
+#define PORT_MATCHMAKER		46002
 #define	NUM_BROADCAST_PORTS 5
 
 //=========================================
@@ -667,10 +669,11 @@ int			NET_GetPacket( const socket_t *socket, netadr_t *address, msg_t *message )
 qboolean    NET_SendPacket( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
 
 int			NET_Get( const socket_t *socket, netadr_t *address, void *data, size_t length );
-qboolean    NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
+int         NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
 
 void	    NET_Sleep( int msec, socket_t *sockets[] );
-int         NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *socket), void (*exception_cb)(socket_t *socket) );
+int         NET_Monitor( int msec, socket_t *sockets[], 
+	void (*read_cb)(socket_t *socket, void*), void (*exception_cb)(socket_t *socket, void*), void *privatep[] );
 const char *NET_ErrorString( void );
 void	    NET_SetErrorString( const char *format, ... );
 void		NET_SetErrorStringFromLastError( const char *function );
