@@ -243,6 +243,9 @@
     <ClCompile Include="ui_precompiled.cpp">
       <Filter>Source Files\precompiled</Filter>
     </ClCompile>
+    <ClCompile Include="datasources\ui_callvotes_datasource.cpp">
+      <Filter>Source Files\datasources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ui_public.h">
@@ -433,6 +436,9 @@
     </ClInclude>
     <ClInclude Include="ui_precompiled.h">
       <Filter>Header Files\precompiled</Filter>
+    </ClInclude>
+    <ClInclude Include="datasources\ui_callvotes_datasource.h">
+      <Filter>Header Files\datasources</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -259,10 +259,6 @@ typedef struct
 #ifdef TCP_ALLOW_CONNECT
 	socket_t socket_tcp;
 #endif
-#ifdef HTTP_SUPPORT
-	socket_t socket_http;
-	socket_t socket_http6;
-#endif
 
 	char mapcmd[MAX_TOKEN_CHARS];       // ie: *intro.cin+base
 

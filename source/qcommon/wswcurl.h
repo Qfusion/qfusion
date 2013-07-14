@@ -8,7 +8,8 @@
 typedef struct wswcurl_req_s wswcurl_req;
 
 typedef void (*wswcurl_done_cb)(struct wswcurl_req_s *req, int status, void *customp);
-typedef size_t (*wswcurl_read_cb)(struct wswcurl_req_s *req, const void *buf, size_t numb, float percentage, void *customp);
+typedef size_t (*wswcurl_read_cb)(struct wswcurl_req_s *req, const void *buf, size_t numb, 
+	float percentage, void *customp);
 typedef void (*wswcurl_header_cb)(struct wswcurl_req_s *req, const char *buf, void *customp);
 
 /**
@@ -118,5 +119,6 @@ const char *wswcurl_getip(wswcurl_req *req);
 const char *wswcurl_errorstr(int status);
 const char *wswcurl_get_url(const wswcurl_req *req);
 const char *wswcurl_get_effective_url(wswcurl_req *req);
+int wswcurl_get_status(const wswcurl_req *req);
 
 #endif

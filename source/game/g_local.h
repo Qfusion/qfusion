@@ -693,6 +693,8 @@ void G_CallVotes_Think( void );
 void G_CallVote_Cmd( edict_t *ent );
 void G_OperatorVote_Cmd( edict_t *ent );
 void G_RegisterGametypeScriptCallvote( const char *name, const char *usage, const char *help );
+http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const char *resource, 
+	char **content, size_t *content_length );
 
 //
 // g_trigger.c
@@ -1372,10 +1374,6 @@ struct edict_s
 
 // matchmaker
 
-// legacy:
-void G_MM_Setup( const char *gametype, int scorelimit, float timelimit, qboolean falldamage );
-void G_MM_Reset( void );
-
 void G_AddPlayerReport( edict_t *ent, bool final );
 void G_Match_SendReport( void );
 
@@ -1391,3 +1389,6 @@ raceRun_t *G_NewRaceRun( edict_t *ent, int numSectors );
 void G_SetRaceTime( edict_t *ent, int sector, unsigned int time );
 void G_ListRaces_f( void );
 
+// web
+http_response_code_t G_WebRequest( http_query_method_t method, const char *resource, 
+		char **content, size_t *content_length );

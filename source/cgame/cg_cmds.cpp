@@ -646,11 +646,11 @@ static void CG_SC_ExecuteText( void )
 
 typedef struct
 {
-	char *name;
+	const char *name;
 	void ( *func )( void );
 } svcmd_t;
 
-svcmd_t cg_svcmds[] =
+static const svcmd_t cg_svcmds[] =
 {
 	{ "pr", CG_SC_Print },
 	{ "ch", CG_SC_ChatPrint },
@@ -679,7 +679,7 @@ svcmd_t cg_svcmds[] =
 void CG_GameCommand( const char *command )
 {
 	char *s;
-	svcmd_t *cmd;
+	const svcmd_t *cmd;
 
 	trap_Cmd_TokenizeString( command );
 
@@ -827,15 +827,33 @@ static void CG_Viewpos_f( void )
 	CG_Printf( "\"angles\" \"%i %i %i\"\n", (int)cg.view.angles[0], (int)cg.view.angles[1], (int)cg.view.angles[2] );
 }
 
+// ======================================================================
+
+/*
+* CG_GametypeMenuCmdAdd_f
+*/
+static void CG_GametypeMenuCmdAdd_f( void )
+{
+	cgs.hasGametypeMenu = true;
+}
+
+// server commands
+static svcmd_t cg_consvcmds[] =
+{
+	{ "gametypemenu", CG_GametypeMenuCmdAdd_f },
+
+	{ NULL, NULL }
+};
+
 // local cgame commands
 typedef struct
 {
-	char *name;
+	const char *name;
 	void ( *func )( void );
 	bool allowdemo;
 } cgcmd_t;
 
-static cgcmd_t cgcmds[] =
+static const cgcmd_t cgcmds[] =
 {
 	{ "score", CG_ToggleScores_f, true },
 	{ "+scores", CG_ScoresOn_f, true },
@@ -850,7 +868,7 @@ static cgcmd_t cgcmds[] =
 	{ "players", NULL, false },
 	{ "spectators", NULL, false },
 
-	{ NULL, NULL }
+	{ NULL, NULL, false }
 };
 
 /*
@@ -860,12 +878,14 @@ void CG_RegisterCGameCommands( void )
 {
 	int i;
 	char *name;
-	cgcmd_t *cmd;
+	const cgcmd_t *cmd;
 
 	CG_LoadingString( "commands" );
 
 	if( !cgs.demoPlaying )
 	{
+		const svcmd_t *svcmd;
+
 		// add game side commands
 		for( i = 0; i < MAX_GAMECOMMANDS; i++ )
 		{
@@ -884,11 +904,18 @@ void CG_RegisterCGameCommands( void )
 			if( cmd->name )
 				continue;
 
-			if( !cgs.hasGametypeMenu && !Q_stricmp( name, "gametypemenu" ) ) {
-				cgs.hasGametypeMenu = true;
-			}
-
 			trap_Cmd_AddCommand( name, NULL );
+
+			// check for server commands we might want to do some special things for..
+			for( svcmd = cg_consvcmds; svcmd->name; svcmd++ )
+			{
+				if( !Q_stricmp( svcmd->name, name ) ) {
+					if( svcmd->func ) {
+						svcmd->func();
+					}
+					break;
+				}
+			}
 		}
 	}
 
@@ -908,7 +935,7 @@ void CG_UnregisterCGameCommands( void )
 {
 	int i;
 	char *name;
-	cgcmd_t *cmd;
+	const cgcmd_t *cmd;
 
 	if( !cgs.demoPlaying )
 	{

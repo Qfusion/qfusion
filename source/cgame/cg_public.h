@@ -21,9 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __CG_PUBLIC_H__
 #define __CG_PUBLIC_H__
 
+typedef size_t (*cg_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
+	int status, const char *contentType, void *privatep);
+typedef void (*cg_async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
+
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   62
+#define	CGAME_API_VERSION   63
 
 //
 // structs and variables shared with the main engine
@@ -146,6 +150,13 @@ typedef struct
 	int ( *NET_GetCurrentUserCmdNum )( void );
 	void ( *NET_GetCurrentState )( int *incomingAcknowledged, int *outgoingSequence, int *outgoingSent );
 	void ( *RefreshMouseAngles )( void );
+
+	// Asynchronous HTTP requests
+	void ( *AsyncStream_UrlEncode )( const char *src, char *dst, size_t size );
+	size_t ( *AsyncStream_UrlDecode )( const char *src, char *dst, size_t size );
+	int ( *AsyncStream_PerformRequest )( const char *url, const char *method, const char *data, int timeout,
+		cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep );
+	size_t ( *GetBaseServerURL )( char *buffer, size_t buffer_size );
 
 	// refresh system
 	void ( *R_UpdateScreen )( void );

@@ -634,7 +634,6 @@ void CL_SetKeyDest( int key_dest )
 	}
 }
 
-
 /*
 * CL_SetOldKeyDest
 */
@@ -643,6 +642,25 @@ void CL_SetOldKeyDest( int key_dest )
 	if( key_dest < key_game || key_dest > key_delegate )
 		Com_Error( ERR_DROP, "CL_SetKeyDest: invalid key_dest" );
 	cls.old_key_dest = key_dest;
+}
+
+/*
+* CL_GetBaseServerURL
+*/
+size_t CL_GetBaseServerURL( char *buffer, size_t buffer_size )
+{
+	const char *web_url = cls.httpbaseurl;
+
+	if( !buffer || !buffer_size ) {
+		return 0;
+	}
+	if( !web_url || !*web_url ) {
+		*buffer = '\0';
+		return 0;
+	}
+
+	Q_strncpyz( buffer, web_url, buffer_size );
+	return strlen( web_url );
 }
 
 /*
@@ -2630,9 +2648,14 @@ done:
 /*
 * CL_CheckForUpdateReadCb
 */
-static size_t CL_CheckForUpdateReadCb( const void *buf, size_t numb, float percentage, const char *contentType, void *privatep )
+static size_t CL_CheckForUpdateReadCb( const void *buf, size_t numb, float percentage, 
+	int status, const char *contentType, void *privatep )
 {
 	char *newbuf;
+
+	if( status < 0 || status >= 300 ) {
+		return 0;
+	}
 
 	newbuf = Mem_ZoneMalloc( updateRemoteDataSize + numb + 1 );
 	memcpy( newbuf, updateRemoteData, updateRemoteDataSize - 1 );
@@ -2641,6 +2664,7 @@ static size_t CL_CheckForUpdateReadCb( const void *buf, size_t numb, float perce
 
 	Mem_Free( updateRemoteData );
 	updateRemoteData = newbuf;
+	updateRemoteDataSize = updateRemoteDataSize + numb + 1;
 
 	return numb;
 }
@@ -2797,7 +2821,7 @@ static void CL_ShutdownAsyncStream( void )
 * CL_AsyncStreamRequest
 */
 void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, int resumeFrom,
-	size_t (*read_cb)(const void *, size_t, float, const char *, void *), void (*done_cb)(int, const char *, void *), 
+	size_t (*read_cb)(const void *, size_t, float, int, const char *, void *), void (*done_cb)(int, const char *, void *), 
 	void (*header_cb)(const char *, void *), void *privatep, qboolean urlencodeUnsafe )
 {
 	char *tmpUrl = NULL;

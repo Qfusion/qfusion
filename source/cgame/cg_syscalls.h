@@ -151,6 +151,11 @@ static inline void trap_Cmd_Execute( void )
 	CGAME_IMPORT.Cmd_Execute();
 }
 
+static inline void trap_Cmd_SetCompletionFunc( const char *cmd_name, char **( *completion_func )( const char *partial ) )
+{
+	CGAME_IMPORT.Cmd_SetCompletionFunc( cmd_name, completion_func );
+}
+
 static inline int trap_FS_FOpenFile( const char *filename, int *filenum, int mode )
 {
 	return CGAME_IMPORT.FS_FOpenFile( filename, filenum, mode );
@@ -558,3 +563,25 @@ static inline void trap_MemFree( void *data, const char *filename, int fileline 
 {
 	CGAME_IMPORT.Mem_Free( data, filename, fileline );
 }
+
+static inline void trap_AsyncStream_UrlEncode( const char *src, char *dst, size_t size )
+{
+	CGAME_IMPORT.AsyncStream_UrlEncode( src, dst, size );
+}
+
+static inline void trap_AsyncStream_UrlDecode( const char *src, char *dst, size_t size )
+{
+	CGAME_IMPORT.AsyncStream_UrlDecode( src, dst, size );
+}
+
+static inline int trap_AsyncStream_PerformRequest( const char *url, const char *method, const char *data, 
+		int timeout, cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep )
+{
+	return CGAME_IMPORT.AsyncStream_PerformRequest( url, method, data, timeout, read_cb, done_cb, privatep );
+}
+
+static inline size_t trap_GetBaseServerURL( char *buffer, size_t buffer_size )
+{
+	return CGAME_IMPORT.GetBaseServerURL( buffer, buffer_size );
+}
+

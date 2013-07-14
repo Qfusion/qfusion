@@ -81,8 +81,9 @@ static size_t AsyncStream_ReadCallback( wswcurl_req *req, const void *buf, size_
 	}
 
 	if( handler->read_cb ) {
+		int status = wswcurl_get_status( req );
 		const char *contentType = wswcurl_get_content_type( req );
-		return handler->read_cb( buf, numb, percentage, contentType, handler->privatep );
+		return handler->read_cb( buf, numb, percentage, status, contentType, handler->privatep );
 	}
 
 	return numb;
@@ -174,7 +175,8 @@ void AsyncStream_UrlEncodeUnsafeChars( const char *src, char *dst, size_t size )
 /*
 * AsyncStream_PerformRequestExt
 */
-int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *url, const char *method, const char *data, 
+int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *url, const char *method, 
+	const char *data, 
 	const char **headers, int timeout, int resumeFrom, 
 	async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, async_stream_header_cb_t header_cb,
 	void *privatep )
@@ -284,7 +286,8 @@ int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *ur
 * AsyncStream_PerformRequest
 */
 int AsyncStream_PerformRequest( async_stream_module_t *module, const char *url, const char *method, const char *data, 
-	const char *referer, int timeout, int resumeFrom, async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, void *privatep )
+	const char *referer, int timeout, int resumeFrom, async_stream_read_cb_t read_cb, async_stream_done_cb_t done_cb, 
+	void *privatep )
 {
 	const char *headers[3] = { NULL, NULL, NULL };
 	

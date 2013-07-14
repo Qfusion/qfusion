@@ -294,9 +294,10 @@ static void CL_WebDownloadDoneCb( int status, const char *contentType, void *pri
 /*
 * CL_WebDownloadReadCb
 */
-static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percentage, const char *contentType, void *privatep )
+static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percentage, int status,
+	const char *contentType, void *privatep )
 {
-	qboolean stop = cls.download.disconnect || cls.download.cancelled;
+	qboolean stop = cls.download.disconnect || cls.download.cancelled || status < 0 || status >= 300;
 	size_t write = 0;
 
 	if( !stop ) {
@@ -870,7 +871,12 @@ static void CL_ParseServerData( msg_t *msg )
 		Mem_Free( cls.httpbaseurl );
 	}
 	if( http_portnum ) {
-		cls.httpbaseurl = ZoneCopyString( va( "http://%s/", NET_AddressToString( &cls.httpaddress ) ) );
+		if( cls.httpaddress.type == NA_LOOPBACK ) {
+			cls.httpbaseurl = ZoneCopyString( va( "http://localhost:%hu/", http_portnum ) );
+		}
+		else {
+			cls.httpbaseurl = ZoneCopyString( va( "http://%s/", NET_AddressToString( &cls.httpaddress ) ) );
+		}
 	}
 	else {
 		cls.httpbaseurl = NULL;

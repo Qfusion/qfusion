@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // g_public.h -- game dll information visible to server
 
-#define	GAME_API_VERSION    46
+#define	GAME_API_VERSION    47
 
 //===============================================================
 
@@ -239,9 +239,9 @@ typedef struct
 
 	qboolean ( *AllowDownload )( edict_t *ent, const char *requestname, const char *uploadname );
 
-	// legacy MM (TODO: remove)
-	void ( *MM_Setup )( const char *gametype, int scorelimit, float timelimit, qboolean falldamage );
-	void ( *MM_Reset )( void );
+	// Web requests to local HTTP server
+	http_response_code_t ( *WebRequest )( http_query_method_t method, const char *resource, 
+		char **content, size_t *content_length );
 
 	// gameside rating library
 	struct clientRating_s *( *AddDefaultRating )( edict_t *ent, const char *gametype );

@@ -56,12 +56,11 @@ extern "C" QF_DLL_EXPORT game_export_t *GetGameAPI( game_import_t *import )
 
 	globals.AllowDownload = G_AllowDownload;
 
-	globals.MM_Setup = G_MM_Setup;
-	globals.MM_Reset = G_MM_Reset;
-
 	globals.AddDefaultRating = G_AddDefaultRating;
 	globals.AddRating = G_AddRating;
 	globals.RemoveRating = G_RemoveRating;
+
+	globals.WebRequest = G_WebRequest;
 
 	return &globals;
 }

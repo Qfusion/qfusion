@@ -94,14 +94,15 @@ void StreamCache::PurgeCache( void )
 	}
 }
 
-size_t StreamCache::StreamRead( const void *buf, size_t numb, float percentage, const char *contentType, void *privatep )
+size_t StreamCache::StreamRead( const void *buf, size_t numb, float percentage, int status,
+	const char *contentType, void *privatep )
 {
 	AsyncStream *stream;
 
 	stream = ( AsyncStream * )privatep;
 
 	if( stream->read_cb ) {
-		return stream->read_cb( buf, numb, percentage, contentType, stream->privatep );
+		return stream->read_cb( buf, numb, percentage, status, contentType, stream->privatep );
 	}
 	else if( stream->cache_cb ) {
 		// write to temporary cache file

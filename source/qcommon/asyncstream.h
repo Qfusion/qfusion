@@ -34,10 +34,12 @@ typedef void *(*async_stream_alloc_t)( size_t size, const char *filename, int fi
 typedef void (*async_stream_free_t)( void *data, const char *filename, int fileline );
 
 // read and done callbacks
+// status - HTTP/FTP response code
 // contentType represents value read from the Content-Type: field by libcurl:
 // A value of NULL indicates that the server didn't send a valid Content-Type header or that the protocol used doesn't support this.
 
-typedef size_t (*async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, const char *contentType, void *privatep);
+typedef size_t (*async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
+	int status, const char *contentType, void *privatep);
 typedef void (*async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
 typedef void (*async_stream_header_cb_t)(const void *buf, void *privatep);
 
