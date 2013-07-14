@@ -183,6 +183,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="datasources\ui_callvotes_datasource.cpp" />
     <ClCompile Include="ui_public.cpp" />
     <ClCompile Include="widgets\ui_anchor.cpp" />
     <ClCompile Include="widgets\ui_colorselector.cpp" />
@@ -259,6 +260,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="datasources\ui_callvotes_datasource.h" />
     <ClInclude Include="ui_public.h" />
     <ClInclude Include="as\asbind.h" />
     <ClInclude Include="as\asmodule.h" />

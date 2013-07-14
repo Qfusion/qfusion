@@ -497,6 +497,7 @@
     <ClCompile Include="..\gameshared\gs_weapondefs.c" />
     <ClCompile Include="..\gameshared\gs_weapons.c" />
     <ClCompile Include="..\matchmaker\mm_rating.c" />
+    <ClCompile Include="g_web.cpp" />
     <ClCompile Include="p_client.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>

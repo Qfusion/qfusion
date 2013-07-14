@@ -766,6 +766,11 @@ const char *wswcurl_get_effective_url(wswcurl_req *req)
 	return last_url;
 }
 
+int wswcurl_get_status(const wswcurl_req *req)
+{
+	return req->respcode;
+}
+
 ///////////////////////
 // static functions
 
@@ -810,6 +815,8 @@ static size_t wswcurl_readheader(void *ptr, size_t size, size_t nmemb, void *str
 	{
 		req->rx_expsize = 0;
 	}
+
+	curl_easy_getinfo( req->curl, CURLINFO_RESPONSE_CODE, &(req->respcode) );
 
 	// call header callback function
 	if( req->callback_header ) {

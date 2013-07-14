@@ -410,6 +410,30 @@ typedef enum
 
 //==============================================
 
+typedef enum
+{
+	HTTP_METHOD_BAD = -1,
+	HTTP_METHOD_NONE = 0,
+	HTTP_METHOD_GET  = 1,
+	HTTP_METHOD_POST = 2,
+	HTTP_METHOD_PUT  = 3,
+	HTTP_METHOD_HEAD = 4,
+} http_query_method_t;
+
+typedef enum
+{
+	HTTP_RESP_NONE = 0,
+	HTTP_RESP_OK = 200,
+	HTTP_RESP_PARTIAL_CONTENT = 206,
+	HTTP_RESP_BAD_REQUEST = 400,
+	HTTP_RESP_FORBIDDEN = 403,
+	HTTP_RESP_NOT_FOUND = 404,
+	HTTP_RESP_REQUEST_TOO_LARGE = 413,
+	HTTP_RESP_REQUESTED_RANGE_NOT_SATISFIABLE = 416,
+} http_response_code_t;
+
+//==============================================
+
 #define	MAX_GAME_STATS	16
 #define MAX_GAME_LONGSTATS 8
 

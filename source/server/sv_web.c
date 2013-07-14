@@ -39,28 +39,6 @@ typedef enum
 	HTTP_CONN_STATE_RESP = 2,
 	HTTP_CONN_STATE_SEND = 3
 } sv_http_connstate_t;
-
-typedef enum
-{
-	HTTP_METHOD_BAD = -1,
-	HTTP_METHOD_NONE = 0,
-	HTTP_METHOD_GET  = 1,
-	HTTP_METHOD_POST = 2,
-	HTTP_METHOD_PUT  = 3,
-	HTTP_METHOD_HEAD = 4,
-} sv_http_query_method_t;
-
-typedef enum
-{
-	HTTP_RESP_NONE = 0,
-	HTTP_RESP_OK = 200,
-	HTTP_RESP_PARTIAL_CONTENT = 206,
-	HTTP_RESP_BAD_REQUEST = 400,
-	HTTP_RESP_FORBIDDEN = 403,
-	HTTP_RESP_NOT_FOUND = 404,
-	HTTP_RESP_REQUEST_TOO_LARGE = 413,
-	HTTP_RESP_REQUESTED_RANGE_NOT_SATISFIABLE = 416,
-} sv_http_response_code_t;
 	
 typedef struct {
 	long begin;
@@ -80,10 +58,11 @@ typedef struct {
 } sv_http_stream_t;
 
 typedef struct {
-	sv_http_query_method_t method;
-	sv_http_response_code_t error;
+	http_query_method_t method;
+	http_response_code_t error;
 	sv_http_stream_t stream;
 
+	char *method_str;
 	char *resource;
 	char *http_ver;
 
@@ -95,7 +74,7 @@ typedef struct {
 } sv_http_request_t;
 
 typedef struct {
-	sv_http_response_code_t code;
+	http_response_code_t code;
 	sv_http_stream_t stream;
 
 	int file;
@@ -124,6 +103,9 @@ typedef struct sv_http_connection_s
 static qboolean sv_http_initialized = qfalse;
 static sv_http_connection_t sv_http_connections[MAX_INCOMING_HTTP_CONNECTIONS];
 static sv_http_connection_t sv_http_connection_headnode, *sv_free_http_connections;
+
+socket_t sv_socket_http;
+socket_t sv_socket_http6;
 
 // ============================================================================
 
@@ -154,6 +136,10 @@ static void SV_Web_ResetStream( sv_http_stream_t *stream )
 */
 static void SV_Web_ResetRequest( sv_http_request_t *request )
 {
+	if( request->method_str ) {
+		Mem_Free( request->method_str );
+		request->method_str = NULL;
+	}
 	if( request->resource ) {
 		Mem_Free( request->resource );
 		request->resource = NULL;
@@ -332,6 +318,8 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 	} else {
 		request->error = HTTP_RESP_BAD_REQUEST;
 	}
+
+	request->method_str = ZoneCopyString( token );
 
 	// COM_Parse may get confused about double slash and treat it as single-line comment
 	while( *ptr <= ' ' || *ptr == '/' ) {
@@ -604,7 +592,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 /*
 * SV_Web_ResponseCodeMessage
 */
-static const char *SV_Web_ResponseCodeMessage( sv_http_response_code_t code )
+static const char *SV_Web_ResponseCodeMessage( http_response_code_t code )
 {
 	switch( code ) {
 		case HTTP_RESP_OK: return "OK";
@@ -632,7 +620,12 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 	if( !Q_strnicmp( resource, "game/", 5 ) ) {
 		// request to game module
 		response->resource = ZoneCopyString( resource + 5 );
-		response->code = HTTP_RESP_OK;
+		if( ge ) {
+			response->code = ge->WebRequest( request->method, response->resource, content, content_length );
+		}
+		else {
+			response->code = HTTP_RESP_NOT_FOUND;
+		}
 	} else if( !Q_strnicmp( resource, "files/", 6 ) ) {
 		const char *filename, *extension;
 		char *delim;
@@ -700,7 +693,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 		SV_Web_RouteRequest( request, response, &content, &content_length );
 
 		if( response->file ) {
-			Com_Printf( "HTTP serving file '%s' to '%s'\n", response->resource, NET_AddressToString( &con->address ) );
+			Com_DPrintf( "HTTP serving file '%s' to '%s'\n", response->resource, NET_AddressToString( &con->address ) );
 		}
 
 		// serve range requests
@@ -832,7 +825,7 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 					int read_size;
 					
 					if( FS_Eof( response->file ) ){
-						Com_Printf( "HTTP file streaming error: premature EOF on %s to %s\n", 
+						Com_DPrintf( "HTTP file streaming error: premature EOF on %s to %s\n", 
 							response->resource, NET_AddressToString( &con->address ) );
 						con->open = qfalse;
 						break;
@@ -960,7 +953,7 @@ static void SV_Web_Listen( socket_t *socket )
 				}
 
 				if( cnt < MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
-					Com_Printf( "HTTP connection accepted from %s\n", NET_AddressToString( &newaddress ) );
+					Com_DPrintf( "HTTP connection accepted from %s\n", NET_AddressToString( &newaddress ) );
 					con = SV_Web_AllocConnection();
 					if( !con ) {
 						break;
@@ -976,7 +969,7 @@ static void SV_Web_Listen( socket_t *socket )
 		}
 
 		if( !con ) {
-			Com_Printf( "HTTP connection refused for %s\n", NET_AddressToString( &newaddress ) );
+			Com_DPrintf( "HTTP connection refused for %s\n", NET_AddressToString( &newaddress ) );
 			NET_CloseSocket( &newsocket );
 		}
 	}
@@ -995,10 +988,10 @@ void SV_Web_Init( void )
 		return;
 	}
 
-	SV_Web_InitSocket( sv_ip->string, NA_IP, &svs.socket_http );
-	SV_Web_InitSocket( sv_ip6->string, NA_IP6, &svs.socket_http6 );
+	SV_Web_InitSocket( sv_ip->string, NA_IP, &sv_socket_http );
+	SV_Web_InitSocket( sv_ip6->string, NA_IP6, &sv_socket_http6 );
 
-	sv_http_initialized = (svs.socket_http.address.type == NA_IP || svs.socket_http6.address.type == NA_IP6);
+	sv_http_initialized = (sv_socket_http.address.type == NA_IP || sv_socket_http6.address.type == NA_IP6);
 }
 
 /*
@@ -1016,11 +1009,11 @@ void SV_Web_Frame( void )
 	}
 
 	// accept new connections
-	if( svs.socket_http.address.type == NA_IP ) {
-		SV_Web_Listen( &svs.socket_http );
+	if( sv_socket_http.address.type == NA_IP ) {
+		SV_Web_Listen( &sv_socket_http );
 	}
-	if( svs.socket_http6.address.type == NA_IP6 ) {
-		SV_Web_Listen( &svs.socket_http6 );
+	if( sv_socket_http6.address.type == NA_IP6 ) {
+		SV_Web_Listen( &sv_socket_http6 );
 	}
 
 	// handle incoming data
@@ -1090,7 +1083,7 @@ void SV_Web_Frame( void )
 
 			if( Sys_Milliseconds() > con->last_active + timeout*1000 ) {
 				con->open = qfalse;
-				Com_Printf( "HTTP connection timeout from %s\n", NET_AddressToString( &con->address ) );
+				Com_DPrintf( "HTTP connection timeout from %s\n", NET_AddressToString( &con->address ) );
 			}
 		}
 
@@ -1121,8 +1114,8 @@ void SV_Web_Shutdown( void )
 
 	SV_Web_ShutdownConnections();
 
-	NET_CloseSocket( &svs.socket_http );
-	NET_CloseSocket( &svs.socket_http6 );
+	NET_CloseSocket( &sv_socket_http );
+	NET_CloseSocket( &sv_socket_http6 );
 
 	sv_http_initialized = qfalse;
 }

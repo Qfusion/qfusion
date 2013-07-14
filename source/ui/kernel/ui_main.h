@@ -41,6 +41,7 @@ class ModelsDataSource;
 class CrosshairDataSource;
 class TVChannelsDataSource;
 class IrcChannelsDataSource;
+class CallvotesDataSource;
 
 class LevelShotFormatter;
 class DatetimeFormatter;
@@ -160,6 +161,7 @@ private:
 	CrosshairDataSource *crosshairs;
 	TVChannelsDataSource *tvchannels;
 	IrcChannelsDataSource *ircchannels;
+	CallvotesDataSource *callvotes;
 
 	NavigationStack *navigator;
 

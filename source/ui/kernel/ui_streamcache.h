@@ -69,7 +69,8 @@ namespace WSWUI
 		StreamCache();
 
 		// public streaming callbacks, privatep points to AsyncStream object
-		static size_t StreamRead( const void *buf, size_t numb, float percentage, const char *contentType, void *privatep );
+		static size_t StreamRead( const void *buf, size_t numb, float percentage, int status,
+			const char *contentType, void *privatep );
 		static void StreamDone( int status, const char *contentType, void *privatep );
 
 		// the entry function for all requests

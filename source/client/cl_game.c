@@ -17,7 +17,9 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+
 #include "client.h"
+#include "../qcommon/asyncstream.h"
 
 static cgame_export_t *cge;
 
@@ -26,6 +28,8 @@ EXTERN_API_FUNC void *GetCGameAPI( void * );
 static mempool_t *cl_gamemodulepool;
 
 static void *module_handle;
+
+static async_stream_module_t *cg_async_stream;
 
 //======================================================================
 
@@ -182,6 +186,35 @@ static void CL_GameModule_SoundUpdate( const vec3_t origin, const vec3_t velocit
 //==============================================
 
 /*
+* CL_GameModule_AsyncStream_Init
+*/
+static void CL_GameModule_AsyncStream_Init( void )
+{
+	cg_async_stream = AsyncStream_InitModule( "UI", CL_GameModule_MemAlloc, CL_GameModule_MemFree );
+}
+
+/*
+* CL_GameModule_AsyncStream_PerformRequest
+*/
+static int CL_GameModule_AsyncStream_PerformRequest( const char *url, const char *method, const char *data, int timeout,
+	cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep )
+{
+	assert( cg_async_stream );
+	return AsyncStream_PerformRequest( cg_async_stream, url, method, data, NULL, timeout, 0, read_cb, done_cb, privatep );
+}
+
+/*
+* CL_GameModule_AsyncStream_Shutdown
+*/
+static void CL_GameModule_AsyncStream_Shutdown( void )
+{
+	AsyncStream_ShutdownModule( cg_async_stream );
+	cg_async_stream = NULL;
+}
+
+//==============================================
+
+/*
 * CL_GameModule_Init
 */
 void CL_GameModule_Init( void )
@@ -329,6 +362,11 @@ void CL_GameModule_Init( void )
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
 
+	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
+	import.AsyncStream_UrlDecode = AsyncStream_UrlDecode;
+	import.AsyncStream_PerformRequest = CL_GameModule_AsyncStream_PerformRequest;
+	import.GetBaseServerURL = CL_GetBaseServerURL;
+
 	import.Mem_Alloc = CL_GameModule_MemAlloc;
 	import.Mem_Free = CL_GameModule_MemFree;
 
@@ -349,6 +387,8 @@ void CL_GameModule_Init( void )
 
 	oldState = cls.state;
 	cls.state = CA_LOADING;
+
+	CL_GameModule_AsyncStream_Init();
 
 	start = Sys_Milliseconds();
 	cge->Init( cls.servername, cl.playernum, viddef.width, viddef.height, 
@@ -384,6 +424,8 @@ void CL_GameModule_Shutdown( void )
 		return;
 
 	cls.cgameActive = qfalse;
+
+	CL_GameModule_AsyncStream_Shutdown();
 
 	cge->Shutdown();
 	Mem_FreePool( &cl_gamemodulepool );

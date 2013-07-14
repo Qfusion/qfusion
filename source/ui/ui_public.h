@@ -21,9 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    39
+#define	UI_API_VERSION	    40
 
-typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, const char *contentType, void *privatep);
+typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
+	int status, const char *contentType, void *privatep);
 typedef void (*ui_async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
 
 #include "../cgame/ref.h"
@@ -184,6 +185,7 @@ typedef struct
 	size_t ( *AsyncStream_UrlDecode )( const char *src, char *dst, size_t size );
 	int ( *AsyncStream_PerformRequest )( const char *url, const char *method, const char *data, int timeout,
 		ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep );
+	size_t ( *GetBaseServerURL )( char *buffer, size_t buffer_size );
 
 	// IRC
 	size_t (*Irc_HistorySize)(void);

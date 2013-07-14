@@ -183,6 +183,9 @@
     <ClCompile Include="..\matchmaker\mm_rating.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="g_web.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\gameshared\anorms.h">

@@ -28,6 +28,7 @@
 #include "datasources/ui_serverbrowser_datasource.h"
 #include "datasources/ui_tvchannels_datasource.h"
 #include "datasources/ui_ircchannels_datasource.h"
+#include "datasources/ui_callvotes_datasource.h"
 
 #include "formatters/ui_crosshair_formatter.h"
 #include "formatters/ui_levelshot_formatter.h"
@@ -47,8 +48,11 @@ const std::string UI_Main::ui_connectscreen( "connectscreen.rml" );
 UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, bool demoPlaying, const char *demoName )
 	// pointers to zero
 	: asmodule(0), rocketModule(0),
-	levelshot_fmt(0), datetime_fmt(0), duration_fmt(0), filetype_fmt(0), colorcode_fmt(0), crosshair_fmt(0), empty_fmt(0),
-	serverBrowser(0), gameTypes(0), maps(0), vidProfiles(0), huds(0), videoModes(0), demos(0), mods(0), playerModels(0), crosshairs(0), 
+	levelshot_fmt(0), datetime_fmt(0), duration_fmt(0), filetype_fmt(0), colorcode_fmt(0), 
+	crosshair_fmt(0), empty_fmt(0),
+	serverBrowser(0), gameTypes(0), maps(0), vidProfiles(0), huds(0), videoModes(0), 
+	demos(0), mods(0), 
+	playerModels(0), crosshairs(0), 
 	navigator(0), /* backwards development compatibility: */ currentLoader(0),
 
 	// other members
@@ -88,6 +92,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, boo
 	crosshairs = __new__( CrosshairDataSource )();
 	tvchannels = __new__( TVChannelsDataSource )();
 	ircchannels = __new__( IrcChannelsDataSource )();
+	callvotes = __new__( CallvotesDataSource )();
 
 	crosshair_fmt = __new__( CrosshairFormatter )();
 	datetime_fmt = __new__( DatetimeFormatter )();
@@ -256,6 +261,7 @@ void UI_Main::shutdownRocket( void )
 	__SAFE_DELETE_NULLIFY( crosshair_fmt );
 	__SAFE_DELETE_NULLIFY( crosshairs );
 	__SAFE_DELETE_NULLIFY( mods );
+	__SAFE_DELETE_NULLIFY( callvotes );
 	__SAFE_DELETE_NULLIFY( demos );
 	__SAFE_DELETE_NULLIFY( videoModes );
 	__SAFE_DELETE_NULLIFY( huds );

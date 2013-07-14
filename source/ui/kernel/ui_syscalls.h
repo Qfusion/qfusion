@@ -442,6 +442,10 @@ namespace trap
 			ui_async_stream_read_cb_t read_cb, ui_async_stream_done_cb_t done_cb, void *privatep ) {
 				return UI_IMPORT.AsyncStream_PerformRequest( url, method, data, timeout, read_cb, done_cb, privatep );
 		}
+		
+		inline size_t GetBaseServerURL( char *buffer, size_t buffer_size ) {
+			return UI_IMPORT.GetBaseServerURL( buffer, buffer_size );
+		}
 
 		inline qboolean MM_Login( const char *user, const char *password ) {
 			return UI_IMPORT.MM_Login( user, password );

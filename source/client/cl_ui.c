@@ -243,6 +243,7 @@ void CL_UIModule_Init( void )
 	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
 	import.AsyncStream_UrlDecode = AsyncStream_UrlDecode;
 	import.AsyncStream_PerformRequest = CL_UIModule_AsyncStream_PerformRequest;
+	import.GetBaseServerURL = CL_GetBaseServerURL;
 
 	import.VID_GetModeInfo = VID_GetModeInfo;
 	import.VID_FlashWindow = VID_FlashWindow;

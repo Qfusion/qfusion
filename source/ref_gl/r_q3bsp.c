@@ -1365,8 +1365,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 				break; // end of entity
 
 			Q_strncpyz( key, token, sizeof( key ) );
-			while( key[strlen( key )-1] == ' ' )  // remove trailing spaces
-				key[strlen( key )-1] = 0;
+			Q_trim( key );
 
 			token = COM_Parse( &data );
 			if( !token[0] )
