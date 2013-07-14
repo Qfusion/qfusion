@@ -8,6 +8,7 @@
 
 #include <Rocket/Controls.h>
 #include <Rocket/Controls/ElementTabSet.h>
+#include <Rocket/Controls/ElementFormControlDataSelect.h>
 
 // macro to addref a return object (rocket element)
 #define _RETREF(a)	if( (a) ) { (a)->AddReference(); } return (a);
@@ -25,6 +26,7 @@ static asIObjectType *elementsArrayType;
 
 typedef Rocket::Controls::ElementForm ElementForm;
 typedef Rocket::Controls::ElementFormControl ElementFormControl;
+typedef Rocket::Controls::ElementFormControlDataSelect ElementFormControlDataSelect;
 
 typedef Rocket::Controls::ElementDataGrid ElementDataGrid;
 typedef Rocket::Controls::ElementDataGridRow ElementDataGridRow;
@@ -37,6 +39,7 @@ typedef Rocket::Controls::ElementTabSet ElementTabSet;
 
 ASBIND_TYPE( Rocket::Controls::ElementForm, ElementForm );
 ASBIND_TYPE( Rocket::Controls::ElementFormControl, ElementFormControl );
+ASBIND_TYPE( Rocket::Controls::ElementFormControlDataSelect, ElementFormControlDataSelect );
 
 ASBIND_TYPE( Rocket::Controls::ElementDataGrid, ElementDataGrid );
 ASBIND_TYPE( Rocket::Controls::ElementDataGridRow, ElementDataGridRow );
@@ -634,6 +637,62 @@ static void BindElementFormControl( ASInterface *as )
 		;
 }
 
+//
+// DATA SELECT
+
+static ElementFormControlDataSelect *Element_CastToFormControlDataSelect( Element *self ) {
+	ElementFormControlDataSelect *r = dynamic_cast<ElementFormControlDataSelect *>( self );
+	_RETREF(r);
+}
+
+static Element *FormControlDataSelect_CastToElement( ElementFormControlDataSelect *self ) {
+	Element *e = dynamic_cast<Element *>( self );
+	_RETREF(e);
+}
+
+static ElementFormControlDataSelect *FormControl_CastToFormControlDataSelect( ElementFormControl *self ) {
+	ElementFormControlDataSelect *r = dynamic_cast<ElementFormControlDataSelect *>( self );
+	_RETREF(r);
+}
+
+static ElementFormControl *FormControlDataSelect_CastToFormControl( ElementFormControlDataSelect *self ) {
+	ElementFormControl *e = dynamic_cast<ElementFormControl *>( self );
+	_RETREF(e);
+}
+
+static void ElementFormControlDataSelect_SetDataSource( ElementFormControlDataSelect *self, const asstring_t &source ) {
+	self->SetDataSource( ASSTR( source ) );
+}
+
+static void PreBindElementFormControlDataSelect( ASInterface *as )
+{
+	ASBind::Class<ElementFormControlDataSelect, ASBind::class_ref>( as->getEngine() );
+}
+
+static void BindElementFormControlDataSelect( ASInterface *as )
+{
+	asIScriptEngine *engine = as->getEngine();
+
+	ASBind::GetClass<ElementFormControlDataSelect>( engine )
+		.refs( &ElementFormControlDataSelect::AddReference, &ElementFormControlDataSelect::RemoveReference )
+
+		.method( &ElementFormControlDataSelect_SetDataSource, "setDataSource", true )
+
+		.refcast( &FormControlDataSelect_CastToElement, true, true )
+		.refcast( &FormControlDataSelect_CastToFormControl, true, true )
+		;
+
+	// Cast behavior for the Element class
+	ASBind::GetClass<Element>( engine )
+		.refcast( &Element_CastToFormControlDataSelect, true, true )
+		;
+
+	// Cast behavior for the FormControl class
+	ASBind::GetClass<ElementFormControl>( engine )
+		.refcast( &FormControl_CastToFormControlDataSelect, true, true )
+		;
+}
+
 //==============================================================
 
 //
@@ -764,6 +823,8 @@ void PrebindElement( ASInterface *as )
 
 	PreBindElementFormControl( as );
 
+	PreBindElementFormControlDataSelect( as );
+
 	PreBindElementTabSet( as );
 }
 
@@ -882,6 +943,9 @@ void BindElement( ASInterface *as )
 
 	// ElementFormControl
 	BindElementFormControl( as );
+
+	// ElementFormControlDataSelect
+	BindElementFormControlDataSelect( as );
 
 	// ElementTabSet
 	BindElementTabSet( as );
