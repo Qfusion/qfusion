@@ -28,7 +28,7 @@
 #include "datasources/ui_serverbrowser_datasource.h"
 #include "datasources/ui_tvchannels_datasource.h"
 #include "datasources/ui_ircchannels_datasource.h"
-#include "datasources/ui_callvotes_datasource.h"
+#include "datasources/ui_gameajax_datasource.h"
 
 #include "formatters/ui_crosshair_formatter.h"
 #include "formatters/ui_levelshot_formatter.h"
@@ -80,28 +80,9 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, boo
 
 	registerRocketCustoms();
 
-	// TESTING, moved these from initRocket, between Init and postinit functions
-	serverBrowser = __new__( ServerBrowserDataSource )();
-	gameTypes = __new__(GameTypesDataSource)();
-	maps = __new__(MapsDataSource)();
-	levelshot_fmt = __new__(LevelShotFormatter)();
-	huds = __new__( HudsDataSource )();
-	videoModes = __new__( VideoDataSource )();
-	demos = __new__( DemosDataSource )( std::string( ".wd" ) + toString( gameProtocol ) );
-	mods = __new__( ModsDataSource )();
-	crosshairs = __new__( CrosshairDataSource )();
-	tvchannels = __new__( TVChannelsDataSource )();
-	ircchannels = __new__( IrcChannelsDataSource )();
-	callvotes = __new__( CallvotesDataSource )();
+	createDataSources();
+	createFormatters();
 
-	crosshair_fmt = __new__( CrosshairFormatter )();
-	datetime_fmt = __new__( DatetimeFormatter )();
-	duration_fmt = __new__( DurationFormatter )();
-	filetype_fmt = __new__( FiletypeFormatter )();
-	colorcode_fmt = __new__( ColorCodeFormatter )();
-	empty_fmt = __new__( EmptyFormatter )();
-	playerModels = __new__( ModelsDataSource )();
-	vidProfiles = __new__( ProfilesDataSource )();
 	navigator = __new__( NavigationStack )();
 	streamCache = __new__( StreamCache )();
 
@@ -212,6 +193,10 @@ void UI_Main::reloadUI( void )
 		demos->Reset();
 	}
 
+	destroyDataSources();
+
+	createDataSources();
+
 	preloadUI();
 
 	showUI( true );
@@ -254,23 +239,68 @@ void UI_Main::shutdownRocket( void )
 	// clear the navigation stack from previous installment
 	navigator->getCache()->clearCaches();
 
-	// TODO: move these out from 'shutdownRocket
+	destroyDataSources();
+	destroyFormatters();
+
 	__SAFE_DELETE_NULLIFY( navigator );
-	__SAFE_DELETE_NULLIFY( vidProfiles );
-	__SAFE_DELETE_NULLIFY( playerModels );
-	__SAFE_DELETE_NULLIFY( crosshair_fmt );
-	__SAFE_DELETE_NULLIFY( crosshairs );
-	__SAFE_DELETE_NULLIFY( mods );
-	__SAFE_DELETE_NULLIFY( callvotes );
-	__SAFE_DELETE_NULLIFY( demos );
-	__SAFE_DELETE_NULLIFY( videoModes );
-	__SAFE_DELETE_NULLIFY( huds );
-	__SAFE_DELETE_NULLIFY( maps );
-	__SAFE_DELETE_NULLIFY( levelshot_fmt );
-	__SAFE_DELETE_NULLIFY( gameTypes );
-	__SAFE_DELETE_NULLIFY( serverBrowser );
 
 	__SAFE_DELETE_NULLIFY( rocketModule );
+}
+
+void UI_Main::createDataSources( void )
+{
+	serverBrowser = __new__( ServerBrowserDataSource )();
+	gameTypes = __new__(GameTypesDataSource)();
+	maps = __new__(MapsDataSource)();
+	huds = __new__( HudsDataSource )();
+	videoModes = __new__( VideoDataSource )();
+	demos = __new__( DemosDataSource )( std::string( ".wd" ) + toString( gameProtocol ) );
+	mods = __new__( ModsDataSource )();
+	crosshairs = __new__( CrosshairDataSource )();
+	tvchannels = __new__( TVChannelsDataSource )();
+	ircchannels = __new__( IrcChannelsDataSource )();
+	gameajax = __new__( GameAjaxDataSource )();
+	playerModels = __new__( ModelsDataSource )();
+	vidProfiles = __new__( ProfilesDataSource )();
+}
+
+void UI_Main::destroyDataSources( void )
+{
+	__SAFE_DELETE_NULLIFY( serverBrowser );
+	__SAFE_DELETE_NULLIFY( gameTypes );
+	__SAFE_DELETE_NULLIFY( maps );
+	__SAFE_DELETE_NULLIFY( huds );
+	__SAFE_DELETE_NULLIFY( videoModes );
+	__SAFE_DELETE_NULLIFY( demos );
+	__SAFE_DELETE_NULLIFY( mods );
+	__SAFE_DELETE_NULLIFY( crosshairs );
+	__SAFE_DELETE_NULLIFY( tvchannels );
+	__SAFE_DELETE_NULLIFY( ircchannels );
+	__SAFE_DELETE_NULLIFY( gameajax );
+	__SAFE_DELETE_NULLIFY( playerModels );
+	__SAFE_DELETE_NULLIFY( vidProfiles );
+}
+
+void UI_Main::createFormatters( void )
+{
+	crosshair_fmt = __new__( CrosshairFormatter )();
+	levelshot_fmt = __new__(LevelShotFormatter)();
+	datetime_fmt = __new__( DatetimeFormatter )();
+	duration_fmt = __new__( DurationFormatter )();
+	filetype_fmt = __new__( FiletypeFormatter )();
+	colorcode_fmt = __new__( ColorCodeFormatter )();
+	empty_fmt = __new__( EmptyFormatter )();
+}
+
+void UI_Main::destroyFormatters( void )
+{
+	__SAFE_DELETE_NULLIFY( crosshair_fmt );
+	__SAFE_DELETE_NULLIFY( levelshot_fmt );
+	__SAFE_DELETE_NULLIFY( datetime_fmt );
+	__SAFE_DELETE_NULLIFY( duration_fmt );
+	__SAFE_DELETE_NULLIFY( filetype_fmt );
+	__SAFE_DELETE_NULLIFY( colorcode_fmt );
+	__SAFE_DELETE_NULLIFY( empty_fmt );
 }
 
 //==============================================
