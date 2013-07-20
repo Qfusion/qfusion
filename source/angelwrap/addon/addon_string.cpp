@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qas_precompiled.h"
 #include "addon_string.h"
+#include <string>
 
 static inline asstring_t *objectString_Alloc( void )
 {
@@ -443,6 +444,21 @@ static asstring_t *objectString_getToken( unsigned int index, asstring_t *self )
 	return objectString_FactoryBuffer( token, strlen( token ) );
 }
 
+static asstring_t *objectString_Replace( const asstring_t &assearch, const asstring_t &asreplace, asstring_t *self )
+{
+	std::string search(assearch.buffer);
+	std::string replace(asreplace.buffer);
+	std::string subject(self->buffer);
+
+    size_t pos = 0;
+    while ((pos = subject.find(search, pos)) != std::string::npos) {
+         subject.replace(pos, search.length(), replace);
+         pos += replace.length();
+    }
+
+	return objectString_FactoryBuffer( subject.c_str(), subject.size() );
+}
+
 void PreRegisterStringAddon( asIScriptEngine *engine )
 {
 	int r;
@@ -519,6 +535,8 @@ void RegisterStringAddon( asIScriptEngine *engine )
 	r = engine->RegisterObjectMethod( "String", "String @subString(const uint start, const uint length) const", asFUNCTION( objectString_Substring ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "String", "String @substr(const uint start) const", asFUNCTION( objectString_Substring2 ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "String", "String @subString(const uint start) const", asFUNCTION( objectString_Substring2 ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod( "String", "String @replace(const String &in search, const String &in replace) const", asFUNCTION( objectString_Replace ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod( "String", "bool isAlpha() const", asFUNCTION( objectString_IsAlpha ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "String", "bool isNumerical() const", asFUNCTION( objectString_IsNumeric ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
