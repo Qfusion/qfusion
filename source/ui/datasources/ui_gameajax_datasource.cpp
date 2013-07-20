@@ -138,7 +138,7 @@ int GameAjaxDataSource::GetNumRows( const String &tableName )
 	// fetch list now and notify listeners when we get the reply in async manner
 	char buf[1024];
 	trap::GetBaseServerURL( buf, sizeof( buf ) );
-	std::string url = std::string( buf ) + "/game/" + stdTableName + "/";
+	std::string url = std::string( buf ) + "/game/" + stdTableName;
 
 	trap::AsyncStream_PerformRequest(
 		url.c_str(), "GET", "", 10,

@@ -56,6 +56,8 @@ typedef struct callvotetype_s
 	void ( *execute )( callvotedata_t *vote );
 	const char *( *current )( void );
 	void ( *extraHelp )( edict_t *ent );
+	http_response_code_t ( *webRequest )( http_query_method_t method, const char *resource, 
+		char **content, size_t *content_length );
 	char *argument_format;
 	char *help;
 	char *argument_type;
@@ -76,6 +78,8 @@ static callvotetype_t *callvotesHeadNode = NULL;
 //==============================================
 //		Vote specifics
 //==============================================
+
+#define MAPLIST_SEPS " ,"
 
 /*
 * map
@@ -180,14 +184,13 @@ static bool G_VoteMapValidate( callvotedata_t *data, bool first )
 		if( g_enforce_map_pool->integer )
 		{
 			char *s, *tok;
-			static const char *seps = " ,";
 
 			// if map pool is empty, basically turn it off
 			if( strlen(g_map_pool->string) < 2 )
 				return true;
 
 			s = G_CopyString( g_map_pool->string );
-			tok = strtok( s, seps );
+			tok = strtok( s, MAPLIST_SEPS );
 			while ( tok != NULL )
 			{
 				if ( !Q_stricmp( tok, mapname ) )
@@ -196,7 +199,7 @@ static bool G_VoteMapValidate( callvotedata_t *data, bool first )
 					return true;
 				}
 				else
-					tok = strtok( NULL, seps );
+					tok = strtok( NULL, MAPLIST_SEPS );
 			}
 			G_Free( s );
 			G_PrintMsg( data->caller, "%sMap is not in map pool.\n", S_COLOR_RED );
@@ -220,6 +223,61 @@ static void G_VoteMapPassed( callvotedata_t *vote )
 static const char *G_VoteMapCurrent( void )
 {
 	return level.mapname;
+}
+
+http_response_code_t G_VoteMapWebRequest( http_query_method_t method, const char *resource, 
+	char **content, size_t *content_length )
+{
+	int i;
+	char msg[0x8000];
+	char buffer[MAX_STRING_CHARS];
+
+	if( method != HTTP_METHOD_GET && method != HTTP_METHOD_HEAD ) {
+		return HTTP_RESP_BAD_REQUEST;
+	}
+
+	// update the maplist
+	trap_ML_Update ();
+
+	msg[0] = '\0';
+	if( g_enforce_map_pool->integer && strlen( g_map_pool->string ) > 2 )
+	{
+		char *s, *tok;
+
+		s = G_CopyString( g_map_pool->string );
+		tok = strtok( s, MAPLIST_SEPS );
+		while ( tok != NULL )
+		{
+			const char *fullname = trap_ML_GetFullname( tok );
+			if( *fullname ) {
+				Q_strncatz( msg, va( "{\n"
+					"\"name\"" " " "\"%s\"" "\n"
+					"\"fullname\"" " " "\"%s\"" "\n"
+					"}\n", 
+					tok,
+					fullname
+					), sizeof( msg ) );
+			}
+			tok = strtok( NULL, MAPLIST_SEPS );
+		}
+
+		G_Free( s );
+	}
+	else {
+		for( i = 0; trap_ML_GetMapByNum( i, buffer, sizeof( buffer ) ); i++ ) {
+			Q_strncatz( msg, va( "{\n"
+				"\"name\"" " " "\"%s\"" "\n"
+				"\"fullname\"" " " "\"%s\"" "\n"
+				"}\n", 
+				buffer,
+				buffer + strlen( buffer ) + 1
+			), sizeof( msg ) );
+		}
+	}
+
+	*content = G_CopyString( msg );
+	*content_length = strlen( msg );
+	return HTTP_RESP_OK;
 }
 
 
@@ -2232,6 +2290,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteMapExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<name>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_VoteMapWebRequest;
 	callvote->help = G_LevelCopyString( "Changes map" );
 
 	callvote = G_RegisterCallvote( "restart" );
@@ -2577,7 +2636,17 @@ http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const c
 		return HTTP_RESP_OK;
 	}
 	else if( !Q_strnicmp( resource, "callvote/", 9 ) ) {
+		const char *votename = resource + 9;
+
 		// print the list of available arguments
+		for( callvote = callvotesHeadNode; callvote != NULL; callvote = callvote->next )
+		{
+			if( Q_stricmp( callvote->name, votename ) )
+				continue;
+			if( callvote->webRequest )
+				return callvote->webRequest( method, resource, content, content_length );
+			break;
+		}
 	}
 	return HTTP_RESP_NOT_FOUND;
 }
