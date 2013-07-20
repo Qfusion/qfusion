@@ -301,6 +301,7 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 {
 	const char *ptr;
 	char *token;
+	size_t length;
 
 	ptr = line;
 
@@ -327,6 +328,12 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 	}
 	token = COM_ParseExt( &ptr, qfalse );
 	request->resource = ZoneCopyString( *token ? token : "/" );
+
+	// remove the trailing ?-separator if query string is empty
+	length = strlen( request->resource );
+	if( request->resource[length-1] == '?' ) {
+		request->resource[length-1] = '\0';
+	}
 
 	token = COM_ParseExt( &ptr, qfalse );
 	request->http_ver = ZoneCopyString( token );

@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // g_public.h -- game dll information visible to server
 
-#define	GAME_API_VERSION    47
+#define	GAME_API_VERSION    48
 
 //===============================================================
 
@@ -179,6 +179,7 @@ typedef struct
 	qboolean ( *ML_Update )( void );
 	size_t ( *ML_GetMapByNum )( int num, char *out, size_t size );
 	qboolean ( *ML_FilenameExists )( const char *filename );
+	const char *( *ML_GetFullname )( const char *filename );
 
 	// add commands to the server console as if they were typed in for map changing, etc
 	void ( *Cmd_ExecuteText )( int exec_when, const char *text );
