@@ -1,6 +1,9 @@
 // geometry outline GLSL shader
 
 #include "include/uniforms.glsl"
+#ifdef APPLY_FOG
+#include "include/fog.glsl"
+#endif
 
 #ifdef VERTEX_SHADER
 
@@ -25,7 +28,7 @@ void main(void)
 
 #ifdef APPLY_FOG
 	myhalf4 tempColor = myhalf4(1.0);
-	QF_FogGen(Position, tempColor, true);
+	FogGen(Position, tempColor, true);
 	outColor.rgb = mix(u_Fog.Color, outColor.rgb, tempColor.a);
 #endif
 

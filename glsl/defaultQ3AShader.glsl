@@ -8,11 +8,11 @@
 #endif
 #endif
 
-#if defined(APPLY_FOG)
+#ifdef APPLY_FOG
 #include "include/fog.glsl"
 #endif
 
-#if defined(APPLY_FOG)
+#ifdef APPLY_GRAYSCALE
 #include "include/greyscale.glsl"
 #endif
 

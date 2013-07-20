@@ -8,11 +8,12 @@
 #endif
 #endif
 
-#if defined(APPLY_FOG)
+#ifdef APPLY_FOG
 #include "include/fog.glsl"
 #endif
-
+#ifdef APPLY_GRAYSCALE
 #include "include/greyscale.glsl"
+#endif
 
 varying vec2 v_TexCoord;
 #ifdef NUM_LIGHTMAPS
