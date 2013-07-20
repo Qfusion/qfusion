@@ -3144,12 +3144,15 @@ static void asFunc_RegisterCommand( asstring_t *str )
 	G_AddCommand( str->buffer, NULL );
 }
 
-static void asFunc_RegisterCallvote( asstring_t *asname, asstring_t *asusage, asstring_t *ashelp )
+static void asFunc_RegisterCallvote( asstring_t *asname, asstring_t *asusage, asstring_t *astype, asstring_t *ashelp )
 {
 	if( !asname || !asname->buffer || !asname->buffer[0]  )
 		return;
 
-	G_RegisterGametypeScriptCallvote( asname->buffer, asusage ? asusage->buffer : NULL, ashelp ? ashelp->buffer : NULL );
+	G_RegisterGametypeScriptCallvote( asname->buffer, 
+		asusage ? asusage->buffer : NULL, 
+		astype ? astype->buffer : NULL, 
+		ashelp ? ashelp->buffer : NULL );
 }
 
 static void asFunc_ConfigString( int index, asstring_t *str )
