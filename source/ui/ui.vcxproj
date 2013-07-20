@@ -183,7 +183,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="datasources\ui_callvotes_datasource.cpp" />
+    <ClCompile Include="datasources\ui_gameajax_datasource.cpp" />
     <ClCompile Include="ui_public.cpp" />
     <ClCompile Include="widgets\ui_anchor.cpp" />
     <ClCompile Include="widgets\ui_colorselector.cpp" />
@@ -260,12 +260,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="datasources\ui_callvotes_datasource.h" />
+    <ClInclude Include="datasources\ui_gameajax_datasource.h" />
     <ClInclude Include="ui_public.h" />
     <ClInclude Include="as\asbind.h" />
     <ClInclude Include="as\asmodule.h" />
     <ClInclude Include="as\asui.h" />
-    <ClInclude Include="as\asui_loadingscreen.h" />
     <ClInclude Include="as\asui_local.h" />
     <ClInclude Include="as\asui_scheduled.h" />
     <ClInclude Include="as\asui_url.h" />

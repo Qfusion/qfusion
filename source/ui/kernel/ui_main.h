@@ -41,7 +41,7 @@ class ModelsDataSource;
 class CrosshairDataSource;
 class TVChannelsDataSource;
 class IrcChannelsDataSource;
-class CallvotesDataSource;
+class GameAjaxDataSource;
 
 class LevelShotFormatter;
 class DatetimeFormatter;
@@ -130,6 +130,12 @@ private:
 	void unregisterRocketCustoms( void );
 	void shutdownRocket( void );
 
+	void createDataSources( void );
+	void destroyDataSources( void );
+
+	void createFormatters( void );
+	void destroyFormatters( void );
+
 	void loadCursor( void );
 
 	void customRender( void );
@@ -161,7 +167,7 @@ private:
 	CrosshairDataSource *crosshairs;
 	TVChannelsDataSource *tvchannels;
 	IrcChannelsDataSource *ircchannels;
-	CallvotesDataSource *callvotes;
+	GameAjaxDataSource *gameajax;
 
 	NavigationStack *navigator;
 

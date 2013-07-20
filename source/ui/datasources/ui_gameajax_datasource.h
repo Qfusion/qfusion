@@ -26,52 +26,39 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 namespace WSWUI
 {
 
-class CallvotesDataSource;
+class DynTable;
 
-class Callvote
+class GameAjaxDataSource : public Rocket::Controls::DataSource
 {
 public:
-	Callvote( void )
-	{
-		name = "";
-		help = "";
-		argformat = "";
-		expectedargs = 0;
-	}
-	Callvote( const std::string &name, const std::string &help, const std::string &argformat, int expectedargs = 1 ) :
-		name( name ), help( help ), argformat( argformat ), expectedargs( expectedargs ) { }
-	friend class CallvotesDataSource;
-
-private:
-	std::string name;
-	std::string help;
-	std::string argformat;
-	int expectedargs;
-};
-
-class CallvotesDataSource : public Rocket::Controls::DataSource
-{
-public:
-	CallvotesDataSource( void );
-	~CallvotesDataSource( void );
+	GameAjaxDataSource( void );
+	~GameAjaxDataSource( void );
 
 	void GetRow( StringList& row, const String& table, int row_index, const StringList& columns );
 	int GetNumRows( const String& table );
 
-	static size_t StreamRead( const void *buf, size_t numb, float percentage, int status,
-		const char *contentType, void *privatep );
-	static void StreamDone( int status, const char *contentType, void *privatep );
-
-	static bool CallvotesNameCompare( const Callvote &lcv, const Callvote &rcv ) {
-		return lcv.name < rcv.name;
-	}
-
 private:
-	bool fetchList;
-	std::string fetchBuf;
-	typedef std::vector<Callvote> CallvotesList;
-	CallvotesList callvotes;
+	static const int UPDATE_INTERVAL = 10000; // in milliseconds
+
+	class DynTableFetcher
+	{
+	public:
+		DynTableFetcher( DynTable *table ) : table( table ), buf( "" ) {}
+		DynTable *table;
+		std::string buf;
+	};
+
+	typedef std::pair<GameAjaxDataSource *, DynTableFetcher *> SourceFetcherPair;
+	typedef std::map<std::string, DynTableFetcher *> DynTableList;
+	DynTableList tableList;
+
+	static size_t StreamRead( const void *buf, size_t numb, float percentage, int status,
+			const char *contentType, void *privatep );
+	static void StreamDone( int status, const char *contentType, void *privatep );
 };
+
+Rocket::Controls::DataSource *GetCallvotesDataSourceInstance();
+void DestroyCallvotesDataSourceInstance(Rocket::Controls::DataSource *instance);
 
 }
 #endif

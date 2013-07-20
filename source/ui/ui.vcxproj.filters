@@ -243,7 +243,7 @@
     <ClCompile Include="ui_precompiled.cpp">
       <Filter>Source Files\precompiled</Filter>
     </ClCompile>
-    <ClCompile Include="datasources\ui_callvotes_datasource.cpp">
+    <ClCompile Include="datasources\ui_gameajax_datasource.cpp">
       <Filter>Source Files\datasources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -258,9 +258,6 @@
       <Filter>Header Files\as</Filter>
     </ClInclude>
     <ClInclude Include="as\asui.h">
-      <Filter>Header Files\as</Filter>
-    </ClInclude>
-    <ClInclude Include="as\asui_loadingscreen.h">
       <Filter>Header Files\as</Filter>
     </ClInclude>
     <ClInclude Include="as\asui_local.h">
@@ -437,7 +434,7 @@
     <ClInclude Include="ui_precompiled.h">
       <Filter>Header Files\precompiled</Filter>
     </ClInclude>
-    <ClInclude Include="datasources\ui_callvotes_datasource.h">
+    <ClInclude Include="datasources\ui_gameajax_datasource.h">
       <Filter>Header Files\datasources</Filter>
     </ClInclude>
   </ItemGroup>
