@@ -2,7 +2,12 @@
 
 #include "include/uniforms.glsl"
 
+#ifdef APPLY_FOG
+#include "include/fog.glsl"
+#endif
+#ifdef APPLY_GRAYSCALE
 #include "include/greyscale.glsl"
+#endif
 
 varying vec2 v_TexCoord;
 varying vec3 v_TexCoordCube;
@@ -32,7 +37,7 @@ void main(void)
 	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
 
 #ifdef APPLY_FOG
-#if defined(APPLY_FOG_COLOR)
+#ifdef APPLY_FOG_COLOR
 	FogGen(Position, outColor, APPLY_FOG_COLOR_ALPHA);
 #else
 	FogGen(Position, v_FogCoord);
