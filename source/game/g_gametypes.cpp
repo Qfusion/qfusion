@@ -1461,8 +1461,6 @@ bool G_Gametype_CanSpawnItem( gsitem_t *item )
 	if( !item )
 		return false;
 
-	return true;
-
 	return ( level.gametype.spawnableItemsMask & item->type ) ? true : false;
 }
 
