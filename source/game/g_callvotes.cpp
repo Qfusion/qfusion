@@ -79,11 +79,76 @@ static callvotetype_t *callvotesHeadNode = NULL;
 //		Vote specifics
 //==============================================
 
-#define MAPLIST_SEPS " ,"
+static void G_AppendString( char **pdst, const char *src, size_t *pdst_len, size_t *pdst_size )
+{
+	char *dst = *pdst;
+	size_t dst_len = *pdst_len;
+	size_t dst_size = *pdst_size;
+	size_t src_len;
+
+	assert( src != NULL );
+
+	if( !dst ) {
+		dst_size = 0x1000;
+		dst_len = 0;
+		dst = ( char * )G_Malloc( dst_size );
+	}
+
+	src_len = strlen( src );
+	if( dst_len + src_len >= dst_size ) {
+		char *old_dst = dst;
+	
+		dst_size = (dst_len + src_len) * 2;
+		dst = ( char * )G_Malloc( dst_size );
+		memcpy( dst, old_dst, dst_len );
+		dst[dst_len] = '\0';
+
+		G_Free( old_dst );
+	}
+
+	memcpy( dst + dst_len, src, src_len );
+	dst_len += src_len;
+	dst[dst_len] = '\0';
+
+	*pdst_len = dst_len;
+	*pdst_size = dst_size;
+	*pdst = dst;
+}
+
+static http_response_code_t G_PlayerlistWebRequest( http_query_method_t method, const char *resource, 
+	char **content, size_t *content_length )
+{
+	int i;
+	char *msg = NULL;
+	size_t msg_len = 0, msg_size = 0;
+
+	if( method != HTTP_METHOD_GET && method != HTTP_METHOD_HEAD ) {
+		return HTTP_RESP_BAD_REQUEST;
+	}
+
+	for( i = 0; i < gs.maxclients; i++ ) {
+		if( trap_GetClientState( i ) >= CS_SPAWNED ) {
+			G_AppendString( &msg, va( 
+				"{\n"
+				"\"value\"" " " "\"%i\"" "\n"
+				"\"name\"" " " "\"%s\"" "\n"
+				"}\n", 
+				i,
+				game.clients[i].netname
+				), &msg_len, &msg_size );
+		}
+	}
+
+	*content = msg;
+	*content_length = msg_len;
+	return HTTP_RESP_OK;
+}
 
 /*
 * map
 */
+
+#define MAPLIST_SEPS " ,"
 
 static void G_VoteMapExtraHelp( edict_t *ent )
 {
@@ -225,11 +290,12 @@ static const char *G_VoteMapCurrent( void )
 	return level.mapname;
 }
 
-http_response_code_t G_VoteMapWebRequest( http_query_method_t method, const char *resource, 
+static http_response_code_t G_VoteMapWebRequest( http_query_method_t method, const char *resource, 
 	char **content, size_t *content_length )
 {
 	int i;
-	char msg[0x8000];
+	char *msg = NULL;
+	size_t msg_len = 0, msg_size = 0;
 	char buffer[MAX_STRING_CHARS];
 
 	if( method != HTTP_METHOD_GET && method != HTTP_METHOD_HEAD ) {
@@ -239,7 +305,6 @@ http_response_code_t G_VoteMapWebRequest( http_query_method_t method, const char
 	// update the maplist
 	trap_ML_Update ();
 
-	msg[0] = '\0';
 	if( g_enforce_map_pool->integer && strlen( g_map_pool->string ) > 2 )
 	{
 		char *s, *tok;
@@ -249,15 +314,16 @@ http_response_code_t G_VoteMapWebRequest( http_query_method_t method, const char
 		while ( tok != NULL )
 		{
 			const char *fullname = trap_ML_GetFullname( tok );
-			if( *fullname ) {
-				Q_strncatz( msg, va( "{\n"
-					"\"name\"" " " "\"%s\"" "\n"
-					"\"fullname\"" " " "\"%s\"" "\n"
-					"}\n", 
-					tok,
-					fullname
-					), sizeof( msg ) );
-			}
+
+			G_AppendString( &msg, va( 
+				"{\n"
+				"\"value\"" " " "\"%s\"" "\n"
+				"\"name\"" " " "\"%s '%s'\"" "\n"
+				"}\n", 
+				tok,
+				tok, fullname
+			), &msg_len, &msg_size );
+
 			tok = strtok( NULL, MAPLIST_SEPS );
 		}
 
@@ -265,18 +331,19 @@ http_response_code_t G_VoteMapWebRequest( http_query_method_t method, const char
 	}
 	else {
 		for( i = 0; trap_ML_GetMapByNum( i, buffer, sizeof( buffer ) ); i++ ) {
-			Q_strncatz( msg, va( "{\n"
-				"\"name\"" " " "\"%s\"" "\n"
-				"\"fullname\"" " " "\"%s\"" "\n"
+			G_AppendString( &msg, va(
+				"{\n"
+				"\"value\"" " " "\"%s\"" "\n"
+				"\"name\"" " " "\"%s '%s'\"" "\n"
 				"}\n", 
 				buffer,
-				buffer + strlen( buffer ) + 1
-			), sizeof( msg ) );
+				buffer, buffer + strlen( buffer ) + 1
+			), &msg_len, &msg_size );
 		}
 	}
 
-	*content = G_CopyString( msg );
-	*content_length = strlen( msg );
+	*content = msg;
+	*content_length = msg_len;
 	return HTTP_RESP_OK;
 }
 
@@ -393,7 +460,8 @@ static void G_VoteGametypeExtraHelp( edict_t *ent )
 
 	Q_strncatz( message, "- Available gametypes:", sizeof( message ) );
 
-	for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; count++ )
+	for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; 
+		count++ )
 	{
 		if( G_Gametype_IsVotable( name ) )
 		{
@@ -405,6 +473,38 @@ static void G_VoteGametypeExtraHelp( edict_t *ent )
 	G_PrintMsg( ent, "%s\n", message );
 }
 
+static http_response_code_t G_VoteGametypeWebRequest( http_query_method_t method, const char *resource, 
+	char **content, size_t *content_length )
+{
+	char *name; // use buffer to send only one print message
+	int count;
+	char *msg = NULL;
+	size_t msg_len = 0, msg_size = 0;
+
+	if( method != HTTP_METHOD_GET && method != HTTP_METHOD_HEAD ) {
+		return HTTP_RESP_BAD_REQUEST;
+	}
+
+	for( count = 0; ( name = G_ListNameForPosition( g_gametypes_list->string, count, CHAR_GAMETYPE_SEPARATOR ) ) != NULL; 
+		count++ )
+	{
+		if( G_Gametype_IsVotable( name ) )
+		{
+			G_AppendString( &msg, va( 
+				"{\n"
+				"\"value\"" " " "\"%s\"" "\n"
+				"\"name\"" " " "\"%s\"" "\n"
+				"}\n", 
+				name,
+				name
+				), &msg_len, &msg_size );
+		}
+	}
+
+	*content = msg;
+	*content_length = msg_len;
+	return HTTP_RESP_OK;
+}
 
 static bool G_VoteGametypeValidate( callvotedata_t *vote, bool first )
 {
@@ -2341,6 +2441,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteGametypeExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<name>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_VoteGametypeWebRequest;
 	callvote->help = G_LevelCopyString( "Changes the gametype" );
 
 	callvote = G_RegisterCallvote( "warmup_timelimit" );
@@ -2411,6 +2512,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteRemoveExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_PlayerlistWebRequest;
 	callvote->help = G_LevelCopyString( "Forces player back to spectator mode" );
 
 	callvote = G_RegisterCallvote( "kick" );
@@ -2421,6 +2523,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteKickExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_PlayerlistWebRequest;
 	callvote->help = G_LevelCopyString( "Removes player from the server" );
 
 	callvote = G_RegisterCallvote( "kickban" );
@@ -2431,6 +2534,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteKickBanExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_PlayerlistWebRequest;
 	callvote->help = G_LevelCopyString( "Removes player from the server and bans his IP-address for 15 minutes" );
 
 	callvote = G_RegisterCallvote( "mute" );
@@ -2441,6 +2545,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteMuteExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_PlayerlistWebRequest;
 	callvote->help = G_LevelCopyString( "Disallows chat messages from the muted player" );
 
 	callvote = G_RegisterCallvote( "vmute" );
@@ -2451,6 +2556,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteMuteExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_PlayerlistWebRequest;
 	callvote->help = G_LevelCopyString( "Disallows voice chat messages from the muted player" );
 
 	callvote = G_RegisterCallvote( "unmute" );
@@ -2461,6 +2567,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteUnmuteExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_PlayerlistWebRequest;
 	callvote->help = G_LevelCopyString( "Reallows chat messages from the unmuted player" );
 
 	callvote = G_RegisterCallvote( "vunmute" );
@@ -2471,6 +2578,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = G_VoteUnmuteExtraHelp;
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
+	callvote->webRequest = G_PlayerlistWebRequest;
 	callvote->help = G_LevelCopyString( "Reallows voice chat messages from the unmuted player" );
 
 	callvote = G_RegisterCallvote( "numbots" );
@@ -2600,14 +2708,13 @@ void G_CallVotes_Init( void )
 http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const char *resource, 
 	char **content, size_t *content_length )
 {
-	char msg[0x8000];
+	char *msg = NULL;
+	size_t msg_len = 0, msg_size = 0;
 	callvotetype_t *callvote;
 
 	if( method != HTTP_METHOD_GET && method != HTTP_METHOD_HEAD ) {
 		return HTTP_RESP_BAD_REQUEST;
 	}
-
-	msg[0] = '\0';
 
 	if( !Q_strnicmp( resource, "callvotes/", 10 ) ) {
 		// print the list of callvotes
@@ -2616,9 +2723,9 @@ http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const c
 			if( trap_Cvar_Value( va( "g_disable_vote_%s", callvote->name ) ) )
 				continue;
 
-			Q_strncatz( msg, va( "{\n"
+			G_AppendString( &msg, va( "{\n"
 				"\"name\"" " " "\"%s\"" "\n"
-				"\"expectedargs\"" " " "\"%i\"" "\n"
+				"\"expected_args\"" " " "\"%i\"" "\n"
 				"\"argument_format\"" " " "\"%s\"" "\n"
 				"\"argument_type\"" " " "\"%s\"" "\n"
 				"\"help\"" " " "\"%s\"" "\n"
@@ -2628,11 +2735,11 @@ http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const c
 				callvote->argument_format ? callvote->argument_format : "",
 				callvote->argument_type ? callvote->argument_type : "string",
 				callvote->help ? callvote->help : ""
-				), sizeof( msg ) );
+				), &msg_len, &msg_size );
 		}
 
-		*content = G_CopyString( msg );
-		*content_length = strlen( msg );
+		*content = msg;
+		*content_length = msg_len;
 		return HTTP_RESP_OK;
 	}
 	else if( !Q_strnicmp( resource, "callvote/", 9 ) ) {
