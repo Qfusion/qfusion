@@ -99,9 +99,9 @@ static const constant_numeric_t cg_numeric_constants[] = {
 };
 
 // picnames for custom icons (weaponlist)
-static char *customWeaponPics[WEAP_TOTAL-1];
-static char *customNoGunWeaponPics[WEAP_TOTAL-1];
-static char *customWeaponSelectPic;
+static const char *customWeaponPics[WEAP_TOTAL-1];
+static const char *customNoGunWeaponPics[WEAP_TOTAL-1];
+static const char *customWeaponSelectPic;
 
 //=============================================================================
 
@@ -1332,7 +1332,7 @@ static opFunc_t CG_OperatorFuncForArgument( const char *token )
 
 //=============================================================================
 
-static char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode );
+static const char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode );
 static float CG_GetNumericArg( struct cg_layoutnode_s **argumentsnode );
 
 //=============================================================================
@@ -1362,7 +1362,7 @@ enum
 //=============================================================================
 // Commands' Functions
 //=============================================================================
-static int CG_LFuncDrawTimer( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawTimer( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	char time[64];
 	int min, sec, milli;
@@ -1382,7 +1382,7 @@ static int CG_LFuncDrawTimer( struct cg_layoutnode_s *commandnode, struct cg_lay
 	return true;
 }
 
-static int CG_LFuncDrawPicVar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawPicVar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int min, max, val, firstimg, lastimg, imgcount;
 	static char filefmt[MAX_QPATH], filenm[MAX_QPATH], *ptr;
@@ -1465,7 +1465,7 @@ static int CG_LFuncDrawPicVar( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static int CG_LFuncDrawPicByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawPicByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 	int x, y;
@@ -1484,7 +1484,7 @@ static int CG_LFuncDrawPicByIndex( struct cg_layoutnode_s *commandnode, struct c
 	return false;
 }
 
-static int CG_LFuncDrawPicByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawPicByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int itemindex = (int)CG_GetNumericArg( &argumentnode );
 	int x, y;
@@ -1499,7 +1499,7 @@ static int CG_LFuncDrawPicByItemIndex( struct cg_layoutnode_s *commandnode, stru
 	return true;
 }
 
-static int CG_LFuncDrawPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int x, y;
 
@@ -1509,7 +1509,7 @@ static int CG_LFuncDrawPicByName( struct cg_layoutnode_s *commandnode, struct cg
 	return true;
 }
 
-static int CG_LFuncDrawModelByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawModelByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	struct model_s *model;
 	int value = (int)CG_GetNumericArg( &argumentnode );
@@ -1524,11 +1524,11 @@ static int CG_LFuncDrawModelByIndex( struct cg_layoutnode_s *commandnode, struct
 	return false;
 }
 
-static int CG_LFuncDrawModelByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawModelByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	struct model_s *model;
 	struct shader_s *shader;
-	char *shadername;
+	const char *shadername;
 
 	model = CG_RegisterModel( CG_GetStringArg( &argumentnode ) );
 	shadername = CG_GetStringArg( &argumentnode );
@@ -1537,7 +1537,7 @@ static int CG_LFuncDrawModelByName( struct cg_layoutnode_s *commandnode, struct 
 	return true;
 }
 
-static int CG_LFuncDrawModelByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawModelByItemIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int i;
 	gsitem_t	*item;
@@ -1558,7 +1558,7 @@ static int CG_LFuncDrawModelByItemIndex( struct cg_layoutnode_s *commandnode, st
 	return true;
 }
 
-static int CG_LFuncScale( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncScale( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	layout_cursor_scale = (int)CG_GetNumericArg( &argumentnode );
 	return true;
@@ -1567,7 +1567,7 @@ static int CG_LFuncScale( struct cg_layoutnode_s *commandnode, struct cg_layoutn
 #define SCALE_X( n ) ( (layout_cursor_scale == NOSCALE) ? (n) : ((layout_cursor_scale == SCALEBYHEIGHT) ? (n)*cgs.vidHeight/600.0f : (n)*cgs.vidWidth/800.0f) )
 #define SCALE_Y( n ) ( (layout_cursor_scale == NOSCALE) ? (n) : ((layout_cursor_scale == SCALEBYWIDTH) ? (n)*cgs.vidWidth/800.0f : (n)*cgs.vidHeight/600.0f) )
 
-static int CG_LFuncCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	float x, y;
 
@@ -1581,7 +1581,7 @@ static int CG_LFuncCursor( struct cg_layoutnode_s *commandnode, struct cg_layout
 	return true;
 }
 
-static int CG_LFuncMoveCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncMoveCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	float x, y;
 
@@ -1595,7 +1595,7 @@ static int CG_LFuncMoveCursor( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static int CG_LFuncSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	float x, y;
 
@@ -1609,7 +1609,7 @@ static int CG_LFuncSize( struct cg_layoutnode_s *commandnode, struct cg_layoutno
 	return true;
 }
 
-static int CG_LFuncColor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncColor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int i;
 	for( i = 0; i < 4; i++ )
@@ -1620,19 +1620,19 @@ static int CG_LFuncColor( struct cg_layoutnode_s *commandnode, struct cg_layoutn
 	return true;
 }
 
-static int CG_LFuncColorToTeamColor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncColorToTeamColor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_TeamColor( CG_GetNumericArg( &argumentnode ), layout_cursor_color );
 	return true;
 }
 
-static int CG_LFuncColorAlpha( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncColorAlpha( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	layout_cursor_color[3] = CG_GetNumericArg( &argumentnode );
 	return true;
 }
 
-static int CG_LFuncRotationSpeed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncRotationSpeed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int i;
 	for( i = 0; i < 3; i++ )
@@ -1643,7 +1643,7 @@ static int CG_LFuncRotationSpeed( struct cg_layoutnode_s *commandnode, struct cg
 	return true;
 }
 
-static int CG_LFuncAlign( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncAlign( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int v, h;
 
@@ -1655,10 +1655,10 @@ static int CG_LFuncAlign( struct cg_layoutnode_s *commandnode, struct cg_layoutn
 	return true;
 }
 
-static int CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	struct qfontface_s *font;
-	char *fontname = CG_GetStringArg( &argumentnode );
+	const char *fontname = CG_GetStringArg( &argumentnode );
 
 	if( !Q_stricmp( fontname, "con_fontSystem" ) )
 	{
@@ -1679,10 +1679,10 @@ static int CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_la
 	return false;
 }
 
-static int CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	struct qfontface_s *font;
-	char *fontsize = CG_GetStringArg( &argumentnode );
+	const char *fontsize = CG_GetStringArg( &argumentnode );
 
 	if( !Q_stricmp( fontsize, "con_fontsystemsmall" ) )
 	{
@@ -1711,10 +1711,10 @@ static int CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_layo
 	return false;
 }
 
-static int CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	struct qfontface_s *font;
-	char *fontstyle = CG_GetStringArg( &argumentnode );
+	const char *fontstyle = CG_GetStringArg( &argumentnode );
 
 	if( !Q_stricmp( fontstyle, "normal" ) )
 	{
@@ -1747,7 +1747,7 @@ static int CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_lay
 	return false;
 }
 
-static int CG_LFuncDrawObituaries( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawObituaries( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int internal_align = (int)CG_GetNumericArg( &argumentnode );
 	int icon_size = (int)CG_GetNumericArg( &argumentnode );
@@ -1757,19 +1757,19 @@ static int CG_LFuncDrawObituaries( struct cg_layoutnode_s *commandnode, struct c
 	return true;
 }
 
-static int CG_LFuncDrawAwards( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawAwards( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_DrawAwards( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color );
 	return true;
 }
 
-static int CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color );
 	return true;
 }
 
-static int CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	// hide this one when scoreboard is up
 	if( !( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD ) )
@@ -1829,29 +1829,78 @@ static int CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct 
 	return true;
 }
 
-static int CG_LFuncDrawTeamMates( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawTeamMates( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_DrawTeamMates();
 	return true;
 }
 
-static int CG_LFuncDrawPointed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawPointed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_DrawPlayerNames( layout_cursor_font, layout_cursor_color );
 	return true;
 }
 
-static int CG_LFuncDrawString( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawString( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	char *string = CG_GetStringArg( &argumentnode );
-
+	const char *string = CG_GetStringArg( &argumentnode );
+	
 	if( !string || !string[0] )
 		return false;
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, string, layout_cursor_font, layout_cursor_color );
 	return true;
 }
 
-static int CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws )
+{
+	int i;
+	char *temps;
+	size_t pos, string_len;
+
+	if( !string || !string[0] )
+		return false;
+	if( !num_draws )
+		return false;
+
+	string_len = strlen( string );
+	temps = ( char * )CG_Malloc( string_len * num_draws + 1 );
+
+	pos = 0;
+	for( i = 0; i < num_draws; i++ ) {
+		memcpy( temps + pos, string, string_len );
+		pos += string_len;
+	}
+	temps[pos] = '\0';
+
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, temps, layout_cursor_font, layout_cursor_color );
+
+	CG_Free( temps );
+	return true;
+}
+
+static bool CG_LFuncDrawStringRepeat( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	const char *string = CG_GetStringArg( &argumentnode );
+	int num_draws = CG_GetNumericArg( &argumentnode );
+	return CG_LFuncDrawStringRepeat_x( string, num_draws );
+}
+
+static bool CG_LFuncDrawStringRepeatConfigString( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	const char *string = CG_GetStringArg( &argumentnode );
+	int index = (int)CG_GetNumericArg( &argumentnode );
+
+	if( index < 0 || index >= MAX_CONFIGSTRINGS )
+	{
+		CG_Printf( "WARNING 'CG_LFuncDrawStringRepeatConfigString' Bad stat_string index" );
+		return false;
+	}
+
+	int num_draws = atoi( cgs.configStrings[index] );
+	return CG_LFuncDrawStringRepeat_x( string, num_draws );
+}
+
+static bool CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	gsitem_t	*item;
 	int itemindex = CG_GetNumericArg( &argumentnode );
@@ -1863,7 +1912,7 @@ static int CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, s
 	return true;
 }
 
-static int CG_LFuncDrawConfigstring( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawConfigstring( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int index = (int)CG_GetNumericArg( &argumentnode );
 
@@ -1876,7 +1925,7 @@ static int CG_LFuncDrawConfigstring( struct cg_layoutnode_s *commandnode, struct
 	return true;
 }
 
-static int CG_LFuncDrawPlayername( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawPlayername( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int index = (int)CG_GetNumericArg( &argumentnode ) - 1;
 
@@ -1891,14 +1940,14 @@ static int CG_LFuncDrawPlayername( struct cg_layoutnode_s *commandnode, struct c
 	return false;
 }
 
-static int CG_LFuncDrawNumeric( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawNumeric( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 	CG_DrawHUDNumeric( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_color, layout_cursor_width, layout_cursor_height, value );
 	return true;
 }
 
-static int CG_LFuncDrawStretchNum( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawStretchNum( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	static char num[16];
 	int len;
@@ -1917,7 +1966,7 @@ static int CG_LFuncDrawStretchNum( struct cg_layoutnode_s *commandnode, struct c
 	return true;
 }
 
-static int CG_LFuncDrawNumeric2( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawNumeric2( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 
@@ -1925,7 +1974,7 @@ static int CG_LFuncDrawNumeric2( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
-static int CG_LFuncDrawBar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawBar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 	int maxvalue = (int)CG_GetNumericArg( &argumentnode );
@@ -1935,7 +1984,7 @@ static int CG_LFuncDrawBar( struct cg_layoutnode_s *commandnode, struct cg_layou
 	return true;
 }
 
-static int CG_LFuncDrawPicBar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawPicBar( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 	int maxvalue = (int)CG_GetNumericArg( &argumentnode );
@@ -1946,7 +1995,7 @@ static int CG_LFuncDrawPicBar( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static int CG_LFuncCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int weapon = (int)CG_GetNumericArg( &argumentnode );
 	int hasgun = (int)CG_GetNumericArg( &argumentnode );
@@ -1962,13 +2011,13 @@ static int CG_LFuncCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struc
 	return true;
 }
 
-static int CG_LFuncCustomWeaponSelect( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncCustomWeaponSelect( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	customWeaponSelectPic = CG_GetStringArg( &argumentnode );
 	return true;
 }
 
-static int CG_LFuncDrawWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int offx, offy, w, h;
 
@@ -1982,13 +2031,13 @@ static int CG_LFuncDrawWeaponIcons( struct cg_layoutnode_s *commandnode, struct 
 	return true;
 }
 
-static int CG_LFuncDrawCaptureAreas( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawCaptureAreas( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	// FIXME: DELETE ME
 	return true;
 }
 
-static int CG_LFuncDrawMiniMap( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawMiniMap( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	bool draw_playernames, draw_itemnames;
 
@@ -2000,7 +2049,7 @@ static int CG_LFuncDrawMiniMap( struct cg_layoutnode_s *commandnode, struct cg_l
 	return true;
 }
 
-static int CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int loc_tag = CG_GetNumericArg( &argumentnode );
 	char string[MAX_CONFIGSTRING_CHARS];
@@ -2014,7 +2063,7 @@ static int CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struct
 	return true;
 }
 
-static int CG_LFuncDrawWeaponWeakAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawWeaponWeakAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int offx, offy, fontsize;
 
@@ -2027,7 +2076,7 @@ static int CG_LFuncDrawWeaponWeakAmmo( struct cg_layoutnode_s *commandnode, stru
 	return true;
 }
 
-static int CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int offx, offy, fontsize;
 
@@ -2040,33 +2089,33 @@ static int CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, st
 	return true;
 }
 
-static int CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_DrawTeamInfo( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color );
 	return true;
 }
 
-static int CG_LFuncDrawCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_DrawCrosshair( layout_cursor_x, layout_cursor_y, layout_cursor_align );
-	return qtrue;
+	return true;
 }
 
-static int CG_LFuncDrawKeyState( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawKeyState( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	char *key = CG_GetStringArg( &argumentnode );
+	const char *key = CG_GetStringArg( &argumentnode );
 
 	CG_DrawKeyState( layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, layout_cursor_align, key );
 	return true;
 }
 
-static int CG_LFuncDrawNet( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawNet( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_DrawNet( layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, layout_cursor_align, layout_cursor_color );
 	return true;
 }
 
-static int CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int padding_x, padding_y;
 	struct shader_s *shader;
@@ -2081,16 +2130,16 @@ static int CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_layo
 }
 
 
-static int CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	return (int)CG_GetNumericArg( &argumentnode );
+	return (int)CG_GetNumericArg( &argumentnode ) != 0;
 }
 
 
 typedef struct cg_layoutcommand_s
 {
 	char *name;
-	int ( *func )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
+	bool ( *func )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
 	int numparms;
 	char *help;
 	bool precache;
@@ -2295,6 +2344,22 @@ static cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncDrawNumeric2,
 		1,
 		"Draws numbers as text",
+		false
+	},
+	
+	{
+		"drawStringRepeat",
+		CG_LFuncDrawStringRepeat,
+		2,
+		"Draws argument string multiple times",
+		false
+	},
+	
+	{
+		"drawStringRepeatConfigString",
+		CG_LFuncDrawStringRepeatConfigString,
+		2,
+		"Draws argument string multiple times",
 		false
 	},
 
@@ -2563,7 +2628,7 @@ void Cmd_CG_PrintHudHelp_f( void )
 
 typedef struct cg_layoutnode_s
 {
-	int ( *func )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
+	bool ( *func )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
 	int type;
 	char *string;
 	int integer;
@@ -2578,7 +2643,7 @@ typedef struct cg_layoutnode_s
 /*
 * CG_GetStringArg
 */
-static char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode )
+static const char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode )
 {
 	struct cg_layoutnode_s *anode = *argumentsnode;
 
