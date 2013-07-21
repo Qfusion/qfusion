@@ -204,7 +204,7 @@ static void R_TranslateForEntity( const entity_t *e )
 void R_TransformForEntity( const entity_t *e )
 {
 	if( e->rtype != RT_MODEL ) {
-		R_TranslateForEntity( e );
+		R_TransformForWorld();
 		return;
 	}
 	if( e == rsc.worldent ) {
@@ -455,12 +455,12 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	if( ri.params & RP_MIRRORVIEW )
 		VectorInverse( v_left );
 
-	VectorScale( v_up, radius, point );
-	VectorMA( point, radius, v_left, xyz[0] );
+	VectorMA( e->origin, -radius, v_up, point );
+	VectorMA( point, -radius, v_left, xyz[0] );
 	VectorMA( point, radius, v_left, xyz[3] );
 
-	VectorScale( v_up, radius, point );
-	VectorMA( point, radius, v_left, xyz[1] );
+	VectorMA( e->origin, radius, v_up, point );
+	VectorMA( point, -radius, v_left, xyz[1] );
 	VectorMA( point, radius, v_left, xyz[2] );
 
 	for( i = 0; i < 4; i++ )
@@ -476,6 +476,8 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	mesh.stArray = texcoords;
 	mesh.colorsArray[0] = colors;
 	mesh.colorsArray[1] = NULL;
+
+	RB_BatchMesh( &mesh );
 }
 
 /*
