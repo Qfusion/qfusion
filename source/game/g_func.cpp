@@ -160,6 +160,7 @@ static void Move_Begin( edict_t *ent )
 
 	// set up velocity vector
 	VectorSubtract( ent->moveinfo.dest, ent->s.origin, dir );
+	VectorNormalize( dir );
 	VectorScale( dir, ent->moveinfo.speed, ent->velocity );
 	ent->nextThink = level.time + 1;
 	ent->think = Move_Watch;
@@ -217,6 +218,7 @@ static void AngleMove_Watch( edict_t *ent )
 
 	// update remaining distance
 	VectorSubtract( ent->moveinfo.destangles, ent->s.angles, destdelta );
+	VectorNormalize( destdelta );
 
 	// reached?
 	if( VectorCompare( destdelta, vec3_origin ) )
