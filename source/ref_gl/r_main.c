@@ -961,7 +961,7 @@ static void R_Clear( void )
 /*
 * R_SetupGL
 */
-static void R_SetupGL( void )
+void R_SetupGL( qboolean clear )
 {
 	RB_Scissor( ri.scissor[0], ri.scissor[1], ri.scissor[2], ri.scissor[3] );
 	RB_Viewport( ri.viewport[0], ri.viewport[1], ri.viewport[2], ri.viewport[3] );
@@ -982,7 +982,9 @@ static void R_SetupGL( void )
 	if( ( ri.params & RP_SHADOWMAPVIEW ) && glConfig.ext.shadow )
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE );
 
-	R_Clear();
+	if( clear ) {
+		R_Clear();
+	}
 }
 
 /*
@@ -1228,7 +1230,7 @@ void R_RenderView( const refdef_t *fd )
 	if( r_portalonly->integer && !( ri.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) )
 		return;
 
-	R_SetupGL();
+	R_SetupGL( qtrue );
 
 	if( r_speeds->integer )
 		msec = Sys_Milliseconds();
