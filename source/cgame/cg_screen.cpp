@@ -474,7 +474,7 @@ void CG_DrawCrosshair( int x, int y, int align )
 	}
 }
 
-void CG_DrawKeyState( int x, int y, int w, int h, int align, char *key )
+void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 {
 	int i;
 	qbyte on = 0;
