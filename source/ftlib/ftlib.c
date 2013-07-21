@@ -135,7 +135,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 			if( i < minChar ) {
 				minChar = i;
 			}
-			else if( i > maxChar ) {
+			if( i > maxChar ) {
 				maxChar = i;
 			}
 
@@ -150,6 +150,10 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 		goto done;
 	}
 
+	if( maxChar < FTLIB_REPLACEMENT_GLYPH ) {
+		maxChar = FTLIB_REPLACEMENT_GLYPH;
+	}
+
 	// failed to find an unused slot, take a new one
 	if( faceIndex == numFontFaces ) {
 		numFontFaces++;
@@ -160,6 +164,10 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	fontHeight = ftface->size->metrics.height >> 6;
 	numGlyphs = maxChar + 1;
 	linesPerImage = FTLIB_MAX_FONT_IMAGE_HEIGHT / (fontHeight + margin);
+	if( linesPerImage < 1 ) {
+		Com_Printf( S_COLOR_YELLOW "Warning: Font height limit exceeded for '%s' %i\n", family->name, size );
+		return;
+	}
 	numImages = numLines / linesPerImage + 1;
 
 	// store font info
