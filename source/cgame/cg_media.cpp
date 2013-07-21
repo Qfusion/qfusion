@@ -510,8 +510,9 @@ void CG_RegisterFonts( void )
 	}
 
 	cgs.fontSystemBigSize = con_fontSystemBigSize->integer;
-	cgs.fontSystemSmall = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemBigSize );
-	if( !cgs.fontSystemBig )
+	cgs.fontSystemBig = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemBigSize );
+	if( !cgs.fontSystemBig ) {
 		cgs.fontSystemBigSize = DEFAULT_SYSTEM_FONT_BIG_SIZE;
 		cgs.fontSystemBig = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemBigSize );
+	}
 }
