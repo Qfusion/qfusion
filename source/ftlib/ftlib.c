@@ -166,7 +166,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	linesPerImage = FTLIB_MAX_FONT_IMAGE_HEIGHT / (fontHeight + margin);
 	if( linesPerImage < 1 ) {
 		Com_Printf( S_COLOR_YELLOW "Warning: Font height limit exceeded for '%s' %i\n", family->name, size );
-		return;
+		goto done;
 	}
 	numImages = numLines / linesPerImage + 1;
 
