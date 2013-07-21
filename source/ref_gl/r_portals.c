@@ -398,6 +398,7 @@ setup_and_render:
 	r_viewcluster = oldcluster;		// restore viewcluster for current frame
 	r_viewarea = oldarea;
 	ri = prevRi;
+	R_SetupGL( qtrue );
 
 	if( doRefraction && !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) )
 	{
@@ -510,5 +511,6 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	r_viewarea = oldarea;
 	ri = prevRi;
 
-	R_TransformForEntity( e );
+	// restore modelview and projection matrices, scissoring, etc for the main view
+	R_SetupGL( qtrue );
 }

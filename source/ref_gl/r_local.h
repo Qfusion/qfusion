@@ -436,6 +436,7 @@ extern mempool_t *r_mempool;
 
 void		R_BeginFrame( float cameraSeparation, qboolean forceClear );
 void		R_EndFrame( void );
+void		R_SetupGL( qboolean clear );
 void		R_Set2DMode( qboolean enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_ClearStats( void );
