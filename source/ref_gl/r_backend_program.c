@@ -516,7 +516,7 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 		case RGB_GEN_WAVE:
 		case RGB_GEN_CUSTOMWAVE:
 			programFeatures |= GLSL_SHADER_COMMON_RGB_GEN_CONST;
-			if( rgbgen->func->type == SHADER_FUNC_RAMP ) {
+			if( rgbgen->func && rgbgen->func->type == SHADER_FUNC_RAMP ) {
 				programFeatures |= GLSL_SHADER_COMMON_RGB_DISTANCERAMP;
 			}
 			break;
@@ -535,7 +535,7 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 			break;
 		case ALPHA_GEN_WAVE:
 			programFeatures |= GLSL_SHADER_COMMON_ALPHA_GEN_CONST;
-			if( alphagen->func->type == SHADER_FUNC_RAMP ) {
+			if( alphagen->func && alphagen->func->type == SHADER_FUNC_RAMP ) {
 				programFeatures |= GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP;
 			}
 			break;
