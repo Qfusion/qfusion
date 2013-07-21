@@ -932,6 +932,8 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 
 	program[0] = '\0';
 	Q_strncpyz( program, 
+		"#define APPLY_DEFORMVERTS\n"
+		"\n"
 		"#if defined(APPLY_AUTOSPRITE) || defined(APPLY_AUTOSPRITE2)\n"
 		"attribute vec4 a_SpritePoint;\n"
 		"#else\n"

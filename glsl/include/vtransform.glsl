@@ -5,7 +5,7 @@ void TransformVerts(inout vec4 Position, inout vec3 Normal, inout vec2 TexCoord)
 #endif
 
 #ifdef APPLY_DEFORMVERTS
-	QF_DeformVerts(u_ShaderTime, Position, Normal, TexCoord);
+	QF_DeformVerts(Position, Normal, TexCoord);
 #endif
 
 #ifdef APPLY_INSTANCED_TRANSFORMS
@@ -20,7 +20,7 @@ void TransformVerts(inout vec4 Position, inout vec3 Normal, inout vec3 Tangent, 
 #endif
 
 #ifdef APPLY_DEFORMVERTS
-	QF_DeformVerts(u_ShaderTime, Position, Normal, TexCoord);
+	QF_DeformVerts(Position, Normal, TexCoord);
 #endif
 
 #ifdef APPLY_INSTANCED_TRANSFORMS
