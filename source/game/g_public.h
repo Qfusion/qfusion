@@ -242,7 +242,7 @@ typedef struct
 
 	// Web requests to local HTTP server
 	http_response_code_t ( *WebRequest )( http_query_method_t method, const char *resource, 
-		char **content, size_t *content_length );
+		const char *query_string, char **content, size_t *content_length );
 
 	// gameside rating library
 	struct clientRating_s *( *AddDefaultRating )( edict_t *ent, const char *gametype );

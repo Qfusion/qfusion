@@ -57,7 +57,7 @@ typedef struct callvotetype_s
 	const char *( *current )( void );
 	void ( *extraHelp )( edict_t *ent );
 	http_response_code_t ( *webRequest )( http_query_method_t method, const char *resource, 
-		char **content, size_t *content_length );
+		const char *query_string, char **content, size_t *content_length );
 	char *argument_format;
 	char *help;
 	char *argument_type;
@@ -116,7 +116,7 @@ static void G_AppendString( char **pdst, const char *src, size_t *pdst_len, size
 }
 
 static http_response_code_t G_PlayerlistWebRequest( http_query_method_t method, const char *resource, 
-	char **content, size_t *content_length )
+	const char *query_string, char **content, size_t *content_length )
 {
 	int i;
 	char *msg = NULL;
@@ -291,7 +291,7 @@ static const char *G_VoteMapCurrent( void )
 }
 
 static http_response_code_t G_VoteMapWebRequest( http_query_method_t method, const char *resource, 
-	char **content, size_t *content_length )
+	const char *query_string, char **content, size_t *content_length )
 {
 	int i;
 	char *msg = NULL;
@@ -474,7 +474,7 @@ static void G_VoteGametypeExtraHelp( edict_t *ent )
 }
 
 static http_response_code_t G_VoteGametypeWebRequest( http_query_method_t method, const char *resource, 
-	char **content, size_t *content_length )
+	const char *query_string, char **content, size_t *content_length )
 {
 	char *name; // use buffer to send only one print message
 	int count;
@@ -2706,7 +2706,7 @@ void G_CallVotes_Init( void )
 * G_CallVotes_WebRequest
 */
 http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const char *resource, 
-	char **content, size_t *content_length )
+	const char *query_string, char **content, size_t *content_length )
 {
 	char *msg = NULL;
 	size_t msg_len = 0, msg_size = 0;
@@ -2751,7 +2751,7 @@ http_response_code_t G_CallVotes_WebRequest( http_query_method_t method, const c
 			if( Q_stricmp( callvote->name, votename ) )
 				continue;
 			if( callvote->webRequest )
-				return callvote->webRequest( method, resource, content, content_length );
+				return callvote->webRequest( method, resource, query_string, content, content_length );
 			break;
 		}
 	}
