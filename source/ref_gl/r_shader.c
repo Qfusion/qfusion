@@ -61,6 +61,7 @@ static qboolean	r_shaderNoPicMip;
 static qboolean r_shaderNoFiltering;
 static qboolean	r_shaderNoCompress;
 static qboolean r_shaderHasLightmapPass;
+static qboolean r_shaderHasAutosprite;
 static int		r_shaderAllDetail;
 
 static image_t	*r_defaultImage;
@@ -510,6 +511,8 @@ static int Shader_SetImageFlags( shader_t *shader )
 		flags |= IT_NOCOMPRESS;
 	if( r_shaderNoFiltering )
 		flags |= IT_NOFILTERING;
+	if( r_shaderHasAutosprite )
+		flags |= IT_CLAMP;
 
 	return flags;
 }
@@ -622,6 +625,7 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 	{
 		deformv->type = DEFORMV_AUTOSPRITE;
 		shader->flags |= SHADER_AUTOSPRITE;
+		r_shaderHasAutosprite = qtrue;
 	}
 	else if( !strcmp( token, "autosprite2" ) )
 	{
@@ -2476,6 +2480,7 @@ static void R_LoadShaderReal( shader_t *s, char *shortname, size_t shortname_len
 	r_shaderNoCompress = qfalse;
 	r_shaderNoFiltering = qfalse;
 	r_shaderHasLightmapPass = qfalse;
+	r_shaderHasAutosprite = qfalse;
 	r_shaderAllDetail = SHADERPASS_DETAIL;
 	if( !r_defaultImage )
 		r_defaultImage = r_notexture;
