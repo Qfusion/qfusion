@@ -64,6 +64,7 @@ typedef struct {
 
 	char *method_str;
 	char *resource;
+	char *query_string;
 	char *http_ver;
 
 	qboolean partial;
@@ -80,7 +81,7 @@ typedef struct {
 	int file;
 	size_t file_send_pos;
 	size_t file_chunk_size;
-	char *resource;
+	char *filename;
 } sv_http_response_t;
 
 typedef struct sv_http_connection_s
@@ -149,6 +150,7 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 		request->http_ver = NULL;
 	}
 
+	request->query_string = "";
 	SV_Web_ResetStream( &request->stream );
 
 	request->partial = qfalse;
@@ -162,9 +164,9 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 */
 static void SV_Web_ResetResponse( sv_http_response_t *response )
 {
-	if( response->resource ) {
-		Mem_Free( response->resource );
-		response->resource = NULL;
+	if( response->filename ) {
+		Mem_Free( response->filename );
+		response->filename = NULL;
 	}
 	if( response->file ) {
 		FS_FCloseFile( response->file );
@@ -300,8 +302,7 @@ static int SV_Web_Send( sv_http_connection_t *con, void *sendbuf, size_t sendbuf
 static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 {
 	const char *ptr;
-	char *token;
-	size_t length;
+	char *token, *delim;
 
 	ptr = line;
 
@@ -329,10 +330,11 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 	token = COM_ParseExt( &ptr, qfalse );
 	request->resource = ZoneCopyString( *token ? token : "/" );
 
-	// remove the trailing ?-separator if query string is empty
-	length = strlen( request->resource );
-	if( request->resource[length-1] == '?' ) {
-		request->resource[length-1] = '\0';
+	// split resource into filepath and query string
+	delim = strstr( request->resource, "?" );
+	if( delim ) {
+		*delim = '\0';
+		request->query_string = delim + 1;
 	}
 
 	token = COM_ParseExt( &ptr, qfalse );
@@ -620,31 +622,24 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 	char **content, size_t *content_length )
 {
 	const char *resource = request->resource;
+	const char *query_string = request->query_string;
 
 	*content = NULL;
 	*content_length = 0;
 
 	if( !Q_strnicmp( resource, "game/", 5 ) ) {
 		// request to game module
-		response->resource = ZoneCopyString( resource + 5 );
 		if( ge ) {
-			response->code = ge->WebRequest( request->method, response->resource, content, content_length );
+			response->code = ge->WebRequest( request->method, resource + 5, query_string, content, content_length );
 		}
 		else {
 			response->code = HTTP_RESP_NOT_FOUND;
 		}
 	} else if( !Q_strnicmp( resource, "files/", 6 ) ) {
 		const char *filename, *extension;
-		char *delim;
 		
-		response->resource = ZoneCopyString( resource + 6 );
-
-		// strip query string
-		delim = strstr( response->resource, "?" );
-		if( delim ) {
-			*delim = '\0';
-		}
-		filename = response->resource;
+		filename = resource + 6;
+		response->filename = ZoneCopyString( filename );
 		
 		if( request->method == HTTP_METHOD_GET || request->method == HTTP_METHOD_HEAD ) {
 			// check for malicious URL's
@@ -661,7 +656,7 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 				return;
 			}
 
-			*content_length = FS_FOpenBaseFile( response->resource, &response->file, FS_READ );
+			*content_length = FS_FOpenBaseFile( filename, &response->file, FS_READ );
 			if( !response->file ) {
 				response->code = HTTP_RESP_NOT_FOUND;
 				*content_length = 0;
@@ -675,7 +670,6 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 		}
 	}
 	else {
-		response->resource = ZoneCopyString( resource );
 		response->code = HTTP_RESP_NOT_FOUND;
 	}
 }
@@ -700,7 +694,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 		SV_Web_RouteRequest( request, response, &content, &content_length );
 
 		if( response->file ) {
-			Com_DPrintf( "HTTP serving file '%s' to '%s'\n", response->resource, NET_AddressToString( &con->address ) );
+			Com_DPrintf( "HTTP serving file '%s' to '%s'\n", response->filename, NET_AddressToString( &con->address ) );
 		}
 
 		// serve range requests
@@ -775,7 +769,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 
 	if( response->file ) {
 		Q_strncatz( resp_stream->header_buf, 
-			va( "Content-Disposition: attachment; filename=\"%s\"\r\n", COM_FileBase( response->resource ) ),
+			va( "Content-Disposition: attachment; filename=\"%s\"\r\n", COM_FileBase( response->filename ) ),
 			sizeof( resp_stream->header_buf ) );
 	}
 
@@ -833,7 +827,7 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 					
 					if( FS_Eof( response->file ) ){
 						Com_DPrintf( "HTTP file streaming error: premature EOF on %s to %s\n", 
-							response->resource, NET_AddressToString( &con->address ) );
+							response->filename, NET_AddressToString( &con->address ) );
 						con->open = qfalse;
 						break;
 					}
