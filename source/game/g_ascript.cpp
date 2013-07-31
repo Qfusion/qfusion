@@ -3424,7 +3424,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "int G_ModelIndex( const String &in, bool pure )", asFUNCTION(asFunc_ModelIndexExt) },
 	{ "int G_SoundIndex( const String &in, bool pure )", asFUNCTION(asFunc_SoundIndexExt) },
 	{ "void G_RegisterCommand( const String &in )", asFUNCTION(asFunc_RegisterCommand) },
-	{ "void G_RegisterCallvote( const String &in, const String &in, const String &in )", asFUNCTION(asFunc_RegisterCallvote) },
+	{ "void G_RegisterCallvote( const String &in, const String &in, const String &in, const String &in )", asFUNCTION(asFunc_RegisterCallvote) },
 	{ "void G_ConfigString( int index, const String &in )", asFUNCTION(asFunc_ConfigString) },
 
 	// projectile firing
