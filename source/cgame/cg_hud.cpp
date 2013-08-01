@@ -202,11 +202,6 @@ static int CG_GetMatchState( const void *parameter )
 	return GS_MatchState();
 }
 
-static int CG_GetMatchTime( const void *parameter )
-{
-	return GS_MatchStartTime() + GS_MatchDuration() - ( GS_MatchPaused() ? cg.frame.serverTime : cg.time );
-}
-
 static int CG_GetMatchDuration( const void *parameter )
 {
 	return GS_MatchDuration();
@@ -544,7 +539,6 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "SPEED_VERTICAL", CG_GetSpeedVertical, NULL },
 	{ "FPS", CG_GetFPS, NULL },
 	{ "MATCH_STATE", CG_GetMatchState, NULL },
-	{ "MATCH_TIME", CG_GetMatchTime, NULL },
 	{ "MATCH_DURATION", CG_GetMatchDuration, NULL },
 	{ "OVERTIME", CG_GetOvertime, NULL },
 	{ "INSTAGIB", CG_GetInstagib, NULL },
