@@ -1318,6 +1318,7 @@ qboolean R_PushRefInst( void )
 		return qfalse;
 	}
 	riStack[riStackSize++] = ri;
+	R_EndGL();
 	return qtrue;
 }
 
