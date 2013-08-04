@@ -735,10 +735,14 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	applyDecal = decalmap != NULL;
 
 	// possibly apply the "texture" fog inline
-	if( fog == rb.texFog && ( rb.currentShader->numpasses == 1 ) && !rb.currentShadowBits ) {
-		rb.texFog = NULL;
+	if( fog == rb.texFog ) {
+		if( ( rb.currentShader->numpasses == 1 ) && !rb.currentShadowBits ) {
+			rb.texFog = NULL;
+		}
+		else {
+			fog = NULL;
+		}
 	}
-
 	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	if( rb.currentModelType == mod_brush )
@@ -1338,7 +1342,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 			fog = NULL;
 		}
 	}
-
 	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	// diffuse lighting for entities
@@ -1474,10 +1477,14 @@ static void RB_RenderMeshGLSL_Cellshade( const shaderpass_t *pass, r_glslfeat_t 
 	RB_VertexTCCellshadeMatrix( reflectionMatrix );
 
 	// possibly apply the "texture" fog inline
-	if( fog == rb.texFog && ( rb.currentShader->numpasses == 1 ) && !rb.currentShadowBits ) {
-		rb.texFog = NULL;
+	if( fog == rb.texFog ) {
+		if( ( rb.currentShader->numpasses == 1 ) && !rb.currentShadowBits ) {
+			rb.texFog = NULL;
+		}
+		else {
+			fog = NULL;
+		}
 	}
-
 	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	// convert rgbgen and alphagen to GLSL feature defines
