@@ -47,7 +47,7 @@ void main(void)
 
 #ifdef APPLY_RGB_SHADOW
 uniform sampler2D u_ShadowmapTexture[MAX_SHADOWS];
-# define qfShadow2D(t,v) step(v.z, decodedepthmacro(texture2D(t, v.xy)))
+# define qfShadow2D(t,v) tep(v.z, decodedepthmacro(texture2D(t, v.xy)))
 #else
 uniform sampler2DShadow u_ShadowmapTexture[MAX_SHADOWS];
 # define qfShadow2D(t,v) shadow2D(t,v)

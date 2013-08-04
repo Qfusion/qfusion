@@ -16,6 +16,10 @@
 #include "include/greyscale.glsl"
 #endif
 
+#ifdef APPLY_SOFT_PARTICLE
+#include "include/softparticle.glsl"
+#endif
+
 varying vec3 v_Position;
 
 #ifdef APPLY_DRAWFLAT
@@ -38,6 +42,10 @@ varying vec2 v_LightmapTexCoord[NUM_LIGHTMAPS];
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
 varying vec2 v_FogCoord;
+#endif
+
+#if defined(APPLY_SOFT_PARTICLE)
+varying float v_Depth;
 #endif
 
 #ifdef VERTEX_SHADER
@@ -66,7 +74,7 @@ void main(void)
 
 #ifdef APPLY_FOG
 #if defined(APPLY_FOG_COLOR)
-	FogGen(Position, outColor, APPLY_FOG_COLOR_ALPHA);
+	FogGen(Position, outColor, u_BlendMix);
 #else
 	FogGen(Position, v_FogCoord);
 #endif
@@ -112,6 +120,11 @@ void main(void)
 #endif // NUM_LIGHTMAPS
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;
+
+#if defined(APPLY_SOFT_PARTICLE)
+	vec4 modelPos = u_ModelViewMatrix * Position;
+	v_Depth = -modelPos.z;
+#endif	
 }
 
 #endif // VERTEX_SHADER
@@ -132,6 +145,10 @@ uniform myhalf3 u_FloorColor;
 
 #ifdef NUM_LIGHTMAPS
 uniform sampler2D u_LightmapTexture[NUM_LIGHTMAPS];
+#endif
+
+#if defined(APPLY_SOFT_PARTICLE)
+uniform sampler2D u_DepthTexture;
 #endif
 
 void main(void)
@@ -181,7 +198,12 @@ void main(void)
 	color.rgb = mix(color.rgb, u_Fog.Color, fogDensity);
 #endif
 
-	gl_FragColor = color;
+#if defined(APPLY_SOFT_PARTICLE)
+	myhalf softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_Viewport, u_ZNear, u_ZFar, u_SoftParticlesScale);
+	color *= mix(myhalf4(1.0), myhalf4(softness), u_BlendMix.xxxy);
+#endif
+
+	gl_FragColor = vec4(color);
 }
 
 #endif // FRAGMENT_SHADER

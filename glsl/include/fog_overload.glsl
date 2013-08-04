@@ -1,5 +1,5 @@
 #if defined(FOG_GEN_OUTPUT_COLOR)
-void FogGen(in vec4 Position, inout myhalf4 outColor, const bool alpha)
+void FogGen(in vec4 Position, inout myhalf4 outColor, const myhalf2 blendMix)
 #elif defined(FOG_GEN_OUTPUT_TEXCOORDS)
 void FogGen(in vec4 Position, inout vec2 outTexCoord)
 #endif
@@ -12,11 +12,8 @@ void FogGen(in vec4 Position, inout vec2 outTexCoord)
 
 #if defined(FOG_GEN_OUTPUT_COLOR)
 	myhalf FogDist = FDist * dot(side, myhalf2(1.0, FogDistScale));
-
-	if (alpha)
-	outColor.a *= myhalf(clamp(1.0 - FogDist * u_Fog.Scale, 0.0, 1.0));
-else
-	outColor.rgb *= myhalf(clamp(1.0 - FogDist * u_Fog.Scale, 0.0, 1.0));
+	myhalf FogScale = myhalf(clamp(1.0 - FogDist * u_Fog.Scale, 0.0, 1.0));
+	outColor *= mix(myhalf4(1.0), myhalf4(FogScale), blendMix.xxxy);
 #endif
 
 #if defined(FOG_GEN_OUTPUT_TEXCOORDS)

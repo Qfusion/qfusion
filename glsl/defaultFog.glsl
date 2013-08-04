@@ -1,10 +1,7 @@
 // Fog shader
 
 #include "include/uniforms.glsl"
-
-#ifdef APPLY_FOG
 #include "include/fog.glsl"
-#endif
 
 varying vec2 v_FogCoord;
 
