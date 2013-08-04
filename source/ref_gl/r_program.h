@@ -34,6 +34,7 @@ typedef quint64 r_glslfeat_t;
 #define DEFAULT_GLSL_Q3A_SHADER_PROGRAM		"defaultQ3AShader"
 #define DEFAULT_GLSL_CELLSHADE_PROGRAM		"defaultCellshade"
 #define DEFAULT_GLSL_FOG_PROGRAM			"defaultFog"
+#define DEFAULT_GLSL_FXAA_PROGRAM			"defaultFXAA"
 
 // program types
 enum
@@ -48,6 +49,7 @@ enum
 	GLSL_PROGRAM_TYPE_Q3A_SHADER,
 	GLSL_PROGRAM_TYPE_CELLSHADE,
 	GLSL_PROGRAM_TYPE_FOG,
+	GLSL_PROGRAM_TYPE_FXAA,
 
 	GLSL_PROGRAM_TYPE_MAXTYPE
 };
@@ -163,7 +165,6 @@ void RP_Init( void );
 void RP_Shutdown( void );
 
 void RP_ProgramList_f( void );
-void RP_ProgramDump_f( void );
 
 int	RP_FindProgram( const char *name );
 int	RP_RegisterProgram( int type, const char *name, const char *deformsKey, 

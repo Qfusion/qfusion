@@ -167,6 +167,8 @@ void R_AddLightStyleToScene( int style, float r, float g, float b )
 */
 void R_RenderScene( const refdef_t *fd )
 {
+	int fbFlags = 0;
+
 	if( r_norefresh->integer )
 		return;
 
@@ -190,13 +192,22 @@ void R_RenderScene( const refdef_t *fd )
 	ri.shadowBits = 0;
 	ri.dlightBits = 0;
 	ri.shadowGroup = NULL;
+
+	fbFlags = 0;
 	ri.fbColorAttachment = ri.fbDepthAttachment = NULL;
 	
 	// soft particles require GL_EXT_framebuffer_blit as we need to copy the depth buffer
 	// attachment into a texture we're going to read from in GLSL shader
 	if( r_soft_particles->integer && glConfig.ext.framebuffer_blit ) {
+		fbFlags |= 1;
 		ri.fbColorAttachment = r_screentexture;
 		ri.fbDepthAttachment = r_screendepthtexture;
+	}
+	if( r_fxaa->integer ) {
+		fbFlags |= 2;
+		if( !ri.fbColorAttachment ) {
+			ri.fbColorAttachment = r_screenfxaacopy;
+		}
 	}
 
 	// adjust field of view for widescreen
@@ -222,9 +233,25 @@ void R_RenderScene( const refdef_t *fd )
 
 	R_Set2DMode( qtrue );
 
-	if( ri.fbColorAttachment ) {
+	if( fbFlags & 1 ) {
+		if( fbFlags & 2 ) {
+			// copy to FXAA framebuffer
+			R_UseFBObject( r_screenfxaacopy->fbo );
+		}
+		else {
+			// copy to default framebuffer
+			R_UseFBObject( 0 );
+		}
+
+		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
+			colorWhite, GLSL_PROGRAM_TYPE_NONE, ri.fbColorAttachment );
+	}
+
+	// blend the active framebuffer to screen
+	if( fbFlags & 2 ) {
 		R_UseFBObject( 0 );
-		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, colorWhite, ri.fbColorAttachment );
+		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
+			colorWhite, GLSL_PROGRAM_TYPE_FXAA, r_screenfxaacopy );
 	}
 }
 

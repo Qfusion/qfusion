@@ -245,6 +245,7 @@ extern image_t *r_screentexture;
 extern image_t *r_screendepthtexture;
 extern image_t *r_screentexturecopy;
 extern image_t *r_screendepthtexturecopy;
+extern image_t *r_screenfxaacopy;
 
 extern unsigned int r_pvsframecount;
 extern unsigned int r_framecount;
@@ -326,6 +327,8 @@ extern cvar_t *r_outlines_cutoff;
 
 extern cvar_t *r_soft_particles;
 extern cvar_t *r_soft_particles_scale;
+
+extern cvar_t *r_fxaa;
 
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
@@ -417,6 +420,7 @@ void		R_UseFBObject( int object );
 int			R_ActiveFBObject( void );
 void		R_AttachTextureToFBObject( int object, image_t *texture );
 void		R_DetachTextureFromFBObject( qboolean depth );
+image_t		*R_GetFBObjectTextureAttachment( int object, qboolean depth );
 void		R_DisableFBObjectDrawBuffer( void );
 void		R_CopyFBObject( int dest, int bitMask, int mode );
 qboolean	R_CheckFBObjectStatus( void );
@@ -488,7 +492,7 @@ void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offse
 void		R_EndStretchBatch( void );
 void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const shader_t *shader );
 void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *data );
-void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, image_t *image );
+void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, int program_type, image_t *image );
 
 #define NUM_CUSTOMCOLORS	16
 void		R_InitCustomColors( void );
