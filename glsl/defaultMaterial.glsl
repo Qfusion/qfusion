@@ -54,7 +54,7 @@ void main()
 
 #ifdef APPLY_FOG
 #if defined(APPLY_FOG_COLOR)
-	FogGen(Position, outColor, APPLY_FOG_COLOR_ALPHA);
+	FogGen(Position, outColor, u_BlendMix);
 #else
 	FogGen(Position, v_FogCoord);
 #endif

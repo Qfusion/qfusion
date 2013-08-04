@@ -22,7 +22,7 @@ uniform float u_FrontPlane;
 
 void main(void)
 {
-gl_FrontColor = a_Color;
+	gl_FrontColor = a_Color;
 
 	vec4 Position = a_Position;
 	vec3 Normal = a_Normal;
