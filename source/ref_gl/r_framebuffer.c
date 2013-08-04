@@ -29,11 +29,14 @@ typedef struct
 	int registrationSequence;
 	int objectID;
 	int renderBufferAttachment;
-	image_t *textureAttachment;
+	int width, height;
+	image_t *depthTexture;
+	image_t *colorTexture;
 } r_fbo_t;
 
 static qboolean r_frambuffer_objects_initialized;
-static int r_bound_framebuffer_object;
+static int r_bound_framebuffer_objectID;
+static r_fbo_t *r_bound_framebuffer_object;
 static int r_num_framebuffer_objects;
 static r_fbo_t r_framebuffer_objects[MAX_FRAMEBUFFER_OBJECTS];
 
@@ -49,7 +52,8 @@ void R_InitFBObjects( void )
 	memset( r_framebuffer_objects, 0, sizeof( r_framebuffer_objects ) );
 
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
-	r_bound_framebuffer_object = 0;
+	r_bound_framebuffer_objectID = 0;
+	r_bound_framebuffer_object = NULL;
 
 	r_frambuffer_objects_initialized = qtrue;
 }
@@ -81,10 +85,11 @@ static void R_DeleteFBObject( r_fbo_t *fbo )
 /*
 * R_RegisterFBObject
 */
-int R_RegisterFBObject( void )
+int R_RegisterFBObject( int width, int height )
 {
 	int i;
 	GLuint fbID;
+	GLuint rbID;
 	r_fbo_t *fbo;
 
 	if( !r_frambuffer_objects_initialized )
@@ -110,8 +115,46 @@ found:
 	qglGenFramebuffersEXT( 1, &fbID );
 	memset( fbo, 0, sizeof( *fbo ) );
 	fbo->objectID = fbID;
+	fbo->registrationSequence = rf.registrationSequence;
+	fbo->width = width;
+	fbo->height = height;
+
+	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
+
+	qglGenRenderbuffersEXT( 1, &rbID );
+	fbo->renderBufferAttachment = rbID;
+
+	// setup 24bit depth buffer for render-to-texture
+	qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, fbo->renderBufferAttachment );
+	qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, width, height );
+	qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+
+	// attach depth renderbuffer
+	qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, 
+		GL_RENDERBUFFER_EXT, fbo->renderBufferAttachment );
+
+	if( r_bound_framebuffer_objectID )
+		qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_object->objectID );
+	else
+		qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 
 	return i+1;
+}
+
+/*
+* R_UnregisterFBObject
+*/
+void R_UnregisterFBObject( int object )
+{
+	r_fbo_t *fbo;
+
+	assert( object > 0 && object <= r_num_framebuffer_objects );
+	if( !object ) {
+		return;
+	}
+
+	fbo = r_framebuffer_objects + object - 1;
+	R_DeleteFBObject( fbo );
 }
 
 /*
@@ -122,6 +165,9 @@ void R_TouchFBObject( int object )
 	r_fbo_t *fbo;
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
+	if( !object ) {
+		return;
+	}
 
 	fbo = r_framebuffer_objects + object - 1;
 	fbo->registrationSequence = rf.registrationSequence;
@@ -132,98 +178,174 @@ void R_TouchFBObject( int object )
 */
 int R_ActiveFBObject( void )
 {
-	return r_bound_framebuffer_object;
+	return r_bound_framebuffer_objectID;
 }
 
 /*
 * R_UseFBObject
 */
-qboolean R_UseFBObject( int object )
+void R_UseFBObject( int object )
 {
-	qboolean status;
-
 	if( !object )
 	{
 		if( r_frambuffer_objects_initialized )
 			qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
-		r_bound_framebuffer_object = 0;
+		r_bound_framebuffer_objectID = 0;
+		r_bound_framebuffer_object = NULL;
+		return;
+	}
 
-		return r_frambuffer_objects_initialized;
+	if( !r_frambuffer_objects_initialized ) {
+		return;
 	}
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
+	if( object <= 0 || object > r_num_framebuffer_objects ) {
+		return;
+	}
 
-	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_framebuffer_objects[object-1].objectID );
-	r_bound_framebuffer_object = object;
-
-	status = R_CheckFBObjectStatus ();
-
-	return status;
+	r_bound_framebuffer_objectID = object;
+	r_bound_framebuffer_object = r_framebuffer_objects + object - 1;
+	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_object->objectID );
 }
 
-/*
-* R_AttachTextureToFBOject
-*/
-qboolean R_AttachTextureToFBOject( int object, image_t *texture, qboolean depthOnly )
-{
-	r_fbo_t *fbo;
-	qboolean status;
+#define FBO_ATTACHMENT(depth) (depth ? GL_DEPTH_ATTACHMENT_EXT : GL_COLOR_ATTACHMENT0_EXT)
 
-	if( !object )
-		return qfalse;
-	if( !r_frambuffer_objects_initialized )
-		return qfalse;
+/*
+* R_AttachTextureToFBObject
+*/
+void R_AttachTextureToFBObject( int object, image_t *texture )
+{
+	qboolean depth;
+	r_fbo_t *fbo;
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
-	assert( texture );
+	if( object <= 0 || object > r_num_framebuffer_objects ) {
+		return;
+	}
+
+	assert( texture != NULL );
+	if( !texture ) {
+		return;
+	}
 
 	fbo = r_framebuffer_objects + object - 1;
 
+	if( texture->flags & IT_DEPTH ) {
+		depth = qtrue;
+		fbo->depthTexture = texture;
+	} else {
+		depth = qfalse;
+		fbo->colorTexture = texture;
+	}
+	texture->fbo = fbo->objectID;
+
+	// attach texture
+	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
+	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, FBO_ATTACHMENT(depth), GL_TEXTURE_2D, texture->texnum, 0 );
+	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_objectID ? r_bound_framebuffer_object->objectID : 0 );
+}
+
+/*
+* R_DetachTextureFromFBObject
+*/
+void R_DetachTextureFromFBObject( qboolean depth )
+{
+	r_fbo_t *fbo = r_bound_framebuffer_object;
+
+	if( !r_bound_framebuffer_object )
+		return;
+
+	if( depth ) {
+		fbo->depthTexture = NULL;
+	} else {
+		fbo->colorTexture = NULL;
+	}
+
+	// attach texture
+	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, FBO_ATTACHMENT(depth), GL_TEXTURE_2D, 0, 0 );
+}
+
+/*
+* R_DisableFBObjectDrawBuffer
+*/
+void R_DisableFBObjectDrawBuffer( void )
+{
+	if( !r_bound_framebuffer_object )
+		return;
+
+	qglDrawBuffer( GL_NONE );
+	qglReadBuffer( GL_NONE );
+}
+
+/*
+* R_CopyFBObject
+*
+* The target FBO must be equal or greater in both dimentions than
+* the currently bound FBO!
+*/
+void R_CopyFBObject( int dest, int bitMask, int mode )
+{
+	int bits;
+	int dx, dy, dw, dh;
+	r_fbo_t *fbo = r_bound_framebuffer_object, 
+		*destfbo = r_framebuffer_objects + dest - 1;
+
+	if( !r_bound_framebuffer_object ) {
+		return;
+	}
+	if( !glConfig.ext.framebuffer_blit ) {
+		return;
+	}
+
+	assert( dest > 0 && dest <= r_num_framebuffer_objects );
+	if( dest <= 0 || dest > r_num_framebuffer_objects ) {
+		return;
+	}
+
+	bits = 0;
+	if( fbo->colorTexture && destfbo->colorTexture ) {
+		bits |= GL_COLOR_BUFFER_BIT;
+	}
+	if( fbo->depthTexture && destfbo->depthTexture ) {
+		bits |= GL_DEPTH_BUFFER_BIT;
+	}
+	bits &= bitMask;
+
+	if( !bits ) {
+		return;
+	}
+
+	switch( mode ) {
+		case FBO_COPY_CENTREPOS:
+			dx = (destfbo->width - fbo->width) / 2;
+			dy = (destfbo->height - fbo->height) / 2;
+			dw = fbo->width;
+			dh = fbo->height;
+			break;
+		case FBO_COPY_INVERT_Y:
+			dx = 0;
+			dy = destfbo->height - fbo->height;
+			dw = fbo->width;
+			dh = fbo->height;
+			break;
+		default:
+			dx = 0;
+			dy = 0;
+			dw = fbo->width;
+			dh = fbo->height;
+			break;
+	}
+
+	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+	qglBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, fbo->objectID );
+	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, destfbo->objectID );
+	qglBlitFramebufferEXT( 0, 0, fbo->width, fbo->height, dx, dy, dx + dw, dy + dh, bits, GL_NEAREST );
+	qglBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, 0 );
+	qglBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 );
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
-	if( depthOnly )
-	{
-        // Set up depth_tex for render-to-texture
-		qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, texture->texnum, 0 );
-
-		// inform the driver we do not wish to render to the color buffer
-		qglDrawBuffer( GL_NONE );
-		qglReadBuffer( GL_NONE );
-	}
-	else
-	{
-		// initialize depth renderbuffer
-		if( !fbo->renderBufferAttachment )
-		{
-			GLuint rbID;
-			qglGenRenderbuffersEXT( 1, &rbID );
-			fbo->renderBufferAttachment = rbID;
-		}
-
-		// setup 24bit depth buffer for render-to-texture
-		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, fbo->renderBufferAttachment );
-		qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24,
-			texture->upload_width, texture->upload_height );
-		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
-
-		// attach depth renderbuffer
-		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, 
-			GL_RENDERBUFFER_EXT, fbo->renderBufferAttachment );
-
-		// attach texture
-		qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT,
-			GL_TEXTURE_2D, texture->texnum, 0 );
-		fbo->textureAttachment = texture;
-	}
-
-	status = R_CheckFBObjectStatus ();
-
-	if( r_bound_framebuffer_object )
-		qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_framebuffer_objects[r_bound_framebuffer_object-1].objectID );
-	else
-		qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
-
-	return status;
+	assert( qglGetError() == GL_NO_ERROR );
 }
 
 /*
@@ -288,7 +410,7 @@ void R_ShutdownFBObjects( void )
 	}
 
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
-	r_bound_framebuffer_object = 0;
+	r_bound_framebuffer_objectID = 0;
 
 	r_frambuffer_objects_initialized = qfalse;
 	r_num_framebuffer_objects = 0;

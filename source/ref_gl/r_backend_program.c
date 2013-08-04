@@ -629,14 +629,7 @@ static r_glslfeat_t RB_FogProgramFeatures( const shaderpass_t *pass, const mfog_
 	if( fog )
 	{
 		programFeatures |= GLSL_SHADER_COMMON_FOG;
-
-		if( fog == rb.colorFog )
-		{
-			if( RB_IsAlphaBlending( pass->flags & GLSTATE_SRCBLEND_MASK, pass->flags & GLSTATE_DSTBLEND_MASK ) )
-			{
-				programFeatures |= GLSL_SHADER_COMMON_FOG_ALPHA;
-				return programFeatures;
-			}
+		if( fog == rb.colorFog ) {
 			programFeatures |= GLSL_SHADER_COMMON_FOG_RGB;
 		}
 	}
@@ -652,6 +645,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 	byte_vec4_t constColor;
 	const entity_t *e = rb.currentEntity;
 	vec3_t tmp;
+	vec2_t blendMix = { 0, 0 };
 
 	VectorCopy( e->origin, entOrigin );
 	VectorSubtract( ri.viewOrigin, e->origin, tmp );
@@ -666,16 +660,30 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 		RB_ApplyTCMods( pass, texMatrix );
 	}
 
-	RP_UpdateCommonUniforms( program, 
+	RP_UpdateViewUniforms( program,
 		rb.modelviewMatrix, rb.modelviewProjectionMatrix,
-		rb.currentShaderTime, 
 		ri.viewOrigin, ri.viewAxis, 
 		ri.params & RP_MIRRORVIEW ? -1 : 1,
+		ri.viewport,
+		rb.zNear, rb.zFar
+	);
+
+	RP_UpdateShaderUniforms( program, 
+		rb.currentShaderTime, 
 		entOrigin, entDist, rb.entityColor,
 		constColor, 
 		pass->rgbgen.func ? pass->rgbgen.func->args : pass->rgbgen.args, 
 		pass->alphagen.func ? pass->alphagen.func->args : pass->alphagen.args,
 		texMatrix );
+
+	if( RB_IsAlphaBlending( pass->flags & GLSTATE_SRCBLEND_MASK, pass->flags & GLSTATE_DSTBLEND_MASK ) ) {
+		blendMix[1] = 1;
+	} else {
+		blendMix[0] = 1;
+	}
+	RP_UpdateBlendMixUniform( program, blendMix );
+
+	RP_UpdateSoftParticlesUniforms( program, r_soft_particles_scale->value );
 }
 /*
 
@@ -1193,13 +1201,12 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	mat4_t texMatrix;
 	const mfog_t *fog = rb.fog;
 
-	if( fog )
-	{
-		programFeatures |= GLSL_SHADER_COMMON_FOG|GLSL_SHADER_COMMON_FOG_ALPHA;
+	if( fog ) {
+		programFeatures |= GLSL_SHADER_COMMON_FOG;
 	}
-
-	if( rb.currentModelType == mod_brush )
+	if( rb.currentModelType == mod_brush ) {
 		programFeatures |= GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF;
+	}
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL, NULL, NULL, 0, programFeatures );
@@ -1394,6 +1401,10 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 	RB_SetState( state );
 
+	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
+		RB_BindTexture( 3, r_screendepthtexturecopy );
+	}
+
 	if( isLightmapped ) {
 		int i;
 
@@ -1528,7 +1539,7 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 	const mfog_t *fog = rb.fog;
 	mat4_t texMatrix = { 0 };
 
-	programFeatures |= GLSL_SHADER_COMMON_FOG|GLSL_SHADER_COMMON_FOG_ALPHA;
+	programFeatures |= GLSL_SHADER_COMMON_FOG;
 
 	// set shaderpass state (blending, depthwrite, etc)
 	state = rb.currentShaderState | pass->flags;
@@ -1567,6 +1578,10 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	features |= RB_BonesTransformsToProgramFeatures();
 	features |= RB_AutospriteProgramFeatures();
 	features |= RB_InstancedArraysProgramFeatures();
+	
+	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) && ri.fbDepthAttachment ) {
+		features |= GLSL_SHADER_COMMON_SOFT_PARTICLE;
+	}
 
 	switch( programType )
 	{
@@ -1769,6 +1784,15 @@ void RB_SetInstanceData( int numInstances, const instancePoint_t *instances )
 		return;
 	}
 	RP_UpdateInstancesUniforms( rb.currentProgram, numInstances, instances );
+}
+
+/*
+* RB_SetZClip
+*/
+void RB_SetZClip( float zNear, float zFar )
+{
+	rb.zNear = zNear;
+	rb.zFar = zFar;
 }
 
 /*

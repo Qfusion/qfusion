@@ -61,7 +61,8 @@ enum
 	SHADER_PORTAL_CAPTURE2			= 1 << 12,
 	SHADER_NO_TEX_FILTERING			= 1 << 13,
 	SHADER_ALLDETAIL				= 1 << 14,
-	SHADER_NODRAWFLAT				= 1 << 15
+	SHADER_NODRAWFLAT				= 1 << 15,
+	SHADER_SOFT_PARTICLE			= 1 << 16
 };
 
 // sorting
@@ -231,6 +232,7 @@ typedef struct
 typedef struct shader_s
 {
 	char				*name;
+	unsigned int		id;
 	int					registrationSequence;
 	shaderType_e		type;
 
@@ -261,16 +263,17 @@ typedef struct shader_s
 	struct shader_s		*prev, *next;
 } shader_t;
 
-extern shader_t	r_shaders[MAX_SHADERS];
-extern int r_numShaders;
-
 #define 	Shader_UseTextureFog(s) ( ( (s)->sort <= SHADER_SORT_ALPHATEST && \
 				( (s)->flags & ( SHADER_DEPTHWRITE|SHADER_SKY ) ) ) || (s)->fog_dist )
+
+#define		Shader_ReadDepth(s) ((s)->flags & SHADER_SOFT_PARTICLE)
 
 void		R_InitShaders( void );
 void		R_ShutdownShaders( void );
 
 void		R_UploadCinematicShader( const shader_t *shader );
+
+shader_t	*R_ShaderById( unsigned int id );
 
 shader_t	*R_LoadShader( const char *name, shaderType_e type, qboolean forceDefault );
 

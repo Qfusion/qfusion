@@ -1453,7 +1453,7 @@ static int R_TextureFormat( int samples, qboolean noCompress )
 static void R_Upload32( qbyte **data, int width, int height, int flags, 
 	int *upload_width, int *upload_height, int *samples, int inSamples, qboolean subImage )
 {
-	int i, comp, format;
+	int i, comp, format, type;
 	int target, target2;
 	int numTextures;
 	qbyte *scaled = NULL;
@@ -1526,11 +1526,13 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	{
 		comp = GL_DEPTH_COMPONENT;
 		format = GL_DEPTH_COMPONENT;
+		type = GL_INT;
 	}
 	else if( flags & IT_LUMINANCE )
 	{
 		comp = GL_LUMINANCE;
 		format = GL_LUMINANCE;
+		type = GL_UNSIGNED_BYTE;
 	}
 	else
 	{
@@ -1539,6 +1541,7 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 			format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
 		else
 			format = ( flags & IT_BGRA ? GL_BGR_EXT : GL_RGB );
+		type = GL_UNSIGNED_BYTE;
 	}
 
 	if( flags & IT_NOFILTERING )
@@ -1593,12 +1596,12 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 		if( subImage )
 		{
 			for( i = 0; i < numTextures; i++, target2++ )
-				qglTexSubImage2D( target2, 0, 0, 0, scaledWidth, scaledHeight, format, GL_UNSIGNED_BYTE, data[i] );
+				qglTexSubImage2D( target2, 0, 0, 0, scaledWidth, scaledHeight, format, type, data[i] );
 		}
 		else
 		{
 			for( i = 0; i < numTextures; i++, target2++ )
-				qglTexImage2D( target2, 0, comp, scaledWidth, scaledHeight, 0, format, GL_UNSIGNED_BYTE, data[i] );
+				qglTexImage2D( target2, 0, comp, scaledWidth, scaledHeight, 0, format, type, data[i] );
 		}
 	}
 	else
@@ -1618,9 +1621,9 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 				mip = NULL;
 
 			if( subImage )
-				qglTexSubImage2D( target2, 0, 0, 0, scaledWidth, scaledHeight, format, GL_UNSIGNED_BYTE, mip );
+				qglTexSubImage2D( target2, 0, 0, 0, scaledWidth, scaledHeight, format, type, mip );
 			else
-				qglTexImage2D( target2, 0, comp, scaledWidth, scaledHeight, 0, format, GL_UNSIGNED_BYTE, mip );
+				qglTexImage2D( target2, 0, comp, scaledWidth, scaledHeight, 0, format, type, mip );
 
 			// mipmaps generation
 			if( !( flags & IT_NOMIPMAP ) && mip )
@@ -1643,9 +1646,9 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 					miplevel++;
 
 					if( subImage )
-						qglTexSubImage2D( target2, miplevel, 0, 0, w, h, format, GL_UNSIGNED_BYTE, mip );
+						qglTexSubImage2D( target2, miplevel, 0, 0, w, h, format, type, mip );
 					else
-						qglTexImage2D( target2, miplevel, comp, w, h, 0, format, GL_UNSIGNED_BYTE, mip );
+						qglTexImage2D( target2, miplevel, comp, w, h, 0, format, type, mip );
 				}
 			}
 		}
@@ -1705,17 +1708,6 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 	RB_BindTexture( 0, image );
 
 	R_Upload32( pic, width, height, flags, &image->upload_width, &image->upload_height, &image->samples, image->samples, qfalse );
-
-	if( flags & IT_FRAMEBUFFER )
-	{
-		image->fbo = R_RegisterFBObject ();
-		if( image->fbo &&
-			! R_AttachTextureToFBOject( image->fbo, image, (image->flags & IT_DEPTH ? qtrue : qfalse) ) )
-		{
-			Com_Printf( S_COLOR_YELLOW "Warning: Error attaching texture to a FBO: %s\n", image->name );
-			image->fbo = 0;
-		}
-	}
 
 	image_cur_hash = IMAGES_HASH_SIZE+1;
 	return image;
@@ -2138,6 +2130,7 @@ void R_EnvShot_f( void )
 	ri.params |= RP_CUBEMAPVIEW;
 	ri.clipFlags = 15;
 	ri.shadowGroup = NULL;
+	ri.fbColorAttachment = ri.fbDepthAttachment = NULL;
 
 	Vector4Set( ri.viewport, fd.x, glConfig.height - size - fd.y, size, size );
 	Vector4Set( ri.scissor, fd.x, glConfig.height - size - fd.y, size, size );
@@ -2402,13 +2395,13 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples )
 }
 
 /*
-* R_GetScreenTextureSize
+* R_GetViewportTextureSize
 */
-static void R_GetScreenTextureSize( const int screenWidth, const int screenHeight, const int size, int *width, int *height )
+static void R_GetViewportTextureSize( const int viewportWidth, const int viewportHeight, 
+	const int size, int *width, int *height )
 {
 	int limit;
 	int width_, height_;
-	qboolean screenLimit = glConfig.ext.framebuffer_object ? qfalse : qtrue;
 
 	// limit the texture size to either screen resolution in case we can't use FBO
 	// or hardware limits and ensure it's a POW2-texture if we don't support such textures
@@ -2421,16 +2414,12 @@ static void R_GetScreenTextureSize( const int screenWidth, const int screenHeigh
 
 	if( glConfig.ext.texture_non_power_of_two )
 	{
-		if( screenLimit )
-		{
-			width_ = min( screenWidth, limit );
-			height_ = min( screenHeight, limit );
-		}
+		width_ = min( viewportWidth, limit );
+		height_ = min( viewportHeight, limit );
 	}
 	else
 	{
-		if( screenLimit )
-			limit = min( limit, min( screenWidth, screenHeight ) );
+		limit = min( limit, min( viewportWidth, viewportHeight ) );
 		for( width_ = 2; width_ <= limit; width_ <<= 1 );
 		width_ = height_ = width_ >> 1;
 	}
@@ -2440,59 +2429,62 @@ static void R_GetScreenTextureSize( const int screenWidth, const int screenHeigh
 }
 
 /*
-* R_InitScreenTexture
+* R_InitViewportTexture
 */
-static void R_InitScreenTexture( image_t **texture, const char *name, int id, int screenWidth, int screenHeight, int size, int flags, int samples )
+static void R_InitViewportTexture( image_t **texture, const char *name, int id, 
+	int viewportWidth, int viewportHeight, int size, int flags, int samples )
 {
 	int width, height;
 	image_t *t;
 
-	R_GetScreenTextureSize( screenWidth, screenHeight, size, &width, &height );
+	if( !glConfig.ext.framebuffer_object ) {
+		*texture = NULL;
+		return;
+	}
+
+	R_GetViewportTextureSize( viewportWidth, viewportHeight, size, &width, &height );
 
 	// create a new texture or update the old one
 	if( !( *texture ) || ( *texture )->width != width || ( *texture )->height != height )
 	{
 		qbyte *data = NULL;
 
-		if( !*texture )
-		{
+		if( !*texture ) {
 			char uploadName[128];
 
 			Q_snprintfz( uploadName, sizeof( uploadName ), "***%s_%i***", name, id );
-			*texture = R_LoadImage( uploadName, &data, width, height, flags, samples );
-			return;
+			t = *texture = R_LoadImage( uploadName, &data, width, height, flags, samples );
+		}
+		else { 
+			t = *texture;
+			RB_BindTexture( 0, t );
+			t->width = width;
+			t->height = height;
+			R_Upload32( &data, width, height, flags, &t->upload_width, &t->upload_height, 
+				&t->samples, t->samples, qfalse );
 		}
 
-		t = *texture;
-		RB_BindTexture( 0, t );
-		t->width = width;
-		t->height = height;
-		R_Upload32( &data, width, height, flags, &t->upload_width, &t->upload_height, &t->samples, t->samples, qfalse );
-
-		// update FBO if attached
-		if( t->fbo )
-		{
-			if( !R_AttachTextureToFBOject( t->fbo, t, (flags & IT_DEPTH ? qtrue : qfalse) ) )
-			{
-				Com_Printf( S_COLOR_YELLOW "Warning: Error attaching texture to a FBO: %s\n", t->name );
-				t->fbo = 0;
-			}
+		// update FBO, if attached
+		if( t->fbo ) {
+			R_UnregisterFBObject( t->fbo );
 		}
+		t->fbo = R_RegisterFBObject( t->upload_width, t->upload_height );
+		R_AttachTextureToFBObject( t->fbo, t );
 	}
 }
 
 /*
 * R_GetPortalTextureId
 */
-int R_GetPortalTextureId( const int screenWidth, const int screenHeight, const int flags )
+int R_GetPortalTextureId( const int viewportWidth, const int viewportHeight, const int flags )
 {
 	int i;
 	int best = -1;
 	int realwidth, realheight;
-	int realflags = IT_PORTALMAP|IT_FRAMEBUFFER|flags;
+	int realflags = IT_PORTALMAP|flags;
 	image_t *image;
 
-	R_GetScreenTextureSize( screenWidth, screenHeight, r_portalmaps_maxtexsize->integer, 
+	R_GetViewportTextureSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
 		&realwidth, &realheight );
 
 	for( i = 0; i < MAX_PORTAL_TEXTURES; i++ )
@@ -2526,14 +2518,15 @@ int R_GetPortalTextureId( const int screenWidth, const int screenHeight, const i
 /*
 * R_GetPortalTexture
 */
-image_t *R_GetPortalTexture( int id, int screenWidth, int screenHeight, int flags )
+image_t *R_GetPortalTexture( int id, int viewportWidth, int viewportHeight, int flags )
 {
 	if( id < 0 || id >= MAX_PORTAL_TEXTURES ) {
 		return NULL;
 	}
 
-	R_InitScreenTexture( &r_portaltextures[id], "r_portaltexture", id, screenWidth, screenHeight, 
-		r_portalmaps_maxtexsize->integer, IT_PORTALMAP|IT_FRAMEBUFFER|flags, 3 );
+	R_InitViewportTexture( &r_portaltextures[id], "r_portaltexture", id, 
+		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
+		IT_PORTALMAP|flags, 3 );
 
 	r_portaltextures[id]->framenum = rf.sceneFrameCount;
 	return r_portaltextures[id];
@@ -2542,7 +2535,7 @@ image_t *R_GetPortalTexture( int id, int screenWidth, int screenHeight, int flag
 /*
 * R_GetShadowmapTexture
 */
-image_t *R_GetShadowmapTexture( int id, int screenWidth, int screenHeight, int flags )
+image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, int flags )
 {
 	int samples;
 
@@ -2559,8 +2552,9 @@ image_t *R_GetShadowmapTexture( int id, int screenWidth, int screenHeight, int f
 		samples = 3;
 	}
 
-	R_InitScreenTexture( &r_shadowmapTextures[id], "r_shadowmap", id, screenWidth, screenHeight, 
-		r_shadows_maxtexsize->integer, IT_SHADOWMAP|IT_FRAMEBUFFER|flags, samples );
+	R_InitViewportTexture( &r_shadowmapTextures[id], "r_shadowmap", id, 
+		viewportWidth, viewportHeight, r_shadows_maxtexsize->integer, 
+		IT_SHADOWMAP|flags, samples );
 
 	return r_shadowmapTextures[id];
 }
@@ -2588,6 +2582,33 @@ static void R_InitStretchRawTexture( void )
 }
 
 /*
+* R_InitScreenTexturesPair
+*/
+static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t **depth )
+{
+	R_InitViewportTexture( color, name, 0, 
+		glConfig.width, glConfig.height, 0, 
+		IT_NOFILTERING|IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP, 3 );
+
+	if( *color ) {
+		R_InitViewportTexture( depth, va( "%s_depth", name ), 0,
+			(*color)->upload_width, (*color)->upload_height, 0, 
+			IT_NOFILTERING|IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_DEPTH|IT_CLAMP, 1 );
+
+		R_AttachTextureToFBObject( (*color)->fbo, *depth );
+	}
+}
+
+/*
+* R_InitScreenTextures
+*/
+static void R_InitScreenTextures( void )
+{
+	R_InitScreenTexturesPair( "r_screentex", &r_screentexture, &r_screendepthtexture ); 
+	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, &r_screendepthtexturecopy ); 
+}
+
+/*
 * R_InitBuiltinTextures
 */
 static void R_InitBuiltinTextures( void )
@@ -2609,7 +2630,6 @@ static void R_InitBuiltinTextures( void )
 		{ "***r_blankbumptexture***", &r_blankbumptexture, &R_InitBlankBumpTexture },
 		{ "***r_particletexture***", &r_particletexture, &R_InitParticleTexture },
 		{ "***r_coronatexture***", &r_coronatexture, &R_InitCoronaTexture },
-
 		{ NULL, NULL, NULL }
 	};
 	size_t i, num_builtin_textures = sizeof( textures ) / sizeof( textures[0] ) - 1;
@@ -2630,14 +2650,18 @@ static void R_InitBuiltinTextures( void )
 */
 static void R_TouchBuiltinTextures( void )
 {
-	r_rawtexture->registrationSequence =
-	r_notexture->registrationSequence =
-	r_whitetexture->registrationSequence =
-	r_blacktexture->registrationSequence = 
-	r_greytexture->registrationSequence =
-	r_blankbumptexture->registrationSequence = 
-	r_particletexture->registrationSequence = 
-	r_coronatexture->registrationSequence = rf.registrationSequence;
+	R_TouchImage( r_rawtexture );
+	R_TouchImage( r_notexture );
+	R_TouchImage( r_whitetexture );
+	R_TouchImage( r_blacktexture ); 
+	R_TouchImage( r_greytexture );
+	R_TouchImage( r_blankbumptexture ); 
+	R_TouchImage( r_particletexture ); 
+	R_TouchImage( r_coronatexture ); 
+	R_TouchImage( r_screentexture ); 
+	R_TouchImage( r_screendepthtexture );
+	R_TouchImage( r_screentexturecopy ); 
+	R_TouchImage( r_screendepthtexturecopy );
 }
 
 /*
@@ -2651,6 +2675,8 @@ static void R_ReleaseBuiltinTextures( void )
 	r_blankbumptexture = NULL;
 	r_particletexture = NULL;
 	r_coronatexture = NULL;
+	r_screentexture = r_screendepthtexture = NULL;
+	r_screentexturecopy = r_screendepthtexturecopy = NULL;
 }
 
 //=======================================================
@@ -2688,6 +2714,7 @@ void R_InitImages( void )
 
 	R_InitStretchRawTexture();
 	R_InitBuiltinTextures();
+	R_InitScreenTextures();
 }
 
 /*
@@ -2695,6 +2722,9 @@ void R_InitImages( void )
 */
 void R_TouchImage( image_t *image )
 {
+	if( !image ) {
+		return;
+	}
 	if( image->registrationSequence == rf.registrationSequence ) {
 		return;
 	}

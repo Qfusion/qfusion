@@ -167,10 +167,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	image_t *captureTexture;
 	int captureTextureId = -1;
 	qboolean doReflection, doRefraction;
-	qboolean useFBO;
-	int activeFBO;
 	image_t *portalTexures[2] = { NULL, NULL };
-	refinst_t prevRi;
 
 	doReflection = doRefraction = qtrue;
 	if( shader->flags & SHADER_PORTAL_CAPTURE )
@@ -197,9 +194,6 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 		captureTexture = NULL;
 		captureTextureId = -1;
 	}
-
-	useFBO = qfalse;
-	activeFBO = R_ActiveFBObject();
 
 	x = y = 0;
 	w = ri.refdef.width;
@@ -263,7 +257,10 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 
 	oldcluster = r_viewcluster;
 	oldarea = r_viewarea;
-	prevRi = ri;
+	if( !R_PushRefInst() ) {
+		return;
+	}
+
 setup_and_render:
 
 	if( refraction )
@@ -375,21 +372,22 @@ setup_and_render:
 		ri.refdef.height = h;
 		ri.refdef.x = 0;
 		ri.refdef.y = 0;
+		ri.fbColorAttachment = captureTexture;
+		// no point in capturing the depth buffer due to oblique frustum messing up
+		// the far plane and depth values
+		ri.fbDepthAttachment = NULL;
 		Vector4Set( ri.viewport, ri.refdef.x + x, glConfig.height - h - (ri.refdef.y + y), w, h );
 		Vector4Set( ri.scissor, ri.refdef.x + x, glConfig.height - h - (ri.refdef.y + y), w, h );
 	}
 	else {
+		// no point in capturing the depth buffer due to oblique frustum messing up
+		// the far plane and depth values
+		ri.fbDepthAttachment = NULL;
 		Vector4Set( ri.scissor, ri.refdef.x + x, ri.refdef.y + y, w, h );
 	}
 	
 	VectorCopy( origin, ri.refdef.vieworg );
 	Matrix3_Copy( axis, ri.refdef.viewaxis );
-
-	// check if we can use framebuffer object for RTT (render-to-texture)
-	useFBO = qfalse;
-	if( captureTexture ) {
-		useFBO = R_UseFBObject( captureTexture->fbo );
-	}
 
 	R_RenderView( &ri.refdef );
 
@@ -397,8 +395,6 @@ setup_and_render:
 		r_oldviewcluster = -1;		// force markleafs
 	r_viewcluster = oldcluster;		// restore viewcluster for current frame
 	r_viewarea = oldarea;
-	ri = prevRi;
-	R_SetupGL( qtrue );
 
 	if( doRefraction && !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) )
 	{
@@ -412,9 +408,7 @@ done:
 	portalSurface->texures[0] = portalTexures[0];
 	portalSurface->texures[1] = portalTexures[1];
 
-	if( useFBO ) {
-		R_UseFBObject( activeFBO );
-	}
+	R_PopRefInst( 0 );
 }
 
 /*
@@ -431,7 +425,9 @@ void R_DrawPortals( void )
 	if( !( ri.params & ( RP_MIRRORVIEW|RP_PORTALVIEW|RP_SHADOWMAPVIEW ) ) )
 	{
 		for( i = 0; i < ri.numPortalSurfaces; i++ ) {
-			R_DrawPortalSurface( &ri.portalSurfaces[i] );
+			portalSurface_t portalSurface = ri.portalSurfaces[i]; 
+			R_DrawPortalSurface( &portalSurface );
+			ri.portalSurfaces[i] = portalSurface;
 		}
 	}
 }
@@ -443,14 +439,16 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 {
 	int x, y, w, h;
 	int oldcluster, oldarea;
-	refinst_t prevRi;
 
-	if( !R_ScissorForEntity( e, mins, maxs, &x, &y, &w, &h ) )
+	if( !R_ScissorForEntity( e, mins, maxs, &x, &y, &w, &h ) ) {
 		return;
+	}
+	if( !R_PushRefInst() ) {
+		return;
+	}
 
 	oldcluster = r_viewcluster;
 	oldarea = r_viewarea;
-	prevRi = ri;
 
 	ri.params = ( ri.params|RP_SKYPORTALVIEW ) & ~( RP_OLDVIEWCLUSTER );
 	VectorCopy( skyportal->vieworg, ri.pvsOrigin );
@@ -509,8 +507,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	r_oldviewcluster = -1;			// force markleafs
 	r_viewcluster = oldcluster;		// restore viewcluster for current frame
 	r_viewarea = oldarea;
-	ri = prevRi;
 
 	// restore modelview and projection matrices, scissoring, etc for the main view
-	R_SetupGL( qtrue );
+	R_PopRefInst( ~GL_COLOR_BUFFER_BIT );
 }

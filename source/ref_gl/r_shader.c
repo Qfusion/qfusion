@@ -43,7 +43,7 @@ typedef struct shadercache_s
 	struct shadercache_s *hash_next;
 } shadercache_t;
 
-shader_t r_shaders[MAX_SHADERS];
+static shader_t r_shaders[MAX_SHADERS];
 
 static char *shaderPaths;
 static shader_t r_shaders_hash_headnode[SHADERS_HASH_SIZE], *r_free_shaders;
@@ -904,6 +904,11 @@ static void Shader_Skip( shader_t *shader, shaderpass_t *pass, const char **ptr 
 	Shader_SkipLine( ptr );
 }
 
+static void Shader_SoftParticle( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	shader->flags |= SHADER_SOFT_PARTICLE;
+}
+
 static const shaderkey_t shaderkeys[] =
 {
 	{ "cull", Shader_Cull },
@@ -927,6 +932,7 @@ static const shaderkey_t shaderkeys[] =
 	{ "nodepthtest", Shader_NoDepthTest },
 	{ "template", Shader_Template },
 	{ "skip", Shader_Skip },
+	{ "softparticle", Shader_SoftParticle },
 
 	{ NULL,	NULL }
 };
@@ -2722,6 +2728,18 @@ create_default:
 }
 
 /*
+* R_ShaderById
+*/
+shader_t *R_ShaderById( unsigned int id )
+{
+	assert( id < MAX_SHADERS );
+	if( id >= MAX_SHADERS ) {
+		return NULL;
+	}
+	return r_shaders + id;
+}
+
+/*
 * R_LoadShader
 */
 shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefault )
@@ -2769,7 +2787,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 	memset( s, 0, sizeof( shader_t ) );
 	s->next = next;
 	s->prev = prev;
-
+	s->id = s - r_shaders;
 	R_LoadShaderReal( s, shortname, nameLength, type, forceDefault );
 
 	// add to linked lists

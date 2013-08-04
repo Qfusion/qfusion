@@ -89,7 +89,7 @@ static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes )
 */
 static unsigned int R_PackDistKey( int shaderSort, unsigned int dist, int order )
 {
-	return (shaderSort << 26) | ((dist << 5) & 0x7FFF) << 11 | min( order, 0x7FF );
+	return (shaderSort << 26) | ((max(0x400 - dist, 0) << 5) & 0x7FFF) << 11 | min( order, 0x7FF );
 }
 
 /*
@@ -99,7 +99,7 @@ static unsigned int R_PackSortKey( unsigned int shaderNum, int fogNum,
 	int portalNum, unsigned int entNum )
 {
 	return (shaderNum & 0x7FF) << 21 | (entNum & 0x7FF) << 10 | 
-		((portalNum+1) & 0x1F << 5) | (fogNum+1) & 0x1F;
+		(((portalNum+1) & 0x1F) << 5) | ((unsigned int)(fogNum+1) & 0x1F);
 }
 
 /*
@@ -151,7 +151,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 
 	sds = &list->drawSurfs[list->numDrawSurfs++];
 	sds->distKey = R_PackDistKey( shader->sort, (unsigned int )(max( dist, 0 )), order );
-	sds->sortKey = R_PackSortKey( shader - r_shaders, fog ? fog - r_worldbrushmodel->fogs : -1,
+	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - r_worldbrushmodel->fogs : -1,
 		portalSurf ? portalSurf - ri.portalSurfaces : -1, R_ENT2NUM(e) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
 
@@ -339,6 +339,10 @@ static void _R_DrawSurfaces( void )
 	drawList_t *list = ri.meshlist;
 	float depthmin = gldepthmin, depthmax = gldepthmax;
 	qboolean depthHack = qfalse, cullHack = qfalse;
+	qboolean infiniteProj = qfalse, prevInfiniteProj = qfalse;
+	qboolean depthWrite = qfalse;
+	qboolean depthCopied = qfalse;
+	mat4_t projectionMatrix;
 
 	if( !list->numDrawSurfs ) {
 		return;
@@ -354,7 +358,7 @@ static void _R_DrawSurfaces( void )
 		// decode draw surface properties
 		R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &portalNum, &entNum );
 
-		shader = r_shaders + shaderNum;
+		shader = R_ShaderById( shaderNum );
 		entity = R_NUM2ENT(entNum);
 		fog = fogNum >= 0 ? r_worldbrushmodel->fogs + fogNum : NULL;
 		portalSurface = portalNum >= 0 ? ri.portalSurfaces + portalNum : NULL;
@@ -390,6 +394,28 @@ static void _R_DrawSurfaces( void )
 				R_TransformForEntity( entity );
 			}
 
+			depthWrite = shader->flags & SHADER_DEPTHWRITE ? qtrue : qfalse;
+			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
+				depthCopied = qtrue;
+				if( ri.fbDepthAttachment ) {
+					R_CopyFBObject( r_screentexturecopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
+				}
+			}
+
+			// sky and things that don't use depth test use infinite projection matrix
+			// to not pollute the farclip
+			infiniteProj = shader->flags & (SHADER_NO_DEPTH_TEST|SHADER_SKY) ? qtrue : qfalse;
+			if( infiniteProj != prevInfiniteProj ) {
+				if( infiniteProj ) {
+					Matrix4_Copy( ri.projectionMatrix, projectionMatrix );
+					Matrix4_PerspectiveProjectionToInfinity( Z_NEAR, projectionMatrix );
+					RB_LoadProjectionMatrix( projectionMatrix );
+				}
+				else {
+					RB_LoadProjectionMatrix( ri.projectionMatrix );
+				}
+			}
+
 			RB_BindShader( entity, shader, fog );
 
 			RB_SetShadowBits( rsc.entShadowBits[entNum] & ri.shadowBits );
@@ -403,6 +429,7 @@ static void _R_DrawSurfaces( void )
 			prevFogNum = fogNum;
 			prevBatchDrawSurf = batchDrawSurf;
 			prevPortalNum = portalNum;
+			prevInfiniteProj = infiniteProj;
 
 			if( batchDrawSurf ) {
 				RB_BeginBatch();

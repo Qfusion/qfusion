@@ -333,25 +333,3 @@ int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius
 
 	return 0;
 }
-
-/*
-* R_CullSprite
-*/
-qboolean R_CullSprite( const entity_t *e )
-{
-	float dist;
-
-	if( ri.params & (RP_SHADOWMAPVIEW|RP_ENVVIEW) )
-		return qtrue;
-	if( e )
-		return qtrue;
-
-	dist =
-		( e->origin[0] - ri.refdef.vieworg[0] ) * ri.viewAxis[AXIS_FORWARD+0] +
-		( e->origin[1] - ri.refdef.vieworg[1] ) * ri.viewAxis[AXIS_FORWARD+1] +
-		( e->origin[2] - ri.refdef.vieworg[2] ) * ri.viewAxis[AXIS_FORWARD+2];
-
-	if( dist < 0 )
-		return qtrue;
-	return qfalse;
-}

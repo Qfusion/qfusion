@@ -369,6 +369,16 @@ typedef unsigned int GLhandleARB;
 #define GL_RENDERBUFFER_STENCIL_SIZE_EXT					0x8D55
 #endif /* GL_EXT_framebuffer_object */
 
+/* GL_EXT_framebuffer_object */
+#ifndef GL_EXT_framebuffer_blit
+#define GL_EXT_framebuffer_blit
+
+#define GL_READ_FRAMEBUFFER_EXT                             0x8CA8
+#define GL_DRAW_FRAMEBUFFER_EXT                             0x8CA9
+#define GL_DRAW_FRAMEBUFFER_BINDING_EXT			            0x8CA6 // alias FRAMEBUFFER_BINDING_EXT
+#define GL_READ_FRAMEBUFFER_BINDING_EXT                     0x8CAA
+#endif /* GL_EXT_framebuffer_object */
+
 /* GL_NVX_gpu_memory_info */
 #ifndef GL_NVX_gpu_memory_info
 #define GL_NVX_gpu_memory_info
@@ -537,6 +547,8 @@ QGL_EXT(void, glFramebufferTexture2DEXT, (GLenum, GLenum, GLenum, GLuint, GLint)
 QGL_EXT(void, glFramebufferRenderbufferEXT, (GLenum, GLenum, GLenum, GLuint));
 QGL_EXT(void, glGetFramebufferAttachmentParameterivEXT, (GLenum, GLenum, GLenum, GLint *));
 QGL_EXT(void, glGenerateMipmapEXT, (GLenum));
+
+QGL_EXT(void, glBlitFramebufferEXT, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
 
 QGL_EXT(void, glSwapInterval, (int interval));
 

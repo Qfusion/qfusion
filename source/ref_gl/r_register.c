@@ -82,6 +82,9 @@ cvar_t *r_outlines_world;
 cvar_t *r_outlines_scale;
 cvar_t *r_outlines_cutoff;
 
+cvar_t *r_soft_particles;
+cvar_t *r_soft_particles_scale;
+
 cvar_t *r_lodbias;
 cvar_t *r_lodscale;
 
@@ -272,6 +275,12 @@ static const gl_extension_func_t gl_ext_framebuffer_object_EXT_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_EXT_framebuffer_blit */
+static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
+{
+	GL_EXTENSION_FUNC(BlitFramebufferEXT)
+};
+
 #ifdef _WIN32
 
 /* WGL_EXT_swap_interval */
@@ -315,6 +324,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, vertex_buffer_object, true, true, &gl_ext_vertex_buffer_object_ARB_funcs )
 	,GL_EXTENSION( EXT, draw_range_elements, true, true, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
+	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, true, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
 	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -672,6 +682,9 @@ void R_Register( void )
 	r_outlines_scale = Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );
 	r_outlines_cutoff = Cvar_Get( "r_outlines_cutoff", "712", CVAR_ARCHIVE );
 
+	r_soft_particles = Cvar_Get( "r_soft_particles", "1", CVAR_ARCHIVE );
+	r_soft_particles_scale = Cvar_Get( "r_soft_particles_scale", "0.01", CVAR_ARCHIVE );
+
 	r_lodbias = Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
 
@@ -901,6 +914,8 @@ init_qgl:
 
 	R_InitVolatileAssets();
 
+	R_ClearRefInstStack();
+
 	err = qglGetError();
 	if( err != GL_NO_ERROR )
 		Com_Printf( "glGetError() = 0x%x\n", err );
@@ -989,6 +1004,7 @@ void R_EndRegistration( void )
 	R_FreeUnusedShaders();
 	R_FreeUnusedCinematics();
 	R_FreeUnusedImages();
+	R_FreeUnusedFBObjects();
 
 	RB_EndRegistration();
 

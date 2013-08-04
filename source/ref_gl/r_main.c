@@ -44,6 +44,10 @@ image_t *r_blankbumptexture;
 image_t	*r_coronatexture;
 image_t	*r_portaltextures[MAX_PORTAL_TEXTURES+1];   // portal views
 image_t	*r_shadowmapTextures[MAX_SHADOWGROUPS];
+image_t *r_screentexture;
+image_t *r_screendepthtexture;
+image_t *r_screentexturecopy;
+image_t *r_screendepthtexturecopy;
 
 unsigned int r_pvsframecount;    // bumped when going to a new PVS
 unsigned int r_framecount;       // used for dlight push checking
@@ -456,12 +460,12 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 		VectorInverse( v_left );
 
 	VectorMA( e->origin, -radius, v_up, point );
-	VectorMA( point, -radius, v_left, xyz[0] );
-	VectorMA( point, radius, v_left, xyz[3] );
+	VectorMA( point, radius, v_left, xyz[0] );
+	VectorMA( point, -radius, v_left, xyz[3] );
 
 	VectorMA( e->origin, radius, v_up, point );
-	VectorMA( point, -radius, v_left, xyz[1] );
-	VectorMA( point, radius, v_left, xyz[2] );
+	VectorMA( point, radius, v_left, xyz[1] );
+	VectorMA( point, -radius, v_left, xyz[2] );
 
 	for( i = 0; i < 4; i++ )
 		Vector4Copy( e->color, colors[i] );
@@ -779,6 +783,31 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *da
 }
 
 /*
+* R_DrawStretchImage
+*/
+void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, image_t *image )
+{
+	static char *s_name = "$builtinimage";
+	static shaderpass_t p;
+	static shader_t s;
+
+	s.vattribs = VATTRIB_TEXCOORDS_BIT;
+	s.sort = SHADER_SORT_NEAREST;
+	s.numpasses = 1;
+	s.name = s_name;
+	s.passes = &p;
+
+	p.rgbgen.type = RGB_GEN_IDENTITY;
+	p.alphagen.type = ALPHA_GEN_IDENTITY;
+	p.tcgen = TC_GEN_BASE;
+	p.anim_frames[0] = image;
+
+	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, color, &s );
+
+	R_EndStretchBatch();
+}
+
+/*
 * R_SetScissorRegion
 *
 * Set scissor region for 2D drawing. Passing a negative value
@@ -936,7 +965,7 @@ static void R_SetupViewMatrices( void )
 /*
 * R_Clear
 */
-static void R_Clear( void )
+static void R_Clear( int bitMask )
 {
 	int bits;
 	byte_vec4_t clearColor = { 255, 255, 255, 255 };
@@ -945,11 +974,7 @@ static void R_Clear( void )
 
 	bits = GL_DEPTH_BUFFER_BIT;
 
-	if( (!( ri.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY())
-    // do not clear the color buffer in case we're rendering to a framebuffer object
-    // and a skyportal is present: since the skyportal uses the same FBO that'd clear
-    // the skyportal view we've just rendered
-	 || (R_ActiveFBObject() && !(ri.refdef.rdflags & RDF_SKYPORTALINVIEW)) )
+	if( !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() )
 		bits |= GL_COLOR_BUFFER_BIT;
 	if( glConfig.stencilEnabled )
 		bits |= GL_STENCIL_BUFFER_BIT;
@@ -957,13 +982,22 @@ static void R_Clear( void )
 	if( !( ri.params & RP_SHADOWMAPVIEW ) )
 		Vector4Copy( envColor, clearColor ); 
 
+	bits &= bitMask;
+
+	if( ri.fbColorAttachment && (bits & GL_COLOR_BUFFER_BIT) ) {
+		R_AttachTextureToFBObject( R_ActiveFBObject(), ri.fbColorAttachment );
+	}
+	if( ri.fbDepthAttachment ) {
+		R_AttachTextureToFBObject( R_ActiveFBObject(), ri.fbDepthAttachment );
+	}
+
 	RB_Clear( bits, clearColor );
 }
 
 /*
 * R_SetupGL
 */
-void R_SetupGL( qboolean clear )
+static void R_SetupGL( int clearBitMask )
 {
 	RB_Scissor( ri.scissor[0], ri.scissor[1], ri.scissor[2], ri.scissor[3] );
 	RB_Viewport( ri.viewport[0], ri.viewport[1], ri.viewport[2], ri.viewport[3] );
@@ -973,6 +1007,8 @@ void R_SetupGL( qboolean clear )
 		cplane_t *p = &ri.clipPlane;
 		Matrix4_ObliqueNearClipping( p->normal, -p->dist, ri.cameraMatrix, ri.projectionMatrix );
 	}
+
+	RB_SetZClip( Z_NEAR, ri.farClip );
 
 	RB_LoadProjectionMatrix( ri.projectionMatrix );
 
@@ -984,9 +1020,7 @@ void R_SetupGL( qboolean clear )
 	if( ( ri.params & RP_SHADOWMAPVIEW ) && glConfig.ext.shadow )
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE );
 
-	if( clear ) {
-		R_Clear();
-	}
+	R_Clear( clearBitMask );
 }
 
 /*
@@ -1102,18 +1136,6 @@ static void R_DrawEntities( void )
 			break;
 		case RT_SPRITE:
 			culled = ! R_AddSpriteToDrawList( e );
-
-			// below is a hack to make sprites marked as NO_DEPTH_TEST not flicker due to farclip
-			if( !culled && (e->customShader->flags & SHADER_NO_DEPTH_TEST) )
-			{
-				int i;
-
-				for( i = 0; i < 3; i++ )
-				{
-					ri.visMins[i] = min( ri.visMins[i], e->origin[i] - e->radius * e->scale );
-					ri.visMaxs[i] = max( ri.visMaxs[i], e->origin[i] + e->radius * e->scale );
-				}
-			}
 			break;
 		default:
 			break;
@@ -1130,6 +1152,31 @@ static void R_DrawEntities( void )
 }
 
 //=======================================================================
+
+/*
+* R_UseRefInstFBO
+*/
+static void R_UseRefInstFBO( void )
+{
+	int fbo;
+
+	if( ri.fbColorAttachment ) {
+		fbo = ri.fbColorAttachment->fbo;
+	}
+	else if( ri.fbDepthAttachment ) {
+		fbo = ri.fbDepthAttachment->fbo;
+	}
+	else {
+		fbo = 0;
+	}
+
+	R_UseFBObject( fbo );
+
+	if( fbo && !ri.fbColorAttachment ) {
+		// inform the driver we do not wish to render to the color buffer
+		R_DisableFBObjectDrawBuffer();
+	}
+}
 
 /*
 * R_RenderView
@@ -1227,12 +1274,14 @@ void R_RenderView( const refdef_t *fd )
 
 	R_SortDrawList();
 
+	R_UseRefInstFBO();
+
 	R_DrawPortals();
 
 	if( r_portalonly->integer && !( ri.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) )
 		return;
 
-	R_SetupGL( qtrue );
+	R_SetupGL( ~0 );
 
 	if( r_speeds->integer )
 		msec = Sys_Milliseconds();
@@ -1246,6 +1295,43 @@ void R_RenderView( const refdef_t *fd )
 	R_TransformForWorld();
 
 	R_EndGL();
+}
+
+#define REFINST_STACK_SIZE	64
+static refinst_t riStack[REFINST_STACK_SIZE];
+static unsigned int riStackSize;
+
+/*
+* R_ClearRefInstStack
+*/
+void R_ClearRefInstStack( void )
+{
+	riStackSize = 0;
+}
+
+/*
+* R_PushRefInst
+*/
+qboolean R_PushRefInst( void )
+{
+	if( riStackSize == REFINST_STACK_SIZE ) {
+		return qfalse;
+	}
+	riStack[riStackSize++] = ri;
+	return qtrue;
+}
+
+/*
+* R_PopRefInst
+*/
+void R_PopRefInst( int clearBitMask )
+{
+	if( !riStackSize ) {
+		return;
+	}
+	ri = riStack[--riStackSize];
+	R_UseRefInstFBO();
+	R_SetupGL( clearBitMask );
 }
 
 //=======================================================================
@@ -1405,7 +1491,7 @@ void R_EndFrame( void )
 	R_EndStretchBatch();
 
 	R_PolyBlend();
-
+	
 	// reset the 2D state so that the mode will be 
 	// properly set back again in R_BeginFrame
 	R_Set2DMode( qfalse );
@@ -1475,7 +1561,8 @@ const char *R_SpeedsMessage( char *out, size_t size )
 				int numVerts = 0, numTris = 0;
 
 				Q_snprintfz( out, size,
-					"%s type:%i", r_debug_surface->shader->name, r_debug_surface->facetype );
+					"%s type:%i sort:%i", 
+					r_debug_surface->shader->name, r_debug_surface->facetype, r_debug_surface->shader->sort );
 
 				Q_strncatz( out, "\n", size );
 

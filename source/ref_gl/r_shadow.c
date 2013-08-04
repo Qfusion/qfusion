@@ -333,12 +333,10 @@ static float R_SetupShadowmapView( shadowGroup_t *group, refdef_t *refdef, int l
 void R_DrawShadowmaps( void )
 {
 	unsigned int i;
-	int activeFBO;
 	image_t *shadowmap;
 	int textureWidth, textureHeight;
 	float lodScale;
 	vec3_t lodOrigin;
-	refinst_t prevRi;
 	shadowGroup_t *group;
 	int shadowBits = ri.shadowBits;
 	refdef_t refdef;
@@ -354,12 +352,12 @@ void R_DrawShadowmaps( void )
 	if( !shadowBits )
 		return;
 
-	prevRi = ri;
+	if( !R_PushRefInst() ) {
+		return;
+	}
 
 	lodScale = ri.lod_dist_scale_for_fov;
 	VectorCopy( ri.lodOrigin, lodOrigin );
-
-	activeFBO = R_ActiveFBObject();	// 0 if framebuffer objects are disabled or there's no active FBO
 
 	refdef = ri.refdef;
 
@@ -401,8 +399,6 @@ void R_DrawShadowmaps( void )
 			continue;
 		}
 
-		R_UseFBObject( shadowmap->fbo );
-
 		farClip = R_SetupShadowmapView( group, &refdef, lod );
 
 		// ignore shadowmaps of very low detail level
@@ -410,6 +406,8 @@ void R_DrawShadowmaps( void )
 			continue;
 		}
 
+		ri.fbColorAttachment = NULL;
+		ri.fbDepthAttachment = shadowmap;
 		ri.farClip = farClip;
 		ri.params = RP_SHADOWMAPVIEW|RP_FLIPFRONTFACE;
 		ri.clipFlags |= 16; // clip by far plane too
@@ -431,7 +429,5 @@ void R_DrawShadowmaps( void )
 		Matrix4_Copy( ri.cameraProjectionMatrix, group->cameraProjectionMatrix );
 	}
 
-	R_UseFBObject( activeFBO );
-
-	ri = prevRi;
+	R_PopRefInst( 0 );
 }
