@@ -226,7 +226,7 @@ static void RP_PrecachePrograms( void )
 			int type;
 			r_glslfeat_t lb, hb;
 			r_glslfeat_t features;
-			const char *name;
+			char name[256];
 
 			// read program type
 			token = COM_Parse( ptr );
@@ -255,7 +255,7 @@ static void RP_PrecachePrograms( void )
 				break;
 			}
 
-			name = token;
+			Q_strncpyz( name, token, sizeof( name ) );
 			features = (hb << 32) | lb; 
 
 			Com_DPrintf( "Loading program %s...\n", name );
@@ -299,8 +299,12 @@ static void RP_StorePrecacheList( void )
 		if( *program->deformsKey ) {
 			continue;
 		}
+
 		FS_Printf( handle, "%i %i %i %s\n", 
-			program->type, (int)(program->features & ULONG_MAX), (int)((program->features>>32) & ULONG_MAX), program->name );
+			program->type, 
+			(int)(program->features & ULONG_MAX), 
+			(int)((program->features>>32) & ULONG_MAX), 
+			program->name );
 	}
 
 	FS_FCloseFile( handle );
@@ -346,6 +350,8 @@ static void RP_DeleteProgram( glsl_program_t *program )
 
 	if( program->name )
 		Mem_Free( program->name );
+	if( program->deformsKey )
+		Mem_Free( program->deformsKey );
 
 	hash_next = program->hash_next;
 	memset( program, 0, sizeof( glsl_program_t ) );
@@ -1448,7 +1454,7 @@ done:
 	program->type = type;
 	program->features = features;
 	program->name = RP_CopyString( name );
-	program->deformsKey = *deformsKey ? RP_CopyString( deformsKey ) : "";
+	program->deformsKey = RP_CopyString( deformsKey ? deformsKey : "" );
 
 	if( !program->hash_next )
 	{
