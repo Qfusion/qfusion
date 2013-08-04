@@ -1026,7 +1026,6 @@ void R_Shutdown( qboolean verbose )
 	Cmd_RemoveCommand( "shaderdump" );
 	Cmd_RemoveCommand( "shaderlist" );
 	Cmd_RemoveCommand( "glslprogramlist" );
-	Cmd_RemoveCommand( "glslprogramdump" );
 
 	R_StopAviDemo();
 
