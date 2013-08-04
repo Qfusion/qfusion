@@ -240,13 +240,13 @@ typedef struct shader_s
 	vattribmask_t		vattribs;
 	unsigned int		sort;
 	unsigned int		sortkey;
-	unsigned int		volatileFlags;
 
 	unsigned short		numpasses;
 	shaderpass_t		*passes;
 
 	unsigned short		numdeforms;
 	deformv_t			*deforms;
+	char				*deformsKey;
 
 	qbyte				fog_color[4];
 	float				fog_dist, fog_clearDist;
