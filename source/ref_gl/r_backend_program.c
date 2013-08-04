@@ -1572,6 +1572,33 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 }
 
 /*
+* RB_RenderMeshGLSL_FXAA
+*/
+static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t programFeatures )
+{
+	int state;
+	int program;
+	mat4_t texMatrix = { 0 };
+
+	// set shaderpass state (blending, depthwrite, etc)
+	state = rb.currentShaderState | pass->flags;
+
+	RB_SetState( state );
+
+	RB_BindTexture( 0, pass->anim_frames[0] );
+
+	// update uniforms
+	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
+		rb.currentShader->name, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+	if( RB_BindProgram( program ) )
+	{
+		RB_UpdateCommonUniforms( program, pass, texMatrix );
+
+		RB_DrawElementsReal();
+	}
+}
+
+/*
 * RB_RenderMeshGLSLProgrammed
 */
 void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
@@ -1615,6 +1642,9 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 		break;
 	case GLSL_PROGRAM_TYPE_FOG:
 		RB_RenderMeshGLSL_Fog( pass, features );
+		break;
+	case GLSL_PROGRAM_TYPE_FXAA:
+		RB_RenderMeshGLSL_FXAA( pass, features );
 		break;
 	default:
 		Com_DPrintf( S_COLOR_YELLOW "WARNING: Unknown GLSL program type %i\n", programType );

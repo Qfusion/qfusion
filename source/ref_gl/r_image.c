@@ -2586,14 +2586,15 @@ static void R_InitStretchRawTexture( void )
 */
 static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t **depth )
 {
-	R_InitViewportTexture( color, name, 0, 
-		glConfig.width, glConfig.height, 0, 
-		IT_NOFILTERING|IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP, 3 );
-
-	if( *color ) {
+	if( color ) {
+		R_InitViewportTexture( color, name, 0, 
+			glConfig.width, glConfig.height, 0, 
+			IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP, 3 );
+	}
+	if( depth && *color ) {
 		R_InitViewportTexture( depth, va( "%s_depth", name ), 0,
 			(*color)->upload_width, (*color)->upload_height, 0, 
-			IT_NOFILTERING|IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_DEPTH|IT_CLAMP, 1 );
+			IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_DEPTH|IT_CLAMP, 1 );
 
 		R_AttachTextureToFBObject( (*color)->fbo, *depth );
 	}
@@ -2605,7 +2606,8 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t
 static void R_InitScreenTextures( void )
 {
 	R_InitScreenTexturesPair( "r_screentex", &r_screentexture, &r_screendepthtexture ); 
-	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, &r_screendepthtexturecopy ); 
+	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, &r_screendepthtexturecopy );
+	R_InitScreenTexturesPair( "r_screenfxaacopy", &r_screenfxaacopy, NULL );
 }
 
 /*
@@ -2662,6 +2664,7 @@ static void R_TouchBuiltinTextures( void )
 	R_TouchImage( r_screendepthtexture );
 	R_TouchImage( r_screentexturecopy ); 
 	R_TouchImage( r_screendepthtexturecopy );
+	R_TouchImage( r_screenfxaacopy );
 }
 
 /*
@@ -2677,6 +2680,7 @@ static void R_ReleaseBuiltinTextures( void )
 	r_coronatexture = NULL;
 	r_screentexture = r_screendepthtexture = NULL;
 	r_screentexturecopy = r_screendepthtexturecopy = NULL;
+	r_screenfxaacopy = NULL;
 }
 
 //=======================================================

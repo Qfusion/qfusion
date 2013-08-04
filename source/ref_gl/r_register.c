@@ -85,6 +85,8 @@ cvar_t *r_outlines_cutoff;
 cvar_t *r_soft_particles;
 cvar_t *r_soft_particles_scale;
 
+cvar_t *r_fxaa;
+
 cvar_t *r_lodbias;
 cvar_t *r_lodscale;
 
@@ -685,6 +687,8 @@ void R_Register( void )
 	r_soft_particles = Cvar_Get( "r_soft_particles", "1", CVAR_ARCHIVE );
 	r_soft_particles_scale = Cvar_Get( "r_soft_particles_scale", "0.01", CVAR_ARCHIVE );
 
+	r_fxaa = Cvar_Get( "r_fxaa", "0", CVAR_ARCHIVE );
+
 	r_lodbias = Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
 
@@ -730,7 +734,6 @@ void R_Register( void )
 	Cmd_AddCommand( "modellist", Mod_Modellist_f );
 	Cmd_AddCommand( "gfxinfo", R_GfxInfo_f );
 	Cmd_AddCommand( "glslprogramlist", RP_ProgramList_f );
-	Cmd_AddCommand( "glslprogramdump", RP_ProgramDump_f );
 }
 
 /*

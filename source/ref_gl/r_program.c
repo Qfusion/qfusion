@@ -144,15 +144,6 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program );
 static void RP_PrecachePrograms( void );
 static void RP_StorePrecacheList( void );
 
-static const char *r_defaultMaterialProgram;
-static const char *r_defaultDistortionGLSLProgram;
-static const char *r_defaultRGBShadowGLSLProgram;
-static const char *r_defaultShadowmapGLSLProgram;
-static const char *r_defaultOutlineGLSLProgram;
-static const char *r_defaultQ3AShaderProgram;
-static const char *r_defaultCellshadeProgram;
-static const char *r_defaultFogProgram;
-
 /*
 * RP_Init
 */
@@ -174,6 +165,7 @@ void RP_Init( void )
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELLSHADE, DEFAULT_GLSL_CELLSHADE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
 	
 	// check whether compilation of the shader with GPU skinning succeeds, if not, disable GPU bone transforms
 	if( glConfig.maxGLSLBones ) {
@@ -668,6 +660,11 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ 0, NULL, NULL }
 };
 
+static const glsl_feature_t glsl_features_fxaa[] =
+{
+	{ 0, NULL, NULL }
+};
+
 static const glsl_feature_t * const glsl_programtypes_features[] =
 {
 	// GLSL_PROGRAM_TYPE_NONE
@@ -689,7 +686,9 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	// GLSL_PROGRAM_TYPE_CELLSHADE
 	glsl_features_cellshade,
 	// GLSL_PROGRAM_TYPE_FOG
-	glsl_features_fog
+	glsl_features_fog,
+	// GLSL_PROGRAM_TYPE_FXAA
+	glsl_features_fxaa,
 };
 
 // ======================================================================================
@@ -1487,23 +1486,6 @@ void RP_ProgramList_f( void )
 	}
 	Com_Printf( "%i programs total\n", i );
 }
-
-/*
-* RP_ProgramDump_f
-*/
-#define DUMP_PROGRAM(p) { int file; if( FS_FOpenFile( va("glsl/%s.glsl", #p), &file, FS_WRITE ) != -1 ) { FS_Print( file, r_##p ); FS_FCloseFile( file ); } }
-void RP_ProgramDump_f( void )
-{
-	DUMP_PROGRAM( defaultMaterialProgram );
-	DUMP_PROGRAM( defaultDistortionGLSLProgram );
-	DUMP_PROGRAM( defaultRGBShadowGLSLProgram );
-	DUMP_PROGRAM( defaultShadowmapGLSLProgram );
-	DUMP_PROGRAM( defaultOutlineGLSLProgram );
-	DUMP_PROGRAM( defaultQ3AShaderProgram );
-	DUMP_PROGRAM( defaultCellshadeProgram );
-	DUMP_PROGRAM( defaultFogProgram );
-}
-#undef DUMP_PROGRAM
 
 /*
 * RP_UpdateShaderUniforms

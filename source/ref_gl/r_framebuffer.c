@@ -267,6 +267,22 @@ void R_DetachTextureFromFBObject( qboolean depth )
 }
 
 /*
+* R_GetFBObjectTextureAttachment
+*/
+image_t	*R_GetFBObjectTextureAttachment( int object, qboolean depth )
+{
+	r_fbo_t *fbo;
+
+	assert( object > 0 && object <= r_num_framebuffer_objects );
+	if( object <= 0 || object > r_num_framebuffer_objects ) {
+		return;
+	}
+
+	fbo = r_framebuffer_objects + object - 1;
+	return depth ? fbo->depthTexture : fbo->colorTexture;
+}
+
+/*
 * R_DisableFBObjectDrawBuffer
 */
 void R_DisableFBObjectDrawBuffer( void )

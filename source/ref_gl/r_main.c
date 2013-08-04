@@ -48,6 +48,7 @@ image_t *r_screentexture;
 image_t *r_screendepthtexture;
 image_t *r_screentexturecopy;
 image_t *r_screendepthtexturecopy;
+image_t *r_screenfxaacopy;
 
 unsigned int r_pvsframecount;    // bumped when going to a new PVS
 unsigned int r_framecount;       // used for dlight push checking
@@ -767,7 +768,8 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 /*
 * R_DrawStretchPic
 */
-void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const shader_t *shader )
+void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
+	const vec4_t color, const shader_t *shader )
 {
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, color, shader );
 }
@@ -785,7 +787,8 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *da
 /*
 * R_DrawStretchImage
 */
-void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, image_t *image )
+void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
+	const vec4_t color, int program_type, image_t *image )
 {
 	static char *s_name = "$builtinimage";
 	static shaderpass_t p;
@@ -801,6 +804,7 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 	p.alphagen.type = ALPHA_GEN_IDENTITY;
 	p.tcgen = TC_GEN_BASE;
 	p.anim_frames[0] = image;
+	p.program_type = program_type;
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, color, &s );
 
