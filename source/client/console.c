@@ -674,9 +674,10 @@ void Con_DrawNotify( void )
 		// don't let it go beyond the right screen edge
 		clamp_low( chat_prestep, prewidth - ( width - promptwidth - cursorwidth ) );
 
+		// FIXME: we double the font height to compensate for alignment issues
 		SCR_DrawClampString( x + promptwidth - chat_prestep,
 			y, s, x + promptwidth, y,
-			x + width, y + SCR_strHeight( font ), font, colorWhite );
+			x + width, y + SCR_strHeight( font ) * 2, font, colorWhite );
 
 		if( (int)( cls.realtime>>8 )&1 )
 			SCR_DrawRawChar( x + promptwidth + prewidth - chat_prestep, y, '_',
