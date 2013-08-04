@@ -56,7 +56,6 @@ cvar_t *r_lighting_diffuse2heightmap;
 cvar_t *r_lighting_specular;
 cvar_t *r_lighting_glossintensity;
 cvar_t *r_lighting_glossexponent;
-cvar_t *r_lighting_models_followdeluxe;
 cvar_t *r_lighting_ambientscale;
 cvar_t *r_lighting_directedscale;
 cvar_t *r_lighting_packlightmaps;

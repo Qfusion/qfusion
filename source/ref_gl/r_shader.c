@@ -63,6 +63,7 @@ static qboolean	r_shaderNoCompress;
 static qboolean r_shaderHasLightmapPass;
 static qboolean r_shaderHasAutosprite;
 static int		r_shaderAllDetail;
+static char		r_shaderDeformvKey[1024];
 
 static image_t	*r_defaultImage;
 
@@ -589,6 +590,7 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 {
 	char *token;
 	deformv_t *deformv;
+	shaderfunc_t *func;
 
 	if( shader->numdeforms == MAX_SHADER_DEFORMVS )
 	{
@@ -598,28 +600,41 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 	}
 
 	deformv = &r_currentDeforms[shader->numdeforms];
+	func = &deformv->func;
 
 	token = Shader_ParseString( ptr );
+	Q_strncatz( r_shaderDeformvKey, token, sizeof( r_shaderDeformvKey ) );
+
 	if( !strcmp( token, "wave" ) )
 	{
 		deformv->type = DEFORMV_WAVE;
 		deformv->args[0] = Shader_ParseFloat( ptr );
-		if( deformv->args[0] )
-			deformv->args[0] = 1.0f / deformv->args[0];
-		else
-			deformv->args[0] = 100.0f;
-		Shader_ParseFunc( ptr, &deformv->func );
+		Shader_ParseFunc( ptr, func );
+		Q_strncatz( r_shaderDeformvKey, 
+			va( "%g%i%g%g%g%g", 
+			deformv->args[0], func->type, func->args[0], func->args[1], func->args[2], func->args[3] ), 
+			sizeof( r_shaderDeformvKey ) );
+		deformv->args[0] = deformv->args[0] ? 1.0f / deformv->args[0] : 100.0f;
 	}
 	else if( !strcmp( token, "bulge" ) )
 	{
 		deformv->type = DEFORMV_BULGE;
 		Shader_ParseVector( ptr, deformv->args, 4 );
+		Q_strncatz( r_shaderDeformvKey, 
+			va( "%g%g%g%g", 
+			deformv->args[0], deformv->args[1], deformv->args[2], deformv->args[3] ), 
+			sizeof( r_shaderDeformvKey ) );
 	}
 	else if( !strcmp( token, "move" ) )
 	{
 		deformv->type = DEFORMV_MOVE;
 		Shader_ParseVector( ptr, deformv->args, 3 );
 		Shader_ParseFunc( ptr, &deformv->func );
+		Q_strncatz( r_shaderDeformvKey, 
+			va( "%g%g%g%i%g%g%g%g", 
+			deformv->args[0], deformv->args[1], deformv->args[2],
+			func->type, func->args[0], func->args[1], func->args[2], func->args[3] ), 
+			sizeof( r_shaderDeformvKey ) );
 	}
 	else if( !strcmp( token, "autosprite" ) )
 	{
@@ -2218,6 +2233,9 @@ static void Shader_Finish( shader_t *s )
 	size_t size = strlen( oldname ) + 1;
 	shaderpass_t *pass;
 	qbyte *buffer;
+	size_t deformvKeyLen;
+
+	deformvKeyLen = strlen( r_shaderDeformvKey );
 
 	if( !s->numpasses && !s->sort )
 	{
@@ -2258,6 +2276,8 @@ static void Shader_Finish( shader_t *s )
 	}
 
 	size += s->numdeforms * sizeof( deformv_t ) + s->numpasses * sizeof( shaderpass_t );
+	size += deformvKeyLen + 1;
+
 	for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ )
 	{
 		// rgbgen args
@@ -2285,9 +2305,11 @@ static void Shader_Finish( shader_t *s )
 
 	s->name = ( char * )buffer; buffer += strlen( oldname ) + 1;
 	s->passes = ( shaderpass_t * )buffer; buffer += s->numpasses * sizeof( shaderpass_t );
+	s->deformsKey = ( char * )buffer; buffer += deformvKeyLen + 1;
 
 	strcpy( s->name, oldname );
 	memcpy( s->passes, r_currentPasses, s->numpasses * sizeof( shaderpass_t ) );
+	memcpy( s->deformsKey, r_shaderDeformvKey, deformvKeyLen + 1 );
 
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ )
 	{
@@ -2488,6 +2510,7 @@ static void R_LoadShaderReal( shader_t *s, char *shortname, size_t shortname_len
 	r_shaderHasLightmapPass = qfalse;
 	r_shaderHasAutosprite = qfalse;
 	r_shaderAllDetail = SHADERPASS_DETAIL;
+	r_shaderDeformvKey[0] = '\0';
 	if( !r_defaultImage )
 		r_defaultImage = r_notexture;
 
