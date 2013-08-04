@@ -275,7 +275,7 @@ image_t	*R_GetFBObjectTextureAttachment( int object, qboolean depth )
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
 	if( object <= 0 || object > r_num_framebuffer_objects ) {
-		return;
+		return NULL;
 	}
 
 	fbo = r_framebuffer_objects + object - 1;
