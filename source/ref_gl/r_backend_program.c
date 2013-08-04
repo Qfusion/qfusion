@@ -917,7 +917,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	}
 
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, NULL,
-		rb.currentShader->name, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		// update uniforms
@@ -1010,7 +1010,8 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	RB_BindTexture( 3, portaltexture[1] );           // refraction
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, NULL, NULL, NULL, 0, programFeatures );
+	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, NULL,
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
@@ -1051,7 +1052,8 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 	}
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, NULL, NULL, NULL, 0, programFeatures );
+	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, NULL,
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( !RB_BindProgram( program ) )
 		return;
 
@@ -1104,7 +1106,8 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 	RB_SetState( rb.currentShaderState | pass->flags );
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, NULL, NULL, NULL, 0, programFeatures );
+	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, NULL,
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
@@ -1213,7 +1216,8 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	}
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL, NULL, NULL, 0, programFeatures );
+	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL,
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( !RB_BindProgram( program ) )
 		return;
 
@@ -1419,7 +1423,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, NULL,
-		rb.currentShader->name, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
@@ -1516,7 +1520,7 @@ static void RB_RenderMeshGLSL_Cellshade( const shaderpass_t *pass, r_glslfeat_t 
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELLSHADE, NULL,
-		rb.currentShader->name, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
@@ -1555,7 +1559,7 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, NULL,
-		rb.currentShader->name, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
@@ -1589,7 +1593,7 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
-		rb.currentShader->name, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
