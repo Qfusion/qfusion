@@ -15,6 +15,7 @@ varying vec3 v_EyeVector;
 
 #include "include/attributes.glsl"
 #include "include/vtransform.glsl"
+#include "include/rgbgen.glsl"
 
 #ifdef APPLY_EYEDOT
 uniform float u_FrontPlane;
@@ -22,15 +23,16 @@ uniform float u_FrontPlane;
 
 void main(void)
 {
-	gl_FrontColor = a_Color;
-
 	vec4 Position = a_Position;
 	vec3 Normal = a_Normal;
 	vec2 TexCoord = a_TexCoord;
 	vec3 Tangent = a_SVector.xyz;
 	float TangentDir = a_SVector.w;
+	myhalf4 inColor = myhalf4(a_Color);
 
 	TransformVerts(Position, Normal, TexCoord);
+
+	gl_FrontColor = vec4(VertexRGBGen(Position, Normal, inColor));
 
 	v_TexCoord.st = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 
@@ -125,7 +127,7 @@ void main(void)
 
 	// add reflection and refraction
 #ifdef APPLY_DISTORTION_ALPHA
-	color = myhalf3(gl_Color.rgb) + myhalf3(mix (refr, refl, float(gl_Color.a)));
+	color = myhalf3(gl_Color.rgb) + myhalf3(mix (refr, refl, myhalf(gl_Color.a)));
 #else
 	color = myhalf3(gl_Color.rgb) + refr + refl;
 #endif

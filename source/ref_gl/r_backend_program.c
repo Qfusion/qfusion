@@ -994,6 +994,11 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	Matrix4_Identity( texMatrix );
 
 	RB_BindTexture( 0, pass->anim_frames[0] );  // dudvmap
+	
+	// convert rgbgen and alphagen to GLSL feature defines
+	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
+
+	programFeatures |= RB_FogProgramFeatures( pass, rb.fog );
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetState( rb.currentShaderState | pass->flags );

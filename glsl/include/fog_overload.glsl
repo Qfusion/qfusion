@@ -17,10 +17,8 @@ void FogGen(in vec4 Position, inout vec2 outTexCoord)
 #endif
 
 #if defined(FOG_GEN_OUTPUT_TEXCOORDS)
-
 	myhalf FogS = FDist * dot(side, myhalf2(1.0, step(FVdist, 0.0) * FogDistScale));
 	myhalf FogT = -FVdist;
-
 	outTexCoord = vec2(FogS * u_Fog.Scale, FogT * u_Fog.Scale + 1.5*FOG_TEXCOORD_STEP);
 #endif
 }
