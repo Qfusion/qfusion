@@ -53,6 +53,7 @@ void		Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y,
 	vec_t near, vec_t far, vec_t stereoSeparation, mat4_t m );
 void		Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y, 
 	vec_t near, vec_t stereoSeparation, mat4_t m );
+void		Matrix4_PerspectiveProjectionToInfinity( vec_t near, mat4_t m );
 void		Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m );
 void		Matrix4_ObliqueNearClipping( const vec3_t normal, const vec_t dist, const mat4_t cm, mat4_t pm );
 

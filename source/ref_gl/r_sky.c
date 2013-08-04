@@ -316,8 +316,6 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	vec3_t mins, maxs;
 	int umin, umax, vmin, vmax;
 	entity_t skyent;
-	mat4_t projectionMatrix;
-	mat4_t oldObjectMatrix, oldProjectionMatrix, oldModelviewMatrix;
 	refdef_t *rd = &ri.refdef;
 	skydome_t *skydome = r_worldbrushmodel->skydome;
 
@@ -370,20 +368,6 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	if( rd->rdflags & RDF_SKYPORTALINVIEW ) {
 		R_DrawSkyPortal( e, &rd->skyportal, mins, maxs );
 		return qfalse;
-	}
-
-	Matrix4_Copy( ri.objectMatrix, oldObjectMatrix );
-	Matrix4_Copy( ri.projectionMatrix, oldProjectionMatrix );
-	Matrix4_Copy( ri.modelviewMatrix, oldModelviewMatrix );
-
-	if( rd->rdflags & RDF_USEORTHO ) {
-		// FIXME?
-	}
-	else {
-		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, 
-			Z_NEAR, rf.cameraSeparation, projectionMatrix );
-
-		RB_LoadProjectionMatrix( projectionMatrix );
 	}
 
 	// center skydome on camera to give the illusion of a larger space

@@ -75,6 +75,7 @@ typedef struct r_backend_s
 	mat4_t modelviewMatrix;
 	mat4_t projectionMatrix;
 	mat4_t modelviewProjectionMatrix;
+	float zNear, zFar;
 
 	const entity_t *currentEntity;
 	modtype_t currentModelType;

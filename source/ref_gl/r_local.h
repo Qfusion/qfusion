@@ -47,7 +47,7 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define SUBDIVISIONS_DEFAULT	5
 
 #define MAX_PORTAL_SURFACES		32
-#define MAX_PORTAL_TEXTURES		32
+#define MAX_PORTAL_TEXTURES		64
 
 #define BACKFACE_EPSILON		4
 
@@ -115,6 +115,9 @@ typedef struct portalSurface_s
 typedef struct
 {
 	unsigned int	params;					// rendering parameters
+
+	image_t			*fbColorAttachment;
+	image_t			*fbDepthAttachment;
 
 	refdef_t		refdef;
 	int				scissor[4];
@@ -236,7 +239,12 @@ extern image_t *r_blankbumptexture;
 extern image_t *r_particletexture;
 extern image_t *r_coronatexture;
 extern image_t *r_portaltextures[];
+extern image_t *r_portaldepthtextures[];
 extern image_t *r_shadowmapTextures[];
+extern image_t *r_screentexture;
+extern image_t *r_screendepthtexture;
+extern image_t *r_screentexturecopy;
+extern image_t *r_screendepthtexturecopy;
 
 extern unsigned int r_pvsframecount;
 extern unsigned int r_framecount;
@@ -316,6 +324,9 @@ extern cvar_t *r_outlines_world;
 extern cvar_t *r_outlines_scale;
 extern cvar_t *r_outlines_cutoff;
 
+extern cvar_t *r_soft_particles;
+extern cvar_t *r_soft_particles_scale;
+
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
 
@@ -391,12 +402,23 @@ qboolean	R_CullSpriteEntity( const entity_t *e );
 //
 // r_framebuffer.c
 //
+enum
+{
+	FBO_COPY_NORMAL = 0,
+	FBO_COPY_CENTREPOS = 1,
+	FBO_COPY_INVERT_Y = 2
+};
+
 void		R_InitFBObjects( void );
-int			R_RegisterFBObject( void );
+int			R_RegisterFBObject( int width, int height );
+void		R_UnregisterFBObject( int object );
 void		R_TouchFBObject( int object );
-qboolean	R_UseFBObject( int object );
+void		R_UseFBObject( int object );
 int			R_ActiveFBObject( void );
-qboolean	R_AttachTextureToFBOject( int object, image_t *texture, qboolean depthOnly );
+void		R_AttachTextureToFBObject( int object, image_t *texture );
+void		R_DetachTextureFromFBObject( qboolean depth );
+void		R_DisableFBObjectDrawBuffer( void );
+void		R_CopyFBObject( int dest, int bitMask, int mode );
 qboolean	R_CheckFBObjectStatus( void );
 void		R_FreeUnusedFBObjects( void );
 void		R_ShutdownFBObjects( void );
@@ -436,7 +458,6 @@ extern mempool_t *r_mempool;
 
 void		R_BeginFrame( float cameraSeparation, qboolean forceClear );
 void		R_EndFrame( void );
-void		R_SetupGL( qboolean clear );
 void		R_Set2DMode( qboolean enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_ClearStats( void );
@@ -465,6 +486,9 @@ void		R_AddDebugBounds( const vec3_t mins, const vec3_t maxs );
 
 void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset );
 void		R_EndStretchBatch( void );
+void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const shader_t *shader );
+void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *data );
+void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, image_t *image );
 
 #define NUM_CUSTOMCOLORS	16
 void		R_InitCustomColors( void );
@@ -473,6 +497,10 @@ int			R_GetCustomColor( int num );
 void		R_ShutdownCustomColors( void );
 
 #define ENTITY_OUTLINE(ent) (( !(ri.params & RP_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
+
+void		R_ClearRefInstStack( void );
+qboolean	R_PushRefInst( void );
+void		R_PopRefInst( int clearBitMask );
 
 //
 // r_mesh.c

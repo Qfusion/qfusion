@@ -161,6 +161,7 @@ typedef struct
 				,instanced_arrays
 				,gpu_memory_info
 				,meminfo
+				,framebuffer_blit
 				;
 } glextinfo_t;
 

@@ -190,6 +190,14 @@ void R_RenderScene( const refdef_t *fd )
 	ri.shadowBits = 0;
 	ri.dlightBits = 0;
 	ri.shadowGroup = NULL;
+	ri.fbColorAttachment = ri.fbDepthAttachment = NULL;
+	
+	// soft particles require GL_EXT_framebuffer_blit as we need to copy the depth buffer
+	// attachment into a texture we're going to read from in GLSL shader
+	if( r_soft_particles->integer && glConfig.ext.framebuffer_blit ) {
+		ri.fbColorAttachment = r_screentexture;
+		ri.fbDepthAttachment = r_screendepthtexture;
+	}
 
 	// adjust field of view for widescreen
 	if( glConfig.wideScreen && !( fd->rdflags & RDF_NOFOVADJUSTMENT ) )
@@ -213,6 +221,11 @@ void R_RenderScene( const refdef_t *fd )
 	R_RenderDebugBounds();
 
 	R_Set2DMode( qtrue );
+
+	if( ri.fbColorAttachment ) {
+		R_UseFBObject( 0 );
+		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, colorWhite, ri.fbColorAttachment );
+	}
 }
 
 /*

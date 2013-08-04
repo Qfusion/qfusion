@@ -52,10 +52,14 @@ typedef struct glsl_program_s
 		int			ModelViewMatrix,
 					ModelViewProjectionMatrix,
 
+					ZNear, ZFar,
+
 					ViewOrigin,
 					ViewAxis,
 
 					MirrorSide,
+
+					Viewport,
 
 					LightDir,
 					LightAmbient,
@@ -109,7 +113,11 @@ typedef struct glsl_program_s
 					ShadowProjDistance[GLSL_SHADOWMAP_LIMIT],
 					ShadowmapTextureParams[GLSL_SHADOWMAP_LIMIT],
 					ShadowmapMatrix[GLSL_SHADOWMAP_LIMIT],
-					ShadowAlpha;
+					ShadowAlpha,
+					
+					BlendMix,
+					
+					SoftParticlesScale;
 
 		// builtin uniforms
 		struct {
@@ -425,8 +433,7 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP, "#define APPLY_ALPHA_DISTANCERAMP\n", "_alpha_dr" },
 
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA false\n", "_rgb" },
-	{ GLSL_SHADER_COMMON_FOG_ALPHA, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA true\n", "_alpha" },
+	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
 	{ GLSL_SHADER_COMMON_DLIGHTS_32, "#define NUM_DLIGHTS 32\n", "_dl32" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#define NUM_DLIGHTS 16\n", "_dl16" },
@@ -532,7 +539,6 @@ static const glsl_feature_t glsl_features_outline[] =
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define NUM_BONE_INFLUENCES 1\n", "_bones1" },
 
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_ALPHA, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA true\n", "_alpha" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
@@ -570,8 +576,7 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP, "#define APPLY_ALPHA_DISTANCERAMP\n", "_alpha_dr" },
 
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA false\n", "_rgb" },
-	{ GLSL_SHADER_COMMON_FOG_ALPHA, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA true\n", "_alpha" },
+	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
 	{ GLSL_SHADER_COMMON_DLIGHTS_32, "#define NUM_DLIGHTS 32\n", "_dl32" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#define NUM_DLIGHTS 16\n", "_dl16" },
@@ -586,6 +591,8 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+
+	{ GLSL_SHADER_COMMON_SOFT_PARTICLE, "#define APPLY_SOFT_PARTICLE\n", "_sp" },
 
 	{ GLSL_SHADER_Q3_TC_GEN_REFLECTION, "#define APPLY_TC_GEN_REFLECTION\n", "_tc_refl" },
 	{ GLSL_SHADER_Q3_TC_GEN_PROJECTION, "#define APPLY_TC_GEN_PROJECTION\n", "_tc_proj" },
@@ -623,8 +630,7 @@ static const glsl_feature_t glsl_features_cellshade[] =
 	{ GLSL_SHADER_COMMON_ALPHA_GEN_CONST, "#define APPLY_ALPHA_CONST\n", "_ac" },
 
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA false\n", "_rgb" },
-	{ GLSL_SHADER_COMMON_FOG_ALPHA, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA true\n", "_alpha" },
+	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
 	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
@@ -649,9 +655,8 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define NUM_BONE_INFLUENCES 2\n", "_bones2" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define NUM_BONE_INFLUENCES 1\n", "_bones1" },
 
-	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
-	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA false\n", "_rgb" },
-	{ GLSL_SHADER_COMMON_FOG_ALPHA, "#define APPLY_FOG_COLOR\n#define APPLY_FOG_COLOR_ALPHA true\n", "_alpha" },
+	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n", "_fog" },
+	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
 	{ GLSL_SHADER_COMMON_AUTOSPRITE, "#define APPLY_AUTOSPRITE\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
@@ -1501,45 +1506,16 @@ void RP_ProgramDump_f( void )
 #undef DUMP_PROGRAM
 
 /*
-* RP_UpdateCommonUniforms
+* RP_UpdateShaderUniforms
 */
-void RP_UpdateCommonUniforms( int elem, 
-	const mat4_t modelviewMatrix, const mat4_t modelviewProjectionMatrix,
+void RP_UpdateShaderUniforms( int elem, 
 	float shaderTime, 
-	const vec3_t viewOrigin, const mat3_t viewAxis, 
-	const float mirrorSide,
 	const vec3_t entOrigin, const vec3_t entDist, const qbyte *entityColor, 
 	const qbyte *constColor, const float *rgbGenFuncArgs, const float *alphaGenFuncArgs,
 	const mat4_t texMatrix )
 {
 	GLfloat m[9];
 	glsl_program_t *program = r_glslprograms + elem - 1;
-
-	if( program->loc.ModelViewMatrix >= 0 ) {
-		qglUniformMatrix4fvARB( program->loc.ModelViewMatrix, 1, GL_FALSE, modelviewMatrix );
-	}
-	if( program->loc.ModelViewProjectionMatrix >= 0 ) {
-		qglUniformMatrix4fvARB( program->loc.ModelViewProjectionMatrix, 1, GL_FALSE, modelviewProjectionMatrix );
-	}
-
-	if( viewOrigin ) {
-		if( program->loc.ViewOrigin >= 0 )
-			qglUniform3fvARB( program->loc.ViewOrigin, 1, viewOrigin );
-		if( program->loc.builtin.ViewOrigin >= 0 )
-			qglUniform3fvARB( program->loc.builtin.ViewOrigin, 1, viewOrigin );
-	}
-
-	if( viewAxis ) {
-		if( program->loc.ViewAxis >= 0 )
-			qglUniformMatrix3fvARB( program->loc.ViewAxis, 1, GL_FALSE, viewAxis );
-		if( program->loc.builtin.ViewAxis >= 0 )
-			qglUniformMatrix3fvARB( program->loc.builtin.ViewAxis, 1, GL_FALSE, viewAxis );
-	}
-
-	if( program->loc.MirrorSide >= 0 )
-		qglUniform1fARB( program->loc.MirrorSide, mirrorSide );
-	if( program->loc.builtin.MirrorSide >= 0 )
-		qglUniform1fARB( program->loc.builtin.MirrorSide, mirrorSide );
 
 	if( entDist ) {
 		if( program->loc.EntityOrigin >= 0 )
@@ -1572,6 +1548,85 @@ void RP_UpdateCommonUniforms( int elem,
 		m[4] = texMatrix[12], m[5] = texMatrix[13];
 
 		qglUniform2fvARB( program->loc.TextureMatrix, 3, m );
+	}
+}
+
+/*
+* RP_UpdateViewUniforms
+*/
+void RP_UpdateViewUniforms( int elem, 
+	const mat4_t modelviewMatrix, const mat4_t modelviewProjectionMatrix,
+	const vec3_t viewOrigin, const mat3_t viewAxis, 
+	const float mirrorSide, 
+	int viewport[4],
+	float zNear, float zFar )
+{
+	glsl_program_t *program = r_glslprograms + elem - 1;
+
+	if( program->loc.ModelViewMatrix >= 0 ) {
+		qglUniformMatrix4fvARB( program->loc.ModelViewMatrix, 1, GL_FALSE, modelviewMatrix );
+	}
+	if( program->loc.ModelViewProjectionMatrix >= 0 ) {
+		qglUniformMatrix4fvARB( program->loc.ModelViewProjectionMatrix, 1, GL_FALSE, modelviewProjectionMatrix );
+	}
+
+	if( program->loc.ZNear >= 0 ) {
+		qglUniform1fARB( program->loc.ZNear, zNear );
+	}
+	if( program->loc.ZFar >= 0 ) {
+		qglUniform1fARB( program->loc.ZFar, zFar );
+	}
+
+	if( viewOrigin ) {
+		if( program->loc.ViewOrigin >= 0 )
+			qglUniform3fvARB( program->loc.ViewOrigin, 1, viewOrigin );
+		if( program->loc.builtin.ViewOrigin >= 0 )
+			qglUniform3fvARB( program->loc.builtin.ViewOrigin, 1, viewOrigin );
+	}
+
+	if( viewAxis ) {
+		if( program->loc.ViewAxis >= 0 )
+			qglUniformMatrix3fvARB( program->loc.ViewAxis, 1, GL_FALSE, viewAxis );
+		if( program->loc.builtin.ViewAxis >= 0 )
+			qglUniformMatrix3fvARB( program->loc.builtin.ViewAxis, 1, GL_FALSE, viewAxis );
+	}
+
+	if( program->loc.Viewport >= 0 ) {
+		qglUniform4ivARB( program->loc.Viewport, 1, viewport );
+	}
+
+	if( program->loc.MirrorSide >= 0 )
+		qglUniform1fARB( program->loc.MirrorSide, mirrorSide );
+	if( program->loc.builtin.MirrorSide >= 0 )
+		qglUniform1fARB( program->loc.builtin.MirrorSide, mirrorSide );
+}
+
+/*
+* RP_UpdateBlendMixUniform
+*
+* The first component corresponds to RGB, the second to ALPHA.
+* Whenever the program needs to scale source colors, the mask needs
+* to be used in the following manner:
+* color *= mix(myhalf4(1.0), myhalf4(scale), u_BlendMix.xxxy);
+*/
+void RP_UpdateBlendMixUniform( int elem, vec2_t blendMix )
+{
+	glsl_program_t *program = r_glslprograms + elem - 1;
+
+	if( program->loc.BlendMix >= 0 ) {
+		qglUniform2fvARB( program->loc.BlendMix, 1, blendMix );
+	}
+}
+
+/*
+* RP_UpdateSoftParticlesUniforms
+*/
+void RP_UpdateSoftParticlesUniforms( int elem, float scale )
+{
+	glsl_program_t *program = r_glslprograms + elem - 1;
+
+	if( program->loc.SoftParticlesScale >= 0 ) {
+		qglUniform1fARB( program->loc.SoftParticlesScale, scale );
 	}
 }
 
@@ -1847,17 +1902,23 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 			locCellShadeTexture,
 			locCellLightTexture,
 			locDiffuseTexture,
-			locStripesTexture;
+			locStripesTexture,
+			locDepthTexture;
 
 	memset( &program->loc, -1, sizeof( program->loc ) );
 
 	program->loc.ModelViewMatrix = qglGetUniformLocationARB( program->object, "u_ModelViewMatrix" );
 	program->loc.ModelViewProjectionMatrix = qglGetUniformLocationARB( program->object, "u_ModelViewProjectionMatrix" );
 
+	program->loc.ZNear = qglGetUniformLocationARB( program->object, "u_ZNear" );
+	program->loc.ZFar = qglGetUniformLocationARB( program->object, "u_ZFar" );
+
 	program->loc.ViewOrigin = qglGetUniformLocationARB( program->object, "u_ViewOrigin" );
 	program->loc.ViewAxis = qglGetUniformLocationARB( program->object, "u_ViewAxis" );
 
 	program->loc.MirrorSide = qglGetUniformLocationARB( program->object, "u_MirrorSide" );
+
+	program->loc.Viewport = qglGetUniformLocationARB( program->object, "u_Viewport" );
 
 	program->loc.LightDir = qglGetUniformLocationARB( program->object, "u_LightDir" );
 	program->loc.LightAmbient = qglGetUniformLocationARB( program->object, "u_LightAmbient" );
@@ -1885,6 +1946,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	locCellLightTexture = qglGetUniformLocationARB( program->object, "u_CellLightTexture" );
 	locDiffuseTexture = qglGetUniformLocationARB( program->object, "u_DiffuseTexture" );
 	locStripesTexture = qglGetUniformLocationARB( program->object, "u_StripesTexture" );
+
+	locDepthTexture = qglGetUniformLocationARB( program->object, "u_DepthTexture" );
 
 	program->loc.LightstyleColor = qglGetUniformLocationARB( program->object, "u_LightstyleColor" );
 	program->loc.DeluxemapOffset = qglGetUniformLocationARB( program->object, "u_DeluxemapOffset" );
@@ -1967,6 +2030,10 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 
 	program->loc.ShadowAlpha = qglGetUniformLocationARB( program->object, "u_ShadowAlpha" );
 
+	program->loc.BlendMix = qglGetUniformLocationARB( program->object, "u_BlendMix" );
+
+	program->loc.SoftParticlesScale = qglGetUniformLocationARB( program->object, "u_SoftParticlesScale" );
+	
 	program->loc.WallColor = qglGetUniformLocationARB( program->object, "u_WallColor" );
 	program->loc.FloorColor = qglGetUniformLocationARB( program->object, "u_FloorColor" );
 
@@ -2006,6 +2073,9 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 		qglUniform1iARB( locStripesTexture, 5 );
 	if( locCellLightTexture >= 0 )
 		qglUniform1iARB( locCellLightTexture, 6 );
+
+	if( locDepthTexture >= 0 )
+		qglUniform1iARB( locDepthTexture, 3 );
 
 	for( i = 0; i < MAX_LIGHTMAPS && locLightmapTexture[i] >= 0; i++ )
 		qglUniform1iARB( locLightmapTexture[i], i+4 );

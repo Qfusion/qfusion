@@ -70,9 +70,9 @@ void R_InitImages( void );
 void R_TouchImage( image_t *image );
 void R_FreeUnusedImages( void );
 void R_ShutdownImages( void );
-int	R_GetPortalTextureId( const int screenWidth, const int screenHeight, const int flags );
-image_t *R_GetPortalTexture( int id, int screenWidth, int screenHeight, int flags );
-image_t *R_GetShadowmapTexture( int id, int screenWidth, int screenHeight, int flags );
+int	R_GetPortalTextureId( const int viewportWidth, const int viewportHeight, const int flags );
+image_t *R_GetPortalTexture( int id, int viewportWidth, int viewportHeight, int flags );
+image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, int flags );
 void R_InitDrawFlatTexture( void );
 void R_FreeImageBuffers( void );
 

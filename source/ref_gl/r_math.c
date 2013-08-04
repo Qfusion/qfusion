@@ -382,13 +382,15 @@ void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y,
 	m[15] = 0.0f;
 }
 
+#define INFINITE_PROJECTION_EPSILON		24e-8
+
 /*
 * Matrix4_InfinitePerspectiveProjection
 */
 void Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y, 
 	vec_t near, vec_t stereoSeparation, mat4_t m )
 {
-	const vec_t epsilon = 24e-8;
+	const vec_t epsilon = INFINITE_PROJECTION_EPSILON;
 	m[0] = 1.0f / tan( fov_x * M_PI / 360.0 );
 	m[1] = 0.0f;
 	m[2] = 0.0f;
@@ -405,6 +407,16 @@ void Matrix4_InfinitePerspectiveProjection( vec_t fov_x, vec_t fov_y,
 	m[13] = 0.0f;
 	m[14] = (epsilon - 2.0f) * near;
 	m[15] = 0.0f;
+}
+
+/*
+* Matrix4_PerspectiveProjectionToInfinity
+*/
+void Matrix4_PerspectiveProjectionToInfinity( vec_t near, mat4_t m )
+{
+	const vec_t epsilon = INFINITE_PROJECTION_EPSILON;
+	m[10] = epsilon - 1.0f;
+	m[14] = (epsilon - 2.0f) * near;
 }
 
 /*

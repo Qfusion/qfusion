@@ -56,7 +56,7 @@ enum
 #define GLSL_SHADER_COMMON_GRAYSCALE			GLSL_BIT(0)
 #define GLSL_SHADER_COMMON_FOG					GLSL_BIT(1)
 #define GLSL_SHADER_COMMON_FOG_RGB				GLSL_BIT(2)
-#define GLSL_SHADER_COMMON_FOG_ALPHA			GLSL_BIT(3)
+
 
 #define GLSL_SHADER_COMMON_RGB_GEN_CONST 		GLSL_BIT(4)
 #define GLSL_SHADER_COMMON_RGB_GEN_VERTEX 		GLSL_BIT(5)
@@ -90,6 +90,8 @@ enum
 
 #define GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS	GLSL_BIT(21)
 #define GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS	GLSL_BIT(22)
+
+#define GLSL_SHADER_COMMON_SOFT_PARTICLE		GLSL_BIT(23)
 
 // material prgoram type features
 #define GLSL_SHADER_MATERIAL_LIGHTSTYLE0		GLSL_BIT(32)
@@ -168,15 +170,22 @@ int	RP_RegisterProgram( int type, const char *name, const char *deformsKey,
 	const deformv_t *deforms, int numDeforms, r_glslfeat_t features );
 int	RP_GetProgramObject( int elem );
 
-void RP_UpdateCommonUniforms( int elem, 
-	const mat4_t modelviewMatrix, const mat4_t modelviewProjectionMatrix,
+void RP_UpdateShaderUniforms( int elem, 
 	float shaderTime, 
-	const vec3_t viewOrigin, const mat3_t viewAxis, 
-	const float mirrorSide,
-	const vec3_t entOrigin, const vec3_t entDist,
-	const qbyte *entityColor, const qbyte *constColor, 
-	const float *rgbGenArgs, const float *alphaGenArgs,
+	const vec3_t entOrigin, const vec3_t entDist, const qbyte *entityColor, 
+	const qbyte *constColor, const float *rgbGenFuncArgs, const float *alphaGenFuncArgs,
 	const mat4_t texMatrix );
+
+void RP_UpdateViewUniforms( int elem, 
+	const mat4_t modelviewMatrix, const mat4_t modelviewProjectionMatrix,
+	const vec3_t viewOrigin, const mat3_t viewAxis, 
+	const float mirrorSide, 
+	int viewport[4],
+	float zNear, float zFar );
+
+void RP_UpdateBlendMixUniform( int elem, vec2_t blendMask );
+
+void RP_UpdateSoftParticlesUniforms( int elem, float scale );
 
 void RP_UpdateMaterialUniforms( int elem, 
 	float offsetmappingScale, float glossIntensity, float glossExponent );

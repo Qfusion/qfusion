@@ -48,6 +48,7 @@ void RB_LoadObjectMatrix( const mat4_t m );
 void RB_LoadModelviewMatrix( const mat4_t m );
 void RB_LoadProjectionMatrix( const mat4_t m );
 
+
 void RB_BindTexture( int tmu, const image_t *tex );
 void RB_AllocTextureNum( image_t *tex );
 void RB_FreeTextureNum( image_t *tex );
@@ -87,6 +88,7 @@ void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
 qboolean RB_EnableTriangleOutlines( qboolean enable );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
+void RB_SetZClip( float zNear, float zFar );
 
 vattribmask_t RB_GetVertexAttribs( void );
 

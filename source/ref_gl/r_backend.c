@@ -75,6 +75,7 @@ void RB_Shutdown( void )
 void RB_BeginRegistration( void )
 {
 	RB_RegisterStreamVBOs();
+	RB_BindVBO( 0, 0 );
 }
 
 /*
@@ -82,6 +83,7 @@ void RB_BeginRegistration( void )
 */
 void RB_EndRegistration( void )
 {
+	RB_BindVBO( 0, 0 );
 }
 
 /*
@@ -105,7 +107,9 @@ void RB_BeginFrame( void )
 
 	memset( &rb.stats, 0, sizeof( rb.stats ) );
 
+	// start fresh each frame
 	RB_SetShaderStateMask( ~0, 0 );
+	RB_BindVBO( 0, 0 );
 }
 
 /*
@@ -256,6 +260,7 @@ void RB_LoadObjectMatrix( const mat4_t m )
 void RB_LoadModelviewMatrix( const mat4_t m )
 {
 	Matrix4_Copy( m, rb.modelviewMatrix );
+	Matrix4_Multiply( rb.projectionMatrix, m, rb.modelviewProjectionMatrix );
 }
 
 /*
@@ -264,6 +269,7 @@ void RB_LoadModelviewMatrix( const mat4_t m )
 void RB_LoadProjectionMatrix( const mat4_t m )
 {
 	Matrix4_Copy( m, rb.projectionMatrix );
+	Matrix4_Multiply( m, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
 }
 
 /*
@@ -1186,8 +1192,6 @@ static void RB_DrawElements_( int firstVert, int numVerts, int firstElem, int nu
 	}
 
 	assert( rb.currentShader != NULL );
-
-	Matrix4_Multiply( rb.projectionMatrix, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
 
 	rb.drawElements.numVerts = numVerts;
 	rb.drawElements.numElems = numElems;
