@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef HTTP_SUPPORT
 
-#define MAX_INCOMING_HTTP_CONNECTIONS			32
+#define MAX_INCOMING_HTTP_CONNECTIONS			48
 #define MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR	3
 
 #define MAX_INCOMING_CONTENT_LENGTH				0x2800
@@ -932,8 +932,8 @@ static void SV_Web_Listen( socket_t *socket )
 		con = NULL;
 		for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
 		{
-#if 0
-	 		if( cl->state == CS_FREE )
+#if 1
+	 		if( cl->state < CS_FREE )
 				continue;
 
 			if( NET_CompareBaseAddress( &newaddress, &cl->netchan.remoteAddress ) )
