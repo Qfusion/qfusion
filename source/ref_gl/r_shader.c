@@ -512,8 +512,8 @@ static int Shader_SetImageFlags( shader_t *shader )
 		flags |= IT_NOCOMPRESS;
 	if( r_shaderNoFiltering )
 		flags |= IT_NOFILTERING;
-	if( r_shaderHasAutosprite )
-		flags |= IT_CLAMP;
+	//if( r_shaderHasAutosprite )
+	//	flags |= IT_CLAMP;
 
 	return flags;
 }
@@ -1428,6 +1428,7 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
 	char *token;
+	float dist;
 
 	token = Shader_ParseString( ptr );
 	if( !strcmp( token, "vertex" ) )
@@ -1440,6 +1441,12 @@ static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const cha
 	{
 		pass->alphagen.type = ALPHA_GEN_WAVE;
 		Shader_ParseFunc( ptr, pass->alphagen.func );
+
+		// treat custom distanceramp as portal
+		if( pass->alphagen.func->type == SHADER_FUNC_RAMP && pass->alphagen.func->args[1] == 1 ) {
+			dist = fabs( pass->alphagen.func->args[3] );
+			shader->portalDistance = max( dist, shader->portalDistance );
+		}
 	}
 	else if( !strcmp( token, "const" ) || !strcmp( token, "constant" ) )
 	{
@@ -1448,7 +1455,7 @@ static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const cha
 	}
 	else if( !strcmp( token, "portal" ) )
 	{
-		float dist = fabs( Shader_ParseFloat( ptr ) );
+		dist = fabs( Shader_ParseFloat( ptr ) );
 		if( !dist ) {
 			dist = 256;
 		}
