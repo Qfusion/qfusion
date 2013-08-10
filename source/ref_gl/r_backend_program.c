@@ -779,7 +779,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		if( !( r_offsetmapping->integer & 4 ) )
 			offsetmappingScale = 0;
 	#ifdef CELSHADEDMATERIAL
-		programFeatures |= GLSL_SHADER_MATERIAL_CELLSHADING;
+		programFeatures |= GLSL_SHADER_MATERIAL_CELSHADING;
 	#endif
 	#ifdef HALFLAMBERTLIGHTING
 		programFeatures |= GLSL_SHADER_MATERIAL_HALFLAMBERT;
