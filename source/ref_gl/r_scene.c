@@ -180,6 +180,10 @@ void R_RenderScene( const refdef_t *fd )
 		rsc.refdef = *fd;
 
 	ri.refdef = *fd;
+	if( !r_screenweapontexture || fd->weaponAlpha == 1 ) {
+		ri.refdef.rdflags &= ~RDF_WEAPONALPHA;
+	}
+
 	fd = &ri.refdef;
 
 	ri.params = RP_NONE;
@@ -193,21 +197,25 @@ void R_RenderScene( const refdef_t *fd )
 	ri.dlightBits = 0;
 	ri.shadowGroup = NULL;
 
+
 	fbFlags = 0;
 	ri.fbColorAttachment = ri.fbDepthAttachment = NULL;
 	
 	// soft particles require GL_EXT_framebuffer_blit as we need to copy the depth buffer
 	// attachment into a texture we're going to read from in GLSL shader
 	if( r_soft_particles->integer && glConfig.ext.framebuffer_blit ) {
-		fbFlags |= 1;
 		ri.fbColorAttachment = r_screentexture;
 		ri.fbDepthAttachment = r_screendepthtexture;
+		fbFlags |= 1;
+	}
+	if( fd->rdflags & RDF_WEAPONALPHA ) {
+		fbFlags |= 2;
 	}
 	if( r_fxaa->integer ) {
-		fbFlags |= 2;
 		if( !ri.fbColorAttachment ) {
 			ri.fbColorAttachment = r_screenfxaacopy;
 		}
+		fbFlags |= 4;
 	}
 
 	// adjust field of view for widescreen
@@ -223,6 +231,15 @@ void R_RenderScene( const refdef_t *fd )
 	if( gl_finish->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
 		qglFinish();
 
+	if( fd->rdflags & RDF_WEAPONALPHA ) {
+		// clear the framebuffer we're going to render the weapon model into
+		// set the alpha to 0, visible parts of the model will overwrite that,
+		// creating proper alpha mask
+		R_UseFBObject( r_screenweapontexture->fbo );
+		RB_Clear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT, 0, 0, 0, 0 );
+		R_UseFBObject( 0 );
+	}
+
 	R_BuildShadowGroups();
 
 	R_RenderView( fd );
@@ -233,22 +250,27 @@ void R_RenderScene( const refdef_t *fd )
 
 	R_Set2DMode( qtrue );
 
-	if( fbFlags & 1 ) {
-		if( fbFlags & 2 ) {
-			// copy to FXAA framebuffer
-			R_UseFBObject( r_screenfxaacopy->fbo );
-		}
-		else {
-			// copy to default framebuffer
-			R_UseFBObject( 0 );
-		}
+	// blit and blend framebuffers in proper order
 
+	if( fbFlags & 1 ) {
+		// copy to FXAA or default framebuffer
+		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
 		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
 			colorWhite, GLSL_PROGRAM_TYPE_NONE, ri.fbColorAttachment );
 	}
 
-	// blend the active framebuffer to screen
 	if( fbFlags & 2 ) {
+		vec4_t color = { 1, 1, 1, 1 };
+		color[3] = fd->weaponAlpha;
+
+		// blend to FXAA or default framebuffer
+		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
+		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
+			color, GLSL_PROGRAM_TYPE_NONE, r_screenweapontexture );
+	}
+
+	// blit FXAA to default framebuffer
+	if( fbFlags & 4 ) {
 		R_UseFBObject( 0 );
 		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
 			colorWhite, GLSL_PROGRAM_TYPE_FXAA, r_screenfxaacopy );

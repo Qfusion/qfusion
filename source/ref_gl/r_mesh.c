@@ -343,10 +343,14 @@ static void _R_DrawSurfaces( void )
 	qboolean depthWrite = qfalse;
 	qboolean depthCopied = qfalse;
 	mat4_t projectionMatrix;
+	refdef_t *rd = &ri.refdef;
+	int riFBO = 0;
 
 	if( !list->numDrawSurfs ) {
 		return;
 	}
+
+	riFBO = R_ActiveFBObject();
 
 	for( i = 0; i < list->numDrawSurfs; i++ ) {
 		sds = list->drawSurfs + i;
@@ -375,9 +379,19 @@ static void _R_DrawSurfaces( void )
 			if( entNum != prevEntNum ) {
 				// hack the depth range to prevent view model from poking into walls
 				if( entity->flags & RF_WEAPONMODEL ) {
+					// render weapon to a different framebuffer we'll blend on top of screen
+					// at later stage
+					if( shader->flags & SHADER_DEPTHWRITE ) {
+						if( rd->rdflags & RDF_WEAPONALPHA ) {
+							R_UseFBObject( r_screenweapontexture->fbo );
+						}
+					}					
 					depthHack = qtrue;
 					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 				} else if( depthHack ) {
+					// bind the main framebuffer back
+					R_UseFBObject( riFBO );
+
 					depthHack = qfalse;
 					RB_DepthRange( depthmin, depthmax );
 				}
@@ -445,13 +459,14 @@ static void _R_DrawSurfaces( void )
 	if( batchDrawSurf ) {
 		RB_EndBatch();
 	}
-
 	if( depthHack ) {
 		RB_DepthRange( depthmin, depthmax );
 	}
 	if( cullHack ) {
 		RB_FlipFrontFace();
 	}
+
+	R_UseFBObject( riFBO );
 }
 
 /*

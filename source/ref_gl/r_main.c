@@ -49,6 +49,7 @@ image_t *r_screendepthtexture;
 image_t *r_screentexturecopy;
 image_t *r_screendepthtexturecopy;
 image_t *r_screenfxaacopy;
+image_t *r_screenweapontexture;
 
 unsigned int r_pvsframecount;    // bumped when going to a new PVS
 unsigned int r_framecount;       // used for dlight push checking
@@ -793,6 +794,7 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 	static char *s_name = "$builtinimage";
 	static shaderpass_t p;
 	static shader_t s;
+	static float rgba[4];
 
 	s.vattribs = VATTRIB_TEXCOORDS_BIT;
 	s.sort = SHADER_SORT_NEAREST;
@@ -800,10 +802,14 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 	s.name = s_name;
 	s.passes = &p;
 
-	p.rgbgen.type = RGB_GEN_IDENTITY;
-	p.alphagen.type = ALPHA_GEN_IDENTITY;
+	Vector4Copy( color, rgba );
+	p.rgbgen.type = RGB_GEN_CONST;
+	p.rgbgen.args = rgba;
+	p.alphagen.type = ALPHA_GEN_CONST;
+	p.alphagen.args = &rgba[3];
 	p.tcgen = TC_GEN_BASE;
 	p.anim_frames[0] = image;
+	p.flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 	p.program_type = program_type;
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, color, &s );
@@ -972,7 +978,6 @@ static void R_SetupViewMatrices( void )
 static void R_Clear( int bitMask )
 {
 	int bits;
-	byte_vec4_t clearColor = { 255, 255, 255, 255 };
 	qbyte *envColor = r_worldmodel && !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog ?
 		r_worldbrushmodel->globalfog->shader->fog_color : mapConfig.environmentColor;
 
@@ -983,9 +988,6 @@ static void R_Clear( int bitMask )
 	if( glConfig.stencilEnabled )
 		bits |= GL_STENCIL_BUFFER_BIT;
 
-	if( !( ri.params & RP_SHADOWMAPVIEW ) )
-		Vector4Copy( envColor, clearColor ); 
-
 	bits &= bitMask;
 
 	if( ri.fbColorAttachment && (bits & GL_COLOR_BUFFER_BIT) ) {
@@ -995,13 +997,18 @@ static void R_Clear( int bitMask )
 		R_AttachTextureToFBObject( R_ActiveFBObject(), ri.fbDepthAttachment );
 	}
 
-	RB_Clear( bits, clearColor );
+	if( !( ri.params & RP_SHADOWMAPVIEW ) ) {
+		RB_Clear( bits, envColor[0] / 255.0, envColor[1] / 255.0, envColor[2] / 255.0, 1 );
+	}
+	else {
+		RB_Clear( bits, 1, 1, 1, 1 );
+	}
 }
 
 /*
 * R_SetupGL
 */
-static void R_SetupGL( int clearBitMask )
+void R_SetupGL( int clearBitMask )
 {
 	RB_Scissor( ri.scissor[0], ri.scissor[1], ri.scissor[2], ri.scissor[3] );
 	RB_Viewport( ri.viewport[0], ri.viewport[1], ri.viewport[2], ri.viewport[3] );
@@ -1496,6 +1503,12 @@ void R_EndFrame( void )
 	R_EndStretchBatch();
 
 	R_PolyBlend();
+
+	if( r_temp1->integer )
+	{
+		R_DrawStretchQuick( 0, 0, 320, 240, 0, 1, 1, 0, 
+			colorWhite, GLSL_PROGRAM_TYPE_NONE, r_screenweapontexture );
+	}
 	
 	// reset the 2D state so that the mode will be 
 	// properly set back again in R_BeginFrame

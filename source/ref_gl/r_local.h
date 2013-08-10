@@ -246,6 +246,7 @@ extern image_t *r_screendepthtexture;
 extern image_t *r_screentexturecopy;
 extern image_t *r_screendepthtexturecopy;
 extern image_t *r_screenfxaacopy;
+extern image_t *r_screenweapontexture;
 
 extern unsigned int r_pvsframecount;
 extern unsigned int r_framecount;

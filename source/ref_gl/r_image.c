@@ -2467,9 +2467,12 @@ static void R_InitViewportTexture( image_t **texture, const char *name, int id,
 		// update FBO, if attached
 		if( t->fbo ) {
 			R_UnregisterFBObject( t->fbo );
+			t->fbo = 0;
 		}
-		t->fbo = R_RegisterFBObject( t->upload_width, t->upload_height );
-		R_AttachTextureToFBObject( t->fbo, t );
+		if( t->flags & IT_FRAMEBUFFER ) {
+			t->fbo = R_RegisterFBObject( t->upload_width, t->upload_height );
+			R_AttachTextureToFBObject( t->fbo, t );
+		}
 	}
 }
 
@@ -2481,7 +2484,7 @@ int R_GetPortalTextureId( const int viewportWidth, const int viewportHeight, con
 	int i;
 	int best = -1;
 	int realwidth, realheight;
-	int realflags = IT_PORTALMAP|flags;
+	int realflags = IT_PORTALMAP|IT_FRAMEBUFFER|flags;
 	image_t *image;
 
 	R_GetViewportTextureSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
@@ -2526,7 +2529,7 @@ image_t *R_GetPortalTexture( int id, int viewportWidth, int viewportHeight, int 
 
 	R_InitViewportTexture( &r_portaltextures[id], "r_portaltexture", id, 
 		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
-		IT_PORTALMAP|flags, 3 );
+		IT_PORTALMAP|IT_FRAMEBUFFER|flags, 3 );
 
 	r_portaltextures[id]->framenum = rf.sceneFrameCount;
 	return r_portaltextures[id];
@@ -2554,7 +2557,7 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 
 	R_InitViewportTexture( &r_shadowmapTextures[id], "r_shadowmap", id, 
 		viewportWidth, viewportHeight, r_shadows_maxtexsize->integer, 
-		IT_SHADOWMAP|flags, samples );
+		IT_SHADOWMAP|IT_FRAMEBUFFER|flags, samples );
 
 	return r_shadowmapTextures[id];
 }
@@ -2584,12 +2587,12 @@ static void R_InitStretchRawTexture( void )
 /*
 * R_InitScreenTexturesPair
 */
-static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t **depth )
+static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t **depth, int samples )
 {
 	if( color ) {
 		R_InitViewportTexture( color, name, 0, 
 			glConfig.width, glConfig.height, 0, 
-			IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP, 3 );
+			IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_FRAMEBUFFER|IT_CLAMP, samples );
 	}
 	if( depth && *color ) {
 		R_InitViewportTexture( depth, va( "%s_depth", name ), 0,
@@ -2605,9 +2608,10 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t
 */
 static void R_InitScreenTextures( void )
 {
-	R_InitScreenTexturesPair( "r_screentex", &r_screentexture, &r_screendepthtexture ); 
-	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, &r_screendepthtexturecopy );
-	R_InitScreenTexturesPair( "r_screenfxaacopy", &r_screenfxaacopy, NULL );
+	R_InitScreenTexturesPair( "r_screentex", &r_screentexture, &r_screendepthtexture, 3 ); 
+	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, &r_screendepthtexturecopy, 3 );
+	R_InitScreenTexturesPair( "r_screenfxaacopy", &r_screenfxaacopy, NULL, 3 );
+	R_InitScreenTexturesPair( "r_screenweapontexture", &r_screenweapontexture, NULL, 4 );
 }
 
 /*
@@ -2665,6 +2669,7 @@ static void R_TouchBuiltinTextures( void )
 	R_TouchImage( r_screentexturecopy ); 
 	R_TouchImage( r_screendepthtexturecopy );
 	R_TouchImage( r_screenfxaacopy );
+	R_TouchImage( r_screenweapontexture );
 }
 
 /*
@@ -2681,6 +2686,7 @@ static void R_ReleaseBuiltinTextures( void )
 	r_screentexture = r_screendepthtexture = NULL;
 	r_screentexturecopy = r_screendepthtexturecopy = NULL;
 	r_screenfxaacopy = NULL;
+	r_screenweapontexture = NULL;
 }
 
 //=======================================================
