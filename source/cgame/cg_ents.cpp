@@ -1152,7 +1152,7 @@ static void CG_AddPlayerEnt( centity_t *cent )
 {
 	// render effects
 	cent->ent.renderfx = cent->renderfx;
-#ifndef CELLSHADEDMATERIAL
+#ifndef CELSHADEDMATERIAL
 	cent->ent.renderfx |= RF_MINLIGHT;
 #endif
 
