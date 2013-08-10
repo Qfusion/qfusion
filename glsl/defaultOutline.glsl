@@ -9,6 +9,7 @@
 
 #include "include/attributes.glsl"
 #include "include/vtransform.glsl"
+#include "include/rgbgen.glsl"
 
 uniform float u_OutlineHeight;
 
@@ -24,7 +25,7 @@ void main(void)
 	Position += vec4(Normal * u_OutlineHeight, 0.0);
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 
-	myhalf4 outColor = inColor;
+	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
 
 #ifdef APPLY_FOG
 	myhalf4 tempColor = myhalf4(1.0);

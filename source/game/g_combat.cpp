@@ -557,7 +557,7 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 {
 #define VERTICALBIAS 0.65f // 0...1
 #define CAPSULEDISTANCE
-#define SPLASH_HDIST_CLAMP 53
+//#define SPLASH_HDIST_CLAMP 0
 	vec3_t boxcenter = { 0, 0, 0 };
 	vec3_t hitpoint, vec;
 	float distance;
@@ -595,7 +595,7 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 #endif
 
 	// find push intensity
-	distance = DistanceFast( boxcenter, hitpoint );
+	distance = Distance( boxcenter, hitpoint );
 
 	if( distance >= maxradius )
 	{
@@ -640,6 +640,10 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 		// linear kick fraction
 		float kick = ( distance / maxradius );
 
+		kick *= kick;
+		//kick = maxradius / distance;
+		clamp( kick, 0, 1 );
+
 		// half linear half exponential
 		//*kickFrac =  ( kick + ( kick * kick ) ) * 0.5f;
 
@@ -670,7 +674,7 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 
 #ifdef SPLASH_HDIST_CLAMP
 		// if pushed from below, hack the hitpoint to limit the side push direction
-		if( hitpoint[2] < boxcenter[2] && SPLASH_HDIST_CLAMP > 0 )
+		if( hitpoint[2] < boxcenter[2] && SPLASH_HDIST_CLAMP >= 0 )
 		{
 			// do not allow the hitpoint to be further away
 			// than SPLASH_HDIST_CLAMP in the horizontal axis
@@ -678,10 +682,10 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 			vec[1] = hitpoint[1];
 			vec[2] = boxcenter[2];
 
-			if( DistanceFast( boxcenter, vec ) > SPLASH_HDIST_CLAMP )
+			if( Distance( boxcenter, vec ) > SPLASH_HDIST_CLAMP )
 			{
 				VectorSubtract( vec, boxcenter, pushdir );
-				VectorNormalizeFast( pushdir );
+				VectorNormalize( pushdir );
 				VectorMA( boxcenter, SPLASH_HDIST_CLAMP, pushdir, hitpoint );
 				hitpoint[2] = point[2]; // restore the original hitpoint height
 			}
@@ -689,7 +693,7 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 #endif // SPLASH_HDIST_CLAMP
 
 		VectorSubtract( boxcenter, hitpoint, pushdir );
-		VectorNormalizeFast( pushdir );
+		VectorNormalize( pushdir );
 	}
 
 #undef VERTICALBIAS

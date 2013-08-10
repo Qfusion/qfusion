@@ -293,9 +293,10 @@ static qboolean Shader_ParseConditions( const char **ptr, shader_t *shader )
 				conditions[numConditions].operand = ( int )r_portalmaps->integer;
 			else
 			{
-				Com_Printf( S_COLOR_YELLOW "WARNING: Unknown expression '%s' in shader %s\n", tok, shader->name );
+//				Com_Printf( S_COLOR_YELLOW "WARNING: Unknown expression '%s' in shader %s\n", tok, shader->name );
 //				skip = qtrue;
-				conditions[numConditions].operand = ( int )falseCondition;
+//				conditions[numConditions].operand = ( int )falseCondition;
+				conditions[numConditions].operand = atoi( tok );
 			}
 
 			conditions[numConditions].operand++;
