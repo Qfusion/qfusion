@@ -131,6 +131,9 @@ typedef struct r_backend_s
 	entity_t nullEnt;
 
 	const mfog_t *fog, *texFog, *colorFog;
+
+	qboolean alphaHack;
+	float hackedAlpha;
 } rbackend_t;
 
 extern rbackend_t rb;

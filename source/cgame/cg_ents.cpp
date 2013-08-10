@@ -613,7 +613,6 @@ static void CG_EntAddTeamColorTransitionEffect( centity_t *cent )
 	cent->ent.shaderRGBA[0] = (qbyte)( newcolor[0] * 255 );
 	cent->ent.shaderRGBA[1] = (qbyte)( newcolor[1] * 255 );
 	cent->ent.shaderRGBA[2] = (qbyte)( newcolor[2] * 255 );
-	cent->ent.shaderRGBA[3] = (qbyte)255;
 }
 
 /*
@@ -637,7 +636,8 @@ static void CG_AddLinkedModel( centity_t *cent )
 	ent.rtype = RT_MODEL;
 	ent.scale = cent->ent.scale;
 	ent.renderfx = cent->ent.renderfx;
-	Vector4Set( ent.shaderRGBA, 255, 255, 255, 255 );
+	ent.shaderTime = cent->ent.shaderTime;
+	Vector4Copy( cent->ent.shaderRGBA, ent.shaderRGBA );
 	ent.model = model;
 	ent.customShader = NULL;
 	ent.customSkin = NULL;
@@ -660,9 +660,19 @@ static void CG_AddLinkedModel( centity_t *cent )
 			CG_PlaceModelOnTag( &ent, &cent->ent, &tag );
 	}
 
-	CG_AddColoredOutLineEffect( &ent, cent->effects, 0, 0, 0, 255 );
+	CG_AddColoredOutLineEffect( &ent, cent->effects, 
+		cent->outlineColor[0], cent->outlineColor[1], cent->outlineColor[2], cent->outlineColor[3] );
 	CG_AddEntityToScene( &ent );
 	CG_AddShellEffects( &ent, cent->effects );
+}
+
+/*
+* CG_AddCentityOutLineEffect
+*/
+void CG_AddCentityOutLineEffect( centity_t *cent )
+{
+	CG_AddColoredOutLineEffect( &cent->ent, cent->effects, 
+		cent->outlineColor[0], cent->outlineColor[1], cent->outlineColor[2], cent->outlineColor[3] );
 }
 
 //==========================================================================
@@ -857,6 +867,9 @@ static void CG_AddGenericEnt( centity_t *cent )
 	if( cent->effects & EF_TEAMCOLOR_TRANSITION )
 		CG_EntAddTeamColorTransitionEffect( cent );
 
+	// add to refresh list
+	CG_AddCentityOutLineEffect( cent );
+
 	// render effects
 	cent->ent.renderfx = cent->renderfx;
 
@@ -881,10 +894,20 @@ static void CG_AddGenericEnt( centity_t *cent )
 				cent->ent.shaderRGBA[0] = ( qbyte )( 255 * scolor[0] );
 				cent->ent.shaderRGBA[1] = ( qbyte )( 255 * scolor[1] );
 				cent->ent.shaderRGBA[2] = ( qbyte )( 255 * scolor[2] );
-				cent->ent.shaderRGBA[3] = ( qbyte )( 255 * scolor[3] );
 			}
 			else  // set white
-				Vector4Set( cent->ent.shaderRGBA, 255, 255, 255, 255 );
+				VectorSet( cent->ent.shaderRGBA, 255, 255, 255 );
+		}
+
+		if( cent->effects & EF_GHOST ) {
+			cent->ent.renderfx |= RF_ALPHAHACK;
+			cent->ent.shaderRGBA[3] = 127;
+
+			// outlines don't work on transparent objects...
+			cent->ent.outlineHeight = 0;
+		}
+		else {
+			cent->ent.shaderRGBA[3] = 255;
 		}
 
 		// add shadows for items (do it before offseting for weapons)
@@ -926,8 +949,6 @@ static void CG_AddGenericEnt( centity_t *cent )
 	if( !cent->current.modelindex )
 		return;
 
-	// add to refresh list
-	CG_AddCentityOutLineEffect( cent );
 	CG_AddEntityToScene( &cent->ent );
 
 	if( cent->current.modelindex2 )

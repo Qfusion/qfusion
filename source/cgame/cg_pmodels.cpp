@@ -790,14 +790,6 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, qbyte r, qbyte g, q
 }
 
 /*
-* CG_AddCentityOutLineEffect
-*/
-void CG_AddCentityOutLineEffect( centity_t *cent )
-{
-	CG_AddColoredOutLineEffect( &cent->ent, cent->effects, cent->outlineColor[0], cent->outlineColor[1], cent->outlineColor[2], cent->outlineColor[3] );
-}
-
-/*
 * CG_PModel_AddFlag
 */
 static void CG_PModel_AddFlag( centity_t *cent )

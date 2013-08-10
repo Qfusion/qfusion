@@ -78,6 +78,12 @@ void R_AddEntityToScene( const entity_t *ent )
 			}
 		}
 
+		if( de->renderfx & RF_ALPHAHACK ) {
+			if( de->shaderRGBA[3] == 255 ) {
+				de->renderfx &= ~RF_ALPHAHACK;
+			}
+		}
+
 		rsc.numEntities++;
 	}
 }

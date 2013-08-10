@@ -125,6 +125,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 {
 	drawList_t *list;
 	sortedDrawSurf_t *sds;
+	int shaderSort;
 
 	if( !shader ) {
 		return qfalse;
@@ -149,8 +150,14 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 		R_ReserveDrawSurfaces( list, minMeshes );
 	}
 
+	shaderSort = shader->sort;
+	if( e->renderfx & RF_ALPHAHACK ) {
+		// force shader sort to additive
+		shaderSort = SHADER_SORT_ADDITIVE;
+	}
+
 	sds = &list->drawSurfs[list->numDrawSurfs++];
-	sds->distKey = R_PackDistKey( shader->sort, (unsigned int )(max( dist, 0 )), order );
+	sds->distKey = R_PackDistKey( shaderSort, (unsigned int )(max( dist, 0 )), order );
 	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - r_worldbrushmodel->fogs : -1,
 		portalSurf ? portalSurf - ri.portalSurfaces : -1, R_ENT2NUM(e) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;

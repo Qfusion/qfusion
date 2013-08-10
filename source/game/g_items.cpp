@@ -47,6 +47,7 @@ void DoRespawn( edict_t *ent )
 
 	ent->r.solid = SOLID_TRIGGER;
 	ent->r.svflags &= ~SVF_NOCLIENT;
+	ent->s.effects &= ~EF_GHOST;
 
 	GClip_LinkEntity( ent );
 
@@ -76,10 +77,15 @@ void SetRespawn( edict_t *ent, int delay )
 		return;
 	}
 
-	ent->r.svflags |= SVF_NOCLIENT;
 	ent->r.solid = SOLID_NOT;
 	ent->nextThink = level.time + delay;
 	ent->think = DoRespawn;
+	if( GS_MatchState() == MATCH_STATE_WARMUP ) {
+		ent->s.effects |= EF_GHOST;
+	}
+	else {
+		ent->r.svflags |= SVF_NOCLIENT;
+	}
 
 	// megahealth is different
 	if( ( ent->style & HEALTH_TIMED ) && ent->r.owner )

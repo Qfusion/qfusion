@@ -51,6 +51,8 @@ static int rb_noiseperm[NOISE_SIZE];
 
 static shaderpass_t r_GLSLpasses[MAX_BUILTIN_GLSLPASSES];
 
+static void RB_SetShaderpassState( int state );
+
 /*
 * RB_InitBuiltinPasses
 */
@@ -668,6 +670,18 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 		rb.zNear, rb.zFar
 	);
 
+	if( RB_IsAlphaBlending( rb.gl.state & GLSTATE_SRCBLEND_MASK, rb.gl.state & GLSTATE_DSTBLEND_MASK ) ) {
+		blendMix[1] = 1;
+		if( rb.alphaHack ) {
+			constColor[3] *= rb.hackedAlpha;
+		}
+	} else {
+		blendMix[0] = 1;
+		if( rb.alphaHack ) {
+			constColor[0] *= rb.hackedAlpha,constColor[1] *= rb.hackedAlpha, constColor[2] *= rb.hackedAlpha;
+		}
+	}
+
 	RP_UpdateShaderUniforms( program, 
 		rb.currentShaderTime, 
 		entOrigin, entDist, rb.entityColor,
@@ -676,11 +690,6 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 		pass->alphagen.func ? pass->alphagen.func->args : pass->alphagen.args,
 		texMatrix );
 
-	if( RB_IsAlphaBlending( pass->flags & GLSTATE_SRCBLEND_MASK, pass->flags & GLSTATE_DSTBLEND_MASK ) ) {
-		blendMix[1] = 1;
-	} else {
-		blendMix[0] = 1;
-	}
 	RP_UpdateBlendMixUniform( program, blendMix );
 
 	RP_UpdateSoftParticlesUniforms( program, r_soft_particles_scale->value );
@@ -790,7 +799,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( rb.currentShaderState | pass->flags );
+	RB_SetShaderpassState( pass->flags );
 
 	// we only send S-vectors to GPU and recalc T-vectors as cross product
 	// in vertex shader
@@ -1001,7 +1010,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	programFeatures |= RB_FogProgramFeatures( pass, rb.fog );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( rb.currentShaderState | pass->flags );
+	RB_SetShaderpassState( pass->flags );
 
 	if( pass->anim_frames[1] )
 	{
@@ -1078,7 +1087,7 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	RB_Scissor( ri.refdef.x + scissor[0], ri.refdef.y + scissor[1], scissor[2] - scissor[0], scissor[3] - scissor[1] );
 
-	RB_SetState( rb.currentShaderState | pass->flags );
+	RB_SetShaderpassState( pass->flags );
 
 	RB_UpdateCommonUniforms( program, pass, texMatrix );
 
@@ -1108,7 +1117,7 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 	Matrix4_Identity( texMatrix );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( rb.currentShaderState | pass->flags );
+	RB_SetShaderpassState( pass->flags );
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, NULL,
@@ -1219,6 +1228,7 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	if( rb.currentModelType == mod_brush ) {
 		programFeatures |= GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF;
 	}
+	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL,
@@ -1232,7 +1242,7 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	RB_Cull( GL_BACK );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( rb.currentShaderState | pass->flags );
+	RB_SetShaderpassState( pass->flags );
 
 	RB_UpdateCommonUniforms( program, pass, texMatrix );
 
@@ -1398,7 +1408,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	programFeatures |= RB_TcGenToProgramFeatures( pass->tcgen, pass->tcgenVec, texMatrix, genVectors );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	state = rb.currentShaderState | pass->flags;
+	state = pass->flags;
 
 	// possibly force depthwrite and give up blending when doing a lightmapped pass
 	if( isLightmapped && 
@@ -1411,7 +1421,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		state |= GLSTATE_DEPTHWRITE;
 	}
 
-	RB_SetState( state );
+	RB_SetShaderpassState( state );
 
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
 		RB_BindTexture( 3, r_screendepthtexturecopy );
@@ -1500,7 +1510,7 @@ static void RB_RenderMeshGLSL_Cellshade( const shaderpass_t *pass, r_glslfeat_t 
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
 	// set shaderpass state (blending, depthwrite, etc)
-	RB_SetState( rb.currentShaderState | pass->flags );
+	RB_SetShaderpassState( pass->flags );
 
 	// bind white texture for shadow map view
 #define CELLSHADE_BIND(tmu,tex,feature,canAdd) \
@@ -1550,7 +1560,6 @@ static void RB_RenderMeshGLSL_Cellshade( const shaderpass_t *pass, r_glslfeat_t 
 */
 static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t programFeatures )
 {
-	int state;
 	int program;
 	const mfog_t *fog = rb.fog;
 	mat4_t texMatrix = { 0 };
@@ -1558,9 +1567,7 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 	programFeatures |= GLSL_SHADER_COMMON_FOG;
 
 	// set shaderpass state (blending, depthwrite, etc)
-	state = rb.currentShaderState | pass->flags;
-
-	RB_SetState( state );
+	RB_SetShaderpassState( pass->flags );
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, NULL,
@@ -1585,14 +1592,11 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 */
 static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t programFeatures )
 {
-	int state;
 	int program;
 	mat4_t texMatrix = { 0 };
 
 	// set shaderpass state (blending, depthwrite, etc)
-	state = rb.currentShaderState | pass->flags;
-
-	RB_SetState( state );
+	RB_SetShaderpassState( pass->flags );
 
 	RB_BindTexture( 0, pass->anim_frames[0] );
 
@@ -1720,12 +1724,15 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	if( !e ) {
 		rb.currentEntity = &rb.nullEnt;
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
+		rb.alphaHack = qfalse;
 	} else {
 		Vector4Copy( rb.currentEntity->shaderRGBA, rb.entityColor );
 		if( rb.currentEntity->shaderTime > rb.time )
 			rb.currentShaderTime = 0;
 		else
 			rb.currentShaderTime = (rb.time - rb.currentEntity->shaderTime) * 0.001;
+		rb.alphaHack = e->renderfx & RF_ALPHAHACK ? qtrue : qfalse;
+		rb.hackedAlpha = e->shaderRGBA[3] / 255.0;
 	}
 
 	RB_UpdateVertexAttribs();
@@ -1944,6 +1951,21 @@ static void RB_SetShaderState( void )
 		state |= GLSTATE_NO_DEPTH_TEST;
 
 	rb.currentShaderState = (state & rb.shaderStateANDmask) | rb.shaderStateORmask;
+}
+
+/*
+* RB_SetShaderpassState
+*/
+static void RB_SetShaderpassState( int state )
+{
+	state |= rb.currentShaderState;
+	if( rb.alphaHack ) {
+		if( !(state &GLSTATE_SRCBLEND_MASK) && !(state & GLSTATE_DSTBLEND_MASK) ) {
+			// force alpha blending
+			state = (state & ~ GLSTATE_DEPTHWRITE)|GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+		}
+	}
+	RB_SetState( state );
 }
 
 /*
