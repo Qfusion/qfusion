@@ -1529,7 +1529,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	CELSHADE_BIND( 3, decal, GLSL_SHADER_CELSHADE_DECAL, qtrue );
 	CELSHADE_BIND( 4, entdecal, GLSL_SHADER_CELSHADE_ENTITY_DECAL, qtrue );
 	CELSHADE_BIND( 5, stripes, GLSL_SHADER_CELSHADE_STRIPES, qtrue );
-	CELSHADE_BIND( 6, light, GLSL_SHADER_CELSHADE_CELL_LIGHT, qtrue );
+	CELSHADE_BIND( 6, light, GLSL_SHADER_CELSHADE_CEL_LIGHT, qtrue );
 
 #undef CELSHADE_BIND
 
