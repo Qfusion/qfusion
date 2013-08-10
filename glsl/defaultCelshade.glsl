@@ -1,4 +1,4 @@
-// cell shading shader
+// cel-shading shader
 
 #include "include/uniforms.glsl"
 
@@ -58,7 +58,7 @@ void main(void)
 // Fragment shader
 
 uniform sampler2D u_BaseTexture;
-uniform samplerCube u_CellShadeTexture;
+uniform samplerCube u_CelShadeTexture;
 
 #ifdef APPLY_DIFFUSE
 uniform sampler2D u_DiffuseTexture;
@@ -72,8 +72,8 @@ uniform sampler2D u_EntityDecalTexture;
 #ifdef APPLY_STRIPES
 uniform sampler2D u_StripesTexture;
 #endif
-#ifdef APPLY_CELL_LIGHT
-uniform samplerCube u_CellLightTexture;
+#ifdef APPLY_CEL_LIGHT
+uniform samplerCube u_CelLightTexture;
 #endif
 
 void main(void)
@@ -98,7 +98,7 @@ void main(void)
 	outColor.rgb *= myhalf3(texture2D(u_DiffuseTexture, v_TexCoord));
 #endif
 
-	outColor.rgb *= myhalf3(textureCube(u_CellShadeTexture, v_TexCoordCube));
+	outColor.rgb *= myhalf3(textureCube(u_CelShadeTexture, v_TexCoordCube));
 
 #ifdef APPLY_STRIPES
 #ifdef APPLY_STRIPES_ADD
@@ -109,14 +109,14 @@ void main(void)
 #endif
 #endif // APPLY_STRIPES_ADD
 
-#ifdef APPLY_CELL_LIGHT
-#ifdef APPLY_CELL_LIGHT_ADD
-	outColor.rgb += myhalf3(textureCube(u_CellLightTexture, v_TexCoordCube));
+#ifdef APPLY_CEL_LIGHT
+#ifdef APPLY_CEL_LIGHT_ADD
+	outColor.rgb += myhalf3(textureCube(u_CelLightTexture, v_TexCoordCube));
 #else
 	tempColor = myhalf4(textureCube(u_EntityDecalTexture, v_TexCoordCube));
 	outColor.rgb = mix(outColor.rgb, tempColor.rgb, tempColor.a);
 #endif
-#endif // APPLY_CELL_LIGHT
+#endif // APPLY_CEL_LIGHT
 
 #ifdef APPLY_DECAL
 #ifdef APPLY_DECAL_ADD

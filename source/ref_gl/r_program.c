@@ -656,8 +656,8 @@ static const glsl_feature_t glsl_features_celshade[] =
 	{ GLSL_SHADER_CELSHADE_ENTITY_DECAL_ADD, "#define APPLY_ENTITY_DECAL\n#define APPLY_ENTITY_DECAL_ADD\n", "_add" },
 	{ GLSL_SHADER_CELSHADE_STRIPES, "#define APPLY_STRIPES\n", "_stripes" },
 	{ GLSL_SHADER_CELSHADE_STRIPES_ADD, "#define APPLY_STRIPES_ADD\n", "_stripes_add" },
-	{ GLSL_SHADER_CELSHADE_CELL_LIGHT, "#define APPLY_CELL_LIGHT\n", "_light" },
-	{ GLSL_SHADER_CELSHADE_CELL_LIGHT_ADD, "#define APPLY_CELL_LIGHT\n#define APPLY_CELL_LIGHT_ADD\n", "_add" },
+	{ GLSL_SHADER_CELSHADE_CEL_LIGHT, "#define APPLY_CEL_LIGHT\n", "_light" },
+	{ GLSL_SHADER_CELSHADE_CEL_LIGHT_ADD, "#define APPLY_CEL_LIGHT\n#define APPLY_CEL_LIGHT_ADD\n", "_add" },
 
 	{ 0, NULL, NULL }
 };
