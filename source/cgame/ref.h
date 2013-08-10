@@ -48,6 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define RDF_WORLDOUTLINES		0x40	// draw cell outlines for world surfaces
 #define RDF_CROSSINGWATER		0x80	// potentially crossing water surface
 #define RDF_USEORTHO			0x100	// use orthographic projection
+#define RDF_WEAPONALPHA			0x200	// blend translucent gun model into screen as a post-processing step
 
 // skm flags
 #define SKM_ATTACHMENT_BONE		1
@@ -180,6 +181,7 @@ typedef struct refdef_s
 	int rdflags;						// RDF_UNDERWATER, etc
 	skyportal_t skyportal;
 	qbyte *areabits;					// if not NULL, only areas with set bits will be drawn
+	float weaponAlpha;
 } refdef_t;
 
 #endif // __REF_H

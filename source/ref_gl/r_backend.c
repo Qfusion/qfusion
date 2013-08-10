@@ -171,6 +171,13 @@ static void RB_SetGLDefaults( void )
 		qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 	}
 	qglFrontFace( GL_CCW );
+
+	rb.gl.state = 0;
+	rb.gl.frontFace = qfalse;
+	rb.gl.currentTMU = -1;
+	rb.gl.faceCull = 0;
+	rb.gl.polygonOffset[0] = rb.gl.polygonOffset[1] = 0;
+	memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
 }
 
 /*
@@ -578,7 +585,7 @@ void RB_Viewport( int x, int y, int w, int h )
 /*
 * RB_Clear
 */
-void RB_Clear( int bits, byte_vec4_t clearColor )
+void RB_Clear( int bits, float r, float g, float b, float a )
 {
 	// this is required for glClear(GL_DEPTH_BUFFER_BIT) to work
 	if( bits & GL_DEPTH_BUFFER_BIT )
@@ -588,7 +595,7 @@ void RB_Clear( int bits, byte_vec4_t clearColor )
 		qglClearStencil( 128 );
 
 	if( bits & GL_COLOR_BUFFER_BIT )
-		qglClearColor( clearColor[0] * 1.0/255.0, clearColor[1] * 1.0/255.0, clearColor[2] * 1.0/255.0, 1 );
+		qglClearColor( r, g, b, a );
 
 	qglClear( bits );
 

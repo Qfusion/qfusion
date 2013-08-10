@@ -556,6 +556,10 @@ static int CG_RenderFlags( void )
 
 	rdflags |= CG_SkyPortal();
 
+	if( cg.view.refdef.weaponAlpha != 1 ) {
+		rdflags |= RDF_WEAPONALPHA;
+	}
+
 	return rdflags;
 }
 
@@ -813,7 +817,7 @@ void CG_SetupViewDef( cg_viewdef_t *view, int type )
 		{
 			if( ( cg_entities[view->POVent].serverFrame == cg.frame.serverFrame ) &&
 				( cg_entities[view->POVent].current.weapon != 0 ) )
-				view->drawWeapon = ( cg_gun->integer != 0 );
+				view->drawWeapon = ( cg_gun->integer != 0 ) && ( cg_gun_alpha->value > 0 );
 		}
 
 		// check for chase cams
@@ -900,6 +904,8 @@ void CG_SetupViewDef( cg_viewdef_t *view, int type )
 
 	view->refdef.fov_y = CalcFov( view->refdef.fov_x, view->refdef.width, view->refdef.height );
 	view->fracDistFOV = tan( view->refdef.fov_x * ( M_PI/180 ) * 0.5f );
+
+	view->refdef.weaponAlpha = bound( 0, cg_gun_alpha->value, 1 );
 
 	Matrix3_FromAngles( view->angles, view->axis );
 
