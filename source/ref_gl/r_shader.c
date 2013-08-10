@@ -1128,7 +1128,7 @@ static void Shaderpass_CubeMap( shader_t *shader, shaderpass_t *pass, const char
 
 static void Shaderpass_ShadeCubeMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
-	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_REFLECTION_CELLSHADE, ptr );
+	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_REFLECTION_CELSHADE, ptr );
 }
 
 static void Shaderpass_VideoMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -1309,8 +1309,8 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 	shader->flags |= SHADER_PORTAL|SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2;
 }
 
-// <base> <cellshade> [diffuse] [decal] [entitydecal] [stripes] [celllight]
-static void Shaderpass_Cellshade( shader_t *shader, shaderpass_t *pass, const char **ptr )
+// <base> <celshade> [diffuse] [decal] [entitydecal] [stripes] [celllight]
+static void Shaderpass_Celshade( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
 	int i;
 	int flags;
@@ -1327,7 +1327,7 @@ static void Shaderpass_Cellshade( shader_t *shader, shaderpass_t *pass, const ch
 	pass->anim_fps = 0;
 	memset( pass->anim_frames, 0, sizeof( pass->anim_frames ) );
 
-	// at least two valid images are required: 'base' and 'cellshade'
+	// at least two valid images are required: 'base' and 'celshade'
 	for( i = 0; i < 2; i++ ) {
 		token = Shader_ParseString( ptr );
 		if( *token && strcmp( token, "-" ) )
@@ -1340,7 +1340,7 @@ static void Shaderpass_Cellshade( shader_t *shader, shaderpass_t *pass, const ch
 		}
 	}
 
-	pass->program_type = GLSL_PROGRAM_TYPE_CELLSHADE;
+	pass->program_type = GLSL_PROGRAM_TYPE_CELSHADE;
 
 	// parse optional images: [diffuse] [decal] [entitydecal] [stripes] [celllight]
 	for( i = 0; i < 5; i++ ) {
@@ -1645,8 +1645,8 @@ static void Shaderpass_TcGen( shader_t *shader, shaderpass_t *pass, const char *
 	}
 	else if( !strcmp( token, "reflection" ) )
 		pass->tcgen = TC_GEN_REFLECTION;
-	else if( !strcmp( token, "cellshade" ) )
-		pass->tcgen = TC_GEN_REFLECTION_CELLSHADE;
+	else if( !strcmp( token, "celshade" ) )
+		pass->tcgen = TC_GEN_REFLECTION_CELSHADE;
 }
 
 static void Shaderpass_Detail( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -1681,7 +1681,7 @@ static const shaderkey_t shaderpasskeys[] =
 	{ "animclampmap", Shaderpass_AnimClampMap },
 	{ "material", Shaderpass_Material },
 	{ "distortion",	Shaderpass_Distortion },
-	{ "cellshade", Shaderpass_Cellshade },
+	{ "celshade", Shaderpass_Celshade },
 	{ "tcgen", Shaderpass_TcGen },
 	{ "alphagen", Shaderpass_AlphaGen },
 	{ "detail", Shaderpass_Detail },
@@ -2180,7 +2180,7 @@ void Shader_SetFeatures( shader_t *s )
 			s->vattribs |= VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT|VATTRIB_LMCOORDS_BIT;
 		else if( pass->program_type == GLSL_PROGRAM_TYPE_DISTORTION )
 			s->vattribs |= VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT;
-		else if( pass->program_type == GLSL_PROGRAM_TYPE_CELLSHADE )
+		else if( pass->program_type == GLSL_PROGRAM_TYPE_CELSHADE )
 			s->vattribs |= VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT;
 
 		switch( pass->rgbgen.type )
@@ -2222,7 +2222,7 @@ void Shader_SetFeatures( shader_t *s )
 			s->vattribs |= VATTRIB_NORMAL_BIT;
 			break;
 		case TC_GEN_REFLECTION:
-		case TC_GEN_REFLECTION_CELLSHADE:
+		case TC_GEN_REFLECTION_CELSHADE:
 			s->vattribs |= VATTRIB_NORMAL_BIT;
 			break;
 		default:

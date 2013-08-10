@@ -263,9 +263,9 @@ void RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal, vec_t *fogDist,
 }
 
 /*
-* RB_VertexTCCellshadeMatrix
+* RB_VertexTCCelshadeMatrix
 */
-void RB_VertexTCCellshadeMatrix( mat4_t matrix )
+void RB_VertexTCCelshadeMatrix( mat4_t matrix )
 {
 	vec3_t dir;
 	mat4_t m;
@@ -778,7 +778,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		// regular models
 		if( !( r_offsetmapping->integer & 4 ) )
 			offsetmappingScale = 0;
-	#ifdef CELLSHADEDMATERIAL
+	#ifdef CELSHADEDMATERIAL
 		programFeatures |= GLSL_SHADER_MATERIAL_CELLSHADING;
 	#endif
 	#ifdef HALFLAMBERTLIGHTING
@@ -1285,8 +1285,8 @@ r_glslfeat_t RB_TcGenToProgramFeatures( int tcgen, vec_t *tcgenVec, mat4_t texMa
 	case TC_GEN_PROJECTION:
 		programFeatures |= GLSL_SHADER_Q3_TC_GEN_PROJECTION;
 		break;
-	case TC_GEN_REFLECTION_CELLSHADE:
-		RB_VertexTCCellshadeMatrix( texMatrix );
+	case TC_GEN_REFLECTION_CELSHADE:
+		RB_VertexTCCelshadeMatrix( texMatrix );
 	case TC_GEN_REFLECTION:
 		programFeatures |= GLSL_SHADER_Q3_TC_GEN_REFLECTION;
 		break;
@@ -1471,9 +1471,9 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 }
 
 /*
-* RB_RenderMeshGLSL_Cellshade
+* RB_RenderMeshGLSL_Celshade
 */
-static void RB_RenderMeshGLSL_Cellshade( const shaderpass_t *pass, r_glslfeat_t programFeatures )
+static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures )
 {
 	int program;
 	image_t *base, *shade, *diffuse, *decal, *entdecal, *stripes, *light;
@@ -1493,7 +1493,7 @@ static void RB_RenderMeshGLSL_Cellshade( const shaderpass_t *pass, r_glslfeat_t 
 
 	RB_BindTexture( 0, base );
 
-	RB_VertexTCCellshadeMatrix( reflectionMatrix );
+	RB_VertexTCCelshadeMatrix( reflectionMatrix );
 
 	// possibly apply the "texture" fog inline
 	if( fog == rb.texFog ) {
@@ -1513,7 +1513,7 @@ static void RB_RenderMeshGLSL_Cellshade( const shaderpass_t *pass, r_glslfeat_t 
 	RB_SetShaderpassState( pass->flags );
 
 	// bind white texture for shadow map view
-#define CELLSHADE_BIND(tmu,tex,feature,canAdd) \
+#define CELSHADE_BIND(tmu,tex,feature,canAdd) \
 	if( tex ) { \
 		if( ri.params & RP_SHADOWMAPVIEW ) { \
 			tex = r_whitetexture; \
@@ -1524,17 +1524,17 @@ static void RB_RenderMeshGLSL_Cellshade( const shaderpass_t *pass, r_glslfeat_t 
 		RB_BindTexture(tmu, tex); \
 	}
 
-	CELLSHADE_BIND( 1, shade, 0, qfalse );
-	CELLSHADE_BIND( 2, diffuse, GLSL_SHADER_CELLSHADE_DIFFUSE, qfalse );
-	CELLSHADE_BIND( 3, decal, GLSL_SHADER_CELLSHADE_DECAL, qtrue );
-	CELLSHADE_BIND( 4, entdecal, GLSL_SHADER_CELLSHADE_ENTITY_DECAL, qtrue );
-	CELLSHADE_BIND( 5, stripes, GLSL_SHADER_CELLSHADE_STRIPES, qtrue );
-	CELLSHADE_BIND( 6, light, GLSL_SHADER_CELLSHADE_CELL_LIGHT, qtrue );
+	CELSHADE_BIND( 1, shade, 0, qfalse );
+	CELSHADE_BIND( 2, diffuse, GLSL_SHADER_CELSHADE_DIFFUSE, qfalse );
+	CELSHADE_BIND( 3, decal, GLSL_SHADER_CELSHADE_DECAL, qtrue );
+	CELSHADE_BIND( 4, entdecal, GLSL_SHADER_CELSHADE_ENTITY_DECAL, qtrue );
+	CELSHADE_BIND( 5, stripes, GLSL_SHADER_CELSHADE_STRIPES, qtrue );
+	CELSHADE_BIND( 6, light, GLSL_SHADER_CELSHADE_CELL_LIGHT, qtrue );
 
-#undef CELLSHADE_BIND
+#undef CELSHADE_BIND
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELLSHADE, NULL,
+	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -1650,8 +1650,8 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	case GLSL_PROGRAM_TYPE_Q3A_SHADER:
 		RB_RenderMeshGLSL_Q3AShader( pass, features );
 		break;
-	case GLSL_PROGRAM_TYPE_CELLSHADE:
-		RB_RenderMeshGLSL_Cellshade( pass, features );
+	case GLSL_PROGRAM_TYPE_CELSHADE:
+		RB_RenderMeshGLSL_Celshade( pass, features );
 		break;
 	case GLSL_PROGRAM_TYPE_FOG:
 		RB_RenderMeshGLSL_Fog( pass, features );

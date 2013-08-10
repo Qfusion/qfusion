@@ -163,7 +163,7 @@ void RP_Init( void )
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, DEFAULT_GLSL_SHADOWMAP_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, DEFAULT_GLSL_OUTLINE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELLSHADE, DEFAULT_GLSL_CELLSHADE_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, DEFAULT_GLSL_CELSHADE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
 	
@@ -621,7 +621,7 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_cellshade[] =
+static const glsl_feature_t glsl_features_celshade[] =
 {
 	{ GLSL_SHADER_COMMON_GRAYSCALE, "#define APPLY_GRAYSCALE\n", "_grey" },
 
@@ -649,15 +649,15 @@ static const glsl_feature_t glsl_features_cellshade[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
 
-	{ GLSL_SHADER_CELLSHADE_DIFFUSE, "#define APPLY_DIFFUSE\n", "_diff" },
-	{ GLSL_SHADER_CELLSHADE_DECAL, "#define APPLY_DECAL\n", "_decal" },
-	{ GLSL_SHADER_CELLSHADE_DECAL_ADD, "#define APPLY_DECAL_ADD\n", "_decal" },
-	{ GLSL_SHADER_CELLSHADE_ENTITY_DECAL, "#define APPLY_ENTITY_DECAL\n", "_edecal" },
-	{ GLSL_SHADER_CELLSHADE_ENTITY_DECAL_ADD, "#define APPLY_ENTITY_DECAL\n#define APPLY_ENTITY_DECAL_ADD\n", "_add" },
-	{ GLSL_SHADER_CELLSHADE_STRIPES, "#define APPLY_STRIPES\n", "_stripes" },
-	{ GLSL_SHADER_CELLSHADE_STRIPES_ADD, "#define APPLY_STRIPES_ADD\n", "_stripes_add" },
-	{ GLSL_SHADER_CELLSHADE_CELL_LIGHT, "#define APPLY_CELL_LIGHT\n", "_light" },
-	{ GLSL_SHADER_CELLSHADE_CELL_LIGHT_ADD, "#define APPLY_CELL_LIGHT\n#define APPLY_CELL_LIGHT_ADD\n", "_add" },
+	{ GLSL_SHADER_CELSHADE_DIFFUSE, "#define APPLY_DIFFUSE\n", "_diff" },
+	{ GLSL_SHADER_CELSHADE_DECAL, "#define APPLY_DECAL\n", "_decal" },
+	{ GLSL_SHADER_CELSHADE_DECAL_ADD, "#define APPLY_DECAL_ADD\n", "_decal" },
+	{ GLSL_SHADER_CELSHADE_ENTITY_DECAL, "#define APPLY_ENTITY_DECAL\n", "_edecal" },
+	{ GLSL_SHADER_CELSHADE_ENTITY_DECAL_ADD, "#define APPLY_ENTITY_DECAL\n#define APPLY_ENTITY_DECAL_ADD\n", "_add" },
+	{ GLSL_SHADER_CELSHADE_STRIPES, "#define APPLY_STRIPES\n", "_stripes" },
+	{ GLSL_SHADER_CELSHADE_STRIPES_ADD, "#define APPLY_STRIPES_ADD\n", "_stripes_add" },
+	{ GLSL_SHADER_CELSHADE_CELL_LIGHT, "#define APPLY_CELL_LIGHT\n", "_light" },
+	{ GLSL_SHADER_CELSHADE_CELL_LIGHT_ADD, "#define APPLY_CELL_LIGHT\n#define APPLY_CELL_LIGHT_ADD\n", "_add" },
 
 	{ 0, NULL, NULL }
 };
@@ -705,8 +705,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_dynamiclights,
 	// GLSL_PROGRAM_TYPE_Q3A_SHADER
 	glsl_features_q3a,
-	// GLSL_PROGRAM_TYPE_CELLSHADE
-	glsl_features_cellshade,
+	// GLSL_PROGRAM_TYPE_CELSHADE
+	glsl_features_celshade,
 	// GLSL_PROGRAM_TYPE_FOG
 	glsl_features_fog,
 	// GLSL_PROGRAM_TYPE_FXAA
@@ -1903,8 +1903,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 			locReflectionTexture,
 			locRefractionTexture,
 			locShadowmapTexture[GLSL_SHADOWMAP_LIMIT],
-			locCellShadeTexture,
-			locCellLightTexture,
+			locCelShadeTexture,
+			locCelLightTexture,
 			locDiffuseTexture,
 			locStripesTexture,
 			locDepthTexture;
@@ -1946,8 +1946,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 			break;
 	}
 
-	locCellShadeTexture = qglGetUniformLocationARB( program->object, "u_CellShadeTexture" );
-	locCellLightTexture = qglGetUniformLocationARB( program->object, "u_CellLightTexture" );
+	locCelShadeTexture = qglGetUniformLocationARB( program->object, "u_CelShadeTexture" );
+	locCelLightTexture = qglGetUniformLocationARB( program->object, "u_CelLightTexture" );
 	locDiffuseTexture = qglGetUniformLocationARB( program->object, "u_DiffuseTexture" );
 	locStripesTexture = qglGetUniformLocationARB( program->object, "u_StripesTexture" );
 
@@ -2065,8 +2065,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 
 //	if( locBaseTexture >= 0 )
 //		qglUniform1iARB( locBaseTexture, 0 );
-	if( locCellShadeTexture >= 0 )
-		qglUniform1iARB( locCellShadeTexture, 1 );
+	if( locCelShadeTexture >= 0 )
+		qglUniform1iARB( locCelShadeTexture, 1 );
 	if( locDiffuseTexture >= 0 )
 		qglUniform1iARB( locDiffuseTexture, 2 );
 //	if( locDecalTexture >= 0 )
@@ -2075,8 +2075,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 //		qglUniform1iARB( locEntityDecalTexture, 4 );
 	if( locStripesTexture >= 0 )
 		qglUniform1iARB( locStripesTexture, 5 );
-	if( locCellLightTexture >= 0 )
-		qglUniform1iARB( locCellLightTexture, 6 );
+	if( locCelLightTexture >= 0 )
+		qglUniform1iARB( locCelLightTexture, 6 );
 
 	if( locDepthTexture >= 0 )
 		qglUniform1iARB( locDepthTexture, 3 );
