@@ -262,7 +262,7 @@ void R_RenderScene( const refdef_t *fd )
 		// copy to FXAA or default framebuffer
 		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
 		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
-			colorWhite, GLSL_PROGRAM_TYPE_NONE, ri.fbColorAttachment );
+			colorWhite, GLSL_PROGRAM_TYPE_NONE, ri.fbColorAttachment, qfalse );
 	}
 
 	if( fbFlags & 2 ) {
@@ -272,14 +272,14 @@ void R_RenderScene( const refdef_t *fd )
 		// blend to FXAA or default framebuffer
 		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
 		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
-			color, GLSL_PROGRAM_TYPE_NONE, r_screenweapontexture );
+			color, GLSL_PROGRAM_TYPE_NONE, r_screenweapontexture, qtrue );
 	}
 
 	// blit FXAA to default framebuffer
 	if( fbFlags & 4 ) {
 		R_UseFBObject( 0 );
 		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
-			colorWhite, GLSL_PROGRAM_TYPE_FXAA, r_screenfxaacopy );
+			colorWhite, GLSL_PROGRAM_TYPE_FXAA, r_screenfxaacopy, qfalse );
 	}
 }
 
