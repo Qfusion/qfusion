@@ -789,7 +789,7 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *da
 * R_DrawStretchImage
 */
 void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
-	const vec4_t color, int program_type, image_t *image )
+	const vec4_t color, int program_type, image_t *image, qboolean blend )
 {
 	static char *s_name = "$builtinimage";
 	static shaderpass_t p;
@@ -809,7 +809,7 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 	p.alphagen.args = &rgba[3];
 	p.tcgen = TC_GEN_BASE;
 	p.anim_frames[0] = image;
-	p.flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+	p.flags = blend ? GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA : 0;
 	p.program_type = program_type;
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, color, &s );
@@ -1503,12 +1503,6 @@ void R_EndFrame( void )
 	R_EndStretchBatch();
 
 	R_PolyBlend();
-
-	if( r_temp1->integer )
-	{
-		R_DrawStretchQuick( 0, 0, 320, 240, 0, 1, 1, 0, 
-			colorWhite, GLSL_PROGRAM_TYPE_NONE, r_screenweapontexture );
-	}
 	
 	// reset the 2D state so that the mode will be 
 	// properly set back again in R_BeginFrame
