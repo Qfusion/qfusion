@@ -699,7 +699,7 @@ static void CG_UpdateGenericEnt( centity_t *cent )
 
 	// set up the model
 	cent->ent.rtype = RT_MODEL;
-	if( cent->current.modelindex < 255 )
+	if( cent->current.modelindex != 1 )
 		cent->ent.model = cgs.modelDraw[cent->current.modelindex];
 
 	cent->skel = CG_SkeletonForModel( cent->ent.model );
