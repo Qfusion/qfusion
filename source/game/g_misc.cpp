@@ -61,7 +61,7 @@ void ThrowClientHead( edict_t *self, int damage )
 {
 	vec3_t vd;
 
-	self->s.modelindex = 255;
+	self->s.modelindex = 1;
 	self->s.modelindex2 = 0;
 	self->s.skinnum = 0;
 
@@ -713,10 +713,7 @@ void SP_func_explosive( edict_t *self )
 //QUAKED light_mine (0 1 0) (-2 -2 -12) (2 2 12)
 void SP_light_mine( edict_t *ent )
 {
-	ent->movetype = MOVETYPE_NONE;
-	ent->r.solid = SOLID_YES;
-	ent->s.modelindex = trap_ModelIndex( "models/objects/minelite/light1/tris.md2" );
-	GClip_LinkEntity( ent );
+	G_FreeEdict( ent );
 }
 
 

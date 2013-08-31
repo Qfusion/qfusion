@@ -395,29 +395,6 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	if( to->team != from->team )
 		bits |= U_TEAM;
 
-	/*
-	// small check for testing delta compression on linear projectiles
-	if( to->linearProjectile ) 
-	{
-	if( bits & (U_ORIGIN1|U_ORIGIN2|U_ORIGIN3|U_OTHERORIGIN|U_WEAPON|U_LIGHT) )
-	Com_Printf( "LINEAR PROJECTILE Delta compression test\n" );
-	}
-
-	if( bits & (U_OTHERORIGIN) )
-	{
-	if( to->type == 0 )
-	Com_Printf( "ET_GENERIC: U_OTHERORIGIN: updated\n" );
-	if( to->type == 1 )
-	Com_Printf( "ET_PLAYER: U_OTHERORIGIN: updated\n" );
-	if( to->type == 2 )
-	Com_Printf( "ET_CORPSE: U_OTHERORIGIN: updated\n" );
-	if( to->type == 6 )
-	Com_Printf( "ET_PUSH_TRIGGER: U_OTHERORIGIN: updated\n" );
-	if( to->type == 14 )
-	Com_Printf( "ET_ITEM: U_OTHERORIGIN: updated\n" );
-	}
-	*/
-
 	//
 	// write the message
 	//
@@ -471,9 +448,9 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 		MSG_WriteShort( msg, to->solid );
 
 	if( bits & U_MODEL )
-		MSG_WriteByte( msg, to->modelindex );
+		MSG_WriteShort( msg, to->modelindex );
 	if( bits & U_MODEL2 )
-		MSG_WriteByte( msg, to->modelindex2 );
+		MSG_WriteShort( msg, to->modelindex2 );
 
 	if( bits & U_FRAME8 )
 		MSG_WriteByte( msg, to->frame );
@@ -537,7 +514,8 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	}
 
 	if( bits & U_SOUND )
-		MSG_WriteByte( msg, (qbyte)to->sound );
+		MSG_WriteShort( msg, (qbyte)to->sound );
+
 	if( bits & U_EVENT )
 	{
 		if( !to->eventParms[0] )
@@ -649,9 +627,9 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 		to->solid = MSG_ReadShort( msg );
 
 	if( bits & U_MODEL )
-		to->modelindex = (qbyte)MSG_ReadByte( msg );
+		to->modelindex = MSG_ReadShort( msg );
 	if( bits & U_MODEL2 )
-		to->modelindex2 = (qbyte)MSG_ReadByte( msg );
+		to->modelindex2 = MSG_ReadShort( msg );
 
 	if( bits & U_FRAME8 )
 		to->frame = (qbyte)MSG_ReadByte( msg );
@@ -710,7 +688,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 		MSG_ReadPos( msg, to->origin2 );
 
 	if( bits & U_SOUND )
-		to->sound = (qbyte)MSG_ReadByte( msg );
+		to->sound = MSG_ReadShort( msg );
 
 	if( bits & U_EVENT )
 	{
