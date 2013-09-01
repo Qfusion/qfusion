@@ -19,17 +19,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #ifndef APPLICATION
-#define APPLICATION						"Warsow"
+#define APPLICATION						"Qfusion"
 #endif
 
 #ifndef APPLICATION_UTF8
-#define APPLICATION_UTF8				"War\xC2\xA7ow"
+#define APPLICATION_UTF8				"Qfusion"
 #endif
 
-#define	DEFAULT_BASEGAME				"basewsw"
+#define	DEFAULT_BASEGAME				"base"
 
 #ifndef APP_VERSION_MAJOR
-#define APP_VERSION_MAJOR				1
+#define APP_VERSION_MAJOR				0
 #endif
 
 #ifndef APP_VERSION_MINOR
@@ -45,21 +45,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef PUBLIC_BUILD
-#define APP_PROTOCOL_VERSION			16
+#define APP_PROTOCOL_VERSION			1
 #else
-#define APP_PROTOCOL_VERSION			6095	// we're using revision number as protocol version for internal builds
+#define APP_PROTOCOL_VERSION			1001	// we're using revision number as protocol version for internal builds
 #endif
 
 #ifndef APP_URL
-#define	APP_URL							"http://www.warsow.net/"
+#define	APP_URL							"http://www.e4m5.net/"
 #endif
 
 #ifndef APP_COPYRIGHT_OWNER
-#define APP_COPYRIGHT_OWNER				"Chasseur de bots"
+#define APP_COPYRIGHT_OWNER				"Picmip Studios"
 #endif
 
 #ifndef APP_SCREENSHOTS_PREFIX
-#define APP_SCREENSHOTS_PREFIX			"wsw_"
+#define APP_SCREENSHOTS_PREFIX			"qfusion_"
 #endif
 
 #undef STR_HELPER
@@ -69,7 +69,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define STR_TOSTR( x )					STR_HELPER( x )
 
 #define APP_PROTOCOL_VERSION_STR		STR_TOSTR( APP_PROTOCOL_VERSION )
-#define APP_DEMO_EXTENSION_STR			".wd" APP_PROTOCOL_VERSION_STR
+#define APP_DEMO_EXTENSION_STR			".md" APP_PROTOCOL_VERSION_STR
 
 #define APP_URI_SCHEME					APPLICATION "://"
 #define APP_URI_PROTO_SCHEME			APPLICATION STR_TOSTR( APP_PROTOCOL_VERSION ) "://"
@@ -83,19 +83,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_UPDATE_URL
-#define	APP_UPDATE_URL					"http://update.warsow.net/"
+#define	APP_UPDATE_URL					"http://update.e4m5.net/"
 #define	APP_SERVER_UPDATE_DIRECTORY		"autoupdate/"STR_TOSTR( APP_VERSION_MAJOR ) "." STR_TOSTR( APP_VERSION_MINOR )"/"
 #define APP_SERVER_UPDATE_FILE			"filelist.txt"
-#define APP_CLIENT_UPDATE_FILE			"warsow_last_version.txt"
-#define APP_CLIENT_ANNOUNCEMENT_FILE	"warsow_announcement.txt"
+#define APP_CLIENT_UPDATE_FILE			"qfusion_last_version.txt"
 #endif
 
 #ifdef PUBLIC_BUILD
-#define APP_MATCHMAKER_URL				"http://mm.warsow.net:1337"
-#define APP_MATCHMAKER_WEB_URL			"http://www.warsow.net/wmm/"
+#define APP_MATCHMAKER_URL				"http://www.e4m5.net:1337"
+#define APP_MATCHMAKER_WEB_URL			"http://www.e4m5.net/wmm/"
 #else
-#define APP_MATCHMAKER_URL				"http://mm-dev.warsow.net:1337"
-#define APP_MATCHMAKER_WEB_URL			"http://www-dev.warsow.net/wmm/"
+#define APP_MATCHMAKER_URL				"http://www.e4m5.net:1337"
+#define APP_MATCHMAKER_WEB_URL			"http://www.e4m5.net/wmm/"
 #endif
 
 //
