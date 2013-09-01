@@ -721,7 +721,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #endif
 
 #define MYGLSLVERSION "" \
-"#version 120\n"
+"#version 140\n"
 
 #define MYHALFTYPES "" \
 "#if !defined(myhalf)\n" \
