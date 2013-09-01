@@ -31,8 +31,8 @@ void AI_Cheat_NoTarget( edict_t *ent )
 	if( !sv_cheats->integer )
 		return;
 
-	ent->ai->notarget = !ent->ai->notarget ? true : false;
-	if( ent->ai->notarget )
+	ent->flags ^= FL_NOTARGET;
+	if( ent->flags & FL_NOTARGET )
 		G_PrintMsg( ent, "Bot Notarget ON\n" );
 	else
 		G_PrintMsg( ent, "Bot Notarget OFF\n" );

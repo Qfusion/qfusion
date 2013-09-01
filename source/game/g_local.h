@@ -48,12 +48,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CLIENT_RESPAWN_FREEZE_DELAY 300
 
 // edict->flags
-#define	FL_FLY			0x00000001
-#define	FL_SWIM			0x00000002  // implied immunity to drowining
+#define	FL_FLY				0x00000001
+#define	FL_SWIM				0x00000002  // implied immunity to drowining
 #define FL_IMMUNE_LASER		0x00000004
-#define	FL_INWATER		0x00000008
-#define	FL_GODMODE		0x00000010
-#define	FL_NOTARGET		0x00000020
+#define	FL_INWATER			0x00000008
+#define	FL_GODMODE			0x00000010
+#define	FL_NOTARGET			0x00000020
 #define FL_IMMUNE_SLIME		0x00000040
 #define FL_IMMUNE_LAVA		0x00000080
 #define	FL_PARTIALGROUND	0x00000100  // not all corners are valid
@@ -227,8 +227,10 @@ typedef struct
 	bool forceExit;     // just exit, ignore extended time checks
 
 	edict_t	*current_entity;    // entity running from G_RunFrame
-	edict_t	*spawning_entity;    // entity being spawned from G_InitLevel
+	edict_t	*spawning_entity;   // entity being spawned from G_InitLevel
 	int body_que;               // dead bodies
+
+	edict_t *think_client_entity;// cycles between connected clients each frame
 
 	int numCheckpoints;
 	int numLocations;
@@ -717,20 +719,20 @@ void SP_trigger_gravity( edict_t *ent );
 //
 
 int	G_PointContents( vec3_t p );
-void	G_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask );
+void G_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask );
 int G_PointContents4D( vec3_t p, int timeDelta );
 void G_Trace4D( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask, int timeDelta );
 void GClip_BackUpCollisionFrame( void );
 edict_t *GClip_FindBoxInRadius4D( edict_t *from, vec3_t org, float rad, int timeDelta );
 void G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir, float *kickFrac, float *dmgFrac, int timeDelta );
-void	GClip_ClearWorld( void );
-void	GClip_SetBrushModel( edict_t *ent, const char *name );
-void	GClip_SetAreaPortalState( edict_t *ent, bool open );
-void	GClip_LinkEntity( edict_t *ent );
-void	GClip_UnlinkEntity( edict_t *ent );
-void	GClip_TouchTriggers( edict_t *ent );
+void GClip_ClearWorld( void );
+void GClip_SetBrushModel( edict_t *ent, const char *name );
+void GClip_SetAreaPortalState( edict_t *ent, bool open );
+void GClip_LinkEntity( edict_t *ent );
+void GClip_UnlinkEntity( edict_t *ent );
+void GClip_TouchTriggers( edict_t *ent );
 void G_PMoveTouchTriggers( pmove_t *pm );
-
+entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
 
 
 //
