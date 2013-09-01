@@ -360,7 +360,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 
 		if( goalEnt->ent->r.client )
 		{
-			if( G_ISGHOSTING( goalEnt->ent ) || goalEnt->ent->ai->notarget )
+			if( G_ISGHOSTING( goalEnt->ent ) || goalEnt->ent->flags & FL_NOTARGET )
 				goalEnt->node = NODE_INVALID;
 			else
 				goalEnt->node = AI_FindClosestReachableNode( goalEnt->ent->s.origin, goalEnt->ent, NODE_DENSITY, NODE_ALL );
@@ -557,11 +557,11 @@ void AI_Think( edict_t *self )
 		return;
 	}
 
-	AI_CategorizePosition( self );
-
 	// check for being blocked
 	if( !G_ISGHOSTING( self ) )
 	{
+		AI_CategorizePosition( self );
+
 		if( VectorLengthFast( self->velocity ) > 37 )
 			self->ai->blocked_timeout = level.time + 10000;
 
@@ -583,7 +583,9 @@ void AI_Think( edict_t *self )
 	if( self->ai->goal_node == NODE_INVALID )
 		AI_PickLongRangeGoal( self );
 
-	AI_PickShortRangeGoal( self );
+	// only pick short term goals for bots once per frame
+	if( self == level.think_client_entity )
+		AI_PickShortRangeGoal( self );
 
 	self->ai->pers.RunFrame( self );
 

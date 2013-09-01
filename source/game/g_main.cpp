@@ -199,8 +199,6 @@ static void G_GS_RoundUpToHullSize( vec3_t mins, vec3_t maxs )
 	trap_CM_RoundUpToHullSize( mins, maxs, NULL );
 }
 
-entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
-
 /*
 * G_InitGameShared
 * give gameshared access to some utilities

@@ -293,7 +293,6 @@ typedef struct ai_handle_s
 	edict_t	*latched_enemy;
 	int enemyReactionDelay;
 	//int				rethinkEnemyDelay;
-	bool notarget;  // bots can not see this entity
 	bool rj_triggered;
 	bool dont_jump;
 	bool camp_item;
