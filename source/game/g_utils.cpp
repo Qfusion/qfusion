@@ -930,7 +930,7 @@ edict_t *G_Spawn( void )
 		}
 
 		// this is going to be our second chance to spawn an entity in case all free
-		// entities have become such only recently
+		// entities have been freed only recently
 		if( !freed )
 			freed = e;
 	}
@@ -938,7 +938,10 @@ edict_t *G_Spawn( void )
 	if( i == game.maxentities )
 	{
 		if( freed )
-			return e;
+		{
+			G_InitEdict( freed );
+			return freed;
+		}
 		G_Error( "G_Spawn: no free edicts" );
 	}
 
