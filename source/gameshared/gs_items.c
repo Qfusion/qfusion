@@ -88,7 +88,6 @@ gsitem_t	itemdefs[] =
 		AMMO_WEAK_GUNBLADE,         // weak ammo tag
 		NULL,                       // miscelanea info pointer
 		PATH_GUNBLADEBLAST_STRONG_MODEL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED weapon_machinegun
@@ -112,7 +111,6 @@ gsitem_t	itemdefs[] =
 		AMMO_WEAK_BULLETS,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED riotgun
@@ -135,7 +133,6 @@ gsitem_t	itemdefs[] =
 		AMMO_WEAK_SHELLS,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED weapon_grenadelauncher (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -159,7 +156,6 @@ gsitem_t	itemdefs[] =
 		NULL,
 		PATH_GRENADE_WEAK_MODEL " " PATH_GRENADE_STRONG_MODEL,
 		NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED weapon_rocketlauncher (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -184,7 +180,6 @@ gsitem_t	itemdefs[] =
 		PATH_ROCKET_WEAK_MODEL " " PATH_ROCKET_STRONG_MODEL,
 		S_WEAPON_ROCKET_W_FLY " " S_WEAPON_ROCKET_S_FLY,
 		NULL
-		,0 ,0
 	},
 
 	//QUAKED weapon_plasmagun (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -209,7 +204,6 @@ gsitem_t	itemdefs[] =
 		PATH_PLASMA_WEAK_MODEL " " PATH_PLASMA_STRONG_MODEL,
 		S_WEAPON_PLASMAGUN_W_FLY " " S_WEAPON_PLASMAGUN_S_FLY,
 		NULL
-		,0 ,0
 	},
 
 	//QUAKED lasergun
@@ -234,7 +228,6 @@ gsitem_t	itemdefs[] =
 		NULL,
 		S_WEAPON_LASERGUN_S_HUM " " S_WEAPON_LASERGUN_W_HUM " " S_WEAPON_LASERGUN_S_QUAD_HUM " "S_WEAPON_LASERGUN_W_QUAD_HUM " " S_WEAPON_LASERGUN_S_STOP " " S_WEAPON_LASERGUN_W_STOP,
 		NULL
-		,0 ,0
 	},
 
 	//QUAKED electrobolt
@@ -257,7 +250,6 @@ gsitem_t	itemdefs[] =
 		AMMO_WEAK_BOLTS,
 		NULL,
 		PATH_ELECTROBOLT_WEAK_MODEL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED instagun
@@ -280,7 +272,6 @@ gsitem_t	itemdefs[] =
 		AMMO_WEAK_INSTAS,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 
@@ -310,7 +301,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_machinegun (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -333,7 +323,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_riotgun (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -356,7 +345,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_grenadelauncher (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -379,7 +367,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_rocketlauncher (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -402,7 +389,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_plasmagun (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -425,7 +411,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_lasergun (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -448,7 +433,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_electrobolt (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -471,7 +455,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	{
@@ -493,7 +476,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//------------------------
@@ -520,7 +502,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_machinegun_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -543,7 +524,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_riotgun_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -566,7 +546,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_grenadelauncher_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -589,7 +568,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_rocketlauncher_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -612,7 +590,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_plasmagun_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -635,7 +612,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_lasergun_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -658,7 +634,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED ammo_electrobolt_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -681,7 +656,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	{
@@ -703,7 +677,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 
@@ -730,7 +703,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_armor_ya (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -753,7 +725,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_armor_ra (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -776,7 +747,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_armor_shard (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -799,7 +769,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//------------------------
@@ -826,7 +795,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_health_medium (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -849,7 +817,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_health_large (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -872,7 +839,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_health_mega (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -895,7 +861,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_health_ultra (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -918,7 +883,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 
@@ -948,7 +912,6 @@ gsitem_t	itemdefs[] =
 		S_QUAD_FIRE S_ITEM_QUAD_RESPAWN,
 		// S_QUAD_USE " " S_QUAD_FIRE,
 		NULL
-		,0 ,0
 	},
 
 	//QUAKED item_warshell (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -974,7 +937,6 @@ gsitem_t	itemdefs[] =
 		S_ITEM_WARSHELL_RESPAWN,
 		//S_SHELL_USE,
 		NULL
-		,0 ,0
 	},
 
 	//QUAKED item_regen (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -999,7 +961,6 @@ gsitem_t	itemdefs[] =
 		NULL,
 		S_ITEM_REGEN_RESPAWN,
 		NULL
-		,0 ,0
 	},
 
 	//QUAKED item_ammopack_weak (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -1022,7 +983,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_ammopack_strong (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -1045,7 +1005,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	//QUAKED item_ammopack (.3 .3 1) (-16 -16 -16) (16 16 16)
@@ -1068,7 +1027,6 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL, NULL, NULL
-		,0 ,0
 	},
 
 	// end of list marker

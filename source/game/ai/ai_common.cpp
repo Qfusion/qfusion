@@ -97,14 +97,14 @@ void AI_NewEnemyInView( edict_t *self, edict_t *enemy )
 	if( enemy == self )
 		return;
 
-	self->ai.latched_enemy = enemy;
-	self->ai.enemyReactionDelay = ( 50 + ( AI_REACTION_TIME * ( 1.0f - self->ai.pers.skillLevel ) ) );
+	self->ai->latched_enemy = enemy;
+	self->ai->enemyReactionDelay = ( 50 + ( AI_REACTION_TIME * ( 1.0f - self->ai->pers.skillLevel ) ) );
 }
 
 unsigned int AI_CurrentLinkType( edict_t *self )
 {
-	if( !AI_PlinkExists( self->ai.current_node, self->ai.next_node ) )
+	if( !AI_PlinkExists( self->ai->current_node, self->ai->next_node ) )
 		return LINK_INVALID;
 
-	return AI_PlinkMoveType( self->ai.current_node, self->ai.next_node );
+	return AI_PlinkMoveType( self->ai->current_node, self->ai->next_node );
 }

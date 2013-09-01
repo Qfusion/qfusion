@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t *sv_botpersonality;
 
 ai_weapon_t AIWeapons[WEAP_TOTAL];
+const size_t ai_handle_size = sizeof( ai_handle_t );
 
 //==========================================
 // AI_InitLevel
@@ -49,8 +50,8 @@ void AI_InitLevel( void )
 	game.numBots = 0;
 	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
 	{
-		if( !ent->r.inuse || !ent->ai.type ) continue;
-		if( ent->r.svflags & SVF_FAKECLIENT && ent->ai.type == AI_ISBOT )
+		if( !ent->r.inuse || !ent->ai ) continue;
+		if( ent->r.svflags & SVF_FAKECLIENT && AI_GetType( ent->ai ) == AI_ISBOT )
 			game.numBots++;
 	}
 
@@ -128,13 +129,14 @@ void AI_InitLevel( void )
 //==========================================
 void G_FreeAI( edict_t *ent )
 {
-	if( !ent->ai.type ) return;
-	if( ent->ai.type == AI_ISBOT )
-	{
+	if( !ent->ai ) {
+		return;
+	}
+	if( ent->ai->type == AI_ISBOT ) {
 		game.numBots--;
 	}
-
-	ent->ai.type = AI_INACTIVE;
+	G_Free( ent->ai );
+	ent->ai = NULL;
 }
 
 //==========================================
@@ -143,60 +145,114 @@ void G_FreeAI( edict_t *ent )
 //==========================================
 void G_SpawnAI( edict_t *ent )
 {
-	memset( &ent->ai, 0, sizeof( ai_handle_t ) );
+	if( !ent->ai ) {
+		ent->ai = ( ai_handle_t * )G_Malloc( sizeof( ai_handle_t ) );
+	}
+	else {
+		memset( &ent->ai, 0, sizeof( ai_handle_t ) );
+	}
 	if( ent->r.svflags & SVF_FAKECLIENT )
-		ent->ai.type = AI_ISBOT;
+		ent->ai->type = AI_ISBOT;
 	else
-		ent->ai.type = AI_ISMONSTER;
+		ent->ai->type = AI_ISMONSTER;
 }
 
-// FIXME: All this is too slow
 nav_ents_t *AI_GetGoalentForEnt( edict_t *target )
 {
-	int i;
+	int entnum;
 
 	if( !target )
 		return NULL;
 
-	for( i = 0; i < nav.num_goalEnts; i++ )
-	{
-		if( target == nav.goalEnts[i].ent )
-			return &nav.goalEnts[i];
-	}
-
-	return NULL;
+	entnum = ENTNUM( target );
+	return nav.entsGoals[entnum];
 }
 
-edict_t *AI_GetGoalentAtNode( int node ) 
+//==========================================
+// AI_GetRootGoalEnt
+//==========================================
+int AI_GetRootGoalEnt( void )
 {
-	int i;
-
-	for( i = 0; i < nav.num_goalEnts; i++ )
-	{
-		if( nav.goalEnts[i].node == node )
-			return nav.goalEnts[i].ent;
-	}
-
-	return NULL;
+	return -1;
 }
 
-edict_t *AI_GetGoalEnt( int index )
+//==========================================
+// AI_GetNextGoalEnt
+//==========================================
+int AI_GetNextGoalEnt( int index )
 {
-	if( !nav.loaded || index < 0 || index >= nav.num_goalEnts )
+	if ( !nav.loaded || index >= MAX_GOALENTS )
+		return -1;
+	if( index < 0 )
+		return nav.goalEntsHeadnode.prev->id;
+	return nav.goalEnts[index].prev->id;
+}
+
+//==========================================
+// AI_GetGoalEntity
+//==========================================
+edict_t *AI_GetGoalEntity( int index )
+{
+	if ( !nav.loaded || index < 0 || index >= MAX_GOALENTS )
 		return NULL;
-
 	return nav.goalEnts[index].ent;
 }
 
-int AI_GetGoalEntNode( int index )
+//==========================================
+// AI_GetType
+//==========================================
+ai_type AI_GetType( const ai_handle_t *ai )
 {
-	if( !nav.loaded || index < 0 || index >= nav.num_goalEnts )
-		return NODE_INVALID;
-
-	return nav.goalEnts[index].node;
+	return ai ? ai->type : AI_INACTIVE;
 }
 
+//==========================================
+// AI_ClearWeights
+//==========================================
+void AI_ClearWeights( ai_handle_t *ai )
+{
+	memset( ai->status.entityWeights, 0, sizeof( ai->status.entityWeights ) );
+}
 
+//==========================================
+// AI_SetGoalWeight
+//==========================================
+void AI_SetGoalWeight( ai_handle_t *ai, int index, float weight )
+{
+	if( index < 0 || index >= MAX_GOALENTS )
+		return;
+	ai->status.entityWeights[index] = weight;
+}
+
+//==========================================
+// AI_GetItemWeight
+//==========================================
+float AI_GetItemWeight( const ai_handle_t *ai, const gsitem_t *item )
+{
+	if( !item )
+		return 0;
+	return ai->pers.inventoryWeights[item->tag];
+}
+
+float AI_GetCharacterReactionTime( const ai_handle_t *ai )
+{
+	return ai ? ai->pers.cha.reaction_time : 0;
+}
+
+float AI_GetCharacterOffensiveness( const ai_handle_t *ai )
+{
+	return ai ? ai->pers.cha.offensiveness : 0;
+}
+
+float AI_GetCharacterCampiness( const ai_handle_t *ai )
+{
+	return ai ? ai->pers.cha.campiness : 0;
+}
+
+float AI_GetCharacterFirerate( const ai_handle_t *ai )
+{
+	return ai ? ai->pers.cha.firerate : 0;
+}
 
 //==========================================
 // AI_ResetWeights
@@ -204,15 +260,15 @@ int AI_GetGoalEntNode( int index )
 //==========================================
 void AI_ResetWeights( ai_handle_t *ai )
 {
-	int i;
+	nav_ents_t *goalEnt;
 
 	// restore defaults from bot personality
-	memset( ai->status.entityWeights, 0, sizeof( ai->status.entityWeights ) );
+	AI_ClearWeights( ai );
 
-	for( i = 0; i < nav.num_goalEnts; i++ )
+	FOREACH_GOALENT( goalEnt )
 	{
-		if( nav.goalEnts[i].ent->item )
-			ai->status.entityWeights[i] = ai->pers.inventoryWeights[nav.goalEnts[i].ent->item->tag];
+		if( goalEnt->ent->item )
+			AI_SetGoalWeight( ai, goalEnt->id, AI_GetItemWeight( ai, goalEnt->ent->item ) );
 	}
 }
 
@@ -223,17 +279,17 @@ void AI_ResetWeights( ai_handle_t *ai )
 //==========================================
 void AI_ResetNavigation( edict_t *self )
 {
-	self->enemy = self->ai.latched_enemy = NULL;
-	self->ai.state_combat_timeout = 0;
+	self->enemy = self->ai->latched_enemy = NULL;
+	self->ai->state_combat_timeout = 0;
 
-	self->ai.is_bunnyhop = false;
+	self->ai->is_bunnyhop = false;
 
-	self->ai.nearest_node_tries = 0;
-	self->ai.longRangeGoalTimeout = 0;
+	self->ai->nearest_node_tries = 0;
+	self->ai->longRangeGoalTimeout = 0;
 
-	self->ai.blocked_timeout = level.time + 15000;
+	self->ai->blocked_timeout = level.time + 15000;
 
-	self->ai.shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
+	self->ai->shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 	self->movetarget = NULL;
 
 	AI_ClearGoal( self );
@@ -265,35 +321,34 @@ void AI_PickLongRangeGoal( edict_t *self )
 	if( G_ISGHOSTING( self ) )
 		return;
 
-	if( self->ai.longRangeGoalTimeout > level.time )
+	if( self->ai->longRangeGoalTimeout > level.time )
 		return;
 
 	if( !self->r.client->ps.pmove.stats[PM_STAT_MAXSPEED] ) {
 		return;
 	}
 
-	self->ai.longRangeGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom( 0, 1000 );
+	self->ai->longRangeGoalTimeout = level.time + AI_LONG_RANGE_GOAL_DELAY + brandom( 0, 1000 );
 
 	// look for a target
-	current_node = AI_FindClosestReachableNode( self->s.origin, self, ( ( 1 + self->ai.nearest_node_tries ) * NODE_DENSITY ), NODE_ALL );
-	self->ai.current_node = current_node;
+	current_node = AI_FindClosestReachableNode( self->s.origin, self, ( ( 1 + self->ai->nearest_node_tries ) * NODE_DENSITY ), NODE_ALL );
+	self->ai->current_node = current_node;
 
 	if( current_node == NODE_INVALID )
 	{
 		if( nav.debugMode && bot_showlrgoal->integer )
-			G_PrintChasersf( self, "%s: LRGOAL: Closest node not found. Tries:%i\n", self->ai.pers.netname, self->ai.nearest_node_tries );
+			G_PrintChasersf( self, "%s: LRGOAL: Closest node not found. Tries:%i\n", self->ai->pers.netname, self->ai->nearest_node_tries );
 
-		self->ai.nearest_node_tries++; // extend search radius with each try
+		self->ai->nearest_node_tries++; // extend search radius with each try
 		return;
 	}
 
-	self->ai.nearest_node_tries = 0;
+	self->ai->nearest_node_tries = 0;
 
 	// Run the list of potential goal entities
-	for( i = 0; i < nav.num_goalEnts; i++ )
+	FOREACH_GOALENT( goalEnt )
 	{
-		goalEnt = &nav.goalEnts[i];
-
+		i = goalEnt->id;
 		if( !goalEnt->ent )
 			continue;
 
@@ -305,7 +360,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 
 		if( goalEnt->ent->r.client )
 		{
-			if( G_ISGHOSTING( goalEnt->ent ) || goalEnt->ent->ai.notarget )
+			if( G_ISGHOSTING( goalEnt->ent ) || goalEnt->ent->ai->notarget )
 				goalEnt->node = NODE_INVALID;
 			else
 				goalEnt->node = AI_FindClosestReachableNode( goalEnt->ent->s.origin, goalEnt->ent, NODE_DENSITY, NODE_ALL );
@@ -320,7 +375,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 		if( goalEnt->node == NODE_INVALID )
 			continue;
 
-		weight = self->ai.status.entityWeights[i];
+		weight = self->ai->status.entityWeights[i];
 
 		if( weight <= 0.0f )
 			continue;
@@ -330,7 +385,7 @@ void AI_PickLongRangeGoal( edict_t *self )
 		if( dist > WEIGHT_MAXDISTANCE_FACTOR * weight/* || dist < AI_GOAL_SR_RADIUS*/ )
 			continue;
 
-		cost = AI_FindCost( current_node, goalEnt->node, self->ai.status.moveTypesMask );
+		cost = AI_FindCost( current_node, goalEnt->node, self->ai->status.moveTypesMask );
 		if( cost == NODE_INVALID )
 			continue;
 
@@ -347,17 +402,17 @@ void AI_PickLongRangeGoal( edict_t *self )
 
 	if( bestGoalEnt )
 	{
-		self->ai.goalEnt = bestGoalEnt;
+		self->ai->goalEnt = bestGoalEnt;
 		AI_SetGoal( self, bestGoalEnt->node );
 
-		if( self->ai.goalEnt != NULL && nav.debugMode && bot_showlrgoal->integer )
-			G_PrintChasersf( self, "%s: selected a %s at node %d for LR goal. (weight %f)\n", self->ai.pers.netname, self->ai.goalEnt->ent->classname, self->ai.goalEnt->node, bestWeight );
+		if( self->ai->goalEnt != NULL && nav.debugMode && bot_showlrgoal->integer )
+			G_PrintChasersf( self, "%s: selected a %s at node %d for LR goal. (weight %f)\n", self->ai->pers.netname, self->ai->goalEnt->ent->classname, self->ai->goalEnt->node, bestWeight );
 
 		return;
 	}
 
 	if( nav.debugMode && bot_showlrgoal->integer )
-		G_PrintChasersf( self, "%s: did not find a LR goal.\n", self->ai.pers.netname );
+		G_PrintChasersf( self, "%s: did not find a LR goal.\n", self->ai->pers.netname );
 
 #undef WEIGHT_MAXDISTANCE_FACTOR
 #undef COST_INFLUENCE
@@ -381,31 +436,31 @@ static void AI_PickShortRangeGoal( edict_t *self )
 	if( !self->r.client || G_ISGHOSTING( self ) )
 		return;
 
-	if( self->ai.state_combat_timeout > level.time )
+	if( self->ai->state_combat_timeout > level.time )
 	{
-		self->ai.shortRangeGoalTimeout = self->ai.state_combat_timeout;
+		self->ai->shortRangeGoalTimeout = self->ai->state_combat_timeout;
 		return;
 	}
 
-	if( self->ai.shortRangeGoalTimeout > level.time )
+	if( self->ai->shortRangeGoalTimeout > level.time )
 		return;
 
 	canPickupItems = (self->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK) != 0 ? true : false;
 
-	self->ai.shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
+	self->ai->shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY;
 
 	self->movetarget = NULL;
 
-	for( i = 0; i < nav.num_goalEnts; i++ )
+	FOREACH_GOALENT( goalEnt )
 	{
-		goalEnt = &nav.goalEnts[i];
+		i = goalEnt->id;
 		if( !goalEnt->ent->r.inuse || goalEnt->ent->r.solid == SOLID_NOT )
 			continue;
 
 		if( goalEnt->ent->r.client )
 			continue;
 
-		if( self->ai.status.entityWeights[i] <= 0.0f )
+		if( self->ai->status.entityWeights[i] <= 0.0f )
 			continue;
 
 		item = goalEnt->ent->item;
@@ -421,16 +476,16 @@ static void AI_PickShortRangeGoal( edict_t *self )
 		if( AI_ShortRangeReachable( self, goalEnt->ent->s.origin ) && G_InFront( self, goalEnt->ent ) )
 		{
 			// Long range goal gets top priority
-			if( goalEnt == self->ai.goalEnt ) 
+			if( goalEnt == self->ai->goalEnt ) 
 			{
 				bestGoal = goalEnt->ent;
 				break;
 			}
 
 			// get the one with the best weight
-			if( self->ai.status.entityWeights[i] > bestWeight )
+			if( self->ai->status.entityWeights[i] > bestWeight )
 			{
-				bestWeight = self->ai.status.entityWeights[i];
+				bestWeight = self->ai->status.entityWeights[i];
 				bestGoal = goalEnt->ent;
 			}
 		}
@@ -440,7 +495,7 @@ static void AI_PickShortRangeGoal( edict_t *self )
 	{
 		self->movetarget = bestGoal;
 		if( nav.debugMode && bot_showsrgoal->integer )
-			G_PrintChasersf( self, "%s: selected a %s for SR goal.\n", self->ai.pers.netname, self->movetarget->classname );
+			G_PrintChasersf( self, "%s: selected a %s for SR goal.\n", self->ai->pers.netname, self->movetarget->classname );
 	}
 }
 
@@ -473,17 +528,17 @@ void AI_UpdateStatus( edict_t *self )
 {
 	if( !G_ISGHOSTING( self ) )
 	{
-		AI_ResetWeights( &self->ai );
+		AI_ResetWeights( self->ai );
 
-		self->ai.status.moveTypesMask = self->ai.pers.moveTypesMask;
+		self->ai->status.moveTypesMask = self->ai->pers.moveTypesMask;
 
 		if( !GT_asCallBotStatus( self ) )
-			self->ai.pers.UpdateStatus( self );
+			self->ai->pers.UpdateStatus( self );
 
-		self->ai.statusUpdateTimeout = level.time + AI_STATUS_TIMEOUT;
+		self->ai->statusUpdateTimeout = level.time + AI_STATUS_TIMEOUT;
 
 		// no cheating with moveTypesMask
-		self->ai.status.moveTypesMask &= self->ai.pers.moveTypesMask;
+		self->ai->status.moveTypesMask &= self->ai->pers.moveTypesMask;
 	}
 }
 
@@ -493,7 +548,7 @@ void AI_UpdateStatus( edict_t *self )
 //==========================================
 void AI_Think( edict_t *self )
 {
-	if( !self->ai.type )
+	if( !self->ai || self->ai->type == AI_INACTIVE )
 		return;
 
 	if( level.spawnedTimeStamp + 5000 > game.realtime || !level.canSpawnEntities )
@@ -508,32 +563,32 @@ void AI_Think( edict_t *self )
 	if( !G_ISGHOSTING( self ) )
 	{
 		if( VectorLengthFast( self->velocity ) > 37 )
-			self->ai.blocked_timeout = level.time + 10000;
+			self->ai->blocked_timeout = level.time + 10000;
 
 		// if completely stuck somewhere
-		if( self->ai.blocked_timeout < level.time )
+		if( self->ai->blocked_timeout < level.time )
 		{
-			self->ai.pers.blockedTimeout( self );
+			self->ai->pers.blockedTimeout( self );
 			return;
 		}
 	}
 
 	//update status information to feed up ai
-	if( self->ai.statusUpdateTimeout <= level.time )
+	if( self->ai->statusUpdateTimeout <= level.time )
 		AI_UpdateStatus( self );
 
 	if( AI_NodeHasTimedOut( self ) )
 		AI_ClearGoal( self );
 
-	if( self->ai.goal_node == NODE_INVALID )
+	if( self->ai->goal_node == NODE_INVALID )
 		AI_PickLongRangeGoal( self );
 
 	AI_PickShortRangeGoal( self );
 
-	self->ai.pers.RunFrame( self );
+	self->ai->pers.RunFrame( self );
 
 	// Show the path
-	if( nav.debugMode && bot_showpath->integer && self->ai.goal_node != NODE_INVALID )
+	if( nav.debugMode && bot_showpath->integer && self->ai->goal_node != NODE_INVALID )
 	{
 		// only draw the path of those bots which are being chased
 		edict_t *chaser;
@@ -543,13 +598,13 @@ void AI_Think( edict_t *self )
 		{
 			if( chaser->r.client->resp.chase.active && chaser->r.client->resp.chase.target == ENTNUM( self ) )
 			{
-				AITools_DrawPath( self, self->ai.goal_node );
+				AITools_DrawPath( self, self->ai->goal_node );
 				chaserFound = true;
 			}
 		}
 
 		if( !chaserFound && game.numBots == 1 )
-			AITools_DrawPath( self, self->ai.goal_node );
+			AITools_DrawPath( self, self->ai->goal_node );
 	}
 }
 

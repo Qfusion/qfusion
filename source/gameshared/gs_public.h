@@ -536,8 +536,6 @@ typedef struct gitem_s
 	char *precache_models;
 	char *precache_sounds;
 	char *precache_images;
-
-	int asRefCount, asFactored;
 } gsitem_t;
 
 extern gsitem_t itemdefs[];

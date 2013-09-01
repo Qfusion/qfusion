@@ -195,7 +195,7 @@ bool AI_SpecialMove( edict_t *self, usercmd_t *ucmd )
 	if( ISWALKABLEPLANE( &tr.plane ) )
 		return false;
 
-	if( self->ai.status.moveTypesMask & LINK_CROUCH || self->is_swim )
+	if( self->ai->status.moveTypesMask & LINK_CROUCH || self->is_swim )
 	{
 		// crouch box
 		VectorCopy( self->s.origin, boxorigin );
@@ -213,7 +213,7 @@ bool AI_SpecialMove( edict_t *self, usercmd_t *ucmd )
 		}
 	}
 
-	if( self->ai.status.moveTypesMask & LINK_JUMP && self->groundentity )
+	if( self->ai->status.moveTypesMask & LINK_JUMP && self->groundentity )
 	{
 		// jump box
 		VectorCopy( self->s.origin, boxorigin );
@@ -252,18 +252,18 @@ int AI_ChangeAngle( edict_t *ent )
 	edict_t *self = ent;
 
 	// Normalize the move angle first
-	VectorNormalize( ent->ai.move_vector );
+	VectorNormalize( ent->ai->move_vector );
 
 	current_yaw = anglemod( ent->s.angles[YAW] );
 	current_pitch = anglemod( ent->s.angles[PITCH] );
 
-	VecToAngles( ent->ai.move_vector, ideal_angle );
+	VecToAngles( ent->ai->move_vector, ideal_angle );
 
 	ideal_yaw = anglemod( ideal_angle[YAW] );
 	ideal_pitch = anglemod( ideal_angle[PITCH] );
 
-	speed_yaw = ent->ai.speed_yaw;
-	speed_pitch = ent->ai.speed_pitch;
+	speed_yaw = ent->ai->speed_yaw;
+	speed_pitch = ent->ai->speed_pitch;
 
 	// Yaw
 	if( fabs( current_yaw - ideal_yaw ) < 10 )
@@ -351,8 +351,8 @@ int AI_ChangeAngle( edict_t *ent )
 		move = speed_pitch;
 		ent->s.angles[PITCH] = anglemod( current_pitch + move );
 	}
-	ent->ai.speed_yaw = speed_yaw;
-	ent->ai.speed_pitch = speed_pitch;
+	ent->ai->speed_yaw = speed_yaw;
+	ent->ai->speed_pitch = speed_pitch;
 	return yawmove > 0 ? 1 : -1;
 }
 
@@ -365,12 +365,12 @@ bool AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd )
 	if( !self->movetarget || !self->r.client )
 		return false;
 
-	if( self->ai.goalEnt && ( self->ai.goalEnt->ent == self->movetarget )
-		&& ( AI_GetNodeFlags( self->ai.goal_node ) & NODEFLAGS_ENTITYREACH ) )
+	if( self->ai->goalEnt && ( self->ai->goalEnt->ent == self->movetarget )
+		&& ( AI_GetNodeFlags( self->ai->goal_node ) & NODEFLAGS_ENTITYREACH ) )
 	{
 		// wait
-		VectorSubtract( self->movetarget->s.origin, self->s.origin, self->ai.move_vector );
-		if( VectorLength( self->ai.move_vector ) < 72 )
+		VectorSubtract( self->movetarget->s.origin, self->s.origin, self->ai->move_vector );
+		if( VectorLength( self->ai->move_vector ) < 72 )
 			ucmd->buttons |= BUTTON_WALK;
 
 		if( BoundsIntersect( self->movetarget->r.absmin, self->movetarget->r.absmax, self->r.absmin, self->r.absmax ) )
@@ -378,7 +378,7 @@ bool AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd )
 			ucmd->forwardmove = 0;
 			ucmd->sidemove = 0;
 			ucmd->upmove = 0;
-			self->ai.node_timeout = 0;
+			self->ai->node_timeout = 0;
 			return true;
 		}
 	}
@@ -386,12 +386,12 @@ bool AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd )
 	if( self->movetarget->r.solid == SOLID_NOT || DistanceFast( self->movetarget->s.origin, self->s.origin ) > AI_GOAL_SR_RADIUS + 72 )
 	{
 		self->movetarget = NULL;
-		self->ai.shortRangeGoalTimeout = level.time;
+		self->ai->shortRangeGoalTimeout = level.time;
 		return false;
 	}
 
 	// Force movement direction to reach the goal entity
-	VectorSubtract( self->movetarget->s.origin, self->s.origin, self->ai.move_vector );
+	VectorSubtract( self->movetarget->s.origin, self->s.origin, self->ai->move_vector );
 
 	return true;
 }

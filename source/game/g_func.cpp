@@ -706,9 +706,9 @@ static void Touch_DoorTrigger( edict_t *self, edict_t *other, cplane_t *plane, i
 		return;
 	if( self->s.team && other->s.team != self->s.team )
 		return;
-	if( ( !other->r.client ) && ( other->ai.type != AI_ISMONSTER ) )
+	if( ( !other->r.client ) && ( AI_GetType( other->ai ) != AI_ISMONSTER ) )
 		return;
-	if( ( self->r.owner->spawnflags & DOOR_NOMONSTER ) && ( other->ai.type == AI_ISMONSTER ) )
+	if( ( self->r.owner->spawnflags & DOOR_NOMONSTER ) && ( AI_GetType( other->ai ) == AI_ISMONSTER ) )
 		return;
 	if( level.time < self->timeStamp + 1000 )
 		return;

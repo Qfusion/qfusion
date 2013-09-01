@@ -1101,7 +1101,7 @@ void G_CallTouch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags 
 	else if( self->scriptSpawned && self->asTouchFunc )
 		G_asCallMapEntityTouch( self, other, plane, surfFlags );
 
-	if( other->ai.type )
+	if( other->ai )
 		AI_TouchedEntity( other, self );
 }
 
@@ -1684,7 +1684,7 @@ bool G_EntNotBlocked( edict_t *viewer, edict_t *targ )
 int G_SolidMaskForEnt( edict_t *ent )
 {
 	int solidmask;
-	if( ent->ai.type == AI_ISMONSTER )
+	if( AI_GetType( ent->ai ) == AI_ISMONSTER )
 		solidmask = MASK_MONSTERSOLID;
 	else
 		solidmask = ent->r.clipmask ? ent->r.clipmask : MASK_SOLID;
