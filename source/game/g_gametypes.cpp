@@ -1628,7 +1628,7 @@ static void G_CheckNumBots( void )
 		{
 			if( !ent->r.inuse || !( ent->r.svflags & SVF_FAKECLIENT ) )
 				continue;
-			if( ent->ai.type == AI_ISBOT )
+			if( AI_GetType( ent->ai ) == AI_ISBOT )
 			{
 				trap_DropClient( ent, DROP_TYPE_GENERAL, NULL );
 				break;

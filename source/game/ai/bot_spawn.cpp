@@ -289,8 +289,8 @@ static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size, int bot_pe
 		//count spawned bots for the names
 		for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ )
 		{
-			if( !ent->r.inuse || !ent->ai.type ) continue;
-			if( ent->r.svflags & SVF_FAKECLIENT && ent->ai.type == AI_ISBOT )
+			if( !ent->r.inuse || !ent->ai ) continue;
+			if( ent->r.svflags & SVF_FAKECLIENT && AI_GetType( ent->ai ) == AI_ISBOT )
 				botcount++;
 		}
 
@@ -334,17 +334,17 @@ static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size, int bot_pe
 //==========================================
 void BOT_Respawn( edict_t *self )
 {
-	if( self->ai.type != AI_ISBOT )
+	if( AI_GetType( self->ai ) != AI_ISBOT )
 		return;
 
 	self->enemy = NULL;
 	self->movetarget = NULL;
 
-	self->ai.statusUpdateTimeout = 0;
-	self->ai.changeweapon_timeout = 0;
-	self->ai.combatmovepush_timeout = 0;
-	self->ai.state_combat_timeout = 0;
-	self->ai.enemyReactionDelay = 0;
+	self->ai->statusUpdateTimeout = 0;
+	self->ai->changeweapon_timeout = 0;
+	self->ai->combatmovepush_timeout = 0;
+	self->ai->state_combat_timeout = 0;
+	self->ai->enemyReactionDelay = 0;
 
 	VectorClear( self->r.client->ps.pmove.delta_angles );
 
@@ -361,7 +361,7 @@ static void BOT_InitPersistant( edict_t *self )
 	//standard stuff
 	self->think = NULL;
 	self->nextThink = level.time + 1;
-	self->ai.type = AI_ISBOT;
+	self->ai->type = AI_ISBOT;
 	self->classname = "bot";
 	self->yaw_speed = AI_DEFAULT_YAW_SPEED;
 	self->die = player_die;
@@ -370,17 +370,17 @@ static void BOT_InitPersistant( edict_t *self )
 	sv_skill = trap_Cvar_Value( "sv_skilllevel" ); // 0 = easy, 2 = hard
 	sv_skill += random(); // so we have a float between 0 and 3 meaning the server skill
 	clamp( sv_skill, 0.1f, 3.0f );
-	self->ai.pers.skillLevel = sv_skill/3.0f; // the same being a fraction of 1.
-	if( self->ai.pers.skillLevel < 0.1f ) self->ai.pers.skillLevel = 0.1f;
+	self->ai->pers.skillLevel = sv_skill/3.0f; // the same being a fraction of 1.
+	if( self->ai->pers.skillLevel < 0.1f ) self->ai->pers.skillLevel = 0.1f;
 
-	self->yaw_speed -= 20 * ( 1.0f - self->ai.pers.skillLevel );
+	self->yaw_speed -= 20 * ( 1.0f - self->ai->pers.skillLevel );
 
 	if( self->r.client->netname[0] )
-		self->ai.pers.netname = self->r.client->netname;
+		self->ai->pers.netname = self->r.client->netname;
 	else
-		self->ai.pers.netname = "SomeBot";
+		self->ai->pers.netname = "SomeBot";
 
-	G_Printf( "%s skill %i\n", self->r.client->netname, (int)( self->ai.pers.skillLevel * 100 ) );
+	G_Printf( "%s skill %i\n", self->r.client->netname, (int)( self->ai->pers.skillLevel * 100 ) );
 
 	//class: always set up default first
 	BOT_DMclass_InitPersistant( self );
@@ -426,7 +426,7 @@ static void BOT_DoSpawnBot( void )
 
 	//init this bot
 
-	ent->ai.pers.cha = bot_personalities[ bot_pers ];
+	ent->ai->pers.cha = bot_personalities[ bot_pers ];
 
 	BOT_InitPersistant( ent );
 
@@ -497,7 +497,7 @@ void BOT_RemoveBot( const char *name )
 
 	for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ )
 	{
-		if( !ent->r.inuse || ent->ai.type != AI_ISBOT )
+		if( !ent->r.inuse || AI_GetType( ent->ai ) != AI_ISBOT )
 			continue;
 
 		if( !Q_stricmp( ent->r.client->netname, name ) || !Q_stricmp( name, "all" ) )

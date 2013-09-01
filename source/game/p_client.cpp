@@ -218,7 +218,6 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage )
 	body->s.effects = 0;
 	body->r.svflags = SVF_CORPSE;
 	body->r.svflags &= ~SVF_NOCLIENT;
-	body->ai.type = AI_INACTIVE;
 	body->activator = ent;
 	if( g_deadbody_followkiller->integer )
 		body->enemy = attacker;
@@ -548,7 +547,7 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 	self->max_health = 100;
 	self->health = self->max_health;
 
-	if( self->ai.type == AI_ISBOT )
+	if( AI_GetType( self->ai ) == AI_ISBOT )
 	{
 		self->think = NULL;
 		self->classname = "bot";
@@ -1615,7 +1614,7 @@ void G_ClientThink( edict_t *ent )
 	// run bots thinking with the rest of clients
 	if( ent->r.svflags & SVF_FAKECLIENT )
 	{
-		if( !ent->think && ent->ai.type == AI_ISBOT )
+		if( !ent->think && AI_GetType( ent->ai ) == AI_ISBOT )
 			AI_Think( ent );
 	}
 

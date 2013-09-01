@@ -108,20 +108,20 @@ int AI_FindClosestNode( vec3_t origin, float mindist, int range, int flagsmask )
 
 void AI_ClearGoal( edict_t *self )
 {
-	self->ai.goal_node = NODE_INVALID;
-	self->ai.current_node = NODE_INVALID;
-	self->ai.next_node = NODE_INVALID;
-	self->ai.goalEnt = NULL;
-	self->ai.vsay_goalent = NULL;
+	self->ai->goal_node = NODE_INVALID;
+	self->ai->current_node = NODE_INVALID;
+	self->ai->next_node = NODE_INVALID;
+	self->ai->goalEnt = NULL;
+	self->ai->vsay_goalent = NULL;
 
-	VectorSet( self->ai.move_vector, 0, 0, 0 );
+	VectorSet( self->ai->move_vector, 0, 0, 0 );
 }
 
 void AI_SetGoal( edict_t *self, int goal_node )
 {
 	int node;
 
-	self->ai.goal_node = goal_node;
+	self->ai->goal_node = goal_node;
 	node = AI_FindClosestReachableNode( self->s.origin, self, NODE_DENSITY * 3, NODE_ALL );
 
 	if( node == NODE_INVALID )
@@ -131,47 +131,47 @@ void AI_SetGoal( edict_t *self, int goal_node )
 	}
 
 	// ASTAR 
-	if( !AStar_GetPath( node, goal_node, self->ai.status.moveTypesMask, &self->ai.path ) )
+	if( !AStar_GetPath( node, goal_node, self->ai->status.moveTypesMask, &self->ai->path ) )
 	{
 		AI_ClearGoal( self );
 		return;
 	}
 
-	self->ai.current_node = self->ai.path.nodes[self->ai.path.numNodes];
+	self->ai->current_node = self->ai->path.nodes[self->ai->path.numNodes];
 
 	if( nav.debugMode && bot_showlrgoal->integer > 1 )
-		G_PrintChasersf( self, "%s: GOAL: new START NODE selected %d goal %d\n", self->ai.pers.netname, node, self->ai.goal_node );
+		G_PrintChasersf( self, "%s: GOAL: new START NODE selected %d goal %d\n", self->ai->pers.netname, node, self->ai->goal_node );
 
-	self->ai.next_node = self->ai.current_node; // make sure we get to the nearest node first
-	self->ai.node_timeout = 0;
-	self->ai.longRangeGoalTimeout = 0;
-	self->ai.tries = 0; // Reset the count of how many times we tried this goal
+	self->ai->next_node = self->ai->current_node; // make sure we get to the nearest node first
+	self->ai->node_timeout = 0;
+	self->ai->longRangeGoalTimeout = 0;
+	self->ai->tries = 0; // Reset the count of how many times we tried this goal
 }
 
 bool AI_NewNextNode( edict_t *self ) 
 {
 	// reset timeout
-	self->ai.node_timeout = 0;
+	self->ai->node_timeout = 0;
 
-	if( self->ai.next_node == self->ai.goal_node )
+	if( self->ai->next_node == self->ai->goal_node )
 	{
 		if( nav.debugMode && bot_showlrgoal->integer > 1 )
-			G_PrintChasersf( self, "%s: GOAL REACHED!\n", self->ai.pers.netname );
+			G_PrintChasersf( self, "%s: GOAL REACHED!\n", self->ai->pers.netname );
 
 		//if botroam, setup a timeout for it
 		/*
-		if( nodes[self->ai.goal_node].flags & NODEFLAGS_BOTROAM )
+		if( nodes[self->ai->goal_node].flags & NODEFLAGS_BOTROAM )
 		{
 		int i;
 		for( i = 0; i < nav.num_broams; i++ ) //find the broam
 		{
-		if( nav.broams[i].node != self->ai.goal_node )
+		if( nav.broams[i].node != self->ai->goal_node )
 		continue;
 
 		//if(AIDevel.debugChased && bot_showlrgoal->integer)
-		//	G_PrintMsg (AIDevel.chaseguy, "%s: BotRoam Time Out set up for node %i\n", self->ai.pers.netname, nav.broams[i].node);
-		//Com_Printf( "%s: BotRoam Time Out set up for node %i\n", self->ai.pers.netname, nav.broams[i].node);
-		self->ai.status.broam_timeouts[i] = level.time + 15000;
+		//	G_PrintMsg (AIDevel.chaseguy, "%s: BotRoam Time Out set up for node %i\n", self->ai->pers.netname, nav.broams[i].node);
+		//Com_Printf( "%s: BotRoam Time Out set up for node %i\n", self->ai->pers.netname, nav.broams[i].node);
+		self->ai->status.broam_timeouts[i] = level.time + 15000;
 		break;
 		}
 		}
@@ -184,10 +184,10 @@ bool AI_NewNextNode( edict_t *self )
 	}
 
 	// we did not reach our goal yet. just setup next node...
-	self->ai.current_node = self->ai.next_node;
-	if( self->ai.path.numNodes )
-		self->ai.path.numNodes--;
-	self->ai.next_node = self->ai.path.nodes[self->ai.path.numNodes];
+	self->ai->current_node = self->ai->next_node;
+	if( self->ai->path.numNodes )
+		self->ai->path.numNodes--;
+	self->ai->next_node = self->ai->path.nodes[self->ai->path.numNodes];
 
 	return true;
 }
@@ -202,22 +202,22 @@ void AI_NodeReached( edict_t *self )
 
 bool AI_NodeHasTimedOut( edict_t *self )
 {
-	if( self->ai.goal_node == NODE_INVALID )
+	if( self->ai->goal_node == NODE_INVALID )
 		return true;
 
 	if( !GS_MatchPaused() )
-		self->ai.node_timeout += game.frametime;
+		self->ai->node_timeout += game.frametime;
 
 	// Try again?
-	if( self->ai.node_timeout > NODE_TIMEOUT || self->ai.next_node == NODE_INVALID )
+	if( self->ai->node_timeout > NODE_TIMEOUT || self->ai->next_node == NODE_INVALID )
 	{
-		if( self->ai.tries++ > 3 )
+		if( self->ai->tries++ > 3 )
 			return true;
 		else
-			AI_SetGoal( self, self->ai.goal_node );
+			AI_SetGoal( self, self->ai->goal_node );
 	}
 
-	if( self->ai.current_node == NODE_INVALID || self->ai.next_node == NODE_INVALID )
+	if( self->ai->current_node == NODE_INVALID || self->ai->next_node == NODE_INVALID )
 		return true;
 
 	return false;
@@ -240,10 +240,10 @@ void AI_ReachedEntity( edict_t *self )
 	// find all bots which have this node as goal and tell them their goal is reached
 	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
 	{
-		if( !ent->ai.type )
+		if( !ent->ai || ent->ai->type == AI_INACTIVE )
 			continue;
 
-		if( ent->ai.goal_node == goalEnt->node )
+		if( ent->ai->goal_node == goalEnt->node )
 			AI_ClearGoal( ent );
 	}
 }
@@ -256,32 +256,34 @@ void AI_ReachedEntity( edict_t *self )
 void AI_TouchedEntity( edict_t *self, edict_t *ent )
 {
 	int i;
+	nav_ents_t *goalEnt;
 
 	// right now we only support this on a few trigger entities (jumpads, teleporters)
 	if( ent->r.solid != SOLID_TRIGGER )
 		return;
 
-	if( self->ai.next_node != NODE_INVALID &&
-		( nodes[self->ai.next_node].flags & NODEFLAGS_REACHATTOUCH ) )
+	if( self->ai->next_node != NODE_INVALID &&
+		( nodes[self->ai->next_node].flags & NODEFLAGS_REACHATTOUCH ) )
 	{
 		for( i = 0; i < nav.num_navigableEnts; i++ )
 		{
-			if( nav.navigableEnts[i].node == self->ai.next_node && nav.navigableEnts[i].ent == ent )
+			if( nav.navigableEnts[i].node == self->ai->next_node && nav.navigableEnts[i].ent == ent )
 			{
 				if( nav.debugMode && bot_showlrgoal->integer > 1 )
-					G_PrintChasersf( self, "REACHED touch node %i with entity %s\n", self->ai.next_node, ent->classname ? ent->classname : "no classname" );
+					G_PrintChasersf( self, "REACHED touch node %i with entity %s\n", self->ai->next_node, ent->classname ? ent->classname : "no classname" );
 
 				AI_NodeReached( self );
 				return;
 			}
 		}
 
-		for( i = 0; i < nav.num_goalEnts; i++ )
+		FOREACH_GOALENT( goalEnt )
 		{
-			if( nav.goalEnts[i].node == self->ai.next_node && nav.goalEnts[i].ent == ent )
+			i = goalEnt->id;
+			if( goalEnt->node == self->ai->next_node && goalEnt->ent == ent )
 			{
 				if( nav.debugMode && bot_showlrgoal->integer > 1 )
-					G_PrintChasersf( self, "REACHED touch node %i with entity %s\n", self->ai.next_node, ent->classname ? ent->classname : "no classname" );
+					G_PrintChasersf( self, "REACHED touch node %i with entity %s\n", self->ai->next_node, ent->classname ? ent->classname : "no classname" );
 
 				AI_NodeReached( self );
 				return;

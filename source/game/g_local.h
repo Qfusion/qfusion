@@ -1350,7 +1350,7 @@ struct edict_s
 	// common data blocks
 	moveinfo_t moveinfo;        // func movers movement
 
-	ai_handle_t ai;     //MbotGame
+	ai_handle_t *ai;     //MbotGame
 
 	snap_edict_t snap; // information that is cleared each frame snap
 
@@ -1366,7 +1366,6 @@ struct edict_s
 
 	bool linked;
 
-	int asRefCount, asFactored;
 	bool scriptSpawned;
 	void *asScriptModule;
 	void *asSpawnFunc, *asThinkFunc, *asUseFunc, *asTouchFunc, *asPainFunc, *asDieFunc, *asStopFunc;

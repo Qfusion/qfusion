@@ -31,8 +31,8 @@ void AI_Cheat_NoTarget( edict_t *ent )
 	if( !sv_cheats->integer )
 		return;
 
-	ent->ai.notarget = !ent->ai.notarget ? true : false;
-	if( ent->ai.notarget )
+	ent->ai->notarget = !ent->ai->notarget ? true : false;
+	if( ent->ai->notarget )
 		G_PrintMsg( ent, "Bot Notarget ON\n" );
 	else
 		G_PrintMsg( ent, "Bot Notarget OFF\n" );
@@ -132,19 +132,19 @@ void AITools_DrawPath( edict_t *self, int node_to )
 
 	drawnpath_timeout = level.time + 4 * game.snapFrameTime;
 
-	if( self->ai.path.goalNode != node_to )
+	if( self->ai->path.goalNode != node_to )
 		return;
 
-	pos = self->ai.path.numNodes;
+	pos = self->ai->path.numNodes;
 
 	// Now set up and display the path
-	while( self->ai.path.nodes[pos] != node_to && count < 32 && pos > 0 )
+	while( self->ai->path.nodes[pos] != node_to && count < 32 && pos > 0 )
 	{
 		edict_t	*event;
 
-		event = G_SpawnEvent( EV_GREEN_LASER, 0, nodes[self->ai.path.nodes[pos]].origin );
+		event = G_SpawnEvent( EV_GREEN_LASER, 0, nodes[self->ai->path.nodes[pos]].origin );
 		event->r.svflags = SVF_TRANSMITORIGIN2;
-		VectorCopy( nodes[self->ai.path.nodes[pos-1]].origin, event->s.origin2 );
+		VectorCopy( nodes[self->ai->path.nodes[pos-1]].origin, event->s.origin2 );
 		G_SetBoundsForSpanEntity( event, 8 );
 		GClip_LinkEntity( event );
 
@@ -163,6 +163,7 @@ static void AITools_ShowPlinks( edict_t *target )
 	int current_node;
 	int plink_node;
 	int i;
+	nav_ents_t *goalEnt;
 
 	if( !target || !target->r.client || !target->r.client->level.showPLinks )
 		return;
@@ -184,14 +185,15 @@ static void AITools_ShowPlinks( edict_t *target )
 	if( nav.editmode || !nav.loaded )
 		return;
 
-	for( i = 0; i < nav.num_goalEnts; i++ )
+	FOREACH_GOALENT( goalEnt )
 	{
-		if( nav.goalEnts[i].node == current_node )
+		i = goalEnt->id;
+		if( goalEnt->node == current_node )
 		{
-			if( !nav.goalEnts[i].ent->classname )
+			if( !goalEnt->ent->classname )
 				G_CenterPrintMsg( target, "no classname" );
 			else
-				G_CenterPrintMsg( target, "%s", nav.goalEnts[i].ent->classname );
+				G_CenterPrintMsg( target, "%s", goalEnt->ent->classname );
 			break;
 		}
 	}

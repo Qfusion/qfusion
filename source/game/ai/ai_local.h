@@ -41,12 +41,12 @@ extern cvar_t *sv_botpersonality;
 #define AI_LONG_RANGE_GOAL_DELAY 1000
 #define AI_SHORT_RANGE_GOAL_DELAY 75
 
-#define AI_DEFAULT_YAW_SPEED	( self->ai.pers.cha.default_yaw_speed )
-#define AI_REACTION_TIME	( self->ai.pers.cha.reaction_time )
-#define AI_COMBATMOVE_TIMEOUT	( self->ai.pers.cha.combatmove_timeout )
-#define AI_YAW_ACCEL		( self->ai.pers.cha.yaw_accel * FRAMETIME )
-#define AI_CHAR_OFFENSIVNESS ( self->ai.pers.cha.offensiveness )
-#define AI_CHAR_CAMPINESS ( self->ai.pers.cha.campiness )
+#define AI_DEFAULT_YAW_SPEED	( self->ai->pers.cha.default_yaw_speed )
+#define AI_REACTION_TIME	( self->ai->pers.cha.reaction_time )
+#define AI_COMBATMOVE_TIMEOUT	( self->ai->pers.cha.combatmove_timeout )
+#define AI_YAW_ACCEL		( self->ai->pers.cha.yaw_accel * FRAMETIME )
+#define AI_CHAR_OFFENSIVNESS ( self->ai->pers.cha.offensiveness )
+#define AI_CHAR_CAMPINESS ( self->ai->pers.cha.campiness )
 
 // Platform states:
 #define	STATE_TOP	    0
@@ -63,6 +63,7 @@ extern cvar_t *sv_botpersonality;
 //	NAVIGATION DATA
 //=============================================================
 
+#define MAX_GOALENTS 1024
 #define MAX_NODES 2048        //jalToDo: needs dynamic alloc (big terrain maps)
 #define NODE_INVALID  -1
 #define NODE_DENSITY 128         // Density setting for nodes
@@ -142,9 +143,10 @@ typedef struct nav_node_s
 
 typedef struct nav_ents_s
 {
+	int id;
 	edict_t	*ent;
 	int node;
-
+	struct nav_ents_s *prev, *next;
 } nav_ents_t;
 
 typedef struct nav_path_s
@@ -167,13 +169,16 @@ typedef struct
 	int num_nodes;          // total number of nodes
 	int serverNodesStart;
 
-	int num_goalEnts;
-	nav_ents_t goalEnts[MAX_EDICTS]; // entities which are potential goals
+	nav_ents_t goalEnts[MAX_GOALENTS]; // entities which are potential goals
+	nav_ents_t goalEntsHeadnode;
+	nav_ents_t *goalEntsFree;
+	nav_ents_t *entsGoals[MAX_EDICTS]; // entities to goals map
 
 	int num_navigableEnts;
-	nav_ents_t navigableEnts[MAX_EDICTS]; // plats, etc
-
+	nav_ents_t navigableEnts[MAX_GOALENTS]; // plats, etc
 } ai_navigation_t;
+
+#define FOREACH_GOALENT(goalEnt) for( goalEnt = nav.goalEntsHeadnode.prev; goalEnt != &nav.goalEntsHeadnode; goalEnt = goalEnt->prev )
 
 extern ai_navigation_t	nav;
 
@@ -208,6 +213,97 @@ typedef struct
 } ai_weapon_t;
 
 extern ai_weapon_t AIWeapons[WEAP_TOTAL];
+
+//----------------------------------------------------------
+
+typedef struct
+{
+	unsigned int moveTypesMask; // moves the bot can perform at this moment
+	float entityWeights[MAX_GOALENTS];
+} ai_status_t;
+
+typedef struct
+{
+	const char *name;
+	float default_yaw_speed;
+	float reaction_time;		
+	float combatmove_timeout;
+	float yaw_accel;
+	float offensiveness;
+	float campiness;
+	float firerate;
+	float armor_grabber;
+	float health_grabber;
+
+	float weapon_affinity[WEAP_TOTAL];
+} ai_character;
+
+typedef struct
+{
+	const char *netname;
+	float skillLevel;       // Affects AIM and fire rate (fraction of 1)
+	unsigned int moveTypesMask;      // bot can perform these moves, to check against required moves for a given path
+	float inventoryWeights[MAX_ITEMS];
+
+	//class based functions
+	void ( *UpdateStatus )( edict_t *ent );
+	void ( *RunFrame )( edict_t *ent );
+	void ( *blockedTimeout )( edict_t *ent );
+
+	ai_character cha;
+} ai_pers_t;
+
+typedef struct ai_handle_s
+{
+	ai_pers_t pers;         // persistant definition (class?)
+	ai_status_t status;     //player (bot, NPC) status for AI frame
+
+	ai_type	type;
+
+	unsigned int state_combat_timeout;
+
+	// movement
+	vec3_t move_vector;
+	unsigned int blocked_timeout;
+	unsigned int changeweapon_timeout;
+	unsigned int statusUpdateTimeout;
+
+	unsigned int combatmovepush_timeout;
+	int combatmovepushes[3];
+
+	// nodes
+	int current_node;
+	int goal_node;
+	int next_node;
+	unsigned int node_timeout;
+	struct nav_ents_s *goalEnt;
+
+	unsigned int longRangeGoalTimeout;
+	unsigned int shortRangeGoalTimeout;
+	int tries;
+
+	struct astarpath_s path; //jabot092
+
+	int nearest_node_tries;     //for increasing radius of search with each try
+
+	//vsay
+	unsigned int vsay_timeout;
+	edict_t	*vsay_goalent;
+
+	edict_t	*latched_enemy;
+	int enemyReactionDelay;
+	//int				rethinkEnemyDelay;
+	bool notarget;  // bots can not see this entity
+	bool rj_triggered;
+	bool dont_jump;
+	bool camp_item;
+	bool rush_item;
+	float speed_yaw, speed_pitch;
+	bool is_bunnyhop;
+
+	int asFactored, asRefCount;
+
+} ai_handle_t;
 
 //----------------------------------------------------------
 

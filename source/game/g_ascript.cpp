@@ -66,7 +66,7 @@ typedef struct
 typedef struct
 {
 	const char * name;
-	asEObjTypeFlags typeFlags; 
+	asDWORD typeFlags; 
 	size_t size;
 	const asFuncdef_t * funcdefs;
 	const asBehavior_t * objBehaviors;
@@ -727,9 +727,9 @@ static const asProperty_t astrace_Properties[] =
 static const asClassDescriptor_t asTraceClassDescriptor =
 {
 	"cTrace",					/* name */
-	static_cast<asEObjTypeFlags>(asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK),	/* object type flags */
+	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_CK,	/* object type flags */
 	sizeof( astrace_t ),		/* size */
-	astrace_Funcdefs,		/* funcdefs */
+	astrace_Funcdefs,			/* funcdefs */
 	astrace_ObjectBehaviors,	/* object behaviors */
 	astrace_Methods,			/* methods */
 	astrace_Properties,			/* properties */
@@ -740,33 +740,6 @@ static const asClassDescriptor_t asTraceClassDescriptor =
 //=======================================================================
 
 // CLASS: cItem 
-static int gsitem_factored_count = 0;
-static int gsitem_released_count = 0;
-
-static gsitem_t *objectGItem_Factory()
-{
-	static gsitem_t *object;
-
-	object = ( gsitem_t * )G_AsMalloc( sizeof( gsitem_t ) );
-	object->asRefCount = 1;
-	object->asFactored = 1;
-	gsitem_factored_count++;
-	return object;
-}
-
-static void objectGItem_Addref( gsitem_t *obj ) { obj->asRefCount++; }
-
-static void objectGItem_Release( gsitem_t *obj ) 
-{
-	obj->asRefCount--; 
-	clamp_low( obj->asRefCount, 0 );
-	if( !obj->asRefCount && obj->asFactored )
-	{
-		G_AsFree( obj );
-		gsitem_released_count++;
-	}
-}
-
 static asstring_t *objectGItem_getClassName( gsitem_t *self )
 {
 	return angelExport->asStringFactoryBuffer( self->classname, self->classname ? strlen(self->classname) : 0 );
@@ -834,10 +807,6 @@ static const asFuncdef_t asitem_Funcdefs[] =
 
 static const asBehavior_t asitem_ObjectBehaviors[] =
 {
-	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL(cItem@, f, ()), asFUNCTION(objectGItem_Factory), asCALL_CDECL },
-	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectGItem_Addref), asCALL_CDECL_OBJLAST },
-	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectGItem_Release), asCALL_CDECL_OBJLAST },
-
 	ASLIB_BEHAVIOR_NULL
 };
 
@@ -876,9 +845,9 @@ static const asProperty_t asitem_Properties[] =
 static const asClassDescriptor_t asItemClassDescriptor =
 {
 	"cItem",					/* name */
-	asOBJ_REF,					/* object type flags */
+	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
 	sizeof( gsitem_t ),			/* size */
-	asitem_Funcdefs,		/* funcdefs */
+	asitem_Funcdefs,			/* funcdefs */
 	asitem_ObjectBehaviors,		/* object behaviors */
 	asitem_Methods,				/* methods */
 	asitem_Properties,			/* properties */
@@ -1208,9 +1177,9 @@ static const asProperty_t gametypedescr_Properties[] =
 static const asClassDescriptor_t asGametypeClassDescriptor =
 {
 	"cGametypeDesc",				/* name */
-	static_cast<asEObjTypeFlags>(asOBJ_REF|asOBJ_NOHANDLE),		/* object type flags */
-	sizeof( gametype_descriptor_t ), /* size */
-	gametypedescr_Funcdefs,	/* funcdefs */
+	asOBJ_REF|asOBJ_NOHANDLE,		/* object type flags */
+	sizeof( gametype_descriptor_t ),/* size */
+	gametypedescr_Funcdefs,			/* funcdefs */
 	gametypedescr_ObjectBehaviors,	/* object behaviors */
 	gametypedescr_Methods,			/* methods */
 	gametypedescr_Properties,		/* properties */
@@ -1220,35 +1189,7 @@ static const asClassDescriptor_t asGametypeClassDescriptor =
 
 //=======================================================================
 
-
 // CLASS: cTeam
-static int g_teamlist_stats_factored_count = 0;
-static int g_teamlist_stats_released_count = 0;
-
-static g_teamlist_t *objectTeamlist_Factory()
-{
-	g_teamlist_t *object;
-
-	object = ( g_teamlist_t * )G_AsMalloc( sizeof( g_teamlist_t ) );
-	object->asRefCount = 1;
-	object->asFactored = 1;
-	g_teamlist_stats_factored_count++;
-	return object;
-}
-
-static void objectTeamlist_Addref( g_teamlist_t *obj ) { obj->asRefCount++; }
-
-static void objectTeamlist_Release( g_teamlist_t *obj ) 
-{
-	obj->asRefCount--;
-	clamp_low( obj->asRefCount, 0 );
-	if( !obj->asRefCount && obj->asFactored )
-	{
-		G_AsFree( obj );
-		g_teamlist_stats_released_count++;
-	}
-}
-
 static edict_t *objectTeamlist_GetPlayerEntity( int index, g_teamlist_t *obj ) 
 {
 	if( index < 0 || index >= obj->numplayers )
@@ -1325,10 +1266,6 @@ static const asFuncdef_t teamlist_Funcdefs[] =
 
 static const asBehavior_t teamlist_ObjectBehaviors[] =
 {
-	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL(cTeam @, f, ()), asFUNCTION(objectTeamlist_Factory), asCALL_CDECL },
-	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectTeamlist_Addref), asCALL_CDECL_OBJLAST },
-	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectTeamlist_Release), asCALL_CDECL_OBJLAST },
-
 	ASLIB_BEHAVIOR_NULL
 };
 
@@ -1360,9 +1297,9 @@ static const asProperty_t teamlist_Properties[] =
 static const asClassDescriptor_t asTeamListClassDescriptor =
 {
 	"cTeam",					/* name */
-	asOBJ_REF,					/* object type flags */
+	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
 	sizeof( g_teamlist_t ),		/* size */
-	teamlist_Funcdefs,	/* funcdefs */
+	teamlist_Funcdefs,			/* funcdefs */
 	teamlist_ObjectBehaviors,	/* object behaviors */
 	teamlist_Methods,			/* methods */
 	teamlist_Properties,		/* properties */
@@ -1373,33 +1310,6 @@ static const asClassDescriptor_t asTeamListClassDescriptor =
 //=======================================================================
 
 // CLASS: cStats
-static int client_stats_factored_count = 0;
-static int client_stats_released_count = 0;
-
-static score_stats_t *objectScoreStats_Factory()
-{
-	static score_stats_t *object;
-
-	object = ( score_stats_t * )G_AsMalloc( sizeof( score_stats_t ) );
-	object->asRefCount = 1;
-	object->asFactored = 1;
-	client_stats_factored_count++;
-	return object;
-}
-
-static void objectScoreStats_Addref( score_stats_t *obj ) { obj->asRefCount++; }
-
-static void objectScoreStats_Release( score_stats_t *obj ) 
-{
-	obj->asRefCount--;
-	clamp_low( obj->asRefCount, 0 );
-	if( !obj->asRefCount && obj->asFactored )
-	{
-		G_AsFree( obj );
-		client_stats_released_count++;
-	}
-}
-
 static void objectScoreStats_Clear( score_stats_t *obj ) 
 {
 	memset( obj, 0, sizeof( *obj ) );
@@ -1467,10 +1377,6 @@ static const asFuncdef_t scorestats_Funcdefs[] =
 
 static const asBehavior_t scorestats_ObjectBehaviors[] =
 {
-	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL(cStats @, f, ()), asFUNCTION(objectScoreStats_Factory), asCALL_CDECL },
-	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectScoreStats_Addref), asCALL_CDECL_OBJLAST },
-	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectScoreStats_Release), asCALL_CDECL_OBJLAST },
-
 	ASLIB_BEHAVIOR_NULL
 };
 
@@ -1510,9 +1416,9 @@ static const asProperty_t scorestats_Properties[] =
 static const asClassDescriptor_t asScoreStatsClassDescriptor =
 {
 	"cStats",					/* name */
-	asOBJ_REF,					/* object type flags */
+	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
 	sizeof( score_stats_t ),	/* size */
-	scorestats_Funcdefs,	/* funcdefs */
+	scorestats_Funcdefs,		/* funcdefs */
 	scorestats_ObjectBehaviors, /* object behaviors */
 	scorestats_Methods,			/* methods */
 	scorestats_Properties,		/* properties */
@@ -1523,65 +1429,6 @@ static const asClassDescriptor_t asScoreStatsClassDescriptor =
 //=======================================================================
 
 // CLASS: cBot
-static int asbot_factored_count = 0;
-static int asbot_released_count = 0;
-
-
-typedef ai_handle_t asbot_t;
-
-static asbot_t *objectBot_Factory()
-{
-	static asbot_t *object;
-
-	object = ( asbot_t * )G_AsMalloc( sizeof( asbot_t ) );
-	object->asRefCount = 1;
-	object->asFactored = 1;
-	asbot_factored_count++;
-	return object;
-}
-
-static void objectBot_Addref( asbot_t *obj ) { obj->asRefCount++; }
-
-static void objectBot_Release( asbot_t *obj ) 
-{
-	obj->asRefCount--;
-	clamp_low( obj->asRefCount, 0 );
-	if( !obj->asRefCount && obj->asFactored )
-	{
-		G_AsFree( obj );
-		asbot_released_count++;
-	}
-}
-
-static void objectBot_ClearWeights( asbot_t *obj ) 
-{
-	memset( obj->status.entityWeights, 0, sizeof( obj->status.entityWeights ) );
-}
-
-static void objectBot_ResetWeights( asbot_t *obj ) 
-{
-	AI_ResetWeights( obj );
-}
-
-static void objectBot_SetGoalWeight( int index, float weight, asbot_t *obj ) 
-{
-	if( index < 0 || index >= MAX_EDICTS )
-		return;
-
-	obj->status.entityWeights[index] = weight;
-}
-
-static edict_t *objectBot_GetGoalEnt( int index, asbot_t *obj ) 
-{
-	return AI_GetGoalEnt( index );
-}
-
-static float objectBot_GetItemWeight( gsitem_t *item, asbot_t *obj ) 
-{
-	if( !item )
-		return 0.0f;
-	return obj->pers.inventoryWeights[item->tag];
-}
 
 static const asFuncdef_t asbot_Funcdefs[] =
 {
@@ -1590,47 +1437,36 @@ static const asFuncdef_t asbot_Funcdefs[] =
 
 static const asBehavior_t asbot_ObjectBehaviors[] =
 {
-	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL(cBot @, f, ()), asFUNCTION(objectBot_Factory), asCALL_CDECL },
-	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectBot_Addref), asCALL_CDECL_OBJLAST },
-	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectBot_Release), asCALL_CDECL_OBJLAST },
-
 	ASLIB_BEHAVIOR_NULL
 };
 
 static const asMethod_t asbot_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL(void, clearGoalWeights, ()), asFUNCTION(objectBot_ClearWeights), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, resetGoalWeights, ()), asFUNCTION(objectBot_ResetWeights), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, setGoalWeight, ( int i, float weight )), asFUNCTION(objectBot_SetGoalWeight), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(cEntity @, getGoalEnt, ( int i ) const), asFUNCTION(objectBot_GetGoalEnt), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, clearGoalWeights, ()), asFUNCTION(AI_ClearWeights), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(void, resetGoalWeights, ()), asFUNCTION(AI_ResetWeights), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(void, setGoalWeight, ( int i, float weight )), asFUNCTION(AI_SetGoalWeight), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, getItemWeight, ( const cItem @item ) const), asFUNCTION(AI_GetItemWeight), asCALL_CDECL_OBJFIRST },
 
-	{ ASLIB_FUNCTION_DECL(float, getItemWeight, ( cItem @item ) const), asFUNCTION(objectBot_GetItemWeight), asCALL_CDECL_OBJLAST },
+	// character
+	{ ASLIB_FUNCTION_DECL(float, get_reactionTime, () const), asFUNCTION(AI_GetCharacterReactionTime), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, get_offensiveness, () const), asFUNCTION(AI_GetCharacterOffensiveness), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, get_campiness, () const), asFUNCTION(AI_GetCharacterCampiness), asCALL_CDECL_OBJFIRST },
+	{ ASLIB_FUNCTION_DECL(float, get_firerate, () const), asFUNCTION(AI_GetCharacterFirerate), asCALL_CDECL_OBJFIRST },
 
 	ASLIB_METHOD_NULL
 };
 
 static const asProperty_t asbot_Properties[] =
 {
-	{ ASLIB_PROPERTY_DECL(const float, skill), ASLIB_FOFFSET(asbot_t, pers.skillLevel) },
-	{ ASLIB_PROPERTY_DECL(const int, currentNode), ASLIB_FOFFSET(asbot_t, current_node) },
-	{ ASLIB_PROPERTY_DECL(const int, nextNode), ASLIB_FOFFSET(asbot_t, next_node) },
-	{ ASLIB_PROPERTY_DECL(uint, moveTypesMask), ASLIB_FOFFSET(asbot_t, status.moveTypesMask) },
-
-	// character
-	{ ASLIB_PROPERTY_DECL(const float, reactionTime), ASLIB_FOFFSET(asbot_t, pers.cha.reaction_time) },
-	{ ASLIB_PROPERTY_DECL(const float, offensiveness), ASLIB_FOFFSET(asbot_t, pers.cha.offensiveness) },
-	{ ASLIB_PROPERTY_DECL(const float, campiness), ASLIB_FOFFSET(asbot_t, pers.cha.campiness) },
-	{ ASLIB_PROPERTY_DECL(const float, firerate), ASLIB_FOFFSET(asbot_t, pers.cha.firerate) },
-
 	ASLIB_PROPERTY_NULL
 };
 
 static const asClassDescriptor_t asBotClassDescriptor =
 {
 	"cBot",						/* name */
-	asOBJ_REF,					/* object type flags */
-	sizeof( asbot_t ),			/* size */
-	asbot_Funcdefs,		/* funcdefs */
+	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
+	ai_handle_size,				/* size */
+	asbot_Funcdefs,				/* funcdefs */
 	asbot_ObjectBehaviors,		/* object behaviors */
 	asbot_Methods,				/* methods */
 	asbot_Properties,			/* properties */
@@ -1641,33 +1477,6 @@ static const asClassDescriptor_t asBotClassDescriptor =
 //=======================================================================
 
 // CLASS: cClient
-static int gclient_factored_count = 0;
-static int gclient_released_count = 0;
-
-static gclient_t *objectGameClient_Factory()
-{
-	static gclient_t *object;
-
-	object = ( gclient_t * )G_AsMalloc( sizeof( gclient_t ) );
-	object->asRefCount = 1;
-	object->asFactored = 1;
-	gclient_factored_count++;
-	return object;
-}
-
-static void objectGameClient_Addref( gclient_t *obj ) { obj->asRefCount++; }
-
-static void objectGameClient_Release( gclient_t *obj ) 
-{
-	obj->asRefCount--;
-	clamp_low( obj->asRefCount, 0 );
-	if( !obj->asRefCount && obj->asFactored )
-	{
-		G_AsFree( obj );
-		gclient_released_count++;
-	}
-}
-
 static int objectGameClient_PlayerNum( gclient_t *self )
 {
 	if( self->asFactored )
@@ -1687,6 +1496,7 @@ static bool objectGameClient_isReady( gclient_t *self )
 static bool objectGameClient_isBot( gclient_t *self )
 {
 	int playerNum;
+	const edict_t *ent;
 
 	if( self->asFactored )
 		return false;
@@ -1695,14 +1505,14 @@ static bool objectGameClient_isBot( gclient_t *self )
 	if( playerNum < 0 && playerNum >= gs.maxclients )
 		return false;
 
-	return ( ( game.edicts[ playerNum + 1 ].r.svflags & SVF_FAKECLIENT ) &&
-		game.edicts[ playerNum + 1 ].ai.type == AI_ISBOT ) ? true : false;
+	ent = PLAYERENT( playerNum );
+	return ( ( ent->r.svflags & SVF_FAKECLIENT ) && AI_GetType( ent->ai ) == AI_ISBOT );
 }
 
-static asbot_t *objectGameClient_getBot( gclient_t *self )
+static ai_handle_t *objectGameClient_getBot( gclient_t *self )
 {
 	int playerNum;
-	edict_t *ent;
+	const edict_t *ent;
 
 	if( self->asFactored )
 		return NULL;
@@ -1711,12 +1521,11 @@ static asbot_t *objectGameClient_getBot( gclient_t *self )
 	if( playerNum < 0 && playerNum >= gs.maxclients )
 		return NULL;
 
-	ent = &game.edicts[playerNum + 1];
-
-	if( !( ent->r.svflags & SVF_FAKECLIENT ) || ent->ai.type != AI_ISBOT )
+	ent = PLAYERENT( playerNum );
+	if( !( ent->r.svflags & SVF_FAKECLIENT ) || AI_GetType( ent->ai ) != AI_ISBOT )
 		return NULL;
 
-	return &ent->ai;
+	return ent->ai;
 }
 
 static int objectGameClient_ClientState( gclient_t *self )
@@ -2058,10 +1867,6 @@ static const asFuncdef_t gameclient_Funcdefs[] =
 
 static const asBehavior_t gameclient_ObjectBehaviors[] =
 {
-	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL(cClient @, f, ()), asFUNCTION(objectGameClient_Factory), asCALL_CDECL },
-	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectGameClient_Addref), asCALL_CDECL_OBJLAST },
-	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectGameClient_Release), asCALL_CDECL_OBJLAST },
-
 	ASLIB_BEHAVIOR_NULL
 };
 
@@ -2136,9 +1941,9 @@ static const asProperty_t gameclient_Properties[] =
 static const asClassDescriptor_t asGameClientDescriptor =
 {
 	"cClient",					/* name */
-	asOBJ_REF,					/* object type flags */
+	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
 	sizeof( gclient_t ),		/* size */
-	gameclient_Funcdefs,	/* funcdefs */
+	gameclient_Funcdefs,		/* funcdefs */
 	gameclient_ObjectBehaviors,	/* object behaviors */
 	gameclient_Methods,			/* methods */
 	gameclient_Properties,		/* properties */
@@ -2149,42 +1954,12 @@ static const asClassDescriptor_t asGameClientDescriptor =
 //=======================================================================
 
 // CLASS: cEntity
-static int edict_factored_count = 0;
-static int edict_released_count = 0;
-
 static void *asEntityCallThinkFuncPtr = NULL;
 static void *asEntityCallTouchFuncPtr = NULL;
 static void *asEntityCallUseFuncPtr = NULL;
 static void *asEntityCallStopFuncPtr = NULL;
 static void *asEntityCallPainFuncPtr = NULL;
 static void *asEntityCallDieFuncPtr = NULL;
-
-static edict_t *objectGameEntity_Factory()
-{
-	static edict_t *object;
-
-	object = ( edict_t * )G_AsMalloc( sizeof( edict_t ) );
-	object->asRefCount = 1;
-	object->asFactored = 1;
-	object->s.number = -1;
-	edict_factored_count++;
-	return object;
-}
-
-static void objectGameEntity_Addref( edict_t *obj ) {
-	obj->asRefCount++;
-}
-
-static void objectGameEntity_Release( edict_t *obj ) 
-{
-	obj->asRefCount--;
-	clamp_low( obj->asRefCount, 0 );
-	if( !obj->asRefCount && obj->asFactored )
-	{
-		G_AsFree( obj );
-		edict_released_count++;
-	}
-}
 
 static asvec3_t objectGameEntity_GetVelocity( edict_t *obj )
 {
@@ -2317,15 +2092,11 @@ static bool objectGameEntity_IsGhosting( edict_t *self )
 
 static int objectGameEntity_EntNum( edict_t *self )
 {
-	if( self->asFactored )
-		return -1;
 	return ( ENTNUM( self ) );
 }
 
 static int objectGameEntity_PlayerNum( edict_t *self )
 {
-	if( self->asFactored )
-		return -1;
 	return ( PLAYERNUM( self ) );
 }
 
@@ -2474,29 +2245,6 @@ static edict_t *objectGameEntity_findTargeting( edict_t *from, edict_t *self )
 	return G_Find( from, FOFS( target ), self->targetname );
 }
 
-static void objectGameEntity_setAIgoal( bool customReach, edict_t *self )
-{
-	if( customReach )
-		AI_AddGoalEntityCustom( self );
-	else
-		AI_AddGoalEntity( self );
-}
-
-static void objectGameEntity_setAIgoalSimple( edict_t *self )
-{
-	objectGameEntity_setAIgoal( false, self );
-}
-
-static void objectGameEntity_removeAIgoal( edict_t *self )
-{
-	AI_RemoveGoalEntity( self );
-}
-
-static void objectGameEntity_reachedAIgoal( edict_t *self )
-{
-	AI_ReachedEntity( self );
-}
-
 static void objectGameEntity_TeleportEffect( bool in, edict_t *self )
 {
 	G_TeleportEffect( self, in );
@@ -2569,10 +2317,6 @@ static const asFuncdef_t gedict_Funcdefs[] =
 
 static const asBehavior_t gedict_ObjectBehaviors[] =
 {
-	{ asBEHAVE_FACTORY, ASLIB_FUNCTION_DECL(cEntity @, f, ()), asFUNCTION(objectGameEntity_Factory), asCALL_CDECL },
-	{ asBEHAVE_ADDREF, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectGameEntity_Addref), asCALL_CDECL_OBJLAST },
-	{ asBEHAVE_RELEASE, ASLIB_FUNCTION_DECL(void, f, ()), asFUNCTION(objectGameEntity_Release), asCALL_CDECL_OBJLAST },
-
 	ASLIB_BEHAVIOR_NULL
 };
 
@@ -2621,10 +2365,6 @@ static const asMethod_t gedict_Methods[] =
 	{ ASLIB_FUNCTION_DECL(cEntity @, findTargetingEntity, ( const cEntity @from ) const), asFUNCTION(objectGameEntity_findTargeting), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, useTargets, ( const cEntity @activator )), asFUNCTION(objectGameEntity_UseTargets), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(cEntity @, dropItem, ( int tag ) const), asFUNCTION(objectGameEntity_DropItem), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, addAIGoal, ( bool customReach )), asFUNCTION(objectGameEntity_setAIgoal), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, addAIGoal, ()), asFUNCTION(objectGameEntity_setAIgoalSimple), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, removeAIGoal, ()), asFUNCTION(objectGameEntity_removeAIgoal), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, reachedAIGoal, ()), asFUNCTION(objectGameEntity_reachedAIgoal), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, sustainDamage, ( cEntity @inflicter, cEntity @attacker, const Vec3 &in dir, float damage, float knockback, float stun, int mod )), asFUNCTION(objectGameEntity_sustainDamage), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, splashDamage, ( cEntity @attacker, int radius, float damage, float knockback, float stun, int mod )), asFUNCTION(objectGameEntity_splashDamage), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, explosionEffect, ( int radius )), asFUNCTION(objectGameEntity_explosionEffect), asCALL_CDECL_OBJLAST },
@@ -2706,9 +2446,9 @@ static const asProperty_t gedict_Properties[] =
 static const asClassDescriptor_t asGameEntityClassDescriptor =
 {
 	"cEntity",					/* name */
-	asOBJ_REF,					/* object type flags */
+	asOBJ_REF|asOBJ_NOCOUNT,	/* object type flags */
 	sizeof( edict_t ),			/* size */
-	gedict_Funcdefs,		/* funcdefs */
+	gedict_Funcdefs,			/* funcdefs */
 	gedict_ObjectBehaviors,		/* object behaviors */
 	gedict_Methods,				/* methods */
 	gedict_Properties,			/* properties */
@@ -3444,6 +3184,32 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ NULL, NULL }
 };
 
+// ============================================================================
+
+static void asFunc_AI_AddGoal( edict_t *self, bool customReach )
+{
+	if( customReach )
+		AI_AddGoalEntityCustom( self );
+	else
+		AI_AddGoalEntity( self );
+}
+
+static const asglobfuncs_t asAIGlobFuncs[] =
+{
+	{ "int GetRootGoal()", asFUNCTION(AI_GetRootGoalEnt) },
+	{ "int GetNextGoal( int index )", asFUNCTION(AI_GetNextGoalEnt) },
+	{ "cEntity @GetGoalEntity( int index )", asFUNCTION(AI_GetGoalEntity) },
+
+	{ "void AddGoal( cEntity @ent )", asFUNCTION(AI_AddGoalEntity) },
+	{ "void AddGoal( cEntity @ent, bool customReach )", asFUNCTION(asFunc_AI_AddGoal) },
+	{ "void RemoveGoal( cEntity @ent )", asFUNCTION(AI_RemoveGoalEntity) },
+	{ "void ReachedGoal( cEntity @ent )", asFUNCTION(AI_ReachedEntity) },
+
+	{ NULL, NULL }
+};
+
+// ============================================================================
+
 static const asglobproperties_t asGlobProps[] =
 {
 	{ "const uint levelTime", &level.time },
@@ -3460,13 +3226,15 @@ static const asglobproperties_t asGlobProps[] =
 	{ NULL, NULL }
 };
 
-static void G_asRegisterGlobalFunctions( asIScriptEngine *asEngine )
+static void G_asRegisterGlobalFunctions( asIScriptEngine *asEngine, const asglobfuncs_t *funcs, const char *nameSpace )
 {
 	int error;
 	int count = 0, failedcount = 0;
 	const asglobfuncs_t *func;
 
-	for( func = asGlobFuncs; func->declaration; func++ )
+	asEngine->SetDefaultNamespace( nameSpace );
+
+	for( func = funcs; func->declaration; func++ )
 	{
 		error = asEngine->RegisterGlobalFunction( func->declaration, func->pointer, asCALL_CDECL );
 
@@ -3480,20 +3248,24 @@ static void G_asRegisterGlobalFunctions( asIScriptEngine *asEngine )
 	}
 
 	// get AS function pointers
-	for( func = asGlobFuncs; func->declaration; func++ ) {
+	for( func = funcs; func->declaration; func++ ) {
 		if( func->asFuncPtr ) {
 			*func->asFuncPtr = asEngine->GetGlobalFunctionByDecl( func->declaration );
 		}
 	}
+
+	asEngine->SetDefaultNamespace( "" );
 }
 
-static void G_asRegisterGlobalProperties( asIScriptEngine *asEngine )
+static void G_asRegisterGlobalProperties( asIScriptEngine *asEngine, const asglobproperties_t *props, const char *nameSpace )
 {
 	int error;
 	int count = 0, failedcount = 0;
 	const asglobproperties_t *prop;
 
-	for( prop = asGlobProps; prop->declaration; prop++ )
+	asEngine->SetDefaultNamespace( nameSpace );
+
+	for( prop = props; prop->declaration; prop++ )
 	{
 		error = asEngine->RegisterGlobalProperty( prop->declaration, prop->pointer );
 		if( error < 0 )
@@ -3504,6 +3276,8 @@ static void G_asRegisterGlobalProperties( asIScriptEngine *asEngine )
 
 		count++;
 	}
+
+	asEngine->SetDefaultNamespace( "" );
 }
 
 // ==========================================================================================
@@ -3979,10 +3753,11 @@ static void G_InitializeGameModuleSyntax( asIScriptEngine *asEngine )
 	G_asRegisterObjectClasses( asEngine );
 
 	// register global functions
-	G_asRegisterGlobalFunctions( asEngine );
+	G_asRegisterGlobalFunctions( asEngine, asGlobFuncs, "" );
+	G_asRegisterGlobalFunctions( asEngine, asAIGlobFuncs, "AI" );
 
 	// register global properties
-	G_asRegisterGlobalProperties( asEngine );
+	G_asRegisterGlobalProperties( asEngine, asGlobProps, "" );
 }
 
 /*

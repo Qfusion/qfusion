@@ -231,10 +231,7 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
 	//put into ents table
-	nav.navigableEnts[nav.num_navigableEnts].ent = ent;
-	nav.navigableEnts[nav.num_navigableEnts].node = nav.num_nodes;
-	nav.num_navigableEnts++;
-
+	AI_AddNavigatableEntity( ent, nav.num_nodes );
 	nav.num_nodes++;
 
 	// Destiny node
@@ -247,9 +244,7 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
 	//put into ents table
-	nav.navigableEnts[nav.num_navigableEnts].ent = ent;
-	nav.navigableEnts[nav.num_navigableEnts].node = nav.num_nodes;
-	nav.num_navigableEnts++;
+	AI_AddNavigatableEntity( ent, nav.num_nodes );
 
 	// link jumpad to dest
 	AI_AddLink( nav.num_nodes-1, nav.num_nodes, LINK_JUMPPAD );
@@ -363,9 +358,7 @@ static int AI_AddNode_Door( edict_t *ent )
 			continue;
 
 		//put into ents table
-		nav.navigableEnts[nav.num_navigableEnts].ent = ent;
-		nav.navigableEnts[nav.num_navigableEnts].node = dropped[i];
-		nav.num_navigableEnts++;
+		AI_AddNavigatableEntity( ent, dropped[i] );
 
 		for( j = 0; j < 4; j++ )
 		{
@@ -486,9 +479,7 @@ static int AI_AddNode_Platform( edict_t *ent )
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
 	//put into ents table
-	nav.navigableEnts[nav.num_navigableEnts].ent = ent;
-	nav.navigableEnts[nav.num_navigableEnts].node = nav.num_nodes;
-	nav.num_navigableEnts++;
+	AI_AddNavigatableEntity( ent, nav.num_nodes );
 
 	nav.num_nodes++;
 
@@ -503,9 +494,7 @@ static int AI_AddNode_Platform( edict_t *ent )
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
 
 	//put into ents table
-	nav.navigableEnts[nav.num_navigableEnts].ent = ent;
-	nav.navigableEnts[nav.num_navigableEnts].node = nav.num_nodes;
-	nav.num_navigableEnts++;
+	AI_AddNavigatableEntity( ent, nav.num_nodes );
 
 	// link lower to upper
 	AI_AddLink( nav.num_nodes, nav.num_nodes-1, LINK_PLATFORM );
@@ -557,9 +546,7 @@ static int AI_AddNode_Teleporter( edict_t *ent )
 #endif
 
 	//put into ents table
-	nav.navigableEnts[nav.num_navigableEnts].ent = ent;
-	nav.navigableEnts[nav.num_navigableEnts].node = nav.num_nodes;
-	nav.num_navigableEnts++;
+	AI_AddNavigatableEntity( ent, nav.num_nodes );
 
 	nav.num_nodes++;
 
@@ -577,9 +564,7 @@ static int AI_AddNode_Teleporter( edict_t *ent )
 #endif
 
 	//put into ents table
-	nav.navigableEnts[nav.num_navigableEnts].ent = ent;
-	nav.navigableEnts[nav.num_navigableEnts].node = nav.num_nodes;
-	nav.num_navigableEnts++;
+	AI_AddNavigatableEntity( ent, nav.num_nodes );
 
 	// link from teleport_in
 	AI_AddLink( nav.num_nodes-1, nav.num_nodes, LINK_TELEPORT );
@@ -828,7 +813,7 @@ static int AI_LinkServerNodes( int start )
 }
 
 /*
-* 
+* AI_AddNavigableEntity
 */
 static bool AI_AddNavigableEntity( edict_t *ent )
 {
@@ -877,12 +862,51 @@ static bool AI_AddNavigableEntity( edict_t *ent )
 }
 
 /*
-* 
+* AI_AllocGoalEntity
+*/
+static nav_ents_t *AI_AllocGoalEntity( void )
+{
+	nav_ents_t *goalEnt;
+
+	if( !nav.goalEntsFree ) {
+		return NULL;
+	}
+
+	// take a free decal if possible
+	goalEnt = nav.goalEntsFree;
+	nav.goalEntsFree = goalEnt->next;
+
+	// put the decal at the start of the list
+	goalEnt->prev = &nav.goalEntsHeadnode;
+	goalEnt->next = nav.goalEntsHeadnode.next;
+	goalEnt->next->prev = goalEnt;
+	goalEnt->prev->next = goalEnt;
+
+	return goalEnt;
+}
+
+/*
+* AI_FreeGoalEntity
+*/
+static void AI_FreeGoalEntity( nav_ents_t *goalEnt )
+{
+	// remove from linked active list
+	goalEnt->prev->next = goalEnt->next;
+	goalEnt->next->prev = goalEnt->prev;
+
+	// insert into linked free list
+	goalEnt->next = nav.goalEntsFree;
+	nav.goalEntsFree = goalEnt;
+}
+
+/*
+* AI_AddGoalEntityNode
 */
 static void AI_AddGoalEntityNode( edict_t *ent, bool customReach )
 {
 	int node = NODE_INVALID;
 	int range = NODE_DENSITY * 0.75;
+	nav_ents_t *goalEnt;
 
 	if( !ent->r.inuse || !ent->classname )
 		return;
@@ -892,10 +916,8 @@ static void AI_AddGoalEntityNode( edict_t *ent, bool customReach )
 
 	if( ent->r.client )
 	{
-		nav.goalEnts[nav.num_goalEnts].node = NODE_INVALID;
-		nav.goalEnts[nav.num_goalEnts].ent = ent;
-		nav.num_goalEnts++;
-		return;
+		node = NODE_INVALID;
+		goto add;
 	}
 
 	//
@@ -938,17 +960,22 @@ static void AI_AddGoalEntityNode( edict_t *ent, bool customReach )
 
 	if( node != NODE_INVALID )
 	{
-		nav.goalEnts[nav.num_goalEnts].node = node;
-		nav.goalEnts[nav.num_goalEnts].ent = ent;
-		nav.num_goalEnts++;
-
 		if( customReach )
 			nodes[node].flags |= NODEFLAGS_ENTITYREACH;
+
+add:
+		goalEnt = AI_AllocGoalEntity();
+		if( !goalEnt ) {
+			return;
+		}
+		goalEnt->node = node;
+		goalEnt->ent = ent;
+		nav.entsGoals[ENTNUM(ent)] = goalEnt;
 	}
 }
 
 /*
-* 
+* AI_AddGoalEntity
 */
 void AI_AddGoalEntity( edict_t *ent )
 {
@@ -956,7 +983,7 @@ void AI_AddGoalEntity( edict_t *ent )
 }
 
 /*
-* 
+* AI_AddGoalEntityCustom
 */
 void AI_AddGoalEntityCustom( edict_t *ent )
 {
@@ -964,31 +991,35 @@ void AI_AddGoalEntityCustom( edict_t *ent )
 }
 
 /*
-* 
+* AI_AddNavigatableEntity
+*/
+void AI_AddNavigatableEntity( edict_t *ent, int node )
+{
+	if( nav.num_navigableEnts == sizeof( nav.navigableEnts ) / sizeof( nav.navigableEnts[0] ) ) {
+		return;
+	}
+	nav.navigableEnts[nav.num_navigableEnts].ent = ent;
+	nav.navigableEnts[nav.num_navigableEnts].node = node;
+	nav.num_navigableEnts++;
+}
+
+/*
+* AI_RemoveGoalEntity
 */
 void AI_RemoveGoalEntity( edict_t *ent )
 {
-	int i, j;
+	nav_ents_t *goalEnt;
 
-	for( i = 0; i < nav.num_goalEnts; i++ )
-	{
-		if( nav.goalEnts[i].ent == ent )
-		{
-			for( j = i; j < nav.num_goalEnts - 1; j++ )
-			{
-				nav.goalEnts[j].ent = nav.goalEnts[j + 1].ent;
-				nav.goalEnts[j].node = nav.goalEnts[j + 1].node;
-			}
-
-			nav.num_goalEnts--;
-			nav.goalEnts[nav.num_goalEnts].ent = NULL;
-			nav.goalEnts[nav.num_goalEnts].node = NODE_INVALID;
-
-			if( nav.debugMode && bot_showlrgoal->integer > 2 )
-				G_Printf( "Goal Entity removed: %s\n", ent->classname );
-			return;
-		}
+	goalEnt = AI_GetGoalentForEnt( ent );
+	if( !goalEnt ) {
+		return;
 	}
+
+	AI_FreeGoalEntity( goalEnt );
+	nav.entsGoals[ENTNUM( ent )] = NULL;
+
+	if( nav.debugMode && bot_showlrgoal->integer > 2 )
+		G_Printf( "Goal Entity removed: %s\n", ent->classname );
 }
 
 /*************************************************************************/
@@ -1157,10 +1188,24 @@ void AI_InitNavigationData( bool silent )
 {
 	int i;
 	int linkscount;
+	const int maxgoalEnts = sizeof( nav.goalEnts ) / sizeof( nav.goalEnts[0] );
 
 	memset( &nav, 0, sizeof( nav ) );
 	memset( nodes, 0, sizeof( nav_node_t ) * MAX_NODES );
 	memset( pLinks, 0, sizeof( nav_plink_t ) * MAX_NODES );
+
+	nav.goalEntsFree = nav.goalEnts;
+	nav.goalEntsHeadnode.id = -1;
+	nav.goalEntsHeadnode.ent = game.edicts;
+	nav.goalEntsHeadnode.node = NODE_INVALID;
+	nav.goalEntsHeadnode.prev = &nav.goalEntsHeadnode;
+	nav.goalEntsHeadnode.next = &nav.goalEntsHeadnode;
+	for( i = 0; i < maxgoalEnts - 1; i++ ) {
+		nav.goalEnts[i].id = i;
+		nav.goalEnts[i].next = &nav.goalEnts[i+1];
+	}
+	nav.goalEnts[i].id = i;
+	nav.goalEnts[i].next = NULL;
 
 	if( developer->integer && !silent )
 	{

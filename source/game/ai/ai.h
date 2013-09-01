@@ -25,43 +25,6 @@ in NO WAY supported by Steve Yeager.
 
 #include "AStar.h"
 
-typedef struct
-{
-	unsigned int moveTypesMask; // moves the bot can perform at this moment
-	float entityWeights[MAX_EDICTS];
-} ai_status_t;
-
-typedef struct
-{
-	const char *name;
-	float default_yaw_speed;
-	float reaction_time;		
-	float combatmove_timeout;
-	float yaw_accel;
-	float offensiveness;
-	float campiness;
-	float firerate;
-	float armor_grabber;
-	float health_grabber;
-
-	float weapon_affinity[WEAP_TOTAL];
-} ai_character;
-
-typedef struct
-{
-	const char *netname;
-	float skillLevel;       // Affects AIM and fire rate (fraction of 1)
-	unsigned int moveTypesMask;      // bot can perform these moves, to check against required moves for a given path
-	float inventoryWeights[MAX_ITEMS];
-
-	//class based functions
-	void ( *UpdateStatus )( edict_t *ent );
-	void ( *RunFrame )( edict_t *ent );
-	void ( *blockedTimeout )( edict_t *ent );
-
-	ai_character cha;
-} ai_pers_t;
-
 typedef enum
 {
 	AI_INACTIVE,
@@ -71,59 +34,8 @@ typedef enum
 	AI_MAX_TYPES
 } ai_type;
 
-
-typedef struct
-{
-	ai_pers_t pers;         // persistant definition (class?)
-	ai_status_t status;     //player (bot, NPC) status for AI frame
-
-	ai_type	type;
-
-	unsigned int state_combat_timeout;
-
-	// movement
-	vec3_t move_vector;
-	unsigned int blocked_timeout;
-	unsigned int changeweapon_timeout;
-	unsigned int statusUpdateTimeout;
-
-	unsigned int combatmovepush_timeout;
-	int combatmovepushes[3];
-
-	// nodes
-	int current_node;
-	int goal_node;
-	int next_node;
-	unsigned int node_timeout;
-	struct nav_ents_s *goalEnt;
-
-	unsigned int longRangeGoalTimeout;
-	unsigned int shortRangeGoalTimeout;
-	int tries;
-
-	struct astarpath_s path; //jabot092
-
-	int nearest_node_tries;     //for increasing radius of search with each try
-
-	//vsay
-	unsigned int vsay_timeout;
-	edict_t	*vsay_goalent;
-
-	edict_t	*latched_enemy;
-	int enemyReactionDelay;
-	//int				rethinkEnemyDelay;
-	bool notarget;  // bots can not see this entity
-	bool rj_triggered;
-	bool dont_jump;
-	bool camp_item;
-	bool rush_item;
-	float speed_yaw, speed_pitch;
-	bool is_bunnyhop;
-
-	int asFactored, asRefCount;
-
-} ai_handle_t;
-
+typedef struct ai_handle_s ai_handle_t;
+extern const size_t ai_handle_size;
 
 // bot_cmds.c
 bool    BOT_Commands( edict_t *ent );
@@ -133,16 +45,26 @@ bool    BOT_ServerCommand( void );
 void        AI_InitLevel( void );
 void		AI_AddGoalEntity( edict_t *ent );
 void		AI_AddGoalEntityCustom( edict_t *ent );
+void		AI_AddNavigatableEntity( edict_t *ent, int node );
 void		AI_RemoveGoalEntity( edict_t *ent );
 void		AI_InitEntitiesData( void );
 void        AI_Think( edict_t *self );
 void        G_FreeAI( edict_t *ent );
 void        G_SpawnAI( edict_t *ent );
-void AI_ResetWeights( ai_handle_t *ai );
-edict_t *AI_GetGoalEnt( int index );
-int AI_GetGoalEntNode( int index );
-void AI_ReachedEntity( edict_t *self );
-void AI_TouchedEntity( edict_t *self, edict_t *ent );
+ai_type		AI_GetType( const ai_handle_t *ai );
+void		AI_ClearWeights( ai_handle_t *ai );
+void		AI_SetGoalWeight( ai_handle_t *ai, int index, float weight );
+void		AI_ResetWeights( ai_handle_t *ai );
+float		AI_GetItemWeight( const ai_handle_t *ai, const gsitem_t *item );
+int			AI_GetRootGoalEnt( void );
+int			AI_GetNextGoalEnt( int index );
+edict_t		*AI_GetGoalEntity( int index );
+void		AI_ReachedEntity( edict_t *self );
+void		AI_TouchedEntity( edict_t *self, edict_t *ent );
+float		AI_GetCharacterReactionTime( const ai_handle_t *ai );
+float		AI_GetCharacterOffensiveness( const ai_handle_t *ai );
+float		AI_GetCharacterCampiness( const ai_handle_t *ai );
+float		AI_GetCharacterFirerate( const ai_handle_t *ai );
 
 // ai_items.c
 void        AI_EnemyAdded( edict_t *ent );
