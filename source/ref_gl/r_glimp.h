@@ -147,6 +147,7 @@ typedef struct
 				,texture_compression
 				,vertex_buffer_object
 				,GLSL
+				,GLSL130
 				,depth_texture
 				,shadow
 				,framebuffer_object
@@ -154,6 +155,7 @@ typedef struct
 				,fragment_shader
 				,shader_objects
 				,shading_language_100
+				,shading_language_130
 				,bgra
 				,gamma_control
 				,swap_control
@@ -174,7 +176,7 @@ typedef struct
 	const char		*glwExtensionsString;
 	const char		*shadingLanguageVersionString;
 
-	int				shadingLanguageVersion100;
+	int				shadingLanguageVersion;
 
 	int				width, height;
 	qboolean		fullScreen;
@@ -197,7 +199,7 @@ typedef struct
 					,maxFragmentUniformComponents
 					;
 	unsigned int	maxGLSLBones;	// the maximum amount of bones we can handle in a vertex shader
-	glextinfo_t ext;
+	glextinfo_t		ext;
 } glconfig_t;
 
 extern glconfig_t	glConfig;

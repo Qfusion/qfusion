@@ -236,6 +236,14 @@ static const gl_extension_func_t gl_ext_GLSL_ARB_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_ARB_GLSL130 (meta extension) */
+static const gl_extension_func_t gl_ext_GLSL_ARB130_funcs[] =
+{
+	GL_EXTENSION_FUNC(BindFragDataLocation)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 /* GL_ARB_draw_instanced */
 static const gl_extension_func_t gl_ext_draw_instanced_ARB_funcs[] =
 {
@@ -345,6 +353,7 @@ static const gl_extension_t gl_extensions_decl[] =
 
 	// meta GLSL extensions
 	,GL_EXTENSION_EXT( \0, GLSL, 1, false, true, &gl_ext_GLSL_ARB_funcs, shading_language_100 )
+	,GL_EXTENSION_EXT( \0, GLSL130, 1, false, false, &gl_ext_GLSL_ARB130_funcs, GLSL )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
@@ -430,12 +439,15 @@ static qboolean R_RegisterGLExtensions( void )
 				gl_extension_func_t *func2 = extension->funcs;
 
 				// whine about buggy driver
-				Com_Printf( "R_RegisterGLExtensions: broken %s support, contact your video card vendor\n", cvar->name );
+				if( *extension->prefix ) {
+					Com_Printf( "R_RegisterGLExtensions: broken %s support, contact your video card vendor\n", 
+						cvar->name );
+				}
 
 				// reset previously initialized functions back to NULL
 				do {
 					*(func2->pointer) = NULL;
-				} while( ++func2 != func );
+				} while( (++func2)->name && func2 != func );
 
 				goto non_avail;
 			}
@@ -553,8 +565,10 @@ static void R_FinalizeGLExtensions( void )
 	if( strstr( glConfig.extensionsString, "GL_EXT_texture_filter_anisotropic" ) )
 		qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureFilterAnisotropic );
 
-	// GLSL version * 100
-	glConfig.shadingLanguageVersion100 = (int)(atof(glConfig.shadingLanguageVersionString) * 100);
+	glConfig.shadingLanguageVersion = (int)(atof(glConfig.shadingLanguageVersionString) * 100);
+	if( !glConfig.ext.GLSL130 ) {
+		glConfig.shadingLanguageVersion = 120;
+	}
 
 	glConfig.maxVaryingFloats = 0;
 	glConfig.maxVertexUniformComponents = glConfig.maxFragmentUniformComponents = 0;
@@ -570,7 +584,7 @@ static void R_FinalizeGLExtensions( void )
 	}
 
 	// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
-	if( glConfig.shadingLanguageVersion100 >= 140 ) {
+	if( glConfig.shadingLanguageVersion >= 140 ) {
 		// require GLSL version 1.40 and higher
 		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 20, r_maxglslbones->integer );
 	}
