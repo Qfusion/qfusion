@@ -526,6 +526,8 @@ QGL_EXT(void, glBindAttribLocationARB, (GLhandleARB programObj, GLuint index, co
 QGL_EXT(void, glGetActiveAttribARB, (GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name));
 QGL_EXT(GLint, glGetAttribLocationARB, (GLhandleARB programObj, const GLcharARB *name));
 
+QGL_EXT(void, glBindFragDataLocation, (GLuint programObj, GLuint index, const GLcharARB *name));
+
 QGL_EXT(void, glDrawArraysInstancedARB, (GLenum mode, GLint first, GLsizei count, GLsizei primcount));
 QGL_EXT(void, glDrawElementsInstancedARB, (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices, GLsizei primcount));
 

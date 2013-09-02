@@ -720,10 +720,19 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define STR_TOSTR( x )					STR_HELPER( x )
 #endif
 
-#define MYGLSLVERSION "" \
-"#version 140\n"
+#define QF_GLSL_VERSION120 "" \
+"#version 120\n" \
+"#define QF_GLSLVERSION 120\n"
 
-#define MYHALFTYPES "" \
+#define QF_GLSL_VERSION130 "" \
+"#version 130\n" \
+"#define QF_GLSLVERSION 130\n"
+
+#define QF_GLSL_VERSION140 "" \
+"#version 140\n" \
+"#define QF_GLSLVERSION 140\n"
+
+#define QF_BUILTIN_GLSL_MACROS "" \
 "#if !defined(myhalf)\n" \
 "//#if !defined(__GLSL_CG_DATA_TYPES)\n" \
 "#define myhalf float\n" \
@@ -736,9 +745,28 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "//#define myhalf3 half3\n" \
 "//#define myhalf4 half4\n" \
 "//#endif\n" \
-"#endif\n"
+"#endif\n" \
+"\n" \
+"#if QF_GLSLVERSION >= 130\n" \
+"  precision highp float;\n" \
+"# ifdef VERTEX_SHADER\n" \
+"#  define varying out\n" \
+"#  define attribute in\n" \
+"# endif\n" \
+"\n" \
+"# ifdef FRAGMENT_SHADER\n" \
+"   out vec4 myFragColor;\n" \
+"#  define gl_FragColor myFragColor\n" \
+"#  define varying in\n" \
+"#  define attribute in\n" \
+"#  define texture2D texture\n" \
+"#  define textureCube texture\n" \
+"#  define shadow2D texture\n" \
+"# endif\n" \
+"#endif\n" \
+"\n"
 
-#define MYPI "" \
+#define QF_GLSL_PI "" \
 "#ifndef M_PI\n" \
 "#define M_PI 3.14159265358979323846\n" \
 "#endif\n" \
@@ -746,8 +774,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define M_TWOPI 6.28318530717958647692\n" \
 "#endif\n"
 
-#define GLSL_BUILTIN_CONSTANTS \
-MYPI \
+#define QF_BUILTIN_GLSL_CONSTANTS \
+QF_GLSL_PI \
 "\n" \
 "#ifndef MAX_UNIFORM_BONES\n" \
 "#define MAX_UNIFORM_BONES " STR_TOSTR( MAX_GLSL_UNIFORM_BONES ) "\n" \
@@ -765,16 +793,16 @@ MYPI \
 "#define DRAWFLAT_NORMAL_STEP " STR_TOSTR( DRAWFLAT_NORMAL_STEP ) "\n" \
 "#endif\n"
 
-#define GLSL_BUILTIN_UNIFORMS \
+#define QF_BUILTIN_GLSL_UNIFORMS \
 "uniform vec3 u_QF_ViewOrigin;\n" \
 "uniform mat3 u_QF_ViewAxis;\n" \
 "uniform float u_QF_MirrorSide;\n" \
 "uniform vec3 u_QF_EntityOrigin;\n" \
 "uniform float u_QF_ShaderTime;\n"
 
-#define GLSL_WAVEFUNCS \
+#define QF_GLSL_WAVEFUNCS \
 "\n" \
-MYPI \
+QF_GLSL_PI \
 "\n" \
 "#ifndef WAVE_SIN\n" \
 "float QF_WaveFunc_Sin(float x)\n" \
@@ -811,7 +839,7 @@ MYPI \
 "#endif\n" \
 "\n"
 
-#define GLSL_DUAL_QUAT_TRANSFORM_OVERLOAD "" \
+#define QF_DUAL_QUAT_TRANSFORM_OVERLOAD "" \
 "#if defined(DUAL_QUAT_TRANSFORM_NORMALS)\n" \
 "#if defined(DUAL_QUAT_TRANSFORM_TANGENT)\n" \
 "void QF_VertexDualQuatsTransform(const int numWeights, inout vec4 Position, inout vec3 Normal, inout vec3 Tangent)\n" \
@@ -888,26 +916,26 @@ MYPI \
 "}\n"
 
 // FIXME: version 140 and up?
-#define GLSL_DUAL_QUAT_TRANSFORMS \
+#define QF_GLSL_DUAL_QUAT_TRANSFORMS \
 "#ifdef VERTEX_SHADER\n" \
 "attribute vec4 a_BonesIndices;\n" \
 "attribute vec4 a_BonesWeights;\n" \
 "\n" \
 "uniform vec4 u_QF_DualQuats[MAX_UNIFORM_BONES*2];\n" \
 "\n" \
-GLSL_DUAL_QUAT_TRANSFORM_OVERLOAD \
+QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
 "\n" \
 "// use defines to overload the transform function\n" \
 "\n" \
 "#define DUAL_QUAT_TRANSFORM_NORMALS\n" \
-GLSL_DUAL_QUAT_TRANSFORM_OVERLOAD \
+QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
 "\n" \
 "#define DUAL_QUAT_TRANSFORM_TANGENT\n" \
-GLSL_DUAL_QUAT_TRANSFORM_OVERLOAD \
+QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
 "\n" \
 "#endif\n"
 
-#define GLSL_INSTANCED_TRASFORMS \
+#define QF_GLSL_INSTANCED_TRASFORMS \
 "#ifdef VERTEX_SHADER\n" \
 "#ifdef APPLY_INSTANCED_ATTRIB_TRASNFORMS\n" \
 "attribute vec4 a_InstanceQuat;\n" \
@@ -1361,15 +1389,23 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
-	shaderStrings[i++] = MYGLSLVERSION;
-	shaderStrings[i++] = MYHALFTYPES;
+	if( glConfig.shadingLanguageVersion >= 140 ) {
+		shaderStrings[i++] = QF_GLSL_VERSION140;
+	}
+	else if( glConfig.shadingLanguageVersion >= 130 ) {
+		shaderStrings[i++] = QF_GLSL_VERSION130;
+	}
+	else {
+		shaderStrings[i++] = QF_GLSL_VERSION120;
+	}
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
-	shaderStrings[i++] = GLSL_BUILTIN_CONSTANTS;
-	shaderStrings[i++] = GLSL_BUILTIN_UNIFORMS;	
-	shaderStrings[i++] = GLSL_WAVEFUNCS;
-	shaderStrings[i++] = GLSL_DUAL_QUAT_TRANSFORMS;
-	shaderStrings[i++] = GLSL_INSTANCED_TRASFORMS;
+	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
+	shaderStrings[i++] = QF_BUILTIN_GLSL_CONSTANTS;
+	shaderStrings[i++] = QF_BUILTIN_GLSL_UNIFORMS;	
+	shaderStrings[i++] = QF_GLSL_WAVEFUNCS;
+	shaderStrings[i++] = QF_GLSL_DUAL_QUAT_TRANSFORMS;
+	shaderStrings[i++] = QF_GLSL_INSTANCED_TRASFORMS;
 
 	if( header ) {
 		body_start = i;
@@ -2114,6 +2150,10 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program )
 
 	qglBindAttribLocationARB( program->object, VATTRIB_INSTANCE_QUAT, "a_InstanceQuat" );
 	qglBindAttribLocationARB( program->object, VATTRIB_INSTANCE_XYZS, "a_InstancePosAndScale" );
+
+	if( glConfig.shadingLanguageVersion >= 130 ) {
+		qglBindFragDataLocation( program->object, 0, "myFragColor" );
+	}
 }
 
 /*
