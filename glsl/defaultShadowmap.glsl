@@ -35,8 +35,6 @@ void main(void)
 		// computation in the fragment shader
 		v_ShadowProjVector[i].xyz = (v_ShadowProjVector[i].xyz + vec3(v_ShadowProjVector[i].w)) * 0.5;
 	}
-
-	gl_FrontColor = vec4(1.0);
 }
 
 #endif // VERTEX_SHADER
@@ -47,7 +45,7 @@ void main(void)
 
 #ifdef APPLY_RGB_SHADOW
 uniform sampler2D u_ShadowmapTexture[MAX_SHADOWS];
-# define qfShadow2D(t,v) tep(v.z, decodedepthmacro(texture2D(t, v.xy)))
+# define qfShadow2D(t,v) step(v.z, decodedepthmacro(texture2D(t, v.xy)))
 #else
 uniform sampler2DShadow u_ShadowmapTexture[MAX_SHADOWS];
 # define qfShadow2D(t,v) shadow2D(t,v)
@@ -63,10 +61,6 @@ void main(void)
 
 	for (int i = 0; i < MAX_SHADOWS; i++)
 	{
-		myhalf color = myhalf(1.0);
-
-		// most of what follows was written by eihrul
-
 		vec3 shadowmaptc = vec3 (v_ShadowProjVector[i].xyz / v_ShadowProjVector[i].w);
 
 		// this keeps shadows from appearing on surfaces behind frustum's nearplane
@@ -84,7 +78,7 @@ void main(void)
 		#ifdef APPLY_DITHER
 
 		# ifdef APPLY_PCF
-		#  define texval(x, y) myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(center + vec2(x, y)*ShadowMap_TextureScale, shadowmaptc.z)).r)
+		#  define texval(x, y) myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(center + vec2(x, y)*ShadowMap_TextureScale, shadowmaptc.z)))
 
 		// this method can be described as a 'dithered pinwheel' (4 texture lookups)
 		// which is a combination of the 'pinwheel' filter suggested by eihrul and dithered 4x4 PCF,
@@ -102,7 +96,7 @@ void main(void)
 
 		f = dot(myhalf4(0.25), myhalf4(group1, group2, group3, group4));
 		# else
-		f = myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(shadowmaptc.xy*ShadowMap_TextureScale, shadowmaptc.z)).r);
+		f = myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(shadowmaptc.xy*ShadowMap_TextureScale, shadowmaptc.z)));
 		# endif // APPLY_PCF
 	
 		#else
@@ -123,7 +117,7 @@ void main(void)
 		// NOTE: we're using emulation of texture_gather now
 
 		# ifdef APPLY_PCF
-		# define texval(off) qfShadow2D(u_ShadowmapTexture[i], vec3(off,shadowmaptc.z)).r
+		# define texval(off) qfShadow2D(u_ShadowmapTexture[i], vec3(off,shadowmaptc.z))
 		
 		vec2 offset = fract(shadowmaptc.xy - 0.5);
 		vec4 size = vec4(offset + 1.0, 2.0 - offset), weight = (vec4(2.0 - 1.0 / size.xy, 1.0 / size.zw - 1.0) + (shadowmaptc.xy - offset).xyxy)*ShadowMap_TextureScale.xyxy;
@@ -131,7 +125,7 @@ void main(void)
 		
 		#else
 		
-		f = myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(shadowmaptc.xy * ShadowMap_TextureScale, shadowmaptc.z)).r);
+		f = myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(shadowmaptc.xy * ShadowMap_TextureScale, shadowmaptc.z)));
 		
 		#endif // APPLY_PCF
 		
