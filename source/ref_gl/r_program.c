@@ -750,13 +750,18 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#if QF_GLSLVERSION >= 130\n" \
 "  precision highp float;\n" \
 "# ifdef VERTEX_SHADER\n" \
+"   out myhalf4 qf_FrontColor;\n" \
 "#  define varying out\n" \
 "#  define attribute in\n" \
+"#  define gl_FrontColor qf_FrontColor\n" \
 "# endif\n" \
 "\n" \
 "# ifdef FRAGMENT_SHADER\n" \
-"   out vec4 myFragColor;\n" \
-"#  define gl_FragColor myFragColor\n" \
+"   in myhalf4 qf_FrontColor;\n" \
+"   out vec4 qf_FragColor;\n" \
+"   out myhalf4	qf_FragColor;\n" \
+"#  define gl_Color qf_FrontColor\n" \
+"#  define gl_FragColor qf_FragColor\n" \
 "#  define varying in\n" \
 "#  define attribute in\n" \
 "#  define texture2D texture\n" \
@@ -2152,7 +2157,7 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program )
 	qglBindAttribLocationARB( program->object, VATTRIB_INSTANCE_XYZS, "a_InstancePosAndScale" );
 
 	if( glConfig.shadingLanguageVersion >= 130 ) {
-		qglBindFragDataLocation( program->object, 0, "myFragColor" );
+		qglBindFragDataLocation( program->object, 0, "qf_FragColor" );
 	}
 }
 
