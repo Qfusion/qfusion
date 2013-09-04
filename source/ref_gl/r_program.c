@@ -758,7 +758,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "\n" \
 "# ifdef FRAGMENT_SHADER\n" \
 "   in myhalf4 qf_FrontColor;\n" \
-"   out vec4 qf_FragColor;\n" \
 "   out myhalf4	qf_FragColor;\n" \
 "#  define gl_Color qf_FrontColor\n" \
 "#  define gl_FragColor qf_FragColor\n" \
