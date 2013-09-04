@@ -49,23 +49,23 @@ uniform sampler2D u_ShadowmapTexture[MAX_SHADOWS];
 # define qfShadow2D(t,v) step(v.z, decodedepthmacro(texture2D(t, v.xy)))
 #else
 uniform sampler2DShadow u_ShadowmapTexture[MAX_SHADOWS];
-# define qfShadow2D(t,v) shadow2D(t,v)
+# define qfShadow2D(t,v) float(shadow2D(t,v))
 #endif
 
-uniform myhalf u_ShadowAlpha;
+uniform float u_ShadowAlpha;
 uniform float u_ShadowProjDistance[MAX_SHADOWS];
 uniform vec4 u_ShadowmapTextureParams[MAX_SHADOWS];
 
 void main(void)
 {
-	myhalf finalcolor = myhalf(1.0);
+	float finalcolor = 1.0;
 
 	for (int i = 0; i < MAX_SHADOWS; i++)
 	{
-		vec3 shadowmaptc = vec3 (v_ShadowProjVector[i].xyz / v_ShadowProjVector[i].w);
+		vec3 shadowmaptc = vec3(v_ShadowProjVector[i].xyz / v_ShadowProjVector[i].w);
 
 		// this keeps shadows from appearing on surfaces behind frustum's nearplane
-		myhalf d = step(v_ShadowProjVector[i].w, 0.0);
+		float d = step(v_ShadowProjVector[i].w, 0.0);
 
 		//shadowmaptc = (shadowmaptc + vec3 (1.0)) * vec3 (0.5);
 		shadowmaptc.xy = shadowmaptc.xy * u_ShadowmapTextureParams[i].xy; // .x - texture width
@@ -74,12 +74,12 @@ void main(void)
 
 		vec2 ShadowMap_TextureScale = u_ShadowmapTextureParams[i].zw;
 
-		myhalf f;
+		float f;
 
 		#ifdef APPLY_DITHER
 
 		# ifdef APPLY_PCF
-		#  define texval(x, y) myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(center + vec2(x, y)*ShadowMap_TextureScale, shadowmaptc.z)))
+		#  define texval(x, y) qfShadow2D(u_ShadowmapTexture[i], vec3(center + vec2(x, y)*ShadowMap_TextureScale, shadowmaptc.z))
 
 		// this method can be described as a 'dithered pinwheel' (4 texture lookups)
 		// which is a combination of the 'pinwheel' filter suggested by eihrul and dithered 4x4 PCF,
@@ -90,14 +90,14 @@ void main(void)
 		offset_dither.y *= step(offset_dither.y, 1.1);
 
 		vec2 center = (shadowmaptc.xy + offset_dither.xy) * ShadowMap_TextureScale;
-		myhalf group1 = texval(-0.4,  1.0);
-		myhalf group2 = texval(-1.0, -0.4);
-		myhalf group3 = texval( 0.4, -1.0);
-		myhalf group4 = texval( 1.0,  0.4);
+		float group1 = texval(-0.4,  1.0);
+		float group2 = texval(-1.0, -0.4);
+		float group3 = texval( 0.4, -1.0);
+		float group4 = texval( 1.0,  0.4);
 
-		f = dot(myhalf4(0.25), myhalf4(group1, group2, group3, group4));
+		f = dot(vec4(0.25), vec4(group1, group2, group3, group4));
 		# else
-		f = myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(shadowmaptc.xy*ShadowMap_TextureScale, shadowmaptc.z)));
+		f = qfShadow2D(u_ShadowmapTexture[i], vec3(shadowmaptc.xy*ShadowMap_TextureScale, shadowmaptc.z));
 		# endif // APPLY_PCF
 	
 		#else
@@ -126,7 +126,7 @@ void main(void)
 		
 		#else
 		
-		f = myhalf(qfShadow2D(u_ShadowmapTexture[i], vec3(shadowmaptc.xy * ShadowMap_TextureScale, shadowmaptc.z)));
+		f = qfShadow2D(u_ShadowmapTexture[i], vec3(shadowmaptc.xy * ShadowMap_TextureScale, shadowmaptc.z));
 		
 		#endif // APPLY_PCF
 		
