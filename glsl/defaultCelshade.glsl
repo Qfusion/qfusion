@@ -1,5 +1,6 @@
-// cel-shading shader
+// Qfusion cel-shading shader
 
+#include "include/common.glsl"
 #include "include/uniforms.glsl"
 
 #ifdef APPLY_FOG
@@ -18,7 +19,6 @@ varying vec2 v_FogCoord;
 
 #ifdef VERTEX_SHADER
 // Vertex shader
-
 #include "include/attributes.glsl"
 #include "include/vtransform.glsl"
 #include "include/rgbgen.glsl"

@@ -1,5 +1,6 @@
 // GLSL shader for surfaces with per-pixel lighting
 
+#include "include/common.glsl"
 #include "include/uniforms.glsl"
 
 #if defined(NUM_DLIGHTS)

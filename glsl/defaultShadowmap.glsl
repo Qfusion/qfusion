@@ -1,5 +1,6 @@
 // shadowmapping GLSL shader
 
+#include "include/common.glsl"
 #include "include/uniforms.glsl"
 #include "include/rgbdepth.glsl"
 

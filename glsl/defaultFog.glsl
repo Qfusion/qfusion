@@ -1,5 +1,6 @@
 // Fog shader
 
+#include "include/common.glsl"
 #include "include/uniforms.glsl"
 #include "include/fog.glsl"
 

@@ -1,5 +1,6 @@
-// Mental distortion GLSL shader
+// Qfusion distortion GLSL shader
 
+#include "include/common.glsl"
 #include "include/uniforms.glsl"
 
 #include "include/greyscale.glsl"

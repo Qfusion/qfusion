@@ -1,5 +1,6 @@
 // geometry outline GLSL shader
 
+#include "include/common.glsl"
 #include "include/uniforms.glsl"
 #ifdef APPLY_FOG
 #include "include/fog.glsl"

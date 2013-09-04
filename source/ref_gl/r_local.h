@@ -34,8 +34,6 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #include "r_surface.h"
 #include "r_image.h"
 
-#define DRAWFLAT_NORMAL_STEP	0.5		// floor or ceiling if < abs(normal.z) 
-
 #ifdef CGAMEGETLIGHTORIGIN
 #define SHADOW_MAPPING			2
 #else
