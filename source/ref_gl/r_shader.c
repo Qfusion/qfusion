@@ -2340,7 +2340,8 @@ static void Shader_Finish( shader_t *s )
 		}
 
 		if( pass->rgbgen.type == RGB_GEN_WAVE ||
-			( (pass->rgbgen.type == RGB_GEN_ENTITYWAVE || pass->rgbgen.type == RGB_GEN_CUSTOMWAVE) && r_currentPasses[i].rgbgen.func->type != SHADER_FUNC_NONE) )
+			( (pass->rgbgen.type == RGB_GEN_ENTITYWAVE || pass->rgbgen.type == RGB_GEN_CUSTOMWAVE) 
+			&& r_currentPasses[i].rgbgen.func->type != SHADER_FUNC_NONE) )
 		{
 			pass->rgbgen.func = ( shaderfunc_t * )buffer; buffer += sizeof( shaderfunc_t );
 			memcpy( pass->rgbgen.func, r_currentPasses[i].rgbgen.func, sizeof( shaderfunc_t ) );

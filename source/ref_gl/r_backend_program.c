@@ -361,8 +361,8 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 	double temp;
 	float *table, a;
 	vec3_t v;
-	const entity_t *e = rb.currentEntity;
-	const shaderfunc_t *rgbgenfunc, *alphagenfunc;
+	const shaderfunc_t *rgbgenfunc = pass->rgbgen.func;
+	const shaderfunc_t *alphagenfunc = pass->alphagen.func;
 
 	Vector4Set( rgba, 255, 255, 255, 255 );
 
@@ -378,8 +378,12 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 	case RGB_GEN_ENTITYWAVE:
 	case RGB_GEN_WAVE:
 	case RGB_GEN_CUSTOMWAVE:
-		rgbgenfunc = pass->rgbgen.func;
-		if( !rgbgenfunc || rgbgenfunc->type == SHADER_FUNC_NONE || rgbgenfunc->type == SHADER_FUNC_RAMP )
+		
+		if( !rgbgenfunc || rgbgenfunc->type == SHADER_FUNC_NONE )
+		{
+			temp = 1;
+		}
+		else if( rgbgenfunc->type == SHADER_FUNC_RAMP )
 		{
 			break;
 		}
@@ -427,14 +431,14 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 		a = v[2] * temp; rgba[2] = fast_ftol( a * 255.0f );
 		break;
 	case RGB_GEN_OUTLINE:
-		rgba[0] = e->outlineColor[0];
-		rgba[1] = e->outlineColor[1];
-		rgba[2] = e->outlineColor[2];
+		rgba[0] = rb.entityOutlineColor[0];
+		rgba[1] = rb.entityOutlineColor[1];
+		rgba[2] = rb.entityOutlineColor[2];
 		break;
 	case RGB_GEN_ONE_MINUS_ENTITY:
-		rgba[0] = 255 - e->color[0];
-		rgba[1] = 255 - e->color[1];
-		rgba[2] = 255 - e->color[2];
+		rgba[0] = 255 - rb.entityColor[0];
+		rgba[1] = 255 - rb.entityColor[1];
+		rgba[2] = 255 - rb.entityColor[2];
 		break;
 	case RGB_GEN_FOG:
 		rgba[0] = rb.texFog->shader->fog_color[0];
@@ -458,8 +462,11 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 		rgba[3] = fast_ftol( pass->alphagen.args[0] * 255.0f );
 		break;
 	case ALPHA_GEN_WAVE:
-		alphagenfunc = pass->alphagen.func;
-		if( !alphagenfunc || alphagenfunc->type == SHADER_FUNC_NONE || alphagenfunc->type == SHADER_FUNC_RAMP )
+		if( !alphagenfunc || alphagenfunc->type == SHADER_FUNC_NONE )
+		{
+			a = 1;
+		}
+		else if( alphagenfunc->type == SHADER_FUNC_RAMP )
 		{
 			break;
 		}
@@ -482,10 +489,10 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 		rgba[3] = fast_ftol( a * 255.0f );
 		break;
 	case ALPHA_GEN_ENTITY:
-		rgba[3] = e->color[3];
+		rgba[3] = rb.entityColor[3];
 		break;
 	case ALPHA_GEN_OUTLINE:
-		rgba[3] = e->outlineColor[3];
+		rgba[3] = rb.entityOutlineColor[3];
 	default:
 		break;
 	}
@@ -1727,6 +1734,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.alphaHack = qfalse;
 	} else {
 		Vector4Copy( rb.currentEntity->shaderRGBA, rb.entityColor );
+		Vector4Copy( rb.currentEntity->outlineColor, rb.entityOutlineColor );
 		if( rb.currentEntity->shaderTime > rb.time )
 			rb.currentShaderTime = 0;
 		else
