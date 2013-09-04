@@ -1,5 +1,6 @@
 // Q3A GLSL shader
 
+#include "include/common.glsl"
 #include "include/uniforms.glsl"
 
 #if defined(NUM_DLIGHTS)

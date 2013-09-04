@@ -787,14 +787,6 @@ QF_GLSL_PI \
 "\n" \
 "#ifndef MAX_UNIFORM_INSTANCES\n" \
 "#define MAX_UNIFORM_INSTANCES " STR_TOSTR( MAX_GLSL_UNIFORM_INSTANCES ) "\n" \
-"#endif\n" \
-"\n" \
-"#ifndef FOG_TEXCOORD_STEP\n" \
-"#define FOG_TEXCOORD_STEP 1.0/256.0\n" \
-"#endif\n" \
-"\n" \
-"#ifndef DRAWFLAT_NORMAL_STEP\n" \
-"#define DRAWFLAT_NORMAL_STEP " STR_TOSTR( DRAWFLAT_NORMAL_STEP ) "\n" \
 "#endif\n"
 
 #define QF_BUILTIN_GLSL_UNIFORMS \

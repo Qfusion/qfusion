@@ -8,6 +8,8 @@ struct Fog
 
 uniform Fog u_Fog;
 
+#define FOG_TEXCOORD_STEP 1.0/256.0
+
 #define FogDensity(coord) sqrt(clamp((coord)[0],0.0,1.0))*step(FOG_TEXCOORD_STEP,(coord)[1])
 
 #define FOG_GEN_OUTPUT_COLOR
