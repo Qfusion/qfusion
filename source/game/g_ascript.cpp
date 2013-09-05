@@ -1626,8 +1626,7 @@ static void objectGameClient_InventorySetCount( int index, int newcount, gclient
 
 static void objectGameClient_InventoryGiveItemExt( int index, int count, gclient_t *self )
 {
-	gsitem_t *it;
-	edict_t *tmpEnt, *selfEnt;
+	const gsitem_t *it;
 	int playerNum;
 
 	if( index < 0 || index >= MAX_ITEMS )
@@ -1644,17 +1643,7 @@ static void objectGameClient_InventoryGiveItemExt( int index, int count, gclient
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	selfEnt = PLAYERENT( playerNum );
-
-	tmpEnt = G_Spawn();
-	tmpEnt->r.solid = SOLID_TRIGGER;
-	tmpEnt->s.type = ET_ITEM;
-	tmpEnt->count = count < 0 ? it->quantity : count;
-	tmpEnt->item = it;
-
-	G_PickupItem( tmpEnt, selfEnt );
-
-	G_FreeEdict( tmpEnt );
+	G_PickupItem( PLAYERENT( playerNum ), it, 0, count < 0 ? it->quantity : count, NULL );
 }
 
 static void objectGameClient_InventoryGiveItem( int index, gclient_t *self )

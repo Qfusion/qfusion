@@ -429,7 +429,7 @@ static void AI_PickShortRangeGoal( edict_t *self )
 	edict_t *bestGoal = NULL;
 	float bestWeight = 0;
 	nav_ents_t *goalEnt;
-	gsitem_t *item;
+	const gsitem_t *item;
 	bool canPickupItems;
 	int i;
 
