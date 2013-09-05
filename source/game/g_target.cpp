@@ -804,13 +804,13 @@ void SP_target_print( edict_t *self )
 static void target_give_use( edict_t *self, edict_t *other, edict_t *activator )
 {
 	edict_t *give;
-	gsitem_t *item;
+	const gsitem_t *item;
 	int i, numsounds;
 	float attenuation;
 	const char *pickup_sound;
 	int prev_pickup = -1;
 	gclient_t *aclient = activator && activator->r.client ? activator->r.client : NULL;
-	gsitem_t *sounds[MAX_GIVE_SOUNDS];
+	const gsitem_t *sounds[MAX_GIVE_SOUNDS];
 
 	give = NULL;
 	numsounds = 0;

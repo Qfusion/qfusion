@@ -35,7 +35,7 @@ void W_Plasma_Backtrace( edict_t *ent, const vec3_t start );
 /*
 * Use_Weapon
 */
-void Use_Weapon( edict_t *ent, gsitem_t *item )
+void Use_Weapon( edict_t *ent, const gsitem_t *item )
 {
 	int ammocount, weakammocount;
 	gs_weapon_definition_t *weapondef;
@@ -86,13 +86,11 @@ void Use_Weapon( edict_t *ent, gsitem_t *item )
 /*
 * Pickup_Weapon
 */
-bool Pickup_Weapon( edict_t *ent, edict_t *other )
+bool Pickup_Weapon( edict_t *other, const gsitem_t *item, int flags, int ammo_count )
 {
 	int ammo_tag;
-	gsitem_t *item;
 	gs_weapon_definition_t *weapondef;
 
-	item = ent->item;
 	weapondef = GS_GetWeaponDef( item->tag );
 
 	other->r.client->ps.inventory[item->tag]++;
@@ -101,7 +99,7 @@ bool Pickup_Weapon( edict_t *ent, edict_t *other )
 	if( other->r.client->ps.inventory[item->tag] > item->inventory_max )
 		other->r.client->ps.inventory[item->tag] = item->inventory_max;
 
-	if( !( ent->spawnflags & DROPPED_ITEM ) )
+	if( !(flags & DROPPED_ITEM) )
 	{
 		// give them some ammo with it
 		ammo_tag = item->ammo_tag;
@@ -112,8 +110,8 @@ bool Pickup_Weapon( edict_t *ent, edict_t *other )
 	{    
 		// it's a dropped weapon
 		ammo_tag = item->ammo_tag;
-		if( ent->count && ammo_tag )
-			Add_Ammo( other->r.client, GS_FindItemByTag( ammo_tag ), ent->count, true );
+		if( ammo_count && ammo_tag )
+			Add_Ammo( other->r.client, GS_FindItemByTag( ammo_tag ), ammo_count, true );
 	}
 
 	return true;
@@ -122,7 +120,7 @@ bool Pickup_Weapon( edict_t *ent, edict_t *other )
 /*
 * Drop_Weapon
 */
-void Drop_Weapon( edict_t *ent, gsitem_t *item )
+void Drop_Weapon( edict_t *ent, const gsitem_t *item )
 {
 	int otherweapon;
 	edict_t *drop;

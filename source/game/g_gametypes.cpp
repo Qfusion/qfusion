@@ -1445,7 +1445,7 @@ bool G_Gametype_IsVotable( const char *name )
 /*
 * G_Gametype_CanPickUpItem
 */
-bool G_Gametype_CanPickUpItem( gsitem_t *item )
+bool G_Gametype_CanPickUpItem( const gsitem_t *item )
 {
 	if( !item )
 		return false;
@@ -1456,7 +1456,7 @@ bool G_Gametype_CanPickUpItem( gsitem_t *item )
 /*
 * G_Gametype_CanSpawnItem
 */
-bool G_Gametype_CanSpawnItem( gsitem_t *item )
+bool G_Gametype_CanSpawnItem( const gsitem_t *item )
 {
 	if( !item )
 		return false;
@@ -1467,7 +1467,7 @@ bool G_Gametype_CanSpawnItem( gsitem_t *item )
 /*
 * G_Gametype_CanRespawnItem
 */
-bool G_Gametype_CanRespawnItem( gsitem_t *item )
+bool G_Gametype_CanRespawnItem( const gsitem_t *item )
 {
 	int itemmask;
 
@@ -1486,7 +1486,7 @@ bool G_Gametype_CanRespawnItem( gsitem_t *item )
 /*
 * G_Gametype_CanDropItem
 */
-bool G_Gametype_CanDropItem( gsitem_t *item, bool ignoreMatchState )
+bool G_Gametype_CanDropItem( const gsitem_t *item, bool ignoreMatchState )
 {
 	int itemmask;
 
@@ -1525,7 +1525,7 @@ bool G_Gametype_CanTeamDamage( int damageflags )
 /*
 * G_Gametype_RespawnTimeForItem
 */
-int G_Gametype_RespawnTimeForItem( gsitem_t *item )
+int G_Gametype_RespawnTimeForItem( const gsitem_t *item )
 {
 	if( !item )
 		return -1; // free the edict
@@ -1583,7 +1583,7 @@ int G_Gametype_RespawnTimeForItem( gsitem_t *item )
 /*
 * G_Gametype_DroppedItemTimeout
 */
-int G_Gametype_DroppedItemTimeout( gsitem_t *item )
+int G_Gametype_DroppedItemTimeout( const gsitem_t *item )
 {
 	// to do: add cvar
 	return 29;
@@ -1680,7 +1680,7 @@ static void G_TickOutPowerUps( void )
 		if( !( ent->item->type & IT_POWERUP ) )
 			continue;
 
-		if( ent->spawnflags & ( DROPPED_ITEM|DROPPED_PLAYER_ITEM ) )
+		if( ent->spawnflags & DROPPED_ITEM )
 		{
 			ent->count--;
 			if( ent->count <= 0 )

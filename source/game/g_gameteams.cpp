@@ -1256,7 +1256,7 @@ static void Say_Team_Pickup_Location( edict_t *who, char *buf, int buflen, const
 
 static void Say_Team_Drop( edict_t *who, char *buf, int buflen, const char *current_color )
 {
-	gsitem_t *item = who->r.client->teamstate.last_drop_item;
+	const gsitem_t *item = who->r.client->teamstate.last_drop_item;
 
 	if( !item )
 		buf[0] = 0;

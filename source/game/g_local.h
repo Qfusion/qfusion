@@ -399,13 +399,13 @@ void G_Gametype_GenerateAllowedGametypesList( void );
 bool G_Gametype_IsVotable( const char *name );
 void G_Gametype_ScoreEvent( gclient_t *client, const char *score_event, const char *args );
 void G_RunGametype( void );
-bool G_Gametype_CanPickUpItem( gsitem_t *item );
-bool G_Gametype_CanSpawnItem( gsitem_t *item );
-bool G_Gametype_CanRespawnItem( gsitem_t *item );
-bool G_Gametype_CanDropItem( gsitem_t *item, bool ignoreMatchState );
+bool G_Gametype_CanPickUpItem( const gsitem_t *item );
+bool G_Gametype_CanSpawnItem( const gsitem_t *item );
+bool G_Gametype_CanRespawnItem( const gsitem_t *item );
+bool G_Gametype_CanDropItem( const gsitem_t *item, bool ignoreMatchState );
 bool G_Gametype_CanTeamDamage( int damageflags );
-int G_Gametype_RespawnTimeForItem( gsitem_t *item );
-int G_Gametype_DroppedItemTimeout( gsitem_t *item );
+int G_Gametype_RespawnTimeForItem( const gsitem_t *item );
+int G_Gametype_DroppedItemTimeout( const gsitem_t *item );
 
 //
 // g_spawnpoints.c
@@ -514,7 +514,8 @@ void G_asDumpAPI_f( void );
 #define DROPPED_ITEM		0x00010000
 #define	DROPPED_PLAYER_ITEM	0x00020000
 #define ITEM_TARGETS_USED	0x00040000
-
+#define ITEM_IGNORE_MAX		0x00080000
+#define ITEM_TIMED			0x00100000
 //
 // fields are needed for spawning from the entity string
 //
@@ -558,23 +559,23 @@ void G_BOTvsay_f( edict_t *ent, const char *msg, bool team );
 // g_items.c
 //
 void DoRespawn( edict_t *ent );
-void PrecacheItem( gsitem_t *it );
+void PrecacheItem( const gsitem_t *it );
 void G_PrecacheItems( void );
-edict_t *Drop_Item( edict_t *ent, gsitem_t *item );
+edict_t *Drop_Item( edict_t *ent, const gsitem_t *item );
 void SetRespawn( edict_t *ent, int delay );
 void G_Items_RespawnByType( unsigned int typeMask, int item_tag, float delay );
 void G_FireWeapon( edict_t *ent, int parm );
-void SpawnItem( edict_t *ent, gsitem_t *item );
+void SpawnItem( edict_t *ent, const gsitem_t *item );
 void G_Items_FinishSpawningItems( void );
 void MegaHealth_think( edict_t *self );
 int PowerArmorType( edict_t *ent );
-gsitem_t *GetItemByTag( int tag );
-bool Add_Ammo( gclient_t *client, gsitem_t *item, int count, bool add_it );
-void Touch_ItemSound( edict_t *other, gsitem_t *item );
+const gsitem_t *GetItemByTag( int tag );
+bool Add_Ammo( gclient_t *client, const gsitem_t *item, int count, bool add_it );
+void Touch_ItemSound( edict_t *other, const gsitem_t *item );
 void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags );
-bool G_PickupItem( struct edict_s *ent, struct edict_s *other );
-void G_UseItem( struct edict_s *ent, struct gitem_s *item );
-void G_DropItem( struct edict_s *ent, struct gitem_s *item );
+bool G_PickupItem( edict_t *other, const gsitem_t *it, int flags, int count, const int *invpack );
+void G_UseItem( struct edict_s *ent, const gsitem_t *item );
+void G_DropItem( struct edict_s *ent, const gsitem_t *item );
 bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 
 //
@@ -800,9 +801,9 @@ edict_t	*W_Fire_Lasergun( edict_t *self, vec3_t start, vec3_t angles, float dama
 edict_t	*W_Fire_Lasergun_Weak( edict_t *self, vec3_t start, vec3_t end, float damage, int knockback, int stun, int timeout, int mod, int timeDelta );
 void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, int knockback, int stun, int radius, int range, int mod, int timeDelta );
 
-bool Pickup_Weapon( edict_t *ent, edict_t *other );
-void Drop_Weapon( edict_t *ent, gsitem_t *item );
-void Use_Weapon( edict_t *ent, gsitem_t *item );
+bool Pickup_Weapon( edict_t *other, const gsitem_t *item, int flags, int ammo_count );
+void Drop_Weapon( edict_t *ent, const gsitem_t *item );
+void Use_Weapon( edict_t *ent, const gsitem_t *item );
 
 //
 // g_chasecam	//newgametypes
@@ -1124,7 +1125,7 @@ typedef struct
 	vec3_t position_angles;
 	unsigned int position_lastcmd;
 
-	gsitem_t *last_drop_item;
+	const gsitem_t *last_drop_item;
 	vec3_t last_drop_location;
 	edict_t	*last_pickup;
 	edict_t *last_killer;
@@ -1346,7 +1347,7 @@ struct edict_s
 	float light;
 	vec3_t color;
 
-	gsitem_t	*item;              // for bonus items
+	const gsitem_t *item;           // for bonus items
 	int invpak[AMMO_TOTAL];         // small inventory-like for dropped backpacks. Handles weapons and ammos of both types
 
 	// common data blocks

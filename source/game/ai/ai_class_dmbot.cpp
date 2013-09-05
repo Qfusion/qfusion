@@ -1393,7 +1393,7 @@ static void BOT_DMclass_UpdateStatus( edict_t *self )
 //==========================================
 static void BOT_DMclass_VSAYmessages( edict_t *self )
 {
-	gsitem_t *itemgoal = NULL;
+	const gsitem_t *itemgoal = NULL;
 
 	if( GS_MatchState() != MATCH_STATE_PLAYTIME )
 		return;

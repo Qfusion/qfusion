@@ -701,7 +701,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	int i;
 	edict_t *ent;
 	char *token;
-	gsitem_t *item;
+	const gsitem_t *item;
 
 	G_asGarbageCollect( true );
 

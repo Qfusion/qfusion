@@ -19,9 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "g_local.h"
 
-#define HEALTH_IGNORE_MAX   1
-#define HEALTH_TIMED	    2
-
 #define SHELL_TIMEOUT	30000
 #define QUAD_TIMEOUT	30000
 #define REGEN_TIMEOUT	30000
@@ -88,10 +85,13 @@ void SetRespawn( edict_t *ent, int delay )
 	}
 
 	// megahealth is different
-	if( ( ent->style & HEALTH_TIMED ) && ent->r.owner )
+	if( ( ent->spawnflags & ITEM_TIMED ) && ent->r.owner )
 	{
-		ent->think = MegaHealth_think;
-		ent->nextThink = level.time + 1;
+		if( ent->item->flags & IT_HEALTH )
+		{
+			ent->think = MegaHealth_think;
+			ent->nextThink = level.time + 1;
+		}
 	}
 
 	GClip_LinkEntity( ent );
@@ -110,7 +110,7 @@ void G_Items_RespawnByType( unsigned int typeMask, int item_tag, float delay )
 		if( typeMask && !( ent->item->type & typeMask ) )
 			continue;
 
-		if( ent->spawnflags & ( DROPPED_ITEM|DROPPED_PLAYER_ITEM ) )
+		if( ent->spawnflags & DROPPED_ITEM )
 		{
 			G_FreeEdict( ent );
 			continue;
@@ -128,7 +128,7 @@ void G_Items_RespawnByType( unsigned int typeMask, int item_tag, float delay )
 			clamp_low( msecs, 1 );
 
 		// megahealth is different
-		if( ( ent->style & HEALTH_TIMED ) && ent->r.owner )
+		if( ( ent->spawnflags & ITEM_TIMED ) && ent->r.owner )
 			ent->r.owner = NULL;
 
 		SetRespawn( ent, msecs );
@@ -137,25 +137,25 @@ void G_Items_RespawnByType( unsigned int typeMask, int item_tag, float delay )
 
 //======================================================================
 
-static bool Pickup_Powerup( edict_t *ent, edict_t *other )
+static bool Pickup_Powerup( edict_t *other, const gsitem_t *item, int flags, int count )
 {
-	if( !ent->item || !ent->item->tag )
+	if( !item || !item->tag )
 		return false;
 
-	if( ent->item->quantity )
+	if( item->quantity )
 	{
 		int timeout;
 
-		if( ent->spawnflags & ( DROPPED_ITEM | DROPPED_PLAYER_ITEM ) )
-			timeout = ent->count + 1;
+		if( flags & DROPPED_ITEM )
+			timeout = count + 1;
 		else
-			timeout = ent->item->quantity + 1;
+			timeout = item->quantity + 1;
 
-		other->r.client->ps.inventory[ent->item->tag] += timeout;
+		other->r.client->ps.inventory[item->tag] += timeout;
 	}
 	else
 	{
-		other->r.client->ps.inventory[ent->item->tag]++;
+		other->r.client->ps.inventory[item->tag]++;
 	}
 
 	return true;
@@ -163,7 +163,7 @@ static bool Pickup_Powerup( edict_t *ent, edict_t *other )
 
 //======================================================================
 
-bool Add_Ammo( gclient_t *client, gsitem_t *item, int count, bool add_it )
+bool Add_Ammo( gclient_t *client, const gsitem_t *item, int count, bool add_it )
 {
 	int max;
 
@@ -189,44 +189,42 @@ bool Add_Ammo( gclient_t *client, gsitem_t *item, int count, bool add_it )
 	return true;
 }
 
-static bool Pickup_AmmoPack( edict_t *ent, edict_t *other )
+static bool Pickup_AmmoPack( edict_t *other, const int *invpack )
 {
 	gsitem_t *item;
 	int i;
 
 	if( !other->r.client )
 		return false;
+	if( !invpack )
+		return false;
 
 	for( i = AMMO_GUNBLADE; i < AMMO_TOTAL; i++ )
 	{
 		item = GS_FindItemByTag( i );
 		if( item )
-			Add_Ammo( other->r.client, item, ent->invpak[i], true );
+			Add_Ammo( other->r.client, item, invpack[i], true );
 	}
 
 	return true;
 }
 
-static bool Pickup_Ammo( edict_t *ent, edict_t *other )
+static bool Pickup_Ammo( edict_t *other, const gsitem_t *item, int count, const int *invpack )
 {
-	int count;
-
 	// ammo packs are special
-	if( ent->item->tag == AMMO_PACK || ent->item->tag == AMMO_PACK_WEAK || ent->item->tag == AMMO_PACK_STRONG )
-		return Pickup_AmmoPack( ent, other );
+	if( item->tag == AMMO_PACK || item->tag == AMMO_PACK_WEAK || item->tag == AMMO_PACK_STRONG )
+		return Pickup_AmmoPack( other, invpack );
 
-	if( ent->count )
-		count = ent->count;
-	else
-		count = ent->item->quantity;
+	if( !count )
+		count = item->quantity;
 
-	if( !Add_Ammo( other->r.client, ent->item, count, true ) )
+	if( !Add_Ammo( other->r.client, item, count, true ) )
 		return false;
 
 	return true;
 }
 
-static void Drop_Ammo( edict_t *ent, gsitem_t *item )
+static void Drop_Ammo( edict_t *ent, const gsitem_t *item )
 {
 	edict_t	*dropped;
 	int index;
@@ -264,15 +262,15 @@ void MegaHealth_think( edict_t *self )
 	}
 
 	// player is back under max health so we can set respawn time for next MH
-	if( !( self->spawnflags & ( DROPPED_ITEM | DROPPED_PLAYER_ITEM ) ) && G_Gametype_CanRespawnItem( self->item ) )
+	if( !( self->spawnflags & DROPPED_ITEM ) && G_Gametype_CanRespawnItem( self->item ) )
 		SetRespawn( self, G_Gametype_RespawnTimeForItem( self->item ) );
 	else
 		G_FreeEdict( self );
 }
 
-static bool Pickup_Health( edict_t *ent, edict_t *other )
+static bool Pickup_Health( edict_t *other, const gsitem_t *item, int flags )
 {
-	if( !( ent->style & HEALTH_IGNORE_MAX ) )
+	if( !(flags & ITEM_IGNORE_MAX) )
 		if( HEALTH_TO_INT( other->health ) >= other->max_health )
 			return false;
 
@@ -280,15 +278,15 @@ static bool Pickup_Health( edict_t *ent, edict_t *other )
 	if( other->health < 0.5 )
 		other->health = 0.5;
 
-	other->health += ent->item->quantity;
+	other->health += item->quantity;
 
 	if( other->r.client )
 	{
-		other->r.client->level.stats.health_taken += ent->item->quantity;
-		teamlist[other->s.team].stats.health_taken += ent->item->quantity;
+		other->r.client->level.stats.health_taken += item->quantity;
+		teamlist[other->s.team].stats.health_taken += item->quantity;
 	}
 
-	if( !( ent->style & HEALTH_IGNORE_MAX ) )
+	if( !(flags & ITEM_IGNORE_MAX) )
 	{
 		if( other->health > other->max_health )
 			other->health = other->max_health;
@@ -299,15 +297,12 @@ static bool Pickup_Health( edict_t *ent, edict_t *other )
 			other->health = 200;
 	}
 
-	if( ent->style & HEALTH_TIMED )
-		ent->r.owner = other;
-
 	return true;
 }
 
 //======================================================================
 
-bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it )
+bool Add_Armor( edict_t *other, const gsitem_t *item, bool pick_it )
 {
 	gclient_t *client = other->r.client;
 	float maxarmorcount = 0.0f, newarmorcount;
@@ -316,10 +311,10 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it )
 	if( !client )
 		return false;
 
-	if( !ent->item || !( ent->item->type & IT_ARMOR ) )
+	if( !( item->type & IT_ARMOR ) )
 		return false;
 
-	pickupitem_maxcount = GS_Armor_MaxCountForTag( ent->item->tag );
+	pickupitem_maxcount = GS_Armor_MaxCountForTag( item->tag );
 
 	// can't pick if surpassed the max armor count of that type
 	if( pickupitem_maxcount && ( client->resp.armor >= pickupitem_maxcount ) )
@@ -331,9 +326,9 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it )
 		maxarmorcount = max( GS_Armor_MaxCountForTag( GS_Armor_TagForCount( client->resp.armor ) ), pickupitem_maxcount );
 
 	if( !pickupitem_maxcount )
-		newarmorcount = client->resp.armor + GS_Armor_PickupCountForTag( ent->item->tag );
+		newarmorcount = client->resp.armor + GS_Armor_PickupCountForTag( item->tag );
 	else
-		newarmorcount = min( client->resp.armor + GS_Armor_PickupCountForTag( ent->item->tag ), maxarmorcount );
+		newarmorcount = min( client->resp.armor + GS_Armor_PickupCountForTag( item->tag ), maxarmorcount );
 
 	// it can't be picked up if it doesn't add any armor
 	if( newarmorcount <= client->resp.armor )
@@ -343,23 +338,23 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it )
 	{
 		client->resp.armor = newarmorcount;
 		client->ps.stats[STAT_ARMOR] = ARMOR_TO_INT( client->resp.armor );
-		client->level.stats.armor_taken += ent->item->quantity;
-		teamlist[other->s.team].stats.armor_taken += ent->item->quantity;
+		client->level.stats.armor_taken += item->quantity;
+		teamlist[other->s.team].stats.armor_taken += item->quantity;
 	}
 
 	return true;
 }
 
-static bool Pickup_Armor( edict_t *ent, edict_t *other )
+static bool Pickup_Armor( edict_t *other, const gsitem_t *item )
 {
-	return Add_Armor( ent, other, true );
+	return Add_Armor( other, item, true );
 }
 
 //======================================================================
 
 //======================================================================
 
-void Touch_ItemSound( edict_t *other, gsitem_t *item )
+void Touch_ItemSound( edict_t *other, const gsitem_t *item )
 {
 	if( item->pickup_sound )
 	{
@@ -376,6 +371,7 @@ void Touch_ItemSound( edict_t *other, gsitem_t *item )
 void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags )
 {
 	bool taken;
+	const gsitem_t *item = ent->item;
 
 	if( !other->r.client || G_ISGHOSTING( other ) )
 		return;
@@ -383,13 +379,13 @@ void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags )
 	if( !( other->r.client->ps.pmove.stats[PM_STAT_FEATURES] & PMFEAT_ITEMPICK ) )
 		return;
 
-	if( !ent->item || !( ent->item->flags & ITFLAG_PICKABLE ) )
+	if( !item || !( item->flags & ITFLAG_PICKABLE ) )
 		return; // not a grabbable item
 
-	if( !G_Gametype_CanPickUpItem( ent->item ) )
+	if( !G_Gametype_CanPickUpItem( item ) )
 		return;
 
-	taken = G_PickupItem( ent, other );
+	taken = G_PickupItem( other, item, ent->spawnflags, ent->count, ent->invpak );
 
 	if( !( ent->spawnflags & ITEM_TARGETS_USED ) )
 	{
@@ -399,6 +395,9 @@ void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags )
 
 	if( !taken )
 		return;
+
+	if( ent->spawnflags & ITEM_TIMED )
+		ent->r.owner = other;
 
 	// flash the screen
 	G_AddPlayerStateEvent( other->r.client, PSEV_PICKUP, ( ent->item->flags & IT_WEAPON ? ent->item->tag : 0 ) );
@@ -413,10 +412,10 @@ void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags )
 	other->r.client->resp.pickup_msg_time = level.time + 3000;
 
 	if( ent->attenuation )
-		Touch_ItemSound( other, ent->item );
+		Touch_ItemSound( other, item );
 
-	if( !( ent->spawnflags & ( DROPPED_ITEM | DROPPED_PLAYER_ITEM ) ) && G_Gametype_CanRespawnItem( ent->item ) )
-		SetRespawn( ent, G_Gametype_RespawnTimeForItem( ent->item ) );
+	if( !( ent->spawnflags & DROPPED_ITEM ) && G_Gametype_CanRespawnItem( item ) )
+		SetRespawn( ent, G_Gametype_RespawnTimeForItem( item ) );
 	else
 		G_FreeEdict( ent );
 }
@@ -442,7 +441,7 @@ static void drop_make_touchable( edict_t *ent )
 	}
 }
 
-edict_t *Drop_Item( edict_t *ent, gsitem_t *item )
+edict_t *Drop_Item( edict_t *ent, const gsitem_t *item )
 {
 	edict_t	*dropped;
 	vec3_t forward, right;
@@ -590,41 +589,35 @@ edict_t *Drop_Item( edict_t *ent, gsitem_t *item )
 /*
 * G_PickupItem
 */
-bool G_PickupItem( edict_t *ent, edict_t *other )
+bool G_PickupItem( edict_t *other, const gsitem_t *it, int flags, int count, const int *invpack )
 {
-	gsitem_t	*it;
 	bool taken = false;
-
-	if( !ent || !other )
-		return false;
 
 	if( other->r.client && G_ISGHOSTING( other ) )
 		return false;
 
-	if( !ent->item || !( ent->item->flags & ITFLAG_PICKABLE ) )
+	if( !it || !( it->flags & ITFLAG_PICKABLE ) )
 		return false;
-
-	it = ent->item;
 
 	if( it->type & IT_WEAPON )
 	{
-		taken = Pickup_Weapon( ent, other );
+		taken = Pickup_Weapon( other, it, flags, count );
 	}
 	else if( it->type & IT_AMMO )
 	{
-		taken = Pickup_Ammo( ent, other );
+		taken = Pickup_Ammo( other, it, count, invpack );
 	}
 	else if( it->type & IT_ARMOR )
 	{
-		taken = Pickup_Armor( ent, other );
+		taken = Pickup_Armor( other, it );
 	}
 	else if( it->type & IT_HEALTH )
 	{
-		taken = Pickup_Health( ent, other );
+		taken = Pickup_Health( other, it, flags );
 	}
 	else if( it->type & IT_POWERUP )
 	{
-		taken = Pickup_Powerup( ent, other );
+		taken = Pickup_Powerup( other, it, flags, count );
 	}
 
 	if( taken && other->r.client )
@@ -633,7 +626,7 @@ bool G_PickupItem( edict_t *ent, edict_t *other )
 	return taken;
 }
 
-static void Drop_General( edict_t *ent, gsitem_t *item )
+static void Drop_General( edict_t *ent, const gsitem_t *item )
 {
 	Drop_Item( ent, item );
 	if( ent->r.client && ent->r.client->ps.inventory[item->tag] > 0 )
@@ -643,7 +636,7 @@ static void Drop_General( edict_t *ent, gsitem_t *item )
 /*
 * G_DropItem
 */
-void G_DropItem( edict_t *ent, gsitem_t *it )
+void G_DropItem( edict_t *ent, const gsitem_t *it )
 {
 	if( !it || !( it->flags & ITFLAG_DROPABLE ) )
 		return;
@@ -668,7 +661,7 @@ void G_DropItem( edict_t *ent, gsitem_t *it )
 /*
 * G_UseItem
 */
-void G_UseItem( edict_t *ent, gsitem_t *it )
+void G_UseItem( edict_t *ent, const gsitem_t *it )
 {
 	if( !it || !( it->flags & ITFLAG_USABLE ) )
 		return;
@@ -731,7 +724,7 @@ static edict_t *G_ClosestFlagBase( edict_t *ent )
 	return best;
 }
 
-static bool G_ItemTimerNeeded( gsitem_t *it )
+static bool G_ItemTimerNeeded( const gsitem_t *it )
 {
 	assert( it );
 
@@ -745,7 +738,7 @@ static bool G_ItemTimerNeeded( gsitem_t *it )
 	return false;
 }
 
-static bool G_ItemTimerUnimportant( gsitem_t *it )
+static bool G_ItemTimerUnimportant( const gsitem_t *it )
 {
 	assert( it );
 
@@ -771,7 +764,7 @@ void item_timer_think( edict_t *ent )
 	if( owner->think != DoRespawn )
 	{
 		// megahealth is special
-		if( owner->style & HEALTH_TIMED && owner->r.owner )
+		if( ( owner->spawnflags & ITEM_TIMED ) && owner->r.owner )
 		{
 			/*			if( owner->r.owner->r.inuse && owner->r.owner->s.team != TEAM_SPECTATOR &&
 			HEALTH_TO_INT( owner->r.owner->health ) > owner->r.owner->max_health )
@@ -844,7 +837,7 @@ static void Finish_SpawningItem( edict_t *ent )
 {
 	trace_t	tr;
 	vec3_t dest;
-	gsitem_t *item = ent->item;
+	const gsitem_t *item = ent->item;
 
 	assert( item );
 
@@ -904,9 +897,9 @@ static void Finish_SpawningItem( edict_t *ent )
 	if( item->type & IT_HEALTH )
 	{
 		if( item->tag == HEALTH_SMALL || item->tag == HEALTH_ULTRA )
-			ent->style = HEALTH_IGNORE_MAX;
+			ent->spawnflags |= ITEM_IGNORE_MAX;
 		else if( item->tag == HEALTH_MEGA )
-			ent->style = HEALTH_IGNORE_MAX|HEALTH_TIMED;
+			ent->spawnflags |= ITEM_IGNORE_MAX|ITEM_TIMED;
 	}
 
 	if( ent->team )
@@ -990,7 +983,7 @@ void G_Items_FinishSpawningItems( void )
 * Items can't be immediately dropped to floor, because they might
 * be on an entity that hasn't spawned yet.
 */
-void SpawnItem( edict_t *ent, gsitem_t *item )
+void SpawnItem( edict_t *ent, const gsitem_t *item )
 {
 	// set items as ET_ITEM for simpleitems
 	ent->s.type = ET_ITEM;
@@ -1007,7 +1000,7 @@ void SpawnItem( edict_t *ent, gsitem_t *item )
 * This will be called for each item spawned in a level,
 * and for each item in each client's inventory.
 */
-void PrecacheItem( gsitem_t *it )
+void PrecacheItem( const gsitem_t *it )
 {
 	int i;
 	const char *s, *start;
