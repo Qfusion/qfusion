@@ -567,7 +567,6 @@ void G_Items_RespawnByType( unsigned int typeMask, int item_tag, float delay );
 void G_FireWeapon( edict_t *ent, int parm );
 void SpawnItem( edict_t *ent, const gsitem_t *item );
 void G_Items_FinishSpawningItems( void );
-void MegaHealth_think( edict_t *self );
 int PowerArmorType( edict_t *ent );
 const gsitem_t *GetItemByTag( int tag );
 bool Add_Ammo( gclient_t *client, const gsitem_t *item, int count, bool add_it );

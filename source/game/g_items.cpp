@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QUAD_TIMEOUT	30000
 #define REGEN_TIMEOUT	30000
 
+static void MegaHealth_think( edict_t *self );
+
 //======================================================================
 
 void DoRespawn( edict_t *ent )
@@ -245,7 +247,7 @@ static void Drop_Ammo( edict_t *ent, const gsitem_t *item )
 
 //======================================================================
 
-void MegaHealth_think( edict_t *self )
+static void MegaHealth_think( edict_t *self )
 {
 	self->nextThink = level.time + 1;
 
@@ -750,7 +752,7 @@ static bool G_ItemTimerUnimportant( const gsitem_t *it )
 /*
 * item_timer_think
 */
-void item_timer_think( edict_t *ent )
+static void item_timer_think( edict_t *ent )
 {
 	edict_t *owner;
 
