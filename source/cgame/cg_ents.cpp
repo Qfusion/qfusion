@@ -1410,6 +1410,11 @@ static void CG_AddItemEnt( centity_t *cent )
 		CG_AddGenericEnt( cent );
 		return;
 	}
+	else
+	{
+		if( cent->effects & EF_GHOST )
+			cent->ent.shaderRGBA[3] = 127;
+	}
 
 	// offset the item origin up
 	cent->ent.origin[2] += cent->ent.radius + 2;
