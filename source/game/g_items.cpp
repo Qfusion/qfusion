@@ -402,7 +402,7 @@ void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags )
 		ent->r.owner = other;
 
 	// flash the screen
-	G_AddPlayerStateEvent( other->r.client, PSEV_PICKUP, ( ent->item->flags & IT_WEAPON ? ent->item->tag : 0 ) );
+	G_AddPlayerStateEvent( other->r.client, PSEV_PICKUP, ( item->flags & IT_WEAPON ? item->tag : 0 ) );
 
 	G_AwardPlayerPickup( other, ent );
 
@@ -410,7 +410,7 @@ void Touch_Item( edict_t *ent, edict_t *other, cplane_t *plane, int surfFlags )
 	other->r.client->teamstate.last_pickup = ent;
 
 	// show icon and name on status bar
-	other->r.client->ps.stats[STAT_PICKUP_ITEM] = ent->item->tag;
+	other->r.client->ps.stats[STAT_PICKUP_ITEM] = item->tag;
 	other->r.client->resp.pickup_msg_time = level.time + 3000;
 
 	if( ent->attenuation )
