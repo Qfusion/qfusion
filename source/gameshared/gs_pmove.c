@@ -167,7 +167,6 @@ static void PlayerTouchWall( int nbTestDir, float maxZnormal, vec3_t *normal )
 			max[j] = pm->maxs[j];
 		}
 		min[2] = max[2] = 0;
-		VectorScale( dir, 1.002, dir );
 
 		module_Trace( &trace, pml.origin, min, max, dir, pm->playerState->POVnum, pm->contentmask, 0 );
 
