@@ -1,10 +1,6 @@
 // FXAA shader
 // Original algorithm and code by Timothy Lottes
 
-#define FXAA_SPAN_MAX 8.0
-#define FXAA_REDUCE_MUL 1.0/8.0
-#define FXAA_REDUCE_MIN 1.0/128.0
-
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 
@@ -26,58 +22,53 @@ void main(void)
 #ifdef FRAGMENT_SHADER
 // Fragment shader
 
+#define FXAA_PC 1
+#if QF_GLSLVERSION >= 130
+# define FXAA_GLSL_130 1
+#else
+# define FXAA_GLSL_120 1
+#endif
+#define FXAA_GREEN_AS_LUMA 1
+#define FXAA_QUALITY__PRESET 13
+
+#include "include/Fxaa3_11.h"
+
 uniform sampler2D u_BaseTexture;
 
 void main(void)
 {
-#define Tex() texture2D(u_BaseTexture, v_TexCoord).rgb
-#define TexOfs(ofs) texture2D(u_BaseTexture, v_TexCoord + ofs).rgb
-#define TexOfsInv(ofs) texture2D(u_BaseTexture, v_TexCoord + ofs*invViewportSize).rgb
+    vec2 rcpFrame = vec2(1.0) / vec2(u_Viewport.zw); 
+    vec2 pos = gl_FragCoord.xy / vec2(u_Viewport.zw);
 
-	vec2 invViewportSize = vec2(1.0) / vec2(u_Viewport.zw);
-	myhalf3 rgbNW = TexOfsInv(vec2(-1.0,-1.0));
-	myhalf3 rgbNE = TexOfsInv(vec2(1.0,-1.0));
-	myhalf3 rgbSW = TexOfsInv(vec2(-1.0,1.0));
-	myhalf3 rgbSE = TexOfsInv(vec2(1.0,1.0));
-	myhalf3 rgbM = Tex();
-	
-	myhalf3 luma = myhalf3(0.299, 0.587, 0.114);
-	myhalf lumaNW = dot(rgbNW, luma);
-	myhalf lumaNE = dot(rgbNE, luma);
-	myhalf lumaSW = dot(rgbSW, luma);
-	myhalf lumaSE = dot(rgbSE, luma);
-	myhalf lumaM  = dot(rgbM,  luma);
-	
-	myhalf lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
-	myhalf lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
-	
-	myhalf2 dir;
-	dir.x = -((lumaNW + lumaNE) - (lumaSW + lumaSE));
-	dir.y =  ((lumaNW + lumaSW) - (lumaNE + lumaSE));
-	
-	myhalf dirReduce = max(
-		(lumaNW + lumaNE + lumaSW + lumaSE) * (0.25 * FXAA_REDUCE_MUL),
-		FXAA_REDUCE_MIN);
-	  
-	myhalf rcpDirMin = 1.0/(min(abs(dir.x), abs(dir.y)) + dirReduce);
-	
-	dir = min(myhalf2( FXAA_SPAN_MAX,  FXAA_SPAN_MAX),
-		  max(myhalf2(-FXAA_SPAN_MAX, -FXAA_SPAN_MAX),
-		  dir * rcpDirMin)) * myhalf2(invViewportSize);
-		
-	myhalf3 rgbA = (1.0/2.0) * (
-		TexOfs(dir * (1.0/3.0 - 0.5)) +
-		TexOfs(dir * (2.0/3.0 - 0.5)));
-	myhalf3 rgbB = rgbA * (1.0/2.0) + (1.0/4.0) * (
-		TexOfs(dir * (0.0/3.0 - 0.5)) +
-		TexOfs(dir * (3.0/3.0 - 0.5)));
-	myhalf lumaB = dot(rgbB, luma);
+	// Only used on FXAA Quality.
+    // Choose the amount of sub-pixel aliasing removal.
+    // This can effect sharpness.
+    //   1.00 - upper limit (softer)
+    //   0.75 - default amount of filtering
+    //   0.50 - lower limit (sharper, less sub-pixel aliasing removal)
+    //   0.25 - almost off
+    //   0.00 - completely off
+    float QualitySubpix = 0.75;
 
-	if((lumaB < lumaMin) || (lumaB > lumaMax)){
-		gl_FragColor.rgb = vec3(rgbA);
-	}else{
-		gl_FragColor.rgb = vec3(rgbB);
-	}
+    // The minimum amount of local contrast required to apply algorithm.
+    //   0.333 - too little (faster)
+    //   0.250 - low quality
+    //   0.166 - default
+    //   0.125 - high quality 
+    //   0.033 - very high quality (slower)
+    float QualityEdgeThreshold = 0.166;
+    float QualityEdgeThresholdMin = 0.0;
+
+    vec4 ConsolePosPos = vec4(0.0,0.0,0.0,0.0);
+    vec4 ConsoleRcpFrameOpt = vec4(0.0,0.0,0.0,0.0);
+    vec4 ConsoleRcpFrameOpt2 = vec4(0.0,0.0,0.0,0.0);
+    vec4 Console360RcpFrameOpt2 = vec4(0.0,0.0,0.0,0.0);
+    float ConsoleEdgeSharpness = 8.0;
+    float ConsoleEdgeThreshold = 0.125;
+    float ConsoleEdgeThresholdMin = 0.05;
+    vec4  Console360ConstDir = vec4(1.0, -1.0, 0.25, -0.25);
+
+    gl_FragColor = FxaaPixelShader(pos, ConsolePosPos, u_BaseTexture, u_BaseTexture, u_BaseTexture, rcpFrame, ConsoleRcpFrameOpt, ConsoleRcpFrameOpt2, Console360RcpFrameOpt2, QualitySubpix, QualityEdgeThreshold, QualityEdgeThresholdMin, ConsoleEdgeSharpness, ConsoleEdgeThreshold, ConsoleEdgeThresholdMin, Console360ConstDir);
 }
 
 #endif // FRAGMENT_SHADER
