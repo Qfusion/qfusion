@@ -25,8 +25,14 @@ void main(void)
 #define FXAA_PC 1
 #if QF_GLSLVERSION >= 130
 # define FXAA_GLSL_130 1
+# ifdef GL_ARB_gpu_shader5
+#  extension GL_ARB_gpu_shader5 : enable
+# endif
 #else
 # define FXAA_GLSL_120 1
+# ifdef GL_EXT_gpu_shader4
+#  extension GL_EXT_gpu_shader4 : enable
+# endif
 #endif
 #define FXAA_GREEN_AS_LUMA 1
 #define FXAA_QUALITY__PRESET 13
