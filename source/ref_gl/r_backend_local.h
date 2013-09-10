@@ -133,6 +133,7 @@ typedef struct r_backend_s
 
 	const mfog_t *fog, *texFog, *colorFog;
 
+	qboolean greyscale;
 	qboolean alphaHack;
 	float hackedAlpha;
 } rbackend_t;

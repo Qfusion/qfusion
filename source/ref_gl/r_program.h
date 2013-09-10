@@ -55,7 +55,7 @@ enum
 };
 
 // features common for all program types
-#define GLSL_SHADER_COMMON_GRAYSCALE			GLSL_BIT(0)
+#define GLSL_SHADER_COMMON_GREYSCALE			GLSL_BIT(0)
 #define GLSL_SHADER_COMMON_FOG					GLSL_BIT(1)
 #define GLSL_SHADER_COMMON_FOG_RGB				GLSL_BIT(2)
 

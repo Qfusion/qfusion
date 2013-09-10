@@ -12,7 +12,7 @@
 #ifdef APPLY_FOG
 #include "include/fog.glsl"
 #endif
-#ifdef APPLY_GRAYSCALE
+#ifdef APPLY_GREYSCALE
 #include "include/greyscale.glsl"
 #endif
 
@@ -372,8 +372,8 @@ color = color * diffuse;
 
 #endif // APPLY_DECAL
 
-#ifdef APPLY_GRAYSCALE
-	color.rgb = Greyscale(grey);
+#ifdef APPLY_GREYSCALE
+	color.rgb = Greyscale(color.rgb);
 #endif
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)

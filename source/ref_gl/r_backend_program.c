@@ -1625,8 +1625,8 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 {
 	r_glslfeat_t features = 0;
 
-	if( pass->flags & SHADERPASS_GRAYSCALE ) {
-		features |= GLSL_SHADER_COMMON_GRAYSCALE;
+	if( rb.greyscale || pass->flags & SHADERPASS_GREYSCALE ) {
+		features |= GLSL_SHADER_COMMON_GREYSCALE;
 	}
 
 	features |= RB_BonesTransformsToProgramFeatures();
@@ -1732,6 +1732,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.currentEntity = &rb.nullEnt;
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
 		rb.alphaHack = qfalse;
+		rb.greyscale = qfalse;
 	} else {
 		Vector4Copy( rb.currentEntity->shaderRGBA, rb.entityColor );
 		Vector4Copy( rb.currentEntity->outlineColor, rb.entityOutlineColor );
@@ -1741,6 +1742,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 			rb.currentShaderTime = (rb.time - rb.currentEntity->shaderTime) * 0.001;
 		rb.alphaHack = e->renderfx & RF_ALPHAHACK ? qtrue : qfalse;
 		rb.hackedAlpha = e->shaderRGBA[3] / 255.0;
+		rb.greyscale = e->renderfx & RF_GREYSCALE ? qtrue : qfalse;
 	}
 
 	RB_UpdateVertexAttribs();
