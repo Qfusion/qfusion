@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define RF_FORCENOLOD			0x80
 #define RF_NOPORTALENTS			0x100
 #define RF_ALPHAHACK			0x200	// force alpha blending on opaque passes, read alpha from entity
+#define RF_GREYSCALE			0x400
 
 // refdef flags
 #define	RDF_UNDERWATER			0x1		// warp the screen as apropriate

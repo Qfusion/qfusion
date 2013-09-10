@@ -900,8 +900,8 @@ static void CG_AddGenericEnt( centity_t *cent )
 		}
 
 		if( cent->effects & EF_GHOST ) {
-			cent->ent.renderfx |= RF_ALPHAHACK;
-			cent->ent.shaderRGBA[3] = 127;
+			cent->ent.renderfx |= RF_ALPHAHACK|RF_GREYSCALE;
+			cent->ent.shaderRGBA[3] = 100;
 
 			// outlines don't work on transparent objects...
 			cent->ent.outlineHeight = 0;
@@ -1413,7 +1413,10 @@ static void CG_AddItemEnt( centity_t *cent )
 	else
 	{
 		if( cent->effects & EF_GHOST )
-			cent->ent.shaderRGBA[3] = 127;
+		{
+			cent->ent.shaderRGBA[3] = 100;
+			cent->ent.renderfx |= RF_GREYSCALE;
+		}
 	}
 
 	// offset the item origin up

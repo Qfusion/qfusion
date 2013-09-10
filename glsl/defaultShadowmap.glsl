@@ -58,7 +58,7 @@ uniform vec4 u_ShadowmapTextureParams[MAX_SHADOWS];
 
 void main(void)
 {
-	float finalcolor = 1.0;
+	float finalcolor = myhalf(1.0);
 
 	for (int i = 0; i < MAX_SHADOWS; i++)
 	{

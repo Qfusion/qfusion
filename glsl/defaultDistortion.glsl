@@ -133,7 +133,7 @@ void main(void)
 	color = myhalf3(gl_Color.rgb) + refr + refl;
 #endif
 
-#ifdef APPLY_GRAYSCALE
+#ifdef APPLY_GREYSCALE
 	gl_FragColor = vec4(vec3(Greyscale(color)),1.0);
 #else
 	gl_FragColor = vec4(vec3(color),1.0);

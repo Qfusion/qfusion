@@ -406,14 +406,14 @@ static int RP_CompileShader( int program, const char *programName, const char *s
 
 static const glsl_feature_t glsl_features_generic[] =
 {
-	{ GLSL_SHADER_COMMON_GRAYSCALE, "#define APPLY_GRAYSCALE\n", "_grey" },
+	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
 
 	{ 0, NULL, NULL }
 };
 
 static const glsl_feature_t glsl_features_material[] =
 {
-	{ GLSL_SHADER_COMMON_GRAYSCALE, "#define APPLY_GRAYSCALE\n", "_grey" },
+	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
 
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS4, "#define NUM_BONE_INFLUENCES 4\n", "_bones4" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS3, "#define NUM_BONE_INFLUENCES 3\n", "_bones3" },
@@ -477,7 +477,7 @@ static const glsl_feature_t glsl_features_material[] =
 
 static const glsl_feature_t glsl_features_distortion[] =
 {
-	{ GLSL_SHADER_COMMON_GRAYSCALE, "#define APPLY_GRAYSCALE\n", "_grey" },
+	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
 
 	{ GLSL_SHADER_COMMON_RGB_GEN_ONE_MINUS_VERTEX, "#define APPLY_RGB_ONE_MINUS_VERTEX\n", "_c1-v" },
 	{ GLSL_SHADER_COMMON_RGB_GEN_CONST, "#define APPLY_RGB_CONST\n", "_cc" },
@@ -574,6 +574,8 @@ static const glsl_feature_t glsl_features_dynamiclights[] =
 
 static const glsl_feature_t glsl_features_q3a[] =
 {
+	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
+
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS4, "#define NUM_BONE_INFLUENCES 4\n", "_bones4" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS3, "#define NUM_BONE_INFLUENCES 3\n", "_bones3" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define NUM_BONE_INFLUENCES 2\n", "_bones2" },
@@ -623,7 +625,7 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 static const glsl_feature_t glsl_features_celshade[] =
 {
-	{ GLSL_SHADER_COMMON_GRAYSCALE, "#define APPLY_GRAYSCALE\n", "_grey" },
+	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
 
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS4, "#define NUM_BONE_INFLUENCES 4\n", "_bones4" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS3, "#define NUM_BONE_INFLUENCES 3\n", "_bones3" },

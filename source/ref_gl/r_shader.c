@@ -1654,9 +1654,9 @@ static void Shaderpass_Detail( shader_t *shader, shaderpass_t *pass, const char 
 	pass->flags |= SHADERPASS_DETAIL;
 }
 
-static void Shaderpass_Grayscale( shader_t *shader, shaderpass_t *pass, const char **ptr )
+static void Shaderpass_Greyscale( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
-	pass->flags |= SHADERPASS_GRAYSCALE;
+	pass->flags |= SHADERPASS_GREYSCALE;
 }
 
 static void Shaderpass_Skip( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -1685,7 +1685,8 @@ static const shaderkey_t shaderpasskeys[] =
 	{ "tcgen", Shaderpass_TcGen },
 	{ "alphagen", Shaderpass_AlphaGen },
 	{ "detail", Shaderpass_Detail },
-	{ "grayscale", Shaderpass_Grayscale },
+	{ "grayscale", Shaderpass_Greyscale },
+	{ "greyscale", Shaderpass_Greyscale },
 	{ "skip", Shaderpass_Skip },
 
 	{ NULL,	NULL }

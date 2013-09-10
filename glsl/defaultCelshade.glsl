@@ -6,7 +6,7 @@
 #ifdef APPLY_FOG
 #include "include/fog.glsl"
 #endif
-#ifdef APPLY_GRAYSCALE
+#ifdef APPLY_GREYSCALE
 #include "include/greyscale.glsl"
 #endif
 
@@ -129,8 +129,8 @@ void main(void)
 
 	outColor = myhalf4(inColor * outColor);
 
-#ifdef APPLY_GRAYSCALE
-	outColor.rgb = Greyscale(color);
+#ifdef APPLY_GREYSCALE
+	outColor.rgb = Greyscale(outColor.rgb);
 #endif
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
