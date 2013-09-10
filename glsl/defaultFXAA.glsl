@@ -35,7 +35,7 @@ void main(void)
 # endif
 #endif
 #define FXAA_GREEN_AS_LUMA 1
-#define FXAA_QUALITY__PRESET 13
+#define FXAA_QUALITY__PRESET 23
 
 #include "include/Fxaa3_11.h"
 
