@@ -4,7 +4,7 @@ MORE_OPTS=""
 [ ! -z "$HOST" ] && MORE_OPTS="${MORE_OPTS} --host=${HOST}"
 
 cd ${SOURCE_DIR}libsrcs/libfreetype && \
-./configure \
+./autogen.sh \
 $MORE_OPTS && \
 make
 
