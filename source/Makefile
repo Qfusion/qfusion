@@ -198,7 +198,7 @@ endif
 LDFLAGS_IRC=-lwsock32 -lws2_32
 LDFLAGS_ANGELWRAP=$(ANGELSCRIPT_LIB)
 
-CLIENT_EXE=metal_$(ARCH).exe
+CLIENT_EXE=qfusion_$(ARCH).exe
 SERVER_EXE=qfusion_server_$(ARCH).exe
 TV_SERVER_EXE=qfusiontv_server_$(ARCH).exe
 else # USE_MINGW
