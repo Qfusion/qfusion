@@ -8,7 +8,7 @@ cd ${SOURCE_DIR}libsrcs/libfreetype && \
 $MORE_OPTS && \
 make
 
-cp objs/.libs/libfreetype.a "${TARGET_DIR}"
+cp objs/.libs/libfreetype.a "${TARGET_DIR}libfreetypestat.a"
 if [ "$ENABLE_SHARED" = "YES" ]; then
 	cp objs/.libs/libfreetype.$SHARED_LIBRARY_EXT "${TARGET_DIR}"
 fi
