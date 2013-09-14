@@ -103,7 +103,7 @@ int scr_erase_center;
 * Called for important messages that should stay in the center of the screen
 * for a few moments
 */
-void CG_CenterPrint( char *str )
+void CG_CenterPrint( const char *str )
 {
 	char *s;
 
@@ -119,7 +119,7 @@ void CG_CenterPrint( char *str )
 			scr_center_lines++;
 }
 
-void CG_CenterPrintToUpper( char *str )
+void CG_CenterPrintToUpper( const char *str )
 {
 	char *s;
 

@@ -285,7 +285,7 @@ struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader )
 	return ( struct shader_s * )mediashader->data;
 }
 
-char *sb_nums[11] =
+static const char *sb_nums[11] =
 {
 	"gfx/hud/0", "gfx/hud/1",
 	"gfx/hud/2", "gfx/hud/3",

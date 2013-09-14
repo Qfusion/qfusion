@@ -75,7 +75,7 @@ void RB_EndBatch( void );
 
 void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems );
 void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems, 
-	int numInstances, const instancePoint_t *instances );
+	int numInstances, instancePoint_t *instances );
 
 // shader
 void RB_BindShader( const entity_t *e, const struct shader_s *shader, const struct mfog_s *fog );

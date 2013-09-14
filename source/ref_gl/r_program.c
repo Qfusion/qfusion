@@ -1893,7 +1893,7 @@ void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDu
 * 
 * Set uniform values for instance points (quaternion + xyz + scale)
 */
-void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, const instancePoint_t *instances )
+void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePoint_t *instances )
 {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
