@@ -286,21 +286,21 @@ static const beginDrawSurf_cb r_beginDrawSurfCb[ST_MAX_TYPES] =
 	/* ST_NONE */
 	NULL,
 	/* ST_BSP */
-	R_DrawBSPSurf,
+	&R_DrawBSPSurf,
 	/* ST_SKY */
-	R_DrawSkySurf,
+	&R_DrawSkySurf,
 	/* ST_ALIAS */
-	R_DrawAliasSurf,
+	&R_DrawAliasSurf,
 	/* ST_SKELETAL */
-	R_DrawSkeletalSurf,
+	&R_DrawSkeletalSurf,
 	/* ST_SPRITE */
-	R_BeginSpriteSurf,
+	&R_BeginSpriteSurf,
 	/* ST_POLY */
-	R_BeginPolySurf,
+	&R_BeginPolySurf,
 	/* ST_CORONA */
-	R_BeginCoronaSurf,
+	&R_BeginCoronaSurf,
 	/* ST_NULLMODEL */
-	R_DrawNullSurf,
+	&R_DrawNullSurf,
 };
 
 static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
@@ -316,11 +316,11 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 	/* ST_SKELETAL */
 	NULL,
 	/* ST_SPRITE */
-	R_BatchSpriteSurf,
+	&R_BatchSpriteSurf,
 	/* ST_POLY */
-	R_BatchPolySurf,
+	&R_BatchPolySurf,
 	/* ST_CORONA */
-	R_BatchCoronaSurf,
+	&R_BatchCoronaSurf,
 	/* ST_NULLMODEL */
 	NULL,
 };

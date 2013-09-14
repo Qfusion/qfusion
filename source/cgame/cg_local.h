@@ -629,7 +629,7 @@ void CG_SetOutlineColor( byte_vec4_t outlineColor, byte_vec4_t color );
 void CG_AddColoredOutLineEffect( entity_t *ent, int effects, qbyte r, qbyte g, qbyte b, qbyte a );
 void CG_AddCentityOutLineEffect( centity_t *cent );
 
-void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, char *tagname );
+void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *tagname );
 
 void CG_ResetItemTimers( void );
 centity_t *CG_GetItemTimerEnt( int num );
@@ -668,10 +668,10 @@ extern cvar_t *model;
 extern cvar_t *skin;
 extern cvar_t *hand;
 
-void CG_LoadClientInfo( cg_clientInfo_t *ci, char *s, int client );
+void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *s, int client );
 void CG_UpdateSexedSoundsRegistration( pmodelinfo_t *pmodelinfo );
-void CG_SexedSound( int entnum, int entchannel, char *name, float fvol );
-struct sfx_s *CG_RegisterSexedSound( int entnum, char *name );
+void CG_SexedSound( int entnum, int entchannel, const char *name, float fvol );
+struct sfx_s *CG_RegisterSexedSound( int entnum, const char *name );
 
 //
 // cg_predict.c
@@ -713,8 +713,8 @@ void CG_CenterPrintToUpper( char *str );
 void CG_EscapeKey( void );
 void CG_LoadStatusBar( void );
 
-void CG_LoadingString( char *str );
-void CG_LoadingItemName( char *str );
+void CG_LoadingString( const char *str );
+void CG_LoadingItemName( const char *str );
 
 void CG_DrawCrosshair( int x, int y, int align );
 void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key );

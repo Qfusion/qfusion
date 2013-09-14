@@ -678,7 +678,7 @@ void 		R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset,
 vattribmask_t R_UploadVBOBonesData( mesh_vbo_t *vbo, int vertsOffset, int numVerts, 
 	qbyte *bonesIndices, qbyte *bonesWeights );
 vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset,
-	int numInstances, const instancePoint_t *instances );
+	int numInstances, instancePoint_t *instances );
 void		R_FreeVBOsByTag( vbo_tag_t tag );
 void		R_FreeUnusedVBOs( void );
 void 		R_ShutdownVBO( void );

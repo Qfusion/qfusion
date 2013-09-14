@@ -310,7 +310,7 @@ static qboolean FS_SearchPakForFile( pack_t *pak, const char *filename, packfile
 	assert( pak );
 	assert( filename );
 
-	trie_error = Trie_Find( pak->trie, filename, TRIE_EXACT_MATCH, &pakFile );
+	trie_error = Trie_Find( pak->trie, filename, TRIE_EXACT_MATCH, ( void ** )&pakFile );
 	if( pout ) {
 		*pout = pakFile;
 	}

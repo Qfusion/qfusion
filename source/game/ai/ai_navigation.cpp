@@ -38,7 +38,7 @@ int AI_FindCost( int from, int to, int movetypes )
 	return path.totalDistance;
 }
 
-int AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, int flagsmask )
+int AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, unsigned int flagsmask )
 {
 	int i;
 	float closest;
@@ -80,7 +80,7 @@ int AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, int
 	return node;
 }
 
-int AI_FindClosestNode( vec3_t origin, float mindist, int range, int flagsmask )
+int AI_FindClosestNode( vec3_t origin, float mindist, int range, unsigned int flagsmask )
 {
 	int i;
 	float closest;

@@ -314,7 +314,6 @@ int GS_UpdateBaseAnims( entity_state_t *state, vec3_t velocity )
 void GS_PModel_AnimToFrame( unsigned int curTime, gs_pmodel_animationset_t *animSet, gs_pmodel_animationstate_t *anim )
 {
 	int i, channel = BASE_CHANNEL;
-	int curframe;
 
 	for( i = LOWER; i < PMODEL_PARTS; i++ )
 	{
@@ -348,7 +347,6 @@ void GS_PModel_AnimToFrame( unsigned int curTime, gs_pmodel_animationset_t *anim
 				{
 					assert( channel != BASE_CHANNEL );
 					thisAnim->anim = ANIM_NONE;
-					curframe = 0;
 				}
 			}
 		}

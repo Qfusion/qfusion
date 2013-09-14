@@ -281,12 +281,11 @@ static void GS_AddClippingPlane( move_t *move, const vec3_t planeNormal )
 */
 static int GS_SlideMoveClipMove( move_t *move /*, const qboolean stepping*/ )
 {
-	vec3_t endpos, startingOrigin, startingVelocity;
+	vec3_t endpos, startingOrigin;
 	trace_t	trace;
 	int blockedmask = 0;
 
 	VectorCopy( move->origin, startingOrigin );
-	VectorCopy( move->velocity, startingVelocity );
 
 	VectorMA( move->origin, move->remainingTime, move->velocity, endpos );
 	module_Trace( &trace, move->origin, move->mins, move->maxs, endpos, move->passent, move->contentmask, 0 );

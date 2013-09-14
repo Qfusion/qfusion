@@ -403,10 +403,10 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 /*
 * SCR_GetNextColumnLayout
 */
-static char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle, char *type, int *width )
+static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle, char *type, int *width )
 {
-	static char *empty = "";
-	char *token;
+	static const char *empty = "";
+	const char *token;
 
 	assert( ptrlay && *ptrlay );
 
@@ -454,7 +454,7 @@ static char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle
 */
 static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int panelWidth, struct qfontface_s *font )
 {
-	char *token;
+	const char *token;
 	char *layout, *titles;
 	int team, team_score, team_ping;
 	int yoffset = 0, xoffset = 0;

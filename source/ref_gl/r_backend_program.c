@@ -1841,7 +1841,7 @@ void RB_SetSkyboxSide( int side )
 * Internal backend function, only used by RB_DrawElementsReal to upload
 * instance data
 */
-void RB_SetInstanceData( int numInstances, const instancePoint_t *instances )
+void RB_SetInstanceData( int numInstances, instancePoint_t *instances )
 {
 	if( !rb.currentProgram ) {
 		return;
@@ -1864,13 +1864,10 @@ void RB_SetZClip( float zNear, float zFar )
 int RB_BindProgram( int program )
 {
 	int object;
-	int oldp;
 
 	if( program == rb.currentProgram ) {
 		return rb.currentProgramObject;
 	}
-
-	oldp = rb.currentProgram;
 
 	rb.currentProgram = program;
 	if( !program ) {
@@ -2068,15 +2065,11 @@ void RB_DrawShadedElements( void )
 {
 	int i;
 	qboolean addGLSLOutline = qfalse;
-	qboolean rawLightmap = qfalse;
 	shaderpass_t *pass;
 
 	if( RB_CleanSinglePass() ) {
 		return;
 	}
-
-	// check whether this shader/mesh requires an additional drawflat pass
-	rawLightmap = ( ri.params & RP_LIGHTMAP );
 
 	if( ENTITY_OUTLINE( rb.currentEntity ) && !(ri.params & RP_CLIPPLANE)
 		&& ( rb.currentShader->sort == SHADER_SORT_OPAQUE ) && ( rb.currentShader->flags & SHADER_CULL_FRONT )

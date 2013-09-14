@@ -570,15 +570,14 @@ static void PM_AirAccelerate( vec3_t wishdir, float wishspeed )
 // when using +strafe convert the inertia to forward speed.
 static void PM_Aircontrol( pmove_t *pm, vec3_t wishdir, float wishspeed )
 {
-	float zspeed, speed, dot, k;
 	int i;
-	float fmove, smove;
+	float zspeed, speed, dot, k;
+	float smove;
 
 	if( !pm_aircontrol )
 		return;
 
 	// accelerate
-	fmove = pml.forwardPush;
 	smove = pml.sidePush;
 
 	if( ( smove > 0 || smove < 0 ) || ( wishspeed == 0.0 ) )

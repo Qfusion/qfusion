@@ -715,7 +715,7 @@ vattribmask_t R_UploadVBOBonesData( mesh_vbo_t *vbo, int vertsOffset, int numVer
 * R_UploadVBOInstancesData
 */
 vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset,
-	int numInstances, const instancePoint_t *instances )
+	int numInstances, instancePoint_t *instances )
 {
 	vattribmask_t errMask = 0;
 

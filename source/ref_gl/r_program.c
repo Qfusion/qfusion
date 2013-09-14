@@ -193,7 +193,6 @@ void RP_Init( void )
 static void RP_PrecachePrograms( void )
 {
 #ifdef NDEBUG
-	int length;
 	int version;
 	char *buffer = NULL, *data, **ptr;
 	const char *token;
@@ -201,7 +200,7 @@ static void RP_PrecachePrograms( void )
 
 	fileName = GLSL_CACHE_FILE_NAME;
 
-	length = FS_LoadFile( fileName, ( void ** )&buffer, NULL, 0 );
+	FS_LoadFile( fileName, ( void ** )&buffer, NULL, 0 );
 	if( !buffer ) {
 		return;
 	}
@@ -1126,7 +1125,7 @@ static qboolean RP_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 	char *trieCache;
 	trie_error_t trie_error;
 
-	trie_error = Trie_Find( glsl_cache_trie, fileName, TRIE_EXACT_MATCH, &trieCache );
+	trie_error = Trie_Find( glsl_cache_trie, fileName, TRIE_EXACT_MATCH, ( void ** )&trieCache );
 	if( trie_error != TRIE_OK ) {
 		FS_LoadFile( fileName, &fileContents, NULL, 0 );
 
@@ -1876,7 +1875,7 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 * 
 * Set uniform values for animation dual quaternions
 */
-void RP_UpdateBonesUniforms( int elem, unsigned int numBones, const dualquat_t *animDualQuat )
+void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDualQuat )
 {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 

@@ -962,7 +962,7 @@ static void CG_AddGenericEnt( centity_t *cent )
 /*
 * CG_AddFlagModelOnTag
 */
-void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, char *tagname )
+void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *tagname )
 {
 	static entity_t	flag;
 	orientation_t tag;

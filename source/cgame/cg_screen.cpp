@@ -1090,7 +1090,7 @@ void CG_DrawLoading( void )
 /*
 * CG_LoadingString
 */
-void CG_LoadingString( char *str )
+void CG_LoadingString( const char *str )
 {
 	cg.checkname[0] = '\0';
 	Q_strncpyz( cg.loadingstring, str, sizeof( cg.loadingstring ) );
@@ -1100,7 +1100,7 @@ void CG_LoadingString( char *str )
 /*
 * CG_LoadingItemName
 */
-void CG_LoadingItemName( char *str )
+void CG_LoadingItemName( const char *str )
 {
 	cg.precacheCount++;
 	if( !cg_debugLoading->integer )

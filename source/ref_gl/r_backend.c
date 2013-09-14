@@ -815,7 +815,7 @@ static void RB_UploadBatchMesh( vboSlice_t *batch )
 mesh_t *RB_MapBatchMesh( int numVerts, int numElems )
 {
 	int stream;
-	vboSlice_t *batch, *offset;
+	vboSlice_t *batch;
 
 	assert( rb.currentVBOId < RB_VBO_NONE );
 	if( rb.currentVBOId >= RB_VBO_NONE ) {
@@ -829,7 +829,6 @@ mesh_t *RB_MapBatchMesh( int numVerts, int numElems )
 
 	stream = -rb.currentVBOId - 1;
 	batch = &rb.batches[stream];
-	offset = &rb.streamOffset[stream];
 
 	batch->numElems = batch->numVerts = 0;
 	batch->firstElem = batch->firstVert = 0;

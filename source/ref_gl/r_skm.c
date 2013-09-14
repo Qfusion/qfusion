@@ -31,13 +31,6 @@ typedef struct iqmpose iqmpose_t;
 typedef struct iqmmesh iqmmesh_t;
 typedef struct iqmbounds iqmbounds_t;
 
-
-static mesh_t skm_mesh;
-
-static vec3_t skm_mins;
-static vec3_t skm_maxs;
-static float skm_radius;
-
 /*
 ==============================================================================
 

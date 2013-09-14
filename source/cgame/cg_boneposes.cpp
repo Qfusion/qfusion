@@ -306,7 +306,7 @@ void CG_RotateBonePose( vec3_t angles, bonepose_t *bonepose )
 * CG_TagMask
 * Use alternative names for tag bones
 */
-static cg_tagmask_t *CG_TagMask( char *maskname, cgs_skeleton_t *skel )
+static cg_tagmask_t *CG_TagMask( const char *maskname, cgs_skeleton_t *skel )
 {
 	cg_tagmask_t *tagmask;
 
@@ -326,7 +326,8 @@ static cg_tagmask_t *CG_TagMask( char *maskname, cgs_skeleton_t *skel )
 * CG_SkeletalPoseGetAttachment
 * Get the tag from the interpolated and transformed pose
 */
-bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel, bonepose_t *boneposes, char *bonename )
+bool CG_SkeletalPoseGetAttachment( orientation_t *orient, cgs_skeleton_t *skel, 
+	bonepose_t *boneposes, const char *bonename )
 {
 	int i;
 	quat_t quat;

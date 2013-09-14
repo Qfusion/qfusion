@@ -180,7 +180,7 @@ struct model_s *CG_RegisterModel( const char *name )
 /*
 * CG_RegisterMediaModel
 */
-static cgs_media_handle_t *CG_RegisterMediaModel( char *name, bool precache )
+static cgs_media_handle_t *CG_RegisterMediaModel( const char *name, bool precache )
 {
 	cgs_media_handle_t *mediamodel;
 
@@ -254,7 +254,7 @@ cgs_media_handle_t *shader_headnode;
 /*
 * CG_RegisterMediaShader
 */
-static cgs_media_handle_t *CG_RegisterMediaShader( char *name, bool precache )
+static cgs_media_handle_t *CG_RegisterMediaShader( const char *name, bool precache )
 {
 	cgs_media_handle_t *mediashader;
 

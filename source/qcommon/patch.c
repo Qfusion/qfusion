@@ -109,7 +109,7 @@ PATCH_EVALUATE_DECL(type)													\
 	float s, t, step[2];													\
 	type *tvec, *tvec2;														\
 	const type *pv[3][3];													\
-	type v1[4], v2[4], v3[4];												\
+	type v1[4] = {0,0,0,0}, v2[4] = {0,0,0,0}, v3[4] = {0,0,0,0};			\
 																			\
 	num_patches[0] = numcp[0] / 2;											\
 	num_patches[1] = numcp[1] / 2;											\

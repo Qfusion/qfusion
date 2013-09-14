@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-static char *cg_defaultSexedSounds[] =
+static const char *cg_defaultSexedSounds[] =
 {
 	"*death", //"*death2", "*death3", "*death4",
 	"*fall_0", "*fall_1", "*fall_2",
@@ -38,7 +38,7 @@ static char *cg_defaultSexedSounds[] =
 /*
 * CG_RegisterPmodelSexedSound
 */
-static struct sfx_s *CG_RegisterPmodelSexedSound( pmodelinfo_t *pmodelinfo, char *name )
+static struct sfx_s *CG_RegisterPmodelSexedSound( pmodelinfo_t *pmodelinfo, const char *name )
 {
 	char *p, *s, model[MAX_QPATH];
 	cg_sexedSfx_t *sexedSfx;
@@ -116,7 +116,7 @@ static struct sfx_s *CG_RegisterPmodelSexedSound( pmodelinfo_t *pmodelinfo, char
 void CG_UpdateSexedSoundsRegistration( pmodelinfo_t *pmodelinfo )
 {
 	cg_sexedSfx_t *sexedSfx, *next;
-	char *name;
+	const char *name;
 	int i;
 
 	if( !pmodelinfo )
@@ -153,7 +153,7 @@ void CG_UpdateSexedSoundsRegistration( pmodelinfo_t *pmodelinfo )
 /*
 * CG_RegisterSexedSound
 */
-struct sfx_s *CG_RegisterSexedSound( int entnum, char *name )
+struct sfx_s *CG_RegisterSexedSound( int entnum, const char *name )
 {
 	if( entnum < 0 || entnum >= MAX_EDICTS )
 		return NULL;
@@ -163,7 +163,7 @@ struct sfx_s *CG_RegisterSexedSound( int entnum, char *name )
 /*
 * CG_SexedSound
 */
-void CG_SexedSound( int entnum, int entchannel, char *name, float fvol )
+void CG_SexedSound( int entnum, int entchannel, const char *name, float fvol )
 {
 	bool fixed;
 
@@ -182,7 +182,7 @@ void CG_SexedSound( int entnum, int entchannel, char *name, float fvol )
 /*
 * CG_LoadClientInfo
 */
-void CG_LoadClientInfo( cg_clientInfo_t *ci, char *info, int client )
+void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *info, int client )
 {
 	char *s;
 	int rgbcolor;

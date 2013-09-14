@@ -69,7 +69,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	int line, numLines;
 	int linesPerImage;
 	int numImages, imageNum;
-	qbyte *tempRGBA = NULL, *end;
+	qbyte *tempRGBA = NULL;
 	qboolean clearImage;
 	qboolean hasKerning;
 	qfontface_t *qfont = NULL;
@@ -273,7 +273,7 @@ upload_image:
 
 			// round to nearest greater power of two
 			uploadWidth = imageWidth;
-			uploadHeight = uploadHeight = 1;
+			uploadHeight = 1;
 			for( ; uploadHeight < imageHeight; uploadHeight <<= 1 );
 
 			Q_snprintfz( shaderName, sizeof( shaderName ), "%s %i (%i)", family->name, size, imageNum );
