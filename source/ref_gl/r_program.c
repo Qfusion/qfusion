@@ -1127,7 +1127,7 @@ static qboolean RP_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 
 	trie_error = Trie_Find( glsl_cache_trie, fileName, TRIE_EXACT_MATCH, ( void ** )&trieCache );
 	if( trie_error != TRIE_OK ) {
-		FS_LoadFile( fileName, &fileContents, NULL, 0 );
+		FS_LoadFile( fileName, (void **)&fileContents, NULL, 0 );
 
 		if( fileContents ) {
 			trieCache = RP_CopyString( fileContents );

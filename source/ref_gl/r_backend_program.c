@@ -1785,7 +1785,7 @@ void RB_SetShadowBits( unsigned int shadowBits )
 /*
 * RB_SetAnimData
 */
-void RB_SetBonesData( int numBones, const dualquat_t *dualQuats, int maxWeights )
+void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights )
 {
 	assert( rb.currentShader != NULL );
 
