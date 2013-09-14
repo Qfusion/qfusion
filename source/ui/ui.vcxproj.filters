@@ -317,9 +317,6 @@
     <ClInclude Include="kernel\ui_utils.h">
       <Filter>Header Files\kernel</Filter>
     </ClInclude>
-    <ClInclude Include="kernel\uimodule.h">
-      <Filter>Header Files\kernel</Filter>
-    </ClInclude>
     <ClInclude Include="widgets\ui_field.h">
       <Filter>Header Files\widgets</Filter>
     </ClInclude>

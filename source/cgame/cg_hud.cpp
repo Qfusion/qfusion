@@ -2721,13 +2721,14 @@ static cg_layoutnode_t *CG_LayoutParseCommandNode( const char *token )
 * CG_LayoutParseArgumentNode
 * alloc a new node for an argument
 */
-static cg_layoutnode_t *CG_LayoutParseArgumentNode( char *token )
+static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token )
 {
 	cg_layoutnode_t *node;
 	int type = LNODE_NUMERIC;
-	char *valuetok, *p;
+	char tokcopy[MAX_TOKEN_CHARS], *p;
+	const char *valuetok;
 	static char tmpstring[8];
-	gsitem_t	*item;
+	gsitem_t *item;
 
 	// find what's it
 	if( !token )
@@ -2767,7 +2768,10 @@ static cg_layoutnode_t *CG_LayoutParseArgumentNode( char *token )
 		// replace constants names by values
 		if( !strncmp( valuetok, "ITEM_", strlen( "ITEM_" ) ) )
 		{
-			p = valuetok;
+			valuetok = tokcopy;
+			Q_strncpyz( tokcopy, token, sizeof( tokcopy ) );
+
+			p = tokcopy;
 			while( ( p = strchr( p, '_' ) ) )
 			{
 				*p = ' ';

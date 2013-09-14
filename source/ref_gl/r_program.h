@@ -212,6 +212,6 @@ void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t f
 
 void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **groups, const mat4_t objectMatrix );
 
-void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, const instancePoint_t *instances );
+void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePoint_t *instances );
 
 #endif // __R_PROGRAM_H__

@@ -144,7 +144,7 @@ namespace WSWUI
 
 #ifdef __WARSOW_CUSTOM_NEW__
 	#define __new__(T)	new(WSWUI::__operator_new2__(sizeof(T), __FILE__, __LINE__)) (T)
-	#define __newa__(T,C) new(WSWUI::__operator_new2__(sizeof(T)*(C), __FILE__, __LINE__)) (T[])
+	#define __newa__(T,C) new(WSWUI::__operator_new2__(sizeof(T)*(C), __FILE__, __LINE__)) (T)
 
 	// delete requires templates to deduce the destructor
 	template<typename T>
@@ -198,7 +198,7 @@ namespace WSWUI
 	#define __deletea__(ptr,count) WSWUI::__delete__impl__((ptr), (count), __FILE__, __LINE__)
 #else
 	#define __new__(T)				new (T)
-	#define __newa__(T,C) 			new (T[C])
+	#define __newa__(T,C) 			new (sizeof(T)*(C))
 	#define __delete__(ptr)			delete (ptr)
 	#define __deletea__(ptr,count)	delete (ptr)
 #endif

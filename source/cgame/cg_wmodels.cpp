@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 weaponinfo_t cg_pWeaponModelInfos[WEAP_TOTAL];
 
-static char *wmPartSufix[] = { "", "_expansion", "_barrel", "_flash", "_hand", NULL };
+static const char *wmPartSufix[] = { "", "_expansion", "_barrel", "_flash", "_hand", NULL };
 
 /*
 * CG_vWeap_ParseAnimationScript

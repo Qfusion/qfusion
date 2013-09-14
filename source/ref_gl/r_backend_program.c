@@ -1207,13 +1207,15 @@ static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t 
 
 		shadowGroups[numShadows++] = group;
 		if( numShadows >= GLSL_SHADOWMAP_LIMIT ) {
-			RB_RenderMeshGLSL_ShadowmapArray( pass, programFeatures, numShadows, shadowGroups, scissor );
+			RB_RenderMeshGLSL_ShadowmapArray( pass, programFeatures, numShadows, 
+				(const shadowGroup_t **)shadowGroups, scissor );
 			numShadows = 0;
 		}
 	}
 
 	if( numShadows > 0 ) {
-		RB_RenderMeshGLSL_ShadowmapArray( pass, programFeatures, numShadows, shadowGroups, scissor );
+		RB_RenderMeshGLSL_ShadowmapArray( pass, programFeatures, numShadows, 
+			(const shadowGroup_t **)shadowGroups, scissor );
 	}
 
 	RB_Scissor( old_scissor[0], old_scissor[1], old_scissor[2], old_scissor[3] );

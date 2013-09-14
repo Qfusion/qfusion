@@ -48,7 +48,7 @@ enum
 	DEMOCAM_MAX_TYPES
 };
 
-static char *cam_TypeNames[] = {
+static const char *cam_TypeNames[] = {
 	"FirstPerson",
 	"ThirdPerson",
 	"Positional",
@@ -771,7 +771,7 @@ void CG_Democam_DrawCenterSubtitle( int y, unsigned int maxwidth, struct qfontfa
 void CG_DrawDemocam2D( void )
 {
 	int xpos, ypos;
-	char *cam_type_name;
+	const char *cam_type_name;
 	unsigned int cam_timestamp;
 	char sfov[8], strack[8];
 	cg_subtitle_t *sub;

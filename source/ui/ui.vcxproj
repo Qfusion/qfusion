@@ -284,7 +284,6 @@
     <ClInclude Include="kernel\ui_syscalls.h" />
     <ClInclude Include="kernel\ui_systeminterface.h" />
     <ClInclude Include="kernel\ui_utils.h" />
-    <ClInclude Include="kernel\uimodule.h" />
     <ClInclude Include="widgets\ui_field.h" />
     <ClInclude Include="widgets\ui_idiv.h" />
     <ClInclude Include="widgets\ui_image.h" />

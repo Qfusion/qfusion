@@ -247,7 +247,6 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	imageHeight = 0;
 	imagePitch = imageWidth * 4;
 	tempRGBA = ( qbyte * )FTLIB_Alloc( ftlibPool, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
-	end = tempRGBA + imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT;
 	clearImage = qtrue;
 	lastStartChar = minChar;
 
