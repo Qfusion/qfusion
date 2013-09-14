@@ -386,7 +386,7 @@ TEMPORARY (ONE-FRAME) DECALS
 #define MAX_TEMPDECAL_VERTS			128
 #define MAX_TEMPDECAL_FRAGMENTS		64
 
-static int cg_numDecalVerts = 0;
+static unsigned int cg_numDecalVerts = 0;
 
 /*
 * CG_ClearFragmentedDecals
@@ -450,10 +450,10 @@ void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radiu
 
 	for( i = 0, fr = fragments; i < numfragments; i++, fr++ )
 	{
-		if( cg_numDecalVerts+fr->numverts > sizeof( t_verts ) / sizeof( t_verts[0] ) )
-			return;
 		if( fr->numverts <= 0 )
 			continue;
+		if( cg_numDecalVerts+(unsigned)fr->numverts > sizeof( t_verts ) / sizeof( t_verts[0] ) )
+			return;
 
 		poly.shader = shader;
 		poly.verts = &t_verts[cg_numDecalVerts];
@@ -462,7 +462,7 @@ void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radiu
 		poly.colors = &t_colors[cg_numDecalVerts];
 		poly.numverts = fr->numverts;
 		poly.fognum = fr->fognum;
-		cg_numDecalVerts += fr->numverts;
+		cg_numDecalVerts += (unsigned)fr->numverts;
 
 		for( j = 0; j < fr->numverts; j++ )
 		{
@@ -812,8 +812,8 @@ void CG_ElectroIonsTrail( vec3_t start, vec3_t end )
 */
 static void CG_FlyParticles( vec3_t origin, int count )
 {
-	int i;
-	float angle, sr, sp, sy, cr, cp, cy;
+	int i, j;
+	float angle, sp, sy, cp, cy;
 	vec3_t forward, dir;
 	float dist, ltime;
 	cparticle_t *p;
@@ -826,8 +826,9 @@ static void CG_FlyParticles( vec3_t origin, int count )
 
 	if( !avelocities[0][0] )
 	{
-		for( i = 0; i < NUMVERTEXNORMALS*3; i++ )
-			avelocities[0][i] = ( rand()&255 ) * 0.01;
+		for( i = 0; i < NUMVERTEXNORMALS; i++ )
+			for( j = 0; j < 3; j++ )
+				avelocities[i][j] = ( rand()&255 ) * 0.01;
 	}
 
 	i = 0;
@@ -846,9 +847,6 @@ static void CG_FlyParticles( vec3_t origin, int count )
 		angle = ltime * avelocities[i][1];
 		sp = sin( angle );
 		cp = cos( angle );
-		angle = ltime * avelocities[i][2];
-		sr = sin( angle );
-		cr = cos( angle );
 
 		forward[0] = cp*cy;
 		forward[1] = cp*sy;
