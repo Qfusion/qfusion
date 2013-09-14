@@ -172,7 +172,7 @@ LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lcurlstat -lwsock32 -lws2_32 -lzstat
 
 # static link to custombuilt lib
-LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/lib -lRocketWSW -lfreetypetype
+LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/lib -lRocketWSW -lfreetypestat
 
 # openal
 ifeq ($(BUILD_SND_OPENAL),YES)
