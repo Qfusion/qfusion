@@ -128,8 +128,6 @@ CFLAGS_ROCKET=-DSTATIC_LIB -I$(LIBROCKET_INC) -I$(ANGELSCRIPT_INC)
 # add the base of ui to inclusions
 CFLAGS_ROCKET+=-Iui
 
-# static link to custombuilt lib
-LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/lib -lRocketWSW -lfreetype
 # dynamic link to 'official' build
 # LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/Build -lRocketCore -lRocketControls -lfreetype
 
@@ -172,6 +170,9 @@ LDFLAGS_CLIENT=-lcurlstat -lwsock32 -ljpegstat -lpngstat -lgdi32 -L../dxsdk/lib/
 LDFLAGS_DED=-lcurlstat -lwsock32 -lws2_32 -lzstat
 LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lcurlstat -lwsock32 -lws2_32 -lzstat
+
+# static link to custombuilt lib
+LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/lib -lRocketWSW -lfreetypetype
 
 # openal
 ifeq ($(BUILD_SND_OPENAL),YES)
@@ -244,6 +245,9 @@ LDFLAGS_CLIENT=-ljpeg -lpng -lz -L$(X11BASE)/$(LIB) -lX11 -lXext -lXxf86dga -lXx
 LDFLAGS_DED=-lz $(shell curl-config --libs)
 LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lz $(shell curl-config --libs)
+
+# static link to custombuilt lib
+LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/lib -lRocketWSW -lfreetype
 
 # openal
 ifeq ($(BUILD_SND_OPENAL),YES)
