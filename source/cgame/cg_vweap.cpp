@@ -380,7 +380,6 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 void CG_AddViewWeapon( cg_viewweapon_t *viewweapon )
 {
 	orientation_t tag;
-	weaponinfo_t *weaponInfo;
 	unsigned int flash_time = 0;
 
 	if( !cg.view.drawWeapon || viewweapon->weapon == WEAP_NONE )
@@ -389,8 +388,6 @@ void CG_AddViewWeapon( cg_viewweapon_t *viewweapon )
 	// update the other origins
 	VectorCopy( viewweapon->ent.origin, viewweapon->ent.origin2 );
 	VectorCopy( cg_entities[viewweapon->POVnum].ent.lightingOrigin, viewweapon->ent.lightingOrigin );
-
-	weaponInfo = CG_GetWeaponInfo( viewweapon->weapon );
 
 	CG_AddColoredOutLineEffect( &viewweapon->ent, cg.effects, 0, 0, 0, 255 );
 	CG_AddEntityToScene( &viewweapon->ent );
