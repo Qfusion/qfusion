@@ -198,7 +198,7 @@ static qboolean Shader_ParseConditions( const char **ptr, shader_t *shader )
 	int numConditions;
 	shaderCon_t conditions[MAX_CONDITIONS];
 	qboolean result = qfalse, val = qfalse, skip, expectingOperator;
-	static const int falseCondition = 0;
+//	static const int falseCondition = 0;
 
 	numConditions = 0;
 	memset( conditions, 0, sizeof( conditions ) );

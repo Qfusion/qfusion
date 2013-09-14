@@ -50,7 +50,7 @@ static inline void trap_Cvar_SetValue( const char *name, float value )
 	SOUND_IMPORT.Cvar_SetValue( name, value );
 }
 
-static inline cvar_t *trap_Cvar_ForceSet( const char *name, char *value )
+static inline cvar_t *trap_Cvar_ForceSet( const char *name, const char *value )
 {
 	return SOUND_IMPORT.Cvar_ForceSet( name, value );
 }

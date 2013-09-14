@@ -1321,7 +1321,7 @@ void G_Say_Team( edict_t *who, char *msg, bool checkflood )
 
 	UpdatePoint( who );
 
-	for( p = outmsg; *msg && ( p - outmsg ) < sizeof( outmsg ) - 3; msg++ )
+	for( p = outmsg; *msg && (size_t)( p - outmsg ) < sizeof( outmsg ) - 3; msg++ )
 	{
 		if( *msg == '%' )
 		{

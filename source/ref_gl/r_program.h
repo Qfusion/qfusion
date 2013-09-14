@@ -206,7 +206,7 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 
 void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat4_t vectorMatrix );
 
-void RP_UpdateBonesUniforms( int elem, unsigned int numBones, const dualquat_t *animDualQuat );
+void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDualQuat );
 
 void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t floorColor );
 

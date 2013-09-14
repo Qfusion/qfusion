@@ -21,14 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "svnrev.h"
 
 /*
-* SVN_RevNumber
-*/
-int SVN_RevNumber( void )
-{
-	return SVN_REV;
-}
-
-/*
 * SVN_RevString
 */
 const char *SVN_RevString( void )

@@ -140,7 +140,7 @@ extern pmodel_t	cg_entPModels[MAX_EDICTS];      //a pmodel handle for each cg_en
 
 //utils
 void CG_AddShellEffects( entity_t *ent, int effects );
-bool CG_GrabTag( orientation_t *tag, entity_t *ent, char *tagname );
+bool CG_GrabTag( orientation_t *tag, entity_t *ent, const char *tagname );
 void CG_PlaceModelOnTag( entity_t *ent, entity_t *dest, orientation_t *tag );
 void CG_PlaceRotatedModelOnTag( entity_t *ent, entity_t *dest, orientation_t *tag );
 void CG_MoveToTag( vec3_t move_origin, 
@@ -154,8 +154,8 @@ void CG_MoveToTag( vec3_t move_origin,
 void CG_PModelsInit( void );
 void CG_ResetPModels( void );
 void CG_RegisterBasePModel( void );
-struct pmodelinfo_s *CG_RegisterPlayerModel( char *filename );
-void CG_LoadClientPmodel( int cenum, char *model_name, char *skin_name );
+struct pmodelinfo_s *CG_RegisterPlayerModel( const char *filename );
+void CG_LoadClientPmodel( int cenum, char *model_name, const char *skin_name );
 void CG_AddPModel( centity_t *cent );
 bool CG_PModel_GetProjectionSource( int entnum, orientation_t *tag_result );
 void CG_UpdatePlayerModelEnt( centity_t *cent );

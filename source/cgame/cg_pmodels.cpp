@@ -393,7 +393,7 @@ static bool CG_ParseAnimationScript( pmodelinfo_t *pmodelinfo, char *filename )
 /*
 * CG_LoadPlayerModel
 */
-static bool CG_LoadPlayerModel( pmodelinfo_t *pmodelinfo, char *filename )
+static bool CG_LoadPlayerModel( pmodelinfo_t *pmodelinfo, const char *filename )
 {
 	bool loaded_model = false;
 	char anim_filename[MAX_QPATH];
@@ -438,7 +438,7 @@ static bool CG_LoadPlayerModel( pmodelinfo_t *pmodelinfo, char *filename )
 * PModel is not exactly the model, but the indexes of the
 * models contained in the pmodel and it's animation data
 */
-struct pmodelinfo_s *CG_RegisterPlayerModel( char *filename )
+struct pmodelinfo_s *CG_RegisterPlayerModel( const char *filename )
 {
 	pmodelinfo_t *pmodelinfo;
 
@@ -492,7 +492,7 @@ void CG_RegisterBasePModel( void )
 * In the case of skeletal models, boneposes must
 * be transformed prior to calling this function
 */
-bool CG_GrabTag( orientation_t *tag, entity_t *ent, char *tagname )
+bool CG_GrabTag( orientation_t *tag, entity_t *ent, const char *tagname )
 {
 	cgs_skeleton_t *skel;
 

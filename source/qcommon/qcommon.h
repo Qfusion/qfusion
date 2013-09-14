@@ -554,7 +554,6 @@ SVN INTEGRATION
 ==============================================================
 */
 
-int SVN_RevNumber( void );
 const char *SVN_RevString( void );
 
 /*

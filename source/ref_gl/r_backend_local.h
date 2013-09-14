@@ -156,6 +156,6 @@ void RB_InitShading( void );
 void RB_DrawOutlinedElements( void );
 void RB_DrawShadedElements( void );
 int RB_BindProgram( int program );
-void RB_SetInstanceData( int numInstances, const instancePoint_t *instances );
+void RB_SetInstanceData( int numInstances, instancePoint_t *instances );
 
 #endif /*__R_BACKEND_LOCAL_H__*/

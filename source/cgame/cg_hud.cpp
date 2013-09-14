@@ -1218,7 +1218,7 @@ static float CG_OpFuncCompareOr( const float a, const float b )
 
 typedef struct cg_layoutoperators_s
 {
-	char *name;
+	const char *name;
 	opFunc_t opFunc;
 } cg_layoutoperators_t;
 
@@ -2132,14 +2132,14 @@ static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnod
 
 typedef struct cg_layoutcommand_s
 {
-	char *name;
+	const char *name;
 	bool ( *func )( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments );
 	int numparms;
-	char *help;
+	const char *help;
 	bool precache;
 } cg_layoutcommand_t;
 
-static cg_layoutcommand_t cg_LayoutCommands[] =
+static const cg_layoutcommand_t cg_LayoutCommands[] =
 {
 	{
 		"setScale",
@@ -2566,7 +2566,7 @@ static cg_layoutcommand_t cg_LayoutCommands[] =
 
 void Cmd_CG_PrintHudHelp_f( void )
 {
-	cg_layoutcommand_t *cmd;
+	const cg_layoutcommand_t *cmd;
 	cg_layoutoperators_t *op;
 	int i;
 	gsitem_t	*item;
@@ -2690,7 +2690,7 @@ static float CG_GetNumericArg( struct cg_layoutnode_s **argumentsnode )
 static cg_layoutnode_t *CG_LayoutParseCommandNode( const char *token )
 {
 	int i = 0;
-	cg_layoutcommand_t *command = NULL;
+	const cg_layoutcommand_t *command = NULL;
 	cg_layoutnode_t *node;
 
 	for( i = 0; cg_LayoutCommands[i].name; i++ )

@@ -340,8 +340,8 @@ bool    AI_IsStep( edict_t *ent );
 // ai_navigation.c
 //----------------------------------------------------------
 int	    AI_FindCost( int from, int to, int movetypes );
-int	    AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, int flagsmask );
-int	    AI_FindClosestNode( vec3_t origin, float mindist, int range, int flagsmask );
+int	    AI_FindClosestReachableNode( vec3_t origin, edict_t *passent, int range, unsigned int flagsmask );
+int	    AI_FindClosestNode( vec3_t origin, float mindist, int range, unsigned int flagsmask );
 void	    AI_SetGoal( edict_t *self, int goal_node );
 void AI_NodeReached( edict_t *self );
 int AI_GetNodeFlags( int node );

@@ -1028,6 +1028,8 @@ void SV_Web_Frame( void )
 				connections[num_sockets] = con;
 				num_sockets++;
 				break;
+			default:
+				break;
 		}
 	}
 	sockets[num_sockets] = NULL;
@@ -1079,6 +1081,8 @@ void SV_Web_Frame( void )
 					break;
 				case HTTP_CONN_STATE_SEND:
 					timeout = INCOMING_HTTP_CONNECTION_SEND_TIMEOUT;
+					break;
+				default:
 					break;
 			}
 
