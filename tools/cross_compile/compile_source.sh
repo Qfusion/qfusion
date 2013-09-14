@@ -16,11 +16,9 @@ cd "$SOURCE_DIR"
 
 cd "source"
 
-SVN_REV=$(svnversion -c | cut -d ':' -f 2 | sed -e "s/[^0-9]//g")
-
 echo "${COMMAND_ENV} CXXFLAGS=${CFLAGS_COMMON} ${PATH}"
 
-CFLAGS="${CFLAGS_COMMON} ${CFLAGS_SOURCE} -I../libsrcs/zlib -I../libsrcs/libcurl/include -I../libsrcs/libjpeg -I../libsrcs/libogg/include -I../libsrcs/libvorbis/include -I../libsrcs/libtheora/include -I../libsrcs/libfreetype/include -I../libsrcs/libpng -I${DIRECTX_DIR}include -DSVN_REV=$SVN_REV "
+CFLAGS="${CFLAGS_COMMON} ${CFLAGS_SOURCE} -I../libsrcs/zlib -I../libsrcs/libcurl/include -I../libsrcs/libjpeg -I../libsrcs/libogg/include -I../libsrcs/libvorbis/include -I../libsrcs/libtheora/include -I../libsrcs/libfreetype/include -I../libsrcs/libpng -I${DIRECTX_DIR}include "
 LDFLAGS="${LDFLAGS} -L${TARGET_LIB_DIR}"
 
 COMMAND_PREF="${COMMAND_ENV} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" PATH=\"${PATH}\" "
