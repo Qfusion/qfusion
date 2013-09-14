@@ -568,7 +568,7 @@ static void Irc_Client_Names_f(void) {
 			trie_dump_t *dump;
 			unsigned int namebufsize = 1;
 			unsigned int i;
-			char *namebuf, *namebuf2;
+			char *namebuf;
 			char *out;
 			IRC_IMPORT.Trie_Dump(names, "", TRIE_DUMP_BOTH, &dump);
 			for (i = 0; i < dump->size; ++i)
@@ -585,7 +585,6 @@ static void Irc_Client_Names_f(void) {
 					*out++ = ' ';
 			}
 			*out++ = '\0';
-			namebuf2 = Irc_MemAlloc(namebufsize);
 			Irc_Println("%s names: \"%s\"\n", IRC_COLOR_IRC_TO_WSW, channel, namebuf);
 			Irc_MemFree(namebuf);
 			IRC_IMPORT.Trie_FreeDump(dump);

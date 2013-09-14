@@ -1393,8 +1393,6 @@ static void BOT_DMclass_UpdateStatus( edict_t *self )
 //==========================================
 static void BOT_DMclass_VSAYmessages( edict_t *self )
 {
-	const gsitem_t *itemgoal = NULL;
-
 	if( GS_MatchState() != MATCH_STATE_PLAYTIME )
 		return;
 
@@ -1433,11 +1431,6 @@ static void BOT_DMclass_VSAYmessages( edict_t *self )
 
 	if( GS_TeamBasedGametype() && !GS_InvidualGameType() )
 	{
-		if( self->ai->vsay_goalent && self->ai->vsay_goalent->item )
-		{
-			itemgoal = self->ai->vsay_goalent->item;
-		}
-
 		if( self->health < 20 && random() > 0.3 )
 		{
 			G_BOTvsay_f( self, "needhealth", true );

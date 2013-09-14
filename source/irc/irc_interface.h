@@ -244,7 +244,8 @@ typedef struct
 	void		(*Cmd_SetCompletionFunc)(const char *cmd_name,  xcompletionf_t completion_func);
 
 	// console
-	void		(*Com_BeginRedirect)(int target, char *buffer, int buffersize, void (*flush)(int, char*, const void*), const void *extra);
+	void		(*Com_BeginRedirect)(int target, char *buffer, int buffersize, 
+		void (*flush)(int, char*, const void*), const void *extra);
 	void		(*Com_EndRedirect)(void);
 	void		(*Cbuf_AddText)(const char *text);
 	// tries

@@ -218,7 +218,8 @@ static int rd_buffersize;
 static void ( *rd_flush )( int target, char *buffer, const void *extra );
 static const void *rd_extra;
 
-void Com_BeginRedirect( int target, char *buffer, int buffersize, void ( *flush )(int, char*, const void*), const void *extra )
+void Com_BeginRedirect( int target, char *buffer, int buffersize, 
+	void ( *flush )(int, char*, const void*), const void *extra )
 {
 	if( !target || !buffer || !buffersize || !flush )
 		return;

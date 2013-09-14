@@ -723,7 +723,6 @@ static void Think_CalcMoveSpeed( edict_t *self )
 	float min;
 	float time;
 	float newspeed;
-	float ratio;
 	float dist;
 
 	if( self->flags & FL_TEAMSLAVE )
@@ -744,7 +743,6 @@ static void Think_CalcMoveSpeed( edict_t *self )
 	for( ent = self; ent; ent = ent->teamchain )
 	{
 		newspeed = fabs( ent->moveinfo.distance ) / time;
-		ratio = newspeed / ent->moveinfo.speed;
 		ent->moveinfo.speed = newspeed;
 	}
 }
