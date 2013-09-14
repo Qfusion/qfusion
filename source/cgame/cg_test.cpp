@@ -326,13 +326,12 @@ static void CG_TestEntities( void )
 static void CG_TestLights( void )
 {
 	int i, j;
-	float f, r;
 	vec3_t origin;
 
 	for( i = 0; i < min( cg_testLights->integer, 32 ); i++ )
 	{
-		r = 64 * ( ( i%4 ) - 1.5 );
-		f = 64 * ( i/4 ) + 128;
+		/*float r = 64 * ( ( i%4 ) - 1.5 );
+		float f = 64 * ( i/4 ) + 128;*/
 
 		for( j = 0; j < 3; j++ )
 			origin[j] = cg.view.origin[j] /* + cg.view.axis[FORWARD][j]*f + cg.view.axis[RIGHT][j]*r*/;

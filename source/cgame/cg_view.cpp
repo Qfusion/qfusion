@@ -927,7 +927,6 @@ void CG_SetupViewDef( cg_viewdef_t *view, int type )
 #define	WAVE_FREQUENCY	0.6     // [0..1]
 void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime )
 {
-	unsigned int prevTime;
 	refdef_t *rd = &cg.view.refdef;
 
 	// update time
@@ -935,7 +934,6 @@ void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned
 	cg.frameTime = frameTime;
 	cg.realFrameTime = realFrameTime;
 	cg.frameCount++;
-	prevTime = cg.time;
 	cg.time = serverTime;
 
 	if( !cgs.precacheDone || !cg.frame.valid )
