@@ -464,13 +464,12 @@ static void TV_Module_ConfigString( relay_t *relay, int index, const char *val )
 */
 void TV_ReleaseModule( const char *game )
 {
-	tv_module_t *iter, *prev;
+	tv_module_t *iter;
 
 	assert( game && strlen( game ) < MAX_CONFIGSTRING_CHARS );
 	assert( COM_ValidateRelativeFilename( game ) && !strchr( game, '/' ) );
 
 	// see if it's already loaded
-	prev = NULL;
 	iter = modules;
 	if( !iter )
 		Com_Error( ERR_FATAL, "Attempting to release non-existing module" );

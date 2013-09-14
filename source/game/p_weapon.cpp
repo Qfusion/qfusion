@@ -707,7 +707,7 @@ static edict_t *G_Fire_Instagun( vec3_t origin, vec3_t angles, firedef_t *firede
 	}
 
 	W_Fire_Instagun( owner, origin, angles, damage,
-		knockback, stun, radius, range, MOD_INSTAGUN_S, timeDelta );
+		knockback, stun, radius, range, mod, timeDelta );
 
 	return NULL;
 }

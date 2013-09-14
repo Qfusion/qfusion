@@ -636,7 +636,6 @@ static int GClip_PointContents( vec3_t p, int timeDelta )
 	int i, num;
 	int contents, c2;
 	struct cmodel_s	*cmodel;
-	float *angles;
 
 	// get base contents from world
 	contents = trap_CM_TransformedPointContents( p, NULL, NULL, NULL );
@@ -650,11 +649,6 @@ static int GClip_PointContents( vec3_t p, int timeDelta )
 
 		// might intersect, so do an exact clip
 		cmodel = GClip_CollisionModelForEntity( &clipEnt->s, &clipEnt->r );
-
-		if( !ISBRUSHMODEL( clipEnt->s.modelindex ) )
-			angles = vec3_origin; // boxes don't rotate
-		else
-			angles = clipEnt->s.angles;
 
 		c2 = trap_CM_TransformedPointContents( p, cmodel, clipEnt->s.origin, clipEnt->s.angles );
 		contents |= c2;

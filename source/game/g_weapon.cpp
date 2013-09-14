@@ -390,7 +390,7 @@ void W_Fire_Blade( edict_t *self, int range, vec3_t start, vec3_t angles, float 
 	if( GS_RaceGametype() )
 		mask = MASK_SOLID;
 
-	G_Trace4D( &trace, start, NULL, NULL, end, self, MASK_SHOT, timeDelta );
+	G_Trace4D( &trace, start, NULL, NULL, end, self, mask, timeDelta );
 	if( trace.ent == -1 )  //didn't touch anything
 		return;
 

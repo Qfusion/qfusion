@@ -95,7 +95,7 @@ typedef struct
 
 #define ASLIB_FOFFSET(s,m)						(size_t)&(((s *)0)->m)
 
-#define ASLIB_ENUM_VAL(name)					{ #name,name }
+#define ASLIB_ENUM_VAL(name)					{ #name,(int)name }
 #define ASLIB_ENUM_VAL_NULL						{ NULL, 0 }
 
 #define ASLIB_ENUM_NULL							{ NULL, NULL }
@@ -2468,7 +2468,6 @@ static const asClassDescriptor_t * const asClassesDescriptors[] =
 static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 {
 	int i, j;
-	int error;
 	const asClassDescriptor_t *cDescr;
 
 	// first register all class names so methods using custom classes work
@@ -2476,8 +2475,7 @@ static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 	{
 		if( !(cDescr = asClassesDescriptors[i]) )
 			break;
-
-		error = asEngine->RegisterObjectType( cDescr->name, cDescr->size, cDescr->typeFlags );
+		asEngine->RegisterObjectType( cDescr->name, cDescr->size, cDescr->typeFlags );
 	}
 
 	// now register object and global behaviors, then methods and properties
@@ -2494,8 +2492,7 @@ static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 				const asFuncdef_t *funcdef = &cDescr->funcdefs[j];
 				if( !funcdef->declaration )
 					break;
-
-				error = asEngine->RegisterFuncdef( funcdef->declaration );
+				asEngine->RegisterFuncdef( funcdef->declaration );
 			}
 		}
 
@@ -2507,7 +2504,7 @@ static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 				const asBehavior_t *objBehavior = &cDescr->objBehaviors[j];
 				if( !objBehavior->declaration )
 					break;
-				error = asEngine->RegisterObjectBehaviour( 
+				asEngine->RegisterObjectBehaviour( 
 					cDescr->name, objBehavior->behavior, objBehavior->declaration, 
 					objBehavior->funcPointer, objBehavior->callConv );
 			}
@@ -2522,7 +2519,7 @@ static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 				if( !objMethod->declaration )
 					break;
 
-				error = asEngine->RegisterObjectMethod( cDescr->name, 
+				asEngine->RegisterObjectMethod( cDescr->name, 
 					objMethod->declaration, objMethod->funcPointer, 
 					objMethod->callConv );
 			}
@@ -2537,7 +2534,7 @@ static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 				if( !objProperty->declaration )
 					break;
 
-				error = asEngine->RegisterObjectProperty( cDescr->name, 
+				asEngine->RegisterObjectProperty( cDescr->name, 
 					objProperty->declaration, objProperty->offset );
 			}
 		}
@@ -3170,7 +3167,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "bool ML_FilenameExists( String & )", asFUNCTION(asFunc_ML_FilenameExists), NULL },
 	{ "String @ML_GetMapByNum( int num )", asFUNCTION(asFunc_ML_GetMapByNum), NULL },
 
-	{ NULL, NULL, NULL }
+	{ NULL }
 };
 
 // ============================================================================
@@ -3194,7 +3191,7 @@ static const asglobfuncs_t asAIGlobFuncs[] =
 	{ "void RemoveGoal( cEntity @ent )", asFUNCTION(AI_RemoveGoalEntity), NULL },
 	{ "void ReachedGoal( cEntity @ent )", asFUNCTION(AI_ReachedEntity), NULL },
 
-	{ NULL, NULL, NULL }
+	{ NULL }
 };
 
 // ============================================================================
@@ -3212,7 +3209,7 @@ static const asglobproperties_t asGlobProps[] =
 	{ "cGametypeDesc gametype", &level.gametype },
 	{ "cMatch match", &level.gametype.match },
 
-	{ NULL, NULL }
+	{ NULL }
 };
 
 static void G_asRegisterGlobalFunctions( asIScriptEngine *asEngine, const asglobfuncs_t *funcs, const char *nameSpace )

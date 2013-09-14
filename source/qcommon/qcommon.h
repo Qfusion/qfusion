@@ -849,7 +849,8 @@ MISC
 
 #define MAX_PRINTMSG	3072
 
-void	    Com_BeginRedirect( int target, char *buffer, int buffersize, void ( *flush )(int, char*, const void*), const void *extra );
+void	    Com_BeginRedirect( int target, char *buffer, int buffersize, 
+				void ( *flush )(int, char*, const void*), const void *extra );
 void	    Com_EndRedirect( void );
 void	    Com_Printf( const char *format, ... );
 void	    Com_DPrintf( const char *format, ... );

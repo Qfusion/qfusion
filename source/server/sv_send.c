@@ -34,9 +34,9 @@ qbyte tmpMessageData[MAX_MSGLEN];
 //=============================================================================
 
 char sv_outputbuf[SV_OUTPUTBUF_LENGTH];
-void SV_FlushRedirect( int sv_redirected, char *outputbuf, const void *extra )
+void SV_FlushRedirect( int sv_redirected, const char *outputbuf, const void *extra )
 {
-	const flush_params_t *params = ( flush_params_t * )extra;
+	const flush_params_t *params = ( const flush_params_t * )extra;
 
 	if( sv_redirected == RD_PACKET )
 	{

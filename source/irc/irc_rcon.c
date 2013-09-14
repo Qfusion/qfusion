@@ -17,7 +17,7 @@ cvar_t *irc_rconTimeout = NULL;
 static void Irc_Rcon_CmdPrivmsg_f(irc_command_t cmd, const char *prefix, const char *params, const char *trailing);
 static void Irc_Rcon_CmdQuit_f(irc_command_t cmd, const char *prefix, const char *params, const char *trailing);
 static void Irc_Rcon_ProcessMsg(const char *user, const char *msg);
-static void Irc_Rcon_Flush_f(int redirected, const char *msg, const void *extra);
+static void Irc_Rcon_Flush_f(int redirected, char *msg, const void *extra);
 
 static trie_t *irc_rcon_users = NULL;
 static const char *rcon_flush_to = NULL;
@@ -159,7 +159,7 @@ static void Irc_Rcon_ProcessMsg(const char *user, const char *msg) {
 #	pragma warning (pop)
 #endif
 
-static void Irc_Rcon_Flush_f(int redirected, const char *msg, const void *extra) {
+static void Irc_Rcon_Flush_f(int redirected, char *msg, const void *extra) {
 	if (redirected == 1) {
 		// cut into lines
 		size_t len = strlen(msg);

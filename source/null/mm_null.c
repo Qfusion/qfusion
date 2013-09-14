@@ -30,6 +30,4 @@ void MM_Shutdown( void )
 
 void MM_Frame( int realmsec )
 {
-	int *a = &realmsec; // compiler warnings
-	a = (int *)0;
 }

@@ -457,10 +457,7 @@ static void G_SnapEntities( void )
 						// play an apropriate pain sound
 						if( level.time >= ent->pain_debounce_time )
 						{
-							float taken;
-
 							// see if it should pain for a FALL or for damage received
-							taken = ent->snap.damage_taken + ent->snap.damage_saved - ent->snap.damage_fall;
 							if( ent->snap.damage_fall )
 							{
 								ent->pain_debounce_time = level.time + 200;

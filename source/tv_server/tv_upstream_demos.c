@@ -113,7 +113,6 @@ static const char *TV_Upstream_AutoRecordName( upstream_t *upstream, char *name,
 void TV_Upstream_AutoRecordAction( upstream_t *upstream, const char *action )
 {
 	char name[MAX_STRING_CHARS];
-	const char *gametype;
 
 	if( !action[0] )
 		return;
@@ -122,7 +121,6 @@ void TV_Upstream_AutoRecordAction( upstream_t *upstream, const char *action )
 	if( upstream->demo.playing )
 		return;
 
-	gametype = upstream->configstrings[CS_GAMETYPENAME];
 	TV_Upstream_AutoRecordName( upstream, name, sizeof( name ) );
 
 	if( !Q_stricmp( action, "start" ) )
