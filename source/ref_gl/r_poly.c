@@ -426,6 +426,7 @@ static void R_RecursiveFragmentNode( void )
 				// there are no fragments that are OUTSIDE, so the check below is disabled
 				//if( inside )
 				//	return;
+				(void)inside; // hush compiler warning
 			} while( *mark );
 
 			if( numFragmentVerts == maxFragmentVerts || numClippedFragments == maxClippedFragments )

@@ -1034,7 +1034,7 @@ void SV_Web_Frame( void )
 	}
 	sockets[num_sockets] = NULL;
 
-	NET_Monitor( 50, sockets, SV_Web_ReceiveRequest, NULL, connections );
+	NET_Monitor( 50, sockets, (void (*)(socket_t *, void*))SV_Web_ReceiveRequest, NULL, connections );
 
 	for( con = hnode->prev; con != hnode; con = next )
 	{

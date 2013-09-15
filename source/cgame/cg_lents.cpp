@@ -1197,9 +1197,7 @@ void CG_Explosion2( vec3_t pos )
 */
 void CG_GreenLaser( vec3_t start, vec3_t end )
 {
-	lentity_t *le;
-
-	le = CG_AllocLaser( start, end, 2.0f, 2.0f, 0.0f, 0.85f, 0.0f, 0.3f, CG_MediaShader( cgs.media.shaderLaser ) );
+	CG_AllocLaser( start, end, 2.0f, 2.0f, 0.0f, 0.85f, 0.0f, 0.3f, CG_MediaShader( cgs.media.shaderLaser ) );
 }
 
 void CG_SpawnTracer( vec3_t origin, vec3_t dir, vec3_t dir_per1, vec3_t dir_per2 )
@@ -1387,7 +1385,6 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 {
 	lentity_t *le;
 	int i, count;
-	float mass;
 	vec3_t angles, velocity;
 	int time;
 
@@ -1397,7 +1394,6 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 	if( cg_gibs->integer > 1 )
 	{
 		time = 50;
-		mass = 60;
 		count = cg_gibs->integer;
 		clamp( count, 2, 128 );
 
@@ -1446,7 +1442,6 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 		clamp( radialspeed, 50.0f, 100.0f );
 
 		time = 15;
-		mass = 120;
 		count = 10;
 
 		VectorCopy( initialVelocity, velocity );
