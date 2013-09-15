@@ -163,7 +163,7 @@ static void TV_Upstream_Netchan_Transmit( upstream_t *upstream, msg_t *msg )
 */
 static qboolean TV_Upstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
 {
-	int sequence, sequence_ack;
+	/*int sequence, sequence_ack;*/
 	int zerror;
 
 	if( !Netchan_Process( netchan, msg ) )
@@ -171,8 +171,8 @@ static qboolean TV_Upstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
 
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
-	sequence = MSG_ReadLong( msg );
-	sequence_ack = MSG_ReadLong( msg );
+	/*sequence = */MSG_ReadLong( msg );
+	/*sequence_ack = */MSG_ReadLong( msg );
 	if( msg->compressed )
 	{
 		zerror = Netchan_DecompressMessage( msg );
