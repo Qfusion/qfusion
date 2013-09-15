@@ -2767,9 +2767,9 @@ static cg_layoutnode_t *CG_LayoutParseArgumentNode( const char *token )
 
 		// replace constants names by values
 		if( !strncmp( valuetok, "ITEM_", strlen( "ITEM_" ) ) )
-		{
+		{			
+			Q_strncpyz( tokcopy, valuetok, sizeof( tokcopy ) );
 			valuetok = tokcopy;
-			Q_strncpyz( tokcopy, token, sizeof( tokcopy ) );
 
 			p = tokcopy;
 			while( ( p = strchr( p, '_' ) ) )
