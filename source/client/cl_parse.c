@@ -1322,10 +1322,10 @@ void CL_ParseServerMessage( msg_t *msg )
 		case svc_extension:
 			if( 1 )
 			{
-				int ext, len, ver;
+				int ext, len;
 
 				ext = MSG_ReadByte( msg );		// extension id
-				ver = MSG_ReadByte( msg );		// version number
+				MSG_ReadByte( msg );			// version number
 				len = MSG_ReadShort( msg );		// command length
 
 				switch( ext )

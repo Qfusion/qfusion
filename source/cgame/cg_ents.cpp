@@ -143,13 +143,8 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 	}
 	else if( state->linearProjectile )
 	{
-		bool firstTime = false;
-
 		if( ( cent->serverFrame != cg.oldFrame.serverFrame ) || state->teleported )
-		{
-			firstTime = true;
 			cent->prev = *state;
-		}
 		else
 			cent->prev = cent->current;
 
@@ -354,7 +349,8 @@ static void CG_UpdatePlayerState( void )
 		index = -1;
 		for( i = 0; i < cg.frame.numplayers; i++ )
 		{
-			if( cg.frame.playerStates[i].playerNum < (unsigned)gs.maxclients && cg.frame.playerStates[i].playerNum == cg.multiviewPlayerNum )
+			if( cg.frame.playerStates[i].playerNum < (unsigned)gs.maxclients 
+				&& cg.frame.playerStates[i].playerNum == cg.multiviewPlayerNum )
 			{
 				index = i;
 				break;
@@ -378,7 +374,7 @@ static void CG_UpdatePlayerState( void )
 	index = -1;
 	for( i = 0; i < cg.oldFrame.numplayers; i++ )
 	{
-		if( (int) cg.oldFrame.playerStates[i].playerNum == cg.multiviewPlayerNum )
+		if( cg.oldFrame.playerStates[i].playerNum == cg.multiviewPlayerNum )
 		{
 			index = i;
 			break;
@@ -1843,13 +1839,7 @@ void CG_AddEntities( void )
 	vec3_t autorotate;
 	int pnum;
 	centity_t *cent;
-	unsigned int serverTime;
 	bool canLight;
-
-	if( GS_MatchPaused() )
-		serverTime = cg.frame.serverTime;
-	else
-		serverTime = cg.time;
 
 	// bonus items rotate at a fixed rate
 	VectorSet( autorotate, 0, ( cg.time%3600 )*0.1, 0 );

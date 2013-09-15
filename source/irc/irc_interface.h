@@ -245,7 +245,7 @@ typedef struct
 
 	// console
 	void		(*Com_BeginRedirect)(int target, char *buffer, int buffersize, 
-		void (*flush)(int, char*, const void*), const void *extra);
+		void (*flush)(int, const char*, const void*), const void *extra);
 	void		(*Com_EndRedirect)(void);
 	void		(*Cbuf_AddText)(const char *text);
 	// tries
