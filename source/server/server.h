@@ -440,7 +440,7 @@ typedef struct
 	const netadr_t *address;
 } flush_params_t;
 
-void SV_FlushRedirect( int sv_redirected, char *outputbuf, const void *extra );
+void SV_FlushRedirect( int sv_redirected, const char *outputbuf, const void *extra );
 void SV_SendClientMessages( void );
 
 void SV_Multicast( vec3_t origin, multicast_t to );
