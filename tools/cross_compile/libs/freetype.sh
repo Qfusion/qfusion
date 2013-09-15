@@ -2,6 +2,8 @@
 
 MORE_OPTS=""
 [ ! -z "$HOST" ] && MORE_OPTS="${MORE_OPTS} --host=${HOST}"
+[ "$ENABLE_SHARED" = "YES" ]  && MORE_OPTS="${MORE_OPTS} --enable-shared=yes"
+[ "$ENABLE_SHARED" != "YES" ] && MORE_OPTS="${MORE_OPTS} --disable-shared=yes"
 
 cd ${SOURCE_DIR}libsrcs/libfreetype && \
 ./autogen.sh && ./configure \
