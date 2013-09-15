@@ -30,4 +30,5 @@ void MM_Shutdown( void )
 
 void MM_Frame( int realmsec )
 {
+	(void)realmsec;
 }
