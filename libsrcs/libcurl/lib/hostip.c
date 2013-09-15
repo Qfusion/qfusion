@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,11 +20,8 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -33,9 +30,6 @@
 #endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>     /* for the close() proto */
 #endif
 #ifdef __VMS
 #include <in.h>
@@ -112,7 +106,7 @@
  * asyn-thread.c - functions for threaded name resolves
 
  * The hostip.h is the united header file for all this. It defines the
- * CURLRES_* defines based on the config*.h and setup.h defines.
+ * CURLRES_* defines based on the config*.h and curl_setup.h defines.
  */
 
 /* These two symbols are for the global DNS cache */
@@ -146,6 +140,10 @@ struct curl_hash *Curl_global_host_cache_init(void)
 void Curl_global_host_cache_dtor(void)
 {
   if(host_cache_initialized) {
+    /* first make sure that any custom "CURLOPT_RESOLVE" names are
+       cleared off */
+    Curl_hostcache_clean(NULL, &hostname_cache);
+    /* then free the remaining hash completely */
     Curl_hash_clean(&hostname_cache);
     host_cache_initialized = 0;
   }
@@ -201,14 +199,23 @@ Curl_printable_address(const Curl_addrinfo *ai, char *buf, size_t bufsize)
 }
 
 /*
- * Return a hostcache id string for the providing host + port, to be used by
+ * Return a hostcache id string for the provided host + port, to be used by
  * the DNS caching.
  */
 static char *
-create_hostcache_id(const char *server, int port)
+create_hostcache_id(const char *name, int port)
 {
   /* create and return the new allocated entry */
-  return aprintf("%s:%d", server, port);
+  char *id = aprintf("%s:%d", name, port);
+  char *ptr = id;
+  if(ptr) {
+    /* lower case the name part */
+    while(*ptr && (*ptr != ':')) {
+      *ptr = (char)TOLOWER(*ptr);
+      ptr++;
+    }
+  }
+  return id;
 }
 
 struct hostcache_prune_data {
@@ -678,12 +685,14 @@ clean_up:
  * Curl_resolv_unlock() unlocks the given cached DNS entry. When this has been
  * made, the struct may be destroyed due to pruning. It is important that only
  * one unlock is made for each Curl_resolv() call.
+ *
+ * May be called with 'data' == NULL for global cache.
  */
 void Curl_resolv_unlock(struct SessionHandle *data, struct Curl_dns_entry *dns)
 {
   DEBUGASSERT(dns && (dns->inuse>0));
 
-  if(data->share)
+  if(data && data->share)
     Curl_share_lock(data, CURL_LOCK_DATA_DNS, CURL_LOCK_ACCESS_SINGLE);
 
   dns->inuse--;
@@ -694,7 +703,7 @@ void Curl_resolv_unlock(struct SessionHandle *data, struct Curl_dns_entry *dns)
     free(dns);
   }
 
-  if(data->share)
+  if(data && data->share)
     Curl_share_unlock(data, CURL_LOCK_DATA_DNS);
 }
 
@@ -721,4 +730,98 @@ struct curl_hash *Curl_mk_dnscache(void)
   return Curl_hash_alloc(7, Curl_hash_str, Curl_str_key_compare, freednsentry);
 }
 
+static int hostcache_inuse(void *data, void *hc)
+{
+  struct Curl_dns_entry *c = (struct Curl_dns_entry *) hc;
 
+  if(c->inuse == 1)
+    Curl_resolv_unlock(data, c);
+
+  return 1; /* free all entries */
+}
+
+/*
+ * Curl_hostcache_clean()
+ *
+ * This _can_ be called with 'data' == NULL but then of course no locking
+ * can be done!
+ */
+
+void Curl_hostcache_clean(struct SessionHandle *data,
+                          struct curl_hash *hash)
+{
+  /* Entries added to the hostcache with the CURLOPT_RESOLVE function are
+   * still present in the cache with the inuse counter set to 1. Detect them
+   * and cleanup!
+   */
+  Curl_hash_clean_with_criterium(hash, data, hostcache_inuse);
+}
+
+
+CURLcode Curl_loadhostpairs(struct SessionHandle *data)
+{
+  struct curl_slist *hostp;
+  char hostname[256];
+  char address[256];
+  int port;
+
+  for(hostp = data->change.resolve; hostp; hostp = hostp->next ) {
+    if(!hostp->data)
+      continue;
+    if(hostp->data[0] == '-') {
+      /* TODO: mark an entry for removal */
+    }
+    else if(3 == sscanf(hostp->data, "%255[^:]:%d:%255s", hostname, &port,
+                        address)) {
+      struct Curl_dns_entry *dns;
+      Curl_addrinfo *addr;
+      char *entry_id;
+      size_t entry_len;
+
+      addr = Curl_str2addr(address, port);
+      if(!addr) {
+        infof(data, "Resolve %s found illegal!\n", hostp->data);
+        continue;
+      }
+
+      /* Create an entry id, based upon the hostname and port */
+      entry_id = create_hostcache_id(hostname, port);
+      /* If we can't create the entry id, fail */
+      if(!entry_id) {
+        Curl_freeaddrinfo(addr);
+        return CURLE_OUT_OF_MEMORY;
+      }
+
+      entry_len = strlen(entry_id);
+
+      if(data->share)
+        Curl_share_lock(data, CURL_LOCK_DATA_DNS, CURL_LOCK_ACCESS_SINGLE);
+
+      /* See if its already in our dns cache */
+      dns = Curl_hash_pick(data->dns.hostcache, entry_id, entry_len+1);
+
+      /* free the allocated entry_id again */
+      free(entry_id);
+
+      if(!dns)
+        /* if not in the cache already, put this host in the cache */
+        dns = Curl_cache_addr(data, addr, hostname, port);
+      else
+        /* this is a duplicate, free it again */
+        Curl_freeaddrinfo(addr);
+
+      if(data->share)
+        Curl_share_unlock(data, CURL_LOCK_DATA_DNS);
+
+      if(!dns) {
+        Curl_freeaddrinfo(addr);
+        return CURLE_OUT_OF_MEMORY;
+      }
+      infof(data, "Added %s:%d:%s to DNS cache\n",
+            hostname, port, address);
+    }
+  }
+  data->change.resolve = NULL; /* dealt with now */
+
+  return CURLE_OK;
+}

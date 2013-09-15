@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #ifndef CURL_DISABLE_RTSP
 
@@ -113,6 +113,7 @@ const struct Curl_handler Curl_handler_rtsp = {
   ZERO_NULL,                            /* doing */
   ZERO_NULL,                            /* proto_getsock */
   rtsp_getsock_do,                      /* doing_getsock */
+  ZERO_NULL,                            /* domore_getsock */
   ZERO_NULL,                            /* perform_getsock */
   rtsp_disconnect,                      /* disconnect */
   rtsp_rtp_readwrite,                   /* readwrite */
@@ -667,7 +668,7 @@ static CURLcode rtsp_rtp_readwrite(struct SessionHandle *data,
   }
 
   if(rtp_dataleft != 0 && rtp[0] == '$') {
-    DEBUGF(infof(data, "RTP Rewinding %zu %s\n", rtp_dataleft,
+    DEBUGF(infof(data, "RTP Rewinding %zd %s\n", rtp_dataleft,
           *readmore ? "(READMORE)" : ""));
 
     /* Store the incomplete RTP packet for a "rewind" */
@@ -746,13 +747,7 @@ CURLcode Curl_rtsp_parseheader(struct connectdata *conn,
 
   if(checkprefix("CSeq:", header)) {
     /* Store the received CSeq. Match is verified in rtsp_done */
-    int nc;
-    char *temp = strdup(header);
-    if(!temp)
-      return CURLE_OUT_OF_MEMORY;
-    Curl_strntoupper(temp, temp, sizeof(temp));
-    nc = sscanf(temp, "CSEQ: %ld", &CSeq);
-    free(temp);
+    int nc = sscanf(&header[4], ": %ld", &CSeq);
     if(nc == 1) {
       data->state.proto.rtsp->CSeq_recv = CSeq; /* mark the request */
       data->state.rtsp_CSeq_recv = CSeq; /* update the handle */

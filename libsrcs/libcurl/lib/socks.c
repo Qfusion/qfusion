@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,13 +20,10 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
-#if !defined(CURL_DISABLE_PROXY) || defined(USE_WINDOWS_SSPI)
+#if !defined(CURL_DISABLE_PROXY)
 
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -199,8 +196,15 @@ CURLcode Curl_SOCKS4(const char *proxy_name,
    * This is currently not supporting "Identification Protocol (RFC1413)".
    */
   socksreq[8] = 0; /* ensure empty userid is NUL-terminated */
-  if(proxy_name)
-    strlcat((char*)socksreq + 8, proxy_name, sizeof(socksreq) - 8);
+  if(proxy_name) {
+    size_t plen = strlen(proxy_name);
+    if(plen >= sizeof(socksreq) - 8) {
+      failf(data, "Too long SOCKS proxy name, can't use!\n");
+      return CURLE_COULDNT_CONNECT;
+    }
+    /* copy the proxy name WITH trailing zero */
+    memcpy(socksreq + 8, proxy_name, plen+1);
+  }
 
   /*
    * Make connection
@@ -370,7 +374,7 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
   long timeout;
   bool socks5_resolve_local = (conn->proxytype == CURLPROXY_SOCKS5)?TRUE:FALSE;
   const size_t hostname_len = strlen(hostname);
-  ssize_t packetsize = 0;
+  ssize_t len = 0;
 
   /* RFC1928 chapter 5 specifies max 255 chars for domain name in packet */
   if(!socks5_resolve_local && hostname_len > 255) {
@@ -473,15 +477,14 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
 #endif
   else if(socksreq[1] == 2) {
     /* Needs user name and password */
-    size_t userlen, pwlen;
-    int len;
+    size_t proxy_name_len, proxy_password_len;
     if(proxy_name && proxy_password) {
-      userlen = strlen(proxy_name);
-      pwlen = strlen(proxy_password);
+      proxy_name_len = strlen(proxy_name);
+      proxy_password_len = strlen(proxy_password);
     }
     else {
-      userlen = 0;
-      pwlen = 0;
+      proxy_name_len = 0;
+      proxy_password_len = 0;
     }
 
     /*   username/password request looks like
@@ -493,14 +496,14 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
      */
     len = 0;
     socksreq[len++] = 1;    /* username/pw subnegotiation version */
-    socksreq[len++] = (unsigned char) userlen;
-    if(proxy_name && userlen)
-      memcpy(socksreq + len, proxy_name, userlen);
-    len += (int)userlen;
-    socksreq[len++] = (unsigned char) pwlen;
-    if(proxy_password && pwlen)
-      memcpy(socksreq + len, proxy_password, pwlen);
-    len += (int)pwlen;
+    socksreq[len++] = (unsigned char) proxy_name_len;
+    if(proxy_name && proxy_name_len)
+      memcpy(socksreq + len, proxy_name, proxy_name_len);
+    len += proxy_name_len;
+    socksreq[len++] = (unsigned char) proxy_password_len;
+    if(proxy_password && proxy_password_len)
+      memcpy(socksreq + len, proxy_password, proxy_password_len);
+    len += proxy_password_len;
 
     code = Curl_write_plain(conn, sock, (char *)socksreq, len, &written);
     if((code != CURLE_OK) || (len != written)) {
@@ -554,30 +557,21 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
   }
 
   /* Authentication is complete, now specify destination to the proxy */
-  socksreq[0] = 5; /* version (SOCKS5) */
-  socksreq[1] = 1; /* connect */
-  socksreq[2] = 0; /* must be zero */
+  len = 0;
+  socksreq[len++] = 5; /* version (SOCKS5) */
+  socksreq[len++] = 1; /* connect */
+  socksreq[len++] = 0; /* must be zero */
 
   if(!socks5_resolve_local) {
-    packetsize = (ssize_t)(5 + hostname_len + 2);
-
-    socksreq[3] = 3; /* ATYP: domain name = 3 */
-    socksreq[4] = (char) hostname_len; /* address length */
-    memcpy(&socksreq[5], hostname, hostname_len); /* address bytes w/o NULL */
-
-    /* PORT MSB */
-    socksreq[hostname_len+5] = (unsigned char)((remote_port >> 8) & 0xff);
-    /* PORT LSB */
-    socksreq[hostname_len+6] = (unsigned char)(remote_port & 0xff);
+    socksreq[len++] = 3; /* ATYP: domain name = 3 */
+    socksreq[len++] = (char) hostname_len; /* address length */
+    memcpy(&socksreq[len], hostname, hostname_len); /* address str w/o NULL */
+    len += hostname_len;
   }
   else {
     struct Curl_dns_entry *dns;
-    Curl_addrinfo *hp=NULL;
+    Curl_addrinfo *hp = NULL;
     int rc = Curl_resolv(conn, hostname, remote_port, &dns);
-
-    packetsize = 10;
-
-    socksreq[3] = 1; /* IPv4 = 1 */
 
     if(rc == CURLRESOLV_ERROR)
       return CURLE_COULDNT_RESOLVE_HOST;
@@ -596,17 +590,31 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
     if(dns)
       hp=dns->addr;
     if(hp) {
-      char buf[64];
-      unsigned short ip[4];
-      Curl_printable_address(hp, buf, sizeof(buf));
+      struct sockaddr_in *saddr_in;
+#ifdef ENABLE_IPV6
+      struct sockaddr_in6 *saddr_in6;
+#endif
+      int i;
 
-      if(4 == sscanf( buf, "%hu.%hu.%hu.%hu",
-                      &ip[0], &ip[1], &ip[2], &ip[3])) {
-        socksreq[4] = (unsigned char)ip[0];
-        socksreq[5] = (unsigned char)ip[1];
-        socksreq[6] = (unsigned char)ip[2];
-        socksreq[7] = (unsigned char)ip[3];
+      if(hp->ai_family == AF_INET) {
+        socksreq[len++] = 1; /* ATYP: IPv4 = 1 */
+
+        saddr_in = (struct sockaddr_in*)hp->ai_addr;
+        for(i = 0; i < 4; i++) {
+          socksreq[len++] = ((unsigned char*)&saddr_in->sin_addr.s_addr)[i];
+          infof(data, "%d\n", socksreq[len-1]);
+        }
       }
+#ifdef ENABLE_IPV6
+      else if(hp->ai_family == AF_INET6) {
+        socksreq[len++] = 4; /* ATYP: IPv6 = 4 */
+
+        saddr_in6 = (struct sockaddr_in6*)hp->ai_addr;
+        for(i = 0; i < 16; i++) {
+          socksreq[len++] = ((unsigned char*)&saddr_in6->sin6_addr.s6_addr)[i];
+        }
+      }
+#endif
       else
         hp = NULL; /* fail! */
 
@@ -617,10 +625,10 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
             hostname);
       return CURLE_COULDNT_RESOLVE_HOST;
     }
-
-    socksreq[8] = (unsigned char)((remote_port >> 8) & 0xff); /* PORT MSB */
-    socksreq[9] = (unsigned char)(remote_port & 0xff);        /* PORT LSB */
   }
+
+  socksreq[len++] = (unsigned char)((remote_port >> 8) & 0xff); /* PORT MSB */
+  socksreq[len++] = (unsigned char)(remote_port & 0xff);        /* PORT LSB */
 
 #if defined(HAVE_GSSAPI) || defined(USE_WINDOWS_SSPI)
   if(conn->socks5_gssapi_enctype) {
@@ -628,14 +636,14 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
   }
   else
 #endif
-    code = Curl_write_plain(conn, sock, (char *)socksreq, packetsize,
-                            &written);
-  if((code != CURLE_OK) || (written != packetsize)) {
+    code = Curl_write_plain(conn, sock, (char *)socksreq, len, &written);
+
+  if((code != CURLE_OK) || (len != written)) {
     failf(data, "Failed to send SOCKS5 connect request.");
     return CURLE_COULDNT_CONNECT;
   }
 
-  packetsize = 10; /* minimum packet size is 10 */
+  len = 10; /* minimum packet size is 10 */
 
 #if defined(HAVE_GSSAPI) || defined(USE_WINDOWS_SSPI)
   if(conn->socks5_gssapi_enctype) {
@@ -643,9 +651,10 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
   }
   else
 #endif
-    result = Curl_blockread_all(conn, sock, (char *)socksreq, packetsize,
-                                &actualread);
-  if((result != CURLE_OK) || (actualread != packetsize)) {
+    result = Curl_blockread_all(conn, sock, (char *)socksreq,
+                                len, &actualread);
+
+  if((result != CURLE_OK) || (len != actualread)) {
     failf(data, "Failed to receive SOCKS5 connect request ack.");
     return CURLE_COULDNT_CONNECT;
   }
@@ -656,13 +665,37 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
     return CURLE_COULDNT_CONNECT;
   }
   if(socksreq[1] != 0) { /* Anything besides 0 is an error */
+    if(socksreq[3] == 1) {
       failf(data,
             "Can't complete SOCKS5 connection to %d.%d.%d.%d:%d. (%d)",
             (unsigned char)socksreq[4], (unsigned char)socksreq[5],
             (unsigned char)socksreq[6], (unsigned char)socksreq[7],
             ((socksreq[8] << 8) | socksreq[9]),
             socksreq[1]);
-      return CURLE_COULDNT_CONNECT;
+    }
+    else if(socksreq[3] == 3) {
+      failf(data,
+            "Can't complete SOCKS5 connection to %s:%d. (%d)",
+            hostname,
+            ((socksreq[8] << 8) | socksreq[9]),
+            socksreq[1]);
+    }
+    else if(socksreq[3] == 4) {
+      failf(data,
+            "Can't complete SOCKS5 connection to %02x%02x:%02x%02x:"
+            "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%d. (%d)",
+            (unsigned char)socksreq[4], (unsigned char)socksreq[5],
+            (unsigned char)socksreq[6], (unsigned char)socksreq[7],
+            (unsigned char)socksreq[8], (unsigned char)socksreq[9],
+            (unsigned char)socksreq[10], (unsigned char)socksreq[11],
+            (unsigned char)socksreq[12], (unsigned char)socksreq[13],
+            (unsigned char)socksreq[14], (unsigned char)socksreq[15],
+            (unsigned char)socksreq[16], (unsigned char)socksreq[17],
+            (unsigned char)socksreq[18], (unsigned char)socksreq[19],
+            ((socksreq[8] << 8) | socksreq[9]),
+            socksreq[1]);
+    }
+    return CURLE_COULDNT_CONNECT;
   }
 
   /* Fix: in general, returned BND.ADDR is variable length parameter by RFC
@@ -685,11 +718,11 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
   if(socksreq[3] == 3) {
     /* domain name */
     int addrlen = (int) socksreq[4];
-    packetsize = 5 + addrlen + 2;
+    len = 5 + addrlen + 2;
   }
   else if(socksreq[3] == 4) {
     /* IPv6 */
-    packetsize = 4 + 16 + 2;
+    len = 4 + 16 + 2;
   }
 
   /* At this point we already read first 10 bytes */
@@ -697,11 +730,11 @@ CURLcode Curl_SOCKS5(const char *proxy_name,
   if(!conn->socks5_gssapi_enctype) {
     /* decrypt_gssapi_blockread already read the whole packet */
 #endif
-    if(packetsize > 10) {
-      packetsize -= 10;
+    if(len > 10) {
+      len -= 10;
       result = Curl_blockread_all(conn, sock, (char *)&socksreq[10],
-                                  packetsize, &actualread);
-      if((result != CURLE_OK) || (actualread != packetsize)) {
+                                  len, &actualread);
+      if((result != CURLE_OK) || (len != actualread)) {
         failf(data, "Failed to receive SOCKS5 connect request ack.");
         return CURLE_COULDNT_CONNECT;
       }

@@ -611,8 +611,11 @@
 /* Define to enable c-ares asynchronous DNS lookups. */
 /* #define USE_ARES 1 */
 
-/* Define to enable threaded asynchronous DNS lookups. */
-#define USE_THREADS_WIN32 1
+/* Default define to enable threaded asynchronous DNS lookups. */
+#if !defined(USE_SYNC_DNS) && !defined(USE_ARES) && \
+    !defined(USE_THREADS_WIN32)
+#  define USE_THREADS_WIN32 1
+#endif
 
 #if defined(USE_ARES) && defined(USE_THREADS_WIN32)
 #  error "Only one DNS lookup specialty may be defined at most"
@@ -653,10 +656,10 @@
 #undef OS
 #if defined(_M_IX86) || defined(__i386__) /* x86 (MSVC or gcc) */
 #define OS "i386-pc-win32"
+#elif defined(_M_X64) || defined(__x86_64__) /* x86_64 (MSVC >=2005 or gcc) */
+#define OS "x86_64-pc-win32"
 #elif defined(_M_IA64) /* Itanium */
 #define OS "ia64-pc-win32"
-#elif defined(_M_X64) /* AMD64/EM64T - Not defined until MSVC 2005 */
-#define OS "amd64-pc-win32"
 #else
 #define OS "unknown-pc-win32"
 #endif

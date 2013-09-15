@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2009, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,16 +20,10 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
 #endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -61,11 +55,11 @@ int curlx_nonblock(curl_socket_t sockfd,    /* operate on this */
 
   /* most recent unix versions */
   int flags;
-  flags = fcntl(sockfd, F_GETFL, 0);
+  flags = sfcntl(sockfd, F_GETFL, 0);
   if(nonblock)
-    return fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+    return sfcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
   else
-    return fcntl(sockfd, F_SETFL, flags & (~O_NONBLOCK));
+    return sfcntl(sockfd, F_SETFL, flags & (~O_NONBLOCK));
 
 #elif defined(HAVE_IOCTL_FIONBIO)
 

@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,16 +20,10 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 #ifdef HAVE_PWD_H
 #include <pwd.h>
-#endif
-#ifdef __VMS
-#include <unixlib.h>
 #endif
 
 #include <curl/curl.h>
@@ -51,10 +45,7 @@
 enum host_lookup_state {
   NOTHING,
   HOSTFOUND,    /* the 'machine' keyword was found */
-  HOSTCOMPLETE, /* the machine name following the keyword was found too */
-  HOSTVALID,    /* this is "our" machine! */
-
-  HOSTEND /* LAST enum */
+  HOSTVALID     /* this is "our" machine! */
 };
 
 /*
@@ -89,11 +80,7 @@ int Curl_parsenetrc(const char *host,
       struct passwd *pw;
       pw= getpwuid(geteuid());
       if(pw) {
-#ifdef __VMS
-        home = decc_translate_vms(pw->pw_dir);
-#else
         home = pw->pw_dir;
-#endif
       }
 #endif
     }
@@ -174,10 +161,6 @@ int Curl_parsenetrc(const char *host,
             state_our_login = FALSE;
           }
           break;
-        case HOSTCOMPLETE:
-        case HOSTEND:
-            /* Should not be reached. */
-            DEBUGASSERT(0);
         } /* switch (state) */
 
         tok = strtok_r(NULL, " \t\n", &tok_buf);

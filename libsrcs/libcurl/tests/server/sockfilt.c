@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2010, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -19,6 +19,7 @@
  * KIND, either express or implied.
  *
  ***************************************************************************/
+#include "server_setup.h"
 
 /* Purpose
  *
@@ -79,18 +80,8 @@
  * if no signal was being ignored or handled at all.  Enjoy it!
  */
 
-#define CURL_NO_OLDIES
-
-#include "setup.h" /* portability help from the lib directory */
-
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -101,6 +92,9 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
+#ifdef USE_WINSOCK
+#include <conio.h>  /* for _kbhit() used in select_ws() */
+#endif
 
 #define ENABLE_CURLX_PRINTF
 /* make the curlx header define all printf() functions to use the curlx_*
@@ -110,9 +104,21 @@
 #include "inet_pton.h"
 #include "util.h"
 #include "server_sockaddr.h"
+#include "warnless.h"
 
 /* include memdebug.h last */
 #include "memdebug.h"
+
+#ifdef USE_WINSOCK
+#undef  EINTR
+#define EINTR    4 /* errno.h value */
+#undef  EAGAIN
+#define EAGAIN  11 /* errno.h value */
+#undef  ENOMEM
+#define ENOMEM  12 /* errno.h value */
+#undef  EINVAL
+#define EINVAL  22 /* errno.h value */
+#endif
 
 #define DEFAULT_PORT 8999
 
@@ -123,6 +129,7 @@
 const char *serverlogfile = DEFAULT_LOGFILE;
 
 static bool verbose = FALSE;
+static bool bind_only = FALSE;
 #ifdef ENABLE_IPV6
 static bool use_ipv6 = FALSE;
 #endif
@@ -167,6 +174,10 @@ static SIGHANDLER_T old_sigint_handler  = SIG_ERR;
 static SIGHANDLER_T old_sigterm_handler = SIG_ERR;
 #endif
 
+#if defined(SIGBREAK) && defined(WIN32)
+static SIGHANDLER_T old_sigbreak_handler = SIG_ERR;
+#endif
+
 /* var which if set indicates that the program should finish execution */
 
 SIG_ATOMIC_T got_exit_signal = 0;
@@ -182,13 +193,13 @@ static volatile int exit_signal = 0;
 
 static RETSIGTYPE exit_signal_handler(int signum)
 {
-  int old_errno = ERRNO;
+  int old_errno = errno;
   if(got_exit_signal == 0) {
     got_exit_signal = 1;
     exit_signal = signum;
   }
   (void)signal(signum, exit_signal_handler);
-  SET_ERRNO(old_errno);
+  errno = old_errno;
 }
 
 static void install_signal_handlers(void)
@@ -196,31 +207,38 @@ static void install_signal_handlers(void)
 #ifdef SIGHUP
   /* ignore SIGHUP signal */
   if((old_sighup_handler = signal(SIGHUP, SIG_IGN)) == SIG_ERR)
-    logmsg("cannot install SIGHUP handler: %s", strerror(ERRNO));
+    logmsg("cannot install SIGHUP handler: %s", strerror(errno));
 #endif
 #ifdef SIGPIPE
   /* ignore SIGPIPE signal */
   if((old_sigpipe_handler = signal(SIGPIPE, SIG_IGN)) == SIG_ERR)
-    logmsg("cannot install SIGPIPE handler: %s", strerror(ERRNO));
+    logmsg("cannot install SIGPIPE handler: %s", strerror(errno));
 #endif
 #ifdef SIGALRM
   /* ignore SIGALRM signal */
   if((old_sigalrm_handler = signal(SIGALRM, SIG_IGN)) == SIG_ERR)
-    logmsg("cannot install SIGALRM handler: %s", strerror(ERRNO));
+    logmsg("cannot install SIGALRM handler: %s", strerror(errno));
 #endif
 #ifdef SIGINT
   /* handle SIGINT signal with our exit_signal_handler */
   if((old_sigint_handler = signal(SIGINT, exit_signal_handler)) == SIG_ERR)
-    logmsg("cannot install SIGINT handler: %s", strerror(ERRNO));
+    logmsg("cannot install SIGINT handler: %s", strerror(errno));
   else
     siginterrupt(SIGINT, 1);
 #endif
 #ifdef SIGTERM
   /* handle SIGTERM signal with our exit_signal_handler */
   if((old_sigterm_handler = signal(SIGTERM, exit_signal_handler)) == SIG_ERR)
-    logmsg("cannot install SIGTERM handler: %s", strerror(ERRNO));
+    logmsg("cannot install SIGTERM handler: %s", strerror(errno));
   else
     siginterrupt(SIGTERM, 1);
+#endif
+#if defined(SIGBREAK) && defined(WIN32)
+  /* handle SIGBREAK signal with our exit_signal_handler */
+  if((old_sigbreak_handler = signal(SIGBREAK, exit_signal_handler)) == SIG_ERR)
+    logmsg("cannot install SIGBREAK handler: %s", strerror(errno));
+  else
+    siginterrupt(SIGBREAK, 1);
 #endif
 }
 
@@ -246,7 +264,78 @@ static void restore_signal_handlers(void)
   if(SIG_ERR != old_sigterm_handler)
     (void)signal(SIGTERM, old_sigterm_handler);
 #endif
+#if defined(SIGBREAK) && defined(WIN32)
+  if(SIG_ERR != old_sigbreak_handler)
+    (void)signal(SIGBREAK, old_sigbreak_handler);
+#endif
 }
+
+#ifdef WIN32
+/*
+ * read-wrapper to support reading from stdin on Windows.
+ */
+static ssize_t read_wincon(int fd, void *buf, size_t count)
+{
+  HANDLE handle = NULL;
+  DWORD mode, rcount = 0;
+  BOOL success;
+
+  if(fd == fileno(stdin)) {
+    handle = GetStdHandle(STD_INPUT_HANDLE);
+  }
+  else {
+    return read(fd, buf, count);
+  }
+
+  if(GetConsoleMode(handle, &mode)) {
+    success = ReadConsole(handle, buf, count, &rcount, NULL);
+  }
+  else {
+    success = ReadFile(handle, buf, count, &rcount, NULL);
+  }
+  if(success) {
+    return rcount;
+  }
+
+  errno = GetLastError();
+  return -1;
+}
+#define read(a,b,c) read_wincon(a,b,c)
+
+/*
+ * write-wrapper to support writing to stdout and stderr on Windows.
+ */
+static ssize_t write_wincon(int fd, const void *buf, size_t count)
+{
+  HANDLE handle = NULL;
+  DWORD mode, wcount = 0;
+  BOOL success;
+
+  if(fd == fileno(stdout)) {
+    handle = GetStdHandle(STD_OUTPUT_HANDLE);
+  }
+  else if(fd == fileno(stderr)) {
+    handle = GetStdHandle(STD_ERROR_HANDLE);
+  }
+  else {
+    return write(fd, buf, count);
+  }
+
+  if(GetConsoleMode(handle, &mode)) {
+    success = WriteConsole(handle, buf, count, &wcount, NULL);
+  }
+  else {
+    success = WriteFile(handle, buf, count, &wcount, NULL);
+  }
+  if(success) {
+    return wcount;
+  }
+
+  errno = GetLastError();
+  return -1;
+}
+#define write(a,b,c) write_wincon(a,b,c)
+#endif
 
 /*
  * fullread is a wrapper around the read() function. This will repeat the call
@@ -270,10 +359,12 @@ static ssize_t fullread(int filedes, void *buffer, size_t nbytes)
     }
 
     if(rc < 0) {
-      error = ERRNO;
+      error = errno;
       if((error == EINTR) || (error == EAGAIN))
         continue;
-      logmsg("unrecoverable read() failure: %s", strerror(error));
+      logmsg("reading from file descriptor: %d,", filedes);
+      logmsg("unrecoverable read() failure: (%d) %s",
+             error, strerror(error));
       return -1;
     }
 
@@ -314,10 +405,12 @@ static ssize_t fullwrite(int filedes, const void *buffer, size_t nbytes)
     }
 
     if(wc < 0) {
-      error = ERRNO;
+      error = errno;
       if((error == EINTR) || (error == EAGAIN))
         continue;
-      logmsg("unrecoverable write() failure: %s", strerror(error));
+      logmsg("writing to file descriptor: %d,", filedes);
+      logmsg("unrecoverable write() failure: (%d) %s",
+             error, strerror(error));
       return -1;
     }
 
@@ -407,6 +500,245 @@ static void lograw(unsigned char *buffer, ssize_t len)
     logmsg("'%s'", data);
 }
 
+#ifdef USE_WINSOCK
+/*
+ * WinSock select() does not support standard file descriptors,
+ * it can only check SOCKETs. The following function is an attempt
+ * to re-create a select() function with support for other handle types.
+ *
+ * select() function with support for WINSOCK2 sockets and all
+ * other handle types supported by WaitForMultipleObjectsEx().
+ *
+ * TODO: Differentiate between read/write/except for non-SOCKET handles.
+ *
+ * http://msdn.microsoft.com/en-us/library/windows/desktop/ms687028.aspx
+ * http://msdn.microsoft.com/en-us/library/windows/desktop/ms741572.aspx
+ */
+static int select_ws(int nfds, fd_set *readfds, fd_set *writefds,
+                     fd_set *exceptfds, struct timeval *timeout)
+{
+  long networkevents;
+  DWORD milliseconds, wait, idx, mode, avail, events, inputs;
+  WSAEVENT wsaevent, *wsaevents;
+  WSANETWORKEVENTS wsanetevents;
+  INPUT_RECORD *inputrecords;
+  HANDLE handle, *handles;
+  curl_socket_t sock, *fdarr, *wsasocks;
+  int error, fds;
+  DWORD nfd = 0, wsa = 0;
+  int ret = 0;
+
+  /* check if the input value is valid */
+  if(nfds < 0) {
+    errno = EINVAL;
+    return -1;
+  }
+
+  /* check if we got descriptors, sleep in case we got none */
+  if(!nfds) {
+    Sleep((timeout->tv_sec * 1000) + (timeout->tv_usec / 1000));
+    return 0;
+  }
+
+  /* allocate internal array for the original input handles */
+  fdarr = malloc(nfds * sizeof(curl_socket_t));
+  if(fdarr == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  /* allocate internal array for the internal event handles */
+  handles = malloc(nfds * sizeof(HANDLE));
+  if(handles == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  /* allocate internal array for the internal socket handles */
+  wsasocks = malloc(nfds * sizeof(curl_socket_t));
+  if(wsasocks == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  /* allocate internal array for the internal WINSOCK2 events */
+  wsaevents = malloc(nfds * sizeof(WSAEVENT));
+  if(wsaevents == NULL) {
+    errno = ENOMEM;
+    return -1;
+  }
+
+  /* loop over the handles in the input descriptor sets */
+  for(fds = 0; fds < nfds; fds++) {
+    networkevents = 0;
+    handles[nfd] = 0;
+
+    if(FD_ISSET(fds, readfds))
+      networkevents |= FD_READ|FD_ACCEPT|FD_CLOSE;
+
+    if(FD_ISSET(fds, writefds))
+      networkevents |= FD_WRITE|FD_CONNECT;
+
+    if(FD_ISSET(fds, exceptfds))
+      networkevents |= FD_OOB|FD_CLOSE;
+
+    /* only wait for events for which we actually care */
+    if(networkevents) {
+      fdarr[nfd] = curlx_sitosk(fds);
+      if(fds == fileno(stdin)) {
+        handles[nfd] = GetStdHandle(STD_INPUT_HANDLE);
+      }
+      else if(fds == fileno(stdout)) {
+        handles[nfd] = GetStdHandle(STD_OUTPUT_HANDLE);
+      }
+      else if(fds == fileno(stderr)) {
+        handles[nfd] = GetStdHandle(STD_ERROR_HANDLE);
+      }
+      else {
+        wsaevent = WSACreateEvent();
+        if(wsaevent != WSA_INVALID_EVENT) {
+          error = WSAEventSelect(fds, wsaevent, networkevents);
+          if(error != SOCKET_ERROR) {
+            handles[nfd] = wsaevent;
+            wsasocks[wsa] = curlx_sitosk(fds);
+            wsaevents[wsa] = wsaevent;
+            wsa++;
+          }
+          else {
+            handles[nfd] = (HANDLE) curlx_sitosk(fds);
+            WSACloseEvent(wsaevent);
+          }
+        }
+      }
+      nfd++;
+    }
+  }
+
+  /* convert struct timeval to milliseconds */
+  if(timeout) {
+    milliseconds = ((timeout->tv_sec * 1000) + (timeout->tv_usec / 1000));
+  }
+  else {
+    milliseconds = INFINITE;
+  }
+
+  /* wait for one of the internal handles to trigger */
+  wait = WaitForMultipleObjectsEx(nfd, handles, FALSE, milliseconds, FALSE);
+
+  /* loop over the internal handles returned in the descriptors */
+  for(idx = 0; idx < nfd; idx++) {
+    handle = handles[idx];
+    sock = fdarr[idx];
+    fds = curlx_sktosi(sock);
+
+    /* check if the current internal handle was triggered */
+    if(wait != WAIT_FAILED && (wait - WAIT_OBJECT_0) <= idx &&
+       WaitForSingleObjectEx(handle, 0, FALSE) == WAIT_OBJECT_0) {
+      /* try to handle the event with STD* handle functions */
+      if(fds == fileno(stdin)) {
+        /* check if there is no data in the input buffer */
+        if(!stdin->_cnt) {
+          /* check if we are getting data from a PIPE */
+          if(!GetConsoleMode(handle, &mode)) {
+            /* check if there is no data from PIPE input */
+            if(!PeekNamedPipe(handle, NULL, 0, NULL, &avail, NULL))
+              avail = 0;
+            if(!avail) {
+              FD_CLR(sock, readfds);
+              /* reduce CPU load */
+              Sleep(10);
+            }
+          } /* check if there is no data from keyboard input */
+          else if (!_kbhit()) {
+            /* check if there are INPUT_RECORDs in the input buffer */
+            if(GetNumberOfConsoleInputEvents(handle, &events)) {
+              if(events > 0) {
+                /* remove INPUT_RECORDs from the input buffer */
+                inputrecords = (INPUT_RECORD*)malloc(events *
+                                                     sizeof(INPUT_RECORD));
+                if(inputrecords) {
+                  if(!ReadConsoleInput(handle, inputrecords,
+                                       events, &inputs))
+                    inputs = 0;
+                  free(inputrecords);
+                }
+
+                /* check if we got all inputs, otherwise clear buffer */
+                if(events != inputs)
+                  FlushConsoleInputBuffer(handle);
+              }
+            }
+
+            /* remove from descriptor set since there is no real data */
+            FD_CLR(sock, readfds);
+          }
+        }
+
+        /* stdin is never ready for write or exceptional */
+        FD_CLR(sock, writefds);
+        FD_CLR(sock, exceptfds);
+      }
+      else if(fds == fileno(stdout) || fds == fileno(stderr)) {
+        /* stdout and stderr are never ready for read or exceptional */
+        FD_CLR(sock, readfds);
+        FD_CLR(sock, exceptfds);
+      }
+      else {
+        /* try to handle the event with the WINSOCK2 functions */
+        error = WSAEnumNetworkEvents(fds, handle, &wsanetevents);
+        if(error != SOCKET_ERROR) {
+          /* remove from descriptor set if not ready for read/accept/close */
+          if(!(wsanetevents.lNetworkEvents & (FD_READ|FD_ACCEPT|FD_CLOSE)))
+            FD_CLR(sock, readfds);
+
+          /* remove from descriptor set if not ready for write/connect */
+          if(!(wsanetevents.lNetworkEvents & (FD_WRITE|FD_CONNECT)))
+            FD_CLR(sock, writefds);
+
+          /* HACK:
+           * use exceptfds together with readfds to signal
+           * that the connection was closed by the client.
+           *
+           * Reason: FD_CLOSE is only signaled once, sometimes
+           * at the same time as FD_READ with data being available.
+           * This means that recv/sread is not reliable to detect
+           * that the connection is closed.
+           */
+          /* remove from descriptor set if not exceptional */
+          if(!(wsanetevents.lNetworkEvents & (FD_OOB|FD_CLOSE)))
+            FD_CLR(sock, exceptfds);
+        }
+      }
+
+      /* check if the event has not been filtered using specific tests */
+      if(FD_ISSET(sock, readfds) || FD_ISSET(sock, writefds) ||
+         FD_ISSET(sock, exceptfds)) {
+        ret++;
+      }
+    }
+    else {
+      /* remove from all descriptor sets since this handle did not trigger */
+      FD_CLR(sock, readfds);
+      FD_CLR(sock, writefds);
+      FD_CLR(sock, exceptfds);
+    }
+  }
+
+  for(idx = 0; idx < wsa; idx++) {
+    WSAEventSelect(wsasocks[idx], NULL, 0);
+    WSACloseEvent(wsaevents[idx]);
+  }
+
+  free(wsaevents);
+  free(wsasocks);
+  free(handles);
+  free(fdarr);
+
+  return ret;
+}
+#define select(a,b,c,d,e) select_ws(a,b,c,d,e)
+#endif  /* USE_WINSOCK */
+
 /*
   sockfdp is a pointer to an established stream or CURL_SOCKET_BAD
 
@@ -422,7 +754,7 @@ static bool juggle(curl_socket_t *sockfdp,
   fd_set fds_write;
   fd_set fds_err;
   curl_socket_t sockfd = CURL_SOCKET_BAD;
-  curl_socket_t maxfd = CURL_SOCKET_BAD;
+  int maxfd = -99;
   ssize_t rc;
   ssize_t nread_socket;
   ssize_t bytes_written;
@@ -455,17 +787,7 @@ static bool juggle(curl_socket_t *sockfdp,
   FD_ZERO(&fds_write);
   FD_ZERO(&fds_err);
 
-#ifdef USE_WINSOCK
-  /*
-  ** WinSock select() does not support standard file descriptors,
-  ** it can only check SOCKETs. Since this program in its current
-  ** state will not work on WinSock based systems, next line is
-  ** commented out to allow warning-free compilation awaiting the
-  ** day it will be fixed to also run on WinSock systems.
-  */
-#else
-  FD_SET(fileno(stdin), &fds_read);
-#endif
+  FD_SET((curl_socket_t)fileno(stdin), &fds_read);
 
   switch(*mode) {
 
@@ -475,7 +797,7 @@ static bool juggle(curl_socket_t *sockfdp,
     sockfd = listenfd;
     /* there's always a socket to wait for */
     FD_SET(sockfd, &fds_read);
-    maxfd = sockfd;
+    maxfd = (int)sockfd;
     break;
 
   case PASSIVE_CONNECT:
@@ -489,7 +811,10 @@ static bool juggle(curl_socket_t *sockfdp,
     else {
       /* there's always a socket to wait for */
       FD_SET(sockfd, &fds_read);
-      maxfd = sockfd;
+#ifdef USE_WINSOCK
+      FD_SET(sockfd, &fds_err);
+#endif
+      maxfd = (int)sockfd;
     }
     break;
 
@@ -499,7 +824,10 @@ static bool juggle(curl_socket_t *sockfdp,
     /* sockfd turns CURL_SOCKET_BAD when our connection has been closed */
     if(CURL_SOCKET_BAD != sockfd) {
       FD_SET(sockfd, &fds_read);
-      maxfd = sockfd;
+#ifdef USE_WINSOCK
+      FD_SET(sockfd, &fds_err);
+#endif
+      maxfd = (int)sockfd;
     }
     else {
       logmsg("No socket to read on");
@@ -519,14 +847,16 @@ static bool juggle(curl_socket_t *sockfdp,
 
   do {
 
-    rc = select((int)maxfd + 1, &fds_read, &fds_write, &fds_err, &timeout);
+    /* select() blocking behavior call on blocking descriptors please */
+
+    rc = select(maxfd + 1, &fds_read, &fds_write, &fds_err, &timeout);
 
     if(got_exit_signal) {
       logmsg("signalled to die, exiting...");
       return FALSE;
     }
 
-  } while((rc == -1) && ((error = SOCKERRNO) == EINTR));
+  } while((rc == -1) && ((error = errno) == EINTR));
 
   if(rc < 0) {
     logmsg("select() failed with error: (%d) %s",
@@ -640,17 +970,22 @@ static bool juggle(curl_socket_t *sockfdp,
 
   if((sockfd != CURL_SOCKET_BAD) && (FD_ISSET(sockfd, &fds_read)) ) {
 
+    curl_socket_t newfd = CURL_SOCKET_BAD; /* newly accepted socket */
+
     if(*mode == PASSIVE_LISTEN) {
       /* there's no stream set up yet, this is an indication that there's a
          client connecting. */
-      sockfd = accept(sockfd, NULL, NULL);
-      if(CURL_SOCKET_BAD == sockfd)
-        logmsg("accept() failed");
+      newfd = accept(sockfd, NULL, NULL);
+      if(CURL_SOCKET_BAD == newfd) {
+        error = SOCKERRNO;
+        logmsg("accept(%d, NULL, NULL) failed with error: (%d) %s",
+               sockfd, error, strerror(error));
+      }
       else {
         logmsg("====> Client connect");
         if(!write_stdout("CNCT\n", 5))
           return FALSE;
-        *sockfdp = sockfd; /* store the new socket */
+        *sockfdp = newfd; /* store the new socket */
         *mode = PASSIVE_CONNECT; /* we have connected */
       }
       return TRUE;
@@ -659,7 +994,22 @@ static bool juggle(curl_socket_t *sockfdp,
     /* read from socket, pass on data to stdout */
     nread_socket = sread(sockfd, buffer, sizeof(buffer));
 
-    if(nread_socket <= 0) {
+    if(nread_socket > 0) {
+      snprintf(data, sizeof(data), "DATA\n%04zx\n", nread_socket);
+      if(!write_stdout(data, 10))
+        return FALSE;
+      if(!write_stdout(buffer, nread_socket))
+        return FALSE;
+
+      logmsg("< %zd bytes data, client => server", nread_socket);
+      lograw(buffer, nread_socket);
+    }
+
+    if(nread_socket <= 0
+#ifdef USE_WINSOCK
+       || FD_ISSET(sockfd, &fds_err)
+#endif
+       ) {
       logmsg("====> Client disconnect");
       if(!write_stdout("DISC\n", 5))
         return FALSE;
@@ -671,15 +1021,6 @@ static bool juggle(curl_socket_t *sockfdp,
         *mode = ACTIVE_DISCONNECT;
       return TRUE;
     }
-
-    snprintf(data, sizeof(data), "DATA\n%04zx\n", nread_socket);
-    if(!write_stdout(data, 10))
-      return FALSE;
-    if(!write_stdout(buffer, nread_socket))
-      return FALSE;
-
-    logmsg("< %zd bytes data, client => server", nread_socket);
-    lograw(buffer, nread_socket);
   }
 
   return TRUE;
@@ -711,7 +1052,7 @@ static curl_socket_t sockdaemon(curl_socket_t sock,
         rc = wait_ms(delay);
         if(rc) {
           /* should not happen */
-          error = SOCKERRNO;
+          error = errno;
           logmsg("wait_ms() failed with error: (%d) %s",
                  error, strerror(error));
           sclose(sock);
@@ -807,12 +1148,18 @@ static curl_socket_t sockdaemon(curl_socket_t sock,
     }
   }
 
+  /* bindonly option forces no listening */
+  if(bind_only) {
+    logmsg("instructed to bind port without listening");
+    return sock;
+  }
+
   /* start accepting connections */
   rc = listen(sock, 5);
   if(0 != rc) {
     error = SOCKERRNO;
-    logmsg("listen() failed with error: (%d) %s",
-           error, strerror(error));
+    logmsg("listen(%d, 5) failed with error: (%d) %s",
+           sock, error, strerror(error));
     sclose(sock);
     return CURL_SOCKET_BAD;
   }
@@ -875,6 +1222,10 @@ int main(int argc, char *argv[])
 #endif
       arg++;
     }
+    else if(!strcmp("--bindonly", argv[arg])) {
+      bind_only = TRUE;
+      arg++;
+    }
     else if(!strcmp("--port", argv[arg])) {
       arg++;
       if(argc>arg) {
@@ -923,6 +1274,7 @@ int main(int argc, char *argv[])
            " --pidfile [file]\n"
            " --ipv4\n"
            " --ipv6\n"
+           " --bindonly\n"
            " --port [port]\n"
            " --connect [port]\n"
            " --addr [address]");
@@ -933,6 +1285,10 @@ int main(int argc, char *argv[])
 #ifdef WIN32
   win32_init();
   atexit(win32_cleanup);
+
+  setmode(fileno(stdin), O_BINARY);
+  setmode(fileno(stdout), O_BINARY);
+  setmode(fileno(stderr), O_BINARY);
 #endif
 
   install_signal_handlers();
@@ -950,6 +1306,7 @@ int main(int argc, char *argv[])
     error = SOCKERRNO;
     logmsg("Error creating socket: (%d) %s",
            error, strerror(error));
+    write_stdout("FAIL\n", 5);
     goto sockfilt_cleanup;
   }
 
@@ -985,6 +1342,7 @@ int main(int argc, char *argv[])
       error = SOCKERRNO;
       logmsg("Error connecting to port %hu: (%d) %s",
              connectport, error, strerror(error));
+      write_stdout("FAIL\n", 5);
       goto sockfilt_cleanup;
     }
     logmsg("====> Client connect");
@@ -993,8 +1351,10 @@ int main(int argc, char *argv[])
   else {
     /* passive daemon style */
     sock = sockdaemon(sock, &port);
-    if(CURL_SOCKET_BAD == sock)
+    if(CURL_SOCKET_BAD == sock) {
+      write_stdout("FAIL\n", 5);
       goto sockfilt_cleanup;
+    }
     msgsock = CURL_SOCKET_BAD; /* no stream socket yet */
   }
 
@@ -1002,12 +1362,16 @@ int main(int argc, char *argv[])
 
   if(connectport)
     logmsg("Connected to port %hu", connectport);
+  else if(bind_only)
+    logmsg("Bound without listening on port %hu", port);
   else
     logmsg("Listening on port %hu", port);
 
   wrotepidfile = write_pidfile(pidname);
-  if(!wrotepidfile)
+  if(!wrotepidfile) {
+    write_stdout("FAIL\n", 5);
     goto sockfilt_cleanup;
+  }
 
   do {
     juggle_again = juggle(&msgsock, sock, &mode);

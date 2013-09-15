@@ -2,7 +2,7 @@
 #***************************************************************************
 
 # File version for 'aclocal' use. Keep it a single number.
-# serial 4
+# serial 7
 
 dnl CURL_OVERRIDE_AUTOCONF
 dnl -------------------------------------------------
@@ -15,16 +15,6 @@ AC_DEFUN([CURL_OVERRIDE_AUTOCONF], [
 AC_BEFORE([$0],[AC_PROG_LIBTOOL])
 # using curl-override.m4
 ])
-
-dnl Override some Libtool tests
-dnl -------------------------------------------------
-dnl This is done to prevent Libtool 1.5.X from doing
-dnl unnecesary C++, Fortran and Java tests and reduce
-dnl resulting configure script by nearly 300 Kb.
-
-m4_define([AC_LIBTOOL_LANG_CXX_CONFIG],[:])
-m4_define([AC_LIBTOOL_LANG_F77_CONFIG],[:])
-m4_define([AC_LIBTOOL_LANG_GCJ_CONFIG],[:])
 
 dnl Override Autoconf's AC_LANG_PROGRAM (C)
 dnl -------------------------------------------------
@@ -83,28 +73,4 @@ char $1 ();
 choke me
 #endif
 ], [return $1 ();])])
-
-dnl Override Autoconf's PATH_SEPARATOR check
-dnl -------------------------------------------------
-dnl This is done to ensure that the same check is
-dnl used across different Autoconf versions and to
-dnl allow us to use this macro early enough in the
-dnl configure script.
-
-m4_defun([_AS_PATH_SEPARATOR_PREPARE],
-[CURL_CHECK_PATH_SEPARATOR
-m4_define([$0],[])])
-
-m4_defun([_LT_AC_LIBTOOL_SYS_PATH_SEPARATOR],
-[CURL_CHECK_PATH_SEPARATOR
-m4_define([$0],[])])
-
-dnl Override Autoconf's AC_CONFIG_MACRO_DIR (DIR)
-dnl -------------------------------------------------
-dnl This is an emulation of Autoconf's 2.61 macro.
-dnl This is done to use fixed macro across Autoconf
-dnl versions, and avoid warnings from modern libtool
-dnl which traces usage of this macro.
-
-AC_DEFUN([AC_CONFIG_MACRO_DIR],[:])
 

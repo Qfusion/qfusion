@@ -73,7 +73,7 @@ static void rtsp_options(CURL *curl, const char *uri)
   CURLcode res = CURLE_OK;
   printf("\nRTSP: OPTIONS %s\n", uri);
   my_curl_easy_setopt(curl, CURLOPT_RTSP_STREAM_URI, uri);
-  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_OPTIONS);
+  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, (long)CURL_RTSPREQ_OPTIONS);
   my_curl_easy_perform(curl);
 }
 
@@ -93,7 +93,7 @@ static void rtsp_describe(CURL *curl, const char *uri,
     printf("Writing SDP to '%s'\n", sdp_filename);
   }
   my_curl_easy_setopt(curl, CURLOPT_WRITEDATA, sdp_fp);
-  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_DESCRIBE);
+  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, (long)CURL_RTSPREQ_DESCRIBE);
   my_curl_easy_perform(curl);
   my_curl_easy_setopt(curl, CURLOPT_WRITEDATA, stdout);
   if (sdp_fp != stdout) {
@@ -109,7 +109,7 @@ static void rtsp_setup(CURL *curl, const char *uri, const char *transport)
   printf("      TRANSPORT %s\n", transport);
   my_curl_easy_setopt(curl, CURLOPT_RTSP_STREAM_URI, uri);
   my_curl_easy_setopt(curl, CURLOPT_RTSP_TRANSPORT, transport);
-  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_SETUP);
+  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, (long)CURL_RTSPREQ_SETUP);
   my_curl_easy_perform(curl);
 }
 
@@ -121,7 +121,7 @@ static void rtsp_play(CURL *curl, const char *uri, const char *range)
   printf("\nRTSP: PLAY %s\n", uri);
   my_curl_easy_setopt(curl, CURLOPT_RTSP_STREAM_URI, uri);
   my_curl_easy_setopt(curl, CURLOPT_RANGE, range);
-  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_PLAY);
+  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, (long)CURL_RTSPREQ_PLAY);
   my_curl_easy_perform(curl);
 }
 
@@ -131,7 +131,7 @@ static void rtsp_teardown(CURL *curl, const char *uri)
 {
   CURLcode res = CURLE_OK;
   printf("\nRTSP: TEARDOWN %s\n", uri);
-  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, CURL_RTSPREQ_TEARDOWN);
+  my_curl_easy_setopt(curl, CURLOPT_RTSP_REQUEST, (long)CURL_RTSPREQ_TEARDOWN);
   my_curl_easy_perform(curl);
 }
 
@@ -178,7 +178,7 @@ int main(int argc, char * const argv[])
 #endif
   const char *range = "0.000-";
   int rc = EXIT_SUCCESS;
-  char *basename = NULL;
+  char *base_name = NULL;
 
   printf("\nRTSP request %s\n", VERSION_STR);
   printf("    Project web site: http://code.google.com/p/rtsprequest/\n");
@@ -186,20 +186,20 @@ int main(int argc, char * const argv[])
 
   /* check command line */
   if ((argc != 2) && (argc != 3)) {
-    basename = strrchr(argv[0], '/');
-    if (basename == NULL) {
-      basename = strrchr(argv[0], '\\');
+    base_name = strrchr(argv[0], '/');
+    if (base_name == NULL) {
+      base_name = strrchr(argv[0], '\\');
     }
-    if (basename == NULL) {
-      basename = argv[0];
+    if (base_name == NULL) {
+      base_name = argv[0];
     } else {
-      basename++;
+      base_name++;
     }
-    printf("Usage:   %s url [transport]\n", basename);
+    printf("Usage:   %s url [transport]\n", base_name);
     printf("         url of video server\n");
     printf("         transport (optional) specifier for media stream protocol\n");
     printf("         default transport: %s\n", transport);
-    printf("Example: %s rtsp://192.168.0.2/media/video1\n\n", basename);
+    printf("Example: %s rtsp://192.168.0.2/media/video1\n\n", base_name);
     rc = EXIT_FAILURE;
   } else {
     const char *url = argv[1];

@@ -47,9 +47,14 @@ p.roffit {
 
 <p class="level0"><a name="NAME"></a><h2 class="nroffsh">NAME</h2>
 <p class="level0">curl_multi_socket - reads/writes available data <a name="SYNOPSIS"></a><h2 class="nroffsh">SYNOPSIS</h2>
-<p class="level0">
-<p class="level0">#include &lt;curl/curl.h&gt; CURLMcode curl_multi_socket(CURLM * multi_handle, curl_socket_t sockfd, &nbsp;                           int *running_handles); 
-<p class="level0">CURLMcode curl_multi_socket_all(CURLM *multi_handle, &nbsp;                               int *running_handles); 
+<p class="level0"><pre>
+<p class="level0">#include &lt;curl/curl.h&gt;
+ CURLMcode curl_multi_socket(CURLM * multi_handle, curl_socket_t sockfd,
+ &nbsp;                           int *running_handles);
+ <p class="level0">CURLMcode curl_multi_socket_all(CURLM *multi_handle,
+ &nbsp;                               int *running_handles);
+ </pre>
+
 <p class="level0"><a name="DESCRIPTION"></a><h2 class="nroffsh">DESCRIPTION</h2>
 <p class="level0">These functions are deprecated. Do not use! See <a class="emphasis" href="./curl_multi_socket_action.html">curl_multi_socket_action(3)</a> instead! 
 <p class="level0">At return, the integer <span Class="bold">running_handles</span> points to will contain the number of still running easy handles within the multi handle. When this number reaches zero, all transfers are complete/done. Note that when you call <a class="emphasis" href="./curl_multi_socket_action.html">curl_multi_socket_action(3)</a> on a specific socket and the counter decreases by one, it DOES NOT necessarily mean that this exact socket/transfer is the one that completed. Use <a class="emphasis" href="./curl_multi_info_read.html">curl_multi_info_read(3)</a> to figure out which easy handle that completed. 
@@ -58,10 +63,14 @@ p.roffit {
 <p class="level0">Usage of <a class="emphasis" href="./curl_multi_socket.html">curl_multi_socket(3)</a> is deprecated, whereas the function is equivalent to <a class="emphasis" href="./curl_multi_socket_action.html">curl_multi_socket_action(3)</a> with <span Class="bold">ev_bitmask</span> set to 0. 
 <p class="level0">Force libcurl to (re-)check all its internal sockets and transfers instead of just a single one by calling <a class="bold" href="./curl_multi_socket_all.html">curl_multi_socket_all(3)</a>. Note that there should not be any reason to use this function! <a name="CALLBACK"></a><h2 class="nroffsh">CALLBACK DETAILS</h2>
 <p class="level0">
-<p class="level0">The socket <span Class="bold">callback</span> function uses a prototype like this 
-<p class="level0">
-<p class="level0">&nbsp; int curl_socket_callback(CURL *easy,      /* easy handle */ &nbsp;                          curl_socket_t s, /* socket */ &nbsp;                          int action,      /* see values below */ &nbsp;                          void *userp,    /* private callback pointer */ &nbsp;                          void *socketp); /* private socket pointer */ 
-<p class="level0">
+<p class="level0">The socket <span Class="bold">callback</span> function uses a prototype like this <pre>
+<p class="level0"><p class="level0">&nbsp; int curl_socket_callback(CURL *easy,      /* easy handle */
+ &nbsp;                          curl_socket_t s, /* socket */
+ &nbsp;                          int action,      /* see values below */
+ &nbsp;                          void *userp,    /* private callback pointer */
+ &nbsp;                          void *socketp); /* private socket pointer */
+ <p class="level0"></pre>
+
 <p class="level0">The callback MUST return 0. 
 <p class="level0">The <span Class="emphasis">easy</span> argument is a pointer to the easy handle that deals with this particular socket. Note that a single handle may work with several sockets simultaneously. 
 <p class="level0">The <span Class="emphasis">s</span> argument is the actual socket value as you use it within your system. 

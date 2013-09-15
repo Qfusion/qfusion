@@ -20,7 +20,7 @@ BUGS
 1.1 There are still bugs
 
   Curl and libcurl have grown substantially since the beginning. At the time
-  of writing (September 2011), there are about 66000 lines of source code, and
+  of writing (January 2013), there are about 83,000 lines of source code, and
   by the time you read this it has probably grown even more.
 
   Of course there are lots of bugs left. And lots of misfeatures.
@@ -35,9 +35,11 @@ BUGS
   have a go at a solution. You can optionally also post your bug/problem at
   curl's bug tracking system over at
 
-        http://sourceforge.net/bugs/?group_id=976
+        https://sourceforge.net/p/curl/bugs/
 
-  (but please read the sections below first before doing that)
+  Please read the rest of this document below first before doing that! Also,
+  you need to login to your sourceforge account before being able to submit a
+  bug report (necessary evil done to avoid spam).
 
   If you feel you need to ask around first, find a suitable mailing list and
   post there. The lists are available on http://curl.haxx.se/mail/
@@ -91,7 +93,7 @@ BUGS
   your problem and to work on a fix (if we agree it truly is a problem).
 
   Lots of problems that appear to be libcurl problems are actually just abuses
-  of the libcurl API or other malfunctions in your applications. It is adviced
+  of the libcurl API or other malfunctions in your applications. It is advised
   that you run your problematic program using a memory debug tool like
   valgrind or similar before you post memory-related or "crashing" problems to
   us.

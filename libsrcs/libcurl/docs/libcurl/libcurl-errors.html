@@ -70,14 +70,16 @@ p.roffit {
 <p class="level1">After connecting to a FTP server, libcurl expects to get a certain reply back. This error code implies that it got a strange or bad reply. The given remote server is probably not an OK FTP server. 
 <p class="level0"><a name="CURLEREMOTEACCESSDENIED"></a><span class="nroffip">CURLE_REMOTE_ACCESS_DENIED (9)</span> 
 <p class="level1">We were denied access to the resource given in the URL.  For FTP, this occurs while trying to change to the remote directory. 
+<p class="level0"><a name="CURLEFTPACCEPTFAILED"></a><span class="nroffip">CURLE_FTP_ACCEPT_FAILED (10)</span> 
+<p class="level1">While waiting for the server to connect back when an active FTP session is used, an error code was sent over the control connection or similar. 
 <p class="level0"><a name="CURLEFTPWEIRDPASSREPLY"></a><span class="nroffip">CURLE_FTP_WEIRD_PASS_REPLY (11)</span> 
 <p class="level1">After having sent the FTP password to the server, libcurl expects a proper reply. This error code indicates that an unexpected code was returned. 
+<p class="level0"><a name="CURLEFTPACCEPTTIMEOUT"></a><span class="nroffip">CURLE_FTP_ACCEPT_TIMEOUT (12)</span> 
+<p class="level1">During an active FTP session while waiting for the server to connect, the <span Class="emphasis">CURLOPT_ACCEPTTIMOUT_MS</span> (or the internal default) timeout expired. 
 <p class="level0"><a name="CURLEFTPWEIRDPASVREPLY"></a><span class="nroffip">CURLE_FTP_WEIRD_PASV_REPLY (13)</span> 
 <p class="level1">libcurl failed to get a sensible result back from the server as a response to either a PASV or a EPSV command. The server is flawed. 
 <p class="level0"><a name="CURLEFTPWEIRD227FORMAT"></a><span class="nroffip">CURLE_FTP_WEIRD_227_FORMAT (14)</span> 
 <p class="level1">FTP servers return a 227-line as a response to a PASV command. If libcurl fails to parse that line, this return code is passed back. 
-<p class="level0"><a name="CURLEFTPPRETFAILED"></a><span class="nroffip">CURLE_FTP_PRET_FAILED (84)</span> 
-<p class="level1">The FTP server does not understand the PRET command at all or does not support the given argument. Be careful when using <span Class="emphasis">CURLOPT_CUSTOMREQUEST</span>, a custom LIST command will be sent with PRET CMD before PASV as well. (Added in 7.20.0) 
 <p class="level0"><a name="CURLEFTPCANTGETHOST"></a><span class="nroffip">CURLE_FTP_CANT_GET_HOST (15)</span> 
 <p class="level1">An internal failure to lookup the host used for the new connection. 
 <p class="level0"><a name="CURLEFTPCOULDNTSETTYPE"></a><span class="nroffip">CURLE_FTP_COULDNT_SET_TYPE (17)</span> 
@@ -197,7 +199,7 @@ p.roffit {
 <p class="level0"><a name="CURLESSLISSUERERROR"></a><span class="nroffip">CURLE_SSL_ISSUER_ERROR (83)</span> 
 <p class="level1">Issuer check failed (Added in 7.19.0) 
 <p class="level0"><a name="CURLEFTPPRETFAILED"></a><span class="nroffip">CURLE_FTP_PRET_FAILED (84)</span> 
-<p class="level1">PRET command failed 
+<p class="level1">The FTP server does not understand the PRET command at all or does not support the given argument. Be careful when using <span Class="emphasis">CURLOPT_CUSTOMREQUEST</span>, a custom LIST command will be sent with PRET CMD before PASV as well. (Added in 7.20.0) 
 <p class="level0"><a name="CURLERTSPCSEQERROR"></a><span class="nroffip">CURLE_RTSP_CSEQ_ERROR (85)</span> 
 <p class="level1">Mismatch of RTSP CSeq numbers. 
 <p class="level0"><a name="CURLERTSPSESSIONERROR"></a><span class="nroffip">CURLE_RTSP_SESSION_ERROR (86)</span> 
@@ -206,11 +208,13 @@ p.roffit {
 <p class="level1">Unable to parse FTP file list (during FTP wildcard downloading). 
 <p class="level0"><a name="CURLECHUNKFAILED"></a><span class="nroffip">CURLE_CHUNK_FAILED (88)</span> 
 <p class="level1">Chunk callback reported error. 
+<p class="level0"><a name="CURLENOCONNECTIONAVAILABLE"></a><span class="nroffip">CURLE_NO_CONNECTION_AVAILABLE (89)</span> 
+<p class="level1">(For internal use only, will never be returned by libcurl) No connection available, the session will be queued. (added in 7.30.0) 
 <p class="level0"><a name="CURLEOBSOLETE"></a><span class="nroffip">CURLE_OBSOLETE*</span> 
 <p class="level1">These error codes will never be returned. They were used in an old libcurl version and are currently unused. <a name="CURLMcode"></a><h2 class="nroffsh">CURLMcode</h2>
 <p class="level0">This is the generic return code used by functions in the libcurl multi interface. Also consider <a class="emphasis" href="./curl_multi_strerror.html">curl_multi_strerror(3)</a>. 
 <p class="level0"><a name="CURLMCALLMULTIPERFORM"></a><span class="nroffip">CURLM_CALL_MULTI_PERFORM (-1)</span> 
-<p class="level1">This is not really an error. It means you should call <a class="emphasis" href="./curl_multi_perform.html">curl_multi_perform(3)</a> again without doing select() or similar in between. 
+<p class="level1">This is not really an error. It means you should call <a class="emphasis" href="./curl_multi_perform.html">curl_multi_perform(3)</a> again without doing select() or similar in between. Before version 7.20.0 this could be returned by <a class="emphasis" href="./curl_multi_perform.html">curl_multi_perform(3)</a>, but in later versions this return code is never used. 
 <p class="level0"><a name="CURLMOK"></a><span class="nroffip">CURLM_OK (0)</span> 
 <p class="level1">Things are fine. 
 <p class="level0"><a name="CURLMBADHANDLE"></a><span class="nroffip">CURLM_BAD_HANDLE (1)</span> 
@@ -235,6 +239,8 @@ p.roffit {
 <p class="level0"><a name="CURLSHEINVALID"></a><span class="nroffip">CURLSHE_INVALID (3)</span> 
 <p class="level1">An invalid share object was passed to the function. 
 <p class="level0"><a name="CURLSHENOMEM"></a><span class="nroffip">CURLSHE_NOMEM (4)</span> 
-<p class="level1">Not enough memory was available. (Added in 7.12.0) <p class="roffit">
+<p class="level1">Not enough memory was available. (Added in 7.12.0) 
+<p class="level0"><a name="CURLSHENOTBUILTIN"></a><span class="nroffip">CURLSHE_NOT_BUILT_IN (5)</span> 
+<p class="level1">The requested sharing could not be done because the library you use don't have that particular feature enabled. (Added in 7.23.0) <p class="roffit">
  This HTML page was made with <a href="http://daniel.haxx.se/projects/roffit/">roffit</a>.
 </body></html>

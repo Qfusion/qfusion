@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -21,7 +21,7 @@
 #***************************************************************************
 
 # File version for 'aclocal' use. Keep it a single number.
-# serial 58
+# serial 66
 
 
 dnl CURL_CHECK_COMPILER
@@ -97,7 +97,7 @@ AC_DEFUN([CURL_CHECK_COMPILER_CLANG], [
     flags_dbg_all="$flags_dbg_all -gdwarf-2"
     flags_dbg_all="$flags_dbg_all -gvms"
     flags_dbg_yes="-g"
-    flags_dbg_off="-g0"
+    flags_dbg_off=""
     flags_opt_all="-O -O0 -O1 -O2 -Os -O3 -O4"
     flags_opt_yes="-Os"
     flags_opt_off="-O0"
@@ -121,7 +121,7 @@ AC_DEFUN([CURL_CHECK_COMPILER_DEC_C], [
     compiler_id="DEC_C"
     flags_dbg_all="-g -g0 -g1 -g2 -g3"
     flags_dbg_yes="-g2"
-    flags_dbg_off="-g0"
+    flags_dbg_off=""
     flags_opt_all="-O -O0 -O1 -O2 -O3 -O4"
     flags_opt_yes="-O1"
     flags_opt_off="-O0"
@@ -157,10 +157,11 @@ AC_DEFUN([CURL_CHECK_COMPILER_GNU_C], [
     flags_dbg_all="$flags_dbg_all -gdwarf-2"
     flags_dbg_all="$flags_dbg_all -gvms"
     flags_dbg_yes="-g"
-    flags_dbg_off="-g0"
+    flags_dbg_off=""
     flags_opt_all="-O -O0 -O1 -O2 -O3 -Os"
     flags_opt_yes="-O2"
     flags_opt_off="-O0"
+    CURL_CHECK_DEF([_WIN32], [], [silent])
   else
     AC_MSG_RESULT([no])
   fi
@@ -235,7 +236,7 @@ AC_DEFUN([CURL_CHECK_COMPILER_INTEL_C], [
       compiler_id="INTEL_UNIX_C"
       flags_dbg_all="-g -g0"
       flags_dbg_yes="-g"
-      flags_dbg_off="-g0"
+      flags_dbg_off=""
       flags_opt_all="-O -O0 -O1 -O2 -O3 -Os"
       flags_opt_yes="-O2"
       flags_opt_off="-O0"
@@ -299,7 +300,7 @@ AC_DEFUN([CURL_CHECK_COMPILER_SGI_MIPS_C], [
     compiler_id="SGI_MIPS_C"
     flags_dbg_all="-g -g0 -g1 -g2 -g3"
     flags_dbg_yes="-g"
-    flags_dbg_off="-g0"
+    flags_dbg_off=""
     flags_opt_all="-O -O0 -O1 -O2 -O3 -Ofast"
     flags_opt_yes="-O2"
     flags_opt_off="-O0"
@@ -326,7 +327,7 @@ AC_DEFUN([CURL_CHECK_COMPILER_SGI_MIPSPRO_C], [
     compiler_id="SGI_MIPSPRO_C"
     flags_dbg_all="-g -g0 -g1 -g2 -g3"
     flags_dbg_yes="-g"
-    flags_dbg_off="-g0"
+    flags_dbg_off=""
     flags_opt_all="-O -O0 -O1 -O2 -O3 -Ofast"
     flags_opt_yes="-O2"
     flags_opt_off="-O0"
@@ -855,8 +856,6 @@ AC_DEFUN([CURL_SET_COMPILER_WARNING_OPTS], [
       CLANG)
         #
         if test "$want_warnings" = "yes"; then
-          dnl All versions of clang support the same warnings as at least
-          dnl gcc 4.2.1 except -Wunused.
           tmp_CFLAGS="$tmp_CFLAGS -pedantic"
           tmp_CFLAGS="$tmp_CFLAGS -Wall -Wextra"
           tmp_CFLAGS="$tmp_CFLAGS -Wpointer-arith -Wwrite-strings"
@@ -964,6 +963,11 @@ AC_DEFUN([CURL_SET_COMPILER_WARNING_OPTS], [
             tmp_CFLAGS="$tmp_CFLAGS -Wdeclaration-after-statement"
           fi
           #
+          dnl Only gcc 4.0 or later
+          if test "$compiler_num" -ge "400"; then
+            tmp_CFLAGS="$tmp_CFLAGS -Wstrict-aliasing=3"
+          fi
+          #
           dnl Only gcc 4.2 or later
           if test "$compiler_num" -ge "402"; then
             tmp_CFLAGS="$tmp_CFLAGS -Wcast-align"
@@ -975,6 +979,14 @@ AC_DEFUN([CURL_SET_COMPILER_WARNING_OPTS], [
             tmp_CFLAGS="$tmp_CFLAGS -Wmissing-parameter-type -Wempty-body"
             tmp_CFLAGS="$tmp_CFLAGS -Wclobbered -Wignored-qualifiers"
             tmp_CFLAGS="$tmp_CFLAGS -Wconversion -Wno-sign-conversion -Wvla"
+          fi
+          #
+          dnl Only gcc 4.5 or later
+          if test "$compiler_num" -ge "405"; then
+            dnl Only windows targets
+            if test "$curl_cv_have_def__WIN32" = "yes"; then
+              tmp_CFLAGS="$tmp_CFLAGS -Wno-pedantic-ms-format"
+            fi
           fi
           #
         fi
@@ -1183,6 +1195,7 @@ dnl library or as a shared one on those systems on which
 dnl shared libraries support undefined symbols.
 
 AC_DEFUN([CURL_CHECK_CURLDEBUG], [
+  AC_REQUIRE([XC_LIBTOOL])dnl
   AC_REQUIRE([CURL_SHFUNC_SQUEEZE])dnl
   supports_curldebug="unknown"
   if test "$want_curldebug" = "yes"; then
@@ -1198,7 +1211,7 @@ AC_DEFUN([CURL_CHECK_CURLDEBUG], [
     fi
     if test "$supports_curldebug" != "no"; then
       if test "$enable_shared" = "yes" &&
-        test "$need_no_undefined" = "yes"; then
+        test "x$xc_lt_shlib_use_no_undefined" = 'xyes'; then
         supports_curldebug="no"
         AC_MSG_WARN([shared library does not support undefined symbols.])
       fi
@@ -1225,45 +1238,6 @@ AC_DEFUN([CURL_CHECK_CURLDEBUG], [
   fi
 ])
 
-
-dnl CURL_CHECK_NO_UNDEFINED
-dnl -------------------------------------------------
-dnl Checks if the -no-undefined flag must be used when
-dnl building shared libraries. This is required on all
-dnl systems on which shared libraries should not have
-dnl references to undefined symbols. This check should
-dnl not be done before AC-PROG-LIBTOOL.
-
-AC_DEFUN([CURL_CHECK_NO_UNDEFINED], [
-  AC_BEFORE([$0],[CURL_CHECK_CURLDEBUG])dnl
-  AC_MSG_CHECKING([if shared libraries need -no-undefined])
-  need_no_undefined="no"
-  case $host in
-    *-*-cygwin* | *-*-mingw* | *-*-pw32* | *-*-cegcc* | *-*-aix*)
-      need_no_undefined="yes"
-      ;;
-  esac
-  if test "x$allow_undefined" = "xno"; then
-    need_no_undefined="yes"
-  elif test "x$allow_undefined_flag" = "xunsupported"; then
-    need_no_undefined="yes"
-  fi
-  AC_MSG_RESULT($need_no_undefined)
-])
-
-
-dnl CURL_CHECK_PROG_CC
-dnl -------------------------------------------------
-dnl Check for compiler program, preventing CFLAGS and
-dnl CPPFLAGS from being unexpectedly changed.
-
-AC_DEFUN([CURL_CHECK_PROG_CC], [
-  ac_save_CFLAGS="$CFLAGS"
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  AC_PROG_CC
-  CFLAGS="$ac_save_CFLAGS"
-  CPPFLAGS="$ac_save_CPPFLAGS"
-])
 
 
 dnl CURL_CHECK_COMPILER_HALT_ON_ERROR
@@ -1372,6 +1346,150 @@ AC_DEFUN([CURL_CHECK_COMPILER_STRUCT_MEMBER_SIZE], [
     AC_MSG_RESULT([no])
     AC_MSG_ERROR([compiler fails struct member size checking.])
   fi
+])
+
+
+dnl CURL_CHECK_COMPILER_SYMBOL_HIDING
+dnl -------------------------------------------------
+dnl Verify if compiler supports hiding library internal symbols, setting
+dnl shell variable supports_symbol_hiding value as appropriate, as well as
+dnl variables symbol_hiding_CFLAGS and symbol_hiding_EXTERN when supported.
+
+AC_DEFUN([CURL_CHECK_COMPILER_SYMBOL_HIDING], [
+  AC_REQUIRE([CURL_CHECK_COMPILER])dnl
+  AC_BEFORE([$0],[CURL_CONFIGURE_SYMBOL_HIDING])dnl
+  AC_MSG_CHECKING([if compiler supports hiding library internal symbols])
+  supports_symbol_hiding="no"
+  symbol_hiding_CFLAGS=""
+  symbol_hiding_EXTERN=""
+  tmp_CFLAGS=""
+  tmp_EXTERN=""
+  case "$compiler_id" in
+    CLANG)
+      dnl All versions of clang support -fvisibility=
+      tmp_EXTERN="__attribute__ ((__visibility__ (\"default\")))"
+      tmp_CFLAGS="-fvisibility=hidden"
+      supports_symbol_hiding="yes"
+      ;;
+    GNU_C)
+      dnl Only gcc 3.4 or later
+      if test "$compiler_num" -ge "304"; then
+        if $CC --help --verbose 2>&1 | grep fvisibility= > /dev/null ; then
+          tmp_EXTERN="__attribute__ ((__visibility__ (\"default\")))"
+          tmp_CFLAGS="-fvisibility=hidden"
+          supports_symbol_hiding="yes"
+        fi
+      fi
+      ;;
+    INTEL_UNIX_C)
+      dnl Only icc 9.0 or later
+      if test "$compiler_num" -ge "900"; then
+        if $CC --help --verbose 2>&1 | grep fvisibility= > /dev/null ; then
+          tmp_save_CFLAGS="$CFLAGS"
+          CFLAGS="$CFLAGS -fvisibility=hidden"
+          AC_LINK_IFELSE([
+            AC_LANG_PROGRAM([[
+#             include <stdio.h>
+            ]],[[
+              printf("icc fvisibility bug test");
+            ]])
+          ],[
+            tmp_EXTERN="__attribute__ ((__visibility__ (\"default\")))"
+            tmp_CFLAGS="-fvisibility=hidden"
+            supports_symbol_hiding="yes"
+          ])
+          CFLAGS="$tmp_save_CFLAGS"
+        fi
+      fi
+      ;;
+    SUNPRO_C)
+      if $CC 2>&1 | grep flags >/dev/null && $CC -flags | grep xldscope= >/dev/null ; then
+        tmp_EXTERN="__global"
+        tmp_CFLAGS="-xldscope=hidden"
+        supports_symbol_hiding="yes"
+      fi
+      ;;
+  esac
+  if test "$supports_symbol_hiding" = "yes"; then
+    tmp_save_CFLAGS="$CFLAGS"
+    CFLAGS="$tmp_save_CFLAGS $tmp_CFLAGS"
+    squeeze CFLAGS
+    AC_COMPILE_IFELSE([
+      AC_LANG_PROGRAM([[
+        $tmp_EXTERN char *dummy(char *buff);
+        char *dummy(char *buff)
+        {
+         if(buff)
+           return ++buff;
+         else
+           return buff;
+        }
+      ]],[[
+        char b[16];
+        char *r = dummy(&b[0]);
+        if(r)
+          return (int)*r;
+      ]])
+    ],[
+      supports_symbol_hiding="yes"
+      if test -f conftest.err; then
+        grep 'visibility' conftest.err >/dev/null
+        if test "$?" -eq "0"; then
+          supports_symbol_hiding="no"
+        fi
+      fi
+    ],[
+      supports_symbol_hiding="no"
+      echo " " >&6
+      sed 's/^/cc-src: /' conftest.$ac_ext >&6
+      sed 's/^/cc-err: /' conftest.err >&6
+      echo " " >&6
+    ])
+    CFLAGS="$tmp_save_CFLAGS"
+  fi
+  if test "$supports_symbol_hiding" = "yes"; then
+    AC_MSG_RESULT([yes])
+    symbol_hiding_CFLAGS="$tmp_CFLAGS"
+    symbol_hiding_EXTERN="$tmp_EXTERN"
+  else
+    AC_MSG_RESULT([no])
+  fi
+])
+
+
+dnl CURL_CHECK_COMPILER_PROTOTYPE_MISMATCH
+dnl -------------------------------------------------
+dnl Verifies if the compiler actually halts after the
+dnl compilation phase without generating any object
+dnl code file, when the source code tries to redefine
+dnl a prototype which does not match previous one.
+
+AC_DEFUN([CURL_CHECK_COMPILER_PROTOTYPE_MISMATCH], [
+  AC_REQUIRE([CURL_CHECK_COMPILER_HALT_ON_ERROR])dnl
+  AC_MSG_CHECKING([if compiler halts on function prototype mismatch])
+  AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM([[
+#     include <stdlib.h>
+      int rand(int n);
+      int rand(int n)
+      {
+        if(n)
+          return ++n;
+        else
+          return n;
+      }
+    ]],[[
+      int i[2];
+      int j = rand(i[0]);
+      if(j)
+        return j;
+    ]])
+  ],[
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([compiler does not halt on function prototype mismatch.])
+  ],[
+    AC_MSG_RESULT([yes])
+  ])
 ])
 
 

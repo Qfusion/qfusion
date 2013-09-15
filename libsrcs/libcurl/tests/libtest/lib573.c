@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -21,12 +21,12 @@
  ***************************************************************************/
 #include "test.h"
 
+#include "testtrace.h"
 #include "testutil.h"
 #include "warnless.h"
 #include "memdebug.h"
 
-#define MAIN_LOOP_HANG_TIMEOUT     90 * 1000
-#define MULTI_PERFORM_HANG_TIMEOUT 60 * 1000
+#define TEST_HANG_TIMEOUT 60 * 1000
 
 /*
  * Get a single URL without select().
@@ -34,98 +34,77 @@
 
 int test(char *URL)
 {
-  CURL *c;
+  CURL *c = NULL;
   CURLM *m = NULL;
   int res = 0;
-  int running=1;
+  int running = 1;
   double connect_time = 0.0;
-  struct timeval mp_start;
-  char mp_timedout = FALSE;
+  double dbl_epsilon;
 
-  if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
-    fprintf(stderr, "curl_global_init() failed\n");
-    return TEST_ERR_MAJOR_BAD;
-  }
+  dbl_epsilon = 1.0;
+  do {
+    dbl_epsilon /= 2.0;
+  } while ((double)(1.0 + (dbl_epsilon/2.0)) > (double)1.0);
 
-  if ((c = curl_easy_init()) == NULL) {
-    fprintf(stderr, "curl_easy_init() failed\n");
-    curl_global_cleanup();
-    return TEST_ERR_MAJOR_BAD;
-  }
+  start_test_timing();
 
-  test_setopt(c, CURLOPT_HEADER, 1L);
-  test_setopt(c, CURLOPT_URL, URL);
+  global_init(CURL_GLOBAL_ALL);
 
-  if ((m = curl_multi_init()) == NULL) {
-    fprintf(stderr, "curl_multi_init() failed\n");
-    curl_easy_cleanup(c);
-    curl_global_cleanup();
-    return TEST_ERR_MAJOR_BAD;
-  }
+  easy_init(c);
 
-  if ((res = (int)curl_multi_add_handle(m, c)) != CURLM_OK) {
-    fprintf(stderr, "curl_multi_add_handle() failed, "
-            "with code %d\n", res);
-    curl_multi_cleanup(m);
-    curl_easy_cleanup(c);
-    curl_global_cleanup();
-    return TEST_ERR_MAJOR_BAD;
-  }
+  easy_setopt(c, CURLOPT_HEADER, 1L);
+  easy_setopt(c, CURLOPT_URL, URL);
 
-  mp_timedout = FALSE;
-  mp_start = tutil_tvnow();
+  libtest_debug_config.nohex = 1;
+  libtest_debug_config.tracetime = 1;
+  easy_setopt(c, CURLOPT_DEBUGDATA, &libtest_debug_config);
+  easy_setopt(c, CURLOPT_DEBUGFUNCTION, libtest_debug_cb);
+  easy_setopt(c, CURLOPT_VERBOSE, 1L);
+
+  multi_init(m);
+
+  multi_add_handle(m, c);
 
   while (running) {
-    static struct timeval timeout = /* 100 ms */ { 0, 100000L };
+    struct timeval timeout;
     fd_set fdread, fdwrite, fdexcep;
-    int maxfd = -1;
+    int maxfd = -99;
 
-    res = (int)curl_multi_perform(m, &running);
-    if (tutil_tvdiff(tutil_tvnow(), mp_start) >
-        MULTI_PERFORM_HANG_TIMEOUT) {
-      mp_timedout = TRUE;
-      break;
-    }
-    if (running <= 0) {
-      fprintf(stderr, "nothing left running.\n");
-      break;
-    }
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000L; /* 100 ms */
+
+    multi_perform(m, &running);
+
+    abort_on_test_timeout();
+
+    if(!running)
+      break; /* done */
 
     FD_ZERO(&fdread);
     FD_ZERO(&fdwrite);
     FD_ZERO(&fdexcep);
-    curl_multi_fdset(m, &fdread, &fdwrite, &fdexcep, &maxfd);
 
-    /* In a real-world program you OF COURSE check the return code of the
-       function calls.  On success, the value of maxfd is guaranteed to be
-       greater or equal than -1.  We call select(maxfd + 1, ...), specially in
-       case of (maxfd == -1), we call select(0, ...), which is basically equal
-       to sleep. */
+    multi_fdset(m, &fdread, &fdwrite, &fdexcep, &maxfd);
 
-    if (select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout) == -1) {
-      res = ~CURLM_OK;
-      break;
-    }
-  }
+    /* At this point, maxfd is guaranteed to be greater or equal than -1. */
 
-  if (mp_timedout) {
-    fprintf(stderr, "mp_timedout\nABORTING TEST, since it seems "
-            "that it would have run forever.\n");
-    res = TEST_ERR_RUNS_FOREVER;
+    select_test(maxfd+1, &fdread, &fdwrite, &fdexcep, &timeout);
+
+    abort_on_test_timeout();
   }
 
   curl_easy_getinfo(c, CURLINFO_CONNECT_TIME, &connect_time);
-  if (connect_time <= 0.0) {
-    fprintf(stderr, "connect time is <=0.0\n");
+  if (connect_time < dbl_epsilon) {
+    fprintf(stderr, "connect time is < epsilon\n");
     res = TEST_ERR_MAJOR_BAD;
   }
 
 test_cleanup:
 
-  if(m) {
-    curl_multi_remove_handle(m, c);
-    curl_multi_cleanup(m);
-  }
+  /* proper cleanup sequence - type PA */
+
+  curl_multi_remove_handle(m, c);
+  curl_multi_cleanup(m);
   curl_easy_cleanup(c);
   curl_global_cleanup();
 

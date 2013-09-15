@@ -5,7 +5,7 @@
 .\" *                            | (__| |_| |  _ <| |___
 .\" *                             \___|\___/|_| \_\_____|
 .\" *
-.\" * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+.\" * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
 .\" *
 .\" * This software is licensed as described in the file COPYING, which
 .\" * you should have received as part of this distribution. The terms
@@ -66,20 +66,21 @@ remote server is probably not an OK FTP server.
 .IP "CURLE_REMOTE_ACCESS_DENIED (9)"
 We were denied access to the resource given in the URL.  For FTP, this occurs
 while trying to change to the remote directory.
+.IP "CURLE_FTP_ACCEPT_FAILED (10)"
+While waiting for the server to connect back when an active FTP session is
+used, an error code was sent over the control connection or similar.
 .IP "CURLE_FTP_WEIRD_PASS_REPLY (11)"
 After having sent the FTP password to the server, libcurl expects a proper
 reply. This error code indicates that an unexpected code was returned.
+.IP "CURLE_FTP_ACCEPT_TIMEOUT (12)"
+During an active FTP session while waiting for the server to connect, the
+\fICURLOPT_ACCEPTTIMOUT_MS\fP (or the internal default) timeout expired.
 .IP "CURLE_FTP_WEIRD_PASV_REPLY (13)"
 libcurl failed to get a sensible result back from the server as a response to
 either a PASV or a EPSV command. The server is flawed.
 .IP "CURLE_FTP_WEIRD_227_FORMAT (14)"
 FTP servers return a 227-line as a response to a PASV command. If libcurl
 fails to parse that line, this return code is passed back.
-.IP "CURLE_FTP_PRET_FAILED (84)"
-The FTP server does not understand the PRET command at all or does not support
-the given argument. Be careful when using \fICURLOPT_CUSTOMREQUEST\fP, a
-custom LIST command will be sent with PRET CMD before PASV as well. (Added in
-7.20.0)
 .IP "CURLE_FTP_CANT_GET_HOST (15)"
 An internal failure to lookup the host used for the new connection.
 .IP "CURLE_FTP_COULDNT_SET_TYPE (17)"
@@ -227,7 +228,10 @@ Failed to load CRL file (Added in 7.19.0)
 .IP "CURLE_SSL_ISSUER_ERROR (83)"
 Issuer check failed (Added in 7.19.0)
 .IP "CURLE_FTP_PRET_FAILED (84)"
-PRET command failed
+The FTP server does not understand the PRET command at all or does not support
+the given argument. Be careful when using \fICURLOPT_CUSTOMREQUEST\fP, a
+custom LIST command will be sent with PRET CMD before PASV as well. (Added in
+7.20.0)
 .IP "CURLE_RTSP_CSEQ_ERROR (85)"
 Mismatch of RTSP CSeq numbers.
 .IP "CURLE_RTSP_SESSION_ERROR (86)"
@@ -236,6 +240,9 @@ Mismatch of RTSP Session Identifiers.
 Unable to parse FTP file list (during FTP wildcard downloading).
 .IP "CURLE_CHUNK_FAILED (88)"
 Chunk callback reported error.
+.IP "CURLE_NO_CONNECTION_AVAILABLE (89)"
+(For internal use only, will never be returned by libcurl) No connection
+available, the session will be queued. (added in 7.30.0)
 .IP "CURLE_OBSOLETE*"
 These error codes will never be returned. They were used in an old libcurl
 version and are currently unused.
@@ -244,7 +251,10 @@ This is the generic return code used by functions in the libcurl multi
 interface. Also consider \fIcurl_multi_strerror(3)\fP.
 .IP "CURLM_CALL_MULTI_PERFORM (-1)"
 This is not really an error. It means you should call
-\fIcurl_multi_perform(3)\fP again without doing select() or similar in between.
+\fIcurl_multi_perform(3)\fP again without doing select() or similar in
+between. Before version 7.20.0 this could be returned by
+\fIcurl_multi_perform(3)\fP, but in later versions this return code is never
+used.
 .IP "CURLM_OK (0)"
 Things are fine.
 .IP "CURLM_BAD_HANDLE (1)"
@@ -277,3 +287,6 @@ An invalid share object was passed to the function.
 .IP "CURLSHE_NOMEM (4)"
 Not enough memory was available.
 (Added in 7.12.0)
+.IP "CURLSHE_NOT_BUILT_IN (5)"
+The requested sharing could not be done because the library you use don't have
+that particular feature enabled. (Added in 7.23.0)

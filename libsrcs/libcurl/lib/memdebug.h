@@ -8,7 +8,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -28,13 +28,9 @@
  * as well as the library. Do not mix with library internals!
  */
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #include <curl/curl.h>
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 
 #define CURL_MT_LOGFNAME_BUFSIZE 512
 
@@ -50,6 +46,11 @@ CURL_EXTERN void *curl_dorealloc(void *ptr, size_t size, int line,
                                  const char *source);
 CURL_EXTERN void curl_dofree(void *ptr, int line, const char *source);
 CURL_EXTERN char *curl_dostrdup(const char *str, int line, const char *source);
+#if defined(WIN32) && defined(UNICODE)
+CURL_EXTERN wchar_t *curl_dowcsdup(const wchar_t *str, int line,
+                                   const char *source);
+#endif
+
 CURL_EXTERN void curl_memdebug(const char *logname);
 CURL_EXTERN void curl_memlimit(long limit);
 CURL_EXTERN void curl_memlog(const char *format, ...);
@@ -87,6 +88,20 @@ CURL_EXTERN int curl_fclose(FILE *file, int line, const char *source);
 #define calloc(nbelem,size) curl_docalloc(nbelem, size, __LINE__, __FILE__)
 #define realloc(ptr,size) curl_dorealloc(ptr, size, __LINE__, __FILE__)
 #define free(ptr) curl_dofree(ptr, __LINE__, __FILE__)
+
+#ifdef WIN32
+#  ifdef UNICODE
+#    undef wcsdup
+#    define wcsdup(ptr) curl_dowcsdup(ptr, __LINE__, __FILE__)
+#    undef _wcsdup
+#    define _wcsdup(ptr) curl_dowcsdup(ptr, __LINE__, __FILE__)
+#    undef _tcsdup
+#    define _tcsdup(ptr) curl_dowcsdup(ptr, __LINE__, __FILE__)
+#  else
+#    undef _tcsdup
+#    define _tcsdup(ptr) curl_dostrdup(ptr, __LINE__, __FILE__)
+#  endif
+#endif
 
 #define socket(domain,type,protocol)\
  curl_socket(domain,type,protocol,__LINE__,__FILE__)
@@ -152,8 +167,10 @@ CURL_EXTERN int curl_fclose(FILE *file, int line, const char *source);
 /*
  * Curl_safefree defined as a macro to allow MemoryTracking feature
  * to log free() calls at same location where Curl_safefree is used.
+ * This macro also assigns NULL to given pointer when free'd.
  */
 
-#define Curl_safefree(ptr)  do {if((ptr)) free((ptr));} WHILE_FALSE
+#define Curl_safefree(ptr) \
+  do {if((ptr)) {free((ptr)); (ptr) = NULL;}} WHILE_FALSE
 
 #endif /* HEADER_CURL_MEMDEBUG_H */

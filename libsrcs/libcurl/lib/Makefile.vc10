@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1999 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1999 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -22,7 +22,7 @@
 
 # All files in the Makefile.vc* series are generated automatically from the
 # one made for MSVC version 6. Alas, if you want to do changes to any of the
-# fiels and send back to the project, edit the version six, make your diff and
+# files and send back to the project, edit the version six, make your diff and
 # mail curl-library.
 
 ###########################################################################
@@ -62,18 +62,18 @@
 # Makefile.msvc.names provides libcurl file names
 # ------------------------------------------------
 
-!INCLUDE ..\Makefile.msvc.names
+!INCLUDE ..\winbuild\Makefile.msvc.names
 
 !IFNDEF OPENSSL_PATH
-OPENSSL_PATH   = ../../openssl-0.9.8r
+OPENSSL_PATH   = ../../openssl-0.9.8y
 !ENDIF
 
 !IFNDEF LIBSSH2_PATH
-LIBSSH2_PATH   = ../../libssh2-1.2.8
+LIBSSH2_PATH   = ../../libssh2-1.4.3
 !ENDIF
 
 !IFNDEF ZLIB_PATH
-ZLIB_PATH  = ../../zlib
+ZLIB_PATH  = ../../zlib-1.2.8
 !ENDIF
 
 !IFNDEF MACHINE
@@ -103,23 +103,24 @@ WINDOWS_SDK_PATH = "$(PROGRAMFILES)\Microsoft SDK"
 #############################################################
 ## Nothing more to do below this line!
 
-CCNODBG    = cl.exe /O2 /DNDEBUG
-CCDEBUG    = cl.exe /Od /Gm /Zi /D_DEBUG /RTC1
-CFLAGSSSL  = /DUSE_SSLEAY /I "$(OPENSSL_PATH)/inc32" /I "$(OPENSSL_PATH)/inc32/openssl"
-CFLAGSSSH2 = /DUSE_LIBSSH2 /DCURL_DISABLE_LDAP /DHAVE_LIBSSH2 /DHAVE_LIBSSH2_H /DLIBSSH2_WIN32 /DLIBSSH2_LIBRARY /I "$(LIBSSH2_PATH)/include"
-CFLAGSZLIB = /DHAVE_ZLIB_H /DHAVE_ZLIB /DHAVE_LIBZ /I "$(ZLIB_PATH)"
-CFLAGS     = /I. /I../include /nologo /W3 /EHsc /DWIN32 /FD /c /DBUILDING_LIBCURL /D_BIND_TO_CURRENT_VCLIBS_VERSION=1
-CFLAGSLIB  = /DCURL_STATICLIB
-LNKDLL     = link.exe /DLL
-LNKLIB     = link.exe /lib
-LFLAGS     = /nologo /machine:$(MACHINE)
-SSLLIBS    = libeay32.lib ssleay32.lib
-ZLIBLIBSDLL= zdll.lib
-ZLIBLIBS   = zlib.lib
-WINLIBS    = ws2_32.lib wldap32.lib
-CFLAGS     = $(CFLAGS)
+CCNODBG      = cl.exe /O2 /DNDEBUG
+CCDEBUG      = cl.exe /Od /Gm /Zi /D_DEBUG /RTC1
+CFLAGSSSL    = /DUSE_SSLEAY /DUSE_OPENSSL /I "$(OPENSSL_PATH)/inc32" /I "$(OPENSSL_PATH)/inc32/openssl"
+CFLAGSWINSSL = /DUSE_SCHANNEL
+CFLAGSSSH2   = /DUSE_LIBSSH2 /DCURL_DISABLE_LDAP /DHAVE_LIBSSH2 /DHAVE_LIBSSH2_H /DLIBSSH2_WIN32 /DLIBSSH2_LIBRARY /I "$(LIBSSH2_PATH)/include"
+CFLAGSZLIB   = /DHAVE_ZLIB_H /DHAVE_ZLIB /DHAVE_LIBZ /I "$(ZLIB_PATH)"
+CFLAGS       = /I. /I../include /nologo /W3 /EHsc /DWIN32 /FD /c /DBUILDING_LIBCURL /D_BIND_TO_CURRENT_VCLIBS_VERSION=1
+CFLAGSLIB    = /DCURL_STATICLIB
+LNKDLL       = link.exe /DLL
+LNKLIB       = link.exe /lib
+LFLAGS       = /nologo /machine:$(MACHINE)
+SSLLIBS      = libeay32.lib ssleay32.lib
+ZLIBLIBSDLL  = zdll.lib
+ZLIBLIBS     = zlib.lib
+WINLIBS      = ws2_32.lib wldap32.lib advapi32.lib
+CFLAGS       = $(CFLAGS)
 
-CFGSET     = FALSE
+CFGSET       = FALSE
 
 !IFDEF WINDOWS_SSPI
 CFLAGS = $(CFLAGS) /DUSE_WINDOWS_SSPI /I$(WINDOWS_SDK_PATH)\include
@@ -190,6 +191,32 @@ CFGSET   = TRUE
 !ENDIF
 
 ######################
+# release-winssl-zlib
+
+!IF "$(CFG)" == "release-winssl-zlib"
+TARGET   = $(LIBCURL_STA_LIB_REL)
+DIROBJ   = $(CFG)
+LFLAGSZLIB = "/LIBPATH:$(ZLIB_PATH)"
+LNK      = $(LNKLIB) $(LFLAGSZLIB) /out:$(DIROBJ)\$(TARGET)
+CC       = $(CCNODBG) $(RTLIB) $(CFLAGSWINSSL) $(CFLAGSZLIB) $(CFLAGSLIB)
+CFGSET   = TRUE
+!ENDIF
+
+######################
+# release-ssl-ssh2-zlib
+
+!IF "$(CFG)" == "release-ssl-ssh2-zlib"
+TARGET   = $(LIBCURL_STA_LIB_REL)
+DIROBJ   = $(CFG)
+LFLAGSSSL = "/LIBPATH:$(OPENSSL_PATH)\out32"
+LFLAGSSSH2 = "/LIBPATH:$(LIBSSH2_PATH)"
+LFLAGSZLIB = "/LIBPATH:$(ZLIB_PATH)"
+LNK      = $(LNKLIB) $(LFLAGSSSL) $(LFLAGSSSH2) $(LFLAGSZLIB) /out:$(DIROBJ)\$(TARGET)
+CC       = $(CCNODBG) $(RTLIB) $(CFLAGSSSL) $(CFLAGSSSH2) $(CFLAGSZLIB) $(CFLAGSLIB)
+CFGSET   = TRUE
+!ENDIF
+
+######################
 # release-ssl-dll
 
 !IF "$(CFG)" == "release-ssl-dll"
@@ -224,36 +251,6 @@ LFLAGSSSL = "/LIBPATH:$(OPENSSL_PATH)\out32dll"
 LNK      = $(LNKLIB) $(WINLIBS) $(SSLLIBS) $(ZLIBLIBSDLL) $(LFLAGSSSL) $(LFLAGSZLIB) /out:$(DIROBJ)\$(TARGET)
 CC       = $(CCNODBG) $(RTLIB) $(CFLAGSSSL) $(CFLAGSZLIB) $(CFLAGSLIB)
 CFGSET   = TRUE
-!ENDIF
-
-######################
-# release-ssl-ssh2-zlib
-
-!IF "$(CFG)" == "release-ssl-ssh2-zlib"
-TARGET   = $(LIB_NAME).lib
-DIROBJ   = $(CFG)
-LFLAGSSSL = "/LIBPATH:$(OPENSSL_PATH)\out32"
-LFLAGSSSH2 = "/LIBPATH:$(LIBSSH2_PATH)"
-LFLAGSZLIB = "/LIBPATH:$(ZLIB_PATH)"
-LNK      = $(LNKLIB) $(LFLAGSSSL) $(LFLAGSSSH2) $(LFLAGSZLIB) /out:$(DIROBJ)\$(TARGET)
-CC       = $(CCNODBG) $(RTLIB) $(CFLAGSSSL) $(CFLAGSSSH2) $(CFLAGSZLIB) $(CFLAGSLIB)
-CFGSET   = TRUE
-RESOURCE = $(LIBSSH2_PATH)/Release/src/libssh2.lib $(ZLIB_PATH)/zlib.lib
-!ENDIF
-
-######################
-# debug-ssl-ssh2-zlib
-
-!IF "$(CFG)" == "debug-ssl-ssh2-zlib"
-TARGET   = $(LIB_NAME_DEBUG).lib
-DIROBJ   = $(CFG)
-LFLAGSZLIB = "/LIBPATH:$(ZLIB_PATH)"
-LFLAGSSSH2 = "/LIBPATH:$(LIBSSH2_PATH)"
-LFLAGSSSL = "/LIBPATH:$(OPENSSL_PATH)\out32"
-LNK      = $(LNKLIB) $(ZLIBLIBS) $(LFLAGSSSL) $(LFLAGSSSH2) $(LFLAGSZLIB) /out:$(DIROBJ)\$(TARGET)
-CC       = $(CCDEBUG) $(RTLIBD) $(CFLAGSSSL) $(CFLAGSSSH2) $(CFLAGSZLIB) $(CFLAGSLIB)
-CFGSET   = TRUE
-RESOURCE = $(LIBSSH2_PATH)/Release/src/libssh2.lib $(ZLIB_PATH)/zlib.lib
 !ENDIF
 
 ######################
@@ -353,6 +350,20 @@ LFLAGSZLIB = "/LIBPATH:$(ZLIB_PATH)"
 LFLAGSSSL = "/LIBPATH:$(OPENSSL_PATH)\out32"
 LNK      = $(LNKLIB) $(ZLIBLIBS) $(LFLAGSSSL) $(LFLAGSZLIB) /out:$(DIROBJ)\$(TARGET)
 CC       = $(CCDEBUG) $(RTLIBD) $(CFLAGSSSL) $(CFLAGSZLIB) $(CFLAGSLIB)
+CFGSET   = TRUE
+!ENDIF
+
+######################
+# debug-ssl-ssh2-zlib
+
+!IF "$(CFG)" == "debug-ssl-ssh2-zlib"
+TARGET   = $(LIBCURL_STA_LIB_DBG)
+DIROBJ   = $(CFG)
+LFLAGSZLIB = "/LIBPATH:$(ZLIB_PATH)"
+LFLAGSSSH2 = "/LIBPATH:$(LIBSSH2_PATH)"
+LFLAGSSSL = "/LIBPATH:$(OPENSSL_PATH)\out32"
+LNK      = $(LNKLIB) $(ZLIBLIBS) $(LFLAGSSSL) $(LFLAGSSSH2) $(LFLAGSZLIB) /out:$(DIROBJ)\$(TARGET)
+CC       = $(CCDEBUG) $(RTLIBD) $(CFLAGSSSL) $(CFLAGSSSH2) $(CFLAGSZLIB) $(CFLAGSLIB)
 CFGSET   = TRUE
 !ENDIF
 
@@ -463,11 +474,11 @@ RESOURCE = $(DIROBJ)\libcurl.res
 !MESSAGE   release-dll-ssl-dll          - release dynamic library with dynamic ssl
 !MESSAGE   release-dll-zlib-dll         - release dynamic library with dynamic zlib
 !MESSAGE   release-dll-ssl-dll-zlib-dll - release dynamic library with dynamic ssl and dynamic zlib
-!MESSAGE   debug-ssl-ssh2-zlib          - debug static library with ssl, ssh2 and zlib
 !MESSAGE   debug                        - debug static library
 !MESSAGE   debug-ssl                    - debug static library with ssl
 !MESSAGE   debug-zlib                   - debug static library with zlib
 !MESSAGE   debug-ssl-zlib               - debug static library with ssl and zlib
+!MESSAGE   debug-ssl-ssh2-zlib          - debug static library with ssl, ssh2 and zlib
 !MESSAGE   debug-ssl-dll                - debug static library with dynamic ssl
 !MESSAGE   debug-zlib-dll               - debug static library with dynamic zlib
 !MESSAGE   debug-ssl-dll-zlib-dll       - debug static library with dynamic ssl and dynamic zlib
@@ -496,32 +507,42 @@ clean:
 # A config was provided, so the library can be built.
 #
 X_OBJS= \
+	$(DIROBJ)\amigaos.obj \
 	$(DIROBJ)\asyn-ares.obj \
 	$(DIROBJ)\asyn-thread.obj \
+	$(DIROBJ)\axtls.obj \
 	$(DIROBJ)\base64.obj \
+	$(DIROBJ)\bundles.obj \
+	$(DIROBJ)\conncache.obj \
 	$(DIROBJ)\connect.obj \
 	$(DIROBJ)\content_encoding.obj \
 	$(DIROBJ)\cookie.obj \
 	$(DIROBJ)\curl_addrinfo.obj \
+	$(DIROBJ)\curl_darwinssl.obj \
 	$(DIROBJ)\curl_fnmatch.obj \
 	$(DIROBJ)\curl_gethostname.obj \
+	$(DIROBJ)\curl_gssapi.obj \
 	$(DIROBJ)\curl_memrchr.obj \
+	$(DIROBJ)\curl_multibyte.obj \
 	$(DIROBJ)\curl_ntlm.obj \
 	$(DIROBJ)\curl_ntlm_core.obj \
 	$(DIROBJ)\curl_ntlm_msgs.obj \
 	$(DIROBJ)\curl_ntlm_wb.obj \
-	$(DIROBJ)\curl_rand.obj \
 	$(DIROBJ)\curl_rtmp.obj \
+	$(DIROBJ)\curl_sasl.obj \
+	$(DIROBJ)\curl_schannel.obj \
 	$(DIROBJ)\curl_sspi.obj \
 	$(DIROBJ)\curl_threads.obj \
+	$(DIROBJ)\cyassl.obj \
 	$(DIROBJ)\dict.obj \
+	$(DIROBJ)\dotdot.obj \
 	$(DIROBJ)\easy.obj \
 	$(DIROBJ)\escape.obj \
-	$(DIROBJ)\fileinfo.obj \
 	$(DIROBJ)\file.obj \
+	$(DIROBJ)\fileinfo.obj \
 	$(DIROBJ)\formdata.obj \
-	$(DIROBJ)\ftplistparser.obj \
 	$(DIROBJ)\ftp.obj \
+	$(DIROBJ)\ftplistparser.obj \
 	$(DIROBJ)\getenv.obj \
 	$(DIROBJ)\getinfo.obj \
 	$(DIROBJ)\gopher.obj \
@@ -529,20 +550,24 @@ X_OBJS= \
 	$(DIROBJ)\hash.obj \
 	$(DIROBJ)\hmac.obj \
 	$(DIROBJ)\hostasyn.obj \
+	$(DIROBJ)\hostcheck.obj \
+	$(DIROBJ)\hostip.obj \
 	$(DIROBJ)\hostip4.obj \
 	$(DIROBJ)\hostip6.obj \
-	$(DIROBJ)\hostip.obj \
 	$(DIROBJ)\hostsyn.obj \
+	$(DIROBJ)\http.obj \
 	$(DIROBJ)\http_chunks.obj \
 	$(DIROBJ)\http_digest.obj \
 	$(DIROBJ)\http_negotiate.obj \
-        $(DIROBJ)\http_negotiate_sspi.obj \
-	$(DIROBJ)\http.obj \
+	$(DIROBJ)\http_negotiate_sspi.obj \
 	$(DIROBJ)\http_proxy.obj \
+	$(DIROBJ)\idn_win32.obj \
 	$(DIROBJ)\if2ip.obj \
 	$(DIROBJ)\imap.obj \
 	$(DIROBJ)\inet_ntop.obj \
 	$(DIROBJ)\inet_pton.obj \
+	$(DIROBJ)\krb4.obj \
+	$(DIROBJ)\krb5.obj \
 	$(DIROBJ)\ldap.obj \
 	$(DIROBJ)\llist.obj \
 	$(DIROBJ)\md4.obj \
@@ -551,28 +576,35 @@ X_OBJS= \
 	$(DIROBJ)\mprintf.obj \
 	$(DIROBJ)\multi.obj \
 	$(DIROBJ)\netrc.obj \
+	$(DIROBJ)\non-ascii.obj \
 	$(DIROBJ)\nonblock.obj \
+	$(DIROBJ)\nss.obj \
 	$(DIROBJ)\openldap.obj \
 	$(DIROBJ)\parsedate.obj \
 	$(DIROBJ)\pingpong.obj \
+	$(DIROBJ)\pipeline.obj \
 	$(DIROBJ)\polarssl.obj \
+	$(DIROBJ)\polarssl_threadlock.obj \
 	$(DIROBJ)\pop3.obj \
 	$(DIROBJ)\progress.obj \
+	$(DIROBJ)\qssl.obj \
 	$(DIROBJ)\rawstr.obj \
 	$(DIROBJ)\rtsp.obj \
+	$(DIROBJ)\security.obj \
 	$(DIROBJ)\select.obj \
 	$(DIROBJ)\sendf.obj \
 	$(DIROBJ)\share.obj \
 	$(DIROBJ)\slist.obj \
 	$(DIROBJ)\smtp.obj \
-	$(DIROBJ)\socks_gssapi.obj \
 	$(DIROBJ)\socks.obj \
+	$(DIROBJ)\socks_gssapi.obj \
 	$(DIROBJ)\socks_sspi.obj \
 	$(DIROBJ)\speedcheck.obj \
 	$(DIROBJ)\splay.obj \
 	$(DIROBJ)\ssh.obj \
 	$(DIROBJ)\sslgen.obj \
 	$(DIROBJ)\ssluse.obj \
+	$(DIROBJ)\strdup.obj \
 	$(DIROBJ)\strequal.obj \
 	$(DIROBJ)\strerror.obj \
 	$(DIROBJ)\strtok.obj \

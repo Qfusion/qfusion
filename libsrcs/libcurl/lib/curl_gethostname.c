@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2010, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,11 +20,7 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "curl_setup.h"
 
 #include "curl_gethostname.h"
 
@@ -32,11 +28,15 @@
  * Curl_gethostname() is a wrapper around gethostname() which allows
  * overriding the host name that the function would normally return.
  * This capability is used by the test suite to verify exact matching
- * of NTLM authentication, which exercises libcurl's MD4 and DES code.
+ * of NTLM authentication, which exercises libcurl's MD4 and DES code
+ * as well as by the SMTP module when a hostname is not provided.
  *
  * For libcurl debug enabled builds host name overriding takes place
  * when environment variable CURL_GETHOSTNAME is set, using the value
  * held by the variable to override returned host name.
+ *
+ * Note: The function always returns the un-qualified hostname rather
+ * than being provider dependent.
  *
  * For libcurl shared library release builds the test suite preloads
  * another shared library named libhostname using the LD_PRELOAD
@@ -58,6 +58,8 @@ int Curl_gethostname(char *name, GETHOSTNAME_TYPE_ARG2 namelen) {
   return -1;
 
 #else
+  int err;
+  char* dot;
 
 #ifdef DEBUGBUILD
 
@@ -65,17 +67,34 @@ int Curl_gethostname(char *name, GETHOSTNAME_TYPE_ARG2 namelen) {
   const char *force_hostname = getenv("CURL_GETHOSTNAME");
   if(force_hostname) {
     strncpy(name, force_hostname, namelen);
-    name[namelen-1] = '\0';
-    return 0;
+    err = 0;
+  }
+  else {
+    name[0] = '\0';
+    err = gethostname(name, namelen);
   }
 
-#endif /* DEBUGBUILD */
+#else /* DEBUGBUILD */
 
   /* The call to system's gethostname() might get intercepted by the
      libhostname library when libcurl is built as a non-debug shared
      library when running the test suite. */
-  return gethostname(name, namelen);
+  name[0] = '\0';
+  err = gethostname(name, namelen);
 
+#endif
+
+  name[namelen - 1] = '\0';
+
+  if(err)
+    return err;
+
+  /* Truncate domain, leave only machine name */
+  dot = strchr(name, '.');
+  if(dot)
+    *dot = '\0';
+
+  return 0;
 #endif
 
 }

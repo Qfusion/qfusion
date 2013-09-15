@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #include <curl/curl.h>
 #include "urldata.h"
@@ -64,10 +64,11 @@
 char *curl_version(void)
 {
   static char version[200];
-  char *ptr=version;
+  char *ptr = version;
   size_t len;
   size_t left = sizeof(version);
-  strcpy(ptr, LIBCURL_NAME "/" LIBCURL_VERSION );
+
+  strcpy(ptr, LIBCURL_NAME "/" LIBCURL_VERSION);
   len = strlen(ptr);
   left -= len;
   ptr += len;
@@ -101,7 +102,7 @@ char *curl_version(void)
   }
 #endif
 #ifdef USE_WIN32_IDN
-  len = snprintf(ptr, left, " IDN-Windows-native");
+  len = snprintf(ptr, left, " WinIDN");
   left -= len;
   ptr += len;
 #endif
@@ -131,11 +132,14 @@ char *curl_version(void)
     else
       suff[0] = '\0';
 
-    len = snprintf(ptr, left, " librtmp/%d.%d%s",
-      RTMP_LIB_VERSION >> 16, (RTMP_LIB_VERSION >> 8) & 0xff, suff);
+    snprintf(ptr, left, " librtmp/%d.%d%s",
+             RTMP_LIB_VERSION >> 16, (RTMP_LIB_VERSION >> 8) & 0xff,
+             suff);
 /*
   If another lib version is added below this one, this code would
   also have to do:
+
+    len = what snprintf() returned
 
     left -= len;
     ptr += len;
@@ -240,7 +244,7 @@ static curl_version_info_data version_info = {
 #ifdef USE_NTLM
   | CURL_VERSION_NTLM
 #endif
-#ifdef NTLM_WB_ENABLED
+#if defined(USE_NTLM) && defined(NTLM_WB_ENABLED)
   | CURL_VERSION_NTLM_WB
 #endif
 #ifdef USE_WINDOWS_SSPI

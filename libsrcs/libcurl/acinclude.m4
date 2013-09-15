@@ -5,7 +5,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -51,7 +51,7 @@ CURL_DEF_TOKEN $1
   ],[
     tmp_exp=`eval "$ac_cpp conftest.$ac_ext" 2>/dev/null | \
       "$GREP" CURL_DEF_TOKEN 2>/dev/null | \
-      "$SED" 's/.*CURL_DEF_TOKEN[[ ]]//' 2>/dev/null | \
+      "$SED" 's/.*CURL_DEF_TOKEN[[ ]][[ ]]*//' 2>/dev/null | \
       "$SED" 's/[["]][[ ]]*[["]]//g' 2>/dev/null`
     if test -z "$tmp_exp" || test "$tmp_exp" = "$1"; then
       tmp_exp=""
@@ -130,7 +130,7 @@ int main (void)
     ]])
   ],[
     tst_lib_xnet_required="yes"
-    LIBS="$LIBS -lxnet"
+    LIBS="-lxnet $LIBS"
   ])
   AC_MSG_RESULT([$tst_lib_xnet_required])
 ])
@@ -150,6 +150,7 @@ AC_DEFUN([CURL_CHECK_AIX_ALL_SOURCE], [
 #endif])
   AC_BEFORE([$0], [AC_SYS_LARGEFILE])dnl
   AC_BEFORE([$0], [CURL_CONFIGURE_REENTRANT])dnl
+  AC_BEFORE([$0], [CURL_CONFIGURE_PULL_SYS_POLL])dnl
   AC_MSG_CHECKING([if OS is AIX (to define _ALL_SOURCE)])
   AC_EGREP_CPP([yes_this_is_aix],[
 #ifdef _AIX
@@ -228,12 +229,7 @@ AC_DEFUN([CURL_CHECK_NATIVE_WINDOWS], [
       ])
     fi
   ])
-  case "$ac_cv_native_windows" in
-    yes)
-      AC_DEFINE_UNQUOTED(NATIVE_WINDOWS, 1,
-        [Define to 1 if you are building a native Windows target.])
-      ;;
-  esac
+  AM_CONDITIONAL(DOING_NATIVE_WINDOWS, test "x$ac_cv_native_windows" = xyes)
 ])
 
 
@@ -1601,213 +1597,6 @@ AC_DEFUN([CURL_CHECK_FUNC_SEND], [
   fi
 ])
 
-
-dnl CURL_CHECK_FUNC_RECVFROM
-dnl -------------------------------------------------
-dnl Test if the socket recvfrom() function is available,
-dnl and check its return type and the types of its
-dnl arguments. If the function succeeds HAVE_RECVFROM
-dnl will be defined, defining the types of the arguments
-dnl in RECVFROM_TYPE_ARG1, RECVFROM_TYPE_ARG2, and so on
-dnl to RECVFROM_TYPE_ARG6, defining also the type of the
-dnl function return value in RECVFROM_TYPE_RETV.
-dnl Notice that the types returned for pointer arguments
-dnl will actually be the type pointed by the pointer.
-
-AC_DEFUN([CURL_CHECK_FUNC_RECVFROM], [
-  AC_REQUIRE([CURL_CHECK_HEADER_WINSOCK])dnl
-  AC_REQUIRE([CURL_CHECK_HEADER_WINSOCK2])dnl
-  AC_CHECK_HEADERS(sys/types.h sys/socket.h)
-  #
-  AC_MSG_CHECKING([for recvfrom])
-  AC_LINK_IFELSE([
-    AC_LANG_PROGRAM([[
-#undef inline
-#ifdef HAVE_WINDOWS_H
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#ifdef HAVE_WINSOCK2_H
-#include <winsock2.h>
-#else
-#ifdef HAVE_WINSOCK_H
-#include <winsock.h>
-#endif
-#endif
-#else
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#endif
-    ]],[[
-      recvfrom(0, 0, 0, 0, 0, 0);
-    ]])
-  ],[
-    AC_MSG_RESULT([yes])
-    curl_cv_recvfrom="yes"
-  ],[
-    AC_MSG_RESULT([no])
-    curl_cv_recvfrom="no"
-  ])
-  #
-  if test "$curl_cv_recvfrom" = "yes"; then
-    AC_CACHE_CHECK([types of args and return type for recvfrom],
-      [curl_cv_func_recvfrom_args], [
-      curl_cv_func_recvfrom_args="unknown"
-      for recvfrom_retv in 'int' 'ssize_t'; do
-        for recvfrom_arg1 in 'int' 'ssize_t' 'SOCKET'; do
-          for recvfrom_arg2 in 'char *' 'void *'; do
-            for recvfrom_arg3 in 'size_t' 'int' 'socklen_t' 'unsigned int'; do
-              for recvfrom_arg4 in 'int' 'unsigned int'; do
-                for recvfrom_arg5 in 'struct sockaddr *' 'void *' 'const struct sockaddr *'; do
-                  for recvfrom_arg6 in 'socklen_t *' 'int *' 'unsigned int *' 'size_t *' 'void *'; do
-                    if test "$curl_cv_func_recvfrom_args" = "unknown"; then
-                      AC_COMPILE_IFELSE([
-                        AC_LANG_PROGRAM([[
-#undef inline
-#ifdef HAVE_WINDOWS_H
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#ifdef HAVE_WINSOCK2_H
-#include <winsock2.h>
-#else
-#ifdef HAVE_WINSOCK_H
-#include <winsock.h>
-#endif
-#endif
-#define RECVFROMCALLCONV PASCAL
-#else
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#define RECVFROMCALLCONV
-#endif
-                          extern $recvfrom_retv RECVFROMCALLCONV
-                          recvfrom($recvfrom_arg1, $recvfrom_arg2,
-                                   $recvfrom_arg3, $recvfrom_arg4,
-                                   $recvfrom_arg5, $recvfrom_arg6);
-                        ]],[[
-                          $recvfrom_arg1 s=0;
-                          $recvfrom_arg2 buf=0;
-                          $recvfrom_arg3 len=0;
-                          $recvfrom_arg4 flags=0;
-                          $recvfrom_arg5 addr=0;
-                          $recvfrom_arg6 addrlen=0;
-                          $recvfrom_retv res=0;
-                          res = recvfrom(s, buf, len, flags, addr, addrlen);
-                        ]])
-                      ],[
-                        curl_cv_func_recvfrom_args="$recvfrom_arg1,$recvfrom_arg2,$recvfrom_arg3,$recvfrom_arg4,$recvfrom_arg5,$recvfrom_arg6,$recvfrom_retv"
-                      ])
-                    fi
-                  done
-                done
-              done
-            done
-          done
-        done
-      done
-    ]) # AC-CACHE-CHECK
-    # Nearly last minute change for this release starts here
-    AC_DEFINE_UNQUOTED(HAVE_RECVFROM, 1,
-      [Define to 1 if you have the recvfrom function.])
-    ac_cv_func_recvfrom="yes"
-    # Nearly last minute change for this release ends here
-    if test "$curl_cv_func_recvfrom_args" = "unknown"; then
-      AC_MSG_WARN([Cannot find proper types to use for recvfrom args])
-    else
-      recvfrom_prev_IFS=$IFS; IFS=','
-      set dummy `echo "$curl_cv_func_recvfrom_args" | sed 's/\*/\*/g'`
-      IFS=$recvfrom_prev_IFS
-      shift
-      #
-      recvfrom_ptrt_arg2=$[2]
-      recvfrom_qual_ptrt_arg5=$[5]
-      recvfrom_ptrt_arg6=$[6]
-      #
-      AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG1, $[1],
-        [Define to the type of arg 1 for recvfrom.])
-      AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG3, $[3],
-        [Define to the type of arg 3 for recvfrom.])
-      AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG4, $[4],
-        [Define to the type of arg 4 for recvfrom.])
-      AC_DEFINE_UNQUOTED(RECVFROM_TYPE_RETV, $[7],
-        [Define to the function return type for recvfrom.])
-      #
-      prev_sh_opts=$-
-      #
-      case $prev_sh_opts in
-        *f*)
-          ;;
-        *)
-          set -f
-          ;;
-      esac
-      #
-      case "$recvfrom_qual_ptrt_arg5" in
-        const*)
-          recvfrom_qual_arg5=const
-          recvfrom_ptrt_arg5=`echo $recvfrom_qual_ptrt_arg5 | sed 's/^const //'`
-        ;;
-        *)
-          recvfrom_qual_arg5=
-          recvfrom_ptrt_arg5=$recvfrom_qual_ptrt_arg5
-        ;;
-      esac
-      #
-      recvfrom_type_arg2=`echo $recvfrom_ptrt_arg2 | sed 's/ \*//'`
-      recvfrom_type_arg5=`echo $recvfrom_ptrt_arg5 | sed 's/ \*//'`
-      recvfrom_type_arg6=`echo $recvfrom_ptrt_arg6 | sed 's/ \*//'`
-      #
-      AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG2, $recvfrom_type_arg2,
-        [Define to the type pointed by arg 2 for recvfrom.])
-      AC_DEFINE_UNQUOTED(RECVFROM_QUAL_ARG5, $recvfrom_qual_arg5,
-        [Define to the type qualifier pointed by arg 5 for recvfrom.])
-      AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG5, $recvfrom_type_arg5,
-        [Define to the type pointed by arg 5 for recvfrom.])
-      AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG6, $recvfrom_type_arg6,
-        [Define to the type pointed by arg 6 for recvfrom.])
-      #
-      if test "$recvfrom_type_arg2" = "void"; then
-        AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG2_IS_VOID, 1,
-          [Define to 1 if the type pointed by arg 2 for recvfrom is void.])
-      fi
-      if test "$recvfrom_type_arg5" = "void"; then
-        AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG5_IS_VOID, 1,
-          [Define to 1 if the type pointed by arg 5 for recvfrom is void.])
-      fi
-      if test "$recvfrom_type_arg6" = "void"; then
-        AC_DEFINE_UNQUOTED(RECVFROM_TYPE_ARG6_IS_VOID, 1,
-          [Define to 1 if the type pointed by arg 6 for recvfrom is void.])
-      fi
-      #
-      case $prev_sh_opts in
-        *f*)
-          ;;
-        *)
-          set +f
-          ;;
-      esac
-      #
-      AC_DEFINE_UNQUOTED(HAVE_RECVFROM, 1,
-        [Define to 1 if you have the recvfrom function.])
-      ac_cv_func_recvfrom="yes"
-    fi
-  else
-    AC_MSG_WARN([Unable to link function recvfrom])
-  fi
-])
-
-
 dnl CURL_CHECK_MSG_NOSIGNAL
 dnl -------------------------------------------------
 dnl Check for MSG_NOSIGNAL
@@ -2158,7 +1947,6 @@ AC_DEFUN([CURL_CHECK_LIBS_CLOCK_GETTIME_MONOTONIC], [
         else
           LIBS="$curl_cv_gclk_LIBS $curl_cv_save_LIBS"
         fi
-        CURL_LIBS="$CURL_LIBS $curl_cv_gclk_LIBS"
         AC_MSG_RESULT([$curl_cv_gclk_LIBS])
         ac_cv_func_clock_gettime="yes"
         ;;
@@ -2315,6 +2103,8 @@ AC_DEFUN([CURL_CONFIGURE_CURL_SOCKLEN_T], [
   AC_REQUIRE([CURL_INCLUDES_SYS_SOCKET])dnl
   AC_REQUIRE([CURL_PREPROCESS_CALLCONV])dnl
   #
+  AC_BEFORE([$0], [CURL_CONFIGURE_PULL_SYS_POLL])dnl
+  #
   AC_MSG_CHECKING([for curl_socklen_t data type])
   curl_typeof_curl_socklen_t="unknown"
   for arg1 in int SOCKET; do
@@ -2420,6 +2210,45 @@ AC_DEFUN([CURL_CONFIGURE_CURL_SOCKLEN_T], [
   esac
   CURL_DEFINE_UNQUOTED([CURL_TYPEOF_CURL_SOCKLEN_T], [$curl_typeof_curl_socklen_t])
   CURL_DEFINE_UNQUOTED([CURL_SIZEOF_CURL_SOCKLEN_T], [$curl_sizeof_curl_socklen_t])
+])
+
+
+dnl CURL_CONFIGURE_PULL_SYS_POLL
+dnl -------------------------------------------------
+dnl Find out if system header file sys/poll.h must be included by the
+dnl external interface, making appropriate definitions for template file
+dnl include/curl/curlbuild.h.in to properly configure and use the library.
+dnl
+dnl The need for the sys/poll.h inclusion arises mainly to properly
+dnl interface AIX systems which define macros 'events' and 'revents'.
+
+AC_DEFUN([CURL_CONFIGURE_PULL_SYS_POLL], [
+  AC_REQUIRE([CURL_INCLUDES_POLL])dnl
+  #
+  tst_poll_events_macro_defined="unknown"
+  #
+  AC_COMPILE_IFELSE([
+    AC_LANG_PROGRAM([[
+      $curl_includes_poll
+    ]],[[
+#if defined(events) || defined(revents)
+      return 0;
+#else
+      force compilation error
+#endif
+    ]])
+  ],[
+    tst_poll_events_macro_defined="yes"
+  ],[
+    tst_poll_events_macro_defined="no"
+  ])
+  #
+  if test "$tst_poll_events_macro_defined" = "yes"; then
+    if test "x$ac_cv_header_sys_poll_h" = "xyes"; then
+      CURL_DEFINE_UNQUOTED([CURL_PULL_SYS_POLL_H])
+    fi
+  fi
+  #
 ])
 
 
@@ -2790,8 +2619,10 @@ AC_HELP_STRING([--without-ca-path], [Don't use a default CA path]),
     fi
     capath="$want_capath"
     ca="no"
-  else
-    dnl neither of --with-ca-* given
+  elif test "x$cross_compiling" != "xyes"; then
+    dnl NOT cross-compiling and...
+    dnl neither of the --with-ca-* options are provided
+
     dnl first try autodetecting a CA bundle , then a CA path
     dnl both autodetections can be skipped by --without-ca-*
     ca="no"
@@ -2827,9 +2658,10 @@ AC_HELP_STRING([--without-ca-path], [Don't use a default CA path]),
         fi
       done
     fi
+  else
+    dnl no option given and cross-compiling
+    AC_MSG_WARN([skipped the ca-cert path detection when cross-compiling])
   fi
-
-
 
   if test "x$ca" != "xno"; then
     CURL_CA_BUNDLE='"'$ca'"'
@@ -3220,8 +3052,8 @@ AC_DEFUN([CURL_EXPORT_PCDIR], [
 
 dnl CURL_CHECK_PKGCONFIG ($module, [$pcdir])
 dnl ------------------------
-dnl search for the pkg-config tool (if not cross-compiling). Set the PKGCONFIG
-dnl variable to hold the path to it, or 'no' if not found/present.
+dnl search for the pkg-config tool. Set the PKGCONFIG variable to hold the
+dnl path to it, or 'no' if not found/present.
 dnl
 dnl If pkg-config is present, check that it has info about the $module or
 dnl return "no" anyway!
@@ -3233,15 +3065,7 @@ AC_DEFUN([CURL_CHECK_PKGCONFIG], [
 
     PKGCONFIG="no"
 
-    if test x$cross_compiling = xyes; then
-      dnl see if there's a pkg-specific for this host setup
-      AC_PATH_PROG( PKGCONFIG, ${host}-pkg-config, no,
-                    $PATH:/usr/bin:/usr/local/bin)
-    fi
-
-    if test x$PKGCONFIG = xno; then
-      AC_PATH_PROG( PKGCONFIG, pkg-config, no, $PATH:/usr/bin:/usr/local/bin)
-    fi
+    AC_PATH_TOOL( PKGCONFIG, pkg-config, no, $PATH:/usr/bin:/usr/local/bin)
 
     if test x$PKGCONFIG != xno; then
       AC_MSG_CHECKING([for $1 options with pkg-config])

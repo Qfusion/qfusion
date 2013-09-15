@@ -7,7 +7,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -21,7 +21,7 @@
  * KIND, either express or implied.
  *
  ***************************************************************************/
-#include "setup.h"
+#include "curl_setup.h"
 
 /*
  * Prototypes for library-wide functions provided by url.c
@@ -37,7 +37,7 @@ CURLcode Curl_close(struct SessionHandle *data); /* opposite of curl_open() */
 CURLcode Curl_connect(struct SessionHandle *, struct connectdata **,
                       bool *async, bool *protocol_connect);
 CURLcode Curl_do(struct connectdata **, bool *done);
-CURLcode Curl_do_more(struct connectdata *);
+CURLcode Curl_do_more(struct connectdata *, int *completed);
 CURLcode Curl_done(struct connectdata **, CURLcode, bool premature);
 CURLcode Curl_disconnect(struct connectdata *, bool dead_connection);
 CURLcode Curl_protocol_connect(struct connectdata *conn, bool *done);
@@ -45,15 +45,6 @@ CURLcode Curl_protocol_connecting(struct connectdata *conn, bool *done);
 CURLcode Curl_protocol_doing(struct connectdata *conn, bool *done);
 CURLcode Curl_setup_conn(struct connectdata *conn,
                          bool *protocol_done);
-
-/* create a connection cache */
-struct conncache *Curl_mk_connc(int type, long amount);
-/* free a connection cache */
-void Curl_rm_connc(struct conncache *c);
-/* Change number of entries of a connection cache */
-CURLcode Curl_ch_connc(struct SessionHandle *data,
-                       struct conncache *c,
-                       long newamount);
 
 int Curl_protocol_getsock(struct connectdata *conn,
                           curl_socket_t *socks,

@@ -96,7 +96,6 @@ int main(void)
    CURLM *mcurl;
    int still_running = 1;
    struct timeval mp_start;
-   char mp_timedout = 0;
    struct WriteThis pooh;
    struct curl_slist* rcpt_list = NULL;
 
@@ -123,16 +122,15 @@ int main(void)
    curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
    curl_easy_setopt(curl, CURLOPT_MAIL_FROM, MAILFROM);
    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, rcpt_list);
-   curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
-   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER,0);
-   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+   curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
+   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
    curl_easy_setopt(curl, CURLOPT_READDATA, &pooh);
-   curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
-   curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0);
-   curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0);
+   curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+   curl_easy_setopt(curl, CURLOPT_SSLVERSION, 0L);
+   curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L);
    curl_multi_add_handle(mcurl, curl);
 
-   mp_timedout = 0;
    mp_start = tvnow();
 
   /* we start some action by calling perform right away */

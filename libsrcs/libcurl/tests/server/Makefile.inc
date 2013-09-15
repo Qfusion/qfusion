@@ -1,28 +1,29 @@
 noinst_PROGRAMS = getpart resolve rtspd sockfilt sws tftpd fake_ntlm
 
 CURLX_SRCS = \
- $(top_srcdir)/lib/mprintf.c \
- $(top_srcdir)/lib/nonblock.c \
- $(top_srcdir)/lib/strequal.c \
- $(top_srcdir)/lib/strtoofft.c \
- $(top_srcdir)/lib/timeval.c \
- $(top_srcdir)/lib/warnless.c
+ ../../lib/mprintf.c \
+ ../../lib/nonblock.c \
+ ../../lib/strequal.c \
+ ../../lib/strtoofft.c \
+ ../../lib/timeval.c \
+ ../../lib/warnless.c
 
 CURLX_HDRS = \
- $(top_srcdir)/lib/curlx.h \
- $(top_srcdir)/lib/nonblock.h \
- $(top_srcdir)/lib/strequal.h \
- $(top_srcdir)/lib/strtoofft.h \
- $(top_srcdir)/lib/timeval.h \
- $(top_srcdir)/lib/warnless.h
+ ../../lib/curlx.h \
+ ../../lib/nonblock.h \
+ ../../lib/strequal.h \
+ ../../lib/strtoofft.h \
+ ../../lib/timeval.h \
+ ../../lib/warnless.h
 
 USEFUL = \
  getpart.c \
  getpart.h \
- $(top_srcdir)/lib/base64.c \
- $(top_srcdir)/lib/curl_base64.h \
- $(top_srcdir)/lib/memdebug.c \
- $(top_srcdir)/lib/memdebug.h
+ server_setup.h \
+ ../../lib/base64.c \
+ ../../lib/curl_base64.h \
+ ../../lib/memdebug.c \
+ ../../lib/memdebug.h
 
 UTIL = \
  util.c \
@@ -30,41 +31,42 @@ UTIL = \
 
 getpart_SOURCES = $(CURLX_SRCS) $(CURLX_HDRS) $(USEFUL) \
  testpart.c
-getpart_LDADD = @TEST_SERVER_LIBS@
+getpart_LDADD = @CURL_NETWORK_AND_TIME_LIBS@
 getpart_CFLAGS = $(AM_CFLAGS)
 
 resolve_SOURCES = $(CURLX_SRCS) $(CURLX_HDRS) $(USEFUL) $(UTIL) \
  resolve.c
-resolve_LDADD = @TEST_SERVER_LIBS@
+resolve_LDADD = @CURL_NETWORK_AND_TIME_LIBS@
 resolve_CFLAGS = $(AM_CFLAGS)
 
 rtspd_SOURCES = $(CURLX_SRCS) $(CURLX_HDRS) $(USEFUL) $(UTIL) \
  server_sockaddr.h \
  rtspd.c
-rtspd_LDADD = @TEST_SERVER_LIBS@
+rtspd_LDADD = @CURL_NETWORK_AND_TIME_LIBS@
 rtspd_CFLAGS = $(AM_CFLAGS)
 
 sockfilt_SOURCES = $(CURLX_SRCS) $(CURLX_HDRS) $(USEFUL) $(UTIL) \
  server_sockaddr.h \
  sockfilt.c \
- $(top_srcdir)/lib/inet_pton.c
-sockfilt_LDADD = @TEST_SERVER_LIBS@
+ ../../lib/inet_pton.c
+sockfilt_LDADD = @CURL_NETWORK_AND_TIME_LIBS@
 sockfilt_CFLAGS = $(AM_CFLAGS)
 
 sws_SOURCES = $(CURLX_SRCS) $(CURLX_HDRS) $(USEFUL) $(UTIL) \
  server_sockaddr.h \
- sws.c
-sws_LDADD = @TEST_SERVER_LIBS@
+ sws.c \
+ ../../lib/inet_pton.c
+sws_LDADD = @CURL_NETWORK_AND_TIME_LIBS@
 sws_CFLAGS = $(AM_CFLAGS)
 
 tftpd_SOURCES = $(CURLX_SRCS) $(CURLX_HDRS) $(USEFUL) $(UTIL) \
  server_sockaddr.h \
  tftpd.c \
  tftp.h
-tftpd_LDADD = @TEST_SERVER_LIBS@
+tftpd_LDADD = @CURL_NETWORK_AND_TIME_LIBS@
 tftpd_CFLAGS = $(AM_CFLAGS)
 
 fake_ntlm_SOURCES = $(CURLX_SRCS) $(CURLX_HDRS) $(USEFUL) $(UTIL) \
  fake_ntlm.c
-fake_ntlm_LDADD = @TEST_SERVER_LIBS@
+fake_ntlm_LDADD = @CURL_NETWORK_AND_TIME_LIBS@
 fake_ntlm_CFLAGS = $(AM_CFLAGS)

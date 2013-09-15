@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -64,6 +64,7 @@ int main(void)
   curl_socket_t sockfd; /* socket */
   long sockextr;
   size_t iolen;
+  curl_off_t nread;
 
   curl = curl_easy_init();
   if(curl) {
@@ -122,7 +123,9 @@ int main(void)
       if(CURLE_OK != res)
         break;
 
-      printf("Received %u bytes.\n", iolen);
+      nread = (curl_off_t)iolen;
+
+      printf("Received %" CURL_FORMAT_CURL_OFF_T " bytes.\n", nread);
     }
 
     /* always cleanup */

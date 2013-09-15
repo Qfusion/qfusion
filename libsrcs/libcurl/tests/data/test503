@@ -13,6 +13,13 @@ multi
 
 # Server-side
 <reply>
+<servercmd>
+connection-monitor
+</servercmd>
+<connect>
+HTTP/1.1 200 Mighty fine indeed
+
+</connect>
 <data>
 HTTP/1.1 200 OK swsclose
 Date: Thu, 09 Nov 2010 14:49:00 GMT
@@ -37,6 +44,7 @@ ETag: "21025-dc7-39462498"
 <client>
 <server>
 http
+http-proxy
 </server>
 # tool is what to use instead of 'curl'
 <tool>
@@ -47,7 +55,7 @@ lib503
 simple multi http:// through proxytunnel with authentication info
  </name>
  <command>
-http://%HOSTIP:%HTTPSPORT/503 %HOSTIP:%HTTPPORT
+http://machine.503:%HTTPPORT/503 %HOSTIP:%PROXYPORT
 </command>
 <file name="log/test503.txt">
 foo
@@ -60,17 +68,20 @@ moo
 
 # Verify data after the test has been "shot"
 <verify>
-<protocol>
-CONNECT %HOSTIP:%HTTPSPORT HTTP/1.1
-Host: %HOSTIP:%HTTPSPORT
+<proxy>
+CONNECT machine.503:%HTTPPORT HTTP/1.1
+Host: machine.503:%HTTPPORT
 Proxy-Authorization: Basic dGVzdDppbmc=
 Proxy-Connection: Keep-Alive
 
+</proxy>
+<protocol>
 GET /503 HTTP/1.1
 Authorization: Basic dGVzdDppbmc=
-Host: %HOSTIP:%HTTPSPORT
+Host: machine.503:%HTTPPORT
 Accept: */*
 
+[DISCONNECT]
 </protocol>
 </verify>
 </testcase>

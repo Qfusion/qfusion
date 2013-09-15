@@ -20,7 +20,7 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #include "llist.h"
 #include "curl_memory.h"
@@ -46,7 +46,7 @@ Curl_llist_alloc(curl_llist_dtor dtor)
   struct curl_llist *list;
 
   list = malloc(sizeof(struct curl_llist));
-  if(NULL == list)
+  if(!list)
     return NULL;
 
   llist_init(list, dtor);
@@ -130,6 +130,10 @@ Curl_llist_remove(struct curl_llist *list, struct curl_llist_element *e,
   }
 
   list->dtor(user, e->ptr);
+
+  e->ptr  = NULL;
+  e->prev = NULL;
+  e->next = NULL;
 
   free(e);
   --list->size;

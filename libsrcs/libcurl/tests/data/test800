@@ -1,8 +1,8 @@
 <testcase>
 <info>
 <keywords>
-POP3
-RETR
+IMAP
+FETCH
 </keywords>
 </info>
 
@@ -24,13 +24,13 @@ body
 # Client-side
 <client>
 <server>
-pop3
+imap
 </server>
  <name>
-POP3 RETR
+IMAP FETCH
  </name>
  <command>
-pop3://%HOSTIP:%POP3PORT/800 -u user:secret
+'imap://%HOSTIP:%IMAPPORT/800/;UID=1' -u user:secret
 </command>
 </client>
 
@@ -38,10 +38,11 @@ pop3://%HOSTIP:%POP3PORT/800 -u user:secret
 # Verify data after the test has been "shot"
 <verify>
 <protocol>
-USER user
-PASS secret
-RETR 800
-QUIT
+A001 CAPABILITY
+A002 LOGIN user secret
+A003 SELECT 800
+A004 FETCH 1 BODY[]
+A005 LOGOUT
 </protocol>
 </verify>
 </testcase>

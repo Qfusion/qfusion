@@ -6,7 +6,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -31,6 +31,7 @@ my $mallocs=0;
 my $callocs=0;
 my $reallocs=0;
 my $strdups=0;
+my $wcsdups=0;
 my $showlimit;
 
 while(1) {
@@ -220,6 +221,25 @@ while(<FILE>) {
             newtotal($totalmem);
             $strdups++;
         }
+        elsif($function =~ /wcsdup\(0x([0-9a-f]*)\) \((\d*)\) = 0x([0-9a-f]*)/) {
+            # wcsdup(a5b50) (8) = df7c0
+
+            $dup = $1;
+            $size = $2;
+            $addr = $3;
+            $getmem{$addr}="$source:$linenum";
+            $sizeataddr{$addr}=$size;
+
+            $totalmem += $size;
+
+            if($trace) {
+                printf("WCSDUP: $size bytes at %s, makes totally: %d bytes\n",
+                       $getmem{$addr}, $totalmem);
+            }
+
+            newtotal($totalmem);
+            $wcsdups++;
+        }
         else {
             print "Not recognized input line: $function\n";
         }
@@ -266,7 +286,7 @@ while(<FILE>) {
         $linenum = $2;
         $function = $3;
 
-        if($function =~ /f[d]*open\(\"([^\"]*)\",\"([^\"]*)\"\) = (\(nil\)|0x([0-9a-f]*))/) {
+        if($function =~ /f[d]*open\(\"(.*)\",\"([^\"]*)\"\) = (\(nil\)|0x([0-9a-f]*))/) {
             if($3 eq "(nil)") {
                 ;
             }
@@ -378,8 +398,9 @@ if($verbose) {
     "Reallocs: $reallocs\n",
     "Callocs: $callocs\n",
     "Strdups:  $strdups\n",
+    "Wcsdups:  $wcsdups\n",
     "Frees: $frees\n",
-    "Allocations: ".($mallocs + $callocs + $reallocs + $strdups)."\n";
+    "Allocations: ".($mallocs + $callocs + $reallocs + $strdups + $wcsdups)."\n";
 
     print "Maximum allocated: $maxmem\n";
 }

@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -39,6 +39,7 @@
 
 #include <curl/mprintf.h>
 
+#include "warnless.h"
 #include "memdebug.h"
 
 #define RTP_PKT_CHANNEL(p)   ((int)((unsigned char)((p)[1])))
@@ -54,11 +55,13 @@ static int rtp_packet_count = 0;
 static size_t rtp_write(void *ptr, size_t size, size_t nmemb, void *stream) {
   char *data = (char *)ptr;
   int channel = RTP_PKT_CHANNEL(data);
-  int message_size = (int)(size * nmemb) - 4;
+  int message_size;
   int coded_size = RTP_PKT_LENGTH(data);
   size_t failure = (size * nmemb) ? 0 : 1;
   int i;
   (void)stream;
+
+  message_size = curlx_uztosi(size * nmemb) - 4;
 
   printf("RTP: message size %d, channel %d\n", message_size, channel);
   if(message_size != coded_size) {
@@ -132,7 +135,7 @@ int test(char *URL)
   stream_uri = NULL;
 
   test_setopt(curl, CURLOPT_INTERLEAVEFUNCTION, rtp_write);
-  test_setopt(curl, CURLOPT_TIMEOUT, 3);
+  test_setopt(curl, CURLOPT_TIMEOUT, 3L);
   test_setopt(curl, CURLOPT_VERBOSE, 1L);
   test_setopt(curl, CURLOPT_WRITEDATA, protofile);
 

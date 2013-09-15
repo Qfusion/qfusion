@@ -13,6 +13,12 @@ proxytunnel
 #
 # Server-side
 <reply>
+<connect>
+HTTP/1.1 200 Mighty fine indeed
+Server: test tunnel 2000
+
+</connect>
+
 <data nocheck="yes">
 HTTP/1.0 200 OK
 Date: Thu, 09 Nov 2010 14:49:00 GMT
@@ -31,12 +37,13 @@ contents
 <client>
 <server>
 http
+http-proxy
 </server>
  <name>
 HTTP 1.0 CONNECT with proxytunnel and downgrade GET to HTTP/1.0
  </name>
  <command>
---proxy1.0 %HOSTIP:%HTTPPORT -p http://%HOSTIP:%HTTPPORT/we/want/that/page/1078 http://%HOSTIP:%HTTPPORT/we/want/that/page/1078
+--proxy1.0 %HOSTIP:%PROXYPORT -p http://%HOSTIP.1078:%HTTPPORT/we/want/that/page/1078 http://%HOSTIP.1078:%HTTPPORT/we/want/that/page/1078
 </command>
 </client>
 
@@ -46,22 +53,25 @@ HTTP 1.0 CONNECT with proxytunnel and downgrade GET to HTTP/1.0
 <strip>
 ^User-Agent:.*
 </strip>
-<protocol>
-CONNECT %HOSTIP:%HTTPPORT HTTP/1.0
-Host: %HOSTIP:%HTTPPORT
+<proxy>
+CONNECT %HOSTIP.1078:%HTTPPORT HTTP/1.0
+Host: %HOSTIP.1078:%HTTPPORT
 Proxy-Connection: Keep-Alive
 
+</proxy>
+<protocol>
 GET /we/want/that/page/1078 HTTP/1.1
-Host: %HOSTIP:%HTTPPORT
+Host: %HOSTIP.1078:%HTTPPORT
 Accept: */*
 
 GET /we/want/that/page/1078 HTTP/1.0
-Host: %HOSTIP:%HTTPPORT
+Host: %HOSTIP.1078:%HTTPPORT
 Accept: */*
 
 </protocol>
 <stdout>
 HTTP/1.1 200 Mighty fine indeed
+Server: test tunnel 2000
 
 HTTP/1.0 200 OK
 Date: Thu, 09 Nov 2010 14:49:00 GMT

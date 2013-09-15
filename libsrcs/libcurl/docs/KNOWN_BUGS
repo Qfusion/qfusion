@@ -3,20 +3,57 @@ join in and help us correct one or more of these! Also be sure to check the
 changelog of the current development status, as one or more of these problems
 may have been fixed since this was written!
 
+83. curl is unable to load non-default openssl engines, because openssl isn't
+  initialized properly. This seems to require OpenSSL_config() or
+  CONF_modules_load_file() to be used by libcurl but the first seems to not
+  work and we've gotten not reports from tests with the latter. Possibly we
+  need to discuss with OpenSSL developers how this is supposed to be done. We
+  need users with actual external openssl engines for testing to work on this.
+  http://curl.haxx.se/bug/view.cgi?id=1208
+
+82. When building with the Windows Borland compiler, it fails because the
+  "tlib" tool doesn't support hyphens (minus signs) in file names and we have
+  such in the build.
+  http://curl.haxx.se/bug/view.cgi?id=1222
+
+81. When using -J (with -O), automaticly resumed downloading together with "-C
+  -" fails. Without -J the same command line works! This happens because the
+  resume logic is worked out before the target file name (and thus its
+  pre-transfer size) has been figured out!
+  http://curl.haxx.se/bug/view.cgi?id=1169
+
+80. Curl doesn't recognize certificates in DER format in keychain, but it
+  works with PEM.
+  http://curl.haxx.se/bug/view.cgi?id=3439999
+
+79. SMTP. When sending data to multiple recipients, curl will abort and return
+  failure if one of the recipients indicate failure (on the "RCPT TO"
+  command). Ordinary mail programs would proceed and still send to the ones
+  that can receive data. This is subject for change in the future.
+  http://curl.haxx.se/bug/view.cgi?id=3438362
+
+78. curl and libcurl don't always signal the client properly when "sending"
+  zero bytes files - it makes for example the command line client not creating
+  any file at all. Like when using FTP.
+  http://curl.haxx.se/bug/view.cgi?id=3438362
+
+77. CURLOPT_FORBID_REUSE on a handle prevents NTLM from working since it
+  "abuses" the underlying connection re-use system and if connections are
+  forced to close they break the NTLM support.
+
 76. The SOCKET type in Win64 is 64 bits large (and thus so is curl_socket_t on
   that platform), and long is only 32 bits. It makes it impossible for
   curl_easy_getinfo() to return a socket properly with the CURLINFO_LASTSOCKET
   option as for all other operating systems.
 
-75. NTLM authentication involving unicode user name or password.
+75. NTLM authentication involving unicode user name or password only works
+  properly if built with UNICODE defined together with the schannel/winssl
+  backend. The original problem was mentioned in:
   http://curl.haxx.se/mail/lib-2009-10/0024.html
   http://curl.haxx.se/bug/view.cgi?id=2944325
 
-74. The HTTP spec allows headers to be merged and become comma-separated
-  instead of being repeated several times. This also include Authenticate: and
-  Proxy-Authenticate: headers and while this hardly every happens in real life
-  it will confuse libcurl which does not properly support it for all headers -
-  like those Authenticate headers.
+  The schannel version verified to work as mentioned in
+  http://curl.haxx.se/mail/lib-2012-07/0073.html
 
 73. if a connection is made to a FTP server but the server then just never
   sends the 220 response or otherwise is dead slow, libcurl will not
@@ -67,13 +104,6 @@ may have been fixed since this was written!
   CURLOPT_FAILONERROR with FTP to detect if a file exists or not, but it is
   not working: http://curl.haxx.se/mail/lib-2008-07/0295.html
 
-57. On VMS-Alpha: When using an http-file-upload the file is not sent to the
-  Server with the correct content-length.  Sending a file with 511 or less
-  bytes, content-length 512 is used.  Sending a file with 513 - 1023 bytes,
-  content-length 1024 is used.  Files with a length of a multiple of 512 Bytes
-  show the correct content-length. Only these files work for upload.
-  http://curl.haxx.se/bug/view.cgi?id=2057858
-
 56. When libcurl sends CURLOPT_POSTQUOTE commands when connected to a SFTP
   server using the multi interface, the commands are not being sent correctly
   and instead the connection is "cancelled" (the operation is considered done)
@@ -116,13 +146,6 @@ may have been fixed since this was written!
 38. Kumar Swamy Bhatt's problem in ftp/ssl "LIST" operation:
   http://curl.haxx.se/mail/lib-2007-01/0103.html
 
-37. Having more than one connection to the same host when doing NTLM
-  authentication (with performs multiple "passes" and authenticates a
-  connection rather than a HTTP request), and particularly when using the
-  multi interface, there's a risk that libcurl will re-use a wrong connection
-  when doing the different passes in the NTLM negotiation and thus fail to
-  negotiate (in seemingly mysterious ways).
-
 35. Both SOCKS5 and SOCKS4 proxy connections are done blocking, which is very
   bad when used with the multi interface.
 
@@ -152,18 +175,11 @@ may have been fixed since this was written!
   to what winhttp does. See http://curl.haxx.se/bug/view.cgi?id=1281867
 
 23. SOCKS-related problems:
-  A) libcurl doesn't support SOCKS for IPv6.
   B) libcurl doesn't support FTPS over a SOCKS proxy.
   E) libcurl doesn't support active FTP over a SOCKS proxy
 
   We probably have even more bugs and lack of features when a SOCKS proxy is
   used.
-
-22. Sending files to a FTP server using curl on VMS, might lead to curl
-  complaining on "unaligned file size" on completion. The problem is related
-  to VMS file structures and the perceived file sizes stat() returns. A
-  possible fix would involve sending a "STRU VMS" command.
-  http://curl.haxx.se/bug/view.cgi?id=1156287
 
 21. FTP ASCII transfers do not follow RFC959. They don't convert the data
    accordingly (not for sending nor for receiving). RFC 959 section 3.1.1.1

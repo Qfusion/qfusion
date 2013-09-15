@@ -39,7 +39,7 @@
  *
  */
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #ifndef CURL_DISABLE_FTP
 #ifdef HAVE_KRB4
@@ -49,10 +49,6 @@
 #endif
 #include <krb.h>
 #include <des.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h> /* for getpid() */
-#endif
 
 #include "urldata.h"
 #include "curl_base64.h"

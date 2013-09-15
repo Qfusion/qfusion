@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #ifdef USE_WINDOWS_SSPI
 
@@ -29,9 +29,11 @@
 #include "urldata.h"
 #include "sendf.h"
 #include "rawstr.h"
+#include "warnless.h"
 #include "curl_base64.h"
 #include "http_negotiate.h"
 #include "curl_memory.h"
+#include "curl_multibyte.h"
 
 #define _MPRINTF_REPLACE /* use our functions only */
 #include <curl/mprintf.h>
@@ -87,9 +89,9 @@ int Curl_input_negotiate(struct connectdata *conn, bool proxy,
   SecBuffer         out_sec_buff;
   SecBufferDesc     in_buff_desc;
   SecBuffer         in_sec_buff;
-  ULONG             context_attributes;
+  unsigned long     context_attributes;
   TimeStamp         lifetime;
-
+  TCHAR             *sname;
   int ret;
   size_t len = 0, input_token_len = 0;
   bool gss = FALSE;
@@ -136,7 +138,7 @@ int Curl_input_negotiate(struct connectdata *conn, bool proxy,
 
   if(!neg_ctx->output_token) {
     PSecPkgInfo SecurityPackage;
-    ret = s_pSecFn->QuerySecurityPackageInfo((SEC_CHAR *)"Negotiate",
+    ret = s_pSecFn->QuerySecurityPackageInfo((TCHAR *) TEXT("Negotiate"),
                                              &SecurityPackage);
     if(ret != SEC_E_OK)
       return -1;
@@ -165,7 +167,8 @@ int Curl_input_negotiate(struct connectdata *conn, bool proxy,
       return -1;
 
     neg_ctx->status =
-      s_pSecFn->AcquireCredentialsHandle(NULL, (SEC_CHAR *)"Negotiate",
+      s_pSecFn->AcquireCredentialsHandle(NULL,
+                                         (TCHAR *) TEXT("Negotiate"),
                                          SECPKG_CRED_OUTBOUND, NULL, NULL,
                                          NULL, NULL, neg_ctx->credentials,
                                          &lifetime);
@@ -189,7 +192,7 @@ int Curl_input_negotiate(struct connectdata *conn, bool proxy,
   out_buff_desc.cBuffers  = 1;
   out_buff_desc.pBuffers  = &out_sec_buff;
 
-  out_sec_buff.cbBuffer   = neg_ctx->max_token_length;
+  out_sec_buff.cbBuffer   = curlx_uztoul(neg_ctx->max_token_length);
   out_sec_buff.BufferType = SECBUFFER_TOKEN;
   out_sec_buff.pvBuffer   = neg_ctx->output_token;
 
@@ -197,17 +200,21 @@ int Curl_input_negotiate(struct connectdata *conn, bool proxy,
   if(input_token) {
     in_buff_desc.ulVersion = 0;
     in_buff_desc.cBuffers  = 1;
-    in_buff_desc.pBuffers  = &out_sec_buff;
+    in_buff_desc.pBuffers  = &in_sec_buff;
 
-    in_sec_buff.cbBuffer   = input_token_len;
+    in_sec_buff.cbBuffer   = curlx_uztoul(input_token_len);
     in_sec_buff.BufferType = SECBUFFER_TOKEN;
     in_sec_buff.pvBuffer   = input_token;
   }
 
+  sname = Curl_convert_UTF8_to_tchar(neg_ctx->server_name);
+  if(!sname)
+    return CURLE_OUT_OF_MEMORY;
+
   neg_ctx->status = s_pSecFn->InitializeSecurityContext(
     neg_ctx->credentials,
     input_token ? neg_ctx->context : 0,
-    neg_ctx->server_name,
+    sname,
     ISC_REQ_CONFIDENTIALITY,
     0,
     SECURITY_NATIVE_DREP,
@@ -217,6 +224,8 @@ int Curl_input_negotiate(struct connectdata *conn, bool proxy,
     &out_buff_desc,
     &context_attributes,
     &lifetime);
+
+  Curl_unicodefree(sname);
 
   if(GSS_ERROR(neg_ctx->status))
     return -1;

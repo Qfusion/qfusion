@@ -6,7 +6,7 @@
 #                            | (__| |_| |  _ <| |___
 #                             \___|\___/|_| \_\_____|
 #
-# Copyright (C) 1998 - 2010, Daniel Stenberg, <daniel@haxx.se>, et al.
+# Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution. The terms
@@ -22,7 +22,8 @@
 #***************************************************************************
 
 BEGIN {
-    @INC=(@INC, $ENV{'srcdir'}, '.');
+    push(@INC, $ENV{'srcdir'}) if(defined $ENV{'srcdir'});
+    push(@INC, ".");
 }
 
 use strict;
@@ -40,8 +41,8 @@ my $idnum = 1;       # dafault http server instance number
 my $proto = 'http';  # protocol the http server speaks
 my $pidfile;         # http server pid file
 my $logfile;         # http server log file
+my $connect;         # IP to connect to on CONNECT
 my $srcdir;
-my $fork;
 my $gopher = 0;
 
 my $flags  = "";
@@ -82,6 +83,12 @@ while(@ARGV) {
             shift @ARGV;
         }
     }
+    elsif($ARGV[0] eq '--connect') {
+        if($ARGV[1]) {
+            $connect = $ARGV[1];
+            shift @ARGV;
+        }
+    }
     elsif($ARGV[0] eq '--id') {
         if($ARGV[1] =~ /^(\d+)$/) {
             $idnum = $1 if($1 > 0);
@@ -90,9 +97,6 @@ while(@ARGV) {
     }
     elsif($ARGV[0] eq '--verbose') {
         $verbose = 1;
-    }
-    elsif($ARGV[0] eq '--fork') {
-        $fork = $ARGV[0];
     }
     else {
         print STDERR "\nWarning: httpserver.pl unknown parameter: $ARGV[0]\n";
@@ -110,9 +114,13 @@ if(!$logfile) {
     $logfile = server_logfilename($logdir, $proto, $ipvnum, $idnum);
 }
 
-$flags .= "--gopher " if($gopher);
-$flags .= "--fork " if(defined($fork));
 $flags .= "--pidfile \"$pidfile\" --logfile \"$logfile\" ";
+$flags .= "--gopher " if($gopher);
+$flags .= "--connect $connect " if($connect);
 $flags .= "--ipv$ipvnum --port $port --srcdir \"$srcdir\"";
+
+if($verbose) {
+    print STDERR "RUN: server/sws $flags\n";
+}
 
 exec("server/sws $flags");

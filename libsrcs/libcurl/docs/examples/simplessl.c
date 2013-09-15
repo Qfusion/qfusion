@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -43,6 +43,7 @@
 
 int main(void)
 {
+  int i;
   CURL *curl;
   CURLcode res;
   FILE *headerfile;
@@ -76,7 +77,7 @@ int main(void)
     curl_easy_setopt(curl, CURLOPT_URL, "HTTPS://your.favourite.ssl.site");
     curl_easy_setopt(curl, CURLOPT_WRITEHEADER, headerfile);
 
-    while(1)                    /* do some ugly short cut... */
+    for(i = 0; i < 1; i++) /* single-iteration loop, just to break out from */
     {
       if (pEngine)             /* use crypto engine */
       {
@@ -118,8 +119,14 @@ int main(void)
       /* disconnect if we can't validate server's cert */
       curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1L);
 
+      /* Perform the request, res will get the return code */
       res = curl_easy_perform(curl);
-      break;                   /* we are done... */
+      /* Check for errors */
+      if(res != CURLE_OK)
+        fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                curl_easy_strerror(res));
+
+      /* we are done... */
     }
     /* always cleanup */
     curl_easy_cleanup(curl);

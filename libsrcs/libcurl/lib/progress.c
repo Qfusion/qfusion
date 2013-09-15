@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #include "urldata.h"
 #include "sendf.h"
@@ -131,11 +131,14 @@ static char *max5data(curl_off_t bytes, char *max5)
 
 */
 
-void Curl_pgrsDone(struct connectdata *conn)
+int Curl_pgrsDone(struct connectdata *conn)
 {
+  int rc;
   struct SessionHandle *data = conn->data;
   data->progress.lastshow=0;
-  Curl_pgrsUpdate(conn); /* the final (forced) update */
+  rc = Curl_pgrsUpdate(conn); /* the final (forced) update */
+  if(rc)
+    return rc;
 
   if(!(data->progress.flags & PGRS_HIDE) &&
      !data->progress.callback)
@@ -144,19 +147,25 @@ void Curl_pgrsDone(struct connectdata *conn)
     fprintf(data->set.err, "\n");
 
   data->progress.speeder_c = 0; /* reset the progress meter display */
+  return 0;
 }
 
-/* reset all times except redirect */
-void Curl_pgrsResetTimes(struct SessionHandle *data)
+/* reset all times except redirect, and reset the known transfer sizes */
+void Curl_pgrsResetTimesSizes(struct SessionHandle *data)
 {
   data->progress.t_nslookup = 0.0;
   data->progress.t_connect = 0.0;
   data->progress.t_pretransfer = 0.0;
   data->progress.t_starttransfer = 0.0;
+
+  Curl_pgrsSetDownloadSize(data, 0);
+  Curl_pgrsSetUploadSize(data, 0);
 }
 
 void Curl_pgrsTime(struct SessionHandle *data, timerid timer)
 {
+  struct timeval now = Curl_tvnow();
+
   switch(timer) {
   default:
   case TIMER_NONE:
@@ -164,35 +173,38 @@ void Curl_pgrsTime(struct SessionHandle *data, timerid timer)
     break;
   case TIMER_STARTSINGLE:
     /* This is set at the start of a single fetch */
-    data->progress.t_startsingle = Curl_tvnow();
+    data->progress.t_startsingle = now;
+    break;
+
+  case TIMER_STARTACCEPT:
+    data->progress.t_acceptdata = Curl_tvnow();
     break;
 
   case TIMER_NAMELOOKUP:
     data->progress.t_nslookup =
-      Curl_tvdiff_secs(Curl_tvnow(), data->progress.t_startsingle);
+      Curl_tvdiff_secs(now, data->progress.t_startsingle);
     break;
   case TIMER_CONNECT:
     data->progress.t_connect =
-      Curl_tvdiff_secs(Curl_tvnow(), data->progress.t_startsingle);
+      Curl_tvdiff_secs(now, data->progress.t_startsingle);
     break;
   case TIMER_APPCONNECT:
     data->progress.t_appconnect =
-      Curl_tvdiff_secs(Curl_tvnow(), data->progress.t_startsingle);
+      Curl_tvdiff_secs(now, data->progress.t_startsingle);
     break;
   case TIMER_PRETRANSFER:
     data->progress.t_pretransfer =
-      Curl_tvdiff_secs(Curl_tvnow(), data->progress.t_startsingle);
+      Curl_tvdiff_secs(now, data->progress.t_startsingle);
     break;
   case TIMER_STARTTRANSFER:
     data->progress.t_starttransfer =
-      Curl_tvdiff_secs(Curl_tvnow(), data->progress.t_startsingle);
+      Curl_tvdiff_secs(now, data->progress.t_startsingle);
     break;
   case TIMER_POSTRANSFER:
     /* this is the normal end-of-transfer thing */
     break;
   case TIMER_REDIRECT:
-    data->progress.t_redirect =
-      Curl_tvdiff_secs(Curl_tvnow(), data->progress.start);
+    data->progress.t_redirect = Curl_tvdiff_secs(now, data->progress.start);
     break;
   }
 }
@@ -201,7 +213,8 @@ void Curl_pgrsStartNow(struct SessionHandle *data)
 {
   data->progress.speeder_c = 0; /* reset the progress meter display */
   data->progress.start = Curl_tvnow();
-  data->progress.flags &= PGRS_HIDE; /* clear all bits except HIDE */
+  /* clear all bits except HIDE and HEADERS_OUT */
+  data->progress.flags &= PGRS_HIDE|PGRS_HEADERS_OUT;
 }
 
 void Curl_pgrsSetDownloadCounter(struct SessionHandle *data, curl_off_t size)
@@ -232,6 +245,10 @@ void Curl_pgrsSetUploadSize(struct SessionHandle *data, curl_off_t size)
     data->progress.flags &= ~PGRS_UL_SIZE_KNOWN;
 }
 
+/*
+ * Curl_pgrsUpdate() returns 0 for success or the value returned by the
+ * progress callback!
+ */
 int Curl_pgrsUpdate(struct connectdata *conn)
 {
   struct timeval now;
@@ -340,12 +357,21 @@ int Curl_pgrsUpdate(struct connectdata *conn)
   } /* Calculations end */
 
   if(!(data->progress.flags & PGRS_HIDE)) {
-
     /* progress meter has not been shut off */
 
-    if(data->set.fprogress) {
-      /* There's a callback set, so we call that instead of writing
-         anything ourselves. This really is the way to go. */
+    if(data->set.fxferinfo) {
+      /* There's a callback set, call that */
+      result= data->set.fxferinfo(data->set.progress_client,
+                                  data->progress.size_dl,
+                                  data->progress.downloaded,
+                                  data->progress.size_ul,
+                                  data->progress.uploaded);
+      if(result)
+        failf(data, "Callback aborted");
+      return result;
+    }
+    else if(data->set.fprogress) {
+      /* The older deprecated callback is set, call that */
       result= data->set.fprogress(data->set.progress_client,
                                   (double)data->progress.size_dl,
                                   (double)data->progress.downloaded,

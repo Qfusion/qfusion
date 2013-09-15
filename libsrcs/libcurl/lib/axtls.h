@@ -1,5 +1,5 @@
-#ifndef __AXTLS_H
-#define __AXTLS_H
+#ifndef HEADER_CURL_AXTLS_H
+#define HEADER_CURL_AXTLS_H
 /***************************************************************************
  *                                  _   _ ____  _
  *  Project                     ___| | | |  _ \| |
@@ -30,6 +30,10 @@
 int Curl_axtls_init(void);
 int Curl_axtls_cleanup(void);
 CURLcode Curl_axtls_connect(struct connectdata *conn, int sockindex);
+CURLcode Curl_axtls_connect_nonblocking(
+    struct connectdata *conn,
+    int sockindex,
+    bool *done);
 
 /* tell axTLS to close down all open information regarding connections (and
    thus session ID caching etc) */
@@ -47,6 +51,7 @@ int Curl_axtls_check_cxn(struct connectdata *conn);
 #define curlssl_init Curl_axtls_init
 #define curlssl_cleanup Curl_axtls_cleanup
 #define curlssl_connect Curl_axtls_connect
+#define curlssl_connect_nonblocking Curl_axtls_connect_nonblocking
 #define curlssl_session_free(x)  Curl_axtls_session_free(x)
 #define curlssl_close_all Curl_axtls_close_all
 #define curlssl_close Curl_axtls_close
@@ -59,4 +64,5 @@ int Curl_axtls_check_cxn(struct connectdata *conn);
 #define curlssl_data_pending(x,y) (x=x, y=y, 0)
 
 #endif /* USE_AXTLS */
-#endif
+#endif /* HEADER_CURL_AXTLS_H */
+

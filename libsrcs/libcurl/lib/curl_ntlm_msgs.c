@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #ifdef USE_NTLM
 
@@ -33,56 +33,21 @@
 
 #define DEBUG_ME 0
 
-#ifdef USE_SSLEAY
-
-#  ifdef USE_OPENSSL
-#    include <openssl/des.h>
-#    ifndef OPENSSL_NO_MD4
-#      include <openssl/md4.h>
-#    endif
-#    include <openssl/md5.h>
-#    include <openssl/ssl.h>
-#    include <openssl/rand.h>
-#  else
-#    include <des.h>
-#    ifndef OPENSSL_NO_MD4
-#      include <md4.h>
-#    endif
-#    include <md5.h>
-#    include <ssl.h>
-#    include <rand.h>
-#  endif
-#  include "ssluse.h"
-
-#elif defined(USE_GNUTLS)
-
-#  include <gcrypt.h>
-#  include "gtls.h"
-#  define MD5_DIGEST_LENGTH 16
-#  define MD4_DIGEST_LENGTH 16
-
-#elif defined(USE_NSS)
-
-#  include <nss.h>
-#  include <pk11pub.h>
-#  include <hasht.h>
-#  include "nssg.h"
-#  include "curl_md4.h"
-#  define MD5_DIGEST_LENGTH MD5_LENGTH
-
-#elif defined(USE_WINDOWS_SSPI)
-#  include "curl_sspi.h"
-#else
-#  error "Can't compile NTLM support without a crypto library."
-#endif
-
 #include "urldata.h"
 #include "non-ascii.h"
 #include "sendf.h"
 #include "curl_base64.h"
 #include "curl_ntlm_core.h"
 #include "curl_gethostname.h"
+#include "curl_multibyte.h"
+#include "warnless.h"
 #include "curl_memory.h"
+
+#ifdef USE_WINDOWS_SSPI
+#  include "curl_sspi.h"
+#endif
+
+#include "sslgen.h"
 
 #define BUILDING_CURL_NTLM_MSGS_C
 #include "curl_ntlm_msgs.h"
@@ -92,9 +57,6 @@
 
 /* The last #include file should be: */
 #include "memdebug.h"
-
-/* Hostname buffer size */
-#define HOSTNAME_MAX 1024
 
 /* "NTLMSSP" signature is always in ASCII regardless of the platform */
 #define NTLMSSP_SIGNATURE "\x4e\x54\x4c\x4d\x53\x53\x50"
@@ -217,10 +179,11 @@ static unsigned int readint_le(unsigned char *buf)
 /*
  * Curl_ntlm_decode_type2_message()
  *
- * This is used to decode a ntlm type-2 message received from a: HTTP, SMTP
- * or POP3 server. The message is first decoded from a base64 string into a
- * raw ntlm message and checked for validity before the appropriate data for
- * creating a type-3 message is written to the given ntlm data structure.
+ * This is used to decode a ntlm type-2 message received from a HTTP or SASL
+ * based (such as SMTP, POP3 or IMAP) server. The message is first decoded
+ * from a base64 string into a raw ntlm message and checked for validity
+ * before the appropriate data for creating a type-3 message is written to
+ * the given ntlm data structure.
  *
  * Parameters:
  *
@@ -277,7 +240,7 @@ CURLcode Curl_ntlm_decode_type2_message(struct SessionHandle *data,
     free(buffer);
     return CURLE_OUT_OF_MEMORY;
   }
-  ntlm->n_type_2 = (unsigned long)size;
+  ntlm->n_type_2 = curlx_uztoul(size);
   memcpy(ntlm->type_2, buffer, size);
 #else
   ntlm->flags = 0;
@@ -311,19 +274,16 @@ CURLcode Curl_ntlm_decode_type2_message(struct SessionHandle *data,
 #ifdef USE_WINDOWS_SSPI
 void Curl_ntlm_sspi_cleanup(struct ntlmdata *ntlm)
 {
-  if(ntlm->type_2) {
-    free(ntlm->type_2);
-    ntlm->type_2 = NULL;
-  }
+  Curl_safefree(ntlm->type_2);
   if(ntlm->has_handles) {
     s_pSecFn->DeleteSecurityContext(&ntlm->c_handle);
     s_pSecFn->FreeCredentialsHandle(&ntlm->handle);
     ntlm->has_handles = 0;
   }
   if(ntlm->p_identity) {
-    if(ntlm->identity.User) free(ntlm->identity.User);
-    if(ntlm->identity.Password) free(ntlm->identity.Password);
-    if(ntlm->identity.Domain) free(ntlm->identity.Domain);
+    Curl_safefree(ntlm->identity.User);
+    Curl_safefree(ntlm->identity.Password);
+    Curl_safefree(ntlm->identity.Domain);
     ntlm->p_identity = NULL;
   }
 }
@@ -346,24 +306,26 @@ static void unicodecpy(unsigned char *dest,
 /*
  * Curl_ntlm_create_type1_message()
  *
- * This is used to generate an already encoded NTLM type-1 message ready
- * for sending to the recipient, be it a: HTTP, SMTP or POP3 server,
- * using the appropriate compile time crypo API.
+ * This is used to generate an already encoded NTLM type-1 message ready for
+ * sending to the recipient, be it a HTTP or SASL based (such as SMTP, POP3
+ * or IMAP) server, using the appropriate compile time crypo API.
  *
  * Parameters:
  *
  * userp   [in]     - The user name in the format User or Domain\User.
  * passdwp [in]     - The user's password.
  * ntlm    [in/out] - The ntlm data struct being used and modified.
- * outptr  [in/out] - The adress where a pointer to newly allocated memory
+ * outptr  [in/out] - The address where a pointer to newly allocated memory
  *                    holding the result will be stored upon completion.
+ * outlen  [out]    - The length of the output message.
  *
  * Returns CURLE_OK on success.
  */
 CURLcode Curl_ntlm_create_type1_message(const char *userp,
                                         const char *passwdp,
                                         struct ntlmdata *ntlm,
-                                        char **outptr)
+                                        char **outptr,
+                                        size_t *outlen)
 {
   /* NTLM type-1 message structure:
 
@@ -380,7 +342,6 @@ CURLcode Curl_ntlm_create_type1_message(const char *userp,
   */
 
   unsigned char ntlmbuf[NTLM_BUFSIZE];
-  size_t base64_sz = 0;
   size_t size;
 
 #ifdef USE_WINDOWS_SSPI
@@ -388,67 +349,94 @@ CURLcode Curl_ntlm_create_type1_message(const char *userp,
   SecBuffer buf;
   SecBufferDesc desc;
   SECURITY_STATUS status;
-  ULONG attrs;
-  const char *dest = "";
-  const char *user;
-  const char *domain = "";
-  size_t userlen = 0;
+  unsigned long attrs;
+  xcharp_u useranddomain;
+  xcharp_u user, dup_user;
+  xcharp_u domain, dup_domain;
+  xcharp_u passwd, dup_passwd;
   size_t domlen = 0;
-  size_t passwdlen = 0;
   TimeStamp tsDummy; /* For Windows 9x compatibility of SSPI calls */
+
+  domain.const_tchar_ptr = TEXT("");
 
   Curl_ntlm_sspi_cleanup(ntlm);
 
-  user = strchr(userp, '\\');
-  if(!user)
-    user = strchr(userp, '/');
+  if(userp && *userp) {
 
-  if(user) {
-    domain = userp;
-    domlen = user - userp;
-    user++;
-  }
-  else {
-    user = userp;
-    domain = "";
-    domlen = 0;
-  }
-
-  if(user)
-    userlen = strlen(user);
-
-  if(passwdp)
-    passwdlen = strlen(passwdp);
-
-  if(userlen > 0) {
-    /* note: initialize all of this before doing the mallocs so that
-     * it can be cleaned up later without leaking memory.
-     */
+    /* null initialize ntlm identity's data to allow proper cleanup */
     ntlm->p_identity = &ntlm->identity;
     memset(ntlm->p_identity, 0, sizeof(*ntlm->p_identity));
-    if((ntlm->identity.User = (unsigned char *)strdup(user)) == NULL)
+
+    useranddomain.tchar_ptr = Curl_convert_UTF8_to_tchar((char *)userp);
+    if(!useranddomain.tchar_ptr)
       return CURLE_OUT_OF_MEMORY;
 
-    ntlm->identity.UserLength = (unsigned long)userlen;
-    if((ntlm->identity.Password = (unsigned char *)strdup(passwdp)) == NULL)
-      return CURLE_OUT_OF_MEMORY;
+    user.const_tchar_ptr = _tcschr(useranddomain.const_tchar_ptr, TEXT('\\'));
+    if(!user.const_tchar_ptr)
+      user.const_tchar_ptr = _tcschr(useranddomain.const_tchar_ptr, TEXT('/'));
 
-    ntlm->identity.PasswordLength = (unsigned long)strlen(passwdp);
-    if((ntlm->identity.Domain = malloc(domlen + 1)) == NULL)
-      return CURLE_OUT_OF_MEMORY;
+    if(user.tchar_ptr) {
+      domain.tchar_ptr = useranddomain.tchar_ptr;
+      domlen = user.tchar_ptr - useranddomain.tchar_ptr;
+      user.tchar_ptr++;
+    }
+    else {
+      user.tchar_ptr = useranddomain.tchar_ptr;
+      domain.const_tchar_ptr = TEXT("");
+      domlen = 0;
+    }
 
-    strncpy((char *)ntlm->identity.Domain, domain, domlen);
-    ntlm->identity.Domain[domlen] = '\0';
-    ntlm->identity.DomainLength = (unsigned long)domlen;
-    ntlm->identity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+    /* setup ntlm identity's user and length */
+    dup_user.tchar_ptr = _tcsdup(user.tchar_ptr);
+    if(!dup_user.tchar_ptr) {
+      Curl_unicodefree(useranddomain.tchar_ptr);
+      return CURLE_OUT_OF_MEMORY;
+    }
+    ntlm->identity.User = dup_user.tbyte_ptr;
+    ntlm->identity.UserLength = curlx_uztoul(_tcslen(dup_user.tchar_ptr));
+    dup_user.tchar_ptr = NULL;
+
+    /* setup ntlm identity's domain and length */
+    dup_domain.tchar_ptr = malloc(sizeof(TCHAR) * (domlen + 1));
+    if(!dup_domain.tchar_ptr) {
+      Curl_unicodefree(useranddomain.tchar_ptr);
+      return CURLE_OUT_OF_MEMORY;
+    }
+    _tcsncpy(dup_domain.tchar_ptr, domain.tchar_ptr, domlen);
+    *(dup_domain.tchar_ptr + domlen) = TEXT('\0');
+    ntlm->identity.Domain = dup_domain.tbyte_ptr;
+    ntlm->identity.DomainLength = curlx_uztoul(domlen);
+    dup_domain.tchar_ptr = NULL;
+
+    Curl_unicodefree(useranddomain.tchar_ptr);
+
+    /* setup ntlm identity's password and length */
+    passwd.tchar_ptr = Curl_convert_UTF8_to_tchar((char *)passwdp);
+    if(!passwd.tchar_ptr)
+      return CURLE_OUT_OF_MEMORY;
+    dup_passwd.tchar_ptr = _tcsdup(passwd.tchar_ptr);
+    if(!dup_passwd.tchar_ptr) {
+      Curl_unicodefree(passwd.tchar_ptr);
+      return CURLE_OUT_OF_MEMORY;
+    }
+    ntlm->identity.Password = dup_passwd.tbyte_ptr;
+    ntlm->identity.PasswordLength =
+      curlx_uztoul(_tcslen(dup_passwd.tchar_ptr));
+    dup_passwd.tchar_ptr = NULL;
+
+    Curl_unicodefree(passwd.tchar_ptr);
+
+    /* setup ntlm identity's flags */
+    ntlm->identity.Flags = SECFLAG_WINNT_AUTH_IDENTITY;
   }
   else
     ntlm->p_identity = NULL;
 
-  status = s_pSecFn->AcquireCredentialsHandleA(NULL, (void *)"NTLM",
-                                               SECPKG_CRED_OUTBOUND, NULL,
-                                               ntlm->p_identity, NULL, NULL,
-                                               &ntlm->handle, &tsDummy);
+  status = s_pSecFn->AcquireCredentialsHandle(NULL,
+                                              (TCHAR *) TEXT("NTLM"),
+                                              SECPKG_CRED_OUTBOUND, NULL,
+                                              ntlm->p_identity, NULL, NULL,
+                                              &ntlm->handle, &tsDummy);
   if(status != SEC_E_OK)
     return CURLE_OUT_OF_MEMORY;
 
@@ -459,15 +447,15 @@ CURLcode Curl_ntlm_create_type1_message(const char *userp,
   buf.BufferType = SECBUFFER_TOKEN;
   buf.pvBuffer   = ntlmbuf;
 
-  status = s_pSecFn->InitializeSecurityContextA(&ntlm->handle, NULL,
-                                                (void *)dest,
-                                                ISC_REQ_CONFIDENTIALITY |
-                                                ISC_REQ_REPLAY_DETECT |
-                                                ISC_REQ_CONNECTION,
-                                                0, SECURITY_NETWORK_DREP,
-                                                NULL, 0,
-                                                &ntlm->c_handle, &desc,
-                                                &attrs, &tsDummy);
+  status = s_pSecFn->InitializeSecurityContext(&ntlm->handle, NULL,
+                                               (TCHAR *) TEXT(""),
+                                               ISC_REQ_CONFIDENTIALITY |
+                                               ISC_REQ_REPLAY_DETECT |
+                                               ISC_REQ_CONNECTION,
+                                               0, SECURITY_NETWORK_DREP,
+                                               NULL, 0,
+                                               &ntlm->c_handle, &desc,
+                                               &attrs, &tsDummy);
 
   if(status == SEC_I_COMPLETE_AND_CONTINUE ||
      status == SEC_I_CONTINUE_NEEDED)
@@ -559,15 +547,15 @@ CURLcode Curl_ntlm_create_type1_message(const char *userp,
   });
 
   /* Return with binary blob encoded into base64 */
-  return Curl_base64_encode(NULL, (char *)ntlmbuf, size, outptr, &base64_sz);
+  return Curl_base64_encode(NULL, (char *)ntlmbuf, size, outptr, outlen);
 }
 
 /*
  * Curl_ntlm_create_type3_message()
  *
- * This is used to generate an already encoded NTLM type-3 message ready
- * for sending to the recipient, be it a: HTTP, SMTP or POP3 server,
- * using the appropriate compile time crypo API.
+ * This is used to generate an already encoded NTLM type-3 message ready for
+ * sending to the recipient, be it a HTTP or SASL based (such as SMTP, POP3
+ * or IMAP) server, using the appropriate compile time crypo API.
  *
  * Parameters:
  *
@@ -575,8 +563,9 @@ CURLcode Curl_ntlm_create_type1_message(const char *userp,
  * userp   [in]     - The user name in the format User or Domain\User.
  * passdwp [in]     - The user's password.
  * ntlm    [in/out] - The ntlm data struct being used and modified.
- * outptr  [in/out] - The adress where a pointer to newly allocated memory
+ * outptr  [in/out] - The address where a pointer to newly allocated memory
  *                    holding the result will be stored upon completion.
+ * outlen  [out]    - The length of the output message.
  *
  * Returns CURLE_OK on success.
  */
@@ -584,7 +573,8 @@ CURLcode Curl_ntlm_create_type3_message(struct SessionHandle *data,
                                         const char *userp,
                                         const char *passwdp,
                                         struct ntlmdata *ntlm,
-                                        char **outptr)
+                                        char **outptr,
+                                        size_t *outlen)
 {
   /* NTLM type-3 message structure:
 
@@ -605,17 +595,15 @@ CURLcode Curl_ntlm_create_type3_message(struct SessionHandle *data,
   */
 
   unsigned char ntlmbuf[NTLM_BUFSIZE];
-  size_t base64_sz = 0;
   size_t size;
 
 #ifdef USE_WINDOWS_SSPI
-  const char *dest = "";
   SecBuffer type_2;
   SecBuffer type_3;
   SecBufferDesc type_2_desc;
   SecBufferDesc type_3_desc;
   SECURITY_STATUS status;
-  ULONG attrs;
+  unsigned long attrs;
   TimeStamp tsDummy; /* For Windows 9x compatibility of SSPI calls */
 
   (void)passwdp;
@@ -634,17 +622,17 @@ CURLcode Curl_ntlm_create_type3_message(struct SessionHandle *data,
   type_3.pvBuffer   = ntlmbuf;
   type_3.cbBuffer   = NTLM_BUFSIZE;
 
-  status = s_pSecFn->InitializeSecurityContextA(&ntlm->handle,
-                                                &ntlm->c_handle,
-                                                (void *)dest,
-                                                ISC_REQ_CONFIDENTIALITY |
-                                                ISC_REQ_REPLAY_DETECT |
-                                                ISC_REQ_CONNECTION,
-                                                0, SECURITY_NETWORK_DREP,
-                                                &type_2_desc,
-                                                0, &ntlm->c_handle,
-                                                &type_3_desc,
-                                                &attrs, &tsDummy);
+  status = s_pSecFn->InitializeSecurityContext(&ntlm->handle,
+                                               &ntlm->c_handle,
+                                               (TCHAR *) TEXT(""),
+                                               ISC_REQ_CONFIDENTIALITY |
+                                               ISC_REQ_REPLAY_DETECT |
+                                               ISC_REQ_CONNECTION,
+                                               0, SECURITY_NETWORK_DREP,
+                                               &type_2_desc,
+                                               0, &ntlm->c_handle,
+                                               &type_3_desc,
+                                               &attrs, &tsDummy);
   if(status != SEC_E_OK)
     return CURLE_RECV_ERROR;
 
@@ -686,18 +674,13 @@ CURLcode Curl_ntlm_create_type3_message(struct SessionHandle *data,
   if(user)
     userlen = strlen(user);
 
-  if(Curl_gethostname(host, HOSTNAME_MAX)) {
-    infof(data, "gethostname() failed, continuing without!");
+  /* Get the machine's un-qualified host name as NTLM doesn't like the fully
+     qualified domain name */
+  if(Curl_gethostname(host, sizeof(host))) {
+    infof(data, "gethostname() failed, continuing without!\n");
     hostlen = 0;
   }
   else {
-    /* If the workstation if configured with a full DNS name (i.e.
-     * workstation.somewhere.net) gethostname() returns the fully qualified
-     * name, which NTLM doesn't like.
-     */
-    char *dot = strchr(host, '.');
-    if(dot)
-      *dot = '\0';
     hostlen = strlen(host);
   }
 
@@ -716,20 +699,7 @@ CURLcode Curl_ntlm_create_type3_message(struct SessionHandle *data,
     unsigned char entropy[8];
 
     /* Need to create 8 bytes random data */
-#ifdef USE_SSLEAY
-    MD5_CTX MD5pw;
-    Curl_ossl_seed(data); /* Initiate the seed if not already done */
-    RAND_bytes(entropy, 8);
-#elif defined(USE_GNUTLS)
-    gcry_md_hd_t MD5pw;
-    Curl_gtls_seed(data); /* Initiate the seed if not already done */
-    gcry_randomize(entropy, 8, GCRY_STRONG_RANDOM);
-#elif defined(USE_NSS)
-    PK11Context *MD5pw;
-    unsigned int outlen;
-    Curl_nss_seed(data);  /* Initiate the seed if not already done */
-    PK11_GenerateRandom(entropy, 8);
-#endif
+    Curl_ssl_random(data, entropy, sizeof(entropy));
 
     /* 8 bytes random data as challenge in lmresp */
     memcpy(lmresp, entropy, 8);
@@ -741,21 +711,7 @@ CURLcode Curl_ntlm_create_type3_message(struct SessionHandle *data,
     memcpy(tmp, &ntlm->nonce[0], 8);
     memcpy(tmp + 8, entropy, 8);
 
-#ifdef USE_SSLEAY
-    MD5_Init(&MD5pw);
-    MD5_Update(&MD5pw, tmp, 16);
-    MD5_Final(md5sum, &MD5pw);
-#elif defined(USE_GNUTLS)
-    gcry_md_open(&MD5pw, GCRY_MD_MD5, 0);
-    gcry_md_write(MD5pw, tmp, MD5_DIGEST_LENGTH);
-    memcpy(md5sum, gcry_md_read (MD5pw, 0), MD5_DIGEST_LENGTH);
-    gcry_md_close(MD5pw);
-#elif defined(USE_NSS)
-    MD5pw = PK11_CreateDigestContext(SEC_OID_MD5);
-    PK11_DigestOp(MD5pw, tmp, 16);
-    PK11_DigestFinal(MD5pw, md5sum, &outlen, MD5_DIGEST_LENGTH);
-    PK11_DestroyContext(MD5pw, PR_TRUE);
-#endif
+    Curl_ssl_md5sum(tmp, 16, md5sum, MD5_DIGEST_LENGTH);
 
     /* We shall only use the first 8 bytes of md5sum, but the des
        code in Curl_ntlm_core_lm_resp only encrypt the first 8 bytes */
@@ -958,7 +914,7 @@ CURLcode Curl_ntlm_create_type3_message(struct SessionHandle *data,
 #endif
 
   /* Return with binary blob encoded into base64 */
-  return Curl_base64_encode(NULL, (char *)ntlmbuf, size, outptr, &base64_sz);
+  return Curl_base64_encode(NULL, (char *)ntlmbuf, size, outptr, outlen);
 }
 
 #endif /* USE_NTLM */

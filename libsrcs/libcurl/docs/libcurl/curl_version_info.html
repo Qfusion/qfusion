@@ -54,14 +54,29 @@ p.roffit {
 <p class="level0">&nbsp;       data = curl_version_info(CURLVERSION_NOW); 
 <p class="level0">Applications should use this information to judge if things are possible to do or not, instead of using compile-time checks, as dynamic/DLL libraries can be changed independent of applications. 
 <p class="level0">The curl_version_info_data struct looks like this 
-<p class="level0">
-<p class="level0">typedef struct { &nbsp; CURLversion age;          /* see description below */ 
-<p class="level0">&nbsp; /* when 'age' is 0 or higher, the members below also exist: */ &nbsp; const char *version;      /* human readable string */ &nbsp; unsigned int version_num; /* numeric representation */ &nbsp; const char *host;         /* human readable string */ &nbsp; int features;             /* bitmask, see below */ &nbsp; char *ssl_version;        /* human readable string */ &nbsp; long ssl_version_num;     /* not used, always zero */ &nbsp; const char *libz_version; /* human readable string */ &nbsp; const char **protocols;   /* list of protocols */ 
-<p class="level0">&nbsp; /* when 'age' is 1 or higher, the members below also exist: */ &nbsp; const char *ares;         /* human readable string */ &nbsp; int ares_num;             /* number */ 
-<p class="level0">&nbsp; /* when 'age' is 2 or higher, the member below also exists: */ &nbsp; const char *libidn;       /* human readable string */ 
-<p class="level0">&nbsp; /* when 'age' is 3 or higher, the members below also exist: */ &nbsp; int iconv_ver_num;       /* '_libiconv_version' if iconv support enabled */ 
-<p class="level0">&nbsp; const char *libssh_version; /* human readable string */ 
-<p class="level0">} curl_version_info_data; 
+<p class="level0"><pre>
+<p class="level0">typedef struct {
+ &nbsp; CURLversion age;          /* see description below */
+ <p class="level0">&nbsp; /* when 'age' is 0 or higher, the members below also exist: */
+ &nbsp; const char *version;      /* human readable string */
+ &nbsp; unsigned int version_num; /* numeric representation */
+ &nbsp; const char *host;         /* human readable string */
+ &nbsp; int features;             /* bitmask, see below */
+ &nbsp; char *ssl_version;        /* human readable string */
+ &nbsp; long ssl_version_num;     /* not used, always zero */
+ &nbsp; const char *libz_version; /* human readable string */
+ &nbsp; const char **protocols;   /* list of protocols */
+ <p class="level0">&nbsp; /* when 'age' is 1 or higher, the members below also exist: */
+ &nbsp; const char *ares;         /* human readable string */
+ &nbsp; int ares_num;             /* number */
+ <p class="level0">&nbsp; /* when 'age' is 2 or higher, the member below also exists: */
+ &nbsp; const char *libidn;       /* human readable string */
+ <p class="level0">&nbsp; /* when 'age' is 3 or higher, the members below also exist: */
+ &nbsp; int iconv_ver_num;       /* '_libiconv_version' if iconv support enabled */
+ <p class="level0">&nbsp; const char *libssh_version; /* human readable string */
+ <p class="level0">} curl_version_info_data;
+ </pre>
+
 <p class="level0">
 <p class="level0"><span Class="emphasis">age</span> describes what the age of this struct is. The number depends on how new the libcurl you're using is. You are however guaranteed to get a struct that you have a matching struct for in the header, as you tell libcurl your "age" with the input argument. 
 <p class="level0"><span Class="emphasis">version</span> is just an ascii string for the libcurl version. 

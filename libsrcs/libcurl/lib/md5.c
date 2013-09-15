@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2012, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,16 +20,46 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #ifndef CURL_DISABLE_CRYPTO_AUTH
 
 #include "curl_md5.h"
 #include "curl_hmac.h"
+#include "warnless.h"
 
-#ifdef USE_GNUTLS
+#include "curl_memory.h"
+
+#if defined(USE_GNUTLS_NETTLE)
+
+#include <nettle/md5.h>
+/* The last #include file should be: */
+#include "memdebug.h"
+
+typedef struct md5_ctx MD5_CTX;
+
+static void MD5_Init(MD5_CTX * ctx)
+{
+  md5_init(ctx);
+}
+
+static void MD5_Update(MD5_CTX * ctx,
+                       const unsigned char * input,
+                       unsigned int inputLen)
+{
+  md5_update(ctx, inputLen, input);
+}
+
+static void MD5_Final(unsigned char digest[16], MD5_CTX * ctx)
+{
+  md5_digest(ctx, 16, digest);
+}
+
+#elif defined(USE_GNUTLS)
 
 #include <gcrypt.h>
+/* The last #include file should be: */
+#include "memdebug.h"
 
 typedef gcry_md_hd_t MD5_CTX;
 
@@ -51,9 +81,7 @@ static void MD5_Final(unsigned char digest[16], MD5_CTX * ctx)
   gcry_md_close(*ctx);
 }
 
-#else
-
-#ifdef USE_SSLEAY
+#elif defined(USE_SSLEAY)
 /* When OpenSSL is available we use the MD5-function from OpenSSL */
 
 #  ifdef USE_OPENSSL
@@ -62,8 +90,75 @@ static void MD5_Final(unsigned char digest[16], MD5_CTX * ctx)
 #    include <md5.h>
 #  endif
 
-#else /* USE_SSLEAY */
-/* When OpenSSL is not available we use this code segment */
+#elif (defined(__MAC_OS_X_VERSION_MAX_ALLOWED) && \
+              (__MAC_OS_X_VERSION_MAX_ALLOWED >= 1040)) || \
+      (defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && \
+              (__IPHONE_OS_VERSION_MAX_ALLOWED >= 20000))
+
+/* For Apple operating systems: CommonCrypto has the functions we need.
+   These functions are available on Tiger and later, as well as iOS 2.0
+   and later. If you're building for an older cat, well, sorry.
+
+   Declaring the functions as static like this seems to be a bit more
+   reliable than defining COMMON_DIGEST_FOR_OPENSSL on older cats. */
+#  include <CommonCrypto/CommonDigest.h>
+#  define MD5_CTX CC_MD5_CTX
+
+static void MD5_Init(MD5_CTX *ctx)
+{
+  CC_MD5_Init(ctx);
+}
+
+static void MD5_Update(MD5_CTX *ctx,
+                       const unsigned char *input,
+                       unsigned int inputLen)
+{
+  CC_MD5_Update(ctx, input, inputLen);
+}
+
+static void MD5_Final(unsigned char digest[16], MD5_CTX *ctx)
+{
+  CC_MD5_Final(digest, ctx);
+}
+
+#elif defined(_WIN32)
+
+#include <wincrypt.h>
+
+typedef struct {
+  HCRYPTPROV hCryptProv;
+  HCRYPTHASH hHash;
+} MD5_CTX;
+
+static void MD5_Init(MD5_CTX *ctx)
+{
+  if(CryptAcquireContext(&ctx->hCryptProv, NULL, NULL,
+                         PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+    CryptCreateHash(ctx->hCryptProv, CALG_MD5, 0, 0, &ctx->hHash);
+  }
+}
+
+static void MD5_Update(MD5_CTX *ctx,
+                       const unsigned char *input,
+                       unsigned int inputLen)
+{
+  CryptHashData(ctx->hHash, (unsigned char *)input, inputLen, 0);
+}
+
+static void MD5_Final(unsigned char digest[16], MD5_CTX *ctx)
+{
+  unsigned long length;
+  CryptGetHashParam(ctx->hHash, HP_HASHVAL, NULL, &length, 0);
+  if(length == 16)
+    CryptGetHashParam(ctx->hHash, HP_HASHVAL, digest, &length, 0);
+  if(ctx->hHash)
+    CryptDestroyHash(ctx->hHash);
+  if(ctx->hCryptProv)
+    CryptReleaseContext(ctx->hCryptProv, 0);
+}
+
+#else
+/* When no other crypto library is available we use this code segment */
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
 rights reserved.
@@ -365,9 +460,10 @@ static void Decode (UINT4 *output,
       (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);
 }
 
-#endif /* USE_SSLEAY */
+#endif /* CRYPTO LIBS */
 
-#endif /* USE_GNUTLS */
+/* The last #include file should be: */
+#include "memdebug.h"
 
 const HMAC_params Curl_HMAC_MD5[] = {
   {
@@ -380,14 +476,66 @@ const HMAC_params Curl_HMAC_MD5[] = {
   }
 };
 
+const MD5_params Curl_DIGEST_MD5[] = {
+  {
+    (Curl_MD5_init_func) MD5_Init,      /* Digest initialization function */
+    (Curl_MD5_update_func) MD5_Update,  /* Digest update function */
+    (Curl_MD5_final_func) MD5_Final,    /* Digest computation end function */
+    sizeof(MD5_CTX),                    /* Size of digest context struct */
+    16                                  /* Result size */
+  }
+};
 
 void Curl_md5it(unsigned char *outbuffer, /* 16 bytes */
                 const unsigned char *input)
 {
   MD5_CTX ctx;
   MD5_Init(&ctx);
-  MD5_Update(&ctx, input, (unsigned int)strlen((char *)input));
+  MD5_Update(&ctx, input, curlx_uztoui(strlen((char *)input)));
   MD5_Final(outbuffer, &ctx);
+}
+
+MD5_context *Curl_MD5_init(const MD5_params *md5params)
+{
+  MD5_context *ctxt;
+
+  /* Create MD5 context */
+  ctxt = malloc(sizeof *ctxt);
+
+  if(!ctxt)
+    return ctxt;
+
+  ctxt->md5_hashctx = malloc(md5params->md5_ctxtsize);
+
+  if(!ctxt->md5_hashctx) {
+    free(ctxt);
+    return NULL;
+  }
+
+  ctxt->md5_hash = md5params;
+
+  (*md5params->md5_init_func)(ctxt->md5_hashctx);
+
+  return ctxt;
+}
+
+int Curl_MD5_update(MD5_context *context,
+                    const unsigned char *data,
+                    unsigned int len)
+{
+  (*context->md5_hash->md5_update_func)(context->md5_hashctx, data, len);
+
+  return 0;
+}
+
+int Curl_MD5_final(MD5_context *context, unsigned char *result)
+{
+  (*context->md5_hash->md5_final_func)(result, context->md5_hashctx);
+
+  free(context->md5_hashctx);
+  free(context);
+
+  return 0;
 }
 
 #endif /* CURL_DISABLE_CRYPTO_AUTH */

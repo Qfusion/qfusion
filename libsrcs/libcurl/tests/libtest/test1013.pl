@@ -18,11 +18,12 @@ while( <CURL> )
 }
 close CURL;
 
+$curl_protocols =~ s/\r//;
 $curl_protocols =~ /\w+: (.*)$/;
 @curl = split / /,$1;
 
 # These features are not supported by curl-config
-@curl = grep(!/^(Debug|TrackMemory|Largefile|CharConv|GSS-Negotiate|SPNEGO)$/i, @curl);
+@curl = grep(!/^(Debug|TrackMemory|Metalink|Largefile|CharConv|GSS-Negotiate|SPNEGO)$/i, @curl);
 @curl = sort @curl;
 
 # Read the output of curl-config

@@ -5,7 +5,7 @@
  *                            | (__| |_| |  _ <| |___
  *                             \___|\___/|_| \_\_____|
  *
- * Copyright (C) 1998 - 2011, Daniel Stenberg, <daniel@haxx.se>, et al.
+ * Copyright (C) 1998 - 2013, Daniel Stenberg, <daniel@haxx.se>, et al.
  *
  * This software is licensed as described in the file COPYING, which
  * you should have received as part of this distribution. The terms
@@ -20,7 +20,7 @@
  *
  ***************************************************************************/
 
-#include "setup.h"
+#include "curl_setup.h"
 
 #ifdef USE_NTLM
 
@@ -95,7 +95,13 @@ CURLcode Curl_input_ntlm(struct connectdata *conn,
       ntlm->state = NTLMSTATE_TYPE2; /* We got a type-2 message */
     }
     else {
-      if(ntlm->state >= NTLMSTATE_TYPE1) {
+      if(ntlm->state == NTLMSTATE_TYPE3) {
+        infof(conn->data, "NTLM handshake rejected\n");
+        Curl_http_ntlm_cleanup(conn);
+        ntlm->state = NTLMSTATE_NONE;
+        return CURLE_REMOTE_ACCESS_DENIED;
+      }
+      else if(ntlm->state >= NTLMSTATE_TYPE1) {
         infof(conn->data, "NTLM handshake failure (internal error)\n");
         return CURLE_REMOTE_ACCESS_DENIED;
       }
@@ -114,6 +120,7 @@ CURLcode Curl_output_ntlm(struct connectdata *conn,
                           bool proxy)
 {
   char *base64 = NULL;
+  size_t len = 0;
   CURLcode error;
 
   /* point to the address of the pointer that holds the string to send to the
@@ -172,7 +179,8 @@ CURLcode Curl_output_ntlm(struct connectdata *conn,
   case NTLMSTATE_TYPE1:
   default: /* for the weird cases we (re)start here */
     /* Create a type-1 message */
-    error = Curl_ntlm_create_type1_message(userp, passwdp, ntlm, &base64);
+    error = Curl_ntlm_create_type1_message(userp, passwdp, ntlm, &base64,
+                                           &len);
     if(error)
       return error;
 
@@ -181,15 +189,17 @@ CURLcode Curl_output_ntlm(struct connectdata *conn,
       *allocuserpwd = aprintf("%sAuthorization: NTLM %s\r\n",
                               proxy ? "Proxy-" : "",
                               base64);
-      DEBUG_OUT(fprintf(stderr, "**** Header %s\n ", *allocuserpwd));
       free(base64);
+      if(!*allocuserpwd)
+        return CURLE_OUT_OF_MEMORY;
+      DEBUG_OUT(fprintf(stderr, "**** Header %s\n ", *allocuserpwd));
     }
     break;
 
   case NTLMSTATE_TYPE2:
     /* We already received the type-2 message, create a type-3 message */
     error = Curl_ntlm_create_type3_message(conn->data, userp, passwdp,
-                                           ntlm, &base64);
+                                           ntlm, &base64, &len);
     if(error)
       return error;
 
@@ -198,8 +208,10 @@ CURLcode Curl_output_ntlm(struct connectdata *conn,
       *allocuserpwd = aprintf("%sAuthorization: NTLM %s\r\n",
                               proxy ? "Proxy-" : "",
                               base64);
-      DEBUG_OUT(fprintf(stderr, "**** %s\n ", *allocuserpwd));
       free(base64);
+      if(!*allocuserpwd)
+        return CURLE_OUT_OF_MEMORY;
+      DEBUG_OUT(fprintf(stderr, "**** %s\n ", *allocuserpwd));
 
       ntlm->state = NTLMSTATE_TYPE3; /* we send a type-3 */
       authp->done = TRUE;
@@ -209,10 +221,7 @@ CURLcode Curl_output_ntlm(struct connectdata *conn,
   case NTLMSTATE_TYPE3:
     /* connection is already authenticated,
      * don't send a header in future requests */
-    if(*allocuserpwd) {
-      free(*allocuserpwd);
-      *allocuserpwd = NULL;
-    }
+    Curl_safefree(*allocuserpwd);
     authp->done = TRUE;
     break;
   }

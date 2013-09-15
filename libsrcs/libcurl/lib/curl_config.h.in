@@ -1,8 +1,5 @@
 /* lib/curl_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* when building libcurl itself */
-#undef BUILDING_LIBCURL
-
 /* Location of default ca bundle */
 #undef CURL_CA_BUNDLE
 
@@ -39,6 +36,9 @@
 /* to disable LDAPS */
 #undef CURL_DISABLE_LDAPS
 
+/* to disable --libcurl C code generation option */
+#undef CURL_DISABLE_LIBCURL_OPTION
+
 /* to disable POP3 */
 #undef CURL_DISABLE_POP3
 
@@ -63,23 +63,20 @@
 /* to disable verbose strings */
 #undef CURL_DISABLE_VERBOSE_STRINGS
 
-/* to make a symbol visible */
+/* Definition to make a library symbol externally visible. */
 #undef CURL_EXTERN_SYMBOL
-
-/* to enable hidden symbols */
-#undef CURL_HIDDEN_SYMBOLS
 
 /* Use Windows LDAP implementation */
 #undef CURL_LDAP_WIN
-
-/* when not building a shared library */
-#undef CURL_STATICLIB
 
 /* your Entropy Gathering Daemon socket pathname */
 #undef EGD_SOCKET
 
 /* Define if you want to enable IPv6 support */
 #undef ENABLE_IPV6
+
+/* Define to the type of arg 2 for gethostname. */
+#undef GETHOSTNAME_TYPE_ARG2
 
 /* Define to the type qualifier of arg 1 for getnameinfo. */
 #undef GETNAMEINFO_QUAL_ARG1
@@ -382,9 +379,6 @@
 /* Define to 1 if you have the `ldap_url_parse' function. */
 #undef HAVE_LDAP_URL_PARSE
 
-/* Define to 1 if you have the `gcrypt' library (-lgcrypt). */
-#undef HAVE_LIBGCRYPT
-
 /* Define to 1 if you have the <libgen.h> header file. */
 #undef HAVE_LIBGEN_H
 
@@ -469,6 +463,9 @@
 /* Define to 1 if NI_WITHSCOPEID exists and works. */
 #undef HAVE_NI_WITHSCOPEID
 
+/* if you have the NSS_InitContext function */
+#undef HAVE_NSS_INITCONTEXT
+
 /* if you have an old MIT gssapi library, lacking GSS_C_NT_HOSTBASED_SERVICE
    */
 #undef HAVE_OLD_GSSMIT
@@ -506,9 +503,6 @@
 /* Define to 1 if you have the `pipe' function. */
 #undef HAVE_PIPE
 
-/* if you have the function PK11_CreateGenericObject */
-#undef HAVE_PK11_CREATEGENERICOBJECT
-
 /* Define to 1 if you have a working poll function. */
 #undef HAVE_POLL
 
@@ -538,9 +532,6 @@
 
 /* Define to 1 if you have the recv function. */
 #undef HAVE_RECV
-
-/* Define to 1 if you have the recvfrom function. */
-#undef HAVE_RECVFROM
 
 /* Define to 1 if you have the <rsa.h> header file. */
 #undef HAVE_RSA_H
@@ -611,6 +602,9 @@
 /* if you have the function SRP_Calc_client_key */
 #undef HAVE_SSLEAY_SRP
 
+/* Define to 1 if you have the `SSLv2_client_method' function. */
+#undef HAVE_SSLV2_CLIENT_METHOD
+
 /* Define to 1 if you have the `SSL_get_shutdown' function. */
 #undef HAVE_SSL_GET_SHUTDOWN
 
@@ -632,9 +626,6 @@
 /* Define to 1 if you have the strcasecmp function. */
 #undef HAVE_STRCASECMP
 
-/* Define to 1 if you have the strcasestr function. */
-#undef HAVE_STRCASESTR
-
 /* Define to 1 if you have the strcmpi function. */
 #undef HAVE_STRCMPI
 
@@ -652,9 +643,6 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
-
-/* Define to 1 if you have the strlcat function. */
-#undef HAVE_STRLCAT
 
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY
@@ -801,9 +789,6 @@
    */
 #undef LT_OBJDIR
 
-/* Define to 1 if you are building a native Windows target. */
-#undef NATIVE_WINDOWS
-
 /* Define to 1 if you need the lber.h header file even with ldap.h */
 #undef NEED_LBER_H
 
@@ -818,6 +803,9 @@
 
 /* Define to 1 if _THREAD_SAFE preprocessor symbol must be defined. */
 #undef NEED_THREAD_SAFE
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
 
 /* Define to enable NTLM delegation to winbind's ntlm_auth helper. */
 #undef NTLM_WB_ENABLED
@@ -851,39 +839,6 @@
 
 /* a suitable file to read random data from */
 #undef RANDOM_FILE
-
-/* Define to the type qualifier pointed by arg 5 for recvfrom. */
-#undef RECVFROM_QUAL_ARG5
-
-/* Define to the type of arg 1 for recvfrom. */
-#undef RECVFROM_TYPE_ARG1
-
-/* Define to the type pointed by arg 2 for recvfrom. */
-#undef RECVFROM_TYPE_ARG2
-
-/* Define to 1 if the type pointed by arg 2 for recvfrom is void. */
-#undef RECVFROM_TYPE_ARG2_IS_VOID
-
-/* Define to the type of arg 3 for recvfrom. */
-#undef RECVFROM_TYPE_ARG3
-
-/* Define to the type of arg 4 for recvfrom. */
-#undef RECVFROM_TYPE_ARG4
-
-/* Define to the type pointed by arg 5 for recvfrom. */
-#undef RECVFROM_TYPE_ARG5
-
-/* Define to 1 if the type pointed by arg 5 for recvfrom is void. */
-#undef RECVFROM_TYPE_ARG5_IS_VOID
-
-/* Define to the type pointed by arg 6 for recvfrom. */
-#undef RECVFROM_TYPE_ARG6
-
-/* Define to 1 if the type pointed by arg 6 for recvfrom is void. */
-#undef RECVFROM_TYPE_ARG6_IS_VOID
-
-/* Define to the function return type for recvfrom. */
-#undef RECVFROM_TYPE_RETV
 
 /* Define to the type of arg 1 for recv. */
 #undef RECV_TYPE_ARG1
@@ -972,14 +927,17 @@
 /* if axTLS is enabled */
 #undef USE_AXTLS
 
-/* Define to disable non-blocking sockets. */
-#undef USE_BLOCKING_SOCKETS
-
 /* if CyaSSL is enabled */
 #undef USE_CYASSL
 
+/* to enable iOS/Mac OS X native SSL/TLS support */
+#undef USE_DARWINSSL
+
 /* if GnuTLS is enabled */
 #undef USE_GNUTLS
+
+/* if GnuTLS uses nettle as crypto backend */
+#undef USE_GNUTLS_NETTLE
 
 /* if librtmp is in use */
 #undef USE_LIBRTMP
@@ -989,6 +947,9 @@
 
 /* If you want to build curl with the built-in manual */
 #undef USE_MANUAL
+
+/* Define to enable metalink support */
+#undef USE_METALINK
 
 /* if NSS is enabled */
 #undef USE_NSS
@@ -1002,6 +963,9 @@
 /* if PolarSSL is enabled */
 #undef USE_POLARSSL
 
+/* to enable Windows native SSL/TLS support */
+#undef USE_SCHANNEL
+
 /* if SSL is enabled */
 #undef USE_SSLEAY
 
@@ -1010,6 +974,9 @@
 
 /* Use TLS-SRP authentication */
 #undef USE_TLS_SRP
+
+/* Define to 1 if you have the `normaliz' (WinIDN) library (-lnormaliz). */
+#undef USE_WIN32_IDN
 
 /* Define to 1 if you are building a Windows target with large file support.
    */
@@ -1028,12 +995,20 @@
 /* Version number of package */
 #undef VERSION
 
+/* Define to 1 to provide own prototypes. */
+#undef WANT_IDN_PROTOTYPES
+
 /* Define to avoid automatic inclusion of winsock.h */
 #undef WIN32_LEAN_AND_MEAN
 
 /* Define to 1 if OS is AIX. */
 #ifndef _ALL_SOURCE
 #  undef _ALL_SOURCE
+#endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
