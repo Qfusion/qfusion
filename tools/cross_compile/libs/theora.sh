@@ -6,6 +6,7 @@ MORE_OPTS=""
 [ "$ENABLE_SHARED" != "YES" ] && MORE_OPTS="${MORE_OPTS} --disable-shared"
 
 cd ${SOURCE_DIR}libsrcs/libtheora && \
+MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
 ln -s -f ../../libogg/include/ogg ./include/ogg && \
 LDFLAGS="$LDFLAGS -L`pwd`/../libogg/src/.libs/" \
 ./configure --disable-encode --disable-examples \

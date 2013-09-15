@@ -6,6 +6,7 @@ MORE_OPTS=""
 [ "$ENABLE_SHARED" = "YES" ] && MORE_OPTS="${MORE_OPTS} --enable-shared"
 
 cd ${SOURCE_DIR}libsrcs/libcurl && \
+MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
 ./configure --with-zlib=`pwd`/../zlib/ \
  --enable-static --disable-ldap --disable-ldaps --disable-dict --disable-telet \
  --disable-tftp --disable-manual --disable-file --without-ssl --without-libidn --enable-ipv6 \
