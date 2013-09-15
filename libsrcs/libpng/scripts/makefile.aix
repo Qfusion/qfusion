@@ -21,8 +21,10 @@ RANLIB = ranlib
 RM_F = rm -f
 LN_SF = ln -f -s
 
-LIBNAME=libpng15
-PNGMAJ = 15
+LIBNAME=libpng12
+PNGMAJ = 0
+PNGMIN = 1.2.50
+PNGVER = $(PNGMAJ).$(PNGMIN)
 
 prefix=/usr/local
 INCPATH=$(prefix)/include
@@ -46,8 +48,8 @@ LDDEBUG =
 CRELEASE = -O2
 LDRELEASE = -s
 WARNMORE=-W -Wall
-CFLAGS = -I$(ZLIBINC) $(WARNMORE) $(CRELEASE)
-LDFLAGS = -L. -L$(ZLIBLIB) -lpng15 -lz -lm $(LDRELEASE)
+CFLAGS = -D_ALL_SOURCE -I$(ZLIBINC) $(WARNMORE) $(CRELEASE)
+LDFLAGS = -L. -L$(ZLIBLIB) -lpng12 -lz -lm $(LDRELEASE)
 
 # File extensions
 O=.o
@@ -61,10 +63,6 @@ OBJS =  png$(O) pngerror$(O) pngget$(O) pngmem$(O) pngpread$(O) \
 
 # Targets
 all: $(LIBNAME)$(A) pngtest$(E)
-
-include scripts/pnglibconf.mak
-REMOVE = $(RM_F)
-DFNFLAGS = $(DEFS) $(CPPFLAGS)
 
 $(LIBNAME)$(A): $(OBJS)
 	$(AR_RC) $@ $(OBJS)
@@ -82,14 +80,11 @@ install: $(LIBNAME)$(A)
 	-@if [ ! -d $(DL) ]; then $(MKDIR_P) $(DL); fi
 	-@$(RM_F) $(DI)/$(LIBNAME)/png.h
 	-@$(RM_F) $(DI)/$(LIBNAME)/pngconf.h
-	-@$(RM_F) $(DI)/$(LIBNAME)/pnglibconf.h
 	-@$(RM_F) $(DI)/png.h
 	-@$(RM_F) $(DI)/pngconf.h
-	-@$(RM_F) $(DI)/pnglibconf.h
-	cp png.h pngconf.h pnglibconf.h $(DI)/$(LIBNAME)
+	cp png.h pngconf.h $(DI)/$(LIBNAME)
 	chmod 644 $(DI)/$(LIBNAME)/png.h \
-	$(DI)/$(LIBNAME)/pngconf.h \
-	$(DI)/$(LIBNAME)/pnglibconf.h
+	$(DI)/$(LIBNAME)/pngconf.h
 	-@$(RM_F) -r $(DI)/libpng
 	(cd $(DI); $(LN_SF) $(LIBNAME) libpng; $(LN_SF) $(LIBNAME)/* .)
 	-@$(RM_F) $(DL)/$(LIBNAME)$(A)
@@ -100,22 +95,22 @@ install: $(LIBNAME)$(A)
 	(cd $(DI); $(LN_SF) libpng/* .;)
 
 clean:
-	$(RM_F) *.o $(LIBNAME)$(A) pngtest pngout.png pnglibconf.h
+	$(RM_F) *.o $(LIBNAME)$(A) pngtest pngout.png
 
-png$(O):      png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngerror$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngget$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngmem$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngpread$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngread$(O):  png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngrio$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngrtran$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngrutil$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngset$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngtrans$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngwio$(O):   png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngwrite$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngwtran$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
-pngwutil$(O): png.h pngconf.h pnglibconf.h pngpriv.h pngstruct.h pnginfo.h pngdebug.h
+png$(O):      png.h pngconf.h
+pngerror$(O): png.h pngconf.h
+pngget$(O):   png.h pngconf.h
+pngmem$(O):   png.h pngconf.h
+pngpread$(O): png.h pngconf.h
+pngread$(O):  png.h pngconf.h
+pngrio$(O):   png.h pngconf.h
+pngrtran$(O): png.h pngconf.h
+pngrutil$(O): png.h pngconf.h
+pngset$(O):   png.h pngconf.h
+pngtrans$(O): png.h pngconf.h
+pngwio$(O):   png.h pngconf.h
+pngwrite$(O): png.h pngconf.h
+pngwtran$(O): png.h pngconf.h
+pngwutil$(O): png.h pngconf.h
 
-pngtest$(O):  png.h pngconf.h pnglibconf.h
+pngtest$(O):  png.h pngconf.h
