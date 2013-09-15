@@ -26,10 +26,9 @@ void Irc_Printf( const char *format, ... )
 {
 	va_list		argptr;
 	char		msg[1024];
-	int			len;
 
 	va_start( argptr, format );
-	len = vsnprintf( msg, sizeof(msg), format, argptr );
+	vsnprintf( msg, sizeof(msg), format, argptr );
 	msg[sizeof(msg)-1] = 0;
 	va_end( argptr );
 
