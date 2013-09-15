@@ -116,7 +116,7 @@ typedef struct
 	const netadr_t *address;
 } flush_params_t;
 
-void TV_FlushRedirect( int sv_redirected, char *outputbuf, const void *extra );
+void TV_FlushRedirect( int sv_redirected, const char *outputbuf, const void *extra );
 
 typedef struct
 {
