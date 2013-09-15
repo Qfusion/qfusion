@@ -8,7 +8,7 @@ COMMAND_ENV=""
 set -e
 
 . `pwd`/inc/common.inc.sh
-. `pwd`/inc/host-${OS}-${ARCH}.inc.sh
+. `pwd`/inc/target-${OS}-${ARCH}.inc.sh
 
 TARGET_LIB_DIR="${SOURCE_DIR}/source/$OS/$ARCH/$TLIB_DIR/"
 

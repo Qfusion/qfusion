@@ -15,7 +15,7 @@ ARCH="$2"
 set -e
 
 . `pwd`/inc/common.inc.sh
-. `pwd`/inc/host-${OS}-${ARCH}.inc.sh
+. `pwd`/inc/target-${OS}-${ARCH}.inc.sh
 
 TARGET_DIR="${SOURCE_DIR}/source/$OS/$ARCH/$TLIB_DIR/"
 if [ ! -d "$TARGET_DIR" ]; then

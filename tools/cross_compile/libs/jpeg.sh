@@ -10,6 +10,7 @@ else
 fi
 
 cd ${SOURCE_DIR}libsrcs/libjpeg && \
+MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
 ./configure --enable-static=yes \
 ${MORE_OPTS} && \
 make

@@ -7,6 +7,7 @@ MORE_OPTS=""
 [ "$ENABLE_SHARED" != "YES" ] && MORE_OPTS="${MORE_OPTS} --enable-shared=no"
 
 cd ${SOURCE_DIR}libsrcs/libpng && \
+MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
 CFLAGS="$CFLAGS -I`pwd`/../zlib/" \
 LDFLAGS="$LDFLAGS -L`pwd`/../zlib/lib/" \
 ./configure \

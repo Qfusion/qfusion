@@ -6,6 +6,7 @@ MORE_OPTS=""
 [ "$ENABLE_SHARED" != "YES" ] && MORE_OPTS="${MORE_OPTS} --disable-shared"
 
 cd ${SOURCE_DIR}libsrcs/libvorbis && \
+MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
 ln -s -f ../../libogg/include/ogg ./include/ogg && \
 LDFLAGS="$LDFLAGS -L`pwd`/../libogg/src/.libs/" \
 ./autogen.sh --disable-docs \
