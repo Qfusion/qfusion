@@ -91,6 +91,8 @@ typedef struct
 
 //=======================================================================
 
+static void asnullfunc(void) {}
+
 #define ASLIB_LOCAL_CLASS_DESCR(x)
 
 #define ASLIB_FOFFSET(s,m)						(size_t)&(((s *)0)->m)
@@ -106,8 +108,8 @@ typedef struct
 
 #define ASLIB_FUNCTION_NULL						NULL
 #define ASLIB_FUNCDEF_NULL						{ ASLIB_FUNCTION_NULL }
-#define ASLIB_BEHAVIOR_NULL						{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_NULL, asFUNCTION(NULL), 0 }
-#define ASLIB_METHOD_NULL						{ ASLIB_FUNCTION_NULL, asFUNCTION(NULL), 0 }
+#define ASLIB_BEHAVIOR_NULL						{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), 0 }
+#define ASLIB_METHOD_NULL						{ ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), 0 }
 #define ASLIB_PROPERTY_NULL						{ NULL, 0 }
 
 #define ASLIB_Malloc(s)							(aslib_import.Mem_Alloc(s,__FILE__,__LINE__))
