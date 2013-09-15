@@ -121,7 +121,7 @@ public:
 			}
 		}
 		else if( event.GetType() == "change" && ( event.GetPhase() == Rocket::Core::Event::PHASE_BUBBLE ) ) {
-			bool linebreak = event.GetParameter<bool>( "linebreak", false );
+			bool linebreak = event.GetParameter<int>( "linebreak", 0 ) != 0;
 			if( linebreak ) {
 				// form submission
 				String inpuType;

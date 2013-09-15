@@ -215,7 +215,7 @@ CLIENT / SERVER interactions
 static int rd_target;
 static char *rd_buffer;
 static int rd_buffersize;
-static void ( *rd_flush )( int target, char *buffer, const void *extra );
+static void ( *rd_flush )( int target, const char *buffer, const void *extra );
 static const void *rd_extra;
 
 void Com_BeginRedirect( int target, char *buffer, int buffersize, 
