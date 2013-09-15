@@ -43,11 +43,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 		gives a sharper transition thus showing that with smaller uncertainity the probability curve is more "sure"
 		about the estimation.
  */
-
+#if 0
 static float * rating_getExpectedList( clientRating_t *list, int listSize )
 {
 	return NULL;
 }
+#endif
 
 // returns the given rating or NULL
 clientRating_t *Rating_Find( clientRating_t *ratings, const char *gametype )
