@@ -590,8 +590,8 @@ qboolean TV_Downstream_ChangeStream( client_t *client, relay_t *relay )
 */
 static qboolean TV_Downstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
 {
-	int sequence, sequence_ack;
-	int game_port = -1;
+	/*int sequence, sequence_ack;
+	int game_port = -1;*/
 	int zerror;
 
 	if( !Netchan_Process( netchan, msg ) )
@@ -599,9 +599,9 @@ static qboolean TV_Downstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
 
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
-	sequence = MSG_ReadLong( msg );
-	sequence_ack = MSG_ReadLong( msg );
-	game_port = MSG_ReadShort( msg );
+	/*sequence = */MSG_ReadLong( msg );
+	/*sequence_ack = */MSG_ReadLong( msg );
+	/*game_port = */MSG_ReadShort( msg );
 	if( msg->compressed )
 	{
 		zerror = Netchan_DecompressMessage( msg );

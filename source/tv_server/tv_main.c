@@ -282,7 +282,7 @@ void SV_Frame( int realmsec, int gamemsec )
 //=============================================================================
 
 char tv_outputbuf[TV_OUTPUTBUF_LENGTH];
-void TV_FlushRedirect( int tv_redirected, char *outputbuf, const void *extra )
+void TV_FlushRedirect( int tv_redirected, const char *outputbuf, const void *extra )
 {
 	const flush_params_t *params = ( flush_params_t * )extra;
 

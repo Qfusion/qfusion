@@ -559,11 +559,10 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 #define CAPSULEDISTANCE
 //#define SPLASH_HDIST_CLAMP 0
 	vec3_t boxcenter = { 0, 0, 0 };
-	vec3_t hitpoint, vec;
+	vec3_t hitpoint;
 	float distance;
 	int i;
 	float innerradius;
-	float outerradius;
 	float refdistance;
 
 	if( maxradius <= 0 )
@@ -580,7 +579,6 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 	VectorCopy( point, hitpoint );
 
 	innerradius = ( maxs[0] + maxs[1] - mins[0] - mins[1] ) * 0.25;
-	outerradius = ( sqrt( maxs[0]*maxs[0] + maxs[1]*maxs[1] ) + sqrt( mins[0]*mins[0] + mins[1]*mins[1] ) ) * 0.5;
 
 #ifdef CAPSULEDISTANCE
 	// Find the distance to the closest point in the capsule contained in the player bbox
@@ -678,6 +676,8 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 		{
 			// do not allow the hitpoint to be further away
 			// than SPLASH_HDIST_CLAMP in the horizontal axis
+			vec3_t vec;
+
 			vec[0] = hitpoint[0];
 			vec[1] = hitpoint[1];
 			vec[2] = boxcenter[2];
