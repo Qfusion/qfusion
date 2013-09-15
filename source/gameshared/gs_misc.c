@@ -65,10 +65,9 @@ int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs )
 {
 	vec3_t point;
 	int cont;
-	int waterlevel, watertype;
+	int waterlevel;
 
 	waterlevel = 0;
-	watertype = 0;
 
 	point[0] = state->origin[0];
 	point[1] = state->origin[1];
@@ -76,7 +75,6 @@ int GS_WaterLevel( entity_state_t *state, vec3_t mins, vec3_t maxs )
 	cont = module_PointContents( point, 0 );
 	if( cont & MASK_WATER )
 	{
-		watertype = cont;
 		waterlevel = 1;
 		point[2] += 26;
 		cont = module_PointContents( point, 0 );

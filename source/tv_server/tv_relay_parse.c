@@ -249,10 +249,10 @@ void TV_Relay_ParseServerMessage( relay_t *relay, msg_t *msg )
 		case svc_extension:
 			if( 1 )
 			{
-				int cmd, len, ver;
+				int len;
 
-				cmd = MSG_ReadByte( msg );		// extension id
-				ver = MSG_ReadByte( msg );		// version number
+				MSG_ReadByte( msg );			// extension id
+				MSG_ReadByte( msg );			// version number
 				len = MSG_ReadShort( msg );		// command length
 				MSG_SkipData( msg, len );		// command data
 			}
