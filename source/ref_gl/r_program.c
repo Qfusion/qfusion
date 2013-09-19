@@ -103,6 +103,7 @@ typedef struct glsl_program_s
 					DynamicLightsRadius[MAX_DLIGHTS],
 					DynamicLightsPosition[MAX_DLIGHTS],
 					DynamicLightsDiffuse[MAX_DLIGHTS],
+					NumDynamicLights,
 
 					AttrBonesIndices,
 					AttrBonesWeights,
@@ -384,10 +385,16 @@ static int RP_CompileShader( int program, const char *programName, const char *s
 
 		if( log[0] ) {
 			int i;
-			for( i = 0; i < numStrings; i++ )
-				Com_Printf( "%s\n", strings[i] );
-			Com_Printf( S_COLOR_YELLOW "Failed to compile %s shader for program %s:\n%s\n", 
-				shaderName, programName, log );
+
+			for( i = 0; i < numStrings; i++ ) {
+				Com_Printf( "%s", strings[i] );
+				Com_Printf( "\n" );
+			}
+
+			Com_Printf( S_COLOR_YELLOW "Failed to compile %s shader for program %s\n%s\n", 
+				shaderName, programName );
+			Com_Printf( "%s", log );
+			Com_Printf( "\n" );
 		}
 
 		qglDeleteObjectARB( shader );
@@ -722,16 +729,13 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #endif
 
 #define QF_GLSL_VERSION120 "" \
-"#version 120\n" \
-"#define QF_GLSLVERSION 120\n"
+"#version 120\n"
 
 #define QF_GLSL_VERSION130 "" \
-"#version 130\n" \
-"#define QF_GLSLVERSION 130\n"
+"#version 130\n"
 
 #define QF_GLSL_VERSION140 "" \
-"#version 140\n" \
-"#define QF_GLSLVERSION 140\n"
+"#version 140\n"
 
 #define QF_BUILTIN_GLSL_MACROS "" \
 "#if !defined(myhalf)\n" \
@@ -1314,6 +1318,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	const char **header;
 	char *shaderBuffers[100];
 	const char *shaderStrings[MAX_DEFINES_FEATURES+100];
+	char shaderVersion[100];
 	glslParser_t parser;
 
 	if( type <= GLSL_PROGRAM_TYPE_NONE || type >= GLSL_PROGRAM_TYPE_MAXTYPE )
@@ -1380,6 +1385,9 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 
 	Q_snprintfz( fileName, sizeof( fileName ), "glsl/%s.glsl", name );
 
+	Q_snprintfz( shaderVersion, sizeof( shaderVersion ), 
+		"#define QF_GLSL_VERSION %i\n", glConfig.shadingLanguageVersion );
+
 	// load
 	//
 
@@ -1395,6 +1403,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	else {
 		shaderStrings[i++] = QF_GLSL_VERSION120;
 	}
+	shaderStrings[i++] = shaderVersion;
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
@@ -1472,8 +1481,11 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 		qglGetInfoLogARB( program->object, sizeof( log ), NULL, log );
 		log[sizeof( log ) - 1] = 0;
 
-		if( log[0] )
-			Com_Printf( S_COLOR_YELLOW "Failed to link object for program %s:\n%s\n", fullName, log );
+		if( log[0] ) {
+			Com_Printf( S_COLOR_YELLOW "Failed to link object for program %s\n", fullName );
+			Com_Printf( "%s", log );
+			Com_Printf( "\n" );
+		}
 
 		error = 1;
 		goto done;
@@ -1756,7 +1768,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 	int i, n;
 	dlight_t *dl;
 	float colorScale = mapConfig.mapLightColorScale;
-	vec3_t dlorigin, tvec;
+	vec3_t dlorigin, tvec, dlcolor;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 	qboolean identityAxis = Matrix3_Compare( entAxis, axis_identity );
 
@@ -1792,16 +1804,21 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 				VectorCopy( dlorigin, tvec );
 				Matrix3_TransformVector( entAxis, tvec, dlorigin );
 			}
+			VectorScale( dl->color, colorScale, dlcolor );
 
 			qglUniform1fARB( program->loc.DynamicLightsRadius[n], dl->intensity );
-			qglUniform3fARB( program->loc.DynamicLightsPosition[n], dlorigin[0], dlorigin[1], dlorigin[2] );
-			qglUniform3fARB( program->loc.DynamicLightsDiffuse[n], dl->color[0] * colorScale, dl->color[1] * colorScale, dl->color[2] * colorScale );
+			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, dlorigin );
+			qglUniform3fvARB( program->loc.DynamicLightsDiffuse[n], 1, dlcolor );
 
 			n++;
 			dlightbits &= ~(1<<i);
 			if( !dlightbits ) {
 				break;
 			}
+		}
+
+		if( program->loc.NumDynamicLights >= 0 ) {
+			qglUniform1iARB( program->loc.NumDynamicLights, n );
 		}
 
 		for( ; n < MAX_DLIGHTS; n++ ) {
@@ -2051,6 +2068,7 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 		program->loc.DynamicLightsPosition[i] = locP;
 		program->loc.DynamicLightsDiffuse[i] = locD;
 	}
+	program->loc.NumDynamicLights = qglGetUniformLocationARB( program->object, "u_NumDynamicLights" );
 
 	// shadowmaps
 	for( i = 0; i < GLSL_SHADOWMAP_LIMIT; i++ ) {
