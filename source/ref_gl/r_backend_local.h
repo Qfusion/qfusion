@@ -101,7 +101,7 @@ typedef struct r_backend_s
 		unsigned int numInstances;
 	} drawElements;
 
-	int currentVAttribs;
+	vattribmask_t currentVAttribs;
 
 	int primitive;
 	int currentVBOId;

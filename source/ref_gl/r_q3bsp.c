@@ -1554,7 +1554,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 	}
 
 	// make sure that the only fog in the map has valid shader
-	globalFog = ( loadbmodel->numfogs == 1 );
+	globalFog = ( loadbmodel->numfogs == 1 ) ? qtrue : qfalse;
 	if( globalFog )
 	{
 		testFog = &loadbmodel->fogs[0];

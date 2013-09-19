@@ -218,21 +218,21 @@ typedef void ( *modelLoader_t )( void *param0, void *param1, void *param2, void 
 
 typedef struct
 {
-	const char * const header;
-	const int * const versions;
-	const int lightmapWidth;
-	const int lightmapHeight;
-	const int flags;
-	const int entityLumpNum;
+	const char *header;
+	int *versions;
+	int lightmapWidth;
+	int lightmapHeight;
+	int flags;
+	int entityLumpNum;
 } bspFormatDesc_t;
 
 typedef struct
 {
-	const char * const header;
-	const int headerLen;
-	const bspFormatDesc_t * const bspFormats;
-	const int maxLods;
-	const modelLoader_t loader;
+	const char *header;
+	int headerLen;
+	const bspFormatDesc_t *bspFormats;
+	int maxLods;
+	modelLoader_t loader;
 } modelFormatDescr_t;
 
 extern const bspFormatDesc_t q3BSPFormats[];

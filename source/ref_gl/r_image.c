@@ -1500,7 +1500,10 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 		if( flags & ( IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL ) )
 		{
 			qbyte *temp = R_PrepareImageBuffer( TEXTURE_FLIPPING_BUF0, width * height * inSamples );
-			R_FlipTexture( data[0], temp, width, height, inSamples, (flags & IT_FLIPX), (flags & IT_FLIPY), (flags & IT_FLIPDIAGONAL) );
+			R_FlipTexture( data[0], temp, width, height, inSamples, 
+				(flags & IT_FLIPX) ? qtrue : qfalse, 
+				(flags & IT_FLIPY) ? qtrue : qfalse, 
+				(flags & IT_FLIPDIAGONAL) ? qtrue : qfalse );
 			data = &temp;
 		}
 
@@ -1536,7 +1539,7 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	}
 	else
 	{
-		comp = R_TextureFormat( *samples, flags & IT_NOCOMPRESS );
+		comp = R_TextureFormat( *samples, flags & IT_NOCOMPRESS ? qtrue : qfalse );
 		if( inSamples == 4 )
 			format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
 		else
@@ -1873,7 +1876,10 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 					{
 						int flags = cubemapSides[i][j].flags;
 						qbyte *temp = R_PrepareImageBuffer( TEXTURE_FLIPPING_BUF0+j, width * height * samples );
-						R_FlipTexture( pic[j], temp, width, height, 4, (flags & IT_FLIPX), (flags & IT_FLIPY), (flags & IT_FLIPDIAGONAL) );
+						R_FlipTexture( pic[j], temp, width, height, 4, 
+							(flags & IT_FLIPX) ? qtrue : qfalse, 
+							(flags & IT_FLIPY) ? qtrue : qfalse, 
+							(flags & IT_FLIPDIAGONAL) ? qtrue : qfalse );
 						pic[j] = temp;
 					}
 					continue;
@@ -2056,7 +2062,9 @@ static void R_ScreenShot( const char *name, qboolean silent )
 		buffer = Mem_Alloc( r_texturesPool, 18 + glConfig.width * glConfig.height * 3 );
 		qglReadPixels( 0, 0, glConfig.width, glConfig.height, glConfig.ext.bgra ? GL_BGR_EXT : GL_RGB, GL_UNSIGNED_BYTE, buffer + 18 );
 
-		if( WriteTGA( checkname + gamepath_offset, buffer, glConfig.width, glConfig.height, glConfig.ext.bgra ) && !silent )
+		if( WriteTGA( checkname + gamepath_offset, buffer, glConfig.width, glConfig.height, 
+			glConfig.ext.bgra != 0 ? qtrue : qfalse ) 
+			&& !silent )
 			Com_Printf( "Wrote %s\n", checkname );
 	}
 
@@ -2069,7 +2077,7 @@ static void R_ScreenShot( const char *name, qboolean silent )
 */
 void R_ScreenShot_f( void )
 {
-	R_ScreenShot( Cmd_Argv( 1 ), Cmd_Argc() >= 3 && !Q_stricmp( Cmd_Argv( 2 ), "silent" ) );
+	R_ScreenShot( Cmd_Argv( 1 ), Cmd_Argc() >= 3 && !Q_stricmp( Cmd_Argv( 2 ), "silent" ) ? qtrue : qfalse );
 }
 
 /*
@@ -2143,7 +2151,10 @@ void R_EnvShot_f( void )
 
 		qglReadPixels( 0, 0, size, size, glConfig.ext.bgra ? GL_BGR_EXT : GL_RGB, GL_UNSIGNED_BYTE, buffer );
 
-		R_FlipTexture( buffer, bufferFlipped + 18, size, size, 3, ( cubemapShots[i].flags & IT_FLIPX ), ( cubemapShots[i].flags & IT_FLIPY ), ( cubemapShots[i].flags & IT_FLIPDIAGONAL ) );
+		R_FlipTexture( buffer, bufferFlipped + 18, size, size, 3, 
+			( cubemapShots[i].flags & IT_FLIPX ) ? qtrue : qfalse, 
+			( cubemapShots[i].flags & IT_FLIPY ) ? qtrue : qfalse, 
+			( cubemapShots[i].flags & IT_FLIPDIAGONAL ) ? qtrue : qfalse );
 
 		Q_snprintfz( checkname, checkname_size, "env/%s_%s", Cmd_Argv( 1 ), cubemapShots[i].suf );
 		//if( r_screenshot_jpeg->integer ) {
@@ -2152,7 +2163,7 @@ void R_EnvShot_f( void )
 		//		Com_Printf( "Wrote envshot %s\n", checkname );
 		//} else {
 		COM_DefaultExtension( checkname, ".tga", checkname_size );
-		if( WriteTGA( checkname, bufferFlipped, size, size, glConfig.ext.bgra ) )
+		if( WriteTGA( checkname, bufferFlipped, size, size, glConfig.ext.bgra != 0 ? qtrue : qfalse ) )
 			Com_Printf( "Wrote envshot %s\n", checkname );
 		//}
 	}
@@ -2215,7 +2226,7 @@ void R_WriteAviFrame( int frame, qboolean scissor )
 	{
 		COM_DefaultExtension( checkname, ".tga", checkname_size );
 		qglReadPixels( x, y, w, h, glConfig.ext.bgra ? GL_BGR_EXT : GL_RGB, GL_UNSIGNED_BYTE, r_aviBuffer + 18 );
-		WriteTGA( checkname, r_aviBuffer, w, h, glConfig.ext.bgra );
+		WriteTGA( checkname, r_aviBuffer, w, h, glConfig.ext.bgra != 0 ? qtrue : qfalse );
 	}
 
 	Mem_Free( checkname );
@@ -2301,6 +2312,7 @@ static void R_InitParticleTexture( int *w, int *h, int *flags, int *samples )
 {
 	int x, y;
 	int dx2, dy, d;
+	float dd2;
 	qbyte *data;
 
 	//
@@ -2319,7 +2331,8 @@ static void R_InitParticleTexture( int *w, int *h, int *flags, int *samples )
 		for( y = 0; y < 16; y++ )
 		{
 			dy = y - 8;
-			d = 255 - 35 *sqrt( dx2 + dy *dy );
+			dd2 = dx2 + dy * dy;
+			d = 255 - 35 * sqrt( dd2 );
 			data[( y*16 + x ) * 4 + 3] = bound( 0, d, 255 );
 		}
 	}

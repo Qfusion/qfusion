@@ -887,7 +887,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 	}
 	else {
 		int i;
-		vattrib_t vattribs = rb.currentVAttribs;
+		vattribmask_t vattribs = rb.currentVAttribs;
 
 		memcpy( rb.batchMesh.xyzArray + batch->numVerts, mesh->xyzArray, numVerts * sizeof( vec3_t ) );
 		if( rb.currentVBOId == RB_VBO_STREAM_QUAD ) {
@@ -979,7 +979,7 @@ void RB_EndBatch( void )
 static void RB_EnableVertexAttribs( void )
 {
 	int i;
-	vattrib_t vattribs = rb.currentVAttribs;
+	vattribmask_t vattribs = rb.currentVAttribs;
 	mesh_vbo_t *vbo = rb.currentVBO;
 
 	// xyz position

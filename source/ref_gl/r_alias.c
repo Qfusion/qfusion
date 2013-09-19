@@ -466,7 +466,7 @@ static float R_AliasModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t
 /*
 * R_AliasModelLerpTag
 */
-qboolean R_AliasModelLerpTag( orientation_t *orient, maliasmodel_t *aliasmodel, int oldframenum, int framenum, float lerpfrac, const char *name )
+qboolean R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int oldframenum, int framenum, float lerpfrac, const char *name )
 {
 	int i;
 	quat_t quat;
