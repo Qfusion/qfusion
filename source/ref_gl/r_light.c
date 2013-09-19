@@ -482,7 +482,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 	}
 
 	// find the nearest square block size
-	root = ( int )sqrt( num );
+	root = ( int )sqrt( (float)num );
 	if( root > max )
 		root = max;
 

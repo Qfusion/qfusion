@@ -252,7 +252,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	{
 		if( !VectorCompare( best->origin, best->origin2 ) )	// portal
 			mirror = qfalse;
-		best->rtype = -1;
+		best->rtype = NUM_RTYPES;
 	}
 
 	oldcluster = r_viewcluster;

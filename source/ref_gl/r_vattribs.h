@@ -56,7 +56,7 @@ typedef enum vattrib_e
 
 #define VATTRIB_BIT(va)		(1<<(va))
 
-typedef enum vattribmask_e
+typedef enum vattribbit_e
 {
 	VATTRIB_POSITION_BIT	= VATTRIB_BIT(0),
 
@@ -91,6 +91,8 @@ typedef enum vattribmask_e
 	VATTRIB_INSTANCES_BIT	= VATTRIB_INSTANCE_QUAT_BIT|VATTRIB_INSTANCE_XYZS_BIT,
 
 	VATTRIBS_MASK			= VATTRIB_BIT(18)-1
-} vattribmask_t;
+} vattribbit_t;
+
+typedef unsigned int vattribmask_t;
 
 #endif

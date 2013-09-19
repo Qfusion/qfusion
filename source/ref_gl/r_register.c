@@ -134,20 +134,20 @@ static void R_DestroyVolatileAssets( void );
 
 typedef struct
 {
-	const char * const name;				// constant pointer to constant string
-	void ** const pointer;					// constant pointer to function's pointer (function itself)
+	const char *name;				// constant pointer to constant string
+	void **pointer;					// constant pointer to function's pointer (function itself)
 } gl_extension_func_t;
 
 typedef struct
 {
-	const char * const prefix;				// constant pointer to constant string
-	const char * const name;
-	const char * const cvar_default;
-	const qboolean cvar_readonly;
-	const qboolean mandatory;
-	gl_extension_func_t * const funcs;		// constant pointer to array of functions
-	const size_t offset;					// offset to respective variable
-	const size_t depOffset;					// offset to required pre-initialized variable
+	const char * prefix;				// constant pointer to constant string
+	const char * name;
+	const char * cvar_default;
+	qboolean cvar_readonly;
+	qboolean mandatory;
+	gl_extension_func_t *funcs;		// constant pointer to array of functions
+	size_t offset;					// offset to respective variable
+	size_t depOffset;					// offset to required pre-initialized variable
 } gl_extension_t;
 
 #define GL_EXTENSION_FUNC_EXT(name,func) { name, (void ** const)func }
@@ -816,6 +816,7 @@ rserr_t R_Init( void *hinstance, void *wndproc, void *parenthWnd, int x, int y, 
 	char renderer_buffer[1024];
 	char vendor_buffer[1024];
 	rserr_t err;
+	GLenum glerr;
 
 	r_mempool = Mem_AllocPool( NULL, "Rendering Frontend" );
 
@@ -932,8 +933,8 @@ init_qgl:
 
 	R_ClearRefInstStack();
 
-	err = qglGetError();
-	if( err != GL_NO_ERROR )
+	glerr = qglGetError();
+	if( glerr != GL_NO_ERROR )
 		Com_Printf( "glGetError() = 0x%x\n", err );
 
 	Com_Printf( "----- finished R_Init -----\n" );
