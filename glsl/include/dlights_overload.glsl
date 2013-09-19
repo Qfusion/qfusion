@@ -6,7 +6,11 @@ myhalf3 DynamicLightsSummaryColor(in vec3 Position)
 {
 	myhalf3 Color = myhalf3(0.0);
 
+#if QF_GLSL_VERSION >= 330
+	for (int i = 0; i < u_NumDynamicLights; i++)
+#else
 	for (int i = 0; i < NUM_DLIGHTS; i++)
+#endif
 	{
 		myhalf3 STR = myhalf3(u_DynamicLights[i].Position - Position);
 		myhalf distance = length(STR);
