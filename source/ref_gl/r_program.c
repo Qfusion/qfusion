@@ -1899,7 +1899,7 @@ void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDu
 	if( numBones > glConfig.maxGLSLBones ) {
 		return;
 	}
-	if( !program->loc.builtin.DualQuats < 0 ) {
+	if( program->loc.builtin.DualQuats < 0 ) {
 		return;
 	}
 	qglUniform4fvARB( program->loc.builtin.DualQuats, numBones * 2, &animDualQuat[0][0] );
@@ -1917,7 +1917,7 @@ void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePo
 	if( numInstances > MAX_GLSL_UNIFORM_INSTANCES ) {
 		numInstances = MAX_GLSL_UNIFORM_INSTANCES;
 	}
-	if( !program->loc.builtin.InstancePoints < 0 ) {
+	if( program->loc.builtin.InstancePoints < 0 ) {
 		return;
 	}
 	qglUniform4fvARB( program->loc.builtin.InstancePoints, numInstances * 2, &instances[0][0] );
