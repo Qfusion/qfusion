@@ -219,7 +219,7 @@ typedef void ( *modelLoader_t )( void *param0, void *param1, void *param2, void 
 typedef struct
 {
 	const char *header;
-	int *versions;
+	const int *versions;
 	int lightmapWidth;
 	int lightmapHeight;
 	int flags;
