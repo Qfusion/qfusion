@@ -177,7 +177,7 @@ typedef struct irc_command_s {
 // listener signature
 typedef void (*irc_listener_f)(irc_command_t cmd, const char *prefix, const char *params, const char *trailing);
 
-struct mufont_s;
+struct qfontface_s;
 struct shader_s;
 struct poly_s;
 struct irc_chat_history_node_s;

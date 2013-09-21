@@ -24,8 +24,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/qcommon.h"
 #include "../client/keys.h"
 #include "../client/vid.h"
+#include "../client/ref.h"
 #include "../client/console.h"
 #include "../ref_gl/r_public.h"
+
+static ref_export_t re;
 
 static void Key_Bind_Null_f( void )
 {
@@ -113,30 +116,30 @@ void SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_
 {
 }
 
-int SCR_DrawStringWidth( int x, int y, int align, const char *str, int maxwidth, struct mufont_s *font, vec4_t color )
+int SCR_DrawStringWidth( int x, int y, int align, const char *str, int maxwidth, struct qfontface_s *font, vec4_t color )
 {
 	return 0;
 }
 
-void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct mufont_s *font, vec4_t color )
+void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color )
 {
 }
 
-void SCR_DrawRawChar( int x, int y, qwchar num, struct mufont_s *font, vec4_t color )
+void SCR_DrawRawChar( int x, int y, qwchar num, struct qfontface_s *font, vec4_t color )
 {
 }
 
-size_t SCR_strHeight( struct mufont_s *font )
-{
-	return 0;
-}
-
-size_t SCR_strWidth( const char *str, struct mufont_s *font, int maxlen )
+size_t SCR_strHeight( struct qfontface_s *font )
 {
 	return 0;
 }
 
-size_t SCR_StrlenForWidth( const char *str, struct mufont_s *font, size_t maxwidth )
+size_t SCR_strWidth( const char *str, struct qfontface_s *font, int maxlen )
+{
+	return 0;
+}
+
+size_t SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth )
 {
 	return 0;
 }
