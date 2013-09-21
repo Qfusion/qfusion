@@ -634,7 +634,7 @@ void Con_DrawNotify( void )
 			width = con_chatWidth->integer;
 
 			if( *con_chatFontFamily->string && con_chatFontSize->integer ) {
-				font = SCR_RegisterFont( con_chatFontFamily->string, (qfontstyle_t)con_chatFontStyle->integer, con_chatFontSize->integer );
+				font = SCR_RegisterFont( con_chatFontFamily->string, con_chatFontStyle->integer, con_chatFontSize->integer );
 			}
 			if( !font )
 				font = cls.fontSystemSmall;

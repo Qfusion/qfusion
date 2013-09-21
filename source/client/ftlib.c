@@ -229,7 +229,7 @@ void FTLIB_UnloadLibrary( qboolean verbose )
 /*
 * FTLIB_RegisterFont
 */
-struct qfontface_s *FTLIB_RegisterFont( const char *family, qfontstyle_t style, unsigned int size )
+struct qfontface_s *FTLIB_RegisterFont( const char *family, int style, unsigned int size )
 {
 	return ftlib_export ? ftlib_export->RegisterFont( family, style, size ) : NULL;
 }
