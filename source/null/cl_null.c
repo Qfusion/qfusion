@@ -28,7 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../client/console.h"
 #include "../ref_gl/r_public.h"
 
-static ref_export_t re;
+struct poly_s;
+
+static struct shader_s *R_RegisterPic( const char *name );
+static void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const float *color, const struct shader_s *shader );
+static void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, const vec4_t color, const struct shader_s *shader );
+static void R_DrawStretchPoly( const struct poly_s *p, float x_offset, float y_offset );
 
 static void Key_Bind_Null_f( void )
 {
@@ -36,6 +41,10 @@ static void Key_Bind_Null_f( void )
 
 void CL_Init( void )
 {
+	re.RegisterPic = &R_RegisterPic;
+	re.DrawStretchPic = &R_DrawStretchPic;
+	re.DrawRotatedStretchPic = &R_DrawRotatedStretchPic;
+	re.DrawStretchPoly = &R_DrawStretchPoly;
 }
 
 void CL_InitDynvars( void )
@@ -144,25 +153,25 @@ size_t SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t max
 	return 0;
 }
 
-struct shader_s *R_RegisterPic( const char *name )
+static struct shader_s *R_RegisterPic( const char *name )
 {
 	return NULL;
 }
 
-void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const float *color, const struct shader_s *shader )
+static void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const float *color, const struct shader_s *shader )
 {
 }
 
-void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, const vec4_t color, const struct shader_s *shader )
+static void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, const vec4_t color, const struct shader_s *shader )
 {
 }
 
-struct poly_s;
-
-void R_DrawStretchPoly( const struct poly_s *p, float x_offset, float y_offset )
+static void R_DrawStretchPoly( const struct poly_s *p, float x_offset, float y_offset )
 {
 }
 
 viddef_t viddef;
 
 qboolean con_initialized;
+
+ref_export_t re;
