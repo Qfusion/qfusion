@@ -382,7 +382,6 @@ static void Mod_LoadSubmodels( const lump_t *l )
 static void Mod_LoadShaderrefs( const lump_t *l )
 {
 	int i, count;
-	int contents;
 	dshaderref_t *in;
 	dshaderref_t *out;
 
@@ -399,7 +398,6 @@ static void Mod_LoadShaderrefs( const lump_t *l )
 	{
 		Q_strncpyz( out->name, in->name, sizeof( out->name ) );
 		out->flags = LittleLong( in->flags );
-		contents = LittleLong( in->contents );
 	}
 }
 
@@ -478,7 +476,8 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 		{
 			int i, j, u, v, p;
 			int patch_cp[2], step[2], size[2], flat[2];
-			int numVerts, numElems, inNumVerts, inFirstVert;
+			int numVerts, numElems;
+			int inFirstVert;
 			elem_t *elems;
 
 			j = loadmodel_patchgrouprefs[faceNum];
@@ -493,7 +492,6 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			flat[0] = loadmodel_patchgroups[j].flatness[0];
 			flat[1] = loadmodel_patchgroups[j].flatness[1];
 
-			inNumVerts = LittleLong( in->numverts );
 			inFirstVert = LittleLong( in->firstvert );
 
 			// allocate space for mesh
