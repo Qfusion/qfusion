@@ -375,7 +375,6 @@ CFILES_CLIENT += unix/unix_input.c unix/unix_glw.c unix/unix_qgl.c unix_xpm.c
 endif
 CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c
 endif
-CFILES_CLIENT += $(wildcard ref_gl/*.c)
 CFILES_CLIENT += $(wildcard gameshared/q_*.c)
 # CFILES_CLIENT += null/mm_null.c
 CFILES_CLIENT += $(wildcard matchmaker/*.c)
