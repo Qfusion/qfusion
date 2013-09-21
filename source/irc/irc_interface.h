@@ -4,7 +4,7 @@
 #include "../client/keys.h"
 #include "../qcommon/dynvar.h"
 #include "../qcommon/cvar.h"
-#include "../qcommon/trie.h"
+#include "../gameshared/q_trie.h"
 
 #define IRC_API_VERSION 3
 

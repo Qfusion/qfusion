@@ -169,7 +169,7 @@
     <ClCompile Include="..\gameshared\q_shared.c" />
     <ClCompile Include="..\qcommon\bsp.c" />
     <ClCompile Include="..\qcommon\patch.c" />
-    <ClCompile Include="..\qcommon\trie.c" />
+    <ClCompile Include="..\gameshared\q_trie.c" />
     <ClCompile Include="..\win32\win_glw.c" />
     <ClCompile Include="..\win32\win_qgl.c" />
     <ClCompile Include="r_alias.c" />
@@ -209,7 +209,7 @@
     <ClInclude Include="..\gameshared\q_math.h" />
     <ClInclude Include="..\gameshared\q_shared.h" />
     <ClInclude Include="..\qcommon\patch.h" />
-    <ClInclude Include="..\qcommon\trie.h" />
+    <ClInclude Include="..\gameshared\q_trie.h" />
     <ClInclude Include="..\win32\win_glw.h" />
     <ClInclude Include="iqm.h" />
     <ClInclude Include="qgl.h" />
