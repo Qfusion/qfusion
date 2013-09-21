@@ -18,6 +18,7 @@ BUILD_SND_QF?=YES
 BUILD_SND_OPENAL?=YES
 BUILD_CIN?=YES
 BUILD_FTLIB?=YES
+BUILD_REF_GL?=YES
 
 # game modules
 BUILD_CGAME?=YES
@@ -88,13 +89,14 @@ DEPENDFILE_UI_ROCKET=$(BUILDDIR)/ui/Makefile.d
 DEPENDFILE_IRC=$(BUILDDIR)/irc/Makefile.d
 DEPENDFILE_CIN=$(BUILDDIR)/cin/Makefile.d
 DEPENDFILE_FTLIB=$(BUILDDIR)/ftlib/Makefile.d
+DEPENDFILE_REF_GL=$(BUILDDIR)/ref_gl/Makefile.d
 DEPENDFILE_ANGELWRAP=$(BUILDDIR)/angelwrap/Makefile.d
 DEPENDFILE_TV_SERVER=$(BUILDDIR)/tv_server/Makefile.d
 DEPENDFILE_NULL=$(BUILDDIR)/null/Makefile.d
 DEPENDFILE_ROCKETCORE=$(BUILDDIR)/rocketcore/Makefile.d
 DEPENDFILE_ROCKETCONTROLS=$(BUILDDIR)/rocketcontrols/Makefile.d
 
-BUILDDIRS=$(BUILDDIR)/client $(BUILDDIR)/ded $(BUILDDIR)/cgame $(BUILDDIR)/game $(BUILDDIR)/ui $(BUILDDIR)/openal $(BUILDDIR)/qf $(BUILDDIR)/irc $(BUILDDIR)/cin $(BUILDDIR)/ftlib $(BUILDDIR)/angelwrap $(BUILDDIR)/tv_server $(BUILDDIR)/rocketcore $(BUILDDIR)/rocketcontrols
+BUILDDIRS=$(BUILDDIR)/client $(BUILDDIR)/ded $(BUILDDIR)/cgame $(BUILDDIR)/game $(BUILDDIR)/ui $(BUILDDIR)/openal $(BUILDDIR)/qf $(BUILDDIR)/irc $(BUILDDIR)/cin $(BUILDDIR)/ftlib $(BUILDDIR)/ref_gl $(BUILDDIR)/angelwrap $(BUILDDIR)/tv_server $(BUILDDIR)/rocketcore $(BUILDDIR)/rocketcontrols
 
 ###########################################################
 # Angelwrap stuff
@@ -144,7 +146,7 @@ else
 CFLAGS_COMMON+=$(CFLAGS_RELEASE)
 endif
 
-CFLAGS_CLIENT=-I../libsrcs/libjpeg -I../libsrcs/libpng -I../dxsdk/include -DCURL_STATICLIB
+CFLAGS_CLIENT=-I../dxsdk/include -DCURL_STATICLIB
 CFLAGS_DED=-DDEDICATED_ONLY -DCURL_STATICLIB
 CFLAGS_MODULE=-DPIC
 CFLAGS_TV_SERVER=-DDEDICATED_ONLY -DTV_SERVER_ONLY -DTV_MODULE_HARD_LINKED -DCURL_STATICLIB
@@ -166,7 +168,7 @@ LDFLAGS_COMMON+= -s
 LXXFLAGS_COMMON+= -s
 endif
 
-LDFLAGS_CLIENT=-lcurlstat -lwsock32 -ljpegstat -lpngstat -lgdi32 -L../dxsdk/lib/ -lddraw -ldinput -ldxguid -lws2_32 -lzstat
+LDFLAGS_CLIENT=-lcurlstat -lwsock32 -lgdi32 -ldinput -ldxguid -lws2_32 -lzstat
 LDFLAGS_DED=-lcurlstat -lwsock32 -lws2_32 -lzstat
 LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lcurlstat -lwsock32 -lws2_32 -lzstat
@@ -196,6 +198,11 @@ CFLAGS_FTLIB=-I../libsrcs/libfreetype/include
 LDFLAGS_FTLIB=-lfreetypestat
 endif
 
+ifeq ($(BUILD_REF_GL),YES)
+CFLAGS_REF_GL=-I../libsrcs/libjpeg -I../libsrcs/libpng
+LDFLAGS_REF_GL=-ljpegstat -lpngstat -lzstat
+endif
+
 LDFLAGS_IRC=-lwsock32 -lws2_32
 LDFLAGS_ANGELWRAP=$(ANGELSCRIPT_LIB)
 
@@ -207,7 +214,7 @@ else # USE_MINGW
 LOCALBASE?=/usr/local
 X11BASE?=/usr/X11R6
 
-CFLAGS_COMMON=$(CFLAGS) -pipe -I. -I$(LOCALBASE)/include -I$(X11BASE)/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden
+CFLAGS_COMMON=$(CFLAGS) -pipe -I. -I$(LOCALBASE)/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG -msse2
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
 ifeq ($(DEBUG_BUILD),YES)
@@ -241,7 +248,7 @@ else
 LIB=lib
 endif
 
-LDFLAGS_CLIENT=-ljpeg -lpng -lz -L$(X11BASE)/$(LIB) -lX11 -lXext -lXxf86dga -lXxf86vm -lXinerama -lXrandr -lrt $(shell curl-config --libs)
+LDFLAGS_CLIENT=-lz -lrt $(shell curl-config --libs)
 LDFLAGS_DED=-lz $(shell curl-config --libs)
 LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lz $(shell curl-config --libs)
@@ -272,7 +279,12 @@ endif
 
 ifeq ($(BUILD_FTLIB),YES)
 CFLAGS_FTLIB=$(shell freetype-config --cflags)
-LDFLAGS_FTLIB=$(shell freetype-config --libs)
+LDFLAGS_FTLIB=-L$(X11BASE)/$(LIB) -lX11 -lXext -lXxf86dga -lXxf86vm -lXinerama -lXrandr $(shell freetype-config --libs)
+endif
+
+ifeq ($(BUILD_REF_GL),YES)
+CFLAGS_REF_GL=-I$(X11BASE)/include $(shell freetype-config --cflags)
+LDFLAGS_REF_GL=-ljpeg -lpng -lz
 endif
 
 LDFLAGS_IRC=
@@ -300,11 +312,12 @@ endif
 CFLAGS_OPENAL=-I/System/Library/Frameworks/OpenAL.framework/Headers
 CFLAGS_QF=-I/Library/Frameworks/SDL.framework/Headers
 CFLAGS_SDL=-I/Library/Frameworks/SDL.framework/Headers
-CFLAGS_CLIENT=-std=gnu99 -I/Library/Frameworks/SDL.framework/Headers -I/Library/Frameworks/libjpeg.framework/Headers -I/System/Library/Frameworks/OpenAL.framework/Headers
+CFLAGS_CLIENT=-std=gnu99 -I/Library/Frameworks/SDL.framework/Headers -I/System/Library/Frameworks/OpenAL.framework/Headers
 CFLAGS_DED=-DDEDICATED_ONLY -DC_ONLY
-CFLAGS_CIN=
-CFLAGS_FTLIB=
-LDFLAGS_CLIENT=-lz -lcurl -framework libjpeg -framework SDL -framework OpenGL -I/Library/Frameworks/SDL.framework/Headers
+CFLAGS_CIN=-I/Library/Frameworks/SDL.framework/Headers
+CFLAGS_FTLIB=-I/Library/Frameworks/SDL.framework/Headers
+CFLAGS_REF_GL=-I/Library/Frameworks/SDL.framework/Headers -I/Library/Frameworks/libjpeg.framework/Headers
+LDFLAGS_CLIENT=-lz -lcurl -framework SDL -framework OpenGL -I/Library/Frameworks/SDL.framework/Headers
 LDFLAGS_MODULE=-bundle
 LDFLAGS_COMMON=-arch ppc -arch i386 -framework AppKit -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
 LXXFLAGS_COMMON=$(LDFLAGS_COMMON) -lstdc++ -lsupc++
@@ -313,8 +326,9 @@ LDFLAGS_QF=-framework SDL -framework Ogg -framework Vorbis
 LDFLAGS_OPENAL=-framework OpenAL -framework Ogg -framework Vorbis
 LDFLAGS_IRC=
 LDFLAGS_ANGELWRAP=$(ANGELSCRIPT_LIB) -lpthread
-LDFLAGS_CIN=
+LDFLAGS_CIN= -framework Ogg -framework Theora
 LDFLAGS_FTLIB=
+LDFLAGS_REF_GL=-lz -framework libjpeg -framework libpng
 endif
 
 ######################################################################################################
@@ -489,6 +503,16 @@ OFILES_FTLIB=$(CFILES_FTLIB_WITHOUT_PATH:.c=.o)
 OBJS_FTLIB = $(addprefix $(BUILDDIR)/ftlib/, $(OFILES_FTLIB) )
 
 #########
+# REF_GL
+#########
+CFILES_REF_GL  = $(wildcard ref_gl/*.c)
+CFILES_REF_GL += $(wildcard gameshared/q_*.c)
+
+CFILES_REF_GL_WITHOUT_PATH= $(notdir  $(CFILES_REF_GL))
+OFILES_REF_GL=$(CFILES_REF_GL_WITHOUT_PATH:.c=.o)
+OBJS_REF_GL = $(addprefix $(BUILDDIR)/ref_gl/, $(OFILES_REF_GL) )
+
+#########
 # ANGELWRAP
 #########
 CPPFILES_ANGELWRAP  = $(wildcard angelwrap/*.cpp)
@@ -534,13 +558,14 @@ OBJS_TV_SERVER = $(addprefix $(BUILDDIR)/tv_server/, $(OFILES_TV_SERVER) )
 	irc message-irc compile-irc link-irc \
 	cin message-cin compile-cin link-cin \
 	ftlib message-ftlib compile-ftlib link-ftlib \
+	ref_gl message-ref_gl compile-ref_gl link-ref_gl \
 	angelwrap message-angelwrap compile-angelwrap link-angelwrap \
 	tv_server message-tv_server compile-tv_server link-tv_server  \
 	clean clean-depend clean-client clean-openal clean-qf clean-ded \
 	clean-cgame clean-game clean-irc clean-cin clean-angelwrap clean-game clean-tv_server \
 	compile
 
-all: client openal qf ded cgame game ui irc cin ftlib angelwrap tv_server
+all: client openal qf ded cgame game ui irc cin ftlib ref_gl angelwrap tv_server
 
 client: $(BUILDDIRS) message-client compile-client link-client start-script-client
 openal: $(BUILDDIRS) message-openal compile-openal link-openal
@@ -552,10 +577,11 @@ ui: $(BUILDDIRS) message-ui compile-ui link-ui
 irc: $(BUILDDIRS) message-irc compile-irc link-irc
 cin: $(BUILDDIRS) message-cin compile-cin link-cin
 ftlib: $(BUILDDIRS) message-ftlib compile-ftlib link-ftlib
+ref_gl: $(BUILDDIRS) message-ref_gl compile-ref_gl link-ref_gl
 angelwrap: $(BUILDDIRS) message-angelwrap compile-angelwrap link-angelwrap
 tv_server: $(BUILDDIRS) message-tv_server compile-tv_server link-tv_server start-script-tv_server
 
-clean: clean-msg clean-depend clean-client clean-openal clean-qf clean-ded clean-cgame clean-game clean-ui clean-librocket clean-irc clean-cin clean-ftlib clean-angelwrap clean-tv_server
+clean: clean-msg clean-depend clean-client clean-openal clean-qf clean-ded clean-cgame clean-game clean-ui clean-librocket clean-irc clean-cin clean-ftlib clean-ref_gl clean-angelwrap clean-tv_server
 
 clean-msg:
 	@echo "> *********************************************************"
@@ -563,7 +589,7 @@ clean-msg:
 	@echo "> *********************************************************"
 clean-depend:
 	@echo "  > Removing depend files" && \
-	$(RM) $(DEPENDFILE_CLIENT) $(DEPENDFILE_DED) $(DEPENDFILE_CGAME) $(DEPENDFILE_GAME) $(DEPENDFILE_UI_ROCKET) $(DEPENDFILE_OPENAL) $(DEPENDFILE_TV_SERVER) $(DEPENDFILE_QF) $(DEPENDFILE_IRC) $(DEPENDFILE_CIN) $(DEPENDFILE_FTLIB) $(DEPENDFILE_ANGELWRAP)
+	$(RM) $(DEPENDFILE_CLIENT) $(DEPENDFILE_DED) $(DEPENDFILE_CGAME) $(DEPENDFILE_GAME) $(DEPENDFILE_UI_ROCKET) $(DEPENDFILE_OPENAL) $(DEPENDFILE_TV_SERVER) $(DEPENDFILE_QF) $(DEPENDFILE_IRC) $(DEPENDFILE_CIN) $(DEPENDFILE_FTLIB) $(DEPENDFILE_REF_GL) $(DEPENDFILE_ANGELWRAP)
 
 $(BUILDDIRS) $(BINDIR) $(BINDIR)/base $(BINDIR)/libs:
 	@mkdir -p $@
@@ -701,6 +727,18 @@ clean-ftlib:
 	$(RM) $(OBJS_FTLIB)
 endif
 
+ifeq ($(BUILD_REF_GL),YES)
+message-ref_gl:
+	@echo "> *********************************************************"
+	@echo "> * Building ref_gl"
+	@echo "> *********************************************************"
+compile-ref_gl: $(OBJS_REF_GL)
+link-ref_gl: $(BINDIR)/libs $(BINDIR)/libs/ref_gl_$(ARCH).$(SHARED_LIBRARY_EXTENSION)
+clean-ref_gl:
+	@echo "  > Removing ref_gl objects" && \
+	$(RM) $(OBJS_FTLIB)
+endif
+
 ifeq ($(BUILD_ANGELWRAP),YES)
 message-angelwrap:
 	@echo "> *********************************************************"
@@ -808,6 +846,10 @@ $(BINDIR)/libs/cin_$(ARCH).$(SHARED_LIBRARY_EXTENSION): $(OBJS_CIN)
 $(BINDIR)/libs/ftlib_$(ARCH).$(SHARED_LIBRARY_EXTENSION): $(OBJS_FTLIB)
 	@echo "  > Linking $@" && \
 	$(LD) -o $@ $^ $(LDFLAGS_COMMON) $(LDFLAGS_MODULE) $(LDFLAGS_FTLIB)
+
+$(BINDIR)/libs/ref_gl_$(ARCH).$(SHARED_LIBRARY_EXTENSION): $(OBJS_REF_GL)
+	@echo "  > Linking $@" && \
+	$(LD) -o $@ $^ $(LDFLAGS_COMMON) $(LDFLAGS_MODULE) $(LDFLAGS_REF_GL)
 
 $(BINDIR)/libs/angelwrap_$(ARCH).$(SHARED_LIBRARY_EXTENSION): $(OBJS_ANGELWRAP)
 	@echo "  > Linking $@" && \
@@ -1016,6 +1058,15 @@ $(BUILDDIR)/ftlib/%.o: ftlib/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_FTLIB)
 
 ########
+# REF_GL
+########
+$(BUILDDIR)/ref_gl/%.o: gameshared/%.c
+	@$(DO_CC_MODULE)
+
+$(BUILDDIR)/ref_gl/%.o: ref_gl/%.c
+	@$(DO_CC_MODULE) $(CFLAGS_REF_GL)
+
+########
 # ANGELWRAP
 ########
 $(BUILDDIR)/angelwrap/%.o: gameshared/%.c
@@ -1125,6 +1176,11 @@ $(DEPENDFILE_FTLIB): $(BUILDDIRS) $(CFILES_FTLIB)
 	awk '/^[a-zA-Z_]/{ sub(/^([a-zA-Z_]*\/)+/, "$(BUILDDIR)/ftlib/"); print $$0, "Makefile"; \
 		sub(/^.*\:/, "$(DEPENDFILE_FTLIB):"); print $$0, "Makefile" }' > $(DEPENDFILE_FTLIB)
 
+$(DEPENDFILE_REF_GL): $(BUILDDIRS) $(CFILES_REF_GL)
+	@makedepend -f - -- $(CFLAGS_COMMON) $(CFLAGS_MODULES) -- $(CFILES_REF_GL) 2> /dev/null | \
+	awk '/^[a-zA-Z_]/{ sub(/^([a-zA-Z_]*\/)+/, "$(BUILDDIR)/ref_gl/"); print $$0, "Makefile"; \
+		sub(/^.*\:/, "$(DEPENDFILE_REF_GL):"); print $$0, "Makefile" }' > $(DEPENDFILE_REF_GL)
+
 $(DEPENDFILE_ANGELWRAP): $(BUILDDIRS) $(CFILES_ANGELWRAP)
 	@makedepend -f - -- $(CFLAGS_COMMON) $(CFLAGS_MODULES) -- $(CFILES_ANGELWRAP) 2> /dev/null | \
 	awk '/^[a-zA-Z_]/{ sub(/^([a-zA-Z_]*\/)+/, "$(BUILDDIR)/angelwrap/"); print $$0, "Makefile"; \
@@ -1164,6 +1220,9 @@ ifeq ($(BUILD_CIN),YES)
 endif
 ifeq ($(BUILD_FTLIB),YES)
 -include $(DEPENDFILE_FTLIB)
+endif
+ifeq ($(BUILD_REF_GL),YES)
+-include $(DEPENDFILE_REF_GL)
 endif
 ifeq ($(BUILD_ANGELWRAP),YES)
 -include $(DEPENDFILE_TV_SERVER)
