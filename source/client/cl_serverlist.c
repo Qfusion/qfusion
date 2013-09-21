@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_serverlist.c  -- interactuates with the master server
 
 #include "client.h"
-#include "../qcommon/trie.h"
+#include "../gameshared/q_trie.h"
 
 #ifdef PUBLIC_BUILD
 #define SERVERBROWSER_PROTOCOL_VERSION		APP_PROTOCOL_VERSION

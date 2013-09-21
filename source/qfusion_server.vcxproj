@@ -244,7 +244,7 @@
     <ClCompile Include="server\sv_oob.c" />
     <ClCompile Include="server\sv_send.c" />
     <ClCompile Include="qcommon\svnrev.c" />
-    <ClCompile Include="qcommon\trie.c" />
+    <ClCompile Include="gameshared\q_trie.c" />
     <ClCompile Include="qcommon\webdownload.c" />
     <ClCompile Include="win32\win_fs.c" />
     <ClCompile Include="win32\win_net.c" />
@@ -288,7 +288,7 @@
     <ClInclude Include="qcommon\sys_fs.h" />
     <ClInclude Include="qcommon\sys_library.h" />
     <ClInclude Include="qcommon\sys_net.h" />
-    <ClInclude Include="qcommon\trie.h" />
+    <ClInclude Include="gameshared\q_trie.h" />
     <ClInclude Include="qcommon\version.h" />
     <ClInclude Include="qcommon\webdownload.h" />
     <ClInclude Include="win32\winquake.h" />
