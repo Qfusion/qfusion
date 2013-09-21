@@ -14,7 +14,7 @@ static vec4_t IRC_WINDOW_TXT_COLOR = {0.0f, 0.8f, 0.0f, 1.0f};
 static vec4_t IRC_TXT_COLOR_WHITE = {1.0f, 1.0f, 1.0f, 1.0f};
 static const char IRC_WINDOW_BG_PIC[] = "$whiteimage";
 
-struct mufont_s;
+struct qfontface_s;
 
 static cvar_t *con_fontSystemFamily = NULL;
 static cvar_t *con_fontSystemSmallSize = NULL;
