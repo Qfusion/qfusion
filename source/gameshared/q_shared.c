@@ -217,16 +217,7 @@ int COM_FilePathLength( const char *in )
 //
 //============================================================================
 
-#if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
-short ( *BigShort )(short l);
-short ( *LittleShort )(short l);
-int ( *BigLong )(int l);
-int ( *LittleLong )(int l);
-float ( *BigFloat )(float l);
-float ( *LittleFloat )(float l);
-#endif
-
-short   ShortSwap( short l )
+short ShortSwap( short l )
 {
 	qbyte b1, b2;
 
@@ -237,13 +228,13 @@ short   ShortSwap( short l )
 }
 
 #if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
-static short   ShortNoSwap( short l )
+static short ShortNoSwap( short l )
 {
 	return l;
 }
 #endif
 
-int    LongSwap( int l )
+int LongSwap( int l )
 {
 	qbyte b1, b2, b3, b4;
 
@@ -256,7 +247,7 @@ int    LongSwap( int l )
 }
 
 #if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
-static int     LongNoSwap( int l )
+static int LongNoSwap( int l )
 {
 	return l;
 }
@@ -286,13 +277,13 @@ static float FloatNoSwap( float f )
 }
 #endif
 
+#if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
 
 /*
 * Swap_Init
 */
-void Swap_Init( void )
+static void Swap_Init( void )
 {
-#if !defined ( ENDIAN_LITTLE ) && !defined ( ENDIAN_BIG )
 	qbyte swaptest[2] = { 1, 0 };
 
 	// set the byte swapping variables in a portable manner
@@ -314,8 +305,24 @@ void Swap_Init( void )
 		BigFloat = FloatNoSwap;
 		LittleFloat = FloatSwap;
 	}
-#endif
 }
+
+static short BigShortDetectSwap( short l ) { Swap_Init(); return BigShort( l ); }
+static short LittleShortDetectSwap( short l ) { Swap_Init(); return LittleShort( l ); }
+
+static int BigLongDetectSwap( int l ) { Swap_Init(); return BigLong( l ); }
+static int LittleLongDetectSwap( int l ) { Swap_Init(); return LittleLong( l ); }
+
+static float BigFloatDetectSwap( float l ) { Swap_Init(); return BigFloat( l ); }
+static float LittleFloatDetectSwap( float l ) { Swap_Init(); return LittleFloat( l ); }
+
+short ( *BigShort )(short l) = &BigShortDetectSwap;
+short ( *LittleShort )(short l) = &LittleShortDetectSwap;
+int ( *BigLong )(int l) = &BigLongDetectSwap;
+int ( *LittleLong )(int l) = &LittleLongDetectSwap;
+float ( *BigFloat )(float l) = &BigFloatDetectSwap;
+float ( *LittleFloat )(float l) = &LittleFloatDetectSwap;
+#endif
 
 
 /*
@@ -1051,13 +1058,16 @@ int Q_vsnprintfz( char *dest, size_t size, const char *format, va_list argptr )
 /*
 * Q_snprintfz
 */
-void Q_snprintfz( char *dest, size_t size, const char *format, ... )
+int Q_snprintfz( char *dest, size_t size, const char *format, ... )
 {
+	int len;
 	va_list	argptr;
 
 	va_start( argptr, format );
-	Q_vsnprintfz( dest, size, format, argptr );
+	len = Q_vsnprintfz( dest, size, format, argptr );
 	va_end( argptr );
+	
+	return len;
 }
 
 /*

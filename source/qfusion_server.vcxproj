@@ -204,6 +204,7 @@
     <ClCompile Include="qcommon\anticheat.c" />
     <ClCompile Include="qcommon\ascript.c" />
     <ClCompile Include="qcommon\base64.c" />
+    <ClCompile Include="qcommon\bsp.c" />
     <ClCompile Include="qcommon\cjson.c" />
     <ClCompile Include="null\cl_null.c" />
     <ClCompile Include="qcommon\cm_main.c" />
@@ -256,6 +257,7 @@
     <ClInclude Include="gameshared\config.h" />
     <ClInclude Include="qcommon\anticheat.h" />
     <ClInclude Include="qcommon\base64.h" />
+    <ClInclude Include="qcommon\bsp.h" />
     <ClInclude Include="qcommon\cjson.h" />
     <ClInclude Include="qcommon\cm_local.h" />
     <ClInclude Include="qcommon\cmodel.h" />

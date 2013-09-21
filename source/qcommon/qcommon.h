@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qfiles.h"
 #include "cmodel.h"
 #include "version.h"
+#include "bsp.h"
 
 //#define	PARANOID			// speed sapping error checking
 
@@ -188,57 +189,6 @@ void CRC_Init( unsigned short *crcvalue );
 void CRC_ProcessByte( unsigned short *crcvalue, qbyte data );
 unsigned short CRC_Value( unsigned short crcvalue );
 unsigned short CRC_Block( qbyte *start, int count );
-
-/* patch.h */
-#define PATCH_EVALUATE_DECL(type)										\
-	void Patch_Evaluate_##type											\
-	(const type *p, int *numcp, const int *tess, type *dest, int comp)
-
-PATCH_EVALUATE_DECL(vec_t);
-PATCH_EVALUATE_DECL(qbyte);
-
-#define Patch_Evaluate(type,comp,p,numcp,tess,dest)						\
-	Patch_Evaluate_##type(p,numcp,tess,dest,comp)
-
-void Patch_GetFlatness( float maxflat, const float *points, int comp, const int *patch_cp, int *flat );
-
-/*
-==============================================================
-
-BSP FORMATS
-
-==============================================================
-*/
-
-typedef void ( *modelLoader_t )( void *param0, void *param1, void *param2, void *param3 );
-
-#define BSP_NONE		0
-#define BSP_RAVEN		1
-#define BSP_NOAREAS		2
-
-typedef struct
-{
-	const char *header;
-	const int *versions;
-	int lightmapWidth;
-	int lightmapHeight;
-	int flags;
-	int entityLumpNum;
-} bspFormatDesc_t;
-
-typedef struct
-{
-	const char *header;
-	int headerLen;
-	const bspFormatDesc_t *bspFormats;
-	int maxLods;
-	modelLoader_t loader;
-} modelFormatDescr_t;
-
-extern const bspFormatDesc_t q3BSPFormats[];
-
-const bspFormatDesc_t *Com_FindBSPFormat( const bspFormatDesc_t *formats, const char *header, int version );
-const modelFormatDescr_t *Com_FindFormatDescriptor( const modelFormatDescr_t *formats, const qbyte *buf, const bspFormatDesc_t **bspFormat );
 
 /*
 ==============================================================
@@ -441,7 +391,7 @@ void Com_UnloadLibrary( void **lib );
 void *Com_LoadLibrary( const char *name, dllfunc_t *funcs ); // NULL-terminated array of functions
 
 void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void **handle, void *parms,
-                           void *( *builtinAPIfunc )(void *), qboolean pure, char *manifest );
+                           qboolean pure, char *manifest );
 void Com_UnloadGameLibrary( void **handle );
 
 /*
@@ -844,9 +794,6 @@ MISC
 ==============================================================
 */
 
-#define	ERR_FATAL	0       // exit the entire game with a popup window
-#define	ERR_DROP	1       // print to console and disconnect from game
-
 #define MAX_PRINTMSG	3072
 
 void	    Com_BeginRedirect( int target, char *buffer, int buffersize, 
@@ -854,7 +801,7 @@ void	    Com_BeginRedirect( int target, char *buffer, int buffersize,
 void	    Com_EndRedirect( void );
 void	    Com_Printf( const char *format, ... );
 void	    Com_DPrintf( const char *format, ... );
-void	    Com_Error( int code, const char *format, ... );
+void	    Com_Error( com_error_code_t code, const char *format, ... );
 void	    Com_Quit( void );
 
 int			Com_ClientState( void );        // this should have just been a cvar...
@@ -910,6 +857,7 @@ typedef struct mempool_s mempool_t;
 #define MEMPOOL_DB					32
 #define MEMPOOL_ANGELSCRIPT			64
 #define MEMPOOL_CINMODULE			128
+#define MEMPOOL_REFMODULE			256
 
 void Memory_Init( void );
 void Memory_InitCommands( void );

@@ -214,9 +214,10 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 
 void		GLimp_BeginFrame( void );
 void		GLimp_EndFrame( void );
-int			GLimp_Init( void *hinstance, void *wndproc, void *parenthWnd );
+int			GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd );
 void	    GLimp_Shutdown( void );
-rserr_t		GLimp_SetMode( int x, int y, int width, int height, qboolean fullscreen, qboolean wideScreen );
+rserr_t		GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
+				qboolean fullscreen, qboolean wideScreen );
 void	    GLimp_AppActivate( qboolean active, qboolean destroy );
 qboolean	GLimp_GetGammaRamp( size_t stride, unsigned short *ramp );
 void		GLimp_SetGammaRamp( size_t stride, unsigned short *ramp );

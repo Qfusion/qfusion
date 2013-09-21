@@ -162,7 +162,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	version = LittleLong( pinmodel->version );
 
 	if( version != MD3_ALIAS_VERSION )
-		Com_Error( ERR_DROP, "%s has wrong version number (%i should be %i)",
+		ri.Com_Error( ERR_DROP, "%s has wrong version number (%i should be %i)",
 		mod->name, version, MD3_ALIAS_VERSION );
 
 	mod->type = mod_alias;
@@ -180,21 +180,21 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	poutmodel->numskins = 0;
 
 	if( poutmodel->numframes <= 0 )
-		Com_Error( ERR_DROP, "model %s has no frames", mod->name );
+		ri.Com_Error( ERR_DROP, "model %s has no frames", mod->name );
 	//	else if( poutmodel->numframes > MD3_MAX_FRAMES )
-	//		Com_Error( ERR_DROP, "model %s has too many frames", mod->name );
+	//		ri.Com_Error( ERR_DROP, "model %s has too many frames", mod->name );
 
 	if( poutmodel->numtags > MD3_MAX_TAGS )
-		Com_Error( ERR_DROP, "model %s has too many tags", mod->name );
+		ri.Com_Error( ERR_DROP, "model %s has too many tags", mod->name );
 	else if( poutmodel->numtags < 0 )
-		Com_Error( ERR_DROP, "model %s has invalid number of tags", mod->name );
+		ri.Com_Error( ERR_DROP, "model %s has invalid number of tags", mod->name );
 
 	if( poutmodel->nummeshes < 0 )
-		Com_Error( ERR_DROP, "model %s has invalid number of meshes", mod->name );
+		ri.Com_Error( ERR_DROP, "model %s has invalid number of meshes", mod->name );
 	else if( !poutmodel->nummeshes && !poutmodel->numtags )
-		Com_Error( ERR_DROP, "model %s has no meshes and no tags", mod->name );
+		ri.Com_Error( ERR_DROP, "model %s has no meshes and no tags", mod->name );
 	//	else if( poutmodel->nummeshes > MD3_MAX_MESHES )
-	//		Com_Error( ERR_DROP, "model %s has too many meshes", mod->name );
+	//		ri.Com_Error( ERR_DROP, "model %s has too many meshes", mod->name );
 
 	bufsize = poutmodel->numframes * ( sizeof( maliasframe_t ) + sizeof( maliastag_t ) * poutmodel->numtags ) +
 		poutmodel->nummeshes * sizeof( maliasmesh_t ) + 
@@ -263,7 +263,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	for( i = 0; i < poutmodel->nummeshes; i++, poutmesh++ )
 	{
 		if( strncmp( (const char *)pinmesh->id, IDMD3HEADER, 4 ) )
-			Com_Error( ERR_DROP, "mesh %s in model %s has wrong id (%s should be %s)",
+			ri.Com_Error( ERR_DROP, "mesh %s in model %s has wrong id (%s should be %s)",
 			pinmesh->name, mod->name, pinmesh->id, IDMD3HEADER );
 
 		Q_strncpyz( poutmesh->name, pinmesh->name, MD3_MAX_PATH );
@@ -275,17 +275,17 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		poutmesh->numverts = numverts = LittleLong( pinmesh->num_verts );
 
 		/*		if( poutmesh->numskins <= 0 )
-		Com_Error( ERR_DROP, "mesh %i in model %s has no skins", i, mod->name );
+		ri.Com_Error( ERR_DROP, "mesh %i in model %s has no skins", i, mod->name );
 		else*/ if( poutmesh->numskins > MD3_MAX_SHADERS )
-			Com_Error( ERR_DROP, "mesh %i in model %s has too many skins", i, mod->name );
+			ri.Com_Error( ERR_DROP, "mesh %i in model %s has too many skins", i, mod->name );
 		if( poutmesh->numtris <= 0 )
-			Com_Error( ERR_DROP, "mesh %i in model %s has no elements", i, mod->name );
+			ri.Com_Error( ERR_DROP, "mesh %i in model %s has no elements", i, mod->name );
 		else if( poutmesh->numtris > MD3_MAX_TRIANGLES )
-			Com_Error( ERR_DROP, "mesh %i in model %s has too many triangles", i, mod->name );
+			ri.Com_Error( ERR_DROP, "mesh %i in model %s has too many triangles", i, mod->name );
 		if( poutmesh->numverts <= 0 )
-			Com_Error( ERR_DROP, "mesh %i in model %s has no vertices", i, mod->name );
+			ri.Com_Error( ERR_DROP, "mesh %i in model %s has no vertices", i, mod->name );
 		else if( poutmesh->numverts > MD3_MAX_VERTS )
-			Com_Error( ERR_DROP, "mesh %i in model %s has too many vertices", i, mod->name );
+			ri.Com_Error( ERR_DROP, "mesh %i in model %s has too many vertices", i, mod->name );
 
 		bufsize = sizeof( maliasskin_t ) * poutmesh->numskins + poutmesh->numtris * sizeof( elem_t ) * 3 +
 			numverts * ( sizeof( vec2_t ) + sizeof( maliasvertex_t ) * poutmodel->numframes );
@@ -418,7 +418,7 @@ static float R_AliasModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t
 	if( ( framenum >= aliasmodel->numframes ) || ( framenum < 0 ) )
 	{
 #ifndef PUBLIC_BUILD
-		Com_DPrintf( "R_AliasModelLerpBBox %s: no such frame %d\n", mod->name, framenum );
+		ri.Com_DPrintf( "R_AliasModelLerpBBox %s: no such frame %d\n", mod->name, framenum );
 #endif
 		framenum = 0;
 	}
@@ -426,7 +426,7 @@ static float R_AliasModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t
 	if( ( oldframenum >= aliasmodel->numframes ) || ( oldframenum < 0 ) )
 	{
 #ifndef PUBLIC_BUILD
-		Com_DPrintf( "R_AliasModelLerpBBox %s: no such oldframe %d\n", mod->name, oldframenum );
+		ri.Com_DPrintf( "R_AliasModelLerpBBox %s: no such oldframe %d\n", mod->name, oldframenum );
 #endif
 		oldframenum = 0;
 	}
@@ -481,7 +481,7 @@ qboolean R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasm
 
 	if( i == aliasmodel->numtags )
 	{
-		//Com_DPrintf ("R_AliasModelLerpTag: no such tag %s\n", name );
+		//ri.Com_DPrintf ("R_AliasModelLerpTag: no such tag %s\n", name );
 		return qfalse;
 	}
 
@@ -489,14 +489,14 @@ qboolean R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasm
 	if( ( framenum >= aliasmodel->numframes ) || ( framenum < 0 ) )
 	{
 #ifndef PUBLIC_BUILD
-		Com_DPrintf( "R_AliasModelLerpTag %s: no such oldframe %i\n", name, framenum );
+		ri.Com_DPrintf( "R_AliasModelLerpTag %s: no such oldframe %i\n", name, framenum );
 #endif
 		framenum = 0;
 	}
 	if( ( oldframenum >= aliasmodel->numframes ) || ( oldframenum < 0 ) )
 	{
 #ifndef PUBLIC_BUILD
-		Com_DPrintf( "R_AliasModelLerpTag %s: no such oldframe %i\n", name, oldframenum );
+		ri.Com_DPrintf( "R_AliasModelLerpTag %s: no such oldframe %i\n", name, oldframenum );
 #endif
 		oldframenum = 0;
 	}
@@ -568,7 +568,7 @@ qboolean R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_
 
 		rb_mesh = RB_MapBatchMesh( aliasmesh->numverts, aliasmesh->numtris * 3 );
 		if( !rb_mesh ) {
-			Com_DPrintf( S_COLOR_YELLOW "R_DrawAliasSurf: RB_MapBatchMesh returned NULL for (%s)(%s)", 
+			ri.Com_DPrintf( S_COLOR_YELLOW "R_DrawAliasSurf: RB_MapBatchMesh returned NULL for (%s)(%s)", 
 				drawSurf->model->name, aliasmesh->name );
 			return qfalse;
 		}
@@ -696,7 +696,7 @@ void R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t
 	if( ( frame >= (int)aliasmodel->numframes ) || ( frame < 0 ) )
 	{
 #ifndef PUBLIC_BUILD
-		Com_DPrintf( "R_SkeletalModelFrameBounds %s: no such frame %d\n", mod->name, frame );
+		ri.Com_DPrintf( "R_SkeletalModelFrameBounds %s: no such frame %d\n", mod->name, frame );
 #endif
 		ClearBounds( mins, maxs );
 		return;
@@ -735,11 +735,11 @@ qboolean R_AddAliasModelToDrawList( const entity_t *e )
 		return qfalse;
 
 	// never render weapon models or non-occluders into shadowmaps
-	if( ri.params & RP_SHADOWMAPVIEW ) {
+	if( rn.params & RP_SHADOWMAPVIEW ) {
 		if( e->renderfx & RF_WEAPONMODEL ) {
 			return qtrue;
 		}
-		if( rsc.entShadowGroups[R_ENT2NUM(e)] != ri.shadowGroup->id ) {
+		if( rsc.entShadowGroups[R_ENT2NUM(e)] != rn.shadowGroup->id ) {
 			return qtrue;
 		}
 	}
@@ -749,7 +749,7 @@ qboolean R_AddAliasModelToDrawList( const entity_t *e )
 		distance = 0;
 	}
 	else {
-		distance = Distance( e->origin, ri.viewOrigin ) + 1;
+		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
 
 	fog = R_FogForSphere( e->origin, radius );

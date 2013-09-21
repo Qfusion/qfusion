@@ -625,11 +625,11 @@ void FTLIB_PrecacheFonts( qboolean verbose )
 /*
 * FTLIB_RegisterFont
 */
-qfontface_t *FTLIB_RegisterFont( const char *family, qfontstyle_t style, unsigned int size )
+qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size )
 {
 	int i;
 	qfontfamily_t *qfamily, *best;
-	qfontstyle_t bestStyle;
+	int bestStyle;
 	qfontface_t *qface;
 
 	assert( family != NULL );

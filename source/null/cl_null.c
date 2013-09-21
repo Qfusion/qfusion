@@ -104,14 +104,12 @@ void Key_DelegatePop( keydest_t next_dest )
 {
 }
 
-struct mufont_s;
-
-struct mufont_s *SCR_RegisterFont( const char *name )
+struct qfontface_s *SCR_RegisterFont( const char *name )
 {
 	return NULL;
 }
 
-void SCR_DrawString( int x, int y, int align, const char *str, struct mufont_s *font, vec4_t color )
+void SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color )
 {
 }
 

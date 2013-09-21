@@ -156,7 +156,7 @@ static void Mod_LoadLighting( const lump_t *l, const lump_t *faces )
 		return;
 	size = mod_bspFormat->lightmapWidth * mod_bspFormat->lightmapHeight * LIGHTMAP_BYTES;
 	if( l->filelen % size )
-		Com_Error( ERR_DROP, "Mod_LoadLighting: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadLighting: funny lump size in %s", loadmodel->name );
 
 	loadmodel_numlightmaps = l->filelen / size;
 	loadmodel_lightmapRects = Mod_Malloc( loadmodel, loadmodel_numlightmaps * sizeof( *loadmodel_lightmapRects ) );
@@ -181,7 +181,7 @@ static void Mod_LoadVertexes( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadVertexes: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadVertexes: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 
 	bufSize = 0;
@@ -263,7 +263,7 @@ static void Mod_LoadVertexes_RBSP( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadVertexes: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadVertexes: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 
 	bufSize = 0;
@@ -347,7 +347,7 @@ static void Mod_LoadSubmodels( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadSubmodels: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadSubmodels: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -388,7 +388,7 @@ static void Mod_LoadShaderrefs( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadShaderrefs: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadShaderrefs: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -400,8 +400,6 @@ static void Mod_LoadShaderrefs( const lump_t *l )
 		Q_strncpyz( out->name, in->name, sizeof( out->name ) );
 		out->flags = LittleLong( in->flags );
 		contents = LittleLong( in->contents );
-		if( contents & ( MASK_WATER|CONTENTS_FOG ) )
-			out->flags |= SURF_NOMARKS;
 	}
 }
 
@@ -701,7 +699,7 @@ static inline void Mod_LoadFaceCommon( const rdface_t *in, msurface_t *out, int 
 		}
 		else if( lightmaps[j] >= loadmodel_numlightmaps )
 		{
-			Com_DPrintf( S_COLOR_RED "WARNING: bad lightmap number: %i\n", lightmaps[j] );
+			ri.Com_DPrintf( S_COLOR_RED "WARNING: bad lightmap number: %i\n", lightmaps[j] );
 			lmRects[j] = NULL;
 			lightmaps[j] = -1;
 			lightmapStyles[j] = 255;
@@ -721,7 +719,7 @@ static inline void Mod_LoadFaceCommon( const rdface_t *in, msurface_t *out, int 
 	// load shader
 	shadernum = LittleLong( in->shadernum );
 	if( shadernum < 0 || shadernum >= loadmodel_numshaderrefs )
-		Com_Error( ERR_DROP, "MOD_LoadBmodel: bad shader number" );
+		ri.Com_Error( ERR_DROP, "MOD_LoadBmodel: bad shader number" );
 	shaderref = loadmodel_shaderrefs + shadernum;
 
 	if( lightmaps[0] < 0 ) {
@@ -797,7 +795,7 @@ static void Mod_LoadPatchGroups( const lump_t *l )
 #define Mod_PreloadPatches_PROLOGUE(in) \
 	in = ( void * )( mod_base + l->fileofs ); \
 	if( l->filelen % sizeof( *in ) ) \
-		Com_Error( ERR_DROP, "Mod_LoadPatchGroups: funny lump size in %s", loadmodel->name ); \
+		ri.Com_Error( ERR_DROP, "Mod_LoadPatchGroups: funny lump size in %s", loadmodel->name ); \
 	count = l->filelen / sizeof( *in ); \
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) ); \
 	memset( out, -1, count*sizeof( *out ) );
@@ -829,7 +827,7 @@ static void Mod_LoadPatchGroups( const lump_t *l )
 	loadmodel_patchgrouprefs = out;
 
 	if( !patchcount ) {
-		Mem_Free( patches );
+		R_Free( patches );
 		return;
 	}
 
@@ -852,9 +850,9 @@ static void Mod_LoadPatchGroups( const lump_t *l )
 		}
 	}
 
-	Mem_Free( patches );
+	R_Free( patches );
 
-	Com_DPrintf( "Mod_LoadPatchGroups: count (%i), groups(%i)\n", patchcount, loadmodel_numpatchgroups );
+	ri.Com_DPrintf( "Mod_LoadPatchGroups: count (%i), groups(%i)\n", patchcount, loadmodel_numpatchgroups );
 
 #undef Mod_PreloadPatches_PROLOGUE
 #undef Mod_PreloadPatches_COUNT
@@ -872,7 +870,7 @@ static void Mod_LoadFaces( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadFaces: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadFaces: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -901,7 +899,7 @@ static void Mod_LoadFaces_RBSP( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadFaces: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadFaces: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -938,7 +936,7 @@ static void Mod_LoadNodes( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadNodes: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadNodes: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -969,9 +967,9 @@ static void Mod_LoadNodes( const lump_t *l )
 
 		if( badBounds || VectorCompare( out->mins, out->maxs ) )
 		{
-			Com_DPrintf( S_COLOR_YELLOW "WARNING: bad node %i bounds:\n", i );
-			Com_DPrintf( S_COLOR_YELLOW "mins: %i %i %i\n", Q_rint( out->mins[0] ), Q_rint( out->mins[1] ), Q_rint( out->mins[2] ) );
-			Com_DPrintf( S_COLOR_YELLOW "maxs: %i %i %i\n", Q_rint( out->maxs[0] ), Q_rint( out->maxs[1] ), Q_rint( out->maxs[2] ) );
+			ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: bad node %i bounds:\n", i );
+			ri.Com_DPrintf( S_COLOR_YELLOW "mins: %i %i %i\n", Q_rint( out->mins[0] ), Q_rint( out->mins[1] ), Q_rint( out->mins[2] ) );
+			ri.Com_DPrintf( S_COLOR_YELLOW "maxs: %i %i %i\n", Q_rint( out->maxs[0] ), Q_rint( out->maxs[1] ), Q_rint( out->maxs[2] ) );
 		}
 	}
 }
@@ -991,24 +989,24 @@ static void Mod_LoadFogs( const lump_t *l, const lump_t *brLump, const lump_t *b
 
 	inbrushes = ( void * )( mod_base + brLump->fileofs );
 	if( brLump->filelen % sizeof( *inbrushes ) )
-		Com_Error( ERR_DROP, "Mod_LoadBrushes: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadBrushes: funny lump size in %s", loadmodel->name );
 
 	if( mod_bspFormat->flags & BSP_RAVEN )
 	{
 		inrbrushsides = ( void * )( mod_base + brSidesLump->fileofs );
 		if( brSidesLump->filelen % sizeof( *inrbrushsides ) )
-			Com_Error( ERR_DROP, "Mod_LoadBrushsides: funny lump size in %s", loadmodel->name );
+			ri.Com_Error( ERR_DROP, "Mod_LoadBrushsides: funny lump size in %s", loadmodel->name );
 	}
 	else
 	{
 		inbrushsides = ( void * )( mod_base + brSidesLump->fileofs );
 		if( brSidesLump->filelen % sizeof( *inbrushsides ) )
-			Com_Error( ERR_DROP, "Mod_LoadBrushsides: funny lump size in %s", loadmodel->name );
+			ri.Com_Error( ERR_DROP, "Mod_LoadBrushsides: funny lump size in %s", loadmodel->name );
 	}
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadFogs: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadFogs: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -1027,14 +1025,14 @@ static void Mod_LoadFogs( const lump_t *l, const lump_t *brLump, const lump_t *b
 		p = LittleLong( brush->numsides );
 		if( p < 6 ) {
 			out->shader = NULL;
-			Com_DPrintf( S_COLOR_YELLOW "WARNING: missing fog brush sides\n" );
+			ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing fog brush sides\n" );
 			continue;
 		}
 
 		p = LittleLong( brush->firstside );
 		if( p == -1 ) {
 			out->shader = NULL;
-			Com_DPrintf( S_COLOR_YELLOW "WARNING: bad fog brush side\n" );
+			ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: bad fog brush side\n" );
 			continue;
 		}
 
@@ -1091,12 +1089,12 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 
 	inMarkSurfaces = ( void * )( mod_base + msLump->fileofs );
 	if( msLump->filelen % sizeof( *inMarkSurfaces ) )
-		Com_Error( ERR_DROP, "Mod_LoadMarksurfaces: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadMarksurfaces: funny lump size in %s", loadmodel->name );
 	countMarkSurfaces = msLump->filelen / sizeof( *inMarkSurfaces );
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadLeafs: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadLeafs: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -1117,7 +1115,7 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 
 		if( i && ( badBounds || VectorCompare( out->mins, out->maxs ) ) && out->cluster >= 0 )
 		{
-			Com_DPrintf( S_COLOR_YELLOW "WARNING: bad leaf bounds\n" );
+			ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: bad leaf bounds\n" );
 			out->cluster = -1;
 		}
 
@@ -1142,7 +1140,7 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 
 		firstMarkSurface = LittleLong( in->firstleafface );
 		if( firstMarkSurface < 0 || numMarkSurfaces + firstMarkSurface > countMarkSurfaces )
-			Com_Error( ERR_DROP, "MOD_LoadBmodel: bad marksurfaces in leaf %i", i );
+			ri.Com_Error( ERR_DROP, "MOD_LoadBmodel: bad marksurfaces in leaf %i", i );
 
 		numVisSurfaces = numMarkSurfaces;
 		numFragmentSurfaces = numMarkSurfaces;
@@ -1178,7 +1176,7 @@ static void Mod_LoadElems( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadElems: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadElems: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -1201,7 +1199,7 @@ static void Mod_LoadPlanes( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadPlanes: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadPlanes: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -1236,7 +1234,7 @@ static void Mod_LoadLightgrid( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadLightgrid: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadLightgrid: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -1270,7 +1268,7 @@ static void Mod_LoadLightgrid_RBSP( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadLightgrid: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadLightgrid: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -1311,7 +1309,7 @@ static void Mod_LoadLightArray_RBSP( const lump_t *l )
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		Com_Error( ERR_DROP, "Mod_LoadLightArray: funny lump size in %s", loadmodel->name );
+		ri.Com_Error( ERR_DROP, "Mod_LoadLightArray: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
@@ -1322,7 +1320,7 @@ static void Mod_LoadLightArray_RBSP( const lump_t *l )
 	{
 		index = LittleShort( *in );
 		if( index >= (unsigned)loadbmodel->numlightgridelems ) {
-			Com_Error( ERR_DROP, "Mod_LoadLightArray_RBSP: funny grid index(%i):%i in %s", i, index, loadmodel->name );
+			ri.Com_Error( ERR_DROP, "Mod_LoadLightArray_RBSP: funny grid index(%i):%i in %s", i, index, loadmodel->name );
 		}
 		*out = loadbmodel->lightgrid + index;
 	}
@@ -1611,7 +1609,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 
 	if( globalFog ) {
 		loadbmodel->globalfog = testFog;
-		Com_DPrintf( "Global fog detected: %s\n", testFog->shader->name );
+		ri.Com_DPrintf( "Global fog detected: %s\n", testFog->shader->name );
 	}
 
 	if( loadmodel_xyz_array ) {
@@ -1662,7 +1660,7 @@ void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 	mod->type = mod_brush;
 	mod->registrationSequence = rf.registrationSequence;
 	if( r_worldmodel != NULL )
-		Com_Error( ERR_DROP, "Loaded a brush model after the world" );
+		ri.Com_Error( ERR_DROP, "Loaded a brush model after the world" );
 
 	loadmodel = mod;
 

@@ -548,7 +548,7 @@ void SCR_RunConsole( int msec );
 void SCR_RegisterConsoleMedia( qboolean verbose );
 void SCR_ShutDownConsoleMedia( qboolean verbose );
 void SCR_ChangeSystemFontSmallSize( int ch );
-qfontface_t *SCR_RegisterFont( const char *family, qfontstyle_t style, unsigned int size );
+qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size );
 size_t SCR_strHeight( qfontface_t *font );
 size_t SCR_strWidth( const char *str, qfontface_t *font, size_t maxlen );
 size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth );
@@ -557,6 +557,8 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 void SCR_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color );
 void SCR_DrawFillRect( int x, int y, int w, int h, vec4_t color );
+unsigned int SCR_GetScreenWidth( void );
+unsigned int SCR_GetScreenHeight( void );
 
 void CL_InitMedia( qboolean verbose );
 void CL_ShutdownMedia( qboolean verbose );
@@ -566,6 +568,8 @@ void CL_AddNetgraph( void );
 
 extern float scr_con_current;
 extern float scr_conlines;       // lines of console to display
+
+extern ref_export_t re;		// interface to refresh .dll
 
 //
 // cl_mm.c

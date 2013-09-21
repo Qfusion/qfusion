@@ -61,7 +61,7 @@ void R_DrawPolys( void )
 	drawSurfacePoly_t *p;
 	mfog_t *fog;
 
-	if( ri.params & RP_NOENTS )
+	if( rn.params & RP_NOENTS )
 		return;
 
 	for( i = 0; i < rsc.numPolys; i++ )

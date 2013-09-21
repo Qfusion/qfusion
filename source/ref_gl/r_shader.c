@@ -45,7 +45,6 @@ typedef struct shadercache_s
 
 static shader_t r_shaders[MAX_SHADERS];
 
-static char *shaderPaths;
 static shader_t r_shaders_hash_headnode[SHADERS_HASH_SIZE], *r_free_shaders;
 static shadercache_t *shadercache_hash[SHADERCACHE_HASH_SIZE];
 
@@ -535,14 +534,14 @@ static image_t *Shader_FindImage( shader_t *shader, char *name, int flags, float
 		return r_particletexture;
 	if( !Q_strnicmp( name, "*lm", 3 ) )
 	{
-		Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with explicit lightmap image\n", shader->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with explicit lightmap image\n", shader->name );
 		return r_whitetexture;
 	}
 
 	image = R_FindImage( name, NULL, flags, bumpScale );
 	if( !image )
 	{
-		Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with no image: %s\n", shader->name, name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with no image: %s\n", shader->name, name );
 		return r_defaultImage;
 	}
 
@@ -1038,7 +1037,7 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 	pass->anim_fps = 0;
 	pass->anim_frames[0] = Shader_FindImage( shader, token, flags, 0 );
 	if( !pass->anim_frames[0] )
-		Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
+		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
 }
 
 static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int addFlags, const char **ptr )
@@ -1082,7 +1081,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 
 	if( !glConfig.ext.texture_cube_map )
 	{
-		Com_DPrintf( S_COLOR_YELLOW "Shader %s has an unsupported cubemap stage: %s.\n", shader->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has an unsupported cubemap stage: %s.\n", shader->name );
 		pass->anim_frames[0] = r_notexture;
 		pass->tcgen = TC_GEN_BASE;
 		return;
@@ -1095,7 +1094,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	}
 	else
 	{
-		Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
+		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
 		pass->anim_frames[0] = r_notexture;
 		pass->tcgen = TC_GEN_BASE;
 	}
@@ -1159,7 +1158,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	pass->anim_frames[0] = Shader_FindImage( shader, token, flags, 0 );
 	if( !pass->anim_frames[0] )
 	{
-		Com_DPrintf( S_COLOR_YELLOW "WARNING: failed to load base/diffuse image for material %s in shader %s.\n", token, shader->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: failed to load base/diffuse image for material %s in shader %s.\n", token, shader->name );
 		return;
 	}
 
@@ -1186,7 +1185,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 			pass->anim_frames[1] = Shader_FindImage( shader, token, flags, bumpScale );
 			if( !pass->anim_frames[1] )
 			{
-				Com_DPrintf( S_COLOR_YELLOW "WARNING: missing normalmap image %s in shader %s.\n", token, shader->name );
+				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing normalmap image %s in shader %s.\n", token, shader->name );
 				pass->anim_frames[1] = r_blankbumptexture;
 			}
 			else
@@ -1201,7 +1200,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 			{
 				pass->anim_frames[2] = Shader_FindImage( shader, token, flags, 0 );
 				if( !pass->anim_frames[2] )
-					Com_DPrintf( S_COLOR_YELLOW "WARNING: missing glossmap image %s in shader %s.\n", token, shader->name );
+					ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing glossmap image %s in shader %s.\n", token, shader->name );
 			}
 
 			// set gloss to r_blacktexture so we know we have already parsed the gloss image
@@ -1223,7 +1222,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 					decal = Shader_FindImage( shader, token, flags, 0 );
 					if( !decal ) {
 						decal = r_whitetexture;
-						Com_DPrintf( S_COLOR_YELLOW "WARNING: missing decal image %s in shader %s.\n", token, shader->name );
+						ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing decal image %s in shader %s.\n", token, shader->name );
 					}
 				}
 
@@ -1258,7 +1257,7 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 
 	if( !r_portalmaps->integer )
 	{
-		Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a distortion stage, while GLSL is not supported\n", shader->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a distortion stage, while GLSL is not supported\n", shader->name );
 		Shader_SkipLine( ptr );
 		return;
 	}
@@ -1285,7 +1284,7 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 			pass->anim_frames[0] = Shader_FindImage( shader, token, flags, 0 );
 			if( !pass->anim_frames[0] )
 			{
-				Com_DPrintf( S_COLOR_YELLOW "WARNING: missing dudvmap image %s in shader %s.\n", token, shader->name );
+				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing dudvmap image %s in shader %s.\n", token, shader->name );
 				pass->anim_frames[0] = r_blacktexture;
 			}
 
@@ -1295,7 +1294,7 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 		{
 			pass->anim_frames[1] = Shader_FindImage( shader, token, flags, bumpScale );
 			if( !pass->anim_frames[1] )
-				Com_DPrintf( S_COLOR_YELLOW "WARNING: missing normalmap image %s in shader.\n", token, shader->name );
+				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing normalmap image %s in shader.\n", token, shader->name );
 			flags &= ~IT_HEIGHTMAP;
 		}
 	}
@@ -1334,7 +1333,7 @@ static void Shaderpass_Celshade( shader_t *shader, shaderpass_t *pass, const cha
 			pass->anim_frames[i] = Shader_FindImage( shader, token, flags | (i ? IT_CLAMP|IT_CUBEMAP : 0), 0 );
 
 		if( !pass->anim_frames[i] ) {
-			Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
+			ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
 			pass->anim_frames[0] = r_notexture;
 			return;
 		}
@@ -1726,16 +1725,16 @@ void R_ShaderDump_f( void )
 	const char *name, *ptr;
 	shadercache_t *cache;
 
-	if( (Cmd_Argc() < 2) && !r_debug_surface )
+	if( (ri.Cmd_Argc() < 2) && !r_debug_surface )
 	{
-		Com_Printf( "Usage: %s [name]\n", Cmd_Argv(0) );
+		Com_Printf( "Usage: %s [name]\n", ri.Cmd_Argv(0) );
 		return;
 	}
 
-	if( Cmd_Argc() < 2 )
+	if( ri.Cmd_Argc() < 2 )
 		name = r_debug_surface->shader->name;
 	else
-		name = Cmd_Argv( 1 );
+		name = ri.Cmd_Argv( 1 );
 
 	Shader_GetCache( name, &cache );
 	if( !cache )
@@ -1764,8 +1763,8 @@ static void Shader_MakeCache( const char *filename )
 	unsigned int key;
 	char *pathName = NULL;
 	size_t pathNameSize;
-	char *buf, *temp = NULL;
-	const char *token, *ptr;
+	char *token, *buf, *temp = NULL;
+	const char *ptr;
 	shadercache_t *cache;
 	qbyte *cacheMemBuf;
 	size_t cacheMemSize;
@@ -1777,7 +1776,7 @@ static void Shader_MakeCache( const char *filename )
 
 	Com_Printf( "...loading '%s'\n", pathName );
 
-	size = FS_LoadFile( pathName, ( void ** )&temp, NULL, 0 );
+	size = R_LoadFile( pathName, ( void ** )&temp );
 	if( !temp || size <= 0 )
 		goto done;
 
@@ -1787,7 +1786,7 @@ static void Shader_MakeCache( const char *filename )
 
 	buf = R_Malloc( size+1 );
 	strcpy( buf, temp );
-	FS_FreeFile( temp );
+	R_FreeFile( temp );
 	temp = NULL;
 
 	// calculate buffer size to allocate our cache objects all at once (we may leak
@@ -1816,6 +1815,7 @@ static void Shader_MakeCache( const char *filename )
 		if( !token[0] )
 			break;
 
+		token = Q_strlwr( token );
 		key = Shader_GetCache( token, &cache );
 		if( cache )
 			goto set_path_and_offset;
@@ -1827,7 +1827,7 @@ static void Shader_MakeCache( const char *filename )
 		shadercache_hash[key] = cache;
 
 set_path_and_offset:
-		cache->filename = filename;
+		cache->filename = R_CopyString( filename );
 		cache->buffer = buf;
 		cache->offset = ptr - buf;
 
@@ -1836,7 +1836,7 @@ set_path_and_offset:
 
 done:
 	if( temp )
-		FS_FreeFile( temp );
+		R_FreeFile( temp );
 	if( pathName )
 		R_Free( pathName );
 }
@@ -1848,10 +1848,12 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache )
 {
 	unsigned int key;
 	shadercache_t *c;
+	unsigned int len;
 
 	*cache = NULL;
 
-	key = Com_HashKey( name, SHADERCACHE_HASH_SIZE );
+	len = strlen( name );
+	key = ri.Hash_SuperFastHash( ( const qbyte * )name, len, len ) % SHADERCACHE_HASH_SIZE;
 	for( c = shadercache_hash[key]; c; c = c->hash_next )
 	{
 		if( !Q_stricmp( c->name, name ) )
@@ -1869,25 +1871,34 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache )
 */
 static qboolean R_InitShadersCache( void )
 {
-	int i, numfiles;
+	int i, j, k, numfiles;
 	const char *fileptr;
-	size_t filelen, shaderbuflen;
+	char shaderPaths[1024];
 
-	numfiles = FS_GetFileListExt( "scripts", ".shader", NULL, &shaderbuflen, 0, 0 );
+	memset( shadercache_hash, 0, sizeof( shadercache_t * )*SHADERCACHE_HASH_SIZE );
+	
+	// enumerate shaders
+	numfiles = ri.FS_GetFileList( "scripts", ".shader", NULL, 0, 0, 0 );
 	if( !numfiles ) {
 		return qfalse;
 	}
 
-	shaderPaths = R_Malloc( shaderbuflen );
-	FS_GetFileList( "scripts", ".shader", shaderPaths, shaderbuflen, 0, 0 );
+	// now load them all
+	for( i = 0; i < numfiles; i += k ) {
+		if( ( k = ri.FS_GetFileList( "scripts", ".shader", shaderPaths, sizeof( shaderPaths ), i, numfiles )) == 0 ) {
+			k = 1; // advance by one file
+			continue;
+		}
 
-	// now load all the scripts
-	fileptr = shaderPaths;
-	memset( shadercache_hash, 0, sizeof( shadercache_t * )*SHADERCACHE_HASH_SIZE );
+		fileptr = shaderPaths;
+		for( j = 0; j < k; j++ ) {
+			Shader_MakeCache( fileptr );
 
-	for( i = 0; i < numfiles; i++, fileptr += filelen + 1 ) {
-		filelen = strlen( fileptr );
-		Shader_MakeCache( fileptr );
+			fileptr += strlen( fileptr ) + 1;
+			if( !*fileptr ) {
+				break;
+			}
+		}
 	}
 
 	return qtrue;
@@ -1905,7 +1916,7 @@ void R_InitShaders( void )
 	r_shaderTemplateBuf = NULL;
 
 	if( !R_InitShadersCache() ) {
-		Com_Error( ERR_DROP, "Could not find any shaders!" );
+		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
 	}
 
 	memset( r_shaders, 0, sizeof( r_shaders ) );
@@ -2041,7 +2052,6 @@ void R_ShutdownShaders( void )
 	}
 
 	r_shaderTemplateBuf = NULL;
-	shaderPaths = NULL;
 
 	memset( shadercache_hash, 0, sizeof( shadercache_hash ) );
 }
@@ -2534,7 +2544,7 @@ static void R_LoadShaderReal( shader_t *s, char *shortname, size_t shortname_len
 
 		// shader is in the shader scripts
 		text = cache->buffer + cache->offset;
-		Com_DPrintf( "Loading shader %s from cache...\n", shortname );
+		ri.Com_DPrintf( "Loading shader %s from cache...\n", shortname );
 
 		ptr = text;
 		token = COM_ParseExt( &ptr, qtrue );
@@ -2790,7 +2800,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 		return NULL;
 
 	// test if already loaded
-	key = Com_HashKey( shortname, SHADERS_HASH_SIZE );
+	key = ri.Hash_SuperFastHash( ( const qbyte *)shortname, nameLength, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 	best = NULL;
 
@@ -2809,7 +2819,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 	}
 
 	if( !r_free_shaders ) {
-		Com_Error( ERR_FATAL, "R_LoadShader: Shader limit exceeded" );
+		ri.Com_Error( ERR_FATAL, "R_LoadShader: Shader limit exceeded" );
 	}
 
 	s = r_free_shaders;
@@ -2933,7 +2943,7 @@ void R_GetShaderDimensions( const shader_t *shader, int *width, int *height )
 
 	baseImage = shader->passes[0].anim_frames[0];
 	if( !baseImage ) {
-		Com_DPrintf( S_COLOR_YELLOW "R_GetShaderDimensions: shader %s is missing base image\n", shader->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_GetShaderDimensions: shader %s is missing base image\n", shader->name );
 		return;
 	}
 

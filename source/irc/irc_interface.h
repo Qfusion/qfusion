@@ -2,7 +2,6 @@
 #define IRC_INTERFACE_H
 
 #include "../client/keys.h"
-#include "../client/vid.h"
 #include "../qcommon/dynvar.h"
 #include "../qcommon/cvar.h"
 #include "../qcommon/trie.h"
@@ -194,17 +193,18 @@ typedef struct
 	keydest_t	(*Key_DelegatePush)(key_delegate_f key_del, key_char_delegate_f char_del);
 	void		(*Key_DelegatePop)(keydest_t next_dest);
 	// drawing
-	struct mufont_s *(*SCR_RegisterFont)(const char *name);
-	void			(*SCR_DrawString)(int x, int y, int align, const char *str, struct mufont_s *font, vec4_t color);
-	int				(*SCR_DrawStringWidth)(int x, int y, int align, const char *str, int maxwidth, struct mufont_s *font, vec4_t color);
-	void			(*SCR_DrawRawChar)(int x, int y, qwchar num, struct mufont_s *font, vec4_t color);
-	size_t			(*SCR_strHeight)(struct mufont_s *font );
-	size_t			(*SCR_strWidth)(const char *str, struct mufont_s *font, int maxlen);
-	size_t			(*SCR_StrlenForWidth)(const char *str, struct mufont_s *font, size_t maxwidth);
+	struct qfontface_s *(*SCR_RegisterFont)(const char *name, int style, unsigned int size );
+	void			(*SCR_DrawString)(int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color);
+	size_t			(*SCR_DrawStringWidth)(int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color);
+	void			(*SCR_DrawRawChar)(int x, int y, qwchar num, struct qfontface_s *font, vec4_t color);
+	size_t			(*SCR_strHeight)(struct qfontface_s *font );
+	size_t			(*SCR_strWidth)(const char *str, struct qfontface_s *font, size_t maxlen);
+	size_t			(*SCR_StrlenForWidth)(const char *str, struct qfontface_s *font, size_t maxwidth);
 	struct shader_s*(*R_RegisterPic)(const char *name);
 	void			(*R_DrawStretchPic)(int x, int y, int w, int h, float s1, float t1, float s2, float t2, float *color, struct shader_s *shader);
 	void			(*R_DrawStretchPoly)(const struct poly_s *poly, float x_offset, float y_offset);
-	viddef_t		*viddef;
+	unsigned int	(*SCR_GetScreenWidth)( void );
+	unsigned int	(*SCR_GetScreenHeight)( void );
 	// clock
 	unsigned int	(*Milliseconds)(void);
 	quint64			(*Microseconds)(void);

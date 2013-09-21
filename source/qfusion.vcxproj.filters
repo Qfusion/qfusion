@@ -153,72 +153,6 @@
     <ClCompile Include="gameshared\q_shared.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ref_gl\r_alias.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_backend.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_cin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_cull.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_framebuffer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_image.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_light.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_main.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_math.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_mesh.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_model.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_poly.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_program.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_q3bsp.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_register.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_shader.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_shadow.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_skin.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_skm.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_sky.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_surf.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_vbo.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="qcommon\snap_demos.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -270,9 +204,6 @@
     <ClCompile Include="win32\win_fs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="win32\win_glw.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="win32\win_input.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -280,9 +211,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="win32\win_net.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="win32\win_qgl.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="win32\win_sys.c">
@@ -294,19 +222,10 @@
     <ClCompile Include="qcommon\wswcurl.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ref_gl\r_portals.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_backend_program.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_scene.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ref_gl\r_trace.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="server\sv_web.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\bsp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -522,6 +441,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ref_gl\r_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\patch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\bsp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cin\cin_public.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

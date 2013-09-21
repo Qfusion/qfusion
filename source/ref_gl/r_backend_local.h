@@ -44,7 +44,7 @@ typedef struct
 
 typedef struct r_backend_s
 {
-	struct mempool_s	*mempool;
+	mempool_t			*mempool;
 
 	struct
 	{
@@ -141,8 +141,8 @@ typedef struct r_backend_s
 extern rbackend_t rb;
 
 // r_backend.c
-#define RB_Alloc(size) Mem_Alloc( rb.mempool, size )
-#define RB_Free(data) Mem_Free(data)
+#define RB_Alloc(size) R_MallocExt( rb.mempool, size, 16, 1 )
+#define RB_Free(data) R_Free(data)
 
 void RB_DrawElementsReal( void );
 #define RB_IsAlphaBlending(blendsrc,blenddst) \

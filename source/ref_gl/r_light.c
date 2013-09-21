@@ -76,10 +76,10 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 	VectorCopy( light->origin, origin );
 
-	VectorCopy( &ri.viewAxis[AXIS_RIGHT], v_left );
-	VectorCopy( &ri.viewAxis[AXIS_UP], v_up );
+	VectorCopy( &rn.viewAxis[AXIS_RIGHT], v_left );
+	VectorCopy( &rn.viewAxis[AXIS_UP], v_up );
 
-	if( ri.params & RP_MIRRORVIEW )
+	if( rn.params & RP_MIRRORVIEW )
 		VectorInverse( v_left );
 
 	VectorMA( origin, down, v_up, point );
@@ -118,7 +118,7 @@ void R_DrawCoronas( void )
 	unsigned int i;
 	float dist;
 	dlight_t *light;
-	trace_t tr;
+	rtrace_t tr;
 
 	if( r_dynamiclight->integer != 2 )
 		return;
@@ -127,21 +127,21 @@ void R_DrawCoronas( void )
 	{
 		light = rsc.dlights + i;
 		dist =
-			ri.viewAxis[AXIS_FORWARD+0] * ( light->origin[0] - ri.viewOrigin[0] ) +
-			ri.viewAxis[AXIS_FORWARD+1] * ( light->origin[1] - ri.viewOrigin[1] ) +
-			ri.viewAxis[AXIS_FORWARD+2] * ( light->origin[2] - ri.viewOrigin[2] );
+			rn.viewAxis[AXIS_FORWARD+0] * ( light->origin[0] - rn.viewOrigin[0] ) +
+			rn.viewAxis[AXIS_FORWARD+1] * ( light->origin[1] - rn.viewOrigin[1] ) +
+			rn.viewAxis[AXIS_FORWARD+2] * ( light->origin[2] - rn.viewOrigin[2] );
 		if( dist < 24.0f )
 			continue;
 		dist -= light->intensity;
 
-		R_TraceLine( &tr, light->origin, ri.viewOrigin, SURF_NONSOLID );
+		R_TraceLine( &tr, light->origin, rn.viewOrigin, SURF_NONSOLID );
 		if( tr.fraction != 1.0f )
 			continue;
 
 		R_AddDSurfToDrawList( rsc.worldent, 
 			R_FogForSphere( light->origin, 1 ), 
 			r_coronaShader, 
-			Distance( ri.viewOrigin, light->origin ), 0, NULL, &r_coronaSurfs[i] );
+			Distance( rn.viewOrigin, light->origin ), 0, NULL, &r_coronaSurfs[i] );
 	}
 }
 
@@ -174,7 +174,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	VectorSet( ambientLocal, 0, 0, 0 );
 	VectorSet( diffuseLocal, 0, 0, 0 );
 
-	if( !r_worldmodel /* || (ri.refdef.rdflags & RDF_NOWORLDMODEL)*/ ||
+	if( !r_worldmodel /* || (rn.refdef.rdflags & RDF_NOWORLDMODEL)*/ ||
 		!r_worldbrushmodel->lightgrid || !r_worldbrushmodel->numlightgridelems )
 	{
 		VectorSet( dir, 0.1f, 0.2f, 0.7f );
@@ -459,7 +459,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 	maxY = r_maxLightmapBlockSize / h;
 	max = min( maxX, maxY );
 
-	Com_DPrintf( "Packing %i lightmap(s) -> ", num );
+	ri.Com_DPrintf( "Packing %i lightmap(s) -> ", num );
 
 	if( !max || num == 1 || !mapConfig.lightmapsPacking /* || !r_lighting_packlightmaps->integer*/ )
 	{
@@ -476,7 +476,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 			rects[0].texMatrix[1][0] = 1; rects[0].texMatrix[1][1] = 0;
 		}
 
-		Com_DPrintf( "\n" );
+		ri.Com_DPrintf( "\n" );
 
 		return 1;
 	}
@@ -530,13 +530,13 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 	if( rectSize > r_lightmapBufferSize )
 	{
 		if( r_lightmapBuffer )
-			Mem_TempFree( r_lightmapBuffer );
-		r_lightmapBuffer = Mem_TempMallocExt( rectSize, 0 );
+			R_Free( r_lightmapBuffer );
+		r_lightmapBuffer = R_MallocExt( r_mempool, rectSize, 0, 0 );
 		memset( r_lightmapBuffer, 255, rectSize );
 		r_lightmapBufferSize = rectSize;
 	}
 
-	Com_DPrintf( "%ix%i : %ix%i\n", rectX, rectY, rectX * w, rectY * h );
+	ri.Com_DPrintf( "%ix%i : %ix%i\n", rectX, rectY, rectX * w, rectY * h );
 
 	block = r_lightmapBuffer;
 	for( y = 0, ty = 0.0, num = 0, rect = rects; y < rectY; y++, ty += th, block += rectX * xStride * h )
@@ -601,7 +601,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte
 	r_maxLightmapBlockSize = size;
 	size = w * h * LIGHTMAP_BYTES;
 	r_lightmapBufferSize = size;
-	r_lightmapBuffer = Mem_TempMalloc( r_lightmapBufferSize );
+	r_lightmapBuffer = R_MallocExt( r_mempool, r_lightmapBufferSize, 0, 0 );
 	r_numUploadedLightmaps = 0;
 
 	m = 1;
@@ -620,13 +620,13 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte
 		p = R_PackLightmaps( numLightmaps - j, w, h, size, stride, qfalse, "*lm", lmData + j * size * stride, &rects[i] );
 
 	if( r_lightmapBuffer )
-		Mem_TempFree( r_lightmapBuffer );
+		R_Free( r_lightmapBuffer );
 
 	loadbmodel->lightmapImages = Mod_Malloc( mod, sizeof( *loadbmodel->lightmapImages ) * r_numUploadedLightmaps );
 	memcpy( loadbmodel->lightmapImages, r_lightmapTextures, sizeof( *loadbmodel->lightmapImages ) * r_numUploadedLightmaps );
 	loadbmodel->numLightmapImages = r_numUploadedLightmaps;
 
-	Com_DPrintf( "Packed %i lightmap blocks into %i texture(s)\n", numBlocks, r_numUploadedLightmaps );
+	ri.Com_DPrintf( "Packed %i lightmap blocks into %i texture(s)\n", numBlocks, r_numUploadedLightmaps );
 }
 
 /*
@@ -701,7 +701,7 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps, con
 	}
 
 	if( loadbmodel->numSuperLightStyles == MAX_SUPER_STYLES )
-		Com_Error( ERR_DROP, "R_AddSuperLightStyle: r_numSuperLightStyles == MAX_SUPER_STYLES" );
+		ri.Com_Error( ERR_DROP, "R_AddSuperLightStyle: r_numSuperLightStyles == MAX_SUPER_STYLES" );
 	loadbmodel->numSuperLightStyles++;
 
 	sls->vattribs = 0;

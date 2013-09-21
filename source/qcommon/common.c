@@ -120,91 +120,6 @@ static void Com_Sys_Symbol_f( void )
 #endif // SYS_SYMBOL
 
 /*
-==============================================================
-
-BSP FORMATS
-
-==============================================================
-*/
-
-static const int mod_IBSPQ3Versions[] = { Q3BSPVERSION, RTCWBSPVERSION, 0 };
-static const int mod_RBSPQ3Versions[] = { RBSPVERSION, 0 };
-static const int mod_FBSPQ3Versions[] = { QFBSPVERSION, 0 };
-
-const bspFormatDesc_t q3BSPFormats[] =
-{
-	{ QFBSPHEADER, mod_FBSPQ3Versions, QF_LIGHTMAP_WIDTH, QF_LIGHTMAP_HEIGHT, BSP_RAVEN, LUMP_ENTITIES },
-	{ IDBSPHEADER, mod_IBSPQ3Versions, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, BSP_NONE, LUMP_ENTITIES },
-	{ RBSPHEADER, mod_RBSPQ3Versions, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, BSP_RAVEN, LUMP_ENTITIES },
-
-	// trailing NULL
-	{ NULL, NULL, 0, 0, 0, 0 }
-};
-
-/*
-* Com_FindBSPFormat
-*/
-const bspFormatDesc_t *Com_FindBSPFormat( const bspFormatDesc_t *formats, const char *header, int version )
-{
-	int j;
-	const bspFormatDesc_t *bspFormat;
-
-	// check whether any of passed formats matches the header/version combo
-	for( bspFormat = formats; bspFormat->header; bspFormat++ )
-	{
-		if( strlen( bspFormat->header ) && strncmp( header, bspFormat->header, strlen( bspFormat->header ) ) )
-			continue;
-
-		// check versions listed for this header
-		for( j = 0; bspFormat->versions[j]; j++ )
-		{
-			if( version == bspFormat->versions[j] )
-				break;
-		}
-
-		// found a match
-		if( bspFormat->versions[j] )
-			return bspFormat;
-	}
-
-	return NULL;
-}
-
-/*
-* Com_FindFormatDescriptor
-*/
-const modelFormatDescr_t *Com_FindFormatDescriptor( const modelFormatDescr_t *formats, const qbyte *buf, const bspFormatDesc_t **bspFormat )
-{
-	int i;
-	const modelFormatDescr_t *descr;
-
-	// search for a matching header
-	for( i = 0, descr = formats; descr->header; i++, descr++ )
-	{
-		if( descr->header[0] == '*' )
-		{
-			const char *header;
-			int version;
-
-			header = ( const char * )buf;
-			version = LittleLong( *((int *)((qbyte *)buf + descr->headerLen)) );
-
-			// check whether any of specified formats matches the header/version combo
-			*bspFormat = Com_FindBSPFormat( descr->bspFormats, header, version );
-			if( *bspFormat )
-				return descr;
-		}
-		else
-		{
-			if( !strncmp( (const char *)buf, descr->header, descr->headerLen ) )
-				return descr;
-		}
-	}
-
-	return NULL;
-}
-
-/*
 ============================================================================
 
 CLIENT / SERVER interactions
@@ -350,7 +265,7 @@ void Com_DPrintf( const char *format, ... )
 * Both client and server can use this, and it will
 * do the apropriate things.
 */
-void Com_Error( int code, const char *format, ... )
+void Com_Error( com_error_code_t code, const char *format, ... )
 {
 	va_list	argptr;
 	char *msg = com_errormsg;
@@ -1126,7 +1041,6 @@ void Qcommon_Init( int argc, char **argv )
 	// cvar and command buffer management
 	COM_InitArgv( argc, argv );
 
-	Swap_Init();
 	Cbuf_Init();
 
 	// initialize cmd/cvar/dynvar tries

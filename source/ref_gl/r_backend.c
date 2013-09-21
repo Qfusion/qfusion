@@ -43,7 +43,7 @@ void RB_Init( void )
 {
 	memset( &rb, 0, sizeof( rb ) );
 
-	rb.mempool = Mem_AllocPool( NULL, "Rendering Backend" );
+	rb.mempool = R_AllocPool( NULL, "Rendering Backend" );
 
 	// set default OpenGL state
 	RB_SetGLDefaults();
@@ -66,7 +66,7 @@ void RB_Init( void )
 */
 void RB_Shutdown( void )
 {
-	Mem_FreePool( &rb.mempool );
+	R_FreePool( &rb.mempool );
 }
 
 /*
@@ -92,7 +92,7 @@ void RB_EndRegistration( void )
 void RB_SetTime( unsigned int time )
 {
 	rb.time = time;
-	rb.nullEnt.shaderTime = Sys_Milliseconds();
+	rb.nullEnt.shaderTime = ri.Sys_Milliseconds();
 }
 
 /*
@@ -1117,7 +1117,7 @@ void RB_DrawElementsReal( void )
 	int firstVert, numVerts, firstElem, numElems;
 	int numInstances;
 
-	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt || ri.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt || rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		return;
 
 	numVerts = rb.drawElements.numVerts;

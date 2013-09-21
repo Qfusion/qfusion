@@ -58,15 +58,6 @@ static cvar_t *con_fontSystemSmallSize;
 static cvar_t *con_fontSystemMediumSize;
 static cvar_t *con_fontSystemBigSize;
 
-/*
-===============================================================================
-
-MUFONT STRINGS
-
-===============================================================================
-*/
-
-
 //
 //	Variable width (proportional) fonts
 //
@@ -78,9 +69,9 @@ MUFONT STRINGS
 /*
 * SCR_RegisterFont
 */
-qfontface_t *SCR_RegisterFont( const char *family, qfontstyle_t style, unsigned int size )
+qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size )
 {
-	return FTLIB_RegisterFont( family, (qfontstyle_t)style, size );
+	return FTLIB_RegisterFont( family, style, size );
 }
 
 /*
@@ -89,7 +80,7 @@ qfontface_t *SCR_RegisterFont( const char *family, qfontstyle_t style, unsigned 
 static void SCR_RegisterSystemFonts( void )
 {
 	const char *con_fontSystemFamilyName;
-	const qfontstyle_t con_fontSystemStyle = (qfontstyle_t)DEFAULT_SYSTEM_FONT_STYLE;
+	const int con_fontSystemStyle = DEFAULT_SYSTEM_FONT_STYLE;
 
 	// register system fonts
 	con_fontSystemFamilyName = con_fontSystemFamily->string;
@@ -329,7 +320,7 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 */
 void SCR_DrawFillRect( int x, int y, int w, int h, vec4_t color )
 {
-	R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, cls.whiteShader );
+	re.DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, cls.whiteShader );
 }
 
 /*
@@ -446,6 +437,22 @@ void SCR_InitScreen( void )
 	scr_initialized = qtrue;
 }
 
+/*
+* SCR_GetScreenWidth
+*/
+unsigned int SCR_GetScreenWidth( void )
+{
+	return viddef.width;
+}
+
+/*
+* SCR_GetScreenHeight
+*/
+unsigned int SCR_GetScreenHeight( void )
+{
+	return viddef.height;
+}
+
 //=============================================================================
 
 /*
@@ -528,8 +535,8 @@ void SCR_EndLoadingPlaque( void )
 */
 void SCR_RegisterConsoleMedia( qboolean verbose )
 {
-	cls.whiteShader = R_RegisterPic( "$whiteimage" );
-	cls.consoleShader = R_RegisterPic( "gfx/ui/console" );
+	cls.whiteShader = re.RegisterPic( "$whiteimage" );
+	cls.consoleShader = re.RegisterPic( "gfx/ui/console" );
 
 	SCR_InitFonts( verbose );
 }
@@ -638,7 +645,7 @@ void SCR_UpdateScreen( void )
 
 	for( i = 0; i < numframes; i++ )
 	{
-		R_BeginFrame( separation[i], scr_cinematic || scr_forceclear->integer ? qtrue : qfalse );
+		re.BeginFrame( separation[i], scr_cinematic || scr_forceclear->integer ? qtrue : qfalse );
 
 		if( scr_draw_loading == 2 )
 		{ 
@@ -685,6 +692,6 @@ void SCR_UpdateScreen( void )
 		// wsw : aiwa : call any listeners so they can draw their stuff
 		Dynvar_CallListeners( updatescreen, NULL );
 
-		R_EndFrame();
+		re.EndFrame();
 	}
 }

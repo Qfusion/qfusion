@@ -203,6 +203,7 @@
   <ItemGroup>
     <ClCompile Include="..\null\ascript_null.c" />
     <ClCompile Include="..\null\cl_null.c" />
+    <ClCompile Include="..\qcommon\bsp.c" />
     <ClCompile Include="..\qcommon\cm_main.c" />
     <ClCompile Include="..\qcommon\cm_q3bsp.c" />
     <ClCompile Include="..\qcommon\cm_trace.c" />
@@ -268,6 +269,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\gameshared\config.h" />
+    <ClInclude Include="..\qcommon\bsp.h" />
     <ClInclude Include="..\qcommon\glob.h" />
     <ClInclude Include="..\gameshared\q_arch.h" />
     <ClInclude Include="..\gameshared\q_collision.h" />

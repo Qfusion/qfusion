@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // r_cin.c
 #include "r_local.h"
-#include "../client/cin.h"
 
 #define MAX_CINEMATICS	256
 
@@ -48,10 +47,10 @@ static qboolean R_RunCin( r_cinhandle_t *h )
 {
 	qboolean redraw;
 
-	if( !CIN_NeedNextFrame( h->cin, Sys_Milliseconds() ) )
+	if( !ri.CIN_NeedNextFrame( h->cin, ri.Sys_Milliseconds() ) )
 		return qfalse;
 
-	h->pic = CIN_ReadNextFrame( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
+	h->pic = ri.CIN_ReadNextFrame( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
 	return redraw;
 }
 
@@ -131,7 +130,7 @@ void R_InitCinematics( void )
 		r_cinematics[i].id = i + 1;
 	}
 
-	Cmd_AddCommand( "cinlist", R_CinList_f );
+	ri.Cmd_AddCommand( "cinlist", R_CinList_f );
 }
 
 /*
@@ -184,7 +183,7 @@ unsigned int R_StartCinematic( const char *arg )
 	}
 
 	// open the file, read header, etc
-	cin = CIN_Open( arg, Sys_Milliseconds(), CIN_LOOP|CIN_NOAUDIO );
+	cin = ri.CIN_Open( arg, ri.Sys_Milliseconds(), qtrue, qfalse );
 
 	// take a free cinematic handle if possible
 	if( !r_free_cinematics || !cin )
@@ -256,7 +255,7 @@ void R_FreeCinematic( unsigned int id )
 	if( !handle->cin )
 		return;
 
-	CIN_Close( handle->cin );
+	ri.CIN_Close( handle->cin );
 	handle->cin = NULL;
 
 	assert( handle->name );
@@ -292,5 +291,5 @@ void R_ShutdownCinematics( void )
 
 	R_Free( r_cinematics );
 
-	Cmd_RemoveCommand( "cinlist" );
+	ri.Cmd_RemoveCommand( "cinlist" );
 }

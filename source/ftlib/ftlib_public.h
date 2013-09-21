@@ -113,7 +113,7 @@ typedef struct
 
 	// core functions
 	void ( *PrecacheFonts )( qboolean verbose );
-	struct qfontface_s *( *RegisterFont )( const char *family, qfontstyle_t style, unsigned int size );
+	struct qfontface_s *( *RegisterFont )( const char *family, int style, unsigned int size );
 	void ( *TouchFont )( struct qfontface_s *qfont );
 	void ( *FreeFonts )( qboolean verbose );
 

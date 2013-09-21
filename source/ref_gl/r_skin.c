@@ -47,19 +47,6 @@ void R_InitSkinFiles( void )
 }
 
 /*
-* SkinFile_CopyString
-*/
-static char *SkinFile_CopyString( const char *in )
-{
-	char *out;
-
-	out = R_Malloc( ( strlen( in ) + 1 ) );
-	strcpy( out, in );
-
-	return out;
-}
-
-/*
 * SkinFile_FreeSkinFile
 */
 static void SkinFile_FreeSkinFile( skinfile_t *skinfile )
@@ -123,7 +110,7 @@ static int SkinFile_ParseBuffer( char *buffer, mesh_shader_pair_t *pairs )
 		if( pairs )
 		{
 			*t = 0;
-			pairs[numpairs].meshname = SkinFile_CopyString( token );
+			pairs[numpairs].meshname = R_CopyString( token );
 			pairs[numpairs].shader = R_RegisterSkin( token + strlen( token ) + 1 );
 		}
 
@@ -160,15 +147,15 @@ static skinfile_t *R_SkinFileForName( const char *name )
 		return NULL;
 	}
 
-	if( FS_LoadFile( filename, (void **)&buffer, NULL, 0 ) == -1 )
+	if( R_LoadFile( filename, (void **)&buffer ) == -1 )
 	{
-		Com_DPrintf( S_COLOR_YELLOW "R_SkinFile_Load: Failed to load %s\n", name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_SkinFile_Load: Failed to load %s\n", name );
 		return NULL;
 	}
 
 	r_numskinfiles++;
 	skinfile = &r_skinfiles[i];
-	skinfile->name = SkinFile_CopyString( filename );
+	skinfile->name = R_CopyString( filename );
 
 	skinfile->numpairs = SkinFile_ParseBuffer( buffer, NULL );
 	if( skinfile->numpairs )
@@ -178,10 +165,10 @@ static skinfile_t *R_SkinFileForName( const char *name )
 	}
 	else
 	{
-		Com_DPrintf( S_COLOR_YELLOW "R_SkinFile_Load: no mesh/shader pairs in %s\n", name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_SkinFile_Load: no mesh/shader pairs in %s\n", name );
 	}
 
-	FS_FreeFile( (void *)buffer );
+	R_FreeFile( (void *)buffer );
 
 	return skinfile;
 }

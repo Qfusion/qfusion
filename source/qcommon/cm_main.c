@@ -230,7 +230,7 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload
 	*checksum = cms->checksum;
 
 	// call the apropriate loader
-	descr = Com_FindFormatDescriptor( cm_supportedformats, ( const qbyte * )buf, (const bspFormatDesc_t **)&bspFormat );
+	descr = Q_FindFormatDescriptor( cm_supportedformats, ( const qbyte * )buf, (const bspFormatDesc_t **)&bspFormat );
 	if( !descr )
 		Com_Error( ERR_DROP, "CM_LoadMap: unknown fileid for %s", name );
 
@@ -294,7 +294,7 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 	}
 
 	FS_Read( h_v, 4 + sizeof( int ), file );
-	descr = Com_FindFormatDescriptor( cm_supportedformats, h_v, &bspFormat );
+	descr = Q_FindFormatDescriptor( cm_supportedformats, h_v, &bspFormat );
 	if( !descr )
 	{
 		Com_Printf( "CM_LoadMapMessage: %s: unknown bsp format\n", name );

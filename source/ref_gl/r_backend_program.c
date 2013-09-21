@@ -230,14 +230,14 @@ void RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal, vec_t *fogDist,
 	fogShader = fog->shader;
 
 	// distance to fog
-	dist = ri.fog_dist_to_eye[fog-r_worldbrushmodel->fogs];
+	dist = rn.fog_dist_to_eye[fog-r_worldbrushmodel->fogs];
 
 	if( rb.currentShader->flags & SHADER_SKY )
 	{
 		if( dist > 0 )
-			VectorMA( ri.viewOrigin, -dist, fogPlane->normal, viewtofog );
+			VectorMA( rn.viewOrigin, -dist, fogPlane->normal, viewtofog );
 		else
-			VectorCopy( ri.viewOrigin, viewtofog );
+			VectorCopy( rn.viewOrigin, viewtofog );
 	}
 	else
 	{
@@ -254,11 +254,11 @@ void RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal, vec_t *fogDist,
 	VectorScale( fogNormal, e->scale, fogNormal );
 	*fogDist = ( fogPlane->dist - DotProduct( viewtofog, fogPlane->normal ) );
 
-	Matrix3_TransformVector( e->axis, ri.viewAxis, vpnNormal );
+	Matrix3_TransformVector( e->axis, rn.viewAxis, vpnNormal );
 	VectorScale( vpnNormal, e->scale, vpnNormal );
-	*vpnDist = ( ( ri.viewOrigin[0] - viewtofog[0] ) * ri.viewAxis[AXIS_FORWARD+0] + 
-		( ri.viewOrigin[1] - viewtofog[1] ) * ri.viewAxis[AXIS_FORWARD+1] + 
-		( ri.viewOrigin[2] - viewtofog[2] ) * ri.viewAxis[AXIS_FORWARD+2] ) + 
+	*vpnDist = ( ( rn.viewOrigin[0] - viewtofog[0] ) * rn.viewAxis[AXIS_FORWARD+0] + 
+		( rn.viewOrigin[1] - viewtofog[1] ) * rn.viewAxis[AXIS_FORWARD+1] + 
+		( rn.viewOrigin[2] - viewtofog[2] ) * rn.viewAxis[AXIS_FORWARD+2] ) + 
 		fogShader->fog_clearDist;
 }
 
@@ -271,7 +271,7 @@ void RB_VertexTCCelshadeMatrix( mat4_t matrix )
 	mat4_t m;
 	const entity_t *e = rb.currentEntity;
 
-	if( e->model != NULL && !( ri.params & RP_SHADOWMAPVIEW ) )
+	if( e->model != NULL && !( rn.params & RP_SHADOWMAPVIEW ) )
 	{
 		R_LightForOrigin( e->lightingOrigin, dir, NULL, NULL, e->model->radius * e->scale );
 
@@ -657,7 +657,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 	vec2_t blendMix = { 0, 0 };
 
 	VectorCopy( e->origin, entOrigin );
-	VectorSubtract( ri.viewOrigin, e->origin, tmp );
+	VectorSubtract( rn.viewOrigin, e->origin, tmp );
 	Matrix3_TransformVector( e->axis, tmp, entDist );
 
 	// calculate constant color
@@ -671,9 +671,9 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 
 	RP_UpdateViewUniforms( program,
 		rb.modelviewMatrix, rb.modelviewProjectionMatrix,
-		ri.viewOrigin, ri.viewAxis, 
-		ri.params & RP_MIRRORVIEW ? -1 : 1,
-		ri.viewport,
+		rn.viewOrigin, rn.viewAxis, 
+		rn.params & RP_MIRRORVIEW ? -1 : 1,
+		rn.viewport,
 		rb.zNear, rb.zFar
 	);
 
@@ -712,7 +712,7 @@ static void RB_UpdateFogUniforms( int program, const mfog_t *fog )
 	RB_TransformFogPlanes( fog, fogPlane.normal, &fogPlane.dist, vpnPlane.normal, &vpnPlane.dist );
 
 	RP_UpdateFogUniforms( program, fog->shader->fog_color, fog->shader->fog_clearDist,
-		fog->shader->fog_dist, &fogPlane, &vpnPlane, ri.fog_dist_to_eye[fog-r_worldbrushmodel->fogs] );
+		fog->shader->fog_dist, &fogPlane, &vpnPlane, rn.fog_dist_to_eye[fog-r_worldbrushmodel->fogs] );
 }
 
 /*
@@ -767,10 +767,10 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		if( !( r_offsetmapping->integer & 1 ) ) {
 			offsetmappingScale = 0;
 		}
-		if( ri.params & RP_LIGHTMAP ) {
+		if( rn.params & RP_LIGHTMAP ) {
 			programFeatures |= GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY;
 		}
-		if( ( ri.params & RP_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+		if( ( rn.params & RP_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT|GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY;
 		}
 	}
@@ -822,7 +822,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	{
 		programFeatures |= GLSL_SHADER_MATERIAL_DECAL;
 
-		if( ri.params & RP_LIGHTMAP ) {
+		if( rn.params & RP_LIGHTMAP ) {
 			decalmap = r_blacktexture;
 			programFeatures |= GLSL_SHADER_MATERIAL_DECAL_ADD;
 		}
@@ -999,7 +999,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	if( portaltexture[1] != r_blacktexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_REFRACTION;
 
-	frontPlane = (PlaneDiff( ri.viewOrigin, &rb.currentPortalSurface->untransformed_plane ) > 0 ? qtrue : qfalse);
+	frontPlane = (PlaneDiff( rn.viewOrigin, &rb.currentPortalSurface->untransformed_plane ) > 0 ? qtrue : qfalse);
 
 	if( frontPlane )
 	{
@@ -1092,7 +1092,7 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	Matrix4_Identity( texMatrix );
 
-	RB_Scissor( ri.refdef.x + scissor[0], ri.refdef.y + scissor[1], scissor[2] - scissor[0], scissor[3] - scissor[1] );
+	RB_Scissor( rn.refdef.x + scissor[0], rn.refdef.y + scissor[1], scissor[2] - scissor[0], scissor[3] - scissor[1] );
 
 	RB_SetShaderpassState( pass->flags );
 
@@ -1160,7 +1160,7 @@ static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t 
 	if( r_shadows_dither->integer )
 		programFeatures |= GLSL_SHADER_SHADOWMAP_DITHER;
 
-	Vector4Copy( ri.scissor, old_scissor );
+	Vector4Copy( rn.scissor, old_scissor );
 
 	numShadows = 0;
 	for( i = 0; i < rsc.numShadowGroups; i++ )
@@ -1404,7 +1404,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		if( rb.currentDlightBits ) {
 			programFeatures |= RB_DlightbitsToProgramFeatures( rb.currentDlightBits );
 		}
-		if( ( ri.params & RP_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+		if( ( rn.params & RP_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT;
 		}
 	}
@@ -1524,7 +1524,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	// bind white texture for shadow map view
 #define CELSHADE_BIND(tmu,tex,feature,canAdd) \
 	if( tex ) { \
-		if( ri.params & RP_SHADOWMAPVIEW ) { \
+		if( rn.params & RP_SHADOWMAPVIEW ) { \
 			tex = r_whitetexture; \
 		} else {\
 			programFeatures |= feature; \
@@ -1635,7 +1635,7 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	features |= RB_AutospriteProgramFeatures();
 	features |= RB_InstancedArraysProgramFeatures();
 	
-	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) && ri.fbDepthAttachment ) {
+	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) && rn.fbDepthAttachment ) {
 		features |= GLSL_SHADER_COMMON_SOFT_PARTICLE;
 	}
 
@@ -1669,7 +1669,7 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 		RB_RenderMeshGLSL_FXAA( pass, features );
 		break;
 	default:
-		Com_DPrintf( S_COLOR_YELLOW "WARNING: Unknown GLSL program type %i\n", programType );
+		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: Unknown GLSL program type %i\n", programType );
 		return;
 	}
 }
@@ -1893,10 +1893,10 @@ int RB_BindProgram( int program )
 static void RB_RenderPass( const shaderpass_t *pass )
 {
 	// for depth texture we render light's view to, ignore passes that do not write into depth buffer
-	if( ( ri.params & RP_SHADOWMAPVIEW ) && !( pass->flags & GLSTATE_DEPTHWRITE ) )
+	if( ( rn.params & RP_SHADOWMAPVIEW ) && !( pass->flags & GLSTATE_DEPTHWRITE ) )
 		return;
 
-	if( ( ri.params & RP_SHADOWMAPVIEW ) && !glConfig.ext.shadow ) {
+	if( ( rn.params & RP_SHADOWMAPVIEW ) && !glConfig.ext.shadow ) {
 		RB_RenderMeshGLSLProgrammed( pass, GLSL_PROGRAM_TYPE_RGB_SHADOW );
 	} else if( pass->program_type ) {
 		RB_RenderMeshGLSLProgrammed( pass, pass->program_type );
@@ -1950,7 +1950,7 @@ static void RB_SetShaderState( void )
 		state |= GLSTATE_OFFSET_FILL;
 		RB_PolygonOffset( -1.0, -2.0f );
 	}
-	else if( ri.params & RP_SHADOWMAPVIEW )
+	else if( rn.params & RP_SHADOWMAPVIEW )
 	{
 		state |= GLSTATE_OFFSET_FILL;
 		RB_PolygonOffset( 4.0f, 1.0f );
@@ -2073,9 +2073,9 @@ void RB_DrawShadedElements( void )
 		return;
 	}
 
-	if( ENTITY_OUTLINE( rb.currentEntity ) && !(ri.params & RP_CLIPPLANE)
+	if( ENTITY_OUTLINE( rb.currentEntity ) && !(rn.params & RP_CLIPPLANE)
 		&& ( rb.currentShader->sort == SHADER_SORT_OPAQUE ) && ( rb.currentShader->flags & SHADER_CULL_FRONT )
-		&& !( ri.params & RP_SHADOWMAPVIEW ) )
+		&& !( rn.params & RP_SHADOWMAPVIEW ) )
 	{
 		addGLSLOutline = qtrue;
 	}

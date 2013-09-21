@@ -73,7 +73,7 @@ mleaf_t *Mod_PointInLeaf( vec3_t p, model_t *model )
 
 	if( !model || !( bmodel = ( mbrushmodel_t * )model->extradata ) || !bmodel->nodes )
 	{
-		Com_Error( ERR_DROP, "Mod_PointInLeaf: bad model" );
+		ri.Com_Error( ERR_DROP, "Mod_PointInLeaf: bad model" );
 		return NULL;
 	}
 
@@ -318,7 +318,7 @@ static void Mod_SetupSubmodels( model_t *mod )
 }
 
 #ifdef PUBLIC_BUILD
-#define VBO_Printf Com_DPrintf
+#define VBO_Printf ri.Com_DPrintf
 #else
 #define VBO_Printf Com_Printf
 #endif
@@ -568,12 +568,12 @@ merge:
 		}
 	}
 
-	Mem_Free( surfmap );
+	R_Free( surfmap );
 
 	if( visdata )
-		Mem_Free( visdata );
+		R_Free( visdata );
 	if( areadata )
-		Mem_Free( areadata );
+		R_Free( areadata );
 
 	return num_vbos;
 }
@@ -713,7 +713,7 @@ void Mod_Modellist_f( void )
 		if( !mod->name ) {
 			continue;
 		}
-		size = Mem_PoolTotalSize( mod->mempool );
+		size = ri.Mem_PoolTotalSize( mod->mempool );
 		Com_Printf( "%8i : %s\n", size, mod->name );
 		total += size;
 	}
@@ -726,11 +726,11 @@ void Mod_Modellist_f( void )
 */
 void R_InitModels( void )
 {
-	mod_mempool = Mem_AllocPool( r_mempool, "Models" );
+	mod_mempool = R_AllocPool( r_mempool, "Models" );
 	memset( mod_novis, 0xff, sizeof( mod_novis ) );
 	mod_isworldmodel = qfalse;
 	r_prevworldmodel = NULL;
-	mod_mapConfigs = Mem_Alloc( mod_mempool, sizeof( *mod_mapConfigs ) * MAX_MOD_KNOWN );
+	mod_mapConfigs = R_MallocExt( mod_mempool, sizeof( *mod_mapConfigs ) * MAX_MOD_KNOWN, 0, 1 );
 }
 
 /*
@@ -738,7 +738,7 @@ void R_InitModels( void )
 */
 static void Mod_Free( model_t *model )
 {
-	Mem_FreePool( &model->mempool );
+	R_FreePool( &model->mempool );
 	memset( model, 0, sizeof( *model ) );
 	model->type = mod_bad;
 }
@@ -792,7 +792,7 @@ void R_ShutdownModels( void )
 	mod_numknown = 0;
 	memset( mod_known, 0, sizeof( mod_known ) );
 
-	Mem_FreePool( &mod_mempool );
+	R_FreePool( &mod_mempool );
 }
 
 /*
@@ -846,7 +846,7 @@ static model_t *Mod_FindSlot( const char *name )
 	// find a free model slot spot
 	//
 	if( mod_numknown == MAX_MOD_KNOWN )
-		Com_Error( ERR_DROP, "mod_numknown == MAX_MOD_KNOWN" );
+		ri.Com_Error( ERR_DROP, "mod_numknown == MAX_MOD_KNOWN" );
 	return &mod_known[mod_numknown++];
 }
 
@@ -880,10 +880,9 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 	const char *extension;
 	const modelFormatDescr_t *descr;
 	bspFormatDesc_t *bspFormat = NULL;
-	qbyte stack[0x4000];
 
 	if( !name[0] )
-		Com_Error( ERR_DROP, "Mod_ForName: NULL name" );
+		ri.Com_Error( ERR_DROP, "Mod_ForName: NULL name" );
 
 	//
 	// inline models are grabbed only from worldmodel
@@ -892,7 +891,7 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 	{
 		int modnum = atoi( name+1 );
 		if( modnum < 1 || !r_worldmodel || (unsigned)modnum >= r_worldbrushmodel->numsubmodels )
-			Com_Error( ERR_DROP, "bad inline model number" );
+			ri.Com_Error( ERR_DROP, "bad inline model number" );
 		return &r_worldbrushmodel->inlines[modnum];
 	}
 
@@ -908,17 +907,17 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 	//
 	// load the file
 	//
-	modfilelen = FS_LoadFile( name, (void **)&buf, stack, sizeof( stack ) );
+	modfilelen = R_LoadFile( name, (void **)&buf );
 	if( !buf && crash )
-		Com_Error( ERR_DROP, "Mod_NumForName: %s not found", name );
+		ri.Com_Error( ERR_DROP, "Mod_NumForName: %s not found", name );
 
 	// free data we may still have from the previous load attempt for this model slot
 	if( mod->mempool ) {
-		Mem_FreePool( &mod->mempool );
+		R_FreePool( &mod->mempool );
 	}
 
 	mod->type = mod_bad;
-	mod->mempool = Mem_AllocPool( mod_mempool, name );
+	mod->mempool = R_AllocPool( mod_mempool, name );
 	mod->name = Mod_Malloc( mod, strlen( name ) + 1 );
 	strcpy( mod->name, name );
 
@@ -927,10 +926,10 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 		return NULL;
 
 	// call the apropriate loader
-	descr = Com_FindFormatDescriptor( mod_supportedformats, ( const qbyte * )buf, (const bspFormatDesc_t **)&bspFormat );
+	descr = Q_FindFormatDescriptor( mod_supportedformats, ( const qbyte * )buf, (const bspFormatDesc_t **)&bspFormat );
 	if( !descr )
 	{
-		Com_DPrintf( S_COLOR_YELLOW "Mod_NumForName: unknown fileid for %s", mod->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "Mod_NumForName: unknown fileid for %s", mod->name );
 		return NULL;
 	}
 
@@ -940,8 +939,7 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 	}
 
 	descr->loader( mod, NULL, buf, bspFormat );
-	if( ( qbyte *)buf != stack )
-		FS_FreeFile( buf );
+	R_FreeFile( buf );
 
 	if( mod_isworldmodel ) {
 		// we only init map config when loading the map from disk
@@ -965,7 +963,7 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 	for( i = 0; i < descr->maxLods; i++ )
 	{
 		Q_snprintfz( lodname, sizeof( lodname ), "%s_%i.%s", shortname, i+1, extension );
-		FS_LoadFile( lodname, (void **)&buf, stack, sizeof( stack ) );
+		R_LoadFile( lodname, (void **)&buf );
 		if( !buf || strncmp( (const char *)buf, descr->header, descr->headerLen ) )
 			break;
 
@@ -975,15 +973,14 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 
 		lod->type = mod_bad;
 		lod->lodnum = i+1;
-		lod->mempool = Mem_AllocPool( mod_mempool, lodname );
+		lod->mempool = R_AllocPool( mod_mempool, lodname );
 		lod->name = Mod_Malloc( lod, strlen( lodname ) + 1 );
 		strcpy( lod->name, lodname );
 
 		mod_numknown++;
 
 		descr->loader( lod, mod, buf, bspFormat );
-		if( (qbyte *)buf != stack )
-			FS_FreeFile( buf );
+		R_FreeFile( buf );
 
 		mod->numlods++;
 	}
@@ -1056,9 +1053,9 @@ static void R_InitMapConfig( const char *model )
 		{
 			*p = 0;
 			Q_strncatz( lightmapsPath, "/lm_0000.tga", sizeof( lightmapsPath ) );
-			if( FS_FOpenFile( lightmapsPath, NULL, FS_READ ) != -1 )
+			if( ri.FS_FOpenFile( lightmapsPath, NULL, FS_READ ) != -1 )
 			{
-				Com_DPrintf( S_COLOR_YELLOW "External lightmap stage: lightmaps packing is disabled\n" );
+				ri.Com_DPrintf( S_COLOR_YELLOW "External lightmap stage: lightmaps packing is disabled\n" );
 				mapConfig.lightmapsPacking = qfalse;
 			}
 		}

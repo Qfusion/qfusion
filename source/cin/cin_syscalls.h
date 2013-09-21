@@ -211,13 +211,3 @@ static inline unsigned int trap_S_GetRawSamplesTime( void )
 {
 	return CIN_IMPORT.S_GetRawSamplesTime();
 }
-
-static inline void *trap_LoadLibrary( char *name, dllfunc_t *funcs )
-{
-	return CIN_IMPORT.LoadLibrary( name, funcs );
-}
-
-static inline void trap_UnloadLibrary( void **lib )
-{
-	CIN_IMPORT.UnloadLibrary( lib );
-}

@@ -237,7 +237,7 @@ loc0:
 /*
 * R_TraceLine
 */
-static msurface_t *R_TransformedTraceLine( trace_t *tr, const vec3_t start, const vec3_t end, 
+static msurface_t *R_TransformedTraceLine( rtrace_t *tr, const vec3_t start, const vec3_t end, 
 	entity_t *test, int surfumask )
 {
 	model_t *model;
@@ -245,7 +245,7 @@ static msurface_t *R_TransformedTraceLine( trace_t *tr, const vec3_t start, cons
 	r_traceframecount++;	// for multi-check avoidance
 
 	// fill in a default trace
-	memset( tr, 0, sizeof( trace_t ) );
+	memset( tr, 0, sizeof( *tr ) );
 
 	trace_surface = NULL;
 	trace_umask = surfumask;
@@ -319,7 +319,7 @@ static msurface_t *R_TransformedTraceLine( trace_t *tr, const vec3_t start, cons
 /*
 * R_TraceLine
 */
-msurface_t *R_TraceLine( trace_t *tr, const vec3_t start, const vec3_t end, int surfumask )
+msurface_t *R_TraceLine( rtrace_t *tr, const vec3_t start, const vec3_t end, int surfumask )
 {
 	unsigned int i;
 	msurface_t *surf;
@@ -330,7 +330,7 @@ msurface_t *R_TraceLine( trace_t *tr, const vec3_t start, const vec3_t end, int 
 	// trace against bmodels
 	for( i = 0; i < rsc.numBmodelEntities; i++ )
 	{
-		trace_t t2;
+		rtrace_t t2;
 		msurface_t *s2;
 
 		s2 = R_TransformedTraceLine( &t2, start, end, rsc.bmodelEntities[i], surfumask );

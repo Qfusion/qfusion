@@ -86,7 +86,7 @@ static const cin_type_t cin_types[] =
 /*
 * CIN_Open
 */
-cinematics_t *CIN_Open( const char *name, unsigned int start_time, int flags )
+cinematics_t *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio )
 {
 	int i;
 	size_t name_size;
@@ -103,12 +103,18 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time, int flags )
 
 	cin->mempool = mempool;
 	cin->file = 0;
-	cin->flags = flags;
 	cin->name = CIN_Alloc( cin->mempool, name_size );
 	cin->frame = 0;
 	cin->width = cin->height = 0;
 	cin->aspect_numerator = cin->aspect_denominator = 0; // do not keep aspect ratio
 	cin->start_time = cin->cur_time = start_time;
+	cin->flags = 0;
+	if( loop ) {
+		cin->flags |= CIN_LOOP;
+	}
+	if( audio ) {
+		cin->flags |= CIN_AUDIO;
+	}
 
 	if( trap_FS_IsUrl( name ) )
 	{

@@ -201,7 +201,7 @@ static void RP_PrecachePrograms( void )
 
 	fileName = GLSL_CACHE_FILE_NAME;
 
-	FS_LoadFile( fileName, ( void ** )&buffer, NULL, 0 );
+	R_LoadFile( fileName, ( void ** )&buffer );
 	if( !buffer ) {
 		return;
 	}
@@ -210,8 +210,8 @@ static void RP_PrecachePrograms( void )
 	ptr = &data;
 
 	token = COM_Parse( ptr );
-	if( strcmp( token, APPLICATION ) ) {
-		Com_DPrintf( "Ignoring %s: unknown application name \"%s\", expected \"%s\"\n", token, APPLICATION );
+	if( strcmp( token, rf.applicationName ) ) {
+		ri.Com_DPrintf( "Ignoring %s: unknown application name \"%s\", expected \"%s\"\n", token, rf.applicationName );
 		return;
 	}
 
@@ -219,7 +219,7 @@ static void RP_PrecachePrograms( void )
 	version = atoi( token );
 	if( version != GLSL_BITS_VERSION ) {
 		// ignore cache files with mismatching version number
-		Com_DPrintf( "Ignoring %s: found version %i, expcted %i\n", version, GLSL_BITS_VERSION );
+		ri.Com_DPrintf( "Ignoring %s: found version %i, expcted %i\n", version, GLSL_BITS_VERSION );
 	}
 	else {
 		while( 1 ) {
@@ -258,13 +258,13 @@ static void RP_PrecachePrograms( void )
 			Q_strncpyz( name, token, sizeof( name ) );
 			features = (hb << 32) | lb; 
 
-			Com_DPrintf( "Loading program %s...\n", name );
+			ri.Com_DPrintf( "Loading program %s...\n", name );
 
 			RP_RegisterProgram( type, name, NULL, NULL, 0, features );
 		}
 	}
 
-	FS_FreeFile( buffer );
+	R_FreeFile( buffer );
 #endif
 }
 
@@ -284,13 +284,13 @@ static void RP_StorePrecacheList( void )
 	glsl_program_t *program;
 
 	fileName = GLSL_CACHE_FILE_NAME;
-	if( FS_FOpenFile( fileName, &handle, FS_WRITE ) == -1 ) {
+	if( ri.FS_FOpenFile( fileName, &handle, FS_WRITE ) == -1 ) {
 		Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", fileName );
 		return;
 	}
 
-	FS_Printf( handle, "%s\n", APPLICATION );
-	FS_Printf( handle, "%i\n", GLSL_BITS_VERSION );
+	ri.FS_Printf( handle, "%s\n", rf.applicationName );
+	ri.FS_Printf( handle, "%i\n", GLSL_BITS_VERSION );
 
 	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ ) {
 		if( !program->features ) {
@@ -300,28 +300,15 @@ static void RP_StorePrecacheList( void )
 			continue;
 		}
 
-		FS_Printf( handle, "%i %i %i %s\n", 
+		ri.FS_Printf( handle, "%i %i %i %s\n", 
 			program->type, 
 			(int)(program->features & ULONG_MAX), 
 			(int)((program->features>>32) & ULONG_MAX), 
 			program->name );
 	}
 
-	FS_FCloseFile( handle );
+	ri.FS_FCloseFile( handle );
 #endif
-}
-
-/*
-* RP_CopyString
-*/
-static char *RP_CopyString( const char *in )
-{
-	char *out;
-
-	out = R_Malloc( strlen( in ) + 1 );
-	strcpy( out, in );
-
-	return out;
 }
 
 /*
@@ -349,9 +336,9 @@ static void RP_DeleteProgram( glsl_program_t *program )
 		qglDeleteObjectARB( program->object );
 
 	if( program->name )
-		Mem_Free( program->name );
+		R_Free( program->name );
 	if( program->deformsKey )
-		Mem_Free( program->deformsKey );
+		R_Free( program->deformsKey );
 
 	hash_next = program->hash_next;
 	memset( program, 0, sizeof( glsl_program_t ) );
@@ -1131,10 +1118,10 @@ static qboolean RP_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 
 	trie_error = Trie_Find( glsl_cache_trie, fileName, TRIE_EXACT_MATCH, ( void ** )&trieCache );
 	if( trie_error != TRIE_OK ) {
-		FS_LoadFile( fileName, (void **)&fileContents, NULL, 0 );
+		R_LoadFile( fileName, (void **)&fileContents );
 
 		if( fileContents ) {
-			trieCache = RP_CopyString( fileContents );
+			trieCache = R_CopyString( fileContents );
 		}
 		else {
 			trieCache = NULL;
@@ -1143,7 +1130,7 @@ static qboolean RP_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 	}
 	else {
 		if( trieCache ) {
-			fileContents = RP_CopyString( trieCache );
+			fileContents = R_CopyString( trieCache );
 		}
 		else {
 			fileContents = NULL;
@@ -1219,7 +1206,7 @@ static qboolean RP_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 			COM_SanitizeFilePath( token );
 
 			tempFilenameSize = strlen( fileName ) + 1 + strlen( token ) + 1;
-			tempFilename = Mem_TempMalloc( tempFilenameSize );
+			tempFilename = R_Malloc( tempFilenameSize );
 
 			if( *token != '/' ) {
 				Q_strncpyz( tempFilename, fileName, tempFilenameSize );
@@ -1234,7 +1221,7 @@ static qboolean RP_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 
 			parser->error = RP_LoadShaderFromFile_r( parser, tempFilename, stackDepth+1 );
 
-			Mem_TempFree( tempFilename );
+			R_Free( tempFilename );
 
 			if( parser->error ) {
 				return qtrue;
@@ -1391,7 +1378,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	// load
 	//
 
-	Com_DPrintf( "Registering GLSL program %s\n", fullName );
+	ri.Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
 	if( glConfig.shadingLanguageVersion >= 140 ) {
@@ -1496,13 +1483,13 @@ done:
 		RP_DeleteProgram( program );
 
 	for( i = 0; i < parser.numBuffers; i++ ) {
-		Mem_Free( parser.buffers[i] );
+		R_Free( parser.buffers[i] );
 	}
 
 	program->type = type;
 	program->features = features;
-	program->name = RP_CopyString( name );
-	program->deformsKey = RP_CopyString( deformsKey ? deformsKey : "" );
+	program->name = R_CopyString( name );
+	program->deformsKey = R_CopyString( deformsKey ? deformsKey : "" );
 
 	if( !program->hash_next )
 	{

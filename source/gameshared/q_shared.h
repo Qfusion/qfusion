@@ -67,8 +67,6 @@ extern float ( *BigFloat )(float l);
 extern float ( *LittleFloat )(float l);
 #endif
 
-void	Swap_Init( void );
-
 //==============================================
 
 // command line execution flags
@@ -193,7 +191,7 @@ qboolean COM_ValidateConfigstring( const char *string );
 void Q_strncpyz( char *dest, const char *src, size_t size );
 void Q_strncatz( char *dest, const char *src, size_t size );
 int Q_vsnprintfz( char *dest, size_t size, const char *format, va_list argptr );
-void Q_snprintfz( char *dest, size_t size, const char *format, ... );
+int Q_snprintfz( char *dest, size_t size, const char *format, ... );
 char *Q_strupr( char *s );
 char *Q_strlwr( char *s );
 const char *Q_strlocate( const char *s, const char *substr, int skip );
@@ -238,6 +236,20 @@ void Info_RemoveKey( char *s, const char *key );
 qboolean Info_SetValueForKey( char *s, const char *key, const char *value );
 qboolean Info_Validate( const char *s );
 
+//==============================================
+
+//
+// per-level limits
+//
+#define	MAX_CLIENTS					256			// absolute limit
+#define	MAX_EDICTS					1024		// must change protocol to increase more
+#define	MAX_LIGHTSTYLES				256
+#define	MAX_MODELS					1024		// these are sent over the net as shorts
+#define	MAX_SOUNDS					1024		// so they cannot be blindly increased
+#define	MAX_IMAGES					256
+#define MAX_SKINFILES				256
+#define MAX_ITEMS					64			// 16x4
+#define MAX_GENERAL					( MAX_CLIENTS )	// general config strings
 
 //============================================
 // HTTP
@@ -291,11 +303,17 @@ size_t LA_Size( linear_allocator_t *la );
 //
 //==============================================================
 
+typedef enum
+{
+	ERR_FATAL,		// exit the entire game with a popup window
+	ERR_DROP,		// print to console and disconnect from game
+} com_error_code_t;
 
 // this is only here so the functions in q_shared.c and q_math.c can link
+
 void Sys_Error( const char *error, ... );
 void Com_Printf( const char *msg, ... );
-
+void Com_Error( com_error_code_t code, const char *format, ... );
 
 //==============================================================
 //

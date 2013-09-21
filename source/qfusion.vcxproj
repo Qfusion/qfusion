@@ -90,7 +90,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>win32\include\msvc;win32\include;..\libsrcs\zlib;..\libsrcs\libcurl\include;..\libsrcs\libjpeg;..\libsrcs\libogg\include;..\libsrcs\libvorbis\include;..\libsrcs\libtheora\include;..\libsrcs\libpng;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>win32\include\msvc;win32\include;..\libsrcs\zlib;..\libsrcs\libcurl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;CURL_STATICLIB;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -117,7 +117,7 @@
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <Link>
-      <AdditionalDependencies>winmm.lib;ws2_32.lib;zlibstat.lib;libjpegstat.lib;dxguid.lib;libcurlstat.lib;libpngstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;ws2_32.lib;zlibstat.lib;dxguid.lib;libcurlstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>win32\$(PlatformShortName)\lib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -158,7 +158,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>false</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>win32\include\msvc;win32\include;..\libsrcs\zlib;..\libsrcs\libcurl\include;..\libsrcs\libjpeg;..\libsrcs\libogg\include;..\libsrcs\libvorbis\include;..\libsrcs\libtheora\include;..\libsrcs\libpng\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>win32\include\msvc;win32\include;..\libsrcs\zlib;..\libsrcs\libcurl\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;CURL_STATICLIB;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
@@ -186,7 +186,7 @@
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <Link>
-      <AdditionalDependencies>winmm.lib;ws2_32.lib;zlibstat.lib;libjpegstat.lib;dxguid.lib;libcurlstat.lib;libpngstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;ws2_32.lib;zlibstat.lib;dxguid.lib;libcurlstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <AdditionalLibraryDirectories>win32\$(PlatformShortName)\lib\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -212,6 +212,7 @@
     <ClCompile Include="qcommon\asyncstream.c" />
     <ClCompile Include="qcommon\base64.c" />
     <ClCompile Include="client\cin.c" />
+    <ClCompile Include="qcommon\bsp.c" />
     <ClCompile Include="qcommon\cjson.c" />
     <ClCompile Include="client\cl_cin.c" />
     <ClCompile Include="client\cl_demo.c" />
@@ -232,10 +233,6 @@
     <ClCompile Include="qcommon\common.c">
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">svnrev.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
-    <ClCompile Include="ref_gl\r_backend_program.c" />
-    <ClCompile Include="ref_gl\r_portals.c" />
-    <ClCompile Include="ref_gl\r_scene.c" />
-    <ClCompile Include="ref_gl\r_trace.c" />
     <ClCompile Include="server\sv_web.c" />
     <ClCompile Include="win32\conproc.c" />
     <ClCompile Include="client\console.c" />
@@ -260,28 +257,6 @@
     <ClCompile Include="qcommon\patch.c" />
     <ClCompile Include="gameshared\q_math.c" />
     <ClCompile Include="gameshared\q_shared.c" />
-    <ClCompile Include="ref_gl\r_alias.c" />
-    <ClCompile Include="ref_gl\r_backend.c" />
-    <ClCompile Include="ref_gl\r_cin.c" />
-    <ClCompile Include="ref_gl\r_cull.c" />
-    <ClCompile Include="ref_gl\r_framebuffer.c" />
-    <ClCompile Include="ref_gl\r_image.c" />
-    <ClCompile Include="ref_gl\r_light.c" />
-    <ClCompile Include="ref_gl\r_main.c" />
-    <ClCompile Include="ref_gl\r_math.c" />
-    <ClCompile Include="ref_gl\r_mesh.c" />
-    <ClCompile Include="ref_gl\r_model.c" />
-    <ClCompile Include="ref_gl\r_poly.c" />
-    <ClCompile Include="ref_gl\r_program.c" />
-    <ClCompile Include="ref_gl\r_q3bsp.c" />
-    <ClCompile Include="ref_gl\r_register.c" />
-    <ClCompile Include="ref_gl\r_shader.c" />
-    <ClCompile Include="ref_gl\r_shadow.c" />
-    <ClCompile Include="ref_gl\r_skin.c" />
-    <ClCompile Include="ref_gl\r_skm.c" />
-    <ClCompile Include="ref_gl\r_sky.c" />
-    <ClCompile Include="ref_gl\r_surf.c" />
-    <ClCompile Include="ref_gl\r_vbo.c" />
     <ClCompile Include="qcommon\snap_demos.c" />
     <ClCompile Include="qcommon\snap_read.c" />
     <ClCompile Include="qcommon\snap_write.c" />
@@ -299,27 +274,28 @@
     <ClCompile Include="qcommon\trie.c" />
     <ClCompile Include="qcommon\webdownload.c" />
     <ClCompile Include="win32\win_fs.c" />
-    <ClCompile Include="win32\win_glw.c" />
     <ClCompile Include="win32\win_input.c" />
     <ClCompile Include="win32\win_lib.c" />
     <ClCompile Include="win32\win_net.c" />
-    <ClCompile Include="win32\win_qgl.c" />
     <ClCompile Include="win32\win_sys.c" />
     <ClCompile Include="win32\win_vid.c" />
     <ClCompile Include="qcommon\wswcurl.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cin\cin_public.h" />
     <ClInclude Include="ftlib\ftlib_public.h" />
     <ClInclude Include="qcommon\anticheat.h" />
     <ClInclude Include="qcommon\asyncstream.h" />
     <ClInclude Include="qcommon\base64.h" />
     <ClInclude Include="cgame\cg_public.h" />
     <ClInclude Include="client\cin.h" />
+    <ClInclude Include="qcommon\bsp.h" />
     <ClInclude Include="qcommon\cjson.h" />
     <ClInclude Include="client\client.h" />
     <ClInclude Include="qcommon\cm_local.h" />
     <ClInclude Include="qcommon\cmodel.h" />
     <ClInclude Include="gameshared\config.h" />
+    <ClInclude Include="qcommon\patch.h" />
     <ClInclude Include="qcommon\patch_eval_inc.h" />
     <ClInclude Include="ref_gl\r_image.h" />
     <ClInclude Include="ref_gl\r_program.h" />

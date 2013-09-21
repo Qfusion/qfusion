@@ -457,7 +457,7 @@ qbyte *RoQ_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 
 		if( chunk->id == RoQ_INFO )
 			RoQ_ReadInfo( cin );
-		else if( (chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO) && !( cin->flags & CIN_NOAUDIO ) )
+		else if( (chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO) && ( cin->flags & CIN_AUDIO ) )
 			RoQ_ReadAudio( cin );
 		else if( chunk->id == RoQ_QUAD_VQ ) {
 			*redraw = qtrue;

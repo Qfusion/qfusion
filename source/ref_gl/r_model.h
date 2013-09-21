@@ -408,6 +408,11 @@ void		R_InitModels( void );
 void		R_ShutdownModels( void );
 void		R_FreeUnusedModels( void );
 
+void		R_ModelBounds( const model_t *model, vec3_t mins, vec3_t maxs );
+void		R_ModelFrameBounds( const struct model_s *model, int frame, vec3_t mins, vec3_t maxs );
+void		R_RegisterWorldModel( const char *model, const dvis_t *pvsData );
+struct model_s *R_RegisterModel( const char *name );
+
 void		Mod_ClearAll( void );
 model_t		*Mod_ForName( const char *name, qboolean crash );
 mleaf_t		*Mod_PointInLeaf( float *p, model_t *model );
@@ -417,8 +422,8 @@ unsigned int Mod_Handle( const model_t *mod );
 model_t		*Mod_ForHandle( unsigned int elem );
 
 // force 16-bytes alignment for all memory chunks allocated for model data
-#define		Mod_Malloc( mod, size ) _Mem_AllocExt( ( mod )->mempool, size, 16, 1, 0, 0, __FILE__, __LINE__ )
-#define		Mod_MemFree( data ) Mem_Free( data )
+#define		Mod_Malloc( mod, size ) ri.Mem_AllocExt( ( mod )->mempool, size, 16, 1, __FILE__, __LINE__ )
+#define		Mod_MemFree( data ) ri.Mem_Free( data, __FILE__, __LINE__ )
 
 void		Mod_StripLODSuffix( char *name );
 

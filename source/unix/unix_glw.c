@@ -869,12 +869,12 @@ static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, q
 #endif
 	}
 
-	XSetStandardProperties( x11display.dpy, x11display.win, APPLICATION, None, None, NULL, 0, NULL );
+	XSetStandardProperties( x11display.dpy, x11display.win, glw_state.applicationName, None, None, NULL, 0, NULL );
 
 	GLimp_SetApplicationIcon();
 
-	XSetIconName( x11display.dpy, x11display.win, APPLICATION );
-	XStoreName( x11display.dpy, x11display.win, APPLICATION );
+	XSetIconName( x11display.dpy, x11display.win, glw_state.applicationName );
+	XStoreName( x11display.dpy, x11display.win, glw_state.applicationName );
 
 	// save the parent window size for mouse use. this is not the gl context window
 	x11display.win_width = width;
@@ -899,9 +899,10 @@ static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, q
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, qboolean fullscreen, qboolean wideScreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
+	qboolean fullscreen, qboolean wideScreen )
 {
-	return GLimp_SetMode_Real( width, height, fullscreen, wideScreen, qfalse );
+	return GLimp_SetMode_Real( app, width, height, fullscreen, wideScreen, qfalse );
 }
 
 /*
@@ -939,6 +940,11 @@ void GLimp_Shutdown( void )
 
 	if( x11wndproc ) {
 		x11wndproc( NULL, 0, 0, 0 );
+	}
+
+	if( glw_state.applicationName ) {
+		free( glw_state.applicationName );
+		glw_state.applicationName = NULL;
 	}
 }
 
@@ -981,11 +987,14 @@ static qboolean ChooseVisual( int colorbits, int stencilbits )
 /*
 ** GLimp_Init
 */
-int GLimp_Init( void *hinstance, void *wndproc, void *parenthWnd )
+int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
 {
 	int colorbits, stencilbits;
 	XSetWindowAttributes attr;
 	unsigned long mask;
+
+	glw_state.applicationName = malloc( strlen( app ) + 1 );
+	memcpy( glw_state.applicationName, app, strlen( app ) + 1 );
 
 	hinstance = NULL;
 	x11wndproc = (x11wndproc_t )wndproc;
@@ -1092,7 +1101,8 @@ void GLimp_EndFrame( void )
 
 	if( glConfig.fullScreen && vid_multiscreen_head->modified )
 	{
-		GLimp_SetMode_Real( glConfig.width, glConfig.height, qtrue, glConfig.wideScreen, qtrue );
+		GLimp_SetMode_Real( glw_state.applicationName, 
+			glConfig.width, glConfig.height, qtrue, glConfig.wideScreen, qtrue );
 		vid_multiscreen_head->modified = qfalse;
 	}
 }
@@ -1102,7 +1112,8 @@ void GLimp_EndFrame( void )
 */
 qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *ramp )
 {
-	if( XF86VidModeGetGammaRamp( x11display.dpy, x11display.scr, stride, ramp, ramp + stride, ramp + ( stride << 1 ) ) != 0 )
+	if( XF86VidModeGetGammaRamp( x11display.dpy, x11display.scr, 
+		stride, ramp, ramp + stride, ramp + ( stride << 1 ) ) != 0 )
 		return qtrue;
 	return qfalse;
 }
@@ -1112,7 +1123,8 @@ qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *ramp )
 */
 void GLimp_SetGammaRamp( size_t stride, unsigned short *ramp )
 {
-	XF86VidModeSetGammaRamp( x11display.dpy, x11display.scr, stride, ramp, ramp + stride, ramp + ( stride << 1 ) );
+	XF86VidModeSetGammaRamp( x11display.dpy, x11display.scr, 
+		stride, ramp, ramp + stride, ramp + ( stride << 1 ) );
 }
 
 /*

@@ -160,7 +160,7 @@ void R_AddLightStyleToScene( int style, float r, float g, float b )
 	lightstyle_t *ls;
 
 	if( style < 0 || style >= MAX_LIGHTSTYLES )
-		Com_Error( ERR_DROP, "R_AddLightStyleToScene: bad light style %i", style );
+		ri.Com_Error( ERR_DROP, "R_AddLightStyleToScene: bad light style %i", style );
 
 	ls = &rsc.lightStyles[style];
 	ls->rgb[0] = max( 0, r );
@@ -185,54 +185,54 @@ void R_RenderScene( const refdef_t *fd )
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) )
 		rsc.refdef = *fd;
 
-	ri.refdef = *fd;
+	rn.refdef = *fd;
 	if( !r_screenweapontexture || fd->weaponAlpha == 1 ) {
-		ri.refdef.rdflags &= ~RDF_WEAPONALPHA;
+		rn.refdef.rdflags &= ~RDF_WEAPONALPHA;
 	}
 
-	fd = &ri.refdef;
+	fd = &rn.refdef;
 
-	ri.params = RP_NONE;
+	rn.params = RP_NONE;
 
-	ri.farClip = R_DefaultFarClip();
-	ri.clipFlags = 15;
-	if( r_worldmodel && !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog )
-		ri.clipFlags |= 16;
-	ri.meshlist = &r_worldlist;
-	ri.shadowBits = 0;
-	ri.dlightBits = 0;
-	ri.shadowGroup = NULL;
+	rn.farClip = R_DefaultFarClip();
+	rn.clipFlags = 15;
+	if( r_worldmodel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog )
+		rn.clipFlags |= 16;
+	rn.meshlist = &r_worldlist;
+	rn.shadowBits = 0;
+	rn.dlightBits = 0;
+	rn.shadowGroup = NULL;
 
 
 	fbFlags = 0;
-	ri.fbColorAttachment = ri.fbDepthAttachment = NULL;
+	rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
 	
 	// soft particles require GL_EXT_framebuffer_blit as we need to copy the depth buffer
 	// attachment into a texture we're going to read from in GLSL shader
 	if( r_soft_particles->integer && glConfig.ext.framebuffer_blit ) {
-		ri.fbColorAttachment = r_screentexture;
-		ri.fbDepthAttachment = r_screendepthtexture;
+		rn.fbColorAttachment = r_screentexture;
+		rn.fbDepthAttachment = r_screendepthtexture;
 		fbFlags |= 1;
 	}
 	if( fd->rdflags & RDF_WEAPONALPHA ) {
 		fbFlags |= 2;
 	}
 	if( r_fxaa->integer ) {
-		if( !ri.fbColorAttachment ) {
-			ri.fbColorAttachment = r_screenfxaacopy;
+		if( !rn.fbColorAttachment ) {
+			rn.fbColorAttachment = r_screenfxaacopy;
 		}
 		fbFlags |= 4;
 	}
 
 	// adjust field of view for widescreen
 	if( glConfig.wideScreen && !( fd->rdflags & RDF_NOFOVADJUSTMENT ) )
-		AdjustFov( &ri.refdef.fov_x, &ri.refdef.fov_y, glConfig.width, glConfig.height, qfalse );
+		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, qfalse );
 
 	// clip new scissor region to the one currently set
-	Vector4Set( ri.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
-	Vector4Set( ri.viewport, fd->x, fd->y, fd->width, fd->height );
-	VectorCopy( fd->vieworg, ri.pvsOrigin );
-	VectorCopy( fd->vieworg, ri.lodOrigin );
+	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
+	Vector4Set( rn.viewport, fd->x, fd->y, fd->width, fd->height );
+	VectorCopy( fd->vieworg, rn.pvsOrigin );
+	VectorCopy( fd->vieworg, rn.lodOrigin );
 
 	if( gl_finish->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
 		qglFinish();
@@ -262,7 +262,7 @@ void R_RenderScene( const refdef_t *fd )
 		// copy to FXAA or default framebuffer
 		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
 		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
-			colorWhite, GLSL_PROGRAM_TYPE_NONE, ri.fbColorAttachment, qfalse );
+			colorWhite, GLSL_PROGRAM_TYPE_NONE, rn.fbColorAttachment, qfalse );
 	}
 
 	if( fbFlags & 2 ) {
@@ -378,20 +378,20 @@ static void R_RenderDebugBounds( void )
 */
 static void R_RenderDebugSurface( void )
 {
-	trace_t tr;
+	rtrace_t tr;
 	vec3_t forward;
 	vec3_t start, end;
 	msurface_t *surf;
 
-	if( ri.params & RP_NONVIEWERREF || ri.refdef.rdflags & RDF_NOWORLDMODEL )
+	if( rn.params & RP_NONVIEWERREF || rn.refdef.rdflags & RDF_NOWORLDMODEL )
 		return;
 
 	r_debug_surface = NULL;
 	if( r_speeds->integer != 4 && r_speeds->integer != 5 )
 		return;
 
-	VectorCopy( &ri.viewAxis[AXIS_FORWARD], forward );
-	VectorCopy( ri.viewOrigin, start );
+	VectorCopy( &rn.viewAxis[AXIS_FORWARD], forward );
+	VectorCopy( rn.viewOrigin, start );
 	VectorMA( start, 4096, forward, end );
 
 	surf = R_TraceLine( &tr, start, end, 0 );
