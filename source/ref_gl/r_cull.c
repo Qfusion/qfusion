@@ -68,13 +68,13 @@ void R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum )
 		vec3_t right;
 
 		VectorNegate( left, right );
-		// rotate ri.vpn right by FOV_X/2 degrees
+		// rotate rn.vpn right by FOV_X/2 degrees
 		RotatePointAroundVector( frustum[0].normal, up, forward, -( 90-rd->fov_x / 2 ) );
-		// rotate ri.vpn left by FOV_X/2 degrees
+		// rotate rn.vpn left by FOV_X/2 degrees
 		RotatePointAroundVector( frustum[1].normal, up, forward, 90-rd->fov_x / 2 );
-		// rotate ri.vpn up by FOV_X/2 degrees
+		// rotate rn.vpn up by FOV_X/2 degrees
 		RotatePointAroundVector( frustum[2].normal, right, forward, 90-rd->fov_y / 2 );
-		// rotate ri.vpn down by FOV_X/2 degrees
+		// rotate rn.vpn down by FOV_X/2 degrees
 		RotatePointAroundVector( frustum[3].normal, right, forward, -( 90 - rd->fov_y / 2 ) );
 
 		for( i = 0; i < 4; i++ ) {
@@ -104,7 +104,7 @@ qboolean R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int cli
 	if( r_nocull->integer )
 		return qfalse;
 
-	for( i = sizeof( ri.frustum )/sizeof( ri.frustum[0] ), bit = 1, p = ri.frustum; i > 0; i--, bit<<=1, p++ )
+	for( i = sizeof( rn.frustum )/sizeof( rn.frustum[0] ), bit = 1, p = rn.frustum; i > 0; i--, bit<<=1, p++ )
 	{
 		if( !( clipflags & bit ) )
 			continue;
@@ -166,7 +166,7 @@ qboolean R_CullSphere( const vec3_t centre, const float radius, const unsigned i
 	if( r_nocull->integer )
 		return qfalse;
 
-	for( i = sizeof( ri.frustum )/sizeof( ri.frustum[0] ), bit = 1, p = ri.frustum; i > 0; i--, bit<<=1, p++ )
+	for( i = sizeof( rn.frustum )/sizeof( rn.frustum[0] ), bit = 1, p = rn.frustum; i > 0; i--, bit<<=1, p++ )
 	{
 		if( !( clipflags & bit ) )
 			continue;
@@ -186,9 +186,9 @@ qboolean R_VisCullBox( const vec3_t mins, const vec3_t maxs )
 	vec3_t extmins, extmaxs;
 	mnode_t *node, *localstack[2048];
 
-	if( !r_worldmodel || ( ri.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( !r_worldmodel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		return qfalse;
-	if( ri.params & RP_NOVIS )
+	if( rn.params & RP_NOVIS )
 		return qfalse;
 
 	for( s = 0; s < 3; s++ )
@@ -235,9 +235,9 @@ qboolean R_VisCullSphere( const vec3_t origin, float radius )
 	int stackdepth = 0;
 	mnode_t *node, *localstack[2048];
 
-	if( !r_worldmodel || ( ri.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( !r_worldmodel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		return qfalse;
-	if( ri.params & RP_NOVIS )
+	if( rn.params & RP_NOVIS )
 		return qfalse;
 
 	radius += 4;
@@ -284,21 +284,21 @@ int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius
 {
 	if( e->flags & RF_NOSHADOW )
 	{
-		if( ri.params & RP_SHADOWMAPVIEW )
+		if( rn.params & RP_SHADOWMAPVIEW )
 			return 3;
 	}
 
 	if( e->flags & RF_WEAPONMODEL )
 	{
-		if( ri.params & RP_NONVIEWERREF )
+		if( rn.params & RP_NONVIEWERREF )
 			return 1;
 		return 0;
 	}
 
 	if( e->flags & RF_VIEWERMODEL )
 	{
-		//if( !(ri.params & RP_NONVIEWERREF) )
-		if( !( ri.params & ( RP_MIRRORVIEW|RP_SHADOWMAPVIEW ) ) )
+		//if( !(rn.params & RP_NONVIEWERREF) )
+		if( !( rn.params & ( RP_MIRRORVIEW|RP_SHADOWMAPVIEW ) ) )
 			return 1;
 	}
 
@@ -308,16 +308,16 @@ int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius
 
 	if( sphereCull )
 	{
-		if( R_CullSphere( e->origin, radius, ri.clipFlags ) )
+		if( R_CullSphere( e->origin, radius, rn.clipFlags ) )
 			return 1;
 	}
 	else
 	{
-		if( R_CullBox( mins, maxs, ri.clipFlags ) )
+		if( R_CullBox( mins, maxs, rn.clipFlags ) )
 			return 1;
 	}
 
-	if( ri.params & RP_PVSCULL )
+	if( rn.params & RP_PVSCULL )
 	{
 		if( sphereCull )
 		{

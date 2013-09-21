@@ -213,6 +213,9 @@
     <ClCompile Include="tv_module\tvm_syscalls.c">
       <Filter>Source Files\tv_module</Filter>
     </ClCompile>
+    <ClCompile Include="..\qcommon\bsp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\gameshared\config.h">
@@ -364,6 +367,9 @@
     </ClInclude>
     <ClInclude Include="tv_module\tvm_syscalls.h">
       <Filter>Header Files\tv_module</Filter>
+    </ClInclude>
+    <ClInclude Include="..\qcommon\bsp.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

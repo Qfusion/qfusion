@@ -289,6 +289,8 @@ void		R_FreeUnusedShaders( void );
 
 void		R_RemapShader( const char *from, const char *to, int timeOffset );
 
+void		R_GetShaderDimensions( const shader_t *shader, int *width, int *height );
+
 void		R_ShaderList_f( void );
 void		R_ShaderDump_f( void );
 

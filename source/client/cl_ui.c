@@ -109,7 +109,7 @@ static void CL_UIModule_AsyncStream_Shutdown( void )
 * CL_UIModule_R_RegisterWorldModel
 */
 static void CL_UIModule_R_RegisterWorldModel( const char *model ) {
-	R_RegisterWorldModel( model, NULL );
+	re.RegisterWorldModel( model, NULL );
 }
 
 //==============================================
@@ -192,33 +192,33 @@ void CL_UIModule_Init( void )
 	import.Key_SetBinding = Key_SetBinding;
 	import.Key_IsDown = Key_IsDown;
 
-	import.R_ClearScene = R_ClearScene;
-	import.R_AddEntityToScene = R_AddEntityToScene;
-	import.R_AddLightToScene = R_AddLightToScene;
-	import.R_AddPolyToScene = R_AddPolyToScene;
-	import.R_RenderScene = R_RenderScene;
-	import.R_EndFrame = R_EndFrame;
+	import.R_ClearScene = re.ClearScene;
+	import.R_AddEntityToScene = re.AddEntityToScene;
+	import.R_AddLightToScene = re.AddLightToScene;
+	import.R_AddPolyToScene = re.AddPolyToScene;
+	import.R_RenderScene = re.RenderScene;
+	import.R_EndFrame = re.EndFrame;
 	import.R_RegisterWorldModel = CL_UIModule_R_RegisterWorldModel;
-	import.R_ModelBounds = R_ModelBounds;
-	import.R_ModelFrameBounds = R_ModelFrameBounds;
-	import.R_RegisterModel = R_RegisterModel;
-	import.R_RegisterPic = R_RegisterPic;
-	import.R_RegisterRawPic = R_RegisterRawPic;
-	import.R_RegisterLevelshot = R_RegisterLevelshot;
-	import.R_RegisterSkin = R_RegisterSkin;
-	import.R_RegisterSkinFile = R_RegisterSkinFile;
-	import.R_RegisterVideo = R_RegisterVideo;
-	import.R_LerpTag = R_LerpTag;
-	import.R_DrawStretchPic = R_DrawStretchPic;
-	import.R_DrawRotatedStretchPic = R_DrawRotatedStretchPic;
-	import.R_DrawStretchPoly = R_DrawStretchPoly;
-	import.R_TransformVectorToScreen = R_TransformVectorToScreen;
-	import.R_SetScissorRegion = R_SetScissorRegion;
-	import.R_GetScissorRegion = R_GetScissorRegion;
-	import.R_GetShaderDimensions = R_GetShaderDimensions;
-	import.R_SkeletalGetNumBones = R_SkeletalGetNumBones;
-	import.R_SkeletalGetBoneInfo = R_SkeletalGetBoneInfo;
-	import.R_SkeletalGetBonePose = R_SkeletalGetBonePose;
+	import.R_ModelBounds = re.ModelBounds;
+	import.R_ModelFrameBounds = re.ModelFrameBounds;
+	import.R_RegisterModel = re.RegisterModel;
+	import.R_RegisterPic = re.RegisterPic;
+	import.R_RegisterRawPic = re.RegisterRawPic;
+	import.R_RegisterLevelshot = re.RegisterLevelshot;
+	import.R_RegisterSkin = re.RegisterSkin;
+	import.R_RegisterSkinFile = re.RegisterSkinFile;
+	import.R_RegisterVideo = re.RegisterVideo;
+	import.R_LerpTag = re.LerpTag;
+	import.R_DrawStretchPic = re.DrawStretchPic;
+	import.R_DrawRotatedStretchPic = re.DrawRotatedStretchPic;
+	import.R_DrawStretchPoly = re.DrawStretchPoly;
+	import.R_TransformVectorToScreen = re.TransformVectorToScreen;
+	import.R_SetScissorRegion = re.SetScissorRegion;
+	import.R_GetScissorRegion = re.GetScissorRegion;
+	import.R_GetShaderDimensions = re.GetShaderDimensions;
+	import.R_SkeletalGetNumBones = re.SkeletalGetNumBones;
+	import.R_SkeletalGetBoneInfo = re.SkeletalGetBoneInfo;
+	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;
 	import.S_RegisterSound = CL_SoundModule_RegisterSound;
 	import.S_StartLocalSound = CL_SoundModule_StartLocalSound;
 	import.S_StartBackgroundTrack = CL_SoundModule_StartBackgroundTrack;
@@ -271,7 +271,12 @@ void CL_UIModule_Init( void )
 	import.Irc_GetPrevHistoryNode = Irc_GetPrevHistoryNode;
 	import.Irc_GetHistoryNodeLine = Irc_GetHistoryNodeLine;
 
-	uie = (ui_export_t *)Com_LoadGameLibrary( "ui", "GetUIAPI", &module_handle, &import, builtinAPIfunc, cls.sv_pure, NULL );
+	if( builtinAPIfunc ) {
+		uie = builtinAPIfunc( &import );
+	}
+	else {
+		uie = (ui_export_t *)Com_LoadGameLibrary( "ui", "GetUIAPI", &module_handle, &import, cls.sv_pure, NULL );
+	}
 	if( !uie )
 		Com_Error( ERR_DROP, "Failed to load UI dll" );
 

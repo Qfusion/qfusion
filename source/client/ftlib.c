@@ -25,60 +25,64 @@ static ftlib_export_t *ftlib_export;
 static void *ftlib_libhandle = NULL;
 static mempool_t *ftlib_mempool;
 
-/*
-* CL_FTLibModule_Error
-*/
 static void CL_FTLibModule_Error( const char *msg )
 {
 	Com_Error( ERR_FATAL, "%s", msg );
 }
 
-/*
-* CL_FTLibModule_Print
-*/
 static void CL_FTLibModule_Print( const char *msg )
 {
 	Com_Printf( "%s", msg );
 }
 
-/*
-* CL_FTLibModule_MemAlloc
-*/
 static void *CL_FTLibModule_MemAlloc( mempool_t *pool, int size, const char *filename, int fileline )
 {
 	return _Mem_Alloc( pool, size, MEMPOOL_CINMODULE, 0, filename, fileline );
 }
 
-/*
-* CL_FTLibModule_MemFree
-*/
 static void CL_FTLibModule_MemFree( void *data, const char *filename, int fileline )
 {
 	_Mem_Free( data, MEMPOOL_CINMODULE, 0, filename, fileline );
 }
 
-/*
-* CL_FTLibModule_MemAllocPool
-*/
 static mempool_t *CL_FTLibModule_MemAllocPool( const char *name, const char *filename, int fileline )
 {
 	return _Mem_AllocPool( ftlib_mempool, name, MEMPOOL_CINMODULE, filename, fileline );
 }
 
-/*
-* CL_FTLibModule_MemFreePool
-*/
 static void CL_FTLibModule_MemFreePool( mempool_t **pool, const char *filename, int fileline )
 {
 	_Mem_FreePool( pool, MEMPOOL_CINMODULE, 0, filename, fileline );
 }
 
-/*
-* CL_FTLibModule_MemEmptyPool
-*/
 static void CL_FTLibModule_MemEmptyPool( mempool_t *pool, const char *filename, int fileline )
 {
 	_Mem_EmptyPool( pool, MEMPOOL_CINMODULE, 0, filename, fileline );
+}
+
+static struct shader_s *CL_FTLibModule_RegisterPic( const char *name )
+{
+	return re.RegisterPic( name );
+}
+
+static struct shader_s *CL_FTLibModule_RegisterRawPic( const char *name, int width, int height, qbyte *data )
+{
+	return re.RegisterRawPic( name, width, height, data );
+}
+
+static void CL_FTLibModule_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader )
+{
+	re.DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
+}
+
+static void CL_FTLibModule_SetScissorRegion( int x, int y, int w, int h )
+{
+	re.SetScissorRegion( x, y, w, h );
+}
+
+static void CL_FTLibModule_GetScissorRegion( int *x, int *y, int *w, int *h )
+{
+	re.GetScissorRegion( x, y, w, h );
 }
 
 /*
@@ -125,11 +129,11 @@ void FTLIB_LoadLibrary( qboolean verbose )
 	import.FS_GetFileList = &FS_GetFileList;
 	import.FS_IsUrl = &FS_IsUrl;
 
-	import.R_RegisterPic = R_RegisterPic;
-	import.R_RegisterRawPic = R_RegisterRawPic;
-	import.R_DrawStretchPic = R_DrawStretchPic;
-	import.R_SetScissorRegion = R_SetScissorRegion;
-	import.R_GetScissorRegion = R_GetScissorRegion;
+	import.R_RegisterPic = &CL_FTLibModule_RegisterPic;
+	import.R_RegisterRawPic = &CL_FTLibModule_RegisterRawPic;
+	import.R_DrawStretchPic = &CL_FTLibModule_DrawStretchPic;
+	import.R_SetScissorRegion = &CL_FTLibModule_SetScissorRegion;
+	import.R_GetScissorRegion = &CL_FTLibModule_GetScissorRegion;
 
 	import.Milliseconds = &Sys_Milliseconds;
 	import.Microseconds = &Sys_Microseconds;

@@ -641,7 +641,7 @@ qboolean Ogg_Init_CIN( cinematics_t *cin )
 				memcpy( &ogg->os_video, &test, sizeof( test ) );
 				theora_p = 1;
 			}
-			else if( !ogg->a_stream && !(cin->flags & CIN_NOAUDIO) && !vorbis_synthesis_headerin( &ogg->vi, &ogg->vc, &op ) )
+			else if( !ogg->a_stream && (cin->flags & CIN_AUDIO) && !vorbis_synthesis_headerin( &ogg->vi, &ogg->vc, &op ) )
 			{
 				// it is vorbis
 				ogg->a_stream = qtrue;

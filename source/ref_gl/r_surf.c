@@ -179,14 +179,14 @@ qboolean R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
 
 	if( drawSurf->dlightFrame == rf.sceneFrameCount ) {
-		RB_SetDlightBits( drawSurf->dlightBits & ri.dlightBits );
+		RB_SetDlightBits( drawSurf->dlightBits & rn.dlightBits );
 	}
 	else {
 		RB_SetDlightBits( 0 );
 	}
 
 	if( drawSurf->shadowFrame == rf.sceneFrameCount ) {
-		RB_SetShadowBits( drawSurf->shadowBits & ri.shadowBits );
+		RB_SetShadowBits( drawSurf->shadowBits & rn.shadowBits );
 	}
 	else {
 		RB_SetShadowBits( 0 );
@@ -281,7 +281,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 	}
 
 	c_brush_polys++;
-	ri.numVisSurfaces++;
+	rn.numVisSurfaces++;
 }
 
 /*
@@ -357,23 +357,23 @@ qboolean R_AddBrushModelToDrawList( const entity_t *e )
 	}
 
 	// never render weapon models or non-occluders into shadowmaps
-	if( ri.params & RP_SHADOWMAPVIEW ) {
-		if( rsc.entShadowGroups[R_ENT2NUM(e)] != ri.shadowGroup->id ) {
+	if( rn.params & RP_SHADOWMAPVIEW ) {
+		if( rsc.entShadowGroups[R_ENT2NUM(e)] != rn.shadowGroup->id ) {
 			return qtrue;
 		}
 	}
 
 	VectorAdd( e->model->mins, e->model->maxs, origin );
 	VectorMA( e->origin, 0.5, origin, origin );
-	distance = Distance( origin, ri.refdef.vieworg );
+	distance = Distance( origin, rn.refdef.vieworg );
 
 	fog = R_FogForBounds( bmins, bmaxs );
 
-	R_TransformPointToModelSpace( e, rotated, ri.refdef.vieworg, modelOrg );
+	R_TransformPointToModelSpace( e, rotated, rn.refdef.vieworg, modelOrg );
 
 	// check dynamic lights that matter in the instance against the model
 	dlightBits = 0;
-	for( i = 0, fullBits = ri.dlightBits, bit = 1; fullBits; i++, fullBits &= ~bit, bit <<= 1 ) {
+	for( i = 0, fullBits = rn.dlightBits, bit = 1; fullBits; i++, fullBits &= ~bit, bit <<= 1 ) {
 		if( !( fullBits & bit ) ) {
 			continue;
 		}
@@ -385,7 +385,7 @@ qboolean R_AddBrushModelToDrawList( const entity_t *e )
 
 	// check shadowmaps that matter in the instance against the model
 	shadowBits = 0;
-	for( i = 0, fullBits = ri.shadowBits; fullBits; i++, fullBits &= ~bit ) {
+	for( i = 0, fullBits = rn.shadowBits; fullBits; i++, fullBits &= ~bit ) {
 		shadowGroup_t *grp = rsc.shadowGroups + i;
 		bit = grp->bit;
 		if( !( fullBits & bit ) ) {
@@ -456,7 +456,7 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 		if( surf->visFrame != r_framecount || newDlightBits || newShadowBits ) {
 			VectorAdd( surf->mins, surf->maxs, centre );
 			VectorScale( centre, 0.5, centre );
-			distance = Distance( ri.refdef.vieworg, centre );
+			distance = Distance( rn.refdef.vieworg, centre );
 
 			R_AddSurfaceToDrawList( rsc.worldent, surf, surf->fog, clipFlags, 
 				newDlightBits, newShadowBits, distance );
@@ -486,7 +486,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 
 		if( clipFlags )
 		{
-			for( i = sizeof( ri.frustum )/sizeof( ri.frustum[0] ), bit = 1, clipplane = ri.frustum; i > 0; i--, bit<<=1, clipplane++ )
+			for( i = sizeof( rn.frustum )/sizeof( rn.frustum[0] ), bit = 1, clipplane = rn.frustum; i > 0; i--, bit<<=1, clipplane++ )
 			{
 				if( clipFlags & bit )
 				{
@@ -564,12 +564,12 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 	// add leaf bounds to view bounds
 	for( i = 0; i < 3; i++ )
 	{
-		ri.visMins[i] = min( ri.visMins[i], pleaf->mins[i] );
-		ri.visMaxs[i] = max( ri.visMaxs[i], pleaf->maxs[i] );
+		rn.visMins[i] = min( rn.visMins[i], pleaf->mins[i] );
+		rn.visMaxs[i] = max( rn.visMaxs[i], pleaf->maxs[i] );
 	}
 
-	ri.dlightBits |= dlightBits;
-	ri.shadowBits |= shadowBits;
+	rn.dlightBits |= dlightBits;
+	rn.shadowBits |= shadowBits;
 
 	R_MarkLeafSurfaces( pleaf->firstVisSurface, clipFlags, dlightBits, shadowBits );
 	c_world_leafs++;
@@ -590,14 +590,14 @@ void R_DrawWorld( void )
 		return;
 	if( !r_worldmodel )
 		return;
-	if( ri.refdef.rdflags & RDF_NOWORLDMODEL )
+	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
 		return;
-	if( ri.params & RP_SHADOWMAPVIEW )
+	if( rn.params & RP_SHADOWMAPVIEW )
 		return;
 
-	VectorCopy( ri.refdef.vieworg, modelOrg );
+	VectorCopy( rn.refdef.vieworg, modelOrg );
 
-	if( (ri.refdef.rdflags & RDF_WORLDOUTLINES) && (r_viewcluster != -1) && r_outlines_scale->value > 0 )
+	if( (rn.refdef.rdflags & RDF_WORLDOUTLINES) && (r_viewcluster != -1) && r_outlines_scale->value > 0 )
 		rsc.worldent->outlineHeight = max( 0.0f, r_outlines_world->value );
 	else
 		rsc.worldent->outlineHeight = 0;
@@ -606,17 +606,17 @@ void R_DrawWorld( void )
 	if( r_nocull->integer )
 		clipFlags = 0;
 	else
-		clipFlags = ri.clipFlags;
+		clipFlags = rn.clipFlags;
 
 	// dynamic lights
-	if( r_dynamiclight->integer != 1 || r_fullbright->integer || ri.params & RP_ENVVIEW ) {
+	if( r_dynamiclight->integer != 1 || r_fullbright->integer || rn.params & RP_ENVVIEW ) {
 		dlightBits = 0;
 	} else {
 		dlightBits = rsc.numDlights < 32 ? ( 1 << rsc.numDlights ) - 1 : ~0;
 	}
 
 	// shadowmaps
-	if( ri.params & RP_ENVVIEW ) {
+	if( rn.params & RP_ENVVIEW ) {
 		shadowBits = 0;
 	}
 	else {
@@ -624,12 +624,12 @@ void R_DrawWorld( void )
 	}
 
 	if( r_speeds->integer )
-		msec = Sys_Milliseconds();
+		msec = ri.Sys_Milliseconds();
 
 	R_RecursiveWorldNode( r_worldbrushmodel->nodes, clipFlags, dlightBits, shadowBits );
 
 	if( r_speeds->integer )
-		r_world_node += Sys_Milliseconds() - msec;
+		r_world_node += ri.Sys_Milliseconds() - msec;
 }
 
 /*
@@ -648,12 +648,12 @@ void R_MarkLeaves( void )
 	int cluster;
 	qbyte fatpvs[MAX_MAP_LEAFS/8];
 
-	rdflags = ri.refdef.rdflags;
+	rdflags = rn.refdef.rdflags;
 	if( rdflags & RDF_NOWORLDMODEL )
 		return;
-	if( r_oldviewcluster == r_viewcluster && ( rdflags & RDF_OLDAREABITS ) && !(ri.params & RP_NOVIS) && r_viewcluster != -1 && r_oldviewcluster != -1 )
+	if( r_oldviewcluster == r_viewcluster && ( rdflags & RDF_OLDAREABITS ) && !(rn.params & RP_NOVIS) && r_viewcluster != -1 && r_oldviewcluster != -1 )
 		return;
-	if( ri.params & RP_SHADOWMAPVIEW )
+	if( rn.params & RP_SHADOWMAPVIEW )
 		return;
 	if( !r_worldmodel )
 		return;
@@ -666,7 +666,7 @@ void R_MarkLeaves( void )
 	r_pvsframecount++;
 	r_oldviewcluster = r_viewcluster;
 
-	if( ri.params & RP_NOVIS || r_viewcluster == -1 || !r_worldbrushmodel->pvs )
+	if( rn.params & RP_NOVIS || r_viewcluster == -1 || !r_worldbrushmodel->pvs )
 	{
 		// mark everything
 		for( pleaf = r_worldbrushmodel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
@@ -677,11 +677,11 @@ void R_MarkLeaves( void )
 	}
 
 	pvs = Mod_ClusterPVS( r_viewcluster, r_worldmodel );
-	if( r_viewarea > -1 && ri.refdef.areabits )
+	if( r_viewarea > -1 && rn.refdef.areabits )
 #ifdef AREAPORTALS_MATRIX
-		areabits = ri.refdef.areabits + r_viewarea * ((r_worldbrushmodel->numareas+7)/8);
+		areabits = rn.refdef.areabits + r_viewarea * ((r_worldbrushmodel->numareas+7)/8);
 #else
-		areabits = ri.refdef.areabits;
+		areabits = rn.refdef.areabits;
 #endif
 	else
 		areabits = NULL;
@@ -693,7 +693,7 @@ void R_MarkLeaves( void )
 		vec3_t pvsOrigin2;
 		int viewcluster2;
 
-		VectorCopy( ri.pvsOrigin, pvsOrigin2 );
+		VectorCopy( rn.pvsOrigin, pvsOrigin2 );
 		if( rdflags & RDF_UNDERWATER )
 		{
 			// look up a bit

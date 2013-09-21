@@ -64,7 +64,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 			VectorAdd( centre, v[i], centre );
 		VectorMA( ent->origin, 0.25, centre, centre );
 
-		VectorNegate( &ri.viewAxis[AXIS_FORWARD], plane.normal );
+		VectorNegate( &rn.viewAxis[AXIS_FORWARD], plane.normal );
 		plane.dist = DotProduct( plane.normal, centre );
 		CategorizePlane( &plane );
 	}
@@ -93,7 +93,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 		}
 	}
 
-	if( ( dist = PlaneDiff( ri.viewOrigin, &plane ) ) <= BACKFACE_EPSILON )
+	if( ( dist = PlaneDiff( rn.viewOrigin, &plane ) ) <= BACKFACE_EPSILON )
 	{
 		// behind the portal plane
 		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) ) {
@@ -109,8 +109,8 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 	}
 
 	// find the matching portal plane
-	for( i = 0; i < ri.numPortalSurfaces; i++ ) {
-		portalSurface = &ri.portalSurfaces[i];
+	for( i = 0; i < rn.numPortalSurfaces; i++ ) {
+		portalSurface = &rn.portalSurfaces[i];
 
 		if( portalSurface->entity == ent &&
 			portalSurface->shader == shader &&
@@ -125,7 +125,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 		return NULL;
 	}
 
-	portalSurface = &ri.portalSurfaces[ri.numPortalSurfaces++];
+	portalSurface = &rn.portalSurfaces[rn.numPortalSurfaces++];
 	portalSurface->entity = ent;
 	portalSurface->plane = plane;
 	portalSurface->shader = shader;
@@ -196,10 +196,10 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	}
 
 	x = y = 0;
-	w = ri.refdef.width;
-	h = ri.refdef.height;
+	w = rn.refdef.width;
+	h = rn.refdef.height;
 
-	dist = PlaneDiff( ri.viewOrigin, portal_plane );
+	dist = PlaneDiff( rn.viewOrigin, portal_plane );
 	if( dist <= BACKFACE_EPSILON || !doReflection )
 	{
 		if( !( shader->flags & SHADER_PORTAL_CAPTURE2 ) || !doRefraction )
@@ -217,7 +217,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 		}
 	}
 
-	if( !(ri.params & RP_NOVIS) && !R_ScissorForEntity( portal_ent, portal_mins, portal_maxs, &x, &y, &w, &h ) )
+	if( !(rn.params & RP_NOVIS) && !R_ScissorForEntity( portal_ent, portal_mins, portal_maxs, &x, &y, &w, &h ) )
 		return;
 
 	mirror = qtrue; // default to mirror view
@@ -268,28 +268,28 @@ setup_and_render:
 		VectorInverse( portal_plane->normal );
 		portal_plane->dist = -portal_plane->dist - 1;
 		CategorizePlane( portal_plane );
-		VectorCopy( ri.viewOrigin, origin );
-		Matrix3_Copy( ri.refdef.viewaxis, axis );
+		VectorCopy( rn.viewOrigin, origin );
+		Matrix3_Copy( rn.refdef.viewaxis, axis );
 
-		ri.params = RP_PORTALVIEW;
+		rn.params = RP_PORTALVIEW;
 		if( !mirror )
-			ri.params |= RP_PVSCULL;
+			rn.params |= RP_PVSCULL;
 		if( r_viewcluster != -1 )
-			ri.params |= RP_OLDVIEWCLUSTER;
+			rn.params |= RP_OLDVIEWCLUSTER;
 	}
 	else if( mirror )
 	{
-		VectorReflect( ri.viewOrigin, portal_plane->normal, portal_plane->dist, origin );
+		VectorReflect( rn.viewOrigin, portal_plane->normal, portal_plane->dist, origin );
 
-		VectorReflect( &ri.viewAxis[AXIS_FORWARD], portal_plane->normal, 0, &axis[AXIS_FORWARD] );
-		VectorReflect( &ri.viewAxis[AXIS_RIGHT], portal_plane->normal, 0, &axis[AXIS_RIGHT] );
-		VectorReflect( &ri.viewAxis[AXIS_UP], portal_plane->normal, 0, &axis[AXIS_UP] );
+		VectorReflect( &rn.viewAxis[AXIS_FORWARD], portal_plane->normal, 0, &axis[AXIS_FORWARD] );
+		VectorReflect( &rn.viewAxis[AXIS_RIGHT], portal_plane->normal, 0, &axis[AXIS_RIGHT] );
+		VectorReflect( &rn.viewAxis[AXIS_UP], portal_plane->normal, 0, &axis[AXIS_UP] );
 
 		Matrix3_Normalize( axis );
 
-		ri.params = RP_MIRRORVIEW|RP_FLIPFRONTFACE;
+		rn.params = RP_MIRRORVIEW|RP_FLIPFRONTFACE;
 		if( r_viewcluster != -1 )
-			ri.params |= RP_OLDVIEWCLUSTER;
+			rn.params |= RP_OLDVIEWCLUSTER;
 	}
 	else
 	{
@@ -309,12 +309,12 @@ setup_and_render:
 		Matrix3_Multiply( C, A, rot );
 
 		// translate view origin
-		VectorSubtract( ri.viewOrigin, best->origin, tvec );
+		VectorSubtract( rn.viewOrigin, best->origin, tvec );
 		Matrix3_TransformVector( rot, tvec, origin );
 		VectorAdd( origin, best->origin2, origin );
 
 		Matrix3_Transpose( A, B );
-		Matrix3_Multiply( ri.viewAxis, B, rot );
+		Matrix3_Multiply( rn.viewAxis, B, rot );
 		Matrix3_Multiply( best->axis, rot, B );
 		Matrix3_Transpose( C, A );
 		Matrix3_Multiply( B, A, axis );
@@ -327,28 +327,28 @@ setup_and_render:
 		// for portals, vis data is taken from portal origin, not
 		// view origin, because the view point moves around and
 		// might fly into (or behind) a wall
-		ri.params = RP_PORTALVIEW|RP_PVSCULL;
-		VectorCopy( best->origin2, ri.pvsOrigin );
-		VectorCopy( best->origin2, ri.lodOrigin );
+		rn.params = RP_PORTALVIEW|RP_PVSCULL;
+		VectorCopy( best->origin2, rn.pvsOrigin );
+		VectorCopy( best->origin2, rn.lodOrigin );
 
 		// ignore entities, if asked politely
 		if( best->renderfx & RF_NOPORTALENTS )
-			ri.params |= RP_NOENTS;
+			rn.params |= RP_NOENTS;
 	}
 
-	ri.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER );
+	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER );
 
-	ri.shadowGroup = NULL;
-	ri.meshlist = &r_portallist;
+	rn.shadowGroup = NULL;
+	rn.meshlist = &r_portallist;
 
-	ri.params |= RP_CLIPPLANE;
-	ri.clipPlane = *portal_plane;
+	rn.params |= RP_CLIPPLANE;
+	rn.clipPlane = *portal_plane;
 
-	ri.farClip = R_DefaultFarClip();
+	rn.farClip = R_DefaultFarClip();
 
-	ri.clipFlags |= ( 1<<5 );
-	ri.frustum[5] = *portal_plane;
-	CategorizePlane( &ri.frustum[5] );
+	rn.clipFlags |= ( 1<<5 );
+	rn.frustum[5] = *portal_plane;
+	CategorizePlane( &rn.frustum[5] );
 
 	// if we want to render to a texture, initialize texture
 	// but do not try to render to it more than once
@@ -368,30 +368,30 @@ setup_and_render:
 		x = y = 0;
 		w = captureTexture->upload_width;
 		h = captureTexture->upload_height;
-		ri.refdef.width = w;
-		ri.refdef.height = h;
-		ri.refdef.x = 0;
-		ri.refdef.y = 0;
-		ri.fbColorAttachment = captureTexture;
+		rn.refdef.width = w;
+		rn.refdef.height = h;
+		rn.refdef.x = 0;
+		rn.refdef.y = 0;
+		rn.fbColorAttachment = captureTexture;
 		// no point in capturing the depth buffer due to oblique frustum messing up
 		// the far plane and depth values
-		ri.fbDepthAttachment = NULL;
-		Vector4Set( ri.viewport, ri.refdef.x + x, glConfig.height - h - (ri.refdef.y + y), w, h );
-		Vector4Set( ri.scissor, ri.refdef.x + x, glConfig.height - h - (ri.refdef.y + y), w, h );
+		rn.fbDepthAttachment = NULL;
+		Vector4Set( rn.viewport, rn.refdef.x + x, glConfig.height - h - (rn.refdef.y + y), w, h );
+		Vector4Set( rn.scissor, rn.refdef.x + x, glConfig.height - h - (rn.refdef.y + y), w, h );
 	}
 	else {
 		// no point in capturing the depth buffer due to oblique frustum messing up
 		// the far plane and depth values
-		ri.fbDepthAttachment = NULL;
-		Vector4Set( ri.scissor, ri.refdef.x + x, ri.refdef.y + y, w, h );
+		rn.fbDepthAttachment = NULL;
+		Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 	}
 	
-	VectorCopy( origin, ri.refdef.vieworg );
-	Matrix3_Copy( axis, ri.refdef.viewaxis );
+	VectorCopy( origin, rn.refdef.vieworg );
+	Matrix3_Copy( axis, rn.refdef.viewaxis );
 
-	R_RenderView( &ri.refdef );
+	R_RenderView( &rn.refdef );
 
-	if( !( ri.params & RP_OLDVIEWCLUSTER ) )
+	if( !( rn.params & RP_OLDVIEWCLUSTER ) )
 		r_oldviewcluster = -1;		// force markleafs
 	r_viewcluster = oldcluster;		// restore viewcluster for current frame
 	r_viewarea = oldarea;
@@ -422,12 +422,12 @@ void R_DrawPortals( void )
 		return;
 	}
 
-	if( !( ri.params & ( RP_MIRRORVIEW|RP_PORTALVIEW|RP_SHADOWMAPVIEW ) ) )
+	if( !( rn.params & ( RP_MIRRORVIEW|RP_PORTALVIEW|RP_SHADOWMAPVIEW ) ) )
 	{
-		for( i = 0; i < ri.numPortalSurfaces; i++ ) {
-			portalSurface_t portalSurface = ri.portalSurfaces[i]; 
+		for( i = 0; i < rn.numPortalSurfaces; i++ ) {
+			portalSurface_t portalSurface = rn.portalSurfaces[i]; 
 			R_DrawPortalSurface( &portalSurface );
-			ri.portalSurfaces[i] = portalSurface;
+			rn.portalSurfaces[i] = portalSurface;
 		}
 	}
 }
@@ -450,18 +450,18 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	oldcluster = r_viewcluster;
 	oldarea = r_viewarea;
 
-	ri.params = ( ri.params|RP_SKYPORTALVIEW ) & ~( RP_OLDVIEWCLUSTER );
-	VectorCopy( skyportal->vieworg, ri.pvsOrigin );
+	rn.params = ( rn.params|RP_SKYPORTALVIEW ) & ~( RP_OLDVIEWCLUSTER );
+	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
-	ri.farClip = R_DefaultFarClip();
+	rn.farClip = R_DefaultFarClip();
 
-	ri.clipFlags = 15;
-	ri.shadowGroup = NULL;
-	ri.meshlist = &r_skyportallist;
-	//Vector4Set( ri.scissor, ri.refdef.x + x, ri.refdef.y + y, w, h );
+	rn.clipFlags = 15;
+	rn.shadowGroup = NULL;
+	rn.meshlist = &r_skyportallist;
+	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 
 	if( skyportal->noEnts ) {
-		ri.params |= RP_NOENTS;
+		rn.params |= RP_NOENTS;
 	}
 
 	if( skyportal->scale )
@@ -470,12 +470,12 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 
 		VectorAdd( r_worldmodel->mins, r_worldmodel->maxs, centre );
 		VectorScale( centre, 0.5f, centre );
-		VectorSubtract( centre, ri.viewOrigin, diff );
-		VectorMA( skyportal->vieworg, -skyportal->scale, diff, ri.refdef.vieworg );
+		VectorSubtract( centre, rn.viewOrigin, diff );
+		VectorMA( skyportal->vieworg, -skyportal->scale, diff, rn.refdef.vieworg );
 	}
 	else
 	{
-		VectorCopy( skyportal->vieworg, ri.refdef.vieworg );
+		VectorCopy( skyportal->vieworg, rn.refdef.vieworg );
 	}
 
 	// FIXME
@@ -484,25 +484,25 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 		vec3_t angles;
 		mat3_t axis;
 
-		Matrix3_Copy( ri.refdef.viewaxis, axis );
+		Matrix3_Copy( rn.refdef.viewaxis, axis );
 		VectorInverse( &axis[AXIS_RIGHT] );
 		Matrix3_ToAngles( axis, angles );
 
 		VectorAdd( angles, skyportal->viewanglesOffset, angles );
 		AnglesToAxis( angles, axis );
-		Matrix3_Copy( axis, ri.refdef.viewaxis );
+		Matrix3_Copy( axis, rn.refdef.viewaxis );
 	}
 
-	ri.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER|RDF_SKYPORTALINVIEW );
+	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER|RDF_SKYPORTALINVIEW );
 	if( skyportal->fov )
 	{
-		ri.refdef.fov_x = skyportal->fov;
-		ri.refdef.fov_y = CalcFov( ri.refdef.fov_x, ri.refdef.width, ri.refdef.height );
-		if( glConfig.wideScreen && !( ri.refdef.rdflags & RDF_NOFOVADJUSTMENT ) )
-			AdjustFov( &ri.refdef.fov_x, &ri.refdef.fov_y, glConfig.width, glConfig.height, qfalse );
+		rn.refdef.fov_x = skyportal->fov;
+		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
+		if( glConfig.wideScreen && !( rn.refdef.rdflags & RDF_NOFOVADJUSTMENT ) )
+			AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, qfalse );
 	}
 
-	R_RenderView( &ri.refdef );
+	R_RenderView( &rn.refdef );
 
 	r_oldviewcluster = -1;			// force markleafs
 	r_viewcluster = oldcluster;		// restore viewcluster for current frame

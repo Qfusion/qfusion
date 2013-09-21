@@ -50,7 +50,7 @@ void R_InitDrawLists( void )
 */
 void R_ClearDrawList( void )
 {
-	drawList_t *list = ri.meshlist;
+	drawList_t *list = rn.meshlist;
 
 	// clear counters
 	list->numDrawSurfs = 0;
@@ -132,7 +132,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 	}
 
 	if( shader->flags & SHADER_PORTAL ) {
-		if( ri.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) {
+		if( rn.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) {
 			return qfalse;
 		}
 	}
@@ -140,7 +140,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 		R_UploadCinematicShader( shader );
 	}
 
-	list = ri.meshlist;
+	list = rn.meshlist;
 	// reallocate if numDrawSurfs
 	if( list->numDrawSurfs >= list->maxDrawSurfs ) {
 		int minMeshes = MIN_RENDER_MESHES;
@@ -159,7 +159,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 	sds = &list->drawSurfs[list->numDrawSurfs++];
 	sds->distKey = R_PackDistKey( shaderSort, (unsigned int )(max( dist, 0 )), order );
 	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - r_worldbrushmodel->fogs : -1,
-		portalSurf ? portalSurf - ri.portalSurfaces : -1, R_ENT2NUM(e) );
+		portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM(e) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
 
 	return qtrue;
@@ -194,7 +194,7 @@ static int R_DrawSurfCompare( const sortedDrawSurf_t *sbs1, const sortedDrawSurf
 */
 void R_SortDrawList( void )
 {
-	drawList_t *list = ri.meshlist;
+	drawList_t *list = rn.meshlist;
 
 	if( r_draworder->integer ) {
 		return;
@@ -234,7 +234,7 @@ static void R_ReserveVBOSlices( drawList_t *list, unsigned int minSlices )
 void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems, 
 	unsigned int firstVert, unsigned int firstElem )
 {
-	drawList_t *list = ri.meshlist;
+	drawList_t *list = rn.meshlist;
 	vboSlice_t *slice;
 
 	if( index >= list->maxVboSlices ) {
@@ -272,7 +272,7 @@ void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numE
 */
 vboSlice_t *R_GetVBOSlice( unsigned int index )
 {
-	drawList_t *list = ri.meshlist;
+	drawList_t *list = rn.meshlist;
 
 	assert( index < list->maxVboSlices );
 	if( index >= list->maxVboSlices ) {
@@ -343,14 +343,14 @@ static void _R_DrawSurfaces( void )
 	const entity_t *entity;
 	const mfog_t *fog;
 	const portalSurface_t *portalSurface;
-	drawList_t *list = ri.meshlist;
+	drawList_t *list = rn.meshlist;
 	float depthmin = gldepthmin, depthmax = gldepthmax;
 	qboolean depthHack = qfalse, cullHack = qfalse;
 	qboolean infiniteProj = qfalse, prevInfiniteProj = qfalse;
 	qboolean depthWrite = qfalse;
 	qboolean depthCopied = qfalse;
 	mat4_t projectionMatrix;
-	refdef_t *rd = &ri.refdef;
+	refdef_t *rd = &rn.refdef;
 	int riFBO = 0;
 
 	if( !list->numDrawSurfs ) {
@@ -372,7 +372,7 @@ static void _R_DrawSurfaces( void )
 		shader = R_ShaderById( shaderNum );
 		entity = R_NUM2ENT(entNum);
 		fog = fogNum >= 0 ? r_worldbrushmodel->fogs + fogNum : NULL;
-		portalSurface = portalNum >= 0 ? ri.portalSurfaces + portalNum : NULL;
+		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum || 
@@ -418,7 +418,7 @@ static void _R_DrawSurfaces( void )
 			depthWrite = shader->flags & SHADER_DEPTHWRITE ? qtrue : qfalse;
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
 				depthCopied = qtrue;
-				if( ri.fbDepthAttachment ) {
+				if( rn.fbDepthAttachment ) {
 					R_CopyFBObject( r_screentexturecopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
 				}
 			}
@@ -428,18 +428,18 @@ static void _R_DrawSurfaces( void )
 			infiniteProj = shader->flags & (SHADER_NO_DEPTH_TEST|SHADER_SKY) ? qtrue : qfalse;
 			if( infiniteProj != prevInfiniteProj ) {
 				if( infiniteProj ) {
-					Matrix4_Copy( ri.projectionMatrix, projectionMatrix );
+					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
 					Matrix4_PerspectiveProjectionToInfinity( Z_NEAR, projectionMatrix );
 					RB_LoadProjectionMatrix( projectionMatrix );
 				}
 				else {
-					RB_LoadProjectionMatrix( ri.projectionMatrix );
+					RB_LoadProjectionMatrix( rn.projectionMatrix );
 				}
 			}
 
 			RB_BindShader( entity, shader, fog );
 
-			RB_SetShadowBits( rsc.entShadowBits[entNum] & ri.shadowBits );
+			RB_SetShadowBits( rsc.entShadowBits[entNum] & rn.shadowBits );
 
 			RB_SetPortalSurface( portalSurface );
 
@@ -495,7 +495,7 @@ void R_DrawOutlinedSurfaces( void )
 {
 	qboolean triOutlines;
 	
-	if( ri.params & RP_SHADOWMAPVIEW )
+	if( rn.params & RP_SHADOWMAPVIEW )
 		return;
 
 	// properly store and restore the state, as the 
@@ -577,7 +577,7 @@ void R_BuildTangentVectors( int numVertexes, vec3_t *xyzArray, vec3_t *normalsAr
 	vec3_t *tVectorsArray;
 
 	if( numVertexes > sizeof( stackTVectorsArray )/sizeof( stackTVectorsArray[0] ) )
-		tVectorsArray = Mem_TempMalloc( sizeof( vec3_t )*numVertexes );
+		tVectorsArray = R_Malloc( sizeof( vec3_t )*numVertexes );
 	else
 		tVectorsArray = stackTVectorsArray;
 
@@ -643,5 +643,5 @@ void R_BuildTangentVectors( int numVertexes, vec3_t *xyzArray, vec3_t *normalsAr
 	}
 
 	if( tVectorsArray != stackTVectorsArray )
-		Mem_TempFree( tVectorsArray );
+		R_Free( tVectorsArray );
 }

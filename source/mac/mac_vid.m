@@ -29,12 +29,13 @@ static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 /*
  * VID_Sys_Init
  */
-int VID_Sys_Init( int x, int y, int width, int height, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
+int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, 
+	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
-	extern cvar_t *vid_parentwid;
-
-	return R_Init( NULL, NULL, (void *)(strtol( vid_parentwid->string, NULL, 0 )), 
-                x, y, width, height, fullScreen, wideScreen, verbose );
+	return R_Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
+				NULL, NULL, parentWindow, 
+                x, y, width, height, displayFrequency,
+				fullScreen, wideScreen, verbose );
 }
 
 /*

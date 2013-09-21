@@ -176,7 +176,7 @@ qboolean SCR_DrawCinematic( void )
 		y = 0;
 	}
 
-	R_DrawStretchRaw( x, y, w, h, cl.cin.width, cl.cin.height, cl.cin.pic );
+	re.DrawStretchRaw( x, y, w, h, cl.cin.width, cl.cin.height, cl.cin.pic );
 
 	cl.cin.redraw = qfalse;
 	return qtrue;
@@ -191,7 +191,7 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 
 	CL_SoundModule_Clear();
 
-	cin = CIN_Open( arg, 0, 0 );
+	cin = CIN_Open( arg, 0, qfalse, qtrue );
 	if( !cin )
 	{
 		Com_Printf( "SCR_PlayCinematic: couldn't find %s\n", arg );

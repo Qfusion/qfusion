@@ -156,13 +156,13 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	// check IQM magic
 	if( memcmp( header->magic, "INTERQUAKEMODEL", 16 ) ) {
-		Com_Error( ERR_DROP, "%s is not an Inter-Quake Model", mod->name );
+		ri.Com_Error( ERR_DROP, "%s is not an Inter-Quake Model", mod->name );
 	}
 
 	// check header version
 	header->version = LittleLong( header->version );
 	if( header->version != IQM_VERSION ) {
-		Com_Error( ERR_DROP, "%s has wrong type number (%i should be %i)", mod->name, header->version, IQM_VERSION );
+		ri.Com_Error( ERR_DROP, "%s has wrong type number (%i should be %i)", mod->name, header->version, IQM_VERSION );
 	}
 
 	// byteswap header
@@ -196,16 +196,16 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 #undef H_SWAP
 
 	if( header->num_triangles < 1 || header->num_vertexes < 3 || header->num_vertexarrays < 1 || header->num_meshes < 1 ) {
-		Com_Error( ERR_DROP, "%s has no geometry", mod->name );
+		ri.Com_Error( ERR_DROP, "%s has no geometry", mod->name );
 	}
 	if( header->num_frames < 1 || header->num_anims < 1 ) {
-		Com_Error( ERR_DROP, "%s has no animations", mod->name );
+		ri.Com_Error( ERR_DROP, "%s has no animations", mod->name );
 	}
 	if( header->num_joints != header->num_poses ) {
-		Com_Error( ERR_DROP, "%s has an invalid number of poses: %i vs %i", mod->name, header->num_joints, header->num_poses );
+		ri.Com_Error( ERR_DROP, "%s has an invalid number of poses: %i vs %i", mod->name, header->num_joints, header->num_poses );
 	}
 	if( !header->ofs_bounds ) {
-		Com_Error( ERR_DROP, "%s has no frame bounds", mod->name );
+		ri.Com_Error( ERR_DROP, "%s has no frame bounds", mod->name );
 	}
 
 	pbase = ( qbyte * )buffer;
@@ -220,7 +220,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		|| header->ofs_meshes + header->num_meshes * sizeof( iqmmesh_t ) > filesize
 		|| header->ofs_bounds + header->num_frames * sizeof( iqmbounds_t ) > filesize
 		) {
-		Com_Error( ERR_DROP, "%s has invalid size or offset information", mod->name );
+		ri.Com_Error( ERR_DROP, "%s has invalid size or offset information", mod->name );
 	}
 
 	poutmodel = mod->extradata = Mod_Malloc( mod, sizeof( *poutmodel ) );
@@ -303,7 +303,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	}
 
 	if( !vposition || !vtexcoord || !vblendindexes || !vblendweights ) {
-		Com_Error( ERR_DROP, "%s is missing vertex array data", mod->name );
+		ri.Com_Error( ERR_DROP, "%s is missing vertex array data", mod->name );
 	}
 
 	// load joints
@@ -334,7 +334,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		}
 
 		if( joints[i].parent >= (int)i ) {
-			Com_Error( ERR_DROP, "%s bone[%i].parent(%i) >= %i", mod->name, i, joints[i].parent, i );
+			ri.Com_Error( ERR_DROP, "%s bone[%i].parent(%i) >= %i", mod->name, i, joints[i].parent, i );
 		}
 
 		poutmodel->bones[i].name = texts + joints[i].name;
@@ -619,7 +619,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	mod->registrationSequence = rf.registrationSequence;
 	mod->touch = &Mod_TouchSkeletalModel;
 
-	Mem_Free( baseposes );
+	R_Free( baseposes );
 }
 
 /*
@@ -651,7 +651,7 @@ int R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t n
 
 	skmodel = ( mskmodel_t * )mod->extradata;
 	if( (unsigned int)bonenum >= (int)skmodel->numbones )
-		Com_Error( ERR_DROP, "R_SkeletalGetBone: bad bone number" );
+		ri.Com_Error( ERR_DROP, "R_SkeletalGetBone: bad bone number" );
 
 	bone = &skmodel->bones[bonenum];
 	if( name && name_size )
@@ -673,9 +673,9 @@ void R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose
 
 	skmodel = ( mskmodel_t * )mod->extradata;
 	if( bonenum < 0 || bonenum >= (int)skmodel->numbones )
-		Com_Error( ERR_DROP, "R_SkeletalGetBonePose: bad bone number" );
+		ri.Com_Error( ERR_DROP, "R_SkeletalGetBonePose: bad bone number" );
 	if( frame < 0 || frame >= (int)skmodel->numframes )
-		Com_Error( ERR_DROP, "R_SkeletalGetBonePose: bad frame number" );
+		ri.Com_Error( ERR_DROP, "R_SkeletalGetBonePose: bad frame number" );
 
 	if( bonepose )
 		*bonepose = skmodel->frames[frame].boneposes[bonenum];
@@ -718,14 +718,14 @@ static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec
 	if( frame >= skmodel->numframes )
 	{
 #ifndef PUBLIC_BUILD
-		Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such frame %d\n", mod->name, frame );
+		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such frame %d\n", mod->name, frame );
 #endif
 		frame = 0;
 	}
 	if( e->oldframe >= (int)skmodel->numframes )
 	{
 #ifndef PUBLIC_BUILD
-		Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such oldframe %d\n", mod->name, oldframe );
+		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such oldframe %d\n", mod->name, oldframe );
 #endif
 	}
 
@@ -776,14 +776,14 @@ static skmcacheentry_t *r_skmcache_head;	// actual entries are linked to this
 static skmcacheentry_t *r_skmcache_free;	// actual entries are linked to this
 static skmcacheentry_t *r_skmcachekeys[MAX_ENTITIES*(MOD_MAX_LODS+1)];		// entities linked to cache entries
 
-#define R_SKMCacheAlloc(size) Mem_Alloc(r_skmcachepool, (size))
+#define R_SKMCacheAlloc(size) R_MallocExt(r_skmcachepool, (size), 16, 1)
 
 /*
 * R_InitSkeletalCache
 */
 void R_InitSkeletalCache( void )
 {
-	r_skmcachepool = Mem_AllocPool( r_mempool, "SKM Cache" );
+	r_skmcachepool = R_AllocPool( r_mempool, "SKM Cache" );
 
 	r_skmcache_head = NULL;
 	r_skmcache_free = NULL;
@@ -903,7 +903,7 @@ void R_ShutdownSkeletalCache( void )
 	if( !r_skmcachepool )
 		return;
 
-	Mem_FreePool( &r_skmcachepool );
+	R_FreePool( &r_skmcachepool );
 
 	r_skmcache_head = NULL;
 	r_skmcache_free = NULL;
@@ -1061,14 +1061,14 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 		if( ( framenum >= (int)skmodel->numframes ) || ( framenum < 0 ) )
 		{
 #ifndef PUBLIC_BUILD
-			Com_DPrintf( "R_DrawBonesFrameLerp %s: no such frame %d\n", mod->name, framenum );
+			ri.Com_DPrintf( "R_DrawBonesFrameLerp %s: no such frame %d\n", mod->name, framenum );
 #endif
 			framenum = 0;
 		}
 		if( ( oldframenum >= (int)skmodel->numframes ) || ( oldframenum < 0 ) )
 		{
 #ifndef PUBLIC_BUILD
-			Com_DPrintf( "R_DrawBonesFrameLerp %s: no such oldframe %d\n", mod->name, oldframenum );
+			ri.Com_DPrintf( "R_DrawBonesFrameLerp %s: no such oldframe %d\n", mod->name, oldframenum );
 #endif
 			oldframenum = 0;
 		}
@@ -1191,7 +1191,7 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 
 		rb_mesh = RB_MapBatchMesh( skmesh->numverts, skmesh->numtris * 3 );
 		if( !rb_mesh ) {
-			Com_DPrintf( S_COLOR_YELLOW "R_DrawAliasSurf: RB_MapBatchMesh returned NULL for (%s)(%s)", 
+			ri.Com_DPrintf( S_COLOR_YELLOW "R_DrawAliasSurf: RB_MapBatchMesh returned NULL for (%s)(%s)", 
 				drawSurf->model->name, skmesh->name );
 			return qfalse;
 		}
@@ -1261,7 +1261,7 @@ void R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec
 	if( ( frame >= (int)skmodel->numframes ) || ( frame < 0 ) )
 	{
 #ifndef PUBLIC_BUILD
-		Com_DPrintf( "R_SkeletalModelFrameBounds %s: no such frame %d\n", mod->name, frame );
+		ri.Com_DPrintf( "R_SkeletalModelFrameBounds %s: no such frame %d\n", mod->name, frame );
 #endif
 		ClearBounds( mins, maxs );
 		return;
@@ -1298,11 +1298,11 @@ qboolean R_AddSkeletalModelToDrawList( const entity_t *e )
 		return qfalse;
 
 	// never render weapon models or non-occluders into shadowmaps
-	if( ri.params & RP_SHADOWMAPVIEW ) {
+	if( rn.params & RP_SHADOWMAPVIEW ) {
 		if( e->renderfx & RF_WEAPONMODEL ) {
 			return qtrue;
 		}
-		if( rsc.entShadowGroups[R_ENT2NUM(e)] != ri.shadowGroup->id ) {
+		if( rsc.entShadowGroups[R_ENT2NUM(e)] != rn.shadowGroup->id ) {
 			return qtrue;
 		}
 	}
@@ -1312,7 +1312,7 @@ qboolean R_AddSkeletalModelToDrawList( const entity_t *e )
 		distance = 0;
 	}
 	else {
-		distance = Distance( e->origin, ri.viewOrigin ) + 1;
+		distance = Distance( e->origin, rn.viewOrigin ) + 1;
 	}
 
 	fog = R_FogForSphere( e->origin, radius );

@@ -32,7 +32,7 @@ float gldepthmin, gldepthmax;
 
 mapconfig_t mapConfig;
 
-refinst_t ri;
+refinst_t rn;
 
 image_t	*r_rawtexture;      // cinematic texture
 image_t	*r_notexture;       // use for bad textures
@@ -113,11 +113,11 @@ qboolean R_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
 		// compute and rotate the full bounding box
 		VectorCopy( bbox[i], corner );
 
-		Matrix4_Multiply_Vector( ri.cameraProjectionMatrix, corner, proj );
+		Matrix4_Multiply_Vector( rn.cameraProjectionMatrix, corner, proj );
 
 		if( proj[3] ) {
-			v[0] = ( proj[0] / proj[3] + 1.0f ) * 0.5f * ri.refdef.width;
-			v[1] = ( proj[1] / proj[3] + 1.0f ) * 0.5f * ri.refdef.height;
+			v[0] = ( proj[0] / proj[3] + 1.0f ) * 0.5f * rn.refdef.width;
+			v[1] = ( proj[1] / proj[3] + 1.0f ) * 0.5f * rn.refdef.height;
 			v[2] = ( proj[2] / proj[3] + 1.0f ) * 0.5f; // [-1..1] -> [0..1]
 		} else {
 			v[0] = 999999.0f;
@@ -128,30 +128,30 @@ qboolean R_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
 		if( v[2] < 0 || v[2] > 1 )
 		{
 			// the test point is behind the nearclip or further than farclip
-			if( PlaneDiff( corner, &ri.frustum[0] ) < PlaneDiff( corner, &ri.frustum[1] ) )
+			if( PlaneDiff( corner, &rn.frustum[0] ) < PlaneDiff( corner, &rn.frustum[1] ) )
 				v[0] = 0;
 			else
-				v[0] = ri.refdef.width;
-			if( PlaneDiff( corner, &ri.frustum[2] ) < PlaneDiff( corner, &ri.frustum[3] ) )
+				v[0] = rn.refdef.width;
+			if( PlaneDiff( corner, &rn.frustum[2] ) < PlaneDiff( corner, &rn.frustum[3] ) )
 				v[1] = 0;
 			else
-				v[1] = ri.refdef.height;
+				v[1] = rn.refdef.height;
 		}
 
 		x1 = min( x1, v[0] ); y1 = min( y1, v[1] );
 		x2 = max( x2, v[0] ); y2 = max( y2, v[1] );
 	}
 
-	ix1 = max( x1 - 1.0f, 0 ); ix2 = min( x2 + 1.0f, ri.refdef.width );
+	ix1 = max( x1 - 1.0f, 0 ); ix2 = min( x2 + 1.0f, rn.refdef.width );
 	if( ix1 >= ix2 )
 		return qfalse; // FIXME
 
-	iy1 = max( y1 - 1.0f, 0 ); iy2 = min( y2 + 1.0f, ri.refdef.height );
+	iy1 = max( y1 - 1.0f, 0 ); iy2 = min( y2 + 1.0f, rn.refdef.height );
 	if( iy1 >= iy2 )
 		return qfalse; // FIXME
 
 	*x = ix1;
-	*y = ri.refdef.height - iy2;
+	*y = rn.refdef.height - iy2;
 	*w = ix2 - ix1;
 	*h = iy2 - iy1;
 
@@ -177,11 +177,11 @@ qboolean R_ScissorForEntity( const entity_t *ent, vec3_t mins, vec3_t maxs, int 
 */
 void R_TransformForWorld( void )
 {
-	Matrix4_Identity( ri.objectMatrix );
-	Matrix4_Copy( ri.cameraMatrix, ri.modelviewMatrix );
+	Matrix4_Identity( rn.objectMatrix );
+	Matrix4_Copy( rn.cameraMatrix, rn.modelviewMatrix );
 
-	RB_LoadObjectMatrix( ri.objectMatrix );
-	RB_LoadModelviewMatrix( ri.modelviewMatrix );
+	RB_LoadObjectMatrix( rn.objectMatrix );
+	RB_LoadModelviewMatrix( rn.modelviewMatrix );
 }
 
 /*
@@ -189,19 +189,19 @@ void R_TransformForWorld( void )
 */
 static void R_TranslateForEntity( const entity_t *e )
 {
-	Matrix4_Identity( ri.objectMatrix );
+	Matrix4_Identity( rn.objectMatrix );
 
-	ri.objectMatrix[0] = e->scale;
-	ri.objectMatrix[5] = e->scale;
-	ri.objectMatrix[10] = e->scale;
-	ri.objectMatrix[12] = e->origin[0];
-	ri.objectMatrix[13] = e->origin[1];
-	ri.objectMatrix[14] = e->origin[2];
+	rn.objectMatrix[0] = e->scale;
+	rn.objectMatrix[5] = e->scale;
+	rn.objectMatrix[10] = e->scale;
+	rn.objectMatrix[12] = e->origin[0];
+	rn.objectMatrix[13] = e->origin[1];
+	rn.objectMatrix[14] = e->origin[2];
 
-	Matrix4_MultiplyFast( ri.cameraMatrix, ri.objectMatrix, ri.modelviewMatrix );
+	Matrix4_MultiplyFast( rn.cameraMatrix, rn.objectMatrix, rn.modelviewMatrix );
 
-	RB_LoadObjectMatrix( ri.objectMatrix );
-	RB_LoadModelviewMatrix( ri.modelviewMatrix );
+	RB_LoadObjectMatrix( rn.objectMatrix );
+	RB_LoadModelviewMatrix( rn.modelviewMatrix );
 }
 
 /*
@@ -219,39 +219,39 @@ void R_TransformForEntity( const entity_t *e )
 	}
 
 	if( e->scale != 1.0f ) {
-		ri.objectMatrix[0] = e->axis[0] * e->scale;
-		ri.objectMatrix[1] = e->axis[1] * e->scale;
-		ri.objectMatrix[2] = e->axis[2] * e->scale;
-		ri.objectMatrix[4] = e->axis[3] * e->scale;
-		ri.objectMatrix[5] = e->axis[4] * e->scale;
-		ri.objectMatrix[6] = e->axis[5] * e->scale;
-		ri.objectMatrix[8] = e->axis[6] * e->scale;
-		ri.objectMatrix[9] = e->axis[7] * e->scale;
-		ri.objectMatrix[10] = e->axis[8] * e->scale;
+		rn.objectMatrix[0] = e->axis[0] * e->scale;
+		rn.objectMatrix[1] = e->axis[1] * e->scale;
+		rn.objectMatrix[2] = e->axis[2] * e->scale;
+		rn.objectMatrix[4] = e->axis[3] * e->scale;
+		rn.objectMatrix[5] = e->axis[4] * e->scale;
+		rn.objectMatrix[6] = e->axis[5] * e->scale;
+		rn.objectMatrix[8] = e->axis[6] * e->scale;
+		rn.objectMatrix[9] = e->axis[7] * e->scale;
+		rn.objectMatrix[10] = e->axis[8] * e->scale;
 	} else {
-		ri.objectMatrix[0] = e->axis[0];
-		ri.objectMatrix[1] = e->axis[1];
-		ri.objectMatrix[2] = e->axis[2];
-		ri.objectMatrix[4] = e->axis[3];
-		ri.objectMatrix[5] = e->axis[4];
-		ri.objectMatrix[6] = e->axis[5];
-		ri.objectMatrix[8] = e->axis[6];
-		ri.objectMatrix[9] = e->axis[7];
-		ri.objectMatrix[10] = e->axis[8];
+		rn.objectMatrix[0] = e->axis[0];
+		rn.objectMatrix[1] = e->axis[1];
+		rn.objectMatrix[2] = e->axis[2];
+		rn.objectMatrix[4] = e->axis[3];
+		rn.objectMatrix[5] = e->axis[4];
+		rn.objectMatrix[6] = e->axis[5];
+		rn.objectMatrix[8] = e->axis[6];
+		rn.objectMatrix[9] = e->axis[7];
+		rn.objectMatrix[10] = e->axis[8];
 	}
 
-	ri.objectMatrix[3] = 0;
-	ri.objectMatrix[7] = 0;
-	ri.objectMatrix[11] = 0;
-	ri.objectMatrix[12] = e->origin[0];
-	ri.objectMatrix[13] = e->origin[1];
-	ri.objectMatrix[14] = e->origin[2];
-	ri.objectMatrix[15] = 1.0;
+	rn.objectMatrix[3] = 0;
+	rn.objectMatrix[7] = 0;
+	rn.objectMatrix[11] = 0;
+	rn.objectMatrix[12] = e->origin[0];
+	rn.objectMatrix[13] = e->origin[1];
+	rn.objectMatrix[14] = e->origin[2];
+	rn.objectMatrix[15] = 1.0;
 
-	Matrix4_MultiplyFast( ri.cameraMatrix, ri.objectMatrix, ri.modelviewMatrix );
+	Matrix4_MultiplyFast( rn.cameraMatrix, rn.objectMatrix, rn.modelviewMatrix );
 
-	RB_LoadObjectMatrix( ri.objectMatrix );
-	RB_LoadModelviewMatrix( ri.modelviewMatrix );
+	RB_LoadObjectMatrix( rn.objectMatrix );
+	RB_LoadModelviewMatrix( rn.modelviewMatrix );
 }
 
 /*
@@ -282,9 +282,9 @@ mfog_t *R_FogForBounds( const vec3_t mins, const vec3_t maxs )
 	unsigned int i, j;
 	mfog_t *fog;
 
-	if( !r_worldmodel || ( ri.refdef.rdflags & RDF_NOWORLDMODEL ) || !r_worldbrushmodel->numfogs )
+	if( !r_worldmodel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) || !r_worldbrushmodel->numfogs )
 		return NULL;
-	if( ri.params & RP_SHADOWMAPVIEW )
+	if( rn.params & RP_SHADOWMAPVIEW )
 		return NULL;
 	if( r_worldbrushmodel->globalfog )
 		return r_worldbrushmodel->globalfog;
@@ -335,11 +335,11 @@ qboolean R_CompletelyFogged( const mfog_t *fog, vec3_t origin, float radius )
 {
 	// note that fog->distanceToEye < 0 is always true if
 	// globalfog is not NULL and we're inside the world boundaries
-	if( fog && fog->shader && fog == ri.fog_eye )
+	if( fog && fog->shader && fog == rn.fog_eye )
 	{
-		float vpnDist = ( ( ri.viewOrigin[0] - origin[0] ) * ri.viewAxis[AXIS_FORWARD+0] + 
-			( ri.viewOrigin[1] - origin[1] ) * ri.viewAxis[AXIS_FORWARD+1] + 
-			( ri.viewOrigin[2] - origin[2] ) * ri.viewAxis[AXIS_FORWARD+2] );
+		float vpnDist = ( ( rn.viewOrigin[0] - origin[0] ) * rn.viewAxis[AXIS_FORWARD+0] + 
+			( rn.viewOrigin[1] - origin[1] ) * rn.viewAxis[AXIS_FORWARD+1] + 
+			( rn.viewOrigin[2] - origin[2] ) * rn.viewAxis[AXIS_FORWARD+2] );
 		return ( ( vpnDist + radius ) / fog->shader->fog_dist ) < -1;
 	}
 
@@ -354,8 +354,8 @@ int R_LODForSphere( const vec3_t origin, float radius )
 	float dist;
 	int lod;
 
-	dist = DistanceFast( origin, ri.lodOrigin );
-	dist *= ri.lod_dist_scale_for_fov;
+	dist = DistanceFast( origin, rn.lodOrigin );
+	dist *= rn.lod_dist_scale_for_fov;
 
 	lod = (int)( dist / radius );
 	if( r_lodscale->integer )
@@ -449,16 +449,16 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 	if( rotation )
 	{
-		RotatePointAroundVector( v_left, &ri.viewAxis[AXIS_FORWARD], &ri.viewAxis[AXIS_RIGHT], rotation );
-		CrossProduct( &ri.viewAxis[AXIS_FORWARD], v_left, v_up );
+		RotatePointAroundVector( v_left, &rn.viewAxis[AXIS_FORWARD], &rn.viewAxis[AXIS_RIGHT], rotation );
+		CrossProduct( &rn.viewAxis[AXIS_FORWARD], v_left, v_up );
 	}
 	else
 	{
-		VectorCopy( &ri.viewAxis[AXIS_RIGHT], v_left );
-		VectorCopy( &ri.viewAxis[AXIS_UP], v_up );
+		VectorCopy( &rn.viewAxis[AXIS_RIGHT], v_left );
+		VectorCopy( &rn.viewAxis[AXIS_UP], v_up );
 	}
 
-	if( ri.params & RP_MIRRORVIEW )
+	if( rn.params & RP_MIRRORVIEW )
 		VectorInverse( v_left );
 
 	VectorMA( e->origin, -radius, v_up, point );
@@ -498,9 +498,9 @@ static qboolean R_AddSpriteToDrawList( const entity_t *e )
 	}
 
 	dist =
-		( e->origin[0] - ri.refdef.vieworg[0] ) * ri.viewAxis[AXIS_FORWARD+0] +
-		( e->origin[1] - ri.refdef.vieworg[1] ) * ri.viewAxis[AXIS_FORWARD+1] +
-		( e->origin[2] - ri.refdef.vieworg[2] ) * ri.viewAxis[AXIS_FORWARD+2];
+		( e->origin[0] - rn.refdef.vieworg[0] ) * rn.viewAxis[AXIS_FORWARD+0] +
+		( e->origin[1] - rn.refdef.vieworg[1] ) * rn.viewAxis[AXIS_FORWARD+1] +
+		( e->origin[2] - rn.refdef.vieworg[2] ) * rn.viewAxis[AXIS_FORWARD+2];
 	if( dist <= 0 )
 		return qfalse; // cull it because we don't want to sort unneeded things
 
@@ -684,16 +684,16 @@ void R_Set2DMode( qboolean enable )
 		// reset 2D batching
 		R_ResetStretchPic();
 
-		Matrix4_OrthogonalProjection( 0, glConfig.width, glConfig.height, 0, -99999, 99999, ri.projectionMatrix );
-		Matrix4_Copy( mat4x4_identity, ri.modelviewMatrix );
-		Matrix4_Copy( ri.projectionMatrix, ri.cameraProjectionMatrix );
+		Matrix4_OrthogonalProjection( 0, glConfig.width, glConfig.height, 0, -99999, 99999, rn.projectionMatrix );
+		Matrix4_Copy( mat4x4_identity, rn.modelviewMatrix );
+		Matrix4_Copy( rn.projectionMatrix, rn.cameraProjectionMatrix );
 
 		// set 2D virtual screen size
 		RB_Scissor( 0, 0, glConfig.width, glConfig.height );
 		RB_Viewport( 0, 0, glConfig.width, glConfig.height );
 
-		RB_LoadProjectionMatrix( ri.projectionMatrix );
-		RB_LoadModelviewMatrix( ri.modelviewMatrix );
+		RB_LoadProjectionMatrix( rn.projectionMatrix );
+		RB_LoadModelviewMatrix( rn.modelviewMatrix );
 
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 	}
@@ -870,9 +870,9 @@ float R_DefaultFarClip( void )
 {
 	float farclip_dist;
 
-	if( ri.params & RP_SHADOWMAPVIEW ) {
-		return ri.shadowGroup->projDist;
-	} else if( r_worldmodel && !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog ) {
+	if( rn.params & RP_SHADOWMAPVIEW ) {
+		return rn.shadowGroup->projDist;
+	} else if( r_worldmodel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog ) {
 		farclip_dist = r_worldbrushmodel->globalfog->shader->fog_dist;
 	} else {
 		farclip_dist = r_farclip_min;
@@ -891,18 +891,18 @@ static void R_SetVisFarClip( void )
 	vec3_t tmp;
 	float farclip_dist;
 
-	if( !r_worldmodel || ( ri.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+	if( !r_worldmodel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 		return;
 	}
 
 	farclip_dist = 0;
 	for( i = 0; i < 8; i++ )
 	{
-		tmp[0] = ( ( i & 1 ) ? ri.visMins[0] : ri.visMaxs[0] );
-		tmp[1] = ( ( i & 2 ) ? ri.visMins[1] : ri.visMaxs[1] );
-		tmp[2] = ( ( i & 4 ) ? ri.visMins[2] : ri.visMaxs[2] );
+		tmp[0] = ( ( i & 1 ) ? rn.visMins[0] : rn.visMaxs[0] );
+		tmp[1] = ( ( i & 2 ) ? rn.visMins[1] : rn.visMaxs[1] );
+		tmp[2] = ( ( i & 4 ) ? rn.visMins[2] : rn.visMaxs[2] );
 
-		dist = DistanceSquared( tmp, ri.viewOrigin );
+		dist = DistanceSquared( tmp, rn.viewOrigin );
 		farclip_dist = max( farclip_dist, dist );
 	}
 
@@ -914,10 +914,10 @@ static void R_SetVisFarClip( void )
 		if( farclip_dist > fogdist )
 			farclip_dist = fogdist;
 		else
-			ri.clipFlags &= ~16;
+			rn.clipFlags &= ~16;
 	}
 
-	ri.farClip = max( r_farclip_min, farclip_dist ) + r_farclip_bias;
+	rn.farClip = max( r_farclip_min, farclip_dist ) + r_farclip_bias;
 }
 
 /*
@@ -928,23 +928,23 @@ static void R_SetupFrame( void )
 	mleaf_t *leaf;
 
 	// build the transformation matrix for the given view angles
-	VectorCopy( ri.refdef.vieworg, ri.viewOrigin );
-	Matrix3_Copy( ri.refdef.viewaxis, ri.viewAxis );
+	VectorCopy( rn.refdef.vieworg, rn.viewOrigin );
+	Matrix3_Copy( rn.refdef.viewaxis, rn.viewAxis );
 
 	r_framecount++;
 
-	ri.lod_dist_scale_for_fov = tan( ri.refdef.fov_x * ( M_PI/180 ) * 0.5f );
+	rn.lod_dist_scale_for_fov = tan( rn.refdef.fov_x * ( M_PI/180 ) * 0.5f );
 
 	// current viewcluster
-	if( !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 	{
-		VectorCopy( r_worldmodel->mins, ri.visMins );
-		VectorCopy( r_worldmodel->maxs, ri.visMaxs );
+		VectorCopy( r_worldmodel->mins, rn.visMins );
+		VectorCopy( r_worldmodel->maxs, rn.visMaxs );
 
-		if( !( ri.params & RP_OLDVIEWCLUSTER ) )
+		if( !( rn.params & RP_OLDVIEWCLUSTER ) )
 		{
 			//r_oldviewcluster = r_viewcluster;
-			leaf = Mod_PointInLeaf( ri.pvsOrigin, r_worldmodel );
+			leaf = Mod_PointInLeaf( rn.pvsOrigin, r_worldmodel );
 			r_viewcluster = leaf->cluster;
 			r_viewarea = leaf->area;
 		}
@@ -956,20 +956,20 @@ static void R_SetupFrame( void )
 */
 static void R_SetupViewMatrices( void )
 {
-	refdef_t *rd = &ri.refdef;
+	refdef_t *rd = &rn.refdef;
 
-	Matrix4_Modelview( rd->vieworg, rd->viewaxis, ri.cameraMatrix );
+	Matrix4_Modelview( rd->vieworg, rd->viewaxis, rn.cameraMatrix );
 
 	if( rd->rdflags & RDF_USEORTHO ) {
 		Matrix4_OrthogonalProjection( -rd->ortho_x, rd->ortho_x, -rd->ortho_y, rd->ortho_y, 
-			-ri.farClip, ri.farClip, ri.projectionMatrix );
+			-rn.farClip, rn.farClip, rn.projectionMatrix );
 	}
 	else {
 		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y, 
-			Z_NEAR, ri.farClip, rf.cameraSeparation, ri.projectionMatrix );
+			Z_NEAR, rn.farClip, rf.cameraSeparation, rn.projectionMatrix );
 	}
 
-	Matrix4_Multiply( ri.projectionMatrix, ri.cameraMatrix, ri.cameraProjectionMatrix );
+	Matrix4_Multiply( rn.projectionMatrix, rn.cameraMatrix, rn.cameraProjectionMatrix );
 }
 
 /*
@@ -978,26 +978,26 @@ static void R_SetupViewMatrices( void )
 static void R_Clear( int bitMask )
 {
 	int bits;
-	qbyte *envColor = r_worldmodel && !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog ?
+	qbyte *envColor = r_worldmodel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog ?
 		r_worldbrushmodel->globalfog->shader->fog_color : mapConfig.environmentColor;
 
 	bits = GL_DEPTH_BUFFER_BIT;
 
-	if( !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() )
+	if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() )
 		bits |= GL_COLOR_BUFFER_BIT;
 	if( glConfig.stencilEnabled )
 		bits |= GL_STENCIL_BUFFER_BIT;
 
 	bits &= bitMask;
 
-	if( ri.fbColorAttachment && (bits & GL_COLOR_BUFFER_BIT) ) {
-		R_AttachTextureToFBObject( R_ActiveFBObject(), ri.fbColorAttachment );
+	if( rn.fbColorAttachment && (bits & GL_COLOR_BUFFER_BIT) ) {
+		R_AttachTextureToFBObject( R_ActiveFBObject(), rn.fbColorAttachment );
 	}
-	if( ri.fbDepthAttachment ) {
-		R_AttachTextureToFBObject( R_ActiveFBObject(), ri.fbDepthAttachment );
+	if( rn.fbDepthAttachment ) {
+		R_AttachTextureToFBObject( R_ActiveFBObject(), rn.fbDepthAttachment );
 	}
 
-	if( !( ri.params & RP_SHADOWMAPVIEW ) ) {
+	if( !( rn.params & RP_SHADOWMAPVIEW ) ) {
 		RB_Clear( bits, envColor[0] / 255.0, envColor[1] / 255.0, envColor[2] / 255.0, 1 );
 	}
 	else {
@@ -1010,25 +1010,25 @@ static void R_Clear( int bitMask )
 */
 void R_SetupGL( int clearBitMask )
 {
-	RB_Scissor( ri.scissor[0], ri.scissor[1], ri.scissor[2], ri.scissor[3] );
-	RB_Viewport( ri.viewport[0], ri.viewport[1], ri.viewport[2], ri.viewport[3] );
+	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
+	RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
 
-	if( ri.params & RP_CLIPPLANE )
+	if( rn.params & RP_CLIPPLANE )
 	{
-		cplane_t *p = &ri.clipPlane;
-		Matrix4_ObliqueNearClipping( p->normal, -p->dist, ri.cameraMatrix, ri.projectionMatrix );
+		cplane_t *p = &rn.clipPlane;
+		Matrix4_ObliqueNearClipping( p->normal, -p->dist, rn.cameraMatrix, rn.projectionMatrix );
 	}
 
-	RB_SetZClip( Z_NEAR, ri.farClip );
+	RB_SetZClip( Z_NEAR, rn.farClip );
 
-	RB_LoadProjectionMatrix( ri.projectionMatrix );
+	RB_LoadProjectionMatrix( rn.projectionMatrix );
 
-	RB_LoadModelviewMatrix( ri.cameraMatrix );
+	RB_LoadModelviewMatrix( rn.cameraMatrix );
 
-	if( ri.params & RP_FLIPFRONTFACE )
+	if( rn.params & RP_FLIPFRONTFACE )
 		RB_FlipFrontFace();
 
-	if( ( ri.params & RP_SHADOWMAPVIEW ) && glConfig.ext.shadow )
+	if( ( rn.params & RP_SHADOWMAPVIEW ) && glConfig.ext.shadow )
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE );
 
 	R_Clear( clearBitMask );
@@ -1039,10 +1039,10 @@ void R_SetupGL( int clearBitMask )
 */
 static void R_EndGL( void )
 {
-	if( ( ri.params & RP_SHADOWMAPVIEW ) && glConfig.ext.shadow )
+	if( ( rn.params & RP_SHADOWMAPVIEW ) && glConfig.ext.shadow )
 		RB_SetShaderStateMask( ~0, 0 );
 
-	if( ri.params & RP_FLIPFRONTFACE )
+	if( rn.params & RP_FLIPFRONTFACE )
 		RB_FlipFrontFace();
 }
 
@@ -1058,11 +1058,11 @@ static void R_CalcDistancesToFogVolumes( void )
 
 	if( !r_worldmodel )
 		return;
-	if( ri.refdef.rdflags & RDF_NOWORLDMODEL )
+	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
 		return;
 
-	v = ri.viewOrigin;
-	ri.fog_eye = NULL;
+	v = rn.viewOrigin;
+	rn.fog_eye = NULL;
 
 	for( i = 0, fog = r_worldbrushmodel->fogs; i < r_worldbrushmodel->numfogs; i++, fog++ ) {
 		dist = PlaneDiff( v, fog->visibleplane );
@@ -1078,11 +1078,11 @@ static void R_CalcDistancesToFogVolumes( void )
 				}
 			}
 			if( j == 3 ) {
-				ri.fog_eye = fog;
+				rn.fog_eye = fog;
 			}
 		}
 
-		ri.fog_dist_to_eye[i] = dist;
+		rn.fog_dist_to_eye[i] = dist;
 	}
 }
 
@@ -1093,13 +1093,13 @@ static void R_DrawEntities( void )
 {
 	unsigned int i;
 	entity_t *e;
-	qboolean shadowmap = ( ( ri.params & RP_SHADOWMAPVIEW ) != 0 );
+	qboolean shadowmap = ( ( rn.params & RP_SHADOWMAPVIEW ) != 0 );
 	qboolean culled = qtrue;
 
-	if( ri.params & RP_NOENTS )
+	if( rn.params & RP_NOENTS )
 		return;
 
-	if( ri.params & RP_ENVVIEW )
+	if( rn.params & RP_ENVVIEW )
 	{
 		for( i = 0; i < rsc.numBmodelEntities; i++ )
 		{
@@ -1153,10 +1153,10 @@ static void R_DrawEntities( void )
 		}
 
 		if( shadowmap && !culled ) {
-			if( rsc.entShadowGroups[i] != ri.shadowGroup->id ||
+			if( rsc.entShadowGroups[i] != rn.shadowGroup->id ||
 				r_shadows_self_shadow->integer ) {
 				// not from the casting group, mark as shadowed
-				rsc.entShadowBits[i] |= ri.shadowGroup->bit;
+				rsc.entShadowBits[i] |= rn.shadowGroup->bit;
 			}
 		}
 	}
@@ -1171,11 +1171,11 @@ static void R_UseRefInstFBO( void )
 {
 	int fbo;
 
-	if( ri.fbColorAttachment ) {
-		fbo = ri.fbColorAttachment->fbo;
+	if( rn.fbColorAttachment ) {
+		fbo = rn.fbColorAttachment->fbo;
 	}
-	else if( ri.fbDepthAttachment ) {
-		fbo = ri.fbDepthAttachment->fbo;
+	else if( rn.fbDepthAttachment ) {
+		fbo = rn.fbDepthAttachment->fbo;
 	}
 	else {
 		fbo = 0;
@@ -1183,7 +1183,7 @@ static void R_UseRefInstFBO( void )
 
 	R_UseFBObject( fbo );
 
-	if( fbo && !ri.fbColorAttachment ) {
+	if( fbo && !rn.fbColorAttachment ) {
 		// inform the driver we do not wish to render to the color buffer
 		R_DisableFBObjectDrawBuffer();
 	}
@@ -1195,63 +1195,63 @@ static void R_UseRefInstFBO( void )
 void R_RenderView( const refdef_t *fd )
 {
 	int msec = 0;
-	qboolean shadowMap = ri.params & RP_SHADOWMAPVIEW ? qtrue : qfalse;
+	qboolean shadowMap = rn.params & RP_SHADOWMAPVIEW ? qtrue : qfalse;
 
-	ri.refdef = *fd;
-	ri.numVisSurfaces = 0;
+	rn.refdef = *fd;
+	rn.numVisSurfaces = 0;
 
 	// load view matrices with default far clip value
 	R_SetupViewMatrices();
 
-	ri.shadowBits = 0;
-	ri.dlightBits = 0;
+	rn.shadowBits = 0;
+	rn.dlightBits = 0;
 	
-	ri.numPortalSurfaces = 0;
+	rn.numPortalSurfaces = 0;
 
-	ClearBounds( ri.visMins, ri.visMaxs );
+	ClearBounds( rn.visMins, rn.visMaxs );
 
 	R_ClearSky();
 
 	// enable PVS culling for some rendering instances
-	if( ri.refdef.rdflags & RDF_PORTALINVIEW
-		|| ((ri.refdef.rdflags & RDF_SKYPORTALINVIEW) && !ri.refdef.skyportal.noEnts) ) {
-		ri.params |= RP_PVSCULL;
+	if( rn.refdef.rdflags & RDF_PORTALINVIEW
+		|| ((rn.refdef.rdflags & RDF_SKYPORTALINVIEW) && !rn.refdef.skyportal.noEnts) ) {
+		rn.params |= RP_PVSCULL;
 	}
 
 	if( r_novis->integer ) {
-		ri.params |= RP_NOVIS;
+		rn.params |= RP_NOVIS;
 	}
 
 	if( r_lightmap->integer ) {
-		ri.params |= RP_LIGHTMAP;
+		rn.params |= RP_LIGHTMAP;
 	}
 
 	if( r_drawflat->integer ) {
-		ri.params |= RP_DRAWFLAT;
+		rn.params |= RP_DRAWFLAT;
 	}
 
 	R_ClearDrawList();
 
-	if( !r_worldmodel && !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) )
-		Com_Error( ERR_DROP, "R_RenderView: NULL worldmodel" );
+	if( !r_worldmodel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
+		ri.Com_Error( ERR_DROP, "R_RenderView: NULL worldmodel" );
 
 	R_SetupFrame();
 
-	R_SetupFrustum( &ri.refdef, ri.farClip, ri.frustum );
+	R_SetupFrustum( &rn.refdef, rn.farClip, rn.frustum );
 
 	// we know the initial farclip at this point after determining visible world leafs
 	// R_DrawEntities can make adjustments as well
 
 	if( !shadowMap ) {
 		if( r_speeds->integer )
-			msec = Sys_Milliseconds();
+			msec = ri.Sys_Milliseconds();
 		R_MarkLeaves();
 		if( r_speeds->integer )
-			r_mark_leaves += ( Sys_Milliseconds() - msec );
+			r_mark_leaves += ( ri.Sys_Milliseconds() - msec );
 
 		R_DrawWorld();
 
-		if( !ri.numVisSurfaces ) {
+		if( !rn.numVisSurfaces ) {
 			// no world surfaces visible
 			return;
 		}
@@ -1261,17 +1261,17 @@ void R_RenderView( const refdef_t *fd )
 		R_DrawCoronas();
 
 		if( r_speeds->integer )
-			msec = Sys_Milliseconds();
+			msec = ri.Sys_Milliseconds();
 		R_DrawPolys();
 		if( r_speeds->integer )
-			r_add_polys += ( Sys_Milliseconds() - msec );
+			r_add_polys += ( ri.Sys_Milliseconds() - msec );
 	}
 
 	if( r_speeds->integer )
-		msec = Sys_Milliseconds();
+		msec = ri.Sys_Milliseconds();
 	R_DrawEntities();
 	if( r_speeds->integer )
-		r_add_entities += ( Sys_Milliseconds() - msec );
+		r_add_entities += ( ri.Sys_Milliseconds() - msec );
 
 	if( !shadowMap ) {
 		// now set  the real far clip value and reload view matrices
@@ -1289,16 +1289,16 @@ void R_RenderView( const refdef_t *fd )
 
 	R_DrawPortals();
 
-	if( r_portalonly->integer && !( ri.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) )
+	if( r_portalonly->integer && !( rn.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) )
 		return;
 
 	R_SetupGL( ~0 );
 
 	if( r_speeds->integer )
-		msec = Sys_Milliseconds();
+		msec = ri.Sys_Milliseconds();
 	R_DrawSurfaces();
 	if( r_speeds->integer )
-		r_draw_meshes += ( Sys_Milliseconds() - msec );
+		r_draw_meshes += ( ri.Sys_Milliseconds() - msec );
 
 	if( r_showtris->integer )
 		R_DrawOutlinedSurfaces();
@@ -1328,7 +1328,7 @@ qboolean R_PushRefInst( void )
 	if( riStackSize == REFINST_STACK_SIZE ) {
 		return qfalse;
 	}
-	riStack[riStackSize++] = ri;
+	riStack[riStackSize++] = rn;
 	R_EndGL();
 	return qtrue;
 }
@@ -1341,7 +1341,7 @@ void R_PopRefInst( int clearBitMask )
 	if( !riStackSize ) {
 		return;
 	}
-	ri = riStack[--riStackSize];
+	rn = riStack[--riStackSize];
 	R_UseRefInstFBO();
 	R_SetupGL( clearBitMask );
 }
@@ -1478,10 +1478,10 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear )
 	// keep r_outlines_cutoff value in sane bounds to prevent wallhacking
 	if( r_outlines_scale->modified ) {
 		if( r_outlines_scale->value < 0 ) {
-			Cvar_ForceSet( r_outlines_scale->name, "0" );
+			ri.Cvar_ForceSet( r_outlines_scale->name, "0" );
 		}
 		else if( r_outlines_scale->value > 3 ) {
-			Cvar_ForceSet( r_outlines_scale->name, "3" );
+			ri.Cvar_ForceSet( r_outlines_scale->name, "3" );
 		}
 		r_outlines_scale->modified = qfalse;
 	}
@@ -1517,6 +1517,14 @@ void R_EndFrame( void )
 }
 
 /*
+* R_AppActivate
+*/
+void R_AppActivate( qboolean active, qboolean destroy )
+{
+	GLimp_AppActivate( active, destroy );
+}
+
+/*
 * R_ClearStats
 */
 void R_ClearStats( void )
@@ -1542,7 +1550,7 @@ const char *R_SpeedsMessage( char *out, size_t size )
 		out[0] = '\0';
 	}
 
-	if( r_speeds->integer && !( ri.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( r_speeds->integer && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 	{
 		switch( r_speeds->integer )
 		{
@@ -1602,7 +1610,7 @@ const char *R_SpeedsMessage( char *out, size_t size )
 		case 6:
 			Q_snprintfz( out, size,
 				"%.1f %.1f %.1f",
-				ri.refdef.vieworg[0], ri.refdef.vieworg[1], ri.refdef.vieworg[2]
+				rn.refdef.vieworg[0], rn.refdef.vieworg[1], rn.refdef.vieworg[2]
 				);
 			break;
 		}
@@ -1641,7 +1649,7 @@ void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out 
 			-4096.0f, 4096.0f, p );
 	}
 	else {
-		Matrix4_PerspectiveProjection( trd.fov_x, trd.fov_y, Z_NEAR, ri.farClip, 
+		Matrix4_PerspectiveProjection( trd.fov_x, trd.fov_y, Z_NEAR, rn.farClip, 
 			rf.cameraSeparation, p );
 	}
 
@@ -1673,4 +1681,61 @@ void R_LatLongToNorm( const qbyte latlong[2], vec3_t out )
 	sin_b = sinTable[latlong[1]];
 
 	VectorSet( out, cos_b * sin_a, sin_b * sin_a, cos_a );
+}
+
+/*
+* R_CopyString
+*/
+char *R_CopyString_( const char *in, const char *filename, int fileline )
+{
+	char *out;
+
+	out = ri.Mem_AllocExt( r_mempool, ( strlen( in ) + 1 ), 0, 1, filename, fileline );
+	strcpy( out, in );
+
+	return out;
+}
+
+/*
+* R_LoadFile
+*/
+int R_LoadFile_( const char *path, void **buffer, const char *filename, int fileline )
+{
+	qbyte *buf;
+	unsigned int len;
+	int fhandle;
+
+	buf = NULL; // quiet compiler warning
+
+	// look for it in the filesystem or pack files
+	len = ri.FS_FOpenFile( path, &fhandle, FS_READ );
+	if( !fhandle )
+	{
+		if( buffer )
+			*buffer = NULL;
+		return -1;
+	}
+
+	if( !buffer )
+	{
+		ri.FS_FCloseFile( fhandle );
+		return len;
+	}
+
+	buf = ( qbyte *)ri.Mem_AllocExt( r_mempool, len + 1, 16, 0, filename, fileline );
+	buf[len] = 0;
+	*buffer = buf;
+
+	ri.FS_Read( buf, len, fhandle );
+	ri.FS_FCloseFile( fhandle );
+
+	return len;
+}
+
+/*
+* R_FreeFile
+*/
+void R_FreeFile_( void *buffer, const char *filename, int fileline )
+{
+	ri.Mem_Free( buffer, filename, fileline );
 }

@@ -257,11 +257,11 @@ static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visS
 {
 	int side = visSide->index;
 
-	if( ri.skyMins[0][side] >= ri.skyMaxs[0][side] ||
-		ri.skyMins[1][side] >= ri.skyMaxs[1][side] )
+	if( rn.skyMins[0][side] >= rn.skyMaxs[0][side] ||
+		rn.skyMins[1][side] >= rn.skyMaxs[1][side] )
 		return;
 
-	RB_BindShader( rsc.worldent, rf.skyShader, ri.skyFog );
+	RB_BindShader( rsc.worldent, rf.skyShader, rn.skyFog );
 
 	RB_BindVBO( skydome->linearVbos[side]->index, GL_TRIANGLES );
 
@@ -294,11 +294,11 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 	int side = 5;
 	const visSkySide_t *visSide = visSides + side;
 
-	if( ri.skyMins[0][side] >= ri.skyMaxs[0][side] ||
-		ri.skyMins[1][side] >= ri.skyMaxs[1][side] )
+	if( rn.skyMins[0][side] >= rn.skyMaxs[0][side] ||
+		rn.skyMins[1][side] >= rn.skyMaxs[1][side] )
 		return;
 
-	RB_BindShader( rsc.worldent, rf.envShader, ri.skyFog );
+	RB_BindShader( rsc.worldent, rf.envShader, rn.skyFog );
 
 	RB_BindVBO( skydome->linearVbos[side]->index, GL_TRIANGLES );
 
@@ -316,7 +316,7 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	vec3_t mins, maxs;
 	int umin, umax, vmin, vmax;
 	entity_t skyent;
-	refdef_t *rd = &ri.refdef;
+	refdef_t *rd = &rn.refdef;
 	skydome_t *skydome = r_worldbrushmodel->skydome;
 
 	if( !skydome )
@@ -329,17 +329,17 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 	for( i = 0; i < 6; i++ )
 	{
-		if( ri.skyMins[0][i] >= ri.skyMaxs[0][i] ||
-			ri.skyMins[1][i] >= ri.skyMaxs[1][i] )
+		if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
+			rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
 			continue;
 
 		// increase the visible sides counter
 		numVisSides++;
 
-		umin = (int)( ( ri.skyMins[0][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) );
-		umax = (int)( ( ri.skyMaxs[0][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) ) + 1;
-		vmin = (int)( ( ri.skyMins[1][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) );
-		vmax = (int)( ( ri.skyMaxs[1][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) ) + 1;
+		umin = (int)( ( rn.skyMins[0][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) );
+		umax = (int)( ( rn.skyMaxs[0][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) ) + 1;
+		vmin = (int)( ( rn.skyMins[1][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) );
+		vmax = (int)( ( rn.skyMaxs[1][i]+1.0f )*0.5f*(float)( SIDE_SIZE-1 ) ) + 1;
 
 		clamp( umin, 0, SIDE_SIZE-1 );
 		clamp( umax, 0, SIDE_SIZE-1 );
@@ -362,8 +362,8 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	if( !numVisSides )
 		return qfalse;
 
-	VectorAdd( mins, ri.viewOrigin, mins );
-	VectorAdd( maxs, ri.viewOrigin, maxs );
+	VectorAdd( mins, rn.viewOrigin, mins );
+	VectorAdd( maxs, rn.viewOrigin, maxs );
 
 	if( rd->rdflags & RDF_SKYPORTALINVIEW ) {
 		R_DrawSkyPortal( e, &rd->skyportal, mins, maxs );
@@ -373,7 +373,7 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	// center skydome on camera to give the illusion of a larger space
 	skyent = *rsc.worldent;
 	skyent.scale = shader->skyHeight;
-	VectorCopy( ri.viewOrigin, skyent.origin );
+	VectorCopy( rn.viewOrigin, skyent.origin );
 	R_TransformForEntity( &skyent );
 
 	if( shader->skyboxImages[0] )
@@ -383,14 +383,14 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 	if( shader->numpasses )
 	{
-		RB_BindShader( rsc.worldent, shader, ri.skyFog );
+		RB_BindShader( rsc.worldent, shader, rn.skyFog );
 
 		for( i = 0; i < 5; i++ )
 		{
 			const visSkySide_t *visSide = visSkySides + i;
 
-			if( ri.skyMins[0][i] >= ri.skyMaxs[0][i] ||
-				ri.skyMins[1][i] >= ri.skyMaxs[1][i] )
+			if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
+				rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
 				continue;
 
 			RB_BindVBO( skydome->sphereVbos[i]->index, GL_TRIANGLES );
@@ -493,14 +493,14 @@ static void DrawSkyPolygon( int nump, vec3_t vecs )
 		j = vec_to_st[axis][1];
 		t = ( j < 0 ) ? -vecs[-j -1] * dv : vecs[j-1] * dv;
 
-		if( s < ri.skyMins[0][axis] )
-			ri.skyMins[0][axis] = s;
-		if( t < ri.skyMins[1][axis] )
-			ri.skyMins[1][axis] = t;
-		if( s > ri.skyMaxs[0][axis] )
-			ri.skyMaxs[0][axis] = s;
-		if( t > ri.skyMaxs[1][axis] )
-			ri.skyMaxs[1][axis] = t;
+		if( s < rn.skyMins[0][axis] )
+			rn.skyMins[0][axis] = s;
+		if( t < rn.skyMins[1][axis] )
+			rn.skyMins[1][axis] = t;
+		if( s > rn.skyMaxs[0][axis] )
+			rn.skyMaxs[0][axis] = s;
+		if( t > rn.skyMaxs[1][axis] )
+			rn.skyMaxs[1][axis] = t;
 	}
 }
 
@@ -522,7 +522,7 @@ void ClipSkyPolygon( int nump, vec3_t vecs, int stage )
 	int i, j;
 
 	if( nump > MAX_CLIP_VERTS )
-		Com_Error( ERR_DROP, "ClipSkyPolygon: MAX_CLIP_VERTS" );
+		ri.Com_Error( ERR_DROP, "ClipSkyPolygon: MAX_CLIP_VERTS" );
 
 loc1:
 	if( stage == 6 )
@@ -625,22 +625,22 @@ void R_AddSkyToDrawList( const msurface_t *fa )
 	vert = mesh->xyzArray;
 	for( i = 0; i < mesh->numElems; i += 3, elem += 3 )
 	{
-		VectorSubtract( vert[elem[0]], ri.viewOrigin, verts[0] );
-		VectorSubtract( vert[elem[1]], ri.viewOrigin, verts[1] );
-		VectorSubtract( vert[elem[2]], ri.viewOrigin, verts[2] );
+		VectorSubtract( vert[elem[0]], rn.viewOrigin, verts[0] );
+		VectorSubtract( vert[elem[1]], rn.viewOrigin, verts[1] );
+		VectorSubtract( vert[elem[2]], rn.viewOrigin, verts[2] );
 		ClipSkyPolygon( 3, verts[0], 0 );
 	}
 
 	if( r_warpFaceVis ) {
 		if( fa->fog ) {
-			ri.skyFog = fa->fog;
+			rn.skyFog = fa->fog;
 		} else if( r_worldbrushmodel->globalfog ) {
-			ri.skyFog = r_worldbrushmodel->globalfog;
+			rn.skyFog = r_worldbrushmodel->globalfog;
 		}
 
 		// there should be only one sky drawSurf in the list
-		if( !ri.skyShader ) {
-			ri.skyShader = fa->shader;
+		if( !rn.skyShader ) {
+			rn.skyShader = fa->shader;
 			R_AddDSurfToDrawList( rsc.worldent, NULL, fa->shader, 0, r_warpFaceAxis, NULL, &r_skySurf );
 		}
 	}
@@ -653,12 +653,12 @@ void R_ClearSky( void )
 {
 	int i;
 
-	ri.skyFog = NULL;
-	ri.skyShader = NULL;
+	rn.skyFog = NULL;
+	rn.skyShader = NULL;
 	for( i = 0; i < 6; i++ )
 	{
-		ri.skyMins[0][i] = ri.skyMins[1][i] = 9999999;
-		ri.skyMaxs[0][i] = ri.skyMaxs[1][i] = -9999999;
+		rn.skyMins[0][i] = rn.skyMins[1][i] = 9999999;
+		rn.skyMaxs[0][i] = rn.skyMaxs[1][i] = -9999999;
 	}
 }
 

@@ -22,16 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _CIN_PUBLIC_H_
 
 // cin_public.h -- cinematics playback as a separate dll, making the engine
-// agnostic of actual file types/containers
+// container/format-agnostic
 
-#define	CIN_API_VERSION   1
+#define	CIN_API_VERSION				3
 
 //===============================================================
 
-#define CIN_LOOP					1
-#define CIN_NOAUDIO					2
-
 struct cinematics_s;
+typedef struct cinematics_s cinematics_t;
 
 //
 // functions provided by the main engine
@@ -86,7 +84,7 @@ typedef struct
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
-	void *( *Mem_Alloc )( struct mempool_s *pool, int size, const char *filename, int fileline );
+	void *( *Mem_Alloc )( struct mempool_s *pool, size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
@@ -95,9 +93,6 @@ typedef struct
 	void ( *S_Clear )( void );
 	void ( *S_RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
 	unsigned int ( *S_GetRawSamplesTime )( void ); // Mixing position in milliseconds for A/V sync
-
-	void *( *LoadLibrary )( const char *name, dllfunc_t *funcs );
-	void ( *UnloadLibrary )( void **lib );
 } cin_import_t;
 
 //
@@ -112,10 +107,10 @@ typedef struct
 	qboolean ( *Init )( qboolean verbose );
 	void ( *Shutdown )( qboolean verbose );
 
-	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, int flags );
-	qboolean ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
-	qbyte *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-	void ( *Close )( struct cinematics_s *cin );
+	cinematics_t *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
+	qboolean ( *NeedNextFrame )( cinematics_t *cin, unsigned int curtime );
+	qbyte *( *ReadNextFrame )( cinematics_t *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	void ( *Close )( cinematics_t *cin );
 } cin_export_t;
 
 #endif

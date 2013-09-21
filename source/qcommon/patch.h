@@ -18,18 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __R_TRACE_H__
-#define __R_TRACE_H__
+#define PATCH_EVALUATE_DECL(type)										\
+	void Patch_Evaluate_##type											\
+	(const type *p, int *numcp, const int *tess, type *dest, int comp)
 
-typedef struct
-{
-	float fraction;				// time completed, 1.0 = didn't hit anything
-	vec3_t endpos;				// final position
-	cplane_t plane;				// surface normal at impact
-	int surfFlags;				// surface hit
-	int ent;					// not set by CM_*() functions
-} rtrace_t;
+PATCH_EVALUATE_DECL(vec_t);
+PATCH_EVALUATE_DECL(qbyte);
 
-msurface_t *R_TraceLine( rtrace_t *tr, const vec3_t start, const vec3_t end, int surfumask );
+#define Patch_Evaluate(type,comp,p,numcp,tess,dest)						\
+	Patch_Evaluate_##type(p,numcp,tess,dest,comp)
 
-#endif /*__R_TRACE_H__*/
+void Patch_GetFlatness( float maxflat, const float *points, int comp, const int *patch_cp, int *flat );

@@ -37,7 +37,8 @@ glwstate_t glw_state = { NULL, qfalse };
  * @param fullscreen <code>qtrue</code> for a fullscreen mode,
  *     <code>qfalse</code> otherwise
  */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, qboolean fullscreen, qboolean wideScreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
+	qboolean fullscreen, qboolean wideScreen )
 {
 	int colorbits = 0;
 
@@ -106,7 +107,7 @@ void GLimp_Shutdown()
  * @param wndproc
  */
 
-int GLimp_Init( void *hinstance, void *wndproc, void *parenthWnd )
+int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
 {
 	hinstance = NULL;
 	wndproc = NULL;

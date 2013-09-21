@@ -18,10 +18,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifdef CGAME_HARD_LINKED
-#define CGAME_IMPORT cgi_imp_local
-#endif
-
 extern cgame_import_t CGAME_IMPORT;
 
 static inline void trap_Print( const char *msg )
@@ -519,7 +515,7 @@ static inline void trap_S_StopBackgroundTrack( void )
 	CGAME_IMPORT.S_StopBackgroundTrack();
 }
 
-static inline struct qfontface_s *trap_SCR_RegisterFont( const char *family, qfontstyle_t style, unsigned int size )
+static inline struct qfontface_s *trap_SCR_RegisterFont( const char *family, int style, unsigned int size )
 {
 	return CGAME_IMPORT.SCR_RegisterFont( family, style, size );
 }

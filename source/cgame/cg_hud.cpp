@@ -1343,7 +1343,7 @@ static vec3_t layout_cursor_rotation = { 0, 0, 0 };
 static struct qfontface_s *layout_cursor_font;
 static char layout_cursor_font_name[MAX_QPATH];
 static int layout_cursor_font_size;
-static qfontstyle_t layout_cursor_font_style;
+static int layout_cursor_font_style;
 
 enum
 {
@@ -1724,7 +1724,7 @@ static bool CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_la
 	}
 	else if( !Q_stricmp( fontstyle, "bold-italic" ) )
 	{
-		layout_cursor_font_style = (qfontstyle_t)(QFONT_STYLE_BOLD | QFONT_STYLE_ITALIC);
+		layout_cursor_font_style = QFONT_STYLE_BOLD | QFONT_STYLE_ITALIC;
 	}
 	else
 	{

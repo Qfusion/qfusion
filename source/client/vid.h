@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // vid.h -- video driver defs
 
+#ifndef __VID_H__
+#define __VID_H__
+
 typedef struct
 {
 	unsigned width, height;             // coordinates from main game
@@ -36,3 +39,7 @@ void	*VID_GetWindowHandle( void );
 void	VID_FlashWindow( int count );
 qboolean VID_GetScreenSize( int *width, int *height );
 qboolean VID_GetModeInfo( int *width, int *height, qboolean *wideScreen, int mode );
+void	VID_AppActivate( qboolean active, qboolean destroy );
+qboolean VID_RefreshActive( void );
+
+#endif

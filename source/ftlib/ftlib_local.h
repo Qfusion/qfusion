@@ -66,7 +66,7 @@ typedef struct qfontface_s
 {
 	struct qfontfamily_s *family;
 
-	qfontstyle_t style;
+	int style;
 	unsigned int size;
 	int height;
 
@@ -91,7 +91,7 @@ typedef struct qfontfamily_s
 	char *name;
 
 	int numFaces;
-	qfontstyle_t style;
+	int style;
 
 	void *privatep;
 	size_t privateSize;
@@ -117,7 +117,7 @@ char *FTLIB_CopyString( const char *in );
 void FTLIB_InitSubsystems( qboolean verbose );
 void FTLIB_ShutdownSubsystems( qboolean verbose );
 void FTLIB_PrecacheFonts( qboolean verbose );
-qfontface_t *FTLIB_RegisterFont( const char *family, qfontstyle_t style, unsigned int size );
+qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size );
 void FTLIB_TouchFont( qfontface_t *qfont );
 void FTLIB_FreeFonts( qboolean verbose );
 void FTLIB_PrintFontList( void );

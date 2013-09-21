@@ -1590,7 +1590,7 @@ void CL_RequestNextDownload( void )
 			restart_msg = "Files downloaded. Restarting media...";
 		}
 
-		R_BeginRegistration();
+		re.BeginRegistration();
 		CL_SoundModule_BeginRegistration();
 
 		if( restart ) {
@@ -1603,10 +1603,10 @@ void CL_RequestNextDownload( void )
 			else {
 				// the following registration calls will ensure 
 				// no media assets survives the restart
-				R_EndRegistration();
+				re.EndRegistration();
 				CL_SoundModule_EndRegistration();
 
-				R_BeginRegistration();
+				re.BeginRegistration();
 				CL_SoundModule_BeginRegistration();
 			}
 		}
@@ -1779,7 +1779,7 @@ void CL_SetClientState( int state )
 		break;
 	case CA_ACTIVE:
 	case CA_CINEMATIC:
-		R_EndRegistration();
+		re.EndRegistration();
 		CL_SoundModule_EndRegistration();
 		Con_Close();
 		CL_UIModule_ForceMenuOff();
@@ -1811,6 +1811,8 @@ void CL_InitMedia( qboolean verbose )
 		return;
 	if( cls.state == CA_UNINITIALIZED )
 		return;
+	if( !VID_RefreshActive() )
+		return;
 
 	// random seed to be shared among game modules so pseudo-random stuff is in sync
 	if ( cls.state != CA_CONNECTED )
@@ -1839,6 +1841,8 @@ void CL_InitMedia( qboolean verbose )
 void CL_ShutdownMedia( qboolean verbose )
 {
 	if( !cls.mediaInitialized )
+		return;
+	if( !VID_RefreshActive() )
 		return;
 
 	cls.mediaInitialized = qfalse;
@@ -2566,7 +2570,7 @@ void CL_Frame( int realmsec, int gamemsec )
 	{
 		int frame = ++cls.demo.avi_frame;
 		if( cls.demo.avi_video )
-			R_WriteAviFrame( frame, cl_demoavi_scissor->integer );
+			re.WriteAviFrame( frame, cl_demoavi_scissor->integer );
 	}
 
 	// update audio

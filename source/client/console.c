@@ -712,7 +712,7 @@ void Con_DrawConsole( float frac )
 		lines = viddef.height;
 
 	// draw the background
-	R_DrawStretchPic( 0, 0, viddef.width, lines, 0, 0, 1, 1, colorWhite, cls.consoleShader );
+	re.DrawStretchPic( 0, 0, viddef.width, lines, 0, 0, 1, 1, colorWhite, cls.consoleShader );
 	SCR_DrawFillRect( 0, lines - 2, viddef.width, 2, colorRed );
 
 	// get date from system

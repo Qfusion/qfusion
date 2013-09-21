@@ -3,7 +3,7 @@
 
 #include "../client/console.h"
 
-#define IRC_WINDOW_WIDTH (IRC_IMPORT.viddef->width * max(min(Cvar_GetFloatValue(irc_windowWidth), 1.0f), 0.0f))
+#define IRC_WINDOW_WIDTH (IRC_IMPORT.SCR_GetScreenWidth() * max(min(Cvar_GetFloatValue(irc_windowWidth), 1.0f), 0.0f))
 #define IRC_WINDOW_HEIGHT (lines * font_height)
 #define IRC_WINDOW_BORDER 2
 
@@ -16,25 +16,28 @@ static const char IRC_WINDOW_BG_PIC[] = "$whiteimage";
 
 struct mufont_s;
 
-static cvar_t *con_fontSystemSmall = NULL;
+static cvar_t *con_fontSystemFamily = NULL;
+static cvar_t *con_fontSystemSmallSize = NULL;
 
-static void Irc_Client_DrawWindow(struct mufont_s *font, int x, int y, int width, int height, int lines, struct shader_s *shaderBg);
-static int Irc_Client_DrawLine(int lines_avail, int off, int *x, int *y, const char *s, struct mufont_s *font, int font_height, vec4_t default_color, int last_color);
+static void Irc_Client_DrawWindow(struct qfontface_s *font, int x, int y, int width, int height, int lines, struct shader_s *shaderBg);
+static int Irc_Client_DrawLine(int lines_avail, int off, int *x, int *y, const char *s, struct qfontface_s *font, int font_height, vec4_t default_color, int last_color);
 static int Irc_Client_LastColor(const char *msg, size_t msg_len);
 
 void Irc_Client_DrawNotify(const char *target, const char *chat_buffer, size_t chat_bufferlen) {
 	
-	struct mufont_s *font;
+	struct qfontface_s *font;
 	unsigned int font_height = 0;
 	unsigned int charbuffer_width, target_width;
 	const char *s;
 	int vskip, hskip;
 
-	if (!con_fontSystemSmall)
-		con_fontSystemSmall = IRC_IMPORT.Cvar_Get("con_fontSystemSmall", "", 0);
+	if (!con_fontSystemFamily)
+		con_fontSystemFamily = IRC_IMPORT.Cvar_Get("con_fontSystemFamily", "", 0);
+	if (!con_fontSystemSmallSize)
+		con_fontSystemSmallSize = IRC_IMPORT.Cvar_Get("con_fontSystemSmallSize", "", 0);
 
 	// get font and font size
-	font = IRC_IMPORT.SCR_RegisterFont((char*) Cvar_GetStringValue(con_fontSystemSmall));
+	font = IRC_IMPORT.SCR_RegisterFont((char*) Cvar_GetStringValue(con_fontSystemFamily), QFONT_STYLE_NONE, Cvar_GetIntegerValue(con_fontSystemSmallSize));
 	font_height = (unsigned int) IRC_IMPORT.SCR_strHeight(font);
 	target_width = (unsigned int) IRC_IMPORT.SCR_strWidth(target, font, 0);
 
@@ -47,7 +50,7 @@ void Irc_Client_DrawNotify(const char *target, const char *chat_buffer, size_t c
 	// print what the user typed so far
 	s = chat_buffer;
 	charbuffer_width = (unsigned int) IRC_IMPORT.SCR_strWidth(s, font, (int) chat_bufferlen + 1);
-	while (charbuffer_width > IRC_IMPORT.viddef->width - (hskip + 72)) {
+	while (charbuffer_width > IRC_IMPORT.SCR_GetScreenWidth() - (hskip + 72)) {
 		++s;
 		charbuffer_width = (unsigned int) IRC_IMPORT.SCR_strWidth(s, font, (int) chat_bufferlen + 1);
 	}
@@ -61,20 +64,22 @@ void Irc_Client_DrawNotify(const char *target, const char *chat_buffer, size_t c
 void Irc_Client_DrawIngameWindow() {
 	
 	static struct shader_s *shaderBg = NULL;
-	struct mufont_s *font;
+	struct qfontface_s *font;
 	const int lines = Cvar_GetIntegerValue(irc_windowLines);
 	unsigned int font_height;
 
 	// read cvars
-	if (!con_fontSystemSmall)
-		con_fontSystemSmall = IRC_IMPORT.Cvar_Get("con_fontSystemSmall", "", 0);
+	if (!con_fontSystemFamily)
+		con_fontSystemFamily = IRC_IMPORT.Cvar_Get("con_fontSystemFamily", "", 0);
+	if (!con_fontSystemSmallSize)
+		con_fontSystemSmallSize = IRC_IMPORT.Cvar_Get("con_fontSystemSmallSize", "", 0);
 	if (!irc_windowWidth)
 		irc_windowWidth = IRC_IMPORT.Cvar_Get("irc_windowWidth", "0.4", CVAR_ARCHIVE);
 	if (!shaderBg)
 		shaderBg = IRC_IMPORT.R_RegisterPic((char*) IRC_WINDOW_BG_PIC);
 
 	// get font and font height
-	font = IRC_IMPORT.SCR_RegisterFont((char*) Cvar_GetStringValue(con_fontSystemSmall));
+	font = IRC_IMPORT.SCR_RegisterFont((char*) Cvar_GetStringValue(con_fontSystemFamily), QFONT_STYLE_NONE, Cvar_GetIntegerValue(con_fontSystemSmallSize));
 	font_height = (unsigned int) IRC_IMPORT.SCR_strHeight(font);
 
 	// draw the window
@@ -89,7 +94,7 @@ void Irc_Client_DrawIngameWindow() {
 }
 
 static void Irc_Client_DrawWindow(
-	struct mufont_s *font,
+	struct qfontface_s *font,
 	int x, int y,
 	int width, int height,
 	int lines,
@@ -122,7 +127,7 @@ static void Irc_Client_DrawWindow(
 
 }
 
-static int Irc_Client_DrawLine(int lines_avail, int off, int *x, int *y, const char *s, struct mufont_s *font, int font_height, vec4_t default_color, int last_color) {
+static int Irc_Client_DrawLine(int lines_avail, int off, int *x, int *y, const char *s, struct qfontface_s *font, int font_height, vec4_t default_color, int last_color) {
 
 	int lines_used = 0;
 	size_t s_len = strlen(s);

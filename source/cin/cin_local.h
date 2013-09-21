@@ -21,9 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _CIN_LOCAL_H_
 #define _CIN_LOCAL_H_
 
-// it's in qcommon.h too, but we don't include it for modules
-typedef struct { char *name; void **funcPointer; } dllfunc_t;
-
 #include "../gameshared/q_arch.h"
 #include "../gameshared/q_math.h"
 #include "../gameshared/q_shared.h"
@@ -37,6 +34,9 @@ typedef struct { char *name; void **funcPointer; } dllfunc_t;
 #define CIN_AllocPool( name ) trap_MemAllocPool( name, __FILE__, __LINE__ )
 #define CIN_FreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
 #define CIN_EmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
+
+#define CIN_LOOP					1
+#define CIN_AUDIO					2
 
 void Com_DPrintf( const char *format, ... );
 
@@ -74,7 +74,7 @@ qboolean CIN_Init( qboolean verbose );
 void CIN_Shutdown( qboolean verbose );
 char *CIN_CopyString( const char *in );
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, int flags );
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
 qboolean CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime );
 qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 void CIN_Close( struct cinematics_s *cin );

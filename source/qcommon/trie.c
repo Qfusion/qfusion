@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#include "qcommon.h"
+#include "../gameshared/q_shared.h"
 #include "trie.h"
 
 #include <assert.h>
@@ -127,7 +127,7 @@ trie_error_t Trie_Create(
 {
 	if( trie )
 	{
-		*trie = (struct trie_s *) Mem_ZoneMalloc( sizeof( struct trie_s ) );
+		*trie = (struct trie_s *) malloc( sizeof( struct trie_s ) );
 		( *trie )->root = Trie_CreateNode( 0, '\0', NULL, NULL, 0, NULL );
 		( *trie )->size = 0;
 		( *trie )->casing = casing;
@@ -144,7 +144,7 @@ trie_error_t Trie_Destroy(
 	if( trie )
 	{
 		Trie_Destroy_Rec( trie->root );
-		Mem_ZoneFree( trie );
+		free( trie );
 		return TRIE_OK;
 	}
 	else
@@ -354,13 +354,13 @@ trie_error_t Trie_DumpIf(
 	if( prefix && dump && predicate )
 	{
 		struct trie_node_s *result = TRIE_Find_Rec( trie->root, prefix, TRIE_PREFIX_MATCH, trie->casing, predicate, cookie );
-		*dump = (struct trie_dump_s *) Mem_ZoneMalloc( sizeof( struct trie_dump_s ) );
+		*dump = (struct trie_dump_s *) malloc( sizeof( struct trie_dump_s ) );
 		// prefix matches some nodes, begin dump
 		if( result )
 		{
 			( *dump )->size = Trie_NoOfKeys( result, trie->casing, predicate, cookie, 0 );
 			( *dump )->what = what;
-			( *dump )->key_value_vector = (struct trie_key_value_s *) Mem_ZoneMalloc( sizeof( struct trie_key_value_s ) *( ( *dump )->size + 1 ) );
+			( *dump )->key_value_vector = (struct trie_key_value_s *) malloc( sizeof( struct trie_key_value_s ) *( ( *dump )->size + 1 ) );
 			Trie_Dump_Rec( result, what, trie->casing, predicate, cookie, 0, prefix, &( *dump )->key_value_vector );
 			( *dump )->key_value_vector -= ( *dump )->size;
 		}
@@ -384,10 +384,10 @@ trie_error_t Trie_FreeDump(
 		unsigned int i;
 		for( i = 0; i < dump->size; ++i )
 			if( dump->key_value_vector[i].key )
-				Mem_ZoneFree( (char *) dump->key_value_vector[i].key );
+				free( (char *) dump->key_value_vector[i].key );
 		if( dump->key_value_vector )
-			Mem_ZoneFree( dump->key_value_vector );
-		Mem_ZoneFree( dump );
+			free( dump->key_value_vector );
+		free( dump );
 	}
 	return TRIE_OK;
 }
@@ -403,7 +403,7 @@ static struct trie_node_s *Trie_CreateNode(
         void *data
 )
 {
-	struct trie_node_s *result = (struct trie_node_s *) Mem_ZoneMalloc( sizeof( struct trie_node_s ) );
+	struct trie_node_s *result = (struct trie_node_s *) malloc( sizeof( struct trie_node_s ) );
 	assert( result );
 	result->depth = depth;
 	result->letter = letter;
@@ -423,7 +423,7 @@ static void Trie_Destroy_Rec(
 		Trie_Destroy_Rec( node->sibling );
 	if( node->child )
 		Trie_Destroy_Rec( node->child );
-	Mem_ZoneFree( node );
+	free( node );
 }
 
 static struct trie_node_s *TRIE_Find_Rec(
@@ -547,9 +547,9 @@ static trie_remove_result_t Trie_Remove_Rec(
 			status = Trie_Remove_Rec( node->sibling, key, casing, data );
 			if( status == TRIE_REMOVE_NO_CHILDREN_OR_DATA_LEFT )
 			{
-				// sibling node has no children or data, Mem_ZoneFree it and preserve siblings
+				// sibling node has no children or data, free it and preserve siblings
 				struct trie_node_s *sibling = node->sibling->sibling;
-				Mem_ZoneFree( node->sibling );
+				free( node->sibling );
 				node->sibling = sibling;
 				// ch : is this right?
 				// return ( node->child != NULL ) || ( node->data_is_set );
@@ -573,9 +573,9 @@ static trie_remove_result_t Trie_Remove_Rec(
 				status = Trie_Remove_Rec( node->child, node->depth ? key + 1 : key, casing, data );
 				if( !status )
 				{
-					// child node has no children, Mem_ZoneFree it and preserve siblings
+					// child node has no children, free it and preserve siblings
 					struct trie_node_s *sibling = node->child->sibling;
-					Mem_ZoneFree( node->child );
+					free( node->child );
 					node->child = sibling;
 					// ch : is this right?
 					// return ( node->child != NULL ) || ( node->data_is_set );
@@ -643,7 +643,7 @@ static void Trie_Dump_Rec(
 	int keyDumped = 0;
 	if( what & TRIE_DUMP_KEYS )
 	{
-		key = (char *) Mem_ZoneMalloc( sizeof( char ) * ( node->depth + 1 ) );
+		key = (char *) malloc( sizeof( char ) * ( node->depth + 1 ) );
 		strncpy( key, key_prev, node->depth ); // copy previous key
 		if( node->depth )
 			key[node->depth - 1] = node->letter; // append/replace letter
@@ -674,7 +674,7 @@ static void Trie_Dump_Rec(
 	if( ( what & TRIE_DUMP_KEYS ) && !keyDumped )
 	{
 		assert( key );
-		Mem_ZoneFree( key );
+		free( key );
 	}
 }
 

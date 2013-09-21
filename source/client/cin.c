@@ -44,7 +44,7 @@ static void CL_CinModule_Print( const char *msg )
 /*
 * CL_CinModule_MemAlloc
 */
-static void *CL_CinModule_MemAlloc( mempool_t *pool, int size, const char *filename, int fileline )
+static void *CL_CinModule_MemAlloc( mempool_t *pool, size_t size, const char *filename, int fileline )
 {
 	return _Mem_Alloc( pool, size, MEMPOOL_CINMODULE, 0, filename, fileline );
 }
@@ -220,10 +220,10 @@ void CIN_UnloadLibrary( qboolean verbose )
 	}
 }
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, int flags )
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio )
 {
 	if( cin_export ) {
-		return cin_export->Open( name, start_time, flags );
+		return cin_export->Open( name, start_time, loop, audio );
 	}
 	return NULL;
 }

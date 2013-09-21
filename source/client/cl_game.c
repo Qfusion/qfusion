@@ -158,7 +158,7 @@ static void CL_GameModule_RefreshMouseAngles( void )
 * CL_GameModule_R_RegisterWorldModel
 */
 static void CL_GameModule_R_RegisterWorldModel( const char *model ) {
-	R_RegisterWorldModel( model, cl.cms ? CM_PVSData( cl.cms ) : NULL );
+	re.RegisterWorldModel( model, cl.cms ? CM_PVSData( cl.cms ) : NULL );
 }
 
 /*
@@ -303,36 +303,36 @@ void CL_GameModule_Init( void )
 	import.RefreshMouseAngles = CL_GameModule_RefreshMouseAngles;
 
 	import.R_UpdateScreen = SCR_UpdateScreen;
-	import.R_GetClippedFragments = R_GetClippedFragments;
-	import.R_ClearScene = R_ClearScene;
-	import.R_AddEntityToScene = R_AddEntityToScene;
-	import.R_AddLightToScene = R_AddLightToScene;
-	import.R_AddPolyToScene = R_AddPolyToScene;
-	import.R_AddLightStyleToScene = R_AddLightStyleToScene;
-	import.R_RenderScene = R_RenderScene;
-	import.R_SpeedsMessage = R_SpeedsMessage;
+	import.R_GetClippedFragments = re.GetClippedFragments;
+	import.R_ClearScene = re.ClearScene;
+	import.R_AddEntityToScene = re.AddEntityToScene;
+	import.R_AddLightToScene = re.AddLightToScene;
+	import.R_AddPolyToScene = re.AddPolyToScene;
+	import.R_AddLightStyleToScene = re.AddLightStyleToScene;
+	import.R_RenderScene = re.RenderScene;
+	import.R_SpeedsMessage = re.SpeedsMessage;
 	import.R_RegisterWorldModel = CL_GameModule_R_RegisterWorldModel;
-	import.R_ModelBounds = R_ModelBounds;
-	import.R_ModelFrameBounds = R_ModelFrameBounds;
-	import.R_RegisterModel = R_RegisterModel;
-	import.R_RegisterPic = R_RegisterPic;
-	import.R_RegisterRawPic = R_RegisterRawPic;
-	import.R_RegisterLevelshot = R_RegisterLevelshot;
-	import.R_RegisterSkin = R_RegisterSkin;
-	import.R_RegisterSkinFile = R_RegisterSkinFile;
-	import.R_LerpTag = R_LerpTag;
-	import.R_LightForOrigin = R_LightForOrigin;
-	import.R_SetCustomColor = R_SetCustomColor;
-	import.R_DrawStretchPic = R_DrawStretchPic;
-	import.R_DrawStretchPoly = R_DrawStretchPoly;
-	import.R_DrawRotatedStretchPic = R_DrawRotatedStretchPic;
-	import.R_SetScissorRegion = R_SetScissorRegion;
-	import.R_GetScissorRegion = R_GetScissorRegion;
-	import.R_GetShaderDimensions = R_GetShaderDimensions;
-	import.R_TransformVectorToScreen = R_TransformVectorToScreen;
-	import.R_SkeletalGetNumBones = R_SkeletalGetNumBones;
-	import.R_SkeletalGetBoneInfo = R_SkeletalGetBoneInfo;
-	import.R_SkeletalGetBonePose = R_SkeletalGetBonePose;
+	import.R_ModelBounds = re.ModelBounds;
+	import.R_ModelFrameBounds = re.ModelFrameBounds;
+	import.R_RegisterModel = re.RegisterModel;
+	import.R_RegisterPic = re.RegisterPic;
+	import.R_RegisterRawPic = re.RegisterRawPic;
+	import.R_RegisterLevelshot = re.RegisterLevelshot;
+	import.R_RegisterSkin = re.RegisterSkin;
+	import.R_RegisterSkinFile = re.RegisterSkinFile;
+	import.R_LerpTag = re.LerpTag;
+	import.R_LightForOrigin = re.LightForOrigin;
+	import.R_SetCustomColor = re.SetCustomColor;
+	import.R_DrawStretchPic = re.DrawStretchPic;
+	import.R_DrawStretchPoly = re.DrawStretchPoly;
+	import.R_DrawRotatedStretchPic = re.DrawRotatedStretchPic;
+	import.R_SetScissorRegion = re.SetScissorRegion;
+	import.R_GetScissorRegion = re.GetScissorRegion;
+	import.R_GetShaderDimensions = re.GetShaderDimensions;
+	import.R_TransformVectorToScreen = re.TransformVectorToScreen;
+	import.R_SkeletalGetNumBones = re.SkeletalGetNumBones;
+	import.R_SkeletalGetBoneInfo = re.SkeletalGetBoneInfo;
+	import.R_SkeletalGetBonePose = re.SkeletalGetBonePose;
 
 	import.VID_FlashWindow = VID_FlashWindow;
 
@@ -370,7 +370,12 @@ void CL_GameModule_Init( void )
 	import.Mem_Alloc = CL_GameModule_MemAlloc;
 	import.Mem_Free = CL_GameModule_MemFree;
 
-	cge = (cgame_export_t *)Com_LoadGameLibrary( "cgame", "GetCGameAPI", &module_handle, &import, builtinAPIfunc, cls.sv_pure, NULL );
+	if( builtinAPIfunc ) {
+		cge = builtinAPIfunc( &import );
+	}
+	else {
+		cge = (cgame_export_t *)Com_LoadGameLibrary( "cgame", "GetCGameAPI", &module_handle, &import, cls.sv_pure, NULL );
+	}
 	if( !cge )
 		Com_Error( ERR_DROP, "Failed to load client game DLL" );
 

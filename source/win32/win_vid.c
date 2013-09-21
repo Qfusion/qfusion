@@ -311,7 +311,7 @@ static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy )
 	if( win_nowinkeys->integer )
 		VID_EnableWinKeys( !ActiveApp );
 
-	GLimp_AppActivate( fActive, destroy );
+	VID_AppActivate( fActive, destroy );
 }
 
 /*
@@ -541,11 +541,13 @@ void *VID_GetWindowHandle( void )
 /*
 ** VID_Sys_Init
 */
-rserr_t VID_Sys_Init( int x, int y, int width, int height, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
+rserr_t VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
+	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
-	extern cvar_t *vid_parentwid;
-	return R_Init( global_hInstance, MainWndProc, STR_TO_POINTER( vid_parentwid->string ), 
-		x, y, width, height, fullScreen, wideScreen, verbose );
+	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
+		global_hInstance, MainWndProc, parentWindow, 
+		x, y, width, height, displayFrequency,
+		fullScreen, wideScreen, verbose );
 }
 
 /*

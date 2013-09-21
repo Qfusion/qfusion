@@ -39,7 +39,7 @@ static unsigned int image_cur_hash;
 
 static int *r_8to24table;
 
-static mempool_t *r_texturesPool;
+static mempool_t *r_imagesPool;
 static char *r_imagePathBuf, *r_imagePathBuf2;
 static size_t r_sizeof_imagePathBuf, r_sizeof_imagePathBuf2;
 
@@ -48,9 +48,9 @@ static size_t r_sizeof_imagePathBuf, r_sizeof_imagePathBuf2;
 	if( r_sizeof_ ##buf < need ) \
 	{ \
 		if( r_ ##buf ) \
-			Mem_Free( r_ ##buf ); \
+			R_Free( r_ ##buf ); \
 		r_sizeof_ ##buf += (((need) & (MAX_QPATH-1))+1) * MAX_QPATH; \
-		r_ ##buf = Mem_Alloc( r_texturesPool, r_sizeof_ ##buf ); \
+		r_ ##buf = R_MallocExt( r_imagesPool, r_sizeof_ ##buf, 0, 0 ); \
 	}
 
 int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
@@ -233,8 +233,8 @@ static qbyte *_R_PrepareImageBuffer( int buffer, size_t size, const char *filena
 	{
 		r_imageBufSize[buffer] = size;
 		if( r_imageBuffers[buffer] )
-			Mem_Free( r_imageBuffers[buffer] );
-		r_imageBuffers[buffer] = _Mem_Alloc( r_texturesPool, size, 0, 0, filename, fileline );
+			R_Free( r_imageBuffers[buffer] );
+		r_imageBuffers[buffer] = R_MallocExt( r_imagesPool, size, 0, 1 );
 	}
 
 	memset( r_imageBuffers[buffer], 255, size );
@@ -253,7 +253,7 @@ void R_FreeImageBuffers( void )
 	{
 		if( r_imageBuffers[i] )
 		{
-			Mem_Free( r_imageBuffers[i] );
+			R_Free( r_imageBuffers[i] );
 			r_imageBuffers[i] = NULL;
 		}
 		r_imageBufSize[i] = 0;
@@ -548,14 +548,13 @@ static int LoadTGA( const char *name, qbyte **pic, int *width, int *height, int 
 	qbyte *buf_p, *buffer, *pixbuf, *targa_rgba;
 	qbyte palette[256][4];
 	TargaHeader targa_header;
-	qbyte stack[0x4000];
 
 	*pic = NULL;
 
 	//
 	// load the file
 	//
-	FS_LoadFile( name, (void **)&buffer, stack, sizeof( stack ) );
+	R_LoadFile( name, (void **)&buffer );
 	if( !buffer )
 		return 0;
 
@@ -588,23 +587,20 @@ static int LoadTGA( const char *name, qbyte **pic, int *width, int *height, int 
 		// uncompressed colormapped image
 		if( targa_header.pixel_size != 8 )
 		{
-			Com_DPrintf( S_COLOR_YELLOW "LoadTGA: Only 8 bit images supported for type 1 and 9" );
-			if( buffer != stack )
-				FS_FreeFile( buffer );
+			ri.Com_DPrintf( S_COLOR_YELLOW "LoadTGA: Only 8 bit images supported for type 1 and 9" );
+			R_FreeFile( buffer );
 			return 0;
 		}
 		if( targa_header.colormap_length != 256 )
 		{
-			Com_DPrintf( S_COLOR_YELLOW "LoadTGA: Only 8 bit colormaps are supported for type 1 and 9" );
-			if( buffer != stack )
-				FS_FreeFile( buffer );
+			ri.Com_DPrintf( S_COLOR_YELLOW "LoadTGA: Only 8 bit colormaps are supported for type 1 and 9" );
+			R_FreeFile( buffer );
 			return 0;
 		}
 		if( targa_header.colormap_index )
 		{
-			Com_DPrintf( S_COLOR_YELLOW "LoadTGA: colormap_index is not supported for type 1 and 9" );
-			if( buffer != stack )
-				FS_FreeFile( buffer );
+			ri.Com_DPrintf( S_COLOR_YELLOW "LoadTGA: colormap_index is not supported for type 1 and 9" );
+			R_FreeFile( buffer );
 			return 0;
 		}
 		if( targa_header.colormap_size == 24 )
@@ -631,9 +627,8 @@ static int LoadTGA( const char *name, qbyte **pic, int *width, int *height, int 
 		}
 		else
 		{
-			Com_DPrintf( S_COLOR_YELLOW "LoadTGA: only 24 and 32 bit colormaps are supported for type 1 and 9" );
-			if( buffer != stack )
-				FS_FreeFile( buffer );
+			ri.Com_DPrintf( S_COLOR_YELLOW "LoadTGA: only 24 and 32 bit colormaps are supported for type 1 and 9" );
+			R_FreeFile( buffer );
 			return 0;
 		}
 	}
@@ -642,9 +637,8 @@ static int LoadTGA( const char *name, qbyte **pic, int *width, int *height, int 
 		// uncompressed or RLE compressed RGB
 		if( targa_header.pixel_size != 32 && targa_header.pixel_size != 24 )
 		{
-			Com_DPrintf( S_COLOR_YELLOW "LoadTGA: Only 32 or 24 bit images supported for type 2 and 10" );
-			if( buffer != stack )
-				FS_FreeFile( buffer );
+			ri.Com_DPrintf( S_COLOR_YELLOW "LoadTGA: Only 32 or 24 bit images supported for type 2 and 10" );
+			R_FreeFile( buffer );
 			return 0;
 		}
 
@@ -655,9 +649,8 @@ static int LoadTGA( const char *name, qbyte **pic, int *width, int *height, int 
 		// uncompressed grayscale
 		if( targa_header.pixel_size != 8 )
 		{
-			Com_DPrintf( S_COLOR_YELLOW "LoadTGA: Only 8 bit images supported for type 3 and 11" );
-			if( buffer != stack )
-				FS_FreeFile( buffer );
+			ri.Com_DPrintf( S_COLOR_YELLOW "LoadTGA: Only 8 bit images supported for type 3 and 11" );
+			R_FreeFile( buffer );
 			return 0;
 		}
 	}
@@ -725,7 +718,7 @@ static int LoadTGA( const char *name, qbyte **pic, int *width, int *height, int 
 		// Flip the image vertically
 		int rowsize = columns * samples;
 		qbyte *row1, *row2;
-		qbyte *tmpLine = Mem_TempMalloc( rowsize );
+		qbyte *tmpLine = R_MallocExt( r_imagesPool, rowsize, 1, 0 );
 
 		for( i = 0, j = rows - 1; i < j; i++, j-- )
 		{
@@ -736,11 +729,10 @@ static int LoadTGA( const char *name, qbyte **pic, int *width, int *height, int 
 			memcpy( row2, tmpLine, rowsize );
 		}
 
-		Mem_TempFree( tmpLine );
+		R_Free( tmpLine );
 	}
 
-	if( buffer != stack )
-		FS_FreeFile( buffer );
+	R_FreeFile( buffer );
 
 	if( flags )
 		*flags |= IT_BGRA;
@@ -761,7 +753,7 @@ static qboolean WriteTGA( const char *name, qbyte *buffer, int width, int height
 {
 	int file, i, c, temp;
 
-	if( FS_FOpenFile( name, &file, FS_WRITE ) == -1 )
+	if( ri.FS_FOpenFile( name, &file, FS_WRITE ) == -1 )
 	{
 		Com_Printf( "WriteTGA: Couldn't create %s\n", name );
 		return qfalse;
@@ -785,8 +777,8 @@ static qboolean WriteTGA( const char *name, qbyte *buffer, int width, int height
 			buffer[i+2] = temp;
 		}
 	}
-	FS_Write( buffer, c, file );
-	FS_FCloseFile( file );
+	ri.FS_Write( buffer, c, file );
+	ri.FS_FCloseFile( file );
 
 	return qtrue;
 }
@@ -813,7 +805,7 @@ static void q_jpg_error_exit(j_common_ptr cinfo)
 
     // create the message
 	qerr->pub.format_message( cinfo, buffer );
-	Com_DPrintf( "q_jpg_error_exit: %s\n", buffer );
+	ri.Com_DPrintf( "q_jpg_error_exit: %s\n", buffer );
 
 	// Return control to the setjmp point
 	longjmp(qerr->setjmp_buffer, 1);
@@ -825,7 +817,7 @@ static void q_jpg_noop( j_decompress_ptr cinfo )
 
 static boolean q_jpg_fill_input_buffer( j_decompress_ptr cinfo )
 {
-	Com_DPrintf( "Premature end of jpeg file\n" );
+	ri.Com_DPrintf( "Premature end of jpeg file\n" );
 	return 1;
 }
 
@@ -859,12 +851,11 @@ static int LoadJPG( const char *name, qbyte **pic, int *width, int *height, int 
 	qbyte *img, *scan, *buffer, *line;
 	struct q_jpeg_error_mgr jerr;
 	struct jpeg_decompress_struct cinfo;
-	qbyte stack[0x4000];
 
 	*pic = NULL;
 
 	// load the file
-	length = FS_LoadFile( name, (void **)&buffer, stack, sizeof( stack ) );
+	length = R_LoadFile( name, (void **)&buffer );
 	if( !buffer )
 		return 0;
 
@@ -886,10 +877,9 @@ static int LoadJPG( const char *name, qbyte **pic, int *width, int *height, int 
 	if( samples != 3 && samples != 1 )
 	{
 error:
-		Com_DPrintf( S_COLOR_YELLOW "Bad jpeg file %s\n", name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "Bad jpeg file %s\n", name );
 		jpeg_destroy_decompress( &cinfo );
-		if( buffer != stack )
-			FS_FreeFile( buffer );
+		R_FreeFile( buffer );
 		return 0;
 	}
 
@@ -900,10 +890,7 @@ error:
 
 	img = *pic = R_PrepareImageBuffer( TEXTURE_LOADING_BUF0+side, cinfo.output_width * cinfo.output_height * 3 );
 	widthXsamples = cinfo.output_width * samples;
-	if( sizeof( stack ) >= widthXsamples + length )
-		line = stack + length;
-	else
-		line = R_PrepareImageBuffer( TEXTURE_LINE_BUF, widthXsamples );
+	line = R_PrepareImageBuffer( TEXTURE_LINE_BUF, widthXsamples );
 
 	while( cinfo.output_scanline < cinfo.output_height )
 	{
@@ -912,8 +899,7 @@ error:
 		{
 			Com_Printf( S_COLOR_YELLOW "Bad jpeg file %s\n", name );
 			jpeg_destroy_decompress( &cinfo );
-			if( buffer != stack )
-				FS_FreeFile( buffer );
+			R_FreeFile( buffer );
 			return 0;
 		}
 
@@ -932,10 +918,39 @@ error:
 	jpeg_finish_decompress( &cinfo );
 	jpeg_destroy_decompress( &cinfo );
 
-	if( buffer != stack )
-		FS_FreeFile( buffer );
+	R_FreeFile( buffer );
 
 	return 3;
+}
+
+#define JPEG_OUTPUT_BUFFER_SIZE		4096
+
+static void q_jpg_init_destination(j_compress_ptr cinfo)
+{
+}
+
+static boolean q_jpg_write_buf_to_disk(j_compress_ptr cinfo)
+{
+	int written = JPEG_OUTPUT_BUFFER_SIZE - cinfo->dest->free_in_buffer;
+	char *buf = ( char * )cinfo->dest->next_output_byte - written;
+	int file = *((int *)(buf - sizeof( int )));
+	if( ri.FS_Write( buf, written, file ) == 0 ) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static boolean q_jpg_empty_output_buffer(j_compress_ptr cinfo)
+{
+	boolean res = q_jpg_write_buf_to_disk( cinfo );
+	cinfo->dest->next_output_byte -= JPEG_OUTPUT_BUFFER_SIZE - cinfo->dest->free_in_buffer;
+	cinfo->dest->free_in_buffer = JPEG_OUTPUT_BUFFER_SIZE;
+	return res;
+}
+
+static void q_jpg_term_destination(j_compress_ptr cinfo)
+{
+	q_jpg_write_buf_to_disk( cinfo );
 }
 
 /*
@@ -945,30 +960,27 @@ static qboolean WriteJPG( const char *name, qbyte *buffer, int width, int height
 {
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_error_mgr jerr;
-	char *fullname;
-	int fullname_size;
-	FILE *f;
+	char buf[sizeof( int ) + JPEG_OUTPUT_BUFFER_SIZE];
 	JSAMPROW s[1];
 	int offset, w3;
+	int file;
 
-	// We can't use FS-functions with libjpeg
-	fullname_size =
-		sizeof( char ) * ( strlen( FS_WriteDirectory() ) + 1 + strlen( FS_GameDirectory() ) + 1 + strlen( name ) + 1 );
-	fullname = Mem_TempMalloc( fullname_size );
-	Q_snprintfz( fullname, fullname_size, "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), name );
-	FS_CreateAbsolutePath( fullname );
-
-	if( !( f = fopen( fullname, "wb" ) ) )
-	{
-		Com_Printf( "WriteJPG: Couldn't create %s\n", fullname );
-		Mem_TempFree( fullname );
+	if( ri.FS_FOpenFile( name, &file, FS_WRITE ) == -1 ) {
+		Com_Printf( "WriteJPG: Couldn't create %s\n", name );
 		return qfalse;
 	}
 
+	// hack file handle into output buffer
+	*(int *)buf = file;
+
 	// initialize the JPEG compression object
-	cinfo.err = jpeg_std_error( &jerr );
 	jpeg_create_compress( &cinfo );
-	jpeg_stdio_dest( &cinfo, f );
+	cinfo.err = jpeg_std_error( &jerr );
+	cinfo.dest->init_destination = q_jpg_init_destination;
+	cinfo.dest->empty_output_buffer = q_jpg_empty_output_buffer;
+	cinfo.dest->term_destination = q_jpg_term_destination;
+	cinfo.dest->next_output_byte = (JOCTET *)(buf + sizeof( int ));
+	cinfo.dest->free_in_buffer = JPEG_OUTPUT_BUFFER_SIZE;
 
 	// setup JPEG parameters
 	cinfo.image_width = width;
@@ -1006,8 +1018,7 @@ static qboolean WriteJPG( const char *name, qbyte *buffer, int width, int height
 	jpeg_finish_compress( &cinfo );
 	jpeg_destroy_compress( &cinfo );
 
-	fclose( f );
-	Mem_TempFree( fullname );
+	ri.FS_FCloseFile( file );
 
 	return qtrue;
 }
@@ -1028,12 +1039,12 @@ typedef struct {
 
 static void q_png_error_fn( png_structp png_ptr, const char *message )
 {
-    Com_DPrintf( "q_png_error_fn: error: %s\n", message );
+    ri.Com_DPrintf( "q_png_error_fn: error: %s\n", message );
 }
 
 static void q_png_warning_fn( png_structp png_ptr, const char *message )
 {
-    Com_DPrintf( "q_png_warning_fn: warning: %s\n", message );
+    ri.Com_DPrintf( "q_png_warning_fn: warning: %s\n", message );
 }
 
 //LordHavoc: removed __cdecl prefix, added overrun protection, and rewrote this to be more efficient
@@ -1043,7 +1054,7 @@ static void q_png_user_read_fn( png_structp png_ptr, unsigned char *data, size_t
 	size_t rem = io->size - io->curptr;
 
 	if( length > rem ) {
-        Com_DPrintf( "q_png_user_read_fn: overrun by %i bytes\n", (int)(length - rem) );
+        ri.Com_DPrintf( "q_png_user_read_fn: overrun by %i bytes\n", (int)(length - rem) );
 
         // a read going past the end of the file, fill in the remaining bytes
         // with 0 just to be consistent
@@ -1063,7 +1074,6 @@ static int LoadPNG( const char *name, qbyte **pic, int *width, int *height, int 
 	qbyte *img;
 	qbyte *png_data;
 	size_t png_datasize;
-	qbyte stack[0x4000];
 	q_png_iobuf_t io;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
@@ -1076,20 +1086,18 @@ static int LoadPNG( const char *name, qbyte **pic, int *width, int *height, int 
 	*pic = NULL;
 
 	// load the file
-	png_datasize = FS_LoadFile( name, (void **)&png_data, stack, sizeof( stack ) );
+	png_datasize = R_LoadFile( name, (void **)&png_data );
 	if( !png_data )
 		return 0;
 
 	if( png_sig_cmp( png_data, 0, png_datasize ) ) {
 error:
-		Com_DPrintf( S_COLOR_YELLOW "Bad png file %s\n", name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "Bad png file %s\n", name );
 
 		if( png_ptr != NULL ) {
 			png_destroy_write_struct( &png_ptr, NULL );
 		}
-		if( png_data != stack ) {
-			FS_FreeFile( png_data );
-		}
+		R_FreeFile( png_data );
         return 0;
 	}
 	
@@ -1173,7 +1181,7 @@ error:
 	// allocate the memory to hold the image using the fields of info_ptr
 
 	row_bytes = png_get_rowbytes( png_ptr, info_ptr );
-    row_pointers = (unsigned char **)Mem_TempMalloc( p_height * sizeof( *row_pointers ) );
+	row_pointers = (unsigned char **)R_MallocExt( r_imagesPool, p_height * sizeof( *row_pointers ), 0, 0 );
 
 	img = *pic = R_PrepareImageBuffer( TEXTURE_LOADING_BUF0+side, p_height * row_bytes );
 
@@ -1190,11 +1198,9 @@ error:
 	// clean up after the read, and free any memory allocated - REQUIRED
     png_destroy_read_struct( &png_ptr, &info_ptr, 0 );
 
-	Mem_TempFree( row_pointers );
+	R_Free( row_pointers );
 
-	if( png_data != stack ) {
-		FS_FreeFile( png_data );
-	}
+	R_FreeFile( png_data );
 
 	return samples;
 }
@@ -1213,7 +1219,7 @@ static int R_LoadImageFromDisk( char *pathname, size_t pathname_size, qbyte **pi
 	*width = *height = 0;
 	samples = 0;
 
-	extension = FS_FirstExtension( pathname, IMAGE_EXTENSIONS, NUM_IMAGE_EXTENSIONS );
+	extension = ri.FS_FirstExtension( pathname, IMAGE_EXTENSIONS, NUM_IMAGE_EXTENSIONS );
 	if( extension )
 	{
 		int format_flags = 0;
@@ -1687,16 +1693,17 @@ static image_t *R_AllocPic( void )
 image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int flags, int samples )
 {
 	image_t *image;
+	int name_len = strlen( name );
 
 	if( image_cur_hash >= IMAGES_HASH_SIZE )
-		image_cur_hash = Com_HashKey( name, IMAGES_HASH_SIZE );
+		image_cur_hash = ri.Hash_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
 
 	image = R_AllocPic();
 	if( !image ) {
-		Com_Error( ERR_DROP, "R_LoadImage: r_numImages == MAX_GLIMAGES" );
+		ri.Com_Error( ERR_DROP, "R_LoadImage: r_numImages == MAX_GLIMAGES" );
 	}
 
-	image->name = Mem_Alloc( r_texturesPool, strlen( name ) + 1 );
+	image->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
 	strcpy( image->name, name );
 	image->width = width;
 	image->height = height;
@@ -1754,7 +1761,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 	size_t pathsize;
 
 	if( !name || !name[0] )
-		return NULL; //	Com_Error (ERR_DROP, "R_FindImage: NULL name");
+		return NULL; //	ri.Com_Error (ERR_DROP, "R_FindImage: NULL name");
 
 	ENSUREBUFSIZE( imagePathBuf, strlen( name ) + (suffix ? strlen( suffix ) : 0) + 5 );
 	pathname = r_imagePathBuf;
@@ -1798,7 +1805,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 	pathname[len] = 0;
 
 	// look for it
-	key = image_cur_hash = Com_HashKey( pathname, IMAGES_HASH_SIZE );
+	key = image_cur_hash = ri.Hash_SuperFastHash( ( const qbyte *)pathname, len, len ) % IMAGES_HASH_SIZE;
 	hnode = &images_hash_headnode[key];
 	if( flags & IT_HEIGHTMAP )
 	{
@@ -1946,7 +1953,7 @@ static void R_ScreenShot( const char *name, qboolean silent )
 	if( name && name[0] && Q_stricmp(name, "*") )
 	{
 		checkname_size = sizeof( char ) * ( strlen( "screenshots/" ) + strlen( name ) + strlen( ".jpg" ) + 1 );
-		checkname = Mem_TempMalloc( checkname_size );
+		checkname = R_Malloc( checkname_size );
 		Q_snprintfz( checkname, checkname_size, "screenshots/%s", name );
 
 		COM_SanitizeFilePath( checkname );
@@ -1954,7 +1961,7 @@ static void R_ScreenShot( const char *name, qboolean silent )
 		if( !COM_ValidateRelativeFilename( checkname ) )
 		{
 			Com_Printf( "Invalid filename\n" );
-			Mem_Free( checkname );
+			R_Free( checkname );
 			return;
 		}
 
@@ -1985,7 +1992,7 @@ static void R_ScreenShot( const char *name, qboolean silent )
 		{
 			strftime( timestamp_str, sizeof( timestamp_str ), r_screenshot_fmtstr->string, timestampptr );
 			if( !COM_ValidateRelativeFilename( timestamp_str ) )
-				Cvar_ForceSet( r_screenshot_fmtstr->name, r_screenshot_fmtstr->dvalue );
+				ri.Cvar_ForceSet( r_screenshot_fmtstr->name, r_screenshot_fmtstr->dvalue );
 			else
 				break;
 		}
@@ -1993,15 +2000,15 @@ static void R_ScreenShot( const char *name, qboolean silent )
 		// hm... shouldn't really happen, but check anyway
 		if( i == 2 )
 		{
-			Q_strncpyz( timestamp_str, APP_SCREENSHOTS_PREFIX, sizeof( timestamp_str ) );
-			Cvar_ForceSet( r_screenshot_fmtstr->name, APP_SCREENSHOTS_PREFIX );
+			Q_strncpyz( timestamp_str, rf.screenshotPrefix, sizeof( timestamp_str ) );
+			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, rf.screenshotPrefix );
 		}
 
-		gamepath_offset = strlen( FS_WriteDirectory() ) + 1 + strlen( FS_GameDirectory() ) + 1;
+		gamepath_offset = strlen( ri.FS_WriteDirectory() ) + 1 + strlen( ri.FS_GameDirectory() ) + 1;
 
 		checkname_size =
 			sizeof( char ) * ( gamepath_offset + strlen( "screenshots/" ) + strlen( timestamp_str ) + 5 + strlen( ".jpg" ) + 1 );
-		checkname = Mem_TempMalloc( checkname_size );
+		checkname = R_MallocExt( r_imagesPool, checkname_size, 0, 1 );
 
 		// if the string format is a constant or file already exists then iterate
 		if( !*timestamp_str || !strcmp( timestamp_str, r_screenshot_fmtstr->string ) )
@@ -2023,8 +2030,8 @@ static void R_ScreenShot( const char *name, qboolean silent )
 		else
 		{
 			Q_snprintfz( checkname, checkname_size, "%s/%s/screenshots/%s.%s", 
-				FS_WriteDirectory(), FS_GameDirectory(), timestamp_str, r_screenshot_jpeg->integer ? "jpg" : "tga" );
-			if( FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) != -1 )
+				ri.FS_WriteDirectory(), ri.FS_GameDirectory(), timestamp_str, r_screenshot_jpeg->integer ? "jpg" : "tga" );
+			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) != -1 )
 			{
 				lastIndex = 0;
 				addIndex = qtrue;
@@ -2034,15 +2041,15 @@ static void R_ScreenShot( const char *name, qboolean silent )
 		for( ; addIndex && lastIndex < maxFiles; lastIndex++ )
 		{
 			Q_snprintfz( checkname, checkname_size, "%s/%s/screenshots/%s%05i.%s", 
-				FS_WriteDirectory(), FS_GameDirectory(), timestamp_str, lastIndex, r_screenshot_jpeg->integer ? "jpg" : "tga" );
-			if( FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) == -1 )
+				ri.FS_WriteDirectory(), ri.FS_GameDirectory(), timestamp_str, lastIndex, r_screenshot_jpeg->integer ? "jpg" : "tga" );
+			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) == -1 )
 				break; // file doesn't exist
 		}
 
 		if( lastIndex == maxFiles )
 		{
 			Com_Printf( "Couldn't create a file\n" );
-			Mem_Free( checkname );
+			R_Free( checkname );
 			return;
 		}
 
@@ -2051,7 +2058,7 @@ static void R_ScreenShot( const char *name, qboolean silent )
 
 	if( r_screenshot_jpeg->integer )
 	{
-		buffer = Mem_Alloc( r_texturesPool, glConfig.width * glConfig.height * 3 );
+		buffer = R_MallocExt( r_imagesPool, glConfig.width * glConfig.height * 3, 0, 0 );
 		qglReadPixels( 0, 0, glConfig.width, glConfig.height, GL_RGB, GL_UNSIGNED_BYTE, buffer );
 
 		if( WriteJPG( checkname + gamepath_offset, buffer, glConfig.width, glConfig.height, r_screenshot_jpeg_quality->integer ) && !silent )
@@ -2059,7 +2066,7 @@ static void R_ScreenShot( const char *name, qboolean silent )
 	}
 	else
 	{
-		buffer = Mem_Alloc( r_texturesPool, 18 + glConfig.width * glConfig.height * 3 );
+		buffer = R_MallocExt( r_imagesPool, 18 + glConfig.width * glConfig.height * 3, 0, 0 );
 		qglReadPixels( 0, 0, glConfig.width, glConfig.height, glConfig.ext.bgra ? GL_BGR_EXT : GL_RGB, GL_UNSIGNED_BYTE, buffer + 18 );
 
 		if( WriteTGA( checkname + gamepath_offset, buffer, glConfig.width, glConfig.height, 
@@ -2068,8 +2075,8 @@ static void R_ScreenShot( const char *name, qboolean silent )
 			Com_Printf( "Wrote %s\n", checkname );
 	}
 
-	Mem_Free( buffer );
-	Mem_Free( checkname );
+	R_Free( buffer );
+	R_Free( checkname );
 }
 
 /*
@@ -2077,7 +2084,7 @@ static void R_ScreenShot( const char *name, qboolean silent )
 */
 void R_ScreenShot_f( void )
 {
-	R_ScreenShot( Cmd_Argv( 1 ), Cmd_Argc() >= 3 && !Q_stricmp( Cmd_Argv( 2 ), "silent" ) ? qtrue : qfalse );
+	R_ScreenShot( ri.Cmd_Argv( 1 ), ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? qtrue : qfalse );
 }
 
 /*
@@ -2106,25 +2113,25 @@ void R_EnvShot_f( void )
 	if( !r_worldmodel )
 		return;
 
-	if( Cmd_Argc() != 3 )
+	if( ri.Cmd_Argc() != 3 )
 	{
 		Com_Printf( "usage: envshot <name> <size>\n" );
 		return;
 	}
 
 	maxSize = min( glConfig.width, glConfig.height );
-	if( maxSize > atoi( Cmd_Argv( 2 ) ) )
-		maxSize = atoi( Cmd_Argv( 2 ) );
+	if( maxSize > atoi( ri.Cmd_Argv( 2 ) ) )
+		maxSize = atoi( ri.Cmd_Argv( 2 ) );
 
 	for( size = 1; size < maxSize; size <<= 1 ) ;
 	if( size > maxSize )
 		size >>= 1;
 
-	buffer = Mem_Alloc( r_texturesPool, (size * size * 3) * 2 + 18 );
+	buffer = R_MallocExt( r_imagesPool, (size * size * 3) * 2 + 18, 0, 0 );
 	bufferFlipped = buffer + size * size * 3;
 
-	checkname_size = sizeof( char ) * ( strlen( "env/" ) + strlen( Cmd_Argv( 1 ) ) + 1 + strlen( cubemapShots[0].suf ) + 4 + 1 );
-	checkname = Mem_TempMalloc( checkname_size );
+	checkname_size = sizeof( char ) * ( strlen( "env/" ) + strlen( ri.Cmd_Argv( 1 ) ) + 1 + strlen( cubemapShots[0].suf ) + 4 + 1 );
+	checkname = R_Malloc( checkname_size );
 
 	fd = rsc.refdef;
 	fd.time = 0;
@@ -2132,16 +2139,16 @@ void R_EnvShot_f( void )
 	fd.width = fd.height = size;
 	fd.fov_x = fd.fov_y = 90;
 
-	ri.farClip = R_DefaultFarClip();
+	rn.farClip = R_DefaultFarClip();
 
 	// do not render non-bmodel entities
-	ri.params |= RP_CUBEMAPVIEW;
-	ri.clipFlags = 15;
-	ri.shadowGroup = NULL;
-	ri.fbColorAttachment = ri.fbDepthAttachment = NULL;
+	rn.params |= RP_CUBEMAPVIEW;
+	rn.clipFlags = 15;
+	rn.shadowGroup = NULL;
+	rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
 
-	Vector4Set( ri.viewport, fd.x, glConfig.height - size - fd.y, size, size );
-	Vector4Set( ri.scissor, fd.x, glConfig.height - size - fd.y, size, size );
+	Vector4Set( rn.viewport, fd.x, glConfig.height - size - fd.y, size, size );
+	Vector4Set( rn.scissor, fd.x, glConfig.height - size - fd.y, size, size );
 
 	for( i = 0; i < 6; i++ )
 	{
@@ -2156,7 +2163,7 @@ void R_EnvShot_f( void )
 			( cubemapShots[i].flags & IT_FLIPY ) ? qtrue : qfalse, 
 			( cubemapShots[i].flags & IT_FLIPDIAGONAL ) ? qtrue : qfalse );
 
-		Q_snprintfz( checkname, checkname_size, "env/%s_%s", Cmd_Argv( 1 ), cubemapShots[i].suf );
+		Q_snprintfz( checkname, checkname_size, "env/%s_%s", ri.Cmd_Argv( 1 ), cubemapShots[i].suf );
 		//if( r_screenshot_jpeg->integer ) {
 		//	COM_DefaultExtension( checkname, ".jpg", sizeof(checkname) );
 		//	if( WriteJPG( checkname, bufferFlipped, size, size, r_screenshot_jpeg_quality->integer ) )
@@ -2169,10 +2176,10 @@ void R_EnvShot_f( void )
 	}
 
 	// render non-bmodel entities again
-	ri.params &= ~RP_CUBEMAPVIEW;
+	rn.params &= ~RP_CUBEMAPVIEW;
 
-	Mem_Free( checkname );
-	Mem_Free( buffer );
+	R_Free( checkname );
+	R_Free( buffer );
 }
 
 /*
@@ -2181,8 +2188,8 @@ void R_EnvShot_f( void )
 void R_BeginAviDemo( void )
 {
 	if( r_aviBuffer )
-		Mem_Free( r_aviBuffer );
-	r_aviBuffer = Mem_Alloc( r_texturesPool, 18 + glConfig.width * glConfig.height * 3 );
+		R_Free( r_aviBuffer );
+	r_aviBuffer = R_MallocExt( r_imagesPool, 18 + glConfig.width * glConfig.height * 3, 0, 0 );
 }
 
 /*
@@ -2213,7 +2220,7 @@ void R_WriteAviFrame( int frame, qboolean scissor )
 	}
 
 	checkname_size = sizeof( char ) * ( strlen( "avi/avi" ) + 6 + 4 + 1 );
-	checkname = Mem_TempMalloc( checkname_size );
+	checkname = R_Malloc( checkname_size );
 	Q_snprintfz( checkname, checkname_size, "avi/avi%06i", frame );
 
 	if( r_screenshot_jpeg->integer )
@@ -2229,7 +2236,7 @@ void R_WriteAviFrame( int frame, qboolean scissor )
 		WriteTGA( checkname, r_aviBuffer, w, h, glConfig.ext.bgra != 0 ? qtrue : qfalse );
 	}
 
-	Mem_Free( checkname );
+	R_Free( checkname );
 }
 
 /*
@@ -2239,7 +2246,7 @@ void R_StopAviDemo( void )
 {
 	if( r_aviBuffer )
 	{
-		Mem_Free( r_aviBuffer );
+		R_Free( r_aviBuffer );
 		r_aviBuffer = NULL;
 	}
 }
@@ -2580,18 +2587,19 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 */
 static void R_InitStretchRawTexture( void )
 {
-	const char *name = "*** raw ***";
+	const char * const name = "*** raw ***";
+	int name_len = strlen( name );
 
 	// reserve a dummy texture slot
-	image_cur_hash = Com_HashKey( name, IMAGES_HASH_SIZE );
+	image_cur_hash = ri.Hash_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
 	r_rawtexture = R_AllocPic();
 
 	assert( r_rawtexture );
 	if( !r_rawtexture ) {
-		Com_Error( ERR_FATAL, "Failed to register cinematic texture" );
+		ri.Com_Error( ERR_FATAL, "Failed to register cinematic texture" );
 	}
 
-	r_rawtexture->name = Mem_Alloc( r_texturesPool, strlen( name ) + 1 );
+	r_rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
 	r_rawtexture->flags = IT_CINEMATIC;
 	strcpy( r_rawtexture->name, name );
 	RB_AllocTextureNum( r_rawtexture );
@@ -2715,7 +2723,7 @@ void R_InitImages( void )
 	qglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	qglPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-	r_texturesPool = Mem_AllocPool( r_mempool, "Textures" );
+	r_imagesPool = R_AllocPool( r_mempool, "Images" );
 	image_cur_hash = IMAGES_HASH_SIZE+1;
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
@@ -2765,7 +2773,7 @@ static void R_FreeImage( image_t *image )
 {
 	RB_FreeTextureNum( image );
 
-	Mem_Free( image->name );
+	R_Free( image->name );
 	image->name = NULL;
 	image->texnum = 0;
 	image->registrationSequence = 0;
@@ -2823,7 +2831,7 @@ void R_ShutdownImages( void )
 	int i;
 	image_t *image;
 
-	if( !r_texturesPool )
+	if( !r_imagesPool )
 		return;
 
 	R_ReleaseBuiltinTextures();
@@ -2839,17 +2847,17 @@ void R_ShutdownImages( void )
 	R_FreeImageBuffers();
 
 	if( r_imagePathBuf )
-		Mem_Free( r_imagePathBuf );
+		R_Free( r_imagePathBuf );
 	if( r_imagePathBuf2 )
-		Mem_Free( r_imagePathBuf2 );
+		R_Free( r_imagePathBuf2 );
 
 	if( r_8to24table )
 	{
-		Mem_Free( r_8to24table );
+		R_Free( r_8to24table );
 		r_8to24table = NULL;
 	}
 
-	Mem_FreePool( &r_texturesPool );
+	R_FreePool( &r_imagesPool );
 
 	memset( r_portaltextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
 	memset( r_shadowmapTextures, 0, sizeof( image_t * ) * MAX_SHADOWGROUPS );

@@ -61,7 +61,7 @@ qboolean R_AddLightOccluder( const entity_t *ent )
 	vec3_t mins, maxs, bbox[8];
 	qboolean bmodelRotated = qfalse;
 
-	if( ri.refdef.rdflags & RDF_NOWORLDMODEL )
+	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
 		return qfalse;
 	if( !ent->model || ent->model->type == mod_brush )
 		return qfalse;
@@ -338,16 +338,16 @@ void R_DrawShadowmaps( void )
 	float lodScale;
 	vec3_t lodOrigin;
 	shadowGroup_t *group;
-	int shadowBits = ri.shadowBits;
+	int shadowBits = rn.shadowBits;
 	refdef_t refdef;
 	int lod;
 	float farClip;
 
 	if( !rsc.numShadowGroups )
 		return;
-	if( ri.params & RP_SHADOWMAPVIEW )
+	if( rn.params & RP_SHADOWMAPVIEW )
 		return;
-	if( ri.refdef.rdflags & RDF_NOWORLDMODEL )
+	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
 		return;
 	if( !shadowBits )
 		return;
@@ -356,10 +356,10 @@ void R_DrawShadowmaps( void )
 		return;
 	}
 
-	lodScale = ri.lod_dist_scale_for_fov;
-	VectorCopy( ri.lodOrigin, lodOrigin );
+	lodScale = rn.lod_dist_scale_for_fov;
+	VectorCopy( rn.lodOrigin, lodOrigin );
 
-	refdef = ri.refdef;
+	refdef = rn.refdef;
 
 	// find lighting group containing entities with same lightingOrigin as ours
 	for( i = 0; i < rsc.numShadowGroups; i++ )
@@ -406,27 +406,27 @@ void R_DrawShadowmaps( void )
 			continue;
 		}
 
-		ri.fbColorAttachment = NULL;
-		ri.fbDepthAttachment = shadowmap;
-		ri.farClip = farClip;
-		ri.params = RP_SHADOWMAPVIEW|RP_FLIPFRONTFACE;
-		ri.clipFlags |= 16; // clip by far plane too
-		ri.meshlist = &r_shadowlist;
-		ri.shadowGroup = group;
-		ri.lod_dist_scale_for_fov = lodScale;
-		VectorCopy( group->origin, ri.pvsOrigin );
-		VectorCopy( lodOrigin, ri.lodOrigin );
+		rn.fbColorAttachment = NULL;
+		rn.fbDepthAttachment = shadowmap;
+		rn.farClip = farClip;
+		rn.params = RP_SHADOWMAPVIEW|RP_FLIPFRONTFACE;
+		rn.clipFlags |= 16; // clip by far plane too
+		rn.meshlist = &r_shadowlist;
+		rn.shadowGroup = group;
+		rn.lod_dist_scale_for_fov = lodScale;
+		VectorCopy( group->origin, rn.pvsOrigin );
+		VectorCopy( lodOrigin, rn.lodOrigin );
 
 		// 3 pixels border on each side to prevent nasty stretching/bleeding of shadows,
 		// also accounting for smoothing done in the fragment shader
-		Vector4Set( ri.viewport, refdef.x + 3, glConfig.height - refdef.height - refdef.y + 3, 
+		Vector4Set( rn.viewport, refdef.x + 3, glConfig.height - refdef.height - refdef.y + 3, 
 			refdef.width - 6, refdef.height - 6 );
-		Vector4Set( ri.scissor, refdef.x, glConfig.height - textureHeight - refdef.y, 
+		Vector4Set( rn.scissor, refdef.x, glConfig.height - textureHeight - refdef.y, 
 			textureWidth, textureHeight );
 
 		R_RenderView( &refdef );
 
-		Matrix4_Copy( ri.cameraProjectionMatrix, group->cameraProjectionMatrix );
+		Matrix4_Copy( rn.cameraProjectionMatrix, group->cameraProjectionMatrix );
 	}
 
 	R_PopRefInst( 0 );

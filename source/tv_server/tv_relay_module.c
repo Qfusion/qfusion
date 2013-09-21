@@ -585,8 +585,13 @@ tv_module_t *TV_GetModule( const char *game )
 	iter->import.LocateEntities = TV_Module_LocateEntities;
 	iter->import.LocateLocalEntities = TV_Module_LocateLocalEntities;
 
-	iter->export = (tv_module_export_t *)Com_LoadGameLibrary( "tv", "GetTVModuleAPI", &iter->handle, &iter->import,
-		builtinAPIfunc, qfalse, NULL );
+	if( builtinAPIfunc ) {
+		iter->export = builtinAPIfunc( &iter->import );
+	}
+	else {
+		iter->export = (tv_module_export_t *)Com_LoadGameLibrary( "tv", "GetTVModuleAPI", &iter->handle, 
+			&iter->import, qfalse, NULL );
+	}
 	if( !iter->export )
 	{
 		Mem_Free( iter );

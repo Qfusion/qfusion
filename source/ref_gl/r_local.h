@@ -21,18 +21,48 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __R_LOCAL_H__
 #define __R_LOCAL_H__
 
-#include "../qcommon/qcommon.h"
+#include "../gameshared/q_arch.h"
+#include "../gameshared/q_math.h"
+#include "../gameshared/q_shared.h"
+#include "../gameshared/q_cvar.h"
+#include "../qcommon/qfiles.h"
+#include "../qcommon/bsp.h"
+#include "../qcommon/patch.h"
 
 typedef unsigned int elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
 #include "r_math.h"
-#include "r_glimp.h"
 #include "r_public.h"
 #include "r_vattribs.h"
+
+typedef struct
+{
+	vec3_t			origin;
+	vec3_t			color;
+	float			intensity;
+} dlight_t;
+
+typedef struct superLightStyle_s
+{
+	vattribmask_t	vattribs;
+	int				lightmapNum[MAX_LIGHTMAPS];
+	int				lightmapStyles[MAX_LIGHTMAPS];
+	int				vertexStyles[MAX_LIGHTMAPS];
+	float			stOffset[MAX_LIGHTMAPS][2];
+} superLightStyle_t;
+
+#include "r_glimp.h"
 #include "r_surface.h"
 #include "r_image.h"
+#include "r_mesh.h"
+#include "r_shader.h"
+#include "r_backend.h"
+#include "r_shadow.h"
+#include "r_model.h"
+#include "r_trace.h"
+#include "r_program.h"
 
 #ifdef CGAMEGETLIGHTORIGIN
 #define SHADOW_MAPPING			2
@@ -76,30 +106,6 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 #define RP_NONVIEWERREF			( RP_PORTALVIEW|RP_MIRRORVIEW|RP_ENVVIEW|RP_SKYPORTALVIEW|RP_SHADOWMAPVIEW )
 
 //===================================================================
-
-typedef struct
-{
-	vec3_t			origin;
-	vec3_t			color;
-	float			intensity;
-} dlight_t;
-
-typedef struct superLightStyle_s
-{
-	vattribmask_t	vattribs;
-	int				lightmapNum[MAX_LIGHTMAPS];
-	int				lightmapStyles[MAX_LIGHTMAPS];
-	int				vertexStyles[MAX_LIGHTMAPS];
-	float			stOffset[MAX_LIGHTMAPS][2];
-} superLightStyle_t;
-
-#include "r_mesh.h"
-#include "r_shader.h"
-#include "r_backend.h"
-#include "r_shadow.h"
-#include "r_model.h"
-#include "r_trace.h"
-#include "r_program.h"
 
 typedef struct portalSurface_s
 {
@@ -198,6 +204,9 @@ typedef struct
 
 typedef struct
 {
+	const char		*applicationName;
+	const char		*screenshotPrefix;
+
 	// any asset (model, shader, texture, etc) with has not been registered
 	// or "touched" during the last registration sequence will be freed
 	int				registrationSequence;
@@ -224,6 +233,8 @@ typedef struct
 
 	float			sinTableByte[256];
 } r_frontend_t;
+
+extern ref_import_t ri;
 
 extern r_scene_t rsc;
 extern r_frontend_t rf;
@@ -455,9 +466,21 @@ void		R_ShutdownCoronas( void );
 
 extern mempool_t *r_mempool;
 
-#define	R_Malloc( size ) Mem_Alloc( r_mempool, size )
-#define	R_Realloc( data, size ) Mem_Realloc( data, size )
-#define	R_Free( data ) Mem_Free( data )
+#define	R_Malloc( size ) ri.Mem_AllocExt( r_mempool, size, 16, 1, __FILE__, __LINE__ )
+#define	R_Realloc( data, size ) ri.Mem_Realloc( data, size, __FILE__, __LINE__ )
+#define	R_Free( data ) ri.Mem_Free( data, __FILE__, __LINE__ )
+#define R_AllocPool( parent, name ) ri.Mem_AllocPool( parent, name, __FILE__, __LINE__ )
+#define R_FreePool( pool ) ri.Mem_FreePool( pool, __FILE__, __LINE__ )
+#define R_MallocExt(pool,size,align,z) ri.Mem_AllocExt(pool,size,align,z,__FILE__,__LINE__)
+
+char		*R_CopyString_( const char *in, const char *filename, int fileline );
+#define		R_CopyString(in) R_CopyString_(in,__FILE__,__LINE__)
+
+int			R_LoadFile_( const char *path, void **buffer, const char *filename, int fileline );
+void		R_FreeFile_( void *buffer, const char *filename, int fileline );
+
+#define		R_LoadFile(path,buffer) R_LoadFile_(path,buffer,__FILE__,__LINE__)
+#define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
 void		R_BeginFrame( float cameraSeparation, qboolean forceClear );
 void		R_EndFrame( void );
@@ -465,6 +488,7 @@ void		R_Set2DMode( qboolean enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_ClearStats( void );
 const char *R_SpeedsMessage( char *out, size_t size );
+void		R_AppActivate( qboolean active, qboolean destroy );
 
 mfog_t		*R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t		*R_FogForSphere( const vec3_t centre, const float radius );
@@ -491,6 +515,8 @@ void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offse
 void		R_EndStretchBatch( void );
 void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, const shader_t *shader );
+void		R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
+	float angle, const vec4_t color, const shader_t *shader );
 void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *data );
 void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, int program_type, image_t *image, qboolean blend );
@@ -501,11 +527,16 @@ void		R_SetCustomColor( int num, int r, int g, int b );
 int			R_GetCustomColor( int num );
 void		R_ShutdownCustomColors( void );
 
-#define ENTITY_OUTLINE(ent) (( !(ri.params & RP_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
+#define ENTITY_OUTLINE(ent) (( !(rn.params & RP_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
 
 void		R_ClearRefInstStack( void );
 qboolean	R_PushRefInst( void );
 void		R_PopRefInst( int clearBitMask );
+
+qboolean	R_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
+
+void		R_SetScissorRegion( int x, int y, int w, int h );
+void		R_GetScissorRegion( int *x, int *y, int *w, int *h );
 
 //
 // r_mesh.c
@@ -555,11 +586,15 @@ int			R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], 
 //
 // r_register.c
 //
-rserr_t		R_Init( void *hinstance, void *wndproc, void *parenthWnd, int x, int y, int width, int height, qboolean fullscreen, qboolean wideScreen, qboolean verbose );
+rserr_t		R_Init( const char *applicationName, const char *screenshotPrefix,
+				void *hinstance, void *wndproc, void *parenthWnd, 
+				int x, int y, int width, int height, int displayFrequency,
+				qboolean fullscreen, qboolean wideScreen, qboolean verbose );
 void		R_BeginRegistration( void );
 void		R_EndRegistration( void );
 void		R_Shutdown( qboolean verbose );
-
+rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency,
+				qboolean fullScreen, qboolean wideScreen );
 
 //
 // r_scene.c
@@ -607,6 +642,7 @@ float		R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
 void		R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 int			R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags );
 void		R_SkeletalGetBonePose( const model_t *mod, int bonenum, int frame, bonepose_t *bonepose );
+int			R_SkeletalGetNumBones( const model_t *mod, int *numFrames );
 
 void		R_InitSkeletalCache( void );
 void		R_ClearSkeletalCache( void );
@@ -728,6 +764,6 @@ typedef struct
 } mapconfig_t;
 
 extern mapconfig_t	mapConfig;
-extern refinst_t	ri;
+extern refinst_t	rn;
 
 #endif /*__R_LOCAL_H__*/

@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#include "../qcommon/qcommon.h"
+#include "../client/client.h"
 #include "../irc/irc_interface.h"
 
 static irc_export_t *irc_export;
@@ -32,20 +32,6 @@ static qboolean irc_initialized = qfalse;
 
 static void Irc_LoadLibrary( void );
 static void Irc_UnloadLibrary( void );
-
-// diverse declarations of functions we need to export but whose headers conflict
-extern struct mufont_s *SCR_RegisterFont( const char *name );
-extern void SCR_DrawString( int x, int y, int align, const char *str, struct mufont_s *font, vec4_t color );
-extern int SCR_DrawStringWidth( int x, int y, int align, const char *str, int maxwidth, struct mufont_s *font, vec4_t color );
-extern void SCR_DrawRawChar( int x, int y, qwchar num, struct mufont_s *font, vec4_t color );
-extern size_t SCR_strHeight( struct mufont_s *font );
-extern size_t SCR_strWidth( const char *str, struct mufont_s *font, int maxlen );
-extern size_t SCR_StrlenForWidth( const char *str, struct mufont_s *font, size_t maxwidth );
-extern int CL_GetKeyDest( void );
-extern connstate_t CL_GetClientState( void );
-extern struct shader_s *R_RegisterPic( const char *name );
-extern void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float *color, struct shader_s *shader );
-extern void R_DrawStretchPoly( const struct poly_s *poly, float x_offset, float y_offset );
 
 static void Irc_Print( const char *msg )
 {
@@ -118,6 +104,21 @@ static void Irc_MemEmptyPool( const char *filename, int fileline )
 	_Mem_EmptyPool( irc_pool, 0, 0, filename, fileline );
 }
 
+static struct shader_s *Irc_RegisterPic(const char *name)
+{
+	return re.RegisterPic(name);
+}
+
+static void	Irc_DrawStretchPic(int x, int y, int w, int h, float s1, float t1, float s2, float t2, float *color, struct shader_s *shader)
+{
+	re.DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
+}
+
+static void	Irc_DrawStretchPoly(const struct poly_s *poly, float x_offset, float y_offset)
+{
+	re.DrawStretchPoly( poly, x_offset, y_offset );
+}
+
 static void Irc_LoadLibrary( void )
 {
 	static irc_import_t import;
@@ -138,10 +139,11 @@ static void Irc_LoadLibrary( void )
 	import.SCR_strHeight = SCR_strHeight;
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
-	import.R_RegisterPic = R_RegisterPic;
-	import.R_DrawStretchPic = R_DrawStretchPic;
-	import.R_DrawStretchPoly = R_DrawStretchPoly;
-	import.viddef = &viddef;
+	import.SCR_GetScreenWidth = SCR_GetScreenWidth;
+	import.SCR_GetScreenHeight = SCR_GetScreenHeight;
+	import.R_RegisterPic = Irc_RegisterPic;
+	import.R_DrawStretchPic = Irc_DrawStretchPic;
+	import.R_DrawStretchPoly = Irc_DrawStretchPoly;
 	import.Milliseconds = Sys_Milliseconds;
 	import.Microseconds = Sys_Microseconds;
 	import.Mem_AllocPool = Irc_MemAllocPool;
