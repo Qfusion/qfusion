@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/qcommon.h"
 #include "../client/keys.h"
 #include "../client/vid.h"
-#include "../client/ref.h"
+#include "../cgame/ref.h"
 #include "../client/console.h"
 #include "../ref_gl/r_public.h"
 
