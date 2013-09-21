@@ -119,7 +119,7 @@ static void SCR_RegisterSystemFonts( void )
 */
 static void SCR_InitFonts( qboolean verbose )
 {
-	const qfontstyle_t con_fontSystemStyle = (qfontstyle_t)DEFAULT_SYSTEM_FONT_STYLE;
+	const int con_fontSystemStyle = DEFAULT_SYSTEM_FONT_STYLE;
 
 	FTLIB_PrecacheFonts( verbose );
 	
