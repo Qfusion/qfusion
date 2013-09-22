@@ -200,7 +200,7 @@ endif
 
 ifeq ($(BUILD_REF_GL),YES)
 CFLAGS_REF_GL=-I../libsrcs/libjpeg -I../libsrcs/libpng
-LDFLAGS_REF_GL=-ljpegstat -lpngstat -lzstat
+LDFLAGS_REF_GL= -lgdi32 -ljpegstat -lpngstat -lzstat
 endif
 
 LDFLAGS_IRC=-lwsock32 -lws2_32
@@ -279,12 +279,12 @@ endif
 
 ifeq ($(BUILD_FTLIB),YES)
 CFLAGS_FTLIB=$(shell freetype-config --cflags)
-LDFLAGS_FTLIB=-L$(X11BASE)/$(LIB) -lX11 -lXext -lXxf86dga -lXxf86vm -lXinerama -lXrandr $(shell freetype-config --libs)
+LDFLAGS_FTLIB=$(shell freetype-config --libs)
 endif
 
 ifeq ($(BUILD_REF_GL),YES)
 CFLAGS_REF_GL=-I$(X11BASE)/include $(shell freetype-config --cflags)
-LDFLAGS_REF_GL=-ljpeg -lpng -lz
+LDFLAGS_REF_GL=-L$(X11BASE)/$(LIB) -lX11 -lXext -lXxf86dga -lXxf86vm -lXinerama -lXrandr -ljpeg -lpng -lz
 endif
 
 LDFLAGS_IRC=
