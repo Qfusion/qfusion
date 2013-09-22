@@ -581,9 +581,9 @@ void VID_Front_f( void )
 }
 
 /*
-** VID_GetScreenSize
+** VID_GetDisplaySize
 */
-qboolean VID_GetScreenSize( int *width, int *height )
+qboolean VID_GetDisplaySize( int *width, int *height )
 {
 	DEVMODE dm;
 		
