@@ -744,7 +744,7 @@ compile-ref_gl: $(OBJS_REF_GL)
 link-ref_gl: $(BINDIR)/libs $(BINDIR)/libs/ref_gl_$(ARCH).$(SHARED_LIBRARY_EXTENSION)
 clean-ref_gl:
 	@echo "  > Removing ref_gl objects" && \
-	$(RM) $(OBJS_FTLIB)
+	$(RM) $(OBJS_REF_GL)
 endif
 
 ifeq ($(BUILD_ANGELWRAP),YES)
