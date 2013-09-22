@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // This file must be identical in the quake and utils directories
 //
 
+#ifndef __Q_FILES__
+#define __Q_FILES__
+
 /*
 ========================================================================
 
@@ -442,3 +445,5 @@ typedef struct
 	unsigned char styles[MAX_LIGHTMAPS];
 	unsigned char direction[2];
 } rdgridlight_t;
+
+#endif // __Q_FILES__
