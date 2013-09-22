@@ -550,7 +550,7 @@ static qboolean _NETWM_CHECK_FULLSCREEN( void )
 
 	vid_fullscreen = Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
 	glConfig.fullScreen = isfullscreen;
-	Cvar_SetValue( vid_fullscreen->name, fullScreen ? 1 : 0 );
+	Cvar_SetValue( vid_fullscreen->name, isfullscreen ? 1 : 0 );
 	vid_fullscreen->modified = qfalse;
 
 	XFree( atomdata );
@@ -644,11 +644,13 @@ static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, q
 	XSetWindowAttributes wa;
 	unsigned long mask;
 
-	if( (glConfig.width == width) && (glConfig.height == height) && (glConfig.fullScreen != fullscreen) ) {
-		// toggle fullscreen
-		glConfig.fullScreen = fullscreen;		
-		_NETWM_SET_FULLSCREEN( fullscreen );
-		return;
+	if( x11display.dpy ) {
+		if( (glConfig.width == width) && (glConfig.height == height) && (glConfig.fullScreen != fullscreen) ) {
+			// fullscreen toggle
+			_NETWM_SET_FULLSCREEN( fullscreen );
+			_NETWM_CHECK_FULLSCREEN();
+			return glConfig.fullScreen == fullscreen ? rserr_ok : rserr_restart_required;
+		}
 	}
 
 	screen_mode = -1;
