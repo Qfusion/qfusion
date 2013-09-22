@@ -888,9 +888,6 @@ $(BUILDDIR)/client/%.o: server/%.c
 $(BUILDDIR)/client/%.o: client/%.c
 	@$(DO_CC_CLIENT)
 
-$(BUILDDIR)/client/%.o: ref_gl/%.c
-	@$(DO_CC_CLIENT)
-
 $(BUILDDIR)/client/%.o: null/%.c
 	@$(DO_CC_CLIENT)
 
@@ -914,9 +911,6 @@ $(BUILDDIR)/client/%.o: unix/%.c
 	@$(DO_CC_CLIENT)
 endif
 endif
-
-$(BUILDDIR)/client/%.o: game/%.c
-	@$(DO_CC_CLIENT)
 
 $(BUILDDIR)/client/%.o: gameshared/%.c
 	@$(DO_CC_DED)
