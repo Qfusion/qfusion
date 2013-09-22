@@ -41,5 +41,7 @@ qboolean VID_GetScreenSize( int *width, int *height );
 qboolean VID_GetModeInfo( int *width, int *height, qboolean *wideScreen, int mode );
 void	VID_AppActivate( qboolean active, qboolean destroy );
 qboolean VID_RefreshActive( void );
+int		VID_GetWindowWidth( void );
+int		VID_GetWindowHeight( void );
 
 #endif

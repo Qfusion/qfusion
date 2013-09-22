@@ -281,7 +281,9 @@ void SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font
 }
 
 /*
-* SCR_DrawStringWidth - clamp to width in pixels. Returns drawn len
+* SCR_DrawStringWidth
+*
+* ClampS to width in pixels. Returns drawn len
 */
 size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color )
 {
@@ -311,6 +313,24 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 	}
 
 	return 0;
+}
+
+//===============================================================================
+
+/*
+* SCR_RegisterPic
+*/
+struct shader_s *SCR_RegisterPic( const char *name )
+{
+	return re.RegisterPic( name );
+}
+
+/*
+* SCR_DrawStretchPic
+*/
+void SCR_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const float *color, const struct shader_s *shader )
+{
+	re.DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
 }
 
 /*
@@ -442,7 +462,7 @@ void SCR_InitScreen( void )
 */
 unsigned int SCR_GetScreenWidth( void )
 {
-	return viddef.width;
+	return VID_GetWindowWidth();
 }
 
 /*
@@ -450,7 +470,7 @@ unsigned int SCR_GetScreenWidth( void )
 */
 unsigned int SCR_GetScreenHeight( void )
 {
-	return viddef.height;
+	return VID_GetWindowHeight();
 }
 
 //=============================================================================
