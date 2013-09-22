@@ -512,7 +512,7 @@ static qboolean _NET_WM_STATE_FULLSCREEN_SUPPORTED( void )
 /*
 * _NETWM_CHECK_FULLSCREEN
 */
-qboolean _NETWM_CHECK_FULLSCREEN( void )
+static qboolean _NETWM_CHECK_FULLSCREEN( void )
 {
 	qboolean isfullscreen = qfalse;
 	unsigned char *atomdata;
@@ -549,18 +549,9 @@ qboolean _NETWM_CHECK_FULLSCREEN( void )
 	}
 
 	vid_fullscreen = Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
-	if( isfullscreen )
-	{
-		glConfig.fullScreen = qtrue;
-		Cvar_SetValue( vid_fullscreen->name, 1 );
-		vid_fullscreen->modified = qfalse;
-	}
-	else
-	{
-		glConfig.fullScreen = qfalse;
-		Cvar_SetValue( vid_fullscreen->name, 0 );
-		vid_fullscreen->modified = qfalse;
-	}
+	glConfig.fullScreen = isfullscreen;
+	Cvar_SetValue( vid_fullscreen->name, fullScreen ? 1 : 0 );
+	vid_fullscreen->modified = qfalse;
 
 	XFree( atomdata );
 	return isfullscreen;
@@ -571,7 +562,7 @@ qboolean _NETWM_CHECK_FULLSCREEN( void )
 *
 * Tell Window-Manager to toggle fullscreen
 */
-void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
+static void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
 {
 	XEvent xev;
 	Atom wm_state;
@@ -652,6 +643,13 @@ static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, q
 	float ratio;
 	XSetWindowAttributes wa;
 	unsigned long mask;
+
+	if( (glConfig.width == width) && (glConfig.height == height) && (glConfig.fullScreen != fullscreen) ) {
+		// toggle fullscreen
+		glConfig.fullScreen = fullscreen;		
+		_NETWM_SET_FULLSCREEN( fullscreen );
+		return;
+	}
 
 	screen_mode = -1;
 	screen_x = screen_y = 0;
@@ -770,6 +768,8 @@ static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, q
 
 		if( !x11display.features.wmStateFullscreen )
 			_x11_SetNoResize( x11display.win, width, height );
+		else
+			_NETWM_SET_FULLSCREEN( qfalse );
 
 #ifdef _XRANDR_OVER_VIDMODE_
 		_xf86_XrandrSwitchBack();
@@ -1040,4 +1040,5 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short *ramp )
 */
 void GLimp_AppActivate( qboolean active, qboolean destroy )
 {
+	_NETWM_CHECK_FULLSCREEN();
 }

@@ -985,7 +985,7 @@ static void HandleEvents( void )
 				break;
 
 			case ConfigureNotify:
-				_NETWM_CHECK_FULLSCREEN();
+				VID_AppActivate( qtrue, qfalse );
 				break;
 
 			case PropertyNotify:
@@ -1024,12 +1024,12 @@ static void HandleEvents( void )
 				if( !focus && Cvar_Value( "vid_fullscreen" ) )
 				{
 					go_fullscreen_on_focus = qtrue;
-					_NETWM_SET_FULLSCREEN( qfalse );
+					Cbuf_ExecuteText( EXEC_APPEND, "vid_fullscreen 0\n" );
 				}
 				else if( focus && go_fullscreen_on_focus )
 				{
 					go_fullscreen_on_focus = qfalse;
-					_NETWM_SET_FULLSCREEN( qtrue );
+					Cbuf_ExecuteText( EXEC_APPEND, "vid_fullscreen 1\n" );
 				}
 			}
 		}
