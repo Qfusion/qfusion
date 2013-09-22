@@ -1077,6 +1077,19 @@ $(BUILDDIR)/ref_gl/%.o: qcommon/%.c
 $(BUILDDIR)/ref_gl/%.o: ref_gl/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_REF_GL)
 
+ifeq ($(USE_MINGW),YES)
+$(BUILDDIR)/ref_gl/%.o: win32/%.c
+	@$(DO_CC_CLIENT)
+else
+ifeq ($(OS),Darwin)
+$(BUILDDIR)/ref_gl/%.o: mac/%.c
+	@$(DO_CC_CLIENT)
+else
+$(BUILDDIR)/client/%.o: unix/%.c
+	@$(DO_CC_CLIENT)
+endif
+endif
+
 ########
 # ANGELWRAP
 ########
