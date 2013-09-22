@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../client/client.h"
 #include "x11.h"
 
-static x11display_t *display;
+x11display_t *display;
 
 static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 {
@@ -38,7 +38,7 @@ int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
 	display = NULL;
 
 	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
-		NULL, NULL, parentWindow, 
+		NULL, &VID_WndProc, parentWindow, 
 		x, y, width, height, displayFrequency,
 		fullScreen, wideScreen, verbose );
 }
@@ -135,4 +135,79 @@ qboolean VID_GetScreenSize( int *width, int *height )
 	}
 
 	return qfalse;
+}
+
+/*
+* Sys_GetClipboardData
+*
+* Orginally from EzQuake
+* There should be a smarter place to put this
+*/
+char *Sys_GetClipboardData( qboolean primary )
+{
+	Window win;
+	Atom type;
+	int format, ret;
+	unsigned long nitems, bytes_after, bytes_left;
+	unsigned char *data;
+	char *buffer;
+	Atom atom;
+
+	if( !x11display || !x11display.dpy )
+		return NULL;
+
+	if( primary )
+	{
+		atom = XInternAtom( x11display.dpy, "PRIMARY", True );
+	}
+	else
+	{
+		atom = XInternAtom( x11display.dpy, "CLIPBOARD", True );
+	}
+	if( atom == None )
+		return NULL;
+
+	win = XGetSelectionOwner( x11display.dpy, atom );
+	if( win == None )
+		return NULL;
+
+	XConvertSelection( x11display.dpy, atom, XA_STRING, atom, win, CurrentTime );
+	XFlush( x11display.dpy );
+
+	XGetWindowProperty( x11display.dpy, win, atom, 0, 0, False, AnyPropertyType, &type, &format, &nitems, &bytes_left,
+		&data );
+	if( bytes_left <= 0 )
+		return NULL;
+
+	ret = XGetWindowProperty( x11display.dpy, win, atom, 0, bytes_left, False, AnyPropertyType, &type,
+		&format, &nitems, &bytes_after, &data );
+	if( ret == Success )
+	{
+		buffer = Q_malloc( bytes_left + 1 );
+		Q_strncpyz( buffer, (char *)data, bytes_left + 1 );
+	}
+	else
+	{
+		buffer = NULL;
+	}
+
+	XFree( data );
+
+	return buffer;
+}
+
+/*
+* Sys_SetClipboardData
+*/
+qboolean Sys_SetClipboardData( char *data )
+{
+	return qfalse;
+}
+
+/*
+* Sys_FreeClipboardData
+*/
+void Sys_FreeClipboardData( char *data )
+{
+	Q_free( data );
 }

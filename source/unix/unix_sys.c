@@ -62,8 +62,7 @@ qboolean stdin_active = qtrue;
 // =======================================================================
 
 #ifndef DEDICATED_ONLY
-extern void GLimp_Shutdown( void );
-extern void IN_Shutdown( void );
+extern void CL_Shutdown( void );
 #endif
 
 static void signal_handler( int sig )
@@ -86,8 +85,7 @@ static void signal_handler( int sig )
 	case 1:
 #ifndef DEDICATED_ONLY
 		printf( "Received signal %d, exiting...\n", sig );
-		IN_Shutdown();
-		GLimp_Shutdown();
+		CL_Shutdown();
 		_exit( 1 );
 		break;
 	case 2:
@@ -399,6 +397,47 @@ void Sys_SendKeyEvents( void )
 {
 	// grab frame time
 	sys_frame_time = Sys_Milliseconds();
+}
+
+#ifdef DEDICATED_ONLY
+
+/*
+* Sys_GetClipboardData
+*/
+char *Sys_GetClipboardData( qboolean primary )
+{
+}
+
+/*
+* Sys_SetClipboardData
+*/
+qboolean Sys_SetClipboardData( char *data )
+{
+	return qfalse;
+}
+
+/*
+* Sys_FreeClipboardData
+*/
+void Sys_FreeClipboardData( char *data )
+{
+}
+
+#endif
+
+/*
+* Sys_OpenURLInBrowser
+*/
+void Sys_OpenURLInBrowser( const char *url )
+{
+    int r;
+
+    r = system( va( "xdg-open \"%s\"", url ) );
+    if( r == 0 ) {
+		// FIXME: XIconifyWindow does minimize the window, however
+		// it seems that FocusIn even which follows grabs the input afterwards
+		// XIconifyWindow( x11display.dpy, x11display.win, x11display.scr );
+    }
 }
 
 /*****************************************************************************/

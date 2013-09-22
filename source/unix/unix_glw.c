@@ -464,82 +464,6 @@ static void _x11_SetNoResize( Window w, int width, int height )
 /*****************************************************************************/
 
 /*
-* Sys_GetClipboardData
-*
-* Orginally from EzQuake
-* There should be a smarter place to put this
-*/
-char *Sys_GetClipboardData( qboolean primary )
-{
-	Window win;
-	Atom type;
-	int format, ret;
-	unsigned long nitems, bytes_after, bytes_left;
-	unsigned char *data;
-	char *buffer;
-	Atom atom;
-
-	if( !x11display.dpy )
-		return NULL;
-
-	if( primary )
-	{
-		atom = XInternAtom( x11display.dpy, "PRIMARY", True );
-	}
-	else
-	{
-		atom = XInternAtom( x11display.dpy, "CLIPBOARD", True );
-	}
-	if( atom == None )
-		return NULL;
-
-	win = XGetSelectionOwner( x11display.dpy, atom );
-	if( win == None )
-		return NULL;
-
-	XConvertSelection( x11display.dpy, atom, XA_STRING, atom, win, CurrentTime );
-	XFlush( x11display.dpy );
-
-	XGetWindowProperty( x11display.dpy, win, atom, 0, 0, False, AnyPropertyType, &type, &format, &nitems, &bytes_left,
-		&data );
-	if( bytes_left <= 0 )
-		return NULL;
-
-	ret = XGetWindowProperty( x11display.dpy, win, atom, 0, bytes_left, False, AnyPropertyType, &type,
-		&format, &nitems, &bytes_after, &data );
-	if( ret == Success )
-	{
-		buffer = Q_malloc( bytes_left + 1 );
-		Q_strncpyz( buffer, (char *)data, bytes_left + 1 );
-	}
-	else
-	{
-		buffer = NULL;
-	}
-
-	XFree( data );
-
-	return buffer;
-}
-
-
-/*
-* Sys_SetClipboardData
-*/
-qboolean Sys_SetClipboardData( char *data )
-{
-	return qfalse;
-}
-
-/*
-* Sys_FreeClipboardData
-*/
-void Sys_FreeClipboardData( char *data )
-{
-	Q_free( data );
-}
-
-/*
 * _NET_WM_CHECK_SUPPORTED
 */
 static qboolean _NET_WM_CHECK_SUPPORTED( Atom NET_ATOM )
@@ -670,21 +594,6 @@ void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
 
 	XSendEvent( x11display.dpy, DefaultRootWindow( x11display.dpy ), False,
 		SubstructureNotifyMask, &xev );
-}
-
-/*
-* Sys_OpenURLInBrowser
-*/
-void Sys_OpenURLInBrowser( const char *url )
-{
-    int r;
-
-    r = system( va( "xdg-open \"%s\"", url ) );
-    if( r == 0 ) {
-		// FIXME: XIconifyWindow does minimize the window, however
-		// it seems that FocusIn even which follows grabs the input afterwards
-		// XIconifyWindow( x11display.dpy, x11display.win, x11display.scr );
-    }
 }
 
 /*****************************************************************************/
