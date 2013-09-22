@@ -73,8 +73,6 @@ extern cvar_t *win_noalttab;
 extern cvar_t *win_nowinkeys;
 
 // Global variables used internally by this module
-extern viddef_t	viddef;             // global video state; used by other modules
-
 HWND cl_hwnd;           // Main window handle for life of program
 HWND cl_parent_hwnd;	// pointer to parent window handle
 
@@ -561,8 +559,8 @@ void VID_UpdateWindowPosAndSize( int x, int y )
 
 	r.left   = 0;
 	r.top    = 0;
-	r.right  = viddef.width;
-	r.bottom = viddef.height;
+	r.right  = VID_GetWindowWidth();
+	r.bottom = VID_GetWindowHeight();
 
 	style = GetWindowLong( cl_hwnd, GWL_STYLE );
 	AdjustWindowRect( &r, style, FALSE );

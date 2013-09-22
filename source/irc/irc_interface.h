@@ -202,7 +202,6 @@ typedef struct
 	size_t			(*SCR_StrlenForWidth)(const char *str, struct qfontface_s *font, size_t maxwidth);
 	struct shader_s*(*R_RegisterPic)(const char *name);
 	void			(*R_DrawStretchPic)(int x, int y, int w, int h, float s1, float t1, float s2, float t2, float *color, struct shader_s *shader);
-	void			(*R_DrawStretchPoly)(const struct poly_s *poly, float x_offset, float y_offset);
 	unsigned int	(*SCR_GetScreenWidth)( void );
 	unsigned int	(*SCR_GetScreenHeight)( void );
 	// clock

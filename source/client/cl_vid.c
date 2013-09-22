@@ -240,6 +240,22 @@ qboolean VID_RefreshActive( void )
 }
 
 /*
+** VID_GetWindowWidth
+*/
+int VID_GetWindowWidth( void )
+{
+	return viddef.width;
+}
+
+/*
+** VID_GetWindowHeight
+*/
+int VID_GetWindowHeight( void )
+{
+	return viddef.height;
+}
+
+/*
 ** VID_ChangeMode
 */
 static rserr_t VID_ChangeMode( vid_init_t vid_init )
