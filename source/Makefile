@@ -1073,14 +1073,14 @@ $(BUILDDIR)/ref_gl/%.o: ref_gl/%.c
 
 ifeq ($(USE_MINGW),YES)
 $(BUILDDIR)/ref_gl/%.o: win32/%.c
-	@$(DO_CC_CLIENT)
+	@$(DO_CC_MODULE)
 else
 ifeq ($(OS),Darwin)
 $(BUILDDIR)/ref_gl/%.o: mac/%.c
-	@$(DO_CC_CLIENT)
+	@$(DO_CC_MODULE)
 else
 $(BUILDDIR)/ref_gl/%.o: unix/%.c
-	@$(DO_CC_CLIENT)
+	@$(DO_CC_MODULE)
 endif
 endif
 
