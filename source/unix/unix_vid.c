@@ -21,11 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../client/client.h"
 #include "x11.h"
 
-x11display_t *display;
+x11display_t x11display;
 
-static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
+static int VID_WndProc( x11display_t *wnd, int ev, int p1, int p2 )
 {
-	display = wnd;
+	x11display = *wnd;
 	return 0;
 }
 
@@ -153,7 +153,7 @@ char *Sys_GetClipboardData( qboolean primary )
 	char *buffer;
 	Atom atom;
 
-	if( !x11display || !x11display.dpy )
+	if( !x11display.dpy )
 		return NULL;
 
 	if( primary )
