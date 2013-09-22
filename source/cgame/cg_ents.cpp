@@ -680,6 +680,8 @@ void CG_AddCentityOutLineEffect( centity_t *cent )
 */
 static void CG_UpdateGenericEnt( centity_t *cent )
 {
+	int modelindex;
+
 	// start from clean
 	memset( &cent->ent, 0, sizeof( cent->ent ) );
 	cent->ent.scale = 1.0f;
@@ -695,8 +697,10 @@ static void CG_UpdateGenericEnt( centity_t *cent )
 
 	// set up the model
 	cent->ent.rtype = RT_MODEL;
-	if( cent->current.modelindex != 1 )
-		cent->ent.model = cgs.modelDraw[cent->current.modelindex];
+
+	modelindex = cent->current.modelindex;
+	if( modelindex > 0 && modelindex < MAX_MODELS )
+		cent->ent.model = cgs.modelDraw[modelindex];
 
 	cent->skel = CG_SkeletonForModel( cent->ent.model );
 }
@@ -1050,6 +1054,11 @@ void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *t
 */
 static void CG_UpdateFlagBaseEnt( centity_t *cent )
 {
+	int modelindex;
+
+		return;
+	}
+
 	// set entity color based on team
 	CG_TeamColorForEntity( cent->current.number, cent->ent.shaderRGBA );
 	if( cent->effects & EF_OUTLINE )
@@ -1066,7 +1075,10 @@ static void CG_UpdateFlagBaseEnt( centity_t *cent )
 	cent->ent.oldframe = cent->prev.frame;
 
 	// set up the model
-	cent->ent.model = cgs.modelDraw[cent->current.modelindex];
+	modelindex = cent->current.modelindex;
+	if( modelindex > 0 && modelindex < MAX_MODELS ) {
+		cent->ent.model = cgs.modelDraw[modelindex];
+	}
 	cent->skel = CG_SkeletonForModel( cent->ent.model );
 }
 
