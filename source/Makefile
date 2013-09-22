@@ -1071,6 +1071,9 @@ $(BUILDDIR)/ftlib/%.o: ftlib/%.c
 $(BUILDDIR)/ref_gl/%.o: gameshared/%.c
 	@$(DO_CC_MODULE)
 
+$(BUILDDIR)/ref_gl/%.o: qcommon/%.c
+	@$(DO_CC_MODULE)
+
 $(BUILDDIR)/ref_gl/%.o: ref_gl/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_REF_GL)
 
