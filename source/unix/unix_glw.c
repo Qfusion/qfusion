@@ -902,7 +902,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, q
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
 	qboolean fullscreen, qboolean wideScreen )
 {
-	return GLimp_SetMode_Real( app, width, height, fullscreen, wideScreen, qfalse );
+	return GLimp_SetMode_Real( width, height, fullscreen, wideScreen, qfalse );
 }
 
 /*
@@ -993,8 +993,8 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	XSetWindowAttributes attr;
 	unsigned long mask;
 
-	glw_state.applicationName = malloc( strlen( app ) + 1 );
-	memcpy( glw_state.applicationName, app, strlen( app ) + 1 );
+	glw_state.applicationName = malloc( strlen( applicationName ) + 1 );
+	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );
 
 	hinstance = NULL;
 	x11wndproc = (x11wndproc_t )wndproc;
@@ -1101,8 +1101,7 @@ void GLimp_EndFrame( void )
 
 	if( glConfig.fullScreen && vid_multiscreen_head->modified )
 	{
-		GLimp_SetMode_Real( glw_state.applicationName, 
-			glConfig.width, glConfig.height, qtrue, glConfig.wideScreen, qtrue );
+		GLimp_SetMode_Real( glConfig.width, glConfig.height, qtrue, glConfig.wideScreen, qtrue );
 		vid_multiscreen_head->modified = qfalse;
 	}
 }
