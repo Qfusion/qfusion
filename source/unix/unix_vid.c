@@ -37,7 +37,7 @@ int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
 {
 	display = NULL;
 
-	return R_Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
+	return re.R_Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
 		NULL, NULL, parentWindow, 
 		x, y, width, height, displayFrequency,
 		fullScreen, wideScreen, verbose );
