@@ -35,7 +35,7 @@ static int VID_WndProc( x11display_t *wnd, int ev, int p1, int p2 )
 int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
 	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
-	display = NULL;
+	x11display.dpy = NULL;
 
 	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
 		NULL, &VID_WndProc, parentWindow, 
@@ -90,18 +90,22 @@ static void _NET_WM_STATE_DEMANDS_ATTENTION( void )
 	Atom wm_state;
 	Atom wm_demandsAttention;
 
-	wm_state = XInternAtom( display->dpy, "_NET_WM_STATE", False );
-	wm_demandsAttention = XInternAtom( display->dpy, "_NET_WM_STATE_DEMANDS_ATTENTION", False );
+	if( !x11display.dpy ) {
+		return;
+	}
+
+	wm_state = XInternAtom( x11display.dpy, "_NET_WM_STATE", False );
+	wm_demandsAttention = XInternAtom( x11display.dpy, "_NET_WM_STATE_DEMANDS_ATTENTION", False );
 
 	memset(&xev, 0, sizeof(xev));
 	xev.type = ClientMessage;
-	xev.xclient.window = display->win;
+	xev.xclient.window = x11display.win;
 	xev.xclient.message_type = wm_state;
 	xev.xclient.format = 32;
 	xev.xclient.data.l[0] = 1;
 	xev.xclient.data.l[1] = wm_demandsAttention;
 
-	XSendEvent( display->dpy, DefaultRootWindow( display->dpy ), False,
+	XSendEvent( x11display.dpy, DefaultRootWindow( x11display.dpy ), False,
 		SubstructureNotifyMask, &xev );
 }
 
@@ -112,15 +116,15 @@ static void _NET_WM_STATE_DEMANDS_ATTENTION( void )
 */
 void VID_FlashWindow( int count )
 {
-	if( display ) {
+	if( x11display.dpy ) {
 		_NET_WM_STATE_DEMANDS_ATTENTION();
 	}
 }
 
 /*
-** VID_GetScreenSize
+** VID_GetDisplaySize
 */
-qboolean VID_GetScreenSize( int *width, int *height )
+qboolean VID_GetDisplaySize( int *width, int *height )
 {
 	Display *dpy = XOpenDisplay( NULL );
 	if( dpy ) {

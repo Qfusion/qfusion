@@ -551,7 +551,7 @@ load_refresh:
 			int w, h;
 			int mode = -1;
 
-			if( VID_GetScreenSize( &w, &h ) ) {
+			if( VID_GetDisplaySize( &w, &h ) ) {
 				mode = VID_GetModeNum( w, h );
 			}
 			Com_Printf( "Mode %i detected\n", mode );

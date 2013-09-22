@@ -37,7 +37,7 @@ void	VID_Restart( qboolean verbose, qboolean soundRestart );
 // The sound module may require the handle when using directsound
 void	*VID_GetWindowHandle( void );
 void	VID_FlashWindow( int count );
-qboolean VID_GetScreenSize( int *width, int *height );
+qboolean VID_GetDisplaySize( int *width, int *height );
 qboolean VID_GetModeInfo( int *width, int *height, qboolean *wideScreen, int mode );
 void	VID_AppActivate( qboolean active, qboolean destroy );
 qboolean VID_RefreshActive( void );
