@@ -1056,9 +1056,6 @@ static void CG_UpdateFlagBaseEnt( centity_t *cent )
 {
 	int modelindex;
 
-		return;
-	}
-
 	// set entity color based on team
 	CG_TeamColorForEntity( cent->current.number, cent->ent.shaderRGBA );
 	if( cent->effects & EF_OUTLINE )
