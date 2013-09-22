@@ -35,6 +35,3 @@ typedef int (* x11wndproc_t)(void *, int, int, int);
 
 // defined by glx_imp.c, used also by in_x11.c
 extern x11display_t x11display;
-
-qboolean _NETWM_CHECK_FULLSCREEN( void );
-void _NETWM_SET_FULLSCREEN( qboolean fullscreen );
