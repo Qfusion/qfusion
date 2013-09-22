@@ -18,7 +18,7 @@ cd "source"
 
 echo "${COMMAND_ENV} CXXFLAGS=${CFLAGS_COMMON} ${PATH}"
 
-CFLAGS="${CFLAGS_COMMON} ${CFLAGS_SOURCE} -I../libsrcs/zlib -I../libsrcs/libcurl/include -I../libsrcs/libjpeg -I../libsrcs/libogg/include -I../libsrcs/libvorbis/include -I../libsrcs/libtheora/include -I../libsrcs/libfreetype/include -I../libsrcs/libpng -I${DIRECTX_DIR}include "
+CFLAGS="${CFLAGS_COMMON} ${CFLAGS_SOURCE} -I../libsrcs/zlib -I../libsrcs/libcurl/include -I../libsrcs/libjpeg -I../libsrcs/libogg/include -I../libsrcs/libvorbis/include -I../libsrcs/libtheora/include -I../libsrcs/libfreetype/include -I../libsrcs/libpng "
 LDFLAGS="${LDFLAGS} -L${TARGET_LIB_DIR}"
 
 COMMAND_PREF="${COMMAND_ENV} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" PATH=\"${PATH}\" "
