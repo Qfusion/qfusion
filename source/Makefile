@@ -1079,7 +1079,7 @@ ifeq ($(OS),Darwin)
 $(BUILDDIR)/ref_gl/%.o: mac/%.c
 	@$(DO_CC_CLIENT)
 else
-$(BUILDDIR)/client/%.o: unix/%.c
+$(BUILDDIR)/ref_gl/%.o: unix/%.c
 	@$(DO_CC_CLIENT)
 endif
 endif
