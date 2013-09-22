@@ -510,9 +510,9 @@ ifeq ($(USE_MINGW),YES)
 CFILES_REF_GL += win32/win_qgl.c win32/win_glw.c
 else
 ifeq ($(OS),Darwin)
-CFILES_CLIENT += mac/mac_qgl.c
+CFILES_REF_GL += mac/mac_qgl.c
 else
-CFILES_CLIENT += unix/unix_glw.c unix/unix_qgl.c
+CFILES_REF_GL += unix/unix_glw.c unix/unix_qgl.c
 endif
 endif
 
