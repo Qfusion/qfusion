@@ -248,7 +248,7 @@ else
 LIB=lib
 endif
 
-LDFLAGS_CLIENT=-lz -lX11 -lXext -lXxf86dga -lXxf86vm -lrt $(shell curl-config --libs)
+LDFLAGS_CLIENT=-lz -lX11 -lXext -lXxf86dga -lrt $(shell curl-config --libs)
 LDFLAGS_DED=-lz $(shell curl-config --libs)
 LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lz $(shell curl-config --libs)
@@ -284,7 +284,7 @@ endif
 
 ifeq ($(BUILD_REF_GL),YES)
 CFLAGS_REF_GL=-I$(X11BASE)/include $(shell freetype-config --cflags)
-LDFLAGS_REF_GL=-L$(X11BASE)/$(LIB) -lX11 -lXext -lXinerama -lXrandr -ljpeg -lpng -lz
+LDFLAGS_REF_GL=-L$(X11BASE)/$(LIB) -lX11 -lXext -lXinerama -lXrandr -lXxf86vm -ljpeg -lpng -lz
 endif
 
 LDFLAGS_IRC=
@@ -370,7 +370,7 @@ RESFILES_CLIENT += win32/qfusion.rc
 else
 ifeq ($(OS),Darwin)
 else
-CFILES_CLIENT += unix/unix_input.c unix_xpm.c
+CFILES_CLIENT += unix/unix_input.c
 endif
 CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c
 endif
@@ -512,7 +512,7 @@ else
 ifeq ($(OS),Darwin)
 CFILES_REF_GL += mac/mac_qgl.c
 else
-CFILES_REF_GL += unix/unix_glw.c unix/unix_qgl.c
+CFILES_REF_GL += unix/unix_glw.c unix_xpm.c unix/unix_qgl.c
 endif
 endif
 
