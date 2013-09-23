@@ -406,6 +406,7 @@ void Sys_SendKeyEvents( void )
 */
 char *Sys_GetClipboardData( qboolean primary )
 {
+	return NULL;
 }
 
 /*
