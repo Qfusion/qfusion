@@ -122,8 +122,11 @@ static qboolean _xf86_XineramaFindBest( int *x, int *y, int *width, int *height,
 	int i, screens, head;
 	int best_dist, dist;
 	XineramaScreenInfo *xinerama;
+	cvar_t *vid_multiscreen_head;
 
 	assert( _xf86_xinerama_supported );
+
+	vid_multiscreen_head = Cvar_Get( "vid_multiscreen_head", "0", CVAR_ARCHIVE );
 
 	if( vid_multiscreen_head->integer == 0 )
 		return qfalse;
@@ -1014,10 +1017,14 @@ void GLimp_EndFrame( void )
 {
 	qglXSwapBuffers( x11display.dpy, x11display.gl_win );
 
-	if( glConfig.fullScreen && vid_multiscreen_head->modified )
+	if( glConfig.fullScreen )
 	{
-		GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, qtrue, glConfig.wideScreen, qtrue );
-		vid_multiscreen_head->modified = qfalse;
+		cvar_t *vid_multiscreen_head = Cvar_Get( "vid_multiscreen_head", "0", CVAR_ARCHIVE );
+		
+		if( vid_multiscreen_head->modified ) {
+			GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, qtrue, glConfig.wideScreen, qtrue );
+			vid_multiscreen_head->modified = qfalse;
+		}
 	}
 }
 
