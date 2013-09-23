@@ -214,6 +214,18 @@ void *_Mem_Realloc( void *data, size_t size, const char *filename, int fileline 
 	return newdata;
 }
 
+char *_Mem_CopyString( mempool_t *pool, const char *in, const char *filename, int fileline )
+{
+	char *out;
+	size_t num_chars = strlen( in ) + 1;
+	size_t str_size = sizeof( char ) * num_chars;
+
+	out = ( char* )_Mem_Alloc( pool, str_size, 0, 0, filename, fileline );
+	memcpy( out, in, str_size );
+
+	return out;
+}
+
 void _Mem_Free( void *data, int musthave, int canthave, const char *filename, int fileline )
 {
 	void *base;
