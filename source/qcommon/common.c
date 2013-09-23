@@ -46,6 +46,7 @@ cvar_t *revisioncvar;
 cvar_t *tv_server;
 cvar_t *mm_server;
 
+cvar_t *com_lang;
 static cvar_t *fixedtime;
 static cvar_t *logconsole = NULL;
 static cvar_t *logconsole_append;
@@ -601,25 +602,14 @@ int Com_GlobMatch( const char *pattern, const char *text, const qboolean casecmp
 	return glob_match( pattern, text, casecmp );
 }
 
-char *_ZoneCopyString( const char *in, const char *filename, int fileline )
+char *_ZoneCopyString( const char *str, const char *filename, int fileline )
 {
-	char *out;
-
-	out = ( char* )_Mem_Alloc( zoneMemPool, sizeof( char ) * ( strlen( in ) + 1 ), 0, 0, filename, fileline );
-	//out = Mem_ZoneMalloc( sizeof(char) * (strlen(in) + 1) );
-	Q_strncpyz( out, in, sizeof( char ) * ( strlen( in ) + 1 ) );
-
-	return out;
+	return _Mem_CopyString( zoneMemPool, str, filename, fileline );
 }
 
-char *TempCopyString( const char *in )
+char *_TempCopyString( const char *str, const char *filename, int fileline )
 {
-	char *out;
-
-	out = ( char* )Mem_TempMalloc( sizeof( char ) * ( strlen( in ) + 1 ) );
-	Q_strncpyz( out, in, sizeof( char ) * ( strlen( in ) + 1 ) );
-
-	return out;
+	return _Mem_CopyString( tempMemPool, str, filename, fileline );
 }
 
 void Info_Print( char *s )
@@ -1027,6 +1017,27 @@ void Qcommon_ShutdownCommands( void )
 }
 
 /*
+* Qcommon_CheckUserLanguage
+*
+* Make sure com_lang is always set to a sensible value
+*/
+static void Qcommon_CheckUserLanguage( void )
+{
+	if( com_lang->modified ) {
+		if( !com_lang->string[0] ) {
+			const char *lang;
+
+			lang = Sys_GetPreferredLanguage();
+			if( !lang || !lang[0] ) {
+				lang = APP_DEFAULT_LANGUAGE;
+			}
+			Cvar_ForceSet( com_lang->name, lang );
+		}
+		com_lang->modified = qfalse;
+	}
+}
+
+/*
 * Qcommon_Init
 */
 void Qcommon_Init( int argc, char **argv )
@@ -1154,7 +1165,12 @@ void Qcommon_Init( int argc, char **argv )
 	versioncvar = Cvar_Get( "version", APP_VERSION_STR " " CPUSTRING " " __DATE__ " " BUILDSTRING, CVAR_SERVERINFO|CVAR_READONLY );
 	revisioncvar = Cvar_Get( "revision", SVN_RevString(), CVAR_READONLY );
 
+	com_lang = Cvar_Get( "com_lang", "", CVAR_NOSET );
+	com_lang->modified = qtrue;
+
 	Sys_Init();
+
+	Qcommon_CheckUserLanguage();
 
 	NET_Init();
 	Netchan_Init();

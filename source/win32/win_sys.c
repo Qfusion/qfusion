@@ -587,6 +587,59 @@ void Sys_OpenURLInBrowser( const char *url )
 }
 
 /*
+* Sys_GetPreferredLanguage
+* Get the preferred language through the MUI API. Works on Vista and newer.
+*/
+const char *Sys_GetPreferredLanguage( void )
+{
+	typedef BOOL (WINAPI *GetUserPreferredUILanguages_t)(DWORD, PULONG, PZZWSTR, PULONG);
+	BOOL hr;
+	ULONG numLanguages = 0;
+	DWORD cchLanguagesBuffer = 0;
+	HINSTANCE kernel32Dll;
+	GetUserPreferredUILanguages_t GetUserPreferredUILanguages_f;
+	static char lang[10];
+	
+	lang[0] = '\0';
+
+	kernel32Dll = LoadLibrary( "kernel32.dll" );
+
+	hr = FALSE;
+	GetUserPreferredUILanguages_f = (void *)GetProcAddress( kernel32Dll, "GetUserPreferredUILanguages" );
+	if( GetUserPreferredUILanguages_f ) {
+		hr = GetUserPreferredUILanguages_f( MUI_LANGUAGE_NAME, &numLanguages, NULL, &cchLanguagesBuffer );
+	}
+
+	if( hr ) {
+		WCHAR *pwszLanguagesBuffer;
+		
+		pwszLanguagesBuffer = Q_malloc( sizeof( WCHAR ) * cchLanguagesBuffer );
+		hr = GetUserPreferredUILanguages_f( MUI_LANGUAGE_NAME, &numLanguages, pwszLanguagesBuffer, &cchLanguagesBuffer );
+
+		if( hr ) {
+			char *p;
+
+			WideCharToMultiByte( CP_ACP, 0, pwszLanguagesBuffer, cchLanguagesBuffer, lang, sizeof(lang), NULL, NULL );
+			lang[sizeof(lang)-1] = '\0';
+
+			p = strchr( lang, '-' );
+			if( p ) { *p = '\0'; }
+			p = strchr( lang, '_' );
+			if( p ) { *p = '\0'; }
+		}
+
+		Q_free( pwszLanguagesBuffer );	
+	}
+
+	FreeLibrary( kernel32Dll );
+
+	if( !lang[0] ) {
+		return APP_DEFAULT_LANGUAGE;
+	}
+	return Q_strlwr( lang );
+}
+
+/*
 ==============================================================================
 
 WINDOWS CRAP
