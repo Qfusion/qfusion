@@ -608,7 +608,7 @@ static void GLimp_SetXPMIcon( const int *xpm_icon )
 	width = xpm_icon[0];
 	height = xpm_icon[1];
 	cardinalSize = width * height + 2;
-	cardinalData = Q_malloc( cardinalSize * sizeof( *cardinalData ) );
+	cardinalData = malloc( cardinalSize * sizeof( *cardinalData ) );
 	for( i = 0; i < cardinalSize; i++ )
 		cardinalData[i] = xpm_icon[i];
 
@@ -618,7 +618,7 @@ static void GLimp_SetXPMIcon( const int *xpm_icon )
 	XChangeProperty( x11display.dpy, x11display.win, NET_WM_ICON, CARDINAL, 32,
 		PropModeReplace, (unsigned char *)cardinalData, cardinalSize );
 
-	Q_free( cardinalData );
+	free( cardinalData );
 }
 
 int *parse_xpm_icon ( int num_xpm_elements, char *xpm_data[] );
