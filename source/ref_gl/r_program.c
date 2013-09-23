@@ -378,7 +378,7 @@ static int RP_CompileShader( int program, const char *programName, const char *s
 				Com_Printf( "\n" );
 			}
 
-			Com_Printf( S_COLOR_YELLOW "Failed to compile %s shader for program %s\n%s\n", 
+			Com_Printf( S_COLOR_YELLOW "Failed to compile %s shader for program %s\n", 
 				shaderName, programName );
 			Com_Printf( "%s", log );
 			Com_Printf( "\n" );
