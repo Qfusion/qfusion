@@ -810,6 +810,10 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 	glConfig.fullScreen = fullscreen;
 	glConfig.wideScreen = wideScreen;
 
+	if( x11wndproc ) {
+		x11wndproc( &x11display, 0, 0, 0 );
+	}
+
 	return rserr_ok;
 }
 
@@ -856,7 +860,7 @@ void GLimp_Shutdown( void )
 	x11display.dpy = NULL;
 
 	if( x11wndproc ) {
-		x11wndproc( NULL, 0, 0, 0 );
+		x11wndproc( &x11display, 0, 0, 0 );
 	}
 
 	if( glw_state.applicationName ) {
