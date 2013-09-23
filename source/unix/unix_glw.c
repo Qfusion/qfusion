@@ -366,17 +366,16 @@ static short _xf86_XrandrClosestRate( int mode, short preferred_rate )
 	return best;
 }
 
-static void _xf86_XrandrSwitch( int mode, int rate )
+static void _xf86_XrandrSwitch( int mode, int refresh_rate )
 {
 	if( _xrandr_supported )
 	{
 		short rate;
 
 		// prefer user defined rate
-		_vid_display_refresh_rate = rate;
-		if( !rate ) {
-			rate =_xrandr_default_rate;
-		}
+		_vid_display_refresh_rate = refresh_rate;
+		rate = _vid_display_refresh_rate ? _vid_display_refresh_rate : _xrandr_default_rate;
+
 		// find the closest rate on this resolution
 		rate = _xf86_XrandrClosestRate( mode, rate );
 
