@@ -60,6 +60,7 @@ x11wndproc_t x11wndproc;
 
 glwstate_t glw_state;
 
+static int _vid_display_refresh_rate = 0;
 static qboolean _xf86_vidmodes_supported = qfalse;
 static int default_dotclock, default_viewport[2];
 static XF86VidModeModeLine default_modeline;
@@ -362,14 +363,17 @@ static short _xf86_XrandrClosestRate( int mode, short preferred_rate )
 	return best;
 }
 
-static void _xf86_XrandrSwitch( int mode )
+static void _xf86_XrandrSwitch( int mode, int rate )
 {
 	if( _xrandr_supported )
 	{
 		short rate;
 
 		// prefer user defined rate
-		rate = vid_displayfrequency->integer ? vid_displayfrequency->integer : _xrandr_default_rate;
+		_vid_display_refresh_rate = rate;
+		if( !rate ) {
+			rate =_xrandr_default_rate;
+		}
 		// find the closest rate on this resolution
 		rate = _xf86_XrandrClosestRate( mode, rate );
 
@@ -637,7 +641,7 @@ static void GLimp_SetApplicationIcon( void )
 ** GLimp_SetMode_Real
 * Hack to get rid of the prints when toggling fullscreen
 */
-static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, qboolean wideScreen, qboolean silent )
+static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, qboolean fullscreen, qboolean wideScreen, qboolean silent )
 {
 	int screen_x, screen_y, screen_width, screen_height, screen_mode;
 	float ratio;
@@ -737,7 +741,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, q
 		if( screen_mode != -1 )
 		{
 #ifdef _XRANDR_OVER_VIDMODE_
-			_xf86_XrandrSwitch( screen_mode );
+			_xf86_XrandrSwitch( screen_mode, displayFrequency );
 #else
 			_xf86_VidmodesSwitch( screen_mode );
 #endif
@@ -813,7 +817,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, qboolean fullscreen, q
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
 	qboolean fullscreen, qboolean wideScreen )
 {
-	return GLimp_SetMode_Real( width, height, fullscreen, wideScreen, qfalse );
+	return GLimp_SetMode_Real( width, height, displayFrequency, fullscreen, wideScreen, qfalse );
 }
 
 /*
@@ -1012,7 +1016,7 @@ void GLimp_EndFrame( void )
 
 	if( glConfig.fullScreen && vid_multiscreen_head->modified )
 	{
-		GLimp_SetMode_Real( glConfig.width, glConfig.height, qtrue, glConfig.wideScreen, qtrue );
+		GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, qtrue, glConfig.wideScreen, qtrue );
 		vid_multiscreen_head->modified = qfalse;
 	}
 }
