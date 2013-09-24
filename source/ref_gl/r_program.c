@@ -739,7 +739,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "//#endif\n" \
 "#endif\n" \
 "\n" \
-"#if QF_GLSLVERSION >= 130\n" \
+"#if QF_GLSL_VERSION >= 130\n" \
 "  precision highp float;\n" \
 "# ifdef VERTEX_SHADER\n" \
 "   out myhalf4 qf_FrontColor;\n" \
