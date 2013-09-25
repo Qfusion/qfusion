@@ -91,6 +91,7 @@ static const constant_numeric_t cg_numeric_constants[] = {
 	{ "WEAP_PLASMAGUN", WEAP_PLASMAGUN },
 	{ "WEAP_LASERGUN", WEAP_LASERGUN },
 	{ "WEAP_ELECTROBOLT", WEAP_ELECTROBOLT },
+	{ "WEAP_INSTAGUN", WEAP_INSTAGUN },
 
 	{ "NOGUN", 0 },
 	{ "GUN", 1 },
