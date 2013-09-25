@@ -1910,10 +1910,16 @@ static char *G_CallVotes_ArgsToString( callvotedata_t *vote )
 */
 static char *G_CallVotes_String( callvotedata_t *vote )
 {
+	char *arguments;
+
 	if( vote->string )
-		return vote->string;
+		arguments = vote->string;
 	else
-		return G_CallVotes_ArgsToString( vote );
+		arguments = G_CallVotes_ArgsToString( vote );
+
+	if( arguments[0] )
+		return va( "%s %s", vote->callvote->name, arguments );
+	return vote->callvote->name;
 }
 
 /*
@@ -1936,8 +1942,8 @@ static void G_CallVotes_CheckState( void )
 	{
 		// fixme: should be vote cancelled or something
 		G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_FAILED_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
-		G_PrintMsg( NULL, "Vote is no longer valid\nVote %s%s %s%s canceled\n", S_COLOR_YELLOW,
-			callvoteState.vote.callvote->name, G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
+		G_PrintMsg( NULL, "Vote is no longer valid\nVote %s%s%s canceled\n", S_COLOR_YELLOW,
+			G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
 		G_CallVotes_Reset();
 		return;
 	}
@@ -1963,7 +1969,7 @@ static void G_CallVotes_CheckState( void )
 	if( yeses > needvotes || callvoteState.vote.operatorcall )
 	{
 		G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_PASSED_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
-		G_PrintMsg( NULL, "Vote %s%s %s%s passed\n", S_COLOR_YELLOW, callvoteState.vote.callvote->name,
+		G_PrintMsg( NULL, "Vote %s%s%s passed\n", S_COLOR_YELLOW,
 			G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
 		if( callvoteState.vote.callvote->execute != NULL )
 			callvoteState.vote.callvote->execute( &callvoteState.vote );
@@ -1975,7 +1981,7 @@ static void G_CallVotes_CheckState( void )
 	if( game.realtime > callvoteState.timeout || voters-noes <= needvotes ) // no change to pass anymore
 	{
 		G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_FAILED_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
-		G_PrintMsg( NULL, "Vote %s%s %s%s failed\n", S_COLOR_YELLOW, callvoteState.vote.callvote->name,
+		G_PrintMsg( NULL, "Vote %s%s%s failed\n", S_COLOR_YELLOW,
 			G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
 		G_CallVotes_Reset();
 		return;
@@ -1985,8 +1991,8 @@ static void G_CallVotes_CheckState( void )
 	{
 		if( callvoteState.timeout - game.realtime <= 7.5 && callvoteState.timeout - game.realtime > 2.5 )
 			G_AnnouncerSound( NULL, trap_SoundIndex( S_ANNOUNCER_CALLVOTE_VOTE_NOW ), GS_MAX_TEAMS, true, NULL );
-		G_PrintMsg( NULL, "Vote in progress: %s%s %s%s, %i voted yes, %i voted no. %i required\n", S_COLOR_YELLOW,
-			callvoteState.vote.callvote->name, G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE, yeses, noes,
+		G_PrintMsg( NULL, "Vote in progress: %s%s%s, %i voted yes, %i voted no. %i required\n", S_COLOR_YELLOW,
+			G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE, yeses, noes,
 			needvotes + 1 );
 		warntimer = game.realtime + 5 * 1000;
 	}
@@ -2182,8 +2188,8 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 
 	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_CALLED_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
 
-	G_PrintMsg( NULL, "%s%s requested to vote %s%s %s%s\n", ent->r.client->netname, S_COLOR_WHITE, S_COLOR_YELLOW,
-		callvoteState.vote.callvote->name, G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
+	G_PrintMsg( NULL, "%s%s requested to vote %s%s%s\n", ent->r.client->netname, S_COLOR_WHITE, S_COLOR_YELLOW,
+		G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
 
 	G_PrintMsg( NULL, "%sPress %sF1 (\\vote yes)%s or %sF2 (\\vote no)%s\n", S_COLOR_WHITE, S_COLOR_YELLOW,
 		S_COLOR_WHITE, S_COLOR_YELLOW, S_COLOR_WHITE );
