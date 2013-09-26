@@ -38,13 +38,51 @@ typedef struct podomain_s
 
 static podomain_t *podomains_head;
 
+static cvar_t *com_lang;
+
 // ============================================================================
 
 /*
 * Com_ParsePOString
 */
-static char *Com_ParsePOString( char *str )
+static size_t Com_ParsePOString( char *instr, char *outstr )
 {
+	char *q1, *q2;
+	char *outstart = outstr;
+	char line[1024];
+
+	Q_strncpyz( line, instr, sizeof( line ) );
+
+	// accept properly double quoted strings
+	// or strings without double quotes at all
+	q1 = strchr( instr, '"' );
+	q2 = strrchr( instr, '"' );
+	if( q1 && q2 ) {
+		if( q2 <= q1 ) {
+			return 0;
+		}
+		q1++;
+		*q2 = '\0';
+	}
+	else {
+		if( q1 && !q2 || !q1 && q2 ) {
+			return 0;
+		}
+		// no quotes
+		for( q1 = instr; *q1 == ' ' || *q1 == '\t'; q1++ );
+	}
+
+	// skip empty lines
+	if( !*q1 ) {
+		return 0;
+	}
+
+	for( instr = q1; *instr; instr++ ) {
+		// TODO: handle escaped and hex chars properly
+		*outstr++ = *instr;
+	}
+	*outstr++ = '\0';
+	return outstr - outstart - 1;
 }
 
 /*
@@ -54,8 +92,9 @@ static trie_t *Com_ParsePOFile( char *buffer, int length )
 {
 	char *start = buffer, *end = buffer + length;
 	char *cur, *eol;
-	char *msgid;
-	char *q1, *q2;
+	qboolean have_msgid, have_msgstr;
+	char *msgid, *msgstr, *instr, *outstr;
+	size_t str_length;
 	trie_t *dict;
 	trie_error_t tr_err;
 
@@ -64,7 +103,12 @@ static trie_t *Com_ParsePOFile( char *buffer, int length )
 		return NULL;
 	}
 
-	for( cur = start; cur && *cur && cur < end; cur++ ) {
+	have_msgid = have_msgstr = qfalse;
+	instr = outstr = buffer;
+	msgid = msgstr = buffer;
+
+	for( cur = start; cur && cur < end; cur++ ) {	char line[1024];
+
 		if( !*cur ) {
 			break;
 		}
@@ -77,7 +121,11 @@ static trie_t *Com_ParsePOFile( char *buffer, int length )
 		// find the end of line
 		eol = strchr( cur, '\n' );
 		if( eol ) {
+			char *prev = eol - 1;
 			*eol = '\0';
+			if( *prev == '\r' ) {
+				*prev = '\0';
+			}
 		}
 
 		if( *cur == '#' ) {
@@ -85,24 +133,59 @@ static trie_t *Com_ParsePOFile( char *buffer, int length )
 			continue;
 		}
 
+	Q_strncpyz( line, cur, sizeof( line ) );
+
+parse_cmd:
 		// search for msgid "id"
-		if( !msgid ) {
-			if( !strncmp( cur, "msgid ", 6 ) ) {
+		if( !strncmp( cur, "msgid ", 6 ) ) {
+			if( have_msgstr ) {
+				Trie_Insert( dict, msgid, ( void * )msgstr );
+			}
+			have_msgid = qtrue;
+			instr = cur + 6;
+			outstr = cur + 5;
+			msgid = outstr;
+			*msgid = '\0';
+		}
+		else if( have_msgid && !strncmp( cur, "msgstr ", 7 ) ) {
+			have_msgstr = qtrue;
+			instr = cur + 7;
+			outstr = cur + 6;
+			msgstr = outstr;
+			*msgstr = '\0';
+		}
+		else {
+			// multiline?
+			if( have_msgid || have_msgstr ) {
+				if( *cur != '"' || !strrchr( cur+1, '"') ) {
+					if( have_msgstr ) {
+						Trie_Insert( dict, msgid, ( void * )msgstr );
+					}
+					// no
+					have_msgid = have_msgstr = qfalse;
+					goto parse_cmd;
+				}
+				// yes
+				instr = cur;
+			} else {
 				cur = eol;
 				continue;
 			}
-
-			// "abc"
-			// 01234
-			q1 = strchr( cur, '"' );
-			q2 = strrchr( cur, '"' );
-			if( q1 && q2 && (q2 > q1) ) {
-				continue;
-			}
-
-			*q2 = '\0';
-			Com_ParsePOString( q1 + 1 );
 		}
+
+		str_length = Com_ParsePOString( instr, outstr );
+		if( !str_length ) {
+			have_msgid = have_msgstr = qfalse;
+			cur = eol;
+		}
+		else {
+			cur = eol;
+			outstr += str_length;
+		}
+	}
+
+	if( have_msgstr ) {
+		Trie_Insert( dict, msgid, ( void * )msgstr );
 	}
 
 	return dict;
@@ -117,7 +200,7 @@ static trie_t *Com_LoadPOFile( const char *filepath )
 	char *buffer;
 	trie_t *dict;
 
-	length = FS_LoadFile( filepath, &buffer, NULL, 0 );
+	length = FS_LoadFile( filepath, ( void ** )&buffer, NULL, 0 );
 	if( length < 0 ) {
 		return NULL;
 	}
@@ -135,7 +218,7 @@ static trie_t *Com_LoadPOFile( const char *filepath )
 static pofile_t *Com_CreatePOFile( const char *filepath )
 {
 	pofile_t *pofile;
-	pofile = Mem_ZoneMalloc( sizeof( *pofile ) );
+	pofile = ( pofile_t * )Mem_ZoneMalloc( sizeof( *pofile ) );
 	pofile->path = ZoneCopyString( filepath );
 	pofile->next = NULL;
 	pofile->dict = NULL;
@@ -174,7 +257,7 @@ static podomain_t *Com_FindPODomain( const char *name )
 static podomain_t *Com_CreatePODomain( const char *name )
 {
 	podomain_t *podomain;
-	podomain = Mem_ZoneMalloc( sizeof( *podomain ) );
+	podomain = ( podomain_t * )Mem_ZoneMalloc( sizeof( *podomain ) );
 	podomain->name = ZoneCopyString( name );
 	podomain->next = NULL;
 	podomain->pofiles_head = NULL;
@@ -199,21 +282,55 @@ static void Com_DestroyPODomain( podomain_t *podomain )
 }
 
 /*
+* Com_l10n_CheckUserLanguage
+*/
+void Com_l10n_CheckUserLanguage( void )
+{
+	if( com_lang->modified ) {
+		if( !com_lang->string[0] ) {
+			const char *lang;
+
+			lang = Sys_GetPreferredLanguage();
+			if( !lang || !lang[0] ) {
+				lang = APP_DEFAULT_LANGUAGE;
+			}
+			Cvar_ForceSet( com_lang->name, lang );
+		}
+		com_lang->modified = qfalse;
+	}
+}
+
+/*
 * Com_l10n_Init
 */
 void Com_l10n_Init( void )
 {
 	podomains_head = NULL;
+
+	com_lang = Cvar_Get( "com_lang", "", CVAR_NOSET );
+	com_lang->modified = qtrue;
+
+	Com_l10n_CheckUserLanguage();
 }
 
 /*
-* Com_l10n_LoadPOFile
+* Com_l10n_LoadLangPOFile
 */
-void Com_l10n_LoadPOFile( const char *domainname, const char *filepath )
+void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 {
 	podomain_t *podomain;
 	pofile_t *pofile;
 	trie_t *pofile_dict;
+	char *tempfilename;
+	const char *sep;
+	size_t tempfilename_size;
+
+	if( !domainname || !*domainname ) {
+		return;
+	}
+	if( !filepath || !*filepath ) {
+		return;
+	}
 
 	podomain = Com_FindPODomain( domainname );
 	if( !podomain ) {
@@ -222,16 +339,21 @@ void Com_l10n_LoadPOFile( const char *domainname, const char *filepath )
 		podomains_head = podomain;
 	}
 
-	pofile_dict = Com_LoadPOFile( filepath );
-	if( !pofile_dict ) {
-		return;
+	tempfilename_size = strlen( filepath ) + strlen( "/" ) + strlen( com_lang->string ) + strlen( ".po" ) + 1;
+	tempfilename = ( char * )Mem_TempMalloc( tempfilename_size );
+
+	sep = ( filepath[strlen( filepath ) - 1] == '/' ? "" : "/" );
+	Q_snprintfz( tempfilename, tempfilename_size, "%s%s%s.po", filepath, sep, com_lang->string );
+
+	pofile_dict = Com_LoadPOFile( tempfilename );
+	if( pofile_dict ) {
+		pofile = Com_CreatePOFile( filepath );
+		pofile->dict = pofile_dict;
+		pofile->next = podomain->pofiles_head;
+		podomain->pofiles_head = pofile;
 	}
 
-	pofile = Com_CreatePOFile( filepath );
-	pofile->dict = pofile_dict;
-	pofile->next = podomain->pofiles_head;
-
-	podomain->pofiles_head = pofile;
+	Mem_TempFree( tempfilename );
 }
 
 /*
