@@ -271,6 +271,8 @@ void CL_UIModule_Init( void )
 	import.Irc_GetPrevHistoryNode = Irc_GetPrevHistoryNode;
 	import.Irc_GetHistoryNodeLine = Irc_GetHistoryNodeLine;
 
+	import.L10n_TranslateString = Com_l10n_TranslateString;
+
 	if( builtinAPIfunc ) {
 		uie = builtinAPIfunc( &import );
 	}

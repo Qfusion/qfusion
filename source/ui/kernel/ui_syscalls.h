@@ -496,6 +496,10 @@ namespace trap
 		inline const char *Irc_GetHistoryNodeLine(const struct irc_chat_history_node_s *n) {
 			return UI_IMPORT.Irc_GetHistoryNodeLine(n);
 		}
+
+		inline const char *L10n_TranslateString( const char *domainname, const char *string ) {
+			return UI_IMPORT.L10n_TranslateString( domainname, string );
+		}
 }
 
 #endif

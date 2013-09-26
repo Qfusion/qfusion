@@ -47,11 +47,10 @@ static cvar_t *com_lang;
 */
 static size_t Com_ParsePOString( char *instr, char *outstr )
 {
+	int i;
 	char *q1, *q2;
 	char *outstart = outstr;
-	char line[1024];
-
-	Q_strncpyz( line, instr, sizeof( line ) );
+	char *inend = instr + strlen( instr );
 
 	// accept properly double quoted strings
 	// or strings without double quotes at all
@@ -59,6 +58,7 @@ static size_t Com_ParsePOString( char *instr, char *outstr )
 	q2 = strrchr( instr, '"' );
 	if( q1 && q2 ) {
 		if( q2 <= q1 ) {
+			// TODO: print error message
 			return 0;
 		}
 		q1++;
@@ -66,6 +66,7 @@ static size_t Com_ParsePOString( char *instr, char *outstr )
 	}
 	else {
 		if( q1 && !q2 || !q1 && q2 ) {
+			// TODO: print error message
 			return 0;
 		}
 		// no quotes
@@ -74,12 +75,82 @@ static size_t Com_ParsePOString( char *instr, char *outstr )
 
 	// skip empty lines
 	if( !*q1 ) {
+		// TODO: print error message
 		return 0;
 	}
 
-	for( instr = q1; *instr; instr++ ) {
-		// TODO: handle escaped and hex chars properly
-		*outstr++ = *instr;
+	for( instr = q1; instr < inend && *instr; instr++ ) {
+		char num;
+		char c = *instr;
+
+		switch (c) {
+			case '\\':
+				c = *(++instr);
+				if (!c)
+					break;
+				switch (c) {
+					case 'a':
+						*outstr++ = '\a';
+						break;
+					case 'b':
+						*outstr++ = '\b';
+						break;
+					case 'f':
+						*outstr++ = '\f';
+						break;
+					case 'n':
+						*outstr++ = '\n';
+						break;
+					case 'r':
+						*outstr++ = '\r';
+						break;
+					case 't':
+						*outstr++ = '\t';
+						break;
+					case 'v':
+						*outstr++ = '\v';
+						break;
+					case 'x':
+						// hexadecimals
+						num = 0;
+						for( i = 0; i < 2; i++ ) {
+							c = *(++instr);
+							if( c >= '0' && c <= '9' ) {
+								num = (num << 4) | (c - '0');
+							} else if( c >= 'a' && c <= 'f' ) {
+								num = (num << 4) | (c - 'a');
+							} else if( c >= 'A' && c <= 'F' ) {
+								num = (num << 4) | (c - 'A');
+							} else {
+								instr -= 2;
+								break;
+							}
+						}
+						*outstr++ = num ? num : 'x';
+						break;
+					default:
+						// octals
+						num = 0;
+						instr--;
+						if( c >= '0' && c <= '7' ) {
+							for( i = 0; i < 3; i++ ) {
+								c = *(++instr);
+								if( c >= '0' && c <= '7' ) {
+									num = (num << 3) | (c - '0');
+								} else {
+									instr -= 2;
+									break;
+								}
+							}
+						}
+						*outstr++ = num ? num : c;
+						break;
+				}
+				break;
+			default:
+				*outstr++ = c;
+				break;
+		}
 	}
 	*outstr++ = '\0';
 	return outstr - outstart - 1;
@@ -107,8 +178,7 @@ static trie_t *Com_ParsePOFile( char *buffer, int length )
 	instr = outstr = buffer;
 	msgid = msgstr = buffer;
 
-	for( cur = start; cur && cur < end; cur++ ) {	char line[1024];
-
+	for( cur = start; cur >= start && cur < end; cur = eol + 1 ) {
 		if( !*cur ) {
 			break;
 		}
@@ -129,17 +199,19 @@ static trie_t *Com_ParsePOFile( char *buffer, int length )
 		}
 
 		if( *cur == '#' ) {
-			cur = eol;
 			continue;
 		}
 
-	Q_strncpyz( line, cur, sizeof( line ) );
+		if( !*cur ) {
+			// empty line
+			continue;
+		}
 
 parse_cmd:
 		// search for msgid "id"
 		if( !strncmp( cur, "msgid ", 6 ) ) {
 			if( have_msgstr ) {
-				Trie_Insert( dict, msgid, ( void * )msgstr );
+				Trie_Insert( dict, msgid, ( void * )ZoneCopyString( msgstr ) );
 			}
 			have_msgid = qtrue;
 			instr = cur + 6;
@@ -159,7 +231,7 @@ parse_cmd:
 			if( have_msgid || have_msgstr ) {
 				if( *cur != '"' || !strrchr( cur+1, '"') ) {
 					if( have_msgstr ) {
-						Trie_Insert( dict, msgid, ( void * )msgstr );
+						Trie_Insert( dict, msgid, ( void * )ZoneCopyString( msgstr ) );
 					}
 					// no
 					have_msgid = have_msgstr = qfalse;
@@ -168,24 +240,21 @@ parse_cmd:
 				// yes
 				instr = cur;
 			} else {
-				cur = eol;
 				continue;
 			}
 		}
 
 		str_length = Com_ParsePOString( instr, outstr );
 		if( !str_length ) {
-			have_msgid = have_msgstr = qfalse;
-			cur = eol;
+			have_msgid = have_msgstr = qfalse;			
 		}
 		else {
-			cur = eol;
 			outstr += str_length;
 		}
 	}
 
 	if( have_msgstr ) {
-		Trie_Insert( dict, msgid, ( void * )msgstr );
+		Trie_Insert( dict, msgid, ( void * )ZoneCopyString( msgstr ) );
 	}
 
 	return dict;
@@ -354,6 +423,55 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 	}
 
 	Mem_TempFree( tempfilename );
+}
+
+/*
+* Com_l10n_LookupString
+*/
+const char *Com_l10n_LookupString( const podomain_t *podomain, const char *string )
+{
+	const pofile_t *pofile;
+	const trie_t *dict;
+	char *result = NULL;
+
+	for( pofile = podomain->pofiles_head; pofile; pofile = pofile->next ) {
+		dict = pofile->dict;
+		if( Trie_Find( dict, string, TRIE_EXACT_MATCH, (void **)&result ) == TRIE_OK ) {
+			return result;
+		}
+	}
+	return result;
+}
+
+/*
+* Com_l10n_TranslateString
+*/
+const char *Com_l10n_TranslateString( const char *domainname, const char *string )
+{
+	podomain_t *podomain;
+	const char *result;
+	
+	if( !string || !*string ) {
+		return string;
+	}
+
+	podomain = Com_FindPODomain( domainname );
+	if( podomain ) {
+		result = Com_l10n_LookupString( podomain, string );
+		if( result ) {
+			return result;
+		}
+	}
+
+	podomain = Com_FindPODomain( "common" );
+	if( podomain ) {
+		result = Com_l10n_LookupString( podomain, string );
+		if( result ) {
+			return result;
+		}
+	}
+
+	return NULL;
 }
 
 /*
