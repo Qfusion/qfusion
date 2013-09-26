@@ -47,7 +47,7 @@ bool UI_SystemInterface::LogMessage(Log::Type type, const String& message)
 			break;
 		case Log::LT_INFO:
 			console_msg = message + "\n";
-			//trap::Print( console_msg.CString() );
+			trap::Print( console_msg.CString() );
 			break;
 		case Log::LT_DEBUG:
 		case Log::LT_MAX:
@@ -58,6 +58,20 @@ bool UI_SystemInterface::LogMessage(Log::Type type, const String& message)
 			break;
 	}
 	return true;
+}
+
+int UI_SystemInterface::TranslateString(Rocket::Core::String& translated, const Rocket::Core::String& input)
+{
+	const char *l10ned;
+	
+	l10ned = trap::L10n_TranslateString( "ui", input.CString() );
+	if( l10ned ) {
+		translated = l10ned;
+		return 1;
+	}
+
+	translated = input;
+	return 0;
 }
 
 }
