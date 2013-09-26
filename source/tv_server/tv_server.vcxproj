@@ -209,6 +209,7 @@
     <ClCompile Include="..\qcommon\cm_trace.c" />
     <ClCompile Include="..\qcommon\cmd.c" />
     <ClCompile Include="..\qcommon\common.c" />
+    <ClCompile Include="..\qcommon\l10n.c" />
     <ClCompile Include="..\win32\conproc.c" />
     <ClCompile Include="..\qcommon\cvar.c" />
     <ClCompile Include="..\qcommon\dynvar.c" />
@@ -278,7 +279,8 @@
     <ClInclude Include="..\gameshared\q_dynvar.h" />
     <ClInclude Include="..\gameshared\q_math.h" />
     <ClInclude Include="..\gameshared\q_shared.h" />
-	<ClInclude Include="..\gameshared\q_trie.h" />
+    <ClInclude Include="..\gameshared\q_trie.h" />
+    <ClInclude Include="..\qcommon\l10n.h" />
     <ClInclude Include="..\qcommon\qcommon.h" />
     <ClInclude Include="..\qcommon\snap_read.h" />
     <ClInclude Include="..\qcommon\snap_write.h" />

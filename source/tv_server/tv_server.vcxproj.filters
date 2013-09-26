@@ -102,9 +102,6 @@
     <ClCompile Include="..\qcommon\svnrev.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\qcommon\trie.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="tv_cmds.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -214,6 +211,12 @@
       <Filter>Source Files\tv_module</Filter>
     </ClCompile>
     <ClCompile Include="..\qcommon\bsp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\gameshared\q_trie.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\qcommon\l10n.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -369,6 +372,12 @@
       <Filter>Header Files\tv_module</Filter>
     </ClInclude>
     <ClInclude Include="..\qcommon\bsp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_trie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\qcommon\l10n.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
