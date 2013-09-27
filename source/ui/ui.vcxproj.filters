@@ -246,6 +246,9 @@
     <ClCompile Include="datasources\ui_gameajax_datasource.cpp">
       <Filter>Source Files\datasources</Filter>
     </ClCompile>
+    <ClCompile Include="as\as_bind_l10n.cpp">
+      <Filter>Source Files\as</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ui_public.h">
