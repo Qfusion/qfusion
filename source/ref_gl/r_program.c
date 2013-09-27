@@ -378,7 +378,7 @@ static int RP_CompileShader( int program, const char *programName, const char *s
 				Com_Printf( "\n" );
 			}
 
-			Com_Printf( S_COLOR_YELLOW "Failed to compile %s shader for program %s\n%s\n", 
+			Com_Printf( S_COLOR_YELLOW "Failed to compile %s shader for program %s\n", 
 				shaderName, programName );
 			Com_Printf( "%s", log );
 			Com_Printf( "\n" );
@@ -739,7 +739,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "//#endif\n" \
 "#endif\n" \
 "\n" \
-"#if QF_GLSLVERSION >= 130\n" \
+"#if QF_GLSL_VERSION >= 130\n" \
 "  precision highp float;\n" \
 "# ifdef VERTEX_SHADER\n" \
 "   out myhalf4 qf_FrontColor;\n" \
