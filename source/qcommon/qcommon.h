@@ -1056,17 +1056,4 @@ qboolean ML_ValidateFullname( const char *fullname );
 
 char **ML_CompleteBuildList( const char *partial );
 
-/*
-==============================================================
-
-L10N SUBSYSTEM
-
-==============================================================
-*/
-void Com_l10n_Init( void );
-void Com_l10n_CheckUserLanguage( void );
-void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath );
-const char *Com_l10n_TranslateString( const char *domainname, const char *string );
-void Com_l10n_Shutdown( void );
-
 #endif // __QCOMMON_H

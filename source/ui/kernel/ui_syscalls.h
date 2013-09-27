@@ -497,8 +497,16 @@ namespace trap
 			return UI_IMPORT.Irc_GetHistoryNodeLine(n);
 		}
 
-		inline const char *L10n_TranslateString( const char *domainname, const char *string ) {
-			return UI_IMPORT.L10n_TranslateString( domainname, string );
+		inline const char *L10n_TranslateString( const char *string ) {
+			return UI_IMPORT.L10n_TranslateString( string );
+		}
+
+		inline void L10n_ClearDomain( void ) {
+			UI_IMPORT.L10n_ClearDomain();
+		}
+
+		inline void L10n_LoadLangPOFile( const char *filepath ) {
+			UI_IMPORT.L10n_LoadLangPOFile( filepath );
 		}
 }
 

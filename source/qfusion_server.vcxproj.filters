@@ -168,9 +168,6 @@
     <ClCompile Include="gameshared\q_trie.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\l10n.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="qcommon\anticheat.h">
@@ -285,9 +282,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gameshared\q_trie.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="qcommon\l10n.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

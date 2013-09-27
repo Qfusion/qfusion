@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include "qcommon.h"
+#include "client.h"
 #include "../gameshared/q_trie.h"
 #include "l10n.h"
 
@@ -44,7 +44,7 @@ typedef struct podomain_s
 
 static mempool_t *pomempool;
 
-static cvar_t *com_lang;
+static cvar_t *cl_lang;
 
 static podomain_t *podomains_head;
 
@@ -59,9 +59,9 @@ static podomain_t *podomain_common;
 // ============================================================================
 
 /*
-* Com_ParsePOString
+* L10n_ParsePOString
 */
-static size_t Com_ParsePOString( char *instr, char *outstr )
+static size_t L10n_ParsePOString( char *instr, char *outstr )
 {
 	int i;
 	char *q1, *q2;
@@ -170,12 +170,12 @@ static size_t Com_ParsePOString( char *instr, char *outstr )
 }
 
 /*
-* Com_ParsePOFile
+* L10n_ParsePOFile
 *
 * Doesn't allocate memory, writes to input buffer, which
 * should NOT be freed after calling this function.
 */
-static trie_t *Com_ParsePOFile( const char *filepath, char *buffer, int length )
+static trie_t *L10n_ParsePOFile( const char *filepath, char *buffer, int length )
 {
 	int linenum = 0;
 	char *start = buffer, *end = buffer + length;
@@ -265,7 +265,7 @@ parse_cmd:
 		}
 
 		// parse single line of C-style string
-		str_length = Com_ParsePOString( instr, outstr );
+		str_length = L10n_ParsePOString( instr, outstr );
 		if( !str_length ) {
 			have_msgid = have_msgstr = qfalse;
 			Com_Printf( S_COLOR_YELLOW "Error parsing line %i of %s: syntax error near '%s'\n", 
@@ -286,9 +286,9 @@ parse_cmd:
 }
 
 /*
-* Com_LoadPODict
+* L10n_LoadPODict
 */
-static podict_t *Com_LoadPODict( const char *filepath )
+static podict_t *L10n_LoadPODict( const char *filepath )
 {
 	int file;
 	int length;
@@ -304,14 +304,14 @@ static podict_t *Com_LoadPODict( const char *filepath )
 	FS_Read( podict->buffer, length, file );
 	podict->buffer[length] = '\0'; // safeguard
 
-	podict->trie = Com_ParsePOFile( filepath, podict->buffer, length );
+	podict->trie = L10n_ParsePOFile( filepath, podict->buffer, length );
 	return podict;
 }
 
 /*
-* Com_DestroyPODict
+* L10n_DestroyPODict
 */
-static void Com_DestroyPODict( podict_t *podict )
+static void L10n_DestroyPODict( podict_t *podict )
 {
 	if( !podict ) {
 		return;
@@ -323,9 +323,9 @@ static void Com_DestroyPODict( podict_t *podict )
 }
 
 /*
-* Com_CreatePOFile
+* L10n_CreatePOFile
 */
-static pofile_t *Com_CreatePOFile( const char *filepath )
+static pofile_t *L10n_CreatePOFile( const char *filepath )
 {
 	size_t filepath_size = strlen( filepath ) + 1;
 	pofile_t *pofile;
@@ -338,18 +338,38 @@ static pofile_t *Com_CreatePOFile( const char *filepath )
 }
 
 /*
-* Com_DestroyPOFile
+* L10n_DestroyPOFile
 */
-static void Com_DestroyPOFile( pofile_t *pofile )
+static void L10n_DestroyPOFile( pofile_t *pofile )
 {
-	Com_DestroyPODict( pofile->dict );
+	L10n_DestroyPODict( pofile->dict );
 	L10n_Free( pofile );
 }
 
 /*
-* Com_FindPODomain
+* L10n_FindPOFile
 */
-static podomain_t *Com_FindPODomain( const char *name )
+static pofile_t *L10n_FindPOFile( podomain_t *podomain, const char *filepath )
+{
+	pofile_t *pofile;
+
+	if( !podomain ) {
+		return NULL;
+	}
+
+	for( pofile = podomain->pofiles_head; pofile != NULL; pofile = pofile->next ) {
+		if( !Q_stricmp( pofile->path, filepath ) ) {
+			return pofile;
+		}
+	}
+
+	return NULL;
+}
+
+/*
+* L10n_FindPODomain
+*/
+static podomain_t *L10n_FindPODomain( const char *name )
 {
 	podomain_t *podomain;
 
@@ -367,9 +387,9 @@ static podomain_t *Com_FindPODomain( const char *name )
 }
 
 /*
-* Com_CreatePODomain
+* L10n_CreatePODomain
 */
-static podomain_t *Com_CreatePODomain( const char *name )
+static podomain_t *L10n_CreatePODomain( const char *name )
 {
 	size_t name_size = strlen( name ) + 1;
 	podomain_t *podomain;
@@ -382,66 +402,67 @@ static podomain_t *Com_CreatePODomain( const char *name )
 }
 
 /*
-* Com_ClearPODomain
+* L10n_ClearPODomain
 */
-static void Com_ClearPODomain( podomain_t *podomain )
+static void L10n_ClearPODomain( podomain_t *podomain )
 {
 	pofile_t *pofile, *next;
 	
 	for( pofile = podomain->pofiles_head; pofile; pofile = next )
 	{
 		next = pofile->next;
-		Com_DestroyPOFile( pofile );
+		L10n_DestroyPOFile( pofile );
 	}
+	podomain->pofiles_head = NULL;
 }
 
 /*
-* Com_DestroyPODomain
+* L10n_DestroyPODomain
 */
-static void Com_DestroyPODomain( podomain_t *podomain )
+static void L10n_DestroyPODomain( podomain_t *podomain )
 {
-	Com_ClearPODomain( podomain );
+	L10n_ClearPODomain( podomain );
 	L10n_Free( podomain );
 }
 
 /*
-* Com_l10n_CheckUserLanguage
+* L10n_CheckUserLanguage
 */
-void Com_l10n_CheckUserLanguage( void )
+void L10n_CheckUserLanguage( void )
 {
-	if( com_lang->modified ) {
-		if( !com_lang->string[0] ) {
+	if( cl_lang->modified ) {
+		if( !cl_lang->string[0] ) {
 			const char *lang;
 
 			lang = Sys_GetPreferredLanguage();
 			if( !lang || !lang[0] ) {
 				lang = APP_DEFAULT_LANGUAGE;
 			}
-			Cvar_ForceSet( com_lang->name, lang );
+			Cvar_ForceSet( cl_lang->name, lang );
 		}
-		com_lang->modified = qfalse;
+		cl_lang->modified = qfalse;
 	}
 }
 
 /*
-* Com_l10n_Init
+* L10n_Init
 */
-void Com_l10n_Init( void )
+void L10n_Init( void )
 {
 	podomains_head = NULL;
 
 	pomempool = Mem_AllocPool( NULL, "L10n" );
 
-	com_lang = Cvar_Get( "com_lang", "", CVAR_NOSET );
-	com_lang->modified = qtrue;
+	cl_lang = Cvar_Get( "lang", "", CVAR_USERINFO );
+	cl_lang->modified = qtrue;
 
-	Com_l10n_CheckUserLanguage();
+	L10n_CheckUserLanguage();
 }
 
 /*
-* Com_l10n_LoadLangPOFile
+* L10n_LoadLangPOFile
 */
-void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
+void L10n_LoadLangPOFile( const char *domainname, const char *filepath )
 {
 	podomain_t *podomain;
 	pofile_t *pofile;
@@ -457,9 +478,9 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 		return;
 	}
 
-	podomain = Com_FindPODomain( domainname );
+	podomain = L10n_FindPODomain( domainname );
 	if( !podomain ) {
-		podomain = Com_CreatePODomain( domainname );
+		podomain = L10n_CreatePODomain( domainname );
 		podomain->next = podomains_head;
 		podomains_head = podomain;
 
@@ -469,15 +490,26 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 		}
 	}
 
-	tempfilename_size = strlen( filepath ) + strlen( "/" ) + strlen( com_lang->string ) + strlen( ".po" ) + 1;
+	tempfilename_size = strlen( filepath ) + strlen( "/" ) + strlen( cl_lang->string ) + strlen( ".po" ) + 1;
 	tempfilename = ( char * )L10n_Malloc( tempfilename_size );
 
 	sep = ( filepath[strlen( filepath ) - 1] == '/' ? "" : "/" );
-	Q_snprintfz( tempfilename, tempfilename_size, "%s%s%s.po", filepath, sep, com_lang->string );
+	Q_snprintfz( tempfilename, tempfilename_size, "%s%s%s.po", filepath, sep, cl_lang->string );
 
-	pofile_dict = Com_LoadPODict( tempfilename );
+	if( !COM_ValidateFilename( tempfilename ) ) {
+		Com_Printf( S_COLOR_YELLOW "LoadLangPOFile failed: invalid filename '%s'\n", filepath );
+		return;
+	}
+
+	pofile = L10n_FindPOFile( podomain, tempfilename );
+	if( pofile ) {
+		// already loaded
+		return;
+	}
+
+	pofile_dict = L10n_LoadPODict( tempfilename );
 	if( pofile_dict ) {
-		pofile = Com_CreatePOFile( filepath );
+		pofile = L10n_CreatePOFile( filepath );
 		pofile->dict = pofile_dict;
 		pofile->next = podomain->pofiles_head;
 		podomain->pofiles_head = pofile;
@@ -487,9 +519,9 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 }
 
 /*
-* Com_l10n_LookupString
+* L10n_LookupString
 */
-const char *Com_l10n_LookupString( const podomain_t *podomain, const char *string )
+const char *L10n_LookupString( const podomain_t *podomain, const char *string )
 {
 	const pofile_t *pofile;
 	const podict_t *dict;
@@ -505,9 +537,9 @@ const char *Com_l10n_LookupString( const podomain_t *podomain, const char *strin
 }
 
 /*
-* Com_l10n_TranslateString
+* L10n_TranslateString
 */
-const char *Com_l10n_TranslateString( const char *domainname, const char *string )
+const char *L10n_TranslateString( const char *domainname, const char *string )
 {
 	const podomain_t *podomain;
 	const char *result;
@@ -516,9 +548,9 @@ const char *Com_l10n_TranslateString( const char *domainname, const char *string
 		return string;
 	}
 
-	podomain = Com_FindPODomain( domainname );
+	podomain = L10n_FindPODomain( domainname );
 	if( podomain ) {
-		result = Com_l10n_LookupString( podomain, string );
+		result = L10n_LookupString( podomain, string );
 		if( result ) {
 			return result;
 		}
@@ -526,7 +558,7 @@ const char *Com_l10n_TranslateString( const char *domainname, const char *string
 
 	podomain = podomain_common;
 	if( podomain ) {
-		result = Com_l10n_LookupString( podomain, string );
+		result = L10n_LookupString( podomain, string );
 		if( result ) {
 			return result;
 		}
@@ -536,29 +568,29 @@ const char *Com_l10n_TranslateString( const char *domainname, const char *string
 }
 
 /*
-* Com_l10n_ClearDomain
+* L10n_ClearDomain
 */
-void Com_l10n_ClearDomain( const char *domainname )
+void L10n_ClearDomain( const char *domainname )
 {
 	podomain_t *podomain;
 
-	podomain = Com_FindPODomain( domainname );
+	podomain = L10n_FindPODomain( domainname );
 	if( podomain ) {
-		Com_ClearPODomain( podomain );
+		L10n_ClearPODomain( podomain );
 	}
 }
 
 /*
-* Com_l10n_Shutdown
+* L10n_Shutdown
 */
-void Com_l10n_Shutdown( void )
+void L10n_Shutdown( void )
 {
 	podomain_t *podomain, *next;
 
 	for( podomain = podomains_head; podomain; podomain = next )
 	{
 		next = podomain->next;
-		Com_DestroyPODomain( podomain );
+		L10n_DestroyPODomain( podomain );
 	}
 
 	Mem_FreePool( &pomempool );

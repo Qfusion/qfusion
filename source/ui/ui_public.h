@@ -198,7 +198,9 @@ typedef struct
 	const char *(*Irc_GetHistoryNodeLine)(const struct irc_chat_history_node_s *n);
 
 	// l10n
-	const char *( *L10n_TranslateString )( const char *domainname, const char *string );
+	void ( *L10n_ClearDomain )( void );
+	void ( *L10n_LoadLangPOFile )( const char *filepath );
+	const char *( *L10n_TranslateString )( const char *string );
 } ui_import_t;
 
 typedef struct

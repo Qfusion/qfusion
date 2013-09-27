@@ -1145,10 +1145,6 @@ void Qcommon_Init( int argc, char **argv )
 
 	Sys_Init();
 
-	Com_l10n_Init();
-
-	Com_l10n_LoadLangPOFile( "common", "l10n/" );
-
 	NET_Init();
 	Netchan_Init();
 
@@ -1254,8 +1250,6 @@ void Qcommon_Frame( unsigned int realmsec )
 
 	wswcurl_perform();
 
-	Com_l10n_CheckUserLanguage();
-
 	FS_Frame();
 
 	if( dedicated->integer )
@@ -1354,6 +1348,5 @@ void Qcommon_Shutdown( void )
 	Cvar_Shutdown();
 	Cmd_Shutdown();
 	Cbuf_Shutdown();
-	Com_l10n_Shutdown();
 	Memory_Shutdown();
 }

@@ -207,6 +207,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="client\l10n.c" />
     <ClCompile Include="qcommon\anticheat.c" />
     <ClCompile Include="qcommon\ascript.c" />
     <ClCompile Include="qcommon\asyncstream.c" />
@@ -233,7 +234,6 @@
     <ClCompile Include="qcommon\common.c">
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">svnrev.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
-    <ClCompile Include="qcommon\l10n.c" />
     <ClCompile Include="server\sv_web.c" />
     <ClCompile Include="win32\conproc.c" />
     <ClCompile Include="client\console.c" />
@@ -284,6 +284,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cin\cin_public.h" />
+    <ClInclude Include="client\l10n.h" />
     <ClInclude Include="ftlib\ftlib_public.h" />
     <ClInclude Include="qcommon\anticheat.h" />
     <ClInclude Include="qcommon\asyncstream.h" />
@@ -296,7 +297,6 @@
     <ClInclude Include="qcommon\cm_local.h" />
     <ClInclude Include="qcommon\cmodel.h" />
     <ClInclude Include="gameshared\config.h" />
-    <ClInclude Include="qcommon\l10n.h" />
     <ClInclude Include="qcommon\patch.h" />
     <ClInclude Include="qcommon\patch_eval_inc.h" />
     <ClInclude Include="ref_gl\r_image.h" />

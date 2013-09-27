@@ -212,7 +212,6 @@
     <ClCompile Include="qcommon\cm_trace.c" />
     <ClCompile Include="qcommon\cmd.c" />
     <ClCompile Include="qcommon\common.c" />
-    <ClCompile Include="qcommon\l10n.c" />
     <ClCompile Include="server\sv_web.c" />
     <ClCompile Include="win32\conproc.c" />
     <ClCompile Include="qcommon\cvar.c" />
@@ -262,7 +261,6 @@
     <ClInclude Include="qcommon\cjson.h" />
     <ClInclude Include="qcommon\cm_local.h" />
     <ClInclude Include="qcommon\cmodel.h" />
-    <ClInclude Include="qcommon\l10n.h" />
     <ClInclude Include="win32\conproc.h" />
     <ClInclude Include="qcommon\cvar.h" />
     <ClInclude Include="qcommon\dynvar.h" />

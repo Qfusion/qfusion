@@ -839,7 +839,7 @@ void CL_Disconnect( const char *message )
 
 	cls.connect_time = 0;
 	cls.connect_count = 0;
-	cls.rejected = 0;
+	cls.rejected = qfalse;
 
 	if( cls.demo.recording )
 		CL_Stop_f();
@@ -1601,8 +1601,7 @@ void CL_RequestNextDownload( void )
 				Cbuf_ExecuteText( EXEC_NOW, "s_restart 1\n" );
 			}
 			else {
-				// the following registration calls will ensure 
-				// no media assets survives the restart
+				// make sure all media assets will be freed
 				re.EndRegistration();
 				CL_SoundModule_EndRegistration();
 
@@ -1822,6 +1821,9 @@ void CL_InitMedia( qboolean verbose )
 	}
 
 	cls.mediaInitialized = qtrue;
+		
+	// load common localization strings
+	L10n_LoadLangPOFile( "common", "l10n" );
 
 	// register console font and background
 	SCR_RegisterConsoleMedia( verbose );
@@ -2495,6 +2497,8 @@ void CL_Frame( int realmsec, int gamemsec )
 	CL_UserInputFrame();
 	CL_NetFrame( realmsec, gamemsec );
 	CL_MM_Frame();
+	
+	L10n_CheckUserLanguage();
 
 	if( cl_maxfps->integer > 0 && !cl_timedemo->integer && !( cls.demo.avi_video && cls.state == CA_ACTIVE ) )
 	{
@@ -2889,6 +2893,9 @@ void CL_Init( void )
 	if( !NET_OpenSocket( &cls.socket_udp6, SOCKET_UDP, &address, qfalse ) )
 		Com_Printf( "Error: Couldn't open UDP6 socket: %s", NET_ErrorString() );
 
+	// init localization subsystem
+	L10n_Init();
+
 	SCR_InitScreen();
 	cls.disable_screen = qtrue; // don't draw yet
 
@@ -2957,6 +2964,7 @@ void CL_Shutdown( void )
 	CL_SoundModule_Shutdown( qtrue );
 	CL_ShutdownInput();
 	CL_Mumble_Shutdown();
+	L10n_Shutdown();
 	VID_Shutdown();
 
 	CL_ShutdownMedia( qtrue );

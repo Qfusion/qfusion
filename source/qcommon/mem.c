@@ -139,6 +139,8 @@ void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int 
 	if( !alignment )
 		alignment = MEMALIGNMENT_DEFAULT;
 
+	assert( pool != NULL );
+
 	if( pool == NULL )
 		_Mem_Error( "Mem_Alloc: pool == NULL (alloc at %s:%i)", filename, fileline );
 	if( musthave && ( ( pool->flags & musthave ) != musthave ) )
