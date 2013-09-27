@@ -228,7 +228,7 @@
     <ClCompile Include="gameshared\q_trie.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\l10n.c">
+    <ClCompile Include="client\l10n.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -455,7 +455,7 @@
     <ClInclude Include="gameshared\q_trie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qcommon\l10n.h">
+    <ClInclude Include="client\l10n.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

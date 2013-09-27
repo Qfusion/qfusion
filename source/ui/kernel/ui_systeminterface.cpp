@@ -64,7 +64,7 @@ int UI_SystemInterface::TranslateString(Rocket::Core::String& translated, const 
 {
 	const char *l10ned;
 	
-	l10ned = trap::L10n_TranslateString( "ui", input.CString() );
+	l10ned = trap::L10n_TranslateString( input.CString() );
 	if( l10ned ) {
 		translated = l10ned;
 		return 1;
