@@ -183,6 +183,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="as\as_bind_l10n.cpp" />
     <ClCompile Include="datasources\ui_gameajax_datasource.cpp" />
     <ClCompile Include="ui_public.cpp" />
     <ClCompile Include="widgets\ui_anchor.cpp" />
