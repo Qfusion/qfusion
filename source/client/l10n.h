@@ -30,4 +30,5 @@ void L10n_CheckUserLanguage( void );
 void L10n_LoadLangPOFile( const char *domainname, const char *filepath );
 const char *L10n_TranslateString( const char *domainname, const char *string );
 void L10n_ClearDomain( const char *domainname );
+void L10n_ClearDomains( void );
 void L10n_Shutdown( void );

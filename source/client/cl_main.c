@@ -1858,6 +1858,8 @@ void CL_ShutdownMedia( qboolean verbose )
 	SCR_ShutDownConsoleMedia( verbose );
 
 	CL_SoundModule_StopAllSounds();
+
+	L10n_ClearDomains();
 }
 
 /*

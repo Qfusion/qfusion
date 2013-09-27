@@ -453,7 +453,7 @@ void L10n_Init( void )
 
 	pomempool = Mem_AllocPool( NULL, "L10n" );
 
-	cl_lang = Cvar_Get( "lang", "", CVAR_USERINFO );
+	cl_lang = Cvar_Get( "lang", "", CVAR_USERINFO|CVAR_ARCHIVE );
 	cl_lang->modified = qtrue;
 
 	L10n_CheckUserLanguage();
@@ -576,6 +576,18 @@ void L10n_ClearDomain( const char *domainname )
 
 	podomain = L10n_FindPODomain( domainname );
 	if( podomain ) {
+		L10n_ClearPODomain( podomain );
+	}
+}
+
+/*
+* L10n_ClearDomains
+*/
+void L10n_ClearDomains( void )
+{
+	podomain_t *podomain;
+
+	for( podomain = podomains_head; podomain; podomain = podomain->next ) {
 		L10n_ClearPODomain( podomain );
 	}
 }
