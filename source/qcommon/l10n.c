@@ -58,7 +58,6 @@ static size_t Com_ParsePOString( char *instr, char *outstr )
 	q2 = strrchr( instr, '"' );
 	if( q1 && q2 ) {
 		if( q2 <= q1 ) {
-			// TODO: print error message
 			return 0;
 		}
 		q1++;
@@ -66,7 +65,6 @@ static size_t Com_ParsePOString( char *instr, char *outstr )
 	}
 	else {
 		if( q1 && !q2 || !q1 && q2 ) {
-			// TODO: print error message
 			return 0;
 		}
 		// no quotes
@@ -75,7 +73,6 @@ static size_t Com_ParsePOString( char *instr, char *outstr )
 
 	// skip empty lines
 	if( !*q1 ) {
-		// TODO: print error message
 		return 0;
 	}
 
@@ -158,9 +155,13 @@ static size_t Com_ParsePOString( char *instr, char *outstr )
 
 /*
 * Com_ParsePOFile
+*
+* Doesn't allocate memory, writes to input buffer, which
+* should NOT be freed after calling this function.
 */
-static trie_t *Com_ParsePOFile( char *buffer, int length )
+static trie_t *Com_ParsePOFile( const char *filepath, char *buffer, int length )
 {
+	int linenum = 0;
 	char *start = buffer, *end = buffer + length;
 	char *cur, *eol;
 	qboolean have_msgid, have_msgstr;
@@ -177,11 +178,14 @@ static trie_t *Com_ParsePOFile( char *buffer, int length )
 	have_msgid = have_msgstr = qfalse;
 	instr = outstr = buffer;
 	msgid = msgstr = buffer;
+	eol = end;
 
 	for( cur = start; cur >= start && cur < end; cur = eol + 1 ) {
 		if( !*cur ) {
 			break;
 		}
+
+		linenum++;
 
 		// skip whitespaces
 		while( *cur == ' ' || *cur == '\t' ) {
@@ -211,7 +215,7 @@ parse_cmd:
 		// search for msgid "id"
 		if( !strncmp( cur, "msgid ", 6 ) ) {
 			if( have_msgstr ) {
-				Trie_Insert( dict, msgid, ( void * )ZoneCopyString( msgstr ) );
+				Trie_Insert( dict, msgid, ( void * )msgstr );
 			}
 			have_msgid = qtrue;
 			instr = cur + 6;
@@ -231,7 +235,7 @@ parse_cmd:
 			if( have_msgid || have_msgstr ) {
 				if( *cur != '"' || !strrchr( cur+1, '"') ) {
 					if( have_msgstr ) {
-						Trie_Insert( dict, msgid, ( void * )ZoneCopyString( msgstr ) );
+						Trie_Insert( dict, msgid, ( void * )msgstr );
 					}
 					// no
 					have_msgid = have_msgstr = qfalse;
@@ -244,39 +248,48 @@ parse_cmd:
 			}
 		}
 
+		// parse C-style string declaration
 		str_length = Com_ParsePOString( instr, outstr );
 		if( !str_length ) {
-			have_msgid = have_msgstr = qfalse;			
+			have_msgid = have_msgstr = qfalse;
+			Com_Printf( S_COLOR_YELLOW "Error parsing line %i of %s: syntax error near '%s'\n", 
+				linenum, filepath, instr );
 		}
 		else {
+			// shift the output buffer so that in case multiline string
+			// is ecountered it'll be properly appended
 			outstr += str_length;
 		}
 	}
 
 	if( have_msgstr ) {
-		Trie_Insert( dict, msgid, ( void * )ZoneCopyString( msgstr ) );
+		Trie_Insert( dict, msgid, ( void * )msgstr );
 	}
 
 	return dict;
 }
 
 /*
-* Com_LoadPOFile
+* Com_LoadPODict
 */
-static trie_t *Com_LoadPOFile( const char *filepath )
+static trie_t *Com_LoadPODict( const char *filepath )
 {
 	int length;
 	char *buffer;
+	void *buffer2;
 	trie_t *dict;
 
-	length = FS_LoadFile( filepath, ( void ** )&buffer, NULL, 0 );
+	length = FS_LoadFile( filepath, &buffer2, NULL, 0 );
 	if( length < 0 ) {
 		return NULL;
 	}
 
-	dict = Com_ParsePOFile( buffer, length );
+	buffer = ( char * )Mem_ZoneMalloc( length + 1 );
+	memcpy( buffer, buffer2, length );
+	buffer[length] = '\0'; // safeguard
+	FS_FreeFile( buffer2 );
 
-	FS_FreeFile( buffer );
+	dict = Com_ParsePOFile( filepath, buffer, length );
 	
 	return dict;
 }
@@ -414,7 +427,7 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 	sep = ( filepath[strlen( filepath ) - 1] == '/' ? "" : "/" );
 	Q_snprintfz( tempfilename, tempfilename_size, "%s%s%s.po", filepath, sep, com_lang->string );
 
-	pofile_dict = Com_LoadPOFile( tempfilename );
+	pofile_dict = Com_LoadPODict( tempfilename );
 	if( pofile_dict ) {
 		pofile = Com_CreatePOFile( filepath );
 		pofile->dict = pofile_dict;
