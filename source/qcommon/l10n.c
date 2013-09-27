@@ -22,10 +22,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../gameshared/q_trie.h"
 #include "l10n.h"
 
+typedef struct
+{
+	trie_t *trie;
+	char *buffer;
+} podict_t;
+
 typedef struct pofile_s
 {
 	char *path;
-	trie_t *dict;
+	podict_t *dict;
 	struct pofile_s *next;
 } pofile_t;
 
@@ -36,9 +42,19 @@ typedef struct podomain_s
 	struct podomain_s *next;
 } podomain_t;
 
-static podomain_t *podomains_head;
+static mempool_t *pomempool;
 
 static cvar_t *com_lang;
+
+static podomain_t *podomains_head;
+
+// "common" domain
+static const char * podomain_common_name = "common";
+static podomain_t *podomain_common;
+
+#define L10n_Malloc(size) _Mem_Alloc( pomempool, size, 0, 0, __FILE__, __LINE__ )
+#define L10n_Free(data) _Mem_Free( data, 0, 0, __FILE__, __LINE__ )
+#define L10n_CopyString(string) _Mem_CopyString( pomempool, string, __FILE__, __LINE__ )
 
 // ============================================================================
 
@@ -248,7 +264,7 @@ parse_cmd:
 			}
 		}
 
-		// parse C-style string declaration
+		// parse single line of C-style string
 		str_length = Com_ParsePOString( instr, outstr );
 		if( !str_length ) {
 			have_msgid = have_msgstr = qfalse;
@@ -272,26 +288,38 @@ parse_cmd:
 /*
 * Com_LoadPODict
 */
-static trie_t *Com_LoadPODict( const char *filepath )
+static podict_t *Com_LoadPODict( const char *filepath )
 {
+	int file;
 	int length;
-	char *buffer;
-	void *buffer2;
-	trie_t *dict;
+	podict_t *podict;
 
-	length = FS_LoadFile( filepath, &buffer2, NULL, 0 );
+	length = FS_FOpenFile( filepath, &file, FS_READ );
 	if( length < 0 ) {
 		return NULL;
 	}
 
-	buffer = ( char * )Mem_ZoneMalloc( length + 1 );
-	memcpy( buffer, buffer2, length );
-	buffer[length] = '\0'; // safeguard
-	FS_FreeFile( buffer2 );
+	podict = ( podict_t * )L10n_Malloc( sizeof( *podict ) + length + 1 );
+	podict->buffer = ( char * )( ( qbyte * )podict + sizeof( *podict ) );
+	FS_Read( podict->buffer, length, file );
+	podict->buffer[length] = '\0'; // safeguard
 
-	dict = Com_ParsePOFile( filepath, buffer, length );
-	
-	return dict;
+	podict->trie = Com_ParsePOFile( filepath, podict->buffer, length );
+	return podict;
+}
+
+/*
+* Com_DestroyPODict
+*/
+static void Com_DestroyPODict( podict_t *podict )
+{
+	if( !podict ) {
+		return;
+	}
+	if( podict->trie ) {
+		Trie_Destroy( podict->trie );
+	}
+	L10n_Free( podict );
 }
 
 /*
@@ -299,11 +327,13 @@ static trie_t *Com_LoadPODict( const char *filepath )
 */
 static pofile_t *Com_CreatePOFile( const char *filepath )
 {
+	size_t filepath_size = strlen( filepath ) + 1;
 	pofile_t *pofile;
-	pofile = ( pofile_t * )Mem_ZoneMalloc( sizeof( *pofile ) );
-	pofile->path = ZoneCopyString( filepath );
+	pofile = ( pofile_t * )L10n_Malloc( sizeof( *pofile ) + filepath_size );
+	pofile->path = ( char * )( ( qbyte * )pofile + sizeof( *pofile ) );
 	pofile->next = NULL;
 	pofile->dict = NULL;
+	memcpy( pofile->path, filepath, filepath_size );
 	return pofile;
 }
 
@@ -312,9 +342,8 @@ static pofile_t *Com_CreatePOFile( const char *filepath )
 */
 static void Com_DestroyPOFile( pofile_t *pofile )
 {
-	Trie_Destroy( pofile->dict );
-	Mem_ZoneFree( pofile->path );
-	Mem_ZoneFree( pofile );
+	Com_DestroyPODict( pofile->dict );
+	L10n_Free( pofile );
 }
 
 /*
@@ -323,6 +352,10 @@ static void Com_DestroyPOFile( pofile_t *pofile )
 static podomain_t *Com_FindPODomain( const char *name )
 {
 	podomain_t *podomain;
+
+	if( !name ) {
+		return NULL;
+	}
 
 	for( podomain = podomains_head; podomain != NULL; podomain = podomain->next ) {
 		if( !Q_stricmp( podomain->name, name ) ) {
@@ -338,18 +371,20 @@ static podomain_t *Com_FindPODomain( const char *name )
 */
 static podomain_t *Com_CreatePODomain( const char *name )
 {
+	size_t name_size = strlen( name ) + 1;
 	podomain_t *podomain;
-	podomain = ( podomain_t * )Mem_ZoneMalloc( sizeof( *podomain ) );
-	podomain->name = ZoneCopyString( name );
+	podomain = ( podomain_t * )L10n_Malloc( sizeof( *podomain ) + name_size );
+	podomain->name = ( char * )( ( qbyte * )podomain + sizeof( *podomain ) );
 	podomain->next = NULL;
 	podomain->pofiles_head = NULL;
+	memcpy( podomain->name, name, name_size );
 	return podomain;
 }
 
 /*
-* Com_DestroyPODomain
+* Com_ClearPODomain
 */
-static void Com_DestroyPODomain( podomain_t *podomain )
+static void Com_ClearPODomain( podomain_t *podomain )
 {
 	pofile_t *pofile, *next;
 	
@@ -358,9 +393,15 @@ static void Com_DestroyPODomain( podomain_t *podomain )
 		next = pofile->next;
 		Com_DestroyPOFile( pofile );
 	}
+}
 
-	Mem_ZoneFree( podomain->name );
-	Mem_ZoneFree( podomain );
+/*
+* Com_DestroyPODomain
+*/
+static void Com_DestroyPODomain( podomain_t *podomain )
+{
+	Com_ClearPODomain( podomain );
+	L10n_Free( podomain );
 }
 
 /*
@@ -389,6 +430,8 @@ void Com_l10n_Init( void )
 {
 	podomains_head = NULL;
 
+	pomempool = Mem_AllocPool( NULL, "L10n" );
+
 	com_lang = Cvar_Get( "com_lang", "", CVAR_NOSET );
 	com_lang->modified = qtrue;
 
@@ -402,7 +445,7 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 {
 	podomain_t *podomain;
 	pofile_t *pofile;
-	trie_t *pofile_dict;
+	podict_t *pofile_dict;
 	char *tempfilename;
 	const char *sep;
 	size_t tempfilename_size;
@@ -419,10 +462,15 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 		podomain = Com_CreatePODomain( domainname );
 		podomain->next = podomains_head;
 		podomains_head = podomain;
+
+		// store pointer to common domain for quick access
+		if( podomain_common == NULL && !Q_stricmp( domainname, podomain_common_name ) ) {
+			podomain_common = podomain;
+		}
 	}
 
 	tempfilename_size = strlen( filepath ) + strlen( "/" ) + strlen( com_lang->string ) + strlen( ".po" ) + 1;
-	tempfilename = ( char * )Mem_TempMalloc( tempfilename_size );
+	tempfilename = ( char * )L10n_Malloc( tempfilename_size );
 
 	sep = ( filepath[strlen( filepath ) - 1] == '/' ? "" : "/" );
 	Q_snprintfz( tempfilename, tempfilename_size, "%s%s%s.po", filepath, sep, com_lang->string );
@@ -435,7 +483,7 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 		podomain->pofiles_head = pofile;
 	}
 
-	Mem_TempFree( tempfilename );
+	L10n_Free( tempfilename );
 }
 
 /*
@@ -444,12 +492,12 @@ void Com_l10n_LoadLangPOFile( const char *domainname, const char *filepath )
 const char *Com_l10n_LookupString( const podomain_t *podomain, const char *string )
 {
 	const pofile_t *pofile;
-	const trie_t *dict;
+	const podict_t *dict;
 	char *result = NULL;
 
 	for( pofile = podomain->pofiles_head; pofile; pofile = pofile->next ) {
 		dict = pofile->dict;
-		if( Trie_Find( dict, string, TRIE_EXACT_MATCH, (void **)&result ) == TRIE_OK ) {
+		if( Trie_Find( dict->trie, string, TRIE_EXACT_MATCH, (void **)&result ) == TRIE_OK ) {
 			return result;
 		}
 	}
@@ -461,7 +509,7 @@ const char *Com_l10n_LookupString( const podomain_t *podomain, const char *strin
 */
 const char *Com_l10n_TranslateString( const char *domainname, const char *string )
 {
-	podomain_t *podomain;
+	const podomain_t *podomain;
 	const char *result;
 	
 	if( !string || !*string ) {
@@ -476,7 +524,7 @@ const char *Com_l10n_TranslateString( const char *domainname, const char *string
 		}
 	}
 
-	podomain = Com_FindPODomain( "common" );
+	podomain = podomain_common;
 	if( podomain ) {
 		result = Com_l10n_LookupString( podomain, string );
 		if( result ) {
@@ -485,6 +533,19 @@ const char *Com_l10n_TranslateString( const char *domainname, const char *string
 	}
 
 	return NULL;
+}
+
+/*
+* Com_l10n_ClearDomain
+*/
+void Com_l10n_ClearDomain( const char *domainname )
+{
+	podomain_t *podomain;
+
+	podomain = Com_FindPODomain( domainname );
+	if( podomain ) {
+		Com_ClearPODomain( podomain );
+	}
 }
 
 /*
@@ -499,6 +560,8 @@ void Com_l10n_Shutdown( void )
 		next = podomain->next;
 		Com_DestroyPODomain( podomain );
 	}
+
+	Mem_FreePool( &pomempool );
 
 	podomains_head = NULL;
 }
