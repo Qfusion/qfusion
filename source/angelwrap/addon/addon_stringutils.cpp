@@ -253,24 +253,22 @@ void RegisterStringUtilsAddon( asIScriptEngine *engine )
 
 	r = engine->SetDefaultNamespace( "StringUtils" ); assert( r >= 0 );
 
-	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1)", asFUNCTION( QAS_FormatInt ), asCALL_CDECL );  assert( r >= 0 );
-
 	r = engine->RegisterGlobalFunction( "String @FormatInt(int64 val, const String &in options, uint width = 0)", asFUNCTION( QAS_FormatInt ), asCALL_CDECL );  assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @FormatFloat(double val, const String &in options, uint width = 0, uint precision = 0)", asFUNCTION( QAS_FormatFloat ), asCALL_CDECL ); assert( r >= 0 );
 
-	r = engine->RegisterGlobalFunction( "String @FormatString1(const String &in format, const String &in arg1)", asFUNCTION( QAS_FormatString1 ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction( "String @FormatString2(const String &in format, const String &in arg1, const String &in arg2)", asFUNCTION( QAS_FormatString2 ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction( "String @FormatString3(const String &in format, const String &in arg1, const String &in arg2, "
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1)", asFUNCTION( QAS_FormatString1 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2)", asFUNCTION( QAS_FormatString2 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
 		"const String &in arg3)", asFUNCTION( QAS_FormatString3 ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction( "String @FormatString4(const String &in format, const String &in arg1, const String &in arg2, "
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
 		"const String &in arg3, const String &in arg4)", asFUNCTION( QAS_FormatString4 ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction( "String @FormatString5(const String &in format, const String &in arg1, const String &in arg2, "
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
 		"const String &in arg3, const String &in arg4, const String &in arg5)", asFUNCTION( QAS_FormatString5 ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction( "String @FormatString6(const String &in format, const String &in arg1, const String &in arg2, "
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
 		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6)", asFUNCTION( QAS_FormatString6 ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction( "String @FormatString7(const String &in format, const String &in arg1, const String &in arg2, "
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
 		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7)", asFUNCTION( QAS_FormatString7 ), asCALL_CDECL ); assert( r >= 0 );
-	r = engine->RegisterGlobalFunction( "String @FormatString8(const String &in format, const String &in arg1, const String &in arg2, "
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
 		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7, const String &in arg8)", asFUNCTION( QAS_FormatString8 ), asCALL_CDECL ); assert( r >= 0 );
 	
     r = engine->RegisterGlobalFunction( "array<String @> @Split(const String &in string, const String &in delimiter)", asFUNCTION( QAS_SplitString ), asCALL_CDECL ); assert( r >= 0 );
