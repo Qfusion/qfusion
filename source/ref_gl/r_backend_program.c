@@ -922,8 +922,9 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 				if( e->flags & RF_MINLIGHT )
 				{
-					if( ambient[0] <= 0.1f || ambient[1] <= 0.1f || ambient[2] <= 0.1f )
-						VectorSet( ambient, 0.1f, 0.1f, 0.1f );
+					float minLight = rb.minLight;
+					if( ambient[0] <= minLight || ambient[1] <= minLight || ambient[2] <= minLight )
+						VectorSet( ambient, minLight, minLight, minLight );
 				}
 
 				// rotate direction
@@ -1858,6 +1859,14 @@ void RB_SetZClip( float zNear, float zFar )
 {
 	rb.zNear = zNear;
 	rb.zFar = zFar;
+}
+
+/*
+* RB_SetMinLight
+*/
+void RB_SetMinLight( float minLight )
+{
+	rb.minLight = minLight;
 }
 
 /*
