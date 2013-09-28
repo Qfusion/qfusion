@@ -333,7 +333,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, vertex_buffer_object, true, true, &gl_ext_vertex_buffer_object_ARB_funcs )
 	,GL_EXTENSION( EXT, draw_range_elements, true, true, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
-	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, true, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
+	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
 	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
