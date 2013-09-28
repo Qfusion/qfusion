@@ -906,6 +906,7 @@ void CG_SetupViewDef( cg_viewdef_t *view, int type )
 	view->fracDistFOV = tan( view->refdef.fov_x * ( M_PI/180 ) * 0.5f );
 
 	view->refdef.weaponAlpha = bound( 0, cg_gun_alpha->value, 1 );
+	view->refdef.minLight = 0.3f;
 
 	Matrix3_FromAngles( view->angles, view->axis );
 
