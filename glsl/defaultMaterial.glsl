@@ -183,7 +183,7 @@ void main()
 	myhalf3 diffuseNormalModelspace;
 	float diffuseProduct;
 
-#ifdef APPLY_CELLSHADING
+#ifdef APPLY_CELSHADING
 	int lightcell;
 	float diffuseProductPositive;
 	float diffuseProductNegative;
@@ -214,7 +214,7 @@ void main()
 
 	weightedDiffuseNormalModelspace = diffuseNormalModelspace;
 
-#ifdef APPLY_CELLSHADING
+#ifdef APPLY_CELSHADING
 	hardShadow = 0.0;
 #ifdef APPLY_HALFLAMBERT
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
@@ -260,7 +260,7 @@ void main()
 	color.rgb += u_LightDiffuse.rgb * myhalf(max (diffuseProduct, 0.0)) + u_LightAmbient;
 #endif
 
-#endif // APPLY_CELLSHADING
+#endif // APPLY_CELSHADING
 
 #endif // APPLY_DIRECTIONAL_LIGHT
 
