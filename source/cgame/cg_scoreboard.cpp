@@ -455,7 +455,7 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int panelWidth, struct qfontface_s *font )
 {
 	const char *token;
-	char *layout, *titles;
+	const char *layout, *titles;
 	int team, team_score, team_ping;
 	int yoffset = 0, xoffset = 0;
 	int dir = 0, align, width, height;
@@ -530,7 +530,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	xoffset = CG_HorizontalAlignForWidth( 0, align, panelWidth );
 	xoffset += ( SCB_CENTERMARGIN * dir );
 
-	while( ( token = SCR_GetNextColumnLayout( (const char **)&layout, (const char **)&titles, NULL, &width ) ) != NULL )
+	while( ( token = SCR_GetNextColumnLayout( &layout, &titles, NULL, &width ) ) != NULL )
 	{
 		if( width )
 		{

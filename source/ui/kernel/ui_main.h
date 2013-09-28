@@ -68,7 +68,7 @@ public:
 	void keyEvent( int key, bool pressed );
 
 	// Commands (these could be private)
-	static void ReloadUI_Cmd( void );
+	static void ReloadUI_Cmd_f( void );
 	static void DumpAPI_f( void );
 	static void M_Menu_Force_f( void );
 	static void M_Menu_Open_f( void );

@@ -68,10 +68,19 @@ static size_t L10n_ParsePOString( char *instr, char *outstr )
 	char *outstart = outstr;
 	char *inend = instr + strlen( instr );
 
+	while( *instr == ' ' || *instr == '\t' ) instr++;
+
 	// accept properly double quoted strings
 	// or strings without double quotes at all
 	q1 = strchr( instr, '"' );
 	q2 = strrchr( instr, '"' );
+
+	if( *instr != '"' && q1 ) {
+		// do not accept string that do not start with a double
+		// quote but nonetheless contain a double quote
+		return 0;
+	}
+
 	if( q1 && q2 ) {
 		if( q2 <= q1 ) {
 			return 0;
@@ -144,8 +153,8 @@ static size_t L10n_ParsePOString( char *instr, char *outstr )
 					default:
 						// octals
 						num = 0;
-						instr--;
 						if( c >= '0' && c <= '7' ) {
+							instr--;
 							for( i = 0; i < 3; i++ ) {
 								c = *(++instr);
 								if( c >= '0' && c <= '7' ) {
@@ -232,6 +241,7 @@ parse_cmd:
 		if( !strncmp( cur, "msgid ", 6 ) ) {
 			if( have_msgstr ) {
 				Trie_Insert( dict, msgid, ( void * )msgstr );
+				have_msgid = have_msgstr = qfalse;
 			}
 			have_msgid = qtrue;
 			instr = cur + 6;
@@ -509,7 +519,7 @@ void L10n_LoadLangPOFile( const char *domainname, const char *filepath )
 
 	pofile_dict = L10n_LoadPODict( tempfilename );
 	if( pofile_dict ) {
-		pofile = L10n_CreatePOFile( filepath );
+		pofile = L10n_CreatePOFile( tempfilename );
 		pofile->dict = pofile_dict;
 		pofile->next = podomain->pofiles_head;
 		podomain->pofiles_head = pofile;

@@ -27,9 +27,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace ASUI {
 
-static asstring_t *L10n_TranslateString( const asstring_t &input )
+static const asstring_t *L10n_TranslateString( const asstring_t &input )
 {
-	return ASSTR( trap::L10n_TranslateString( input.buffer ) );
+	const char *translation;
+
+	translation = trap::L10n_TranslateString( input.buffer );
+	if( !translation ) {
+		translation = input.buffer;
+	}
+	return ASSTR( translation );
 }
 
 void PrebindL10n( ASInterface *as )
@@ -40,8 +46,8 @@ void PrebindL10n( ASInterface *as )
 void BindL10n( ASInterface *as )
 {
 	ASBind::Global( as->getEngine() )
-		.funcdef( &L10n_TranslateString, "TranslateString" )
-		.funcdef( &L10n_TranslateString, "_T" )
+		.function( &L10n_TranslateString, "TranslateString" )
+		.function( &L10n_TranslateString, "_T" )
 	;
 }
 
