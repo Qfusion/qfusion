@@ -212,15 +212,15 @@ void R_RenderScene( const refdef_t *fd )
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
 		// soft particles require GL_EXT_framebuffer_blit as we need to copy the depth buffer
 		// attachment into a texture we're going to read from in GLSL shader
-		if( r_soft_particles->integer && glConfig.ext.framebuffer_blit ) {
+		if( r_soft_particles->integer && glConfig.ext.framebuffer_blit && ( r_screentexture != NULL ) ) {
 			rn.fbColorAttachment = r_screentexture;
 			rn.fbDepthAttachment = r_screendepthtexture;
 			fbFlags |= 1;
 		}
-		if( fd->rdflags & RDF_WEAPONALPHA ) {
+		if( ( fd->rdflags & RDF_WEAPONALPHA ) && ( r_screenweapontexture != NULL ) ) {
 			fbFlags |= 2;
 		}
-		if( r_fxaa->integer ) {
+		if( r_fxaa->integer && ( r_screenfxaacopy != NULL ) ) {
 			if( !rn.fbColorAttachment ) {
 				rn.fbColorAttachment = r_screenfxaacopy;
 			}
