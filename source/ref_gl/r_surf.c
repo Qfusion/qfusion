@@ -590,8 +590,6 @@ void R_DrawWorld( void )
 		return;
 	if( !r_worldmodel )
 		return;
-	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
-		return;
 	if( rn.params & RP_SHADOWMAPVIEW )
 		return;
 
