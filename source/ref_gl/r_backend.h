@@ -89,6 +89,7 @@ void RB_SetSkyboxSide( int side );
 qboolean RB_EnableTriangleOutlines( qboolean enable );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
 void RB_SetZClip( float zNear, float zFar );
+void RB_SetMinLight( float minLight );
 
 vattribmask_t RB_GetVertexAttribs( void );
 

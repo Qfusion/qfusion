@@ -31,6 +31,11 @@ static void Serverbrowser_sortByColumn( ServerBrowserDataSource *browser, const 
 	browser->sortByColumn( column.buffer );
 }
 
+static ServerBrowserDataSource &Serverbrowser_getInstance( void )
+{
+	return *(UI_Main::Get()->getServerBrowser());
+}
+
 void BindServerbrowser( ASInterface *as )
 {
 	ASBind::GetClass<ServerBrowserDataSource>( as->getEngine() )
@@ -50,7 +55,7 @@ void BindServerbrowserGlobal( ASInterface *as )
 	// globals
 	ASBind::Global( as->getEngine() )
 		// global variables
-		.var( UI_Main::Get()->getServerBrowser(), "serverBrowser" )
+		.function( &Serverbrowser_getInstance, "get_serverBrowser" )
 	;
 }
 
