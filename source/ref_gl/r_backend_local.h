@@ -136,6 +136,8 @@ typedef struct r_backend_s
 	qboolean greyscale;
 	qboolean alphaHack;
 	float hackedAlpha;
+
+	float minLight;
 } rbackend_t;
 
 extern rbackend_t rb;

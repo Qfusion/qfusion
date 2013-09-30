@@ -186,7 +186,10 @@ void R_RenderScene( const refdef_t *fd )
 		rsc.refdef = *fd;
 
 	rn.refdef = *fd;
-	if( !r_screenweapontexture || fd->weaponAlpha == 1 ) {
+	if( !rn.refdef.minLight ) {
+		rn.refdef.minLight = 0.1f;
+	}
+	if( !r_screenweapontexture || rn.refdef.weaponAlpha == 1 ) {
 		rn.refdef.rdflags &= ~RDF_WEAPONALPHA;
 	}
 
@@ -196,32 +199,33 @@ void R_RenderScene( const refdef_t *fd )
 
 	rn.farClip = R_DefaultFarClip();
 	rn.clipFlags = 15;
-	if( r_worldmodel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog )
+	if( r_worldmodel && !( fd->rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog )
 		rn.clipFlags |= 16;
 	rn.meshlist = &r_worldlist;
 	rn.shadowBits = 0;
 	rn.dlightBits = 0;
 	rn.shadowGroup = NULL;
 
-
 	fbFlags = 0;
 	rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
 	
-	// soft particles require GL_EXT_framebuffer_blit as we need to copy the depth buffer
-	// attachment into a texture we're going to read from in GLSL shader
-	if( r_soft_particles->integer && glConfig.ext.framebuffer_blit ) {
-		rn.fbColorAttachment = r_screentexture;
-		rn.fbDepthAttachment = r_screendepthtexture;
-		fbFlags |= 1;
-	}
-	if( fd->rdflags & RDF_WEAPONALPHA ) {
-		fbFlags |= 2;
-	}
-	if( r_fxaa->integer ) {
-		if( !rn.fbColorAttachment ) {
-			rn.fbColorAttachment = r_screenfxaacopy;
+	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
+		// soft particles require GL_EXT_framebuffer_blit as we need to copy the depth buffer
+		// attachment into a texture we're going to read from in GLSL shader
+		if( r_soft_particles->integer && glConfig.ext.framebuffer_blit && ( r_screentexture != NULL ) ) {
+			rn.fbColorAttachment = r_screentexture;
+			rn.fbDepthAttachment = r_screendepthtexture;
+			fbFlags |= 1;
 		}
-		fbFlags |= 4;
+		if( ( fd->rdflags & RDF_WEAPONALPHA ) && ( r_screenweapontexture != NULL ) ) {
+			fbFlags |= 2;
+		}
+		if( r_fxaa->integer && ( r_screenfxaacopy != NULL ) ) {
+			if( !rn.fbColorAttachment ) {
+				rn.fbColorAttachment = r_screenfxaacopy;
+			}
+			fbFlags |= 4;
+		}
 	}
 
 	// adjust field of view for widescreen
@@ -261,7 +265,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( fbFlags & 1 ) {
 		// copy to FXAA or default framebuffer
 		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
-		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
+		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
 			colorWhite, GLSL_PROGRAM_TYPE_NONE, rn.fbColorAttachment, qfalse );
 	}
 
@@ -271,14 +275,14 @@ void R_RenderScene( const refdef_t *fd )
 
 		// blend to FXAA or default framebuffer
 		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
-		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
+		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
 			color, GLSL_PROGRAM_TYPE_NONE, r_screenweapontexture, qtrue );
 	}
 
 	// blit FXAA to default framebuffer
 	if( fbFlags & 4 ) {
 		R_UseFBObject( 0 );
-		R_DrawStretchQuick( 0, 0, glConfig.width, glConfig.height, 0, 1, 1, 0, 
+		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
 			colorWhite, GLSL_PROGRAM_TYPE_FXAA, r_screenfxaacopy, qfalse );
 	}
 }

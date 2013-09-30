@@ -2554,7 +2554,10 @@ image_t *R_GetPortalTexture( int id, int viewportWidth, int viewportHeight, int 
 		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
 		IT_PORTALMAP|IT_FRAMEBUFFER|flags, 3 );
 
-	r_portaltextures[id]->framenum = rf.sceneFrameCount;
+	if( r_portaltextures[id] ) {
+		r_portaltextures[id]->framenum = rf.sceneFrameCount;
+	}
+
 	return r_portaltextures[id];
 }
 

@@ -333,7 +333,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, vertex_buffer_object, true, true, &gl_ext_vertex_buffer_object_ARB_funcs )
 	,GL_EXTENSION( EXT, draw_range_elements, true, true, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
-	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, true, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
+	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
 	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -667,8 +667,8 @@ static void R_Register( const char *screenshotsPrefix )
 	r_lighting_specular = ri.Cvar_Get( "r_lighting_specular", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_glossintensity = ri.Cvar_Get( "r_lighting_glossintensity", "1", CVAR_ARCHIVE );
 	r_lighting_glossexponent = ri.Cvar_Get( "r_lighting_glossexponent", "48", CVAR_ARCHIVE );
-	r_lighting_ambientscale = ri.Cvar_Get( "r_lighting_ambientscale", "1.0", 0 );
-	r_lighting_directedscale = ri.Cvar_Get( "r_lighting_directedscale", "1.0", 0 );
+	r_lighting_ambientscale = ri.Cvar_Get( "r_lighting_ambientscale", "0.6", 0 );
+	r_lighting_directedscale = ri.Cvar_Get( "r_lighting_directedscale", "0.6", 0 );
 
 	r_lighting_packlightmaps = ri.Cvar_Get( "r_lighting_packlightmaps", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
