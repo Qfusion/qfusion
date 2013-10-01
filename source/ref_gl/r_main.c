@@ -872,7 +872,9 @@ float R_DefaultFarClip( void )
 
 	if( rn.params & RP_SHADOWMAPVIEW ) {
 		return rn.shadowGroup->projDist;
-	} else if( r_worldmodel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog ) {
+	} else if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
+		farclip_dist = 1024;
+	} else if( r_worldmodel && r_worldbrushmodel->globalfog ) {
 		farclip_dist = r_worldbrushmodel->globalfog->shader->fog_dist;
 	} else {
 		farclip_dist = r_farclip_min;
@@ -1024,6 +1026,8 @@ void R_SetupGL( int clearBitMask )
 	RB_LoadProjectionMatrix( rn.projectionMatrix );
 
 	RB_LoadModelviewMatrix( rn.cameraMatrix );
+
+	RB_SetMinLight( rn.refdef.minLight );
 
 	if( rn.params & RP_FLIPFRONTFACE )
 		RB_FlipFrontFace();
@@ -1249,14 +1253,16 @@ void R_RenderView( const refdef_t *fd )
 		if( r_speeds->integer )
 			r_mark_leaves += ( ri.Sys_Milliseconds() - msec );
 
-		R_DrawWorld();
+		if( ! ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+			R_DrawWorld();
 
-		if( !rn.numVisSurfaces ) {
-			// no world surfaces visible
-			return;
+			if( !rn.numVisSurfaces ) {
+				// no world surfaces visible
+				return;
+			}
+
+			R_CalcDistancesToFogVolumes();
 		}
-
-		R_CalcDistancesToFogVolumes();
 
 		R_DrawCoronas();
 
