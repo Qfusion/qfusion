@@ -53,7 +53,7 @@ static void CG_SC_ChatPrint( void )
 	if( !name )
 		CG_LocalPrint( false, S_COLOR_GREEN "console: %s\n", text );
 	else if( teamonly )
-		CG_LocalPrint( true, S_COLOR_YELLOW "[%s]" S_COLOR_WHITE "%s:" S_COLOR_YELLOW " %s\n",
+		CG_LocalPrint( true, S_COLOR_YELLOW "[%s]" S_COLOR_WHITE "%s" S_COLOR_YELLOW ": %s\n",
 			cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR ? "SPEC" : "TEAM", name, text );
 	else
 		CG_LocalPrint( false, "%s" S_COLOR_GREEN ": %s\n", name, text );
