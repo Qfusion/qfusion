@@ -510,7 +510,7 @@ bool G_Teams_JoinTeam( edict_t *ent, int team )
 */
 bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent )
 {
-	int best = gs.maxclients+1;
+	int best_numplayers, best_score;
 	int i, team = -1;
 	bool wasinqueue = ( ent->r.client->queueTimeStamp != 0 );
 
@@ -541,7 +541,7 @@ bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent )
 	else
 	{       //team based
 
-		//find the available team with smaller player count
+		//find the available team with smaller player count or worse score
 		for( i = TEAM_ALPHA; i < GS_MAX_TEAMS; i++ )
 		{
 			if( G_GameTypes_DenyJoinTeam( ent, i ) )
@@ -549,9 +549,11 @@ bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent )
 				continue;
 			}
 
-			if( teamlist[i].numplayers < best )
+			if( team == -1 || teamlist[i].numplayers < best_numplayers
+					|| ( teamlist[i].numplayers == best_numplayers && teamlist[i].stats.score < best_score ) )
 			{
-				best = teamlist[i].numplayers;
+				best_numplayers = teamlist[i].numplayers;
+				best_score = teamlist[i].stats.score;
 				team = i;
 			}
 		}
@@ -560,7 +562,7 @@ bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent )
 		{                   // he is at the right team
 			if( !silent )
 			{
-				G_PrintMsg( ent, "%sCouldn't find an emptier team than team %s.\n",
+				G_PrintMsg( ent, "%sCouldn't find a better team than team %s.\n",
 					S_COLOR_WHITE, GS_TeamName( ent->s.team ) );
 			}
 			return false;
