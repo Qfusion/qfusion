@@ -113,7 +113,7 @@ static void W_Fire_Lead( edict_t *self, vec3_t start, vec3_t aimdir, vec3_t axis
 }
 #endif
 
-#define DIRECAIRTHIT_DAMAGE_BONUS 0
+#define DIRECTAIRTHIT_DAMAGE_BONUS 0
 #define DIRECTHIT_DAMAGE_BONUS 0
 
 enum {
@@ -672,7 +672,7 @@ static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int 
 			// no direct hit bonuses for grenades
 			/*
 			if( hitType == PROJECTILE_TOUCH_DIRECTAIRHIT )
-				directHitDamage += DIRECAIRTHIT_DAMAGE_BONUS;
+				directHitDamage += DIRECTAIRTHIT_DAMAGE_BONUS;
 			else if( hitType == PROJECTILE_TOUCH_DIRECTHIT )
 				directHitDamage += DIRECTHIT_DAMAGE_BONUS;
 			*/
@@ -776,7 +776,7 @@ static void W_Touch_Rocket( edict_t *ent, edict_t *other, cplane_t *plane, int s
 			VectorNormalize2( ent->velocity, dir );
 
 			if( hitType == PROJECTILE_TOUCH_DIRECTAIRHIT )
-				directHitDamage += DIRECAIRTHIT_DAMAGE_BONUS;
+				directHitDamage += DIRECTAIRTHIT_DAMAGE_BONUS;
 			else if( hitType == PROJECTILE_TOUCH_DIRECTHIT )
 				directHitDamage += DIRECTHIT_DAMAGE_BONUS;
 		}
