@@ -171,12 +171,13 @@ void COM_AddParm( char *parm );
 void COM_Init( void );
 void COM_InitArgv( int argc, char **argv );
 
-char *TempCopyString( const char *in );
-
 // some hax, because we want to save the file and line where the copy was called
 // from, not the file and line from ZoneCopyString function
-char *_ZoneCopyString( const char *in, const char *filename, int fileline );
-#define ZoneCopyString( in ) _ZoneCopyString( in, __FILE__, __LINE__ )
+char *_ZoneCopyString( const char *str, const char *filename, int fileline );
+#define ZoneCopyString( str ) _ZoneCopyString( str, __FILE__, __LINE__ )
+
+char *_TempCopyString( const char *str, const char *filename, int fileline );
+#define TempCopyString( str ) _TempCopyString( str, __FILE__, __LINE__ )
 
 int Com_GlobMatch( const char *pattern, const char *text, const qboolean casecmp );
 
@@ -872,6 +873,7 @@ mempool_t *_Mem_AllocPool( mempool_t *parent, const char *name, int flags, const
 mempool_t *_Mem_AllocTempPool( const char *name, const char *filename, int fileline );
 void _Mem_FreePool( mempool_t **pool, int musthave, int canthave, const char *filename, int fileline );
 void _Mem_EmptyPool( mempool_t *pool, int musthave, int canthave, const char *filename, int fileline );
+char *_Mem_CopyString( mempool_t *pool, const char *in, const char *filename, int fileline );
 
 void _Mem_CheckSentinels( void *data, const char *filename, int fileline );
 void _Mem_CheckSentinelsGlobal( const char *filename, int fileline );
@@ -886,6 +888,7 @@ size_t Mem_PoolTotalSize( mempool_t *pool );
 #define Mem_AllocTempPool( name ) _Mem_AllocTempPool( name, __FILE__, __LINE__ )
 #define Mem_FreePool( pool ) _Mem_FreePool( pool, 0, 0, __FILE__, __LINE__ )
 #define Mem_EmptyPool( pool ) _Mem_EmptyPool( pool, 0, 0, __FILE__, __LINE__ )
+#define Mem_CopyString( pool, str ) _Mem_CopyString( pool, str, __FILE__, __LINE__ )
 
 #define Mem_CheckSentinels( data ) _Mem_CheckSentinels( data, __FILE__, __LINE__ )
 #define Mem_CheckSentinelsGlobal() _Mem_CheckSentinelsGlobal( __FILE__, __LINE__ )
@@ -942,6 +945,7 @@ void	Sys_Quit( void );
 char	*Sys_GetClipboardData( qboolean primary );
 qboolean Sys_SetClipboardData( char *data );
 void	Sys_FreeClipboardData( char *data );
+const char *Sys_GetPreferredLanguage( void );
 
 void	Sys_OpenURLInBrowser( const char *url );
 

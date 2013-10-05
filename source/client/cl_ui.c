@@ -112,6 +112,32 @@ static void CL_UIModule_R_RegisterWorldModel( const char *model ) {
 	re.RegisterWorldModel( model, NULL );
 }
 
+#define UI_L10N_DOMAIN	"ui"
+
+/*
+* CL_UIModule_L10n_LoadLangPOFile
+*/
+void CL_UIModule_L10n_LoadLangPOFile( const char *filepath )
+{
+	L10n_LoadLangPOFile( UI_L10N_DOMAIN, filepath );
+}
+
+/*
+* CL_UIModule_L10n_TranslateString
+*/
+const char *CL_UIModule_L10n_TranslateString( const char *string )
+{
+	return L10n_TranslateString( UI_L10N_DOMAIN, string );
+}
+
+/*
+* CL_UIModule_L10n_ClearDomain
+*/
+void CL_UIModule_L10n_ClearDomain( void )
+{
+	L10n_ClearDomain( UI_L10N_DOMAIN );
+}
+
 //==============================================
 
 /*
@@ -271,8 +297,12 @@ void CL_UIModule_Init( void )
 	import.Irc_GetPrevHistoryNode = Irc_GetPrevHistoryNode;
 	import.Irc_GetHistoryNodeLine = Irc_GetHistoryNodeLine;
 
+	import.L10n_LoadLangPOFile = &CL_UIModule_L10n_LoadLangPOFile;
+	import.L10n_TranslateString = &CL_UIModule_L10n_TranslateString;
+	import.L10n_ClearDomain = &CL_UIModule_L10n_ClearDomain;
+
 	if( builtinAPIfunc ) {
-		uie = builtinAPIfunc( &import );
+		uie = (ui_export_t *)builtinAPIfunc( &import );
 	}
 	else {
 		uie = (ui_export_t *)Com_LoadGameLibrary( "ui", "GetUIAPI", &module_handle, &import, cls.sv_pure, NULL );
@@ -308,6 +338,8 @@ void CL_UIModule_Shutdown( void )
 	Mem_FreePool( &ui_mempool );
 	Com_UnloadGameLibrary( &module_handle );
 	uie = NULL;
+
+	CL_UIModule_L10n_ClearDomain();
 }
 
 /*
@@ -447,11 +479,4 @@ void CL_UIModule_MouseMove( int dx, int dy )
 {
 	if( uie )
 		uie->MouseMove( dx, dy );
-}
-
-/*
-* CL_UIModule_MM_UIReply
-*/
-void CL_UIModule_MM_UIReply( int action, const char *data )
-{
 }

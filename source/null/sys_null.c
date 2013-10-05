@@ -88,6 +88,11 @@ void Sys_OpenURLInBrowser( const char *url )
 {
 }
 
+const char *Sys_GetPreferredLanguage( void )
+{
+	return NULL;
+}
+
 unsigned int Sys_Milliseconds( void )
 {
 	return 0;

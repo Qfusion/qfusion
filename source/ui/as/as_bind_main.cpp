@@ -18,6 +18,7 @@ void BindAPI( ASInterface *as )
 	PrebindElement( as );
 	PrebindWindow( as );
 	PrebindIrc( as );
+	PrebindL10n( as );
 
 	PrebindOptionsForm( as );
 	PrebindServerbrowser( as );
@@ -33,6 +34,7 @@ void BindAPI( ASInterface *as )
 	BindElement( as );
 	BindWindow( as );
 	BindIrc( as );
+	BindL10n( as );
 
 	BindOptionsForm( as );
 	BindServerbrowser( as );

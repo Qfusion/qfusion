@@ -149,9 +149,9 @@ using namespace Rocket::Core;
 		}
 		else if( KeysAreBound() )
 		{
-			text  = std::string( trap::Key_KeynumToString( boundKey[0] ) );
-			text += std::string( " or " );
-			text += std::string( trap::Key_KeynumToString( boundKey[1] ) );
+			std::string b0 = trap::Key_KeynumToString( boundKey[0] );
+			std::string b1 = trap::Key_KeynumToString( boundKey[1] );
+			text += va( trap::L10n_TranslateString( "%s or %s" ), b0.c_str(), b1.c_str() );
 		}
 
 		this->SetInnerRML( text.c_str() );

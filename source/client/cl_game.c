@@ -214,6 +214,34 @@ static void CL_GameModule_AsyncStream_Shutdown( void )
 
 //==============================================
 
+#define CGAME_L10N_DOMAIN	"cgame"
+
+/*
+* CL_GameModule_L10n_LoadLangPOFile
+*/
+void CL_GameModule_L10n_LoadLangPOFile( const char *filepath )
+{
+	L10n_LoadLangPOFile( CGAME_L10N_DOMAIN, filepath );
+}
+
+/*
+* CL_GameModule_TranslateString
+*/
+const char *CL_GameModule_L10n_TranslateString( const char *string )
+{
+	return L10n_TranslateString( CGAME_L10N_DOMAIN, string );
+}
+
+/*
+* CL_GameModule_L10n_ClearDomain
+*/
+void CL_GameModule_L10n_ClearDomain( void )
+{
+	L10n_ClearDomain( CGAME_L10N_DOMAIN );
+}
+
+//==============================================
+
 /*
 * CL_GameModule_Init
 */
@@ -369,6 +397,10 @@ void CL_GameModule_Init( void )
 
 	import.Mem_Alloc = CL_GameModule_MemAlloc;
 	import.Mem_Free = CL_GameModule_MemFree;
+
+	import.L10n_LoadLangPOFile = &CL_GameModule_L10n_LoadLangPOFile;
+	import.L10n_TranslateString = &CL_GameModule_L10n_TranslateString;
+	import.L10n_ClearDomain = &CL_GameModule_L10n_ClearDomain;
 
 	if( builtinAPIfunc ) {
 		cge = builtinAPIfunc( &import );

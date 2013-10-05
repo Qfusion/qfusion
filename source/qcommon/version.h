@@ -128,4 +128,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_FILEVERSION_RC_STR			STR_TOSTR( APP_FILEVERSION_RC )
 #endif
 
+#define APP_DEFAULT_LANGUAGE			"en"
+
 #endif

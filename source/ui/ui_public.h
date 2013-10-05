@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    40
+#define	UI_API_VERSION	    41
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -196,6 +196,11 @@ typedef struct
 	const struct irc_chat_history_node_s *(*Irc_GetNextHistoryNode)(const struct irc_chat_history_node_s *n);
 	const struct irc_chat_history_node_s *(*Irc_GetPrevHistoryNode)(const struct irc_chat_history_node_s *n);
 	const char *(*Irc_GetHistoryNodeLine)(const struct irc_chat_history_node_s *n);
+
+	// l10n
+	void ( *L10n_ClearDomain )( void );
+	void ( *L10n_LoadLangPOFile )( const char *filepath );
+	const char *( *L10n_TranslateString )( const char *string );
 } ui_import_t;
 
 typedef struct
