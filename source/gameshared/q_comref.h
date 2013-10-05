@@ -160,8 +160,8 @@ typedef struct
 #define	ANGLE2BYTE( x )		( (int)( ( x )*256/360 ) & 255 )
 #define	BYTE2ANGLE( x )		( ( x )*( 360.0/256 ) )
 
-#define MAX_GAMECOMMANDS	64		// command names for command completion
-#define MAX_LOCATIONS		64
+#define MAX_GAMECOMMANDS	256		// command names for command completion
+#define MAX_LOCATIONS		256
 #define MAX_WEAPONDEFS		MAX_ITEMS
 
 //
