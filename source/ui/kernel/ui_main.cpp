@@ -177,8 +177,8 @@ void UI_Main::preloadUI( void )
 
 	trap::L10n_ClearDomain();
 
-	// load base UI strings: ui/l10n
-	trap::L10n_LoadLangPOFile( "ui/l10n" );
+	// load base UI strings: l10n/ui
+	trap::L10n_LoadLangPOFile( "l10n/ui" );
 	
 	// load strings provided by the theme: e.g. ui/l10n/porkui
 	String l10nLocalPath( navigator->getDefaultPath().c_str() );

@@ -219,7 +219,8 @@ static int SCB_DrawPlayerStats( int x, int y )
 		yoffset = trap_SCR_strHeight( font );
 
 		// header
-		trap_SCR_DrawStringWidth( x + xoffset, y + yoffset, ALIGN_LEFT_TOP, "Weapon stats", width, font, colorMdGrey );
+		trap_SCR_DrawStringWidth( x + xoffset, y + yoffset, ALIGN_LEFT_TOP, 
+			CG_TranslateString( "Weapon stats" ), width, font, colorMdGrey );
 		yoffset += trap_SCR_strHeight( font );
 
 		// box
@@ -256,7 +257,8 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 
 	// draw title
 	yoffset = height;
-	trap_SCR_DrawString( x + xoffset, y + yoffset, ALIGN_CENTER_TOP, "Challengers", font, colorCyan );
+	trap_SCR_DrawString( x + xoffset, y + yoffset, ALIGN_CENTER_TOP, 
+		CG_TranslateString( "Challengers" ), font, colorCyan );
 	yoffset += height;
 
 	// draw challengers
@@ -339,7 +341,8 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 
 	// draw title
 	yoffset = height;
-	trap_SCR_DrawString( x + xoffset, y + yoffset, ALIGN_CENTER_TOP, "Spectators", font, colorYellow );
+	trap_SCR_DrawString( x + xoffset, y + yoffset, ALIGN_CENTER_TOP, 
+		CG_TranslateString( "Spectators" ), font, colorYellow );
 	yoffset += height;
 
 	// draw spectators
@@ -501,7 +504,8 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 			width, height, align, teamcolor, cgs.shaderWhite );
 
 		xoffset += ( 16 * dir );
-		CG_DrawHUDNumeric( x + xoffset, y + yoffset, align, colorWhite, SCB_SCORENUMBER_SIZE, SCB_SCORENUMBER_SIZE, team_score );
+		CG_DrawHUDNumeric( x + xoffset, y + yoffset, align, colorWhite, 
+			SCB_SCORENUMBER_SIZE, SCB_SCORENUMBER_SIZE, team_score );
 
 		xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen(va("%i", team_score)) + 16 ) * dir );
 		CG_PingColor( team_ping, pingcolor );
@@ -534,9 +538,8 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	{
 		if( width )
 		{
-			trap_SCR_DrawClampString( x + xoffset, y + yoffset, token,
+			trap_SCR_DrawClampString( x + xoffset, y + yoffset, CG_TranslateString( token ),
 				x + xoffset, y + yoffset, x + xoffset + width, y + yoffset + height, font, colorWhite );
-
 			xoffset += width;
 		}
 	}
@@ -654,7 +657,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 
 		case 'b': // is a Y/N boolean
 			i = atoi( token );
-			Q_snprintfz( string, sizeof( string ), "%s", ( i != 0 ) ? "Yes" : "No" );
+			Q_snprintfz( string, sizeof( string ), "%s", CG_TranslateString( ( i != 0 ) ? "Yes" : "No" ) );
 			VectorCopy( i ? colorGreen : colorRed, color );
 			break;
 
@@ -670,7 +673,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 
 				milli = (unsigned int)( atoi( token ) );
 				if( !milli )
-					Q_snprintfz( string, sizeof( string ), "no time" );
+					Q_snprintfz( string, sizeof( string ), CG_TranslateString( "no time" ) );
 				else
 				{
 					min = milli / 60000;
@@ -736,7 +739,7 @@ void CG_DrawScoreboard( void )
 	if( scoreboardString[0] != '&' ) // nothing to draw
 		return;
 
-	font = trap_SCR_RegisterFont( cg_scoreboardFontFamily->string, QFONT_STYLE_NONE, cg_scoreboardFontSize->integer );
+	font = trap_SCR_RegisterFont( cg_scoreboardFontFamily->string, QFONT_STYLE_NONE, cg_scoreboardFontSize->integer - 1 );
 	if( !font )
 	{
 		CG_Printf( "%sWarning: Invalid font in 'cg_scoreboardFontFamily'. Reseting to default\n", S_COLOR_YELLOW );

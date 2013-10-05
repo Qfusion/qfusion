@@ -398,6 +398,29 @@ char *_CG_CopyString( const char *in, const char *filename, int fileline )
 }
 
 /*
+* CG_InitL10n
+*/
+static void CG_InitL10n( void )
+{
+	trap_L10n_ClearDomain();
+	trap_L10n_LoadLangPOFile( "l10n/cgame" );
+}
+
+/*
+* CG_TranslateString
+*/
+const char *CG_TranslateString( const char *string )
+{
+	const char *translation;
+
+	translation = trap_L10n_TranslateString( string );
+	if( !translation ) {
+		return string;
+	}
+	return translation;
+}
+
+/*
 * CG_RegisterWeaponModels
 */
 static void CG_RegisterWeaponModels( void )
@@ -982,6 +1005,9 @@ void CG_Init( const char *serverName, unsigned int playerNum, int vidWidth, int 
 	// register fonts here so loading screen works
 	CG_RegisterFonts();
 	cgs.shaderWhite = trap_R_RegisterPic( "$whiteimage" );
+
+	// l10n
+	CG_InitL10n();
 
 	CG_RegisterLevelMinimap();
 
