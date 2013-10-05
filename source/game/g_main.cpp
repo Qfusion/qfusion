@@ -114,7 +114,7 @@ cvar_t *g_skillRating;
 
 static char *map_rotation_s = NULL;
 static char **map_rotation_p = NULL;
-static int map_rotation_current = 0;
+static int map_rotation_current = -1;
 static int map_rotation_count = 0;
 
 static const char *G_SelectNextMapName( void );
@@ -473,9 +473,9 @@ static edict_t *CreateTargetChangeLevel( const char *map )
 */
 static void G_UpdateMapRotation( void )
 {
-	int count;
-	bool thiswhitespace, lastwhitespace;
-	char *p;
+	int count, i;
+	bool thiswhitespace, lastwhitespace, found;
+	char *p, *start;
 	static const char *seps = " ,\n\r";
 
 	if( g_maplist->modified || !map_rotation_s || !map_rotation_p )
@@ -490,18 +490,34 @@ static void G_UpdateMapRotation( void )
 
 		map_rotation_s = G_CopyString( g_maplist->string );
 		map_rotation_p = NULL;
-		map_rotation_current = 0;	// reset the mapcounter too
+		map_rotation_current = -1;	// reset the mapcounter too
 		map_rotation_count = 0;
 
 		// count the number of tokens
 		p = map_rotation_s;
 		count = 0;
 		lastwhitespace = true;
+		start = NULL;
+		found = qfalse;
 		while( *p )
 		{
 			thiswhitespace = ( strchr( seps, *p ) != NULL ) ? true : false;
 			if( lastwhitespace && !thiswhitespace )
+			{
+				start = p;
 				count++;
+			}
+			else if( thiswhitespace && !lastwhitespace && !found && start )
+			{
+				found = qtrue;
+				for( i = 0; start + i < p; i++ )
+				{
+					if( tolower( start[i] ) != tolower( level.mapname[i] ) )
+						found = qfalse;
+				}
+				if( found )
+					map_rotation_current = count - 1;
+			}
 
 			lastwhitespace = thiswhitespace;
 			p++;
@@ -547,10 +563,12 @@ static const char *G_MapRotationNormal( void )
 	if( !map_rotation_count )
 		return NULL;
 
+	map_rotation_current++;
+
 	if( map_rotation_current >= map_rotation_count || map_rotation_p[map_rotation_current] == NULL )
 		map_rotation_current = 0;
 
-	return map_rotation_p[map_rotation_current++];
+	return map_rotation_p[map_rotation_current];
 }
 
 /*
