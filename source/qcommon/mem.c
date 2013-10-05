@@ -139,6 +139,8 @@ void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int 
 	if( !alignment )
 		alignment = MEMALIGNMENT_DEFAULT;
 
+	assert( pool != NULL );
+
 	if( pool == NULL )
 		_Mem_Error( "Mem_Alloc: pool == NULL (alloc at %s:%i)", filename, fileline );
 	if( musthave && ( ( pool->flags & musthave ) != musthave ) )
@@ -212,6 +214,18 @@ void *_Mem_Realloc( void *data, size_t size, const char *filename, int fileline 
 	Mem_Free( data );
 
 	return newdata;
+}
+
+char *_Mem_CopyString( mempool_t *pool, const char *in, const char *filename, int fileline )
+{
+	char *out;
+	size_t num_chars = strlen( in ) + 1;
+	size_t str_size = sizeof( char ) * num_chars;
+
+	out = ( char* )_Mem_Alloc( pool, str_size, 0, 0, filename, fileline );
+	memcpy( out, in, str_size );
+
+	return out;
 }
 
 void _Mem_Free( void *data, int musthave, int canthave, const char *filename, int fileline )

@@ -581,3 +581,17 @@ static inline size_t trap_GetBaseServerURL( char *buffer, size_t buffer_size )
 	return CGAME_IMPORT.GetBaseServerURL( buffer, buffer_size );
 }
 
+static inline void trap_L10n_ClearDomain( void )
+{
+	CGAME_IMPORT.L10n_ClearDomain();
+}
+
+static inline void trap_L10n_LoadLangPOFile( const char *filepath )
+{
+	CGAME_IMPORT.L10n_LoadLangPOFile( filepath );
+}
+
+static inline const char *trap_L10n_TranslateString( const char *string )
+{
+	return CGAME_IMPORT.L10n_TranslateString( string );
+}

@@ -601,25 +601,14 @@ int Com_GlobMatch( const char *pattern, const char *text, const qboolean casecmp
 	return glob_match( pattern, text, casecmp );
 }
 
-char *_ZoneCopyString( const char *in, const char *filename, int fileline )
+char *_ZoneCopyString( const char *str, const char *filename, int fileline )
 {
-	char *out;
-
-	out = ( char* )_Mem_Alloc( zoneMemPool, sizeof( char ) * ( strlen( in ) + 1 ), 0, 0, filename, fileline );
-	//out = Mem_ZoneMalloc( sizeof(char) * (strlen(in) + 1) );
-	Q_strncpyz( out, in, sizeof( char ) * ( strlen( in ) + 1 ) );
-
-	return out;
+	return _Mem_CopyString( zoneMemPool, str, filename, fileline );
 }
 
-char *TempCopyString( const char *in )
+char *_TempCopyString( const char *str, const char *filename, int fileline )
 {
-	char *out;
-
-	out = ( char* )Mem_TempMalloc( sizeof( char ) * ( strlen( in ) + 1 ) );
-	Q_strncpyz( out, in, sizeof( char ) * ( strlen( in ) + 1 ) );
-
-	return out;
+	return _Mem_CopyString( tempMemPool, str, filename, fileline );
 }
 
 void Info_Print( char *s )

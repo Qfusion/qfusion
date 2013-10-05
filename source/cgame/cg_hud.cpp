@@ -259,7 +259,7 @@ static int CG_GetStunned( const void *parameter )
 
 static int CG_GetCvar( const void *parameter )
 {
-	return trap_Cvar_Value( (char *)parameter );
+	return trap_Cvar_Value( (const char *)parameter );
 }
 
 static int CG_GetDamageIndicatorDirValue( const void *parameter )
@@ -1841,7 +1841,8 @@ static bool CG_LFuncDrawString( struct cg_layoutnode_s *commandnode, struct cg_l
 	
 	if( !string || !string[0] )
 		return false;
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, string, layout_cursor_font, layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, 
+		CG_TranslateString( string ), layout_cursor_font, layout_cursor_color );
 	return true;
 }
 
@@ -1856,6 +1857,7 @@ static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws )
 	if( !num_draws )
 		return false;
 
+	//string = CG_TranslateString( string );
 	string_len = strlen( string );
 	temps = ( char * )CG_Malloc( string_len * num_draws + 1 );
 
@@ -1902,7 +1904,8 @@ static bool CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, 
 	item = GS_FindItemByTag( itemindex );
 	if( !item || !item->name )
 		return false;
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, item->name, layout_cursor_font, layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, 
+		CG_TranslateString( item->name ), layout_cursor_font, layout_cursor_color );
 	return true;
 }
 

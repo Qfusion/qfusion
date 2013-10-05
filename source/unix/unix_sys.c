@@ -41,6 +41,7 @@ FIXME:  This will be remidied once a native Mac port is complete
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <errno.h>
+#include <locale.h>
 
 #if defined ( __FreeBSD__ )
 #include <machine/param.h>
@@ -439,6 +440,36 @@ void Sys_OpenURLInBrowser( const char *url )
 		// it seems that FocusIn even which follows grabs the input afterwards
 		// XIconifyWindow( x11display.dpy, x11display.win, x11display.scr );
     }
+}
+
+/*
+* Sys_GetPreferredLanguage
+*/
+const char *Sys_GetPreferredLanguage( void )
+{
+	static char lang[10];
+	const char *locale;
+	char *p;
+
+	setlocale( LC_ALL, "" );
+	locale = setlocale( LC_ALL, NULL );
+
+	Q_strncpyz( lang, locale, sizeof( lang ) ); 
+
+	p = strchr( lang, '-' );
+	if( p ) { *p = '\0'; }
+	p = strchr( lang, '_' );
+	if( p ) { *p = '\0'; }
+	p = strchr( lang, '.' );
+	if( p ) { *p = '\0'; }
+
+	if( !lang[0] ) {
+		return APP_DEFAULT_LANGUAGE;
+	}
+	if( !Q_stricmp( lang, "C" ) ) {
+		return APP_DEFAULT_LANGUAGE;
+	}
+	return Q_strlwr( lang );
 }
 
 /*****************************************************************************/

@@ -101,7 +101,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, boo
 	preloadUI();
 
 	// commands
-	trap::Cmd_AddCommand( "ui_reload", ReloadUI_Cmd );
+	trap::Cmd_AddCommand( "ui_reload", ReloadUI_Cmd_f );
 	trap::Cmd_AddCommand( "ui_dumpapi", DumpAPI_f );
 	trap::Cmd_AddCommand( "ui_printdocs", PrintDocuments_Cmd );
 
@@ -172,6 +172,19 @@ void UI_Main::preloadUI( void )
 
 	// initialize with default document
 	navigator->setDefaultPath( ui_basepath->string );
+
+	// load translation strings
+
+	trap::L10n_ClearDomain();
+
+	// load base UI strings: l10n/ui
+	trap::L10n_LoadLangPOFile( "l10n/ui" );
+	
+	// load strings provided by the theme: e.g. ui/l10n/porkui
+	String l10nLocalPath( navigator->getDefaultPath().c_str() );
+	l10nLocalPath += "l10n";
+	l10nLocalPath.Erase( 0, 1 );
+	trap::L10n_LoadLangPOFile( l10nLocalPath.CString() );
 
 	// postpone displaying the document until the first valid refresh state
 	navigator->pushDocument( ui_index, false, false );
@@ -493,7 +506,7 @@ void UI_Main::Destroy( void )
 
 //==================================
 
-void UI_Main::ReloadUI_Cmd( void )
+void UI_Main::ReloadUI_Cmd_f( void )
 {
 	if( !self )
 		return;

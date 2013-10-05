@@ -466,13 +466,23 @@ static void CG_SC_ChannelRemove( void )
 static void CG_SC_MatchMessage( void )
 {
 	matchmessage_t mm;
+	const char *matchmessage;
 
 	cg.matchmessage = NULL;
 
 	mm = (matchmessage_t)atoi( trap_Cmd_Argv( 1 ) );
-	cg.matchmessage = GS_MatchMessageString( mm );
-	if( !cg.matchmessage[0] )
-		cg.matchmessage = NULL;
+	matchmessage = GS_MatchMessageString( mm );
+	if( !matchmessage[0] )
+		matchmessage = NULL;
+
+	if( matchmessage ) {
+		const char *translated = CG_TranslateString( matchmessage );
+		if( translated ) {
+			matchmessage = translated;
+		}
+	}
+
+	cg.matchmessage = matchmessage;
 }
 
 /*

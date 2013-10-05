@@ -102,10 +102,9 @@ namespace ASUI
 	void BindIrc( ASInterface *as );
 	void BindIrcGlobal( ASInterface *as );
 
-	// asui_loadingscreen.cpp
-	void PrebindLoadingscreen( ASInterface *as );
-	void BindLoadingscreen( ASInterface *as );
-	void BindLoadingscreenGlobal( ASInterface *as );
+	// as_bind_l10n.cpp
+	void PrebindL10n( ASInterface *as );
+	void BindL10n( ASInterface *as );
 }
 
 // type definitions required by ASBind

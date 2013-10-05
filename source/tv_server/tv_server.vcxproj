@@ -278,7 +278,7 @@
     <ClInclude Include="..\gameshared\q_dynvar.h" />
     <ClInclude Include="..\gameshared\q_math.h" />
     <ClInclude Include="..\gameshared\q_shared.h" />
-	<ClInclude Include="..\gameshared\q_trie.h" />
+    <ClInclude Include="..\gameshared\q_trie.h" />
     <ClInclude Include="..\qcommon\qcommon.h" />
     <ClInclude Include="..\qcommon\snap_read.h" />
     <ClInclude Include="..\qcommon\snap_write.h" />

@@ -207,6 +207,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="client\l10n.c" />
     <ClCompile Include="qcommon\anticheat.c" />
     <ClCompile Include="qcommon\ascript.c" />
     <ClCompile Include="qcommon\asyncstream.c" />
@@ -283,6 +284,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cin\cin_public.h" />
+    <ClInclude Include="client\l10n.h" />
     <ClInclude Include="ftlib\ftlib_public.h" />
     <ClInclude Include="qcommon\anticheat.h" />
     <ClInclude Include="qcommon\asyncstream.h" />

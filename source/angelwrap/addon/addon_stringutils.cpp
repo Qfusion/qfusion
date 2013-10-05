@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include <stdarg.h>
 #include "../qas_precompiled.h"
 #include "addon_string.h"
 #include "addon_scriptarray.h"
@@ -101,6 +102,74 @@ static asstring_t *QAS_FormatFloat( double value, const asstring_t &options, asU
 	std::string s( options.buffer );
 	std::string ret = FormatFloat( value, s, width, precision );
 	return objectString_FactoryBuffer( ret.c_str(), ret.length() );
+}
+
+static asstring_t *QAS_FormatStringHelper( const char *format, ... )
+{
+	char buf[256];
+    va_list args;
+	const int buf_size = int(sizeof( buf ));
+
+    va_start( args, format );
+
+	int ret = Q_vsnprintfz( buf, buf_size, format, args );
+	if( ret < 0 ) {
+		return objectString_FactoryBuffer( "", 0 );
+	}
+
+	if( ret < buf_size ) {
+		va_end( args );
+		return objectString_FactoryBuffer( buf, strlen( buf ) );
+	}
+
+	asstring_t *formatted = objectString_FactoryBuffer( NULL, ret );
+	Q_vsnprintfz( formatted->buffer, formatted->size, format, args );
+	return formatted;
+}
+
+static asstring_t *QAS_FormatString1( const asstring_t &format, const asstring_t &arg1 )
+{
+	return QAS_FormatStringHelper( format.buffer, arg1.buffer );
+}
+
+static asstring_t *QAS_FormatString2( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2 )
+{
+	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer );
+}
+
+static asstring_t *QAS_FormatString3( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3 )
+{
+	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer );
+}
+
+static asstring_t *QAS_FormatString4( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
+	const asstring_t &arg4 )
+{
+	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer );
+}
+
+static asstring_t *QAS_FormatString5( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
+	const asstring_t &arg4, const asstring_t &arg5 )
+{
+	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer, arg5.buffer );
+}
+
+static asstring_t *QAS_FormatString6( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
+	const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6 )
+{
+	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer, arg5.buffer, arg6.buffer );
+}
+
+static asstring_t *QAS_FormatString7( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
+	const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6, const asstring_t &arg7 )
+{
+	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer, arg5.buffer, arg6.buffer, arg7.buffer );
+}
+
+static asstring_t *QAS_FormatString8( const asstring_t &format, const asstring_t &arg1, const asstring_t &arg2, const asstring_t &arg3, 
+	const asstring_t &arg4, const asstring_t &arg5, const asstring_t &arg6, const asstring_t &arg7, const asstring_t &arg8 )
+{
+	return QAS_FormatStringHelper( format.buffer, arg1.buffer, arg2.buffer, arg3.buffer, arg4.buffer, arg5.buffer, arg6.buffer, arg7.buffer, arg8.buffer );
 }
 
 static CScriptArrayInterface *QAS_SplitString( const asstring_t &str, const asstring_t &delim )
@@ -187,6 +256,21 @@ void RegisterStringUtilsAddon( asIScriptEngine *engine )
 	r = engine->RegisterGlobalFunction( "String @FormatInt(int64 val, const String &in options, uint width = 0)", asFUNCTION( QAS_FormatInt ), asCALL_CDECL );  assert( r >= 0 );
 	r = engine->RegisterGlobalFunction( "String @FormatFloat(double val, const String &in options, uint width = 0, uint precision = 0)", asFUNCTION( QAS_FormatFloat ), asCALL_CDECL ); assert( r >= 0 );
 
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1)", asFUNCTION( QAS_FormatString1 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2)", asFUNCTION( QAS_FormatString2 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
+		"const String &in arg3)", asFUNCTION( QAS_FormatString3 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
+		"const String &in arg3, const String &in arg4)", asFUNCTION( QAS_FormatString4 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
+		"const String &in arg3, const String &in arg4, const String &in arg5)", asFUNCTION( QAS_FormatString5 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
+		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6)", asFUNCTION( QAS_FormatString6 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
+		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7)", asFUNCTION( QAS_FormatString7 ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @Format(const String &in format, const String &in arg1, const String &in arg2, "
+		"const String &in arg3, const String &in arg4, const String &in arg5, const String &in arg6, const String &in arg7, const String &in arg8)", asFUNCTION( QAS_FormatString8 ), asCALL_CDECL ); assert( r >= 0 );
+	
     r = engine->RegisterGlobalFunction( "array<String @> @Split(const String &in string, const String &in delimiter)", asFUNCTION( QAS_SplitString ), asCALL_CDECL ); assert( r >= 0 );
     r = engine->RegisterGlobalFunction( "String @Join(array<String @> &in, const String &in delimiter)", asFUNCTION( QAS_JoinString ), asCALL_CDECL ); assert( r >= 0 );
 

@@ -517,7 +517,7 @@ gsitem_t	itemdefs[] =
 		S_PICKUP_AMMO,
 		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
 
-		"Strong bullets", "11mm", S_COLOR_GREY,
+		"Weak bullets", "11mm", S_COLOR_GREY,
 		0, // actual value comes from weapondefs instead
 		0, // actual value comes from weapondefs instead
 		AMMO_NONE,
