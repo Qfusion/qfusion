@@ -89,7 +89,7 @@ static size_t L10n_ParsePOString( char *instr, char *outstr )
 		*q2 = '\0';
 	}
 	else {
-		if( q1 && !q2 || !q1 && q2 ) {
+		if( ( q1 && !q2 ) || ( !q1 && q2 ) ) {
 			return 0;
 		}
 		// no quotes

@@ -110,7 +110,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_FILEVERSION_RC_STR			STR_TOSTR( APP_VERSION_MAJOR ) "," STR_TOSTR( APP_VERSION_MINOR ) "," STR_TOSTR( APP_VERSION_UPDATE ) ",0"
 #endif
 
-#else
+#else // __GNUC__
 
 #ifndef APP_VERSION_RC
 #define APP_VERSION_RC					APP_VERSION_MAJOR.APP_VERSION_MINOR
@@ -128,6 +128,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_FILEVERSION_RC_STR			STR_TOSTR( APP_FILEVERSION_RC )
 #endif
 
-#define APP_DEFAULT_LANGUAGE			"en"
+#endif // __GNUC__
 
-#endif
+#define APP_DEFAULT_LANGUAGE			"en"
