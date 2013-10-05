@@ -592,14 +592,19 @@ void Sys_OpenURLInBrowser( const char *url )
 */
 const char *Sys_GetPreferredLanguage( void )
 {
-	typedef BOOL (WINAPI *GetUserPreferredUILanguages_t)(DWORD, PULONG, PZZWSTR, PULONG);
+	typedef BOOL (WINAPI *GetUserPreferredUILanguages_t)(DWORD, PULONG, PWSTR, PULONG);
 	BOOL hr;
 	ULONG numLanguages = 0;
 	DWORD cchLanguagesBuffer = 0;
 	HINSTANCE kernel32Dll;
 	GetUserPreferredUILanguages_t GetUserPreferredUILanguages_f;
 	static char lang[10];
-	
+
+// mingw doesn't define this
+#ifndef MUI_LANGUAGE_NAME
+# define MUI_LANGUAGE_NAME 0x8
+#endif
+
 	lang[0] = '\0';
 
 	kernel32Dll = LoadLibrary( "kernel32.dll" );
