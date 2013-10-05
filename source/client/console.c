@@ -599,6 +599,8 @@ void Con_DrawNotify( void )
 {
 	int v;
 	char *text;
+	const char *say;
+	const char *translated;
 	int i;
 	int time;
 	char *s;
@@ -656,14 +658,19 @@ void Con_DrawNotify( void )
 
 		if( chat_team )
 		{
-			SCR_DrawString( x, y, ALIGN_LEFT_TOP, "say_team:", font, colorWhite );
-			promptwidth = SCR_strWidth( "say_team: ", font, 0 );
+			say = "say_team:";
 		}
 		else
 		{
-			SCR_DrawString( x, y, ALIGN_LEFT_TOP, "say:", font, colorWhite );
-			promptwidth = SCR_strWidth( "say: ", font, 0 );
+			say = "say:";
 		}
+
+		translated = L10n_TranslateString( "common", say );
+		if( !translated ) {
+			translated = say;
+		}
+		SCR_DrawString( x, y, ALIGN_LEFT_TOP, translated, font, colorWhite );
+		promptwidth = SCR_strWidth( translated, font, 0 ) + SCR_strWidth( " ", font, 0 );
 
 		s = chat_buffer;
 		prewidth = chat_linepos ? SCR_strWidth( s, font, chat_linepos ) : 0;

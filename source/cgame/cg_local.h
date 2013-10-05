@@ -869,6 +869,8 @@ void CG_LocalPrint( bool team, const char *format, ... );
 
 int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const char *resp), void *privatep );
 
+const char *CG_TranslateString( const char *string );
+
 //
 // cg_svcmds.c
 //

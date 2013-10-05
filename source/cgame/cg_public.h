@@ -27,7 +27,7 @@ typedef void (*cg_async_stream_done_cb_t)(int status, const char *contentType, v
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   63
+#define	CGAME_API_VERSION   64
 
 //
 // structs and variables shared with the main engine
@@ -226,6 +226,11 @@ typedef struct
 	// managed memory allocation
 	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
+
+	// l10n
+	void ( *L10n_ClearDomain )( void );
+	void ( *L10n_LoadLangPOFile )( const char *filepath );
+	const char *( *L10n_TranslateString )( const char *string );
 } cgame_import_t;
 
 //
