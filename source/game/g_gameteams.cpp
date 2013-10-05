@@ -517,7 +517,7 @@ bool G_Teams_JoinTeam( edict_t *ent, int team )
 */
 bool G_Teams_JoinAnyTeam( edict_t *ent, bool silent )
 {
-	int best_numplayers, best_score;
+	int best_numplayers = gs.maxclients + 1, best_score = 999999;
 	int i, team = -1;
 	bool wasinqueue = ( ent->r.client->queueTimeStamp != 0 );
 
