@@ -66,6 +66,13 @@ int UI_SystemInterface::TranslateString(Rocket::Core::String& translated, const 
 	
 	l10ned = trap::L10n_TranslateString( input.CString() );
 	if( l10ned ) {
+		if( !strcmp( input.CString(), l10ned ) ) {
+			// handle cases when translation matches the input
+			// to prevent libRocket from going into endless loop,
+			// trying to translate the same string over and over
+			translated = input;
+			return 0;
+		}
 		translated = l10ned;
 		return 1;
 	}
