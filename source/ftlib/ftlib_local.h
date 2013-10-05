@@ -50,7 +50,7 @@ typedef struct shader_s shader_t;
 #define FTLIB_MAX_FONT_FACES		128
 
 #define FTLIB_FIRST_FONT_CHAR		32
-#define FTLIB_LAST_FONT_CHAR		0x04FF
+#define FTLIB_LAST_FONT_CHAR		0x9FCC
 #define FTLIB_MAX_FONT_CHARS		( FTLIB_LAST_FONT_CHAR - FTLIB_FIRST_FONT_CHAR + 1 )
 
 typedef struct
@@ -82,8 +82,12 @@ typedef struct qfontface_s
 	unsigned int numGlyphs;
 	qglyph_t *glyphs;
 
+	qboolean hasKerning;
+
 	// offsets between adjacent characters
-	short **kerning;
+	short ( *getKerning )( struct qfontface_s *, unsigned int char1, unsigned int char2 );
+
+	void *facedata;
 } qfontface_t;
 
 typedef struct qfontfamily_s

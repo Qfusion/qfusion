@@ -44,6 +44,39 @@ static qfontface_t fontFaces[FTLIB_MAX_FONT_FACES];
 
 FT_Library ftLibrary = NULL;
 
+typedef struct
+{
+	FT_Face ftface;
+	FT_UInt *gindices;
+} qttface_t;
+
+/*
+* QFT_GetKerning
+*/
+static short QFT_GetKerning( qfontface_t *qfont, unsigned int char1, unsigned int char2 )
+{
+	qttface_t *qttf;
+	FT_UInt gi1, gi2;
+	FT_Vector kvec;
+
+	qttf = ( qttface_t * )qfont->facedata;
+	if( char1 < qfont->firstChar || char1 > qfont->lastChar ) {
+		return 0;
+	}
+	if( char2 < qfont->firstChar || char2 > qfont->lastChar ) {
+		return 0;
+	}
+
+	gi1 = qttf->gindices[char1];
+	gi2 = qttf->gindices[char2];
+	if( !gi1 || !gi2 ) {
+		return 0;
+	}
+
+	FT_Get_Kerning( qttf->ftface, gi1, gi2, FT_KERNING_DEFAULT, &kvec );
+	return kvec.x >> 6;
+}
+
 /*
 * QFT_LoadFace
 *
@@ -59,7 +92,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	int error;
 	FT_Face ftface;
 	FT_ULong charcode;
-	FT_UInt gindex, gindices[FTLIB_LAST_FONT_CHAR+1];
+	FT_UInt gindex;
 	FT_Pos advance;
 	const int margin = TTF_BITMAP_MARGIN;
 	const int imageWidth = FTLIB_FONT_IMAGE_WIDTH;
@@ -72,6 +105,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	qbyte *tempRGBA = NULL;
 	qboolean clearImage;
 	qboolean hasKerning;
+	qttface_t *qttf = NULL;
 	qfontface_t *qfont = NULL;
 
 	ftface = NULL;
@@ -100,7 +134,6 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	FT_Set_Pixel_Sizes( ftface, size, 0 );
 
 	hasKerning = FT_HAS_KERNING( ftface ) ? qtrue : qfalse;
-	memset( gindices, 0, sizeof( gindices ) );
 
 	// go over all characters to find the max ascent values, which
 	// corresponds to the amount of space required above the baseline
@@ -118,7 +151,6 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 		// render glyph for this char
 		charcode = i;
 		gindex = FT_Get_Char_Index( ftface, charcode );
-		gindices[charcode] = gindex;
 		if( gindex > 0 ) {
 			FT_Load_Glyph( ftface, gindex, FT_LOAD_DEFAULT );
 			FT_Render_Glyph( ftface->glyph, FT_RENDER_MODE_NORMAL );
@@ -154,6 +186,11 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 		maxChar = FTLIB_REPLACEMENT_GLYPH;
 	}
 
+	// we are going to need this for kerning
+	qttf = FTLIB_Alloc( ftlibPool, sizeof( *qttf ) + (maxChar+1) * sizeof( FT_UInt ) );
+	qttf->gindices = ( FT_UInt * )( ( qbyte * )qttf + sizeof( *qttf ) );
+	qttf->ftface = ftface;
+
 	// failed to find an unused slot, take a new one
 	if( faceIndex == numFontFaces ) {
 		numFontFaces++;
@@ -182,65 +219,9 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	qfont->numShaders = numImages;
 	qfont->shaders = ( shader_t ** )FTLIB_Alloc( ftlibPool, numImages * sizeof( *qfont->shaders ) );
 	qfont->shaderNames = ( char ** )FTLIB_Alloc( ftlibPool, numImages * sizeof( *qfont->shaderNames ) );
-
-	// individual kerning for glyphs
-	if( hasKerning ) {
-		int kerningRows;
-		char charHasKerning[FTLIB_LAST_FONT_CHAR+1];
-
-		memset( charHasKerning, 0, sizeof( charHasKerning ) );
-
-		// get kerning vectors, counting rows with meaningful data
-		// so we don't have to keep in memory the almost zero-matrix
-		kerningRows = 0;
-		for( i = minChar; i <= maxChar; i++ ) {
-			if( gindices[i] > 0 ) {
-				for( j = minChar; j <= maxChar; j++ ) {
-					if( gindices[j] > 0 ) {
-						FT_Vector kvec;
-
-						FT_Get_Kerning( ftface, gindices[i], gindices[j], FT_KERNING_DEFAULT, &kvec );
-						if( kvec.x ) {
-							charHasKerning[i] = 1;
-							break;
-						}
-					}
-				}
-			}
-
-			if( charHasKerning[i] ) {
-				kerningRows++;
-			}
-		}
-
-		// now reallocate and store non-zero kerning rows
-		// to reduce memory footprint
-		if( kerningRows > 0 ) {
-			short **base, *base2;
-
-			qfont->kerning = ( short ** )FTLIB_Alloc( ftlibPool, 
-				( numGlyphs * sizeof( *qfont->kerning ) ) + kerningRows * numGlyphs * sizeof( **qfont->kerning ) );
-
-			base = qfont->kerning;
-			base2 = ( short * ) (base + numGlyphs);
-			for( i = minChar; i <= maxChar; i++ ) {
-				if( charHasKerning[i] ) {
-					*base = base2;
-
-					for( j = minChar; j <= maxChar; j++ ) {
-						if( gindices[j] > 0 ) {
-							FT_Vector kvec;
-							FT_Get_Kerning( ftface, gindices[i], gindices[j], FT_KERNING_DEFAULT, &kvec );
-							base2[j] = kvec.x >> 6;
-						}
-					}
-
-					base2 += numGlyphs;
-				}
-				base++;
-			}
-		}
-	}
+	qfont->hasKerning = hasKerning;
+	qfont->facedata = ( void * )qttf;
+	qfont->getKerning = & QFT_GetKerning;
 
 	// render glyphs onto RGBA images
 	imageNum = 0;
@@ -307,7 +288,8 @@ upload_image:
 
 		// render glyph for this char
 		charcode = i;
-		gindex = gindices[charcode];
+		gindex = FT_Get_Char_Index( ftface, charcode );
+		qttf->gindices[charcode] = gindex;
 		if( gindex > 0 ) {
 			qbyte *dst, *src;
 			qbyte *dst_p, *src_p;
@@ -432,10 +414,31 @@ done:
 	if( tempRGBA ) {
 		FTLIB_Free( tempRGBA );
 	}
-	if( ftface ) {
-		FT_Done_Face( ftface );
+	if( !qfont && qttf ) {
+		if( qttf->ftface ) {
+			FT_Done_Face( qttf->ftface );
+		}
+		FTLIB_Free( qttf );
 	}
 	return qfont;
+}
+
+/*
+* QFT_UnloadFace
+*/
+void QFT_UnloadFace( qfontface_t *qfont )
+{
+	qttface_t *qttf;
+
+	qttf = ( qttface_t * )qfont->facedata;
+	if( !qttf ) {
+		return;
+	}
+
+	if( qttf->ftface ) {
+		FT_Done_Face( qttf->ftface );
+	}
+	FTLIB_Free( qttf );
 }
 
 /*
@@ -482,6 +485,7 @@ static void QFT_LoadFamily( const char *fileName, const qbyte *data, size_t data
 	qfamily->privatep = FTLIB_Alloc( ftlibPool, dataSize );
 	qfamily->privateSize = dataSize;
 	qfamily->loadFace = & QFT_LoadFace;
+	qfamily->unloadFace = & QFT_UnloadFace;
 	qfamily->style = QFONT_STYLE_NONE;
 	qfamily->style |= ftface->style_flags & FT_STYLE_FLAG_ITALIC ? QFONT_STYLE_ITALIC : 0;
 	qfamily->style |= ftface->style_flags & FT_STYLE_FLAG_BOLD ? QFONT_STYLE_BOLD : 0;
@@ -670,6 +674,9 @@ qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int siz
 	qface = qfamily->loadFace( qfamily, size, qfamily->privatep, qfamily->privateSize );
 	if( qface ) {
 		qfamily->faces[qfamily->numFaces++] = qface;
+		if( qface->hasKerning && !qface->getKerning ) {
+			qface->hasKerning = qfalse;
+		}
 	}
 	return qface;
 }
@@ -711,9 +718,6 @@ void FTLIB_FreeFonts( qboolean verbose )
 				qfamily->unloadFace( qface );
 			}
 
-			if( qface->kerning ) {
-				FTLIB_Free( qface->kerning );
-			}
 			if( qface->shaderNames ) {
 				for( k = 0; k < qface->numShaders; k++ ) {
 					FTLIB_Free( qface->shaderNames[k] );

@@ -66,8 +66,8 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 				num = FTLIB_REPLACEMENT_GLYPH;
 
 			if( prev_num ) {
-				if( font->kerning && font->kerning[prev_num] ) {
-					width += font->kerning[prev_num][num];
+				if( font->hasKerning ) {
+					width += font->getKerning( font, prev_num, num );
 				}
 			}
 
@@ -123,8 +123,8 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 
 			advance = font->glyphs[num].x_advance;
 			if( prev_num ) {
-				if( font->kerning && font->kerning[prev_num] ) {
-					advance += font->kerning[prev_num][num];
+				if( font->hasKerning ) {
+					advance += font->getKerning( font, prev_num, num );
 				}
 			}
 
@@ -218,8 +218,8 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 
 			if( prev_num ) {
 				xoffset += font->glyphs[prev_num].x_advance;
-				if( font->kerning && font->kerning[prev_num] ) {
-					xoffset += font->kerning[prev_num][num];
+				if( font->hasKerning ) {
+					xoffset += font->getKerning( font, prev_num, num );
 				}
 			}
 
@@ -285,8 +285,8 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 
 			if( prev_num ) {
 				xoffset += font->glyphs[prev_num].x_advance;
-				if( font->kerning && font->kerning[prev_num] ) {
-					xoffset += font->kerning[prev_num][num];
+				if( font->hasKerning ) {
+					xoffset += font->getKerning( font, prev_num, num );
 				}
 			}
 
