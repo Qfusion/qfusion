@@ -448,16 +448,14 @@ const char *L10n_GetUserLanguage( void )
 */
 void L10n_CheckUserLanguage( void )
 {
-	if( cl_lang->modified ) {
-		if( !cl_lang->string[0] ) {
-			const char *lang;
+	if( !cl_lang->string[0] ) {
+		const char *lang;
 
-			lang = Sys_GetPreferredLanguage();
-			if( !lang || !lang[0] ) {
-				lang = APP_DEFAULT_LANGUAGE;
-			}
-			Cvar_ForceSet( cl_lang->name, lang );
+		lang = Sys_GetPreferredLanguage();
+		if( !lang || !lang[0] ) {
+			lang = APP_DEFAULT_LANGUAGE;
 		}
+		Cvar_ForceSet( cl_lang->name, lang );
 		cl_lang->modified = qfalse;
 	}
 }
@@ -471,8 +469,11 @@ void L10n_Init( void )
 
 	pomempool = Mem_AllocPool( NULL, "L10n" );
 
-	cl_lang = Cvar_Get( "lang", "", CVAR_USERINFO|CVAR_ARCHIVE );
-	cl_lang->modified = qtrue;
+	cl_lang = Cvar_Get( "lang", "", CVAR_USERINFO|CVAR_ARCHIVE
+#ifdef PUBLIC_BUILD
+		| CVAR_LATCH_VIDEO
+#endif
+		);
 
 	L10n_CheckUserLanguage();
 }
