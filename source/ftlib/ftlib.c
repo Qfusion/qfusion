@@ -21,10 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "ftlib_local.h"
 
-static int numFontFamilies;
+static unsigned int numFontFamilies;
 static qfontfamily_t fontFamilies[FTLIB_MAX_FONT_FAMILIES];
 
-static int numFontFaces;
+static unsigned int numFontFaces;
 static qfontface_t fontFaces[FTLIB_MAX_FONT_FACES];
 
 // ============================================================================
@@ -82,12 +82,13 @@ static short QFT_GetKerning( qfontface_t *qfont, unsigned int char1, unsigned in
 *
 * FIXME: this is waaaaaaaay too complex...
 */
-static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, const void *data, size_t dataSize )
+static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsigned int lastChar, 
+	const void *data, size_t dataSize )
 {
-	int i, j, x, y;
-	int faceIndex;
+	unsigned int i, j, x, y;
+	unsigned int faceIndex;
 	int fontHeight;
-	int minChar, maxChar, numGlyphs;
+	unsigned int minChar, maxChar, numGlyphs;
 	int lastStartChar;
 	int error;
 	FT_Face ftface;
@@ -143,11 +144,15 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	minChar = FTLIB_LAST_FONT_CHAR + 1;
 	maxChar = FTLIB_FIRST_FONT_CHAR - 1;
 
+	if( lastChar > FTLIB_LAST_FONT_CHAR ) {
+		lastChar = FTLIB_LAST_FONT_CHAR;
+	}
+
 	numLines = 1;
 
 	advance = 0;
 	xOffset = 0;
-	for( i = FTLIB_FIRST_FONT_CHAR; i <= FTLIB_LAST_FONT_CHAR; i++ ) {
+	for( i = FTLIB_FIRST_FONT_CHAR; i <= lastChar; i++ ) {
 		// render glyph for this char
 		charcode = i;
 		gindex = FT_Get_Char_Index( ftface, charcode );
@@ -242,7 +247,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 upload_image:
 		if( uploadNow )
 		{
-			int lastEndChar;
+			unsigned int lastEndChar;
 			int uploadWidth, uploadHeight;
 			char shaderName[MAX_QPATH];
 			shader_t *shader;
@@ -294,9 +299,9 @@ upload_image:
 			qbyte *dst, *src;
 			qbyte *dst_p, *src_p;
 			FT_Bitmap *bitmap;
-			int bitmap_width, bitmap_height;
-			int bitmap_left, bitmap_top;
-			int bitmap_pixmode, bitmap_pitch;
+			unsigned int bitmap_width, bitmap_height;
+			unsigned int bitmap_left, bitmap_top;
+			unsigned int bitmap_pixmode, bitmap_pitch;
 			
 			FT_Load_Glyph( ftface, gindex, FT_LOAD_DEFAULT );
 			FT_Render_Glyph( ftface->glyph, FT_RENDER_MODE_NORMAL );
@@ -629,9 +634,9 @@ void FTLIB_PrecacheFonts( qboolean verbose )
 /*
 * FTLIB_RegisterFont
 */
-qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size )
+qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size, unsigned int lastChar )
 {
-	int i;
+	unsigned int i;
 	qfontfamily_t *qfamily, *best;
 	int bestStyle;
 	qfontface_t *qface;
@@ -671,7 +676,7 @@ qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int siz
 		}
 	}
 
-	qface = qfamily->loadFace( qfamily, size, qfamily->privatep, qfamily->privateSize );
+	qface = qfamily->loadFace( qfamily, size, lastChar, qfamily->privatep, qfamily->privateSize );
 	if( qface ) {
 		qfamily->faces[qfamily->numFaces++] = qface;
 		if( qface->hasKerning && !qface->getKerning ) {
@@ -686,7 +691,7 @@ qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int siz
 */
 void FTLIB_TouchFont( qfontface_t *qfont )
 {
-	int i;
+	unsigned int i;
 
 	if( !qfont->shaders ) {
 		return;
@@ -702,7 +707,7 @@ void FTLIB_TouchFont( qfontface_t *qfont )
 */
 void FTLIB_FreeFonts( qboolean verbose )
 {
-	int i, j, k;
+	unsigned int i, j, k;
 	qfontfamily_t *qfamily;
 	qfontface_t *qface;
 
@@ -760,7 +765,7 @@ void FTLIB_ShutdownSubsystems( qboolean verbose )
 */
 void FTLIB_PrintFontList( void )
 {
-	int i, j;
+	unsigned int i, j;
 	qfontfamily_t *qfamily;
 	qfontface_t *qface;
 
