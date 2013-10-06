@@ -436,6 +436,14 @@ static void L10n_DestroyPODomain( podomain_t *podomain )
 }
 
 /*
+* L10n_GetUserLanguage
+*/
+const char *L10n_GetUserLanguage( void )
+{
+	return cl_lang->string;
+}
+
+/*
 * L10n_CheckUserLanguage
 */
 void L10n_CheckUserLanguage( void )

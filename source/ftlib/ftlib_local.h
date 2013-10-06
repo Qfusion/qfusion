@@ -43,8 +43,8 @@ typedef struct shader_s shader_t;
 
 #define FTLIB_REPLACEMENT_GLYPH		127
 
-#define FTLIB_FONT_IMAGE_WIDTH		512
-#define FTLIB_MAX_FONT_IMAGE_HEIGHT	512
+#define FTLIB_FONT_IMAGE_WIDTH		1024
+#define FTLIB_MAX_FONT_IMAGE_HEIGHT	1024
 
 #define FTLIB_MAX_FONT_FAMILIES		64
 #define FTLIB_MAX_FONT_FACES		128
@@ -71,7 +71,7 @@ typedef struct qfontface_s
 	int height;
 
 	// a font may not fit into single image
-	int numShaders;
+	unsigned int numShaders;
 	shader_t **shaders;
 	char **shaderNames;
 
@@ -94,14 +94,14 @@ typedef struct qfontfamily_s
 {
 	char *name;
 
-	int numFaces;
+	unsigned int numFaces;
 	int style;
 
 	void *privatep;
 	size_t privateSize;
 
 	// method which the loader needs to call to load specific font face
-	qfontface_t *( *loadFace )( struct qfontfamily_s *, unsigned int , const void *, size_t );
+	qfontface_t *( *loadFace )( struct qfontfamily_s *, unsigned int , unsigned int, const void *, size_t );
 
 	// method which the loader needs to call to unload font face
 	void ( *unloadFace )( qfontface_t * );
@@ -121,7 +121,7 @@ char *FTLIB_CopyString( const char *in );
 void FTLIB_InitSubsystems( qboolean verbose );
 void FTLIB_ShutdownSubsystems( qboolean verbose );
 void FTLIB_PrecacheFonts( qboolean verbose );
-qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size );
+qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size, unsigned int lastChar );
 void FTLIB_TouchFont( qfontface_t *qfont );
 void FTLIB_FreeFonts( qboolean verbose );
 void FTLIB_PrintFontList( void );

@@ -215,6 +215,8 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 		{
 			if( num == '\n' )
 				break;
+			if( num < font->firstChar || num > font->lastChar )
+				continue;
 
 			if( prev_num ) {
 				xoffset += font->glyphs[prev_num].x_advance;
@@ -276,6 +278,8 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 		{
 			if( num == '\n' )
 				break;
+			if( num < font->firstChar || num > font->lastChar )
+				continue;
 
 			if( maxwidth && ( ( xoffset + font->glyphs[num].x_advance ) > maxwidth ) )
 			{
