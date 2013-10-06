@@ -174,7 +174,7 @@ static int CG_GetFPS( const void *parameter )
 			avFrameTime += frameTimes[( cg.frameCount-i ) & FPSSAMPLESMASK];
 		}
 		avFrameTime /= FPSSAMPLESCOUNT;
-		fps = (int)( 1.0f/avFrameTime );
+		fps = (int)( 1.0f/avFrameTime + 0.5f );
 	}
 	else
 	{
