@@ -1846,6 +1846,8 @@ void G_CallVotes_Reset( void )
 			G_Free( callvoteState.vote.argv[i] );
 	}
 
+	trap_ConfigString( CS_ACTIVE_CALLVOTE, "" );
+
 	memset( &callvoteState, 0, sizeof( callvoteState ) );
 }
 
@@ -2185,6 +2187,8 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 
 	//caller is assumed to vote YES
 	clientVoted[PLAYERNUM( ent )] = VOTED_YES;
+
+	trap_ConfigString( CS_ACTIVE_CALLVOTE, votename );
 
 	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_CALLED_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
 
