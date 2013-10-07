@@ -141,6 +141,7 @@ void BindGame( ASInterface *as )
 		( "CS_TEAM_BETA_NAME", CS_TEAM_BETA_NAME )
 		( "CS_MATCHNAME", CS_MATCHNAME )
 		( "CS_MATCHSCORE", CS_MATCHSCORE )
+		( "CS_ACTIVE_CALLVOTE", CS_ACTIVE_CALLVOTE )
 	;
 
 	ASBind::Enum( as->getEngine(), "eClientState" )
