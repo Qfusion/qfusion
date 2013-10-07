@@ -200,6 +200,8 @@ typedef struct
 #define CS_MATCHSCORE		23
 #define CS_MATCHUUID		24
 
+#define CS_ACTIVE_CALLVOTE	25
+
 #define CS_WORLDMODEL		30
 #define	CS_MAPCHECKSUM		31		// for catching cheater maps
 
