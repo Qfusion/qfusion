@@ -936,7 +936,8 @@ static void SV_Web_Listen( socket_t *socket )
 	 		if( cl->state < CS_FREE )
 				continue;
 
-			if( NET_CompareBaseAddress( &newaddress, &cl->netchan.remoteAddress ) )
+			if( NET_IsLocalAddress( &newaddress ) 
+				|| NET_CompareBaseAddress( &newaddress, &cl->netchan.remoteAddress ) )
 #endif
 			{
 				int cnt = 0;
