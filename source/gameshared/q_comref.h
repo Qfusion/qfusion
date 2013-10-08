@@ -315,8 +315,13 @@ typedef struct entity_state_s
 		int targetNum;					// ET_EVENT specific
 		int colorRGBA;					// ET_BEAM, ET_EVENT specific
 		int range;						// ET_LASERBEAM, ET_CURVELASERBEAM specific
-		int attenuation;				// ET_SOUNDEVENT
 	};
+
+	float attenuation;					// should be <= 255/16.0 as this is sent as byte
+
+										// server will use this for sound culling in case
+										// the entity has an event attached to it (along with
+										// PVS culling)
 
 	int weapon;							// WEAP_ for players
 	qboolean teleported;				// the entity was teleported this snap (sent inside "weapon" as ET_INVERSE flag)

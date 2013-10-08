@@ -620,6 +620,8 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 		}
 	}
 
+	self->s.attenuation = ATTN_NORM;
+
 	self->s.teleported = qtrue;
 
 	// hold in place briefly

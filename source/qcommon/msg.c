@@ -383,6 +383,9 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 			bits |= U_OTHERORIGIN;
 	}
 
+	if( to->attenuation != from->attenuation )
+		bits |= U_ATTENUATION;
+
 	if( to->weapon != from->weapon || to->teleported != from->teleported )
 		bits |= U_WEAPON;
 
@@ -540,6 +543,9 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 			MSG_WriteByte( msg, (qbyte)to->eventParms[1] );
 		}
 	}
+
+	if( bits & U_ATTENUATION )
+		MSG_WriteByte( msg, (qbyte)(to->attenuation * 16) );
 
 	if( bits & U_WEAPON )
 	{
@@ -718,6 +724,12 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 	{
 		to->events[1] = 0;
 		to->eventParms[1] = 0;
+	}
+
+	if( bits & U_ATTENUATION )
+	{
+		qbyte attenuation = MSG_ReadByte( msg );
+		to->attenuation = (float)attenuation / 16.0;
 	}
 
 	if( bits & U_WEAPON )

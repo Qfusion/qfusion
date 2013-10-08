@@ -265,7 +265,7 @@ qboolean Info_Validate( const char *s );
 //#define S_DEFAULT_ATTENUATION_MODEL		1
 #define S_DEFAULT_ATTENUATION_MODEL			3
 #define S_DEFAULT_ATTENUATION_MAXDISTANCE	8000
-#define S_DEFAULT_ATTENUATION_REFDISTANCE	175
+#define S_DEFAULT_ATTENUATION_REFDISTANCE	125
 
 float Q_GainForAttenuation( int model, float maxdistance, float refdistance, float dist, float attenuation );
 

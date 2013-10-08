@@ -363,7 +363,7 @@ enum clc_ops_e
 // fourth byte
 #define	U_SKIN16	( 1<<24 )
 #define	U_ANGLE3	( 1<<25 )     // for multiview, info need for culling
-#define	U_____UNUSED1	( 1<<26 )
+#define	U_ATTENUATION	( 1<<26 )
 #define	U_EFFECTS16	( 1<<27 )
 #define U_____UNUSED2	( 1<<28 )
 #define	U_FRAME16	( 1<<29 )     // frame is a short

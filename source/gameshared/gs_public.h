@@ -178,7 +178,7 @@ extern gs_state_t gs;
 #define	ATTN_NORM				0.875	// players, weapons, etc
 #define	ATTN_IDLE				2.5		// stuff around you
 #define	ATTN_STATIC				5		// diminish very rapidly with distance
-#define	ATTN_FOOTSTEPS			10		// must be very close to hear it
+#define	ATTN_WHISPER			10		// must be very close to hear it
 
 #if 0
 // S_DEFAULT_ATTENUATION_MODEL			"1"
@@ -187,7 +187,7 @@ extern gs_state_t gs;
 #define	ATTN_NORM				5	// players, weapons, etc
 #define	ATTN_IDLE				8	// stuff around you
 #define	ATTN_STATIC				10	// diminish very rapidly with distance
-#define	ATTN_FOOTSTEPS			21	// must be very close to hear it
+#define	ATTN_WHISPER			15	// must be very close to hear it
 #endif
 
 // sound channels

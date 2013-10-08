@@ -875,6 +875,7 @@ void G_InitEdict( edict_t *e )
 	e->timeDelta = 0;
 	e->s.team = 0;
 	e->deadflag = DEAD_NO;
+	e->s.attenuation = ATTN_NORM;
 
 	e->s.teleported = qfalse;
 	e->timeStamp = 0;
@@ -1398,7 +1399,7 @@ static edict_t *_G_SpawnSound( int channel, int soundindex, float attenuation )
 	ent->r.svflags &= ~SVF_NOCLIENT;
 	ent->r.svflags |= SVF_SOUNDCULL;
 	ent->s.type = ET_SOUNDEVENT;
-	ent->s.attenuation = (int)( attenuation * 16.0f );
+	ent->s.attenuation = attenuation;
 	ent->s.channel = channel;
 	ent->s.sound = soundindex;
 
