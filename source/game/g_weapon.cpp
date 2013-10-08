@@ -480,6 +480,7 @@ edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t angles, float
 	blast->style = mod;
 
 	blast->s.sound = trap_SoundIndex( S_WEAPON_PLASMAGUN_S_FLY );
+	blast->s.attenuation = ATTN_STATIC;
 
 	return blast;
 }
@@ -832,6 +833,7 @@ edict_t *W_Fire_Rocket( edict_t *self, vec3_t start, vec3_t angles, int speed, f
 		rocket->s.effects &= ~EF_STRONG_WEAPON;
 		rocket->s.sound = trap_SoundIndex( S_WEAPON_ROCKET_W_FLY );
 	}
+	rocket->s.attenuation = ATTN_STATIC;
 	rocket->touch = W_Touch_Rocket;
 	rocket->think = G_FreeEdict;
 	rocket->classname = "rocket";
@@ -991,7 +993,7 @@ edict_t *W_Fire_Plasma( edict_t *self, vec3_t start, vec3_t angles, float damage
 		plasma->s.sound = trap_SoundIndex( S_WEAPON_PLASMAGUN_W_FLY );
 		plasma->s.effects &= ~EF_STRONG_WEAPON;
 	}
-
+	plasma->s.attenuation = ATTN_STATIC;
 	return plasma;
 }
 

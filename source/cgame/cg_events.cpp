@@ -20,15 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cg_local.h"
 
 /*
-* CG_TouchJumpPad
-*/
-static void CG_TouchJumpPad( int entNum )
-{
-	CG_SexedSound( entNum, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
-	CG_PModel_AddAnimation( entNum, LEGS_JUMP_NEUTRAL, 0, 0, EVENT_CHANNEL );
-}
-
-/*
 * CG_Event_WeaponBeam
 */
 static void CG_Event_WeaponBeam( vec3_t origin, vec3_t dir, int ownerNum, int weapon, int firemode )
@@ -827,7 +818,7 @@ void CG_Event_Fall( entity_state_t *state, int parm )
 	{
 		if( cg.frame.playerState.pmove.pm_type != PM_NORMAL )
 		{
-			CG_SexedSound( state->number, CHAN_AUTO, "*fall_0", cg_volume_players->value );
+			CG_SexedSound( state->number, CHAN_AUTO, "*fall_0", cg_volume_players->value, state->attenuation );
 			return;
 		}
 
@@ -839,7 +830,7 @@ void CG_Event_Fall( entity_state_t *state, int parm )
 
 	if( parm > 10 )
 	{
-		CG_SexedSound( state->number, CHAN_PAIN, "*fall_2", cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_PAIN, "*fall_2", cg_volume_players->value, state->attenuation );
 		switch( (int)brandom( 0, 3 ) )
 		{
 		case 0:
@@ -856,10 +847,10 @@ void CG_Event_Fall( entity_state_t *state, int parm )
 	}
 	else if( parm > 0 )
 	{
-		CG_SexedSound( state->number, CHAN_PAIN, "*fall_1", cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_PAIN, "*fall_1", cg_volume_players->value, state->attenuation );
 	}
 	else
-		CG_SexedSound( state->number, CHAN_PAIN, "*fall_0", cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_PAIN, "*fall_0", cg_volume_players->value, state->attenuation );
 
 	// smoke effect
 	if( parm > 0 && ( cg_cartoonEffects->integer & 2 ) )
@@ -897,13 +888,16 @@ void CG_Event_Pain( entity_state_t *state, int parm )
 	if( parm == PAIN_WARSHELL )
 	{
 		if( ISVIEWERENTITY( state->number ) )
-			trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxShellHit ), CHAN_PAIN, cg_volume_players->value );
+			trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxShellHit ), CHAN_PAIN, 
+				cg_volume_players->value );
 		else
-			trap_S_StartRelativeSound( CG_MediaSfx( cgs.media.sfxShellHit ), state->number, CHAN_PAIN, cg_volume_players->value, ATTN_NORM );
+			trap_S_StartRelativeSound( CG_MediaSfx( cgs.media.sfxShellHit ), state->number, CHAN_PAIN, 
+				cg_volume_players->value, state->attenuation );
 	}
 	else
 	{
-		CG_SexedSound( state->number, CHAN_PAIN, va( S_PLAYER_PAINS, 25*( parm+1 ) ), cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_PAIN, va( S_PLAYER_PAINS, 25*( parm+1 ) ), 
+			cg_volume_players->value, state->attenuation );
 	}
 
 	switch( (int)brandom( 0, 3 ) )
@@ -926,7 +920,8 @@ void CG_Event_Pain( entity_state_t *state, int parm )
 */
 void CG_Event_Die( entity_state_t *state, int parm )
 {
-	CG_SexedSound( state->number, CHAN_PAIN, S_PLAYER_DEATH, cg_volume_players->value );
+	CG_SexedSound( state->number, CHAN_PAIN, S_PLAYER_DEATH, cg_volume_players->value, state->attenuation );
+	
 	switch( parm )
 	{
 	case 0:
@@ -953,22 +948,28 @@ void CG_Event_Dash( entity_state_t *state, int parm )
 		break;
 	case 0: // dash front
 		CG_PModel_AddAnimation( state->number, LEGS_DASH, 0, 0, EVENT_CHANNEL );
-		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_DASH_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_DASH_1_to_2, ( rand()&1 )+1 ), 
+			cg_volume_players->value, state->attenuation );
 		break;
 	case 1: // dash left
 		CG_PModel_AddAnimation( state->number, LEGS_DASH_LEFT, 0, 0, EVENT_CHANNEL );
-		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_DASH_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_DASH_1_to_2, ( rand()&1 )+1 ), 
+			cg_volume_players->value, state->attenuation );
 		break;
 	case 2: // dash right
 		CG_PModel_AddAnimation( state->number, LEGS_DASH_RIGHT, 0, 0, EVENT_CHANNEL );
-		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_DASH_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_DASH_1_to_2, ( rand()&1 )+1 ), 
+			cg_volume_players->value, state->attenuation );
 		break;
 	case 3: // dash back
 		CG_PModel_AddAnimation( state->number, LEGS_DASH_BACK, 0, 0, EVENT_CHANNEL );
-		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_DASH_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_DASH_1_to_2, ( rand()&1 )+1 ), 
+			cg_volume_players->value, state->attenuation );
 		break;
 	}
+
 	CG_Dash( state ); // Dash smoke effect
+
 	// since most dash animations jump with right leg, reset the jump to start with left leg after a dash
 	cg_entities[state->number].jumpedLeft = true;
 }
@@ -996,13 +997,15 @@ void CG_Event_WallJump( entity_state_t *state, int parm, int ev )
 	if( ev == EV_WALLJUMP_FAILED )
 	{
 		if( ISVIEWERENTITY( state->number ) )
-			trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxWalljumpFailed ), CHAN_BODY, cg_volume_effects->value );
+			trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxWalljumpFailed ), CHAN_BODY, 
+			cg_volume_effects->value );
 		else
 			trap_S_StartRelativeSound( CG_MediaSfx( cgs.media.sfxWalljumpFailed ), state->number, CHAN_BODY, cg_volume_effects->value, ATTN_NORM );
 	}
 	else
 	{
-		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_WALLJUMP_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_WALLJUMP_1_to_2, ( rand()&1 )+1 ), 
+			cg_volume_players->value, state->attenuation );
 	
 		// smoke effect
 		if( cg_cartoonEffects->integer & 1 )
@@ -1020,7 +1023,8 @@ void CG_Event_WallJump( entity_state_t *state, int parm, int ev )
 */
 void CG_Event_DoubleJump( entity_state_t *state, int parm )
 {
-	CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+	CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), 
+		cg_volume_players->value, state->attenuation );
 }
 
 /*
@@ -1037,7 +1041,8 @@ void CG_Event_Jump( entity_state_t *state, int parm )
 	if( xyspeedcheck < 100 )
 	{                      // the player is jumping on the same place, not running
 		CG_PModel_AddAnimation( state->number, LEGS_JUMP_NEUTRAL, 0, 0, EVENT_CHANNEL );
-		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+		CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), 
+			cg_volume_players->value, state->attenuation );
 	}
 	else
 	{
@@ -1058,18 +1063,21 @@ void CG_Event_Jump( entity_state_t *state, int parm )
 			if( !cent->jumpedLeft )
 			{
 				CG_PModel_AddAnimation( state->number, LEGS_JUMP_LEG2, 0, 0, EVENT_CHANNEL );
-				CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+				CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), 
+					cg_volume_players->value, state->attenuation );
 			}
 			else
 			{
 				CG_PModel_AddAnimation( state->number, LEGS_JUMP_LEG1, 0, 0, EVENT_CHANNEL );
-				CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+				CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), 
+					cg_volume_players->value, state->attenuation );
 			}
 		}
 		else
 		{
 			CG_PModel_AddAnimation( state->number, LEGS_JUMP_NEUTRAL, 0, 0, EVENT_CHANNEL );
-			CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), cg_volume_players->value );
+			CG_SexedSound( state->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), 
+				cg_volume_players->value, state->attenuation );
 		}
 	}
 #undef MOVEDIREPSILON
@@ -1241,7 +1249,9 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 		break;
 
 	case EV_JUMP_PAD:
-		CG_TouchJumpPad( ent->number );
+		CG_SexedSound( ent->number, CHAN_BODY, va( S_PLAYER_JUMP_1_to_2, ( rand()&1 )+1 ), 
+			cg_volume_players->value, ent->attenuation );
+		CG_PModel_AddAnimation( ent->number, LEGS_JUMP_NEUTRAL, 0, 0, EVENT_CHANNEL );
 		break;
 
 	case EV_FALL:
@@ -1257,9 +1267,9 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 
 	case EV_SEXEDSOUND:
 		if( parm == 2 )
-			CG_SexedSound( ent->number, CHAN_AUTO, S_PLAYER_GASP, cg_volume_players->value );
+			CG_SexedSound( ent->number, CHAN_AUTO, S_PLAYER_GASP, cg_volume_players->value, ent->attenuation );
 		else if( parm == 1 )
-			CG_SexedSound( ent->number, CHAN_AUTO, S_PLAYER_DROWN, cg_volume_players->value );
+			CG_SexedSound( ent->number, CHAN_AUTO, S_PLAYER_DROWN, cg_volume_players->value, ent->attenuation );
 		break;
 
 	case EV_PAIN:
@@ -1324,7 +1334,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 		break;
 
 	case EV_GESTURE:
-		CG_SexedSound( ent->number, CHAN_BODY, "*taunt", cg_volume_players->value );
+		CG_SexedSound( ent->number, CHAN_BODY, "*taunt", cg_volume_players->value, ent->attenuation );
 		break;
 
 	case EV_DROP:

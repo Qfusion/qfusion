@@ -670,7 +670,7 @@ extern cvar_t *hand;
 
 void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *s, int client );
 void CG_UpdateSexedSoundsRegistration( pmodelinfo_t *pmodelinfo );
-void CG_SexedSound( int entnum, int entchannel, const char *name, float fvol );
+void CG_SexedSound( int entnum, int entchannel, const char *name, float fvol, float attn );
 struct sfx_s *CG_RegisterSexedSound( int entnum, const char *name );
 
 //

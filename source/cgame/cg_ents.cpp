@@ -1783,7 +1783,7 @@ void CG_SoundEntityNewState( centity_t *cent )
 	owner = cent->current.ownerNum;
 	channel = cent->current.channel & ~CHAN_FIXED;
 	fixed = (cent->current.channel & CHAN_FIXED) ? true : false;
-	attenuation = (float)cent->current.attenuation / 16.0f;
+	attenuation = cent->current.attenuation;
 
 	if( attenuation == ATTN_NONE )
 	{
@@ -1813,7 +1813,7 @@ void CG_SoundEntityNewState( centity_t *cent )
 		{
 			char *cstring = cgs.configStrings[CS_SOUNDS + soundindex];
 			if( cstring && cstring[0] == '*' )
-				CG_SexedSound( owner, channel | (fixed ? CHAN_FIXED : 0), cstring, 1.0f );
+				CG_SexedSound( owner, channel | (fixed ? CHAN_FIXED : 0), cstring, 1.0f, attenuation );
 		}
 		return;
 	}

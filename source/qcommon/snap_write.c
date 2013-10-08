@@ -883,9 +883,10 @@ static qboolean SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, vec
 	if( !attenuation )
 		return qfalse;
 
-	dist = DistanceFast( ent->s.origin, listener_origin ) - 256; // extend the influence sphere cause the player could be moving
+	// extend the influence sphere cause the player could be moving
+	dist = DistanceFast( ent->s.origin, listener_origin ) - 128;
 	gain = SNAP_GainForAttenuation( dist < 0 ? 0 : dist, attenuation );
-	if( gain > 0.03 )  // curved attenuations can keep barely audible sounds for long distances
+	if( gain > 0.06 )  // curved attenuations can keep barely audible sounds for long distances
 		return qfalse;
 
 	return qtrue;
@@ -897,6 +898,8 @@ static qboolean SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, vec
 static qboolean SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *clent, client_snapshot_t *frame, vec3_t vieworg, qbyte *fatpvs )
 {
 	qbyte *areabits;
+	qboolean snd_cull_only;
+	qboolean snd_culled;
 
 	// filters: this entity has been disabled for comunication
 	if( ent->r.svflags & SVF_NOCLIENT )
@@ -932,19 +935,25 @@ static qboolean SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t 
 		}
 	}
 
+	snd_cull_only = qfalse;
+	snd_culled = qtrue;
+
 	// sound entities culling
 	if( ent->r.svflags & SVF_SOUNDCULL )
-		return SNAP_SnapCullSoundEntity( cms, ent, vieworg, (float)(ent->s.attenuation / 16.0f) );
-
+		snd_cull_only = qtrue;
 	// if not a sound entity but the entity is only a sound
-	if( !ent->s.modelindex && !ent->s.events[0] && !ent->s.light && !ent->s.effects && ent->s.sound )
-	{
-#define	ATTN_STATIC		5 // FIXME!
-		return SNAP_SnapCullSoundEntity( cms, ent, vieworg, ATTN_STATIC );
-#undef ATTN_STATIC
-	}
+	else if( !ent->s.modelindex && !ent->s.events[0] && !ent->s.light && !ent->s.effects && ent->s.sound )
+		snd_cull_only = qtrue;
 
-	return SNAP_PVSCullEntity( cms, fatpvs, ent );			// cull by PVS
+	// PVS culling alone may not be used on pure sounds, entities with
+	// events and regular entities emitting sounds
+	if( snd_cull_only || ent->s.events[0] || ent->s.sound )
+		snd_culled = SNAP_SnapCullSoundEntity( cms, ent, vieworg, ent->s.attenuation );
+
+	// pure sound emitters don't use PVS culling at all
+	if( snd_cull_only && snd_culled )
+		return qtrue;
+	return snd_culled && SNAP_PVSCullEntity( cms, fatpvs, ent );	// cull by PVS
 }
 
 /*
