@@ -175,7 +175,7 @@ extern gs_state_t gs;
 // S_DEFAULT_ATTENUATION_MODEL	"3"
 #define	ATTN_NONE				0		// full volume the entire level
 #define	ATTN_DISTANT			0.5		// distant sound (most likely explosions)
-#define	ATTN_NORM				0.875	// players, weapons, etc
+#define	ATTN_NORM				1		// players, weapons, etc
 #define	ATTN_IDLE				2.5		// stuff around you
 #define	ATTN_STATIC				5		// diminish very rapidly with distance
 #define	ATTN_WHISPER			10		// must be very close to hear it

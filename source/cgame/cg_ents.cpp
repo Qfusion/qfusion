@@ -921,6 +921,8 @@ static void CG_AddGenericEnt( centity_t *cent )
 			cent->ent.renderfx |= RF_NOSHADOW;
 		}
 
+		cent->ent.renderfx |= RF_MINLIGHT;
+
 		// offset weapon items by their special tag
 		if( cent->item->type & IT_WEAPON )
 		{
