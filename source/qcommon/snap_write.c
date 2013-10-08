@@ -886,7 +886,7 @@ static qboolean SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, vec
 	// extend the influence sphere cause the player could be moving
 	dist = DistanceFast( ent->s.origin, listener_origin ) - 128;
 	gain = SNAP_GainForAttenuation( dist < 0 ? 0 : dist, attenuation );
-	if( gain > 0.06 )  // curved attenuations can keep barely audible sounds for long distances
+	if( gain > 0.08 )  // curved attenuations can keep barely audible sounds for long distances
 		return qfalse;
 
 	return qtrue;
