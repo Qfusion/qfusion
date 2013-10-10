@@ -1773,6 +1773,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 		{
 			int i;
 			int y = layout_cursor_y;
+			int font_height = trap_SCR_strHeight( layout_cursor_font );
 			const char *helpmessage = "";
 
 			for( i = 0; i < 3; i++ )
@@ -1787,7 +1788,8 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 				case 1:
 					if( !cg.motd )
 						return true;
-					helpmessage = "\nMessage of the Day:";
+					helpmessage = CG_TranslateString( "Message of the Day:" );
+					y += font_height;
 					break;
 				case 2:
 					helpmessage = cg.motd;
@@ -1800,7 +1802,8 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 				{
 					do
 					{
-						len = trap_SCR_DrawStringWidth( layout_cursor_x, y, layout_cursor_align, helpmessage, layout_cursor_width, layout_cursor_font, layout_cursor_color );
+						len = trap_SCR_DrawStringWidth( layout_cursor_x, y, layout_cursor_align, 
+							helpmessage, layout_cursor_width, layout_cursor_font, layout_cursor_color );
 						if( !len )
 						{
 							if( *helpmessage == '\r' || *helpmessage == '\n' )
@@ -1810,13 +1813,13 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 						}
 						if( helpmessage[len-1] == '\n' )
 						{
-							y += trap_SCR_strHeight( layout_cursor_font );
+							y += font_height;
 						}
 						helpmessage += len;
 					}
 					while( helpmessage[0] );
 
-					y += trap_SCR_strHeight( layout_cursor_font );
+					y += font_height;
 				}
 			}
 		}
