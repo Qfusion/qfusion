@@ -1788,7 +1788,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 				case 1:
 					if( !cg.motd )
 						return true;
-					helpmessage = CG_TranslateString( "Message of the Day:" );
+					helpmessage = CG_TranslateString( "Message of the day:" );
 					y += font_height;
 					break;
 				case 2:
