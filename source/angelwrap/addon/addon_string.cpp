@@ -418,7 +418,7 @@ static asstring_t *objectString_RemoveColorTokens( asstring_t *self )
 
 static int objectString_toInt( asstring_t *self )
 {
-	return atoi( self->buffer );
+	return strtol( self->buffer, NULL, 0 );
 }
 
 static float objectString_toFloat( asstring_t *self )
