@@ -1847,6 +1847,8 @@ void G_CallVotes_Reset( void )
 	}
 
 	trap_ConfigString( CS_ACTIVE_CALLVOTE, "" );
+	trap_ConfigString( CS_ACTIVE_CALLVOTE_VALUE, "" );
+	trap_ConfigString( CS_ACTIVE_CALLVOTE_VOTES, "" );
 
 	memset( &callvoteState, 0, sizeof( callvoteState ) );
 }
@@ -2043,6 +2045,36 @@ void G_CallVotes_CmdVote( edict_t *ent )
 }
 
 /*
+* G_CallVotes_UpdateVotesConfigString
+*
+* For clients that have already votes, sets and encodes
+* appropriate bits in the configstring.
+*/
+static void G_CallVotes_UpdateVotesConfigString( void )
+{
+#define NUM_VOTEINTS ((MAX_CLIENTS+31)/32)
+	int i, n;
+	int votebits[NUM_VOTEINTS];
+	char cs[MAX_CONFIGSTRING_CHARS+1];
+
+	memset( votebits, 0, sizeof( votebits ) );
+	for( i = 0; i < gs.maxclients; i++ ) {
+		votebits[i>>5] |= clientVoted[i] ? (1 << (i & 31)) : 0;
+	}
+
+	// find the last bitvector that isn't 0
+	for( n = NUM_VOTEINTS; n > 0 && !votebits[n-1]; n-- );
+
+	cs[0] = cs[1] = '\0';
+	for( i = 0; i < n; i++ ) {
+		Q_strncatz( cs, va( " %x", votebits[i] ), sizeof( cs ) );
+	}
+	cs[MAX_CONFIGSTRING_CHARS] = '\0';
+
+	trap_ConfigString( CS_ACTIVE_CALLVOTE_VOTES, cs + 1 );
+}
+
+/*
 * G_CallVotes_Think
 */
 void G_CallVotes_Think( void )
@@ -2057,6 +2089,8 @@ void G_CallVotes_Think( void )
 
 	if( callvotethinktimer < game.realtime )
 	{
+		G_CallVotes_UpdateVotesConfigString();
+
 		G_CallVotes_CheckState();
 		callvotethinktimer = game.realtime + 1000;
 	}
@@ -2189,6 +2223,7 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 	clientVoted[PLAYERNUM( ent )] = VOTED_YES;
 
 	trap_ConfigString( CS_ACTIVE_CALLVOTE, votename );
+	trap_ConfigString( CS_ACTIVE_CALLVOTE_VALUE, G_CallVotes_String( &callvoteState.vote ) );
 
 	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_CALLED_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
 
