@@ -27,9 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 struct mempool_s;
 struct cinematics_s;
 
-typedef struct mempool_s mempool_t;
-typedef struct cinematics_s cinematics_t;
-
 //
 // these are the functions exported by the refresh module
 //
@@ -86,18 +83,18 @@ typedef struct
 	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
 
-	cinematics_t *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
-	qboolean ( *CIN_NeedNextFrame )( cinematics_t *cin, unsigned int curtime );
-	qbyte *( *CIN_ReadNextFrame )( cinematics_t *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-	void ( *CIN_Close )( cinematics_t *cin );
+	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
+	qboolean ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
+	qbyte *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	void ( *CIN_Close )( struct cinematics_s *cin );
 
-	mempool_t *( *Mem_AllocPool )( mempool_t *parent, const char *name, const char *filename, int fileline );
-	void ( *Mem_FreePool )( mempool_t **pool, const char *filename, int fileline );
-	void ( *Mem_EmptyPool )( mempool_t *pool, const char *filename, int fileline );
-	void *( *Mem_AllocExt )( mempool_t *pool, size_t size, size_t alignment, int z, const char *filename, int fileline );
+	struct mempool_s *( *Mem_AllocPool )( struct mempool_s *parent, const char *name, const char *filename, int fileline );
+	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
+	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
+	void *( *Mem_AllocExt )( struct mempool_s *pool, size_t size, size_t alignment, int z, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 	void *( *Mem_Realloc )( void *data, size_t size, const char *filename, int fileline );
-	size_t ( *Mem_PoolTotalSize )( mempool_t *pool );
+	size_t ( *Mem_PoolTotalSize )( struct mempool_s *pool );
 } ref_import_t;
 
 typedef struct
