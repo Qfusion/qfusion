@@ -1556,6 +1556,7 @@ const char *R_SpeedsMessage( char *out, size_t size )
 		return out;
 	}
 
+	out[0] = '\0';
 	if( r_speeds->integer && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 	{
 		switch( r_speeds->integer )
