@@ -268,7 +268,7 @@ typedef std::runtime_error Exception;
 	}
 
 	// throw ?
-	template<typename T> const char * typestr() { ctassert<false>(); return "ERROR"; }
+	template<typename T> const char * typestr() { ctassert<sizeof(T)==0>(); return "ERROR"; }
 
 	template<> inline const char *typestr<signed int>() { return "int"; }
 	template<> inline const char *typestr<unsigned int>() { return "uint"; }
@@ -439,7 +439,7 @@ template<typename R>
 struct FunctionStringProxy {
 	std::string operator()( const char *s )
 	{
-		ctassert<false>();
+		ctassert<sizeof(R)==0>();
 		throw Exception( std::string("FunctionStringProxy base called with " ) + s );
 	}
 };
@@ -542,7 +542,7 @@ struct FunctionStringProxy<R (*)(A1,A2,A3,A4,A5,A6)> {
 template<typename T> struct MethodStringProxy {
 	std::string operator()( const char *s  )
 	{
-		ctassert<false>();
+		ctassert<sizeof(T)==0>();
 		throw Exception( std::string( "MethodStringProxy: base class called in " ) + s );
 	}
 };
@@ -904,12 +904,12 @@ typename StripThisProxy<typename __ptr<F>::type>::func_ol StripThisLast( F f )
 // first define structs to get/set arguments (struct to partial-specialize)
 template<typename T> struct SetArg {
 	void operator()( asIScriptContext *ctx, int idx, T &t ) {
-		ctassert<false>();
+		ctassert<sizeof(T)==0>();
 	}
 };
 template<typename T> struct GetArg {
 	T operator()() {
-		ctassert<false>();
+		ctassert<sizeof(T)==0>();
 		return T();
 	}
 };
@@ -1046,7 +1046,7 @@ struct FunctionPtr : FunctionPtrBase {
 	FunctionPtr( asIScriptFunction *fptr=NULL ) : FunctionPtrBase( fptr ) {}
 	R operator()( void )
 	{
-		ctassert<false>();
+		ctassert<sizeof(R)==0>();
 		throw std::runtime_error( "FunctionPtr baseclass called!" );
 		return R();
 	}
