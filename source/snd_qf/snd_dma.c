@@ -1071,7 +1071,7 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 
 	if( width == 2 )
 	{
-		short *in = (short *)data;
+		const short *in = (const short *)data;
 
 		if( channels == 2 )
 		{
@@ -1095,7 +1095,7 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 	{
 		if( channels == 2 )
 		{
-			char *in = (char *)data;
+			const char *in = (const char *)data;
 
 			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
 			{

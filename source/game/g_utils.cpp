@@ -1329,7 +1329,7 @@ void G_Obituary( edict_t *victim, edict_t *attacker, int mod )
 */
 void G_UpdatePlayerMatchMsg( edict_t *ent )
 {
-	matchmessage_t newmm = ent->r.client->level.matchmessage;
+	matchmessage_t newmm;
 
 	if( GS_MatchWaiting() )
 	{

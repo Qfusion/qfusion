@@ -423,7 +423,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 		// the remaining vertex can be trivially computed in vertex shader
 		vec3_t vd[3];
 		float d[3];
-		int longest_edge = -1, longer_edge = -1, short_axis;
+		int longest_edge = -1, longer_edge = -1, short_edge;
 		float longest_dist = 0, longer_dist = 0;
 		const int edges[3][2] = { { 1, 0 }, { 2, 0 }, { 2, 1 } };
 		vec4_t centre[4];
@@ -484,7 +484,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 				}
 			}
 
-			short_axis = 3 - (longest_edge + longer_edge);
+			short_edge = 3 - (longest_edge + longer_edge);
 
 			// centre
 			VectorAdd( verts[elems[edges[longest_edge][0]]], verts[elems[edges[longest_edge][1]]], centre[0] );
@@ -492,7 +492,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			// radius
 			centre[0][3] = d[longest_edge] * 0.5; // unused
 			// right axis, normalized
-			VectorScale( vd[short_axis], 1.0 / d[short_axis], axis[0][0] );
+			VectorScale( vd[short_edge], 1.0 / d[short_edge], axis[0][0] );
 			// up axis, normalized
 			VectorScale( vd[longer_edge], 1.0 / d[longer_edge], axis[1][0] );
 

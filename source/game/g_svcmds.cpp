@@ -239,7 +239,7 @@ void SV_WriteIPList( void )
 	int file;
 	char name[MAX_QPATH];
 	char string[MAX_STRING_CHARS];
-	qbyte b[4];
+	qbyte b[4] = { 0, 0, 0, 0 };
 	int i;
 
 	Q_strncpyz( name, "listip.cfg", sizeof( name ) );
