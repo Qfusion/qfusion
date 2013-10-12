@@ -119,6 +119,8 @@ add:
 		R_SkeletalModelBBox( ent, mins, maxs );
 	else if( ent->model->type == mod_brush )
 		R_BrushModelBBox( ent, mins, maxs, &bmodelRotated );
+	else
+		ClearBounds( mins, maxs );
 
 	maxSide = 0;
 	for( i = 0; i < 3; i++ ) {

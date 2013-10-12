@@ -37,7 +37,7 @@ void DoRespawn( edict_t *ent )
 
 		master = ent->teammaster;
 
-		for( count = 0, ent = master; ent; ent = ent->chain, count++ );
+		for( count = 1, ent = master; ent; ent = ent->chain, count++ );
 
 		choice = rand() % count;
 
