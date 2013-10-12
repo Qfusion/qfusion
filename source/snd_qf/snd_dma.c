@@ -327,9 +327,9 @@ static sfx_t *S_FindName( const char *name, qboolean create )
 
 	if( !name )
 		S_Error( "S_FindName: NULL" );
-	if( !name[0] )
+	if( !name[0] != '\0' )
 	{
-		*( (int *)0 ) = -1;
+		assert( name[0] != '\0' );
 		S_Error( "S_FindName: empty name" );
 	}
 
