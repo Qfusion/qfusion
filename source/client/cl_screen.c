@@ -333,9 +333,6 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 		font = cls.fontSystemSmall;
 	fontHeight = FTLIB_FontHeight( font );
 
-	if( maxwidth < 0 )
-		maxwidth = 0;
-
 	width = FTLIB_StringWidth( str, font, 0 );
 	if( width )
 	{
