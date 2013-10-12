@@ -31,19 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 **
 */
 
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <signal.h>
-#include <dlfcn.h>
-
-#include "../qcommon/qcommon.h"
-#include "../ref_gl/r_glimp.h"
 #include "../ref_gl/r_local.h"
-#include "../client/keys.h"
 
 #include "x11.h"
 
