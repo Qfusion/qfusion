@@ -313,7 +313,7 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 		coords[2] = ( coords[2] + (float)z_lefttop ) / (float)map_z;
 
 		// is it a player?
-		if( ( cent->current.type == ET_PLAYER ) )
+		if( cent->current.type == ET_PLAYER )
 		{
 			int box_size = (int)( 3.0 + coords[2] * 10.0 );
 

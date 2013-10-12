@@ -1370,7 +1370,7 @@ void Con_KeyDown( int key )
 		return;
 	}
 
-	if( ( key == K_BACKSPACE ) )
+	if( key == K_BACKSPACE )
 	{
 		if( key_linepos > 1 )
 		{
