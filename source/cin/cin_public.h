@@ -29,7 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //===============================================================
 
 struct cinematics_s;
-typedef struct cinematics_s cinematics_t;
 
 //
 // functions provided by the main engine
@@ -107,10 +106,10 @@ typedef struct
 	qboolean ( *Init )( qboolean verbose );
 	void ( *Shutdown )( qboolean verbose );
 
-	cinematics_t *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
-	qboolean ( *NeedNextFrame )( cinematics_t *cin, unsigned int curtime );
-	qbyte *( *ReadNextFrame )( cinematics_t *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-	void ( *Close )( cinematics_t *cin );
+	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
+	qboolean ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
+	qbyte *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	void ( *Close )( struct cinematics_s *cin );
 } cin_export_t;
 
 #endif
