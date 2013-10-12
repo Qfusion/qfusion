@@ -367,7 +367,6 @@ static void CG_UpdatePlayerState( void )
 	// set up the playerstates
 
 	// current
-	index = index;
 	CG_SetFramePlayerState( &cg.frame, index );
 
 	// old
