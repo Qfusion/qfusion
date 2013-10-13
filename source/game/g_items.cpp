@@ -36,12 +36,16 @@ void DoRespawn( edict_t *ent )
 		int choice;
 
 		master = ent->teammaster;
+		
+		assert( master != NULL );
 
-		for( count = 1, ent = master; ent; ent = ent->chain, count++ );
+		if( master ) {
+			for( count = 0, ent = master; ent; ent = ent->chain, count++ );
 
-		choice = rand() % count;
+			choice = rand() % count;
 
-		for( count = 0, ent = master; count < choice; ent = ent->chain, count++ );
+			for( count = 0, ent = master; count < choice; ent = ent->chain, count++ );
+		}
 	}
 
 	ent->r.solid = SOLID_TRIGGER;
