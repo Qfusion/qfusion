@@ -1853,7 +1853,7 @@ static bool CG_LFuncDrawString( struct cg_layoutnode_s *commandnode, struct cg_l
 static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws )
 {
 	int i;
-	char *temps;
+	char temps[1024];
 	size_t pos, string_len;
 
 	if( !string || !string[0] )
@@ -1863,10 +1863,12 @@ static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws )
 
 	//string = CG_TranslateString( string );
 	string_len = strlen( string );
-	temps = ( char * )CG_Malloc( string_len * num_draws + 1 );
 
 	pos = 0;
 	for( i = 0; i < num_draws; i++ ) {
+		if( pos + string_len >= sizeof( temps ) ) {
+			break;
+		}
 		memcpy( temps + pos, string, string_len );
 		pos += string_len;
 	}
@@ -1874,7 +1876,6 @@ static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws )
 
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, temps, layout_cursor_font, layout_cursor_color );
 
-	CG_Free( temps );
 	return true;
 }
 
