@@ -1061,7 +1061,7 @@ static void CL_CvarInfoRequest_f( void )
 */
 static void CL_UpdateConfigString( int idx, const char *s )
 {
-	if( !s || !s[0] )
+	if( !s )
 		return;
 
 	if( cl_debug_serverCmd->integer && ( cls.state >= CA_ACTIVE || cls.demo.playing ) )
