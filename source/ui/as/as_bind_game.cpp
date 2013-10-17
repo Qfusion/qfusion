@@ -125,6 +125,11 @@ static void Game_DPrint( Game *game, const asstring_t &s )
 	}
 }
 
+static int Game_PlayerNum( Game *game )
+{
+	return trap::CL_PlayerNum();
+}
+
 void BindGame( ASInterface *as )
 {
 	ASBind::Enum( as->getEngine(), "eConfigString" )
@@ -142,7 +147,6 @@ void BindGame( ASInterface *as )
 		( "CS_MATCHNAME", CS_MATCHNAME )
 		( "CS_MATCHSCORE", CS_MATCHSCORE )
 		( "CS_ACTIVE_CALLVOTE", CS_ACTIVE_CALLVOTE )
-		( "CS_ACTIVE_CALLVOTE_VALUE", CS_ACTIVE_CALLVOTE_VALUE )
 		( "CS_ACTIVE_CALLVOTE_VOTES", CS_ACTIVE_CALLVOTE_VOTES )
 	;
 
@@ -184,6 +188,8 @@ void BindGame( ASInterface *as )
 
 		.constmethod( Game_ConfigString, "configString", true )
 		.constmethod( Game_ConfigString, "cs", true )
+
+		.constmethod( Game_PlayerNum, "get_playerNum", true )
 
 		.constmethod( Game_ClientState, "get_clientState", true )
 		.constmethod( Game_ServerState, "get_serverState", true )
