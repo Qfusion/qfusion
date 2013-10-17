@@ -551,7 +551,7 @@ static int wswcurl_debug_callback( CURL *curl, curl_infotype infotype, char *buf
 	temp = Mem_TempMalloc( buf_size + 1 );
 	memcpy( temp, buf, buf_size );
 
-	Com_DPrintf( "%s\n", temp );
+	Com_Printf( "%s\n", temp );
 
 	Mem_TempFree( temp );
 
