@@ -117,7 +117,7 @@ static void CL_UIModule_R_RegisterWorldModel( const char *model ) {
 /*
 * CL_UIModule_L10n_LoadLangPOFile
 */
-void CL_UIModule_L10n_LoadLangPOFile( const char *filepath )
+static void CL_UIModule_L10n_LoadLangPOFile( const char *filepath )
 {
 	L10n_LoadLangPOFile( UI_L10N_DOMAIN, filepath );
 }
@@ -125,7 +125,7 @@ void CL_UIModule_L10n_LoadLangPOFile( const char *filepath )
 /*
 * CL_UIModule_L10n_TranslateString
 */
-const char *CL_UIModule_L10n_TranslateString( const char *string )
+static const char *CL_UIModule_L10n_TranslateString( const char *string )
 {
 	return L10n_TranslateString( UI_L10N_DOMAIN, string );
 }
@@ -133,9 +133,20 @@ const char *CL_UIModule_L10n_TranslateString( const char *string )
 /*
 * CL_UIModule_L10n_ClearDomain
 */
-void CL_UIModule_L10n_ClearDomain( void )
+static void CL_UIModule_L10n_ClearDomain( void )
 {
 	L10n_ClearDomain( UI_L10N_DOMAIN );
+}
+
+/*
+* CL_UIModule_PlayerNum
+*/
+static int CL_UIModule_PlayerNum( void )
+{
+	if( cls.state < CA_CONNECTED ) {
+		return -1;
+	}
+	return cl.playernum;
 }
 
 //==============================================
@@ -210,6 +221,7 @@ void CL_UIModule_Init( void )
 	import.CL_FreeClipboardData = CL_FreeClipboardData;
 	import.CL_OpenURLInBrowser = CL_OpenURLInBrowser;
 	import.CL_ReadDemoMetaData = CL_ReadDemoMetaData;
+	import.CL_PlayerNum = CL_UIModule_PlayerNum;
 
 	import.Key_ClearStates = Key_ClearStates;
 	import.Key_GetBindingBuf = Key_GetBindingBuf;

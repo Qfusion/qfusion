@@ -201,8 +201,7 @@ typedef struct
 #define CS_MATCHUUID		24
 
 #define CS_ACTIVE_CALLVOTE	25
-#define CS_ACTIVE_CALLVOTE_VALUE 26
-#define CS_ACTIVE_CALLVOTE_VOTES 27
+#define CS_ACTIVE_CALLVOTE_VOTES 26
 
 #define CS_WORLDMODEL		30
 #define	CS_MAPCHECKSUM		31		// for catching cheater maps

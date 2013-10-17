@@ -228,6 +228,10 @@ namespace trap
 			return UI_IMPORT.CL_ReadDemoMetaData( demopath, meta_data, meta_data_size );
 		}
 
+		inline int CL_PlayerNum( void ) {
+			return UI_IMPORT.CL_PlayerNum();
+		}
+
 		inline const char *Key_GetBindingBuf( int binding ) {
 			return UI_IMPORT.Key_GetBindingBuf( binding );
 		}

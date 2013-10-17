@@ -1847,7 +1847,6 @@ void G_CallVotes_Reset( void )
 	}
 
 	trap_ConfigString( CS_ACTIVE_CALLVOTE, "" );
-	trap_ConfigString( CS_ACTIVE_CALLVOTE_VALUE, "" );
 	trap_ConfigString( CS_ACTIVE_CALLVOTE_VOTES, "" );
 
 	memset( &callvoteState, 0, sizeof( callvoteState ) );
@@ -1892,7 +1891,7 @@ static void G_CallVotes_PrintHelpToPlayer( edict_t *ent, callvotetype_t *callvot
 /*
 * G_CallVotes_ArgsToString
 */
-static char *G_CallVotes_ArgsToString( callvotedata_t *vote )
+static const char *G_CallVotes_ArgsToString( const callvotedata_t *vote )
 {
 	static char argstring[MAX_STRING_CHARS];
 	int i;
@@ -1910,17 +1909,26 @@ static char *G_CallVotes_ArgsToString( callvotedata_t *vote )
 }
 
 /*
-* G_CallVotes_String
+* G_CallVotes_Arguments
 */
-static char *G_CallVotes_String( callvotedata_t *vote )
+static const char *G_CallVotes_Arguments( const callvotedata_t *vote )
 {
-	char *arguments;
-
+	const char *arguments;
 	if( vote->string )
 		arguments = vote->string;
 	else
 		arguments = G_CallVotes_ArgsToString( vote );
+	return arguments;
+}
 
+/*
+* G_CallVotes_String
+*/
+static const char *G_CallVotes_String( const callvotedata_t *vote )
+{
+	const char *arguments;
+
+	arguments = G_CallVotes_Arguments( vote );
 	if( arguments[0] )
 		return va( "%s %s", vote->callvote->name, arguments );
 	return vote->callvote->name;
@@ -2222,8 +2230,7 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 	//caller is assumed to vote YES
 	clientVoted[PLAYERNUM( ent )] = VOTED_YES;
 
-	trap_ConfigString( CS_ACTIVE_CALLVOTE, votename );
-	trap_ConfigString( CS_ACTIVE_CALLVOTE_VALUE, G_CallVotes_String( &callvoteState.vote ) );
+	trap_ConfigString( CS_ACTIVE_CALLVOTE, G_CallVotes_String( &callvoteState.vote ) );
 
 	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_CALLED_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
 

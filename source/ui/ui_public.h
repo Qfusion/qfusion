@@ -119,6 +119,7 @@ typedef struct
 	void ( *CL_FreeClipboardData )( char *data );
 	void ( *CL_OpenURLInBrowser )( const char *url );
 	size_t ( *CL_ReadDemoMetaData )( const char *demopath, char *meta_data, size_t meta_data_size );
+	int ( *CL_PlayerNum )( void );
 
 	const char *( *Key_GetBindingBuf )( int binding );
 	void ( *Key_ClearStates )( void );
