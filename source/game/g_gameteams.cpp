@@ -97,7 +97,7 @@ void G_Teams_UpdateMembersList( void )
 			if( !ent->r.client || ( trap_GetClientState( PLAYERNUM( ent ) ) < CS_CONNECTED ) )
 				continue;
 
-			if( ent->s.team == team || team == GS_MAX_TEAMS )
+			if( ent->s.team == team || ( team == GS_MAX_TEAMS && ent->s.team != TEAM_SPECTATOR ) )
 			{
 				teamlist[team].playerIndices[teamlist[team].numplayers++] = ENTNUM( ent );
 

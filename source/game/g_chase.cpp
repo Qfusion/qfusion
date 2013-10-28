@@ -465,13 +465,14 @@ void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmod
 void G_ChaseStep( edict_t *ent, int step )
 {
 	int i, j;
+	int actual;
 	int start;
 	edict_t *newtarget = NULL;
 
 	if( !ent->r.client->resp.chase.active )
 		return;
 
-	i = start = ent->r.client->resp.chase.target;
+	start = ent->r.client->resp.chase.target;
 
 	if( step == 0 )
 	{
@@ -483,20 +484,30 @@ void G_ChaseStep( edict_t *ent, int step )
 
 	if( !newtarget )
 	{
-		for( j = 0; j < gs.maxclients; j++ )
+		i = -1;
+		for( j = 0; j < teamlist[GS_MAX_TEAMS].numplayers; j++ )
 		{
-			i += step;
-			if( i < 1 )
-				i = gs.maxclients;
-			else if( i > gs.maxclients )
-				i = 1;
-			if( i == start )
-				break;
-			if( G_Chase_IsValidTarget( ent, game.edicts + i, ent->r.client->resp.chase.teamonly ) )
-			{	
-				newtarget = game.edicts + i;
+			if( teamlist[GS_MAX_TEAMS].playerIndices[j] == start )
+			{
+				i = j;
 				break;
 			}
+		}
+		i += step;
+		for( j = 0; j < gs.maxclients; j++ )
+		{
+			if( i < 0 )
+				i += teamlist[GS_MAX_TEAMS].numplayers;
+			i %= teamlist[GS_MAX_TEAMS].numplayers;
+			actual = teamlist[GS_MAX_TEAMS].playerIndices[i];
+			if( actual == start )
+				break;
+			if( G_Chase_IsValidTarget( ent, game.edicts + actual, ent->r.client->resp.chase.teamonly ) )
+			{	
+				newtarget = game.edicts + actual;
+				break;
+			}
+			i += step;
 		}
 	}
 
