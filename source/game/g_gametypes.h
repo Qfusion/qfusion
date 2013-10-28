@@ -182,7 +182,7 @@ typedef struct
 	int asFactored;
 } g_teamlist_t;
 
-extern g_teamlist_t teamlist[GS_MAX_TEAMS];
+extern g_teamlist_t teamlist[GS_MAX_TEAMS + 1];
 
 //clock
 extern char clockstring[16];
