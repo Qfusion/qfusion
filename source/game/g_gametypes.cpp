@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "g_local.h"
 
-g_teamlist_t teamlist[GS_MAX_TEAMS];
+g_teamlist_t teamlist[GS_MAX_TEAMS + 1];
 
 // Generic functions used for all gametypes when don't require any special setting
 
