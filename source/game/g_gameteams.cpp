@@ -66,6 +66,15 @@ void G_Teams_Init( void )
 
 }
 
+static int G_Teams_CompareMembers( const void *a, const void *b )
+{
+	edict_t *edict_a = game.edicts + *(int *)a;
+	edict_t *edict_b = game.edicts + *(int *)b;
+	int score_a = edict_a->r.client->level.stats.score;
+	int score_b = edict_b->r.client->level.stats.score;
+	return ( score_b > score_a ) - ( score_a > score_b );
+}
+
 /*
 * G_Teams_UpdateMembersList
 * It's better to count the list in detail once per fame, than
@@ -73,14 +82,8 @@ void G_Teams_Init( void )
 */
 void G_Teams_UpdateMembersList( void )
 {
-	static int list[MAX_CLIENTS];
-	static int sorted[MAX_CLIENTS];
-	static int count;
-
 	edict_t	*ent;
 	int i, team;
-	int bestscore;
-	int bestplayer = 0;
 
 	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ )
 	{
@@ -88,7 +91,6 @@ void G_Teams_UpdateMembersList( void )
 		teamlist[team].ping = 0;
 		teamlist[team].has_coach = false;
 
-		count = 0;
 		//create a temp list with the clients inside this team
 		for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ )
 		{
@@ -97,52 +99,24 @@ void G_Teams_UpdateMembersList( void )
 
 			if( ent->s.team == team )
 			{
-				list[count] = ENTNUM( ent );
-				count++;
+				teamlist[team].playerIndices[teamlist[team].numplayers++] = ENTNUM( ent );
 
 				if( ent->r.client->teamstate.is_coach )
 					teamlist[team].has_coach = true;
 			}
 		}
 
-		if( count )
-		{
-			memset( sorted, 0, sizeof( int )*MAX_CLIENTS );
-			bestplayer = -2;
-			while( bestplayer != -1 )
-			{
-				bestscore = -9999;
-				bestplayer = -1;
-				//now sort them by their score
-				for( i = 0; i < count; i++ )
-				{
-					if( !sorted[i] )
-					{
-						int score;
-						ent = game.edicts + list[i];
-						score = ent->r.client->level.stats.score;
-						if( score >= bestscore )
-						{
-							bestplayer = i;
-							bestscore = score;
-						}
-					}
-				}
-
-				if( bestplayer > -1 )
-				{
-					sorted[bestplayer] = true;
-					teamlist[team].playerIndices[teamlist[team].numplayers] = list[bestplayer];
-					teamlist[team].numplayers++;
-					teamlist[team].ping += game.edicts[list[bestplayer]].r.client->r.ping;
-				}
-			}
-		}
+		qsort( teamlist[team].playerIndices, teamlist[team].numplayers, sizeof( teamlist[team].playerIndices[0] ), G_Teams_CompareMembers );
 
 		//terminate the list with -1
 		teamlist[team].playerIndices[teamlist[team].numplayers] = -1;
+
 		if( teamlist[team].numplayers )
+		{
+			for( i = 0; i < teamlist[team].numplayers; i++ )
+				teamlist[team].ping += game.edicts[teamlist[team].playerIndices[i]].r.client->r.ping;
 			teamlist[team].ping /= teamlist[team].numplayers;
+		}
 	}
 }
 
