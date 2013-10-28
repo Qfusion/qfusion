@@ -1152,6 +1152,7 @@ static const asProperty_t gametypedescr_Properties[] =
 	{ ASLIB_PROPERTY_DECL(uint, pickableItemsMask), ASLIB_FOFFSET(gametype_descriptor_t, pickableItemsMask) },
 	{ ASLIB_PROPERTY_DECL(bool, isTeamBased), ASLIB_FOFFSET(gametype_descriptor_t, isTeamBased) },
 	{ ASLIB_PROPERTY_DECL(bool, isRace), ASLIB_FOFFSET(gametype_descriptor_t, isRace) },
+	{ ASLIB_PROPERTY_DECL(bool, inverseScore), ASLIB_FOFFSET(gametype_descriptor_t, inverseScore) },
 	{ ASLIB_PROPERTY_DECL(bool, hasChallengersQueue), ASLIB_FOFFSET(gametype_descriptor_t, hasChallengersQueue) },
 	{ ASLIB_PROPERTY_DECL(int, maxPlayersPerTeam), ASLIB_FOFFSET(gametype_descriptor_t, maxPlayersPerTeam) },
 	{ ASLIB_PROPERTY_DECL(int, ammoRespawn), ASLIB_FOFFSET(gametype_descriptor_t, ammo_respawn) },
