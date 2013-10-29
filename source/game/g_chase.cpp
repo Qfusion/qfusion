@@ -473,26 +473,26 @@ void G_ChaseStep( edict_t *ent, int step )
 		return;
 
 	start = ent->r.client->resp.chase.target;
+	i = -1;
+	for( j = 0; j < teamlist[GS_MAX_TEAMS].numplayers; j++ )
+	{
+		if( teamlist[GS_MAX_TEAMS].playerIndices[j] == start )
+		{
+			i = j;
+			break;
+		}
+	}
 
 	if( step == 0 )
 	{
-		if( G_Chase_IsValidTarget( ent, game.edicts + i, ent->r.client->resp.chase.teamonly ) )
-			newtarget = game.edicts + i;
+		if( i >= 0 && G_Chase_IsValidTarget( ent, game.edicts + start, ent->r.client->resp.chase.teamonly ) )
+			newtarget = game.edicts + start;
 		else
 			step = 1;
 	}
 
-	if( !newtarget )
+	if( !newtarget && teamlist[GS_MAX_TEAMS].numplayers )
 	{
-		i = -1;
-		for( j = 0; j < teamlist[GS_MAX_TEAMS].numplayers; j++ )
-		{
-			if( teamlist[GS_MAX_TEAMS].playerIndices[j] == start )
-			{
-				i = j;
-				break;
-			}
-		}
 		i += step;
 		for( j = 0; j < gs.maxclients; j++ )
 		{
