@@ -90,7 +90,7 @@ void G_Teams_UpdateMembersList( void )
 	edict_t	*ent;
 	int i, team;
 
-	for( team = TEAM_SPECTATOR; team <= GS_MAX_TEAMS; team++ )
+	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ )
 	{
 		teamlist[team].numplayers = 0;
 		teamlist[team].ping = 0;
@@ -102,7 +102,7 @@ void G_Teams_UpdateMembersList( void )
 			if( !ent->r.client || ( trap_GetClientState( PLAYERNUM( ent ) ) < CS_CONNECTED ) )
 				continue;
 
-			if( ent->s.team == team || ( team == GS_MAX_TEAMS && ent->s.team != TEAM_SPECTATOR ) )
+			if( ent->s.team == team )
 			{
 				teamlist[team].playerIndices[teamlist[team].numplayers++] = ENTNUM( ent );
 
@@ -123,6 +123,13 @@ void G_Teams_UpdateMembersList( void )
 			teamlist[team].ping /= teamlist[team].numplayers;
 		}
 	}
+	teamlist[GS_MAX_TEAMS].numplayers = 0;
+	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
+	{
+		for( i = 0; i < teamlist[team].numplayers; i++ )
+			teamlist[GS_MAX_TEAMS].playerIndices[teamlist[GS_MAX_TEAMS].numplayers++] = teamlist[team].playerIndices[i];
+	}
+	teamlist[GS_MAX_TEAMS].playerIndices[teamlist[GS_MAX_TEAMS].numplayers] = -1;
 }
 
 /*
