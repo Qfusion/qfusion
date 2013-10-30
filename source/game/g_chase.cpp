@@ -61,7 +61,7 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 	int maxteam;
 	int flags[GS_MAX_TEAMS];
 	int newctfpov, newpoweruppov;
-	int score_max;
+	int score_best;
 	int newpov = -1;
 	edict_t *target;
 	static int ctfpov = -1, poweruppov = -1;
@@ -90,7 +90,9 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 	}
 
 	// find what players have what
-	score_max = -999999999;
+	score_best = -999999999;
+	if( level.gametype.inverseScore )
+		score_best *= -1;
 	quad = warshell = regen = scorelead = -1;
 	memset( flags, -1, sizeof( flags ) );
 	newctfpov = newpoweruppov = -1;
@@ -129,9 +131,10 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 		}
 
 		// find the scoring leader
-		if( target->r.client->ps.stats[STAT_SCORE] > score_max )
+		if( ( !level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] > score_best )
+				|| ( level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] < score_best ) )
 		{
-			score_max = target->r.client->ps.stats[STAT_SCORE];
+			score_best = target->r.client->ps.stats[STAT_SCORE];
 			scorelead = ENTNUM( target );
 		}
 	}
@@ -559,7 +562,7 @@ void Cmd_ChaseCam_f( edict_t *ent )
 	}
 	else if( !Q_stricmp( arg1, "score" ) )
 	{
-		G_PrintMsg( ent, "Chasecam mode is 'score'. It will always follow the highest fragger.\n" );
+		G_PrintMsg( ent, "Chasecam mode is 'score'. It will always follow the player with the best score.\n" );
 		G_ChasePlayer( ent, NULL, team_only, 1 );
 	}
 	else if( !Q_stricmp( arg1, "fragger" ) )
