@@ -72,11 +72,11 @@ static int G_Teams_CompareMembers( const void *a, const void *b )
 	edict_t *edict_b = game.edicts + *(int *)b;
 	int score_a = edict_a->r.client->level.stats.score;
 	int score_b = edict_b->r.client->level.stats.score;
-	int result = ( level.gametype.inverseScore ? -1 : 1 ) * ( ( score_b > score_a ) - ( score_a > score_b ) );
+	int result = ( level.gametype.inverseScore ? -1 : 1 ) * ( score_b - score_a );
 	if (!result)
 		result = Q_stricmp( edict_a->r.client->netname, edict_b->r.client->netname );
 	if (!result)
-		result = ( ENTNUM( edict_b ) < ENTNUM( edict_a ) ) - ( ENTNUM( edict_a ) < ENTNUM( edict_b ) );
+		result = ENTNUM( edict_a ) - ENTNUM( edict_b );
 	return result;
 }
 
