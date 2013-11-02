@@ -2640,7 +2640,7 @@ void G_CallVotes_Init( void )
 	callvote->current = G_VoteNumBotsCurrent;
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<number>" );
-	callvote->argument_type = G_LevelCopyString( "number" );
+	callvote->argument_type = G_LevelCopyString( "integer" );
 	callvote->help = G_LevelCopyString( "Sets the number of bots to play on the server" );
 
 	callvote = G_RegisterCallvote( "allow_teamdamage" );
