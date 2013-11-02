@@ -2473,7 +2473,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<number>" );
 	callvote->argument_type = G_LevelCopyString( "integer" );
-	callvote->help = G_LevelCopyString( "Sets the number of frags or caps needed to win the match\nUse 0 to disable" );
+	callvote->help = G_LevelCopyString( "Sets the number of frags or caps needed to win the match\nSpecify 0 to disable" );
 
 	callvote = G_RegisterCallvote( "timelimit" );
 	callvote->expectedargs = 1;
@@ -2483,7 +2483,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<minutes>" );
 	callvote->argument_type = G_LevelCopyString( "integer" );
-	callvote->help = G_LevelCopyString( "Sets number of minutes after which the match ends\nUse 0 to disable" );
+	callvote->help = G_LevelCopyString( "Sets number of minutes after which the match ends\nSpecify 0 to disable" );
 
 	callvote = G_RegisterCallvote( "gametype" );
 	callvote->expectedargs = 1;
@@ -2504,7 +2504,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<minutes>" );
 	callvote->argument_type = G_LevelCopyString( "integer" );
-	callvote->help = G_LevelCopyString( "Sets the number of minutes after which the warmup ends\nUse 0 to disable" );
+	callvote->help = G_LevelCopyString( "Sets the number of minutes after which the warmup ends\nSpecify 0 to disable" );
 
 	callvote = G_RegisterCallvote( "extended_time" );
 	callvote->expectedargs = 1;
@@ -2514,7 +2514,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<minutes>" );
 	callvote->argument_type = G_LevelCopyString( "integer" );
-	callvote->help = G_LevelCopyString( "Sets the length of the overtime\nUse 0 to enable suddendeath mode" );
+	callvote->help = G_LevelCopyString( "Sets the length of the overtime\nSpecify 0 to enable suddendeath mode" );
 
 	callvote = G_RegisterCallvote( "maxteamplayers" );
 	callvote->expectedargs = 1;
