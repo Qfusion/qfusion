@@ -1732,43 +1732,6 @@ static const char *G_VoteAllowUnevenCurrent( void )
 		return "0";
 }
 
-#ifdef ALLOWBYNNY_VOTE
-static bool G_VoteAllowBunnyValidate( callvotedata_t *vote, bool first )
-{
-	int allow_bunny = atoi( vote->argv[0] );
-
-	if( allow_bunny != 0 && allow_bunny != 1 )
-		return false;
-
-	if( allow_bunny && g_allow_bunny->integer )
-	{
-		if( first ) G_PrintMsg( vote->caller, "%sBunnyhopping already allowed.\n", S_COLOR_RED );
-		return false;
-	}
-
-	if( !allow_bunny && !g_allow_bunny->integer )
-	{
-		if( first ) G_PrintMsg( vote->caller, "%sBunnyhopping already disallowed\n", S_COLOR_RED );
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteAllowBunnyPassed( callvotedata_t *vote )
-{
-	trap_Cvar_Set( "g_allow_bunny", va( "%i", atoi( vote->argv[0] ) ) );
-}
-
-static const char *G_VoteAllowBunnyCurrent( void )
-{
-	if( g_allow_bunny->integer )
-		return "1";
-	else
-		return "0";
-}
-#endif
-
 //================================================
 //
 //================================================
@@ -2514,7 +2477,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<minutes>" );
 	callvote->argument_type = G_LevelCopyString( "integer" );
-	callvote->help = G_LevelCopyString( "Sets the length of the overtime\nSpecify 0 to enable suddendeath mode" );
+	callvote->help = G_LevelCopyString( "Sets the length of the overtime\nSpecify 0 to enable sudden death mode" );
 
 	callvote = G_RegisterCallvote( "maxteamplayers" );
 	callvote->expectedargs = 1;
@@ -2732,18 +2695,6 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
 	callvote->argument_type = G_LevelCopyString( "bool" );
 	callvote->help = G_LevelCopyString( "Toggles whether uneven teams is allowed" );
-
-#ifdef ALLOWBYNNY_VOTE
-	callvote = G_RegisterCallvote( "allow_bunny" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteAllowBunnyValidate;
-	callvote->execute = G_VoteAllowBunnyPassed;
-	callvote->current = G_VoteAllowBunnyCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
-	callvote->argument_type = G_LevelCopyString( "bool" );
-	callvote->help = G_LevelCopyString( "Toggles whether bunnyhopping is enabled" );
-#endif
 
 	// wsw : pb : server admin can now disable a specific callvote command (g_disable_vote_<callvote name>)
 	for( callvote = callvotesHeadNode; callvote != NULL; callvote = callvote->next )
