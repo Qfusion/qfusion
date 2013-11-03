@@ -1,7 +1,7 @@
 source/release/
 source/debug/
 source/build*/
-libsrcs/angelscript/angelSVN/sdk/angelscript/lib/
-libsrcs/angelscript/angelSVN/sdk/angelscript/projects/gnuc/obj/
+libsrcs/angelscript/sdk/angelscript/lib/
+libsrcs/angelscript/sdk/angelscript/projects/gnuc/obj/
 libsrcs/libRocket/libRocket/lib/
 libsrcs/libRocket/libRocket/Build/obj/
