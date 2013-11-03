@@ -1,3 +1,0 @@
-This copy corresponds to revision 1091 of angel script 
-SVN repository which is located at: 
-https://angelscript.svn.sourceforge.net/svnroot/angelscript/trunk
