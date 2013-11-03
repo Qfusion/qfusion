@@ -115,9 +115,9 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability )
 	engine->SetEngineProperty( asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT, 1 );
 
 	PreRegisterMathAddon( engine );
-	PreRegisterScriptArrayAddon( engine, true );
+	PreRegisterScriptArray( engine, true );
 	PreRegisterStringAddon( engine );
-	PreRegisterDictionaryAddon( engine );
+	PreRegisterScriptDictionary( engine );
 	PreRegisterTimeAddon( engine );
 	PreRegisterScriptAny( engine );
 	PreRegisterVec3Addon( engine );
@@ -125,9 +125,9 @@ asIScriptEngine *qasCreateEngine( bool *asMaxPortability )
 	PreRegisterStringUtilsAddon( engine );
 
 	RegisterMathAddon( engine );
-	RegisterScriptArrayAddon( engine, true );
+	RegisterScriptArray( engine, true );
 	RegisterStringAddon( engine );
-	RegisterDictionaryAddon( engine );
+	RegisterScriptDictionary( engine );
 	RegisterTimeAddon( engine );
 	RegisterScriptAny( engine );
 	RegisterVec3Addon( engine );

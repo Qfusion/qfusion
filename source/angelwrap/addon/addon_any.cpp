@@ -1,8 +1,5 @@
 #include "../qas_precompiled.h"
 #include "addon_any.h"
-#include <new>
-#include <assert.h>
-#include <string.h>
 
 BEGIN_AS_NAMESPACE
 
@@ -11,7 +8,7 @@ static void ScriptAnyFactory_Generic(asIScriptGeneric *gen)
 {
 	asIScriptEngine *engine = gen->GetEngine();
 
-	*(CScriptAny**)gen->GetAddressOfReturnLocation() = new CScriptAny(engine);
+	*(CScriptAny**)gen->GetAddressOfReturnLocation() = QAS_NEW(CScriptAny)(engine);
 }
 
 static void ScriptAnyFactory2_Generic(asIScriptGeneric *gen)
@@ -20,7 +17,7 @@ static void ScriptAnyFactory2_Generic(asIScriptGeneric *gen)
 	void *ref = (void*)gen->GetArgAddress(0);
 	int refType = gen->GetArgTypeId(0);
 
-	*(CScriptAny**)gen->GetAddressOfReturnLocation() = new CScriptAny(ref,refType,engine);
+	*(CScriptAny**)gen->GetAddressOfReturnLocation() = QAS_NEW(CScriptAny)(ref,refType,engine);
 }
 
 static CScriptAny &ScriptAnyAssignment(CScriptAny *other, CScriptAny *self)
@@ -28,10 +25,108 @@ static CScriptAny &ScriptAnyAssignment(CScriptAny *other, CScriptAny *self)
 	return *self = *other;
 }
 
-void PreRegisterScriptAny(asIScriptEngine *engine)
+static void ScriptAnyAssignment_Generic(asIScriptGeneric *gen)
 {
-	int r;
-	r = engine->RegisterObjectType("any", sizeof(CScriptAny), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
+	CScriptAny *other = (CScriptAny*)gen->GetArgObject(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	*self = *other;
+
+	gen->SetReturnObject(self);
+}
+
+static void ScriptAny_Store_Generic(asIScriptGeneric *gen)
+{
+	void *ref = (void*)gen->GetArgAddress(0);
+	int refTypeId = gen->GetArgTypeId(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	self->Store(ref, refTypeId);
+}
+
+static void ScriptAny_StoreInt_Generic(asIScriptGeneric *gen)
+{
+	asINT64 *ref = (asINT64*)gen->GetArgAddress(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	self->Store(*ref);
+}
+
+static void ScriptAny_StoreFlt_Generic(asIScriptGeneric *gen)
+{
+	double *ref = (double*)gen->GetArgAddress(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	self->Store(*ref);
+}
+
+static void ScriptAny_Retrieve_Generic(asIScriptGeneric *gen)
+{
+	void *ref = (void*)gen->GetArgAddress(0);
+	int refTypeId = gen->GetArgTypeId(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	*(bool*)gen->GetAddressOfReturnLocation() = self->Retrieve(ref, refTypeId);
+}
+
+static void ScriptAny_RetrieveInt_Generic(asIScriptGeneric *gen)
+{
+	asINT64 *ref = (asINT64*)gen->GetArgAddress(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	*(bool*)gen->GetAddressOfReturnLocation() = self->Retrieve(*ref);
+}
+
+static void ScriptAny_RetrieveFlt_Generic(asIScriptGeneric *gen)
+{
+	double *ref = (double*)gen->GetArgAddress(0);
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+
+	*(bool*)gen->GetAddressOfReturnLocation() = self->Retrieve(*ref);
+}
+
+static void ScriptAny_AddRef_Generic(asIScriptGeneric *gen)
+{
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+	self->AddRef();
+}
+
+static void ScriptAny_Release_Generic(asIScriptGeneric *gen)
+{
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+	self->Release();
+}
+
+static void ScriptAny_GetRefCount_Generic(asIScriptGeneric *gen)
+{
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+	*(int*)gen->GetAddressOfReturnLocation() = self->GetRefCount();
+}
+
+static void ScriptAny_SetFlag_Generic(asIScriptGeneric *gen)
+{
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+	self->SetFlag();
+}
+
+static void ScriptAny_GetFlag_Generic(asIScriptGeneric *gen)
+{
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+	*(bool*)gen->GetAddressOfReturnLocation() = self->GetFlag();
+}
+
+static void ScriptAny_EnumReferences_Generic(asIScriptGeneric *gen)
+{
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
+	self->EnumReferences(engine);
+}
+
+static void ScriptAny_ReleaseAllHandles_Generic(asIScriptGeneric *gen)
+{
+	CScriptAny *self = (CScriptAny*)gen->GetObject();
+	asIScriptEngine *engine = *(asIScriptEngine**)gen->GetAddressOfArg(0);
+	self->ReleaseAllHandles(engine);
 }
 
 static void RegisterScriptAny_Native(asIScriptEngine *engine)
@@ -60,11 +155,45 @@ static void RegisterScriptAny_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(CScriptAny,ReleaseAllHandles), asCALL_THISCALL); assert( r >= 0 );
 }
 
-void RegisterScriptAny(asIScriptEngine *engine)
+static void RegisterScriptAny_Generic(asIScriptEngine *engine)
 {
-	RegisterScriptAny_Native(engine);
+	int r;
+
+	// We'll use the generic interface for the constructor as we need the engine pointer
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_FACTORY, "any@ f()", asFUNCTION(ScriptAnyFactory_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_FACTORY, "any@ f(?&in)", asFUNCTION(ScriptAnyFactory2_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_ADDREF, "void f()", asFUNCTION(ScriptAny_AddRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_RELEASE, "void f()", asFUNCTION(ScriptAny_Release_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "any &opAssign(any&in)", asFUNCTION(ScriptAnyAssignment_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "void store(?&in)", asFUNCTION(ScriptAny_Store_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "void store(int64&in)", asFUNCTION(ScriptAny_StoreInt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "void store(double&in)", asFUNCTION(ScriptAny_StoreFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(?&out) const", asFUNCTION(ScriptAny_Retrieve_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(int64&out) const", asFUNCTION(ScriptAny_RetrieveInt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("any", "bool retrieve(double&out) const", asFUNCTION(ScriptAny_RetrieveFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	// Register GC behaviours
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptAny_GetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_SETGCFLAG, "void f()", asFUNCTION(ScriptAny_SetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptAny_GetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptAny_EnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectBehaviour("any", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptAny_ReleaseAllHandles_Generic), asCALL_GENERIC); assert( r >= 0 );
 }
 
+void PreRegisterScriptAny(asIScriptEngine *engine)
+{
+	int r;
+	r = engine->RegisterObjectType("any", sizeof(CScriptAny), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
+}
+
+void RegisterScriptAny(asIScriptEngine *engine)
+{
+	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+		RegisterScriptAny_Generic(engine);
+	else
+		RegisterScriptAny_Native(engine);
+}
 
 CScriptAny &CScriptAny::operator=(const CScriptAny &other)
 {
@@ -83,12 +212,12 @@ CScriptAny &CScriptAny::operator=(const CScriptAny &other)
 	{
 		// For handles, copy the pointer and increment the reference count
 		value.valueObj = other.value.valueObj;
-		engine->AddRefScriptObject(value.valueObj, value.typeId);
+		engine->AddRefScriptObject(value.valueObj, engine->GetObjectTypeById(value.typeId));
 	}
 	else if( value.typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Create a copy of the object
-		value.valueObj = engine->CreateScriptObjectCopy(other.value.valueObj, value.typeId);
+		value.valueObj = engine->CreateScriptObjectCopy(other.value.valueObj, engine->GetObjectTypeById(value.typeId));
 	}
 	else
 	{
@@ -112,6 +241,7 @@ CScriptAny::CScriptAny(asIScriptEngine *engine)
 {
 	this->engine = engine;
 	refCount = 1;
+	gcFlag = false;
 
 	value.typeId = 0;
 	value.valueInt = 0;
@@ -124,6 +254,7 @@ CScriptAny::CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine)
 {
 	this->engine = engine;
 	refCount = 1;
+	gcFlag = false;
 
 	value.typeId = 0;
 	value.valueInt = 0;
@@ -156,12 +287,12 @@ void CScriptAny::Store(void *ref, int refTypeId)
 	{
 		// We're receiving a reference to the handle, so we need to dereference it
 		value.valueObj = *(void**)ref;
-		engine->AddRefScriptObject(value.valueObj, value.typeId);
+		engine->AddRefScriptObject(value.valueObj, engine->GetObjectTypeById(value.typeId));
 	}
 	else if( value.typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Create a copy of the object
-		value.valueObj = engine->CreateScriptObjectCopy(ref, value.typeId);
+		value.valueObj = engine->CreateScriptObjectCopy(ref, engine->GetObjectTypeById(value.typeId));
 	}
 	else
 	{
@@ -197,7 +328,7 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId) const
 		if( (value.typeId & asTYPEID_MASK_OBJECT) && 
 			engine->IsHandleCompatibleWithObject(value.valueObj, value.typeId, refTypeId) )
 		{
-			engine->AddRefScriptObject(value.valueObj, value.typeId);
+			engine->AddRefScriptObject(value.valueObj, engine->GetObjectTypeById(value.typeId));
 			*(void**)ref = value.valueObj;
 
 			return true;
@@ -210,7 +341,7 @@ bool CScriptAny::Retrieve(void *ref, int refTypeId) const
 		// Copy the object into the given reference
 		if( value.typeId == refTypeId )
 		{
-			engine->CopyScriptObject(ref, value.valueObj, value.typeId);
+			engine->AssignScriptObject(ref, value.valueObj, engine->GetObjectTypeById(value.typeId));
 
 			return true;
 		}
@@ -259,14 +390,14 @@ int CScriptAny::GetTypeId() const
 
 void CScriptAny::FreeObject()
 {
-    // If it is a handle or a ref counted object, call release
+	// If it is a handle or a ref counted object, call release
 	if( value.typeId & asTYPEID_MASK_OBJECT )
 	{
 		// Let the engine release the object
-		engine->ReleaseScriptObject(value.valueObj, value.typeId);
+		asIObjectType *ot = engine->GetObjectTypeById(value.typeId);
+		engine->ReleaseScriptObject(value.valueObj, ot);
 
 		// Release the object type info
-		asIObjectType *ot = engine->GetObjectTypeById(value.typeId);
 		if( ot )
 			ot->Release();
 
@@ -274,7 +405,7 @@ void CScriptAny::FreeObject()
 		value.typeId = 0;
 	}
 
-    // For primitives, there's nothing to do
+	// For primitives, there's nothing to do
 }
 
 
@@ -300,17 +431,18 @@ void CScriptAny::ReleaseAllHandles(asIScriptEngine * /*engine*/)
 int CScriptAny::AddRef() const
 {
 	// Increase counter and clear flag set by GC
-	refCount = (refCount & 0x7FFFFFFF) + 1;
-	return refCount;
+	gcFlag = false;
+	return asAtomicInc(refCount);
 }
 
 int CScriptAny::Release() const
 {
-	// Now do the actual releasing (clearing the flag set by GC)
-	refCount = (refCount & 0x7FFFFFFF) - 1;
-	if( refCount == 0 )
+	// Decrease the ref counter
+	gcFlag = false;
+	if( asAtomicDec(refCount) == 0 )
 	{
-		delete this;
+		// Delete this object as no more references to it exists
+		QAS_DELETE(const_cast<CScriptAny*>(this), CScriptAny);
 		return 0;
 	}
 
@@ -319,17 +451,17 @@ int CScriptAny::Release() const
 
 int CScriptAny::GetRefCount()
 {
-	return refCount & 0x7FFFFFFF;
+	return refCount;
 }
 
 void CScriptAny::SetFlag()
 {
-	refCount |= 0x80000000;
+	gcFlag = true;
 }
 
 bool CScriptAny::GetFlag()
 {
-	return (refCount & 0x80000000) ? true : false;
+	return gcFlag;
 }
 
 
