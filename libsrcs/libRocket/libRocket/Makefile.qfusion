@@ -3,13 +3,15 @@ DEBUG_BUILD?=NO
 CXX?=g++
 AR?=ar
 LOCALBASE?=/usr/local
-FREETYPE_INC?=$(shell freetype-config --cflags)
+FREETYPE_INC?=-I../../../libsrcs/libfreetype/include
 
 CXXFLAGS:=$(subst -I../libsrcs/,-I../../../libsrcs/,$(CXXFLAGS))
 CXXFLAGS+=-DSTATIC_LIB -IInclude
 
+CXXFLAGS+=$(FREETYPE_INC)
+
 ifneq ($(USE_MINGW),YES)
-CXXFLAGS+=-I$(LOCALBASE)/include -fPIC $(FREETYPE_INC)
+CXXFLAGS+=-I$(LOCALBASE)/include -fPIC
 endif
 
 ifeq ($(DEBUG_BUILD),YES)
