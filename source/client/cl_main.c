@@ -2735,7 +2735,7 @@ static void CL_CheckForUpdate( void )
 	char *profileId;
 	int profileIdSize;
 	int headerNum = 0;
-	const char *headers[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	const char *headers[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 	if( !cl_checkForUpdate->integer )
 		return;
@@ -2773,6 +2773,10 @@ static void CL_CheckForUpdate( void )
 		headers[headerNum++] = "X-Profile-Id";
 		headers[headerNum++] = Q_strlwr( profileId );
 	}
+
+	// send language
+	headers[headerNum++] = "X-Lang";
+	headers[headerNum++] = L10n_GetUserLanguage();
 
 	CL_AsyncStreamRequest( url, headers, 15, 0, CL_CheckForUpdateReadCb, CL_CheckForUpdateDoneCb, 
 		CL_CheckForUpdateHeaderCb, NULL, qfalse );
