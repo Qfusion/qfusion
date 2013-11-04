@@ -1513,7 +1513,7 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 				(flags & IT_FLIPX) ? qtrue : qfalse, 
 				(flags & IT_FLIPY) ? qtrue : qfalse, 
 				(flags & IT_FLIPDIAGONAL) ? qtrue : qfalse );
-			data = &temp;
+			data = &r_imageBuffers[TEXTURE_FLIPPING_BUF0];
 		}
 
 		numTextures = 1;
