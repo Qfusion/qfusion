@@ -488,7 +488,8 @@ edict_t *W_Fire_GunbladeBlast( edict_t *self, vec3_t start, vec3_t angles, float
 /*
 * W_Fire_Bullet
 */
-void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int spread, float damage, int knockback, int stun, int mod, int timeDelta )
+void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int hspread, int vspread,
+	float damage, int knockback, int stun, int mod, int timeDelta )
 {
 	vec3_t dir;
 	edict_t *event;
@@ -514,8 +515,8 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	// circle shape
 	alpha = M_PI * Q_crandom( &seed ); // [-PI ..+PI]
 	s = fabs( Q_crandom( &seed ) ); // [0..1]
-	r = s * cos( alpha ) * spread;
-	u = s * sin( alpha ) * spread;
+	r = s * cos( alpha ) * hspread;
+	u = s * sin( alpha ) * vspread;
 
 	GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
 	if( trace.ent != -1 )
@@ -533,7 +534,7 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	}
 }
 
-void G_Fire_SpiralPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, int spread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
+static void G_Fire_SpiralPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, int spread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
 {
 	int i;
 	float r;
@@ -562,7 +563,37 @@ void G_Fire_SpiralPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, i
 	}
 }
 
-void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int spread,
+static void G_Fire_RandomPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, 
+	int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
+{
+	int i;
+	float r;
+	float u;
+	trace_t trace;
+
+	for( i = 0; i < count; i++ )
+	{
+		r = crandom() * hspread;
+		u = crandom() * vspread;
+
+		GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
+		if( trace.ent != -1 )
+		{
+			if( game.edicts[trace.ent].takedamage )
+			{
+				G_Damage( &game.edicts[trace.ent], self, self, dir, dir, trace.endpos, damage, kick, stun, dflags, mod );
+			}
+			else
+			{
+				if( !( trace.surfFlags & SURF_NOIMPACT ) )
+				{
+				}
+			}
+		}
+	}
+}
+
+void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int hspread, int vspread,
 					int count, float damage, int knockback, int stun, int mod, int timeDelta )
 {
 	vec3_t dir;
@@ -583,7 +614,8 @@ void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int r
 	if( mod == MOD_RIOTGUN_S )
 		event->s.weapon |= EV_INVERSE;
 
-	G_Fire_SpiralPattern( self, start, dir, &seed, count, spread, range, damage, knockback, stun, dmgflags, mod, timeDelta );
+	G_Fire_RandomPattern( self, start, dir, &seed, count, hspread, vspread,
+		range, damage, knockback, stun, dmgflags, mod, timeDelta );
 }
 
 /*

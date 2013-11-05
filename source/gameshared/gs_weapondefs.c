@@ -64,6 +64,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			0,                              // speed
 			0,                              // spread
+			0,                              // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -97,6 +98,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			0,                              // speed
 			0,                              // spread
+			0,                              // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -134,6 +136,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			3000,							// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			2,                              // weapon pickup amount
@@ -167,6 +170,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			0,								// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -204,6 +208,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			INSTANT,						// speed
 			175,							// spread
+			175,                            // v_spread
 
 			//ammo
 			50,                             // weapon pickup amount
@@ -237,6 +242,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			INSTANT,						// speed
 			175,							// spread
+			175,                            // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -273,7 +279,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//projectile def
 			INSTANT,						// speed
-			50,								// spread
+			1500,							// spread
+			500,                            // v_spread
 
 			//ammo
 			10,                             // weapon pickup amount
@@ -306,7 +313,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//projectile def
 			INSTANT,						// speed
-			70,								// spread
+			1500,							// spread
+			500,                            // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -344,6 +352,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			900,							// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			10,                             // weapon pickup amount
@@ -377,6 +386,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			900,							// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -414,6 +424,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			1100,							// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			10,                             // weapon pickup amount
@@ -447,6 +458,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			1100,							// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -484,6 +496,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			2400,							// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			75,                             // weapon pickup amount
@@ -516,7 +529,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//projectile def
 			2600,							// speed
-			90,							// spread
+			90,								// spread
+			0,                              // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -554,6 +568,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			INSTANT,						// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			75,                             // weapon pickup amount
@@ -587,10 +602,11 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			INSTANT,						// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
-			0,							// pickup amount
+			0,								// pickup amount
 			0								// max amount
 		},
 	},
@@ -624,6 +640,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			INSTANT,						// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			5,                              // weapon pickup amount
@@ -657,6 +674,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			6000,							// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -694,6 +712,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			INSTANT,						// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			5,                              // weapon pickup amount
@@ -727,6 +746,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			INSTANT,						// speed
 			0,								// spread
+			0,                              // v_spread
 
 			//ammo
 			5,                              // weapon pickup amount
