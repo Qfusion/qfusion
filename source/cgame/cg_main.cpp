@@ -817,7 +817,7 @@ void CG_OverrideWeapondef( int index, const char *cstring )
 		&firedef->v_spread
 		);
 
-	if( i != 9 )
+	if( i != 10 )
 		CG_Error( "CG_OverrideWeapondef: Bad configstring: %s \"%s\" (%i)\n", weapondef->name, cstring, i );
 }
 
