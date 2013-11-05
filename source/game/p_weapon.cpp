@@ -426,7 +426,7 @@ static edict_t *G_Fire_Machinegun( vec3_t origin, vec3_t angles, firedef_t *fire
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	W_Fire_Bullet( owner, origin, angles, seed, range, firedef->spread,
+	W_Fire_Bullet( owner, origin, angles, seed, range, firedef->spread, firedef->v_spread,
 		damage, knockback, stun, mod, timeDelta );
 
 	return NULL;
@@ -458,8 +458,8 @@ static edict_t *G_Fire_Riotgun( vec3_t origin, vec3_t angles, firedef_t *firedef
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
 
-	W_Fire_Riotgun( owner, origin, angles, seed, range, firedef->spread, firedef->projectile_count, 
-		damage, knockback, stun, mod, timeDelta );
+	W_Fire_Riotgun( owner, origin, angles, seed, range, firedef->spread, firedef->v_spread,
+		firedef->projectile_count, damage, knockback, stun, mod, timeDelta );
 
 	return NULL;
 }
