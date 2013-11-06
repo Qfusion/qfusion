@@ -1406,13 +1406,9 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 			shaderStrings[i] = ( char * )header[i - body_start];
 	}
 
+	// forward declare QF_DeformVerts
 	deformvIdx = i;
-	if( numDeforms ) {
-		// forward declare QF_DeformVerts
-		shaderStrings[i++] = R_GLSLBuildDeformv( deforms, numDeforms );
-	} else {
-		shaderStrings[i++] = "\n";
-	}
+	shaderStrings[i++] = R_GLSLBuildDeformv( deforms, numDeforms );
 
 	num_init_strings = i;
 
@@ -1439,6 +1435,9 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 
 	// vertex shader
 	shaderStrings[shaderTypeIdx] = "#define VERTEX_SHADER\n";
+	if( shaderStrings[deformvIdx] == NULL ) {
+		shaderStrings[deformvIdx] = "\n";
+	}
 	program->vertexShader = RP_CompileShader( program->object, fullName, "vertex", GL_VERTEX_SHADER_ARB, 
 		shaderStrings, num_shader_strings );
 	if( !program->vertexShader )

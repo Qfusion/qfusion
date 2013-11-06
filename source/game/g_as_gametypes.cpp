@@ -151,7 +151,7 @@ void GT_asCallThinkRules( void )
 		GT_asShutdownScript();
 }
 
-//"void GT_playerRespawn( cEntity @ent, int old_team, int new_team )"
+//"void GT_playerRespawn( Entity @ent, int old_team, int new_team )"
 void GT_asCallPlayerRespawn( edict_t *ent, int old_team, int new_team )
 {
 	int error;
@@ -176,7 +176,7 @@ void GT_asCallPlayerRespawn( edict_t *ent, int old_team, int new_team )
 		GT_asShutdownScript();
 }
 
-//"void GT_scoreEvent( cClient @client, String &score_event, String &args )"
+//"void GT_scoreEvent( Client @client, String &score_event, String &args )"
 void GT_asCallScoreEvent( gclient_t *client, const char *score_event, const char *args )
 {
 	int error;
@@ -248,7 +248,7 @@ char *GT_asCallScoreboardMessage( unsigned int maxlen )
 	return scoreboardString;
 }
 
-//"cEntity @GT_SelectSpawnPoint( cEntity @ent )"
+//"Entity @GT_SelectSpawnPoint( Entity @ent )"
 edict_t *GT_asCallSelectSpawnPoint( edict_t *ent )
 {
 	int error;
@@ -278,7 +278,7 @@ edict_t *GT_asCallSelectSpawnPoint( edict_t *ent )
 	return spot;
 }
 
-//"bool GT_Command( cClient @client, String &cmdString, String &argsString, int argc )"
+//"bool GT_Command( Client @client, String &cmdString, String &argsString, int argc )"
 bool GT_asCallGameCommand( gclient_t *client, const char *cmd, const char *args, int argc )
 {
 	int error;
@@ -318,7 +318,7 @@ bool GT_asCallGameCommand( gclient_t *client, const char *cmd, const char *args,
 	return ctx->GetReturnByte() == 0 ? false : true;
 }
 
-//"bool GT_UpdateBotStatus( cEntity @ent )"
+//"bool GT_UpdateBotStatus( Entity @ent )"
 bool GT_asCallBotStatus( edict_t *ent )
 {
 	int error;
@@ -424,7 +424,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "void GT_playerRespawn( cEntity @ent, int old_team, int new_team )";
+	fdeclstr = "void GT_playerRespawn( Entity @ent, int old_team, int new_team )";
 	level.gametype.playerRespawnFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.playerRespawnFunc )
 	{
@@ -434,7 +434,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "void GT_scoreEvent( cClient @client, String &score_event, String &args )";
+	fdeclstr = "void GT_scoreEvent( Client @client, String &score_event, String &args )";
 	level.gametype.scoreEventFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.scoreEventFunc )
 	{
@@ -454,7 +454,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "cEntity @GT_SelectSpawnPoint( cEntity @ent )";
+	fdeclstr = "Entity @GT_SelectSpawnPoint( Entity @ent )";
 	level.gametype.selectSpawnPointFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.selectSpawnPointFunc )
 	{
@@ -464,7 +464,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "bool GT_Command( cClient @client, String &cmdString, String &argsString, int argc )";
+	fdeclstr = "bool GT_Command( Client @client, String &cmdString, String &argsString, int argc )";
 	level.gametype.clientCommandFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.clientCommandFunc )
 	{
@@ -474,7 +474,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "bool GT_UpdateBotStatus( cEntity @ent )";
+	fdeclstr = "bool GT_UpdateBotStatus( Entity @ent )";
 	level.gametype.botStatusFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.botStatusFunc )
 	{
