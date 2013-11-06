@@ -804,7 +804,7 @@ void CG_OverrideWeapondef( int index, const char *cstring )
 
 	firedef = ( firemode == FIRE_MODE_STRONG ) ? &weapondef->firedef : &weapondef->firedef_weak;
 
-	i = sscanf( cstring, "%7i %7i %7u %7u %7u %7u %7u %7i %7i",
+	i = sscanf( cstring, "%7i %7i %7u %7u %7u %7u %7u %7i %7i %7i",
 		&firedef->usage_count,
 		&firedef->projectile_count,
 		&firedef->weaponup_time,
@@ -813,10 +813,11 @@ void CG_OverrideWeapondef( int index, const char *cstring )
 		&firedef->cooldown_time,
 		&firedef->timeout,
 		&firedef->speed,
-		&firedef->spread
+		&firedef->spread,
+		&firedef->v_spread
 		);
 
-	if( i != 9 )
+	if( i != 10 )
 		CG_Error( "CG_OverrideWeapondef: Bad configstring: %s \"%s\" (%i)\n", weapondef->name, cstring, i );
 }
 
