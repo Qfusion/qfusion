@@ -49,6 +49,8 @@ void G_Teams_Init( void )
 	memset( teamlist, 0, sizeof( teamlist ) );
 	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ )
 		teamlist[team].playerIndices[0] = -1;
+	playerlist[0] = -1;
+	playerlist_numplayers = 0;
 
 	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
 	{
@@ -123,13 +125,13 @@ void G_Teams_UpdateMembersList( void )
 			teamlist[team].ping /= teamlist[team].numplayers;
 		}
 	}
-	teamlist[GS_MAX_TEAMS].numplayers = 0;
+	playerlist_numplayers = 0;
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 	{
 		for( i = 0; i < teamlist[team].numplayers; i++ )
-			teamlist[GS_MAX_TEAMS].playerIndices[teamlist[GS_MAX_TEAMS].numplayers++] = teamlist[team].playerIndices[i];
+			playerlist[playerlist_numplayers++] = teamlist[team].playerIndices[i];
 	}
-	teamlist[GS_MAX_TEAMS].playerIndices[teamlist[GS_MAX_TEAMS].numplayers] = -1;
+	playerlist[playerlist_numplayers] = -1;
 }
 
 /*
