@@ -409,7 +409,7 @@ static const asEnumVal_t asPowerupTagEnumVals[] =
 	ASLIB_ENUM_VAL_NULL
 };
 
-static const asEnumVal_t asMisItemTagEnumVals[] =
+static const asEnumVal_t asMiscItemTagEnumVals[] =
 {
 	ASLIB_ENUM_VAL( AMMO_PACK_WEAK ),
 	ASLIB_ENUM_VAL( AMMO_PACK_STRONG ),
@@ -603,7 +603,7 @@ static const asEnum_t asEnums[] =
 	{ "armor_tag_e", asArmorTagEnumVals },
 	{ "health_tag_e", asHealthTagEnumVals },
 	{ "powerup_tag_e", asPowerupTagEnumVals },
-	{ "otheritems_tag_e", asMisItemTagEnumVals },
+	{ "otheritems_tag_e", asMiscItemTagEnumVals },
 
 	{ "client_statest_e", asClientStateEnumVals },
 	{ "sound_channels_e", asSoundChannelEnumVals },
