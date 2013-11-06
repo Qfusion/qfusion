@@ -496,12 +496,13 @@ void G_ChaseStep( edict_t *ent, int step )
 
 	if( !newtarget && teamlist[GS_MAX_TEAMS].numplayers )
 	{
-		i += step;
 		for( j = 0; j < gs.maxclients; j++ )
 		{
+			i += step;
 			if( i < 0 )
 				i += teamlist[GS_MAX_TEAMS].numplayers;
-			i %= teamlist[GS_MAX_TEAMS].numplayers;
+			else
+				i %= teamlist[GS_MAX_TEAMS].numplayers;
 			actual = teamlist[GS_MAX_TEAMS].playerIndices[i];
 			if( actual == start )
 				break;
@@ -510,7 +511,6 @@ void G_ChaseStep( edict_t *ent, int step )
 				newtarget = game.edicts + actual;
 				break;
 			}
-			i += step;
 		}
 	}
 
