@@ -100,7 +100,7 @@ BUILDDIRS=$(BUILDDIR)/client $(BUILDDIR)/ded $(BUILDDIR)/cgame $(BUILDDIR)/game 
 
 ###########################################################
 # Angelwrap stuff
-ANGELSCRIPT_DIR=../libsrcs/angelscript/angelSVN/sdk/angelscript
+ANGELSCRIPT_DIR=../libsrcs/angelscript/sdk/angelscript
 ifeq ($(USE_MINGW),YES)
 ifeq ($(CROSS_COMPILE),YES)
 ANGELSCRIPT_PROJECT_DIR=$(ANGELSCRIPT_DIR)/projects/gnuc

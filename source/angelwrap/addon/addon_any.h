@@ -6,6 +6,7 @@
 #include <angelscript.h>
 #endif
 
+
 BEGIN_AS_NAMESPACE
 
 class CScriptAny : public CScriptAnyInterface
@@ -48,6 +49,7 @@ protected:
 	void FreeObject();
 
 	mutable int refCount;
+	mutable bool gcFlag;
 	asIScriptEngine *engine;
 
 	// The structure for holding the values

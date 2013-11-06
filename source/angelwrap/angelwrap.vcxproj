@@ -85,7 +85,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\win32\include\msvc;..\..\libsrcs\angelscript\angelSVN\sdk\angelscript\include;..\..\libsrcs\angelscript\angelSVN\sdk\add_on\scriptarray;..\win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\win32\include\msvc;..\..\libsrcs\angelscript\sdk\angelscript\include;..\..\libsrcs\angelscript\sdk\add_on\scriptarray;..\win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -142,7 +142,7 @@
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\win32\include\msvc;..\..\libsrcs\angelscript\angelSVN\sdk\angelscript\include;..\..\libsrcs\angelscript\angelSVN\sdk\add_on\scriptarray;..\win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\win32\include\msvc;..\..\libsrcs\angelscript\sdk\angelscript\include;..\..\libsrcs\angelscript\sdk\add_on\scriptarray;..\win32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -243,7 +243,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\libsrcs\angelscript\angelSVN\sdk\angelscript\include\angelscript.h" />
+    <ClInclude Include="..\..\libsrcs\angelscript\sdk\angelscript\include\angelscript.h" />
     <ClInclude Include="..\gameshared\q_angeliface.h" />
     <ClInclude Include="..\gameshared\q_math.h" />
     <ClInclude Include="..\gameshared\q_shared.h" />

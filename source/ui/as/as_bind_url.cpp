@@ -154,7 +154,7 @@ CScriptDictionaryInterface *ASURL::GetParameters( void ) const
 
 	RocketURL::Parameters parameters = rocketURL.GetParameters();
 	for( RocketURL::Parameters::const_iterator it = parameters.begin(); it != parameters.end(); it++ ) {
-		dict->Set( ASSTR( it->first ), ASSTR( it->second ), stringObjectTypeId );
+		dict->Set( *(ASSTR( it->first )), ASSTR( it->second ), stringObjectTypeId );
 	}
 	return dict;
 }
