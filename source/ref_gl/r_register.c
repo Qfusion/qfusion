@@ -288,6 +288,8 @@ static const gl_extension_func_t gl_ext_framebuffer_object_EXT_funcs[] =
 static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 {
 	GL_EXTENSION_FUNC(BlitFramebufferEXT)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
 #ifdef _WIN32

@@ -73,25 +73,25 @@ public:
 	virtual void Release() const = 0;
 
 	// Sets/Gets a variable type value for a key
-	virtual void Set(const asstring_t *key, void *value, int typeId) = 0;
-	virtual bool Get(const asstring_t *key, void *value, int typeId) const = 0;
+	virtual void Set(const asstring_t &key, void *value, int typeId) = 0;
+	virtual bool Get(const asstring_t &key, void *value, int typeId) const = 0;
 
 	// Sets/Gets an integer number value for a key
-	virtual void Set(const asstring_t *key, qint64 &value) = 0;
-	virtual bool Get(const asstring_t *key, qint64 &value) const = 0;
+	virtual void Set(const asstring_t &key, qint64 &value) = 0;
+	virtual bool Get(const asstring_t &key, qint64 &value) const = 0;
 
 	// Sets/Gets a real number value for a key
-	virtual void Set(const asstring_t *key, double &value) = 0;
-	virtual bool Get(const asstring_t *key, double &value) const = 0;
+	virtual void Set(const asstring_t &key, double &value) = 0;
+	virtual bool Get(const asstring_t &key, double &value) const = 0;
 
 	// Returns true if the key is set
-	virtual bool Exists(const asstring_t *key) const = 0;
+	virtual bool Exists(const asstring_t &key) const = 0;
 
 	// Deletes the key
-	virtual void Delete(const asstring_t *key) = 0;
+	virtual void Delete(const asstring_t &key) = 0;
 
 	// Deletes all keys
-	virtual void Clear() = 0;
+	virtual void DeleteAll() = 0;
 };
 
 class CScriptAnyInterface
