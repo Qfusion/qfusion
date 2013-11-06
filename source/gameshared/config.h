@@ -30,7 +30,6 @@
 //#define PURE_CHEAT
 
 //#define ANTICHEAT_MODULE
-//#define ALLOWBYNNY_VOTE
 
 #define MATCHMAKER_SUPPORT
 

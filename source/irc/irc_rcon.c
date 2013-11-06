@@ -4,7 +4,9 @@
 #include "irc_protocol.h"
 
 #ifdef _WIN32
-#	define strcasecmp stricmp
+#	ifndef strcasecmp
+#		define strcasecmp stricmp
+#	endif
 #endif
 
 typedef struct irc_rcon_user_s {
