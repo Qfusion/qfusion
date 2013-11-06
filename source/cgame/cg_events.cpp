@@ -603,13 +603,13 @@ static void CG_Event_FireMachinegun( vec3_t origin, vec3_t dir, int weapon, int 
 	trace_t trace, *water_trace;
 	gs_weapon_definition_t *weapondef = GS_GetWeaponDef( weapon );
 	firedef_t *firedef = ( firemode ) ? &weapondef->firedef : &weapondef->firedef_weak;
-	int range = firedef->timeout, spread = firedef->spread;
+	int range = firedef->timeout, hspread = firedef->spread, vspread = firedef->v_spread;
 
 	// circle shape
 	alpha = M_PI * Q_crandom( &seed ); // [-PI ..+PI]
 	s = fabs( Q_crandom( &seed ) ); // [0..1]
-	r = s * cos( alpha ) * spread;
-	u = s * sin( alpha ) * spread;
+	r = s * cos( alpha ) * hspread;
+	u = s * sin( alpha ) * vspread;
 
 	water_trace = GS_TraceBullet( &trace, origin, dir, r, u, range, owner, 0 );
 	if( water_trace )
@@ -673,6 +673,40 @@ static void CG_Fire_SpiralPattern( vec3_t start, vec3_t dir, int *seed, int igno
 }
 
 /*
+* CG_Fire_RandomPattern
+*/
+static void CG_Fire_RandomPattern( vec3_t start, vec3_t dir, int *seed, int ignore, int count, 
+	int hspread, int vspread, int range, void ( *impact )(trace_t *tr) )
+{
+	int i;
+	float r;
+	float u;
+	trace_t trace, *water_trace;
+
+	assert( seed );
+
+	for( i = 0; i < count; i++ )
+	{
+		r = crandom() * hspread;
+		u = crandom() * vspread;
+
+		water_trace = GS_TraceBullet( &trace, start, dir, r, u, range, ignore, 0 );
+		if( water_trace )
+		{
+			trace_t *tr = water_trace;
+			if( !VectorCompare( tr->endpos, start ) )
+				CG_LeadWaterSplash( tr );
+		}
+
+		if( trace.ent != -1 && !( trace.surfFlags & SURF_NOIMPACT ) )
+			impact( &trace );
+
+		if( water_trace )
+			CG_LeadBubbleTrail( &trace, water_trace->endpos );
+	}
+}
+
+/*
 * CG_Event_FireRiotgun
 */
 static void CG_Event_FireRiotgun( vec3_t origin, vec3_t dir, int weapon, int firemode, int seed, int owner ) 
@@ -682,7 +716,8 @@ static void CG_Event_FireRiotgun( vec3_t origin, vec3_t dir, int weapon, int fir
 	gs_weapon_definition_t *weapondef = GS_GetWeaponDef( weapon );
 	firedef_t *firedef = ( firemode ) ? &weapondef->firedef : &weapondef->firedef_weak;
 
-	CG_Fire_SpiralPattern( origin, dir, &seed, owner, firedef->projectile_count, firedef->spread, firedef->timeout, CG_BulletImpact );
+	CG_Fire_RandomPattern( origin, dir, &seed, owner, firedef->projectile_count, 
+		firedef->spread, firedef->v_spread, firedef->timeout, CG_BulletImpact );
 
 	// spawn a single sound at the impact
 	VectorMA( origin, firedef->timeout, dir, end );
