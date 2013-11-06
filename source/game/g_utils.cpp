@@ -2122,7 +2122,7 @@ void G_PrecacheWeapondef( int weapon, firedef_t *firedef )
 	if( !firedef )
 		return;
 
-	Q_snprintfz( cstring, sizeof(cstring), "%i %i %u %u %u %u %u %i %i",
+	Q_snprintfz( cstring, sizeof(cstring), "%i %i %u %u %u %u %u %i %i %i",
 		firedef->usage_count, 
 		firedef->projectile_count,
 		firedef->weaponup_time,
@@ -2131,7 +2131,8 @@ void G_PrecacheWeapondef( int weapon, firedef_t *firedef )
 		firedef->cooldown_time,
 		firedef->timeout,
 		firedef->speed,
-		firedef->spread
+		firedef->spread,
+		firedef->v_spread
 		);
 
 	if( firedef->fire_mode == FIRE_MODE_WEAK )
@@ -2225,6 +2226,7 @@ static bool G_ParseFiredefFile( qbyte *buf, int weapon, firedef_t *firedef )
 
 	firedef->speed = (int)parm[count++];
 	firedef->spread = (int)parm[count++];
+	firedef->v_spread = (int)parm[count++];
 
 	firedef->ammo_pickup = (int)parm[count++];
 	firedef->ammo_max = (int)parm[count++];
