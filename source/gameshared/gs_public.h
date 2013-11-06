@@ -1106,7 +1106,8 @@ typedef struct firedef_s
 
 	// projectile def
 	int speed;
-	int spread;
+	int spread;		// horizontal spread
+	int v_spread;	// vertical spread
 
 	// ammo amounts
 	int weapon_pickup;
