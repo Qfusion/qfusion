@@ -614,10 +614,9 @@ int *parse_xpm_icon ( int num_xpm_elements, char *xpm_data[] );
 static void GLimp_SetApplicationIcon( void )
 {
 #include "qfusion128x128.xpm"
-
 	const int *xpm_icon;
 
-	xpm_icon = parse_xpm_icon( sizeof( qfusion128x128_xpm ) / sizeof( qfusion128x128_xpm[0] ), qfusion128x128_xpm );
+	xpm_icon = parse_xpm_icon( sizeof( app128x128_xpm ) / sizeof( app128x128_xpm[0] ), app128x128_xpm );
 	if( xpm_icon )
 	{
 		GLimp_SetXPMIcon( xpm_icon );

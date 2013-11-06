@@ -42,19 +42,19 @@ typedef struct
 	const char * declaration;
 } asFuncdef_t;
 
-typedef struct
+typedef struct asBehavior_s
 {
 	asEBehaviours behavior;
 	const char * declaration;
 	asSFuncPtr funcPointer;
-	int callConv;
+	asECallConvTypes callConv;
 } asBehavior_t;
 
 typedef struct
 {
 	const char * declaration;
 	asSFuncPtr funcPointer;
-	int callConv;
+	asECallConvTypes callConv;
 } asMethod_t;
 
 typedef struct
@@ -108,8 +108,8 @@ static void asnullfunc(void) {}
 
 #define ASLIB_FUNCTION_NULL						NULL
 #define ASLIB_FUNCDEF_NULL						{ ASLIB_FUNCTION_NULL }
-#define ASLIB_BEHAVIOR_NULL						{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), 0 }
-#define ASLIB_METHOD_NULL						{ ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), 0 }
+#define ASLIB_BEHAVIOR_NULL						{ asBEHAVE_CONSTRUCT, ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), asCALL_CDECL }
+#define ASLIB_METHOD_NULL						{ ASLIB_FUNCTION_NULL, asFUNCTION(asnullfunc), asCALL_CDECL }
 #define ASLIB_PROPERTY_NULL						{ NULL, 0 }
 
 #define ASLIB_Malloc(s)							(aslib_import.Mem_Alloc(s,__FILE__,__LINE__))

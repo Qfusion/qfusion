@@ -87,7 +87,7 @@ static CScriptDictionaryInterface *Event_GetParameters( Event *self ) {
 	Rocket::Core::String name;
 	Rocket::Core::String value;
 	while( parameters->Iterate( index, name, value ) ) {
-		dict->Set( ASSTR( name ), ASSTR( value ), stringObjectTypeId );
+		dict->Set( *(ASSTR( name )), ASSTR( value ), stringObjectTypeId );
 	}
 
 	return dict;
@@ -868,9 +868,6 @@ void BindElement( ASInterface *as )
 		.method( &Element_HasAttribute, "hasAttr", true )
 		.method( &Element_RemoveAttribute, "removeAttr", true )
 		.method( &Element::GetNumAttributes, "numAttr" )
-		// jquery
-		.method( &Element_SetAttribute, "attr", true )
-		.method( &Element_GetAttribute, "attr", true )
 
 		// dom
 		.constmethod( &Element_GetTagName, "get_tagName", true )

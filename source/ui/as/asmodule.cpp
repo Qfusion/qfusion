@@ -378,8 +378,7 @@ public:
 		int functionCount = engine->GetGlobalFunctionCount();
 		for( i = 0; i < functionCount; i++ )
 		{
-			int funcId = engine->GetGlobalFunctionIdByIndex( i );
-			asIScriptFunction *func = engine->GetFunctionById( funcId );
+			asIScriptFunction *func = engine->GetGlobalFunctionByIndex( i );
 			if( func )
 			{
 				const char *decl = va( "%s;\r\n", func->GetDeclaration( false ) );
@@ -430,10 +429,9 @@ public:
 				{
 					// ch : FIXME: obscure function names in behaviours
 					asEBehaviours behaviourType;
-					int funcId = objectType->GetBehaviourByIndex( j, &behaviourType );
+					asIScriptFunction *function = objectType->GetBehaviourByIndex( j, &behaviourType );
 					if( behaviourType == asBEHAVE_ADDREF || behaviourType == asBEHAVE_RELEASE )
 						continue;
-					asIScriptFunction *function = engine->GetFunctionById( funcId );
 					const char *decl = va( "\t%s;&s\r\n", function->GetDeclaration( false ),
 							( behaviourType == asBEHAVE_FACTORY ? " /* factory */ " : "" ) );
 					trap::FS_Write( decl, strlen( decl ), filenum );
