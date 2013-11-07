@@ -139,6 +139,7 @@ typedef struct
 
 	bool isTeamBased;
 	bool isRace;
+	bool inverseScore;
 	bool hasChallengersQueue;
 	int maxPlayersPerTeam;
 
