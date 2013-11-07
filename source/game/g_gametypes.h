@@ -184,8 +184,6 @@ typedef struct
 } g_teamlist_t;
 
 extern g_teamlist_t teamlist[GS_MAX_TEAMS];
-extern int playerlist[MAX_CLIENTS];
-extern int playerlist_numplayers;
 
 //clock
 extern char clockstring[16];

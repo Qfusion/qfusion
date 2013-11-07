@@ -46,7 +46,6 @@ void G_Teams_Init( void )
 
 	//unlock all teams and clear up team lists
 	memset( teamlist, 0, sizeof( teamlist ) );
-	playerlist_numplayers = 0;
 
 	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
 	{
@@ -117,12 +116,6 @@ void G_Teams_UpdateMembersList( void )
 				teamlist[team].ping += game.edicts[teamlist[team].playerIndices[i]].r.client->r.ping;
 			teamlist[team].ping /= teamlist[team].numplayers;
 		}
-	}
-	playerlist_numplayers = 0;
-	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
-	{
-		for( i = 0; i < teamlist[team].numplayers; i++ )
-			playerlist[playerlist_numplayers++] = teamlist[team].playerIndices[i];
 	}
 }
 
