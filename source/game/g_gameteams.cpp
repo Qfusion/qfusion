@@ -124,7 +124,6 @@ void G_Teams_UpdateMembersList( void )
 		for( i = 0; i < teamlist[team].numplayers; i++ )
 			playerlist[playerlist_numplayers++] = teamlist[team].playerIndices[i];
 	}
-	playerlist[playerlist_numplayers] = -1;
 }
 
 /*
