@@ -326,7 +326,7 @@ void G_EndServerFrames_UpdateChaseCam( void )
 	// do it by teams, so spectators can copy the chasecam information from players
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 	{
-		for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[team].numplayers; i++ )
 		{
 			ent = game.edicts + teamlist[team].playerIndices[i];
 			if( trap_GetClientState( PLAYERNUM(ent) ) < CS_SPAWNED )
@@ -341,7 +341,7 @@ void G_EndServerFrames_UpdateChaseCam( void )
 
 	// Do spectators last
 	team = TEAM_SPECTATOR;
-	for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+	for( i = 0; i < teamlist[team].numplayers; i++ )
 	{
 		ent = game.edicts + teamlist[team].playerIndices[i];
 		if( trap_GetClientState( PLAYERNUM(ent) ) < CS_SPAWNED )

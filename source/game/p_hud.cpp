@@ -152,7 +152,7 @@ void G_ScoreboardMessage_AddSpectators( void )
 	Q_strncpyz( entry, "&s ", sizeof(entry) );
 	ADD_SCOREBOARD_ENTRY( scoreboardString, len, entry );
 
-	for( i = 0; teamlist[TEAM_SPECTATOR].playerIndices[i] != -1; i++ )
+	for( i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ )
 	{
 		e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[i];
 
@@ -170,7 +170,7 @@ void G_ScoreboardMessage_AddSpectators( void )
 	}
 
 	// add connecting spectators
-	for( i = 0; teamlist[TEAM_SPECTATOR].playerIndices[i] != -1; i++ )
+	for( i = 0; i < teamlist[TEAM_SPECTATOR].numplayers; i++ )
 	{
 		e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[i];
 
