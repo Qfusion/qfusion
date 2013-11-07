@@ -112,7 +112,7 @@ void G_Gametype_GENERIC_SetUpMatch( void )
 		memset( &team->stats, 0, sizeof( team->stats ) );
 
 		// respawn all clients inside the playing teams
-		for( j = 0; team->playerIndices[j] != -1; j++ )
+		for( j = 0; j < team->numplayers; j++ )
 		{
 			edict_t *ent = &game.edicts[ team->playerIndices[j] ];
 			G_ClientClearStats( ent );
@@ -212,7 +212,7 @@ char *G_Gametype_GENERIC_ScoreboardMessage( void )
 	}
 
 	// players
-	for( i = 0; teamlist[TEAM_PLAYERS].playerIndices[i] != -1; i++ )
+	for( i = 0; i < teamlist[TEAM_PLAYERS].numplayers; i++ )
 	{
 		e = game.edicts + teamlist[TEAM_PLAYERS].playerIndices[i];
 
@@ -563,7 +563,7 @@ void G_Match_Autorecord_Start( void )
 	for( playerCount = 0, team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 	{
 		// add our team info to the string
-		for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[team].numplayers; i++ )
 		{
 			if( game.edicts[ teamlist[team].playerIndices[i] ].r.svflags & SVF_FAKECLIENT )
 				continue;
@@ -1031,7 +1031,7 @@ static void G_Match_ScoreAnnouncement( void )
 	{
 		int score_max = -999999999;
 
-		for( i = 0; i < MAX_CLIENTS && teamlist[TEAM_PLAYERS].playerIndices[i] != -1; i++ )
+		for( i = 0; i < MAX_CLIENTS && i < teamlist[TEAM_PLAYERS].numplayers; i++ )
 		{
 			if( game.clients[teamlist[TEAM_PLAYERS].playerIndices[i]-1].level.stats.score > score_max )
 			{
@@ -1228,7 +1228,7 @@ void G_Match_CheckReadys( void )
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 	{
 		readys = notreadys = 0;
-		for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[team].numplayers; i++ )
 		{
 			e = game.edicts + teamlist[team].playerIndices[i];
 
@@ -1743,7 +1743,7 @@ static void G_CheckEvenTeam( void )
 
 	if( max - min > 1 )
 	{
-		for( i = 0; teamlist[uneven_team].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[uneven_team].numplayers; i++ )
 		{
 			edict_t	*e = game.edicts + teamlist[uneven_team].playerIndices[i];
 			if( !e->r.inuse )
