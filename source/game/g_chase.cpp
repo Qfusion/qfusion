@@ -473,12 +473,15 @@ void G_ChaseStep( edict_t *ent, int step )
 	int start;
 	edict_t *newtarget = NULL;
 
+	assert( step == -1 || step == 0 || step == 1 );
+
 	if( !ent->r.client->resp.chase.active )
 		return;
 
 	start = ent->r.client->resp.chase.target;
 	i = -1;
-	player_found = qfalse;
+	player_found = qfalse; // needed to prevent an infinite loop if there are no players
+	// find the team of the previously chased player and his index in the sorted teamlist
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 	{
 		for( j = 0; j < teamlist[team].numplayers; j++ )
@@ -496,6 +499,7 @@ void G_ChaseStep( edict_t *ent, int step )
 
 	if( step == 0 )
 	{
+		// keep chasing the current player if possible
 		if( i >= 0 && G_Chase_IsValidTarget( ent, game.edicts + start, ent->r.client->resp.chase.teamonly ) )
 			newtarget = game.edicts + start;
 		else
@@ -504,9 +508,15 @@ void G_ChaseStep( edict_t *ent, int step )
 
 	if( !newtarget && player_found )
 	{
+		// reset the team if the previously chased player was not found
+		if( team == GS_MAX_TEAMS )
+			team = TEAM_PLAYERS;
 		for( j = 0; j < gs.maxclients; j++ )
 		{
+			// at this point step is -1 or 1
 			i += step;
+			// change to the previous team if we skipped before the start of this one
+			// the loop assures empty teams before this team are skipped as well
 			while( i < 0 )
 			{
 				team--;
@@ -514,6 +524,7 @@ void G_ChaseStep( edict_t *ent, int step )
 					team = GS_MAX_TEAMS - 1;
 				i = teamlist[team].numplayers - 1;
 			}
+			// similarly, change to the next team if we skipped past the end of this one
 			while( i >= teamlist[team].numplayers )
 			{
 				team++;
@@ -523,19 +534,18 @@ void G_ChaseStep( edict_t *ent, int step )
 			}
 			actual = teamlist[team].playerIndices[i];
 			if( actual == start )
-				break;
+				break; // back at the original player, no need to waste time
 			if( G_Chase_IsValidTarget( ent, game.edicts + actual, ent->r.client->resp.chase.teamonly ) )
-			{	
+			{
 				newtarget = game.edicts + actual;
 				break;
 			}
+			// make another step if this player is not valid
 		}
 	}
 
 	if( newtarget )
-	{
 		G_ChasePlayer( ent, va( "%i", PLAYERNUM( newtarget ) ), ent->r.client->resp.chase.teamonly, ent->r.client->resp.chase.followmode );
-	}
 }
 
 /*
