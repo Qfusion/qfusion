@@ -61,7 +61,7 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 	int maxteam;
 	int flags[GS_MAX_TEAMS];
 	int newctfpov, newpoweruppov;
-	int score_max;
+	int score_best;
 	int newpov = -1;
 	edict_t *target;
 	static int ctfpov = -1, poweruppov = -1;
@@ -90,7 +90,9 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 	}
 
 	// find what players have what
-	score_max = -999999999;
+	score_best = -999999999;
+	if( level.gametype.inverseScore )
+		score_best *= -1;
 	quad = warshell = regen = scorelead = -1;
 	memset( flags, -1, sizeof( flags ) );
 	newctfpov = newpoweruppov = -1;
@@ -129,9 +131,10 @@ static int G_Chase_FindFollowPOV( edict_t *ent )
 		}
 
 		// find the scoring leader
-		if( target->r.client->ps.stats[STAT_SCORE] > score_max )
+		if( ( !level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] > score_best )
+				|| ( level.gametype.inverseScore && target->r.client->ps.stats[STAT_SCORE] < score_best ) )
 		{
-			score_max = target->r.client->ps.stats[STAT_SCORE];
+			score_best = target->r.client->ps.stats[STAT_SCORE];
 			scorelead = ENTNUM( target );
 		}
 	}
@@ -323,7 +326,7 @@ void G_EndServerFrames_UpdateChaseCam( void )
 	// do it by teams, so spectators can copy the chasecam information from players
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 	{
-		for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[team].numplayers; i++ )
 		{
 			ent = game.edicts + teamlist[team].playerIndices[i];
 			if( trap_GetClientState( PLAYERNUM(ent) ) < CS_SPAWNED )
@@ -338,7 +341,7 @@ void G_EndServerFrames_UpdateChaseCam( void )
 
 	// Do spectators last
 	team = TEAM_SPECTATOR;
-	for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+	for( i = 0; i < teamlist[team].numplayers; i++ )
 	{
 		ent = game.edicts + teamlist[team].playerIndices[i];
 		if( trap_GetClientState( PLAYERNUM(ent) ) < CS_SPAWNED )
@@ -464,37 +467,66 @@ void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmod
 */
 void G_ChaseStep( edict_t *ent, int step )
 {
-	int i, j;
+	int i, j, team;
+	qboolean player_found;
+	int actual;
 	int start;
 	edict_t *newtarget = NULL;
 
 	if( !ent->r.client->resp.chase.active )
 		return;
 
-	i = start = ent->r.client->resp.chase.target;
+	start = ent->r.client->resp.chase.target;
+	i = -1;
+	player_found = qfalse;
+	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
+	{
+		for( j = 0; j < teamlist[team].numplayers; j++ )
+		{
+			player_found = qtrue;
+			if( teamlist[team].playerIndices[j] == start )
+			{
+				i = j;
+				break;
+			}
+		}
+		if( j != teamlist[team].numplayers )
+			break;
+	}
 
 	if( step == 0 )
 	{
-		if( G_Chase_IsValidTarget( ent, game.edicts + i, ent->r.client->resp.chase.teamonly ) )
-			newtarget = game.edicts + i;
+		if( i >= 0 && G_Chase_IsValidTarget( ent, game.edicts + start, ent->r.client->resp.chase.teamonly ) )
+			newtarget = game.edicts + start;
 		else
 			step = 1;
 	}
 
-	if( !newtarget )
+	if( !newtarget && player_found )
 	{
 		for( j = 0; j < gs.maxclients; j++ )
 		{
 			i += step;
-			if( i < 1 )
-				i = gs.maxclients;
-			else if( i > gs.maxclients )
-				i = 1;
-			if( i == start )
+			while( i < 0 )
+			{
+				team--;
+				if( team < TEAM_PLAYERS )
+					team = GS_MAX_TEAMS - 1;
+				i = teamlist[team].numplayers - 1;
+			}
+			while( i >= teamlist[team].numplayers )
+			{
+				team++;
+				if( team == GS_MAX_TEAMS )
+					team = TEAM_PLAYERS;
+				i = 0;
+			}
+			actual = teamlist[team].playerIndices[i];
+			if( actual == start )
 				break;
-			if( G_Chase_IsValidTarget( ent, game.edicts + i, ent->r.client->resp.chase.teamonly ) )
+			if( G_Chase_IsValidTarget( ent, game.edicts + actual, ent->r.client->resp.chase.teamonly ) )
 			{	
-				newtarget = game.edicts + i;
+				newtarget = game.edicts + actual;
 				break;
 			}
 		}
@@ -559,7 +591,7 @@ void Cmd_ChaseCam_f( edict_t *ent )
 	}
 	else if( !Q_stricmp( arg1, "score" ) )
 	{
-		G_PrintMsg( ent, "Chasecam mode is 'score'. It will always follow the highest fragger.\n" );
+		G_PrintMsg( ent, "Chasecam mode is 'score'. It will always follow the player with the best score.\n" );
 		G_ChasePlayer( ent, NULL, team_only, 1 );
 	}
 	else if( !Q_stricmp( arg1, "fragger" ) )

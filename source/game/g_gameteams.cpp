@@ -33,7 +33,6 @@ cvar_t *g_teams_allow_uneven;
 */
 void G_Teams_Init( void )
 {
-	int team;
 	edict_t	*ent;
 
 	// set the team names with default ones
@@ -47,8 +46,6 @@ void G_Teams_Init( void )
 
 	//unlock all teams and clear up team lists
 	memset( teamlist, 0, sizeof( teamlist ) );
-	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ )
-		teamlist[team].playerIndices[0] = -1;
 
 	for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients; ent++ )
 	{
@@ -66,6 +63,20 @@ void G_Teams_Init( void )
 
 }
 
+static int G_Teams_CompareMembers( const void *a, const void *b )
+{
+	edict_t *edict_a = game.edicts + *(int *)a;
+	edict_t *edict_b = game.edicts + *(int *)b;
+	int score_a = edict_a->r.client->level.stats.score;
+	int score_b = edict_b->r.client->level.stats.score;
+	int result = ( level.gametype.inverseScore ? -1 : 1 ) * ( score_b - score_a );
+	if (!result)
+		result = Q_stricmp( edict_a->r.client->netname, edict_b->r.client->netname );
+	if (!result)
+		result = ENTNUM( edict_a ) - ENTNUM( edict_b );
+	return result;
+}
+
 /*
 * G_Teams_UpdateMembersList
 * It's better to count the list in detail once per fame, than
@@ -73,14 +84,8 @@ void G_Teams_Init( void )
 */
 void G_Teams_UpdateMembersList( void )
 {
-	static int list[MAX_CLIENTS];
-	static int sorted[MAX_CLIENTS];
-	static int count;
-
 	edict_t	*ent;
 	int i, team;
-	int bestscore;
-	int bestplayer = 0;
 
 	for( team = TEAM_SPECTATOR; team < GS_MAX_TEAMS; team++ )
 	{
@@ -88,7 +93,6 @@ void G_Teams_UpdateMembersList( void )
 		teamlist[team].ping = 0;
 		teamlist[team].has_coach = false;
 
-		count = 0;
 		//create a temp list with the clients inside this team
 		for( i = 0, ent = game.edicts + 1; i < gs.maxclients; i++, ent++ )
 		{
@@ -97,52 +101,21 @@ void G_Teams_UpdateMembersList( void )
 
 			if( ent->s.team == team )
 			{
-				list[count] = ENTNUM( ent );
-				count++;
+				teamlist[team].playerIndices[teamlist[team].numplayers++] = ENTNUM( ent );
 
 				if( ent->r.client->teamstate.is_coach )
 					teamlist[team].has_coach = true;
 			}
 		}
 
-		if( count )
-		{
-			memset( sorted, 0, sizeof( int )*MAX_CLIENTS );
-			bestplayer = -2;
-			while( bestplayer != -1 )
-			{
-				bestscore = -9999;
-				bestplayer = -1;
-				//now sort them by their score
-				for( i = 0; i < count; i++ )
-				{
-					if( !sorted[i] )
-					{
-						int score;
-						ent = game.edicts + list[i];
-						score = ent->r.client->level.stats.score;
-						if( score >= bestscore )
-						{
-							bestplayer = i;
-							bestscore = score;
-						}
-					}
-				}
+		qsort( teamlist[team].playerIndices, teamlist[team].numplayers, sizeof( teamlist[team].playerIndices[0] ), G_Teams_CompareMembers );
 
-				if( bestplayer > -1 )
-				{
-					sorted[bestplayer] = true;
-					teamlist[team].playerIndices[teamlist[team].numplayers] = list[bestplayer];
-					teamlist[team].numplayers++;
-					teamlist[team].ping += game.edicts[list[bestplayer]].r.client->r.ping;
-				}
-			}
-		}
-
-		//terminate the list with -1
-		teamlist[team].playerIndices[teamlist[team].numplayers] = -1;
 		if( teamlist[team].numplayers )
+		{
+			for( i = 0; i < teamlist[team].numplayers; i++ )
+				teamlist[team].ping += game.edicts[teamlist[team].playerIndices[i]].r.client->r.ping;
 			teamlist[team].ping /= teamlist[team].numplayers;
+		}
 	}
 }
 
@@ -678,7 +651,7 @@ void G_Teams_UpdateTeamInfoMessages( void )
 		len = strlen( teammessage );
 
 		// add our team info to the string
-		for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[team].numplayers; i++ )
 		{
 			ent = game.edicts + teamlist[team].playerIndices[i];
 
@@ -713,7 +686,7 @@ void G_Teams_UpdateTeamInfoMessages( void )
 			len = strlen( teammessage );
 		}
 
-		for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[team].numplayers; i++ )
 		{
 			ent = game.edicts + teamlist[team].playerIndices[i];
 
@@ -723,7 +696,7 @@ void G_Teams_UpdateTeamInfoMessages( void )
 			trap_GameCmd( ent, teammessage );
 
 			// see if there are spectators chasing this player and send them the layout too
-			for( j = 0; teamlist[TEAM_SPECTATOR].playerIndices[j] != -1; j++ )
+			for( j = 0; j < teamlist[TEAM_SPECTATOR].numplayers; j++ )
 			{
 				e = game.edicts + teamlist[TEAM_SPECTATOR].playerIndices[j];
 
@@ -868,7 +841,7 @@ static edict_t *G_Teams_BestScoreBelow( int maxscore )
 	{
 		for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
 		{
-			for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+			for( i = 0; i < teamlist[team].numplayers; i++ )
 			{
 				e = game.edicts + teamlist[team].playerIndices[i];
 				if( e->r.client->level.stats.score > bestScore &&
@@ -883,7 +856,7 @@ static edict_t *G_Teams_BestScoreBelow( int maxscore )
 	}
 	else
 	{
-		for( i = 0; teamlist[TEAM_PLAYERS].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[TEAM_PLAYERS].numplayers; i++ )
 		{
 			e = game.edicts + teamlist[TEAM_PLAYERS].playerIndices[i];
 			if( e->r.client->level.stats.score > bestScore &&
@@ -939,7 +912,7 @@ void G_Teams_AdvanceChallengersQueue( void )
 	// put everyone who just played out of the challengers queue
 	for( team = START_TEAM; team < END_TEAM; team++ )
 	{
-		for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+		for( i = 0; i < teamlist[team].numplayers; i++ )
 		{
 			e = game.edicts + teamlist[team].playerIndices[i];
 			e->r.client->queueTimeStamp = 0;

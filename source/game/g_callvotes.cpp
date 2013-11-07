@@ -2087,7 +2087,7 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 			if( !teamlist[team].numplayers )
 				continue;
 
-			for( i = 0; teamlist[team].playerIndices[i] != -1; i++ )
+			for( i = 0; i < teamlist[team].numplayers; i++ )
 			{
 				e = game.edicts + teamlist[team].playerIndices[i];
 				if( e->r.inuse && e->r.svflags & SVF_FAKECLIENT )
