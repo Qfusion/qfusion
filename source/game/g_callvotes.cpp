@@ -1991,21 +1991,27 @@ void G_CallVotes_CmdVote( edict_t *ent )
 		return;
 	}
 
-	if( clientVoted[PLAYERNUM( ent )] != VOTED_NOTHING )
-	{
-		G_PrintMsg( ent, "%sYou have already voted\n", S_COLOR_RED );
-		return;
-	}
-
 	vote = trap_Cmd_Argv( 1 );
 	if( !Q_stricmp( vote, "yes" ) )
 	{
+		if( clientVoted[PLAYERNUM( ent )] == VOTED_YES )
+		{
+			G_PrintMsg( ent, "%sYou have already voted yes\n", S_COLOR_RED );
+			return;
+		}
+
 		clientVoted[PLAYERNUM( ent )] = VOTED_YES;
 		G_CallVotes_CheckState();
 		return;
 	}
 	else if( !Q_stricmp( vote, "no" ) )
 	{
+		if( clientVoted[PLAYERNUM( ent )] == VOTED_NO )
+		{
+			G_PrintMsg( ent, "%sYou have already voted no\n", S_COLOR_RED );
+			return;
+		}
+
 		clientVoted[PLAYERNUM( ent )] = VOTED_NO;
 		G_CallVotes_CheckState();
 		return;
