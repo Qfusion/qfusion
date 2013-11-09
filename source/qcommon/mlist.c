@@ -396,9 +396,10 @@ void ML_Init( void )
 	else
 		ML_InitFromMaps();
 
+	ml_initialized = qtrue;
+
 	ML_BuildCache();
 
-	ml_initialized = qtrue;
 	ml_flush = qtrue;
 }
 
@@ -413,11 +414,11 @@ void ML_Shutdown( void )
 	if( !ml_initialized )
 		return;
 
+	ML_BuildCache();
+
 	ml_initialized = qfalse;
 
 	Cmd_RemoveCommand( "maplist" );
-
-	ML_BuildCache();
 
 	Trie_Destroy( mlist_filenames_trie );
 	Trie_Destroy( mlist_fullnames_trie );
