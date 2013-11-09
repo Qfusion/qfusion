@@ -582,7 +582,7 @@ const char *ML_GetFullname( const char *filename )
 	filepath = va( "maps/%s.bsp", filename );
 	COM_SanitizeFilePath( filepath );
 
-	if( !ML_ValidateFilename( filepath ) )
+	if( !ML_ValidateFilename( filename ) )
 		return MLIST_NULL;
 	/*
 	if( FS_FOpenFile( filepath, NULL, FS_READ ) == -1 )
