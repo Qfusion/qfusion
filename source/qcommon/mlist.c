@@ -396,8 +396,6 @@ void ML_Init( void )
 	else
 		ML_InitFromMaps();
 
-	ML_BuildCache();
-
 	ml_initialized = qtrue;
 	ml_flush = qtrue;
 }
@@ -413,11 +411,11 @@ void ML_Shutdown( void )
 	if( !ml_initialized )
 		return;
 
+	ML_BuildCache();
+
 	ml_initialized = qfalse;
 
 	Cmd_RemoveCommand( "maplist" );
-
-	ML_BuildCache();
 
 	Trie_Destroy( mlist_filenames_trie );
 	Trie_Destroy( mlist_fullnames_trie );
@@ -573,19 +571,20 @@ qboolean ML_FilenameExists( const char *filename )
 const char *ML_GetFullname( const char *filename )
 {
 	mapinfo_t *map;
-	char *filepath;
+	//char *filepath;
 
 	if( !ml_initialized )
 		return MLIST_NULL;
 
+	if( !ML_ValidateFilename( filename ) )
+		return MLIST_NULL;
+
+	/*
 	filepath = va( "maps/%s.bsp", filename );
 	COM_SanitizeFilePath( filepath );
 
-	if( !ML_ValidateFilename( filepath ) )
-		return MLIST_NULL;
-	/*
 	if( FS_FOpenFile( filepath, NULL, FS_READ ) == -1 )
-	return MLIST_NULL;
+		return MLIST_NULL;
 	*/
 
 	if( Trie_Find( mlist_filenames_trie, filename, TRIE_EXACT_MATCH, (void **)&map ) == TRIE_OK )
