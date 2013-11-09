@@ -397,9 +397,6 @@ void ML_Init( void )
 		ML_InitFromMaps();
 
 	ml_initialized = qtrue;
-
-	ML_BuildCache();
-
 	ml_flush = qtrue;
 }
 
