@@ -29,7 +29,7 @@ OGG THEORA FORMAT PLAYBACK
 #include <ogg/ogg.h>
 #include <vorbis/codec.h>
 #include <theora/theoradec.h>
-#include "cin_ogg.h"
+#include "cin_theora.h"
 
 #define OGG_BUFFER_SIZE	4*1024 // 4096
 
@@ -97,9 +97,9 @@ static void Ogg_LoadPagesToStreams( qogg_info_t *ogg, ogg_page *page )
 #define AUDIO_PRELOAD_MSEC	400
 
 /*
-* Ogg_NeedAudioData
+* OggVorbis_NeedAudioData
 */
-static qboolean Ogg_NeedAudioData( cinematics_t *cin )
+static qboolean OggVorbis_NeedAudioData( cinematics_t *cin )
 {
 	qogg_info_t *ogg = cin->fdata;
 
@@ -111,11 +111,11 @@ static qboolean Ogg_NeedAudioData( cinematics_t *cin )
 }
 
 /*
-* Ogg_LoadAudioFrame
+* OggVorbis_LoadAudioFrame
 *
 * Returns qtrue if no additional audio packets are needed
 */
-static qboolean Ogg_LoadAudioFrame( cinematics_t *cin )
+static qboolean OggVorbis_LoadAudioFrame( cinematics_t *cin )
 {
 	int	i, val;
 	short* ptr;
@@ -174,7 +174,7 @@ read_samples:
 
 		ogg->samples_read += samplesNeeded;
 
-		if( !Ogg_NeedAudioData( cin ) ) {
+		if( !OggVorbis_NeedAudioData( cin ) ) {
 			vorbis_block_clear( &vb );
 			return qtrue;
 		}
@@ -199,9 +199,9 @@ read_samples:
 }
 
 /*
-* Ogg_VideoGranuleMsec
+* OggTheora_VideoGranuleMsec
 */
-static unsigned int Ogg_VideoGranuleMsec( cinematics_t *cin )
+static unsigned int OggTheora_VideoGranuleMsec( cinematics_t *cin )
 {
 	qogg_info_t *ogg = cin->fdata;
 
@@ -212,16 +212,16 @@ static unsigned int Ogg_VideoGranuleMsec( cinematics_t *cin )
 }
 
 /*
-* Ogg_NeedVideoData
+* OggTheora_NeedVideoData
 */
-static qboolean Ogg_NeedVideoData( cinematics_t *cin )
+static qboolean OggTheora_NeedVideoData( cinematics_t *cin )
 {
 	unsigned int realframe;
 	qogg_info_t *ogg = cin->fdata;
 
 	if( ogg->a_stream && !ogg->a_eos ) {
 		// sync to audio
-		if( cin->cur_time > cin->start_time + Ogg_VideoGranuleMsec( cin ) ) {
+		if( cin->cur_time > cin->start_time + OggTheora_VideoGranuleMsec( cin ) ) {
 			return qtrue;
 		}
 		return qfalse;
@@ -237,7 +237,7 @@ static qboolean Ogg_NeedVideoData( cinematics_t *cin )
 }
 
 // taken from http://www.gamedev.ru/code/articles/?id=4252&page=3
-#define Ogg_InitYCbCrTable() \
+#define Theora_InitYCbCrTable() \
 	int cc = 0; \
 	int b0_[256], b1_[256], b2_[256], b3_[256]; \
  \
@@ -251,9 +251,9 @@ static qboolean Ogg_NeedVideoData( cinematics_t *cin )
 		b3_[cc] = ( 113508 * (cc-128) + 32768 ) >> 16; \
 
 /*
-* Ogg_DecodeYCbCr2RGB_420
+* Theora_DecodeYCbCr2RGB_420
 */
-static void Ogg_DecodeYCbCr2RGB_420( th_ycbcr_buffer yuv, int x_offset, int y_offset, unsigned int width, unsigned int height, int bytes, qbyte *out )
+static void Theora_DecodeYCbCr2RGB_420( th_ycbcr_buffer yuv, int x_offset, int y_offset, unsigned int width, unsigned int height, int bytes, qbyte *out )
 {
 	int 
 		yStride = yuv[0].stride,
@@ -275,7 +275,7 @@ static void Ogg_DecodeYCbCr2RGB_420( th_ycbcr_buffer yuv, int x_offset, int y_of
 	unsigned int xPos, yPos;
 	int y = 0, u = 0, v = 0, c[3];
 
-	Ogg_InitYCbCrTable();
+	Theora_InitYCbCrTable();
 
 	yStride += yStride - width;
 	uStride += 0 - (width >> 1);
@@ -318,9 +318,9 @@ static void Ogg_DecodeYCbCr2RGB_420( th_ycbcr_buffer yuv, int x_offset, int y_of
 }
 
 /*
-* Ogg_DecodeYCbCr2RGB_422
+* Theora_DecodeYCbCr2RGB_422
 */
-static void Ogg_DecodeYCbCr2RGB_422( th_ycbcr_buffer yuv, int x_offset, int y_offset, unsigned int width, unsigned int height, int bytes, qbyte *out )
+static void Theora_DecodeYCbCr2RGB_422( th_ycbcr_buffer yuv, int x_offset, int y_offset, unsigned int width, unsigned int height, int bytes, qbyte *out )
 {
 	int 
 		yStride = yuv[0].stride,
@@ -340,7 +340,7 @@ static void Ogg_DecodeYCbCr2RGB_422( th_ycbcr_buffer yuv, int x_offset, int y_of
 	unsigned int xPos, yPos;
 	int y = 0, u = 0, v = 0, c[3];
 
-	Ogg_InitYCbCrTable();
+	Theora_InitYCbCrTable();
 
 	yStride -= width;
 	uStride -= width / 2;
@@ -376,9 +376,9 @@ static void Ogg_DecodeYCbCr2RGB_422( th_ycbcr_buffer yuv, int x_offset, int y_of
 }
 
 /*
-* Ogg_DecodeYCbCr2RGB_444
+* Theora_DecodeYCbCr2RGB_444
 */
-static void Ogg_DecodeYCbCr2RGB_444( th_ycbcr_buffer yuv, int x_offset, int y_offset, unsigned int width, unsigned int height, int bytes, qbyte *out )
+static void Theora_DecodeYCbCr2RGB_444( th_ycbcr_buffer yuv, int x_offset, int y_offset, unsigned int width, unsigned int height, int bytes, qbyte *out )
 {
 	int 
 		yStride = yuv[0].stride,
@@ -398,7 +398,7 @@ static void Ogg_DecodeYCbCr2RGB_444( th_ycbcr_buffer yuv, int x_offset, int y_of
 	unsigned int xPos, yPos;
 	int y = 0, u = 0, v = 0, c[3];
 
-	Ogg_InitYCbCrTable();
+	Theora_InitYCbCrTable();
 
 	yStride -= width;
 	uStride -= width;
@@ -427,27 +427,27 @@ static void Ogg_DecodeYCbCr2RGB_444( th_ycbcr_buffer yuv, int x_offset, int y_of
 }
 
 /*
-* Ogg_DecodeYCbCr2RGB
+* Theora_DecodeYCbCr2RGB
 */
-static void Ogg_DecodeYCbCr2RGB( th_pixel_fmt pfmt, th_ycbcr_buffer yuv, int x_offset, int y_offset, unsigned int width, unsigned int height, int bytes, qbyte *out )
+static void Theora_DecodeYCbCr2RGB( th_pixel_fmt pfmt, th_ycbcr_buffer yuv, int x_offset, int y_offset, unsigned int width, unsigned int height, int bytes, qbyte *out )
 {
 	if( pfmt == (th_pixel_fmt)TH_PF_444 ) {
-		Ogg_DecodeYCbCr2RGB_444( yuv, x_offset, y_offset, width, height, bytes, out );
+		Theora_DecodeYCbCr2RGB_444( yuv, x_offset, y_offset, width, height, bytes, out );
 	}
 	else if( pfmt == (th_pixel_fmt)TH_PF_422 ) {
-		Ogg_DecodeYCbCr2RGB_422( yuv, x_offset, y_offset, width, height, bytes, out );
+		Theora_DecodeYCbCr2RGB_422( yuv, x_offset, y_offset, width, height, bytes, out );
 	}
 	else if( pfmt == (th_pixel_fmt)TH_PF_420 ) {
-		Ogg_DecodeYCbCr2RGB_420( yuv, x_offset, y_offset, width, height, bytes, out );
+		Theora_DecodeYCbCr2RGB_420( yuv, x_offset, y_offset, width, height, bytes, out );
 	}
 }
 
 /*
-* Ogg_LoadVideoFrame
+* OggTheora_LoadVideoFrame
 *
 * Return qtrue if a new video frame has been successfully loaded
 */
-static qboolean Ogg_LoadVideoFrame( cinematics_t *cin )
+static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 {
 	ogg_packet op;
 	qogg_info_t *ogg = cin->fdata;
@@ -480,7 +480,7 @@ static qboolean Ogg_LoadVideoFrame( cinematics_t *cin )
 
 		cin->frame = th_granule_frame( ogg->tctx, ogg->th_granulepos );
 
-		if( cin->cur_time > cin->start_time + Ogg_VideoGranuleMsec( cin ) ) {
+		if( cin->cur_time > cin->start_time + OggTheora_VideoGranuleMsec( cin ) ) {
 			Com_DPrintf( "Dropped frame: %i\n", cin->frame );
 			continue;
 		}
@@ -511,7 +511,7 @@ static qboolean Ogg_LoadVideoFrame( cinematics_t *cin )
 		}
 
 		// convert YCbCr to RGB
-		Ogg_DecodeYCbCr2RGB( ogg->ti.pixel_fmt, yuv, ogg->ti.pic_x & ~1, ogg->ti.pic_y & ~1, width, height, 4, cin->vid_buffer );
+		Theora_DecodeYCbCr2RGB( ogg->ti.pixel_fmt, yuv, ogg->ti.pic_x & ~1, ogg->ti.pic_y & ~1, width, height, 4, cin->vid_buffer );
 
 		return qtrue;
 	}
@@ -520,9 +520,9 @@ static qboolean Ogg_LoadVideoFrame( cinematics_t *cin )
 }
 
 /*
-* Ogg_ReadNextFrame_CIN
+* Theora_ReadNextFrame_CIN
 */
-qbyte *Ogg_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
+qbyte *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 {
 	unsigned int bytes, pages = 0;
 	qboolean redraw_ = qfalse;
@@ -534,8 +534,8 @@ qbyte *Ogg_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 		ogg_page og;
 		qboolean needAudio, needVideo;
 
-		needAudio = !haveAudio && Ogg_NeedAudioData( cin );
-		needVideo = !haveVideo && Ogg_NeedVideoData( cin );
+		needAudio = !haveAudio && OggVorbis_NeedAudioData( cin );
+		needVideo = !haveVideo && OggTheora_NeedVideoData( cin );
 		redraw_ = redraw_ || needVideo;
 
 		if( !needAudio && !needVideo ) {
@@ -543,11 +543,11 @@ qbyte *Ogg_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 		}
 
 		if( needAudio ) {
-			haveAudio = Ogg_LoadAudioFrame( cin );
+			haveAudio = OggVorbis_LoadAudioFrame( cin );
 			needAudio = !haveAudio;
 		}
 		if( needVideo ) {
-			haveVideo = Ogg_LoadVideoFrame( cin );
+			haveVideo = OggTheora_LoadVideoFrame( cin );
 			needVideo = !haveVideo;
 		}
 
@@ -580,9 +580,9 @@ qbyte *Ogg_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 }
 
 /*
-* Ogg_Init_CIN
+* Theora_Init_CIN
 */
-qboolean Ogg_Init_CIN( cinematics_t *cin )
+qboolean Theora_Init_CIN( cinematics_t *cin )
 {
 	int status;
 	ogg_page	og;
@@ -765,9 +765,9 @@ qboolean Ogg_Init_CIN( cinematics_t *cin )
 }
 
 /*
-* Ogg_Shutdown_CIN
+* Theora_Shutdown_CIN
 */
-void Ogg_Shutdown_CIN( cinematics_t *cin )
+void Theora_Shutdown_CIN( cinematics_t *cin )
 {
 	qogg_info_t *ogg = cin->fdata;
 
@@ -794,24 +794,24 @@ void Ogg_Shutdown_CIN( cinematics_t *cin )
 }
 
 /*
-* Ogg_Reset_CIN
+* Theora_Reset_CIN
 */
-void Ogg_Reset_CIN( cinematics_t *cin )
+void Theora_Reset_CIN( cinematics_t *cin )
 {
-	Ogg_Shutdown_CIN( cin );
+	Theora_Shutdown_CIN( cin );
 
 	CIN_Free( cin->fdata );
 	cin->fdata = NULL;
 
 	trap_FS_Seek( cin->file, 0, FS_SEEK_SET );
 
-	Ogg_Init_CIN( cin );
+	Theora_Init_CIN( cin );
 }
 
 /*
-* Ogg_NeedNextFrame_CIN
+* Theora_NeedNextFrame_CIN
 */
-qboolean Ogg_NeedNextFrame_CIN( cinematics_t *cin )
+qboolean Theora_NeedNextFrame_CIN( cinematics_t *cin )
 {
-	return Ogg_NeedAudioData( cin ) || Ogg_NeedVideoData( cin );
+	return OggVorbis_NeedAudioData( cin ) || OggTheora_NeedVideoData( cin );
 }

@@ -27,14 +27,14 @@ CINEMATICS PLAYBACK ABSTRACTION LAYER
 */
 
 #include "cin_local.h"
-#include "cin_ogg.h"
+#include "cin_theora.h"
 #include "cin_roq.h"
 
 enum
 {
 	CIN_TYPE_NONE = -1,
 
-	CIN_TYPE_OGG,
+	CIN_TYPE_THEORA,
 	CIN_TYPE_ROQ,
 
 	CIN_NUM_TYPES
@@ -54,12 +54,12 @@ static const cin_type_t cin_types[] =
 {
 	// Ogg Theora
 	{
-		OGG_FILE_EXTENSIONS,
-		Ogg_Init_CIN,
-		Ogg_Shutdown_CIN,
-		Ogg_Reset_CIN,
-		Ogg_NeedNextFrame_CIN,
-		Ogg_ReadNextFrame_CIN
+		THEORA_FILE_EXTENSIONS,
+		Theora_Init_CIN,
+		Theora_Shutdown_CIN,
+		Theora_Reset_CIN,
+		Theora_NeedNextFrame_CIN,
+		Theora_ReadNextFrame_CIN
 	},
 
 	// RoQ - http://wiki.multimedia.cx/index.php?title=ROQ
@@ -118,7 +118,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time, qboolean loop
 
 	if( trap_FS_IsUrl( name ) )
 	{
-		cin->type = CIN_TYPE_OGG;
+		cin->type = CIN_TYPE_THEORA;
 		Q_strncpyz( cin->name, name, name_size );
 		trap_FS_FOpenFile( cin->name, &cin->file, FS_READ );
 	}

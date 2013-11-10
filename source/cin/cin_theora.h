@@ -18,17 +18,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef _CIN_OGG_H_
-#define _CIN_OGG_H_
+#ifndef _CIN_THEORA_H_
+#define _CIN_THEORA_H_
 
 #include "cin_local.h"
 
-#define OGG_FILE_EXTENSIONS ".ogg .ogv"
+#define THEORA_FILE_EXTENSIONS ".ogg .ogv"
 
-qboolean Ogg_Init_CIN( cinematics_t *cin );
-void Ogg_Shutdown_CIN( cinematics_t *cin );
-void Ogg_Reset_CIN( cinematics_t *cin );
-qboolean Ogg_NeedNextFrame_CIN( cinematics_t *cin );
-qbyte *Ogg_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw );
+qboolean Theora_Init_CIN( cinematics_t *cin );
+void Theora_Shutdown_CIN( cinematics_t *cin );
+void Theora_Reset_CIN( cinematics_t *cin );
+qboolean Theora_NeedNextFrame_CIN( cinematics_t *cin );
+qbyte *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw );
 
 #endif
