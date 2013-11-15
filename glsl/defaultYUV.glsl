@@ -1,5 +1,4 @@
-// FXAA shader
-// Original algorithm and code by Timothy Lottes
+// YUV -> RGB color-space conversion shader
 
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
