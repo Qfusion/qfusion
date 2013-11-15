@@ -489,7 +489,7 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 
 void		R_BeginFrame( float cameraSeparation, qboolean forceClear );
 void		R_EndFrame( void );
-void		R_Set2DMode( qboolean enable, int width, int height );
+void		R_Set2DMode( qboolean enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_ClearStats( void );
 const char *R_SpeedsMessage( char *out, size_t size );
