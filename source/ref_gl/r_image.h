@@ -70,6 +70,8 @@ void R_InitImages( void );
 void R_TouchImage( image_t *image );
 void R_FreeUnusedImages( void );
 void R_ShutdownImages( void );
+void R_InitViewportTexture( image_t **texture, const char *name, int id, 
+	int viewportWidth, int viewportHeight, int size, int flags, int samples );
 int	R_GetPortalTextureId( const int viewportWidth, const int viewportHeight, const int flags );
 image_t *R_GetPortalTexture( int id, int viewportWidth, int viewportHeight, int flags );
 image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, int flags );

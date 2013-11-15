@@ -85,15 +85,15 @@ void UI_RenderInterface::SetScissorRegion(int x, int y, int width, int height)
 	scissorHeight = height;
 
 	if( scissorEnabled )
-		trap::R_SetScissorRegion( x, y, width, height );
+		trap::R_Scissor( x, y, width, height );
 }
 
 void UI_RenderInterface::EnableScissorRegion(bool enable)
 {
 	if( enable )
-		trap::R_SetScissorRegion( scissorX, scissorY, scissorWidth, scissorHeight );
+		trap::R_Scissor( scissorX, scissorY, scissorWidth, scissorHeight );
 	else
-		trap::R_SetScissorRegion( -1, -1, -1, -1 );
+		trap::R_Scissor( -1, -1, -1, -1 );
 
 	scissorEnabled = enable;
 }

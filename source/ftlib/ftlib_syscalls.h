@@ -186,14 +186,14 @@ static inline void trap_R_DrawStretchPic( int x, int y, int w, int h, float s1, 
 	FTLIB_IMPORT.R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
 }
 
-static inline void trap_R_SetScissorRegion( int x, int y, int w, int h )
+static inline void trap_R_Scissor( int x, int y, int w, int h )
 {
-	FTLIB_IMPORT.R_SetScissorRegion( x, y, w, h );
+	FTLIB_IMPORT.R_Scissor( x, y, w, h );
 }
 
-static inline void trap_R_GetScissorRegion( int *x, int *y, int *w, int *h )
+static inline void trap_R_GetScissor( int *x, int *y, int *w, int *h )
 {
-	FTLIB_IMPORT.R_GetScissorRegion( x, y, w, h );
+	FTLIB_IMPORT.R_GetScissor( x, y, w, h );
 }
 
 // memory

@@ -29,8 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // shader types (by superlightstyle)
 typedef enum
 {
-	SHADER_TYPE_SKYCLIP			= -10,
-	SHADER_TYPE_2D_BUILTIN_RAW	= -9,
+	SHADER_TYPE_SKYCLIP			= -9,
 	SHADER_TYPE_SKYBOX			= -8,
 	SHADER_TYPE_VERTEX			= -7,
 	SHADER_TYPE_VIDEO			= -6,

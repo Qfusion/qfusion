@@ -78,10 +78,11 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.DrawStretchPic = R_DrawStretchPic;
 	globals.DrawRotatedStretchPic = R_DrawRotatedStretchPic;
 	globals.DrawStretchRaw = R_DrawStretchRaw;
+	globals.DrawStretchRawYUV = R_DrawStretchRawYUV;
 	globals.DrawStretchPoly = R_DrawStretchPoly;
 	
-	globals.SetScissorRegion = R_SetScissorRegion;
-	globals.GetScissorRegion = R_GetScissorRegion;
+	globals.Scissor = R_Scissor;
+	globals.GetScissor = R_GetScissor;
 
 	globals.SetCustomColor = R_SetCustomColor;
 	globals.LightForOrigin = R_LightForOrigin;

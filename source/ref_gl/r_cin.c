@@ -34,6 +34,9 @@ typedef struct r_cinhandle_s
 	int				width, height;
 	qbyte			*pic;
 	qboolean		new_frame;
+	qboolean		yuv;
+	ref_yuv_t		*cyuv;
+	image_t			*yuv_images[3];
 	struct r_cinhandle_s *prev, *next;
 } r_cinhandle_t;
 
@@ -50,7 +53,13 @@ static qboolean R_RunCin( r_cinhandle_t *h )
 	if( !ri.CIN_NeedNextFrame( h->cin, ri.Sys_Milliseconds() ) )
 		return qfalse;
 
-	h->pic = ri.CIN_ReadNextFrame( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
+	if( h->yuv ) {
+		h->cyuv = ri.CIN_ReadNextFrameYUV( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
+		h->pic = ( qbyte * )h->cyuv;
+	}
+	else {
+		h->pic = ri.CIN_ReadNextFrame( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
+	}
 	return redraw;
 }
 
@@ -64,12 +73,63 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 	if( !handle->pic )
 		return NULL;
 
-	if( !handle->image ) {
-		handle->image = R_LoadImage( handle->name, &handle->pic, handle->width, handle->height, IT_CINEMATIC, samples );
-		handle->new_frame = qfalse;
-	} else if( handle->new_frame ) {
-		R_ReplaceImage( handle->image, &handle->pic, handle->width, handle->height, samples );
-		handle->new_frame = qfalse;
+	if( handle->yuv ) {
+		int i;
+
+		if( !handle->yuv_images[0] ) {
+			qbyte *fake_data[1] = { NULL };
+			const char *letters[3] = { "y", "u", "v" };
+
+			for( i = 0; i < 3; i++ ) {
+				handle->yuv_images[i] = R_LoadImage( va( "%s_%s", handle->name, letters[i] ), 
+					fake_data, 1, 1, IT_CINEMATIC|IT_LUMINANCE, 1 );
+			}
+			handle->new_frame = qtrue;
+		}
+		
+		if( handle->new_frame ) {
+			int fbo;
+			qboolean in2D;
+			
+			// render/convert three 8-bit YUV images into RGB framebuffer
+
+			in2D = rf.in2D;
+			fbo = R_ActiveFBObject();
+
+			if( !in2D ) {
+				R_PushRefInst();
+			}
+
+			R_InitViewportTexture( &handle->image, handle->name, 0, handle->width, handle->height, 
+				0, IT_CINEMATIC|IT_FRAMEBUFFER, samples );
+
+			R_BindFrameBufferObject( handle->image->fbo );
+
+			R_Set2DMode( qtrue, handle->image->upload_width, handle->image->upload_height );
+
+			// flip the image vertically because we're rendering to a FBO
+			R_DrawStretchRawYUVBuiltin( 0, 0, handle->image->upload_width, handle->image->upload_height, 
+				handle->cyuv, handle->yuv_images, qtrue, 2 );
+
+			if( !in2D ) {
+				R_PopRefInst( 0 );
+			}
+			R_BindFrameBufferObject( fbo );
+
+			R_Set2DMode( in2D, -1, -1 );
+
+			handle->new_frame = qfalse;
+		}
+	}
+	else {
+		if( !handle->image ) {
+			handle->image = R_LoadImage( handle->name, &handle->pic, handle->width, handle->height, 
+				IT_CINEMATIC, samples );
+			handle->new_frame = qfalse;
+		} else if( handle->new_frame ) {
+			R_ReplaceImage( handle->image, &handle->pic, handle->width, handle->height, samples );
+			handle->new_frame = qfalse;
+		}
 	}
 
 	return handle->image;
@@ -100,7 +160,8 @@ void R_CinList_f( void )
 
 		image = handle->image;
 		if( image && (handle->width != image->upload_width || handle->height != image->upload_height) )
-			Com_Printf( "%s %i(%i)x%i(%i)\n", handle->name, handle->width, image->upload_width, handle->height, image->upload_height );
+			Com_Printf( "%s %i(%i)x%i(%i)\n", handle->name, handle->width, 
+				image->upload_width, handle->height, image->upload_height );
 		else
 			Com_Printf( "%s %ix%i\n", handle->name, handle->width, handle->height );
 
@@ -169,6 +230,7 @@ unsigned int R_StartCinematic( const char *arg )
 	size_t name_size;
 	r_cinhandle_t *handle, *hnode, *next;
 	struct cinematics_s *cin;
+	qboolean yuv;
 
 	// find cinematics with the same name
 	hnode = &r_cinematics_headnode;
@@ -183,7 +245,7 @@ unsigned int R_StartCinematic( const char *arg )
 	}
 
 	// open the file, read header, etc
-	cin = ri.CIN_Open( arg, ri.Sys_Milliseconds(), qtrue, qfalse );
+	cin = ri.CIN_Open( arg, ri.Sys_Milliseconds(), qtrue, qfalse, &yuv );
 
 	// take a free cinematic handle if possible
 	if( !r_free_cinematics || !cin )
@@ -205,6 +267,9 @@ unsigned int R_StartCinematic( const char *arg )
 
 	handle->cin = cin;
 	handle->new_frame = qtrue;
+	handle->yuv = yuv;
+	handle->image = NULL;
+	handle->yuv_images[0] = handle->yuv_images[1] = handle->yuv_images[2] = NULL;
 	handle->registrationSequence = rf.registrationSequence;
 
 	// put handle at the start of the list
@@ -221,11 +286,25 @@ unsigned int R_StartCinematic( const char *arg )
 */
 void R_TouchCinematic( unsigned int id )
 {
+	int i;
+	r_cinhandle_t *handle;
+
 	assert( id > 0 && id <= MAX_CINEMATICS );
 	if( id == 0 || id > MAX_CINEMATICS ) {
 		return;
 	}
-	r_cinematics[id - 1].registrationSequence = rf.registrationSequence;
+
+	handle = &r_cinematics[id - 1];
+	handle->registrationSequence = rf.registrationSequence;
+
+	if( handle->image ) {
+		R_TouchImage( handle->image );
+	}
+	for( i = 0; i < 3; i++ ) {
+		if( handle->yuv_images[i] ) {
+			R_TouchImage( handle->yuv_images[i] );
+		}
+	}
 }
 
 /*

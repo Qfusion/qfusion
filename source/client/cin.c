@@ -220,10 +220,10 @@ void CIN_UnloadLibrary( qboolean verbose )
 	}
 }
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio )
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv )
 {
 	if( cin_export ) {
-		return cin_export->Open( name, start_time, loop, audio );
+		return cin_export->Open( name, start_time, loop, audio, yuv );
 	}
 	return NULL;
 }
@@ -240,6 +240,14 @@ qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, int
 {
 	if( cin_export ) {
 		return cin_export->ReadNextFrame( cin, width, height, aspect_numerator, aspect_denominator, redraw );
+	}
+	return NULL;
+}
+
+ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
+{
+	if( cin_export ) {
+		return ( ref_yuv_t * )cin_export->ReadNextFrameYUV( cin, width, height, aspect_numerator, aspect_denominator, redraw );
 	}
 	return NULL;
 }

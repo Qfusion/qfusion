@@ -64,6 +64,8 @@ typedef struct r_backend_s
 
 		unsigned int	vertexAttribEnabled;
 
+		int				fbWidth, fbHeight;
+
 		float			polygonOffset[2];
 	} gl;
 

@@ -75,14 +75,14 @@ static void CL_FTLibModule_DrawStretchPic( int x, int y, int w, int h, float s1,
 	re.DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
 }
 
-static void CL_FTLibModule_SetScissorRegion( int x, int y, int w, int h )
+static void CL_FTLibModule_Scissor( int x, int y, int w, int h )
 {
-	re.SetScissorRegion( x, y, w, h );
+	re.Scissor( x, y, w, h );
 }
 
-static void CL_FTLibModule_GetScissorRegion( int *x, int *y, int *w, int *h )
+static void CL_FTLibModule_GetScissor( int *x, int *y, int *w, int *h )
 {
-	re.GetScissorRegion( x, y, w, h );
+	re.GetScissor( x, y, w, h );
 }
 
 /*
@@ -132,8 +132,8 @@ void FTLIB_LoadLibrary( qboolean verbose )
 	import.R_RegisterPic = &CL_FTLibModule_RegisterPic;
 	import.R_RegisterRawPic = &CL_FTLibModule_RegisterRawPic;
 	import.R_DrawStretchPic = &CL_FTLibModule_DrawStretchPic;
-	import.R_SetScissorRegion = &CL_FTLibModule_SetScissorRegion;
-	import.R_GetScissorRegion = &CL_FTLibModule_GetScissorRegion;
+	import.R_Scissor = &CL_FTLibModule_Scissor;
+	import.R_GetScissor = &CL_FTLibModule_GetScissor;
 
 	import.Milliseconds = &Sys_Milliseconds;
 	import.Microseconds = &Sys_Microseconds;

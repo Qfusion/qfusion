@@ -161,14 +161,14 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 	qalBufferData( buffer, format, data, ( samples * width * channels ), rate );
 	if( ( error = qalGetError() ) != AL_NO_ERROR )
 	{
-		Com_Printf( "Couldn't fill sound buffer (%s)", S_ErrorMessage( error ) );
+		Com_Printf( "Couldn't fill sound buffer (%s)\n", S_ErrorMessage( error ) );
 		return;
 	}
 
 	qalSourceQueueBuffers( source, 1, &buffer );
 	if( ( error = qalGetError() ) != AL_NO_ERROR )
 	{
-		Com_Printf( "Couldn't queue sound buffer (%s)", S_ErrorMessage( error ) );
+		Com_Printf( "Couldn't queue sound buffer (%s)\n", S_ErrorMessage( error ) );
 		return;
 	}
 

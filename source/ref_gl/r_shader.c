@@ -2680,7 +2680,6 @@ create_default:
 		case SHADER_TYPE_2D:
 		case SHADER_TYPE_2D_RAW:
 		case SHADER_TYPE_VIDEO:
-		case SHADER_TYPE_2D_BUILTIN_RAW:
 			s->flags = 0;
 			s->vattribs = VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
@@ -2702,8 +2701,6 @@ create_default:
 					pass->cin = R_StartCinematic( shortname+6 );
 				else
 					pass->cin = R_StartCinematic( shortname );
-			} else if( type == SHADER_TYPE_2D_BUILTIN_RAW ) {
-				pass->anim_frames[0] = r_rawtexture;
 			} else if( type != SHADER_TYPE_2D_RAW ) {
 				pass->anim_frames[0] = Shader_FindImage( s, shortname, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP, 0 );
 			}

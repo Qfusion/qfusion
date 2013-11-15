@@ -400,14 +400,14 @@ static inline void trap_R_TransformVectorToScreen( const refdef_t *rd, const vec
 	CGAME_IMPORT.R_TransformVectorToScreen( rd, in, out );
 }
 
-static inline void trap_R_SetScissorRegion( int x, int y, int w, int h )
+static inline void trap_R_Scissor( int x, int y, int w, int h )
 {
-	CGAME_IMPORT.R_SetScissorRegion( x, y, w, h );
+	CGAME_IMPORT.R_Scissor( x, y, w, h );
 }
 
-static inline void trap_R_GetScissorRegion( int *x, int *y, int *w, int *h )
+static inline void trap_R_GetScissor( int *x, int *y, int *w, int *h )
 {
-	CGAME_IMPORT.R_GetScissorRegion( x, y, w, h );
+	CGAME_IMPORT.R_GetScissor( x, y, w, h );
 }
 
 static inline void trap_R_GetShaderDimensions( const struct shader_s *shader, int *width, int *height )

@@ -225,12 +225,12 @@ typedef struct
 	shader_t		*envShader;
 	shader_t		*skyShader;
 	shader_t		*whiteShader;
-	shader_t		*builtinRawShader;
 	shader_t		*skyclipShader;
 
 	struct mesh_vbo_s *nullVBO;
 
 	qboolean		in2D;
+	int				frameBufferWidth, frameBufferHeight;
 
 	float			cameraSeparation;
 
@@ -243,6 +243,7 @@ extern r_scene_t rsc;
 extern r_frontend_t rf;
 
 extern image_t *r_rawtexture;
+extern image_t *r_rawYUVtextures[3];
 extern image_t *r_notexture;
 extern image_t *r_whitetexture;
 extern image_t *r_blacktexture;
@@ -437,6 +438,7 @@ image_t		*R_GetFBObjectTextureAttachment( int object, qboolean depth );
 void		R_DisableFBObjectDrawBuffer( void );
 void		R_CopyFBObject( int dest, int bitMask, int mode );
 qboolean	R_CheckFBObjectStatus( void );
+void		R_GetFBObjectSize( int object, int *width, int *height );
 void		R_FreeUnusedFBObjects( void );
 void		R_ShutdownFBObjects( void );
 
@@ -487,7 +489,7 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 
 void		R_BeginFrame( float cameraSeparation, qboolean forceClear );
 void		R_EndFrame( void );
-void		R_Set2DMode( qboolean enable );
+void		R_Set2DMode( qboolean enable, int width, int height );
 void		R_RenderView( const refdef_t *fd );
 void		R_ClearStats( void );
 const char *R_SpeedsMessage( char *out, size_t size );
@@ -521,6 +523,9 @@ void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2
 void		R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	float angle, const vec4_t color, const shader_t *shader );
 void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *data );
+void		R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, ref_yuv_t *data, image_t **yuvTextures, 
+	qboolean upload, int flip );
+void		R_DrawStretchRawYUV( int x, int y, int w, int h, ref_yuv_t *data );
 void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, int program_type, image_t *image, qboolean blend );
 
@@ -538,8 +543,11 @@ void		R_PopRefInst( int clearBitMask );
 
 qboolean	R_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
 
-void		R_SetScissorRegion( int x, int y, int w, int h );
-void		R_GetScissorRegion( int *x, int *y, int *w, int *h );
+void		R_BindFrameBufferObject( int object );
+
+void		R_Scissor( int x, int y, int w, int h );
+void		R_GetScissor( int *x, int *y, int *w, int *h );
+void		R_EnableScissor( qboolean enable );
 
 //
 // r_mesh.c

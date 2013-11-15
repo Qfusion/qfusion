@@ -30,6 +30,36 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 struct cinematics_s;
 
+typedef struct {
+	// MUST MATCH ref_img_plane_t
+	//===============================
+
+	// the offset in bytes between successive rows
+	int stride;
+
+	// the width and height of the plane can be computed
+	// as img_width/w_denominator and img_height/h_denominator respectively
+	int w_denominator;
+	int h_denominator;
+
+	// pointer to the beginning of the first row
+	unsigned char *data;
+} cin_img_plane_t;
+
+typedef struct {
+	int width;
+	int height;
+
+	// cropping factors
+	int x_offset;
+	int y_offset;
+	cin_img_plane_t yuv[3];
+
+	// DO NOT CHANGE ANYHING ABOVE
+	// ref_yuv_t EXPECTS FIELDS IN THAT ORDER
+	//===============================
+} cin_yuv_t;
+
 //
 // functions provided by the main engine
 //
@@ -106,9 +136,10 @@ typedef struct
 	qboolean ( *Init )( qboolean verbose );
 	void ( *Shutdown )( qboolean verbose );
 
-	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
+	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv );
 	qboolean ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
 	qbyte *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	cin_yuv_t *( *ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 	void ( *Close )( struct cinematics_s *cin );
 } cin_export_t;
 
