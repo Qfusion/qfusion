@@ -46,8 +46,10 @@ bool UI_SystemInterface::LogMessage(Log::Type type, const String& message)
 			trap::Print( console_msg.CString() );
 			break;
 		case Log::LT_INFO:
-			console_msg = message + "\n";
-			trap::Print( console_msg.CString() );
+			if( trap::Cvar_Value( "developer" ) ) {
+				console_msg = message + "\n";
+				trap::Print( console_msg.CString() );
+			}
 			break;
 		case Log::LT_DEBUG:
 		case Log::LT_MAX:
