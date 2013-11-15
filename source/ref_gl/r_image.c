@@ -2454,7 +2454,7 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 /*
 * R_InitViewportTexture
 */
-static void R_InitViewportTexture( image_t **texture, const char *name, int id, 
+void R_InitViewportTexture( image_t **texture, const char *name, int id, 
 	int viewportWidth, int viewportHeight, int size, int flags, int samples )
 {
 	int width, height;
@@ -2612,6 +2612,36 @@ static void R_InitStretchRawTexture( void )
 }
 
 /*
+* R_InitStretchRawYUVTextures
+*/
+static void R_InitStretchRawYUVTextures( void )
+{
+	int i;
+	image_t *rawtexture;
+	const char * const name[3] = { "*** rawyuv0 ***", "*** rawyuv1 ***", "*** rawyuv2 ***" };
+
+	for( i = 0; i < 3; i++ ) {
+		// reserve a dummy texture slot
+		int name_len = strlen( name[i] );
+
+		image_cur_hash = ri.Hash_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
+		rawtexture = R_AllocPic();
+
+		assert( rawtexture );
+		if( !rawtexture ) {
+			ri.Com_Error( ERR_FATAL, "Failed to register cinematic texture" );
+		}
+
+		rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
+		rawtexture->flags = IT_CINEMATIC|IT_LUMINANCE;
+		strcpy( rawtexture->name, name[i] );
+		RB_AllocTextureNum( rawtexture );
+
+		r_rawYUVtextures[i] = rawtexture;
+	}
+}
+
+/*
 * R_InitScreenTexturesPair
 */
 static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t **depth, int samples )
@@ -2684,6 +2714,9 @@ static void R_InitBuiltinTextures( void )
 static void R_TouchBuiltinTextures( void )
 {
 	R_TouchImage( r_rawtexture );
+	R_TouchImage( r_rawYUVtextures[0] );
+	R_TouchImage( r_rawYUVtextures[1] );
+	R_TouchImage( r_rawYUVtextures[2] );
 	R_TouchImage( r_notexture );
 	R_TouchImage( r_whitetexture );
 	R_TouchImage( r_blacktexture ); 
@@ -2705,6 +2738,7 @@ static void R_TouchBuiltinTextures( void )
 static void R_ReleaseBuiltinTextures( void )
 {
 	r_rawtexture = NULL;
+	r_rawYUVtextures[0] = r_rawYUVtextures[1] = r_rawYUVtextures[2] = NULL;
 	r_notexture = NULL;
 	r_whitetexture = r_blacktexture = r_greytexture = NULL;
 	r_blankbumptexture = NULL;
@@ -2750,6 +2784,7 @@ void R_InitImages( void )
 	}
 
 	R_InitStretchRawTexture();
+	R_InitStretchRawYUVTextures();
 	R_InitBuiltinTextures();
 	R_InitScreenTextures();
 }

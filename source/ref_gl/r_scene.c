@@ -178,7 +178,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( r_norefresh->integer )
 		return;
 
-	R_Set2DMode( qfalse );
+	R_Set2DMode( qfalse, -1, -1 );
 
 	RB_SetTime( fd->time );
 
@@ -245,9 +245,9 @@ void R_RenderScene( const refdef_t *fd )
 		// clear the framebuffer we're going to render the weapon model into
 		// set the alpha to 0, visible parts of the model will overwrite that,
 		// creating proper alpha mask
-		R_UseFBObject( r_screenweapontexture->fbo );
+		R_BindFrameBufferObject( r_screenweapontexture->fbo );
 		RB_Clear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT, 0, 0, 0, 0 );
-		R_UseFBObject( 0 );
+		R_BindFrameBufferObject( 0 );
 	}
 
 	R_BuildShadowGroups();
@@ -258,13 +258,13 @@ void R_RenderScene( const refdef_t *fd )
 
 	R_RenderDebugBounds();
 
-	R_Set2DMode( qtrue );
+	R_Set2DMode( qtrue, -1, -1 );
 
 	// blit and blend framebuffers in proper order
 
 	if( fbFlags & 1 ) {
 		// copy to FXAA or default framebuffer
-		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
+		R_BindFrameBufferObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
 		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
 			colorWhite, GLSL_PROGRAM_TYPE_NONE, rn.fbColorAttachment, qfalse );
 	}
@@ -274,14 +274,14 @@ void R_RenderScene( const refdef_t *fd )
 		color[3] = fd->weaponAlpha;
 
 		// blend to FXAA or default framebuffer
-		R_UseFBObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
+		R_BindFrameBufferObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
 		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
 			color, GLSL_PROGRAM_TYPE_NONE, r_screenweapontexture, qtrue );
 	}
 
 	// blit FXAA to default framebuffer
 	if( fbFlags & 4 ) {
-		R_UseFBObject( 0 );
+		R_BindFrameBufferObject( 0 );
 		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
 			colorWhite, GLSL_PROGRAM_TYPE_FXAA, r_screenfxaacopy, qfalse );
 	}

@@ -61,10 +61,21 @@ void SCR_FinishCinematic( void )
 */
 static void SCR_ReadNextCinematicFrame( void )
 {
-	cl.cin.pic = CIN_ReadNextFrame( cl.cin.h, 
-		&cl.cin.width, &cl.cin.height, 
-		&cl.cin.aspect_numerator, &cl.cin.aspect_denominator,
-		&cl.cin.redraw );
+	if( cl.cin.yuv ) {
+		cl.cin.cyuv = CIN_ReadNextFrameYUV( cl.cin.h, 
+			&cl.cin.width, &cl.cin.height, 
+			&cl.cin.aspect_numerator, &cl.cin.aspect_denominator,
+			&cl.cin.redraw );
+
+		// so that various cl.cin.pic == NULL checks still make sense
+		cl.cin.pic = ( qbyte * )cl.cin.cyuv;
+	}
+	else {
+		cl.cin.pic = CIN_ReadNextFrame( cl.cin.h, 
+			&cl.cin.width, &cl.cin.height, 
+			&cl.cin.aspect_numerator, &cl.cin.aspect_denominator,
+			&cl.cin.redraw );
+	}
 }
 
 /*
@@ -176,7 +187,12 @@ qboolean SCR_DrawCinematic( void )
 		y = 0;
 	}
 
-	re.DrawStretchRaw( x, y, w, h, cl.cin.width, cl.cin.height, cl.cin.pic );
+	if( cl.cin.yuv ) {
+		re.DrawStretchRawYUV( x, y, w, h, cl.cin.redraw ? cl.cin.cyuv : NULL );
+	}
+	else {
+		re.DrawStretchRaw( x, y, w, h, cl.cin.width, cl.cin.height, cl.cin.redraw ? cl.cin.pic : NULL );
+	}
 
 	cl.cin.redraw = qfalse;
 	return qtrue;
@@ -188,10 +204,11 @@ qboolean SCR_DrawCinematic( void )
 static void SCR_PlayCinematic( const char *arg, int flags )
 {
 	struct cinematics_s *cin;
+	qboolean yuv;
 
 	CL_SoundModule_Clear();
 
-	cin = CIN_Open( arg, 0, qfalse, qtrue );
+	cin = CIN_Open( arg, 0, qfalse, qtrue, &yuv );
 	if( !cin )
 	{
 		Com_Printf( "SCR_PlayCinematic: couldn't find %s\n", arg );
@@ -206,6 +223,7 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 	cl.cin.paused = qfalse;
 	cl.cin.absStartTime = cl.cin.absCurrentTime = cl.cin.absPrevTime = SCR_CinematicTime();
 	cl.cin.currentTime = 0;
+	cl.cin.yuv = yuv;
 
 	CL_SetClientState( CA_CINEMATIC );
 

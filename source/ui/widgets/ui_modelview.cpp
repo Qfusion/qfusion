@@ -141,7 +141,7 @@ public:
 
 		// clip scissor region to parent
 		int scissor_x, scissor_y, scissor_w, scissor_h;
-		trap::R_GetScissorRegion( &scissor_x, &scissor_y, &scissor_w, &scissor_h );
+		trap::R_GetScissor( &scissor_x, &scissor_y, &scissor_w, &scissor_h );
 		refdef.scissor_x = std::max( scissor_x, refdef.x );
 		refdef.scissor_y = std::max( scissor_y, refdef.y );
 		refdef.scissor_width = std::min( scissor_w, refdef.width );

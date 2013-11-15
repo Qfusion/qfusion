@@ -187,4 +187,33 @@ typedef struct refdef_s
 	float minLight;						// minimum value of ambient lighting applied to RF_MINLIGHT entities
 } refdef_t;
 
+typedef struct {
+	// MUST MATCH cin_img_plane_t
+	//===============================
+
+	// the offset in bytes between successive rows
+	int stride;
+
+	// the width and height of the plane can be computed
+	// as img_width/w_denominator and img_height/h_denominator respectively
+	int w_denominator;
+	int h_denominator;
+
+	// pointer to the beginning of the first row
+	unsigned char *data;
+} ref_img_plane_t;
+
+typedef struct {
+	int width;
+	int height;
+
+	// cropping factors
+	int x_offset;
+	int y_offset;
+	ref_img_plane_t yuv[3];
+
+	// EVERYTHING ABOVE MATCH cin_yuv_t
+	//===============================
+} ref_yuv_t;
+
 #endif // __REF_H

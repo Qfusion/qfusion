@@ -684,11 +684,7 @@ void SCR_UpdateScreen( void )
 		numframes = 1;
 	}
 
-	// avoid redrawing fullscreen cinematics unless damaged by console drawing
 	scr_cinematic = cls.state == CA_CINEMATIC ? qtrue : qfalse;
-//	if( scr_cinematic && !cl.cin.redraw && !scr_con_current && !scr_con_previous ) {
-//		return;
-//	}
 
 	if( cls.cgameActive && cls.state < CA_LOADING ) {
 		// this is when we've finished loading cgame media and are waiting

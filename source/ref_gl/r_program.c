@@ -167,6 +167,7 @@ void RP_Init( void )
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, DEFAULT_GLSL_CELSHADE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, DEFAULT_GLSL_YUV_PROGRAM, NULL, NULL, 0, 0 );
 	
 	// check whether compilation of the shader with GPU skinning succeeds, if not, disable GPU bone transforms
 	if( glConfig.maxGLSLBones ) {
@@ -1943,7 +1944,11 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 			locCelLightTexture,
 			locDiffuseTexture,
 			locStripesTexture,
-			locDepthTexture;
+			locDepthTexture,
+			locYUVTextureY,
+			locYUVTextureU,
+			locYUVTextureV
+			;
 
 	memset( &program->loc, -1, sizeof( program->loc ) );
 
@@ -1988,6 +1993,10 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	locStripesTexture = qglGetUniformLocationARB( program->object, "u_StripesTexture" );
 
 	locDepthTexture = qglGetUniformLocationARB( program->object, "u_DepthTexture" );
+
+	locYUVTextureY = qglGetUniformLocationARB( program->object, "u_YUVTextureY" );
+	locYUVTextureU = qglGetUniformLocationARB( program->object, "u_YUVTextureU" );
+	locYUVTextureV = qglGetUniformLocationARB( program->object, "u_YUVTextureV" );
 
 	program->loc.LightstyleColor = qglGetUniformLocationARB( program->object, "u_LightstyleColor" );
 	program->loc.DeluxemapOffset = qglGetUniformLocationARB( program->object, "u_DeluxemapOffset" );
@@ -2120,6 +2129,13 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 
 	for( i = 0; i < MAX_LIGHTMAPS && locLightmapTexture[i] >= 0; i++ )
 		qglUniform1iARB( locLightmapTexture[i], i+4 );
+
+	if( locYUVTextureY >= 0 )
+		qglUniform1iARB( locYUVTextureY, 0 );
+	if( locYUVTextureU >= 0 )
+		qglUniform1iARB( locYUVTextureU, 1 );
+	if( locYUVTextureV >= 0 )
+		qglUniform1iARB( locYUVTextureV, 2 );
 }
 
 /*

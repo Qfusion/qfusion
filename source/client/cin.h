@@ -23,7 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void CIN_LoadLibrary( qboolean verbose );
 void CIN_UnloadLibrary( qboolean verbose );
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv );
 qboolean CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime );
 qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 void CIN_Close( struct cinematics_s *cin );

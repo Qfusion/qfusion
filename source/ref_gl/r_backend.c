@@ -158,7 +158,6 @@ static void RB_SetGLDefaults( void )
 
 	qglDisable( GL_CULL_FACE );
 	qglFrontFace( GL_CCW );
-	qglEnable( GL_SCISSOR_TEST );
 	qglDisable( GL_BLEND );
 	qglDisable( GL_ALPHA_TEST );
 	qglDepthFunc( GL_LEQUAL );
@@ -543,11 +542,20 @@ static void GL_EnableVertexAttrib( int index, qboolean enable )
 }
 
 /*
+* RB_SetFrameBufferSize
+*/
+void RB_SetFrameBufferSize( int width, int height )
+{
+	rb.gl.fbWidth = width;
+	rb.gl.fbHeight = height;
+}
+
+/*
 * RB_Scissor
 */
 void RB_Scissor( int x, int y, int w, int h )
 {
-	qglScissor( x, glConfig.height - h - y, w, h );
+	qglScissor( x, rb.gl.fbHeight - h - y, w, h );
 
 	rb.gl.scissorX = x;
 	rb.gl.scissorY = y;
@@ -556,9 +564,9 @@ void RB_Scissor( int x, int y, int w, int h )
 }
 
 /*
-* RB_GetScissorRegion
+* RB_GetScissor
 */
-void RB_GetScissorRegion( int *x, int *y, int *w, int *h )
+void RB_GetScissor( int *x, int *y, int *w, int *h )
 {
 	if( x ) {
 		*x = rb.gl.scissorX;
@@ -575,11 +583,24 @@ void RB_GetScissorRegion( int *x, int *y, int *w, int *h )
 }
 
 /*
+* RB_EnableScissor
+*/
+void RB_EnableScissor( qboolean enable )
+{
+	if( enable ) {
+		qglEnable( GL_SCISSOR_TEST );
+	}
+	else {
+		qglDisable( GL_SCISSOR_TEST );
+	}
+}
+
+/*
 * RB_Viewport
 */
 void RB_Viewport( int x, int y, int w, int h )
 {
-	qglViewport( x, glConfig.height - h - y, w, h );
+	qglViewport( x, rb.gl.fbHeight - h - y, w, h );
 }
 
 /*

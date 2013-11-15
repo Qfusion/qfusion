@@ -42,12 +42,12 @@ namespace trap
 			UI_IMPORT.R_ClearScene ();
 		}
 
-		inline void R_SetScissorRegion( int x, int y, int w, int h ) {
-			UI_IMPORT.R_SetScissorRegion( x, y, w, h );
+		inline void R_Scissor( int x, int y, int w, int h ) {
+			UI_IMPORT.R_Scissor( x, y, w, h );
 		}
 
-		inline void R_GetScissorRegion( int *x, int *y, int* w, int *h ) {
-			UI_IMPORT.R_GetScissorRegion( x, y, w, h );
+		inline void R_GetScissor( int *x, int *y, int* w, int *h ) {
+			UI_IMPORT.R_GetScissor( x, y, w, h );
 		}
 
 		inline void R_AddEntityToScene( entity_t *ent ) {

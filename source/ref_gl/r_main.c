@@ -34,9 +34,10 @@ mapconfig_t mapConfig;
 
 refinst_t rn;
 
-image_t	*r_rawtexture;      // cinematic texture
-image_t	*r_notexture;       // use for bad textures
-image_t	*r_particletexture; // little dot for particles
+image_t	*r_rawtexture;			// cinematic texture (RGB)
+image_t	*r_rawYUVtextures[3];	// 8bit cinematic textures (YCbCr)
+image_t	*r_notexture;			// use for bad textures
+image_t	*r_particletexture;		// little dot for particles
 image_t	*r_whitetexture;
 image_t	*r_blacktexture;
 image_t *r_greytexture;
@@ -671,26 +672,34 @@ void R_EndStretchBatch( void )
 
 /*
 * R_Set2DMode
+*
+* Pass a negative value for width or height to set the viewport
+* size to match the size of the current framebuffer.
 */
-void R_Set2DMode( qboolean enable )
+void R_Set2DMode( qboolean enable, int width, int height )
 {
 	if( rf.in2D == enable )
 		return;
 
 	rf.in2D = enable;
 
+	if( width < 0 || height ) {
+		width = rf.frameBufferWidth;
+		height = rf.frameBufferHeight;
+	}
+
 	if( enable )
 	{
 		// reset 2D batching
 		R_ResetStretchPic();
 
-		Matrix4_OrthogonalProjection( 0, glConfig.width, glConfig.height, 0, -99999, 99999, rn.projectionMatrix );
+		Matrix4_OrthogonalProjection( 0, width, height, 0, -99999, 99999, rn.projectionMatrix );
 		Matrix4_Copy( mat4x4_identity, rn.modelviewMatrix );
 		Matrix4_Copy( rn.projectionMatrix, rn.cameraProjectionMatrix );
 
 		// set 2D virtual screen size
-		RB_Scissor( 0, 0, glConfig.width, glConfig.height );
-		RB_Viewport( 0, 0, glConfig.width, glConfig.height );
+		RB_Scissor( 0, 0, width, height );
+		RB_Viewport( 0, 0, width, height );
 
 		RB_LoadProjectionMatrix( rn.projectionMatrix );
 		RB_LoadModelviewMatrix( rn.modelviewMatrix );
@@ -777,12 +786,97 @@ void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2,
 
 /*
 * R_DrawStretchRaw
+*
+* Passing NULL for data redraws last uploaded frame
 */
 void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *data )
 {
-	R_ReplaceImage( r_rawtexture, &data, cols, rows, 4 );
+	if( data ) {
+		R_ReplaceImage( r_rawtexture, &data, cols, rows, 4 );
+	}
 
-	R_DrawRotatedStretchPic( x, y, w, h, 0, 0, 1, 1, 0, colorWhite, rf.builtinRawShader );
+	R_DrawStretchQuick( x, y, w, h, 0, 0, 1, 1, colorWhite, GLSL_PROGRAM_TYPE_NONE, r_rawtexture, qfalse );
+}
+
+/*
+* R_DrawStretchRawYUVBuiltin
+*
+* Set bit 0 in 'flip' to flip the image horizontally
+* Set bit 1 in 'flip' to flip the image vertically
+*/
+void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, ref_yuv_t *data, 
+	image_t **yuvTextures, qboolean upload, int flip )
+{
+	static char *s_name = "$builtinyuv";
+	static shaderpass_t p;
+	static shader_t s;
+	int height;
+	float s1, t1, s2, t2;
+
+	s.vattribs = VATTRIB_TEXCOORDS_BIT;
+	s.sort = SHADER_SORT_NEAREST;
+	s.numpasses = 1;
+	s.name = s_name;
+	s.passes = &p;
+
+	p.rgbgen.type = RGB_GEN_IDENTITY;
+	p.alphagen.type = ALPHA_GEN_IDENTITY;
+	p.tcgen = TC_GEN_BASE;
+	p.anim_frames[0] = yuvTextures[0];
+	p.anim_frames[1] = yuvTextures[1];
+	p.anim_frames[2] = yuvTextures[2];
+	p.flags = 0;
+	p.program_type = GLSL_PROGRAM_TYPE_YUV;
+
+	height = data->height + data->y_offset * 2;
+
+	if( upload ) {
+		int i;
+		for( i = 0; i < 3; i++ ) {
+			R_ReplaceImage( yuvTextures[i], &data->yuv[i].data, 
+				data->yuv[i].stride, height / data->yuv[i].h_denominator, 1 );
+		}
+	}
+
+	s1 = (float)(data->x_offset + 1) / data->yuv[0].stride;
+	t1 = (float)(data->y_offset + 1) / height;
+	s2 = (float)(data->width + data->x_offset - 1) / data->yuv[0].stride;
+	t2 = (float)(data->height + data->y_offset - 1) / height;
+
+	if( flip & 1 ) {
+		s1 = 1.0 - s1;
+		s2 = 1.0 - s2;
+	}
+	if( flip & 2 ) {
+		t1 = 1.0 - t1;
+		t2 = 1.0 - t2;
+	}
+
+	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, colorWhite, &s );
+
+	R_EndStretchBatch();
+}
+
+/*
+* R_DrawStretchRawYUV
+*
+* Passing NULL for data redraws last uploaded frame
+*/
+void R_DrawStretchRawYUV( int x, int y, int w, int h, ref_yuv_t *data )
+{
+	qboolean upload;
+	static ref_yuv_t last_data;
+
+	if( data ) {
+		last_data = *data;
+		upload = qtrue;
+	}
+	else {
+		// leave last_data alone
+		upload = qfalse;
+	}
+
+	R_DrawStretchRawYUVBuiltin( x, y, w, h, &last_data, r_rawYUVtextures, upload, 0 );
 }
 
 /*
@@ -818,20 +912,37 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 }
 
 /*
-* R_SetScissorRegion
+* R_BindFrameBufferObject
+*/
+void R_BindFrameBufferObject( int object )
+{
+	int width, height;
+
+	R_UseFBObject( object );
+
+	R_GetFBObjectSize( object, &width, &height );
+
+	rf.frameBufferWidth = width;
+	rf.frameBufferHeight = height;
+
+	RB_SetFrameBufferSize( width, height );
+}
+
+/*
+* R_Scissor
 *
 * Set scissor region for 2D drawing. Passing a negative value
 * for any of the variables sets the scissor region to full screen.
 * x and y represent the bottom left corner of the region/rectangle.
 */
-void R_SetScissorRegion( int x, int y, int w, int h )
+void R_Scissor( int x, int y, int w, int h )
 {
 	// flush batched 2D geometry
 	R_EndStretchBatch();
 
 	if( x < 0 || y < 0 || w < 0 || h < 0 ) {
 		// reset
-		RB_Scissor( 0, 0, glConfig.width, glConfig.height );
+		RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
 	}
 	else {
 		RB_Scissor( x, y, w, h );
@@ -839,11 +950,19 @@ void R_SetScissorRegion( int x, int y, int w, int h )
 }
 
 /*
-* R_GetScissorRegion
+* R_GetScissor
 */
-void R_GetScissorRegion( int *x, int *y, int *w, int *h )
+void R_GetScissor( int *x, int *y, int *w, int *h )
 {
-	RB_GetScissorRegion( x, y, w, h );
+	RB_GetScissor( x, y, w, h );
+}
+
+/*
+* R_EnableScissor
+*/
+void R_EnableScissor( qboolean enable )
+{
+	RB_EnableScissor( enable );
 }
 
 /*
@@ -856,8 +975,8 @@ static void R_PolyBlend( void )
 	if( rsc.refdef.blend[3] < 0.01f )
 		return;
 
-	R_Set2DMode( qtrue );
-	R_DrawStretchPic( 0, 0, glConfig.width, glConfig.height, 0, 0, 1, 1, rsc.refdef.blend, rf.whiteShader );
+	R_Set2DMode( qtrue, -1, -1 );
+	R_DrawStretchPic( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1, rsc.refdef.blend, rf.whiteShader );
 	R_EndStretchBatch();
 }
 
@@ -1169,9 +1288,9 @@ static void R_DrawEntities( void )
 //=======================================================================
 
 /*
-* R_UseRefInstFBO
+* R_BindRefInstFBO
 */
-static void R_UseRefInstFBO( void )
+static void R_BindRefInstFBO( void )
 {
 	int fbo;
 
@@ -1185,7 +1304,7 @@ static void R_UseRefInstFBO( void )
 		fbo = 0;
 	}
 
-	R_UseFBObject( fbo );
+	R_BindFrameBufferObject( fbo );
 
 	if( fbo && !rn.fbColorAttachment ) {
 		// inform the driver we do not wish to render to the color buffer
@@ -1291,7 +1410,7 @@ void R_RenderView( const refdef_t *fd )
 
 	R_SortDrawList();
 
-	R_UseRefInstFBO();
+	R_BindRefInstFBO();
 
 	R_DrawPortals();
 
@@ -1348,7 +1467,7 @@ void R_PopRefInst( int clearBitMask )
 		return;
 	}
 	rn = riStack[--riStackSize];
-	R_UseRefInstFBO();
+	R_BindRefInstFBO();
 	R_SetupGL( clearBitMask );
 }
 
@@ -1497,7 +1616,7 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear )
 
 	R_ClearStats();
 
-	R_Set2DMode( qtrue );
+	R_Set2DMode( qtrue, -1, -1 );
 }
 
 /*
@@ -1512,7 +1631,7 @@ void R_EndFrame( void )
 	
 	// reset the 2D state so that the mode will be 
 	// properly set back again in R_BeginFrame
-	R_Set2DMode( qfalse );
+	R_Set2DMode( qfalse, -1, -1 );
 
 	// free temporary image buffers
 	R_FreeImageBuffers();

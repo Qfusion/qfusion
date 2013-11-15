@@ -48,6 +48,7 @@ typedef struct
 	void ( *reset )( cinematics_t *cin );
 	qboolean ( *need_next_frame )( cinematics_t *cin );
 	qbyte *( *read_next_frame )( cinematics_t *cin, qboolean *redraw );
+	cin_yuv_t *( *read_next_frame_yuv )( cinematics_t *cin, qboolean *redraw );
 } cin_type_t;
 
 static const cin_type_t cin_types[] = 
@@ -59,7 +60,8 @@ static const cin_type_t cin_types[] =
 		Theora_Shutdown_CIN,
 		Theora_Reset_CIN,
 		Theora_NeedNextFrame_CIN,
-		Theora_ReadNextFrame_CIN
+		Theora_ReadNextFrame_CIN,
+		Theora_ReadNextFrameYUV_CIN
 	},
 
 	// RoQ - http://wiki.multimedia.cx/index.php?title=ROQ
@@ -69,7 +71,8 @@ static const cin_type_t cin_types[] =
 		RoQ_Shutdown_CIN,
 		RoQ_Reset_CIN,
 		RoQ_NeedNextFrame_CIN,
-		RoQ_ReadNextFrame_CIN
+		RoQ_ReadNextFrame_CIN,
+		NULL
 	},
 
 	// NULL safe guard
@@ -86,7 +89,7 @@ static const cin_type_t cin_types[] =
 /*
 * CIN_Open
 */
-cinematics_t *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio )
+cinematics_t *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv )
 {
 	int i;
 	size_t name_size;
@@ -179,6 +182,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time, qboolean loop
 		return NULL;
 	}
 
+	*yuv = cin->yuv;
 	return cin;
 }
 
@@ -202,9 +206,9 @@ qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 }
 
 /*
-* CIN_ReadNextFrame
+* CIN_ReadNextFrame_
 */
-qbyte *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
+static qbyte *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw, qboolean yuv )
 {
 	int i;
 	qbyte *frame = NULL;
@@ -219,7 +223,12 @@ qbyte *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, int *aspec
 	for( i = 0; i < 2; i++ )
 	{
 		redraw_ = qfalse;
-		frame = type->read_next_frame( cin, &redraw_ );
+		if( yuv ) {
+			frame = ( qbyte * )type->read_next_frame_yuv( cin, &redraw_ );
+		}
+		else {
+			frame = type->read_next_frame( cin, &redraw_ );
+		}
 		if( frame || !( cin->flags & CIN_LOOP ) )
 			break;
 
@@ -241,6 +250,22 @@ qbyte *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, int *aspec
 		*redraw = redraw_;
 
 	return frame;
+}
+
+/*
+* CIN_ReadNextFrame
+*/
+qbyte *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
+{
+	return CIN_ReadNextFrame_( cin, width, height, aspect_numerator, aspect_denominator, redraw, qfalse );
+}
+
+/*
+* CIN_ReadNextFrameYUV
+*/
+cin_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
+{
+	return ( cin_yuv_t * )CIN_ReadNextFrame_( cin, width, height, aspect_numerator, aspect_denominator, redraw, qtrue );
 }
 
 /*

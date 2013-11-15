@@ -54,12 +54,14 @@ typedef struct
 	qboolean allowConsole;
 	qboolean redraw;
 	qboolean paused;
+	qboolean yuv;
 	unsigned int absStartTime;		// absolute start time
 	unsigned int absPrevTime;
 	unsigned int absCurrentTime;	// absolute current time
 	unsigned int currentTime;		// always relative to 0
 	qbyte *pic;
 	int aspect_numerator, aspect_denominator;
+	ref_yuv_t *cyuv;
 } cl_cintematics_t;
 
 //

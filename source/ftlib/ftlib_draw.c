@@ -199,8 +199,8 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 	if( xmax <= xmin || ymax <= ymin || x > xmax || y > ymax )
 		return;
 
-	trap_R_GetScissorRegion( &oldscissor.x, &oldscissor.y, &oldscissor.w, &oldscissor.h );
-	trap_R_SetScissorRegion( 
+	trap_R_GetScissor( &oldscissor.x, &oldscissor.y, &oldscissor.w, &oldscissor.h );
+	trap_R_Scissor( 
 		max( xmin, oldscissor.x ),
 		max( ymin, oldscissor.y ), 
 		min( xmax - xmin, oldscissor.w ), 
@@ -243,7 +243,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 			assert( 0 );
 	}
 
-	trap_R_SetScissorRegion( oldscissor.x, oldscissor.y, oldscissor.w, oldscissor.h );
+	trap_R_Scissor( oldscissor.x, oldscissor.y, oldscissor.w, oldscissor.h );
 }
 
 /*

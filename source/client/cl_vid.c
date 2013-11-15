@@ -438,6 +438,7 @@ static qboolean VID_LoadRefresh( const char *name )
 	import.CIN_Open = &CIN_Open;
 	import.CIN_NeedNextFrame = &CIN_NeedNextFrame;
 	import.CIN_ReadNextFrame = &CIN_ReadNextFrame;
+	import.CIN_ReadNextFrameYUV = &CIN_ReadNextFrameYUV;
 	import.CIN_Close = &CIN_Close;
 
 	import.Mem_AllocPool = &VID_RefModule_MemAllocPool;

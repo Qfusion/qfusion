@@ -488,6 +488,7 @@ qboolean RoQ_Init_CIN( cinematics_t *cin )
 	cin->framerate = RoQ_FRAMERATE;
 	cin->s_rate = 22050;
 	cin->s_width = 2;
+	cin->yuv = qfalse;
 
 	RoQ_Init();
 

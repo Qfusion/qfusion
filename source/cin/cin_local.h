@@ -62,6 +62,8 @@ typedef struct cinematics_s
 	unsigned int start_time;              // Sys_Milliseconds for first cinematic frame
 	unsigned int frame;
 
+	qboolean	yuv;
+
 	qbyte		*vid_buffer;
 
 	int			type;
@@ -74,9 +76,10 @@ qboolean CIN_Init( qboolean verbose );
 void CIN_Shutdown( qboolean verbose );
 char *CIN_CopyString( const char *in );
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv );
 qboolean CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime );
 qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+cin_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 void CIN_Close( struct cinematics_s *cin );
 
 #endif

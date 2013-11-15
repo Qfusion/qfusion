@@ -929,6 +929,10 @@ init_qgl:
 
 	RB_Init();
 
+	RB_SetFrameBufferSize( glConfig.width, glConfig.height );
+
+	RB_EnableScissor( qtrue );
+
 	R_InitCinematics();
 
 	R_InitShaders();
@@ -974,7 +978,6 @@ static void R_InitVolatileAssets( void )
 	rf.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, qtrue );
 	rf.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, qtrue );
 	rf.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, qtrue );
-	rf.builtinRawShader = R_LoadShader( "$builtinraw", SHADER_TYPE_2D_BUILTIN_RAW, qtrue );
 	rf.skyclipShader = R_LoadShader( "$skyclip", SHADER_TYPE_SKYCLIP, qtrue );
 
 	if( !rf.nullVBO ) {

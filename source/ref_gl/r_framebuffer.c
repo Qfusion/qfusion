@@ -183,6 +183,8 @@ int R_ActiveFBObject( void )
 
 /*
 * R_UseFBObject
+*
+* DO NOT call this function directly, use R_BindFrameBufferObject instead.
 */
 void R_UseFBObject( int object )
 {
@@ -201,6 +203,10 @@ void R_UseFBObject( int object )
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
 	if( object <= 0 || object > r_num_framebuffer_objects ) {
+		return;
+	}
+
+	if( r_bound_framebuffer_objectID == object ) {
 		return;
 	}
 
@@ -389,6 +395,29 @@ qboolean R_CheckFBObjectStatus( void )
 	}
 	
 	return qfalse;
+}
+
+/*
+* R_GetFBObjectSize
+*/
+void R_GetFBObjectSize( int object, int *width, int *height )
+{
+	r_fbo_t *fbo;
+
+	if( !object ) {
+		*width = glConfig.width;
+		*height = glConfig.height;
+		return;
+	}
+
+	assert( object > 0 && object <= r_num_framebuffer_objects );
+	if( object <= 0 || object > r_num_framebuffer_objects ) {
+		return;
+	}
+
+	fbo = r_framebuffer_objects + object - 1;
+	*width = fbo->width;
+	*height = fbo->height;
 }
 
 /*

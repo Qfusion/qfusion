@@ -390,14 +390,14 @@ static void _R_DrawSurfaces( void )
 					// at later stage
 					if( shader->flags & SHADER_DEPTHWRITE ) {
 						if( rd->rdflags & RDF_WEAPONALPHA ) {
-							R_UseFBObject( r_screenweapontexture->fbo );
+							R_BindFrameBufferObject( r_screenweapontexture->fbo );
 						}
 					}					
 					depthHack = qtrue;
 					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 				} else if( depthHack ) {
 					// bind the main framebuffer back
-					R_UseFBObject( riFBO );
+					R_BindFrameBufferObject( riFBO );
 
 					depthHack = qfalse;
 					RB_DepthRange( depthmin, depthmax );
@@ -473,7 +473,7 @@ static void _R_DrawSurfaces( void )
 		RB_FlipFrontFace();
 	}
 
-	R_UseFBObject( riFBO );
+	R_BindFrameBufferObject( riFBO );
 }
 
 /*

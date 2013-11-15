@@ -83,9 +83,10 @@ typedef struct
 	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
 
-	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio );
+	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv );
 	qboolean ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
 	qbyte *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	ref_yuv_t *( *CIN_ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 	void ( *CIN_Close )( struct cinematics_s *cin );
 
 	struct mempool_s *( *Mem_AllocPool )( struct mempool_s *parent, const char *name, const char *filename, int fileline );
@@ -147,10 +148,16 @@ typedef struct
 								 const float *color, const struct shader_s *shader );
 	void		( *DrawRotatedStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 								 float angle, const vec4_t color, const struct shader_s *shader );
+
+	// Passing NULL for data redraws last uploaded frame
 	void		( *DrawStretchRaw )( int x, int y, int w, int h, int cols, int rows, qbyte *data );
+
+	// Passing NULL for data redraws last uploaded frame
+	void		( *DrawStretchRawYUV )( int x, int y, int w, int h, ref_yuv_t *data );
+
 	void		( *DrawStretchPoly )( const poly_t *poly, float x_offset, float y_offset );
-	void		( *SetScissorRegion )( int x, int y, int w, int h );
-	void		( *GetScissorRegion )( int *x, int *y, int *w, int *h );
+	void		( *Scissor )( int x, int y, int w, int h );
+	void		( *GetScissor )( int *x, int *y, int *w, int *h );
 
 	void		( *SetCustomColor )( int num, int r, int g, int b );
 	void		( *LightForOrigin )( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );

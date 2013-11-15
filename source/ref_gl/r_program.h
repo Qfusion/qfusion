@@ -35,6 +35,7 @@ typedef quint64 r_glslfeat_t;
 #define DEFAULT_GLSL_CELSHADE_PROGRAM		"defaultCelshade"
 #define DEFAULT_GLSL_FOG_PROGRAM			"defaultFog"
 #define DEFAULT_GLSL_FXAA_PROGRAM			"defaultFXAA"
+#define DEFAULT_GLSL_YUV_PROGRAM			"defaultYUV"
 
 // program types
 enum
@@ -50,6 +51,7 @@ enum
 	GLSL_PROGRAM_TYPE_CELSHADE,
 	GLSL_PROGRAM_TYPE_FOG,
 	GLSL_PROGRAM_TYPE_FXAA,
+	GLSL_PROGRAM_TYPE_YUV,
 
 	GLSL_PROGRAM_TYPE_MAXTYPE
 };
