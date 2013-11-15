@@ -592,6 +592,7 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qb
 */
 void S_StopAllSounds( void )
 {
+	S_StopStream();
 	S_StopAllSources();
 	S_StopBackgroundTrack();
 }
