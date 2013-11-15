@@ -673,20 +673,19 @@ void R_EndStretchBatch( void )
 /*
 * R_Set2DMode
 *
-* Pass a negative value for width or height to set the viewport
-* size to match the size of the current framebuffer.
+* Note that this sets the viewport to size of the active framebuffer.
 */
-void R_Set2DMode( qboolean enable, int width, int height )
+void R_Set2DMode( qboolean enable )
 {
+	int width, height;
+
 	if( rf.in2D == enable )
 		return;
 
 	rf.in2D = enable;
 
-	if( width < 0 || height ) {
-		width = rf.frameBufferWidth;
-		height = rf.frameBufferHeight;
-	}
+	width = rf.frameBufferWidth;
+	height = rf.frameBufferHeight;
 
 	if( enable )
 	{
@@ -975,7 +974,7 @@ static void R_PolyBlend( void )
 	if( rsc.refdef.blend[3] < 0.01f )
 		return;
 
-	R_Set2DMode( qtrue, -1, -1 );
+	R_Set2DMode( qtrue );
 	R_DrawStretchPic( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1, rsc.refdef.blend, rf.whiteShader );
 	R_EndStretchBatch();
 }
@@ -1616,7 +1615,7 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear )
 
 	R_ClearStats();
 
-	R_Set2DMode( qtrue, -1, -1 );
+	R_Set2DMode( qtrue );
 }
 
 /*
@@ -1631,7 +1630,7 @@ void R_EndFrame( void )
 	
 	// reset the 2D state so that the mode will be 
 	// properly set back again in R_BeginFrame
-	R_Set2DMode( qfalse, -1, -1 );
+	R_Set2DMode( qfalse );
 
 	// free temporary image buffers
 	R_FreeImageBuffers();

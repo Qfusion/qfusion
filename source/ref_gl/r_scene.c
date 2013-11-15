@@ -178,7 +178,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( r_norefresh->integer )
 		return;
 
-	R_Set2DMode( qfalse, -1, -1 );
+	R_Set2DMode( qfalse );
 
 	RB_SetTime( fd->time );
 
@@ -258,7 +258,7 @@ void R_RenderScene( const refdef_t *fd )
 
 	R_RenderDebugBounds();
 
-	R_Set2DMode( qtrue, -1, -1 );
+	R_Set2DMode( qtrue );
 
 	// blit and blend framebuffers in proper order
 
