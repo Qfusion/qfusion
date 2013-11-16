@@ -560,8 +560,6 @@ void SCR_BeginLoadingPlaque( void )
 	scr_conlines = 0;       // none visible
 	scr_draw_loading = 2;   // clear to black first
 	SCR_UpdateScreen();
-
-	CL_ShutdownMedia();
 }
 
 /*
@@ -571,7 +569,6 @@ void SCR_EndLoadingPlaque( void )
 {
 	cls.disable_screen = 0;
 	Con_ClearNotify();
-	CL_InitMedia();
 }
 
 
