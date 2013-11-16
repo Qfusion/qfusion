@@ -398,6 +398,11 @@ static int RP_CompileShader( int program, const char *programName, const char *s
 
 #define MAX_DEFINES_FEATURES	255
 
+static const glsl_feature_t glsl_features_empty[] =
+{
+	{ 0, NULL, NULL }
+};
+
 static const glsl_feature_t glsl_features_generic[] =
 {
 	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
@@ -678,11 +683,6 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_fxaa[] =
-{
-	{ 0, NULL, NULL }
-};
-
 static const glsl_feature_t * const glsl_programtypes_features[] =
 {
 	// GLSL_PROGRAM_TYPE_NONE
@@ -706,7 +706,9 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	// GLSL_PROGRAM_TYPE_FOG
 	glsl_features_fog,
 	// GLSL_PROGRAM_TYPE_FXAA
-	glsl_features_fxaa,
+	glsl_features_empty,
+	// GLSL_PROGRAM_TYPE_YUV
+	glsl_features_empty,
 };
 
 // ======================================================================================
