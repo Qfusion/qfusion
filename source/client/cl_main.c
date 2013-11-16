@@ -1826,9 +1826,6 @@ void CL_InitMedia( void )
 
 	cls.mediaInitialized = qtrue;
 
-	// load common localization strings
-	L10n_LoadLangPOFile( "common", "l10n" );
-
 	// register console font and background
 	SCR_RegisterConsoleMedia();
 
@@ -1862,8 +1859,6 @@ void CL_ShutdownMedia( void )
 	SCR_ShutDownConsoleMedia();
 
 	CL_SoundModule_StopAllSounds();
-
-	L10n_ClearDomains();
 }
 
 /*
@@ -2885,6 +2880,9 @@ void CL_Init( void )
 
 	Con_Init();
 
+	// init localization subsystem
+	L10n_Init();
+
 	VID_Init();
 
 	CL_ClearState();
@@ -2902,9 +2900,6 @@ void CL_Init( void )
 	NET_SetAddressPort( &address, cl_port6->integer );
 	if( !NET_OpenSocket( &cls.socket_udp6, SOCKET_UDP, &address, qfalse ) )
 		Com_Printf( "Error: Couldn't open UDP6 socket: %s", NET_ErrorString() );
-
-	// init localization subsystem
-	L10n_Init();
 
 	SCR_InitScreen();
 	cls.disable_screen = qtrue; // don't draw yet
