@@ -115,6 +115,9 @@ public:
 
 	bool debugOn( void );
 
+	void clearShaderCache( void );
+	void touchAllCachedShaders( void );
+
 private:
 	UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, bool demoPlaying, const char *demoName );
 

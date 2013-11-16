@@ -199,6 +199,9 @@ void UI_Main::reloadUI( void )
 	// clear the navigation stack from previous installment
 	navigator->getCache()->clearCaches();
 
+	// forget about all previously registed shaders
+	rocketModule->clearShaderCache();
+
 	if( serverBrowser ) {
 		serverBrowser->stopUpdate();
 	}
@@ -251,6 +254,8 @@ void UI_Main::shutdownRocket( void )
 	navigator->popAllDocuments();
 	// clear the navigation stack from previous installment
 	navigator->getCache()->clearCaches();
+	// forget about all previously registed shaders
+	rocketModule->clearShaderCache();
 
 	destroyDataSources();
 	destroyFormatters();
@@ -258,6 +263,19 @@ void UI_Main::shutdownRocket( void )
 	__SAFE_DELETE_NULLIFY( navigator );
 
 	__SAFE_DELETE_NULLIFY( rocketModule );
+}
+
+void UI_Main::clearShaderCache( void )
+{
+	if( rocketModule != NULL ) {
+		rocketModule->clearShaderCache();
+	}
+}
+void UI_Main::touchAllCachedShaders( void )
+{
+	if( rocketModule != NULL ) {
+		rocketModule->touchAllCachedShaders();
+	}
 }
 
 void UI_Main::createDataSources( void )

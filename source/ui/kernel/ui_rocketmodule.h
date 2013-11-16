@@ -53,6 +53,9 @@ namespace WSWUI
 		// you shouldnt need to use this
 		Rocket::Core::Context *getContext() { return context; }
 
+		void clearShaderCache( void );
+		void touchAllCachedShaders( void );
+
 	private:
 		void preloadFonts( const char *ext );
 

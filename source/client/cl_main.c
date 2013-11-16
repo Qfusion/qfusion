@@ -1871,8 +1871,41 @@ void CL_ShutdownMedia( void )
 */
 void CL_RestartMedia( void )
 {
-	CL_ShutdownMedia();
-	CL_InitMedia();
+	if( !VID_RefreshActive() )
+		return;
+
+	if( cls.mediaInitialized )
+	{
+		// shutdown cgame
+		CL_GameModule_Shutdown();
+
+		cls.mediaInitialized = qfalse;
+	}
+
+	CL_SoundModule_StopAllSounds();
+
+	// random seed to be shared among game modules so pseudo-random stuff is in sync
+	if ( cls.state != CA_CONNECTED )
+	{
+		srand( time( NULL ) );
+		cls.mediaRandomSeed = rand();
+	}
+
+	cls.mediaInitialized = qtrue;
+
+	FTLIB_TouchAllFonts();
+
+	// register console font and background
+	SCR_RegisterConsoleMedia();
+
+	CL_UIModule_ForceMenuOff();
+
+	CL_UIModule_TouchAllSounds();
+
+	CL_UIModule_TouchAllShaders();
+
+	// check memory integrity
+	Mem_CheckSentinelsGlobal();
 }
 
 /*

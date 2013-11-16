@@ -122,6 +122,17 @@ namespace WSWUI
 			ui_main->addToServerList( adr, info );
 		}
 	}
+	void TouchAllSounds( void )
+	{
+		// we don't use S_RegisterSound
+	}
+
+	void TouchAllShaders( void )
+	{
+		if( ui_main ) {
+			ui_main->touchAllCachedShaders();
+		}
+	}
 
 }	// namespace
 
@@ -150,6 +161,9 @@ ui_export_t *GetUIAPI( ui_import_t *import )
 	globals.ForceMenuOff = WSWUI::ForceMenuOff;
 
 	globals.AddToServerList = WSWUI::AddToServerList;
+
+	globals.TouchAllSounds = WSWUI::TouchAllSounds;
+	globals.TouchAllShaders = WSWUI::TouchAllShaders;
 
 	return &globals;
 }

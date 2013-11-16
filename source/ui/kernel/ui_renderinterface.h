@@ -51,6 +51,10 @@ public:
 	int GetWidth( void );
 	int GetHeight( void );
 
+	void AddShaderToCache( Rocket::Core::String &shader );
+	void ClearShaderCache( void );
+	void TouchAllShaders( void );
+
 private:
 	int vid_width;
 	int vid_height;
@@ -63,6 +67,9 @@ private:
 
 	PolyAllocator polyAlloc;
 	struct shader_s *whiteShader;
+
+	typedef std::map<Rocket::Core::String, char> ShaderMap;
+	ShaderMap shaderMap;
 
 	poly_t *RocketGeometry2Poly(bool temp, Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture);
 };
