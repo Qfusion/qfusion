@@ -153,10 +153,8 @@ static void SCR_CheckFontLastChar( void )
 /*
 * SCR_InitFonts
 */
-static void SCR_InitFonts( qboolean verbose )
+static void SCR_InitFonts( void )
 {
-	FTLIB_PrecacheFonts( verbose );
-
 	con_fontSystemFamily = Cvar_Get( "con_fontSystemFamily", DEFAULT_SYSTEM_FONT_FAMILY, CVAR_ARCHIVE );
 	con_fontSystemSmallSize = Cvar_Get( "con_fontSystemSmallSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_SMALL_SIZE ), CVAR_ARCHIVE );
 	con_fontSystemMediumSize = Cvar_Get( "con_fontSystemMediumSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_MEDIUM_SIZE ), CVAR_ARCHIVE );
@@ -170,10 +168,8 @@ static void SCR_InitFonts( qboolean verbose )
 /*
 * SCR_ShutdownFonts
 */
-static void SCR_ShutdownFonts( qboolean verbose )
+static void SCR_ShutdownFonts( void )
 {
-	FTLIB_FreeFonts( verbose );
-
 	cls.fontSystemSmall = NULL;
 	cls.fontSystemMedium = NULL;
 	cls.fontSystemBig = NULL;
@@ -485,8 +481,6 @@ void SCR_InitScreen( void )
 	scr_graphshift = Cvar_Get( "graphshift", "0", 0 );
 	scr_forceclear = Cvar_Get( "scr_forceclear", "0", CVAR_READONLY );
 
-	FTLIB_LoadLibrary( qtrue );
-
 	scr_initialized = qtrue;
 }
 
@@ -567,7 +561,7 @@ void SCR_BeginLoadingPlaque( void )
 	scr_draw_loading = 2;   // clear to black first
 	SCR_UpdateScreen();
 
-	CL_ShutdownMedia( qfalse );
+	CL_ShutdownMedia();
 }
 
 /*
@@ -577,7 +571,7 @@ void SCR_EndLoadingPlaque( void )
 {
 	cls.disable_screen = 0;
 	Con_ClearNotify();
-	CL_InitMedia( qfalse );
+	CL_InitMedia();
 }
 
 
@@ -586,20 +580,20 @@ void SCR_EndLoadingPlaque( void )
 /*
 * SCR_RegisterConsoleMedia
 */
-void SCR_RegisterConsoleMedia( qboolean verbose )
+void SCR_RegisterConsoleMedia()
 {
 	cls.whiteShader = re.RegisterPic( "$whiteimage" );
 	cls.consoleShader = re.RegisterPic( "gfx/ui/console" );
 
-	SCR_InitFonts( verbose );
+	SCR_InitFonts();
 }
 
 /*
 * SCR_ShutDownConsoleMedia
 */
-void SCR_ShutDownConsoleMedia( qboolean verbose )
+void SCR_ShutDownConsoleMedia( void )
 {
-	SCR_ShutdownFonts( verbose );
+	SCR_ShutdownFonts();
 }
 
 //============================================================================

@@ -60,10 +60,10 @@ static short QFT_GetKerning( qfontface_t *qfont, unsigned int char1, unsigned in
 	FT_Vector kvec;
 
 	qttf = ( qttface_t * )qfont->facedata;
-	if( char1 < qfont->firstChar || char1 > qfont->lastChar ) {
+	if( char1 < qfont->minChar || char1 > qfont->maxChar ) {
 		return 0;
 	}
-	if( char2 < qfont->firstChar || char2 > qfont->lastChar ) {
+	if( char2 < qfont->minChar || char2 > qfont->maxChar ) {
 		return 0;
 	}
 
@@ -125,7 +125,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	}
 
 	if( i == FTLIB_MAX_FONT_FACES ) {
-		Com_Printf( S_COLOR_YELLOW "Warning: '%s' numFontFaces == FTLIB_MAX_FONT_FACES\n" );
+		Com_Printf( S_COLOR_YELLOW "Warning: numFontFaces == FTLIB_MAX_FONT_FACES\n" );
 		goto done;
 	}
 
@@ -143,10 +143,6 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	// track available chars
 	minChar = FTLIB_LAST_FONT_CHAR + 1;
 	maxChar = FTLIB_FIRST_FONT_CHAR - 1;
-
-	if( lastChar > FTLIB_LAST_FONT_CHAR ) {
-		lastChar = FTLIB_LAST_FONT_CHAR;
-	}
 
 	numLines = 1;
 
@@ -218,8 +214,9 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	qfont->size = size;
 	qfont->height = fontHeight;
 	qfont->numGlyphs = numGlyphs;
-	qfont->firstChar = minChar;
-	qfont->lastChar = maxChar;
+	qfont->minChar = minChar;
+	qfont->maxChar = maxChar;
+	qfont->lastChar = lastChar;
 	qfont->glyphs = ( qglyph_t *)(FTLIB_Alloc( ftlibPool, numGlyphs * sizeof( *qfont->glyphs ) ));
 	qfont->numShaders = numImages;
 	qfont->shaders = ( shader_t ** )FTLIB_Alloc( ftlibPool, numImages * sizeof( *qfont->shaders ) );
@@ -479,7 +476,7 @@ static void QFT_LoadFamily( const char *fileName, const qbyte *data, size_t data
 
 	if( numFontFamilies == FTLIB_MAX_FONT_FAMILIES ) {
 		if( verbose ) {
-			Com_Printf( S_COLOR_YELLOW "Warning: '%s' numFontFamilies == FTLIB_MAX_FONT_FAMILIES\n" );
+			Com_Printf( S_COLOR_YELLOW "Warning: numFontFamilies == FTLIB_MAX_FONT_FAMILIES\n" );
 		}
 		return;
 	}
@@ -647,6 +644,10 @@ qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int siz
 		return NULL;
 	}
 
+	if( lastChar > FTLIB_LAST_FONT_CHAR ) {
+		lastChar = FTLIB_LAST_FONT_CHAR;
+	}
+
 	best = NULL;
 	bestStyle = QFONT_STYLE_MASK + 1;
 	for( i = 0; i < numFontFamilies; i++ ) {
@@ -670,8 +671,9 @@ qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int siz
 	// find the best matching font style of the same size
 	for( i = 0; i < qfamily->numFaces; i++ ) {
 		qface = qfamily->faces[i];
-		if( qface->size == size ) {
+		if( qface->size == size && qface->lastChar >= lastChar ) {
 			// exact match
+			FTLIB_TouchFont( qface );
 			return qface;
 		}
 	}
@@ -699,6 +701,28 @@ void FTLIB_TouchFont( qfontface_t *qfont )
 
 	for( i = 0; i < qfont->numShaders; i++ ) {
 		trap_R_RegisterPic( qfont->shaderNames[i] ); 
+	}
+}
+
+/*
+* FTLIB_TouchAllFonts
+*/
+void FTLIB_TouchAllFonts( void )
+{
+	unsigned int i, j;
+	qfontfamily_t *qfamily;
+	qfontface_t *qface;
+
+	// unload all font families
+	for( i = 0; i < numFontFamilies; i++ ) {
+		qfamily = &fontFamilies[i];
+
+		// unload all faces for this family
+		for( j = 0; j < qfamily->numFaces; j++ ) {
+			qface = qfamily->faces[j];
+
+			FTLIB_TouchFont( qface );
+		}
 	}
 }
 
