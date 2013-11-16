@@ -1,4 +1,4 @@
-myhalf FragmentSoftness(float Depth, sampler2D DepthTexture, const vec2 ScreenCoord, const ivec4 Viewport, const float ZNear, const float ZFar, myhalf Scale)
+myhalf FragmentSoftness(float Depth, sampler2D DepthTexture, in vec2 ScreenCoord, in ivec4 Viewport, in float ZNear, in float ZFar, myhalf Scale)
 {
 	vec2 tc = ScreenCoord / vec2(Viewport.zw);
 
