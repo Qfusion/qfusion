@@ -727,6 +727,9 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_GLSL_VERSION140 "" \
 "#version 140\n"
 
+#define QF_GLSL_ENABLE_ARB_DRAW_INSTACED "" \
+"#extension GL_ARB_draw_instanced : enable\n"
+
 #define QF_BUILTIN_GLSL_MACROS "" \
 "#if !defined(myhalf)\n" \
 "//#if !defined(__GLSL_CG_DATA_TYPES)\n" \
@@ -932,7 +935,6 @@ QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
 "attribute vec4 a_InstanceQuat;\n" \
 "attribute vec4 a_InstancePosAndScale;\n" \
 "#elif defined(GL_ARB_draw_instanced)\n" \
-"#extension GL_ARB_draw_instanced : enable\n" \
 "\n" \
 "uniform vec4 u_QF_InstancePoints[MAX_UNIFORM_INSTANCES*2];\n" \
 "\n" \
@@ -1394,6 +1396,11 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	else {
 		shaderStrings[i++] = QF_GLSL_VERSION120;
 	}
+
+	if( glConfig.shadingLanguageVersion < 300 && glConfig.ext.draw_instanced ) {
+		shaderStrings[i++] = QF_GLSL_ENABLE_ARB_DRAW_INSTACED;
+	}
+
 	shaderStrings[i++] = shaderVersion;
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
