@@ -2786,7 +2786,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 {
 	unsigned int key, nameLength;
 	char shortname[MAX_QPATH];
-	shader_t *s, *best;
+	shader_t *s;
 	shader_t *hnode, *prev, *next;
 
 	if( !name || !name[0] )
@@ -2799,20 +2799,20 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 	// test if already loaded
 	key = ri.Hash_SuperFastHash( ( const qbyte *)shortname, nameLength, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
-	best = NULL;
 
 	// scan all instances of the same shader for exact match of the type
 	for( s = hnode->next; s != hnode; s = s->next ) {
 		if( ( s->type == type ) && !strcmp( s->name, shortname ) ) {
-			best = s;
-			break;
+			// exact match found
+			R_TouchShader( s );
+			return s;
 		}
-	}
-
-	if( best ) {
-		// match found
-		R_TouchShader( best );
-		return best;
+		if( ( type == SHADER_TYPE_2D ) && ( s->type == SHADER_TYPE_2D_RAW ) && !strcmp( s->name, shortname ) ) {
+			// almost exact match:
+			// alias SHADER_TYPE_2D_RAW to SHADER_TYPE_2D so the shader can be "touched" by name
+			R_TouchShader( s );
+			return s;
+		}
 	}
 
 	if( !r_free_shaders ) {
