@@ -76,7 +76,10 @@ typedef struct qfontface_s
 	char **shaderNames;
 
 	// range of characters contained within the font
-	unsigned int firstChar, lastChar;
+	unsigned int minChar, maxChar;
+
+	// registration char
+	unsigned int lastChar;
 
 	// glyphs
 	unsigned int numGlyphs;
@@ -123,6 +126,7 @@ void FTLIB_ShutdownSubsystems( qboolean verbose );
 void FTLIB_PrecacheFonts( qboolean verbose );
 qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size, unsigned int lastChar );
 void FTLIB_TouchFont( qfontface_t *qfont );
+void FTLIB_TouchAllFonts( void );
 void FTLIB_FreeFonts( qboolean verbose );
 void FTLIB_PrintFontList( void );
 

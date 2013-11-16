@@ -41,6 +41,7 @@ QF_DLL_EXPORT ftlib_export_t *GetFTLibAPI( ftlib_import_t *import )
 	globals.PrecacheFonts = &FTLIB_PrecacheFonts;
 	globals.RegisterFont = &FTLIB_RegisterFont;
 	globals.TouchFont = &FTLIB_TouchFont;
+	globals.TouchAllFonts = &FTLIB_TouchAllFonts;
 	globals.FreeFonts = &FTLIB_FreeFonts;
 
 	globals.FontHeight = &FTLIB_fontHeight;

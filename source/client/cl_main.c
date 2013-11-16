@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_main.c  -- client main loop
 
 #include "client.h"
+#include "ftlib.h"
 #include "../qcommon/asyncstream.h"
 
 cvar_t *cl_stereo_separation;
@@ -870,7 +871,7 @@ void CL_Disconnect( const char *message )
 		cls.httpbaseurl = NULL;
 	}
 
-	CL_RestartMedia( qfalse );
+	CL_RestartMedia();
 
 	CL_Mumble_Unlink();
 
@@ -1602,16 +1603,18 @@ void CL_RequestNextDownload( void )
 			}
 			else {
 				// make sure all media assets will be freed
+				FTLIB_TouchAllFonts();
 				re.EndRegistration();
 				CL_SoundModule_EndRegistration();
 
 				re.BeginRegistration();
 				CL_SoundModule_BeginRegistration();
+				FTLIB_TouchAllFonts();
 			}
 		}
 
 		if( !vid_restart ) {
-			CL_RestartMedia( qfalse );
+			CL_RestartMedia();
 		}
 
 		cls.download.successCount = 0;
@@ -1777,7 +1780,8 @@ void CL_SetClientState( int state )
 		//SCR_UpdateScreen();
 		break;
 	case CA_ACTIVE:
-	case CA_CINEMATIC:
+	case CA_CINEMATIC:	
+		FTLIB_TouchAllFonts();
 		re.EndRegistration();
 		CL_SoundModule_EndRegistration();
 		Con_Close();
@@ -1804,7 +1808,7 @@ connstate_t CL_GetClientState( void )
 /*
 * CL_InitMedia
 */
-void CL_InitMedia( qboolean verbose )
+void CL_InitMedia( void )
 {
 	if( cls.mediaInitialized )
 		return;
@@ -1821,12 +1825,12 @@ void CL_InitMedia( qboolean verbose )
 	}
 
 	cls.mediaInitialized = qtrue;
-		
+
 	// load common localization strings
 	L10n_LoadLangPOFile( "common", "l10n" );
 
 	// register console font and background
-	SCR_RegisterConsoleMedia( verbose );
+	SCR_RegisterConsoleMedia();
 
 	// load user interface
 	CL_UIModule_Init();
@@ -1840,7 +1844,7 @@ void CL_InitMedia( qboolean verbose )
 /*
 * CL_ShutdownMedia
 */
-void CL_ShutdownMedia( qboolean verbose )
+void CL_ShutdownMedia( void )
 {
 	if( !cls.mediaInitialized )
 		return;
@@ -1855,7 +1859,7 @@ void CL_ShutdownMedia( qboolean verbose )
 	// shutdown user interface
 	CL_UIModule_Shutdown();
 
-	SCR_ShutDownConsoleMedia( verbose );
+	SCR_ShutDownConsoleMedia();
 
 	CL_SoundModule_StopAllSounds();
 
@@ -1865,10 +1869,10 @@ void CL_ShutdownMedia( qboolean verbose )
 /*
 * CL_RestartMedia
 */
-void CL_RestartMedia( qboolean verbose )
+void CL_RestartMedia( void )
 {
-	CL_ShutdownMedia( verbose );
-	CL_InitMedia( verbose );
+	CL_ShutdownMedia();
+	CL_InitMedia();
 }
 
 /*
@@ -2914,7 +2918,7 @@ void CL_Init( void )
 
 	CL_SoundModule_Init( qtrue ); // sound must be initialized after window is created
 
-	CL_InitMedia( qtrue );
+	CL_InitMedia();
 	Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
 
 	// check for update
@@ -2973,7 +2977,7 @@ void CL_Shutdown( void )
 	L10n_Shutdown();
 	VID_Shutdown();
 
-	CL_ShutdownMedia( qtrue );
+	CL_ShutdownMedia();
 
 	CL_ShutdownCinematics();
 

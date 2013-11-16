@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // qfusion refresh engine.
 #include "client.h"
 #include "cin.h"
+#include "ftlib.h"
 
 cvar_t *vid_ref;
 cvar_t *vid_mode;
@@ -492,6 +493,7 @@ static qboolean VID_LoadRefresh( const char *name )
 void VID_CheckChanges( void )
 {
 	rserr_t err;
+	qboolean verbose = vid_ref_verbose || vid_ref_sound_restart;
 
 	if( win_noalttab->modified ) {
 		VID_EnableAltTab( win_noalttab->integer ? qfalse : qtrue );
@@ -529,10 +531,12 @@ void VID_CheckChanges( void )
 		cgameActive = cls.cgameActive;
 		cls.disable_screen = qtrue;
 
-		CL_ShutdownMedia( qfalse );
+		CL_ShutdownMedia();
 
 		// stop and free all sounds
 		CL_SoundModule_Shutdown( qfalse );
+
+		FTLIB_FreeFonts( qfalse );
 
 		Cvar_GetLatchedVars( CVAR_LATCH_VIDEO );
 
@@ -576,9 +580,11 @@ load_refresh:
 		vid_ref_active = qtrue;
 
 		// stop and free all sounds
-		CL_SoundModule_Init( vid_ref_verbose || vid_ref_sound_restart );
+		CL_SoundModule_Init( verbose );
 
-		CL_InitMedia( vid_ref_verbose || vid_ref_sound_restart );
+		FTLIB_PrecacheFonts( verbose );
+
+		CL_InitMedia();
 
 		cls.disable_screen = qfalse;
 
@@ -648,6 +654,8 @@ void VID_Init( void )
 	vid_fullscreen->modified = qfalse;
 	vid_ref_prevmode = atoi( VID_DEFAULTFALLBACKMODE );
 
+	FTLIB_LoadLibrary( qfalse );
+
 	VID_CheckChanges();
 }
 
@@ -660,6 +668,8 @@ void VID_Shutdown( void )
 		return;
 
 	VID_UnloadRefresh();
+
+	FTLIB_UnloadLibrary( qfalse );
 
 	Cmd_RemoveCommand( "vid_restart" );
 	Cmd_RemoveCommand( "vid_front" );

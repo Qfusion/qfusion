@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // ftlib_public.h - font provider subsystem
 
-#define	FTLIB_API_VERSION			1
+#define	FTLIB_API_VERSION			2
 
 //===============================================================
 
@@ -115,6 +115,7 @@ typedef struct
 	void ( *PrecacheFonts )( qboolean verbose );
 	struct qfontface_s *( *RegisterFont )( const char *family, int style, unsigned int size, unsigned int lastChar );
 	void ( *TouchFont )( struct qfontface_s *qfont );
+	void ( *TouchAllFonts )( void );
 	void ( *FreeFonts )( qboolean verbose );
 
 	// drawing functions

@@ -245,6 +245,16 @@ void FTLIB_TouchFont( struct qfontface_s *qfont )
 }
 
 /*
+* FTLIB_TouchAllFonts
+*/
+void FTLIB_TouchAllFonts( void )
+{
+	if( ftlib_export ) {
+		ftlib_export->TouchAllFonts();
+	}
+}
+
+/*
 * FTLIB_PrecacheFonts
 */
 void FTLIB_PrecacheFonts( qboolean verbose )

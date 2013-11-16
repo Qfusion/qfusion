@@ -62,7 +62,7 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 		case GRABCHAR_CHAR:
 			if( num < ' ' )
 				break;
-			if( num < font->firstChar || num > font->lastChar )
+			if( num < font->minChar || num > font->maxChar )
 				num = FTLIB_REPLACEMENT_GLYPH;
 
 			if( prev_num ) {
@@ -118,7 +118,7 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 				break;
 			if( num < ' ' )
 				continue;
-			if( num < font->firstChar || num > font->lastChar )
+			if( num < font->minChar || num > font->maxChar )
 				num = FTLIB_REPLACEMENT_GLYPH;
 
 			advance = font->glyphs[num].x_advance;
@@ -169,7 +169,7 @@ void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t colo
 
 	if( num <= ' ' )
 		return;
-	if( num < font->firstChar || num > font->lastChar )
+	if( num < font->minChar || num > font->maxChar )
 		num = FTLIB_REPLACEMENT_GLYPH;
 
 	glyph = &font->glyphs[num];
@@ -215,7 +215,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 		{
 			if( num == '\n' )
 				break;
-			if( num < font->firstChar || num > font->lastChar )
+			if( num < font->minChar || num > font->maxChar )
 				continue;
 
 			if( prev_num ) {
@@ -278,7 +278,7 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 		{
 			if( num == '\n' )
 				break;
-			if( num < font->firstChar || num > font->lastChar )
+			if( num < font->minChar || num > font->maxChar )
 				continue;
 
 			if( maxwidth && ( ( xoffset + font->glyphs[num].x_advance ) > maxwidth ) )

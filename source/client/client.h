@@ -547,8 +547,8 @@ void SCR_BeginLoadingPlaque( void );
 void SCR_EndLoadingPlaque( void );
 void SCR_DebugGraph( float value, float r, float g, float b );
 void SCR_RunConsole( int msec );
-void SCR_RegisterConsoleMedia( qboolean verbose );
-void SCR_ShutDownConsoleMedia( qboolean verbose );
+void SCR_RegisterConsoleMedia( void );
+void SCR_ShutDownConsoleMedia( void );
 void SCR_ChangeSystemFontSmallSize( int ch );
 qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size );
 size_t SCR_strHeight( qfontface_t *font );
@@ -565,9 +565,9 @@ void SCRR_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float 
 unsigned int SCR_GetScreenWidth( void );
 unsigned int SCR_GetScreenHeight( void );
 
-void CL_InitMedia( qboolean verbose );
-void CL_ShutdownMedia( qboolean verbose );
-void CL_RestartMedia( qboolean verbose );
+void CL_InitMedia( void );
+void CL_ShutdownMedia( void );
+void CL_RestartMedia( void );
 
 void CL_AddNetgraph( void );
 
