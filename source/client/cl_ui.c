@@ -492,3 +492,21 @@ void CL_UIModule_MouseMove( int dx, int dy )
 	if( uie )
 		uie->MouseMove( dx, dy );
 }
+
+/*
+* CL_UIModule_TouchAllSounds
+*/
+void CL_UIModule_TouchAllSounds( void )
+{
+	if( uie )
+		uie->TouchAllSounds();
+}
+
+/*
+* CL_UIModule_TouchAllShader
+*/
+void CL_UIModule_TouchAllShaders( void )
+{
+	if( uie )
+		uie->TouchAllShaders();
+}

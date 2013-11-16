@@ -453,6 +453,8 @@ void CL_UIModule_UpdateConnectScreen( qboolean backGround );
 void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
 void CL_UIModule_MouseMove( int dx, int dy );
+void CL_UIModule_TouchAllSounds( void );
+void CL_UIModule_TouchAllShaders( void );
 
 //
 // cl_serverlist.c
