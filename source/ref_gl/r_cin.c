@@ -70,8 +70,11 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 {
 	const int samples = 4;
 
-	if( !handle->pic )
-		return NULL;
+	if( !handle->pic ) {
+		// we haven't yet read a new frame, return whatever image we got
+		// this will return NULL until at least one frame has been read
+		return handle->image;
+	}
 
 	if( handle->yuv ) {
 		int i;
@@ -266,11 +269,13 @@ unsigned int R_StartCinematic( const char *arg )
 	memcpy( handle->uploadName, uploadName, name_size );
 
 	handle->cin = cin;
-	handle->new_frame = qtrue;
+	handle->new_frame = qfalse;
 	handle->yuv = yuv;
 	handle->image = NULL;
 	handle->yuv_images[0] = handle->yuv_images[1] = handle->yuv_images[2] = NULL;
 	handle->registrationSequence = rf.registrationSequence;
+	handle->pic = NULL;
+	handle->cyuv = NULL;
 
 	// put handle at the start of the list
 	handle->prev = &r_cinematics_headnode;
@@ -305,6 +310,11 @@ void R_TouchCinematic( unsigned int id )
 			R_TouchImage( handle->yuv_images[i] );
 		}
 	}
+
+	// do not attempt to reupload the new frame until successful R_RunCin 
+	handle->new_frame = qfalse;
+	handle->pic = NULL;
+	handle->cyuv = NULL;
 }
 
 /*
