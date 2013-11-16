@@ -821,9 +821,9 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, ref_yuv_t *data,
 	p.rgbgen.type = RGB_GEN_IDENTITY;
 	p.alphagen.type = ALPHA_GEN_IDENTITY;
 	p.tcgen = TC_GEN_BASE;
-	p.anim_frames[0] = yuvTextures[0];
-	p.anim_frames[1] = yuvTextures[1];
-	p.anim_frames[2] = yuvTextures[2];
+	p.images[0] = yuvTextures[0];
+	p.images[1] = yuvTextures[1];
+	p.images[2] = yuvTextures[2];
 	p.flags = 0;
 	p.program_type = GLSL_PROGRAM_TYPE_YUV;
 
@@ -901,7 +901,7 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 	p.alphagen.type = ALPHA_GEN_CONST;
 	p.alphagen.args = &rgba[3];
 	p.tcgen = TC_GEN_BASE;
-	p.anim_frames[0] = image;
+	p.images[0] = image;
 	p.flags = blend ? GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA : 0;
 	p.program_type = program_type;
 
