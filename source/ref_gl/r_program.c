@@ -932,6 +932,7 @@ QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
 "attribute vec4 a_InstanceQuat;\n" \
 "attribute vec4 a_InstancePosAndScale;\n" \
 "#elif defined(GL_ARB_draw_instanced)\n" \
+"#extension GL_ARB_draw_instanced : enable\n" \
 "\n" \
 "uniform vec4 u_QF_InstancePoints[MAX_UNIFORM_INSTANCES*2];\n" \
 "\n" \
