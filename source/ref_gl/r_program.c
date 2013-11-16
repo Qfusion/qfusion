@@ -1050,7 +1050,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 						"up = (1.0 - TexCoord.t * 2.0) * u_QF_ViewAxis[2];\n"
 						"forward = -1 * u_QF_ViewAxis[0];\n"
 						"// prevent the particle from disappearing at large distances\n"
-						"t = (a_SpritePoint.xyz + u_QF_EntityOrigin - u_QF_ViewOrigin) * u_QF_ViewAxis[0];\n"
+						"t = dot(a_SpritePoint.xyz + u_QF_EntityOrigin - u_QF_ViewOrigin, u_QF_ViewAxis[0]);\n"
 						"t = 1.5 + step(20.0, t) * t * 0.006;\n"
 						"Position.xyz = a_SpritePoint.xyz + (right + up) * t * a_SpritePoint.w;\n"
 						"Normal.xyz = forward;\n",
@@ -1303,7 +1303,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	unsigned int i;
 	int hash;
 	int linked, error = 0;
-	int shaderTypeIdx, deformvIdx;
+	int shaderTypeIdx, deformvIdx, instancedIdx;
 	int body_start, num_init_strings, num_shader_strings;
 	glsl_program_t *program;
 	char fullName[1024];
@@ -1397,8 +1397,12 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 		shaderStrings[i++] = QF_GLSL_VERSION120;
 	}
 
-	if( glConfig.shadingLanguageVersion < 300 && glConfig.ext.draw_instanced ) {
+	instancedIdx = i;
+	if( glConfig.shadingLanguageVersion < 400 && glConfig.ext.draw_instanced ) {
 		shaderStrings[i++] = QF_GLSL_ENABLE_ARB_DRAW_INSTACED;
+	}
+	else {
+		shaderStrings[i++] = "\n";
 	}
 
 	shaderStrings[i++] = shaderVersion;
@@ -1458,6 +1462,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	}
 
 	// fragment shader
+	shaderStrings[instancedIdx] = "\n"; // GL_ARB_draw_instanced is unsupported in fragment shader
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
 	shaderStrings[deformvIdx] = "\n";
 	program->fragmentShader = RP_CompileShader( program->object, fullName, "fragment", GL_FRAGMENT_SHADER_ARB, 
