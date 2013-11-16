@@ -947,6 +947,8 @@ init_qgl:
 
 	R_ClearRefInstStack();
 
+	R_BindFrameBufferObject( 0 );
+
 	glerr = qglGetError();
 	if( glerr != GL_NO_ERROR )
 		Com_Printf( "glGetError() = 0x%x\n", err );
