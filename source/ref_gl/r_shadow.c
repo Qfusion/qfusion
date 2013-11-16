@@ -421,10 +421,8 @@ void R_DrawShadowmaps( void )
 
 		// 3 pixels border on each side to prevent nasty stretching/bleeding of shadows,
 		// also accounting for smoothing done in the fragment shader
-		Vector4Set( rn.viewport, refdef.x + 3, glConfig.height - refdef.height - refdef.y + 3, 
-			refdef.width - 6, refdef.height - 6 );
-		Vector4Set( rn.scissor, refdef.x, glConfig.height - textureHeight - refdef.y, 
-			textureWidth, textureHeight );
+		Vector4Set( rn.viewport, refdef.x + 3,refdef.y + 3, refdef.width - 6, refdef.height - 6 );
+		Vector4Set( rn.scissor, refdef.x, refdef.y, textureWidth, textureHeight );
 
 		R_RenderView( &refdef );
 
