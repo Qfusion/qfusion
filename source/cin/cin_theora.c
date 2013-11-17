@@ -451,14 +451,18 @@ static void Theora_DecodeYCbCr2RGB_444( cin_yuv_t *cyuv, int bytes, qbyte *out )
 */
 static void Theora_DecodeYCbCr2RGB( th_pixel_fmt pfmt, cin_yuv_t *cyuv, int bytes, qbyte *out )
 {
-	if( pfmt == (th_pixel_fmt)TH_PF_444 ) {
-		Theora_DecodeYCbCr2RGB_444( cyuv, bytes, out );
-	}
-	else if( pfmt == (th_pixel_fmt)TH_PF_422 ) {
-		Theora_DecodeYCbCr2RGB_422( cyuv, bytes, out );
-	}
-	else if( pfmt == (th_pixel_fmt)TH_PF_420 ) {
-		Theora_DecodeYCbCr2RGB_420( cyuv, bytes, out );
+	switch( pfmt ) {
+		case TH_PF_444:
+			Theora_DecodeYCbCr2RGB_444( cyuv, bytes, out );
+			break;
+		case TH_PF_422:
+			Theora_DecodeYCbCr2RGB_422( cyuv, bytes, out );
+			break;
+		case TH_PF_420:
+			Theora_DecodeYCbCr2RGB_420( cyuv, bytes, out );
+			break;
+		default:
+			break;
 	}
 }
 
@@ -511,14 +515,7 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 			continue;
 		}
 
-		width  = qth->ti.pic_width & ~1;
-		height = qth->ti.pic_height & ~1;
 		memcpy( &qth->th_yuv, &yuv, sizeof( yuv ) );
-
-		qth->pub_yuv.width  = width;
-		qth->pub_yuv.height = height;
-		qth->pub_yuv.x_offset = qth->ti.pic_x & ~1;
-		qth->pub_yuv.y_offset = qth->ti.pic_y & ~1;
 
 		for( i = 0; i < 3; i++ ) {
 			qth->pub_yuv.yuv[i].data = yuv[i].data;
@@ -547,7 +544,18 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 				qth->pub_yuv.yuv[2].w_denominator = 2;
 				qth->pub_yuv.yuv[2].h_denominator = 2;
 				break;
+			default:
+				// unsupported pixel format
+				return qfalse;
 		}
+
+		width  = qth->ti.pic_width & ~1;
+		height = qth->ti.pic_height & ~1;
+
+		qth->pub_yuv.width  = width;
+		qth->pub_yuv.height = height;
+		qth->pub_yuv.x_offset = qth->ti.pic_x & ~1;
+		qth->pub_yuv.y_offset = qth->ti.pic_y & ~1;
 
 		if( cin->width != width || cin->height != height ) {
 			size_t size;
@@ -663,10 +671,9 @@ qbyte *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 cin_yuv_t *Theora_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw )
 {
 	qboolean eos;
-	qboolean haveVideo;
 	qtheora_info_t *qth = cin->fdata;
 
-	haveVideo = Theora_ReadNextFrame_CIN_( cin, redraw, &eos );
+	Theora_ReadNextFrame_CIN_( cin, redraw, &eos );
 	if( eos ) {
 		return NULL;
 	}

@@ -827,7 +827,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, ref_yuv_t *data,
 	p.flags = 0;
 	p.program_type = GLSL_PROGRAM_TYPE_YUV;
 
-	height = data->height + data->y_offset * 2;
+	height = /*data->height + data->y_offset * 2*/764;
 
 	if( upload ) {
 		int i;
