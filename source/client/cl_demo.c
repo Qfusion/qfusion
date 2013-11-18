@@ -416,6 +416,81 @@ static void CL_StartDemo( const char *demoname )
 }
 
 /*
+CL_DemoComplete
+*/
+char **CL_DemoComplete( const char *partial )
+{
+	const char *p;
+	char dir[MAX_QPATH];
+	char subdir[MAX_QPATH];
+	char prefix[MAX_QPATH];
+	int prefix_length;
+	int subdir_length;
+	int total;
+	size_t size;
+	char **buf;
+	char *list;
+	int i, j, k, len;
+
+	// locate the basename (prefix) of the partial name
+	for( p = partial + strlen( partial ); p >= partial && *p != '/'; p-- )
+		;
+	p++;
+	Q_strncpyz( prefix, p, sizeof( prefix ) );
+	// determine the searching directory
+	// if we are searching in a demos subdirectory, this subdirectory will have
+	// to be prepended to all results
+	strcpy( dir, "demos" );
+	subdir[0] = '\0';
+	if( p > partial )
+	{
+		Q_strncatz( dir, "/", sizeof( dir ) );
+		Q_strncpyz( subdir, partial, min( p - partial, sizeof( subdir ) ) );
+		Q_strncatz( dir, subdir, sizeof( dir ) );
+		Q_strncatz( subdir, "/", sizeof( subdir ) );
+	}
+
+	// count the total amount of demos in the directory
+	total = FS_GetFileListExt( dir, APP_DEMO_EXTENSION_STR, NULL, &size, 0, 0 );
+	if( !total )
+		return NULL;
+
+	subdir_length = strlen( subdir );
+	buf = ( char ** )Mem_TempMalloc(
+			( total + 1 ) * sizeof( char * )	// resulting pointer list with NULL ending
+			+ size								// actual strings
+			+ total * subdir_length );			// extra space to prepend subdirs
+	// get all demo files in the directory
+	list = ( char * )buf + ( total + 1 ) * sizeof( char * );
+	FS_GetFileList( dir, APP_DEMO_EXTENSION_STR, list, size, 0, 0 );
+	prefix_length = strlen( prefix );
+	j = 0;
+	for( i = 0; i < total; i++ )
+	{
+		len = strlen( list ) + 1;
+		if( !Q_strnicmp( prefix, list, prefix_length ) )
+		{
+			// remove the extension
+			list[len - sizeof( APP_DEMO_EXTENSION_STR )] = '\0';
+			if( *subdir )
+			{
+				// searching in a subdirectory, prepend it
+				memmove( list + subdir_length, list, size );
+				for( k = 0; k < subdir_length; k++ )
+					list[k] = subdir[k];
+				len += subdir_length;
+			}
+			buf[j++] = list;
+		}
+		list += len;
+		size -= len;
+	}
+	buf[j] = NULL;
+
+	return buf;
+}
+
+/*
 * CL_PlayDemo_f
 * 
 * demo <demoname>

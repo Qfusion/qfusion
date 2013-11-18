@@ -2055,6 +2055,9 @@ static void CL_InitLocal( void )
 	Cmd_AddCommand( "showserverip", CL_ShowServerIP_f );
 	Cmd_AddCommand( "downloadstatus", CL_DownloadStatus_f );
 	Cmd_AddCommand( "downloadcancel", CL_DownloadCancel_f );
+
+	Cmd_SetCompletionFunc( "demo", CL_DemoComplete );
+	Cmd_SetCompletionFunc( "demoavi", CL_DemoComplete );
 }
 
 /*
