@@ -430,7 +430,9 @@ char **CL_DemoComplete( const char *partial )
 	size_t size;
 	char **buf;
 	char *list;
+	char *ext;
 	int i, j, k, len;
+	int file;
 
 	// locate the basename (prefix) of the partial name
 	for( p = partial + strlen( partial ); p >= partial && *p != '/'; p-- )
@@ -451,7 +453,7 @@ char **CL_DemoComplete( const char *partial )
 	}
 
 	// count the total amount of demos in the directory
-	total = FS_GetFileListExt( dir, APP_DEMO_EXTENSION_STR, NULL, &size, 0, 0 );
+	total = FS_GetFileListExt( dir, NULL, NULL, &size, 0, 0 );
 	if( !total )
 		return NULL;
 
@@ -459,10 +461,11 @@ char **CL_DemoComplete( const char *partial )
 	buf = ( char ** )Mem_TempMalloc(
 			( total + 1 ) * sizeof( char * )	// resulting pointer list with NULL ending
 			+ size								// actual strings
-			+ total * subdir_length );			// extra space to prepend subdirs
+			+ total * subdir_length				// extra space to prepend subdirs
+			+ total );							// trailing slashes for directory results
 	// get all demo files in the directory
 	list = ( char * )buf + ( total + 1 ) * sizeof( char * );
-	FS_GetFileList( dir, APP_DEMO_EXTENSION_STR, list, size, 0, 0 );
+	FS_GetFileList( dir, NULL, list, size, 0, 0 );
 	prefix_length = strlen( prefix );
 	j = 0;
 	for( i = 0; i < total; i++ )
@@ -470,8 +473,24 @@ char **CL_DemoComplete( const char *partial )
 		len = strlen( list ) + 1;
 		if( !Q_strnicmp( prefix, list, prefix_length ) )
 		{
-			// remove the extension
-			list[len - sizeof( APP_DEMO_EXTENSION_STR )] = '\0';
+			ext = list + len - sizeof( APP_DEMO_EXTENSION_STR );
+			if( FS_FOpenFile( va("%s/%s", dir, list ), &file, FS_READ ) == -1 )
+			{
+				// directory, append a slash
+				memmove( list + len, list + len - 1, size );
+				list[len - 1] = '/';
+				len++;
+			}
+			else if( ext >= list && !Q_stricmp( ext, APP_DEMO_EXTENSION_STR ) )
+			{
+				// remove the extension
+				*ext = '\0';
+			}
+			else
+			{
+				// ignore other files
+				break;
+			}
 			if( *subdir )
 			{
 				// searching in a subdirectory, prepend it
