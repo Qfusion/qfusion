@@ -1804,7 +1804,7 @@ void G_CallVotes_Reset( void )
 	int i;
 
 	callvoteState.vote.callvote = NULL;
-	for( i = 0; i < MAX_CLIENTS; i++ )
+	for( i = 0; i < gs.maxclients; i++ )
 		G_CallVotes_ResetClient( i );
 	callvoteState.timeout = 0;
 
@@ -2221,7 +2221,7 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 	}
 
 	//we're done. Proceed launching the election
-	for( i = 0; i < MAX_CLIENTS; i++ )
+	for( i = 0; i < gs.maxclients; i++ )
 		G_CallVotes_ResetClient( i );
 	callvoteState.timeout = game.realtime + ( g_callvote_electtime->integer * 1000 );
 
