@@ -522,10 +522,12 @@ void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2
 	const vec4_t color, const shader_t *shader );
 void		R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	float angle, const vec4_t color, const shader_t *shader );
-void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *data );
-void		R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, ref_yuv_t *data, image_t **yuvTextures, 
-	qboolean upload, int flip );
-void		R_DrawStretchRawYUV( int x, int y, int w, int h, ref_yuv_t *data );
+void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
+	float s1, float t1, float s2, float t2, qbyte *data );
+void		R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
+	ref_img_plane_t *yuv, image_t **yuvTextures, int flip );
+void		R_DrawStretchRawYUV( int x, int y, int w, int h, 
+	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
 void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, int program_type, image_t *image, qboolean blend );
 

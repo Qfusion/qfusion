@@ -518,35 +518,10 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 		memcpy( &qth->th_yuv, &yuv, sizeof( yuv ) );
 
 		for( i = 0; i < 3; i++ ) {
-			qth->pub_yuv.yuv[i].data = yuv[i].data;
 			qth->pub_yuv.yuv[i].stride = yuv[i].stride;
-		}
-
-		qth->pub_yuv.yuv[0].w_denominator = 1;
-		qth->pub_yuv.yuv[0].h_denominator = 1;
-
-		switch( qth->ti.pixel_fmt ) {
-			case TH_PF_444:
-				qth->pub_yuv.yuv[1].w_denominator = 1;
-				qth->pub_yuv.yuv[1].h_denominator = 1;
-				qth->pub_yuv.yuv[2].w_denominator = 1;
-				qth->pub_yuv.yuv[2].h_denominator = 1;
-				break;
-			case TH_PF_422:
-				qth->pub_yuv.yuv[1].w_denominator = 2;
-				qth->pub_yuv.yuv[1].h_denominator = 1;
-				qth->pub_yuv.yuv[2].w_denominator = 2;
-				qth->pub_yuv.yuv[2].h_denominator = 1;
-				break;
-			case TH_PF_420:
-				qth->pub_yuv.yuv[1].w_denominator = 2;
-				qth->pub_yuv.yuv[1].h_denominator = 2;
-				qth->pub_yuv.yuv[2].w_denominator = 2;
-				qth->pub_yuv.yuv[2].h_denominator = 2;
-				break;
-			default:
-				// unsupported pixel format
-				return qfalse;
+			qth->pub_yuv.yuv[i].width = yuv[i].width;
+			qth->pub_yuv.yuv[i].height = yuv[i].height;
+			qth->pub_yuv.yuv[i].data = yuv[i].data;
 		}
 
 		width  = qth->ti.pic_width & ~1;
@@ -556,6 +531,8 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 		qth->pub_yuv.height = height;
 		qth->pub_yuv.x_offset = qth->ti.pic_x & ~1;
 		qth->pub_yuv.y_offset = qth->ti.pic_y & ~1;
+		qth->pub_yuv.image_width = max( abs( yuv[0].stride ), (int)qth->ti.frame_width );
+		qth->pub_yuv.image_height = qth->ti.frame_height;
 
 		if( cin->width != width || cin->height != height ) {
 			size_t size;

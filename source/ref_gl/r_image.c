@@ -1729,7 +1729,7 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 /*
 * R_ReplaceImage
 */
-void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int samples )
+void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int flags, int samples )
 {
 	assert( image );
 	assert( image->texnum );
@@ -1737,12 +1737,13 @@ void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int sam
 	RB_BindTexture( 0, image );
 
 	if( image->width != width || image->height != height )
-		R_Upload32( pic, width, height, image->flags, 
+		R_Upload32( pic, width, height, flags, 
 		&(image->upload_width), &(image->upload_height), &(image->samples), samples, qfalse );
 	else
-		R_Upload32( pic, width, height, image->flags, 
+		R_Upload32( pic, width, height, flags, 
 		&(image->upload_width), &(image->upload_height), &(image->samples), samples, qtrue );
 
+	image->flags = flags;
 	image->width = width;
 	image->height = height;
 	image->registrationSequence = rf.registrationSequence;
