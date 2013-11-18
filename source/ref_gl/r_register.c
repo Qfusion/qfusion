@@ -752,26 +752,21 @@ static void R_Register( const char *screenshotsPrefix )
 }
 
 /*
-* R_GfxInfo_f
+* R_PrintGLExtensions
 */
-static void R_GfxInfo_f( void )
+static void R_PrintGLExtensions( const char *name, const char *str )
 {
 	size_t len, p;
 
-	Com_Printf( "\n" );
-	Com_Printf( "GL_VENDOR: %s\n", glConfig.vendorString );
-	Com_Printf( "GL_RENDERER: %s\n", glConfig.rendererString );
-	Com_Printf( "GL_VERSION: %s\n", glConfig.versionString );
-	Com_Printf( "GL_SHADING_LANGUAGE_VERSION: %s\n", glConfig.shadingLanguageVersionString );
+	Com_Printf( "%s: ", name );
 
-	Com_Printf( "GL_EXTENSIONS: " );
-	if( glConfig.extensionsString )
+	if( str && *str )
 	{
-		for( len = strlen( glConfig.extensionsString ), p = 0; p < len;  )
+		for( len = strlen( str ), p = 0; p < len;  )
 		{
-			char chunk[1024];
+			char chunk[512];
 
-			p += Q_snprintfz( chunk, sizeof( chunk ), "%s", glConfig.extensionsString + p );
+			p += Q_snprintfz( chunk, sizeof( chunk ), "%s", str + p );
 			
 			Com_Printf( "%s", chunk );
 		}
@@ -780,10 +775,22 @@ static void R_GfxInfo_f( void )
 	{
 		Com_Printf( "none" );
 	}
-	Com_Printf( "\n" );
+}
 
-	if( *glConfig.glwExtensionsString )
-		Com_Printf( "GLW_EXTENSIONS: %s\n", glConfig.glwExtensionsString );
+/*
+* R_GfxInfo_f
+*/
+static void R_GfxInfo_f( void )
+{
+	Com_Printf( "\n" );
+	Com_Printf( "GL_VENDOR: %s\n", glConfig.vendorString );
+	Com_Printf( "GL_RENDERER: %s\n", glConfig.rendererString );
+	Com_Printf( "GL_VERSION: %s\n", glConfig.versionString );
+	Com_Printf( "GL_SHADING_LANGUAGE_VERSION: %s\n", glConfig.shadingLanguageVersionString );
+
+	R_PrintGLExtensions( "GL_EXTENSIONS", glConfig.extensionsString );
+	R_PrintGLExtensions( "GLXW_EXTENSIONS", glConfig.glwExtensionsString );
+
 	Com_Printf( "GL_MAX_TEXTURE_SIZE: %i\n", glConfig.maxTextureSize );
 	Com_Printf( "GL_MAX_TEXTURE_UNITS: %i\n", glConfig.maxTextureUnits );
 	if( glConfig.ext.texture_cube_map )
