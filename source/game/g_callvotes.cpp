@@ -24,10 +24,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //===================================================================
 
 int clientVoted[MAX_CLIENTS];
+int clientVoteChanges[MAX_CLIENTS];
 
 cvar_t *g_callvote_electpercentage;
 cvar_t *g_callvote_electtime;          // in seconds
 cvar_t *g_callvote_enabled;
+cvar_t *g_vote_maxchanges;
 
 enum
 {
@@ -1784,6 +1786,17 @@ void G_FreeCallvotes( void )
 //===================================================================
 
 /*
+* G_CallVotes_ResetClient
+*/
+static void G_CallVotes_ResetClient( int n )
+{
+	clientVoted[n] = VOTED_NOTHING;
+	clientVoteChanges[n] = g_vote_maxchanges->integer;
+	if( clientVoteChanges[n] < 1 )
+		clientVoteChanges[n] = 1;
+}
+
+/*
 * G_CallVotes_Reset
 */
 void G_CallVotes_Reset( void )
@@ -1791,7 +1804,8 @@ void G_CallVotes_Reset( void )
 	int i;
 
 	callvoteState.vote.callvote = NULL;
-	memset( clientVoted, VOTED_NOTHING, sizeof( clientVoted ) );
+	for( i = 0; i < MAX_CLIENTS; i++ )
+		G_CallVotes_ResetClient( i );
 	callvoteState.timeout = 0;
 
 	callvoteState.vote.caller = NULL;
@@ -2000,7 +2014,14 @@ void G_CallVotes_CmdVote( edict_t *ent )
 			return;
 		}
 
+		if( clientVoteChanges[PLAYERNUM( ent )] == 0 )
+		{
+			G_PrintMsg( ent, "%sYou cannot change your vote anymore\n", S_COLOR_RED );
+			return;
+		}
+
 		clientVoted[PLAYERNUM( ent )] = VOTED_YES;
+		clientVoteChanges[PLAYERNUM( ent )]--;
 		G_CallVotes_CheckState();
 		return;
 	}
@@ -2012,7 +2033,14 @@ void G_CallVotes_CmdVote( edict_t *ent )
 			return;
 		}
 
+		if( clientVoteChanges[PLAYERNUM( ent )] == 0 )
+		{
+			G_PrintMsg( ent, "%sYou cannot change your vote anymore\n", S_COLOR_RED );
+			return;
+		}
+
 		clientVoted[PLAYERNUM( ent )] = VOTED_NO;
+		clientVoteChanges[PLAYERNUM( ent )]--;
 		G_CallVotes_CheckState();
 		return;
 	}
@@ -2193,11 +2221,13 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 	}
 
 	//we're done. Proceed launching the election
-	memset( clientVoted, VOTED_NOTHING, sizeof( clientVoted ) );
+	for( i = 0; i < MAX_CLIENTS; i++ )
+		G_CallVotes_ResetClient( i );
 	callvoteState.timeout = game.realtime + ( g_callvote_electtime->integer * 1000 );
 
 	//caller is assumed to vote YES
 	clientVoted[PLAYERNUM( ent )] = VOTED_YES;
+	clientVoteChanges[PLAYERNUM( ent )]--;
 
 	trap_ConfigString( CS_ACTIVE_CALLVOTE, G_CallVotes_String( &callvoteState.vote ) );
 
@@ -2400,6 +2430,7 @@ void G_CallVotes_Init( void )
 	g_callvote_electpercentage =	trap_Cvar_Get( "g_vote_percent", "55", CVAR_ARCHIVE );
 	g_callvote_electtime =		trap_Cvar_Get( "g_vote_electtime", "40", CVAR_ARCHIVE );
 	g_callvote_enabled =		trap_Cvar_Get( "g_vote_allowed", "1", CVAR_ARCHIVE );
+	g_vote_maxchanges =		trap_Cvar_Get( "g_vote_maxchanges", "3", CVAR_ARCHIVE );
 
 	// register all callvotes
 
