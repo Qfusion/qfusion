@@ -150,10 +150,12 @@ typedef struct
 								 float angle, const vec4_t color, const struct shader_s *shader );
 
 	// Passing NULL for data redraws last uploaded frame
-	void		( *DrawStretchRaw )( int x, int y, int w, int h, int cols, int rows, qbyte *data );
+	void		( *DrawStretchRaw )( int x, int y, int w, int h, int cols, int rows, 
+									float s1, float t1, float s2, float t2, qbyte *data );
 
-	// Passing NULL for data redraws last uploaded frame
-	void		( *DrawStretchRawYUV )( int x, int y, int w, int h, ref_yuv_t *data );
+	// Passing NULL for yuv redraws last uploaded frame
+	void		( *DrawStretchRawYUV )( int x, int y, int w, int h, 
+										float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
 
 	void		( *DrawStretchPoly )( const poly_t *poly, float x_offset, float y_offset );
 	void		( *Scissor )( int x, int y, int w, int h );

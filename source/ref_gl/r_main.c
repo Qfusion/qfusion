@@ -788,13 +788,14 @@ void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2,
 *
 * Passing NULL for data redraws last uploaded frame
 */
-void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *data )
+void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
+	float s1, float t1, float s2, float t2, qbyte *data )
 {
 	if( data ) {
-		R_ReplaceImage( r_rawtexture, &data, cols, rows, 4 );
+		R_ReplaceImage( r_rawtexture, &data, cols, rows, r_rawtexture->flags, 4 );
 	}
 
-	R_DrawStretchQuick( x, y, w, h, 0, 0, 1, 1, colorWhite, GLSL_PROGRAM_TYPE_NONE, r_rawtexture, qfalse );
+	R_DrawStretchQuick( x, y, w, h, s1, t1, s2, t2, colorWhite, GLSL_PROGRAM_TYPE_NONE, r_rawtexture, qfalse );
 }
 
 /*
@@ -803,14 +804,13 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, qbyte *da
 * Set bit 0 in 'flip' to flip the image horizontally
 * Set bit 1 in 'flip' to flip the image vertically
 */
-void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, ref_yuv_t *data, 
-	image_t **yuvTextures, qboolean upload, int flip )
+void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, 
+	float s1, float t1, float s2, float t2, 
+	ref_img_plane_t *yuv, image_t **yuvTextures, int flip )
 {
 	static char *s_name = "$builtinyuv";
 	static shaderpass_t p;
 	static shader_t s;
-	int height;
-	float s1, t1, s2, t2;
 
 	s.vattribs = VATTRIB_TEXCOORDS_BIT;
 	s.sort = SHADER_SORT_NEAREST;
@@ -827,20 +827,25 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, ref_yuv_t *data,
 	p.flags = 0;
 	p.program_type = GLSL_PROGRAM_TYPE_YUV;
 
-	height = /*data->height + data->y_offset * 2*/764;
-
-	if( upload ) {
+	if( yuv ) {
 		int i;
+
 		for( i = 0; i < 3; i++ ) {
-			R_ReplaceImage( yuvTextures[i], &data->yuv[i].data, 
-				data->yuv[i].stride, height / data->yuv[i].h_denominator, 1 );
+			qbyte *data = yuv[i].data;
+			int flags = yuvTextures[i]->flags;
+			int stride = yuv[i].stride;
+			int height = yuv[i].height;
+
+			if( stride < 0 ) {
+				// negative stride flips the image vertically
+				data = data + stride * height;
+				flags = (flags & ~(IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL)) | IT_FLIPY;
+				stride = -stride;
+			}
+
+			R_ReplaceImage( yuvTextures[i], &data, stride, height, flags, 1 );
 		}
 	}
-
-	s1 = (float)(data->x_offset + 1) / data->yuv[0].stride;
-	t1 = (float)(data->y_offset + 1) / height;
-	s2 = (float)(data->width + data->x_offset - 1) / data->yuv[0].stride;
-	t2 = (float)(data->height + data->y_offset - 1) / height;
 
 	if( flip & 1 ) {
 		s1 = 1.0 - s1;
@@ -861,21 +866,10 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, ref_yuv_t *data,
 *
 * Passing NULL for data redraws last uploaded frame
 */
-void R_DrawStretchRawYUV( int x, int y, int w, int h, ref_yuv_t *data )
+void R_DrawStretchRawYUV( int x, int y, int w, int h, 
+	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv )
 {
-	qboolean upload;
-	static ref_yuv_t last_data;
-
-	if( data ) {
-		last_data = *data;
-		upload = qtrue;
-	}
-	else {
-		// leave last_data alone
-		upload = qfalse;
-	}
-
-	R_DrawStretchRawYUVBuiltin( x, y, w, h, &last_data, r_rawYUVtextures, upload, 0 );
+	R_DrawStretchRawYUVBuiltin( x, y, w, h, s1, t1, s2, t2, yuv, r_rawYUVtextures, 0 );
 }
 
 /*

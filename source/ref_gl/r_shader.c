@@ -2869,7 +2869,7 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, qbyte *data
 		}
 		else {
 			// replace current texture data
-			R_ReplaceImage( image, &data, width, height, image->samples );
+			R_ReplaceImage( image, &data, width, height, image->flags, image->samples );
 		}
 	}
 	return s;
