@@ -75,7 +75,7 @@ char *FTLIB_CopyString( const char *in )
 void Sys_Error( const char *format, ... )
 {
 	va_list	argptr;
-	char msg[1024];
+	char msg[3072];
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
@@ -87,7 +87,7 @@ void Sys_Error( const char *format, ... )
 void Com_Printf( const char *format, ... )
 {
 	va_list	argptr;
-	char msg[1024];
+	char msg[3072];
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
