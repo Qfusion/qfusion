@@ -71,6 +71,7 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 {
 	size_t size;
 	struct _finddata_t findinfo;
+	const char *finame;
 
 	assert( path );
 	assert( findhandle == -1 );
@@ -88,10 +89,13 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 	if( findhandle == -1 )
 		return NULL;
 
-	if( strcmp( findinfo.name, "." ) && strcmp( findinfo.name, ".." ) &&
+	finame = findinfo.name;
+
+	if( strcmp( finame, "." ) && strcmp( finame, ".." ) &&
 		CompareAttributes( findinfo.attrib, musthave, canthave ) )
 	{
-		size = sizeof( char ) * ( strlen( findbase ) + 1 + strlen( findinfo.name ) + 1 );
+		size_t finame_len = strlen( finame );
+		size = sizeof( char ) * ( strlen( findbase ) + 1 + finame_len + 1 + 1 );
 		if( findpath_size < size )
 		{
 			if( findpath )
@@ -100,7 +104,8 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned cant
 			findpath = Mem_TempMalloc( findpath_size );
 		}
 
-		Q_snprintfz( findpath, findpath_size, "%s/%s", findbase, findinfo.name );
+		Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, finame, 
+			( findinfo.attrib & _A_SUBDIR ) && finame[finame_len-1] != '/' ? "/" : "" );
 		return findpath;
 	}
 
@@ -114,6 +119,7 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 {
 	size_t size;
 	struct _finddata_t findinfo;
+	const char *finame;
 
 	assert( findhandle != -1 );
 	assert( findbase );
@@ -123,10 +129,13 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 
 	while( _findnext( findhandle, &findinfo ) != -1 )
 	{
-		if( strcmp( findinfo.name, "." ) && strcmp( findinfo.name, ".." ) &&
+		finame = findinfo.name;
+
+		if( strcmp( finame, "." ) && strcmp( finame, ".." ) &&
 			CompareAttributes( findinfo.attrib, musthave, canthave ) )
 		{
-			size = sizeof( char ) * ( strlen( findbase ) + 1 + strlen( findinfo.name ) + 1 );
+			size_t finame_len = strlen( finame );
+			size = sizeof( char ) * ( strlen( findbase ) + 1 + finame_len + 1 + 1 );
 			if( findpath_size < size )
 			{
 				if( findpath )
@@ -135,7 +144,8 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave )
 				findpath = Mem_TempMalloc( findpath_size );
 			}
 
-			Q_snprintfz( findpath, findpath_size, "%s/%s", findbase, findinfo.name );
+			Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, finame, 
+				( findinfo.attrib & _A_SUBDIR ) && finame[finame_len-1] != '/' ? "/" : "" );
 			return findpath;
 		}
 	}
