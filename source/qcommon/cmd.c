@@ -1093,12 +1093,22 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 		if( !Q_strnicmp( prefix, list, prefix_length ) )
 		{
 			ext = list + len - strlen( extension ) - 1;
-			if( subdirectories && FS_FOpenFile( va("%s/%s", dir, list ), &file, FS_READ ) == -1 )
+			if( FS_FOpenFile( va("%s/%s", dir, list ), &file, FS_READ ) == -1 )
 			{
-				// assuming a directory, append a slash
-				memmove( list + len, list + len - 1, size - len + 1 );
-				list[len - 1] = '/';
-				len++;
+				if( subdirectories )
+				{
+					// assuming a directory, append a slash
+					memmove( list + len, list + len - 1, size - len + 1 );
+					list[len - 1] = '/';
+					len++;
+				}
+				else
+				{
+					// ignore directories (and otherwise unreadable files)
+					list += len;
+					size -= len;
+					continue;
+				}
 			}
 			else if( ext >= list && !Q_stricmp( ext, extension ) )
 			{
