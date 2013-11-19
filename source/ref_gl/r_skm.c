@@ -73,7 +73,9 @@ static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh )
 
 	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &skmmesh, VBO_HINT_NONE ); 
 	R_UploadVBOElemData( mesh->vbo, 0, 0, &skmmesh, VBO_HINT_NONE );
-	R_UploadVBOBonesData( mesh->vbo, 0, mesh->numverts, mesh->blendIndices, 	mesh->blendWeights );
+	if( glConfig.maxGLSLBones > 0 ) {
+	    R_UploadVBOBonesData( mesh->vbo, 0, mesh->numverts, mesh->blendIndices, mesh->blendWeights );
+	}
 }
 
 /*
@@ -1034,7 +1036,7 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 	const model_t *mod = drawSurf->model;
 	const mskmodel_t *skmodel = ( const mskmodel_t * )mod->extradata;
 	const mskmesh_t *skmesh = drawSurf->mesh;
-	qboolean hardwareTransform = skmesh->vbo != NULL ? qtrue : qfalse;
+	qboolean hardwareTransform = skmesh->vbo != NULL && glConfig.maxGLSLBones > 0 ? qtrue : qfalse;
 	vattribmask_t vattribs;
 
 	bonePoseRelativeMat = NULL;
@@ -1216,10 +1218,10 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 		RB_UploadMesh( rb_mesh );
 	}
 
-	RB_SetBonesData( skmodel->numbones, bonePoseRelativeDQ, skmesh->maxWeights );
-
 	if( hardwareTransform )
 	{
+
+		RB_SetBonesData( skmodel->numbones, bonePoseRelativeDQ, skmesh->maxWeights );
 		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3 );
 	}
 	else
