@@ -477,7 +477,7 @@ char **CL_DemoComplete( const char *partial )
 			if( FS_FOpenFile( va("%s/%s", dir, list ), &file, FS_READ ) == -1 )
 			{
 				// directory, append a slash
-				memmove( list + len, list + len - 1, size );
+				memmove( list + len, list + len - 1, size - len + 1 );
 				list[len - 1] = '/';
 				len++;
 			}
