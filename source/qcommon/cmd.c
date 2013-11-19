@@ -1030,6 +1030,107 @@ char **Cmd_CompleteBuildArgList( const char *partial )
 }
 
 /*
+* CL_CompleteFiles
+*
+* Find matching files
+*/
+char **Cmd_CompleteFileList( const char *partial, const char *basedir, const char *extension, qboolean subdirectories )
+{
+	const char *p;
+	char dir[MAX_QPATH];
+	char subdir[MAX_QPATH];
+	char prefix[MAX_QPATH];
+	int prefix_length;
+	int subdir_length;
+	int total;
+	size_t size;
+	char **buf;
+	char *list;
+	char *ext;
+	int i, j, k, len;
+	int file;
+
+	// locate the basename (prefix) of the partial name
+	for( p = partial + strlen( partial ); p >= partial && *p != '/'; p-- )
+		;
+	p++;
+	Q_strncpyz( prefix, p, sizeof( prefix ) );
+	// determine the searching directory
+	// if we are searching in a subdirectory, this subdirectory will have
+	// to be prepended to all results
+	strcpy( dir, basedir );
+	subdir[0] = '\0';
+	if( p > partial )
+	{
+		if( !subdirectories )
+			return NULL;
+		if( dir[0] )
+			Q_strncatz( dir, "/", sizeof( dir ) );
+		Q_strncpyz( subdir, partial, min( p - partial, sizeof( subdir ) ) );
+		Q_strncatz( dir, subdir, sizeof( dir ) );
+		Q_strncatz( subdir, "/", sizeof( subdir ) );
+	}
+
+	// count the total amount of files in the directory
+	total = FS_GetFileListExt( dir, NULL, NULL, &size, 0, 0 );
+	if( !total )
+		return NULL;
+
+	subdir_length = strlen( subdir );
+	buf = ( char ** )Mem_TempMalloc(
+			( total + 1 ) * sizeof( char * )	// resulting pointer list with NULL ending
+			+ size								// actual strings
+			+ total * subdir_length				// extra space to prepend subdirs
+			+ total );							// trailing slashes for directory results
+	// get all files in the directory
+	list = ( char * )buf + ( total + 1 ) * sizeof( char * );
+	FS_GetFileList( dir, NULL, list, size, 0, 0 );
+	prefix_length = strlen( prefix );
+	j = 0;
+	for( i = 0; i < total; i++ )
+	{
+		len = strlen( list ) + 1;
+		if( !Q_strnicmp( prefix, list, prefix_length ) )
+		{
+			ext = list + len - strlen( extension ) - 1;
+			if( subdirectories && FS_FOpenFile( va("%s/%s", dir, list ), &file, FS_READ ) == -1 )
+			{
+				// assuming a directory, append a slash
+				memmove( list + len, list + len - 1, size - len + 1 );
+				list[len - 1] = '/';
+				len++;
+			}
+			else if( ext >= list && !Q_stricmp( ext, extension ) )
+			{
+				// remove the extension
+				*ext = '\0';
+			}
+			else
+			{
+				// ignore other files
+				list += len;
+				size -= len;
+				continue;
+			}
+			if( *subdir )
+			{
+				// searching in a subdirectory, prepend it
+				memmove( list + subdir_length, list, size );
+				for( k = 0; k < subdir_length; k++ )
+					list[k] = subdir[k];
+				len += subdir_length;
+			}
+			buf[j++] = list;
+		}
+		list += len;
+		size -= len;
+	}
+	buf[j] = NULL;
+
+	return buf;
+}
+
+/*
 Cmd_CompleteAlias
 */
 char *Cmd_CompleteAlias( const char *partial )
