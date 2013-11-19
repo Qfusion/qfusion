@@ -909,7 +909,7 @@ QF_GLSL_PI \
 "#endif\n" \
 "}\n"
 
-// FIXME: version 140 and up?
+// #version 130+
 #define QF_GLSL_DUAL_QUAT_TRANSFORMS \
 "#ifdef VERTEX_SHADER\n" \
 "attribute vec4 a_BonesIndices;\n" \

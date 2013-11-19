@@ -585,9 +585,9 @@ static void R_FinalizeGLExtensions( void )
 		ri.Cvar_ForceSet( r_maxglslbones->name, r_maxglslbones->dvalue );
 	}
 
-	// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
-	if( glConfig.shadingLanguageVersion >= 140 ) {
-		// require GLSL version 1.40 and higher
+	// require GLSL 1.30+ for GPU skinning
+	if( glConfig.shadingLanguageVersion >= 130 ) {
+		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
 		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 20, r_maxglslbones->integer );
 	}
 	else {
