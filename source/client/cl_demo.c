@@ -416,7 +416,7 @@ static void CL_StartDemo( const char *demoname )
 }
 
 /*
-CL_DemoComplete
+* CL_DemoComplete
 */
 char **CL_DemoComplete( const char *partial )
 {
