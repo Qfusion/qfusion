@@ -416,6 +416,14 @@ static void CL_StartDemo( const char *demoname )
 }
 
 /*
+CL_DemoComplete
+*/
+char **CL_DemoComplete( const char *partial )
+{
+	return Cmd_CompleteFileList( partial, "demos", APP_DEMO_EXTENSION_STR, qtrue );
+}
+
+/*
 * CL_PlayDemo_f
 * 
 * demo <demoname>

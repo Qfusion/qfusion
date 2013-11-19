@@ -449,6 +449,7 @@ char		**Cmd_CompleteAliasBuildList( const char *partial );
 int			Cmd_CompleteCountPossible( const char *partial );
 char		**Cmd_CompleteBuildList( const char *partial );
 char		**Cmd_CompleteBuildArgList( const char *partial );
+char		**Cmd_CompleteFileList( const char *partial, const char *basedir, const char *extension, qboolean subdirectories );
 int			Cmd_Argc( void );
 char		*Cmd_Argv( int arg );
 char		*Cmd_Args( void );
