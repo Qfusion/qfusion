@@ -1025,7 +1025,7 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 	int framenum = e->frame;
 	int oldframenum = e->oldframe;
 	float backlerp = e->backlerp;
-	float frontlerp = 1.0 - backlerp, *pose;
+	float frontlerp = 1.0 - backlerp;
 	bonepose_t tempbonepose[256];
 	const bonepose_t *bp, *oldbp, *bonepose, *oldbonepose, *lerpedbonepose;
 	bonepose_t *out, tp;
@@ -1096,9 +1096,9 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 	bonePoseRelativeDQSize = sizeof( dualquat_t ) * skmodel->numbones;
 
 	// fetch bones tranforms from cache (both matrices and dual quaternions)
-	bonePoseRelativeMat = ( mat4_t * )R_GetSketalCache( R_ENT2NUM( e ), mod->lodnum );
-	if( bonePoseRelativeMat ) {
-		bonePoseRelativeDQ = ( dualquat_t * )(( qbyte * )bonePoseRelativeMat + bonePoseRelativeMatSize);
+	bonePoseRelativeDQ = ( dualquat_t * )R_GetSketalCache( R_ENT2NUM( e ), mod->lodnum );
+	if( bonePoseRelativeDQ ) {
+		bonePoseRelativeMat = ( mat4_t * )(( qbyte * )bonePoseRelativeDQ + bonePoseRelativeDQSize);
 	}
 	else {
 		// lerp boneposes and store results in cache
@@ -1160,22 +1160,24 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 			}
 		}
 
-		bonePoseRelativeMat = ( mat4_t * )R_AllocSkeletalDataCache( R_ENT2NUM( e ), mod->lodnum, 
-			bonePoseRelativeMatSize + bonePoseRelativeDQSize );
-		bonePoseRelativeDQ = ( dualquat_t * )(( qbyte * )bonePoseRelativeMat + bonePoseRelativeMatSize);
+		bonePoseRelativeDQ = ( dualquat_t * )R_AllocSkeletalDataCache( R_ENT2NUM( e ), mod->lodnum, 
+			bonePoseRelativeDQSize + bonePoseRelativeMatSize );
 
-		// generate matrices and dual quaternions for all bones
+		// generate dual quaternions for all bones
 		for( i = 0; i < skmodel->numbones; i++ ) {
-			pose = bonePoseRelativeMat[i];
-
 			DualQuat_Multiply( lerpedbonepose[i].dualquat, skmodel->invbaseposes[i].dualquat, bonePoseRelativeDQ[i] );
 			DualQuat_Normalize( bonePoseRelativeDQ[i] );
-
-			Matrix4_FromDualQuaternion( bonePoseRelativeDQ[i], pose );
 		}
 
 		// CPU transforms
 		if( !hardwareTransform ) {
+			bonePoseRelativeMat = ( mat4_t * )(( qbyte * )bonePoseRelativeDQ + bonePoseRelativeDQSize);
+
+			// generate matrices for all bones
+			for( i = 0; i < skmodel->numbones; i++ ) {
+				Matrix4_FromDualQuaternion( bonePoseRelativeDQ[i], bonePoseRelativeMat[i] );
+			}
+
 			// generate matrices for all blend combinations
 			R_SkeletalBlendPoses( skmodel->numblends, skmodel->blends, skmodel->numbones, bonePoseRelativeMat );
 		}
@@ -1184,6 +1186,8 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 	if( hardwareTransform )
 	{
 		RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
+		RB_SetBonesData( skmodel->numbones, bonePoseRelativeDQ, skmesh->maxWeights );
+		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3 );
 	}
 	else
 	{
@@ -1216,16 +1220,6 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 		rb_mesh->stArray = skmesh->stArray;
 
 		RB_UploadMesh( rb_mesh );
-	}
-
-	if( hardwareTransform )
-	{
-
-		RB_SetBonesData( skmodel->numbones, bonePoseRelativeDQ, skmesh->maxWeights );
-		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3 );
-	}
-	else
-	{
 		RB_EndBatch();
 	}
 
