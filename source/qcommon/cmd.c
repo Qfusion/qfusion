@@ -1030,7 +1030,7 @@ char **Cmd_CompleteBuildArgList( const char *partial )
 }
 
 /*
-* CL_CompleteFiles
+* Cmd_CompleteFileList
 *
 * Find matching files
 */
@@ -1048,7 +1048,6 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 	char *list;
 	char *ext;
 	int i, j, k, len;
-	int file;
 
 	// locate the basename (prefix) of the partial name
 	for( p = partial + strlen( partial ); p >= partial && *p != '/'; p-- )
@@ -1093,7 +1092,7 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 		if( !Q_strnicmp( prefix, list, prefix_length ) )
 		{
 			ext = list + len - strlen( extension ) - 1;
-			if( FS_FOpenFile( va("%s/%s", dir, list ), &file, FS_READ ) == -1 )
+			if( FS_FOpenFile( va("%s/%s", dir, list ), NULL, FS_READ ) == -1 )
 			{
 				if( subdirectories )
 				{
