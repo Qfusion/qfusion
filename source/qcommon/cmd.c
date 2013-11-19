@@ -511,6 +511,13 @@ static void Cmd_Exec_f( void )
 	Mem_TempFree( name );
 }
 
+/*
+* CL_CompleteExecBuildList
+*/
+static char **CL_CompleteExecBuildList( const char *partial )
+{
+	return Cmd_CompleteFileList( partial, "", ".cfg", qtrue );
+}
 
 /*
 * Cmd_Echo_f
@@ -1416,6 +1423,7 @@ void Cmd_Init( void )
 	Cmd_SetCompletionFunc( "alias", Cmd_CompleteAliasBuildList );
 	Cmd_SetCompletionFunc( "aliasa", Cmd_CompleteAliasBuildList );
 	Cmd_SetCompletionFunc( "unalias", Cmd_CompleteAliasBuildList );
+	Cmd_SetCompletionFunc( "exec", CL_CompleteExecBuildList );
 
 	cmd_initialized = qtrue;
 }
