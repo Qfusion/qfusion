@@ -533,9 +533,9 @@ static const glsl_feature_t glsl_features_shadowmap[] =
 
 	{ GLSL_SHADER_SHADOWMAP_DITHER, "#define APPLY_DITHER\n", "_dither" },
 	{ GLSL_SHADER_SHADOWMAP_PCF, "#define APPLY_PCF\n", "_pcf" },
-	{ GLSL_SHADER_SHADOWMAP_SHADOW2, "#define MAX_SHADOWS 2\n", "_2" },
-	{ GLSL_SHADER_SHADOWMAP_SHADOW3, "#define MAX_SHADOWS 3\n", "_3" },
-	{ GLSL_SHADER_SHADOWMAP_SHADOW4, "#define MAX_SHADOWS 4\n", "_4" },
+	{ GLSL_SHADER_SHADOWMAP_SHADOW2, "#define NUM_SHADOWS 2\n", "_2" },
+	{ GLSL_SHADER_SHADOWMAP_SHADOW3, "#define NUM_SHADOWS 3\n", "_3" },
+	{ GLSL_SHADER_SHADOWMAP_SHADOW4, "#define NUM_SHADOWS 4\n", "_4" },
 	{ GLSL_SHADER_SHADOWMAP_RGB_SHADOW, "#define APPLY_RGB_SHADOW\n", "_rgb" },
 
 	{ 0, NULL, NULL }
