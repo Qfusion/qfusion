@@ -170,7 +170,7 @@ void Matrix4_FromDualQuaternion( const dualquat_t dq, mat4_t out )
 
 	DualQuat_ToMatrix3AndVector( dq, m, v );
 
-	out[0 ] = m[0], out[1 ] = m[2], out[2 ] = m[6], out[3 ] = 0;
+	out[0 ] = m[0], out[1 ] = m[3], out[2 ] = m[6], out[3 ] = 0;
 	out[4 ] = m[1], out[5 ] = m[4], out[6 ] = m[7], out[7 ] = 0;
 	out[8 ] = m[2], out[9 ] = m[5], out[10] = m[8], out[11] = 0;
 	out[12] = v[0], out[13] = v[1], out[14] = v[2], out[15] = 1;
