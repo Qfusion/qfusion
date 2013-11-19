@@ -260,6 +260,14 @@ void SCR_PauseCinematic( void )
 // =======================================================================
 
 /*
+* CL_CinematicsComplete_f
+*/
+static char **CL_CinematicsComplete_f( const char *partial )
+{
+	return Cmd_CompleteFileList( partial, "video", NULL, qtrue );
+}
+
+/*
 * CL_PlayCinematic_f
 */
 void CL_PlayCinematic_f( void )
@@ -296,6 +304,8 @@ void CL_InitCinematics( void )
 
 	Cmd_AddCommand( "cinematic", CL_PlayCinematic_f );
 	Cmd_AddCommand( "cinepause", CL_PauseCinematic_f );
+
+	Cmd_SetCompletionFunc( "cinematic", CL_CinematicsComplete_f );
 }
 
 /*
