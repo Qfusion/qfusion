@@ -1092,7 +1092,7 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 		if( !Q_strnicmp( prefix, list, prefix_length ) )
 		{
 			ext = list + len - strlen( extension ) - 1;
-			if( FS_FOpenFile( va("%s/%s", dir, list ), NULL, FS_READ ) == -1 )
+			if( FS_FOpenFile( dir[0] ? va("%s/%s", dir, list ) : list, NULL, FS_READ ) == -1 )
 			{
 				if( subdirectories )
 				{
@@ -1100,6 +1100,7 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 					memmove( list + len, list + len - 1, size - len + 1 );
 					list[len - 1] = '/';
 					len++;
+					size++;
 				}
 				else
 				{
@@ -1128,6 +1129,7 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 				for( k = 0; k < subdir_length; k++ )
 					list[k] = subdir[k];
 				len += subdir_length;
+				size += subdir_length;
 			}
 			buf[j++] = list;
 		}
