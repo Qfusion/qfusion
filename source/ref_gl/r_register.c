@@ -403,7 +403,7 @@ static qboolean R_RegisterGLExtensions( void )
 
 		cvar = ri.Cvar_Get( name, extension->cvar_default ? extension->cvar_default : "0", cvar_flags );
 		if( !cvar->integer )
-			continue;
+			goto non_avail;
 
 		// an alternative extension of higher priority is available so ignore this one
 		var = &(GLINF_FROM( &glConfig.ext, extension->offset ));
@@ -461,7 +461,7 @@ static qboolean R_RegisterGLExtensions( void )
 
 non_avail:
 		if( extension->mandatory ) {
-			Com_Printf( "R_RegisterGLExtensions: '%s_s' is not available, aborting\n", 
+			Sys_Error( "R_RegisterGLExtensions: '%s_%s' is not available, aborting\n", 
 				extension->prefix, extension->name );
 			return qfalse;
 		}
