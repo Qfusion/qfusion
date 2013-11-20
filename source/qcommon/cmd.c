@@ -1084,7 +1084,7 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 		if( dir[0] )
 			Q_strncatz( dir, "/", sizeof( dir ) );
 		Q_strncpyz( subdir, partial, min( p - partial, sizeof( subdir ) ) );
-		for( subdir_len = strlen( subdir ); subdir[subdir_len-1] == '/'; subdir_len-- ) subdir[subdir_len-1] = '/0';
+		for( subdir_len = strlen( subdir ); subdir[subdir_len-1] == '/'; subdir_len-- ) subdir[subdir_len-1] = '\0';
 		Q_strncatz( dir, subdir, sizeof( dir ) );
 		Q_strncatz( subdir, "/", sizeof( subdir ) );
 	}
@@ -1092,11 +1092,6 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 	total = 0;
 	total_size = 0;
 	numpasses = 0;
-
-	// passing NULL for extension forces subdirectories
-	if( !extension ) {
-		subdirectories = qtrue;
-	}
 
 	numdirs = 0;
 	numdirs_added = 0;
