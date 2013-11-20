@@ -32,7 +32,7 @@ void main(void)
 #  extension GL_ARB_gpu_shader5 : enable
 # endif
 #define FXAA_GREEN_AS_LUMA 1
-#define FXAA_QUALITY__PRESET 23
+#define FXAA_QUALITY_X_PRESET 23
 
 #include "include/Fxaa3_11.h"
 

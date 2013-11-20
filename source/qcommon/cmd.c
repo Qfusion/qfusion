@@ -511,6 +511,13 @@ static void Cmd_Exec_f( void )
 	Mem_TempFree( name );
 }
 
+/*
+* CL_CompleteExecBuildList
+*/
+static char **CL_CompleteExecBuildList( const char *partial )
+{
+	return Cmd_CompleteFileList( partial, "", ".cfg", qtrue );
+}
 
 /*
 * Cmd_Echo_f
@@ -1030,6 +1037,171 @@ char **Cmd_CompleteBuildArgList( const char *partial )
 }
 
 /*
+* Cmd_CompleteFileList
+*
+* Find matching files
+*/
+char **Cmd_CompleteFileList( const char *partial, const char *basedir, const char *extension, qboolean subdirectories )
+{
+	const char *p;
+	char dir[MAX_QPATH];
+	char subdir[MAX_QPATH];
+	char prefix[MAX_QPATH];
+	int prefix_length;
+	int subdir_length;
+	int total;
+	size_t size;
+	size_t buf_size;
+	size_t total_size;
+	char **buf;
+	char *list;
+	char *ext;
+	int i, j, len;
+	int numitems;
+	int pass;
+	int numpasses;
+	int numdirs, numdirs_added;
+
+	// locate the basename (prefix) of the partial name
+	for( p = partial + strlen( partial ); p >= partial && *p != '/'; p-- )
+		;
+	p++;
+
+	Q_strncpyz( prefix, p, sizeof( prefix ) );
+	prefix_length = strlen( prefix );
+
+	// determine the searching directory
+	// if we are searching in a subdirectory, this subdirectory will have
+	// to be prepended to all results
+	strcpy( dir, basedir );
+	subdir[0] = '\0';
+	if( p > partial )
+	{
+		size_t subdir_len;
+
+		if( !subdirectories )
+			return NULL;
+		if( dir[0] )
+			Q_strncatz( dir, "/", sizeof( dir ) );
+		Q_strncpyz( subdir, partial, min( p - partial, sizeof( subdir ) ) );
+		for( subdir_len = strlen( subdir ); subdir[subdir_len-1] == '/'; subdir_len-- ) subdir[subdir_len-1] = '/0';
+		Q_strncatz( dir, subdir, sizeof( dir ) );
+		Q_strncatz( subdir, "/", sizeof( subdir ) );
+	}
+
+	total = 0;
+	total_size = 0;
+	numpasses = 0;
+
+	// passing NULL for extension forces subdirectories
+	if( !extension ) {
+		subdirectories = qtrue;
+	}
+
+	numdirs = 0;
+	numdirs_added = 0;
+	if( subdirectories ) {
+		// count the total amount of subdirectories in the directory
+		numdirs = FS_GetFileListExt( dir, "/", NULL, &size, 0, 0 );
+		if( numdirs ) {
+			total += numdirs;
+			total_size += size;
+			numpasses++;
+		}
+	}
+
+	// count the total amount of files in the directory
+	numitems = FS_GetFileListExt( dir, extension, NULL, &size, 0, 0 );
+	total += numitems;
+	total_size += size;
+	numpasses++;
+
+	if( !total )
+		return NULL;
+
+	subdir_length = strlen( subdir );
+	buf_size = 	( total + 1 ) * sizeof( char * )	// resulting pointer list with NULL ending
+				+ total_size						// actual strings
+				+ total * subdir_length;			// extra space to prepend subdirs
+	buf = ( char ** )Mem_TempMalloc( buf_size );							
+	list = ( char * )buf + ( total + 1 ) * sizeof( char * );
+
+	// get all files in the directory
+
+	size = total_size;
+	for( pass = 0; pass < numpasses; pass++ )
+	{
+		if( pass > 0 ) {
+			// prepend subdirectories
+			j = 0;
+			numitems = FS_GetFileList( dir, "/", list, size, 0, 0 );
+		}
+		else {
+			// take advantage of FS_GetFileList caching
+			j = numdirs;
+			numitems = FS_GetFileList( dir, extension, list, size, 0, 0 );
+		}
+
+		for( i = 0; i < numitems; i++ )
+		{
+			len = strlen( list );
+			if( !Q_strnicmp( prefix, list, prefix_length ) )
+			{
+				ext = extension && *extension ? list + len - strlen( extension ) : NULL;
+				if( list[len - 1] == '/' )
+				{
+					if( !pass || !subdirectories )
+					{
+						// ignore directories
+						list += len + 1;
+						size -= len + 1;
+						continue;
+					}
+					numdirs_added++;
+				}
+				else if( !ext )
+				{
+					// do nothing
+				}
+				else if( ext >= list && !Q_stricmp( ext, extension ) )
+				{
+					// remove the extension
+					*ext = '\0';
+				}
+				else
+				{
+					// ignore other files
+					list += len + 1;
+					size -= len + 1;
+					continue;
+				}
+
+				if( *subdir )
+				{
+					// searching in a subdirectory, prepend it
+					memmove( list + subdir_length, list, size );
+					memcpy( list, subdir, subdir_length );
+
+					len += subdir_length;
+					size += subdir_length;
+				}
+				buf[j++] = list;
+			}
+
+			list += len + 1;
+			size -= len + 1;
+		}
+	}
+	buf[total] = NULL;
+
+	if( numdirs > numdirs_added ) {
+		memmove( buf + numdirs_added, buf + numdirs, ( total - numdirs ) * sizeof ( char * ) );
+	}
+
+	return buf;
+}
+
+/*
 Cmd_CompleteAlias
 */
 char *Cmd_CompleteAlias( const char *partial )
@@ -1253,6 +1425,7 @@ void Cmd_Init( void )
 	Cmd_SetCompletionFunc( "alias", Cmd_CompleteAliasBuildList );
 	Cmd_SetCompletionFunc( "aliasa", Cmd_CompleteAliasBuildList );
 	Cmd_SetCompletionFunc( "unalias", Cmd_CompleteAliasBuildList );
+	Cmd_SetCompletionFunc( "exec", CL_CompleteExecBuildList );
 
 	cmd_initialized = qtrue;
 }

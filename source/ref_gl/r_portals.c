@@ -376,8 +376,8 @@ setup_and_render:
 		// no point in capturing the depth buffer due to oblique frustum messing up
 		// the far plane and depth values
 		rn.fbDepthAttachment = NULL;
-		Vector4Set( rn.viewport, rn.refdef.x + x, glConfig.height - h - (rn.refdef.y + y), w, h );
-		Vector4Set( rn.scissor, rn.refdef.x + x, glConfig.height - h - (rn.refdef.y + y), w, h );
+		Vector4Set( rn.viewport, rn.refdef.x + x, rn.refdef.y + y, w, h );
+		Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 	}
 	else {
 		// no point in capturing the depth buffer due to oblique frustum messing up

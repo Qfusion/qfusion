@@ -538,6 +538,8 @@ void VID_CheckChanges( void )
 
 		FTLIB_FreeFonts( qfalse );
 
+		L10n_ClearDomains();
+
 		Cvar_GetLatchedVars( CVAR_LATCH_VIDEO );
 
 load_refresh:
@@ -583,6 +585,9 @@ load_refresh:
 		CL_SoundModule_Init( verbose );
 
 		FTLIB_PrecacheFonts( verbose );
+
+		// load common localization strings
+		L10n_LoadLangPOFile( "common", "l10n" );
 
 		CL_InitMedia();
 

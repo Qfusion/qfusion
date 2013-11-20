@@ -1011,7 +1011,7 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 			pass->tcgen = TC_GEN_LIGHTMAP;
 			pass->flags = ( pass->flags & ~( SHADERPASS_PORTALMAP ) ) | SHADERPASS_LIGHTMAP;
 			pass->anim_fps = 0;
-			pass->anim_frames[0] = NULL;
+			pass->images[0] = NULL;
 			return;
 		}
 		else if( !strcmp( token, "portalmap" ) || !strcmp( token, "mirrormap" ) )
@@ -1019,7 +1019,7 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 			pass->tcgen = TC_GEN_PROJECTION;
 			pass->flags = ( pass->flags & ~( SHADERPASS_LIGHTMAP ) ) | SHADERPASS_PORTALMAP;
 			pass->anim_fps = 0;
-			pass->anim_frames[0] = NULL;
+			pass->images[0] = NULL;
 			if( ( shader->flags & SHADER_PORTAL ) && ( shader->sort == SHADER_SORT_PORTAL ) )
 				shader->sort = 0; // reset sorting so we can figure it out later. FIXME?
 			shader->flags |= SHADER_PORTAL|( r_portalmaps->integer ? SHADER_PORTAL_CAPTURE : 0 );
@@ -1035,8 +1035,8 @@ static void Shaderpass_MapExt( shader_t *shader, shaderpass_t *pass, int addFlag
 	pass->tcgen = TC_GEN_BASE;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
 	pass->anim_fps = 0;
-	pass->anim_frames[0] = Shader_FindImage( shader, token, flags, 0 );
-	if( !pass->anim_frames[0] )
+	pass->images[0] = Shader_FindImage( shader, token, flags, 0 );
+	if( !pass->images[0] )
 		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
 }
 
@@ -1059,8 +1059,8 @@ static void Shaderpass_AnimMapExt( shader_t *shader, shaderpass_t *pass, int add
 		token = Shader_ParseString( ptr );
 		if( !token[0] )
 			break;
-		if( pass->anim_numframes < MAX_SHADER_ANIM_FRAMES )
-			pass->anim_frames[pass->anim_numframes++] = Shader_FindImage( shader, token, flags, 0 );
+		if( pass->anim_numframes < MAX_SHADER_images )
+			pass->images[pass->anim_numframes++] = Shader_FindImage( shader, token, flags, 0 );
 	}
 
 	if( pass->anim_numframes == 0 )
@@ -1082,20 +1082,20 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	if( !glConfig.ext.texture_cube_map )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has an unsupported cubemap stage: %s.\n", shader->name );
-		pass->anim_frames[0] = r_notexture;
+		pass->images[0] = r_notexture;
 		pass->tcgen = TC_GEN_BASE;
 		return;
 	}
 
-	pass->anim_frames[0] = R_FindImage( token, NULL, flags|IT_CUBEMAP, 0 );
-	if( pass->anim_frames[0] )
+	pass->images[0] = R_FindImage( token, NULL, flags|IT_CUBEMAP, 0 );
+	if( pass->images[0] )
 	{
 		pass->tcgen = tcgen;
 	}
 	else
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
-		pass->anim_frames[0] = r_notexture;
+		pass->images[0] = r_notexture;
 		pass->tcgen = TC_GEN_BASE;
 	}
 }
@@ -1155,14 +1155,14 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	flags = Shader_SetImageFlags( shader );
 	token = Shader_ParseString( ptr );
 
-	pass->anim_frames[0] = Shader_FindImage( shader, token, flags, 0 );
-	if( !pass->anim_frames[0] )
+	pass->images[0] = Shader_FindImage( shader, token, flags, 0 );
+	if( !pass->images[0] )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: failed to load base/diffuse image for material %s in shader %s.\n", token, shader->name );
 		return;
 	}
 
-	pass->anim_frames[1] = pass->anim_frames[2] = pass->anim_frames[3] = NULL;
+	pass->images[1] = pass->images[2] = pass->images[3] = NULL;
 
 	pass->tcgen = TC_GEN_BASE;
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
@@ -1180,13 +1180,13 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 			flags |= IT_HEIGHTMAP;
 			bumpScale = atoi( token );
 		}
-		else if( !pass->anim_frames[1] )
+		else if( !pass->images[1] )
 		{
-			pass->anim_frames[1] = Shader_FindImage( shader, token, flags, bumpScale );
-			if( !pass->anim_frames[1] )
+			pass->images[1] = Shader_FindImage( shader, token, flags, bumpScale );
+			if( !pass->images[1] )
 			{
 				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing normalmap image %s in shader %s.\n", token, shader->name );
-				pass->anim_frames[1] = r_blankbumptexture;
+				pass->images[1] = r_blankbumptexture;
 			}
 			else
 			{
@@ -1194,18 +1194,18 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 			}
 			flags &= ~IT_HEIGHTMAP;
 		}
-		else if( !pass->anim_frames[2] )
+		else if( !pass->images[2] )
 		{
 			if( strcmp( token, "-" ) && r_lighting_specular->integer )
 			{
-				pass->anim_frames[2] = Shader_FindImage( shader, token, flags, 0 );
-				if( !pass->anim_frames[2] )
+				pass->images[2] = Shader_FindImage( shader, token, flags, 0 );
+				if( !pass->images[2] )
 					ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing glossmap image %s in shader %s.\n", token, shader->name );
 			}
 
 			// set gloss to r_blacktexture so we know we have already parsed the gloss image
-			if( pass->anim_frames[2] == NULL )
-				pass->anim_frames[2] = r_blacktexture;
+			if( pass->images[2] == NULL )
+				pass->images[2] = r_blacktexture;
 		}
 		else
 		{
@@ -1213,7 +1213,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 			for( i = 3; i < 5; i++ ) {
 				image_t *decal;
 
-				if( pass->anim_frames[i] ) {
+				if( pass->images[i] ) {
 					continue;
 				}
 
@@ -1226,27 +1226,27 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 					}
 				}
 
-				pass->anim_frames[i] = decal;
+				pass->images[i] = decal;
 				break;
 			}
 		}
 	}
 
 	// black texture => no gloss, so don't waste time in the GLSL program
-	if( pass->anim_frames[2] == r_blacktexture )
-		pass->anim_frames[2] = NULL;
+	if( pass->images[2] == r_blacktexture )
+		pass->images[2] = NULL;
 
 	for( i = 3; i < 5; i++ ) {
-		if( pass->anim_frames[i] == r_whitetexture )
-			pass->anim_frames[i] = NULL;
+		if( pass->images[i] == r_whitetexture )
+			pass->images[i] = NULL;
 	}
 
-	if( pass->anim_frames[1] )
+	if( pass->images[1] )
 		return;
 
 	// load default images
 	pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-	Shaderpass_LoadMaterial( &pass->anim_frames[1], &pass->anim_frames[2], &pass->anim_frames[3], pass->anim_frames[0]->name, flags, bumpScale );
+	Shaderpass_LoadMaterial( &pass->images[1], &pass->images[2], &pass->images[3], pass->images[0]->name, flags, bumpScale );
 }
 
 static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -1266,7 +1266,7 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 
 	flags = Shader_SetImageFlags( shader );
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
-	pass->anim_frames[0] = pass->anim_frames[1] = NULL;
+	pass->images[0] = pass->images[1] = NULL;
 
 	while( 1 )
 	{
@@ -1279,21 +1279,21 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 			flags |= IT_HEIGHTMAP;
 			bumpScale = atoi( token );
 		}
-		else if( !pass->anim_frames[0] )
+		else if( !pass->images[0] )
 		{
-			pass->anim_frames[0] = Shader_FindImage( shader, token, flags, 0 );
-			if( !pass->anim_frames[0] )
+			pass->images[0] = Shader_FindImage( shader, token, flags, 0 );
+			if( !pass->images[0] )
 			{
 				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing dudvmap image %s in shader %s.\n", token, shader->name );
-				pass->anim_frames[0] = r_blacktexture;
+				pass->images[0] = r_blacktexture;
 			}
 
 			pass->program_type = GLSL_PROGRAM_TYPE_DISTORTION;
 		}
 		else
 		{
-			pass->anim_frames[1] = Shader_FindImage( shader, token, flags, bumpScale );
-			if( !pass->anim_frames[1] )
+			pass->images[1] = Shader_FindImage( shader, token, flags, bumpScale );
+			if( !pass->images[1] )
 				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing normalmap image %s in shader.\n", token, shader->name );
 			flags &= ~IT_HEIGHTMAP;
 		}
@@ -1324,17 +1324,17 @@ static void Shaderpass_Celshade( shader_t *shader, shaderpass_t *pass, const cha
 		pass->rgbgen.type = RGB_GEN_IDENTITY;
 
 	pass->anim_fps = 0;
-	memset( pass->anim_frames, 0, sizeof( pass->anim_frames ) );
+	memset( pass->images, 0, sizeof( pass->images ) );
 
 	// at least two valid images are required: 'base' and 'celshade'
 	for( i = 0; i < 2; i++ ) {
 		token = Shader_ParseString( ptr );
 		if( *token && strcmp( token, "-" ) )
-			pass->anim_frames[i] = Shader_FindImage( shader, token, flags | (i ? IT_CLAMP|IT_CUBEMAP : 0), 0 );
+			pass->images[i] = Shader_FindImage( shader, token, flags | (i ? IT_CLAMP|IT_CUBEMAP : 0), 0 );
 
-		if( !pass->anim_frames[i] ) {
+		if( !pass->images[i] ) {
 			ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
-			pass->anim_frames[0] = r_notexture;
+			pass->images[0] = r_notexture;
 			return;
 		}
 	}
@@ -1348,7 +1348,7 @@ static void Shaderpass_Celshade( shader_t *shader, shaderpass_t *pass, const cha
 			break;
 		}
 		if( strcmp( token, "-" ) ) {
-			pass->anim_frames[i+2] = Shader_FindImage( shader, token, flags | (i == 4 ? IT_CLAMP|IT_CUBEMAP : 0), 0 );
+			pass->images[i+2] = Shader_FindImage( shader, token, flags | (i == 4 ? IT_CLAMP|IT_CUBEMAP : 0), 0 );
 		}
 	}
 }
@@ -1985,12 +1985,12 @@ void R_TouchShader( shader_t *s )
 	for( i = 0; i < s->numpasses; i++ ) {
 		shaderpass_t *pass = s->passes + i;
 
-		for( j = 0; j < MAX_SHADER_ANIM_FRAMES; j++ ) {
-			image_t *image = pass->anim_frames[j];
+		for( j = 0; j < MAX_SHADER_images; j++ ) {
+			image_t *image = pass->images[j];
 			if( image ) {
 				R_TouchImage( image );
 			} else if( !pass->program_type ) {
-				// only programs can have gaps in anim_frames
+				// only programs can have gaps in images
 				break;
 			}
 		}
@@ -2471,7 +2471,7 @@ void R_UploadCinematicShader( const shader_t *shader )
 	for( j = 0, pass = shader->passes; j < shader->numpasses; j++, pass++ )
 	{
 		if( pass->cin )
-			pass->anim_frames[0] = R_UploadCinematic( pass->cin );
+			pass->images[0] = R_UploadCinematic( pass->cin );
 	}
 }
 
@@ -2511,7 +2511,7 @@ static void R_LoadShaderReal( shader_t *s, char *shortname, size_t shortname_len
 {
 	shadercache_t *cache;
 	shaderpass_t *pass;
-	image_t *materialImages[MAX_SHADER_ANIM_FRAMES];
+	image_t *materialImages[MAX_SHADER_images];
 
 	s->name = shortname;
 	s->type = type;
@@ -2589,7 +2589,7 @@ create_default:
 			pass->tcgen = TC_GEN_BASE;
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
-			pass->anim_frames[0] = Shader_FindImage( s, shortname, 0, 0 );
+			pass->images[0] = Shader_FindImage( s, shortname, 0, 0 );
 			break;
 		case SHADER_TYPE_DELUXEMAP:
 			// deluxemapping
@@ -2609,10 +2609,10 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_IDENTITY;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-			pass->anim_frames[0] = Shader_FindImage( s, shortname, 0, 0 );
-			pass->anim_frames[1] = materialImages[0]; // normalmap
-			pass->anim_frames[2] = materialImages[1]; // glossmap
-			pass->anim_frames[3] = materialImages[2]; // decalmap
+			pass->images[0] = Shader_FindImage( s, shortname, 0, 0 );
+			pass->images[1] = materialImages[0]; // normalmap
+			pass->images[2] = materialImages[1]; // glossmap
+			pass->images[3] = materialImages[2]; // decalmap
 			break;
 		case SHADER_TYPE_LIGHTMAP:
 			// lightmapping
@@ -2636,7 +2636,7 @@ create_default:
 			pass->tcgen = TC_GEN_BASE;
 			pass->rgbgen.type = RGB_GEN_IDENTITY;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
-			pass->anim_frames[0] = Shader_FindImage( s, shortname, 0, 0 );
+			pass->images[0] = Shader_FindImage( s, shortname, 0, 0 );
 			break;
 		case SHADER_TYPE_CORONA:
 			s->vattribs = VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
@@ -2651,7 +2651,7 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
-			pass->anim_frames[0] = Shader_FindImage( s, shortname, IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS|IT_CLAMP, 0 );
+			pass->images[0] = Shader_FindImage( s, shortname, IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS|IT_CLAMP, 0 );
 			break;
 		case SHADER_TYPE_DIFFUSE:
 			// load material images
@@ -2671,10 +2671,10 @@ create_default:
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
 			pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-			pass->anim_frames[0] = Shader_FindImage( s, shortname, 0, 0 );
-			pass->anim_frames[1] = materialImages[0]; // normalmap
-			pass->anim_frames[2] = materialImages[1]; // glossmap
-			pass->anim_frames[3] = materialImages[2]; // decalmap
+			pass->images[0] = Shader_FindImage( s, shortname, 0, 0 );
+			pass->images[1] = materialImages[0]; // normalmap
+			pass->images[2] = materialImages[1]; // glossmap
+			pass->images[3] = materialImages[2]; // decalmap
 			s->vattribs |= VATTRIB_SVECTOR_BIT|VATTRIB_NORMAL_BIT;
 			break;
 		case SHADER_TYPE_2D:
@@ -2702,7 +2702,7 @@ create_default:
 				else
 					pass->cin = R_StartCinematic( shortname );
 			} else if( type != SHADER_TYPE_2D_RAW ) {
-				pass->anim_frames[0] = Shader_FindImage( s, shortname, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP, 0 );
+				pass->images[0] = Shader_FindImage( s, shortname, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP, 0 );
 			}
 			break;
 		case SHADER_TYPE_OPAQUE_ENV:
@@ -2720,7 +2720,7 @@ create_default:
 			VectorClear( pass->rgbgen.args );
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_NONE;
-			pass->anim_frames[0] = r_whitetexture;
+			pass->images[0] = r_whitetexture;
 			break;
 		case SHADER_TYPE_SKYBOX:
 			s->vattribs = VATTRIB_TEXCOORDS_BIT;
@@ -2737,7 +2737,7 @@ create_default:
 			pass->tcgen = TC_GEN_BASE;
 			pass->flags = SHADERPASS_SKYBOXSIDE;
 			// the actual image will be picked at rendering time based on skyside number
-			pass->anim_frames[0] = r_whitetexture;
+			pass->images[0] = r_whitetexture;
 			break;
 		case SHADER_TYPE_SKYCLIP:
 			// a shader that only writes to depthbuffer
@@ -2755,7 +2755,7 @@ create_default:
 			pass->tcgen = TC_GEN_NONE;
 			pass->flags = GLSTATE_DEPTHWRITE|GLSTATE_NO_COLORWRITE;
 			// the actual image will be picked at rendering time based on skyside number
-			pass->anim_frames[0] = r_whitetexture;
+			pass->images[0] = r_whitetexture;
 			break;
 		default:
 			break;
@@ -2861,15 +2861,15 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, qbyte *data
 		image_t *image;
 
 		// unlink and delete the old image from memory, unless it's the default one
-		image = s->passes[0].anim_frames[0];
+		image = s->passes[0].images[0];
 		if( !image || image == r_notexture ) {
 			// try to load new image
 			image = R_LoadImage( name, &data, width, height, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP, 4 );
-			s->passes[0].anim_frames[0] = image;
+			s->passes[0].images[0] = image;
 		}
 		else {
 			// replace current texture data
-			R_ReplaceImage( image, &data, width, height, image->samples );
+			R_ReplaceImage( image, &data, width, height, image->flags, image->samples );
 		}
 	}
 	return s;
@@ -2882,11 +2882,11 @@ shader_t *R_RegisterLevelshot( const char *name, shader_t *defaultShader, qboole
 {
 	shader_t *shader;
 
-	r_defaultImage = defaultShader ? defaultShader->passes[0].anim_frames[0] : NULL;
+	r_defaultImage = defaultShader ? defaultShader->passes[0].images[0] : NULL;
 	shader = R_LoadShader( name, SHADER_TYPE_2D, qtrue );
 
 	if( matchesDefault )
-		*matchesDefault = ((shader->passes[0].anim_frames[0] == r_defaultImage) ? qtrue : qfalse);
+		*matchesDefault = ((shader->passes[0].images[0] == r_defaultImage) ? qtrue : qfalse);
 
 	r_defaultImage = NULL;
 
@@ -2938,7 +2938,7 @@ void R_GetShaderDimensions( const shader_t *shader, int *width, int *height )
 		return;
 	}
 
-	baseImage = shader->passes[0].anim_frames[0];
+	baseImage = shader->passes[0].images[0];
 	if( !baseImage ) {
 		ri.Com_DPrintf( S_COLOR_YELLOW "R_GetShaderDimensions: shader %s is missing base image\n", shader->name );
 		return;

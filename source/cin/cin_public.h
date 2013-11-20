@@ -34,19 +34,26 @@ typedef struct {
 	// MUST MATCH ref_img_plane_t
 	//===============================
 
+	// the width of this plane
+	// note that row data has to be continous
+	// so for planes where stride != image_width, 
+	// the width should be max (stride, image_width)
+	int width;
+
+	// the height of this plane
+	int height;
+
 	// the offset in bytes between successive rows
 	int stride;
-
-	// the width and height of the plane can be computed
-	// as img_width/w_denominator and img_height/h_denominator respectively
-	int w_denominator;
-	int h_denominator;
 
 	// pointer to the beginning of the first row
 	unsigned char *data;
 } cin_img_plane_t;
 
 typedef struct {
+	int image_width;
+	int image_height;
+
 	int width;
 	int height;
 
