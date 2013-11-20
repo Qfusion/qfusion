@@ -1037,14 +1037,6 @@ char **Cmd_CompleteBuildArgList( const char *partial )
 }
 
 /*
-* Cmd_CompleteCompareFileNames
-*/
-static int Cmd_CompleteCompareFileNames( const char **first, const char **second )
-{
-	return Q_stricmp( *first, *second );
-}
-
-/*
 * Cmd_CompleteFileList
 *
 * Find matching files
@@ -1093,7 +1085,6 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 			Q_strncatz( dir, "/", sizeof( dir ) );
 		Q_strncpyz( subdir, partial, min( p - partial, sizeof( subdir ) ) );
 		for( subdir_len = strlen( subdir ); subdir[subdir_len-1] == '/'; subdir_len-- ) subdir[subdir_len-1] = '/0';
-		//subdir[subdir_len-1] = '/';
 		Q_strncatz( dir, subdir, sizeof( dir ) );
 		Q_strncatz( subdir, "/", sizeof( subdir ) );
 	}
