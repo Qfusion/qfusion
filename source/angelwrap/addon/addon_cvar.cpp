@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon_string.h"
 #include "addon_cvar.h"
 
+//#define CVAR_FORCESET
+
 // CLASS: Cvar
 void objectCVar_Constructor( asstring_t *name, asstring_t *value, unsigned int flags, ascvar_t *self )
 {
@@ -68,6 +70,7 @@ static void objectCVar_setD( double value, ascvar_t *self )
 	objectCVar_setF( (float)value, self );
 }
 
+#ifdef CVAR_FORCESET
 static void objectCVar_forceSetS( asstring_t *str, ascvar_t *self )
 {
 	if( !str || !self->cvar )
@@ -93,6 +96,7 @@ static void objectCVar_forceSetD( double value, ascvar_t *self )
 {
 	objectCVar_forceSetF( (float)value, self );
 }
+#endif
 
 static bool objectCVar_getBool( ascvar_t *self )
 {
@@ -184,10 +188,12 @@ void RegisterCvarAddon( asIScriptEngine *engine )
 	r = engine->RegisterObjectMethod( "Cvar", "void set( float value )", asFUNCTION( objectCVar_setF ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "void set( int value )", asFUNCTION( objectCVar_setI ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "void set( double value )", asFUNCTION( objectCVar_setD ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+#ifdef CVAR_FORCESET
 	r = engine->RegisterObjectMethod( "Cvar", "void forceSet( const String &in )", asFUNCTION( objectCVar_forceSetS ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "void forceSet( float value )", asFUNCTION( objectCVar_forceSetF ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "void forceSet( int value )", asFUNCTION( objectCVar_forceSetI ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "void forceSet( double value )", asFUNCTION( objectCVar_forceSetD ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+#endif
 
 	r = engine->RegisterObjectMethod( "Cvar", "bool get_modified() const", asFUNCTION( objectCVar_getModified ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "bool get_boolean() const", asFUNCTION( objectCVar_getBool ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
