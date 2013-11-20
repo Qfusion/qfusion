@@ -511,6 +511,7 @@ void CL_PauseDemo_f( void );
 void CL_DemoJump_f( void );
 void CL_BeginDemoAviDump( void );
 size_t CL_ReadDemoMetaData( const char *demopath, char *meta_data, size_t meta_data_size );
+char **CL_DemoComplete( const char *partial );
 #define CL_WriteAvi() ( cls.demo.avi && cls.state == CA_ACTIVE && cls.demo.playing && !cls.demo.play_jump )
 #define CL_SetDemoMetaKeyValue(k,v) cls.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue(cls.demo.meta_data, sizeof(cls.demo.meta_data), cls.demo.meta_data_realsize, k, v)
 

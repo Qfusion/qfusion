@@ -131,7 +131,8 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canhave )
 			continue;
 
 		if( d->d_type == DT_DIR && fdots > 0 )
-		{                                   // . and .. never match
+		{
+			// . and .. never match
 			const char *base = COM_FileBase( d->d_name );
 			if( !strcmp( base, "." ) || !strcmp( base, ".." ) )
 			{
@@ -142,7 +143,9 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canhave )
 
 		if( !*findpattern || Com_GlobMatch( findpattern, d->d_name, 0 ) )
 		{
-			size_t size = sizeof( char ) * ( findbase_size + strlen( d->d_name ) + 1 );
+			const char *dname = d->d_name;
+			size_t dname_len = strlen( dname );
+			size_t size = sizeof( char ) * ( findbase_size + dname_len + 1 + 1 );
 			if( findpath_size < size )
 			{
 				if( findpath )
@@ -151,7 +154,8 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canhave )
 				findpath = Mem_TempMalloc( findpath_size );
 			}
 
-			Q_snprintfz( findpath, findpath_size, "%s/%s", findbase, d->d_name );
+			Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, dname,
+				( d->d_type == DT_DIR ) && dname[dname_len-1] != '/' ? "/" : "" );
 			if( CompareAttributesForPath( d, findpath, musthave, canhave ) )
 				return findpath;
 		}

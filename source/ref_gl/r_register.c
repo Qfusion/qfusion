@@ -403,7 +403,7 @@ static qboolean R_RegisterGLExtensions( void )
 
 		cvar = ri.Cvar_Get( name, extension->cvar_default ? extension->cvar_default : "0", cvar_flags );
 		if( !cvar->integer )
-			continue;
+			goto non_avail;
 
 		// an alternative extension of higher priority is available so ignore this one
 		var = &(GLINF_FROM( &glConfig.ext, extension->offset ));
@@ -461,7 +461,7 @@ static qboolean R_RegisterGLExtensions( void )
 
 non_avail:
 		if( extension->mandatory ) {
-			Com_Printf( "R_RegisterGLExtensions: '%s_s' is not available, aborting\n", 
+			Sys_Error( "R_RegisterGLExtensions: '%s_%s' is not available, aborting\n", 
 				extension->prefix, extension->name );
 			return qfalse;
 		}
@@ -585,9 +585,9 @@ static void R_FinalizeGLExtensions( void )
 		ri.Cvar_ForceSet( r_maxglslbones->name, r_maxglslbones->dvalue );
 	}
 
-	// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
-	if( glConfig.shadingLanguageVersion >= 140 ) {
-		// require GLSL version 1.40 and higher
+	// require GLSL 1.30+ for GPU skinning
+	if( glConfig.shadingLanguageVersion >= 130 ) {
+		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
 		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 20, r_maxglslbones->integer );
 	}
 	else {
@@ -752,26 +752,21 @@ static void R_Register( const char *screenshotsPrefix )
 }
 
 /*
-* R_GfxInfo_f
+* R_PrintGLExtensions
 */
-static void R_GfxInfo_f( void )
+static void R_PrintGLExtensions( const char *name, const char *str )
 {
 	size_t len, p;
 
-	Com_Printf( "\n" );
-	Com_Printf( "GL_VENDOR: %s\n", glConfig.vendorString );
-	Com_Printf( "GL_RENDERER: %s\n", glConfig.rendererString );
-	Com_Printf( "GL_VERSION: %s\n", glConfig.versionString );
-	Com_Printf( "GL_SHADING_LANGUAGE_VERSION: %s\n", glConfig.shadingLanguageVersionString );
+	Com_Printf( "%s: ", name );
 
-	Com_Printf( "GL_EXTENSIONS: " );
-	if( glConfig.extensionsString )
+	if( str && *str )
 	{
-		for( len = strlen( glConfig.extensionsString ), p = 0; p < len;  )
+		for( len = strlen( str ), p = 0; p < len;  )
 		{
-			char chunk[1024];
+			char chunk[512];
 
-			p += Q_snprintfz( chunk, sizeof( chunk ), "%s", glConfig.extensionsString + p );
+			p += Q_snprintfz( chunk, sizeof( chunk ), "%s", str + p );
 			
 			Com_Printf( "%s", chunk );
 		}
@@ -780,10 +775,22 @@ static void R_GfxInfo_f( void )
 	{
 		Com_Printf( "none" );
 	}
-	Com_Printf( "\n" );
+}
 
-	if( *glConfig.glwExtensionsString )
-		Com_Printf( "GLW_EXTENSIONS: %s\n", glConfig.glwExtensionsString );
+/*
+* R_GfxInfo_f
+*/
+static void R_GfxInfo_f( void )
+{
+	Com_Printf( "\n" );
+	Com_Printf( "GL_VENDOR: %s\n", glConfig.vendorString );
+	Com_Printf( "GL_RENDERER: %s\n", glConfig.rendererString );
+	Com_Printf( "GL_VERSION: %s\n", glConfig.versionString );
+	Com_Printf( "GL_SHADING_LANGUAGE_VERSION: %s\n", glConfig.shadingLanguageVersionString );
+
+	R_PrintGLExtensions( "GL_EXTENSIONS", glConfig.extensionsString );
+	R_PrintGLExtensions( "GLXW_EXTENSIONS", glConfig.glwExtensionsString );
+
 	Com_Printf( "GL_MAX_TEXTURE_SIZE: %i\n", glConfig.maxTextureSize );
 	Com_Printf( "GL_MAX_TEXTURE_UNITS: %i\n", glConfig.maxTextureUnits );
 	if( glConfig.ext.texture_cube_map )

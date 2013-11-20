@@ -188,10 +188,18 @@ qboolean SCR_DrawCinematic( void )
 	}
 
 	if( cl.cin.yuv ) {
-		re.DrawStretchRawYUV( x, y, w, h, cl.cin.redraw ? cl.cin.cyuv : NULL );
+		ref_yuv_t *cyuv = cl.cin.cyuv;
+
+		re.DrawStretchRawYUV( x, y, w, h, 		
+			(float)(cyuv->x_offset) / cyuv->image_width,
+			(float)(cyuv->y_offset) / cyuv->image_height,
+			(float)(cyuv->x_offset + cyuv->width) / cyuv->image_width,
+			(float)(cyuv->y_offset + cyuv->height) / cyuv->image_height,
+			cl.cin.redraw ? cyuv->yuv : NULL );
 	}
 	else {
-		re.DrawStretchRaw( x, y, w, h, cl.cin.width, cl.cin.height, cl.cin.redraw ? cl.cin.pic : NULL );
+		re.DrawStretchRaw( x, y, w, h, cl.cin.width, cl.cin.height, 
+			0, 0, 1, 1, cl.cin.redraw ? cl.cin.pic : NULL );
 	}
 
 	cl.cin.redraw = qfalse;
@@ -252,6 +260,14 @@ void SCR_PauseCinematic( void )
 // =======================================================================
 
 /*
+* CL_CinematicsComplete_f
+*/
+static char **CL_CinematicsComplete_f( const char *partial )
+{
+	return Cmd_CompleteFileList( partial, "video", NULL, qtrue );
+}
+
+/*
 * CL_PlayCinematic_f
 */
 void CL_PlayCinematic_f( void )
@@ -288,6 +304,8 @@ void CL_InitCinematics( void )
 
 	Cmd_AddCommand( "cinematic", CL_PlayCinematic_f );
 	Cmd_AddCommand( "cinepause", CL_PauseCinematic_f );
+
+	Cmd_SetCompletionFunc( "cinematic", CL_CinematicsComplete_f );
 }
 
 /*

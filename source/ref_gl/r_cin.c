@@ -103,7 +103,8 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 				R_PushRefInst();
 			}
 
-			R_InitViewportTexture( &handle->image, handle->name, 0, handle->width, handle->height, 
+			R_InitViewportTexture( &handle->image, handle->name, 0, 
+				handle->cyuv->image_width, handle->cyuv->image_height, 
 				0, IT_CINEMATIC|IT_FRAMEBUFFER, samples );
 
 			R_BindFrameBufferObject( handle->image->fbo );
@@ -111,8 +112,12 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 			R_Set2DMode( qtrue );
 
 			// flip the image vertically because we're rendering to a FBO
-			R_DrawStretchRawYUVBuiltin( 0, 0, handle->image->upload_width, handle->image->upload_height, 
-				handle->cyuv, handle->yuv_images, qtrue, 2 );
+			R_DrawStretchRawYUVBuiltin( 0, 0, handle->width, handle->height, 
+				(float)handle->cyuv->x_offset / handle->cyuv->image_width, 
+				(float)handle->cyuv->y_offset / handle->cyuv->image_height, 
+				(float)(handle->cyuv->x_offset + handle->cyuv->width) / handle->cyuv->image_width, 
+				(float)(handle->cyuv->y_offset + handle->cyuv->height) / handle->cyuv->image_height, 
+				handle->cyuv->yuv, handle->yuv_images, 2 );
 
 			if( !in2D ) {
 				R_PopRefInst( 0 );
@@ -130,7 +135,8 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 				IT_CINEMATIC, samples );
 			handle->new_frame = qfalse;
 		} else if( handle->new_frame ) {
-			R_ReplaceImage( handle->image, &handle->pic, handle->width, handle->height, samples );
+			R_ReplaceImage( handle->image, &handle->pic, handle->width, handle->height, 
+				handle->image->flags, samples );
 			handle->new_frame = qfalse;
 		}
 	}

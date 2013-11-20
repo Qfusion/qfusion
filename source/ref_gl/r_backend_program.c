@@ -732,11 +732,11 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	mat4_t texMatrix;
 
 	// handy pointers
-	base = pass->anim_frames[0];
-	normalmap = pass->anim_frames[1];
-	glossmap = pass->anim_frames[2];
-	decalmap = pass->anim_frames[3];
-	entdecalmap = pass->anim_frames[4];
+	base = pass->images[0];
+	normalmap = pass->images[1];
+	glossmap = pass->images[2];
+	decalmap = pass->images[3];
+	entdecalmap = pass->images[4];
 
 	assert( normalmap );
 
@@ -993,7 +993,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 		}
 	}
 
-	if( pass->anim_frames[0] != r_blankbumptexture )
+	if( pass->images[0] != r_blankbumptexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_DUDV;
 	if( portaltexture[0] != r_blacktexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_REFLECTION;
@@ -1010,7 +1010,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 
 	Matrix4_Identity( texMatrix );
 
-	RB_BindTexture( 0, pass->anim_frames[0] );  // dudvmap
+	RB_BindTexture( 0, pass->images[0] );  // dudvmap
 	
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
@@ -1020,12 +1020,12 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	if( pass->anim_frames[1] )
+	if( pass->images[1] )
 	{
 		// eyeDot
 		programFeatures |= GLSL_SHADER_DISTORTION_EYEDOT;
 
-		RB_BindTexture( 1, pass->anim_frames[1] ); // normalmap
+		RB_BindTexture( 1, pass->images[1] ); // normalmap
 	}
 
 	RB_BindTexture( 2, portaltexture[0] );           // reflection
@@ -1313,13 +1313,13 @@ r_glslfeat_t RB_TcGenToProgramFeatures( int tcgen, vec_t *tcgenVec, mat4_t texMa
 static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass )
 {
 	if( pass->anim_fps )
-		return pass->anim_frames[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
+		return pass->images[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
 	if( pass->flags & SHADERPASS_PORTALMAP )
 		return rb.currentPortalSurface && rb.currentPortalSurface->texures[0] ? 
 			rb.currentPortalSurface->texures[0] : r_blacktexture;
 	if( ( pass->flags & SHADERPASS_SKYBOXSIDE ) && rb.skyboxShader && rb.skyboxSide >= 0 )
 		return rb.skyboxShader->skyboxImages[rb.skyboxSide];
-	return ( pass->anim_frames[0] ? pass->anim_frames[0] : r_notexture );
+	return ( pass->images[0] ? pass->images[0] : r_notexture );
 }
 
 /*
@@ -1491,13 +1491,13 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	mat4_t reflectionMatrix;
 	mat4_t texMatrix;
 
-	base = pass->anim_frames[0];
-	shade = pass->anim_frames[1];
-	diffuse = pass->anim_frames[2];
-	decal = pass->anim_frames[3];
-	entdecal = pass->anim_frames[4];
-	stripes = pass->anim_frames[5];
-	light = pass->anim_frames[6];
+	base = pass->images[0];
+	shade = pass->images[1];
+	diffuse = pass->images[2];
+	decal = pass->images[3];
+	entdecal = pass->images[4];
+	stripes = pass->images[5];
+	light = pass->images[6];
 
 	Matrix4_Identity( texMatrix );
 
@@ -1608,7 +1608,7 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	RB_BindTexture( 0, pass->anim_frames[0] );
+	RB_BindTexture( 0, pass->images[0] );
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
@@ -1632,9 +1632,9 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	RB_BindTexture( 0, pass->anim_frames[0] );
-	RB_BindTexture( 1, pass->anim_frames[1] );
-	RB_BindTexture( 2, pass->anim_frames[2] );
+	RB_BindTexture( 0, pass->images[0] );
+	RB_BindTexture( 1, pass->images[1] );
+	RB_BindTexture( 2, pass->images[2] );
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, NULL,
@@ -2088,7 +2088,7 @@ void RB_DrawOutlinedElements( void )
 	r_triLinesPass.alphagen.type = ALPHA_GEN_CONST;
 	r_triLinesPass.alphagen.args = &r_triLinesColor[3];
 	r_triLinesPass.flags = 0;
-	r_triLinesPass.anim_frames[0] = r_whitetexture;
+	r_triLinesPass.images[0] = r_whitetexture;
 	r_triLinesPass.anim_fps = 0;
 	r_triLinesPass.anim_numframes = 0;
 	r_triLinesPass.program_type = GLSL_PROGRAM_TYPE_Q3A_SHADER;
@@ -2144,7 +2144,7 @@ void RB_DrawShadedElements( void )
 	{
 		shaderpass_t *fogPass = &r_GLSLpasses[BUILTIN_GLSLPASS_FOG];
 
-		fogPass->anim_frames[0] = r_whitetexture;
+		fogPass->images[0] = r_whitetexture;
 		if( !rb.currentShader->numpasses || rb.currentShader->fog_dist || ( rb.currentShader->flags & SHADER_SKY ) )
 			fogPass->flags &= ~GLSTATE_DEPTHFUNC_EQ;
 		else

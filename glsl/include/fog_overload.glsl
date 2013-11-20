@@ -1,5 +1,5 @@
 #if defined(FOG_GEN_OUTPUT_COLOR)
-void FogGen(in vec4 Position, inout myhalf4 outColor, const myhalf2 blendMix)
+void FogGen(in vec4 Position, inout myhalf4 outColor, in myhalf2 blendMix)
 #elif defined(FOG_GEN_OUTPUT_TEXCOORDS)
 void FogGen(in vec4 Position, inout vec2 outTexCoord)
 #endif
