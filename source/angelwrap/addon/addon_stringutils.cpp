@@ -26,8 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 namespace StringUtils {
 
-static asIObjectType *StringsArrayObjectType;
-
 // lifted from AngelScript source code
 
 static std::string FormatInt( asINT64 value, const std::string &options, asUINT width )
@@ -174,7 +172,12 @@ static asstring_t *QAS_FormatString8( const asstring_t &format, const asstring_t
 
 static CScriptArrayInterface *QAS_SplitString( const asstring_t &str, const asstring_t &delim )
 {
-	CScriptArrayInterface *arr = QAS_NEW(CScriptArray)(0, StringsArrayObjectType);
+	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
+
+	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<String @>"));
+
+	CScriptArrayInterface *arr = QAS_NEW(CScriptArray)(0, ot);
 	const char *pdelim = delim.buffer;
 	const size_t delim_len = strlen( pdelim );
 
@@ -240,16 +243,9 @@ void PreRegisterStringUtilsAddon( asIScriptEngine *engine )
 {
 }
 
-static void CacheObjectTypes( asIScriptEngine *engine )
-{
-	StringsArrayObjectType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<String @>"));
-}
-
 void RegisterStringUtilsAddon( asIScriptEngine *engine )
 {
 	int r;
-
-	CacheObjectTypes( engine );
 
 	r = engine->SetDefaultNamespace( "StringUtils" ); assert( r >= 0 );
 
