@@ -276,6 +276,7 @@ void UI_Main::touchAllCachedShaders( void )
 	if( rocketModule != NULL ) {
 		rocketModule->touchAllCachedShaders();
 	}
+	navigator->invalidateAssets();
 }
 
 void UI_Main::createDataSources( void )

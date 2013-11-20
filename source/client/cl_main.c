@@ -1762,7 +1762,8 @@ void CL_SetClientState( int state )
 	{
 	case CA_DISCONNECTED:
 		Con_Close();
-		Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
+		CL_UIModule_Refresh( qtrue, qtrue );
+		CL_UIModule_ForceMenuOn();
 		//CL_UIModule_MenuMain ();
 		CL_SetKeyDest( key_menu );
 		//SCR_UpdateScreen();
@@ -1785,6 +1786,7 @@ void CL_SetClientState( int state )
 		re.EndRegistration();
 		CL_SoundModule_EndRegistration();
 		Con_Close();
+		CL_UIModule_Refresh( qfalse, qfalse );
 		CL_UIModule_ForceMenuOff();
 		CL_SetKeyDest( key_game );
 		//SCR_UpdateScreen();
@@ -2950,7 +2952,8 @@ void CL_Init( void )
 	CL_SoundModule_Init( qtrue ); // sound must be initialized after window is created
 
 	CL_InitMedia();
-	Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
+
+	CL_UIModule_ForceMenuOn();
 
 	// check for update
 	CL_CheckForUpdate();

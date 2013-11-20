@@ -240,6 +240,15 @@ void DocumentCache::printCache()
 		Com_Printf("  %s (%d references)\n", (*it)->getName().c_str(), (*it)->getReference() );
 }
 
+// send "invalidate" event to all elements
+void DocumentCache::invalidateAssets(void)
+{
+	Rocket::Core::Dictionary parameters;
+	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
+		( *it )->getRocketDocument()->DispatchEvent( "invalidate", parameters, true );
+	}
+}
+
 //==========================================
 
 // NavigationStack
@@ -378,6 +387,11 @@ void NavigationStack::popAllDocuments(void)
 	documentStack.clear();
 
 	stackLocked = false;
+}
+
+void NavigationStack::invalidateAssets(void)
+{
+	cache.invalidateAssets();
 }
 
 void NavigationStack::attachMainEventListenerToTop( Document *prev )

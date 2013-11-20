@@ -467,6 +467,15 @@ void CL_UIModule_CharEvent( qwchar key )
 }
 
 /*
+* CL_UIModule_ForceMenuOn
+*/
+void CL_UIModule_ForceMenuOn( void )
+{
+	if( uie )
+		Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
+}
+
+/*
 * CL_UIModule_ForceMenuOff
 */
 void CL_UIModule_ForceMenuOff( void )

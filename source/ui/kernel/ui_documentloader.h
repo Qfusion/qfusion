@@ -101,6 +101,9 @@ namespace WSWUI {
 		// (maybe unsafe, invalidates all Document pointers dangling)
 		void clearCaches();
 
+		// touch or reset shaders, models, etc
+		void invalidateAssets(void);
+
 		// DEBUG
 		void printCache();
 
@@ -157,6 +160,8 @@ namespace WSWUI {
 		void showStack(bool show=true);
 		void hideStack();
 		size_t getStackSize(void) const;
+
+		void invalidateAssets(void);
 
 		// DEBUG
 		void printStack();
