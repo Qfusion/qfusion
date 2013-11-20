@@ -1145,7 +1145,7 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 				ext = extension && *extension ? list + len - strlen( extension ) : NULL;
 				if( list[len - 1] == '/' )
 				{
-					if( !pass || !subdirectories )
+					if( !subdirectories )
 					{
 						// ignore directories
 						list += len + 1;
