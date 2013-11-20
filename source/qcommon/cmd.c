@@ -1064,10 +1064,11 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 	char **buf;
 	char *list;
 	char *ext;
-	int i, j, k, len;
+	int i, j, len;
 	int numitems;
 	int pass;
 	int numpasses;
+	int numdirs, numdirs_added;
 
 	// locate the basename (prefix) of the partial name
 	for( p = partial + strlen( partial ); p >= partial && *p != '/'; p-- )
@@ -1084,11 +1085,15 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 	subdir[0] = '\0';
 	if( p > partial )
 	{
+		size_t subdir_len;
+
 		if( !subdirectories )
 			return NULL;
 		if( dir[0] )
 			Q_strncatz( dir, "/", sizeof( dir ) );
 		Q_strncpyz( subdir, partial, min( p - partial, sizeof( subdir ) ) );
+		for( subdir_len = strlen( subdir ); subdir[subdir_len-1] == '/'; subdir_len-- ) subdir[subdir_len-1] = '/0';
+		//subdir[subdir_len-1] = '/';
 		Q_strncatz( dir, subdir, sizeof( dir ) );
 		Q_strncatz( subdir, "/", sizeof( subdir ) );
 	}
@@ -1097,13 +1102,18 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 	total_size = 0;
 	numpasses = 0;
 
-	// passing NULL for extension will add subdirectories anyway
-	if( subdirectories && extension )
-	{
+	// passing NULL for extension forces subdirectories
+	if( !extension ) {
+		subdirectories = qtrue;
+	}
+
+	numdirs = 0;
+	numdirs_added = 0;
+	if( subdirectories ) {
 		// count the total amount of subdirectories in the directory
-		numitems = FS_GetFileListExt( dir, "/", NULL, &size, 0, 0 );
-		if( numitems ) {
-			total += numitems;
+		numdirs = FS_GetFileListExt( dir, "/", NULL, &size, 0, 0 );
+		if( numdirs ) {
+			total += numdirs;
 			total_size += size;
 			numpasses++;
 		}
@@ -1121,39 +1131,42 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 	subdir_length = strlen( subdir );
 	buf_size = 	( total + 1 ) * sizeof( char * )	// resulting pointer list with NULL ending
 				+ total_size						// actual strings
-				+ total * subdir_length				// extra space to prepend subdirs
-				+ total;							// trailing slashes for directory results
+				+ total * subdir_length;			// extra space to prepend subdirs
 	buf = ( char ** )Mem_TempMalloc( buf_size );							
 	list = ( char * )buf + ( total + 1 ) * sizeof( char * );
 
 	// get all files in the directory
 
-	// take advantage of FS_GetFileList caching
 	size = total_size;
-	numitems = FS_GetFileList( dir, extension, list, size, 0, 0 );
-
-	j = 0;
 	for( pass = 0; pass < numpasses; pass++ )
 	{
 		if( pass > 0 ) {
-			// append subdirectories
+			// prepend subdirectories
+			j = 0;
 			numitems = FS_GetFileList( dir, "/", list, size, 0, 0 );
 		}
+		else {
+			// take advantage of FS_GetFileList caching
+			j = numdirs;
+			numitems = FS_GetFileList( dir, extension, list, size, 0, 0 );
+		}
+
 		for( i = 0; i < numitems; i++ )
 		{
-			len = strlen( list ) ;
+			len = strlen( list );
 			if( !Q_strnicmp( prefix, list, prefix_length ) )
 			{
 				ext = extension && *extension ? list + len - strlen( extension ) : NULL;
 				if( list[len - 1] == '/' )
 				{
-					if( !subdirectories )
+					if( !pass || !subdirectories )
 					{
 						// ignore directories
-						list += len;
-						size -= len;
+						list += len + 1;
+						size -= len + 1;
 						continue;
 					}
+					numdirs_added++;
 				}
 				else if( !ext )
 				{
@@ -1168,7 +1181,7 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 				{
 					// ignore other files
 					list += len + 1;
-					size -= len - 1;
+					size -= len + 1;
 					continue;
 				}
 
@@ -1176,8 +1189,8 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 				{
 					// searching in a subdirectory, prepend it
 					memmove( list + subdir_length, list, size );
-					for( k = 0; k < subdir_length; k++ )
-						list[k] = subdir[k];
+					memcpy( list, subdir, subdir_length );
+
 					len += subdir_length;
 					size += subdir_length;
 				}
@@ -1185,15 +1198,13 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 			}
 
 			list += len + 1;
-			size -= len - 1;
+			size -= len + 1;
 		}
-		buf[j] = NULL;
 	}
+	buf[total] = NULL;
 
-	if( j > 0 ) {
-		// FIXME: should subdirectories come first?
-		qsort( buf, j - 1, sizeof( char * ), 
-			( int ( * )( const void *, const void * ) )Cmd_CompleteCompareFileNames );
+	if( numdirs > numdirs_added ) {
+		memmove( buf + numdirs_added, buf + numdirs, ( total - numdirs ) * sizeof ( char * ) );
 	}
 
 	return buf;
