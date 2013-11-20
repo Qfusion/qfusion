@@ -602,7 +602,7 @@ load_refresh:
 			CL_SetKeyDest( key_game );
 		}
 		else {
-			Cbuf_ExecuteText( EXEC_NOW, "menu_force 1\n" );
+			CL_UIModule_ForceMenuOn();
 			CL_SetKeyDest( key_menu );
 		}
 
