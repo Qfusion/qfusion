@@ -388,7 +388,7 @@ void RocketModule::clearShaderCache( void )
 
 void RocketModule::touchAllCachedShaders( void )
 {
-	renderInterface->TouchAllShaders();
+	renderInterface->TouchAllCachedShaders();
 }
 
 }

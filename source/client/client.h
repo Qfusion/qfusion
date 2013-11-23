@@ -445,6 +445,7 @@ void CL_Mumble_Shutdown( void );
 //
 void CL_UIModule_Init( void );
 void CL_UIModule_Shutdown( void );
+void CL_UIModule_Touch( void );
 void CL_UIModule_Keydown( int key );
 void CL_UIModule_Keyup( int key );
 void CL_UIModule_CharEvent( qwchar key );
@@ -454,8 +455,6 @@ void CL_UIModule_ForceMenuOn( void );
 void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
 void CL_UIModule_MouseMove( int dx, int dy );
-void CL_UIModule_TouchAllSounds( void );
-void CL_UIModule_TouchAllShaders( void );
 
 //
 // cl_serverlist.c

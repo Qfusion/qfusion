@@ -208,12 +208,18 @@ typedef struct
 {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
-	void ( *Init )( int vidWidth, int vidHeight, int protocol, int sharedSeed, qboolean demoPlaying, const char *demoName );
+	void ( *Init )( int vidWidth, int vidHeight, int protocol, const char *demoExtension );
 	void ( *Shutdown )( void );
 
-	void ( *Refresh )( unsigned int time, int clientState, int serverState, qboolean demoPaused, unsigned int demoTime, qboolean backGround, qboolean showCursor );
-	void ( *UpdateConnectScreen )( const char *serverName, const char *rejectmessage, int downloadType, const char *downloadfilename,
-						  float downloadPercent, int downloadSpeed, int connectCount, qboolean backGround );
+	void ( *Touch )( void );
+
+	void ( *Refresh )( unsigned int time, int clientState, int serverState, 
+		qboolean demoPlaying, const char *demoName, qboolean demoPaused, unsigned int demoTime, 
+		qboolean backGround, qboolean showCursor );
+
+	void ( *UpdateConnectScreen )( const char *serverName, const char *rejectmessage, 
+		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
+		int connectCount, qboolean backGround );
 
 	void ( *Keydown )( int key );
 	void ( *Keyup )( int key );
@@ -223,9 +229,6 @@ typedef struct
 
 	void ( *ForceMenuOff )( void );
 	void ( *AddToServerList )( const char *adr, const char *info );
-
-	void ( *TouchAllSounds )( void );
-	void ( *TouchAllShaders )( void );
 } ui_export_t;
 
 #ifdef UI_HARD_LINKED
