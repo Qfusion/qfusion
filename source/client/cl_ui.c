@@ -333,7 +333,7 @@ void CL_UIModule_Init( void )
 
 	CL_UIModule_AsyncStream_Init();
 
-	uie->Init( viddef.width, viddef.height, APP_PROTOCOL_VERSION, cls.mediaRandomSeed, cls.demo.playing, cls.demo.name );
+	uie->Init( viddef.width, viddef.height, APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR );
 }
 
 /*
@@ -355,12 +355,23 @@ void CL_UIModule_Shutdown( void )
 }
 
 /*
+* CL_UIModule_Touch
+*/
+void CL_UIModule_Touch( void )
+{
+	if( uie )
+		uie->Touch();
+}
+
+/*
 * CL_UIModule_Refresh
 */
 void CL_UIModule_Refresh( qboolean backGround, qboolean showCursor )
 {
 	if( uie )
-		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(), cls.demo.paused, Q_rint(cls.demo.time/1000.0f), backGround, showCursor );
+		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(), 
+			cls.demo.playing, cls.demo.name, cls.demo.paused, Q_rint(cls.demo.time/1000.0f), 
+			backGround, showCursor );
 }
 
 /*
@@ -500,22 +511,4 @@ void CL_UIModule_MouseMove( int dx, int dy )
 {
 	if( uie )
 		uie->MouseMove( dx, dy );
-}
-
-/*
-* CL_UIModule_TouchAllSounds
-*/
-void CL_UIModule_TouchAllSounds( void )
-{
-	if( uie )
-		uie->TouchAllSounds();
-}
-
-/*
-* CL_UIModule_TouchAllShader
-*/
-void CL_UIModule_TouchAllShaders( void )
-{
-	if( uie )
-		uie->TouchAllShaders();
 }

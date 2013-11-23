@@ -51,9 +51,9 @@ public:
 	int GetWidth( void );
 	int GetHeight( void );
 
-	void AddShaderToCache( Rocket::Core::String &shader );
+	void AddShaderToCache( const Rocket::Core::String &shader );
 	void ClearShaderCache( void );
-	void TouchAllShaders( void );
+	void TouchAllCachedShaders( void );
 
 private:
 	int vid_width;

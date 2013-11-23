@@ -197,7 +197,7 @@ poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex
 	return poly;
 }
 
-void UI_RenderInterface::AddShaderToCache( Rocket::Core::String &shader )
+void UI_RenderInterface::AddShaderToCache( const Rocket::Core::String &shader )
 {
 	ShaderMap::const_iterator it;
 
@@ -212,7 +212,7 @@ void UI_RenderInterface::ClearShaderCache( void )
 	shaderMap.clear();
 }
 
-void UI_RenderInterface::TouchAllShaders( void )
+void UI_RenderInterface::TouchAllCachedShaders( void )
 {
 	ShaderMap::const_iterator it;
 

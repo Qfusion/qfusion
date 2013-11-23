@@ -2705,7 +2705,7 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 
 	assert( !dir || dir[strlen( dir )-1] != '/' );
 
-	if( ( dir && dir[strlen( dir )-1] == '/' ) || !bufsize )
+	if( dir && dir[strlen( dir )-1] == '/' )
 		return 0;
 
 	if( fs_cursearchfiles )
