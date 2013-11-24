@@ -1897,7 +1897,7 @@ void CL_RestartMedia( void )
 
 	CL_UIModule_ForceMenuOff();
 
-	CL_UIModule_Touch();
+	CL_UIModule_TouchAllAssets();
 
 	// check memory integrity
 	Mem_CheckSentinelsGlobal();

@@ -445,7 +445,7 @@ void CL_Mumble_Shutdown( void );
 //
 void CL_UIModule_Init( void );
 void CL_UIModule_Shutdown( void );
-void CL_UIModule_Touch( void );
+void CL_UIModule_TouchAllAssets( void );
 void CL_UIModule_Keydown( int key );
 void CL_UIModule_Keyup( int key );
 void CL_UIModule_CharEvent( qwchar key );

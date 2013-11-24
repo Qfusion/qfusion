@@ -62,7 +62,7 @@ namespace WSWUI
 		ui_main = 0;
 	}
 
-	void Touch( void )
+	void TouchAllAssets( void )
 	{
 		if( ui_main ) {
 			ui_main->touchAllCachedShaders();
@@ -150,7 +150,7 @@ ui_export_t *GetUIAPI( ui_import_t *import )
 	globals.Init = WSWUI::Init;
 	globals.Shutdown = WSWUI::Shutdown;
 
-	globals.Touch = WSWUI::Touch;
+	globals.TouchAllAssets = WSWUI::TouchAllAssets;
 
 	globals.Refresh = WSWUI::Refresh;
 	globals.UpdateConnectScreen = WSWUI::UpdateConnectScreen;
