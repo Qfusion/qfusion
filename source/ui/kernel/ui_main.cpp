@@ -45,7 +45,7 @@ UI_Main *UI_Main::self = 0;
 const std::string UI_Main::ui_index( "index.rml" );
 const std::string UI_Main::ui_connectscreen( "connectscreen.rml" );
 
-UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, bool demoPlaying, const char *demoName )
+UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, const char *demoExtension )
 	// pointers to zero
 	: asmodule(0), rocketModule(0),
 	levelshot_fmt(0), datetime_fmt(0), duration_fmt(0), filetype_fmt(0), colorcode_fmt(0), 
@@ -57,7 +57,8 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, boo
 
 	// other members
 	mousex(0), mousey(0), gameProtocol(protocol),
-	menuVisible(false), forceMenu(false), showNavigationStack(false), demoInfo(demoName), sharedSeed(sharedSeed)
+	menuVisible(false), forceMenu(false), showNavigationStack(false),
+	serverName(""), rejectMessage(""), demoExtension(demoExtension)
 {
 	// instance
 	self = this;
@@ -73,7 +74,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, boo
 	refreshState.height = vidHeight;
 	refreshState.drawBackground = true;
 
-	demoInfo.setPlaying( demoPlaying );
+	demoInfo.setPlaying( false );
 
 	if( !initRocket() )
 		throw std::runtime_error( "UI: Failed to initialize libRocket" );
@@ -199,6 +200,9 @@ void UI_Main::reloadUI( void )
 	// clear the navigation stack from previous installment
 	navigator->getCache()->clearCaches();
 
+	// forget about all previously registed shaders
+	rocketModule->clearShaderCache();
+
 	if( serverBrowser ) {
 		serverBrowser->stopUpdate();
 	}
@@ -251,6 +255,8 @@ void UI_Main::shutdownRocket( void )
 	navigator->popAllDocuments();
 	// clear the navigation stack from previous installment
 	navigator->getCache()->clearCaches();
+	// forget about all previously registed shaders
+	rocketModule->clearShaderCache();
 
 	destroyDataSources();
 	destroyFormatters();
@@ -260,6 +266,20 @@ void UI_Main::shutdownRocket( void )
 	__SAFE_DELETE_NULLIFY( rocketModule );
 }
 
+void UI_Main::clearShaderCache( void )
+{
+	if( rocketModule != NULL ) {
+		rocketModule->clearShaderCache();
+	}
+}
+void UI_Main::touchAllCachedShaders( void )
+{
+	if( rocketModule != NULL ) {
+		rocketModule->touchAllCachedShaders();
+	}
+	navigator->invalidateAssets();
+}
+
 void UI_Main::createDataSources( void )
 {
 	serverBrowser = __new__( ServerBrowserDataSource )();
@@ -267,7 +287,7 @@ void UI_Main::createDataSources( void )
 	maps = __new__(MapsDataSource)();
 	huds = __new__( HudsDataSource )();
 	videoModes = __new__( VideoDataSource )();
-	demos = __new__( DemosDataSource )( std::string( ".wd" ) + toString( gameProtocol ) );
+	demos = __new__( DemosDataSource )( demoExtension );
 	mods = __new__( ModsDataSource )();
 	crosshairs = __new__( CrosshairDataSource )();
 	tvchannels = __new__( TVChannelsDataSource )();
@@ -334,17 +354,6 @@ void UI_Main::showUI( bool show )
 
 	if( !show )
 		navigator->popAllDocuments();
-}
-
-void UI_Main::setRefreshState( unsigned int time, int clientState, int serverState, bool demoPaused, unsigned int demoTime, bool backGround )
-{
-	refreshState.time = time;
-	refreshState.clientState = clientState;
-	refreshState.serverState = serverState;
-	refreshState.drawBackground = backGround;
-
-	demoInfo.setTime( demoTime );
-	demoInfo.setPaused( demoPaused );
 }
 
 void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessage, 
@@ -427,9 +436,21 @@ bool UI_Main::debugOn( void )
 	return ui_developer->integer != 0;
 }
 
-void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState, bool demoPaused, unsigned int demoTime, bool backGround, bool showCursor )
+void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState, 
+	bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
+	bool backGround, bool showCursor )
 {
-	setRefreshState( time, clientState, serverState, demoPaused, demoTime, backGround );
+	refreshState.time = time;
+	refreshState.clientState = clientState;
+	refreshState.serverState = serverState;
+	refreshState.drawBackground = backGround;
+
+	if( demoPlaying && !demoInfo.getPlaying() ) {
+		demoInfo.setName( demoName );
+	}
+	demoInfo.setTime( demoTime );
+	demoInfo.setPaused( demoPaused );
+	demoInfo.setPlaying( demoPlaying );
 
 	// postponed showing of the stacked document, we need to set the refresh state first
 	if( showNavigationStack ) {
@@ -483,10 +504,10 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 
 //==================================
 
-UI_Main *UI_Main::Instance( int vidWidth, int vidHeight, int protocol, int sharedSeed, bool demoPlaying, const char *demoName )
+UI_Main *UI_Main::Instance( int vidWidth, int vidHeight, int protocol, const char *demoExtension  )
 {
 	if( !self ) {
-		self = __new__( UI_Main )( vidWidth, vidHeight, protocol, sharedSeed, demoPlaying, demoName );
+		self = __new__( UI_Main )( vidWidth, vidHeight, protocol, demoExtension );
 	}
 	return self;
 }

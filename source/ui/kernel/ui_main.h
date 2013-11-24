@@ -56,9 +56,12 @@ class UI_Main
 public:
 	virtual ~UI_Main();
 
-	void refreshScreen( unsigned int time, int clientState, int serverState, bool demoPaused, unsigned int demoTime, bool backGround, bool showCursor );
-	void drawConnectScreen( const char *serverName, const char *rejectmessage, int downloadType, const char *downloadfilename,
-						  float downloadPercent, int downloadSpeed, int connectCount, bool backGround );
+	void refreshScreen( unsigned int time, int clientState, int serverState, 
+		bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
+		bool backGround, bool showCursor );
+	void drawConnectScreen( const char *serverName, const char *rejectmessage, 
+		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
+		int connectCount, bool backGround );
 
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
@@ -82,7 +85,7 @@ public:
 	static void PrintDocuments_Cmd( void );
 	
 	// Other static functions
-	static UI_Main *Instance( int vidWidth, int vidHeight, int protocol, int sharedSeed, bool demoPlaying, const char *demoName );
+	static UI_Main *Instance( int vidWidth, int vidHeight, int protocol, const char *demoExtension );
 	static UI_Main *Get( void );
 	static void Destroy( void );
 
@@ -105,7 +108,6 @@ public:
 	DocumentLoader *getDocumentLoader() { return currentLoader; }
 	void setDocumentLoader( DocumentLoader *loader ) { currentLoader = loader; }
 
-	void setRefreshState( unsigned int time, int clientState, int serverState, bool demoPaused, unsigned int demoTime, bool backGround );
 	const RefreshState &getRefreshState( void ) { return refreshState; }
 
 	std::string getServerName( void ) const { return serverName; }
@@ -115,8 +117,11 @@ public:
 
 	bool debugOn( void );
 
+	void clearShaderCache( void );
+	void touchAllCachedShaders( void );
+
 private:
-	UI_Main( int vidWidth, int vidHeight, int protocol, int sharedSeed, bool demoPlaying, const char *demoName );
+	UI_Main( int vidWidth, int vidHeight, int protocol, const char *demoExtension );
 
 	//// METHODS
 	bool initAS( void );
@@ -188,8 +193,7 @@ private:
 
 	std::string serverName;
 	std::string rejectMessage;
-
-	int sharedSeed;
+	std::string demoExtension;
 
 	vec4_t colorWhite;
 

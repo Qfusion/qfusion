@@ -317,11 +317,7 @@ static void Mod_SetupSubmodels( model_t *mod )
 	}
 }
 
-#ifdef PUBLIC_BUILD
 #define VBO_Printf ri.Com_DPrintf
-#else
-#define VBO_Printf Com_Printf
-#endif
 
 /*
 * Mod_CreateSubmodelBufferObjects

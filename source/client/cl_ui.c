@@ -165,6 +165,8 @@ void CL_UIModule_Init( void )
 
 	CL_UIModule_Shutdown();
 
+	Com_Printf( "------- UI initialization -------\n" );
+
 	ui_mempool = _Mem_AllocPool( NULL, "User Iterface", MEMPOOL_USERINTERFACE, __FILE__, __LINE__ );
 
 	import.Error = CL_UIModule_Error;
@@ -333,7 +335,9 @@ void CL_UIModule_Init( void )
 
 	CL_UIModule_AsyncStream_Init();
 
-	uie->Init( viddef.width, viddef.height, APP_PROTOCOL_VERSION, cls.mediaRandomSeed, cls.demo.playing, cls.demo.name );
+	uie->Init( viddef.width, viddef.height, APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR );
+
+	Com_Printf( "------------------------------------\n" );
 }
 
 /*
@@ -355,12 +359,23 @@ void CL_UIModule_Shutdown( void )
 }
 
 /*
+* CL_UIModule_TouchAllAssets
+*/
+void CL_UIModule_TouchAllAssets( void )
+{
+	if( uie )
+		uie->TouchAllAssets();
+}
+
+/*
 * CL_UIModule_Refresh
 */
 void CL_UIModule_Refresh( qboolean backGround, qboolean showCursor )
 {
 	if( uie )
-		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(), cls.demo.paused, Q_rint(cls.demo.time/1000.0f), backGround, showCursor );
+		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(), 
+			cls.demo.playing, cls.demo.name, cls.demo.paused, Q_rint(cls.demo.time/1000.0f), 
+			backGround, showCursor );
 }
 
 /*
@@ -464,6 +479,15 @@ void CL_UIModule_CharEvent( qwchar key )
 {
 	if( uie )
 		uie->CharEvent( key );
+}
+
+/*
+* CL_UIModule_ForceMenuOn
+*/
+void CL_UIModule_ForceMenuOn( void )
+{
+	if( uie )
+		Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
 }
 
 /*

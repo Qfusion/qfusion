@@ -77,7 +77,8 @@ public:
 class DynTable: public Table
 {
 public:
-	DynTable( const std::string &name, unsigned int updateTime ) : Table( name ), updateTime( updateTime )
+	DynTable( const std::string &name, unsigned int updateTime, const std::string &baseURL ) 
+		: Table( name ), updateTime( updateTime ), baseURL( baseURL )
 	{
 	}
 
@@ -85,8 +86,13 @@ public:
 		return updateTime;
 	}
 
+	const std::string GetBaseURL() const {
+		return baseURL;
+	}
+
 private:
 	unsigned int updateTime;
+	std::string baseURL;
 };
 
 // ============================================================================
@@ -117,28 +123,32 @@ int GameAjaxDataSource::GetNumRows( const String &tableName )
 {
 	unsigned int now = trap::Milliseconds();
 
+	char baseURL[1024];
+	trap::GetBaseServerURL( baseURL, sizeof( baseURL ) );
+
 	DynTable *table, *oldTable = NULL;
 	DynTableList::iterator t_it = tableList.find( tableName.CString() );
-	
+
 	if( t_it != tableList.end() ) {
 		oldTable = t_it->second->table;
 		
 		// return cached counter
-		if( oldTable->GetUpdateTime() + UPDATE_INTERVAL > now ) {
-			return oldTable->GetNumRows();
+		if( oldTable->GetBaseURL() == baseURL ) {
+			if( oldTable->GetUpdateTime() + UPDATE_INTERVAL > now ) {
+				return oldTable->GetNumRows();
+			}
 		}
+
 		tableList.erase( t_it );
 	}
 	
 	// trigger AJAX-style query to server
 
 	std::string stdTableName = tableName.CString();
-	table = __new__( DynTable )( stdTableName, now );
+	table = __new__( DynTable )( stdTableName, now, baseURL );
 
 	// fetch list now and notify listeners when we get the reply in async manner
-	char buf[1024];
-	trap::GetBaseServerURL( buf, sizeof( buf ) );
-	std::string url = std::string( buf ) + "/game/" + stdTableName;
+	std::string url = std::string( baseURL ) + "/game/" + stdTableName;
 
 	trap::AsyncStream_PerformRequest(
 		url.c_str(), "GET", "", 10,

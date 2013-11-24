@@ -33,7 +33,7 @@ using namespace Rocket::Core;
 // forward-declare the instancer for keyselects
 class UI_WorldviewWidgetInstancer;
 
-class UI_WorldviewWidget : public Element
+class UI_WorldviewWidget : public Element, EventListener
 {
 public:
 	refdef_t refdef;
@@ -67,7 +67,6 @@ public:
 
 		if( !Initialized ) {
 			// lazily register the world model
-
 			if( mapName.Empty() ) {
 				return;
 			}
@@ -180,9 +179,42 @@ public:
 		}
 	}
 
+	// Called when the element is added into a hierarchy.
+	void OnChildAdd( Element* element )
+	{
+		Element::OnChildAdd( element );
+
+		if( element == this ) {
+			Element *document = GetOwnerDocument();
+			if( document == NULL )
+				return;
+			document->AddEventListener( "invalidate", this );
+		}
+	}
+
+	// Called when the element is removed from a hierarchy.
+	void OnChildRemove(Element* element)
+	{
+		Element::OnChildRemove( element );
+
+		if( element == this ) {
+			Element *document = GetOwnerDocument();
+			if( document == NULL )
+				return;
+			document->RemoveEventListener( "invalidate", this );
+		}
+	}
+
+	// Called for every event sent to this element or one of its descendants.
+	void ProcessEvent( Rocket::Core::Event& evt )
+	{
+		if( evt == "invalidate" ) {
+			Initialized = false;
+		}
+	}
+
 	virtual ~UI_WorldviewWidget()
 	{
-	
 	}
 };
 

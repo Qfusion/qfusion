@@ -34,7 +34,7 @@ namespace WSWUI
 		return UI_API_VERSION;
 	}
 
-	void Init( int vidWidth, int vidHeight, int protocol, int sharedSeed, qboolean demoPlaying, const char *demoName )
+	void Init( int vidWidth, int vidHeight, int protocol, const char *demoExtension )
 	{
 		// destructor doesnt throw
 		if( ui_main ) {
@@ -45,7 +45,7 @@ namespace WSWUI
 		// constructor may throw
 		try
 		{
-			ui_main = UI_Main::Instance( vidWidth, vidHeight, protocol, sharedSeed, demoPlaying == qtrue, demoName ? demoName : "" );
+			ui_main = UI_Main::Instance( vidWidth, vidHeight, protocol, demoExtension );
 		}
 		catch( std::runtime_error &err )
 		{
@@ -62,15 +62,27 @@ namespace WSWUI
 		ui_main = 0;
 	}
 
-	void Refresh( unsigned int time, int clientState, int serverState, qboolean demoPaused, unsigned int demoTime, qboolean backGround, qboolean showCursor )
+	void TouchAllAssets( void )
 	{
 		if( ui_main ) {
-			ui_main->refreshScreen( time, clientState, serverState, demoPaused == qtrue, demoTime, backGround == qtrue, showCursor == qtrue );
+			ui_main->touchAllCachedShaders();
 		}
 	}
 
-	void UpdateConnectScreen( const char *serverName, const char *rejectmessage, int downloadType, const char *downloadfilename,
-						  float downloadPercent, int downloadSpeed, int connectCount, qboolean backGround )
+	void Refresh( unsigned int time, int clientState, int serverState, 
+		qboolean demoPlaying, const char *demoName, qboolean demoPaused, unsigned int demoTime, 
+		qboolean backGround, qboolean showCursor )
+	{
+		if( ui_main ) {
+			ui_main->refreshScreen( time, clientState, serverState, 
+				demoPlaying == qtrue, demoName ? demoName : "",
+				demoPaused == qtrue, demoTime, backGround == qtrue, showCursor == qtrue );
+		}
+	}
+
+	void UpdateConnectScreen( const char *serverName, const char *rejectmessage, 
+		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
+		int connectCount, qboolean backGround )
 	{
 		if( ui_main )
 			ui_main->drawConnectScreen( serverName, rejectmessage, downloadType, downloadfilename, 
@@ -122,7 +134,6 @@ namespace WSWUI
 			ui_main->addToServerList( adr, info );
 		}
 	}
-
 }	// namespace
 
 //=================================
@@ -138,6 +149,8 @@ ui_export_t *GetUIAPI( ui_import_t *import )
 
 	globals.Init = WSWUI::Init;
 	globals.Shutdown = WSWUI::Shutdown;
+
+	globals.TouchAllAssets = WSWUI::TouchAllAssets;
 
 	globals.Refresh = WSWUI::Refresh;
 	globals.UpdateConnectScreen = WSWUI::UpdateConnectScreen;
