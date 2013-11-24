@@ -61,6 +61,9 @@ static int server_state = CA_UNINITIALIZED;
 static int client_state = CA_UNINITIALIZED;
 static qboolean	demo_playing = qfalse;
 
+struct cmodel_state_s *server_cms = NULL;
+unsigned server_map_checksum = 0;
+
 // host_speeds times
 unsigned int time_before_game;
 unsigned int time_after_game;
@@ -356,6 +359,24 @@ int Com_ServerState( void )
 void Com_SetServerState( int state )
 {
 	server_state = state;
+}
+
+/*
+* Com_ServerCM
+*/
+struct cmodel_state_s *Com_ServerCM( unsigned *checksum )
+{
+	*checksum = server_map_checksum;
+	return server_cms;
+}
+
+/*
+* Com_SetServerCM
+*/
+void Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum )
+{
+	server_cms = cms;
+	server_map_checksum = checksum;
 }
 
 int Com_ClientState( void )

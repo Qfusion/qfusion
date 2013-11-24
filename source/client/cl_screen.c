@@ -611,7 +611,7 @@ static void SCR_RenderView( float stereo_separation )
 	}
 
 	// frame is not valid until we load the CM data
-	if( CM_ClientLoad( cl.cms ) )
+	if( cl.cms != NULL )
 		CL_GameModule_RenderView( stereo_separation );
 }
 

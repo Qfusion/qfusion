@@ -27,7 +27,6 @@ int c_pointcontents, c_traces, c_brush_traces;
 
 struct cmodel_s *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload, unsigned *checksum );
 struct cmodel_s *CM_InlineModel( cmodel_state_t *cms, int num ); // 1, 2, etc
-qboolean CM_ClientLoad( cmodel_state_t *cms );
 char *CM_LoadMapMessage( char *name, char *message, int size );
 
 dvis_t *CM_PVSData( cmodel_state_t *cms );
@@ -83,7 +82,8 @@ int CM_MergeVisSets( cmodel_state_t *cms, vec3_t org, qbyte *pvs, qbyte *areabit
 
 //
 cmodel_state_t *CM_New( void *mempool );
-void CM_Free( cmodel_state_t *cms );
+void CM_AddReference( cmodel_state_t *cms );
+void CM_ReleaseReference( cmodel_state_t *cms );
 
 //
 void CM_Init( void );

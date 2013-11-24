@@ -26,6 +26,8 @@ static qboolean	cm_initialized = qfalse;
 
 static mempool_t *cmap_mempool;
 
+static cmodel_state_t *cmap_lastcms;
+
 static cvar_t *cm_noAreas;
 cvar_t *cm_noCurves;
 
@@ -194,8 +196,6 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload
 	assert( name && strlen( name ) < MAX_CONFIGSTRING_CHARS );
 	assert( checksum );
 
-	cms->map_clientload = clientload;
-
 	if( !strcmp( cms->map_name, name ) && ( clientload || !Cvar_Value( "flushmap" ) ) )
 	{
 		*checksum = cms->checksum;
@@ -363,15 +363,6 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 	Mem_Free( entitystring );
 
 	return message;
-}
-
-/*
-* CM_ClientLoad
-* FIXME!
-*/
-qboolean CM_ClientLoad( cmodel_state_t *cms )
-{
-	return cms && cms->map_clientload;
 }
 
 /*
@@ -858,14 +849,39 @@ cmodel_state_t *CM_New( void *mempool )
 /*
 * CM_Free
 */
-void CM_Free( cmodel_state_t *cms )
+static void CM_Free( cmodel_state_t *cms )
 {
 	CM_Clear( cms );
 
 	Mem_Free( cms );
+}
 
-	Cvar_ForceSet( "cm_mapHeader", "" );
-	Cvar_ForceSet( "cm_mapVersion", "0" );
+/*
+* CM_AddReference
+*/
+void CM_AddReference( cmodel_state_t *cms )
+{
+	if( !cms ) {
+		return;
+	}
+	cms->refcount++;
+}
+
+/*
+* CM_ReleaseReference
+*/
+void CM_ReleaseReference( cmodel_state_t *cms )
+{
+	if( !cms ) {
+		return;
+	}
+
+	cms->refcount--;
+	if( cms->refcount > 0 ) {
+		return;
+	}
+
+	CM_Free( cms );
 }
 
 /*
@@ -879,9 +895,6 @@ void CM_Init( void )
 
 	cm_noAreas =	    Cvar_Get( "cm_noAreas", "0", CVAR_CHEAT );
 	cm_noCurves =	    Cvar_Get( "cm_noCurves", "0", CVAR_CHEAT );
-
-	Cvar_Get( "cm_mapHeader", "", CVAR_READONLY );
-	Cvar_Get( "cm_mapVersion", "0", CVAR_READONLY );
 
 	cm_initialized = qtrue;
 }

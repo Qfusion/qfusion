@@ -108,12 +108,12 @@ typedef struct
 struct cmodel_state_s
 {
 	int checkcount;
+	int refcount;
 	struct mempool_s *mempool;
 
 	const bspFormatDesc_t *cmap_bspFormat;
 
 	char map_name[MAX_CONFIGSTRING_CHARS];
-	qboolean map_clientload;
 	unsigned int checksum;
 
 	int numbrushsides;
