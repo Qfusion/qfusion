@@ -165,6 +165,8 @@ void CL_UIModule_Init( void )
 
 	CL_UIModule_Shutdown();
 
+	Com_Printf( "------- UI initialization -------\n" );
+
 	ui_mempool = _Mem_AllocPool( NULL, "User Iterface", MEMPOOL_USERINTERFACE, __FILE__, __LINE__ );
 
 	import.Error = CL_UIModule_Error;
@@ -334,6 +336,8 @@ void CL_UIModule_Init( void )
 	CL_UIModule_AsyncStream_Init();
 
 	uie->Init( viddef.width, viddef.height, APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR );
+
+	Com_Printf( "------------------------------------\n" );
 }
 
 /*
@@ -355,12 +359,12 @@ void CL_UIModule_Shutdown( void )
 }
 
 /*
-* CL_UIModule_Touch
+* CL_UIModule_TouchAllAssets
 */
-void CL_UIModule_Touch( void )
+void CL_UIModule_TouchAllAssets( void )
 {
 	if( uie )
-		uie->Touch();
+		uie->TouchAllAssets();
 }
 
 /*

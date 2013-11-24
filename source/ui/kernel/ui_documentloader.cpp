@@ -240,7 +240,10 @@ void DocumentCache::printCache()
 		Com_Printf("  %s (%d references)\n", (*it)->getName().c_str(), (*it)->getReference() );
 }
 
-// send "invalidate" event to all elements
+// send "invalidate" event to all documents
+// elements that reference engine assets (models, shaders, sounds, etc)
+// must attach themselves to the event as listeneres to either touch
+// the assets or invalidate them
 void DocumentCache::invalidateAssets(void)
 {
 	Rocket::Core::Dictionary parameters;

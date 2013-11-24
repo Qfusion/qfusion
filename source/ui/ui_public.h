@@ -211,7 +211,7 @@ typedef struct
 	void ( *Init )( int vidWidth, int vidHeight, int protocol, const char *demoExtension );
 	void ( *Shutdown )( void );
 
-	void ( *Touch )( void );
+	void ( *TouchAllAssets )( void );
 
 	void ( *Refresh )( unsigned int time, int clientState, int serverState, 
 		qboolean demoPlaying, const char *demoName, qboolean demoPaused, unsigned int demoTime, 
