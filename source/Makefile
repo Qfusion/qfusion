@@ -122,7 +122,7 @@ CFLAGS_GAME=-I$(ANGELSCRIPT_INC)
 ###########################################################
 # libRocket stuff
 LIBROCKET_DIR=../libsrcs/libRocket/libRocket
-LIBROCKET_MAKEFILE=Makefile.qfusion
+LIBROCKET_MAKEFILE=Build/Makefile.qfusion
 LIBROCKET_INC=$(LIBROCKET_DIR)/Include
 LIBROCKET_LIB=$(LIBROCKET_DIR)/lib/libRocketWSW.a
 
