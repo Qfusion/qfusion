@@ -814,6 +814,8 @@ void	    Com_SetDemoPlaying( qboolean state );
 
 int			Com_ServerState( void );        // this should have just been a cvar...
 void	    Com_SetServerState( int state );
+struct cmodel_state_s *Com_ServerCM( unsigned *checksum );
+void		Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum );
 
 void	    Com_PageInMemory( qbyte *buffer, int size );
 

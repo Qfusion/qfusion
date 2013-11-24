@@ -229,7 +229,7 @@ void TV_Relay_Shutdown( relay_t *relay, const char *format, ... )
 		memset( &relay->client_entities, 0, sizeof( relay->client_entities ) );
 	}
 
-	CM_Free( relay->cms );
+	CM_ReleaseReference( relay->cms );
 	relay->cms = NULL;
 
 	relay->state = CA_UNINITIALIZED;
@@ -437,6 +437,7 @@ void TV_Relay_Init( relay_t *relay, upstream_t *upstream, int delay )
 	relay->client_entities.entities = Mem_Alloc( upstream->mempool, sizeof( entity_state_t ) * relay->client_entities.num_entities );
 
 	relay->cms = CM_New( upstream->mempool );
+	CM_AddReference( relay->cms );
 
 	relay->delay = max( delay, RELAY_MIN_DELAY );
 }

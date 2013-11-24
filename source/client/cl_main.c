@@ -679,7 +679,7 @@ void CL_ClearState( void )
 {
 	if( cl.cms )
 	{
-		CM_Free( cl.cms );
+		CM_ReleaseReference( cl.cms );
 		cl.cms = NULL;
 	}
 
@@ -1413,8 +1413,18 @@ static unsigned int CL_LoadMap( const char *name )
 	unsigned int map_checksum;
 
 	assert( !cl.cms );
-	cl.cms = CM_New( NULL );
-	CM_LoadMap( cl.cms, name, qtrue, &map_checksum );
+
+	// if local server is running, share the collision model,
+	// increasing the ref counter
+	if( Com_ServerState() ) {
+		cl.cms = Com_ServerCM( &map_checksum );
+	}
+	else {
+		cl.cms = CM_New( NULL );
+		CM_LoadMap( cl.cms, name, qtrue, &map_checksum );
+	}
+
+	CM_AddReference( cl.cms );
 
 	assert( cl.cms );
 

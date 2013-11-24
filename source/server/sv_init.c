@@ -300,6 +300,8 @@ static void SV_SpawnServer( const char *server, qboolean devmap )
 
 	SV_CreateBaseline(); // create a baseline for more efficient communications
 
+	Com_SetServerCM( svs.cms, checksum );
+
 	// all precaches are complete
 	sv.state = ss_game;
 	Com_SetServerState( sv.state );
@@ -428,6 +430,7 @@ void SV_InitGame( void )
 	// load the map
 	assert( !svs.cms );
 	svs.cms = CM_New( NULL );
+	CM_AddReference( svs.cms );
 }
 
 /*
@@ -509,9 +512,13 @@ void SV_ShutdownGame( const char *finalmsg, qboolean reconnect )
 
 	if( svs.cms )
 	{
-		CM_Free( svs.cms );
+		// CM_ReleaseReference will take care of freeing up the memory
+		// if there are no other modules referencing the collision model
+		CM_ReleaseReference( svs.cms );
 		svs.cms = NULL;
 	}
+
+	Com_SetServerCM( NULL, 0 );
 
 	memset( &sv, 0, sizeof( sv ) );
 	Com_SetServerState( sv.state );
