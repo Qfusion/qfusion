@@ -118,6 +118,8 @@ bool UI_RenderInterface::GenerateTexture(Rocket::Core::TextureHandle & texture_h
 
 	// Com_Printf( "RenderInterface::GenerateTexture %s successful\n", name.CString() );
 
+	AddShaderToCache( name );
+
 	texture_handle = TextureHandle( shader );
 	return true;
 }
@@ -138,6 +140,8 @@ bool UI_RenderInterface::LoadTexture(Rocket::Core::TextureHandle & texture_handl
 	}
 
 	trap::R_GetShaderDimensions( shader, &texture_dimensions.x, &texture_dimensions.y );
+
+	AddShaderToCache( source2 );
 
 	texture_handle = TextureHandle( shader );
 
@@ -191,6 +195,30 @@ poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex
 	poly->shader = ( texture == 0 ? whiteShader : ( shader_t* )texture );
 
 	return poly;
+}
+
+void UI_RenderInterface::AddShaderToCache( const Rocket::Core::String &shader )
+{
+	ShaderMap::const_iterator it;
+
+	it = shaderMap.find( shader );
+	if( it == shaderMap.end() ) {
+		shaderMap[shader] = 1;
+	}
+}
+
+void UI_RenderInterface::ClearShaderCache( void )
+{
+	shaderMap.clear();
+}
+
+void UI_RenderInterface::TouchAllCachedShaders( void )
+{
+	ShaderMap::const_iterator it;
+
+	for( it = shaderMap.begin(); it != shaderMap.end(); ++it ) {
+		trap::R_RegisterPic( it->first.CString() );
+	}
 }
 
 }

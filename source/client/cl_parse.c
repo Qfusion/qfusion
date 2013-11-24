@@ -904,8 +904,6 @@ static void CL_ParseServerData( msg_t *msg )
 	// get the configstrings request
 	CL_AddReliableCommand( va( "configstrings %i 0", cl.servercount ) );
 
-	CL_RestartMedia();
-
 	cls.sv_pure = ( sv_bitflags & SV_BITFLAGS_PURE ) != 0;
 	cls.sv_tv = ( sv_bitflags & SV_BITFLAGS_TVSERVER ) != 0;
 

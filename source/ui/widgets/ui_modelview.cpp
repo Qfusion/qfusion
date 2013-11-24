@@ -21,7 +21,7 @@ using namespace Rocket::Core;
 // forward-declare the instancer for keyselects
 class UI_ModelviewWidgetInstancer;
 
-class UI_ModelviewWidget : public Element
+class UI_ModelviewWidget : public Element, EventListener
 {
 public:
 	entity_t entity;
@@ -32,12 +32,16 @@ public:
 	unsigned int time;
 	bool AutoRotationCenter;
 	bool Initialized;
+	bool RecomputePosition;
 	UI_BonePoses BonePoses;
 	cgs_skeleton_t *skel;
+	String modelName;
+	String skinName;
 
 	UI_ModelviewWidget( const String &tag )
 		: Element( tag ), 
-		time( 0 ), AutoRotationCenter( false), Initialized( false ), skel( NULL )
+		time( 0 ), AutoRotationCenter( false), Initialized( false ), RecomputePosition( false ), 
+		skel( NULL ), modelName( "" ), skinName( "" )
 	{
 		memset( &entity, 0, sizeof( entity ) );
 		memset( &refdef, 0, sizeof( refdef ) );
@@ -57,48 +61,23 @@ public:
 		Vector4Set(entity.shaderRGBA, 1.0f, 1.0f, 1.0f, 1.0f);
 	}
 
-	void ComputePosition()
-	{
-		if (!entity.model)
-			return;
-
-		// refdef setup
-		Rocket::Core::Vector2f box = GetBox().GetSize(Rocket::Core::Box::CONTENT);
-		refdef.x = 0;
-		refdef.y = 0;
-		refdef.width = box.x;
-		refdef.height = box.y;
-		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
-
-		skel = NULL;
-		if (trap::R_SkeletalGetNumBones( entity.model, NULL ))
-		{
-			skel = BonePoses.SkeletonForModel( entity.model );
-			BonePoses.SetBoneposesForTemporaryEntity( &entity );
-		}
-
-		// entity setup
-		// Set origin to fit the viewport according to initial rotation
-		//trap::R_FitModelPositionInViewport( entity.model, baseangles, refdef.fov_x, refdef.fov_y, entity.origin);
-
-		vec3_t mins, maxs;
-		trap::R_ModelFrameBounds( entity.model, entity.frame, mins, maxs );
-
-		entity.origin[0] = 0.5 * ( maxs[2] - mins[2] ) * ( 1.0 / 0.220 );
-		entity.origin[1] = 0.5 * ( mins[1] + maxs[1] );
-		entity.origin[2] = -0.5 * ( mins[2] + maxs[2] );
-
-		VectorCopy( entity.origin, entity.origin2 );
-		VectorCopy( baseangles, angles );
-
-		Initialized = true;
-	}
-
 	virtual void OnRender()
 	{
 		Element::OnRender();
 
-		if (!Initialized || !entity.model)
+		if (!Initialized)
+		{
+			Initialize();
+			Initialized = true;
+		}
+
+		if (RecomputePosition)
+		{
+			ComputePosition();
+			RecomputePosition = false;
+		}
+
+		if (!entity.model)
 		{
 			return;
 		}
@@ -109,7 +88,7 @@ public:
 		refdef.time = curtime;
 
 		for (int i = 0; i < 3; ++i)
-			angles[i] += deltatime * anglespeed[i] / 1000.0f;
+			angles[i] = anglemod( angles[i] + deltatime * anglespeed[i] / 1000.0f );
 
 		AnglesToAxis( angles, entity.axis );
 
@@ -156,31 +135,23 @@ public:
 		// TODO: Should this be done here or in ComputePosition?
 		BonePoses.ResetTemporaryBoneposesCache();
 		time = curtime;
-
 	}
 
 	virtual void OnPropertyChange(const Rocket::Core::PropertyNameList& changed_properties)
 	{
-		bool RecomputePosition = false;
-
 		Element::OnPropertyChange(changed_properties);
 
 		for (Rocket::Core::PropertyNameList::const_iterator it = changed_properties.begin(); it != changed_properties.end(); ++it)
 		{
 			if (*it == "model-modelpath")
 			{
-				if (GetProperty(*it)->Get<Rocket::Core::String>().Length())
-					entity.model = trap::R_RegisterModel(GetProperty(*it)->Get<Rocket::Core::String>().CString());
-				else
-					entity.model = NULL;
-				RecomputePosition = true;
+				modelName = GetProperty(*it)->Get<Rocket::Core::String>();
+				Initialized = false;
 			}
 			else if (*it == "model-skinpath" && GetProperty(*it)->Get<Rocket::Core::String>().Length() > 0)
 			{
-				if (GetProperty(*it)->Get<Rocket::Core::String>().Length())
-					entity.customSkin = trap::R_RegisterSkinFile(GetProperty(*it)->Get<Rocket::Core::String>().CString());
-				else
-					entity.customSkin = NULL;
+				skinName = GetProperty(*it)->Get<Rocket::Core::String>();
+				Initialized = false;
 			}
 			else if (*it == "model-scale")
 			{
@@ -244,14 +215,94 @@ public:
 
 		if ((refdef.x - GetAbsoluteLeft() + GetClientLeft()) >= MODELVIEW_EPSILON || (refdef.y - GetAbsoluteTop() + GetClientTop()) >= MODELVIEW_EPSILON)
 			RecomputePosition = true;
+	}
 
-		if (RecomputePosition)
-			ComputePosition();
+	// Called when the element is added into a hierarchy.
+	void OnChildAdd( Element* element )
+	{
+		Element::OnChildAdd( element );
+
+		if( element == this ) {
+			Element *document = GetOwnerDocument();
+			if( document == NULL )
+				return;
+			document->AddEventListener( "invalidate", this );
+		}
+	}
+
+	// Called when the element is removed from a hierarchy.
+	void OnChildRemove(Element* element)
+	{
+		Element::OnChildRemove( element );
+
+		if( element == this ) {
+			Element *document = GetOwnerDocument();
+			if( document == NULL )
+				return;
+			document->RemoveEventListener( "invalidate", this );
+		}
+	}
+
+	// Called for every event sent to this element or one of its descendants.
+	void ProcessEvent( Rocket::Core::Event& evt )
+	{
+		if( evt == "invalidate" ) {
+			Initialized = false;
+		}
 	}
 
 	virtual ~UI_ModelviewWidget()
 	{
 	
+	}
+
+private:
+	void Initialize()
+	{
+		RecomputePosition = true;
+
+		if( modelName.Empty() ) {
+			entity.model = NULL;
+			return;
+		}
+
+		entity.model = trap::R_RegisterModel( modelName.CString() );
+		entity.customSkin = trap::R_RegisterSkinFile( skinName.CString() );
+	}
+
+	void ComputePosition()
+	{
+		if (!entity.model)
+			return;
+
+		// refdef setup
+		Rocket::Core::Vector2f box = GetBox().GetSize(Rocket::Core::Box::CONTENT);
+		refdef.x = 0;
+		refdef.y = 0;
+		refdef.width = box.x;
+		refdef.height = box.y;
+		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
+
+		skel = NULL;
+		if (trap::R_SkeletalGetNumBones( entity.model, NULL ))
+		{
+			skel = BonePoses.SkeletonForModel( entity.model );
+			BonePoses.SetBoneposesForTemporaryEntity( &entity );
+		}
+
+		// entity setup
+		// Set origin to fit the viewport according to initial rotation
+		//trap::R_FitModelPositionInViewport( entity.model, baseangles, refdef.fov_x, refdef.fov_y, entity.origin);
+
+		vec3_t mins, maxs;
+		trap::R_ModelFrameBounds( entity.model, entity.frame, mins, maxs );
+
+		entity.origin[0] = 0.5 * ( maxs[2] - mins[2] ) * ( 1.0 / 0.220 );
+		entity.origin[1] = 0.5 * ( mins[1] + maxs[1] );
+		entity.origin[2] = -0.5 * ( mins[2] + maxs[2] );
+
+		VectorCopy( entity.origin, entity.origin2 );
+		VectorCopy( baseangles, angles );
 	}
 };
 

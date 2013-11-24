@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    41
+#define	UI_API_VERSION	    43
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -208,12 +208,18 @@ typedef struct
 {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
-	void ( *Init )( int vidWidth, int vidHeight, int protocol, int sharedSeed, qboolean demoPlaying, const char *demoName );
+	void ( *Init )( int vidWidth, int vidHeight, int protocol, const char *demoExtension );
 	void ( *Shutdown )( void );
 
-	void ( *Refresh )( unsigned int time, int clientState, int serverState, qboolean demoPaused, unsigned int demoTime, qboolean backGround, qboolean showCursor );
-	void ( *UpdateConnectScreen )( const char *serverName, const char *rejectmessage, int downloadType, const char *downloadfilename,
-						  float downloadPercent, int downloadSpeed, int connectCount, qboolean backGround );
+	void ( *TouchAllAssets )( void );
+
+	void ( *Refresh )( unsigned int time, int clientState, int serverState, 
+		qboolean demoPlaying, const char *demoName, qboolean demoPaused, unsigned int demoTime, 
+		qboolean backGround, qboolean showCursor );
+
+	void ( *UpdateConnectScreen )( const char *serverName, const char *rejectmessage, 
+		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
+		int connectCount, qboolean backGround );
 
 	void ( *Keydown )( int key );
 	void ( *Keyup )( int key );

@@ -1762,7 +1762,8 @@ void CL_SetClientState( int state )
 	{
 	case CA_DISCONNECTED:
 		Con_Close();
-		Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
+		CL_UIModule_Refresh( qtrue, qtrue );
+		CL_UIModule_ForceMenuOn();
 		//CL_UIModule_MenuMain ();
 		CL_SetKeyDest( key_menu );
 		//SCR_UpdateScreen();
@@ -1785,6 +1786,7 @@ void CL_SetClientState( int state )
 		re.EndRegistration();
 		CL_SoundModule_EndRegistration();
 		Con_Close();
+		CL_UIModule_Refresh( qfalse, qfalse );
 		CL_UIModule_ForceMenuOff();
 		CL_SetKeyDest( key_game );
 		//SCR_UpdateScreen();
@@ -1866,8 +1868,39 @@ void CL_ShutdownMedia( void )
 */
 void CL_RestartMedia( void )
 {
-	CL_ShutdownMedia();
-	CL_InitMedia();
+	if( !VID_RefreshActive() )
+		return;
+
+	if( cls.mediaInitialized )
+	{
+		// shutdown cgame
+		CL_GameModule_Shutdown();
+
+		cls.mediaInitialized = qfalse;
+	}
+
+	CL_SoundModule_StopAllSounds();
+
+	// random seed to be shared among game modules so pseudo-random stuff is in sync
+	if ( cls.state != CA_CONNECTED )
+	{
+		srand( time( NULL ) );
+		cls.mediaRandomSeed = rand();
+	}
+
+	cls.mediaInitialized = qtrue;
+
+	FTLIB_TouchAllFonts();
+
+	// register console font and background
+	SCR_RegisterConsoleMedia();
+
+	CL_UIModule_ForceMenuOff();
+
+	CL_UIModule_TouchAllAssets();
+
+	// check memory integrity
+	Mem_CheckSentinelsGlobal();
 }
 
 /*
@@ -2917,7 +2950,8 @@ void CL_Init( void )
 	CL_SoundModule_Init( qtrue ); // sound must be initialized after window is created
 
 	CL_InitMedia();
-	Cbuf_ExecuteText( EXEC_NOW, "menu_force 1" );
+
+	CL_UIModule_ForceMenuOn();
 
 	// check for update
 	CL_CheckForUpdate();

@@ -38,23 +38,23 @@ bool UI_SystemInterface::LogMessage(Log::Type type, const String& message)
 			break;
 		case Log::LT_ERROR:
 		case Log::LT_ASSERT:
-			console_msg = String( S_COLOR_RED ) + "ERROR: " + message + "\n";
+			console_msg = String( S_COLOR_RED ) + "LibRocket: ERROR: " + message + "\n";
 			trap::Print( console_msg.CString() );
 			break;
 		case Log::LT_WARNING:
-			console_msg = String( S_COLOR_YELLOW ) + "WARNING: " + message + "\n";
+			console_msg = String( S_COLOR_YELLOW ) + "LibRocket: WARNING: " + message + "\n";
 			trap::Print( console_msg.CString() );
 			break;
 		case Log::LT_INFO:
-			if( trap::Cvar_Value( "developer" ) ) {
-				console_msg = message + "\n";
+			//if( trap::Cvar_Value( "developer" ) ) {
+				console_msg = "LibRocket: " + message + "\n";
 				trap::Print( console_msg.CString() );
-			}
+			//}
 			break;
 		case Log::LT_DEBUG:
 		case Log::LT_MAX:
 			if( trap::Cvar_Value( "developer" ) ) {
-				console_msg = String( S_COLOR_CYAN ) + "DEBUG: " + message + "\n";
+				console_msg = String( S_COLOR_CYAN ) + "LibRocket: DEBUG: " + message + "\n";
 				trap::Print( console_msg.CString() );
 			}
 			break;

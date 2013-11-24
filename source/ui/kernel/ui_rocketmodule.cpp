@@ -381,4 +381,14 @@ void RocketModule::preloadFonts( const char *ext )
 	} while( i < numFonts );
 }
 
+void RocketModule::clearShaderCache( void )
+{
+	renderInterface->ClearShaderCache();
+}
+
+void RocketModule::touchAllCachedShaders( void )
+{
+	renderInterface->TouchAllCachedShaders();
+}
+
 }
