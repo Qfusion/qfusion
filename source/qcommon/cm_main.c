@@ -26,8 +26,6 @@ static qboolean	cm_initialized = qfalse;
 
 static mempool_t *cmap_mempool;
 
-static cmodel_state_t *cmap_lastcms;
-
 static cvar_t *cm_noAreas;
 cvar_t *cm_noCurves;
 
