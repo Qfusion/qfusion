@@ -8,7 +8,7 @@ MORE_OPTS=""
 cd ${SOURCE_DIR}libsrcs/libfreetype && \
 ./autogen.sh && ./configure \
 $MORE_OPTS && \
-make
+${MAKE}
 
 cp objs/.libs/libfreetype.a "${TARGET_DIR}libfreetypestat.a"
 if [ "$ENABLE_SHARED" = "YES" ]; then
