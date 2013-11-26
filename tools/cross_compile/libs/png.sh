@@ -11,8 +11,8 @@ MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
 CFLAGS="$CFLAGS -I`pwd`/../zlib/" \
 LDFLAGS="$LDFLAGS -L`pwd`/../zlib/lib/" \
 ./configure \
- ${MORE_OPTS} && \
-make
+${MORE_OPTS} && \
+${MAKE} 
 
 cp -f .libs/libpng12.a "${TARGET_DIR}libpngstat.a"
 

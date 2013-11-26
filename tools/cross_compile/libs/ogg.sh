@@ -9,7 +9,7 @@ cd ${SOURCE_DIR}libsrcs/libogg && \
 MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
 ./configure \
 ${MORE_OPTS} && \
-make
+${MAKE}
 
 cp -f src/.libs/libogg.a "${TARGET_DIR}liboggstat.a"
 if [ "$ENABLE_SHARED" = "YES" ]; then

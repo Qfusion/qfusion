@@ -11,7 +11,7 @@ ln -s -f ../../libogg/include/ogg ./include/ogg && \
 LDFLAGS="$LDFLAGS -L`pwd`/../libogg/src/.libs/" \
 ./configure --disable-encode --disable-examples \
 ${MORE_OPTS} && \
-make
+${MAKE}
 
 cp -f lib/.libs/libtheora.a "${TARGET_DIR}libtheorastat.a"
 if [ "$ENABLE_SHARED" = "YES" ]; then

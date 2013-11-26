@@ -11,7 +11,7 @@ ln -s -f ../../libogg/include/ogg ./include/ogg && \
 LDFLAGS="$LDFLAGS -L`pwd`/../libogg/src/.libs/" \
 ./autogen.sh --disable-docs \
 ${MORE_OPTS} && \
-make
+${MAKE}
 
 cp -f lib/.libs/libvorbis.a "${TARGET_DIR}libvorbisstat.a" && \
 cp -f lib/.libs/libvorbisfile.a "${TARGET_DIR}libvorbisfilestat.a"

@@ -13,7 +13,7 @@ MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
  --disable-ftp --disable-tftp --disable-manual --disable-file --without-ssl --without-libidn --enable-ipv6 \
  --disable-gopher --disable-imap --disable-pop3 --disable-smtp --disable-rtsp --disable-telnet \
  ${MORE_OPTS} && \
-make
+ ${MAKE}
 
 cp -f lib/.libs/libcurl.a "${TARGET_DIR}libcurlstat.a"
 
