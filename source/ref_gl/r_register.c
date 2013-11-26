@@ -491,6 +491,35 @@ static void R_PrintGLExtensionsInfo( void )
 }
 
 /*
+* R_PrintGLExtensionsString
+*/
+static void R_PrintGLExtensionsString( const char *name, const char *str )
+{
+	size_t len, p;
+
+	Com_Printf( "%s: ", name );
+
+	if( str && *str )
+	{
+		for( len = strlen( str ), p = 0; p < len;  )
+		{
+			char chunk[512];
+
+			Q_snprintfz( chunk, sizeof( chunk ), "%s", str + p );
+			p += strlen( chunk );
+			
+			Com_Printf( "%s", chunk );
+		}
+	}
+	else
+	{
+		Com_Printf( "none" );
+	}
+
+	Com_Printf( "\n" );
+}
+
+/*
 * R_PrintMemoryInfo
 */
 static void R_PrintMemoryInfo( void )
@@ -752,32 +781,6 @@ static void R_Register( const char *screenshotsPrefix )
 }
 
 /*
-* R_PrintGLExtensions
-*/
-static void R_PrintGLExtensions( const char *name, const char *str )
-{
-	size_t len, p;
-
-	Com_Printf( "%s: ", name );
-
-	if( str && *str )
-	{
-		for( len = strlen( str ), p = 0; p < len;  )
-		{
-			char chunk[512];
-
-			p += Q_snprintfz( chunk, sizeof( chunk ), "%s", str + p );
-			
-			Com_Printf( "%s", chunk );
-		}
-	}
-	else
-	{
-		Com_Printf( "none" );
-	}
-}
-
-/*
 * R_GfxInfo_f
 */
 static void R_GfxInfo_f( void )
@@ -788,8 +791,8 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "GL_VERSION: %s\n", glConfig.versionString );
 	Com_Printf( "GL_SHADING_LANGUAGE_VERSION: %s\n", glConfig.shadingLanguageVersionString );
 
-	R_PrintGLExtensions( "GL_EXTENSIONS", glConfig.extensionsString );
-	R_PrintGLExtensions( "GLXW_EXTENSIONS", glConfig.glwExtensionsString );
+	R_PrintGLExtensionsString( "GL_EXTENSIONS", glConfig.extensionsString );
+	R_PrintGLExtensionsString( "GLXW_EXTENSIONS", glConfig.glwExtensionsString );
 
 	Com_Printf( "GL_MAX_TEXTURE_SIZE: %i\n", glConfig.maxTextureSize );
 	Com_Printf( "GL_MAX_TEXTURE_UNITS: %i\n", glConfig.maxTextureUnits );
