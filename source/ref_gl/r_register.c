@@ -346,6 +346,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, texture_non_power_of_two, false, false, NULL )
 	,GL_EXTENSION( ARB, draw_instanced, true, false, &gl_ext_draw_instanced_ARB_funcs )
 	,GL_EXTENSION( ARB, instanced_arrays, false, false, &gl_ext_instanced_arrays_ARB_funcs )
+	,GL_EXTENSION( ARB, half_float_vertex, false, false, NULL )
 
 	// extensions required by meta-extension gl_ext_GLSL
 	,GL_EXTENSION_EXT( ARB, vertex_shader, 1, true, true, NULL, multitexture )
@@ -496,7 +497,7 @@ static void R_PrintGLExtensionsInfo( void )
 static void R_PrintGLExtensionsString( const char *name, const char *str )
 {
 	size_t len, p;
-
+	return;
 	Com_Printf( "%s: ", name );
 
 	if( str && *str )
@@ -640,6 +641,9 @@ static void R_FinalizeGLExtensions( void )
 			ri.Cvar_ForceSet( "gl_ext_texture_non_power_of_two", "0" );
 		}
 	}
+
+	glConfig.halfFloat = (glConfig.ext.half_float_vertex ? GL_HALF_FLOAT : GL_FLOAT);
+	glConfig.halfFloatSize = sizeof( float ) / (glConfig.ext.half_float_vertex ? 2 : 1);
 
 	cvar = ri.Cvar_Get( "gl_ext_vertex_buffer_object_hack", "0", CVAR_ARCHIVE|CVAR_NOSET );
 	if( cvar && !cvar->integer ) 

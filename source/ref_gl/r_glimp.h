@@ -164,6 +164,7 @@ typedef struct
 				,gpu_memory_info
 				,meminfo
 				,framebuffer_blit
+				,half_float_vertex
 				;
 } glextinfo_t;
 
@@ -187,6 +188,10 @@ typedef struct
 
 	qboolean		hwGamma;
 	unsigned short	orignalGammaRamp[3*256];
+
+	// if ARB_half_float_vertex isn't available, these will equal to GL_FLOAT and sizeo(float) respectively
+	int				halfFloat;
+	size_t			halfFloatSize;
 
 	int				maxTextureSize
 					,maxTextureUnits
