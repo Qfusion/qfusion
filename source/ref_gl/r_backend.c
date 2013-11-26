@@ -1011,7 +1011,7 @@ static void RB_EnableVertexAttribs( void )
 	// normal
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_NORMAL, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_NORMAL, 3, GL_FLOAT, GL_FALSE, 0,
+		qglVertexAttribPointerARB( VATTRIB_NORMAL, 3, glConfig.halfFloat, GL_FALSE, 0,
 			( const GLvoid * )vbo->normalsOffset );
 	}
 	else {
@@ -1021,7 +1021,7 @@ static void RB_EnableVertexAttribs( void )
 	// s-vector
 	if( vattribs & VATTRIB_SVECTOR_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_SVECTOR, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, glConfig.halfFloat, GL_FALSE, 0, 
 			( const GLvoid * )vbo->sVectorsOffset );
 	}
 	else {
@@ -1041,7 +1041,7 @@ static void RB_EnableVertexAttribs( void )
 	// texture coordinates
 	if( vattribs & VATTRIB_TEXCOORDS_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, glConfig.halfFloat, GL_FALSE, 0, 
 			( const GLvoid * )vbo->stOffset );
 	}
 	else {
@@ -1055,11 +1055,11 @@ static void RB_EnableVertexAttribs( void )
 			( const GLvoid * )vbo->spritePointsOffset );
 
 		GL_EnableVertexAttrib( VATTRIB_SPRITERAXIS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITERAXIS, 3, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_SPRITERAXIS, 3, glConfig.halfFloat, GL_FALSE, 0, 
 			( const GLvoid * )vbo->spriteRightAxesOffset );
 
 		GL_EnableVertexAttrib( VATTRIB_SPRITEUAXIS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEUAXIS, 3, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_SPRITEUAXIS, 3, glConfig.halfFloat, GL_FALSE, 0, 
 			( const GLvoid * )vbo->spriteUpAxesOffset );
 	}
 	else if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
@@ -1095,7 +1095,7 @@ static void RB_EnableVertexAttribs( void )
 		// lightmap texture coordinates
 		if( vattribs & VATTRIB_LMCOORDS_BIT ) {
 			GL_EnableVertexAttrib( VATTRIB_LMCOORDS, qtrue );
-			qglVertexAttribPointerARB( VATTRIB_LMCOORDS, 2, GL_FLOAT, GL_FALSE, 0, 
+			qglVertexAttribPointerARB( VATTRIB_LMCOORDS, 2, glConfig.halfFloat, GL_FALSE, 0, 
 				( const GLvoid * )vbo->lmstOffset[0] );
 		}
 		else {
@@ -1105,7 +1105,7 @@ static void RB_EnableVertexAttribs( void )
 		for( i = 0; i < MAX_LIGHTMAPS-1; i++ ) {
 			if( vattribs & (VATTRIB_LMCOORDS1_BIT<<i) ) {
 				GL_EnableVertexAttrib( VATTRIB_LMCOORDS1+i, qtrue );
-				qglVertexAttribPointerARB( VATTRIB_LMCOORDS1+i, 2, GL_FLOAT, GL_FALSE, 0, 
+				qglVertexAttribPointerARB( VATTRIB_LMCOORDS1+i, 2, glConfig.halfFloat, GL_FALSE, 0, 
 					( const GLvoid * )vbo->lmstOffset[i+1] );
 			}
 			else {
@@ -1116,7 +1116,7 @@ static void RB_EnableVertexAttribs( void )
 
 	if( (vattribs & VATTRIB_INSTANCES_BIT) == VATTRIB_INSTANCES_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ), 
+		qglVertexAttribPointerARB( VATTRIB_INSTANCE_QUAT, 4, glConfig.halfFloat, GL_FALSE, 8 * sizeof( vec_t ), 
 			( const GLvoid * )vbo->instancesOffset );
 		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_QUAT, 1 );
 
