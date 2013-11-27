@@ -621,7 +621,7 @@ static r_glslfeat_t RB_AutospriteProgramFeatures( void )
 static r_glslfeat_t RB_InstancedArraysProgramFeatures( void )
 {
 	r_glslfeat_t programFeatures = 0;
-	if( ( rb.currentVAttribs & VATTRIB_INSTANCES_BIT ) == VATTRIB_INSTANCES_BIT ) {
+	if( ( rb.currentVAttribs & VATTRIB_INSTANCES_BITS ) == VATTRIB_INSTANCES_BITS ) {
 		programFeatures |= GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS;
 	} else if( rb.drawElements.numInstances ) {
 		programFeatures |= GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS;
@@ -1716,7 +1716,7 @@ static void RB_UpdateVertexAttribs( void )
 		vattribs |= rb.superLightStyle->vattribs;
 	}
 	if( rb.bonesData.numBones ) {
-		vattribs |= VATTRIB_BONES_BIT;
+		vattribs |= VATTRIB_BONES_BITS;
 	}
 	if( rb.currentEntity->outlineHeight ) {
 		vattribs |= VATTRIB_NORMAL_BIT;

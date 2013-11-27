@@ -529,10 +529,10 @@ mesh_vbo_t *R_InitNullModelVBO( void )
 	vec2_t texcoords[6] = { {0,0}, {0,1}, {0,0}, {0,1}, {0,0}, {0,1} };
 	elem_t elems[6] = { 0, 1, 2, 3, 4, 5 };
 	mesh_t mesh;
-	vattribmask_t vattribs = VATTRIB_TEXCOORDS_BIT | VATTRIB_COLOR_BIT;
+	vattribmask_t vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_COLOR_BIT;
 	mesh_vbo_t *vbo;
 	
-	vbo = R_CreateMeshVBO( &rf, 6, 6, 0, vattribs, VBO_TAG_NONE );
+	vbo = R_CreateMeshVBO( &rf, 6, 6, 0, vattribs, VBO_TAG_NONE, vattribs );
 	if( !vbo ) {
 		return NULL;
 	}
@@ -812,7 +812,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 	static shaderpass_t p;
 	static shader_t s;
 
-	s.vattribs = VATTRIB_TEXCOORDS_BIT;
+	s.vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
 	s.sort = SHADER_SORT_NEAREST;
 	s.numpasses = 1;
 	s.name = s_name;
@@ -883,7 +883,7 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 	static shader_t s;
 	static float rgba[4];
 
-	s.vattribs = VATTRIB_TEXCOORDS_BIT;
+	s.vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
 	s.sort = SHADER_SORT_NEAREST;
 	s.numpasses = 1;
 	s.name = s_name;

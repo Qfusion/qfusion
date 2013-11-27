@@ -698,6 +698,8 @@ typedef struct mesh_vbo_s
 	size_t				arrayBufferSize;
 	size_t				elemBufferSize;
 
+	vattribmask_t		halfFloatAttribs;
+
 	size_t 				normalsOffset;
 	size_t 				sVectorsOffset;
 	size_t 				stOffset;
@@ -713,7 +715,7 @@ typedef struct mesh_vbo_s
 
 void 		R_InitVBO( void );
 mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numInstances,
-	vattribmask_t vattribs, vbo_tag_t tag );
+	vattribmask_t vattribs, vbo_tag_t tag, vattribmask_t halfFloatVattribs );
 void		R_ReleaseMeshVBO( mesh_vbo_t *vbo );
 void		R_TouchMeshVBO( mesh_vbo_t *vbo );
 mesh_vbo_t *R_GetVBOByIndex( int index );

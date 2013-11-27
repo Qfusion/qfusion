@@ -64,6 +64,7 @@ extern "C" {
 #pragma warning( disable : 4306 )       // conversion from 'int' to 'void *' of greater size
 #pragma warning( disable : 4305 )       // truncation from 'void *' to 'int'
 #pragma warning( disable : 4055 )		// 'type cast' : from data pointer 'void *' to function pointer
+#pragma warning( disable : 4204 )		// nonstandard extension used : non-constant aggregate initializer
 
 #if defined _M_AMD64
 #pragma warning( disable : 4267 )       // conversion from 'size_t' to whatever, possible loss of data

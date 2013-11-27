@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define BOX_SIZE    1.0f
 #define BOX_STEP    BOX_SIZE / ( SIDE_SIZE-1 ) * 2.0f
 
-#define SKYDOME_VATTRIBS ( VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT )
+#define SKYDOME_VATTRIBS ( VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT )
 
 typedef struct visSkySide_s
 {
@@ -93,12 +93,12 @@ skydome_t *R_CreateSkydome( model_t *model )
 		if( i != 5 ) {
 			skydome->sphereStCoords[i] = ( vec2_t * )buffer; buffer += sizeof( vec2_t ) * POINTS_LEN;
 			skydome->sphereVbos[i] = R_CreateMeshVBO( mesh, mesh->numVerts, mesh->numElems, 0,
-				SKYDOME_VATTRIBS, VBO_TAG_WORLD );
+				SKYDOME_VATTRIBS, VBO_TAG_WORLD, SKYDOME_VATTRIBS );
 		}
 
 		skydome->linearStCoords[i] = ( vec2_t * )buffer; buffer += sizeof( vec2_t ) * POINTS_LEN;
 		skydome->linearVbos[i] = R_CreateMeshVBO( mesh, mesh->numVerts, mesh->numElems, 0,
-			SKYDOME_VATTRIBS, VBO_TAG_WORLD );
+			SKYDOME_VATTRIBS, VBO_TAG_WORLD, SKYDOME_VATTRIBS );
 	}
 
 	Gen_Box( skydome );
