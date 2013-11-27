@@ -642,9 +642,6 @@ static void R_FinalizeGLExtensions( void )
 		}
 	}
 
-	glConfig.halfFloat = (glConfig.ext.half_float_vertex ? GL_HALF_FLOAT : GL_FLOAT);
-	glConfig.halfFloatSize = sizeof( float ) / (glConfig.ext.half_float_vertex ? 2 : 1);
-
 	cvar = ri.Cvar_Get( "gl_ext_vertex_buffer_object_hack", "0", CVAR_ARCHIVE|CVAR_NOSET );
 	if( cvar && !cvar->integer ) 
 	{

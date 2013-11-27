@@ -338,39 +338,6 @@
     <ClInclude Include="qcommon\qfiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ref_gl\qgl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_backend.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_backend_local.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_glimp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_local.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_math.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_model.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_public.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_shader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_shadow.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cgame\ref.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -413,9 +380,6 @@
     <ClInclude Include="qcommon\webdownload.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="win32\win_glw.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="win32\winquake.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -426,21 +390,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qcommon\patch_eval_inc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_surface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_vattribs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_trace.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_program.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ref_gl\r_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qcommon\patch.h">
