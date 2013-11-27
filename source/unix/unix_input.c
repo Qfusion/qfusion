@@ -1077,11 +1077,11 @@ void IN_Init( void )
 	if( input_inited )
 		return;
 
-	in_dgamouse = Cvar_Get( "in_dgamouse", "1", CVAR_ARCHIVE );
+	in_dgamouse = Cvar_Get( "in_dgamouse", "0", CVAR_ARCHIVE );
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 
 #ifdef WSW_EVDEV
-	m_raw = Cvar_Get( "m_raw", "0", CVAR_ARCHIVE );
+	m_raw = Cvar_Get( "m_raw", "1", CVAR_ARCHIVE );
 	if( m_raw->integer )
 	{
 		if( evdev_scandevices() )
