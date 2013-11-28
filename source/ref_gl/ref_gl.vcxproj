@@ -213,6 +213,7 @@
     <ClInclude Include="..\win32\win_glw.h" />
     <ClInclude Include="iqm.h" />
     <ClInclude Include="qgl.h" />
+    <ClInclude Include="qmesa.h" />
     <ClInclude Include="r_backend.h" />
     <ClInclude Include="r_backend_local.h" />
     <ClInclude Include="r_glimp.h" />

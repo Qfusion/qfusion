@@ -299,11 +299,6 @@
     <ClInclude Include="gameshared\config.h" />
     <ClInclude Include="qcommon\patch.h" />
     <ClInclude Include="qcommon\patch_eval_inc.h" />
-    <ClInclude Include="ref_gl\r_image.h" />
-    <ClInclude Include="ref_gl\r_program.h" />
-    <ClInclude Include="ref_gl\r_surface.h" />
-    <ClInclude Include="ref_gl\r_trace.h" />
-    <ClInclude Include="ref_gl\r_vattribs.h" />
     <ClInclude Include="win32\conproc.h" />
     <ClInclude Include="client\console.h" />
     <ClInclude Include="qcommon\cvar.h" />
@@ -329,17 +324,6 @@
     <ClInclude Include="gameshared\q_shared.h" />
     <ClInclude Include="qcommon\qcommon.h" />
     <ClInclude Include="qcommon\qfiles.h" />
-    <ClInclude Include="ref_gl\qgl.h" />
-    <ClInclude Include="ref_gl\r_backend.h" />
-    <ClInclude Include="ref_gl\r_backend_local.h" />
-    <ClInclude Include="ref_gl\r_glimp.h" />
-    <ClInclude Include="ref_gl\r_local.h" />
-    <ClInclude Include="ref_gl\r_math.h" />
-    <ClInclude Include="ref_gl\r_mesh.h" />
-    <ClInclude Include="ref_gl\r_model.h" />
-    <ClInclude Include="ref_gl\r_public.h" />
-    <ClInclude Include="ref_gl\r_shader.h" />
-    <ClInclude Include="ref_gl\r_shadow.h" />
     <ClInclude Include="cgame\ref.h" />
     <ClInclude Include="win32\resource.h" />
     <ClInclude Include="server\server.h" />
@@ -355,7 +339,6 @@
     <ClInclude Include="qcommon\version.h" />
     <ClInclude Include="client\vid.h" />
     <ClInclude Include="qcommon\webdownload.h" />
-    <ClInclude Include="win32\win_glw.h" />
     <ClInclude Include="win32\winquake.h" />
     <ClInclude Include="qcommon\wswcurl.h" />
   </ItemGroup>

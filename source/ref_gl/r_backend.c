@@ -677,7 +677,7 @@ void RB_RegisterStreamVBOs( void )
 		}
 		rb.streamVBOs[i] = R_CreateMeshVBO( &rb, 
 			MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, MAX_STREAM_VBO_INSTANCES,
-			VATTRIBS_MASK, tags[i] );
+			VATTRIBS_MASK, tags[i], 0 );
 	}
 }
 
@@ -864,10 +864,7 @@ mesh_t *RB_MapBatchMesh( int numVerts, int numElems )
 */
 void RB_BeginBatch( void )
 {
-	mesh_t *mesh;
-
-	mesh = RB_MapBatchMesh( 0, 0 );
-	assert( mesh != NULL );
+	RB_MapBatchMesh( 0, 0 );
 }
 
 /*
@@ -1002,16 +999,19 @@ static void RB_EnableVertexAttribs( void )
 	int i;
 	vattribmask_t vattribs = rb.currentVAttribs;
 	mesh_vbo_t *vbo = rb.currentVBO;
+	vattribmask_t hfa = vbo->halfFloatAttribs;
+
+	assert( vattribs & VATTRIB_POSITION_BIT );
 
 	// xyz position
 	GL_EnableVertexAttrib( VATTRIB_POSITION, qtrue );
-	qglVertexAttribPointerARB( VATTRIB_POSITION, 3, GL_FLOAT, GL_FALSE, 0, 
+	qglVertexAttribPointerARB( VATTRIB_POSITION, 3, FLOAT_VATTRIB_TYPE( VATTRIB_POSITION_BIT, hfa ), GL_FALSE, 0, 
 		( const GLvoid * )0 );
 
 	// normal
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_NORMAL, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_NORMAL, 3, GL_FLOAT, GL_FALSE, 0,
+		qglVertexAttribPointerARB( VATTRIB_NORMAL, 3, FLOAT_VATTRIB_TYPE( VATTRIB_NORMAL_BIT, hfa ), GL_FALSE, 0,
 			( const GLvoid * )vbo->normalsOffset );
 	}
 	else {
@@ -1021,7 +1021,7 @@ static void RB_EnableVertexAttribs( void )
 	// s-vector
 	if( vattribs & VATTRIB_SVECTOR_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_SVECTOR, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_TYPE( VATTRIB_SVECTOR_BIT, hfa ), GL_FALSE, 0, 
 			( const GLvoid * )vbo->sVectorsOffset );
 	}
 	else {
@@ -1041,7 +1041,7 @@ static void RB_EnableVertexAttribs( void )
 	// texture coordinates
 	if( vattribs & VATTRIB_TEXCOORDS_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ), GL_FALSE, 0, 
 			( const GLvoid * )vbo->stOffset );
 	}
 	else {
@@ -1051,15 +1051,15 @@ static void RB_EnableVertexAttribs( void )
 	if( (vattribs & VATTRIB_AUTOSPRITE2_BIT) == VATTRIB_AUTOSPRITE2_BIT ) {
 		// submit sprite centre and the longest edge
 		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), GL_FALSE, 0, 
 			( const GLvoid * )vbo->spritePointsOffset );
 
 		GL_EnableVertexAttrib( VATTRIB_SPRITERAXIS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITERAXIS, 3, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_SPRITERAXIS, 3, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE2_BIT, hfa ), GL_FALSE, 0, 
 			( const GLvoid * )vbo->spriteRightAxesOffset );
 
 		GL_EnableVertexAttrib( VATTRIB_SPRITEUAXIS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEUAXIS, 3, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_SPRITEUAXIS, 3, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE2_BIT, hfa ), GL_FALSE, 0, 
 			( const GLvoid * )vbo->spriteUpAxesOffset );
 	}
 	else if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
@@ -1067,7 +1067,7 @@ static void RB_EnableVertexAttribs( void )
 		GL_EnableVertexAttrib( VATTRIB_SPRITERAXIS, qfalse );
 		GL_EnableVertexAttrib( VATTRIB_SPRITEUAXIS, qfalse );
 		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, GL_FLOAT, GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), GL_FALSE, 0, 
 			( const GLvoid * )vbo->spritePointsOffset );
 	}
 	else {
@@ -1077,7 +1077,7 @@ static void RB_EnableVertexAttribs( void )
 	}
 
 	// bones (skeletal models)
-	if( (vattribs & VATTRIB_BONES_BIT) == VATTRIB_BONES_BIT ) {
+	if( (vattribs & VATTRIB_BONES_BITS) == VATTRIB_BONES_BITS ) {
 		// submit indices
 		GL_EnableVertexAttrib( VATTRIB_BONESINDICES, qtrue );
 		qglVertexAttribPointerARB( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE, GL_FALSE, SKM_MAX_WEIGHTS, 
@@ -1095,7 +1095,7 @@ static void RB_EnableVertexAttribs( void )
 		// lightmap texture coordinates
 		if( vattribs & VATTRIB_LMCOORDS_BIT ) {
 			GL_EnableVertexAttrib( VATTRIB_LMCOORDS, qtrue );
-			qglVertexAttribPointerARB( VATTRIB_LMCOORDS, 2, GL_FLOAT, GL_FALSE, 0, 
+			qglVertexAttribPointerARB( VATTRIB_LMCOORDS, 2, FLOAT_VATTRIB_TYPE( VATTRIB_LMCOORDS_BIT, hfa ), GL_FALSE, 0, 
 				( const GLvoid * )vbo->lmstOffset[0] );
 		}
 		else {
@@ -1103,9 +1103,11 @@ static void RB_EnableVertexAttribs( void )
 		}
 
 		for( i = 0; i < MAX_LIGHTMAPS-1; i++ ) {
-			if( vattribs & (VATTRIB_LMCOORDS1_BIT<<i) ) {
+			vattribbit_t lmvattrib = ( vattribbit_t ) (VATTRIB_LMCOORDS1_BIT<<i);
+
+			if( vattribs & lmvattrib ) {
 				GL_EnableVertexAttrib( VATTRIB_LMCOORDS1+i, qtrue );
-				qglVertexAttribPointerARB( VATTRIB_LMCOORDS1+i, 2, GL_FLOAT, GL_FALSE, 0, 
+				qglVertexAttribPointerARB( VATTRIB_LMCOORDS1+i, 2, FLOAT_VATTRIB_TYPE( lmvattrib, hfa ), GL_FALSE, 0, 
 					( const GLvoid * )vbo->lmstOffset[i+1] );
 			}
 			else {
@@ -1114,7 +1116,7 @@ static void RB_EnableVertexAttribs( void )
 		}
 	}
 
-	if( (vattribs & VATTRIB_INSTANCES_BIT) == VATTRIB_INSTANCES_BIT ) {
+	if( (vattribs & VATTRIB_INSTANCES_BITS) == VATTRIB_INSTANCES_BITS ) {
 		GL_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, qtrue );
 		qglVertexAttribPointerARB( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ), 
 			( const GLvoid * )vbo->instancesOffset );
@@ -1243,7 +1245,7 @@ static void RB_DrawElements_( int firstVert, int numVerts, int firstElem, int nu
 */
 void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems )
 {
-	rb.currentVAttribs &= ~VATTRIB_INSTANCES_BIT;
+	rb.currentVAttribs &= ~VATTRIB_INSTANCES_BITS;
 	rb.drawElements.numInstances = 0;
 	RB_DrawElements_( firstVert, numVerts, firstElem, numElems );
 }
@@ -1264,7 +1266,7 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	if( glConfig.ext.instanced_arrays ) {
 		// upload instances
 		if( rb.currentVBOId < RB_VBO_NONE ) {
-			rb.currentVAttribs |= VATTRIB_INSTANCES_BIT;
+			rb.currentVAttribs |= VATTRIB_INSTANCES_BITS;
 
 			// FIXME: this is nasty!
 			while( numInstances > MAX_STREAM_VBO_INSTANCES ) {
@@ -1284,11 +1286,11 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 			R_UploadVBOInstancesData( rb.currentVBO, 0, numInstances, instances );
 		} else if( rb.currentVBO->instancesOffset ) {
 			// static VBO's must come with their own set of instance data
-			rb.currentVAttribs |= VATTRIB_INSTANCES_BIT;
+			rb.currentVAttribs |= VATTRIB_INSTANCES_BITS;
 		}
 	}
 
-	if( !( rb.currentVAttribs & VATTRIB_INSTANCES_BIT ) ) {
+	if( !( rb.currentVAttribs & VATTRIB_INSTANCES_BITS ) ) {
 		// can't use instanced arrays so we'll have to manually update
 		// the uniform state in between draw calls
 		if( rb.maxDrawInstances < numInstances ) {

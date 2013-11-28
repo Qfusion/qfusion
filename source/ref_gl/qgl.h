@@ -399,6 +399,17 @@ typedef unsigned int GLhandleARB;
 #define RENDERBUFFER_FREE_MEMORY_ATI						0x87FD
 #endif /* GL_ATI_meminfo */
 
+/* GL_ARB_half_float_vertex */
+#ifndef GL_ARB_half_float_vertex
+#define GL_ARB_half_float_vertex
+
+typedef unsigned short GLhalfARB;
+
+#ifndef GL_HALF_FLOAT
+#define GL_HALF_FLOAT										0x140B
+#endif
+#endif
+
 #endif /*__QGL_H__*/
 
 #ifndef APIENTRY
