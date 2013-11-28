@@ -164,6 +164,7 @@ typedef struct
 				,gpu_memory_info
 				,meminfo
 				,framebuffer_blit
+				,half_float_vertex
 				;
 } glextinfo_t;
 

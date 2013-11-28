@@ -492,9 +492,11 @@ merge:
 		// create vertex buffer object for this face then upload data
 		vattribs = shader->vattribs | surf->superLightStyle->vattribs | VATTRIB_NORMAL_BIT;
 		if( surf->numInstances ) {
-			vattribs |= VATTRIB_INSTANCES_BIT;
+			vattribs |= VATTRIB_INSTANCES_BITS;
 		}
-		vbo = R_CreateMeshVBO( ( void * )surf, vcount, ecount, surf->numInstances, vattribs, VBO_TAG_WORLD );
+
+		// don't use half-floats for XYZ due to precision issues
+		vbo = R_CreateMeshVBO( ( void * )surf, vcount, ecount, surf->numInstances, vattribs, VBO_TAG_WORLD, vattribs & ~VATTRIB_POSITION_BIT );
 		if( vbo )
 		{
 			vattribmask_t errMask;

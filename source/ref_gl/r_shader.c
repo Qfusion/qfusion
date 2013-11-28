@@ -2154,10 +2154,12 @@ static qboolean Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const sha
 	return qfalse;
 }
 
-void Shader_SetFeatures( shader_t *s )
+static void Shader_SetVertexAttribs( shader_t *s )
 {
 	int i;
 	shaderpass_t *pass;
+
+	s->vattribs |= VATTRIB_POSITION_BIT;
 
 	if( s->flags & SHADER_SKY )
 		s->vattribs |= VATTRIB_TEXCOORDS_BIT;
@@ -2176,6 +2178,7 @@ void Shader_SetFeatures( shader_t *s )
 			s->vattribs |= VATTRIB_AUTOSPRITE_BIT;
 			break;
 		case DEFORMV_AUTOSPRITE2:
+			s->vattribs |= VATTRIB_AUTOSPRITE_BIT;
 			s->vattribs |= VATTRIB_AUTOSPRITE2_BIT;
 			break;
 		case DEFORMV_MOVE:
@@ -2456,7 +2459,7 @@ static void Shader_Finish( shader_t *s )
 		s->flags |= SHADER_NODRAWFLAT;
 	}
 
-	Shader_SetFeatures( s );
+	Shader_SetVertexAttribs( s );
 }
 
 /*
@@ -2576,7 +2579,7 @@ create_default:
 		case SHADER_TYPE_VERTEX:
 			// vertex lighting
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT;
-			s->vattribs = VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2596,7 +2599,7 @@ create_default:
 			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, 1 );
 
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_LIGHTMAP;
-			s->vattribs = VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2617,7 +2620,7 @@ create_default:
 		case SHADER_TYPE_LIGHTMAP:
 			// lightmapping
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_LIGHTMAP;
-			s->vattribs = VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 2;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2639,7 +2642,7 @@ create_default:
 			pass->images[0] = Shader_FindImage( s, shortname, 0, 0 );
 			break;
 		case SHADER_TYPE_CORONA:
-			s->vattribs = VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2658,7 +2661,7 @@ create_default:
 			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, 1 );
 
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT;
-			s->vattribs = VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2681,7 +2684,7 @@ create_default:
 		case SHADER_TYPE_2D_RAW:
 		case SHADER_TYPE_VIDEO:
 			s->flags = 0;
-			s->vattribs = VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2706,6 +2709,7 @@ create_default:
 			}
 			break;
 		case SHADER_TYPE_OPAQUE_ENV:
+			s->vattribs = VATTRIB_POSITION_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->flags = SHADER_CULL_FRONT|SHADER_DEPTHWRITE;
 			s->numpasses = 1;
@@ -2723,7 +2727,7 @@ create_default:
 			pass->images[0] = r_whitetexture;
 			break;
 		case SHADER_TYPE_SKYBOX:
-			s->vattribs = VATTRIB_TEXCOORDS_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
 			s->sort = SHADER_SORT_SKY;
 			s->flags = SHADER_CULL_FRONT|SHADER_SKY;
 			s->numpasses = 1;
@@ -2741,7 +2745,7 @@ create_default:
 			break;
 		case SHADER_TYPE_SKYCLIP:
 			// a shader that only writes to depthbuffer
-			s->vattribs = 0;
+			s->vattribs = VATTRIB_POSITION_BIT;
 			s->sort = SHADER_SORT_SKY;
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_SKY;
 			s->numpasses = 1;
