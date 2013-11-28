@@ -2702,7 +2702,7 @@ create_default:
 				else
 					pass->cin = R_StartCinematic( shortname );
 			} else if( type != SHADER_TYPE_2D_RAW ) {
-				pass->images[0] = Shader_FindImage( s, shortname, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP, 0 );
+				pass->images[0] = Shader_FindImage( s, shortname, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, 0 );
 			}
 			break;
 		case SHADER_TYPE_OPAQUE_ENV:
@@ -2864,7 +2864,7 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, qbyte *data
 		image = s->passes[0].images[0];
 		if( !image || image == r_notexture ) {
 			// try to load new image
-			image = R_LoadImage( name, &data, width, height, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP, 4 );
+			image = R_LoadImage( name, &data, width, height, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, 4 );
 			s->passes[0].images[0] = image;
 		}
 		else {
