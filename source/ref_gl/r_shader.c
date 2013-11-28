@@ -2729,7 +2729,7 @@ create_default:
 		case SHADER_TYPE_SKYBOX:
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
 			s->sort = SHADER_SORT_SKY;
-			s->flags = SHADER_CULL_FRONT;
+			s->flags = SHADER_CULL_FRONT|SHADER_SKY;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
@@ -2747,7 +2747,7 @@ create_default:
 			// a shader that only writes to depthbuffer
 			s->vattribs = VATTRIB_POSITION_BIT;
 			s->sort = SHADER_SORT_SKY;
-			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT;
+			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_SKY;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
