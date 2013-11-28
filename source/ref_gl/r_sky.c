@@ -93,12 +93,12 @@ skydome_t *R_CreateSkydome( model_t *model )
 		if( i != 5 ) {
 			skydome->sphereStCoords[i] = ( vec2_t * )buffer; buffer += sizeof( vec2_t ) * POINTS_LEN;
 			skydome->sphereVbos[i] = R_CreateMeshVBO( mesh, mesh->numVerts, mesh->numElems, 0,
-				SKYDOME_VATTRIBS, VBO_TAG_WORLD, SKYDOME_VATTRIBS );
+				SKYDOME_VATTRIBS, VBO_TAG_WORLD, 0 );
 		}
 
 		skydome->linearStCoords[i] = ( vec2_t * )buffer; buffer += sizeof( vec2_t ) * POINTS_LEN;
 		skydome->linearVbos[i] = R_CreateMeshVBO( mesh, mesh->numVerts, mesh->numElems, 0,
-			SKYDOME_VATTRIBS, VBO_TAG_WORLD, SKYDOME_VATTRIBS );
+			SKYDOME_VATTRIBS, VBO_TAG_WORLD, 0 );
 	}
 
 	Gen_Box( skydome );
