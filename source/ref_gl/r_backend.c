@@ -1041,7 +1041,7 @@ static void RB_EnableVertexAttribs( void )
 	// texture coordinates
 	if( vattribs & VATTRIB_TEXCOORDS_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_TYPE( VATTRIB_TEXCOORDS, hfa ), GL_FALSE, 0, 
+		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ), GL_FALSE, 0, 
 			( const GLvoid * )vbo->stOffset );
 	}
 	else {
