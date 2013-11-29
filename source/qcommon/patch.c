@@ -107,11 +107,13 @@ void Patch_GetFlatness( float maxflat, const float *points, int comp, const int 
 PATCH_EVALUATE_DECL(type)													\
 {																			\
 	int num_patches[2], num_tess[2];										\
-	int index[3], dstpitch, i, u, v, x, y;									\
+	int index[3], dstpitch, i, j, u, v, x, y;								\
 	float s, t, step[2];													\
 	type *tvec, *tvec2;														\
 	const type *pv[3][3];													\
 	type v1[4] = {0,0,0,0}, v2[4] = {0,0,0,0}, v3[4] = {0,0,0,0};			\
+																			\
+	assert( comp<=4 );														\
 																			\
 	if (!stride) stride = comp;												\
 																			\

@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-// r_alias.c: Quake 2 .md2 and Quake III Arena .md3 model formats support
+// r_alias.c: Quake III Arena .md3 model format support
 
 #include "r_local.h"
 
@@ -87,8 +87,9 @@ static void Mod_AliasBuildMeshesForFrame0( model_t *mod )
 		{
 			for( j = 0; j < 3; j++ ) {
 				mesh->xyzArray[i][j] = frame->translate[j] + frame->scale[j] * mesh->vertexes[i].point[j];
-				mesh->xyzArray[i][j] = 1;
 			}
+			mesh->xyzArray[i][3] = 1;
+
 			R_LatLongToNorm4( mesh->vertexes[i].latlong, mesh->normalsArray[i] );
 		}
 

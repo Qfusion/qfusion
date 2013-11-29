@@ -529,7 +529,11 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				patch_cp, step, mesh->stArray[0], 0 );
 
 			for( i = 0; i < numVerts; i++ )
+			{
+				mesh->xyzArray[i][3] = 1;
+				mesh->normalsArray[i][3] = 0;
 				VectorNormalize( mesh->normalsArray[i] );
+			}
 
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255 && LittleLong( in->lm_texnum[j] ) >= 0; j++ )
 			{

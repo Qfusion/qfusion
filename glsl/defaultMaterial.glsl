@@ -43,7 +43,7 @@ varying vec2 v_FogCoord;
 void main()
 {
 	vec4 Position = a_Position;
-	vec3 Normal = a_Normal;
+	vec3 Normal = a_Normal.xyz;
 	myhalf4 inColor = myhalf4(a_Color);
 	vec2 TexCoord = a_TexCoord;
 	vec3 Tangent = a_SVector.xyz;

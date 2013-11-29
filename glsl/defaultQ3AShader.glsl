@@ -65,7 +65,7 @@ uniform mat4 u_VectorTexMatrix;
 void main(void)
 {
 	vec4 Position = a_Position;
-	vec3 Normal = a_Normal;
+	vec3 Normal = a_Normal.xyz;
 	vec2 TexCoord = a_TexCoord;
 	myhalf4 inColor = myhalf4(a_Color);
 
