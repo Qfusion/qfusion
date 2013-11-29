@@ -225,7 +225,6 @@ typedef struct
 	shader_t		*envShader;
 	shader_t		*skyShader;
 	shader_t		*whiteShader;
-	shader_t		*skyclipShader;
 
 	struct mesh_vbo_s *nullVBO;
 

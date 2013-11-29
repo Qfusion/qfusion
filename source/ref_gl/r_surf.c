@@ -228,13 +228,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 			if( !R_FASTSKY() ) {
 				R_AddSkyToDrawList( surf );
 			}
-
-			// fallthrough, but add with skyclip shader, writing to depthbuffer
-			// that will mask our skydome and prevent world geometry from
-			// bleeding through it
-			fog = NULL;
-			shader = rf.skyclipShader;
-			order = 1000;
+			return;
 		}
 	}
 
