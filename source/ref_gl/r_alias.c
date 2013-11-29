@@ -75,19 +75,21 @@ static void Mod_AliasBuildMeshesForFrame0( model_t *mod )
 	{
 		maliasmesh_t *mesh = &aliasmodel->meshes[k];
 
-		size = sizeof( vec3_t ) + sizeof( vec3_t ); // xyz and normals
+		size = sizeof( vec4_t ) + sizeof( vec4_t ); // xyz and normals
 		size += sizeof( vec4_t );       // s-vectors
 		size *= mesh->numverts;
 
-		mesh->xyzArray = ( vec3_t * )Mod_Malloc( mod, size );
-		mesh->normalsArray = ( vec3_t * )( ( qbyte * )mesh->xyzArray + mesh->numverts * sizeof( vec3_t ) );
-		mesh->sVectorsArray = ( vec4_t * )( ( qbyte * )mesh->normalsArray + mesh->numverts * sizeof( vec3_t ) );
+		mesh->xyzArray = ( vec4_t * )Mod_Malloc( mod, size );
+		mesh->normalsArray = ( vec4_t * )( ( qbyte * )mesh->xyzArray + mesh->numverts * sizeof( vec4_t ) );
+		mesh->sVectorsArray = ( vec4_t * )( ( qbyte * )mesh->normalsArray + mesh->numverts * sizeof( vec4_t ) );
 
 		for( i = 0; i < mesh->numverts; i++ )
 		{
-			for( j = 0; j < 3; j++ )
+			for( j = 0; j < 3; j++ ) {
 				mesh->xyzArray[i][j] = frame->translate[j] + frame->scale[j] * mesh->vertexes[i].point[j];
-			R_LatLongToNorm( mesh->vertexes[i].latlong, mesh->normalsArray[i] );
+				mesh->xyzArray[i][j] = 1;
+			}
+			R_LatLongToNorm4( mesh->vertexes[i].latlong, mesh->normalsArray[i] );
 		}
 
 		R_BuildTangentVectors( mesh->numverts, mesh->xyzArray, mesh->normalsArray, mesh->stArray, mesh->numtris, mesh->elems, mesh->sVectorsArray );
@@ -560,8 +562,8 @@ qboolean R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_
 	else
 	{
 		mesh_t *rb_mesh;
-		vec3_t *inVertsArray;
-		vec3_t *inNormalsArray;
+		vec4_t *inVertsArray;
+		vec4_t *inNormalsArray;
 		vec4_t *inSVectorsArray;
 
 		RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
@@ -598,13 +600,14 @@ qboolean R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_
 			v = aliasmesh->vertexes + framenum * aliasmesh->numverts;
 			for( i = 0; i < aliasmesh->numverts; i++, v++ )
 			{
-				VectorSet( inVertsArray[i],
+				Vector4Set( inVertsArray[i],
 					move[0] + v->point[0]*frontv[0],
 					move[1] + v->point[1]*frontv[1],
-					move[2] + v->point[2]*frontv[2] );
+					move[2] + v->point[2]*frontv[2],
+					1);
 
 				if( calcNormals )
-					R_LatLongToNorm( v->latlong, inNormalsArray[i] );
+					R_LatLongToNorm4( v->latlong, inNormalsArray[i] );
 			}
 		}
 		else

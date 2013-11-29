@@ -26,15 +26,15 @@ PolyAllocator::~PolyAllocator()
 void PolyAllocator::assignPointers( poly_t *p, unsigned char *b )
 {
 	// rely that base is set
-	p->verts = ( vec3_t* )b;
-	p->normals = ( vec3_t* )( p->verts + p->numverts );
+	p->verts = ( vec4_t* )b;
+	p->normals = ( vec4_t* )( p->verts + p->numverts );
 	p->stcoords = ( vec2_t* )( p->normals + p->numverts );
 	p->colors = ( byte_vec4_t* )( p->stcoords + p->numverts );
 }
 
 size_t PolyAllocator::sizeForPolyData( int numverts, int numelems )
 {
-	return numverts * ( sizeof( vec3_t ) + sizeof( vec3_t ) + sizeof( vec2_t ) + sizeof( byte_vec4_t ) );
+	return numverts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) + sizeof( byte_vec4_t ) );
 }
 
 poly_t *PolyAllocator::get_temp( int numverts, int numelems )

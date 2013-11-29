@@ -272,9 +272,11 @@ static inline void trap_R_UpdateScreen( void )
 	CGAME_IMPORT.R_UpdateScreen();
 }
 
-static inline int trap_R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts, vec3_t *fverts, int maxfragments, fragment_t *fragments )
+static inline int trap_R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], 
+	int maxfverts, vec4_t *fverts, int maxfragments, fragment_t *fragments )
 {
-	return CGAME_IMPORT.R_GetClippedFragments( origin, radius, axis, maxfverts, fverts, maxfragments, fragments );
+	return CGAME_IMPORT.R_GetClippedFragments( origin, radius, axis, 
+		maxfverts, fverts, maxfragments, fragments );
 }
 
 static inline void trap_R_ClearScene( void )

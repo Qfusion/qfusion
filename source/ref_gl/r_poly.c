@@ -105,7 +105,7 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 
 static int numFragmentVerts;
 static int maxFragmentVerts;
-static vec3_t *fragmentVerts;
+static vec4_t *fragmentVerts;
 
 static int numClippedFragments;
 static int maxClippedFragments;
@@ -225,8 +225,11 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 	fr->firstvert = numFragmentVerts;
 	fr->fognum = surf->fog ? surf->fog - r_worldbrushmodel->fogs + 1 : -1;
 	VectorCopy( snorm, fr->normal );
-	for( i = 0, v = verts[0], nextv = fragmentVerts[numFragmentVerts]; i < numv; i++, v += 3, nextv += 3 )
+	for( i = 0, v = verts[0], nextv = fragmentVerts[numFragmentVerts]; i < numv; i++, v += 3, nextv += 4 )
+	{
 		VectorCopy( v, nextv );
+		nextv[3] = 1;
+	}
 
 	numFragmentVerts += numv;
 	if( numFragmentVerts == maxFragmentVerts && numClippedFragments == maxClippedFragments )
@@ -269,7 +272,7 @@ static qboolean R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
 	int i;
 	mesh_t *mesh;
 	elem_t	*elem;
-	vec3_t *verts;
+	vec4_t *verts;
 	vec3_t poly[4];
 	vec3_t dir1, dir2, snorm;
 	qboolean planar;
@@ -324,7 +327,7 @@ static qboolean R_PatchSurfClipFragment( msurface_t *surf, vec3_t normal )
 	int i, j;
 	mesh_t *mesh;
 	elem_t	*elem;
-	vec3_t *verts;
+	vec4_t *verts;
 	vec3_t poly[3];
 	vec3_t dir1, dir2, snorm;
 
@@ -455,7 +458,8 @@ nextNodeOnStack:
 /*
 * R_GetClippedFragments
 */
-int R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts, vec3_t *fverts, int maxfragments, fragment_t *fragments )
+int R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], 
+	int maxfverts, vec4_t *fverts, int maxfragments, fragment_t *fragments )
 {
 	int i;
 	float d;

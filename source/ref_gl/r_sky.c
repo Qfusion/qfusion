@@ -74,7 +74,7 @@ skydome_t *R_CreateSkydome( model_t *model )
 
 	size = sizeof( skydome_t ) + sizeof( mesh_t ) * 6 +
 		sizeof( elem_t ) * ELEM_LEN * 6 +
-		sizeof( vec3_t ) * POINTS_LEN * 6 + sizeof( vec3_t ) * POINTS_LEN * 6 +
+		sizeof( vec4_t ) * POINTS_LEN * 6 + sizeof( vec4_t ) * POINTS_LEN * 6 +
 		sizeof( vec2_t ) * POINTS_LEN * 11;
 	buffer = Mod_Malloc( model, size );
 
@@ -87,8 +87,8 @@ skydome_t *R_CreateSkydome( model_t *model )
 		mesh->elems = ( elem_t * )buffer; buffer += sizeof( elem_t ) * ELEM_LEN;
 
 		mesh->numVerts = POINTS_LEN;
-		mesh->xyzArray = ( vec3_t * )buffer; buffer += sizeof( vec3_t ) * POINTS_LEN;
-		mesh->normalsArray = ( vec3_t * )buffer; buffer += sizeof( vec3_t ) * POINTS_LEN;
+		mesh->xyzArray = ( vec4_t * )buffer; buffer += sizeof( vec4_t ) * POINTS_LEN;
+		mesh->normalsArray = ( vec4_t * )buffer; buffer += sizeof( vec4_t ) * POINTS_LEN;
 
 		if( i != 5 ) {
 			skydome->sphereStCoords[i] = ( vec2_t * )buffer; buffer += sizeof( vec2_t ) * POINTS_LEN;
@@ -611,7 +611,7 @@ loc1:
 void R_AddSkyToDrawList( const msurface_t *fa )
 {
 	int i;
-	vec3_t *vert;
+	vec4_t *vert;
 	elem_t	*elem;
 	mesh_t *mesh;
 	vec3_t verts[4];

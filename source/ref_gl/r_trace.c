@@ -105,7 +105,7 @@ static qboolean R_TraceAgainstSurface( msurface_t *surf )
 	int i;
 	mesh_t *mesh = surf->mesh;
 	elem_t	*elem = mesh->elems;
-	vec3_t *verts = mesh->xyzArray;
+	vec4_t *verts = mesh->xyzArray;
 	float old_frac = trace_fraction;
 	qboolean isPlanar = ( surf->facetype == FACETYPE_PLANAR ) ? qtrue : qfalse;
 

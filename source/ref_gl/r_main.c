@@ -440,8 +440,8 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	int i;
 	vec3_t point;
 	vec3_t v_left, v_up;
-	vec3_t xyz[4];
-	vec3_t normals[4] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
+	vec4_t xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
+	vec4_t normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 	byte_vec4_t colors[4];
 	vec2_t texcoords[4] = { {0, 1}, {0, 0}, {1,0}, {1,1} };
 	mesh_t mesh;
@@ -523,8 +523,8 @@ drawSurfaceType_t nullDrawSurf = ST_NULLMODEL;
 mesh_vbo_t *R_InitNullModelVBO( void )
 {
 	float scale = 15;
-	vec3_t xyz[6];
-	vec3_t normals[6] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
+	vec4_t xyz[6] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
+	vec4_t normals[6] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 	byte_vec4_t colors[6];
 	vec2_t texcoords[6] = { {0,0}, {0,1}, {0,0}, {0,1}, {0,0}, {0,1} };
 	elem_t elems[6] = { 0, 1, 2, 3, 4, 5 };
@@ -599,8 +599,8 @@ static qboolean R_AddNullSurfToDrawList( const entity_t *e )
 
 //==================================================================================
 
-static vec3_t pic_xyz[4] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
-static vec3_t pic_normals[4] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
+static vec4_t pic_xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
+static vec4_t pic_normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 static vec2_t pic_st[4];
 static byte_vec4_t pic_colors[4];
 static mesh_t pic_mesh = { 4, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, 0, NULL };
@@ -1787,9 +1787,9 @@ void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out 
 //===================================================================
 
 /*
-* R_LatLongToNorm
+* R_LatLongToNorm4
 */
-void R_LatLongToNorm( const qbyte latlong[2], vec3_t out )
+void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out )
 {
 	static float * const sinTable = rf.sinTableByte;
 	float sin_a, sin_b, cos_a, cos_b;
@@ -1799,7 +1799,16 @@ void R_LatLongToNorm( const qbyte latlong[2], vec3_t out )
 	cos_b = sinTable[( latlong[1] + 64 ) & 255];
 	sin_b = sinTable[latlong[1]];
 
-	VectorSet( out, cos_b * sin_a, sin_b * sin_a, cos_a );
+	Vector4Set( out, cos_b * sin_a, sin_b * sin_a, cos_a, 0 );
+}
+/*
+* R_LatLongToNorm
+*/
+void R_LatLongToNorm( const qbyte latlong[2], vec3_t out )
+{
+	vec4_t t;
+	R_LatLongToNorm4( latlong, t );
+	VectorCopy( t, out );
 }
 
 /*

@@ -459,20 +459,22 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	}
 
 	// XYZ positions
-	poutmodel->xyzArray = ( vec3_t * )pmem; pmem += sizeof( *poutmodel->xyzArray ) * header->num_vertexes;
+	poutmodel->xyzArray = ( vec4_t * )pmem; pmem += sizeof( *poutmodel->xyzArray ) * header->num_vertexes;
 	for( i = 0; i < header->num_vertexes; i++ ) {
 		for( j = 0; j < 3; j++ ) {
 			poutmodel->xyzArray[i][j] = LittleFloat( vposition[j] );
 		}
+		poutmodel->xyzArray[i][3] = 1;
 		vposition += 3;
 	}
 
 	// normals
-	poutmodel->normalsArray = ( vec3_t * )pmem; pmem += sizeof( *poutmodel->normalsArray ) * header->num_vertexes;
+	poutmodel->normalsArray = ( vec4_t * )pmem; pmem += sizeof( *poutmodel->normalsArray ) * header->num_vertexes;
 	for( i = 0; i < header->num_vertexes; i++ ) {
 		for( j = 0; j < 3; j++ ) {
 			poutmodel->normalsArray[i][j] = LittleFloat( vnormal[j] );
 		}
+		poutmodel->normalsArray[i][3] = 0;
 		vnormal += 3;
 	}
 
@@ -961,12 +963,13 @@ static void R_SkeletalTransformVerts( int numverts, const unsigned int *blends, 
 {
 	const float *pose;
 
-	for( ; numverts; numverts--, v += 3, ov += 3, blends++ ) {
+	for( ; numverts; numverts--, v += 4, ov += 4, blends++ ) {
 		pose = relbonepose[*blends];
 
 		ov[0] = v[0] * pose[0] + v[1] * pose[4] + v[2] * pose[ 8] + pose[12];
 		ov[1] = v[0] * pose[1] + v[1] * pose[5] + v[2] * pose[ 9] + pose[13];
 		ov[2] = v[0] * pose[2] + v[1] * pose[6] + v[2] * pose[10] + pose[14];
+		ov[3] = 1;
 	}
 }
 
@@ -977,12 +980,13 @@ static void R_SkeletalTransformNormals( int numverts, const unsigned int *blends
 {
 	const float *pose;
 
-	for( ; numverts; numverts--, v += 3, ov += 3, blends++ ) {
+	for( ; numverts; numverts--, v += 4, ov += 4, blends++ ) {
 		pose = relbonepose[*blends];
 
 		ov[0] = v[0] * pose[0] + v[1] * pose[4] + v[2] * pose[ 8];
 		ov[1] = v[0] * pose[1] + v[1] * pose[5] + v[2] * pose[ 9];
 		ov[2] = v[0] * pose[2] + v[1] * pose[6] + v[2] * pose[10];
+		ov[3] = 0;
 	}
 }
 
@@ -993,12 +997,13 @@ static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int
 {
 	const float *pose;
 
-	for( ; numverts; numverts--, v += 3, ov += 3, sv += 4, osv += 4, blends++ ) {
+	for( ; numverts; numverts--, v += 4, ov += 4, sv += 4, osv += 4, blends++ ) {
 		pose = relbonepose[*blends];
 
 		ov[0] = v[0] * pose[0] + v[1] * pose[4] + v[2] * pose[ 8];
 		ov[1] = v[0] * pose[1] + v[1] * pose[5] + v[2] * pose[ 9];
 		ov[2] = v[0] * pose[2] + v[1] * pose[6] + v[2] * pose[10];
+		ov[3] = 0;
 
 		osv[0] = sv[0] * pose[0] + sv[1] * pose[4] + sv[2] * pose[ 8];
 		osv[1] = sv[0] * pose[1] + sv[1] * pose[5] + sv[2] * pose[ 9];
