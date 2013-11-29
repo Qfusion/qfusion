@@ -55,7 +55,7 @@ static byte_vec4_t cg_poly_colors[MAX_CGPOLYS][MAX_CGPOLY_VERTS];
 */
 void CG_ClearPolys( void )
 {
-	int i;
+	int i, j;
 
 	memset( cg_polys, 0, sizeof( cg_polys ) );
 
@@ -72,6 +72,10 @@ void CG_ClearPolys( void )
 		cg_polys[i].poly->verts = cg_poly_verts[i];
 		cg_polys[i].poly->stcoords = cg_poly_stcoords[i];
 		cg_polys[i].poly->colors = cg_poly_colors[i];
+
+		for( j = 0; j < MAX_CGPOLY_VERTS; j++ ) {
+			cg_polys[i].poly->verts[j][3] = 1;
+		}
 	}
 }
 
