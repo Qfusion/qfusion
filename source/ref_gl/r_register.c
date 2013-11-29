@@ -497,7 +497,7 @@ static void R_PrintGLExtensionsInfo( void )
 static void R_PrintGLExtensionsString( const char *name, const char *str )
 {
 	size_t len, p;
-	return;
+
 	Com_Printf( "%s: ", name );
 
 	if( str && *str )
