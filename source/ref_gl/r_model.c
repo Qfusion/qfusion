@@ -254,7 +254,7 @@ static void Mod_FinishFaces( model_t *mod )
 		vert = mesh->xyzArray[0];
 		VectorCopy( vert, surf->mins );
 		VectorCopy( vert, surf->maxs );
-		for( j = 1, vert += 3; j < mesh->numVerts; j++, vert += 3 ) {
+		for( j = 1, vert += 4; j < mesh->numVerts; j++, vert += 4 ) {
 			AddPointToBounds( vert, surf->mins, surf->maxs );
 		}
 

@@ -25,7 +25,7 @@ uniform float u_FrontPlane;
 void main(void)
 {
 	vec4 Position = a_Position;
-	vec3 Normal = a_Normal;
+	vec3 Normal = a_Normal.xyz;
 	vec2 TexCoord = a_TexCoord;
 	vec3 Tangent = a_SVector.xyz;
 	float TangentDir = a_SVector.w;

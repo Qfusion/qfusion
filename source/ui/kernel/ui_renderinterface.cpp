@@ -177,11 +177,13 @@ poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex
 	{
 		poly->verts[i][0] = vertices[i].position.x;
 		poly->verts[i][1] = vertices[i].position.y;
-		poly->verts[i][2] = 1.0; // ??
+		poly->verts[i][2] = 1; // ??
+		poly->verts[i][3] = 1;
 
 		poly->normals[i][0] = 0;
 		poly->normals[i][1] = 0;
 		poly->normals[i][2] = 1; // ??
+		poly->normals[i][3] = 0;
 
 		poly->stcoords[i][0] = vertices[i].tex_coord.x;
 		poly->stcoords[i][1] = vertices[i].tex_coord.y;

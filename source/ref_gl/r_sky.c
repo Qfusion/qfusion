@@ -184,7 +184,7 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 		for( c = 0; c < SIDE_SIZE; c++ )
 		{
 			// pos points from eye to vertex on box
-			VectorScale( pos, 1, v );
+			VectorCopy( pos, v );
 			VectorCopy( pos, w );
 
 			// Normalize pos -> w
@@ -213,8 +213,11 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 			VectorAdd( pos, dcol, pos );
 			VectorCopy( norm, n );
 
-			v += 3;
-			n += 3;
+			v[3] = 1;
+			n[3] = 0;
+
+			v += 4;
+			n += 4;
 			if( st ) st += 2;
 			st2 += 2;
 		}

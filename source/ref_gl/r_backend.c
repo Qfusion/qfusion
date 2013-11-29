@@ -907,7 +907,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 		int i;
 		vattribmask_t vattribs = rb.currentVAttribs;
 
-		memcpy( rb.batchMesh.xyzArray + batch->numVerts, mesh->xyzArray, numVerts * sizeof( vec3_t ) );
+		memcpy( rb.batchMesh.xyzArray + batch->numVerts, mesh->xyzArray, numVerts * sizeof( vec4_t ) );
 		if( rb.currentVBOId == RB_VBO_STREAM_QUAD ) {
 			// quad indices are stored in a static vbo
 		} else if( mesh->elems ) {
@@ -923,7 +923,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 			assert( 0 );
 		}
 		if( mesh->normalsArray && (vattribs & VATTRIB_NORMAL_BIT) ) {
-			memcpy( rb.batchMesh.normalsArray + batch->numVerts, mesh->normalsArray, numVerts * sizeof( vec3_t ) );
+			memcpy( rb.batchMesh.normalsArray + batch->numVerts, mesh->normalsArray, numVerts * sizeof( vec4_t ) );
 		}
 		if( mesh->sVectorsArray && (vattribs & VATTRIB_SVECTOR_BIT) ) {
 			memcpy( rb.batchMesh.sVectorsArray + batch->numVerts, mesh->sVectorsArray, numVerts * sizeof( vec4_t ) );
