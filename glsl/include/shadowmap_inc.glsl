@@ -1,3 +1,4 @@
+	{
 		vec3 shadowmaptc = vec3(v_ShadowProjVector[SHADOW_INDEX].xyz / v_ShadowProjVector[SHADOW_INDEX].w);
 
 		// this keeps shadows from appearing on surfaces behind frustum's nearplane
@@ -69,3 +70,4 @@
 		#endif // APPLY_DITHER
 
 		finalcolor *= clamp(max(max(f, d), u_ShadowAlpha), 0.0, 1.0);
+	}
