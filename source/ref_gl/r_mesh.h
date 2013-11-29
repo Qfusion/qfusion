@@ -28,8 +28,8 @@ struct mfog_s;
 typedef struct mesh_s
 {
 	unsigned short		numVerts;
-	vec3_t				*xyzArray;
-	vec3_t				*normalsArray;
+	vec4_t				*xyzArray;
+	vec4_t				*normalsArray;
 	vec4_t				*sVectorsArray;
 	vec2_t				*stArray;
 	vec2_t				*lmstArray[MAX_LIGHTMAPS];

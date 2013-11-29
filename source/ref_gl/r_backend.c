@@ -21,8 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_backend_local.h"
 
-ALIGN( 16 ) vec3_t batchVertsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec3_t batchNormalsArray[MAX_BATCH_VERTS];
+ALIGN( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
+ALIGN( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
 ALIGN( 16 ) vec4_t batchSVectorsArray[MAX_BATCH_VERTS];
 ALIGN( 16 ) vec2_t batchSTCoordsArray[MAX_BATCH_VERTS];
 ALIGN( 16 ) vec2_t batchLMCoordsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
@@ -1005,13 +1005,13 @@ static void RB_EnableVertexAttribs( void )
 
 	// xyz position
 	GL_EnableVertexAttrib( VATTRIB_POSITION, qtrue );
-	qglVertexAttribPointerARB( VATTRIB_POSITION, 3, FLOAT_VATTRIB_TYPE( VATTRIB_POSITION_BIT, hfa ), GL_FALSE, 0, 
+	qglVertexAttribPointerARB( VATTRIB_POSITION, 4, FLOAT_VATTRIB_TYPE( VATTRIB_POSITION_BIT, hfa ), GL_FALSE, 0, 
 		( const GLvoid * )0 );
 
 	// normal
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_NORMAL, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_NORMAL, 3, FLOAT_VATTRIB_TYPE( VATTRIB_NORMAL_BIT, hfa ), GL_FALSE, 0,
+		qglVertexAttribPointerARB( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_TYPE( VATTRIB_NORMAL_BIT, hfa ), GL_FALSE, 0,
 			( const GLvoid * )vbo->normalsOffset );
 	}
 	else {

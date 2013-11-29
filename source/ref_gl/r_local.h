@@ -380,6 +380,7 @@ extern cvar_t *vid_multiscreen_head;
 //====================================================================
 
 void R_LatLongToNorm( const qbyte latlong[2], vec3_t out );
+void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out );
 
 //====================================================================
 
@@ -571,7 +572,7 @@ void R_CopyOffsetElements( const elem_t *inelems, int numElems, int vertsOffset,
 void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
 void R_BuildQuadElements( int vertsOffset, int numVerts, elem_t *elems );
 void R_BuildTrifanElements( int vertsOffset, int numVerts, elem_t *elems );
-void R_BuildTangentVectors( int numVertexes, vec3_t *xyzArray, vec3_t *normalsArray, vec2_t *stArray,
+void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsArray, vec2_t *stArray,
 	int numTris, elem_t *elems, vec4_t *sVectorsArray );
 
 //
@@ -594,7 +595,7 @@ void		R_DrawPolys( void );
 void		R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
 qboolean	R_SurfPotentiallyFragmented( msurface_t *surf );
 int			R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts,
-								  vec3_t *fverts, int maxfragments, fragment_t *fragments );
+								  vec4_t *fverts, int maxfragments, fragment_t *fragments );
 
 //
 // r_register.c

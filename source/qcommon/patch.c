@@ -113,9 +113,11 @@ PATCH_EVALUATE_DECL(type)													\
 	const type *pv[3][3];													\
 	type v1[4] = {0,0,0,0}, v2[4] = {0,0,0,0}, v3[4] = {0,0,0,0};			\
 																			\
+	if (!stride) stride = comp;												\
+																			\
 	num_patches[0] = numcp[0] / 2;											\
 	num_patches[1] = numcp[1] / 2;											\
-	dstpitch = ( num_patches[0] * tess[0] + 1 ) * comp;						\
+	dstpitch = ( num_patches[0] * tess[0] + 1 ) * stride;					\
 																			\
 	step[0] = 1.0f / (float)tess[0];										\
 	step[1] = 1.0f / (float)tess[1];										\
@@ -142,14 +144,14 @@ PATCH_EVALUATE_DECL(type)													\
 				pv[i][2] = &p[( index[2]+i ) * comp];						\
 			}																\
 																			\
-			tvec = dest + v * tess[1] * dstpitch + u * tess[0] * comp;		\
+			tvec = dest + v * tess[1] * dstpitch + u * tess[0] * stride;	\
 			for( y = 0, t = 0.0f; y < num_tess[1]; y++, t += step[1], tvec += dstpitch ) \
 			{																\
 				Patch_Evaluate_QuadricBezier__( t, pv[0][0], pv[0][1], pv[0][2], v1, comp ); \
 				Patch_Evaluate_QuadricBezier__( t, pv[1][0], pv[1][1], pv[1][2], v2, comp ); \
 				Patch_Evaluate_QuadricBezier__( t, pv[2][0], pv[2][1], pv[2][2], v3, comp ); \
 																			\
-				for( x = 0, tvec2 = tvec, s = 0.0f; x < num_tess[0]; x++, s += step[0], tvec2 += comp )	\
+				for( x = 0, tvec2 = tvec, s = 0.0f; x < num_tess[0]; x++, s += step[0], tvec2 += stride )	\
 					Patch_Evaluate_QuadricBezier__( s, v1, v2, v3, tvec2, comp ); \
 			}																\
 		}																	\

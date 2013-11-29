@@ -160,7 +160,7 @@ typedef struct
 
 	// refresh system
 	void ( *R_UpdateScreen )( void );
-	int ( *R_GetClippedFragments )( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts, vec3_t *fverts, int maxfragments, struct fragment_s *fragments );
+	int ( *R_GetClippedFragments )( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts, vec4_t *fverts, int maxfragments, struct fragment_s *fragments );
 	void ( *R_ClearScene )( void );
 	void ( *R_AddEntityToScene )( const struct entity_s *ent );
 	void ( *R_AddLightToScene )( const vec3_t org, float intensity, float r, float g, float b );

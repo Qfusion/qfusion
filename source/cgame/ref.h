@@ -79,8 +79,8 @@ typedef struct fragment_s
 typedef struct poly_s
 {
 	int numverts;
-	vec3_t *verts;
-	vec3_t *normals;
+	vec4_t *verts;
+	vec4_t *normals;
 	vec2_t *stcoords;
 	byte_vec4_t *colors;
 	struct shader_s	*shader;

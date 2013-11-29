@@ -42,8 +42,8 @@ static cdecal_t	cg_decals[MAX_DECALS];
 static cdecal_t	cg_decals_headnode, *cg_free_decals;
 
 static poly_t cg_decal_polys[MAX_DECALS];
-static vec3_t cg_decal_verts[MAX_DECALS][MAX_DECAL_VERTS];
-static vec3_t cg_decal_norms[MAX_DECALS][MAX_DECAL_VERTS];
+static vec4_t cg_decal_verts[MAX_DECALS][MAX_DECAL_VERTS];
+static vec4_t cg_decal_norms[MAX_DECALS][MAX_DECAL_VERTS];
 static vec2_t cg_decal_stcoords[MAX_DECALS][MAX_DECAL_VERTS];
 static byte_vec4_t cg_decal_colors[MAX_DECALS][MAX_DECAL_VERTS];
 
@@ -129,7 +129,7 @@ void CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
 	cdecal_t *dl;
 	poly_t *poly;
 	vec3_t axis[3];
-	vec3_t verts[MAX_DECAL_VERTS];
+	vec4_t verts[MAX_DECAL_VERTS];
 	vec3_t v;
 	byte_vec4_t color;
 	fragment_t *fr, fragments[MAX_DECAL_FRAGMENTS];
@@ -206,8 +206,8 @@ void CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
 
 		for( j = 0; j < fr->numverts; j++ )
 		{
-			VectorCopy( verts[fr->firstvert+j], poly->verts[j] );
-			VectorCopy( fr->normal, poly->normals[j] );
+			Vector4Copy( verts[fr->firstvert+j], poly->verts[j] );
+			VectorCopy( fr->normal, poly->normals[j] ); poly->normals[j][3] = 0;
 			VectorSubtract( poly->verts[j], origin, v );
 			poly->stcoords[j][0] = DotProduct( v, axis[1] ) + 0.5f;
 			poly->stcoords[j][1] = DotProduct( v, axis[2] ) + 0.5f;

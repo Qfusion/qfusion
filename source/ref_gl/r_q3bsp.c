@@ -502,7 +502,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numVerts = size[0] * size[1];
 			numElems = ( size[0] - 1 ) * ( size[1] - 1 ) * 6;
 
-			bufSize = sizeof( mesh_t ) + numVerts * ( sizeof( vec3_t ) + sizeof( vec3_t ) + sizeof( vec2_t ) );
+			bufSize = sizeof( mesh_t ) + numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			bufSize += numElems * sizeof( elem_t );
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( vec2_t );
@@ -515,26 +515,34 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
-			mesh->xyzArray = ( vec3_t * )buffer; buffer += numVerts * sizeof( vec3_t );
-			mesh->normalsArray = ( vec3_t * )buffer; buffer += numVerts * sizeof( vec3_t );
+			mesh->xyzArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
+			mesh->normalsArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
 			mesh->stArray = ( vec2_t * )buffer; buffer += numVerts * sizeof( vec2_t );
 
-			Patch_Evaluate( vec_t, 3, loadmodel_xyz_array[inFirstVert], patch_cp, step, mesh->xyzArray[0] );
-			Patch_Evaluate( vec_t, 3, loadmodel_normals_array[inFirstVert], patch_cp, step, mesh->normalsArray[0] );
-			Patch_Evaluate( vec_t, 2, loadmodel_st_array[inFirstVert], patch_cp, step, mesh->stArray[0] );
+			Patch_Evaluate( vec_t, 3, loadmodel_xyz_array[inFirstVert], 
+				patch_cp, step, mesh->xyzArray[0], 4 );
+
+			Patch_Evaluate( vec_t, 3, loadmodel_normals_array[inFirstVert],
+				patch_cp, step, mesh->normalsArray[0], 4 );
+
+			Patch_Evaluate( vec_t, 2, loadmodel_st_array[inFirstVert], 
+				patch_cp, step, mesh->stArray[0], 0 );
+
 			for( i = 0; i < numVerts; i++ )
 				VectorNormalize( mesh->normalsArray[i] );
 
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255 && LittleLong( in->lm_texnum[j] ) >= 0; j++ )
 			{
 				mesh->lmstArray[j] = ( vec2_t * )buffer; buffer += numVerts * sizeof( vec2_t );
-				Patch_Evaluate( vec_t, 2, loadmodel_lmst_array[j][inFirstVert], patch_cp, step, mesh->lmstArray[j][0] );
+				Patch_Evaluate( vec_t, 2, loadmodel_lmst_array[j][inFirstVert], 
+					patch_cp, step, mesh->lmstArray[j][0], 0 );
 			}
 
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 			{
 				mesh->colorsArray[j] = ( byte_vec4_t * )buffer; buffer += numVerts * sizeof( byte_vec4_t );
-				Patch_Evaluate( qbyte, 4, loadmodel_colors_array[j][inFirstVert + i], patch_cp, step, mesh->colorsArray[j][0] );
+				Patch_Evaluate( qbyte, 4, loadmodel_colors_array[j][inFirstVert + i], 
+					patch_cp, step, mesh->colorsArray[j][0], 0 );
 			}
 
 			// compute new elems
@@ -582,7 +590,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numElems = LittleLong( in->numelems );
 			firstElem = LittleLong( in->firstelem );
 
-			bufSize = sizeof( mesh_t ) + numVerts * ( sizeof( vec3_t ) + sizeof( vec3_t ) + sizeof( vec2_t ) );
+			bufSize = sizeof( mesh_t ) + numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			bufSize += numElems * sizeof( elem_t );
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( vec2_t );
@@ -599,12 +607,18 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
-			mesh->xyzArray = ( vec3_t * )buffer; buffer += numVerts * sizeof( vec3_t );
-			mesh->normalsArray = ( vec3_t * )buffer; buffer += numVerts * sizeof( vec3_t );
+			mesh->xyzArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
+			mesh->normalsArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
 			mesh->stArray = ( vec2_t * )buffer; buffer += numVerts * sizeof( vec2_t );
 
-			memcpy( mesh->xyzArray, loadmodel_xyz_array + firstVert, numVerts * sizeof( vec3_t ) );
-			memcpy( mesh->normalsArray, loadmodel_normals_array + firstVert, numVerts * sizeof( vec3_t ) );
+			for( j = 0; j < numVerts; j++ ) {
+				VectorCopy( loadmodel_xyz_array[firstVert+j], mesh->xyzArray[j] );
+				mesh->xyzArray[j][3] = 1;
+
+				VectorCopy( loadmodel_normals_array[firstVert+j], mesh->normalsArray[j] );
+				mesh->normalsArray[j][3] = 0;
+			}
+
 			memcpy( mesh->stArray, loadmodel_st_array + firstVert, numVerts * sizeof( vec2_t ) );
 
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255 && LittleLong( in->lm_texnum[j] ) >= 0; j++ )

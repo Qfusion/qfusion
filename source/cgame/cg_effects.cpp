@@ -190,8 +190,8 @@ typedef struct
 	int entNum;
 	struct shader_s *shader;
 
-	vec3_t verts[MAX_BLOBSHADOW_VERTS];
-	vec3_t norms[MAX_BLOBSHADOW_VERTS];
+	vec4_t verts[MAX_BLOBSHADOW_VERTS];
+	vec4_t norms[MAX_BLOBSHADOW_VERTS];
 	vec2_t stcoords[MAX_BLOBSHADOW_VERTS];
 	byte_vec4_t colors[MAX_BLOBSHADOW_VERTS];
 } cgshadebox_t;
@@ -214,7 +214,7 @@ static void CG_AddBlobShadow( vec3_t origin, vec3_t dir, float orient, float rad
 	fragment_t *fr, fragments[MAX_BLOBSHADOW_FRAGMENTS];
 	int numfragments;
 	poly_t poly;
-	vec3_t verts[MAX_BLOBSHADOW_VERTS];
+	vec4_t verts[MAX_BLOBSHADOW_VERTS];
 
 	if( radius <= 0 || VectorCompare( dir, vec3_origin ) )
 		return; // invalid
@@ -270,8 +270,8 @@ static void CG_AddBlobShadow( vec3_t origin, vec3_t dir, float orient, float rad
 		{
 			vec3_t v;
 
-			VectorCopy( verts[fr->firstvert+j], poly.verts[j] );
-			VectorCopy( axis[0], poly.normals[j] );
+			Vector4Copy( verts[fr->firstvert+j], poly.verts[j] );
+			VectorCopy( axis[0], poly.normals[j] ); poly.normals[j][3] = 0;
 			VectorSubtract( poly.verts[j], origin, v );
 			poly.stcoords[j][0] = DotProduct( v, axis[1] ) + 0.5f;
 			poly.stcoords[j][1] = DotProduct( v, axis[2] ) + 0.5f;
@@ -408,9 +408,9 @@ void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radiu
 	fragment_t *fr, fragments[MAX_TEMPDECAL_FRAGMENTS];
 	int numfragments;
 	poly_t poly;
-	vec3_t verts[MAX_BLOBSHADOW_VERTS];
-	static vec3_t t_verts[MAX_TEMPDECAL_VERTS*MAX_TEMPDECALS];
-	static vec3_t t_norms[MAX_TEMPDECAL_VERTS*MAX_TEMPDECALS];
+	vec4_t verts[MAX_BLOBSHADOW_VERTS];
+	static vec4_t t_verts[MAX_TEMPDECAL_VERTS*MAX_TEMPDECALS];
+	static vec4_t t_norms[MAX_TEMPDECAL_VERTS*MAX_TEMPDECALS];
 	static vec2_t t_stcoords[MAX_TEMPDECAL_VERTS*MAX_TEMPDECALS];
 	static byte_vec4_t t_colors[MAX_TEMPDECAL_VERTS*MAX_TEMPDECALS];
 
@@ -502,7 +502,7 @@ typedef struct particle_s
 	bool fog;
 
 	poly_t poly;
-	vec3_t pVerts[4];
+	vec4_t pVerts[4];
 	vec2_t pStcoords[4];
 	byte_vec4_t pColor[4];
 
@@ -959,10 +959,10 @@ void CG_AddParticles( void )
 		corner[1] = org[1] - 0.5f * p->scale;
 		corner[2] = org[2] - 0.5f * p->scale;
 
-		VectorSet( p->pVerts[0], corner[0], corner[1] + p->scale, corner[2] + p->scale );
-		VectorSet( p->pVerts[1], corner[0], corner[1], corner[2] + p->scale );
-		VectorSet( p->pVerts[2], corner[0], corner[1], corner[2] );
-		VectorSet( p->pVerts[3], corner[0], corner[1] + p->scale, corner[2] );
+		Vector4Set( p->pVerts[0], corner[0], corner[1] + p->scale, corner[2] + p->scale, 1 );
+		Vector4Set( p->pVerts[1], corner[0], corner[1], corner[2] + p->scale, 1 );
+		Vector4Set( p->pVerts[2], corner[0], corner[1], corner[2], 1 );
+		Vector4Set( p->pVerts[3], corner[0], corner[1] + p->scale, corner[2], 1 );
 		for( k = 0; k < 4; k++ )
 		{
 			Vector4Copy( color, p->pColor[k] );

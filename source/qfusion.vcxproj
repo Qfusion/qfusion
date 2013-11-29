@@ -299,6 +299,7 @@
     <ClInclude Include="gameshared\config.h" />
     <ClInclude Include="qcommon\patch.h" />
     <ClInclude Include="qcommon\patch_eval_inc.h" />
+    <ClInclude Include="ref_gl\r_public.h" />
     <ClInclude Include="win32\conproc.h" />
     <ClInclude Include="client\console.h" />
     <ClInclude Include="qcommon\cvar.h" />

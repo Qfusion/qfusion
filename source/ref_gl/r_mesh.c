@@ -567,7 +567,8 @@ void R_BuildTrifanElements( int vertsOffset, int numVerts, elem_t *elems )
 /*
 * R_BuildTangentVectors
 */
-void R_BuildTangentVectors( int numVertexes, vec3_t *xyzArray, vec3_t *normalsArray, vec2_t *stArray, int numTris, elem_t *elems, vec4_t *sVectorsArray )
+void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsArray, 
+	vec2_t *stArray, int numTris, elem_t *elems, vec4_t *sVectorsArray )
 {
 	int i, j;
 	float d, *v[3], *tc[3];
@@ -624,7 +625,7 @@ void R_BuildTangentVectors( int numVertexes, vec3_t *xyzArray, vec3_t *normalsAr
 	}
 
 	// normalize
-	for( i = 0, s = *sVectorsArray, t = *tVectorsArray, n = *normalsArray; i < numVertexes; i++, s += 4, t += 3, n += 3 )
+	for( i = 0, s = *sVectorsArray, t = *tVectorsArray, n = *normalsArray; i < numVertexes; i++, s += 4, t += 3, n += 4 )
 	{
 		// keep s\t vectors perpendicular
 		d = -DotProduct( s, n );

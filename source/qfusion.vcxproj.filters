@@ -407,6 +407,9 @@
     <ClInclude Include="client\l10n.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ref_gl\r_public.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="win32\qfusion.ico">

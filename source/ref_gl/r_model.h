@@ -238,8 +238,8 @@ typedef struct maliasmesh_s
 	maliasvertex_t *vertexes;
 	vec2_t			*stArray;
 
-	vec3_t			*xyzArray;
-	vec3_t			*normalsArray;
+	vec4_t			*xyzArray;
+	vec4_t			*normalsArray;
 	vec4_t			*sVectorsArray;
 
 	int				numtris;
@@ -303,8 +303,8 @@ typedef struct mskmesh_s
 	qbyte			*blendWeights;
 
 	unsigned int	numverts;
-	vec3_t			*xyzArray;
-	vec3_t			*normalsArray;
+	vec4_t			*xyzArray;
+	vec4_t			*normalsArray;
 	vec2_t			*stArray;
 	vec4_t			*sVectorsArray;
 
@@ -348,8 +348,8 @@ typedef struct mskmodel_s
 	elem_t			*elems;
 
 	unsigned int	numverts;
-	vec3_t			*xyzArray;
-	vec3_t			*normalsArray;
+	vec4_t			*xyzArray;
+	vec4_t			*normalsArray;
 	vec2_t			*stArray;
 	vec4_t			*sVectorsArray;
 	qbyte			*blendIndices;

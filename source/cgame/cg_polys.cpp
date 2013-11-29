@@ -46,7 +46,7 @@ static cpoly_t cg_polys[MAX_CGPOLYS];
 static cpoly_t cg_polys_headnode, *cg_free_polys;
 
 static poly_t cg_poly_polys[MAX_CGPOLYS];
-static vec3_t cg_poly_verts[MAX_CGPOLYS][MAX_CGPOLY_VERTS];
+static vec4_t cg_poly_verts[MAX_CGPOLYS][MAX_CGPOLY_VERTS];
 static vec2_t cg_poly_stcoords[MAX_CGPOLYS][MAX_CGPOLY_VERTS];
 static byte_vec4_t cg_poly_colors[MAX_CGPOLYS][MAX_CGPOLY_VERTS];
 

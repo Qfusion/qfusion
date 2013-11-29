@@ -79,8 +79,8 @@ typedef struct
 	drawSurfaceType_t type;
 
 	int	numVerts;
-	vec3_t *xyzArray;
-	vec3_t *normalsArray;
+	vec4_t *xyzArray;
+	vec4_t *normalsArray;
 	vec2_t *stArray;
 	byte_vec4_t *colorsArray;
 	struct shader_s	*shader;

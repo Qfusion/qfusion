@@ -68,8 +68,8 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	dlight_t *light = rsc.dlights + (drawSurf - r_coronaSurfs);
 	float radius = light->intensity, colorscale;
 	float up = radius, down = -radius, left = -radius, right = radius;
-	vec3_t xyz[4];
-	vec3_t normals[4] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
+	vec4_t xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
+	vec4_t normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 	byte_vec4_t colors[4];
 	vec2_t texcoords[4] = { {0, 1}, {0, 0}, {1,0}, {1,1} };
 	mesh_t mesh;

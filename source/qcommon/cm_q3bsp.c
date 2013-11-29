@@ -209,7 +209,7 @@ static void CM_CreatePatch( cmodel_state_t *cms, cface_t *patch, cshaderref_t *s
 	brushplanes = ( cplane_t * )data; data += ( size[0]-1 ) * ( size[1]-1 ) * 2 * MAX_FACET_PLANES * sizeof( cplane_t );
 
 	// fill in
-	Patch_Evaluate( vec_t, 3, verts[0], patch_cp, step, points[0] );
+	Patch_Evaluate( vec_t, 3, verts[0], patch_cp, step, points[0], 0 );
 
 	totalsides = 0;
 	patch->numfacets = 0;
