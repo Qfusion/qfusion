@@ -341,7 +341,7 @@ void CG_AddShadeBoxes( void )
 	vec3_t lightdir, end, sborigin;
 	trace_t	trace;
 
-	if( cg_shadows->integer != 1 )
+	if( !cg_shadows->integer )
 		return;
 
 	for( i = 0, sb = cg_shadeBoxes; i < cg_numShadeBoxes; i++, sb++ )
