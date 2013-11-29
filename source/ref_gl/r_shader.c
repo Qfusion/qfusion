@@ -2743,24 +2743,6 @@ create_default:
 			// the actual image will be picked at rendering time based on skyside number
 			pass->images[0] = r_whitetexture;
 			break;
-		case SHADER_TYPE_SKYCLIP:
-			// a shader that only writes to depthbuffer
-			s->vattribs = VATTRIB_POSITION_BIT;
-			s->sort = SHADER_SORT_SKY;
-			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_SKY;
-			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
-			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
-
-			pass = &s->passes[0];
-			pass->rgbgen.type = RGB_GEN_IDENTITY;
-			pass->alphagen.type = ALPHA_GEN_IDENTITY;
-			pass->tcgen = TC_GEN_NONE;
-			pass->flags = GLSTATE_DEPTHWRITE|GLSTATE_NO_COLORWRITE;
-			// the actual image will be picked at rendering time based on skyside number
-			pass->images[0] = r_whitetexture;
-			break;
 		default:
 			break;
 		}

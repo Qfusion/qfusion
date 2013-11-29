@@ -991,7 +991,6 @@ static void R_InitVolatileAssets( void )
 	rf.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, qtrue );
 	rf.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, qtrue );
 	rf.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, qtrue );
-	rf.skyclipShader = R_LoadShader( "$skyclip", SHADER_TYPE_SKYCLIP, qtrue );
 
 	if( !rf.nullVBO ) {
 		rf.nullVBO = R_InitNullModelVBO();
