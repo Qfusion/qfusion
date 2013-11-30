@@ -170,7 +170,9 @@ void FunctionCallScheduler::removeFunction( int id )
 {
 	FunctionMap::iterator it = functions.find( id );
 	if( it != functions.end() ) {
+		ScheduledFunction *func = it->second;
 		functions.erase( it );
+		__delete__( func );
 	}
 }
 
