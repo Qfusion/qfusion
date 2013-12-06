@@ -79,7 +79,6 @@ HWND cl_parent_hwnd;	// pointer to parent window handle
 static HHOOK WinKeyHook;
 static qboolean s_winkeys_hooked;
 static qboolean s_alttab_disabled;
-extern qboolean	s_win95;
 extern unsigned	sys_msg_time;
 
 /*
@@ -120,16 +119,8 @@ void VID_EnableAltTab( qboolean enable )
 	{
 		if( s_alttab_disabled )
 		{
-			if( s_win95 )
-			{
-				BOOL old;
-				SystemParametersInfo( SPI_SETSCREENSAVERRUNNING, 0, &old, 0 );
-			}
-			else
-			{
-				UnregisterHotKey( 0, 0 );
-				UnregisterHotKey( 0, 1 );
-			}
+			UnregisterHotKey( 0, 0 );
+			UnregisterHotKey( 0, 1 );
 			s_alttab_disabled = qfalse;
 		}
 	}
@@ -138,16 +129,9 @@ void VID_EnableAltTab( qboolean enable )
 		if( s_alttab_disabled )
 			return;
 
-		if( s_win95 )
-		{
-			BOOL old;
-			SystemParametersInfo( SPI_SETSCREENSAVERRUNNING, 1, &old, 0 );
-		}
-		else
-		{
-			RegisterHotKey( 0, 0, MOD_ALT, VK_TAB );
-			RegisterHotKey( 0, 1, MOD_ALT, VK_RETURN );
-		}
+		RegisterHotKey( 0, 0, MOD_ALT, VK_TAB );
+		RegisterHotKey( 0, 1, MOD_ALT, VK_RETURN );
+
 		s_alttab_disabled = qtrue;
 	}
 }
@@ -157,9 +141,6 @@ void VID_EnableAltTab( qboolean enable )
 */
 void VID_EnableWinKeys( qboolean enable )
 {
-	if( s_win95 )
-		return; // requires at least WinNT 4.0
-
 	if( enable )
 	{
 		if( !s_winkeys_hooked )
