@@ -65,6 +65,8 @@ LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
 HINSTANCE hInstDS;
 HWND cl_hwnd;
 
+static qboolean s_active = qfalse;
+
 static qboolean SNDDMA_InitWav( qboolean verbose );
 static sndinitstat SNDDMA_InitDirect( qboolean verbose );
 
@@ -649,6 +651,7 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 		return qfalse;
 	}
 
+	s_active = qtrue;
 	return qtrue;
 }
 
@@ -763,7 +766,7 @@ void SNDDMA_Submit( void )
 	{
 		if( snd_completed == snd_sent )
 		{
-			Com_Printf( "Sound overrun\n" );
+			//Com_Printf( "Sound overrun\n" );
 			break;
 		}
 
@@ -789,13 +792,16 @@ void SNDDMA_Submit( void )
 		* waveOutWrite function returns immediately and waveform
 		* data is sent to the output device in the background.
 		*/
-		wResult = waveOutWrite( hWaveOut, h, sizeof( WAVEHDR ) );
-
-		if( wResult != MMSYSERR_NOERROR )
+		if( s_active )
 		{
-			Com_Printf( "Failed to write block to device\n" );
-			FreeSound( qtrue );
-			return;
+			wResult = waveOutWrite( hWaveOut, h, sizeof( WAVEHDR ) );
+
+			if( wResult != MMSYSERR_NOERROR )
+			{
+				Com_Printf( "Failed to write block to device\n" );
+				FreeSound( qtrue );
+				return;
+			}
 		}
 	}
 }
@@ -820,6 +826,11 @@ void SNDDMA_Shutdown( qboolean verbose )
 */
 void S_Activate( qboolean active )
 {
+	s_active = active;
+
+	// block the background track from being read from disk
+	S_LockBackgroundTrack( !active );
+
 	if( !pDS )
 		return;
 
@@ -829,7 +840,4 @@ void S_Activate( qboolean active )
 		Com_Printf( "DirectSound SetCooperativeLevel failed\n" );
 		SNDDMA_Shutdown( qfalse );
 	}
-
-	// block the background track from being read from disk
-	S_LockBackgroundTrack( !active );
 }
