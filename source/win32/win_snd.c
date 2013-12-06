@@ -595,7 +595,7 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 
 	memset( (void *)&dma, 0, sizeof( dma ) );
 
-	s_wavonly = trap_Cvar_Get( "s_wavonly", "0", 0 );
+	s_wavonly = trap_Cvar_Get( "s_wavonly", "0", CVAR_LATCH_SOUND );
 
 	dsound_init = wav_init = qfalse;
 
