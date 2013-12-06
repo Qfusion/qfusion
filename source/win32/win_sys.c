@@ -35,8 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MINIMUM_WIN_MEMORY  0x0a00000
 #define MAXIMUM_WIN_MEMORY  0x1000000
 
-qboolean s_win95;
-
 int starttime;
 int ActiveApp;
 int Minimized;
@@ -229,13 +227,9 @@ void Sys_Init( void )
 	if( !GetVersionEx( &vinfo ) )
 		Sys_Error( "Couldn't get OS info" );
 
-	if( vinfo.dwMajorVersion < 4 )
-		Sys_Error( "%s requires windows version 4 or greater", APPLICATION );
-	if( vinfo.dwPlatformId == VER_PLATFORM_WIN32s )
-		Sys_Error( "%s doesn't run on Win32s", APPLICATION );
-	else if( vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS )
-		s_win95 = qtrue;
-
+	if( vinfo.dwMajorVersion < 5 )
+		Sys_Error( "%s requires windows version 5 or greater", APPLICATION );
+	
 	if( dedicated->integer )
 	{
 		SetPriorityClass( GetCurrentProcess(), HIGH_PRIORITY_CLASS );
