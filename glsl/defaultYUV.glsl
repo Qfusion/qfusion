@@ -28,7 +28,7 @@ uniform sampler2D u_YUVTextureV;
 
 void main(void)
 {
-	gl_FragColor = vec4(YUV2RGB(vec3(
+	gl_FragColor = vec4(YUV2RGB_HDTV(vec3(
 		texture2D(u_YUVTextureY, v_TexCoord).r,
 		texture2D(u_YUVTextureU, v_TexCoord).r, 
 		texture2D(u_YUVTextureV, v_TexCoord).r
