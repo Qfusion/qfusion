@@ -258,7 +258,9 @@ upload_image:
 			uploadHeight = 1;
 			for( ; uploadHeight < imageHeight; uploadHeight <<= 1 );
 
-			Q_snprintfz( shaderName, sizeof( shaderName ), "%s %i (%i)", family->name, size, imageNum );
+			Q_snprintfz( shaderName, sizeof( shaderName ), 
+				"%s %i %i (%i)", 
+				family->name, size, family->style, imageNum );
 			shader = trap_R_RegisterRawPic( shaderName, uploadWidth, uploadHeight, tempRGBA );
 
 			qfont->shaderNames[imageNum] = FTLIB_CopyString( shaderName );
