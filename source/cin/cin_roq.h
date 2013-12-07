@@ -29,6 +29,6 @@ qboolean RoQ_Init_CIN( cinematics_t *cin );
 void RoQ_Shutdown_CIN( cinematics_t *cin );
 void RoQ_Reset_CIN( cinematics_t *cin );
 qboolean RoQ_NeedNextFrame_CIN( cinematics_t *cin );
-qbyte *RoQ_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw );
+cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw );
 
 #endif
