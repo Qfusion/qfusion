@@ -29,7 +29,7 @@ int clientVoteChanges[MAX_CLIENTS];
 cvar_t *g_callvote_electpercentage;
 cvar_t *g_callvote_electtime;          // in seconds
 cvar_t *g_callvote_enabled;
-cvar_t *g_vote_maxchanges;
+cvar_t *g_callvote_maxchanges;
 
 enum
 {
@@ -1753,7 +1753,7 @@ void G_FreeCallvotes( void )
 void G_CallVotes_ResetClient( int n )
 {
 	clientVoted[n] = VOTED_NOTHING;
-	clientVoteChanges[n] = g_vote_maxchanges->integer;
+	clientVoteChanges[n] = g_callvote_maxchanges->integer;
 	if( clientVoteChanges[n] < 1 )
 		clientVoteChanges[n] = 1;
 }
@@ -2382,7 +2382,7 @@ void G_CallVotes_Init( void )
 	g_callvote_electpercentage =	trap_Cvar_Get( "g_vote_percent", "55", CVAR_ARCHIVE );
 	g_callvote_electtime =		trap_Cvar_Get( "g_vote_electtime", "40", CVAR_ARCHIVE );
 	g_callvote_enabled =		trap_Cvar_Get( "g_vote_allowed", "1", CVAR_ARCHIVE );
-	g_vote_maxchanges =		trap_Cvar_Get( "g_vote_maxchanges", "3", CVAR_ARCHIVE );
+	g_callvote_maxchanges =		trap_Cvar_Get( "g_vote_maxchanges", "3", CVAR_ARCHIVE );
 
 	// register all callvotes
 
