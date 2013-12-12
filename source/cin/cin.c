@@ -71,12 +71,15 @@ static const cin_type_t cin_types[] =
 		RoQ_Shutdown_CIN,
 		RoQ_Reset_CIN,
 		RoQ_NeedNextFrame_CIN,
-		RoQ_ReadNextFrame_CIN,
-		NULL
+		NULL,
+		RoQ_ReadNextFrameYUV_CIN
 	},
 
 	// NULL safe guard
 	{
+		NULL,
+		NULL,
+		NULL,
 		NULL,
 		NULL,
 		NULL,
