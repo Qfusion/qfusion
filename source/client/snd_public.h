@@ -126,7 +126,11 @@ typedef struct
 
 	// cinema
 	void ( *RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
-	unsigned int ( *GetRawSamplesTime )( void ); // Mixing position in milliseconds for A/V sync
+	void ( *PositionedRawSamples )( int entnum, float fvol, float attenuation, 
+		unsigned int samples, unsigned int rate, 
+		unsigned short width, unsigned short channels, const qbyte *data );
+	unsigned int ( *GetRawSamplesLength )( void );
+	unsigned int ( *GetPositionedRawSamplesLength )( int entnum );
 
 	// music
 	void ( *StartBackgroundTrack )( const char *intro, const char *loop );

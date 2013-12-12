@@ -907,7 +907,7 @@ init_qgl:
 
 	memset( &rf, 0, sizeof( rf ) );
 	rf.registrationSequence = 1;
-	rf.lastRegistrationSequence = 1;
+	rf.registrationOpen = qfalse;
 
 	rf.applicationName = R_CopyString( applicationName );
 	rf.screenshotPrefix = R_CopyString( screenshotPrefix );
@@ -1024,6 +1024,7 @@ void R_BeginRegistration( void )
 		// since rf.registrationSequence never equals 0
 		rf.registrationSequence = 1; 
 	}
+	rf.registrationOpen = qtrue;
 
 	RB_BeginRegistration();
 
@@ -1035,11 +1036,11 @@ void R_BeginRegistration( void )
 */
 void R_EndRegistration( void )
 {
-	if( rf.registrationSequence == rf.lastRegistrationSequence ) {
+	if( rf.registrationOpen == qfalse ) {
 		return;
 	}
 
-	rf.lastRegistrationSequence = rf.registrationSequence;
+	rf.registrationOpen = qfalse;
 
 	R_FreeUnusedModels();
 	R_FreeUnusedVBOs();
@@ -1050,6 +1051,8 @@ void R_EndRegistration( void )
 	R_FreeUnusedFBObjects();
 
 	RB_EndRegistration();
+
+	R_RestartCinematics();
 }
 
 /*

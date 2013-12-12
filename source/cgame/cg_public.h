@@ -25,9 +25,12 @@ typedef size_t (*cg_async_stream_read_cb_t)(const void *buf, size_t numb, float 
 	int status, const char *contentType, void *privatep);
 typedef void (*cg_async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
 
+typedef void (*cg_raw_samples_cb_t)(void*,unsigned int, unsigned int, unsigned short, unsigned short, const qbyte *);
+typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
+
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   64
+#define	CGAME_API_VERSION   65
 
 //
 // structs and variables shared with the main engine
@@ -191,6 +194,8 @@ typedef struct
 	int ( *R_SkeletalGetNumBones )( const struct model_s *mod, int *numFrames );
 	int ( *R_SkeletalGetBoneInfo )( const struct model_s *mod, int bone, char *name, size_t name_size, int *flags );
 	void ( *R_SkeletalGetBonePose )( const struct model_s *mod, int bone, int frame, struct bonepose_s *bonepose );
+	struct shader_s *( *R_GetShaderForOrigin )( const vec3_t origin );
+	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
 
 	void ( *VID_FlashWindow )( int count );
 
@@ -213,6 +218,11 @@ typedef struct
 	void ( *S_AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop );
 	void ( *S_StopBackgroundTrack )( void );
+	void ( *S_RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data );
+	void ( *S_PositionedRawSamples )( int entnum, float fvol, float attenuation, 
+		unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data );
+	unsigned int ( *S_GetRawSamplesLength )( void );
+	unsigned int ( *S_GetPositionedRawSamplesLength )( int entnum );
 
 	// fonts
 	struct qfontface_s *( *SCR_RegisterFont )( const char *family, int style, unsigned int size );
@@ -231,6 +241,10 @@ typedef struct
 	void ( *L10n_ClearDomain )( void );
 	void ( *L10n_LoadLangPOFile )( const char *filepath );
 	const char *( *L10n_TranslateString )( const char *string );
+
+	// cinematics
+	qboolean ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener, 
+		cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
 } cgame_import_t;
 
 //

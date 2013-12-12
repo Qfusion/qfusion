@@ -23,24 +23,16 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "snd_local.h"
 
-#define MUSIC_BUFFERS		8
-#define MUSIC_BUFFER_SIZE	8192
+#define MUSIC_BUFFER_SIZE		8192
 
-static src_t *src = NULL;
-static ALuint source;
-static ALuint buffers[MUSIC_BUFFERS];
+#define MUSIC_PRELOAD_MSEC		200
 
-static qboolean queued_buffers;
-static qboolean alloced_buffers;
-
-static qbyte decode_buffer[MUSIC_BUFFER_SIZE];
+#define MUSIC_BUFFERING_SIZE	(MUSIC_BUFFER_SIZE*4+4000)
 
 // =================================
 
 static bgTrack_t *s_bgTrack;
 static bgTrack_t *s_bgTrackHead;
-
-#define BACKGROUND_TRACK_BUFFERING_SIZE		MUSIC_BUFFER_SIZE*4+4000
 
 static qboolean s_bgTrackPaused = qfalse;  // the track is manually paused
 static qboolean s_bgTrackLocked = qfalse;  // the track is blocked by the game (e.g. the window's minimized)
@@ -335,82 +327,52 @@ static qboolean S_AdvanceBackgroundTrack( int n )
 /*
 * Local helper functions
 */
-
-static void music_source_get( void )
-{
-	// Allocate a source at high priority
-	src = S_AllocSource( SRCPRI_STREAM, -2, 0 );
-	if( !src )
-		return;
-
-	S_LockSource( src );
-	source = S_GetALSource( src );
-
-	qalSource3f( source, AL_POSITION, 0.0, 0.0, 0.0 );
-	qalSource3f( source, AL_VELOCITY, 0.0, 0.0, 0.0 );
-	qalSource3f( source, AL_DIRECTION, 0.0, 0.0, 0.0 );
-	qalSourcef( source, AL_ROLLOFF_FACTOR, 0.0 );
-	qalSourcei( source, AL_SOURCE_RELATIVE, AL_TRUE );
-	qalSourcef( source, AL_GAIN, s_musicvolume->value );
-}
-
-static void music_source_free( void )
-{
-	if( src )
-		S_UnlockSource( src );
-	source = 0;
-	src = NULL;
-}
-
-static qboolean music_process( ALuint b )
+static qboolean music_process( void )
 {
 	int l = 0;
-	ALuint format;
-	ALenum error;
 	snd_stream_t *music_stream;
+	qbyte decode_buffer[MUSIC_BUFFER_SIZE];
 
-start:
-	if( s_bgTrackBuffering )
-		return qtrue;
-
-	music_stream = s_bgTrack->stream;
-	if( music_stream ) {
-		l = S_ReadStream( music_stream, MUSIC_BUFFER_SIZE, decode_buffer );
-	}
-	else {
-		l = 0;
-	}
-
-	if( !l )
+	while( S_GetRawSamplesLength() < MUSIC_PRELOAD_MSEC )
 	{
-		bgTrack_t *cur;
+		music_stream = s_bgTrack->stream;
+		if( music_stream ) {
+			l = S_ReadStream( music_stream, MUSIC_BUFFER_SIZE, decode_buffer );
+		}
+		else {
+			l = 0;
+		}
 
-		cur = s_bgTrack;
-		if( !S_AdvanceBackgroundTrack( 1 ) )
+		if( !l )
 		{
-			if( !S_ValidMusicFile( s_bgTrack ) )
+			bgTrack_t *cur;
+
+			cur = s_bgTrack;
+			if( !S_AdvanceBackgroundTrack( 1 ) )
+			{
+				if( !S_ValidMusicFile( s_bgTrack ) )
+					return qfalse;
+			}
+			else
+			{
+				// we've advanced to the next track, close this one
+				S_CloseMusicTrack( cur );
+				continue;
+			}
+
+			if( !S_ResetStream( music_stream ) )
+			{
+				// if failed, close the track?
 				return qfalse;
-		}
-		else
-		{
-			// we've advanced to the next track, close this one
-			S_CloseMusicTrack( cur );
-			goto start;
+			}
+
+			continue;
 		}
 
-		if( !S_ResetStream( music_stream ) )
-		{
-			// if failed, close the track?
-			return qfalse;
-		}
-
-		goto start;
+		S_RawSamples( l / (music_stream->info.width * music_stream->info.channels),
+			music_stream->info.rate, music_stream->info.width, 
+			music_stream->info.channels, decode_buffer, qtrue );
 	}
-
-	format = S_SoundFormat( music_stream->info.width, music_stream->info.channels );
-	qalBufferData( b, format, decode_buffer, l, music_stream->info.rate );
-	if( ( error = qalGetError() ) != AL_NO_ERROR )
-		return qfalse;
 
 	return qtrue;
 }
@@ -421,13 +383,6 @@ start:
 
 void S_UpdateMusic( void )
 {
-	int i, processed;
-	ALint state;
-	ALenum error;
-	ALuint b;
-	int num_processed_buffers;
-	ALuint processed_buffers[MUSIC_BUFFERS];
-
 	if( !s_bgTrack )
 		return;
 	if( !s_musicvolume->value && !s_bgTrack->isUrl )
@@ -442,7 +397,7 @@ void S_UpdateMusic( void )
 			S_CloseMusicTrack( s_bgTrack );
 		}
 		else {
-			if( S_FTellSteam( s_bgTrack->stream ) < BACKGROUND_TRACK_BUFFERING_SIZE )
+			if( S_FTellSteam( s_bgTrack->stream ) < MUSIC_BUFFERING_SIZE )
 				return;
 
 			// in case we delayed openening to let the stream be cached for a while,
@@ -456,67 +411,23 @@ void S_UpdateMusic( void )
 		s_bgTrackBuffering = qfalse;
 	}
 
-	if( !queued_buffers )
+	if( !music_process() )
 	{
-		// if we haven't queued any buffers yet, do it now
-		num_processed_buffers = MUSIC_BUFFERS;
-		memcpy( processed_buffers, buffers, sizeof( buffers ) );
+		Com_Printf( "Error processing music data\n" );
+		S_StopBackgroundTrack();
+		return;
 	}
-	else
-	{
-		num_processed_buffers = 0;
-
-		processed = 0;
-		qalGetSourcei( source, AL_BUFFERS_PROCESSED, &processed );
-		while( processed-- )
-		{
-			qalSourceUnqueueBuffers( source, 1, &b );
-			processed_buffers[num_processed_buffers++] = b;
-		}
-	}
-
-	for( i = 0; i < num_processed_buffers; i++ )
-	{
-		b = processed_buffers[i];
-		if( !music_process( b ) )
-		{
-			Com_Printf( "Error processing music data\n" );
-			S_StopBackgroundTrack();
-			return;
-		}
-
-		qalSourceQueueBuffers( source, 1, &b );
-		if( ( error = qalGetError() ) != AL_NO_ERROR )
-		{
-			Com_Printf( "Couldn't queue music data (%s)\n", S_ErrorMessage( error ) );
-			S_StopBackgroundTrack();
-			return;
-		}
-	}
-
-	// If it's not still playing, give it a kick
-	qalGetSourcei( source, AL_SOURCE_STATE, &state );
-	if( !queued_buffers || state != AL_PLAYING )
-	{
-		queued_buffers = qtrue;
-		qalSourcePlay( source );
-	}
-
-	if( s_musicvolume->modified )
-		qalSourcef( source, AL_GAIN, s_musicvolume->value );
 }
 
 /*
 * Global functions (sound.h)
 */
-
 void S_StartBackgroundTrack( const char *intro, const char *loop )
 {
 	int count;
 	const char *ext;
 	bgTrack_t *t, f;
 	bgTrack_t *introTrack, *loopTrack;
-	ALenum error;
 	int mode = 0;
 
 	// Stop any existing music that might be playing
@@ -601,44 +512,14 @@ start_playback:
 		s_bgTrack->next = s_bgTrack->prev = s_bgTrack;
 	}
 
-	music_source_get();
-	if( !src )
-	{
-		Com_Printf( "Error couldn't get source for music\n" );
-		S_StopBackgroundTrack();
-		return;
-	}
-
-	alloced_buffers = qfalse;
-	queued_buffers = qfalse;
-
-	qalGenBuffers( MUSIC_BUFFERS, buffers );
-	if( ( error = qalGetError() ) != AL_NO_ERROR )
-	{
-		Com_Printf( "Error couldn't generate music buffers (%s)\n", S_ErrorMessage( error ) );
-		S_StopBackgroundTrack();
-		return;
-	}
-
-	alloced_buffers = qtrue;
+	S_UpdateMusic();
 }
 
 void S_StopBackgroundTrack( void )
 {
 	bgTrack_t *next;
 
-	if( source )
-		qalSourceStop( source );
-
-	if( alloced_buffers ) {
-		qalSourceUnqueueBuffers( source, MUSIC_BUFFERS, buffers );
-		qalDeleteBuffers( MUSIC_BUFFERS, buffers );
-		alloced_buffers = queued_buffers = qfalse;
-	}
-
-	music_source_free();
-
-	qalGetError();
+	S_StopRawSamples();
 
 	while( s_bgTrackHead )
 	{

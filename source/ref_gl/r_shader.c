@@ -1942,7 +1942,7 @@ static void R_FreeShader( shader_t *shader )
 	int i;
 	shaderpass_t *pass;
 
-	if( shader->flags & SHADER_VIDEOMAP ) {
+	if( shader->cin ) {
 		for( i = 0, pass = shader->passes; i < shader->numpasses; i++, pass++ )
 			R_FreePassCinematics( pass );
 	}
@@ -2411,7 +2411,7 @@ static void Shader_Finish( shader_t *s )
 		if( !blendmask )
 			pass->flags |= GLSTATE_DEPTHWRITE;
 		if( pass->cin )
-			s->flags |= SHADER_VIDEOMAP;
+			s->cin = pass->cin;
 		if( pass->flags & SHADERPASS_LIGHTMAP )
 			s->flags |= SHADER_LIGHTMAP;
 		if( pass->flags & GLSTATE_DEPTHWRITE )
@@ -2698,12 +2698,13 @@ create_default:
 			pass->tcgen = TC_GEN_BASE;
 			if( type == SHADER_TYPE_VIDEO )
 			{
-				s->flags = SHADER_VIDEOMAP;
 				// we don't want "video/" to be there since it's hardcoded into cinematics
 				if( !Q_strnicmp(shortname, "video/", 6 ) )
 					pass->cin = R_StartCinematic( shortname+6 );
 				else
 					pass->cin = R_StartCinematic( shortname );
+				s->cin = pass->cin;
+				pass->images[0] = r_notexture;
 			} else if( type != SHADER_TYPE_2D_RAW ) {
 				pass->images[0] = Shader_FindImage( s, shortname, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, 0 );
 			}

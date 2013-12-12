@@ -42,6 +42,8 @@ QF_DLL_EXPORT cin_export_t *GetCinematicsAPI( cin_import_t *import )
 	globals.NeedNextFrame = &CIN_NeedNextFrame;
 	globals.ReadNextFrame = &CIN_ReadNextFrame;
 	globals.ReadNextFrameYUV = &CIN_ReadNextFrameYUV;
+	globals.AddRawSamplesListener = &CIN_AddRawSamplesListener;
+	globals.Reset = &CIN_Reset;
 	globals.Close = &CIN_Close;
 
 	return &globals;

@@ -23,8 +23,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void CIN_LoadLibrary( qboolean verbose );
 void CIN_UnloadLibrary( qboolean verbose );
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv );
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
+	qboolean loop, qboolean *yuv, float *framerate );
+
 qboolean CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime );
-qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+
+qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, 
+	int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+
+ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, 
+	int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+
+qboolean CIN_AddRawSamplesListener( struct cinematics_s *cin, void *listener,
+	cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs );
+
+void CIN_Reset( struct cinematics_s *cin, unsigned int cur_time );
+
 void CIN_Close( struct cinematics_s *cin );

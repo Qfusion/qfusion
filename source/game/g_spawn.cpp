@@ -162,6 +162,7 @@ spawn_t	spawns[] = {
 	{ "misc_skyportal", SP_skyportal },
 	{ "props_skyportal", SP_skyportal },
 	{ "misc_particles", SP_misc_particles },
+	{ "misc_video_speaker", SP_misc_video_speaker },
 
 	{ NULL, NULL }
 };

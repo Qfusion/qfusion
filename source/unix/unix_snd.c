@@ -248,6 +248,7 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 	dma.samples = tmp;
 	dma.submission_chunk = 1;
 	dma.speed = obtained.freq;
+	dma.msec_per_sample = 1000.0 / dma.speed;
 	dmasize = ( dma.samples * ( dma.samplebits/8 ) );
 	dma.buffer = calloc( 1, dmasize );
 

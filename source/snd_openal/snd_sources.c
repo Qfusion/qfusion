@@ -42,13 +42,17 @@ static sentity_t *entlist = NULL; //[MAX_EDICTS];
 /*
 * source_setup
 */
-static void source_setup( src_t *src, sfx_t *sfx, int priority, int entNum, int channel, float fvol, float attenuation )
+static void source_setup( src_t *src, sfx_t *sfx, int priority, int entNum, 
+	int channel, float fvol, float attenuation )
 {
-	ALuint buffer;
+	ALuint buffer = 0;
 
 	// Mark the SFX as used, and grab the raw AL buffer
-	S_UseBuffer( sfx );
-	buffer = S_GetALBuffer( sfx );
+	if( sfx )
+	{
+		S_UseBuffer( sfx );
+		buffer = S_GetALBuffer( sfx );
+	}
 
 	clamp_low( attenuation, 0.0f );
 
@@ -63,6 +67,7 @@ static void source_setup( src_t *src, sfx_t *sfx, int priority, int entNum, int 
 	src->isLocked = qfalse;
 	src->isLooping = qfalse;
 	src->isTracking = qfalse;
+	src->volumeVar = s_volume;
 	VectorClear( src->origin );
 	VectorClear( src->velocity );
 
@@ -83,11 +88,27 @@ static void source_setup( src_t *src, sfx_t *sfx, int priority, int entNum, int 
 */
 static void source_kill( src_t *src )
 {
+	int numbufs;
+	ALuint source = src->source;
+	ALuint buffer;
+
 	if( src->isLocked )
 		return;
 
 	if( src->isActive )
-		qalSourceStop( src->source );
+		qalSourceStop( source );
+
+	// Un-queue all queued buffers
+	qalGetSourcei( source, AL_BUFFERS_QUEUED, &numbufs );
+	while( numbufs-- ) {
+		qalSourceUnqueueBuffers( source, 1, &buffer );
+	}
+
+	// Un-queue all processed buffers
+	qalGetSourcei( source, AL_BUFFERS_PROCESSED, &numbufs );
+	while( numbufs-- ) {
+		qalSourceUnqueueBuffers( source, 1, &buffer );
+	}
 
 	qalSourcei( src->source, AL_BUFFER, AL_NONE );
 
@@ -168,7 +189,7 @@ static void source_loop( int priority, sfx_t *sfx, int entNum, float fvol, float
 		entlist[entNum].src = src;
 	}
 
-	qalSourcef( src->source, AL_GAIN, src->fvol * s_volume->value );
+	qalSourcef( src->source, AL_GAIN, src->fvol * src->volumeVar->value );
 
 	qalSourcef( src->source, AL_REFERENCE_DISTANCE, s_attenuation_refdistance );
 	qalSourcef( src->source, AL_MAX_DISTANCE, s_attenuation_maxdistance );
@@ -255,13 +276,13 @@ void S_UpdateSources( void )
 
 	for( i = 0; i < src_count; i++ )
 	{
-		if( srclist[i].isLocked )
-			continue;
 		if( !srclist[i].isActive )
 			continue;
+		if( srclist[i].isLocked )
+			continue;
 
-		if( s_volume->modified )
-			qalSourcef( srclist[i].source, AL_GAIN, srclist[i].fvol * s_volume->value );
+		if( srclist[i].volumeVar->modified )
+			qalSourcef( srclist[i].source, AL_GAIN, srclist[i].fvol * srclist[i].volumeVar->value );
 
 		// Check if it's done, and flag it
 		qalGetSourcei( srclist[i].source, AL_SOURCE_STATE, &state );
@@ -357,6 +378,14 @@ void S_UnlockSource( src_t *src )
 }
 
 /*
+* S_UnlockSource
+*/
+void S_KeepSourceAlive( src_t *src, qboolean alive )
+{
+	src->keepAlive = alive;
+}
+
+/*
 * S_GetALSource
 */
 ALuint S_GetALSource( const src_t *src )
@@ -445,6 +474,32 @@ void S_StartGlobalSound( sfx_t *sfx, int channel, float fvol )
 void S_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation )
 {
 	source_loop( SRCPRI_LOOP, sfx, entnum, fvol, attenuation );
+}
+
+/*
+* S_AllocRawSource
+*/
+src_t *S_AllocRawSource( int entNum, float fvol, float attenuation, cvar_t *volumeVar )
+{
+	src_t *src;
+
+	if( !volumeVar )
+		volumeVar = s_volume;
+
+	src = S_AllocSource( SRCPRI_STREAM, entNum, 0 );
+	if( !src )
+		return NULL;
+
+	source_setup( src, NULL, SRCPRI_STREAM, entNum, 0, fvol, attenuation );
+
+	if( src->attenuation && entNum > 0 )
+		src->isTracking = qtrue;
+
+	src->volumeVar = volumeVar;
+	qalSourcef( src->source, AL_GAIN, src->fvol * src->volumeVar->value );
+
+	source_spatialize( src );
+	return src;
 }
 
 /*

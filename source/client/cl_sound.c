@@ -466,22 +466,39 @@ void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, flo
 /*
 * CL_SoundModule_RawSamples
 */
-void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music )
+void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data, qboolean music )
 {
 	if( se )
 		se->RawSamples( samples, rate, width, channels, data, music );
 }
 
 /*
-* CL_SoundModule_GetRawSamplesTime
-*
-* Mixing position in milliseconds for A/V sync
+* CL_SoundModule_PositionedRawSamples
 */
-unsigned int CL_SoundModule_GetRawSamplesTime( void )
+void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+		unsigned int samples, unsigned int rate, 
+		unsigned short width, unsigned short channels, const qbyte *data )
 {
 	if( se )
-		return se->GetRawSamplesTime();
-	return cls.realtime;
+		se->PositionedRawSamples( entnum, fvol, attenuation,
+			samples, rate, width, channels, data );
+}
+
+/*
+* CL_SoundModule_GetRawSamplesLength
+*/
+unsigned int CL_SoundModule_GetRawSamplesLength( void )
+{
+	return se ? se->GetRawSamplesLength() : 0;
+}
+
+/*
+* CL_SoundModule_GetPositionedRawSamplesLength
+*/
+unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum )
+{
+	return se ? se->GetPositionedRawSamplesLength( entnum ) : 0;
 }
 
 /*

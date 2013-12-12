@@ -1024,10 +1024,13 @@ enum
 	ET_ITEM_TIMER,	// for specs only
 	ET_PARTICLES,
 	ET_SPAWN_INDICATOR,
+	
+	ET_VIDEO_SPEAKER,
 
 	// eventual entities: types below this will get event treatment
 	ET_EVENT = EVENT_ENTITIES_START,
 	ET_SOUNDEVENT,
+
 	ET_TOTAL_TYPES, // current count
 	MAX_ENTITY_TYPES = 128
 };

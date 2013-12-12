@@ -463,28 +463,29 @@ int S_PaintChannels( unsigned int endtime, int dumpfile )
 		}
 
 		// clear the paint buffer
-		if( s_rawend < paintedtime )
-		{
-			memset( paintbuffer, 0, ( end - paintedtime ) * sizeof( portable_samplepair_t ) );
-		}
-		else
-		{
+		memset( paintbuffer, 0, ( end - paintedtime ) * sizeof( portable_samplepair_t ) );
+
+		// paint in the raw samples
+		for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
 			// copy from the streaming sound source
 			int s;
-			unsigned stop;
+			unsigned j, stop;
+			rawsound_t *rawsound = raw_sounds[i];
 
-			stop = ( end < s_rawend ) ? end : s_rawend;
-
-			for( i = paintedtime; i < stop; i++ )
-			{
-				s = i&( MAX_RAW_SAMPLES-1 );
-				paintbuffer[i-paintedtime] = s_rawsamples[s];
+			if( !rawsound ) {
+				continue;
+			}
+			if( !rawsound->left_volume && !rawsound->right_volume ) {
+				// not audible
+				continue;
 			}
 
-			for(; i < end; i++ )
+			stop = ( end < rawsound->rawend ) ? end : rawsound->rawend;
+			for( j = paintedtime; j < stop; j++ )
 			{
-				paintbuffer[i-paintedtime].left =
-					paintbuffer[i-paintedtime].right = 0;
+				s = j&( MAX_RAW_SAMPLES-1 );
+				paintbuffer[j-paintedtime].left += rawsound->rawsamples[s].left * rawsound->left_volume;
+				paintbuffer[j-paintedtime].right += rawsound->rawsamples[s].right * rawsound->right_volume;
 			}
 		}
 
