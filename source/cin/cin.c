@@ -60,7 +60,11 @@ static const cin_type_t cin_types[] =
 		Theora_Shutdown_CIN,
 		Theora_Reset_CIN,
 		Theora_NeedNextFrame_CIN,
+#ifdef THEORA_SOFTWARE_YUV2RGB
 		Theora_ReadNextFrame_CIN,
+#else
+		NULL,
+#endif
 		Theora_ReadNextFrameYUV_CIN
 	},
 

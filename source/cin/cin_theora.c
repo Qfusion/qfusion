@@ -246,6 +246,201 @@ static qboolean OggTheora_NeedVideoData( cinematics_t *cin )
 	return qfalse;
 }
 
+/*
+* OggTheora_LoadVideoFrame
+*
+* Return qtrue if a new video frame has been successfully loaded
+*/
+#define VIDEO_LAG_TOLERANCE_MSEC	500
+
+static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
+{
+	int i;
+	ogg_packet op;
+	qtheora_info_t *qth = cin->fdata;
+	th_ycbcr_buffer yuv;
+	unsigned int sync_time = qth->s_sound_time;
+	
+	memset( &op, 0, sizeof( op ) );
+
+	while( ogg_stream_packetout( &qth->os_video, &op ) )
+	{
+		int error;
+		int width, height;
+
+		if( op.e_o_s ) {
+			// we've encountered end of stream packet
+			qth->v_eos = qtrue;
+			break;
+		}
+
+		if( op.granulepos >= 0 ) {
+			qth->th_granulemsec = th_granule_time( qth->tctx, op.granulepos ) * 1000.0;
+			th_decode_ctl( qth->tctx, TH_DECCTL_SET_GRANPOS, &op.granulepos, sizeof( op.granulepos ) );
+		}
+
+		// if lagging behind audio, seek forward to max_keyframe_interval before the target,
+		// then skip to nearest keyframe 
+		if( ( op.granulepos >= 0 ) 
+			&& ( qth->a_stream != qfalse )
+			&& ( qth->a_eos == qfalse )
+			&& ( sync_time > qth->th_granulemsec + VIDEO_LAG_TOLERANCE_MSEC ) ) {
+			qth->th_seek_msec_to = 
+				sync_time <= qth->th_max_keyframe_interval 
+					? qth->th_max_keyframe_interval : sync_time - qth->th_max_keyframe_interval;
+			qth->th_seek_to_keyframe = qtrue;
+		}
+
+		// seek to msec
+		if( qth->th_seek_msec_to > 0 ) {
+			if( ( op.granulepos >= 0 ) && ( qth->th_seek_msec_to <= cin->start_time + qth->th_granulemsec ) ) {
+				qth->th_seek_msec_to = 0;
+			}
+			else
+			{
+				Com_DPrintf( "Dropped frame %i\n", cin->frame );
+				continue;
+			}
+		}
+
+		// seek to keyframe
+		if( qth->th_seek_to_keyframe ) {
+			if( !th_packet_iskeyframe( &op ) ) {
+				Com_DPrintf( "Dropped frame %i\n", cin->frame );
+				continue;
+			}
+			qth->th_seek_to_keyframe = qfalse;
+		}
+
+		error = th_decode_packetin( qth->tctx, &op, &qth->th_granulepos );
+		if( error < 0 ) {
+			// bad packet
+			continue;
+		}
+
+		if( th_packet_isheader( &op ) ) {
+			// header packet, skip
+			continue;
+		}
+
+		if( error == TH_DUPFRAME ) {
+			return qtrue;
+		}
+
+		if( th_decode_ycbcr_out( qth->tctx, yuv ) != 0 ) {
+			// error
+			continue;
+		}
+
+		memcpy( &qth->th_yuv, &yuv, sizeof( yuv ) );
+
+		for( i = 0; i < 3; i++ ) {
+			qth->pub_yuv.yuv[i].stride = yuv[i].stride;
+			qth->pub_yuv.yuv[i].width = yuv[i].width;
+			qth->pub_yuv.yuv[i].height = yuv[i].height;
+			qth->pub_yuv.yuv[i].data = yuv[i].data;
+		}
+
+		width  = qth->ti.pic_width & ~1;
+		height = qth->ti.pic_height & ~1;
+
+		qth->pub_yuv.width  = width;
+		qth->pub_yuv.height = height;
+		qth->pub_yuv.x_offset = qth->ti.pic_x & ~1;
+		qth->pub_yuv.y_offset = qth->ti.pic_y & ~1;
+		qth->pub_yuv.image_width = max( abs( yuv[0].stride ), (int)qth->ti.frame_width );
+		qth->pub_yuv.image_height = qth->ti.frame_height;
+
+		if( cin->width != width || cin->height != height ) {
+			size_t size;
+
+			if( cin->vid_buffer ) {
+				CIN_Free( cin->vid_buffer );
+			}
+
+			cin->width = width;
+			cin->height = height;
+
+			// default to 255 for alpha
+			size = cin->width * cin->height * 4;
+			cin->vid_buffer = CIN_Alloc( cin->mempool, size );
+			memset( cin->vid_buffer, 0xFF, size );
+		}
+			
+		cin->frame = th_granule_frame( qth->tctx, qth->th_granulepos );
+
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+/*
+* Theora_ReadNextFrame_CIN_
+*/
+static qboolean Theora_ReadNextFrame_CIN_( cinematics_t *cin, qboolean *redraw, qboolean *eos )
+{
+	unsigned int bytes, pages = 0;
+	qboolean redraw_ = qfalse;
+	qtheora_info_t *qth = cin->fdata;
+	qboolean haveAudio = qfalse, haveVideo = qfalse;
+
+	*eos = qfalse;
+
+	while( 1 )
+	{
+		ogg_page og;
+		qboolean needAudio, needVideo;
+
+		needAudio = !haveAudio && OggVorbis_NeedAudioData( cin );
+		needVideo = !haveVideo && OggTheora_NeedVideoData( cin );
+		redraw_ = redraw_ || needVideo;
+
+		if( !needAudio && !needVideo ) {
+			break;
+		}
+
+		if( needAudio ) {
+			haveAudio = OggVorbis_LoadAudioFrame( cin );
+			needAudio = !haveAudio;
+		}
+		if( needVideo ) {
+			haveVideo = OggTheora_LoadVideoFrame( cin );
+			needVideo = !haveVideo;
+		}
+
+		if( qth->v_eos ) {
+			// end of video stream
+			*eos = qtrue;
+			return qfalse;
+		}
+
+		if( !needAudio && !needVideo ) {
+			break;
+		}
+
+		bytes = Ogg_LoadBlockToSync( cin ); // returns 0 if EOF
+
+		// process all read pages
+		pages = 0;
+		while( ogg_sync_pageout( &qth->oy, &og ) > 0 ) {
+			pages++;
+			Ogg_LoadPagesToStreams( qth, &og );
+		}
+
+		if( !bytes && !pages ) {
+			// end of FILE, no pages remaining
+			*eos = qtrue;
+			return qfalse;
+		}
+	}
+
+	*redraw = redraw_;
+	return haveVideo;
+}
+
+#ifdef THEORA_SOFTWARE_YUV2RGB
+
 // taken from http://www.gamedev.ru/code/articles/?id=4252&page=3
 #define Theora_InitYCbCrTable() \
 	int cc = 0; \
@@ -475,199 +670,6 @@ static void Theora_DecodeYCbCr2RGB( th_pixel_fmt pfmt, cin_yuv_t *cyuv, int byte
 }
 
 /*
-* OggTheora_LoadVideoFrame
-*
-* Return qtrue if a new video frame has been successfully loaded
-*/
-#define VIDEO_LAG_TOLERANCE_MSEC	500
-
-static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
-{
-	int i;
-	ogg_packet op;
-	qtheora_info_t *qth = cin->fdata;
-	th_ycbcr_buffer yuv;
-	unsigned int sync_time = qth->s_sound_time;
-	
-	memset( &op, 0, sizeof( op ) );
-
-	while( ogg_stream_packetout( &qth->os_video, &op ) )
-	{
-		int error;
-		int width, height;
-
-		if( op.e_o_s ) {
-			// we've encountered end of stream packet
-			qth->v_eos = qtrue;
-			break;
-		}
-
-		if( op.granulepos >= 0 ) {
-			qth->th_granulemsec = th_granule_time( qth->tctx, op.granulepos ) * 1000.0;
-			th_decode_ctl( qth->tctx, TH_DECCTL_SET_GRANPOS, &op.granulepos, sizeof( op.granulepos ) );
-		}
-
-		// if lagging behind audio, seek forward to max_keyframe_interval before the target,
-		// then skip to nearest keyframe 
-		if( ( op.granulepos >= 0 ) 
-			&& ( qth->a_stream != qfalse )
-			&& ( qth->a_eos == qfalse )
-			&& ( sync_time > qth->th_granulemsec + VIDEO_LAG_TOLERANCE_MSEC ) ) {
-			qth->th_seek_msec_to = 
-				sync_time <= qth->th_max_keyframe_interval 
-					? qth->th_max_keyframe_interval : sync_time - qth->th_max_keyframe_interval;
-			qth->th_seek_to_keyframe = qtrue;
-		}
-
-		// seek to msec
-		if( qth->th_seek_msec_to > 0 ) {
-			if( ( op.granulepos >= 0 ) && ( qth->th_seek_msec_to <= cin->start_time + qth->th_granulemsec ) ) {
-				qth->th_seek_msec_to = 0;
-			}
-			else
-			{
-				Com_DPrintf( "Dropped frame %i\n", cin->frame );
-				continue;
-			}
-		}
-
-		// seek to keyframe
-		if( qth->th_seek_to_keyframe ) {
-			if( !th_packet_iskeyframe( &op ) ) {
-				Com_DPrintf( "Dropped frame %i\n", cin->frame );
-				continue;
-			}
-			qth->th_seek_to_keyframe = qfalse;
-		}
-
-		error = th_decode_packetin( qth->tctx, &op, &qth->th_granulepos );
-		if( error < 0 ) {
-			// bad packet
-			continue;
-		}
-
-		if( th_packet_isheader( &op ) ) {
-			// header packet, skip
-			continue;
-		}
-
-		if( error == TH_DUPFRAME ) {
-			return qtrue;
-		}
-
-		if( th_decode_ycbcr_out( qth->tctx, yuv ) != 0 ) {
-			// error
-			continue;
-		}
-
-		memcpy( &qth->th_yuv, &yuv, sizeof( yuv ) );
-
-		for( i = 0; i < 3; i++ ) {
-			qth->pub_yuv.yuv[i].stride = yuv[i].stride;
-			qth->pub_yuv.yuv[i].width = yuv[i].width;
-			qth->pub_yuv.yuv[i].height = yuv[i].height;
-			qth->pub_yuv.yuv[i].data = yuv[i].data;
-		}
-
-		width  = qth->ti.pic_width & ~1;
-		height = qth->ti.pic_height & ~1;
-
-		qth->pub_yuv.width  = width;
-		qth->pub_yuv.height = height;
-		qth->pub_yuv.x_offset = qth->ti.pic_x & ~1;
-		qth->pub_yuv.y_offset = qth->ti.pic_y & ~1;
-		qth->pub_yuv.image_width = max( abs( yuv[0].stride ), (int)qth->ti.frame_width );
-		qth->pub_yuv.image_height = qth->ti.frame_height;
-
-		if( cin->width != width || cin->height != height ) {
-			size_t size;
-
-			if( cin->vid_buffer ) {
-				CIN_Free( cin->vid_buffer );
-			}
-
-			cin->width = width;
-			cin->height = height;
-
-			// default to 255 for alpha
-			size = cin->width * cin->height * 4;
-			cin->vid_buffer = CIN_Alloc( cin->mempool, size );
-			memset( cin->vid_buffer, 0xFF, size );
-		}
-			
-		cin->frame = th_granule_frame( qth->tctx, qth->th_granulepos );
-
-		return qtrue;
-	}
-
-	return qfalse;
-}
-
-/*
-* Theora_ReadNextFrame_CIN_
-*/
-static qboolean Theora_ReadNextFrame_CIN_( cinematics_t *cin, qboolean *redraw, qboolean *eos )
-{
-	unsigned int bytes, pages = 0;
-	qboolean redraw_ = qfalse;
-	qtheora_info_t *qth = cin->fdata;
-	qboolean haveAudio = qfalse, haveVideo = qfalse;
-
-	*eos = qfalse;
-
-	while( 1 )
-	{
-		ogg_page og;
-		qboolean needAudio, needVideo;
-
-		needAudio = !haveAudio && OggVorbis_NeedAudioData( cin );
-		needVideo = !haveVideo && OggTheora_NeedVideoData( cin );
-		redraw_ = redraw_ || needVideo;
-
-		if( !needAudio && !needVideo ) {
-			break;
-		}
-
-		if( needAudio ) {
-			haveAudio = OggVorbis_LoadAudioFrame( cin );
-			needAudio = !haveAudio;
-		}
-		if( needVideo ) {
-			haveVideo = OggTheora_LoadVideoFrame( cin );
-			needVideo = !haveVideo;
-		}
-
-		if( qth->v_eos ) {
-			// end of video stream
-			*eos = qtrue;
-			return qfalse;
-		}
-
-		if( !needAudio && !needVideo ) {
-			break;
-		}
-
-		bytes = Ogg_LoadBlockToSync( cin ); // returns 0 if EOF
-
-		// process all read pages
-		pages = 0;
-		while( ogg_sync_pageout( &qth->oy, &og ) > 0 ) {
-			pages++;
-			Ogg_LoadPagesToStreams( qth, &og );
-		}
-
-		if( !bytes && !pages ) {
-			// end of FILE, no pages remaining
-			*eos = qtrue;
-			return qfalse;
-		}
-	}
-
-	*redraw = redraw_;
-	return haveVideo;
-}
-
-/*
 * Theora_ReadNextFrame_CIN
 */
 qbyte *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
@@ -688,6 +690,8 @@ qbyte *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 
 	return cin->vid_buffer;
 }
+
+#endif // THEORA_SOFTWARE_YUV2RGB
 
 /*
 * Theora_ReadNextFrameYUV_CIN
