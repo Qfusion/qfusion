@@ -1236,6 +1236,8 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 	// let the gametype scripts know this client just connected
 	G_Gametype_ScoreEvent( ent->r.client, "connect", NULL );
 
+	G_CallVotes_ResetClient( PLAYERNUM( ent ) );
+
 	return qtrue;
 }
 

@@ -690,6 +690,7 @@ void G_SetBoundsForSpanEntity( edict_t *ent, vec_t size );
 void G_CallVotes_Init( void );
 void G_FreeCallvotes( void );
 void G_CallVotes_Reset( void );
+void G_CallVotes_ResetClient( int n );
 void G_CallVotes_CmdVote( edict_t *ent );
 void G_CallVotes_Think( void );
 void G_CallVote_Cmd( edict_t *ent );

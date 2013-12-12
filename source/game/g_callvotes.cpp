@@ -1788,7 +1788,7 @@ void G_FreeCallvotes( void )
 /*
 * G_CallVotes_ResetClient
 */
-static void G_CallVotes_ResetClient( int n )
+void G_CallVotes_ResetClient( int n )
 {
 	clientVoted[n] = VOTED_NOTHING;
 	clientVoteChanges[n] = g_vote_maxchanges->integer;
@@ -1992,7 +1992,8 @@ static void G_CallVotes_CheckState( void )
 */
 void G_CallVotes_CmdVote( edict_t *ent )
 {
-	char *vote;
+	const char *vote;
+	int vote_id;
 
 	if( !ent->r.client )
 		return;
@@ -2008,45 +2009,34 @@ void G_CallVotes_CmdVote( edict_t *ent )
 	vote = trap_Cmd_Argv( 1 );
 	if( !Q_stricmp( vote, "yes" ) )
 	{
-		if( clientVoted[PLAYERNUM( ent )] == VOTED_YES )
-		{
-			G_PrintMsg( ent, "%sYou have already voted yes\n", S_COLOR_RED );
-			return;
-		}
-
-		if( clientVoteChanges[PLAYERNUM( ent )] == 0 )
-		{
-			G_PrintMsg( ent, "%sYou cannot change your vote anymore\n", S_COLOR_RED );
-			return;
-		}
-
-		clientVoted[PLAYERNUM( ent )] = VOTED_YES;
-		clientVoteChanges[PLAYERNUM( ent )]--;
-		G_CallVotes_CheckState();
-		return;
+		vote_id = VOTED_YES;
 	}
 	else if( !Q_stricmp( vote, "no" ) )
 	{
-		if( clientVoted[PLAYERNUM( ent )] == VOTED_NO )
-		{
-			G_PrintMsg( ent, "%sYou have already voted no\n", S_COLOR_RED );
-			return;
-		}
-
-		if( clientVoteChanges[PLAYERNUM( ent )] == 0 )
-		{
-			G_PrintMsg( ent, "%sYou cannot change your vote anymore\n", S_COLOR_RED );
-			return;
-		}
-
-		clientVoted[PLAYERNUM( ent )] = VOTED_NO;
-		clientVoteChanges[PLAYERNUM( ent )]--;
-		G_CallVotes_CheckState();
+		vote_id = VOTED_NO;
+	}
+	else
+	{
+		G_PrintMsg( ent, "%sInvalid vote: %s%s%s. Use yes or no\n", S_COLOR_RED,
+			S_COLOR_YELLOW, vote, S_COLOR_RED );
 		return;
 	}
 
-	G_PrintMsg( ent, "%sInvalid vote: %s%s%s. Use yes or no\n", S_COLOR_RED,
-		S_COLOR_YELLOW, vote, S_COLOR_RED );
+	if( clientVoted[PLAYERNUM( ent )] == vote_id )
+	{
+		G_PrintMsg( ent, "%sYou have already voted %s\n", S_COLOR_RED, vote );
+		return;
+	}
+
+	if( clientVoteChanges[PLAYERNUM( ent )] == 0 )
+	{
+		G_PrintMsg( ent, "%sYou cannot change your vote anymore\n", S_COLOR_RED );
+		return;
+	}
+
+	clientVoted[PLAYERNUM( ent )] = vote_id;
+	clientVoteChanges[PLAYERNUM( ent )]--;
+	G_CallVotes_CheckState();
 }
 
 /*
@@ -2064,7 +2054,7 @@ static void G_CallVotes_UpdateVotesConfigString( void )
 
 	memset( votebits, 0, sizeof( votebits ) );
 	for( i = 0; i < gs.maxclients; i++ ) {
-		votebits[i>>5] |= clientVoted[i] ? (1 << (i & 31)) : 0;
+		votebits[i>>5] |= clientVoteChanges[i]==0 ? (1 << (i & 31)) : 0;
 	}
 
 	// find the last bitvector that isn't 0
@@ -2107,7 +2097,7 @@ void G_CallVotes_Think( void )
 static void G_CallVote( edict_t *ent, bool isopcall )
 {
 	int i;
-	char *votename;
+	const char *votename;
 	callvotetype_t *callvote;
 
 	if( !isopcall && ent->s.team == TEAM_SPECTATOR && GS_InvidualGameType()
