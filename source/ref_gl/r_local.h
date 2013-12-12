@@ -213,7 +213,7 @@ typedef struct
 	// any asset (model, shader, texture, etc) with has not been registered
 	// or "touched" during the last registration sequence will be freed
 	int				registrationSequence;
-	int				lastRegistrationSequence;
+	qboolean		registrationOpen;
 
 	 // bumped each R_ClearScene
 	unsigned int	sceneFrameCount;
@@ -404,6 +404,8 @@ void		R_RunAllCinematics( void );
 void		R_TouchCinematic( unsigned int id );
 void		R_FreeUnusedCinematics( void );
 image_t		*R_UploadCinematic( unsigned int id );
+struct cinematics_s *R_GetCinematicById( unsigned int id );
+void		R_RestartCinematics( void );
 
 //
 // r_cull.c
@@ -487,7 +489,7 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define		R_LoadFile(path,buffer) R_LoadFile_(path,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
-void		R_BeginFrame( float cameraSeparation, qboolean forceClear );
+void		R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVsync );
 void		R_EndFrame( void );
 void		R_Set2DMode( qboolean enable );
 void		R_RenderView( const refdef_t *fd );
@@ -550,6 +552,9 @@ void		R_BindFrameBufferObject( int object );
 void		R_Scissor( int x, int y, int w, int h );
 void		R_GetScissor( int *x, int *y, int *w, int *h );
 void		R_EnableScissor( qboolean enable );
+
+shader_t	*R_GetShaderForOrigin( const vec3_t origin );
+struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
 
 //
 // r_mesh.c

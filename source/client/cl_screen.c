@@ -629,7 +629,7 @@ void SCR_UpdateScreen( void )
 	int numframes;
 	int i;
 	float separation[2];
-	qboolean scr_cinematic;
+	qboolean cinematic, forceclear;
 
 	if( !updatescreen )
 		updatescreen = Dynvar_Create( "updatescreen", qfalse, DYNVAR_WRITEONLY, DYNVAR_READONLY );
@@ -675,7 +675,8 @@ void SCR_UpdateScreen( void )
 		numframes = 1;
 	}
 
-	scr_cinematic = cls.state == CA_CINEMATIC ? qtrue : qfalse;
+	cinematic = cls.state == CA_CINEMATIC ? qtrue : qfalse;
+	forceclear = cinematic || scr_forceclear->integer ? qtrue : qfalse;
 
 	if( cls.cgameActive && cls.state < CA_LOADING ) {
 		// this is when we've finished loading cgame media and are waiting
@@ -685,7 +686,7 @@ void SCR_UpdateScreen( void )
 
 	for( i = 0; i < numframes; i++ )
 	{
-		re.BeginFrame( separation[i], scr_cinematic || scr_forceclear->integer ? qtrue : qfalse );
+		re.BeginFrame( separation[i], forceclear, cinematic );
 
 		if( scr_draw_loading == 2 )
 		{ 
@@ -695,7 +696,7 @@ void SCR_UpdateScreen( void )
 		}
 		// if a cinematic is supposed to be running, handle menus
 		// and console specially
-		else if( scr_cinematic )
+		else if( cinematic )
 		{
 			SCR_DrawCinematic();
 			SCR_DrawConsole();

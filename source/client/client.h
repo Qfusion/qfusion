@@ -55,13 +55,12 @@ typedef struct
 	qboolean redraw;
 	qboolean paused;
 	qboolean yuv;
-	unsigned int absStartTime;		// absolute start time
-	unsigned int absPrevTime;
-	unsigned int absCurrentTime;	// absolute current time
-	unsigned int currentTime;		// always relative to 0
+	unsigned int startTime;
+	unsigned int pauseTime;
 	qbyte *pic;
 	int aspect_numerator, aspect_denominator;
 	ref_yuv_t *cyuv;
+	float framerate;
 } cl_cintematics_t;
 
 //
@@ -352,6 +351,7 @@ qboolean SCR_AllowCinematicConsole( void );
 void SCR_PauseCinematic( void );
 void CL_InitCinematics( void );
 void CL_ShutdownCinematics( void );
+float SCR_CinematicFramerate( void );
 
 //
 // cl_main.c
@@ -427,8 +427,13 @@ void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int chann
 void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
 void CL_SoundModule_StartLocalSound( const char *s );
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
-void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
-unsigned int CL_SoundModule_GetRawSamplesTime( void );
+void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
+void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+	unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data );
+unsigned int CL_SoundModule_GetRawSamplesLength( void );
+unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum );
 void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop );
 void CL_SoundModule_StopBackgroundTrack( void );
 void CL_SoundModule_BeginAviDemo( void );

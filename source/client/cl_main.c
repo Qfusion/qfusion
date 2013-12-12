@@ -1870,6 +1870,8 @@ void CL_ShutdownMedia( void )
 
 	SCR_ShutDownConsoleMedia();
 
+	SCR_StopCinematic();
+
 	CL_SoundModule_StopAllSounds();
 }
 
@@ -2491,6 +2493,7 @@ void CL_Frame( int realmsec, int gamemsec )
 	static int allRealMsec = 0, allGameMsec = 0, extraMsec = 0;
 	static float roundingMsec = 0.0f;
 	int minMsec;
+	float maxFps;
 
 	if( dedicated->integer )
 		return;
@@ -2546,18 +2549,28 @@ void CL_Frame( int realmsec, int gamemsec )
 	CL_MM_Frame();
 	
 	L10n_CheckUserLanguage();
-
-	if( cl_maxfps->integer > 0 && !cl_timedemo->integer && !( cls.demo.avi_video && cls.state == CA_ACTIVE ) )
+	
+	if( cls.state == CA_CINEMATIC )
 	{
-		// Vic: do not allow setting cl_maxfps to very low values to prevent cheating
+		maxFps = SCR_CinematicFramerate();
+		if( maxFps < 24 ) 
+			maxFps = 24.0f;
+		minMsec = max( ( 1000.0f / maxFps ), 1 );
+		roundingMsec += max( ( 1000.0f / maxFps ), 1.0f ) - minMsec;
+	}
+	else if( cl_maxfps->integer > 0 && !cl_timedemo->integer 
+		&& !( cls.demo.avi_video && cls.state == CA_ACTIVE ) )
+	{
+		// do not allow setting cl_maxfps to very low values to prevent cheating
 		if( cl_maxfps->integer < 24 )
 			Cvar_ForceSet( "cl_maxfps", "24" );
-
-		minMsec = max( ( 1000.0f / cl_maxfps->value ), 1 );
-		roundingMsec += max( ( 1000.0f / cl_maxfps->value ), 1.0f ) - minMsec;
+		maxFps = cl_maxfps->value;
+		minMsec = max( ( 1000.0f / maxFps ), 1 );
+		roundingMsec += max( ( 1000.0f / maxFps ), 1.0f ) - minMsec;
 	}
 	else
 	{
+		maxFps = 10000.0f;
 		minMsec = 1;
 		roundingMsec = 0;
 	}

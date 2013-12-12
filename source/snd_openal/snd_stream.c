@@ -23,133 +23,214 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "snd_local.h"
 
-static src_t *src = NULL;
-static qboolean is_playing = qfalse;
-static qboolean use_musicvolume = qfalse;
-static ALuint source;
-static ALfloat played_length = 0;
-static unsigned int systime, waittime;
+typedef struct
+{
+	src_t *src;
+	ALuint source;
+	int entNum;
+	ALuint samples_length;
+} rawsrc_t;
+
+static size_t downmixbuf_size = 0;
+static qbyte *downmixbuf = NULL;
+
+#define RAW_SOUND_ENTNUM	-2
+#define MAX_RAW_SOUNDS		16
+
+static rawsrc_t raw_sounds[MAX_RAW_SOUNDS];
 
 /*
 * Local helper functions
 */
 
-static void allocate_channel( void )
+static const qbyte *downmix_stereo_to_mono( unsigned samples, int width, const qbyte *data )
 {
-	// Allocate a source at high priority
-	src = S_AllocSource( SRCPRI_STREAM, -2, 0 );
-	if( !src )
-		return;
+	unsigned i;
+	size_t buf_size;
 
-	S_LockSource( src );
-	source = S_GetALSource( src );
+	buf_size = samples * width;
+	if( buf_size > downmixbuf_size ) {
+		if( downmixbuf )
+			S_Free( downmixbuf );
+		downmixbuf = S_Malloc( buf_size );
+		downmixbuf_size = buf_size;
+	}
 
-	qalSourcei( source, AL_BUFFER, 0 );
-	qalSourcei( source, AL_LOOPING, AL_FALSE );
-	qalSource3f( source, AL_POSITION, 0.0, 0.0, 0.0 );
-	qalSource3f( source, AL_VELOCITY, 0.0, 0.0, 0.0 );
-	qalSource3f( source, AL_DIRECTION, 0.0, 0.0, 0.0 );
-	qalSourcef( source, AL_ROLLOFF_FACTOR, 0.0 );
-	qalSourcei( source, AL_SOURCE_RELATIVE, AL_TRUE );
-	qalSourcef( source, AL_GAIN, ( use_musicvolume ? s_musicvolume->value : s_volume->value ) );
+	if( width == 2 ) {
+		short *in = ( short * )data;
+		short *out = ( short * )downmixbuf;
+		for( i = 0; i < samples; i++ ) {
+			int m = (in[0] + in[1]) >> 1;
+			out[0] = (short)bound( -0x8000, m, 0x7fff );
+			in += 2;
+			out++;
+		}
+		return downmixbuf;
+	}
+	else if( width == 1 ) {
+		qbyte *in = ( qbyte * )data;
+		qbyte *out = ( qbyte * )downmixbuf;
+		for( i = 0; i < samples; i++ ) {
+			int m = (in[0] + in[1]) >> 1;
+			out[0] = (short)bound( -0xff, m, 0x7f );
+			in += 2;
+			out++;
+		}
+		return downmixbuf;
+	}
+	return data;
 }
 
-static void free_channel( void )
+static rawsrc_t *find_rawsound( int entNum )
 {
-	// Release the output source
-	S_UnlockSource( src );
-	source = 0;
-	src = NULL;
+	int i;
+	rawsrc_t *rs, *free;
+
+	free = NULL;
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
+		rs = &raw_sounds[i];
+		
+		if( !free && !rs->src ) {
+			free = rs;
+		}
+		else if( rs->src && rs->entNum == entNum ) {
+			return rs;
+		}
+	}
+
+	return free;
 }
 
-/*
-* Sound system wide functions (snd_local.h)
-*/
-
-void S_UpdateStream( void )
+static ALuint unqueue_buffers( rawsrc_t *rs )
 {
-	int processed = 0;
-	ALint state;
 	ALuint buffer;
-	float processed_length;
-	unsigned int prevtime, interval;
+	int processed = 0;
+	ALuint processed_length;
 
-	prevtime = systime;
-	systime = trap_Milliseconds();
-	interval = systime - prevtime;
-
-	if( !src ) {
-		waittime += interval;
-		return;
+	if( !rs ) {
+		return 0;
 	}
 
 	processed = 0;
 	processed_length = 0;
 
 	// Un-queue any processed buffers, and delete them
-	qalGetSourcei( source, AL_BUFFERS_PROCESSED, &processed );
-	if( processed )
+	qalGetSourcei( rs->source, AL_BUFFERS_PROCESSED, &processed );
+	while( processed-- )
 	{
-		do
-		{
-			qalSourceUnqueueBuffers( source, 1, &buffer );
-			processed_length += S_GetBufferLength( buffer );
-			qalDeleteBuffers( 1, &buffer );
-		} while( --processed );
+		qalSourceUnqueueBuffers( rs->source, 1, &buffer );
+		processed_length += S_GetBufferLength( buffer );
+		qalDeleteBuffers( 1, &buffer );
 	}
 
-	played_length += processed_length;
-
-	// If it's stopped, release the source
-	qalGetSourcei( source, AL_SOURCE_STATE, &state );
-	if( state == AL_STOPPED )
-	{
-		is_playing = qfalse;
-		qalSourceStop( source );
-		free_channel();
-		waittime += interval;
-		return;
-	}
-
-	if( ( use_musicvolume && s_musicvolume->modified ) || ( !use_musicvolume && s_volume->modified ) )
-		qalSourcef( source, AL_GAIN, ( use_musicvolume ? s_musicvolume->value : s_volume->value ) );
+	return processed_length;
 }
 
-void S_StopStream( void )
+static void update_rawsound( rawsrc_t *rs )
 {
-	if( !src )
-		return;
+	ALuint processed_length;
 
-	is_playing = qfalse;
-	played_length = 0;
-	qalSourceStop( source );
-	free_channel();
+	if( !rs->src ) {
+		return;
+	}
+
+	// Un-queue any processed buffers, and delete them
+	processed_length = unqueue_buffers( rs );
+	if( rs->samples_length < processed_length ) {
+		rs->samples_length = 0;
+	}
+	else {
+		rs->samples_length -= processed_length;
+	}
+}
+
+static void stop_rawsound( rawsrc_t *rs )
+{
+	if( !rs->src ) {
+		return;
+	}
+	qalSourceStop( rs->source );
+	unqueue_buffers( rs );
+	memset( rs, 0, sizeof( *rs ) );
 }
 
 /*
-* Global functions (sound.h)
+* Sound system wide functions (snd_local.h)
 */
-void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music )
+void S_UpdateStreams( void )
+{
+	int i;
+	rawsrc_t *rs;
+
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ )
+	{
+		rs = & raw_sounds[i];
+		if( !rs->src ) {
+			continue;
+		}
+		
+		update_rawsound( rs );
+
+		if( !rs->src->isActive ) {
+			memset( rs, 0, sizeof( *rs ) );
+		}
+	}
+}
+
+void S_StopStreams( void )
+{
+	int i;
+
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ )
+		stop_rawsound( &raw_sounds[i] );
+}
+
+/*
+* S_StopRawSamples
+*/
+void S_StopRawSamples( void )
+{
+	rawsrc_t *rs;
+
+	rs = find_rawsound( RAW_SOUND_ENTNUM );
+	if( rs ) {
+		stop_rawsound( rs );
+	}
+}
+
+static void S_RawSamples_( int entNum, float fvol, float attenuation, 
+	unsigned int samples, unsigned int rate, unsigned short width,
+	unsigned short channels, const qbyte *data, cvar_t *volumeVar )
 {
 	ALuint buffer;
 	ALuint format;
 	ALint state;
 	ALenum error;
+	rawsrc_t *rs;
 
-	use_musicvolume = music;
-	format = S_SoundFormat( width, channels );
-	systime = trap_Milliseconds();
+	rs = find_rawsound( entNum );
+	if( !rs )
+	{
+		Com_Printf( "Couldn't allocate raw sound\n" );
+		return;
+	}
 
 	// Create the source if necessary
-	if( !src )
+	if( !rs->src )
 	{
-		allocate_channel();
-		if( !src )
+		rs->src = S_AllocRawSource( entNum, fvol, attenuation, volumeVar );
+		if( !rs->src )
 		{
 			Com_Printf( "Couldn't allocate streaming source\n" );
 			return;
 		}
+		rs->samples_length = 0;
+		rs->source = S_GetALSource( rs->src );
+		rs->entNum = entNum;
 	}
+
+	if( !rs->src->isActive )
+		return;
 
 	qalGenBuffers( 1, &buffer );
 	if( ( error = qalGetError() ) != AL_NO_ERROR )
@@ -158,6 +239,8 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 		return;
 	}
 
+	format = S_SoundFormat( width, channels );
+
 	qalBufferData( buffer, format, data, ( samples * width * channels ), rate );
 	if( ( error = qalGetError() ) != AL_NO_ERROR )
 	{
@@ -165,30 +248,83 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 		return;
 	}
 
-	qalSourceQueueBuffers( source, 1, &buffer );
+	qalSourceQueueBuffers( rs->source, 1, &buffer );
 	if( ( error = qalGetError() ) != AL_NO_ERROR )
 	{
 		Com_Printf( "Couldn't queue sound buffer (%s)\n", S_ErrorMessage( error ) );
 		return;
 	}
 
-	qalGetSourcei( source, AL_SOURCE_STATE, &state );
-	if( !is_playing )
+	rs->samples_length += (ALuint)((ALfloat)samples * 1000.0 / rate + 0.5f);
+
+	qalGetSourcei( rs->source, AL_SOURCE_STATE, &state );
+	if( state != AL_PLAYING )
 	{
-		qalSourcePlay( source );
-		is_playing = qtrue;
+		qalSourcePlay( rs->source );
 	}
 }
 
 /*
-* S_GetRawSamplesTime
+* Global functions (sound.h)
 */
-unsigned int S_GetRawSamplesTime( void )
+void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data, qboolean music )
 {
-	float pos = 0;
+	S_RawSamples_( RAW_SOUND_ENTNUM, 1, ATTN_NONE, samples, rate, width, 
+		channels, data, music ? s_musicvolume : s_volume );
+}
 
-	if( src && is_playing ) {
-		qalGetSourcef( source, AL_SEC_OFFSET, &pos );
-	}	
-	return (played_length + pos) * 1000 + waittime;
+/*
+* S_PositionedRawSamples
+*/
+void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+		unsigned int samples, unsigned int rate, 
+		unsigned short width, unsigned short channels, const qbyte *data )
+{
+	if( entnum < 0 ) {
+		entnum = 0;
+	}
+
+	// downmix stereo to mono because OpenAL doesn't spatialize stereo sources
+	if( attenuation > 0 && channels == 2 ) {
+		channels = 1;
+		data = downmix_stereo_to_mono( samples, width, data );
+	}
+
+	S_RawSamples_( entnum, fvol, attenuation, samples, rate, width, channels, data, 
+		s_volume );
+}
+
+/*
+* S_GetRawSamplesLength
+*/
+unsigned int S_GetRawSamplesLength( void ) 
+{
+	rawsrc_t *rs;
+
+	rs = find_rawsound( RAW_SOUND_ENTNUM );
+	if( rs && rs->src ) {
+		update_rawsound( rs );
+		return rs->samples_length;
+	}
+	return 0;
+}
+
+/*
+* S_GetPositionedRawSamplesLength
+*/
+unsigned int S_GetPositionedRawSamplesLength( int entnum )
+{
+	rawsrc_t *rs;
+
+	if( entnum < 0 ) {
+		entnum = 0;
+	}
+
+	rs = find_rawsound( entnum );
+	if( rs && rs->src ) {
+		update_rawsound( rs );
+		return rs->samples_length;
+	}
+	return 0;
 }

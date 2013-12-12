@@ -48,19 +48,18 @@ enum
 	SHADER_SKY						= 1 << 1,
 	SHADER_CULL_FRONT				= 1 << 2,
 	SHADER_CULL_BACK				= 1 << 3,
-	SHADER_VIDEOMAP					= 1 << 4,
-	SHADER_POLYGONOFFSET			= 1 << 5,
-	SHADER_ENTITY_MERGABLE			= 1 << 6,
-	SHADER_NO_DEPTH_TEST			= 1 << 7,
-	SHADER_AUTOSPRITE				= 1 << 8,
-	SHADER_LIGHTMAP					= 1 << 9,
-	SHADER_PORTAL					= 1 << 10,
-	SHADER_PORTAL_CAPTURE			= 1 << 11,
-	SHADER_PORTAL_CAPTURE2			= 1 << 12,
-	SHADER_NO_TEX_FILTERING			= 1 << 13,
-	SHADER_ALLDETAIL				= 1 << 14,
-	SHADER_NODRAWFLAT				= 1 << 15,
-	SHADER_SOFT_PARTICLE			= 1 << 16
+	SHADER_POLYGONOFFSET			= 1 << 4,
+	SHADER_ENTITY_MERGABLE			= 1 << 5,
+	SHADER_NO_DEPTH_TEST			= 1 << 6,
+	SHADER_AUTOSPRITE				= 1 << 7,
+	SHADER_LIGHTMAP					= 1 << 8,
+	SHADER_PORTAL					= 1 << 9,
+	SHADER_PORTAL_CAPTURE			= 1 << 10,
+	SHADER_PORTAL_CAPTURE2			= 1 << 11,
+	SHADER_NO_TEX_FILTERING			= 1 << 12,
+	SHADER_ALLDETAIL				= 1 << 13,
+	SHADER_NODRAWFLAT				= 1 << 14,
+	SHADER_SOFT_PARTICLE			= 1 << 15
 };
 
 // sorting
@@ -249,6 +248,8 @@ typedef struct shader_s
 
 	qbyte				fog_color[4];
 	float				fog_dist, fog_clearDist;
+
+	unsigned int		cin;
 
 	float				glossIntensity;
 	float				glossExponent;

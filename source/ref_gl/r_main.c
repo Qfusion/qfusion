@@ -656,7 +656,7 @@ void R_EndStretchBatch( void )
 	}
 
 	// upload video right before rendering
-	if( pic_mbuffer_shader->flags & SHADER_VIDEOMAP ) {
+	if( pic_mbuffer_shader->cin ) {
 		R_UploadCinematicShader( pic_mbuffer_shader );
 	}
 
@@ -1467,6 +1467,18 @@ void R_PopRefInst( int clearBitMask )
 //=======================================================================
 
 /*
+* R_SwapInterval
+*/
+static void R_SwapInterval( qboolean swapInterval )
+{
+	if( !glConfig.stereoEnabled )
+	{
+		if( qglSwapInterval )
+			qglSwapInterval( swapInterval );
+	}
+}
+
+/*
 * R_UpdateSwapInterval
 */
 static void R_UpdateSwapInterval( void )
@@ -1474,12 +1486,7 @@ static void R_UpdateSwapInterval( void )
 	if( r_swapinterval->modified )
 	{
 		r_swapinterval->modified = qfalse;
-
-		if( !glConfig.stereoEnabled )
-		{
-			if( qglSwapInterval )
-				qglSwapInterval( r_swapinterval->integer );
-		}
+		R_SwapInterval( r_swapinterval->integer ? qtrue : qfalse );
 	}
 }
 
@@ -1510,7 +1517,7 @@ static void R_UpdateHWGamma( void )
 /*
 * R_BeginFrame
 */
-void R_BeginFrame( float cameraSeparation, qboolean forceClear )
+void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVsync )
 {
 	GLimp_BeginFrame();
 
@@ -1604,8 +1611,14 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear )
 		r_outlines_scale->modified = qfalse;
 	}
 
-	// swapinterval stuff
-	R_UpdateSwapInterval();
+	// swapinterval stuff (vertical synchronization)
+	if( forceVsync ) {
+		R_SwapInterval( qtrue );
+	}
+	else {
+		r_swapinterval->modified = qtrue;
+		R_UpdateSwapInterval();
+	}
 
 	R_ClearStats();
 
@@ -1782,6 +1795,52 @@ void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out 
 
 	out[0] = trd.x + ( temp[0] / temp[3] + 1.0f ) * trd.width * 0.5f;
 	out[1] = glConfig.height - (trd.y + ( temp[1] / temp[3] + 1.0f ) * trd.height * 0.5f);
+}
+
+/*
+* R_GetShaderForOrigin
+*
+* Trace 64 units in all axial directions to find the closest surface
+*/
+shader_t *R_GetShaderForOrigin( const vec3_t origin )
+{
+	int i, j;
+	vec3_t dir, end;
+	rtrace_t tr;
+	shader_t *best = NULL;
+	float best_frac = 1000.0f;
+
+	for( i = 0; i < 3; i++ ) {
+		VectorClear( dir );
+
+		for( j = -1; j <= 1; j += 2 ) {
+			dir[i] = j;
+			VectorMA( origin, 64, dir, end );
+
+			R_TraceLine( &tr, origin, end, 0 );
+			if( !tr.shader ) {
+				continue;
+			}
+
+			if( tr.fraction < best_frac ) {
+				best = tr.shader;
+				best_frac = tr.fraction;
+			}
+		}
+	}
+
+	return best;
+}
+
+/*
+* R_GetShaderCinematic
+*/
+struct cinematics_s *R_GetShaderCinematic( shader_t *shader )
+{
+	if( !shader ) {
+		return NULL;
+	}
+	return R_GetCinematicById( shader->cin );
 }
 
 //===================================================================

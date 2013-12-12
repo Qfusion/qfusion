@@ -156,6 +156,7 @@ static qboolean DS_CreateBuffers( void )
 	dma.channels = format.nChannels;
 	dma.samplebits = format.wBitsPerSample;
 	dma.speed = format.nSamplesPerSec;
+	dma.msec_per_sample = 1000.0 / dma.speed;
 
 	if( DS_OK != pDSBuf->lpVtbl->GetCaps( pDSBuf, &dsbcaps ) )
 	{
@@ -329,6 +330,7 @@ sndinitstat SNDDMA_InitDirect( qboolean verbose )
 		dma.speed = 22050;
 	else
 		dma.speed = 11025;
+	dma.msec_per_sample = 1000.0 / dma.speed;
 
 	if( verbose )
 		Com_Printf( "Initializing DirectSound\n" );
@@ -439,6 +441,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 		dma.speed = 22050;
 	else
 		dma.speed = 11025;
+	dma.msec_per_sample = 1000.0 / dma.speed;
 
 	memset( &format, 0, sizeof( format ) );
 	format.wFormatTag = WAVE_FORMAT_PCM;

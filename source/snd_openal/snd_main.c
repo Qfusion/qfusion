@@ -177,8 +177,10 @@ ALuint S_SoundFormat( int width, int channels )
 
 /*
 * S_GetBufferLength
+*
+* Returns buffer length expressed in milliseconds
 */
-ALfloat S_GetBufferLength( ALuint buffer )
+ALuint S_GetBufferLength( ALuint buffer )
 {
     ALint size, bits, channels, freq;
 
@@ -190,7 +192,7 @@ ALfloat S_GetBufferLength( ALuint buffer )
 	if( qalGetError() != AL_NO_ERROR ) {
         return 0;
 	}
-    return (ALfloat)((ALuint)size/(bits/8)/channels) / (ALfloat)freq;
+    return (ALuint)((ALfloat)(size/(bits/8)/channels) * 1000.0 / freq + 0.5f);
 }
 
 /*
@@ -473,7 +475,7 @@ fail_no_device:
 */
 void S_Shutdown( qboolean verbose )
 {
-	S_StopStream();
+	S_StopStreams();
 	S_StopBackgroundTrack();
 
 #ifdef ENABLE_PLAY
@@ -562,9 +564,9 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qb
 	qalListenerfv( AL_VELOCITY, velocity );
 	qalListenerfv( AL_ORIENTATION, orientation );
 
-	S_UpdateSources();
-	S_UpdateStream();
 	S_UpdateMusic();
+	S_UpdateStreams();
+	S_UpdateSources();
 
 	s_volume->modified = qfalse; // Checked by src and stream
 	s_musicvolume->modified = qfalse; // Checked by stream and music
@@ -592,7 +594,7 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qb
 */
 void S_StopAllSounds( void )
 {
-	S_StopStream();
+	S_StopStreams();
 	S_StopAllSources();
 	S_StopBackgroundTrack();
 }
