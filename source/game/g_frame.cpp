@@ -318,10 +318,7 @@ void G_CheckCvars( void )
 	GS_GamestatSetFlag( GAMESTAT_FLAG_INSTAGIB, ( g_instagib->integer != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_FALLDAMAGE, ( g_allow_falldamage->integer != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_SELFDAMAGE, ( g_allow_selfdamage->integer != 0 ) );
-	if( !g_challengers_queue->integer )
-		GS_GamestatSetFlag( GAMESTAT_FLAG_HASCHALLENGERS, qfalse );
-	else
-		GS_GamestatSetFlag( GAMESTAT_FLAG_HASCHALLENGERS, ( level.gametype.hasChallengersQueue != 0 ) );
+	GS_GamestatSetFlag( GAMESTAT_FLAG_HASCHALLENGERS, ( level.gametype.hasChallengersQueue != 0 ) );
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_ISTEAMBASED, ( level.gametype.isTeamBased != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_ISRACE, ( level.gametype.isRace != 0 ) );

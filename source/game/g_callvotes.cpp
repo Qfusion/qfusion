@@ -1659,44 +1659,6 @@ static void G_VoteTimeinPassed( callvotedata_t *vote )
 }
 
 /*
-* challengers_queue
-*/
-static bool G_VoteChallengersValidate( callvotedata_t *vote, bool first )
-{
-	int challengers = atoi( vote->argv[0] );
-
-	if( challengers != 0 && challengers != 1 )
-		return false;
-
-	if( challengers && g_challengers_queue->integer )
-	{
-		if( first ) G_PrintMsg( vote->caller, "%sChallengers queue is already enabled\n", S_COLOR_RED );
-		return false;
-	}
-
-	if( !challengers && !g_challengers_queue->integer )
-	{
-		if( first ) G_PrintMsg( vote->caller, "%sChallengers queue is already disabled\n", S_COLOR_RED );
-		return false;
-	}
-
-	return true;
-}
-
-static void G_VoteChallengersPassed( callvotedata_t *vote )
-{
-	trap_Cvar_Set( "g_challengers_queue", va( "%i", atoi( vote->argv[0] ) ) );
-}
-
-static const char *G_VoteChallengersCurrent( void )
-{
-	if( g_challengers_queue->integer )
-		return "1";
-	else
-		return "0";
-}
-
-/*
 * allow_uneven
 */
 static bool G_VoteAllowUnevenValidate( callvotedata_t *vote, bool first )
