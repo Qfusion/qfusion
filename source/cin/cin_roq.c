@@ -38,7 +38,11 @@ typedef struct
 	roq_cell_t		cells[256];
 	roq_qcell_t		qcells[256];
 
-	qbyte			*vid_pic[2];
+	int				width_2;
+	int				height_2;
+
+	cin_yuv_t		cyuv[2];
+	qbyte			*yuv_pixels;
 } roq_info_t;
 
 static short snd_sqr_arr[256];
@@ -104,23 +108,55 @@ static void RoQ_ReadInfo( cinematics_t *cin )
 {
 	short t[4];
 	roq_info_t *roq = cin->fdata;
+	cin_yuv_t *cyuv = roq->cyuv;
+	qbyte *pixels;
+	int width, height;
 
 	trap_FS_Read( t, sizeof( short ) * 4, cin->file );
 
-	if( cin->width != LittleShort( t[0] ) || cin->height != LittleShort( t[1] ) )
+	width = LittleShort( t[0] );
+	height = LittleShort( t[1] );
+	if( cin->width != width || cin->height != height )
 	{
-		cin->width = LittleShort( t[0] );
-		cin->height = LittleShort( t[1] );
+		int i, j;
+		int width_2 = width / 2, height_2 = height / 2;
 
-		if( cin->vid_buffer )
-			CIN_Free( cin->vid_buffer );
+		cin->width = width;
+		cin->height = height;
 
-		// default to 255 for alpha
-		cin->vid_buffer = CIN_Alloc( cin->mempool, cin->width * cin->height * 4 * 2 );
-		memset( cin->vid_buffer, 0xFF, cin->width * cin->height * 4 * 2 );
+		if( roq->yuv_pixels )
+			CIN_Free( roq->yuv_pixels );
 
-		roq->vid_pic[0] = cin->vid_buffer;
-		roq->vid_pic[1] = cin->vid_buffer + cin->width * cin->height * 4;
+		roq->width_2 = width_2;
+		roq->height_2 = height_2;
+		roq->yuv_pixels = CIN_Alloc( cin->mempool, 
+			(width * height + width_2 * height_2 * 2) * 2 );
+
+		pixels = roq->yuv_pixels;
+		for( i = 0; i < 2; i++ ) {
+			cyuv[i].width = width;
+			cyuv[i].height = height;
+			cyuv[i].image_width = width;
+			cyuv[i].image_height = height;
+			cyuv[i].x_offset = 0;
+			cyuv[i].y_offset = 0;
+
+			// Y
+			cyuv[i].yuv[0].width = width;
+			cyuv[i].yuv[0].height = height;
+			cyuv[i].yuv[0].stride = width;
+			cyuv[i].yuv[0].data = pixels;
+			pixels += width * height;
+
+			// UV
+			for( j = 1; j < 3; j++ ) {
+				cyuv[i].yuv[j].width = width_2;
+				cyuv[i].yuv[j].height = height_2;
+				cyuv[i].yuv[j].stride = width_2;
+				cyuv[i].yuv[j].data = pixels;
+				pixels += width_2 * height_2;
+			}
+		}
 	}
 }
 
@@ -148,125 +184,189 @@ static void RoQ_ReadCodebook( cinematics_t *cin )
 /*
 * RoQ_ApplyVector2x2
 */
-static void RoQ_DecodeBlock( qbyte *dst0, qbyte *dst1, const qbyte *src0, const qbyte *src1, float u, float v )
+static void RoQ_ApplyVector2x2( cinematics_t *cin, int xpos, int ypos, const roq_cell_t *cell )
 {
-	int c[3];
-
-	// convert YCbCr to RGB
-	VectorSet( c, 1.402f * v, -0.34414f * u - 0.71414f * v, 1.772f * u );
-
-	// 1st pixel
-	dst0[0] = bound( 0, c[0] + src0[0], 255 );
-	dst0[1] = bound( 0, c[1] + src0[0], 255 );
-	dst0[2] = bound( 0, c[2] + src0[0], 255 );
-
-	// 2nd pixel
-	dst0[4] = bound( 0, c[0] + src0[1], 255 );
-	dst0[5] = bound( 0, c[1] + src0[1], 255 );
-	dst0[6] = bound( 0, c[2] + src0[1], 255 );
-
-	// 3rd pixel
-	dst1[0] = bound( 0, c[0] + src1[0], 255 );
-	dst1[1] = bound( 0, c[1] + src1[0], 255 );
-	dst1[2] = bound( 0, c[2] + src1[0], 255 );
-
-	// 4th pixel
-	dst1[4] = bound( 0, c[0] + src1[1], 255 );
-	dst1[5] = bound( 0, c[1] + src1[1], 255 );
-	dst1[6] = bound( 0, c[2] + src1[1], 255 );
-}
-
-/*
-* RoQ_ApplyVector2x2
-*/
-static void RoQ_ApplyVector2x2( cinematics_t *cin, int x, int y, const roq_cell_t *cell )
-{
-	qbyte *dst0, *dst1;
+	qbyte *dst_y0, *dst_y1;
+	qbyte *dst_u, *dst_v;
 	roq_info_t *roq = cin->fdata;
+	cin_img_plane_t *plane;
+	int xpos_2 = xpos / 2, ypos_2 = ypos / 2;
 
-	dst0 = roq->vid_pic[0] + ( y * cin->width + x ) * 4;
-	dst1 = dst0 + cin->width * 4;
+	// Y
+	plane = &roq->cyuv[0].yuv[0];
+	dst_y0 = plane->data + ypos * plane->stride + xpos;
+	dst_y1 = dst_y0 + plane->stride;
 
-	RoQ_DecodeBlock( dst0, dst1, cell->y, cell->y+2, (float)( (int)cell->u-128 ), (float)( (int)cell->v-128 ) );
+	// U
+	plane = &roq->cyuv[0].yuv[1];
+	dst_u = plane->data + ypos_2 * plane->stride + xpos_2;
+
+	// V
+	plane = &roq->cyuv[0].yuv[2];
+	dst_v = plane->data + ypos_2 * plane->stride + xpos_2;
+
+	dst_y0[0] = cell->y[0];
+	dst_y0[1] = cell->y[1];
+	dst_y1[0] = cell->y[2];
+	dst_y1[1] = cell->y[3];
+	*dst_u = cell->u;
+	*dst_v = cell->v;
 }
 
 /*
 * RoQ_ApplyVector4x4
 */
-static void RoQ_ApplyVector4x4( cinematics_t *cin, int x, int y, const roq_cell_t *cell )
+static void RoQ_ApplyVector4x4( cinematics_t *cin, int xpos, int ypos, const roq_cell_t *cell )
 {
-	qbyte *dst0, *dst1;
-	qbyte p[4];
-	float u, v;
+	qbyte *dst_y0, *dst_y1;
+	qbyte *dst_u0, *dst_v0;
+	qbyte p[4], u[2], v[2];
 	roq_info_t *roq = cin->fdata;
+	cin_img_plane_t *y_plane, *u_plane, *v_plane;
+	int xpos_2 = xpos / 2, ypos_2 = ypos / 2;
 
-	u = (float)( (int)cell->u - 128 );
-	v = (float)( (int)cell->v - 128 );
+	// Y
+	y_plane = &roq->cyuv[0].yuv[0];
+	dst_y0 = y_plane->data + ypos * y_plane->stride + xpos;
+	dst_y1 = dst_y0 + y_plane->stride;
 
 	p[0] = p[1] = cell->y[0];
 	p[2] = p[3] = cell->y[1];
-	dst0 = roq->vid_pic[0] + ( y * cin->width + x ) * 4; dst1 = dst0 + cin->width * 4;
-	RoQ_DecodeBlock( dst0, dst0+8, p, p+2, u, v );
-	RoQ_DecodeBlock( dst1, dst1+8, p, p+2, u, v );
+	*(int *)dst_y0 = *(int *)p;
+	*(int *)dst_y1 = *(int *)p;
+
+	dst_y0 += y_plane->stride * 2;
+	dst_y1 += y_plane->stride * 2;
 
 	p[0] = p[1] = cell->y[2];
 	p[2] = p[3] = cell->y[3];
-	dst0 += cin->width * 4 * 2; dst1 += cin->width * 4 * 2;
-	RoQ_DecodeBlock( dst0, dst0+8, p, p+2, u, v );
-	RoQ_DecodeBlock( dst1, dst1+8, p, p+2, u, v );
+	*(int *)dst_y0 = *(int *)p;
+	*(int *)dst_y1 = *(int *)p;
+
+	// U
+	u_plane = &roq->cyuv[0].yuv[1];
+	dst_u0 = u_plane->data + ypos_2 * u_plane->stride + xpos_2;
+
+	// V
+	v_plane = &roq->cyuv[0].yuv[2];
+	dst_v0 = v_plane->data + ypos_2 * v_plane->stride + xpos_2;
+
+	u[0] = u[1] = cell->u;
+	v[0] = v[1] = cell->v;
+
+	*(short *)dst_u0 = *(short *)u;
+	*(short *)dst_v0 = *(short *)v;
+
+	dst_u0 += u_plane->stride;
+	dst_v0 += v_plane->stride;
+
+	*(short *)dst_u0 = *(short *)u;
+	*(short *)dst_v0 = *(short *)v;
 }
 
 /*
 * RoQ_ApplyMotion4x4
 */
-static void RoQ_ApplyMotion4x4( cinematics_t *cin, int x, int y, qbyte mv, char mean_x, char mean_y )
+static void RoQ_ApplyMotion4x4( cinematics_t *cin, int xpos, int ypos, qbyte mv, char mean_x, char mean_y )
 {
-	int x0, y0;
+	int i, j;
+	int xpos_2, ypos_2;
+	int xpos1, ypos1, xpos1_2, ypos1_2;
 	qbyte *src, *dst;
 	roq_info_t *roq = cin->fdata;
+	cin_img_plane_t *plane, *plane1;
 
 	// calc source coords
-	x0 = x + 8 - ( mv >> 4 ) - mean_x;
-	y0 = y + 8 - ( mv & 0xF ) - mean_y;
+	xpos1 = xpos + 8 - ( mv >> 4 ) - mean_x;
+	ypos1 = ypos + 8 - ( mv & 0xF ) - mean_y;
 
-	src = roq->vid_pic[1] + ( y0 * cin->width + x0 ) * 4;
-	dst = roq->vid_pic[0] + ( y * cin->width + x ) * 4;
+	xpos_2 = xpos / 2;
+	ypos_2 = ypos / 2;
+	xpos1_2 = xpos1 / 2;
+	ypos1_2 = ypos1 / 2;
 
-	for( y = 0; y < 4; y++, src += cin->width * 4, dst += cin->width * 4 )
-		memcpy( dst, src, 4 * 4 );
+	// Y
+	plane  = &roq->cyuv[0].yuv[0];
+	plane1 = &roq->cyuv[1].yuv[0];
+	dst = plane->data  + ( ypos *  plane->stride  + xpos );
+	src = plane1->data + ( ypos1 * plane1->stride + xpos1 );
+	for( j = 0; j < 4; j++ ) {
+		*(int *)dst = *(int *)src;
+		src += plane1->stride;
+		dst += plane->stride;
+	}
+
+	// UV
+	for( i = 1; i < 3; i++ ) {
+		plane  = &roq->cyuv[0].yuv[i];
+		plane1 = &roq->cyuv[1].yuv[i];
+		dst = plane->data  + ( ypos_2 *  plane->stride  + xpos_2 );
+		src = plane1->data + ( ypos1_2 * plane1->stride + xpos1_2 );
+		for( j = 0; j < 2; j++ ) {
+			*(short *)dst = *(short *)src;
+			src += plane1->stride;
+			dst += plane->stride;
+		}
+	}
 }
 
 /*
 * RoQ_ApplyMotion8x8
 */
-static void RoQ_ApplyMotion8x8( cinematics_t *cin, int x, int y, qbyte mv, char mean_x, char mean_y )
+static void RoQ_ApplyMotion8x8( cinematics_t *cin, int xpos, int ypos, qbyte mv, char mean_x, char mean_y )
 {
-	int x0, y0;
+	int i, j;
+	int xpos_2, ypos_2;
+	int xpos1, ypos1, xpos1_2, ypos1_2;
 	qbyte *src, *dst;
 	roq_info_t *roq = cin->fdata;
+	cin_img_plane_t *plane, *plane1;
 
 	// calc source coords
-	x0 = x + 8 - ( mv >> 4 ) - mean_x;
-	y0 = y + 8 - ( mv & 0xF ) - mean_y;
+	xpos1 = xpos + 8 - ( mv >> 4 ) - mean_x;
+	ypos1 = ypos + 8 - ( mv & 0xF ) - mean_y;
 
-	src = roq->vid_pic[1] + ( y0 * cin->width + x0 ) * 4;
-	dst = roq->vid_pic[0] + ( y * cin->width + x ) * 4;
+	xpos_2 = xpos / 2;
+	ypos_2 = ypos / 2;
+	xpos1_2 = xpos1 / 2;
+	ypos1_2 = ypos1 / 2;
 
-	for( y = 0; y < 8; y++, src += cin->width * 4, dst += cin->width * 4 )
-		memcpy( dst, src, 8 * 4 );
+	// Y
+	plane  = &roq->cyuv[0].yuv[0];
+	plane1 = &roq->cyuv[1].yuv[0];
+	dst = plane->data  + ( ypos *  plane->stride  + xpos );
+	src = plane1->data + ( ypos1 * plane1->stride + xpos1 );
+	for( j = 0; j < 8; j++ ) {
+		memcpy( dst, src, 8 );
+		src += plane1->stride;
+		dst += plane->stride;
+	}
+
+	// UV
+	for( i = 1; i < 3; i++ ) {
+		plane  = &roq->cyuv[0].yuv[i];
+		plane1 = &roq->cyuv[1].yuv[i];
+		dst = plane->data  + ( ypos_2 *  plane->stride  + xpos_2 );
+		src = plane1->data + ( ypos1_2 * plane1->stride + xpos1_2 );
+		for( j = 0; j < 4; j++ ) {
+			*(int *)dst = *(int *)src;
+			src += plane1->stride;
+			dst += plane->stride;
+		}
+	}
 }
 
 /*
 * RoQ_ReadVideo
 */
 #define RoQ_READ_BLOCK	0x4000
-static qbyte *RoQ_ReadVideo( cinematics_t *cin )
+static cin_yuv_t *RoQ_ReadVideo( cinematics_t *cin )
 {
 	roq_info_t *roq = cin->fdata;
 	roq_chunk_t *chunk = &roq->chunk;
 	int i, vqflg, vqflg_pos, vqid;
 	int xpos, ypos, x, y, xp, yp;
-	qbyte c, *tp;
+	qbyte c;
 	roq_qcell_t *qcell;
 	qbyte raw[RoQ_READ_BLOCK];
 	unsigned remaining, bpos, read;
@@ -296,7 +396,9 @@ static qbyte *RoQ_ReadVideo( cinematics_t *cin )
 
 				case RoQ_ID_FCC:
 					RoQ_ReadByte( c );
-					RoQ_ApplyMotion8x8( cin, xp, yp, c, ( char )( ( chunk->argument >> 8 ) & 0xff ), (char)( chunk->argument & 0xff ) );
+					RoQ_ApplyMotion8x8( cin, xp, yp, c, 
+						( char )( ( chunk->argument >> 8 ) & 0xff ), 
+						( char )( chunk->argument & 0xff ) );
 					break;
 
 				case RoQ_ID_SLD:
@@ -323,7 +425,9 @@ static qbyte *RoQ_ReadVideo( cinematics_t *cin )
 
 						case RoQ_ID_FCC:
 							RoQ_ReadByte( c );
-							RoQ_ApplyMotion4x4( cin, x, y, c, ( char )( ( chunk->argument >> 8 ) & 0xff ), (char)( chunk->argument & 0xff ) );
+							RoQ_ApplyMotion4x4( cin, x, y, c, 
+								( char )( ( chunk->argument >> 8 ) & 0xff ), 
+								( char )( chunk->argument & 0xff ) );
 							break;
 
 						case RoQ_ID_SLD:
@@ -369,18 +473,7 @@ static qbyte *RoQ_ReadVideo( cinematics_t *cin )
 			}
 	}
 
-	if( cin->frame++ == 0 )
-	{
-		// copy initial values to back buffer for motion
-		memcpy( roq->vid_pic[1], roq->vid_pic[0], cin->width * cin->height * 4 );
-	}
-	else
-	{
-		// swap buffers
-		tp = roq->vid_pic[0]; roq->vid_pic[0] = roq->vid_pic[1]; roq->vid_pic[1] = tp;
-	}
-
-	return roq->vid_pic[1];
+	return roq->cyuv;
 }
 
 /*
@@ -442,12 +535,13 @@ static void RoQ_ReadAudio( cinematics_t *cin )
 }
 
 /*
-* RoQ_ReadNextFrame_CIN
+* RoQ_ReadNextFrameYUV_CIN
 */
-qbyte *RoQ_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
+cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw )
 {
 	roq_info_t *roq = cin->fdata;
 	roq_chunk_t *chunk = &roq->chunk;
+	cin_yuv_t *cyuv = NULL;
 
 	while( !trap_FS_Eof( cin->file ) )
 	{
@@ -464,7 +558,8 @@ qbyte *RoQ_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 			RoQ_ReadAudio( cin );
 		else if( chunk->id == RoQ_QUAD_VQ ) {
 			*redraw = qtrue;
-			return RoQ_ReadVideo( cin );
+			cyuv = RoQ_ReadVideo( cin );
+			break;
 		}
 		else if( chunk->id == RoQ_QUAD_CODEBOOK )
 			RoQ_ReadCodebook( cin );
@@ -472,7 +567,23 @@ qbyte *RoQ_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 			RoQ_SkipChunk( cin );
 	}
 
-	return NULL;
+	if( cyuv ) {
+		if( cin->frame > 0 ) {
+			// swap buffers
+			cin_yuv_t tp;
+			tp = roq->cyuv[0]; roq->cyuv[0] = roq->cyuv[1]; roq->cyuv[1] = tp;
+		} else {
+			int i;
+			// init back buffer for inter-frame motion compensation
+			for( i = 0; i < 3; i++ ) {
+				memcpy( roq->cyuv[1].yuv[i].data, roq->cyuv[0].yuv[i].data, 
+					roq->cyuv[0].yuv[i].width * roq->cyuv[0].yuv[i].height );
+			}
+		}
+		cin->frame++;
+	}
+
+	return cyuv;
 }
 
 /*
@@ -491,7 +602,7 @@ qboolean RoQ_Init_CIN( cinematics_t *cin )
 	cin->framerate = RoQ_FRAMERATE;
 	cin->s_rate = 22050;
 	cin->s_width = 2;
-	cin->yuv = qfalse;
+	cin->yuv = qtrue;
 
 	RoQ_Init();
 
