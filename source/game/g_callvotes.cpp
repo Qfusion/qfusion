@@ -2665,16 +2665,6 @@ void G_CallVotes_Init( void )
 	callvote->argument_type = NULL;
 	callvote->help = G_LevelCopyString( "Resumes the game if in timeout" );
 
-	callvote = G_RegisterCallvote( "challengers_queue" );
-	callvote->expectedargs = 1;
-	callvote->validate = G_VoteChallengersValidate;
-	callvote->execute = G_VoteChallengersPassed;
-	callvote->current = G_VoteChallengersCurrent;
-	callvote->extraHelp = NULL;
-	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
-	callvote->argument_type = G_LevelCopyString( "bool" );
-	callvote->help = G_LevelCopyString( "Toggles the challenging spectators queue line" );
-
 	callvote = G_RegisterCallvote( "allow_uneven" );
 	callvote->expectedargs = 1;
 	callvote->validate = G_VoteAllowUnevenValidate;
