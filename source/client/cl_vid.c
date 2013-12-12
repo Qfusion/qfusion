@@ -440,6 +440,7 @@ static qboolean VID_LoadRefresh( const char *name )
 	import.CIN_NeedNextFrame = &CIN_NeedNextFrame;
 	import.CIN_ReadNextFrame = &CIN_ReadNextFrame;
 	import.CIN_ReadNextFrameYUV = &CIN_ReadNextFrameYUV;
+	import.CIN_Reset = &CIN_Reset;
 	import.CIN_Close = &CIN_Close;
 
 	import.Mem_AllocPool = &VID_RefModule_MemAllocPool;
@@ -579,10 +580,13 @@ load_refresh:
 		if( err != rserr_ok ) {
 			Sys_Error( "VID_ChangeMode() failed with code %i", err );
 		}
-		vid_ref_active = qtrue;
+		vid_ref_active = qtrue;	
 
 		// stop and free all sounds
 		CL_SoundModule_Init( verbose );
+
+		re.BeginRegistration();
+		CL_SoundModule_BeginRegistration();
 
 		FTLIB_PrecacheFonts( verbose );
 
@@ -605,6 +609,9 @@ load_refresh:
 			CL_UIModule_ForceMenuOn();
 			CL_SetKeyDest( key_menu );
 		}
+
+		re.EndRegistration();
+		CL_SoundModule_EndRegistration();
 
 		vid_ref_modified = qfalse;
 		vid_ref_verbose = qtrue;

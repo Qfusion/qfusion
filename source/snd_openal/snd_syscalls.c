@@ -60,7 +60,9 @@ QF_DLL_EXPORT sound_export_t *GetSoundAPI( sound_import_t *import )
 	globals.AddLoopSound = S_AddLoopSound;
 
 	globals.RawSamples = S_RawSamples;
-	globals.GetRawSamplesTime = S_GetRawSamplesTime;
+	globals.PositionedRawSamples = S_PositionedRawSamples;
+	globals.GetRawSamplesLength = S_GetRawSamplesLength;
+	globals.GetPositionedRawSamplesLength = S_GetPositionedRawSamplesLength;
 
 	globals.StartBackgroundTrack = S_StartBackgroundTrack;
 	globals.StopBackgroundTrack = S_StopBackgroundTrack;

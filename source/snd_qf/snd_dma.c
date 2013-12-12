@@ -63,6 +63,8 @@ playsound_t s_playsounds[MAX_PLAYSOUNDS];
 playsound_t s_freeplays;
 playsound_t s_pendingplays;
 
+rawsound_t *raw_sounds[MAX_RAW_SOUNDS];
+
 cvar_t *developer;
 
 cvar_t *s_volume;
@@ -82,9 +84,7 @@ static float s_attenuation_refdistance = 0;
 
 struct mempool_s *soundpool;
 
-unsigned int s_rawend;
-portable_samplepair_t s_rawsamples[MAX_RAW_SAMPLES];
-
+#define BACKGROUND_TRACK_PRELOAD_MSEC		200
 #define BACKGROUND_TRACK_BUFFERING_SIZE		MAX_RAW_SAMPLES*4+4000
 
 bgTrack_t *s_bgTrack;
@@ -100,6 +100,8 @@ static char *s_aviDumpFileName;
 static void S_PrevBackgroundTrack( void );
 static void S_NextBackgroundTrack( void );
 static void S_PauseBackgroundTrack( void );
+
+static void S_ClearRawSounds( void );
 
 // highfrequency attenuation parameters
 // 340/0.15 (speed of sound/width of head) gives us 2267hz
@@ -262,6 +264,8 @@ qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
 	num_sfx = 0;
 	num_loopsfx = 0;
 
+	memset( raw_sounds, 0, sizeof( raw_sounds ) );
+
 	S_ClearSoundTime();
 
 	if( verbose )
@@ -419,6 +423,14 @@ void S_FreeSounds( void )
 		memset( sfx, 0, sizeof( *sfx ) );
 	}
 
+	// free raw samples
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
+		if( raw_sounds[i] ) {
+			S_Free( raw_sounds[i] );
+		}
+	}
+	memset( raw_sounds, 0, sizeof( raw_sounds ) );
+
 	S_StopBackgroundTrack();
 }
 
@@ -470,7 +482,7 @@ void S_ClearSoundTime( void )
 {
 	soundtime = 0;
 	paintedtime = 0;
-	s_rawend = 0;
+	S_ClearRawSounds();
 }
 
 //=============================================================================
@@ -938,7 +950,7 @@ void S_Clear( void )
 {
 	int clear;
 
-	s_rawend = 0;
+	S_ClearRawSounds();
 
 	if( dma.samplebits == 8 )
 		clear = 0x80;
@@ -1048,23 +1060,80 @@ static void S_AddLoopSounds( void )
 
 //=============================================================================
 
-#define S_RAW_SAMPLES_PRECISION_BITS 14
+#define S_RAW_SOUND_IDLE_SEC			10	// time interval for idling raw sound before it's freed
+#define S_RAW_SOUND_BGTRACK				-1
+#define S_RAW_SAMPLES_PRECISION_BITS	14
 
 /*
-* S_RawSamples
+* S_FindRawSound
 */
-void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music )
+static rawsound_t *S_FindRawSound( int entnum, qboolean addNew )
 {
-	int snd_vol;
+	int i, free;
+	int best, best_time;
+	rawsound_t *rawsound;
+
+	// check for replacement sound, or find the best one to replace
+	best = free = -1;
+	best_time = 0x7fffffff;
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
+		rawsound = raw_sounds[i];
+
+		if( free < 0 && !rawsound ) {
+			free = i;
+		}
+		else if( rawsound ) {
+			int time;
+
+			if( rawsound->entnum == entnum ) {
+				// exact match
+				return rawsound;
+			}
+			
+			time = rawsound->rawend - paintedtime;
+			if( time < best_time ) {
+				best = i;
+				best_time = time;
+			}
+		}
+	}
+
+	if( !addNew ) {
+		return NULL;
+	}
+
+	if( free >= 0 ) {
+		best = free;
+	}
+	if( best < 0 ) {
+		// no free slots
+		return NULL;
+	}
+
+	if( !raw_sounds[best] ) {
+		raw_sounds[best] = S_Malloc( sizeof( *rawsound ) 
+			+ sizeof( portable_samplepair_t ) * MAX_RAW_SAMPLES );
+	}
+
+	rawsound = raw_sounds[best];
+	rawsound->entnum = entnum;
+	rawsound->rawend = 0;
+	return rawsound;
+}
+
+/*
+* S_RawSamplesMono
+*/
+static unsigned int S_RawSamplesMono( portable_samplepair_t *rawsamples, unsigned int rawend,
+	unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data )
+{
+	int mono;
 	unsigned src, dst;
 	unsigned fracstep, samplefrac;
 
-	snd_vol = (int)( ( music ? s_musicvolume->value : s_volume->value ) * 256 );
-	if( snd_vol < 0 )
-		snd_vol = 0;
-
-	if( s_rawend < paintedtime )
-		s_rawend = paintedtime;
+	if( rawend < paintedtime )
+		rawend = paintedtime;
 
 	fracstep = ( (double) rate / (double) dma.speed ) * (double)(1 << S_RAW_SAMPLES_PRECISION_BITS);
 	samplefrac = 0;
@@ -1077,17 +1146,19 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 		{
 			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
 			{
-				dst = s_rawend++ & ( MAX_RAW_SAMPLES - 1 );
-				s_rawsamples[dst].left = in[src*2] * snd_vol;
-				s_rawsamples[dst].right = in[src*2+1] * snd_vol;
+				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
+				mono = (in[src*2] + in[src*2+1])/2;
+				rawsamples[dst].left = mono;
+				rawsamples[dst].right = mono;
 			}
 		}
 		else
 		{
 			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
 			{
-				dst = s_rawend++ & ( MAX_RAW_SAMPLES - 1 );
-				s_rawsamples[dst].left = s_rawsamples[dst].right = in[src] * snd_vol;
+				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
+				rawsamples[dst].left = in[src];
+				rawsamples[dst].right = in[src];
 			}
 		}
 	}
@@ -1099,28 +1170,257 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 
 			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
 			{
-				dst = s_rawend++ & ( MAX_RAW_SAMPLES - 1 );
-				s_rawsamples[dst].left = in[src*2] << 8 * snd_vol;
-				s_rawsamples[dst].right = in[src*2+1] << 8 * snd_vol;
+				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
+				mono = (in[src*2] + in[src*2+1]) << 7;
+				rawsamples[dst].left = mono;
+				rawsamples[dst].right = mono;
 			}
 		}
 		else
 		{
 			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
 			{
-				dst = s_rawend++ & ( MAX_RAW_SAMPLES - 1 );
-				s_rawsamples[dst].left = s_rawsamples[dst].right = ( data[src] - 128 ) << 8 * snd_vol;
+				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
+				rawsamples[dst].left = ( data[src] - 128 ) << 8;
+				rawsamples[dst].right = ( data[src] - 128 ) << 8;
 			}
+		}
+	}
+
+	return rawend;
+}
+
+/*
+* S_RawSamplesStereo
+*/
+static unsigned int S_RawSamplesStereo( portable_samplepair_t *rawsamples, unsigned int rawend,
+	unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data )
+{
+	unsigned src, dst;
+	unsigned fracstep, samplefrac;
+
+	if( rawend < paintedtime )
+		rawend = paintedtime;
+
+	fracstep = ( (double) rate / (double) dma.speed ) * (double)(1 << S_RAW_SAMPLES_PRECISION_BITS);
+	samplefrac = 0;
+
+	if( width == 2 )
+	{
+		const short *in = (const short *)data;
+
+		if( channels == 2 )
+		{
+			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
+			{
+				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
+				rawsamples[dst].left = in[src*2];
+				rawsamples[dst].right = in[src*2+1];
+			}
+		}
+		else
+		{
+			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
+			{
+				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
+				rawsamples[dst].left = in[src];
+				rawsamples[dst].right = in[src];
+			}
+		}
+	}
+	else
+	{
+		if( channels == 2 )
+		{
+			const char *in = (const char *)data;
+
+			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
+			{
+				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
+				rawsamples[dst].left = in[src*2] << 8;
+				rawsamples[dst].right = in[src*2+1] << 8;
+			}
+		}
+		else
+		{
+			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
+			{
+				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
+				rawsamples[dst].left = ( data[src] - 128 ) << 8;
+				rawsamples[dst].right = ( data[src] - 128 ) << 8;
+			}
+		}
+	}
+
+	return rawend;
+}
+
+/*
+* S_RawSamples
+*/
+void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data, qboolean music )
+{
+	int snd_vol;
+	rawsound_t *rawsound;
+	
+	snd_vol = (int)( ( music ? s_musicvolume->value : s_volume->value ) * 255 );
+	if( snd_vol < 0 )
+		snd_vol = 0;
+	if( !snd_vol )
+		return;
+
+	rawsound = S_FindRawSound( S_RAW_SOUND_BGTRACK, qtrue );
+	if( !rawsound ) {
+		return;
+	}
+
+	rawsound->volume = snd_vol;
+	rawsound->attenuation = ATTN_NONE;
+	rawsound->rawend = S_RawSamplesStereo( rawsound->rawsamples, rawsound->rawend, 
+		samples, rate, width, channels, data );
+}
+
+/*
+* S_PositionedRawSamples
+*/
+void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+		unsigned int samples, unsigned int rate, 
+		unsigned short width, unsigned short channels, const qbyte *data )
+{
+	rawsound_t *rawsound;
+	
+	if( entnum < 0 )
+		entnum = 0;
+	if( fvol <= 0 )
+		return;
+
+	rawsound = S_FindRawSound( entnum, qtrue );
+	if( !rawsound ) {
+		return;
+	}
+
+	rawsound->volume = fvol * 255;
+	rawsound->attenuation = attenuation;
+	rawsound->rawend = S_RawSamplesMono( rawsound->rawsamples, rawsound->rawend, 
+		samples, rate, width, channels, data );
+
+	trap_GetEntitySpatilization( entnum, rawsound->origin, NULL );
+}
+
+/*
+* S_GetRawSamplesLength
+*/
+unsigned int S_GetRawSamplesLength( void ) 
+{
+	rawsound_t *rawsound;
+	
+	rawsound = S_FindRawSound( S_RAW_SOUND_BGTRACK, qfalse );
+	if( !rawsound ) {
+		return 0;
+	}
+
+	return rawsound->rawend <= paintedtime 
+		? 0 
+		: (float)(rawsound->rawend - paintedtime) * dma.msec_per_sample;
+}
+
+/*
+* S_GetPositionedRawSamplesLength
+*/
+unsigned int S_GetPositionedRawSamplesLength( int entnum ) 
+{
+	rawsound_t *rawsound;
+	
+	if( entnum < 0 )
+		entnum = 0;
+
+	rawsound = S_FindRawSound( entnum, qfalse );
+	if( !rawsound ) {
+		return 0;
+	}
+
+	return rawsound->rawend <= paintedtime 
+		? 0 
+		: (float)(rawsound->rawend - paintedtime) * dma.msec_per_sample;
+}
+
+/*
+* S_FreeIdleRawSounds
+*
+* Free raw sound that have been idling for too long.
+*/
+static void S_FreeIdleRawSounds( void )
+{
+	int i;
+
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
+		rawsound_t *rawsound = raw_sounds[i];
+
+		if( !rawsound ) {
+			continue;
+		}
+		if( rawsound->rawend >= paintedtime ) {
+			continue;
+		}
+
+		if( (paintedtime - rawsound->rawend) / dma.speed >= S_RAW_SOUND_IDLE_SEC ) {
+			S_Free( rawsound );
+			raw_sounds[i] = NULL;
 		}
 	}
 }
 
 /*
-* S_GetRawSamplesTime
+* S_ClearRawSounds
 */
-unsigned int S_GetRawSamplesTime( void )
+static void S_ClearRawSounds( void )
 {
-	return (double)paintedtime * 1000.0 / dma.speed;
+	int i;
+
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
+		rawsound_t *rawsound = raw_sounds[i];
+
+		if( !rawsound ) {
+			continue;
+		}
+		rawsound->rawend = 0;
+	}
+}
+
+/*
+* S_SpatializeRawSounds
+*/
+static void S_SpatializeRawSounds( void )
+{
+	int i;
+	
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
+		int left, right;
+		rawsound_t *rawsound = raw_sounds[i];
+
+		if( !rawsound ) {
+			continue;
+		}
+
+		if( rawsound->rawend < paintedtime ) {
+			rawsound->left_volume = rawsound->right_volume = 0;
+			continue;
+		}
+
+		// spatialization
+		if( rawsound->attenuation ) {
+			S_SpatializeOrigin( rawsound->origin, rawsound->volume, 
+	rawsound->attenuation, &left, &right );
+		}
+		else {
+			left = right = rawsound->volume;
+		}
+
+		rawsound->left_volume = left;
+		rawsound->right_volume = right;
+	}
 }
 
 //=============================================================================
@@ -1787,18 +2087,25 @@ static void S_UpdateBackgroundTrack( void )
 		return;
 	}
 
-	if( s_rawend < paintedtime )
-		s_rawend = paintedtime;
 	scale = (float)s_bgTrack->info.rate / dma.speed;
 	maxSamples = sizeof( data ) / s_bgTrack->info.channels / s_bgTrack->info.width;
 
 	while( 1 )
 	{
-		samples = ( paintedtime + MAX_RAW_SAMPLES - s_rawend ) * scale;
-		if( samples <= 0 )
+		unsigned int rawSamplesLength;
+
+		rawSamplesLength = S_GetRawSamplesLength();
+		if( rawSamplesLength >= BACKGROUND_TRACK_PRELOAD_MSEC )
 			return;
+
+		samples = BACKGROUND_TRACK_PRELOAD_MSEC - rawSamplesLength;
+		samples = (float)samples / 1000.0 * s_bgTrack->info.rate / scale;
+
 		if( samples > maxSamples )
 			samples = maxSamples;
+		if( samples > MAX_RAW_SAMPLES )
+			samples = MAX_RAW_SAMPLES;
+
 		maxRead = samples * s_bgTrack->info.channels * s_bgTrack->info.width;
 
 		total = 0;
@@ -1838,8 +2145,11 @@ static void S_UpdateBackgroundTrack( void )
 			total += read;
 		}
 
-		byteSwapRawSamples( samples, s_bgTrack->info.width, s_bgTrack->info.channels, data );
-		S_RawSamples( samples, s_bgTrack->info.rate, s_bgTrack->info.width, s_bgTrack->info.channels, data, qtrue );
+		byteSwapRawSamples( samples, s_bgTrack->info.width, 
+			s_bgTrack->info.channels, data );
+
+		S_RawSamples( samples, s_bgTrack->info.rate, s_bgTrack->info.width, 
+			s_bgTrack->info.channels, data, qtrue );
 	}
 }
 
@@ -1952,8 +2262,11 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qb
 		}
 	}
 
-	// add loopsounds
 	S_AddLoopSounds();
+
+	S_FreeIdleRawSounds();
+
+	S_SpatializeRawSounds();
 
 	//
 	// debugging output

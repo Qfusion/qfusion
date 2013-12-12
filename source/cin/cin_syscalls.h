@@ -196,18 +196,3 @@ static inline void trap_MemEmptyPool( struct mempool_s *pool, const char *filena
 {
 	CIN_IMPORT.Mem_EmptyPool( pool, filename, fileline );
 }
-
-static inline void trap_S_Clear( void )
-{
-	CIN_IMPORT.S_Clear();
-}
-
-static inline void trap_S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music )
-{
-	CIN_IMPORT.S_RawSamples( samples, rate, width, channels, data, music );
-}
-
-static inline unsigned int trap_S_GetRawSamplesTime( void )
-{
-	return CIN_IMPORT.S_GetRawSamplesTime();
-}

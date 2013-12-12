@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 1
+#define REF_API_VERSION 2
 
 struct mempool_s;
 struct cinematics_s;
@@ -83,10 +83,13 @@ typedef struct
 	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
 
-	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv );
+	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean *yuv, float *framerate );
 	qboolean ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
-	qbyte *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-	ref_yuv_t *( *CIN_ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	qbyte *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, 
+		int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	ref_yuv_t *( *CIN_ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, 
+		int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	void ( *CIN_Reset )( struct cinematics_s *cin, unsigned int cur_time );
 	void ( *CIN_Close )( struct cinematics_s *cin );
 
 	struct mempool_s *( *Mem_AllocPool )( struct mempool_s *parent, const char *name, const char *filename, int fileline );
@@ -174,9 +177,12 @@ typedef struct
 	int			( *GetClippedFragments )( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts, vec4_t *fverts, 
 									  int maxfragments, fragment_t *fragments );
 
+	struct shader_s * ( *GetShaderForOrigin )( const vec3_t origin );
+	struct cinematics_s * ( *GetShaderCinematic )( struct shader_s *shader );
+
 	void		( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 
-	void		( *BeginFrame )( float cameraSeparation, qboolean forceClear );
+	void		( *BeginFrame )( float cameraSeparation, qboolean forceClear, qboolean forceVsync );
 	void		( *EndFrame )( void );
 	const char *( *SpeedsMessage )( char *out, size_t size );
 

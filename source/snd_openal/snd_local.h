@@ -105,7 +105,11 @@ void S_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuatio
 
 // cinema
 void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
-unsigned int S_GetRawSamplesTime( void );
+void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+		unsigned int samples, unsigned int rate, 
+		unsigned short width, unsigned short channels, const qbyte *data );
+unsigned int S_GetRawSamplesLength( void );
+unsigned int S_GetPositionedRawSamplesLength( int entnum );
 
 // music
 void S_StartBackgroundTrack( const char *intro, const char *loop );
@@ -120,7 +124,7 @@ void S_LockBackgroundTrack( qboolean lock );
 */
 ALuint S_SoundFormat( int width, int channels );
 const char *S_ErrorMessage( ALenum error );
-ALfloat S_GetBufferLength( ALuint buffer );
+ALuint S_GetBufferLength( ALuint buffer );
 
 /*
 * Buffer management
@@ -139,6 +143,8 @@ typedef struct src_s
 	ALuint source;
 	sfx_t *sfx;
 
+	cvar_t *volumeVar;
+
 	int lastUse;    // Last time used
 	int priority;
 	int entNum;
@@ -151,6 +157,7 @@ typedef struct src_s
 	qboolean isLocked;
 	qboolean isLooping;
 	qboolean isTracking;
+	qboolean keepAlive;
 
 	vec3_t origin, velocity; // for local culling
 } src_t;
@@ -164,6 +171,7 @@ void S_LockSource( src_t *src );
 void S_UnlockSource( src_t *src );
 void S_StopAllSources( void );
 ALuint S_GetALSource( const src_t *src );
+src_t *S_AllocRawSource( int entNum, float fvol, float attenuation, cvar_t *volumeVar );
 
 /*
 * Music
@@ -173,8 +181,9 @@ void S_UpdateMusic( void );
 /*
 * Stream
 */
-void S_UpdateStream( void );
-void S_StopStream( void );
+void S_UpdateStreams( void );
+void S_StopStreams( void );
+void S_StopRawSamples( void );
 
 /*
 * Decoder

@@ -305,6 +305,7 @@ static msurface_t *R_TransformedTraceLine( rtrace_t *tr, const vec3_t start, con
 		trace_plane.dist = DotProduct( trace_plane.normal, trace_impact );
 		CategorizePlane( &trace_plane );
 
+		tr->shader = trace_surface->shader;
 		tr->plane = trace_plane;
 		tr->surfFlags = trace_surface->flags;
 		tr->ent = R_ENT2NUM(test);
@@ -323,6 +324,10 @@ msurface_t *R_TraceLine( rtrace_t *tr, const vec3_t start, const vec3_t end, int
 {
 	unsigned int i;
 	msurface_t *surf;
+
+	if( !r_worldbrushmodel ) {
+		return NULL;
+	}
 
 	// trace against world
 	surf = R_TransformedTraceLine( tr, start, end, rsc.worldent, surfumask );

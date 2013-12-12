@@ -27,6 +27,7 @@ typedef struct r_cinhandle_s
 {
 	unsigned int	id;
 	int				registrationSequence;
+	qboolean		reset;
 	char			*name;
 	char			*uploadName;
 	struct cinematics_s	*cin;
@@ -49,9 +50,21 @@ static r_cinhandle_t r_cinematics_headnode, *r_free_cinematics;
 static qboolean R_RunCin( r_cinhandle_t *h )
 {
 	qboolean redraw;
+	unsigned int now = ri.Sys_Milliseconds();
 
-	if( !ri.CIN_NeedNextFrame( h->cin, ri.Sys_Milliseconds() ) )
+	// don't advance cinematics during registration
+	if( rf.registrationOpen ) {
 		return qfalse;
+	}
+
+	if( h->reset ) {
+		h->reset = qfalse;
+		ri.CIN_Reset( h->cin, now );
+	}
+
+	if( !ri.CIN_NeedNextFrame( h->cin, now ) ) {
+		return qfalse;
+	}
 
 	if( h->yuv ) {
 		h->cyuv = ri.CIN_ReadNextFrameYUV( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
@@ -219,15 +232,43 @@ void R_RunAllCinematics( void )
 }
 
 /*
-* R_UploadCinematic
+* R_GetCinematicHandleById
 */
-image_t *R_UploadCinematic( unsigned int id )
+static r_cinhandle_t *R_GetCinematicHandleById( unsigned int id )
 {
 	assert( id > 0 && id <= MAX_CINEMATICS );
 	if( id == 0 || id > MAX_CINEMATICS ) {
 		return NULL;
 	}
-	return R_ResampleCinematicFrame( r_cinematics + id - 1 );
+	return &r_cinematics[id - 1];
+}
+
+/*
+* R_GetCinematicById
+*/
+struct cinematics_s *R_GetCinematicById( unsigned int id )
+{
+	r_cinhandle_t *handle;
+	
+	handle = R_GetCinematicHandleById( id );
+	if( handle ) {
+		return handle->cin;
+	}
+	return NULL;
+}
+
+/*
+* R_UploadCinematic
+*/
+image_t *R_UploadCinematic( unsigned int id )
+{
+	r_cinhandle_t *handle;
+	
+	handle = R_GetCinematicHandleById( id );
+	if( handle ) {
+		return R_ResampleCinematicFrame( handle );
+	}
+	return NULL;
 }
 
 /*
@@ -254,7 +295,7 @@ unsigned int R_StartCinematic( const char *arg )
 	}
 
 	// open the file, read header, etc
-	cin = ri.CIN_Open( arg, ri.Sys_Milliseconds(), qtrue, qfalse, &yuv );
+	cin = ri.CIN_Open( arg, ri.Sys_Milliseconds(), qtrue, &yuv, NULL );
 
 	// take a free cinematic handle if possible
 	if( !r_free_cinematics || !cin )
@@ -299,13 +340,12 @@ void R_TouchCinematic( unsigned int id )
 {
 	int i;
 	r_cinhandle_t *handle;
-
-	assert( id > 0 && id <= MAX_CINEMATICS );
-	if( id == 0 || id > MAX_CINEMATICS ) {
+	
+	handle = R_GetCinematicHandleById( id );
+	if( !handle ) {
 		return;
 	}
 
-	handle = &r_cinematics[id - 1];
 	handle->registrationSequence = rf.registrationSequence;
 
 	if( handle->image ) {
@@ -345,10 +385,11 @@ void R_FreeUnusedCinematics( void )
 void R_FreeCinematic( unsigned int id )
 {
 	r_cinhandle_t *handle;
-
-	handle = r_cinematics + id - 1;
-	if( !handle->cin )
+	
+	handle = R_GetCinematicHandleById( id );
+	if( !handle ) {
 		return;
+	}
 
 	ri.CIN_Close( handle->cin );
 	handle->cin = NULL;
@@ -368,6 +409,27 @@ void R_FreeCinematic( unsigned int id )
 	// insert into linked free list
 	handle->next = r_free_cinematics;
 	r_free_cinematics = handle;
+}
+
+/*
+* R_ResetCinematic
+*/
+static void R_ResetCinematic( r_cinhandle_t *handle )
+{
+	handle->reset = qtrue;
+}
+
+/*
+* R_RestartCinematics
+*/
+void R_RestartCinematics( void )
+{
+	r_cinhandle_t *handle, *hnode;
+
+	hnode = &r_cinematics_headnode;
+	for( handle = hnode->prev; handle != hnode; handle = handle->prev ) {
+		R_ResetCinematic( handle );
+	}
 }
 
 /*

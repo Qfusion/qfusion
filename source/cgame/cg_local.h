@@ -119,6 +119,8 @@ typedef struct
 	bool jumpedLeft;
 	vec3_t animVelocity;
 	float yawVelocity;
+
+	struct cinematics_s *cin;
 } centity_t;
 
 #include "cg_pmodels.h"
@@ -628,6 +630,7 @@ void CG_LerpGenericEnt( centity_t *cent );
 void CG_SetOutlineColor( byte_vec4_t outlineColor, byte_vec4_t color );
 void CG_AddColoredOutLineEffect( entity_t *ent, int effects, qbyte r, qbyte g, qbyte b, qbyte a );
 void CG_AddCentityOutLineEffect( centity_t *cent );
+void CG_AddItemGhostEffect( centity_t *cent );
 
 void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *tagname );
 

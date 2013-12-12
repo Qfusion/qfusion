@@ -279,6 +279,14 @@ static inline int trap_R_GetClippedFragments( const vec3_t origin, float radius,
 		maxfverts, fverts, maxfragments, fragments );
 }
 
+static inline struct shader_s *trap_R_GetShaderForOrigin( const vec3_t origin ) {
+	return CGAME_IMPORT.R_GetShaderForOrigin( origin );
+}
+
+static inline struct cinematics_s *trap_R_GetShaderCinematic( struct shader_s *shader ) {
+	return CGAME_IMPORT.R_GetShaderCinematic( shader );
+}
+
 static inline void trap_R_ClearScene( void )
 {
 	CGAME_IMPORT.R_ClearScene();
@@ -517,6 +525,29 @@ static inline void trap_S_StopBackgroundTrack( void )
 	CGAME_IMPORT.S_StopBackgroundTrack();
 }
 
+static inline void trap_S_RawSamples( unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data )
+{
+	CGAME_IMPORT.S_RawSamples( samples, rate, width, channels, data );
+}
+
+static inline void trap_S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+		unsigned int samples, unsigned int rate, unsigned short width, 
+		unsigned short channels, const qbyte *data )
+{
+	CGAME_IMPORT.S_PositionedRawSamples( entnum, fvol, attenuation, samples, rate, width, channels, data );
+}
+
+static inline unsigned int trap_S_GetRawSamplesLength( void )
+{
+	return CGAME_IMPORT.S_GetRawSamplesLength();
+}
+
+static inline unsigned int trap_S_GetPositionedRawSamplesLength( int entnum )
+{
+	return CGAME_IMPORT.S_GetPositionedRawSamplesLength( entnum );
+}
+
 static inline struct qfontface_s *trap_SCR_RegisterFont( const char *family, int style, unsigned int size )
 {
 	return CGAME_IMPORT.SCR_RegisterFont( family, style, size );
@@ -596,4 +627,10 @@ static inline void trap_L10n_LoadLangPOFile( const char *filepath )
 static inline const char *trap_L10n_TranslateString( const char *string )
 {
 	return CGAME_IMPORT.L10n_TranslateString( string );
+}
+
+static inline qboolean trap_CIN_AddRawSamplesListener( struct cinematics_s *cin, 
+	void *listener, cg_raw_samples_cb_t rs,cg_get_raw_samples_cb_t grs )
+{
+	return CGAME_IMPORT.CIN_AddRawSamplesListener( cin, listener, rs, grs );
 }
