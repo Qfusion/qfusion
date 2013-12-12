@@ -136,7 +136,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 			return qfalse;
 		}
 	}
-	if( shader->flags & SHADER_VIDEOMAP ) {
+	if( shader->cin ) {
 		R_UploadCinematicShader( shader );
 	}
 

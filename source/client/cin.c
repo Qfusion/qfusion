@@ -134,10 +134,6 @@ void CIN_LoadLibrary( qboolean verbose )
 	import.Mem_FreePool = &CL_CinModule_MemFreePool;
 	import.Mem_EmptyPool = &CL_CinModule_MemEmptyPool;
 
-	import.S_Clear = &CL_SoundModule_Clear;
-	import.S_RawSamples = &CL_SoundModule_RawSamples;
-	import.S_GetRawSamplesTime = &CL_SoundModule_GetRawSamplesTime;
-
 	// load dynamic library
 	cin_export = NULL;
 	if( verbose ) {
@@ -220,10 +216,11 @@ void CIN_UnloadLibrary( qboolean verbose )
 	}
 }
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv )
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
+	qboolean loop, qboolean *yuv, float *framerate )
 {
 	if( cin_export ) {
-		return cin_export->Open( name, start_time, loop, audio, yuv );
+		return cin_export->Open( name, start_time, loop, yuv, framerate );
 	}
 	return NULL;
 }
@@ -236,20 +233,40 @@ qboolean CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime )
 	return qfalse;
 }
 
-qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
+qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, 
+	int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
 {
 	if( cin_export ) {
-		return cin_export->ReadNextFrame( cin, width, height, aspect_numerator, aspect_denominator, redraw );
+		return cin_export->ReadNextFrame( cin, width, height, 
+			aspect_numerator, aspect_denominator, redraw );
 	}
 	return NULL;
 }
 
-ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
+ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, 
+	int *width, int *height, int *aspect_numerator, int *aspect_denominator, 
+	qboolean *redraw )
 {
 	if( cin_export ) {
-		return ( ref_yuv_t * )cin_export->ReadNextFrameYUV( cin, width, height, aspect_numerator, aspect_denominator, redraw );
+		return ( ref_yuv_t * )cin_export->ReadNextFrameYUV( cin, width, height, 
+			aspect_numerator, aspect_denominator, redraw );
 	}
 	return NULL;
+}
+
+qboolean CIN_AddRawSamplesListener( struct cinematics_s *cin, void *listener, 
+	cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs ) {
+	if( cin_export ) {
+		return cin_export->AddRawSamplesListener( cin, listener, rs, grs );
+	}
+	return qfalse;
+}
+
+void CIN_Reset( struct cinematics_s *cin, unsigned int cur_time )
+{
+	if( cin_export ) {
+		cin_export->Reset( cin, cur_time );
+	}
 }
 
 void CIN_Close( struct cinematics_s *cin )

@@ -95,6 +95,9 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.GetClippedFragments = R_GetClippedFragments;
 
+	globals.GetShaderForOrigin = R_GetShaderForOrigin;
+	globals.GetShaderCinematic = R_GetShaderCinematic;
+
 	globals.TransformVectorToScreen = R_TransformVectorToScreen;
 
 	globals.BeginFrame = R_BeginFrame;

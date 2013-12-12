@@ -22,9 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _CIN_PUBLIC_H_
 
 // cin_public.h -- cinematics playback as a separate dll, making the engine
-// container/format-agnostic
+// container- and format- agnostic
 
-#define	CIN_API_VERSION				3
+#define	CIN_API_VERSION				5
 
 //===============================================================
 
@@ -66,6 +66,10 @@ typedef struct {
 	// ref_yuv_t EXPECTS FIELDS IN THAT ORDER
 	//===============================
 } cin_yuv_t;
+
+typedef void (*cin_raw_samples_cb_t)(void*,unsigned int, unsigned int, 
+	unsigned short, unsigned short, const qbyte *);
+typedef unsigned int (*cin_get_raw_samples_cb_t)(void*);
 
 //
 // functions provided by the main engine
@@ -124,11 +128,6 @@ typedef struct
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
-
-	// sound mixing functions
-	void ( *S_Clear )( void );
-	void ( *S_RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
-	unsigned int ( *S_GetRawSamplesTime )( void ); // Mixing position in milliseconds for A/V sync
 } cin_import_t;
 
 //
@@ -143,10 +142,12 @@ typedef struct
 	qboolean ( *Init )( qboolean verbose );
 	void ( *Shutdown )( qboolean verbose );
 
-	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv );
+	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean *yuv, float *framerate );
 	qboolean ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
 	qbyte *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 	cin_yuv_t *( *ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	qboolean ( *AddRawSamplesListener )( struct cinematics_s *cin, void *listener, cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs );
+	void ( *Reset )( struct cinematics_s *cin, unsigned int cur_time );
 	void ( *Close )( struct cinematics_s *cin );
 } cin_export_t;
 

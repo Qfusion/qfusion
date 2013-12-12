@@ -35,10 +35,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CIN_FreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
 #define CIN_EmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
 
-#define CIN_LOOP					1
-#define CIN_AUDIO					2
+#define CIN_LOOP						1
 
-void Com_DPrintf( const char *format, ... );
+#define CIN_MAX_RAW_SAMPLES_LISTENERS	8
+
+typedef struct
+{
+	void *listener;
+	cin_raw_samples_cb_t raw_samples;
+	cin_get_raw_samples_cb_t get_raw_samples;
+} cin_raw_samples_listener_t;
 
 typedef struct cinematics_s
 {
@@ -50,6 +56,7 @@ typedef struct cinematics_s
 	unsigned int s_rate;
 	unsigned short s_width;
 	unsigned short s_channels;
+	unsigned int s_samples_length;
 
 	int			width;
 	int			height;
@@ -59,27 +66,52 @@ typedef struct cinematics_s
 	int			headerlen;
 
 	unsigned int cur_time;
-	unsigned int start_time;              // Sys_Milliseconds for first cinematic frame
+	unsigned int start_time;		// Sys_Milliseconds for first cinematic frame
 	unsigned int frame;
 
 	qboolean	yuv;
 
 	qbyte		*vid_buffer;
 
+	qboolean	haveAudio;			// only valid for the current frame
+	int			num_listeners;
+	cin_raw_samples_listener_t listeners[CIN_MAX_RAW_SAMPLES_LISTENERS];
+
 	int			type;
 	void		*fdata;				// format-dependent data
 	struct mempool_s *mempool;
 } cinematics_t;
+
+void Com_DPrintf( const char *format, ... );
 
 int CIN_API( void );
 qboolean CIN_Init( qboolean verbose );
 void CIN_Shutdown( qboolean verbose );
 char *CIN_CopyString( const char *in );
 
-struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, qboolean loop, qboolean audio, qboolean *yuv );
-qboolean CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime );
-qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-cin_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-void CIN_Close( struct cinematics_s *cin );
+struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
+	qboolean loop, qboolean *yuv, float *framerate );
+
+qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime );
+
+qbyte *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 
+	int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+
+cin_yuv_t *CIN_ReadNextFrameYUV( cinematics_t *cin, int *width, int *height, 
+	int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+
+void CIN_ClearRawSamplesListeners( cinematics_t *cin );
+
+qboolean CIN_AddRawSamplesListener( cinematics_t *cin, void *listener, 
+	cin_raw_samples_cb_t raw_samples, cin_get_raw_samples_cb_t get_raw_samples );
+
+void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigned int rate, 
+		unsigned short width, unsigned short channels, const qbyte *data );
+
+unsigned int CIN_GetRawSamplesLengthFromListeners( cinematics_t *cin );
+
+void CIN_Reset( cinematics_t *cin, unsigned int cur_time );
+
+void CIN_Close( cinematics_t *cin );
 
 #endif

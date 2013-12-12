@@ -1,5 +1,6 @@
 /*
-Copyright (C) 2002-2011 Victor Luchits
+Copyright (C) 2002-2014 Victor Luchits
+Copyright (C) 2003 Dr. Tim Ferguson
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -22,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 =======================================================================
 
 RoQ FORMAT PLAYBACK
+
+Based on work by Dr. Tim Ferguson: http://www.csse.monash.edu.au/~timf/
 
 =======================================================================
 */
@@ -418,7 +421,7 @@ static void RoQ_ReadAudio( cinematics_t *cin )
 				snd_left = (short)snd_left;
 			}
 
-			trap_S_RawSamples( read, cin->s_rate, 2, 1, (qbyte *)samples, qfalse );
+			CIN_RawSamplesToListeners( cin, read, cin->s_rate, 2, 1, (qbyte *)samples );
 		}
 		else if( chunk->id == RoQ_SOUND_STEREO )
 		{
@@ -433,7 +436,7 @@ static void RoQ_ReadAudio( cinematics_t *cin )
 				snd_right = (short)snd_right;
 			}
 
-			trap_S_RawSamples( read / 2, cin->s_rate, 2, 2, (qbyte *)samples, qfalse );
+			CIN_RawSamplesToListeners( cin, read / 2, cin->s_rate, 2, 2, (qbyte *)samples );
 		}
 	}
 }
@@ -457,7 +460,7 @@ qbyte *RoQ_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 
 		if( chunk->id == RoQ_INFO )
 			RoQ_ReadInfo( cin );
-		else if( (chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO) && ( cin->flags & CIN_AUDIO ) )
+		else if( (chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO) && ( cin->num_listeners != 0 ) )
 			RoQ_ReadAudio( cin );
 		else if( chunk->id == RoQ_QUAD_VQ ) {
 			*redraw = qtrue;

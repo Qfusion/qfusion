@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "cin.h"
 
-#define SCR_CinematicTime() CL_SoundModule_GetRawSamplesTime()
+#define SCR_CinematicTime() Sys_Milliseconds()
 
 
 /*
@@ -57,6 +57,27 @@ void SCR_FinishCinematic( void )
 //==========================================================================
 
 /*
+* SCR_CinematicRawSamples
+*/
+static void SCR_CinematicRawSamples( void *unused, unsigned int samples, 
+	unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data )
+{
+	(void)unused;
+	
+	CL_SoundModule_RawSamples( samples, rate, width, channels, data, qfalse );
+}
+
+/*
+* SCR_CinematicGetRawSamplesLength
+*/
+static unsigned int SCR_CinematicGetRawSamplesLength( void *unused )
+{
+	(void)unused;
+
+	return CL_SoundModule_GetRawSamplesLength();
+}
+
+/*
 * SCR_ReadNextCinematicFrame
 */
 static void SCR_ReadNextCinematicFrame( void )
@@ -87,6 +108,14 @@ qboolean SCR_AllowCinematicConsole( void )
 }
 
 /*
+* SCR_CinematicFramerate
+*/
+float SCR_CinematicFramerate( void )
+{
+	return cl.cin.framerate;
+}
+
+/*
 * SCR_RunCinematic
 */
 void SCR_RunCinematic( void )
@@ -102,16 +131,15 @@ void SCR_RunCinematic( void )
 		return;
 	}
 
-	cl.cin.absPrevTime = cl.cin.absCurrentTime;
-	cl.cin.absCurrentTime = SCR_CinematicTime();
-
 	if( cl.cin.paused ) {
 		return;
 	}
 
-	cl.cin.currentTime += cl.cin.absCurrentTime - cl.cin.absPrevTime;
+	// CIN_NeedNextFrame is going to query us for raw samples length
+	CIN_AddRawSamplesListener( cl.cin.h, NULL, 
+		&SCR_CinematicRawSamples, &SCR_CinematicGetRawSamplesLength );
 
-	if( !CIN_NeedNextFrame( cl.cin.h, cl.cin.currentTime ) ) {
+	if( !CIN_NeedNextFrame( cl.cin.h, SCR_CinematicTime() - cl.cin.startTime ) ) {
 		cl.cin.redraw = qfalse;
 		return;
 	}
@@ -213,10 +241,11 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 {
 	struct cinematics_s *cin;
 	qboolean yuv;
+	float framerate;
 
 	CL_SoundModule_Clear();
 
-	cin = CIN_Open( arg, 0, qfalse, qtrue, &yuv );
+	cin = CIN_Open( arg, 0, qfalse, &yuv, &framerate );
 	if( !cin )
 	{
 		Com_Printf( "SCR_PlayCinematic: couldn't find %s\n", arg );
@@ -229,9 +258,10 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 	cl.cin.keepRatio = (flags & 1) ? qfalse : qtrue;
 	cl.cin.allowConsole = (flags & 2) ? qfalse : qtrue;
 	cl.cin.paused = qfalse;
-	cl.cin.absStartTime = cl.cin.absCurrentTime = cl.cin.absPrevTime = SCR_CinematicTime();
-	cl.cin.currentTime = 0;
+	cl.cin.startTime = SCR_CinematicTime();
+	cl.cin.paused = qfalse;
 	cl.cin.yuv = yuv;
+	cl.cin.framerate = framerate;
 
 	CL_SetClientState( CA_CINEMATIC );
 
@@ -239,7 +269,7 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 
 	SCR_EndLoadingPlaque();
 
-	SCR_ReadNextCinematicFrame();
+	SCR_RunCinematic();
 }
 
 /*
@@ -253,7 +283,12 @@ void SCR_PauseCinematic( void )
 
 	cl.cin.paused = !cl.cin.paused;
 	if( cl.cin.paused ) {
+		cl.cin.pauseTime = SCR_CinematicTime();
 		CL_SoundModule_Clear();
+	}
+	else {
+		cl.cin.startTime += SCR_CinematicTime() - cl.cin.pauseTime;
+		cl.cin.pauseTime = 0;
 	}
 }
 
