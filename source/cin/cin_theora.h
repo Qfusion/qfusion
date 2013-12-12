@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cin_local.h"
 
+//#define THEORA_SOFTWARE_YUV2RGB
 #define THEORA_FILE_EXTENSIONS ".ogg .ogv"
 
 qboolean Theora_Init_CIN( cinematics_t *cin );
