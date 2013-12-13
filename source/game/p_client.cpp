@@ -587,7 +587,7 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 		self->r.client->resp.takeStun = true;
 		self->r.solid = SOLID_YES;
 		self->movetype = MOVETYPE_PLAYER;
-		client->ps.pmove.stats[PM_STAT_FEATURES] = static_cast<short>(PMFEAT_DEFAULT);
+		client->ps.pmove.stats[PM_STAT_FEATURES] = static_cast<unsigned short>(PMFEAT_DEFAULT);
 		if( !g_allow_bunny->integer )
 			client->ps.pmove.stats[PM_STAT_FEATURES] &= ~( PMFEAT_AIRCONTROL|PMFEAT_FWDBUNNY );
 	}
@@ -1129,6 +1129,16 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 	// TODO: remove the key after storing it to gclient_t !
 	s = Info_ValueForKey( userinfo, "cl_mm_session" );
 	cl->mm_session = ( s == NULL ) ? 0 : atoi( s );
+
+	// tv
+	if( cl->tv )
+	{
+		s = Info_ValueForKey( userinfo, "tv_port" );
+		cl->tv_port = s ? atoi( s ) : 0;
+
+		s = Info_ValueForKey( userinfo, "tv_port6" );
+		cl->tv_port6 = s ? atoi( s ) : 0;
+	}
 
 	if( !G_ISGHOSTING( ent ) && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED )
 		G_Client_AssignTeamSkin( ent, userinfo );
