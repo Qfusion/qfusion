@@ -1191,54 +1191,7 @@ static void Cmd_Whois_f( edict_t *ent )
 */
 static void Cmd_TVConnect_f( edict_t *ent )
 {
-	int i;
-	gclient_t *client, *best;
-	static int last_tv = 0;
-	bool isIPv6;
-	char ip[MAX_INFO_VALUE];
-	int port;
-	const char *p;
-
-	best = NULL;
-	for( i = 0; i < gs.maxclients; i++ ) {
-		client = &game.clients[(last_tv + 1 + i) % gs.maxclients];
-		if( !client->isTV || client->connecting ) {
-			// not a TV or not ready yet
-			continue;
-		}
-		if( client->tv.numclients == client->tv.maxclients ) {
-			// full
-			continue;
-		}
-		if( !client->tv.channel ) {
-			// invalid userinfo/channel number
-			continue;
-		}
-		best = client;
-		break;
-	}
-
-	if( !best ) {
-		G_PrintMsg( ent, "Could not find a free TV server\n" );
-		return;
-	}
-
-	Q_strncpyz( ip, best->ip, sizeof( ip ) );
-
-	// check IP type
-	p = strstr( ip, "::" );
-	isIPv6 = p != NULL;
-
-	// strip port number from address string
-	p = strrchr( ip, ':' );
-	if( p != NULL ) {
-		ip[p - ip] = '\0';
-	}
-
-	port = isIPv6 ? best->tv.port6 : best->tv.port;
-
-	last_tv = best - game.clients;
-	trap_GameCmd( ent, va( "cmd connect %s:%hu#%i", ip, port, best->tv.channel ) );
+	G_MoveClientToTV( ent );
 }
 
 //===========================================================
