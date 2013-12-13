@@ -781,7 +781,7 @@ static void G_SetName( edict_t *ent, const char *original_name )
 	}
 
 	maxchars = MAX_NAME_CHARS;
-	if( ent->r.client->tv )
+	if( ent->r.client->isTV )
 		maxchars = min( maxchars + 10, MAX_NAME_BYTES-1 );
 
 	// Limit the name to MAX_NAME_CHARS printable characters
@@ -1007,7 +1007,7 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 	// set name, it's validated and possibly changed first
 	Q_strncpyz( oldname, cl->netname, sizeof( oldname ) );
 	G_SetName( ent, Info_ValueForKey( userinfo, "name" ) );
-	if( oldname[0] && Q_stricmp( oldname, cl->netname ) && !cl->tv && !CheckFlood( ent, false ) )
+	if( oldname[0] && Q_stricmp( oldname, cl->netname ) && !cl->isTV && !CheckFlood( ent, false ) )
 		G_PrintMsg( NULL, "%s%s is now known as %s%s\n", oldname, S_COLOR_WHITE, cl->netname, S_COLOR_WHITE );
 	if( !Info_SetValueForKey( userinfo, "name", cl->netname ) )
 	{
@@ -1131,13 +1131,19 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 	cl->mm_session = ( s == NULL ) ? 0 : atoi( s );
 
 	// tv
-	if( cl->tv )
+	if( cl->isTV )
 	{
 		s = Info_ValueForKey( userinfo, "tv_port" );
-		cl->tv_port = s ? atoi( s ) : 0;
+		cl->tv.port = s ? atoi( s ) : 0;
 
 		s = Info_ValueForKey( userinfo, "tv_port6" );
-		cl->tv_port6 = s ? atoi( s ) : 0;
+		cl->tv.port6 = s ? atoi( s ) : 0;
+
+		s = Info_ValueForKey( userinfo, "max_cl" );
+		cl->tv.maxclients = s ? atoi( s ) : 0;
+
+		s = Info_ValueForKey( userinfo, "num_cl" );
+		cl->tv.numclients = s ? atoi( s ) : 0;
 	}
 
 	if( !G_ISGHOSTING( ent ) && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED )
@@ -1232,7 +1238,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 	memset( ent->r.client, 0, sizeof( gclient_t ) );
 	ent->r.client->ps.playerNum = PLAYERNUM( ent );
 	ent->r.client->connecting = true;
-	ent->r.client->tv = tvClient ? qtrue : qfalse;
+	ent->r.client->isTV = tvClient == qtrue;
 	ent->r.client->team = TEAM_SPECTATOR;
 	G_Client_UpdateActivity( ent->r.client ); // activity detected
 
