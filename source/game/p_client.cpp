@@ -1144,6 +1144,9 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 
 		s = Info_ValueForKey( userinfo, "num_cl" );
 		cl->tv.numclients = s ? atoi( s ) : 0;
+
+		s = Info_ValueForKey( userinfo, "chan" );
+		cl->tv.channel = s ? atoi( s ) : 0;
 	}
 
 	if( !G_ISGHOSTING( ent ) && trap_GetClientState( PLAYERNUM( ent ) ) >= CS_SPAWNED )

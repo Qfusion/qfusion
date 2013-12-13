@@ -148,6 +148,8 @@ char *TV_Upstream_Userinfo( upstream_t *upstream )
 	Info_SetValueForKey( userinfo, "num_cl", va( "%i", count ) );
 	Info_SetValueForKey( userinfo, "max_cl", va( "%i", tv_maxclients->integer ) );
 
+	Info_SetValueForKey( userinfo, "chan", va( "%i", upstream->number + 1 ) );
+
 	return userinfo;
 }
 
