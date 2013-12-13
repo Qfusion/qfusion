@@ -133,6 +133,7 @@ static int Game_PlayerNum( Game *game )
 void BindGame( ASInterface *as )
 {
 	ASBind::Enum( as->getEngine(), "eConfigString" )
+		( "CS_TVSERVER", CS_TVSERVER )
 		( "CS_MODMANIFEST", CS_MODMANIFEST )
 		( "CS_MESSAGE", CS_MESSAGE )
 		( "CS_MAPNAME", CS_MAPNAME )
