@@ -70,8 +70,6 @@ cvar_t *tv_floodprotection_penalty;
 */
 void TV_Init( void )
 {
-	netadr_t address;
-
 	Com_Printf( "Initializing " APPLICATION " TV server\n" );
 
 	tv_mempool = Mem_AllocPool( NULL, "TV" );
@@ -127,7 +125,7 @@ void TV_Init( void )
 
 	if( tv_maxclients->integer )
 	{
-		tvs.clients = Mem_Alloc( tv_mempool, sizeof( client_t ) * tv_maxclients->integer );
+		tvs.clients = ( client_t * )Mem_Alloc( tv_mempool, sizeof( client_t ) * tv_maxclients->integer );
 	}
 	else
 	{
@@ -137,13 +135,13 @@ void TV_Init( void )
 	tvs.lobby.snapFrameTime = 100;
 
 	// IPv4
-	if( !NET_StringToAddress( tv_ip->string, &address ) )
+	if( !NET_StringToAddress( tv_ip->string, &tvs.address ) )
 		Com_Error( ERR_FATAL, "Couldn't understand address of tv_ip cvar: %s\n", NET_ErrorString() );
-	NET_SetAddressPort( &address, tv_port->integer );
+	NET_SetAddressPort( &tvs.address, tv_port->integer );
 
 	if( tv_udp->integer )
 	{
-		if( !NET_OpenSocket( &tvs.socket_udp, SOCKET_UDP, &address, qtrue ) )
+		if( !NET_OpenSocket( &tvs.socket_udp, SOCKET_UDP, &tvs.address, qtrue ) )
 		{
 			Com_Printf( "Error: Couldn't open UDP socket: %s\n", NET_ErrorString() );
 			Cvar_ForceSet( tv_udp->name, "0" );
@@ -151,13 +149,13 @@ void TV_Init( void )
 	}
 
 	// IPv6
-	if( !NET_StringToAddress( tv_ip6->string, &address ) )
+	if( !NET_StringToAddress( tv_ip6->string, &tvs.addressIPv6 ) )
 		Com_Error( ERR_FATAL, "Couldn't understand address of tv_ip6 cvar: %s\n", NET_ErrorString() );
-	NET_SetAddressPort( &address, tv_port6->integer );
+	NET_SetAddressPort( &tvs.addressIPv6, tv_port6->integer );
 
 	if( tv_udp6->integer )
 	{
-		if( !NET_OpenSocket( &tvs.socket_udp6, SOCKET_UDP, &address, qtrue ) )
+		if( !NET_OpenSocket( &tvs.socket_udp6, SOCKET_UDP, &tvs.addressIPv6, qtrue ) )
 		{
 			Com_Printf( "Error: Couldn't open UDP6 socket: %s\n", NET_ErrorString() );
 			Cvar_ForceSet( tv_udp6->name, "0" );
@@ -167,7 +165,7 @@ void TV_Init( void )
 #ifdef TCP_ALLOW_CONNECT
 	if( tv_tcp->integer )
 	{
-		if( !NET_OpenSocket( &tvs.socket_tcp, SOCKET_TCP, &address, qtrue ) )
+		if( !NET_OpenSocket( &tvs.socket_tcp, SOCKET_TCP, &tvs.addressIPv6, qtrue ) )
 		{
 			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
 			Cvar_ForceSet( tv_tcp->name, "0" );

@@ -119,7 +119,9 @@ char *TV_Upstream_Userinfo( upstream_t *upstream )
 	relay_t *relay;
 
 	if( !upstream->userinfo )
-		upstream->userinfo = Mem_Alloc( upstream->mempool, sizeof( *upstream->userinfo ) * MAX_INFO_STRING );
+		upstream->userinfo = ( char * )Mem_Alloc( upstream->mempool, 
+		sizeof( *upstream->userinfo ) * MAX_INFO_STRING );
+
 	userinfo = upstream->userinfo;
 
 	// override the name value
@@ -132,6 +134,10 @@ char *TV_Upstream_Userinfo( upstream_t *upstream )
 
 	// override password
 	Info_SetValueForKey( userinfo, "password", upstream->password ? upstream->password : "" );
+
+	// send self port
+	Info_SetValueForKey( userinfo, "tv_port", va( "%hu", NET_GetAddressPort( &tvs.address ) ) );
+	Info_SetValueForKey( userinfo, "tv_port6", va( "%hu", NET_GetAddressPort( &tvs.addressIPv6 ) ) );
 
 	return userinfo;
 }
