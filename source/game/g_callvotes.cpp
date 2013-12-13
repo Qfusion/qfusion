@@ -2210,6 +2210,7 @@ void G_CallVote_Cmd( edict_t *ent )
 void G_OperatorVote_Cmd( edict_t *ent )
 {
 	edict_t *other;
+	int forceVote;
 
 	if( !ent->r.client )
 		return;
@@ -2225,11 +2226,24 @@ void G_OperatorVote_Cmd( edict_t *ent )
 	if( !Q_stricmp( trap_Cmd_Argv( 1 ), "help" ) )
 	{
 		G_PrintMsg( ent, "Opcall can be used with all callvotes and the following commands:\n" );
-		G_PrintMsg( ent, "-help\n - passvote\n- cancelvote\n" );
+		G_PrintMsg( ent, "-help\n - passvote\n- cancelvote\n- putteam\n" );
 		return;
 	}
 
 	if( !Q_stricmp( trap_Cmd_Argv( 1 ), "cancelvote" ) )
+	{
+		forceVote = VOTED_NO;
+	}
+	else if( !Q_stricmp( trap_Cmd_Argv( 1 ), "passvote" ) )
+	{
+		forceVote = VOTED_YES;
+	}
+	else
+	{
+		forceVote = VOTED_NOTHING;
+	}
+
+	if( forceVote != VOTED_NOTHING )
 	{
 		if( !callvoteState.vote.callvote )
 		{
@@ -2241,37 +2255,14 @@ void G_OperatorVote_Cmd( edict_t *ent )
 		{
 			if( !other->r.inuse || trap_GetClientState( PLAYERNUM( other ) ) < CS_SPAWNED )
 				continue;
-
 			if( ( other->r.svflags & SVF_FAKECLIENT ) || other->r.client->isTV )
 				continue;
 
-			clientVoted[PLAYERNUM( other )] = VOTED_NO;
+			clientVoted[PLAYERNUM( other )] = forceVote;
 		}
 
-		G_PrintMsg( NULL, "Callvote has been cancelled by %s\n", ent->r.client->netname );
-		return;
-	}
-
-	if( !Q_stricmp( trap_Cmd_Argv( 1 ), "passvote" ) )
-	{
-		if( !callvoteState.vote.callvote )
-		{
-			G_PrintMsg( ent, "There's no callvote to pass.\n" );
-			return;
-		}
-
-		for( other = game.edicts + 1; PLAYERNUM( other ) < gs.maxclients; other++ )
-		{
-			if( !other->r.inuse || trap_GetClientState( PLAYERNUM( other ) ) < CS_SPAWNED )
-				continue;
-
-			if( ( other->r.svflags & SVF_FAKECLIENT ) || other->r.client->isTV )
-				continue;
-
-			clientVoted[PLAYERNUM( other )] = VOTED_YES;
-		}
-
-		G_PrintMsg( NULL, "Callvote has been passed by %s\n", ent->r.client->netname );
+		G_PrintMsg( NULL, "Callvote has been %s by %s\n", 
+			forceVote == VOTED_NO ? "cancelled" : "passed", ent->r.client->netname );
 		return;
 	}
 
@@ -2303,6 +2294,21 @@ void G_OperatorVote_Cmd( edict_t *ent )
 		G_Teams_SetTeam( playerEnt, newTeam );
 		G_PrintMsg( NULL, "%s was moved to team %s by %s.\n", playerEnt->r.client->netname, GS_TeamName( newTeam ), ent->r.client->netname );
 
+		return;
+	}
+
+	if( !Q_stricmp( trap_Cmd_Argv( 1 ), "specstotv" ) )
+	{
+		for( other = game.edicts + 1; PLAYERNUM( other ) < gs.maxclients; other++ )
+		{
+			if( !other->r.inuse || trap_GetClientState( PLAYERNUM( other ) ) < CS_SPAWNED )
+				continue;
+			if( other->r.client->isoperator )
+				continue;
+			if( other->s.team != TEAM_SPECTATOR )
+				continue;
+			G_MoveClientToTV( other );
+		}
 		return;
 	}
 
