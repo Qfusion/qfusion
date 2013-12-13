@@ -534,6 +534,7 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	}
 }
 
+#if 0
 static void G_Fire_SpiralPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, int spread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
 {
 	int i;
@@ -562,6 +563,7 @@ static void G_Fire_SpiralPattern( edict_t *self, vec3_t start, vec3_t dir, int *
 		}
 	}
 }
+#endif
 
 static void G_Fire_RandomPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, 
 	int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
