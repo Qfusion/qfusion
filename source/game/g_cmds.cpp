@@ -1194,14 +1194,21 @@ static void Cmd_TVConnect_f( edict_t *ent )
 	int i;
 	gclient_t *client, *best;
 	static int last_tv = 0;
+	bool isIPv6;
 
 	best = NULL;
 	for( i = 0; i < gs.maxclients; i++ ) {
 		client = &game.clients[(last_tv + 1 + i) % gs.maxclients];
 		if( !client->isTV ) {
+			// not a TV
 			continue;
 		}
 		if( client->tv.numclients == client->tv.maxclients ) {
+			// full
+			continue;
+		}
+		if( !client->tv.channel ) {
+			// invalid userinfo/channel number
 			continue;
 		}
 		best = client;
@@ -1214,7 +1221,9 @@ static void Cmd_TVConnect_f( edict_t *ent )
 	}
 
 	last_tv = best - game.clients;
-	trap_GameCmd( ent, va( "cmd connect %s:%hu", best->ip, best->tv.port ) );
+	isIPv6 = strstr( best->ip, "::" ) != NULL;
+	trap_GameCmd( ent, va( "cmd connect %s:%hu#i", 
+		best->ip, isIPv6 ? best->tv.port6 : best->tv.port, best->tv.channel ) );
 }
 
 //===========================================================

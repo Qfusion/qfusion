@@ -1170,6 +1170,7 @@ struct gclient_s
 		int port6;
 		int maxclients;
 		int numclients;
+		int channel;
 	} tv;
 
 	int mm_session;					// 0 - invalid session, < 0 - local session, > 0 authenticated account
