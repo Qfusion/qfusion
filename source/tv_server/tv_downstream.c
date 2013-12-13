@@ -582,6 +582,9 @@ qboolean TV_Downstream_ChangeStream( client_t *client, relay_t *relay )
 	TV_Downstream_SendServerCommand( client, "reconnect" );
 	client->state = CS_CONNECTED;
 
+	// let upstream servers know how many clients are connected
+	userinfo_modified = qtrue;
+
 	return qtrue;
 }
 
@@ -819,6 +822,7 @@ void TV_Downstream_CheckTimeouts( void )
 
 		if( client->state == CS_ZOMBIE && client->lastPacketReceivedTime + 1000 * tv_zombietime->value < tvs.realtime )
 		{
+			userinfo_modified = qtrue;
 			client->state = CS_FREE; // can now be reused
 			if( client->individual_socket )
 				NET_CloseSocket( &client->socket );
@@ -828,6 +832,7 @@ void TV_Downstream_CheckTimeouts( void )
 		if( ( client->state != CS_FREE && client->state != CS_ZOMBIE ) &&
 			( client->lastPacketReceivedTime + 1000 * tv_timeout->value < tvs.realtime ) )
 		{
+			userinfo_modified = qtrue;
 			TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "Upstream timed out" );
 			client->state = CS_FREE; // don't bother with zombie state
 			if( client->socket.open )
