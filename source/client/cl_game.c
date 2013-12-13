@@ -509,6 +509,7 @@ void CL_GameModule_Init( void )
 	import.S_GetPositionedRawSamplesLength = CL_SoundModule_GetPositionedRawSamplesLength;
 
 	import.SCR_RegisterFont = SCR_RegisterFont;
+	import.SCR_RegisterSpecialFont = SCR_RegisterSpecialFont;
 	import.SCR_DrawString = SCR_DrawString;
 	import.SCR_DrawStringWidth = SCR_DrawStringWidth;
 	import.SCR_DrawClampString = SCR_DrawClampString;

@@ -553,6 +553,11 @@ static inline struct qfontface_s *trap_SCR_RegisterFont( const char *family, int
 	return CGAME_IMPORT.SCR_RegisterFont( family, style, size );
 }
 
+static inline struct qfontface_s *trap_SCR_RegisterSpecialFont( const char *family, int style, unsigned int size )
+{
+	return CGAME_IMPORT.SCR_RegisterSpecialFont( family, style, size );
+}
+
 static inline void trap_SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color )
 {
 	CGAME_IMPORT.SCR_DrawString( x, y, align, str, font, color );

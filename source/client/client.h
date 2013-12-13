@@ -559,6 +559,7 @@ void SCR_RegisterConsoleMedia( void );
 void SCR_ShutDownConsoleMedia( void );
 void SCR_ChangeSystemFontSmallSize( int ch );
 qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size );
+qfontface_t *SCR_RegisterSpecialFont( const char *family, int style, unsigned int size );
 size_t SCR_strHeight( qfontface_t *font );
 size_t SCR_strWidth( const char *str, qfontface_t *font, size_t maxlen );
 size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth );
