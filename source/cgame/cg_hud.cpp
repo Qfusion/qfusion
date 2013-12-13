@@ -1650,9 +1650,23 @@ static bool CG_LFuncAlign( struct cg_layoutnode_s *commandnode, struct cg_layout
 	return true;
 }
 
-static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+static bool CG_LFuncFontFamilyExt( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, 
+	int numArguments, struct qfontface_s *(*register_font)( const char *, int , unsigned int ) )
 {
 	struct qfontface_s *font;
+
+	font = register_font( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
+	if( font )
+	{
+		layout_cursor_font = font;
+		return true;
+	}
+
+	return false;
+}
+
+static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
 	const char *fontname = CG_GetStringArg( &argumentnode );
 
 	if( !Q_stricmp( fontname, "con_fontSystem" ) )
@@ -1664,14 +1678,14 @@ static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_l
 		Q_strncpyz( layout_cursor_font_name, fontname, sizeof( layout_cursor_font_name ) );
 	}
 
-	font = trap_SCR_RegisterFont( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
-	if( font )
-	{
-		layout_cursor_font = font;
-		return true;
-	}
+	return CG_LFuncFontFamilyExt( commandnode, argumentnode, numArguments, trap_SCR_RegisterFont );
+}
 
-	return false;
+static bool CG_LFuncSpecialFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	const char *fontname = CG_GetStringArg( &argumentnode );
+	Q_strncpyz( layout_cursor_font_name, fontname, sizeof( layout_cursor_font_name ) );
+	return CG_LFuncFontFamilyExt( commandnode, argumentnode, numArguments, trap_SCR_RegisterSpecialFont );
 }
 
 static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
@@ -2194,6 +2208,14 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncFontFamily,
 		1,
 		"Sets font by font family. Accepts 'con_fontSystem', as a shortcut to default game font family.",
+		false
+	},
+
+	{
+		"setSpecialFontFamily",
+		CG_LFuncSpecialFontFamily,
+		1,
+		"Sets font by font family. The font will not overriden by the fallback font used when CJK is detected.",
 		false
 	},
 
