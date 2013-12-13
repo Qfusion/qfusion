@@ -209,6 +209,9 @@ typedef struct
 
 	tv_lobby_t lobby;
 
+	netadr_t address;
+	netadr_t addressIPv6;
+
 	// downstream
 #ifdef TCP_ALLOW_CONNECT
 	socket_t socket_tcp;

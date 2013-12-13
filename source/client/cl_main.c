@@ -402,7 +402,7 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 /*
 * CL_Connect_Cmd_f
 */
-static void CL_Connect_Cmd_f( int socket )
+static void CL_Connect_Cmd_f( socket_type_t socket )
 {
 	netadr_t serveraddress;
 	char *servername, password[64], autowatch[64] = { 0 };

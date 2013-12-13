@@ -1164,11 +1164,21 @@ struct gclient_s
 	char ip[MAX_INFO_VALUE];
 	char socket[MAX_INFO_VALUE];
 
-	int mm_session;		// 0 - invalid session, < 0 - local session, > 0 authenticated account
-	clientRating_t *ratings;	// list of ratings for gametypes
+	// port numbers reported by connected TV as part of userinfo
+	struct {
+		int port;
+		int port6;
+		int maxclients;
+		int numclients;
+		int channel;
+	} tv;
+
+	int mm_session;					// 0 - invalid session, < 0 - local session, > 0 authenticated account
+	clientRating_t *ratings;		// list of ratings for gametypes
 
 	bool connecting;
-	bool multiview, tv;
+	bool multiview;
+	bool isTV;
 
 	byte_vec4_t color;
 	int team;

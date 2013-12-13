@@ -29,7 +29,7 @@ int clientVoteChanges[MAX_CLIENTS];
 cvar_t *g_callvote_electpercentage;
 cvar_t *g_callvote_electtime;          // in seconds
 cvar_t *g_callvote_enabled;
-cvar_t *g_vote_maxchanges;
+cvar_t *g_callvote_maxchanges;
 
 enum
 {
@@ -1753,7 +1753,7 @@ void G_FreeCallvotes( void )
 void G_CallVotes_ResetClient( int n )
 {
 	clientVoted[n] = VOTED_NOTHING;
-	clientVoteChanges[n] = g_vote_maxchanges->integer;
+	clientVoteChanges[n] = g_callvote_maxchanges->integer;
 	if( clientVoteChanges[n] < 1 )
 		clientVoteChanges[n] = 1;
 }
@@ -1905,7 +1905,7 @@ static void G_CallVotes_CheckState( void )
 		if( !ent->r.inuse || trap_GetClientState( PLAYERNUM( ent ) ) < CS_SPAWNED )
 			continue;
 
-		if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->tv )
+		if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->isTV )
 			continue;
 
 		voters++;
@@ -1959,7 +1959,7 @@ void G_CallVotes_CmdVote( edict_t *ent )
 
 	if( !ent->r.client )
 		return;
-	if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->tv )
+	if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->isTV )
 		return;
 
 	if( !callvoteState.vote.callvote )
@@ -2199,7 +2199,7 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 */
 void G_CallVote_Cmd( edict_t *ent )
 {
-	if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->tv )
+	if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->isTV )
 		return;
 	G_CallVote( ent, false );
 }
@@ -2213,7 +2213,7 @@ void G_OperatorVote_Cmd( edict_t *ent )
 
 	if( !ent->r.client )
 		return;
-	if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->tv )
+	if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->isTV )
 		return;
 
 	if( !ent->r.client->isoperator )
@@ -2242,7 +2242,7 @@ void G_OperatorVote_Cmd( edict_t *ent )
 			if( !other->r.inuse || trap_GetClientState( PLAYERNUM( other ) ) < CS_SPAWNED )
 				continue;
 
-			if( ( other->r.svflags & SVF_FAKECLIENT ) || other->r.client->tv )
+			if( ( other->r.svflags & SVF_FAKECLIENT ) || other->r.client->isTV )
 				continue;
 
 			clientVoted[PLAYERNUM( other )] = VOTED_NO;
@@ -2265,7 +2265,7 @@ void G_OperatorVote_Cmd( edict_t *ent )
 			if( !other->r.inuse || trap_GetClientState( PLAYERNUM( other ) ) < CS_SPAWNED )
 				continue;
 
-			if( ( other->r.svflags & SVF_FAKECLIENT ) || other->r.client->tv )
+			if( ( other->r.svflags & SVF_FAKECLIENT ) || other->r.client->isTV )
 				continue;
 
 			clientVoted[PLAYERNUM( other )] = VOTED_YES;
@@ -2382,7 +2382,7 @@ void G_CallVotes_Init( void )
 	g_callvote_electpercentage =	trap_Cvar_Get( "g_vote_percent", "55", CVAR_ARCHIVE );
 	g_callvote_electtime =		trap_Cvar_Get( "g_vote_electtime", "40", CVAR_ARCHIVE );
 	g_callvote_enabled =		trap_Cvar_Get( "g_vote_allowed", "1", CVAR_ARCHIVE );
-	g_vote_maxchanges =		trap_Cvar_Get( "g_vote_maxchanges", "3", CVAR_ARCHIVE );
+	g_callvote_maxchanges =		trap_Cvar_Get( "g_vote_maxchanges", "3", CVAR_ARCHIVE );
 
 	// register all callvotes
 
