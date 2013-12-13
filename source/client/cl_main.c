@@ -968,8 +968,9 @@ void CL_ServerReconnect_f( void )
 		CL_Stop_f();
 
 	cls.connect_count = 0;
-	cls.rejected = 0;
+	cls.rejected = qfalse;
 
+	CL_GameModule_Shutdown();
 	CL_SoundModule_StopAllSounds();
 
 	Com_Printf( "Reconnecting...\n" );
