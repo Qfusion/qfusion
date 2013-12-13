@@ -117,9 +117,12 @@ char *TV_Upstream_Userinfo( upstream_t *upstream )
 	char *name;
 	char *userinfo;
 	relay_t *relay;
+	int i, count;
 
 	if( !upstream->userinfo )
-		upstream->userinfo = Mem_Alloc( upstream->mempool, sizeof( *upstream->userinfo ) * MAX_INFO_STRING );
+		upstream->userinfo = ( char * )Mem_Alloc( upstream->mempool, 
+		sizeof( *upstream->userinfo ) * MAX_INFO_STRING );
+
 	userinfo = upstream->userinfo;
 
 	// override the name value
@@ -132,6 +135,20 @@ char *TV_Upstream_Userinfo( upstream_t *upstream )
 
 	// override password
 	Info_SetValueForKey( userinfo, "password", upstream->password ? upstream->password : "" );
+
+	// send self port
+	Info_SetValueForKey( userinfo, "tv_port", va( "%hu", NET_GetAddressPort( &tvs.address ) ) );
+	Info_SetValueForKey( userinfo, "tv_port6", va( "%hu", NET_GetAddressPort( &tvs.addressIPv6 ) ) );
+
+	// send the number of connected clients and the maximum number of clients
+	count = 0;
+	for( i = 0; i < tv_maxclients->integer; i++ )
+		if( tvs.clients[i].state >= CS_CONNECTED )
+			count++;
+	Info_SetValueForKey( userinfo, "num_cl", va( "%i", count ) );
+	Info_SetValueForKey( userinfo, "max_cl", va( "%i", tv_maxclients->integer ) );
+
+	Info_SetValueForKey( userinfo, "chan", va( "%i", upstream->number + 1 ) );
 
 	return userinfo;
 }
