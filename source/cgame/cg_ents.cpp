@@ -1681,7 +1681,7 @@ static void CG_UpdateVideoSpeakerEnt( centity_t *cent )
 	VectorCopy( cent->current.origin, cent->ent.origin );
 	VectorCopy( cent->current.origin2, cent->ent.origin2 );
 
-	shader = trap_R_GetShaderForOrigin( cent->ent.origin );
+	shader = trap_R_GetShaderForOrigin( cent->ent.origin2 );
 	cent->cin = trap_R_GetShaderCinematic( shader );
 }
 
