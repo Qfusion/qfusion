@@ -1023,7 +1023,8 @@ static void locateTargetSpeaker( edict_t *ent )
 	ent->s.sound = 1;
 	ent->attenuation = target->attenuation;
 	ent->s.attenuation = ent->attenuation;
-	VectorCopy( target->s.origin, ent->s.origin2 );
+	VectorCopy( ent->s.origin, ent->s.origin2 );
+	VectorCopy( target->s.origin, ent->s.origin );
 }
 
 //QUAKED misc_video_speaker
