@@ -675,7 +675,7 @@ static void G_RunEntities( void )
 		// if the ground entity moved, make sure we are still on it
 		if( !ent->r.client )
 		{
-			if( ( ent->groundentity ) && ( ent->groundentity->r.linkcount != ent->groundentity_linkcount ) )
+			if( ( ent->groundentity ) && ( ent->groundentity->linkcount != ent->groundentity_linkcount ) )
 				G_CheckGround( ent );
 		}
 

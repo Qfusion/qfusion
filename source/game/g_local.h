@@ -584,7 +584,6 @@ bool Add_Armor( edict_t *ent, edict_t *other, bool pick_it );
 bool KillBox( edict_t *ent );
 float LookAtKillerYAW( edict_t *self, edict_t *inflictor, edict_t *attacker );
 edict_t *G_Find( edict_t *from, size_t fieldofs, const char *match );
-edict_t *findradius( edict_t *from, edict_t *to, vec3_t org, float rad );
 edict_t *G_FindBoxInRadius( edict_t *from, edict_t *to, vec3_t org, float rad );
 edict_t *G_PickTarget( const char *targetname );
 void G_UseTargets( edict_t *ent, edict_t *activator );
@@ -717,13 +716,20 @@ void SP_trigger_gravity( edict_t *ent );
 //
 // g_clip.c
 //
+#define MAX_ENT_AREAS 16
+
+typedef struct link_s
+{
+	struct link_s *prev, *next;
+	int entNum;
+} link_t;
 
 int	G_PointContents( vec3_t p );
 void G_Trace( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask );
 int G_PointContents4D( vec3_t p, int timeDelta );
 void G_Trace4D( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, edict_t *passedict, int contentmask, int timeDelta );
 void GClip_BackUpCollisionFrame( void );
-edict_t *GClip_FindBoxInRadius4D( edict_t *from, vec3_t org, float rad, int timeDelta );
+int GClip_FindBoxInRadius4D( vec3_t org, float rad, int *list, int maxcount, int timeDelta );
 void G_SplashFrac4D( int entNum, vec3_t hitpoint, float maxradius, vec3_t pushdir, float *kickFrac, float *dmgFrac, int timeDelta );
 void GClip_ClearWorld( void );
 void GClip_SetBrushModel( edict_t *ent, const char *name );
@@ -733,7 +739,7 @@ void GClip_UnlinkEntity( edict_t *ent );
 void GClip_TouchTriggers( edict_t *ent );
 void G_PMoveTouchTriggers( pmove_t *pm );
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
-
+int GClip_FindRadius( vec3_t org, float rad, int *list, int maxcount );
 
 //
 // g_combat.c
@@ -1256,6 +1262,11 @@ struct edict_s
 	// EXPECTS THE FIELDS IN THAT ORDER!
 
 	//================================
+
+	int linkcount;
+
+	// physics grid areas this edict is linked into
+	link_t areagrid[MAX_ENT_AREAS];
 
 	entity_state_t olds; // state in the last sent frame snap
 

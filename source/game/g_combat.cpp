@@ -706,6 +706,8 @@ void G_SplashFrac( const vec3_t origin, const vec3_t mins, const vec3_t maxs, co
 */
 void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edict_t *ignore, int mod )
 {
+	int i, numtouch;
+	int touch[MAX_EDICTS];
 	edict_t *ent = NULL;
 	float dmgFrac, kickFrac, damage, knockback, stun;
 	vec3_t pushDir;
@@ -730,8 +732,13 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 	clamp_high( minknockback, maxknockback );
 	clamp_high( minstun, maxstun );
 
-	while( ( ent = GClip_FindBoxInRadius4D( ent, inflictor->s.origin, radius, inflictor->timeDelta ) ) != NULL )
+	numtouch = GClip_FindBoxInRadius4D( inflictor->s.origin, radius, touch, MAX_EDICTS, inflictor->timeDelta );
+	if( numtouch > MAX_EDICTS )
+		numtouch = MAX_EDICTS;
+
+	for( i = 0; i < numtouch; i++ )
 	{
+		ent = game.edicts + touch[i];
 		if( ent == ignore || !ent->takedamage )
 			continue;
 
