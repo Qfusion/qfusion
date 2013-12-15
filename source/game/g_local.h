@@ -450,6 +450,7 @@ void SP_func_door_rotating( edict_t *ent );
 void SP_func_door_secret( edict_t *self );
 void SP_func_water( edict_t *self );
 void SP_func_train( edict_t *ent );
+void SP_func_timer( edict_t *self );
 void SP_func_conveyor( edict_t *self );
 void SP_func_wall( edict_t *self );
 void SP_func_object( edict_t *self );
@@ -871,6 +872,7 @@ void SP_target_print( edict_t *self );
 void SP_target_give( edict_t *self );
 void SP_target_changelevel( edict_t *ent );
 void SP_target_relay( edict_t *self );
+void SP_target_delay( edict_t *ent );
 
 //
 // g_svcmds.c
@@ -1361,6 +1363,7 @@ struct edict_s
 	// timing variables
 	float wait;
 	float delay;                // before firing targets
+	float random;
 
 	int watertype;
 	int waterlevel;

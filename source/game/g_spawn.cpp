@@ -106,6 +106,7 @@ spawn_t	spawns[] = {
 	{ "func_water", SP_func_water },
 	{ "func_rotating", SP_func_rotating },
 	{ "func_train", SP_func_train },
+	{ "func_timer", SP_func_timer },
 	{ "func_conveyor", SP_func_conveyor },
 	{ "func_wall", SP_func_wall },
 	{ "func_object", SP_func_object },
@@ -141,6 +142,7 @@ spawn_t	spawns[] = {
 	{ "target_push", SP_info_notnull },
 	{ "target_changelevel", SP_target_changelevel },
 	{ "target_relay", SP_target_relay },
+	{ "target_delay", SP_target_delay },
 
 	{ "worldspawn", SP_worldspawn },
 
