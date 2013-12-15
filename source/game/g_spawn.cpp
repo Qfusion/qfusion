@@ -140,6 +140,7 @@ spawn_t	spawns[] = {
 	{ "target_give", SP_target_give },
 	{ "target_push", SP_info_notnull },
 	{ "target_changelevel", SP_target_changelevel },
+	{ "target_relay", SP_target_relay },
 
 	{ "worldspawn", SP_worldspawn },
 
