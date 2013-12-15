@@ -262,7 +262,7 @@ sfxcache_t *SNDOGG_Load( sfx_t *s )
 
 	if( sc->speed != dma.speed ) {
 		sc->length = ResampleSfx( samples, sc->speed, sc->channels, 2, (qbyte *)buffer, sc->data, s->name );
-		sc->loopstart = sc->speed;
+		sc->loopstart = sc->length;
 		sc->speed = dma.speed;
 	}
 
