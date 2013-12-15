@@ -2957,7 +2957,7 @@ static void asFunc_ConfigString( int index, asstring_t *str )
 
 static CScriptArrayInterface *asFunc_FindRadius( asvec3_t *org, float radius )
 {
-	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptContext *ctx = angelExport->asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
 	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<Entity @>"));
 
@@ -3112,7 +3112,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "Item @G_GetItem( int tag )", asFUNCTION(asFunc_GS_FindItemByTag), NULL },
 	{ "Item @G_GetItemByName( const String &in name )", asFUNCTION(asFunc_GS_FindItemByName), NULL },
 	{ "Item @G_GetItemByClassname( const String &in name )", asFUNCTION(asFunc_GS_FindItemByClassname), NULL },
-	{ "Entity @G_FindInRadius( Entity @, Entity @, const Vec3 &in, float radius )", asFUNCTION(asFunc_FindRadius), NULL },
+	{ "array<Entity @> @G_FindInRadius( const Vec3 &in, float radius )", asFUNCTION(asFunc_FindRadius), NULL },
 	{ "Entity @G_FindByClassname( Entity @, const String &in )", asFUNCTION(asFunc_FindEntityWithClassname), NULL },
 
 	// misc management utils
