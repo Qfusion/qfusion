@@ -27,7 +27,7 @@ static inline asstring_t *objectString_Alloc( void )
 {
 	static asstring_t *object;
 
-	object = (asstring_t *)QAS_Malloc( sizeof( asstring_t ) );
+	object = new asstring_t;
 	object->asRefCount = 1;
 	return object;
 }
@@ -37,7 +37,7 @@ asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length 
 	asstring_t *object;
 
 	object = objectString_Alloc();
-	object->buffer = (char *)QAS_Malloc( sizeof( char ) * ( length + 1 ) );
+	object->buffer = new char[length + 1];
 	object->len = length;
 	object->buffer[length] = 0;
 	object->size = length + 1;
@@ -51,10 +51,9 @@ asstring_t *objectString_AssignString( asstring_t *self, const char *string, siz
 {
 	if( strlen >= self->size )
 	{
-		QAS_Free( self->buffer );
-
+		delete[] self->buffer;
 		self->size = strlen + 1;
-		self->buffer = (char *)QAS_Malloc( self->size );
+		self->buffer = new char[self->size];
 	}
 
 	self->len = strlen;
@@ -83,10 +82,10 @@ static asstring_t *objectString_AddAssignString( asstring_t *self, const char *s
 
 		self->len = strlen + self->len;
 		self->size = self->len + 1;
-		self->buffer = (char *)QAS_Malloc( self->size );
+		self->buffer = new char[self->size];
 
 		Q_snprintfz( self->buffer, self->size, "%s%s", tem, string );
-		QAS_Free( tem );
+		delete[] tem;
 	}
 
 	return self;
@@ -165,8 +164,8 @@ void objectString_Release( asstring_t *obj )
 
 	if( !obj->asRefCount )
 	{
-		QAS_Free( obj->buffer );
-		QAS_Free( obj );
+		delete[] obj->buffer;
+		delete obj;
 	}
 }
 
