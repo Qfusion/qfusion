@@ -733,9 +733,6 @@ void G_RadiusDamage( edict_t *inflictor, edict_t *attacker, cplane_t *plane, edi
 	clamp_high( minstun, maxstun );
 
 	numtouch = GClip_FindBoxInRadius4D( inflictor->s.origin, radius, touch, MAX_EDICTS, inflictor->timeDelta );
-	if( numtouch > MAX_EDICTS )
-		numtouch = MAX_EDICTS;
-
 	for( i = 0; i < numtouch; i++ )
 	{
 		ent = game.edicts + touch[i];

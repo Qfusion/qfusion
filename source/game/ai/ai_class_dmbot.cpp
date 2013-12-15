@@ -620,10 +620,6 @@ static bool BOT_DMclass_FindRocket( edict_t *self, vec3_t away_from_rocket )
 	bool any_rocket = false;
 
 	numtargets = GClip_FindRadius( self->s.origin, AI_ROCKET_DETECT_RADIUS, targets, MAX_EDICTS );
-	if( numtargets > MAX_EDICTS ) {
-		numtargets = MAX_EDICTS;
-	}
-
 	for( i = 0; i < numtargets; i++ )
 	{
 		target = game.edicts + targets[i];

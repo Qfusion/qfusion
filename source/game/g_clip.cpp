@@ -43,7 +43,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define AREA_GRID		128
 #define AREA_GRIDNODES	(AREA_GRID * AREA_GRID)
-#define AREA_GRIDMINSIZE 64		// minimum areagrid cell size, smaller values 
+#define AREA_GRIDMINSIZE 64.0f	// minimum areagrid cell size, smaller values 
 								// work better for lots of small objects, higher
 								// values for large objects
 
@@ -427,13 +427,14 @@ static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins
 			}
 			areagrid->entmarknumber[l->entNum] = areagrid->marknumber;
 
-			if( !clipEnt->r.inuse || clipEnt->r.solid == SOLID_NOT ) {
+			if( !clipEnt->r.inuse ) {
 				continue; // deactivated
 			}
 			if( areatype == AREA_TRIGGERS && clipEnt->r.solid != SOLID_TRIGGER ) {
 				continue;
 			}
-			if( areatype == AREA_SOLID && clipEnt->r.solid == SOLID_TRIGGER ) {
+			if( areatype == AREA_SOLID && 
+				( clipEnt->r.solid == SOLID_TRIGGER || clipEnt->r.solid == SOLID_NOT ) ) {
 				continue;
 			}
 
@@ -463,13 +464,14 @@ static int GClip_EntitiesInBox_AreaGrid( areagrid_t *areagrid, const vec3_t mins
 				}
 				areagrid->entmarknumber[l->entNum] = areagrid->marknumber;
 
-				if( !clipEnt->r.inuse || clipEnt->r.solid == SOLID_NOT ) {
+				if( !clipEnt->r.inuse ) {
 					continue; // deactivated
 				}
 				if( areatype == AREA_TRIGGERS && clipEnt->r.solid != SOLID_TRIGGER ) {
 					continue;
 				}
-				if( areatype == AREA_SOLID && clipEnt->r.solid == SOLID_TRIGGER ) {
+				if( areatype == AREA_SOLID && 
+					( clipEnt->r.solid == SOLID_TRIGGER || clipEnt->r.solid == SOLID_NOT ) ) {
 					continue;
 				}
 
@@ -682,9 +684,6 @@ void GClip_LinkEntity( edict_t *ent )
 	ent->linkcount++;
 	ent->linked = true;
 
-	if( ent->r.solid == SOLID_NOT )
-		return;
-
 	GClip_LinkEntity_AreaGrid( &g_areagrid, ent );
 }
 
@@ -719,8 +718,10 @@ static int GClip_AreaEdicts( const vec3_t mins, const vec3_t maxs,
 	int *list, int maxcount, int areatype, int timeDelta )
 {
 	int count;
+
 	count = GClip_EntitiesInBox_AreaGrid( &g_areagrid, mins, maxs, 
 		list, maxcount, areatype, timeDelta );
+
 	return min( count, maxcount );
 }
 
