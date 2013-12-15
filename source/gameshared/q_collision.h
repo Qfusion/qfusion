@@ -92,12 +92,6 @@ extern "C" {
 #define	MASK_OPAQUE			( CONTENTS_SOLID|CONTENTS_SLIME|CONTENTS_LAVA )
 #define	MASK_SHOT			( CONTENTS_SOLID|CONTENTS_BODY|CONTENTS_CORPSE )
 
-
-// gi.BoxEdicts() can return a list of either solid or trigger entities
-// FIXME: eliminate AREA_ distinction?
-#define	AREA_SOLID	1
-#define	AREA_TRIGGERS	2
-
 // a trace is returned when a box is swept through the world
 typedef struct
 {

@@ -520,7 +520,7 @@ static bool SV_Push( edict_t *pusher, vec3_t move, vec3_t amove )
 			|| check->movetype == MOVETYPE_NOCLIP )
 			continue;
 
-		if( !check->r.area.prev )
+		if( !check->areagrid[0].prev )
 			continue; // not linked in anywhere
 
 		// if the entity is standing on the pusher, it will definitely be moved
@@ -826,7 +826,7 @@ static void SV_Physics_Toss( edict_t *ent )
 			)
 			{
 				ent->groundentity = &game.edicts[trace.ent];
-				ent->groundentity_linkcount = ent->groundentity->r.linkcount;
+				ent->groundentity_linkcount = ent->groundentity->linkcount;
 				VectorClear( ent->velocity );
 				VectorClear( ent->avelocity );
 				G_CallStop( ent );
@@ -845,7 +845,7 @@ static void SV_Physics_Toss( edict_t *ent )
 			if( trace.allsolid || ISWALKABLEPLANE( &trace.plane ) )
 			{
 				ent->groundentity = trace.ent < 0 ? world : &game.edicts[trace.ent];
-				ent->groundentity_linkcount = ent->groundentity->r.linkcount;
+				ent->groundentity_linkcount = ent->groundentity->linkcount;
 #endif
 				VectorClear( ent->velocity );
 				VectorClear( ent->avelocity );

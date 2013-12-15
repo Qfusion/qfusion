@@ -563,78 +563,6 @@ edict_t *G_Find( edict_t *from, size_t fieldofs, const char *match )
 }
 
 /*
-* findradius
-* 
-* Returns entities that have origins within a spherical area
-* 
-* findradius (origin, radius)
-*/
-edict_t *findradius( edict_t *from, edict_t *to, vec3_t org, float rad )
-{
-	vec3_t eorg;
-	int j;
-
-	if( !from )
-		from = world;
-	else
-		from++;
-	if( !to )
-		to = &game.edicts[game.numentities - 1];
-
-	for(; from <= to; from++ )
-	{
-		if( !from->r.inuse )
-			continue;
-		if( from->r.solid == SOLID_NOT )
-			continue;
-		for( j = 0; j < 3; j++ )
-			eorg[j] = org[j] - ( from->s.origin[j] + ( from->r.mins[j] + from->r.maxs[j] )*0.5 );
-		if( VectorLengthFast( eorg ) > rad )
-			continue;
-		return from;
-	}
-
-	return NULL;
-}
-
-/*
-* G_FindBoxInRadius
-* Returns entities that have their boxes within a spherical area
-*/
-edict_t *G_FindBoxInRadius( edict_t *from, edict_t *to, vec3_t org, float rad )
-{
-	int j;
-	vec3_t mins, maxs;
-
-	if( !from )
-		from = world;
-	else
-		from++;
-	if( !to )
-		to = &game.edicts[game.numentities - 1];
-
-	for(; from <= to; from++ )
-	{
-		if( !from->r.inuse )
-			continue;
-		if( from->r.solid == SOLID_NOT )
-			continue;
-		// make absolute mins and maxs
-		for( j = 0; j < 3; j++ )
-		{
-			mins[j] = from->s.origin[j] + from->r.mins[j];
-			maxs[j] = from->s.origin[j] + from->r.maxs[j];
-		}
-		if( !BoundsAndSphereIntersect( mins, maxs, org, rad ) )
-			continue;
-
-		return from;
-	}
-
-	return NULL;
-}
-
-/*
 * G_PickTarget
 * 
 * Searches all active entities for the next one that holds
@@ -1744,7 +1672,7 @@ void G_CheckGround( edict_t *ent )
 	{
 		//VectorCopy( trace.endpos, ent->s.origin );
 		ent->groundentity = &game.edicts[trace.ent];
-		ent->groundentity_linkcount = ent->groundentity->r.linkcount;
+		ent->groundentity_linkcount = ent->groundentity->linkcount;
 		if( ent->velocity[2] < 0 )
 			ent->velocity[2] = 0;
 	}

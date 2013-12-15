@@ -24,13 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //===============================================================
 
-// link_t is only used for entity area links now
-typedef struct link_s
-{
-	struct link_s *prev, *next;
-	int entNum;
-} link_t;
-
 #define	MAX_ENT_CLUSTERS    16
 
 typedef struct edict_s edict_t;
@@ -55,10 +48,6 @@ typedef struct
 {
 	gclient_t *client;
 	qboolean inuse;
-	int linkcount;
-
-	// FIXME: move these fields to a server private sv_entity_t
-	link_t area;                // linked to a division node or leaf
 
 	int num_clusters;           // if -1, use headnode instead
 	int clusternums[MAX_ENT_CLUSTERS];

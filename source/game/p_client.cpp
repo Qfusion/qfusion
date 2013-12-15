@@ -1592,7 +1592,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta )
 		G_AwardResetPlayerComboStats( ent );
 
 		ent->groundentity = &game.edicts[pm.groundentity];
-		ent->groundentity_linkcount = ent->groundentity->r.linkcount;
+		ent->groundentity_linkcount = ent->groundentity->linkcount;
 	}
 	
 	GClip_LinkEntity( ent );

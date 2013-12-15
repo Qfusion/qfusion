@@ -613,12 +613,21 @@ static bool BOT_DMclass_FindRocket( edict_t *self, vec3_t away_from_rocket )
 {
 #define AI_ROCKET_DETECT_RADIUS 1000
 #define AI_ROCKET_DANGER_RADIUS 200
-	edict_t *target = findradius( NULL, NULL, self->s.origin, AI_ROCKET_DETECT_RADIUS );
+	int i, numtargets;
+	int targets[MAX_EDICTS];
+	edict_t *target;
 	float min_roxx_time = 1.0f;
 	bool any_rocket = false;
 
-	while( target )
+	numtargets = GClip_FindRadius( self->s.origin, AI_ROCKET_DETECT_RADIUS, targets, MAX_EDICTS );
+	if( numtargets > MAX_EDICTS ) {
+		numtargets = MAX_EDICTS;
+	}
+
+	for( i = 0; i < numtargets; i++ )
 	{
+		target = game.edicts + targets[i];
+
 		// Missile detection code
 		if( target->r.svflags & SVF_PROJECTILE && target->s.type != ET_PLASMA ) // (plasmas come in bunchs so are too complex for the bot to dodge)
 		{
@@ -656,7 +665,6 @@ static bool BOT_DMclass_FindRocket( edict_t *self, vec3_t away_from_rocket )
 				}
 			}
 		}
-		target = findradius( target, NULL, self->s.origin, AI_ROCKET_DETECT_RADIUS );
 	}
 
 	return any_rocket;
