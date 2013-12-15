@@ -825,6 +825,28 @@ void SP_target_relay( edict_t *self )
 	self->use = target_relay_use;
 }
 
+//==========================================================
+
+static void target_delay_think( edict_t *ent ) {
+	G_UseTargets( ent, ent->activator );
+}
+
+static void target_delay_use( edict_t *ent, edict_t *other, edict_t *activator ) {
+	ent->nextThink = level.time + 1000 * (ent->wait + ent->random * crandom());
+	ent->think = target_delay_think;
+	ent->activator = activator;
+}
+
+//QUAKED target_delay (1 0 0) (-8 -8 -8) (8 8 8)
+//"wait" seconds to pause before firing targets.
+//"random" delay variance, total delay = delay +/- random seconds
+void SP_target_delay( edict_t *ent )
+{
+	if( !ent->wait )
+		ent->wait = 1.0;
+	ent->use = target_delay_use;
+}
+
 #define MAX_GIVE_SOUNDS 8
 
 //target_give wait classname weapon_xxx
