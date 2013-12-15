@@ -792,11 +792,38 @@ void SP_target_print( edict_t *self )
 //notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
 //notsingle : when set to 1, entity will not spawn in Single Player mode (bot play mode).
 //-------- SPAWNFLAGS --------
-//RED_ONLY : only red team players can activate trigger. <- WRONG
-//BLUE_ONLY : only red team players can activate trigger. <- WRONG
+//RED_ONLY : only alpha team players can activate the target.
+//BLUE_ONLY : only beta team players can activate the target.
 //RANDOM : one one of the targeted entities will be triggered at random.
 
 //=============================================================================
+
+static void target_relay_use( edict_t *self, edict_t *other, edict_t *activator )
+{
+	if( ( self->spawnflags & 1 ) != 0 && activator->r.client 
+		&& activator->s.team != TEAM_ALPHA )
+		return;
+
+	if( ( self->spawnflags & 2 ) != 0 && activator->r.client 
+		&& activator->s.team != TEAM_BETA )
+		return;
+
+	if( ( self->spawnflags & 4 ) != 0 )
+	{
+		edict_t *target;
+		target = G_PickTarget( self->targetname );
+		if( target != NULL )
+			G_CallUse( target, self, activator );
+		return;
+	}
+
+	G_UseTargets( self, activator );
+}
+
+void SP_target_relay( edict_t *self )
+{
+	self->use = target_relay_use;
+}
 
 #define MAX_GIVE_SOUNDS 8
 

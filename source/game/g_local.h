@@ -870,6 +870,7 @@ void SP_target_position( edict_t *self );
 void SP_target_print( edict_t *self );
 void SP_target_give( edict_t *self );
 void SP_target_changelevel( edict_t *ent );
+void SP_target_relay( edict_t *self );
 
 //
 // g_svcmds.c
