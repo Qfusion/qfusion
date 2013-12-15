@@ -637,6 +637,16 @@ static void G_asRegisterEnums( asIScriptEngine *asEngine )
 
 //=======================================================================
 
+static asIObjectType *asEntityArrayType()
+{
+	asIScriptContext *ctx = angelExport->asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
+	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<Entity @>"));
+	return ot;
+}
+
+//=======================================================================
+
 // CLASS: Trace
 typedef struct  
 {
@@ -2222,20 +2232,42 @@ static edict_t *objectGameEntity_DropItem( int tag, edict_t *self )
 	return Drop_Item( self, item );
 }
 
-static edict_t *objectGameEntity_findTarget( edict_t *from, edict_t *self )
+static CScriptArrayInterface *objectGameEntity_findTargets( edict_t *self )
 {
-	if( !self->target )
-		return NULL;
+	asIObjectType *ot = asEntityArrayType();
+	CScriptArrayInterface *arr = angelExport->asCreateArrayCpp( 0, ot );
 
-	return G_Find( from, FOFS( targetname ), self->target );
+	if( self->target && self->target[0] != '\0' )
+	{
+		int count = 0;
+		edict_t *ent = NULL;
+		while( ( ent = G_Find( ent, FOFS( targetname ), self->target ) ) != NULL ) {
+			arr->Resize( count + 1 );
+			*((edict_t **)arr->At( count )) = ent;
+			count++;
+		}
+	}
+
+	return arr;
 }
 
-static edict_t *objectGameEntity_findTargeting( edict_t *from, edict_t *self )
+static CScriptArrayInterface *objectGameEntity_findTargeting( edict_t *self )
 {
-	if( !self->targetname )
-		return NULL;
+	asIObjectType *ot = asEntityArrayType();
+	CScriptArrayInterface *arr = angelExport->asCreateArrayCpp( 0, ot );
 
-	return G_Find( from, FOFS( target ), self->targetname );
+	if( self->targetname && self->targetname[0] != '\0' )
+	{
+		int count = 0;
+		edict_t *ent = NULL;
+		while( ( ent = G_Find( ent, FOFS( target ), self->targetname ) ) != NULL ) {
+			arr->Resize( count + 1 );
+			*((edict_t **)arr->At( count )) = ent;
+			count++;
+		}
+	}
+
+	return arr;
 }
 
 static void objectGameEntity_TeleportEffect( bool in, edict_t *self )
@@ -2354,8 +2386,8 @@ static const asMethod_t gedict_Methods[] =
 	{ ASLIB_FUNCTION_DECL(void, respawnEffect, ()), asFUNCTION(G_RespawnEffect), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setupModel, ( const String &in )), asFUNCTION(objectGameEntity_SetupModel), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setupModel, ( const String &in, const String &in )), asFUNCTION(objectGameEntity_SetupModelExt), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(Entity @, findTargetEntity, ( const Entity @from ) const), asFUNCTION(objectGameEntity_findTarget), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(Entity @, findTargetingEntity, ( const Entity @from ) const), asFUNCTION(objectGameEntity_findTargeting), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(array<Entity @> @, findTargets, () const), asFUNCTION(objectGameEntity_findTargets), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(array<Entity @> @, findTargeting, () const), asFUNCTION(objectGameEntity_findTargeting), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, useTargets, ( const Entity @activator )), asFUNCTION(objectGameEntity_UseTargets), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(Entity @, dropItem, ( int tag ) const), asFUNCTION(objectGameEntity_DropItem), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, sustainDamage, ( Entity @inflicter, Entity @attacker, const Vec3 &in dir, float damage, float knockback, float stun, int mod )), asFUNCTION(objectGameEntity_sustainDamage), asCALL_CDECL_OBJLAST },
@@ -2546,7 +2578,6 @@ static void G_asRegisterObjectClasses( asIScriptEngine *asEngine )
 }
 
 //=======================================================================
-
 
 static edict_t *asFunc_G_Spawn( asstring_t *classname )
 {
@@ -2955,28 +2986,36 @@ static void asFunc_ConfigString( int index, asstring_t *str )
 	trap_ConfigString( index, str->buffer );
 }
 
-static CScriptArrayInterface *asFunc_FindInRadius( asvec3_t *org, float radius )
+static CScriptArrayInterface *asFunc_G_FindInRadius( asvec3_t *org, float radius )
 {
-	asIScriptContext *ctx = angelExport->asGetActiveContext();
-	asIScriptEngine *engine = ctx->GetEngine();
-	asIObjectType *ot = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<Entity @>"));
+	asIObjectType *ot = asEntityArrayType();
 
 	int touch[MAX_EDICTS];
 	int numtouch = GClip_FindRadius( org->v, radius, touch, MAX_EDICTS );
 	CScriptArrayInterface *arr = angelExport->asCreateArrayCpp( numtouch, ot );
 	for( int i = 0; i < numtouch; i++ ) {
-		*((edict_t **)arr->At(i)) = game.edicts + touch[i];
+		*((edict_t **)arr->At( i )) = game.edicts + touch[i];
 	}
 
 	return arr;
 }
 
-static edict_t *asFunc_FindEntityWithClassname( edict_t *from, asstring_t *str )
+static CScriptArrayInterface *asFunc_G_FindByClassname( asstring_t *str )
 {
-	if( !str || !str->buffer )
-		return NULL;
+	const char *classname = str->buffer;
 
-	return G_Find( from, FOFS( classname ), str->buffer );
+	asIObjectType *ot = asEntityArrayType();
+	CScriptArrayInterface *arr = angelExport->asCreateArrayCpp( 0, ot );
+
+	int count = 0;
+	edict_t *ent = NULL;
+	while( ( ent = G_Find( ent, FOFS( classname ), classname ) ) != NULL ) {
+		arr->Resize( count + 1 );
+		*((edict_t **)arr->At( count )) = ent;
+		count++;
+	}
+
+	return arr;
 }
 
 static void asFunc_PositionedSound( asvec3_t *origin, int channel, int soundindex, float attenuation )
@@ -3111,8 +3150,8 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "Item @G_GetItem( int tag )", asFUNCTION(asFunc_GS_FindItemByTag), NULL },
 	{ "Item @G_GetItemByName( const String &in name )", asFUNCTION(asFunc_GS_FindItemByName), NULL },
 	{ "Item @G_GetItemByClassname( const String &in name )", asFUNCTION(asFunc_GS_FindItemByClassname), NULL },
-	{ "array<Entity @> @G_FindInRadius( const Vec3 &in, float radius )", asFUNCTION(asFunc_FindInRadius), NULL },
-	{ "Entity @G_FindByClassname( Entity @, const String &in )", asFUNCTION(asFunc_FindEntityWithClassname), NULL },
+	{ "array<Entity @> @G_FindInRadius( const Vec3 &in, float radius )", asFUNCTION(asFunc_G_FindInRadius), NULL },
+	{ "array<Entity @> @G_FindByClassname( const String &in )", asFUNCTION(asFunc_G_FindByClassname), NULL },
 
 	// misc management utils
 	{ "void G_RemoveAllProjectiles()", asFUNCTION(asFunc_G_Match_RemoveAllProjectiles), NULL },
