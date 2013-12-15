@@ -2955,7 +2955,7 @@ static void asFunc_ConfigString( int index, asstring_t *str )
 	trap_ConfigString( index, str->buffer );
 }
 
-static CScriptArrayInterface *asFunc_FindRadius( asvec3_t *org, float radius )
+static CScriptArrayInterface *asFunc_FindInRadius( asvec3_t *org, float radius )
 {
 	asIScriptContext *ctx = angelExport->asGetActiveContext();
 	asIScriptEngine *engine = ctx->GetEngine();
@@ -2963,7 +2963,6 @@ static CScriptArrayInterface *asFunc_FindRadius( asvec3_t *org, float radius )
 
 	int touch[MAX_EDICTS];
 	int numtouch = GClip_FindRadius( org->v, radius, touch, MAX_EDICTS );
-
 	CScriptArrayInterface *arr = angelExport->asCreateArrayCpp( numtouch, ot );
 	for( int i = 0; i < numtouch; i++ ) {
 		*((edict_t **)arr->At(i)) = game.edicts + touch[i];
@@ -3112,7 +3111,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "Item @G_GetItem( int tag )", asFUNCTION(asFunc_GS_FindItemByTag), NULL },
 	{ "Item @G_GetItemByName( const String &in name )", asFUNCTION(asFunc_GS_FindItemByName), NULL },
 	{ "Item @G_GetItemByClassname( const String &in name )", asFUNCTION(asFunc_GS_FindItemByClassname), NULL },
-	{ "array<Entity @> @G_FindInRadius( const Vec3 &in, float radius )", asFUNCTION(asFunc_FindRadius), NULL },
+	{ "array<Entity @> @G_FindInRadius( const Vec3 &in, float radius )", asFUNCTION(asFunc_FindInRadius), NULL },
 	{ "Entity @G_FindByClassname( Entity @, const String &in )", asFUNCTION(asFunc_FindEntityWithClassname), NULL },
 
 	// misc management utils
