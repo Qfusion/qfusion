@@ -1305,6 +1305,8 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 		VectorClear( pass->rgbgen.args );
 	}
 
+	if( shader->sort == SHADER_SORT_PORTAL )
+		shader->sort = 0; // reset sorting so we can figure it out later. FIXME?
 	shader->flags |= SHADER_PORTAL|SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2;
 }
 
