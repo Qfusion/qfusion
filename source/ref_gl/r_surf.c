@@ -233,14 +233,14 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 	}
 
 	drawSurf = surf->drawSurf;
-	if( drawSurf->visFrame != r_framecount ) {
+	if( drawSurf->visFrame != rf.framecount ) {
 		portalSurface_t *portalSurface = NULL;
 
 		if( shader->flags & SHADER_PORTAL ) {
 			portalSurface = R_AddPortalSurface( e, surf->mesh, surf->mins, surf->maxs, shader );
 		}
 
-		drawSurf->visFrame = r_framecount;
+		drawSurf->visFrame = rf.framecount;
 
 		if( !R_AddDSurfToDrawList( e, fog, shader, dist, order, portalSurface, drawSurf ) ) {
 			return;
@@ -395,8 +395,8 @@ qboolean R_AddBrushModelToDrawList( const entity_t *e )
 		if( !surf->drawSurf ) {
 			continue;
 		}
-		if( surf->visFrame != r_framecount ) {
-			surf->visFrame = r_framecount;
+		if( surf->visFrame != rf.framecount ) {
+			surf->visFrame = rf.framecount;
 			R_AddSurfaceToDrawList( e, surf, fog, 0, dlightBits, shadowBits, distance );
 		}
 	}
@@ -447,7 +447,7 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 			newShadowBits = R_SurfaceShadowBits( surf, newShadowBits );
 		}
 
-		if( surf->visFrame != r_framecount || newDlightBits || newShadowBits ) {
+		if( surf->visFrame != rf.framecount || newDlightBits || newShadowBits ) {
 			VectorAdd( surf->mins, surf->maxs, centre );
 			VectorScale( centre, 0.5, centre );
 			distance = Distance( rn.refdef.vieworg, centre );
@@ -456,7 +456,7 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 				newDlightBits, newShadowBits, distance );
 		}
 
-		surf->visFrame = r_framecount;
+		surf->visFrame = rf.framecount;
 	} while( *mark );
 }
 
@@ -475,7 +475,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 
 	while( 1 )
 	{
-		if( node->pvsframe != r_pvsframecount )
+		if( node->pvsframe != rf.pvsframecount )
 			return;
 
 		if( clipFlags )
@@ -553,7 +553,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 
 	// if a leaf node, draw stuff
 	pleaf = ( mleaf_t * )node;
-	pleaf->visframe = r_framecount;
+	pleaf->visframe = rf.framecount;
 
 	// add leaf bounds to view bounds
 	for( i = 0; i < 3; i++ )
@@ -589,7 +589,7 @@ void R_DrawWorld( void )
 
 	VectorCopy( rn.refdef.vieworg, modelOrg );
 
-	if( (rn.refdef.rdflags & RDF_WORLDOUTLINES) && (r_viewcluster != -1) && r_outlines_scale->value > 0 )
+	if( (rn.refdef.rdflags & RDF_WORLDOUTLINES) && (rf.viewcluster != -1) && r_outlines_scale->value > 0 )
 		rsc.worldent->outlineHeight = max( 0.0f, r_outlines_world->value );
 	else
 		rsc.worldent->outlineHeight = 0;
@@ -643,7 +643,7 @@ void R_MarkLeaves( void )
 	rdflags = rn.refdef.rdflags;
 	if( rdflags & RDF_NOWORLDMODEL )
 		return;
-	if( r_oldviewcluster == r_viewcluster && ( rdflags & RDF_OLDAREABITS ) && !(rn.params & RP_NOVIS) && r_viewcluster != -1 && r_oldviewcluster != -1 )
+	if( rf.oldviewcluster == rf.viewcluster && ( rdflags & RDF_OLDAREABITS ) && !(rn.params & RP_NOVIS) && rf.viewcluster != -1 && rf.oldviewcluster != -1 )
 		return;
 	if( rn.params & RP_SHADOWMAPVIEW )
 		return;
@@ -655,23 +655,23 @@ void R_MarkLeaves( void )
 	if( r_lockpvs->integer )
 		return;
 
-	r_pvsframecount++;
-	r_oldviewcluster = r_viewcluster;
+	rf.pvsframecount++;
+	rf.oldviewcluster = rf.viewcluster;
 
-	if( rn.params & RP_NOVIS || r_viewcluster == -1 || !r_worldbrushmodel->pvs )
+	if( rn.params & RP_NOVIS || rf.viewcluster == -1 || !r_worldbrushmodel->pvs )
 	{
 		// mark everything
 		for( pleaf = r_worldbrushmodel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
-			leaf->pvsframe = r_pvsframecount;
+			leaf->pvsframe = rf.pvsframecount;
 		for( i = 0, node = r_worldbrushmodel->nodes; i < r_worldbrushmodel->numnodes; i++, node++ )
-			node->pvsframe = r_pvsframecount;
+			node->pvsframe = rf.pvsframecount;
 		return;
 	}
 
-	pvs = Mod_ClusterPVS( r_viewcluster, r_worldmodel );
-	if( r_viewarea > -1 && rn.refdef.areabits )
+	pvs = Mod_ClusterPVS( rf.viewcluster, r_worldmodel );
+	if( rf.viewarea > -1 && rn.refdef.areabits )
 #ifdef AREAPORTALS_MATRIX
-		areabits = rn.refdef.areabits + r_viewarea * ((r_worldbrushmodel->numareas+7)/8);
+		areabits = rn.refdef.areabits + rf.viewarea * ((r_worldbrushmodel->numareas+7)/8);
 #else
 		areabits = rn.refdef.areabits;
 #endif
@@ -699,7 +699,7 @@ void R_MarkLeaves( void )
 
 		leaf = Mod_PointInLeaf( pvsOrigin2, r_worldmodel );
 		viewcluster2 = leaf->cluster;
-		if( viewcluster2 > -1 && viewcluster2 != r_viewcluster && !( pvs[viewcluster2>>3] & ( 1<<( viewcluster2&7 ) ) ) )
+		if( viewcluster2 > -1 && viewcluster2 != rf.viewcluster && !( pvs[viewcluster2>>3] & ( 1<<( viewcluster2&7 ) ) ) )
 		{
 			memcpy( fatpvs, pvs, ( r_worldbrushmodel->pvs->numclusters + 7 ) / 8 ); // same as pvs->rowsize
 			pvs = Mod_ClusterPVS( viewcluster2, r_worldmodel );
@@ -726,9 +726,9 @@ void R_MarkLeaves( void )
 			node = (mnode_t *)leaf;
 			do
 			{
-				if( node->pvsframe == r_pvsframecount )
+				if( node->pvsframe == rf.pvsframecount )
 					break;
-				node->pvsframe = r_pvsframecount;
+				node->pvsframe = rf.pvsframecount;
 				node = node->parent;
 			}
 			while( node );

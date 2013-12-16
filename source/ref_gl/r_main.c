@@ -52,9 +52,6 @@ image_t *r_screendepthtexturecopy;
 image_t *r_screenfxaacopy;
 image_t *r_screenweapontexture;
 
-unsigned int r_pvsframecount;    // bumped when going to a new PVS
-unsigned int r_framecount;       // used for dlight push checking
-
 unsigned int c_brush_polys, c_world_leafs;
 
 unsigned int r_mark_leaves, r_world_node;
@@ -67,8 +64,6 @@ static const float r_farclip_min = Z_NEAR, r_farclip_bias = 64.0f;
 // screen size info
 //
 r_scene_t rsc;
-
-int r_viewcluster, r_oldviewcluster, r_viewarea;
 
 /*
 * R_TransformBounds
@@ -976,6 +971,15 @@ static void R_PolyBlend( void )
 //=======================================================================
 
 /*
+* R_ForceMarkLeafs
+*/
+void R_ForceMarkLeafs( void )
+{
+	rf.viewcluster = rf.oldviewcluster = -1;
+	rf.viewarea = -1;
+}
+
+/*
 * R_DefaultFarClip
 */
 float R_DefaultFarClip( void )
@@ -1039,30 +1043,35 @@ static void R_SetVisFarClip( void )
 */
 static void R_SetupFrame( void )
 {
-	mleaf_t *leaf;
+	rf.framecount++;
 
 	// build the transformation matrix for the given view angles
 	VectorCopy( rn.refdef.vieworg, rn.viewOrigin );
 	Matrix3_Copy( rn.refdef.viewaxis, rn.viewAxis );
-
-	r_framecount++;
 
 	rn.lod_dist_scale_for_fov = tan( rn.refdef.fov_x * ( M_PI/180 ) * 0.5f );
 
 	// current viewcluster
 	if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 	{
+		mleaf_t *leaf;
+
 		VectorCopy( r_worldmodel->mins, rn.visMins );
 		VectorCopy( r_worldmodel->maxs, rn.visMaxs );
 
-		if( !( rn.params & RP_OLDVIEWCLUSTER ) )
-		{
-			//r_oldviewcluster = r_viewcluster;
-			leaf = Mod_PointInLeaf( rn.pvsOrigin, r_worldmodel );
-			r_viewcluster = leaf->cluster;
-			r_viewarea = leaf->area;
-		}
+		leaf = Mod_PointInLeaf( rn.pvsOrigin, r_worldmodel );
+		rn.viewcluster = leaf->cluster;
+		rn.viewarea = leaf->area;
 	}
+	else
+	{
+		rn.viewcluster = -1;
+		rn.viewarea = -1;
+	}
+
+	rf.oldviewcluster = rf.viewcluster;
+	rf.viewcluster = rn.viewcluster;
+	rf.viewarea = rf.viewarea;
 }
 
 /*

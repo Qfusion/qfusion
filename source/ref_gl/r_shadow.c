@@ -339,6 +339,7 @@ void R_DrawShadowmaps( void )
 	int textureWidth, textureHeight;
 	float lodScale;
 	vec3_t lodOrigin;
+	vec3_t viewerOrigin;
 	shadowGroup_t *group;
 	int shadowBits = rn.shadowBits;
 	refdef_t refdef;
@@ -360,6 +361,7 @@ void R_DrawShadowmaps( void )
 
 	lodScale = rn.lod_dist_scale_for_fov;
 	VectorCopy( rn.lodOrigin, lodOrigin );
+	VectorCopy( rn.viewOrigin, viewerOrigin );
 
 	refdef = rn.refdef;
 
@@ -416,7 +418,7 @@ void R_DrawShadowmaps( void )
 		rn.meshlist = &r_shadowlist;
 		rn.shadowGroup = group;
 		rn.lod_dist_scale_for_fov = lodScale;
-		VectorCopy( group->origin, rn.pvsOrigin );
+		VectorCopy( viewerOrigin, rn.pvsOrigin );
 		VectorCopy( lodOrigin, rn.lodOrigin );
 
 		// 3 pixels border on each side to prevent nasty stretching/bleeding of shadows,

@@ -95,15 +95,14 @@ typedef struct superLightStyle_s
 #define RP_PORTALVIEW			0x2
 #define RP_ENVVIEW				0x4
 #define RP_SKYPORTALVIEW		0x8
-#define RP_OLDVIEWCLUSTER		0x10
-#define RP_SHADOWMAPVIEW		0x20
-#define RP_FLIPFRONTFACE		0x40
-#define RP_DRAWFLAT				0x80
-#define RP_CLIPPLANE			0x100
-#define RP_PVSCULL				0x200
-#define RP_NOVIS				0x400
-#define RP_NOENTS				0x800
-#define RP_LIGHTMAP				0x1000
+#define RP_SHADOWMAPVIEW		0x10
+#define RP_FLIPFRONTFACE		0x20
+#define RP_DRAWFLAT				0x40
+#define RP_CLIPPLANE			0x80
+#define RP_PVSCULL				0x100
+#define RP_NOVIS				0x200
+#define RP_NOENTS				0x400
+#define RP_LIGHTMAP				0x800
 
 #define RP_CUBEMAPVIEW			( RP_ENVVIEW )
 #define RP_NONVIEWERREF			( RP_PORTALVIEW|RP_MIRRORVIEW|RP_ENVVIEW|RP_SKYPORTALVIEW|RP_SHADOWMAPVIEW )
@@ -174,6 +173,8 @@ typedef struct
 	vec3_t			lodOrigin;
 	vec3_t			pvsOrigin;
 	cplane_t		clipPlane;
+
+	int				viewcluster, viewarea;
 } refinst_t;
 
 //====================================================
@@ -234,6 +235,14 @@ typedef struct
 	float			cameraSeparation;
 
 	float			sinTableByte[256];
+
+	// used for dlight push checking
+	unsigned int	framecount;
+
+	// bumped when going to a new PVS
+	unsigned int	pvsframecount;
+
+	int				viewcluster, oldviewcluster, viewarea;
 } r_frontend_t;
 
 extern ref_import_t ri;
@@ -260,8 +269,6 @@ extern image_t *r_screendepthtexturecopy;
 extern image_t *r_screenfxaacopy;
 extern image_t *r_screenweapontexture;
 
-extern unsigned int r_pvsframecount;
-extern unsigned int r_framecount;
 extern unsigned int c_brush_polys, c_world_leafs;
 
 extern unsigned int r_mark_leaves, r_world_node;
@@ -276,8 +283,6 @@ extern float gldepthmin, gldepthmax;
 
 #define R_ENT2NUM(ent) ((ent)-rsc.entities)
 #define R_NUM2ENT(num) (rsc.entities+(num))
-
-extern int r_viewcluster, r_oldviewcluster, r_viewarea;
 
 extern model_t *r_worldmodel;
 extern mbrushmodel_t *r_worldbrushmodel;
@@ -298,7 +303,7 @@ extern cvar_t *r_dynamiclight;
 extern cvar_t *r_coronascale;
 extern cvar_t *r_detailtextures;
 extern cvar_t *r_subdivisions;
-	extern cvar_t *r_showtris;
+extern cvar_t *r_showtris;
 extern cvar_t *r_shownormals;
 extern cvar_t *r_draworder;
 
@@ -469,7 +474,7 @@ void		R_ShutdownCoronas( void );
 //
 // r_main.c
 //
-#define R_FASTSKY() (r_fastsky->integer || r_viewcluster == -1)
+#define R_FASTSKY() (r_fastsky->integer || rf.viewcluster == -1)
 
 extern mempool_t *r_mempool;
 
@@ -540,6 +545,8 @@ int			R_GetCustomColor( int num );
 void		R_ShutdownCustomColors( void );
 
 #define ENTITY_OUTLINE(ent) (( !(rn.params & RP_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
+
+void		R_ForceMarkLeafs( void );
 
 void		R_ClearRefInstStack( void );
 qboolean	R_PushRefInst( void );
