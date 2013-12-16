@@ -402,12 +402,6 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 				rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
 				continue;
 
-			Com_Printf( "%i %i %i %i %i - %i %i %i %i\n",
-				i,
-				0, POINTS_LEN, 0, ELEM_LEN,
-				visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems
-			);
-
 			RB_BindVBO( skydome->sphereVbos[i]->index, GL_TRIANGLES );
 
 			RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems );
