@@ -1113,7 +1113,7 @@ static void R_Clear( int bitMask )
 
 	bits &= bitMask;
 
-	if( rn.fbColorAttachment && (bits & GL_COLOR_BUFFER_BIT) ) {
+	if( rn.fbColorAttachment ) {
 		R_AttachTextureToFBObject( R_ActiveFBObject(), rn.fbColorAttachment );
 	}
 	if( rn.fbDepthAttachment ) {
