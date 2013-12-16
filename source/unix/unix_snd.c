@@ -84,23 +84,21 @@ void S_Activate( qboolean active )
 }
 
 /* The audio callback. All the magic happens here. */
-static int dmapos = 0;
-static int dmasize = 0;
+static unsigned dmapos = 0;
+static unsigned dmasize = 0;
 static void sdl_audio_callback( void *userdata, Uint8 *stream, int len )
 {
-	int pos = ( dmapos * ( dma.samplebits/8 ) );
-	if( pos >= dmasize )
-		dmapos = pos = 0;
+	int pos = dmapos % dmasize;
 
 	if( !snd_inited )/* shouldn't happen, but just in case... */
 	{
 		memset( stream, '\0', len );
 		return;
 	}
-	else
+	else if( len > 0 )
 	{
-		int tobufend = dmasize - pos;/* bytes to buffer's end. */
-		int len1 = len;
+		unsigned tobufend = dmasize - pos;/* bytes to buffer's end. */
+		unsigned len1 = len;
 		int len2 = 0;
 
 		if( len1 > tobufend )
@@ -110,16 +108,13 @@ static void sdl_audio_callback( void *userdata, Uint8 *stream, int len )
 		}
 		memcpy( stream, dma.buffer + pos, len1 );
 		if( len2 <= 0 )
-			dmapos += ( len1 / ( dma.samplebits/8 ) );
+			dmapos += len1;
 		else /* wraparound? */
 		{
 			memcpy( stream+len1, dma.buffer, len2 );
-			dmapos = ( len2 / ( dma.samplebits/8 ) );
+			dmapos = len2;
 		}
 	}
-
-	if( dmapos >= dmasize )
-		dmapos = 0;
 }
 
 static void print_audiospec( const char *str, const SDL_AudioSpec *spec )
@@ -264,7 +259,7 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 
 int SNDDMA_GetDMAPos( void )
 {
-	return dmapos;
+	return dmapos / ( dma.samplebits/8 );
 }
 
 void SNDDMA_Shutdown( qboolean verbose )
