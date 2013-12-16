@@ -351,9 +351,15 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 		visSkySides[i].index = i;
 		visSkySides[i].firstVert = vmin * SIDE_SIZE + umin;
-		visSkySides[i].numVerts = (vmax - vmin) * SIDE_SIZE + (umax - umin);
-		visSkySides[i].firstElem = (vmin * (SIDE_SIZE-1) + umin) * 6;
-		visSkySides[i].numElems = ((vmax - vmin) * (SIDE_SIZE-1) + (umax - umin)) * 6;
+		visSkySides[i].numVerts = (vmax - vmin) * SIDE_SIZE + (umax - umin) + 1;
+		visSkySides[i].firstElem = (vmin * (SIDE_SIZE-2) + umin) * 6;
+		visSkySides[i].numElems = ((vmax - vmin) * (SIDE_SIZE-2) + (umax - umin)) * 6;
+
+		clamp( visSkySides[i].firstVert, 0, POINTS_LEN-1 );
+		clamp( visSkySides[i].numVerts, 0, POINTS_LEN );
+
+		clamp( visSkySides[i].firstElem, 0, ELEM_LEN-1 );
+		clamp( visSkySides[i].numElems, 0, ELEM_LEN );
 
 		AddPointToBounds( skydome->meshes[i].xyzArray[vmin*SIDE_SIZE+umin], mins, maxs );
 		AddPointToBounds( skydome->meshes[i].xyzArray[vmax*SIDE_SIZE+umax], mins, maxs );
@@ -395,6 +401,12 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 			if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
 				rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
 				continue;
+
+			Com_Printf( "%i %i %i %i %i - %i %i %i %i\n",
+				i,
+				0, POINTS_LEN, 0, ELEM_LEN,
+				visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems
+			);
 
 			RB_BindVBO( skydome->sphereVbos[i]->index, GL_TRIANGLES );
 
