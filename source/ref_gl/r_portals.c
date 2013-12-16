@@ -153,8 +153,8 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 {
 	unsigned int i;
 	int x, y, w, h;
-	int oldcluster, oldarea;
 	float dist, d, best_d;
+	vec3_t viewerOrigin;
 	vec3_t origin;
 	mat3_t axis;
 	entity_t *ent, *best;
@@ -255,11 +255,11 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 		best->rtype = NUM_RTYPES;
 	}
 
-	oldcluster = r_viewcluster;
-	oldarea = r_viewarea;
 	if( !R_PushRefInst() ) {
 		return;
 	}
+
+	VectorCopy( rn.viewOrigin, viewerOrigin );
 
 setup_and_render:
 
@@ -270,12 +270,11 @@ setup_and_render:
 		CategorizePlane( portal_plane );
 		VectorCopy( rn.viewOrigin, origin );
 		Matrix3_Copy( rn.refdef.viewaxis, axis );
+		VectorCopy( viewerOrigin, rn.pvsOrigin );
 
 		rn.params = RP_PORTALVIEW;
 		if( !mirror )
 			rn.params |= RP_PVSCULL;
-		if( r_viewcluster != -1 )
-			rn.params |= RP_OLDVIEWCLUSTER;
 	}
 	else if( mirror )
 	{
@@ -287,9 +286,9 @@ setup_and_render:
 
 		Matrix3_Normalize( axis );
 
+		VectorCopy( viewerOrigin, rn.pvsOrigin );
+
 		rn.params = RP_MIRRORVIEW|RP_FLIPFRONTFACE;
-		if( r_viewcluster != -1 )
-			rn.params |= RP_OLDVIEWCLUSTER;
 	}
 	else
 	{
@@ -391,11 +390,6 @@ setup_and_render:
 
 	R_RenderView( &rn.refdef );
 
-	if( !( rn.params & RP_OLDVIEWCLUSTER ) )
-		r_oldviewcluster = -1;		// force markleafs
-	r_viewcluster = oldcluster;		// restore viewcluster for current frame
-	r_viewarea = oldarea;
-
 	if( doRefraction && !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) )
 	{
 		refraction = qtrue;
@@ -418,7 +412,7 @@ void R_DrawPortals( void )
 {
 	unsigned int i;
 
-	if( r_viewcluster == -1 ) {
+	if( rf.viewcluster == -1 ) {
 		return;
 	}
 
@@ -447,10 +441,10 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 		return;
 	}
 
-	oldcluster = r_viewcluster;
-	oldarea = r_viewarea;
+	oldcluster = rf.viewcluster;
+	oldarea = rf.viewarea;
 
-	rn.params = ( rn.params|RP_SKYPORTALVIEW ) & ~( RP_OLDVIEWCLUSTER );
+	rn.params = ( rn.params|RP_SKYPORTALVIEW );
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
 	rn.farClip = R_DefaultFarClip();
@@ -504,9 +498,9 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 
 	R_RenderView( &rn.refdef );
 
-	r_oldviewcluster = -1;			// force markleafs
-	r_viewcluster = oldcluster;		// restore viewcluster for current frame
-	r_viewarea = oldarea;
+	rf.oldviewcluster = -1;			// force markleafs
+	rf.viewcluster = oldcluster;		// restore viewcluster for current frame
+	rf.viewarea = oldarea;
 
 	// restore modelview and projection matrices, scissoring, etc for the main view
 	R_PopRefInst( ~GL_COLOR_BUFFER_BIT );

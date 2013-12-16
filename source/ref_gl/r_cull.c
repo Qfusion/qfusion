@@ -199,7 +199,7 @@ qboolean R_VisCullBox( const vec3_t mins, const vec3_t maxs )
 
 	for( node = r_worldbrushmodel->nodes;; )
 	{
-		if( node->pvsframe != r_pvsframecount )
+		if( node->pvsframe != rf.pvsframecount )
 		{
 			if( !stackdepth )
 				return qtrue;
@@ -243,7 +243,7 @@ qboolean R_VisCullSphere( const vec3_t origin, float radius )
 	radius += 4;
 	for( node = r_worldbrushmodel->nodes;; )
 	{
-		if( node->pvsframe != r_pvsframecount )
+		if( node->pvsframe != rf.pvsframecount )
 		{
 			if( !stackdepth )
 				return qtrue;

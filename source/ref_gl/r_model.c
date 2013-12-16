@@ -1101,9 +1101,7 @@ static void R_FinishMapConfig( void )
 */
 void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 {
-	r_framecount = 1;
-	r_oldviewcluster = r_viewcluster = -1;  // force markleafs
-	r_viewarea = -1;
+	rf.framecount = 1;
 
 	r_prevworldmodel = r_worldmodel;
 	r_worldmodel = NULL;
@@ -1133,6 +1131,8 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 	rsc.worldent->model = r_worldmodel;
 	rsc.worldent->rtype = RT_MODEL;
 	Matrix3_Identity( rsc.worldent->axis );
+
+	R_ForceMarkLeafs();
 }
 
 /*

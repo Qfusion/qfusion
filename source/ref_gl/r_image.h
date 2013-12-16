@@ -61,7 +61,7 @@ typedef struct image_s
 					upload_height;				// after power of two and picmip
 	int				samples;
 	int				fbo;						// frame buffer object texture is attached to
-	unsigned int	framenum;					// r_framecount texture was updated (rendered to)
+	unsigned int	framenum;					// rf.framecount texture was updated (rendered to)
 	float			bumpScale;
 	struct image_s	*next, *prev;
 } image_t;
