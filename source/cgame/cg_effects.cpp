@@ -468,8 +468,8 @@ void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radiu
 		{
 			vec3_t v;
 
-			VectorCopy( verts[fr->firstvert+j], poly.verts[j] );
-			VectorCopy( axis[0], poly.normals[j] );
+			Vector4Copy( verts[fr->firstvert+j], poly.verts[j] );
+			VectorCopy( axis[0], poly.normals[j] ); poly.normals[j][3] = 0;
 			VectorSubtract( poly.verts[j], origin, v );
 			poly.stcoords[j][0] = DotProduct( v, axis[1] ) + 0.5f;
 			poly.stcoords[j][1] = DotProduct( v, axis[2] ) + 0.5f;
