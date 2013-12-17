@@ -254,14 +254,14 @@ static void _xf86_VidmodesFindBest( int *mode, int *pwidth, int *pheight, qboole
 				best_fit = i;
 			}
 
-			if( !silent )
-				ri.Com_Printf( "%ix%i -> %ix%i: %i\n", *pwidth, *pheight, _xf86_vidmodes[i]->hdisplay, _xf86_vidmodes[i]->vdisplay, dist );
+			//if( !silent )
+			//	ri.Com_Printf( "%ix%i -> %ix%i: %i\n", *pwidth, *pheight, _xf86_vidmodes[i]->hdisplay, _xf86_vidmodes[i]->vdisplay, dist );
 		}
 
 		if( best_fit >= 0 )
 		{
-			if( !silent )
-				ri.Com_Printf( "%ix%i selected\n", _xf86_vidmodes[best_fit]->hdisplay, _xf86_vidmodes[best_fit]->vdisplay );
+			//if( !silent )
+			//	ri.Com_Printf( "%ix%i selected\n", _xf86_vidmodes[best_fit]->hdisplay, _xf86_vidmodes[best_fit]->vdisplay );
 
 			*pwidth = _xf86_vidmodes[best_fit]->hdisplay;
 			*pheight = _xf86_vidmodes[best_fit]->vdisplay;
