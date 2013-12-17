@@ -37,7 +37,7 @@ typedef struct cpoly_s
 	int tag;
 	poly_t *poly;
 
-	vec3_t verts[MAX_CGPOLY_VERTS];
+	vec4_t verts[MAX_CGPOLY_VERTS];
 	vec3_t origin;
 	vec3_t angles;
 } cpoly_t;
@@ -215,7 +215,7 @@ static cpoly_t *CG_SpawnPolyBeam( vec3_t start, vec3_t end, vec4_t color, int wi
 	poly->fognum = 0;
 
 	// A
-	VectorSet( poly->verts[poly->numverts], xmin, 0, ymin );
+	Vector4Set( poly->verts[poly->numverts], xmin, 0, ymin, 1 );
 	poly->stcoords[poly->numverts][0] = 0;
 	poly->stcoords[poly->numverts][1] = 0;
 	poly->colors[poly->numverts][0] = ( qbyte )( cgpoly->color[0] * 255 );
@@ -225,7 +225,7 @@ static cpoly_t *CG_SpawnPolyBeam( vec3_t start, vec3_t end, vec4_t color, int wi
 	poly->numverts++;
 
 	// B
-	VectorSet( poly->verts[poly->numverts], xmin, 0, ymax );
+	Vector4Set( poly->verts[poly->numverts], xmin, 0, ymax, 1 );
 	poly->stcoords[poly->numverts][0] = 0;
 	poly->stcoords[poly->numverts][1] = sty;
 	poly->colors[poly->numverts][0] = ( qbyte )( cgpoly->color[0] * 255 );
@@ -235,7 +235,7 @@ static cpoly_t *CG_SpawnPolyBeam( vec3_t start, vec3_t end, vec4_t color, int wi
 	poly->numverts++;
 
 	// C
-	VectorSet( poly->verts[poly->numverts], xmax, 0, ymax );
+	Vector4Set( poly->verts[poly->numverts], xmax, 0, ymax, 1 );
 	poly->stcoords[poly->numverts][0] = stx;
 	poly->stcoords[poly->numverts][1] = sty;
 	poly->colors[poly->numverts][0] = ( qbyte )( cgpoly->color[0] * 255 );
@@ -245,7 +245,7 @@ static cpoly_t *CG_SpawnPolyBeam( vec3_t start, vec3_t end, vec4_t color, int wi
 	poly->numverts++;
 
 	// D
-	VectorSet( poly->verts[poly->numverts], xmax, 0, ymin );
+	Vector4Set( poly->verts[poly->numverts], xmax, 0, ymin, 1 );
 	poly->stcoords[poly->numverts][0] = stx;
 	poly->stcoords[poly->numverts][1] = 0;
 	poly->colors[poly->numverts][0] = ( qbyte )( cgpoly->color[0] * 255 );
@@ -256,7 +256,7 @@ static cpoly_t *CG_SpawnPolyBeam( vec3_t start, vec3_t end, vec4_t color, int wi
 
 	// the verts data is stored inside cgpoly, cause it can be moved later
 	for( i = 0; i < poly->numverts; i++ )
-		VectorCopy( poly->verts[i], cgpoly->verts[i] );
+		Vector4Copy( poly->verts[i], cgpoly->verts[i] );
 
 	return cgpoly;
 }
