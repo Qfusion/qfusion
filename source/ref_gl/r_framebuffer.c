@@ -244,7 +244,7 @@ void R_AttachTextureToFBObject( int object, image_t *texture )
 		depth = qfalse;
 		fbo->colorTexture = texture;
 	}
-	texture->fbo = fbo->objectID;
+	texture->fbo = object;
 
 	// attach texture
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
