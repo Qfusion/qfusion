@@ -1059,4 +1059,13 @@ qboolean ML_ValidateFullname( const char *fullname );
 
 char **ML_CompleteBuildList( const char *partial );
 
+/*
+==============================================================
+
+MULTITHREADING
+
+==============================================================
+*/
+#include "qthreads.h"
+
 #endif // __QCOMMON_H
