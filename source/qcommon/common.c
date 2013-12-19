@@ -1044,6 +1044,8 @@ void Qcommon_Init( int argc, char **argv )
 	if( setjmp( abortframe ) )
 		Sys_Error( "Error during initialization: %s", com_errormsg );
 
+	QThreads_Init();
+
 	// initialize memory manager
 	Memory_Init();
 
@@ -1370,4 +1372,5 @@ void Qcommon_Shutdown( void )
 	Cmd_Shutdown();
 	Cbuf_Shutdown();
 	Memory_Shutdown();
+	QThreads_Shutdown();
 }
