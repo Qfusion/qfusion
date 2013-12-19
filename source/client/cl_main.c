@@ -2553,7 +2553,7 @@ void CL_Frame( int realmsec, int gamemsec )
 	
 	if( cls.state == CA_CINEMATIC )
 	{
-		maxFps = SCR_CinematicFramerate();
+		maxFps = SCR_CinematicFramerate() * 2;
 		if( maxFps < 24 ) 
 			maxFps = 24.0f;
 		minMsec = max( ( 1000.0f / maxFps ), 1 );
