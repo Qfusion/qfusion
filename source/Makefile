@@ -234,7 +234,7 @@ LXXFLAGS_COMMON=$(LDFLAGS) -lstdc++ -lsupc++
 ifeq ($(OS),FreeBSD)
 LDFLAGS_COMMON+= -L/usr/local/lib -lm -pthread
 else
-LDFLAGS_COMMON+= -L/usr/local/lib -ldl -lm -O1 -Wl,--as-needed
+LDFLAGS_COMMON+= -L/usr/local/lib -lm -lpthread -ldl -O1 -Wl,--as-needed
 endif
 
 ifneq ($(DEBUG_BUILD),YES)
@@ -372,7 +372,7 @@ ifeq ($(OS),Darwin)
 else
 CFILES_CLIENT += unix/unix_input.c
 endif
-CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c unix_threads.c
+CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c unix/unix_threads.c
 endif
 CFILES_CLIENT += $(wildcard gameshared/q_*.c)
 # CFILES_CLIENT += null/mm_null.c
@@ -412,13 +412,13 @@ OBJS_QF = $(addprefix $(BUILDDIR)/qf/, $(OFILES_QF) )
 #########
 # DED
 #########
-CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/glob.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/mlist.c qcommon/webdownload.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_write.c qcommon/ascript.c qcommon/anticheat.c qcommon/wswcurl.c qcommon/cjson.c qcommon/base64.c
+CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/glob.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/mlist.c qcommon/webdownload.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_write.c qcommon/ascript.c qcommon/anticheat.c qcommon/wswcurl.c qcommon/cjson.c qcommon/base64.c qcommon/threads.c
 CFILES_DED += $(wildcard server/*.c)
 CFILES_DED += null/cl_null.c
 ifeq ($(USE_MINGW),YES)
 CFILES_DED += win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_sys.c win32/win_lib.c
 else
-CFILES_DED += unix/unix_fs.c unix/unix_net.c unix/unix_lib.c unix/unix_sys.c unix_threads.c
+CFILES_DED += unix/unix_fs.c unix/unix_net.c unix/unix_lib.c unix/unix_sys.c unix/unix_threads.c
 endif
 CFILES_DED += $(wildcard gameshared/q_*.c)
 CFILES_DED += $(wildcard matchmaker/mm_*.c)
@@ -537,13 +537,13 @@ OBJS_ANGELWRAP = $(addprefix $(BUILDDIR)/angelwrap/, $(OFILES_ANGELWRAP) )
 #########
 # TV SERVER
 #########
-CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/glob.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_read.c qcommon/snap_write.c qcommon/wswcurl.c
+CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/glob.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_read.c qcommon/snap_write.c qcommon/wswcurl.c qcommon/threads.c
 CFILES_TV_SERVER += $(wildcard tv_server/*.c)
 CFILES_TV_SERVER += null/cl_null.c null/ascript_null.c null/mm_null.c
 ifeq ($(USE_MINGW),YES)
 CFILES_TV_SERVER += win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_sys.c win32/win_lib.c
 else
-CFILES_TV_SERVER += unix/unix_fs.c unix/unix_net.c unix/unix_sys.c unix/unix_lib.c unix_threads.c
+CFILES_TV_SERVER += unix/unix_fs.c unix/unix_net.c unix/unix_sys.c unix/unix_lib.c unix/unix_threads.c
 endif
 CFILES_TV_SERVER += $(wildcard gameshared/q_*.c)
 CFILES_TV_SERVER += $(wildcard tv_server/tv_module/*.c)

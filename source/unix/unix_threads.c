@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qcommon/qcommon.h"
 #include "../qcommon/sys_threads.h"
-#include <pthreads.h>
+#include <pthread.h>
 
 struct qthread_s {
 	pthread_t t;
@@ -95,7 +95,7 @@ int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *para
 	thread = ( qthread_t * )malloc( sizeof( *thread ) );
 	thread->t = t;
 	*pthread = thread;
-    return 0;
+	return 0;
 }
 
 /*
@@ -104,6 +104,6 @@ int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *para
 void Sys_Thread_Join( qthread_t *thread )
 {
 	if( thread ) {
-		pthread_join( thread->h, NULL );
+		pthread_join( thread->t, NULL );
 	}
 }
