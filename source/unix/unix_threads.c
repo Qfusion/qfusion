@@ -20,14 +20,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qcommon/qcommon.h"
 #include "../qcommon/sys_threads.h"
-#include "winquake.h"
+#include <pthreads.h>
 
 struct qthread_s {
-	HANDLE h;
+	pthread_t t;
 };
 
 struct qmutex_s {
-	HANDLE h;
+	pthread_mutex_t m;
 };
 
 /*
@@ -35,15 +35,17 @@ struct qmutex_s {
 */
 int Sys_Mutex_Create( qmutex_t **pmutex )
 {
+	int res;
 	qmutex_t *mutex;
+	pthread_mutex_t m;
 
-	HANDLE h = CreateMutex( NULL, FALSE, NULL );
-	if( h == NULL ) {
-		return 1;
+	res = pthread_mutex_init( &m, NULL );
+	if( res != 0 ) {
+		return res;
 	}
 	
 	mutex = ( qmutex_t * )malloc( sizeof( *mutex ) );
-	mutex->h = h;
+	mutex->m = m;
 	*pmutex = mutex;
 	return 0;
 }
@@ -56,7 +58,7 @@ void Sys_Mutex_Destroy( qmutex_t *mutex )
 	if( !mutex ) {
 		return;
 	}
-	CloseHandle( mutex->h );
+	pthread_mutex_destroy( &mutex->m );
 	free( mutex );
 }
 
@@ -65,7 +67,7 @@ void Sys_Mutex_Destroy( qmutex_t *mutex )
 */
 void Sys_Mutex_Lock( qmutex_t *mutex )
 {
-	WaitForSingleObject( mutex->h, INFINITE );
+	pthread_mutex_lock( &mutex->m );
 }
 
 /*
@@ -73,7 +75,7 @@ void Sys_Mutex_Lock( qmutex_t *mutex )
 */
 void Sys_Mutex_Unlock( qmutex_t *mutex )
 {
-	ReleaseMutex( mutex->h );
+	pthread_mutex_unlock( &mutex->m );
 }
 
 /*
@@ -82,24 +84,18 @@ void Sys_Mutex_Unlock( qmutex_t *mutex )
 int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *param )
 {
 	qthread_t *thread;
+	pthread_t t;
+	int res;
 
-	HANDLE h = CreateThread(
-		NULL,
-		0,
-		(LPTHREAD_START_ROUTINE) routine,
-		(LPVOID) param,
-		0,
-        NULL
-	);
-
-	if( h == NULL ) {
-		return 1;
+	res = pthread_create( &t, NULL, routine, param );
+	if( res != 0 ) {
+		return res;
 	}
 
 	thread = ( qthread_t * )malloc( sizeof( *thread ) );
-	thread->h = h;
+	thread->t = t;
 	*pthread = thread;
-	return 0;
+    return 0;
 }
 
 /*
@@ -108,7 +104,6 @@ int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *para
 void Sys_Thread_Join( qthread_t *thread )
 {
 	if( thread ) {
-		WaitForSingleObject( thread->h, INFINITE );
-		CloseHandle( thread->h );
+		pthread_join( thread->h, NULL );
 	}
 }

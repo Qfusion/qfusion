@@ -372,7 +372,7 @@ ifeq ($(OS),Darwin)
 else
 CFILES_CLIENT += unix/unix_input.c
 endif
-CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c
+CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c unix_threads.c
 endif
 CFILES_CLIENT += $(wildcard gameshared/q_*.c)
 # CFILES_CLIENT += null/mm_null.c
@@ -418,7 +418,7 @@ CFILES_DED += null/cl_null.c
 ifeq ($(USE_MINGW),YES)
 CFILES_DED += win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_sys.c win32/win_lib.c
 else
-CFILES_DED += unix/unix_fs.c unix/unix_net.c unix/unix_lib.c unix/unix_sys.c
+CFILES_DED += unix/unix_fs.c unix/unix_net.c unix/unix_lib.c unix/unix_sys.c unix_threads.c
 endif
 CFILES_DED += $(wildcard gameshared/q_*.c)
 CFILES_DED += $(wildcard matchmaker/mm_*.c)
@@ -543,7 +543,7 @@ CFILES_TV_SERVER += null/cl_null.c null/ascript_null.c null/mm_null.c
 ifeq ($(USE_MINGW),YES)
 CFILES_TV_SERVER += win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_sys.c win32/win_lib.c
 else
-CFILES_TV_SERVER += unix/unix_fs.c unix/unix_net.c unix/unix_sys.c unix/unix_lib.c
+CFILES_TV_SERVER += unix/unix_fs.c unix/unix_net.c unix/unix_sys.c unix/unix_lib.c unix_threads.c
 endif
 CFILES_TV_SERVER += $(wildcard gameshared/q_*.c)
 CFILES_TV_SERVER += $(wildcard tv_server/tv_module/*.c)
