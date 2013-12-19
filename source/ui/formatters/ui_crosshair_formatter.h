@@ -37,7 +37,7 @@ public:
 	{
 		formatted_data = "";
 		for( StringList::const_iterator it = raw_data.begin(); it != raw_data.end(); ++it)
-			formatted_data += " <img src=\"" + (*it) + "\"/>";
+			formatted_data += " <img src=\"" + (*it) + "\" width=\"32\" height=\"32\" />";
 	}
 };
 
