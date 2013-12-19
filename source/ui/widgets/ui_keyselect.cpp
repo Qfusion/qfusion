@@ -145,7 +145,13 @@ using namespace Rocket::Core;
 		}
 		else if( FirstKeyIsBound() )
 		{
-			text = trap::Key_KeynumToString( boundKey[0] );
+			std::string b0 = trap::Key_KeynumToString( boundKey[0] );
+			if( focusMode ) {
+				text = va( trap::L10n_TranslateString( "%s or %s" ), b0.c_str(), "???" );
+			}
+			else {
+				text = b0;
+			}
 		}
 		else if( KeysAreBound() )
 		{
@@ -188,8 +194,7 @@ using namespace Rocket::Core;
 		Q_snprintfz( bindCmd, sizeof( bindCmd ), "bind \"%s\" \"%s\"\n", trap::Key_KeynumToString( key ), cmd.CString() );
 		trap::Cmd_ExecuteText( EXEC_INSERT, bindCmd );
 
-		this->WriteText();
-		this->Blur();
+		Blur();
 	}
 
 	/// Called for every event sent to this element or one of its descendants.
@@ -200,6 +205,7 @@ using namespace Rocket::Core;
 		{
 			focusMode = false;
 			GetRocketModule()->showCursor();
+			WriteText();
 		}
 		else if( event == "focus" )
 		{
@@ -210,6 +216,8 @@ using namespace Rocket::Core;
 			// old C ui functionality
 			if( KeysAreBound() )
 				ReleaseKeys();
+
+			WriteText();
 		}
 
 		// get the key
