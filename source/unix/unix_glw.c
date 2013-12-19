@@ -347,10 +347,10 @@ static short _xf86_XrandrClosestRate( int mode, short preferred_rate )
 			min = delta;
 		}
 
-		ri.Com_Printf("  rate %i -> %i: %i\n", preferred_rate, rates[i], delta );
+		//ri.Com_Printf("  rate %i -> %i: %i\n", preferred_rate, rates[i], delta );
 	}
 
-	ri.Com_Printf("_xf86_XrandrClosestRate found %i for %i\n", best, preferred_rate );
+	//ri.Com_Printf("_xf86_XrandrClosestRate found %i for %i\n", best, preferred_rate );
 	return best;
 }
 
@@ -415,14 +415,14 @@ static void _xf86_XrandrFindBest( int *mode, int *pwidth, int *pheight, qboolean
 				best_fit = i;
 			}
 
-			if( !silent )
-				ri.Com_Printf( "%ix%i -> %ix%i: %i\n", *pwidth, *pheight, _xrandr_sizes[i].width, _xrandr_sizes[i].height, dist );
+			//if( !silent )
+			//	ri.Com_Printf( "%ix%i -> %ix%i: %i\n", *pwidth, *pheight, _xrandr_sizes[i].width, _xrandr_sizes[i].height, dist );
 		}
 
 		if( best_fit >= 0 )
 		{
-			if( !silent )
-				ri.Com_Printf( "%ix%i selected\n", _xrandr_sizes[best_fit].width, _xrandr_sizes[best_fit].height );
+			//if( !silent )
+			//	ri.Com_Printf( "%ix%i selected\n", _xrandr_sizes[best_fit].width, _xrandr_sizes[best_fit].height );
 
 			*pwidth = _xrandr_sizes[best_fit].width;
 			*pheight = _xrandr_sizes[best_fit].height;
