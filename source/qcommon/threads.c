@@ -111,6 +111,8 @@ void QThreads_Init( void )
 */
 void QThreads_Shutdown( void )
 {
-	Sys_Mutex_Destroy( global_mutex );
-	global_mutex = NULL;
+	if( global_mutex != NULL ) {
+		Sys_Mutex_Destroy( global_mutex );
+		global_mutex = NULL;
+	}
 }
