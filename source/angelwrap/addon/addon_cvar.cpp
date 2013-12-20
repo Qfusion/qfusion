@@ -130,36 +130,36 @@ static float objectCVar_getValue( ascvar_t *self )
 	return self->cvar->value;
 }
 
-static asstring_t *objectCVar_getName( ascvar_t *self )
+static const asstring_t *objectCVar_getName( ascvar_t *self )
 {
 	if( !self->cvar || !self->cvar->name )
-		return objectString_FactoryBuffer( NULL, 0 );
+		return objectString_ConstFactoryBuffer( NULL, 0 );
 
-	return objectString_FactoryBuffer( self->cvar->name, strlen( self->cvar->name ) );
+	return objectString_ConstFactoryBuffer( self->cvar->name, strlen( self->cvar->name ) );
 }
 
-static asstring_t *objectCVar_getString( ascvar_t *self )
+static const asstring_t *objectCVar_getString( ascvar_t *self )
 {
 	if( !self->cvar || !self->cvar->string )
-		return objectString_FactoryBuffer( NULL, 0 );
+		return objectString_ConstFactoryBuffer( NULL, 0 );
 
-	return objectString_FactoryBuffer( self->cvar->string, strlen( self->cvar->string ) );
+	return objectString_ConstFactoryBuffer( self->cvar->string, strlen( self->cvar->string ) );
 }
 
-static asstring_t *objectCVar_getDefaultString( ascvar_t *self )
+static const asstring_t *objectCVar_getDefaultString( ascvar_t *self )
 {
 	if( !self->cvar || !self->cvar->dvalue )
-		return objectString_FactoryBuffer( NULL, 0 );
+		return objectString_ConstFactoryBuffer( NULL, 0 );
 
-	return objectString_FactoryBuffer( self->cvar->dvalue, strlen( self->cvar->dvalue ) );
+	return objectString_ConstFactoryBuffer( self->cvar->dvalue, strlen( self->cvar->dvalue ) );
 }
 
-static asstring_t *objectCVar_getLatchedString( ascvar_t *self )
+static const asstring_t *objectCVar_getLatchedString( ascvar_t *self )
 {
 	if( !self->cvar || !self->cvar->latched_string )
-		return objectString_FactoryBuffer( NULL, 0 );
+		return objectString_ConstFactoryBuffer( NULL, 0 );
 
-	return objectString_FactoryBuffer( self->cvar->latched_string, strlen( self->cvar->latched_string ) );
+	return objectString_ConstFactoryBuffer( self->cvar->latched_string, strlen( self->cvar->latched_string ) );
 }
 
 void PreRegisterCvarAddon( asIScriptEngine *engine )
@@ -199,10 +199,10 @@ void RegisterCvarAddon( asIScriptEngine *engine )
 	r = engine->RegisterObjectMethod( "Cvar", "bool get_boolean() const", asFUNCTION( objectCVar_getBool ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "int get_integer() const", asFUNCTION( objectCVar_getInteger ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "Cvar", "float get_value() const", asFUNCTION( objectCVar_getValue ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Cvar", "String @ get_name() const", asFUNCTION( objectCVar_getName ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Cvar", "String @ get_string() const", asFUNCTION( objectCVar_getString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Cvar", "String @ get_defaultString() const", asFUNCTION( objectCVar_getDefaultString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
-	r = engine->RegisterObjectMethod( "Cvar", "String @ get_latchedString() const", asFUNCTION( objectCVar_getLatchedString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Cvar", "const String @ get_name() const", asFUNCTION( objectCVar_getName ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Cvar", "const String @ get_string() const", asFUNCTION( objectCVar_getString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Cvar", "const String @ get_defaultString() const", asFUNCTION( objectCVar_getDefaultString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+	r = engine->RegisterObjectMethod( "Cvar", "const String @ get_latchedString() const", asFUNCTION( objectCVar_getLatchedString ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
 	// enums
 	r = engine->RegisterEnumValue( "eCvarFlag", "CVAR_ARCHIVE", CVAR_ARCHIVE ); assert( r >= 0 );
