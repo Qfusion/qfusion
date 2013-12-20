@@ -424,7 +424,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "void GT_playerRespawn( Entity @ent, int old_team, int new_team )";
+	fdeclstr = "void GT_PlayerRespawn( Entity @ent, int old_team, int new_team )";
 	level.gametype.playerRespawnFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.playerRespawnFunc )
 	{
@@ -434,7 +434,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "void GT_scoreEvent( Client @client, String &score_event, String &args )";
+	fdeclstr = "void GT_ScoreEvent( Client @client, const String &score_event, const String &args )";
 	level.gametype.scoreEventFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.scoreEventFunc )
 	{
@@ -464,7 +464,7 @@ static bool G_asInitializeGametypeScript( asIScriptModule *asModule )
 	else
 		funcCount++;
 
-	fdeclstr = "bool GT_Command( Client @client, String &cmdString, String &argsString, int argc )";
+	fdeclstr = "bool GT_Command( Client @client, const String &cmdString, const String &argsString, int argc )";
 	level.gametype.clientCommandFunc = asModule->GetFunctionByDecl( fdeclstr );
 	if( !level.gametype.clientCommandFunc )
 	{
