@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "addon_string.h"
 #include <string>
 
+#define CONST_STRING_BITFLAG	(1<<31)
+
 static inline asstring_t *objectString_Alloc( void )
 {
 	static asstring_t *object;
@@ -35,29 +37,63 @@ static inline asstring_t *objectString_Alloc( void )
 asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length )
 {
 	asstring_t *object;
+	unsigned int size = (length + 1) & ~CONST_STRING_BITFLAG;
 
+	length = size-1;
 	object = objectString_Alloc();
-	object->buffer = new char[length + 1];
+	object->buffer = new char[size];
 	object->len = length;
-	object->buffer[length] = 0;
-	object->size = length + 1;
-	if( buffer )
-		Q_strncpyz( object->buffer, buffer, object->size );
+	object->size = size;
+	if( buffer ) {
+		memcpy( object->buffer, buffer, length );
+		object->buffer[length] = '\0';
+	}
+	else {
+		object->len = 0;
+		object->buffer[0] = '\0';
+	}
+	return object;
+}
 
+const asstring_t *objectString_ConstFactoryBuffer( const char *buffer, unsigned int length )
+{
+	asstring_t *object;
+	qbyte *rawmem;
+	unsigned int size = (length + 1) & ~CONST_STRING_BITFLAG;
+
+	length = size - 1;
+	rawmem = new qbyte[sizeof( asstring_t ) + size];
+	object = ( asstring_t * )rawmem;
+	object->asRefCount = 1;
+	object->buffer = ( char * )( object + 1 );
+	object->len = length;
+	object->size = size | CONST_STRING_BITFLAG;
+	memcpy( object->buffer, buffer, length );
+	object->buffer[length] = '\0';
 	return object;
 }
 
 asstring_t *objectString_AssignString( asstring_t *self, const char *string, size_t strlen )
 {
+	unsigned int size;
+
 	if( strlen >= self->size )
 	{
 		delete[] self->buffer;
-		self->size = strlen + 1;
-		self->buffer = new char[self->size];
+
+		size = (strlen + 1) & ~CONST_STRING_BITFLAG;
+		self->size = size;
+		self->buffer = new char[size];
+		strlen = size - 1;
+	}
+	else
+	{
+		size = self->size;
 	}
 
 	self->len = strlen;
-	Q_strncpyz( self->buffer, string, self->size );
+	memcpy( self->buffer, string, strlen );
+	self->buffer[strlen] = '\0';
 
 	return self;
 }
@@ -79,12 +115,15 @@ static asstring_t *objectString_AddAssignString( asstring_t *self, const char *s
 	if( strlen )
 	{
 		char *tem = self->buffer;
+		unsigned int length = strlen + self->len;
+		unsigned int size = (length + 1) & ~CONST_STRING_BITFLAG;
 
-		self->len = strlen + self->len;
-		self->size = self->len + 1;
-		self->buffer = new char[self->size];
+		length = size - 1;
+		self->len = length;
+		self->size = size;
+		self->buffer = new char[size];
 
-		Q_snprintfz( self->buffer, self->size, "%s%s", tem, string );
+		Q_snprintfz( self->buffer, size, "%s%s", tem, string );
 		delete[] tem;
 	}
 
@@ -164,14 +203,27 @@ void objectString_Release( asstring_t *obj )
 
 	if( !obj->asRefCount )
 	{
-		delete[] obj->buffer;
-		delete obj;
+		if( ( obj->size & CONST_STRING_BITFLAG ) == 0 )
+		{
+			delete[] obj->buffer;
+			delete obj;
+		}
+		else
+		{
+			qbyte *rawmem = ( qbyte * )obj;
+			delete[] rawmem;
+		}
 	}
 }
 
 static asstring_t *StringFactory( unsigned int length, const char *s )
 {
 	return objectString_FactoryBuffer( s, length );
+}
+
+static const asstring_t *ConstStringFactory( unsigned int length, const char *s )
+{
+	return objectString_ConstFactoryBuffer( s, length );
 }
 
 static char *objectString_Index( unsigned int i, asstring_t *self )
@@ -472,6 +524,7 @@ void RegisterStringAddon( asIScriptEngine *engine )
 
 	// register the string factory
 	r = engine->RegisterStringFactory( "String @", asFUNCTION( StringFactory ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterStringFactory( "const String @", asFUNCTION( ConstStringFactory ), asCALL_CDECL ); assert( r >= 0 );
 
 	// register object behaviours
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_FACTORY, "String @f()", asFUNCTION( objectString_Factory ), asCALL_CDECL ); assert( r >= 0 );

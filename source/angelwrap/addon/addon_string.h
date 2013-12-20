@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __ADDON_STRING_H__
 
 asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length );
+const asstring_t *objectString_ConstFactoryBuffer( const char *buffer, unsigned int length );
 void objectString_Release( asstring_t *obj );
 asstring_t *objectString_AssignString( asstring_t *self, const char *string, size_t strlen );
 
