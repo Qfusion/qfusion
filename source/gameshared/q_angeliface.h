@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct asstring_s
 {
 	char *buffer;
-	size_t len, size;
+	unsigned int len, size;
 	int asRefCount;
 } asstring_t;
 
