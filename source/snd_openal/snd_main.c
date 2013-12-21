@@ -404,7 +404,7 @@ qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
 		snd_shutdown_bug = qtrue;
 
 	s_volume = trap_Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
-	s_musicvolume = trap_Cvar_Get( "s_musicvolume", "0.5", CVAR_ARCHIVE );
+	s_musicvolume = trap_Cvar_Get( "s_musicvolume", "0.2", CVAR_ARCHIVE );
 	s_doppler = trap_Cvar_Get( "s_doppler", "1.0", CVAR_ARCHIVE );
 	s_sound_velocity = trap_Cvar_Get( "s_sound_velocity", "10976", CVAR_DEVELOPER );
 	s_stereo2mono = trap_Cvar_Get ( "s_stereo2mono", "0", CVAR_ARCHIVE );
