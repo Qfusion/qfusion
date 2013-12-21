@@ -310,7 +310,7 @@ int asCContext::Prepare(asIScriptFunction *func)
 	if( m_status == asEXECUTION_ACTIVE || m_status == asEXECUTION_SUSPENDED )
 	{
 		asCString str;
-		str.Format(TXT_FAILED_IN_FUNC_s_d, "Prepare", asCONTEXT_ACTIVE);
+		str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, "Prepare", func->GetDeclaration(true, true), asCONTEXT_ACTIVE);
 		m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 		return asCONTEXT_ACTIVE;
 	}
@@ -337,6 +337,15 @@ int asCContext::Prepare(asIScriptFunction *func)
 	else
 	{
 		asASSERT( m_engine );
+
+		// Make sure the function is from the same engine as the context to avoid mixups
+		if( m_engine != func->GetEngine() )
+		{
+			asCString str;
+			str.Format(TXT_FAILED_IN_FUNC_s_WITH_s_d, "Prepare", func->GetDeclaration(true, true), asINVALID_ARG);
+			m_engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
+			return asINVALID_ARG;
+		}
 
 		if( m_initialFunction )
 		{
@@ -1104,13 +1113,10 @@ int asCContext::Execute()
 					}
 				}
 
-				if( realFunc )
-				{
-					if( realFunc->signatureId != m_currentFunction->signatureId )
-						SetInternalException(TXT_NULL_POINTER_ACCESS);
-					else
-						m_currentFunction = realFunc;
-				}
+				if( realFunc && realFunc->signatureId == m_currentFunction->signatureId )
+					m_currentFunction = realFunc;
+				else
+					SetInternalException(TXT_NULL_POINTER_ACCESS);
 			}
 		}
 
@@ -1136,8 +1142,9 @@ int asCContext::Execute()
 		}
 		else
 		{
-			// This shouldn't happen
-			asASSERT(false);
+			// This shouldn't happen unless there was an error in which 
+			// case an exception should have been raised already
+			asASSERT( m_status == asEXECUTION_EXCEPTION );
 		}
 	}
 
@@ -1565,39 +1572,44 @@ void asCContext::CallInterfaceMethod(asCScriptFunction *func)
 
 	asCObjectType *objType = obj->objType;
 
-	// TODO: runtime optimize: The object type should have a list of only those methods that
-	//                         implement interface methods. This list should be ordered by
-	//                         the signatureId so that a binary search can be made, instead
-	//                         of a linear search.
-	//
-	//                         When this is done, we must also make sure the signatureId of a
-	//                         function never changes, e.g. when if the signature functions are
-	//                         released.
-
 	// Search the object type for a function that matches the interface function
 	asCScriptFunction *realFunc = 0;
 	if( func->funcType == asFUNC_INTERFACE )
 	{
-		for( asUINT n = 0; n < objType->methods.GetLength(); n++ )
+		// Find the offset for the interface's virtual function table chunk
+		asUINT offset = 0;
+		bool found = false;
+		asCObjectType *findInterface = func->objectType;
+
+		// TODO: runtime optimize: The list of interfaces should be ordered by the address
+		//                         Then a binary search pattern can be used. 
+		asUINT intfCount = asUINT(objType->interfaces.GetLength());
+		for( asUINT n = 0; n < intfCount; n++ )
 		{
-			asCScriptFunction *f2 = m_engine->scriptFunctions[objType->methods[n]];
-			if( f2->signatureId == func->signatureId )
+			if( objType->interfaces[n] == findInterface )
 			{
-				if( f2->funcType == asFUNC_VIRTUAL )
-					realFunc = objType->virtualFunctionTable[f2->vfTableIdx];
-				else
-					realFunc = f2;
+				offset = objType->interfaceVFTOffsets[n];
+				found = true;
 				break;
 			}
 		}
 
-		if( realFunc == 0 )
+		if( !found )
 		{
 			// Tell the exception handler to clean up the arguments to this method
 			m_needToCleanupArgs = true;
 			SetInternalException(TXT_NULL_POINTER_ACCESS);
 			return;
 		}
+
+		// Find the real function in the virtual table chunk with the found offset
+		realFunc = objType->virtualFunctionTable[func->vfTableIdx + offset];
+
+		// Since the interface was implemented by the class, it shouldn't
+		// be possible that the real function isn't found
+		asASSERT( realFunc );
+
+		asASSERT( realFunc->signatureId == func->signatureId );
 	}
 	else // if( func->funcType == asFUNC_VIRTUAL )
 	{

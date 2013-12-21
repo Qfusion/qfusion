@@ -96,11 +96,11 @@
 #define TXT_EXPR_MUST_BE_BOOL             "Expression must be of boolean type"
 
 #define TXT_FAILED_TO_COMPILE_DEF_ARG_d_IN_FUNC_s "Failed while compiling default arg for parameter %d in function '%s'"
-#define TXT_FAILED_TO_CREATE_TEMP_OBJ     "Previous error occurred while attempting to create a temporary copy of object"
-#define TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC "Float value truncated in implicit conversion to integer"
-#define TXT_FOUND_MULTIPLE_ENUM_VALUES    "Found multiple matching enum values"
-#define TXT_FUNCTION_ALREADY_EXIST        "A function with the same name and parameters already exists"
-#define TXT_FUNCTION_s_NOT_FOUND          "Function '%s' not found"
+#define TXT_FAILED_TO_CREATE_TEMP_OBJ             "Previous error occurred while attempting to create a temporary copy of object"
+#define TXT_FLOAT_CONV_TO_INT_CAUSE_TRUNC         "Float value truncated in implicit conversion to integer"
+#define TXT_FOUND_MULTIPLE_ENUM_VALUES            "Found multiple matching enum values"
+#define TXT_FUNCTION_ALREADY_EXIST                "A function with the same name and parameters already exists"
+#define TXT_FUNCTION_s_NOT_FOUND                  "Function '%s' not found"
 
 #define TXT_GET_SET_ACCESSOR_TYPE_MISMATCH_FOR_s "The property '%s' has mismatching types for the get and set accessors"
 #define TXT_GLOBAL_VARS_NOT_ALLOWED              "Global variables have been disabled by the application"
@@ -179,6 +179,7 @@
 #define TXT_s_NOT_MEMBER_OF_s                      "'%s' is not a member of '%s'"
 #define TXT_NOT_VALID_REFERENCE                    "Not a valid reference"
 #define TXT_NOT_VALID_LVALUE                       "Not a valid lvalue"
+#define TXT_NOTHING_WAS_BUILT                      "Nothing was built in the module"
 
 #define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
 #define TXT_OBJECT_HANDLE_NOT_SUPPORTED    "Object handle is not supported for this type"
@@ -213,6 +214,7 @@
 #define TXT_SHARED_CANNOT_INHERIT_FROM_NON_SHARED_s    "Shared class cannot inherit from non-shared class '%s'"
 #define TXT_SHARED_CANNOT_USE_NON_SHARED_TYPE_s        "Shared code cannot use non-shared type '%s'"
 #define TXT_SHARED_s_DOESNT_MATCH_ORIGINAL             "Shared type '%s' doesn't match the original declaration in other module"
+#define TXT_SECTION_IS_EMPTY                           "The script section is empty"
 #define TXT_SIGNED_UNSIGNED_MISMATCH                   "Signed/Unsigned mismatch"
 #define TXT_STRINGS_NOT_RECOGNIZED                     "Strings are not recognized by the application"
 #define TXT_SWITCH_CASE_MUST_BE_CONSTANT               "Case expressions must be constants"
@@ -282,6 +284,7 @@
 #define TXT_EXCEPTION_IN_NESTED_CALL                  "An exception occurred in a nested call"
 #define TXT_TYPE_s_IS_STILL_USED_BY_FUNC_s            "Type '%s' is still used by function '%s'"
 #define TXT_PREV_TYPE_IS_NAMED_s                      "The builtin type in previous message is named '%s'"
+#define TXT_PREV_FUNC_IS_NAMED_s_TYPE_IS_d            "The function in previous message is named '%s'. The func type is %d"
 #define TXT_RESURRECTING_SCRIPTOBJECT_s               "The script object of type '%s' is being resurrected illegally during destruction"
 
 // Internal names

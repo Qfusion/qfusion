@@ -15,6 +15,48 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.28.1 WIP - 2013/12/20</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Fixed improper warning of used types when releasing engine and having circular references between registered types (Thanks Jason Goepel)
+<li>Fixed memory leak on registering opAssign twice for the same object type (Thanks Jason Goepel)
+<li>Compiler will not used enum values from registered enum types if the module doesn't have access to it
+<li>Fixed assert failure in Execute when forgetting to set the object on a class method call (Thanks simps)
+<li>Compiler now uses the default args declared in derived methods instead of the default args in base method (Thanks Aaron Baker)
+<li>Fixed the position reported for errors while compiling global variables
+<li>Compiler wasn't searching parent namespaces when resolving the symbol for class inheritance (Thanks Agnis)
+</ul>
+<li>Library
+<ul>
+<li>Defined default arg for asSFuncPtr constructor to allow trivial instanciation (Thanks _Vicious_)
+<li>Added verification to avoid use of context from a different engine to call functions (Thanks GGLucas)
+<li>Removed some more unused code in AS_NO_COMPILER mode
+<li>Optimized compiler performance with faster lookups (Thanks GGLucas)
+<li>Added check against attempts to register multiple list factories (Thanks Jason Goepel)
+<li>Compiler is able to resolve ambiguous enum values if it can determine the enum type from the destination (Thanks Jason Goepel)
+<li>Slightly reduced memory consumption as virtual functions no longer store the default args
+<li>Linux with ARM now supports native calling conventions for both soft-float ABI and hard-float ABI
+<li>Compiler is capable of using constructors with default args as default constructor (Thanks Sir Ementaler)
+<li>An error will now be returned when building an empty script
+<li>Saving bytecode for an empty module will now return an error
+<li>The overhead for calling interface methods is reduced by adding the methods in the virtual function table (Thanks GGLucas)
+<li>asIScriptEngine::GetObjectTypeByName can now return template types too
+<li>POD value types are now allocated inline when members of script classes (Thanks GGLucas)
+<li>Ternary condition operator now converts either case to const @ if the other is const @ (Thanks _Vicious_)
+</ul>
+<li>Add-ons & samples
+<ul>
+<li>WriteConfigToFile now writes the engine properties too
+<li>asbuild sample updated to set the engine properties as informed in config file
+<li>Added GetTypeId to the script handle to make it easier to work with function pointers (Thanks Ava Skoog)
+<li>Implemented FindByRef in the script array (Thanks Marcus L)
+<li>CDebugger now has a RegisterToStringCallback to allow custom conversion of types to strings for the debug output
+<li>Fixed assert failure in CScriptWeakRef (Thanks Squared'D)
+</ul>
+</ul>
+
 <h2>Version 2.28.0 - 2013/11/02</h2>
 
 <ul>

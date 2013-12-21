@@ -93,10 +93,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\add_on\scripthelper\scripthelper.cpp" />
     <ClCompile Include="..\..\source\main.cpp" />
     <ClCompile Include="..\..\..\..\add_on\scriptbuilder\scriptbuilder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\add_on\scripthelper\scripthelper.h" />
     <ClInclude Include="..\..\..\..\angelscript\include\angelscript.h" />
     <ClInclude Include="..\..\..\..\add_on\scriptbuilder\scriptbuilder.h" />
   </ItemGroup>

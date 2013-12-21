@@ -232,6 +232,7 @@
     <ClInclude Include="..\..\source\as_tokenizer.h" />
     <ClInclude Include="..\..\source\as_typeinfo.h" />
     <ClInclude Include="..\..\source\as_variablescope.h" />
+    <ClInclude Include="..\..\source\as_namespace.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\source\as_callfunc_x64_msvc_asm.asm">

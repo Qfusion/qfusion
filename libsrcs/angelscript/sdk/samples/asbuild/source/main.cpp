@@ -3,10 +3,13 @@
 #include <string.h>  // strstr()
 #include <angelscript.h>
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
+#include "../../../add_on/scripthelper/scripthelper.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <sstream>
 #if defined(_MSC_VER) && !defined(_WIN32_WCE)
 #include <direct.h>
+#include <crtdbg.h>
 #endif
 #ifdef _WIN32_WCE
 #include <windows.h> // For GetModuleFileName
@@ -35,6 +38,15 @@ void MessageCallback(const asSMessageInfo *msg, void *param)
 
 int main(int argc, char **argv)
 {
+#if defined(_MSC_VER)
+	// Turn on memory leak detection (use _CrtSetBreakAlloc to break at specific allocation)
+	_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF|_CRTDBG_ALLOC_MEM_DF);
+	_CrtSetReportMode(_CRT_ASSERT,_CRTDBG_MODE_FILE);
+	_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
+
+	//_CrtSetBreakAlloc(6150);
+#endif
+
 	int r;
 
 	if( argc < 4 )
@@ -135,7 +147,49 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 		string token;
 		// TODO: The position where the initial token is found should be stored for error messages
 		GetToken(engine, token, config, pos);
-		if( token == "namespace" )
+		if( token == "ep" )
+		{
+			string tmp;
+			GetToken(engine, tmp, config, pos);
+
+			asEEngineProp ep = asEEngineProp(atol(tmp.c_str()));
+
+			// Only set properties that affect the compiler
+			switch( ep )
+			{
+			case asEP_ALLOW_UNSAFE_REFERENCES:
+			case asEP_OPTIMIZE_BYTECODE:
+			//case asEP_COPY_SCRIPT_SECTIONS:
+			//case asEP_MAX_STACK_SIZE:
+			case asEP_USE_CHARACTER_LITERALS:
+			case asEP_ALLOW_MULTILINE_STRINGS:
+			case asEP_ALLOW_IMPLICIT_HANDLE_TYPES:
+			case asEP_BUILD_WITHOUT_LINE_CUES:
+			//case asEP_INIT_GLOBAL_VARS_AFTER_BUILD:
+			case asEP_REQUIRE_ENUM_SCOPE:
+			case asEP_SCRIPT_SCANNER:
+			case asEP_INCLUDE_JIT_INSTRUCTIONS:
+			case asEP_STRING_ENCODING:
+			case asEP_PROPERTY_ACCESSOR_MODE:
+			//case asEP_EXPAND_DEF_ARRAY_TO_TMPL:
+			//case asEP_AUTO_GARBAGE_COLLECT:
+			case asEP_DISALLOW_GLOBAL_VARS:
+			case asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT:
+			case asEP_COMPILER_WARNINGS:
+			case asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE:
+				{
+					// Get the value for the property
+					GetToken(engine, tmp, config, pos);
+					stringstream s(tmp);
+					asPWORD value;
+
+					s >> value;
+
+					engine->SetEngineProperty(ep, value);
+				}
+			}
+		}
+		else if( token == "namespace" )
 		{
 			string ns;
 			GetToken(engine, ns, config, pos);

@@ -819,14 +819,44 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 		int func = 0;
 		asSTypeBehaviour *beh = type.GetBehaviour();
-		if( beh ) func = beh->factory;
+		if( beh ) 
+		{
+			func = beh->factory;
+
+			// If no trivial default factory is found, look for a factory where all params have default args
+			if( func == 0 )
+			{
+				for( asUINT n = 0; n < beh->factories.GetLength(); n++ )
+				{
+					asCScriptFunction *f = engine->scriptFunctions[beh->factories[n]];
+					if( f->defaultArgs.GetLength() == f->parameterTypes.GetLength() &&
+						f->defaultArgs[0] != 0 )
+					{
+						func = beh->factories[n];
+						break;
+					}
+				}
+			}
+		}
 
 		if( func > 0 )
 		{
+			asCArray<asSExprContext *> args;
+			asCScriptFunction *f = engine->scriptFunctions[func];
+			if( f->parameterTypes.GetLength() )
+			{
+				// Add the default values for arguments not explicitly supplied
+				CompileDefaultArgs(node, args, f);
+
+				PrepareFunctionCall(func, &ctx.bc, args);
+
+				MoveArgsToStack(func, &ctx.bc, args, false);
+			}
+
 			if( isVarGlobOrMem == 0 )
 			{
 				// Call factory and store the handle in the given variable
-				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType(), true, offset);
+				PerformFunctionCall(func, &ctx, false, &args, type.GetObjectType(), true, offset);
 
 				// Pop the reference left by the function call
 				ctx.bc.Instr(asBC_PopPtr);
@@ -834,7 +864,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 			else
 			{
 				// Call factory
-				PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
+				PerformFunctionCall(func, &ctx, false, &args, type.GetObjectType());
 
 				// TODO: runtime optimize: Should have a way of storing the object pointer directly to the destination
 				//                         instead of first storing it in a local variable and then copying it to the
@@ -878,38 +908,101 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 			bc->AddCode(&ctx.bc);
 
+			// Cleanup
+			for( asUINT n = 0; n < args.GetLength(); n++ )
+				if( args[n] )
+				{
+					asDELETE(args[n],asSExprContext);
+				}
+
 			return 0;
 		}
 	}
 	else
 	{
+		asSExprContext ctx(engine);
+		ctx.exprNode = node;
+
 		asSTypeBehaviour *beh = type.GetBehaviour();
 
 		int func = 0;
-		if( beh ) func = beh->construct;
+		if( beh ) 
+		{
+			func = beh->construct;
+
+			// If no trivial default constructor is found, look for a constructor where all params have default args
+			if( func == 0 )
+			{
+				for( asUINT n = 0; n < beh->constructors.GetLength(); n++ )
+				{
+					asCScriptFunction *f = engine->scriptFunctions[beh->constructors[n]];
+					if( f->defaultArgs.GetLength() == f->parameterTypes.GetLength() &&
+						f->defaultArgs[0] != 0 )
+					{
+						func = beh->constructors[n];
+						break;
+					}
+				}
+			}
+		}
 
 		// Allocate and initialize with the default constructor
 		if( func != 0 || (type.GetObjectType()->flags & asOBJ_POD) )
 		{
+			asCArray<asSExprContext *> args;
+			asCScriptFunction *f = engine->scriptFunctions[func];
+			if( f && f->parameterTypes.GetLength() )
+			{
+				// Add the default values for arguments not explicitly supplied
+				CompileDefaultArgs(node, args, f);
+
+				PrepareFunctionCall(func, &ctx.bc, args);
+
+				MoveArgsToStack(func, &ctx.bc, args, false);
+			}
+
 			if( !isObjectOnHeap )
 			{
-				asASSERT( isVarGlobOrMem == 0 );
-
-				// There is nothing to do if there is no function,
-				// as the memory is already allocated on the stack
-				if( func )
+				if( isVarGlobOrMem == 0 )
 				{
-					// Call the constructor as a normal function
-					bc->InstrSHORT(asBC_PSF, (short)offset);
-					if( derefDest )
-						bc->Instr(asBC_RDSPtr);
-					asSExprContext ctx(engine);
-					PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
-					bc->AddCode(&ctx.bc);
+					// There is nothing to do if there is no function,
+					// as the memory is already allocated on the stack
+					if( func )
+					{
+						// Call the constructor as a normal function
+						bc->InstrSHORT(asBC_PSF, (short)offset);
+						if( derefDest )
+							bc->Instr(asBC_RDSPtr);
 
-					// TODO: value on stack: This probably needs to be done in PerformFunctionCall
-					// Mark the object as initialized
-					bc->ObjInfo(offset, asOBJ_INIT);
+						asSExprContext ctx(engine);
+						PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
+						bc->AddCode(&ctx.bc);
+
+						// TODO: value on stack: This probably needs to be done in PerformFunctionCall
+						// Mark the object as initialized
+						bc->ObjInfo(offset, asOBJ_INIT);
+					}
+				}
+				else if( isVarGlobOrMem == 2 )
+				{
+					// Only POD types can be allocated inline in script classes
+					asASSERT( type.GetObjectType()->flags & asOBJ_POD );
+
+					if( func )
+					{
+						// Call the constructor as a normal function
+						bc->InstrSHORT(asBC_PSF, 0);
+						bc->Instr(asBC_RDSPtr);
+						bc->InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+
+						asSExprContext ctx(engine);
+						PerformFunctionCall(func, &ctx, false, 0, type.GetObjectType());
+						bc->AddCode(&ctx.bc);
+					}
+				}
+				else 
+				{
+					asASSERT( false );
 				}
 			}
 			else
@@ -927,6 +1020,13 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 
 				bc->Alloc(asBC_ALLOC, type.GetObjectType(), func, AS_PTR_SIZE);
 			}
+
+			// Cleanup
+			for( asUINT n = 0; n < args.GetLength(); n++ )
+				if( args[n] )
+				{
+					asDELETE(args[n],asSExprContext);
+				}
 
 			return 0;
 		}
@@ -1090,7 +1190,7 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 	// Compile the expression
 	asSExprContext ctx(engine);
 	asQWORD constantValue;
-	if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->idNode, gvar->index, &constantValue, 1) )
+	if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->declaredAtNode, gvar->index, &constantValue, 1) )
 	{
 		// Should the variable be marked as pure constant?
 		if( gvar->datatype.IsPrimitive() && gvar->datatype.IsReadOnly() )
@@ -1105,10 +1205,10 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 
 	// Add information on the line number for the global variable
 	size_t pos = 0;
-	if( gvar->idNode )
-		pos = gvar->idNode->tokenPos;
-	else if( gvar->nextNode )
-		pos = gvar->nextNode->tokenPos;
+	if( gvar->declaredAtNode )
+		pos = gvar->declaredAtNode->tokenPos;
+	else if( gvar->initializationNode )
+		pos = gvar->initializationNode->tokenPos;
 	LineInstr(&byteCode, pos);
 
 	// Reserve space for all local variables
@@ -1304,6 +1404,8 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 				// variable then it is not necessary to make a copy either
 				if( !ctx->type.isTemporary && !(param.IsReadOnly() && ctx->type.isVariable) && !isMakingCopy )
 				{
+					// TODO: 2.28.1: Need to reserve variables, as the default constructor may need 
+					//               to allocate temporary variables to compute default args
 					// Make sure the variable is not used in the expression
 					offset = AllocateVariableNotIn(dt, true, false, ctx);
 
@@ -1387,6 +1489,9 @@ void asCCompiler::PrepareArgument(asCDataType *paramType, asSExprContext *ctx, a
 			}
 			else
 			{
+				// TODO: 2.28.1: Need to reserve variables, as the default constructor may need 
+				//               to allocate temporary variables to compute default args
+
 				// Allocate and construct the temporary object
 				asCByteCode tmpBC(engine);
 				CallDefaultConstructor(dt, offset, IsVariableOnHeap(offset), &tmpBC, node);
@@ -1881,6 +1986,10 @@ asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext
 				bool noMatch = true;
 				if( args.GetLength() < desc->parameterTypes.GetLength() )
 				{
+					// For virtual functions, the default args are defined in the real function of the object
+					if( desc->funcType == asFUNC_VIRTUAL )
+						desc = objectType->virtualFunctionTable[desc->vfTableIdx];
+
 					// Count the number of default args
 					asUINT defaultArgs = 0;
 					for( asUINT d = 0; d < desc->defaultArgs.GetLength(); d++ )
@@ -2067,7 +2176,8 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		asCString name(&script->code[node->tokenPos], node->tokenLength);
 
 		// Verify that the name isn't used by a dynamic data type
-		if( engine->GetObjectType(name.AddressOf(), outFunc->nameSpace) != 0 )
+		// TODO: Must check against registered funcdefs too
+		if( engine->GetRegisteredObjectType(name.AddressOf(), outFunc->nameSpace) != 0 )
 		{
 			asCString str;
 			str.Format(TXT_ILLEGAL_VARIABLE_NAME_s, name.AddressOf());
@@ -2206,14 +2316,18 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 								if( onHeap )
 									ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
 							}
-							else
+							else if( isVarGlobOrMem == 1 )
 							{
 								// Push the address of the location where the variable will be stored on the stack.
 								// This reference is safe, because the addresses of the global variables cannot change.
 								onHeap = true;
-								if( isVarGlobOrMem == 1 )
-									ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
-								else
+								ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[offset]->GetAddressOfValue());
+							}
+							else
+							{
+								// Value types may be allocated inline if they are POD types
+								onHeap = !type.IsObject() || type.IsReference() || (type.GetObjectType()->flags & asOBJ_REF);
+								if( onHeap )
 								{
 									ctx.bc.InstrSHORT(asBC_PSF, 0);
 									ctx.bc.Instr(asBC_RDSPtr);
@@ -2227,7 +2341,18 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 							// When the object is allocated on the stack, the address to the
 							// object is pushed on the stack after the arguments as the object pointer
 							if( !onHeap )
-								ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
+							{
+								if( isVarGlobOrMem == 2 )
+								{
+									ctx.bc.InstrSHORT(asBC_PSF, 0);
+									ctx.bc.Instr(asBC_RDSPtr);
+									ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)offset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+								}
+								else
+								{
+									ctx.bc.InstrSHORT(asBC_PSF, (short)offset);
+								}
+							}
 
 							PerformFunctionCall(funcs[0], &ctx, onHeap, &args, type.GetObjectType());
 
@@ -2272,8 +2397,10 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		// Call the default constructor here
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
-		else
+		else if( isVarGlobOrMem == 1 )
 			CallDefaultConstructor(type, offset, true, &ctx.bc, errNode, isVarGlobOrMem);
+		else if( isVarGlobOrMem == 2 )
+			CallDefaultConstructor(type, offset, type.IsReference(), &ctx.bc, errNode, isVarGlobOrMem);
 
 		// Compile the expression
 		asSExprContext expr(engine);
@@ -2332,8 +2459,14 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				lexpr.type.Set(type);
 				if( isVarGlobOrMem == 0 )
 					lexpr.type.dataType.MakeReference(IsVariableOnHeap(offset));
-				else
+				else if( isVarGlobOrMem == 1 )
 					lexpr.type.dataType.MakeReference(true);
+				else if( isVarGlobOrMem == 2 )
+				{
+					if( !lexpr.type.dataType.IsObject() || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_REF) )
+						lexpr.type.dataType.MakeReference(true);
+				}
+
 				// Allow initialization of constant variables
 				lexpr.type.dataType.MakeReadOnly(false);
 
@@ -2424,8 +2557,15 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		// Call the default constructor here, as no explicit initialization is done
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), bc, errNode);
-		else
+		else if( isVarGlobOrMem == 1 )
 			CallDefaultConstructor(type, offset, true, bc, errNode, isVarGlobOrMem);
+		else if( isVarGlobOrMem == 2 )
+		{
+			if( !type.IsObject() || type.IsReference() || (type.GetObjectType()->flags & asOBJ_REF) )
+				CallDefaultConstructor(type, offset, true, bc, errNode, isVarGlobOrMem);
+			else
+				CallDefaultConstructor(type, offset, false, bc, errNode, isVarGlobOrMem);
+		}
 	}
 
 	bc->OptimizeLocally(tempVariableOffsets);
@@ -2553,21 +2693,34 @@ void asCCompiler::CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByte
 		}
 		else
 		{
+			bool onHeap = true;
+
 			// Put the address where the object pointer will be placed on the stack
 			if( isVarGlobOrMem == 1 )
 				ctx.bc.InstrPTR(asBC_PGA, engine->globalProperties[var->stackOffset]->GetAddressOfValue());
 			else
+			{
+				onHeap = !var->dataType.IsObject() || var->dataType.IsReference() || (var->dataType.GetObjectType()->flags & asOBJ_REF);
+				if( onHeap )
+				{
+					ctx.bc.InstrSHORT(asBC_PSF, 0);
+					ctx.bc.Instr(asBC_RDSPtr);
+					ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
+				}
+			}
+
+			// Add the address of the list buffer as the argument
+			ctx.bc.AddCode(&arg1.bc);
+
+			if( !onHeap )
 			{
 				ctx.bc.InstrSHORT(asBC_PSF, 0);
 				ctx.bc.Instr(asBC_RDSPtr);
 				ctx.bc.InstrSHORT_DW(asBC_ADDSi, (short)var->stackOffset, engine->GetTypeIdFromDataType(asCDataType::CreateObject(outFunc->objectType, false)));
 			}
 
-			// Add the address of the list buffer as the argument
-			ctx.bc.AddCode(&arg1.bc);
-
 			// Call the ALLOC instruction to allocate memory and invoke constructor
-			PerformFunctionCall(funcId, &ctx, true, &args, var->dataType.GetObjectType());
+			PerformFunctionCall(funcId, &ctx, onHeap, &args, var->dataType.GetObjectType());
 		}
 	}
 
@@ -4835,6 +4988,32 @@ asUINT asCCompiler::ImplicitConvPrimitiveToPrimitive(asSExprContext *ctx, const 
 		return asCC_NO_CONV;
 	}
 
+	// Is the conversion an ambiguous enum value?
+	if( ctx->enumValue != "" )
+	{
+		if( to.IsEnumType() )
+		{
+			// Attempt to resolve an ambiguous enum value
+			asCDataType out;
+			asDWORD value;
+			if( builder->GetEnumValueFromObjectType(to.GetObjectType(), ctx->enumValue.AddressOf(), out, value) )
+			{
+				ctx->type.SetConstantDW(out, value);
+				ctx->type.dataType.MakeReadOnly(to.IsReadOnly());
+
+				// It wasn't really a conversion. The compiler just resolved the ambiguity (or not)
+				return asCC_NO_CONV;
+			}
+		}
+
+		// The enum value is ambiguous
+		if( node && generateCode )
+			Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, node);
+
+		// Set a dummy to allow the compiler to try to continue the conversion
+		ctx->type.SetDummy();
+	}
+
 	// Determine the cost of this conversion
 	asUINT cost = asCC_NO_CONV;
 	if( (to.IsIntegerType() || to.IsUnsignedType()) && (ctx->type.dataType.IsFloatType() || ctx->type.dataType.IsDoubleType()) )
@@ -6968,6 +7147,13 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 				ImplicitConversion(&le, to, cexpr->next, asIC_IMPLICIT_CONV);
 			}
 
+			// Allow either case to be converted to const @ if the other is const @
+			if( le.type.dataType.IsHandleToConst() || re.type.dataType.IsHandleToConst() )
+			{
+				le.type.dataType.MakeHandleToConst(true);
+				re.type.dataType.MakeHandleToConst(true);
+			}
+
 			//---------------------------------
 			// Output the byte code
 			int afterLabel = nextLabel++;
@@ -7632,7 +7818,15 @@ int asCCompiler::CompileVariableAccess(const asCString &name, const asCString &s
 					found = true;
 					if( e == 2 )
 					{
-						Error(TXT_FOUND_MULTIPLE_ENUM_VALUES, errNode);
+						// Ambiguous enum value: Save the name for resolution later.
+						// The ambiguity could be resolved now, but I hesitate
+						// to store too much information in the context.
+						ctx->enumValue = name.AddressOf();
+						
+						// We cannot set a dummy value because it will pass through
+						// cleanly as an integer.
+						ctx->type.SetConstantDW(asCDataType::CreatePrimitive(ttIdentifier, true), 0);
+						return 0;
 					}
 				}
 			}
@@ -8673,6 +8867,8 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		{
 			int r = asSUCCESS;
 
+			// TODO: 2.28.1: Merge this with MakeFunctionCall
+
 			// Add the default values for arguments not explicitly supplied
 			asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
@@ -8890,7 +9086,6 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
-	asCArray<asCTypeInfo> temporaryVariables;
 
 	if( CompileArgumentList(node->lastChild, args) >= 0 )
 	{
@@ -8919,7 +9114,14 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			// Add the default values for arguments not explicitly supplied
 			asCScriptFunction *func = builder->GetFunctionDescription(funcs[0]);
 			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-				r = CompileDefaultArgs(node, args, func);
+			{
+				// Make sure to use the real function for virtual functions
+				asCScriptFunction *realFunc = func;
+				if( realFunc->funcType == asFUNC_VIRTUAL )
+					realFunc = objectType->virtualFunctionTable[realFunc->vfTableIdx];
+
+				r = CompileDefaultArgs(node, args, realFunc);
+			}
 
 			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 			//                is it enough to make sure it is in a local variable?
@@ -10466,6 +10668,7 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 		asSExprContext ti(engine);
 		ti.type = argExpr->type;
 		ti.methodName = argExpr->methodName;
+		ti.enumValue = argExpr->enumValue;
 		if( argExpr->type.dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
 		asUINT cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
 
@@ -12686,6 +12889,7 @@ void asCCompiler::MergeExprBytecodeAndType(asSExprContext *before, asSExprContex
 	before->property_arg    = after->property_arg;
 	before->exprNode        = after->exprNode;
 	before->methodName      = after->methodName;
+	before->enumValue       = after->enumValue;
 
 	after->property_arg = 0;
 

@@ -909,7 +909,7 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 		cmpContext = asGetActiveContext();
 		if( cmpContext )
 		{
-			if( cmpContext->PushState() >= 0 )
+			if( cmpContext->GetEngine() == objType->GetEngine() && cmpContext->PushState() >= 0 )
 				isNested = true;
 			else
 				cmpContext = 0;
@@ -1086,7 +1086,7 @@ int CScriptArray::Find(asUINT index, void *value) const
 		cmpContext = asGetActiveContext();
 		if( cmpContext )
 		{
-			if( cmpContext->PushState() >= 0 )
+			if( cmpContext->GetEngine() == objType->GetEngine() && cmpContext->PushState() >= 0 )
 				isNested = true;
 			else
 				cmpContext = 0;
@@ -1262,7 +1262,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 		cmpContext = asGetActiveContext();
 		if( cmpContext )
 		{
-			if( cmpContext->PushState() >= 0 )
+			if( cmpContext->GetEngine() == objType->GetEngine() && cmpContext->PushState() >= 0 )
 				isNested = true;
 			else
 				cmpContext = 0;

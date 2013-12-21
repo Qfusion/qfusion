@@ -242,6 +242,9 @@
     <ClInclude Include="..\..\source\as_memory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\as_namespace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\source\as_callfunc_x64_msvc_asm.asm">

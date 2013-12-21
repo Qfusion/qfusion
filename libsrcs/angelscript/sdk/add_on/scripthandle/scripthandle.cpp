@@ -97,9 +97,22 @@ void CScriptHandle::Set(void *ref, asIObjectType *type)
 	AddRefHandle();
 }
 
-asIObjectType *CScriptHandle::GetType()
+asIObjectType *CScriptHandle::GetType() const
 {
 	return m_type;
+}
+
+int CScriptHandle::GetTypeId() const
+{
+	if( m_type == 0 ) return 0;
+
+	if( m_type->GetFlags() & asOBJ_SCRIPT_FUNCTION )
+	{
+		asIScriptFunction *func = reinterpret_cast<asIScriptFunction*>(m_ref);
+		return func->GetTypeId() | asTYPEID_OBJHANDLE;
+	}
+
+	return m_type->GetTypeId() | asTYPEID_OBJHANDLE;
 }
 
 // This method shouldn't be called from the application 

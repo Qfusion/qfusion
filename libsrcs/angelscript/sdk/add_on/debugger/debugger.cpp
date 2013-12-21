@@ -76,9 +76,11 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 			value = *(void**)value;
 
 		asIScriptObject *obj = (asIScriptObject *)value;
-
+		
+		// Print the address of the object
 		s << "{" << obj << "}";
 
+		// Print the members
 		if( obj && expandMembers )
 		{
 			asIObjectType *type = obj->GetObjectType();
@@ -94,13 +96,50 @@ string CDebugger::ToString(void *value, asUINT typeId, bool expandMembers, asISc
 		if( typeId & asTYPEID_OBJHANDLE )
 			value = *(void**)value;
 
-		// TODO: Value types can have their properties expanded by default
-		
-		// Just print the address
-		s << "{" << value << "}";
+		// Print the address for reference types so it will be
+		// possible to see when handles point to the same object
+		asIObjectType *type = engine->GetObjectTypeById(typeId);
+		if( type->GetFlags() & asOBJ_REF )
+			s << "{" << value << "}";
+
+		if( value )
+		{
+			// Check if there is a registered to-string callback
+			map<const asIObjectType*, ToStringCallback>::iterator it = m_toStringCallbacks.find(type);
+			if( it == m_toStringCallbacks.end() )
+			{
+				// If the type is a template instance, there might be a
+				// to-string callback for the generic template type
+				if( type->GetFlags() & asOBJ_TEMPLATE )
+				{
+					asIObjectType *tmplType = engine->GetObjectTypeByName(type->GetName());
+					it = m_toStringCallbacks.find(tmplType);
+				}
+			}
+
+			if( it != m_toStringCallbacks.end() )
+			{
+				if( type->GetFlags() & asOBJ_REF )
+					s << endl;
+
+				// Invoke the callback to get the string representation of this type
+				string str = it->second(value, expandMembers, this);
+				s << str;
+			}
+			else
+			{
+				// TODO: Value types can have their properties expanded by default
+			}
+		}
 	}
 
 	return s.str();
+}
+
+void CDebugger::RegisterToStringCallback(const asIObjectType *ot, ToStringCallback callback)
+{
+	if( m_toStringCallbacks.find(ot) == m_toStringCallbacks.end() )
+		m_toStringCallbacks.insert(map<const asIObjectType*, ToStringCallback>::value_type(ot, callback));
 }
 
 void CDebugger::LineCallback(asIScriptContext *ctx)
@@ -143,7 +182,7 @@ void CDebugger::LineCallback(asIScriptContext *ctx)
 	stringstream s;
 	const char *file;
 	int lineNbr = ctx->GetLineNumber(0, 0, &file);
-	s << file << ":" << lineNbr << "; " << ctx->GetFunction()->GetDeclaration() << endl;
+	s << (file ? file : "{unnamed}") << ":" << lineNbr << "; " << ctx->GetFunction()->GetDeclaration() << endl;
 	Output(s.str());
 
 	TakeCommands(ctx);
@@ -169,40 +208,40 @@ bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 	if( m_lastFunction != func )
 	{
 		// Check if any breakpoints need adjusting
-		for( size_t n = 0; n < breakPoints.size(); n++ )
+		for( size_t n = 0; n < m_breakPoints.size(); n++ )
 		{
 			// We need to check for a breakpoint at entering the function
-			if( breakPoints[n].func )
+			if( m_breakPoints[n].func )
 			{
-				if( breakPoints[n].name == func->GetName() )
+				if( m_breakPoints[n].name == func->GetName() )
 				{
 					stringstream s;
-					s << "Entering function '" << breakPoints[n].name << "'. Transforming it into break point" << endl;
+					s << "Entering function '" << m_breakPoints[n].name << "'. Transforming it into break point" << endl;
 					Output(s.str());
 
 					// Transform the function breakpoint into a file breakpoint
-					breakPoints[n].name           = file;
-					breakPoints[n].lineNbr        = lineNbr;
-					breakPoints[n].func           = false;
-					breakPoints[n].needsAdjusting = false;
+					m_breakPoints[n].name           = file;
+					m_breakPoints[n].lineNbr        = lineNbr;
+					m_breakPoints[n].func           = false;
+					m_breakPoints[n].needsAdjusting = false;
 				}
 			}
 			// Check if a given breakpoint fall on a line with code or else adjust it to the next line
-			else if( breakPoints[n].needsAdjusting &&
-					 breakPoints[n].name == file )
+			else if( m_breakPoints[n].needsAdjusting &&
+					 m_breakPoints[n].name == file )
 			{
-				int line = func->FindNextLineWithCode(breakPoints[n].lineNbr);
+				int line = func->FindNextLineWithCode(m_breakPoints[n].lineNbr);
 				if( line >= 0 )
 				{
-					breakPoints[n].needsAdjusting = false;
-					if( line != breakPoints[n].lineNbr )
+					m_breakPoints[n].needsAdjusting = false;
+					if( line != m_breakPoints[n].lineNbr )
 					{
 						stringstream s;
 						s << "Moving break point " << n << " in file '" << file << "' to next line with code at line " << line << endl;
 						Output(s.str());
 
 						// Move the breakpoint to the next line
-						breakPoints[n].lineNbr = line;
+						m_breakPoints[n].lineNbr = line;
 					}
 				}
 			}
@@ -211,14 +250,14 @@ bool CDebugger::CheckBreakPoint(asIScriptContext *ctx)
 	m_lastFunction = func;
 
 	// Determine if there is a breakpoint at the current line
-	for( size_t n = 0; n < breakPoints.size(); n++ )
+	for( size_t n = 0; n < m_breakPoints.size(); n++ )
 	{
 		// TODO: do case-less comparison for file name
 
 		// Should we break?
-		if( !breakPoints[n].func &&
-			breakPoints[n].lineNbr == lineNbr &&
-			breakPoints[n].name == file )
+		if( !m_breakPoints[n].func &&
+			m_breakPoints[n].lineNbr == lineNbr &&
+			m_breakPoints[n].name == file )
 		{
 			stringstream s;
 			s << "Reached break point " << n << " in file '" << file << "' at line " << lineNbr << endl;
@@ -305,14 +344,14 @@ bool CDebugger::InterpretCommand(const string &cmd, asIScriptContext *ctx)
 				string br = cmd.substr(2);
 				if( br == "all" )
 				{
-					breakPoints.clear();
+					m_breakPoints.clear();
 					Output("All break points have been removed\n");
 				}
 				else
 				{
 					int nbr = atoi(br.c_str());
-					if( nbr >= 0 && nbr < (int)breakPoints.size() )
-						breakPoints.erase(breakPoints.begin()+nbr);
+					if( nbr >= 0 && nbr < (int)m_breakPoints.size() )
+						m_breakPoints.erase(m_breakPoints.begin()+nbr);
 					ListBreakPoints();
 				}
 			}
@@ -510,11 +549,11 @@ void CDebugger::ListBreakPoints()
 {
 	// List all break points
 	stringstream s;
-	for( size_t b = 0; b < breakPoints.size(); b++ )
-		if( breakPoints[b].func )
-			s << b << " - " << breakPoints[b].name << endl;
+	for( size_t b = 0; b < m_breakPoints.size(); b++ )
+		if( m_breakPoints[b].func )
+			s << b << " - " << m_breakPoints[b].name << endl;
 		else
-			s << b << " - " << breakPoints[b].name << ":" << breakPoints[b].lineNbr << endl;
+			s << b << " - " << m_breakPoints[b].name << ":" << m_breakPoints[b].lineNbr << endl;
 	Output(s.str());
 }
 
@@ -605,7 +644,7 @@ void CDebugger::AddFuncBreakPoint(const string &func)
 	Output(s.str());
 
 	BreakPoint bp(actual, 0, true);
-	breakPoints.push_back(bp);
+	m_breakPoints.push_back(bp);
 }
 
 void CDebugger::AddFileBreakPoint(const string &file, int lineNbr)
@@ -628,7 +667,7 @@ void CDebugger::AddFileBreakPoint(const string &file, int lineNbr)
 	Output(s.str());
 
 	BreakPoint bp(actual, lineNbr, false);
-	breakPoints.push_back(bp);
+	m_breakPoints.push_back(bp);
 }
 
 void CDebugger::PrintHelp()

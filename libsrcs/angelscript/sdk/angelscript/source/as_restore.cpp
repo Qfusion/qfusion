@@ -585,21 +585,14 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	if( func->name == DELEGATE_FACTORY )
 	{
 		// It's not necessary to read anymore, everything is known 
-		for( asUINT n = 0; n < engine->registeredGlobalFuncs.GetLength(); n++ )
-		{
-			asCScriptFunction *f = engine->registeredGlobalFuncs[n];
-			if( f->name == DELEGATE_FACTORY )
-			{
-				func->returnType     = f->returnType;
-				func->parameterTypes = f->parameterTypes;
-				func->inOutFlags     = f->inOutFlags;
-				func->funcType       = f->funcType;
-				func->defaultArgs    = f->defaultArgs;
-				func->nameSpace      = f->nameSpace;
-				return;
-			}
-		}
-		asASSERT( false );
+		asCScriptFunction *f = engine->registeredGlobalFuncs.GetFirst(engine->nameSpaces[0], DELEGATE_FACTORY);
+		asASSERT( f );
+		func->returnType     = f->returnType;
+		func->parameterTypes = f->parameterTypes;
+		func->inOutFlags     = f->inOutFlags;
+		func->funcType       = f->funcType;
+		func->defaultArgs    = f->defaultArgs;
+		func->nameSpace      = f->nameSpace;
 		return;
 	}
 
@@ -800,7 +793,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			func->scriptData->declaredAt = ReadEncodedUInt();
 		}
 	}
-	else if( func->funcType == asFUNC_VIRTUAL )
+	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )
 	{
 		func->vfTableIdx = ReadEncodedUInt();
 	}
@@ -936,13 +929,15 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 					ot->derivedFrom->AddRef();
 			}
 
-			// interfaces[]
+			// interfaces[] / interfaceVFTOffsets[]
 			int size = ReadEncodedUInt();
 			if( sharedExists )
 			{
 				for( int n = 0; n < size; n++ )
 				{
 					asCObjectType *intf = ReadObjectType();
+					ReadEncodedUInt();
+
 					if( !ot->Implements(intf) )
 					{
 						asCString str;
@@ -955,10 +950,14 @@ void asCReader::ReadObjectTypeDeclaration(asCObjectType *ot, int phase)
 			else
 			{
 				ot->interfaces.Allocate(size,0);
+				ot->interfaceVFTOffsets.Allocate(size,0);
 				for( int n = 0; n < size; n++ )
 				{
 					asCObjectType *intf = ReadObjectType();
 					ot->interfaces.PushLast(intf);
+
+					asUINT offset = ReadEncodedUInt();
+					ot->interfaceVFTOffsets.PushLast(offset);
 				}
 			}
 
@@ -1522,7 +1521,7 @@ asCObjectType* asCReader::ReadObjectType()
 		// Read the name of the template type
 		asCString typeName;
 		ReadString(&typeName);
-		asCObjectType *tmpl = engine->GetObjectType(typeName.AddressOf(), engine->nameSpaces[0]);
+		asCObjectType *tmpl = engine->GetRegisteredObjectType(typeName.AddressOf(), engine->nameSpaces[0]);
 		if( tmpl == 0 )
 		{
 			asCString str;
@@ -1626,7 +1625,7 @@ asCObjectType* asCReader::ReadObjectType()
 			// Find the object type
 			ot = module->GetObjectType(typeName.AddressOf(), nameSpace);
 			if( !ot )
-				ot = engine->GetObjectType(typeName.AddressOf(), nameSpace);
+				ot = engine->GetRegisteredObjectType(typeName.AddressOf(), nameSpace);
 			
 			if( ot == 0 )
 			{
@@ -3376,8 +3375,9 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 			WriteEncodedInt64(func->scriptData->declaredAt);
 		}
 	}
-	else if( func->funcType == asFUNC_VIRTUAL )
+	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )
 	{
+		// TODO: Do we really need to store this? It can probably be reconstructed by the reader
 		WriteEncodedInt64(func->vfTableIdx);
 	}
 }
@@ -3392,6 +3392,8 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		WriteData(&ot->flags, 4);
 
 		// size
+		// TODO: Do we really need to store this? The reader should be able to 
+		//       determine the correct size from the object type's flags
 		if( (ot->flags & asOBJ_SCRIPT_OBJECT) && ot->size > 0 )
 		{
 			// The size for script objects may vary from platform to platform so 
@@ -3431,16 +3433,20 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 		{
 			WriteObjectType(ot->derivedFrom);
 
-			// interfaces[]
+			// interfaces[] / interfaceVFTOffsets[]
+			// TOOD: Is it really necessary to store the VFTOffsets? Can't the reader calculate those?
 			int size = (asUINT)ot->interfaces.GetLength();
 			WriteEncodedInt64(size);
 			asUINT n;
 			for( n = 0; n < ot->interfaces.GetLength(); n++ )
 			{
 				WriteObjectType(ot->interfaces[n]);
+				WriteEncodedInt64(ot->interfaceVFTOffsets[n]);
 			}
 
 			// behaviours
+			// TODO: Default behaviours should just be stored as a indicator  
+			//       to avoid storing the actual function object
 			if( !ot->IsInterface() && ot->flags != asOBJ_TYPEDEF && ot->flags != asOBJ_ENUM )
 			{
 				WriteFunction(engine->scriptFunctions[ot->beh.destruct]);
@@ -3454,6 +3460,8 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			}
 
 			// methods[]
+			// TODO: Avoid storing inherited methods in interfaces, as the reader
+			//       can add those directly from the base interface
 			size = (int)ot->methods.GetLength();
 			WriteEncodedInt64(size);
 			for( n = 0; n < ot->methods.GetLength(); n++ )
@@ -3462,6 +3470,7 @@ void asCWriter::WriteObjectTypeDeclaration(asCObjectType *ot, int phase)
 			}
 
 			// virtualFunctionTable[]
+			// TODO: Is it really necessary to store this? Can't it be easily rebuilt by the reader
 			size = (int)ot->virtualFunctionTable.GetLength();
 			WriteEncodedInt64(size);
 			for( n = 0; n < (asUINT)size; n++ )

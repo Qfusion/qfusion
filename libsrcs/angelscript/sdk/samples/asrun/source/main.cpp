@@ -2,6 +2,7 @@
 #include <assert.h>  // assert()
 #include <string.h>  // strstr()
 #include <stdio.h>
+#include <sstream>   // stringstream
 #include <angelscript.h>
 #include "../../../add_on/scriptbuilder/scriptbuilder.h"
 #include "../../../add_on/scriptstdstring/scriptstdstring.h"
@@ -25,6 +26,7 @@ CScriptArray *g_commandLineArgs = 0;
 int           g_argc = 0;
 char        **g_argv = 0;
 
+// This message callback is used by the engine to send compiler messages
 void MessageCallback(const asSMessageInfo *msg, void *param)
 {
 	const char *type = "ERR ";
@@ -117,6 +119,56 @@ int ConfigureEngine(asIScriptEngine *engine)
 	return 0;
 }
 
+// This is the to-string callback for the string type
+std::string StringToString(void *obj, bool expandMembers, CDebugger *dbg)
+{
+	// We know the received object is a string
+	std::string *val = reinterpret_cast<std::string*>(obj);
+
+	// Format the output string
+	// TODO: Should convert non-readable characters to escape sequences
+	std::stringstream s;
+	s << "(len=" << val->length() << ") \"";
+	if( val->length() < 20 )
+		s << *val << "\"";
+	else
+		s << val->substr(0, 20) << "...";
+
+	return s.str();
+}
+
+// This is the to-string callback for the array type
+// This is generic and will take care of all template instances based on the array template
+std::string ArrayToString(void *obj, bool expandMembers, CDebugger *dbg)
+{
+	CScriptArray *arr = reinterpret_cast<CScriptArray*>(obj);
+
+	std::stringstream s;
+	s << "(len=" << arr->GetSize() << ")";
+	
+	if( expandMembers )
+	{
+		s << " [";
+		for( asUINT n = 0; n < arr->GetSize(); n++ )
+		{
+			s << dbg->ToString(arr->At(n), arr->GetElementTypeId(), false, arr->GetArrayObjectType()->GetEngine());
+			if( n < arr->GetSize()-1 )
+				s << ", ";
+		}
+		s << "]";
+	}
+
+	return s.str();
+}
+
+// This function will register to-string callbacks in the debugger for the application registered types
+void RegisterToStringCallbacks(CDebugger *dbg, asIScriptEngine *engine)
+{
+	dbg->RegisterToStringCallback(engine->GetObjectTypeByName("string"), StringToString);
+	dbg->RegisterToStringCallback(engine->GetObjectTypeByName("array"), ArrayToString);
+}
+
+// This is where the script is compiled into bytecode that can be executed
 int CompileScript(asIScriptEngine *engine, const char *scriptFile)
 {
 	int r;
@@ -142,6 +194,7 @@ int CompileScript(asIScriptEngine *engine, const char *scriptFile)
 	return 0;
 }
 
+// Execute the script by calling the main() function
 int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 {
 	CDebugger *dbg = 0;
@@ -172,6 +225,9 @@ int ExecuteScript(asIScriptEngine *engine, const char *scriptFile, bool debug)
 
 		// Create the debugger instance
 		dbg = new CDebugger();
+
+		// Register the to-string callbacks so the user can see the contents of objects
+		RegisterToStringCallbacks(dbg, engine);
 
 		// Allow the user to initialize the debugging before moving on
 		dbg->TakeCommands(ctx);
@@ -248,23 +304,24 @@ CScriptArray *GetCommandLineArgs()
 		return g_commandLineArgs;
 	}
 
-    // Obtain a pointer to the engine
-    asIScriptContext *ctx = asGetActiveContext();
-    asIScriptEngine *engine = ctx->GetEngine();
+	// Obtain a pointer to the engine
+	asIScriptContext *ctx = asGetActiveContext();
+	asIScriptEngine *engine = ctx->GetEngine();
 
-    // Create the array object
+	// Create the array object
 	asIObjectType *arrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl("array<string>"));
-    g_commandLineArgs = new CScriptArray(0, arrayType);
+	g_commandLineArgs = new CScriptArray(0, arrayType);
 
-    // Find the existence of the delimiter in the input string
+	// Find the existence of the delimiter in the input string
 	for( int n = 0; n < g_argc; n++ )
 	{
-        // Add the arg to the array
-        g_commandLineArgs->Resize(g_commandLineArgs->GetSize()+1);
-        ((string*)g_commandLineArgs->At(n))->assign(g_argv[n]);
-    }
+		// Add the arg to the array
+		g_commandLineArgs->Resize(g_commandLineArgs->GetSize()+1);
+		((string*)g_commandLineArgs->At(n))->assign(g_argv[n]);
+	}
 
-    // Return the array by handle
+	// Return the array by handle
 	g_commandLineArgs->AddRef();
-    return g_commandLineArgs;
+	return g_commandLineArgs;
 }
+

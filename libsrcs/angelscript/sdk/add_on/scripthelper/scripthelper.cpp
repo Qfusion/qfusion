@@ -3,6 +3,7 @@
 #include <string>
 #include <assert.h>
 #include <stdio.h>
+#include <sstream>
 
 using namespace std;
 
@@ -226,12 +227,24 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 	asDWORD currAccessMask = 0;
 	string currNamespace = "";
 
+	// Export the engine version, just for info
+	fprintf(f, "// AngelScript %s\n", asGetLibraryVersion());
+
+	// Export the relevant engine properties
+	fprintf(f, "\n// Engine properties\n");
+	for( n = 0; n < asEP_LAST_PROPERTY; n++ )
+	{
+		stringstream s; 
+		s << engine->GetEngineProperty(asEEngineProp(n));
+		fprintf(f, "ep %d %s\n", n, s.str().c_str());
+	}
+
 	// Make sure the default array type is expanded to the template form
 	bool expandDefArrayToTempl = engine->GetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL) ? true : false;
 	engine->SetEngineProperty(asEP_EXPAND_DEF_ARRAY_TO_TMPL, true);
 
 	// Write enum types and their values
-	fprintf(f, "// Enums\n");
+	fprintf(f, "\n// Enums\n");
 	c = engine->GetEnumCount();
 	for( n = 0; n < c; n++ )
 	{
@@ -379,7 +392,15 @@ int WriteConfigToFile(asIScriptEngine *engine, const char *filename)
 			{
 				asEBehaviours beh;
 				asIScriptFunction *func = type->GetBehaviourByIndex(m, &beh);
-				fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), beh, func->GetDeclaration(false));
+
+				if( beh == asBEHAVE_CONSTRUCT )
+					// Prefix 'void'
+					fprintf(f, "objbeh \"%s\" %d \"void %s\"\n", typeDecl.c_str(), beh, func->GetDeclaration(false));
+				else if( beh == asBEHAVE_DESTRUCT )
+					// Prefix 'void' and remove ~
+					fprintf(f, "objbeh \"%s\" %d \"void %s\"\n", typeDecl.c_str(), beh, func->GetDeclaration(false)+1);
+				else
+					fprintf(f, "objbeh \"%s\" %d \"%s\"\n", typeDecl.c_str(), beh, func->GetDeclaration(false));
 			}
 			for( m = 0; m < type->GetMethodCount(); m++ )
 			{

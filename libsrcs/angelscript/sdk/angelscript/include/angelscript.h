@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22800
-#define ANGELSCRIPT_VERSION_STRING "2.28.0"
+#define ANGELSCRIPT_VERSION        22801
+#define ANGELSCRIPT_VERSION_STRING "2.28.1 WIP"
 
 // Data types
 
@@ -76,6 +76,39 @@ class asIThreadManager;
 class asILockableSharedBool;
 
 // Enumerations and constants
+
+// Return codes
+enum asERetCodes
+{
+	asSUCCESS                              =  0,
+	asERROR                                = -1,
+	asCONTEXT_ACTIVE                       = -2,
+	asCONTEXT_NOT_FINISHED                 = -3,
+	asCONTEXT_NOT_PREPARED                 = -4,
+	asINVALID_ARG                          = -5,
+	asNO_FUNCTION                          = -6,
+	asNOT_SUPPORTED                        = -7,
+	asINVALID_NAME                         = -8,
+	asNAME_TAKEN                           = -9,
+	asINVALID_DECLARATION                  = -10,
+	asINVALID_OBJECT                       = -11,
+	asINVALID_TYPE                         = -12,
+	asALREADY_REGISTERED                   = -13,
+	asMULTIPLE_FUNCTIONS                   = -14,
+	asNO_MODULE                            = -15,
+	asNO_GLOBAL_VAR                        = -16,
+	asINVALID_CONFIGURATION                = -17,
+	asINVALID_INTERFACE                    = -18,
+	asCANT_BIND_ALL_FUNCTIONS              = -19,
+	asLOWER_ARRAY_DIMENSION_NOT_REGISTERED = -20,
+	asWRONG_CONFIG_GROUP                   = -21,
+	asCONFIG_GROUP_IS_IN_USE               = -22,
+	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
+	asWRONG_CALLING_CONV                   = -24,
+	asBUILD_IN_PROGRESS                    = -25,
+	asINIT_GLOBAL_VARS_FAILED              = -26,
+	asOUT_OF_MEMORY                        = -27
+};
 
 // Engine properties
 enum asEEngineProp
@@ -99,7 +132,9 @@ enum asEEngineProp
 	asEP_DISALLOW_GLOBAL_VARS               = 17,
 	asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT      = 18,
 	asEP_COMPILER_WARNINGS                  = 19,
-	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20
+	asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE = 20,
+
+	asEP_LAST_PROPERTY
 };
 
 // Calling conventions
@@ -190,39 +225,6 @@ enum asEBehaviours
 	asBEHAVE_LAST_GC = asBEHAVE_RELEASEREFS,
 
 	asBEHAVE_MAX
-};
-
-// Return codes
-enum asERetCodes
-{
-	asSUCCESS                              =  0,
-	asERROR                                = -1,
-	asCONTEXT_ACTIVE                       = -2,
-	asCONTEXT_NOT_FINISHED                 = -3,
-	asCONTEXT_NOT_PREPARED                 = -4,
-	asINVALID_ARG                          = -5,
-	asNO_FUNCTION                          = -6,
-	asNOT_SUPPORTED                        = -7,
-	asINVALID_NAME                         = -8,
-	asNAME_TAKEN                           = -9,
-	asINVALID_DECLARATION                  = -10,
-	asINVALID_OBJECT                       = -11,
-	asINVALID_TYPE                         = -12,
-	asALREADY_REGISTERED                   = -13,
-	asMULTIPLE_FUNCTIONS                   = -14,
-	asNO_MODULE                            = -15,
-	asNO_GLOBAL_VAR                        = -16,
-	asINVALID_CONFIGURATION                = -17,
-	asINVALID_INTERFACE                    = -18,
-	asCANT_BIND_ALL_FUNCTIONS              = -19,
-	asLOWER_ARRAY_DIMENSION_NOT_REGISTERED = -20,
-	asWRONG_CONFIG_GROUP                   = -21,
-	asCONFIG_GROUP_IS_IN_USE               = -22,
-	asILLEGAL_BEHAVIOUR_FOR_TYPE           = -23,
-	asWRONG_CALLING_CONV                   = -24,
-	asBUILD_IN_PROGRESS                    = -25,
-	asINIT_GLOBAL_VARS_FAILED              = -26,
-	asOUT_OF_MEMORY                        = -27
 };
 
 // Context states

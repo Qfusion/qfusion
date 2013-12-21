@@ -238,6 +238,8 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "void reverse()", asMETHOD(CScriptArray, Reverse), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "int find(const T&in) const", asMETHODPR(CScriptArray, Find, (void*) const, int), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "int find(uint, const T&in) const", asMETHODPR(CScriptArray, Find, (asUINT, void*) const, int), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "int findByRef(const T&in) const", asMETHODPR(CScriptArray, FindByRef, (void*) const, int), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "int findByRef(uint, const T&in) const", asMETHODPR(CScriptArray, FindByRef, (asUINT, void*) const, int), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "bool opEquals(const array<T>&in) const", asMETHOD(CScriptArray, operator==), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "bool isEmpty() const", asMETHOD(CScriptArray, IsEmpty), asCALL_THISCALL); assert( r >= 0 );
 
@@ -934,7 +936,7 @@ bool CScriptArray::operator==(const CScriptArray &other) const
 		cmpContext = asGetActiveContext();
 		if( cmpContext )
 		{
-			if( cmpContext->PushState() >= 0 )
+			if( cmpContext->GetEngine() == objType->GetEngine() && cmpContext->PushState() >= 0 )
 				isNested = true;
 			else
 				cmpContext = 0;
@@ -1060,12 +1062,44 @@ bool CScriptArray::Equals(const void *a, const void *b, asIScriptContext *ctx, S
 	return false;
 }
 
+int CScriptArray::FindByRef(void *ref) const
+{
+	return FindByRef(0, ref);
+}
+
+int CScriptArray::FindByRef(asUINT startAt, void *ref) const
+{
+	// Find the matching element by its reference
+	asUINT size = GetSize();
+	if( subTypeId & asTYPEID_OBJHANDLE )
+	{
+		// Dereference the pointer
+		ref = *(void**)ref;
+		for( asUINT i = startAt; i < size; i++ )
+		{
+			if( *(void**)At(i) == ref )
+				return i;
+		}
+	}
+	else
+	{
+		// Compare the reference directly
+		for( asUINT i = startAt; i < size; i++ )
+		{
+			if( At(i) == ref )
+				return i;
+		}
+	}
+
+	return -1;
+}
+
 int CScriptArray::Find(void *value) const
 {
 	return Find(0, value);
 }
 
-int CScriptArray::Find(asUINT index, void *value) const
+int CScriptArray::Find(asUINT startAt, void *value) const
 {
 	// Check if the subtype really supports find()
 	// TODO: Can't this be done at compile time too by the template callback
@@ -1111,7 +1145,7 @@ int CScriptArray::Find(asUINT index, void *value) const
 		cmpContext = asGetActiveContext();
 		if( cmpContext )
 		{
-			if( cmpContext->PushState() >= 0 )
+			if( cmpContext->GetEngine() == objType->GetEngine() && cmpContext->PushState() >= 0 )
 				isNested = true;
 			else
 				cmpContext = 0;
@@ -1129,21 +1163,18 @@ int CScriptArray::Find(asUINT index, void *value) const
 	int ret = -1;
 	asUINT size = GetSize();
 
-	if( index < size )
+	for( asUINT i = startAt; i < size; i++ )
 	{
-		for( asUINT i = index; i < size; i++ )
+		// value passed by reference
+		if( Equals(At(i), value, cmpContext, cache) )
 		{
-			// value passed by reference
-			if( Equals(At(i), (value), cmpContext, cache) )
-			{
-				ret = (int)i;
-				break;
-			}
+			ret = (int)i;
+			break;
 		}
 	}
 
 	if( cmpContext )
-    {
+	{
 		if( isNested )
 		{
 			asEContextState state = cmpContext->GetState();
@@ -1153,7 +1184,7 @@ int CScriptArray::Find(asUINT index, void *value) const
 		}
 		else
 			cmpContext->Release();
-    }
+	}
 
 	return ret;
 }
@@ -1199,9 +1230,9 @@ void CScriptArray::SortAsc()
 }
 
 // Sort ascending
-void CScriptArray::SortAsc(asUINT index, asUINT count)
+void CScriptArray::SortAsc(asUINT startAt, asUINT count)
 {
-	Sort(index, count, true);
+	Sort(startAt, count, true);
 }
 
 // Sort descending
@@ -1211,14 +1242,14 @@ void CScriptArray::SortDesc()
 }
 
 // Sort descending
-void CScriptArray::SortDesc(asUINT index, asUINT count)
+void CScriptArray::SortDesc(asUINT startAt, asUINT count)
 {
-	Sort(index, count, false);
+	Sort(startAt, count, false);
 }
 
 
 // internal
-void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
+void CScriptArray::Sort(asUINT startAt, asUINT count, bool asc)
 {
 	// Subtype isn't primitive and doesn't have opCmp
 	SArrayCache *cache = reinterpret_cast<SArrayCache*>(objType->GetUserData(ARRAY_CACHE));
@@ -1260,8 +1291,8 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 		return;
 	}
 
-	int start = index;
-	int end = index + count;
+	int start = startAt;
+	int end = startAt + count;
 
 	// Check if we could access invalid item while sorting
 	if( start >= (int)buffer->numElements || end > (int)buffer->numElements )
@@ -1287,7 +1318,7 @@ void CScriptArray::Sort(asUINT index, asUINT count, bool asc)
 		cmpContext = asGetActiveContext();
 		if( cmpContext )
 		{
-			if( cmpContext->PushState() >= 0 )
+			if( cmpContext->GetEngine() == objType->GetEngine() && cmpContext->PushState() >= 0 )
 				isNested = true;
 			else
 				cmpContext = 0;
@@ -1632,6 +1663,21 @@ static void ScriptArrayFind2_Generic(asIScriptGeneric *gen)
 	gen->SetReturnDWord(self->Find(index, value));
 }
 
+static void ScriptArrayFindByRef_Generic(asIScriptGeneric *gen)
+{
+	void *value = gen->GetArgAddress(0);
+	CScriptArray *self = (CScriptArray*)gen->GetObject();
+	gen->SetReturnDWord(self->FindByRef(value));
+}
+
+static void ScriptArrayFindByRef2_Generic(asIScriptGeneric *gen)
+{
+	asUINT index = gen->GetArgDWord(0);
+	void *value = gen->GetArgAddress(1);
+	CScriptArray *self = (CScriptArray*)gen->GetObject();
+	gen->SetReturnDWord(self->FindByRef(index, value));
+}
+
 static void ScriptArrayAt_Generic(asIScriptGeneric *gen)
 {
 	asUINT index = gen->GetArgDWord(0);
@@ -1807,6 +1853,8 @@ static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("array<T>", "void reverse()", asFUNCTION(ScriptArrayReverse_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "int find(const T&in) const", asFUNCTION(ScriptArrayFind_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "int find(uint, const T&in) const", asFUNCTION(ScriptArrayFind2_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "int findByRef(const T&in) const", asFUNCTION(ScriptArrayFindByRef_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("array<T>", "int findByRef(uint, const T&in) const", asFUNCTION(ScriptArrayFindByRef2_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "bool opEquals(const array<T>&in) const", asFUNCTION(ScriptArrayEquals_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "bool isEmpty() const", asFUNCTION(ScriptArrayIsEmpty_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("array<T>", "uint get_length() const", asFUNCTION(ScriptArrayLength_Generic), asCALL_GENERIC); assert( r >= 0 );

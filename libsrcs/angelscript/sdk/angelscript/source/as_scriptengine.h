@@ -263,7 +263,7 @@ public:
 
 	int CreateContext(asIScriptContext **context, bool isInternal);
 
-	asCObjectType *GetObjectType(const char *type, asSNameSpace *ns) const;
+	asCObjectType *GetRegisteredObjectType(const asCString &name, asSNameSpace *ns) const;
 
 	asCObjectType *GetListPatternType(int listPatternFuncId);
 	void DestroyList(asBYTE *buffer, const asCObjectType *listPatternType);
@@ -328,23 +328,26 @@ public:
 	asCObjectType    globalPropertyBehaviours;
 
 	// Registered interface
-	asCArray<asCObjectType *>          registeredObjTypes;
-	asCArray<asCObjectType *>          registeredTypeDefs;
-	asCArray<asCObjectType *>          registeredEnums;
-	asCSymbolTable<asCGlobalProperty>  registeredGlobalProps;
-	asCArray<asCScriptFunction *>      registeredGlobalFuncs;
-	asCArray<asCScriptFunction *>      registeredFuncDefs;
-	asCScriptFunction                 *stringFactory;
+	asCArray<asCObjectType *>         registeredObjTypes;
+	asCArray<asCObjectType *>         registeredTypeDefs;
+	asCArray<asCObjectType *>         registeredEnums;
+	asCSymbolTable<asCGlobalProperty> registeredGlobalProps; // TODO: memory savings: Since there can be only one property with the same name a simpler symbol table should be used
+	asCSymbolTable<asCScriptFunction> registeredGlobalFuncs;
+	asCArray<asCScriptFunction *>     registeredFuncDefs;
+	asCArray<asCObjectType *>         registeredTemplateTypes;
+	asCScriptFunction                *stringFactory;
 	bool configFailed;
 
-	// Stores all known object types, both application registered, and script declared
-	asCArray<asCObjectType *>      objectTypes;
+	// Stores all registered types except funcdefs
+	asCMap<asSNameSpaceNamePair, asCObjectType*> allRegisteredTypes;  
+
+	// Dummy types used to name the subtypes in the template objects 
 	asCArray<asCObjectType *>      templateSubTypes;
 
 	// Store information about template types
 	// This list will contain all instances of templates, both registered specialized 
 	// types and those automacially instanciated from scripts
-	asCArray<asCObjectType *>      templateTypes;
+	asCArray<asCObjectType *>      templateInstanceTypes;
 
 	// Store information about list patterns
 	asCArray<asCObjectType *>      listPatternTypes;
