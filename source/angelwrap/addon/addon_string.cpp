@@ -70,30 +70,31 @@ const asstring_t *objectString_ConstFactoryBuffer( const char *buffer, unsigned 
 	object->size = size | CONST_STRING_BITFLAG;
 	memcpy( object->buffer, buffer, length );
 	object->buffer[length] = '\0';
+
 	return object;
 }
 
-asstring_t *objectString_AssignString( asstring_t *self, const char *string, size_t strlen )
+asstring_t *objectString_AssignString( asstring_t *self, const char *string, size_t strlen_ )
 {
 	unsigned int size;
 
-	if( strlen >= self->size )
+	if( strlen_ >= self->size )
 	{
 		delete[] self->buffer;
 
-		size = (strlen + 1) & ~CONST_STRING_BITFLAG;
+		size = (strlen_ + 1) & ~CONST_STRING_BITFLAG;
 		self->size = size;
 		self->buffer = new char[size];
-		strlen = size - 1;
+		strlen_ = size - 1;
 	}
 	else
 	{
 		size = self->size;
 	}
 
-	self->len = strlen;
-	memcpy( self->buffer, string, strlen );
-	self->buffer[strlen] = '\0';
+	self->len = strlen_;
+	memcpy( self->buffer, string, strlen_ );
+	self->buffer[strlen_] = '\0';
 
 	return self;
 }
@@ -110,12 +111,12 @@ static asstring_t *objectString_AssignPattern( asstring_t *self, const char *pat
 	return objectString_AssignString( self, buf, strlen( buf ) );
 }
 
-static asstring_t *objectString_AddAssignString( asstring_t *self, const char *string, size_t strlen )
+static asstring_t *objectString_AddAssignString( asstring_t *self, const char *string, size_t strlen_ )
 {
-	if( strlen )
+	if( strlen_ )
 	{
 		char *tem = self->buffer;
-		unsigned int length = strlen + self->len;
+		unsigned int length = strlen_ + self->len;
 		unsigned int size = (length + 1) & ~CONST_STRING_BITFLAG;
 
 		length = size - 1;
@@ -124,6 +125,7 @@ static asstring_t *objectString_AddAssignString( asstring_t *self, const char *s
 		self->buffer = new char[size];
 
 		Q_snprintfz( self->buffer, size, "%s%s", tem, string );
+
 		delete[] tem;
 	}
 
@@ -147,7 +149,7 @@ static asstring_t *objectString_AddString( asstring_t *first, const char *second
 	asstring_t *self = objectString_FactoryBuffer( NULL, first->len + seclen );
 
 	Q_snprintfz( self->buffer, self->size, "%s%s", first->buffer, second );
-
+	self->len = self->size - 1;
 	return self;
 }
 
