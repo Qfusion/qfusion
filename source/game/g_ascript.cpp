@@ -825,15 +825,15 @@ static const asBehavior_t asitem_ObjectBehaviors[] =
 
 static const asMethod_t asitem_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL(String @, get_classname, () const), asFUNCTION(objectGItem_getClassName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_name, () const), asFUNCTION(objectGItem_getName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_shortName, () const), asFUNCTION(objectGItem_getShortName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_model, () const), asFUNCTION(objectGItem_getModelName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_model2, () const), asFUNCTION(objectGItem_getModel2Name), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_icon, () const), asFUNCTION(objectGItem_getIconName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_simpleIcon, () const), asFUNCTION(objectGItem_getSimpleItemName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_pickupSound, () const), asFUNCTION(objectGItem_getPickupSoundName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_colorToken, () const), asFUNCTION(objectGItem_getColorToken), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_classname, () const), asFUNCTION(objectGItem_getClassName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_name, () const), asFUNCTION(objectGItem_getName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_shortName, () const), asFUNCTION(objectGItem_getShortName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_model, () const), asFUNCTION(objectGItem_getModelName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_model2, () const), asFUNCTION(objectGItem_getModel2Name), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_icon, () const), asFUNCTION(objectGItem_getIconName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_simpleIcon, () const), asFUNCTION(objectGItem_getSimpleItemName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_pickupSound, () const), asFUNCTION(objectGItem_getPickupSoundName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_colorToken, () const), asFUNCTION(objectGItem_getColorToken), asCALL_CDECL_OBJLAST },
 
 	{ ASLIB_FUNCTION_DECL(bool, isPickable, () const), asFUNCTION(objectGItem_isPickable), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(bool, isUsable, () const), asFUNCTION(objectGItem_isUsable), asCALL_CDECL_OBJLAST },
@@ -1012,8 +1012,8 @@ static const asMethod_t match_Methods[] =
 	{ ASLIB_FUNCTION_DECL(uint, startTime, () const), asFUNCTION(objectMatch_startTime), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(uint, endTime, () const), asFUNCTION(objectMatch_endTime), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(int, getState, () const), asFUNCTION(objectMatch_getState), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_name, () const), asFUNCTION(objectMatch_getName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, getScore, () const), asFUNCTION(objectMatch_getScore),  asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_name, () const), asFUNCTION(objectMatch_getName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, getScore, () const), asFUNCTION(objectMatch_getScore),  asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_name, ( String &in )), asFUNCTION(objectMatch_setName), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setScore, ( String &in )), asFUNCTION(objectMatch_setScore), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setClockOverride, ( uint milliseconds )), asFUNCTION(objectMatch_setClockOverride), asCALL_CDECL_OBJLAST },
@@ -1137,14 +1137,14 @@ static const asBehavior_t gametypedescr_ObjectBehaviors[] =
 
 static const asMethod_t gametypedescr_Methods[] =
 {
-	{ ASLIB_FUNCTION_DECL(String @, get_name, () const), asFUNCTION(objectGametypeDescriptor_getName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_title, () const), asFUNCTION(objectGametypeDescriptor_getTitle), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_name, () const), asFUNCTION(objectGametypeDescriptor_getName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_title, () const), asFUNCTION(objectGametypeDescriptor_getTitle), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_title, ( String & )), asFUNCTION(objectGametypeDescriptor_setTitle), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_version, () const), asFUNCTION(objectGametypeDescriptor_getVersion), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_version, () const), asFUNCTION(objectGametypeDescriptor_getVersion), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_version, ( String & )), asFUNCTION(objectGametypeDescriptor_setVersion), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_author, () const), asFUNCTION(objectGametypeDescriptor_getAuthor), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_author, () const), asFUNCTION(objectGametypeDescriptor_getAuthor), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_author, ( String & )), asFUNCTION(objectGametypeDescriptor_setAuthor), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_manifest, () const), asFUNCTION(objectGametypeDescriptor_getManifest), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_manifest, () const), asFUNCTION(objectGametypeDescriptor_getManifest), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setTeamSpawnsystem, ( int team, int spawnsystem, int wave_time, int wave_maxcount, bool deadcam )), asFUNCTION(objectGametypeDescriptor_SetTeamSpawnsystem), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(bool, get_isInstagib, () const), asFUNCTION(objectGametypeDescriptor_isInstagib), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(bool, get_hasFallDamage, () const), asFUNCTION(objectGametypeDescriptor_hasFallDamage), asCALL_CDECL_OBJLAST },
@@ -1286,8 +1286,8 @@ static const asBehavior_t teamlist_ObjectBehaviors[] =
 static const asMethod_t teamlist_Methods[] =
 {
 	{ ASLIB_FUNCTION_DECL(Entity @, ent, ( int index )), asFUNCTION(objectTeamlist_GetPlayerEntity), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_name, () const), asFUNCTION(objectTeamlist_getName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_defaultName, () const), asFUNCTION(objectTeamlist_getDefaultName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_name, () const), asFUNCTION(objectTeamlist_getName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_defaultName, () const), asFUNCTION(objectTeamlist_getDefaultName), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_name, ( String &in )), asFUNCTION(objectTeamlist_setName), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(bool, isLocked, () const), asFUNCTION(objectTeamlist_IsLocked), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(bool, lock, () const), asFUNCTION(objectTeamlist_Lock), asCALL_CDECL_OBJLAST },
@@ -1772,12 +1772,22 @@ static void objectGameClient_setPMoveFeatures( unsigned int bitmask, gclient_t *
 	self->ps.pmove.stats[PM_STAT_FEATURES] = ( bitmask & PMFEAT_ALL );
 }
 
+static unsigned int objectGameClient_getPMoveFeatures( gclient_t *self )
+{
+	return self->ps.pmove.stats[PM_STAT_FEATURES];
+}
+
 static void objectGameClient_setPMoveMaxSpeed( float speed, gclient_t *self )
 {
 	if( speed < 0.0f )
 		self->ps.pmove.stats[PM_STAT_MAXSPEED] = DEFAULT_PLAYERSPEED;
 	else
 		self->ps.pmove.stats[PM_STAT_MAXSPEED] = ( (int)speed & 0xFFFF );
+}
+
+static float objectGameClient_getPMoveMaxSpeed( gclient_t *self )
+{
+	return self->ps.pmove.stats[PM_STAT_MAXSPEED];
 }
 
 static void objectGameClient_setPMoveJumpSpeed( float speed, gclient_t *self )
@@ -1788,12 +1798,22 @@ static void objectGameClient_setPMoveJumpSpeed( float speed, gclient_t *self )
 		self->ps.pmove.stats[PM_STAT_JUMPSPEED] = ( (int)speed & 0xFFFF );
 }
 
+static float objectGameClient_getPMoveJumpSpeed( gclient_t *self )
+{
+	return self->ps.pmove.stats[PM_STAT_JUMPSPEED];
+}
+
 static void objectGameClient_setPMoveDashSpeed( float speed, gclient_t *self )
 {
 	if( speed < 0.0f )
 		self->ps.pmove.stats[PM_STAT_DASHSPEED] = DEFAULT_DASHSPEED;
 	else
 		self->ps.pmove.stats[PM_STAT_DASHSPEED] = ( (int)speed & 0xFFFF );
+}
+
+static float objectGameClient_getPMoveDashSpeed( gclient_t *self )
+{
+	return self->ps.pmove.stats[PM_STAT_DASHSPEED];
 }
 
 static asstring_t *objectGameClient_getUserInfoKey( asstring_t *key, gclient_t *self )
@@ -1835,6 +1855,25 @@ static void objectGameClient_ChaseCam( asstring_t *str, bool teamonly, gclient_t
 		return;
 
 	G_ChasePlayer( &game.edicts[ playerNum + 1 ], str ? str->buffer : NULL, teamonly, 0 );
+}
+
+static void objectGameClient_SetChaseActive( bool active, gclient_t *self )
+{
+	int playerNum;
+
+	playerNum = (int)( self - game.clients );
+	assert( playerNum >= 0 && playerNum < gs.maxclients );
+
+	if( playerNum < 0 || playerNum >= gs.maxclients )
+		return;
+
+	self->resp.chase.active = active;
+	G_UpdatePlayerMatchMsg( &game.edicts[ playerNum + 1 ] );
+}
+
+static bool objectGameClient_GetChaseActive( gclient_t *self )
+{
+	return self->resp.chase.active;
 }
 
 static void objectGameClient_NewRaceRun( int numSectors, gclient_t *self )
@@ -1882,8 +1921,8 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL(int, state, () const), asFUNCTION(objectGameClient_ClientState), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, respawn, ( bool ghost )), asFUNCTION(objectGameClient_Respawn), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, clearPlayerStateEvents, ()), asFUNCTION(objectGameClient_ClearPlayerStateEvents), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_name, () const), asFUNCTION(objectGameClient_getName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_clanName, () const), asFUNCTION(objectGameClient_getClanName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_name, () const), asFUNCTION(objectGameClient_getName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_clanName, () const), asFUNCTION(objectGameClient_getClanName), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(Entity @, getEnt, () const), asFUNCTION(objectGameClient_GetEntity), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(int, inventoryCount, ( int tag ) const), asFUNCTION(objectGameClient_InventoryCount), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, inventorySetCount, ( int tag, int count )), asFUNCTION(objectGameClient_InventorySetCount), asCALL_CDECL_OBJLAST },
@@ -1897,14 +1936,19 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL(void, execGameCommand, ( const String &in )), asFUNCTION(objectGameClient_execGameCommand), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setHUDStat, ( int stat, int value )), asFUNCTION(objectGameClient_setHUDStat), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(int, getHUDStat, ( int stat ) const), asFUNCTION(objectGameClient_getHUDStat), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, setPMoveFeatures, ( uint bitmask )), asFUNCTION(objectGameClient_setPMoveFeatures), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, setPMoveMaxSpeed, ( float speed )), asFUNCTION(objectGameClient_setPMoveMaxSpeed), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, setPMoveJumpSpeed, ( float speed )), asFUNCTION(objectGameClient_setPMoveJumpSpeed), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, setPMoveDashSpeed, ( float speed )), asFUNCTION(objectGameClient_setPMoveDashSpeed), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, getUserInfoKey, ( const String &in ) const), asFUNCTION(objectGameClient_getUserInfoKey), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, set_pmoveFeatures, ( uint bitmask )), asFUNCTION(objectGameClient_setPMoveFeatures), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, set_pmoveMaxSpeed, ( float speed )), asFUNCTION(objectGameClient_setPMoveMaxSpeed), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, set_pmoveJumpSpeed, ( float speed )), asFUNCTION(objectGameClient_setPMoveJumpSpeed), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, set_pmoveDashSpeed, ( float speed )), asFUNCTION(objectGameClient_setPMoveDashSpeed), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(uint, get_pmoveFeatures, () const), asFUNCTION(objectGameClient_getPMoveFeatures), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(float, get_pmoveMaxSpeed, () const), asFUNCTION(objectGameClient_getPMoveMaxSpeed), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(float, get_pmoveJumpSpeed, () const), asFUNCTION(objectGameClient_getPMoveJumpSpeed), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(float, get_pmoveDashSpeed, () const), asFUNCTION(objectGameClient_getPMoveDashSpeed), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, getUserInfoKey, ( const String &in ) const), asFUNCTION(objectGameClient_getUserInfoKey), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, printMessage, ( const String &in )), asFUNCTION(objectGameClient_printMessage), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, chaseCam, ( String @, bool teamOnly )), asFUNCTION(objectGameClient_ChaseCam), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, setChaseActive, ( bool active )), asFUNCTION(objectGameClient_ChaseCam), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, chaseCam, ( const String @, bool teamOnly )), asFUNCTION(objectGameClient_ChaseCam), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, set_chaseActive, ( const bool active )), asFUNCTION(objectGameClient_SetChaseActive), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(bool, get_chaseActive, () const ), asFUNCTION(objectGameClient_GetChaseActive), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, newRaceRun, ( int numSectors )), asFUNCTION(objectGameClient_NewRaceRun), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setRaceTime, ( int sector, uint time )), asFUNCTION(objectGameClient_SetRaceTime), asCALL_CDECL_OBJLAST },
 
@@ -1934,7 +1978,6 @@ static const asProperty_t gameclient_Properties[] =
 	{ ASLIB_PROPERTY_DECL(const int, ping), ASLIB_FOFFSET(gclient_t, r.ping) },
 	{ ASLIB_PROPERTY_DECL(const int16, weapon), ASLIB_FOFFSET(gclient_t, ps.stats[STAT_WEAPON]) },
 	{ ASLIB_PROPERTY_DECL(const int16, pendingWeapon), ASLIB_FOFFSET(gclient_t, ps.stats[STAT_PENDING_WEAPON]) },
-	{ ASLIB_PROPERTY_DECL(const int16, pmoveFeatures), ASLIB_FOFFSET(gclient_t, ps.pmove.stats[PM_STAT_FEATURES]) },
 	{ ASLIB_PROPERTY_DECL(bool, takeStun), ASLIB_FOFFSET(gclient_t, resp.takeStun) },
 	{ ASLIB_PROPERTY_DECL(uint, lastActivity), ASLIB_FOFFSET(gclient_t, level.last_activity) },
 
@@ -2368,14 +2411,14 @@ static const asMethod_t gedict_Methods[] =
 	{ ASLIB_FUNCTION_DECL(bool, isGhosting, () const), asFUNCTION(objectGameEntity_IsGhosting), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(int, get_entNum, () const), asFUNCTION(objectGameEntity_EntNum), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(int, get_playerNum, () const), asFUNCTION(objectGameEntity_PlayerNum), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_model, () const), asFUNCTION(objectGameEntity_getModelName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_model2, () const), asFUNCTION(objectGameEntity_getModel2Name), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_sounds, () const), asFUNCTION(objectGameEntity_getSoundName), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_classname, () const), asFUNCTION(objectGameEntity_getClassname), asCALL_CDECL_OBJLAST },
-	//{ ASLIB_FUNCTION_DECL(String @, getSpawnKey, ( String &in )), asFUNCTION(objectGameEntity_getSpawnKey), NULL, asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_targetname, () const), asFUNCTION(objectGameEntity_getTargetname), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_target, () const), asFUNCTION(objectGameEntity_getTarget), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(String @, get_map, () const), asFUNCTION(objectGameEntity_getMap), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_model, () const), asFUNCTION(objectGameEntity_getModelName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_model2, () const), asFUNCTION(objectGameEntity_getModel2Name), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_sounds, () const), asFUNCTION(objectGameEntity_getSoundName), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_classname, () const), asFUNCTION(objectGameEntity_getClassname), asCALL_CDECL_OBJLAST },
+	//{ ASLIB_FUNCTION_DECL(const String @, getSpawnKey, ( String &in )), asFUNCTION(objectGameEntity_getSpawnKey), NULL, asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_targetname, () const), asFUNCTION(objectGameEntity_getTargetname), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_target, () const), asFUNCTION(objectGameEntity_getTarget), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(const String @, get_map, () const), asFUNCTION(objectGameEntity_getMap), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_target, ( const String &in )), asFUNCTION(objectGameEntity_setTarget), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_targetname, ( const String &in )), asFUNCTION(objectGameEntity_setTargetname), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, set_classname, ( const String &in )), asFUNCTION(objectGameEntity_setClassname), asCALL_CDECL_OBJLAST },
@@ -3143,7 +3186,7 @@ static edict_t *asFunc_FireBlast( asvec3_t *origin, asvec3_t *angles, int speed,
 static const asglobfuncs_t asGlobFuncs[] =
 {
 	{ "Entity @G_SpawnEntity( const String &in )", asFUNCTION(asFunc_G_Spawn), NULL },
-	{ "String @G_SpawnTempValue( const String &in )", asFUNCTION(asFunc_G_SpawnTempValue), NULL },
+	{ "const String @G_SpawnTempValue( const String &in )", asFUNCTION(asFunc_G_SpawnTempValue), NULL },
 	{ "Entity @G_GetEntity( int entNum )", asFUNCTION(asFunc_GetEntity), NULL },
 	{ "Client @G_GetClient( int clientNum )", asFUNCTION(asFunc_GetClient), NULL },
 	{ "Team @G_GetTeam( int team )", asFUNCTION(asFunc_GetTeamlist), NULL },
@@ -3174,12 +3217,12 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "bool G_InPVS( const Vec3 &in origin1, const Vec3 &in origin2 )", asFUNCTION(asFunc_InPVS), NULL },
 	{ "bool G_WriteFile( const String &, const String & )", asFUNCTION(asFunc_WriteFile), NULL },
 	{ "bool G_AppendToFile( const String &, const String & )", asFUNCTION(asFunc_AppendToFile), NULL },
-	{ "String @G_LoadFile( const String & )", asFUNCTION(asFunc_LoadFile), NULL },
+	{ "const String @G_LoadFile( const String & )", asFUNCTION(asFunc_LoadFile), NULL },
 	{ "int G_FileLength( const String & )", asFUNCTION(asFunc_FileLength), NULL },
 	{ "void G_CmdExecute( const String & )", asFUNCTION(asFunc_Cmd_ExecuteText), NULL },
-	{ "String @G_LocationName( const Vec3 &in origin )", asFUNCTION(asFunc_LocationName), NULL },
+	{ "const String @G_LocationName( const Vec3 &in origin )", asFUNCTION(asFunc_LocationName), NULL },
 	{ "int G_LocationTag( const String & )", asFUNCTION(asFunc_LocationTag), NULL },
-	{ "String @G_LocationName( int tag )", asFUNCTION(asFunc_LocationForTag), NULL },
+	{ "const String @G_LocationName( int tag )", asFUNCTION(asFunc_LocationForTag), NULL },
 
 	{ "void __G_CallThink( Entity @ent )", asFUNCTION(G_CallThink), &asEntityCallThinkFuncPtr },
 	{ "void __G_CallTouch( Entity @ent, Entity @other, const Vec3 planeNormal, int surfFlags )", asFUNCTION(G_CallTouch), &asEntityCallTouchFuncPtr },
@@ -3210,7 +3253,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "Entity @G_FireBlast( const Vec3 &in origin, const Vec3 &in angles, int speed, int radius, int damage, int knockback, int stun, Entity @owner )", asFUNCTION(asFunc_FireBlast), NULL },
 
 	{ "bool ML_FilenameExists( String & )", asFUNCTION(asFunc_ML_FilenameExists), NULL },
-	{ "String @ML_GetMapByNum( int num )", asFUNCTION(asFunc_ML_GetMapByNum), NULL },
+	{ "const String @ML_GetMapByNum( int num )", asFUNCTION(asFunc_ML_GetMapByNum), NULL },
 
 	{ NULL }
 };
