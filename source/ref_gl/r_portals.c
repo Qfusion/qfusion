@@ -498,10 +498,8 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 
 	R_RenderView( &rn.refdef );
 
-	rf.oldviewcluster = -1;			// force markleafs
-	rf.viewcluster = oldcluster;		// restore viewcluster for current frame
-	rf.viewarea = oldarea;
-
 	// restore modelview and projection matrices, scissoring, etc for the main view
 	R_PopRefInst( ~GL_COLOR_BUFFER_BIT );
+
+	R_ForceMarkLeafs();
 }
