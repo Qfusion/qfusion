@@ -1268,8 +1268,6 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 	snd_vol = (int)( ( music ? s_musicvolume->value : s_volume->value ) * 255 );
 	if( snd_vol < 0 )
 		snd_vol = 0;
-	if( !snd_vol )
-		return;
 
 	rawsound = S_FindRawSound( S_RAW_SOUND_BGTRACK, qtrue );
 	if( !rawsound ) {
@@ -1293,8 +1291,6 @@ void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
 	
 	if( entnum < 0 )
 		entnum = 0;
-	if( fvol <= 0 )
-		return;
 
 	rawsound = S_FindRawSound( entnum, qtrue );
 	if( !rawsound ) {
