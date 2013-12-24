@@ -352,7 +352,6 @@ static void _R_DrawSurfaces( void )
 	mat4_t projectionMatrix;
 	refdef_t *rd = &rn.refdef;
 	int riFBO = 0;
-	int fb_w, fb_h;
 
 	if( !list->numDrawSurfs ) {
 		return;
