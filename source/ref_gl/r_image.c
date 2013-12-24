@@ -2463,6 +2463,7 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 	{
 		int d;
 
+		// calculate the upper bound and make sure it's not a pow of 2
 		d = min( limit, viewportWidth );
 		if( ( d & (d-1) ) == 0 ) d--;
 		for( width_ = 2; width_ <= d; width_ <<= 1 );
