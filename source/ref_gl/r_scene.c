@@ -177,46 +177,41 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	int x, y;
 	int w, h;
 
-	R_BindFrameBufferObject( dstFbo );
+	RB_BindFrameBufferObject( dstFbo );
 
-	R_Set2DMode( qtrue );
-
-#if 1
 	if( !dstFbo ) {
-#else
-	if( 0 ) {
-#endif
-		//RB_Viewport( fd->x, fd->y, fd->width, fd->height );
+		// default framebuffer
+		// set the viewport to full resolution
+		// but keep the scissoring region
 		x = fd->x;
 		y = fd->y;
 		w = fd->width;
 		h = fd->height;
+		RB_Viewport( 0, 0, glConfig.width, glConfig.height );
 		RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
 	}
 	else {
+		// aux framebuffer
+		// set the viewport to full resolution of the framebuffer
+		// set scissor to default framebuffer resolution
 		x = 0;
 		y = 0;
 		w = rf.frameBufferWidth;
 		h = rf.frameBufferHeight;
+		RB_Viewport( 0, 0, w, h );
 		RB_Scissor( 0, 0, glConfig.width, glConfig.height );
 	}
 
-#if 0
-	R_DrawStretchQuick( 0, 0, 
-		glConfig.width, glConfig.height, 
-		0, (float)(glConfig.width+1)/image->upload_width, 
-		(float)(glConfig.height+1)/image->upload_height, 0, 
-		color, program_type, image, blend );
-#else
+	// blit + flip
 	R_DrawStretchQuick( x, y, 
 		w, h, 
-		(float)(x-1)/image->upload_width, (float)(y+h+1)/image->upload_height, 
-		(float)(x+w+1)/image->upload_width, (float)(h-1)/image->upload_height,
+		(float)(x)/image->upload_width, 1.0 - (float)(y)/image->upload_height, 
+		(float)(x+w)/image->upload_width, 1.0 - (float)(y+h)/image->upload_height,
 		color, program_type, image, blend );
-#endif
 
-	RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
+	// restore 2D viewport and scissor
 	RB_Viewport( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
+	RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
 }
 
 /*
@@ -310,6 +305,10 @@ void R_RenderScene( const refdef_t *fd )
 
 	R_RenderDebugBounds();
 
+	R_BindFrameBufferObject( 0 );
+
+	R_Set2DMode( qtrue );
+
 	// blit and blend framebuffers in proper order
 
 	if( fbFlags & 1 ) {
@@ -338,8 +337,6 @@ void R_RenderScene( const refdef_t *fd )
 			GLSL_PROGRAM_TYPE_FXAA, 
 			colorWhite, qfalse );
 	}
-
-	R_Set2DMode( qtrue );
 }
 
 /*

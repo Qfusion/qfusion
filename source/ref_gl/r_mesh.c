@@ -391,19 +391,14 @@ static void _R_DrawSurfaces( void )
 					// at later stage
 					if( shader->flags & SHADER_DEPTHWRITE ) {
 						if( rd->rdflags & RDF_WEAPONALPHA ) {
-							RB_BindFrameBufferObject( r_screenweapontexture->fbo );
-							//RFB_GetObjectSize( r_screenweapontexture->fbo, &fb_w, &fb_h );
-							//RB_Scissor( 0, 0, fb_w, fb_h );
-							//RB_Viewport( 0, 0, fb_w, fb_h );
+							R_BindFrameBufferObject( r_screenweapontexture->fbo );
 						}
 					}					
 					depthHack = qtrue;
 					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 				} else if( depthHack ) {
 					// bind the main framebuffer back
-					RB_BindFrameBufferObject( riFBO );
-				//	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
-					//RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
+					R_BindFrameBufferObject( riFBO );
 					depthHack = qfalse;
 					RB_DepthRange( depthmin, depthmax );
 				}

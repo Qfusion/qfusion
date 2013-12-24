@@ -951,8 +951,9 @@ void R_BindFrameBufferObject( int object )
 	rf.frameBufferHeight = height;
 
 	RB_BindFrameBufferObject( object );
-	RB_Scissor( 0, 0, width, height );
-	RB_Viewport( 0, 0, width, height );
+
+	RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
+	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
 }
 
 /*
