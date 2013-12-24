@@ -222,7 +222,7 @@ typedef struct
 
 	image_t				*images[MAX_SHADER_images]; // texture refs
 
-	float				anim_fps;						// animation frames per sec
+	float				anim_fps;					// animation frames per sec
 	unsigned short		anim_numframes;
 } shaderpass_t;
 

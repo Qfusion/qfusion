@@ -352,12 +352,13 @@ static void _R_DrawSurfaces( void )
 	mat4_t projectionMatrix;
 	refdef_t *rd = &rn.refdef;
 	int riFBO = 0;
+	int fb_w, fb_h;
 
 	if( !list->numDrawSurfs ) {
 		return;
 	}
 
-	riFBO = R_ActiveFBObject();
+	riFBO = RB_BoundFrameBufferObject();
 
 	for( i = 0; i < list->numDrawSurfs; i++ ) {
 		sds = list->drawSurfs + i;
@@ -390,15 +391,19 @@ static void _R_DrawSurfaces( void )
 					// at later stage
 					if( shader->flags & SHADER_DEPTHWRITE ) {
 						if( rd->rdflags & RDF_WEAPONALPHA ) {
-							R_BindFrameBufferObject( r_screenweapontexture->fbo );
+							RB_BindFrameBufferObject( r_screenweapontexture->fbo );
+							//RFB_GetObjectSize( r_screenweapontexture->fbo, &fb_w, &fb_h );
+							//RB_Scissor( 0, 0, fb_w, fb_h );
+							//RB_Viewport( 0, 0, fb_w, fb_h );
 						}
 					}					
 					depthHack = qtrue;
 					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 				} else if( depthHack ) {
 					// bind the main framebuffer back
-					R_BindFrameBufferObject( riFBO );
-
+					RB_BindFrameBufferObject( riFBO );
+				//	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
+					//RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
 					depthHack = qfalse;
 					RB_DepthRange( depthmin, depthmax );
 				}
@@ -419,7 +424,8 @@ static void _R_DrawSurfaces( void )
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
 				depthCopied = qtrue;
 				if( rn.fbDepthAttachment ) {
-					R_CopyFBObject( r_screentexturecopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
+					RB_BlitFrameBufferObject( r_screentexturecopy->fbo, 
+						GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
 				}
 			}
 
@@ -473,7 +479,7 @@ static void _R_DrawSurfaces( void )
 		RB_FlipFrontFace();
 	}
 
-	R_BindFrameBufferObject( riFBO );
+	RB_BindFrameBufferObject( riFBO );
 }
 
 /*

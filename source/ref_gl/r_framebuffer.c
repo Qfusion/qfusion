@@ -41,9 +41,9 @@ static int r_num_framebuffer_objects;
 static r_fbo_t r_framebuffer_objects[MAX_FRAMEBUFFER_OBJECTS];
 
 /*
-* R_InitFBObjects
+* RFB_Init
 */
-void R_InitFBObjects( void )
+void RFB_Init( void )
 {
 	if( !glConfig.ext.framebuffer_object )
 		return;
@@ -59,11 +59,11 @@ void R_InitFBObjects( void )
 }
 
 /*
-* R_DeleteFBObject
+* RFB_DeleteObject
 * 
 * Delete framebuffer object along with attached render buffer
 */
-static void R_DeleteFBObject( r_fbo_t *fbo )
+static void RFB_DeleteObject( r_fbo_t *fbo )
 {
 	GLuint t;
 
@@ -83,9 +83,9 @@ static void R_DeleteFBObject( r_fbo_t *fbo )
 }
 
 /*
-* R_RegisterFBObject
+* RFB_RegisterObject
 */
-int R_RegisterFBObject( int width, int height )
+int RFB_RegisterObject( int width, int height )
 {
 	int i;
 	GLuint fbID;
@@ -104,7 +104,7 @@ int R_RegisterFBObject( int width, int height )
 
 	if( i == MAX_FRAMEBUFFER_OBJECTS )
 	{
-		Com_Printf( S_COLOR_YELLOW "R_RegisterFBObject: framebuffer objects limit exceeded\n" );
+		Com_Printf( S_COLOR_YELLOW "RFB_RegisterObject: framebuffer objects limit exceeded\n" );
 		return 0;
 	}
 
@@ -142,9 +142,9 @@ found:
 }
 
 /*
-* R_UnregisterFBObject
+* RFB_UnregisterObject
 */
-void R_UnregisterFBObject( int object )
+void RFB_UnregisterObject( int object )
 {
 	r_fbo_t *fbo;
 
@@ -154,13 +154,13 @@ void R_UnregisterFBObject( int object )
 	}
 
 	fbo = r_framebuffer_objects + object - 1;
-	R_DeleteFBObject( fbo );
+	RFB_DeleteObject( fbo );
 }
 
 /*
-* R_TouchFBObject
+* RFB_TouchObject
 */
-void R_TouchFBObject( int object )
+void RFB_TouchObject( int object )
 {
 	r_fbo_t *fbo;
 
@@ -174,19 +174,19 @@ void R_TouchFBObject( int object )
 }
 
 /*
-* R_ActiveFBObject
+* RFB_BoundObject
 */
-int R_ActiveFBObject( void )
+int RFB_BoundObject( void )
 {
 	return r_bound_framebuffer_objectID;
 }
 
 /*
-* R_UseFBObject
+* RFB_BindObject
 *
 * DO NOT call this function directly, use R_BindFrameBufferObject instead.
 */
-void R_UseFBObject( int object )
+void RFB_BindObject( int object )
 {
 	if( !object )
 	{
@@ -218,9 +218,9 @@ void R_UseFBObject( int object )
 #define FBO_ATTACHMENT(depth) (depth ? GL_DEPTH_ATTACHMENT_EXT : GL_COLOR_ATTACHMENT0_EXT)
 
 /*
-* R_AttachTextureToFBObject
+* RFB_AttachTextureToObject
 */
-void R_AttachTextureToFBObject( int object, image_t *texture )
+void RFB_AttachTextureToObject( int object, image_t *texture )
 {
 	qboolean depth;
 	r_fbo_t *fbo;
@@ -253,9 +253,9 @@ void R_AttachTextureToFBObject( int object, image_t *texture )
 }
 
 /*
-* R_DetachTextureFromFBObject
+* RFB_DetachTextureFromObject
 */
-void R_DetachTextureFromFBObject( qboolean depth )
+void RFB_DetachTextureFromObject( qboolean depth )
 {
 	r_fbo_t *fbo = r_bound_framebuffer_object;
 
@@ -273,9 +273,9 @@ void R_DetachTextureFromFBObject( qboolean depth )
 }
 
 /*
-* R_GetFBObjectTextureAttachment
+* RFB_GetObjectTextureAttachment
 */
-image_t	*R_GetFBObjectTextureAttachment( int object, qboolean depth )
+image_t	*RFB_GetObjectTextureAttachment( int object, qboolean depth )
 {
 	r_fbo_t *fbo;
 
@@ -289,9 +289,9 @@ image_t	*R_GetFBObjectTextureAttachment( int object, qboolean depth )
 }
 
 /*
-* R_DisableFBObjectDrawBuffer
+* RFB_DisableObjectDrawBuffer
 */
-void R_DisableFBObjectDrawBuffer( void )
+void RFB_DisableObjectDrawBuffer( void )
 {
 	if( !r_bound_framebuffer_object )
 		return;
@@ -301,12 +301,12 @@ void R_DisableFBObjectDrawBuffer( void )
 }
 
 /*
-* R_CopyFBObject
+* RFB_BlitObject
 *
 * The target FBO must be equal or greater in both dimentions than
 * the currently bound FBO!
 */
-void R_CopyFBObject( int dest, int bitMask, int mode )
+void RFB_BlitObject( int dest, int bitMask, int mode )
 {
 	int bits;
 	int dx, dy, dw, dh;
@@ -371,11 +371,11 @@ void R_CopyFBObject( int dest, int bitMask, int mode )
 }
 
 /*
-* R_CheckFBObjectStatus
+* RFB_CheckObjectStatus
 * 
 * Boolean, returns qfalse in case of error
 */
-qboolean R_CheckFBObjectStatus( void )
+qboolean RFB_CheckObjectStatus( void )
 {
 	GLenum status;
 
@@ -398,9 +398,9 @@ qboolean R_CheckFBObjectStatus( void )
 }
 
 /*
-* R_GetFBObjectSize
+* RFB_GetObjectSize
 */
-void R_GetFBObjectSize( int object, int *width, int *height )
+void RFB_GetObjectSize( int object, int *width, int *height )
 {
 	r_fbo_t *fbo;
 
@@ -421,9 +421,9 @@ void R_GetFBObjectSize( int object, int *width, int *height )
 }
 
 /*
-* R_FreeUnusedFBObjects
+* RFB_FreeUnusedObjects
 */
-void R_FreeUnusedFBObjects( void )
+void RFB_FreeUnusedObjects( void )
 {
 	int i;
 
@@ -434,16 +434,16 @@ void R_FreeUnusedFBObjects( void )
 		if( r_framebuffer_objects[i].registrationSequence == rf.registrationSequence ) {
 			continue;
 		}
-		R_DeleteFBObject( r_framebuffer_objects + i );
+		RFB_DeleteObject( r_framebuffer_objects + i );
 	}
 }
 
 /*
-* R_ShutdownFBObjects
+* RFB_Shutdown
 * 
 * Delete all registered framebuffer and render buffer objects, clear memory
 */
-void R_ShutdownFBObjects( void )
+void RFB_Shutdown( void )
 {
 	int i;
 
@@ -451,7 +451,7 @@ void R_ShutdownFBObjects( void )
 		return;
 
 	for( i = 0; i < r_num_framebuffer_objects; i++ ) {
-		R_DeleteFBObject( r_framebuffer_objects + i );
+		RFB_DeleteObject( r_framebuffer_objects + i );
 	}
 
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );

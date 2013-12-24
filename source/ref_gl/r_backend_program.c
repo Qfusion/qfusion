@@ -673,7 +673,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 		rb.modelviewMatrix, rb.modelviewProjectionMatrix,
 		rn.viewOrigin, rn.viewAxis, 
 		rn.params & RP_MIRRORVIEW ? -1 : 1,
-		rn.viewport,
+		rb.viewport,
 		rb.zNear, rb.zFar
 	);
 
@@ -1038,7 +1038,9 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
 
-		RP_UpdateDistortionUniforms( program, frontPlane, width, height );
+		RP_UpdateDistortionUniforms( program, frontPlane );
+
+		RP_UpdateTextureUniforms( program, width, height );
 
 		RB_DrawElementsReal();
 	}
@@ -1476,6 +1478,11 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 			RP_UpdateDrawFlatUniforms( program, rf.wallColor, rf.floorColor );
 		}
 
+		if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
+			RP_UpdateTextureUniforms( program, 
+				r_screendepthtexturecopy->upload_width, r_screendepthtexturecopy->upload_height );
+		}
+
 		RB_DrawElementsReal();
 	}
 }
@@ -1603,19 +1610,23 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t programFeatures )
 {
 	int program;
+	const image_t *image = pass->images[0];
 	mat4_t texMatrix = { 0 };
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	RB_BindTexture( 0, pass->images[0] );
+	RB_BindTexture( 0, image );
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
-		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+		rb.currentShader->deformsKey, rb.currentShader->deforms, 
+		rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
+
+		RP_UpdateTextureUniforms( program, image->upload_width, image->upload_height );
 
 		RB_DrawElementsReal();
 	}
