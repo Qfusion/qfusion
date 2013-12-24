@@ -2677,12 +2677,12 @@ static void R_InitStretchRawYUVTextures( void )
 * R_InitScreenTexturesPair
 */
 static void R_InitScreenTexturesPair( const char *name, image_t **color, 
-	image_t **depth, int samples, qboolean linear )
+	image_t **depth, int samples, qboolean noFilter )
 {
 	int flags;
 
 	flags = IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP;
-	if( linear ) {
+	if( noFilter ) {
 		flags |= IT_NOFILTERING;
 	}
 
@@ -2706,16 +2706,16 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 static void R_InitScreenTextures( void )
 {
 	R_InitScreenTexturesPair( "r_screentex", &r_screentexture, 
-		&r_screendepthtexture, 3, qfalse ); 
+		&r_screendepthtexture, 3, qtrue ); 
 
 	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, 
-		&r_screendepthtexturecopy, 3, qfalse );
+		&r_screendepthtexturecopy, 3, qtrue );
 
 	R_InitScreenTexturesPair( "r_screenfxaacopy", &r_screenfxaacopy, 
 		NULL, 3, qfalse );
 
 	R_InitScreenTexturesPair( "r_screenweapontexture", &r_screenweapontexture, 
-		NULL, 4, qfalse );
+		NULL, 4, qtrue );
 }
 
 /*
