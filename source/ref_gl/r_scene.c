@@ -169,6 +169,57 @@ void R_AddLightStyleToScene( int style, float r, float g, float b )
 }
 
 /*
+* R_BlitTextureToScrFbo
+*/
+static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo, 
+	int program_type, const vec4_t color, qboolean blend )
+{
+	int x, y;
+	int w, h;
+
+	R_BindFrameBufferObject( dstFbo );
+
+	R_Set2DMode( qtrue );
+
+#if 1
+	if( !dstFbo ) {
+#else
+	if( 0 ) {
+#endif
+		//RB_Viewport( fd->x, fd->y, fd->width, fd->height );
+		x = fd->x;
+		y = fd->y;
+		w = fd->width;
+		h = fd->height;
+		RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
+	}
+	else {
+		x = 0;
+		y = 0;
+		w = rf.frameBufferWidth;
+		h = rf.frameBufferHeight;
+		RB_Scissor( 0, 0, glConfig.width, glConfig.height );
+	}
+
+#if 0
+	R_DrawStretchQuick( 0, 0, 
+		glConfig.width, glConfig.height, 
+		0, (float)(glConfig.width+1)/image->upload_width, 
+		(float)(glConfig.height+1)/image->upload_height, 0, 
+		color, program_type, image, blend );
+#else
+	R_DrawStretchQuick( x, y, 
+		w, h, 
+		(float)(x-1)/image->upload_width, (float)(y+h+1)/image->upload_height, 
+		(float)(x+w+1)/image->upload_width, (float)(h-1)/image->upload_height,
+		color, program_type, image, blend );
+#endif
+
+	RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
+	RB_Viewport( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
+}
+
+/*
 * R_RenderScene
 */
 void R_RenderScene( const refdef_t *fd )
@@ -241,14 +292,15 @@ void R_RenderScene( const refdef_t *fd )
 	if( gl_finish->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
 		qglFinish();
 
-	if( fd->rdflags & RDF_WEAPONALPHA ) {
-		// clear the framebuffer we're going to render the weapon model into
+	if( fbFlags & 2 ) {
+		// clear the framebuffer we're going to render the weapon model to
 		// set the alpha to 0, visible parts of the model will overwrite that,
 		// creating proper alpha mask
 		R_BindFrameBufferObject( r_screenweapontexture->fbo );
 		RB_Clear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT, 0, 0, 0, 0 );
-		R_BindFrameBufferObject( 0 );
 	}
+
+	R_BindFrameBufferObject( 0 );
 
 	R_BuildShadowGroups();
 
@@ -258,15 +310,14 @@ void R_RenderScene( const refdef_t *fd )
 
 	R_RenderDebugBounds();
 
-	R_Set2DMode( qtrue );
-
 	// blit and blend framebuffers in proper order
 
 	if( fbFlags & 1 ) {
 		// copy to FXAA or default framebuffer
-		R_BindFrameBufferObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
-		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
-			colorWhite, GLSL_PROGRAM_TYPE_NONE, rn.fbColorAttachment, qfalse );
+		R_BlitTextureToScrFbo( fd, rn.fbColorAttachment, 
+			fbFlags & 4 ? r_screenfxaacopy->fbo : 0, 
+			GLSL_PROGRAM_TYPE_NONE, 
+			colorWhite, qfalse );
 	}
 
 	if( fbFlags & 2 ) {
@@ -274,17 +325,21 @@ void R_RenderScene( const refdef_t *fd )
 		color[3] = fd->weaponAlpha;
 
 		// blend to FXAA or default framebuffer
-		R_BindFrameBufferObject( fbFlags & 4 ? r_screenfxaacopy->fbo : 0 );
-		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
-			color, GLSL_PROGRAM_TYPE_NONE, r_screenweapontexture, qtrue );
+		R_BlitTextureToScrFbo( fd, r_screenweapontexture, 
+			fbFlags & 4 ? r_screenfxaacopy->fbo : 0, 
+			GLSL_PROGRAM_TYPE_NONE, 
+			color, qtrue );
 	}
 
 	// blit FXAA to default framebuffer
 	if( fbFlags & 4 ) {
-		R_BindFrameBufferObject( 0 );
-		R_DrawStretchQuick( fd->x, fd->y, fd->width, fd->height, 0, 1, 1, 0, 
-			colorWhite, GLSL_PROGRAM_TYPE_FXAA, r_screenfxaacopy, qfalse );
+		// blend to FXAA or default framebuffer
+		R_BlitTextureToScrFbo( fd, r_screenfxaacopy, 0, 
+			GLSL_PROGRAM_TYPE_FXAA, 
+			colorWhite, qfalse );
 	}
+
+	R_Set2DMode( qtrue );
 }
 
 /*

@@ -71,7 +71,6 @@ uniform sampler2D u_NormalmapTexture;
 #endif
 uniform sampler2D u_ReflectionTexture;
 uniform sampler2D u_RefractionTexture;
-uniform vec4 u_TextureParams;
 
 void main(void)
 {

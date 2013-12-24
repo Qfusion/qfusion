@@ -542,15 +542,6 @@ static void GL_EnableVertexAttrib( int index, qboolean enable )
 }
 
 /*
-* RB_SetFrameBufferSize
-*/
-void RB_SetFrameBufferSize( int width, int height )
-{
-	rb.gl.fbWidth = width;
-	rb.gl.fbHeight = height;
-}
-
-/*
 * RB_Scissor
 */
 void RB_Scissor( int x, int y, int w, int h )
@@ -600,6 +591,10 @@ void RB_EnableScissor( qboolean enable )
 */
 void RB_Viewport( int x, int y, int w, int h )
 {
+	rb.viewport[0] = x;
+	rb.viewport[1] = y;
+	rb.viewport[2] = w;
+	rb.viewport[3] = h;
 	qglViewport( x, rb.gl.fbHeight - h - y, w, h );
 }
 
@@ -621,6 +616,37 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 	qglClear( bits );
 
 	RB_DepthRange( 0, 1 );
+}
+
+/*
+* RB_BindFrameBufferObject
+*/
+void RB_BindFrameBufferObject( int object )
+{
+	int width, height;
+
+	RFB_BindObject( object );
+
+	RFB_GetObjectSize( object, &width, &height );
+
+	rb.gl.fbWidth = width;
+	rb.gl.fbHeight = height;
+}
+
+/*
+* RB_BoundFrameBufferObject
+*/
+int RB_BoundFrameBufferObject( void )
+{
+	return RFB_BoundObject();
+}
+
+/*
+* RB_BlitFrameBufferObject
+*/
+void RB_BlitFrameBufferObject( int dest, int bitMask, int mode )
+{
+	RFB_BlitObject( dest, bitMask, mode );
 }
 
 /*

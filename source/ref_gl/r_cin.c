@@ -110,7 +110,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 			// render/convert three 8-bit YUV images into RGB framebuffer
 
 			in2D = rf.in2D;
-			fbo = R_ActiveFBObject();
+			fbo = RFB_BoundObject();
 
 			if( !in2D ) {
 				R_PushRefInst();
@@ -124,8 +124,14 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 
 			R_Set2DMode( qtrue );
 
+			RB_Scissor( 0, 0, handle->image->upload_width, handle->image->upload_height );
+
+			RB_Viewport( 0, 0, handle->image->upload_width, handle->image->upload_height );
+
 			// flip the image vertically because we're rendering to a FBO
-			R_DrawStretchRawYUVBuiltin( 0, 0, handle->image->upload_width, handle->image->upload_height,
+			R_DrawStretchRawYUVBuiltin( 
+				0, 0, 
+				handle->image->upload_width, handle->image->upload_height,
 				(float)handle->cyuv->x_offset / handle->cyuv->image_width, 
 				(float)handle->cyuv->y_offset / handle->cyuv->image_height, 
 				(float)(handle->cyuv->x_offset + handle->cyuv->width) / handle->cyuv->image_width, 

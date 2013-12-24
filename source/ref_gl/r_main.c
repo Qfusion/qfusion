@@ -674,16 +674,22 @@ void R_Set2DMode( qboolean enable )
 {
 	int width, height;
 
-	if( rf.in2D == enable )
-		return;
-
-	rf.in2D = enable;
-
 	width = rf.frameBufferWidth;
 	height = rf.frameBufferHeight;
 
+	if( rf.in2D == qtrue && enable == qtrue && width == rf.width2D && height == rf.height2D ) {
+		return;
+	} else if( rf.in2D == qfalse && enable == qfalse ) {
+		return;
+	}
+
+	rf.in2D = enable;
+
 	if( enable )
 	{
+		rf.width2D = width;
+		rf.height2D = height;
+
 		// reset 2D batching
 		R_ResetStretchPic();
 
@@ -786,9 +792,26 @@ void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2,
 void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
 	float s1, float t1, float s2, float t2, qbyte *data )
 {
-	if( data ) {
-		R_ReplaceImage( r_rawtexture, &data, cols, rows, r_rawtexture->flags, 4 );
+	float h_scale, v_scale;
+
+	if( !rows || !cols ) {
+		return;
 	}
+
+	if( data ) {
+		if( r_rawtexture->width != cols || r_rawtexture->height != rows ) {
+			qbyte *nodata[1] = { NULL };
+			R_ReplaceImage( r_rawtexture, nodata, cols, rows, r_rawtexture->flags, 3 );
+		}
+		R_ReplaceSubImage( r_rawtexture, &data, cols, rows );
+	}
+
+	h_scale = (float)r_rawtexture->width / r_rawtexture->upload_width;
+	v_scale = (float)r_rawtexture->height / r_rawtexture->upload_height;
+	s1 *= h_scale;
+	s2 *= h_scale;
+	t1 *= v_scale;
+	t2 *= v_scale;
 
 	R_DrawStretchQuick( x, y, w, h, s1, t1, s2, t2, colorWhite, GLSL_PROGRAM_TYPE_NONE, r_rawtexture, qfalse );
 }
@@ -806,6 +829,8 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 	static char *s_name = "$builtinyuv";
 	static shaderpass_t p;
 	static shader_t s;
+	float h_scale, v_scale;
+	float s2_, t2_;
 
 	s.vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
 	s.sort = SHADER_SORT_NEAREST;
@@ -838,17 +863,31 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 				stride = -stride;
 			}
 
-			R_ReplaceImage( yuvTextures[i], &data, stride, height, flags, 1 );
+			if( yuvTextures[i]->width != stride || yuvTextures[i]->height != height ) {
+				qbyte *nodata[1] = { NULL };
+				R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1 );
+			}
+			R_ReplaceSubImage( yuvTextures[i], &data, stride, height );
 		}
 	}
 
+	h_scale = (float)yuvTextures[0]->width / yuvTextures[0]->upload_width;
+	v_scale = (float)yuvTextures[0]->height / yuvTextures[0]->upload_height;
+
+	s1 *= h_scale;
+	s2 *= h_scale;
+	t1 *= v_scale;
+	t2 *= v_scale;
+
+	s2_ = s2;
+	t2_ = t2;
 	if( flip & 1 ) {
-		s1 = 1.0 - s1;
-		s2 = 1.0 - s2;
+		s1 = s2_ - s1;
+		s2 = s2_ - s2;
 	}
 	if( flip & 2 ) {
-		t1 = 1.0 - t1;
-		t2 = 1.0 - t2;
+		t1 = t2_ - t1;
+		t2 = t2_ - t2;
 	}
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, colorWhite, &s );
@@ -906,14 +945,14 @@ void R_BindFrameBufferObject( int object )
 {
 	int width, height;
 
-	R_UseFBObject( object );
-
-	R_GetFBObjectSize( object, &width, &height );
+	RFB_GetObjectSize( object, &width, &height );
 
 	rf.frameBufferWidth = width;
 	rf.frameBufferHeight = height;
 
-	RB_SetFrameBufferSize( width, height );
+	RB_BindFrameBufferObject( object );
+	RB_Scissor( 0, 0, width, height );
+	RB_Viewport( 0, 0, width, height );
 }
 
 /*
@@ -1114,10 +1153,10 @@ static void R_Clear( int bitMask )
 	bits &= bitMask;
 
 	if( rn.fbColorAttachment ) {
-		R_AttachTextureToFBObject( R_ActiveFBObject(), rn.fbColorAttachment );
+		RFB_AttachTextureToObject( RFB_BoundObject(), rn.fbColorAttachment );
 	}
 	if( rn.fbDepthAttachment ) {
-		R_AttachTextureToFBObject( R_ActiveFBObject(), rn.fbDepthAttachment );
+		RFB_AttachTextureToObject( RFB_BoundObject(), rn.fbDepthAttachment );
 	}
 
 	if( !( rn.params & RP_SHADOWMAPVIEW ) ) {
@@ -1131,7 +1170,7 @@ static void R_Clear( int bitMask )
 /*
 * R_SetupGL
 */
-void R_SetupGL( int clearBitMask )
+static void R_SetupGL( int clearBitMask )
 {
 	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
 	RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
@@ -1310,7 +1349,7 @@ static void R_BindRefInstFBO( void )
 
 	if( fbo && !rn.fbColorAttachment ) {
 		// inform the driver we do not wish to render to the color buffer
-		R_DisableFBObjectDrawBuffer();
+		RFB_DisableObjectDrawBuffer();
 	}
 }
 
@@ -1414,12 +1453,12 @@ void R_RenderView( const refdef_t *fd )
 
 	R_BindRefInstFBO();
 
+	R_SetupGL( ~0 );
+
 	R_DrawPortals();
 
 	if( r_portalonly->integer && !( rn.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) )
 		return;
-
-	R_SetupGL( ~0 );
 
 	if( r_speeds->integer )
 		msec = ri.Sys_Milliseconds();

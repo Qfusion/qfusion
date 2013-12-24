@@ -29,4 +29,6 @@ uniform float u_ZNear, u_ZFar;
 
 uniform ivec4 u_Viewport; // x, y, width, height
 
+uniform vec4 u_TextureParams;
+
 uniform myhalf u_SoftParticlesScale;

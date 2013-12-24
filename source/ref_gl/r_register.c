@@ -934,13 +934,11 @@ init_qgl:
 
 	R_InitVBO();
 
-	R_InitFBObjects();
+	RFB_Init();
 
 	R_InitImages();
 
 	RB_Init();
-
-	RB_SetFrameBufferSize( glConfig.width, glConfig.height );
 
 	RB_EnableScissor( qtrue );
 
@@ -1048,7 +1046,7 @@ void R_EndRegistration( void )
 	R_FreeUnusedShaders();
 	R_FreeUnusedCinematics();
 	R_FreeUnusedImages();
-	R_FreeUnusedFBObjects();
+	RFB_FreeUnusedObjects();
 
 	RB_EndRegistration();
 
@@ -1093,7 +1091,7 @@ void R_Shutdown( qboolean verbose )
 
 	R_ShutdownImages();
 
-	R_ShutdownFBObjects();
+	RFB_Shutdown();
 
 	// restore original gamma
 	if( glConfig.hwGamma )

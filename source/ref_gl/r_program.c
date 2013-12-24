@@ -1716,14 +1716,24 @@ void RP_UpdateMaterialUniforms( int elem,
 /*
 * RP_UpdateDistortionUniforms
 */
-void RP_UpdateDistortionUniforms( int elem, qboolean frontPlane, int TexWidth, int TexHeight )
+void RP_UpdateDistortionUniforms( int elem, qboolean frontPlane )
 {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
 	if( program->loc.FrontPlane >= 0 )
 		qglUniform1fARB( program->loc.FrontPlane, frontPlane ? 1 : -1 );
+}
+
+/*
+* RP_UpdateTextureUniforms
+*/
+void RP_UpdateTextureUniforms( int elem, int TexWidth, int TexHeight )
+{
+	glsl_program_t *program = r_glslprograms + elem - 1;
+
 	if( program->loc.TextureParams >= 0 )
-		qglUniform4fARB( program->loc.TextureParams, TexWidth, TexHeight, TexWidth ? 1.0 / TexWidth : 1.0, TexHeight ? 1.0 / TexHeight : 1.0 );
+		qglUniform4fARB( program->loc.TextureParams, TexWidth, TexHeight, 
+		TexWidth ? 1.0 / TexWidth : 1.0, TexHeight ? 1.0 / TexHeight : 1.0 );
 }
 
 /*

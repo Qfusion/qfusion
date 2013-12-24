@@ -1460,7 +1460,8 @@ static int R_TextureFormat( int samples, qboolean noCompress )
 * R_Upload32
 */
 static void R_Upload32( qbyte **data, int width, int height, int flags, 
-	int *upload_width, int *upload_height, int *samples, int inSamples, qboolean subImage )
+	int *upload_width, int *upload_height, int samples,
+	qboolean subImage, qboolean noScale )
 {
 	int i, comp, format, type;
 	int target, target2;
@@ -1471,7 +1472,8 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	assert( samples );
 
 	// we can't properly mipmap a NPT-texture in software
-	if( glConfig.ext.texture_non_power_of_two && ( flags & IT_NOMIPMAP ) )
+	if( glConfig.ext.texture_non_power_of_two && ( flags & IT_NOMIPMAP ) 
+		|| ( subImage && noScale ) )
 	{
 		scaledWidth = width;
 		scaledHeight = height;
@@ -1508,8 +1510,8 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	{
 		if( flags & ( IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL ) )
 		{
-			qbyte *temp = R_PrepareImageBuffer( TEXTURE_FLIPPING_BUF0, width * height * inSamples );
-			R_FlipTexture( data[0], temp, width, height, inSamples, 
+			qbyte *temp = R_PrepareImageBuffer( TEXTURE_FLIPPING_BUF0, width * height * samples );
+			R_FlipTexture( data[0], temp, width, height, samples, 
 				(flags & IT_FLIPX) ? qtrue : qfalse, 
 				(flags & IT_FLIPY) ? qtrue : qfalse, 
 				(flags & IT_FLIPDIAGONAL) ? qtrue : qfalse );
@@ -1528,12 +1530,6 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	if( upload_height )
 		*upload_height = scaledHeight;
 
-	// scan the texture for any non-255 alpha
-	if( flags & IT_LUMINANCE )
-	{
-		*samples = 1;
-	}
-
 	if( flags & IT_DEPTH )
 	{
 		comp = GL_DEPTH_COMPONENT;
@@ -1548,8 +1544,8 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	}
 	else
 	{
-		comp = R_TextureFormat( *samples, flags & IT_NOCOMPRESS ? qtrue : qfalse );
-		if( inSamples == 4 )
+		comp = R_TextureFormat( samples, flags & IT_NOCOMPRESS ? qtrue : qfalse );
+		if( samples == 4 )
 			format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
 		else
 			format = ( flags & IT_BGRA ? GL_BGR_EXT : GL_RGB );
@@ -1623,12 +1619,12 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 			qbyte *mip;
 
 			if( !scaled )
-				scaled = R_PrepareImageBuffer( TEXTURE_RESAMPLING_BUF, scaledWidth * scaledHeight * inSamples );
+				scaled = R_PrepareImageBuffer( TEXTURE_RESAMPLING_BUF, scaledWidth * scaledHeight * samples );
 
 			// resample the texture
 			mip = scaled;
 			if( data[i] )
-				R_ResampleTexture( data[i], width, height, (qbyte*)mip, scaledWidth, scaledHeight, inSamples );
+				R_ResampleTexture( data[i], width, height, (qbyte*)mip, scaledWidth, scaledHeight, samples );
 			else
 				mip = NULL;
 
@@ -1647,7 +1643,7 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 				h = scaledHeight;
 				while( w > 1 || h > 1 )
 				{
-					R_MipMap( mip, w, h, inSamples );
+					R_MipMap( mip, w, h, samples );
 
 					w >>= 1;
 					h >>= 1;
@@ -1720,7 +1716,8 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 
 	RB_BindTexture( 0, image );
 
-	R_Upload32( pic, width, height, flags, &image->upload_width, &image->upload_height, &image->samples, image->samples, qfalse );
+	R_Upload32( pic, width, height, flags, &image->upload_width, &image->upload_height, 
+		image->samples, qfalse, qfalse );
 
 	image_cur_hash = IMAGES_HASH_SIZE+1;
 	return image;
@@ -1738,14 +1735,35 @@ void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int fla
 
 	if( image->width != width || image->height != height )
 		R_Upload32( pic, width, height, flags, 
-		&(image->upload_width), &(image->upload_height), &(image->samples), samples, qfalse );
+		&(image->upload_width), &(image->upload_height), samples, qfalse, qfalse );
 	else
 		R_Upload32( pic, width, height, flags, 
-		&(image->upload_width), &(image->upload_height), &(image->samples), samples, qtrue );
+		&(image->upload_width), &(image->upload_height), samples, qtrue, qfalse );
 
 	image->flags = flags;
 	image->width = width;
 	image->height = height;
+	image->samples = samples;
+	image->registrationSequence = rf.registrationSequence;
+}
+
+/*
+* R_ReplaceSubImage
+*
+* FIXME: add x,y?
+*/
+void R_ReplaceSubImage( image_t *image, qbyte **pic, int width, int height )
+{
+	int w, h;
+
+	assert( image );
+	assert( image->texnum );
+
+	RB_BindTexture( 0, image );
+
+	R_Upload32( pic, width, height, image->flags,
+		&w, &h, image->samples, qtrue, qtrue );
+
 	image->registrationSequence = rf.registrationSequence;
 }
 
@@ -2443,9 +2461,22 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 	}
 	else
 	{
-		limit = min( limit, min( viewportWidth, viewportHeight ) );
-		for( width_ = 2; width_ <= limit; width_ <<= 1 );
-		width_ = height_ = width_ >> 1;
+		int d;
+
+		d = min( limit, viewportWidth );
+		if( ( d & (d-1) ) == 0 ) d--;
+		for( width_ = 2; width_ <= d; width_ <<= 1 );
+
+		d = min( limit, viewportHeight );
+		if( ( d & (d-1) ) == 0 ) d--;
+		for( height_ = 2; height_ <= d; height_ <<= 1 );
+
+		if( size ) {
+			while( width_ > size || height_ > size ) {
+				width_ >>= 1;
+				height_ >>= 1;
+			}
+		}
 	}
 
 	*width = width_;
@@ -2485,17 +2516,17 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			t->width = width;
 			t->height = height;
 			R_Upload32( &data, width, height, flags, &t->upload_width, &t->upload_height, 
-				&t->samples, t->samples, qfalse );
+				t->samples, qfalse, qfalse );
 		}
 
 		// update FBO, if attached
 		if( t->fbo ) {
-			R_UnregisterFBObject( t->fbo );
+			RFB_UnregisterObject( t->fbo );
 			t->fbo = 0;
 		}
 		if( t->flags & IT_FRAMEBUFFER ) {
-			t->fbo = R_RegisterFBObject( t->upload_width, t->upload_height );
-			R_AttachTextureToFBObject( t->fbo, t );
+			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height );
+			RFB_AttachTextureToObject( t->fbo, t );
 		}
 	}
 }
@@ -2645,19 +2676,27 @@ static void R_InitStretchRawYUVTextures( void )
 /*
 * R_InitScreenTexturesPair
 */
-static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t **depth, int samples )
+static void R_InitScreenTexturesPair( const char *name, image_t **color, 
+	image_t **depth, int samples, qboolean linear )
 {
+	int flags;
+
+	flags = IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP;
+	if( linear ) {
+		flags |= IT_NOFILTERING;
+	}
+
 	if( color ) {
 		R_InitViewportTexture( color, name, 0, 
 			glConfig.width, glConfig.height, 0, 
-			IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_FRAMEBUFFER|IT_CLAMP, samples );
+			flags|IT_FRAMEBUFFER, samples );
 	}
 	if( depth && *color ) {
 		R_InitViewportTexture( depth, va( "%s_depth", name ), 0,
-			(*color)->upload_width, (*color)->upload_height, 0, 
-			IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_DEPTH|IT_CLAMP, 1 );
+			glConfig.width, glConfig.height, 0, 
+			flags|IT_DEPTH, 1 );
 
-		R_AttachTextureToFBObject( (*color)->fbo, *depth );
+		RFB_AttachTextureToObject( (*color)->fbo, *depth );
 	}
 }
 
@@ -2666,10 +2705,17 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t
 */
 static void R_InitScreenTextures( void )
 {
-	R_InitScreenTexturesPair( "r_screentex", &r_screentexture, &r_screendepthtexture, 3 ); 
-	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, &r_screendepthtexturecopy, 3 );
-	R_InitScreenTexturesPair( "r_screenfxaacopy", &r_screenfxaacopy, NULL, 3 );
-	R_InitScreenTexturesPair( "r_screenweapontexture", &r_screenweapontexture, NULL, 4 );
+	R_InitScreenTexturesPair( "r_screentex", &r_screentexture, 
+		&r_screendepthtexture, 3, qfalse ); 
+
+	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, 
+		&r_screendepthtexturecopy, 3, qfalse );
+
+	R_InitScreenTexturesPair( "r_screenfxaacopy", &r_screenfxaacopy, 
+		NULL, 3, qfalse );
+
+	R_InitScreenTexturesPair( "r_screenweapontexture", &r_screenweapontexture, 
+		NULL, 4, qfalse );
 }
 
 /*
@@ -2804,7 +2850,7 @@ void R_TouchImage( image_t *image )
 
 	image->registrationSequence = rf.registrationSequence;
 	if( image->fbo ) {
-		R_TouchFBObject( image->fbo );
+		RFB_TouchObject( image->fbo );
 	}
 }
 

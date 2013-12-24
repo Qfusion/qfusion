@@ -61,12 +61,15 @@ void RB_FlipFrontFace( void );
 void RB_PolygonOffset( float factor, float offset );
 void RB_BindArrayBuffer( int buffer );
 void RB_BindElementArrayBuffer( int buffer );
-void RB_SetFrameBufferSize( int width, int height );
 void RB_EnableScissor( qboolean enable );
 void RB_Scissor( int x, int y, int w, int h );
 void RB_GetScissor( int *x, int *y, int *w, int *h );
 void RB_Viewport( int x, int y, int w, int h );
 void RB_Clear( int bits, float r, float g, float b, float a );
+
+void RB_BindFrameBufferObject( int object );
+int RB_BoundFrameBufferObject( void );
+void RB_BlitFrameBufferObject( int dest, int bitMask, int mode );
 
 void RB_BindVBO( int id, int primitive );
 mesh_t *RB_MapBatchMesh( int numVerts, int numElems );

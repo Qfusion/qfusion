@@ -40,9 +40,6 @@ uniform sampler2D u_BaseTexture;
 
 void main(void)
 {
-    vec2 rcpFrame = vec2(1.0) / vec2(u_Viewport.zw); 
-    vec2 pos = gl_FragCoord.xy / vec2(u_Viewport.zw);
-
 	// Only used on FXAA Quality.
     // Choose the amount of sub-pixel aliasing removal.
     // This can effect sharpness.
@@ -71,7 +68,10 @@ void main(void)
     float ConsoleEdgeThresholdMin = 0.05;
     vec4  Console360ConstDir = vec4(1.0, -1.0, 0.25, -0.25);
 
-    gl_FragColor = FxaaPixelShader(pos, ConsolePosPos, u_BaseTexture, u_BaseTexture, u_BaseTexture, rcpFrame, ConsoleRcpFrameOpt, ConsoleRcpFrameOpt2, Console360RcpFrameOpt2, QualitySubpix, QualityEdgeThreshold, QualityEdgeThresholdMin, ConsoleEdgeSharpness, ConsoleEdgeThreshold, ConsoleEdgeThresholdMin, Console360ConstDir);
+    gl_FragColor = FxaaPixelShader(v_TexCoord, ConsolePosPos, u_BaseTexture, u_BaseTexture, u_BaseTexture, 
+		u_TextureParams.zw, ConsoleRcpFrameOpt, ConsoleRcpFrameOpt2, Console360RcpFrameOpt2, 
+		QualitySubpix, QualityEdgeThreshold, QualityEdgeThresholdMin, ConsoleEdgeSharpness, 
+		ConsoleEdgeThreshold, ConsoleEdgeThresholdMin, Console360ConstDir);
 }
 
 #endif // FRAGMENT_SHADER

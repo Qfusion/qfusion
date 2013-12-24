@@ -361,8 +361,7 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 			cin->width = width;
 			cin->height = height;
 
-			// default to 255 for alpha
-			size = cin->width * cin->height * 4;
+			size = cin->width * cin->height * 3;
 			cin->vid_buffer = CIN_Alloc( cin->mempool, size );
 			memset( cin->vid_buffer, 0xFF, size );
 		}
@@ -685,7 +684,7 @@ qbyte *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 
 	if( haveVideo ) {
 		// convert YCbCr to RGB	
-		Theora_DecodeYCbCr2RGB( qth->ti.pixel_fmt, &qth->pub_yuv, 4, cin->vid_buffer );
+		Theora_DecodeYCbCr2RGB( qth->ti.pixel_fmt, &qth->pub_yuv, 3, cin->vid_buffer );
 	}
 
 	return cin->vid_buffer;

@@ -230,6 +230,8 @@ typedef struct
 	struct mesh_vbo_s *nullVBO;
 
 	qboolean		in2D;
+	int				width2D, height2D;
+
 	int				frameBufferWidth, frameBufferHeight;
 
 	float			cameraSeparation;
@@ -433,21 +435,21 @@ enum
 	FBO_COPY_INVERT_Y = 2
 };
 
-void		R_InitFBObjects( void );
-int			R_RegisterFBObject( int width, int height );
-void		R_UnregisterFBObject( int object );
-void		R_TouchFBObject( int object );
-void		R_UseFBObject( int object );
-int			R_ActiveFBObject( void );
-void		R_AttachTextureToFBObject( int object, image_t *texture );
-void		R_DetachTextureFromFBObject( qboolean depth );
-image_t		*R_GetFBObjectTextureAttachment( int object, qboolean depth );
-void		R_DisableFBObjectDrawBuffer( void );
-void		R_CopyFBObject( int dest, int bitMask, int mode );
-qboolean	R_CheckFBObjectStatus( void );
-void		R_GetFBObjectSize( int object, int *width, int *height );
-void		R_FreeUnusedFBObjects( void );
-void		R_ShutdownFBObjects( void );
+void		RFB_Init( void );
+int			RFB_RegisterObject( int width, int height );
+void		RFB_UnregisterObject( int object );
+void		RFB_TouchObject( int object );
+void		RFB_BindObject( int object );
+int			RFB_BoundObject( void );
+void		RFB_AttachTextureToObject( int object, image_t *texture );
+void		RFB_DetachTextureFromObject( qboolean depth );
+image_t		*RFB_GetObjectTextureAttachment( int object, qboolean depth );
+void		RFB_DisableObjectDrawBuffer( void );
+void		RFB_BlitObject( int dest, int bitMask, int mode );
+qboolean	RFB_CheckObjectStatus( void );
+void		RFB_GetObjectSize( int object, int *width, int *height );
+void		RFB_FreeUnusedObjects( void );
+void		RFB_Shutdown( void );
 
 //
 // r_light.c

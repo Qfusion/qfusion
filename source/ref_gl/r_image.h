@@ -44,7 +44,7 @@ enum
 	,IT_BGRA			= 1<<15
 };
 
-#define IT_CINEMATIC		( IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP|IT_NOCOMPRESS )
+#define IT_CINEMATIC		( IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP|IT_NOCOMPRESS|IT_NOFILTERING )
 #define IT_PORTALMAP		( IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_CLAMP )
 #define IT_SHADOWMAP		( IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_CLAMP|IT_NOCOMPRESS )
 
@@ -87,6 +87,7 @@ void R_AnisotropicFilter( int value );
 image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int flags, int samples );
 image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bumpScale );
 void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int flags, int samples );
+void R_ReplaceSubImage( image_t *image, qbyte **pic, int width, int height );
 
 void R_BeginAviDemo( void );
 void R_WriteAviFrame( int frame, qboolean scissor );
