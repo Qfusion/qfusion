@@ -12,6 +12,8 @@
 
 #include "../gameshared/q_keycodes.h"
 
+#include "parsers/ui_parsersound.h"
+
 #include <Rocket/Core/FontEffectInstancer.h>
 #include <Rocket/Controls.h>
 
@@ -327,10 +329,13 @@ void RocketModule::registerCustoms()
 
 	//
 	// GLOBAL CUSTOM PROPERTIES
+
+	Rocket::Core::StyleSheetSpecification::RegisterParser("sound", new PropertyParserSound());
+
 	Rocket::Core::StyleSheetSpecification::RegisterProperty("sound-hover", "", false)
-		.AddParser("string");
+		.AddParser("sound");
 	Rocket::Core::StyleSheetSpecification::RegisterProperty("sound-click", "", false)
-		.AddParser("string");
+		.AddParser("sound");
 }
 
 void RocketModule::unregisterCustoms()

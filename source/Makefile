@@ -468,6 +468,7 @@ CPPFILES_UI_ROCKET += $(wildcard ui/as/*.cpp)
 CPPFILES_UI_ROCKET += $(wildcard ui/datasources/*.cpp)
 CPPFILES_UI_ROCKET += $(wildcard ui/widgets/*.cpp)
 CPPFILES_UI_ROCKET += $(wildcard ui/decorators/*.cpp)
+CPPFILES_UI_ROCKET += $(wildcard ui/parsers/*.cpp)
 CFILES_UI_ROCKET = $(wildcard gameshared/q_*.c)
 CFILES_UI_ROCKET += $(wildcard qalgo/*.c)
 
