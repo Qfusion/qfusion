@@ -279,9 +279,6 @@ void CL_UIModule_Init( void )
 	import.Milliseconds = Sys_Milliseconds;
 	import.Microseconds = Sys_Microseconds;
 
-	import.Hash_BlockChecksum = Com_MD5Digest32;
-	import.Hash_SuperFastHash = Com_SuperFastHash;
-
 	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
 	import.AsyncStream_UrlDecode = AsyncStream_UrlDecode;
 	import.AsyncStream_PerformRequest = CL_UIModule_AsyncStream_PerformRequest;

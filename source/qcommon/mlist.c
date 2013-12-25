@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // MAPLIST FUNCTIONS
 
 #include "qcommon.h"
-#include "../gameshared/q_trie.h"
+#include "../qalgo/q_trie.h"
 
 #define MLIST_CACHE "mapcache.txt"
 #define MLIST_NULL  ""

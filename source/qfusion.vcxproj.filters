@@ -24,7 +24,7 @@
     <ClCompile Include="qcommon\asyncstream.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\base64.c">
+    <ClCompile Include="qalgo\base64.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="client\cin.c">
@@ -102,7 +102,7 @@
     <ClCompile Include="client\ftlib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\glob.c">
+    <ClCompile Include="qalgo\glob.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="qcommon\irc.c">
@@ -117,7 +117,7 @@
     <ClCompile Include="qcommon\library.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\md5.c">
+    <ClCompile Include="qalgo\md5.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="qcommon\mem.c">
@@ -225,9 +225,6 @@
     <ClCompile Include="qcommon\bsp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gameshared\q_trie.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="client\l10n.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -235,6 +232,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="win32\win_threads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qalgo\q_trie.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qalgo\hash.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -245,7 +248,7 @@
     <ClInclude Include="qcommon\asyncstream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qcommon\base64.h">
+    <ClInclude Include="qalgo\base64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cgame\cg_public.h">
@@ -284,7 +287,7 @@
     <ClInclude Include="client\ftlib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qcommon\glob.h">
+    <ClInclude Include="qalgo\glob.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="client\input.h">
@@ -299,7 +302,7 @@
     <ClInclude Include="client\libmumblelink.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qcommon\md5.h">
+    <ClInclude Include="qalgo\md5.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="matchmaker\mm_common.h">
@@ -407,9 +410,6 @@
     <ClInclude Include="cin\cin_public.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gameshared\q_trie.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="client\l10n.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -420,6 +420,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qcommon\qthreads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gameshared\q_trie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qalgo\hash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -208,10 +208,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="client\l10n.c" />
+    <ClCompile Include="qalgo\hash.c" />
     <ClCompile Include="qcommon\anticheat.c" />
     <ClCompile Include="qcommon\ascript.c" />
     <ClCompile Include="qcommon\asyncstream.c" />
-    <ClCompile Include="qcommon\base64.c" />
+    <ClCompile Include="qalgo\base64.c" />
     <ClCompile Include="client\cin.c" />
     <ClCompile Include="qcommon\bsp.c" />
     <ClCompile Include="qcommon\cjson.c" />
@@ -242,12 +243,12 @@
     <ClCompile Include="qcommon\dynvar.c" />
     <ClCompile Include="qcommon\files.c" />
     <ClCompile Include="client\ftlib.c" />
-    <ClCompile Include="qcommon\glob.c" />
+    <ClCompile Include="qalgo\glob.c" />
     <ClCompile Include="qcommon\irc.c" />
     <ClCompile Include="client\keys.c" />
     <ClCompile Include="client\libmumblelink.c" />
     <ClCompile Include="qcommon\library.c" />
-    <ClCompile Include="qcommon\md5.c" />
+    <ClCompile Include="qalgo\md5.c" />
     <ClCompile Include="qcommon\mem.c" />
     <ClCompile Include="qcommon\mlist.c" />
     <ClCompile Include="matchmaker\mm_common.c" />
@@ -273,7 +274,7 @@
     <ClCompile Include="server\sv_oob.c" />
     <ClCompile Include="server\sv_send.c" />
     <ClCompile Include="qcommon\svnrev.c" />
-    <ClCompile Include="gameshared\q_trie.c" />
+    <ClCompile Include="qalgo\q_trie.c" />
     <ClCompile Include="qcommon\webdownload.c" />
     <ClCompile Include="win32\win_fs.c" />
     <ClCompile Include="win32\win_input.c" />
@@ -288,9 +289,10 @@
     <ClInclude Include="cin\cin_public.h" />
     <ClInclude Include="client\l10n.h" />
     <ClInclude Include="ftlib\ftlib_public.h" />
+    <ClInclude Include="qalgo\hash.h" />
     <ClInclude Include="qcommon\anticheat.h" />
     <ClInclude Include="qcommon\asyncstream.h" />
-    <ClInclude Include="qcommon\base64.h" />
+    <ClInclude Include="qalgo\base64.h" />
     <ClInclude Include="cgame\cg_public.h" />
     <ClInclude Include="client\cin.h" />
     <ClInclude Include="qcommon\bsp.h" />
@@ -309,12 +311,12 @@
     <ClInclude Include="qcommon\cvar.h" />
     <ClInclude Include="qcommon\dynvar.h" />
     <ClInclude Include="client\ftlib.h" />
-    <ClInclude Include="qcommon\glob.h" />
+    <ClInclude Include="qalgo\glob.h" />
     <ClInclude Include="client\input.h" />
     <ClInclude Include="ref_gl\iqm.h" />
     <ClInclude Include="client\keys.h" />
     <ClInclude Include="client\libmumblelink.h" />
-    <ClInclude Include="qcommon\md5.h" />
+    <ClInclude Include="qalgo\md5.h" />
     <ClInclude Include="matchmaker\mm_common.h" />
     <ClInclude Include="matchmaker\mm_query.h" />
     <ClInclude Include="matchmaker\mm_rating.h" />

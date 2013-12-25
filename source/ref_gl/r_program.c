@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_program.c - OpenGL Shading Language support
 
 #include "r_local.h"
-#include "../gameshared/q_trie.h"
+#include "../qalgo/q_trie.h"
 
 #define MAX_GLSL_PROGRAMS			1024
 #define GLSL_PROGRAMS_HASH_SIZE		256

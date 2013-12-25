@@ -214,10 +214,10 @@
     <ClCompile Include="..\qcommon\cvar.c" />
     <ClCompile Include="..\qcommon\dynvar.c" />
     <ClCompile Include="..\qcommon\files.c" />
-    <ClCompile Include="..\qcommon\glob.c" />
+    <ClCompile Include="..\qalgo\glob.c" />
     <ClCompile Include="..\null\irc_null.c" />
     <ClCompile Include="..\qcommon\library.c" />
-    <ClCompile Include="..\qcommon\md5.c" />
+    <ClCompile Include="..\qalgo\md5.c" />
     <ClCompile Include="..\qcommon\mem.c" />
     <ClCompile Include="..\null\mm_null.c" />
     <ClCompile Include="..\qcommon\msg.c" />
@@ -230,7 +230,7 @@
     <ClCompile Include="..\qcommon\snap_read.c" />
     <ClCompile Include="..\qcommon\snap_write.c" />
     <ClCompile Include="..\qcommon\svnrev.c" />
-    <ClCompile Include="..\gameshared\q_trie.c" />
+    <ClCompile Include="..\qalgo\q_trie.c" />
     <ClCompile Include="..\win32\win_threads.c" />
     <ClCompile Include="tv_cmds.c" />
     <ClCompile Include="tv_downstream.c" />
@@ -271,8 +271,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\gameshared\config.h" />
+    <ClInclude Include="..\qalgo\md5.h" />
     <ClInclude Include="..\qcommon\bsp.h" />
-    <ClInclude Include="..\qcommon\glob.h" />
+    <ClInclude Include="..\qalgo\glob.h" />
     <ClInclude Include="..\gameshared\q_arch.h" />
     <ClInclude Include="..\gameshared\q_collision.h" />
     <ClInclude Include="..\gameshared\q_comref.h" />
