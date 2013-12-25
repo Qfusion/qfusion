@@ -193,6 +193,7 @@
     </ClCompile>
     <ClCompile Include="as\as_bind_l10n.cpp" />
     <ClCompile Include="datasources\ui_gameajax_datasource.cpp" />
+    <ClCompile Include="parsers\ui_parsersound.cpp" />
     <ClCompile Include="ui_public.cpp" />
     <ClCompile Include="widgets\ui_anchor.cpp" />
     <ClCompile Include="widgets\ui_colorselector.cpp" />
@@ -272,6 +273,7 @@
     <ClInclude Include="..\qalgo\hash.h" />
     <ClInclude Include="..\qalgo\md5.h" />
     <ClInclude Include="datasources\ui_gameajax_datasource.h" />
+    <ClInclude Include="parsers\ui_parsersound.h" />
     <ClInclude Include="ui_public.h" />
     <ClInclude Include="as\asbind.h" />
     <ClInclude Include="as\asmodule.h" />
