@@ -59,9 +59,6 @@ typedef struct
 	unsigned int ( *Sys_Milliseconds )( void );
 	quint64 ( *Sys_Microseconds )( void );
 
-	unsigned int (* Hash_BlockChecksum )( const qbyte * data, size_t len );
-	unsigned int (* Hash_SuperFastHash )( const qbyte * data, size_t len, unsigned int seed );
-
 	int ( *FS_FOpenFile )( const char *filename, int *filenum, int mode );
 	int ( *FS_FOpenAbsoluteFile )( const char *filename, int *filenum, int mode );
 	int ( *FS_Read )( void *buffer, size_t len, int file );

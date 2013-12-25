@@ -375,6 +375,7 @@ endif
 CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c unix/unix_threads.c
 endif
 CFILES_CLIENT += $(wildcard gameshared/q_*.c)
+CFILES_CLIENT += $(wildcard qalgo/*.c)
 # CFILES_CLIENT += null/mm_null.c
 CFILES_CLIENT += $(wildcard matchmaker/*.c)
 
@@ -389,6 +390,7 @@ OBJS_CLIENT = $(addprefix $(BUILDDIR)/client/, $(OFILES_CLIENT) )
 #########
 CFILES_OPENAL  = $(wildcard snd_openal/*.c)
 CFILES_OPENAL += $(wildcard gameshared/q_*.c)
+CFILES_OPENAL += $(wildcard qalgo/*.c)
 
 CFILES_OPENAL_WITHOUT_PATH= $(notdir  $(CFILES_OPENAL))
 OFILES_OPENAL=$(CFILES_OPENAL_WITHOUT_PATH:.c=.o)
@@ -404,6 +406,7 @@ else
 CFILES_QF += unix/unix_snd.c
 endif
 CFILES_QF += $(wildcard gameshared/q_*.c)
+CFILES_QF += $(wildcard qalgo/*.c)
 
 CFILES_QF_WITHOUT_PATH= $(notdir  $(CFILES_QF))
 OFILES_QF=$(CFILES_QF_WITHOUT_PATH:.c=.o)
@@ -412,7 +415,7 @@ OBJS_QF = $(addprefix $(BUILDDIR)/qf/, $(OFILES_QF) )
 #########
 # DED
 #########
-CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/glob.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/mlist.c qcommon/webdownload.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_write.c qcommon/ascript.c qcommon/anticheat.c qcommon/wswcurl.c qcommon/cjson.c qcommon/base64.c qcommon/threads.c
+CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/mlist.c qcommon/webdownload.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_write.c qcommon/ascript.c qcommon/anticheat.c qcommon/wswcurl.c qcommon/cjson.c qcommon/base64.c qcommon/threads.c
 CFILES_DED += $(wildcard server/*.c)
 CFILES_DED += null/cl_null.c
 ifeq ($(USE_MINGW),YES)
@@ -421,6 +424,7 @@ else
 CFILES_DED += unix/unix_fs.c unix/unix_net.c unix/unix_lib.c unix/unix_sys.c unix/unix_threads.c
 endif
 CFILES_DED += $(wildcard gameshared/q_*.c)
+CFILES_DED += $(wildcard qalgo/*.c)
 CFILES_DED += $(wildcard matchmaker/mm_*.c)
 
 CFILES_DED_WITHOUT_PATH= $(notdir  $(CFILES_DED))
@@ -432,6 +436,7 @@ OBJS_DED = $(addprefix $(BUILDDIR)/ded/, $(OFILES_DED) )
 #########
 CPPFILES_CGAME  = $(wildcard cgame/*.cpp)
 CFILES_CGAME = $(wildcard gameshared/*.c)
+CFILES_CGAME += $(wildcard qalgo/*.c)
 
 CPPFILES_CGAME_WITHOUT_PATH= $(notdir  $(CPPFILES_CGAME))
 OFILES_CGAME=$(CPPFILES_CGAME_WITHOUT_PATH:.cpp=.o)
@@ -445,6 +450,7 @@ OBJS_CGAME = $(addprefix $(BUILDDIR)/cgame/, $(OFILES_CGAME) )
 CPPFILES_GAME  = $(wildcard game/*.cpp)
 CPPFILES_GAME += $(wildcard game/ai/*.cpp)
 CFILES_GAME = $(wildcard gameshared/*.c)
+CFILES_GAME += $(wildcard qalgo/*.c)
 CFILES_GAME += matchmaker/mm_rating.c
 
 CFILES_GAME_WITHOUT_PATH= $(notdir  $(CFILES_GAME))
@@ -463,6 +469,7 @@ CPPFILES_UI_ROCKET += $(wildcard ui/datasources/*.cpp)
 CPPFILES_UI_ROCKET += $(wildcard ui/widgets/*.cpp)
 CPPFILES_UI_ROCKET += $(wildcard ui/decorators/*.cpp)
 CFILES_UI_ROCKET = $(wildcard gameshared/q_*.c)
+CFILES_UI_ROCKET += $(wildcard qalgo/*.c)
 
 CFILES_UI_ROCKET_WITHOUT_PATH= $(notdir  $(CFILES_UI_ROCKET))
 OFILES_UI_ROCKET=$(CFILES_UI_ROCKET_WITHOUT_PATH:.c=.o)
@@ -475,6 +482,7 @@ OBJS_UI_ROCKET = $(addprefix $(BUILDDIR)/ui/, $(OFILES_UI_ROCKET) )
 #########
 CFILES_IRC  = $(wildcard irc/*.c)
 CFILES_IRC += $(wildcard gameshared/q_*.c)
+CFILES_IRC += $(wildcard qalgo/*.c)
 
 CFILES_IRC_WITHOUT_PATH= $(notdir  $(CFILES_IRC))
 OFILES_IRC=$(CFILES_IRC_WITHOUT_PATH:.c=.o)
@@ -485,6 +493,7 @@ OBJS_IRC = $(addprefix $(BUILDDIR)/irc/, $(OFILES_IRC) )
 #########
 CFILES_CIN  = $(wildcard cin/*.c)
 CFILES_CIN += $(wildcard gameshared/q_*.c)
+CFILES_CIN += $(wildcard qalgo/*.c)
 
 CFILES_CIN_WITHOUT_PATH= $(notdir  $(CFILES_CIN))
 OFILES_CIN=$(CFILES_CIN_WITHOUT_PATH:.c=.o)
@@ -495,6 +504,7 @@ OBJS_CIN = $(addprefix $(BUILDDIR)/cin/, $(OFILES_CIN) )
 #########
 CFILES_FTLIB  = $(wildcard ftlib/*.c)
 CFILES_FTLIB += $(wildcard gameshared/q_*.c)
+CFILES_FTLIB += $(wildcard qalgo/*.c)
 
 CFILES_FTLIB_WITHOUT_PATH= $(notdir  $(CFILES_FTLIB))
 OFILES_FTLIB=$(CFILES_FTLIB_WITHOUT_PATH:.c=.o)
@@ -505,6 +515,7 @@ OBJS_FTLIB = $(addprefix $(BUILDDIR)/ftlib/, $(OFILES_FTLIB) )
 #########
 CFILES_REF_GL  = $(wildcard ref_gl/*.c)
 CFILES_REF_GL += $(wildcard gameshared/q_*.c)
+CFILES_REF_GL += $(wildcard qalgo/*.c)
 CFILES_REF_GL += qcommon/bsp.c qcommon/patch.c
 ifeq ($(USE_MINGW),YES)
 CFILES_REF_GL += win32/win_qgl.c win32/win_glw.c
@@ -527,6 +538,7 @@ CPPFILES_ANGELWRAP  = $(wildcard angelwrap/*.cpp)
 CPPFILES_ANGELWRAP += $(wildcard angelwrap/addon/*.cpp)
 CFILES_ANGELWRAP    = $(wildcard angelwrap/*.c)
 CFILES_ANGELWRAP   += $(wildcard gameshared/q_*.c)
+CFILES_ANGELWRAP   += $(wildcard qalgo/*.c)
 
 CFILES_ANGELWRAP_WITHOUT_PATH= $(notdir  $(CFILES_ANGELWRAP))
 CPPFILES_ANGELWRAP_WITHOUT_PATH= $(notdir  $(CPPFILES_ANGELWRAP))
@@ -537,7 +549,7 @@ OBJS_ANGELWRAP = $(addprefix $(BUILDDIR)/angelwrap/, $(OFILES_ANGELWRAP) )
 #########
 # TV SERVER
 #########
-CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/glob.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_read.c qcommon/snap_write.c qcommon/wswcurl.c qcommon/threads.c
+CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_read.c qcommon/snap_write.c qcommon/wswcurl.c qcommon/threads.c
 CFILES_TV_SERVER += $(wildcard tv_server/*.c)
 CFILES_TV_SERVER += null/cl_null.c null/ascript_null.c null/mm_null.c
 ifeq ($(USE_MINGW),YES)
@@ -546,6 +558,7 @@ else
 CFILES_TV_SERVER += unix/unix_fs.c unix/unix_net.c unix/unix_sys.c unix/unix_lib.c unix/unix_threads.c
 endif
 CFILES_TV_SERVER += $(wildcard gameshared/q_*.c)
+CFILES_TV_SERVER += $(wildcard qalgo/*.c)
 CFILES_TV_SERVER += $(wildcard tv_server/tv_module/*.c)
 
 CFILES_TV_SERVER_WITHOUT_PATH= $(notdir  $(CFILES_TV_SERVER))
@@ -913,7 +926,9 @@ endif
 endif
 
 $(BUILDDIR)/client/%.o: gameshared/%.c
-	@$(DO_CC_DED)
+	@$(DO_CC_CLIENT)
+$(BUILDDIR)/client/%.o: qalgo/%.c
+	@$(DO_CC_CLIENT)
 
 $(BINDIR)/qfusion: unix/start_script.sh
 	@echo "  > Installing client start script" && \
@@ -928,7 +943,9 @@ $(BUILDDIR)/openal/%.o: snd_openal/%.c
 
 $(BUILDDIR)/openal/%.o: gameshared/%.c
 	@$(DO_CC_MODULE)
-
+$(BUILDDIR)/openal/%.o: qalgo/%.c
+	@$(DO_CC_MODULE)
+	
 ########
 # QF
 ########
@@ -945,7 +962,8 @@ endif
 
 $(BUILDDIR)/qf/%.o: gameshared/%.c
 	@$(DO_CC_MODULE)
-
+$(BUILDDIR)/qf/%.o: qalgo/%.c
+	@$(DO_CC_MODULE)
 
 ########
 # DED
@@ -973,6 +991,9 @@ $(BUILDDIR)/ded/%.o: game/%.c
 $(BUILDDIR)/ded/%.o: gameshared/%.c
 	@$(DO_CC_DED)
 
+$(BUILDDIR)/ded/%.o: qalgo/%.c
+	@$(DO_CC_DED)
+	
 $(BUILDDIR)/ded/%.o: matchmaker/%.c
 	@$(DO_CC_DED)
 
@@ -990,6 +1011,9 @@ $(BUILDDIR)/cgame/%.o: cgame/%.cpp
 $(BUILDDIR)/cgame/%.o: gameshared/%.c
 	@$(DO_CC_MODULE)
 
+$(BUILDDIR)/cgame/%.o: qalgo/%.c
+	@$(DO_CC_MODULE)
+
 ########
 # GAME
 ########
@@ -1002,6 +1026,9 @@ $(BUILDDIR)/game/%.o: game/ai/%.cpp
 $(BUILDDIR)/game/%.o: gameshared/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_GAME)
 
+$(BUILDDIR)/game/%.o: qalgo/%.c
+	@$(DO_CC_MODULE)
+	
 $(BUILDDIR)/game/%.o: matchmaker/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_GAME)
 
@@ -1009,6 +1036,9 @@ $(BUILDDIR)/game/%.o: matchmaker/%.c
 # UI.ROCKET
 ########
 $(BUILDDIR)/ui/%.o: gameshared/%.c
+	@$(DO_CC_MODULE)
+
+$(BUILDDIR)/ui/%.o: qalgo/%.c
 	@$(DO_CC_MODULE)
 
 $(BUILDDIR)/ui/%.o: ui/%.cpp
@@ -1038,6 +1068,9 @@ $(BUILDDIR)/ui/%.o: ui/decorators/%.cpp
 $(BUILDDIR)/irc/%.o: gameshared/%.c
 	@$(DO_CC_MODULE)
 
+$(BUILDDIR)/irc/%.o: qalgo/%.c
+	@$(DO_CC_MODULE)
+
 $(BUILDDIR)/irc/%.o: irc/%.c
 	@$(DO_CC_MODULE)
 
@@ -1045,6 +1078,9 @@ $(BUILDDIR)/irc/%.o: irc/%.c
 # CIN
 ########
 $(BUILDDIR)/cin/%.o: gameshared/%.c
+	@$(DO_CC_MODULE)
+
+$(BUILDDIR)/cin/%.o: qalgo/%.c
 	@$(DO_CC_MODULE)
 
 $(BUILDDIR)/cin/%.o: cin/%.c
@@ -1056,6 +1092,9 @@ $(BUILDDIR)/cin/%.o: cin/%.c
 $(BUILDDIR)/ftlib/%.o: gameshared/%.c
 	@$(DO_CC_MODULE)
 
+$(BUILDDIR)/ftlib/%.o: qalgo/%.c
+	@$(DO_CC_MODULE)
+
 $(BUILDDIR)/ftlib/%.o: ftlib/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_FTLIB)
 
@@ -1063,6 +1102,9 @@ $(BUILDDIR)/ftlib/%.o: ftlib/%.c
 # REF_GL
 ########
 $(BUILDDIR)/ref_gl/%.o: gameshared/%.c
+	@$(DO_CC_MODULE)
+
+$(BUILDDIR)/ref_gl/%.o: qalgo/%.c
 	@$(DO_CC_MODULE)
 
 $(BUILDDIR)/ref_gl/%.o: qcommon/%.c
@@ -1090,8 +1132,8 @@ endif
 $(BUILDDIR)/angelwrap/%.o: gameshared/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_ANGELWRAP)
 
-$(BUILDDIR)/angelwrap/%.o: angelwrap/%.c
-	@$(DO_CC_MODULE) $(CFLAGS_ANGELWRAP)
+$(BUILDDIR)/angelwrap/%.o: qalgo/%.c
+	@$(DO_CC_MODULE)
 
 $(BUILDDIR)/angelwrap/%.o: angelwrap/%.cpp
 	@$(DO_CXX_MODULE) $(CFLAGS_ANGELWRAP)
@@ -1126,6 +1168,9 @@ $(BUILDDIR)/tv_server/%.o: null/%.c
 	@$(DO_CC_TV_SERVER)
 
 $(BUILDDIR)/tv_server/%.o: gameshared/%.c
+	@$(DO_CC_TV_SERVER)
+
+$(BUILDDIR)/tv_server/%.o: qalgo/%.c
 	@$(DO_CC_TV_SERVER)
 
 $(BINDIR)/qfusiontv_server: unix/start_script.sh

@@ -114,7 +114,10 @@
     <ClCompile Include="r_public.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\gameshared\q_trie.c">
+    <ClCompile Include="..\qalgo\q_trie.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\qalgo\hash.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -200,10 +203,13 @@
     <ClInclude Include="..\cgame\ref.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="qmesa.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\gameshared\q_trie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qmesa.h">
+    <ClInclude Include="..\qalgo\hash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

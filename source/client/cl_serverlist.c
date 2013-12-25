@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_serverlist.c  -- interactuates with the master server
 
 #include "client.h"
-#include "../gameshared/q_trie.h"
+#include "../qalgo/q_trie.h"
 
 #define MAX_MASTER_SERVERS					4
 

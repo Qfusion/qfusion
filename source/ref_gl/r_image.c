@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "r_local.h"
+#include "../qalgo/hash.h"
 
 #if defined ( __MACOSX__ )
 #include "libjpeg/jpeglib.h"
@@ -1695,7 +1696,7 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 	int name_len = strlen( name );
 
 	if( image_cur_hash >= IMAGES_HASH_SIZE )
-		image_cur_hash = ri.Hash_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
+		image_cur_hash = COM_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
 
 	image = R_AllocPic();
 	if( !image ) {
@@ -1827,7 +1828,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 	pathname[len] = 0;
 
 	// look for it
-	key = image_cur_hash = ri.Hash_SuperFastHash( ( const qbyte *)pathname, len, len ) % IMAGES_HASH_SIZE;
+	key = image_cur_hash = COM_SuperFastHash( ( const qbyte *)pathname, len, len ) % IMAGES_HASH_SIZE;
 	hnode = &images_hash_headnode[key];
 	if( flags & IT_HEIGHTMAP )
 	{
@@ -2629,7 +2630,7 @@ static void R_InitStretchRawTexture( void )
 	int name_len = strlen( name );
 
 	// reserve a dummy texture slot
-	image_cur_hash = ri.Hash_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
+	image_cur_hash = COM_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
 	r_rawtexture = R_AllocPic();
 
 	assert( r_rawtexture );
@@ -2656,7 +2657,7 @@ static void R_InitStretchRawYUVTextures( void )
 		// reserve a dummy texture slot
 		int name_len = strlen( name[i] );
 
-		image_cur_hash = ri.Hash_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
+		image_cur_hash = COM_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
 		rawtexture = R_AllocPic();
 
 		assert( rawtexture );

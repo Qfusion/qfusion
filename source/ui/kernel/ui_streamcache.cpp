@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ui_precompiled.h"
 #include "kernel/ui_common.h"
 #include "kernel/ui_streamcache.h"
+#include "../../qalgo/md5.h"
 #include <time.h>
 
 namespace WSWUI
@@ -268,7 +269,7 @@ std::string StreamCache::CacheFileForUrl( const std::string url, bool noCache )
 	std::string fileName;
 
 	// compute hash key for the URL and convert to hex
-	hashkey = trap::Hash_BlockChecksum( ( const qbyte * )url.c_str(), url.size() );
+	hashkey = md5_digest32( ( const qbyte * )url.c_str(), url.size() );
 	std::stringstream outstream;
 	outstream << std::hex << hashkey;	// to hex
 

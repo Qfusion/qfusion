@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // r_shader.c
 
 #include "r_local.h"
+#include "../qalgo/hash.h"
 
 #define SHADERS_HASH_SIZE	128
 #define SHADERCACHE_HASH_SIZE	128
@@ -1855,7 +1856,7 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache )
 	*cache = NULL;
 
 	len = strlen( name );
-	key = ri.Hash_SuperFastHash( ( const qbyte * )name, len, len ) % SHADERCACHE_HASH_SIZE;
+	key = COM_SuperFastHash( ( const qbyte * )name, len, len ) % SHADERCACHE_HASH_SIZE;
 	for( c = shadercache_hash[key]; c; c = c->hash_next )
 	{
 		if( !Q_stricmp( c->name, name ) )
@@ -2786,7 +2787,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 		return NULL;
 
 	// test if already loaded
-	key = ri.Hash_SuperFastHash( ( const qbyte *)shortname, nameLength, nameLength ) % SHADERS_HASH_SIZE;
+	key = COM_SuperFastHash( ( const qbyte *)shortname, nameLength, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 
 	// scan all instances of the same shader for exact match of the type

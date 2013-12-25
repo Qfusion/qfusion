@@ -21,7 +21,7 @@
     <ClCompile Include="qcommon\ascript.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\base64.c">
+    <ClCompile Include="qalgo\base64.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="qcommon\cjson.c">
@@ -57,13 +57,13 @@
     <ClCompile Include="qcommon\files.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\glob.c">
+    <ClCompile Include="qalgo\glob.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="qcommon\irc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\md5.c">
+    <ClCompile Include="qalgo\md5.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="qcommon\mem.c">
@@ -165,7 +165,7 @@
     <ClCompile Include="qcommon\bsp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gameshared\q_trie.c">
+    <ClCompile Include="qtrie\q_trie.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="qcommon\threads.c">
@@ -179,7 +179,7 @@
     <ClInclude Include="qcommon\anticheat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qcommon\base64.h">
+    <ClInclude Include="qalgo\base64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qcommon\cjson.h">
@@ -203,10 +203,10 @@
     <ClInclude Include="game\g_public.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qcommon\glob.h">
+    <ClInclude Include="qalgo\glob.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qcommon\md5.h">
+    <ClInclude Include="qalgo\md5.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="matchmaker\mm_common.h">
@@ -287,7 +287,7 @@
     <ClInclude Include="qcommon\bsp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gameshared\q_trie.h">
+    <ClInclude Include="qtrie\q_trie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qcommon\qthreads.h">

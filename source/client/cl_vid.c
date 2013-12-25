@@ -412,9 +412,6 @@ static qboolean VID_LoadRefresh( const char *name )
 	import.Cmd_ExecuteText = &Cbuf_ExecuteText;
 	import.Cmd_SetCompletionFunc = &Cmd_SetCompletionFunc;
 
-	import.Hash_BlockChecksum = &Com_MD5Digest32;
-	import.Hash_SuperFastHash = &Com_SuperFastHash;
-
 	import.FS_FOpenFile = &FS_FOpenFile;
 	import.FS_FOpenAbsoluteFile = &FS_FOpenAbsoluteFile;
 	import.FS_Read = &FS_Read;
