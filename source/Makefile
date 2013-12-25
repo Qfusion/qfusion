@@ -96,7 +96,7 @@ DEPENDFILE_NULL=$(BUILDDIR)/null/Makefile.d
 DEPENDFILE_ROCKETCORE=$(BUILDDIR)/rocketcore/Makefile.d
 DEPENDFILE_ROCKETCONTROLS=$(BUILDDIR)/rocketcontrols/Makefile.d
 
-BUILDDIRS=$(BUILDDIR)/client $(BUILDDIR)/ded $(BUILDDIR)/cgame $(BUILDDIR)/game $(BUILDDIR)/ui $(BUILDDIR)/openal $(BUILDDIR)/qf $(BUILDDIR)/irc $(BUILDDIR)/cin $(BUILDDIR)/ftlib $(BUILDDIR)/ref_gl $(BUILDDIR)/angelwrap $(BUILDDIR)/tv_server $(BUILDDIR)/rocketcore $(BUILDDIR)/rocketcontrols
+BUILDDIRS=$(BUILDDIR)/client $(BUILDDIR)/ded $(BUILDDIR)/cgame $(BUILDDIR)/game $(BUILDDIR)/ui $(BUILDDIR)/ui/pch $(BUILDDIR)/openal $(BUILDDIR)/qf $(BUILDDIR)/irc $(BUILDDIR)/cin $(BUILDDIR)/ftlib $(BUILDDIR)/ref_gl $(BUILDDIR)/angelwrap $(BUILDDIR)/tv_server $(BUILDDIR)/rocketcore $(BUILDDIR)/rocketcontrols
 
 ###########################################################
 # Angelwrap stuff
@@ -137,7 +137,7 @@ CFLAGS_ROCKET+=-Iui
 
 ####################### MINGW ######################
 ifeq ($(USE_MINGW),YES)
-CFLAGS_COMMON=-D_M_IX86 $(CFLAGS) -MD -I. -Iwin32/include -I../libsrcs/zlib -I../libsrcs/libcurl/include -D__WIN32 -D__USE_LARGEFILE -D__USE_LARGEFILE64 -mwindows -Wall -Wno-unknown-pragmas -Wno-unused-function
+CFLAGS_COMMON=-D_M_IX86 $(CFLAGS) -MD -I. -Iwin32/include -I../libsrcs/zlib -I../libsrcs/libcurl/include -D__WIN32 -D__USE_LARGEFILE -D__USE_LARGEFILE64 -mwindows -Wall -Wno-unknown-pragmas -Wno-unused-function -Winvalid-pch
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
 ifeq ($(DEBUG_BUILD),YES)
@@ -214,7 +214,7 @@ else # USE_MINGW
 LOCALBASE?=/usr/local
 X11BASE?=/usr/X11R6
 
-CFLAGS_COMMON=$(CFLAGS) -pipe -I. -I$(LOCALBASE)/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden
+CFLAGS_COMMON=$(CFLAGS) -pipe -I. -I$(LOCALBASE)/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG -msse2
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
 ifeq ($(DEBUG_BUILD),YES)
@@ -471,6 +471,9 @@ CPPFILES_UI_ROCKET += $(wildcard ui/decorators/*.cpp)
 CFILES_UI_ROCKET = $(wildcard gameshared/q_*.c)
 CFILES_UI_ROCKET += $(wildcard qalgo/*.c)
 
+PCH_UI_ROCKET = $(addprefix $(BUILDDIR)/ui/pch/, ui_precompiled.h.gch)
+CFLAGS_ROCKET := $(addprefix -I$(BUILDDIR)/ui/pch/ , $(CFLAGS_ROCKET))
+
 CFILES_UI_ROCKET_WITHOUT_PATH= $(notdir  $(CFILES_UI_ROCKET))
 OFILES_UI_ROCKET=$(CFILES_UI_ROCKET_WITHOUT_PATH:.c=.o)
 CPPFILES_UI_ROCKET_WITHOUT_PATH= $(notdir  $(CPPFILES_UI_ROCKET))
@@ -694,11 +697,11 @@ message-ui:
 	@echo "> *********************************************************"
 	@echo "> * Building ui"
 	@echo "> *********************************************************"
-compile-ui: $(OBJS_UI_ROCKET) $(LIBROCKET_LIB)
+compile-ui: $(PCH_UI_ROCKET) $(OBJS_UI_ROCKET) $(LIBROCKET_LIB)
 link-ui: $(BINDIR)/base $(BINDIR)/base/ui_$(ARCH).$(SHARED_LIBRARY_EXTENSION)
 clean-ui:
 	@echo "  > Removing ui objects" && \
-	$(RM) $(OBJS_UI_ROCKET)
+	$(RM) $(PCH_UI_ROCKET) $(OBJS_UI_ROCKET)
 
 $(LIBROCKET_LIB):
 	@echo "> * Building Rocket library"
@@ -1035,6 +1038,9 @@ $(BUILDDIR)/game/%.o: matchmaker/%.c
 ########
 # UI.ROCKET
 ########
+$(BUILDDIR)/ui/pch/ui_precompiled.h.gch: ui/ui_precompiled.h
+	@$(DO_CXX_MODULE) $(CFLAGS_ROCKET)
+
 $(BUILDDIR)/ui/%.o: gameshared/%.c
 	@$(DO_CC_MODULE)
 
