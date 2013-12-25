@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 #include "qcommon.h"
-#include "../gameshared/q_trie.h"
+#include "../qalgo/q_trie.h"
 #include "../client/console.h"
 
 #include <assert.h>

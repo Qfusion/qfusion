@@ -819,12 +819,6 @@ void		Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum );
 
 void	    Com_PageInMemory( qbyte *buffer, int size );
 
-unsigned int Com_HashKey( const char *name, int hashsize );
-unsigned int Com_SuperFastHash( const qbyte * data, size_t len, unsigned int hash );
-unsigned int Com_SuperFastHash64BitInt( quint64 data );
-
-unsigned int Com_MD5Digest32( const qbyte * data, size_t len );
-
 unsigned int Com_DaysSince1900( void );
 
 extern cvar_t *developer;

@@ -136,9 +136,6 @@ typedef struct
 	unsigned int ( *Milliseconds )( void );
 	quint64 ( *Microseconds )( void );
 
-	unsigned int (* Hash_BlockChecksum )( const qbyte * data, size_t len );
-	unsigned int (* Hash_SuperFastHash )( const qbyte * data, size_t len, unsigned int seed );
-
 	// files will be memory mapped read only
 	// the returned buffer may be part of a larger pak file,
 	// or a discrete file from anywhere in the quake search path

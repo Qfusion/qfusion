@@ -183,6 +183,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\qalgo\hash.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\qalgo\md5.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="as\as_bind_l10n.cpp" />
     <ClCompile Include="datasources\ui_gameajax_datasource.cpp" />
     <ClCompile Include="ui_public.cpp" />
@@ -261,6 +269,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\qalgo\hash.h" />
+    <ClInclude Include="..\qalgo\md5.h" />
     <ClInclude Include="datasources\ui_gameajax_datasource.h" />
     <ClInclude Include="ui_public.h" />
     <ClInclude Include="as\asbind.h" />

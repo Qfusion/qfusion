@@ -14,8 +14,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-
-#include "qcommon.h"
 #include "base64.h"
 
 // Disable "array is too small to include a terminating null character" warning
@@ -23,7 +21,7 @@
 # pragma warning(disable:4295)
 #endif
 
-static const unsigned char base64_table[64] =
+static const unsigned char base64_table[65] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 /**
@@ -52,7 +50,7 @@ unsigned char * base64_encode(const unsigned char *src, size_t len,
 	olen = len * 4 / 3 + 4; /* 3-byte blocks to 4-byte */
 	// olen += olen / 72; /* line feeds */
 	olen++; /* nul termination */
-	out = Mem_TempMalloc(olen);
+	out = ( unsigned char * )malloc(olen);
 	if (out == NULL)
 		return NULL;
 
@@ -117,7 +115,7 @@ unsigned char * base64_decode(const unsigned char *src, size_t len,
 
 	memset(dtable, 0x80, 256);
 	for (i = 0; i < sizeof(base64_table); i++)
-		dtable[base64_table[i]] = i;
+		dtable[base64_table[i]] = (unsigned char)i;
 	dtable['='] = 0;
 
 	count = 0;
@@ -131,7 +129,7 @@ unsigned char * base64_decode(const unsigned char *src, size_t len,
 
 	olen = count / 4 * 3;
 	olen++; /* nul termination */
-	pos = out = Mem_TempMalloc(olen);
+	pos = out = ( unsigned char * )malloc(olen);
 	if (out == NULL)
 		return NULL;
 

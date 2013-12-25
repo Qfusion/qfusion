@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../matchmaker/mm_query.h"
 #include "../qcommon/wswcurl.h"
 #include "../qcommon/cjson.h"
-#include "../qcommon/base64.h"
+#include "../qalgo/base64.h"
 
 #include "zlib.h"
 
@@ -390,7 +390,7 @@ void StatQuery_Prepare( stat_query_t *query )
 		// set the json field to POST request
 		wswcurl_formadd_raw( query->req, "data", b64Data, b64Size );
 
-		SQFREE( b64Data );
+		free( b64Data );
 	}
 }
 

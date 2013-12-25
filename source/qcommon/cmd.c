@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cmd.c -- Quake script command processing module
 
 #include "qcommon.h"
-#include "../gameshared/q_trie.h"
+#include "../qalgo/q_trie.h"
 #include "../client/console.h"
 
 #define	MAX_ALIAS_NAME	    64
