@@ -441,9 +441,6 @@ void CL_GameModule_Init( void )
 	import.Milliseconds = Sys_Milliseconds;
 	import.DownloadRequest = CL_DownloadRequest;
 
-	import.Hash_BlockChecksum = Com_MD5Digest32;
-	import.Hash_SuperFastHash = Com_SuperFastHash;
-
 	import.NET_GetUserCmd = CL_GameModule_NET_GetUserCmd;
 	import.NET_GetCurrentUserCmdNum = CL_GameModule_NET_GetCurrentUserCmdNum;
 	import.NET_GetCurrentState = CL_GameModule_NET_GetCurrentState;

@@ -17,7 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#include "q_shared.h"
+
+#include "../gameshared/q_arch.h"
 #include "q_trie.h"
 
 #include <assert.h>

@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "../qcommon/qcommon.h"
-#include "../qcommon/base64.h"
+#include "../qalgo/base64.h"
 #include "../qcommon/wswcurl.h"
 
 cvar_t *mm_url;
@@ -43,7 +43,7 @@ static const char *mm_passwordFilename( const char *user )
 	Q_strncpyz( filename, user64, sizeof( filename ) - 1 );
 	Q_strncatz( filename, ".profile", sizeof( filename ) - 1 );
 
-	Mem_TempFree( user64 );
+	free( user64 );
 
 	return filename;
 }

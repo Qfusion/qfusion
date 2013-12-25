@@ -276,14 +276,6 @@ namespace trap
 			return UI_IMPORT.Microseconds ();
 		}
 
-		inline unsigned int Hash_BlockChecksum( const qbyte * data, size_t len ) {
-			return UI_IMPORT.Hash_BlockChecksum( data, len );
-		}
-
-		inline unsigned int Hash_SuperFastHash( const qbyte * data, size_t len, unsigned int seed ) {
-			return UI_IMPORT.Hash_SuperFastHash( data, len, seed );
-		}
-
 		inline int FS_FOpenFile( const char *filename, int *filenum, int mode ) {
 			return UI_IMPORT.FS_FOpenFile( filename, filenum, mode );
 		}
