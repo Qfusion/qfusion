@@ -2614,6 +2614,7 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 		flags |= IT_NOFILTERING;
 		samples = 3;
 	}
+	flags |= IT_NOMIPMAP|IT_NOPICMIP;
 
 	R_InitViewportTexture( &r_shadowmapTextures[id], "r_shadowmap", id, 
 		viewportWidth, viewportHeight, r_shadows_maxtexsize->integer, 
