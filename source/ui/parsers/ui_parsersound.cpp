@@ -38,7 +38,8 @@ bool PropertyParserSound::ParseValue(Rocket::Core::Property& property,
 	property.unit = Rocket::Core::Property::STRING;
 
 	if( !value.Empty() ) {
-		trap::S_RegisterSound( value.CString() );
+		// skip the '/' at the start of the path
+		trap::S_RegisterSound( value.CString()+1 );
 	}
 
 	return true;
