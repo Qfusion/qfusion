@@ -548,10 +548,10 @@ void RB_Scissor( int x, int y, int w, int h )
 {
 	qglScissor( x, rb.gl.fbHeight - h - y, w, h );
 
-	rb.gl.scissorX = x;
-	rb.gl.scissorY = y;
-	rb.gl.scissorW = w;
-	rb.gl.scissorH = h;
+	rb.gl.scissor[0] = x;
+	rb.gl.scissor[1] = y;
+	rb.gl.scissor[2] = w;
+	rb.gl.scissor[3] = h;
 }
 
 /*
@@ -560,16 +560,16 @@ void RB_Scissor( int x, int y, int w, int h )
 void RB_GetScissor( int *x, int *y, int *w, int *h )
 {
 	if( x ) {
-		*x = rb.gl.scissorX;
+		*x = rb.gl.scissor[0];
 	}
 	if( y ) {
-		*y = rb.gl.scissorY;
+		*y = rb.gl.scissor[1];
 	}
 	if( w ) {
-		*w = rb.gl.scissorW;
+		*w = rb.gl.scissor[2];
 	}
 	if( h ) {
-		*h = rb.gl.scissorH;
+		*h = rb.gl.scissor[3];
 	}
 }
 
@@ -591,10 +591,10 @@ void RB_EnableScissor( qboolean enable )
 */
 void RB_Viewport( int x, int y, int w, int h )
 {
-	rb.viewport[0] = x;
-	rb.viewport[1] = y;
-	rb.viewport[2] = w;
-	rb.viewport[3] = h;
+	rb.gl.viewport[0] = x;
+	rb.gl.viewport[1] = y;
+	rb.gl.viewport[2] = w;
+	rb.gl.viewport[3] = h;
 	qglViewport( x, rb.gl.fbHeight - h - y, w, h );
 }
 
@@ -1360,4 +1360,53 @@ qboolean RB_EnableTriangleOutlines( qboolean enable )
 	}
 
 	return oldVal;
+}
+
+/*
+* RB_ScissorForBounds
+*/
+qboolean RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
+{
+	int i;
+	int ix1, iy1, ix2, iy2;
+	float x1, y1, x2, y2;
+	vec4_t corner = { 0, 0, 0, 1 }, proj = { 0, 0, 0, 1 }, v = { 0, 0, 0, 1 };
+
+	x1 = y1 = 999999;
+	x2 = y2 = -999999;
+	for( i = 0; i < 8; i++ )
+	{
+		// compute and rotate the full bounding box
+		VectorCopy( bbox[i], corner );
+
+		Matrix4_Multiply_Vector( rb.modelviewProjectionMatrix, corner, proj );
+
+		if( proj[3] ) {
+			v[0] = ( proj[0] / proj[3] + 1.0f ) * 0.5f * rb.gl.viewport[2];
+			v[1] = ( proj[1] / proj[3] + 1.0f ) * 0.5f * rb.gl.viewport[3];
+			v[2] = ( proj[2] / proj[3] + 1.0f ) * 0.5f; // [-1..1] -> [0..1]
+		} else {
+			v[0] = 999999.0f;
+			v[1] = 999999.0f;
+			v[2] = 999999.0f;
+		}
+
+		x1 = min( x1, v[0] ); y1 = min( y1, v[1] );
+		x2 = max( x2, v[0] ); y2 = max( y2, v[1] );
+	}
+
+	ix1 = max( x1 - 1.0f, 0 ); ix2 = min( x2 + 1.0f, rb.gl.viewport[2] );
+	if( ix1 >= ix2 )
+		return qfalse; // FIXME
+
+	iy1 = max( y1 - 1.0f, 0 ); iy2 = min( y2 + 1.0f, rb.gl.viewport[3] );
+	if( iy1 >= iy2 )
+		return qfalse; // FIXME
+
+	*x = ix1;
+	*y = rb.gl.viewport[3] - iy2;
+	*w = ix2 - ix1;
+	*h = iy2 - iy1;
+
+	return qtrue;
 }
