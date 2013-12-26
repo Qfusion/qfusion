@@ -411,8 +411,14 @@ void R_DrawShadowmaps( void )
 			continue;
 		}
 
-		rn.fbColorAttachment = NULL;
-		rn.fbDepthAttachment = shadowmap;
+		if( shadowmap->flags & IT_DEPTH ) {
+			rn.fbColorAttachment = NULL;
+			rn.fbDepthAttachment = shadowmap;
+		}
+		else {
+			rn.fbColorAttachment = shadowmap;
+			rn.fbDepthAttachment = NULL;
+		}
 		rn.farClip = farClip;
 		rn.params = RP_SHADOWMAPVIEW|RP_FLIPFRONTFACE;
 		rn.clipFlags |= 16; // clip by far plane too
