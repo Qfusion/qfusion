@@ -673,7 +673,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 		rb.modelviewMatrix, rb.modelviewProjectionMatrix,
 		rn.viewOrigin, rn.viewAxis, 
 		rn.params & RP_MIRRORVIEW ? -1 : 1,
-		rb.viewport,
+		rb.gl.viewport,
 		rb.zNear, rb.zFar
 	);
 
@@ -1077,7 +1077,8 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, NULL,
-		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+		rb.currentShader->deformsKey, rb.currentShader->deforms, 
+		rb.currentShader->numdeforms, programFeatures );
 	if( !RB_BindProgram( program ) )
 		return;
 
@@ -1095,7 +1096,8 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	Matrix4_Identity( texMatrix );
 
-	RB_Scissor( rn.refdef.x + scissor[0], rn.refdef.y + scissor[1], scissor[2] - scissor[0], scissor[3] - scissor[1] );
+	RB_Scissor( rb.gl.viewport[0] + scissor[0], rb.gl.viewport[1] + scissor[1], 
+		scissor[2] - scissor[0], scissor[3] - scissor[1] );
 
 	RB_SetShaderpassState( pass->flags );
 
@@ -1112,7 +1114,9 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	for( i--; i >= 0; i-- ) {
 		RB_SelectTextureUnit( i );
-		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE );
+		if( glConfig.ext.shadow ) {
+			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE );
+		}
 	}
 }
 
@@ -1163,7 +1167,7 @@ static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t 
 	if( r_shadows_dither->integer )
 		programFeatures |= GLSL_SHADER_SHADOWMAP_DITHER;
 
-	Vector4Copy( rn.scissor, old_scissor );
+	Vector4Copy( rb.gl.scissor, old_scissor );
 
 	numShadows = 0;
 	for( i = 0; i < rsc.numShadowGroups; i++ )
@@ -1191,7 +1195,7 @@ static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t 
 			corner[2] = ( ( j & 4 ) ? visMins[2] : visMaxs[2] );
 		}
 
-		if( !R_ScissorForBounds( bbox, 
+		if( !RB_ScissorForBounds( bbox, 
 			&groupScissor[0], &groupScissor[1], &groupScissor[2], &groupScissor[3] ) )
 			continue;
 

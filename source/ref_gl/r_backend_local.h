@@ -59,8 +59,8 @@ typedef struct r_backend_s
 		int				faceCull;
 		qboolean		frontFace;
 
-		int				scissorX, scissorY;
-		int				scissorW, scissorH;
+		int				viewport[4];
+		int				scissor[4];
 
 		unsigned int	vertexAttribEnabled;
 
@@ -77,7 +77,6 @@ typedef struct r_backend_s
 	mat4_t modelviewMatrix;
 	mat4_t projectionMatrix;
 	mat4_t modelviewProjectionMatrix;
-	int viewport[4];
 	float zNear, zFar;
 
 	const entity_t *currentEntity;
@@ -162,5 +161,6 @@ void RB_DrawOutlinedElements( void );
 void RB_DrawShadedElements( void );
 int RB_BindProgram( int program );
 void RB_SetInstanceData( int numInstances, instancePoint_t *instances );
+qboolean RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
 
 #endif /*__R_BACKEND_LOCAL_H__*/
