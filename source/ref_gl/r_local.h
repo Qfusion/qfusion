@@ -84,7 +84,8 @@ typedef struct superLightStyle_s
 
 #define	ON_EPSILON				0.1         // point on plane side epsilon
 
-#define Z_NEAR					4
+#define Z_NEAR					4.0f
+#define Z_BIAS					64.0f
 
 #define	SIDE_FRONT				0
 #define	SIDE_BACK				1
@@ -181,40 +182,72 @@ typedef struct
 
 typedef struct
 {
-	unsigned int numEntities;
-	entity_t entities[MAX_ENTITIES];
-	entity_t *worldent;
+	// any asset (model, shader, texture, etc) with has not been registered
+	// or "touched" during the last registration sequence will be freed
+	int				registrationSequence;
+	qboolean		registrationOpen;
 
-	unsigned int numDlights;
-	dlight_t dlights[MAX_DLIGHTS];
+	float			sinTableByte[256];
 
-	unsigned int numPolys;
+	model_t			*worldModel;
+	mbrushmodel_t	*worldBrushModel;
+
+	struct mesh_vbo_s *nullVBO;
+
+	image_t			*rawTexture;				// cinematic texture (RGB)
+	image_t			*rawYUVTextures[3];			// 8bit cinematic textures (YCbCr)
+	image_t			*noTexture;					// use for bad textures
+	image_t			*whiteTexture;
+	image_t			*blackTexture;
+	image_t			*greyTexture;
+	image_t			*blankBumpTexture;
+	image_t			*particleTexture;			// little dot for particles
+	image_t			*coronaTexture;
+	image_t			*portalTextures[MAX_PORTAL_TEXTURES+1];
+	image_t			*shadowmapTextures[MAX_SHADOWGROUPS];
+	image_t			*screenTexture;
+	image_t			*screenDepthTexture;
+	image_t			*screenTextureCopy;
+	image_t			*screenDepthTextureCopy;
+	image_t			*screenFxaaCopy;
+	image_t			*screenWeaponTexture;
+
+	shader_t		*envShader;
+	shader_t		*skyShader;
+	shader_t		*whiteShader;
+} r_shared_t;
+
+typedef struct
+{
+	unsigned int	numEntities;
+	entity_t		entities[MAX_ENTITIES];
+	entity_t		*worldent;
+
+	unsigned int	numDlights;
+	dlight_t		dlights[MAX_DLIGHTS];
+
+	unsigned int	numPolys;
 	drawSurfacePoly_t polys[MAX_POLYS];
 
-	lightstyle_t lightStyles[MAX_LIGHTSTYLES];
+	lightstyle_t	lightStyles[MAX_LIGHTSTYLES];
 
-	unsigned int numBmodelEntities;
-	entity_t *bmodelEntities[MAX_ENTITIES];
+	unsigned int	numBmodelEntities;
+	entity_t		*bmodelEntities[MAX_ENTITIES];
 
-	unsigned int numShadowGroups;
-	shadowGroup_t shadowGroups[MAX_SHADOWGROUPS];
-	unsigned int entShadowGroups[MAX_ENTITIES];
-	unsigned int entShadowBits[MAX_ENTITIES];
+	unsigned int	numShadowGroups;
+	shadowGroup_t	shadowGroups[MAX_SHADOWGROUPS];
+	unsigned int	entShadowGroups[MAX_ENTITIES];
+	unsigned int	entShadowBits[MAX_ENTITIES];
 
-	float	farClipMin, farClipBias;
+	float			farClipMin, farClipBias;
 
-	refdef_t refdef;
+	refdef_t		refdef;
 } r_scene_t;
 
 typedef struct
 {
 	const char		*applicationName;
 	const char		*screenshotPrefix;
-
-	// any asset (model, shader, texture, etc) with has not been registered
-	// or "touched" during the last registration sequence will be freed
-	int				registrationSequence;
-	qboolean		registrationOpen;
 
 	 // bumped each R_ClearScene
 	unsigned int	sceneFrameCount;
@@ -223,20 +256,12 @@ typedef struct
 	// FIXME: move most of the global variables below here
 	vec3_t			wallColor, floorColor;
 
-	shader_t		*envShader;
-	shader_t		*skyShader;
-	shader_t		*whiteShader;
-
-	struct mesh_vbo_s *nullVBO;
-
 	qboolean		in2D;
 	int				width2D, height2D;
 
 	int				frameBufferWidth, frameBufferHeight;
 
 	float			cameraSeparation;
-
-	float			sinTableByte[256];
 
 	// used for dlight push checking
 	unsigned int	framecount;
@@ -245,49 +270,25 @@ typedef struct
 	unsigned int	pvsframecount;
 
 	int				viewcluster, oldviewcluster, viewarea;
+
+	struct {
+		unsigned int	c_brush_polys, c_world_leafs;
+		unsigned int	t_mark_leaves, t_world_node;
+		unsigned int	t_add_polys, t_add_entities;
+		unsigned int	t_draw_meshes;
+	} stats;
 } r_frontend_t;
 
 extern ref_import_t ri;
 
+extern r_shared_t rsh;
 extern r_scene_t rsc;
 extern r_frontend_t rf;
 
-extern image_t *r_rawtexture;
-extern image_t *r_rawYUVtextures[3];
-extern image_t *r_notexture;
-extern image_t *r_whitetexture;
-extern image_t *r_blacktexture;
-extern image_t *r_greytexture;
-extern image_t *r_blankbumptexture;
-extern image_t *r_particletexture;
-extern image_t *r_coronatexture;
-extern image_t *r_portaltextures[];
-extern image_t *r_portaldepthtextures[];
-extern image_t *r_shadowmapTextures[];
-extern image_t *r_screentexture;
-extern image_t *r_screendepthtexture;
-extern image_t *r_screentexturecopy;
-extern image_t *r_screendepthtexturecopy;
-extern image_t *r_screenfxaacopy;
-extern image_t *r_screenweapontexture;
-
-extern unsigned int c_brush_polys, c_world_leafs;
-
-extern unsigned int r_mark_leaves, r_world_node;
-extern unsigned int r_add_polys, r_add_entities;
-extern unsigned int r_draw_meshes;
-
 extern msurface_t *r_debug_surface;
-
-extern int gl_filter_min, gl_filter_max;
-
-extern float gldepthmin, gldepthmax;
 
 #define R_ENT2NUM(ent) ((ent)-rsc.entities)
 #define R_NUM2ENT(num) (rsc.entities+(num))
-
-extern model_t *r_worldmodel;
-extern mbrushmodel_t *r_worldbrushmodel;
 
 extern cvar_t *r_norefresh;
 extern cvar_t *r_drawentities;

@@ -54,6 +54,7 @@ void RB_AllocTextureNum( image_t *tex );
 void RB_FreeTextureNum( image_t *tex );
 
 void RB_DepthRange( float depthmin, float depthmax );
+void RB_GetDepthRange( float* depthmin, float *depthmax );
 void RB_Cull( int cull );
 void RB_SetState( int state );
 void RB_FrontFace( qboolean front );

@@ -264,7 +264,7 @@ static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visS
 		rn.skyMins[1][side] >= rn.skyMaxs[1][side] )
 		return;
 
-	RB_BindShader( rsc.worldent, rf.skyShader, rn.skyFog );
+	RB_BindShader( rsc.worldent, rsh.skyShader, rn.skyFog );
 
 	RB_BindVBO( skydome->linearVbos[side]->index, GL_TRIANGLES );
 
@@ -301,7 +301,7 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 		rn.skyMins[1][side] >= rn.skyMaxs[1][side] )
 		return;
 
-	RB_BindShader( rsc.worldent, rf.envShader, rn.skyFog );
+	RB_BindShader( rsc.worldent, rsh.envShader, rn.skyFog );
 
 	RB_BindVBO( skydome->linearVbos[side]->index, GL_TRIANGLES );
 
@@ -320,7 +320,7 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	int umin, umax, vmin, vmax;
 	entity_t skyent;
 	refdef_t *rd = &rn.refdef;
-	skydome_t *skydome = r_worldbrushmodel->skydome;
+	skydome_t *skydome = rsh.worldBrushModel->skydome;
 
 	if( !skydome )
 		return qfalse;
@@ -643,8 +643,8 @@ void R_AddSkyToDrawList( const msurface_t *fa )
 	if( r_warpFaceVis ) {
 		if( fa->fog ) {
 			rn.skyFog = fa->fog;
-		} else if( r_worldbrushmodel->globalfog ) {
-			rn.skyFog = r_worldbrushmodel->globalfog;
+		} else if( rsh.worldBrushModel->globalfog ) {
+			rn.skyFog = rsh.worldBrushModel->globalfog;
 		}
 
 		// there should be only one sky drawSurf in the list

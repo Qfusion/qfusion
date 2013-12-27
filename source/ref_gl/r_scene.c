@@ -145,7 +145,7 @@ void R_AddPolyToScene( const poly_t *poly )
 			}
 
 			fog = R_FogForBounds( dpmins, dpmaxs );
-			dp->fogNum = (fog ? fog - r_worldbrushmodel->fogs + 1 : -1);
+			dp->fogNum = (fog ? fog - rsh.worldBrushModel->fogs + 1 : -1);
 		}
 
 		rsc.numPolys++;
@@ -235,7 +235,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( !rn.refdef.minLight ) {
 		rn.refdef.minLight = 0.1f;
 	}
-	if( !r_screenweapontexture || rn.refdef.weaponAlpha == 1 ) {
+	if( !rsh.screenWeaponTexture || rn.refdef.weaponAlpha == 1 ) {
 		rn.refdef.rdflags &= ~RDF_WEAPONALPHA;
 	}
 
@@ -245,7 +245,7 @@ void R_RenderScene( const refdef_t *fd )
 
 	rn.farClip = R_DefaultFarClip();
 	rn.clipFlags = 15;
-	if( r_worldmodel && !( fd->rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog )
+	if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog )
 		rn.clipFlags |= 16;
 	rn.meshlist = &r_worldlist;
 	rn.shadowBits = 0;
@@ -258,17 +258,17 @@ void R_RenderScene( const refdef_t *fd )
 	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
 		// soft particles require GL_EXT_framebuffer_blit as we need to copy the depth buffer
 		// attachment into a texture we're going to read from in GLSL shader
-		if( r_soft_particles->integer && glConfig.ext.framebuffer_blit && ( r_screentexture != NULL ) ) {
-			rn.fbColorAttachment = r_screentexture;
-			rn.fbDepthAttachment = r_screendepthtexture;
+		if( r_soft_particles->integer && glConfig.ext.framebuffer_blit && ( rsh.screenTexture != NULL ) ) {
+			rn.fbColorAttachment = rsh.screenTexture;
+			rn.fbDepthAttachment = rsh.screenDepthTexture;
 			fbFlags |= 1;
 		}
-		if( ( fd->rdflags & RDF_WEAPONALPHA ) && ( r_screenweapontexture != NULL ) ) {
+		if( ( fd->rdflags & RDF_WEAPONALPHA ) && ( rsh.screenWeaponTexture != NULL ) ) {
 			fbFlags |= 2;
 		}
-		if( r_fxaa->integer && ( r_screenfxaacopy != NULL ) ) {
+		if( r_fxaa->integer && ( rsh.screenFxaaCopy != NULL ) ) {
 			if( !rn.fbColorAttachment ) {
-				rn.fbColorAttachment = r_screenfxaacopy;
+				rn.fbColorAttachment = rsh.screenFxaaCopy;
 			}
 			fbFlags |= 4;
 		}
@@ -291,7 +291,7 @@ void R_RenderScene( const refdef_t *fd )
 		// clear the framebuffer we're going to render the weapon model to
 		// set the alpha to 0, visible parts of the model will overwrite that,
 		// creating proper alpha mask
-		R_BindFrameBufferObject( r_screenweapontexture->fbo );
+		R_BindFrameBufferObject( rsh.screenWeaponTexture->fbo );
 		RB_Clear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT, 0, 0, 0, 0 );
 	}
 
@@ -314,7 +314,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( fbFlags & 1 ) {
 		// copy to FXAA or default framebuffer
 		R_BlitTextureToScrFbo( fd, rn.fbColorAttachment, 
-			fbFlags & 4 ? r_screenfxaacopy->fbo : 0, 
+			fbFlags & 4 ? rsh.screenFxaaCopy->fbo : 0, 
 			GLSL_PROGRAM_TYPE_NONE, 
 			colorWhite, qfalse );
 	}
@@ -324,8 +324,8 @@ void R_RenderScene( const refdef_t *fd )
 		color[3] = fd->weaponAlpha;
 
 		// blend to FXAA or default framebuffer
-		R_BlitTextureToScrFbo( fd, r_screenweapontexture, 
-			fbFlags & 4 ? r_screenfxaacopy->fbo : 0, 
+		R_BlitTextureToScrFbo( fd, rsh.screenWeaponTexture, 
+			fbFlags & 4 ? rsh.screenFxaaCopy->fbo : 0, 
 			GLSL_PROGRAM_TYPE_NONE, 
 			color, qtrue );
 	}
@@ -333,7 +333,7 @@ void R_RenderScene( const refdef_t *fd )
 	// blit FXAA to default framebuffer
 	if( fbFlags & 4 ) {
 		// blend to FXAA or default framebuffer
-		R_BlitTextureToScrFbo( fd, r_screenfxaacopy, 0, 
+		R_BlitTextureToScrFbo( fd, rsh.screenFxaaCopy, 0, 
 			GLSL_PROGRAM_TYPE_FXAA, 
 			colorWhite, qfalse );
 	}
@@ -398,7 +398,7 @@ static void R_RenderDebugBounds( void )
 
 	RB_EnableTriangleOutlines( qtrue );
 
-	RB_BindShader( rsc.worldent, rf.whiteShader, NULL );
+	RB_BindShader( rsc.worldent, rsh.whiteShader, NULL );
 
 	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLE_STRIP );
 
@@ -463,13 +463,13 @@ static void R_RenderDebugSurface( void )
 
 		if( r_speeds->integer == 5 ) {
 			// VBO debug mode
-			R_AddVBOSlice( surf->drawSurf - r_worldbrushmodel->drawSurfaces, 
+			R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces, 
 				surf->drawSurf->vbo->numVerts, surf->drawSurf->vbo->numElems,
 				0, 0 );
 		}
 		else {
 			// classic mode (showtris for individual surface)
-			R_AddVBOSlice( surf->drawSurf - r_worldbrushmodel->drawSurfaces, 
+			R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces, 
 				surf->mesh->numVerts, surf->mesh->numElems,
 				surf->firstDrawSurfVert, surf->firstDrawSurfElem );
 		}

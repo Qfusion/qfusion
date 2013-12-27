@@ -524,19 +524,19 @@ static image_t *Shader_FindImage( shader_t *shader, char *name, int flags, float
 	image_t *image;
 
 	if( !Q_stricmp( name, "$whiteimage" ) || !Q_stricmp( name, "*white" ) )
-		return r_whitetexture;
+		return rsh.whiteTexture;
 	if( !Q_stricmp( name, "$blackimage" ) || !Q_stricmp( name, "*black" ) )
-		return r_blacktexture;
+		return rsh.blackTexture;
 	if( !Q_stricmp( name, "$greyimage" ) || !Q_stricmp( name, "*grey" ) )
-		return r_greytexture;
+		return rsh.greyTexture;
 	if( !Q_stricmp( name, "$blankbumpimage" ) || !Q_stricmp( name, "*blankbump" ) )
-		return r_blankbumptexture;
+		return rsh.blankBumpTexture;
 	if( !Q_stricmp( name, "$particleimage" ) || !Q_stricmp( name, "*particle" ) )
-		return r_particletexture;
+		return rsh.particleTexture;
 	if( !Q_strnicmp( name, "*lm", 3 ) )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with explicit lightmap image\n", shader->name );
-		return r_whitetexture;
+		return rsh.whiteTexture;
 	}
 
 	image = R_FindImage( name, NULL, flags, bumpScale );
@@ -973,7 +973,7 @@ static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, im
 
 		if( !images[0] ) {
 			// use blank normalmap texture
-			*normalmap = r_blankbumptexture;
+			*normalmap = rsh.blankBumpTexture;
 			*glossmap = *decalmap = NULL;
 			return;
 		}
@@ -1083,7 +1083,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	if( !glConfig.ext.texture_cube_map )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has an unsupported cubemap stage: %s.\n", shader->name );
-		pass->images[0] = r_notexture;
+		pass->images[0] = rsh.noTexture;
 		pass->tcgen = TC_GEN_BASE;
 		return;
 	}
@@ -1096,7 +1096,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 	else
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
-		pass->images[0] = r_notexture;
+		pass->images[0] = rsh.noTexture;
 		pass->tcgen = TC_GEN_BASE;
 	}
 }
@@ -1187,7 +1187,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 			if( !pass->images[1] )
 			{
 				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing normalmap image %s in shader %s.\n", token, shader->name );
-				pass->images[1] = r_blankbumptexture;
+				pass->images[1] = rsh.blankBumpTexture;
 			}
 			else
 			{
@@ -1204,9 +1204,9 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 					ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing glossmap image %s in shader %s.\n", token, shader->name );
 			}
 
-			// set gloss to r_blacktexture so we know we have already parsed the gloss image
+			// set gloss to rsh.blackTexture so we know we have already parsed the gloss image
 			if( pass->images[2] == NULL )
-				pass->images[2] = r_blacktexture;
+				pass->images[2] = rsh.blackTexture;
 		}
 		else
 		{
@@ -1218,11 +1218,11 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 					continue;
 				}
 
-				decal = r_whitetexture;
+				decal = rsh.whiteTexture;
 				if( strcmp( token, "-" ) ) {
 					decal = Shader_FindImage( shader, token, flags, 0 );
 					if( !decal ) {
-						decal = r_whitetexture;
+						decal = rsh.whiteTexture;
 						ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing decal image %s in shader %s.\n", token, shader->name );
 					}
 				}
@@ -1234,11 +1234,11 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	}
 
 	// black texture => no gloss, so don't waste time in the GLSL program
-	if( pass->images[2] == r_blacktexture )
+	if( pass->images[2] == rsh.blackTexture )
 		pass->images[2] = NULL;
 
 	for( i = 3; i < 5; i++ ) {
-		if( pass->images[i] == r_whitetexture )
+		if( pass->images[i] == rsh.whiteTexture )
 			pass->images[i] = NULL;
 	}
 
@@ -1286,7 +1286,7 @@ static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const c
 			if( !pass->images[0] )
 			{
 				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing dudvmap image %s in shader %s.\n", token, shader->name );
-				pass->images[0] = r_blacktexture;
+				pass->images[0] = rsh.blackTexture;
 			}
 
 			pass->program_type = GLSL_PROGRAM_TYPE_DISTORTION;
@@ -1337,7 +1337,7 @@ static void Shaderpass_Celshade( shader_t *shader, shaderpass_t *pass, const cha
 
 		if( !pass->images[i] ) {
 			ri.Com_DPrintf( S_COLOR_YELLOW "Shader %s has a stage with no image: %s\n", shader->name, token );
-			pass->images[0] = r_notexture;
+			pass->images[0] = rsh.noTexture;
 			return;
 		}
 	}
@@ -1978,11 +1978,11 @@ void R_TouchShader( shader_t *s )
 {
 	int i, j;
 
-	if( s->registrationSequence == rf.registrationSequence ) {
+	if( s->registrationSequence == rsh.registrationSequence ) {
 		return;
 	}
 
-	s->registrationSequence = rf.registrationSequence;
+	s->registrationSequence = rsh.registrationSequence;
 
 	// touch all images this shader references
 	for( i = 0; i < s->numpasses; i++ ) {
@@ -2027,7 +2027,7 @@ void R_FreeUnusedShaders( void )
 			// free shader
 			continue;
 		}
-		if( s->registrationSequence == rf.registrationSequence ) {
+		if( s->registrationSequence == rsh.registrationSequence ) {
 			// we need this shader
 			continue;
 		}
@@ -2538,7 +2538,7 @@ static void R_LoadShaderReal( shader_t *s, char *shortname, size_t shortname_len
 	r_shaderAllDetail = SHADERPASS_DETAIL;
 	r_shaderDeformvKey[0] = '\0';
 	if( !r_defaultImage )
-		r_defaultImage = r_notexture;
+		r_defaultImage = rsh.noTexture;
 
 	cache = NULL;
 	if( !forceDefault )
@@ -2707,7 +2707,7 @@ create_default:
 				else
 					pass->cin = R_StartCinematic( shortname );
 				s->cin = pass->cin;
-				pass->images[0] = r_notexture;
+				pass->images[0] = rsh.noTexture;
 			} else if( type != SHADER_TYPE_2D_RAW ) {
 				pass->images[0] = Shader_FindImage( s, shortname, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, 0 );
 			}
@@ -2728,7 +2728,7 @@ create_default:
 			VectorClear( pass->rgbgen.args );
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_NONE;
-			pass->images[0] = r_whitetexture;
+			pass->images[0] = rsh.whiteTexture;
 			break;
 		case SHADER_TYPE_SKYBOX:
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
@@ -2745,7 +2745,7 @@ create_default:
 			pass->tcgen = TC_GEN_BASE;
 			pass->flags = SHADERPASS_SKYBOXSIDE;
 			// the actual image will be picked at rendering time based on skyside number
-			pass->images[0] = r_whitetexture;
+			pass->images[0] = rsh.whiteTexture;
 			break;
 		default:
 			break;
@@ -2754,7 +2754,7 @@ create_default:
 
 	// calculate sortkey
 	s->sortkey = Shader_Sortkey( s, s->sort );
-	s->registrationSequence = rf.registrationSequence;
+	s->registrationSequence = rsh.registrationSequence;
 }
 
 /*
@@ -2852,7 +2852,7 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, qbyte *data
 
 		// unlink and delete the old image from memory, unless it's the default one
 		image = s->passes[0].images[0];
-		if( !image || image == r_notexture ) {
+		if( !image || image == rsh.noTexture ) {
 			// try to load new image
 			image = R_LoadImage( name, &data, width, height, IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, 4 );
 			s->passes[0].images[0] = image;

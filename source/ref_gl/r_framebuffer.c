@@ -115,7 +115,7 @@ found:
 	qglGenFramebuffersEXT( 1, &fbID );
 	memset( fbo, 0, sizeof( *fbo ) );
 	fbo->objectID = fbID;
-	fbo->registrationSequence = rf.registrationSequence;
+	fbo->registrationSequence = rsh.registrationSequence;
 	fbo->width = width;
 	fbo->height = height;
 
@@ -170,7 +170,7 @@ void RFB_TouchObject( int object )
 	}
 
 	fbo = r_framebuffer_objects + object - 1;
-	fbo->registrationSequence = rf.registrationSequence;
+	fbo->registrationSequence = rsh.registrationSequence;
 }
 
 /*
@@ -431,7 +431,7 @@ void RFB_FreeUnusedObjects( void )
 		return;
 
 	for( i = 0; i < r_num_framebuffer_objects; i++ ) {
-		if( r_framebuffer_objects[i].registrationSequence == rf.registrationSequence ) {
+		if( r_framebuffer_objects[i].registrationSequence == rsh.registrationSequence ) {
 			continue;
 		}
 		RFB_DeleteObject( r_framebuffer_objects + i );

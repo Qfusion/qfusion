@@ -186,7 +186,7 @@ qboolean R_VisCullBox( const vec3_t mins, const vec3_t maxs )
 	vec3_t extmins, extmaxs;
 	mnode_t *node, *localstack[2048];
 
-	if( !r_worldmodel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		return qfalse;
 	if( rn.params & RP_NOVIS )
 		return qfalse;
@@ -197,7 +197,7 @@ qboolean R_VisCullBox( const vec3_t mins, const vec3_t maxs )
 		extmaxs[s] = maxs[s] + 4;
 	}
 
-	for( node = r_worldbrushmodel->nodes;; )
+	for( node = rsh.worldBrushModel->nodes;; )
 	{
 		if( node->pvsframe != rf.pvsframecount )
 		{
@@ -235,13 +235,13 @@ qboolean R_VisCullSphere( const vec3_t origin, float radius )
 	int stackdepth = 0;
 	mnode_t *node, *localstack[2048];
 
-	if( !r_worldmodel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		return qfalse;
 	if( rn.params & RP_NOVIS )
 		return qfalse;
 
 	radius += 4;
-	for( node = r_worldbrushmodel->nodes;; )
+	for( node = rsh.worldBrushModel->nodes;; )
 	{
 		if( node->pvsframe != rf.pvsframecount )
 		{

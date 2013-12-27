@@ -41,7 +41,7 @@ void R_InitCoronas( void )
 {
 	int i;
 
-	r_coronaShader = R_LoadShader( "***r_coronatexture***", SHADER_TYPE_CORONA, qtrue );
+	r_coronaShader = R_LoadShader( "***rsh.coronaTexture***", SHADER_TYPE_CORONA, qtrue );
 
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
 		r_coronaSurfs[i] = ST_CORONA;
@@ -174,16 +174,16 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	VectorSet( ambientLocal, 0, 0, 0 );
 	VectorSet( diffuseLocal, 0, 0, 0 );
 
-	if( !r_worldmodel /* || (rn.refdef.rdflags & RDF_NOWORLDMODEL)*/ ||
-		!r_worldbrushmodel->lightgrid || !r_worldbrushmodel->numlightgridelems )
+	if( !rsh.worldModel /* || (rn.refdef.rdflags & RDF_NOWORLDMODEL)*/ ||
+		!rsh.worldBrushModel->lightgrid || !rsh.worldBrushModel->numlightgridelems )
 	{
 		VectorSet( dir, 0.1f, 0.2f, 0.7f );
 		goto dynamic;
 	}
 
-	gridSize = r_worldbrushmodel->gridSize;
-	gridMins = r_worldbrushmodel->gridMins;
-	gridBounds = r_worldbrushmodel->gridBounds;
+	gridSize = rsh.worldBrushModel->gridSize;
+	gridMins = rsh.worldBrushModel->gridMins;
+	gridBounds = rsh.worldBrushModel->gridBounds;
 
 	for( i = 0; i < 3; i++ )
 	{
@@ -200,8 +200,8 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 	for( i = 0; i < 4; i++ )
 	{
-		lightarray[i*2+0] = *r_worldbrushmodel->lightarray[bound( 0, elem[i]+0, r_worldbrushmodel->numlightarrayelems-1)];
-		lightarray[i*2+1] = *r_worldbrushmodel->lightarray[bound( 0, elem[i]+1, r_worldbrushmodel->numlightarrayelems-1)];
+		lightarray[i*2+0] = *rsh.worldBrushModel->lightarray[bound( 0, elem[i]+0, rsh.worldBrushModel->numlightarrayelems-1)];
+		lightarray[i*2+1] = *rsh.worldBrushModel->lightarray[bound( 0, elem[i]+1, rsh.worldBrushModel->numlightarrayelems-1)];
 	}
 
 	t[0] = vf2[0] * vf2[1] * vf2[2];

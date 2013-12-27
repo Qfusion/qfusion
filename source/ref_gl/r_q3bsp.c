@@ -1674,8 +1674,8 @@ void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 	vec3_t gridSize, ambient, outline;
 
 	mod->type = mod_brush;
-	mod->registrationSequence = rf.registrationSequence;
-	if( r_worldmodel != NULL )
+	mod->registrationSequence = rsh.registrationSequence;
+	if( rsh.worldModel != NULL )
 		ri.Com_Error( ERR_DROP, "Loaded a brush model after the world" );
 
 	loadmodel = mod;

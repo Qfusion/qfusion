@@ -462,7 +462,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	{
 		vec3_t centre, diff;
 
-		VectorAdd( r_worldmodel->mins, r_worldmodel->maxs, centre );
+		VectorAdd( rsh.worldModel->mins, rsh.worldModel->maxs, centre );
 		VectorScale( centre, 0.5f, centre );
 		VectorSubtract( centre, rn.viewOrigin, diff );
 		VectorMA( skyportal->vieworg, -skyportal->scale, diff, rn.refdef.vieworg );

@@ -53,7 +53,7 @@ static qboolean R_RunCin( r_cinhandle_t *h )
 	unsigned int now = ri.Sys_Milliseconds();
 
 	// don't advance cinematics during registration
-	if( rf.registrationOpen ) {
+	if( rsh.registrationOpen ) {
 		return qfalse;
 	}
 
@@ -326,7 +326,7 @@ unsigned int R_StartCinematic( const char *arg )
 	handle->yuv = yuv;
 	handle->image = NULL;
 	handle->yuv_images[0] = handle->yuv_images[1] = handle->yuv_images[2] = NULL;
-	handle->registrationSequence = rf.registrationSequence;
+	handle->registrationSequence = rsh.registrationSequence;
 	handle->pic = NULL;
 	handle->cyuv = NULL;
 
@@ -352,7 +352,7 @@ void R_TouchCinematic( unsigned int id )
 		return;
 	}
 
-	handle->registrationSequence = rf.registrationSequence;
+	handle->registrationSequence = rsh.registrationSequence;
 
 	if( handle->image ) {
 		R_TouchImage( handle->image );
@@ -379,7 +379,7 @@ void R_FreeUnusedCinematics( void )
 	hnode = &r_cinematics_headnode;
 	for( handle = hnode->prev; handle != hnode; handle = next ) {
 		next = handle->prev;
-		if( handle->registrationSequence != rf.registrationSequence ) {
+		if( handle->registrationSequence != rsh.registrationSequence ) {
 			R_FreeCinematic( handle->id );
 		}
 	}

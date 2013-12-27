@@ -67,10 +67,10 @@ void R_DrawPolys( void )
 	for( i = 0; i < rsc.numPolys; i++ )
 	{
 		p = rsc.polys + i;
-		if( p->fogNum <= 0 || (unsigned)p->fogNum > r_worldbrushmodel->numfogs )
+		if( p->fogNum <= 0 || (unsigned)p->fogNum > rsh.worldBrushModel->numfogs )
 			fog = NULL;
 		else
-			fog = r_worldbrushmodel->fogs + p->fogNum - 1;
+			fog = rsh.worldBrushModel->fogs + p->fogNum - 1;
 
 		if( !R_AddDSurfToDrawList( rsc.worldent, fog, p->shader, 0, i, NULL, p ) ) {
 			continue;
@@ -223,7 +223,7 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 	fr = &clippedFragments[numClippedFragments++];
 	fr->numverts = numv;
 	fr->firstvert = numFragmentVerts;
-	fr->fognum = surf->fog ? surf->fog - r_worldbrushmodel->fogs + 1 : -1;
+	fr->fognum = surf->fog ? surf->fog - rsh.worldBrushModel->fogs + 1 : -1;
 	VectorCopy( snorm, fr->normal );
 	for( i = 0, v = verts[0], nextv = fragmentVerts[numFragmentVerts]; i < numv; i++, v += 3, nextv += 4 )
 	{
@@ -398,7 +398,7 @@ static void R_RecursiveFragmentNode( void )
 	mleaf_t	*leaf;
 	msurface_t *surf, **mark;
 
-	for( node = r_worldbrushmodel->nodes, stackdepth = 0;; )
+	for( node = rsh.worldBrushModel->nodes, stackdepth = 0;; )
 	{
 		if( node->plane == NULL )
 		{

@@ -283,7 +283,7 @@ static msurface_t *R_TransformedTraceLine( rtrace_t *tr, const vec3_t start, con
 
 			// world uses a recursive approach using BSP tree, submodels
 			// just walk the list of surfaces linearly
-			if( test->model == r_worldmodel )
+			if( test->model == rsh.worldModel )
 				R_RecursiveHullCheck( bmodel->nodes, start_l, end_l );
 			else if( BoundsIntersect( model->mins, model->maxs, trace_absmins, trace_absmaxs ) )
 				R_TraceAgainstBmodel( bmodel );
@@ -325,7 +325,7 @@ msurface_t *R_TraceLine( rtrace_t *tr, const vec3_t start, const vec3_t end, int
 	unsigned int i;
 	msurface_t *surf;
 
-	if( !r_worldbrushmodel ) {
+	if( !rsh.worldBrushModel ) {
 		return NULL;
 	}
 

@@ -590,7 +590,7 @@ void Mod_CreateVertexBufferObjects( model_t *mod )
 	// free all VBO's allocated for previous world map so
 	// we won't end up with both maps residing in video memory
 	// until R_FreeUnusedVBOs call
-	if( r_prevworldmodel && r_prevworldmodel->registrationSequence != rf.registrationSequence ) {
+	if( r_prevworldmodel && r_prevworldmodel->registrationSequence != rsh.registrationSequence ) {
 		R_FreeVBOsByTag( VBO_TAG_WORLD );
 	}
 
@@ -668,7 +668,7 @@ static void Mod_TouchBrushModel( model_t *model )
 	// touch all shaders and vertex buffer objects for this bmodel
 
 	for( modnum = 0; modnum < loadbmodel->numsubmodels; modnum++ ) {
-		loadbmodel->inlines[modnum].registrationSequence = rf.registrationSequence;
+		loadbmodel->inlines[modnum].registrationSequence = rsh.registrationSequence;
 
 		bm = loadbmodel->submodels + modnum;
 		for( i = 0, surf = loadbmodel->surfaces + bm->firstface; i < bm->numfaces; i++, surf++ ) {
@@ -754,7 +754,7 @@ void R_FreeUnusedModels( void )
 		if( !mod->name ) {
 			continue;
 		}
-		if( mod->registrationSequence == rf.registrationSequence ) {
+		if( mod->registrationSequence == rsh.registrationSequence ) {
 			// we need this model
 			continue;
 		}
@@ -763,9 +763,9 @@ void R_FreeUnusedModels( void )
 	}
 
 	// check whether the world model has been freed
-	if( r_worldmodel && r_worldmodel->type == mod_bad ) {
-		r_worldmodel = NULL;
-		r_worldbrushmodel = NULL;
+	if( rsh.worldModel && rsh.worldModel->type == mod_bad ) {
+		rsh.worldModel = NULL;
+		rsh.worldBrushModel = NULL;
 	}
 }
 
@@ -785,8 +785,8 @@ void R_ShutdownModels( void )
 		}
 	}
 
-	r_worldmodel = NULL;
-	r_worldbrushmodel = NULL;
+	rsh.worldModel = NULL;
+	rsh.worldBrushModel = NULL;
 
 	mod_numknown = 0;
 	memset( mod_known, 0, sizeof( mod_known ) );
@@ -889,9 +889,9 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 	if( name[0] == '*' )
 	{
 		int modnum = atoi( name+1 );
-		if( modnum < 1 || !r_worldmodel || (unsigned)modnum >= r_worldbrushmodel->numsubmodels )
+		if( modnum < 1 || !rsh.worldModel || (unsigned)modnum >= rsh.worldBrushModel->numsubmodels )
 			ri.Com_Error( ERR_DROP, "bad inline model number" );
-		return &r_worldbrushmodel->inlines[modnum];
+		return &rsh.worldBrushModel->inlines[modnum];
 	}
 
 	Q_strncpyz( shortname, name, sizeof( shortname ) );
@@ -995,12 +995,12 @@ static void R_TouchModel( model_t *mod )
 	int i;
 	model_t *lod;
 
-	if( mod->registrationSequence == rf.registrationSequence ) {
+	if( mod->registrationSequence == rsh.registrationSequence ) {
 		return;
 	}
 
 	// touching a model precaches all images and possibly other assets
-	mod->registrationSequence = rf.registrationSequence;
+	mod->registrationSequence = rsh.registrationSequence;
 	if( mod->touch ) {
 		mod->touch( mod );
 	}
@@ -1008,7 +1008,7 @@ static void R_TouchModel( model_t *mod )
 	// handle Level Of Details
 	for( i = 0; i < mod->numlods; i++ ) {
 		lod = mod->lods[i];
-		lod->registrationSequence = rf.registrationSequence;
+		lod->registrationSequence = rsh.registrationSequence;
 		if( lod->touch ) {
 			lod->touch( lod );
 		}
@@ -1103,32 +1103,32 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 {
 	rf.framecount = 1;
 
-	r_prevworldmodel = r_worldmodel;
-	r_worldmodel = NULL;
-	r_worldbrushmodel = NULL;
+	r_prevworldmodel = rsh.worldModel;
+	rsh.worldModel = NULL;
+	rsh.worldBrushModel = NULL;
 
 	mod_isworldmodel = qtrue;
-	r_worldmodel = Mod_ForName( model, qtrue );
+	rsh.worldModel = Mod_ForName( model, qtrue );
 	mod_isworldmodel = qfalse;
 
 	// FIXME: this is ugly... Resolve by allowing non-world .bsp models?
-	if( r_worldmodel ) {
+	if( rsh.worldModel ) {
 		// store or restore map config
-		if( r_worldmodel->registrationSequence == rf.registrationSequence ) {
-			mod_mapConfigs[r_worldmodel - mod_known] = mapConfig;
+		if( rsh.worldModel->registrationSequence == rsh.registrationSequence ) {
+			mod_mapConfigs[rsh.worldModel - mod_known] = mapConfig;
 		}
 		else {
-			mapConfig = mod_mapConfigs[r_worldmodel - mod_known];
+			mapConfig = mod_mapConfigs[rsh.worldModel - mod_known];
 		}
 	}
 
-	R_TouchModel( r_worldmodel );
+	R_TouchModel( rsh.worldModel );
 
-	r_worldbrushmodel = ( mbrushmodel_t * )r_worldmodel->extradata;
-	r_worldbrushmodel->pvs = ( dvis_t * )pvsData;
+	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
+	rsh.worldBrushModel->pvs = ( dvis_t * )pvsData;
 
 	rsc.worldent->scale = 1.0f;
-	rsc.worldent->model = r_worldmodel;
+	rsc.worldent->model = rsh.worldModel;
 	rsc.worldent->rtype = RT_MODEL;
 	Matrix3_Identity( rsc.worldent->axis );
 
@@ -1159,10 +1159,10 @@ void R_ModelBounds( const model_t *model, vec3_t mins, vec3_t maxs )
 		VectorCopy( model->mins, mins );
 		VectorCopy( model->maxs, maxs );
 	}
-	else if( r_worldmodel )
+	else if( rsh.worldModel )
 	{
-		VectorCopy( r_worldmodel->mins, mins );
-		VectorCopy( r_worldmodel->maxs, maxs );
+		VectorCopy( rsh.worldModel->mins, mins );
+		VectorCopy( rsh.worldModel->maxs, maxs );
 	}
 }
 
