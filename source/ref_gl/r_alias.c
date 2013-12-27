@@ -112,7 +112,7 @@ static void Mod_TouchAliasModel( model_t *mod )
 	maliasskin_t *skin;
 	maliasmodel_t *aliasmodel = ( maliasmodel_t * )mod->extradata;
 
-	mod->registrationSequence = rf.registrationSequence;
+	mod->registrationSequence = rsh.registrationSequence;
 
 	for( i = 0, mesh = aliasmodel->meshes; i < aliasmodel->nummeshes; i++, mesh++ ) {
 		// register needed skins and images
@@ -171,7 +171,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	mod->type = mod_alias;
 	mod->extradata = poutmodel = Mod_Malloc( mod, sizeof( maliasmodel_t ) );
 	mod->radius = 0;
-	mod->registrationSequence = rf.registrationSequence;
+	mod->registrationSequence = rsh.registrationSequence;
 	mod->touch = &Mod_TouchAliasModel;
 
 	ClearBounds( mod->mins, mod->maxs );

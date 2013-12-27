@@ -144,8 +144,8 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 	// reallocate if numDrawSurfs
 	if( list->numDrawSurfs >= list->maxDrawSurfs ) {
 		int minMeshes = MIN_RENDER_MESHES;
-		if( r_worldbrushmodel ) {
-			minMeshes += r_worldbrushmodel->numDrawSurfaces;
+		if( rsh.worldBrushModel ) {
+			minMeshes += rsh.worldBrushModel->numDrawSurfaces;
 		}
 		R_ReserveDrawSurfaces( list, minMeshes );
 	}
@@ -158,7 +158,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 
 	sds = &list->drawSurfs[list->numDrawSurfs++];
 	sds->distKey = R_PackDistKey( shaderSort, (unsigned int )(max( dist, 0 )), order );
-	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - r_worldbrushmodel->fogs : -1,
+	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - rsh.worldBrushModel->fogs : -1,
 		portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM(e) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
 
@@ -239,8 +239,8 @@ void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numE
 
 	if( index >= list->maxVboSlices ) {
 		unsigned int minSlices = index + 1;
-		if( r_worldbrushmodel ) {
-			minSlices = max( r_worldbrushmodel->numDrawSurfaces, minSlices );
+		if( rsh.worldBrushModel ) {
+			minSlices = max( rsh.worldBrushModel->numDrawSurfaces, minSlices );
 		}
 		R_ReserveVBOSlices( list, minSlices );
 	}
@@ -344,7 +344,7 @@ static void _R_DrawSurfaces( void )
 	const mfog_t *fog;
 	const portalSurface_t *portalSurface;
 	drawList_t *list = rn.meshlist;
-	float depthmin = gldepthmin, depthmax = gldepthmax;
+	float depthmin = 0, depthmax = 0;
 	qboolean depthHack = qfalse, cullHack = qfalse;
 	qboolean infiniteProj = qfalse, prevInfiniteProj = qfalse;
 	qboolean depthWrite = qfalse;
@@ -371,7 +371,7 @@ static void _R_DrawSurfaces( void )
 
 		shader = R_ShaderById( shaderNum );
 		entity = R_NUM2ENT(entNum);
-		fog = fogNum >= 0 ? r_worldbrushmodel->fogs + fogNum : NULL;
+		fog = fogNum >= 0 ? rsh.worldBrushModel->fogs + fogNum : NULL;
 		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 
 		// see if we need to reset mesh properties in the backend
@@ -390,10 +390,11 @@ static void _R_DrawSurfaces( void )
 					// at later stage
 					if( shader->flags & SHADER_DEPTHWRITE ) {
 						if( rd->rdflags & RDF_WEAPONALPHA ) {
-							R_BindFrameBufferObject( r_screenweapontexture->fbo );
+							R_BindFrameBufferObject( rsh.screenWeaponTexture->fbo );
 						}
 					}					
 					depthHack = qtrue;
+					RB_GetDepthRange( &depthmin, &depthmax );
 					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 				} else if( depthHack ) {
 					// bind the main framebuffer back
@@ -418,7 +419,7 @@ static void _R_DrawSurfaces( void )
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
 				depthCopied = qtrue;
 				if( rn.fbDepthAttachment ) {
-					RB_BlitFrameBufferObject( r_screentexturecopy->fbo, 
+					RB_BlitFrameBufferObject( rsh.screenTextureCopy->fbo, 
 						GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
 				}
 			}

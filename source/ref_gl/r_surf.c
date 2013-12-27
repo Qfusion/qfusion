@@ -173,7 +173,7 @@ qboolean R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 {
 	vboSlice_t *slice;
 
-	slice = R_GetVBOSlice( drawSurf - r_worldbrushmodel->drawSurfaces );
+	slice = R_GetVBOSlice( drawSurf - rsh.worldBrushModel->drawSurfaces );
 	assert( slice != NULL );
 
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
@@ -220,7 +220,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 	}
 
 	if( r_drawworld->integer == 2 ) {
-		shader = rf.envShader;
+		shader = rsh.envShader;
 	} else {
 		shader = surf->shader;
 
@@ -248,7 +248,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 	}
 
 	// keep track of the actual vbo chunk we need to render
-	R_AddVBOSlice( drawSurf - r_worldbrushmodel->drawSurfaces, 
+	R_AddVBOSlice( drawSurf - rsh.worldBrushModel->drawSurfaces, 
 		surf->mesh->numVerts, surf->mesh->numElems,
 		surf->firstDrawSurfVert, surf->firstDrawSurfElem );
 
@@ -274,7 +274,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		}
 	}
 
-	c_brush_polys++;
+	rf.stats.c_brush_polys++;
 	rn.numVisSurfaces++;
 }
 
@@ -566,7 +566,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 	rn.shadowBits |= shadowBits;
 
 	R_MarkLeafSurfaces( pleaf->firstVisSurface, clipFlags, dlightBits, shadowBits );
-	c_world_leafs++;
+	rf.stats.c_world_leafs++;
 }
 
 //==================================================================================
@@ -582,7 +582,7 @@ void R_DrawWorld( void )
 
 	if( !r_drawworld->integer )
 		return;
-	if( !r_worldmodel )
+	if( !rsh.worldModel )
 		return;
 	if( rn.params & RP_SHADOWMAPVIEW )
 		return;
@@ -618,10 +618,10 @@ void R_DrawWorld( void )
 	if( r_speeds->integer )
 		msec = ri.Sys_Milliseconds();
 
-	R_RecursiveWorldNode( r_worldbrushmodel->nodes, clipFlags, dlightBits, shadowBits );
+	R_RecursiveWorldNode( rsh.worldBrushModel->nodes, clipFlags, dlightBits, shadowBits );
 
 	if( r_speeds->integer )
-		r_world_node += ri.Sys_Milliseconds() - msec;
+		rf.stats.t_world_node += ri.Sys_Milliseconds() - msec;
 }
 
 /*
@@ -647,7 +647,7 @@ void R_MarkLeaves( void )
 		return;
 	if( rn.params & RP_SHADOWMAPVIEW )
 		return;
-	if( !r_worldmodel )
+	if( !rsh.worldModel )
 		return;
 
 	// development aid to let you run around and see exactly where
@@ -658,20 +658,20 @@ void R_MarkLeaves( void )
 	rf.pvsframecount++;
 	rf.oldviewcluster = rf.viewcluster;
 
-	if( rn.params & RP_NOVIS || rf.viewcluster == -1 || !r_worldbrushmodel->pvs )
+	if( rn.params & RP_NOVIS || rf.viewcluster == -1 || !rsh.worldBrushModel->pvs )
 	{
 		// mark everything
-		for( pleaf = r_worldbrushmodel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
+		for( pleaf = rsh.worldBrushModel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
 			leaf->pvsframe = rf.pvsframecount;
-		for( i = 0, node = r_worldbrushmodel->nodes; i < r_worldbrushmodel->numnodes; i++, node++ )
+		for( i = 0, node = rsh.worldBrushModel->nodes; i < rsh.worldBrushModel->numnodes; i++, node++ )
 			node->pvsframe = rf.pvsframecount;
 		return;
 	}
 
-	pvs = Mod_ClusterPVS( rf.viewcluster, r_worldmodel );
+	pvs = Mod_ClusterPVS( rf.viewcluster, rsh.worldModel );
 	if( rf.viewarea > -1 && rn.refdef.areabits )
 #ifdef AREAPORTALS_MATRIX
-		areabits = rn.refdef.areabits + rf.viewarea * ((r_worldbrushmodel->numareas+7)/8);
+		areabits = rn.refdef.areabits + rf.viewarea * ((rsh.worldBrushModel->numareas+7)/8);
 #else
 		areabits = rn.refdef.areabits;
 #endif
@@ -697,20 +697,20 @@ void R_MarkLeaves( void )
 			pvsOrigin2[2] -= 9;
 		}
 
-		leaf = Mod_PointInLeaf( pvsOrigin2, r_worldmodel );
+		leaf = Mod_PointInLeaf( pvsOrigin2, rsh.worldModel );
 		viewcluster2 = leaf->cluster;
 		if( viewcluster2 > -1 && viewcluster2 != rf.viewcluster && !( pvs[viewcluster2>>3] & ( 1<<( viewcluster2&7 ) ) ) )
 		{
-			memcpy( fatpvs, pvs, ( r_worldbrushmodel->pvs->numclusters + 7 ) / 8 ); // same as pvs->rowsize
-			pvs = Mod_ClusterPVS( viewcluster2, r_worldmodel );
-			c = ( r_worldbrushmodel->pvs->numclusters + 31 ) / 32;
+			memcpy( fatpvs, pvs, ( rsh.worldBrushModel->pvs->numclusters + 7 ) / 8 ); // same as pvs->rowsize
+			pvs = Mod_ClusterPVS( viewcluster2, rsh.worldModel );
+			c = ( rsh.worldBrushModel->pvs->numclusters + 31 ) / 32;
 			for( i = 0; i < c; i++ )
 				(( int * )fatpvs)[i] |= (( int * )pvs)[i];
 			pvs = fatpvs;
 		}
 	}
 
-	for( pleaf = r_worldbrushmodel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
+	for( pleaf = rsh.worldBrushModel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
 	{
 		cluster = leaf->cluster;
 

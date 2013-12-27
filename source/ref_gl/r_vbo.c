@@ -280,7 +280,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 
 	r_num_active_vbos++;
 
-	vbo->registrationSequence = rf.registrationSequence;
+	vbo->registrationSequence = rsh.registrationSequence;
 	vbo->numVerts = numVerts;
 	vbo->numElems = numElems;
 	vbo->owner = owner;
@@ -305,7 +305,7 @@ error:
 */
 void R_TouchMeshVBO( mesh_vbo_t *vbo )
 {
-	vbo->registrationSequence = rf.registrationSequence;
+	vbo->registrationSequence = rsh.registrationSequence;
 }
 
 /*
@@ -912,7 +912,7 @@ void R_FreeUnusedVBOs( void )
 		next = vboh->prev;
 		vbo = &r_mesh_vbo[vboh->index];
 
-		if( vbo->registrationSequence != rf.registrationSequence ) {
+		if( vbo->registrationSequence != rsh.registrationSequence ) {
 			R_ReleaseMeshVBO( vbo );
 		}
 	}

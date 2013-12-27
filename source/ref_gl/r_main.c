@@ -25,40 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 r_frontend_t rf;
 
-model_t	*r_worldmodel;
-mbrushmodel_t *r_worldbrushmodel;
-
-float gldepthmin, gldepthmax;
-
 mapconfig_t mapConfig;
 
 refinst_t rn;
-
-image_t	*r_rawtexture;			// cinematic texture (RGB)
-image_t	*r_rawYUVtextures[3];	// 8bit cinematic textures (YCbCr)
-image_t	*r_notexture;			// use for bad textures
-image_t	*r_particletexture;		// little dot for particles
-image_t	*r_whitetexture;
-image_t	*r_blacktexture;
-image_t *r_greytexture;
-image_t *r_blankbumptexture;
-image_t	*r_coronatexture;
-image_t	*r_portaltextures[MAX_PORTAL_TEXTURES+1];   // portal views
-image_t	*r_shadowmapTextures[MAX_SHADOWGROUPS];
-image_t *r_screentexture;
-image_t *r_screendepthtexture;
-image_t *r_screentexturecopy;
-image_t *r_screendepthtexturecopy;
-image_t *r_screenfxaacopy;
-image_t *r_screenweapontexture;
-
-unsigned int c_brush_polys, c_world_leafs;
-
-unsigned int r_mark_leaves, r_world_node;
-unsigned int r_add_polys, r_add_entities;
-unsigned int r_draw_meshes;
-
-static const float r_farclip_min = Z_NEAR, r_farclip_bias = 64.0f;
 
 //
 // screen size info
@@ -278,15 +247,15 @@ mfog_t *R_FogForBounds( const vec3_t mins, const vec3_t maxs )
 	unsigned int i, j;
 	mfog_t *fog;
 
-	if( !r_worldmodel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) || !r_worldbrushmodel->numfogs )
+	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) || !rsh.worldBrushModel->numfogs )
 		return NULL;
 	if( rn.params & RP_SHADOWMAPVIEW )
 		return NULL;
-	if( r_worldbrushmodel->globalfog )
-		return r_worldbrushmodel->globalfog;
+	if( rsh.worldBrushModel->globalfog )
+		return rsh.worldBrushModel->globalfog;
 
-	fog = r_worldbrushmodel->fogs;
-	for( i = 0; i < r_worldbrushmodel->numfogs; i++, fog++ )
+	fog = rsh.worldBrushModel->fogs;
+	for( i = 0; i < rsh.worldBrushModel->numfogs; i++, fog++ )
 	{
 		if( !fog->shader )
 			continue;
@@ -567,12 +536,12 @@ mesh_vbo_t *R_InitNullModelVBO( void )
 */
 qboolean R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf )
 {
-	assert( rf.nullVBO != NULL );
-	if( !rf.nullVBO ) {
+	assert( rsh.nullVBO != NULL );
+	if( !rsh.nullVBO ) {
 		return qfalse;
 	}
 
-	RB_BindVBO( rf.nullVBO->index, GL_LINES );
+	RB_BindVBO( rsh.nullVBO->index, GL_LINES );
 
 	RB_DrawElements( 0, 6, 0, 6 );
 
@@ -585,7 +554,7 @@ qboolean R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t
 static qboolean R_AddNullSurfToDrawList( const entity_t *e )
 {
 	if( !R_AddDSurfToDrawList( e, R_FogForSphere( e->origin, 0.1f ), 
-		rf.whiteShader, 0, 0, NULL, &nullDrawSurf ) ) {
+		rsh.whiteShader, 0, 0, NULL, &nullDrawSurf ) ) {
 		return qfalse;
 	}
 
@@ -799,21 +768,21 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 	}
 
 	if( data ) {
-		if( r_rawtexture->width != cols || r_rawtexture->height != rows ) {
+		if( rsh.rawTexture->width != cols || rsh.rawTexture->height != rows ) {
 			qbyte *nodata[1] = { NULL };
-			R_ReplaceImage( r_rawtexture, nodata, cols, rows, r_rawtexture->flags, 3 );
+			R_ReplaceImage( rsh.rawTexture, nodata, cols, rows, rsh.rawTexture->flags, 3 );
 		}
-		R_ReplaceSubImage( r_rawtexture, &data, cols, rows );
+		R_ReplaceSubImage( rsh.rawTexture, &data, cols, rows );
 	}
 
-	h_scale = (float)r_rawtexture->width / r_rawtexture->upload_width;
-	v_scale = (float)r_rawtexture->height / r_rawtexture->upload_height;
+	h_scale = (float)rsh.rawTexture->width / rsh.rawTexture->upload_width;
+	v_scale = (float)rsh.rawTexture->height / rsh.rawTexture->upload_height;
 	s1 *= h_scale;
 	s2 *= h_scale;
 	t1 *= v_scale;
 	t2 *= v_scale;
 
-	R_DrawStretchQuick( x, y, w, h, s1, t1, s2, t2, colorWhite, GLSL_PROGRAM_TYPE_NONE, r_rawtexture, qfalse );
+	R_DrawStretchQuick( x, y, w, h, s1, t1, s2, t2, colorWhite, GLSL_PROGRAM_TYPE_NONE, rsh.rawTexture, qfalse );
 }
 
 /*
@@ -903,7 +872,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 void R_DrawStretchRawYUV( int x, int y, int w, int h, 
 	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv )
 {
-	R_DrawStretchRawYUVBuiltin( x, y, w, h, s1, t1, s2, t2, yuv, r_rawYUVtextures, 0 );
+	R_DrawStretchRawYUVBuiltin( x, y, w, h, s1, t1, s2, t2, yuv, rsh.rawYUVTextures, 0 );
 }
 
 /*
@@ -1004,7 +973,7 @@ static void R_PolyBlend( void )
 		return;
 
 	R_Set2DMode( qtrue );
-	R_DrawStretchPic( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1, rsc.refdef.blend, rf.whiteShader );
+	R_DrawStretchPic( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1, rsc.refdef.blend, rsh.whiteShader );
 	R_EndStretchBatch();
 }
 
@@ -1030,13 +999,13 @@ float R_DefaultFarClip( void )
 		return rn.shadowGroup->projDist;
 	} else if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		farclip_dist = 1024;
-	} else if( r_worldmodel && r_worldbrushmodel->globalfog ) {
-		farclip_dist = r_worldbrushmodel->globalfog->shader->fog_dist;
+	} else if( rsh.worldModel && rsh.worldBrushModel->globalfog ) {
+		farclip_dist = rsh.worldBrushModel->globalfog->shader->fog_dist;
 	} else {
-		farclip_dist = r_farclip_min;
+		farclip_dist = Z_NEAR;
 	}
 
-	return max( r_farclip_min, farclip_dist ) + r_farclip_bias;
+	return max( Z_NEAR, farclip_dist ) + Z_BIAS;
 }
 
 /*
@@ -1049,7 +1018,7 @@ static void R_SetVisFarClip( void )
 	vec3_t tmp;
 	float farclip_dist;
 
-	if( !r_worldmodel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 		return;
 	}
 
@@ -1066,16 +1035,16 @@ static void R_SetVisFarClip( void )
 
 	farclip_dist = sqrt( farclip_dist );
 
-	if( r_worldbrushmodel->globalfog )
+	if( rsh.worldBrushModel->globalfog )
 	{
-		float fogdist = r_worldbrushmodel->globalfog->shader->fog_dist;
+		float fogdist = rsh.worldBrushModel->globalfog->shader->fog_dist;
 		if( farclip_dist > fogdist )
 			farclip_dist = fogdist;
 		else
 			rn.clipFlags &= ~16;
 	}
 
-	rn.farClip = max( r_farclip_min, farclip_dist ) + r_farclip_bias;
+	rn.farClip = max( Z_NEAR, farclip_dist ) + Z_BIAS;
 }
 
 /*
@@ -1096,10 +1065,10 @@ static void R_SetupFrame( void )
 	{
 		mleaf_t *leaf;
 
-		VectorCopy( r_worldmodel->mins, rn.visMins );
-		VectorCopy( r_worldmodel->maxs, rn.visMaxs );
+		VectorCopy( rsh.worldModel->mins, rn.visMins );
+		VectorCopy( rsh.worldModel->maxs, rn.visMaxs );
 
-		leaf = Mod_PointInLeaf( rn.pvsOrigin, r_worldmodel );
+		leaf = Mod_PointInLeaf( rn.pvsOrigin, rsh.worldModel );
 		rn.viewcluster = leaf->cluster;
 		rn.viewarea = leaf->area;
 	}
@@ -1141,8 +1110,8 @@ static void R_SetupViewMatrices( void )
 static void R_Clear( int bitMask )
 {
 	int bits;
-	qbyte *envColor = r_worldmodel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && r_worldbrushmodel->globalfog ?
-		r_worldbrushmodel->globalfog->shader->fog_color : mapConfig.environmentColor;
+	qbyte *envColor = rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ?
+		rsh.worldBrushModel->globalfog->shader->fog_color : mapConfig.environmentColor;
 
 	bits = GL_DEPTH_BUFFER_BIT;
 
@@ -1221,7 +1190,7 @@ static void R_CalcDistancesToFogVolumes( void )
 	const vec_t *v;
 	mfog_t *fog;
 
-	if( !r_worldmodel )
+	if( !rsh.worldModel )
 		return;
 	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
 		return;
@@ -1229,7 +1198,7 @@ static void R_CalcDistancesToFogVolumes( void )
 	v = rn.viewOrigin;
 	rn.fog_eye = NULL;
 
-	for( i = 0, fog = r_worldbrushmodel->fogs; i < r_worldbrushmodel->numfogs; i++, fog++ ) {
+	for( i = 0, fog = rsh.worldBrushModel->fogs; i < rsh.worldBrushModel->numfogs; i++, fog++ ) {
 		dist = PlaneDiff( v, fog->visibleplane );
 
 		// determine the fog volume the viewer is inside
@@ -1397,7 +1366,7 @@ void R_RenderView( const refdef_t *fd )
 
 	R_ClearDrawList();
 
-	if( !r_worldmodel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( !rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		ri.Com_Error( ERR_DROP, "R_RenderView: NULL worldmodel" );
 
 	R_SetupFrame();
@@ -1412,7 +1381,7 @@ void R_RenderView( const refdef_t *fd )
 			msec = ri.Sys_Milliseconds();
 		R_MarkLeaves();
 		if( r_speeds->integer )
-			r_mark_leaves += ( ri.Sys_Milliseconds() - msec );
+			rf.stats.t_mark_leaves += ( ri.Sys_Milliseconds() - msec );
 
 		if( ! ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
 			R_DrawWorld();
@@ -1431,14 +1400,14 @@ void R_RenderView( const refdef_t *fd )
 			msec = ri.Sys_Milliseconds();
 		R_DrawPolys();
 		if( r_speeds->integer )
-			r_add_polys += ( ri.Sys_Milliseconds() - msec );
+			rf.stats.t_add_polys += ( ri.Sys_Milliseconds() - msec );
 	}
 
 	if( r_speeds->integer )
 		msec = ri.Sys_Milliseconds();
 	R_DrawEntities();
 	if( r_speeds->integer )
-		r_add_entities += ( ri.Sys_Milliseconds() - msec );
+		rf.stats.t_add_entities += ( ri.Sys_Milliseconds() - msec );
 
 	if( !shadowMap ) {
 		// now set  the real far clip value and reload view matrices
@@ -1465,7 +1434,7 @@ void R_RenderView( const refdef_t *fd )
 		msec = ri.Sys_Milliseconds();
 	R_DrawSurfaces();
 	if( r_speeds->integer )
-		r_draw_meshes += ( ri.Sys_Milliseconds() - msec );
+		rf.stats.t_draw_meshes += ( ri.Sys_Milliseconds() - msec );
 
 	if( r_showtris->integer )
 		R_DrawOutlinedSurfaces();
@@ -1709,14 +1678,7 @@ void R_AppActivate( qboolean active, qboolean destroy )
 */
 void R_ClearStats( void )
 {
-	c_brush_polys = 0;
-	c_world_leafs = 0;
-
-	r_mark_leaves =
-		r_add_polys =
-		r_add_entities =
-		r_draw_meshes =
-		r_world_node = 0;
+	memset( &rf.stats, 0, sizeof( rf.stats ) );
 }
 
 /*
@@ -1742,7 +1704,7 @@ const char *R_SpeedsMessage( char *out, size_t size )
 			Q_snprintfz( out, size,
 				"%4i wpoly %4i leafs\n"
 				"%s",
-				c_brush_polys, c_world_leafs,
+				rf.stats.c_brush_polys, rf.stats.c_world_leafs,
 				backend_msg
 			);
 			break;
@@ -1751,8 +1713,8 @@ const char *R_SpeedsMessage( char *out, size_t size )
 			Q_snprintfz( out, size,
 				"lvs: %5i  node: %5i\n"
 				"polys\\ents: %5i\\%5i  draw: %5i",
-				r_mark_leaves, r_world_node,
-				r_add_polys, r_add_entities, r_draw_meshes
+				rf.stats.t_mark_leaves, rf.stats.t_world_node,
+				rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
 			);
 			break;
 		case 4:
@@ -1899,7 +1861,7 @@ struct cinematics_s *R_GetShaderCinematic( shader_t *shader )
 */
 void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out )
 {
-	static float * const sinTable = rf.sinTableByte;
+	static float * const sinTable = rsh.sinTableByte;
 	float sin_a, sin_b, cos_a, cos_b;
 
 	cos_a = sinTable[( latlong[0] + 64 ) & 255];

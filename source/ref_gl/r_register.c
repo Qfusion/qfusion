@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 glconfig_t glConfig;
 
+r_shared_t rsh;
+
 mempool_t *r_mempool;
 
 cvar_t *r_norefresh;
@@ -906,8 +908,8 @@ init_qgl:
 	Q_strlwr( vendor_buffer );
 
 	memset( &rf, 0, sizeof( rf ) );
-	rf.registrationSequence = 1;
-	rf.registrationOpen = qfalse;
+	rsh.registrationSequence = 1;
+	rsh.registrationOpen = qfalse;
 
 	rf.applicationName = R_CopyString( applicationName );
 	rf.screenshotPrefix = R_CopyString( screenshotPrefix );
@@ -927,7 +929,7 @@ init_qgl:
 		R_GfxInfo_f();
 
 	for( i = 0; i < 256; i++ )
-		rf.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
+		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
 
 	// load and compile GLSL programs
 	RP_Init();
@@ -986,15 +988,15 @@ static void R_InitVolatileAssets( void )
 	R_InitCoronas();
 	R_InitCustomColors();
 
-	rf.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, qtrue );
-	rf.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, qtrue );
-	rf.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, qtrue );
+	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, qtrue );
+	rsh.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, qtrue );
+	rsh.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, qtrue );
 
-	if( !rf.nullVBO ) {
-		rf.nullVBO = R_InitNullModelVBO();
+	if( !rsh.nullVBO ) {
+		rsh.nullVBO = R_InitNullModelVBO();
 	}
 	else {
-		R_TouchMeshVBO( rf.nullVBO );
+		R_TouchMeshVBO( rsh.nullVBO );
 	}
 }
 
@@ -1016,13 +1018,13 @@ void R_BeginRegistration( void )
 {
 	R_DestroyVolatileAssets();
 
-	rf.registrationSequence++;
-	if( !rf.registrationSequence ) {
+	rsh.registrationSequence++;
+	if( !rsh.registrationSequence ) {
 		// make sure assumption that an asset is free it its registrationSequence is 0
-		// since rf.registrationSequence never equals 0
-		rf.registrationSequence = 1; 
+		// since rsh.registrationSequence never equals 0
+		rsh.registrationSequence = 1; 
 	}
-	rf.registrationOpen = qtrue;
+	rsh.registrationOpen = qtrue;
 
 	RB_BeginRegistration();
 
@@ -1034,11 +1036,11 @@ void R_BeginRegistration( void )
 */
 void R_EndRegistration( void )
 {
-	if( rf.registrationOpen == qfalse ) {
+	if( rsh.registrationOpen == qfalse ) {
 		return;
 	}
 
-	rf.registrationOpen = qfalse;
+	rsh.registrationOpen = qfalse;
 
 	R_FreeUnusedModels();
 	R_FreeUnusedVBOs();

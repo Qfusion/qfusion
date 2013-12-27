@@ -90,14 +90,14 @@ qboolean R_AddLightOccluder( const entity_t *ent )
 	if( rsc.numShadowGroups == MAX_SHADOWGROUPS )
 		return qfalse; // no free groups
 
-	leaf = Mod_PointInLeaf( origin, r_worldmodel );
+	leaf = Mod_PointInLeaf( origin, rsh.worldModel );
 
 	// start a new group
 	group = &rsc.shadowGroups[rsc.numShadowGroups];
 	memset( group, 0, sizeof( *group ) );
 	group->id = group - rsc.shadowGroups + 1;
 	group->bit = ( 1<<rsc.numShadowGroups );
-	group->vis = Mod_ClusterPVS( leaf->cluster, r_worldmodel );
+	group->vis = Mod_ClusterPVS( leaf->cluster, rsh.worldModel );
 	group->useOrtho = qtrue;
 	group->alpha = r_shadows_alpha->value;
 

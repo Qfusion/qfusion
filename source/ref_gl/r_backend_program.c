@@ -230,7 +230,7 @@ void RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal, vec_t *fogDist,
 	fogShader = fog->shader;
 
 	// distance to fog
-	dist = rn.fog_dist_to_eye[fog-r_worldbrushmodel->fogs];
+	dist = rn.fog_dist_to_eye[fog-rsh.worldBrushModel->fogs];
 
 	if( rb.currentShader->flags & SHADER_SKY )
 	{
@@ -712,7 +712,7 @@ static void RB_UpdateFogUniforms( int program, const mfog_t *fog )
 	RB_TransformFogPlanes( fog, fogPlane.normal, &fogPlane.dist, vpnPlane.normal, &vpnPlane.dist );
 
 	RP_UpdateFogUniforms( program, fog->shader->fog_color, fog->shader->fog_clearDist,
-		fog->shader->fog_dist, &fogPlane, &vpnPlane, rn.fog_dist_to_eye[fog-r_worldbrushmodel->fogs] );
+		fog->shader->fog_dist, &fogPlane, &vpnPlane, rn.fog_dist_to_eye[fog-rsh.worldBrushModel->fogs] );
 }
 
 /*
@@ -823,7 +823,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		programFeatures |= GLSL_SHADER_MATERIAL_DECAL;
 
 		if( rn.params & RP_LIGHTMAP ) {
-			decalmap = r_blacktexture;
+			decalmap = rsh.blackTexture;
 			programFeatures |= GLSL_SHADER_MATERIAL_DECAL_ADD;
 		}
 		else {
@@ -858,7 +858,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 			// bind lightmap textures and set program's features for lightstyles
 			for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-				RB_BindTexture( i+4, r_worldbrushmodel->lightmapImages[lightStyle->lightmapNum[i]] );
+				RB_BindTexture( i+4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] );
 
 			programFeatures |= ( i * GLSL_SHADER_MATERIAL_LIGHTSTYLE0 );
 
@@ -986,18 +986,18 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	for( i = 0; i < 2; i++ ) {
 		portaltexture[i] = rb.currentPortalSurface->texures[i];
 		if( !portaltexture[i] ) {
-			portaltexture[i] = r_blacktexture;
+			portaltexture[i] = rsh.blackTexture;
 		} else {
 			width = portaltexture[i]->upload_width;
 			height = portaltexture[i]->upload_height;
 		}
 	}
 
-	if( pass->images[0] != r_blankbumptexture )
+	if( pass->images[0] != rsh.blankBumpTexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_DUDV;
-	if( portaltexture[0] != r_blacktexture )
+	if( portaltexture[0] != rsh.blackTexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_REFLECTION;
-	if( portaltexture[1] != r_blacktexture )
+	if( portaltexture[1] != rsh.blackTexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_REFRACTION;
 
 	frontPlane = (PlaneDiff( rn.viewOrigin, &rb.currentPortalSurface->untransformed_plane ) > 0 ? qtrue : qfalse);
@@ -1322,10 +1322,10 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass )
 		return pass->images[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
 	if( pass->flags & SHADERPASS_PORTALMAP )
 		return rb.currentPortalSurface && rb.currentPortalSurface->texures[0] ? 
-			rb.currentPortalSurface->texures[0] : r_blacktexture;
+			rb.currentPortalSurface->texures[0] : rsh.blackTexture;
 	if( ( pass->flags & SHADERPASS_SKYBOXSIDE ) && rb.skyboxShader && rb.skyboxSide >= 0 )
 		return rb.skyboxShader->skyboxImages[rb.skyboxSide];
-	return ( pass->images[0] ? pass->images[0] : r_notexture );
+	return ( pass->images[0] ? pass->images[0] : rsh.noTexture );
 }
 
 /*
@@ -1440,7 +1440,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	RB_SetShaderpassState( state );
 
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
-		RB_BindTexture( 3, r_screendepthtexturecopy );
+		RB_BindTexture( 3, rsh.screenDepthTexture );
 	}
 
 	if( isLightmapped ) {
@@ -1448,7 +1448,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// bind lightmap textures and set program's features for lightstyles
 		for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-			RB_BindTexture( i+4, r_worldbrushmodel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
+			RB_BindTexture( i+4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
 		programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
 	}
 
@@ -1484,7 +1484,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
 			RP_UpdateTextureUniforms( program, 
-				r_screendepthtexturecopy->upload_width, r_screendepthtexturecopy->upload_height );
+				rsh.screenDepthTexture->upload_width, rsh.screenDepthTexture->upload_height );
 		}
 
 		RB_DrawElementsReal();
@@ -1537,7 +1537,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 #define CELSHADE_BIND(tmu,tex,feature,canAdd) \
 	if( tex ) { \
 		if( rn.params & RP_SHADOWMAPVIEW ) { \
-			tex = r_whitetexture; \
+			tex = rsh.whiteTexture; \
 		} else {\
 			programFeatures |= feature; \
 			if( canAdd && tex->samples == 3 ) programFeatures |= ((feature) << 1); \
@@ -2103,7 +2103,7 @@ void RB_DrawOutlinedElements( void )
 	r_triLinesPass.alphagen.type = ALPHA_GEN_CONST;
 	r_triLinesPass.alphagen.args = &r_triLinesColor[3];
 	r_triLinesPass.flags = 0;
-	r_triLinesPass.images[0] = r_whitetexture;
+	r_triLinesPass.images[0] = rsh.whiteTexture;
 	r_triLinesPass.anim_fps = 0;
 	r_triLinesPass.anim_numframes = 0;
 	r_triLinesPass.program_type = GLSL_PROGRAM_TYPE_Q3A_SHADER;
@@ -2159,7 +2159,7 @@ void RB_DrawShadedElements( void )
 	{
 		shaderpass_t *fogPass = &r_GLSLpasses[BUILTIN_GLSLPASS_FOG];
 
-		fogPass->images[0] = r_whitetexture;
+		fogPass->images[0] = rsh.whiteTexture;
 		if( !rb.currentShader->numpasses || rb.currentShader->fog_dist || ( rb.currentShader->flags & SHADER_SKY ) )
 			fogPass->flags &= ~GLSTATE_DEPTHFUNC_EQ;
 		else

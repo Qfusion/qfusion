@@ -88,7 +88,7 @@ static void Mod_TouchSkeletalModel( model_t *mod )
 	mskskin_t *skin;
 	mskmodel_t *skmodel = ( mskmodel_t * )mod->extradata;
 
-	mod->registrationSequence = rf.registrationSequence;
+	mod->registrationSequence = rsh.registrationSequence;
 
 	for( i = 0, mesh = skmodel->meshes; i < skmodel->nummeshes; i++, mesh++ ) {
 		// register needed skins and images
@@ -620,7 +620,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	mod->radius = RadiusFromBounds( mod->mins, mod->maxs );
 	mod->type = mod_skeletal;
-	mod->registrationSequence = rf.registrationSequence;
+	mod->registrationSequence = rsh.registrationSequence;
 	mod->touch = &Mod_TouchSkeletalModel;
 
 	R_Free( baseposes );

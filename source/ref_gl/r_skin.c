@@ -181,10 +181,10 @@ skinfile_t *R_RegisterSkinFile( const char *name )
 	skinfile_t *skinfile;
 
 	skinfile = R_SkinFileForName( name );
-	if( skinfile && skinfile->registrationSequence != rf.registrationSequence ) {
+	if( skinfile && skinfile->registrationSequence != rsh.registrationSequence ) {
 		int i;
 
-		skinfile->registrationSequence = rf.registrationSequence;
+		skinfile->registrationSequence = rsh.registrationSequence;
 		for( i = 0; i < skinfile->numpairs; i++ ) {
 			R_TouchShader( skinfile->pairs[i].shader );
 		}
@@ -201,7 +201,7 @@ void R_FreeUnusedSkinFiles( void )
 	skinfile_t *skinfile;
 
 	for( i = 0, skinfile = r_skinfiles; i < r_numskinfiles; i++, skinfile++ ) {
-		if( skinfile->registrationSequence == rf.registrationSequence ) {
+		if( skinfile->registrationSequence == rsh.registrationSequence ) {
 			// we need this skin
 			continue;
 		}

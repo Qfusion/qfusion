@@ -202,8 +202,8 @@ void RB_BindTexture( int tmu, const image_t *tex )
 
 	assert( tex != NULL );
 
-	if( r_nobind->integer && r_notexture && tex->texnum != 0 )  // performance evaluation option
-		tex = r_notexture;
+	if( r_nobind->integer && rsh.noTexture && tex->texnum != 0 )  // performance evaluation option
+		tex = rsh.noTexture;
 
 	RB_SelectTextureUnit( tmu );
 
@@ -247,9 +247,18 @@ void RB_FreeTextureNum( image_t *tex )
 */
 void RB_DepthRange( float depthmin, float depthmax )
 {
-	gldepthmin = bound( 0, depthmin, 1 );
-	gldepthmax = bound( 0, depthmax, 1 );
-	qglDepthRange( gldepthmin, gldepthmax );
+	rb.gl.depthmin = bound( 0, depthmin, 1 );
+	rb.gl.depthmax = bound( 0, depthmax, 1 );
+	qglDepthRange( rb.gl.depthmin, rb.gl.depthmax );
+}
+
+/*
+* RB_GetDepthRange
+*/
+void RB_GetDepthRange( float* depthmin, float *depthmax )
+{
+	*depthmin = rb.gl.depthmin;
+	*depthmax = rb.gl.depthmax;
 }
 
 /*

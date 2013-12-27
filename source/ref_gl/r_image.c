@@ -54,12 +54,12 @@ static size_t r_sizeof_imagePathBuf, r_sizeof_imagePathBuf2;
 		r_ ##buf = R_MallocExt( r_imagesPool, r_sizeof_ ##buf, 0, 0 ); \
 	}
 
-int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
-int gl_filter_max = GL_LINEAR;
+static int gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
+static int gl_filter_max = GL_LINEAR;
 
-int gl_filter_depth = GL_LINEAR;
+static int gl_filter_depth = GL_LINEAR;
 
-int gl_anisotropic_filter = 0;
+static int gl_anisotropic_filter = 0;
 
 typedef struct
 {
@@ -1711,7 +1711,7 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 	image->samples = samples;
 	image->fbo = 0;
 	image->texnum = 0;
-	image->registrationSequence = rf.registrationSequence;
+	image->registrationSequence = rsh.registrationSequence;
 
 	RB_AllocTextureNum( image );
 
@@ -1745,7 +1745,7 @@ void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int fla
 	image->width = width;
 	image->height = height;
 	image->samples = samples;
-	image->registrationSequence = rf.registrationSequence;
+	image->registrationSequence = rsh.registrationSequence;
 }
 
 /*
@@ -1765,7 +1765,7 @@ void R_ReplaceSubImage( image_t *image, qbyte **pic, int width, int height )
 	R_Upload32( pic, width, height, image->flags,
 		&w, &h, image->samples, qtrue, qtrue );
 
-	image->registrationSequence = rf.registrationSequence;
+	image->registrationSequence = rsh.registrationSequence;
 }
 
 /*
@@ -2133,7 +2133,7 @@ void R_EnvShot_f( void )
 		{ "nz", { 90, 180, 0 }, IT_FLIPDIAGONAL }
 	};
 
-	if( !r_worldmodel )
+	if( !rsh.worldModel )
 		return;
 
 	if( ri.Cmd_Argc() != 3 )
@@ -2549,7 +2549,7 @@ int R_GetPortalTextureId( const int viewportWidth, const int viewportHeight, con
 
 	for( i = 0; i < MAX_PORTAL_TEXTURES; i++ )
 	{
-		image = r_portaltextures[i];
+		image = rsh.portalTextures[i];
 		if( !image )
 			return i;
 
@@ -2584,15 +2584,15 @@ image_t *R_GetPortalTexture( int id, int viewportWidth, int viewportHeight, int 
 		return NULL;
 	}
 
-	R_InitViewportTexture( &r_portaltextures[id], "r_portaltexture", id, 
+	R_InitViewportTexture( &rsh.portalTextures[id], "r_portaltexture", id, 
 		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
 		IT_PORTALMAP|IT_FRAMEBUFFER|flags, 3 );
 
-	if( r_portaltextures[id] ) {
-		r_portaltextures[id]->framenum = rf.sceneFrameCount;
+	if( rsh.portalTextures[id] ) {
+		rsh.portalTextures[id]->framenum = rf.sceneFrameCount;
 	}
 
-	return r_portaltextures[id];
+	return rsh.portalTextures[id];
 }
 
 /*
@@ -2616,11 +2616,11 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 	}
 	flags |= IT_NOMIPMAP|IT_NOPICMIP;
 
-	R_InitViewportTexture( &r_shadowmapTextures[id], "r_shadowmap", id, 
+	R_InitViewportTexture( &rsh.shadowmapTextures[id], "r_shadowmap", id, 
 		viewportWidth, viewportHeight, r_shadows_maxtexsize->integer, 
 		IT_SHADOWMAP|IT_FRAMEBUFFER|flags, samples );
 
-	return r_shadowmapTextures[id];
+	return rsh.shadowmapTextures[id];
 }
 
 /*
@@ -2633,17 +2633,17 @@ static void R_InitStretchRawTexture( void )
 
 	// reserve a dummy texture slot
 	image_cur_hash = COM_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
-	r_rawtexture = R_AllocPic();
+	rsh.rawTexture = R_AllocPic();
 
-	assert( r_rawtexture );
-	if( !r_rawtexture ) {
+	assert( rsh.rawTexture );
+	if( !rsh.rawTexture ) {
 		ri.Com_Error( ERR_FATAL, "Failed to register cinematic texture" );
 	}
 
-	r_rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-	r_rawtexture->flags = IT_CINEMATIC;
-	strcpy( r_rawtexture->name, name );
-	RB_AllocTextureNum( r_rawtexture );
+	rsh.rawTexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
+	rsh.rawTexture->flags = IT_CINEMATIC;
+	strcpy( rsh.rawTexture->name, name );
+	RB_AllocTextureNum( rsh.rawTexture );
 }
 
 /*
@@ -2672,7 +2672,7 @@ static void R_InitStretchRawYUVTextures( void )
 		strcpy( rawtexture->name, name[i] );
 		RB_AllocTextureNum( rawtexture );
 
-		r_rawYUVtextures[i] = rawtexture;
+		rsh.rawYUVTextures[i] = rawtexture;
 	}
 }
 
@@ -2708,16 +2708,16 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 */
 static void R_InitScreenTextures( void )
 {
-	R_InitScreenTexturesPair( "r_screentex", &r_screentexture, 
-		&r_screendepthtexture, 3, qtrue ); 
+	R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
+		&rsh.screenDepthTexture, 3, qtrue ); 
 
-	R_InitScreenTexturesPair( "r_screentexcopy", &r_screentexturecopy, 
-		&r_screendepthtexturecopy, 3, qtrue );
+	R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
+		&rsh.screenDepthTexture, 3, qtrue );
 
-	R_InitScreenTexturesPair( "r_screenfxaacopy", &r_screenfxaacopy, 
+	R_InitScreenTexturesPair( "rsh.screenFxaaCopy", &rsh.screenFxaaCopy, 
 		NULL, 3, qfalse );
 
-	R_InitScreenTexturesPair( "r_screenweapontexture", &r_screenweapontexture, 
+	R_InitScreenTexturesPair( "rsh.screenWeaponTexture", &rsh.screenWeaponTexture, 
 		NULL, 4, qtrue );
 }
 
@@ -2736,13 +2736,13 @@ static void R_InitBuiltinTextures( void )
 	}
 	textures[] =
 	{
-		{ "***r_notexture***", &r_notexture, &R_InitNoTexture },
-		{ "***r_whitetexture***", &r_whitetexture, &R_InitWhiteTexture },
-		{ "***r_blacktexture***", &r_blacktexture, &R_InitBlackTexture },
-		{ "***r_greytexture***", &r_greytexture, &R_InitGreyTexture },
-		{ "***r_blankbumptexture***", &r_blankbumptexture, &R_InitBlankBumpTexture },
-		{ "***r_particletexture***", &r_particletexture, &R_InitParticleTexture },
-		{ "***r_coronatexture***", &r_coronatexture, &R_InitCoronaTexture },
+		{ "***rsh.noTexture***", &rsh.noTexture, &R_InitNoTexture },
+		{ "***rsh.whiteTexture***", &rsh.whiteTexture, &R_InitWhiteTexture },
+		{ "***rsh.blackTexture***", &rsh.blackTexture, &R_InitBlackTexture },
+		{ "***rsh.greyTexture***", &rsh.greyTexture, &R_InitGreyTexture },
+		{ "***rsh.blankBumpTexture***", &rsh.blankBumpTexture, &R_InitBlankBumpTexture },
+		{ "***rsh.particleTexture***", &rsh.particleTexture, &R_InitParticleTexture },
+		{ "***rsh.coronaTexture***", &rsh.coronaTexture, &R_InitCoronaTexture },
 		{ NULL, NULL, NULL }
 	};
 	size_t i, num_builtin_textures = sizeof( textures ) / sizeof( textures[0] ) - 1;
@@ -2763,23 +2763,23 @@ static void R_InitBuiltinTextures( void )
 */
 static void R_TouchBuiltinTextures( void )
 {
-	R_TouchImage( r_rawtexture );
-	R_TouchImage( r_rawYUVtextures[0] );
-	R_TouchImage( r_rawYUVtextures[1] );
-	R_TouchImage( r_rawYUVtextures[2] );
-	R_TouchImage( r_notexture );
-	R_TouchImage( r_whitetexture );
-	R_TouchImage( r_blacktexture ); 
-	R_TouchImage( r_greytexture );
-	R_TouchImage( r_blankbumptexture ); 
-	R_TouchImage( r_particletexture ); 
-	R_TouchImage( r_coronatexture ); 
-	R_TouchImage( r_screentexture ); 
-	R_TouchImage( r_screendepthtexture );
-	R_TouchImage( r_screentexturecopy ); 
-	R_TouchImage( r_screendepthtexturecopy );
-	R_TouchImage( r_screenfxaacopy );
-	R_TouchImage( r_screenweapontexture );
+	R_TouchImage( rsh.rawTexture );
+	R_TouchImage( rsh.rawYUVTextures[0] );
+	R_TouchImage( rsh.rawYUVTextures[1] );
+	R_TouchImage( rsh.rawYUVTextures[2] );
+	R_TouchImage( rsh.noTexture );
+	R_TouchImage( rsh.whiteTexture );
+	R_TouchImage( rsh.blackTexture ); 
+	R_TouchImage( rsh.greyTexture );
+	R_TouchImage( rsh.blankBumpTexture ); 
+	R_TouchImage( rsh.particleTexture ); 
+	R_TouchImage( rsh.coronaTexture ); 
+	R_TouchImage( rsh.screenTexture ); 
+	R_TouchImage( rsh.screenDepthTexture );
+	R_TouchImage( rsh.screenTextureCopy ); 
+	R_TouchImage( rsh.screenDepthTexture );
+	R_TouchImage( rsh.screenFxaaCopy );
+	R_TouchImage( rsh.screenWeaponTexture );
 }
 
 /*
@@ -2787,17 +2787,17 @@ static void R_TouchBuiltinTextures( void )
 */
 static void R_ReleaseBuiltinTextures( void )
 {
-	r_rawtexture = NULL;
-	r_rawYUVtextures[0] = r_rawYUVtextures[1] = r_rawYUVtextures[2] = NULL;
-	r_notexture = NULL;
-	r_whitetexture = r_blacktexture = r_greytexture = NULL;
-	r_blankbumptexture = NULL;
-	r_particletexture = NULL;
-	r_coronatexture = NULL;
-	r_screentexture = r_screendepthtexture = NULL;
-	r_screentexturecopy = r_screendepthtexturecopy = NULL;
-	r_screenfxaacopy = NULL;
-	r_screenweapontexture = NULL;
+	rsh.rawTexture = NULL;
+	rsh.rawYUVTextures[0] = rsh.rawYUVTextures[1] = rsh.rawYUVTextures[2] = NULL;
+	rsh.noTexture = NULL;
+	rsh.whiteTexture = rsh.blackTexture = rsh.greyTexture = NULL;
+	rsh.blankBumpTexture = NULL;
+	rsh.particleTexture = NULL;
+	rsh.coronaTexture = NULL;
+	rsh.screenTexture = rsh.screenDepthTexture = NULL;
+	rsh.screenTextureCopy = rsh.screenDepthTexture = NULL;
+	rsh.screenFxaaCopy = NULL;
+	rsh.screenWeaponTexture = NULL;
 }
 
 //=======================================================
@@ -2847,11 +2847,11 @@ void R_TouchImage( image_t *image )
 	if( !image ) {
 		return;
 	}
-	if( image->registrationSequence == rf.registrationSequence ) {
+	if( image->registrationSequence == rsh.registrationSequence ) {
 		return;
 	}
 
-	image->registrationSequence = rf.registrationSequence;
+	image->registrationSequence = rsh.registrationSequence;
 	if( image->fbo ) {
 		RFB_TouchObject( image->fbo );
 	}
@@ -2894,7 +2894,7 @@ void R_FreeUnusedImages( void )
 			// free image
 			continue;
 		}
-		if( image->registrationSequence == rf.registrationSequence ) {
+		if( image->registrationSequence == rsh.registrationSequence ) {
 			// we need this image
 			continue;
 		}
@@ -2902,14 +2902,14 @@ void R_FreeUnusedImages( void )
 	}
 
 	for( i = 0; i < MAX_PORTAL_TEXTURES; i++ ) {
-		if( r_portaltextures[i] && r_portaltextures[i]->registrationSequence != rf.registrationSequence ) {
-			r_portaltextures[i] = NULL;
+		if( rsh.portalTextures[i] && rsh.portalTextures[i]->registrationSequence != rsh.registrationSequence ) {
+			rsh.portalTextures[i] = NULL;
 		}
 	}
 
 	for( i = 0; i < MAX_SHADOWGROUPS; i++ ) {
-		if( r_shadowmapTextures[i] && r_shadowmapTextures[i]->registrationSequence != rf.registrationSequence ) {
-			r_shadowmapTextures[i] = NULL;
+		if( rsh.shadowmapTextures[i] && rsh.shadowmapTextures[i]->registrationSequence != rsh.registrationSequence ) {
+			rsh.shadowmapTextures[i] = NULL;
 		}
 	}
 }
@@ -2950,8 +2950,8 @@ void R_ShutdownImages( void )
 
 	R_FreePool( &r_imagesPool );
 
-	memset( r_portaltextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
-	memset( r_shadowmapTextures, 0, sizeof( image_t * ) * MAX_SHADOWGROUPS );
+	memset( rsh.portalTextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
+	memset( rsh.shadowmapTextures, 0, sizeof( image_t * ) * MAX_SHADOWGROUPS );
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;
