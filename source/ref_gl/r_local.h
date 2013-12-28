@@ -91,22 +91,24 @@ typedef struct superLightStyle_s
 #define	SIDE_BACK				1
 #define	SIDE_ON					2
 
-#define RP_NONE					0x0
-#define RP_MIRRORVIEW			0x1     // lock pvs at vieworg
-#define RP_PORTALVIEW			0x2
-#define RP_ENVVIEW				0x4
-#define RP_SKYPORTALVIEW		0x8
-#define RP_SHADOWMAPVIEW		0x10
-#define RP_FLIPFRONTFACE		0x20
-#define RP_DRAWFLAT				0x40
-#define RP_CLIPPLANE			0x80
-#define RP_PVSCULL				0x100
-#define RP_NOVIS				0x200
-#define RP_NOENTS				0x400
-#define RP_LIGHTMAP				0x800
+#define RF_BIT(x)				(1ULL << (x))
 
-#define RP_CUBEMAPVIEW			( RP_ENVVIEW )
-#define RP_NONVIEWERREF			( RP_PORTALVIEW|RP_MIRRORVIEW|RP_ENVVIEW|RP_SKYPORTALVIEW|RP_SHADOWMAPVIEW )
+#define RF_NONE					0x0
+#define RF_MIRRORVIEW			RF_BIT(0)
+#define RF_PORTALVIEW			RF_BIT(1)
+#define RF_ENVVIEW				RF_BIT(2)
+#define RF_SKYPORTALVIEW		RF_BIT(3)
+#define RF_SHADOWMAPVIEW		RF_BIT(4)
+#define RF_FLIPFRONTFACE		RF_BIT(5)
+#define RF_DRAWFLAT				RF_BIT(6)
+#define RF_CLIPPLANE			RF_BIT(7)
+#define RF_PVSCULL				RF_BIT(8)
+#define RF_NOVIS				RF_BIT(9)
+#define RF_NOENTS				RF_BIT(10)
+#define RF_LIGHTMAP				RF_BIT(11)
+
+#define RF_CUBEMAPVIEW			( RF_ENVVIEW )
+#define RF_NONVIEWERREF			( RF_PORTALVIEW|RF_MIRRORVIEW|RF_ENVVIEW|RF_SKYPORTALVIEW|RF_SHADOWMAPVIEW )
 
 //===================================================================
 
@@ -121,7 +123,7 @@ typedef struct portalSurface_s
 
 typedef struct
 {
-	unsigned int	params;					// rendering parameters
+	unsigned int	renderFlags;
 
 	image_t			*fbColorAttachment;
 	image_t			*fbDepthAttachment;
@@ -194,6 +196,8 @@ typedef struct
 
 	struct mesh_vbo_s *nullVBO;
 
+	vec3_t			wallColor, floorColor;
+
 	image_t			*rawTexture;				// cinematic texture (RGB)
 	image_t			*rawYUVTextures[3];			// 8bit cinematic textures (YCbCr)
 	image_t			*noTexture;					// use for bad textures
@@ -252,9 +256,6 @@ typedef struct
 	 // bumped each R_ClearScene
 	unsigned int	sceneFrameCount;
 	unsigned int	sceneShadowBits;
-
-	// FIXME: move most of the global variables below here
-	vec3_t			wallColor, floorColor;
 
 	qboolean		in2D;
 	int				width2D, height2D;
@@ -547,7 +548,7 @@ void		R_SetCustomColor( int num, int r, int g, int b );
 int			R_GetCustomColor( int num );
 void		R_ShutdownCustomColors( void );
 
-#define ENTITY_OUTLINE(ent) (( !(rn.params & RP_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
+#define ENTITY_OUTLINE(ent) (( !(rn.renderFlags & RF_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
 
 void		R_ForceMarkLeafs( void );
 

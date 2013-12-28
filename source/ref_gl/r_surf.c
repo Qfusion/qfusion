@@ -351,7 +351,7 @@ qboolean R_AddBrushModelToDrawList( const entity_t *e )
 	}
 
 	// never render weapon models or non-occluders into shadowmaps
-	if( rn.params & RP_SHADOWMAPVIEW ) {
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		if( rsc.entShadowGroups[R_ENT2NUM(e)] != rn.shadowGroup->id ) {
 			return qtrue;
 		}
@@ -584,7 +584,7 @@ void R_DrawWorld( void )
 		return;
 	if( !rsh.worldModel )
 		return;
-	if( rn.params & RP_SHADOWMAPVIEW )
+	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return;
 
 	VectorCopy( rn.refdef.vieworg, modelOrg );
@@ -601,14 +601,14 @@ void R_DrawWorld( void )
 		clipFlags = rn.clipFlags;
 
 	// dynamic lights
-	if( r_dynamiclight->integer != 1 || r_fullbright->integer || rn.params & RP_ENVVIEW ) {
+	if( r_dynamiclight->integer != 1 || r_fullbright->integer || rn.renderFlags & RF_ENVVIEW ) {
 		dlightBits = 0;
 	} else {
 		dlightBits = rsc.numDlights < 32 ? ( 1 << rsc.numDlights ) - 1 : ~0;
 	}
 
 	// shadowmaps
-	if( rn.params & RP_ENVVIEW ) {
+	if( rn.renderFlags & RF_ENVVIEW ) {
 		shadowBits = 0;
 	}
 	else {
@@ -643,9 +643,9 @@ void R_MarkLeaves( void )
 	rdflags = rn.refdef.rdflags;
 	if( rdflags & RDF_NOWORLDMODEL )
 		return;
-	if( rf.oldviewcluster == rf.viewcluster && ( rdflags & RDF_OLDAREABITS ) && !(rn.params & RP_NOVIS) && rf.viewcluster != -1 && rf.oldviewcluster != -1 )
+	if( rf.oldviewcluster == rf.viewcluster && ( rdflags & RDF_OLDAREABITS ) && !(rn.renderFlags & RF_NOVIS) && rf.viewcluster != -1 && rf.oldviewcluster != -1 )
 		return;
-	if( rn.params & RP_SHADOWMAPVIEW )
+	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return;
 	if( !rsh.worldModel )
 		return;
@@ -658,7 +658,7 @@ void R_MarkLeaves( void )
 	rf.pvsframecount++;
 	rf.oldviewcluster = rf.viewcluster;
 
-	if( rn.params & RP_NOVIS || rf.viewcluster == -1 || !rsh.worldBrushModel->pvs )
+	if( rn.renderFlags & RF_NOVIS || rf.viewcluster == -1 || !rsh.worldBrushModel->pvs )
 	{
 		// mark everything
 		for( pleaf = rsh.worldBrushModel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )

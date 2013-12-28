@@ -132,7 +132,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 	}
 
 	if( shader->flags & SHADER_PORTAL ) {
-		if( rn.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) {
+		if( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW ) ) {
 			return qfalse;
 		}
 	}
@@ -496,7 +496,7 @@ void R_DrawOutlinedSurfaces( void )
 {
 	qboolean triOutlines;
 	
-	if( rn.params & RP_SHADOWMAPVIEW )
+	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return;
 
 	// properly store and restore the state, as the 

@@ -79,7 +79,7 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	VectorCopy( &rn.viewAxis[AXIS_RIGHT], v_left );
 	VectorCopy( &rn.viewAxis[AXIS_UP], v_up );
 
-	if( rn.params & RP_MIRRORVIEW )
+	if( rn.renderFlags & RF_MIRRORVIEW )
 		VectorInverse( v_left );
 
 	VectorMA( origin, down, v_up, point );

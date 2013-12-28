@@ -48,7 +48,6 @@ void RB_LoadObjectMatrix( const mat4_t m );
 void RB_LoadModelviewMatrix( const mat4_t m );
 void RB_LoadProjectionMatrix( const mat4_t m );
 
-
 void RB_BindTexture( int tmu, const image_t *tex );
 void RB_AllocTextureNum( image_t *tex );
 void RB_FreeTextureNum( image_t *tex );
@@ -92,6 +91,7 @@ void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights );
 void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );
 void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
+void RB_SetRenderFlags( int flags );
 qboolean RB_EnableTriangleOutlines( qboolean enable );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
 void RB_SetZClip( float zNear, float zFar );

@@ -217,7 +217,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 		}
 	}
 
-	if( !(rn.params & RP_NOVIS) && !R_ScissorForEntity( portal_ent, portal_mins, portal_maxs, &x, &y, &w, &h ) )
+	if( !(rn.renderFlags & RF_NOVIS) && !R_ScissorForEntity( portal_ent, portal_mins, portal_maxs, &x, &y, &w, &h ) )
 		return;
 
 	mirror = qtrue; // default to mirror view
@@ -272,9 +272,9 @@ setup_and_render:
 		Matrix3_Copy( rn.refdef.viewaxis, axis );
 		VectorCopy( viewerOrigin, rn.pvsOrigin );
 
-		rn.params = RP_PORTALVIEW;
+		rn.renderFlags = RF_PORTALVIEW;
 		if( !mirror )
-			rn.params |= RP_PVSCULL;
+			rn.renderFlags |= RF_PVSCULL;
 	}
 	else if( mirror )
 	{
@@ -288,7 +288,7 @@ setup_and_render:
 
 		VectorCopy( viewerOrigin, rn.pvsOrigin );
 
-		rn.params = RP_MIRRORVIEW|RP_FLIPFRONTFACE;
+		rn.renderFlags = RF_MIRRORVIEW|RF_FLIPFRONTFACE;
 	}
 	else
 	{
@@ -326,13 +326,13 @@ setup_and_render:
 		// for portals, vis data is taken from portal origin, not
 		// view origin, because the view point moves around and
 		// might fly into (or behind) a wall
-		rn.params = RP_PORTALVIEW|RP_PVSCULL;
+		rn.renderFlags = RF_PORTALVIEW|RF_PVSCULL;
 		VectorCopy( best->origin2, rn.pvsOrigin );
 		VectorCopy( best->origin2, rn.lodOrigin );
 
 		// ignore entities, if asked politely
 		if( best->renderfx & RF_NOPORTALENTS )
-			rn.params |= RP_NOENTS;
+			rn.renderFlags |= RF_NOENTS;
 	}
 
 	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER );
@@ -340,7 +340,7 @@ setup_and_render:
 	rn.shadowGroup = NULL;
 	rn.meshlist = &r_portallist;
 
-	rn.params |= RP_CLIPPLANE;
+	rn.renderFlags |= RF_CLIPPLANE;
 	rn.clipPlane = *portal_plane;
 
 	rn.farClip = R_DefaultFarClip();
@@ -416,7 +416,7 @@ void R_DrawPortals( void )
 		return;
 	}
 
-	if( !( rn.params & ( RP_MIRRORVIEW|RP_PORTALVIEW|RP_SHADOWMAPVIEW ) ) )
+	if( !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW|RF_SHADOWMAPVIEW ) ) )
 	{
 		for( i = 0; i < rn.numPortalSurfaces; i++ ) {
 			portalSurface_t portalSurface = rn.portalSurfaces[i]; 
@@ -444,7 +444,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	oldcluster = rf.viewcluster;
 	oldarea = rf.viewarea;
 
-	rn.params = ( rn.params|RP_SKYPORTALVIEW );
+	rn.renderFlags = ( rn.renderFlags|RF_SKYPORTALVIEW );
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
 	rn.farClip = R_DefaultFarClip();
@@ -455,7 +455,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 
 	if( skyportal->noEnts ) {
-		rn.params |= RP_NOENTS;
+		rn.renderFlags |= RF_NOENTS;
 	}
 
 	if( skyportal->scale )

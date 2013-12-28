@@ -1299,7 +1299,7 @@ qboolean R_AddSkeletalModelToDrawList( const entity_t *e )
 		return qfalse;
 
 	// never render weapon models or non-occluders into shadowmaps
-	if( rn.params & RP_SHADOWMAPVIEW ) {
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		if( e->renderfx & RF_WEAPONMODEL ) {
 			return qtrue;
 		}

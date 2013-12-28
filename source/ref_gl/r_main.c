@@ -249,7 +249,7 @@ mfog_t *R_FogForBounds( const vec3_t mins, const vec3_t maxs )
 
 	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) || !rsh.worldBrushModel->numfogs )
 		return NULL;
-	if( rn.params & RP_SHADOWMAPVIEW )
+	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return NULL;
 	if( rsh.worldBrushModel->globalfog )
 		return rsh.worldBrushModel->globalfog;
@@ -423,7 +423,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 		VectorCopy( &rn.viewAxis[AXIS_UP], v_up );
 	}
 
-	if( rn.params & RP_MIRRORVIEW )
+	if( rn.renderFlags & RF_MIRRORVIEW )
 		VectorInverse( v_left );
 
 	VectorMA( e->origin, -radius, v_up, point );
@@ -995,7 +995,7 @@ float R_DefaultFarClip( void )
 {
 	float farclip_dist;
 
-	if( rn.params & RP_SHADOWMAPVIEW ) {
+	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		return rn.shadowGroup->projDist;
 	} else if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		farclip_dist = 1024;
@@ -1129,7 +1129,7 @@ static void R_Clear( int bitMask )
 		RFB_AttachTextureToObject( RFB_BoundObject(), rn.fbDepthAttachment );
 	}
 
-	if( !( rn.params & RP_SHADOWMAPVIEW ) ) {
+	if( !( rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
 		RB_Clear( bits, envColor[0] / 255.0, envColor[1] / 255.0, envColor[2] / 255.0, 1 );
 	}
 	else {
@@ -1145,7 +1145,7 @@ static void R_SetupGL( int clearBitMask )
 	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
 	RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
 
-	if( rn.params & RP_CLIPPLANE )
+	if( rn.renderFlags & RF_CLIPPLANE )
 	{
 		cplane_t *p = &rn.clipPlane;
 		Matrix4_ObliqueNearClipping( p->normal, -p->dist, rn.cameraMatrix, rn.projectionMatrix );
@@ -1157,12 +1157,14 @@ static void R_SetupGL( int clearBitMask )
 
 	RB_LoadModelviewMatrix( rn.cameraMatrix );
 
+	RB_SetRenderFlags( rn.renderFlags );
+
 	RB_SetMinLight( rn.refdef.minLight );
 
-	if( rn.params & RP_FLIPFRONTFACE )
+	if( rn.renderFlags & RF_FLIPFRONTFACE )
 		RB_FlipFrontFace();
 
-	if( ( rn.params & RP_SHADOWMAPVIEW ) && glConfig.ext.shadow )
+	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow )
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE );
 
 	R_Clear( clearBitMask );
@@ -1173,10 +1175,10 @@ static void R_SetupGL( int clearBitMask )
 */
 static void R_EndGL( void )
 {
-	if( ( rn.params & RP_SHADOWMAPVIEW ) && glConfig.ext.shadow )
+	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow )
 		RB_SetShaderStateMask( ~0, 0 );
 
-	if( rn.params & RP_FLIPFRONTFACE )
+	if( rn.renderFlags & RF_FLIPFRONTFACE )
 		RB_FlipFrontFace();
 }
 
@@ -1227,13 +1229,13 @@ static void R_DrawEntities( void )
 {
 	unsigned int i;
 	entity_t *e;
-	qboolean shadowmap = ( ( rn.params & RP_SHADOWMAPVIEW ) != 0 );
+	qboolean shadowmap = ( ( rn.renderFlags & RF_SHADOWMAPVIEW ) != 0 );
 	qboolean culled = qtrue;
 
-	if( rn.params & RP_NOENTS )
+	if( rn.renderFlags & RF_NOENTS )
 		return;
 
-	if( rn.params & RP_ENVVIEW )
+	if( rn.renderFlags & RF_ENVVIEW )
 	{
 		for( i = 0; i < rsc.numBmodelEntities; i++ )
 		{
@@ -1329,7 +1331,7 @@ static void R_BindRefInstFBO( void )
 void R_RenderView( const refdef_t *fd )
 {
 	int msec = 0;
-	qboolean shadowMap = rn.params & RP_SHADOWMAPVIEW ? qtrue : qfalse;
+	qboolean shadowMap = rn.renderFlags & RF_SHADOWMAPVIEW ? qtrue : qfalse;
 
 	rn.refdef = *fd;
 	rn.numVisSurfaces = 0;
@@ -1349,19 +1351,19 @@ void R_RenderView( const refdef_t *fd )
 	// enable PVS culling for some rendering instances
 	if( rn.refdef.rdflags & RDF_PORTALINVIEW
 		|| ((rn.refdef.rdflags & RDF_SKYPORTALINVIEW) && !rn.refdef.skyportal.noEnts) ) {
-		rn.params |= RP_PVSCULL;
+		rn.renderFlags |= RF_PVSCULL;
 	}
 
 	if( r_novis->integer ) {
-		rn.params |= RP_NOVIS;
+		rn.renderFlags |= RF_NOVIS;
 	}
 
 	if( r_lightmap->integer ) {
-		rn.params |= RP_LIGHTMAP;
+		rn.renderFlags |= RF_LIGHTMAP;
 	}
 
 	if( r_drawflat->integer ) {
-		rn.params |= RP_DRAWFLAT;
+		rn.renderFlags |= RF_DRAWFLAT;
 	}
 
 	R_ClearDrawList();
@@ -1427,7 +1429,7 @@ void R_RenderView( const refdef_t *fd )
 
 	R_DrawPortals();
 
-	if( r_portalonly->integer && !( rn.params & ( RP_MIRRORVIEW|RP_PORTALVIEW ) ) )
+	if( r_portalonly->integer && !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW ) ) )
 		return;
 
 	if( r_speeds->integer )
@@ -1578,11 +1580,11 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 		int i;
 
 		// parse and clamp colors for walls and floors we will copy into our texture
-		sscanf( r_wallcolor->string,  "%3f %3f %3f", &rf.wallColor[0], &rf.wallColor[1], &rf.wallColor[2] );
-		sscanf( r_floorcolor->string, "%3f %3f %3f", &rf.floorColor[0], &rf.floorColor[1], &rf.floorColor[2] );
+		sscanf( r_wallcolor->string,  "%3f %3f %3f", &rsh.wallColor[0], &rsh.wallColor[1], &rsh.wallColor[2] );
+		sscanf( r_floorcolor->string, "%3f %3f %3f", &rsh.floorColor[0], &rsh.floorColor[1], &rsh.floorColor[2] );
 		for( i = 0; i < 3; i++ ) {
-			rf.wallColor[i] = bound( 0, floor(rf.wallColor[i]) / 255.0, 1.0 );
-			rf.floorColor[i] = bound( 0, floor(rf.floorColor[i]) / 255.0, 1.0 );
+			rsh.wallColor[i] = bound( 0, floor(rsh.wallColor[i]) / 255.0, 1.0 );
+			rsh.floorColor[i] = bound( 0, floor(rsh.floorColor[i]) / 255.0, 1.0 );
 		}
 
 		r_wallcolor->modified = r_floorcolor->modified = qfalse;

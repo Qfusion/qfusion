@@ -241,7 +241,7 @@ void R_RenderScene( const refdef_t *fd )
 
 	fd = &rn.refdef;
 
-	rn.params = RP_NONE;
+	rn.renderFlags = RF_NONE;
 
 	rn.farClip = R_DefaultFarClip();
 	rn.clipFlags = 15;
@@ -439,7 +439,7 @@ static void R_RenderDebugSurface( void )
 	vec3_t start, end;
 	msurface_t *surf;
 
-	if( rn.params & RP_NONVIEWERREF || rn.refdef.rdflags & RDF_NOWORLDMODEL )
+	if( rn.renderFlags & RF_NONVIEWERREF || rn.refdef.rdflags & RDF_NOWORLDMODEL )
 		return;
 
 	r_debug_surface = NULL;

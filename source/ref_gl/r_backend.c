@@ -1175,7 +1175,7 @@ void RB_DrawElementsReal( void )
 	int firstVert, numVerts, firstElem, numElems;
 	int numInstances;
 
-	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt || rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt ) )
 		return;
 
 	numVerts = rb.drawElements.numVerts;
@@ -1340,6 +1340,15 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 
 	rb.drawElements.numInstances = numInstances;
 	RB_DrawElements_( firstVert, numVerts, firstElem, numElems );
+}
+
+
+/*
+* RB_SetRenderFlags
+*/
+void RB_SetRenderFlags( int flags )
+{
+	rb.renderFlags = flags;
 }
 
 /*
