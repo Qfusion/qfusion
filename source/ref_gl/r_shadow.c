@@ -349,7 +349,7 @@ void R_DrawShadowmaps( void )
 
 	if( !rsc.numShadowGroups )
 		return;
-	if( rn.params & RP_SHADOWMAPVIEW )
+	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return;
 	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
 		return;
@@ -420,7 +420,7 @@ void R_DrawShadowmaps( void )
 			rn.fbDepthAttachment = NULL;
 		}
 		rn.farClip = farClip;
-		rn.params = RP_SHADOWMAPVIEW|RP_FLIPFRONTFACE;
+		rn.renderFlags = RF_SHADOWMAPVIEW|RF_FLIPFRONTFACE;
 		rn.clipFlags |= 16; // clip by far plane too
 		rn.meshlist = &r_shadowlist;
 		rn.shadowGroup = group;

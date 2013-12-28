@@ -2165,7 +2165,7 @@ void R_EnvShot_f( void )
 	rn.farClip = R_DefaultFarClip();
 
 	// do not render non-bmodel entities
-	rn.params |= RP_CUBEMAPVIEW;
+	rn.renderFlags |= RF_CUBEMAPVIEW;
 	rn.clipFlags = 15;
 	rn.shadowGroup = NULL;
 	rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
@@ -2199,7 +2199,7 @@ void R_EnvShot_f( void )
 	}
 
 	// render non-bmodel entities again
-	rn.params &= ~RP_CUBEMAPVIEW;
+	rn.renderFlags &= ~RF_CUBEMAPVIEW;
 
 	R_Free( checkname );
 	R_Free( buffer );

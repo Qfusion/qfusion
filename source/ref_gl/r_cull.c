@@ -188,7 +188,7 @@ qboolean R_VisCullBox( const vec3_t mins, const vec3_t maxs )
 
 	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		return qfalse;
-	if( rn.params & RP_NOVIS )
+	if( rn.renderFlags & RF_NOVIS )
 		return qfalse;
 
 	for( s = 0; s < 3; s++ )
@@ -237,7 +237,7 @@ qboolean R_VisCullSphere( const vec3_t origin, float radius )
 
 	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		return qfalse;
-	if( rn.params & RP_NOVIS )
+	if( rn.renderFlags & RF_NOVIS )
 		return qfalse;
 
 	radius += 4;
@@ -284,21 +284,21 @@ int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius
 {
 	if( e->flags & RF_NOSHADOW )
 	{
-		if( rn.params & RP_SHADOWMAPVIEW )
+		if( rn.renderFlags & RF_SHADOWMAPVIEW )
 			return 3;
 	}
 
 	if( e->flags & RF_WEAPONMODEL )
 	{
-		if( rn.params & RP_NONVIEWERREF )
+		if( rn.renderFlags & RF_NONVIEWERREF )
 			return 1;
 		return 0;
 	}
 
 	if( e->flags & RF_VIEWERMODEL )
 	{
-		//if( !(rn.params & RP_NONVIEWERREF) )
-		if( !( rn.params & ( RP_MIRRORVIEW|RP_SHADOWMAPVIEW ) ) )
+		//if( !(rn.renderFlags & RF_NONVIEWERREF) )
+		if( !( rn.renderFlags & ( RF_MIRRORVIEW|RF_SHADOWMAPVIEW ) ) )
 			return 1;
 	}
 
@@ -317,7 +317,7 @@ int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius
 			return 1;
 	}
 
-	if( rn.params & RP_PVSCULL )
+	if( rn.renderFlags & RF_PVSCULL )
 	{
 		if( sphereCull )
 		{

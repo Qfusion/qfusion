@@ -139,11 +139,11 @@ static unsigned int r_numglslprograms;
 static glsl_program_t r_glslprograms[MAX_GLSL_PROGRAMS];
 static glsl_program_t *r_glslprograms_hash[GLSL_PROGRAM_TYPE_MAXTYPE][GLSL_PROGRAMS_HASH_SIZE];
 
-static void RP_GetUniformLocations( glsl_program_t *program );
-static void RP_BindAttrbibutesLocations( glsl_program_t *program );
+static void RF_GetUniformLocations( glsl_program_t *program );
+static void RF_BindAttrbibutesLocations( glsl_program_t *program );
 
-static void RP_PrecachePrograms( void );
-static void RP_StorePrecacheList( void );
+static void RF_PrecachePrograms( void );
+static void RF_StorePrecacheList( void );
 
 /*
 * RP_Init
@@ -177,11 +177,11 @@ void RP_Init( void )
 		}
 	}
 
-	RP_PrecachePrograms();
+	RF_PrecachePrograms();
 }
 
 /*
-* RP_PrecachePrograms
+* RF_PrecachePrograms
 *
 * Loads the list of known program permutations from disk file.
 *
@@ -192,7 +192,7 @@ void RP_Init( void )
 * ..
 * program_typeN features_lower_bitsN features_higher_bitsN program_nameN
 */
-static void RP_PrecachePrograms( void )
+static void RF_PrecachePrograms( void )
 {
 #ifdef NDEBUG
 	int version;
@@ -271,12 +271,12 @@ static void RP_PrecachePrograms( void )
 
 
 /*
-* RP_StorePrecacheList
+* RF_StorePrecacheList
 *
 * Stores the list of known GLSL program permutations to file on the disk.
-* File format matches that expected by RP_PrecachePrograms.
+* File format matches that expected by RF_PrecachePrograms.
 */
-static void RP_StorePrecacheList( void )
+static void RF_StorePrecacheList( void )
 {
 #ifdef NDEBUG
 	unsigned int i;
@@ -313,9 +313,9 @@ static void RP_StorePrecacheList( void )
 }
 
 /*
-* RP_DeleteProgram
+* RF_DeleteProgram
 */
-static void RP_DeleteProgram( glsl_program_t *program )
+static void RF_DeleteProgram( glsl_program_t *program )
 {
 	glsl_program_t *hash_next;
 
@@ -347,9 +347,9 @@ static void RP_DeleteProgram( glsl_program_t *program )
 }
 
 /*
-* RP_CompileShader
+* RF_CompileShader
 */
-static int RP_CompileShader( int program, const char *programName, const char *shaderName, 
+static int RF_CompileShader( int program, const char *programName, const char *shaderName, 
 	int shaderType, const char **strings, int numStrings )
 {
 	GLhandleARB shader;
@@ -1110,9 +1110,9 @@ typedef struct
 } glslParser_t;
 
 /*
-* RP_LoadShaderFromFile_r
+* RF_LoadShaderFromFile_r
 */
-static qboolean RP_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
+static qboolean RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 	int stackDepth )
 {
 	char *fileContents;
@@ -1225,7 +1225,7 @@ static qboolean RP_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 
 			Q_strncatz( tempFilename, va( "%s%s", *tempFilename ? "/" : "", token ), tempFilenameSize );
 
-			parser->error = RP_LoadShaderFromFile_r( parser, tempFilename, stackDepth+1 );
+			parser->error = RF_LoadShaderFromFile_r( parser, tempFilename, stackDepth+1 );
 
 			R_Free( tempFilename );
 
@@ -1439,21 +1439,21 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	parser.numStrings = 0;
 	parser.maxStrings = sizeof( shaderStrings ) / sizeof( shaderStrings[0] ) - num_init_strings;
 
-	RP_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
+	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
 
 	num_shader_strings = num_init_strings + parser.numStrings;
 
 	// compile
 	//
 
-	RP_BindAttrbibutesLocations( program );
+	RF_BindAttrbibutesLocations( program );
 
 	// vertex shader
 	shaderStrings[shaderTypeIdx] = "#define VERTEX_SHADER\n";
 	if( shaderStrings[deformvIdx] == NULL ) {
 		shaderStrings[deformvIdx] = "\n";
 	}
-	program->vertexShader = RP_CompileShader( program->object, fullName, "vertex", GL_VERTEX_SHADER_ARB, 
+	program->vertexShader = RF_CompileShader( program->object, fullName, "vertex", GL_VERTEX_SHADER_ARB, 
 		shaderStrings, num_shader_strings );
 	if( !program->vertexShader )
 	{
@@ -1465,7 +1465,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderStrings[instancedIdx] = "\n"; // GL_ARB_draw_instanced is unsupported in fragment shader
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
 	shaderStrings[deformvIdx] = "\n";
-	program->fragmentShader = RP_CompileShader( program->object, fullName, "fragment", GL_FRAGMENT_SHADER_ARB, 
+	program->fragmentShader = RF_CompileShader( program->object, fullName, "fragment", GL_FRAGMENT_SHADER_ARB, 
 		shaderStrings, num_shader_strings );
 	if( !program->fragmentShader )
 	{
@@ -1495,7 +1495,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 
 done:
 	if( error )
-		RP_DeleteProgram( program );
+		RF_DeleteProgram( program );
 
 	for( i = 0; i < parser.numBuffers; i++ ) {
 		R_Free( parser.buffers[i] );
@@ -1515,7 +1515,7 @@ done:
 	if( program->object )
 	{
 		qglUseProgramObjectARB( program->object );
-		RP_GetUniformLocations( program );
+		RF_GetUniformLocations( program );
 	}
 
 	return ( program - r_glslprograms ) + 1;
@@ -1950,9 +1950,9 @@ void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t f
 }
 
 /*
-* RP_GetUniformLocations
+* RF_GetUniformLocations
 */
-static void RP_GetUniformLocations( glsl_program_t *program )
+static void RF_GetUniformLocations( glsl_program_t *program )
 {
 	unsigned int i;
 	int		locBaseTexture,
@@ -2164,9 +2164,9 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 }
 
 /*
-* RP_BindAttrbibutesLocations
+* RF_BindAttrbibutesLocations
 */
-static void RP_BindAttrbibutesLocations( glsl_program_t *program )
+static void RF_BindAttrbibutesLocations( glsl_program_t *program )
 {
 	qglBindAttribLocationARB( program->object, VATTRIB_POSITION, "a_Position" ); 
 	qglBindAttribLocationARB( program->object, VATTRIB_SVECTOR, "a_SVector" ); 
@@ -2206,10 +2206,10 @@ void RP_Shutdown( void )
 	unsigned int i;
 	glsl_program_t *program;
 
-	RP_StorePrecacheList();
+	RF_StorePrecacheList();
 
 	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ )
-		RP_DeleteProgram( program );
+		RF_DeleteProgram( program );
 
 	Trie_Destroy( glsl_cache_trie );
 	glsl_cache_trie = NULL;

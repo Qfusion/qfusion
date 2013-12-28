@@ -271,7 +271,7 @@ void RB_VertexTCCelshadeMatrix( mat4_t matrix )
 	mat4_t m;
 	const entity_t *e = rb.currentEntity;
 
-	if( e->model != NULL && !( rn.params & RP_SHADOWMAPVIEW ) )
+	if( e->model != NULL && !( rb.renderFlags & RF_SHADOWMAPVIEW ) )
 	{
 		R_LightForOrigin( e->lightingOrigin, dir, NULL, NULL, e->model->radius * e->scale );
 
@@ -672,7 +672,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 	RP_UpdateViewUniforms( program,
 		rb.modelviewMatrix, rb.modelviewProjectionMatrix,
 		rn.viewOrigin, rn.viewAxis, 
-		rn.params & RP_MIRRORVIEW ? -1 : 1,
+		rb.renderFlags & RF_MIRRORVIEW ? -1 : 1,
 		rb.gl.viewport,
 		rb.zNear, rb.zFar
 	);
@@ -767,10 +767,10 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		if( !( r_offsetmapping->integer & 1 ) ) {
 			offsetmappingScale = 0;
 		}
-		if( rn.params & RP_LIGHTMAP ) {
+		if( rb.renderFlags & RF_LIGHTMAP ) {
 			programFeatures |= GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY;
 		}
-		if( ( rn.params & RP_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+		if( ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT|GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY;
 		}
 	}
@@ -822,7 +822,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	{
 		programFeatures |= GLSL_SHADER_MATERIAL_DECAL;
 
-		if( rn.params & RP_LIGHTMAP ) {
+		if( rb.renderFlags & RF_LIGHTMAP ) {
 			decalmap = rsh.blackTexture;
 			programFeatures |= GLSL_SHADER_MATERIAL_DECAL_ADD;
 		}
@@ -960,7 +960,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 		// r_drawflat
 		if( programFeatures & GLSL_SHADER_COMMON_DRAWFLAT ) {
-			RP_UpdateDrawFlatUniforms( program, rf.wallColor, rf.floorColor );
+			RP_UpdateDrawFlatUniforms( program, rsh.wallColor, rsh.floorColor );
 		}
 
 		RB_DrawElementsReal();
@@ -1411,7 +1411,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		if( rb.currentDlightBits ) {
 			programFeatures |= RB_DlightbitsToProgramFeatures( rb.currentDlightBits );
 		}
-		if( ( rn.params & RP_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+		if( ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT;
 		}
 	}
@@ -1479,7 +1479,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// r_drawflat
 		if( programFeatures & GLSL_SHADER_COMMON_DRAWFLAT ) {
-			RP_UpdateDrawFlatUniforms( program, rf.wallColor, rf.floorColor );
+			RP_UpdateDrawFlatUniforms( program, rsh.wallColor, rsh.floorColor );
 		}
 
 		if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
@@ -1536,7 +1536,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	// bind white texture for shadow map view
 #define CELSHADE_BIND(tmu,tex,feature,canAdd) \
 	if( tex ) { \
-		if( rn.params & RP_SHADOWMAPVIEW ) { \
+		if( rb.renderFlags & RF_SHADOWMAPVIEW ) { \
 			tex = rsh.whiteTexture; \
 		} else {\
 			programFeatures |= feature; \
@@ -1946,10 +1946,10 @@ int RB_BindProgram( int program )
 static void RB_RenderPass( const shaderpass_t *pass )
 {
 	// for depth texture we render light's view to, ignore passes that do not write into depth buffer
-	if( ( rn.params & RP_SHADOWMAPVIEW ) && !( pass->flags & GLSTATE_DEPTHWRITE ) )
+	if( ( rb.renderFlags & RF_SHADOWMAPVIEW ) && !( pass->flags & GLSTATE_DEPTHWRITE ) )
 		return;
 
-	if( ( rn.params & RP_SHADOWMAPVIEW ) && !glConfig.ext.shadow ) {
+	if( ( rb.renderFlags & RF_SHADOWMAPVIEW ) && !glConfig.ext.shadow ) {
 		RB_RenderMeshGLSLProgrammed( pass, GLSL_PROGRAM_TYPE_RGB_SHADOW );
 	} else if( pass->program_type ) {
 		RB_RenderMeshGLSLProgrammed( pass, pass->program_type );
@@ -2003,7 +2003,7 @@ static void RB_SetShaderState( void )
 		state |= GLSTATE_OFFSET_FILL;
 		RB_PolygonOffset( -1.0, -2.0f );
 	}
-	else if( rn.params & RP_SHADOWMAPVIEW )
+	else if( rb.renderFlags & RF_SHADOWMAPVIEW )
 	{
 		state |= GLSTATE_OFFSET_FILL;
 		RB_PolygonOffset( 4.0f, 1.0f );
@@ -2126,9 +2126,9 @@ void RB_DrawShadedElements( void )
 		return;
 	}
 
-	if( ENTITY_OUTLINE( rb.currentEntity ) && !(rn.params & RP_CLIPPLANE)
+	if( ENTITY_OUTLINE( rb.currentEntity ) && !(rb.renderFlags & RF_CLIPPLANE)
 		&& ( rb.currentShader->sort == SHADER_SORT_OPAQUE ) && ( rb.currentShader->flags & SHADER_CULL_FRONT )
-		&& !( rn.params & RP_SHADOWMAPVIEW ) )
+		&& !( rb.renderFlags & RF_SHADOWMAPVIEW ) )
 	{
 		addGLSLOutline = qtrue;
 	}

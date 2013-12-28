@@ -80,6 +80,8 @@ typedef struct r_backend_s
 	mat4_t projectionMatrix;
 	mat4_t modelviewProjectionMatrix;
 	float zNear, zFar;
+	
+	int renderFlags;
 
 	const entity_t *currentEntity;
 	modtype_t currentModelType;

@@ -22,8 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef quint64 r_glslfeat_t;
 
-#define GLSL_BIT(x)					(1ULL << (x))
-#define GLSL_BITS_VERSION			3
+#define GLSL_BIT(x)							(1ULL << (x))
+#define GLSL_BITS_VERSION					4
 
 #define DEFAULT_GLSL_MATERIAL_PROGRAM		"defaultMaterial"
 #define DEFAULT_GLSL_DISTORTION_PROGRAM		"defaultDistortion"
@@ -160,8 +160,8 @@ enum
 #define GLSL_SHADER_CELSHADE_ENTITY_DECAL_ADD	GLSL_BIT(36)
 #define GLSL_SHADER_CELSHADE_STRIPES			GLSL_BIT(37)
 #define GLSL_SHADER_CELSHADE_STRIPES_ADD		GLSL_BIT(38)
-#define GLSL_SHADER_CELSHADE_CEL_LIGHT		GLSL_BIT(39)
-#define GLSL_SHADER_CELSHADE_CEL_LIGHT_ADD	GLSL_BIT(40)
+#define GLSL_SHADER_CELSHADE_CEL_LIGHT			GLSL_BIT(39)
+#define GLSL_SHADER_CELSHADE_CEL_LIGHT_ADD		GLSL_BIT(40)
 
 void RP_Init( void );
 void RP_Shutdown( void );
