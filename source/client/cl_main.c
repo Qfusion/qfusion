@@ -1095,6 +1095,8 @@ static void CL_ConnectionlessPacket( const socket_t *socket, const netadr_t *add
 
 		cls.rejected = qfalse;
 
+		Q_strncpyz( cls.session, MSG_ReadStringLine( msg ), sizeof( cls.session ) );
+
 		Netchan_Setup( &cls.netchan, socket, address, Netchan_GamePort() );
 		memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
 		CL_SetClientState( CA_HANDSHAKE );
@@ -2794,7 +2796,14 @@ static void CL_CheckForUpdate( void )
 	char *profileId;
 	int profileIdSize;
 	int headerNum = 0;
-	const char *headers[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	const char *headers[] = { 
+		NULL, NULL, 
+		NULL, NULL, 
+		NULL, NULL, 
+		NULL, NULL, 
+		NULL, NULL, 
+		NULL, NULL, 
+		NULL };
 
 	if( !cl_checkForUpdate->integer )
 		return;
@@ -2836,6 +2845,8 @@ static void CL_CheckForUpdate( void )
 	// send language
 	headers[headerNum++] = "X-Lang";
 	headers[headerNum++] = L10n_GetUserLanguage();
+
+	headerNum += CL_AddSessionHttpRequestHeaders( url, &headers[headerNum] );
 
 	CL_AsyncStreamRequest( url, headers, 15, 0, CL_CheckForUpdateReadCb, CL_CheckForUpdateDoneCb, 
 		CL_CheckForUpdateHeaderCb, NULL, qfalse );
@@ -2891,10 +2902,32 @@ static void CL_ShutdownAsyncStream( void )
 }
 
 /*
+* CL_AddSessionHttpRequestHeaders
+*/
+int CL_AddSessionHttpRequestHeaders( const char *url, const char **headers )
+{
+	static char pH[32];
+
+	if( cls.httpbaseurl && *cls.httpbaseurl ) {
+		if( !strncmp( url, cls.httpbaseurl, strlen( cls.httpbaseurl ) ) ) {
+			Q_snprintfz( pH, sizeof( pH ), "%i", cl.playernum );
+
+			headers[0] = "X-Client";
+			headers[1] = pH;
+			headers[2] = "X-Session";
+			headers[3] = cls.session;
+			return 4;
+		}
+	}
+	return 0;
+}
+
+/*
 * CL_AsyncStreamRequest
 */
 void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, int resumeFrom,
-	size_t (*read_cb)(const void *, size_t, float, int, const char *, void *), void (*done_cb)(int, const char *, void *), 
+	size_t (*read_cb)(const void *, size_t, float, int, const char *, void *), 
+	void (*done_cb)(int, const char *, void *), 
 	void (*header_cb)(const char *, void *), void *privatep, qboolean urlencodeUnsafe )
 {
 	char *tmpUrl = NULL;

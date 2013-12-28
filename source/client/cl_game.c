@@ -199,11 +199,18 @@ static void CL_GameModule_AsyncStream_Init( void )
 /*
 * CL_GameModule_AsyncStream_PerformRequest
 */
-static int CL_GameModule_AsyncStream_PerformRequest( const char *url, const char *method, const char *data, int timeout,
+static int CL_GameModule_AsyncStream_PerformRequest( const char *url, const char *method, 
+	const char *data, int timeout,
 	cg_async_stream_read_cb_t read_cb, cg_async_stream_done_cb_t done_cb, void *privatep )
 {
+	const char *headers[] = { NULL, NULL, NULL, NULL, NULL };
+
 	assert( cg_async_stream );
-	return AsyncStream_PerformRequest( cg_async_stream, url, method, data, NULL, timeout, 0, read_cb, done_cb, privatep );
+	
+	CL_AddSessionHttpRequestHeaders( url, headers );
+
+	return AsyncStream_PerformRequestExt( cg_async_stream, url, method, data, headers, timeout, 
+		0, read_cb, done_cb, NULL, privatep );
 }
 
 /*

@@ -67,6 +67,9 @@ typedef struct {
 	char *query_string;
 	char *http_ver;
 
+	int clientNum;
+	char *clientSession;
+
 	qboolean partial;
 	sv_http_content_range_t partial_content_range;
 
@@ -150,6 +153,11 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 		request->http_ver = NULL;
 	}
 
+	if( request->clientSession ) {
+		Mem_Free( request->clientSession );
+		request->clientSession = NULL;
+	}
+
 	request->query_string = "";
 	SV_Web_ResetStream( &request->stream );
 
@@ -157,6 +165,7 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 	request->close_after_resp = qfalse;
 	request->got_start_line = qfalse;
 	request->error = HTTP_RESP_NONE;
+	request->clientNum = -1;
 }
 
 /*
@@ -424,6 +433,10 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 				request->partial_content_range = stream->content_range;
 			}
 		}
+	} else if( !Q_stricmp( key, "X-Client" ) ) {
+		request->clientNum = atoi( value );
+	} else if( !Q_stricmp( key, "X-Session" ) ) {
+		request->clientSession = ZoneCopyString( value );
 	}
 }
 
@@ -536,6 +549,14 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 		if( request->stream.header_length > MAX_INCOMING_CONTENT_LENGTH ) {
 			request->error = HTTP_RESP_REQUEST_TOO_LARGE;
 		}
+
+		// request must come from a connected client with a valid session id
+		if( !request->error && request->stream.header_done ) {
+			if( !SV_ClientAllowHttpRequest( request->clientNum, request->clientSession ) ) {
+				request->error = HTTP_RESP_FORBIDDEN;
+			}
+		}
+
 		if( request->error ) {
 			break;
 		}
