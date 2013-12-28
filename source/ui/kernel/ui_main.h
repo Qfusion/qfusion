@@ -120,6 +120,8 @@ public:
 	void clearShaderCache( void );
 	void touchAllCachedShaders( void );
 
+	unsigned int getConnectCount( void ) const { return connectCount; }
+
 private:
 	UI_Main( int vidWidth, int vidHeight, int protocol, const char *demoExtension );
 
@@ -194,6 +196,8 @@ private:
 	std::string serverName;
 	std::string rejectMessage;
 	std::string demoExtension;
+
+	unsigned int connectCount;
 
 	vec4_t colorWhite;
 

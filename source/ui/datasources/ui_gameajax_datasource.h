@@ -37,6 +37,9 @@ public:
 	void GetRow( StringList& row, const String& table, int row_index, const StringList& columns );
 	int GetNumRows( const String& table );
 
+	// forces HTTP request on the next update
+	void FlushCache( void );
+
 private:
 	static const int UPDATE_INTERVAL = 10000; // in milliseconds
 
