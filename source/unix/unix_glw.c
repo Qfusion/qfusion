@@ -636,6 +636,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 	float ratio;
 	XSetWindowAttributes wa;
 	unsigned long mask;
+	XClassHint *class_hint;
 
 	if( x11display.dpy ) {
 		if( (glConfig.width == width) && (glConfig.height == height) && (glConfig.fullScreen != fullscreen) ) {
@@ -779,6 +780,14 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 
 	XSetIconName( x11display.dpy, x11display.win, glw_state.applicationName );
 	XStoreName( x11display.dpy, x11display.win, glw_state.applicationName );
+
+	class_hint = XAllocClassHint();
+	if( class_hint ) {
+		class_hint->res_name = glw_state.applicationName;
+		class_hint->res_class = glw_state.applicationName;
+		XSetClassHint( x11display.dpy, x11display.win, class_hint );
+		XFree( class_hint );
+	}
 
 	// save the parent window size for mouse use. this is not the gl context window
 	x11display.win_width = width;
