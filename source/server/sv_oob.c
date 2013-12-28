@@ -731,7 +731,8 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	}
 
 	// get the game a chance to reject this connection or modify the userinfo
-	if( !SV_ClientConnect( socket, address, newcl, userinfo, game_port, challenge, qfalse, tv_client, ticket_id, session_id ) )
+	if( !SV_ClientConnect( socket, address, newcl, userinfo, game_port, challenge, qfalse, 
+		tv_client, ticket_id, session_id ) )
 	{
 		char *rejtype, *rejflag, *rejtypeflag, *rejmsg;
 
@@ -755,7 +756,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	}
 
 	// send the connect packet to the client
-	Netchan_OutOfBandPrint( socket, address, "client_connect" );
+	Netchan_OutOfBandPrint( socket, address, "client_connect\n%s", newcl->session );
 
 	// free the incoming entry
 #ifdef TCP_ALLOW_CONNECT

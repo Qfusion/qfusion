@@ -124,7 +124,7 @@ typedef struct client_s
 {
 	sv_client_state_t state;
 
-	char userinfo[MAX_INFO_STRING];             // name, etc
+	char userinfo[MAX_INFO_STRING];     // name, etc
 
 	qboolean reliable;                  // no need for acks, connection is reliable
 	qboolean mv;                        // send multiview data to the client
@@ -163,8 +163,9 @@ typedef struct client_s
 	int rate;
 	int suppressCount;              // number of messages rate suppressed
 #endif
-	edict_t	*edict;                     // EDICT_NUM(clientnum+1)
-	char name[MAX_INFO_VALUE];          // extracted from userinfo, high bits masked
+	edict_t	*edict;                 // EDICT_NUM(clientnum+1)
+	char name[MAX_INFO_VALUE];      // extracted from userinfo, high bits masked
+	char session[16];               // session id for HTTP requests
 
 	client_snapshot_t snapShots[UPDATE_BACKUP]; // updates can be delta'd from here
 
@@ -456,6 +457,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 void SV_DropClient( client_t *drop, int type, const char *format, ... );
 void SV_ExecuteClientThinks( int clientNum );
 void SV_ClientResetCommandBuffers( client_t *client );
+qboolean SV_ClientAllowHttpRequest( int clientNum, const char *session );
 
 //
 // sv_mv.c

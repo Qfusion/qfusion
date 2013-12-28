@@ -289,6 +289,8 @@ typedef struct
 	int mm_session;
 	unsigned int mm_ticket;
 	clientRating_t *ratings;
+
+	char session[MAX_INFO_VALUE];
 } client_static_t;
 
 extern client_static_t cls;
@@ -391,6 +393,7 @@ void CL_ServerDisconnect_f( void );
 
 size_t CL_GetBaseServerURL( char *buffer, size_t buffer_size );
 
+int CL_AddSessionHttpRequestHeaders( const char *url, const char **headers );
 void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, int resumeFrom,
 	size_t (*read_cb)(const void *, size_t, float, int, const char *, void *), 
 	void (*done_cb)(int, const char *, void *), 

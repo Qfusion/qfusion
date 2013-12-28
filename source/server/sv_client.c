@@ -58,6 +58,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 						  int game_port, int challenge, qboolean fakeClient, qboolean tvClient,
 						  unsigned int ticket_id, int session_id )
 {
+	int i;
 	edict_t	*ent;
 	int edictnum;
 
@@ -155,6 +156,14 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 	// parse some info from the info strings
 	Q_strncpyz( client->userinfo, userinfo, sizeof( client->userinfo ) );
 	SV_UserinfoChanged( client );
+
+	// generate session id
+	for( i = 0; i < sizeof( svs.clients[0].session ) - 1; i++ ) {
+		 const unsigned char symbols[65] =
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+		client->session[i] = symbols[rand() % (sizeof( symbols )-1)];
+	}
+	client->session[i] = '\0';
 
 	return qtrue;
 }
@@ -809,6 +818,20 @@ static void SV_BeginDownload_f( client_t *client )
 	}
 }
 
+
+/*
+* SV_ClientAllowHttpRequest
+*/
+qboolean SV_ClientAllowHttpRequest( int clientNum, const char *session )
+{
+	if( clientNum < 0 || clientNum >= sv_maxclients->integer ) {
+		return qfalse;
+	}
+	if( !session || !*session ) {
+		return qfalse;
+	}
+	return strcmp( svs.clients[clientNum].session, session ) == 0;
+}
 
 //============================================================================
 
