@@ -168,7 +168,6 @@ typedef struct
 	float			lod_dist_scale_for_fov;
 
 	mfog_t			*fog_eye;
-	float			fog_dist_to_eye[MAX_MAP_FOGS];
 
 	unsigned int	numPortalSurfaces;
 	portalSurface_t	portalSurfaces[MAX_PORTAL_SURFACES];
