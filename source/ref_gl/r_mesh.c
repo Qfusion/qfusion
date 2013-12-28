@@ -418,7 +418,7 @@ static void _R_DrawSurfaces( void )
 			depthWrite = shader->flags & SHADER_DEPTHWRITE ? qtrue : qfalse;
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
 				depthCopied = qtrue;
-				if( rn.fbDepthAttachment ) {
+				if( rn.fbDepthAttachment && rsh.screenTextureCopy ) {
 					RB_BlitFrameBufferObject( rsh.screenTextureCopy->fbo, 
 						GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
 				}

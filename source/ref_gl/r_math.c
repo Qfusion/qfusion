@@ -424,7 +424,6 @@ void Matrix4_PerspectiveProjectionToInfinity( vec_t near, mat4_t m )
 */
 void Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m )
 {
-	vec3_t origin;
 	mat3_t axis;
 	mat4_t flip, view;
 
@@ -441,22 +440,20 @@ void Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m )
 
 	Matrix3_Copy( viewAxis, axis );
 
-	VectorCopy( viewOrg, origin );
-
 	view[0 ] = axis[0];
 	view[4 ] = axis[1];
 	view[8 ] = axis[2];
-	view[12] = -origin[0] * view[0] + -origin[1] * view[4] + -origin[2] * view[8];
+	view[12] = -viewOrg[0] * view[0] + -viewOrg[1] * view[4] + -viewOrg[2] * view[8];
 
 	view[1 ] = axis[3];
 	view[5 ] = axis[4];
 	view[9 ] = axis[5];
-	view[13] = -origin[0] * view[1] + -origin[1] * view[5] + -origin[2] * view[9];
+	view[13] = -viewOrg[0] * view[1] + -viewOrg[1] * view[5] + -viewOrg[2] * view[9];
 
 	view[2 ] = axis[6];
 	view[6 ] = axis[7];
 	view[10] = axis[8];
-	view[14] = -origin[0] * view[2] + -origin[1] * view[6] + -origin[2] * view[10];
+	view[14] = -viewOrg[0] * view[2] + -viewOrg[1] * view[6] + -viewOrg[2] * view[10];
 
 	view[3] = 0;
 	view[7] = 0;

@@ -325,15 +325,7 @@ void RFB_BlitObject( int dest, int bitMask, int mode )
 		return;
 	}
 
-	bits = 0;
-	if( fbo->colorTexture && destfbo->colorTexture ) {
-		bits |= GL_COLOR_BUFFER_BIT;
-	}
-	if( fbo->depthTexture && destfbo->depthTexture ) {
-		bits |= GL_DEPTH_BUFFER_BIT;
-	}
-	bits &= bitMask;
-
+	bits = bitMask;
 	if( !bits ) {
 		return;
 	}
