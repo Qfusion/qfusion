@@ -2712,7 +2712,7 @@ static void R_InitScreenTextures( void )
 		&rsh.screenDepthTexture, 3, qtrue ); 
 
 	R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
-		&rsh.screenDepthTexture, 3, qtrue );
+		&rsh.screenDepthTextureCopy, 3, qtrue );
 
 	R_InitScreenTexturesPair( "rsh.screenFxaaCopy", &rsh.screenFxaaCopy, 
 		NULL, 3, qfalse );
@@ -2777,7 +2777,7 @@ static void R_TouchBuiltinTextures( void )
 	R_TouchImage( rsh.screenTexture ); 
 	R_TouchImage( rsh.screenDepthTexture );
 	R_TouchImage( rsh.screenTextureCopy ); 
-	R_TouchImage( rsh.screenDepthTexture );
+	R_TouchImage( rsh.screenDepthTextureCopy );
 	R_TouchImage( rsh.screenFxaaCopy );
 	R_TouchImage( rsh.screenWeaponTexture );
 }
@@ -2795,7 +2795,7 @@ static void R_ReleaseBuiltinTextures( void )
 	rsh.particleTexture = NULL;
 	rsh.coronaTexture = NULL;
 	rsh.screenTexture = rsh.screenDepthTexture = NULL;
-	rsh.screenTextureCopy = rsh.screenDepthTexture = NULL;
+	rsh.screenTextureCopy = rsh.screenDepthTextureCopy = NULL;
 	rsh.screenFxaaCopy = NULL;
 	rsh.screenWeaponTexture = NULL;
 }

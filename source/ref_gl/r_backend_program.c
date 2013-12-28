@@ -231,14 +231,14 @@ static float RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal,
 	fogShader = fog->shader;
 
 	// distance to fog
-	dist = PlaneDiff( rn.viewOrigin, fog->visibleplane );
+	dist = PlaneDiff( rb.cameraOrigin, fog->visibleplane );
 
 	if( rb.currentShader->flags & SHADER_SKY )
 	{
 		if( dist > 0 )
-			VectorMA( rn.viewOrigin, -dist, fogPlane->normal, viewtofog );
+			VectorMA( rb.cameraOrigin, -dist, fogPlane->normal, viewtofog );
 		else
-			VectorCopy( rn.viewOrigin, viewtofog );
+			VectorCopy( rb.cameraOrigin, viewtofog );
 	}
 	else
 	{
@@ -255,11 +255,11 @@ static float RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal,
 	VectorScale( fogNormal, e->scale, fogNormal );
 	*fogDist = ( fogPlane->dist - DotProduct( viewtofog, fogPlane->normal ) );
 
-	Matrix3_TransformVector( e->axis, rn.viewAxis, vpnNormal );
+	Matrix3_TransformVector( e->axis, rb.cameraAxis, vpnNormal );
 	VectorScale( vpnNormal, e->scale, vpnNormal );
-	*vpnDist = ( ( rn.viewOrigin[0] - viewtofog[0] ) * rn.viewAxis[AXIS_FORWARD+0] + 
-		( rn.viewOrigin[1] - viewtofog[1] ) * rn.viewAxis[AXIS_FORWARD+1] + 
-		( rn.viewOrigin[2] - viewtofog[2] ) * rn.viewAxis[AXIS_FORWARD+2] ) + 
+	*vpnDist = ( ( rb.cameraOrigin[0] - viewtofog[0] ) * rb.cameraAxis[AXIS_FORWARD+0] + 
+		( rb.cameraOrigin[1] - viewtofog[1] ) * rb.cameraAxis[AXIS_FORWARD+1] + 
+		( rb.cameraOrigin[2] - viewtofog[2] ) * rb.cameraAxis[AXIS_FORWARD+2] ) + 
 		fogShader->fog_clearDist;
 
 	return dist;
@@ -662,7 +662,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 	vec2_t blendMix = { 0, 0 };
 
 	VectorCopy( e->origin, entOrigin );
-	VectorSubtract( rn.viewOrigin, e->origin, tmp );
+	VectorSubtract( rb.cameraOrigin, e->origin, tmp );
 	Matrix3_TransformVector( e->axis, tmp, entDist );
 
 	// calculate constant color
@@ -676,7 +676,7 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 
 	RP_UpdateViewUniforms( program,
 		rb.modelviewMatrix, rb.modelviewProjectionMatrix,
-		rn.viewOrigin, rn.viewAxis, 
+		rb.cameraOrigin, rb.cameraAxis, 
 		rb.renderFlags & RF_MIRRORVIEW ? -1 : 1,
 		rb.gl.viewport,
 		rb.zNear, rb.zFar
@@ -1006,7 +1006,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	if( portaltexture[1] != rsh.blackTexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_REFRACTION;
 
-	frontPlane = (PlaneDiff( rn.viewOrigin, &rb.currentPortalSurface->untransformed_plane ) > 0 ? qtrue : qfalse);
+	frontPlane = (PlaneDiff( rb.cameraOrigin, &rb.currentPortalSurface->untransformed_plane ) > 0 ? qtrue : qfalse);
 
 	if( frontPlane )
 	{
@@ -1446,7 +1446,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	RB_SetShaderpassState( state );
 
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
-		RB_BindTexture( 3, rsh.screenDepthTexture );
+		RB_BindTexture( 3, rsh.screenDepthTextureCopy );
 	}
 
 	if( isLightmapped ) {
@@ -1683,7 +1683,7 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	features |= RB_AutospriteProgramFeatures();
 	features |= RB_InstancedArraysProgramFeatures();
 	
-	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) && rn.fbDepthAttachment ) {
+	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) && rsh.screenDepthTextureCopy ) {
 		features |= GLSL_SHADER_COMMON_SOFT_PARTICLE;
 	}
 

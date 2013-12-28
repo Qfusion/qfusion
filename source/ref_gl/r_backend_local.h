@@ -83,6 +83,9 @@ typedef struct r_backend_s
 	
 	int renderFlags;
 
+	vec3_t cameraOrigin;
+	mat3_t cameraAxis;
+
 	const entity_t *currentEntity;
 	modtype_t currentModelType;
 	const mesh_vbo_t *currentMeshVBO;

@@ -1153,13 +1153,15 @@ static void R_SetupGL( int clearBitMask )
 
 	RB_SetZClip( Z_NEAR, rn.farClip );
 
-	RB_LoadProjectionMatrix( rn.projectionMatrix );
+	RB_SetCamera( rn.viewOrigin, rn.viewAxis );
 
-	RB_LoadModelviewMatrix( rn.cameraMatrix );
+	RB_SetMinLight( rn.refdef.minLight );
 
 	RB_SetRenderFlags( rn.renderFlags );
 
-	RB_SetMinLight( rn.refdef.minLight );
+	RB_LoadProjectionMatrix( rn.projectionMatrix );
+
+	RB_LoadModelviewMatrix( rn.cameraMatrix );
 
 	if( rn.renderFlags & RF_FLIPFRONTFACE )
 		RB_FlipFrontFace();

@@ -1342,6 +1342,14 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	RB_DrawElements_( firstVert, numVerts, firstElem, numElems );
 }
 
+/*
+* RB_SetCamera
+*/
+void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis )
+{
+	VectorCopy( cameraOrigin, rb.cameraOrigin );
+	Matrix3_Copy( cameraAxis, rb.cameraAxis );
+}
 
 /*
 * RB_SetRenderFlags
