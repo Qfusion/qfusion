@@ -214,7 +214,8 @@ static float RB_BackendGetNoiseValue( float x, float y, float z, float t )
 /*
 * RB_TransformFogPlanes
 */
-void RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal, vec_t *fogDist, vec3_t vpnNormal, vec_t *vpnDist )
+static float RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal, 
+	vec_t *fogDist, vec3_t vpnNormal, vec_t *vpnDist )
 {
 	cplane_t *fogPlane;
 	shader_t *fogShader;
@@ -230,7 +231,7 @@ void RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal, vec_t *fogDist,
 	fogShader = fog->shader;
 
 	// distance to fog
-	dist = rn.fog_dist_to_eye[fog-rsh.worldBrushModel->fogs];
+	dist = PlaneDiff( rn.viewOrigin, fog->visibleplane );
 
 	if( rb.currentShader->flags & SHADER_SKY )
 	{
@@ -260,6 +261,8 @@ void RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal, vec_t *fogDist,
 		( rn.viewOrigin[1] - viewtofog[1] ) * rn.viewAxis[AXIS_FORWARD+1] + 
 		( rn.viewOrigin[2] - viewtofog[2] ) * rn.viewAxis[AXIS_FORWARD+2] ) + 
 		fogShader->fog_clearDist;
+
+	return dist;
 }
 
 /*
@@ -318,7 +321,9 @@ void RB_ApplyTCMods( const shaderpass_t *pass, mat4_t result )
 			{
 				t1 = ( 1.0 / 4.0 );
 				t2 = tcmod->args[2] + rb.currentShaderTime * tcmod->args[3];
-				Matrix4_Scale2D( result, 1 + ( tcmod->args[1] * RB_FastSin( t2 ) + tcmod->args[0] ) * t1, 1 + ( tcmod->args[1] * RB_FastSin( t2 + 0.25 ) + tcmod->args[0] ) * t1 );
+				Matrix4_Scale2D( result, 
+					1 + ( tcmod->args[1] * RB_FastSin( t2 ) + tcmod->args[0] ) * t1, 
+					1 + ( tcmod->args[1] * RB_FastSin( t2 + 0.25 ) + tcmod->args[0] ) * t1 );
 			}
 			break;
 		case TC_MOD_STRETCH:
@@ -707,12 +712,13 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 */
 static void RB_UpdateFogUniforms( int program, const mfog_t *fog )
 {
+	float dist;
 	cplane_t fogPlane, vpnPlane;
 
-	RB_TransformFogPlanes( fog, fogPlane.normal, &fogPlane.dist, vpnPlane.normal, &vpnPlane.dist );
+	dist = RB_TransformFogPlanes( fog, fogPlane.normal, &fogPlane.dist, vpnPlane.normal, &vpnPlane.dist );
 
 	RP_UpdateFogUniforms( program, fog->shader->fog_color, fog->shader->fog_clearDist,
-		fog->shader->fog_dist, &fogPlane, &vpnPlane, rn.fog_dist_to_eye[fog-rsh.worldBrushModel->fogs] );
+		fog->shader->fog_dist, &fogPlane, &vpnPlane, dist );
 }
 
 /*

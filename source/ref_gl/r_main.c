@@ -1183,46 +1183,6 @@ static void R_EndGL( void )
 }
 
 /*
-* R_CalcDistancesToFogVolumes
-*/
-static void R_CalcDistancesToFogVolumes( void )
-{
-	unsigned int i, j;
-	float dist;
-	const vec_t *v;
-	mfog_t *fog;
-
-	if( !rsh.worldModel )
-		return;
-	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
-		return;
-
-	v = rn.viewOrigin;
-	rn.fog_eye = NULL;
-
-	for( i = 0, fog = rsh.worldBrushModel->fogs; i < rsh.worldBrushModel->numfogs; i++, fog++ ) {
-		dist = PlaneDiff( v, fog->visibleplane );
-
-		// determine the fog volume the viewer is inside
-		if( dist < 0 ) {	
-			for( j = 0; j < 3; j++ ) {
-				if( v[j] >= fog->maxs[j] ) {
-					break;
-				}
-				if( v[j] <= fog->mins[j] ) {
-					break;
-				}
-			}
-			if( j == 3 ) {
-				rn.fog_eye = fog;
-			}
-		}
-
-		rn.fog_dist_to_eye[i] = dist;
-	}
-}
-
-/*
 * R_DrawEntities
 */
 static void R_DrawEntities( void )
@@ -1339,6 +1299,8 @@ void R_RenderView( const refdef_t *fd )
 	// load view matrices with default far clip value
 	R_SetupViewMatrices();
 
+	rn.fog_eye = NULL;
+
 	rn.shadowBits = 0;
 	rn.dlightBits = 0;
 	
@@ -1393,7 +1355,7 @@ void R_RenderView( const refdef_t *fd )
 				return;
 			}
 
-			R_CalcDistancesToFogVolumes();
+			rn.fog_eye = R_FogForSphere( rn.viewOrigin, 0.5 );
 		}
 
 		R_DrawCoronas();
