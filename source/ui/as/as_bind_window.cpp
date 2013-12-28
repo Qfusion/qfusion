@@ -285,6 +285,11 @@ public:
 		trap::VID_FlashWindow( count );
 	}
 
+	int getConnectCount( void )
+	{
+		return UI_Main::Get()->getConnectCount();
+	}
+
 private:
 	typedef std::map<ElementDocument *, FunctionCallScheduler *>  SchedulerMap;
 	SchedulerMap schedulers;
@@ -409,6 +414,8 @@ void BindWindow( ASInterface *as )
 		.method( &ASWindow::clearInterval, "clearInterval" )
 
 		.method( &ASWindow::flash, "flash" )
+
+		.method( &ASWindow::getConnectCount, "get_connectCount" )
 	;
 }
 

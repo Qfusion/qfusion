@@ -53,19 +53,15 @@ void PrebindDataSource( ASInterface *as )
 	ASBind::Class<Rocket::Controls::DataSource, ASBind::class_ref>( as->getEngine() );
 }
 
-void aaa( DataSource *ds )
+void dummy( DataSource *ds )
 {
 }
 
-
-void bbb( DataSource *ds )
-{
-}
 
 void BindDataSource( ASInterface *as )
 {
 	ASBind::GetClass<Rocket::Controls::DataSource>( as->getEngine() )
-		.refs( &aaa, &bbb )
+		.refs( &dummy, &dummy )
 
 		.constmethod( &DataSource_GetName, "get_name", true )
 		.constmethod( &DataSource_GetNumRows, "numRows", true )

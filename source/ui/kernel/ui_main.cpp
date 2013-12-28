@@ -52,13 +52,14 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, const char *demoExt
 	crosshair_fmt(0), empty_fmt(0),
 	serverBrowser(0), gameTypes(0), maps(0), vidProfiles(0), huds(0), videoModes(0), 
 	demos(0), mods(0), 
-	playerModels(0), crosshairs(0), 
+	playerModels(0), crosshairs(0), tvchannels(0), ircchannels(0), gameajax(0),
 	navigator(0), /* backwards development compatibility: */ currentLoader(0),
 
 	// other members
 	mousex(0), mousey(0), gameProtocol(protocol),
 	menuVisible(false), forceMenu(false), showNavigationStack(false),
-	serverName(""), rejectMessage(""), demoExtension(demoExtension)
+	serverName(""), rejectMessage(""), demoExtension(demoExtension),
+	connectCount(0)
 {
 	// instance
 	self = this;
@@ -361,6 +362,7 @@ void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessa
 	int connectCount, bool backGround )
 {
 	DownloadInfo dlinfo( downloadFilename, downloadType );
+
 	dlinfo.setPercent( downloadPercent );
 	dlinfo.setSpeed( downloadSpeed );
 
@@ -369,6 +371,11 @@ void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessa
 	this->downloadInfo = dlinfo;
 
 	navigator->pushDocument( ui_connectscreen, true, true );
+
+	// hacky way to reset HTTP query cache between connections
+	gameajax->FlushCache();
+
+	this->connectCount++;
 
 	forceUI( true );
 	showUI( true );

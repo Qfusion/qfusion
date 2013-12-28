@@ -103,11 +103,7 @@ GameAjaxDataSource::GameAjaxDataSource() : DataSource( GAMEAJAX_SOURCE )
 
 GameAjaxDataSource::~GameAjaxDataSource( void )
 {
-	for( DynTableList::iterator it = tableList.begin(); it != tableList.end(); ++it ) {
-		__delete__( it->second->table );
-		__delete__( it->second );
-	}
-	tableList.clear();
+	FlushCache();
 }
 
 void GameAjaxDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList& cols )
@@ -157,6 +153,15 @@ int GameAjaxDataSource::GetNumRows( const String &tableName )
 	);
 
 	return oldTable != NULL ? oldTable->GetNumRows() : 0;
+}
+
+void GameAjaxDataSource::FlushCache( void )
+{
+	for( DynTableList::iterator it = tableList.begin(); it != tableList.end(); ++it ) {
+		__delete__( it->second->table );
+		__delete__( it->second );
+	}
+	tableList.clear();
 }
 
 size_t GameAjaxDataSource::StreamRead( const void *buf, size_t numb, float percentage, 
