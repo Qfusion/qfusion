@@ -747,24 +747,42 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "\n" \
 "#if QF_GLSL_VERSION >= 130\n" \
 "  precision highp float;\n" \
+"\n" \
 "# ifdef VERTEX_SHADER\n" \
 "   out myhalf4 qf_FrontColor;\n" \
-"#  define varying out\n" \
-"#  define attribute in\n" \
-"#  define gl_FrontColor qf_FrontColor\n" \
+"#  define qf_varying out\n" \
+"#  define qf_attribute in\n" \
 "# endif\n" \
-"\n" \
 "# ifdef FRAGMENT_SHADER\n" \
 "   in myhalf4 qf_FrontColor;\n" \
 "   out myhalf4	qf_FragColor;\n" \
-"#  define gl_Color qf_FrontColor\n" \
-"#  define gl_FragColor qf_FragColor\n" \
-"#  define varying in\n" \
-"#  define attribute in\n" \
-"#  define texture2D texture\n" \
-"#  define textureCube texture\n" \
-"#  define shadow2D texture\n" \
+"#  define qf_varying in\n" \
+"#  define qf_attribute in\n" \
 "# endif\n" \
+"\n" \
+"# define qf_texture texture\n" \
+"# define qf_textureCube texture\n" \
+"# define qf_textureLod textureLod\n" \
+"# define qf_textureOffset(a,b,c,d) textureOffset(a,b,ivec2(c,d))\n" \
+"# define qf_shadow texture\n" \
+"#else\n" \
+"# ifdef VERTEX_SHADER\n" \
+"#  define qf_FrontColor gl_FrontColor\n" \
+"#  define qf_varying varying\n" \
+"#  define qf_attribute attribute\n" \
+"# endif\n" \
+"\n" \
+"# ifdef FRAGMENT_SHADER\n" \
+"#  define qf_FrontColor gl_Color\n" \
+"#  define qf_FragColor gl_FragColor\n" \
+"#  define qf_varying varying\n" \
+"#  define qf_attribute attribute\n" \
+"# endif\n" \
+"# define qf_texture texture2D\n" \
+"# define qf_textureLod texture2DLod\n" \
+"# define qf_textureCube textureCube\n" \
+"# define qf_textureOffset(a,b,c,d) texture2DOffset(a,b,ivec2(c,d))\n" \
+"# define qf_shadow shadow2D\n" \
 "#endif\n" \
 "\n"
 

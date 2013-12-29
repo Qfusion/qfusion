@@ -16,21 +16,21 @@
 #include "include/greyscale.glsl"
 #endif
 
-varying vec2 v_TexCoord;
+qf_varying vec2 v_TexCoord;
 #ifdef NUM_LIGHTMAPS
-varying vec2 v_LightmapTexCoord[NUM_LIGHTMAPS];
+qf_varying vec2 v_LightmapTexCoord[NUM_LIGHTMAPS];
 #endif
 
-varying vec3 v_Position;
+qf_varying vec3 v_Position;
 
 #if defined(APPLY_SPECULAR) || defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
-varying vec3 v_EyeVector;
+qf_varying vec3 v_EyeVector;
 #endif
 
-varying mat3 v_StrMatrix; // directions of S/T/R texcoords (tangent, binormal, normal)
+qf_varying mat3 v_StrMatrix; // directions of S/T/R texcoords (tangent, binormal, normal)
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-varying vec2 v_FogCoord;
+qf_varying vec2 v_FogCoord;
 #endif
 
 #ifdef VERTEX_SHADER
@@ -61,7 +61,7 @@ void main()
 #endif
 #endif // APPLY_FOG
 
-	gl_FrontColor = vec4(outColor);
+	qf_FrontColor = vec4(outColor);
 
 	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 
@@ -139,20 +139,20 @@ vec2 OffsetMapping(vec2 TexCoord)
 	vec3 OffsetVector = vec3(normalize(v_EyeVector).xy * u_OffsetMappingScale * vec2(-1, 1), -1);
 	vec3 RT = vec3(TexCoord, 1);
 	OffsetVector *= 0.1;
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector * (step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z)          - 0.5);
-	RT += OffsetVector * (step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z) * 0.5    - 0.25);
-	RT += OffsetVector * (step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z) * 0.25   - 0.125);
-	RT += OffsetVector * (step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z) * 0.125  - 0.0625);
-	RT += OffsetVector * (step(texture2D(u_NormalmapTexture, RT.xy).a, RT.z) * 0.0625 - 0.03125);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
+	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z)          - 0.5);
+	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z) * 0.5    - 0.25);
+	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z) * 0.25   - 0.125);
+	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z) * 0.125  - 0.0625);
+	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z) * 0.0625 - 0.03125);
 	return RT.xy;
 #else
 	// 2 sample offset mapping (only 2 samples because of ATI Radeon 9500-9800/X300 limits)
@@ -163,8 +163,8 @@ vec2 OffsetMapping(vec2 TexCoord)
 	vec2 OffsetVector = vec2(normalize(v_EyeVector).xy * u_OffsetMappingScale * vec2(-1, 1));
 	TexCoord += OffsetVector;
 	OffsetVector *= 0.5;
-	TexCoord -= OffsetVector * texture2D(u_NormalmapTexture, TexCoord).a;
-	TexCoord -= OffsetVector * texture2D(u_NormalmapTexture, TexCoord).a;
+	TexCoord -= OffsetVector * qf_texture(u_NormalmapTexture, TexCoord).a;
+	TexCoord -= OffsetVector * qf_texture(u_NormalmapTexture, TexCoord).a;
 	return TexCoord;
 #endif // APPLY_RELIEFMAPPING
 }
@@ -201,7 +201,7 @@ void main()
 	myhalf4 decal = myhalf4 (0.0, 0.0, 0.0, 1.0);
 
 	// get the surface normal
-	surfaceNormal = normalize(myhalf3(texture2D (u_NormalmapTexture, v_TexCoord)) - myhalf3 (0.5));
+	surfaceNormal = normalize(myhalf3(qf_texture (u_NormalmapTexture, v_TexCoord)) - myhalf3 (0.5));
 	surfaceNormalModelspace = normalize(v_StrMatrix * surfaceNormal);
 
 #ifdef APPLY_DIRECTIONAL_LIGHT
@@ -255,7 +255,7 @@ void main()
 #endif // APPLY_HALFLAMBERT
 
 #ifdef APPLY_DIRECTIONAL_LIGHT_MIX
-	color.rgb += gl_Color.rgb;
+	color.rgb += qf_FrontColor.rgb;
 #else
 	color.rgb += u_LightDiffuse.rgb * myhalf(max (diffuseProduct, 0.0)) + u_LightAmbient;
 #endif
@@ -268,19 +268,19 @@ void main()
 
 #ifdef NUM_LIGHTMAPS
 	// get light normal
-	diffuseNormalModelspace = normalize(myhalf3 (texture2D(u_LightmapTexture[0], vec2(v_LightmapTexCoord[0].s+u_DeluxemapOffset[0],v_LightmapTexCoord[0].t))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture(u_LightmapTexture[0], vec2(v_LightmapTexCoord[0].s+u_DeluxemapOffset[0],v_LightmapTexCoord[0].t))) - myhalf3 (0.5));
 	// calculate directional shading
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 
 #ifdef APPLY_FBLIGHTMAP
 	weightedDiffuseNormalModelspace = diffuseNormalModelspace;
 	// apply lightmap color
-	color.rgb += myhalf3 (max (diffuseProduct, 0.0) * myhalf3 (texture2D (u_LightmapTexture[0], v_LightmapTexCoord[0])));
+	color.rgb += myhalf3 (max (diffuseProduct, 0.0) * myhalf3 (qf_texture (u_LightmapTexture[0], v_LightmapTexCoord[0])));
 #else
 #define NORMALIZE_DIFFUSE_NORMAL
 	weightedDiffuseNormalModelspace = u_LightstyleColor[0] * diffuseNormalModelspace;
 	// apply lightmap color
-	color.rgb += u_LightstyleColor[0] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (texture2D(u_LightmapTexture[0], v_LightmapTexCoord[0]));
+	color.rgb += u_LightstyleColor[0] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[0], v_LightmapTexCoord[0]));
 #endif // APPLY_FBLIGHTMAP
 
 #ifdef APPLY_AMBIENT_COMPENSATION
@@ -289,20 +289,20 @@ void main()
 #endif
 
 #if NUM_LIGHTMAPS >= 2
-	diffuseNormalModelspace = normalize(myhalf3 (texture2D (u_LightmapTexture[1], vec2(v_LightmapTexCoord[1].s+u_DeluxemapOffset[1],v_LightmapTexCoord[1].t))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[1], vec2(v_LightmapTexCoord[1].s+u_DeluxemapOffset[1],v_LightmapTexCoord[1].t))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[1] * diffuseNormalModelspace;
-	color.rgb += u_LightstyleColor[1] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (texture2D(u_LightmapTexture[1], v_LightmapTexCoord[1]));
+	color.rgb += u_LightstyleColor[1] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[1], v_LightmapTexCoord[1]));
 #if NUM_LIGHTMAPS >= 3
-	diffuseNormalModelspace = normalize(myhalf3 (texture2D (u_LightmapTexture[2], vec2(v_LightmapTexCoord[2].s+u_DeluxemapOffset[2],v_LightmapTexCoord[2].t))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[2], vec2(v_LightmapTexCoord[2].s+u_DeluxemapOffset[2],v_LightmapTexCoord[2].t))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[2] * diffuseNormalModelspace;
-	color.rgb += u_LightstyleColor[2] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (texture2D(u_LightmapTexture[2], v_LightmapTexCoord[2]));
+	color.rgb += u_LightstyleColor[2] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[2], v_LightmapTexCoord[2]));
 #if NUM_LIGHTMAPS >= 4
-	diffuseNormalModelspace = normalize(myhalf3 (texture2D (u_LightmapTexture[3], vec2(v_LightmapTexCoord[3].s+u_DeluxemapOffset[3],v_LightmapTexCoord[3].t))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[3], vec2(v_LightmapTexCoord[3].s+u_DeluxemapOffset[3],v_LightmapTexCoord[3].t))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[3] * diffuseNormalModelspace;
-	color.rgb += u_LightstyleColor[3] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (texture2D(u_LightmapTexture[3], v_LightmapTexCoord[3]));
+	color.rgb += u_LightstyleColor[3] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[3], v_LightmapTexCoord[3]));
 #endif // NUM_LIGHTMAPS >= 4
 #endif // NUM_LIGHTMAPS >= 3
 #endif // NUM_LIGHTMAPS >= 2
@@ -321,28 +321,28 @@ void main()
 #endif
 
 	myhalf specularProduct = myhalf(dot (surfaceNormalModelspace, specularNormal));
-	color.rgb += (myhalf3(texture2D(u_GlossTexture, v_TexCoord)) * u_GlossIntensity) * pow(myhalf(max(specularProduct, 0.0)), u_GlossExponent);
+	color.rgb += (myhalf3(qf_texture(u_GlossTexture, v_TexCoord)) * u_GlossIntensity) * pow(myhalf(max(specularProduct, 0.0)), u_GlossExponent);
 #endif // APPLY_SPECULAR
 
 #if defined(APPLY_BASETEX_ALPHA_ONLY) && !defined(APPLY_DRAWFLAT)
-	color = min(color, myhalf4(texture2D(u_BaseTexture, v_TexCoord).a));
+	color = min(color, myhalf4(qf_texture(u_BaseTexture, v_TexCoord).a));
 #else
 	myhalf4 diffuse;
 
 #ifdef APPLY_DRAWFLAT
 	myhalf n = myhalf(step(DRAWFLAT_NORMAL_STEP, abs(v_StrMatrix[2].z)));
-	diffuse = myhalf4(mix(u_WallColor, u_FloorColor, n), myhalf(texture2D(u_BaseTexture, v_TexCoord).a));
+	diffuse = myhalf4(mix(u_WallColor, u_FloorColor, n), myhalf(qf_texture(u_BaseTexture, v_TexCoord).a));
 #else
-	diffuse = myhalf4(texture2D(u_BaseTexture, v_TexCoord));
+	diffuse = myhalf4(qf_texture(u_BaseTexture, v_TexCoord));
 #endif
 
 #ifdef APPLY_ENTITY_DECAL
 
 #ifdef APPLY_ENTITY_DECAL_ADD
-	decal.rgb = myhalf3(texture2D(u_EntityDecalTexture, v_TexCoord));
+	decal.rgb = myhalf3(qf_texture(u_EntityDecalTexture, v_TexCoord));
 	diffuse.rgb += u_EntityColor.rgb * decal.rgb;
 #else
-	decal = myhalf4(u_EntityColor.rgb, 1.0) * myhalf4(texture2D(u_EntityDecalTexture, v_TexCoord));
+	decal = myhalf4(u_EntityColor.rgb, 1.0) * myhalf4(qf_texture(u_EntityDecalTexture, v_TexCoord));
 	diffuse.rgb = mix(diffuse.rgb, decal.rgb, decal.a);
 #endif // APPLY_ENTITY_DECAL_ADD
 
@@ -354,11 +354,11 @@ color = color * diffuse;
 #ifdef APPLY_DECAL
 
 #ifdef APPLY_DECAL_ADD
-	decal.rgb = myhalf3(gl_Color.rgb) * myhalf3(texture2D(u_DecalTexture, v_TexCoord));
+	decal.rgb = myhalf3(qf_FrontColor.rgb) * myhalf3(qf_texture(u_DecalTexture, v_TexCoord));
 	color.rgb = decal.rgb + color.rgb;
-	color.a = color.a * myhalf(gl_Color.a);
+	color.a = color.a * myhalf(qf_FrontColor.a);
 #else
-	decal = myhalf4(gl_Color) * myhalf4(texture2D(u_DecalTexture, v_TexCoord));
+	decal = myhalf4(qf_FrontColor) * myhalf4(qf_texture(u_DecalTexture, v_TexCoord));
 	color.rgb = mix(color.rgb, decal.rgb, decal.a);
 #endif // APPLY_DECAL_ADD
 
@@ -367,7 +367,7 @@ color = color * diffuse;
 #if defined (APPLY_DIRECTIONAL_LIGHT) && defined(APPLY_DIRECTIONAL_LIGHT_MIX)
 	color = color;
 #else
-	color = color * myhalf4(gl_Color);
+	color = color * myhalf4(qf_FrontColor);
 #endif
 
 #endif // APPLY_DECAL
@@ -381,7 +381,7 @@ color = color * diffuse;
 	color.rgb = mix(color.rgb, u_Fog.Color, fogDensity);
 #endif
 
-	gl_FragColor = vec4(color);
+	qf_FragColor = vec4(color);
 }
 
 #endif // FRAGMENT_SHADER

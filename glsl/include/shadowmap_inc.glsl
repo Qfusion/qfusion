@@ -16,7 +16,7 @@
 		#ifdef APPLY_DITHER
 
 		# ifdef APPLY_PCF
-		#  define texval(x, y) qfShadow2D(u_ShadowmapTexture[SHADOW_INDEX], vec3(center + vec2(x, y)*ShadowMap_TextureScale, shadowmaptc.z))
+		#  define texval(x, y) dshadow2D(u_ShadowmapTexture[SHADOW_INDEX], vec3(center + vec2(x, y)*ShadowMap_TextureScale, shadowmaptc.z))
 
 		// this method can be described as a 'dithered pinwheel' (4 texture lookups)
 		// which is a combination of the 'pinwheel' filter suggested by eihrul and dithered 4x4 PCF,
@@ -34,7 +34,7 @@
 
 		f = dot(vec4(0.25), vec4(group1, group2, group3, group4));
 		# else
-		f = qfShadow2D(u_ShadowmapTexture[SHADOW_INDEX], vec3(shadowmaptc.xy*ShadowMap_TextureScale, shadowmaptc.z));
+		f = dshadow2D(u_ShadowmapTexture[SHADOW_INDEX], vec3(shadowmaptc.xy*ShadowMap_TextureScale, shadowmaptc.z));
 		# endif // APPLY_PCF
 	
 		#else
@@ -55,7 +55,7 @@
 		// NOTE: we're using emulation of texture_gather now
 
 		# ifdef APPLY_PCF
-		# define texval(off) qfShadow2D(u_ShadowmapTexture[SHADOW_INDEX], vec3(off,shadowmaptc.z))
+		# define texval(off) dshadow2D(u_ShadowmapTexture[SHADOW_INDEX], vec3(off,shadowmaptc.z))
 		
 		vec2 offset = fract(shadowmaptc.xy - 0.5);
 		vec4 size = vec4(offset + 1.0, 2.0 - offset), weight = (vec4(2.0 - 1.0 / size.xy, 1.0 / size.zw - 1.0) + (shadowmaptc.xy - offset).xyxy)*ShadowMap_TextureScale.xyxy;
@@ -63,7 +63,7 @@
 		
 		#else
 		
-		f = qfShadow2D(u_ShadowmapTexture[SHADOW_INDEX], vec3(shadowmaptc.xy * ShadowMap_TextureScale, shadowmaptc.z));
+		f = dshadow2D(u_ShadowmapTexture[SHADOW_INDEX], vec3(shadowmaptc.xy * ShadowMap_TextureScale, shadowmaptc.z));
 		
 		#endif // APPLY_PCF
 		

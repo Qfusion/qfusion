@@ -10,11 +10,11 @@
 #include "include/greyscale.glsl"
 #endif
 
-varying vec2 v_TexCoord;
-varying vec3 v_TexCoordCube;
+qf_varying vec2 v_TexCoord;
+qf_varying vec3 v_TexCoordCube;
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-varying vec2 v_FogCoord;
+qf_varying vec2 v_FogCoord;
 #endif
 
 #ifdef VERTEX_SHADER
@@ -44,7 +44,7 @@ void main(void)
 #endif
 #endif
 
-	gl_FrontColor = vec4(outColor);
+	qf_FrontColor = vec4(outColor);
 
 	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 	v_TexCoordCube = vec3(u_ReflectionTexMatrix * vec4(reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz), 0.0));
@@ -78,51 +78,51 @@ uniform samplerCube u_CelLightTexture;
 
 void main(void)
 {
-	myhalf4 inColor = myhalf4(gl_Color);
+	myhalf4 inColor = myhalf4(qf_FrontColor);
 
 	myhalf4 tempColor;
 
 	myhalf4 outColor;
-	outColor = myhalf4(texture2D(u_BaseTexture, v_TexCoord));
+	outColor = myhalf4(qf_texture(u_BaseTexture, v_TexCoord));
 
 #ifdef APPLY_ENTITY_DECAL
 #ifdef APPLY_ENTITY_DECAL_ADD
-	outColor.rgb += myhalf3(u_EntityColor.rgb) * myhalf3(texture2D(u_EntityDecalTexture, v_TexCoord));
+	outColor.rgb += myhalf3(u_EntityColor.rgb) * myhalf3(qf_texture(u_EntityDecalTexture, v_TexCoord));
 #else
-	tempColor = myhalf4(u_EntityColor.rgb, 1.0) * myhalf4(texture2D(u_EntityDecalTexture, v_TexCoord));
+	tempColor = myhalf4(u_EntityColor.rgb, 1.0) * myhalf4(qf_texture(u_EntityDecalTexture, v_TexCoord));
 	outColor.rgb = mix(outColor.rgb, tempColor.rgb, tempColor.a);
 #endif
 #endif // APPLY_ENTITY_DECAL
 
 #ifdef APPLY_DIFFUSE
-	outColor.rgb *= myhalf3(texture2D(u_DiffuseTexture, v_TexCoord));
+	outColor.rgb *= myhalf3(qf_texture(u_DiffuseTexture, v_TexCoord));
 #endif
 
-	outColor.rgb *= myhalf3(textureCube(u_CelShadeTexture, v_TexCoordCube));
+	outColor.rgb *= myhalf3(qf_textureCube(u_CelShadeTexture, v_TexCoordCube));
 
 #ifdef APPLY_STRIPES
 #ifdef APPLY_STRIPES_ADD
-	outColor.rgb += myhalf3(u_EntityColor.rgb) * myhalf3(texture2D(u_StripesTexture, v_TexCoord));
+	outColor.rgb += myhalf3(u_EntityColor.rgb) * myhalf3(qf_texture(u_StripesTexture, v_TexCoord));
 #else
-	tempColor = myhalf4(u_EntityColor.rgb, 1.0) * myhalf4(texture2D(u_StripesTexture, v_TexCoord));
+	tempColor = myhalf4(u_EntityColor.rgb, 1.0) * myhalf4(qf_texture(u_StripesTexture, v_TexCoord));
 	outColor.rgb = mix(outColor.rgb, tempColor.rgb, tempColor.a);
 #endif
 #endif // APPLY_STRIPES_ADD
 
 #ifdef APPLY_CEL_LIGHT
 #ifdef APPLY_CEL_LIGHT_ADD
-	outColor.rgb += myhalf3(textureCube(u_CelLightTexture, v_TexCoordCube));
+	outColor.rgb += myhalf3(qf_textureCube(u_CelLightTexture, v_TexCoordCube));
 #else
-	tempColor = myhalf4(textureCube(u_EntityDecalTexture, v_TexCoordCube));
+	tempColor = myhalf4(qf_textureCube(u_EntityDecalTexture, v_TexCoordCube));
 	outColor.rgb = mix(outColor.rgb, tempColor.rgb, tempColor.a);
 #endif
 #endif // APPLY_CEL_LIGHT
 
 #ifdef APPLY_DECAL
 #ifdef APPLY_DECAL_ADD
-	outColor.rgb += myhalf3(texture2D(u_DecalTexture, v_TexCoord));
+	outColor.rgb += myhalf3(qf_texture(u_DecalTexture, v_TexCoord));
 #else
-	tempColor = myhalf4(texture2D(u_DecalTexture, v_TexCoord));
+	tempColor = myhalf4(qf_texture(u_DecalTexture, v_TexCoord));
 	outColor.rgb = mix(outColor.rgb, tempColor.rgb, tempColor.a);
 #endif
 #endif // APPLY_DECAL
@@ -138,7 +138,7 @@ void main(void)
 	outColor.rgb = mix(outColor.rgb, u_Fog.Color, fogDensity);
 #endif
 
-	gl_FragColor = vec4(outColor);
+	qf_FragColor = vec4(outColor);
 }
 
 #endif // FRAGMENT_SHADER

@@ -4,7 +4,7 @@
 #include "include/uniforms.glsl"
 #include "include/fog.glsl"
 
-varying vec2 v_FogCoord;
+qf_varying vec2 v_FogCoord;
 
 #ifdef VERTEX_SHADER
 
@@ -32,7 +32,7 @@ void main(void)
 void main(void)
 {
 	float fogDensity = FogDensity(v_FogCoord);
-	gl_FragColor = vec4(u_Fog.Color, fogDensity);
+	qf_FragColor = vec4(u_Fog.Color, fogDensity);
 }
 
 #endif // FRAGMENT_SHADER
