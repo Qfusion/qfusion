@@ -577,9 +577,9 @@ OBJS_TV_SERVER = $(addprefix $(BUILDDIR)/tv_server/, $(OFILES_TV_SERVER) )
 	openal message-openal compile-openal link-openal  \
 	qf message-qf compile-qf link-qf  \
 	ded message-ded compile-ded link-ded  \
+	ui message-ui compile-ui link-ui \
 	game message-game compile-game link-game  \
 	cgame message-cgame compile-cgame link-cgame  \
-	ui message-ui compile-ui link-ui \
 	irc message-irc compile-irc link-irc \
 	cin message-cin compile-cin link-cin \
 	ftlib message-ftlib compile-ftlib link-ftlib \
@@ -590,15 +590,15 @@ OBJS_TV_SERVER = $(addprefix $(BUILDDIR)/tv_server/, $(OFILES_TV_SERVER) )
 	clean-cgame clean-game clean-irc clean-cin clean-angelwrap clean-game clean-tv_server \
 	compile
 
-all: client openal qf ded cgame game ui irc cin ftlib ref_gl angelwrap tv_server
+all: client openal qf ded ui cgame game irc cin ftlib ref_gl angelwrap tv_server
 
 client: $(BUILDDIRS) message-client compile-client link-client start-script-client
 openal: $(BUILDDIRS) message-openal compile-openal link-openal
 qf: $(BUILDDIRS) message-qf compile-qf link-qf
 ded: $(BUILDDIRS) message-ded compile-ded link-ded start-script-ded
+ui: $(BUILDDIRS) message-ui compile-ui link-ui
 cgame: $(BUILDDIRS) message-cgame compile-cgame link-cgame
 game: $(BUILDDIRS) message-game compile-game link-game
-ui: $(BUILDDIRS) message-ui compile-ui link-ui
 irc: $(BUILDDIRS) message-irc compile-irc link-irc
 cin: $(BUILDDIRS) message-cin compile-cin link-cin
 ftlib: $(BUILDDIRS) message-ftlib compile-ftlib link-ftlib
@@ -606,7 +606,7 @@ ref_gl: $(BUILDDIRS) message-ref_gl compile-ref_gl link-ref_gl
 angelwrap: $(BUILDDIRS) message-angelwrap compile-angelwrap link-angelwrap
 tv_server: $(BUILDDIRS) message-tv_server compile-tv_server link-tv_server start-script-tv_server
 
-clean: clean-msg clean-depend clean-client clean-openal clean-qf clean-ded clean-cgame clean-game clean-ui clean-librocket clean-irc clean-cin clean-ftlib clean-ref_gl clean-angelwrap clean-tv_server
+clean: clean-msg clean-depend clean-client clean-openal clean-qf clean-ded clean-ui clean-librocket clean-cgame clean-game clean-irc clean-cin clean-ftlib clean-ref_gl clean-angelwrap clean-tv_server
 
 clean-msg:
 	@echo "> *********************************************************"
