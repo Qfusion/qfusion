@@ -59,7 +59,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, const char *demoExt
 	mousex(0), mousey(0), gameProtocol(protocol),
 	menuVisible(false), forceMenu(false), showNavigationStack(false),
 	serverName(""), rejectMessage(""), demoExtension(demoExtension),
-	connectCount(0)
+	connectCount(0), invalidateAjaxCache(false)
 {
 	// instance
 	self = this;
@@ -272,13 +272,20 @@ void UI_Main::clearShaderCache( void )
 	if( rocketModule != NULL ) {
 		rocketModule->clearShaderCache();
 	}
+	this->connectCount++;
 }
+
 void UI_Main::touchAllCachedShaders( void )
 {
 	if( rocketModule != NULL ) {
 		rocketModule->touchAllCachedShaders();
 	}
 	navigator->invalidateAssets();
+}
+
+void UI_Main::flushAjaxCache( void )
+{
+	this->invalidateAjaxCache = true;
 }
 
 void UI_Main::createDataSources( void )
@@ -371,11 +378,6 @@ void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessa
 	this->downloadInfo = dlinfo;
 
 	navigator->pushDocument( ui_connectscreen, true, true );
-
-	// hacky way to reset HTTP query cache between connections
-	gameajax->FlushCache();
-
-	this->connectCount++;
 
 	forceUI( true );
 	showUI( true );
@@ -472,6 +474,11 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 		demos->UpdateFrame();
 	if( ircchannels )
 		ircchannels->UpdateFrame();
+
+	if( clientState == CA_ACTIVE && invalidateAjaxCache ) {
+		gameajax->FlushCache();
+		invalidateAjaxCache = false;
+	}
 
 	// TODO: handle the intervalled functions in AS somehow,
 	// taking care that they are not called when menu is hidden.
