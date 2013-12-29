@@ -17,14 +17,10 @@
 #include "include/greyscale.glsl"
 #endif
 
-#ifdef APPLY_SOFT_PARTICLE
-#include "include/softparticle.glsl"
-#endif
-
-varying vec3 v_Position;
+qf_varying vec3 v_Position;
 
 #ifdef APPLY_DRAWFLAT
-varying myhalf v_NormalZ;
+qf_varying myhalf v_NormalZ;
 #endif
 
 #ifdef APPLY_TC_GEN_REFLECTION
@@ -32,21 +28,21 @@ varying myhalf v_NormalZ;
 #endif
 
 #ifdef APPLY_CUBEMAP
-varying vec3 v_TexCoord;
+qf_varying vec3 v_TexCoord;
 #else
-varying vec2 v_TexCoord;
+qf_varying vec2 v_TexCoord;
 #endif
 
 #ifdef NUM_LIGHTMAPS
-varying vec2 v_LightmapTexCoord[NUM_LIGHTMAPS];
+qf_varying vec2 v_LightmapTexCoord[NUM_LIGHTMAPS];
 #endif
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-varying vec2 v_FogCoord;
+qf_varying vec2 v_FogCoord;
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)
-varying float v_Depth;
+qf_varying float v_Depth;
 #endif
 
 #ifdef VERTEX_SHADER
@@ -81,7 +77,7 @@ void main(void)
 #endif
 #endif // APPLY_FOG
 
-	gl_FrontColor = vec4(outColor);
+	qf_FrontColor = vec4(outColor);
 
 #if defined(APPLY_TC_GEN_ENV)
 	vec3 Projection;
@@ -149,7 +145,10 @@ uniform sampler2D u_LightmapTexture[NUM_LIGHTMAPS];
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)
+#include "include/softparticle.glsl"
+
 uniform sampler2D u_DepthTexture;
+
 #endif
 
 void main(void)
@@ -157,19 +156,19 @@ void main(void)
 	myhalf4 color;
 
 #ifdef NUM_LIGHTMAPS
-	color = myhalf4(0.0, 0.0, 0.0, gl_Color.a);
-	color.rgb += myhalf3(texture2D(u_LightmapTexture[0], v_LightmapTexCoord[0])) * u_LightstyleColor[0];
+	color = myhalf4(0.0, 0.0, 0.0, qf_FrontColor.a);
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture[0], v_LightmapTexCoord[0])) * u_LightstyleColor[0];
 #if NUM_LIGHTMAPS >= 2
-	color.rgb += myhalf3(texture2D(u_LightmapTexture[1], v_LightmapTexCoord[1])) * u_LightstyleColor[1];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture[1], v_LightmapTexCoord[1])) * u_LightstyleColor[1];
 #if NUM_LIGHTMAPS >= 3
-	color.rgb += myhalf3(texture2D(u_LightmapTexture[2], v_LightmapTexCoord[2])) * u_LightstyleColor[2];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture[2], v_LightmapTexCoord[2])) * u_LightstyleColor[2];
 #if NUM_LIGHTMAPS >= 4
-	color.rgb += myhalf3(texture2D(u_LightmapTexture[3], v_LightmapTexCoord[3])) * u_LightstyleColor[3];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture[3], v_LightmapTexCoord[3])) * u_LightstyleColor[3];
 #endif // NUM_LIGHTMAPS >= 4
 #endif // NUM_LIGHTMAPS >= 3
 #endif // NUM_LIGHTMAPS >= 2
 #else
-	color = myhalf4(gl_Color);
+	color = myhalf4(qf_FrontColor);
 #endif // NUM_LIGHTMAPS
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
@@ -183,9 +182,9 @@ void main(void)
 	myhalf4 diffuse;
 
 #ifdef APPLY_CUBEMAP
-	diffuse = myhalf4(textureCube(u_BaseTexture, v_TexCoord));
+	diffuse = myhalf4(qf_textureCube(u_BaseTexture, v_TexCoord));
 #else
-	diffuse = myhalf4(texture2D(u_BaseTexture, v_TexCoord));
+	diffuse = myhalf4(qf_texture(u_BaseTexture, v_TexCoord));
 #endif
 
 #ifdef APPLY_DRAWFLAT
@@ -208,7 +207,7 @@ void main(void)
 	color *= mix(myhalf4(1.0), myhalf4(softness), u_BlendMix.xxxy);
 #endif
 
-	gl_FragColor = vec4(color);
+	qf_FragColor = vec4(color);
 }
 
 #endif // FRAGMENT_SHADER

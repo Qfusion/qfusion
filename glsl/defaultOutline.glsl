@@ -34,7 +34,7 @@ void main(void)
 	outColor.rgb = mix(u_Fog.Color, outColor.rgb, tempColor.a);
 #endif
 
-	gl_FrontColor = vec4(outColor);
+	qf_FrontColor = vec4(outColor);
 }
 
 #endif // VERTEX_SHADER
@@ -51,7 +51,7 @@ void main(void)
 	if (u_OutlineCutOff > 0.0 && (gl_FragCoord.z / gl_FragCoord.w > u_OutlineCutOff))
 	discard;
 #endif
-	gl_FragColor = vec4(gl_Color);
+	qf_FragColor = vec4(qf_FrontColor);
 }
 
 #endif // FRAGMENT_SHADER

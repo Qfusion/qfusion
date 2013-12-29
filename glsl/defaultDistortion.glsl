@@ -5,10 +5,10 @@
 
 #include "include/greyscale.glsl"
 
-varying vec4 v_TexCoord;
-varying vec4 v_ProjVector;
+qf_varying vec4 v_TexCoord;
+qf_varying vec4 v_ProjVector;
 #ifdef APPLY_EYEDOT
-varying vec3 v_EyeVector;
+qf_varying vec3 v_EyeVector;
 #endif
 
 #ifdef VERTEX_SHADER
@@ -33,7 +33,7 @@ void main(void)
 
 	TransformVerts(Position, Normal, TexCoord);
 
-	gl_FrontColor = vec4(VertexRGBGen(Position, Normal, inColor));
+	qf_FrontColor = vec4(VertexRGBGen(Position, Normal, inColor));
 
 	v_TexCoord.st = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 
@@ -77,10 +77,10 @@ void main(void)
 	myhalf3 color;
 
 #ifdef APPLY_DUDV
-	vec3 displacement = vec3(texture2D(u_DuDvMapTexture, vec2(v_TexCoord.pq) * vec2(0.25)));
+	vec3 displacement = vec3(qf_texture(u_DuDvMapTexture, vec2(v_TexCoord.pq) * vec2(0.25)));
 	vec2 coord = vec2(v_TexCoord.st) + vec2(displacement) * vec2 (0.2);
 
-	vec3 fdist = vec3 (normalize(vec3(texture2D(u_DuDvMapTexture, coord)) - vec3 (0.5))) * vec3(0.005);
+	vec3 fdist = vec3 (normalize(vec3(qf_texture(u_DuDvMapTexture, coord)) - vec3 (0.5))) * vec3(0.005);
 #else
 	vec3 fdist = vec3(0.0);
 #endif
@@ -98,8 +98,8 @@ void main(void)
 
 #ifdef APPLY_EYEDOT
 	// calculate dot product between the surface normal and eye vector
-	// great for simulating varying water translucency based on the view angle
-	myhalf3 surfaceNormal = normalize(myhalf3(texture2D(u_NormalmapTexture, coord)) - myhalf3 (0.5));
+	// great for simulating qf_varying water translucency based on the view angle
+	myhalf3 surfaceNormal = normalize(myhalf3(qf_texture(u_NormalmapTexture, coord)) - myhalf3 (0.5));
 	vec3 eyeNormal = normalize(myhalf3(v_EyeVector));
 
 	float refrdot = float(dot(surfaceNormal, eyeNormal));
@@ -108,34 +108,34 @@ void main(void)
 	// get refraction and reflection
 
 #ifdef APPLY_REFRACTION
-	refr = (myhalf3(texture2D(u_RefractionTexture, projCoord))) * refrdot;
+	refr = (myhalf3(qf_texture(u_RefractionTexture, projCoord))) * refrdot;
 #endif
 #ifdef APPLY_REFLECTION
-	refl = (myhalf3(texture2D(u_ReflectionTexture, projCoord))) * refldot;
+	refl = (myhalf3(qf_texture(u_ReflectionTexture, projCoord))) * refldot;
 #endif
 
 #else
 
 #ifdef APPLY_REFRACTION
-	refr = (myhalf3(texture2D(u_RefractionTexture, projCoord)));
+	refr = (myhalf3(qf_texture(u_RefractionTexture, projCoord)));
 #endif
 #ifdef APPLY_REFLECTION
-	refl = (myhalf3(texture2D(u_ReflectionTexture, projCoord)));
+	refl = (myhalf3(qf_texture(u_ReflectionTexture, projCoord)));
 #endif
 
 #endif // APPLY_EYEDOT
 
 	// add reflection and refraction
 #ifdef APPLY_DISTORTION_ALPHA
-	color = myhalf3(gl_Color.rgb) + myhalf3(mix (refr, refl, myhalf(gl_Color.a)));
+	color = myhalf3(qf_FrontColor.rgb) + myhalf3(mix (refr, refl, myhalf(qf_FrontColor.a)));
 #else
-	color = myhalf3(gl_Color.rgb) + refr + refl;
+	color = myhalf3(qf_FrontColor.rgb) + refr + refl;
 #endif
 
 #ifdef APPLY_GREYSCALE
-	gl_FragColor = vec4(vec3(Greyscale(color)),1.0);
+	qf_FragColor = vec4(vec3(Greyscale(color)),1.0);
 #else
-	gl_FragColor = vec4(vec3(color),1.0);
+	qf_FragColor = vec4(vec3(color),1.0);
 #endif
 }
 

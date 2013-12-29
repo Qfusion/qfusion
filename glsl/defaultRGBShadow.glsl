@@ -4,7 +4,7 @@
 #include "include/uniforms.glsl"
 #include "include/rgbdepth.glsl"
 
-varying float v_Depth;
+qf_varying float v_Depth;
 
 #ifdef VERTEX_SHADER
 // Vertex shader
@@ -31,7 +31,7 @@ void main(void)
 
 void main(void)
 {
-	gl_FragColor = encodedepthmacro(v_Depth);
+	qf_FragColor = encodedepthmacro(v_Depth);
 }
 
 #endif // FRAGMENT_SHADER

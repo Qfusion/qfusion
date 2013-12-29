@@ -4,7 +4,7 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 
-varying vec2 v_TexCoord;
+qf_varying vec2 v_TexCoord;
 
 #ifdef VERTEX_SHADER
 
@@ -68,7 +68,7 @@ void main(void)
     float ConsoleEdgeThresholdMin = 0.05;
     vec4  Console360ConstDir = vec4(1.0, -1.0, 0.25, -0.25);
 
-    gl_FragColor = FxaaPixelShader(v_TexCoord, ConsolePosPos, u_BaseTexture, u_BaseTexture, u_BaseTexture, 
+    qf_FragColor = FxaaPixelShader(v_TexCoord, ConsolePosPos, u_BaseTexture, u_BaseTexture, u_BaseTexture, 
 		u_TextureParams.zw, ConsoleRcpFrameOpt, ConsoleRcpFrameOpt2, Console360RcpFrameOpt2, 
 		QualitySubpix, QualityEdgeThreshold, QualityEdgeThresholdMin, ConsoleEdgeSharpness, 
 		ConsoleEdgeThreshold, ConsoleEdgeThresholdMin, Console360ConstDir);

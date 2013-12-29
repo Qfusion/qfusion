@@ -8,7 +8,7 @@
 #define NUM_SHADOWS 1
 #endif
 
-varying vec4 v_ShadowProjVector[NUM_SHADOWS];
+qf_varying vec4 v_ShadowProjVector[NUM_SHADOWS];
 
 #ifdef VERTEX_SHADER
 // Vertex shader
@@ -46,10 +46,10 @@ void main(void)
 
 #ifdef APPLY_RGB_SHADOW
 uniform sampler2D u_ShadowmapTexture[NUM_SHADOWS];
-# define qfShadow2D(t,v) step(v.z, decodedepthmacro(texture2D(t, v.xy)))
+# define dshadow2D(t,v) step(v.z, decodedepthmacro(qf_texture(t, v.xy)))
 #else
 uniform sampler2DShadow u_ShadowmapTexture[NUM_SHADOWS];
-# define qfShadow2D(t,v) float(shadow2D(t,v))
+# define dshadow2D(t,v) float(qf_shadow(t,v))
 #endif
 
 uniform float u_ShadowAlpha;
@@ -84,7 +84,7 @@ void main(void)
 #undef SHADOW_INDEX
 #endif
 
-	gl_FragColor = vec4(vec3(finalcolor),1.0);
+	qf_FragColor = vec4(vec3(finalcolor),1.0);
 }
 
 #endif // FRAGMENT_SHADER
