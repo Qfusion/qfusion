@@ -1063,6 +1063,9 @@ $(BUILDDIR)/ui/%.o: ui/datasources/%.cpp
 $(BUILDDIR)/ui/%.o: ui/widgets/%.cpp
 	@$(DO_CXX_MODULE) $(CFLAGS_ROCKET)
 
+$(BUILDDIR)/ui/%.o: ui/parsers/%.cpp
+	@$(DO_CXX_MODULE) $(CFLAGS_ROCKET)
+
 $(BUILDDIR)/ui/%.o: ui/decorators/%.cpp
 	@$(DO_CXX_MODULE) $(CFLAGS_ROCKET)
 
