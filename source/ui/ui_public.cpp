@@ -66,6 +66,7 @@ namespace WSWUI
 	{
 		if( ui_main ) {
 			ui_main->touchAllCachedShaders();
+			ui_main->flushAjaxCache();
 		}
 	}
 

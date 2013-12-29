@@ -119,6 +119,7 @@ public:
 
 	void clearShaderCache( void );
 	void touchAllCachedShaders( void );
+	void flushAjaxCache( void );
 
 	unsigned int getConnectCount( void ) const { return connectCount; }
 
@@ -198,6 +199,7 @@ private:
 	std::string demoExtension;
 
 	unsigned int connectCount;
+	bool invalidateAjaxCache;
 
 	vec4_t colorWhite;
 

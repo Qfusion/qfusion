@@ -103,7 +103,10 @@ GameAjaxDataSource::GameAjaxDataSource() : DataSource( GAMEAJAX_SOURCE )
 
 GameAjaxDataSource::~GameAjaxDataSource( void )
 {
-	FlushCache();
+	for( DynTableList::iterator it = tableList.begin(); it != tableList.end(); ++it ) {
+		__delete__( it->second->table );
+		__delete__( it->second );
+	}
 }
 
 void GameAjaxDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList& cols )
@@ -135,7 +138,7 @@ int GameAjaxDataSource::GetNumRows( const String &tableName )
 			}
 		}
 
-		tableList.erase( t_it );
+		//tableList.erase( t_it );
 	}
 	
 	// trigger AJAX-style query to server
@@ -157,11 +160,7 @@ int GameAjaxDataSource::GetNumRows( const String &tableName )
 
 void GameAjaxDataSource::FlushCache( void )
 {
-	for( DynTableList::iterator it = tableList.begin(); it != tableList.end(); ++it ) {
-		__delete__( it->second->table );
-		__delete__( it->second );
-	}
-	tableList.clear();
+	// do nothing
 }
 
 size_t GameAjaxDataSource::StreamRead( const void *buf, size_t numb, float percentage, 
@@ -227,18 +226,9 @@ void GameAjaxDataSource::StreamDone( int status, const char *contentType, void *
 	}
 	
 	if( oldTable != NULL ) {
-		int numRows = table->GetNumRows(), oldNumRows = oldTable->GetNumRows();
-
 		ds->tableList[tableName] = fetcher;
 
-		if( oldNumRows < numRows ) {
-			ds->NotifyRowAdd( rocketTableName, oldNumRows, numRows );
-		} else if( oldNumRows > numRows ) {
-			ds->NotifyRowRemove( rocketTableName, numRows, oldNumRows - numRows );
-		}
-		if( oldNumRows ) {
-			ds->NotifyRowChange( rocketTableName, 0, oldNumRows );
-		}
+		ds->NotifyRowChange( rocketTableName );
 
 		__delete__( oldTable );
 		__delete__( oldFetcher );
