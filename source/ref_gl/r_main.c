@@ -800,6 +800,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 	static shader_t s;
 	float h_scale, v_scale;
 	float s2_, t2_;
+	float h_ofs, v_ofs;
 
 	s.vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
 	s.sort = SHADER_SORT_NEAREST;
@@ -842,6 +843,8 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 
 	h_scale = (float)yuvTextures[0]->width / yuvTextures[0]->upload_width;
 	v_scale = (float)yuvTextures[0]->height / yuvTextures[0]->upload_height;
+	h_ofs = 1.0f / yuvTextures[0]->upload_width;
+	v_ofs = 1.0f / yuvTextures[0]->upload_height;
 
 	s1 *= h_scale;
 	s2 *= h_scale;
@@ -851,12 +854,22 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 	s2_ = s2;
 	t2_ = t2;
 	if( flip & 1 ) {
-		s1 = s2_ - s1;
-		s2 = s2_ - s2;
+		s1 = s2_ - s1, s2 = s2_ - s2;
 	}
 	if( flip & 2 ) {
-		t1 = t2_ - t1;
-		t2 = t2_ - t2;
+		t1 = t2_ - t1, t2 = t2_ - t2;
+	}
+
+	// avoid lerp seams
+	if( s1 > s2 ) {
+		s1 -= h_ofs, s2 += h_ofs;
+	} else {
+		s1 += h_ofs, s2 -= h_ofs;
+	}
+	if( t1 > t2 ) {
+		t1 -= v_ofs, t2 += v_ofs;
+	} else {
+		t1 += v_ofs, t2 -= v_ofs;
 	}
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, colorWhite, &s );
