@@ -1,0 +1,74 @@
+project "tv_server"
+
+    kind     "WindowedApp"
+    language "C++"
+
+    defines { "DEDICATED_ONLY", "TV_SERVER_ONLY", "TV_MODULE_HARD_LINKED" }
+    flags   { "WinMain"}
+    
+    files   { 
+        "*.h",
+        "tv_module/*.h",
+        "../qalgo/md5.h",
+        "../qalgo/glob.h",
+        "../gameshared/q_arch.h",
+        "../gameshared/q_collision.h",
+        "../gameshared/q_comref.h",
+        "../gameshared/q_cvar.h",
+        "../gameshared/q_dynvar.h",
+        "../gameshared/q_math.h",
+        "../gameshared/q_shared.h",
+        "../gameshared/q_trie.h",
+        "../gameshared/config.h",
+        "../qcommon/bsp.h",
+        "../qcommon/qcommon.h",
+        "../qcommon/qthreads.h",
+        "../qcommon/snap_read.h",
+        "../qcommon/snap_write.h",
+        "../qcommon/svnrev.h",
+        "../qcommon/sys_fs.h",
+        "../qcommon/sys_library.h",
+        "../qcommon/sys_net.h",
+        "../qcommon/sys_threads.h",
+        "../qcommon/version.h",
+        "*.c",
+        "tv_module/*.c",
+        "../qcommon/*.c",
+        "../qalgo/*.c",
+        "../null/irc_null.c",
+        "../null/ascript_null.c",
+        "../null/cl_null.c",
+        "../null/mm_null.c",
+        "../gameshared/q_math.c",
+        "../gameshared/q_shared.c",        
+    }
+
+    excludes {
+        "../qcommon/irc.c",
+        "../qcommon/ascript.c",
+    }
+
+    configuration "windows"
+        files {
+            "../win32/conproc.h",
+            "../win32/winquake.h",
+            "../win32/win_fs.c",
+            "../win32/win_net.c",
+            "../win32/win_sys.c",
+            "../win32/win_lib.c",
+            "../win32/win_threads.c",       
+            "../win32/conproc.c",
+        }
+
+        links { "libcurlstat", "zlibstat", "winmm", "ws2_32" }
+
+    configuration "linux"
+        files {
+            "../unix/unix_fs.c",
+            "../unix/unix_net.c",
+            "../unix/unix_sys.c",
+            "../unix/unix_lib.c",
+            "../unix/unix_threads.c",
+        }
+
+        links { "curl", "z", "pthread", "dl" }

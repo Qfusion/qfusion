@@ -1,0 +1,47 @@
+ project "qfusion_server"
+
+    kind     "WindowedApp"
+    language "C++"
+
+    flags   { "WinMain"}
+    defines { "DEDICATED_ONLY" }
+
+    files {
+        "matchmaker/*.h",
+        "gameshared/*.h",
+        "qalgo/*.h",
+        "qcommon/*.h",
+        "server/server.h",
+        "qalgo/*.c",
+        "qcommon/*.c",
+        "matchmaker/*.c",
+        "server/*.c",
+        "null/cl_null.c",
+        "gameshared/q_math.c",
+        "gameshared/q_shared.c",
+    }
+
+    configuration "windows"
+        files {
+            "win32/conproc.h",
+            "win32/winquake.h",
+            "win32/win_fs.c",
+            "win32/win_net.c",
+            "win32/win_sys.c",
+            "win32/win_lib.c",
+            "win32/win_threads.c",       
+            "win32/conproc.c",
+        }
+
+        links { "libcurlstat", "zlibstat", "winmm", "ws2_32" }
+
+    configuration "linux"
+        files {
+            "unix/unix_fs.c",
+            "unix/unix_net.c",
+            "unix/unix_lib.c",
+            "unix/unix_sys.c",
+            "unix/unix_threads.c",
+        }
+
+        links { "curl", "z", "pthread", "dl" }

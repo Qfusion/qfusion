@@ -1,0 +1,63 @@
+project "qfusion"
+
+        kind     "WindowedApp"
+        language "C++"
+        flags    { "WinMain" }
+
+        configuration "vs*"
+            libdirs { "$(DXSDK_DIR)/Lib/x86" }
+        configuration {}
+        
+        files {
+            "cin/cin_public.h",
+            "ftlib/ftlib_public.h",
+            "cgame/cg_public.h",
+            "ref_gl/r_public.h",
+            "ref_gl/iqm.h",
+            "ui/ui_public.h",
+            "server/server.h",
+            "cgame/ref.h",
+            "matchmaker/*.h",
+            "gameshared/*.h",
+            "qalgo/*.h",
+            "qcommon/*.h",
+            "client/*.h",
+            "qalgo/*.c",
+            "qcommon/*.c",
+            "client/*.c",
+            "server/*.c",
+            "matchmaker/*.c",
+            "gameshared/q_math.c",
+            "gameshared/q_shared.c",
+          }
+
+        configuration "windows"
+            files {
+                "win32/winquake.h",
+                "win32/resource.h",
+                "win32/conproc.h",
+                "win32/conproc.c",
+                "win32/win_fs.c",
+                "win32/win_input.c",
+                "win32/win_lib.c",
+                "win32/win_net.c",
+                "win32/win_sys.c",
+                "win32/win_threads.c",
+                "win32/win_vid.c",
+                "win32/qfusion.rc",
+            }
+
+            links { "cin", "libcurlstat", "zlibstat", "winmm", "ws2_32", "dxguid" }
+
+        configuration "linux"
+            files {
+                "unix/unix_fs.c",
+                "unix/unix_net.c",
+                "unix/unix_sys.c",
+                "unix/unix_lib.c",
+                "unix/unix_threads.c",
+                "unix/unix_vid.c",
+                "unix/unix_input.c",
+            }
+
+            links { "curl", "z", "pthread", "dl", "rt", "X11", "Xext", "Xxf86dga"}
