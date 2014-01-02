@@ -31,6 +31,14 @@ solution "qfusion"
             windows = { "libjpegstat" },
             linux   = { "jpeg" } 
         },
+        curl = {
+            windows = { "libcurlstat" },
+            linux   = { "curl" }
+        },
+        z = {
+            windows = { "zlibstat" },
+            linux   = { "z" }
+        }
     }
 
     function qf_links(libs) 

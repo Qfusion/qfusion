@@ -21,6 +21,8 @@
         "gameshared/q_shared.c",
     }
 
+    qf_links { "curl", "z" }
+
     configuration "windows"
         files {
             "win32/conproc.h",
@@ -33,7 +35,7 @@
             "win32/conproc.c",
         }
 
-        links { "libcurlstat", "zlibstat", "winmm", "ws2_32" }
+        links { "winmm", "ws2_32" }
 
     configuration "linux"
         files {
@@ -44,4 +46,4 @@
             "unix/unix_threads.c",
         }
 
-        links { "curl", "z", "pthread", "dl" }
+        links { "pthread", "dl" }

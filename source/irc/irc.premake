@@ -12,5 +12,3 @@ project "irc"
 
     configuration "windows"
         links { "ws2_32" }
-
-    configuration "macosx"
