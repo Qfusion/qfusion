@@ -175,8 +175,6 @@ typedef struct
 	vec3_t			lodOrigin;
 	vec3_t			pvsOrigin;
 	cplane_t		clipPlane;
-
-	int				viewcluster, viewarea;
 } refinst_t;
 
 //====================================================
@@ -187,6 +185,9 @@ typedef struct
 	// or "touched" during the last registration sequence will be freed
 	int				registrationSequence;
 	qboolean		registrationOpen;
+
+	// bumped each time R_RegisterWorldModel is called
+	int				worldModelSequence;
 
 	float			sinTableByte[256];
 
@@ -252,7 +253,7 @@ typedef struct
 	const char		*applicationName;
 	const char		*screenshotPrefix;
 
-	 // bumped each R_ClearScene
+	// bumped each R_ClearScene
 	unsigned int	sceneFrameCount;
 	unsigned int	sceneShadowBits;
 
@@ -262,6 +263,8 @@ typedef struct
 	int				frameBufferWidth, frameBufferHeight;
 
 	float			cameraSeparation;
+
+	int				worldModelSequence;
 
 	// used for dlight push checking
 	unsigned int	framecount;
@@ -548,8 +551,6 @@ int			R_GetCustomColor( int num );
 void		R_ShutdownCustomColors( void );
 
 #define ENTITY_OUTLINE(ent) (( !(rn.renderFlags & RF_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
-
-void		R_ForceMarkLeafs( void );
 
 void		R_ClearRefInstStack( void );
 qboolean	R_PushRefInst( void );
