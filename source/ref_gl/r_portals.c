@@ -500,6 +500,4 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 
 	// restore modelview and projection matrices, scissoring, etc for the main view
 	R_PopRefInst( ~GL_COLOR_BUFFER_BIT );
-
-	R_ForceMarkLeafs();
 }

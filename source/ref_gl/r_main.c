@@ -993,15 +993,6 @@ static void R_PolyBlend( void )
 //=======================================================================
 
 /*
-* R_ForceMarkLeafs
-*/
-void R_ForceMarkLeafs( void )
-{
-	rf.viewcluster = rf.oldviewcluster = -1;
-	rf.viewarea = -1;
-}
-
-/*
 * R_DefaultFarClip
 */
 float R_DefaultFarClip( void )
@@ -1065,7 +1056,8 @@ static void R_SetVisFarClip( void )
 */
 static void R_SetupFrame( void )
 {
-	rf.framecount++;
+	int viewcluster;
+	int viewarea;
 
 	// build the transformation matrix for the given view angles
 	VectorCopy( rn.refdef.vieworg, rn.viewOrigin );
@@ -1082,18 +1074,26 @@ static void R_SetupFrame( void )
 		VectorCopy( rsh.worldModel->maxs, rn.visMaxs );
 
 		leaf = Mod_PointInLeaf( rn.pvsOrigin, rsh.worldModel );
-		rn.viewcluster = leaf->cluster;
-		rn.viewarea = leaf->area;
+		viewcluster = leaf->cluster;
+		viewarea = leaf->area;
+
+		if( rf.worldModelSequence != rsh.worldModelSequence ) {
+			rf.framecount = 0;
+			rf.viewcluster = -1; // force R_MarkLeaves
+			rf.worldModelSequence = rsh.worldModelSequence;
+		}
 	}
 	else
 	{
-		rn.viewcluster = -1;
-		rn.viewarea = -1;
+		viewcluster = -1;
+		viewarea = -1;
 	}
 
 	rf.oldviewcluster = rf.viewcluster;
-	rf.viewcluster = rn.viewcluster;
-	rf.viewarea = rf.viewarea;
+	rf.viewcluster = viewcluster;
+	rf.viewarea = viewarea;
+
+	rf.framecount++;
 }
 
 /*

@@ -911,6 +911,8 @@ init_qgl:
 	rsh.registrationSequence = 1;
 	rsh.registrationOpen = qfalse;
 
+	rsh.worldModelSequence = 1;
+
 	rf.applicationName = R_CopyString( applicationName );
 	rf.screenshotPrefix = R_CopyString( screenshotPrefix );
 

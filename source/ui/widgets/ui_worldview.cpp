@@ -81,10 +81,12 @@ public:
 		refdef.fov_x = 100;
 		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
 		refdef.time = UI_Main::Get()->getRefreshState().time;
+		refdef.rdflags = RDF_OLDAREABITS;
 
 		vec3_t viewAngles;
 		for( int i = 0; i < 3; i++ ) {
-			viewAngles[i] = baseAngles[i] + aWaveAmplitude[i] * sin( aWavePhase[i] + refdef.time * 0.001 * aWaveFrequency[i] * M_TWOPI );
+			viewAngles[i] = baseAngles[i] + aWaveAmplitude[i] * 
+				sin( aWavePhase[i] + refdef.time * 0.001 * aWaveFrequency[i] * M_TWOPI );
 		}
 		AnglesToAxis( viewAngles, refdef.viewaxis );
 
