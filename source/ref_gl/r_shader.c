@@ -1697,13 +1697,17 @@ static const shaderkey_t shaderpasskeys[] =
 // ===============================================================
 
 /*
-* R_ShaderList_f
+* R_PrintShaderList
 */
-void R_ShaderList_f( void )
+void R_PrintShaderList( const char *pattern, qboolean (*filter)( const char *filter, const char *value) )
 {
 	int i;
 	int numShaders;
 	shader_t *shader;
+
+	if( !pattern ) {
+		pattern = "";
+	}
 
 	numShaders = 0;
 
@@ -1712,7 +1716,10 @@ void R_ShaderList_f( void )
 		if( !shader->name ) {
 			continue;
 		}
-
+		if( filter && !filter( pattern, shader->name ) ) {
+			continue;
+		}
+		
 		Com_Printf( " %2i %2i: %s\n", shader->numpasses, shader->sort, shader->name );
 		numShaders++;
 	}
@@ -1720,24 +1727,13 @@ void R_ShaderList_f( void )
 }
 
 /*
-* R_ShaderDump_f
+* R_PrintShaderCache
 */
-void R_ShaderDump_f( void )
+void R_PrintShaderCache( const char *name )
 {
 	char backup, *start;
-	const char *name, *ptr;
+	const char *ptr;
 	shadercache_t *cache;
-
-	if( (ri.Cmd_Argc() < 2) && !r_debug_surface )
-	{
-		Com_Printf( "Usage: %s [name]\n", ri.Cmd_Argv(0) );
-		return;
-	}
-
-	if( ri.Cmd_Argc() < 2 )
-		name = r_debug_surface->shader->name;
-	else
-		name = ri.Cmd_Argv( 1 );
 
 	Shader_GetCache( name, &cache );
 	if( !cache )

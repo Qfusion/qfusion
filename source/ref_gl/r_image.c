@@ -158,9 +158,9 @@ void R_AnisotropicFilter( int value )
 }
 
 /*
-* R_ImageList_f
+* R_PrintImageList
 */
-void R_ImageList_f( void )
+void R_PrintImageList( const char *mask, qboolean (*filter)( const char *mask, const char *value) )
 {
 	int i, bytes;
 	int numImages;
@@ -176,6 +176,9 @@ void R_ImageList_f( void )
 			continue;
 		}
 		if( !image->upload_width || !image->upload_height ) {
+			continue;
+		}
+		if( filter && !filter( mask, image->name ) ) {
 			continue;
 		}
 
@@ -1967,7 +1970,7 @@ SCREEN SHOTS
 /*
 * R_ScreenShot
 */
-static void R_ScreenShot( const char *name, qboolean silent )
+void R_ScreenShot( const char *name, qboolean silent )
 {
 	char *checkname = NULL;
 	size_t checkname_size = 0, gamepath_offset = 0;
@@ -2023,8 +2026,8 @@ static void R_ScreenShot( const char *name, qboolean silent )
 		// hm... shouldn't really happen, but check anyway
 		if( i == 2 )
 		{
-			Q_strncpyz( timestamp_str, rf.screenshotPrefix, sizeof( timestamp_str ) );
-			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, rf.screenshotPrefix );
+			Q_strncpyz( timestamp_str, rsh.screenshotPrefix, sizeof( timestamp_str ) );
+			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, rsh.screenshotPrefix );
 		}
 
 		gamepath_offset = strlen( ri.FS_WriteDirectory() ) + 1 + strlen( ri.FS_GameDirectory() ) + 1;
@@ -2100,14 +2103,6 @@ static void R_ScreenShot( const char *name, qboolean silent )
 
 	R_Free( buffer );
 	R_Free( checkname );
-}
-
-/*
-* R_ScreenShot_f
-*/
-void R_ScreenShot_f( void )
-{
-	R_ScreenShot( ri.Cmd_Argv( 1 ), ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? qtrue : qfalse );
 }
 
 /*

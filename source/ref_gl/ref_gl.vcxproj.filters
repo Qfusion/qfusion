@@ -120,6 +120,12 @@
     <ClCompile Include="..\qalgo\hash.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\qalgo\glob.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="r_cmds.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\gameshared\anorms.h">
@@ -210,6 +216,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\qalgo\hash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\qalgo\glob.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

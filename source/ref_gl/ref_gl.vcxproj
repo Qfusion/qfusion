@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClCompile Include="..\gameshared\q_math.c" />
     <ClCompile Include="..\gameshared\q_shared.c" />
+    <ClCompile Include="..\qalgo\glob.c" />
     <ClCompile Include="..\qalgo\hash.c" />
     <ClCompile Include="..\qcommon\bsp.c" />
     <ClCompile Include="..\qcommon\patch.c" />
@@ -177,6 +178,7 @@
     <ClCompile Include="r_backend.c" />
     <ClCompile Include="r_backend_program.c" />
     <ClCompile Include="r_cin.c" />
+    <ClCompile Include="r_cmds.c" />
     <ClCompile Include="r_cull.c" />
     <ClCompile Include="r_framebuffer.c" />
     <ClCompile Include="r_image.c" />
@@ -209,6 +211,7 @@
     <ClInclude Include="..\gameshared\q_cvar.h" />
     <ClInclude Include="..\gameshared\q_math.h" />
     <ClInclude Include="..\gameshared\q_shared.h" />
+    <ClInclude Include="..\qalgo\glob.h" />
     <ClInclude Include="..\qalgo\hash.h" />
     <ClInclude Include="..\qcommon\patch.h" />
     <ClInclude Include="..\gameshared\q_trie.h" />
