@@ -211,8 +211,9 @@ static void RF_PrecachePrograms( void )
 	ptr = &data;
 
 	token = COM_Parse( ptr );
-	if( strcmp( token, rf.applicationName ) ) {
-		ri.Com_DPrintf( "Ignoring %s: unknown application name \"%s\", expected \"%s\"\n", token, rf.applicationName );
+	if( strcmp( token, rsh.applicationName ) ) {
+		ri.Com_DPrintf( "Ignoring %s: unknown application name \"%s\", expected \"%s\"\n", 
+			token, rsh.applicationName );
 		return;
 	}
 
@@ -290,7 +291,7 @@ static void RF_StorePrecacheList( void )
 		return;
 	}
 
-	ri.FS_Printf( handle, "%s\n", rf.applicationName );
+	ri.FS_Printf( handle, "%s\n", rsh.applicationName );
 	ri.FS_Printf( handle, "%i\n", GLSL_BITS_VERSION );
 
 	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ ) {
