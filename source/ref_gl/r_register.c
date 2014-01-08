@@ -907,14 +907,16 @@ init_qgl:
 	Q_strncpyz( vendor_buffer, glConfig.vendorString, sizeof( vendor_buffer ) );
 	Q_strlwr( vendor_buffer );
 
+	memset( &rsh, 0, sizeof( rsh ) );
 	memset( &rf, 0, sizeof( rf ) );
+
 	rsh.registrationSequence = 1;
 	rsh.registrationOpen = qfalse;
 
 	rsh.worldModelSequence = 1;
 
-	rf.applicationName = R_CopyString( applicationName );
-	rf.screenshotPrefix = R_CopyString( screenshotPrefix );
+	rsh.applicationName = R_CopyString( applicationName );
+	rsh.screenshotPrefix = R_CopyString( screenshotPrefix );
 
 	R_InitDrawLists();
 

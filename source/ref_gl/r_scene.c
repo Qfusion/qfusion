@@ -20,9 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
-msurface_t *r_debug_surface;
-
-static void R_RenderDebugSurface( void );
+static void R_RenderDebugSurface( const refdef_t *fd );
 
 static void R_ClearDebugBounds( void );
 static void R_RenderDebugBounds( void );
@@ -34,11 +32,18 @@ void R_ClearScene( void )
 {
 	rsc.numDlights = 0;
 	rsc.numPolys = 0;
+	rsc.numEntities = 0;
 
-	rsc.numEntities = 1;
 	rsc.worldent = R_NUM2ENT(0);
+	rsc.worldent->scale = 1.0f;
+	rsc.worldent->model = rsh.worldModel;
+	rsc.worldent->rtype = RT_MODEL;
+	Matrix3_Identity( rsc.worldent->axis );
+	rsc.numEntities = 1;
 
 	rsc.numBmodelEntities = 0;
+
+	rsc.debugSurface = NULL;
 
 	rf.sceneShadowBits = 0;
 	rf.sceneFrameCount++;
@@ -301,7 +306,7 @@ void R_RenderScene( const refdef_t *fd )
 
 	R_RenderView( fd );
 
-	R_RenderDebugSurface();
+	R_RenderDebugSurface( fd );
 
 	R_RenderDebugBounds();
 
@@ -432,22 +437,21 @@ static void R_RenderDebugBounds( void )
 /*
 * R_RenderDebugSurface
 */
-static void R_RenderDebugSurface( void )
+static void R_RenderDebugSurface( const refdef_t *fd )
 {
 	rtrace_t tr;
 	vec3_t forward;
 	vec3_t start, end;
 	msurface_t *surf;
 
-	if( rn.renderFlags & RF_NONVIEWERREF || rn.refdef.rdflags & RDF_NOWORLDMODEL )
+	if( fd->rdflags & RDF_NOWORLDMODEL )
 		return;
 
-	r_debug_surface = NULL;
 	if( r_speeds->integer != 4 && r_speeds->integer != 5 )
 		return;
 
-	VectorCopy( &rn.viewAxis[AXIS_FORWARD], forward );
-	VectorCopy( rn.viewOrigin, start );
+	VectorCopy( &fd->viewaxis[AXIS_FORWARD], forward );
+	VectorCopy( fd->vieworg, start );
 	VectorMA( start, 4096, forward, end );
 
 	surf = R_TraceLine( &tr, start, end, 0 );
@@ -459,7 +463,7 @@ static void R_RenderDebugSurface( void )
 			return;
 		}
 
-		r_debug_surface = surf;
+		rsc.debugSurface = surf;
 
 		if( r_speeds->integer == 5 ) {
 			// VBO debug mode

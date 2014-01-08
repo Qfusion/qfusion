@@ -1125,11 +1125,6 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
 	rsh.worldBrushModel->pvs = ( dvis_t * )pvsData;
-
-	rsc.worldent->scale = 1.0f;
-	rsc.worldent->model = rsh.worldModel;
-	rsc.worldent->rtype = RT_MODEL;
-	Matrix3_Identity( rsc.worldent->axis );
 }
 
 /*
