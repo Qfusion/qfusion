@@ -31,7 +31,7 @@ project "qfusion"
             "gameshared/q_shared.c",
         }
 
-        qf_links { "cin", "curl", "z" }
+        qf_links { "curl", "z" }
 
         configuration "windows"
             files {
