@@ -13,8 +13,8 @@ qf_varying vec2 v_TexCoord;
 
 void main(void)
 {
-	gl_Position = u_ModelViewProjectionMatrix * a_Position;
-	v_TexCoord = a_TexCoord;
+    gl_Position = u_ModelViewProjectionMatrix * a_Position;
+    v_TexCoord = a_TexCoord;
 }
 
 #endif // VERTEX_SHADER
@@ -34,13 +34,21 @@ void main(void)
 #define FXAA_GREEN_AS_LUMA 1
 #define FXAA_QUALITY_X_PRESET 23
 
+uniform sampler2D u_BaseTexture;
+
+#ifdef GL_ARB_gpu_shader5
+
 #include "include/Fxaa3_11.h"
 
-uniform sampler2D u_BaseTexture;
+#else
+
+#include "include/Fxaa2.h"
+
+#endif
 
 void main(void)
 {
-	// Only used on FXAA Quality.
+    // Only used on FXAA Quality.
     // Choose the amount of sub-pixel aliasing removal.
     // This can effect sharpness.
     //   1.00 - upper limit (softer)
@@ -69,9 +77,9 @@ void main(void)
     vec4  Console360ConstDir = vec4(1.0, -1.0, 0.25, -0.25);
 
     qf_FragColor = FxaaPixelShader(v_TexCoord, ConsolePosPos, u_BaseTexture, u_BaseTexture, u_BaseTexture, 
-		u_TextureParams.zw, ConsoleRcpFrameOpt, ConsoleRcpFrameOpt2, Console360RcpFrameOpt2, 
-		QualitySubpix, QualityEdgeThreshold, QualityEdgeThresholdMin, ConsoleEdgeSharpness, 
-		ConsoleEdgeThreshold, ConsoleEdgeThresholdMin, Console360ConstDir);
+        u_TextureParams.zw, ConsoleRcpFrameOpt, ConsoleRcpFrameOpt2, Console360RcpFrameOpt2, 
+        QualitySubpix, QualityEdgeThreshold, QualityEdgeThresholdMin, ConsoleEdgeSharpness, 
+        ConsoleEdgeThreshold, ConsoleEdgeThresholdMin, Console360ConstDir);
 }
 
 #endif // FRAGMENT_SHADER

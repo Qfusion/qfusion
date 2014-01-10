@@ -801,7 +801,7 @@ static void CL_ParseServerData( msg_t *msg )
 	// parse protocol version number
 	i = MSG_ReadLong( msg );
 
-	if( i != APP_PROTOCOL_VERSION && i != 6093 && i != 6094 )
+	if( i != APP_PROTOCOL_VERSION )
 		Com_Error( ERR_DROP, "Server returned version %i, not %i", i, APP_PROTOCOL_VERSION );
 
 	cl.servercount = MSG_ReadLong( msg );

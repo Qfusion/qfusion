@@ -273,6 +273,9 @@ void		R_ShutdownShaders( void );
 
 void		R_UploadCinematicShader( const shader_t *shader );
 
+void		R_PrintShaderList( const char *mask, qboolean (*filter)( const char *filter, const char *value) );
+void		R_PrintShaderCache( const char *name );
+
 shader_t	*R_ShaderById( unsigned int id );
 
 shader_t	*R_LoadShader( const char *name, shaderType_e type, qboolean forceDefault );
@@ -290,8 +293,5 @@ void		R_FreeUnusedShaders( void );
 void		R_RemapShader( const char *from, const char *to, int timeOffset );
 
 void		R_GetShaderDimensions( const shader_t *shader, int *width, int *height );
-
-void		R_ShaderList_f( void );
-void		R_ShaderDump_f( void );
 
 #endif /*__R_SHADER_H__*/

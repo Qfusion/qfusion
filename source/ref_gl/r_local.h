@@ -175,18 +175,22 @@ typedef struct
 	vec3_t			lodOrigin;
 	vec3_t			pvsOrigin;
 	cplane_t		clipPlane;
-
-	int				viewcluster, viewarea;
 } refinst_t;
 
 //====================================================
 
 typedef struct
 {
+	const char		*applicationName;
+	const char		*screenshotPrefix;
+
 	// any asset (model, shader, texture, etc) with has not been registered
 	// or "touched" during the last registration sequence will be freed
 	int				registrationSequence;
 	qboolean		registrationOpen;
+
+	// bumped each time R_RegisterWorldModel is called
+	int				worldModelSequence;
 
 	float			sinTableByte[256];
 
@@ -245,14 +249,13 @@ typedef struct
 	float			farClipMin, farClipBias;
 
 	refdef_t		refdef;
+
+	msurface_t		*debugSurface;
 } r_scene_t;
 
 typedef struct
 {
-	const char		*applicationName;
-	const char		*screenshotPrefix;
-
-	 // bumped each R_ClearScene
+	// bumped each R_ClearScene
 	unsigned int	sceneFrameCount;
 	unsigned int	sceneShadowBits;
 
@@ -262,6 +265,8 @@ typedef struct
 	int				frameBufferWidth, frameBufferHeight;
 
 	float			cameraSeparation;
+
+	int				worldModelSequence;
 
 	// used for dlight push checking
 	unsigned int	framecount;
@@ -284,8 +289,6 @@ extern ref_import_t ri;
 extern r_shared_t rsh;
 extern r_scene_t rsc;
 extern r_frontend_t rf;
-
-extern msurface_t *r_debug_surface;
 
 #define R_ENT2NUM(ent) ((ent)-rsc.entities)
 #define R_NUM2ENT(num) (rsc.entities+(num))
@@ -416,6 +419,14 @@ struct cinematics_s *R_GetCinematicById( unsigned int id );
 void		R_RestartCinematics( void );
 
 //
+// r_cmds.c
+//
+void		R_ScreenShot_f( void );
+void		R_ImageList_f( void );
+void		R_ShaderList_f( void );
+void		R_ShaderDump_f( void );
+
+//
 // r_cull.c
 //
 void		R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum );
@@ -501,7 +512,6 @@ void		R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceV
 void		R_EndFrame( void );
 void		R_Set2DMode( qboolean enable );
 void		R_RenderView( const refdef_t *fd );
-void		R_ClearStats( void );
 const char *R_SpeedsMessage( char *out, size_t size );
 void		R_AppActivate( qboolean active, qboolean destroy );
 
@@ -548,8 +558,6 @@ int			R_GetCustomColor( int num );
 void		R_ShutdownCustomColors( void );
 
 #define ENTITY_OUTLINE(ent) (( !(rn.renderFlags & RF_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
-
-void		R_ForceMarkLeafs( void );
 
 void		R_ClearRefInstStack( void );
 qboolean	R_PushRefInst( void );

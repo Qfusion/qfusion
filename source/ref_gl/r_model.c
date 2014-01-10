@@ -1101,11 +1101,10 @@ static void R_FinishMapConfig( void )
 */
 void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 {
-	rf.framecount = 1;
-
 	r_prevworldmodel = rsh.worldModel;
 	rsh.worldModel = NULL;
 	rsh.worldBrushModel = NULL;
+	rsh.worldModelSequence++;
 
 	mod_isworldmodel = qtrue;
 	rsh.worldModel = Mod_ForName( model, qtrue );
@@ -1126,13 +1125,6 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
 	rsh.worldBrushModel->pvs = ( dvis_t * )pvsData;
-
-	rsc.worldent->scale = 1.0f;
-	rsc.worldent->model = rsh.worldModel;
-	rsc.worldent->rtype = RT_MODEL;
-	Matrix3_Identity( rsc.worldent->axis );
-
-	R_ForceMarkLeafs();
 }
 
 /*

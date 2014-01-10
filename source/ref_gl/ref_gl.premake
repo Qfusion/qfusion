@@ -13,15 +13,18 @@ project "ref_gl"
         "../gameshared/q_cvar.h",
         "../gameshared/q_math.h",
         "../gameshared/q_shared.h",
-        "../qcommon/patch.h",
         "../gameshared/q_trie.h",
+        "../qcommon/patch.h",
+        "../qalgo/glob.h",
+        "../qalgo/hash.h",
         "*.c",
         "../gameshared/q_math.c",
         "../gameshared/q_shared.c",
-        "../qalgo/hash.c",
         "../qcommon/bsp.c",
         "../qcommon/patch.c",
+        "../qalgo/glob.c",
         "../qalgo/q_trie.c",
+        "../qalgo/hash.c",
     }
 
     qf_links { "png", "jpeg" }

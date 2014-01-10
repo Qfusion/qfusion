@@ -78,9 +78,10 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 void R_InitDrawFlatTexture( void );
 void R_FreeImageBuffers( void );
 
-void R_ScreenShot_f( void );
+void R_PrintImageList( const char *pattern, qboolean (*filter)( const char *filter, const char *value) );
+void R_ScreenShot( const char *name, qboolean silent );
+
 void R_EnvShot_f( void );
-void R_ImageList_f( void );
 void R_TextureMode( char *string );
 void R_AnisotropicFilter( int value );
 

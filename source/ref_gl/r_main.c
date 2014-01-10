@@ -29,9 +29,6 @@ mapconfig_t mapConfig;
 
 refinst_t rn;
 
-//
-// screen size info
-//
 r_scene_t rsc;
 
 /*
@@ -993,15 +990,6 @@ static void R_PolyBlend( void )
 //=======================================================================
 
 /*
-* R_ForceMarkLeafs
-*/
-void R_ForceMarkLeafs( void )
-{
-	rf.viewcluster = rf.oldviewcluster = -1;
-	rf.viewarea = -1;
-}
-
-/*
 * R_DefaultFarClip
 */
 float R_DefaultFarClip( void )
@@ -1065,7 +1053,8 @@ static void R_SetVisFarClip( void )
 */
 static void R_SetupFrame( void )
 {
-	rf.framecount++;
+	int viewcluster;
+	int viewarea;
 
 	// build the transformation matrix for the given view angles
 	VectorCopy( rn.refdef.vieworg, rn.viewOrigin );
@@ -1082,18 +1071,26 @@ static void R_SetupFrame( void )
 		VectorCopy( rsh.worldModel->maxs, rn.visMaxs );
 
 		leaf = Mod_PointInLeaf( rn.pvsOrigin, rsh.worldModel );
-		rn.viewcluster = leaf->cluster;
-		rn.viewarea = leaf->area;
+		viewcluster = leaf->cluster;
+		viewarea = leaf->area;
+
+		if( rf.worldModelSequence != rsh.worldModelSequence ) {
+			rf.framecount = 0;
+			rf.viewcluster = -1; // force R_MarkLeaves
+			rf.worldModelSequence = rsh.worldModelSequence;
+		}
 	}
 	else
 	{
-		rn.viewcluster = -1;
-		rn.viewarea = -1;
+		viewcluster = -1;
+		viewarea = -1;
 	}
 
 	rf.oldviewcluster = rf.viewcluster;
-	rf.viewcluster = rn.viewcluster;
-	rf.viewarea = rf.viewarea;
+	rf.viewcluster = viewcluster;
+	rf.viewarea = viewarea;
+
+	rf.framecount++;
 }
 
 /*
@@ -1617,7 +1614,7 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 		R_UpdateSwapInterval();
 	}
 
-	R_ClearStats();
+	memset( &rf.stats, 0, sizeof( rf.stats ) );
 
 	R_Set2DMode( qtrue );
 }
@@ -1650,14 +1647,6 @@ void R_EndFrame( void )
 void R_AppActivate( qboolean active, qboolean destroy )
 {
 	GLimp_AppActivate( active, destroy );
-}
-
-/*
-* R_ClearStats
-*/
-void R_ClearStats( void )
-{
-	memset( &rf.stats, 0, sizeof( rf.stats ) );
 }
 
 /*
@@ -1698,23 +1687,23 @@ const char *R_SpeedsMessage( char *out, size_t size )
 			break;
 		case 4:
 		case 5:
-			if( r_debug_surface )
+			if( rsc.debugSurface )
 			{
 				int numVerts = 0, numTris = 0;
 
 				Q_snprintfz( out, size,
 					"%s type:%i sort:%i", 
-					r_debug_surface->shader->name, r_debug_surface->facetype, r_debug_surface->shader->sort );
+					rsc.debugSurface->shader->name, rsc.debugSurface->facetype, rsc.debugSurface->shader->sort );
 
 				Q_strncatz( out, "\n", size );
 
-				if( r_speeds->integer == 5 && r_debug_surface->drawSurf->vbo ) {
-					numVerts = r_debug_surface->drawSurf->vbo->numVerts;
-					numTris = r_debug_surface->drawSurf->vbo->numElems / 3;
+				if( r_speeds->integer == 5 && rsc.debugSurface->drawSurf->vbo ) {
+					numVerts = rsc.debugSurface->drawSurf->vbo->numVerts;
+					numTris = rsc.debugSurface->drawSurf->vbo->numElems / 3;
 				}
-				else if( r_debug_surface->mesh ) {
-					numVerts = r_debug_surface->mesh->numVerts;
-					numTris = r_debug_surface->mesh->numElems;
+				else if( rsc.debugSurface->mesh ) {
+					numVerts = rsc.debugSurface->mesh->numVerts;
+					numTris = rsc.debugSurface->mesh->numElems;
 				}
 
 				if( numVerts ) {
@@ -1724,9 +1713,9 @@ const char *R_SpeedsMessage( char *out, size_t size )
 
 				Q_strncatz( out, "\n", size );
 
-				if( r_debug_surface->fog && r_debug_surface->fog->shader
-					&& r_debug_surface->fog->shader != r_debug_surface->shader )
-					Q_strncatz( out, r_debug_surface->fog->shader->name, size );
+				if( rsc.debugSurface->fog && rsc.debugSurface->fog->shader
+					&& rsc.debugSurface->fog->shader != rsc.debugSurface->shader )
+					Q_strncatz( out, rsc.debugSurface->fog->shader->name, size );
 			}
 			break;
 		case 6:

@@ -643,7 +643,8 @@ void R_MarkLeaves( void )
 	rdflags = rn.refdef.rdflags;
 	if( rdflags & RDF_NOWORLDMODEL )
 		return;
-	if( rf.oldviewcluster == rf.viewcluster && ( rdflags & RDF_OLDAREABITS ) && !(rn.renderFlags & RF_NOVIS) && rf.viewcluster != -1 && rf.oldviewcluster != -1 )
+	if( rf.oldviewcluster == rf.viewcluster && ( rdflags & RDF_OLDAREABITS ) 
+		&& !(rn.renderFlags & RF_NOVIS) && rf.viewcluster != -1 && rf.oldviewcluster != -1 )
 		return;
 	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return;
