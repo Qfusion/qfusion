@@ -133,3 +133,14 @@ solution "qfusion"
     dofile "ui/ui.premake"
     dofile "qfusion.premake"
     dofile "qfusion_server.premake"
+
+    function prebuild_linux_deps()
+        os.execute("cd ../libsrcs/angelscript/sdk/angelscript/projects/gnuc && make")
+        os.execute("cd ../libsrcs/libRocket/libRocket/Build && make -f Makefile.qfusion")
+    end
+
+    newaction {
+        trigger     = "linux_deps",
+        description = "Build linux dependecies",
+        execute     = prebuild_linux_deps
+    }
