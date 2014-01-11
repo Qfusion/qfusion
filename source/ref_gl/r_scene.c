@@ -45,8 +45,8 @@ void R_ClearScene( void )
 
 	rsc.debugSurface = NULL;
 
-	rf.sceneShadowBits = 0;
-	rf.sceneFrameCount++;
+	rsc.renderedShadowBits = 0;
+	rsc.frameCount++;
 
 	R_ClearDebugBounds();
 

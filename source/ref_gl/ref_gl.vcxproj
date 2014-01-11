@@ -182,6 +182,7 @@
     <ClCompile Include="r_cull.c" />
     <ClCompile Include="r_framebuffer.c" />
     <ClCompile Include="r_image.c" />
+    <ClCompile Include="r_imagelib.c" />
     <ClCompile Include="r_light.c" />
     <ClCompile Include="r_main.c" />
     <ClCompile Include="r_math.c" />
@@ -223,6 +224,7 @@
     <ClInclude Include="r_backend_local.h" />
     <ClInclude Include="r_glimp.h" />
     <ClInclude Include="r_image.h" />
+    <ClInclude Include="r_imagelib.h" />
     <ClInclude Include="r_local.h" />
     <ClInclude Include="r_math.h" />
     <ClInclude Include="r_mesh.h" />

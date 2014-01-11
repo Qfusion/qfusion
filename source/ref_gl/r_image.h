@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __R_IMAGE_H__
 #define __R_IMAGE_H__
 
-#endif // __R_IMAGE_H__
-
 enum
 {
 	IT_NONE
@@ -61,7 +59,7 @@ typedef struct image_s
 					upload_height;				// after power of two and picmip
 	int				samples;
 	int				fbo;						// frame buffer object texture is attached to
-	unsigned int	framenum;					// rf.framecount texture was updated (rendered to)
+	unsigned int	framenum;					// rf.frameCount texture was updated (rendered to)
 	float			bumpScale;
 	struct image_s	*next, *prev;
 } image_t;
@@ -72,16 +70,15 @@ void R_FreeUnusedImages( void );
 void R_ShutdownImages( void );
 void R_InitViewportTexture( image_t **texture, const char *name, int id, 
 	int viewportWidth, int viewportHeight, int size, int flags, int samples );
-int	R_GetPortalTextureId( const int viewportWidth, const int viewportHeight, const int flags );
-image_t *R_GetPortalTexture( int id, int viewportWidth, int viewportHeight, int flags );
+image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight, int flags, unsigned frameNum );
 image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, int flags );
 void R_InitDrawFlatTexture( void );
 void R_FreeImageBuffers( void );
 
 void R_PrintImageList( const char *pattern, qboolean (*filter)( const char *filter, const char *value) );
-void R_ScreenShot( const char *name, qboolean silent );
+void R_ScreenShot( const char *filename, int x, int y, int width, int height, int quality, 
+	qboolean flipx, qboolean flipy, qboolean flipdiagonal, qboolean silent );
 
-void R_EnvShot_f( void );
 void R_TextureMode( char *string );
 void R_AnisotropicFilter( int value );
 
@@ -93,3 +90,5 @@ void R_ReplaceSubImage( image_t *image, qbyte **pic, int width, int height );
 void R_BeginAviDemo( void );
 void R_WriteAviFrame( int frame, qboolean scissor );
 void R_StopAviDemo( void );
+
+#endif // __R_IMAGE_H__

@@ -178,14 +178,14 @@ qboolean R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
 
-	if( drawSurf->dlightFrame == rf.sceneFrameCount ) {
+	if( drawSurf->dlightFrame == rsc.frameCount ) {
 		RB_SetDlightBits( drawSurf->dlightBits & rn.dlightBits );
 	}
 	else {
 		RB_SetDlightBits( 0 );
 	}
 
-	if( drawSurf->shadowFrame == rf.sceneFrameCount ) {
+	if( drawSurf->shadowFrame == rsc.frameCount ) {
 		RB_SetShadowBits( drawSurf->shadowBits & rn.shadowBits );
 	}
 	else {
@@ -233,14 +233,14 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 	}
 
 	drawSurf = surf->drawSurf;
-	if( drawSurf->visFrame != rf.framecount ) {
+	if( drawSurf->visFrame != rf.frameCount ) {
 		portalSurface_t *portalSurface = NULL;
 
 		if( shader->flags & SHADER_PORTAL ) {
 			portalSurface = R_AddPortalSurface( e, surf->mesh, surf->mins, surf->maxs, shader );
 		}
 
-		drawSurf->visFrame = rf.framecount;
+		drawSurf->visFrame = rf.frameCount;
 
 		if( !R_AddDSurfToDrawList( e, fog, shader, dist, order, portalSurface, drawSurf ) ) {
 			return;
@@ -255,22 +255,22 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 	// dynamic lights that affect the surface
 	if( dlightBits && R_SurfPotentiallyLit( surf ) ) {
 		// ignore dlights that have already been marked as affectors
-		if( drawSurf->dlightFrame == rf.sceneFrameCount ) {
+		if( drawSurf->dlightFrame == rsc.frameCount ) {
 			drawSurf->dlightBits |= dlightBits;
 		} else {
 			drawSurf->dlightBits = dlightBits;
-			drawSurf->dlightFrame = rf.sceneFrameCount;
+			drawSurf->dlightFrame = rsc.frameCount;
 		}
 	}
 
 	// shadows that are projected onto the surface
 	if( shadowBits && R_SurfPotentiallyShadowed( surf ) ) {
 		// ignore shadows that have already been marked as affectors
-		if( drawSurf->shadowFrame == rf.sceneFrameCount ) {
+		if( drawSurf->shadowFrame == rsc.frameCount ) {
 			drawSurf->shadowBits |= shadowBits;
 		} else {
 			drawSurf->shadowBits = shadowBits;
-			drawSurf->shadowFrame = rf.sceneFrameCount;
+			drawSurf->shadowFrame = rsc.frameCount;
 		}
 	}
 
@@ -395,8 +395,8 @@ qboolean R_AddBrushModelToDrawList( const entity_t *e )
 		if( !surf->drawSurf ) {
 			continue;
 		}
-		if( surf->visFrame != rf.framecount ) {
-			surf->visFrame = rf.framecount;
+		if( surf->visFrame != rf.frameCount ) {
+			surf->visFrame = rf.frameCount;
 			R_AddSurfaceToDrawList( e, surf, fog, 0, dlightBits, shadowBits, distance );
 		}
 	}
@@ -431,7 +431,7 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 
 		// avoid double-checking dlights that have already been added to drawSurf
 		newDlightBits = dlightBits;
-		if( drawSurf->dlightFrame == rf.sceneFrameCount ) {
+		if( drawSurf->dlightFrame == rsc.frameCount ) {
 			newDlightBits &= ~drawSurf->dlightBits;
 		}
 		if( newDlightBits ) {
@@ -440,14 +440,14 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 
 		// avoid double-checking shadows that have already been added to drawSurf
 		newShadowBits = shadowBits;
-		if( drawSurf->shadowFrame == rf.sceneFrameCount ) {
+		if( drawSurf->shadowFrame == rsc.frameCount ) {
 			newShadowBits &= ~drawSurf->shadowBits;
 		}
 		if( newShadowBits ) {
 			newShadowBits = R_SurfaceShadowBits( surf, newShadowBits );
 		}
 
-		if( surf->visFrame != rf.framecount || newDlightBits || newShadowBits ) {
+		if( surf->visFrame != rf.frameCount || newDlightBits || newShadowBits ) {
 			VectorAdd( surf->mins, surf->maxs, centre );
 			VectorScale( centre, 0.5, centre );
 			distance = Distance( rn.refdef.vieworg, centre );
@@ -456,7 +456,7 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 				newDlightBits, newShadowBits, distance );
 		}
 
-		surf->visFrame = rf.framecount;
+		surf->visFrame = rf.frameCount;
 	} while( *mark );
 }
 
@@ -553,7 +553,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 
 	// if a leaf node, draw stuff
 	pleaf = ( mleaf_t * )node;
-	pleaf->visframe = rf.framecount;
+	pleaf->visframe = rf.frameCount;
 
 	// add leaf bounds to view bounds
 	for( i = 0; i < 3; i++ )

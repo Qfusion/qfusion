@@ -2467,13 +2467,13 @@ static void Shader_Finish( shader_t *s )
 void R_UploadCinematicShader( const shader_t *shader )
 {
 	int j;
-	shaderpass_t *pass;
+	const shaderpass_t *pass;
 
 	// upload cinematics
 	for( j = 0, pass = shader->passes; j < shader->numpasses; j++, pass++ )
 	{
 		if( pass->cin )
-			pass->images[0] = R_UploadCinematic( pass->cin );
+			R_UploadCinematic( pass->cin );
 	}
 }
 

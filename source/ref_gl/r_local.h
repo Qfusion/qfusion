@@ -226,6 +226,9 @@ typedef struct
 
 typedef struct
 {
+	// bumped each R_ClearScene
+	unsigned int	frameCount;
+
 	unsigned int	numEntities;
 	entity_t		entities[MAX_ENTITIES];
 	entity_t		*worldent;
@@ -248,6 +251,8 @@ typedef struct
 
 	float			farClipMin, farClipBias;
 
+	unsigned int	renderedShadowBits;
+
 	refdef_t		refdef;
 
 	msurface_t		*debugSurface;
@@ -255,10 +260,6 @@ typedef struct
 
 typedef struct
 {
-	// bumped each R_ClearScene
-	unsigned int	sceneFrameCount;
-	unsigned int	sceneShadowBits;
-
 	qboolean		in2D;
 	int				width2D, height2D;
 
@@ -269,7 +270,7 @@ typedef struct
 	int				worldModelSequence;
 
 	// used for dlight push checking
-	unsigned int	framecount;
+	unsigned int	frameCount;
 
 	// bumped when going to a new PVS
 	unsigned int	pvsframecount;
@@ -414,7 +415,8 @@ void		R_FreeCinematic( unsigned int id );
 void		R_RunAllCinematics( void );
 void		R_TouchCinematic( unsigned int id );
 void		R_FreeUnusedCinematics( void );
-image_t		*R_UploadCinematic( unsigned int id );
+void		R_UploadCinematic( unsigned int id );
+image_t		*R_GetCinematicImage( unsigned int id );
 struct cinematics_s *R_GetCinematicById( unsigned int id );
 void		R_RestartCinematics( void );
 
@@ -422,6 +424,7 @@ void		R_RestartCinematics( void );
 // r_cmds.c
 //
 void		R_ScreenShot_f( void );
+void		R_EnvShot_f( void );
 void		R_ImageList_f( void );
 void		R_ShaderList_f( void );
 void		R_ShaderDump_f( void );
