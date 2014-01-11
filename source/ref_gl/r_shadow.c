@@ -380,10 +380,10 @@ void R_DrawShadowmaps( void )
 		shadowBits &= ~group->bit;
 
 		// make sure we don't render the same shadowmap twice in the same scene frame
-		if( rf.sceneShadowBits & group->bit ) {
+		if( rsc.renderedShadowBits & group->bit ) {
 			continue;
 		}
-		rf.sceneShadowBits |= group->bit;
+		rsc.renderedShadowBits |= group->bit;
 
 		// calculate LOD for shadowmap
 		lod = (int)((DistanceFast( group->origin, lodOrigin ) * lodScale) / group->projDist);

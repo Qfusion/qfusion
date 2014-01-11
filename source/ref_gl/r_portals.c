@@ -354,9 +354,9 @@ setup_and_render:
 	if( captureTextureId >= 0 )
 	{
 		int texFlags = shader->flags & SHADER_NO_TEX_FILTERING ? IT_NOFILTERING : 0;
-		int texId = R_GetPortalTextureId( rsc.refdef.width, rsc.refdef.height, texFlags );
 
-		captureTexture = R_GetPortalTexture( texId, rsc.refdef.width, rsc.refdef.height, texFlags );
+		captureTexture = R_GetPortalTexture( rsc.refdef.width, rsc.refdef.height, texFlags,
+			rsc.frameCount );
 		portalTexures[captureTextureId] = captureTexture;
 
 		if( !captureTexture ) {

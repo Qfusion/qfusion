@@ -507,6 +507,31 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 	}
 }
 
+/*
+* RB_ShaderpassTex
+*/
+static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass )
+{
+	if( pass->anim_fps ) {
+		return pass->images[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
+	}
+
+	if( pass->flags & SHADERPASS_PORTALMAP ) {
+		return rb.currentPortalSurface && rb.currentPortalSurface->texures[0] ? 
+			rb.currentPortalSurface->texures[0] : rsh.blackTexture;
+	}
+
+	if( ( pass->flags & SHADERPASS_SKYBOXSIDE ) && rb.skyboxShader && rb.skyboxSide >= 0 ) {
+		return rb.skyboxShader->skyboxImages[rb.skyboxSide];
+	}
+
+	if( pass->cin ) {
+		return R_GetCinematicImage( pass->cin );
+	}
+
+	return ( pass->images[0] ? pass->images[0] : rsh.noTexture );
+}
+
 //==================================================================================
 
 /*
@@ -728,7 +753,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 {
 	int i;
 	int program;
-	image_t *base, *normalmap, *glossmap, *decalmap, *entdecalmap;
+	const image_t *base, *normalmap, *glossmap, *decalmap, *entdecalmap;
 	vec3_t lightDir = { 0.0f, 0.0f, 0.0f };
 	vec4_t ambient = { 0.0f, 0.0f, 0.0f, 0.0f }, diffuse = { 0.0f, 0.0f, 0.0f, 0.0f };
 	float offsetmappingScale, glossIntensity, glossExponent;
@@ -738,7 +763,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	mat4_t texMatrix;
 
 	// handy pointers
-	base = pass->images[0];
+	base = RB_ShaderpassTex( pass );
 	normalmap = pass->images[1];
 	glossmap = pass->images[2];
 	decalmap = pass->images[3];
@@ -1317,21 +1342,6 @@ r_glslfeat_t RB_TcGenToProgramFeatures( int tcgen, vec_t *tcgenVec, mat4_t texMa
 	}
 
 	return programFeatures;
-}
-
-/*
-* RB_ShaderpassTex
-*/
-static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass )
-{
-	if( pass->anim_fps )
-		return pass->images[(int)( pass->anim_fps * rb.currentShaderTime ) % pass->anim_numframes];
-	if( pass->flags & SHADERPASS_PORTALMAP )
-		return rb.currentPortalSurface && rb.currentPortalSurface->texures[0] ? 
-			rb.currentPortalSurface->texures[0] : rsh.blackTexture;
-	if( ( pass->flags & SHADERPASS_SKYBOXSIDE ) && rb.skyboxShader && rb.skyboxSide >= 0 )
-		return rb.skyboxShader->skyboxImages[rb.skyboxSide];
-	return ( pass->images[0] ? pass->images[0] : rsh.noTexture );
 }
 
 /*

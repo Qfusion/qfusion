@@ -684,7 +684,8 @@ void R_Set2DMode( qboolean enable )
 /*
 * R_DrawRotatedStretchPic
 */
-void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, const vec4_t color, const shader_t *shader )
+void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, 
+	const vec4_t color, const shader_t *shader )
 {
 	int bcolor;
 
@@ -1075,7 +1076,7 @@ static void R_SetupFrame( void )
 		viewarea = leaf->area;
 
 		if( rf.worldModelSequence != rsh.worldModelSequence ) {
-			rf.framecount = 0;
+			rf.frameCount = 0;
 			rf.viewcluster = -1; // force R_MarkLeaves
 			rf.worldModelSequence = rsh.worldModelSequence;
 		}
@@ -1090,7 +1091,7 @@ static void R_SetupFrame( void )
 	rf.viewcluster = viewcluster;
 	rf.viewarea = viewarea;
 
-	rf.framecount++;
+	rf.frameCount++;
 }
 
 /*
@@ -1732,6 +1733,65 @@ const char *R_SpeedsMessage( char *out, size_t size )
 }
 
 //==================================================================================
+
+/*
+* R_BeginAviDemo
+*/
+void R_BeginAviDemo( void )
+{
+}
+
+/*
+* R_WriteAviFrame
+*/
+void R_WriteAviFrame( int frame, qboolean scissor )
+{
+	int x, y, w, h;
+	int checkname_size;
+	int quality;
+	char *checkname;
+	const char *extension;
+
+	if( scissor )
+	{
+		x = rsc.refdef.x;
+		y = glConfig.height - rsc.refdef.height - rsc.refdef.y;
+		w = rsc.refdef.width;
+		h = rsc.refdef.height;
+	}
+	else
+	{
+		x = 0;
+		y = 0;
+		w = glConfig.width;
+		h = glConfig.height;
+	}
+
+	if( r_screenshot_jpeg->integer ) {
+		extension = ".jpg";
+		quality = r_screenshot_jpeg_quality->integer;
+	}
+	else {
+		extension = ".tga";
+		quality = 100;
+	}
+
+	checkname_size = sizeof( char ) * ( strlen( "avi/avi" ) + 6 + strlen( extension ) + 1 );
+	checkname = malloc( checkname_size );
+	Q_snprintfz( checkname, checkname_size, "avi/avi%06i", frame );
+	COM_DefaultExtension( checkname, ".jpg", checkname_size );
+
+	R_ScreenShot( checkname, x, y, w, h, quality, qfalse, qfalse, qfalse, qtrue );
+
+	free( checkname );
+}
+
+/*
+* R_StopAviDemo
+*/
+void R_StopAviDemo( void )
+{
+}
 
 /*
 * R_TransformVectorToScreen

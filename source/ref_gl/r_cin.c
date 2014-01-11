@@ -264,17 +264,31 @@ struct cinematics_s *R_GetCinematicById( unsigned int id )
 }
 
 /*
-* R_UploadCinematic
+* R_GetCinematicImage
 */
-image_t *R_UploadCinematic( unsigned int id )
+image_t *R_GetCinematicImage( unsigned int id )
 {
 	r_cinhandle_t *handle;
 	
 	handle = R_GetCinematicHandleById( id );
 	if( handle ) {
-		return R_ResampleCinematicFrame( handle );
+		return handle->image;
 	}
 	return NULL;
+
+}
+
+/*
+* R_UploadCinematic
+*/
+void R_UploadCinematic( unsigned int id )
+{
+	r_cinhandle_t *handle;
+	
+	handle = R_GetCinematicHandleById( id );
+	if( handle ) {
+		R_ResampleCinematicFrame( handle );
+	}
 }
 
 /*
