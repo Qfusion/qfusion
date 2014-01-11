@@ -61,13 +61,14 @@ static podomain_t *podomain_common;
 /*
 * L10n_ParsePOString
 */
-static size_t L10n_ParsePOString( char *instr, char *outstr )
+static size_t L10n_ParsePOString( char *instr, char *outstr, qboolean *err )
 {
 	int i;
 	char *q1, *q2;
 	char *outstart = outstr;
 	char *inend = instr + strlen( instr );
 
+	*err = qfalse;
 	while( *instr == ' ' || *instr == '\t' ) instr++;
 
 	// accept properly double quoted strings
@@ -78,11 +79,13 @@ static size_t L10n_ParsePOString( char *instr, char *outstr )
 	if( *instr != '"' && q1 ) {
 		// do not accept string that do not start with a double
 		// quote but nonetheless contain a double quote
+		*err = qtrue;
 		return 0;
 	}
 
 	if( q1 && q2 ) {
 		if( q2 <= q1 ) {
+			*err = qtrue;
 			return 0;
 		}
 		q1++;
@@ -90,6 +93,7 @@ static size_t L10n_ParsePOString( char *instr, char *outstr )
 	}
 	else {
 		if( ( q1 && !q2 ) || ( !q1 && q2 ) ) {
+			*err = qtrue;
 			return 0;
 		}
 		// no quotes
@@ -189,7 +193,7 @@ static trie_t *L10n_ParsePOFile( const char *filepath, char *buffer, int length 
 	int linenum = 0;
 	char *start = buffer, *end = buffer + length;
 	char *cur, *eol;
-	qboolean have_msgid, have_msgstr;
+	qboolean have_msgid, have_msgstr, error;
 	char *msgid, *msgstr, *instr, *outstr;
 	size_t str_length;
 	trie_t *dict;
@@ -275,11 +279,13 @@ parse_cmd:
 		}
 
 		// parse single line of C-style string
-		str_length = L10n_ParsePOString( instr, outstr );
+		str_length = L10n_ParsePOString( instr, outstr, &error );
 		if( !str_length ) {
 			have_msgid = have_msgstr = qfalse;
-			Com_Printf( S_COLOR_YELLOW "Error parsing line %i of %s: syntax error near '%s'\n", 
-				linenum, filepath, instr );
+			if( error ) {
+				Com_Printf( S_COLOR_YELLOW "Error parsing line %i of %s: syntax error near '%s'\n", 
+					linenum, filepath, instr );
+			}
 		}
 		else {
 			// shift the output buffer so that in case multiline string
