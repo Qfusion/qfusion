@@ -195,7 +195,6 @@
     <ClInclude Include="ftlib_syscalls.h" />
     <ClInclude Include="..\gameshared\q_math.h" />
     <ClInclude Include="..\gameshared\q_shared.h" />
-    <ClInclude Include="roq.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
