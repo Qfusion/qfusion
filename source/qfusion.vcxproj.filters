@@ -240,6 +240,9 @@
     <ClCompile Include="qalgo\hash.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="qcommon\steam.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="qcommon\anticheat.h">
@@ -426,6 +429,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qalgo\hash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\steam.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -209,6 +209,7 @@
     <ClCompile Include="..\qcommon\cm_trace.c" />
     <ClCompile Include="..\qcommon\cmd.c" />
     <ClCompile Include="..\qcommon\common.c" />
+    <ClCompile Include="..\qcommon\steam.c" />
     <ClCompile Include="..\qcommon\threads.c" />
     <ClCompile Include="..\win32\conproc.c" />
     <ClCompile Include="..\qcommon\cvar.c" />
@@ -286,6 +287,7 @@
     <ClInclude Include="..\qcommon\qthreads.h" />
     <ClInclude Include="..\qcommon\snap_read.h" />
     <ClInclude Include="..\qcommon\snap_write.h" />
+    <ClInclude Include="..\qcommon\steam.h" />
     <ClInclude Include="..\qcommon\svnrev.h" />
     <ClInclude Include="..\qcommon\sys_fs.h" />
     <ClInclude Include="..\qcommon\sys_library.h" />
