@@ -1110,15 +1110,17 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 	rsh.worldModel = Mod_ForName( model, qtrue );
 	mod_isworldmodel = qfalse;
 
+	if( !rsh.worldModel ) {
+		return;
+	}
+
 	// FIXME: this is ugly... Resolve by allowing non-world .bsp models?
-	if( rsh.worldModel ) {
-		// store or restore map config
-		if( rsh.worldModel->registrationSequence == rsh.registrationSequence ) {
-			mod_mapConfigs[rsh.worldModel - mod_known] = mapConfig;
-		}
-		else {
-			mapConfig = mod_mapConfigs[rsh.worldModel - mod_known];
-		}
+	// store or restore map config
+	if( rsh.worldModel->registrationSequence == rsh.registrationSequence ) {
+		mod_mapConfigs[rsh.worldModel - mod_known] = mapConfig;
+	}
+	else {
+		mapConfig = mod_mapConfigs[rsh.worldModel - mod_known];
 	}
 
 	R_TouchModel( rsh.worldModel );
