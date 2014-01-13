@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 #include <setjmp.h>
 #include "wswcurl.h"
+#include "steam.h"
 #include "../qalgo/glob.h"
 #include "../qalgo/md5.h"
 #include "../matchmaker/mm_common.h"
@@ -1039,6 +1040,8 @@ void Qcommon_Init( int argc, char **argv )
 
 	CM_Init();
 
+	Steam_LoadLibrary();
+
 	Com_ScriptModule_Init();
 
 	MM_Init();
@@ -1141,6 +1144,8 @@ void Qcommon_Frame( unsigned int realmsec )
 
 	FS_Frame();
 
+	Steam_RunFrame();
+
 	if( dedicated->integer )
 	{
 		do
@@ -1213,6 +1218,8 @@ void Qcommon_Shutdown( void )
 	Netchan_Shutdown();
 	NET_Shutdown();
 	Key_Shutdown();
+
+	Steam_UnloadLibrary();
 
 	Qcommon_ShutdownCommands();
 	Memory_ShutdownCommands();

@@ -165,13 +165,16 @@
     <ClCompile Include="qcommon\bsp.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="qtrie\q_trie.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="qcommon\threads.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="win32\win_threads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qalgo\q_trie.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="qcommon\steam.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -287,13 +290,16 @@
     <ClInclude Include="qcommon\bsp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qtrie\q_trie.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="qcommon\qthreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qcommon\sys_threads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gameshared\q_trie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qcommon\steam.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

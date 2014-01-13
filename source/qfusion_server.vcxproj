@@ -212,6 +212,7 @@
     <ClCompile Include="qcommon\cm_trace.c" />
     <ClCompile Include="qcommon\cmd.c" />
     <ClCompile Include="qcommon\common.c" />
+    <ClCompile Include="qcommon\steam.c" />
     <ClCompile Include="qcommon\threads.c" />
     <ClCompile Include="server\sv_web.c" />
     <ClCompile Include="win32\conproc.c" />
@@ -264,6 +265,7 @@
     <ClInclude Include="qcommon\cm_local.h" />
     <ClInclude Include="qcommon\cmodel.h" />
     <ClInclude Include="qcommon\qthreads.h" />
+    <ClInclude Include="qcommon\steam.h" />
     <ClInclude Include="qcommon\sys_threads.h" />
     <ClInclude Include="win32\conproc.h" />
     <ClInclude Include="qcommon\cvar.h" />

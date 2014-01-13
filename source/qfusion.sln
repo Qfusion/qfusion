@@ -37,6 +37,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ftlib", "ftlib\ftlib.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ref_gl", "ref_gl\ref_gl.vcxproj", "{8243957C-B7B7-4F5F-90E2-2B67CB7A1BC9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "steamlib", "steamlib\steamlib.vcxproj", "{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -143,6 +145,14 @@ Global
 		{8243957C-B7B7-4F5F-90E2-2B67CB7A1BC9}.Release|Win32.Build.0 = Release|Win32
 		{8243957C-B7B7-4F5F-90E2-2B67CB7A1BC9}.Release|x64.ActiveCfg = Release|x64
 		{8243957C-B7B7-4F5F-90E2-2B67CB7A1BC9}.Release|x64.Build.0 = Release|x64
+		{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}.Debug|Win32.Build.0 = Debug|Win32
+		{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}.Debug|x64.ActiveCfg = Debug|x64
+		{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}.Debug|x64.Build.0 = Debug|x64
+		{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}.Release|Win32.ActiveCfg = Release|Win32
+		{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}.Release|Win32.Build.0 = Release|Win32
+		{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}.Release|x64.ActiveCfg = Release|x64
+		{76DBB72A-5842-476F-9F2E-8DA4DDFFB9D5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

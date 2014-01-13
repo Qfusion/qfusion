@@ -1,0 +1,54 @@
+/*
+qfusion
+Copyright (c) 2014, Victor Luchits, All rights reserved.
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 3.0 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library.
+*/
+
+#ifndef _STEAMLIB_PUBLIC_H_
+#define _STEAMLIB_PUBLIC_H_
+
+// steamlib_public.h - steam integration subsystem
+
+#define	STEAMLIB_API_VERSION 1
+
+//===============================================================
+
+//
+// functions provided by the main engine
+//
+typedef struct
+{
+	// halts the application or drops to console
+	void ( *Com_Error )( int code, const char *format, ... );
+
+	// console messages
+	void ( *Com_Printf )( const char *format, ... );
+	void ( *Com_DPrintf )( const char *format, ... );
+} steamlib_import_t;
+
+//
+// functions exported by the steam integration subsystem
+//
+typedef struct
+{
+	// if API is different, the dll cannot be used
+	int ( *API )( void );
+
+	int ( *Init )( void );
+	void ( *RunFrame )( void );
+	void ( *Shutdown )( void );
+} steamlib_export_t;
+
+#endif
