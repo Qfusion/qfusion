@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "ftlib.h"
 #include "../qcommon/asyncstream.h"
+#include "../qcommon/steam.h"
 
 cvar_t *cl_stereo_separation;
 cvar_t *cl_stereo;
@@ -2976,6 +2977,8 @@ void CL_Init( void )
 	// init localization subsystem
 	L10n_Init();
 
+	Steam_Init();
+
 	VID_Init();
 
 	CL_ClearState();
@@ -3073,6 +3076,8 @@ void CL_Shutdown( void )
 	CL_ShutdownAsyncStream();
 
 	CL_ShutdownLocal();
+
+	Steam_Shutdown();
 
 	Con_Shutdown();
 
