@@ -77,20 +77,17 @@ void Steam_LoadLibrary( void )
 */
 void Steam_UnloadLibrary( void )
 {
-	assert( steamlib_libhandle );
-
-	if( steamlib_libhandle )
-	{
+	if( !steamlib_libhandle ) {
 		steamlib_export->Shutdown();
-	}
 
-	Com_UnloadLibrary( &steamlib_libhandle );
-	assert( !steamlib_libhandle );
+		Com_UnloadLibrary( &steamlib_libhandle );
+		assert( !steamlib_libhandle );
+
+		Com_Printf( "Steam module unloaded.\n" );
+	}
 
 	steamlib_export = NULL;
 	steamlib_initialized = qfalse;
-
-	Com_Printf( "Steam module unloaded.\n" );
 }
 
 /*
