@@ -77,7 +77,7 @@ void Steam_LoadLibrary( void )
 */
 void Steam_UnloadLibrary( void )
 {
-	if( !steamlib_libhandle ) {
+	if( steamlib_libhandle ) {
 		steamlib_export->Shutdown();
 
 		Com_UnloadLibrary( &steamlib_libhandle );
