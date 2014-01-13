@@ -65,6 +65,10 @@ void Steam_LoadLibrary( void )
 			Com_Printf( "Wrong version: %i, not %i.\n", api_version, STEAMLIB_API_VERSION );
 			Steam_UnloadLibrary();
 		}
+		else
+		{
+			Com_Printf( "Success.\n" );
+		}
 	}
 	else
 	{
