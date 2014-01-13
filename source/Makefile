@@ -38,6 +38,7 @@ BUILD_THIN_CLIENT?=NO
 ifeq ($(USE_MINGW),YES)
 ARCH?=x86
 HOST?=i586-mingw32msvc
+BITS?=32
 
 HOST_PREFIX=$(HOST)-
 
@@ -67,6 +68,13 @@ ARCH?=freebsd_$(BASE_ARCH)
 else
 ARCH?=$(BASE_ARCH)
 endif
+
+ifeq ($(ARCH),x86_64)
+BITS?=64
+else
+BITS?=32
+endif
+
 
 SHARED_LIBRARY_EXTENSION=so
 endif
@@ -139,9 +147,9 @@ CFLAGS_ROCKET+=-Iui
 
 ####################### MINGW ######################
 
+ifeq ($(USE_MINGW),YES)
 BUILD_STEAMLIB=NO
 
-ifeq ($(USE_MINGW),YES)
 CFLAGS_COMMON=-D_M_IX86 $(CFLAGS) -MD -I. -Iwin32/include -I../libsrcs/zlib -I../libsrcs/libcurl/include -D__WIN32 -D__USE_LARGEFILE -D__USE_LARGEFILE64 -mwindows -Wall -Wno-unknown-pragmas -Wno-unused-function -Winvalid-pch
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
@@ -293,8 +301,8 @@ LDFLAGS_FTLIB=$(shell freetype-config --libs)
 endif
 
 ifeq ($(BUILD_STEAMLIB),YES)
-CFLAGS_STEAMLIB=
-LDFLAGS_STEAMLIB=
+CFLAGS_STEAMLIB=-I../libsrcs/steamsdk/public
+LDFLAGS_STEAMLIB=-L../libsrcs/steamsdk/redistributable_bin/linux$(BITS) -lsteam_api
 endif
 
 ifeq ($(BUILD_REF_GL),YES)
@@ -432,7 +440,7 @@ OBJS_QF = $(addprefix $(BUILDDIR)/qf/, $(OFILES_QF) )
 #########
 # DED
 #########
-CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/mlist.c qcommon/webdownload.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_write.c qcommon/ascript.c qcommon/anticheat.c qcommon/wswcurl.c qcommon/cjson.c qcommon/base64.c qcommon/threads.c qcommon/stream.c
+CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/mlist.c qcommon/webdownload.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_write.c qcommon/ascript.c qcommon/anticheat.c qcommon/wswcurl.c qcommon/cjson.c qcommon/base64.c qcommon/threads.c qcommon/steam.c
 CFILES_DED += $(wildcard server/*.c)
 CFILES_DED += null/cl_null.c
 ifeq ($(USE_MINGW),YES)
@@ -537,7 +545,7 @@ OBJS_FTLIB = $(addprefix $(BUILDDIR)/ftlib/, $(OFILES_FTLIB) )
 CPPFILES_STEAMLIB  = $(wildcard steamlib/*.cpp)
 
 CPPFILES_STEAMLIB_WITHOUT_PATH= $(notdir  $(CPPFILES_STEAMLIB))
-OFILES_STEAMLIB=$(CPPFILES_STEAMLIB_WITHOUT_PATH:.c=.o)
+OFILES_STEAMLIB=$(CPPFILES_STEAMLIB_WITHOUT_PATH:.cpp=.o)
 OBJS_STEAMLIB = $(addprefix $(BUILDDIR)/steamlib/, $(OFILES_STEAMLIB) )
 
 #########
@@ -579,7 +587,7 @@ OBJS_ANGELWRAP = $(addprefix $(BUILDDIR)/angelwrap/, $(OFILES_ANGELWRAP) )
 #########
 # TV SERVER
 #########
-CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_read.c qcommon/snap_write.c qcommon/wswcurl.c qcommon/threads.c qcommon/stream.c
+CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_read.c qcommon/snap_write.c qcommon/wswcurl.c qcommon/threads.c qcommon/steam.c
 CFILES_TV_SERVER += $(wildcard tv_server/*.c)
 CFILES_TV_SERVER += null/cl_null.c null/ascript_null.c null/mm_null.c
 ifeq ($(USE_MINGW),YES)
@@ -809,7 +817,6 @@ message-angelwrap:
 	@echo "> *********************************************************"
 	@echo "> * Building angelwrap"
 	@echo "> *********************************************************"
-	-@rm $(ANGELSCRIPT_LIB)
 $(ANGELSCRIPT_INC)/angelscript.h:
 	@echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 	@echo "!!!"
@@ -1155,8 +1162,8 @@ $(BUILDDIR)/ftlib/%.o: ftlib/%.c
 ########
 # STEAMLIB
 ########
-$(BUILDDIR)/ftlib/%.o: ftlib/%.cpp
-	@$(DO_CXX_MODULE) $(CFLAGS_FTLIB)
+$(BUILDDIR)/steamlib/%.o: steamlib/%.cpp
+	@$(DO_CXX_MODULE) $(CFLAGS_STEAMLIB)
 
 ########
 # REF_GL
