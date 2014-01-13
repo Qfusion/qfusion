@@ -301,8 +301,8 @@ LDFLAGS_FTLIB=$(shell freetype-config --libs)
 endif
 
 ifeq ($(BUILD_STEAMLIB),YES)
-CFLAGS_STEAMLIB=-I../libsrcs/steamsdk/public
-LDFLAGS_STEAMLIB=-L../libsrcs/steamsdk/redistributable_bin/linux$(BITS) -lsteam_api
+CFLAGS_STEAMLIB=
+LDFLAGS_STEAMLIB=
 endif
 
 ifeq ($(BUILD_REF_GL),YES)
