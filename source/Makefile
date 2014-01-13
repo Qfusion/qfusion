@@ -18,7 +18,7 @@ BUILD_SND_QF?=YES
 BUILD_SND_OPENAL?=YES
 BUILD_CIN?=YES
 BUILD_FTLIB?=YES
-BUILD_STEAMLIB?=YES
+BUILD_STEAMLIB?=NO
 BUILD_REF_GL?=YES
 
 # game modules
@@ -90,7 +90,7 @@ DEPENDFILE_UI_ROCKET=$(BUILDDIR)/ui/Makefile.d
 DEPENDFILE_IRC=$(BUILDDIR)/irc/Makefile.d
 DEPENDFILE_CIN=$(BUILDDIR)/cin/Makefile.d
 DEPENDFILE_FTLIB=$(BUILDDIR)/ftlib/Makefile.d
-DEPENDFILE_STREAMLIB=$(BUILDDIR)/streamlib/Makefile.d
+DEPENDFILE_STEAMLIB=$(BUILDDIR)/steamlib/Makefile.d
 DEPENDFILE_REF_GL=$(BUILDDIR)/ref_gl/Makefile.d
 DEPENDFILE_ANGELWRAP=$(BUILDDIR)/angelwrap/Makefile.d
 DEPENDFILE_TV_SERVER=$(BUILDDIR)/tv_server/Makefile.d
@@ -98,7 +98,7 @@ DEPENDFILE_NULL=$(BUILDDIR)/null/Makefile.d
 DEPENDFILE_ROCKETCORE=$(BUILDDIR)/rocketcore/Makefile.d
 DEPENDFILE_ROCKETCONTROLS=$(BUILDDIR)/rocketcontrols/Makefile.d
 
-BUILDDIRS=$(BUILDDIR)/client $(BUILDDIR)/ded $(BUILDDIR)/cgame $(BUILDDIR)/game $(BUILDDIR)/ui $(BUILDDIR)/ui/pch $(BUILDDIR)/openal $(BUILDDIR)/qf $(BUILDDIR)/irc $(BUILDDIR)/cin $(BUILDDIR)/ftlib $(BUILDDIR)/streamlib $(BUILDDIR)/ref_gl $(BUILDDIR)/angelwrap $(BUILDDIR)/tv_server $(BUILDDIR)/rocketcore $(BUILDDIR)/rocketcontrols
+BUILDDIRS=$(BUILDDIR)/client $(BUILDDIR)/ded $(BUILDDIR)/cgame $(BUILDDIR)/game $(BUILDDIR)/ui $(BUILDDIR)/ui/pch $(BUILDDIR)/openal $(BUILDDIR)/qf $(BUILDDIR)/irc $(BUILDDIR)/cin $(BUILDDIR)/ftlib $(BUILDDIR)/steamlib $(BUILDDIR)/ref_gl $(BUILDDIR)/angelwrap $(BUILDDIR)/tv_server $(BUILDDIR)/rocketcore $(BUILDDIR)/rocketcontrols
 
 ###########################################################
 # Angelwrap stuff
@@ -138,6 +138,9 @@ CFLAGS_ROCKET+=-Iui
 ###########################################################
 
 ####################### MINGW ######################
+
+BUILD_STEAMLIB=NO
+
 ifeq ($(USE_MINGW),YES)
 CFLAGS_COMMON=-D_M_IX86 $(CFLAGS) -MD -I. -Iwin32/include -I../libsrcs/zlib -I../libsrcs/libcurl/include -D__WIN32 -D__USE_LARGEFILE -D__USE_LARGEFILE64 -mwindows -Wall -Wno-unknown-pragmas -Wno-unused-function -Winvalid-pch
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG
@@ -201,8 +204,8 @@ LDFLAGS_FTLIB=-lfreetypestat
 endif
 
 ifeq ($(BUILD_STEAMLIB),YES)
-CFLAGS_STREAMLIB=
-LDFLAGS_STREAMLIB=
+CFLAGS_STEAMLIB=
+LDFLAGS_STEAMLIB=
 endif
 
 ifeq ($(BUILD_REF_GL),YES)
@@ -289,9 +292,9 @@ CFLAGS_FTLIB=$(shell freetype-config --cflags)
 LDFLAGS_FTLIB=$(shell freetype-config --libs)
 endif
 
-ifeq ($(BUILD_STREAMLIB),YES)
-CFLAGS_STREAMLIB=
-LDFLAGS_STREAMLIB=
+ifeq ($(BUILD_STEAMLIB),YES)
+CFLAGS_STEAMLIB=
+LDFLAGS_STEAMLIB=
 endif
 
 ifeq ($(BUILD_REF_GL),YES)
@@ -328,7 +331,7 @@ CFLAGS_CLIENT=-std=gnu99 -I/Library/Frameworks/SDL.framework/Headers -I/System/L
 CFLAGS_DED=-DDEDICATED_ONLY -DC_ONLY
 CFLAGS_CIN=-I/Library/Frameworks/SDL.framework/Headers
 CFLAGS_FTLIB=-I/Library/Frameworks/SDL.framework/Headers
-CFLAGS_STREAMLIB=
+CFLAGS_STEAMLIB=
 CFLAGS_REF_GL=-I/Library/Frameworks/SDL.framework/Headers -I/Library/Frameworks/libjpeg.framework/Headers
 LDFLAGS_CLIENT=-lz -lcurl -framework SDL -framework OpenGL -I/Library/Frameworks/SDL.framework/Headers
 LDFLAGS_MODULE=-bundle
@@ -341,7 +344,7 @@ LDFLAGS_IRC=
 LDFLAGS_ANGELWRAP=$(ANGELSCRIPT_LIB) -lpthread
 LDFLAGS_CIN= -framework Ogg -framework Theora
 LDFLAGS_FTLIB=
-LDFLAGS_STREAMLIB=
+LDFLAGS_STEAMLIB=
 LDFLAGS_REF_GL=-lz -framework libjpeg -framework libpng
 endif
 
@@ -529,13 +532,13 @@ OFILES_FTLIB=$(CFILES_FTLIB_WITHOUT_PATH:.c=.o)
 OBJS_FTLIB = $(addprefix $(BUILDDIR)/ftlib/, $(OFILES_FTLIB) )
 
 #########
-# STREAMLIB
+# STEAMLIB
 #########
-CPPFILES_STREAMLIB  = $(wildcard streamlib/*.cpp)
+CPPFILES_STEAMLIB  = $(wildcard steamlib/*.cpp)
 
-CPPFILES_STREAMLIB_WITHOUT_PATH= $(notdir  $(CPPFILES_STREAMLIB))
-OFILES_STREAMLIB=$(CPPFILES_STREAMLIB_WITHOUT_PATH:.c=.o)
-OBJS_STREAMLIB = $(addprefix $(BUILDDIR)/streamlib/, $(OFILES_STREAMLIB) )
+CPPFILES_STEAMLIB_WITHOUT_PATH= $(notdir  $(CPPFILES_STEAMLIB))
+OFILES_STEAMLIB=$(CPPFILES_STEAMLIB_WITHOUT_PATH:.c=.o)
+OBJS_STEAMLIB = $(addprefix $(BUILDDIR)/steamlib/, $(OFILES_STEAMLIB) )
 
 #########
 # REF_GL
@@ -606,7 +609,7 @@ OBJS_TV_SERVER = $(addprefix $(BUILDDIR)/tv_server/, $(OFILES_TV_SERVER) )
 	irc message-irc compile-irc link-irc \
 	cin message-cin compile-cin link-cin \
 	ftlib message-ftlib compile-ftlib link-ftlib \
-	streamlib message-streamlib compile-streamlib link-streamlib \
+	steamlib message-steamlib compile-steamlib link-steamlib \
 	ref_gl message-ref_gl compile-ref_gl link-ref_gl \
 	angelwrap message-angelwrap compile-angelwrap link-angelwrap \
 	tv_server message-tv_server compile-tv_server link-tv_server  \
@@ -614,7 +617,7 @@ OBJS_TV_SERVER = $(addprefix $(BUILDDIR)/tv_server/, $(OFILES_TV_SERVER) )
 	clean-cgame clean-game clean-irc clean-cin clean-angelwrap clean-game clean-tv_server \
 	compile
 
-all: client openal qf ded ui cgame game irc cin ftlib streamlib ref_gl angelwrap tv_server
+all: client openal qf ded ui cgame game irc cin ftlib steamlib ref_gl angelwrap tv_server
 
 client: $(BUILDDIRS) message-client compile-client link-client start-script-client
 openal: $(BUILDDIRS) message-openal compile-openal link-openal
@@ -626,12 +629,12 @@ game: $(BUILDDIRS) message-game compile-game link-game
 irc: $(BUILDDIRS) message-irc compile-irc link-irc
 cin: $(BUILDDIRS) message-cin compile-cin link-cin
 ftlib: $(BUILDDIRS) message-ftlib compile-ftlib link-ftlib
-streamlib: $(BUILDDIRS) message-streamlib compile-streamlib link-streamlib
+steamlib: $(BUILDDIRS) message-steamlib compile-steamlib link-steamlib
 ref_gl: $(BUILDDIRS) message-ref_gl compile-ref_gl link-ref_gl
 angelwrap: $(BUILDDIRS) message-angelwrap compile-angelwrap link-angelwrap
 tv_server: $(BUILDDIRS) message-tv_server compile-tv_server link-tv_server start-script-tv_server
 
-clean: clean-msg clean-depend clean-client clean-openal clean-qf clean-ded clean-ui clean-librocket clean-cgame clean-game clean-irc clean-cin clean-ftlib clean-streamlib clean-ref_gl clean-angelwrap clean-tv_server
+clean: clean-msg clean-depend clean-client clean-openal clean-qf clean-ded clean-ui clean-librocket clean-cgame clean-game clean-irc clean-cin clean-ftlib clean-steamlib clean-ref_gl clean-angelwrap clean-tv_server
 
 clean-msg:
 	@echo "> *********************************************************"
@@ -639,7 +642,7 @@ clean-msg:
 	@echo "> *********************************************************"
 clean-depend:
 	@echo "  > Removing depend files" && \
-	$(RM) $(DEPENDFILE_CLIENT) $(DEPENDFILE_DED) $(DEPENDFILE_CGAME) $(DEPENDFILE_GAME) $(DEPENDFILE_UI_ROCKET) $(DEPENDFILE_OPENAL) $(DEPENDFILE_TV_SERVER) $(DEPENDFILE_QF) $(DEPENDFILE_IRC) $(DEPENDFILE_CIN) $(DEPENDFILE_FTLIB) $(DEPENDFILE_STREAMLIB) $(DEPENDFILE_REF_GL) $(DEPENDFILE_ANGELWRAP)
+	$(RM) $(DEPENDFILE_CLIENT) $(DEPENDFILE_DED) $(DEPENDFILE_CGAME) $(DEPENDFILE_GAME) $(DEPENDFILE_UI_ROCKET) $(DEPENDFILE_OPENAL) $(DEPENDFILE_TV_SERVER) $(DEPENDFILE_QF) $(DEPENDFILE_IRC) $(DEPENDFILE_CIN) $(DEPENDFILE_FTLIB) $(DEPENDFILE_STEAMLIB) $(DEPENDFILE_REF_GL) $(DEPENDFILE_ANGELWRAP)
 
 $(BUILDDIRS) $(BINDIR) $(BINDIR)/base $(BINDIR)/libs:
 	@mkdir -p $@
@@ -777,16 +780,16 @@ clean-ftlib:
 	$(RM) $(OBJS_FTLIB)
 endif
 
-ifeq ($(BUILD_STREAMLIB),YES)
-message-streamlib:
+ifeq ($(BUILD_STEAMLIB),YES)
+message-steamlib:
 	@echo "> *********************************************************"
-	@echo "> * Building streamlib"
+	@echo "> * Building steamlib"
 	@echo "> *********************************************************"
-compile-streamlib: $(OBJS_STREAMLIB)
-link-streamlib: $(BINDIR)/libs $(BINDIR)/libs/streamlib_$(ARCH).$(SHARED_LIBRARY_EXTENSION)
-clean-streamlib:
-	@echo "  > Removing streamlib objects" && \
-	$(RM) $(OBJS_STREAMLIB)
+compile-steamlib: $(OBJS_STEAMLIB)
+link-steamlib: $(BINDIR)/libs $(BINDIR)/libs/steamlib_$(ARCH).$(SHARED_LIBRARY_EXTENSION)
+clean-steamlib:
+	@echo "  > Removing steamlib objects" && \
+	$(RM) $(OBJS_STEAMLIB)
 endif
 
 ifeq ($(BUILD_REF_GL),YES)
@@ -909,9 +912,9 @@ $(BINDIR)/libs/ftlib_$(ARCH).$(SHARED_LIBRARY_EXTENSION): $(OBJS_FTLIB)
 	@echo "  > Linking $@" && \
 	$(LD) -o $@ $^ $(LDFLAGS_COMMON) $(LDFLAGS_MODULE) $(LDFLAGS_FTLIB)
 
-$(BINDIR)/libs/streamlib_$(ARCH).$(SHARED_LIBRARY_EXTENSION): $(OBJS_STREAMLIB)
+$(BINDIR)/libs/steamlib_$(ARCH).$(SHARED_LIBRARY_EXTENSION): $(OBJS_STEAMLIB)
 	@echo "  > Linking $@" && \
-	$(LXX) -o $@ $^ $(LXXFLAGS_COMMON) $(LDFLAGS_MODULE) $(LDFLAGS_STREAMLIB)
+	$(LXX) -o $@ $^ $(LXXFLAGS_COMMON) $(LDFLAGS_MODULE) $(LDFLAGS_STEAMLIB)
 
 $(BINDIR)/libs/ref_gl_$(ARCH).$(SHARED_LIBRARY_EXTENSION): $(OBJS_REF_GL)
 	@echo "  > Linking $@" && \
@@ -1150,7 +1153,7 @@ $(BUILDDIR)/ftlib/%.o: ftlib/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_FTLIB)
 
 ########
-# STREAMLIB
+# STEAMLIB
 ########
 $(BUILDDIR)/ftlib/%.o: ftlib/%.cpp
 	@$(DO_CXX_MODULE) $(CFLAGS_FTLIB)
@@ -1296,10 +1299,10 @@ $(DEPENDFILE_FTLIB): $(BUILDDIRS) $(CFILES_FTLIB)
 	awk '/^[a-zA-Z_]/{ sub(/^([a-zA-Z_]*\/)+/, "$(BUILDDIR)/ftlib/"); print $$0, "Makefile"; \
 		sub(/^.*\:/, "$(DEPENDFILE_FTLIB):"); print $$0, "Makefile" }' > $(DEPENDFILE_FTLIB)
 
-$(DEPENDFILE_STREAMLIB): $(BUILDDIRS) $(CPPFILES_STREAMLIB)
-	@makedepend -f - -- $(CFLAGS_COMMON) $(CFLAGS_MODULES) -- $(CPPFILES_STREAMLIB) 2> /dev/null | \
-	awk '/^[a-zA-Z_]/{ sub(/^([a-zA-Z_]*\/)+/, "$(BUILDDIR)/streamlib/"); print $$0, "Makefile"; \
-		sub(/^.*\:/, "$(DEPENDFILE_STREAMLIB):"); print $$0, "Makefile" }' > $(DEPENDFILE_STREAMLIB)
+$(DEPENDFILE_STEAMLIB): $(BUILDDIRS) $(CPPFILES_STEAMLIB)
+	@makedepend -f - -- $(CFLAGS_COMMON) $(CFLAGS_MODULES) -- $(CPPFILES_STEAMLIB) 2> /dev/null | \
+	awk '/^[a-zA-Z_]/{ sub(/^([a-zA-Z_]*\/)+/, "$(BUILDDIR)/steamlib/"); print $$0, "Makefile"; \
+		sub(/^.*\:/, "$(DEPENDFILE_STEAMLIB):"); print $$0, "Makefile" }' > $(DEPENDFILE_STEAMLIB)
 
 $(DEPENDFILE_REF_GL): $(BUILDDIRS) $(CFILES_REF_GL)
 	@makedepend -f - -- $(CFLAGS_COMMON) $(CFLAGS_MODULES) -- $(CFILES_REF_GL) 2> /dev/null | \
@@ -1346,8 +1349,8 @@ endif
 ifeq ($(BUILD_FTLIB),YES)
 -include $(DEPENDFILE_FTLIB)
 endif
-ifeq ($(BUILD_STREAMLIB),YES)
--include $(DEPENDFILE_STREAMLIB)
+ifeq ($(BUILD_STEAMLIB),YES)
+-include $(DEPENDFILE_STEAMLIB)
 endif
 ifeq ($(BUILD_REF_GL),YES)
 -include $(DEPENDFILE_REF_GL)
