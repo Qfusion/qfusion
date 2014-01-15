@@ -498,9 +498,13 @@ static void cl_mm_login_done( stat_query_t *query, qboolean success, void *custo
 	root = sq_api->GetRoot( query );
 	if( root == NULL )
 	{
-		CL_MM_ErrorMessage( qtrue, va( 
-				L10n_TranslateString( "common", "MM Login: Failed to parse data at step %d" )
-			, cl_mm_loginState ) );
+		const char *msg = "MM Login: Failed to parse data at step %d";
+		const char *translated = L10n_TranslateString( "common", msg );
+		
+		if( !translated )
+			translated = msg;
+
+		CL_MM_ErrorMessage( qtrue, va( translated, cl_mm_loginState ) );
 
 		// bail out
 		cl_mm_loginHandle = 0;
