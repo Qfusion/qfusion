@@ -1045,7 +1045,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 
 	size = width * height * 3;
 	buf_size = size * 2;
-	if( size > buf_size ) {
+	if( size > r_screenShotBufferSize ) {
 		if( r_screenShotBuffer ) {
 			R_Free( r_screenShotBuffer );
 		}
@@ -1088,8 +1088,6 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 		if( WriteTGA( filename, &imginfo, 100 ) && !silent )
 			Com_Printf( "Wrote %s\n", filename );
 	}
-
-	free( buffer );
 }
 
 //=======================================================
@@ -1772,6 +1770,9 @@ void R_ShutdownImages( void )
 	}
 
 	R_FreePool( &r_imagesPool );
+
+	r_screenShotBuffer = NULL;
+	r_screenShotBufferSize = 0;
 
 	memset( rsh.portalTextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
 	memset( rsh.shadowmapTextures, 0, sizeof( image_t * ) * MAX_SHADOWGROUPS );

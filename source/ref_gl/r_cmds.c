@@ -97,7 +97,7 @@ void R_ScreenShot_f( void )
 
 		checkname_size =
 			sizeof( char ) * ( gamepath_offset + strlen( "screenshots/" ) + 
-			strlen( timestamp_str ) + 5 + strlen( extension ) + 1 );
+			strlen( timestamp_str ) + 5 + 1 + strlen( extension ) + 1 );
 		checkname = malloc( checkname_size );
 
 		// if the string format is a constant or file already exists then iterate
@@ -119,7 +119,7 @@ void R_ScreenShot_f( void )
 		}
 		else
 		{
-			Q_snprintfz( checkname, checkname_size, "%s/%s/screenshots/%s.%s", 
+			Q_snprintfz( checkname, checkname_size, "%s/%s/screenshots/%s%s", 
 				ri.FS_WriteDirectory(), ri.FS_GameDirectory(), timestamp_str, extension );
 			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) != -1 )
 			{
@@ -130,7 +130,7 @@ void R_ScreenShot_f( void )
 
 		for( ; addIndex && lastIndex < maxFiles; lastIndex++ )
 		{
-			Q_snprintfz( checkname, checkname_size, "%s/%s/screenshots/%s%05i.%s", 
+			Q_snprintfz( checkname, checkname_size, "%s/%s/screenshots/%s%05i%s", 
 				ri.FS_WriteDirectory(), ri.FS_GameDirectory(), timestamp_str, lastIndex, 
 				extension );
 			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) == -1 )
