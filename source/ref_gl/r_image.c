@@ -1557,13 +1557,13 @@ static void R_InitBuiltinTextures( void )
 	}
 	textures[] =
 	{
-		{ "***rsh.noTexture***", &rsh.noTexture, &R_InitNoTexture },
-		{ "***rsh.whiteTexture***", &rsh.whiteTexture, &R_InitWhiteTexture },
-		{ "***rsh.blackTexture***", &rsh.blackTexture, &R_InitBlackTexture },
-		{ "***rsh.greyTexture***", &rsh.greyTexture, &R_InitGreyTexture },
-		{ "***rsh.blankBumpTexture***", &rsh.blankBumpTexture, &R_InitBlankBumpTexture },
-		{ "***rsh.particleTexture***", &rsh.particleTexture, &R_InitParticleTexture },
-		{ "***rsh.coronaTexture***", &rsh.coronaTexture, &R_InitCoronaTexture },
+		{ "***r_notexture***", &rsh.noTexture, &R_InitNoTexture },
+		{ "***r_whitetexture***", &rsh.whiteTexture, &R_InitWhiteTexture },
+		{ "***r_blacktexture***", &rsh.blackTexture, &R_InitBlackTexture },
+		{ "***r_greytexture***", &rsh.greyTexture, &R_InitGreyTexture },
+		{ "***r_blankbumptexture***", &rsh.blankBumpTexture, &R_InitBlankBumpTexture },
+		{ "***r_particletexture***", &rsh.particleTexture, &R_InitParticleTexture },
+		{ "***r_coronatexture***", &rsh.coronaTexture, &R_InitCoronaTexture },
 		{ NULL, NULL, NULL }
 	};
 	size_t i, num_builtin_textures = sizeof( textures ) / sizeof( textures[0] ) - 1;
