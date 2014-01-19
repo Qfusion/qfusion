@@ -69,6 +69,9 @@ static image_t	*r_defaultImage;
 
 static char *r_shaderTemplateBuf;
 
+static char *r_shortShaderName;
+static size_t r_shortShaderNameSize;
+
 static qboolean Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const shaderkey_t *keys, const char *token, const char **ptr );
 static void Shader_MakeCache( const char *filename );
 static unsigned int Shader_GetCache( const char *name, shadercache_t **cache );
@@ -2051,6 +2054,8 @@ void R_ShutdownShaders( void )
 	}
 
 	r_shaderTemplateBuf = NULL;
+	r_shortShaderName = NULL;
+	r_shortShaderNameSize = 0;
 
 	memset( shadercache_hash, 0, sizeof( shadercache_hash ) );
 }
@@ -2478,9 +2483,9 @@ void R_UploadCinematicShader( const shader_t *shader )
 }
 
 /*
-* R_ShaderShortName
+* R_ShaderCleanName
 */
-static size_t R_ShaderShortName( const char *name, char *shortname, size_t shortname_size )
+static size_t R_ShaderCleanName( const char *name, char *shortname, size_t shortname_size )
 {
 	int i;
 	size_t length = 0;
@@ -2508,8 +2513,8 @@ static size_t R_ShaderShortName( const char *name, char *shortname, size_t short
 /*
 * R_LoadShaderReal
 */
-static void R_LoadShaderReal( shader_t *s, char *shortname, size_t shortname_length, shaderType_e type, 
-							   qboolean forceDefault )
+static void R_LoadShaderReal( shader_t *s, char *shortname, 
+	size_t shortname_length, shaderType_e type, qboolean forceDefault )
 {
 	shadercache_t *cache;
 	shaderpass_t *pass;
@@ -2771,14 +2776,26 @@ shader_t *R_ShaderById( unsigned int id )
 shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefault )
 {
 	unsigned int key, nameLength;
-	char shortname[MAX_QPATH];
+	char *shortname;
 	shader_t *s;
 	shader_t *hnode, *prev, *next;
 
 	if( !name || !name[0] )
 		return NULL;
 
-	nameLength = R_ShaderShortName( name, shortname, sizeof( shortname ) );
+	// alloc buffer to hold clean shader name
+	nameLength = strlen( name );
+	if( nameLength + 1 > r_shortShaderNameSize || r_shortShaderNameSize < MAX_QPATH ) {
+		if( r_shortShaderName ) {
+			R_Free( r_shortShaderName );
+			r_shortShaderName = NULL;
+		}
+		r_shortShaderNameSize = max( nameLength + 1, MAX_QPATH );
+		r_shortShaderName = R_Malloc( r_shortShaderNameSize );
+	}
+
+	shortname = r_shortShaderName;
+	nameLength = R_ShaderCleanName( name, r_shortShaderName, r_shortShaderNameSize );
 	if( !nameLength )
 		return NULL;
 
