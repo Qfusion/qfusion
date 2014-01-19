@@ -795,10 +795,10 @@ message-steamlib:
 	@echo "> *********************************************************"
 compile-steamlib: $(OBJS_STEAMLIB)
 link-steamlib: $(BINDIR)/libs $(BINDIR)/libs/steamlib_$(ARCH).$(SHARED_LIBRARY_EXTENSION)
+endif
 clean-steamlib:
 	@echo "  > Removing steamlib objects" && \
 	$(RM) $(OBJS_STEAMLIB)
-endif
 
 ifeq ($(BUILD_REF_GL),YES)
 message-ref_gl:
