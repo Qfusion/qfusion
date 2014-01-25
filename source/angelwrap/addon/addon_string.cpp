@@ -87,10 +87,6 @@ asstring_t *objectString_AssignString( asstring_t *self, const char *string, siz
 		self->buffer = new char[size];
 		strlen_ = size - 1;
 	}
-	else
-	{
-		size = self->size;
-	}
 
 	self->len = strlen_;
 	memcpy( self->buffer, string, strlen_ );

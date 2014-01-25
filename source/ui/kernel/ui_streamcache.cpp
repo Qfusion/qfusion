@@ -173,7 +173,7 @@ void StreamCache::CallCacheCbByStreamKey( const std::string &key, const std::str
 
 	// for all streams marked by the same key, fire the cache callback in case of success
 	// then release them
-	for( StreamList::iterator it = list.begin(); it != list.end(); it++ ) {
+	for( StreamList::iterator it = list.begin(); it != list.end(); ++it ) {
 		AsyncStream *stream = *it;
 
 		// only fire the callback in case of success (that means the cache file actually exists)

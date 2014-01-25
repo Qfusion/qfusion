@@ -31,7 +31,7 @@ void ModelsDataSource::UpdateModelsList( void )
 
 	// now scan for proper models:
 	// we need the main model file, animation config and default skin
-	for( ModelsList::const_iterator it = tempList.begin(); it != tempList.end(); it++ ) {
+	for( ModelsList::const_iterator it = tempList.begin(); it != tempList.end(); ++it ) {
 		size_t i;
 		static const std::string mustHaveFiles[] = { "tris.iqm", "animation.cfg", "default.skin" };
 		static const size_t numMustHaveFiles = sizeof( mustHaveFiles ) / sizeof( mustHaveFiles[0] );
@@ -66,7 +66,7 @@ void ModelsDataSource::GetRow( StringList &row, const String &table, int row_ind
 	}
 
 	// there should be only 1 column, but we watch ahead in the future
-	for( StringList::const_iterator it = columns.begin(); it != columns.end(); it++ ) {
+	for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it ) {
 		if( *it == FIELDS ) {
 			row.push_back( modelsList[row_index].c_str() );
 		}

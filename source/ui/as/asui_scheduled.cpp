@@ -102,11 +102,11 @@ void FunctionCallScheduler::update( void )
 	{
 		ScheduledFunction *func = it->second;
 		if( !func->run() ) {
-			functions.erase( it++ );
+			it = functions.erase( it );
 			__delete__( func );
 		}
 		else
-			it++;
+			++it;
 	}
 }
 

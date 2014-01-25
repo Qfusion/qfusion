@@ -70,7 +70,7 @@ static float buf_decay = 0.5;
 static dynvar_get_status_t CL_MouseFilterBufferSizeGet_f( void **size )
 {
 	static char sizeStr[16];
-	sprintf( sizeStr, "%d", buf_size );
+	sprintf( sizeStr, "%u", buf_size );
 	*size = sizeStr;
 	return DYNVAR_GET_OK;
 }

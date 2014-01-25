@@ -21,14 +21,14 @@ typedef Rocket::Controls::ElementFormControl ElementFormControl;
 
 void CvarStorage::restoreValues()
 {
-	for( CvarMap::iterator it = storedValues.begin(); it != storedValues.end(); it++ )
+	for( CvarMap::iterator it = storedValues.begin(); it != storedValues.end(); ++it )
 		trap::Cvar_Set( it->first.c_str(), it->second.c_str() );
 }
 
 // grab the values from the cvars to storage
 void CvarStorage::storeValues()
 {
-	for( CvarMap::iterator it = storedValues.begin(); it != storedValues.end(); it++ )
+	for( CvarMap::iterator it = storedValues.begin(); it != storedValues.end(); ++it )
 		it->second = trap::Cvar_String( it->first.c_str() );
 }
 

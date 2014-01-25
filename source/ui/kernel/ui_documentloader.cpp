@@ -142,7 +142,7 @@ Document *DocumentCache::getDocument( const std::string &name )
 }
 
 // release document
-void DocumentCache::purgeDocument( DocumentSet::iterator it )
+DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::iterator it )
 {
 	Document *doc = *it;
 
@@ -157,9 +157,10 @@ void DocumentCache::purgeDocument( DocumentSet::iterator it )
 	if( doc->IsModal() ) {
 		DocumentLoader loader;
 		loader.closeDocument( doc->getRocketDocument() );
-		documentSet.erase( it );
-		return;
+		return documentSet.erase( it );
 	}
+	
+	return ++it;
 }
 
 // release document
@@ -187,22 +188,14 @@ void DocumentCache::purgeAllDocuments()
 	DocumentSet::iterator it = documentSet.begin();
 	while( it != documentSet.end() )
 	{
-		// grab the next one in case we remove this element
-		// (shouldnt happen here!)
-		DocumentSet::iterator next = it;
-		next++;
-
-		purgeDocument( it );
-
-		// advance
-		it = next;
+		it = purgeDocument( it );
 	}
 
 	// DEBUG
 	if( UI_Main::Get()->debugOn() ) {
 		if( documentSet.size() > 0 ) {
 			Com_Printf("Warning: DocumentCache::purgeAllDocuments: still have %d documents in the cache\n", documentSet.size() );
-			for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); it++ )
+			for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
 				Com_Printf("    %s (refcount %d)\n", (*it)->getName().c_str(), (*it)->getReference() );
 		}
 	}
@@ -219,7 +212,7 @@ void DocumentCache::clearCaches()
 	// purgeAllDocuments();
 
 	DocumentLoader loader;
-	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); it++ ) {
+	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
 		if( (*it)->getRocketDocument() ) {
 			//(*it)->removeReference();
 			loader.closeDocument( (*it)->getRocketDocument() );
@@ -236,7 +229,7 @@ void DocumentCache::clearCaches()
 // DEBUG
 void DocumentCache::printCache()
 {
-	for(DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); it++ )
+	for(DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
 		Com_Printf("  %s (%d references)\n", (*it)->getName().c_str(), (*it)->getReference() );
 }
 
@@ -539,7 +532,7 @@ void NavigationStack::hideStack()
 // DEBUG
 void NavigationStack::printStack()
 {
-	for(DocumentStack::iterator it = documentStack.begin(); it != documentStack.end(); it++ )
+	for(DocumentStack::iterator it = documentStack.begin(); it != documentStack.end(); ++it )
 		Com_Printf("  %d %s\n", std::distance( documentStack.begin(), it ), (*it)->getName().c_str() );
 }
 
@@ -601,7 +594,7 @@ Core::ElementDocument *DocumentLoader::loadDocument(const char *path)
 	// handle postponed onload events (HOWTO handle these in cached documents?)
 	if( loadedDocument )
 	{
-		for( PostponedList::iterator it = onloads.begin(); it != onloads.end(); it++ )
+		for( PostponedList::iterator it = onloads.begin(); it != onloads.end(); ++it )
 		{
 			it->first->ProcessEvent( *it->second );
 			it->second->RemoveReference();

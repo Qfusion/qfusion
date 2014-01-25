@@ -129,7 +129,7 @@ namespace WSWUI {
 		DocumentSet documentSet;
 
 		// release document
-		void purgeDocument( DocumentSet::iterator it );
+		DocumentSet::iterator purgeDocument( DocumentSet::iterator it );
 	};
 
 //==================================================

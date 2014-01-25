@@ -87,7 +87,7 @@ static dynvar_get_status_t Com_Sys_Uptime_f( void **val )
 	const unsigned int min = ( us / 60000000 ) % 60;
 	const unsigned int sec = ( us / 1000000 ) % 60;
 	const unsigned int usec = us % 1000000;
-	sprintf( buf, "%02d:%02d:%02d.%06d", h, min, sec, usec );
+	sprintf( buf, "%02u:%02u:%02u.%06u", h, min, sec, usec );
 	*val = buf;
 	return DYNVAR_GET_OK;
 }

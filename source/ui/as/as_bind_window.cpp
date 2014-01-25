@@ -50,7 +50,7 @@ public:
 		detachAsEventListener();
 
 		// remove schedulers for all documents we hold references to
-		for( SchedulerMap::iterator it = schedulers.begin(); it != schedulers.end(); it++ ) {
+		for( SchedulerMap::iterator it = schedulers.begin(); it != schedulers.end(); ++it ) {
 			ElementDocument *doc = it->first;
 			FunctionCallScheduler *scheduler = it->second;
 
@@ -140,10 +140,6 @@ public:
 	{
 		SchedulerMap::iterator it = schedulers.begin();
 		while( it != schedulers.end() ) {
-			// grab the next pointer in case we erase the current one
-			SchedulerMap::iterator next = it;
-			next++;
-
 			ElementDocument *doc = it->first;
 			FunctionCallScheduler *scheduler = it->second;
 
@@ -153,14 +149,12 @@ public:
 
 				doc->RemoveReference();
 
-				schedulers.erase( it );
+				it = schedulers.erase( it );
 			}
 			else {
 				scheduler->update();
+				++it;
 			}
-
-			// advance
-			it = next;
 		}
 	}
 
