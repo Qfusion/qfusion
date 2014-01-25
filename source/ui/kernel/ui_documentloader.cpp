@@ -145,6 +145,7 @@ Document *DocumentCache::getDocument( const std::string &name )
 DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::iterator it )
 {
 	Document *doc = *it;
+	DocumentSet::iterator next = it;
 
 	// just trust the reference-counting
 	doc->removeReference();
@@ -157,10 +158,10 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 	if( doc->IsModal() ) {
 		DocumentLoader loader;
 		loader.closeDocument( doc->getRocketDocument() );
-		return documentSet.erase( it );
+		documentSet.erase( it );
 	}
 	
-	return ++it;
+	return ++next;
 }
 
 // release document
