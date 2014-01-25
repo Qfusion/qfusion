@@ -88,7 +88,9 @@ enum eScriptNode
 	snVirtualProperty,
 	snNamespace,
 	snMixin,
-	snListPattern
+	snListPattern,
+	snNamedArgument,
+	snArgumentName,
 };
 
 struct sToken

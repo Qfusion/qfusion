@@ -143,6 +143,13 @@ struct asSOverloadCandidate
 	asUINT cost;
 };
 
+struct asSNamedArgument
+{
+	asCString name;
+	asSExprContext *ctx;
+	asUINT match;
+};
+
 enum EImplicitConv
 {
 	asIC_IMPLICIT_CONV,
@@ -221,12 +228,13 @@ protected:
 	int  CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, int isVarGlobOrMem = 0, bool derefDest = false);
 	int  CallCopyConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool isGlobalVar = false, bool derefDestination = false);
 	void CallDestructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc);
-	int  CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args);
-	int  CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext*> &args, asCScriptFunction *func);
-	asUINT MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true, const asCString &scope = "");
+	int  CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCArray<asSNamedArgument> &namedArgs);
+	int  CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asSExprContext*> &args, asCScriptFunction *func, asCArray<asSNamedArgument> *namedArgs = 0);
+	asUINT MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCArray<asSNamedArgument> *namedArgs = NULL, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true, const asCString &scope = "");
 	int  CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional = false, bool noFunction = false, bool noGlobal = false, asCObjectType *objType = 0);
 	void CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults);
-	bool CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem);
+	bool CompileAutoType(asCDataType &autoType, asSExprContext &compiledCtx, asCScriptNode *node);
+	bool CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem, asSExprContext *preCompiled = 0);
 
 	// Helper functions
 	void ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode *node);
@@ -241,6 +249,7 @@ protected:
 	void Dereference(asSExprContext *ctx, bool generateCode);
 	bool CompileRefCast(asSExprContext *ctx, const asCDataType &to, bool isExplicit, asCScriptNode *node, bool generateCode = true);
 	asUINT MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCandidate> &matches, const asSExprContext *argExpr, int paramNum, bool allowObjectConstruct = true);
+	asUINT MatchArgument(asCScriptFunction *desc, const asSExprContext *argExpr, int paramNum, bool allowObjectConstruct = true);
 	void PerformFunctionCall(int funcId, asSExprContext *out, bool isConstructor = false, asCArray<asSExprContext*> *args = 0, asCObjectType *objTypeForConstruct = 0, bool useVariable = false, int varOffset = 0, int funcPtrVar = 0);
 	void MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprContext *> &args, bool addOneToOffset);
 	void MakeFunctionCall(asSExprContext *ctx, int funcId, asCObjectType *objectType, asCArray<asSExprContext*> &args, asCScriptNode *node, bool useVariable = false, int stackOffset = 0, int funcPtrVar = 0);
@@ -284,7 +293,7 @@ protected:
 	void Error(const asCString &msg, asCScriptNode *node);
 	void Warning(const asCString &msg, asCScriptNode *node);
 	void Information(const asCString &msg, asCScriptNode *node);
-	void PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node);
+	void PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node, asCObjectType *inType = 0);
 	void AddVariableScope(bool isBreakScope = false, bool isContinueScope = false);
 	void RemoveVariableScope();
 	void FinalizeFunction();

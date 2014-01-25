@@ -83,11 +83,11 @@ protected:
 	asCScriptNode *ParseFunctionDefinition();
 	asCScriptNode *ParseParameterList();
 	asCScriptNode *SuperficiallyParseExpression();
-	asCScriptNode *ParseType(bool allowConst, bool allowVariableType = false);
+	asCScriptNode *ParseType(bool allowConst, bool allowVariableType = false, bool allowAuto = false);
 	asCScriptNode *ParseTypeMod(bool isParam);
 	void           ParseOptionalScope(asCScriptNode *node);
 	asCScriptNode *ParseRealType();
-	asCScriptNode *ParseDataType(bool allowVariableType = false);
+	asCScriptNode *ParseDataType(bool allowVariableType = false, bool allowAuto = false);
 	asCScriptNode *ParseIdentifier();
 
 	asCScriptNode *ParseListPattern();

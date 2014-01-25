@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -80,9 +80,9 @@ public:
 	virtual int ClearMessageCallback();
 	virtual int WriteMessage(const char *section, int row, int col, asEMsgType type, const char *message);
 
-    // JIT Compiler
-    virtual int SetJITCompiler(asIJITCompiler *compiler);
-    virtual asIJITCompiler *GetJITCompiler() const;
+	// JIT Compiler
+	virtual int SetJITCompiler(asIJITCompiler *compiler);
+	virtual asIJITCompiler *GetJITCompiler() const;
 
 	// Global functions
 	virtual int                RegisterGlobalFunction(const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0);
@@ -151,7 +151,7 @@ public:
 
 	// Script functions
 	virtual asIScriptFunction *GetFunctionById(int funcId) const;
-    virtual asIScriptFunction *GetFuncDefFromTypeId(int typeId) const;
+	virtual asIScriptFunction *GetFuncDefFromTypeId(int typeId) const;
 
 	// Type identification
 	virtual asIObjectType *GetObjectTypeById(int typeId) const;
@@ -410,7 +410,7 @@ public:
 	asSSystemFunctionInterface  msgCallbackFunc;
 	void                       *msgCallbackObj;
 
-    asIJITCompiler              *jitCompiler;
+	asIJITCompiler              *jitCompiler;
 
 	// Namespaces
 	// These are shared between all entities and are 

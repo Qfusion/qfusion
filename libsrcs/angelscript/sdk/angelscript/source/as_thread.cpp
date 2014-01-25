@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -109,6 +109,10 @@ AS_API void asReleaseSharedLock()
 
 //======================================================================
 
+#if !defined(AS_NO_THREADS) && defined(AS_WINDOWS_THREADS) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+__declspec(thread) asCThreadLocalData *asCThreadManager::tld = 0;
+#endif
+
 asCThreadManager::asCThreadManager()
 {
 	// We're already in the critical section when this function is called
@@ -122,7 +126,11 @@ asCThreadManager::asCThreadManager()
 		pthread_key_create(&pKey, 0);
 		tlsKey = (asDWORD)pKey;
 	#elif defined AS_WINDOWS_THREADS
-		tlsKey = (asDWORD)TlsAlloc();
+		#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+			tld = 0;
+		#else
+			tlsKey = (asDWORD)TlsAlloc();
+		#endif
 	#endif
 #endif
 	refCount = 1;
@@ -203,7 +211,11 @@ asCThreadManager::~asCThreadManager()
 	#if defined AS_POSIX_THREADS
 		pthread_key_delete((pthread_key_t)tlsKey);
 	#elif defined AS_WINDOWS_THREADS
-		TlsFree((DWORD)tlsKey);
+		#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+			tld = 0;
+		#else
+			TlsFree((DWORD)tlsKey);
+		#endif
 	#endif
 #else
 	if( tld ) 
@@ -223,7 +235,9 @@ int asCThreadManager::CleanupLocalData()
 #if defined AS_POSIX_THREADS
 	asCThreadLocalData *tld = (asCThreadLocalData*)pthread_getspecific((pthread_key_t)threadManager->tlsKey);
 #elif defined AS_WINDOWS_THREADS
-	asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
+	#if (WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+		asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
+	#endif
 #endif
 
 	if( tld == 0 ) 
@@ -235,7 +249,11 @@ int asCThreadManager::CleanupLocalData()
 		#if defined AS_POSIX_THREADS
 			pthread_setspecific((pthread_key_t)threadManager->tlsKey, 0);
 		#elif defined AS_WINDOWS_THREADS
-			TlsSetValue((DWORD)threadManager->tlsKey, 0);
+			#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+				tld = 0;
+			#else
+				TlsSetValue((DWORD)threadManager->tlsKey, 0);
+			#endif
 		#endif
 		return 0;
 	}
@@ -271,12 +289,17 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 		pthread_setspecific((pthread_key_t)threadManager->tlsKey, tld);
 	}
 #elif defined AS_WINDOWS_THREADS
-	asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
-	if( tld == 0 ) 
-	{
- 		tld = asNEW(asCThreadLocalData)();
-		TlsSetValue((DWORD)threadManager->tlsKey, tld);
- 	}
+	#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+		if( tld == 0 )
+			tld = asNEW(asCThreadLocalData)();
+	#else
+		asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
+		if( tld == 0 ) 
+		{
+ 			tld = asNEW(asCThreadLocalData)();
+			TlsSetValue((DWORD)threadManager->tlsKey, tld);
+ 		}
+	#endif
 #endif
 
 	return tld;
@@ -306,7 +329,7 @@ asCThreadCriticalSection::asCThreadCriticalSection()
 #if defined AS_POSIX_THREADS
 	pthread_mutex_init(&cs, 0);
 #elif defined AS_WINDOWS_THREADS
-	InitializeCriticalSection(&cs);
+	InitializeCriticalSectionEx(&cs, 4000, 0);
 #endif
 }
 
@@ -356,9 +379,9 @@ asCThreadReadWriteLock::asCThreadReadWriteLock()
 	UNUSED_VAR(r);
 #elif defined AS_WINDOWS_THREADS
 	// Create a semaphore to allow up to maxReaders simultaneous readers
-	readLocks = CreateSemaphore(NULL, maxReaders, maxReaders, 0);
+	readLocks = CreateSemaphoreExW(NULL, maxReaders, maxReaders, 0, 0, 0);
 	// Create a critical section to synchronize writers
-	InitializeCriticalSection(&writeLock);
+	InitializeCriticalSectionEx(&writeLock, 4000, 0);
 #endif
 }
 
@@ -385,7 +408,7 @@ void asCThreadReadWriteLock::AcquireExclusive()
 	// If we try to lock all at once it is quite possible the writer will
 	// never succeed.
 	for( asUINT n = 0; n < maxReaders; n++ )
-		WaitForSingleObject(readLocks, INFINITE);
+		WaitForSingleObjectEx(readLocks, INFINITE, FALSE);
 
 	// Allow another writer to lock. It will only be able to
 	// lock the readers when this writer releases them anyway.
@@ -409,7 +432,7 @@ void asCThreadReadWriteLock::AcquireShared()
 	pthread_rwlock_rdlock(&lock);
 #elif defined AS_WINDOWS_THREADS
 	// Lock a reader slot
-	WaitForSingleObject(readLocks, INFINITE);
+	WaitForSingleObjectEx(readLocks, INFINITE, FALSE);
 #endif
 }
 

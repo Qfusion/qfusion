@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -35,7 +35,7 @@
 // The class that does the actual compilation of the functions
 //
 
-#include <math.h> // fmodf()
+#include <math.h> // fmodf() pow()
 
 #include "as_config.h"
 
@@ -48,6 +48,7 @@
 #include "as_texts.h"
 #include "as_parser.h"
 #include "as_debug.h"
+#include "as_context.h"  // as_powi()
 
 BEGIN_AS_NAMESPACE
 
@@ -846,7 +847,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 			if( f->parameterTypes.GetLength() )
 			{
 				// Add the default values for arguments not explicitly supplied
-				CompileDefaultArgs(node, args, f);
+				CompileDefaultAndNamedArgs(node, args, f);
 
 				PrepareFunctionCall(func, &ctx.bc, args);
 
@@ -954,7 +955,7 @@ int asCCompiler::CallDefaultConstructor(asCDataType &type, int offset, bool isOb
 			if( f && f->parameterTypes.GetLength() )
 			{
 				// Add the default values for arguments not explicitly supplied
-				CompileDefaultArgs(node, args, f);
+				CompileDefaultAndNamedArgs(node, args, f);
 
 				PrepareFunctionCall(func, &ctx.bc, args);
 
@@ -1187,10 +1188,20 @@ int asCCompiler::CompileGlobalVariable(asCBuilder *builder, asCScriptCode *scrip
 		node = parser.GetScriptNode();
 	}
 
+	asSExprContext compiledCtx(engine);
+	bool preCompiled = false;
+	if( gvar->datatype.IsAuto() )
+		preCompiled = CompileAutoType(gvar->datatype, compiledCtx, node);
+	if( gvar->property == 0 )
+	{
+		gvar->property = builder->module->AllocateGlobalProperty(gvar->name.AddressOf(), gvar->datatype, gvar->ns);
+		gvar->index = gvar->property->id;
+	}
+
 	// Compile the expression
 	asSExprContext ctx(engine);
 	asQWORD constantValue;
-	if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->declaredAtNode, gvar->index, &constantValue, 1) )
+		if( CompileInitialization(node, &ctx.bc, gvar->datatype, gvar->declaredAtNode, gvar->index, &constantValue, 1, preCompiled ? &compiledCtx : 0) )
 	{
 		// Should the variable be marked as pure constant?
 		if( gvar->datatype.IsPrimitive() && gvar->datatype.IsReadOnly() )
@@ -1801,7 +1812,7 @@ void asCCompiler::MoveArgsToStack(int funcId, asCByteCode *bc, asCArray<asSExprC
 	}
 }
 
-int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext*> &args)
+int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext*> &args, asCArray<asSNamedArgument> &namedArgs)
 {
 	asASSERT(node->nodeType == snArgList);
 
@@ -1810,7 +1821,8 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 	int argCount = 0;
 	while( arg )
 	{
-		argCount++;
+		if( arg->nodeType != snNamedArgument )
+			argCount++;
 		arg = arg->next;
 	}
 
@@ -1823,30 +1835,73 @@ int asCCompiler::CompileArgumentList(asCScriptNode *node, asCArray<asSExprContex
 	n = argCount-1;
 
 	// Compile the arguments in reverse order (as they will be pushed on the stack)
-	bool anyErrors = false;
+	bool anyErrors = false, inPositionalArguments = false;
 	arg = node->lastChild;
 	while( arg )
 	{
+		asCScriptNode *asgNode = arg, *namedNode = 0;
+		if( asgNode->nodeType == snNamedArgument )
+		{
+			if( inPositionalArguments )
+			{
+				Error(TXT_POS_ARG_AFTER_NAMED_ARG, node);
+				return -1;
+			}
+
+			asgNode = arg->firstChild->next;
+			namedNode = arg->firstChild;
+
+			asASSERT( namedNode->nodeType == snArgumentName );
+		}
+		else
+		{
+			inPositionalArguments = true;
+		}
+
 		asSExprContext expr(engine);
-		int r = CompileAssignment(arg, &expr);
+		int r = CompileAssignment(asgNode, &expr);
 		if( r < 0 ) anyErrors = true;
 
-		args[n] = asNEW(asSExprContext)(engine);
-		if( args[n] == 0 )
+		asSExprContext *ctx = asNEW(asSExprContext)(engine);
+		if( ctx == 0 )
 		{
 			// Out of memory
 			return -1;
 		}
-		MergeExprBytecodeAndType(args[n], &expr);
+		MergeExprBytecodeAndType(ctx, &expr);
 
-		n--;
+		if( inPositionalArguments )
+		{
+			args[n] = ctx;
+			n--;
+		}
+		else
+		{
+			asSNamedArgument namedArg;
+			namedArg.name = asCString(&script->code[namedNode->tokenPos], namedNode->tokenLength);
+			namedArg.ctx = ctx;
+
+			// Error out when multiple arguments with the same name are passed
+			for( asUINT n = 0; n < namedArgs.GetLength(); ++n )
+			{
+				if( namedArgs[n].name == namedArg.name )
+				{
+					Error(TXT_DUPLICATE_NAMED_ARG, asgNode);
+					anyErrors = true;
+					break;
+				}
+			}
+
+			namedArgs.PushLast(namedArg);
+		}
+
 		arg = arg->prev;
 	}
 
 	return anyErrors ? -1 : 0;
 }
 
-int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext*> &args, asCScriptFunction *func)
+int asCCompiler::CompileDefaultAndNamedArgs(asCScriptNode *node, asCArray<asSExprContext*> &args, asCScriptFunction *func, asCArray<asSNamedArgument> *namedArgs)
 {
 	bool anyErrors = false;
 	asCArray<int> varsUsed;
@@ -1855,12 +1910,40 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 	for( int p = 0; p < explicitArgs; p++ )
 		args[p]->bc.GetVarsUsed(varsUsed);
 
-	// Compile the arguments in reverse order (as they will be pushed on the stack)
+	// Make space for all the new arguments
 	args.SetLength(func->parameterTypes.GetLength());
 	for( asUINT c = explicitArgs; c < args.GetLength(); c++ )
 		args[c] = 0;
+
+	// Add the named arguments to the argument list in the right position
+	if( namedArgs )
+	{
+		for( asUINT n = 0; n < namedArgs->GetLength(); ++n )
+		{
+			asSNamedArgument &named = (*namedArgs)[n];
+			named.ctx->bc.GetVarsUsed(varsUsed);
+
+			//Find the right spot to put it in
+			asUINT index = asUINT(-1);
+			for( asUINT j = 0; j < func->parameterTypes.GetLength(); ++j )
+			{
+				if( func->parameterNames[j] == (*namedArgs)[n].name )
+				{
+					index = j;
+					break;
+				}
+			}
+
+			asASSERT( index < args.GetLength() );
+			args[index] = named.ctx;
+			named.ctx = 0;
+		}
+	}
+
+	// Compile the arguments in reverse order (as they will be pushed on the stack)
 	for( int n = (int)func->parameterTypes.GetLength() - 1; n >= explicitArgs; n-- )
 	{
+		if( args[n] != 0 ) continue;
 		if( func->defaultArgs[n] == 0 ) { anyErrors = true; continue; }
 
 		// Parse the default arg string
@@ -1968,175 +2051,330 @@ int asCCompiler::CompileDefaultArgs(asCScriptNode *node, asCArray<asSExprContext
 	return anyErrors ? -1 : 0;
 }
 
-asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
+asUINT asCCompiler::MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCArray<asSNamedArgument> *namedArgs, asCObjectType *objectType, bool isConstMethod, bool silent, bool allowObjectConstruct, const asCString &scope)
 {
-	asCArray<int> origFuncs = funcs; // Keep the original list for error message
-	asUINT cost = 0;
-	asUINT n;
+	 asCArray<int> origFuncs = funcs; // Keep the original list for error message
+	 asUINT cost = 0;
+	 asUINT n;
 
-	if( funcs.GetLength() > 0 )
-	{
-		// Check the number of parameters in the found functions
-		for( n = 0; n < funcs.GetLength(); ++n )
-		{
-			asCScriptFunction *desc = builder->GetFunctionDescription(funcs[n]);
+	 if( funcs.GetLength() > 0 )
+	 {
+		 // Check the number of parameters in the found functions
+		 asUINT totalArgs = args.GetLength();
+		 if( namedArgs != 0 )
+			 totalArgs += namedArgs->GetLength();
 
-			if( desc->parameterTypes.GetLength() != args.GetLength() )
-			{
-				bool noMatch = true;
-				if( args.GetLength() < desc->parameterTypes.GetLength() )
-				{
-					// For virtual functions, the default args are defined in the real function of the object
-					if( desc->funcType == asFUNC_VIRTUAL )
-						desc = objectType->virtualFunctionTable[desc->vfTableIdx];
+		 for( n = 0; n < funcs.GetLength(); ++n )
+		 {
+			 asCScriptFunction *desc = builder->GetFunctionDescription(funcs[n]);
 
-					// Count the number of default args
-					asUINT defaultArgs = 0;
-					for( asUINT d = 0; d < desc->defaultArgs.GetLength(); d++ )
-						if( desc->defaultArgs[d] )
-							defaultArgs++;
+			 if( desc->parameterTypes.GetLength() != totalArgs )
+			 {
+				 bool noMatch = true;
+				 if( totalArgs < desc->parameterTypes.GetLength() )
+				 {
+					 // For virtual functions, the default args are defined in the real function of the object
+					 if( desc->funcType == asFUNC_VIRTUAL )
+					     desc = objectType->virtualFunctionTable[desc->vfTableIdx];
 
-					if( args.GetLength() >= desc->parameterTypes.GetLength() - defaultArgs )
-						noMatch = false;
-				}
+					 // Count the number of default args
+					 asUINT defaultArgs = 0;
+					 for( asUINT d = 0; d < desc->defaultArgs.GetLength(); d++ )
+					     if( desc->defaultArgs[d] )
+					         defaultArgs++;
 
-				if( noMatch )
-				{
-					// remove it from the list
-					if( n == funcs.GetLength()-1 )
-						funcs.PopLast();
-					else
-						funcs[n] = funcs.PopLast();
-					n--;
-				}
-			}
-		}
+					 if( totalArgs >= desc->parameterTypes.GetLength() - defaultArgs )
+					     noMatch = false;
+				 }
 
-		// Match functions with the parameters, and discard those that do not match
-		asCArray<asSOverloadCandidate> matchingFuncs;
-		matchingFuncs.SetLengthNoConstruct( funcs.GetLength() );
-		for ( n = 0; n < funcs.GetLength(); ++n )
-		{
-			matchingFuncs[n].funcId = funcs[n];
-			matchingFuncs[n].cost = 0;
-		}
+				 if( noMatch )
+				 {
+					 // remove it from the list
+					 if( n == funcs.GetLength()-1 )
+					     funcs.PopLast();
+					 else
+					     funcs[n] = funcs.PopLast();
+					 n--;
+				 }
+			 }
+		 }
 
-		for( n = 0; n < args.GetLength(); ++n )
-		{
-			asCArray<asSOverloadCandidate> tempFuncs;
-			MatchArgument(funcs, tempFuncs, args[n], n, allowObjectConstruct);
+		 // Match functions with the parameters, and discard those that do not match
+		 asCArray<asSOverloadCandidate> matchingFuncs;
+		 matchingFuncs.SetLengthNoConstruct( funcs.GetLength() );
+		 for ( n = 0; n < funcs.GetLength(); ++n )
+		 {
+			 matchingFuncs[n].funcId = funcs[n];
+			 matchingFuncs[n].cost = 0;
+		 }
 
-			// Intersect the found functions with the list of matching functions
-			for( asUINT f = 0; f < matchingFuncs.GetLength(); f++ )
-			{
-				asUINT c;
-				for( c = 0; c < tempFuncs.GetLength(); c++ )
-				{
-					if( matchingFuncs[f].funcId == tempFuncs[c].funcId )
-					{
-						// Sum argument cost
-						matchingFuncs[f].cost += tempFuncs[c].cost;
-						break;
+		 // Match positionally passed arguments
+		 for( n = 0; n < args.GetLength(); ++n )
+		 {
+			 asCArray<asSOverloadCandidate> tempFuncs;
+			 MatchArgument(funcs, tempFuncs, args[n], n, allowObjectConstruct);
 
-					} // End if match
-				}
+			 // Intersect the found functions with the list of matching functions
+			 for( asUINT f = 0; f < matchingFuncs.GetLength(); f++ )
+			 {
+				 asUINT c;
+				 for( c = 0; c < tempFuncs.GetLength(); c++ )
+				 {
+					 if( matchingFuncs[f].funcId == tempFuncs[c].funcId )
+					 {
+					     // Sum argument cost
+					     matchingFuncs[f].cost += tempFuncs[c].cost;
+					     break;
 
-				// Was the function a match?
-				if( c == tempFuncs.GetLength() )
-				{
-					// No, remove it from the list
-					if( f == matchingFuncs.GetLength()-1 )
-						matchingFuncs.PopLast();
-					else
-						matchingFuncs[f] = matchingFuncs.PopLast();
-					f--;
-				}
-			}
-		}
+					 } // End if match
+				 }
 
-		// Select the overload(s) with the lowest overall cost
-		funcs.SetLength(0);
-		asUINT bestCost = asUINT(-1);
-		for( n = 0; n < matchingFuncs.GetLength(); ++n )
-		{
-			cost = matchingFuncs[n].cost;
-			if( cost < bestCost )
-			{
-				funcs.SetLength(0);
-				bestCost = cost;
-			}
-			if( cost == bestCost )
-				funcs.PushLast( matchingFuncs[n].funcId );
-		}
+				 // Was the function a match?
+				 if( c == tempFuncs.GetLength() )
+				 {
+					 // No, remove it from the list
+					 if( f == matchingFuncs.GetLength()-1 )
+					     matchingFuncs.PopLast();
+					 else
+					     matchingFuncs[f] = matchingFuncs.PopLast();
+					 f--;
+				 }
+			 }
+		 }
 
-		// Cost returned is equivalent to the best cost discovered
-		cost = bestCost;
-	}
+		 // Match named arguments
+		 if( namedArgs != 0 )
+		 {
+			 for( asUINT i = 0; i < matchingFuncs.GetLength(); ++i )
+			 {
+				 asCScriptFunction *desc = builder->GetFunctionDescription(matchingFuncs[i].funcId);
+				 if( desc->funcType == asFUNC_VIRTUAL )
+					 desc = objectType->virtualFunctionTable[desc->vfTableIdx];
 
-	if( !isConstMethod )
-		FilterConst(funcs);
+				 //Match every named argument to an argument in the function
+				 for( n = 0; n < namedArgs->GetLength(); ++n )
+					 (*namedArgs)[n].match = asUINT(-1);
 
-	if( funcs.GetLength() != 1 && !silent )
-	{
-		// Build a readable string of the function with parameter types
-		asCString str;
-		if( scope != "" )
-		{
-			if( scope == "::" )
-				str = scope;
-			else
-				str = scope + "::";
-		}
-		str += name;
-		str += "(";
-		if( args.GetLength() )
-		{
-			if( args[0]->methodName != "" )
-				str += args[0]->methodName;
-			else
-				str += args[0]->type.dataType.Format();
-		}
-		for( n = 1; n < args.GetLength(); n++ )
-		{
-			str += ", ";
-			if( args[n]->methodName != "" )
-				str += args[n]->methodName;
-			else
-				str += args[n]->type.dataType.Format();
-		}
-		str += ")";
+				 bool matchedAll = true;
+				 for( asUINT j = 0; j < desc->parameterTypes.GetLength(); ++j )
+				 {
+					 asUINT match = asUINT(-1);
+					 for( n = 0; n < namedArgs->GetLength(); ++n )
+					 {
+						 asSNamedArgument &namedArg = (*namedArgs)[n];
+						 if( desc->parameterNames[j] == namedArg.name )
+						 {
+							 namedArg.match = j;
+							 match = n;
+							 break;
+					     }
+					 }
 
-		if( isConstMethod )
-			str += " const";
+					 // Check that every position is filled somehow
+					 if( j >= args.GetLength() )
+					 {
+					     if( match == asUINT(-1) && !desc->defaultArgs[j] )
+					     {
+					         // No argument was found for this, and there is no
+					         // default, so it doesn't work.
+					         matchedAll = false;
+					         break;
+					     }
+					 }
+					 else {
+					     if( match != asUINT(-1) ) {
+					         // Can't name an argument that was already passed
+					         matchedAll = false;
+					         break;
+					     }
+					 }
+				 }
 
-		if( objectType && scope == "" )
-			str = objectType->name + "::" + str;
+				 //Check that every named argument was matched
+				 if( matchedAll )
+				 {
+					 for( n = 0; n < namedArgs->GetLength(); ++n )
+					 {
+					     asSNamedArgument &named = (*namedArgs)[n];
 
-		if( funcs.GetLength() == 0 )
-		{
-			str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-			Error(str, node);
+					     if( named.match == asUINT(-1) )
+					     {
+					         matchedAll = false;
+					         break;
+					     }
 
-			// Print the list of candidates
-			if( origFuncs.GetLength() > 0 )
-			{
-				int r = 0, c = 0;
-				asASSERT( node );
-				if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
-				builder->WriteInfo(script->name.AddressOf(), TXT_CANDIDATES_ARE, r, c, false);
-				PrintMatchingFuncs(origFuncs, node);
-			}
-		}
-		else
-		{
-			str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, str.AddressOf());
-			Error(str, node);
+					     // Add to the cost
+					     asUINT cost = MatchArgument(desc, named.ctx, named.match, allowObjectConstruct);
+					     if( cost == asUINT(-1) )
+					     {
+					         matchedAll = false;
+					         break;
+					     }
 
-			PrintMatchingFuncs(funcs, node);
-		}
-	}
+					     matchingFuncs[i].cost += cost;
+					 }
+				 }
+
+				 if( !matchedAll )
+				 {
+					 // Remove the function, we didn't match all the arguments.
+					 if( i == matchingFuncs.GetLength()-1 )
+					     matchingFuncs.PopLast();
+					 else
+					     matchingFuncs[i] = matchingFuncs.PopLast();
+					 i--;
+				 }
+			 }
+		 }
+
+		 // Select the overload(s) with the lowest overall cost
+		 funcs.SetLength(0);
+		 asUINT bestCost = asUINT(-1);
+		 for( n = 0; n < matchingFuncs.GetLength(); ++n )
+		 {
+			 cost = matchingFuncs[n].cost;
+			 if( cost < bestCost )
+			 {
+				 funcs.SetLength(0);
+				 bestCost = cost;
+			 }
+			 if( cost == bestCost )
+				 funcs.PushLast( matchingFuncs[n].funcId );
+		 }
+
+		 // Cost returned is equivalent to the best cost discovered
+		 cost = bestCost;
+	 }
+
+	 if( !isConstMethod )
+		 FilterConst(funcs);
+
+	 if( funcs.GetLength() != 1 && !silent )
+	 {
+		 // Build a readable string of the function with parameter types
+		 asCString str;
+		 if( scope != "" )
+		 {
+			 if( scope == "::" )
+				 str = scope;
+			 else
+				 str = scope + "::";
+		 }
+		 str += name;
+		 str += "(";
+		 if( args.GetLength() )
+		 {
+			 if( args[0]->methodName != "" )
+				 str += args[0]->methodName;
+			 else
+				 str += args[0]->type.dataType.Format();
+		 }
+		 for( n = 1; n < args.GetLength(); n++ )
+		 {
+			 str += ", ";
+			 if( args[n]->methodName != "" )
+				 str += args[n]->methodName;
+			 else
+				 str += args[n]->type.dataType.Format();
+		 }
+		 if( namedArgs != 0 )
+		 {
+			 for( n = 0; n < namedArgs->GetLength(); n++ )
+			 {
+				 if( n > 0 || args.GetLength() )
+					 str += ", ";
+
+				 asSNamedArgument &named = (*namedArgs)[n];
+				 str += named.name;
+				 str += "=";
+				 if( named.ctx->methodName != "" )
+					 str += named.ctx->methodName;
+				 else
+					 str += named.ctx->type.dataType.Format();
+			 }
+		 }
+		 str += ")";
+
+		 if( isConstMethod )
+			 str += " const";
+
+		 if( objectType && scope == "" )
+			 str = objectType->name + "::" + str;
+
+		 if( funcs.GetLength() == 0 )
+		 {
+			 str.Format(TXT_NO_MATCHING_SIGNATURES_TO_s, str.AddressOf());
+			 Error(str, node);
+
+			 // Print the list of candidates
+			 if( origFuncs.GetLength() > 0 )
+			 {
+				 int r = 0, c = 0;
+				 asASSERT( node );
+				 if( node ) script->ConvertPosToRowCol(node->tokenPos, &r, &c);
+				 builder->WriteInfo(script->name.AddressOf(), TXT_CANDIDATES_ARE, r, c, false);
+				 PrintMatchingFuncs(origFuncs, node, objectType);
+			 }
+		 }
+		 else
+		 {
+			 str.Format(TXT_MULTIPLE_MATCHING_SIGNATURES_TO_s, str.AddressOf());
+			 Error(str, node);
+
+			 PrintMatchingFuncs(funcs, node, objectType);
+		 }
+	 }
 
 	return cost;
+}
+
+bool asCCompiler::CompileAutoType(asCDataType &type, asSExprContext &compiledCtx, asCScriptNode *node) {
+	if( node && node->nodeType == snAssignment )
+	{
+		int r = CompileAssignment(node, &compiledCtx);
+		if( r >= 0 )
+		{
+			asCDataType newType = compiledCtx.type.dataType;
+			bool success = true;
+
+			//Handle const qualifier on auto
+			if( type.IsReadOnly() )
+				newType.MakeReadOnly(true);
+			else if( newType.IsPrimitive() )
+				newType.MakeReadOnly(false);
+
+			//Handle reference/value stuff
+			newType.MakeReference(false);
+			if( !newType.IsObjectHandle() )
+			{
+				// We got a value object or an object reference.
+				// Turn the variable into a handle if specified
+				// as auto@, otherwise make it a 'value'.
+				if( type.IsHandleToAuto() )
+				{
+					if( newType.MakeHandle(true) < 0 )
+					{
+						Error(TXT_OBJECT_HANDLE_NOT_SUPPORTED, node);
+						success = false;
+					}
+				}
+			}
+
+			if(success)
+				type = newType;
+			else
+				type = asCDataType::CreatePrimitive(ttInt, false);
+			return true;
+		}
+
+		return false;
+	}
+	else
+	{
+		Error(TXT_CANNOT_RESOLVE_AUTO, node);
+		type = asCDataType::CreatePrimitive(ttInt, false);
+		return false;
+	}
 }
 
 void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
@@ -2148,6 +2386,12 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 	asCScriptNode *node = decl->firstChild->next;
 	while( node )
 	{
+		// If this is an auto type, we have to compile the assignment now to figure out the type
+		asSExprContext compiledCtx(engine);
+		bool preCompiled = false;
+		if( type.IsAuto() )
+			preCompiled = CompileAutoType(type, compiledCtx, node->next);
+
 		// Is the type allowed?
 		if( !type.CanBeInstanciated() )
 		{
@@ -2216,7 +2460,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 		{
 			// Compile the initialization expression
 			asQWORD constantValue = 0;
-			if( CompileInitialization(node, bc, type, varNode, offset, &constantValue, 0) )
+			if( CompileInitialization(node, bc, type, varNode, offset, &constantValue, 0, preCompiled ? &compiledCtx : 0) )
 			{
 				// Check if the variable should be marked as pure constant
 				if( type.IsPrimitive() && type.IsReadOnly() )
@@ -2233,7 +2477,7 @@ void asCCompiler::CompileDeclaration(asCScriptNode *decl, asCByteCode *bc)
 	bc->OptimizeLocally(tempVariableOffsets);
 }
 
-bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem)
+bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem, asSExprContext *preCompiled)
 {
 	bool isConstantExpression = false;
 	if( node && node->nodeType == snArgList )
@@ -2247,7 +2491,8 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		{
 			// Compile the arguments
 			asCArray<asSExprContext *> args;
-			if( CompileArgumentList(node, args) >= 0 )
+			asCArray<asSNamedArgument> namedArgs;
+			if( CompileArgumentList(node, args, namedArgs) >= 0 )
 			{
 				// Find all constructors
 				asCArray<int> funcs;
@@ -2261,7 +2506,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				}
 
 				asCString str = type.Format();
-				MatchFunctions(funcs, args, node, str.AddressOf());
+				MatchFunctions(funcs, args, node, str.AddressOf(), &namedArgs);
 
 				if( funcs.GetLength() == 1 )
 				{
@@ -2270,7 +2515,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 					// Add the default values for arguments not explicitly supplied
 					asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 					if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-						r = CompileDefaultArgs(node, args, func);
+						r = CompileDefaultAndNamedArgs(node, args, func, &namedArgs);
 
 					if( r == asSUCCESS )
 					{
@@ -2373,6 +2618,11 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				{
 					asDELETE(args[n],asSExprContext);
 				}
+			for( asUINT n = 0; n < namedArgs.GetLength(); n++ )
+				if( namedArgs[n].ctx )
+				{
+					asDELETE(namedArgs[n].ctx,asSExprContext);
+				}
 		}
 	}
 	else if( node && node->nodeType == snInitList )
@@ -2394,6 +2644,21 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		//             just the copy constructor. Only if no appropriate constructor is
 		//             available should the assignment operator be used.
 
+		// Compile the expression
+		asSExprContext newExpr(engine);
+		asSExprContext* expr;
+		int r = 0;
+
+		if(preCompiled)
+		{
+			expr = preCompiled;
+		}
+		else
+		{
+			expr = &newExpr;
+			r = CompileAssignment(node, expr);
+		}
+
 		// Call the default constructor here
 		if( isVarGlobOrMem == 0 )
 			CallDefaultConstructor(type, offset, IsVariableOnHeap(offset), &ctx.bc, errNode);
@@ -2402,20 +2667,17 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 		else if( isVarGlobOrMem == 2 )
 			CallDefaultConstructor(type, offset, type.IsReference(), &ctx.bc, errNode, isVarGlobOrMem);
 
-		// Compile the expression
-		asSExprContext expr(engine);
-		int r = CompileAssignment(node, &expr);
 		if( r >= 0 )
 		{
 			if( type.IsPrimitive() )
 			{
-				if( type.IsReadOnly() && expr.type.isConstant )
+				if( type.IsReadOnly() && expr->type.isConstant )
 				{
-					ImplicitConversion(&expr, type, node, asIC_IMPLICIT_CONV);
+					ImplicitConversion(expr, type, node, asIC_IMPLICIT_CONV);
 
 					// Tell caller that the expression is a constant so it can mark the variable as pure constant
 					isConstantExpression = true;
-					*constantValue = expr.type.qwordValue;
+					*constantValue = expr->type.qwordValue;
 				}
 
 				asSExprContext lctx(engine);
@@ -2446,7 +2708,7 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				lctx.type.dataType.MakeReadOnly(false);
 				lctx.type.isLValue = true;
 
-				DoAssignment(&ctx, &lctx, &expr, node, node, ttAssignment, node);
+				DoAssignment(&ctx, &lctx, expr, node, node, ttAssignment, node);
 				ProcessDeferredParams(&ctx);
 			}
 			else
@@ -2502,10 +2764,10 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 				// Even though an ASHANDLE can be an explicit handle the overloaded operator needs to be called
 				if( lexpr.type.dataType.IsObject() && (!lexpr.type.isExplicitHandle || (lexpr.type.dataType.GetObjectType()->flags & asOBJ_ASHANDLE)) )
 				{
-					assigned = CompileOverloadedDualOperator(node, &lexpr, &expr, &ctx);
+					assigned = CompileOverloadedDualOperator(node, &lexpr, expr, &ctx);
 					if( assigned )
 					{
-						// Pop the resulting value
+					// Pop the resulting value
 						if( !ctx.type.dataType.IsPrimitive() )
 							ctx.bc.Instr(asBC_PopPtr);
 
@@ -2519,27 +2781,27 @@ bool asCCompiler::CompileInitialization(asCScriptNode *node, asCByteCode *bc, as
 
 				if( !assigned )
 				{
-					PrepareForAssignment(&lexpr.type.dataType, &expr, node, false);
+					PrepareForAssignment(&lexpr.type.dataType, expr, node, false);
 
 					// If the expression is constant and the variable also is constant
 					// then mark the variable as pure constant. This will allow the compiler
 					// to optimize expressions with this variable.
-					if( type.IsReadOnly() && expr.type.isConstant )
+					if( type.IsReadOnly() && expr->type.isConstant )
 					{
-						isConstantExpression = true;
-						*constantValue = expr.type.qwordValue;
+					isConstantExpression = true;
+						*constantValue = expr->type.qwordValue;
 					}
 
 					// Add expression code to bytecode
-					MergeExprBytecode(&ctx, &expr);
+					MergeExprBytecode(&ctx, expr);
 
 					// Add byte code for storing value of expression in variable
 					ctx.bc.AddCode(&lexpr.bc);
 
-					PerformAssignment(&lexpr.type, &expr.type, &ctx.bc, errNode);
+					PerformAssignment(&lexpr.type, &expr->type, &ctx.bc, errNode);
 
 					// Release temporary variables used by expression
-					ReleaseTemporaryVariable(expr.type, &ctx.bc);
+					ReleaseTemporaryVariable(expr->type, &ctx.bc);
 
 					ctx.bc.Instr(asBC_PopPtr);
 
@@ -2823,6 +3085,7 @@ int asCCompiler::CompileInitListElement(asSListPatternNode *&patternNode, asCScr
 					// We now know the type
 					dt = rctx.type.dataType;
 					dt.MakeReadOnly(false);
+					dt.MakeReference(false);
 
 					// Values on the list must be aligned to 32bit boundaries, except if the type is smaller than 32bit.
 					if( bufferSize & 0x3 )
@@ -4284,7 +4547,7 @@ void asCCompiler::Information(const asCString &msg, asCScriptNode *node)
 	builder->WriteInfo(script->name, msg, r, c, false);
 }
 
-void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
+void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node, asCObjectType *inType)
 {
 	int r = 0, c = 0;
 	asASSERT( node );
@@ -4292,9 +4555,11 @@ void asCCompiler::PrintMatchingFuncs(asCArray<int> &funcs, asCScriptNode *node)
 
 	for( unsigned int n = 0; n < funcs.GetLength(); n++ )
 	{
-		asIScriptFunction *func = builder->GetFunctionDescription(funcs[n]);
+		asCScriptFunction *func = builder->GetFunctionDescription(funcs[n]);
+		if( inType && func->funcType == asFUNC_VIRTUAL )
+			func = inType->virtualFunctionTable[func->vfTableIdx];
 
-		builder->WriteInfo(script->name, func->GetDeclaration(true), r, c, false);
+		builder->WriteInfo(script->name, func->GetDeclaration(true, false, true), r, c, false);
 	}
 }
 
@@ -4381,7 +4646,11 @@ int asCCompiler::AllocateVariable(const asCDataType &type, bool isTemporary, boo
 int asCCompiler::GetVariableOffset(int varIndex)
 {
 	// Return offset to the last dword on the stack
+
+	// Start at 1 as offset 0 is reserved for the this pointer (or first argument for global functions)
 	int varOffset = 1;
+
+	// Skip lower variables
 	for( int n = 0; n < varIndex; n++ )
 	{
 		if( !variableIsOnHeap[n] && variableAllocations[n].IsObject() )
@@ -4392,6 +4661,7 @@ int asCCompiler::GetVariableOffset(int varIndex)
 
 	if( varIndex < (int)variableAllocations.GetLength() )
 	{
+		// For variables larger than 1 dword the returned offset should be to the last dword
 		int size;
 		if( !variableIsOnHeap[varIndex] && variableAllocations[varIndex].IsObject() )
 			size = variableAllocations[varIndex].GetSizeInMemoryDWords();
@@ -5480,7 +5750,7 @@ asUINT asCCompiler::ImplicitConvObjectToPrimitive(asSExprContext *ctx, const asC
 			for( unsigned int n = 0; n < funcs.GetLength(); n++ )
 			{
 				asCScriptFunction *descr = builder->GetFunctionDescription(funcs[n]);
-				if( descr->returnType.IsEqualExceptConst(target) )
+				if( descr->returnType.IsEqualExceptRefAndConst(target) )
 				{
 					funcId = funcs[n];
 					break;
@@ -5736,7 +6006,7 @@ asUINT asCCompiler::ImplicitConvObjectToObject(asSExprContext *ctx, const asCDat
 		asCArray<asSExprContext *> args;
 		args.PushLast(ctx);
 
-		cost = asCC_TO_OBJECT_CONV + MatchFunctions(funcs, args, node, 0, 0, false, true, false);
+		cost = asCC_TO_OBJECT_CONV + MatchFunctions(funcs, args, node, 0, 0, 0, false, true, false);
 
 		// Did we find a matching constructor?
 		if( funcs.GetLength() == 1 )
@@ -6183,7 +6453,7 @@ asUINT asCCompiler::ImplicitConvPrimitiveToObject(asSExprContext *ctx, const asC
 	arg.exprNode = ctx->exprNode; // Use the same node for compiler messages
 	asCArray<asSExprContext*> args;
 	args.PushLast(&arg);
-	asUINT cost = asCC_TO_OBJECT_CONV + MatchFunctions(funcs, args, 0, 0, objType, false, true, false);
+	asUINT cost = asCC_TO_OBJECT_CONV + MatchFunctions(funcs, args, 0, 0, 0, objType, false, true, false);
 	if( funcs.GetLength() != 1 )
 		return asCC_NO_CONV;
 
@@ -7148,7 +7418,7 @@ int asCCompiler::CompileCondition(asCScriptNode *expr, asSExprContext *ctx)
 			}
 
 			// Allow either case to be converted to const @ if the other is const @
-			if( le.type.dataType.IsHandleToConst() || re.type.dataType.IsHandleToConst() )
+			if( (le.type.dataType.IsHandleToConst() && !le.type.IsNullConstant()) || (re.type.dataType.IsHandleToConst() && !re.type.dataType.IsNullHandle()) )
 			{
 				le.type.dataType.MakeHandleToConst(true);
 				re.type.dataType.MakeHandleToConst(true);
@@ -8695,8 +8965,9 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
+	asCArray<asSNamedArgument> namedArgs;
 	asCArray<asCTypeInfo> temporaryVariables;
-	if( CompileArgumentList(node->lastChild, args) >= 0 )
+	if( CompileArgumentList(node->lastChild, args, namedArgs) >= 0 )
 	{
 		// Check for a value cast behaviour
 		if( args.GetLength() == 1 && args[0]->type.dataType.GetObjectType() )
@@ -8854,7 +9125,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 			return;
 		}
 
-		MatchFunctions(funcs, args, node, name.AddressOf(), NULL, false);
+		MatchFunctions(funcs, args, node, name.AddressOf(), &namedArgs, NULL, false);
 
 		if( funcs.GetLength() != 1 )
 		{
@@ -8872,7 +9143,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 			// Add the default values for arguments not explicitly supplied
 			asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 			if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-				r = CompileDefaultArgs(node, args, func);
+				r = CompileDefaultAndNamedArgs(node, args, func, &namedArgs);
 
 			if( r == asSUCCESS )
 			{
@@ -8931,6 +9202,11 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		if( args[n] )
 		{
 			asDELETE(args[n],asSExprContext);
+		}
+	for( asUINT n = 0; n < namedArgs.GetLength(); n++ )
+		if( namedArgs[n].ctx )
+		{
+			asDELETE(namedArgs[n].ctx,asSExprContext);
 		}
 }
 
@@ -9086,8 +9362,9 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 
 	// Compile the arguments
 	asCArray<asSExprContext *> args;
+	asCArray<asSNamedArgument> namedArgs;
 
-	if( CompileArgumentList(node->lastChild, args) >= 0 )
+	if( CompileArgumentList(node->lastChild, args, namedArgs) >= 0 )
 	{
 		// Special case: Allow calling func(void) with an expression that evaluates to no datatype, but isn't exactly 'void' 
 		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) && !args[0]->type.IsVoidExpression() )
@@ -9098,7 +9375,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 			args.SetLength(0);
 		}
 
-		MatchFunctions(funcs, args, node, name.AddressOf(), objectType, objIsConst, false, true, scope);
+		MatchFunctions(funcs, args, node, name.AddressOf(), &namedArgs, objectType, objIsConst, false, true, scope);
 
 		if( funcs.GetLength() != 1 )
 		{
@@ -9120,7 +9397,7 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 				if( realFunc->funcType == asFUNC_VIRTUAL )
 					realFunc = objectType->virtualFunctionTable[realFunc->vfTableIdx];
 
-				r = CompileDefaultArgs(node, args, realFunc);
+				r = CompileDefaultAndNamedArgs(node, args, realFunc, &namedArgs);
 			}
 
 			// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
@@ -9183,6 +9460,11 @@ int asCCompiler::CompileFunctionCall(asCScriptNode *node, asSExprContext *ctx, a
 		if( args[n] )
 		{
 			asDELETE(args[n],asSExprContext);
+		}
+	for( asUINT n = 0; n < namedArgs.GetLength(); n++ )
+		if( namedArgs[n].ctx )
+		{
+			asDELETE(namedArgs[n].ctx,asSExprContext);
 		}
 
 	if( initializeMembers )
@@ -9952,7 +10234,7 @@ int asCCompiler::ProcessPropertySetAccessor(asSExprContext *ctx, asSExprContext 
 	if( ctx->property_arg )
 		args.PushLast(ctx->property_arg);
 	args.PushLast(arg);
-	MatchFunctions(funcs, args, node, func->GetName(), func->objectType, ctx->property_const);
+	MatchFunctions(funcs, args, node, func->GetName(), NULL, func->objectType, ctx->property_const);
 	if( funcs.GetLength() == 0 )
 	{
 		// MatchFunctions already reported the error
@@ -10031,7 +10313,7 @@ void asCCompiler::ProcessPropertyGetAccessor(asSExprContext *ctx, asCScriptNode 
 	asCArray<asSExprContext *> args;
 	if( ctx->property_arg )
 		args.PushLast(ctx->property_arg);
-	MatchFunctions(funcs, args, node, func->GetName(), func->objectType, ctx->property_const);
+	MatchFunctions(funcs, args, node, func->GetName(), NULL, func->objectType, ctx->property_const);
 	if( funcs.GetLength() == 0 )
 	{
 		// MatchFunctions already reported the error
@@ -10523,12 +10805,13 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 		// Compile arguments
 		asCArray<asSExprContext *> args;
-		if( CompileArgumentList(node->lastChild, args) >= 0 )
+		asCArray<asSNamedArgument> namedArgs;
+		if( CompileArgumentList(node->lastChild, args, namedArgs) >= 0 )
 		{
 			// Match arguments with the funcdef
 			asCArray<int> funcs;
 			funcs.PushLast(ctx->type.dataType.GetFuncDef()->id);
-			MatchFunctions(funcs, args, node, ctx->type.dataType.GetFuncDef()->name.AddressOf());
+			MatchFunctions(funcs, args, node, ctx->type.dataType.GetFuncDef()->name.AddressOf(), &namedArgs);
 
 			if( funcs.GetLength() != 1 )
 			{
@@ -10544,7 +10827,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 				// Add the default values for arguments not explicitly supplied
 				asCScriptFunction *func = (funcs[0] & FUNC_IMPORTED) == 0 ? engine->scriptFunctions[funcs[0]] : 0;
 				if( func && args.GetLength() < (asUINT)func->GetParamCount() )
-					r = CompileDefaultArgs(node, args, func);
+					r = CompileDefaultAndNamedArgs(node, args, func, &namedArgs);
 
 				// TODO: funcdef: Do we have to make sure the handle is stored in a temporary variable, or
 				//                is it enough to make sure it is in a local variable?
@@ -10578,6 +10861,11 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 			{
 				asDELETE(args[n],asSExprContext);
 			}
+		for( asUINT n = 0; n < namedArgs.GetLength(); n++ )
+			if( namedArgs[n].ctx )
+			{
+				asDELETE(namedArgs[n].ctx,asSExprContext);
+			}
 	}
 
 	return 0;
@@ -10585,6 +10873,7 @@ int asCCompiler::CompileExpressionPostOp(asCScriptNode *node, asSExprContext *ct
 
 int asCCompiler::GetPrecedence(asCScriptNode *op)
 {
+	// x ** y
 	// x * y, x / y, x % y
 	// x + y, x - y
 	// x <= y, x < y, x >= y, x > y
@@ -10603,40 +10892,43 @@ int asCCompiler::GetPrecedence(asCScriptNode *op)
 
 	// Evaluate operators by token
 	int tokenType = op->tokenType;
-	if( tokenType == ttStar || tokenType == ttSlash || tokenType == ttPercent )
+	if( tokenType == ttStarStar )
 		return 0;
 
-	if( tokenType == ttPlus || tokenType == ttMinus )
+	if( tokenType == ttStar || tokenType == ttSlash || tokenType == ttPercent )
 		return -1;
+
+	if( tokenType == ttPlus || tokenType == ttMinus )
+		return -2;
 
 	if( tokenType == ttBitShiftLeft ||
 		tokenType == ttBitShiftRight ||
 		tokenType == ttBitShiftRightArith )
-		return -2;
-
-	if( tokenType == ttAmp )
 		return -3;
 
-	if( tokenType == ttBitXor )
+	if( tokenType == ttAmp )
 		return -4;
 
-	if( tokenType == ttBitOr )
+	if( tokenType == ttBitXor )
 		return -5;
+
+	if( tokenType == ttBitOr )
+		return -6;
 
 	if( tokenType == ttLessThanOrEqual ||
 		tokenType == ttLessThan ||
 		tokenType == ttGreaterThanOrEqual ||
 		tokenType == ttGreaterThan )
-		return -6;
-
-	if( tokenType == ttEqual || tokenType == ttNotEqual || tokenType == ttXor || tokenType == ttIs || tokenType == ttNotIs )
 		return -7;
 
-	if( tokenType == ttAnd )
+	if( tokenType == ttEqual || tokenType == ttNotEqual || tokenType == ttXor || tokenType == ttIs || tokenType == ttNotIs )
 		return -8;
 
-	if( tokenType == ttOr )
+	if( tokenType == ttAnd )
 		return -9;
+
+	if( tokenType == ttOr )
+		return -10;
 
 	// Unknown operator
 	asASSERT(false);
@@ -10656,71 +10948,78 @@ asUINT asCCompiler::MatchArgument(asCArray<int> &funcs, asCArray<asSOverloadCand
 		if( (int)desc->parameterTypes.GetLength() <= paramNum )
 			continue;
 
-		// void expressions can match any out parameter, but nothing else
-		if( argExpr->type.IsVoidExpression() )
-		{
-			if( desc->inOutFlags[paramNum] == asTM_OUTREF )
-				matches.PushLast(asSOverloadCandidate(funcs[n], 0));
-			continue;
-		}
-
-		// Can we make the match by implicit conversion?
-		asSExprContext ti(engine);
-		ti.type = argExpr->type;
-		ti.methodName = argExpr->methodName;
-		ti.enumValue = argExpr->enumValue;
-		if( argExpr->type.dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
-		asUINT cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
-
-		// If the function parameter is an inout-reference then it must not be possible to call the
-		// function with an incorrect argument type, even though the type can normally be converted.
-		if( desc->parameterTypes[paramNum].IsReference() &&
-			desc->inOutFlags[paramNum] == asTM_INOUTREF &&
-			desc->parameterTypes[paramNum].GetTokenType() != ttQuestion )
-		{
-			// Observe, that the below checks are only necessary for when unsafe references have been
-			// enabled by the application. Without this the &inout reference form wouldn't be allowed
-			// for these value types.
-
-			// Don't allow a primitive to be converted to a reference of another primitive type
-			if( desc->parameterTypes[paramNum].IsPrimitive() &&
-				desc->parameterTypes[paramNum].GetTokenType() != argExpr->type.dataType.GetTokenType() )
-			{
-				asASSERT( engine->ep.allowUnsafeReferences );
-				continue;
-			}
-
-			// Don't allow an enum to be converted to a reference of another enum type
-			if( desc->parameterTypes[paramNum].IsEnumType() &&
-				desc->parameterTypes[paramNum].GetObjectType() != argExpr->type.dataType.GetObjectType() )
-			{
-				asASSERT( engine->ep.allowUnsafeReferences );
-				continue;
-			}
-
-			// Don't allow a non-handle expression to be converted to a reference to a handle
-			if( desc->parameterTypes[paramNum].IsObjectHandle() &&
-				!argExpr->type.dataType.IsObjectHandle() )
-			{
-				asASSERT( engine->ep.allowUnsafeReferences );
-				continue;
-			}
-
-			// Don't allow a value type to be converted
-			if( (desc->parameterTypes[paramNum].GetObjectType() && (desc->parameterTypes[paramNum].GetObjectType()->GetFlags() & asOBJ_VALUE)) &&
-				(desc->parameterTypes[paramNum].GetObjectType() != argExpr->type.dataType.GetObjectType()) )
-			{
-				asASSERT( engine->ep.allowUnsafeReferences );
-				continue;
-			}
-		}
-
-		// How well does the argument match the function parameter?
-		if( desc->parameterTypes[paramNum].IsEqualExceptRef(ti.type.dataType) )
+		asUINT cost = MatchArgument(desc, argExpr, paramNum, allowObjectConstruct);
+		if( cost != asUINT(-1) )
 			matches.PushLast(asSOverloadCandidate(funcs[n], cost));
 	}
 
 	return (asUINT)matches.GetLength();
+}
+
+asUINT asCCompiler::MatchArgument(asCScriptFunction *desc, const asSExprContext *argExpr, int paramNum, bool allowObjectConstruct) {
+	// void expressions can match any out parameter, but nothing else
+	if( argExpr->type.IsVoidExpression() )
+	{
+		if( desc->inOutFlags[paramNum] == asTM_OUTREF )
+			return 0;
+		return asUINT(-1);
+	}
+
+	// Can we make the match by implicit conversion?
+	asSExprContext ti(engine);
+	ti.type = argExpr->type;
+	ti.methodName = argExpr->methodName;
+	ti.enumValue = argExpr->enumValue;
+	if( argExpr->type.dataType.IsPrimitive() ) ti.type.dataType.MakeReference(false);
+	asUINT cost = ImplicitConversion(&ti, desc->parameterTypes[paramNum], 0, asIC_IMPLICIT_CONV, false, allowObjectConstruct);
+
+	// If the function parameter is an inout-reference then it must not be possible to call the
+	// function with an incorrect argument type, even though the type can normally be converted.
+	if( desc->parameterTypes[paramNum].IsReference() &&
+		desc->inOutFlags[paramNum] == asTM_INOUTREF &&
+		desc->parameterTypes[paramNum].GetTokenType() != ttQuestion )
+	{
+		// Observe, that the below checks are only necessary for when unsafe references have been
+		// enabled by the application. Without this the &inout reference form wouldn't be allowed
+		// for these value types.
+
+		// Don't allow a primitive to be converted to a reference of another primitive type
+		if( desc->parameterTypes[paramNum].IsPrimitive() &&
+			desc->parameterTypes[paramNum].GetTokenType() != argExpr->type.dataType.GetTokenType() )
+		{
+			asASSERT( engine->ep.allowUnsafeReferences );
+			return asUINT(-1);
+		}
+
+		// Don't allow an enum to be converted to a reference of another enum type
+		if( desc->parameterTypes[paramNum].IsEnumType() &&
+			desc->parameterTypes[paramNum].GetObjectType() != argExpr->type.dataType.GetObjectType() )
+		{
+			asASSERT( engine->ep.allowUnsafeReferences );
+			return asUINT(-1);
+		}
+
+		// Don't allow a non-handle expression to be converted to a reference to a handle
+		if( desc->parameterTypes[paramNum].IsObjectHandle() &&
+			!argExpr->type.dataType.IsObjectHandle() )
+		{
+			asASSERT( engine->ep.allowUnsafeReferences );
+			return asUINT(-1);
+		}
+
+		// Don't allow a value type to be converted
+		if( (desc->parameterTypes[paramNum].GetObjectType() && (desc->parameterTypes[paramNum].GetObjectType()->GetFlags() & asOBJ_VALUE)) &&
+			(desc->parameterTypes[paramNum].GetObjectType() != argExpr->type.dataType.GetObjectType()) )
+		{
+			asASSERT( engine->ep.allowUnsafeReferences );
+			return asUINT(-1);
+		}
+	}
+
+	// How well does the argument match the function parameter?
+	if( desc->parameterTypes[paramNum].IsEqualExceptRef(ti.type.dataType) )
+		return cost;
+	return asUINT(-1);
 }
 
 void asCCompiler::PrepareArgument2(asSExprContext *ctx, asSExprContext *arg, asCDataType *paramType, bool isFunction, int refType, bool isMakingCopy)
@@ -10865,6 +11164,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	case ttStar:               op = "opMul";  op_r = "opMul_r";  break;
 	case ttSlash:              op = "opDiv";  op_r = "opDiv_r";  break;
 	case ttPercent:            op = "opMod";  op_r = "opMod_r";  break;
+	case ttStarStar:           op = "opPow";  op_r = "opPow_r";  break;
 	case ttBitOr:              op = "opOr";   op_r = "opOr_r";   break;
 	case ttAmp:                op = "opAnd";  op_r = "opAnd_r";  break;
 	case ttBitXor:             op = "opXor";  op_r = "opXor_r";  break;
@@ -10909,6 +11209,7 @@ bool asCCompiler::CompileOverloadedDualOperator(asCScriptNode *node, asSExprCont
 	case ttMulAssign:         op = "opMulAssign";  break;
 	case ttDivAssign:         op = "opDivAssign";  break;
 	case ttModAssign:         op = "opModAssign";  break;
+	case ttPowAssign:         op = "opPowAssign";  break;
 	case ttOrAssign:          op = "opOrAssign";   break;
 	case ttAndAssign:         op = "opAndAssign";  break;
 	case ttXorAssign:         op = "opXorAssign";  break;
@@ -11191,13 +11492,14 @@ int asCCompiler::CompileOperator(asCScriptNode *node, asSExprContext *lctx, asSE
 		}
 
 		// Math operators
-		// + - * / % += -= *= /= %=
+		// + - * / % ** += -= *= /= %= **=
 		int op = node->tokenType;
-		if( op == ttPlus    || op == ttAddAssign ||
-			op == ttMinus   || op == ttSubAssign ||
-			op == ttStar    || op == ttMulAssign ||
-			op == ttSlash   || op == ttDivAssign ||
-			op == ttPercent || op == ttModAssign )
+		if( op == ttPlus     || op == ttAddAssign ||
+			op == ttMinus    || op == ttSubAssign ||
+			op == ttStar     || op == ttMulAssign ||
+			op == ttSlash    || op == ttDivAssign ||
+			op == ttPercent  || op == ttModAssign ||
+			op == ttStarStar || op == ttPowAssign )
 		{
 			CompileMathOperator(node, lctx, rctx, ctx);
 			return 0;
@@ -11409,10 +11711,25 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	if( rctx->type.dataType.IsReference() )
 		ConvertToVariable(rctx);
 
+	int op = node->tokenType;
 	if( to.IsPrimitive() )
 	{
-		ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
-		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true);
+		// ttStarStar allows an integer, right-hand operand and a double
+		// left-hand operand.
+		if( (op == ttStarStar || op == ttPowAssign) &&
+			lctx->type.dataType.IsDoubleType() &&
+			(rctx->type.dataType.IsIntegerType() ||
+			    rctx->type.dataType.IsUnsignedType()) )
+		{
+			to.SetTokenType(ttInt);
+			ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true);
+			to.SetTokenType(ttDouble);
+		}
+		else
+		{
+			ImplicitConversion(lctx, to, node, asIC_IMPLICIT_CONV, true);
+			ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true);
+		}
 	}
 	reservedVariables.SetLength(l);
 
@@ -11446,7 +11763,6 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 	bool isConstant = lctx->type.isConstant && rctx->type.isConstant;
 
 	// Verify if we are dividing with a constant zero
-	int op = node->tokenType;
 	if( rctx->type.isConstant && rctx->type.qwordValue == 0 &&
 		(op == ttSlash   || op == ttDivAssign ||
 		 op == ttPercent || op == ttModAssign) )
@@ -11463,7 +11779,7 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 
 		if( op == ttAddAssign || op == ttSubAssign ||
 			op == ttMulAssign || op == ttDivAssign ||
-			op == ttModAssign )
+			op == ttModAssign || op == ttPowAssign )
 		{
 			// Merge the operands in the different order so that they are evaluated correctly
 			MergeExprBytecode(ctx, rctx);
@@ -11506,6 +11822,13 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					else
 						instruction = asBC_MODu;
 				}
+				else if( op == ttStarStar || op == ttPowAssign )
+				{
+					if( lctx->type.dataType.IsIntegerType() )
+						instruction = asBC_POWi;
+					else
+						instruction = asBC_POWu;
+				}
 			}
 			else
 			{
@@ -11529,6 +11852,13 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 					else
 						instruction = asBC_MODu64;
 				}
+				else if( op == ttStarStar || op == ttPowAssign )
+				{
+					if( lctx->type.dataType.IsIntegerType() )
+						instruction = asBC_POWi64;
+					else
+						instruction = asBC_POWu64;
+				}
 			}
 		}
 		else if( lctx->type.dataType.IsFloatType() )
@@ -11543,19 +11873,35 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				instruction = asBC_DIVf;
 			else if( op == ttPercent || op == ttModAssign )
 				instruction = asBC_MODf;
+			else if( op == ttStarStar || op == ttPowAssign )
+				instruction = asBC_POWf;
 		}
 		else if( lctx->type.dataType.IsDoubleType() )
 		{
-			if( op == ttPlus || op == ttAddAssign )
-				instruction = asBC_ADDd;
-			else if( op == ttMinus || op == ttSubAssign )
-				instruction = asBC_SUBd;
-			else if( op == ttStar || op == ttMulAssign )
-				instruction = asBC_MULd;
-			else if( op == ttSlash || op == ttDivAssign )
-				instruction = asBC_DIVd;
-			else if( op == ttPercent || op == ttModAssign )
-				instruction = asBC_MODd;
+			if( rctx->type.dataType.IsIntegerType() )
+			{
+				asASSERT(rctx->type.dataType.GetSizeInMemoryDWords() == 1);
+
+				if( op == ttStarStar || op == ttPowAssign )
+					instruction = asBC_POWdi;
+				else
+					asASSERT(false);  // Should not be possible
+			}
+			else
+			{
+				if( op == ttPlus || op == ttAddAssign )
+					instruction = asBC_ADDd;
+				else if( op == ttMinus || op == ttSubAssign )
+					instruction = asBC_SUBd;
+				else if( op == ttStar || op == ttMulAssign )
+					instruction = asBC_MULd;
+				else if( op == ttSlash || op == ttDivAssign )
+					instruction = asBC_DIVd;
+				else if( op == ttPercent || op == ttModAssign )
+					instruction = asBC_MODd;
+				else if( op == ttStarStar || op == ttPowAssign )
+					instruction = asBC_POWd;
+			}
 		}
 		else
 		{
@@ -11609,6 +11955,14 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 						else
 							v = lctx->type.dwordValue % rctx->type.dwordValue;
 				}
+				else if( op == ttStarStar )
+				{
+					bool isOverflow;
+					if( lctx->type.dataType.IsIntegerType() )
+						v = as_powi(lctx->type.intValue, rctx->type.intValue, isOverflow);
+					else
+						v = as_powu(lctx->type.dwordValue, rctx->type.dwordValue, isOverflow);
+				}
 
 				ctx->type.SetConstantDW(lctx->type.dataType, v);
 
@@ -11647,6 +12001,14 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 						else
 							v = lctx->type.qwordValue % rctx->type.qwordValue;
 				}
+				else if( op == ttStarStar )
+				{
+					bool isOverflow;
+					if( lctx->type.dataType.IsIntegerType() )
+						v = as_powi64(asINT64(lctx->type.qwordValue), asINT64(rctx->type.qwordValue), isOverflow);
+					else
+						v = as_powu64(lctx->type.qwordValue, rctx->type.qwordValue, isOverflow);
+				}
 
 				ctx->type.SetConstantQW(lctx->type.dataType, v);
 
@@ -11678,31 +12040,47 @@ void asCCompiler::CompileMathOperator(asCScriptNode *node, asSExprContext *lctx,
 				else
 					v = fmodf(lctx->type.floatValue, rctx->type.floatValue);
 			}
+			else if( op == ttStarStar )
+				v = pow(lctx->type.floatValue, rctx->type.floatValue);
 
 			ctx->type.SetConstantF(lctx->type.dataType, v);
 		}
 		else if( lctx->type.dataType.IsDoubleType() )
 		{
 			double v = 0.0;
-			if( op == ttPlus )
-				v = lctx->type.doubleValue + rctx->type.doubleValue;
-			else if( op == ttMinus )
-				v = lctx->type.doubleValue - rctx->type.doubleValue;
-			else if( op == ttStar )
-				v = lctx->type.doubleValue * rctx->type.doubleValue;
-			else if( op == ttSlash )
+			if( rctx->type.dataType.IsIntegerType() )
 			{
-				if( rctx->type.doubleValue == 0 )
-					v = 0;
+				asASSERT(rctx->type.dataType.GetSizeInMemoryDWords() == 1);
+
+				if( op == ttStarStar || op == ttPowAssign )
+					v = pow(lctx->type.doubleValue, rctx->type.intValue);
 				else
-					v = lctx->type.doubleValue / rctx->type.doubleValue;
+					asASSERT(false);  // Should not be possible
 			}
-			else if( op == ttPercent )
+			else
 			{
-				if( rctx->type.doubleValue == 0 )
-					v = 0;
-				else
-					v = fmod(lctx->type.doubleValue, rctx->type.doubleValue);
+				if( op == ttPlus )
+					v = lctx->type.doubleValue + rctx->type.doubleValue;
+				else if( op == ttMinus )
+					v = lctx->type.doubleValue - rctx->type.doubleValue;
+				else if( op == ttStar )
+					v = lctx->type.doubleValue * rctx->type.doubleValue;
+				else if( op == ttSlash )
+				{
+					if( rctx->type.doubleValue == 0 )
+						v = 0;
+					else
+						v = lctx->type.doubleValue / rctx->type.doubleValue;
+				}
+				else if( op == ttPercent )
+				{
+					if( rctx->type.doubleValue == 0 )
+						v = 0;
+					else
+						v = fmod(lctx->type.doubleValue, rctx->type.doubleValue);
+				}
+				else if( op == ttStarStar )
+					v = pow(lctx->type.doubleValue, rctx->type.doubleValue);
 			}
 
 			ctx->type.SetConstantD(lctx->type.dataType, v);

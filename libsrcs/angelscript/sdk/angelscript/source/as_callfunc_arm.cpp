@@ -469,7 +469,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 					{
 						// 64 bit value align
 						dpos++;
-						paramSize++;						
+						paramSize++;
 					}
 
 					paramBuffer[dpos++] = args[spos++];
@@ -489,7 +489,7 @@ asQWORD CallSystemFunctionNative(asCContext *context, asCScriptFunction *descr, 
 
 					paramBuffer[stackPos++] = args[spos++];
 					stackSize += descr->parameterTypes[n].GetSizeOnStackDWords();
-				}				
+				}
 
 				if( descr->parameterTypes[n].GetSizeOnStackDWords() > 1 )
 				{

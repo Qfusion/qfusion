@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -70,7 +70,16 @@ protected:
 	int refCount;
 
 #ifndef AS_NO_THREADS
+#if defined(AS_WINDOWS_THREADS) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+	// On Windows Store we must use MSVC specific thread variables for thread
+	// local storage, as the TLS API isn't available. On desktop we can't use
+	// this as it may cause problems if the library is used in a dll.
+	// ref: http://msdn.microsoft.com/en-us/library/2s9wt68x.aspx
+	// ref: http://msdn.microsoft.com/en-us/library/9w1sdazb.aspx
+	__declspec(thread) static asCThreadLocalData *tld;
+#else
 	asDWORD tlsKey;
+#endif
 	DECLARECRITICALSECTION(criticalSection);
 #else
 	asCThreadLocalData *tld;

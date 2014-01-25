@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -67,10 +67,14 @@
 #define TXT_CONSTRUCTOR_NAME_ERROR               "The name of constructors and destructors must be the same as the class"
 
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
+#define TXT_CANNOT_RESOLVE_AUTO           "Unable to resolve auto type"
+#define TXT_AUTO_NOT_ALLOWED              "Auto is not allowed here"
 #define TXT_DECL_IN_SWITCH                "Variables cannot be declared in switch cases, except inside statement blocks"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
 #define TXT_DEF_ARG_MISSING_IN_FUNC_s     "All subsequent parameters after the first default value must have default values in function '%s'"
 #define TXT_DEF_ARG_TYPE_DOESNT_MATCH     "The type of the default argument expression doesn't match the function parameter type"
+#define TXT_POS_ARG_AFTER_NAMED_ARG       "Positional arguments cannot be passed after named arguments"
+#define TXT_DUPLICATE_NAMED_ARG           "Duplicate named argument"
 #define TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s "The method in the derived class must have the same return type as in the base class: '%s'"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM  "The destructor must not have any parameters"
 #define TXT_DISALLOW_ASSIGN_ON_REF_TYPE   "Value assignment on reference types is not allowed. Did you mean to do a handle assignment?"
@@ -299,6 +303,7 @@
 #define TXT_NULL_POINTER_ACCESS           "Null pointer access"
 #define TXT_DIVIDE_BY_ZERO                "Divide by zero"
 #define TXT_DIVIDE_OVERFLOW               "Overflow in integer division"
+#define TXT_POW_OVERFLOW                  "Overflow in exponent operation"
 #define TXT_UNRECOGNIZED_BYTE_CODE        "Unrecognized byte code"
 #define TXT_INVALID_CALLING_CONVENTION    "Invalid calling convention"
 #define TXT_UNBOUND_FUNCTION              "Unbound function called"
