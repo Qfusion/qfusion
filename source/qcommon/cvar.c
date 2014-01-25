@@ -667,6 +667,26 @@ static void Cvar_List_f( void )
 	Trie_FreeDump( dump );
 }
 
+/*
+* Cvar_Add_f
+*/
+static void Cvar_Add_f( void )
+{
+	cvar_t *v;
+
+	if( Cmd_Argc() != 3 )
+	{
+		Com_Printf( "usage: cvaradd <variable> <value>\n" );
+		return;
+	}
+
+	v = Cvar_Find( Cmd_Argv( 1 ) );
+	if( !v )
+		return;
+
+	Cvar_Set( v->name, v->value + atof( Cmd_Argv(2) ) );
+}
+
 #ifndef PUBLIC_BUILD
 /*
 * Cvar_ArchiveList_f
@@ -867,6 +887,7 @@ void Cvar_Init( void )
 	Cmd_AddCommand( "sets", Cvar_Sets_f );
 	Cmd_AddCommand( "reset", Cvar_Reset_f );
 	Cmd_AddCommand( "toggle", Cvar_Toggle_f );
+	Cmd_AddCommand( "cvaradd", Cvar_Add_f );
 	Cmd_AddCommand( "cvarlist", Cvar_List_f );
 
 	Cmd_SetCompletionFunc( "set", Cvar_CompleteBuildList );
@@ -877,6 +898,7 @@ void Cvar_Init( void )
 	Cmd_SetCompletionFunc( "setas", Cvar_CompleteBuildListServer );
 	Cmd_SetCompletionFunc( "setu", Cvar_CompleteBuildListUser );
 	Cmd_SetCompletionFunc( "sets", Cvar_CompleteBuildListServer );
+	Cmd_SetCompletionFunc( "cvaradd", Cvar_CompleteBuildList );
 
 #ifndef PUBLIC_BUILD
 	Cmd_AddCommand( "cvararchivelist", Cvar_ArchiveList_f );
@@ -921,6 +943,7 @@ void Cvar_Shutdown( void )
 		Cmd_RemoveCommand( "sets" );
 		Cmd_RemoveCommand( "reset" );
 		Cmd_RemoveCommand( "toggle" );
+		Cmd_RemoveCommand( "cvaradd" );
 		Cmd_RemoveCommand( "cvarlist" );
 #ifndef PUBLIC_BUILD
 		Cmd_RemoveCommand( "cvararchivelist" );
