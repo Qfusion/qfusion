@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 namespace WSWUI
 {
 
+#define LINK_EXTENSION ".link"
+
 AsyncStream::AsyncStream() : privatep(NULL), key(""), tmpFilename(""), tmpFilenum(0), noCache(false)
 {
 }
@@ -280,7 +282,26 @@ std::string StreamCache::CacheFileForUrl( const std::string url, bool noCache )
 		fileName = fileName.substr( 0, delim );
 	}
 
-	return std::string( WSW_UI_STREAMCACHE_DIR ) + "/" + outstream.str() + (noCache ? "_0" : "_1") + "_" + fileName;
+	std::string cacheName = std::string( WSW_UI_STREAMCACHE_DIR ) + "/" + outstream.str() + 
+		(noCache ? "_0" : "_1") + "_" + fileName;
+
+	// link exists?
+	std::string linkName = cacheName + LINK_EXTENSION;
+	int filenum, length;
+
+	length = trap::FS_FOpenFile( linkName.c_str(), &filenum, FS_READ );
+	if( length >= 0 ) {
+		if( length > 0 ) {
+			char *buf = new char[length+1];
+			trap::FS_Read( buf, length, filenum );
+			buf[length] = '\0';
+			cacheName = buf;
+			delete[] buf;
+		}
+		trap::FS_FCloseFile( filenum );
+	}
+
+	return cacheName;
 }
 
 std::string StreamCache::RealFileForCacheFile( const std::string cacheFile, const std::string contentType )
@@ -298,9 +319,6 @@ std::string StreamCache::RealFileForCacheFile( const std::string cacheFile, cons
 		else if( contentType == "image/jpeg" || contentType == "image/jpg" ) {
 			forceExtension = ".jpg";
 		}
-		else if( contentType == "image/pcx" ) {
-			forceExtension = ".pcx";
-		}
 		else if( contentType == "image/png" ) {
 			forceExtension = ".png";
 		}
@@ -313,6 +331,17 @@ std::string StreamCache::RealFileForCacheFile( const std::string cacheFile, cons
 				realFile = realFile.substr( 0, dot );
 			}
 			realFile += forceExtension;
+		}
+	}
+
+	// add a link
+	if( realFile != cacheFile ) {
+		int filenum;
+		std::string linkFile = cacheFile + LINK_EXTENSION;
+
+		if( trap::FS_FOpenFile( linkFile.c_str(), &filenum, FS_WRITE ) >= 0 ) {
+			trap::FS_Write( realFile.c_str(), realFile.length(), filenum );
+			trap::FS_FCloseFile( filenum );
 		}
 	}
 
