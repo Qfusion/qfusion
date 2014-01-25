@@ -146,6 +146,7 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 {
 	Document *doc = *it;
 	DocumentSet::iterator next = it;
+	++next;
 
 	// just trust the reference-counting
 	doc->removeReference();
@@ -161,7 +162,7 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 		documentSet.erase( it );
 	}
 	
-	return ++next;
+	return next;
 }
 
 // release document

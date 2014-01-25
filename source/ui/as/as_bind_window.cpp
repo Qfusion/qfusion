@@ -149,7 +149,7 @@ public:
 
 				doc->RemoveReference();
 
-				it = schedulers.erase( it );
+				schedulers.erase( it++ );
 			}
 			else {
 				scheduler->update();
