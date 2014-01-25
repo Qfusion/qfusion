@@ -392,7 +392,7 @@ void ServerInfoFetcher::updateFrame()
 			it = activeQueries.erase( it );
 		}
 		else {
-			it++;
+			++it;
 		}
 	}
 
@@ -468,7 +468,7 @@ void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int 
 		return;
 
 	const ServerInfo &info = *(*it_info);
-	for( StringList::const_iterator it = columns.begin(); it != columns.end(); it++ )
+	for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it )
 	{
 		// TODO: htmlencode here! "<>& etc..
 		if( *it == "hostname" )
@@ -633,7 +633,7 @@ void ServerBrowserDataSource::startFullUpdate( void )
 	std::vector<std::string> masterServers;
 	tokenize( trap::Cvar_String("masterservers"), ' ', masterServers );
 
-	for( std::vector<std::string>::iterator it = masterServers.begin(); it != masterServers.end(); it++ ) {
+	for( std::vector<std::string>::iterator it = masterServers.begin(); it != masterServers.end(); ++it ) {
 		std::string queryString = std::string ("requestservers global ") + *it + " " + gameName + " full empty\n";
 
 		trap::Cmd_ExecuteText( EXEC_APPEND, queryString.c_str() );
@@ -642,7 +642,7 @@ void ServerBrowserDataSource::startFullUpdate( void )
 	// query for LAN servers too
 	trap::Cmd_ExecuteText( EXEC_APPEND, "requestservers local full empty\n" );
 
-	for( ReferenceListMap::iterator it = referenceListMap.begin(); it != referenceListMap.end(); it++ ) {
+	for( ReferenceListMap::iterator it = referenceListMap.begin(); it != referenceListMap.end(); ++it ) {
 		size_t size = it->second.size();
 		if( size > 0 ) {
 			it->second.clear();
@@ -801,14 +801,14 @@ void ServerBrowserDataSource::sortByColumn( const char *_column )
 
 	// Now resort the list
 	if( sortDirection > 0 ) {
-		for(ReferenceListMap::iterator it = referenceListMap.begin(); it != referenceListMap.end(); it++) {
+		for(ReferenceListMap::iterator it = referenceListMap.begin(); it != referenceListMap.end(); ++it) {
 			it->second.sort( ServerInfo::InvertComparePtrFunction( sortCompare ) );
 			// then tell rocket that our table is changed
 			NotifyRowChange(it->first);
 		}
 	}
 	else {
-		for(ReferenceListMap::iterator it = referenceListMap.begin(); it != referenceListMap.end(); it++) {
+		for(ReferenceListMap::iterator it = referenceListMap.begin(); it != referenceListMap.end(); ++it) {
 			it->second.sort( sortCompare );
 			// then tell rocket that our table is changed
 			NotifyRowChange(it->first);

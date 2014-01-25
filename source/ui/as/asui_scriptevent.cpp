@@ -287,7 +287,7 @@ public:
 	void ReleaseListnersFunctions()
 	{
 		listenerList::iterator it;
-		for( it = listeners.begin(); it != listeners.end(); it++ ) {
+		for( it = listeners.begin(); it != listeners.end(); ++it ) {
 			(*it)->releaseFunctionPtr();
 		}
 	}
@@ -296,7 +296,7 @@ public:
 	void ReleaseListners()
 	{
 		listenerList::iterator it;
-		for( it = listeners.begin(); it != listeners.end(); it++ ) {
+		for( it = listeners.begin(); it != listeners.end(); ++it ) {
 			__delete__( *it );
 		}
 		listeners.clear();

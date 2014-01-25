@@ -69,7 +69,7 @@ void DemoCollection::PopulateList( void )
 	dirList.clear();
 
 	getFileList( dirList, fullPath, "/", true );
-	for( DirList::iterator it = dirList.begin(); it != dirList.end(); it++ ) {
+	for( DirList::iterator it = dirList.begin(); it != dirList.end(); ++it ) {
 		std::string fullName = *it + "/";
 		demoList.push_back( fullName );
 	}
@@ -173,7 +173,7 @@ DemosDataSource::~DemosDataSource( void )
 
 void DemosDataSource::Reset( void )
 {
-	for( DemoPathList::const_iterator it = demoPaths.begin(); it != demoPaths.end(); it++ ) {
+	for( DemoPathList::const_iterator it = demoPaths.begin(); it != demoPaths.end(); ++it ) {
 		NotifyRowRemove( it->first, 0, it->second.GetUpdateIndex() );
 	}
 	demoPaths.clear();
@@ -181,7 +181,7 @@ void DemosDataSource::Reset( void )
 
 void DemosDataSource::UpdateFrame( void )
 {
-	for( DemoPathList::iterator it = demoPaths.begin(); it != demoPaths.end(); it++ ) {
+	for( DemoPathList::iterator it = demoPaths.begin(); it != demoPaths.end(); ++it ) {
 		int firstRowAdded, numRowsAdded;
 
 		if( it->second.UpdateFrame( &firstRowAdded, &numRowsAdded ) ) {
@@ -204,7 +204,7 @@ void DemosDataSource::GetRow( StringList& row, const String& table, int row_inde
 		return;
 	}
 
-	for( StringList::const_iterator it = columns.begin(); it != columns.end(); it++ )
+	for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it )
 	{
 		const Rocket::Core::String &col = *it;
 

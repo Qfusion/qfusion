@@ -64,6 +64,7 @@ static void qasMessageCallback( const asSMessageInfo *msg )
 			break;
 		case asMSGTYPE_WARNING:
 			msg_type = S_COLOR_YELLOW "WARNING: ";
+			break;
 		case asMSGTYPE_INFORMATION:
 		default:
 			msg_type = S_COLOR_CYAN "ANGELSCRIPT: ";

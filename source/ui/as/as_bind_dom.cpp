@@ -277,7 +277,7 @@ static ASElementsArray *Element_GetElementsByTagName( Element *elem, const asstr
 	ASElementsArray *arr = UI_Main::Get()->getAS()->createArray( elements.size(), elementsArrayType );
 
 	unsigned int n = 0;
-	for( ElementList::iterator it = elements.begin(); it != elements.end(); it++ ) {
+	for( ElementList::iterator it = elements.begin(); it != elements.end(); ++it ) {
 		Element *child = *it;
 		child->AddReference();
 		*((Element **)arr->At(n++)) = child;
@@ -295,7 +295,7 @@ static ASElementsArray *Element_GetElementsByClassName( Element *elem, const ass
 	ASElementsArray *arr = UI_Main::Get()->getAS()->createArray( elements.size(), elementsArrayType );
 
 	unsigned int n = 0;
-	for( ElementList::iterator it = elements.begin(); it != elements.end(); it++ ) {
+	for( ElementList::iterator it = elements.begin(); it != elements.end(); ++it ) {
 		Element *child = *it;
 		child->AddReference();
 		*((Element **)arr->At(n++)) = child;
@@ -768,7 +768,7 @@ static asstring_t *DataGrid_GetColumn( ElementDataGrid *self, int idx ) {
 	if( !column )
 		return ASSTR( "" );
 	String ret;
-	for( StringList::const_iterator it = column->fields.begin(); it != column->fields.end(); it++) {
+	for( StringList::const_iterator it = column->fields.begin(); it != column->fields.end(); ++it) {
 		ret += *it + " ";
 	}
 	return ASSTR( ret.Substring( 0, std::max( 0U, ret.Length() - 1 ) ) );

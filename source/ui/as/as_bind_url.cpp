@@ -153,7 +153,7 @@ CScriptDictionaryInterface *ASURL::GetParameters( void ) const
 	int stringObjectTypeId = UI_Main::Get()->getAS()->getStringObjectType()->GetTypeId(); // FIXME: cache this?
 
 	RocketURL::Parameters parameters = rocketURL.GetParameters();
-	for( RocketURL::Parameters::const_iterator it = parameters.begin(); it != parameters.end(); it++ ) {
+	for( RocketURL::Parameters::const_iterator it = parameters.begin(); it != parameters.end(); ++it ) {
 		dict->Set( *(ASSTR( it->first )), ASSTR( it->second ), stringObjectTypeId );
 	}
 	return dict;

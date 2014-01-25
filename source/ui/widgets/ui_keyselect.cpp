@@ -290,7 +290,8 @@ using namespace Rocket::Core;
 	void UI_KeySelectInstancer::ReleaseElement( Element *element )
 	{
 		// first remove from the list
-		std::remove( keyselect_widgets.begin(), keyselect_widgets.end(), element );
+		keyselect_widgets.erase( std::remove( keyselect_widgets.begin(), keyselect_widgets.end(), element ), 
+			keyselect_widgets.end() );
 
 		// then delete
 		__delete__( element );
@@ -302,7 +303,7 @@ using namespace Rocket::Core;
 	// Returns a keyselect which has the same bound key of the excluded one
 	UI_KeySelect* UI_KeySelectInstancer::getKeySelectByKey( int key, const UI_KeySelect *exclude )
 	{
-		for( KeySelectList::iterator it = keyselect_widgets.begin() ; it != keyselect_widgets.end(); it++ )
+		for( KeySelectList::iterator it = keyselect_widgets.begin() ; it != keyselect_widgets.end(); ++it )
 		{
 			if( key )
 			{
@@ -318,7 +319,7 @@ using namespace Rocket::Core;
 	// Returns a keyselect which has the same bound command of the excluded one
 	UI_KeySelect* UI_KeySelectInstancer::getKeySelectByCmd( const String &cmd, const UI_KeySelect *exclude )
 	{
-		for( KeySelectList::iterator it = keyselect_widgets.begin(); it != keyselect_widgets.end(); it++ )
+		for( KeySelectList::iterator it = keyselect_widgets.begin(); it != keyselect_widgets.end(); ++it )
 		{
 			// case insensitive?
 			if( (*it)->GetBindCmd() == cmd && *it != exclude )

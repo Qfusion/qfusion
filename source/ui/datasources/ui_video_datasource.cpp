@@ -81,7 +81,7 @@ void VideoDataSource::GetRow( StringList &row, const String &table, int row_inde
 	// populate table
 	if( table == TABLE_NAME )
 	{
-		for( StringList::const_iterator it = columns.begin(); it != columns.end(); it++ )
+		for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it )
 		{
 			if( *it == RESOLUTION )
 				row.push_back( modesList[row_index].second.c_str() );
