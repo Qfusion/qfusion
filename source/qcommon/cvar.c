@@ -684,7 +684,7 @@ static void Cvar_Add_f( void )
 	if( !v )
 		return;
 
-	Cvar_Set( v->name, v->value + atof( Cmd_Argv(2) ) );
+	Cvar_SetValue( v->name, v->value + atof( Cmd_Argv(2) ) );
 }
 
 #ifndef PUBLIC_BUILD
