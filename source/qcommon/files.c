@@ -2265,9 +2265,6 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 	else
 		modulepack = qfalse;
 
-	if( modulepack )
-		goto error;
-
 	manifestFilesize = -1;
 
 	// add all files to the trie
