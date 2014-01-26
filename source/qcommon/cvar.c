@@ -682,7 +682,10 @@ static void Cvar_Add_f( void )
 
 	v = Cvar_Find( Cmd_Argv( 1 ) );
 	if( !v )
+	{
+		Com_Printf( "No such variable: \"%s\"\n", Cmd_Argv( 1 ) );
 		return;
+	}
 
 	Cvar_SetValue( v->name, v->value + atof( Cmd_Argv(2) ) );
 }
