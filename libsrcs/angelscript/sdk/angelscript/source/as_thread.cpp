@@ -2,23 +2,23 @@
    AngelCode Scripting Library
    Copyright (c) 2003-2014 Andreas Jonsson
 
-   This software is provided 'as-is', without any express or implied 
-   warranty. In no event will the authors be held liable for any 
+   This software is provided 'as-is', without any express or implied
+   warranty. In no event will the authors be held liable for any
    damages arising from the use of this software.
 
-   Permission is granted to anyone to use this software for any 
-   purpose, including commercial applications, and to alter it and 
+   Permission is granted to anyone to use this software for any
+   purpose, including commercial applications, and to alter it and
    redistribute it freely, subject to the following restrictions:
 
-   1. The origin of this software must not be misrepresented; you 
+   1. The origin of this software must not be misrepresented; you
       must not claim that you wrote the original software. If you use
-      this software in a product, an acknowledgment in the product 
+      this software in a product, an acknowledgment in the product
       documentation would be appreciated but is not required.
 
-   2. Altered source versions must be plainly marked as such, and 
+   2. Altered source versions must be plainly marked as such, and
       must not be misrepresented as being the original software.
 
-   3. This notice may not be removed or altered from any source 
+   3. This notice may not be removed or altered from any source
       distribution.
 
    The original version of this library can be located at:
@@ -109,7 +109,7 @@ AS_API void asReleaseSharedLock()
 
 //======================================================================
 
-#if !defined(AS_NO_THREADS) && defined(AS_WINDOWS_THREADS) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+#if !defined(AS_NO_THREADS) && defined(_MSC_VER) && defined(AS_WINDOWS_THREADS) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 __declspec(thread) asCThreadLocalData *asCThreadManager::tld = 0;
 #endif
 
@@ -126,7 +126,7 @@ asCThreadManager::asCThreadManager()
 		pthread_key_create(&pKey, 0);
 		tlsKey = (asDWORD)pKey;
 	#elif defined AS_WINDOWS_THREADS
-		#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+		#if defined(_MSC_VER) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 			tld = 0;
 		#else
 			tlsKey = (asDWORD)TlsAlloc();
@@ -138,7 +138,7 @@ asCThreadManager::asCThreadManager()
 
 int asCThreadManager::Prepare(asIThreadManager *externalThreadMgr)
 {
-	// Don't allow an external thread manager if there 
+	// Don't allow an external thread manager if there
 	// is already a thread manager defined
 	if( externalThreadMgr && threadManager )
 		return asINVALID_ARG;
@@ -147,18 +147,18 @@ int asCThreadManager::Prepare(asIThreadManager *externalThreadMgr)
 	// guarantee for the order in which global variables are initialized
 	// or uninitialized.
 
-	// For this reason it's not possible to prevent two threads from calling 
+	// For this reason it's not possible to prevent two threads from calling
 	// AddRef at the same time, so there is a chance for a race condition here.
 
-	// To avoid the race condition when the thread manager is first created, 
+	// To avoid the race condition when the thread manager is first created,
 	// the application must make sure to call the global asPrepareForMultiThread()
-	// in the main thread before any other thread creates a script engine. 
+	// in the main thread before any other thread creates a script engine.
 	if( threadManager == 0 && externalThreadMgr == 0 )
 		threadManager = asNEW(asCThreadManager);
 	else
 	{
 		// If an application uses different dlls each dll will get it's own memory
-		// space for global variables. If multiple dlls then uses AngelScript's 
+		// space for global variables. If multiple dlls then uses AngelScript's
 		// global thread support functions it is then best to share the thread
 		// manager to make sure all dlls use the same critical section.
 		if( externalThreadMgr )
@@ -189,7 +189,7 @@ void asCThreadManager::Unprepare()
 		// Make sure the local data is destroyed, at least for the current thread
 		CleanupLocalData();
 
-		// As the critical section will be destroyed together 
+		// As the critical section will be destroyed together
 		// with the thread manager we must first clear the global
 		// variable in case a new thread manager needs to be created;
 		asCThreadManager *mgr = threadManager;
@@ -211,14 +211,14 @@ asCThreadManager::~asCThreadManager()
 	#if defined AS_POSIX_THREADS
 		pthread_key_delete((pthread_key_t)tlsKey);
 	#elif defined AS_WINDOWS_THREADS
-		#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+		#if defined(_MSC_VER) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 			tld = 0;
 		#else
 			TlsFree((DWORD)tlsKey);
 		#endif
 	#endif
 #else
-	if( tld ) 
+	if( tld )
 	{
 		asDELETE(tld,asCThreadLocalData);
 	}
@@ -235,21 +235,21 @@ int asCThreadManager::CleanupLocalData()
 #if defined AS_POSIX_THREADS
 	asCThreadLocalData *tld = (asCThreadLocalData*)pthread_getspecific((pthread_key_t)threadManager->tlsKey);
 #elif defined AS_WINDOWS_THREADS
-	#if (WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+	#if !defined(_MSC_VER) || (WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 		asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
 	#endif
 #endif
 
-	if( tld == 0 ) 
+	if( tld == 0 )
 		return 0;
 
-	if( tld->activeContexts.GetLength() == 0 ) 
+	if( tld->activeContexts.GetLength() == 0 )
 	{
 		asDELETE(tld,asCThreadLocalData);
 		#if defined AS_POSIX_THREADS
 			pthread_setspecific((pthread_key_t)threadManager->tlsKey, 0);
 		#elif defined AS_WINDOWS_THREADS
-			#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+			#if defined(_MSC_VER) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 				tld = 0;
 			#else
 				TlsSetValue((DWORD)threadManager->tlsKey, 0);
@@ -257,7 +257,7 @@ int asCThreadManager::CleanupLocalData()
 		#endif
 		return 0;
 	}
-	else 
+	else
 		return asCONTEXT_ACTIVE;
 
 #else
@@ -289,12 +289,12 @@ asCThreadLocalData *asCThreadManager::GetLocalData()
 		pthread_setspecific((pthread_key_t)threadManager->tlsKey, tld);
 	}
 #elif defined AS_WINDOWS_THREADS
-	#if !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+	#if defined(_MSC_VER) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
 		if( tld == 0 )
 			tld = asNEW(asCThreadLocalData)();
 	#else
 		asCThreadLocalData *tld = (asCThreadLocalData*)TlsGetValue((DWORD)threadManager->tlsKey);
-		if( tld == 0 ) 
+		if( tld == 0 )
 		{
  			tld = asNEW(asCThreadLocalData)();
 			TlsSetValue((DWORD)threadManager->tlsKey, tld);
@@ -329,7 +329,11 @@ asCThreadCriticalSection::asCThreadCriticalSection()
 #if defined AS_POSIX_THREADS
 	pthread_mutex_init(&cs, 0);
 #elif defined AS_WINDOWS_THREADS
+#ifdef _MSC_VER
 	InitializeCriticalSectionEx(&cs, 4000, 0);
+#else
+    InitializeCriticalSection(&cs);
+#endif
 #endif
 }
 
@@ -378,10 +382,15 @@ asCThreadReadWriteLock::asCThreadReadWriteLock()
 	asASSERT( r == 0 );
 	UNUSED_VAR(r);
 #elif defined AS_WINDOWS_THREADS
+#ifdef _MSC_VER
 	// Create a semaphore to allow up to maxReaders simultaneous readers
 	readLocks = CreateSemaphoreExW(NULL, maxReaders, maxReaders, 0, 0, 0);
 	// Create a critical section to synchronize writers
 	InitializeCriticalSectionEx(&writeLock, 4000, 0);
+#else
+	readLocks = CreateSemaphoreW(NULL, maxReaders, maxReaders, 0);
+	InitializeCriticalSection(&writeLock);
+#endif
 #endif
 }
 

@@ -24,6 +24,7 @@ int SaveBytecode(asIScriptEngine *engine, const char *outputFile);
 static const char *GetCurrentDir(char *buf, size_t size);
 asETokenClass GetToken(asIScriptEngine *engine, string &token, const string &text, asUINT &pos);
 asUINT GetLineNumber(const string &text, asUINT pos);
+void ReplaceSlashQuote(string &str);
 
 void MessageCallback(const asSMessageInfo *msg, void *param)
 {
@@ -232,6 +233,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			GetToken(engine, behaviour, config, pos);
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
+			ReplaceSlashQuote(decl);
 
 			asEBehaviours behave = static_cast<asEBehaviours>(atol(behaviour.c_str()));
 			if( behave == asBEHAVE_TEMPLATE_CALLBACK )
@@ -256,6 +258,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			name = name.substr(1, name.length() - 2);
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
+			ReplaceSlashQuote(decl);
 
 			r = engine->RegisterObjectMethod(name.c_str(), decl.c_str(), asFUNCTION(0), asCALL_GENERIC);
 			if( r < 0 )
@@ -306,6 +309,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			GetToken(engine, name, config, pos);
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
+			ReplaceSlashQuote(decl);
 
 			r = engine->RegisterInterfaceMethod(name.c_str(), decl.c_str());
 			if( r < 0 )
@@ -319,6 +323,7 @@ int ConfigureEngine(asIScriptEngine *engine, const char *configFile)
 			string decl;
 			GetToken(engine, decl, config, pos);
 			decl = decl.substr(1, decl.length() - 2);
+			ReplaceSlashQuote(decl);
 
 			r = engine->RegisterGlobalFunction(decl.c_str(), asFUNCTION(0), asCALL_GENERIC);
 			if( r < 0 )
@@ -444,6 +449,21 @@ asETokenClass GetToken(asIScriptEngine *engine, string &token, const string &tex
 	pos += len;
 
 	return t;
+}
+
+void ReplaceSlashQuote(string &str)
+{
+	int pos = 0;
+	for(;;)
+	{
+		// Search for \" in the string
+		pos = str.find("\\\"", pos);
+		if( pos == string::npos )
+			break;
+
+		// Remove the \ character
+		str.erase(pos, 1);
+	}
 }
 
 asUINT GetLineNumber(const string &text, asUINT pos)

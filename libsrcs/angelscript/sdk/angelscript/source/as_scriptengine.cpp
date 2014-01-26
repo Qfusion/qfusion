@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -3101,9 +3101,11 @@ int asCScriptEngine::RegisterStringFactory(const char *datatype, const asSFuncPt
 
 	func->returnType = dt;
 	func->parameterTypes.PushLast(asCDataType::CreatePrimitive(ttInt, true));
+	func->inOutFlags.PushLast(asTM_NONE);
 	asCDataType parm1 = asCDataType::CreatePrimitive(ttUInt8, true);
 	parm1.MakeReference(true);
 	func->parameterTypes.PushLast(parm1);
+	func->inOutFlags.PushLast(asTM_INREF);
 	func->id = GetNextScriptFunctionId();
 	SetScriptFunction(func);
 

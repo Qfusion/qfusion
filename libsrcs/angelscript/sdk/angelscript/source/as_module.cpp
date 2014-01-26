@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -1176,7 +1176,7 @@ int asCModule::LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped)
 	asCReader read(this, in, engine);
 	r = read.Read(wasDebugInfoStripped);
 
-    JITCompile();
+	JITCompile();
 
 #ifdef AS_DEBUG
 	// Verify that there are no unwanted gaps in the scriptFunctions array.

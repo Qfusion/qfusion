@@ -15,7 +15,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.1 WIP - 2013/12/20</h2>
+<h2>Version 2.28.1 WIP - 2014/01/25</h2>
 
 <ul>
 <li>Bug fixes
@@ -27,6 +27,12 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Compiler now uses the default args declared in derived methods instead of the default args in base method (Thanks Aaron Baker)
 <li>Fixed the position reported for errors while compiling global variables
 <li>Compiler wasn't searching parent namespaces when resolving the symbol for class inheritance (Thanks Agnis)
+<li>Fixed linker error on Windows RT with ARM due to misaligned code in as_callfunc_arm_msvc.asm (Thanks NiteLordz)
+<li>Fixed crash with THISCALL_ASGLOBAL and virtual methods (Thanks Macobyte)
+<li>Implicit cast didn't work in initialization of global vars (Thanks Jason Goepel)
+<li>Incorrect bytecode sequence when compiling initialization list for dictionary containing values from global string variables (Thanks Jordi Oliveras Rovira)
+<li>Compiler was incorrectly converting both results to const in ?: if one of the expressions was null (Thanks FDsagizi)
+<li>Fixed memory leak on iOS when passing complex object by value to registered function (Thanks FDsagizi)
 </ul>
 <li>Library
 <ul>
@@ -45,6 +51,18 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>asIScriptEngine::GetObjectTypeByName can now return template types too
 <li>POD value types are now allocated inline when members of script classes (Thanks GGLucas)
 <li>Ternary condition operator now converts either case to const @ if the other is const @ (Thanks _Vicious_)
+<li>Multithreading is now supported on Windows Store Apps too
+<li>Slightly reduced size of saved bytecode
+<li>Improved error messages when loading invalid bytecode
+</ul>
+<li>Script language
+<ul>
+<li>Added the operators ** and **= for exponent math operations (Thanks Jason Goepel)
+<li>The methods opPow and opPow_r can be used to overload the exponent math operator (Thanks Jason Goepel)
+</ul>
+<li>Virtual machine
+<ul>
+<li>Added the instructions POWi, POWu, POWf, POWd, POWdi, POWi64, POWu64 (Thanks Jason Goepel)
 </ul>
 <li>Add-ons & samples
 <ul>
@@ -54,6 +72,8 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Implemented FindByRef in the script array (Thanks Marcus L)
 <li>CDebugger now has a RegisterToStringCallback to allow custom conversion of types to strings for the debug output
 <li>Fixed assert failure in CScriptWeakRef (Thanks Squared'D)
+<li>WriteConfigToFile escapes quote characters in default arg expressions (Thanks alraz.exe)
+<li>asbuild sample updated to treat the escaped quote characters properly (Thanks alraz.exe)
 </ul>
 </ul>
 

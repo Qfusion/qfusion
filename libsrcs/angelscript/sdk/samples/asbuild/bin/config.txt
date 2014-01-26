@@ -87,7 +87,7 @@ intfmthd MyIntf "void func() const"
 
 // Functions
 access 1
-func "void Print(const string&in)"
+func "void Print(const string &in = \"\n\")"
 
 // Properties
 prop "float f"

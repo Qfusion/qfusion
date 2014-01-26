@@ -651,7 +651,6 @@
 		#if (defined(_ARM_) || defined(__arm__))
 			// iOS use ARM processor
 			#define AS_ARM
-			#define AS_CALLEE_DESTROY_OBJ_BY_VAL
 			#define CDECL_RETURN_SIMPLE_IN_MEMORY
 			#define STDCALL_RETURN_SIMPLE_IN_MEMORY
 			#define THISCALL_RETURN_SIMPLE_IN_MEMORY

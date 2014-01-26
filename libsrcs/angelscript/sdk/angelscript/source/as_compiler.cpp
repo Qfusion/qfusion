@@ -363,7 +363,7 @@ int asCCompiler::SetupParametersAndReturnVariable(asCArray<asCString> &parameter
 	{
 		// Get the parameter type
 		asCDataType &type = outFunc->parameterTypes[n];
-		asETypeModifiers inoutFlag = outFunc->inOutFlags[n];
+		asETypeModifiers inoutFlag = n < outFunc->inOutFlags.GetLength() ? outFunc->inOutFlags[n] : asTM_NONE;
 
 		// Is the data type allowed?
 		// TODO: Hasn't this been validated by the builder already?
