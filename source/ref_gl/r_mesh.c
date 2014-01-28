@@ -392,10 +392,12 @@ static void _R_DrawSurfaces( void )
 						if( rd->rdflags & RDF_WEAPONALPHA ) {
 							R_BindFrameBufferObject( rsh.screenWeaponTexture->fbo );
 						}
-					}					
-					depthHack = qtrue;
-					RB_GetDepthRange( &depthmin, &depthmax );
-					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
+					}
+					if( !depthHack ) {
+						depthHack = qtrue;
+						RB_GetDepthRange( &depthmin, &depthmax );
+						RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
+					}
 				} else if( depthHack ) {
 					// bind the main framebuffer back
 					R_BindFrameBufferObject( riFBO );
