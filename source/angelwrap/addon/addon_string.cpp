@@ -321,6 +321,8 @@ static bool objectString_EqualBehaviour( asstring_t *first, asstring_t *second )
 	return ( Q_stricmp( first->buffer, second->buffer ) == 0 );
 }
 
+#ifdef ENABLE_STRING_IMPLICIT_CASTS
+
 static int objectString_CastToInt( asstring_t *self )
 {
 	return atoi( self->buffer );
@@ -335,6 +337,8 @@ static double objectString_CastToDouble( asstring_t *self )
 {
 	return atof( self->buffer );
 }
+
+#endif
 
 // ==================================================================================
 
@@ -534,9 +538,11 @@ void RegisterStringAddon( asIScriptEngine *engine )
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_ADDREF, "void f()", asFUNCTION( objectString_Addref ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_RELEASE, "void f()", asFUNCTION( objectString_Release ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 
+#ifdef ENABLE_STRING_IMPLICIT_CASTS
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_IMPLICIT_VALUE_CAST, "int f() const", asFUNCTION( objectString_CastToInt ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_IMPLICIT_VALUE_CAST, "float f() const", asFUNCTION( objectString_CastToFloat ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour( "String", asBEHAVE_IMPLICIT_VALUE_CAST, "double f() const", asFUNCTION( objectString_CastToDouble ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+#endif
 
 	// register object methods
 
