@@ -238,6 +238,11 @@ void CScriptDictionary::Set(const asstring_t &key, void *value, int typeId)
 	Set_(key.buffer, value, typeId);
 }
 
+void CScriptDictionary::Set(const asstring_t &key, asstring_t *value)
+{
+	return Set_(key.buffer, value, engine->GetTypeIdByDecl("String"));
+}
+
 // This overloaded method is implemented so that all integer and
 // unsigned integers types will be stored in the dictionary as int64
 // through implicit conversions. This simplifies the management of the
@@ -331,6 +336,11 @@ bool CScriptDictionary::Get(const asstring_t &key, asINT64 &value) const
 bool CScriptDictionary::Get(const asstring_t &key, double &value) const
 {
 	return Get(key, &value, asTYPEID_DOUBLE);
+}
+
+bool CScriptDictionary::Get(const asstring_t &key, asstring_t *value) const
+{
+	return Get(key, value, engine->GetTypeIdByDecl("String"));
 }
 
 bool CScriptDictionary::Exists(const asstring_t &key) const
@@ -473,6 +483,14 @@ void ScriptDictionarySetFlt_Generic(asIScriptGeneric *gen)
 	dict->Set(*key, *(double*)ref);
 }
 
+void ScriptDictionarySetString_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
+	asstring_t *key = *(asstring_t**)gen->GetAddressOfArg(0);
+	asstring_t *value = *(asstring_t**)gen->GetAddressOfArg(1);
+	dict->Set(*key, value);
+}
+
 void ScriptDictionaryGet_Generic(asIScriptGeneric *gen)
 {
 	CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
@@ -496,6 +514,14 @@ void ScriptDictionaryGetFlt_Generic(asIScriptGeneric *gen)
 	asstring_t *key = *(asstring_t**)gen->GetAddressOfArg(0);
 	void *ref = *(void**)gen->GetAddressOfArg(1);
 	*(bool*)gen->GetAddressOfReturnLocation() = dict->Get(*key, *(double*)ref);
+}
+
+void ScriptDictionaryGetString_Generic(asIScriptGeneric *gen)
+{
+	CScriptDictionary *dict = (CScriptDictionary*)gen->GetObject();
+	asstring_t *key = *(asstring_t**)gen->GetAddressOfArg(0);
+	void *ref = *(void**)gen->GetAddressOfArg(1);
+	*(bool*)gen->GetAddressOfReturnLocation() = dict->Get(*key, (asstring_t *)ref);
 }
 
 void ScriptDictionaryExists_Generic(asIScriptGeneric *gen)
@@ -581,6 +607,9 @@ static void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("Dictionary", "void set(const String &in, double&in)", asMETHODPR(CScriptDictionary,Set,(const asstring_t&,double&),void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Dictionary", "bool get(const String &in, double&out) const", asMETHODPR(CScriptDictionary,Get,(const asstring_t&,double&) const,bool), asCALL_THISCALL); assert( r >= 0 );
 
+	r = engine->RegisterObjectMethod("Dictionary", "void set(const String &in, const String &in)", asMETHODPR(CScriptDictionary,Set,(const asstring_t&,asstring_t*),void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("Dictionary", "bool get(const String &in, String &out) const",asMETHODPR(CScriptDictionary,Get,(const asstring_t&,asstring_t*) const,bool), asCALL_THISCALL); assert( r >= 0 );
+
 	r = engine->RegisterObjectMethod("Dictionary", "bool exists(const String &in) const", asMETHOD(CScriptDictionary,Exists), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Dictionary", "bool isEmpty() const", asMETHOD(CScriptDictionary, IsEmpty), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Dictionary", "uint getSize() const", asMETHOD(CScriptDictionary, GetSize), asCALL_THISCALL); assert( r >= 0 );
@@ -627,6 +656,9 @@ static void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectMethod("Dictionary", "void set(const String &in, double&in)", asFUNCTION(ScriptDictionarySetFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Dictionary", "bool get(const String &in, double&out) const", asFUNCTION(ScriptDictionaryGetFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	r = engine->RegisterObjectMethod("Dictionary", "void set(const String &in, const String &in)", asFUNCTION(ScriptDictionarySetString_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("Dictionary", "bool get(const String &in, String &out) const", asFUNCTION(ScriptDictionaryGetString_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("Dictionary", "bool exists(const String &in) const", asFUNCTION(ScriptDictionaryExists_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Dictionary", "void delete(const String &in)", asFUNCTION(ScriptDictionaryDelete_Generic), asCALL_GENERIC); assert( r >= 0 );
