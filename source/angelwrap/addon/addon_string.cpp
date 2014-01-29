@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <string>
 
 #define CONST_STRING_BITFLAG	(1<<31)
+#define ENABLE_STRING_IMPLICIT_CASTS
 
 static inline asstring_t *objectString_Alloc( void )
 {

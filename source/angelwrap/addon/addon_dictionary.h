@@ -59,6 +59,9 @@ public:
     void Set(const asstring_t &key, double &value);
     bool Get(const asstring_t &key, double &value) const;
 
+	void Set(const asstring_t &key, asstring_t *value);
+	bool Get(const asstring_t &key, asstring_t *value) const;
+
 	// Returns true if the key is set
     bool Exists(const asstring_t &key) const;
 	bool IsEmpty() const;
