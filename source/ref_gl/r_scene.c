@@ -266,6 +266,7 @@ void R_RenderScene( const refdef_t *fd )
 		if( r_soft_particles->integer && glConfig.ext.framebuffer_blit && ( rsh.screenTexture != NULL ) ) {
 			rn.fbColorAttachment = rsh.screenTexture;
 			rn.fbDepthAttachment = rsh.screenDepthTexture;
+			rn.renderFlags |= RF_SOFT_PARTICLES;
 			fbFlags |= 1;
 		}
 		if( ( fd->rdflags & RDF_WEAPONALPHA ) && ( rsh.screenWeaponTexture != NULL ) ) {

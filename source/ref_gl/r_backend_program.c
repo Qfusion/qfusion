@@ -731,8 +731,8 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 
 	RP_UpdateSoftParticlesUniforms( program, r_soft_particles_scale->value );
 }
-/*
 
+/*
 * RB_UpdateFogUniforms
 */
 static void RB_UpdateFogUniforms( int program, const mfog_t *fog )
@@ -1693,7 +1693,9 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	features |= RB_AutospriteProgramFeatures();
 	features |= RB_InstancedArraysProgramFeatures();
 	
-	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) && rsh.screenDepthTextureCopy ) {
+	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) 
+		&& rsh.screenDepthTextureCopy
+		&& ( rb.renderFlags & RF_SOFT_PARTICLES ) ) {
 		features |= GLSL_SHADER_COMMON_SOFT_PARTICLE;
 	}
 
