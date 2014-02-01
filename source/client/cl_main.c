@@ -936,9 +936,13 @@ void CL_Changing_f( void )
 	if( cls.demo.recording )
 		CL_Stop_f();
 
-	Com_Printf( "CL:Changing\n" );
+	Com_DPrintf( "CL:Changing\n" );
 
 	memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
+
+	// ignore snapshots from previous connection
+	cl.pendingSnapNum = cl.currentSnapNum = cl.receivedSnapNum = 0;
+
 	CL_SetClientState( CA_CONNECTED ); // not active anymore, but not disconnected
 }
 
