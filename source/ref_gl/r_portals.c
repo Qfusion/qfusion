@@ -166,6 +166,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	qboolean mirror, refraction = qfalse;
 	image_t *captureTexture;
 	int captureTextureId = -1;
+	int prevRenderFlags = 0;
 	qboolean doReflection, doRefraction;
 	image_t *portalTexures[2] = { NULL, NULL };
 
@@ -255,6 +256,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 		best->rtype = NUM_RTYPES;
 	}
 
+	prevRenderFlags = rn.renderFlags;
 	if( !R_PushRefInst() ) {
 		return;
 	}
@@ -335,6 +337,7 @@ setup_and_render:
 			rn.renderFlags |= RF_NOENTS;
 	}
 
+	rn.renderFlags |= (prevRenderFlags & RF_SOFT_PARTICLES);
 	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER );
 
 	rn.shadowGroup = NULL;
@@ -444,7 +447,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	oldcluster = rf.viewcluster;
 	oldarea = rf.viewarea;
 
-	rn.renderFlags = ( rn.renderFlags|RF_SKYPORTALVIEW );
+	rn.renderFlags = ( rn.renderFlags|RF_SKYPORTALVIEW|RF_SOFT_PARTICLES );
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
 	rn.farClip = R_DefaultFarClip();
