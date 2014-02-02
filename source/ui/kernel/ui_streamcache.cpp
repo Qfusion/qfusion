@@ -284,6 +284,7 @@ std::string StreamCache::CacheFileForUrl( const std::string url, bool noCache )
 
 	std::string cacheName = std::string( WSW_UI_STREAMCACHE_DIR ) + "/" + outstream.str() + 
 		(noCache ? "_0" : "_1") + "_" + fileName;
+	std::transform(cacheName.begin(), cacheName.end(), cacheName.begin(), ::tolower);
 
 	// link exists?
 	std::string linkName = cacheName + LINK_EXTENSION;
