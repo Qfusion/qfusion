@@ -2,11 +2,12 @@
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
+#include <X11/XKBlib.h>
 
-#include <X11/extensions/Xxf86dga.h>
 #include <X11/extensions/xf86vmode.h>
 #include <X11/extensions/Xinerama.h>
 #include <X11/extensions/Xrandr.h>
+#include <X11/extensions/XInput2.h>
 
 #include <GL/glx.h>
 
