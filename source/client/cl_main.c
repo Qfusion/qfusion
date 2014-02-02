@@ -3011,8 +3011,6 @@ void CL_Init( void )
 
 	CL_InitAsyncStream();
 
-	CL_SoundModule_Init( qtrue ); // sound must be initialized after window is created
-
 	CL_InitMedia();
 
 	CL_UIModule_ForceMenuOn();
