@@ -306,15 +306,6 @@ int Sys_XTimeToSysTime( unsigned long xtime )
 }
 
 /*
-* Sys_EvdevTimeToSysTime
-* 
-* Sub-frame timing of events returned by evdev.
-*/
-int Sys_EvdevTimeToSysTime( struct timeval *tp )
-{
-	return ( ( tp->tv_sec - sys_secbase )*1000000 + tp->tv_usec ) / 1000;
-}
-/*
 * Sys_Sleep
 */
 void Sys_Sleep( unsigned int millis )

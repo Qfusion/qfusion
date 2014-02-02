@@ -266,7 +266,7 @@ else
 LIB=lib
 endif
 
-LDFLAGS_CLIENT=-lz -lX11 -lXext -lXxf86dga -lrt $(shell curl-config --libs)
+LDFLAGS_CLIENT=-lz -lX11 -lXext -lXi -lrt $(shell curl-config --libs)
 LDFLAGS_DED=-lz $(shell curl-config --libs)
 LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lz $(shell curl-config --libs)
@@ -395,7 +395,7 @@ RESFILES_CLIENT += win32/qfusion.rc
 else
 ifeq ($(OS),Darwin)
 else
-CFILES_CLIENT += unix/unix_input.c
+CFILES_CLIENT += unix/unix_input.c unix/keysym2ucs.c
 endif
 CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c unix/unix_threads.c
 endif
