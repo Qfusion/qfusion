@@ -456,6 +456,8 @@ const char *Sys_GetPreferredLanguage( void )
 
 	Q_strncpyz( lang, locale, sizeof( lang ) ); 
 
+	setlocale( LC_ALL, "C" );
+
 	p = strchr( lang, '-' );
 	if( p ) { *p = '\0'; }
 	p = strchr( lang, '_' );
