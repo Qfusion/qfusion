@@ -544,20 +544,20 @@ void IN_Init( void )
 
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 
-	input_inited = qtrue;
-	input_active = qfalse; // will be activated by IN_Frame if necessary
+	input_active = qfalse;
 
 	if( !XQueryExtension( x11display.dpy, "XInputExtension", &xi_opcode, &event, &error ) ) {
 		Com_Printf( "ERROR: XInput Extension not available.\n" );
 		return;
 	}
-
-	if( XIQueryVersion (x11display.dpy, &xi2_major, &xi2_minor ) == BadRequest ) {
+	if( XIQueryVersion( x11display.dpy, &xi2_major, &xi2_minor ) == BadRequest ) {
 		Com_Printf( "ERROR: Can't initialize XInput2. Server supports %d.%d\n", xi2_major, xi2_minor );
-	} else {
-		Com_Printf( "Successfully initialized XInput2 %d.%d\n", xi2_major, xi2_minor );
-		install_grabs();
+		return;
 	}
+
+	input_inited = qtrue;
+	Com_Printf( "Successfully initialized XInput2 %d.%d\n", xi2_major, xi2_minor );
+	install_grabs();
 }
 
 void IN_Shutdown( void )
