@@ -30,69 +30,79 @@ static int asFunc_abs( int x )
 	return abs( x );
 }
 
-static float asFunc_fabs( float x )
+static double asFunc_fabs( double x )
 {
 	return fabs( x );
 }
 
-static float asFunc_log( float x )
+static double asFunc_log( double x )
 {
-	return (float)log( x );
+	return log( x );
 }
 
-static float asFunc_pow( float x, float y )
+static double asFunc_pow( double x, double y )
 {
-	return (float)pow( x, y );
+	return pow( x, y );
 }
 
-static float asFunc_cos( float x )
+static double asFunc_cos( double x )
 {
-	return (float)cos( x );
+	return cos( x );
 }
 
-static float asFunc_sin( float x )
+static double asFunc_sin( double x )
 {
-	return (float)sin( x );
+	return sin( x );
 }
 
-static float asFunc_tan( float x )
+static double asFunc_tan( double x )
 {
-	return (float)tan( x );
+	return tan( x );
 }
 
-static float asFunc_acos( float x )
+static double asFunc_acos( double x )
 {
-	return (float)acos( x );
+	return acos( x );
 }
 
-static float asFunc_asin( float x )
+static double asFunc_asin( double x )
 {
-	return (float)asin( x );
+	return asin( x );
 }
 
-static float asFunc_atan( float x )
+static double asFunc_atan( double x )
 {
-	return (float)atan( x );
+	return atan( x );
 }
 
-static float asFunc_atan2( float x, float y )
+static double asFunc_atan2( double x, double y )
 {
-	return (float)atan2( x, y );
+	return atan2( x, y );
 }
 
-static float asFunc_sqrt( float x )
+static double asFunc_sqrt( double x )
 {
-	return (float)sqrt( x );
+	return sqrt( x );
 }
 
-static float asFunc_ceil( float x )
+static double asFunc_ceil( double x )
 {
-	return (float)ceil( x );
+	return ceil( x );
 }
 
-static float asFunc_floor( float x )
+static double asFunc_floor( double x )
 {
-	return (float)floor( x );
+	return floor( x );
+}
+
+static double asFunc_Random( void )
+{
+	return random();
+}
+
+static double asFunc_BRandom( double min, double max )
+{
+	return brandom( min, max );
 }
 
 void PreRegisterMathAddon( asIScriptEngine *engine )
@@ -104,30 +114,32 @@ void RegisterMathAddon( asIScriptEngine *engine )
 	const struct
 	{
 		const char *declaration;
-		void *pointer;
+		asSFuncPtr ptr;
 	}
 	math_asGlobFuncs[] =
 	{
-		{ "int abs( int x )", (void *)asFunc_abs },
-		{ "float abs( float x )", (void *)asFunc_fabs },
-		{ "float log( float x )", (void *)asFunc_log },
-		{ "float pow( float x, float y )", (void *)asFunc_pow },
-		{ "float cos( float x )", (void *)asFunc_cos },
-		{ "float sin( float x )", (void *)asFunc_sin },
-		{ "float tan( float x )", (void *)asFunc_tan },
-		{ "float acos( float x )", (void *)asFunc_acos },
-		{ "float asin( float x )", (void *)asFunc_asin },
-		{ "float atan( float x )", (void *)asFunc_atan },
-		{ "float atan2( float x, float y )", (void *)asFunc_atan2 },
-		{ "float sqrt( float x )", (void *)asFunc_sqrt },
-		{ "float ceil( float x )", (void *)asFunc_ceil },
-		{ "float floor( float x )", (void *)asFunc_floor },
+		{ "int abs( int x )", asFUNCTION(asFunc_abs) },
+		{ "double abs( double x )", asFUNCTION(asFunc_fabs) },
+		{ "double log( double x )", asFUNCTION(asFunc_log) },
+		{ "double pow( double x, double y )", asFUNCTION(asFunc_pow) },
+		{ "double cos( double x )", asFUNCTION(asFunc_cos) },
+		{ "double sin( double x )", asFUNCTION(asFunc_sin) },
+		{ "double tan( double x )", asFUNCTION(asFunc_tan) },
+		{ "double acos( double x )", asFUNCTION(asFunc_acos) },
+		{ "double asin( double x )", asFUNCTION(asFunc_asin) },
+		{ "double atan( double x )", asFUNCTION(asFunc_atan) },
+		{ "double atan2( double x, double y )", asFUNCTION(asFunc_atan2) },
+		{ "double sqrt( double x )", asFUNCTION(asFunc_sqrt) },
+		{ "double ceil( double x )", asFUNCTION(asFunc_ceil) },
+		{ "double floor( double x )", asFUNCTION(asFunc_floor) },
+		{ "double random()", asFUNCTION(asFunc_Random) },
+		{ "double brandom( double min, double max )", asFUNCTION(asFunc_BRandom) },
 
 		{ NULL, NULL }
 	}, *func;
 	int r;
 
 	for( func = math_asGlobFuncs; func->declaration; func++ ) {
-		r = engine->RegisterGlobalFunction( func->declaration, asFUNCTION( func->pointer ), asCALL_CDECL ); assert( r >= 0 );
+		r = engine->RegisterGlobalFunction( func->declaration, func->ptr, asCALL_CDECL ); assert( r >= 0 );
 	}
 }
