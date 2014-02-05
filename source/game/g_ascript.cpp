@@ -2731,16 +2731,6 @@ static void asFunc_G_Sound( edict_t *owner, int channel, int soundindex, float a
 	G_Sound( owner, channel, soundindex, attenuation );
 }
 
-static float asFunc_Random( void )
-{
-	return random();
-}
-
-static float asFunc_BRandom( float min, float max )
-{
-	return brandom( min, max );
-}
-
 static int asFunc_DirToByte( asvec3_t *vec )
 {
 	if( !vec )
@@ -3210,8 +3200,6 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "void G_GlobalSound( int channel, int soundindex )", asFUNCTION(asFunc_G_GlobalSound), NULL },
 	{ "void G_LocalSound( Client @, int channel, int soundIndex )", asFUNCTION(asFunc_G_LocalSound), NULL },
 	{ "void G_AnnouncerSound( Client @, int soundIndex, int team, bool queued, Client @ )", asFUNCTION(asFunc_G_AnnouncerSound), NULL },
-	{ "float random()",asFUNCTION(asFunc_Random), NULL },
-	{ "float brandom( float min, float max )", asFUNCTION(asFunc_BRandom), NULL },
 	{ "int G_DirToByte( const Vec3 &in origin )", asFUNCTION(asFunc_DirToByte), NULL },
 	{ "int G_PointContents( const Vec3 &in origin )", asFUNCTION(asFunc_PointContents), NULL },
 	{ "bool G_InPVS( const Vec3 &in origin1, const Vec3 &in origin2 )", asFUNCTION(asFunc_InPVS), NULL },
