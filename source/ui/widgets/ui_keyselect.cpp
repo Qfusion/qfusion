@@ -143,23 +143,28 @@ using namespace Rocket::Core;
 		{
 			text = "???";
 		}
-		else if( FirstKeyIsBound() )
-		{
-			std::string b0 = trap::Key_KeynumToString( boundKey[0] );
-			if( focusMode ) {
-				text = va( trap::L10n_TranslateString( "%s or %s" ), b0.c_str(), "???" );
-			}
-			else {
-				text = b0;
-			}
-		}
-		else if( KeysAreBound() )
-		{
-			std::string b0 = trap::Key_KeynumToString( boundKey[0] );
-			std::string b1 = trap::Key_KeynumToString( boundKey[1] );
-			text += va( trap::L10n_TranslateString( "%s or %s" ), b0.c_str(), b1.c_str() );
-		}
+		else {
+			const char *or_ = "%s or %s";
+			const char *or_l10n = trap::L10n_TranslateString( or_ );
+			if( !or_l10n ) or_l10n = or_;
 
+			if( FirstKeyIsBound() )
+			{
+				std::string b0 = trap::Key_KeynumToString( boundKey[0] );
+				if( focusMode ) {
+					text = va( or_l10n, b0.c_str(), "???" );
+				}
+				else {
+					text = b0;
+				}
+			}
+			else if( KeysAreBound() )
+			{
+				std::string b0 = trap::Key_KeynumToString( boundKey[0] );
+				std::string b1 = trap::Key_KeynumToString( boundKey[1] );
+				text += va( or_l10n, b0.c_str(), b1.c_str() );
+			}
+		}
 		this->SetInnerRML( text.c_str() );
 	}
 
