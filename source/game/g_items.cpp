@@ -93,7 +93,7 @@ void SetRespawn( edict_t *ent, int delay )
 	// megahealth is different
 	if( ( ent->spawnflags & ITEM_TIMED ) && ent->r.owner )
 	{
-		if( ent->item->flags & IT_HEALTH )
+		if( ent->item->type == IT_HEALTH )
 		{
 			ent->think = MegaHealth_think;
 			ent->nextThink = level.time + 1;
