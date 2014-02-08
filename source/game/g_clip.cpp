@@ -1176,6 +1176,8 @@ int GClip_FindBoxInRadius4D( vec3_t org, float rad, int *list, int maxcount, int
 		// make absolute mins and maxs
 		if( !BoundsAndSphereIntersect( check->r.absmin, check->r.absmax, org, rad ) )
 			continue;
+		if( check->s.solid == SOLID_NOT )
+			continue;
 
 		if( listnum < maxcount ) {
 			list[listnum] = touch[i];
