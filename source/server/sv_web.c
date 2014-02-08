@@ -715,7 +715,7 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 		SV_Web_RouteRequest( request, response, &content, &content_length );
 
 		if( response->file ) {
-			Com_DPrintf( "HTTP serving file '%s' to '%s'\n", response->filename, NET_AddressToString( &con->address ) );
+			Com_Printf( "HTTP serving file '%s' to '%s'\n", response->filename, NET_AddressToString( &con->address ) );
 		}
 
 		// serve range requests
