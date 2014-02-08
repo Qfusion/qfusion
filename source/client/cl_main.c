@@ -1622,12 +1622,12 @@ void CL_RequestNextDownload( void )
 			else {
 				// make sure all media assets will be freed
 				FTLIB_TouchAllFonts();
+				CL_UIModule_TouchAllAssets();
 				re.EndRegistration();
 				CL_SoundModule_EndRegistration();
 
 				re.BeginRegistration();
 				CL_SoundModule_BeginRegistration();
-				FTLIB_TouchAllFonts();
 			}
 		}
 
