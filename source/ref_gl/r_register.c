@@ -357,7 +357,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION_EXT( ARB, shading_language_100, 1, true, true, NULL, shader_objects )
 
 	// meta GLSL extensions
-	,GL_EXTENSION_EXT( \0, GLSL, 1, false, true, &gl_ext_GLSL_ARB_funcs, shading_language_100 )
+	,GL_EXTENSION_EXT( \0, GLSL, 1, true, true, &gl_ext_GLSL_ARB_funcs, shading_language_100 )
 	,GL_EXTENSION_EXT( \0, GLSL130, 1, false, false, &gl_ext_GLSL_ARB130_funcs, GLSL )
 
 	// memory info
