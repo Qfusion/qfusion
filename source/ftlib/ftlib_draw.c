@@ -203,8 +203,8 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 	trap_R_Scissor( 
 		max( xmin, oldscissor.x ),
 		max( ymin, oldscissor.y ), 
-		min( xmax - xmin, oldscissor.w ), 
-		min( ymax - ymin, oldscissor.h ) );
+		min( xmax - xmin + 1, oldscissor.w ), 
+		min( ymax - ymin + 1, oldscissor.h ) );
 
 	Vector4Copy( color, scolor );
 
