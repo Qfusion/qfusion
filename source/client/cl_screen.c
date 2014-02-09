@@ -98,13 +98,27 @@ static void SCR_RegisterSystemFonts( void )
 	// register system fonts
 	con_fontSystemFamilyName = con_fontSystemFamily->string;
 	if( !con_fontSystemSmallSize->integer ) {
-		Cvar_ForceSet( con_fontSystemSmallSize->name, con_fontSystemSmallSize->dvalue );
+		Cvar_SetValue( con_fontSystemSmallSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE );
+	} else if( con_fontSystemSmallSize->integer > DEFAULT_SYSTEM_FONT_SMALL_SIZE * 2 ) {
+		Cvar_SetValue( con_fontSystemSmallSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE * 2 );
+	} else if( con_fontSystemSmallSize->integer < DEFAULT_SYSTEM_FONT_SMALL_SIZE / 2 ) {
+		Cvar_SetValue( con_fontSystemSmallSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE / 2 );
 	}
+
 	if( !con_fontSystemMediumSize->integer ) {
-		Cvar_ForceSet( con_fontSystemMediumSize->name, con_fontSystemMediumSize->dvalue );
+		Cvar_SetValue( con_fontSystemMediumSize->name, DEFAULT_SYSTEM_FONT_MEDIUM_SIZE );
+	} else if( con_fontSystemMediumSize->integer > DEFAULT_SYSTEM_FONT_MEDIUM_SIZE * 2 ) {
+		Cvar_SetValue( con_fontSystemMediumSize->name, DEFAULT_SYSTEM_FONT_MEDIUM_SIZE * 2 );
+	} else if( con_fontSystemMediumSize->integer < DEFAULT_SYSTEM_FONT_MEDIUM_SIZE / 2 ) {
+		Cvar_SetValue( con_fontSystemMediumSize->name, DEFAULT_SYSTEM_FONT_MEDIUM_SIZE / 2 );
 	}
+
 	if( !con_fontSystemBigSize->integer ) {
-		Cvar_ForceSet( con_fontSystemBigSize->name, con_fontSystemBigSize->dvalue );
+		Cvar_SetValue( con_fontSystemBigSize->name,DEFAULT_SYSTEM_FONT_BIG_SIZE );
+	} else if( con_fontSystemBigSize->integer > DEFAULT_SYSTEM_FONT_BIG_SIZE * 2 ) {
+		Cvar_SetValue( con_fontSystemBigSize->name, DEFAULT_SYSTEM_FONT_BIG_SIZE * 2 );
+	} else if( con_fontSystemBigSize->integer < DEFAULT_SYSTEM_FONT_BIG_SIZE / 2 ) {
+		Cvar_SetValue( con_fontSystemBigSize->name, DEFAULT_SYSTEM_FONT_BIG_SIZE / 2 );
 	}
 
 	cls.fontSystemSmall = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, 
