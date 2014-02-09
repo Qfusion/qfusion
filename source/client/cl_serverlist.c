@@ -670,7 +670,7 @@ void CL_GetServers_f( void )
 		localQueryTimeStamp = Sys_Milliseconds();
 
 		// send a broadcast packet
-		Com_Printf( "pinging broadcast...\n" );
+		Com_DPrintf( "pinging broadcast...\n" );
 
 		// erm... modname isn't sent in local queries?
 
