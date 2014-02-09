@@ -38,6 +38,8 @@ cvar_t *r_novis;
 cvar_t *r_nocull;
 cvar_t *r_lerpmodels;
 cvar_t *r_mapoverbrightbits;
+cvar_t *r_brightness;
+
 cvar_t *r_dynamiclight;
 cvar_t *r_coronascale;
 cvar_t *r_detailtextures;
@@ -680,6 +682,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_polyblend = ri.Cvar_Get( "r_polyblend", "1", 0 );
 
 	r_mapoverbrightbits = ri.Cvar_Get( "r_mapoverbrightbits", "2", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_brightness = ri.Cvar_Get( "r_brightness", "0", CVAR_ARCHIVE );
 
 	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "1", CVAR_ARCHIVE );
 

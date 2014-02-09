@@ -780,7 +780,7 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 	t1 *= v_scale;
 	t2 *= v_scale;
 
-	R_DrawStretchQuick( x, y, w, h, s1, t1, s2, t2, colorWhite, GLSL_PROGRAM_TYPE_NONE, rsh.rawTexture, qfalse );
+	R_DrawStretchQuick( x, y, w, h, s1, t1, s2, t2, colorWhite, GLSL_PROGRAM_TYPE_NONE, rsh.rawTexture, 0 );
 }
 
 /*
@@ -890,7 +890,7 @@ void R_DrawStretchRawYUV( int x, int y, int w, int h,
 * R_DrawStretchImage
 */
 void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
-	const vec4_t color, int program_type, image_t *image, qboolean blend )
+	const vec4_t color, int program_type, image_t *image, int blendMask )
 {
 	static char *s_name = "$builtinimage";
 	static shaderpass_t p;
@@ -910,7 +910,7 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 	p.alphagen.args = &rgba[3];
 	p.tcgen = TC_GEN_BASE;
 	p.images[0] = image;
-	p.flags = blend ? GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA : 0;
+	p.flags = blendMask;
 	p.program_type = program_type;
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, color, &s );
@@ -985,6 +985,28 @@ static void R_PolyBlend( void )
 
 	R_Set2DMode( qtrue );
 	R_DrawStretchPic( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1, rsc.refdef.blend, rsh.whiteShader );
+	R_EndStretchBatch();
+}
+
+/*
+* R_ApplyBrightness
+*/
+static void R_ApplyBrightness( void )
+{
+	float c;
+	vec4_t color;
+
+	c = r_brightness->value;
+	if( c < 0.005 )
+		return;
+	else if( c > 1.0 )
+		c = 1.0;
+
+	color[0] = color[1] = color[2] = c, color[3] = 1;
+
+	R_Set2DMode( qtrue );
+	R_DrawStretchQuick( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1,
+		color, GLSL_PROGRAM_TYPE_NONE, rsh.whiteTexture, GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ONE );
 	R_EndStretchBatch();
 }
 
@@ -1630,6 +1652,8 @@ void R_EndFrame( void )
 
 	R_PolyBlend();
 	
+	R_ApplyBrightness();
+
 	// reset the 2D state so that the mode will be 
 	// properly set back again in R_BeginFrame
 	R_Set2DMode( qfalse );
