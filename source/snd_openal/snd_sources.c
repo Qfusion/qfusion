@@ -96,12 +96,16 @@ static void source_kill( src_t *src )
 		return;
 
 	if( src->isActive )
+	{
 		qalSourceStop( source );
-
-	// Un-queue all queued buffers
-	qalGetSourcei( source, AL_BUFFERS_QUEUED, &numbufs );
-	while( numbufs-- ) {
-		qalSourceUnqueueBuffers( source, 1, &buffer );
+	}
+	else
+	{
+		// Un-queue all queued buffers
+		qalGetSourcei( source, AL_BUFFERS_QUEUED, &numbufs );
+		while( numbufs-- ) {
+			qalSourceUnqueueBuffers( source, 1, &buffer );
+		}
 	}
 
 	// Un-queue all processed buffers
