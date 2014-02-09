@@ -237,6 +237,10 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		portalSurface_t *portalSurface = NULL;
 
 		if( shader->flags & SHADER_PORTAL ) {
+			// draw portals in front-to-back order
+			dist = 1024 - dist / 100.0f; 
+			if( dist < 1 ) dist = 1;
+
 			portalSurface = R_AddPortalSurface( e, surf->mesh, surf->mins, surf->maxs, shader );
 		}
 
