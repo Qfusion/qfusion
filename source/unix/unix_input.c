@@ -39,8 +39,6 @@ static int xi_opcode;
 
 static int mx, my;
 
-static qboolean go_fullscreen_on_focus = qfalse;
-
 int Sys_XTimeToSysTime( unsigned long xtime );
 
 //============================================
@@ -352,9 +350,6 @@ static void handle_key(XGenericEventCookie *cookie)
 	int key = 0;
 	const char *name = XLateKey(keycode, &key);
 
-	if (ev->flags & XIKeyRepeat)
-		return;
-
 	if (key == K_SHIFT)
 		shift_down = down;
 
@@ -408,7 +403,6 @@ static void handle_cookie(XGenericEventCookie *cookie)
 static void HandleEvents( void )
 {
 	XEvent event;
-	qboolean was_focused = focus;
 
 	assert( x11display.dpy && x11display.win );
 
@@ -427,19 +421,24 @@ static void HandleEvents( void )
 		switch( event.type )
 		{
 		case FocusIn:
-			if( x11display.ic )
-				XSetICFocus(x11display.ic);
-			if( !focus )
-			{
-				focus = qtrue;
+			if( event.xfocus.mode == NotifyGrab || event.xfocus.mode == NotifyUngrab ) {
+				// Someone is handling a global hotkey, ignore it
+				continue;
 			}
+			focus = qtrue;
 			break;
 
 		case FocusOut:
-			if( x11display.ic )
-				XUnsetICFocus(x11display.ic);
+			if( event.xfocus.mode == NotifyGrab || event.xfocus.mode == NotifyUngrab ) {
+				// Someone is handling a global hotkey, ignore it
+				continue;
+			}
 			if( focus )
 			{
+				if( Cvar_Value( "vid_fullscreen" ) ) {
+					// attempt to restore focus
+					XSetInputFocus( x11display.dpy, x11display.win, RevertToPointerRoot, CurrentTime );
+				}
 				Key_ClearStates();
 				focus = qfalse;
 				shift_down = 0;
@@ -474,26 +473,6 @@ static void HandleEvents( void )
 			break;
 		}
 	}
-
-	// set fullscreen or windowed mode upon focus in/out events if:
-	//  a) lost focus in fullscreen -> windowed
-	//  b) received focus -> fullscreen if a)
-	if( ( focus != was_focused ) )
-	{
-		if( x11display.features.wmStateFullscreen )
-		{
-			if( !focus && Cvar_Value( "vid_fullscreen" ) )
-			{
-				go_fullscreen_on_focus = qtrue;
-				Cbuf_ExecuteText( EXEC_APPEND, "vid_fullscreen 0\n" );
-			}
-			else if( focus && go_fullscreen_on_focus )
-			{
-				go_fullscreen_on_focus = qfalse;
-				Cbuf_ExecuteText( EXEC_APPEND, "vid_fullscreen 1\n" );
-			}
-		}
-	}
 }
 
 /*****************************************************************************/
@@ -518,6 +497,8 @@ void IN_JoyMove( usercmd_t *cmd )
 void IN_Activate( qboolean active )
 {
 	if( !input_inited )
+		return;
+	if( input_active == active )
 		return;
 
 	assert( x11display.dpy && x11display.win );
@@ -555,8 +536,9 @@ void IN_Init( void )
 		return;
 	}
 
-	input_inited = qtrue;
 	Com_Printf( "Successfully initialized XInput2 %d.%d\n", xi2_major, xi2_minor );
+
+	input_inited = qtrue;
 	install_grabs();
 }
 
@@ -566,7 +548,6 @@ void IN_Shutdown( void )
 		return;
 
 	uninstall_grabs();
-
 	input_inited = qfalse;
 }
 
@@ -578,19 +559,23 @@ void IN_Restart( void )
 
 void IN_Frame( void )
 {
+	qboolean in_active = qfalse;
+
 	if( !input_inited )
 		return;
 
-	if( ( ( x11display.features.wmStateFullscreen || !Cvar_Value( "vid_fullscreen" ) ) && ( !focus || ( ( cls.key_dest == key_console ) && !in_grabinconsole->integer ) ) ) )
-	{
-		if( input_active )
-			IN_Activate( qfalse );
+	if( focus ) {
+		if( !Cvar_Value( "vid_fullscreen" ) && ( ( cls.key_dest == key_console ) && !in_grabinconsole->integer ) )
+		{
+			in_active = qfalse;
+		}
+		else
+		{
+			in_active = qtrue;
+		}
 	}
-	else
-	{
-		if( !input_active )
-			IN_Activate( qtrue );
-	}
+
+	IN_Activate( in_active );
 
 	HandleEvents();
 }
