@@ -982,6 +982,11 @@ static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, im
 		}
 	}
 
+	// use blank image if the normalmap is too tiny due to high picmip value
+	if( images[0]->upload_width < 2 || images[0]->upload_height < 2 ) {
+		images[0] = rsh.blankBumpTexture;
+	}
+
 	// load glossmap image
 	if( r_lighting_specular->integer ) {
 		images[1] = R_FindImage( name, "_gloss", addFlags & ~IT_HEIGHTMAP, 0 );
@@ -1186,16 +1191,23 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 		}
 		else if( !pass->images[1] )
 		{
-			pass->images[1] = Shader_FindImage( shader, token, flags, bumpScale );
-			if( !pass->images[1] )
+			image_t *normalmap;
+			normalmap = Shader_FindImage( shader, token, flags|IT_NORMALMAP, bumpScale );
+			if( !normalmap )
 			{
 				ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: missing normalmap image %s in shader %s.\n", token, shader->name );
-				pass->images[1] = rsh.blankBumpTexture;
+				normalmap = rsh.blankBumpTexture;
 			}
 			else
 			{
+				// use blank image if the normalmap is too tiny due to high picmip value
+				if( normalmap->upload_width < 2 || normalmap->upload_height < 2 ) {
+					normalmap = rsh.blankBumpTexture;
+				}
 				pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
 			}
+
+			pass->images[1] = normalmap;
 			flags &= ~IT_HEIGHTMAP;
 		}
 		else if( !pass->images[2] )

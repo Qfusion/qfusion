@@ -461,23 +461,48 @@ static int R_HeightmapToNormalmap( const qbyte *in, qbyte *out, int width, int h
 * note: if given odd width/height this discards the last row/column of
 * pixels, rather than doing a proper box-filter scale down (LordHavoc)
 */
-static void R_MipMap( qbyte *in, int width, int height, int samples )
+static void R_MipMap( qbyte *in, int width, int height, int samples, qboolean normalmap )
 {
 	int i, j, k, samples2;
 	qbyte *out;
 
+	if( samples > 4 ) {
+		samples = 4;
+	}
 	// width <<= 2;
 	width *= samples;
 	height >>= 1;
 	samples2 = samples << 1;
 
-	out = in;
-	for( i = 0; i < height; i++, in += width )
-	{
-		for( j = 0; j < width; j += samples2, out += samples, in += samples2 )
+	if( normalmap ) {
+		vec4_t v;
+		
+		// ensures that generated sampled normals are of unit length
+		out = in;
+		for( i = 0; i < height; i++, in += width )
 		{
-			for( k = 0; k < samples; k++ )
-				out[k] = ( in[k] + in[k+samples] + in[width+k] + in[width+k+samples] )>>2;
+			for( j = 0; j < width; j += samples2, out += samples, in += samples2 )
+			{
+				for( k = 0; k < samples; k++ ) {
+					out[k] = ( in[k] + in[k+samples] + in[width+k] + in[width+k+samples] )>>2;
+					v[k] = (out[k] - 128) / 255.0f;
+				}
+				VectorNormalize( v );
+				for( k = 0; k < 3; k++ ) {
+					out[k] = (v[k] + 1) * 127.5f;
+				}
+			}
+		}
+	}
+	else {
+		out = in;
+		for( i = 0; i < height; i++, in += width )
+		{
+			for( j = 0; j < width; j += samples2, out += samples, in += samples2 )
+			{
+				for( k = 0; k < samples; k++ )
+					out[k] = ( in[k] + in[k+samples] + in[width+k] + in[width+k+samples] )>>2;
+			}
 		}
 	}
 }
@@ -699,7 +724,7 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 				h = scaledHeight;
 				while( w > 1 || h > 1 )
 				{
-					R_MipMap( mip, w, h, samples );
+					R_MipMap( mip, w, h, samples, ( flags & IT_NORMALMAP ) ? qtrue : qfalse );
 
 					w >>= 1;
 					h >>= 1;
