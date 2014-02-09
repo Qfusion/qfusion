@@ -388,8 +388,10 @@ setup_and_render:
 		Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 	}
 	
-	rn.refdef.fov_x = 90;
-	rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
+	if( !mirror ) {
+		rn.refdef.fov_x = 90;
+		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
+	}
 
 	VectorCopy( origin, rn.refdef.vieworg );
 	Matrix3_Copy( axis, rn.refdef.viewaxis );
@@ -408,7 +410,7 @@ done:
 	portalSurface->texures[0] = portalTexures[0];
 	portalSurface->texures[1] = portalTexures[1];
 
-	R_PopRefInst( 0 );
+	R_PopRefInst( rn.fbDepthAttachment != NULL ? 0 : GL_DEPTH_BUFFER_BIT );
 }
 
 /*
