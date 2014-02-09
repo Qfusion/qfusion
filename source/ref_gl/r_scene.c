@@ -177,7 +177,7 @@ void R_AddLightStyleToScene( int style, float r, float g, float b )
 * R_BlitTextureToScrFbo
 */
 static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo, 
-	int program_type, const vec4_t color, qboolean blend )
+	int program_type, const vec4_t color, int blendMask )
 {
 	int x, y;
 	int w, h;
@@ -212,7 +212,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		w, h, 
 		(float)(x)/image->upload_width, 1.0 - (float)(y)/image->upload_height, 
 		(float)(x+w)/image->upload_width, 1.0 - (float)(y+h)/image->upload_height,
-		color, program_type, image, blend );
+		color, program_type, image, blendMask );
 
 	// restore 2D viewport and scissor
 	RB_Viewport( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
@@ -322,7 +322,7 @@ void R_RenderScene( const refdef_t *fd )
 		R_BlitTextureToScrFbo( fd, rn.fbColorAttachment, 
 			fbFlags & 4 ? rsh.screenFxaaCopy->fbo : 0, 
 			GLSL_PROGRAM_TYPE_NONE, 
-			colorWhite, qfalse );
+			colorWhite, 0 );
 	}
 
 	if( fbFlags & 2 ) {
@@ -333,7 +333,7 @@ void R_RenderScene( const refdef_t *fd )
 		R_BlitTextureToScrFbo( fd, rsh.screenWeaponTexture, 
 			fbFlags & 4 ? rsh.screenFxaaCopy->fbo : 0, 
 			GLSL_PROGRAM_TYPE_NONE, 
-			color, qtrue );
+			color, GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 	}
 
 	// blit FXAA to default framebuffer
@@ -341,7 +341,7 @@ void R_RenderScene( const refdef_t *fd )
 		// blend to FXAA or default framebuffer
 		R_BlitTextureToScrFbo( fd, rsh.screenFxaaCopy, 0, 
 			GLSL_PROGRAM_TYPE_FXAA, 
-			colorWhite, qfalse );
+			colorWhite, 0 );
 	}
 }
 

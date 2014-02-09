@@ -306,6 +306,7 @@ extern cvar_t *r_novis;
 extern cvar_t *r_nocull;
 extern cvar_t *r_lerpmodels;
 extern cvar_t *r_mapoverbrightbits;
+extern cvar_t *r_brightness;
 
 extern cvar_t *r_dynamiclight;
 extern cvar_t *r_coronascale;
@@ -553,7 +554,7 @@ void		R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, float s1, float t1
 void		R_DrawStretchRawYUV( int x, int y, int w, int h, 
 	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
 void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
-	const vec4_t color, int program_type, image_t *image, qboolean blend );
+	const vec4_t color, int program_type, image_t *image, int blendMask );
 
 #define NUM_CUSTOMCOLORS	16
 void		R_InitCustomColors( void );
