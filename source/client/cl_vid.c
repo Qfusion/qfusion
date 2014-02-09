@@ -491,6 +491,7 @@ static qboolean VID_LoadRefresh( const char *name )
 void VID_CheckChanges( void )
 {
 	rserr_t err;
+	qboolean vid_ref_was_active = vid_ref_active;
 	qboolean verbose = vid_ref_verbose || vid_ref_sound_restart;
 
 	if( win_noalttab->modified ) {
@@ -577,7 +578,7 @@ load_refresh:
 		if( err != rserr_ok ) {
 			Sys_Error( "VID_ChangeMode() failed with code %i", err );
 		}
-		vid_ref_active = qtrue;	
+		vid_ref_active = qtrue;
 
 		// stop and free all sounds
 		CL_SoundModule_Init( verbose );
@@ -589,6 +590,10 @@ load_refresh:
 
 		// load common localization strings
 		L10n_LoadLangPOFile( "common", "l10n" );
+
+		if( vid_ref_was_active ) {
+			IN_Restart();
+		}
 
 		CL_InitMedia();
 
