@@ -37,7 +37,6 @@ cvar_t *r_lightmap;
 cvar_t *r_novis;
 cvar_t *r_nocull;
 cvar_t *r_lerpmodels;
-cvar_t *r_ignorehwgamma;
 cvar_t *r_mapoverbrightbits;
 cvar_t *r_dynamiclight;
 cvar_t *r_coronascale;
