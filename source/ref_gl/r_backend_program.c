@@ -1754,6 +1754,9 @@ static void RB_UpdateVertexAttribs( void )
 	if( rb.currentEntity->outlineHeight ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
+	if( ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+		vattribs |= VATTRIB_NORMAL_BIT;
+	}
 	rb.currentVAttribs = vattribs;
 }
 
