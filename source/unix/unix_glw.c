@@ -115,6 +115,7 @@ static qboolean _xf86_XineramaFindBest( int *x, int *y, int *width, int *height,
 	assert( _xf86_xinerama_supported );
 
 	vid_multiscreen_head = ri.Cvar_Get( "vid_multiscreen_head", "0", CVAR_ARCHIVE );
+	vid_multiscreen_head->modified = qfalse;
 
 	if( vid_multiscreen_head->integer == 0 )
 		return qfalse;
@@ -561,12 +562,26 @@ static void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
 	XEvent xev;
 	Atom wm_state;
 	Atom wm_fullscreen;
+	Atom atoms[1];
+	int count = 0;
 
 	if( !x11display.features.wmStateFullscreen )
 		return;
 
-	wm_state = XInternAtom( x11display.dpy, "_NET_WM_STATE", False );
-	wm_fullscreen = XInternAtom( x11display.dpy, "_NET_WM_STATE_FULLSCREEN", False );
+	wm_state = XInternAtom( x11display.dpy, "_NET_WM_STATE", True );
+	wm_fullscreen = XInternAtom( x11display.dpy, "_NET_WM_STATE_FULLSCREEN", True );
+
+	if( fullscreen ) {
+	    atoms[count++] = wm_fullscreen;
+	}
+
+	if( count > 0 ) {
+		XChangeProperty( x11display.dpy, x11display.win, wm_state, XA_ATOM, 32,
+			PropModeReplace, (unsigned char *)atoms, count );
+	}
+	else {
+		XDeleteProperty( x11display.dpy, x11display.win, wm_state );
+	}
 
 	memset(&xev, 0, sizeof(xev));
 	xev.type = ClientMessage;
@@ -630,7 +645,7 @@ static void GLimp_SetApplicationIcon( void )
 ** GLimp_SetMode_Real
 * Hack to get rid of the prints when toggling fullscreen
 */
-static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, qboolean fullscreen, qboolean wideScreen, qboolean silent )
+static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, qboolean fullscreen, qboolean wideScreen, qboolean silent, qboolean force )
 {
 	int screen_x, screen_y, screen_width, screen_height, screen_mode;
 	float ratio;
@@ -639,7 +654,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 	XClassHint *class_hint;
 
 	if( x11display.dpy ) {
-		if( (glConfig.width == width) && (glConfig.height == height) && (glConfig.fullScreen != fullscreen) ) {
+		if( !force && (glConfig.width == width) && (glConfig.height == height) && (glConfig.fullScreen != fullscreen) ) {
 			// fullscreen toggle
 			_NETWM_SET_FULLSCREEN( fullscreen );
 			_NETWM_CHECK_FULLSCREEN();
@@ -806,6 +821,8 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 	glConfig.fullScreen = fullscreen;
 	glConfig.wideScreen = wideScreen;
 
+	_NETWM_CHECK_FULLSCREEN();
+
 	if( x11wndproc ) {
 		x11wndproc( &x11display, 0, 0, 0 );
 	}
@@ -819,7 +836,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
 	qboolean fullscreen, qboolean wideScreen )
 {
-	return GLimp_SetMode_Real( width, height, displayFrequency, fullscreen, wideScreen, qfalse );
+	return GLimp_SetMode_Real( width, height, displayFrequency, fullscreen, wideScreen, qfalse, qfalse );
 }
 
 /*
@@ -1021,7 +1038,7 @@ void GLimp_EndFrame( void )
 		cvar_t *vid_multiscreen_head = ri.Cvar_Get( "vid_multiscreen_head", "0", CVAR_ARCHIVE );
 		
 		if( vid_multiscreen_head->modified ) {
-			GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, qtrue, glConfig.wideScreen, qtrue );
+			GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, qtrue, glConfig.wideScreen, qtrue, qtrue );
 			vid_multiscreen_head->modified = qfalse;
 		}
 	}
@@ -1052,5 +1069,4 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short *ramp )
 */
 void GLimp_AppActivate( qboolean active, qboolean destroy )
 {
-	_NETWM_CHECK_FULLSCREEN();
 }
