@@ -1168,12 +1168,7 @@ static void CG_AddPlayerEnt( centity_t *cent )
 		VectorCopy( cent->ent.lightingOrigin, cg.lightingOrigin );
 		if( !cg.view.thirdperson && cent->current.modelindex )
 			cent->ent.renderfx |= RF_VIEWERMODEL; // only draw from mirrors
-		if( ( cent->ent.renderfx & RF_VIEWERMODEL ) && !cg_showSelfShadow->integer )
-			cent->ent.renderfx |= RF_NOSHADOW;
 	}
-
-	if( cg_shadows->integer <= 1 )
-		cent->ent.renderfx |= RF_NOSHADOW;
 
 	// if set to invisible, skip
 	if( !cent->current.modelindex || cent->current.team == TEAM_SPECTATOR )

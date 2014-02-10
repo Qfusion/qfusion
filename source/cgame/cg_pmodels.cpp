@@ -1291,6 +1291,16 @@ void CG_AddPModel( centity_t *cent )
 	cent->ent.model = pmodel->pmodelinfo->model;
 	cent->ent.customShader = NULL;
 	cent->ent.customSkin = pmodel->skin;
+	cent->ent.renderfx |= RF_NOSHADOW;
+
+	if( !( cent->renderfx & RF_NOSHADOW ) && ( cg_showSelfShadow->integer || !( cent->ent.renderfx & RF_VIEWERMODEL ) ) )
+	{
+		if( cg_shadows->integer == 1 ) {
+			CG_AllocShadeBox( cent->current.number, cent->ent.origin, playerbox_stand_mins, playerbox_stand_maxs, NULL );
+		} else {
+			cent->ent.renderfx &= ~RF_NOSHADOW;
+		}
+	}
 
 	if( !( cent->effects & EF_RACEGHOST ) )
 	{
@@ -1306,16 +1316,6 @@ void CG_AddPModel( centity_t *cent )
 	CG_AddShellEffects( &cent->ent, cent->effects );
 
 	CG_AddHeadIcon( cent );
-
-	if( !( cent->renderfx & RF_NOSHADOW ) && ( cg_shadows->integer == 1 ) )
-	{
-		CG_AllocShadeBox( cent->current.number, cent->ent.origin, playerbox_stand_mins, playerbox_stand_maxs, NULL );
-		cent->ent.renderfx |= RF_NOSHADOW;
-	}
-	else if( !cg_shadows->integer )
-	{
-		cent->ent.renderfx |= RF_NOSHADOW;
-	}
 
 	// add teleporter sfx if needed
 	CG_PModel_SpawnTeleportEffect( cent );
