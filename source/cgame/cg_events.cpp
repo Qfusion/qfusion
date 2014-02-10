@@ -687,8 +687,8 @@ static void CG_Fire_RandomPattern( vec3_t start, vec3_t dir, int *seed, int igno
 
 	for( i = 0; i < count; i++ )
 	{
-		r = crandom() * hspread;
-		u = crandom() * vspread;
+		r = Q_crandom( seed ) * hspread;
+		u = Q_crandom( seed ) * vspread;
 
 		water_trace = GS_TraceBullet( &trace, start, dir, r, u, range, ignore, 0 );
 		if( water_trace )
