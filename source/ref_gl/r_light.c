@@ -272,12 +272,12 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 		if( ambient ) {
 			grey = ColorGrayscale( ambientLocal );
-			ambientLocal[0] = ambientLocal[1] = ambientLocal[2] = bound( 0, grey, 1 );
+			ambientLocal[0] = ambientLocal[1] = ambientLocal[2] = bound( 0, grey, 255 );
 		}
 
 		if( diffuse || radius ) {
 			grey = ColorGrayscale( diffuseLocal );
-			diffuseLocal[0] = diffuseLocal[1] = diffuseLocal[2] = bound( 0, grey, 1 );
+			diffuseLocal[0] = diffuseLocal[1] = diffuseLocal[2] = bound( 0, grey, 255 );
 		}
 	}
 
