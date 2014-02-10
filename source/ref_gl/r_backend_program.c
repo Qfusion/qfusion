@@ -1351,6 +1351,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 {
 	int state;
 	int program;
+	const image_t *image;
 	const mfog_t *fog = rb.fog;
 	qboolean isWorldSurface = rb.currentModelType == mod_brush ? qtrue : qfalse;
 	const superLightStyle_t *lightStyle = NULL;
@@ -1422,6 +1423,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		Vector4Set( lightDiffuse, 1, 1, 1, 1 );
 	}
 
+	image = RB_ShaderpassTex( pass );
 	if( isLightmapped || isWorldVertexLight ) {
 		// add dynamic lights
 		if( rb.currentDlightBits ) {
@@ -1430,9 +1432,12 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		if( ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT;
 		}
+		if( rb.renderFlags & RF_LIGHTMAP ) {
+			image = rsh.whiteTexture;
+		}
 	}
 
-	RB_BindTexture( 0, RB_ShaderpassTex( pass ) );
+	RB_BindTexture( 0, image );
 
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
