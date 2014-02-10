@@ -67,7 +67,7 @@ static Cursor CreateNullCursor( Display *display, Window root )
 	return cursor;
 }
 
-static void install_grabs( void )
+static void install_grabs_mouse( void )
 {
 	int i;
 	int num_devices;
@@ -76,16 +76,14 @@ static void install_grabs( void )
 
 	assert( x11display.dpy && x11display.win );
 
+	if( mouse_active )
+		return;
+
 	XDefineCursor(x11display.dpy, x11display.win, CreateNullCursor(x11display.dpy, x11display.win));
 
-	mask.deviceid = XIAllMasterDevices;
+	mask.deviceid = XIAllDevices;
 	mask.mask_len = XIMaskLen(XI_LASTEVENT);
 	mask.mask = calloc(mask.mask_len, sizeof(char));
-	XISetMask(mask.mask, XI_KeyPress);
-	XISetMask(mask.mask, XI_KeyRelease);
-	XISetMask(mask.mask, XI_ButtonPress);
-	XISetMask(mask.mask, XI_ButtonRelease);
-	XISelectEvents(x11display.dpy, x11display.win, &mask, 1);
 	XISetMask(mask.mask, XI_Enter);
 	XISetMask(mask.mask, XI_Leave);
 	XISetMask(mask.mask, XI_ButtonPress);
@@ -105,10 +103,6 @@ static void install_grabs( void )
 			else
 				XIWarpPointer(x11display.dpy, id, None, x11display.win, 0, 0, 0, 0, x11display.win_width/2, x11display.win_height/2);
 		}
-		else if(info[i].use == XIMasterKeyboard)
-		{
-			XIGrabDevice(x11display.dpy, id, x11display.win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &mask);
-		}
 	}
 	XIFreeDeviceInfo(info);
 
@@ -124,10 +118,9 @@ static void install_grabs( void )
 
 	mx = my = 0;
 	mouse_active = qtrue;
-	input_active = qtrue;
 }
 
-static void uninstall_grabs( void )
+static void uninstall_grabs_mouse( void )
 {
 	int i;
 	int num_devices;
@@ -135,11 +128,15 @@ static void uninstall_grabs( void )
 
 	assert( x11display.dpy && x11display.win );
 
+	if( !mouse_active )
+		return;
+
 	XUndefineCursor(x11display.dpy, x11display.win);
+
 	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
 
 	for(i = 0; i < num_devices; i++) {
-		if(info[i].use == XIFloatingSlave || info[i].use == XIMasterKeyboard) {
+		if(info[i].use == XIFloatingSlave) {
 			XIUngrabDevice(x11display.dpy, info[i].deviceid, CurrentTime);
 		}
 		else if(info[i].use == XIMasterPointer) {
@@ -150,10 +147,70 @@ static void uninstall_grabs( void )
 	XIFreeDeviceInfo(info);
 
 	mouse_active = qfalse;
-	input_active = qfalse;
 	mx = my = 0;
+}
 
-	x11display.ic = 0;
+static void install_grabs_keyboard( void )
+{
+	int i;
+	int num_devices;
+	XIDeviceInfo *info;
+	XIEventMask mask;
+
+	assert( x11display.dpy && x11display.win );
+
+	if( input_active )
+		return;
+
+	XDefineCursor(x11display.dpy, x11display.win, CreateNullCursor(x11display.dpy, x11display.win));
+
+	mask.deviceid = XIAllMasterDevices;
+	mask.mask_len = XIMaskLen(XI_LASTEVENT);
+	mask.mask = calloc(mask.mask_len, sizeof(char));
+	XISetMask(mask.mask, XI_KeyPress);
+	XISetMask(mask.mask, XI_KeyRelease);
+	XISetMask(mask.mask, XI_ButtonPress);
+	XISetMask(mask.mask, XI_ButtonRelease);
+	XISelectEvents(x11display.dpy, x11display.win, &mask, 1);
+
+	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
+	for(i = 0; i < num_devices; i++) {
+		int id = info[i].deviceid;
+		if(info[i].use == XIMasterKeyboard)
+		{
+			XIGrabDevice(x11display.dpy, id, x11display.win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &mask);
+		}
+	}
+	XIFreeDeviceInfo(info);
+
+	free(mask.mask);
+
+	XSync(x11display.dpy, True);
+
+	input_active = qtrue;
+}
+
+static void uninstall_grabs_keyboard( void )
+{
+	int i;
+	int num_devices;
+	XIDeviceInfo *info;
+
+	assert( x11display.dpy && x11display.win );
+
+	if( !input_active )
+		return;
+
+	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
+
+	for(i = 0; i < num_devices; i++) {
+		if(info[i].use == XIMasterKeyboard) {
+			XIUngrabDevice(x11display.dpy, info[i].deviceid, CurrentTime);
+		}
+	}
+	XIFreeDeviceInfo(info);
+
+	input_active = qfalse;
 }
 
 // Q3 version
@@ -425,7 +482,11 @@ static void HandleEvents( void )
 				// Someone is handling a global hotkey, ignore it
 				continue;
 			}
-			focus = qtrue;
+			if( !focus )
+			{
+				focus = qtrue;
+				install_grabs_keyboard();
+			}
 			break;
 
 		case FocusOut:
@@ -436,9 +497,9 @@ static void HandleEvents( void )
 			if( focus )
 			{
 				if( Cvar_Value( "vid_fullscreen" ) ) {
-					// attempt to restore focus
-					XSetInputFocus( x11display.dpy, x11display.win, RevertToPointerRoot, CurrentTime );
+					Cbuf_ExecuteText( EXEC_APPEND, "set vid_fullscreen 0\n" );
 				}
+				uninstall_grabs_keyboard();
 				Key_ClearStates();
 				focus = qfalse;
 				shift_down = 0;
@@ -498,18 +559,18 @@ void IN_Activate( qboolean active )
 {
 	if( !input_inited )
 		return;
-	if( input_active == active )
+	if( mouse_active == active )
 		return;
 
 	assert( x11display.dpy && x11display.win );
 
 	if( active )
 	{
-		install_grabs();
+		install_grabs_mouse();
 	}
 	else
 	{
-		uninstall_grabs();
+		uninstall_grabs_mouse();
 	}
 }
 
@@ -526,6 +587,7 @@ void IN_Init( void )
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 
 	input_active = qfalse;
+	mouse_active = qfalse;
 
 	if( !XQueryExtension( x11display.dpy, "XInputExtension", &xi_opcode, &event, &error ) ) {
 		Com_Printf( "ERROR: XInput Extension not available.\n" );
@@ -538,8 +600,10 @@ void IN_Init( void )
 
 	Com_Printf( "Successfully initialized XInput2 %d.%d\n", xi2_major, xi2_minor );
 
+	focus = qtrue;
 	input_inited = qtrue;
-	install_grabs();
+	install_grabs_keyboard();
+	install_grabs_mouse();
 }
 
 void IN_Shutdown( void )
@@ -547,8 +611,10 @@ void IN_Shutdown( void )
 	if( !input_inited )
 		return;
 
-	uninstall_grabs();
+	uninstall_grabs_keyboard();
+	uninstall_grabs_mouse();
 	input_inited = qfalse;
+	focus = qfalse;
 }
 
 void IN_Restart( void )
@@ -559,23 +625,23 @@ void IN_Restart( void )
 
 void IN_Frame( void )
 {
-	qboolean in_active = qfalse;
+	qboolean m_active = qfalse;
 
 	if( !input_inited )
 		return;
 
+	HandleEvents();
+
 	if( focus ) {
 		if( !Cvar_Value( "vid_fullscreen" ) && ( ( cls.key_dest == key_console ) && !in_grabinconsole->integer ) )
 		{
-			in_active = qfalse;
+			m_active = qfalse;
 		}
 		else
 		{
-			in_active = qtrue;
+			m_active = qtrue;
 		}
 	}
 
-	IN_Activate( in_active );
-
-	HandleEvents();
+	IN_Activate( m_active );
 }
