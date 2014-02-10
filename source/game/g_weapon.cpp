@@ -575,8 +575,8 @@ static void G_Fire_RandomPattern( edict_t *self, vec3_t start, vec3_t dir, int *
 
 	for( i = 0; i < count; i++ )
 	{
-		r = crandom() * hspread;
-		u = crandom() * vspread;
+		r = Q_crandom( seed ) * hspread;
+		u = Q_crandom( seed ) * vspread;
 
 		GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
 		if( trace.ent != -1 )
