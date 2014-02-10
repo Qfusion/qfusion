@@ -560,36 +560,43 @@ static qboolean _NETWM_CHECK_FULLSCREEN( void )
 static void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
 {
 	XEvent xev;
-	Atom wm_state;
-	Atom wm_fullscreen;
+	Atom NET_WM_STATE;
+	Atom NET_WM_STATE_FULLSCREEN;
+	Atom NET_WM_BYPASS_COMPOSITOR;
+	long bypass_compositor_value;
 	Atom atoms[1];
 	int count = 0;
 
 	if( !x11display.features.wmStateFullscreen )
 		return;
 
-	wm_state = XInternAtom( x11display.dpy, "_NET_WM_STATE", True );
-	wm_fullscreen = XInternAtom( x11display.dpy, "_NET_WM_STATE_FULLSCREEN", True );
+	NET_WM_BYPASS_COMPOSITOR = XInternAtom( x11display.dpy, "_NET_WM_BYPASS_COMPOSITOR", False );
+	bypass_compositor_value = fullscreen ? 1 : 0;
+	XChangeProperty( x11display.dpy, x11display.win, NET_WM_BYPASS_COMPOSITOR, XA_CARDINAL, 32,
+		PropModeReplace, (unsigned char *)&bypass_compositor_value, 1 );
+
+	NET_WM_STATE = XInternAtom( x11display.dpy, "_NET_WM_STATE", True );
+	NET_WM_STATE_FULLSCREEN = XInternAtom( x11display.dpy, "_NET_WM_STATE_FULLSCREEN", True );
 
 	if( fullscreen ) {
-	    atoms[count++] = wm_fullscreen;
+	    atoms[count++] = NET_WM_STATE_FULLSCREEN;
 	}
 
 	if( count > 0 ) {
-		XChangeProperty( x11display.dpy, x11display.win, wm_state, XA_ATOM, 32,
+		XChangeProperty( x11display.dpy, x11display.win, NET_WM_STATE, XA_ATOM, 32,
 			PropModeReplace, (unsigned char *)atoms, count );
 	}
 	else {
-		XDeleteProperty( x11display.dpy, x11display.win, wm_state );
+		XDeleteProperty( x11display.dpy, x11display.win, NET_WM_STATE );
 	}
 
 	memset(&xev, 0, sizeof(xev));
 	xev.type = ClientMessage;
 	xev.xclient.window = x11display.win;
-	xev.xclient.message_type = wm_state;
+	xev.xclient.message_type = NET_WM_STATE;
 	xev.xclient.format = 32;
 	xev.xclient.data.l[0] = fullscreen ? 1 : 0;
-	xev.xclient.data.l[1] = wm_fullscreen;
+	xev.xclient.data.l[1] = NET_WM_STATE_FULLSCREEN;
 	xev.xclient.data.l[2] = 0;
 
 	XSendEvent( x11display.dpy, DefaultRootWindow( x11display.dpy ), False,
