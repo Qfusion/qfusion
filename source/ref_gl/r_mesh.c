@@ -349,6 +349,7 @@ static void _R_DrawSurfaces( void )
 	qboolean infiniteProj = qfalse, prevInfiniteProj = qfalse;
 	qboolean depthWrite = qfalse;
 	qboolean depthCopied = qfalse;
+	int entityFX = 0, prevEntityFX = -1;
 	mat4_t projectionMatrix;
 	refdef_t *rd = &rn.refdef;
 	int riFBO = 0;
@@ -373,11 +374,13 @@ static void _R_DrawSurfaces( void )
 		entity = R_NUM2ENT(entNum);
 		fog = fogNum >= 0 ? rsh.worldBrushModel->fogs + fogNum : NULL;
 		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
+		entityFX = entity->renderfx;
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum || 
 			portalNum != prevPortalNum ||
-			( entNum != prevEntNum && !(shader->flags & SHADER_ENTITY_MERGABLE) ) ) {
+			( entNum != prevEntNum && !(shader->flags & SHADER_ENTITY_MERGABLE) ) || 
+			entityFX != prevEntityFX ) {
 
 			if( prevBatchDrawSurf ) {
 				RB_EndBatch();
@@ -454,6 +457,7 @@ static void _R_DrawSurfaces( void )
 			prevBatchDrawSurf = batchDrawSurf;
 			prevPortalNum = portalNum;
 			prevInfiniteProj = infiniteProj;
+			prevEntityFX = entityFX;
 
 			if( batchDrawSurf ) {
 				RB_BeginBatch();
