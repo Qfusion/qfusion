@@ -497,7 +497,7 @@ merge:
 
 		// don't use half-floats for XYZ due to precision issues
 		vbo = R_CreateMeshVBO( ( void * )surf, vcount, ecount, surf->numInstances, vattribs, 
-			VBO_TAG_WORLD, vattribs & ~(VATTRIB_POSITION_BIT|VATTRIB_NORMAL_BIT) );
+			VBO_TAG_WORLD, vattribs & ~(VATTRIB_POSITION_BIT|VATTRIB_NORMAL_BIT|VATTRIB_LMCOORDS_BITS) );
 		if( vbo )
 		{
 			vattribmask_t errMask;
@@ -555,9 +555,9 @@ merge:
 					VBO_Printf( " svecs" );
 				if( errMask & VATTRIB_TEXCOORDS_BIT )
 					VBO_Printf( " st" );
-				if( errMask & VATTRIB_LMCOORDS_BIT )
+				if( errMask & VATTRIB_LMCOORDS0_BIT )
 					VBO_Printf( " lmst" );
-				if( errMask & VATTRIB_COLOR_BIT )
+				if( errMask & VATTRIB_COLOR0_BIT )
 					VBO_Printf( " colors" );
 				VBO_Printf( "\n" );
 			}

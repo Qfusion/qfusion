@@ -166,10 +166,10 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	}
 
 	// lightmap texture coordinates
-	if( vattribs & VATTRIB_LMCOORDS_BIT )
+	if( vattribs & VATTRIB_LMCOORDS0_BIT )
 	{
 		vbo->lmstOffset[0] = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS_BIT, halfFloatVattribs) * sizeof( *mesh->lmstArray[0] ) / sizeof( **mesh->lmstArray[0] );
+		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS0_BIT, halfFloatVattribs) * sizeof( *mesh->lmstArray[0] ) / sizeof( **mesh->lmstArray[0] );
 		ALIGN16( size );
 
 		for( i = 1; i < MAX_LIGHTMAPS; i++ )
@@ -184,7 +184,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	}
 
 	// vertex colors
-	if( vattribs & VATTRIB_COLOR_BIT )
+	if( vattribs & VATTRIB_COLOR0_BIT )
 	{
 		vbo->colorsOffset[0] = size;
 		size += numVerts * sizeof( byte_vec4_t );
@@ -468,13 +468,13 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 	}
 
 	// upload lightmap texture coordinates
-	if( vbo->lmstOffset[0] && (vattribs & VATTRIB_LMCOORDS_BIT) ) {
+	if( vbo->lmstOffset[0] && (vattribs & VATTRIB_LMCOORDS0_BIT) ) {
 		numFloats = sizeof( *mesh->lmstArray[0] ) / sizeof( **mesh->lmstArray[0] );
-		size = FLOAT_VATTRIB_SIZE( VATTRIB_LMCOORDS_BIT, hfa ) * numFloats;
+		size = FLOAT_VATTRIB_SIZE( VATTRIB_LMCOORDS0_BIT, hfa ) * numFloats;
 
 		if( mesh->lmstArray[0] ) {
 			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[0] + vertsOffset * size, 
-				numVerts * size, R_VattribFloatBuffer( VATTRIB_LMCOORDS_BIT, hfa, mesh->lmstArray[0][0], numVerts * numFloats ) );
+				numVerts * size, R_VattribFloatBuffer( VATTRIB_LMCOORDS0_BIT, hfa, mesh->lmstArray[0][0], numVerts * numFloats ) );
 
 			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
 				vattribbit_t lmvattrib = (vattribbit_t)(VATTRIB_LMCOORDS1_BIT<<(i-1));
@@ -494,12 +494,12 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			}
 		}
 		else {
-			errMask |= VATTRIB_LMCOORDS_BIT;
+			errMask |= VATTRIB_LMCOORDS0_BIT;
 		}
 	}
 
 	// upload vertex colors (although indices > 0 are never used)
-	if( vbo->colorsOffset[0] && (vattribs & VATTRIB_COLOR_BIT) ) {
+	if( vbo->colorsOffset[0] && (vattribs & VATTRIB_COLOR0_BIT) ) {
 		if( mesh->colorsArray[0] ) {
 			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->colorsOffset[0] + vertsOffset * sizeof( byte_vec4_t ), 
 				numVerts * sizeof( byte_vec4_t ), mesh->colorsArray[0] );
@@ -516,7 +516,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			}
 		}
 		else {
-			errMask |= VATTRIB_COLOR_BIT;
+			errMask |= VATTRIB_COLOR0_BIT;
 		}
 	}
 
