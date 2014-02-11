@@ -2190,7 +2190,7 @@ static void RF_BindAttrbibutesLocations( glsl_program_t *program )
 	qglBindAttribLocationARB( program->object, VATTRIB_POSITION, "a_Position" ); 
 	qglBindAttribLocationARB( program->object, VATTRIB_SVECTOR, "a_SVector" ); 
 	qglBindAttribLocationARB( program->object, VATTRIB_NORMAL, "a_Normal" ); 
-	qglBindAttribLocationARB( program->object, VATTRIB_COLOR, "a_Color" );
+	qglBindAttribLocationARB( program->object, VATTRIB_COLOR0, "a_Color" );
 	qglBindAttribLocationARB( program->object, VATTRIB_TEXCOORDS, "a_TexCoord" );
 
 	qglBindAttribLocationARB( program->object, VATTRIB_SPRITEPOINT, "a_SpritePoint" );
@@ -2200,7 +2200,7 @@ static void RF_BindAttrbibutesLocations( glsl_program_t *program )
 	qglBindAttribLocationARB( program->object, VATTRIB_BONESINDICES, "a_BonesIndices" );
 	qglBindAttribLocationARB( program->object, VATTRIB_BONESWEIGHTS, "a_BonesWeights" );
 
-	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS, "a_LightmapCoord0" );
+	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS0, "a_LightmapCoord0" );
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS1, "a_LightmapCoord1" );
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS2, "a_LightmapCoord2" );
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS3, "a_LightmapCoord3" );

@@ -967,7 +967,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 			memcpy( rb.batchMesh.stArray + batch->numVerts, mesh->stArray, numVerts * sizeof( vec2_t ) );
 		}
 		
-		if( mesh->lmstArray[0] && (vattribs & VATTRIB_LMCOORDS_BIT) ) {
+		if( mesh->lmstArray[0] && (vattribs & VATTRIB_LMCOORDS0_BIT) ) {
 			memcpy( rb.batchMesh.lmstArray[0] + batch->numVerts, mesh->lmstArray[0], numVerts * sizeof( vec2_t ) );
 
 			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
@@ -978,7 +978,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 			}
 		}
 
-		if( mesh->colorsArray[0] && (vattribs & VATTRIB_COLOR_BIT) ) {
+		if( mesh->colorsArray[0] && (vattribs & VATTRIB_COLOR0_BIT) ) {
 			memcpy( rb.batchMesh.colorsArray[0] + batch->numVerts, mesh->colorsArray[0], numVerts * sizeof( byte_vec4_t ) );
 
 			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
@@ -1064,13 +1064,13 @@ static void RB_EnableVertexAttribs( void )
 	}
 	
 	// color
-	if( vattribs & VATTRIB_COLOR_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_COLOR, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, (
+	if( vattribs & VATTRIB_COLOR0_BIT ) {
+		GL_EnableVertexAttrib( VATTRIB_COLOR0, qtrue );
+		qglVertexAttribPointerARB( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, (
 			const GLvoid * )vbo->colorsOffset[0] );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_COLOR, qfalse );
+		GL_EnableVertexAttrib( VATTRIB_COLOR0, qfalse );
 	}
 
 	// texture coordinates
@@ -1128,13 +1128,13 @@ static void RB_EnableVertexAttribs( void )
 		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, qfalse );
 
 		// lightmap texture coordinates
-		if( vattribs & VATTRIB_LMCOORDS_BIT ) {
-			GL_EnableVertexAttrib( VATTRIB_LMCOORDS, qtrue );
-			qglVertexAttribPointerARB( VATTRIB_LMCOORDS, 2, FLOAT_VATTRIB_TYPE( VATTRIB_LMCOORDS_BIT, hfa ), GL_FALSE, 0, 
+		if( vattribs & VATTRIB_LMCOORDS0_BIT ) {
+			GL_EnableVertexAttrib( VATTRIB_LMCOORDS0, qtrue );
+			qglVertexAttribPointerARB( VATTRIB_LMCOORDS0, 2, FLOAT_VATTRIB_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), GL_FALSE, 0, 
 				( const GLvoid * )vbo->lmstOffset[0] );
 		}
 		else {
-			GL_EnableVertexAttrib( VATTRIB_LMCOORDS, qfalse );
+			GL_EnableVertexAttrib( VATTRIB_LMCOORDS0, qfalse );
 		}
 
 		for( i = 0; i < MAX_LIGHTMAPS-1; i++ ) {

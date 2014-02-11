@@ -2207,7 +2207,7 @@ static void Shader_SetVertexAttribs( shader_t *s )
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ )
 	{
 		if ( pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL )
-			s->vattribs |= VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT|VATTRIB_LMCOORDS_BIT;
+			s->vattribs |= VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT|VATTRIB_LMCOORDS0_BIT;
 		else if( pass->program_type == GLSL_PROGRAM_TYPE_DISTORTION )
 			s->vattribs |= VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT;
 		else if( pass->program_type == GLSL_PROGRAM_TYPE_CELSHADE )
@@ -2217,13 +2217,13 @@ static void Shader_SetVertexAttribs( shader_t *s )
 		{
 		case RGB_GEN_LIGHTING_DIFFUSE:
 			if( pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL )
-				s->vattribs = (s->vattribs | VATTRIB_COLOR_BIT) & ~VATTRIB_LMCOORDS_BIT;
+				s->vattribs = (s->vattribs | VATTRIB_COLOR0_BIT) & ~VATTRIB_LMCOORDS0_BIT;
 			s->vattribs |= VATTRIB_NORMAL_BIT;
 			break;
 		case RGB_GEN_VERTEX:
 		case RGB_GEN_ONE_MINUS_VERTEX:
 		case RGB_GEN_EXACT_VERTEX:
-			s->vattribs |= VATTRIB_COLOR_BIT;
+			s->vattribs |= VATTRIB_COLOR0_BIT;
 			break;
 		case RGB_GEN_WAVE:
 			if( pass->rgbgen.func->type == SHADER_FUNC_RAMP )
@@ -2235,7 +2235,7 @@ static void Shader_SetVertexAttribs( shader_t *s )
 		{
 		case ALPHA_GEN_VERTEX:
 		case ALPHA_GEN_ONE_MINUS_VERTEX:
-			s->vattribs |= VATTRIB_COLOR_BIT;
+			s->vattribs |= VATTRIB_COLOR0_BIT;
 			break;
 		case ALPHA_GEN_WAVE:
 			if( pass->alphagen.func->type == SHADER_FUNC_RAMP )
@@ -2246,7 +2246,7 @@ static void Shader_SetVertexAttribs( shader_t *s )
 		switch( pass->tcgen )
 		{
 		case TC_GEN_LIGHTMAP:
-			s->vattribs |= VATTRIB_LMCOORDS_BIT;
+			s->vattribs |= VATTRIB_LMCOORDS0_BIT;
 			break;
 		case TC_GEN_ENVIRONMENT:
 			s->vattribs |= VATTRIB_NORMAL_BIT;
@@ -2595,7 +2595,7 @@ create_default:
 		case SHADER_TYPE_VERTEX:
 			// vertex lighting
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT;
-			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2615,7 +2615,7 @@ create_default:
 			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, 1 );
 
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_LIGHTMAP;
-			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS0_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2636,7 +2636,7 @@ create_default:
 		case SHADER_TYPE_LIGHTMAP:
 			// lightmapping
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_LIGHTMAP;
-			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS0_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 2;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2658,7 +2658,7 @@ create_default:
 			pass->images[0] = Shader_FindImage( s, shortname, 0, 0 );
 			break;
 		case SHADER_TYPE_CORONA:
-			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
@@ -2700,7 +2700,7 @@ create_default:
 		case SHADER_TYPE_2D_RAW:
 		case SHADER_TYPE_VIDEO:
 			s->flags = 0;
-			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR_BIT;
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->numpasses = 1;
 			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );

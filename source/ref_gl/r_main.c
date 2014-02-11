@@ -490,7 +490,7 @@ mesh_vbo_t *R_InitNullModelVBO( void )
 	vec2_t texcoords[6] = { {0,0}, {0,1}, {0,0}, {0,1}, {0,0}, {0,1} };
 	elem_t elems[6] = { 0, 1, 2, 3, 4, 5 };
 	mesh_t mesh;
-	vattribmask_t vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_COLOR_BIT;
+	vattribmask_t vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_COLOR0_BIT;
 	mesh_vbo_t *vbo;
 	
 	vbo = R_CreateMeshVBO( &rf, 6, 6, 0, vattribs, VBO_TAG_NONE, vattribs );
