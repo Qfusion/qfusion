@@ -52,7 +52,7 @@ static const char *wmPartSufix[] = { "", "_expansion", "_barrel", "_flash", "_ha
 * "islastframe":Will read the second value of each animation as lastframe (usually means numframes)
 * "rotationscale": value witch will scale the barrel rotation speed
 */
-static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, char *filename )
+static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char *filename )
 {
 	qbyte *buf;
 	char *ptr, *token;
