@@ -969,11 +969,6 @@ static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, im
 	images[0] = R_FindImage( name, "_norm", (addFlags|IT_NORMALMAP) & ~IT_HEIGHTMAP , 0 );
 	if( !images[0] ) {
 		images[0] = R_FindImage( name, "_bump", addFlags|IT_HEIGHTMAP, bumpScale );
-		if( !images[0] && r_lighting_diffuse2heightmap->integer ) {
-			// convert diffuse to heightmap
-			images[0] = R_FindImage( name, NULL, addFlags|IT_HEIGHTMAP, 2 );
-		}
-
 		if( !images[0] ) {
 			// use blank normalmap texture
 			*normalmap = rsh.blankBumpTexture;

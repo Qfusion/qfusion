@@ -323,7 +323,6 @@ extern cvar_t *r_portalmaps_maxtexsize;
 
 extern cvar_t *r_lighting_bumpscale;
 extern cvar_t *r_lighting_deluxemapping;
-extern cvar_t *r_lighting_diffuse2heightmap;
 extern cvar_t *r_lighting_specular;
 extern cvar_t *r_lighting_glossintensity;
 extern cvar_t *r_lighting_glossexponent;
