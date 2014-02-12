@@ -387,11 +387,6 @@ setup_and_render:
 		rn.fbDepthAttachment = NULL;
 		Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 	}
-	
-	if( !mirror ) {
-		rn.refdef.fov_x = 90;
-		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
-	}
 
 	VectorCopy( origin, rn.refdef.vieworg );
 	Matrix3_Copy( axis, rn.refdef.viewaxis );
