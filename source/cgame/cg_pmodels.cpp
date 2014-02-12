@@ -1297,7 +1297,7 @@ void CG_AddPModel( centity_t *cent )
 	{
 		if( cg_shadows->integer == 1 ) {
 			CG_AllocShadeBox( cent->current.number, cent->ent.origin, playerbox_stand_mins, playerbox_stand_maxs, NULL );
-		} else {
+		} else if( cg_shadows->integer ) {
 			cent->ent.renderfx &= ~RF_NOSHADOW;
 		}
 	}
