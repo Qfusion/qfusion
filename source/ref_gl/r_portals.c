@@ -435,7 +435,6 @@ void R_DrawPortals( void )
 void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, vec3_t maxs )
 {
 	int x, y, w, h;
-	int oldcluster, oldarea;
 
 	if( !R_ScissorForEntity( e, mins, maxs, &x, &y, &w, &h ) ) {
 		return;
@@ -443,9 +442,6 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	if( !R_PushRefInst() ) {
 		return;
 	}
-
-	oldcluster = rf.viewcluster;
-	oldarea = rf.viewarea;
 
 	rn.renderFlags = ( rn.renderFlags|RF_SKYPORTALVIEW|RF_SOFT_PARTICLES );
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
