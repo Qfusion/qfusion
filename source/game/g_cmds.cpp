@@ -1252,7 +1252,7 @@ void G_AddCommand( const char *name, gamecommandfunc_t callback )
 		{
 			// update func if different
 			if( g_Commands[i].func != callback )
-				g_Commands[i].func = ( gamecommandfunc_t )&callback;
+				g_Commands[i].func = ( gamecommandfunc_t )callback;
 			return;
 		}
 	}
