@@ -924,7 +924,7 @@ static void SV_Multiview_f( client_t *client )
 
 typedef struct
 {
-	char *name;
+	const char *name;
 	void ( *func )( client_t *client );
 } ucmd_t;
 
@@ -960,7 +960,7 @@ ucmd_t ucmds[] =
 /*
 * SV_ExecuteUserCommand
 */
-static void SV_ExecuteUserCommand( client_t *client, char *s )
+static void SV_ExecuteUserCommand( client_t *client, const char *s )
 {
 	ucmd_t *u;
 
