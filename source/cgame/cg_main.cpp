@@ -935,6 +935,8 @@ void CG_Reset( void )
 	CG_ClearEffects();
 	CG_ClearLocalEntities();
 
+	CG_DemocamReset();
+
 	// start up announcer events queue from clean
 	CG_ClearAnnouncerEvents();
 
