@@ -544,6 +544,12 @@ void asCReader::ReadUsedFunctions()
 	asUINT count;
 	count = ReadEncodedUInt();
 	usedFunctions.SetLength(count);
+	if( usedFunctions.GetLength() != count )
+	{
+		// Out of memory
+		error = true;
+		return;
+	}
 	memset(usedFunctions.AddressOf(), 0, sizeof(asCScriptFunction *)*count);
 
 	for( asUINT n = 0; n < usedFunctions.GetLength(); n++ )
@@ -652,6 +658,12 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	}
 
 	func->inOutFlags.SetLength(func->parameterTypes.GetLength());
+	if( func->parameterTypes.GetLength() != func->parameterTypes.GetLength() )
+	{
+		// Out of memory
+		error = true;
+		return;
+	}
 	memset(func->inOutFlags.AddressOf(), 0, sizeof(asETypeModifiers)*func->inOutFlags.GetLength());
 	count = ReadEncodedUInt();
 	if( count > func->parameterTypes.GetLength() )
@@ -679,6 +691,12 @@ void asCReader::ReadFunctionSignature(asCScriptFunction *func)
 	if( count )
 	{
 		func->defaultArgs.SetLength(func->parameterTypes.GetLength());
+		if( func->defaultArgs.GetLength() != func->parameterTypes.GetLength() )
+		{
+			// Out of memory
+			error = true;
+			return;
+		}
 		memset(func->defaultArgs.AddressOf(), 0, sizeof(asCString*)*func->defaultArgs.GetLength());
 		for( i = 0; i < count; i++ )
 		{
@@ -763,6 +781,12 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 	if( func->funcType == asFUNC_SCRIPT )
 	{
 		func->AllocateScriptFunctionData();
+		if( func->scriptData == 0 )
+		{
+			// Out of memory
+			error = true;
+			return 0;
+		}
 
 		if( addToGC && !addToModule )
 			engine->gc.AddScriptObjectToGC(func, &engine->functionBehaviours);
@@ -801,12 +825,24 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		{
 			length = ReadEncodedUInt();
 			func->scriptData->lineNumbers.SetLength(length);
+			if( func->scriptData->lineNumbers.GetLength() != length )
+			{
+				// Out of memory
+				error = true;
+				return 0;
+			}
 			for( i = 0; i < length; ++i )
 				func->scriptData->lineNumbers[i] = ReadEncodedUInt();
 
 			// Read the array of script sections 
 			length = ReadEncodedUInt();
 			func->scriptData->sectionIdxs.SetLength(length);
+			if( func->scriptData->sectionIdxs.GetLength() != length )
+			{
+				// Out of memory
+				error = true;
+				return 0;
+			}
 			for( i = 0; i < length; ++i )
 			{
 				if( (i & 1) == 0 )
@@ -2131,7 +2167,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			{
 				// List patterns have a different way of adjusting the offsets
 				SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
-				*(((short*)&bc[n])+2) = (short)listAdj->AdjustOffset(*(((short*)&bc[n])+2), ot);
+				*(((short*)&bc[n])+2) = (short)listAdj->AdjustOffset(*(((short*)&bc[n])+2));
 			}
 			else
 			{
@@ -2302,7 +2338,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 
 			// The adjuster also needs to know the list type so it can know the type of the elements
 			asCObjectType *ot = func->GetObjectTypeOfLocalVar(asBC_SWORDARG0(&bc[n]));
-			listAdjusters.PushLast(asNEW(SListAdjuster)(&bc[n], ot));
+			listAdjusters.PushLast(asNEW(SListAdjuster)(this, &bc[n], ot));
 		}
 		else if( c == asBC_FREE )
 		{
@@ -2313,6 +2349,12 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 			asCObjectType *ot = *(asCObjectType**)pot;
 			if( ot && (ot->flags & asOBJ_LIST_PATTERN) )
 			{
+				if( listAdjusters.GetLength() == 0 )
+				{
+					Error(TXT_INVALID_BYTECODE_d);
+					return;
+				}
+
 				// Finalize the adjustment of the list buffer that was initiated with asBC_AllocMem
 				SListAdjuster *list = listAdjusters.PopLast();
 				list->AdjustAllocMem();
@@ -2323,7 +2365,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Adjust the offset in the list where the size is informed
 			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
-			bc[n+1] = listAdj->AdjustOffset(bc[n+1], listAdj->patternType);
+			bc[n+1] = listAdj->AdjustOffset(bc[n+1]);
 
 			// Inform the list adjuster how many values will be repeated
 			listAdj->SetRepeatCount(bc[n+2]);
@@ -2332,13 +2374,13 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 		{
 			// Adjust the offset in the list where the size is informed
 			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
-			bc[n+1] = listAdj->AdjustOffset(bc[n+1], listAdj->patternType);
+			bc[n+1] = listAdj->AdjustOffset(bc[n+1]);
 		}
 		else if( c == asBC_SetListType )
 		{
 			// Adjust the offset in the list where the typeid is informed
 			SListAdjuster *listAdj = listAdjusters[listAdjusters.GetLength()-1];
-			bc[n+1] = listAdj->AdjustOffset(bc[n+1], listAdj->patternType);
+			bc[n+1] = listAdj->AdjustOffset(bc[n+1]);
 
 			// Translate the type id
 			bc[n+2] = FindTypeId(bc[n+2]);
@@ -2455,8 +2497,8 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 	CalculateStackNeeded(func);
 }
 
-asCReader::SListAdjuster::SListAdjuster(asDWORD *bc, asCObjectType *listType) : 
-	allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1), nextTypeId(-1)
+asCReader::SListAdjuster::SListAdjuster(asCReader *rd, asDWORD *bc, asCObjectType *listType) : 
+	reader(rd), allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1), nextTypeId(-1)
 {
 	asASSERT( patternType && (patternType->flags & asOBJ_LIST_PATTERN) );
 
@@ -2466,13 +2508,13 @@ asCReader::SListAdjuster::SListAdjuster(asDWORD *bc, asCObjectType *listType) :
 	patternNode = node->next;
 }
 
-int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatternType)
+int asCReader::SListAdjuster::AdjustOffset(int offset)
 {
-	// TODO: cleanup: The listPatternType parameter is not needed
-	asASSERT( listPatternType == patternType );
-	UNUSED_VAR( listPatternType );
-
-	asASSERT( offset >= lastOffset );
+	if( offset < lastOffset )
+	{
+		reader->Error(TXT_INVALID_BYTECODE_d);
+		return 0;
+	}
 
 	// If it is the same offset being accessed again, just return the same adjusted value
 	if( lastOffset == offset )
@@ -2586,10 +2628,16 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 		patternNode = patternNode->next;
 
 		lastOffset--;
-		return AdjustOffset(offset, listPatternType);
+		return AdjustOffset(offset);
 	}
 	else if( patternNode->type == asLPT_END )
 	{
+		if( stack.GetLength() == 0 )
+		{
+			reader->Error(TXT_INVALID_BYTECODE_d);
+			return 0;
+		}
+
 		SInfo info = stack.PopLast();
 		repeatCount = info.repeatCount;
 		if( repeatCount )
@@ -2598,12 +2646,13 @@ int asCReader::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 			patternNode = patternNode->next;
 
 		lastOffset--;
-		return AdjustOffset(offset, listPatternType);
+		return AdjustOffset(offset);
 	}
 	else
 	{
 		// Something is wrong with the pattern list declaration
-		asASSERT( false );
+		reader->Error(TXT_INVALID_BYTECODE_d);
+		return 0;
 	}
 
 	return 0;

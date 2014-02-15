@@ -11874,7 +11874,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 {
 	// TODO: If a constant is only using 32bits, then a 32bit operation is preferred
 
-	int op = node->tokenType;
+	eTokenType op = node->tokenType;
 	if( op == ttAmp    || op == ttAndAssign ||
 		op == ttBitOr  || op == ttOrAssign  ||
 		op == ttBitXor || op == ttXorAssign )
@@ -11912,7 +11912,7 @@ void asCCompiler::CompileBitwiseOperator(asCScriptNode *node, asSExprContext *lc
 			to.SetTokenType( to.GetSizeOnStackDWords() == 1 ? ttUInt : ttUInt64 );
 		else
 			to.SetTokenType( to.GetSizeOnStackDWords() == 1 ? ttInt : ttInt64 );
-		ImplicitConversion(rctx, lctx->type.dataType, node, asIC_IMPLICIT_CONV, true);
+		ImplicitConversion(rctx, to, node, asIC_IMPLICIT_CONV, true);
 		reservedVariables.SetLength(l);
 		if( rctx->type.dataType != to )
 		{

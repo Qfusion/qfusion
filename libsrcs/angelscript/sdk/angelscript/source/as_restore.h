@@ -124,9 +124,9 @@ protected:
 	// Helper class for adjusting offsets within initialization list buffers
 	struct SListAdjuster
 	{
-		SListAdjuster(asDWORD *bc, asCObjectType *ot);
+		SListAdjuster(asCReader *rd, asDWORD *bc, asCObjectType *ot);
 		void AdjustAllocMem();
-		int  AdjustOffset(int offset, asCObjectType *listPatternType);
+		int  AdjustOffset(int offset);
 		void SetRepeatCount(asUINT rc);
 		void SetNextType(int typeId);
 
@@ -137,6 +137,7 @@ protected:
 		};
 		asCArray<SInfo> stack;
 
+		asCReader          *reader;
 		asDWORD            *allocMemBC;
 		asUINT              maxOffset;
 		asCObjectType      *patternType;
