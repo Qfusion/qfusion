@@ -3877,20 +3877,28 @@ void G_asGarbageCollect( bool force )
 {
 	static unsigned int lastTime = 0;
 	unsigned int currentSize, totalDestroyed, totalDetected;
+	asIScriptEngine *asEngine;
 
-	if (!angelExport) return;
+	if( !angelExport ) {
+		return;
+	}
+
+	asEngine = GAME_AS_ENGINE();
+	if( !asEngine ) {
+		return;
+	}
 
 	if( lastTime > game.serverTime )
 		force = true;
 
 	if( force || lastTime + g_asGC_interval->value * 1000 < game.serverTime )
 	{
-		GAME_AS_ENGINE()->GetGCStatistics( &currentSize, &totalDestroyed, &totalDetected );
+		asEngine->GetGCStatistics( &currentSize, &totalDestroyed, &totalDetected );
 
 		if( g_asGC_stats->integer )
 			G_Printf( "GC: t=%u size=%u destroyed=%u detected=%u\n", game.serverTime, currentSize, totalDestroyed, totalDetected );
 
-		GAME_AS_ENGINE()->GarbageCollect();
+		asEngine->GarbageCollect();
 
 		lastTime = game.serverTime;
 	}
