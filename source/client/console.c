@@ -834,7 +834,7 @@ static void Con_CompleteCommandLine( void )
 	char *s;
 	int c, v, a, d, ca, i;
 	int cmd_len;
-	char **list[5] = { 0, 0, 0, 0, 0 };
+	char **list[6] = { 0, 0, 0, 0, 0, 0 };
 
 	s = key_lines[edit_line] + 1;
 	if( *s == '\\' || *s == '/' )
