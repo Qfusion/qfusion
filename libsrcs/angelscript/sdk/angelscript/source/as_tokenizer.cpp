@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -443,7 +443,8 @@ bool asCTokenizer::IsKeyWord(const char *source, size_t sourceLength, size_t &to
 			// and the tokens "!" and "isTrue" in the "!isTrue" expression.
 			if( wlen < sourceLength &&
 				((source[wlen-1] >= 'a' && source[wlen-1] <= 'z') ||
-				 (source[wlen-1] >= 'A' && source[wlen-1] <= 'Z')) &&
+				 (source[wlen-1] >= 'A' && source[wlen-1] <= 'Z') ||
+				 (source[wlen-1] >= '0' && source[wlen-1] <= '9')) &&
 				((source[wlen] >= 'a' && source[wlen] <= 'z') ||
 				 (source[wlen] >= 'A' && source[wlen] <= 'Z') ||
 				 (source[wlen] >= '0' && source[wlen] <= '9') ||

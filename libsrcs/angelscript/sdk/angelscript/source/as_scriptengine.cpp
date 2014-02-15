@@ -995,6 +995,7 @@ asIJITCompiler *asCScriptEngine::GetJITCompiler() const
 }
 
 // interface
+// TODO: interface: tokenLength should be asUINT
 asETokenClass asCScriptEngine::ParseToken(const char *string, size_t stringLength, int *tokenLength) const
 {
 	if( stringLength == 0 )
@@ -1365,6 +1366,16 @@ int asCScriptEngine::RegisterObjectProperty(const char *obj, const char *declara
 	prop->accessMask = defaultAccessMask;
 
 	dt.GetObjectType()->properties.PushLast(prop);
+
+	// Add references to template instances so they are not released too early
+	if( type.GetObjectType() && (type.GetObjectType()->flags & asOBJ_TEMPLATE) )
+	{
+		if( !currentGroup->objTypes.Exists(type.GetObjectType()) )
+		{
+			type.GetObjectType()->AddRef();
+			currentGroup->objTypes.PushLast(type.GetObjectType());
+		}
+	}
 
 	currentGroup->RefConfigGroup(FindConfigGroupForObjectType(type.GetObjectType()));
 
@@ -2045,6 +2056,33 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
 		}
 
+		if( behaviour == asBEHAVE_LIST_FACTORY )
+		{
+			// Make sure the factory takes a reference as its last parameter
+			if( objectType->flags & asOBJ_TEMPLATE )
+			{
+				if( func.parameterTypes.GetLength() != 2 || !func.parameterTypes[1].IsReference() )
+				{
+					if( listPattern )
+						listPattern->Destroy(this);
+
+					WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_TEMPLATE_LIST_FACTORY_EXPECTS_2_REF_PARAMS);
+					return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+				}
+			}
+			else
+			{
+				if( func.parameterTypes.GetLength() != 1 || !func.parameterTypes[0].IsReference() )
+				{
+					if( listPattern )
+						listPattern->Destroy(this);
+
+					WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_LIST_FACTORY_EXPECTS_1_REF_PARAM);
+					return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
+				}
+			}
+		}
+
 		// TODO: Verify that the same factory function hasn't been registered already
 
 		// Don't accept duplicates
@@ -2074,30 +2112,6 @@ int asCScriptEngine::RegisterBehaviourToObjectType(asCObjectType *objectType, as
 			if( behaviour == asBEHAVE_LIST_FACTORY )
 			{
 				beh->listFactory = func.id;
-
-				// Make sure the factory takes a reference as its last parameter
-				if( objectType->flags & asOBJ_TEMPLATE )
-				{
-					if( func.parameterTypes.GetLength() != 2 || !func.parameterTypes[1].IsReference() )
-					{
-						if( listPattern )
-							listPattern->Destroy(this);
-
-						WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_TEMPLATE_LIST_FACTORY_EXPECTS_2_REF_PARAMS);
-						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-					}
-				}
-				else
-				{
-					if( func.parameterTypes.GetLength() != 1 || !func.parameterTypes[0].IsReference() )
-					{
-						if( listPattern )
-							listPattern->Destroy(this);
-
-						WriteMessage("", 0, 0, asMSGTYPE_ERROR, TXT_LIST_FACTORY_EXPECTS_1_REF_PARAM);
-						return ConfigError(asINVALID_DECLARATION, "RegisterObjectBehaviour", objectType->name.AddressOf(), decl);
-					}
-				}
 
 				// Store the list pattern for this function
 				int r = scriptFunctions[func.id]->RegisterListPattern(decl, listPattern);
@@ -4361,7 +4375,7 @@ const char *asCScriptEngine::GetTypeDeclaration(int typeId, bool includeNamespac
 	return tempString->AddressOf();
 }
 
-// TODO: interface: Deprecate. This function is not necessary now that all primitive types have fixed typeIds
+// interface
 int asCScriptEngine::GetSizeOfPrimitiveType(int typeId) const
 {
 	asCDataType dt = GetDataTypeFromTypeId(typeId);
@@ -5522,7 +5536,7 @@ void asCScriptEngine::DestroySubList(asBYTE *&buffer, asSListPatternNode *&node)
 	node = node->next;
 	while( node )
 	{
-		if( node->type == asLPT_REPEAT )
+		if( node->type == asLPT_REPEAT || node->type == asLPT_REPEAT_SAME )
 		{
 			// Align the offset to 4 bytes boundary
 			if( (asPWORD(buffer) & 0x3) )

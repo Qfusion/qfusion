@@ -410,7 +410,7 @@ public:
 	asSSystemFunctionInterface  msgCallbackFunc;
 	void                       *msgCallbackObj;
 
-	asIJITCompiler              *jitCompiler;
+	asIJITCompiler             *jitCompiler;
 
 	// Namespaces
 	// These are shared between all entities and are 

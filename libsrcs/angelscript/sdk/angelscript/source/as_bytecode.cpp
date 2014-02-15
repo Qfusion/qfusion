@@ -864,7 +864,6 @@ void asCByteCode::OptimizeLocally(const asCArray<int> &tempVariableOffsets)
 
 				instr = GoForward(curr);
 			}
-
 		}
 		else if( currOp == asBC_RDSPtr )
 		{

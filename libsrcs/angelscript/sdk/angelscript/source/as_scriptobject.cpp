@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -668,7 +668,14 @@ asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 {
 	if( &other != this )
 	{
-		asASSERT( other.objType->DerivesFrom(objType) );
+		if( !other.objType->DerivesFrom(objType) )
+		{
+			// We cannot allow a value assignment from a type that isn't the same or 
+			// derives from this type as the member properties may not have the same layout
+			asIScriptContext *ctx = asGetActiveContext();
+			ctx->SetException(TXT_MISMATCH_IN_VALUE_ASSIGN);
+			return *this;
+		}
 
 		// If the script class implements the opAssign method, it should be called
 		asCScriptEngine *engine = objType->engine;

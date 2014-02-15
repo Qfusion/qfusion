@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -55,8 +55,8 @@ BEGIN_AS_NAMESPACE
 template<>
 void asCSymbolTable<sGlobalVariableDescription>::GetKey(const sGlobalVariableDescription *entry, asSNameSpaceNamePair &key) const
 {
-	asSNameSpace *ns = entry->ns;
-	asCString name = entry->name;
+	asSNameSpace *ns = entry->property->nameSpace;
+	asCString name = entry->property->name;
 	key = asSNameSpaceNamePair(ns, name);
 }
 
@@ -242,9 +242,9 @@ int asCBuilder::Build()
 
 	ParseScripts();
 
-	CompileGlobalVariables();
 	CompileInterfaces();
 	CompileClasses();
+	CompileGlobalVariables();
 	CompileFunctions();
 
 	// TODO: Attempt to reorder the initialization of global variables so that
@@ -383,7 +383,8 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	if( func == 0 )
 		return asOUT_OF_MEMORY;
 
-	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, func->parameterNames, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared, module->defaultNamespace);
+	asCArray<asCString> parameterNames;
+	GetParsedFunctionDetails(node, scripts[0], 0, func->name, func->returnType, parameterNames, func->parameterTypes, func->inOutFlags, func->defaultArgs, func->isReadOnly, isConstructor, isDestructor, isPrivate, isFinal, isOverride, isShared, module->defaultNamespace);
 	func->id                           = engine->GetNextScriptFunctionId();
 	func->scriptData->scriptSectionIdx = engine->GetScriptSectionNameIndex(sectionName ? sectionName : "");
 	int row, col;
@@ -430,11 +431,11 @@ int asCBuilder::CompileFunction(const char *sectionName, const char *code, int l
 	funcDesc->node              = node;
 	funcDesc->name              = func->name;
 	funcDesc->funcId            = func->id;
-	funcDesc->paramNames        = func->parameterNames;
+	funcDesc->paramNames        = parameterNames;
 	funcDesc->isExistingShared  = false;
 
 	asCCompiler compiler(engine);
-	compiler.CompileFunction(this, functions[0]->script, func->parameterNames, functions[0]->node, func, 0);
+	compiler.CompileFunction(this, functions[0]->script, parameterNames, functions[0]->node, func, 0);
 
 	if( numWarnings > 0 && engine->ep.compilerWarnings == 2 )
 		WriteError(TXT_WARNINGS_TREATED_AS_ERROR, 0, 0);
@@ -1023,13 +1024,11 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 	// Preallocate memory
 	func->parameterTypes.Allocate(paramCount, false);
-	func->parameterNames.SetLength(paramCount);
 	func->inOutFlags.Allocate(paramCount, false);
 	func->defaultArgs.Allocate(paramCount, false);
 	if( paramAutoHandles ) paramAutoHandles->Allocate(paramCount, false);
 
 	n = paramList->firstChild;
-	asUINT index = 0;
 	while( n )
 	{
 		asETypeModifiers inOutFlags;
@@ -1064,11 +1063,8 @@ int asCBuilder::ParseFunctionDeclaration(asCObjectType *objType, const char *dec
 
 		// Move to next parameter
 		n = n->next->next;
-		if( n && n->nodeType == snIdentifier ) {
-			func->parameterNames[index] = asCString(&source.code[n->tokenPos], n->tokenLength);
+		if( n && n->nodeType == snIdentifier )
 			n = n->next;
-		}
-		++index;
 
 		if( n && n->nodeType == snExpression )
 		{
@@ -1359,6 +1355,7 @@ int asCBuilder::RegisterFuncDef(asCScriptNode *node, asCScriptCode *file, asSNam
 
 void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 {
+	asCArray<asCString>        parameterNames;
 	asCArray<asCString *>      defaultArgs;
 	bool                       isConstMethod;
 	bool                       isConstructor;
@@ -1371,7 +1368,7 @@ void asCBuilder::CompleteFuncDef(sFuncDef *funcDef)
 	asCScriptFunction *func = module->funcDefs[funcDef->idx];
 	asASSERT( func );
 
-	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, func->returnType, func->parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, func->nameSpace);
+	GetParsedFunctionDetails(funcDef->node, funcDef->script, 0, funcDef->name, func->returnType, parameterNames, func->parameterTypes, func->inOutFlags, defaultArgs, isConstMethod, isConstructor, isDestructor, isPrivate, isOverride, isFinal, isShared, func->nameSpace);
 
 	// There should not be any defaultArgs, but if there are any we need to delete them to avoid leaks
 	for( asUINT n = 0; n < defaultArgs.GetLength(); n++ )
@@ -1448,16 +1445,12 @@ int asCBuilder::RegisterGlobalVar(asCScriptNode *node, asCScriptCode *file, asSN
 		gvar->isCompiled  = false;
 		gvar->datatype    = type;
 		gvar->isEnumValue = false;
-		gvar->ns = ns;
 
 		// TODO: Give error message if wrong
 		asASSERT(!gvar->datatype.IsReference());
 
-		//Allocation is done when the variable is compiled, to allow for autos
-		//gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype, ns);
-		//gvar->index    = gvar->property->id;
-		gvar->property = 0;
-		gvar->index    = 0;
+		gvar->property = module->AllocateGlobalProperty(name.AddressOf(), gvar->datatype, ns);
+		gvar->index    = gvar->property->id;
 
 		globVariables.Put(gvar);
 
@@ -1882,7 +1875,7 @@ void asCBuilder::CompileGlobalVariables()
 				}
 
 				// Set the namespace that should be used for this function
-				initFunc->nameSpace = gvar->ns;
+				initFunc->nameSpace = gvar->property->nameSpace;
 
 				asCCompiler comp(engine);
 				int r = comp.CompileGlobalVariable(this, gvar->script, gvar->initializationNode, gvar, initFunc);
@@ -3273,11 +3266,10 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	asCArray<asCDataType> parameterTypes;
 	asCArray<asETypeModifiers> inOutFlags;
 	asCArray<asCString *> defaultArgs;
-	asCArray<asCString> parameterNames;
 
 	// Add the script function
 	// TODO: declaredAt should be set to where the class has been declared
-	module->AddScriptFunction(file->idx, 0, funcId, objType->name, returnType, parameterTypes, parameterNames, inOutFlags, defaultArgs, false, objType);
+	module->AddScriptFunction(file->idx, 0, funcId, objType->name, returnType, parameterTypes, inOutFlags, defaultArgs, false, objType);
 
 	// Set it as default constructor
 	if( objType->beh.construct )
@@ -3312,7 +3304,7 @@ void asCBuilder::AddDefaultConstructor(asCObjectType *objType, asCScriptCode *fi
 	objType->beh.factories[0] = funcId;
 	returnType = asCDataType::CreateObjectHandle(objType, false);
 	// TODO: should be the same as the constructor
-	module->AddScriptFunction(file->idx, 0, funcId, objType->name, returnType, parameterTypes, parameterNames, inOutFlags, defaultArgs, false);
+	module->AddScriptFunction(file->idx, 0, funcId, objType->name, returnType, parameterTypes, inOutFlags, defaultArgs, false);
 	functions.PushLast(0);
 	asCCompiler compiler(engine);
 	compiler.CompileFactory(this, file, engine->scriptFunctions[funcId]);
@@ -3468,7 +3460,6 @@ int asCBuilder::RegisterEnum(asCScriptNode *node, asCScriptCode *file, asSNameSp
 				gvar->initializationNode = asnNode;
 				gvar->name               = name;
 				gvar->datatype           = type;
-				gvar->ns                 = ns;
 				// No need to allocate space on the global memory stack since the values are stored in the asCObjectType
 				// Set the index to a negative to allow compiler to diferentiate from ordinary global var when compiling the initialization
 				gvar->index              = -1; 
@@ -3983,7 +3974,7 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 		int row = 0, col = 0;
 		if( node )
 			file->ConvertPosToRowCol(node->tokenPos, &row, &col);
-		module->AddScriptFunction(file->idx, (row&0xFFFFF)|((col&0xFFF)<<20), funcId, name, returnType, parameterTypes, parameterNames, inOutFlags, defaultArgs, isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared, ns);
+		module->AddScriptFunction(file->idx, (row&0xFFFFF)|((col&0xFFF)<<20), funcId, name, returnType, parameterTypes, inOutFlags, defaultArgs, isInterface, objType, isConstMethod, isGlobalFunction, isPrivate, isFinal, isOverride, isShared, ns);
 	}
 
 	// Make sure the default args are declared correctly
@@ -4023,7 +4014,7 @@ int asCBuilder::RegisterScriptFunction(asCScriptNode *node, asCScriptCode *file,
 					defaultArgs[n] = asNEW(asCString)(*defaultArgs[n]);
 
 			asCDataType dt = asCDataType::CreateObjectHandle(objType, false);
-			module->AddScriptFunction(file->idx, engine->scriptFunctions[funcId]->scriptData->declaredAt, factoryId, name, dt, parameterTypes, parameterNames, inOutFlags, defaultArgs, false);
+			module->AddScriptFunction(file->idx, engine->scriptFunctions[funcId]->scriptData->declaredAt, factoryId, name, dt, parameterTypes, inOutFlags, defaultArgs, false);
 
 			// If the object is shared, then the factory must also be marked as shared
 			if( objType->flags & asOBJ_SHARED )
@@ -4590,14 +4581,13 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 							// orderwise it is a template instance.
 							// Only do this for application registered interface, as the
 							// scripts cannot implement templates.
-							// TODO: namespace: Use correct implicit namespace
 							asCArray<asCDataType> subTypes;
 							asUINT subtypeIndex;
 							while( n && n->next && n->next->nodeType == snDataType )
 							{
 								n = n->next;
 
-								asCDataType subType = CreateDataTypeFromNode(n, file, engine->nameSpaces[0], false, module ? 0 : ot);
+								asCDataType subType = CreateDataTypeFromNode(n, file, implicitNamespace, false, module ? 0 : ot);
 								subTypes.PushLast(subType);
 
 								if( subType.IsReadOnly() )
@@ -4696,10 +4686,6 @@ asCDataType asCBuilder::CreateDataTypeFromNode(asCScriptNode *node, asCScriptCod
 			dt = asCDataType::CreatePrimitive(ttInt, isConst);
 			return dt;
 		}
-	}
-	else if( n->tokenType == ttAuto )
-	{
-		dt = asCDataType::CreateAuto(isConst);
 	}
 	else
 	{
@@ -4888,25 +4874,35 @@ asCObjectType *asCBuilder::GetObjectTypeFromTypesKnownByObject(const char *type,
 
 	asUINT n;
 
-	for( n = 0; n < currentType->properties.GetLength(); n++ )
+	asCObjectType *found = 0;
+
+	for( n = 0; found == 0 && n < currentType->properties.GetLength(); n++ )
 		if( currentType->properties[n]->type.GetObjectType() &&
 			currentType->properties[n]->type.GetObjectType()->name == type )
-			return currentType->properties[n]->type.GetObjectType();
+			found = currentType->properties[n]->type.GetObjectType();
 
-	for( n = 0; n < currentType->methods.GetLength(); n++ )
+	for( n = 0; found == 0 && n < currentType->methods.GetLength(); n++ )
 	{
 		asCScriptFunction *func = engine->scriptFunctions[currentType->methods[n]];
 		if( func->returnType.GetObjectType() &&
 			func->returnType.GetObjectType()->name == type )
-			return func->returnType.GetObjectType();
-
-		for( asUINT f = 0; f < func->parameterTypes.GetLength(); f++ )
+			found = func->returnType.GetObjectType();
+		
+		for( asUINT f = 0; found == 0 && f < func->parameterTypes.GetLength(); f++ )
 			if( func->parameterTypes[f].GetObjectType() &&
 				func->parameterTypes[f].GetObjectType()->name == type )
-				return func->parameterTypes[f].GetObjectType();
+				found = func->parameterTypes[f].GetObjectType();
 	}
 
-	return 0;
+	if( found )
+	{
+		// In case we find a template instance it mustn't be returned
+		// because it is not known if the subtype is really matching
+		if( found->flags & asOBJ_TEMPLATE )
+			return 0;
+	}
+
+	return found;
 }
 
 asCScriptFunction *asCBuilder::GetFuncDef(const char *type)

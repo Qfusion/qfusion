@@ -67,14 +67,10 @@
 #define TXT_CONSTRUCTOR_NAME_ERROR               "The name of constructors and destructors must be the same as the class"
 
 #define TXT_DATA_TYPE_CANT_BE_s           "Data type can't be '%s'"
-#define TXT_CANNOT_RESOLVE_AUTO           "Unable to resolve auto type"
-#define TXT_AUTO_NOT_ALLOWED              "Auto is not allowed here"
 #define TXT_DECL_IN_SWITCH                "Variables cannot be declared in switch cases, except inside statement blocks"
 #define TXT_DEFAULT_MUST_BE_LAST          "The default case must be the last one"
 #define TXT_DEF_ARG_MISSING_IN_FUNC_s     "All subsequent parameters after the first default value must have default values in function '%s'"
 #define TXT_DEF_ARG_TYPE_DOESNT_MATCH     "The type of the default argument expression doesn't match the function parameter type"
-#define TXT_POS_ARG_AFTER_NAMED_ARG       "Positional arguments cannot be passed after named arguments"
-#define TXT_DUPLICATE_NAMED_ARG           "Duplicate named argument"
 #define TXT_DERIVED_METHOD_MUST_HAVE_SAME_RETTYPE_s "The method in the derived class must have the same return type as in the base class: '%s'"
 #define TXT_DESTRUCTOR_MAY_NOT_HAVE_PARM  "The destructor must not have any parameters"
 #define TXT_DISALLOW_ASSIGN_ON_REF_TYPE   "Value assignment on reference types is not allowed. Did you mean to do a handle assignment?"
@@ -291,6 +287,7 @@
 #define TXT_PREV_FUNC_IS_NAMED_s_TYPE_IS_d               "The function in previous message is named '%s'. The func type is %d"
 #define TXT_RESURRECTING_SCRIPTOBJECT_s                  "The script object of type '%s' is being resurrected illegally during destruction"
 #define TXT_INVALID_BYTECODE_d                           "LoadByteCode failed. The bytecode is invalid. Number of bytes read from stream: %d"
+#define TXT_NO_JIT_IN_FUNC_s                             "Function '%s' appears to have been compiled without JIT entry points"
 
 // Internal names
 
@@ -310,5 +307,6 @@
 #define TXT_UNBOUND_FUNCTION              "Unbound function called"
 #define TXT_OUT_OF_BOUNDS                 "Out of range"
 #define TXT_EXCEPTION_CAUGHT              "Caught an exception from the application"
+#define TXT_MISMATCH_IN_VALUE_ASSIGN      "Mismatching types in value assignment"
 
 #endif

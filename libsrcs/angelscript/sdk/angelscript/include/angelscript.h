@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22801
-#define ANGELSCRIPT_VERSION_STRING "2.28.1 WIP"
+#define ANGELSCRIPT_VERSION        22802
+#define ANGELSCRIPT_VERSION_STRING "2.28.2 WIP"
 
 // Data types
 
@@ -977,7 +977,7 @@ public:
 	virtual const char      *GetObjectName() const = 0;
 	virtual const char      *GetName() const = 0;
 	virtual const char      *GetNamespace() const = 0;
-	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false, bool includeParamNames = false) const = 0;
+	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false) const = 0;
 	virtual bool             IsReadOnly() const = 0;
 	virtual bool             IsPrivate() const = 0;
 	virtual bool             IsFinal() const = 0;

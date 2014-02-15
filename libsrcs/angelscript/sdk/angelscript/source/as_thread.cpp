@@ -329,10 +329,13 @@ asCThreadCriticalSection::asCThreadCriticalSection()
 #if defined AS_POSIX_THREADS
 	pthread_mutex_init(&cs, 0);
 #elif defined AS_WINDOWS_THREADS
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+	// Only the Ex version is available on Windows Store
 	InitializeCriticalSectionEx(&cs, 4000, 0);
 #else
-    InitializeCriticalSection(&cs);
+	// Only the non-Ex version is available on WinXP and older
+	// MinGW also only defines this version
+	InitializeCriticalSection(&cs);
 #endif
 #endif
 }
@@ -382,7 +385,9 @@ asCThreadReadWriteLock::asCThreadReadWriteLock()
 	asASSERT( r == 0 );
 	UNUSED_VAR(r);
 #elif defined AS_WINDOWS_THREADS
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !(WINAPI_FAMILY & WINAPI_PARTITION_DESKTOP)
+	// Only the Ex versions are available on Windows Store
+
 	// Create a semaphore to allow up to maxReaders simultaneous readers
 	readLocks = CreateSemaphoreExW(NULL, maxReaders, maxReaders, 0, 0, 0);
 	// Create a critical section to synchronize writers
