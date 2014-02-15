@@ -1190,7 +1190,7 @@ char **Cmd_CompleteFileList( const char *partial, const char *basedir, const cha
 	buf[total] = NULL;
 
 	if( numdirs > numdirs_added ) {
-		memmove( buf + numdirs_added, buf + numdirs, ( total - numdirs ) * sizeof ( char * ) );
+		memmove( buf + numdirs_added, buf + numdirs, ( total - numdirs + 1 ) * sizeof ( char * ) );
 	}
 
 	return buf;
