@@ -1518,14 +1518,6 @@ qboolean NET_IsLANAddress( const netadr_t *address )
 }
 
 /*
-* NET_AsyncResolveHostname
-*/
-void NET_AsyncResolveHostname( const char *hostname )
-{
-	Sys_NET_AsyncResolveHostname( hostname );
-}
-
-/*
 * NET_ShowIP
 */
 void NET_ShowIP( void )
