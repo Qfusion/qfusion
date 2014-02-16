@@ -50,13 +50,6 @@ net_error_t Sys_NET_GetLastError( void )
 	}
 }
 
-/*
-* Sys_NET_AsyncResolveHostname
-*/
-void Sys_NET_AsyncResolveHostname( const char *hostname )
-{
-}
-
 //=============================================================================
 
 /*
