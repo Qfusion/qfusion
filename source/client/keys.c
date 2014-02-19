@@ -651,7 +651,7 @@ void Key_Event( int key, qboolean down, unsigned time )
 
 #ifndef WIN32
 	// switch between fullscreen/windowed when ALT+ENTER is pressed
-	if( key == K_ENTER && down && keydown[K_ALT] )
+	if( key == K_ENTER && down && (keydown[K_LALT] || keydown[K_RALT]) )
 	{
 		Cbuf_ExecuteText( EXEC_APPEND, "toggle vid_fullscreen\n" );
 		return;
