@@ -153,10 +153,10 @@ static qwchar TranslateSDLKey(qwchar charkey)
 		case SDLK_RIGHT:		charkey = K_RIGHTARROW;	break;
 		case SDLK_LALT:
 		case SDLK_RALT:			charkey = K_OPTION;		break;
-		case SDLK_LCTRL:
-		case SDLK_RCTRL:		charkey = K_CTRL;		break;
-		case SDLK_LSHIFT:
-		case SDLK_RSHIFT:		charkey = K_SHIFT;		break;			
+		case SDLK_LCTRL:		charkey = K_LCTRL;		break;
+		case SDLK_RCTRL:		charkey = K_RCTRL;		break;
+		case SDLK_LSHIFT:		charkey = K_LSHIFT;		break;
+		case SDLK_RSHIFT:		charkey = K_RSHIFT;		break;
 		case SDLK_F1:			charkey = K_F1;			break;
 		case SDLK_F2:			charkey = K_F2;			break;
 		case SDLK_F3:			charkey = K_F3;			break;

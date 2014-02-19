@@ -260,16 +260,16 @@ static char *XLateKey( int keycode, int *key )
 		case XK_KP_Delete: case XK_KP_Decimal: *key = KP_DEL; break;
 		case XK_Delete: *key = K_DEL; break;
 		case XK_Pause: *key = K_PAUSE; break;
-		case XK_Shift_L: *key = K_SHIFT; break;
-		case XK_Shift_R: *key = K_SHIFT; break;
+		case XK_Shift_L: *key = K_LSHIFT; break;
+		case XK_Shift_R: *key = K_RSHIFT; break;
 		case XK_Execute:
-		case XK_Control_L: *key = K_CTRL; break;
-		case XK_Control_R: *key = K_CTRL; break;
+		case XK_Control_L: *key = K_LCTRL; break;
+		case XK_Control_R: *key = K_RCTRL; break;
 		case XK_Alt_L:
-		case XK_Meta_L: *key = K_ALT; break;
+		case XK_Meta_L: *key = K_LALT; break;
 		case XK_Alt_R:
 		case XK_ISO_Level3_Shift:
-		case XK_Meta_R: *key = K_ALT; break;
+		case XK_Meta_R: *key = K_RALT; break;
 		case XK_Super_L: *key = K_WIN; break;
 		case XK_Super_R: *key = K_WIN; break;
 		case XK_Multi_key: *key = K_WIN; break;
