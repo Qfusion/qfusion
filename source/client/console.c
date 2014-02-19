@@ -1236,7 +1236,7 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 		type = COMMAND;
 	else if( *p == '\\' || *p == '/' )
 		type = COMMAND;
-	else if( Key_IsDown(K_CTRL) && !ignore_ctrl )
+	else if( ( Key_IsDown(K_RCTRL) || Key_IsDown(K_LCTRL)) && !ignore_ctrl )
 		type = TEAMCHAT;
 	else if( chatmode == 1 || !Cmd_CheckForCommand( p ) )
 		type = CHAT;
@@ -1285,6 +1285,8 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 */
 void Con_KeyDown( int key )
 {
+	qboolean ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
+
 	if( !con_initialized )
 		return;
 
@@ -1337,7 +1339,7 @@ void Con_KeyDown( int key )
 		break;
 	}
 
-	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && Key_IsDown(K_SHIFT) )
+	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT)) )
 	{
 		Con_Key_Paste( qtrue );
 		return;
@@ -1479,7 +1481,7 @@ void Con_KeyDown( int key )
 	
 	if( key == K_MWHEELUP || key == K_MWHEELDOWN )
 	{
-		if( Key_IsDown( K_CTRL ) ) {
+		if( ctrl_is_down ) {
 			Con_ChangeFontSize( key == K_MWHEELUP ? 1 : -1 );
 			return;
 		}
@@ -1502,7 +1504,7 @@ void Con_KeyDown( int key )
 
 	if( key == K_HOME || key == KP_HOME )
 	{
-		if( Key_IsDown(K_CTRL) )
+		if( ctrl_is_down )
 		{
 			int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
 			int vislines = (int)( viddef.height * bound( 0.0, scr_con_current, 1.0 ) );
@@ -1517,7 +1519,7 @@ void Con_KeyDown( int key )
 
 	if( key == K_END || key == KP_END )
 	{
-		if( Key_IsDown(K_CTRL) )
+		if( ctrl_is_down )
 			con.display = 0;
 		else
 			key_linepos = (unsigned int)strlen( key_lines[edit_line] );
@@ -1620,6 +1622,8 @@ void Con_MessageCharEvent( qwchar key )
 
 void Con_MessageKeyDown( int key )
 {
+	qboolean ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
+
 	if( !con_initialized )
 		return;
 
@@ -1627,7 +1631,7 @@ void Con_MessageKeyDown( int key )
 	{
 		if( chat_bufferlen > 0 )
 		{
-			Con_SendChatMessage( chat_buffer, chat_team || Key_IsDown(K_CTRL) );
+			Con_SendChatMessage( chat_buffer, chat_team || ctrl_is_down );
 			chat_bufferlen = 0;
 			chat_linepos = 0;
 			chat_buffer[0] = 0;
@@ -1639,19 +1643,19 @@ void Con_MessageKeyDown( int key )
 
 	if( key == K_HOME || key == KP_HOME )
 	{
-		if( !Key_IsDown(K_CTRL) )
+		if( !ctrl_is_down )
 			chat_linepos = 0;
 		return;
 	}
 
 	if( key == K_END || key == KP_END )
 	{
-		if( !Key_IsDown(K_CTRL) )
+		if( !ctrl_is_down )
 			chat_linepos = chat_bufferlen;
 		return;
 	}
 
-	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && Key_IsDown(K_SHIFT) )
+	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT) ) )
 	{
 		Con_MessageKeyPaste( qtrue );
 		return;
