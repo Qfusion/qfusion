@@ -25,8 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <Rocket/Controls.h>
 
-#include <typeinfo>
-
 namespace WSWUI
 {
 using namespace Rocket::Core;
@@ -90,7 +88,7 @@ public:
 
 			if( elem )
 			{
-				ElementDataGridRow *row = dynamic_cast<ElementDataGridRow*>( elem );
+				ElementDataGridRow *row = static_cast<ElementDataGridRow*>( elem );
 				int index = row->GetTableRelativeIndex();
 				Rocket::Core::String indexStr(toString( index ).c_str());
 					
