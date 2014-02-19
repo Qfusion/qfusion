@@ -275,7 +275,7 @@ static char *XLateKey( int keycode, int *key )
 		case XK_Multi_key: *key = K_WIN; break;
 		case XK_Menu: *key = K_MENU; break;
 		case XK_KP_Begin: *key = KP_5; break;
-		case XK_KP_Insert: case case XK_KP_0: *key = KP_INS; break;
+		case XK_KP_Insert: case XK_KP_0: *key = KP_INS; break;
 		case XK_Insert: *key = K_INS; break;
 		case XK_KP_Multiply: *key = KP_STAR; break;
 		case XK_KP_Add: *key = KP_PLUS; break;
@@ -378,6 +378,9 @@ static void handle_button(XGenericEventCookie *cookie)
 	unsigned time = Sys_XTimeToSysTime(ev->time);
 	int k_button;
 
+	if(!mouse_active)
+		return;
+
 	switch(button) {
 		case 1: k_button = K_MOUSE1; break;
 		case 2: k_button = K_MOUSE3; break;
@@ -406,7 +409,7 @@ static void handle_key(XGenericEventCookie *cookie)
 	int key = 0;
 	const char *name = XLateKey(keycode, &key);
 
-	if (key == K_SHIFT)
+	if (key == K_LSHIFT || key == K_RSHIFT)
 		shift_down = down;
 
 	Key_Event(key, down, time);
