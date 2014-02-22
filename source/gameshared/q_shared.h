@@ -86,6 +86,7 @@ extern float ( *LittleFloat )(float l);
 #define DEFAULT_SYSTEM_FONT_STYLE			0
 
 #define DEFAULT_SCOREBOARD_FONT_FAMILY		"Droid Sans"
+#define DEFAULT_SCOREBOARD_MONO_FONT_FAMILY	"Droid Sans Mono"
 #define DEFAULT_SCOREBOARD_FONT_SIZE		14
 #define DEFAULT_SCOREBOARD_FONT_STYLE		0
 

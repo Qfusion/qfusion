@@ -698,6 +698,7 @@ void CG_Predict_TouchTriggers( pmove_t *pm );
 extern vrect_t scr_vrect;
 
 extern cvar_t *cg_scoreboardFontFamily;
+extern cvar_t *cg_scoreboardMonoFontFamily;
 extern cvar_t *cg_scoreboardFontSize;
 extern cvar_t *cg_showFPS;
 extern cvar_t *cg_showAwards;
