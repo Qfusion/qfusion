@@ -1174,13 +1174,12 @@ int asCContext::Execute()
 		if( gcPosObjects > gcPreObjects )
 		{
 			// Execute as many steps as there were new objects created
-			while( gcPosObjects-- > gcPreObjects )
-				m_engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE);
+			m_engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE, gcPosObjects - gcPreObjects);
 		}
 		else if( gcPosObjects > 0 )
 		{
 			// Execute at least one step, even if no new objects were created
-			m_engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE);
+			m_engine->GarbageCollect(asGC_ONE_STEP | asGC_DESTROY_GARBAGE | asGC_DETECT_GARBAGE, 1);
 		}
 	}
 

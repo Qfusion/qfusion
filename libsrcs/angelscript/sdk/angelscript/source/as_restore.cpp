@@ -2498,7 +2498,7 @@ void asCReader::TranslateFunction(asCScriptFunction *func)
 }
 
 asCReader::SListAdjuster::SListAdjuster(asCReader *rd, asDWORD *bc, asCObjectType *listType) : 
-	reader(rd), allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1), nextTypeId(-1)
+	reader(rd), allocMemBC(bc), maxOffset(0), patternType(listType), repeatCount(0), lastOffset(-1), nextTypeId(-1), nextOffset(0)
 {
 	asASSERT( patternType && (patternType->flags & asOBJ_LIST_PATTERN) );
 
@@ -2520,7 +2520,6 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 	if( lastOffset == offset )
 		return lastAdjustedOffset;
 
-	int prevOffset = lastOffset;
 	lastOffset = offset;
 	lastAdjustedOffset = maxOffset;
 
@@ -2536,6 +2535,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 
 		// Don't move the patternNode yet because the caller must make a call to SetRepeatCount too
 		maxOffset += 4;
+		nextOffset = offset+1;
 		return lastAdjustedOffset;
 	}
 	else if( patternNode->type == asLPT_TYPE )
@@ -2569,6 +2569,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 				nextTypeId = -1;
 
 				maxOffset += size;
+				nextOffset = offset+1;
 				return lastAdjustedOffset;
 			}
 			else
@@ -2582,7 +2583,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 
 				// The first adjustment is for the typeId
 				maxOffset += 4;
-
+				nextOffset = offset+1;
 				return lastAdjustedOffset;
 			}
 		}
@@ -2597,7 +2598,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 				size = dt.GetSizeInMemoryBytes();
 
 			// If values are skipped, the offset needs to be incremented
-			while( prevOffset++ < offset )
+			while( nextOffset <= offset )
 			{
 				if( repeatCount > 0 )
 					repeatCount--;
@@ -2607,6 +2608,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 					maxOffset += 4 - (maxOffset & 0x3);
 
 				lastAdjustedOffset = maxOffset;
+				nextOffset += 1;
 				maxOffset += size;
 			}
 
@@ -2614,6 +2616,7 @@ int asCReader::SListAdjuster::AdjustOffset(int offset)
 			if( repeatCount == 0 )
 				patternNode = patternNode->next;
 
+			nextOffset = offset+1;
 			return lastAdjustedOffset;
 		}
 	}
@@ -4517,7 +4520,7 @@ void asCWriter::WriteByteCode(asCScriptFunction *func)
 	}
 }
 
-asCWriter::SListAdjuster::SListAdjuster(asCObjectType *ot) : patternType(ot), repeatCount(0), entries(0), lastOffset(-1), nextTypeId(-1)
+asCWriter::SListAdjuster::SListAdjuster(asCObjectType *ot) : patternType(ot), repeatCount(0), entries(0), lastOffset(-1), nextTypeId(-1), nextOffset(0)
 { 
 	asASSERT( ot && (ot->flags & asOBJ_LIST_PATTERN) ); 
 
@@ -4539,8 +4542,7 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	if( offset == lastOffset )
 		return entries-1;
 
-	// Store the last offset so we can check if the list is skipping some values
-	int prevOffset = lastOffset;
+	asASSERT( offset >= nextOffset );
 
 	// Update last offset for next call
 	lastOffset = offset;
@@ -4549,6 +4551,7 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 	if( patternNode->type == asLPT_REPEAT || patternNode->type == asLPT_REPEAT_SAME )
 	{
 		// Don't move the patternNode yet because the caller must make a call to SetRepeatCount too
+		nextOffset = offset + 4;
 		return entries++;
 	}
 	else if( patternNode->type == asLPT_TYPE )
@@ -4561,6 +4564,8 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 			// we can move to the next node
 			if( nextTypeId != -1 )
 			{
+				nextOffset = offset + 4;
+
 				if( repeatCount > 0 )
 					repeatCount--;
 
@@ -4583,14 +4588,14 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 					size = dt.GetSizeInMemoryBytes();
 
 				int count = 0;
-				while( prevOffset < offset )
+				while( nextOffset <= offset )
 				{
 					count++;
-					prevOffset += size;
+					nextOffset += size;
 
 					// Align the offset on 4 byte boundaries
-					if( size >= 4 && (prevOffset & 0x3) )
-						prevOffset += 4 - (prevOffset & 0x3);
+					if( size >= 4 && (nextOffset & 0x3) )
+						nextOffset += 4 - (nextOffset & 0x3);
 				}
 
 				if( --count > 0 )
@@ -4600,6 +4605,7 @@ int asCWriter::SListAdjuster::AdjustOffset(int offset, asCObjectType *listPatter
 					entries += count;
 				}
 
+				nextOffset = offset + size;
 				repeatCount--;
 			}
 

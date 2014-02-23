@@ -1324,27 +1324,43 @@ asCScriptNode *asCParser::ParseConstructCall()
 	return node;
 }
 
-asCScriptNode *asCParser::ParseArgList()
+asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 {
 	asCScriptNode *node = CreateNode(snArgList);
 	if( node == 0 ) return 0;
 
 	sToken t1;
-	GetToken(&t1);
-	if( t1.type != ttOpenParanthesis )
+	if( withParenthesis )
 	{
-		Error(ExpectedToken("("), &t1);
-		return node;
+		GetToken(&t1);
+		if( t1.type != ttOpenParanthesis )
+		{
+			Error(ExpectedToken("("), &t1);
+			return node;
+		}
+
+		node->UpdateSourcePos(t1.pos, t1.length);
 	}
 
-	node->UpdateSourcePos(t1.pos, t1.length);
-
 	GetToken(&t1);
-	if( t1.type == ttCloseParanthesis )
+	if( t1.type == ttCloseParanthesis || t1.type == ttCloseBracket )
 	{
-		node->UpdateSourcePos(t1.pos, t1.length);
+		if( withParenthesis )
+		{
+			if( t1.type == ttCloseParanthesis )
+				node->UpdateSourcePos(t1.pos, t1.length);
+			else
+			{
+				asCString str;
+				str.Format(TXT_UNEXPECTED_TOKEN_s, asCTokenizer::GetDefinition(ttCloseBracket));
 
-		// Statement block is finished
+				Error(str.AddressOf(), &t1);
+			}
+		}
+		else
+			RewindTo(&t1);
+
+		// Argument list has ended
 		return node;
 	}
 	else
@@ -1358,17 +1374,20 @@ asCScriptNode *asCParser::ParseArgList()
 
 			// Check if list continues
 			GetToken(&t1);
-			if( t1.type == ttCloseParanthesis )
-			{
-				node->UpdateSourcePos(t1.pos, t1.length);
-
-				return node;
-			}
-			else if( t1.type == ttListSeparator )
+			if( t1.type == ttListSeparator )
 				continue;
 			else
 			{
-				Error(ExpectedTokens(")", ","), &t1);
+				if( withParenthesis )
+				{
+					if( t1.type == ttCloseParanthesis )
+						node->UpdateSourcePos(t1.pos, t1.length);
+					else
+						Error(ExpectedTokens(")", ","), &t1);
+				}
+				else 
+					RewindTo(&t1);
+
 				return node;
 			}
 		}
@@ -1598,7 +1617,7 @@ asCScriptNode *asCParser::ParseExprPostOp()
 	}
 	else if( t.type == ttOpenBracket )
 	{
-		node->AddChildLast(ParseAssignment());
+		node->AddChildLast(ParseArgList(false));
 
 		GetToken(&t);
 		if( t.type != ttCloseBracket )

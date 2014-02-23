@@ -627,7 +627,7 @@ asCScriptEngine::~asCScriptEngine()
 		}
 	}
 
-	GarbageCollect(asGC_FULL_CYCLE);
+	GarbageCollect();
 	FreeUnusedGlobalProperties();
 	ClearUnusedTypes();
 
@@ -637,7 +637,7 @@ asCScriptEngine::~asCScriptEngine()
 			scriptFunctions[n]->DestroyInternal();
 
 	// There may be instances where one more gc cycle must be run
-	GarbageCollect(asGC_FULL_CYCLE);
+	GarbageCollect();
 	ClearUnusedTypes();
 
 	// If the application hasn't registered GC behaviours for all types
@@ -1138,9 +1138,23 @@ int asCScriptEngine::ClearUnusedTypes()
 				refCount = 2*(int)type->beh.factories.GetLength();
 				if( type->beh.listFactory )
 					refCount += 2;
+
+				// If it is an orphaned script type, then the gc holds 1 reference too
+				bool isScriptTemplate = false;
+				for( asUINT s = 0; s < type->templateSubTypes.GetLength(); s++ )
+				{
+					if( type->templateSubTypes[s].GetObjectType() && (type->templateSubTypes[s].GetObjectType()->flags & asOBJ_SCRIPT_OBJECT) )
+					{
+						isScriptTemplate = true;
+						break;
+					}
+				}
+				
+				if( isScriptTemplate && type->module == 0 )
+					refCount++;
 			}
 
-			if( type->GetRefCount() == refCount )
+			if( type->GetRefCount() == refCount || type->GetRefCount() == 0 )
 			{
 				if( type->flags & asOBJ_TEMPLATE )
 				{
@@ -3219,6 +3233,8 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 {
 	int n;
 
+	RemoveFromTypeIdMap(t);
+
 	// Destroy the factory stubs
 	for( n = 0; n < (int)t->beh.factories.GetLength(); n++ )
 	{
@@ -3259,18 +3275,22 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 		}
 	}
 
-	for( n = (int)generatedTemplateTypes.GetLength()-1; n >= 0; n-- )
+	// Only delete it if the refCount is 0
+	if( t->refCount.get() == 0 )
 	{
-		if( generatedTemplateTypes[n] == t )
+		for( n = (int)generatedTemplateTypes.GetLength()-1; n >= 0; n-- )
 		{
-			if( n == (signed)generatedTemplateTypes.GetLength()-1 )
-				generatedTemplateTypes.PopLast();
-			else
-				generatedTemplateTypes[n] = generatedTemplateTypes.PopLast();
+			if( generatedTemplateTypes[n] == t )
+			{
+				if( n == (signed)generatedTemplateTypes.GetLength()-1 )
+					generatedTemplateTypes.PopLast();
+				else
+					generatedTemplateTypes[n] = generatedTemplateTypes.PopLast();
+			}
 		}
-	}
 
-	asDELETE(t,asCObjectType);
+		asDELETE(t,asCObjectType);
+	}
 }
 
 // internal
@@ -4223,10 +4243,17 @@ int asCScriptEngine::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, asIOb
 	return gc.GetObjectInGC(idx, seqNbr, obj, type);
 }
 
+// internal
+int asCScriptEngine::GarbageCollect(asDWORD flags, asUINT iterations)
+{
+	return gc.GarbageCollect(flags, iterations);
+}
+
 // interface
+// TODO: interface: Allow caller to inform number of iterations
 int asCScriptEngine::GarbageCollect(asDWORD flags)
 {
-	return gc.GarbageCollect(flags);
+	return gc.GarbageCollect(flags, 1);
 }
 
 // interface

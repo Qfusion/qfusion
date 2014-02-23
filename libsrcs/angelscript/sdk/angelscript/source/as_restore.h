@@ -143,6 +143,7 @@ protected:
 		asCObjectType      *patternType;
 		asUINT              repeatCount;
 		int                 lastOffset;
+		int                 nextOffset;
 		asUINT              lastAdjustedOffset;
 		asSListPatternNode *patternNode;
 		int                 nextTypeId;
@@ -240,7 +241,8 @@ protected:
 		asUINT              repeatCount;
 		asSListPatternNode *patternNode;
 		asUINT              entries;
-		int                 lastOffset;
+		int                 lastOffset;  // Last offset adjusted
+		int                 nextOffset;  // next expected offset to be adjusted
 		int                 nextTypeId;
 	};
 	asCArray<SListAdjuster*> listAdjusters;
