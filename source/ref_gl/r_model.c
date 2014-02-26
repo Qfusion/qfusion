@@ -899,6 +899,9 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 	extension = &name[strlen( shortname )+1];
 
 	mod = Mod_FindSlot( name );
+	if( mod->type == mod_bad ) {
+		return NULL;
+	}
 	if( mod->type != mod_free ) {
 		return mod;
 	}
@@ -939,6 +942,10 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 
 	descr->loader( mod, NULL, buf, bspFormat );
 	R_FreeFile( buf );
+
+	if( mod->type == mod_bad ) {
+		return NULL;
+	}
 
 	if( mod_isworldmodel ) {
 		// we only init map config when loading the map from disk
