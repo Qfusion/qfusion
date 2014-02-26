@@ -154,17 +154,20 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	qbyte *vblendindexes, *vblendweights;
 	mskmodel_t *poutmodel;
 
+	baseposes = NULL;
 	header = ( iqmheader_t * )buffer;
 
 	// check IQM magic
 	if( memcmp( header->magic, "INTERQUAKEMODEL", 16 ) ) {
-		ri.Com_Error( ERR_DROP, "%s is not an Inter-Quake Model", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s is not an Inter-Quake Model\n", mod->name );
+		goto error;
 	}
 
 	// check header version
 	header->version = LittleLong( header->version );
 	if( header->version != IQM_VERSION ) {
-		ri.Com_Error( ERR_DROP, "%s has wrong type number (%i should be %i)", mod->name, header->version, IQM_VERSION );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has wrong type number (%i should be %i)\n", mod->name, header->version, IQM_VERSION );
+		goto error;
 	}
 
 	// byteswap header
@@ -198,16 +201,20 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 #undef H_SWAP
 
 	if( header->num_triangles < 1 || header->num_vertexes < 3 || header->num_vertexarrays < 1 || header->num_meshes < 1 ) {
-		ri.Com_Error( ERR_DROP, "%s has no geometry", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no geometry\n", mod->name );
+		goto error;
 	}
 	if( header->num_frames < 1 || header->num_anims < 1 ) {
-		ri.Com_Error( ERR_DROP, "%s has no animations", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no animations\n", mod->name );
+		goto error;
 	}
 	if( header->num_joints != header->num_poses ) {
-		ri.Com_Error( ERR_DROP, "%s has an invalid number of poses: %i vs %i", mod->name, header->num_joints, header->num_poses );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has an invalid number of poses: %i vs %i\n", mod->name, header->num_joints, header->num_poses );
+		goto error;
 	}
 	if( !header->ofs_bounds ) {
-		ri.Com_Error( ERR_DROP, "%s has no frame bounds", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no frame bounds\n", mod->name );
+		goto error;
 	}
 
 	pbase = ( qbyte * )buffer;
@@ -222,7 +229,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		|| header->ofs_meshes + header->num_meshes * sizeof( iqmmesh_t ) > filesize
 		|| header->ofs_bounds + header->num_frames * sizeof( iqmbounds_t ) > filesize
 		) {
-		ri.Com_Error( ERR_DROP, "%s has invalid size or offset information", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has invalid size or offset information\n", mod->name );
+		goto error;
 	}
 
 	poutmodel = mod->extradata = Mod_Malloc( mod, sizeof( *poutmodel ) );
@@ -305,7 +313,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	}
 
 	if( !vposition || !vtexcoord || !vblendindexes || !vblendweights ) {
-		ri.Com_Error( ERR_DROP, "%s is missing vertex array data", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s is missing vertex array data\n", mod->name );
+		goto error;
 	}
 
 	// load joints
@@ -336,7 +345,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		}
 
 		if( joints[i].parent >= (int)i ) {
-			ri.Com_Error( ERR_DROP, "%s bone[%i].parent(%i) >= %i", mod->name, i, joints[i].parent, i );
+			ri.Com_Printf( S_COLOR_RED "ERROR: %s bone[%i].parent(%i) >= %i\n", mod->name, i, joints[i].parent, i );
+			goto error;
 		}
 
 		poutmodel->bones[i].name = texts + joints[i].name;
@@ -624,6 +634,13 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	mod->touch = &Mod_TouchSkeletalModel;
 
 	R_Free( baseposes );
+	return;
+
+error:
+	if( baseposes ) {
+		R_Free( baseposes );
+	}
+	mod->type = mod_bad;
 }
 
 /*
