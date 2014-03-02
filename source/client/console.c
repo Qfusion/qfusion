@@ -1602,8 +1602,8 @@ void Con_MessageCharEvent( qwchar key )
 
 	if( chat_linepos < MAXCMDLINE-1 )
 	{
-		char *utf = Q_WCharToUtf8( key );
-		int utflen = strlen( utf );
+		const char *utf = Q_WCharToUtf8( key );
+		size_t utflen = strlen( utf );
 
 		if( chat_bufferlen + utflen >= MAXCMDLINE )
 			return;		// won't fit
@@ -1618,6 +1618,69 @@ void Con_MessageCharEvent( qwchar key )
 		chat_bufferlen += utflen;
 		chat_linepos += utflen;
 	}
+}
+
+/*
+* Con_MessageCompletion
+*/
+static void Con_MessageCompletion( const char *partial, qboolean teamonly )
+{
+	char comp[256];
+	size_t comp_len;
+	size_t partial_len;
+	char **args;
+	const char *p;
+
+	// only complete at the end of the line
+	if( chat_linepos != chat_bufferlen )
+		return;
+
+	p = strrchr( chat_buffer, ' ' );
+	if( p && *(p+1) ) {
+		partial = p + 1;
+	}
+	else {
+		partial = chat_buffer;
+	}
+
+	args = Cmd_CompleteBuildArgListExt( teamonly ? "say_team" : "say", partial );
+	if( args ) {
+		int i;
+
+		// check for single match
+		if( args[0] && !args[1] ) {
+			Q_strncpyz( comp, args[0], sizeof( comp ) );
+		}
+		else if( args[0] ) {
+			char ch;
+			size_t start_pos, pos;
+
+			start_pos = strlen( partial );
+			for( pos = start_pos; pos + 1 < sizeof( comp ); pos++ ) {
+				ch = args[0][pos];
+				if( !ch )
+					break;
+				for( i = 1; args[i] && args[i][pos] == ch; i++ );
+				if( args[i] )
+					break;
+			}
+			Q_strncpyz( comp, args[0], sizeof( comp ) );
+			comp[pos] = '\0';
+		}
+
+		Mem_Free( args );
+	}
+
+	comp_len = strlen( comp );
+	if( chat_bufferlen + comp_len >= MAXCMDLINE )
+		return;		// won't fit
+
+	partial_len = strlen( partial );
+	chat_linepos -= partial_len;
+	chat_bufferlen -= partial_len;
+	memcpy( chat_buffer + chat_linepos, comp, comp_len + 1 );
+	chat_bufferlen += comp_len;
+	chat_linepos += comp_len;
 }
 
 void Con_MessageKeyDown( int key )
@@ -1658,6 +1721,12 @@ void Con_MessageKeyDown( int key )
 	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT) ) )
 	{
 		Con_MessageKeyPaste( qtrue );
+		return;
+	}
+
+	if( key == K_TAB )
+	{
+		Con_MessageCompletion( chat_buffer, chat_team || ctrl_is_down );
 		return;
 	}
 

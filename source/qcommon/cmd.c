@@ -1012,6 +1012,22 @@ char **Cmd_CompleteBuildList( const char *partial )
 }
 
 /*
+* Cmd_CompleteBuildArgListExt
+* 
+* Find a possible single matching command
+*/
+char **Cmd_CompleteBuildArgListExt( const char *command, const char *arguments )
+{
+	cmd_function_t *cmd = NULL;
+
+	if( Trie_Find( cmd_function_trie, command, TRIE_EXACT_MATCH, (void **)&cmd ) != TRIE_OK )
+		return NULL;
+	if( cmd->completion_func )
+		return cmd->completion_func( arguments );
+	return NULL;
+}
+
+/*
 * Cmd_CompleteBuildArgList
 * 
 * Find a possible single matching command
@@ -1023,14 +1039,8 @@ char **Cmd_CompleteBuildArgList( const char *partial )
 	p = strstr( partial, " " );
 	if( p )
 	{
-		cmd_function_t *cmd;
-
 		Cmd_TokenizeString( partial );
-		if( Trie_Find( cmd_function_trie, cmd_argv[0], TRIE_EXACT_MATCH, (void **)&cmd ) == TRIE_OK )
-		{
-			if( cmd->completion_func )
-				return cmd->completion_func( cmd_args );
-		}
+		return Cmd_CompleteBuildArgListExt( cmd_argv[0], cmd_args );
 	}
 
 	return NULL;
