@@ -358,6 +358,7 @@ typedef struct cg_sexedSfx_s
 typedef struct
 {
 	char name[MAX_QPATH];
+	char cleanname[MAX_QPATH];
 	int hand;
 	int fov, zoomfov;
 	byte_vec4_t color;

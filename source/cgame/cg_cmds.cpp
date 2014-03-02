@@ -847,10 +847,72 @@ static void CG_GametypeMenuCmdAdd_f( void )
 	cgs.hasGametypeMenu = true;
 }
 
+/*
+* CG_SayCompletionExt_f
+*
+* Helper function
+*/
+static char **CG_SayCompletionExt_f( const char *partial, bool teamOnly )
+{
+	int i;
+	int team = cg_entities[cgs.playerNum+1].current.team;
+	char **matches = NULL;
+	int num_matches = 0;
+
+	if( partial && *partial ) {
+		size_t partial_len = strlen( partial );
+
+		matches = (char **) CG_Malloc( sizeof( char * ) * ( gs.maxclients + 1 ) );
+		for( i = 0; i < gs.maxclients; i++ ) {
+			cg_clientInfo_t *info = cgs.clientInfo + i;
+			if( !info->cleanname[0] ) {
+				continue;
+			}
+			if( teamOnly && ( cg_entities[i+1].current.team != team ) ) {
+				continue;
+			}
+			if( !Q_strnicmp( info->cleanname, partial, partial_len )) {
+				matches[num_matches++] = info->cleanname;
+			}
+		}
+		matches[num_matches] = NULL;
+	}
+
+	return matches;
+}
+
+/*
+* CG_SayCompletion_f
+*/
+static char **CG_SayCompletion_f( const char *partial )
+{
+	return CG_SayCompletionExt_f( partial, false );
+}
+
+/*
+* CG_SayTeamCompletion_f
+*/
+static char **CG_SayTeamCompletion_f( const char *partial )
+{
+	return CG_SayCompletionExt_f( partial, true );
+}
+
+static void CG_SayCmdAdd_f( void )
+{
+	trap_Cmd_SetCompletionFunc( "say", &CG_SayCompletion_f );
+}
+
+static void CG_SayTeamCmdAdd_f( void )
+{
+	trap_Cmd_SetCompletionFunc( "say_team", &CG_SayTeamCompletion_f );
+}
+
 // server commands
 static svcmd_t cg_consvcmds[] =
 {
 	{ "gametypemenu", CG_GametypeMenuCmdAdd_f },
+	{ "say", CG_SayCmdAdd_f },
+	{ "say_team", CG_SayTeamCmdAdd_f },
 
 	{ NULL, NULL }
 };
