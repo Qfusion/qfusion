@@ -1908,6 +1908,13 @@ static void G_CallVotes_CheckState( void )
 		if( ( ent->r.svflags & SVF_FAKECLIENT ) || ent->r.client->isTV )
 			continue;
 
+		// racesow - ignore inactive players unless they have voted
+		if( ent->r.client->level.last_activity && 
+			ent->r.client->level.last_activity + ( g_inactivity_maxtime->value * 1000 ) < level.time &&
+			clientVoted[PLAYERNUM( ent )] == VOTED_NOTHING )
+			continue;
+		// !racesow
+
 		voters++;
 		if( clientVoted[PLAYERNUM( ent )] == VOTED_YES )
 			yeses++;
@@ -2397,7 +2404,7 @@ void G_CallVotes_Init( void )
 	callvote->validate = G_VoteMapValidate;
 	callvote->execute = G_VoteMapPassed;
 	callvote->current = G_VoteMapCurrent;
-	callvote->extraHelp = G_VoteMapExtraHelp;
+	callvote->extraHelp = NULL; // racesow - disable G_VoteMapExtraHelp
 	callvote->argument_format = G_LevelCopyString( "<name>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
 	callvote->webRequest = G_VoteMapWebRequest;
