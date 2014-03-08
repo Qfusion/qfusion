@@ -58,6 +58,8 @@ static unsigned int key_linepos;	// byte offset of cursor in edit line
 static int input_prestep;			// pixels to skip at start when drawing
 static int edit_line = 0;
 static int history_line = 0;
+static int search_line = 0;
+static char search_text[MAXCMDLINE*2+4];
 
 // messagemode[2]
 static qboolean chat_team;
@@ -70,6 +72,8 @@ static void Con_ClearTyping( void )
 {
 	key_lines[edit_line][1] = 0; // clear any typing
 	key_linepos = 1;
+	search_line = edit_line;
+	search_text[0] = 0;
 }
 
 /*
@@ -98,11 +102,13 @@ void Con_ToggleConsole_f( void )
 	Con_ClearNotify();
 
 	if( cls.key_dest == key_console )
-	{                               // close console
+	{
+		// close console
 		CL_SetKeyDest( cls.old_key_dest );
 	}
 	else
-	{                               // open console
+	{
+		// open console
 		CL_SetOldKeyDest( cls.key_dest );
 		CL_SetKeyDest( key_console );
 	}
@@ -372,7 +378,8 @@ static void Con_Linefeed( void )
 
 	con.x = 0;
 	if( con.display )
-	{	// the console is scrolled up, stay in the same place if possible
+	{
+		// the console is scrolled up, stay in the same place if possible
 		con.display++;
 		clamp_high( con.display, con.totallines - 1 );
 	}
@@ -562,7 +569,8 @@ static int Q_ColorStrLastColor( const char *s, int byteofs )
 */
 static void Con_DrawInput( int vislines )
 {
-	char *text = key_lines[edit_line];
+	char draw_search_text[MAXCMDLINE*2+4];
+	const char *text = key_lines[edit_line];
 	int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
 	int text_y = vislines - 14 - smallCharHeight;
 	const int left_margin = 8, right_margin = 8;
@@ -573,6 +581,11 @@ static void Con_DrawInput( int vislines )
 
 	if( cls.key_dest != key_console )
 		return;
+
+	if( search_text[0] ) {
+		text = draw_search_text;
+		Q_snprintfz( draw_search_text, sizeof( draw_search_text ), "%s : %s", key_lines[edit_line], search_text );
+	}
 
 	prewidth = SCR_strWidth( text, cls.fontSystemSmall, key_linepos );
 
@@ -1026,6 +1039,11 @@ static void Con_Key_Copy( void )
 	char *buffer;
 	const char *newline = "\r\n";
 
+	if( search_text ) {
+		CL_SetClipboardData( search_text );
+		return;
+	}
+
 	buffer_size = Con_BufferText( NULL, newline ) + 1;
 	buffer = Mem_TempMalloc( buffer_size );
 
@@ -1079,6 +1097,8 @@ static void Con_Key_Paste( qboolean primary )
 				Com_Printf( "%s\n", key_lines[edit_line] );
 				edit_line = ( edit_line + 1 ) & 31;
 				history_line = edit_line;
+				search_line = edit_line;
+				search_text[0] = 0;
 				key_lines[edit_line][0] = ']';
 				key_lines[edit_line][1] = 0;
 				key_linepos = 1;
@@ -1174,6 +1194,24 @@ void Con_CharEvent( qwchar key )
 	case 5: // CTRL+E: jump to end of line (same as END)
 		key_linepos = (unsigned int)strlen( key_lines[edit_line] );
 		return;
+	case 18: // CTRL+R
+		{
+			size_t search_len = strlen( key_lines[edit_line] + 1 );
+			if( !search_len ) {
+				break;
+			}
+			do {
+				search_line = ( search_line - 1 ) & 31;
+			} while( search_line != edit_line && Q_strnicmp( key_lines[search_line]+1, key_lines[edit_line]+1, search_len ) );
+
+			if( search_line != edit_line ) {
+				Q_strncpyz( search_text, key_lines[search_line] + 1, sizeof( search_text ) );
+			}
+			else {
+				search_text[0] = '\0';
+			}
+		}
+		break;
 	}
 
 	if( key < 32 || key > 0x1FFFFF )
@@ -1230,6 +1268,15 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 	0 used to be the NetQuake way (always a command),
 	but no one will probably want it in now */
 
+	if( search_text[0] ) {
+		key_lines[edit_line][0] = ']';
+		Q_strncpyz( key_lines[edit_line] + 1, search_text, sizeof( key_lines[edit_line] ) - 1 );
+		key_linepos = (unsigned int)strlen( key_lines[edit_line] );
+		input_prestep = 0;
+		search_line = 0;
+		search_text[0] = 0;
+	}
+
 	// decide whether to treat the text as chat or command
 	p = key_lines[edit_line] + 1;
 	if( cls.state <= CA_HANDSHAKE || cls.demo.playing )
@@ -1270,6 +1317,8 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 	Com_Printf( "%s\n", key_lines[edit_line] );
 	edit_line = ( edit_line + 1 ) & 31;
 	history_line = edit_line;
+	search_line = edit_line;
+	search_text[0] = 0;
 	key_lines[edit_line][0] = ']';
 	key_lines[edit_line][1] = 0;
 	key_linepos = 1;
