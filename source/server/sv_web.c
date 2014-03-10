@@ -69,6 +69,7 @@ typedef struct {
 
 	int clientNum;
 	char *clientSession;
+	netadr_t realAddr;
 
 	qboolean partial;
 	sv_http_content_range_t partial_content_range;
@@ -101,6 +102,8 @@ typedef struct sv_http_connection_s
 	sv_http_request_t request;
 	sv_http_response_t response;
 
+	qboolean is_upstream;
+
 	struct sv_http_connection_s *next, *prev;
 } sv_http_connection_t;
 
@@ -108,8 +111,11 @@ static qboolean sv_http_initialized = qfalse;
 static sv_http_connection_t sv_http_connections[MAX_INCOMING_HTTP_CONNECTIONS];
 static sv_http_connection_t sv_http_connection_headnode, *sv_free_http_connections;
 
-socket_t sv_socket_http;
-socket_t sv_socket_http6;
+static socket_t sv_socket_http;
+static socket_t sv_socket_http6;
+
+static netadr_t sv_web_upstream_addr;
+static qboolean sv_web_upstream_is_set;
 
 // ============================================================================
 
@@ -160,6 +166,8 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 
 	request->query_string = "";
 	SV_Web_ResetStream( &request->stream );
+	
+	NET_InitAddress( &request->realAddr, NA_NOTRANSMIT );
 
 	request->partial = qfalse;
 	request->close_after_resp = qfalse;
@@ -214,6 +222,7 @@ static sv_http_connection_t *SV_Web_AllocConnection( void )
 	con->prev->next = con;
 	con->state = HTTP_CONN_STATE_NONE;
 	con->close_after_resp = qfalse;
+	con->is_upstream = qfalse;
 	return con;
 }
 
@@ -271,6 +280,33 @@ static void SV_Web_ShutdownConnections( void )
 			SV_Web_FreeConnection( con );
 		}
 	}
+}
+
+/*
+* SV_Web_ConnectionLimitReached
+*/
+static unsigned SV_Web_ConnectionLimitReached( const netadr_t *addr )
+{
+	unsigned cnt;
+	const sv_http_connection_t *con, *next;
+	const sv_http_connection_t *hnode = &sv_http_connection_headnode;
+
+	if( NET_IsLocalAddress( addr ) ) {
+		return qfalse;
+	}
+
+	cnt = 0;
+	for( con = hnode->prev; con != hnode; con = next )
+	{
+		next = con->prev;
+		if( NET_CompareAddress( addr, &con->address ) ) {
+			if( cnt >= MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
+				return qtrue;
+			}
+		}
+		cnt++;
+	}
+	return qfalse;
 }
 
 /*
@@ -437,6 +473,8 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 		request->clientNum = atoi( value );
 	} else if( !Q_stricmp( key, "X-Session" ) ) {
 		request->clientSession = ZoneCopyString( value );
+	} else if( !Q_stricmp( key, sv_http_upstream_realip_header->string ) ) {
+		NET_StringToAddress( value, &request->realAddr );
 	}
 }
 
@@ -552,7 +590,12 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 
 		// request must come from a connected client with a valid session id
 		if( !request->error && request->stream.header_done ) {
-			if( !SV_ClientAllowHttpRequest( request->clientNum, request->clientSession ) ) {
+			// check real IP header value for upstream HTTP connections
+			if( con->is_upstream && 
+				(request->realAddr.type == NA_NOTRANSMIT || 	SV_Web_ConnectionLimitReached( &request->realAddr )) ) {
+				request->error = HTTP_RESP_SERVICE_UNAVAILABLE;
+			}
+			else if( !SV_ClientAllowHttpRequest( request->clientNum, request->clientSession ) ) {
 				request->error = HTTP_RESP_FORBIDDEN;
 			}
 		}
@@ -632,6 +675,7 @@ static const char *SV_Web_ResponseCodeMessage( http_response_code_t code )
 		case HTTP_RESP_NOT_FOUND: return "Not Found";
 		case HTTP_RESP_REQUEST_TOO_LARGE: return "Request Entity Too Large";
 		case HTTP_RESP_REQUESTED_RANGE_NOT_SATISFIABLE: return "Requested range not satisfiable";
+		case HTTP_RESP_SERVICE_UNAVAILABLE: return "Service unavailable";
 		default: return "Unknown Error";
 	}
 }
@@ -936,12 +980,14 @@ static void SV_Web_Listen( socket_t *socket )
 	int ret;
 	socket_t newsocket;
 	netadr_t newaddress;
-	sv_http_connection_t *con, *next, *hnode = &sv_http_connection_headnode;
+	sv_http_connection_t *con;
 
 	// accept new connections
 	while( ( ret = NET_Accept( socket, &newsocket, &newaddress ) ) )
 	{
 		client_t *cl;
+		qboolean block;
+		qboolean is_upstream;
 
 		if( ret == -1 )
 		{
@@ -949,52 +995,43 @@ static void SV_Web_Listen( socket_t *socket )
 			continue;
 		}
 
-		// only accept connections from connected clients
-		con = NULL;
-		for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
+		is_upstream = sv_web_upstream_is_set 
+			&& NET_CompareBaseAddress( &newaddress, &sv_web_upstream_addr );
+		block = qfalse;
+
+		if( !NET_IsLocalAddress( &newaddress ) && !is_upstream )
 		{
-#if 1
-	 		if( cl->state < CS_FREE )
-				continue;
-
-			if( NET_IsLocalAddress( &newaddress ) 
-				|| NET_CompareBaseAddress( &newaddress, &cl->netchan.remoteAddress ) )
-#endif
+			// only accept connections from connected clients
+			block = qtrue;
+			for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
 			{
-				int cnt = 0;
-
-				// only accept up to three HTTP connections per address
-				for( con = hnode->prev; con != hnode; con = next )
-				{
-					next = con->prev;
-					if( NET_CompareAddress( &newaddress, &con->address ) ) {
-						if( cnt >= MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
-							break;
-						}
-						cnt++;
-					}
-				}
-
-				if( cnt < MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
-					Com_DPrintf( "HTTP connection accepted from %s\n", NET_AddressToString( &newaddress ) );
-					con = SV_Web_AllocConnection();
-					if( !con ) {
-						break;
-					}
-					con->socket = newsocket;
-					con->address = newaddress;
-					con->last_active = Sys_Milliseconds();
-					con->open = qtrue;
-					con->state = HTTP_CONN_STATE_RECV;
+	 			if( cl->state < CS_FREE )
+					continue;
+				if( NET_CompareBaseAddress( &newaddress, &cl->netchan.remoteAddress ) ) {		
+					// only accept up to three HTTP connections per address
+					block = SV_Web_ConnectionLimitReached( &newaddress );
 					break;
 				}
 			}
 		}
-
-		if( !con ) {
-			Com_DPrintf( "HTTP connection refused for %s\n", NET_AddressToString( &newaddress ) );
-			NET_CloseSocket( &newsocket );
+		
+		if( !block ) {
+			Com_DPrintf( "HTTP connection accepted from %s\n", NET_AddressToString( &newaddress ) );
+			con = SV_Web_AllocConnection();
+			if( !con ) {
+				break;
+			}
+			con->socket = newsocket;
+			con->address = newaddress;
+			con->last_active = Sys_Milliseconds();
+			con->open = qtrue;
+			con->state = HTTP_CONN_STATE_RECV;
+			con->is_upstream = is_upstream;
+			continue;
 		}
+
+		Com_DPrintf( "HTTP connection refused for %s\n", NET_AddressToString( &newaddress ) );
+		NET_CloseSocket( &newsocket );
 	}
 }
 
@@ -1031,6 +1068,10 @@ void SV_Web_Frame( void )
 		return;
 	}
 
+	sv_web_upstream_is_set = qfalse;
+	sv_web_upstream_is_set = sv_http_upstream_ip->string[0] != '\0' && sv_http_upstream_baseurl->string[0] != '\0';
+	NET_StringToAddress( sv_http_upstream_ip->string, &sv_web_upstream_addr );
+
 	// accept new connections
 	if( sv_socket_http.address.type == NA_IP ) {
 		SV_Web_Listen( &sv_socket_http );
@@ -1056,7 +1097,7 @@ void SV_Web_Frame( void )
 	}
 	sockets[num_sockets] = NULL;
 
-	NET_Monitor( 50, sockets, (void (*)(socket_t *, void*))SV_Web_ReceiveRequest, NULL, connections );
+	NET_Monitor( 0, sockets, (void (*)(socket_t *, void*))SV_Web_ReceiveRequest, NULL, connections );
 
 	for( con = hnode->prev; con != hnode; con = next )
 	{
@@ -1126,7 +1167,6 @@ void SV_Web_Frame( void )
 */
 qboolean SV_Web_Running( void )
 {
-	return qtrue;
 	return sv_http_initialized;
 }
 
@@ -1170,5 +1210,12 @@ void SV_Web_Shutdown( void )
 {
 }
 
+/*
+* SV_Web_Running
+*/
+qboolean SV_Web_Running( void )
+{
+	return qfalse;
+}
 
 #endif // HTTP_SUPPORT

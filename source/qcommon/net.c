@@ -1809,6 +1809,7 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 	fd_set fdsetr, fdsete;
 	fd_set *p_fdsete = NULL;
 	int i, ret;
+	int fdmax = 0;
 
 	if( !sockets || !sockets[0] )
 		return 0;
@@ -1830,9 +1831,10 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 		case SOCKET_TCP:
 #endif
 			assert( sockets[i]->handle > 0 );
-			FD_SET(sockets[i]->handle, &fdsetr ); // network socket
-			if (p_fdsete)
-				FD_SET(sockets[i]->handle, p_fdsete );
+			fdmax = max( (int)sockets[i]->handle, fdmax );
+			FD_SET( sockets[i]->handle, &fdsetr ); // network socket
+			if( p_fdsete )
+				FD_SET( sockets[i]->handle, p_fdsete );
 			break;
 		case SOCKET_LOOPBACK:
 		default:
@@ -1842,7 +1844,7 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 
 	timeout.tv_sec = msec / 1000;
 	timeout.tv_usec = ( msec % 1000 ) * 1000;
-	ret = select( FD_SETSIZE, &fdsetr, NULL, p_fdsete, &timeout );
+	ret = select( fdmax+1, &fdsetr, NULL, p_fdsete, &timeout );
 	if ( ( ret > 0) && ( (read_cb) || (exception_cb)) ) {
 		// Launch callbacks
 		for( i = 0; sockets[i]; i++ ) {
