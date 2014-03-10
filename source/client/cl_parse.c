@@ -861,27 +861,33 @@ static void CL_ParseServerData( msg_t *msg )
 	}
 
 	// builting HTTP server port
-	http_portnum = MSG_ReadShort( msg ) & 0xffff;
-	cls.httpaddress = cls.serveraddress;
-	if( cls.httpaddress.type == NA_IP6 ) {
-		cls.httpaddress.address.ipv6.port = BigShort( http_portnum );
-	} else {
-		cls.httpaddress.address.ipv4.port = BigShort( http_portnum );
-	}
-
 	if( cls.httpbaseurl ) {
 		Mem_Free( cls.httpbaseurl );
+		cls.httpbaseurl = NULL;
 	}
-	if( http_portnum ) {
-		if( cls.httpaddress.type == NA_LOOPBACK ) {
-			cls.httpbaseurl = ZoneCopyString( va( "http://localhost:%hu/", http_portnum ) );
+
+	if( ( sv_bitflags & SV_BITFLAGS_HTTP ) != 0 ) {
+		if( ( sv_bitflags & SV_BITFLAGS_HTTP_BASEURL ) != 0 ) {
+			// read base upstream url
+			cls.httpbaseurl = ZoneCopyString( MSG_ReadString( msg ) );
 		}
 		else {
-			cls.httpbaseurl = ZoneCopyString( va( "http://%s/", NET_AddressToString( &cls.httpaddress ) ) );
+			http_portnum = MSG_ReadShort( msg ) & 0xffff;
+			cls.httpaddress = cls.serveraddress;
+			if( cls.httpaddress.type == NA_IP6 ) {
+				cls.httpaddress.address.ipv6.port = BigShort( http_portnum );
+			} else {
+				cls.httpaddress.address.ipv4.port = BigShort( http_portnum );
+			}
+			if( http_portnum ) {
+				if( cls.httpaddress.type == NA_LOOPBACK ) {
+					cls.httpbaseurl = ZoneCopyString( va( "http://localhost:%hu/", http_portnum ) );
+				}
+				else {
+					cls.httpbaseurl = ZoneCopyString( va( "http://%s/", NET_AddressToString( &cls.httpaddress ) ) );
+				}
+			}
 		}
-	}
-	else {
-		cls.httpbaseurl = NULL;
 	}
 
 	// pure list

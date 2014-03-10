@@ -326,10 +326,22 @@ static void SV_New_f( client_t *client )
 			sv_bitflags |= SV_BITFLAGS_PURE;
 		if( client->reliable )
 			sv_bitflags |= SV_BITFLAGS_RELIABLE;
+		if( SV_Web_Running() )
+		{
+			sv_bitflags |= SV_BITFLAGS_HTTP;
+			if( sv_http_upstream_baseurl->string[0] )
+				sv_bitflags |= SV_BITFLAGS_HTTP_BASEURL;
+		}
 		MSG_WriteByte( &tmpMessage, sv_bitflags );
 	}
 
-	MSG_WriteShort( &tmpMessage, SV_Web_Running() ? sv_http_port->integer : 0 ); // HTTP port number
+	if( sv_bitflags & SV_BITFLAGS_HTTP )
+	{
+		if( sv_bitflags & SV_BITFLAGS_HTTP_BASEURL )
+			MSG_WriteString( &tmpMessage, sv_http_upstream_baseurl->string );
+		else
+			MSG_WriteShort( &tmpMessage, sv_http_port->integer ); // HTTP port number
+	}
 
 	// always write purelist
 	numpure = Com_CountPureListFiles( svs.purelist );
@@ -1188,7 +1200,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg )
 				cmdNum = MSG_ReadLong( msg );
 				if( cmdNum < client->reliableAcknowledge || cmdNum > client->reliableSent )
 				{
-					//					SV_DropClient( client, DROP_TYPE_GENERAL, "Error: bad server command acknowledged" );
+					//SV_DropClient( client, DROP_TYPE_GENERAL, "Error: bad server command acknowledged" );
 					return;
 				}
 				client->reliableAcknowledge = cmdNum;

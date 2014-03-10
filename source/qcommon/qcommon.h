@@ -265,9 +265,11 @@ enum clc_ops_e
 //==============================================
 
 // serverdata flags
-#define SV_BITFLAGS_PURE		( 1<<0 )
+#define SV_BITFLAGS_PURE			( 1<<0 )
 #define SV_BITFLAGS_RELIABLE		( 1<<1 )
 #define SV_BITFLAGS_TVSERVER		( 1<<2 )
+#define SV_BITFLAGS_HTTP			( 1<<3 )
+#define SV_BITFLAGS_HTTP_BASEURL	( 1<<4 )
 
 // framesnap flags
 #define FRAMESNAP_FLAG_DELTA		( 1<<0 )
@@ -519,15 +521,16 @@ NET
 
 // net.h -- quake's interface to the networking layer
 
-#define	PACKET_HEADER		10          // two ints, and a short
+#define	PACKET_HEADER			10          // two ints, and a short
 
 #define	MAX_RELIABLE_COMMANDS	64          // max string commands buffered for restransmit
-#define	MAX_PACKETLEN		1400        // max size of a network packet
-#define	MAX_MSGLEN		32768       // max length of a message, which may be fragmented into multiple packets
+#define	MAX_PACKETLEN			1400        // max size of a network packet
+#define	MAX_MSGLEN				32768       // max length of a message, which may be fragmented into multiple packets
+
 // wsw: Medar: doubled the MSGLEN as a temporary solution for multiview on bigger servers
-#define	FRAGMENT_SIZE		( MAX_PACKETLEN - 96 )
-#define	FRAGMENT_LAST		( 1<<14 )
-#define	FRAGMENT_BIT		( 1<<31 )
+#define	FRAGMENT_SIZE			( MAX_PACKETLEN - 96 )
+#define	FRAGMENT_LAST		(	 1<<14 )
+#define	FRAGMENT_BIT			( 1<<31 )
 
 typedef enum
 {
@@ -635,7 +638,6 @@ const char *NET_SocketTypeToString( socket_type_t type );
 const char *NET_SocketToString( const socket_t *socket );
 char	   *NET_AddressToString( const netadr_t *address );
 qboolean    NET_StringToAddress( const char *s, netadr_t *address );
-qboolean    NET_StringToBaseAddress( const char *s, netadr_t *address );
 
 unsigned short	NET_GetAddressPort( const netadr_t *address );
 void			NET_SetAddressPort( netadr_t *address, unsigned short port );

@@ -423,6 +423,7 @@ typedef enum
 	HTTP_RESP_NOT_FOUND = 404,
 	HTTP_RESP_REQUEST_TOO_LARGE = 413,
 	HTTP_RESP_REQUESTED_RANGE_NOT_SATISFIABLE = 416,
+	HTTP_RESP_SERVICE_UNAVAILABLE = 503,
 } http_response_code_t;
 
 //==============================================

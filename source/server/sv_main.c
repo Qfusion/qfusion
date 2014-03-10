@@ -56,6 +56,9 @@ cvar_t *sv_tcp;
 #ifdef HTTP_SUPPORT
 cvar_t *sv_http;
 cvar_t *sv_http_port;
+cvar_t *sv_http_upstream_baseurl;
+cvar_t *sv_http_upstream_ip;
+cvar_t *sv_http_upstream_realip_header;
 #endif
 
 cvar_t *sv_showclamp;
@@ -878,6 +881,9 @@ void SV_Init( void )
 #ifdef HTTP_SUPPORT
 	sv_http =		    Cvar_Get( "sv_http", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 	sv_http_port =		Cvar_Get( "sv_http_port", va( "%i", PORT_HTTP_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
+	sv_http_upstream_baseurl =	Cvar_Get( "sv_http_upstream_baseurl", "", CVAR_ARCHIVE | CVAR_LATCH );
+	sv_http_upstream_realip_header = Cvar_Get( "sv_http_upstream_realip_header", "", CVAR_ARCHIVE );
+	sv_http_upstream_ip = Cvar_Get( "sv_http_upstream_ip", "", CVAR_ARCHIVE );
 #endif
 
 	rcon_password =		    Cvar_Get( "rcon_password", "", 0 );
