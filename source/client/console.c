@@ -1692,6 +1692,8 @@ static void Con_MessageCompletion( const char *partial, qboolean teamonly )
 		partial = chat_buffer;
 	}
 
+	comp[0] = '\0';
+
 	args = Cmd_CompleteBuildArgListExt( teamonly ? "say_team" : "say", partial );
 	if( args ) {
 		int i;
@@ -1720,11 +1722,18 @@ static void Con_MessageCompletion( const char *partial, qboolean teamonly )
 		Mem_Free( args );
 	}
 
+	partial_len = strlen( partial );
 	comp_len = strlen( comp );
+
+	// add ': ' to string if completing at the beginning of the string
+	if( comp[0] && ( chat_linepos == partial_len ) && ( chat_bufferlen + comp_len + 2 < MAXCMDLINE ) ) {
+		Q_strncatz( comp, ": ", sizeof( comp ) );
+		comp_len += 2;
+	}
+
 	if( chat_bufferlen + comp_len >= MAXCMDLINE )
 		return;		// won't fit
 
-	partial_len = strlen( partial );
 	chat_linepos -= partial_len;
 	chat_bufferlen -= partial_len;
 	memcpy( chat_buffer + chat_linepos, comp, comp_len + 1 );
