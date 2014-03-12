@@ -1039,7 +1039,7 @@ static void Con_Key_Copy( void )
 	char *buffer;
 	const char *newline = "\r\n";
 
-	if( search_text ) {
+	if( search_text[0] ) {
 		CL_SetClipboardData( search_text );
 		return;
 	}
