@@ -433,7 +433,7 @@ asPWORD asCScriptEngine::GetEngineProperty(asEEngineProp property) const
 		return 0;
 	}
 
-	return 0;
+	UNREACHABLE_RETURN;
 }
 
 // interface
@@ -1475,6 +1475,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	r = bld.ParseFunctionDeclaration(func->objectType, declaration, func, false);
 	if( r < 0 )
 	{
+		func->funcType = asFUNC_DUMMY;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asINVALID_DECLARATION, "RegisterInterfaceMethod", intf, declaration);
 	}
@@ -1483,6 +1484,7 @@ int asCScriptEngine::RegisterInterfaceMethod(const char *intf, const char *decla
 	r = bld.CheckNameConflictMember(dt.GetObjectType(), func->name.AddressOf(), 0, 0, false);
 	if( r < 0 )
 	{
+		func->funcType = asFUNC_DUMMY;
 		asDELETE(func,asCScriptFunction);
 		return ConfigError(asNAME_TAKEN, "RegisterInterfaceMethod", intf, declaration);
 	}
@@ -3255,10 +3257,8 @@ void asCScriptEngine::RemoveTemplateInstanceType(asCObjectType *t)
 	// Destroy the specialized functions
 	for( n = 1; n < (int)t->beh.operators.GetLength(); n += 2 )
 	{
-		if( t->beh.operators[n] && scriptFunctions[t->beh.operators[n]]->objectType == t )
-		{
+		if( t->beh.operators[n] )
 			scriptFunctions[t->beh.operators[n]]->Release();
-		}
 	}
 	t->beh.operators.SetLength(0);
 

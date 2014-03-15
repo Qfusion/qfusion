@@ -102,11 +102,14 @@ public:
 	virtual int            RegisterObjectProperty(const char *obj, const char *declaration, int byteOffset);
 	virtual int            RegisterObjectMethod(const char *obj, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv);
 	virtual int            RegisterObjectBehaviour(const char *obj, asEBehaviours behaviour, const char *declaration, const asSFuncPtr &funcPointer, asDWORD callConv, void *objForThiscall = 0);
+	// TODO: 2.29.0: Rename to RegisterScriptInterface. Too often do developers think they should use this to register C++ interface
 	virtual int            RegisterInterface(const char *name);
+	// TODO: 2.29.0: Rename to RegisterScriptInterfaceMethod.
 	virtual int            RegisterInterfaceMethod(const char *intf, const char *declaration);
 	virtual asUINT         GetObjectTypeCount() const;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const;
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const;
+	// TODO: 2.29.0: Add GetObjectTypeByDecl() that supports for example "array<int>"
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0);

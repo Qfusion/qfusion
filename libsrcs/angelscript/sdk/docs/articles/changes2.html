@@ -15,7 +15,56 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.1 WIP - 2014/01/25</h2>
+<h2>Version 2.28.2 WIP - 2014/03/12</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>The Library can now be compiled for WinXP with multithread support again (Thanks carnalis)
+<li>Fixed crash after loading bytecode with initialization lists holding ref types by value (Thanks loboWu)
+<li>Fixed bug with saved bytecode and initialization lists that skip values
+<li>Tokenizer was splitting identifiers that started with keywords that ended with numbers, e.g. int8 (Thanks loboWu)
+<li>GetObjectTypeById crashed if the typeId represented a template instance type that had already been released (Thanks iraxef)
+<li>Corrected some compiler warnings (Thanks arpeggiodragon)
+<li>Fixed crash when returning primitive value implicitly cast from global handle (Thanks Jason Goepel)
+<li>Fixed assert failure in compiler when using opAssign that returns a value instead of a reference (Thanks simong)
+<li>Fixed memory leak with registered cast behaviours on template types (Thanks Jason Goepel)
+<li>Fixed bug with missing implicit ref cast when passing object to parameter as inout reference (Thanks Jason Goepel)
+<li>Fixed bug when passing 'null' or 'void' to var type argument
+</ul>
+<li>Library
+<ul>
+<li>It's now possible to use repeat_same in list pattern to tell compiler that all lines must be of the same length
+<li>The compiler will warn if JIT compiler is used and script is built without JIT entry points (Thanks gjl)
+<li>Compiler no longer warns on sign change for bitwise operator with negative enum value (Thanks _Vicious_)
+<li>Reduced size of saved bytecode
+<li>Changed GarbageCollect so that it can now be executed for a full cycle in a parallel thread
+<li>Implemented C++11 move operators for the internal asCString type (Thanks iraxef)
+<li>Compiler now casts to common base class when comparing two handles (Thanks Aaron Baker)
+<li>When unsafe references is turned on the compiler allows passing literal constants to const references (Thanks Jason Goepel)
+<li>Improved implicit cast of object to primitive in math expressions (Thanks Jason Goepel)
+<li>Optimization to use the copy constructor instead of the assignment when preparing temp object for func argument
+<li>Optimization to avoid copy when passing ref type to const &in parameter (Thanks Jason Goepel)
+</ul>
+<li>Script language
+<ul>
+<li>Anonymous objects can now be initialized in expressions with lists
+<li>The opIndex operator overload now supports multiple arguments
+<li>Functor objects can now be implemented by implementing opCall methods in the class (Thanks gjl)
+</ul>
+<li>Add-ons
+<ul>
+<li>Implemented closeTo() in the math add-on (Thanks haegarr)
+<li>GetTypeTraits<T>() no longer incorrectly identifies C++ arrays as asOBJ_APP_CLASS (Thanks eezstreet)
+<li>The script array now supports user defined memory routines (Thanks FDsagizi)
+<li>The script array should be allocated with factory functions instead of directly with new (Thanks iraxef)
+<li>Added GetTypeId to the dictionary to retrieve the type id of the stored value (Thanks iraxef)
+<li>The dictionary now has an iterator on the C++ side that supports C++ range-for loops (Thanks iraxef)
+<li>Implemented the grid template add-on
+</ul>
+</ul>
+
+<h2>Version 2.28.1 - 2014/01/31</h2>
 
 <ul>
 <li>Bug fixes
@@ -33,6 +82,9 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Incorrect bytecode sequence when compiling initialization list for dictionary containing values from global string variables (Thanks Jordi Oliveras Rovira)
 <li>Compiler was incorrectly converting both results to const in ?: if one of the expressions was null (Thanks FDsagizi)
 <li>Fixed memory leak on iOS when passing complex object by value to registered function (Thanks FDsagizi)
+<li>Fixed intermittent crash with registered object properties of template instance types (Thanks aliascc)
+<li>Fixed crash when attempting to assign a script object to another of another type (Thanks Philip Bennefall)
+<li>Fixed crash when registering two or more methods for an object type uses template instance types in parameters or return value (Thanks iraxef)
 </ul>
 <li>Library
 <ul>
@@ -74,6 +126,7 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 <li>Fixed assert failure in CScriptWeakRef (Thanks Squared'D)
 <li>WriteConfigToFile escapes quote characters in default arg expressions (Thanks alraz.exe)
 <li>asbuild sample updated to treat the escaped quote characters properly (Thanks alraz.exe)
+<li>CScriptHandle will hold a reference to engine to avoid crash if engine is released before the contained reference (Thanks Samuel Villarreal)
 </ul>
 </ul>
 

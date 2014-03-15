@@ -953,7 +953,8 @@ void asCScriptFunction::AddReferences()
 				parameterTypes[p].GetObjectType()->AddRef();
 
 		for( asUINT v = 0; v < scriptData->objVariableTypes.GetLength(); v++ )
-			scriptData->objVariableTypes[v]->AddRef();
+			if( scriptData->objVariableTypes[v] ) // The null handle is also stored, but it doesn't have an object type
+				scriptData->objVariableTypes[v]->AddRef();
 
 		// Go through the byte code and add references to all resources used by the function
 		asCArray<asDWORD> &bc = scriptData->byteCode;
@@ -1493,7 +1494,8 @@ void asCScriptFunction::ReleaseAllHandles(asIScriptEngine *)
 			}
 
 		for( asUINT n = 0; n < scriptData->objVariableTypes.GetLength(); n++ )
-			scriptData->objVariableTypes[n]->Release();
+			if( scriptData->objVariableTypes[n] ) // Null handle is also stored, but it doesn't have an object type
+				scriptData->objVariableTypes[n]->Release();
 		scriptData->objVariableTypes.SetLength(0);
 
 		// Release all script functions

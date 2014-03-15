@@ -383,7 +383,7 @@ typedef void (*asCLEANOBJECTTYPEFUNC_t)(asIObjectType *);
 #if !defined(_MSC_VER) || _MSC_VER >= 1700   // MSVC 2012
 #if !defined(__GNUC__) || __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)  // gnuc 4.7
 #if !(defined(__GNUC__) && defined(__cplusplus) && __cplusplus < 201103L) // g++ -std=c++11
-#define AS_CAN_USE_CPP11
+#define AS_CAN_USE_CPP11 1
 #endif
 #endif
 #endif

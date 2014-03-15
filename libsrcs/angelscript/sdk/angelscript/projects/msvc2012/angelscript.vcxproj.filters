@@ -250,12 +250,12 @@
     <CustomBuild Include="..\..\source\as_callfunc_x64_msvc_asm.asm">
       <Filter>Source Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\source\as_callfunc_arm_msvc.asm">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\source\as_callfunc_arm_gcc.S">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\..\source\as_callfunc_arm_msvc.asm">
       <Filter>Source Files</Filter>
     </None>
     <None Include="..\..\source\as_callfunc_arm_xcode.S">

@@ -815,7 +815,7 @@ int asCBuilder::ParseTemplateDecl(const char *decl, asCString *name, asCArray<as
 	asCScriptNode *node = parser.GetScriptNode()->firstChild;
 
 	name->Assign(&decl[node->tokenPos], node->tokenLength);
-	while( (node = node->next) )
+	while( (node = node->next) != 0 )
 	{
 		asCString subtypeName;
 		subtypeName.Assign(&decl[node->tokenPos], node->tokenLength);

@@ -168,6 +168,7 @@ protected:
 	asCString ExpectedTokens(const char *token1, const char *token2);
 	asCString ExpectedOneOf(int *tokens, int count);
 	asCString ExpectedOneOf(const char **tokens, int count);
+	asCString InsteadFound(sToken &t);
 
 	bool errorWhileParsing;
 	bool isSyntaxError;

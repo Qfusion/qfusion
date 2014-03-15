@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -1552,6 +1552,7 @@ int asCByteCode::GetSize()
 
 void asCByteCode::AddCode(asCByteCode *bc)
 {
+	if( bc == this ) return;
 	if( bc->first )
 	{
 		if( first == 0 )
@@ -2114,7 +2115,12 @@ void asCByteCode::DebugOutput(const char *name, asCScriptEngine *engine, asCScri
 			}
 		}
 		if( !found )
-			fprintf(file, " %.3d: %s {noname}\n", func->scriptData->objVariablePos[n], func->scriptData->objVariableTypes[n]->name.AddressOf());
+		{
+			if( func->scriptData->objVariableTypes[n] )
+				fprintf(file, " %.3d: %s {noname}\n", func->scriptData->objVariablePos[n], func->scriptData->objVariableTypes[n]->name.AddressOf());
+			else
+				fprintf(file, " %.3d: null handle {noname}\n", func->scriptData->objVariablePos[n]);
+		}
 	}
 	fprintf(file, "\n\n");
 
