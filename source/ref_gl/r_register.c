@@ -742,7 +742,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_gamma = ri.Cvar_Get( "r_gamma", "1.0", CVAR_ARCHIVE );
 	r_texturebits = ri.Cvar_Get( "r_texturebits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_texturemode = ri.Cvar_Get( "r_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE );
-	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "1", CVAR_ARCHIVE );
+	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
 	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "8", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );
