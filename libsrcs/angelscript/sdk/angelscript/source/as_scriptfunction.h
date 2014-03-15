@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -66,6 +66,7 @@ struct asSScriptVariable
 enum asEListPatternNodeType
 {
 	asLPT_REPEAT,
+	asLPT_REPEAT_SAME,
 	asLPT_START,
 	asLPT_END,
 	asLPT_TYPE
@@ -134,7 +135,7 @@ public:
 	const char          *GetObjectName() const;
 	const char          *GetName() const;
 	const char          *GetNamespace() const;
-	const char          *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false, bool includeParamNames = false) const;
+	const char          *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false) const;
 	bool                 IsReadOnly() const;
 	bool                 IsPrivate() const;
 	bool                 IsFinal() const;
@@ -180,7 +181,7 @@ public:
 
 	int       GetSpaceNeededForArguments();
 	int       GetSpaceNeededForReturnValue();
-	asCString GetDeclarationStr(bool includeObjectName = true, bool includeNamespace = false, bool includeParamNames = false) const;
+	asCString GetDeclarationStr(bool includeObjectName = true, bool includeNamespace = false) const;
 	int       GetLineNumber(int programPosition, int *sectionIdx);
 	void      ComputeSignatureId();
 	bool      IsSignatureEqual(const asCScriptFunction *func) const;
@@ -231,7 +232,6 @@ public:
 	asCString                    name;
 	asCDataType                  returnType;
 	asCArray<asCDataType>        parameterTypes;
-	asCArray<asCString>          parameterNames;
 	asCArray<asETypeModifiers>   inOutFlags;
 	asCArray<asCString *>        defaultArgs;
 	bool                         isReadOnly;

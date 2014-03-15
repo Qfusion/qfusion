@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied
    warranty. In no event will the authors be held liable for any
@@ -243,8 +243,23 @@ int asCScriptFunction::ParseListPattern(asSListPatternNode *&target, const char 
 	{
 		if( listNodes->nodeType == snIdentifier )
 		{
-			node->next = asNEW(asSListPatternNode)(asLPT_REPEAT);
-			node = node->next;
+			asCString token(&decl[listNodes->tokenPos], listNodes->tokenLength);
+			if( token == "repeat" )
+			{
+				node->next = asNEW(asSListPatternNode)(asLPT_REPEAT);
+				node = node->next;
+			}
+			else if( token == "repeat_same" )
+			{
+				// TODO: list: Should make sure this is a sub-list
+				node->next = asNEW(asSListPatternNode)(asLPT_REPEAT_SAME);
+				node = node->next;
+			}
+			else
+			{
+				// Shouldn't happen as the parser already reported the error
+				asASSERT(false);
+			}
 		}
 		else if( listNodes->nodeType == snDataType )
 		{
@@ -560,7 +575,7 @@ bool asCScriptFunction::DoesReturnOnStack() const
 }
 
 // internal
-asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool includeNamespace, bool includeParamNames) const
+asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool includeNamespace) const
 {
 	asCString str;
 
@@ -618,12 +633,6 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 				else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
 			}
 
-			if( includeParamNames && n < parameterNames.GetLength() && parameterNames[n].GetLength() != 0 )
-			{
-				str += " ";
-				str += parameterNames[n];
-			}
-
 			if( defaultArgs.GetLength() > n && defaultArgs[n] )
 			{
 				asCString tmp;
@@ -641,12 +650,6 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 			if( inOutFlags[n] == asTM_INREF ) str += "in";
 			else if( inOutFlags[n] == asTM_OUTREF ) str += "out";
 			else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
-		}
-
-		if( includeParamNames && n < parameterNames.GetLength() && parameterNames[n].GetLength() != 0 )
-		{
-			str += " ";
-			str += parameterNames[n];
 		}
 
 		if( defaultArgs.GetLength() > n && defaultArgs[n] )
@@ -674,6 +677,8 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 				str += " }";
 			else if( n->type == asLPT_REPEAT )
 				str += " repeat";
+			else if( n->type == asLPT_REPEAT_SAME )
+				str += " repeat_same";
 			else if( n->type == asLPT_TYPE )
 			{
 				str += " ";
@@ -1230,10 +1235,10 @@ asIScriptEngine *asCScriptFunction::GetEngine() const
 }
 
 // interface
-const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace, bool includeParamNames) const
+const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace) const
 {
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = GetDeclarationStr(includeObjectName, includeNamespace, includeParamNames);
+	*tempString = GetDeclarationStr(includeObjectName, includeNamespace);
 	return tempString->AddressOf();
 }
 
@@ -1279,6 +1284,33 @@ void asCScriptFunction::JITCompile()
 	if( !jit )
 		return;
 
+	// Make sure the function has been compiled with JitEntry instructions
+	// For functions that has JitEntry this will be a quick test
+	asUINT length;
+	asDWORD *byteCode = GetByteCode(&length);
+	asDWORD *end = byteCode + length;
+	bool foundJitEntry = false;
+	while( byteCode < end )
+	{
+		// Determine the instruction
+		asEBCInstr op = asEBCInstr(*(asBYTE*)byteCode);
+		if( op == asBC_JitEntry )
+		{
+			foundJitEntry = true;
+			break;
+		}
+
+		// Move to next instruction
+		byteCode += asBCTypeSize[asBCInfo[op].type];
+	}
+
+	if( !foundJitEntry )
+	{
+		asCString msg;
+		msg.Format(TXT_NO_JIT_IN_FUNC_s, GetDeclaration());
+		engine->WriteMessage("", 0, 0, asMSGTYPE_WARNING, msg.AddressOf());
+	}
+
 	// Release the previous function, if any
 	if( scriptData->jitFunction )
 	{
@@ -1289,9 +1321,7 @@ void asCScriptFunction::JITCompile()
 	// Compile for native system
 	int r = jit->CompileFunction(this, &scriptData->jitFunction);
 	if( r < 0 )
-	{
 		asASSERT( scriptData->jitFunction == 0 );
-	}
 }
 
 // interface

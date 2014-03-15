@@ -23,6 +23,7 @@ bool CG_DemoCam_Update( void );
 void CG_DrawDemocam2D( void );
 void CG_DemocamInit( void );
 void CG_DemocamShutdown( void );
+void CG_DemocamReset( void );
 int CG_DemoCam_GetViewType( void );
 bool CG_DemoCam_GetThirdPerson( void );
 float CG_DemoCam_GetOrientation( vec3_t origin, vec3_t angles, vec3_t velocity );

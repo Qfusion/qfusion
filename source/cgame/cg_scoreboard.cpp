@@ -125,9 +125,8 @@ static void SCB_ParsePlayerStats( const char **s )
 /*
 * SCB_DrawPlayerStats
 */
-static int SCB_DrawPlayerStats( int x, int y )
+static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 {
-	struct qfontface_s *font = cgs.fontSystemSmall;
 	int xoffset, yoffset, lines;
 	int i, j, num_weapons, weap, xpos, width, done;
 	gsitem_t *it;
@@ -172,30 +171,9 @@ static int SCB_DrawPlayerStats( int x, int y )
 			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset, ALIGN_LEFT_TOP, string, SCB_TINYFIELD_PIXELWIDTH, font, colorWhite );
 			xoffset += SCB_TINYFIELD_PIXELWIDTH;
 
-			if( weap == WEAP_LASERGUN || weap == WEAP_ELECTROBOLT )
-			{
-				// weak percent
-				if( scb_player_stats[2*( i+j )] != -1 )
-				{
-					Q_snprintfz( string, sizeof( string ), "%2d%c", scb_player_stats[2*( i+j )], '%' );
-					trap_SCR_DrawStringWidth( x + xoffset, y + yoffset, ALIGN_LEFT_TOP, string, SCB_SMALLFIELD_PIXELWIDTH, font, colorWhite );
-				}
-				xoffset += SCB_SMALLFIELD_PIXELWIDTH;
-
-				// strong percent
-				if( scb_player_stats[2*( i+j )+1] != -1 )
-				{
-					Q_snprintfz( string, sizeof( string ), "%2d%c", scb_player_stats[2*( i+j )+1], '%' );
-					trap_SCR_DrawStringWidth( x + xoffset, y + yoffset, ALIGN_LEFT_TOP, string, SCB_SMALLFIELD_PIXELWIDTH, font, colorWhite );
-				}
-				xoffset += SCB_SMALLFIELD_PIXELWIDTH;
-			}
-			else
-			{
-				Q_snprintfz( string, sizeof( string ), "%2d%c", scb_player_stats[2*( i+j )+1], '%' );
-				trap_SCR_DrawStringWidth( x + xoffset + SCB_SMALLFIELD_PIXELWIDTH, y + yoffset, ALIGN_CENTER_TOP, string, 2*SCB_SMALLFIELD_PIXELWIDTH, font, colorWhite );
-				xoffset += 2*SCB_SMALLFIELD_PIXELWIDTH;
-			}
+			Q_snprintfz( string, sizeof( string ), "%2d%c", scb_player_stats[2*( i+j )+1], '%' );
+			trap_SCR_DrawStringWidth( x + xoffset + SCB_SMALLFIELD_PIXELWIDTH, y + yoffset, ALIGN_CENTER_TOP, string, 2*SCB_SMALLFIELD_PIXELWIDTH, font, colorWhite );
+			xoffset += 2*SCB_SMALLFIELD_PIXELWIDTH;
 
 			// separator
 			xoffset += SCB_SMALLFIELD_PIXELWIDTH;
@@ -720,6 +698,27 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 }
 
 /*
+* CG_ScoreboardFont
+*/
+struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar )
+{
+	struct qfontface_s *font;
+
+	font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, cg_scoreboardFontSize->integer );
+	if( !font )
+	{
+		CG_Printf( "%sWarning: Invalid font in '%s'. Reseting to default\n", familyCvar->name, S_COLOR_YELLOW );
+		trap_Cvar_Set( familyCvar->name, familyCvar->dvalue );
+		trap_Cvar_Set( cg_scoreboardFontSize->name, cg_scoreboardFontSize->dvalue );
+		font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, cg_scoreboardFontSize->integer );
+
+		if( !font )
+			CG_Error( "Couldn't load default scoreboard font \"%s\"", familyCvar->value );
+	}
+	return font;
+}
+
+/*
 * CG_DrawScoreboard
 */
 void CG_DrawScoreboard( void )
@@ -729,6 +728,7 @@ void CG_DrawScoreboard( void )
 	int xpos;
 	int ypos, yoffset, maxyoffset;
 	struct qfontface_s *font;
+	struct qfontface_s *monofont;
 	int width, panelWidth;
 	vec4_t whiteTransparent = { 1.0f, 1.0f, 1.0f, 0.5f };
 
@@ -739,16 +739,8 @@ void CG_DrawScoreboard( void )
 	if( scoreboardString[0] != '&' ) // nothing to draw
 		return;
 
-	font = trap_SCR_RegisterFont( cg_scoreboardFontFamily->string, QFONT_STYLE_NONE, cg_scoreboardFontSize->integer - 1 );
-	if( !font )
-	{
-		CG_Printf( "%sWarning: Invalid font in 'cg_scoreboardFontFamily'. Reseting to default\n", S_COLOR_YELLOW );
-		trap_Cvar_Set( cg_scoreboardFontFamily->name, cg_scoreboardFontFamily->dvalue );
-		trap_Cvar_Set( cg_scoreboardFontSize->name, cg_scoreboardFontSize->dvalue );
-		font = trap_SCR_RegisterFont( cg_scoreboardFontFamily->string, QFONT_STYLE_NONE, cg_scoreboardFontSize->integer );
-		if( !font )
-			CG_Error( "Couldn't load default scoreboard font \"%s\"", cg_scoreboardFontFamily->dvalue );
-	}
+	font = CG_ScoreboardFont( cg_scoreboardFontFamily );
+	monofont = CG_ScoreboardFont( cg_scoreboardMonoFontFamily );
 
 	xpos = (int)( cgs.vidWidth * 0.5 );
 	ypos = (int)( cgs.vidHeight * 0.25 ) - 24;
@@ -808,7 +800,7 @@ void CG_DrawScoreboard( void )
 
 	// add the player stats
 	yoffset = maxyoffset + trap_SCR_strHeight( font );
-	yoffset += SCB_DrawPlayerStats( xpos, ypos + yoffset );
+	yoffset += SCB_DrawPlayerStats( xpos, ypos + yoffset, monofont );
 }
 
 

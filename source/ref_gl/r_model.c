@@ -739,7 +739,7 @@ static void Mod_Free( model_t *model )
 {
 	R_FreePool( &model->mempool );
 	memset( model, 0, sizeof( *model ) );
-	model->type = mod_bad;
+	model->type = mod_free;
 }
 
 /*
@@ -763,7 +763,7 @@ void R_FreeUnusedModels( void )
 	}
 
 	// check whether the world model has been freed
-	if( rsh.worldModel && rsh.worldModel->type == mod_bad ) {
+	if( rsh.worldModel && rsh.worldModel->type == mod_free ) {
 		rsh.worldModel = NULL;
 		rsh.worldBrushModel = NULL;
 	}
@@ -824,7 +824,7 @@ static model_t *Mod_FindSlot( const char *name )
 	//
 	for( i = 0, mod = mod_known, best = NULL; i < mod_numknown; i++, mod++ )
 	{
-		if( mod->type == mod_bad ) {
+		if( mod->type == mod_free ) {
 			if( !best ) {
 				best = mod;
 			}
@@ -899,7 +899,10 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 	extension = &name[strlen( shortname )+1];
 
 	mod = Mod_FindSlot( name );
-	if( mod->type != mod_bad ) {
+	if( mod->type == mod_bad ) {
+		return NULL;
+	}
+	if( mod->type != mod_free ) {
 		return mod;
 	}
 
@@ -939,6 +942,10 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 
 	descr->loader( mod, NULL, buf, bspFormat );
 	R_FreeFile( buf );
+
+	if( mod->type == mod_bad ) {
+		return NULL;
+	}
 
 	if( mod_isworldmodel ) {
 		// we only init map config when loading the map from disk

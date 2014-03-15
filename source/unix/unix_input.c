@@ -219,30 +219,29 @@ static char *XLateKey( int keycode, int *key )
 	KeySym keysym;
 
 	keysym = XkbKeycodeToKeysym(x11display.dpy, keycode, 0, 0); /* Don't care about shift state for in game keycode, but... */
-	int kp = 1;
 
 	switch(keysym) {
 		case XK_Scroll_Lock: *key = K_SCROLLLOCK; break;
 		case XK_Caps_Lock: *key = K_CAPSLOCK; break;
 		case XK_Num_Lock: *key = K_NUMLOCK; break;
-		case XK_KP_Page_Up: *key = kp ? KP_PGUP : K_PGUP; break;
+		case XK_KP_Page_Up: case XK_KP_9: *key = KP_PGUP; break;
 		case XK_Page_Up: *key = K_PGUP; break;
-		case XK_KP_Page_Down: *key = kp ? KP_PGDN : K_PGDN; break;
+		case XK_KP_Page_Down: case XK_KP_3: *key = KP_PGDN; break;
 		case XK_Page_Down: *key = K_PGDN; break;
-		case XK_KP_Home: *key = kp ? KP_HOME : K_HOME; break;
+		case XK_KP_Home: case XK_KP_7: *key = KP_HOME; break;
 		case XK_Home: *key = K_HOME; break;
-		case XK_KP_End: *key = kp ? KP_END : K_END; break;
+		case XK_KP_End: case XK_KP_1: *key = KP_END; break;
 		case XK_End: *key = K_END; break;
-		case XK_KP_Left: *key = kp ? KP_LEFTARROW : K_LEFTARROW; break;
+		case XK_KP_Left: case XK_KP_4: *key = KP_LEFTARROW; break;
 		case XK_Left: *key = K_LEFTARROW; break;
-		case XK_KP_Right: *key = kp ? KP_RIGHTARROW : K_RIGHTARROW; break;
+		case XK_KP_Right: case XK_KP_6: *key = KP_RIGHTARROW; break;
 		case XK_Right: *key = K_RIGHTARROW; break;
-		case XK_KP_Down: *key = kp ? KP_DOWNARROW : K_DOWNARROW; break;
+		case XK_KP_Down: case XK_KP_2: *key = KP_DOWNARROW; break;
 		case XK_Down: *key = K_DOWNARROW; break;
-		case XK_KP_Up: *key = kp ? KP_UPARROW : K_UPARROW; break;
+		case XK_KP_Up: case XK_KP_8: *key = KP_UPARROW; break;
 		case XK_Up: *key = K_UPARROW; break;
 		case XK_Escape: *key = K_ESCAPE; break;
-		case XK_KP_Enter: *key = kp ? KP_ENTER : K_ENTER; break;
+		case XK_KP_Enter: *key = KP_ENTER; break;
 		case XK_Return: *key = K_ENTER; break;
 		case XK_Tab: *key = K_TAB; break;
 		case XK_F1: *key = K_F1; break;
@@ -258,30 +257,30 @@ static char *XLateKey( int keycode, int *key )
 		case XK_F11: *key = K_F11; break;
 		case XK_F12: *key = K_F12; break;
 		case XK_BackSpace: *key = K_BACKSPACE; break;
-		case XK_KP_Delete: *key = kp ? KP_DEL : K_DEL; break;
+		case XK_KP_Delete: case XK_KP_Decimal: *key = KP_DEL; break;
 		case XK_Delete: *key = K_DEL; break;
 		case XK_Pause: *key = K_PAUSE; break;
-		case XK_Shift_L: *key = K_SHIFT; break;
-		case XK_Shift_R: *key = K_SHIFT; break;
+		case XK_Shift_L: *key = K_LSHIFT; break;
+		case XK_Shift_R: *key = K_RSHIFT; break;
 		case XK_Execute:
-		case XK_Control_L: *key = K_CTRL; break;
-		case XK_Control_R: *key = K_CTRL; break;
+		case XK_Control_L: *key = K_LCTRL; break;
+		case XK_Control_R: *key = K_RCTRL; break;
 		case XK_Alt_L:
-		case XK_Meta_L: *key = K_ALT; break;
+		case XK_Meta_L: *key = K_LALT; break;
 		case XK_Alt_R:
 		case XK_ISO_Level3_Shift:
-		case XK_Meta_R: *key = K_ALT; break;
+		case XK_Meta_R: *key = K_RALT; break;
 		case XK_Super_L: *key = K_WIN; break;
 		case XK_Super_R: *key = K_WIN; break;
 		case XK_Multi_key: *key = K_WIN; break;
 		case XK_Menu: *key = K_MENU; break;
-		case XK_KP_Begin: *key = kp ? KP_5 : '5'; break;
-		case XK_KP_Insert: *key = kp ? KP_INS : K_INS; break;
+		case XK_KP_Begin: *key = KP_5; break;
+		case XK_KP_Insert: case XK_KP_0: *key = KP_INS; break;
 		case XK_Insert: *key = K_INS; break;
-		case XK_KP_Multiply: *key = kp ? KP_STAR : '*'; break;
-		case XK_KP_Add: *key = kp ? KP_PLUS : '+'; break;
-		case XK_KP_Subtract: *key = kp ? KP_MINUS : '-'; break;
-		case XK_KP_Divide: *key = kp ? KP_SLASH : '/'; break;
+		case XK_KP_Multiply: *key = KP_STAR; break;
+		case XK_KP_Add: *key = KP_PLUS; break;
+		case XK_KP_Subtract: *key = KP_MINUS; break;
+		case XK_KP_Divide: *key = KP_SLASH; break;
 		default:
 			if (keysym >= 32 && keysym <= 126) {
 				*key = keysym;
@@ -300,7 +299,7 @@ static char *XLateKey( int keycode, int *key )
 		case XK_parenright: return ")";
 		case XK_braceleft: return "{";
 		case XK_braceright: return "}";
-		case XK_space: return " ";
+		case XK_space: case XK_KP_Space: return " ";
 		case XK_asciitilde: return "~";
 		case XK_grave: return "`";
 		case XK_exclam: return "!";
@@ -379,6 +378,9 @@ static void handle_button(XGenericEventCookie *cookie)
 	unsigned time = Sys_XTimeToSysTime(ev->time);
 	int k_button;
 
+	if(!mouse_active)
+		return;
+
 	switch(button) {
 		case 1: k_button = K_MOUSE1; break;
 		case 2: k_button = K_MOUSE3; break;
@@ -407,7 +409,7 @@ static void handle_key(XGenericEventCookie *cookie)
 	int key = 0;
 	const char *name = XLateKey(keycode, &key);
 
-	if (key == K_SHIFT)
+	if (key == K_LSHIFT || key == K_RSHIFT)
 		shift_down = down;
 
 	Key_Event(key, down, time);

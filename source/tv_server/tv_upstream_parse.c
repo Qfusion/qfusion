@@ -97,9 +97,17 @@ static void TV_Upstream_ParseServerData( upstream_t *upstream, msg_t *msg )
 	upstream->sv_bitflags = MSG_ReadByte( msg );
 	upstream->reliable = ( ( upstream->sv_bitflags & SV_BITFLAGS_RELIABLE ) ? qtrue : qfalse );
 
-	// builting HTTP server port
-	MSG_ReadShort( msg );
-
+	if( ( upstream->sv_bitflags & SV_BITFLAGS_HTTP ) != 0 ) {
+		if( ( upstream->sv_bitflags & SV_BITFLAGS_HTTP_BASEURL ) != 0 ) {
+			// read base upstream url
+			MSG_ReadString( msg );
+		}
+		else {
+			// http port number
+			MSG_ReadShort( msg );
+		}
+	}
+	
 	// pure list
 
 	// clean old, if necessary

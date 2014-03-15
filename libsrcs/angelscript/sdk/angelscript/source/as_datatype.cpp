@@ -50,8 +50,6 @@ asCDataType::asCDataType()
 	objectType     = 0;
 	isReference    = false;
 	isReadOnly     = false;
-	isAuto         = false;
-	isHandleToAuto = false;
 	isObjectHandle = false;
 	isConstHandle  = false;
 	funcDef        = 0;
@@ -63,8 +61,6 @@ asCDataType::asCDataType(const asCDataType &dt)
 	objectType     = dt.objectType;
 	isReference    = dt.isReference;
 	isReadOnly     = dt.isReadOnly;
-	isAuto         = dt.isAuto;
-	isHandleToAuto = dt.isHandleToAuto;
 	isObjectHandle = dt.isObjectHandle;
 	isConstHandle  = dt.isConstHandle;
 	funcDef        = dt.funcDef;
@@ -90,17 +86,6 @@ asCDataType asCDataType::CreateObject(asCObjectType *ot, bool isConst)
 	dt.tokenType        = ttIdentifier;
 	dt.objectType       = ot;
 	dt.isReadOnly       = isConst;
-
-	return dt;
-}
-
-asCDataType asCDataType::CreateAuto(bool isConst)
-{
-	asCDataType dt;
-
-	dt.tokenType        = ttIdentifier;
-	dt.isReadOnly       = isConst;
-	dt.isAuto           = true;
 
 	return dt;
 }
@@ -206,13 +191,6 @@ asCString asCDataType::Format(bool includeNamespace) const
 			str += ">";
 		}
 	}
-	else if( isAuto )
-	{
-		if( isHandleToAuto )
-			str += "<auto@>";
-		else
-			str += "<auto>";
-	}
 	else
 	{
 		str = "<unknown>";
@@ -239,8 +217,6 @@ asCDataType &asCDataType::operator =(const asCDataType &dt)
 	isReadOnly       = dt.isReadOnly;
 	isObjectHandle   = dt.isObjectHandle;
 	isConstHandle    = dt.isConstHandle;
-	isAuto           = dt.isAuto;
-	isHandleToAuto   = dt.isHandleToAuto;
 	funcDef          = dt.funcDef;
 
 	return (asCDataType &)*this;
@@ -252,35 +228,27 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 	{
 		isObjectHandle = b;
 		isConstHandle = false;
-		isHandleToAuto = false;
 	}
-	else
+	else if( b && !isObjectHandle )
 	{
-		if( isAuto )
-		{
-			isHandleToAuto = true;
-		}
-		else if( !isObjectHandle )
-		{
-			// Only reference types are allowed to be handles, 
-			// but not nohandle reference types, and not scoped references 
-			// (except when returned from registered function)
-			// funcdefs are special reference types and support handles
-			// value types with asOBJ_ASHANDLE are treated as a handle
-			if( !funcDef && 
-				(!objectType || 
-				!((objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_TEMPLATE_SUBTYPE) || (objectType->flags & asOBJ_ASHANDLE)) || 
-				(objectType->flags & asOBJ_NOHANDLE) || 
-				((objectType->flags & asOBJ_SCOPED) && !acceptHandleForScope)) )
-				return -1;
+		// Only reference types are allowed to be handles, 
+		// but not nohandle reference types, and not scoped references 
+		// (except when returned from registered function)
+		// funcdefs are special reference types and support handles
+		// value types with asOBJ_ASHANDLE are treated as a handle
+		if( !funcDef && 
+			(!objectType || 
+			!((objectType->flags & asOBJ_REF) || (objectType->flags & asOBJ_TEMPLATE_SUBTYPE) || (objectType->flags & asOBJ_ASHANDLE)) || 
+			(objectType->flags & asOBJ_NOHANDLE) || 
+			((objectType->flags & asOBJ_SCOPED) && !acceptHandleForScope)) )
+			return -1;
 
-			isObjectHandle = b;
-			isConstHandle = false;
+		isObjectHandle = b;
+		isConstHandle = false;
 
-			// ASHANDLE supports being handle, but as it really is a value type it will not be marked as a handle
-			if( (objectType->flags & asOBJ_ASHANDLE) )
-				isObjectHandle = false;
-		}
+		// ASHANDLE supports being handle, but as it really is a value type it will not be marked as a handle
+		if( (objectType->flags & asOBJ_ASHANDLE) )
+			isObjectHandle = false;
 	}
 
 	return 0;
@@ -332,11 +300,6 @@ int asCDataType::MakeHandleToConst(bool b)
 
 	isReadOnly = b;
 	return 0;
-}
-
-void asCDataType::MakeAuto(bool b)
-{
-	isAuto = b;
 }
 
 bool asCDataType::SupportHandles() const

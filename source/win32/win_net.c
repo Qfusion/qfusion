@@ -44,20 +44,6 @@ net_error_t Sys_NET_GetLastError( void )
 	}
 }
 
-/*
-* Sys_NET_AsyncResolveHostname
-*/
-void Sys_NET_AsyncResolveHostname( const char *hostname )
-{
-#ifndef DEDICATED_ONLY
-#define WM_ASYNC_LOOKUP_DONE WM_USER+1
-	static char hostentbuf[MAXGETHOSTSTRUCT];
-
-	WSAAsyncGetHostByName( cl_hwnd, WM_ASYNC_LOOKUP_DONE, hostname, hostentbuf, sizeof( hostentbuf ) );
-#undef WM_ASYNC_LOOKUP_DONE
-#endif
-}
-
 //=============================================================================
 
 /*

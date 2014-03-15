@@ -88,9 +88,12 @@ const keyname_t keynames[] =
 	{ "LEFTARROW", K_LEFTARROW },
 	{ "RIGHTARROW", K_RIGHTARROW },
 
-	{ "ALT", K_ALT },
-	{ "CTRL", K_CTRL },
-	{ "SHIFT", K_SHIFT },
+	{ "LALT", K_LALT },
+	{ "RALT", K_RALT },
+	{ "LCTRL", K_LCTRL },
+	{ "RCTRL", K_RCTRL },
+	{ "LSHIFT", K_LSHIFT },
+	{ "RSHIFT", K_RSHIFT },
 
 	{ "F1", K_F1 },
 	{ "F2", K_F2 },
@@ -470,7 +473,8 @@ void Key_Init( void )
 	consolekeys[KP_PGUP] = qtrue;
 	consolekeys[K_PGDN] = qtrue;
 	consolekeys[KP_PGDN] = qtrue;
-	consolekeys[K_SHIFT] = qtrue;
+	consolekeys[K_LSHIFT] = qtrue;
+	consolekeys[K_RSHIFT] = qtrue;
 	consolekeys[K_INS] = qtrue;
 	consolekeys[K_DEL] = qtrue;
 	consolekeys[KP_INS] = qtrue;
@@ -485,8 +489,10 @@ void Key_Init( void )
 	//	consolekeys[K_RWIN] = qtrue;
 	consolekeys[K_MENU] = qtrue;
 
-	consolekeys[K_CTRL] = qtrue; // wsw : pb : ctrl in console for ctrl-v
-	consolekeys[K_ALT] = qtrue;
+	consolekeys[K_LCTRL] = qtrue; // wsw : pb : ctrl in console for ctrl-v
+	consolekeys[K_RCTRL] = qtrue;
+	consolekeys[K_LALT] = qtrue;
+	consolekeys[K_RALT] = qtrue;
 
 	consolekeys['`'] = qfalse;
 	consolekeys['~'] = qfalse;
@@ -645,7 +651,7 @@ void Key_Event( int key, qboolean down, unsigned time )
 
 #ifndef WIN32
 	// switch between fullscreen/windowed when ALT+ENTER is pressed
-	if( key == K_ENTER && down && keydown[K_ALT] )
+	if( key == K_ENTER && down && (keydown[K_LALT] || keydown[K_RALT]) )
 	{
 		Cbuf_ExecuteText( EXEC_APPEND, "toggle vid_fullscreen\n" );
 		return;

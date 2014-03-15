@@ -27,11 +27,11 @@ KeyConverter::~KeyConverter()
 int KeyConverter::getModifiers( void )
 {
 	int mod = 0;
-	if( trap::Key_IsDown( K_ALT ) )
+	if( trap::Key_IsDown( K_LALT ) || trap::Key_IsDown( K_RALT ) )
 		mod |= KM_ALT;
-	if( trap::Key_IsDown( K_CTRL ) )
+	if( trap::Key_IsDown( K_LCTRL ) || trap::Key_IsDown( K_RCTRL ) )
 		mod |= KM_CTRL;
-	if( trap::Key_IsDown( K_SHIFT ) )
+	if( trap::Key_IsDown( K_LSHIFT ) || trap::Key_IsDown( K_RSHIFT ) )
 		mod |= KM_SHIFT;
 
 	return mod;
@@ -58,9 +58,12 @@ int KeyConverter::toRocketKey( int key )
 	case K_DOWNARROW:	return KI_DOWN;
 	case K_LEFTARROW:	return KI_LEFT;
 	case K_RIGHTARROW:	return KI_RIGHT;
-	case K_ALT:		return KI_LMENU;	// ??
-	case K_CTRL:	return KI_LCONTROL;
-	case K_SHIFT:	return KI_LSHIFT;
+	case K_LALT:		return KI_LMENU;	// ??
+	case K_LCTRL:	return KI_LCONTROL;
+	case K_LSHIFT:	return KI_LSHIFT;
+	case K_RALT:		return KI_RMENU;	// ??
+	case K_RCTRL:	return KI_RCONTROL;
+	case K_RSHIFT:	return KI_RSHIFT;
 	case K_F1:		return KI_F1;
 	case K_F2:		return KI_F2;
 	case K_F3:		return KI_F3;
@@ -132,9 +135,12 @@ int KeyConverter::fromRocketKey( int key )
 	case KI_DOWN:		return K_DOWNARROW;
 	case KI_LEFT:		return K_LEFTARROW;
 	case KI_RIGHT:		return K_RIGHTARROW;
-	case KI_LMENU:		return K_ALT;	// ch : on mac K_MENU or K_OPTION ?
-	case KI_LCONTROL:	return K_CTRL;
-	case KI_LSHIFT:		return K_SHIFT;
+	case KI_LMENU:		return K_LALT;	// ch : on mac K_MENU or K_OPTION ?
+	case KI_LCONTROL:	return K_LCTRL;
+	case KI_LSHIFT:		return K_LSHIFT;
+	case KI_RMENU:		return K_RALT;	// ch : on mac K_MENU or K_OPTION ?
+	case KI_RCONTROL:	return K_RCTRL;
+	case KI_RSHIFT:		return K_RSHIFT;
 	case KI_F1:			return K_F1;
 	case KI_F2:			return K_F2;
 	case KI_F3:			return K_F3;

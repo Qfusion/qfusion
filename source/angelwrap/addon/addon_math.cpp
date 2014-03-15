@@ -95,14 +95,19 @@ static double asFunc_floor( double x )
 	return floor( x );
 }
 
-static double asFunc_Random( void )
+static double asFunc_random( void )
 {
 	return random();
 }
 
-static double asFunc_BRandom( double min, double max )
+static double asFunc_brandom( double min, double max )
 {
 	return brandom( min, max );
+}
+
+static int asFunc_rand( void )
+{
+	return rand();
 }
 
 void PreRegisterMathAddon( asIScriptEngine *engine )
@@ -132,8 +137,9 @@ void RegisterMathAddon( asIScriptEngine *engine )
 		{ "double sqrt( double x )", asFUNCTION(asFunc_sqrt) },
 		{ "double ceil( double x )", asFUNCTION(asFunc_ceil) },
 		{ "double floor( double x )", asFUNCTION(asFunc_floor) },
-		{ "double random()", asFUNCTION(asFunc_Random) },
-		{ "double brandom( double min, double max )", asFUNCTION(asFunc_BRandom) },
+		{ "double random()", asFUNCTION(asFunc_random) },
+		{ "double brandom( double min, double max )", asFUNCTION(asFunc_brandom) },
+		{ "int rand()", asFUNCTION(asFunc_rand) },
 
 		{ NULL, NULL }
 	}, *func;
