@@ -230,7 +230,6 @@ TV_SERVER_EXE=qfusiontv_server_$(ARCH).exe
 else # USE_MINGW
 ####################### NORMAL *NIX? ######################
 LOCALBASE?=/usr/local
-X11BASE?=/usr/X11R6
 
 CFLAGS_COMMON=$(CFLAGS) -pipe -I. -I$(LOCALBASE)/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG -msse2
@@ -250,9 +249,9 @@ LDFLAGS_COMMON=$(LDFLAGS)
 LXXFLAGS_COMMON=$(LDFLAGS) -lstdc++ -lsupc++
 
 ifeq ($(OS),FreeBSD)
-LDFLAGS_COMMON+= -L/usr/local/lib -lm -pthread
+LDFLAGS_COMMON+= -L$(LOCALBASE)/lib -lm
 else
-LDFLAGS_COMMON+= -L/usr/local/lib -lm -lpthread -ldl -O1 -Wl,--as-needed
+LDFLAGS_COMMON+= -L$(LOCALBASE)/lib -lm -ldl -O1 -Wl,--as-needed
 endif
 
 ifneq ($(DEBUG_BUILD),YES)
@@ -266,10 +265,10 @@ else
 LIB=lib
 endif
 
-LDFLAGS_CLIENT=-lz -lX11 -lXext -lXi -lrt $(shell curl-config --libs)
-LDFLAGS_DED=-lz $(shell curl-config --libs)
+LDFLAGS_CLIENT=-lz -lpthread -lX11 -lXext -lXi -lrt $(shell curl-config --libs)
+LDFLAGS_DED=-lz -lpthread $(shell curl-config --libs)
 LDFLAGS_MODULE=-shared
-LDFLAGS_TV_SERVER=-lz $(shell curl-config --libs)
+LDFLAGS_TV_SERVER=-lz -lpthread $(shell curl-config --libs)
 
 # static link to custombuilt lib
 LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/lib -lRocketWSW -lfreetype
@@ -306,8 +305,8 @@ LDFLAGS_STEAMLIB=
 endif
 
 ifeq ($(BUILD_REF_GL),YES)
-CFLAGS_REF_GL=-I$(X11BASE)/include $(shell freetype-config --cflags)
-LDFLAGS_REF_GL=-L$(X11BASE)/$(LIB) -lX11 -lXext -lXinerama -lXrandr -lXxf86vm -ljpeg -lpng -lz
+CFLAGS_REF_GL=
+LDFLAGS_REF_GL=-lX11 -lXext -lXinerama -lXrandr -lXxf86vm -ljpeg -lpng -lz
 endif
 
 LDFLAGS_IRC=
