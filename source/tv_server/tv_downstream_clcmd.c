@@ -132,8 +132,6 @@ void TV_Downstream_New_f( client_t *client )
 
 	MSG_WriteByte( &message, SV_BITFLAGS_TVSERVER ); // sv_bitflags
 
-	MSG_WriteShort( &message, 0 );
-
 	// purelist
 	if( !client->relay )
 	{
