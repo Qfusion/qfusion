@@ -1722,6 +1722,10 @@ static void Con_MessageCompletion( const char *partial, qboolean teamonly )
 		Mem_Free( args );
 	}
 
+	if( comp[0] == '\0' ) {
+		return;
+	}
+
 	partial_len = strlen( partial );
 	comp_len = strlen( comp );
 
