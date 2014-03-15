@@ -848,18 +848,18 @@ static void CG_GametypeMenuCmdAdd_f( void )
 }
 
 /*
-* CG_SayCompletionExt_f
+* CG_PlayerNamesCompletionExt_f
 *
 * Helper function
 */
-static char **CG_SayCompletionExt_f( const char *partial, bool teamOnly )
+static char **CG_PlayerNamesCompletionExt_f( const char *partial, bool teamOnly )
 {
 	int i;
 	int team = cg_entities[cgs.playerNum+1].current.team;
 	char **matches = NULL;
 	int num_matches = 0;
 
-	if( partial && *partial ) {
+	if( partial ) {
 		size_t partial_len = strlen( partial );
 
 		matches = (char **) CG_Malloc( sizeof( char * ) * ( gs.maxclients + 1 ) );
@@ -882,29 +882,51 @@ static char **CG_SayCompletionExt_f( const char *partial, bool teamOnly )
 }
 
 /*
-* CG_SayCompletion_f
+* CG_PlayerNamesCompletion_f
 */
-static char **CG_SayCompletion_f( const char *partial )
+static char **CG_PlayerNamesCompletion_f( const char *partial )
 {
-	return CG_SayCompletionExt_f( partial, false );
+	return CG_PlayerNamesCompletionExt_f( partial, false );
 }
 
 /*
-* CG_SayTeamCompletion_f
+* CG_TeamPlayerNamesCompletion_f
 */
-static char **CG_SayTeamCompletion_f( const char *partial )
+static char **CG_TeamPlayerNamesCompletion_f( const char *partial )
 {
-	return CG_SayCompletionExt_f( partial, true );
+	return CG_PlayerNamesCompletionExt_f( partial, true );
 }
 
+/*
+* CG_SayCmdAdd_f
+*/
 static void CG_SayCmdAdd_f( void )
 {
-	trap_Cmd_SetCompletionFunc( "say", &CG_SayCompletion_f );
+	trap_Cmd_SetCompletionFunc( "say", &CG_PlayerNamesCompletion_f );
 }
 
+/*
+* CG_SayTeamCmdAdd_f
+*/
 static void CG_SayTeamCmdAdd_f( void )
 {
-	trap_Cmd_SetCompletionFunc( "say_team", &CG_SayTeamCompletion_f );
+	trap_Cmd_SetCompletionFunc( "say_team", &CG_TeamPlayerNamesCompletion_f );
+}
+
+/*
+* CG_StatsCmdAdd_f
+*/
+static void CG_StatsCmdAdd_f( void )
+{
+	trap_Cmd_SetCompletionFunc( "stats", &CG_PlayerNamesCompletion_f );
+}
+
+/*
+* CG_WhoisCmdAdd_f
+*/
+static void CG_WhoisCmdAdd_f( void )
+{
+	trap_Cmd_SetCompletionFunc( "whois", &CG_PlayerNamesCompletion_f );
 }
 
 // server commands
@@ -913,6 +935,8 @@ static svcmd_t cg_consvcmds[] =
 	{ "gametypemenu", CG_GametypeMenuCmdAdd_f },
 	{ "say", CG_SayCmdAdd_f },
 	{ "say_team", CG_SayTeamCmdAdd_f },
+	{ "stats", CG_StatsCmdAdd_f },
+	{ "whois", CG_WhoisCmdAdd_f },
 
 	{ NULL, NULL }
 };
