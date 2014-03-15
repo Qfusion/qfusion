@@ -197,6 +197,9 @@ void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *info, int client )
 	s = Info_ValueForKey( info, "name" );
 	Q_strncpyz( ci->name, s && s[0] ? s : "badname", sizeof( ci->name ) );
 
+	// name with color tokes stripped
+	Q_strncpyz( ci->cleanname, COM_RemoveColorTokens( ci->name ), sizeof( ci->cleanname ) );
+
 	s = Info_ValueForKey( info, "hand" );
 	ci->hand = s && s[0] ? atoi( s ) : 2;
 

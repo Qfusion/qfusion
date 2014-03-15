@@ -136,7 +136,7 @@ static cg_democam_t *CG_Democam_RegisterCam( int type )
 {
 	cg_democam_t *cam;
 
-	demo_time = cg.time - demo_initial_timestamp; // update demo time
+	CG_DemoCam_UpdateDemoTime();
 
 	cam = cg_cams_headnode;
 	while( cam != NULL )
@@ -257,7 +257,7 @@ static cg_subtitle_t *CG_Democam_RegisterSubtitle( void )
 {
 	cg_subtitle_t *sub;
 
-	demo_time = cg.time - demo_initial_timestamp; // update demo time
+	CG_DemoCam_UpdateDemoTime();
 
 	sub = cg_subs_headnode;
 	while( sub != NULL )
@@ -342,7 +342,7 @@ static void CG_Democam_ExecutePathAnalysis( void )
 	cg_democam_t *ccam, *ncam, *pcam, *sncam;
 	int count;
 
-	pathtime = demo_initial_timestamp;
+	pathtime = 0;
 
 	count = 0;
 	while( ( ncam = CG_Democam_FindNext( pathtime ) ) != NULL )
@@ -1750,14 +1750,16 @@ void CG_DemocamInit( void )
 {
 	int name_size;
 	bool hassoundstream = false;
+
 	democam_editing_mode = false;
+	demo_time = 0;
 	demo_initial_timestamp = 0;
 
 	if( !cgs.demoPlaying )
 		return;
 
 	if( !*cgs.demoName )
-		CG_Error( "CG_LoadRecamScriptFile: no demo name string\n" );
+		CG_Error( "CG_DemocamInit: no demo name string\n" );
 
 	// see if there is any script for this demo, and load it
 	name_size = sizeof( char ) * ( strlen( cgs.demoName ) + strlen( ".cam" ) + 1 );
@@ -1822,4 +1824,13 @@ void CG_DemocamShutdown( void )
 	CG_Democam_FreeSubtitles();
 	CG_Free( demoscriptname );
 	demoscriptname = NULL;
+}
+
+/*
+* CG_DemocamReset
+*/
+void CG_DemocamReset( void )
+{
+	demo_time = 0;
+	demo_initial_timestamp = 0;
 }

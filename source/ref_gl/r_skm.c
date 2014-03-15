@@ -110,21 +110,39 @@ static void Mod_TouchSkeletalModel( model_t *mod )
 */
 static int Mod_SkeletalModel_AddBlend( mskmodel_t *model, const mskblend_t *newblend )
 {
-	unsigned int i;
+	unsigned int i, j;
+	mskblend_t t;
 	mskblend_t *blends;
 
-	if( !newblend->weights[1] ) {
-		return newblend->indices[0];
+	t = *newblend;
+
+	// sort influences in descending order	
+	for( i = 0; i < SKM_MAX_WEIGHTS; i++ ) {
+		for( j = i + 1; j < SKM_MAX_WEIGHTS; j++ ) {
+			if( t.weights[i] < t.weights[j] ) {
+				qbyte bi, bw;
+				bi = t.indices[i];
+				bw = t.weights[i];
+				t.indices[i] = t.indices[j];
+				t.weights[i] = t.weights[j];
+				t.indices[j] = bi;
+				t.weights[j] = bw;
+			}
+		}
+	}
+
+	if( !t.weights[1] ) {
+		return t.indices[0];
 	}
 
 	for( i = 0, blends = model->blends; i < model->numblends; i++, blends++ ) {
-		if( !memcmp( blends, newblend, sizeof( mskblend_t ) ) ) {
+		if( !memcmp( blends, &t, sizeof( mskblend_t ) ) ) {
 			return model->numbones + i;
 		}
 	}
 
 	model->numblends++;
-	memcpy( blends, newblend, sizeof( mskblend_t ) );
+	memcpy( blends, &t, sizeof( mskblend_t ) );
 
 	return model->numbones + i;
 }
@@ -151,20 +169,25 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	iqmmesh_t *inmesh;
 	iqmbounds_t *inbounds;
 	float *vposition, *vtexcoord, *vnormal, *vtangent;
-	qbyte *vblendindexes, *vblendweights;
+	qbyte *vblendindices_byte, *vblendweights_byte;
+	int *vblendindexes_int;
+	float *vblendweights_float;
 	mskmodel_t *poutmodel;
 
+	baseposes = NULL;
 	header = ( iqmheader_t * )buffer;
 
 	// check IQM magic
 	if( memcmp( header->magic, "INTERQUAKEMODEL", 16 ) ) {
-		ri.Com_Error( ERR_DROP, "%s is not an Inter-Quake Model", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s is not an Inter-Quake Model\n", mod->name );
+		goto error;
 	}
 
 	// check header version
 	header->version = LittleLong( header->version );
 	if( header->version != IQM_VERSION ) {
-		ri.Com_Error( ERR_DROP, "%s has wrong type number (%i should be %i)", mod->name, header->version, IQM_VERSION );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has wrong type number (%i should be %i)\n", mod->name, header->version, IQM_VERSION );
+		goto error;
 	}
 
 	// byteswap header
@@ -198,16 +221,20 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 #undef H_SWAP
 
 	if( header->num_triangles < 1 || header->num_vertexes < 3 || header->num_vertexarrays < 1 || header->num_meshes < 1 ) {
-		ri.Com_Error( ERR_DROP, "%s has no geometry", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no geometry\n", mod->name );
+		goto error;
 	}
 	if( header->num_frames < 1 || header->num_anims < 1 ) {
-		ri.Com_Error( ERR_DROP, "%s has no animations", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no animations\n", mod->name );
+		goto error;
 	}
 	if( header->num_joints != header->num_poses ) {
-		ri.Com_Error( ERR_DROP, "%s has an invalid number of poses: %i vs %i", mod->name, header->num_joints, header->num_poses );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has an invalid number of poses: %i vs %i\n", mod->name, header->num_joints, header->num_poses );
+		goto error;
 	}
 	if( !header->ofs_bounds ) {
-		ri.Com_Error( ERR_DROP, "%s has no frame bounds", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no frame bounds\n", mod->name );
+		goto error;
 	}
 
 	pbase = ( qbyte * )buffer;
@@ -222,7 +249,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		|| header->ofs_meshes + header->num_meshes * sizeof( iqmmesh_t ) > filesize
 		|| header->ofs_bounds + header->num_frames * sizeof( iqmbounds_t ) > filesize
 		) {
-		ri.Com_Error( ERR_DROP, "%s has invalid size or offset information", mod->name );
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has invalid size or offset information\n", mod->name );
+		goto error;
 	}
 
 	poutmodel = mod->extradata = Mod_Malloc( mod, sizeof( *poutmodel ) );
@@ -241,8 +269,10 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	vtexcoord = NULL;
 	vnormal = NULL;
 	vtangent = NULL;
-	vblendindexes = NULL;
-	vblendweights = NULL;
+	vblendindices_byte = NULL;
+	vblendindexes_int = NULL;
+	vblendweights_byte = NULL;
+	vblendweights_float = NULL;
 
 	va = ( iqmvertexarray_t * )( pbase + header->ofs_vertexarrays );
 	for( i = 0; i < header->num_vertexarrays; i++ ) {
@@ -259,6 +289,11 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 			case IQM_FLOAT:
 				vsize *= sizeof( float );
 				break;
+			case IQM_INT:
+			case IQM_UINT:
+				vsize *= sizeof( int );
+				break;
+			case IQM_BYTE:
 			case IQM_UBYTE:
 				vsize *= sizeof( unsigned char );
 				break;
@@ -292,20 +327,35 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 				}
 				break;
 			case IQM_BLENDINDEXES:
-				if( va[i].format == IQM_UBYTE && va[i].size == SKM_MAX_WEIGHTS ) {
-					vblendindexes = ( qbyte * )( pbase + va[i].offset );
+				if( va[i].size != SKM_MAX_WEIGHTS )
+					break;
+				if( va[i].format == IQM_BYTE || va[i].format == IQM_UBYTE ) {
+					vblendindices_byte = ( qbyte * )( pbase + va[i].offset );
+				}
+				else if( va[i].format == IQM_INT || va[i].format == IQM_UINT ) {
+					vblendindexes_int = ( int * )( pbase + va[i].offset );
 				}
 				break;
 			case IQM_BLENDWEIGHTS:
-				if( va[i].format == IQM_UBYTE && va[i].size == SKM_MAX_WEIGHTS ) {
-					vblendweights = ( qbyte * )( pbase + va[i].offset );
+				if( va[i].size != SKM_MAX_WEIGHTS )
+					break;
+				if( va[i].format == IQM_UBYTE ) {
+					vblendweights_byte = ( qbyte * )( pbase + va[i].offset );
 				}
+				else if( va[i].format == IQM_FLOAT ) {
+					vblendweights_float = ( float * )( pbase + va[i].offset );
+				}
+				break;
+			default:
 				break;
 		}
 	}
 
-	if( !vposition || !vtexcoord || !vblendindexes || !vblendweights ) {
-		ri.Com_Error( ERR_DROP, "%s is missing vertex array data", mod->name );
+	if( !vposition || !vtexcoord 
+		|| !(vblendindices_byte || vblendindexes_int) 
+		|| !(vblendweights_byte || vblendweights_float) ) {
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s is missing vertex array data\n", mod->name );
+		goto error;
 	}
 
 	// load joints
@@ -336,7 +386,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		}
 
 		if( joints[i].parent >= (int)i ) {
-			ri.Com_Error( ERR_DROP, "%s bone[%i].parent(%i) >= %i", mod->name, i, joints[i].parent, i );
+			ri.Com_Printf( S_COLOR_RED "ERROR: %s bone[%i].parent(%i) >= %i\n", mod->name, i, joints[i].parent, i );
+			goto error;
 		}
 
 		poutmodel->bones[i].name = texts + joints[i].name;
@@ -495,11 +546,24 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	// blend indices
 	poutmodel->blendIndices = ( qbyte * )pmem; pmem += sizeof( *poutmodel->blendIndices ) * header->num_vertexes * SKM_MAX_WEIGHTS;
-	memcpy( poutmodel->blendIndices, vblendindexes, sizeof( qbyte ) * header->num_vertexes * SKM_MAX_WEIGHTS );
+	if( vblendindices_byte ) {
+		memcpy( poutmodel->blendIndices, vblendindices_byte, sizeof( qbyte ) * header->num_vertexes * SKM_MAX_WEIGHTS );
+	} else if( vblendindexes_int ) {
+		for( j = 0; j < header->num_vertexes * SKM_MAX_WEIGHTS; j++ ) {
+			poutmodel->blendIndices[j] = LittleLong( vblendindexes_int[j] );
+		}
+	}
 
 	// blend weights
 	poutmodel->blendWeights = ( qbyte * )pmem; pmem += sizeof( *poutmodel->blendWeights ) * header->num_vertexes * SKM_MAX_WEIGHTS;
-	memcpy( poutmodel->blendWeights, vblendweights, sizeof( qbyte ) * header->num_vertexes * SKM_MAX_WEIGHTS );
+	if( vblendweights_byte ) {
+		memcpy( poutmodel->blendWeights, vblendweights_byte, sizeof( qbyte ) * header->num_vertexes * SKM_MAX_WEIGHTS );
+	}
+	else if( vblendweights_float ) {
+		for( j = 0; j < header->num_vertexes * SKM_MAX_WEIGHTS; j++ ) {
+			poutmodel->blendWeights[j] = LittleFloat( vblendweights_float[j] ) * 255.0f;
+		}
+	}
 
 
 	// blends
@@ -511,17 +575,21 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	poutmodel->blends = ( mskblend_t * )pmem; pmem += sizeof( *poutmodel->blends ) * poutmodel->numverts;
 	poutmodel->vertexBlends = ( unsigned int * )pmem;
 
+	vblendindices_byte = poutmodel->blendIndices;
+	vblendweights_byte = poutmodel->blendWeights;
+
 	for( i = 0; i < poutmodel->numverts; i++ ) {
 		mskblend_t blend;
 
 		for( j = 0; j < SKM_MAX_WEIGHTS; j++ ) {
-			blend.indices[j] = vblendindexes[j];
-			blend.weights[j] = vblendweights[j];
+			blend.indices[j] = vblendindices_byte[j];
+			blend.weights[j] = vblendweights_byte[j];
 		}
+
 		poutmodel->vertexBlends[i] = Mod_SkeletalModel_AddBlend( poutmodel, &blend );
 
-		vblendindexes += SKM_MAX_WEIGHTS;
-		vblendweights += SKM_MAX_WEIGHTS;
+		vblendindices_byte += SKM_MAX_WEIGHTS;
+		vblendweights_byte += SKM_MAX_WEIGHTS;
 	}
 
 	// meshes
@@ -572,8 +640,10 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		}
 
 		poutmodel->meshes[i].maxWeights = 1;
-		for( j = 0, vblendweights = poutmodel->meshes[i].blendWeights; j < poutmodel->meshes[i].numverts; j++, vblendweights += SKM_MAX_WEIGHTS ) {
-			for( k = 1; k < SKM_MAX_WEIGHTS && vblendweights[k]; k++ );
+
+		vblendweights_byte = poutmodel->meshes[i].blendWeights;
+		for( j = 0; j < poutmodel->meshes[i].numverts; j++ ) {
+			for( k = 1; k < SKM_MAX_WEIGHTS && vblendweights_byte[k]; k++ );
 
 			if( k > poutmodel->meshes[i].maxWeights ) {
 				poutmodel->meshes[i].maxWeights = k;
@@ -581,6 +651,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 					break;
 				}
 			}
+			vblendweights_byte += SKM_MAX_WEIGHTS;
 		}
 
 		// creating a VBO only makes sense if GLSL is present and the number of bones 
@@ -624,6 +695,13 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	mod->touch = &Mod_TouchSkeletalModel;
 
 	R_Free( baseposes );
+	return;
+
+error:
+	if( baseposes ) {
+		R_Free( baseposes );
+	}
+	mod->type = mod_bad;
 }
 
 /*
@@ -708,7 +786,7 @@ static model_t *R_SkeletalModelLOD( const entity_t *e )
 static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t mins, vec3_t maxs )
 {
 	int i;
-	unsigned int frame = (unsigned)e->frame, oldframe = (unsigned)e->oldframe;
+	int frame = e->frame, oldframe = e->oldframe;
 	mskframe_t *pframe, *poldframe;
 	float *thismins, *oldmins, *thismaxs, *oldmaxs;
 	mskmodel_t *skmodel = ( mskmodel_t * )mod->extradata;
@@ -719,19 +797,22 @@ static float R_SkeletalModelLerpBBox( const entity_t *e, const model_t *mod, vec
 		return 0;
 	}
 
-	if( frame >= skmodel->numframes )
+	if( frame < 0 || frame >= (int)skmodel->numframes )
 	{
 #ifndef PUBLIC_BUILD
-		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such frame %d\n", mod->name, frame );
+		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such frame %i\n", mod->name, frame );
 #endif
 		frame = 0;
 	}
-	if( e->oldframe >= (int)skmodel->numframes )
+	if( oldframe < 0 || oldframe >= (int)skmodel->numframes )
 	{
 #ifndef PUBLIC_BUILD
-		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such oldframe %d\n", mod->name, oldframe );
+		ri.Com_DPrintf( "R_SkeletalModelLerpBBox %s: no such oldframe %i\n", mod->name, oldframe );
 #endif
+		oldframe = 0;
 	}
+
+	frame = oldframe = 0;
 
 	pframe = skmodel->frames + frame;
 	poldframe = skmodel->frames + oldframe;

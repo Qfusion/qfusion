@@ -58,6 +58,8 @@ static unsigned int key_linepos;	// byte offset of cursor in edit line
 static int input_prestep;			// pixels to skip at start when drawing
 static int edit_line = 0;
 static int history_line = 0;
+static int search_line = 0;
+static char search_text[MAXCMDLINE*2+4];
 
 // messagemode[2]
 static qboolean chat_team;
@@ -70,6 +72,8 @@ static void Con_ClearTyping( void )
 {
 	key_lines[edit_line][1] = 0; // clear any typing
 	key_linepos = 1;
+	search_line = edit_line;
+	search_text[0] = 0;
 }
 
 /*
@@ -98,11 +102,13 @@ void Con_ToggleConsole_f( void )
 	Con_ClearNotify();
 
 	if( cls.key_dest == key_console )
-	{                               // close console
+	{
+		// close console
 		CL_SetKeyDest( cls.old_key_dest );
 	}
 	else
-	{                               // open console
+	{
+		// open console
 		CL_SetOldKeyDest( cls.key_dest );
 		CL_SetKeyDest( key_console );
 	}
@@ -372,7 +378,8 @@ static void Con_Linefeed( void )
 
 	con.x = 0;
 	if( con.display )
-	{	// the console is scrolled up, stay in the same place if possible
+	{
+		// the console is scrolled up, stay in the same place if possible
 		con.display++;
 		clamp_high( con.display, con.totallines - 1 );
 	}
@@ -562,7 +569,8 @@ static int Q_ColorStrLastColor( const char *s, int byteofs )
 */
 static void Con_DrawInput( int vislines )
 {
-	char *text = key_lines[edit_line];
+	char draw_search_text[MAXCMDLINE*2+4];
+	const char *text = key_lines[edit_line];
 	int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
 	int text_y = vislines - 14 - smallCharHeight;
 	const int left_margin = 8, right_margin = 8;
@@ -573,6 +581,11 @@ static void Con_DrawInput( int vislines )
 
 	if( cls.key_dest != key_console )
 		return;
+
+	if( search_text[0] ) {
+		text = draw_search_text;
+		Q_snprintfz( draw_search_text, sizeof( draw_search_text ), "%s : %s", key_lines[edit_line], search_text );
+	}
 
 	prewidth = SCR_strWidth( text, cls.fontSystemSmall, key_linepos );
 
@@ -834,7 +847,7 @@ static void Con_CompleteCommandLine( void )
 	char *s;
 	int c, v, a, d, ca, i;
 	int cmd_len;
-	char **list[5] = { 0, 0, 0, 0, 0 };
+	char **list[6] = { 0, 0, 0, 0, 0, 0 };
 
 	s = key_lines[edit_line] + 1;
 	if( *s == '\\' || *s == '/' )
@@ -1026,6 +1039,11 @@ static void Con_Key_Copy( void )
 	char *buffer;
 	const char *newline = "\r\n";
 
+	if( search_text[0] ) {
+		CL_SetClipboardData( search_text );
+		return;
+	}
+
 	buffer_size = Con_BufferText( NULL, newline ) + 1;
 	buffer = Mem_TempMalloc( buffer_size );
 
@@ -1079,6 +1097,8 @@ static void Con_Key_Paste( qboolean primary )
 				Com_Printf( "%s\n", key_lines[edit_line] );
 				edit_line = ( edit_line + 1 ) & 31;
 				history_line = edit_line;
+				search_line = edit_line;
+				search_text[0] = 0;
 				key_lines[edit_line][0] = ']';
 				key_lines[edit_line][1] = 0;
 				key_linepos = 1;
@@ -1174,6 +1194,24 @@ void Con_CharEvent( qwchar key )
 	case 5: // CTRL+E: jump to end of line (same as END)
 		key_linepos = (unsigned int)strlen( key_lines[edit_line] );
 		return;
+	case 18: // CTRL+R
+		{
+			size_t search_len = strlen( key_lines[edit_line] + 1 );
+			if( !search_len ) {
+				break;
+			}
+			do {
+				search_line = ( search_line - 1 ) & 31;
+			} while( search_line != edit_line && Q_strnicmp( key_lines[search_line]+1, key_lines[edit_line]+1, search_len ) );
+
+			if( search_line != edit_line ) {
+				Q_strncpyz( search_text, key_lines[search_line] + 1, sizeof( search_text ) );
+			}
+			else {
+				search_text[0] = '\0';
+			}
+		}
+		break;
 	}
 
 	if( key < 32 || key > 0x1FFFFF )
@@ -1230,13 +1268,22 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 	0 used to be the NetQuake way (always a command),
 	but no one will probably want it in now */
 
+	if( search_text[0] ) {
+		key_lines[edit_line][0] = ']';
+		Q_strncpyz( key_lines[edit_line] + 1, search_text, sizeof( key_lines[edit_line] ) - 1 );
+		key_linepos = (unsigned int)strlen( key_lines[edit_line] );
+		input_prestep = 0;
+		search_line = 0;
+		search_text[0] = 0;
+	}
+
 	// decide whether to treat the text as chat or command
 	p = key_lines[edit_line] + 1;
 	if( cls.state <= CA_HANDSHAKE || cls.demo.playing )
 		type = COMMAND;
 	else if( *p == '\\' || *p == '/' )
 		type = COMMAND;
-	else if( Key_IsDown(K_CTRL) && !ignore_ctrl )
+	else if( ( Key_IsDown(K_RCTRL) || Key_IsDown(K_LCTRL)) && !ignore_ctrl )
 		type = TEAMCHAT;
 	else if( chatmode == 1 || !Cmd_CheckForCommand( p ) )
 		type = CHAT;
@@ -1270,6 +1317,8 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 	Com_Printf( "%s\n", key_lines[edit_line] );
 	edit_line = ( edit_line + 1 ) & 31;
 	history_line = edit_line;
+	search_line = edit_line;
+	search_text[0] = 0;
 	key_lines[edit_line][0] = ']';
 	key_lines[edit_line][1] = 0;
 	key_linepos = 1;
@@ -1285,6 +1334,8 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 */
 void Con_KeyDown( int key )
 {
+	qboolean ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
+
 	if( !con_initialized )
 		return;
 
@@ -1337,7 +1388,7 @@ void Con_KeyDown( int key )
 		break;
 	}
 
-	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && Key_IsDown(K_SHIFT) )
+	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT)) )
 	{
 		Con_Key_Paste( qtrue );
 		return;
@@ -1479,7 +1530,7 @@ void Con_KeyDown( int key )
 	
 	if( key == K_MWHEELUP || key == K_MWHEELDOWN )
 	{
-		if( Key_IsDown( K_CTRL ) ) {
+		if( ctrl_is_down ) {
 			Con_ChangeFontSize( key == K_MWHEELUP ? 1 : -1 );
 			return;
 		}
@@ -1502,7 +1553,7 @@ void Con_KeyDown( int key )
 
 	if( key == K_HOME || key == KP_HOME )
 	{
-		if( Key_IsDown(K_CTRL) )
+		if( ctrl_is_down )
 		{
 			int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
 			int vislines = (int)( viddef.height * bound( 0.0, scr_con_current, 1.0 ) );
@@ -1517,7 +1568,7 @@ void Con_KeyDown( int key )
 
 	if( key == K_END || key == KP_END )
 	{
-		if( Key_IsDown(K_CTRL) )
+		if( ctrl_is_down )
 			con.display = 0;
 		else
 			key_linepos = (unsigned int)strlen( key_lines[edit_line] );
@@ -1600,8 +1651,8 @@ void Con_MessageCharEvent( qwchar key )
 
 	if( chat_linepos < MAXCMDLINE-1 )
 	{
-		char *utf = Q_WCharToUtf8( key );
-		int utflen = strlen( utf );
+		const char *utf = Q_WCharToUtf8( key );
+		size_t utflen = strlen( utf );
 
 		if( chat_bufferlen + utflen >= MAXCMDLINE )
 			return;		// won't fit
@@ -1618,8 +1669,82 @@ void Con_MessageCharEvent( qwchar key )
 	}
 }
 
+/*
+* Con_MessageCompletion
+*/
+static void Con_MessageCompletion( const char *partial, qboolean teamonly )
+{
+	char comp[256];
+	size_t comp_len;
+	size_t partial_len;
+	char **args;
+	const char *p;
+
+	// only complete at the end of the line
+	if( chat_linepos != chat_bufferlen )
+		return;
+
+	p = strrchr( chat_buffer, ' ' );
+	if( p && *(p+1) ) {
+		partial = p + 1;
+	}
+	else {
+		partial = chat_buffer;
+	}
+
+	comp[0] = '\0';
+
+	args = Cmd_CompleteBuildArgListExt( teamonly ? "say_team" : "say", partial );
+	if( args ) {
+		int i;
+
+		// check for single match
+		if( args[0] && !args[1] ) {
+			Q_strncpyz( comp, args[0], sizeof( comp ) );
+		}
+		else if( args[0] ) {
+			char ch;
+			size_t start_pos, pos;
+
+			start_pos = strlen( partial );
+			for( pos = start_pos; pos + 1 < sizeof( comp ); pos++ ) {
+				ch = args[0][pos];
+				if( !ch )
+					break;
+				for( i = 1; args[i] && args[i][pos] == ch; i++ );
+				if( args[i] )
+					break;
+			}
+			Q_strncpyz( comp, args[0], sizeof( comp ) );
+			comp[pos] = '\0';
+		}
+
+		Mem_Free( args );
+	}
+
+	partial_len = strlen( partial );
+	comp_len = strlen( comp );
+
+	// add ': ' to string if completing at the beginning of the string
+	if( comp[0] && ( chat_linepos == partial_len ) && ( chat_bufferlen + comp_len + 2 < MAXCMDLINE ) ) {
+		Q_strncatz( comp, ": ", sizeof( comp ) );
+		comp_len += 2;
+	}
+
+	if( chat_bufferlen + comp_len >= MAXCMDLINE )
+		return;		// won't fit
+
+	chat_linepos -= partial_len;
+	chat_bufferlen -= partial_len;
+	memcpy( chat_buffer + chat_linepos, comp, comp_len + 1 );
+	chat_bufferlen += comp_len;
+	chat_linepos += comp_len;
+}
+
 void Con_MessageKeyDown( int key )
 {
+	qboolean ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
+
 	if( !con_initialized )
 		return;
 
@@ -1627,7 +1752,7 @@ void Con_MessageKeyDown( int key )
 	{
 		if( chat_bufferlen > 0 )
 		{
-			Con_SendChatMessage( chat_buffer, chat_team || Key_IsDown(K_CTRL) );
+			Con_SendChatMessage( chat_buffer, chat_team || ctrl_is_down );
 			chat_bufferlen = 0;
 			chat_linepos = 0;
 			chat_buffer[0] = 0;
@@ -1639,21 +1764,27 @@ void Con_MessageKeyDown( int key )
 
 	if( key == K_HOME || key == KP_HOME )
 	{
-		if( !Key_IsDown(K_CTRL) )
+		if( !ctrl_is_down )
 			chat_linepos = 0;
 		return;
 	}
 
 	if( key == K_END || key == KP_END )
 	{
-		if( !Key_IsDown(K_CTRL) )
+		if( !ctrl_is_down )
 			chat_linepos = chat_bufferlen;
 		return;
 	}
 
-	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && Key_IsDown(K_SHIFT) )
+	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT) ) )
 	{
 		Con_MessageKeyPaste( qtrue );
+		return;
+	}
+
+	if( key == K_TAB )
+	{
+		Con_MessageCompletion( chat_buffer, chat_team || ctrl_is_down );
 		return;
 	}
 

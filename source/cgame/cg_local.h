@@ -358,6 +358,7 @@ typedef struct cg_sexedSfx_s
 typedef struct
 {
 	char name[MAX_QPATH];
+	char cleanname[MAX_QPATH];
 	int hand;
 	int fov, zoomfov;
 	byte_vec4_t color;
@@ -698,6 +699,7 @@ void CG_Predict_TouchTriggers( pmove_t *pm );
 extern vrect_t scr_vrect;
 
 extern cvar_t *cg_scoreboardFontFamily;
+extern cvar_t *cg_scoreboardMonoFontFamily;
 extern cvar_t *cg_scoreboardFontSize;
 extern cvar_t *cg_showFPS;
 extern cvar_t *cg_showAwards;

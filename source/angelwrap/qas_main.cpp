@@ -66,6 +66,8 @@ int QAS_Init( void )
 	angelwrappool = QAS_MemAllocPool( "Angelwrap script module" );
 	QAS_Printf( "Initializing Angel Script\n" );
 
+	srand( time( NULL ) );
+
 	QAS_InitAngelExport();
 	return 1;
 }

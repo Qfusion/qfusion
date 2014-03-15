@@ -139,8 +139,7 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 	MSG_WriteString( &msg, FS_GameDirectory() );
 	MSG_WriteShort( &msg, -1 ); // playernum
 	MSG_WriteString( &msg, sv_name ); // level name
-	MSG_WriteByte( &msg, sv_bitflags ); // sv_bitflags
-	MSG_WriteShort( &msg, 0 ); // HTTP port number
+	MSG_WriteByte( &msg, sv_bitflags & ~SV_BITFLAGS_HTTP ); // sv_bitflags
 
 	// pure files
 	i = Com_CountPureListFiles( purelist );

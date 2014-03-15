@@ -178,6 +178,9 @@ public:
 					Rocket::Controls::ElementFormControl *control =
 						dynamic_cast< Rocket::Controls::ElementFormControl* >(controls[i]);
 
+					if( !control ) {
+						continue;
+					}
 					if( control->IsDisabled() ) {
 						// skip disabled inputs
 						continue;

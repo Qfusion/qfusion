@@ -27,7 +27,6 @@ void	    Sys_NET_Init( void );
 void	    Sys_NET_Shutdown( void );
 
 net_error_t	Sys_NET_GetLastError( void );
-void		Sys_NET_AsyncResolveHostname( const char *hostname );
 
 void	    Sys_NET_SocketClose( socket_handle_t handle );
 int			Sys_NET_SocketIoctl( socket_handle_t handle, long request, ioctl_param_t* param );
