@@ -50,4 +50,20 @@ void SteamLib_Shutdown( void )
 {
 }
 
+/*
+* SteamLib_GetSteamID
+*/
+uint64_t SteamLib_GetSteamID( void )
+{
+	return 0;
+}
+
+/*
+* SteamLib_GetAuthSessionTicket
+*/
+int SteamLib_GetAuthSessionTicket( void (*callback)( void *, size_t ) )
+{
+	return 0;
+}
+
 }
