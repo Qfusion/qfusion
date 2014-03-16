@@ -633,7 +633,7 @@ static void SV_CheckDefaultMap( void )
 */
 void SV_UpdateActivity( void )
 {
-	svc.last_activity = Sys_Milliseconds();
+	svc.lastActivity = Sys_Milliseconds();
 	//Com_Printf( "Server activity\n" );
 }
 
@@ -654,7 +654,7 @@ static void SV_CheckAutoUpdate( void )
 		return;
 
 	// do not if there has been any activity in the last 2 hours
-	if( ( svc.last_activity + 1800000 ) > Sys_Milliseconds() )
+	if( ( svc.lastActivity + 1800000 ) > Sys_Milliseconds() )
 		return;
 
 	days = (unsigned int)sv_lastAutoUpdate->integer;

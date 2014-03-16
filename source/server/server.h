@@ -24,8 +24,9 @@
 
 //=============================================================================
 
-#define	MAX_MASTERS 8               // max recipients for heartbeat packets
+#define	MAX_MASTERS			8               // max recipients for heartbeat packets
 #define	HEARTBEAT_SECONDS   300
+#define TTL_MASTERS			24*60*60
 
 typedef enum
 {
@@ -287,12 +288,12 @@ typedef struct
 
 typedef struct
 {
-	int	last_heartbeat;
-	int last_mmheartbeat;
-	unsigned int last_activity;
+	int	lastHeartbeat;
+	unsigned int lastActivity;
 	unsigned int snapFrameTime;		// msecs between server packets
 	unsigned int gameFrameTime;		// msecs between game code executions
 	qboolean autostarted;
+	unsigned int lastMasterResolve;
 } server_constant_t;
 
 //=============================================================================
@@ -395,6 +396,7 @@ void SV_UpdateActivity( void );
 //
 void SV_ConnectionlessPacket( const socket_t *socket, const netadr_t *address, msg_t *msg );
 void SV_InitMaster( void );
+void SV_UpdateMaster( void );
 
 //
 // sv_init.c

@@ -81,10 +81,9 @@ static void SV_AddMaster_f( char *master )
 }
 
 /*
-* SV_InitMaster
-* Set up the main master server
+* SV_ResolveMaster
 */
-void SV_InitMaster( void )
+static void SV_ResolveMaster( void )
 {
 	char *master, *mlist;
 
@@ -111,7 +110,29 @@ void SV_InitMaster( void )
 		}
 	}
 
-	svc.last_heartbeat = HEARTBEAT_SECONDS * 1000; // wait a while before sending first heartbeat
+	svc.lastMasterResolve = Sys_Milliseconds();
+}
+
+/*
+* SV_InitMaster
+* Set up the main master server
+*/
+void SV_InitMaster( void )
+{
+	SV_ResolveMaster();
+
+	svc.lastHeartbeat = HEARTBEAT_SECONDS * 1000; // wait a while before sending first heartbeat
+}
+
+/*
+* SV_UpdateMaster
+*/
+void SV_UpdateMaster( void )
+{
+	// refresh master server IP addresses periodically
+	if( svc.lastMasterResolve + TTL_MASTERS < Sys_Milliseconds() ) {
+		SV_ResolveMaster();
+	}
 }
 
 /*
@@ -123,11 +144,11 @@ void SV_MasterHeartbeat( void )
 {
 	int i;
 
-	svc.last_heartbeat -= svc.snapFrameTime;
-	if( svc.last_heartbeat > 0 )
+	svc.lastHeartbeat -= svc.snapFrameTime;
+	if( svc.lastHeartbeat > 0 )
 		return;
 
-	svc.last_heartbeat = HEARTBEAT_SECONDS * 1000;
+	svc.lastHeartbeat = HEARTBEAT_SECONDS * 1000;
 
 	if( !sv_public->integer )
 		return;
