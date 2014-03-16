@@ -616,6 +616,8 @@ static void SV_Map_f( void )
 		sv.state = ss_dead; // don't save current level when changing
 	}
 
+	SV_UpdateMaster();
+
 	// start up the next map
 	SV_Map( mapname, !Q_stricmp( Cmd_Argv( 0 ), "devmap" ) );
 
@@ -708,8 +710,7 @@ void SV_Status_f( void )
 */
 static void SV_Heartbeat_f( void )
 {
-	svc.last_heartbeat = 0;
-	svc.last_mmheartbeat = 0;
+	svc.lastHeartbeat = 0;
 }
 
 /*
