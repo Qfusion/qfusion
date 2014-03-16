@@ -80,6 +80,7 @@ struct wswcurl_req_s {
 	char paused;
 	time_t last_action;
 	time_t timeout;
+	size_t ignore_bytes;
 
 	// Custom pointer to pass to callback functions below
 	void *customp;
@@ -360,10 +361,20 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 	cb = req->bhead;
 	while( cb && written < size )
 	{
-		long numb = cb->rxsize - cb->rxoffset;
+		size_t numb = cb->rxsize - cb->rxoffset;
 		if( numb + written > size )
 			numb = size - written;
 
+		if( req->ignore_bytes >= numb ) {
+			req->ignore_bytes -= numb;
+			cb->rxoffset += numb;
+			continue;
+		}
+		else {
+			cb->rxoffset += req->ignore_bytes;
+			req->ignore_bytes = 0;
+		}
+		
 		memcpy( ((char*)buffer)+written, cb->data+cb->rxoffset, numb );
 		written += numb;
 		cb->rxoffset += numb;
@@ -947,6 +958,11 @@ static void wswcurl_unpause( wswcurl_req *req )
 int wswcurl_tell( wswcurl_req *req )
 {
 	return req->rxreturned;
+}
+
+void wswcurl_ignore_bytes(wswcurl_req *req, size_t nbytes)
+{
+	req->ignore_bytes = nbytes;
 }
 
 static int wswcurl_remaining( wswcurl_req *req )

@@ -98,9 +98,9 @@ typedef struct
 typedef struct filehandle_s
 {
 	FILE *fstream;
-	unsigned offset;
-	unsigned uncompressedSize;      // uncompressed size
-	unsigned restReadUncompressed;  // number of bytes to be obtained after decompession
+	unsigned pakOffset;
+	unsigned uncompressedSize;		// uncompressed size
+	unsigned offset;				// current read/write pos
 	zipEntry_t *zipEntry;
 
 	wswcurl_req *streamHandle;
@@ -824,10 +824,10 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 	*filenum = FS_OpenFileHandle();
 	file = &fs_filehandles[*filenum - 1];
 	file->fstream = f;
-	file->offset = 0;
+	file->pakOffset = 0;
 	file->zipEntry = NULL;
 	file->uncompressedSize = end;
-	file->restReadUncompressed = (mode == FS_READ ? end : 0);
+	file->offset = 0;
 
 	return end;
 }
@@ -876,7 +876,7 @@ static int _FS_FOpenPakFile( const char *filename, pack_t *pak, int *filenum )
 	if( !file->fstream )
 		Com_Error( ERR_FATAL, "Error opening pak file: %s", pak->filename );
 	file->uncompressedSize = pakFile->uncompressedSize;
-	file->restReadUncompressed = pakFile->uncompressedSize;
+	file->offset = 0;
 	file->zipEntry = NULL;
 
 	if( !( pakFile->flags & FS_PACKFILE_COHERENT ) )
@@ -890,7 +890,7 @@ static int _FS_FOpenPakFile( const char *filename, pack_t *pak, int *filenum )
 		pakFile->offset += offset;
 		pakFile->flags |= FS_PACKFILE_COHERENT;
 	}
-	file->offset = pakFile->offset;
+	file->pakOffset = pakFile->offset;
 
 	if( pakFile->flags & FS_PACKFILE_DEFLATED )
 	{
@@ -920,7 +920,7 @@ static int _FS_FOpenPakFile( const char *filename, pack_t *pak, int *filenum )
 		}
 	}
 
-	if( fseek( file->fstream, file->offset, SEEK_SET ) != 0 )
+	if( fseek( file->fstream, file->pakOffset, SEEK_SET ) != 0 )
 	{
 		Com_DPrintf( "_FS_FOpenPakFile: can't inflate %s\n", filename );
 		return -1;
@@ -1031,10 +1031,10 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 		*filenum = FS_OpenFileHandle();
 		file = &fs_filehandles[*filenum - 1];
 		file->fstream = f;
-		file->offset = 0;
+		file->pakOffset = 0;
 		file->zipEntry = NULL;
 		file->uncompressedSize = end;
-		file->restReadUncompressed = 0;
+		file->offset = 0;
 
 		return end;
 	}
@@ -1075,11 +1075,11 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 
 		*filenum = FS_OpenFileHandle();
 		file = &fs_filehandles[*filenum - 1];
-		file->offset = 0;
+		file->pakOffset = 0;
 		file->zipEntry = NULL;
 		file->fstream = f;
 		file->uncompressedSize = end;
-		file->restReadUncompressed = end;
+		file->offset = 0;
 
 		Com_DPrintf( "FS_FOpen%sFile: %s\n", (base ? "Base" : ""), tempname );
 		return end;
@@ -1124,7 +1124,6 @@ void FS_FCloseFile( int file )
 		return; // return silently
 
 	fh = FS_FileHandleForNum( file );
-	fh->restReadUncompressed = 0;
 
 	if( fh->zipEntry )
 	{
@@ -1231,33 +1230,7 @@ static int FS_ReadPK3File( qbyte *buf, size_t len, filehandle_t *fh )
 */
 static int FS_ReadFile( qbyte *buf, size_t len, filehandle_t *fh )
 {
-	size_t block, total;
-	int read;
-
-	total = 0;
-	do
-	{   // read in chunks
-		block = min( len, FS_MAX_BLOCK_SIZE );
-
-		read = (int)fread( buf, 1, block, fh->fstream );
-		if( read == 0 )
-		{
-			// we might have been trying to read from a CD
-			read = (int)fread( buf, 1, block, fh->fstream );
-			if( read == 0 )
-				read = -1;
-		}
-		if( read == -1 )
-			Sys_Error( "FS_Read: could not read %i bytes", block );
-
-		// do some progress bar thing here...
-		len -= block;
-		buf += block;
-		total += block;
-	}
-	while( len > 0 );
-
-	return (int)total;
+	return (int)fread( buf, 1, len, fh->fstream );
 }
 
 /*
@@ -1268,15 +1241,13 @@ static int FS_ReadFile( qbyte *buf, size_t len, filehandle_t *fh )
 int FS_Read( void *buffer, size_t len, int file )
 {
 	filehandle_t *fh;
-	size_t total;
+	int total;
 
 	fh = FS_FileHandleForNum( file );
 	if( !fh->fstream && !fh->streamHandle )
 		return 0;
 
 	// read in chunks for progress bar
-	if( !fh->streamHandle && len > fh->restReadUncompressed )
-		len = fh->restReadUncompressed;
 	if( !len || !buffer )
 		return 0;
 
@@ -1287,9 +1258,11 @@ int FS_Read( void *buffer, size_t len, int file )
 	else
 		total = FS_ReadFile( ( qbyte * )buffer, len, fh );
 
-	fh->restReadUncompressed -= (unsigned)total;
+	if( total < 0 )
+		return total;
 
-	return (int)total;
+	fh->offset += (unsigned)total;
+	return total;
 }
 
 /*
@@ -1354,16 +1327,7 @@ int FS_Write( const void *buffer, size_t len, int file )
 			Sys_Error( "FS_Write: can't write %i bytes", block );
 	}
 
-	if( total > fh->restReadUncompressed )
-	{
-		fh->restReadUncompressed = 0;
-		fh->uncompressedSize += total - fh->restReadUncompressed;
-	}
-	else
-	{
-		if( fh->restReadUncompressed )
-			fh->restReadUncompressed -= total;
-	}
+	fh->offset += total;
 
 	return total;
 }
@@ -1380,7 +1344,7 @@ int FS_Tell( int file )
 	if( fh->streamHandle ) {
 		return wswcurl_tell( fh->streamHandle );
 	}
-	return fh->uncompressedSize - fh->restReadUncompressed;
+	return (int)fh->offset;
 }
 
 /*
@@ -1396,7 +1360,7 @@ int FS_Seek( int file, int offset, int whence )
 
 	fh = FS_FileHandleForNum( file );
 
-	currentOffset = fh->uncompressedSize - fh->restReadUncompressed;
+	currentOffset = (int)fh->offset;
 
 	if( whence == FS_SEEK_CUR )
 		offset += currentOffset;
@@ -1406,15 +1370,29 @@ int FS_Seek( int file, int offset, int whence )
 		return -1;
 
 	// clamp so we don't get out of bounds
-	clamp( offset, 0, (int)fh->uncompressedSize );
+	if( offset < 0 )
+		return -1;
 	if( offset == currentOffset )
 		return 0;
 
 	if( fh->streamHandle ) {
+		size_t rxSize, rxReceived, returned;
+		wswcurl_req *newreq;
+		char *url;
+
+		rxSize = wswcurl_getsize( fh->streamHandle, &rxReceived );
+		returned = wswcurl_tell( fh->streamHandle );
+		if( (int)rxReceived < offset ) {
+			return -1;
+		}
+		else if( offset >= (int)returned ) {
+			wswcurl_ignore_bytes( fh->streamHandle, offset - returned );
+			return 0;
+		}
+
 		// kill the current stream
 		// start a new one with byte offset
-		wswcurl_req *newreq;
-		char *url = FS_CopyString( wswcurl_get_url( fh->streamHandle ) );
+		url = FS_CopyString( wswcurl_get_url( fh->streamHandle ) );
 
 		newreq = wswcurl_create( "%s", url );
 		if( !newreq ) {
@@ -1432,17 +1410,19 @@ int FS_Seek( int file, int offset, int whence )
 
 		FS_Free( url );
 
-		fh->restReadUncompressed = fh->uncompressedSize - offset;
+		fh->offset = offset;
 		return 0;
 	}
 
 	if( !fh->fstream )
 		return -1;
+	if( offset > (int)fh->uncompressedSize )
+		return -1;
 
 	if( !fh->zipEntry )
 	{
-		fh->restReadUncompressed = fh->uncompressedSize - offset;
-		return fseek( fh->fstream, fh->offset + offset, SEEK_SET );
+		fh->offset = offset;
+		return fseek( fh->fstream, fh->pakOffset + offset, SEEK_SET );
 	}
 
 	// compressed files, doh
@@ -1454,7 +1434,7 @@ int FS_Seek( int file, int offset, int whence )
 	}
 	else
 	{
-		if( fseek( fh->fstream, fh->offset, SEEK_SET ) != 0 )
+		if( fseek( fh->fstream, fh->pakOffset, SEEK_SET ) != 0 )
 			return -1;
 
 		zipEntry->zstream.next_in = zipEntry->readBuffer;
@@ -1463,7 +1443,7 @@ int FS_Seek( int file, int offset, int whence )
 		if( error != Z_OK )
 			Sys_Error( "FS_Seek: can't inflateReset file" );
 
-		fh->restReadUncompressed = fh->uncompressedSize;
+		fh->offset = 0;
 		zipEntry->restReadCompressed = zipEntry->compressedSize;
 	}
 
@@ -1478,7 +1458,7 @@ int FS_Seek( int file, int offset, int whence )
 	}
 	while( remaining > 0 );
 
-	fh->restReadUncompressed -= offset;
+	fh->offset += offset;
 	return 0;
 }
 
@@ -1492,8 +1472,11 @@ int FS_Eof( int file )
 	fh = FS_FileHandleForNum( file );
 	if( fh->streamHandle )
 		return wswcurl_eof( fh->streamHandle );
-
-	return !fh->restReadUncompressed;
+	if( fh->zipEntry )
+		return fh->zipEntry->restReadCompressed == 0;
+	if( fh->fstream )
+		return feof( fh->fstream );
+	return 1;
 }
 
 /*

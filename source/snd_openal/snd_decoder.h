@@ -41,6 +41,7 @@ typedef qboolean ( *DECODER_RESET )( snd_stream_t *stream );
 typedef qboolean ( *DECODER_EOF )( snd_stream_t *stream );
 typedef void ( *DECODER_CLOSE )( snd_stream_t *stream );
 typedef int ( *DECODER_TELL )( snd_stream_t *stream );
+typedef int ( *DECODER_SEEK )( snd_stream_t *stream, int offset, int whence );
 
 // Codec data structure
 struct snd_decoder_s
@@ -54,6 +55,7 @@ struct snd_decoder_s
 	DECODER_RESET reset;
 	DECODER_EOF eof;
 	DECODER_TELL tell;
+	DECODER_SEEK seek;
 	snd_decoder_t *next;
 };
 
@@ -75,6 +77,7 @@ void decoder_wav_close( snd_stream_t *stream );
 qboolean decoder_wav_reset( snd_stream_t *stream );
 qboolean decoder_wav_eof( snd_stream_t *stream );
 int decoder_wav_tell( snd_stream_t *stream );
+int decoder_wav_seek( snd_stream_t *stream, int offset, int whence );
 
 /**
 * Ogg Vorbis decoder
@@ -88,6 +91,7 @@ void decoder_ogg_close( snd_stream_t *stream );
 qboolean decoder_ogg_reset( snd_stream_t *stream );
 qboolean decoder_ogg_eof( snd_stream_t *stream );
 int decoder_ogg_tell( snd_stream_t *stream );
+int decoder_ogg_seek( snd_stream_t *stream, int offset, int whence );
 
 qboolean SNDOGG_Init( qboolean verbose );
 void SNDOGG_Shutdown( qboolean verbose );

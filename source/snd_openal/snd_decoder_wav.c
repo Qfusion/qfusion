@@ -189,6 +189,7 @@ snd_decoder_t wav_decoder =
 	decoder_wav_reset,
 	decoder_wav_eof,
 	decoder_wav_tell,
+	decoder_wav_seek,
 	NULL
 };
 
@@ -334,4 +335,18 @@ int decoder_wav_tell( snd_stream_t *stream )
 {
 	snd_wav_stream_t *wav_stream = (snd_wav_stream_t *)stream->ptr;
 	return trap_FS_Tell( wav_stream->filenum );
+}
+
+int decoder_wav_seek( snd_stream_t *stream, int offset, int whence )
+{
+	snd_wav_stream_t *wav_stream = (snd_wav_stream_t *)stream->ptr;
+
+	switch( whence )
+	{
+	case SEEK_SET: return trap_FS_Seek( wav_stream->filenum, offset, FS_SEEK_SET );
+	case SEEK_CUR: return trap_FS_Seek( wav_stream->filenum, offset, FS_SEEK_CUR );
+	case SEEK_END: return trap_FS_Seek( wav_stream->filenum, offset, FS_SEEK_END );
+	}
+
+	return -1;
 }

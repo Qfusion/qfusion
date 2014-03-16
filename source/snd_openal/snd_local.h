@@ -227,7 +227,7 @@ int S_ReadStream( snd_stream_t *stream, int bytes, void *buffer );
 void S_CloseStream( snd_stream_t *stream );
 qboolean S_ResetStream( snd_stream_t *stream );
 qboolean S_EoStream( snd_stream_t *stream );
-int S_FTellSteam( snd_stream_t *stream );
+int S_SeekSteam( snd_stream_t *stream, int ofs, int whence );
 
 void S_BeginAviDemo( void );
 void S_StopAviDemo( void );
