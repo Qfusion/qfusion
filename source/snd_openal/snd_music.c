@@ -397,8 +397,10 @@ void S_UpdateMusic( void )
 			S_CloseMusicTrack( s_bgTrack );
 		}
 		else {
-			if( S_FTellSteam( s_bgTrack->stream ) < MUSIC_BUFFERING_SIZE )
+			if( S_SeekSteam( s_bgTrack->stream, MUSIC_BUFFERING_SIZE, SEEK_SET ) < 0 )
 				return;
+
+			S_SeekSteam( s_bgTrack->stream, 0, SEEK_SET );
 
 			// in case we delayed openening to let the stream be cached for a while,
 			// start actually reading from it now

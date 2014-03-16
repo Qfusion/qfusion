@@ -185,6 +185,7 @@ snd_decoder_t ogg_decoder =
 	decoder_ogg_reset,
 	decoder_ogg_eof,
 	decoder_ogg_tell,
+	decoder_ogg_seek,
 	NULL
 };
 
@@ -397,4 +398,18 @@ int decoder_ogg_tell( snd_stream_t *stream )
 {
 	snd_ogg_stream_t *ogg_stream = (snd_ogg_stream_t *)stream->ptr;
 	return trap_FS_Tell( ogg_stream->filenum );
+}
+
+int decoder_ogg_seek( snd_stream_t *stream, int offset, int whence )
+{
+	snd_ogg_stream_t *ogg_stream = (snd_ogg_stream_t *)stream->ptr;
+
+	switch( whence )
+	{
+	case SEEK_SET: return trap_FS_Seek( ogg_stream->filenum, offset, FS_SEEK_SET );
+	case SEEK_CUR: return trap_FS_Seek( ogg_stream->filenum, offset, FS_SEEK_CUR );
+	case SEEK_END: return trap_FS_Seek( ogg_stream->filenum, offset, FS_SEEK_END );
+	}
+
+	return -1;
 }

@@ -2065,8 +2065,10 @@ static void S_UpdateBackgroundTrack( void )
 		if( trap_FS_Eof( s_bgTrack->file ) ) {
 		}
 		else {
-			if( trap_FS_Tell( s_bgTrack->file ) < BACKGROUND_TRACK_BUFFERING_SIZE )
+			if( trap_FS_Seek( s_bgTrack->file, BACKGROUND_TRACK_BUFFERING_SIZE, FS_SEEK_SET ) < 0 )
 				return;
+
+			trap_FS_Seek( s_bgTrack->file, 0, FS_SEEK_SET );
 			s_bgTrack->open( s_bgTrack, NULL );
 		}
 		// in case we delayed openening to let the stream cache for a while,

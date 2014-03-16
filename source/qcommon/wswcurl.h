@@ -113,6 +113,10 @@ int wswcurl_tell(wswcurl_req *req);
  * Returns 1 whether the request has been completed and there are no bytes buffered.
  */
 int wswcurl_eof(wswcurl_req *req);
+/**
+ * 
+ */
+void wswcurl_ignore_bytes(wswcurl_req *req, size_t nbytes);
 
 const char *wswcurl_get_content_type( wswcurl_req *req );
 const char *wswcurl_getip(wswcurl_req *req);

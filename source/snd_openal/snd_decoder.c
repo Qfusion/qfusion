@@ -161,9 +161,9 @@ qboolean S_EoStream( snd_stream_t *stream )
 	return stream->decoder->eof( stream );
 }
 
-int S_FTellSteam( snd_stream_t *stream )
+int S_SeekSteam( snd_stream_t *stream, int ofs, int whence )
 {
-	return stream->decoder->tell( stream );
+	return stream->decoder->seek( stream, ofs, whence );
 }
 
 /**
