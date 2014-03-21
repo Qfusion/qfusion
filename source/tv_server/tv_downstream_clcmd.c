@@ -68,6 +68,7 @@ static void TV_Relay_DelayNew( client_t *client )
 void TV_Downstream_New_f( client_t *client )
 {
 	int playernum, numpure;
+	int tv_bitflags;
 	purelist_t *iter;
 	msg_t message;
 	qbyte messageData[MAX_MSGLEN];
@@ -130,7 +131,11 @@ void TV_Downstream_New_f( client_t *client )
 
 	memset( &client->lastcmd, 0, sizeof( client->lastcmd ) );
 
-	MSG_WriteByte( &message, SV_BITFLAGS_TVSERVER ); // sv_bitflags
+	tv_bitflags = SV_BITFLAGS_TVSERVER;
+	if( client->reliable )
+		tv_bitflags |= SV_BITFLAGS_RELIABLE;
+
+	MSG_WriteByte( &message, tv_bitflags ); // sv_bitflags
 
 	// purelist
 	if( !client->relay )

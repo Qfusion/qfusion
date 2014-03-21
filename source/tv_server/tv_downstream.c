@@ -633,67 +633,81 @@ void TV_Downstream_ReadPackets( void )
 	msg_t msg;
 	qbyte msgData[MAX_MSGLEN];
 
+#ifdef TCP_ALLOW_CONNECT
+	socket_t* tcpsockets [] =
+	{
+		&tvs.socket_tcp,
+		&tvs.socket_tcp6,
+	};
+#endif
+
 	socket_t* sockets [] =
 	{
 		&tvs.socket_udp,
 		&tvs.socket_udp6,
 	};
 
-#ifdef TCP_ALLOW_CONNECT
-	if( tvs.socket_tcp.open )
-	{
-		while( qtrue )
-		{
-			// find a free slot
-			for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
-			{
-				if( !tvs.incoming[i].active )
-					break;
-			}
-			if( i == MAX_INCOMING_CONNECTIONS )
-				break;
+	MSG_Init( &msg, msgData, sizeof( msgData ) );
 
-			if( ( ret = NET_Accept( &tvs.socket_tcp, &newsocket, &address ) ) == 0 )
-				break;
+#ifdef TCP_ALLOW_CONNECT
+	for( socketind = 0; socketind < sizeof( tcpsockets ) / sizeof( tcpsockets[0] ); socketind++ )
+	{
+		socket = tcpsockets[socketind];
+
+		if( socket->open )
+		{
+			while( qtrue )
+			{
+				// find a free slot
+				for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
+				{
+					if( !tvs.incoming[i].active )
+						break;
+				}
+				if( i == MAX_INCOMING_CONNECTIONS )
+					break;
+
+				if( ( ret = NET_Accept( socket, &newsocket, &address ) ) == 0 )
+					break;
+				if( ret == -1 )
+				{
+					Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
+					continue;
+				}
+
+				tvs.incoming[i].active = qtrue;
+				tvs.incoming[i].socket = newsocket;
+				tvs.incoming[i].address = address;
+				tvs.incoming[i].time = tvs.realtime;
+			}
+		}
+
+		for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
+		{
+			if( !tvs.incoming[i].active )
+				continue;
+
+			ret = NET_GetPacket( &tvs.incoming[i].socket, &address, &msg );
 			if( ret == -1 )
 			{
-				Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
-				continue;
-			}
-
-			tvs.incoming[i].active = qtrue;
-			tvs.incoming[i].socket = newsocket;
-			tvs.incoming[i].address = address;
-			tvs.incoming[i].time = tvs.realtime;
-		}
-	}
-
-	for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
-	{
-		if( !tvs.incoming[i].active )
-			continue;
-
-		ret = NET_GetPacket( &tvs.incoming[i].socket, &address, &msg );
-		if( ret == -1 )
-		{
-			NET_CloseSocket( &tvs.incoming[i].socket );
-			tvs.incoming[i].active = qfalse;
-		}
-		else if( ret == 1 )
-		{
-			if( *(int *)msg.data != -1 )
-			{                  // sequence packet without upstreams
 				NET_CloseSocket( &tvs.incoming[i].socket );
 				tvs.incoming[i].active = qfalse;
-				continue;
 			}
+			else if( ret == 1 )
+			{
+				if( *(int *)msg.data != -1 )
+				{
+					// sequence packet without upstreams
+					NET_CloseSocket( &tvs.incoming[i].socket );
+					tvs.incoming[i].active = qfalse;
+					continue;
+				}
 
-			TV_Downstream_UpstreamlessPacket( &tvs.incoming[i].socket, &address, &msg );
+				TV_Downstream_UpstreamlessPacket( &tvs.incoming[i].socket, &address, &msg );
+			}
 		}
 	}
 #endif
-
-	MSG_Init( &msg, msgData, sizeof( msgData ) );
 
 	for( socketind = 0; socketind < sizeof( sockets ) / sizeof( sockets[0] ); socketind++ )
 	{

@@ -939,14 +939,13 @@ void TV_Upstream_Connect( upstream_t *upstream, const char *servername, const ch
 
 #ifdef TCP_ALLOW_CONNECT
 	case SOCKET_TCP:
-		socketaddress.type = NA_IP;
-		socketaddress.ip[0] = socketaddress.ip[1] = socketaddress.ip[2] = socketaddress.ip[3] = 0;
-		socketaddress.port = 0;
+		NET_InitAddress( &socketaddress, address->type );
 		if( !NET_OpenSocket( &upstream->socket_real, SOCKET_TCP, &socketaddress, qfalse ) )
 		{
 			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
 			return;
 		}
+		NET_SetSocketNoDelay( &upstream->socket_real, 1 );
 		upstream->socket = &upstream->socket_real;
 		upstream->reliable = qtrue;
 		upstream->individual_socket = qtrue;

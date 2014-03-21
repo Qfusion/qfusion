@@ -260,6 +260,7 @@ typedef struct
 	socket_t socket_loopback;
 #ifdef TCP_ALLOW_CONNECT
 	socket_t socket_tcp;
+	socket_t socket_tcp6;
 #endif
 
 	char mapcmd[MAX_TOKEN_CHARS];       // ie: *intro.cin+base

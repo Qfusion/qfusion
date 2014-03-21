@@ -38,11 +38,13 @@
 #define TCP_SUPPORT
 
 //#define TCP_ALLOW_CONNECT
+
 #if defined(TCP_ALLOW_CONNECT) && !defined(TCP_SUPPORT)
 #undef TCP_ALLOW_CONNECT
 #endif
 
 #define HTTP_SUPPORT
+
 #if defined(HTTP_SUPPORT) && !defined(TCP_SUPPORT)
 #undef HTTP_SUPPORT
 #endif

@@ -215,6 +215,7 @@ typedef struct
 	// downstream
 #ifdef TCP_ALLOW_CONNECT
 	socket_t socket_tcp;
+	socket_t socket_tcp6;
 #endif
 	socket_t socket_udp;
 	socket_t socket_udp6;
