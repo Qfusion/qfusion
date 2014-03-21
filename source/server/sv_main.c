@@ -190,6 +190,14 @@ static void SV_ReadPackets( void )
 	static msg_t msg;
 	static qbyte msgData[MAX_MSGLEN];
 
+#ifdef TCP_ALLOW_CONNECT
+	socket_t* tcpsockets [] =
+	{
+		&svs.socket_tcp,
+		&svs.socket_tcp6
+	};
+#endif
+
 	socket_t* sockets [] =
 	{
 		&svs.socket_loopback,
@@ -197,68 +205,72 @@ static void SV_ReadPackets( void )
 		&svs.socket_udp6,
 	};
 
+	MSG_Init( &msg, msgData, sizeof( msgData ) );
+
 #ifdef TCP_ALLOW_CONNECT
-
-	if( svs.socket_tcp.open )
+	for( socketind = 0; socketind < sizeof( tcpsockets ) / sizeof( tcpsockets[0] ); socketind++ )
 	{
-		while( qtrue )
-		{
-			// find a free slot
-			for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
-			{
-				if( !svs.incoming[i].active )
-					break;
-			}
-			if( i == MAX_INCOMING_CONNECTIONS )
-				break;
+		socket = tcpsockets[socketind];
 
-			if( ( ret = NET_Accept( &svs.socket_tcp, &newsocket, &address ) ) == 0 )
-				break;
+		if( socket->open )
+		{
+			while( qtrue )
+			{
+				// find a free slot
+				for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
+				{
+					if( !svs.incoming[i].active )
+						break;
+				}
+				if( i == MAX_INCOMING_CONNECTIONS )
+					break;
+
+				if( ( ret = NET_Accept( socket, &newsocket, &address ) ) == 0 )
+					break;
+				if( ret == -1 )
+				{
+					Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
+					continue;
+				}
+
+				Com_Printf( "New TCP connection from %s\n", NET_AddressToString( &address ) );
+
+				svs.incoming[i].active = qtrue;
+				svs.incoming[i].socket = newsocket;
+				svs.incoming[i].address = address;
+				svs.incoming[i].time = svs.realtime;
+			}
+		}
+
+		for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
+		{
+			if( !svs.incoming[i].active )
+				continue;
+
+			ret = NET_GetPacket( &svs.incoming[i].socket, &address, &msg );
 			if( ret == -1 )
 			{
-				Com_Printf( "NET_Accept: Error: %s\n", NET_ErrorString() );
-				continue;
-			}
-
-			Com_Printf( "New TCP connection from %s\n", NET_AddressToString( &address ) );
-
-			svs.incoming[i].active = qtrue;
-			svs.incoming[i].socket = newsocket;
-			svs.incoming[i].address = address;
-			svs.incoming[i].time = svs.realtime;
-		}
-	}
-
-	for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
-	{
-		if( !svs.incoming[i].active )
-			continue;
-
-		ret = NET_GetPacket( &svs.incoming[i].socket, &address, &msg );
-		if( ret == -1 )
-		{
-			Com_Printf( "NET_GetPacket: Error: %s\n", NET_ErrorString() );
-			NET_CloseSocket( &svs.incoming[i].socket );
-			svs.incoming[i].active = qfalse;
-		}
-		else if( ret == 1 )
-		{
-			if( *(int *)msg.data != -1 )
-			{
-				Com_Printf( "Sequence packet without connection\n" );
+				Com_Printf( "NET_GetPacket: Error: %s\n", NET_ErrorString() );
 				NET_CloseSocket( &svs.incoming[i].socket );
 				svs.incoming[i].active = qfalse;
-				continue;
 			}
+			else if( ret == 1 )
+			{
+				if( *(int *)msg.data != -1 )
+				{
+					Com_Printf( "Sequence packet without connection\n" );
+					NET_CloseSocket( &svs.incoming[i].socket );
+					svs.incoming[i].active = qfalse;
+					continue;
+				}
 
-			Com_Printf( "Connectionless TCP packet from: %s\n", NET_AddressToString( &address ) );
+				Com_Printf( "Connectionless TCP packet from: %s\n", NET_AddressToString( &address ) );
 
-			SV_ConnectionlessPacket( &svs.incoming[i].socket, &address, &msg );
+				SV_ConnectionlessPacket( &svs.incoming[i].socket, &address, &msg );
+			}
 		}
 	}
 #endif
-
-	MSG_Init( &msg, msgData, sizeof( msgData ) );
 
 	for( socketind = 0; socketind < sizeof( sockets ) / sizeof( sockets[0] ); socketind++ )
 	{

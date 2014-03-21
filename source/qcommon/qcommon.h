@@ -633,6 +633,7 @@ const char *NET_ErrorString( void );
 void	    NET_SetErrorString( const char *format, ... );
 void		NET_SetErrorStringFromLastError( const char *function );
 void	    NET_ShowIP( void );
+int			NET_SetSocketNoDelay( socket_t *socket, int nodelay );
 
 const char *NET_SocketTypeToString( socket_type_t type );
 const char *NET_SocketToString( const socket_t *socket );

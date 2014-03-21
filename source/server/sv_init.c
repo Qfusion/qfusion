@@ -318,6 +318,7 @@ void SV_InitGame( void )
 	int i;
 	edict_t	*ent;
 	netadr_t address, ipv6_address;
+	qboolean socket_opened = qfalse;
 
 	// make sure the client is down
 	CL_Disconnect( NULL );
@@ -368,8 +369,6 @@ void SV_InitGame( void )
 
 	if( dedicated->integer || sv_maxclients->integer > 1 )
 	{
-		qboolean socket_opened = qfalse;
-
 		// IPv4
 		NET_StringToAddress( sv_ip->string, &address );
 		NET_SetAddressPort( &address, sv_port->integer );
@@ -390,30 +389,62 @@ void SV_InitGame( void )
 		}
 		else
 			Com_Printf( "Error: invalid IPv6 address: %s\n", sv_ip6->string );
-
-		if( dedicated->integer && !socket_opened )
-			Com_Error( ERR_FATAL, "Couldn't open any socket\n" );
 	}
 
 #ifdef TCP_ALLOW_CONNECT
 	if( sv_tcp->integer && ( dedicated->integer || sv_maxclients->integer > 1 ) )
 	{
+		qboolean err = qtrue;
+
 		if( !NET_OpenSocket( &svs.socket_tcp, SOCKET_TCP, &address, qtrue ) )
 		{
-			Com_Printf( "Error: Couldn't open TCP socket: %s", NET_ErrorString() );
-			Cvar_ForceSet( "sv_tcp", "0" );
+			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
 		}
 		else
 		{
+			NET_SetSocketNoDelay( &svs.socket_tcp, 1 );
 			if( !NET_Listen( &svs.socket_tcp ) )
 			{
-				Com_Printf( "Error: Couldn't listen to TCP socket: %s", NET_ErrorString() );
+				Com_Printf( "Error: Couldn't listen to TCP socket: %s\n", NET_ErrorString() );
 				NET_CloseSocket( &svs.socket_tcp );
-				Cvar_ForceSet( "sv_tcp", "0" );
 			}
+			else
+			{
+				err = qfalse;
+				socket_opened = qtrue;
+			}
+		}
+
+		if( ipv6_address.type == NA_IP6 )
+		{
+			if( !NET_OpenSocket( &svs.socket_tcp6, SOCKET_TCP, &ipv6_address, qtrue ) )
+			{
+				Com_Printf( "Error: Couldn't open TCP6 socket: %s\n", NET_ErrorString() );
+			}
+			else
+			{
+				NET_SetSocketNoDelay( &svs.socket_tcp6, 1 );
+				if( !NET_Listen( &svs.socket_tcp6 ) )
+				{
+					Com_Printf( "Error: Couldn't listen to TCP6 socket: %s\n", NET_ErrorString() );
+					NET_CloseSocket( &svs.socket_tcp6 );
+				}
+				else
+				{
+					err = qfalse;
+					socket_opened = qtrue;
+				}
+			}
+		}
+
+		if( err ) {
+			Cvar_ForceSet( "sv_tcp", "0" );
 		}
 	}
 #endif
+
+	if( dedicated->integer && !socket_opened )
+		Com_Error( ERR_FATAL, "Couldn't open any socket\n" );
 
 	// init mm
 	// SV_MM_Init();
@@ -491,8 +522,10 @@ void SV_ShutdownGame( const char *finalmsg, qboolean reconnect )
 	NET_CloseSocket( &svs.socket_udp );
 	NET_CloseSocket( &svs.socket_udp6 );
 #ifdef TCP_ALLOW_CONNECT
-	if( sv_tcp->integer )
+	if( sv_tcp->integer ) {
 		NET_CloseSocket( &svs.socket_tcp );
+		NET_CloseSocket( &svs.socket_tcp6 );
+	}
 #endif
 
 	// get any latched variable changes (sv_maxclients, etc)

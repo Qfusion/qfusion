@@ -716,7 +716,7 @@ static connection_status_t NET_TCP_CheckConnect( socket_t *socket )
 	}
 	else if( result )
 	{
-		struct sockaddr addr;
+		struct sockaddr_storage addr;
 		socklen_t addr_size;
 
 		if( !FD_ISSET( socket->handle, &set ) )
@@ -728,7 +728,7 @@ static connection_status_t NET_TCP_CheckConnect( socket_t *socket )
 		// trick to check if we actually got connection succesfully
 		// idea from http://cr.yp.to/docs/connect.html
 		addr_size = sizeof( addr );
-		if( getpeername( socket->handle, &addr, &addr_size ) != 0 )
+		if( getpeername( socket->handle, (struct sockaddr*)&addr, &addr_size ) != 0 )
 		{
 			char ch;
 			recv( socket->handle, &ch, 1, 0 ); // produces right errno
@@ -806,6 +806,23 @@ static void NET_TCP_CloseSocket( socket_t *socket )
 	socket->open = qfalse;
 	socket->connected = qfalse;
 }
+
+/*
+* NET_TCP_SetNodelay
+*/
+static int NET_TCP_SetNoDelay( socket_t *socket, int nodelay )
+{
+	assert( socket && socket->type == SOCKET_TCP );
+
+	if( setsockopt( socket->handle, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay, sizeof( nodelay ) ) < 0 )
+	{
+		NET_SetErrorStringFromLastError( "socket" );
+		return -1;
+	}
+
+	return 1;
+}
+
 #endif // TCP_SUPPORT
 
 //===================================================================
@@ -1753,6 +1770,29 @@ void NET_CloseSocket( socket_t *socket )
 		NET_SetErrorString( "Unknown socket type" );
 		break;
 	}
+}
+
+/*
+* NET_SetSocketNoDelay
+*/
+int NET_SetSocketNoDelay( socket_t *socket, int nodelay )
+{
+	switch( socket->type )
+	{
+	case SOCKET_LOOPBACK:
+		break;
+	case SOCKET_UDP:
+		break;
+#ifdef TCP_SUPPORT
+	case SOCKET_TCP:
+		return NET_TCP_SetNoDelay( socket, nodelay );
+#endif
+	default:
+		assert( qfalse );
+		NET_SetErrorString( "Unknown socket type" );
+		return -1;
+	}
+	return 0;
 }
 
 /*

@@ -40,7 +40,6 @@ cvar_t *tv_port;
 cvar_t *tv_udp;
 cvar_t *tv_ip6;
 cvar_t *tv_port6;
-cvar_t *tv_udp6;
 #ifdef TCP_ALLOW_CONNECT
 cvar_t *tv_tcp;
 #endif
@@ -87,11 +86,9 @@ void TV_Init( void )
 	tv_port6 = Cvar_Get( "tv_port6", va( "%i", PORT_TV_SERVER ), CVAR_ARCHIVE | CVAR_NOSET );
 #ifdef TCP_ALLOW_CONNECT
 	tv_udp = Cvar_Get( "tv_udp", "1", CVAR_SERVERINFO | CVAR_NOSET );
-	tv_udp6 = Cvar_Get( "tv_udp6", "1", CVAR_SERVERINFO | CVAR_NOSET );
 	tv_tcp = Cvar_Get( "tv_tcp", "0", CVAR_SERVERINFO | CVAR_NOSET );
 #else
 	tv_udp = Cvar_Get( "tv_udp", "1", CVAR_NOSET );
-	tv_udp6 = Cvar_Get( "tv_udp6", "1", CVAR_NOSET );
 #endif
 
 #ifndef TCP_ALLOW_CONNECT
@@ -153,30 +150,58 @@ void TV_Init( void )
 		Com_Error( ERR_FATAL, "Couldn't understand address of tv_ip6 cvar: %s\n", NET_ErrorString() );
 	NET_SetAddressPort( &tvs.addressIPv6, tv_port6->integer );
 
-	if( tv_udp6->integer )
+	if( tvs.addressIPv6.type != NA_NOTRANSMIT )
 	{
 		if( !NET_OpenSocket( &tvs.socket_udp6, SOCKET_UDP, &tvs.addressIPv6, qtrue ) )
 		{
 			Com_Printf( "Error: Couldn't open UDP6 socket: %s\n", NET_ErrorString() );
-			Cvar_ForceSet( tv_udp6->name, "0" );
 		}
 	}
 
 #ifdef TCP_ALLOW_CONNECT
 	if( tv_tcp->integer )
 	{
-		if( !NET_OpenSocket( &tvs.socket_tcp, SOCKET_TCP, &tvs.addressIPv6, qtrue ) )
+		qboolean err = qtrue;
+
+		if( !NET_OpenSocket( &tvs.socket_tcp, SOCKET_TCP, &tvs.address, qtrue ) )
 		{
 			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
-			Cvar_ForceSet( tv_tcp->name, "0" );
 		}
 		else
 		{
+			NET_SetSocketNoDelay( &tvs.socket_tcp, 1 );
 			if( !NET_Listen( &tvs.socket_tcp ) )
 			{
 				Com_Printf( "Error: Couldn't listen to TCP socket: %s\n", NET_ErrorString() );
-				Cvar_ForceSet( tv_tcp->name, "0" );
 			}
+			else
+			{
+				err = qfalse;
+			}
+		}
+
+		if( tvs.addressIPv6.type != NA_NOTRANSMIT )
+		{
+			if( !NET_OpenSocket( &tvs.socket_tcp6, SOCKET_TCP, &tvs.addressIPv6, qtrue ) )
+			{
+				Com_Printf( "Error: Couldn't open TCP6 socket: %s\n", NET_ErrorString() );
+			}
+			else
+			{
+				NET_SetSocketNoDelay( &tvs.socket_tcp6, 1 );
+				if( !NET_Listen( &tvs.socket_tcp6 ) )
+				{
+					Com_Printf( "Error: Couldn't listen to TCP6 socket: %s\n", NET_ErrorString() );
+				}
+				else
+				{
+					err = qfalse;
+				}
+			}
+		}
+
+		if( err ) {
+			Cvar_ForceSet( tv_tcp->name, "0" );
 		}
 	}
 #endif
