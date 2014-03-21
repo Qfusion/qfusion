@@ -326,12 +326,14 @@ static void SV_New_f( client_t *client )
 			sv_bitflags |= SV_BITFLAGS_PURE;
 		if( client->reliable )
 			sv_bitflags |= SV_BITFLAGS_RELIABLE;
+#ifdef HTTP_SUPPORT
 		if( SV_Web_Running() )
 		{
 			sv_bitflags |= SV_BITFLAGS_HTTP;
 			if( sv_http_upstream_baseurl->string[0] )
 				sv_bitflags |= SV_BITFLAGS_HTTP_BASEURL;
 		}
+#endif
 		MSG_WriteByte( &tmpMessage, sv_bitflags );
 	}
 
