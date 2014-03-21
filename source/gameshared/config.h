@@ -35,9 +35,9 @@
 
 //#define UCMDTIMENUDGE
 
-//#define TCP_SUPPORT
+#define TCP_SUPPORT
 
-#define TCP_ALLOW_CONNECT
+//#define TCP_ALLOW_CONNECT
 
 #if defined(TCP_ALLOW_CONNECT) && !defined(TCP_SUPPORT)
 #undef TCP_ALLOW_CONNECT
