@@ -887,7 +887,7 @@ void SV_Init( void )
 	sv_port6 =		    Cvar_Get( "sv_port6", va( "%i", PORT_SERVER ), CVAR_ARCHIVE | CVAR_LATCH );
 
 #ifdef TCP_ALLOW_CONNECT
-	sv_tcp =		    Cvar_Get( "sv_tcp", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
+	sv_tcp =		    Cvar_Get( "sv_tcp", "1", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH );
 #endif
 
 #ifdef HTTP_SUPPORT

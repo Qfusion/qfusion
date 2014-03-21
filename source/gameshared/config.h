@@ -37,7 +37,7 @@
 
 #define TCP_SUPPORT
 
-//#define TCP_ALLOW_CONNECT
+#define TCP_ALLOW_CONNECT
 
 #if defined(TCP_ALLOW_CONNECT) && !defined(TCP_SUPPORT)
 #undef TCP_ALLOW_CONNECT
@@ -50,6 +50,7 @@
 #endif
 
 #ifndef PUBLIC_BUILD
+#define TCP_ALLOW_CONNECT_CLIENT
 //#define WEAPONDEFS_FROM_DISK
 #endif
 
