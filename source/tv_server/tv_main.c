@@ -86,7 +86,7 @@ void TV_Init( void )
 	tv_port6 = Cvar_Get( "tv_port6", va( "%i", PORT_TV_SERVER ), CVAR_ARCHIVE | CVAR_NOSET );
 #ifdef TCP_ALLOW_CONNECT
 	tv_udp = Cvar_Get( "tv_udp", "1", CVAR_SERVERINFO | CVAR_NOSET );
-	tv_tcp = Cvar_Get( "tv_tcp", "0", CVAR_SERVERINFO | CVAR_NOSET );
+	tv_tcp = Cvar_Get( "tv_tcp", "1", CVAR_SERVERINFO | CVAR_NOSET );
 #else
 	tv_udp = Cvar_Get( "tv_udp", "1", CVAR_NOSET );
 #endif

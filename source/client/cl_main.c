@@ -2091,7 +2091,7 @@ static void CL_InitLocal( void )
 	Cmd_AddCommand( "stop", CL_Stop_f );
 	Cmd_AddCommand( "quit", CL_Quit_f );
 	Cmd_AddCommand( "connect", CL_Connect_f );
-#if defined(TCP_ALLOW_CONNECT)
+#if defined(TCP_ALLOW_CONNECT) && defined(TCP_ALLOW_CONNECT_CLIENT)
 	Cmd_AddCommand( "tcpconnect", CL_TCPConnect_f );
 #endif
 	Cmd_AddCommand( "reconnect", CL_Reconnect_f );
