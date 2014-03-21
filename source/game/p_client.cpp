@@ -1554,7 +1554,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta )
 		client->ps.pmove.pm_type = PM_FREEZE;
 	else if( ent->s.type == ET_GIB )
 		client->ps.pmove.pm_type = PM_GIB;
-	else if( ent->movetype == MOVETYPE_NOCLIP )
+	else if( ent->movetype == MOVETYPE_NOCLIP || client->isTV )
 		client->ps.pmove.pm_type = PM_SPECTATOR;
 	else
 		client->ps.pmove.pm_type = PM_NORMAL;
@@ -1562,7 +1562,9 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta )
 	// set up for pmove
 	memset( &pm, 0, sizeof( pmove_t ) );
 	pm.playerState = &client->ps;
-	pm.cmd = *ucmd;
+
+	if( !client->isTV )
+		pm.cmd = *ucmd;
 
 	if( memcmp( &client->old_pmove, &client->ps.pmove, sizeof( pmove_state_t ) ) )
 		pm.snapinitial = qtrue;

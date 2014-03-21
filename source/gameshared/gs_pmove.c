@@ -1945,13 +1945,16 @@ void Pmove( pmove_t *pmove )
 	PM_CheckSpecialMovement();
 
 	if( pm->playerState->pmove.pm_flags & PMF_TIME_TELEPORT )
-	{ // teleport pause stays exactly in place
+	{
+		// teleport pause stays exactly in place
 	}
 	else if( pm->playerState->pmove.pm_flags & PMF_TIME_WATERJUMP )
-	{ // waterjump has no control, but falls
+	{
+		// waterjump has no control, but falls
 		pml.velocity[2] -= pm->playerState->pmove.gravity * pml.frametime;
 		if( pml.velocity[2] < 0 )
-		{ // cancel as soon as we are falling down again
+		{
+			// cancel as soon as we are falling down again
 			pm->playerState->pmove.pm_flags &= ~( PMF_TIME_WATERJUMP | PMF_TIME_LAND | PMF_TIME_TELEPORT );
 			pm->playerState->pmove.pm_time = 0;
 		}
