@@ -39,7 +39,7 @@ namespace {
 ServerInfo::ServerInfo( const char *adr, const char *info )
 	:	has_changed(false), ping_updated(false), has_ping(false), address( adr ),
 		iaddress( addr_to_int( adr ) ), hostname(""), cleanname(""), map(""), curuser(0),
-		maxuser(0), bots(0), gametype(""), modname(""), instagib(false), skilllevel(0),
+		maxuser(0), bots(0), gametype(""), modname(""), instagib(false), race(false), skilllevel(0),
 		password(false), mm(false), tv(false), ping(0), ping_retries(0), favorite(false)
 {
 	if( info )
