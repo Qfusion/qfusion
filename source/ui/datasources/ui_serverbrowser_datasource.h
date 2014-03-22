@@ -59,7 +59,7 @@ namespace WSWUI {
 		bool			tv;
 		unsigned int 	ping;
 		unsigned int 	ping_retries;
-		mutable bool	favorite;
+		bool			favorite;
 
 		// TODO: batches.. just ignore the batch mechanism for now
 
