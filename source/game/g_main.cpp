@@ -342,6 +342,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol )
 	trap_Cvar_Get( "g_match_score", "", CVAR_SERVERINFO|CVAR_READONLY );
 	trap_Cvar_Get( "g_needpass", "", CVAR_SERVERINFO|CVAR_READONLY );
 	trap_Cvar_Get( "g_gametypes_available", "", CVAR_SERVERINFO|CVAR_READONLY );
+	trap_Cvar_Get( "g_race_gametype", "0", CVAR_SERVERINFO|CVAR_READONLY );
 
 	// define this one here so we can see when it's modified
 	g_disable_vote_gametype = trap_Cvar_Get( "g_disable_vote_gametype", "0", CVAR_ARCHIVE );
