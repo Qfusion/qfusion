@@ -353,6 +353,16 @@ static char *SV_ShortInfoString( void )
 		}
 	}
 
+	if( Cvar_Value( "g_race_gametype" ) )
+	{
+		Q_snprintfz( entry, sizeof( entry ), "r\\\\1\\\\" );
+		if( MAX_SVCINFOSTRING_LEN - len > strlen( entry ) )
+		{
+			Q_strncatz( string, entry, sizeof( string ) );
+			len = strlen( string );
+		}
+	}
+
 	// finish it
 	Q_strncatz( string, "EOT", sizeof( string ) );
 	return string;
