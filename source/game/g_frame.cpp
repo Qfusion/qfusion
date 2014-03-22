@@ -247,6 +247,13 @@ static void G_UpdateServerInfo( void )
 		g_votable_gametypes->modified = qfalse;
 		g_disable_vote_gametype->modified = qfalse;
 	}
+
+	if( GS_RaceGametype() ) {
+		trap_Cvar_ForceSet( "g_race_gametype", "1" );
+	}
+	else {
+		trap_Cvar_ForceSet( "g_race_gametype", "0" );
+	}
 }
 
 /*
