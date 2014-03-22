@@ -1187,6 +1187,14 @@ void SV_Web_Shutdown( void )
 	sv_http_initialized = qfalse;
 }
 
+/*
+* SV_Web_UpstreamBaseUrl
+*/
+const char *SV_Web_UpstreamBaseUrl( void )
+{
+	return sv_http_upstream_baseurl->string;
+}
+
 #else
 
 /*
@@ -1216,6 +1224,14 @@ void SV_Web_Shutdown( void )
 qboolean SV_Web_Running( void )
 {
 	return qfalse;
+}
+
+/*
+* SV_Web_UpstreamBaseUrl
+*/
+const char *SV_Web_UpstreamBaseUrl( void )
+{
+	return "";
 }
 
 #endif // HTTP_SUPPORT
