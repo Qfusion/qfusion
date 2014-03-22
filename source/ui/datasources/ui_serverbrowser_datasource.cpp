@@ -13,6 +13,7 @@ namespace WSWUI {
 #define TABLE_NAME_NORMAL	"normal"
 #define TABLE_NAME_INSTA	"instagib"
 #define TABLE_NAME_TV		"tv"
+#define TABLE_NAME_RACE		"race"
 #define TABLE_NAME_FAVORITES "favorites"
 
 //=====================================
@@ -73,6 +74,7 @@ void ServerInfo::fromOther( const ServerInfo &other )
 	gametype = other.gametype;
 	modname = other.modname;
 	instagib = other.instagib;
+	race = other.race;
 	skilllevel = other.skilllevel;
 	password = other.password;
 	mm = other.mm;
@@ -224,6 +226,15 @@ void ServerInfo::fromInfo( const char *info )
 			if( !toint.fail() && (tmptv != 0) != tv ) {
 				has_changed = true;
 				tv = tmptv != 0;
+			}
+		}
+		else if( cmd == "r" ) { // RACE
+			int tmprace;
+			std::stringstream toint( value );
+			toint >> tmprace;
+			if( !toint.fail() && (tmprace != 0) != race ) {
+				has_changed = true;
+				race = tmprace != 0;
 			}
 		}
 		else {
@@ -522,6 +533,9 @@ void ServerBrowserDataSource::tableNameForServerInfo( const ServerInfo &info, St
 	}
 	else if( info.instagib ) {
 		table = TABLE_NAME_INSTA;
+	}
+	else if( info.race ) {
+		table = TABLE_NAME_RACE;
 	}
 	else {
 		table = TABLE_NAME_NORMAL;
