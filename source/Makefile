@@ -439,7 +439,7 @@ OBJS_QF = $(addprefix $(BUILDDIR)/qf/, $(OFILES_QF) )
 #########
 # DED
 #########
-CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/mlist.c qcommon/webdownload.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_write.c qcommon/ascript.c qcommon/anticheat.c qcommon/wswcurl.c qcommon/cjson.c qcommon/threads.c qcommon/steam.c
+CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/mlist.c qcommon/webdownload.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_write.c qcommon/ascript.c qcommon/anticheat.c qcommon/wswcurl.c qcommon/cjson.c qcommon/threads.c qcommon/steam.c
 CFILES_DED += $(wildcard server/*.c)
 CFILES_DED += null/cl_null.c
 ifeq ($(USE_MINGW),YES)
@@ -586,7 +586,7 @@ OBJS_ANGELWRAP = $(addprefix $(BUILDDIR)/angelwrap/, $(OFILES_ANGELWRAP) )
 #########
 # TV SERVER
 #########
-CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/md5.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_read.c qcommon/snap_write.c qcommon/wswcurl.c qcommon/threads.c qcommon/steam.c
+CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bsp.c qcommon/patch.c qcommon/common.c qcommon/files.c qcommon/cmd.c qcommon/mem.c qcommon/net.c qcommon/net_chan.c qcommon/msg.c qcommon/cvar.c qcommon/dynvar.c qcommon/irc.c qcommon/library.c qcommon/svnrev.c qcommon/snap_demos.c qcommon/snap_read.c qcommon/snap_write.c qcommon/wswcurl.c qcommon/threads.c qcommon/steam.c
 CFILES_TV_SERVER += $(wildcard tv_server/*.c)
 CFILES_TV_SERVER += null/cl_null.c null/ascript_null.c null/mm_null.c
 ifeq ($(USE_MINGW),YES)
