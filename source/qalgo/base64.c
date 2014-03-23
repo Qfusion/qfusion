@@ -16,11 +16,6 @@
 #include <string.h>
 #include "base64.h"
 
-// Disable "array is too small to include a terminating null character" warning
-#ifdef _MSC_VER
-# pragma warning(disable:4295)
-#endif
-
 static const unsigned char base64_table[65] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
