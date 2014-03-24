@@ -95,9 +95,8 @@ char *Sys_GetClipboardData( qboolean primary )
 		&format, &nitems, &bytes_after, &data );
 	if( ret == Success )
 	{
-		// memcpy( buffer, data, bytes_left + 1 );
 		buffer = Q_malloc( bytes_left + 1 );
-		Q_strncpyz( buffer, (char *)data, bytes_left + 1 );
+		memcpy( buffer, data, bytes_left + 1 );
 	}
 	else
 	{
@@ -121,8 +120,8 @@ qboolean Sys_SetClipboardData( char *data )
 {
 	// Save the message
 	Q_free( clip_data );
-	clip_data = Q_malloc( sizeof( char ) * strlen( data ) );
-	Q_strncpyz( clip_data, data, sizeof( char ) * strlen( data ) );
+	clip_data = Q_malloc( strlen( data ) - 1 );
+	memcpy( clip_data, data, strlen( data ) - 1 );
 	
 	// Requesting clipboard ownership
 	Atom XA_CLIPBOARD = XInternAtom( x11display.dpy, "CLIPBOARD", True );
