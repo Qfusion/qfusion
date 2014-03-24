@@ -116,8 +116,8 @@ char *Sys_GetClipboardData( qboolean primary )
 qboolean Sys_SetClipboardData( char *data )
 {
 	// Save the message
-	Mem_TempFree( clip_data );
-	clip_data = Mem_TempMalloc( sizeof( char ) * strlen( data ) );
+	Q_free( clip_data );
+	clip_data = Q_malloc( sizeof( char ) * strlen( data ) );
 	Q_strncpyz( clip_data, data, sizeof( char ) * strlen( data ) );
 	
 	// Requesting clipboard ownership
