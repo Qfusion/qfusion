@@ -83,7 +83,7 @@ char *Sys_GetClipboardData( qboolean primary )
 	if( win == None )
 		return NULL;
 
-	XConvertSelection( x11display.dpy, atom, XA_STRING, atom, win, CurrentTime );
+	XConvertSelection( x11display.dpy, atom, XA_utf8_string, atom, win, CurrentTime );
 	XFlush( x11display.dpy );
 
 	XGetWindowProperty( x11display.dpy, win, atom, 0, 0, False, AnyPropertyType, &type, &format, &nitems, &bytes_left,
