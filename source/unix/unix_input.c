@@ -92,6 +92,7 @@ char *Sys_GetClipboardData( qboolean primary )
 		&format, &nitems, &bytes_after, &data );
 	if( ret == Success )
 	{
+		// memcpy( buffer, data, bytes_left + 1 );
 		buffer = Q_malloc( bytes_left + 1 );
 		Q_strncpyz( buffer, (char *)data, bytes_left + 1 );
 	}
@@ -586,8 +587,7 @@ static void handle_key(XGenericEventCookie *cookie)
 		qwchar wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_down));
 
 		// Convert ctrl-c / ctrl-v combinations to the expected events
-		if( ( key == 'v' || key == 'c' )
-			&& ( Key_IsDown(K_LCTRL) || Key_IsDown(K_RCTRL) ) )
+		if( Key_IsDown(K_LCTRL) || Key_IsDown(K_RCTRL) )
 		{
 			if( key == 'v' )
 			{
