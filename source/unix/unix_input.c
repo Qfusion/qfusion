@@ -140,8 +140,6 @@ qboolean Sys_SetClipboardData( char *data )
 void Sys_FreeClipboardData( char *data )
 {
 	Q_free( data );
-	Mem_TempFree( clip_data );
-	clip_data = NULL;
 }
 
 /*
