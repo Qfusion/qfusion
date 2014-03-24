@@ -45,6 +45,9 @@ static char* clip_data;
 
 int Sys_XTimeToSysTime( unsigned long xtime );
 
+#define CTRLC 3
+#define CTRLV 22
+
 //============================================
 
 /*
@@ -591,13 +594,13 @@ static void handle_key(XGenericEventCookie *cookie)
 		{
 			if( key == 'v' )
 			{
-				key = 22;
-				wc = 22;
+				key = CTRLV;
+				wc = CTRLV;
 			}
 			else if( key == 'c' )
 			{
-				key = 3;
-				wc = 3;
+				key = CTRLC;
+				wc = CTRLC;
 			}
 		}
 		Key_CharEvent( key, wc );
