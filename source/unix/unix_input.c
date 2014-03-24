@@ -586,6 +586,22 @@ static void handle_key(XGenericEventCookie *cookie)
 
 	if(name && name[0] && down) {
 		qwchar wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_down));
+
+		// Convert ctrl-c / ctrl-v combinations to the expected events
+		if( ( key == 'v' || key == 'c' )
+			&& ( Key_IsDown(K_LCTRL) || Key_IsDown(K_RCTRL) ) )
+		{
+			if( key == 'v' )
+			{
+				key = 22;
+				wc = 22;
+			}
+			else if( key == 'c' )
+			{
+				key = 3;
+				wc = 3;
+			}
+		}
 		Key_CharEvent( key, wc );
 	}
 }
