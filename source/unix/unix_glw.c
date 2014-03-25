@@ -456,6 +456,21 @@ static void _x11_SetNoResize( Window w, int width, int height )
 	}
 }
 
+/*
+* This function checks if window is mapped and we can send events.
+*/
++static qboolean _x11_IsWindowMapped( Window w )
+{
+	XWindowAttributes attr;
+
+	XGetWindowAttributes( x11display.dpy, w, &attr );
+	if (attr.map_state != IsUnmapped) {
+		return qtrue;
+	} else {
+		return qfalse;
+	}
+}
+ 
 /*****************************************************************************/
 
 /*
@@ -598,6 +613,10 @@ static void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
 	xev.xclient.data.l[0] = fullscreen ? 1 : 0;
 	xev.xclient.data.l[1] = NET_WM_STATE_FULLSCREEN;
 	xev.xclient.data.l[2] = 0;
+ 
+	if( !_x11_IsWindowMapped( x11display.win ) ) {
+		XMapWindow( x11display.dpy, x11display.win );
+	}
 
 	XSendEvent( x11display.dpy, DefaultRootWindow( x11display.dpy ), False,
 		SubstructureNotifyMask, &xev );
