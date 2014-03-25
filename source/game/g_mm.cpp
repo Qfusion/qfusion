@@ -633,8 +633,8 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 		quit->timePlayed = ( level.time - cl->teamstate.timeStamp ) / 1000;
 		quit->final = final;
 		quit->mm_session = mm_session;
-
 		memcpy( &quit->stats, &cl->level.stats, sizeof( quit->stats ) );
+		quit->stats.fragAllocator = NULL;
 
 		// put it to the list
 		quit->next = game.quits;
