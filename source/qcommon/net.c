@@ -539,7 +539,7 @@ static int NET_TCP_GetPacket( const socket_t *socket, netadr_t *address, msg_t *
 {
 	int ret;
 	qbyte buffer[MAX_PACKETLEN + 4];
-	size_t len;
+	int len;
 
 	assert( socket && socket->open && socket->connected && socket->type == SOCKET_TCP );
 	assert( address );
@@ -561,13 +561,13 @@ static int NET_TCP_GetPacket( const socket_t *socket, netadr_t *address, msg_t *
 	memcpy( &len, buffer, 4 );
 	len = LittleLong( len );
 
-	if( len > MAX_PACKETLEN || len > message->maxsize )
+	if( len > MAX_PACKETLEN || len > (int)message->maxsize )
 	{
 		NET_SetErrorString( "Oversized packet" );
 		return -1;
 	}
 
-	if( ret < (int)len + 4 )  // the whole packet is not yet ready
+	if( ret < len + 4 )  // the whole packet is not yet ready
 		return 0;
 
 	// ok we have the whole packet ready, get it

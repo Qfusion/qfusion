@@ -1940,7 +1940,7 @@ static void G_CallVotes_CheckState( void )
 
 	if( warntimer < game.realtime )
 	{
-		if( callvoteState.timeout - game.realtime <= 7.5 && callvoteState.timeout - game.realtime > 2.5 )
+		if( callvoteState.timeout - game.realtime <= 7500 && callvoteState.timeout - game.realtime > 2500 )
 			G_AnnouncerSound( NULL, trap_SoundIndex( S_ANNOUNCER_CALLVOTE_VOTE_NOW ), GS_MAX_TEAMS, true, NULL );
 		G_PrintMsg( NULL, "Vote in progress: %s%s%s, %i voted yes, %i voted no. %i required\n", S_COLOR_YELLOW,
 			G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE, yeses, noes,

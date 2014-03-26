@@ -205,7 +205,7 @@ static bool AngleMove_AdjustFinalStep( edict_t *ent )
 	movedist = ent->moveinfo.speed * ( game.frametime * 0.001f );
 	if( remainingdist <= movedist )
 	{                             // final move: will be reached this frame
-		VectorScale( destdelta, 1000/game.frametime, ent->avelocity );
+		VectorScale( destdelta, 1000.0f/game.frametime, ent->avelocity );
 		return true;
 	}
 

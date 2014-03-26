@@ -2766,7 +2766,7 @@ static void CL_CheckForUpdateHeaderCb( const char *buf, void *privatep )
 		while (*str && (*str == ' ')) { str++; }
 
 		val = str;
-		while (*str && (*str != '\r') && (*str != '\n') && (*str != '\n')) { str++; }
+		while (*str && (*str != '\r') && (*str != '\n')) { str++; }
 		val_size = str - val;
 
 		if( val_size > 0 ) {

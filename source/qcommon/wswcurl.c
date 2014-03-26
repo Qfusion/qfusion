@@ -279,11 +279,9 @@ void wswcurl_start(wswcurl_req *req)
 
 	if (!req)
 		return;
-
 	if (req->status)
 		return; // was already started
-	if (!req)
-		return;
+
 	if (!req->curl)
 	{
 		wswcurl_delete(req);

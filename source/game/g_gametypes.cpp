@@ -306,7 +306,7 @@ void G_Gametype_GENERIC_PlayerKilled( edict_t *targ, edict_t *attacker, edict_t 
 	if( !attacker || GS_MatchState() != MATCH_STATE_PLAYTIME || ( targ->r.svflags & SVF_CORPSE ) )
 		return;
 
-	if( !attacker || !attacker->r.client || attacker == targ || attacker == world )
+	if( !attacker->r.client || attacker == targ || attacker == world )
 		teamlist[targ->s.team].stats.score--;
 	else
 	{

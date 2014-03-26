@@ -1695,6 +1695,7 @@ void BOT_DMclass_InitPersistant( edict_t *self )
 	self->ai->pers.inventoryWeights[POWERUP_SHELL] = self->ai->pers.cha.offensiveness * 2.0f;
 
 	// scale the inventoryWeights by the character weapon affinities
+	// FIXME: rewrite this loop!
 	for( i = 1; i < MAX_ITEMS; i++ )
 	{
 		if( ( item = GS_FindItemByTag( i ) ) == NULL )

@@ -57,8 +57,8 @@ public:
 		refdef.fov_x = 30.0f;
 		entity.scale = 1.0f;
 		entity.outlineHeight = 0.3f;
-		Vector4Set(entity.outlineRGBA, 0.25f, 0.25f, 0.25f, 1.0f);
-		Vector4Set(entity.shaderRGBA, 1.0f, 1.0f, 1.0f, 1.0f);
+		Vector4Set(entity.outlineRGBA, 64, 64, 64, 255);
+		Vector4Set(entity.shaderRGBA, 255, 255, 255, 255);
 	}
 
 	virtual void OnRender()

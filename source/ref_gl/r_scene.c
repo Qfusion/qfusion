@@ -122,11 +122,14 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 */
 void R_AddPolyToScene( const poly_t *poly )
 {
-	assert( poly->shader != NULL );
-
-	if( ( rsc.numPolys < MAX_POLYS ) && poly && poly->numverts && poly->shader )
+	if( ( rsc.numPolys < MAX_POLYS ) && poly && poly->numverts )
 	{
 		drawSurfacePoly_t *dp = &rsc.polys[rsc.numPolys];
+
+		assert( poly->shader != NULL );
+		if( !poly->shader ) {
+			return;
+		}
 
 		dp->type = ST_POLY;
 		dp->shader = poly->shader;

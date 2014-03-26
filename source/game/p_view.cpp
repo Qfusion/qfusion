@@ -179,7 +179,7 @@ void G_ClientAddDamageIndicatorImpact( gclient_t *client, int damage, const vec3
 #undef ACCENT_SCALE
 	}
 
-	frac = damage / ( damage + client->resp.snap.damageTaken );
+	frac = (float)damage / ( damage + client->resp.snap.damageTaken );
 	VectorLerp( client->resp.snap.damageTakenDir, frac, dir, client->resp.snap.damageTakenDir );
 	client->resp.snap.damageTaken += damage;
 }

@@ -1436,7 +1436,6 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 		flags |= IT_NOFILTERING;
 		samples = 3;
 	}
-	flags |= IT_NOMIPMAP|IT_NOPICMIP;
 
 	R_InitViewportTexture( &rsh.shadowmapTextures[id], "r_shadowmap", id, 
 		viewportWidth, viewportHeight, r_shadows_maxtexsize->integer, 
@@ -1775,8 +1774,8 @@ void R_ShutdownImages( void )
 	r_screenShotBuffer = NULL;
 	r_screenShotBufferSize = 0;
 
-	memset( rsh.portalTextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
-	memset( rsh.shadowmapTextures, 0, sizeof( image_t * ) * MAX_SHADOWGROUPS );
+	memset( rsh.portalTextures, 0, sizeof( rsh.portalTextures ) );
+	memset( rsh.shadowmapTextures, 0, sizeof( rsh.shadowmapTextures ) );
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;

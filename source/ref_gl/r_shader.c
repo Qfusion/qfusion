@@ -1420,7 +1420,7 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 	else if( !strcmp( token, "lightingdiffuse" ) ) {
 		if( shader->type < SHADER_TYPE_DIFFUSE ) {
 			pass->rgbgen.type = RGB_GEN_VERTEX;
-		} else if( pass->rgbgen.type > SHADER_TYPE_DIFFUSE ) {
+		} else if( shader->type > SHADER_TYPE_DIFFUSE ) {
 			pass->rgbgen.type = RGB_GEN_IDENTITY;
 		} else {
 			pass->rgbgen.type = RGB_GEN_LIGHTING_DIFFUSE;

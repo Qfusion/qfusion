@@ -386,8 +386,7 @@ trie_error_t Trie_FreeDump(
 		for( i = 0; i < dump->size; ++i )
 			if( dump->key_value_vector[i].key )
 				free( (char *) dump->key_value_vector[i].key );
-		if( dump->key_value_vector )
-			free( dump->key_value_vector );
+		free( dump->key_value_vector );
 		free( dump );
 	}
 	return TRIE_OK;

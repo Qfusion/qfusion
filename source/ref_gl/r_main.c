@@ -1519,7 +1519,7 @@ static void R_UpdateHWGamma( void )
 	if( !glConfig.hwGamma )
 		return;
 
-	invGamma = 1.0 / bound( 0.5, r_gamma->value, 3 );
+	invGamma = 1.0 / bound( 0.5, r_gamma->value, 3.0 );
 	div = (double)( 1 << 0 ) / 255.5;
 
 	for( i = 0; i < 256; i++ )

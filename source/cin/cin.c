@@ -182,7 +182,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 		res = qfalse;
 	}
 
-	if( !res && cin )
+	if( !res )
 	{
 		CIN_Free( cin );
 		return NULL;

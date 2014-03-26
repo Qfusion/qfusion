@@ -87,7 +87,7 @@ static void R_ReserveDrawSurfaces( drawList_t *list, int minMeshes )
 /*
 * R_PackDistKey
 */
-static unsigned int R_PackDistKey( int shaderSort, unsigned int dist, int order )
+static unsigned int R_PackDistKey( int shaderSort, int dist, int order )
 {
 	return (shaderSort << 26) | ((max(0x400 - dist, 0) << 5) & 0x7FFF) << 11 | min( order, 0x7FF );
 }
@@ -157,7 +157,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 	}
 
 	sds = &list->drawSurfs[list->numDrawSurfs++];
-	sds->distKey = R_PackDistKey( shaderSort, (unsigned int )(max( dist, 0 )), order );
+	sds->distKey = R_PackDistKey( shaderSort, (int)dist, order );
 	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - rsh.worldBrushModel->fogs : -1,
 		portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM(e) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;

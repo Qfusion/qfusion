@@ -359,7 +359,7 @@ static int CG_GetItemTimerTeam( const void *parameter )
 	cent = CG_GetItemTimerEnt( num );
 	if( !cent )
 		return 0;
-	return max( cent->current.modelindex-1, 0 );
+	return max( (int)cent->current.modelindex-1, 0 );
 }
 
 // ch : backport some of racesow hud elements
