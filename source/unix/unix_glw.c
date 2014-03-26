@@ -459,7 +459,7 @@ static void _x11_SetNoResize( Window w, int width, int height )
 /*
 * This function checks if window is mapped and we can send events.
 */
-+static qboolean _x11_IsWindowMapped( Window w )
+static qboolean _x11_IsWindowMapped( Window w )
 {
 	XWindowAttributes attr;
 
