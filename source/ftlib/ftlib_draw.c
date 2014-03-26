@@ -263,9 +263,6 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 	if( !font )
 		return 0;
 
-	if( maxwidth < 0 )
-		maxwidth = 0;
-
 	Vector4Copy( color, scolor );
 
 	s = str;

@@ -162,7 +162,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 {
 	int i, j;
 	int k, s;
-	unsigned int vi[3], elem[4];
+	int vi[3], elem[4];
 	float dot, t[8], scale;
 	vec3_t vf, vf2, tdir;
 	vec3_t ambientLocal, diffuseLocal;
@@ -200,8 +200,8 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 	for( i = 0; i < 4; i++ )
 	{
-		lightarray[i*2+0] = *rsh.worldBrushModel->lightarray[bound( 0, elem[i]+0, rsh.worldBrushModel->numlightarrayelems-1)];
-		lightarray[i*2+1] = *rsh.worldBrushModel->lightarray[bound( 0, elem[i]+1, rsh.worldBrushModel->numlightarrayelems-1)];
+		lightarray[i*2+0] = *rsh.worldBrushModel->lightarray[bound( 0, elem[i]+0, (int)rsh.worldBrushModel->numlightarrayelems-1)];
+		lightarray[i*2+1] = *rsh.worldBrushModel->lightarray[bound( 1, elem[i]+1, (int)rsh.worldBrushModel->numlightarrayelems-1)];
 	}
 
 	t[0] = vf2[0] * vf2[1] * vf2[2];

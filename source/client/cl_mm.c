@@ -798,7 +798,6 @@ void CL_MM_Init( void )
 		return;
 
 	cl_mm_enabled = qfalse;
-	cl_mm_loginState = LOGIN_STATE_NONE;
 
 	cls.mm_session = 0;
 

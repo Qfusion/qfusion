@@ -1068,7 +1068,6 @@ void SV_Web_Frame( void )
 		return;
 	}
 
-	sv_web_upstream_is_set = qfalse;
 	sv_web_upstream_is_set = sv_http_upstream_ip->string[0] != '\0' && sv_http_upstream_baseurl->string[0] != '\0';
 	NET_StringToAddress( sv_http_upstream_ip->string, &sv_web_upstream_addr );
 

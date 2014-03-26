@@ -550,7 +550,6 @@ qboolean R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_
 		move[i] = frame->translate[i] + ( oldframe->translate[i] - frame->translate[i] ) * backlerp;
 
 	// based on backend's needs
-	calcNormals = calcSTVectors = qfalse;
 	calcNormals = ( ( vattribs & VATTRIB_NORMAL_BIT ) != 0 ) && ( ( framenum != 0 ) || ( oldframenum != 0 ) );
 	calcSTVectors = ( ( vattribs & VATTRIB_SVECTOR_BIT ) != 0 ) && calcNormals;
 
