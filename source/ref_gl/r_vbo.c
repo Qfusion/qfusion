@@ -570,6 +570,8 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			}
 
 			// find the longest edge, the long edge and the short edge
+			longest_edge = longer_edge = -1;
+			longest_dist = longer_dist = 0;
 			for( j = 0; j < 3; j++ ) {
 				float len;
 
@@ -592,6 +594,9 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			}
 
 			short_edge = 3 - (longest_edge + longer_edge);
+			if( short_edge > 2 ) {
+				continue;
+			}
 
 			// centre
 			VectorAdd( verts[elems[edges[longest_edge][0]]], verts[elems[edges[longest_edge][1]]], centre[0] );
