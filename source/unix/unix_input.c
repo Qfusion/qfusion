@@ -39,9 +39,180 @@ static int xi_opcode;
 
 static int mx, my;
 
+static Atom XA_TARGETS, XA_text, XA_utf8_string;
+
+static char* clip_data;
+
 int Sys_XTimeToSysTime( unsigned long xtime );
 
+#define CTRLC 3
+#define CTRLV 22
+
 //============================================
+
+/*
+* Sys_GetClipboardData
+*
+* Orginally from EzQuake
+*/
+char *Sys_GetClipboardData( qboolean primary )
+{
+	Window win;
+	Atom type;
+	int format, ret;
+	unsigned long nitems, bytes_after, bytes_left;
+	unsigned char *data;
+	char *buffer;
+	Atom atom;
+
+	if( !x11display.dpy )
+		return NULL;
+
+	if( primary )
+	{
+		atom = XInternAtom( x11display.dpy, "PRIMARY", True );
+	}
+	else
+	{
+		atom = XInternAtom( x11display.dpy, "CLIPBOARD", True );
+	}
+	if( atom == None )
+		return NULL;
+
+	win = XGetSelectionOwner( x11display.dpy, atom );
+	if( win == None )
+		return NULL;
+
+	XConvertSelection( x11display.dpy, atom, XA_utf8_string, atom, win, CurrentTime );
+	XFlush( x11display.dpy );
+
+	XGetWindowProperty( x11display.dpy, win, atom, 0, 0, False, AnyPropertyType, &type, &format, &nitems, &bytes_left,
+		&data );
+	if( bytes_left <= 0 )
+		return NULL;
+
+	ret = XGetWindowProperty( x11display.dpy, win, atom, 0, bytes_left, False, AnyPropertyType, &type,
+		&format, &nitems, &bytes_after, &data );
+	if( ret == Success )
+	{
+		buffer = Q_malloc( bytes_left + 1 );
+		memcpy( buffer, data, bytes_left + 1 );
+	}
+	else
+	{
+		buffer = NULL;
+	}
+
+	XFree( data );
+
+	return buffer;
+}
+
+/*
+* Sys_SetClipboardData
+* Adapted from GLFW - x11_clipboard:_glfwPlatformSetClipboardString
+* See: https://github.com/glfw/glfw/blob/master/src/x11_clipboard.c
+*
+* @param e The XEvent of the request
+* @returns The proterty Atom for the appropriate response
+*/
+qboolean Sys_SetClipboardData( char *data )
+{
+	// Save the message
+	Q_free( clip_data );
+	clip_data = Q_malloc( strlen( data ) - 1 );
+	memcpy( clip_data, data, strlen( data ) - 1 );
+	
+	// Requesting clipboard ownership
+	Atom XA_CLIPBOARD = XInternAtom( x11display.dpy, "CLIPBOARD", True );
+	if( XA_CLIPBOARD == None )
+		return qfalse;
+
+	XSetSelectionOwner( x11display.dpy, XA_CLIPBOARD, x11display.win, CurrentTime );
+
+	// Check if we got ownership
+	if( XGetSelectionOwner( x11display.dpy, XA_CLIPBOARD ) == x11display.win )
+		return qtrue;
+
+	return qfalse;
+}
+
+/*
+* Sys_FreeClipboardData
+*/
+void Sys_FreeClipboardData( char *data )
+{
+	Q_free( data );
+}
+
+/*
+* Sys_SendClipboardData
+* Adapted from GLFW - x11_clipboard:writeTargetToProperty
+* See: https://github.com/glfw/glfw/blob/master/src/x11_clipboard.c
+*
+* @param e The XEvent of the request
+* @returns The proterty Atom for the appropriate response
+*/
+static Atom Sys_ClipboardProperty( XSelectionRequestEvent* request )
+{
+	int i;
+	const Atom formats[] = {
+		XA_utf8_string,
+		XA_text,
+		XA_STRING };
+	const int formatCount = sizeof( formats ) / sizeof( formats[0] );
+
+	// Legacy client
+	if( request->property == None )
+		return None;
+
+	// Requested list of available datatypes
+	if( request->target == XA_TARGETS )
+	{
+		const Atom targets[] = {
+			XA_TARGETS,
+			XA_utf8_string,
+			XA_text,
+			XA_STRING };
+
+		XChangeProperty(
+			x11display.dpy,
+			request->requestor,
+			request->property,
+			XA_ATOM,
+			32,
+			PropModeReplace,
+			(unsigned char*)targets,
+			sizeof( targets ) / sizeof( targets[0] ) );
+
+		return request->property;
+	}
+
+	// Requested a data type
+	for( i = 0; i < formatCount; i++ )
+	{
+		if( request->target == formats[i] )
+		{
+			// Requested a supported type
+			XChangeProperty(
+				x11display.dpy,
+				request->requestor,
+				request->property,
+				request->target,
+				8,
+				PropModeReplace,
+				(unsigned char*)clip_data,
+				strlen( clip_data ) );
+
+			return request->property;
+		}
+	}
+
+	// Not supported
+	return None;
+}
+
+/*****************************************************************************/
 
 static Cursor CreateNullCursor( Display *display, Window root )
 {
@@ -416,6 +587,21 @@ static void handle_key(XGenericEventCookie *cookie)
 
 	if(name && name[0] && down) {
 		qwchar wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_down));
+
+		// Convert ctrl-c / ctrl-v combinations to the expected events
+		if( Key_IsDown(K_LCTRL) || Key_IsDown(K_RCTRL) )
+		{
+			if( key == 'v' )
+			{
+				key = CTRLV;
+				wc = CTRLV;
+			}
+			else if( key == 'c' )
+			{
+				key = CTRLC;
+				wc = CTRLC;
+			}
+		}
 		Key_CharEvent( key, wc );
 	}
 }
@@ -461,7 +647,8 @@ static void handle_cookie(XGenericEventCookie *cookie)
 
 static void HandleEvents( void )
 {
-	XEvent event;
+	XEvent event, response;
+	XSelectionRequestEvent* request;
 
 	assert( x11display.dpy && x11display.win );
 
@@ -533,6 +720,28 @@ static void HandleEvents( void )
 					}
 				}
 			}
+			break;
+
+		case SelectionClear:
+			// Another app took clipboard ownership away
+			// There's not actually anything we need to do here
+			break;
+
+		case SelectionRequest:
+			// Another app is requesting clipboard information
+			request = &event.xselectionrequest;
+
+			memset( &response, 0, sizeof( response ) );
+			response.xselection.type = SelectionNotify;
+			response.xselection.display = request->display;
+			response.xselection.requestor = request->requestor;
+			response.xselection.selection = request->selection;
+			response.xselection.target = request->target;
+			response.xselection.time = request->time;
+			response.xselection.property = Sys_ClipboardProperty( request );
+
+			// Send the response
+			XSendEvent( x11display.dpy, request->requestor, 0, 0, &response );
 			break;
 		}
 	}
@@ -606,6 +815,10 @@ void IN_Init( void )
 	input_inited = qtrue;
 	install_grabs_keyboard();
 	install_grabs_mouse();
+
+	XA_TARGETS = XInternAtom( x11display.dpy, "TARGETS", 0 );
+	XA_text = XInternAtom( x11display.dpy, "TEXT", 0 );
+	XA_utf8_string = XInternAtom( x11display.dpy, "UTF8_STRING", 0 );
 }
 
 void IN_Shutdown( void )
