@@ -353,7 +353,7 @@ void SNAP_WriteDemoMetaData( const char *filename, const char *meta_data, size_t
 	// write some data we don't want to copy
 	filelen = FS_LoadFile( tmpn, &compressed_msg, NULL, 0 );
 
-	if( msg_buffer ) {
+	if( compressed_msg ) {
 		int origfile;
 
 		if( FS_FOpenFile( filename, &origfile, FS_READ|FS_UPDATE ) != -1 ) {
