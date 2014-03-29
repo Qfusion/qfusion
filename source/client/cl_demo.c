@@ -68,6 +68,9 @@ void CL_Stop_f( void )
 		return;
 	}
 
+	// finish up
+	SNAP_StopDemoRecording( cls.demo.file );
+
 	// write some meta information about the match/demo
 	CL_SetDemoMetaKeyValue( "hostname", cl.configstrings[CS_HOSTNAME] );
 	CL_SetDemoMetaKeyValue( "localtime", va( "%u", cls.demo.localtime ) );
@@ -80,10 +83,9 @@ void CL_Stop_f( void )
 	CL_SetDemoMetaKeyValue( "matchscore", cl.configstrings[CS_MATCHSCORE] );
 	CL_SetDemoMetaKeyValue( "matchuuid", cl.configstrings[CS_MATCHUUID] );
 
-	// finish up
-	SNAP_StopDemoRecording( cls.demo.file, cls.demo.meta_data, cls.demo.meta_data_realsize );
-
 	FS_FCloseFile( cls.demo.file );
+
+	SNAP_WriteDemoMetaData( cls.demo.filename, cls.demo.meta_data, cls.demo.meta_data_realsize );
 
 	// cancel the demos
 	if( cancel )
@@ -170,7 +172,7 @@ void CL_Record_f( void )
 		return;
 	}
 
-	if( FS_FOpenFile( name, &cls.demo.file, FS_WRITE ) == -1 )
+	if( FS_FOpenFile( name, &cls.demo.file, FS_WRITE|SNAP_DEMO_GZ ) == -1 )
 	{
 		Com_Printf( "Error: Couldn't create the demo file.\n" );
 		Mem_ZoneFree( name );
@@ -357,13 +359,11 @@ static void CL_StartDemo( const char *demoname )
 	Q_snprintfz( name, name_size, "demos/%s", servername );
 	COM_DefaultExtension( name, APP_DEMO_EXTENSION_STR, name_size );
 
-	if( FS_IsUrl( demoname ) )
-		filename = demoname;
-	else if( COM_ValidateRelativeFilename( name ) )
+	if( COM_ValidateRelativeFilename( name ) )
 		filename = name;
 
 	if( filename ) {
-		tempdemofilelen = FS_FOpenFile( filename, &tempdemofilehandle, FS_READ );	// open the demo file
+		tempdemofilelen = FS_FOpenFile( filename, &tempdemofilehandle, FS_READ|SNAP_DEMO_GZ );	// open the demo file
 	}
 
 	if( !tempdemofilehandle || tempdemofilelen < 1 ) {
@@ -601,7 +601,7 @@ size_t CL_ReadDemoMetaData( const char *demopath, char *meta_data, size_t meta_d
 		Q_snprintfz( name, name_size, "demos/%s", servername );
 		COM_DefaultExtension( name, APP_DEMO_EXTENSION_STR, name_size );
 
-		demolength = FS_FOpenFile( name, &demofile, FS_READ );
+		demolength = FS_FOpenFile( name, &demofile, FS_READ|SNAP_DEMO_GZ );
 
 		if( !demofile || demolength < 1 ) {
 			// relative filename didn't work, try launching a demo from absolute path

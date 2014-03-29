@@ -234,7 +234,7 @@ void TV_Upstream_StartDemoRecord( upstream_t *upstream, const char *demoname, qb
 	Q_snprintfz( upstream->demo.tempname, name_size, "%s.rec", upstream->demo.filename );
 
 	// open the demo file
-	if( FS_FOpenFile( upstream->demo.tempname, &upstream->demo.filehandle, FS_WRITE ) == -1 )
+	if( FS_FOpenFile( upstream->demo.tempname, &upstream->demo.filehandle, FS_WRITE|SNAP_DEMO_GZ ) == -1 )
 	{
 		Com_Printf( "Error: Couldn't create the demo file.\n" );
 
@@ -273,20 +273,8 @@ void TV_Upstream_StopDemoRecord( upstream_t *upstream, qboolean silent, qboolean
 		return;
 	}
 
-	// write some meta information about the match/demo
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "hostname", upstream->configstrings[CS_HOSTNAME] );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "localtime", va( "%u", upstream->demo.localtime ) );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "multipov", "1" );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "duration", va( "%u", (int)ceil( upstream->demo.duration/1000.0f ) ) );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "mapname", upstream->configstrings[CS_MAPNAME] );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "gametype", upstream->configstrings[CS_GAMETYPENAME] );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "levelname", upstream->configstrings[CS_MESSAGE] );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "matchname", upstream->configstrings[CS_MATCHNAME] );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "matchscore", upstream->configstrings[CS_MATCHSCORE] );
-	TV_Upstream_SetDemoMetaKeyValue( upstream, "matchuuid", upstream->configstrings[CS_MATCHUUID] );
-
 	// finish up
-	SNAP_StopDemoRecording( upstream->demo.filehandle, upstream->demo.meta_data, upstream->demo.meta_data_realsize );
+	SNAP_StopDemoRecording( upstream->demo.filehandle );
 
 	FS_FCloseFile( upstream->demo.filehandle );
 
@@ -301,6 +289,20 @@ void TV_Upstream_StopDemoRecord( upstream_t *upstream, qboolean silent, qboolean
 	}
 	else
 	{
+		// write some meta information about the match/demo
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "hostname", upstream->configstrings[CS_HOSTNAME] );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "localtime", va( "%u", upstream->demo.localtime ) );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "multipov", "1" );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "duration", va( "%u", (int)ceil( upstream->demo.duration/1000.0f ) ) );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "mapname", upstream->configstrings[CS_MAPNAME] );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "gametype", upstream->configstrings[CS_GAMETYPENAME] );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "levelname", upstream->configstrings[CS_MESSAGE] );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "matchname", upstream->configstrings[CS_MATCHNAME] );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "matchscore", upstream->configstrings[CS_MATCHSCORE] );
+		TV_Upstream_SetDemoMetaKeyValue( upstream, "matchuuid", upstream->configstrings[CS_MATCHUUID] );
+
+		SNAP_WriteDemoMetaData( upstream->demo.tempname, upstream->demo.meta_data, upstream->demo.meta_data_realsize );
+
 		if( !FS_MoveFile( upstream->demo.tempname, upstream->demo.filename ) )
 			Com_Printf( "Error: Failed to rename the demo file\n" );
 	}
@@ -477,7 +479,8 @@ void TV_Upstream_NextDemo( const char *demoname, const char *curdemo, qboolean r
 				if( !*pattern )
 				{
 					extension = COM_FileExtension( match[j] );
-					if( FS_FOpenFile( va( "demos/%s%s", match[j], (extension ? "" : APP_DEMO_EXTENSION_STR) ), NULL, FS_READ ) == -1 )
+					if( FS_FOpenFile( va( "demos/%s%s", match[j], 
+							(extension ? "" : APP_DEMO_EXTENSION_STR) ), NULL, FS_READ ) == -1 )
 						continue;
 				}
 
@@ -528,7 +531,7 @@ void TV_Upstream_StartDemo( upstream_t *upstream, const char *demoname, qboolean
 	if( filepath )
 	{
 		if( COM_ValidateRelativeFilename( filepath ) )
-			tempdemofilelen = FS_FOpenFile( filepath, &tempdemofilehandle, FS_READ );	// open the demo file
+			tempdemofilelen = FS_FOpenFile( filepath, &tempdemofilehandle, FS_READ|SNAP_DEMO_GZ );
 	}
 
 	TV_Upstream_StopDemo( upstream );

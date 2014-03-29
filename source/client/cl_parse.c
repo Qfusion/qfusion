@@ -961,7 +961,7 @@ static void CL_ParseFrame( msg_t *msg )
 				// write out messages to hold the startup information
 				SNAP_BeginDemoRecording( cls.demo.file, 0x10000 + cl.servercount, cl.snapFrameTime, 
 					cl.servermessage, cls.reliable ? SV_BITFLAGS_RELIABLE : 0, cls.purelist, 
-					cl.configstrings[0], cl_baselines, cls.demo.basetime );
+					cl.configstrings[0], cl_baselines );
 
 				// the rest of the demo file will be individual frames
 			}
@@ -1302,7 +1302,6 @@ void CL_ParseServerMessage( msg_t *msg )
 
 				MSG_ReadLong( msg );
 				MSG_ReadLong( msg );
-				cls.demo.basetime = (unsigned)MSG_ReadLong( msg );
 				cls.demo.meta_data_realsize = (size_t)MSG_ReadLong( msg );
 				meta_data_maxsize = (size_t)MSG_ReadLong( msg );
 
