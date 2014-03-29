@@ -1731,7 +1731,7 @@ static void Con_MessageCompletion( const char *partial, qboolean teamonly )
 
 	// add ': ' to string if completing at the beginning of the string
 	if( comp[0] && ( chat_linepos == partial_len ) && ( chat_bufferlen + comp_len + 2 < MAXCMDLINE ) ) {
-		Q_strncatz( comp, ": ", sizeof( comp ) );
+		Q_strncatz( comp, ", ", sizeof( comp ) );
 		comp_len += 2;
 	}
 
