@@ -31,7 +31,7 @@ void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 model_t *Mod_LoadModel( model_t *mod, qboolean crash );
 
 static void R_InitMapConfig( const char *model );
-static void R_FinishMapConfig( void );
+static void R_FinishMapConfig( const model_t *mod );
 
 static qbyte mod_novis[MAX_MAP_LEAFS/8];
 
@@ -949,7 +949,7 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 
 	if( mod_isworldmodel ) {
 		// we only init map config when loading the map from disk
-		R_FinishMapConfig();
+		R_FinishMapConfig( mod );
 	}
 
 	// do some common things
@@ -1073,7 +1073,7 @@ static void R_InitMapConfig( const char *model )
 *
 * Called after loading the map from disk.
 */
-static void R_FinishMapConfig( void )
+static void R_FinishMapConfig( const model_t *mod )
 {
 	// ambient lighting
 	if( r_fullbright->integer )
@@ -1097,6 +1097,7 @@ static void R_FinishMapConfig( void )
 				mapConfig.ambient[i] = bound( 0, mapConfig.ambient[i] * scale, 1 );
 		}
 	}
+	mod_mapConfigs[mod - mod_known] = mapConfig;
 }
 
 //=============================================================================
@@ -1121,14 +1122,8 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 		return;
 	}
 
-	// FIXME: this is ugly... Resolve by allowing non-world .bsp models?
-	// store or restore map config
-	if( rsh.worldModel->registrationSequence == rsh.registrationSequence ) {
-		mod_mapConfigs[rsh.worldModel - mod_known] = mapConfig;
-	}
-	else {
-		mapConfig = mod_mapConfigs[rsh.worldModel - mod_known];
-	}
+	// FIXME: this is ugly...
+	mapConfig = mod_mapConfigs[rsh.worldModel - mod_known];
 
 	R_TouchModel( rsh.worldModel );
 
