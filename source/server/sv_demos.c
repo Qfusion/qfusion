@@ -45,7 +45,7 @@ static void SV_Demo_WriteStartMessages( void )
 	svs.demo.meta_data_realsize = SNAP_ClearDemoMeta( svs.demo.meta_data, sizeof( svs.demo.meta_data ) );
 
 	SNAP_BeginDemoRecording( svs.demo.file, svs.spawncount, svc.snapFrameTime, sv.mapname, SV_BITFLAGS_RELIABLE, 
-		svs.purelist, sv.configstrings[0], sv.baselines, svs.demo.basetime );
+		svs.purelist, sv.configstrings[0], sv.baselines );
 }
 
 /*
@@ -174,7 +174,7 @@ void SV_Demo_Start_f( void )
 	Q_snprintfz( svs.demo.tempname, demofilename_size, "%s.rec", svs.demo.filename );
 
 	// open it
-	if( FS_FOpenFile( svs.demo.tempname, &svs.demo.file, FS_WRITE ) == -1 )
+	if( FS_FOpenFile( svs.demo.tempname, &svs.demo.file, FS_WRITE|SNAP_DEMO_GZ ) == -1 )
 	{
 		Com_Printf( "Error: Couldn't open file: %s\n", svs.demo.tempname );
 		Mem_ZoneFree( svs.demo.filename );
@@ -219,6 +219,21 @@ static void SV_Demo_Stop( qboolean cancel, qboolean silent )
 	}
 	else
 	{
+		SNAP_StopDemoRecording( svs.demo.file );
+
+		Com_Printf( "Stopped server demo recording: %s\n", svs.demo.filename );
+	}
+
+	FS_FCloseFile( svs.demo.file );
+	svs.demo.file = 0;
+
+	if( cancel )
+	{
+		if( !FS_RemoveFile( svs.demo.tempname ) )
+			Com_Printf( "Error: Failed to delete the temporary server demo file\n" );
+	}
+	else
+	{
 		// write some meta information about the match/demo
 		SV_SetDemoMetaKeyValue( "hostname", sv.configstrings[CS_HOSTNAME] );
 		SV_SetDemoMetaKeyValue( "localtime", va( "%u", svs.demo.localtime ) );
@@ -231,25 +246,14 @@ static void SV_Demo_Stop( qboolean cancel, qboolean silent )
 		SV_SetDemoMetaKeyValue( "matchscore", sv.configstrings[CS_MATCHSCORE] );
 		SV_SetDemoMetaKeyValue( "matchuuid", sv.configstrings[CS_MATCHUUID] );
 
-		SNAP_StopDemoRecording( svs.demo.file, svs.demo.meta_data, svs.demo.meta_data_realsize );
-		Com_Printf( "Stopped server demo recording: %s\n", svs.demo.filename );
-	}
+		SNAP_WriteDemoMetaData( svs.demo.tempname, svs.demo.meta_data, svs.demo.meta_data_realsize );
 
-	FS_FCloseFile( svs.demo.file );
-	svs.demo.file = 0;
-	svs.demo.localtime = 0;
-	svs.demo.basetime = svs.demo.duration = 0;
-
-	if( cancel )
-	{
-		if( !FS_RemoveFile( svs.demo.tempname ) )
-			Com_Printf( "Error: Failed to delete the temporary server demo file\n" );
-	}
-	else
-	{
 		if( !FS_MoveFile( svs.demo.tempname, svs.demo.filename ) )
 			Com_Printf( "Error: Failed to rename the server demo file\n" );
 	}
+
+	svs.demo.localtime = 0;
+	svs.demo.basetime = svs.demo.duration = 0;
 
 	SNAP_FreeClientFrames( &svs.demo.client );
 

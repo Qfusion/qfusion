@@ -134,6 +134,9 @@ void Com_FreePureList( purelist_t **purelist );
 
 #define SNAP_MAX_DEMO_META_DATA_SIZE	16*1024
 
+// define this 0 to disable compression of demo files
+#define SNAP_DEMO_GZ					FS_GZ
+
 void SNAP_ParseBaseline( msg_t *msg, entity_state_t *baselines );
 void SNAP_SkipFrame( msg_t *msg, struct snapshot_s *header );
 struct snapshot_s *SNAP_ParseFrame( msg_t *msg, struct snapshot_s *lastFrame, int *suppressCount, struct snapshot_s *backup, entity_state_t *baselines, int showNet );
@@ -153,8 +156,9 @@ void SNAP_RecordDemoMessage( int demofile, msg_t *msg, int offset );
 int SNAP_ReadDemoMessage( int demofile, msg_t *msg );
 void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned int snapFrameTime, 
 								const char *sv_name, unsigned int sv_bitflags, purelist_t *purelist, 
-								char *configstrings, entity_state_t *baselines, unsigned int baseTime );
-void SNAP_StopDemoRecording( int demofile, const char *meta_data, size_t meta_data_realsize );
+								char *configstrings, entity_state_t *baselines );
+void SNAP_StopDemoRecording( int demofile );
+void SNAP_WriteDemoMetaData( const char *filename, const char *meta_data, size_t meta_data_realsize );
 size_t SNAP_ClearDemoMeta( char *meta_data, size_t meta_data_max_size );
 size_t SNAP_SetDemoMetaKeyValue( char *meta_data, size_t meta_data_max_size, size_t meta_data_realsize,
 							  const char *key, const char *value );

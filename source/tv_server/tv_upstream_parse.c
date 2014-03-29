@@ -50,7 +50,7 @@ static void TV_Upstream_ParseFrame( upstream_t *upstream, msg_t *msg )
 			// write out messages to hold the startup information
 			SNAP_BeginDemoRecording( upstream->demo.filehandle, 0x10000 + upstream->servercount, 
 				upstream->snapFrameTime, upstream->levelname, upstream->reliable ? SV_BITFLAGS_RELIABLE : 0, 
-				upstream->purelist, upstream->configstrings[0], upstream->baselines, upstream->demo.basetime );
+				upstream->purelist, upstream->configstrings[0], upstream->baselines );
 		}
 
 		if( !upstream->demo.waiting )
