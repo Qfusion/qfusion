@@ -47,6 +47,8 @@ QUAKE FILESYSTEM
 
 #define FS_PAK_MANIFEST_FILE		"manifest.txt"
 
+#define FZ_GZ_BUFSIZE				0x00020000
+
 const char *pak_extensions[] = { "pk3", "pk2", NULL };
 
 static const char *forbidden_gamedirs[] = {
@@ -72,6 +74,7 @@ typedef struct
 typedef struct packfile_s
 {
 	char *name;
+	char *pakname;
 	unsigned flags;
 	unsigned compressedSize;    // compressed size
 	unsigned uncompressedSize;  // uncompressed size
@@ -102,6 +105,8 @@ typedef struct filehandle_s
 	unsigned uncompressedSize;		// uncompressed size
 	unsigned offset;				// current read/write pos
 	zipEntry_t *zipEntry;
+	gzFile gzstream;
+	int gzlevel;
 
 	wswcurl_req *streamHandle;
 	qboolean streamDone;
@@ -374,7 +379,7 @@ static int FS_FileLength( FILE *f, qboolean close )
 * 
 * Gives the searchpath element where this file exists, or NULL if it doesn't
 */
-static searchpath_t *FS_SearchPathForFile( const char *filename )
+static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **pout, FILE **fout )
 {
 	searchpath_t *search;
 	qboolean purepass;
@@ -392,7 +397,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename )
 		{
 			if( search->pack->pure == purepass )
 			{
-				if( FS_SearchPakForFile( search->pack, filename, NULL ) )
+				if( FS_SearchPakForFile( search->pack, filename, pout ) )
 					return search;
 			}
 		}
@@ -400,7 +405,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename )
 		{
 			if( !purepass )
 			{
-				if( FS_SearchDirectoryForFile( search, filename, NULL ) )
+				if( FS_SearchDirectoryForFile( search, filename, fout ) )
 					return search;
 			}
 		}
@@ -424,7 +429,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename )
 * 
 * Gives the searchpath element where this file exists, or NULL if it doesn't
 */
-static searchpath_t *FS_SearchPathForBaseFile( const char *filename )
+static searchpath_t *FS_SearchPathForBaseFile( const char *filename, FILE **fout )
 {
 	searchpath_t *search;
 
@@ -435,7 +440,7 @@ static searchpath_t *FS_SearchPathForBaseFile( const char *filename )
 	search = fs_basepaths;
 	while( search )
 	{
-		if( FS_SearchDirectoryForFile( search, filename, NULL ) )
+		if( FS_SearchDirectoryForFile( search, filename, fout ) )
 			return search;
 
 		search = search->next;
@@ -472,7 +477,7 @@ static const char *FS_PakNameForPath( pack_t *pack )
 */
 const char *FS_PakNameForFile( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
 
 	if( !search || !search->pack )
 		return NULL;
@@ -583,9 +588,7 @@ static inline filehandle_t *FS_FileHandleForNum( int file )
 {
 	if( file < 1 || file > FS_MAX_HANDLES )
 		Sys_Error( "FS_FileHandleForNum: bad handle: %i", file );
-	if( !fs_filehandles[--file].fstream && !fs_filehandles[file].streamHandle )
-		Sys_Error( "FS_FileHandleForNum: bad handle: %i", file );
-	return &fs_filehandles[file];
+	return &fs_filehandles[file-1];
 }
 
 /*
@@ -722,6 +725,8 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 static int FS_FileExists( const char *filename, qboolean base )
 {
 	searchpath_t *search;
+	packfile_t *pakFile = NULL;
+	FILE *f = NULL;
 
 	if ( FS_IsUrl( filename ) )
 	{
@@ -734,29 +739,24 @@ static int FS_FileExists( const char *filename, qboolean base )
 
 		return rxSize;
 	}
+
 	if( base )
-		search = FS_SearchPathForBaseFile( filename );
+		search = FS_SearchPathForBaseFile( filename, &f );
 	else
-		search = FS_SearchPathForFile( filename );
+		search = FS_SearchPathForFile( filename, &pakFile, &f );
 
 	if( !search )
 		return -1;
 
-	if( search->pack )
+	if( pakFile )
 	{
-		packfile_t *pakFile;
-
 		assert( !base );
-
-		if( FS_SearchPakForFile( search->pack, filename, &pakFile ) )
-			return pakFile->uncompressedSize;
+		return pakFile->uncompressedSize;
 	}
 	else
 	{
-		FILE *f;
-
-		if( FS_SearchDirectoryForFile( search, filename, &f ) )
-			return FS_FileLength( f, qtrue );
+		assert( f );
+		return FS_FileLength( f, qtrue );
 	}
 
 	return -1;
@@ -780,22 +780,44 @@ static int FS_AbsoluteFileExists( const char *filename )
 }
 
 /*
+* FS_FileModeStr
+*/
+static void FS_FileModeStr( int mode, char *modestr, size_t size )
+{
+	int rwa = mode & FS_RWA_MASK;
+	Q_snprintfz( modestr, size, "%sb%s", 
+		rwa == FS_WRITE ? "w" : (rwa == FS_APPEND ? "a" : "r"),
+		mode & FS_UPDATE ? "+" : "" );
+}
+
+/*
 * FS_FOpenAbsoluteFile
 * 
 * Same for absolute files, won't look inside paks.
 */
 int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 {
-	FILE *f;
+	FILE *f = NULL;
+	gzFile gzf = NULL;
 	filehandle_t *file;
 	int end;
+	qboolean gz;
+	qboolean update;
+	int realmode;
+	char modestr[4] = { 0, 0, 0, 0 };
 
 	// FS_NOSIZE bit tells that we're not interested in real size of the file
 	// probably useful for streamed URLS
-	mode = mode & ~FS_NOSIZE;
 
-	assert( mode == FS_READ || mode == FS_WRITE || mode == FS_APPEND );
+	realmode = mode;
+	gz = mode & FS_GZ ? qtrue : qfalse;
+	update = mode & FS_UPDATE ? qtrue : qfalse;
+	mode = mode & FS_RWA_MASK;
+
 	assert( filenum || mode == FS_READ );
+
+	if( gz && update )
+		return -1; // unsupported
 
 	if( filenum )
 		*filenum = 0;
@@ -813,8 +835,14 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 	if( mode == FS_WRITE || mode == FS_APPEND )
 		FS_CreateAbsolutePath( filename );
 
-	f = fopen( filename, (mode == FS_WRITE ? "wb" : (mode == FS_APPEND ? "ab" : "rb")) );
-	if( !f )
+	FS_FileModeStr( realmode, modestr, sizeof( modestr ) );
+
+	if( gz ) {
+		gzf = gzopen( filename, modestr );
+	} else {
+		f = fopen( filename, modestr );
+	}
+	if( !f && !gzf )
 	{
 		Com_DPrintf( "FS_FOpenAbsoluteFile: can't %s %s\n", (mode == FS_READ ? "find" : "write to"), filename );
 		return -1;
@@ -828,6 +856,8 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 	file->zipEntry = NULL;
 	file->uncompressedSize = end;
 	file->offset = 0;
+	file->gzstream = gzf;
+	file->gzlevel = Z_DEFAULT_COMPRESSION;
 
 	return end;
 }
@@ -856,25 +886,22 @@ static void FS_StreamDoneSimpleCb( wswcurl_req *req, int status, void *customp )
 /*
 * _FS_FOpenPakFile
 */
-static int _FS_FOpenPakFile( const char *filename, pack_t *pak, int *filenum )
+static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum )
 {
-	packfile_t *pakFile = NULL;
 	filehandle_t *file;
 
 	*filenum = 0;
 
-	FS_SearchPakForFile( pak, filename, &pakFile );
 	if( !pakFile )
 		return -1;
-
 	if( pakFile->flags & FS_PACKFILE_DIRECTORY )
 		return -1;
 
 	*filenum = FS_OpenFileHandle();
 	file = &fs_filehandles[*filenum - 1];
-	file->fstream = fopen( pak->filename, "rb" );
+	file->fstream = fopen( pakFile->pakname, "rb" );
 	if( !file->fstream )
-		Com_Error( ERR_FATAL, "Error opening pak file: %s", pak->filename );
+		Com_Error( ERR_FATAL, "Error opening pak file: %s", pakFile->pakname );
 	file->uncompressedSize = pakFile->uncompressedSize;
 	file->offset = 0;
 	file->zipEntry = NULL;
@@ -884,7 +911,7 @@ static int _FS_FOpenPakFile( const char *filename, pack_t *pak, int *filenum )
 		unsigned offset = FS_PK3CheckFileCoherency( file->fstream, pakFile );
 		if( !offset )
 		{
-			Com_DPrintf( "_FS_FOpenPakFile: can't get proper offset for %s\n", filename );
+			Com_DPrintf( "_FS_FOpenPakFile: can't get proper offset for %s\n", pakFile->name );
 			return -1;
 		}
 		pakFile->offset += offset;
@@ -915,14 +942,14 @@ static int _FS_FOpenPakFile( const char *filename, pack_t *pak, int *filenum )
 		// size of both compressed and uncompressed data
 		if( inflateInit2( &file->zipEntry->zstream, -MAX_WBITS ) != Z_OK )
 		{
-			Com_DPrintf( "_FS_FOpenPakFile: can't inflate %s\n", filename );
+			Com_DPrintf( "_FS_FOpenPakFile: can't inflate %s\n", pakFile->name );
 			return -1;
 		}
 	}
 
 	if( fseek( file->fstream, file->pakOffset, SEEK_SET ) != 0 )
 	{
-		Com_DPrintf( "_FS_FOpenPakFile: can't inflate %s\n", filename );
+		Com_DPrintf( "_FS_FOpenPakFile: can't inflate %s\n", pakFile->name );
 		return -1;
 	}
 
@@ -940,11 +967,21 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	searchpath_t *search;
 	filehandle_t *file;
 	qboolean noSize;
+	qboolean gz;
+	qboolean update;
+	FILE *f = NULL;
+	packfile_t *pakFile = NULL;
+	gzFile gzf = NULL;
+	int realmode;
 
 	// FS_NOSIZE bit tells that we're not interested in real size of the file
 	// probably useful for streamed URLS
-	noSize = (mode & FS_NOSIZE ? qtrue : qfalse);
-	mode = mode & ~FS_NOSIZE;
+
+	realmode = mode;
+	gz = mode & FS_GZ ? qtrue : qfalse;
+	noSize = mode & FS_NOSIZE ? qtrue : qfalse;
+	update = mode & FS_UPDATE ? qtrue : qfalse;
+	mode = mode & FS_RWA_MASK;
 
 	assert( mode == FS_READ || mode == FS_WRITE || mode == FS_APPEND );
 	assert( filenum || mode == FS_READ );
@@ -1005,10 +1042,10 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 		return rxSize;
 	}
 
-	if( mode == FS_WRITE || mode == FS_APPEND )
+	if( ( mode == FS_WRITE || mode == FS_APPEND ) || update )
 	{
-		FILE *f;
 		int end;
+		char modestr[4] = { 0, 0, 0, 0 };
 
 		if( base )
 		{
@@ -1022,11 +1059,20 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 		}
 		FS_CreateAbsolutePath( tempname );
 
-		f = fopen( tempname, (mode == FS_WRITE ? "wb" : "ab") );
-		if( !f )
+		FS_FileModeStr( realmode, modestr, sizeof( modestr ) );
+
+		if( gz ) {
+			gzf = gzopen( tempname, modestr );
+		} else {
+			f = fopen( tempname, modestr );
+		}
+		if( !f && !gzf )
 			return -1;
 
-		end = (mode == FS_WRITE ? 0 : FS_FileLength( f, qfalse ));
+		end = 0;
+		if( mode == FS_APPEND ) {
+			end = f ? FS_FileLength( f, qfalse ) : 0;
+		}
 
 		*filenum = FS_OpenFileHandle();
 		file = &fs_filehandles[*filenum - 1];
@@ -1035,24 +1081,31 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 		file->zipEntry = NULL;
 		file->uncompressedSize = end;
 		file->offset = 0;
+		file->gzstream = gzf;
+		file->gzlevel = Z_DEFAULT_COMPRESSION;
 
+#if ZLIB_VER_MAJOR >= 1 && ZLIB_VER_MINOR >= 2 && ZLIB_VER_REVISION >= 4
+		if( gzf ) {
+			gzbuffer( gzf, FZ_GZ_BUFSIZE );
+		}
+#endif
 		return end;
 	}
 
 	if( base )
-		search = FS_SearchPathForBaseFile( filename );
+		search = FS_SearchPathForBaseFile( filename, &f );
 	else
-		search = FS_SearchPathForFile( filename );
+		search = FS_SearchPathForFile( filename, &pakFile, &f );
 	if( !search )
 		goto notfound_dprint;
 
-	if( search->pack )
+	if( pakFile )
 	{
 		int uncompressedSize;
 
 		assert( !base );
 
-		uncompressedSize = _FS_FOpenPakFile( filename, search->pack, filenum );
+		uncompressedSize = _FS_FOpenPakFile( pakFile, filenum );
 		if( uncompressedSize < 0 )
 		{
 			if( *filenum > 0 )
@@ -1065,13 +1118,16 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	}
 	else
 	{
-		FILE *f = NULL;
 		int end;
 
-		FS_SearchDirectoryForFile( search, filename, &f );
 		assert( f );
+		end = FS_FileLength( f, gz );
 
-		end = FS_FileLength( f, qfalse );
+		if( gz ) {
+			f = NULL;
+			gzf = gzopen( tempname, "rb" );
+			assert( gzf );
+		}
 
 		*filenum = FS_OpenFileHandle();
 		file = &fs_filehandles[*filenum - 1];
@@ -1080,6 +1136,8 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 		file->fstream = f;
 		file->uncompressedSize = end;
 		file->offset = 0;
+		file->gzstream = gzf;
+		file->gzlevel = Z_DEFAULT_COMPRESSION;
 
 		Com_DPrintf( "FS_FOpen%sFile: %s\n", (base ? "Base" : ""), tempname );
 		return end;
@@ -1154,6 +1212,11 @@ void FS_FCloseFile( int file )
 		fh->customp = NULL;
 		fh->done_cb = NULL;
 		fh->read_cb = NULL;
+	}
+	if( fh->gzstream )
+	{
+		gzclose( fh->gzstream );
+		fh->gzstream = NULL;
 	}
 
 	FS_CloseFileHandle( fh );
@@ -1243,20 +1306,22 @@ int FS_Read( void *buffer, size_t len, int file )
 	filehandle_t *fh;
 	int total;
 
-	fh = FS_FileHandleForNum( file );
-	if( !fh->fstream && !fh->streamHandle )
-		return 0;
-
 	// read in chunks for progress bar
 	if( !len || !buffer )
 		return 0;
 
+	fh = FS_FileHandleForNum( file );
+
 	if( fh->zipEntry )
 		total = FS_ReadPK3File( ( qbyte * )buffer, len, fh );
-	else if ( fh->streamHandle )
+	else if( fh->streamHandle )
 		total = FS_ReadStream( (qbyte *)buffer, len, fh );
-	else
+	else if( fh->gzstream )
+		total = gzread( fh->gzstream, buffer, len );
+	else if( fh->fstream )
 		total = FS_ReadFile( ( qbyte * )buffer, len, fh );
+	else
+		return 0;
 
 	if( total < 0 )
 		return total;
@@ -1301,12 +1366,15 @@ int FS_Printf( int file, const char *format, ... )
 int FS_Write( const void *buffer, size_t len, int file )
 {
 	filehandle_t *fh;
-	size_t block, written, total;
+	size_t written;
 	qbyte *buf;
 
 	fh = FS_FileHandleForNum( file );
 	if( fh->zipEntry )
 		Sys_Error( "FS_Write: writing to compressed file" );
+
+	if( fh->gzstream )
+		return gzwrite( fh->gzstream, buffer, len );
 
 	if( !fh->fstream )
 		return 0;
@@ -1315,21 +1383,13 @@ int FS_Write( const void *buffer, size_t len, int file )
 	if( !buf )
 		return 0;
 
-	for( total = 0; total < len; total += block, buf += block )
-	{
-		block = min( len - total, FS_MAX_BLOCK_SIZE );
+	written = fwrite( buf, 1, len, fh->fstream );
+	if( written != len )
+		Sys_Error( "FS_Write: can't write %i bytes", len );
 
-		written = fwrite( buf, 1, block, fh->fstream );
-		if( written != block )	// try once more
-			written += fwrite( buf + written, 1, block - written, fh->fstream );
+	fh->offset += written;
 
-		if( written != block )
-			Sys_Error( "FS_Write: can't write %i bytes", block );
-	}
-
-	fh->offset += total;
-
-	return total;
+	return written;
 }
 
 /*
@@ -1341,6 +1401,9 @@ int FS_Tell( int file )
 
 	fh = FS_FileHandleForNum( file );
 
+	if( fh->gzstream ) {
+		return gztell( fh->gzstream );
+	}
 	if( fh->streamHandle ) {
 		return wswcurl_tell( fh->streamHandle );
 	}
@@ -1359,6 +1422,13 @@ int FS_Seek( int file, int offset, int whence )
 	qbyte buf[FS_ZIP_BUFSIZE * 4];
 
 	fh = FS_FileHandleForNum( file );
+
+	if( fh->gzstream ) {
+		return gzseek( fh->gzstream, offset, 
+			 whence == FS_SEEK_CUR ? SEEK_CUR : 
+			(whence == FS_SEEK_END ? SEEK_END : 
+			(whence == FS_SEEK_SET ? SEEK_SET : -1)) );
+	}
 
 	currentOffset = (int)fh->offset;
 
@@ -1474,6 +1544,8 @@ int FS_Eof( int file )
 		return wswcurl_eof( fh->streamHandle );
 	if( fh->zipEntry )
 		return fh->zipEntry->restReadCompressed == 0;
+	if( fh->gzstream )
+		return gzeof( fh->gzstream );
 	if( fh->fstream )
 		return feof( fh->fstream );
 	return 1;
@@ -1487,10 +1559,36 @@ int FS_Flush( int file )
 	filehandle_t *fh;
 
 	fh = FS_FileHandleForNum( file );
+	if( fh->gzstream )
+		return gzflush( fh->gzstream, Z_FINISH );
 	if( !fh->fstream )
 		return 0;
 
 	return fflush( fh->fstream );
+}
+
+/*
+* FS_SetCompressionLevel
+*/
+void FS_SetCompressionLevel( int file, int level )
+{
+	filehandle_t *fh = FS_FileHandleForNum( file );
+	if( fh->gzstream ) {
+		fh->gzlevel = level;
+		gzsetparams( fh->gzstream, level,  Z_DEFAULT_STRATEGY );
+	}
+}
+
+/*
+* FS_GetCompressionLevel
+*/
+int	FS_GetCompressionLevel( int file )
+{
+	filehandle_t *fh = FS_FileHandleForNum( file );
+	if( fh->gzstream ) {
+		return fh->gzlevel;
+	}
+	return 0;
 }
 
 /*
@@ -1729,7 +1827,7 @@ void FS_RemovePurePaks( void )
 */
 qboolean FS_IsPureFile( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
 
 	if( !search || !search->pack )
 		return qfalse;
@@ -1742,7 +1840,7 @@ qboolean FS_IsPureFile( const char *filename )
 */
 const char *FS_FileManifest( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
 
 	if( !search || !search->pack )
 		return NULL;
@@ -1903,29 +2001,26 @@ qboolean FS_MoveBaseFile( const char *src, const char *dst )
 static time_t _FS_FileMTime( const char *filename, qboolean base )
 {
 	searchpath_t *search;
+	packfile_t *pakFile = NULL;
+	FILE *f = NULL;
 
 	if( base ) {
-		search = FS_SearchPathForBaseFile( filename );
+		search = FS_SearchPathForBaseFile( filename, &f );
 	} else {
-		search = FS_SearchPathForFile( filename );
+		search = FS_SearchPathForFile( filename, &pakFile, &f );
 	}
 
 	if( !search ) {
 		return 0;
 	}
 
-	if( search->pack ) {
-		packfile_t *pakFile;
-
+	if( pakFile ) {
 		assert( !base );
-
-		if( FS_SearchPakForFile( search->pack, filename, &pakFile ) ) {
-			return pakFile->mtime;
-		}
+		return pakFile->mtime;
 	} else {
-		if( FS_SearchDirectoryForFile( search, filename, NULL ) ) {
-			return Sys_FS_FileMTime( tempname );
-		}
+		assert( f );
+		fclose( f );
+		return Sys_FS_FileMTime( tempname );
 	}
 
 	return -1;
@@ -1987,8 +2082,12 @@ static void FS_ReadPackManifest( pack_t *pack )
 {
 	int size;
 	int file = 0;
+	packfile_t *pakFile = NULL;
 
-	size = _FS_FOpenPakFile( FS_PAK_MANIFEST_FILE, pack, &file );
+	if( !FS_SearchPakForFile( pack, FS_PAK_MANIFEST_FILE, &pakFile ) )
+		return;
+
+	size = _FS_FOpenPakFile( pakFile, &file );
 	if( (size > -1) && file )
 	{
 		pack->manifest = ( char* )FS_Malloc( size + 1 );
@@ -2081,7 +2180,8 @@ static time_t FS_DosTimeToUnixtime( unsigned dosDateTime )
 * 
 * Get Info about the current file in the zipfile, with internal only info
 */
-static unsigned FS_PK3GetFileInfo( FILE *f, unsigned pos, unsigned byteBeforeTheZipFile, packfile_t *file, size_t *fileNameLen, int *crc )
+static unsigned FS_PK3GetFileInfo( FILE *f, unsigned pos, unsigned byteBeforeTheZipFile, 
+	packfile_t *file, size_t *fileNameLen, int *crc )
 {
 	size_t sizeRead;
 	unsigned dosDateTime;
@@ -2258,6 +2358,7 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 		packfile_t *trie_file;
 
 		file->name = names;
+		file->pakname = pack->filename;
 
 		offset = FS_PK3GetFileInfo( fin, centralPos, byteBeforeTheZipFile, file, &len, &checksums[i] );
 
@@ -2918,7 +3019,7 @@ void FS_CreateAbsolutePath( const char *path )
 const char *FS_AbsoluteNameForFile( const char *filename )
 {
 	static char absolutename[1024]; // fixme
-	searchpath_t *search = FS_SearchPathForFile( filename );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
 
 	if( !search || search->pack )
 		return NULL;
@@ -2936,7 +3037,7 @@ const char *FS_AbsoluteNameForFile( const char *filename )
 const char *FS_AbsoluteNameForBaseFile( const char *filename )
 {
 	static char absolutename[1024]; // fixme
-	searchpath_t *search = FS_SearchPathForBaseFile( filename );
+	searchpath_t *search = FS_SearchPathForBaseFile( filename, NULL );
 
 	if( !search )
 		return NULL;
@@ -2951,7 +3052,7 @@ const char *FS_AbsoluteNameForBaseFile( const char *filename )
 const char *FS_BaseNameForFile( const char *filename )
 {
 	const char *p;
-	searchpath_t *search = FS_SearchPathForFile( filename );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
 
 	if( !search || search->pack )
 		return NULL;
@@ -3654,7 +3755,7 @@ int FS_Rescan( void )
 		newpaks += FS_UpdateGameDirectory( fs_game->string );
 
 	if( newpaks )
-		FS_AddNotifications( FS_NOTIFT_NEWPAKS );
+		FS_AddNotifications( FS_NOTIFY_NEWPAKS );
 
 	return newpaks;
 }

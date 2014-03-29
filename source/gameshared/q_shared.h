@@ -329,6 +329,11 @@ void Com_Error( com_error_code_t code, const char *format, ... );
 #define FS_APPEND			2
 #define FS_NOSIZE			0x80	// FS_NOSIZE bit tells that we're not interested in real size of the file
 									// it is merely a hint a proper file size may still be returned by FS_Open
+#define FS_GZ				0x100	// compress on write and decompress on read automatically
+									// doesn't work for pk3 files
+#define FS_UPDATE			0x200
+
+#define FS_RWA_MASK			(FS_READ|FS_WRITE|FS_APPEND)
 
 #define FS_SEEK_CUR			0
 #define FS_SEEK_SET			1
