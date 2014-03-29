@@ -707,7 +707,7 @@ FILESYSTEM
 ==============================================================
 */
 
-#define FS_NOTIFT_NEWPAKS	0x01
+#define FS_NOTIFY_NEWPAKS	0x01
 
 typedef void (*fs_read_cb)(int filenum, const void *buf, size_t numb, float progress, void *customp);
 typedef void (*fs_done_cb)(int filenum, int status, void *customp);
@@ -746,6 +746,9 @@ int	    FS_Seek( int file, int offset, int whence );
 int	    FS_Eof( int file );
 int	    FS_Flush( int file );
 qboolean FS_IsUrl( const char *url );
+
+void	FS_SetCompressionLevel( int file, int level );
+int		FS_GetCompressionLevel( int file );
 
 // file loading
 int	    FS_LoadFileExt( const char *path, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );

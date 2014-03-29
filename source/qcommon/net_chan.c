@@ -303,7 +303,7 @@ int Netchan_ZLibCompressChunk( qbyte *in, int len_in, qbyte *out, int max_len_ou
 	zs.adler = 0;
 	zs.reserved = 0;
 
-	result = deflateInit2( &zs, method, Z_DEFLATED, wbits, 9, Z_DEFAULT_STRATEGY );
+	result = deflateInit2( &zs, method, Z_DEFLATED, wbits, Z_DEFAULT_COMPRESSION, Z_DEFAULT_STRATEGY );
 	if( result != Z_OK )
 		return -1;
 
@@ -335,7 +335,8 @@ int Netchan_CompressMessage( msg_t *msg )
 	memset( msg_process_data, 0, sizeof( msg_process_data ) );
 
 	//compress the message
-	length = Netchan_ZLibCompressChunk( msg->data, msg->cursize, msg_process_data, sizeof( msg_process_data ), Z_DEFAULT_COMPRESSION, -MAX_WBITS );
+	length = Netchan_ZLibCompressChunk( msg->data, msg->cursize, 
+		msg_process_data, sizeof( msg_process_data ), Z_DEFAULT_COMPRESSION, -MAX_WBITS );
 	if( length < 0 )  // failed to compress, return the error
 		return length;
 

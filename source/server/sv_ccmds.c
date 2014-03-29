@@ -433,7 +433,7 @@ done:
 	ML_Update();
 
 	// if there are any new filesystem entries, restart
-	if( FS_GetNotifications() & FS_NOTIFT_NEWPAKS )
+	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS )
 	{
 		if( sv.state != ss_dead )
 		{
@@ -606,9 +606,9 @@ static void SV_Map_f( void )
 		}
 	}
 
-	if( FS_GetNotifications() & FS_NOTIFT_NEWPAKS )
+	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS )
 	{
-		FS_RemoveNotifications( FS_NOTIFT_NEWPAKS );
+		FS_RemoveNotifications( FS_NOTIFY_NEWPAKS );
 		sv.state = ss_dead; // don't save current level when changing
 	}
 	else if( !Q_stricmp( Cmd_Argv( 0 ), "map" ) || !Q_stricmp( Cmd_Argv( 0 ), "devmap" ) )
