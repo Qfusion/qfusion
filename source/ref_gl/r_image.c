@@ -529,7 +529,7 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	assert( samples );
 
 	// we can't properly mipmap a NPT-texture in software
-	if( glConfig.ext.texture_non_power_of_two && ( flags & IT_NOMIPMAP ) 
+	if( ( glConfig.ext.texture_non_power_of_two && ( flags & IT_NOMIPMAP ) )
 		|| ( subImage && noScale ) )
 	{
 		scaledWidth = width;
