@@ -467,7 +467,7 @@ void Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m )
 * Matrix4_ObliqueNearClipping
 *
 * Lengyel, Eric. "Oblique View Frustum Depth Projection and Clipping"
-* Journal of Game Development, Vol. 1, No. 2 (2005), Charles River Media, pp. 5–16.
+* Journal of Game Development, Vol. 1, No. 2 (2005), Charles River Media, pp. 5â€“16.
 *
 * Version that works both for perspective and orthographic projections.
 */
