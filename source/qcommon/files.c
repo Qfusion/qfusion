@@ -1446,11 +1446,11 @@ int FS_Seek( int file, int offset, int whence )
 		return 0;
 
 	if( fh->streamHandle ) {
-		size_t rxSize, rxReceived, returned;
+		size_t rxReceived, returned;
 		wswcurl_req *newreq;
 		char *url;
 
-		rxSize = wswcurl_getsize( fh->streamHandle, &rxReceived );
+		wswcurl_getsize( fh->streamHandle, &rxReceived );
 		returned = wswcurl_tell( fh->streamHandle );
 		if( (int)rxReceived < offset ) {
 			return -1;
