@@ -520,7 +520,7 @@ struct weaponinfo_s *CG_CreateWeaponZeroModel( char *filename )
 		return weaponinfo;
 
 	if( cg_debugWeaponModels->integer )
-		CG_Printf( "%sWEAPmodel: Failed to load generic weapon. Creatin fake one%s\n", S_COLOR_YELLOW, S_COLOR_WHITE );
+		CG_Printf( "%sWEAPmodel: Failed to load generic weapon. Creating a fake one%s\n", S_COLOR_YELLOW, S_COLOR_WHITE );
 
 	CG_CreateHandDefaultAnimations( weaponinfo );
 	Vector4Set( weaponinfo->outlineColor, 0, 0, 0, 255 );

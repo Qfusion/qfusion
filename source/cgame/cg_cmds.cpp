@@ -527,7 +527,7 @@ static void CG_Cmd_DemoGet_f( void )
 	if( trap_Cmd_Argc() != 2 || ( atoi( trap_Cmd_Argv( 1 ) ) <= 0 && trap_Cmd_Argv( 1 )[0] != '.' ) )
 	{
 		CG_Printf( "Usage: demoget <number>\n" );
-		CG_Printf( "Donwloads a demo from the server\n" );
+		CG_Printf( "Downloads a demo from the server\n" );
 		CG_Printf( "Use the demolist command to see list of demos on the server\n" );
 		return;
 	}
