@@ -433,7 +433,18 @@ qboolean G_AllowDownload( edict_t *ent, const char *requestname, const char *upl
 	// allow downloading demos
 	if( g_uploads_demos->integer )
 	{
-		if( !Q_stricmp( COM_FileExtension( uploadname ), va( ".wd%i", game.protocol ) ) )
+		const char *extension = COM_FileExtension( uploadname );
+		const char *protocol = va( "%i", game.protocol );
+		size_t extension_len, protocol_len;
+
+		if( !extension )
+			return qfalse;
+
+		extension_len = strlen( extension );
+		protocol_len = strlen( protocol );
+
+		if( extension_len > protocol_len
+			&& !Q_stricmp( extension + extension_len - protocol_len, protocol ) )
 		{
 			const char *p;
 
