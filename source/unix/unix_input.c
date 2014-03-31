@@ -445,7 +445,7 @@ static char *XLateKey( int keycode, int *key )
 		case XK_Super_R: *key = K_WIN; break;
 		case XK_Multi_key: *key = K_WIN; break;
 		case XK_Menu: *key = K_MENU; break;
-		case XK_KP_Begin: *key = KP_5; break;
+		case XK_KP_Begin: case XK_KP_5: *key = KP_5; break;
 		case XK_KP_Insert: case XK_KP_0: *key = KP_INS; break;
 		case XK_Insert: *key = K_INS; break;
 		case XK_KP_Multiply: *key = KP_STAR; break;
@@ -587,6 +587,8 @@ static void handle_key(XGenericEventCookie *cookie)
 
 	if(name && name[0] && down) {
 		qwchar wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_down));
+		if( wc == -1 )
+			wc = ( qwchar )key;
 
 		// Convert ctrl-c / ctrl-v combinations to the expected events
 		if( Key_IsDown(K_LCTRL) || Key_IsDown(K_RCTRL) )

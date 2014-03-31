@@ -68,6 +68,59 @@ static int chat_prestep = 0;
 static unsigned int chat_linepos = 0;
 static unsigned int chat_bufferlen = 0;
 
+static int Con_NumPadValue( int key )
+{
+	switch( key )
+	{
+	case KP_SLASH:
+		return '/';
+
+	case KP_STAR:
+		return '*';
+
+	case KP_MINUS:
+		return '-';
+
+	case KP_PLUS:
+		return '+';
+
+	case KP_HOME:
+		return '7';
+
+	case KP_UPARROW:
+		return '8';
+
+	case KP_PGUP:
+		return '9';
+
+	case KP_LEFTARROW:
+		return '4';
+
+	case KP_5:
+		return '5';
+
+	case KP_RIGHTARROW:
+		return '6';
+
+	case KP_END:
+		return '1';
+
+	case KP_DOWNARROW:
+		return '2';
+
+	case KP_PGDN:
+		return '3';
+
+	case KP_INS:
+		return '0';
+
+	case KP_DEL:
+		return '.';
+	}
+
+	return key;
+}
+
 static void Con_ClearTyping( void )
 {
 	key_lines[edit_line][1] = 0; // clear any typing
@@ -1121,6 +1174,8 @@ void Con_CharEvent( qwchar key )
 	if( !con_initialized )
 		return;
 
+	key = Con_NumPadValue( key );
+
 	if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CONNECTED )
 		return;
 
@@ -1342,51 +1397,7 @@ void Con_KeyDown( int key )
 	if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CONNECTED )
 		return;
 
-	switch( key )
-	{
-	case KP_SLASH:
-		key = '/';
-		break;
-	case KP_MINUS:
-		key = '-';
-		break;
-	case KP_PLUS:
-		key = '+';
-		break;
-	case KP_HOME:
-		key = '7';
-		break;
-	case KP_UPARROW:
-		key = '8';
-		break;
-	case KP_PGUP:
-		key = '9';
-		break;
-	case KP_LEFTARROW:
-		key = '4';
-		break;
-	case KP_5:
-		key = '5';
-		break;
-	case KP_RIGHTARROW:
-		key = '6';
-		break;
-	case KP_END:
-		key = '1';
-		break;
-	case KP_DOWNARROW:
-		key = '2';
-		break;
-	case KP_PGDN:
-		key = '3';
-		break;
-	case KP_INS:
-		key = '0';
-		break;
-	case KP_DEL:
-		key = '.';
-		break;
-	}
+	key = Con_NumPadValue( key );
 
 	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT)) )
 	{
@@ -1627,6 +1638,8 @@ void Con_MessageCharEvent( qwchar key )
 	if( !con_initialized )
 		return;
 
+	key = Con_NumPadValue( key );
+
 	switch( key )
 	{
 	case 12:
@@ -1751,6 +1764,8 @@ void Con_MessageKeyDown( int key )
 
 	if( !con_initialized )
 		return;
+
+	key = Con_NumPadValue( key );
 
 	if( key == K_ENTER || key == KP_ENTER )
 	{
