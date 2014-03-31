@@ -778,10 +778,12 @@ void IN_Activate( qboolean active )
 	if( active )
 	{
 		install_grabs_mouse();
+		install_grabs_keyboard();
 	}
 	else
 	{
 		uninstall_grabs_mouse();
+		uninstall_grabs_keyboard();
 	}
 }
 
