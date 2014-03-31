@@ -587,7 +587,7 @@ static void handle_key(XGenericEventCookie *cookie)
 
 	if(name && name[0] && down) {
 		qwchar wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_down));
-		if( wc == -1 )
+		if( wc == -1 && key > K_NUMLOCK && key <= KP_EQUAL )
 			wc = ( qwchar )key;
 
 		// Convert ctrl-c / ctrl-v combinations to the expected events
