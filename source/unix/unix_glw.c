@@ -456,21 +456,6 @@ static void _x11_SetNoResize( Window w, int width, int height )
 	}
 }
 
-/*
-* This function checks if window is mapped and we can send events.
-*/
-static qboolean _x11_IsWindowMapped( Window w )
-{
-	XWindowAttributes attr;
-
-	XGetWindowAttributes( x11display.dpy, w, &attr );
-	if (attr.map_state != IsUnmapped) {
-		return qtrue;
-	} else {
-		return qfalse;
-	}
-}
- 
 /*****************************************************************************/
 
 /*
@@ -578,30 +563,23 @@ static void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
 	Atom NET_WM_STATE;
 	Atom NET_WM_STATE_FULLSCREEN;
 	Atom NET_WM_BYPASS_COMPOSITOR;
-	long bypass_compositor_value;
-	Atom atoms[1];
-	int count = 0;
 
 	if( !x11display.features.wmStateFullscreen )
 		return;
 
 	NET_WM_BYPASS_COMPOSITOR = XInternAtom( x11display.dpy, "_NET_WM_BYPASS_COMPOSITOR", False );
-	bypass_compositor_value = fullscreen ? 1 : 0;
 	XChangeProperty( x11display.dpy, x11display.win, NET_WM_BYPASS_COMPOSITOR, XA_CARDINAL, 32,
-		PropModeReplace, (unsigned char *)&bypass_compositor_value, 1 );
+		PropModeReplace, (unsigned char *)&fullscreen, 1 );
 
-	NET_WM_STATE = XInternAtom( x11display.dpy, "_NET_WM_STATE", True );
-	NET_WM_STATE_FULLSCREEN = XInternAtom( x11display.dpy, "_NET_WM_STATE_FULLSCREEN", True );
+	NET_WM_STATE = XInternAtom( x11display.dpy, "_NET_WM_STATE", False );
+	NET_WM_STATE_FULLSCREEN = XInternAtom( x11display.dpy, "_NET_WM_STATE_FULLSCREEN", False );
 
 	if( fullscreen ) {
-	    atoms[count++] = NET_WM_STATE_FULLSCREEN;
-	}
-
-	if( count > 0 ) {
 		XChangeProperty( x11display.dpy, x11display.win, NET_WM_STATE, XA_ATOM, 32,
-			PropModeReplace, (unsigned char *)atoms, count );
+			PropModeReplace, (unsigned char *)&NET_WM_STATE_FULLSCREEN, 1 );
 	}
 	else {
+        // Removing fullscreen property if it is present (we already set it).
 		XDeleteProperty( x11display.dpy, x11display.win, NET_WM_STATE );
 	}
 
@@ -614,12 +592,10 @@ static void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
 	xev.xclient.data.l[1] = NET_WM_STATE_FULLSCREEN;
 	xev.xclient.data.l[2] = 0;
  
-	if( !_x11_IsWindowMapped( x11display.win ) ) {
-		XMapWindow( x11display.dpy, x11display.win );
-	}
+	XMapWindow( x11display.dpy, x11display.win );
 
 	XSendEvent( x11display.dpy, DefaultRootWindow( x11display.dpy ), False,
-		SubstructureNotifyMask, &xev );
+		SubstructureRedirectMask | SubstructureNotifyMask, &xev );
 }
 
 /*****************************************************************************/
