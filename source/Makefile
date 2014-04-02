@@ -265,7 +265,7 @@ else
 LIB=lib
 endif
 
-LDFLAGS_CLIENT=-lz -lpthread -lX11 -lXext -lXi -lrt $(shell curl-config --libs)
+LDFLAGS_CLIENT=-lz -lpthread -lX11 -lXext -lXi -lXrandr -lrt $(shell curl-config --libs)
 LDFLAGS_DED=-lz -lpthread $(shell curl-config --libs)
 LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lz -lpthread $(shell curl-config --libs)
