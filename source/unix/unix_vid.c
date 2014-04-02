@@ -126,14 +126,24 @@ void VID_FlashWindow( int count )
 */
 qboolean VID_GetDisplaySize( int *width, int *height )
 {
-	Display *dpy = XOpenDisplay( NULL );
-	if( dpy ) {
-		int scr = DefaultScreen( dpy );
+	XRRScreenConfiguration *xrrConfig;
+	XRRScreenSize *xrrSizes;
+	Display *dpy;
+	Window root;
+	Rotation rotation;
+	SizeID size_id;
+	int num_sizes;
 
-		*width = DisplayWidth( dpy, scr );
-		*height = DisplayHeight( dpy, scr );
-		
-		XCloseDisplay( dpy );
+	dpy = XOpenDisplay( NULL );
+	if( dpy )
+	{
+		root = DefaultRootWindow( dpy );
+		xrrConfig = XRRGetScreenInfo( dpy, root );
+		xrrSizes = XRRConfigSizes( xrrConfig, &num_sizes );
+		size_id = XRRConfigCurrentConfiguration( xrrConfig, &rotation );
+
+		*width = xrrSizes[size_id].width;
+		*height = xrrSizes[size_id].height;
 
 		return qtrue;
 	}
