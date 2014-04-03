@@ -145,6 +145,7 @@ qboolean VID_GetDisplaySize( int *width, int *height )
 		*width = xrrSizes[size_id].width;
 		*height = xrrSizes[size_id].height;
 
+		XCloseDisplay( dpy );
 		return qtrue;
 	}
 
