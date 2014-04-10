@@ -959,7 +959,10 @@ int COM_ValidatePlayerColor( int rgbcolor )
 	if( r + g + b >= 128 * 3 )
 		return rgbcolor;
 
-	return COLOR_RGB( 128 + r, 128 + g, 128 + b );
+	r = r > 127 ? 255 : 128 + r;
+	g = g > 127 ? 255 : 128 + g;
+	b = b > 127 ? 255 : 128 + b;
+	return COLOR_RGB( r, g, b );
 }
 
 
