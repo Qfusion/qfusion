@@ -10,6 +10,7 @@
 #include "kernel/ui_main.h"
 #include "kernel/ui_boneposes.h"
 #include "widgets/ui_widgets.h"
+#include "../gameshared/q_shared.h"
 
 #define MODELVIEW_EPSILON		1.0f
 
@@ -169,7 +170,8 @@ public:
 			else if (*it == "model-shader-color")
 			{
 				Rocket::Core::Colourb color = GetProperty(*it)->Get<Rocket::Core::Colourb>();
-				Vector4Set(entity.shaderRGBA, color.red, color.green, color.blue, color.alpha);
+				int shaderColor = COM_ValidatePlayerColor( COLOR_RGB( color.red, color.green, color.blue ) );
+				Vector4Set(entity.shaderRGBA, COLOR_R( shaderColor ), COLOR_G( shaderColor ), COLOR_B( shaderColor ), color.alpha);
 			}
 			else if (*it == "model-fov-x")
 			{
