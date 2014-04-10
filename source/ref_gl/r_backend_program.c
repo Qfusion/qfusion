@@ -912,6 +912,10 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		else
 		{
 			// vertex lighting
+			VectorSet( lightDir, 0.1f, 0.2f, 0.7f );
+			VectorSet( ambient, rb.minLight, rb.minLight, rb.minLight );
+			VectorSet( diffuse, rb.minLight, rb.minLight, rb.minLight );
+			
 			programFeatures |= GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT|GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT_MIX;
 		}
 	}
