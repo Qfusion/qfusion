@@ -113,7 +113,7 @@ void main(void)
 #ifdef APPLY_CEL_LIGHT_ADD
 	outColor.rgb += myhalf3(qf_textureCube(u_CelLightTexture, v_TexCoordCube));
 #else
-	tempColor = myhalf4(qf_textureCube(u_EntityDecalTexture, v_TexCoordCube));
+	tempColor = myhalf4(qf_textureCube(u_CelLightTexture, v_TexCoordCube));
 	outColor.rgb = mix(outColor.rgb, tempColor.rgb, tempColor.a);
 #endif
 #endif // APPLY_CEL_LIGHT
