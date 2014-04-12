@@ -1015,7 +1015,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 		"#define a_SpriteUpAxis vec3(0.0)\n"
 		"#endif\n"
 		"\n"
-		"void QF_DeformVerts(inout vec4 Position, inout vec3 Normal, in vec2 TexCoord)\n"
+		"void QF_DeformVerts(inout vec4 Position, inout vec3 Normal, inout vec2 TexCoord)\n"
 		"{\n"
 		"float t = 0.0;\n"
 		"vec3 dist;\n"
@@ -1056,11 +1056,12 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 				break;
 			case DEFORMV_AUTOSPRITE:
 				Q_strncatz( program,
-						"right = (1.0 - TexCoord.s * 2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
-						"up = (1.0 - TexCoord.t * 2.0) * u_QF_ViewAxis[2];\n"
+						"right = (1.0 - step(0.5, TexCoord.s) * 2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
+						"up = (1.0 - step(0.5, TexCoord.t) * 2.0) * u_QF_ViewAxis[2];\n"
 						"forward = -1 * u_QF_ViewAxis[0];\n"
 						"Position.xyz = a_SpritePoint.xyz + (right + up) * a_SpritePoint.w;\n"
-						"Normal.xyz = forward;\n",
+						"Normal.xyz = forward;\n"
+						"TexCoord.st = vec2(step(0.5, TexCoord.s),step(0.5, TexCoord.t));\n",
 					sizeof( program ) );
 				break;
 			case DEFORMV_AUTOPARTICLE:
