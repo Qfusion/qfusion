@@ -15,7 +15,45 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
-<h2>Version 2.28.2 WIP - 2014/03/12</h2>
+<h2>Version 2.29.0 WIP - 2014/04/13</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Function handles were incorrectly treated as handles in value assignment
+<li>Fixed RWX section in as_callfunc_arm_gcc.S (Thanks Julian Ospald)
+<li>Fixed assert failure with implicit cast and get accessor (Thanks Amer Koleci)
+<li>Fixed opCall on global variable (Thanks gjl)
+<li>Fixed crash when calling opCall on a property accessor on a global variable (Thanks gjl)
+<li>Fixed bug in compiler where temporary variable could be overwritten when calling overloaded operators (Thanks Jason Goepel)
+<li>Fixed bug in tokenizer for one line comments on the last line of a script (Thanks Jason Goepel)
+</ul>
+<li>Library
+<ul>
+<li>Added the flag asOBJ_APP_ARRAY to support registering types that are really C arrays
+<li>The parameter names from the declaration are now stored in the functions (Thanks GGLucas)
+<li>The parameter names are stored with the saved bytecode, unless debug information is stripped
+</ul>
+<li>Library interface
+<ul>
+<li>asIScriptFunction::GetDeclaration has an optional argument to include the parameter names (Thanks GGLucas)
+<li>Added asIScriptFunction::GetParam that can optionally return both the name and default argument in addition to the type id
+<li>Deprecated asIScriptFunction::GetParamTypeId
+<li>Added GetObjectTypeByDecl to both engine and module
+</ul>
+<li>Script language
+<ul>
+<li>Named arguments in function calls are now supported (Thanks GGLucas)
+<li>auto can now be used to tell the compiler to resolve the type of a variable from the initialization expression (Thanks GGLucas)
+</ul>
+<li>Add-ons
+<ul>
+<li>The GetTypeTraits&lt;T&gt;() helper function automatically detects when to use asOBJ_APP_ARRAY
+<li>Added default factory and resize method to the grid
+</ul>
+</ul>
+
+<h2>Version 2.28.2 - 2014/03/18</h2>
 
 <ul>
 <li>Bug fixes

@@ -1559,44 +1559,43 @@ int asCScriptEngine::RegisterObjectType(const char *name, int byteSize, asDWORD 
 		if( flags & asOBJ_APP_CLASS )
 		{
 			// Must not set the primitive or float flag
-			if( flags & (asOBJ_APP_PRIMITIVE | asOBJ_APP_FLOAT) )
+			if( flags & (asOBJ_APP_PRIMITIVE | asOBJ_APP_FLOAT | asOBJ_APP_ARRAY) )
 				return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 		}
-		else if( flags & asOBJ_APP_PRIMITIVE )
+		else
 		{
-			// Must not set the class flags nor the float flag
-			if( flags & (asOBJ_APP_CLASS                  |
-				         asOBJ_APP_CLASS_CONSTRUCTOR      |
+			// Must not set the class properties, without the class flag
+			if( flags & (asOBJ_APP_CLASS_CONSTRUCTOR      |
 						 asOBJ_APP_CLASS_DESTRUCTOR       |
 						 asOBJ_APP_CLASS_ASSIGNMENT       |
 						 asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
-						 asOBJ_APP_FLOAT                  |
 						 asOBJ_APP_CLASS_ALLINTS          |
 						 asOBJ_APP_CLASS_ALLFLOATS) )
+			{
+				return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
+			}
+		}
+
+		if( flags & asOBJ_APP_PRIMITIVE )
+		{
+			if( flags & (asOBJ_APP_CLASS |
+						 asOBJ_APP_FLOAT |
+						 asOBJ_APP_ARRAY) )
 				return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 		}
 		else if( flags & asOBJ_APP_FLOAT )
 		{
-			// Must not set the class flags nor the primitive flag
-			if( flags & (asOBJ_APP_CLASS                  |
-				         asOBJ_APP_CLASS_CONSTRUCTOR      |
-						 asOBJ_APP_CLASS_DESTRUCTOR       |
-						 asOBJ_APP_CLASS_ASSIGNMENT       |
-						 asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
-						 asOBJ_APP_PRIMITIVE              |
-						 asOBJ_APP_CLASS_ALLINTS          |
-						 asOBJ_APP_CLASS_ALLFLOATS) )
+			if( flags & (asOBJ_APP_CLASS     |
+						 asOBJ_APP_PRIMITIVE |
+						 asOBJ_APP_ARRAY) )
 				return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 		}
-		else if( flags & (asOBJ_APP_CLASS_CONSTRUCTOR      |
-		                  asOBJ_APP_CLASS_DESTRUCTOR       |
-		                  asOBJ_APP_CLASS_ASSIGNMENT       |
-						  asOBJ_APP_CLASS_COPY_CONSTRUCTOR |
-						  asOBJ_APP_CLASS_ALLINTS          |
-						  asOBJ_APP_CLASS_ALLFLOATS) )
+		else if( flags & asOBJ_APP_ARRAY )
 		{
-			// Must not set the class properties, without the class flag
-			return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
+			if( flags & (asOBJ_APP_CLASS     |
+						 asOBJ_APP_PRIMITIVE |
+						 asOBJ_APP_FLOAT) )
+				return ConfigError(asINVALID_ARG, "RegisterObjectType", name, 0);
 		}
 	}
 	else
@@ -4372,6 +4371,23 @@ void asCScriptEngine::RemoveFromTypeIdMap(asCObjectType *type)
 			mapTypeIdToDataType.Erase(old);
 		}
 	}
+}
+
+// interface
+asIObjectType *asCScriptEngine::GetObjectTypeByDecl(const char *decl) const
+{
+	asCDataType dt;
+	// This cast is ok, because we are not changing anything in the engine
+	asCBuilder bld(const_cast<asCScriptEngine*>(this), 0);
+
+	// Don't write parser errors to the message callback
+	bld.silent = true;
+	
+	int r = bld.ParseDataType(decl, &dt, defaultNamespace);
+	if( r < 0 )
+		return 0;
+
+	return dt.GetObjectType();
 }
 
 // interface

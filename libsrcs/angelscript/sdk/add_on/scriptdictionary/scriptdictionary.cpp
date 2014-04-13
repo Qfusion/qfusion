@@ -238,18 +238,76 @@ void CScriptDictionary::Set(const string &key, void *value, int typeId)
 // through implicit conversions. This simplifies the management of the
 // numeric types when the script retrieves the stored value using a 
 // different type.
-void CScriptDictionary::Set(const string &key, asINT64 &value)
+void CScriptDictionary::Set(const string &key, const asINT64 &value)
 {
-	Set(key, &value, asTYPEID_INT64);
+	Set(key, const_cast<asINT64*>(&value), asTYPEID_INT64);
 }
 
 // This overloaded method is implemented so that all floating point types 
 // will be stored in the dictionary as double through implicit conversions. 
 // This simplifies the management of the numeric types when the script 
 // retrieves the stored value using a different type.
-void CScriptDictionary::Set(const string &key, double &value)
+void CScriptDictionary::Set(const string &key, const double &value)
 {
-	Set(key, &value, asTYPEID_DOUBLE);
+	Set(key, const_cast<double*>(&value), asTYPEID_DOUBLE);
+}
+
+// Internal. Shared with both dictionary and iterator
+bool CScriptDictionary::GetValue(const valueStruct &vs, void *value, int typeId) const
+{
+	// Return the value
+	if( typeId & asTYPEID_OBJHANDLE )
+	{
+		// A handle can be retrieved if the stored type is a handle of same or compatible type
+		// or if the stored type is an object that implements the interface that the handle refer to.
+		if( (vs.typeId & asTYPEID_MASK_OBJECT) && 
+			engine->IsHandleCompatibleWithObject(vs.valueObj, vs.typeId, typeId) )
+		{
+			engine->AddRefScriptObject(vs.valueObj, engine->GetObjectTypeById(vs.typeId));
+			*(void**)value = vs.valueObj;
+
+			return true;
+		}
+	}
+	else if( typeId & asTYPEID_MASK_OBJECT )
+	{
+		// Verify that the copy can be made
+		bool isCompatible = false;
+		if( vs.typeId == typeId )
+			isCompatible = true;
+
+		// Copy the object into the given reference
+		if( isCompatible )
+		{
+			engine->AssignScriptObject(value, vs.valueObj, engine->GetObjectTypeById(typeId));
+
+			return true;
+		}
+	}
+	else
+	{
+		if( vs.typeId == typeId )
+		{
+			int size = engine->GetSizeOfPrimitiveType(typeId);
+			memcpy(value, &vs.valueInt, size);
+			return true;
+		}
+
+		// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
+		if( vs.typeId == asTYPEID_INT64 && typeId == asTYPEID_DOUBLE )
+		{
+			*(double*)value = double(vs.valueInt);
+			return true;
+		}
+		else if( vs.typeId == asTYPEID_DOUBLE && typeId == asTYPEID_INT64 )
+		{
+			*(asINT64*)value = asINT64(vs.valueFlt);
+			return true;
+		}
+	}
+
+	// It was not possible to retrieve the value using the desired typeId
+	return false;
 }
 
 // Returns true if the value was successfully retrieved
@@ -258,64 +316,24 @@ bool CScriptDictionary::Get(const string &key, void *value, int typeId) const
 	map<string, valueStruct>::const_iterator it;
 	it = dict.find(key);
 	if( it != dict.end() )
-	{
-		// Return the value
-		if( typeId & asTYPEID_OBJHANDLE )
-		{
-			// A handle can be retrieved if the stored type is a handle of same or compatible type
-			// or if the stored type is an object that implements the interface that the handle refer to.
-			if( (it->second.typeId & asTYPEID_MASK_OBJECT) && 
-				engine->IsHandleCompatibleWithObject(it->second.valueObj, it->second.typeId, typeId) )
-			{
-				engine->AddRefScriptObject(it->second.valueObj, engine->GetObjectTypeById(it->second.typeId));
-				*(void**)value = it->second.valueObj;
-
-				return true;
-			}
-		}
-		else if( typeId & asTYPEID_MASK_OBJECT )
-		{
-			// Verify that the copy can be made
-			bool isCompatible = false;
-			if( it->second.typeId == typeId )
-				isCompatible = true;
-
-			// Copy the object into the given reference
-			if( isCompatible )
-			{
-				engine->AssignScriptObject(value, it->second.valueObj, engine->GetObjectTypeById(typeId));
-
-				return true;
-			}
-		}
-		else
-		{
-			if( it->second.typeId == typeId )
-			{
-				int size = engine->GetSizeOfPrimitiveType(typeId);
-				memcpy(value, &it->second.valueInt, size);
-				return true;
-			}
-
-			// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
-			if( it->second.typeId == asTYPEID_INT64 && typeId == asTYPEID_DOUBLE )
-			{
-				*(double*)value = double(it->second.valueInt);
-				return true;
-			}
-			else if( it->second.typeId == asTYPEID_DOUBLE && typeId == asTYPEID_INT64 )
-			{
-				*(asINT64*)value = asINT64(it->second.valueFlt);
-				return true;
-			}
-		}
-	}
+		return GetValue(it->second, value, typeId);
 
 	// AngelScript has already initialized the value with a default value,
 	// so we don't have to do anything if we don't find the element, or if 
 	// the element is incompatible with the requested type.
 
 	return false;
+}
+
+// Returns the type id of the stored value
+int CScriptDictionary::GetTypeId(const string &key) const
+{
+	map<string, valueStruct>::const_iterator it;
+	it = dict.find(key);
+	if( it != dict.end() )
+		return it->second.typeId;
+
+	return -1;
 }
 
 bool CScriptDictionary::Get(const string &key, asINT64 &value) const
@@ -392,11 +410,10 @@ CScriptArray* CScriptDictionary::GetKeys() const
 	//                 Only problem is if multiple engines are used, as they may not
 	//                 share the same type id. Alternatively it can be stored in the 
 	//                 user data for the dictionary type.
-	int stringArrayType = engine->GetTypeIdByDecl("array<string>");
-	asIObjectType *ot = engine->GetObjectTypeById(stringArrayType);
+	asIObjectType *ot = engine->GetObjectTypeByDecl("array<string>");
 
 	// Create the array object
-	CScriptArray *array = new CScriptArray(asUINT(dict.size()), ot);
+	CScriptArray *array = CScriptArray::Create(ot, asUINT(dict.size()));
 	long current = -1;
 	std::map<string, valueStruct>::const_iterator it;
 	for( it = dict.begin(); it != dict.end(); it++ )
@@ -575,13 +592,13 @@ void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectMethod("dictionary", "dictionary &opAssign(const dictionary &in)", asMETHODPR(CScriptDictionary, operator=, (const CScriptDictionary &), CScriptDictionary&), asCALL_THISCALL); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asMETHODPR(CScriptDictionary,Set,(const string&,void*,int),void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, const ?&in)", asMETHODPR(CScriptDictionary,Set,(const string&,void*,int),void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out) const", asMETHODPR(CScriptDictionary,Get,(const string&,void*,int) const,bool), asCALL_THISCALL); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, int64&in)", asMETHODPR(CScriptDictionary,Set,(const string&,asINT64&),void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, const int64&in)", asMETHODPR(CScriptDictionary,Set,(const string&,const asINT64&),void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, int64&out) const", asMETHODPR(CScriptDictionary,Get,(const string&,asINT64&) const,bool), asCALL_THISCALL); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, double&in)", asMETHODPR(CScriptDictionary,Set,(const string&,double&),void), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, const double&in)", asMETHODPR(CScriptDictionary,Set,(const string&,const double&),void), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, double&out) const", asMETHODPR(CScriptDictionary,Get,(const string&,double&) const,bool), asCALL_THISCALL); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in) const", asMETHOD(CScriptDictionary,Exists), asCALL_THISCALL); assert( r >= 0 );
@@ -623,13 +640,13 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 
 	r = engine->RegisterObjectMethod("dictionary", "dictionary &opAssign(const dictionary &in)", asFUNCTION(ScriptDictionaryAssign_Generic), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, ?&in)", asFUNCTION(ScriptDictionarySet_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, const ?&in)", asFUNCTION(ScriptDictionarySet_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, ?&out) const", asFUNCTION(ScriptDictionaryGet_Generic), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, int64&in)", asFUNCTION(ScriptDictionarySetInt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, const int64&in)", asFUNCTION(ScriptDictionarySetInt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, int64&out) const", asFUNCTION(ScriptDictionaryGetInt_Generic), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, double&in)", asFUNCTION(ScriptDictionarySetFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("dictionary", "void set(const string &in, const double&in)", asFUNCTION(ScriptDictionarySetFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("dictionary", "bool get(const string &in, double&out) const", asFUNCTION(ScriptDictionaryGetFlt_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("dictionary", "bool exists(const string &in) const", asFUNCTION(ScriptDictionaryExists_Generic), asCALL_GENERIC); assert( r >= 0 );
@@ -644,6 +661,78 @@ void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptDictionaryGetGCFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryEnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("dictionary", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryReleaseAllReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
+}
+
+//------------------------------------------------------------------
+// Iterator implementation
+
+CScriptDictionary::CIterator CScriptDictionary::begin() const
+{
+	return CIterator(*this, dict.begin());
+}
+
+CScriptDictionary::CIterator CScriptDictionary::end() const
+{
+	return CIterator(*this, dict.end());
+}
+
+CScriptDictionary::CIterator::CIterator(
+		const CScriptDictionary &dict, 
+		std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it)
+	: m_dict(dict), m_it(it)
+{}
+
+void CScriptDictionary::CIterator::operator++() 
+{ 
+	++m_it; 
+}
+
+void CScriptDictionary::CIterator::operator++(int) 
+{ 
+	++m_it;
+
+	// Normally the post increment would return a copy of the object with the original state,
+	// but it is rarely used so we skip this extra copy to avoid unnecessary overhead
+}
+
+CScriptDictionary::CIterator &CScriptDictionary::CIterator::operator*()
+{
+	return *this;
+}
+
+bool CScriptDictionary::CIterator::operator==(const CIterator &other) const 
+{ 
+	return m_it == other.m_it;
+}
+
+bool CScriptDictionary::CIterator::operator!=(const CIterator &other) const 
+{ 
+	return m_it != other.m_it; 
+}
+
+const std::string &CScriptDictionary::CIterator::GetKey() const 
+{ 
+	return m_it->first; 
+}
+
+int CScriptDictionary::CIterator::GetTypeId() const
+{ 
+	return m_it->second.typeId; 
+}
+
+bool CScriptDictionary::CIterator::GetValue(asINT64 &value) const
+{ 
+	return m_dict.GetValue(m_it->second, &value, asTYPEID_INT64); 
+}
+
+bool CScriptDictionary::CIterator::GetValue(double &value) const
+{ 
+	return m_dict.GetValue(m_it->second, &value, asTYPEID_DOUBLE); 
+}
+
+bool CScriptDictionary::CIterator::GetValue(void *value, int typeId) const
+{ 
+	return m_dict.GetValue(m_it->second, value, typeId); 
 }
 
 END_AS_NAMESPACE

@@ -162,7 +162,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 		// Only value types can be returned by value
 		asASSERT( objType & asOBJ_VALUE );
 
-		if( !(objType & (asOBJ_APP_CLASS | asOBJ_APP_PRIMITIVE | asOBJ_APP_FLOAT)) )
+		if( !(objType & (asOBJ_APP_CLASS | asOBJ_APP_PRIMITIVE | asOBJ_APP_FLOAT | asOBJ_APP_ARRAY)) )
 		{
 			// If the return is by value then we need to know the true type
 			engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
@@ -171,6 +171,13 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 			str.Format(TXT_CANNOT_RET_TYPE_s_BY_VAL, func->returnType.GetObjectType()->name.AddressOf());
 			engine->WriteMessage("", 0, 0, asMSGTYPE_ERROR, str.AddressOf());
 			engine->ConfigError(asINVALID_CONFIGURATION, 0, 0, 0);
+		}
+		else if( objType & asOBJ_APP_ARRAY )
+		{
+			// Array types are always returned in memory
+			internal->hostReturnInMemory = true;
+			internal->hostReturnSize     = sizeof(void*)/4;
+			internal->hostReturnFloat = false;
 		}
 		else if( objType & asOBJ_APP_CLASS )
 		{
@@ -313,7 +320,7 @@ int PrepareSystemFunction(asCScriptFunction *func, asSSystemFunctionInterface *i
 			internal->takesObjByVal = true;
 
 			// Can't pass objects by value unless the application type is informed
-			if( !(func->parameterTypes[n].GetObjectType()->flags & (asOBJ_APP_CLASS | asOBJ_APP_PRIMITIVE | asOBJ_APP_FLOAT)) )
+			if( !(func->parameterTypes[n].GetObjectType()->flags & (asOBJ_APP_CLASS | asOBJ_APP_PRIMITIVE | asOBJ_APP_FLOAT | asOBJ_APP_ARRAY)) )
 			{
 				engine->WriteMessage("", 0, 0, asMSGTYPE_INFORMATION, func->GetDeclarationStr().AddressOf());
 	
@@ -516,7 +523,7 @@ int CallSystemFunction(int id, asCContext *context, void *objectPointer)
 		{
 			bool needFree = false;
 			asCDataType &dt = descr->parameterTypes[n];
-#ifdef COMPLEX_OBJS_PASSED_BY_REF				
+#ifdef COMPLEX_OBJS_PASSED_BY_REF
 			if( dt.GetObjectType() && dt.GetObjectType()->flags & COMPLEX_MASK ) needFree = true;
 #endif
 #ifdef AS_LARGE_OBJS_PASSED_BY_REF

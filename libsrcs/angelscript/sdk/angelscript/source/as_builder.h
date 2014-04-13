@@ -72,6 +72,7 @@ struct sGlobalVariableDescription
 	asCString          name;
 	asCGlobalProperty *property;
 	asCDataType        datatype;
+	asSNameSpace      *ns;
 	int                index;
 	bool               isCompiled;
 	bool               isPureConstant;

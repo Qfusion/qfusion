@@ -1,6 +1,6 @@
 /*
    AngelCode Scripting Library
-   Copyright (c) 2003-2013 Andreas Jonsson
+   Copyright (c) 2003-2014 Andreas Jonsson
 
    This software is provided 'as-is', without any express or implied 
    warranty. In no event will the authors be held liable for any 
@@ -54,11 +54,11 @@ BEGIN_AS_NAMESPACE
 // TODO: The type id should have flags for differenciating between value types and reference types. It should also have a flag for differenciating interface types.
 
 // Additional flag to the class object type
-const asDWORD asOBJ_IMPLICIT_HANDLE  = 0x00400000;
-const asDWORD asOBJ_LIST_PATTERN     = 0x08000000;
-const asDWORD asOBJ_ENUM             = 0x10000000;
-const asDWORD asOBJ_TEMPLATE_SUBTYPE = 0x20000000;
-const asDWORD asOBJ_TYPEDEF          = 0x40000000;
+const asDWORD asOBJ_IMPLICIT_HANDLE  = (1<<24);
+const asDWORD asOBJ_LIST_PATTERN     = (1<<25);
+const asDWORD asOBJ_ENUM             = (1<<26);
+const asDWORD asOBJ_TEMPLATE_SUBTYPE = (1<<27);
+const asDWORD asOBJ_TYPEDEF          = (1<<28);
 
 
 

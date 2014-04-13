@@ -38,29 +38,39 @@ class CScriptArray;
 class CScriptDictionary
 {
 public:
-	// Memory management
+	// Constructor
 	CScriptDictionary(asIScriptEngine *engine);
+
+	// Constructor. Called from the script to instantiate a dictionary from an initialization list
 	CScriptDictionary(asBYTE *buffer);
+
+	// Reference counting
 	void AddRef() const;
 	void Release() const;
 
+	// Reassign the dictionary
 	CScriptDictionary &operator =(const CScriptDictionary &other);
 
-	// Sets/Gets a variable type value for a key
+	// Sets a key/value pair
 	void Set(const std::string &key, void *value, int typeId);
+	void Set(const std::string &key, const asINT64 &value);
+	void Set(const std::string &key, const double &value);
+
+	// Gets the stored value. Returns false if the value isn't compatible with the informed typeId
 	bool Get(const std::string &key, void *value, int typeId) const;
-
-	// Sets/Gets an integer number value for a key
-	void Set(const std::string &key, asINT64 &value);
 	bool Get(const std::string &key, asINT64 &value) const;
-
-	// Sets/Gets a real number value for a key
-	void Set(const std::string &key, double &value);
 	bool Get(const std::string &key, double &value) const;
+
+	// Returns the type id of the stored value, or negative if it doesn't exist
+	int  GetTypeId(const std::string &key) const;
 
 	// Returns true if the key is set
 	bool Exists(const std::string &key) const;
+
+	// Returns true if there are no key/value pairs in the dictionary
 	bool IsEmpty() const;
+
+	// Returns the number of key/value pairs in the dictionary
 	asUINT GetSize() const;
 
 	// Deletes the key
@@ -72,6 +82,43 @@ public:
 	// Get an array of all keys
 	CScriptArray *GetKeys() const;
 
+	// STL style iterator
+protected:
+	struct valueStruct;
+public:
+	class CIterator
+	{
+	public:
+		void operator++();    // Pre-increment
+		void operator++(int); // Post-increment
+
+		// This is needed to support C++11 range-for
+		CIterator &operator*();
+
+		bool operator==(const CIterator &other) const;
+		bool operator!=(const CIterator &other) const;
+
+		// Accessors
+		const std::string &GetKey() const;
+		int                GetTypeId() const;
+		bool               GetValue(asINT64 &value) const;
+		bool               GetValue(double &value) const;
+		bool               GetValue(void *value, int typeId) const;
+
+	protected:
+		friend class CScriptDictionary;
+
+		CIterator();
+		CIterator(const CScriptDictionary &dict,
+		          std::map<std::string, CScriptDictionary::valueStruct>::const_iterator it);
+
+		std::map<std::string, CScriptDictionary::valueStruct>::const_iterator m_it;
+		const CScriptDictionary &m_dict;
+	};
+
+	CIterator begin() const;
+	CIterator end() const;
+
 	// Garbage collections behaviours
 	int GetRefCount();
 	void SetGCFlag();
@@ -80,6 +127,18 @@ public:
 	void ReleaseAllReferences(asIScriptEngine *engine);
 
 protected:
+	// We don't want anyone to call the destructor directly, it should be called through the Release method
+	virtual ~CScriptDictionary();
+
+	// Helper methods
+	void FreeValue(valueStruct &value);
+	bool GetValue(const valueStruct &vs, void *value, int typeId) const;
+	
+	// Our properties
+	asIScriptEngine *engine;
+	mutable int refCount;
+	mutable bool gcFlag;
+
 	// The structure for holding the values
 	struct valueStruct
 	{
@@ -91,17 +150,6 @@ protected:
 		};
 		int   typeId;
 	};
-
-	// We don't want anyone to call the destructor directly, it should be called through the Release method
-	virtual ~CScriptDictionary();
-
-	// Helper methods
-	void FreeValue(valueStruct &value);
-	
-	// Our properties
-	asIScriptEngine *engine;
-	mutable int refCount;
-	mutable bool gcFlag;
 
 	// TODO: optimize: Use C++11 std::unordered_map instead
 	std::map<std::string, valueStruct> dict;

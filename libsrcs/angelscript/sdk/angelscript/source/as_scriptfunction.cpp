@@ -575,7 +575,7 @@ bool asCScriptFunction::DoesReturnOnStack() const
 }
 
 // internal
-asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool includeNamespace) const
+asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool includeNamespace, bool includeParamNames) const
 {
 	asCString str;
 
@@ -633,6 +633,12 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 				else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
 			}
 
+			if( includeParamNames && n < parameterNames.GetLength() && parameterNames[n].GetLength() != 0 )
+			{
+				str += " ";
+				str += parameterNames[n];
+			}
+
 			if( defaultArgs.GetLength() > n && defaultArgs[n] )
 			{
 				asCString tmp;
@@ -650,6 +656,12 @@ asCString asCScriptFunction::GetDeclarationStr(bool includeObjectName, bool incl
 			if( inOutFlags[n] == asTM_INREF ) str += "in";
 			else if( inOutFlags[n] == asTM_OUTREF ) str += "out";
 			else if( inOutFlags[n] == asTM_INOUTREF ) str += "inout";
+		}
+
+		if( includeParamNames && n < parameterNames.GetLength() && parameterNames[n].GetLength() != 0 )
+		{
+			str += " ";
+			str += parameterNames[n];
 		}
 
 		if( defaultArgs.GetLength() > n && defaultArgs[n] )
@@ -1215,6 +1227,42 @@ asUINT asCScriptFunction::GetParamCount() const
 }
 
 // interface
+int asCScriptFunction::GetParam(asUINT index, int *typeId, asDWORD *flags, const char **name, const char **defaultArg) const
+{
+	if( index >= parameterTypes.GetLength() )
+		return asINVALID_ARG;
+
+	if( typeId )
+		*typeId = engine->GetTypeIdFromDataType(parameterTypes[index]);
+
+	if( flags )
+	{
+		*flags = inOutFlags[index];
+		*flags |= parameterTypes[index].IsReadOnly() ? asTM_CONST : 0;
+	}
+
+	if( name )
+	{
+		// The parameter names are not stored if loading from bytecode without debug information
+		if( index < parameterNames.GetLength() )
+			*name = parameterNames[index].AddressOf();
+		else
+			*name = 0;
+	}
+
+	if( defaultArg )
+	{
+		if( index < defaultArgs.GetLength() && defaultArgs[index] )
+			*defaultArg = defaultArgs[index]->AddressOf();
+		else
+			*defaultArg = 0;
+	}
+
+	return asSUCCESS;
+}
+
+#ifdef AS_DEPRECATED
+// Deprecated since 2014-04-06, 2.29.0
 int asCScriptFunction::GetParamTypeId(asUINT index, asDWORD *flags) const
 {
 	if( index >= parameterTypes.GetLength() )
@@ -1228,6 +1276,7 @@ int asCScriptFunction::GetParamTypeId(asUINT index, asDWORD *flags) const
 
 	return engine->GetTypeIdFromDataType(parameterTypes[index]);
 }
+#endif
 
 // interface
 asIScriptEngine *asCScriptFunction::GetEngine() const
@@ -1236,10 +1285,10 @@ asIScriptEngine *asCScriptFunction::GetEngine() const
 }
 
 // interface
-const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace) const
+const char *asCScriptFunction::GetDeclaration(bool includeObjectName, bool includeNamespace, bool includeParamNames) const
 {
 	asCString *tempString = &asCThreadManager::GetLocalData()->string;
-	*tempString = GetDeclarationStr(includeObjectName, includeNamespace);
+	*tempString = GetDeclarationStr(includeObjectName, includeNamespace, includeParamNames);
 	return tempString->AddressOf();
 }
 

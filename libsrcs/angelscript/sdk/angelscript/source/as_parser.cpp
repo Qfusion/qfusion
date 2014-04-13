@@ -361,7 +361,7 @@ asCScriptNode *asCParser::ParseTypeMod(bool isParam)
 	return node;
 }
 
-asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
+asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
 	if( node == 0 ) return 0;
@@ -383,7 +383,8 @@ asCScriptNode *asCParser::ParseType(bool allowConst, bool allowVariableType)
 	ParseOptionalScope(node);
 
 	// Parse the actual type
-	node->AddChildLast(ParseDataType(allowVariableType));
+	node->AddChildLast(ParseDataType(allowVariableType, allowAuto));
+	if( isSyntaxError ) return node;
 
 	// If the datatype is a template type, then parse the subtype within the < >
 	asCScriptNode *type = node->lastChild;
@@ -507,7 +508,7 @@ asCScriptNode *asCParser::ParseOneOf(int *tokens, int count)
 }
 
 
-asCScriptNode *asCParser::ParseDataType(bool allowVariableType)
+asCScriptNode *asCParser::ParseDataType(bool allowVariableType, bool allowAuto)
 {
 	asCScriptNode *node = CreateNode(snDataType);
 	if( node == 0 ) return 0;
@@ -515,7 +516,7 @@ asCScriptNode *asCParser::ParseDataType(bool allowVariableType)
 	sToken t1;
 
 	GetToken(&t1);
-	if( !IsDataType(t1) && !(allowVariableType && t1.type == ttQuestion) )
+	if( !IsDataType(t1) && !(allowVariableType && t1.type == ttQuestion) && !(allowAuto && t1.type == ttAuto) )
 	{
 		if( t1.type == ttIdentifier )
 		{
@@ -523,6 +524,10 @@ asCScriptNode *asCParser::ParseDataType(bool allowVariableType)
 			tempString.Assign(&script->code[t1.pos], t1.length);
 			errMsg.Format(TXT_IDENTIFIER_s_NOT_DATA_TYPE, tempString.AddressOf());
 			Error(errMsg, &t1);
+		}
+		else if( t1.type == ttAuto )
+		{
+			Error(TXT_AUTO_NOT_ALLOWED, &t1);
 		}
 		else
 		{
@@ -1419,7 +1424,27 @@ asCScriptNode *asCParser::ParseArgList(bool withParenthesis)
 
 		for(;;)
 		{
-			node->AddChildLast(ParseAssignment());
+			// Determine if this is a named argument
+			sToken tl, t2;
+			GetToken(&tl);
+			GetToken(&t2);
+			RewindTo(&tl);
+
+			if( tl.type == ttIdentifier && t2.type == ttAssignment )
+			{
+				asCScriptNode *named = CreateNode(snNamedArgument);
+				if( named == 0 ) return 0;
+				node->AddChildLast(named);
+
+				named->AddChildLast(ParseIdentifier());
+				GetToken(&t2);
+				asASSERT( t2.type == ttAssignment );
+
+				named->AddChildLast(ParseAssignment());
+			}
+			else
+				node->AddChildLast(ParseAssignment());
+
 			if( isSyntaxError ) return node;
 
 			// Check if list continues
@@ -1960,7 +1985,7 @@ asCScriptNode *asCParser::ParseScript(bool inBlock)
 				node->AddChildLast(ParseInterface());
 			else if( t1.type == ttFuncDef )
 				node->AddChildLast(ParseFuncDef());
-			else if( t1.type == ttConst || t1.type == ttScope || IsDataType(t1) )
+			else if( t1.type == ttConst || t1.type == ttScope || t1.type == ttAuto || IsDataType(t1) )
 			{
 				if( IsVirtualPropertyDecl() )
 					node->AddChildLast(ParseVirtualPropertyDecl(false, false));
@@ -2237,25 +2262,28 @@ bool asCParser::IsVarDecl()
 	if( t1.type == ttConst )
 		GetToken(&t1);
 
-	// The type may be initiated with the scope operator
-	if( t1.type == ttScope )
-		GetToken(&t1);
-
-	// The type may be preceeded with a multilevel scope
 	sToken t2;
-	GetToken(&t2);
-	while( t1.type == ttIdentifier && t2.type == ttScope )
+	if( t1.type != ttAuto )
 	{
-		GetToken(&t1);
+		// The type may be initiated with the scope operator
+		if( t1.type == ttScope )
+			GetToken(&t1);
+
+		// The type may be preceeded with a multilevel scope
 		GetToken(&t2);
+		while( t1.type == ttIdentifier && t2.type == ttScope )
+		{
+			GetToken(&t1);
+			GetToken(&t2);
+		}
+		RewindTo(&t2);
 	}
-	RewindTo(&t2);
 
 	// We don't validate if the identifier is an actual declared type at this moment
 	// as it may wrongly identify the statement as a non-declaration if the user typed
 	// the name incorrectly. The real type is validated in ParseDeclaration where a
 	// proper error message can be given.
-	if( !IsRealType(t1.type) && t1.type != ttIdentifier )
+	if( !IsRealType(t1.type) && t1.type != ttIdentifier && t1.type != ttAuto )
 	{
 		RewindTo(&t);
 		return false;
@@ -2316,7 +2344,7 @@ bool asCParser::IsVarDecl()
 			GetToken(&t2);
 		}
 
-		if( t2.type == ttEnd ) 
+		if( t2.type == ttEnd )
 			return false;
 		else
 		{
@@ -2516,7 +2544,7 @@ bool asCParser::IsFuncDecl(bool isMethod)
 			GetToken(&t2);
 		}
 
-		if( t2.type == ttEnd ) 
+		if( t2.type == ttEnd )
 			return false;
 		else
 		{
@@ -3016,6 +3044,9 @@ asCScriptNode *asCParser::ParseClass()
 			return node;
 		}
 
+		if( isSyntaxError )
+			return node;
+
 		GetToken(&t);
 		RewindTo(&t);
 	}
@@ -3435,7 +3466,7 @@ asCScriptNode *asCParser::ParseDeclaration(bool isClassProp, bool isGlobalVar)
 		node->AddChildLast(ParseToken(ttPrivate));
 	
 	// Parse data type
-	node->AddChildLast(ParseType(true));
+	node->AddChildLast(ParseType(true, false, !isClassProp));
 	if( isSyntaxError ) return node;
 
 	for(;;)

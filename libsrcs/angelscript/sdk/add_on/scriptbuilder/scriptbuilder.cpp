@@ -953,6 +953,9 @@ static const char *GetCurrentDir(char *buf, size_t size)
 	assert( size >= 7 );
 	sprintf(buf, "game:\\");
 	return buf;
+#elif defined(_M_ARM)
+	// TODO: How to determine current working dir on Windows Phone?
+	return ""; 
 #else
 	return _getcwd(buf, (int)size);
 #endif // _MSC_VER

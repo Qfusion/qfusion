@@ -785,6 +785,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 		{
 			// Out of memory
 			error = true;
+			asDELETE(func, asCScriptFunction);
 			return 0;
 		}
 
@@ -829,6 +830,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			{
 				// Out of memory
 				error = true;
+				asDELETE(func, asCScriptFunction);
 				return 0;
 			}
 			for( i = 0; i < length; ++i )
@@ -841,6 +843,7 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			{
 				// Out of memory
 				error = true;
+				asDELETE(func, asCScriptFunction);
 				return 0;
 			}
 			for( i = 0; i < length; ++i )
@@ -892,6 +895,21 @@ asCScriptFunction *asCReader::ReadFunction(bool &isNew, bool addToModule, bool a
 			ReadString(&name);
 			func->scriptData->scriptSectionIdx = engine->GetScriptSectionNameIndex(name.AddressOf());
 			func->scriptData->declaredAt = ReadEncodedUInt();
+		}
+
+		// Read parameter names
+		if( !noDebugInfo )
+		{
+			asUINT count = asUINT(ReadEncodedUInt64());
+			if( count > func->parameterTypes.GetLength() )
+			{
+				error = true;
+				asDELETE(func, asCScriptFunction);
+				return 0;
+			}
+			func->parameterNames.SetLength(count);
+			for( asUINT n = 0; n < count; n++ )
+				ReadString(&func->parameterNames[n]);
 		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )
@@ -3472,6 +3490,15 @@ void asCWriter::WriteFunction(asCScriptFunction* func)
 				WriteData(&c, 1);
 			}
 			WriteEncodedInt64(func->scriptData->declaredAt);
+		}
+
+		// Store the parameter names
+		if( !stripDebugInfo )
+		{
+			asUINT count = asUINT(func->parameterNames.GetLength());
+			WriteEncodedInt64(count);
+			for( asUINT n = 0; n < count; n++ )
+				WriteString(&func->parameterNames[n]);
 		}
 	}
 	else if( func->funcType == asFUNC_VIRTUAL || func->funcType == asFUNC_INTERFACE )

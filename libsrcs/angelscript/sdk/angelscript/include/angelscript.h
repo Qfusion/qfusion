@@ -58,8 +58,8 @@ BEGIN_AS_NAMESPACE
 
 // AngelScript version
 
-#define ANGELSCRIPT_VERSION        22802
-#define ANGELSCRIPT_VERSION_STRING "2.28.2 WIP"
+#define ANGELSCRIPT_VERSION        22900
+#define ANGELSCRIPT_VERSION_STRING "2.29.0 WIP"
 
 // Data types
 
@@ -152,19 +152,19 @@ enum asECallConvTypes
 // Object type flags
 enum asEObjTypeFlags
 {
-	asOBJ_REF                        = 0x01,
-	asOBJ_VALUE                      = 0x02,
-	asOBJ_GC                         = 0x04,
-	asOBJ_POD                        = 0x08,
-	asOBJ_NOHANDLE                   = 0x10,
-	asOBJ_SCOPED                     = 0x20,
-	asOBJ_TEMPLATE                   = 0x40,
-	asOBJ_ASHANDLE                   = 0x80,
-	asOBJ_APP_CLASS                  = 0x100,
-	asOBJ_APP_CLASS_CONSTRUCTOR      = 0x200,
-	asOBJ_APP_CLASS_DESTRUCTOR       = 0x400,
-	asOBJ_APP_CLASS_ASSIGNMENT       = 0x800,
-	asOBJ_APP_CLASS_COPY_CONSTRUCTOR = 0x1000,
+	asOBJ_REF                        = (1<<0),
+	asOBJ_VALUE                      = (1<<1),
+	asOBJ_GC                         = (1<<2),
+	asOBJ_POD                        = (1<<3),
+	asOBJ_NOHANDLE                   = (1<<4),
+	asOBJ_SCOPED                     = (1<<5),
+	asOBJ_TEMPLATE                   = (1<<6),
+	asOBJ_ASHANDLE                   = (1<<7),
+	asOBJ_APP_CLASS                  = (1<<8),
+	asOBJ_APP_CLASS_CONSTRUCTOR      = (1<<9),
+	asOBJ_APP_CLASS_DESTRUCTOR       = (1<<10),
+	asOBJ_APP_CLASS_ASSIGNMENT       = (1<<11),
+	asOBJ_APP_CLASS_COPY_CONSTRUCTOR = (1<<12),
 	asOBJ_APP_CLASS_C                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR),
 	asOBJ_APP_CLASS_CD               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR),
 	asOBJ_APP_CLASS_CA               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT),
@@ -180,17 +180,18 @@ enum asEObjTypeFlags
 	asOBJ_APP_CLASS_A                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT),
 	asOBJ_APP_CLASS_AK               = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
 	asOBJ_APP_CLASS_K                = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR),
-	asOBJ_APP_PRIMITIVE              = 0x2000,
-	asOBJ_APP_FLOAT                  = 0x4000,
-	asOBJ_APP_CLASS_ALLINTS          = 0x8000,
-	asOBJ_APP_CLASS_ALLFLOATS        = 0x10000,
-	asOBJ_NOCOUNT                    = 0x20000,
-	asOBJ_APP_CLASS_ALIGN8           = 0x40000,
-	asOBJ_MASK_VALID_FLAGS           = 0x7FFFF,
-	asOBJ_SCRIPT_OBJECT              = 0x80000,
-	asOBJ_SHARED                     = 0x100000,
-	asOBJ_NOINHERIT                  = 0x200000,
-	asOBJ_SCRIPT_FUNCTION            = 0x400000
+	asOBJ_APP_PRIMITIVE              = (1<<13),
+	asOBJ_APP_FLOAT                  = (1<<14),
+	asOBJ_APP_ARRAY                  = (1<<15),
+	asOBJ_APP_CLASS_ALLINTS          = (1<<16),
+	asOBJ_APP_CLASS_ALLFLOATS        = (1<<17),
+	asOBJ_NOCOUNT                    = (1<<18),
+	asOBJ_APP_CLASS_ALIGN8           = (1<<19),
+	asOBJ_MASK_VALID_FLAGS           = 0x0FFFFF,
+	asOBJ_SCRIPT_OBJECT              = (1<<20),
+	asOBJ_SHARED                     = (1<<21),
+	asOBJ_NOINHERIT                  = (1<<22),
+	asOBJ_SCRIPT_FUNCTION            = (1<<23)
 };
 
 // Behaviours
@@ -591,6 +592,7 @@ public:
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
+	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0) = 0;
@@ -730,6 +732,7 @@ public:
 	virtual asUINT         GetObjectTypeCount() const = 0;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const = 0;
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const = 0;
+	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const = 0;
 	virtual int            GetTypeIdByDecl(const char *decl) const = 0;
 
 	// Enums
@@ -986,14 +989,18 @@ public:
 	virtual const char      *GetObjectName() const = 0;
 	virtual const char      *GetName() const = 0;
 	virtual const char      *GetNamespace() const = 0;
-	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false) const = 0;
+	virtual const char      *GetDeclaration(bool includeObjectName = true, bool includeNamespace = false, bool includeParamNames = false) const = 0;
 	virtual bool             IsReadOnly() const = 0;
 	virtual bool             IsPrivate() const = 0;
 	virtual bool             IsFinal() const = 0;
 	virtual bool             IsOverride() const = 0;
 	virtual bool             IsShared() const = 0;
 	virtual asUINT           GetParamCount() const = 0;
+	virtual int              GetParam(asUINT index, int *typeId, asDWORD *flags = 0, const char **name = 0, const char **defaultArg = 0) const = 0;
+#ifdef AS_DEPRECATED
+	// Deprecated since 2.29.0, 2014-04-06
 	virtual int              GetParamTypeId(asUINT index, asDWORD *flags = 0) const = 0;
+#endif
 	virtual int              GetReturnTypeId(asDWORD *flags = 0) const = 0;
 
 	// Type id for function pointers 

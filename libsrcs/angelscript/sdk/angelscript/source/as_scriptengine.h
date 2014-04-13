@@ -109,7 +109,7 @@ public:
 	virtual asUINT         GetObjectTypeCount() const;
 	virtual asIObjectType *GetObjectTypeByIndex(asUINT index) const;
 	virtual asIObjectType *GetObjectTypeByName(const char *name) const;
-	// TODO: 2.29.0: Add GetObjectTypeByDecl() that supports for example "array<int>"
+	virtual asIObjectType *GetObjectTypeByDecl(const char *decl) const;
 
 	// String factory
 	virtual int RegisterStringFactory(const char *datatype, const asSFuncPtr &factoryFunc, asDWORD callConv, void *objForThiscall = 0);

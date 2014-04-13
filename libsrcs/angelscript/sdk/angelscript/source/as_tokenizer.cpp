@@ -223,7 +223,7 @@ bool asCTokenizer::IsComment(const char *source, size_t sourceLength, size_t &to
 		}
 
 		tokenType   = ttOnelineComment;
-		tokenLength = n+1;
+		tokenLength = n < sourceLength ? n+1 : n;
 
 		return true;
 	}
