@@ -46,6 +46,7 @@ typedef enum
 
 	K_LALT,
 	K_RALT,
+	K_ALTGR,
 	K_LCTRL,
 	K_RCTRL,
 	K_LSHIFT,

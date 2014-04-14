@@ -88,6 +88,7 @@ const keyname_t keynames[] =
 	{ "LEFTARROW", K_LEFTARROW },
 	{ "RIGHTARROW", K_RIGHTARROW },
 
+	{ "ALTGR", K_ALTGR },
 	{ "LALT", K_LALT },
 	{ "RALT", K_RALT },
 	{ "LCTRL", K_LCTRL },
