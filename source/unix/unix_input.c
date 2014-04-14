@@ -33,7 +33,7 @@ static qboolean input_inited = qfalse;
 static qboolean mouse_active = qfalse;
 static qboolean input_active = qfalse;
 
-static int shift_down = qfalse;
+static int shift_level = 0;
 
 static int xi_opcode;
 
@@ -436,10 +436,10 @@ static char *XLateKey( int keycode, int *key )
 		case XK_Execute:
 		case XK_Control_L: *key = K_LCTRL; break;
 		case XK_Control_R: *key = K_RCTRL; break;
+		case XK_ISO_Level3_Shift: *key = K_ALTGR; break;
 		case XK_Alt_L:
 		case XK_Meta_L: *key = K_LALT; break;
 		case XK_Alt_R:
-		case XK_ISO_Level3_Shift:
 		case XK_Meta_R: *key = K_RALT; break;
 		case XK_Super_L: *key = K_WIN; break;
 		case XK_Super_R: *key = K_WIN; break;
@@ -460,7 +460,7 @@ static char *XLateKey( int keycode, int *key )
 	}
 
 	/* ... if we're in console or chatting, please activate SHIFT */
-	keysym = XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_down);
+	keysym = XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_level);
 
 	/* this is stupid, there must exist a better way */
 	switch(keysym) {
@@ -580,13 +580,18 @@ static void handle_key(XGenericEventCookie *cookie)
 	int key = 0;
 	const char *name = XLateKey(keycode, &key);
 
+	// Set or clear 1 in the shift_level bitmask
 	if (key == K_LSHIFT || key == K_RSHIFT)
-		shift_down = down;
+		shift_level ^=  (-down ^ shift_level) & 1;
+
+	// Set or clear 2 in the shift_level bitmask
+	else if( key == K_ALTGR )
+		shift_level ^=  (-down ^ shift_level) & 2;
 
 	Key_Event(key, down, time);
 
 	if(name && name[0] && down) {
-		qwchar wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_down));
+		qwchar wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_level));
 		if( wc == -1 && key > K_NUMLOCK && key <= KP_EQUAL )
 			wc = ( qwchar )key;
 
@@ -693,7 +698,7 @@ static void HandleEvents( void )
 				uninstall_grabs_keyboard();
 				Key_ClearStates();
 				focus = qfalse;
-				shift_down = 0;
+				shift_level = 0;
 			}
 			break;
 
