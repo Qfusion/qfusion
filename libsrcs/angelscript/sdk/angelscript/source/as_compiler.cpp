@@ -9093,9 +9093,11 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 		{
 			asSExprContext conv(engine);
 			conv.type = args[0]->type;
-			ImplicitConversion(&conv, dt, node->lastChild, asIC_EXPLICIT_VAL_CAST, false);
+			asUINT cost = ImplicitConversion(&conv, dt, node->lastChild, asIC_EXPLICIT_VAL_CAST, false);
 
-			if( conv.type.dataType.IsEqualExceptRef(dt) )
+			// Don't use this if the cost is 0 because it would mean that nothing
+			// is done and the scipt wants a new value to be constructed
+			if( conv.type.dataType.IsEqualExceptRef(dt) && cost > 0 )
 			{
 				ImplicitConversion(args[0], dt, node->lastChild, asIC_EXPLICIT_VAL_CAST);
 
@@ -9131,9 +9133,7 @@ void asCCompiler::CompileConstructCall(asCScriptNode *node, asSExprContext *ctx)
 				ctx->bc.InstrSHORT(asBC_VAR, tempObj.stackOffset);
 		}
 		else
-		{
 			funcs = beh->factories;
-		}
 
 		// Special case: Allow calling func(void) with a void expression.
 		if( args.GetLength() == 1 && args[0]->type.dataType == asCDataType::CreatePrimitive(ttVoid, false) )
