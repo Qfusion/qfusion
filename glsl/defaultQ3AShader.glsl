@@ -194,6 +194,11 @@ void main(void)
 
 	color *= diffuse;
 
+#ifdef NUM_LIGHTMAPS
+	// so that team-colored shaders work
+	color *= myhalf4(qf_FrontColor);
+#endif
+
 #ifdef APPLY_GREYSCALE
 	color.rgb = Greyscale(color.rgb);
 #endif
