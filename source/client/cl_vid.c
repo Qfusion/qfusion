@@ -163,28 +163,20 @@ qboolean VID_GetModeInfo( int *width, int *height, qboolean *wideScreen, int mod
 /*
 ** VID_GetModeNum
 *
-* Find the best matching video mode for given width and height
+* Find exact match for given width/height
 */
 static int VID_GetModeNum( int width, int height )
 {
 	int i;
-	int dx, dy, dist;
-	int best = -1, best_dist = 10000000;
 
 	for( i = 0; i < VID_NUM_MODES; i++ )
 	{
-		dx = vid_modes[i].width - width;
-		dy = vid_modes[i].height - height;
-
-		dist = dx * dx + dy * dy;
-		if( best < 0 || dist < best_dist )
-		{
-			best = i;
-			best_dist = dist;
+		if( vid_modes[i].width == width && vid_modes[i].height == height ) {
+			return i;
 		}
 	}
 
-	return best;
+	return -1;
 }
 
 /*
@@ -555,17 +547,24 @@ load_refresh:
 		// handle vid_mode changes
 		if( vid_mode->integer == -2 ) {
 			int w, h;
-			int mode = -1;
 
 			if( VID_GetDisplaySize( &w, &h ) ) {
-				mode = VID_GetModeNum( w, h );
-			}
-			Com_Printf( "Mode %i detected\n", mode );
+				int mode = VID_GetModeNum( w, h );
 
-			if( mode < 0 ) {
-				mode = vid_ref_prevmode;
+				Com_Printf( "Mode %i detected\n", mode );
+
+				if( mode < 0 ) {
+					Cvar_ForceSet( "vid_mode", "-1" );
+					Cvar_ForceSet( "vid_customwidth", va( "%i", w ) );
+					Cvar_ForceSet( "vid_customheight", va( "%i", h ) );
+				}
+				else {
+					Cvar_ForceSet( "vid_mode", va( "%i", mode ) );
+				}
 			}
-			Cvar_ForceSet( "vid_mode", va( "%i", mode ) );
+			else {
+				Cvar_ForceSet( "vid_mode", va( "%i", vid_ref_prevmode ) );
+			}
 		}
 
 		if( vid_mode->integer < -1 || vid_mode->integer >= VID_NUM_MODES ) {
