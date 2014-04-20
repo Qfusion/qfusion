@@ -1355,6 +1355,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 {
 	int state;
 	int program;
+	int rgbgen = pass->rgbgen.type;
 	const image_t *image;
 	const mfog_t *fog = rb.fog;
 	qboolean isWorldSurface = rb.currentModelType == mod_brush ? qtrue : qfalse;
@@ -1369,7 +1370,10 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	if( isWorldSurface && 
 		rb.superLightStyle && 
 		rb.superLightStyle->lightmapNum[0] >= 0	&& 
-		pass->rgbgen.type == RGB_GEN_IDENTITY && 
+		(rgbgen == RGB_GEN_IDENTITY 
+			|| rgbgen == RGB_GEN_CONST 
+			|| rgbgen == RGB_GEN_WAVE 
+			|| rgbgen == RGB_GEN_CUSTOMWAVE) && 
 		(rb.currentShader->flags & SHADER_LIGHTMAP) && 
 		(pass->flags & GLSTATE_BLEND_ADD) != GLSTATE_BLEND_ADD ) {
 		lightStyle = rb.superLightStyle;
@@ -1378,7 +1382,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 	// vertex-lit world surface
 	if( isWorldSurface
-		&& ( pass->rgbgen.type == RGB_GEN_VERTEX || pass->rgbgen.type == RGB_GEN_EXACT_VERTEX )
+		&& ( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX )
 		&& ( rb.superLightStyle != NULL ) ) {
 		isWorldVertexLight = qtrue;
 	}
@@ -1401,7 +1405,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	programFeatures |= RB_FogProgramFeatures( pass, fog );
 
 	// diffuse lighting for entities
-	if( !isWorldSurface && pass->rgbgen.type == RGB_GEN_LIGHTING_DIFFUSE && !(e->flags & RF_FULLBRIGHT) ) {
+	if( !isWorldSurface && rgbgen == RGB_GEN_LIGHTING_DIFFUSE && !(e->flags & RF_FULLBRIGHT) ) {
 		vec3_t temp = { 0.1f, 0.2f, 0.7f };
 		float radius = 1;
 
