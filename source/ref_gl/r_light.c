@@ -579,14 +579,6 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte
 
 	loadbmodel = (( mbrushmodel_t * )mod->extradata);
 
-	// set overbright bits for lightmaps and lightgrid
-	// deluxemapped maps have zero scale because most surfaces
-	// have a gloss stage that makes them look brighter anyway
-	mapConfig.pow2MapOvrbr = max(
-		mapConfig.overbrightBits
-		, 0 );
-	mapConfig.mapLightColorScale = ( 1 << mapConfig.pow2MapOvrbr ) * (mapConfig.lightingIntensity ? mapConfig.lightingIntensity : 1);
-
 	if( !mapConfig.lightmapsPacking )
 		size = max( w, h );
 	else

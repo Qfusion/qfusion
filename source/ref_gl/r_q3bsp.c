@@ -148,6 +148,15 @@ static void Mod_LoadLighting( const lump_t *l, const lump_t *faces )
 
 	R_InitLightStyles( loadmodel );
 
+	// set overbright bits for lightmaps and lightgrid
+	// deluxemapped maps have zero scale because most surfaces
+	// have a gloss stage that makes them look brighter anyway
+	mapConfig.pow2MapOvrbr = max(
+		mapConfig.overbrightBits
+		, 0 );
+	mapConfig.mapLightColorScale = ( 1 << mapConfig.pow2MapOvrbr ) 
+		* (mapConfig.lightingIntensity ? mapConfig.lightingIntensity : 1);
+
 	// we don't need lightmaps for vertex lighting
 	if( r_lighting_vertexlight->integer )
 		return;
