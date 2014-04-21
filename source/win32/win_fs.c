@@ -178,9 +178,9 @@ void Sys_FS_FindClose( void )
 }
 
 /*
-* Sys_FS_GetHomeDirectory
+* GetHomeDirectory
 */
-const char *Sys_FS_GetHomeDirectory( void )
+static const char *GetHomeDirectory( void )
 {
 	static char home[MAX_PATH] = { '\0' };
 #ifndef SHGetFolderPath
@@ -198,6 +198,18 @@ const char *Sys_FS_GetHomeDirectory( void )
 	SHGetFolderPath( 0, CSIDL_APPDATA, 0, 0, home );
 #endif
 	return (home[0] == '\0' ? NULL : COM_SanitizeFilePath( home ) );
+}
+
+/*
+* Sys_FS_AddHomeDirectory
+*/
+qboolean Sys_FS_AddHomeDirectory( void )
+{
+	const char *home = GetHomeDirectory();
+	if ( !home )
+		return qfalse;
+	FS_AddBasePath( va( "%s/%s %d.%d", home, APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ) );
+	return qtrue;
 }
 
 /*
