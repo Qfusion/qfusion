@@ -725,6 +725,7 @@ const char *FS_GameDirectory( void );
 const char *FS_BaseGameDirectory( void );
 qboolean    FS_SetGameDirectory( const char *dir, qboolean force );
 int			FS_GetGameDirectoryList( char *buf, size_t bufsize );
+void	    FS_AddBasePath( const char *path );
 int			FS_GetExplicitPurePakList( char ***paknames );
 
 // handling of absolute filenames
