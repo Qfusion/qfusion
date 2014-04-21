@@ -51,7 +51,7 @@ void *Sys_Library_ProcAddress( void *lib, const char *apifuncname )
 /*
 * Sys_Library_ErrorString
 */
-char *Sys_Library_ErrorString( void )
+const char *Sys_Library_ErrorString( void )
 {
 	return dlerror();
 }
