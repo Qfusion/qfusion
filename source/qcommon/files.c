@@ -3471,7 +3471,7 @@ qboolean FS_SetGameDirectory( const char *dir, qboolean force )
 /*
 * FS_AddBasePath
 */
-static void FS_AddBasePath( const char *path )
+void FS_AddBasePath( const char *path )
 {
 	searchpath_t *newpath;
 
