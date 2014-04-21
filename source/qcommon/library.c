@@ -48,12 +48,16 @@ void *Com_LoadLibrary( const char *name, dllfunc_t *funcs )
 
 	Com_DPrintf( "LoadLibrary (%s)\n", name );
 
+#ifdef LIB_OPEN_DIRECTLY
+	fullname = name;
+#else
 	fullname = FS_AbsoluteNameForBaseFile( name );
 	if( !fullname )
 	{
 		Com_DPrintf( "LoadLibrary (%s):(Not found)\n", name );
 		return NULL;
 	}
+#endif
 
 	lib = Sys_Library_Open( fullname );
 	if( !lib )
@@ -237,6 +241,10 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 	libname = ( char* )Mem_TempMalloc( libname_size );
 	Q_snprintfz( libname, libname_size, "%s_" ARCH LIB_SUFFIX, basename );
 
+#ifdef LIB_OPEN_DIRECTLY
+	tempname = ( char * )Mem_ZoneMalloc( libname_size );
+	strcpy( tempname, libname );
+#else
 	// it exists?
 	if( FS_FOpenFile( libname, NULL, FS_READ ) == -1 )
 	{
@@ -277,6 +285,7 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 	// with gamedir for dlopen
 	Q_snprintfz( tempname, tempname_size, "%s/%s/tempmodules%i/%s", FS_WriteDirectory(), FS_GameDirectory(),
 	             randomizer, libname );
+#endif
 
 	gamelib->fullname = COM_SanitizeFilePath( tempname );
 	gamelib->lib = Sys_Library_Open( gamelib->fullname );
