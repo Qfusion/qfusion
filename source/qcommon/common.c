@@ -1051,6 +1051,23 @@ void Qcommon_Init( int argc, char **argv )
 
 	SCR_EndLoadingPlaque();
 
+	if( !dedicated->integer )
+	{
+		Cbuf_AddText( "exec stuffcmds.cfg\n" );
+	}
+	else if( mm_server->integer )
+	{
+		Cbuf_AddText( "exec mmaker_stuffcmds.cfg\n" );
+	}
+	else if( tv_server->integer )
+	{
+		Cbuf_AddText( "exec tvserver_stuffcmds.cfg\n" );
+	}
+	else
+	{
+		Cbuf_AddText( "exec dedicated_stuffcmds.cfg\n" );
+	}
+
 	// add + commands from command line
 	if( !Cbuf_AddLateCommands() )
 	{
