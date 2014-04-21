@@ -191,11 +191,20 @@ void Sys_FS_FindClose( void )
 }
 
 /*
-* Sys_FS_GetHomeDirectory
+* Sys_FS_AddHomeDirectory
 */
-const char *Sys_FS_GetHomeDirectory( void )
+qboolean Sys_FS_AddHomeDirectory( void )
 {
-	return getenv( "HOME" );
+	const char *home = getenv( "HOME" );
+	if ( !home )
+		return qfalse;
+#ifdef __MACOSX__
+	FS_AddBasePath( va( "%s/Library/Application Support/%s-%d.%d", home, APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ) );
+#else	// Unix
+	FS_AddBasePath( va( "%s/.%c%s-%d.%d", home, tolower( *( (const char *)APPLICATION ) ),
+		( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR ) );
+#endif
+	return qtrue;
 }
 
 /*

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __SYS_FS_H
 #define __SYS_FS_H
 
-const char *Sys_FS_GetHomeDirectory( void );
+qboolean    Sys_FS_AddHomeDirectory( void );
 
 qboolean    Sys_FS_RemoveDirectory( const char *path );
 qboolean    Sys_FS_CreateDirectory( const char *path );
