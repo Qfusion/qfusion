@@ -183,6 +183,9 @@ void Sys_FS_FindClose( void )
 const char *Sys_FS_GetHomeDirectory( void )
 {
 	static char home[MAX_PATH] = { '\0' };
+	if( home[0] != '\0' )
+		return home;
+
 #ifndef SHGetFolderPath
 	HINSTANCE shFolderDll = LoadLibrary( "shfolder.dll" );
 
@@ -197,7 +200,11 @@ const char *Sys_FS_GetHomeDirectory( void )
 #else
 	SHGetFolderPath( 0, CSIDL_APPDATA, 0, 0, home );
 #endif
-	return (home[0] == '\0' ? NULL : COM_SanitizeFilePath( home ) );
+
+	if ( home[0] == '\0' )
+		return NULL;
+	Q_strncpyz( home, va( "%s/%s %d.%d", COM_SanitizeFilePath( home ), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ), sizeof( home ) );
+	return home;
 }
 
 /*
