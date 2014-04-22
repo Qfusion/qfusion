@@ -960,7 +960,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 		if( mesh->normalsArray && (vattribs & VATTRIB_NORMAL_BIT) ) {
 			memcpy( rb.batchMesh.normalsArray + batch->numVerts, mesh->normalsArray, numVerts * sizeof( vec4_t ) );
 		}
-		if( mesh->sVectorsArray && (vattribs & VATTRIB_SVECTOR_BIT) ) {
+		if( mesh->sVectorsArray && ( ( vattribs & (VATTRIB_SVECTOR_BIT|VATTRIB_AUTOSPRITE2_BIT) ) == VATTRIB_SVECTOR_BIT ) ) {
 			memcpy( rb.batchMesh.sVectorsArray + batch->numVerts, mesh->sVectorsArray, numVerts * sizeof( vec4_t ) );
 		}
 		if( mesh->stArray && (vattribs & VATTRIB_TEXCOORDS_BIT) ) {
