@@ -391,6 +391,7 @@ extern cvar_t *vid_multiscreen_head;
 
 //====================================================================
 
+void R_NormToLatLong( const vec_t *normal, qbyte latlong[2] );
 void R_LatLongToNorm( const qbyte latlong[2], vec3_t out );
 void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out );
 
@@ -735,8 +736,6 @@ typedef struct mesh_vbo_s
 	size_t				bonesIndicesOffset;
 	size_t				bonesWeightsOffset;
 	size_t				spritePointsOffset; // autosprite or autosprite2 centre + radius
-	size_t				spriteRightAxesOffset;
-	size_t				spriteUpAxesOffset;
 	size_t				instancesOffset;
 } mesh_vbo_t;
 
