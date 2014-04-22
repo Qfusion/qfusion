@@ -3664,6 +3664,7 @@ static void Cmd_FileMTime_f( void )
 void FS_Init( void )
 {
 	int i;
+	const char *homedir;
 
 	assert( !fs_initialized );
 
@@ -3695,7 +3696,8 @@ void FS_Init( void )
 	//
 	fs_cdpath = Cvar_Get( "fs_cdpath", "", CVAR_NOSET );
 	fs_basepath = Cvar_Get( "fs_basepath", ".", CVAR_NOSET );
-	if( Sys_FS_GetHomeDirectory() != NULL )
+	homedir = Sys_FS_GetHomeDirectory();
+	if( homedir != NULL )
 #ifdef PUBLIC_BUILD
 		fs_usehomedir = Cvar_Get( "fs_usehomedir", "1", CVAR_NOSET );
 #else
@@ -3705,15 +3707,8 @@ void FS_Init( void )
 	if( fs_cdpath->string[0] )
 		FS_AddBasePath( fs_cdpath->string );
 	FS_AddBasePath( fs_basepath->string );
-	if( Sys_FS_GetHomeDirectory() != NULL && fs_usehomedir->integer )
-#ifdef __MACOSX__
-		FS_AddBasePath( va( "%s/Library/Application Support/%s-%d.%d", Sys_FS_GetHomeDirectory(), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ) );
-#elif defined(_WIN32)
-		FS_AddBasePath( va( "%s/%s %d.%d", Sys_FS_GetHomeDirectory(), APPLICATION, APP_VERSION_MAJOR, APP_VERSION_MINOR ) );
-#else	// Unix
-		FS_AddBasePath( va( "%s/.%c%s-%d.%d", Sys_FS_GetHomeDirectory(), tolower( *( (const char *)APPLICATION ) ),
-			( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR ) );
-#endif
+	if( homedir != NULL && fs_usehomedir->integer )
+		FS_AddBasePath( homedir );
 
 	//
 	// set game directories
