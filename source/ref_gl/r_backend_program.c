@@ -2129,6 +2129,7 @@ void RB_DrawOutlinedElements( void )
 	rb.currentShadowBits = 0;
 	rb.currentDlightBits = 0;
 	rb.colorFog = rb.texFog = NULL;
+	rb.superLightStyle = NULL;
 
 	// copy and override
 	r_triLinesPass = *pass;
