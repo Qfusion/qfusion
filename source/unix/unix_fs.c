@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/sys_fs.h"
 
 #include <dirent.h>
+#include <linux/limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -195,7 +196,23 @@ void Sys_FS_FindClose( void )
 */
 const char *Sys_FS_GetHomeDirectory( void )
 {
-	return getenv( "HOME" );
+	static char home[PATH_MAX] = { '\0' };
+	const char *homeEnv;
+
+	if( home[0] != '\0' )
+		return home;
+	homeEnv = getenv( "HOME" );
+	if( !homeEnv )
+		return NULL;
+
+#ifdef __MACOSX__
+	Q_snprintfz( home, sizeof( home ), "%s/Library/Application Support/%s-%d.%d", homeEnv, APPLICATION,
+		APP_VERSION_MAJOR, APP_VERSION_MINOR );
+#else
+	Q_snprintfz( home, sizeof( home ), "%s/.%c%s-%d.%d", homeEnv, tolower( *( (const char *)APPLICATION ) ),
+		( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+#endif
+	return home;
 }
 
 /*
