@@ -431,7 +431,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 	}
 	 
 	// upload tangent vectors
-	if( vbo->sVectorsOffset && ( (vattribs & VATTRIB_SVECTOR_BIT|VATTRIB_AUTOSPRITE2_BIT) == VATTRIB_SVECTOR_BIT ) ) {
+	if( vbo->sVectorsOffset && ( ( vattribs & (VATTRIB_SVECTOR_BIT|VATTRIB_AUTOSPRITE2_BIT) ) == VATTRIB_SVECTOR_BIT ) ) {
 		numFloats = 4;
 		size = FLOAT_VATTRIB_SIZE( VATTRIB_SVECTOR_BIT, hfa ) * numFloats;
 
