@@ -222,7 +222,7 @@ qboolean BoundsAndSphereIntersect( const vec3_t mins, const vec3_t maxs, const v
 int DirToByte( vec3_t dir );
 void ByteToDir( int b, vec3_t dir );
 
-void NormToLatLong( const vec3_t normal, qbyte latlong[2] );
+void NormToLatLong( const vec3_t normal, float latlong[2] );
 
 void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up );
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up );

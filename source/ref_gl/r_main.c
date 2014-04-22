@@ -1909,6 +1909,18 @@ struct cinematics_s *R_GetShaderCinematic( shader_t *shader )
 //===================================================================
 
 /*
+* R_NormToLatLong
+*/
+void R_NormToLatLong( const vec_t *normal, qbyte latlong[2] )
+{
+	float flatlong[2];
+
+	NormToLatLong( normal, flatlong );
+	latlong[0] = (int)( flatlong[0] * 255.0 / M_TWOPI ) & 255;
+	latlong[1] = (int)( flatlong[1] * 255.0 / M_TWOPI ) & 255;
+}
+
+/*
 * R_LatLongToNorm4
 */
 void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out )
@@ -1923,6 +1935,7 @@ void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out )
 
 	Vector4Set( out, cos_b * sin_a, sin_b * sin_a, cos_a, 0 );
 }
+
 /*
 * R_LatLongToNorm
 */

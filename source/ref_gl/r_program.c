@@ -975,6 +975,10 @@ QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
 "\n" \
 "#endif\n"
 
+#define QF_GLSL_MATH \
+"#define QF_LatLong2Norm(ll) vec3(cos((ll).y) * sin((ll).x), sin((ll).y) * sin((ll).x), cos((ll).x))\n" \
+"\n"
+
 /*
 * R_GLSLBuildDeformv
 * 
@@ -1008,11 +1012,9 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 		"#endif\n"
 		"\n"
 		"#if defined(APPLY_AUTOSPRITE2)\n"
-		"attribute vec3 a_SpriteRightAxis;\n"
-		"attribute vec3 a_SpriteUpAxis;\n"
+		"attribute vec4 a_SpriteRightUpAxis;\n"
 		"#else\n"
-		"#define a_SpriteRightAxis vec3(0.0)\n"
-		"#define a_SpriteUpAxis vec3(0.0)\n"
+		"#define a_SpriteRightUpAxis vec4(0.0)\n"
 		"#endif\n"
 		"\n"
 		"void QF_DeformVerts(inout vec4 Position, inout vec3 Normal, inout vec2 TexCoord)\n"
@@ -1079,8 +1081,8 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 			case DEFORMV_AUTOSPRITE2:
 				Q_strncatz( program,
 					"// local sprite axes\n"
-					"right = a_SpriteRightAxis * u_QF_MirrorSide;\n"
-					"up = a_SpriteUpAxis;\n"
+					"right = QF_LatLong2Norm(a_SpriteRightUpAxis.xy) * u_QF_MirrorSide;\n"
+					"up = QF_LatLong2Norm(a_SpriteRightUpAxis.zw);\n"
 					"\n"
 					"// mid of quad to camera vector\n"
 					"dist = u_QF_ViewOrigin - u_QF_EntityOrigin - a_SpritePoint.xyz;\n"
@@ -1434,6 +1436,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderStrings[i++] = QF_GLSL_WAVEFUNCS;
 	shaderStrings[i++] = QF_GLSL_DUAL_QUAT_TRANSFORMS;
 	shaderStrings[i++] = QF_GLSL_INSTANCED_TRASFORMS;
+	shaderStrings[i++] = QF_GLSL_MATH;
 
 	if( header ) {
 		body_start = i;
@@ -2195,8 +2198,7 @@ static void RF_BindAttrbibutesLocations( glsl_program_t *program )
 	qglBindAttribLocationARB( program->object, VATTRIB_TEXCOORDS, "a_TexCoord" );
 
 	qglBindAttribLocationARB( program->object, VATTRIB_SPRITEPOINT, "a_SpritePoint" );
-	qglBindAttribLocationARB( program->object, VATTRIB_SPRITERAXIS, "a_SpriteRightAxis" );
-	qglBindAttribLocationARB( program->object, VATTRIB_SPRITEUAXIS, "a_SpriteUpAxis" );
+	qglBindAttribLocationARB( program->object, VATTRIB_SVECTOR, "a_SpriteRightUpAxis" );
 
 	qglBindAttribLocationARB( program->object, VATTRIB_BONESINDICES, "a_BonesIndices" );
 	qglBindAttribLocationARB( program->object, VATTRIB_BONESWEIGHTS, "a_BonesWeights" );

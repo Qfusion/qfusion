@@ -1083,32 +1083,14 @@ static void RB_EnableVertexAttribs( void )
 		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, qfalse );
 	}
 
-	if( (vattribs & VATTRIB_AUTOSPRITE2_BIT) == VATTRIB_AUTOSPRITE2_BIT ) {
-		// submit sprite centre and the longest edge
-		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), GL_FALSE, 0, 
-			( const GLvoid * )vbo->spritePointsOffset );
-
-		GL_EnableVertexAttrib( VATTRIB_SPRITERAXIS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITERAXIS, 3, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE2_BIT, hfa ), GL_FALSE, 0, 
-			( const GLvoid * )vbo->spriteRightAxesOffset );
-
-		GL_EnableVertexAttrib( VATTRIB_SPRITEUAXIS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEUAXIS, 3, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE2_BIT, hfa ), GL_FALSE, 0, 
-			( const GLvoid * )vbo->spriteUpAxesOffset );
-	}
-	else if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
+	 if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
 		// submit sprite point
-		GL_EnableVertexAttrib( VATTRIB_SPRITERAXIS, qfalse );
-		GL_EnableVertexAttrib( VATTRIB_SPRITEUAXIS, qfalse );
 		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qtrue );
 		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), GL_FALSE, 0, 
 			( const GLvoid * )vbo->spritePointsOffset );
 	}
 	else {
 		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qfalse );
-		GL_EnableVertexAttrib( VATTRIB_SPRITERAXIS, qfalse );
-		GL_EnableVertexAttrib( VATTRIB_SPRITEUAXIS, qfalse );
 	}
 
 	// bones (skeletal models)

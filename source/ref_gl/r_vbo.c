@@ -107,7 +107,6 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	GLuint vbo_id;
 	vbohandle_t *vboh = NULL;
 	mesh_vbo_t *vbo = NULL;
-	mesh_t *mesh = NULL;
 	GLenum array_usage = VBO_ARRAY_USAGE_FOR_TAG(tag);
 	GLenum elem_usage = VBO_ELEM_USAGE_FOR_TAG(tag);
 
@@ -139,21 +138,21 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 
 	// vertex data
 	size = 0;
-	size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_POSITION_BIT, halfFloatVattribs) * sizeof( *mesh->xyzArray ) / sizeof( **mesh->xyzArray );
+	size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_POSITION_BIT, halfFloatVattribs) * 4;
 	ALIGN16( size );
 
 	// normals data
 	if( vattribs & VATTRIB_NORMAL_BIT )
 	{
 		vbo->normalsOffset = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_NORMAL_BIT, halfFloatVattribs) * sizeof( *mesh->normalsArray ) / sizeof( **mesh->normalsArray );
+		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_NORMAL_BIT, halfFloatVattribs) * 4;
 	}
 
 	// s-vectors (tangent vectors)
 	if( vattribs & VATTRIB_SVECTOR_BIT )
 	{
 		vbo->sVectorsOffset = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_SVECTOR_BIT, halfFloatVattribs) * sizeof( *mesh->sVectorsArray ) / sizeof( **mesh->sVectorsArray );
+		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_SVECTOR_BIT, halfFloatVattribs) * 4;
 		ALIGN16( size );
 	}
 
@@ -161,7 +160,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	if( vattribs & VATTRIB_TEXCOORDS_BIT )
 	{
 		vbo->stOffset = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_TEXCOORDS_BIT, halfFloatVattribs) * sizeof( *mesh->stArray ) / sizeof( **mesh->stArray );
+		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_TEXCOORDS_BIT, halfFloatVattribs) * 2;
 		ALIGN16( size );
 	}
 
@@ -169,7 +168,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	if( vattribs & VATTRIB_LMCOORDS0_BIT )
 	{
 		vbo->lmstOffset[0] = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS0_BIT, halfFloatVattribs) * sizeof( *mesh->lmstArray[0] ) / sizeof( **mesh->lmstArray[0] );
+		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS0_BIT, halfFloatVattribs) * 2;
 		ALIGN16( size );
 
 		for( i = 1; i < MAX_LIGHTMAPS; i++ )
@@ -178,7 +177,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 			if( !(vattribs & lmvattrib) )
 				break;
 			vbo->lmstOffset[i] = size;
-			size += numVerts * FLOAT_VATTRIB_SIZE(lmvattrib, halfFloatVattribs) * sizeof( *mesh->lmstArray[0] ) / sizeof( **mesh->lmstArray[0] );
+			size += numVerts * FLOAT_VATTRIB_SIZE(lmvattrib, halfFloatVattribs) * 2;
 			ALIGN16( size );
 		}
 	}
@@ -187,7 +186,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	if( vattribs & VATTRIB_COLOR0_BIT )
 	{
 		vbo->colorsOffset[0] = size;
-		size += numVerts * sizeof( byte_vec4_t );
+		size += numVerts * sizeof( GLbyte ) * 4;
 		ALIGN16( size );
 
 		for( i = 1; i < MAX_LIGHTMAPS; i++ )
@@ -195,7 +194,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 			if( !(vattribs & (VATTRIB_COLOR1_BIT<<(i-1))) )
 				break;
 			vbo->colorsOffset[i] = size;
-			size += numVerts * sizeof( byte_vec4_t );
+			size += numVerts * sizeof( GLbyte ) * 4;
 			ALIGN16( size );
 		}
 	}
@@ -203,31 +202,18 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	// bones data for skeletal animation
 	if( (vattribs & VATTRIB_BONES_BITS) == VATTRIB_BONES_BITS ) {
 		vbo->bonesIndicesOffset = size;
-		size += numVerts * sizeof( qbyte ) * SKM_MAX_WEIGHTS;
+		size += numVerts * sizeof( GLbyte ) * SKM_MAX_WEIGHTS;
 		ALIGN16( size );
 
 		vbo->bonesWeightsOffset = size;
-		size += numVerts * sizeof( qbyte ) * SKM_MAX_WEIGHTS;
+		size += numVerts * sizeof( GLbyte ) * SKM_MAX_WEIGHTS;
 		ALIGN16( size );
 	}
 
 	// autosprites
-	// FIXME: autosprite2 requires waaaay to much data for such a trivial
+	// FIXME: autosprite2 requires waaaay too much data for such a trivial
 	// transformation..
-	if( (vattribs & VATTRIB_AUTOSPRITE2_BIT) == VATTRIB_AUTOSPRITE2_BIT ) {
-		vbo->spritePointsOffset = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_AUTOSPRITE_BIT, halfFloatVattribs) * 4;
-		ALIGN16( size );
-
-		vbo->spriteRightAxesOffset = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_AUTOSPRITE2_BIT, halfFloatVattribs) * 3;
-		ALIGN16( size );
-
-		vbo->spriteUpAxesOffset = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_AUTOSPRITE2_BIT, halfFloatVattribs) * 3;
-		ALIGN16( size );
-	}
-	else if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
+	if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
 		vbo->spritePointsOffset = size;
 		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_AUTOSPRITE_BIT, halfFloatVattribs) * 4;
 		ALIGN16( size );
@@ -406,6 +392,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 	vattribmask_t hfa;
 	int numFloats;
 	GLsizeiptrARB size;
+
 	assert( vbo != NULL );
 	assert( mesh != NULL );
 
@@ -421,7 +408,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 
 	// upload vertex xyz data
 	if( mesh->xyzArray && (vattribs & VATTRIB_POSITION_BIT) ) {
-		numFloats = sizeof( *mesh->xyzArray ) / sizeof( **mesh->xyzArray );
+		numFloats = 4;
 		size = FLOAT_VATTRIB_SIZE( VATTRIB_POSITION_BIT, hfa ) * numFloats;
 
 		if( !mesh->xyzArray )
@@ -433,7 +420,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 
 	// upload normals data
 	if( vbo->normalsOffset && (vattribs & VATTRIB_NORMAL_BIT) ) {
-		numFloats = sizeof( *mesh->normalsArray ) / sizeof( **mesh->normalsArray );
+		numFloats = 4;
 		size = FLOAT_VATTRIB_SIZE( VATTRIB_NORMAL_BIT, hfa ) * numFloats;
 
 		if( !mesh->normalsArray )
@@ -444,8 +431,8 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 	}
 	 
 	// upload tangent vectors
-	if( vbo->sVectorsOffset && (vattribs & VATTRIB_SVECTOR_BIT) ) {
-		numFloats = sizeof( *mesh->sVectorsArray ) / sizeof( **mesh->sVectorsArray );
+	if( vbo->sVectorsOffset && ( (vattribs & VATTRIB_SVECTOR_BIT|VATTRIB_AUTOSPRITE2_BIT) == VATTRIB_SVECTOR_BIT ) ) {
+		numFloats = 4;
 		size = FLOAT_VATTRIB_SIZE( VATTRIB_SVECTOR_BIT, hfa ) * numFloats;
 
 		if( !mesh->sVectorsArray )
@@ -457,7 +444,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 
 	// upload texture coordinates
 	if( vbo->stOffset && (vattribs & VATTRIB_TEXCOORDS_BIT) ) {
-		numFloats = sizeof( *mesh->stArray ) / sizeof( **mesh->stArray );
+		numFloats = 2;
 		size = FLOAT_VATTRIB_SIZE( VATTRIB_TEXCOORDS_BIT, hfa ) * numFloats;
 
 		if( !mesh->stArray )
@@ -469,7 +456,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 
 	// upload lightmap texture coordinates
 	if( vbo->lmstOffset[0] && (vattribs & VATTRIB_LMCOORDS0_BIT) ) {
-		numFloats = sizeof( *mesh->lmstArray[0] ) / sizeof( **mesh->lmstArray[0] );
+		numFloats = 2;
 		size = FLOAT_VATTRIB_SIZE( VATTRIB_LMCOORDS0_BIT, hfa ) * numFloats;
 
 		if( mesh->lmstArray[0] ) {
@@ -502,7 +489,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 	if( vbo->colorsOffset[0] && (vattribs & VATTRIB_COLOR0_BIT) ) {
 		if( mesh->colorsArray[0] ) {
 			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->colorsOffset[0] + vertsOffset * sizeof( byte_vec4_t ), 
-				numVerts * sizeof( byte_vec4_t ), mesh->colorsArray[0] );
+				numVerts * sizeof( GLbyte ) * 4, mesh->colorsArray[0] );
 
 			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
 				if( !vbo->colorsOffset[i] || ! (vattribs & (VATTRIB_COLOR1_BIT<<(i-1))) )
@@ -512,7 +499,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 					break;
 				}
 				qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->colorsOffset[i] + vertsOffset * sizeof( byte_vec4_t ), 
-					numVerts * sizeof( byte_vec4_t ), mesh->colorsArray[i] );
+					numVerts * sizeof( GLbyte ) * 4, mesh->colorsArray[i] );
 			}
 		}
 		else {
@@ -522,7 +509,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 
 	// upload centre and radius for autosprites
 	// this code assumes that the mesh has been properly pretransformed
-	if( vbo->spriteRightAxesOffset && ( (vattribs & VATTRIB_AUTOSPRITE2_BIT) == VATTRIB_AUTOSPRITE2_BIT ) ) {
+	if( vbo->spritePointsOffset && ( (vattribs & VATTRIB_AUTOSPRITE2_BIT) == VATTRIB_AUTOSPRITE2_BIT ) ) {
 		// for autosprite2 also upload vertices that form the longest axis
 		// the remaining vertex can be trivially computed in vertex shader
 		vec3_t vd[3];
@@ -531,16 +518,15 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 		float longest_dist = 0, longer_dist = 0;
 		const int edges[3][2] = { { 1, 0 }, { 2, 0 }, { 2, 1 } };
 		vec4_t centre[4];
-		vec3_t axis[2][4];
+		vec4_t axes[4];
 		vec4_t *verts = mesh->xyzArray;
 		elem_t *elems, temp_elems[6];
 		int numQuads;
-		int numFloats0 = 4, numFloats12 = 3;
+		int numFloats0 = 4, numFloats1 = 4;
 		GLsizeiptrARB size0 = FLOAT_VATTRIB_SIZE( VATTRIB_AUTOSPRITE_BIT, hfa ) * numFloats0;
-		GLsizeiptrARB size12 = FLOAT_VATTRIB_SIZE( VATTRIB_AUTOSPRITE2_BIT, hfa ) * numFloats12;
+		GLsizeiptrARB size1 = FLOAT_VATTRIB_SIZE( VATTRIB_SVECTOR_BIT, hfa ) * numFloats1;
 		size_t bufferOffset0 = vbo->spritePointsOffset + vertsOffset * size0;
-		size_t bufferOffset1 = vbo->spriteRightAxesOffset + vertsOffset * size12;
-		size_t bufferOffset2 = vbo->spriteUpAxesOffset + vertsOffset * size12;
+		size_t bufferOffset1 = vbo->sVectorsOffset + vertsOffset * size1;
 
 		if( hint == VBO_HINT_ELEMS_QUAD ) {
 			numQuads = numVerts / 4;
@@ -604,23 +590,23 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			// radius
 			centre[0][3] = d[longest_edge] * 0.5; // unused
 			// right axis, normalized
-			VectorScale( vd[short_edge], 1.0 / d[short_edge], axis[0][0] );
+			VectorScale( vd[short_edge], 1.0 / d[short_edge], vd[short_edge] );
 			// up axis, normalized
-			VectorScale( vd[longer_edge], 1.0 / d[longer_edge], axis[1][0] );
+			VectorScale( vd[longer_edge], 1.0 / d[longer_edge], vd[longer_edge] );
+
+			NormToLatLong( vd[short_edge], &axes[0][0] );
+			NormToLatLong( vd[longer_edge], &axes[0][2] );
 
 			for( j = 1; j < 4; j++ ) {
 				Vector4Copy( centre[0], centre[j] );
-				VectorCopy( axis[0][0], axis[0][j] );
-				VectorCopy( axis[1][0], axis[1][j] );
+				Vector4Copy( axes[0], axes[j] );
 			}
 
-			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset0, 4 * size0 , R_VattribFloatBuffer( VATTRIB_AUTOSPRITE_BIT , hfa, centre[0] , 4 * numFloats0  ) );
-			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset1, 4 * size12, R_VattribFloatBuffer( VATTRIB_AUTOSPRITE2_BIT, hfa, axis[0][0], 4 * numFloats12 ) );
-			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset2, 4 * size12, R_VattribFloatBuffer( VATTRIB_AUTOSPRITE2_BIT, hfa, axis[1][0], 4 * numFloats12 ) );
+			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset0, 4 * size0, R_VattribFloatBuffer( VATTRIB_AUTOSPRITE_BIT, hfa, centre[0], 4 * numFloats0 ) );
+			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset1, 4 * size1, R_VattribFloatBuffer( VATTRIB_SVECTOR_BIT, hfa, axes[0], 4 * numFloats1 ) );
 
 			bufferOffset0 += 4 * size0;
-			bufferOffset1 += 4 * size12;
-			bufferOffset2 += 4 * size12;
+			bufferOffset1 += 4 * size1;
 		}
 	}
 	else if( vbo->spritePointsOffset && ( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) ) {

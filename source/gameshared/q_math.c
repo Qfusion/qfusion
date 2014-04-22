@@ -127,7 +127,7 @@ vec_t ColorNormalize( const vec_t *in, vec_t *out )
 
 //============================================================================
 
-void NormToLatLong( const vec3_t normal, qbyte latlong[2] )
+void NormToLatLong( const vec3_t normal, float latlong[2] )
 {
 	// can't do atan2 (normal[1], normal[0])
 	if( normal[0] == 0 && normal[1] == 0 )
@@ -139,18 +139,14 @@ void NormToLatLong( const vec3_t normal, qbyte latlong[2] )
 		}
 		else
 		{
-			latlong[0] = 128; // acos ( -1 )
+			latlong[0] = M_PI; // acos ( -1 )
 			latlong[1] = 0;
 		}
 	}
 	else
 	{
-		int angle;
-
-		angle = (int)( acos( normal[2] ) * 255.0 / M_TWOPI ) & 255;
-		latlong[0] = angle;
-		angle = (int)( atan2( normal[1], normal[0] ) * 255.0 / M_TWOPI ) & 255;
-		latlong[1] = angle;
+		latlong[0] = acos( normal[2] );
+		latlong[1] = atan2( normal[1], normal[0] );
 	}
 }
 
