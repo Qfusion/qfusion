@@ -24,6 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 qboolean    Sys_Library_Close( void *lib );
 void *Sys_Library_Open( const char *name );
 void *Sys_Library_ProcAddress( void *lib, const char *apifuncname );
-char *Sys_Library_ErrorString( void );
+const char *Sys_Library_ErrorString( void );
 
 #endif // __SYS_LIBRARY_H
