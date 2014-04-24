@@ -20,8 +20,8 @@ uniform vec3 u_LightDir;
 
 uniform myhalf2 u_BlendMix;
 
-uniform vec2 u_TextureMatrix[3];
-#define TextureMatrix2x3Mul(m2x3,tc) vec2(dot((m2x3)[0],(tc)) + (m2x3)[2][0], dot((m2x3)[1],(tc)) + (m2x3)[2][1])
+uniform vec4 u_TextureMatrix[2];
+#define TextureMatrix2x3Mul(m2x3,tc) (vec2(dot((m2x3)[0].xy, (tc)), dot((m2x3)[0].zw, (tc))) + (m2x3)[1].xy)
 
 uniform float u_MirrorSide;
 
