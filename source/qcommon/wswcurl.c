@@ -35,7 +35,7 @@
 #define CURLDBG(x)			
 
 #define WCONNECTTIMEOUT		0
-#define WTIMEOUT			15
+#define WTIMEOUT			200
 
 // 400k of buffering at max
 #define WMAXBUFFERING		102400*4
