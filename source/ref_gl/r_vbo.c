@@ -109,6 +109,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	mesh_vbo_t *vbo = NULL;
 	GLenum array_usage = VBO_ARRAY_USAGE_FOR_TAG(tag);
 	GLenum elem_usage = VBO_ELEM_USAGE_FOR_TAG(tag);
+	vattribbit_t lmattrbit;
 
 	if( !glConfig.ext.vertex_buffer_object )
 		return NULL;
@@ -165,21 +166,16 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	}
 
 	// lightmap texture coordinates
-	if( vattribs & VATTRIB_LMCOORDS0_BIT )
-	{
-		vbo->lmstOffset[0] = size;
-		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS0_BIT, halfFloatVattribs) * 2;
-		ALIGN16( size );
-
-		for( i = 1; i < MAX_LIGHTMAPS; i++ )
-		{
-			vattribbit_t lmvattrib = (vattribbit_t)(VATTRIB_LMCOORDS1_BIT<<(i-1));
-			if( !(vattribs & lmvattrib) )
-				break;
-			vbo->lmstOffset[i] = size;
-			size += numVerts * FLOAT_VATTRIB_SIZE(lmvattrib, halfFloatVattribs) * 2;
-			ALIGN16( size );
+	lmattrbit = VATTRIB_LMCOORDS0_BIT;
+	for( i = 0; i < MAX_LIGHTMAPS/2; i++ ) {
+		if( !(vattribs & lmattrbit) ) {
+			break;
 		}
+		vbo->lmstOffset[i] = size;
+		vbo->lmstSize[i] = vattribs & VATTRIB_LMCOORDS0_BIT<<1 ? 4 : 2;
+		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS0_BIT, halfFloatVattribs) * vbo->lmstSize[i];
+		ALIGN16( size );
+		lmattrbit <<= 2;
 	}
 
 	// vertex colors
@@ -353,7 +349,7 @@ int R_GetNumberOfActiveVBOs( void )
 /*
 * R_HalfFloatBufferFromFloatBuffer
 */
-static GLhalfARB *R_HalfFloatBufferFromFloatBuffer( float *f, int numFloats )
+static GLhalfARB *R_HalfFloatBufferFromFloatBuffer( int numFloats, float *f )
 {
 	GLhalfARB *hptr = ( GLhalfARB * )R_VBOFloatBuffer( ( numFloats + 1 ) / 2 ), *h = hptr;
 	for( ; numFloats > 0 ; numFloats-- ) { 
@@ -365,12 +361,84 @@ static GLhalfARB *R_HalfFloatBufferFromFloatBuffer( float *f, int numFloats )
 /*
 * R_VattribFloatBuffer
 */
-static GLvoid *R_VattribFloatBuffer( vattribbit_t bit, vattribmask_t mask, float *f, int numFloats )
+static GLvoid *R_VattribFloatBuffer( vattribbit_t bit, vattribmask_t mask, int numFloats, float *f )
 {
 	if( FLOAT_VATTRIB_TYPE( bit, mask ) == GL_HALF_FLOAT ) {
-		return ( GLvoid * )R_HalfFloatBufferFromFloatBuffer( f, numFloats );
+		return ( GLvoid * )R_HalfFloatBufferFromFloatBuffer( numFloats, f );
 	}
 	return ( GLvoid * )f;
+}
+
+/*
+* R_VattribInterleavedFloatBuffer
+*/
+static GLvoid *R_VattribInterleavedFloatBuffer( vattribbit_t bit, vattribmask_t mask, int numVerts, ... )
+{
+	int i, j, k;
+	int numArrays;
+	int totalSize;
+	struct {
+		float *ptr;
+		int size;
+	} floatArray[16];
+	va_list vl;
+
+	numArrays = 0;
+	totalSize = 0;
+
+	// count the number of arrays passed
+	va_start( vl, numVerts );
+	while( 1 ) {
+		int size;
+		float *f = va_arg( vl, float * );
+		if( !f ) {
+			break;
+		}
+		if( numArrays == sizeof(floatArray)/sizeof(floatArray[0]) ) {
+			va_end( vl );
+			return NULL;
+		}
+		size = va_arg( vl, int );
+
+		floatArray[numArrays].ptr = f;
+		floatArray[numArrays].size = size;
+
+		totalSize += size;
+		numArrays++;
+	}
+	va_end( vl );
+
+	if( !numArrays || !totalSize ) {
+		return NULL;
+	}
+
+#define fill_with_stride(type,conv) \
+	{ \
+		type *hptr = ( type * )R_VBOFloatBuffer( ( numVerts * totalSize + sizeof(GLfloat)/sizeof(type) - 1 )  \
+				/ (sizeof(GLfloat)/sizeof(type)) ); \
+		type *h = hptr; \
+		\
+		for( i = 0; i < numVerts; i++ ) { \
+			for( j = 0; j < numArrays; j++ ) { \
+				float *f = floatArray[j].ptr; \
+				int size = floatArray[j].size; \
+				for( k = 0; k < size; k++ ) { \
+					*h++ = conv( *f++ ); \
+				} \
+				floatArray[j].ptr += size; \
+			} \
+		} \
+		\
+		return hptr; \
+	}
+
+	if( FLOAT_VATTRIB_TYPE( bit, mask ) == GL_HALF_FLOAT ) {
+		fill_with_stride(GLhalfARB, _mesa_float_to_half);
+	}
+	else {
+		fill_with_stride(GLfloat, );
+	}
+#undef fill_with_stride
 }
 
 /*
@@ -415,7 +483,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			errMask |= VATTRIB_POSITION_BIT;
 		else
 			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 0 + vertsOffset * size,
-				numVerts * size, R_VattribFloatBuffer( VATTRIB_POSITION_BIT, hfa, mesh->xyzArray[0], numVerts * numFloats ) );
+				numVerts * size, R_VattribFloatBuffer( VATTRIB_POSITION_BIT, hfa, numVerts * numFloats, mesh->xyzArray[0] ) );
 	}
 
 	// upload normals data
@@ -427,7 +495,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			errMask |= VATTRIB_NORMAL_BIT;
 		else
 			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->normalsOffset + vertsOffset * size, 
-				numVerts * size, R_VattribFloatBuffer( VATTRIB_NORMAL_BIT, hfa, mesh->normalsArray[0], numVerts * numFloats ) );
+				numVerts * size, R_VattribFloatBuffer( VATTRIB_NORMAL_BIT, hfa, numVerts * numFloats, mesh->normalsArray[0] ) );
 	}
 	 
 	// upload tangent vectors
@@ -439,7 +507,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			errMask |= VATTRIB_SVECTOR_BIT;
 		else
 			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->sVectorsOffset + vertsOffset * size, 
-				numVerts * size, R_VattribFloatBuffer( VATTRIB_SVECTOR_BIT, hfa, mesh->sVectorsArray[0], numVerts * numFloats ) );
+				numVerts * size, R_VattribFloatBuffer( VATTRIB_SVECTOR_BIT, hfa, numVerts * numFloats, mesh->sVectorsArray[0] ) );
 	}
 
 	// upload texture coordinates
@@ -451,37 +519,43 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			errMask |= VATTRIB_TEXCOORDS_BIT;
 		else
 			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->stOffset + vertsOffset * size,
-				numVerts * size, R_VattribFloatBuffer( VATTRIB_TEXCOORDS_BIT, hfa, mesh->stArray[0], numVerts * numFloats ) );
+				numVerts * size, R_VattribFloatBuffer( VATTRIB_TEXCOORDS_BIT, hfa, numVerts * numFloats, mesh->stArray[0] ) );
 	}
 
 	// upload lightmap texture coordinates
-	if( vbo->lmstOffset[0] && (vattribs & VATTRIB_LMCOORDS0_BIT) ) {
-		numFloats = 2;
-		size = FLOAT_VATTRIB_SIZE( VATTRIB_LMCOORDS0_BIT, hfa ) * numFloats;
+	if( vbo->lmstOffset[0] && ( vattribs & VATTRIB_LMCOORDS0_BIT ) ) {
+		int i;
+		vattribbit_t lmattrbit;
 
-		if( mesh->lmstArray[0] ) {
-			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[0] + vertsOffset * size, 
-				numVerts * size, R_VattribFloatBuffer( VATTRIB_LMCOORDS0_BIT, hfa, mesh->lmstArray[0][0], numVerts * numFloats ) );
+		lmattrbit = VATTRIB_LMCOORDS0_BIT;
 
-			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
-				vattribbit_t lmvattrib = (vattribbit_t)(VATTRIB_LMCOORDS1_BIT<<(i-1));
+		for( i = 0; i < MAX_LIGHTMAPS/2; i++ ) {
+			if( !(vattribs & lmattrbit) ) {
+				break;
+			}
+			if( !mesh->lmstArray[i*2+0] ) {
+				errMask |= lmattrbit;
+				break;
+			}
 
-				if( !vbo->lmstOffset[i] || ! (vattribs & lmvattrib) )
-					break;
+			size = FLOAT_VATTRIB_SIZE( VATTRIB_LMCOORDS0_BIT, hfa ) * vbo->lmstSize[i];
 
-				size = FLOAT_VATTRIB_SIZE( lmvattrib, hfa ) * 2;
-
-				if( !mesh->lmstArray[i] ) {
-					errMask |= VATTRIB_LMCOORDS1_BIT<<(i-1);
+			if( vattribs & (lmattrbit<<1) ) {
+				if( !mesh->lmstArray[i*2+1] ) {
+					errMask |= lmattrbit<<1;
 					break;
 				}
-
 				qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[i] + vertsOffset * size, 
-					numVerts * size, R_VattribFloatBuffer( lmvattrib, hfa, mesh->lmstArray[i][0], numVerts * numFloats ) );
+					numVerts * size, R_VattribInterleavedFloatBuffer( VATTRIB_LMCOORDS0_BIT, hfa, numVerts, 
+					mesh->lmstArray[i*2+0][0], 2, mesh->lmstArray[i*2+1][0], 2, NULL ) );
 			}
-		}
-		else {
-			errMask |= VATTRIB_LMCOORDS0_BIT;
+			else {
+				qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[i] + vertsOffset * size, 
+					numVerts * size, R_VattribFloatBuffer( VATTRIB_LMCOORDS0_BIT, hfa, numVerts * 2, 
+					mesh->lmstArray[i*2][0] ) );
+			}
+
+			lmattrbit <<= 2;
 		}
 	}
 
@@ -602,8 +676,10 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 				Vector4Copy( axes[0], axes[j] );
 			}
 
-			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset0, 4 * size0, R_VattribFloatBuffer( VATTRIB_AUTOSPRITE_BIT, hfa, centre[0], 4 * numFloats0 ) );
-			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset1, 4 * size1, R_VattribFloatBuffer( VATTRIB_SVECTOR_BIT, hfa, axes[0], 4 * numFloats1 ) );
+			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset0, 4 * size0, 
+				R_VattribFloatBuffer( VATTRIB_AUTOSPRITE_BIT, hfa, 4 * numFloats0, centre[0] ) );
+			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset1, 4 * size1,
+				R_VattribFloatBuffer( VATTRIB_SVECTOR_BIT, hfa, 4 * numFloats1, axes[0] ) );
 
 			bufferOffset0 += 4 * size0;
 			bufferOffset1 += 4 * size1;
@@ -631,7 +707,8 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 				Vector4Copy( centre[0], centre[j] );
 			}
 
-			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset, 4 * size, R_VattribFloatBuffer( VATTRIB_AUTOSPRITE_BIT, hfa, centre[0], 4 * numFloats ) );
+			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, bufferOffset, 4 * size, 
+				R_VattribFloatBuffer( VATTRIB_AUTOSPRITE_BIT, hfa, 4 * numFloats, centre[0] ) );
 			bufferOffset += 4 * size;
 		}
 	}

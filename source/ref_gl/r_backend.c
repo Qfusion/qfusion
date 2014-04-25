@@ -1031,7 +1031,6 @@ void RB_EndBatch( void )
 */
 static void RB_EnableVertexAttribs( void )
 {
-	int i;
 	vattribmask_t vattribs = rb.currentVAttribs;
 	mesh_vbo_t *vbo = rb.currentVBO;
 	vattribmask_t hfa = vbo->halfFloatAttribs;
@@ -1106,30 +1105,30 @@ static void RB_EnableVertexAttribs( void )
 			( const GLvoid * )vbo->bonesWeightsOffset );
 	}
 	else {
+		int i;
+		vattrib_t lmattr;
+		vattribbit_t lmattrbit;
+
 		GL_EnableVertexAttrib( VATTRIB_BONESINDICES, qfalse );
 		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, qfalse );
 
 		// lightmap texture coordinates
-		if( vattribs & VATTRIB_LMCOORDS0_BIT ) {
-			GL_EnableVertexAttrib( VATTRIB_LMCOORDS0, qtrue );
-			qglVertexAttribPointerARB( VATTRIB_LMCOORDS0, 2, FLOAT_VATTRIB_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), GL_FALSE, 0, 
-				( const GLvoid * )vbo->lmstOffset[0] );
-		}
-		else {
-			GL_EnableVertexAttrib( VATTRIB_LMCOORDS0, qfalse );
-		}
+		lmattr = VATTRIB_LMCOORDS01;
+		lmattrbit = VATTRIB_LMCOORDS0_BIT;
 
-		for( i = 0; i < MAX_LIGHTMAPS-1; i++ ) {
-			vattribbit_t lmvattrib = ( vattribbit_t ) (VATTRIB_LMCOORDS1_BIT<<i);
-
-			if( vattribs & lmvattrib ) {
-				GL_EnableVertexAttrib( VATTRIB_LMCOORDS1+i, qtrue );
-				qglVertexAttribPointerARB( VATTRIB_LMCOORDS1+i, 2, FLOAT_VATTRIB_TYPE( lmvattrib, hfa ), GL_FALSE, 0, 
-					( const GLvoid * )vbo->lmstOffset[i+1] );
+		for( i = 0; i < MAX_LIGHTMAPS/2; i++ ) {
+			if( vattribs & lmattrbit ) {
+				GL_EnableVertexAttrib( lmattr, qtrue );
+				qglVertexAttribPointerARB( lmattr, vbo->lmstSize[i], 
+					FLOAT_VATTRIB_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), 
+					GL_FALSE, 0, ( const GLvoid * )vbo->lmstOffset[i] );
 			}
 			else {
-				GL_EnableVertexAttrib( VATTRIB_LMCOORDS1+i, qfalse );
+				GL_EnableVertexAttrib( lmattr, qfalse );
 			}
+
+			lmattr++;
+			lmattrbit <<= 2;
 		}
 	}
 

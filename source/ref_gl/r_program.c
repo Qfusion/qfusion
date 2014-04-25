@@ -448,10 +448,10 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
 		"#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
 
-	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n", "_ls3" },
-	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n", "_ls2" },
-	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n", "_ls1" },
-	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE0, "#define NUM_LIGHTMAPS 1\n", "_ls0" },
+	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec23 vec4\n", "_ls3" },
+	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec23 vec2\n", "_ls2" },
+	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n#define qf_lmvec01 vec4\n", "_ls1" },
+	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE0, "#define NUM_LIGHTMAPS 1\n#define qf_lmvec01 vec2\n", "_ls0" },
 	{ GLSL_SHADER_MATERIAL_FB_LIGHTMAP, "#define APPLY_FBLIGHTMAP\n", "_fb" },
 	{ GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT, "#define APPLY_DIRECTIONAL_LIGHT\n", "_dirlight" },
 
@@ -615,10 +615,10 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_Q3_TC_GEN_ENV, "#define APPLY_TC_GEN_ENV\n", "_tc_env" },
 	{ GLSL_SHADER_Q3_TC_GEN_VECTOR, "#define APPLY_TC_GEN_VECTOR\n", "_tc_vec" },
 
-	{ GLSL_SHADER_Q3_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n", "_ls3" },
-	{ GLSL_SHADER_Q3_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n", "_ls2" },
-	{ GLSL_SHADER_Q3_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n", "_ls1" },
-	{ GLSL_SHADER_Q3_LIGHTSTYLE0, "#define NUM_LIGHTMAPS 1\n", "_ls0" },
+	{ GLSL_SHADER_Q3_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec23 vec4\n", "_ls3" },
+	{ GLSL_SHADER_Q3_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec23 vec2\n", "_ls2" },
+	{ GLSL_SHADER_Q3_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n#define qf_lmvec01 vec4\n", "_ls1" },
+	{ GLSL_SHADER_Q3_LIGHTSTYLE0, "#define NUM_LIGHTMAPS 1\n#define qf_lmvec01 vec2\n", "_ls0" },
 
 	{ 0, NULL, NULL }
 };
@@ -2203,10 +2203,8 @@ static void RF_BindAttrbibutesLocations( glsl_program_t *program )
 	qglBindAttribLocationARB( program->object, VATTRIB_BONESINDICES, "a_BonesIndices" );
 	qglBindAttribLocationARB( program->object, VATTRIB_BONESWEIGHTS, "a_BonesWeights" );
 
-	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS0, "a_LightmapCoord0" );
-	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS1, "a_LightmapCoord1" );
-	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS2, "a_LightmapCoord2" );
-	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS3, "a_LightmapCoord3" );
+	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS01, "a_LightmapCoord01" );
+	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS23, "a_LightmapCoord23" );
 
 	qglBindAttribLocationARB( program->object, VATTRIB_COLOR1, "a_Color1" );
 	qglBindAttribLocationARB( program->object, VATTRIB_COLOR2, "a_Color2" );
