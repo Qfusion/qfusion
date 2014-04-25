@@ -1168,8 +1168,8 @@ void RB_DrawElementsReal( void )
 	if( numInstances ) {
 		if( glConfig.ext.instanced_arrays ) {
 			// the instance data is contained in vertex attributes
-			qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_INT, 
-				(GLvoid *)(firstElem * sizeof( int )), numInstances );
+			qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT, 
+				(GLvoid *)(firstElem * sizeof( elem_t )), numInstances );
 
 			rb.stats.c_totalDraws++;
 		} else if( glConfig.ext.draw_instanced ) {
@@ -1182,8 +1182,8 @@ void RB_DrawElementsReal( void )
 
 				RB_SetInstanceData( numUInstances, rb.drawInstances + i );
 
-				qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_INT, 
-					(GLvoid *)(firstElem * sizeof( int )), numUInstances );
+				qglDrawElementsInstancedARB( rb.primitive, numElems, GL_UNSIGNED_SHORT, 
+					(GLvoid *)(firstElem * sizeof( elem_t )), numUInstances );
 
 				rb.stats.c_totalDraws++;
 			}
@@ -1197,7 +1197,7 @@ void RB_DrawElementsReal( void )
 
 				qglDrawRangeElementsEXT( rb.primitive, 
 					firstVert, firstVert + numVerts - 1, numElems, 
-					GL_UNSIGNED_INT, (GLvoid *)(firstElem * sizeof( int )) );
+					GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
 
 				rb.stats.c_totalDraws++;
 			}
@@ -1208,7 +1208,7 @@ void RB_DrawElementsReal( void )
 
 		qglDrawRangeElementsEXT( rb.primitive, 
 			firstVert, firstVert + numVerts - 1, numElems, 
-			GL_UNSIGNED_INT, (GLvoid *)(firstElem * sizeof( int )) );
+			GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
 
 		rb.stats.c_totalDraws++;
 	}
