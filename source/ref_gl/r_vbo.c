@@ -244,7 +244,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		goto error;
 	vbo->elemId = vbo_id;
 
-	size = numElems * sizeof( unsigned int );
+	size = numElems * sizeof( elem_t );
 	RB_BindElementArrayBuffer( vbo->elemId );
 	qglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, size, NULL, elem_usage );
 	if( qglGetError () == GL_OUT_OF_MEMORY )
@@ -781,7 +781,7 @@ void R_DiscardVBOElemData( mesh_vbo_t *vbo )
 static int R_UploadVBOElemQuadData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, int numVerts )
 {
 	int numElems;
-	unsigned int *ielems;
+	elem_t *ielems;
 
 	assert( vbo != NULL );
 
@@ -794,8 +794,8 @@ static int R_UploadVBOElemQuadData( mesh_vbo_t *vbo, int vertsOffset, int elemsO
 	R_BuildQuadElements( vertsOffset, numVerts, ielems );
 
 	RB_BindElementArrayBuffer( vbo->elemId );
-	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( unsigned int ), 
-		numElems * sizeof( unsigned int ), ielems );
+	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ), 
+		numElems * sizeof( elem_t ), ielems );
 
 	return numElems;
 }
@@ -808,7 +808,7 @@ static int R_UploadVBOElemQuadData( mesh_vbo_t *vbo, int vertsOffset, int elemsO
 static int R_UploadVBOElemTrifanData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, int numVerts )
 {
 	int numElems;
-	unsigned int *ielems;
+	elem_t *ielems;
 
 	assert( vbo != NULL );
 
@@ -821,8 +821,8 @@ static int R_UploadVBOElemTrifanData( mesh_vbo_t *vbo, int vertsOffset, int elem
 	R_BuildTrifanElements( vertsOffset, numVerts, ielems );
 
 	RB_BindElementArrayBuffer( vbo->elemId );
-	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( unsigned int ), 
-		numElems * sizeof( unsigned int ), ielems );
+	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ), 
+		numElems * sizeof( elem_t ), ielems );
 
 	return numElems;
 }
@@ -836,7 +836,7 @@ void R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset,
 	const mesh_t *mesh, vbo_hint_t hint )
 {
 	int i;
-	unsigned int *ielems;
+	elem_t *ielems;
 
 	assert( vbo != NULL );
 
@@ -859,8 +859,8 @@ void R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset,
 	}
 
 	RB_BindElementArrayBuffer( vbo->elemId );
-	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( unsigned int ), 
-		mesh->numElems * sizeof( unsigned int ), ielems );
+	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ), 
+		mesh->numElems * sizeof( elem_t ), ielems );
 }
 
 /*
