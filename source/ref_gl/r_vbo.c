@@ -184,15 +184,6 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		vbo->colorsOffset[0] = size;
 		size += numVerts * sizeof( GLbyte ) * 4;
 		ALIGN16( size );
-
-		for( i = 1; i < MAX_LIGHTMAPS; i++ )
-		{
-			if( !(vattribs & (VATTRIB_COLOR1_BIT<<(i-1))) )
-				break;
-			vbo->colorsOffset[i] = size;
-			size += numVerts * sizeof( GLbyte ) * 4;
-			ALIGN16( size );
-		}
 	}
 
 	// bones data for skeletal animation
@@ -564,17 +555,6 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 		if( mesh->colorsArray[0] ) {
 			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->colorsOffset[0] + vertsOffset * sizeof( byte_vec4_t ), 
 				numVerts * sizeof( GLbyte ) * 4, mesh->colorsArray[0] );
-
-			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
-				if( !vbo->colorsOffset[i] || ! (vattribs & (VATTRIB_COLOR1_BIT<<(i-1))) )
-					break;
-				if( !mesh->colorsArray[i] ) {
-					errMask |= VATTRIB_COLOR1_BIT<<(i-1);
-					break;
-				}
-				qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->colorsOffset[i] + vertsOffset * sizeof( byte_vec4_t ), 
-					numVerts * sizeof( GLbyte ) * 4, mesh->colorsArray[i] );
-			}
 		}
 		else {
 			errMask |= VATTRIB_COLOR0_BIT;
