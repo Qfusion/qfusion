@@ -1621,7 +1621,7 @@ void RP_UpdateShaderUniforms( int elem,
 		m[2] = texMatrix[1], m[3] = texMatrix[5];
 		m[4] = texMatrix[12], m[5] = texMatrix[13];
 
-		qglUniform2fvARB( program->loc.TextureMatrix, 3, m );
+		qglUniform4fvARB( program->loc.TextureMatrix, 2, m );
 	}
 }
 

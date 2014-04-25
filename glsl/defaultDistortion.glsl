@@ -37,10 +37,9 @@ void main(void)
 
 	v_TexCoord.st = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 
-	vec2 textureMatrix3_[3];
+	vec4 textureMatrix3_[2];
 	textureMatrix3_[0] =  u_TextureMatrix[0];
-	textureMatrix3_[1] =  u_TextureMatrix[1];
-	textureMatrix3_[2] = -u_TextureMatrix[2];
+	textureMatrix3_[1] = -u_TextureMatrix[1];
 	v_TexCoord.pq = TextureMatrix2x3Mul(textureMatrix3_, TexCoord);
 
 #ifdef APPLY_EYEDOT
