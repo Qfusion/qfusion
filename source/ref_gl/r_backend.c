@@ -499,7 +499,7 @@ void RB_FrontFace( qboolean front )
 */
 void RB_FlipFrontFace( void )
 {
-	RB_FrontFace( !rb.gl.frontFace );
+	RB_FrontFace( rb.gl.frontFace ? qfalse : qtrue );
 }
 
 /*
@@ -1110,25 +1110,25 @@ static void RB_EnableVertexAttribs( void )
 		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, qfalse );
 
 		// lightmap texture coordinates
-		if( vattribs & VATTRIB_LMCOORDS0_BIT ) {
-			GL_EnableVertexAttrib( VATTRIB_LMCOORDS0, qtrue );
-			qglVertexAttribPointerARB( VATTRIB_LMCOORDS0, 2, FLOAT_VATTRIB_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), GL_FALSE, 0, 
-				( const GLvoid * )vbo->lmstOffset[0] );
+		if( vattribs & VATTRIB_LMCOORDS01_BITS ) {
+			GL_EnableVertexAttrib( VATTRIB_LMCOORDS01, qtrue );
+			qglVertexAttribPointerARB( VATTRIB_LMCOORDS01, (vattribs & VATTRIB_LMCOORDS1_BIT) ? 4 : 2,
+				FLOAT_VATTRIB_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), GL_FALSE, 0, ( const GLvoid * )vbo->lmstOffset[0] );
 		}
 		else {
-			GL_EnableVertexAttrib( VATTRIB_LMCOORDS0, qfalse );
+			GL_EnableVertexAttrib( VATTRIB_LMCOORDS01, qfalse );
 		}
 
-		for( i = 0; i < MAX_LIGHTMAPS-1; i++ ) {
-			vattribbit_t lmvattrib = ( vattribbit_t ) (VATTRIB_LMCOORDS1_BIT<<i);
+		for( i = 0; i < (MAX_LIGHTMAPS / 2) - 1; i++ ) {
+			vattribbit_t lmvattrib = ( vattribbit_t ) (VATTRIB_LMCOORDS2_BIT << (i << 1));
 
 			if( vattribs & lmvattrib ) {
-				GL_EnableVertexAttrib( VATTRIB_LMCOORDS1+i, qtrue );
-				qglVertexAttribPointerARB( VATTRIB_LMCOORDS1+i, 2, FLOAT_VATTRIB_TYPE( lmvattrib, hfa ), GL_FALSE, 0, 
-					( const GLvoid * )vbo->lmstOffset[i+1] );
+				GL_EnableVertexAttrib( VATTRIB_LMCOORDS23+i, qtrue );
+				qglVertexAttribPointerARB( VATTRIB_LMCOORDS23+i, (vattribs & (lmvattrib << 1)) ? 4 : 2,
+					FLOAT_VATTRIB_TYPE( lmvattrib, hfa ), GL_FALSE, 0, ( const GLvoid * )vbo->lmstOffset[(i + 1) << 1] );
 			}
 			else {
-				GL_EnableVertexAttrib( VATTRIB_LMCOORDS1+i, qfalse );
+				GL_EnableVertexAttrib( VATTRIB_LMCOORDS23+i, qfalse );
 			}
 		}
 	}
@@ -1314,7 +1314,7 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 			if( rb.drawInstances ) {
 				RB_Free( rb.drawInstances );
 			}
-			rb.drawInstances = RB_Alloc( numInstances * sizeof( *rb.drawInstances ) );
+			rb.drawInstances = ( instancePoint_t * )( RB_Alloc( numInstances * sizeof( *rb.drawInstances ) ) );
 			rb.maxDrawInstances = numInstances;
 		}
 		memcpy( rb.drawInstances, instances, numInstances * sizeof( *instances ) );

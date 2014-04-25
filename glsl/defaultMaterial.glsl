@@ -18,8 +18,11 @@
 
 qf_varying vec2 v_TexCoord;
 #ifdef NUM_LIGHTMAPS
-qf_varying vec2 v_LightmapTexCoord[NUM_LIGHTMAPS];
-#endif
+qf_varying vec4 v_LightmapTexCoord01;
+#if NUM_LIGHTMAPS >= 3
+qf_varying vec4 v_LightmapTexCoord23;
+#endif // NUM_LIGHTMAPS >= 3
+#endif // NUM_LIGHTMAPS
 
 qf_varying vec3 v_Position;
 
@@ -66,16 +69,10 @@ void main()
 	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 
 #ifdef NUM_LIGHTMAPS
-	v_LightmapTexCoord[0] = a_LightmapCoord0;
-#if NUM_LIGHTMAPS >= 2
-	v_LightmapTexCoord[1] = a_LightmapCoord1;
+	v_LightmapTexCoord01 = a_LightmapCoord01;
 #if NUM_LIGHTMAPS >= 3
-	v_LightmapTexCoord[2] = a_LightmapCoord2;
-#if NUM_LIGHTMAPS >= 4
-	v_LightmapTexCoord[3] = a_LightmapCoord3;
-#endif // NUM_LIGHTMAPS >= 4
+	v_LightmapTexCoord23 = a_LightmapCoord23;
 #endif // NUM_LIGHTMAPS >= 3
-#endif // NUM_LIGHTMAPS >= 2
 #endif // NUM_LIGHTMAPS
 
 	v_StrMatrix[0] = Tangent;
@@ -268,19 +265,19 @@ void main()
 
 #ifdef NUM_LIGHTMAPS
 	// get light normal
-	diffuseNormalModelspace = normalize(myhalf3 (qf_texture(u_LightmapTexture[0], vec2(v_LightmapTexCoord[0].s+u_DeluxemapOffset[0],v_LightmapTexCoord[0].t))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture(u_LightmapTexture[0], vec2(v_LightmapTexCoord01.s+u_DeluxemapOffset[0],v_LightmapTexCoord01.t))) - myhalf3 (0.5));
 	// calculate directional shading
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 
 #ifdef APPLY_FBLIGHTMAP
 	weightedDiffuseNormalModelspace = diffuseNormalModelspace;
 	// apply lightmap color
-	color.rgb += myhalf3 (max (diffuseProduct, 0.0) * myhalf3 (qf_texture (u_LightmapTexture[0], v_LightmapTexCoord[0])));
+	color.rgb += myhalf3 (max (diffuseProduct, 0.0) * myhalf3 (qf_texture (u_LightmapTexture[0], v_LightmapTexCoord01.st)));
 #else
 #define NORMALIZE_DIFFUSE_NORMAL
 	weightedDiffuseNormalModelspace = u_LightstyleColor[0] * diffuseNormalModelspace;
 	// apply lightmap color
-	color.rgb += u_LightstyleColor[0] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[0], v_LightmapTexCoord[0]));
+	color.rgb += u_LightstyleColor[0] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[0], v_LightmapTexCoord01.st));
 #endif // APPLY_FBLIGHTMAP
 
 #ifdef APPLY_AMBIENT_COMPENSATION
@@ -289,20 +286,20 @@ void main()
 #endif
 
 #if NUM_LIGHTMAPS >= 2
-	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[1], vec2(v_LightmapTexCoord[1].s+u_DeluxemapOffset[1],v_LightmapTexCoord[1].t))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[1], vec2(v_LightmapTexCoord01.p+u_DeluxemapOffset[1],v_LightmapTexCoord01.q))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[1] * diffuseNormalModelspace;
-	color.rgb += u_LightstyleColor[1] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[1], v_LightmapTexCoord[1]));
+	color.rgb += u_LightstyleColor[1] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[1], v_LightmapTexCoord01.pq));
 #if NUM_LIGHTMAPS >= 3
-	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[2], vec2(v_LightmapTexCoord[2].s+u_DeluxemapOffset[2],v_LightmapTexCoord[2].t))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[2], vec2(v_LightmapTexCoord23.s+u_DeluxemapOffset[2],v_LightmapTexCoord23.t))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[2] * diffuseNormalModelspace;
-	color.rgb += u_LightstyleColor[2] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[2], v_LightmapTexCoord[2]));
+	color.rgb += u_LightstyleColor[2] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[2], v_LightmapTexCoord23.st));
 #if NUM_LIGHTMAPS >= 4
-	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[3], vec2(v_LightmapTexCoord[3].s+u_DeluxemapOffset[3],v_LightmapTexCoord[3].t))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[3], vec2(v_LightmapTexCoord23.p+u_DeluxemapOffset[3],v_LightmapTexCoord23.q))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[3] * diffuseNormalModelspace;
-	color.rgb += u_LightstyleColor[3] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[3], v_LightmapTexCoord[3]));
+	color.rgb += u_LightstyleColor[3] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[3], v_LightmapTexCoord23.pq));
 #endif // NUM_LIGHTMAPS >= 4
 #endif // NUM_LIGHTMAPS >= 3
 #endif // NUM_LIGHTMAPS >= 2
