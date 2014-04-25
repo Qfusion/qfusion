@@ -57,7 +57,7 @@ static int r_vbo_numtempfloats;
 static int r_num_active_vbos;
 
 static elem_t *R_VBOElemBuffer( int numElems );
-static float *R_VBOFloatBuffer( int numFloats );
+static float *R_VBOFloatBuffer( float **floats, int *numFloats, int newNumFloats );
 
 /*
 * R_InitVBO
@@ -169,7 +169,6 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	{
 		vbo->lmstOffset[0] = size;
 		size += numVerts * FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS0_BIT, halfFloatVattribs) * 2;
-		ALIGN16( size );
 
 		for( i = 1; i < MAX_LIGHTMAPS; i++ )
 		{
@@ -178,8 +177,12 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 				break;
 			vbo->lmstOffset[i] = size;
 			size += numVerts * FLOAT_VATTRIB_SIZE(lmvattrib, halfFloatVattribs) * 2;
-			ALIGN16( size );
+			if( i & 1 ) {
+				ALIGN16( size );
+			}
 		}
+
+		ALIGN16( size );
 	}
 
 	// vertex colors
@@ -355,11 +358,13 @@ int R_GetNumberOfActiveVBOs( void )
 */
 static GLhalfARB *R_HalfFloatBufferFromFloatBuffer( float *f, int numFloats )
 {
-	GLhalfARB *hptr = ( GLhalfARB * )R_VBOFloatBuffer( ( numFloats + 1 ) / 2 ), *h = hptr;
+	static float *tempFloats = NULL;
+	static int numTempFloats = 0;
+	GLhalfARB *h = ( GLhalfARB * )( R_VBOFloatBuffer( &tempFloats, &numTempFloats, ( numFloats + 1 ) / 2 ) );
 	for( ; numFloats > 0 ; numFloats-- ) { 
 		*h++ = _mesa_float_to_half( *f++ );
 	}
-	return hptr;
+	return ( GLhalfARB * )tempFloats;
 }
 
 /*
@@ -456,32 +461,94 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 
 	// upload lightmap texture coordinates
 	if( vbo->lmstOffset[0] && (vattribs & VATTRIB_LMCOORDS0_BIT) ) {
-		numFloats = 2;
-		size = FLOAT_VATTRIB_SIZE( VATTRIB_LMCOORDS0_BIT, hfa ) * numFloats;
+
+		size = FLOAT_VATTRIB_SIZE( VATTRIB_LMCOORDS0_BIT, hfa ) * 2;
 
 		if( mesh->lmstArray[0] ) {
-			qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[0] + vertsOffset * size, 
-				numVerts * size, R_VattribFloatBuffer( VATTRIB_LMCOORDS0_BIT, hfa, mesh->lmstArray[0][0], numVerts * numFloats ) );
 
-			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
-				vattribbit_t lmvattrib = (vattribbit_t)(VATTRIB_LMCOORDS1_BIT<<(i-1));
+			if( vbo->lmstOffset[1] && (vattribs & VATTRIB_LMCOORDS1_BIT) ) {
 
-				if( !vbo->lmstOffset[i] || ! (vattribs & lmvattrib) )
-					break;
+				if ( mesh->lmstArray[1] ) {
 
-				size = FLOAT_VATTRIB_SIZE( lmvattrib, hfa ) * 2;
+					static float *tempFloats = NULL;
+					static int numTempFloats = 0;
+					float *buffer;
 
-				if( !mesh->lmstArray[i] ) {
-					errMask |= VATTRIB_LMCOORDS1_BIT<<(i-1);
-					break;
+					size *= 2;
+
+					R_VBOFloatBuffer( &tempFloats, &numTempFloats, numVerts * 4 );
+					buffer = ( float * )R_VattribFloatBuffer( VATTRIB_LMCOORDS0_BIT, hfa, mesh->lmstArray[0][0], numVerts * 2 );
+					for( j = 0; j < numVerts; ++j ) {
+						tempFloats[j * 4] = buffer[j * 2]; 
+						tempFloats[j * 4 + 1] = buffer[j * 2 + 1]; 
+					}
+					buffer = ( float * )R_VattribFloatBuffer( VATTRIB_LMCOORDS1_BIT, hfa, mesh->lmstArray[1][0], numVerts * 2 );
+					for( j = 0; j < numVerts; ++j ) {
+						tempFloats[j * 4 + 2] = buffer[j * 2]; 
+						tempFloats[j * 4 + 3] = buffer[j * 2 + 1]; 
+					}
+
+					qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[0] + vertsOffset * size,
+						numVerts * size, tempFloats );
+
+					for( i = 2; i < MAX_LIGHTMAPS; i += 2 ) {
+						vattribbit_t lmvattrib = (vattribbit_t)(VATTRIB_LMCOORDS0_BIT<<i);
+
+						if( !vbo->lmstOffset[i] || ! (vattribs & lmvattrib) )
+							break;
+
+						size = FLOAT_VATTRIB_SIZE( lmvattrib, hfa ) * 2;
+
+						if( !mesh->lmstArray[i] ) {
+							errMask |= (VATTRIB_LMCOORDS0_BIT<<i) | (VATTRIB_LMCOORDS0_BIT<<(i+1));
+							break;
+						}
+
+						if( vbo->lmstOffset[i+1] && (vattribs & VATTRIB_LMCOORDS0_BIT<<(i+1)) ) {
+
+							if( !mesh->lmstArray[i+1] ) {
+								errMask |= (VATTRIB_LMCOORDS0_BIT<<i) | (VATTRIB_LMCOORDS0_BIT<<(i+1));
+								break;
+							}
+
+							size *= 2;
+
+							buffer = ( float * )R_VattribFloatBuffer( lmvattrib, hfa, mesh->lmstArray[i][0], numVerts * 2 );
+							for( j = 0; j < numVerts; ++j ) {
+								tempFloats[j * 4] = buffer[j * 2]; 
+								tempFloats[j * 4 + 1] = buffer[j * 2 + 1]; 
+							}
+							buffer = ( float * )R_VattribFloatBuffer( (vattribbit_t)(VATTRIB_LMCOORDS0_BIT<<(i+1)), hfa, mesh->lmstArray[i+1][0], numVerts * 2 );
+							for( j = 0; j < numVerts; ++j ) {
+								tempFloats[j * 4 + 2] = buffer[j * 2]; 
+								tempFloats[j * 4 + 3] = buffer[j * 2 + 1]; 
+							}
+
+							qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[i] + vertsOffset * size,
+								numVerts * size, tempFloats );
+						}
+						else {
+							qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[i] + vertsOffset * size, 
+								numVerts * size, R_VattribFloatBuffer( lmvattrib, hfa, mesh->lmstArray[i][0], numVerts * 2 ) );
+							break;
+						}
+
+					}
+
 				}
-
-				qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[i] + vertsOffset * size, 
-					numVerts * size, R_VattribFloatBuffer( lmvattrib, hfa, mesh->lmstArray[i][0], numVerts * numFloats ) );
+				else {
+					errMask |= VATTRIB_LMCOORDS01_BITS;
+				}
 			}
+			else
+			{
+				qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vbo->lmstOffset[0] + vertsOffset * size, 
+					numVerts * size, R_VattribFloatBuffer( VATTRIB_LMCOORDS0_BIT, hfa, mesh->lmstArray[0][0], numVerts * 2 ) );
+			}
+	
 		}
 		else {
-			errMask |= VATTRIB_LMCOORDS0_BIT;
+			errMask |= VATTRIB_LMCOORDS01_BITS;
 		}
 	}
 
@@ -657,18 +724,17 @@ static elem_t *R_VBOElemBuffer( int numElems )
 /*
 * R_VBOFloatBuffer
 */
-static float *R_VBOFloatBuffer( int numFloats )
+static float *R_VBOFloatBuffer( float **floats, int *numFloats, int newNumFloats )
 {
-	numFloats = (numFloats+3) & ~3; // align to 4 floats
+	newNumFloats = (newNumFloats+3) & ~3; // align to 4 floats
 
-	if( numFloats > r_vbo_numtempfloats ) {
-		if( r_vbo_tempfloats )
-			R_Free( r_vbo_tempfloats );
-		r_vbo_numtempfloats = numFloats;
-		r_vbo_tempfloats = ( float * )R_Malloc( sizeof( *r_vbo_tempfloats ) * numFloats );
+	if( newNumFloats > *numFloats ) {
+		if( *floats )
+			R_Free( *floats );
+		*numFloats = newNumFloats;
+		*floats = ( float * )R_Malloc( sizeof( **floats ) * newNumFloats );
 	}
-
-	return r_vbo_tempfloats;
+	return *floats;
 }
 
 /*
