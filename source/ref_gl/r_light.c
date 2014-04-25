@@ -719,8 +719,6 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps, con
 			// bit0 is set in the shader
 			if( lightmapStyles[j] != 255 )
 				sls->vattribs |= ( VATTRIB_LMCOORDS1_BIT << (j-1) );
-			if( vertexStyles[j] != 255 )
-				sls->vattribs |= ( VATTRIB_COLOR1_BIT << (j-1) );
 		}
 	}
 

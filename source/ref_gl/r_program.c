@@ -2206,10 +2206,6 @@ static void RF_BindAttrbibutesLocations( glsl_program_t *program )
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS01, "a_LightmapCoord01" );
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS23, "a_LightmapCoord23" );
 
-	qglBindAttribLocationARB( program->object, VATTRIB_COLOR1, "a_Color1" );
-	qglBindAttribLocationARB( program->object, VATTRIB_COLOR2, "a_Color2" );
-	qglBindAttribLocationARB( program->object, VATTRIB_COLOR3, "a_Color3" );
-
 	qglBindAttribLocationARB( program->object, VATTRIB_INSTANCE_QUAT, "a_InstanceQuat" );
 	qglBindAttribLocationARB( program->object, VATTRIB_INSTANCE_XYZS, "a_InstancePosAndScale" );
 

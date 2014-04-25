@@ -980,13 +980,6 @@ void RB_BatchMesh( const mesh_t *mesh )
 
 		if( mesh->colorsArray[0] && (vattribs & VATTRIB_COLOR0_BIT) ) {
 			memcpy( rb.batchMesh.colorsArray[0] + batch->numVerts, mesh->colorsArray[0], numVerts * sizeof( byte_vec4_t ) );
-
-			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
-				if( !mesh->colorsArray[i] || !(vattribs & (VATTRIB_COLOR1_BIT<<(i-1))) ) {
-					break;
-				}
-				memcpy( rb.batchMesh.colorsArray[i] + batch->numVerts, mesh->colorsArray[i], numVerts * sizeof( byte_vec4_t ) );
-			}
 		}
 
 		batch->numVerts += numVerts;
