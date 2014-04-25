@@ -731,7 +731,8 @@ typedef struct mesh_vbo_s
 	size_t 				normalsOffset;
 	size_t 				sVectorsOffset;
 	size_t 				stOffset;
-	size_t 				lmstOffset[MAX_LIGHTMAPS];
+	size_t 				lmstOffset[MAX_LIGHTMAPS/2];
+	size_t 				lmstSize[MAX_LIGHTMAPS/2];
 	size_t 				colorsOffset[MAX_LIGHTMAPS];
 	size_t				bonesIndicesOffset;
 	size_t				bonesWeightsOffset;

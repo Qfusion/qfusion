@@ -34,7 +34,10 @@ qf_varying vec2 v_TexCoord;
 #endif
 
 #ifdef NUM_LIGHTMAPS
-qf_varying vec2 v_LightmapTexCoord[NUM_LIGHTMAPS];
+qf_varying qf_lmvec01 v_LightmapTexCoord01;
+#if NUM_LIGHTMAPS > 2 
+qf_varying qf_lmvec23 v_LightmapTexCoord23;
+#endif
 #endif
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
@@ -104,16 +107,10 @@ void main(void)
 #endif
 
 #ifdef NUM_LIGHTMAPS
-	v_LightmapTexCoord[0] = a_LightmapCoord0;
-#if NUM_LIGHTMAPS >= 2
-	v_LightmapTexCoord[1] = a_LightmapCoord1;
-#if NUM_LIGHTMAPS >= 3
-	v_LightmapTexCoord[2] = a_LightmapCoord2;
-#if NUM_LIGHTMAPS >= 4
-	v_LightmapTexCoord[3] = a_LightmapCoord3;
-#endif // NUM_LIGHTMAPS >= 4
-#endif // NUM_LIGHTMAPS >= 3
-#endif // NUM_LIGHTMAPS >= 2
+	v_LightmapTexCoord01 = a_LightmapCoord01;
+#if NUM_LIGHTMAPS > 2
+	v_LightmapTexCoord23 = a_LightmapCoord23;
+#endif // NUM_LIGHTMAPS > 2
 #endif // NUM_LIGHTMAPS
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;
@@ -157,13 +154,13 @@ void main(void)
 
 #ifdef NUM_LIGHTMAPS
 	color = myhalf4(0.0, 0.0, 0.0, qf_FrontColor.a);
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture[0], v_LightmapTexCoord[0])) * u_LightstyleColor[0];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture[0], v_LightmapTexCoord01.st)) * u_LightstyleColor[0];
 #if NUM_LIGHTMAPS >= 2
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture[1], v_LightmapTexCoord[1])) * u_LightstyleColor[1];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture[1], v_LightmapTexCoord01.pq)) * u_LightstyleColor[1];
 #if NUM_LIGHTMAPS >= 3
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture[2], v_LightmapTexCoord[2])) * u_LightstyleColor[2];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture[2], v_LightmapTexCoord23.st)) * u_LightstyleColor[2];
 #if NUM_LIGHTMAPS >= 4
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture[3], v_LightmapTexCoord[3])) * u_LightstyleColor[3];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture[3], v_LightmapTexCoord23.pq)) * u_LightstyleColor[3];
 #endif // NUM_LIGHTMAPS >= 4
 #endif // NUM_LIGHTMAPS >= 3
 #endif // NUM_LIGHTMAPS >= 2
