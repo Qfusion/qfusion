@@ -151,7 +151,8 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	dmd3skin_t *pinskin;
 	dmd3coord_t *pincoord;
 	dmd3vertex_t *pinvert;
-	elem_t *pinelem, *poutelem;
+	unsigned int *pinelem;
+	elem_t *poutelem;
 	maliasvertex_t *poutvert;
 	vec2_t *poutcoord;
 	maliasskin_t *poutskin;
@@ -169,7 +170,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		mod->name, version, MD3_ALIAS_VERSION );
 
 	mod->type = mod_alias;
-	mod->extradata = poutmodel = Mod_Malloc( mod, sizeof( maliasmodel_t ) );
+	mod->extradata = poutmodel = ( maliasmodel_t * )Mod_Malloc( mod, sizeof( maliasmodel_t ) );
 	mod->radius = 0;
 	mod->registrationSequence = rsh.registrationSequence;
 	mod->touch = &Mod_TouchAliasModel;
@@ -202,7 +203,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	bufsize = poutmodel->numframes * ( sizeof( maliasframe_t ) + sizeof( maliastag_t ) * poutmodel->numtags ) +
 		poutmodel->nummeshes * sizeof( maliasmesh_t ) + 
 		poutmodel->nummeshes * sizeof( drawSurfaceAlias_t );
-	buf = Mod_Malloc( mod, bufsize );
+	buf = ( qbyte * )Mod_Malloc( mod, bufsize );
 
 	//
 	// load the frames
@@ -292,7 +293,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 
 		bufsize = sizeof( maliasskin_t ) * poutmesh->numskins + poutmesh->numtris * sizeof( elem_t ) * 3 +
 			numverts * ( sizeof( vec2_t ) + sizeof( maliasvertex_t ) * poutmodel->numframes );
-		buf = Mod_Malloc( mod, bufsize );
+		buf = ( qbyte * )Mod_Malloc( mod, bufsize );
 
 		//
 		// load the skins
@@ -307,7 +308,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		// load the elems
 		//
-		pinelem = ( elem_t * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_elems ) );
+		pinelem = ( unsigned int * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_elems ) );
 		poutelem = poutmesh->elems = ( elem_t * )buf; buf += poutmesh->numtris * sizeof( elem_t ) * 3;
 		for( j = 0; j < poutmesh->numtris; j++, pinelem += 3, poutelem += 3 )
 		{
@@ -550,8 +551,8 @@ qboolean R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_
 		move[i] = frame->translate[i] + ( oldframe->translate[i] - frame->translate[i] ) * backlerp;
 
 	// based on backend's needs
-	calcNormals = ( ( vattribs & VATTRIB_NORMAL_BIT ) != 0 ) && ( ( framenum != 0 ) || ( oldframenum != 0 ) );
-	calcSTVectors = ( ( vattribs & VATTRIB_SVECTOR_BIT ) != 0 ) && calcNormals;
+	calcNormals = ( ( ( vattribs & VATTRIB_NORMAL_BIT ) != 0 ) && ( ( framenum != 0 ) || ( oldframenum != 0 ) ) ) ? qtrue : qfalse;
+	calcSTVectors = ( ( ( vattribs & VATTRIB_SVECTOR_BIT ) != 0 ) && calcNormals ) ? qtrue : qfalse;
 
 	if( aliasmesh->vbo != NULL && !framenum && !oldframenum )
 	{
