@@ -1032,14 +1032,14 @@ static void RB_EnableVertexAttribs( void )
 
 	// xyz position
 	GL_EnableVertexAttrib( VATTRIB_POSITION, qtrue );
-	qglVertexAttribPointerARB( VATTRIB_POSITION, 4, FLOAT_VATTRIB_TYPE( VATTRIB_POSITION_BIT, hfa ), GL_FALSE, 0, 
-		( const GLvoid * )0 );
+	qglVertexAttribPointerARB( VATTRIB_POSITION, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_POSITION_BIT, hfa ), 
+		GL_FALSE, vbo->vertexSize, ( const GLvoid * )0 );
 
 	// normal
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_NORMAL, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_TYPE( VATTRIB_NORMAL_BIT, hfa ), GL_FALSE, 0,
-			( const GLvoid * )vbo->normalsOffset );
+		qglVertexAttribPointerARB( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_NORMAL_BIT, hfa ), 
+			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->normalsOffset );
 	}
 	else {
 		GL_EnableVertexAttrib( VATTRIB_NORMAL, qfalse );
@@ -1048,8 +1048,8 @@ static void RB_EnableVertexAttribs( void )
 	// s-vector
 	if( vattribs & VATTRIB_SVECTOR_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_SVECTOR, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_TYPE( VATTRIB_SVECTOR_BIT, hfa ), GL_FALSE, 0, 
-			( const GLvoid * )vbo->sVectorsOffset );
+		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SVECTOR_BIT, hfa ), 
+			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->sVectorsOffset );
 	}
 	else {
 		GL_EnableVertexAttrib( VATTRIB_SVECTOR, qfalse );
@@ -1058,8 +1058,8 @@ static void RB_EnableVertexAttribs( void )
 	// color
 	if( vattribs & VATTRIB_COLOR0_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_COLOR0, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, (
-			const GLvoid * )vbo->colorsOffset[0] );
+		qglVertexAttribPointerARB( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE, 
+			GL_TRUE, vbo->vertexSize, (const GLvoid * )vbo->colorsOffset[0] );
 	}
 	else {
 		GL_EnableVertexAttrib( VATTRIB_COLOR0, qfalse );
@@ -1068,18 +1068,18 @@ static void RB_EnableVertexAttribs( void )
 	// texture coordinates
 	if( vattribs & VATTRIB_TEXCOORDS_BIT ) {
 		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ), GL_FALSE, 0, 
-			( const GLvoid * )vbo->stOffset );
+		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_GL_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ), 
+			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->stOffset );
 	}
 	else {
 		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, qfalse );
 	}
 
-	 if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
+	if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
 		// submit sprite point
 		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), GL_FALSE, 0, 
-			( const GLvoid * )vbo->spritePointsOffset );
+		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), 
+			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->spritePointsOffset );
 	}
 	else {
 		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qfalse );
@@ -1089,13 +1089,13 @@ static void RB_EnableVertexAttribs( void )
 	if( (vattribs & VATTRIB_BONES_BITS) == VATTRIB_BONES_BITS ) {
 		// submit indices
 		GL_EnableVertexAttrib( VATTRIB_BONESINDICES, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE, GL_FALSE, SKM_MAX_WEIGHTS, 
-			( const GLvoid * )vbo->bonesIndicesOffset );
+		qglVertexAttribPointerARB( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE, 
+			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->bonesIndicesOffset );
 
 		// submit weights
 		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, qtrue );
-		qglVertexAttribPointerARB( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE, GL_TRUE, SKM_MAX_WEIGHTS, 
-			( const GLvoid * )vbo->bonesWeightsOffset );
+		qglVertexAttribPointerARB( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE, 
+			GL_TRUE, vbo->vertexSize, ( const GLvoid * )vbo->bonesWeightsOffset );
 	}
 	else {
 		int i;
@@ -1113,8 +1113,8 @@ static void RB_EnableVertexAttribs( void )
 			if( vattribs & lmattrbit ) {
 				GL_EnableVertexAttrib( lmattr, qtrue );
 				qglVertexAttribPointerARB( lmattr, vbo->lmstSize[i], 
-					FLOAT_VATTRIB_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), 
-					GL_FALSE, 0, ( const GLvoid * )vbo->lmstOffset[i] );
+					FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), 
+					GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmstOffset[i] );
 			}
 			else {
 				GL_EnableVertexAttrib( lmattr, qfalse );
