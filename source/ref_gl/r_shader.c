@@ -1548,13 +1548,13 @@ static void Shaderpass_AlphaFunc( shader_t *shader, shaderpass_t *pass, const ch
 
 	token = Shader_ParseString( ptr );
 
-	pass->flags &= ~(GLSTATE_ALPHAFUNC);
+	pass->flags &= ~(SHADERPASS_ALPHAFUNC);
 	if( !strcmp( token, "gt0" ) )
-		pass->flags |= GLSTATE_AFUNC_GT0;
+		pass->flags |= SHADERPASS_AFUNC_GT0;
 	else if( !strcmp( token, "lt128" ) )
-		pass->flags |= GLSTATE_AFUNC_LT128;
+		pass->flags |= SHADERPASS_AFUNC_LT128;
 	else if( !strcmp( token, "ge128" ) )
-		pass->flags |= GLSTATE_AFUNC_GE128;
+		pass->flags |= SHADERPASS_AFUNC_GE128;
 }
 
 static void Shaderpass_DepthFunc( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -2300,7 +2300,7 @@ static void Shader_Finish( shader_t *s )
 					//if( pass->alphagen.type == ALPHA_GEN_IDENTITY )
 					//	pass->alphagen.type = ALPHA_GEN_VERTEX;
 
-					if( !(pass->flags & GLSTATE_ALPHAFUNC) )
+					if( !(pass->flags & SHADERPASS_ALPHAFUNC) )
 						pass->flags &= ~blendmask;
 				}
 				break;
@@ -2457,7 +2457,7 @@ static void Shader_Finish( shader_t *s )
 
 		if( !s->sort )
 		{
-			if( pass->flags & GLSTATE_ALPHAFUNC )
+			if( pass->flags & SHADERPASS_ALPHAFUNC )
 				s->sort = SHADER_SORT_ALPHATEST;
 		}
 	}

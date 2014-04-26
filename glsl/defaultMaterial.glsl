@@ -369,6 +369,10 @@ color = color * diffuse;
 
 #endif // APPLY_DECAL
 
+#ifdef ALPHATEST
+	ALPHATEST(color.a);
+#endif
+
 #ifdef APPLY_GREYSCALE
 	color.rgb = Greyscale(color.rgb);
 #endif
