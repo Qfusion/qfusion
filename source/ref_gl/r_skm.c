@@ -50,7 +50,9 @@ static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh )
 	vattribmask_t vattribs;
 	
 	vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
-	vattribs |= VATTRIB_BONES_BITS;
+	if( glConfig.maxGLSLBones > 0 ) {
+		vattribs |= VATTRIB_BONES_BITS;
+	}
 	vattribs |= mesh->skin.shader->vattribs;
 
 	mesh->vbo = R_CreateMeshVBO( ( void * )mesh, 
@@ -71,11 +73,11 @@ static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh )
 	skmmesh.normalsArray = mesh->normalsArray;
 	skmmesh.sVectorsArray = mesh->sVectorsArray;
 
+	skmmesh.blendIndices = mesh->blendIndices;
+	skmmesh.blendWeights = mesh->blendWeights;
+
 	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &skmmesh, VBO_HINT_NONE ); 
 	R_UploadVBOElemData( mesh->vbo, 0, 0, &skmmesh, VBO_HINT_NONE );
-	if( glConfig.maxGLSLBones > 0 ) {
-	    R_UploadVBOBonesData( mesh->vbo, 0, mesh->numverts, mesh->blendIndices, mesh->blendWeights );
-	}
 }
 
 /*

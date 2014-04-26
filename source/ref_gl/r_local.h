@@ -723,6 +723,7 @@ typedef struct mesh_vbo_s
 	unsigned int 		numVerts;
 	unsigned int 		numElems;
 
+	size_t				vertexSize;
 	size_t				arrayBufferSize;
 	size_t				elemBufferSize;
 
@@ -753,8 +754,6 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, vattribma
 	const mesh_t *mesh, vbo_hint_t hint );
 void 		R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, 
 	const mesh_t *mesh, vbo_hint_t hint );
-vattribmask_t R_UploadVBOBonesData( mesh_vbo_t *vbo, int vertsOffset, int numVerts, 
-	qbyte *bonesIndices, qbyte *bonesWeights );
 vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset,
 	int numInstances, instancePoint_t *instances );
 void		R_FreeVBOsByTag( vbo_tag_t tag );

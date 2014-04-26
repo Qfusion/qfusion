@@ -35,6 +35,9 @@ typedef struct mesh_s
 	vec2_t				*lmstArray[MAX_LIGHTMAPS];
 	byte_vec4_t			*colorsArray[MAX_LIGHTMAPS];
 
+	qbyte				*blendIndices;
+	qbyte				*blendWeights;
+
 	unsigned short		numElems;
 	elem_t				*elems;
 } mesh_t;
