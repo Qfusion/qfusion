@@ -652,9 +652,9 @@ static r_glslfeat_t RB_InstancedArraysProgramFeatures( void )
 {
 	r_glslfeat_t programFeatures = 0;
 	if( ( rb.currentVAttribs & VATTRIB_INSTANCES_BITS ) == VATTRIB_INSTANCES_BITS ) {
-		programFeatures |= GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS;
+		programFeatures |= GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS;
 	} else if( rb.drawElements.numInstances ) {
-		programFeatures |= GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS;
+		programFeatures |= GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS;
 	}
 	return programFeatures;
 }
@@ -673,6 +673,22 @@ static r_glslfeat_t RB_FogProgramFeatures( const shaderpass_t *pass, const mfog_
 		}
 	}
 	return programFeatures;
+}
+
+/*
+* RB_AlphatestProgramFeatures
+*/
+static r_glslfeat_t RB_AlphatestProgramFeatures( const shaderpass_t *pass )
+{
+	switch( pass->flags & SHADERPASS_ALPHAFUNC ) {
+	case SHADERPASS_AFUNC_GT0:
+		return GLSL_SHADER_COMMON_AFUNC_GT0;
+	case SHADERPASS_AFUNC_LT128:
+		return GLSL_SHADER_COMMON_AFUNC_LT128;
+	case SHADERPASS_AFUNC_GE128:
+		return GLSL_SHADER_COMMON_AFUNC_GE128;
+	}
+	return 0;
 }
 
 /*
@@ -1460,7 +1476,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		!rb.doneDepthPass &&
 		!(state & GLSTATE_DEPTHWRITE) &&
 		(rb.currentShader->flags & SHADER_DEPTHWRITE) ) {
-		if( !(pass->flags & GLSTATE_ALPHAFUNC) ) {
+		if( !(pass->flags & SHADERPASS_ALPHAFUNC) ) {
 			state &= ~( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK );
 		}
 		state |= GLSTATE_DEPTHWRITE;
@@ -1705,6 +1721,7 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	features |= RB_BonesTransformsToProgramFeatures();
 	features |= RB_AutospriteProgramFeatures();
 	features |= RB_InstancedArraysProgramFeatures();
+	features |= RB_AlphatestProgramFeatures( pass );
 	
 	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) 
 		&& rsh.screenDepthTextureCopy

@@ -444,9 +444,13 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
 
-	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
-		"#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
+	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
+		"#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
+	
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec23 vec4\n", "_ls3" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec23 vec2\n", "_ls2" },
@@ -493,9 +497,9 @@ static const glsl_feature_t glsl_features_distortion[] =
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
 
-	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
-			"#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
+	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
+			"#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
@@ -516,8 +520,8 @@ static const glsl_feature_t glsl_features_rgbshadow[] =
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define NUM_BONE_INFLUENCES 2\n", "_bones2" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define NUM_BONE_INFLUENCES 1\n", "_bones1" },
 
-	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
+	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
 	{ 0, NULL, NULL }
 };
@@ -529,8 +533,8 @@ static const glsl_feature_t glsl_features_shadowmap[] =
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS2, "#define NUM_BONE_INFLUENCES 2\n", "_bones2" },
 	{ GLSL_SHADER_COMMON_BONE_TRANSFORMS1, "#define NUM_BONE_INFLUENCES 1\n", "_bones1" },
 
-	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
+	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
 	{ GLSL_SHADER_SHADOWMAP_DITHER, "#define APPLY_DITHER\n", "_dither" },
 	{ GLSL_SHADER_SHADOWMAP_PCF, "#define APPLY_PCF\n", "_pcf" },
@@ -554,8 +558,8 @@ static const glsl_feature_t glsl_features_outline[] =
 
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 
-	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
+	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
 	{ GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF, "#define APPLY_OUTLINES_CUTOFF\n", "_outcut" },
 
@@ -605,10 +609,14 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
 
-	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
+	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
 	{ GLSL_SHADER_COMMON_SOFT_PARTICLE, "#define APPLY_SOFT_PARTICLE\n", "_sp" },
+	
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_Q3_TC_GEN_REFLECTION, "#define APPLY_TC_GEN_REFLECTION\n", "_tc_refl" },
 	{ GLSL_SHADER_Q3_TC_GEN_PROJECTION, "#define APPLY_TC_GEN_PROJECTION\n", "_tc_proj" },
@@ -648,8 +656,12 @@ static const glsl_feature_t glsl_features_celshade[] =
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
-	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
+	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
+	
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_CELSHADE_DIFFUSE, "#define APPLY_DIFFUSE\n", "_diff" },
 	{ GLSL_SHADER_CELSHADE_DECAL, "#define APPLY_DECAL\n", "_decal" },
@@ -678,8 +690,8 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ GLSL_SHADER_COMMON_AUTOSPRITE2, "#define APPLY_AUTOSPRITE2\n", "" },
 	{ GLSL_SHADER_COMMON_AUTOPARTICLE, "#define APPLY_AUTOSPRITE\n#define APPLY_AUTOPARTICLE\n", "" },
 
-	{ GLSL_SHADER_COMMON_INSTANCED_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
-	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRASNFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRASNFORMS\n", "_instanced_va" },
+	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
+	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
 	{ 0, NULL, NULL }
 };
@@ -948,9 +960,9 @@ QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
 "\n" \
 "#endif\n"
 
-#define QF_GLSL_INSTANCED_TRASFORMS \
+#define QF_GLSL_INSTANCED_TRANSFORMS \
 "#ifdef VERTEX_SHADER\n" \
-"#ifdef APPLY_INSTANCED_ATTRIB_TRASNFORMS\n" \
+"#ifdef APPLY_INSTANCED_ATTRIB_TRANSFORMS\n" \
 "attribute vec4 a_InstanceQuat;\n" \
 "attribute vec4 a_InstancePosAndScale;\n" \
 "#elif defined(GL_ARB_draw_instanced)\n" \
@@ -1435,7 +1447,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderStrings[i++] = QF_BUILTIN_GLSL_UNIFORMS;	
 	shaderStrings[i++] = QF_GLSL_WAVEFUNCS;
 	shaderStrings[i++] = QF_GLSL_DUAL_QUAT_TRANSFORMS;
-	shaderStrings[i++] = QF_GLSL_INSTANCED_TRASFORMS;
+	shaderStrings[i++] = QF_GLSL_INSTANCED_TRANSFORMS;
 	shaderStrings[i++] = QF_GLSL_MATH;
 
 	if( header ) {
