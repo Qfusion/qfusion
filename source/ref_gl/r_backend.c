@@ -405,26 +405,6 @@ void RB_SetState( int state )
 		}
 	}
 
-	if( diff & GLSTATE_ALPHAFUNC )
-	{
-		int alphafunc = state & GLSTATE_ALPHAFUNC;
-
-		if( alphafunc )
-		{
-			qglEnable( GL_ALPHA_TEST );
-			if( alphafunc == GLSTATE_AFUNC_GT0 )
-				qglAlphaFunc( GL_GREATER, 0 );
-			else if( alphafunc == GLSTATE_AFUNC_LT128 )
-				qglAlphaFunc( GL_LESS, 0.5f );
-			else
-				qglAlphaFunc( GL_GEQUAL, 0.5f );
-		}
-		else
-		{
-			qglDisable( GL_ALPHA_TEST );
-		}
-	}
-
 	if( diff & GLSTATE_NO_COLORWRITE )
 	{
 		if( state & GLSTATE_NO_COLORWRITE )
