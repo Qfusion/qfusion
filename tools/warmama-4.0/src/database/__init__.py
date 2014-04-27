@@ -204,7 +204,7 @@ class DatabaseHandler(object):
 	def SessionByAddr(self, cursor, ip, ipv6, port):
 		query = '''
 			SELECT * FROM %s 
-			WHERE (ip=%%s OR ipv6=%%s)
+			WHERE (ip=%%s OR (ipv6!='' AND ipv6=%%s))
 			AND port=%%s
 			''' % table_SessionsServer.tablename
 		values = ( ip, ipv6, port )
