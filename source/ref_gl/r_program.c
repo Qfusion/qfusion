@@ -1068,9 +1068,9 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 				break;
 			case DEFORMV_AUTOSPRITE:
 				Q_strncatz( program,
-						"right = (1.0 - step(0.5, TexCoord.s) * 2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
-						"up = (1.0 - step(0.5, TexCoord.t) * 2.0) * u_QF_ViewAxis[2];\n"
-						"forward = -1 * u_QF_ViewAxis[0];\n"
+						"right = (1.0 + step(0.5, TexCoord.s) * -2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
+						"up = (1.0 + step(0.5, TexCoord.t) * -2.0) * u_QF_ViewAxis[2];\n"
+						"forward = -1.0 * u_QF_ViewAxis[0];\n"
 						"Position.xyz = a_SpritePoint.xyz + (right + up) * a_SpritePoint.w;\n"
 						"Normal.xyz = forward;\n"
 						"TexCoord.st = vec2(step(0.5, TexCoord.s),step(0.5, TexCoord.t));\n",
@@ -1078,9 +1078,9 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 				break;
 			case DEFORMV_AUTOPARTICLE:
 				Q_strncatz( program,
-						"right = (1.0 - TexCoord.s * 2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
-						"up = (1.0 - TexCoord.t * 2.0) * u_QF_ViewAxis[2];\n"
-						"forward = -1 * u_QF_ViewAxis[0];\n"
+						"right = (1.0 + TexCoord.s * -2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
+						"up = (1.0 + TexCoord.t * -2.0) * u_QF_ViewAxis[2];\n"
+						"forward = -1.0 * u_QF_ViewAxis[0];\n"
 						"// prevent the particle from disappearing at large distances\n"
 						"t = dot(a_SpritePoint.xyz + u_QF_EntityOrigin - u_QF_ViewOrigin, u_QF_ViewAxis[0]);\n"
 						"t = 1.5 + step(20.0, t) * t * 0.006;\n"
