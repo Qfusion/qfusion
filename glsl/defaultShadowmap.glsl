@@ -53,7 +53,6 @@ uniform sampler2DShadow u_ShadowmapTexture[NUM_SHADOWS];
 #endif
 
 uniform float u_ShadowAlpha;
-uniform float u_ShadowProjDistance[NUM_SHADOWS];
 uniform vec4 u_ShadowmapTextureParams[NUM_SHADOWS];
 
 void main(void)
