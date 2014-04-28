@@ -97,7 +97,7 @@ typedef struct glsl_program_s
 					VectorTexMatrix,
 
 					DeluxemapOffset,
-					LightstyleColor,
+					LightstyleColor[MAX_LIGHTMAPS],
 
 					DynamicLightsRadius[MAX_DLIGHTS],
 					DynamicLightsPosition[MAX_DLIGHTS],
@@ -110,7 +110,7 @@ typedef struct glsl_program_s
 					WallColor,
 					FloorColor,
 
-					ShadowProjDistance[GLSL_SHADOWMAP_LIMIT],
+					ShadowProjDistance,
 					ShadowmapTextureParams[GLSL_SHADOWMAP_LIMIT],
 					ShadowmapMatrix[GLSL_SHADOWMAP_LIMIT],
 					ShadowAlpha,
@@ -1823,8 +1823,8 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			if( mapConfig.lightingIntensity )
 				VectorScale( rgb, mapConfig.lightingIntensity, rgb );
 
-			if( program->loc.LightstyleColor >= 0 )	
-				qglUniform3fvARB( program->loc.LightstyleColor+i, 1, rgb );
+			if( program->loc.LightstyleColor[i] >= 0 )	
+				qglUniform3fvARB( program->loc.LightstyleColor[i], 1, rgb );
 			if( program->loc.DeluxemapOffset >= 0 )
 				deluxemapOffset[i] = superLightStyle->stOffset[i][0];
 		}
@@ -1910,10 +1910,6 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 
 	for( i = 0; i < numShadows; i++ ) {
 		group = groups[i];
-
-		if( program->loc.ShadowProjDistance[i] >= 0 ) {
-			qglUniform1fARB( program->loc.ShadowProjDistance[i], group->projDist );
-		}
 
 		if( program->loc.ShadowmapTextureParams[i] >= 0 ) {
 			qglUniform4fARB( program->loc.ShadowmapTextureParams[i], 
@@ -2055,13 +2051,13 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	locYUVTextureU = qglGetUniformLocationARB( program->object, "u_YUVTextureU" );
 	locYUVTextureV = qglGetUniformLocationARB( program->object, "u_YUVTextureV" );
 
-	program->loc.LightstyleColor = qglGetUniformLocationARB( program->object, "u_LightstyleColor" );
 	program->loc.DeluxemapOffset = qglGetUniformLocationARB( program->object, "u_DeluxemapOffset" );
 
 	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
 		locLightmapTexture[i] = qglGetUniformLocationARB( program->object, va( "u_LightmapTexture[%i]", i ) );
 		if( locLightmapTexture[i] < 0 )
 			break;
+		program->loc.LightstyleColor[i] = qglGetUniformLocationARB( program->object, va( "u_LightstyleColor[%i]", i ) );
 	}
 
 	program->loc.GlossIntensity = qglGetUniformLocationARB( program->object, "u_GlossIntensity" );
@@ -2130,8 +2126,6 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 
 		program->loc.ShadowmapMatrix[i] = 
 			qglGetUniformLocationARB( program->object, va( "u_ShadowmapMatrix[%i]", i ) );
-		program->loc.ShadowProjDistance[i] = 
-			qglGetUniformLocationARB( program->object, va( "u_ShadowProjDistance[%i]", i ) );
 	}
 
 	program->loc.ShadowAlpha = qglGetUniformLocationARB( program->object, "u_ShadowAlpha" );
