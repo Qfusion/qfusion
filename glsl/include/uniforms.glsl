@@ -25,7 +25,7 @@ uniform vec4 u_TextureMatrix[2];
 
 uniform float u_MirrorSide;
 
-uniform float u_ZNear, u_ZFar;
+uniform vec2 u_ZRange;
 
 uniform ivec4 u_Viewport; // x, y, width, height
 
