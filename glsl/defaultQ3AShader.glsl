@@ -205,7 +205,7 @@ void main(void)
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)
-	myhalf softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_Viewport, u_ZNear, u_ZFar, u_SoftParticlesScale);
+	myhalf softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_Viewport, u_ZRange, u_SoftParticlesScale);
 	color *= mix(myhalf4(1.0), myhalf4(softness), u_BlendMix.xxxy);
 #endif
 
