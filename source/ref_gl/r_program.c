@@ -52,7 +52,7 @@ typedef struct glsl_program_s
 		int			ModelViewMatrix,
 					ModelViewProjectionMatrix,
 
-					ZNear, ZFar,
+					ZRange,
 
 					ViewOrigin,
 					ViewAxis,
@@ -1656,11 +1656,8 @@ void RP_UpdateViewUniforms( int elem,
 		qglUniformMatrix4fvARB( program->loc.ModelViewProjectionMatrix, 1, GL_FALSE, modelviewProjectionMatrix );
 	}
 
-	if( program->loc.ZNear >= 0 ) {
-		qglUniform1fARB( program->loc.ZNear, zNear );
-	}
-	if( program->loc.ZFar >= 0 ) {
-		qglUniform1fARB( program->loc.ZFar, zFar );
+	if( program->loc.ZRange >= 0 ) {
+		qglUniform2fARB( program->loc.ZRange, zNear, zFar );
 	}
 
 	if( viewOrigin ) {
@@ -1822,6 +1819,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 	if( superLightStyle ) {
 		int i;
 		GLfloat rgb[3];
+		static float deluxemapOffset[(MAX_LIGHTMAPS + 3) & (~3)];
 
 		for( i = 0; i < MAX_LIGHTMAPS && superLightStyle->lightmapStyles[i] != 255; i++ ) {
 			VectorCopy( rsc.lightStyles[superLightStyle->lightmapStyles[i]].rgb, rgb );
@@ -1830,8 +1828,13 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 
 			if( program->loc.LightstyleColor >= 0 )	
 				qglUniform3fvARB( program->loc.LightstyleColor+i, 1, rgb );
-			if( program->loc.DeluxemapOffset >= 0 )	
-				qglUniform1fARB( program->loc.DeluxemapOffset+i, superLightStyle->stOffset[i][0] );
+			if( program->loc.DeluxemapOffset >= 0 )	{
+				deluxemapOffset[i] = superLightStyle->stOffset[i][0];
+			}
+		}
+
+		if( i && ( program->loc.DeluxemapOffset >= 0 ) ) {
+			qglUniform4fvARB( program->loc.DeluxemapOffset, (i + 3) / 4, deluxemapOffset );
 		}
 	}
 
@@ -2015,8 +2018,7 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.ModelViewMatrix = qglGetUniformLocationARB( program->object, "u_ModelViewMatrix" );
 	program->loc.ModelViewProjectionMatrix = qglGetUniformLocationARB( program->object, "u_ModelViewProjectionMatrix" );
 
-	program->loc.ZNear = qglGetUniformLocationARB( program->object, "u_ZNear" );
-	program->loc.ZFar = qglGetUniformLocationARB( program->object, "u_ZFar" );
+	program->loc.ZRange = qglGetUniformLocationARB( program->object, "u_ZRange" );
 
 	program->loc.ViewOrigin = qglGetUniformLocationARB( program->object, "u_ViewOrigin" );
 	program->loc.ViewAxis = qglGetUniformLocationARB( program->object, "u_ViewAxis" );
