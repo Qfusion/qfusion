@@ -94,7 +94,7 @@ void main()
 // Fragment shader
 
 #ifdef NUM_LIGHTMAPS
-uniform float u_DeluxemapOffset[NUM_LIGHTMAPS]; // s-offset for v_LightmapTexCoord
+uniform vec4 u_DeluxemapOffset[(NUM_LIGHTMAPS + 3) / 4]; // s-offset for v_LightmapTexCoord
 uniform sampler2D u_LightmapTexture[NUM_LIGHTMAPS];
 #endif
 
@@ -265,7 +265,7 @@ void main()
 
 #ifdef NUM_LIGHTMAPS
 	// get light normal
-	diffuseNormalModelspace = normalize(myhalf3 (qf_texture(u_LightmapTexture[0], v_LightmapTexCoord01.st+vec2(u_DeluxemapOffset[0], 0.0))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture(u_LightmapTexture[0], v_LightmapTexCoord01.st+vec2(u_DeluxemapOffset[0].x, 0.0))) - myhalf3 (0.5));
 	// calculate directional shading
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 
@@ -286,17 +286,17 @@ void main()
 #endif
 
 #if NUM_LIGHTMAPS >= 2
-	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[1], v_LightmapTexCoord01.pq+vec2(u_DeluxemapOffset[1],0.0))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[1], v_LightmapTexCoord01.pq+vec2(u_DeluxemapOffset[0].y,0.0))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[1] * diffuseNormalModelspace;
 	color.rgb += u_LightstyleColor[1] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[1], v_LightmapTexCoord01.pq));
 #if NUM_LIGHTMAPS >= 3
-	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[2], v_LightmapTexCoord23.st+vec2(u_DeluxemapOffset[2],0.0))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[2], v_LightmapTexCoord23.st+vec2(u_DeluxemapOffset[0].z,0.0))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[2] * diffuseNormalModelspace;
 	color.rgb += u_LightstyleColor[2] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[2], v_LightmapTexCoord23.st));
 #if NUM_LIGHTMAPS >= 4
-	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[3], v_LightmapTexCoord23.pq+vec2(u_DeluxemapOffset[3],0.0))) - myhalf3 (0.5));
+	diffuseNormalModelspace = normalize(myhalf3 (qf_texture (u_LightmapTexture[3], v_LightmapTexCoord23.pq+vec2(u_DeluxemapOffset[0].w,0.0))) - myhalf3 (0.5));
 	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
 	weightedDiffuseNormalModelspace += u_LightstyleColor[3] * diffuseNormalModelspace;
 	color.rgb += u_LightstyleColor[3] * myhalf(max (diffuseProduct, 0.0)) * myhalf3 (qf_texture(u_LightmapTexture[3], v_LightmapTexCoord23.pq));
