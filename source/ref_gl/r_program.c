@@ -830,35 +830,31 @@ QF_GLSL_PI \
 "#ifndef WAVE_SIN\n" \
 "float QF_WaveFunc_Sin(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
-"return sin(x * M_TWOPI);\n" \
+"return sin(fract(x) * M_TWOPI);\n" \
 "}\n" \
 "float QF_WaveFunc_Triangle(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
+"x = fract(x);\n" \
 "return step(x, 0.25) * x * 4.0 + (2.0 - 4.0 * step(0.25, x) * step(x, 0.75) * x) + ((step(0.75, x) * x - 0.75) * 4.0 - 1.0);\n" \
 "}\n" \
 "float QF_WaveFunc_Square(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
-"return step(x, 0.5) * 2.0 - 1.0;\n" \
+"return step(fract(x), 0.5) * 2.0 - 1.0;\n" \
 "}\n" \
 "float QF_WaveFunc_Sawtooth(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
-"return x;\n" \
+"return fract(x);\n" \
 "}\n" \
-"float QF_QF_WaveFunc_InverseSawtooth(float x)\n" \
+"float QF_WaveFunc_InverseSawtooth(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
-"return 1.0 - x;\n" \
+"return 1.0 - fract(x);\n" \
 "}\n" \
 "\n" \
 "#define WAVE_SIN(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_Sin((phase)+(time)*(freq))))\n" \
 "#define WAVE_TRIANGLE(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_Triangle((phase)+(time)*(freq))))\n" \
 "#define WAVE_SQUARE(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_Square((phase)+(time)*(freq))))\n" \
 "#define WAVE_SAWTOOTH(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_Sawtooth((phase)+(time)*(freq))))\n" \
-"#define WAVE_INVERSESAWTOOTH(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_QF_WaveFunc_InverseSawtooth((phase)+(time)*(freq))))\n" \
+"#define WAVE_INVERSESAWTOOTH(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_InverseSawtooth((phase)+(time)*(freq))))\n" \
 "#endif\n" \
 "\n"
 
