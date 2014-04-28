@@ -383,7 +383,9 @@ qboolean R_SurfPotentiallyFragmented( msurface_t *surf )
 {
 	if( surf->flags & ( SURF_NOMARKS|SURF_NOIMPACT|SURF_NODRAW ) )
 		return qfalse;
-	return ( ( surf->facetype == FACETYPE_PLANAR ) || ( surf->facetype == FACETYPE_PATCH ) /* || (surf->facetype == FACETYPE_TRISURF)*/ );
+	return ( ( surf->facetype == FACETYPE_PLANAR ) 
+		|| ( surf->facetype == FACETYPE_PATCH ) 
+		/* || (surf->facetype == FACETYPE_TRISURF)*/ );
 }
 
 /*

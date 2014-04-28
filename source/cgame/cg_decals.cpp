@@ -122,7 +122,7 @@ static void CG_FreeDecal( cdecal_t *dl )
 /*
 * CG_SpawnDecal
 */
-void CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
+int CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
 				   float r, float g, float b, float a, float die, float fadetime, bool fadealpha, struct shader_s *shader )
 {
 	int i, j;
@@ -136,16 +136,13 @@ void CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
 	int numfragments;
 	float dietime, fadefreq;
 
-	if( !cg_addDecals->integer )
-		return;
-
 	// invalid decal
 	if( radius <= 0 || VectorCompare( dir, vec3_origin ) )
-		return;
+		return 0;
 
 	// we don't spawn decals if too far away (we could move there, but players won't notice there should be a decal by then)
 	if( DistanceFast( origin, cg.view.origin ) * cg.view.fracDistFOV > 2048 )
-		return;
+		return 0;
 
 	// calculate orientation matrix
 	VectorNormalize2( dir, axis[0] );
@@ -158,7 +155,10 @@ void CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
 
 	// no valid fragments
 	if( !numfragments )
-		return;
+		return 0;
+
+	if( !cg_addDecals->integer )
+		return numfragments;
 
 	// clamp and scale colors
 	if( r < 0 ) r = 0;else if( r > 1 ) r = 255;else r *= 255;
@@ -182,7 +182,7 @@ void CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
 	for( i = 0, fr = fragments; i < numfragments; i++, fr++ )
 	{
 		if( fr->numverts > MAX_DECAL_VERTS )
-			return;
+			return numfragments;
 		else if( fr->numverts <= 0 )
 			continue;
 
@@ -214,6 +214,8 @@ void CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
 			*( int * )poly->colors[j] = *( int * )color;
 		}
 	}
+
+	return numfragments;
 }
 
 /*
