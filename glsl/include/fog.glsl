@@ -1,9 +1,8 @@
 struct Fog
 {
-	float EyeDist;
+	vec2 ScaleAndEyeDist;
 	vec4 EyePlane, Plane;
 	myhalf3 Color;
-	float Scale;
 };
 
 uniform Fog u_Fog;

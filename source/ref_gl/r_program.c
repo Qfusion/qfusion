@@ -52,7 +52,7 @@ typedef struct glsl_program_s
 		int			ModelViewMatrix,
 					ModelViewProjectionMatrix,
 
-					ZNear, ZFar,
+					ZRange,
 
 					ViewOrigin,
 					ViewAxis,
@@ -87,9 +87,8 @@ typedef struct glsl_program_s
 					struct {
 						int Plane,
 							Color,
-							Scale,
-							EyePlane,
-							EyeDist;
+							ScaleAndEyeDist,
+							EyePlane;
 					} Fog;
 
 		int			ShaderTime,
@@ -98,11 +97,10 @@ typedef struct glsl_program_s
 					VectorTexMatrix,
 
 					DeluxemapOffset,
-					LightstyleColor,
+					LightstyleColor[MAX_LIGHTMAPS],
 
-					DynamicLightsRadius[MAX_DLIGHTS],
 					DynamicLightsPosition[MAX_DLIGHTS],
-					DynamicLightsDiffuse[MAX_DLIGHTS],
+					DynamicLightsDiffuseAndRadius[MAX_DLIGHTS],
 					NumDynamicLights,
 
 					AttrBonesIndices,
@@ -111,7 +109,7 @@ typedef struct glsl_program_s
 					WallColor,
 					FloorColor,
 
-					ShadowProjDistance[GLSL_SHADOWMAP_LIMIT],
+					ShadowProjDistance,
 					ShadowmapTextureParams[GLSL_SHADOWMAP_LIMIT],
 					ShadowmapMatrix[GLSL_SHADOWMAP_LIMIT],
 					ShadowAlpha,
@@ -832,35 +830,31 @@ QF_GLSL_PI \
 "#ifndef WAVE_SIN\n" \
 "float QF_WaveFunc_Sin(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
-"return sin(x * M_TWOPI);\n" \
+"return sin(fract(x) * M_TWOPI);\n" \
 "}\n" \
 "float QF_WaveFunc_Triangle(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
+"x = fract(x);\n" \
 "return step(x, 0.25) * x * 4.0 + (2.0 - 4.0 * step(0.25, x) * step(x, 0.75) * x) + ((step(0.75, x) * x - 0.75) * 4.0 - 1.0);\n" \
 "}\n" \
 "float QF_WaveFunc_Square(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
-"return step(x, 0.5) * 2.0 - 1.0;\n" \
+"return step(fract(x), 0.5) * 2.0 - 1.0;\n" \
 "}\n" \
 "float QF_WaveFunc_Sawtooth(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
-"return x;\n" \
+"return fract(x);\n" \
 "}\n" \
-"float QF_QF_WaveFunc_InverseSawtooth(float x)\n" \
+"float QF_WaveFunc_InverseSawtooth(float x)\n" \
 "{\n" \
-"x -= floor(x);\n" \
-"return 1.0 - x;\n" \
+"return 1.0 - fract(x);\n" \
 "}\n" \
 "\n" \
 "#define WAVE_SIN(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_Sin((phase)+(time)*(freq))))\n" \
 "#define WAVE_TRIANGLE(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_Triangle((phase)+(time)*(freq))))\n" \
 "#define WAVE_SQUARE(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_Square((phase)+(time)*(freq))))\n" \
 "#define WAVE_SAWTOOTH(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_Sawtooth((phase)+(time)*(freq))))\n" \
-"#define WAVE_INVERSESAWTOOTH(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_QF_WaveFunc_InverseSawtooth((phase)+(time)*(freq))))\n" \
+"#define WAVE_INVERSESAWTOOTH(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_InverseSawtooth((phase)+(time)*(freq))))\n" \
 "#endif\n" \
 "\n"
 
@@ -1070,9 +1064,9 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 				break;
 			case DEFORMV_AUTOSPRITE:
 				Q_strncatz( program,
-						"right = (1.0 - step(0.5, TexCoord.s) * 2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
-						"up = (1.0 - step(0.5, TexCoord.t) * 2.0) * u_QF_ViewAxis[2];\n"
-						"forward = -1 * u_QF_ViewAxis[0];\n"
+						"right = (1.0 + step(0.5, TexCoord.s) * -2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
+						"up = (1.0 + step(0.5, TexCoord.t) * -2.0) * u_QF_ViewAxis[2];\n"
+						"forward = -1.0 * u_QF_ViewAxis[0];\n"
 						"Position.xyz = a_SpritePoint.xyz + (right + up) * a_SpritePoint.w;\n"
 						"Normal.xyz = forward;\n"
 						"TexCoord.st = vec2(step(0.5, TexCoord.s),step(0.5, TexCoord.t));\n",
@@ -1080,9 +1074,9 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 				break;
 			case DEFORMV_AUTOPARTICLE:
 				Q_strncatz( program,
-						"right = (1.0 - TexCoord.s * 2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
-						"up = (1.0 - TexCoord.t * 2.0) * u_QF_ViewAxis[2];\n"
-						"forward = -1 * u_QF_ViewAxis[0];\n"
+						"right = (1.0 + TexCoord.s * -2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
+						"up = (1.0 + TexCoord.t * -2.0) * u_QF_ViewAxis[2];\n"
+						"forward = -1.0 * u_QF_ViewAxis[0];\n"
 						"// prevent the particle from disappearing at large distances\n"
 						"t = dot(a_SpritePoint.xyz + u_QF_EntityOrigin - u_QF_ViewOrigin, u_QF_ViewAxis[0]);\n"
 						"t = 1.5 + step(20.0, t) * t * 0.006;\n"
@@ -1656,11 +1650,8 @@ void RP_UpdateViewUniforms( int elem,
 		qglUniformMatrix4fvARB( program->loc.ModelViewProjectionMatrix, 1, GL_FALSE, modelviewProjectionMatrix );
 	}
 
-	if( program->loc.ZNear >= 0 ) {
-		qglUniform1fARB( program->loc.ZNear, zNear );
-	}
-	if( program->loc.ZFar >= 0 ) {
-		qglUniform1fARB( program->loc.ZFar, zFar );
+	if( program->loc.ZRange >= 0 ) {
+		qglUniform2fARB( program->loc.ZRange, zNear, zFar );
 	}
 
 	if( viewOrigin ) {
@@ -1796,14 +1787,12 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 
 	if( program->loc.Fog.Color >= 0 )
 		qglUniform3fvARB( program->loc.Fog.Color, 1, fog_color ); 
-	if( program->loc.Fog.Scale >= 0 )
-		qglUniform1fARB( program->loc.Fog.Scale, 1.0 / (opaqueDist - clearDist) );
+	if( program->loc.Fog.ScaleAndEyeDist >= 0 )
+		qglUniform2fARB( program->loc.Fog.ScaleAndEyeDist, 1.0 / (opaqueDist - clearDist), eyeDist );
 	if( program->loc.Fog.Plane >= 0 )
 		qglUniform4fARB( program->loc.Fog.Plane, fogPlane->normal[0], fogPlane->normal[1], fogPlane->normal[2], fogPlane->dist );
 	if( program->loc.Fog.EyePlane >= 0 )
 		qglUniform4fARB( program->loc.Fog.EyePlane, eyePlane->normal[0], eyePlane->normal[1], eyePlane->normal[2], eyePlane->dist );
-	if( program->loc.Fog.EyeDist >= 0 )
-		qglUniform1fARB( program->loc.Fog.EyeDist, eyeDist );
 }
 
 /*
@@ -1822,17 +1811,21 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 	if( superLightStyle ) {
 		int i;
 		GLfloat rgb[3];
+		static float deluxemapOffset[(MAX_LIGHTMAPS + 3) & (~3)];
 
 		for( i = 0; i < MAX_LIGHTMAPS && superLightStyle->lightmapStyles[i] != 255; i++ ) {
 			VectorCopy( rsc.lightStyles[superLightStyle->lightmapStyles[i]].rgb, rgb );
 			if( mapConfig.lightingIntensity )
 				VectorScale( rgb, mapConfig.lightingIntensity, rgb );
 
-			if( program->loc.LightstyleColor >= 0 )	
-				qglUniform3fvARB( program->loc.LightstyleColor+i, 1, rgb );
-			if( program->loc.DeluxemapOffset >= 0 )	
-				qglUniform1fARB( program->loc.DeluxemapOffset+i, superLightStyle->stOffset[i][0] );
+			if( program->loc.LightstyleColor[i] >= 0 )	
+				qglUniform3fvARB( program->loc.LightstyleColor[i], 1, rgb );
+			if( program->loc.DeluxemapOffset >= 0 )
+				deluxemapOffset[i] = superLightStyle->stOffset[i][0];
 		}
+
+		if( i && ( program->loc.DeluxemapOffset >= 0 ) )
+			qglUniform4fvARB( program->loc.DeluxemapOffset, (i + 3) / 4, deluxemapOffset );
 	}
 
 	if( dlightbits ) {
@@ -1842,7 +1835,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			if( !dl->intensity ) {
 				continue;
 			}
-			if( program->loc.DynamicLightsRadius[n] < 0 ) {
+			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
 
@@ -1853,9 +1846,8 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			}
 			VectorScale( dl->color, colorScale, dlcolor );
 
-			qglUniform1fARB( program->loc.DynamicLightsRadius[n], dl->intensity );
 			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, dlorigin );
-			qglUniform3fvARB( program->loc.DynamicLightsDiffuse[n], 1, dlcolor );
+			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndRadius[n], dlcolor[0], dlcolor[1], dlcolor[2], dl->intensity );
 
 			n++;
 			dlightbits &= ~(1<<i);
@@ -1869,11 +1861,10 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 		}
 
 		for( ; n < MAX_DLIGHTS; n++ ) {
-			if( program->loc.DynamicLightsRadius[n] < 0 ) {
+			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
-			qglUniform1fARB( program->loc.DynamicLightsRadius[n], 1 );
-			qglUniform3fARB( program->loc.DynamicLightsDiffuse[n], 0, 0, 0 );
+			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndRadius[n], 0.0f, 0.0f, 0.0f, 1.0f );
 		}
 	}
 	
@@ -1912,10 +1903,6 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 
 	for( i = 0; i < numShadows; i++ ) {
 		group = groups[i];
-
-		if( program->loc.ShadowProjDistance[i] >= 0 ) {
-			qglUniform1fARB( program->loc.ShadowProjDistance[i], group->projDist );
-		}
 
 		if( program->loc.ShadowmapTextureParams[i] >= 0 ) {
 			qglUniform4fARB( program->loc.ShadowmapTextureParams[i], 
@@ -2015,8 +2002,7 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.ModelViewMatrix = qglGetUniformLocationARB( program->object, "u_ModelViewMatrix" );
 	program->loc.ModelViewProjectionMatrix = qglGetUniformLocationARB( program->object, "u_ModelViewProjectionMatrix" );
 
-	program->loc.ZNear = qglGetUniformLocationARB( program->object, "u_ZNear" );
-	program->loc.ZFar = qglGetUniformLocationARB( program->object, "u_ZFar" );
+	program->loc.ZRange = qglGetUniformLocationARB( program->object, "u_ZRange" );
 
 	program->loc.ViewOrigin = qglGetUniformLocationARB( program->object, "u_ViewOrigin" );
 	program->loc.ViewAxis = qglGetUniformLocationARB( program->object, "u_ViewAxis" );
@@ -2058,13 +2044,13 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	locYUVTextureU = qglGetUniformLocationARB( program->object, "u_YUVTextureU" );
 	locYUVTextureV = qglGetUniformLocationARB( program->object, "u_YUVTextureV" );
 
-	program->loc.LightstyleColor = qglGetUniformLocationARB( program->object, "u_LightstyleColor" );
 	program->loc.DeluxemapOffset = qglGetUniformLocationARB( program->object, "u_DeluxemapOffset" );
 
 	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
 		locLightmapTexture[i] = qglGetUniformLocationARB( program->object, va( "u_LightmapTexture[%i]", i ) );
 		if( locLightmapTexture[i] < 0 )
 			break;
+		program->loc.LightstyleColor[i] = qglGetUniformLocationARB( program->object, va( "u_LightstyleColor[%i]", i ) );
 	}
 
 	program->loc.GlossIntensity = qglGetUniformLocationARB( program->object, "u_GlossIntensity" );
@@ -2088,9 +2074,8 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 
 	program->loc.Fog.Plane = qglGetUniformLocationARB( program->object, "u_Fog.Plane" );
 	program->loc.Fog.Color = qglGetUniformLocationARB( program->object, "u_Fog.Color" );
-	program->loc.Fog.Scale = qglGetUniformLocationARB( program->object, "u_Fog.Scale" );
+	program->loc.Fog.ScaleAndEyeDist = qglGetUniformLocationARB( program->object, "u_Fog.ScaleAndEyeDist" );
 	program->loc.Fog.EyePlane = qglGetUniformLocationARB( program->object, "u_Fog.EyePlane" );
-	program->loc.Fog.EyeDist = qglGetUniformLocationARB( program->object, "u_Fog.EyeDist" );
 
 	program->loc.ShaderTime = qglGetUniformLocationARB( program->object, "u_ShaderTime" );
 
@@ -2107,21 +2092,18 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 
 	// dynamic lights
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
-		int locR, locP, locD;
+		int locP, locD;
 
-		locR = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].Radius", i ) );
 		locP = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].Position", i ) );
-		locD = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].Diffuse", i ) );
+		locD = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].DiffuseAndRadius", i ) );
 
-		if( locR < 0 || locP < 0 || locD < 0 ) {
-			program->loc.DynamicLightsRadius[i] = program->loc.DynamicLightsPosition[i] = 
-				program->loc.DynamicLightsDiffuse[i] = -1;
+		if( locP < 0 || locD < 0 ) {
+			program->loc.DynamicLightsPosition[i] = program->loc.DynamicLightsDiffuseAndRadius[i] = -1;
 			break;
 		}
 
-		program->loc.DynamicLightsRadius[i] = locR;
 		program->loc.DynamicLightsPosition[i] = locP;
-		program->loc.DynamicLightsDiffuse[i] = locD;
+		program->loc.DynamicLightsDiffuseAndRadius[i] = locD;
 	}
 	program->loc.NumDynamicLights = qglGetUniformLocationARB( program->object, "u_NumDynamicLights" );
 
@@ -2134,8 +2116,6 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 
 		program->loc.ShadowmapMatrix[i] = 
 			qglGetUniformLocationARB( program->object, va( "u_ShadowmapMatrix[%i]", i ) );
-		program->loc.ShadowProjDistance[i] = 
-			qglGetUniformLocationARB( program->object, va( "u_ShadowProjDistance[%i]", i ) );
 	}
 
 	program->loc.ShadowAlpha = qglGetUniformLocationARB( program->object, "u_ShadowAlpha" );
