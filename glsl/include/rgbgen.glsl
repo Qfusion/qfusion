@@ -1,3 +1,5 @@
+uniform myhalf4 u_ConstColor;
+uniform myhalf4 u_RGBGenFuncArgs, u_AlphaGenFuncArgs;
 myhalf4 VertexRGBGen(in vec4 Position, in vec3 Normal, in myhalf4 VertexColor)
 {
 #if defined(APPLY_RGB_DISTANCERAMP) || defined(APPLY_ALPHA_DISTANCERAMP)
