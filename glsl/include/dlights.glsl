@@ -2,9 +2,8 @@
 
 struct DynamicLight
 {
-	myhalf Radius;
 	vec3 Position;
-	myhalf3 Diffuse;
+	myhalf4 DiffuseAndRadius;
 };
 
 uniform DynamicLight u_DynamicLights[NUM_DLIGHTS];
