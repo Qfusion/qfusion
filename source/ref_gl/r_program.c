@@ -99,9 +99,8 @@ typedef struct glsl_program_s
 					DeluxemapOffset,
 					LightstyleColor[MAX_LIGHTMAPS],
 
-					DynamicLightsRadius[MAX_DLIGHTS],
 					DynamicLightsPosition[MAX_DLIGHTS],
-					DynamicLightsDiffuse[MAX_DLIGHTS],
+					DynamicLightsDiffuseAndRadius[MAX_DLIGHTS],
 					NumDynamicLights,
 
 					AttrBonesIndices,
@@ -1840,7 +1839,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			if( !dl->intensity ) {
 				continue;
 			}
-			if( program->loc.DynamicLightsRadius[n] < 0 ) {
+			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
 
@@ -1851,9 +1850,8 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			}
 			VectorScale( dl->color, colorScale, dlcolor );
 
-			qglUniform1fARB( program->loc.DynamicLightsRadius[n], dl->intensity );
 			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, dlorigin );
-			qglUniform3fvARB( program->loc.DynamicLightsDiffuse[n], 1, dlcolor );
+			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndRadius[n], dlcolor[0], dlcolor[1], dlcolor[2], dl->intensity );
 
 			n++;
 			dlightbits &= ~(1<<i);
@@ -1867,11 +1865,10 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 		}
 
 		for( ; n < MAX_DLIGHTS; n++ ) {
-			if( program->loc.DynamicLightsRadius[n] < 0 ) {
+			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
-			qglUniform1fARB( program->loc.DynamicLightsRadius[n], 1 );
-			qglUniform3fARB( program->loc.DynamicLightsDiffuse[n], 0, 0, 0 );
+			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndRadius[n], 0.0f, 0.0f, 0.0f, 1.0f );
 		}
 	}
 	
@@ -2099,21 +2096,18 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 
 	// dynamic lights
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
-		int locR, locP, locD;
+		int locP, locD;
 
-		locR = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].Radius", i ) );
 		locP = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].Position", i ) );
-		locD = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].Diffuse", i ) );
+		locD = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].DiffuseAndRadius", i ) );
 
-		if( locR < 0 || locP < 0 || locD < 0 ) {
-			program->loc.DynamicLightsRadius[i] = program->loc.DynamicLightsPosition[i] = 
-				program->loc.DynamicLightsDiffuse[i] = -1;
+		if( locP < 0 || locD < 0 ) {
+			program->loc.DynamicLightsPosition[i] = program->loc.DynamicLightsDiffuseAndRadius[i] = -1;
 			break;
 		}
 
-		program->loc.DynamicLightsRadius[i] = locR;
 		program->loc.DynamicLightsPosition[i] = locP;
-		program->loc.DynamicLightsDiffuse[i] = locD;
+		program->loc.DynamicLightsDiffuseAndRadius[i] = locD;
 	}
 	program->loc.NumDynamicLights = qglGetUniformLocationARB( program->object, "u_NumDynamicLights" );
 
