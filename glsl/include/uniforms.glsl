@@ -10,8 +10,6 @@ uniform vec3 u_EntityDist;
 uniform vec3 u_EntityOrigin;
 uniform myhalf4 u_EntityColor;
 
-uniform myhalf4 u_ConstColor;
-uniform myhalf4 u_RGBGenFuncArgs, u_AlphaGenFuncArgs;
 uniform myhalf3 u_LightstyleColor[4]; // lightstyle colors
 
 uniform myhalf3 u_LightAmbient;
@@ -30,5 +28,3 @@ uniform vec2 u_ZRange;
 uniform ivec4 u_Viewport; // x, y, width, height
 
 uniform vec4 u_TextureParams;
-
-uniform myhalf u_SoftParticlesScale;
