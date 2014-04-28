@@ -87,9 +87,8 @@ typedef struct glsl_program_s
 					struct {
 						int Plane,
 							Color,
-							Scale,
-							EyePlane,
-							EyeDist;
+							ScaleAndEyeDist,
+							EyePlane;
 					} Fog;
 
 		int			ShaderTime,
@@ -1793,14 +1792,12 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 
 	if( program->loc.Fog.Color >= 0 )
 		qglUniform3fvARB( program->loc.Fog.Color, 1, fog_color ); 
-	if( program->loc.Fog.Scale >= 0 )
-		qglUniform1fARB( program->loc.Fog.Scale, 1.0 / (opaqueDist - clearDist) );
+	if( program->loc.Fog.ScaleAndEyeDist >= 0 )
+		qglUniform2fARB( program->loc.Fog.ScaleAndEyeDist, 1.0 / (opaqueDist - clearDist), eyeDist );
 	if( program->loc.Fog.Plane >= 0 )
 		qglUniform4fARB( program->loc.Fog.Plane, fogPlane->normal[0], fogPlane->normal[1], fogPlane->normal[2], fogPlane->dist );
 	if( program->loc.Fog.EyePlane >= 0 )
 		qglUniform4fARB( program->loc.Fog.EyePlane, eyePlane->normal[0], eyePlane->normal[1], eyePlane->normal[2], eyePlane->dist );
-	if( program->loc.Fog.EyeDist >= 0 )
-		qglUniform1fARB( program->loc.Fog.EyeDist, eyeDist );
 }
 
 /*
@@ -2088,9 +2085,8 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 
 	program->loc.Fog.Plane = qglGetUniformLocationARB( program->object, "u_Fog.Plane" );
 	program->loc.Fog.Color = qglGetUniformLocationARB( program->object, "u_Fog.Color" );
-	program->loc.Fog.Scale = qglGetUniformLocationARB( program->object, "u_Fog.Scale" );
+	program->loc.Fog.ScaleAndEyeDist = qglGetUniformLocationARB( program->object, "u_Fog.ScaleAndEyeDist" );
 	program->loc.Fog.EyePlane = qglGetUniformLocationARB( program->object, "u_Fog.EyePlane" );
-	program->loc.Fog.EyeDist = qglGetUniformLocationARB( program->object, "u_Fog.EyeDist" );
 
 	program->loc.ShaderTime = qglGetUniformLocationARB( program->object, "u_ShaderTime" );
 
