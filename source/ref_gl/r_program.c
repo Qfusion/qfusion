@@ -1828,14 +1828,12 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 
 			if( program->loc.LightstyleColor >= 0 )	
 				qglUniform3fvARB( program->loc.LightstyleColor+i, 1, rgb );
-			if( program->loc.DeluxemapOffset >= 0 )	{
+			if( program->loc.DeluxemapOffset >= 0 )
 				deluxemapOffset[i] = superLightStyle->stOffset[i][0];
-			}
 		}
 
-		if( i && ( program->loc.DeluxemapOffset >= 0 ) ) {
+		if( i && ( program->loc.DeluxemapOffset >= 0 ) )
 			qglUniform4fvARB( program->loc.DeluxemapOffset, (i + 3) / 4, deluxemapOffset );
-		}
 	}
 
 	if( dlightbits ) {
