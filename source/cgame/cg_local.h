@@ -939,8 +939,8 @@ void CG_GenericExplosion( vec3_t pos, vec3_t dir, int fire_mode, float radius );
 void CG_RocketExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, float radius );
 void CG_ElectroTrail2( vec3_t start, vec3_t end, int team );
 void CG_ImpactSmokePuff( vec3_t origin, vec3_t dir, float radius, float alpha, int time, int speed );
-void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode );
-void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode );
+void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags );
+void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags );
 void CG_BladeImpact( vec3_t pos, vec3_t dir );
 void CG_GunBladeBlastImpact( vec3_t pos, vec3_t dir, float radius );
 void CG_PModel_SpawnTeleportEffect( centity_t *cent );
@@ -961,7 +961,7 @@ void CG_ExplosionsDust( vec3_t pos, vec3_t dir, float radius);
 extern cvar_t *cg_addDecals;
 
 void CG_ClearDecals( void );
-void CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
+int CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
                     float r, float g, float b, float a, float die, float fadetime, bool fadealpha, struct shader_s *shader );
 void CG_AddDecals( void );
 

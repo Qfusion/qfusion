@@ -51,12 +51,12 @@ static void CG_Event_WeaponBeam( vec3_t origin, vec3_t dir, int ownerNum, int we
 
 	// retrace to spawn wall impact
 	CG_Trace( &trace, origin, vec3_origin, vec3_origin, end, cg.view.POVent, MASK_SOLID );
-	if( trace.ent != -1 && !(trace.surfFlags & (SURF_SKY|SURF_NOMARKS|SURF_NOIMPACT)) )
+	if( trace.ent != -1 )
 	{
 		if( weapondef->weapon_id == WEAP_ELECTROBOLT )
-			CG_BoltExplosionMode( trace.endpos, trace.plane.normal, FIRE_MODE_STRONG );
+			CG_BoltExplosionMode( trace.endpos, trace.plane.normal, FIRE_MODE_STRONG, trace.surfFlags );
 		else if( weapondef->weapon_id == WEAP_INSTAGUN )
-			CG_InstaExplosionMode( trace.endpos, trace.plane.normal, FIRE_MODE_STRONG );
+			CG_InstaExplosionMode( trace.endpos, trace.plane.normal, FIRE_MODE_STRONG, trace.surfFlags );
 	}
 
 	// when it's predicted we have to delay the drawing until the view weapon is calculated
@@ -1445,12 +1445,12 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 
 	case EV_BOLT_EXPLOSION:
 		ByteToDir( parm, dir );
-		CG_BoltExplosionMode( ent->origin, dir, ent->firemode );
+		CG_BoltExplosionMode( ent->origin, dir, ent->firemode, 0 );
 		break;
 
 	case EV_INSTA_EXPLOSION:
 		ByteToDir( parm, dir );
-		CG_InstaExplosionMode( ent->origin, dir, ent->firemode );
+		CG_InstaExplosionMode( ent->origin, dir, ent->firemode, 0 );
 		break;
 
 	case EV_GRENADE_EXPLOSION:

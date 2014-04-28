@@ -464,10 +464,17 @@ void CG_PlasmaExplosion( vec3_t pos, vec3_t dir, int fire_mode, float radius )
 /*
 * CG_BoltExplosionMode
 */
-void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode )
+void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags )
 {
 	lentity_t *le;
 	vec3_t angles;
+
+	if( !CG_SpawnDecal( pos, dir, random()*360, 12, 
+		1, 1, 1, 1, 10, 1, true, CG_MediaShader( cgs.media.shaderElectroboltMark ) ) ) {
+		if( surfFlags & (SURF_SKY|SURF_NOMARKS|SURF_NOIMPACT) ) {
+			return;
+		}
+	}
 
 	VecToAngles( dir, angles );
 
@@ -489,17 +496,22 @@ void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode )
 		le->ent.scale = 1.0f;
 		CG_ImpactPuffParticles( pos, dir, 12, 1.0f, 1, 1, 1, 1, NULL );
 	}
-
-	CG_SpawnDecal( pos, dir, random()*360, 8, 1, 1, 1, 1, 10, 1, true, CG_MediaShader( cgs.media.shaderElectroboltMark ) );
 }
 
 /*
 * CG_InstaExplosionMode
 */
-void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode )
+void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags )
 {
 	lentity_t *le;
 	vec3_t angles;
+
+	if( !CG_SpawnDecal( pos, dir, random()*360, 12, 
+		1, 1, 1, 1, 10, 1, true, CG_MediaShader( cgs.media.shaderInstagunMark ) ) ) {
+		if( surfFlags & (SURF_SKY|SURF_NOMARKS|SURF_NOIMPACT) ) {
+			return;
+		}
+	}
 
 	VecToAngles( dir, angles );
 
@@ -521,8 +533,6 @@ void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode )
 		le->ent.scale = 1.0f;
 		CG_ImpactPuffParticles( pos, dir, 12, 1.0f, 1, 1, 1, 1, NULL );
 	}
-
-	CG_SpawnDecal( pos, dir, random()*360, 8, 1, 1, 1, 1, 10, 1, true, CG_MediaShader( cgs.media.shaderInstagunMark ) );
 }
 
 /*
