@@ -1954,6 +1954,49 @@ qboolean FS_CopyBaseFile( const char *src, const char *dst )
 }
 
 /*
+* FS_ExtractFile
+*/
+qboolean FS_ExtractFile( const char *src, const char *dst )
+{
+	int srcnum, length;
+	unsigned int l;
+	FILE *dstnum;
+	qbyte buffer[FS_MAX_BLOCK_SIZE];
+
+	FS_CreateAbsolutePath( dst );
+	if( ( dstnum = fopen( dst, "wb" ) ) == NULL )
+		return qfalse;
+
+	length = _FS_FOpenFile( src, &srcnum, FS_READ, qfalse );
+	if( length == -1 )
+	{
+		fclose( dstnum );
+		return qfalse;
+	}
+
+	while( qtrue )
+	{
+		l = FS_Read( buffer, sizeof( buffer ), srcnum );
+		if( !l )
+			break;
+		if( fwrite( buffer, 1, l, dstnum ) != l )
+			Sys_Error( "FS_ExtractFile: can't extract %i bytes", l );
+		length -= l;
+	}
+
+	fclose( dstnum );
+	FS_FCloseFile( srcnum );
+
+	if( length != 0 )
+	{
+		FS_RemoveAbsoluteFile( dst );
+		return qfalse;
+	}
+
+	return qtrue;
+}
+
+/*
 * _FS_MoveFile
 */
 qboolean _FS_MoveFile( const char *src, const char *dst, qboolean base )
