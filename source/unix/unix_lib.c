@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/sys_library.h"
 
 #include <dlfcn.h>
+#include <linux/limits.h>
 
 /*
 * Sys_Library_Close
@@ -30,6 +31,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 qboolean Sys_Library_Close( void *lib )
 {
 	return !dlclose( lib );
+}
+
+/*
+* Sys_Library_GetFullName
+*/
+const char *Sys_Library_GetFullName( const char *name )
+{
+	return FS_AbsoluteNameForBaseFile( name );
+}
+
+/*
+* Sys_Library_GetGameLibPath
+*/
+const char *Sys_Library_GetGameLibPath( const char *name, qint64 time, int randomizer )
+{
+	static char tempname[PATH_MAX];
+	Q_snprintfz( tempname, sizeof(tempname), "%s/%s/tempmodules_%lld_%d/%s", FS_WriteDirectory(), FS_GameDirectory(),
+		time, randomizer, name );
+	return tempname;
 }
 
 /*
