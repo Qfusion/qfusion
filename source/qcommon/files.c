@@ -1903,24 +1903,22 @@ qboolean FS_RemoveFile( const char *filename )
 */
 qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base, qboolean absolute )
 {
-	int srcnum, dstnum, length, l;
+	int srcnum, dstnum, length, result, l;
 	qbyte buffer[FS_MAX_BLOCK_SIZE];
-
-	if( absolute )
-	{
-		if( FS_FOpenAbsoluteFile( dst, &dstnum, FS_WRITE ) == -1 )
-			return qfalse;
-	}
-	else
-	{
-		if( _FS_FOpenFile( dst, &dstnum, FS_WRITE, base ) == -1 )
-			return qfalse;
-	}
 
 	length = _FS_FOpenFile( src, &srcnum, FS_READ, base );
 	if( length == -1 )
 	{
-		FS_FCloseFile( dstnum );
+		return qfalse;
+	}
+
+	if( absolute )
+		result = FS_FOpenAbsoluteFile( dst, &dstnum, FS_WRITE ) == -1;
+	else
+		result = _FS_FOpenFile( dst, &dstnum, FS_WRITE, base ) == -1;
+	if( result == -1 )
+	{
+		FS_FCloseFile( srcnum );
 		return qfalse;
 	}
 
