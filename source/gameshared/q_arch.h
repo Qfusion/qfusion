@@ -98,7 +98,7 @@ extern "C" {
 
 #define VID_INITFIRST
 
-#define GL_DRIVERNAME "opengl32.dll"
+#define OPENGL_DRIVERNAME "opengl32.dll"
 
 #define VORBISFILE_LIBNAME "libvorbisfile.dll"
 
@@ -174,7 +174,7 @@ typedef UINT_PTR socket_handle_t;
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".so"
 
-#define GL_DRIVERNAME  "libGL.so.1"
+#define OPENGL_DRIVERNAME  "libGL.so.1"
 
 #define VORBISFILE_LIBNAME "libvorbisfile.so"
 
@@ -248,7 +248,7 @@ typedef int socket_handle_t;
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".dylib"
 
-#define GL_DRIVERNAME  "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib"
+#define OPENGL_DRIVERNAME  "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib"
 
 #define VORBISFILE_LIBNAME "libvorbisfile.dylib"
 
