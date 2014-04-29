@@ -33,6 +33,25 @@ qboolean Sys_Library_Close( void *lib )
 }
 
 /*
+* Sys_Library_GetFullName
+*/
+const char *Sys_Library_GetFullName( const char *name )
+{
+	return FS_AbsoluteNameForBaseFile( name );
+}
+
+/*
+* Sys_Library_GetGameLibPath
+*/
+const char *Sys_Library_GetGameLibPath( const char *name, qint64 time, int randomizer )
+{
+	static char tempname[MAX_PATH];
+	Q_snprintfz( tempname, sizeof(tempname), "%s/%s/tempmodules_%lld_%d/%s", FS_WriteDirectory(), FS_GameDirectory(),
+		time, randomizer, name );
+	return tempname;
+}
+
+/*
 * Sys_Library_Open
 */
 void *Sys_Library_Open( const char *name )
