@@ -756,7 +756,30 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "//#endif\n" \
 "#endif\n" \
 "\n" \
-"#if QF_GLSL_VERSION >= 130\n" \
+"#if defined(GL_ES)\n" \
+"# ifdef VERTEX_SHADER\n" \
+"#  if QF_GLSL_VERSION >= 300\n" \
+"#   define qf_varying out\n" \
+"#   define qf_attribute in\n" \
+"#  else\n" \
+"#   define qf_varying varying\n" \
+"#   define qf_attribute attribute\n" \
+"#  endif\n" \
+"# endif\n" \
+"# ifdef FRAGMENT_SHADER\n" \
+"   precision mediump float;\n" \
+"#  define qf_FragColor gl_FragColor\n" \
+"#  if QF_GLSL_VERSION >= 300\n" \
+"#   define qf_varying in\n" \
+"#  else\n" \
+"#   define qf_varying varying\n" \
+"#  endif\n" \
+"# endif\n" \
+"  qf_varying qf_FrontColor;\n" \
+"# define qf_texture texture2D\n" \
+"# define qf_textureLod texture2DLod\n" \
+"# define qf_textureCube textureCube\n" \
+"#elif QF_GLSL_VERSION >= 130\n" \
 "  precision highp float;\n" \
 "\n" \
 "# ifdef VERTEX_SHADER\n" \
