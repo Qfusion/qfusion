@@ -29,7 +29,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 qboolean Sys_Library_Close( void *lib )
 {
-	return FreeLibrary( (HINSTANCE)lib );
+	return ( qboolean )FreeLibrary( (HINSTANCE)lib );
+}
+
+/*
+* Sys_Library_GetFullName
+*/
+const char *Sys_Library_GetFullName( const char *name )
+{
+	return FS_AbsoluteNameForBaseFile( name );
+}
+
+/*
+* Sys_Library_GetGameLibPath
+*/
+const char *Sys_Library_GetGameLibPath( const char *name, qint64 time, int randomizer )
+{
+	static char tempname[MAX_PATH];
+	Q_snprintfz( tempname, sizeof(tempname), "%s/%s/tempmodules_%lld_%d/%s", FS_WriteDirectory(), FS_GameDirectory(),
+		time, randomizer, name );
+	return tempname;
 }
 
 /*

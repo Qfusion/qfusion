@@ -1901,18 +1901,24 @@ qboolean FS_RemoveFile( const char *filename )
 /*
 * _FS_CopyFile
 */
-qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base )
+qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base, qboolean absolute )
 {
-	int srcnum, dstnum, length, l;
+	int srcnum, dstnum, length, result, l;
 	qbyte buffer[FS_MAX_BLOCK_SIZE];
-
-	if( _FS_FOpenFile( dst, &dstnum, FS_WRITE, base ) == -1 )
-		return qfalse;
 
 	length = _FS_FOpenFile( src, &srcnum, FS_READ, base );
 	if( length == -1 )
 	{
-		FS_FCloseFile( dstnum );
+		return qfalse;
+	}
+
+	if( absolute )
+		result = FS_FOpenAbsoluteFile( dst, &dstnum, FS_WRITE ) == -1;
+	else
+		result = _FS_FOpenFile( dst, &dstnum, FS_WRITE, base ) == -1;
+	if( result == -1 )
+	{
+		FS_FCloseFile( srcnum );
 		return qfalse;
 	}
 
@@ -1942,7 +1948,7 @@ qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base )
 */
 qboolean FS_CopyFile( const char *src, const char *dst )
 {
-	return _FS_CopyFile( src, dst, qfalse );
+	return _FS_CopyFile( src, dst, qfalse, qfalse );
 }
 
 /*
@@ -1950,7 +1956,15 @@ qboolean FS_CopyFile( const char *src, const char *dst )
 */
 qboolean FS_CopyBaseFile( const char *src, const char *dst )
 {
-	return _FS_CopyFile( src, dst, qtrue );
+	return _FS_CopyFile( src, dst, qtrue, qfalse );
+}
+
+/*
+* FS_ExtractFile
+*/
+qboolean FS_ExtractFile( const char *src, const char *dst )
+{
+	return _FS_CopyFile( src, dst, qfalse, qtrue );
 }
 
 /*
