@@ -765,6 +765,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#   define qf_varying varying\n" \
 "#   define qf_attribute attribute\n" \
 "#  endif\n" \
+"#  define qf_textureLod texture2DLod\n" \
 "# endif\n" \
 "# ifdef FRAGMENT_SHADER\n" \
 "   precision mediump float;\n" \
@@ -777,7 +778,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "# endif\n" \
 "  qf_varying qf_FrontColor;\n" \
 "# define qf_texture texture2D\n" \
-"# define qf_textureLod texture2DLod\n" \
 "# define qf_textureCube textureCube\n" \
 "#elif QF_GLSL_VERSION >= 130\n" \
 "  precision highp float;\n" \
