@@ -23,7 +23,7 @@ void main(void)
 // Fragment shader
 
 #define FXAA_PC 1
-#if QF_GLSL_VERSION >= 130
+#if !defined(GL_ES) && (QF_GLSL_VERSION >= 130)
 # define FXAA_GLSL_130 1
 #else
 # define FXAA_GLSL_120 1
