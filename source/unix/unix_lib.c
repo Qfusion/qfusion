@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/sys_library.h"
 
 #include <dlfcn.h>
+#include <linux/limits.h>
 
 /*
 * Sys_Library_Close
@@ -45,7 +46,7 @@ const char *Sys_Library_GetFullName( const char *name )
 */
 const char *Sys_Library_GetGameLibPath( const char *name, qint64 time, int randomizer )
 {
-	static char tempname[MAX_PATH];
+	static char tempname[PATH_MAX];
 	Q_snprintfz( tempname, sizeof(tempname), "%s/%s/tempmodules_%lld_%d/%s", FS_WriteDirectory(), FS_GameDirectory(),
 		time, randomizer, name );
 	return tempname;
