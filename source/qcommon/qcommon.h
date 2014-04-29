@@ -768,6 +768,7 @@ int		FS_RemoveNotifications( int bitmask );
 // util functions
 qboolean    FS_CopyFile( const char *src, const char *dst );
 qboolean    FS_CopyBaseFile( const char *src, const char *dst );
+qboolean    FS_ExtractFile( const char *src, const char *dst );
 qboolean    FS_MoveFile( const char *src, const char *dst );
 qboolean    FS_MoveBaseFile( const char *src, const char *dst );
 qboolean    FS_RemoveFile( const char *filename );

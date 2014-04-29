@@ -48,16 +48,12 @@ void *Com_LoadLibrary( const char *name, dllfunc_t *funcs )
 
 	Com_DPrintf( "LoadLibrary (%s)\n", name );
 
-#ifdef LIB_OPEN_DIRECTLY
-	fullname = name;
-#else
-	fullname = FS_AbsoluteNameForBaseFile( name );
+	fullname = Sys_Library_GetFullName( name );
 	if( !fullname )
 	{
 		Com_DPrintf( "LoadLibrary (%s):(Not found)\n", name );
 		return NULL;
 	}
-#endif
 
 	lib = Sys_Library_Open( fullname );
 	if( !lib )
@@ -220,8 +216,10 @@ static void Com_LoadGameLibraryManifest( const char *libname, char *manifest )
 void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void **handle, void *parms, qboolean pure, char *manifest )
 {
 	static int randomizer = 0; // random part of tempmodules dir, always the same for one launch of Warsow
+	static qint64 randomizer_time;
+	const char *temppath;
 	char *tempname, *libname;
-	int tempname_size, libname_size;
+	int libname_size;
 	void *( *APIfunc )(void *);
 	gamelib_t *gamelib;
 
@@ -229,8 +227,9 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 
 	if( !randomizer )
 	{
-		srand( time( 0 ) );
-		randomizer = brandom( 0, 9999 );
+		randomizer_time = time( NULL );
+		srand( randomizer_time );
+		randomizer = brandom( 1, 9999 );
 	}
 
 	gamelib = ( gamelib_t* )Mem_ZoneMalloc( sizeof( gamelib_t ) );
@@ -241,10 +240,6 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 	libname = ( char* )Mem_TempMalloc( libname_size );
 	Q_snprintfz( libname, libname_size, "%s_" ARCH LIB_SUFFIX, basename );
 
-#ifdef LIB_OPEN_DIRECTLY
-	tempname = ( char * )Mem_ZoneMalloc( libname_size );
-	strcpy( tempname, libname );
-#else
 	// it exists?
 	if( FS_FOpenFile( libname, NULL, FS_READ ) == -1 )
 	{
@@ -263,29 +258,21 @@ void *Com_LoadGameLibrary( const char *basename, const char *apifuncname, void *
 		return NULL;
 	}
 
-	tempname_size = strlen( FS_WriteDirectory() ) + 1 + strlen( FS_GameDirectory() ) + strlen( "/tempmodules" ) +
-	                strlen( va( "%i", randomizer ) ) + 1 + strlen( libname ) + 1;
-	tempname = ( char* )Mem_ZoneMalloc( tempname_size );
-
-	// without gamedir for copy
-	Q_snprintfz( tempname, tempname_size, "tempmodules%i/%s", randomizer, libname );
+	temppath = Sys_Library_GetGameLibPath( libname, randomizer_time, randomizer );
+	tempname = ( char * )Mem_ZoneMalloc( strlen( temppath ) + 1 );
+	strcpy( tempname, temppath );
 
 	if( FS_FOpenFile( tempname, NULL, FS_READ ) == -1 )
 	{
-		if( !FS_CopyFile( libname, tempname ) )
+		if( !FS_ExtractFile( libname, tempname ) )
 		{
-			Com_Printf( "LoadLibrary (%s):(FS_CopyFile failed)\n", libname );
+			Com_Printf( "LoadLibrary (%s):(FS_ExtractFile failed)\n", libname );
 			Mem_TempFree( libname );
 			Mem_ZoneFree( tempname );
 			Mem_ZoneFree( gamelib );
 			return NULL;
 		}
 	}
-
-	// with gamedir for dlopen
-	Q_snprintfz( tempname, tempname_size, "%s/%s/tempmodules%i/%s", FS_WriteDirectory(), FS_GameDirectory(),
-	             randomizer, libname );
-#endif
 
 	gamelib->fullname = COM_SanitizeFilePath( tempname );
 	gamelib->lib = Sys_Library_Open( gamelib->fullname );
