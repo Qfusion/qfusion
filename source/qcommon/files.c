@@ -1901,13 +1901,21 @@ qboolean FS_RemoveFile( const char *filename )
 /*
 * _FS_CopyFile
 */
-qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base )
+qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base, qboolean absolute )
 {
 	int srcnum, dstnum, length, l;
 	qbyte buffer[FS_MAX_BLOCK_SIZE];
 
-	if( _FS_FOpenFile( dst, &dstnum, FS_WRITE, base ) == -1 )
-		return qfalse;
+	if( absolute )
+	{
+		if( FS_FOpenAbsoluteFile( dst, &dstnum, FS_WRITE ) == -1 )
+			return qfalse;
+	}
+	else
+	{
+		if( _FS_FOpenFile( dst, &dstnum, FS_WRITE, base ) == -1 )
+			return qfalse;
+	}
 
 	length = _FS_FOpenFile( src, &srcnum, FS_READ, base );
 	if( length == -1 )
@@ -1942,7 +1950,7 @@ qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base )
 */
 qboolean FS_CopyFile( const char *src, const char *dst )
 {
-	return _FS_CopyFile( src, dst, qfalse );
+	return _FS_CopyFile( src, dst, qfalse, qfalse );
 }
 
 /*
@@ -1950,7 +1958,7 @@ qboolean FS_CopyFile( const char *src, const char *dst )
 */
 qboolean FS_CopyBaseFile( const char *src, const char *dst )
 {
-	return _FS_CopyFile( src, dst, qtrue );
+	return _FS_CopyFile( src, dst, qtrue, qfalse );
 }
 
 /*
@@ -1958,42 +1966,7 @@ qboolean FS_CopyBaseFile( const char *src, const char *dst )
 */
 qboolean FS_ExtractFile( const char *src, const char *dst )
 {
-	int srcnum, length;
-	unsigned int l;
-	FILE *dstnum;
-	qbyte buffer[FS_MAX_BLOCK_SIZE];
-
-	FS_CreateAbsolutePath( dst );
-	if( ( dstnum = fopen( dst, "wb" ) ) == NULL )
-		return qfalse;
-
-	length = _FS_FOpenFile( src, &srcnum, FS_READ, qfalse );
-	if( length == -1 )
-	{
-		fclose( dstnum );
-		return qfalse;
-	}
-
-	while( qtrue )
-	{
-		l = FS_Read( buffer, sizeof( buffer ), srcnum );
-		if( !l )
-			break;
-		if( fwrite( buffer, 1, l, dstnum ) != l )
-			Sys_Error( "FS_ExtractFile: can't extract %i bytes", l );
-		length -= l;
-	}
-
-	fclose( dstnum );
-	FS_FCloseFile( srcnum );
-
-	if( length != 0 )
-	{
-		FS_RemoveAbsoluteFile( dst );
-		return qfalse;
-	}
-
-	return qtrue;
+	return _FS_CopyFile( src, dst, qfalse, qtrue );
 }
 
 /*
