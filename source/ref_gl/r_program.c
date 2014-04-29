@@ -1440,11 +1440,9 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 
 	i = 0;
 #ifdef OPENGL_ES
-#ifdef OPENGL_ES3
 	if( glConfig.shadingLanguageVersion >= 300 ) {
 		shaderStrings[i++] = QF_GLSL_VERSION300ES;
 	}
-#endif
 #else
 	if( glConfig.shadingLanguageVersion >= 140 ) {
 		shaderStrings[i++] = QF_GLSL_VERSION140;
