@@ -89,13 +89,15 @@ QGL_EXTERN	const char	*(*qglGetGLWExtensionsString)( void );
 ** extension constants
 */
 
-#define GL_TEXTURE0_ARB										0x84C0
-#define GL_MAX_TEXTURE_UNITS								0x84E2
-#define GL_MAX_TEXTURE_UNITS_ARB							0x84E2
-
-#ifndef GL_POLYGON_OFFSET
-#define GL_POLYGON_OFFSET									0x8037
+#ifndef GL_INT
+#define GL_INT												0x1404
 #endif
+#ifndef GL_FLOAT
+#define GL_FLOAT											0x1406
+#endif
+
+#define GL_TEXTURE0_ARB										0x84C0
+#define GL_MAX_TEXTURE_UNITS_ARB							0x84E2
 
 /* GL_ARB_texture_compression */
 #ifndef GL_ARB_texture_compression
@@ -215,11 +217,9 @@ typedef unsigned int GLhandleARB;
 #define GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB				0x8B87
 #define GL_OBJECT_SHADER_SOURCE_LENGTH_ARB					0x8B88
 #define GL_SHADER_OBJECT_ARB								0x8B48
-#define GL_FLOAT											0x1406
 #define GL_FLOAT_VEC2_ARB									0x8B50
 #define GL_FLOAT_VEC3_ARB									0x8B51
 #define GL_FLOAT_VEC4_ARB									0x8B52
-#define GL_INT												0x1404
 #define GL_INT_VEC2_ARB										0x8B53
 #define GL_INT_VEC3_ARB										0x8B54
 #define GL_INT_VEC4_ARB										0x8B55
@@ -263,7 +263,6 @@ typedef unsigned int GLhandleARB;
 #define GL_VERTEX_ATTRIB_ARRAY_NORMALIZED_ARB				0x886A
 #define GL_CURRENT_VERTEX_ATTRIB_ARB						0x8626
 #define GL_VERTEX_ATTRIB_ARRAY_POINTER_ARB					0x8645
-#define GL_FLOAT											0x1406
 #define GL_FLOAT_VEC2_ARB									0x8B50
 #define GL_FLOAT_VEC3_ARB									0x8B51
 #define GL_FLOAT_VEC4_ARB									0x8B52
@@ -294,11 +293,21 @@ typedef unsigned int GLhandleARB;
 #ifndef ARB_depth_texture
 #define ARB_depth_texture
 
+#ifndef GL_DEPTH_COMPONENT16
 #define GL_DEPTH_COMPONENT16								0x81A5
+#endif
+#ifndef GL_DEPTH_COMPONENT24
 #define GL_DEPTH_COMPONENT24								0x81A6
+#endif
+#ifndef GL_DEPTH_COMPONENT32
 #define GL_DEPTH_COMPONENT32								0x81A7
+#endif
+#ifndef GL_TEXTURE_DEPTH_SIZE
 #define GL_TEXTURE_DEPTH_SIZE								0x884A
+#endif
+#ifndef GL_DEPTH_TEXTURE_MODE
 #define GL_DEPTH_TEXTURE_MODE								0x884B
+#endif
 #endif /* ARB_depth_texture */
 
 /* GL_ARB_shadow */
