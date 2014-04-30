@@ -12,3 +12,9 @@ libsrcs/libRocket/libRocket/Build/obj/
 *.opensdf
 *.vcxproj.user
 *.suo
+
+# ignore cmake generated files
+source/CMakeCache.txt
+source/**/CMakeFiles/
+source/*/Makefile
+*cmake_install.cmake
