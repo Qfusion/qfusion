@@ -1439,7 +1439,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	ri.Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
-#ifdef OPENGL_ES
+#ifdef QGL_ES
 	if( glConfig.shadingLanguageVersion >= 300 ) {
 		shaderStrings[i++] = QF_GLSL_VERSION300ES;
 	}
@@ -1467,7 +1467,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
-#ifdef OPENGL_ES
+#ifdef QGL_ES
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL100ES;
 #else
 	if( glConfig.shadingLanguageVersion >= 130 ) {
