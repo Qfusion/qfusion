@@ -165,7 +165,6 @@ static void RB_SetGLDefaults( void )
 	qglDisable( GL_POLYGON_OFFSET_FILL );
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	qglEnable( GL_DEPTH_TEST );
-	qglShadeModel( GL_SMOOTH );
 	if( qglPolygonMode ) {
 		qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 	}
@@ -408,15 +407,9 @@ void RB_SetState( int state )
 	if( diff & GLSTATE_NO_COLORWRITE )
 	{
 		if( state & GLSTATE_NO_COLORWRITE )
-		{
-			qglShadeModel( GL_FLAT );
 			qglColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-		}
 		else
-		{
-			qglShadeModel( GL_SMOOTH );
 			qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-		}
 	}
 
 	if( diff & GLSTATE_DEPTHFUNC_EQ )
