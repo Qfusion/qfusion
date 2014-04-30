@@ -770,7 +770,7 @@ static void R_Register( const char *screenshotsPrefix )
 
 	gl_finish = ri.Cvar_Get( "gl_finish", "0", CVAR_ARCHIVE );
 	gl_cull = ri.Cvar_Get( "gl_cull", "1", 0 );
-	gl_driver = ri.Cvar_Get( "gl_driver", GLimp_GetDriverName(), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	gl_driver = ri.Cvar_Get( "gl_driver", QGL_GetDriverName(), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	gl_drawbuffer = ri.Cvar_Get( "gl_drawbuffer", "GL_BACK", 0 );
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
@@ -855,9 +855,9 @@ init_qgl:
 		QGL_Shutdown();
 		Com_Printf( "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver->string );
 
-		if( strcmp( gl_driver->string, GLimp_GetDriverName() ) )
+		if( strcmp( gl_driver->string, QGL_GetDriverName() ) )
 		{
-			ri.Cvar_ForceSet( gl_driver->name, GLimp_GetDriverName() );
+			ri.Cvar_ForceSet( gl_driver->name, QGL_GetDriverName() );
 			goto init_qgl;
 		}
 
