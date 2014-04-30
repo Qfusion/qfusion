@@ -452,7 +452,6 @@ QGL_GLX(Bool, glXQueryVersion, (Display *dpy, int *major, int *minor));
 QGL_GLX(const char *, glXQueryExtensionsString, (Display *dpy, int screen));
 
 // GL Functions
-QGL_FUNC(void, glAlphaFunc, (GLenum func, GLclampf ref));
 QGL_FUNC(void, glBindTexture, (GLenum target, GLuint texture));
 QGL_FUNC(void, glBlendFunc, (GLenum sfactor, GLenum dfactor));
 QGL_FUNC(void, glClear, (GLbitfield mask));
@@ -480,7 +479,6 @@ QGL_FUNC(void, glPolygonMode, (GLenum face, GLenum mode));
 QGL_FUNC(void, glPolygonOffset, (GLfloat factor, GLfloat units));
 QGL_FUNC(void, glReadPixels, (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels));
 QGL_FUNC(void, glScissor, (GLint x, GLint y, GLsizei width, GLsizei height));
-QGL_FUNC(void, glShadeModel, (GLenum mode));
 QGL_FUNC(void, glStencilFunc, (GLenum func, GLint ref, GLuint mask));
 QGL_FUNC(void, glStencilMask, (GLuint mask));
 QGL_FUNC(void, glStencilOp, (GLenum fail, GLenum zfail, GLenum zpass));
