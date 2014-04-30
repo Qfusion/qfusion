@@ -1145,10 +1145,11 @@ static void R_Clear( int bitMask )
 	int bits;
 	qbyte *envColor = rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ?
 		rsh.worldBrushModel->globalfog->shader->fog_color : mapConfig.environmentColor;
+	qboolean rgbShadow = ( rn.renderFlags & RF_SHADOWMAPVIEW ) && rn.fbColorAttachment != NULL ? qtrue : qfalse;
 
 	bits = GL_DEPTH_BUFFER_BIT;
 
-	if( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() )
+	if( ( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() ) || rgbShadow )
 		bits |= GL_COLOR_BUFFER_BIT;
 	if( glConfig.stencilEnabled )
 		bits |= GL_STENCIL_BUFFER_BIT;
