@@ -93,6 +93,8 @@ extern "C" {
 #define HAVE_WSIPX
 #endif
 
+#define MUMBLE_SUPPORT
+
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".dll"
 
@@ -172,6 +174,8 @@ typedef UINT_PTR socket_handle_t;
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".so"
 
+#define MUMBLE_SUPPORT
+
 #define VORBISFILE_LIBNAME "libvorbisfile.so"
 
 #ifdef __FreeBSD__
@@ -240,6 +244,8 @@ typedef int socket_handle_t;
 #ifndef HAVE_STRCASECMP // SDL_config.h seems to define this too...
 #define HAVE_STRCASECMP
 #endif
+
+#define MUMBLE_SUPPORT
 
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".dylib"
