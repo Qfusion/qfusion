@@ -93,12 +93,12 @@ extern "C" {
 #define HAVE_WSIPX
 #endif
 
+#define MUMBLE_SUPPORT
+
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".dll"
 
 #define VID_INITFIRST
-
-#define OPENGL_DRIVERNAME "opengl32.dll"
 
 #define VORBISFILE_LIBNAME "libvorbisfile.dll"
 
@@ -174,7 +174,7 @@ typedef UINT_PTR socket_handle_t;
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".so"
 
-#define OPENGL_DRIVERNAME  "libGL.so.1"
+#define MUMBLE_SUPPORT
 
 #define VORBISFILE_LIBNAME "libvorbisfile.so"
 
@@ -245,10 +245,10 @@ typedef int socket_handle_t;
 #define HAVE_STRCASECMP
 #endif
 
+#define MUMBLE_SUPPORT
+
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".dylib"
-
-#define OPENGL_DRIVERNAME  "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib"
 
 #define VORBISFILE_LIBNAME "libvorbisfile.dylib"
 
