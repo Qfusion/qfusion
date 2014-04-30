@@ -629,3 +629,11 @@ void GLimp_AppActivate( qboolean active, qboolean destroy )
 		}
 	}
 }
+
+/*
+** GLimp_GetDriverName
+*/
+const char *GLimp_GetDriverName( void )
+{
+	return "opengl32.dll";
+}
