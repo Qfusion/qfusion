@@ -1072,3 +1072,15 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short *ramp )
 void GLimp_AppActivate( qboolean active, qboolean destroy )
 {
 }
+
+/*
+** GLimp_GetDriverName
+*/
+const char *GLimp_GetDriverName( void )
+{
+#ifdef __MACOSX__
+	return "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib";
+#else
+	return "libGL.so.1";
+#endif
+}
