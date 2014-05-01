@@ -116,6 +116,7 @@ cvar_t *r_floorcolor;
 cvar_t *r_maxglslbones;
 
 cvar_t *gl_drawbuffer;
+cvar_t *gl_driver;
 cvar_t *gl_finish;
 cvar_t *gl_cull;
 
@@ -769,6 +770,7 @@ static void R_Register( const char *screenshotsPrefix )
 
 	gl_finish = ri.Cvar_Get( "gl_finish", "0", CVAR_ARCHIVE );
 	gl_cull = ri.Cvar_Get( "gl_cull", "1", 0 );
+	gl_driver = ri.Cvar_Get( "gl_driver", QGL_GetDriverName(), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	gl_drawbuffer = ri.Cvar_Get( "gl_drawbuffer", "GL_BACK", 0 );
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
@@ -847,10 +849,17 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
 	memset( &glConfig, 0, sizeof(glConfig) );
 
 	// initialize our QGL dynamic bindings
-	if( !QGL_Init() )
+init_qgl:
+	if( !QGL_Init( gl_driver->string ) )
 	{
 		QGL_Shutdown();
-		Com_Printf( "ref_gl::R_Init() - could not load GL driver\n" );
+		Com_Printf( "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver->string );
+
+		if( strcmp( gl_driver->string, QGL_GetDriverName() ) )
+		{
+			ri.Cvar_ForceSet( gl_driver->name, QGL_GetDriverName() );
+			goto init_qgl;
+		}
 
 		return rserr_invalid_driver;
 	}
