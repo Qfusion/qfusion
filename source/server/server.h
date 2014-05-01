@@ -319,6 +319,8 @@ extern cvar_t *sv_tcp;
 
 #ifdef HTTP_SUPPORT
 extern cvar_t *sv_http;
+extern cvar_t *sv_http_ip;
+extern cvar_t *sv_http_ipv6;
 extern cvar_t *sv_http_port;
 extern cvar_t *sv_http_upstream_baseurl;
 extern cvar_t *sv_http_upstream_ip;

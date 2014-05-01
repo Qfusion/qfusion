@@ -1048,8 +1048,8 @@ void SV_Web_Init( void )
 		return;
 	}
 
-	SV_Web_InitSocket( sv_ip->string, NA_IP, &sv_socket_http );
-	SV_Web_InitSocket( sv_ip6->string, NA_IP6, &sv_socket_http6 );
+	SV_Web_InitSocket( sv_http_ip->string, NA_IP, &sv_socket_http );
+	SV_Web_InitSocket( sv_http_ipv6->string, NA_IP6, &sv_socket_http6 );
 
 	sv_http_initialized = (sv_socket_http.address.type == NA_IP || sv_socket_http6.address.type == NA_IP6);
 }
