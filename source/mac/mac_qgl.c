@@ -47,7 +47,6 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 
 #include <SDL/SDL.h>
 #include "../qcommon/qcommon.h"
-#include "../ref_gl/r_public.h"
 #include "mac_glw.h"
 #include <dlfcn.h>
 
@@ -69,12 +68,8 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 #undef QGL_EXT
 #undef QGL_FUNC
 
-extern ref_import_t ri;
-
 static const char *_qglGetGLWExtensionsString( void );
 static const char *_qglGetGLWExtensionsStringInit( void );
-
-#define OPENGL_DRIVERNAME "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib"
 
 /*
 ** QGL_Shutdown
@@ -119,13 +114,9 @@ void QGL_Shutdown( void )
 ** might be.
 **
 */
-qboolean QGL_Init( void )
+qboolean QGL_Init( const char *dllname )
 {
-	const char *dllname = NULL;
 	int result = -1;
-	cvar_t *mac_gl_driver;
-
-	mac_gl_driver = ri.Cvar_Get( "mac_gl_driver", OPENGL_DRIVERNAME, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	glw_state.OpenGLLib = ( void * )0;
 	if( SDL_InitSubSystem( SDL_INIT_VIDEO ) < 0 )
@@ -137,16 +128,7 @@ qboolean QGL_Init( void )
 	// try the system default first
 	result = SDL_GL_LoadLibrary( NULL );
 	if( result == -1 )
-	{
-		dllname = mac_gl_driver->string;
 		result = SDL_GL_LoadLibrary( dllname );
-	}
-	if( result == -1 )
-	{
-		dllname = OPENGL_DRIVERNAME;
-		ri.Cvar_ForceSet( mac_gl_driver->name, dllname );
-		result = SDL_GL_LoadLibrary( dllname );
-	}
 
 	if( result == -1 )
 	{
@@ -156,10 +138,7 @@ qboolean QGL_Init( void )
 	else
 	{
 		glw_state.OpenGLLib = ( void * )1;
-		if( dllname )
-			Com_Printf( "Using %s for OpenGL...\n", dllname );
-		else
-			Com_Printf( "Using default dlib for OpenGL...\n" );
+		Com_Printf( "Using %s for OpenGL...\n", dllname );
 	}
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name ); \

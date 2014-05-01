@@ -48,7 +48,6 @@
 #include <dlfcn.h>
 
 #include "../qcommon/qcommon.h"
-#include "../ref_gl/r_public.h"
 #include "x11.h"
 #include "unix_glw.h"
 
@@ -70,14 +69,8 @@
 #undef QGL_EXT
 #undef QGL_FUNC
 
-extern ref_import_t ri;
-
-static cvar_t *unix_gl_driver;
-
 static const char *_qglGetGLWExtensionsString( void );
 static const char *_qglGetGLWExtensionsStringInit( void );
-
-#define OPENGL_DRIVERNAME "libGL.so.1"
 
 /*
 ** QGL_Shutdown
@@ -119,26 +112,16 @@ void QGL_Shutdown( void )
 ** might be.
 **
 */
-static qboolean _QGL_Init( const char *dllname )
+qboolean QGL_Init( const char *dllname )
 {
 	if( ( glw_state.OpenGLLib = dlopen( dllname, RTLD_LAZY|RTLD_GLOBAL ) ) == 0 )
 	{
 		Com_Printf( "%s\n", dlerror() );
 		return qfalse;
 	}
-	Com_Printf( "Using %s for OpenGL...\n", dllname );
-	ri.Cvar_ForceSet( unix_gl_driver->name, dllname );
-	return qtrue;
-}
-
-qboolean QGL_Init( void )
-{
-	unix_gl_driver = ri.Cvar_Get( "unix_gl_driver", OPENGL_DRIVERNAME, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-
-	if( !_QGL_Init( unix_gl_driver->string ) )
+	else
 	{
-		if( !_QGL_Init( OPENGL_DRIVERNAME ) )
-			return qfalse;
+		Com_Printf( "Using %s for OpenGL...", dllname );
 	}
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( (const GLubyte *)# name ); \
@@ -162,6 +145,20 @@ qboolean QGL_Init( void )
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsStringInit;
 
 	return qtrue;
+}
+
+/*
+** QGL_GetDriverName
+**
+** Returns the default GL DLL name for the target operating system.
+*/
+const char *QGL_GetDriverName( void )
+{
+#ifdef __MACOSX__
+	return "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib";
+#else
+	return "libGL.so.1";
+#endif
 }
 
 /*

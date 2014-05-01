@@ -50,7 +50,6 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 #include <windows.h>
 #include <GL/gl.h>
 #include "../qcommon/qcommon.h"
-#include "../ref_gl/r_public.h"
 #include "win_glw.h"
 
 #define QGL_EXTERN
@@ -70,10 +69,6 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 #undef QGL_WGL
 #undef QGL_EXT
 #undef QGL_FUNC
-
-extern ref_import_t ri;
-
-static cvar_t *win_gl_driver;
 
 static const char *_qglGetGLWExtensionsString( void );
 static const char *_qglGetGLWExtensionsStringInit( void );
@@ -110,7 +105,15 @@ void QGL_Shutdown( void )
 
 #pragma warning( disable : 4113 4133 4047 )
 
-#define OPENGL_DRIVERNAME "opengl32.dll"
+/*
+** QGL_GetDriverName
+**
+** Returns the default GL DLL name for the target operating system.
+*/
+const char *QGL_GetDriverName( void )
+{
+	return "opengl32.dll";
+}
 
 /*
 ** QGL_Init
@@ -122,32 +125,17 @@ void QGL_Shutdown( void )
 ** might be.
 **
 */
-static qboolean _QGL_Init( const char *dllname )
+qboolean QGL_Init( const char *dllname )
 {
 	if( ( glw_state.hinstOpenGL = LoadLibrary( dllname ) ) == 0 )
 	{
-		char *buf = NULL;
+		char *buf;
+
+		buf = NULL;
 		FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ), (LPTSTR) &buf, 0, NULL );
-		if( buf )
-		{
-			Com_Printf( "%s\n", buf );
-			LocalFree( buf );
-		}
+		Com_Printf( "%s\n", buf );
+		MessageBox( NULL, buf, "Error", 0 /* MB_OK */ );
 		return qfalse;
-	}
-	Com_Printf( "Using %s for OpenGL...\n", dllname );
-	ri.Cvar_ForceSet( win_gl_driver->name, dllname );
-	return qtrue;
-}
-
-qboolean QGL_Init( void )
-{
-	win_gl_driver = ri.Cvar_Get( "win_gl_driver", OPENGL_DRIVERNAME, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-
-	if( !_QGL_Init( win_gl_driver->string ) )
-	{
-		if( !_QGL_Init( OPENGL_DRIVERNAME ) )
-			return qfalse;
 	}
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )GetProcAddress( glw_state.hinstOpenGL, # name ); \

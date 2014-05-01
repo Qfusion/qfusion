@@ -78,7 +78,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #undef GL_GLEXT_LEGACY
 #undef GLX_GLXEXT_LEGACY
 
-QGL_EXTERN	qboolean	QGL_Init( void );
+QGL_EXTERN	const char	*QGL_GetDriverName( void );
+QGL_EXTERN	qboolean	QGL_Init( const char *dllname );
 QGL_EXTERN	void		QGL_Shutdown( void );
 
 QGL_EXTERN	void		*qglGetProcAddress( const GLubyte * );
