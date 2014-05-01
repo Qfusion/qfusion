@@ -299,12 +299,6 @@ static void CL_ReadDemoMessage( void )
 		return;
 	}
 
-	if( demofilelen <= 0 )
-	{
-		CL_Disconnect( NULL );
-		return;
-	}
-
 	if( init )
 	{
 		MSG_Init( &demomsg, msgbuf, sizeof( msgbuf ) );
@@ -366,14 +360,14 @@ static void CL_StartDemo( const char *demoname )
 		tempdemofilelen = FS_FOpenFile( filename, &tempdemofilehandle, FS_READ|SNAP_DEMO_GZ );	// open the demo file
 	}
 
-	if( !tempdemofilehandle || tempdemofilelen < 1 ) {
+	if( !tempdemofilehandle ) {
 		// relative filename didn't work, try launching a demo from absolute path
 		Q_snprintfz( name, name_size, "%s", servername );
 		COM_DefaultExtension( name, APP_DEMO_EXTENSION_STR, name_size );
-		tempdemofilelen = FS_FOpenAbsoluteFile( name, &tempdemofilehandle, FS_READ );
+		tempdemofilelen = FS_FOpenAbsoluteFile( name, &tempdemofilehandle, FS_READ|SNAP_DEMO_GZ );
 	}
 
-	if( !tempdemofilehandle || tempdemofilelen < 1 ) {
+	if( !tempdemofilehandle ) {
 		Com_Printf( "No valid demo file found\n" );
 		FS_FCloseFile( tempdemofilehandle );
 		Mem_TempFree( name );
