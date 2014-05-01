@@ -848,7 +848,8 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 		return -1;
 	}
 
-	end = (mode == FS_WRITE ? 0 : FS_FileLength( f, qfalse ));
+	end = (mode == FS_WRITE || gz ? 0 : FS_FileLength( f, qfalse ));
+
 	*filenum = FS_OpenFileHandle();
 	file = &fs_filehandles[*filenum - 1];
 	file->fstream = f;
@@ -858,6 +859,12 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 	file->offset = 0;
 	file->gzstream = gzf;
 	file->gzlevel = Z_DEFAULT_COMPRESSION;
+
+#if ZLIB_VER_MAJOR >= 1 && ZLIB_VER_MINOR >= 2 && ZLIB_VER_REVISION >= 4
+	if( gzf ) {
+		gzbuffer( gzf, FZ_GZ_BUFSIZE );
+	}
+#endif
 
 	return end;
 }
