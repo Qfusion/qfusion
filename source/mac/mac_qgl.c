@@ -164,6 +164,16 @@ qboolean QGL_Init( const char *dllname )
 }
 
 /*
+** QGL_GetDriverName
+**
+** Returns the default GL DLL name for the target operating system.
+*/
+const char *QGL_GetDriverName( void )
+{
+	return "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib";
+}
+
+/*
 ** qglGetProcAddress
 */
 void *qglGetProcAddress( const GLubyte *procName )
