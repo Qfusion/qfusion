@@ -136,8 +136,12 @@ qboolean QGL_Init( const char *dllname )
 		if( buf )
 		{
 			Com_Printf( "%s\n", buf );
-			MessageBox( NULL, buf, "Error", 0 /* MB_OK */ );
+			MessageBox( NULL, va( "QGL_Init: Failed to load %s: %s\n", dllname, buf ), "Error", 0 /* MB_OK */ );
 			LocalFree( buf );
+		}
+		else
+		{
+			MessageBox( NULL, va( "QGL_Init: Failed to load %s\n", dllname ), "Error", 0 /* MB_OK */ );
 		}
 		return qfalse;
 	}
