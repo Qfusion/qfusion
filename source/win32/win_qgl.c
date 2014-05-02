@@ -133,8 +133,12 @@ qboolean QGL_Init( const char *dllname )
 
 		buf = NULL;
 		FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ), (LPTSTR) &buf, 0, NULL );
-		Com_Printf( "%s\n", buf );
-		MessageBox( NULL, buf, "Error", 0 /* MB_OK */ );
+		if( buf )
+		{
+			Com_Printf( "%s\n", buf );
+			MessageBox( NULL, buf, "Error", 0 /* MB_OK */ );
+			LocalFree( buf );
+		}
 		return qfalse;
 	}
 
