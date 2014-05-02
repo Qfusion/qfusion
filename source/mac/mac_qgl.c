@@ -170,9 +170,11 @@ qboolean QGL_Init( const char *dllname )
 */
 const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 {
-	static qgl_driverinfo_t driver;
-	driver.dllname = "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib";
-	driver.dllcvarname = "mac_gl_driver";
+	static const qgl_driverinfo_t driver =
+	{
+		"/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib",
+		"mac_gl_driver"
+	};
 	return &driver;
 }
 
