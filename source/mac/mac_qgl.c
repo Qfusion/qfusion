@@ -164,13 +164,18 @@ qboolean QGL_Init( const char *dllname )
 }
 
 /*
-** QGL_GetDriverName
+** QGL_GetDriverInfo
 **
-** Returns the default GL DLL name for the target operating system.
+** Returns information about the GL DLL.
 */
-const char *QGL_GetDriverName( void )
+const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 {
-	return "/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib";
+	static const qgl_driverinfo_t driver =
+	{
+		"/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib",
+		"mac_gl_driver"
+	};
+	return &driver;
 }
 
 /*
