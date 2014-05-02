@@ -154,9 +154,11 @@ qboolean QGL_Init( const char *dllname )
 */
 const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 {
-	static qgl_driverinfo_t driver;
-	driver.dllname = "libGL.so.1";
-	driver.dllcvarname = "unix_gl_driver";
+	static const qgl_driverinfo_t driver =
+	{
+		"libGL.so.1",
+		"unix_gl_driver"
+	};
 	return &driver;
 }
 
