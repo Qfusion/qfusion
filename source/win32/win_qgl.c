@@ -106,13 +106,16 @@ void QGL_Shutdown( void )
 #pragma warning( disable : 4113 4133 4047 )
 
 /*
-** QGL_GetDriverName
+** QGL_GetDriverInfo
 **
-** Returns the default GL DLL name for the target operating system.
+** Returns information about the GL DLL.
 */
-const char *QGL_GetDriverName( void )
+const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 {
-	return "opengl32.dll";
+	static qgl_driverinfo_t driver;
+	driver.dllname = "opengl32.dll";
+	driver.dllcvarname = "win_gl_driver";
+	return &driver;
 }
 
 /*

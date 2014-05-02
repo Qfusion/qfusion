@@ -662,6 +662,8 @@ static void R_FinalizeGLExtensions( void )
 
 static void R_Register( const char *screenshotsPrefix )
 {
+	const qgl_driverinfo_t *driver;
+
 	r_norefresh = ri.Cvar_Get( "r_norefresh", "0", 0 );
 	r_fullbright = ri.Cvar_Get( "r_fullbright", "0", CVAR_LATCH_VIDEO );
 	r_lightmap = ri.Cvar_Get( "r_lightmap", "0", 0 );
@@ -770,8 +772,11 @@ static void R_Register( const char *screenshotsPrefix )
 
 	gl_finish = ri.Cvar_Get( "gl_finish", "0", CVAR_ARCHIVE );
 	gl_cull = ri.Cvar_Get( "gl_cull", "1", 0 );
-	gl_driver = ri.Cvar_Get( "gl_driver", QGL_GetDriverName(), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	gl_drawbuffer = ri.Cvar_Get( "gl_drawbuffer", "GL_BACK", 0 );
+
+	driver = QGL_GetDriverInfo();
+	if( driver->dllcvarname )
+		gl_driver = ri.Cvar_Get( driver->dllcvarname, driver->dllname, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
 	ri.Cmd_AddCommand( "shaderlist", R_ShaderList_f );
@@ -829,6 +834,7 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
 	int x, int y, int width, int height, int displayFrequency,
 	qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
+	const qgl_driverinfo_t *driver;
 	int i;
 	char renderer_buffer[1024];
 	char vendor_buffer[1024];
@@ -849,15 +855,17 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
 	memset( &glConfig, 0, sizeof(glConfig) );
 
 	// initialize our QGL dynamic bindings
+	driver = QGL_GetDriverInfo();
 init_qgl:
-	if( !QGL_Init( gl_driver->string ) )
+	if( !QGL_Init( driver->dllcvarname ? gl_driver->string : driver->dllname ) )
 	{
 		QGL_Shutdown();
-		Com_Printf( "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver->string );
+		Com_Printf( "ref_gl::R_Init() - could not load \"%s\"\n",
+			driver->dllcvarname ? gl_driver->string : driver->dllname );
 
-		if( strcmp( gl_driver->string, QGL_GetDriverName() ) )
+		if( driver->dllcvarname && strcmp( gl_driver->string, driver->dllname ) )
 		{
-			ri.Cvar_ForceSet( gl_driver->name, QGL_GetDriverName() );
+			ri.Cvar_ForceSet( gl_driver->name, driver->dllname );
 			goto init_qgl;
 		}
 
