@@ -141,7 +141,7 @@ void RegisterMathAddon( asIScriptEngine *engine )
 		{ "double brandom( double min, double max )", asFUNCTION(asFunc_brandom) },
 		{ "int rand()", asFUNCTION(asFunc_rand) },
 
-		{ NULL, NULL }
+		{ NULL, asFUNCTION(0) }
 	}, *func;
 	int r;
 
