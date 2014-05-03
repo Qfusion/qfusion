@@ -1919,7 +1919,13 @@ void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
 	if( program->loc.ReflectionTexMatrix >= 0 )
-		qglUniformMatrix4fvARB( program->loc.ReflectionTexMatrix, 1, GL_FALSE, reflectionMatrix );
+	{
+		mat3_t m;
+		memcpy( &m[0], &reflectionMatrix[0], 3 * sizeof( vec_t ) );
+		memcpy( &m[3], &reflectionMatrix[4], 3 * sizeof( vec_t ) );
+		memcpy( &m[6], &reflectionMatrix[8], 3 * sizeof( vec_t ) );
+		qglUniformMatrix3fvARB( program->loc.ReflectionTexMatrix, 1, GL_FALSE, reflectionMatrix );
+	}
 	if( program->loc.VectorTexMatrix >= 0 )
 		qglUniformMatrix4fvARB( program->loc.VectorTexMatrix, 1, GL_FALSE, vectorMatrix );
 }
