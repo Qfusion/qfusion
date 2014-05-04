@@ -1797,7 +1797,7 @@ void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat
 		memcpy( &m[0], &reflectionMatrix[0], 3 * sizeof( vec_t ) );
 		memcpy( &m[3], &reflectionMatrix[4], 3 * sizeof( vec_t ) );
 		memcpy( &m[6], &reflectionMatrix[8], 3 * sizeof( vec_t ) );
-		qglUniformMatrix3fvARB( program->loc.ReflectionTexMatrix, 1, GL_FALSE, reflectionMatrix );
+		qglUniformMatrix3fvARB( program->loc.ReflectionTexMatrix, 1, GL_FALSE, m );
 	}
 	if( program->loc.VectorTexMatrix >= 0 )
 		qglUniformMatrix4fvARB( program->loc.VectorTexMatrix, 1, GL_FALSE, vectorMatrix );
