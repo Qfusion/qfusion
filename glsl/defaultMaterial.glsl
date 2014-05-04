@@ -118,7 +118,7 @@ uniform myhalf3 u_WallColor;
 uniform myhalf3 u_FloorColor;
 #endif
 
-uniform myhalf u_GlossFactors; // gloss scaling and exponent factors
+uniform myhalf2 u_GlossFactors; // gloss scaling and exponent factors
 
 #if defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
 // The following reliefmapping and offsetmapping routine was taken from DarkPlaces
