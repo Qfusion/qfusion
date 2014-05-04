@@ -106,6 +106,8 @@ typedef struct glsl_program_s
 					AttrBonesWeights,
 					DualQuats,
 
+					InstancePoints,
+
 					WallColor,
 					FloorColor,
 
@@ -124,8 +126,7 @@ typedef struct glsl_program_s
 					ViewOrigin,
 					ViewAxis,
 					MirrorSide,
-					EntityOrigin,
-					InstancePoints;
+					EntityOrigin;
 		} builtin;
 	} loc;
 } glsl_program_t;
@@ -881,33 +882,6 @@ QF_GLSL_PI \
 "#endif\n" \
 "\n"
 
-#define QF_GLSL_INSTANCED_TRANSFORMS \
-"#ifdef VERTEX_SHADER\n" \
-"#ifdef APPLY_INSTANCED_ATTRIB_TRANSFORMS\n" \
-"attribute vec4 a_InstanceQuat;\n" \
-"attribute vec4 a_InstancePosAndScale;\n" \
-"#elif defined(GL_ARB_draw_instanced)\n" \
-"\n" \
-"uniform vec4 u_QF_InstancePoints[MAX_UNIFORM_INSTANCES*2];\n" \
-"\n" \
-"#define a_InstanceQuat u_QF_InstancePoints[gl_InstanceID*2]\n" \
-"#define a_InstancePosAndScale u_QF_InstancePoints[gl_InstanceID*2+1]\n" \
-"#else\n" \
-"uniform vec4 u_QF_InstancePoints[2];\n" \
-"#define a_InstanceQuat u_QF_InstancePoints[0]\n" \
-"#define a_InstancePosAndScale u_QF_InstancePoints[1]\n" \
-"#endif\n" \
-"\n" \
-"void QF_InstancedTransform(inout vec4 Position, inout vec3 Normal)\n" \
-"{\n" \
-"Position.xyz = (cross(a_InstanceQuat.xyz, cross(a_InstanceQuat.xyz, Position.xyz) + " \
-	"Position.xyz*a_InstanceQuat.w)*2.0 + Position.xyz) *\n" \
-" a_InstancePosAndScale.w + a_InstancePosAndScale.xyz;\n" \
-"Normal = cross(a_InstanceQuat.xyz, cross(a_InstanceQuat.xyz, Normal) + Normal*a_InstanceQuat.w)*2.0 + Normal;\n" \
-"}\n" \
-"\n" \
-"#endif\n"
-
 #define QF_GLSL_MATH \
 "#define QF_LatLong2Norm(ll) vec3(cos((ll).y) * sin((ll).x), sin((ll).y) * sin((ll).x), cos((ll).x))\n" \
 "\n"
@@ -1383,7 +1357,6 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderStrings[i++] = QF_BUILTIN_GLSL_CONSTANTS;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_UNIFORMS;
 	shaderStrings[i++] = QF_GLSL_WAVEFUNCS;
-	shaderStrings[i++] = QF_GLSL_INSTANCED_TRANSFORMS;
 	shaderStrings[i++] = QF_GLSL_MATH;
 
 	if( header ) {
@@ -1897,10 +1870,10 @@ void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePo
 	if( numInstances > MAX_GLSL_UNIFORM_INSTANCES ) {
 		numInstances = MAX_GLSL_UNIFORM_INSTANCES;
 	}
-	if( program->loc.builtin.InstancePoints < 0 ) {
+	if( program->loc.InstancePoints < 0 ) {
 		return;
 	}
-	qglUniform4fvARB( program->loc.builtin.InstancePoints, numInstances * 2, &instances[0][0] );
+	qglUniform4fvARB( program->loc.InstancePoints, numInstances * 2, &instances[0][0] );
 }
 
 
@@ -2032,7 +2005,6 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.builtin.MirrorSide = qglGetUniformLocationARB( program->object, "u_QF_MirrorSide" );
 	program->loc.builtin.EntityOrigin = qglGetUniformLocationARB( program->object, "u_QF_EntityOrigin" );
 	program->loc.builtin.ShaderTime = qglGetUniformLocationARB( program->object, "u_QF_ShaderTime" );
-	program->loc.builtin.InstancePoints = qglGetUniformLocationARB( program->object, "u_QF_InstancePoints" );
 
 	// dynamic lights
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
@@ -2069,6 +2041,8 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.SoftParticlesScale = qglGetUniformLocationARB( program->object, "u_SoftParticlesScale" );
 
 	program->loc.DualQuats = qglGetUniformLocationARB( program->object, "u_DualQuats" );
+
+	program->loc.InstancePoints = qglGetUniformLocationARB( program->object, "u_InstancePoints" );
 	
 	program->loc.WallColor = qglGetUniformLocationARB( program->object, "u_WallColor" );
 	program->loc.FloorColor = qglGetUniformLocationARB( program->object, "u_FloorColor" );
