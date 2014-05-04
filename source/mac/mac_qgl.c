@@ -53,6 +53,7 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 #define QGL_EXTERN
 
 #define QGL_FUNC( type, name, params ) type( APIENTRY * q ## name ) params;
+#define QGL_FUNC_OPT( type, name, params ) type( APIENTRY * q ## name ) params;
 #define QGL_EXT( type, name, params ) type( APIENTRY * q ## name ) params;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
@@ -66,6 +67,7 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 #undef QGL_WGL_EXT
 #undef QGL_WGL
 #undef QGL_EXT
+#undef QGL_FUNC_OPT
 #undef QGL_FUNC
 
 static const char *_qglGetGLWExtensionsString( void );
@@ -83,6 +85,7 @@ void QGL_Shutdown( void )
 	glw_state.OpenGLLib = NULL;
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = NULL;
+#define QGL_FUNC_OPT( type, name, params ) ( q ## name ) = NULL;
 #define QGL_EXT( type, name, params ) ( q ## name ) = NULL;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
@@ -101,6 +104,7 @@ void QGL_Shutdown( void )
 #undef QGL_WGL_EXT
 #undef QGL_WGL
 #undef QGL_EXT
+#undef QGL_FUNC_OPT
 #undef QGL_FUNC
 }
 
@@ -143,6 +147,7 @@ qboolean QGL_Init( const char *dllname )
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name ); \
 	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qfalse; }
+#define QGL_FUNC_OPT( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name );
 #define QGL_EXT( type, name, params ) ( q ## name ) = NULL;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
@@ -156,6 +161,7 @@ qboolean QGL_Init( const char *dllname )
 #undef QGL_WGL_EXT
 #undef QGL_WGL
 #undef QGL_EXT
+#undef QGL_FUNC_OPT
 #undef QGL_FUNC
 
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsStringInit;
