@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_BACKEND_H__
-#define __R_BACKEND_H__
+#ifndef R_BACKEND_H
+#define R_BACKEND_H
 
 enum
 {
@@ -102,4 +102,4 @@ vattribmask_t RB_GetVertexAttribs( void );
 
 void RB_StatsMessage( char *msg, size_t size );
 
-#endif /*__R_BACKEND_H__*/
+#endif // R_BACKEND_H

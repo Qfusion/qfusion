@@ -56,8 +56,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 ** QGL.H
 */
-#ifndef __QGL_H__
-#define __QGL_H__
+#ifndef QGL_H
+#define QGL_H
 
 #define GL_GLEXT_LEGACY
 #define GLX_GLXEXT_LEGACY
@@ -426,7 +426,7 @@ typedef unsigned short GLhalfARB;
 #endif
 #endif
 
-#endif /*__QGL_H__*/
+#endif // QGL_H
 
 #ifndef APIENTRY
 #define APIENTRY

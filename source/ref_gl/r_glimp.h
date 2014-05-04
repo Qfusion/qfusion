@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#ifndef __R_GLIMP_H__
-#define __R_GLIMP_H__
+#ifndef R_GLIMP_H
+#define R_GLIMP_H
 
 #ifdef __cplusplus
 #define QGL_EXTERN extern "C"
@@ -217,4 +217,4 @@ void	    GLimp_AppActivate( qboolean active, qboolean destroy );
 qboolean	GLimp_GetGammaRamp( size_t stride, unsigned short *ramp );
 void		GLimp_SetGammaRamp( size_t stride, unsigned short *ramp );
 
-#endif /*__R_GLIMP_H__*/
+#endif // R_GLIMP_H

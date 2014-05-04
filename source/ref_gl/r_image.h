@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __R_IMAGE_H__
-#define __R_IMAGE_H__
+#ifndef R_IMAGE_H
+#define R_IMAGE_H
 
 enum
 {
@@ -91,4 +91,4 @@ void R_BeginAviDemo( void );
 void R_WriteAviFrame( int frame, qboolean scissor );
 void R_StopAviDemo( void );
 
-#endif // __R_IMAGE_H__
+#endif // R_IMAGE_H
