@@ -9,7 +9,6 @@ qf_varying vec2 v_TexCoord;
 #ifdef VERTEX_SHADER
 
 #include "include/attributes.glsl"
-#include "include/vtransform.glsl"
 
 void main(void)
 {
