@@ -368,8 +368,8 @@ color = color * diffuse;
 
 #endif // APPLY_DECAL
 
-#ifdef ALPHATEST
-	ALPHATEST(color.a);
+#ifdef QF_ALPHATEST
+	QF_ALPHATEST(color.a);
 #endif
 
 #ifdef APPLY_GREYSCALE

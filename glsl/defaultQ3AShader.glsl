@@ -209,8 +209,8 @@ void main(void)
 	color *= mix(myhalf4(1.0), myhalf4(softness), u_BlendMix.xxxy);
 #endif
 
-#ifdef ALPHATEST
-	ALPHATEST(color.a);
+#ifdef QF_ALPHATEST
+	QF_ALPHATEST(color.a);
 #endif
 
 	qf_FragColor = vec4(color);

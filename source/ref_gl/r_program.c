@@ -445,9 +445,9 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
 		"#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 	
-	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
-	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
-	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define QF_ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec23 vec4\n", "_ls3" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec23 vec2\n", "_ls2" },
@@ -611,9 +611,9 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_COMMON_SOFT_PARTICLE, "#define APPLY_SOFT_PARTICLE\n", "_sp" },
 	
-	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
-	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
-	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define QF_ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_Q3_TC_GEN_REFLECTION, "#define APPLY_TC_GEN_REFLECTION\n", "_tc_refl" },
 	{ GLSL_SHADER_Q3_TC_GEN_PROJECTION, "#define APPLY_TC_GEN_PROJECTION\n", "_tc_proj" },
@@ -656,9 +656,9 @@ static const glsl_feature_t glsl_features_celshade[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 	
-	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
-	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
-	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define QF_ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_CELSHADE_DIFFUSE, "#define APPLY_DIFFUSE\n", "_diff" },
 	{ GLSL_SHADER_CELSHADE_DECAL, "#define APPLY_DECAL\n", "_decal" },

@@ -84,8 +84,8 @@ void main(void)
 
 	myhalf4 outColor;
 	outColor = myhalf4(qf_texture(u_BaseTexture, v_TexCoord));
-#ifdef ALPHATEST
-	ALPHATEST(outColor.a * inColor.a);
+#ifdef QF_ALPHATEST
+	QF_ALPHATEST(outColor.a * inColor.a);
 #endif
 
 #ifdef APPLY_ENTITY_DECAL
