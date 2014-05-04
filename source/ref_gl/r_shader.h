@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_SHADER_H__
-#define __R_SHADER_H__
+#ifndef R_SHADER_H
+#define R_SHADER_H
 
 #define MAX_SHADERS					2048
 #define MAX_SHADER_PASSES			8
@@ -300,4 +300,4 @@ void		R_RemapShader( const char *from, const char *to, int timeOffset );
 
 void		R_GetShaderDimensions( const shader_t *shader, int *width, int *height );
 
-#endif /*__R_SHADER_H__*/
+#endif // R_SHADER_H
