@@ -67,8 +67,7 @@ typedef struct glsl_program_s
 
 					TextureMatrix,
 
-					GlossIntensity,
-					GlossExponent,
+					GlossFactors,
 
 					OffsetMappingScale,
 					OutlineHeight,
@@ -1771,10 +1770,8 @@ void RP_UpdateMaterialUniforms( int elem,
 {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
-	if( program->loc.GlossIntensity >= 0 )
-		qglUniform1fARB( program->loc.GlossIntensity, glossIntensity );
-	if( program->loc.GlossExponent >= 0 )
-		qglUniform1fARB( program->loc.GlossExponent, glossExponent );
+	if( program->loc.GlossFactors >= 0 )
+		qglUniform2fARB( program->loc.GlossFactors, glossIntensity, glossExponent );
 	if( program->loc.OffsetMappingScale >= 0 )
 		qglUniform1fARB( program->loc.OffsetMappingScale, offsetmappingScale );
 }
@@ -2099,8 +2096,7 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 		program->loc.LightstyleColor[i] = qglGetUniformLocationARB( program->object, va( "u_LightstyleColor[%i]", i ) );
 	}
 
-	program->loc.GlossIntensity = qglGetUniformLocationARB( program->object, "u_GlossIntensity" );
-	program->loc.GlossExponent = qglGetUniformLocationARB( program->object, "u_GlossExponent" );
+	program->loc.GlossFactors = qglGetUniformLocationARB( program->object, "u_GlossFactors" );
 
 	program->loc.OffsetMappingScale = qglGetUniformLocationARB( program->object, "u_OffsetMappingScale" );
 

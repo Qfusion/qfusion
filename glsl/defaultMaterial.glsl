@@ -118,8 +118,7 @@ uniform myhalf3 u_WallColor;
 uniform myhalf3 u_FloorColor;
 #endif
 
-uniform myhalf u_GlossIntensity; // gloss scaling factor
-uniform myhalf u_GlossExponent; // gloss exponent factor
+uniform myhalf u_GlossFactors; // gloss scaling and exponent factors
 
 #if defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
 // The following reliefmapping and offsetmapping routine was taken from DarkPlaces
@@ -318,7 +317,7 @@ void main()
 #endif
 
 	myhalf specularProduct = myhalf(dot (surfaceNormalModelspace, specularNormal));
-	color.rgb += (myhalf3(qf_texture(u_GlossTexture, v_TexCoord)) * u_GlossIntensity) * pow(myhalf(max(specularProduct, 0.0)), u_GlossExponent);
+	color.rgb += (myhalf3(qf_texture(u_GlossTexture, v_TexCoord)) * u_GlossFactors.x) * pow(myhalf(max(specularProduct, 0.0)), u_GlossFactors.y);
 #endif // APPLY_SPECULAR
 
 #if defined(APPLY_BASETEX_ALPHA_ONLY) && !defined(APPLY_DRAWFLAT)
