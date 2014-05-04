@@ -572,6 +572,7 @@ static void R_PrintMemoryInfo( void )
 */
 static void R_FinalizeGLExtensions( void )
 {
+	int shadingLanguageVersionMajor = 0, shadingLanguageVersionMinor = 0;
 	cvar_t *cvar;
 
 	glConfig.maxTextureSize = 0;
@@ -599,7 +600,14 @@ static void R_FinalizeGLExtensions( void )
 	if( strstr( glConfig.extensionsString, "GL_EXT_texture_filter_anisotropic" ) )
 		qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureFilterAnisotropic );
 
-	glConfig.shadingLanguageVersion = (int)(atof(glConfig.shadingLanguageVersionString) * 100);
+#ifdef GL_ES_VERSION_2_0
+	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d",
+		&shadingLanguageVersionMajor, &shadingLanguageVersionMinor );
+#else
+	sscanf( glConfig.shadingLanguageVersionString, "%d.%d",
+		&shadingLanguageVersionMajor, &shadingLanguageVersionMinor );
+#endif
+	glConfig.shadingLanguageVersion = shadingLanguageVersionMajor * 100 + shadingLanguageVersionMinor;
 	if( !glConfig.ext.GLSL130 ) {
 		glConfig.shadingLanguageVersion = 120;
 	}
