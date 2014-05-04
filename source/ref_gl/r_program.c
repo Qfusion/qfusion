@@ -104,6 +104,7 @@ typedef struct glsl_program_s
 
 					AttrBonesIndices,
 					AttrBonesWeights,
+					DualQuats,
 
 					WallColor,
 					FloorColor,
@@ -124,7 +125,6 @@ typedef struct glsl_program_s
 					ViewAxis,
 					MirrorSide,
 					EntityOrigin,
-					DualQuats,
 					InstancePoints;
 		} builtin;
 	} loc;
@@ -881,102 +881,6 @@ QF_GLSL_PI \
 "#endif\n" \
 "\n"
 
-#define QF_DUAL_QUAT_TRANSFORM_OVERLOAD "" \
-"#if defined(DUAL_QUAT_TRANSFORM_NORMALS)\n" \
-"#if defined(DUAL_QUAT_TRANSFORM_TANGENT)\n" \
-"void QF_VertexDualQuatsTransform(const int numWeights, inout vec4 Position, inout vec3 Normal, inout vec3 Tangent)\n" \
-"#else\n" \
-"void QF_VertexDualQuatsTransform(const int numWeights, inout vec4 Position, inout vec3 Normal)\n" \
-"#endif\n" \
-"#else\n" \
-"void QF_VertexDualQuatsTransform(const int numWeights, inout vec4 Position)\n" \
-"#endif\n" \
-"{\n" \
-"int index;\n" \
-"vec4 Indices = a_BonesIndices;\n" \
-"vec4 Weights = a_BonesWeights;\n" \
-"vec4 Indices_2 = Indices * 2.0;\n" \
-"vec4 DQReal, DQDual;\n" \
-"\n" \
-"index = int(Indices_2.x);\n" \
-"DQReal = u_QF_DualQuats[index+0];\n" \
-"DQDual = u_QF_DualQuats[index+1];\n" \
-"\n" \
-"if (numWeights > 1)\n" \
-"{\n" \
-"DQReal *= Weights.x;\n" \
-"DQDual *= Weights.x;\n" \
-"\n" \
-"vec4 DQReal1, DQDual1;\n" \
-"float scale;\n" \
-"\n" \
-"index = int(Indices_2.y);\n" \
-"DQReal1 = u_QF_DualQuats[index+0];\n" \
-"DQDual1 = u_QF_DualQuats[index+1];\n" \
-"// antipodality handling\n" \
-"scale = (dot(DQReal1, DQReal) < 0.0 ? -1.0 : 1.0) * Weights.y;\n" \
-"DQReal += DQReal1 * scale;\n" \
-"DQDual += DQDual1 * scale;\n" \
-"\n" \
-"if (numWeights > 2)\n" \
-"{\n" \
-"index = int(Indices_2.z);\n" \
-"DQReal1 = u_QF_DualQuats[index+0];\n" \
-"DQDual1 = u_QF_DualQuats[index+1];\n" \
-"// antipodality handling\n" \
-"scale = (dot(DQReal1, DQReal) < 0.0 ? -1.0 : 1.0) * Weights.z;\n" \
-"DQReal += DQReal1 * scale;\n" \
-"DQDual += DQDual1 * scale;\n" \
-"\n" \
-"if (numWeights > 3)\n" \
-"{\n" \
-"index = int(Indices_2.w);\n" \
-"DQReal1 = u_QF_DualQuats[index+0];\n" \
-"DQDual1 = u_QF_DualQuats[index+1];\n" \
-"// antipodality handling\n" \
-"scale = (dot(DQReal1, DQReal) < 0.0 ? -1.0 : 1.0) * Weights.w;\n" \
-"DQReal += DQReal1 * scale;\n" \
-"DQDual += DQDual1 * scale;\n" \
-"}\n" \
-"}\n" \
-"}\n" \
-"\n" \
-"float len = length(DQReal);\n" \
-"DQReal /= len;\n" \
-"DQDual /= len;\n" \
-"\n" \
-"Position.xyz = (cross(DQReal.xyz, cross(DQReal.xyz, Position.xyz) + Position.xyz*DQReal.w + DQDual.xyz) + " \
-	"DQDual.xyz*DQReal.w - DQReal.xyz*DQDual.w)*2.0 + Position.xyz;\n" \
-"\n" \
-"#ifdef DUAL_QUAT_TRANSFORM_NORMALS\n" \
-"Normal = cross(DQReal.xyz, cross(DQReal.xyz, Normal) + Normal*DQReal.w)*2.0 + Normal;\n" \
-"#endif\n" \
-"\n" \
-"#ifdef DUAL_QUAT_TRANSFORM_TANGENT\n" \
-"Tangent = cross(DQReal.xyz, cross(DQReal.xyz, Tangent) + Tangent*DQReal.w)*2.0 + Tangent;\n" \
-"#endif\n" \
-"}\n"
-
-// #version 130+
-#define QF_GLSL_DUAL_QUAT_TRANSFORMS \
-"#ifdef VERTEX_SHADER\n" \
-"attribute vec4 a_BonesIndices;\n" \
-"attribute vec4 a_BonesWeights;\n" \
-"\n" \
-"uniform vec4 u_QF_DualQuats[MAX_UNIFORM_BONES*2];\n" \
-"\n" \
-QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
-"\n" \
-"// use defines to overload the transform function\n" \
-"\n" \
-"#define DUAL_QUAT_TRANSFORM_NORMALS\n" \
-QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
-"\n" \
-"#define DUAL_QUAT_TRANSFORM_TANGENT\n" \
-QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
-"\n" \
-"#endif\n"
-
 #define QF_GLSL_INSTANCED_TRANSFORMS \
 "#ifdef VERTEX_SHADER\n" \
 "#ifdef APPLY_INSTANCED_ATTRIB_TRANSFORMS\n" \
@@ -1479,7 +1383,6 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderStrings[i++] = QF_BUILTIN_GLSL_CONSTANTS;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_UNIFORMS;
 	shaderStrings[i++] = QF_GLSL_WAVEFUNCS;
-	shaderStrings[i++] = QF_GLSL_DUAL_QUAT_TRANSFORMS;
 	shaderStrings[i++] = QF_GLSL_INSTANCED_TRANSFORMS;
 	shaderStrings[i++] = QF_GLSL_MATH;
 
@@ -1976,10 +1879,10 @@ void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDu
 	if( numBones > glConfig.maxGLSLBones ) {
 		return;
 	}
-	if( program->loc.builtin.DualQuats < 0 ) {
+	if( program->loc.DualQuats < 0 ) {
 		return;
 	}
-	qglUniform4fvARB( program->loc.builtin.DualQuats, numBones * 2, &animDualQuat[0][0] );
+	qglUniform4fvARB( program->loc.DualQuats, numBones * 2, &animDualQuat[0][0] );
 }
 
 /*
@@ -2129,7 +2032,6 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.builtin.MirrorSide = qglGetUniformLocationARB( program->object, "u_QF_MirrorSide" );
 	program->loc.builtin.EntityOrigin = qglGetUniformLocationARB( program->object, "u_QF_EntityOrigin" );
 	program->loc.builtin.ShaderTime = qglGetUniformLocationARB( program->object, "u_QF_ShaderTime" );
-	program->loc.builtin.DualQuats = qglGetUniformLocationARB( program->object, "u_QF_DualQuats" );
 	program->loc.builtin.InstancePoints = qglGetUniformLocationARB( program->object, "u_QF_InstancePoints" );
 
 	// dynamic lights
@@ -2165,6 +2067,8 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.BlendMix = qglGetUniformLocationARB( program->object, "u_BlendMix" );
 
 	program->loc.SoftParticlesScale = qglGetUniformLocationARB( program->object, "u_SoftParticlesScale" );
+
+	program->loc.DualQuats = qglGetUniformLocationARB( program->object, "u_DualQuats" );
 	
 	program->loc.WallColor = qglGetUniformLocationARB( program->object, "u_WallColor" );
 	program->loc.FloorColor = qglGetUniformLocationARB( program->object, "u_FloorColor" );
