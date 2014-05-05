@@ -21,6 +21,10 @@ License along with this library.
 
 #include <stdint.h>
 
+#if defined(__APPLE__)
+#include <stddef.h> // For size_t
+#endif
+
 // steamlib_public.h - steam integration subsystem
 
 #define	STEAMLIB_API_VERSION 1
