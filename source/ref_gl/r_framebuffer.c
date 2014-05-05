@@ -126,7 +126,7 @@ found:
 
 	// setup 24bit depth buffer for render-to-texture
 	qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, fbo->renderBufferAttachment );
-	qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, width, height );
+	qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, glConfig.ext.depth24 ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16, width, height );
 	qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
 
 	// attach depth renderbuffer
