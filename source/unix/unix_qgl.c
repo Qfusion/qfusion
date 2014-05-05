@@ -116,12 +116,12 @@ void QGL_Shutdown( void )
 ** might be.
 **
 */
-qboolean QGL_Init( const char *dllname )
+qgl_initerr_t QGL_Init( const char *dllname )
 {
 	if( ( glw_state.OpenGLLib = dlopen( dllname, RTLD_LAZY|RTLD_GLOBAL ) ) == 0 )
 	{
 		Com_Printf( "%s\n", dlerror() );
-		return qfalse;
+		return qgl_initerr_invalid_driver;
 	}
 	else
 	{
@@ -129,13 +129,13 @@ qboolean QGL_Init( const char *dllname )
 	}
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( (const GLubyte *)# name ); \
-	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qfalse; }
+	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qgl_initerr_invalid_driver; }
 #define QGL_FUNC_OPT( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( (const GLubyte *)# name );
 #define QGL_EXT( type, name, params ) ( q ## name ) = NULL;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params ) ( q ## name ) = ( void * )dlsym( glw_state.OpenGLLib, # name ); \
-	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qfalse; }
+	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qgl_initerr_invalid_driver; }
 #define QGL_GLX_EXT( type, name, params ) ( q ## name ) = NULL;
 
 #include "../ref_gl/qgl.h"
@@ -150,7 +150,7 @@ qboolean QGL_Init( const char *dllname )
 
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsStringInit;
 
-	return qtrue;
+	return qgl_initerr_ok;
 }
 
 /*

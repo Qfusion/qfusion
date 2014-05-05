@@ -845,6 +845,7 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
 	qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
 	const char *dllname;
+	qgl_initerr_t initerr;
 	int i;
 	char renderer_buffer[1024];
 	char vendor_buffer[1024];
@@ -867,12 +868,13 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
 	// initialize our QGL dynamic bindings
 	dllname = QGL_GetDriverInfo()->dllname;
 init_qgl:
-	if( !QGL_Init( gl_driver ? gl_driver->string : dllname ) )
+	initerr = QGL_Init( gl_driver ? gl_driver->string : dllname );
+	if( initerr != qgl_initerr_ok )
 	{
 		QGL_Shutdown();
 		Com_Printf( "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver ? gl_driver->string : dllname );
 
-		if( gl_driver && strcmp( gl_driver->string, dllname ) )
+		if( ( initerr == qgl_initerr_invalid_driver ) && gl_driver && strcmp( gl_driver->string, dllname ) )
 		{
 			ri.Cvar_ForceSet( gl_driver->name, dllname );
 			goto init_qgl;

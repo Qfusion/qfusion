@@ -118,7 +118,7 @@ void QGL_Shutdown( void )
 ** might be.
 **
 */
-qboolean QGL_Init( const char *dllname )
+qgl_initerr_t QGL_Init( const char *dllname )
 {
 	int result = -1;
 
@@ -126,7 +126,7 @@ qboolean QGL_Init( const char *dllname )
 	if( SDL_InitSubSystem( SDL_INIT_VIDEO ) < 0 )
 	{
 		Com_Printf( "SDL_InitSubSystem(SDL_INIT_VIDEO) failed: %s", SDL_GetError() );
-		return qfalse;
+		return qgl_initerr_unknown;
 	}
 
 	// try the system default first
@@ -137,7 +137,7 @@ qboolean QGL_Init( const char *dllname )
 	if( result == -1 )
 	{
 		Com_Printf( "Error loading %s: %s\n", dllname ? dllname : "OpenGL dlib", SDL_GetError() );
-		return qfalse;
+		return qgl_initerr_invalid_driver;
 	}
 	else
 	{
@@ -146,7 +146,7 @@ qboolean QGL_Init( const char *dllname )
 	}
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name ); \
-	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qfalse; }
+	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qgl_initerr_invalid_driver; }
 #define QGL_FUNC_OPT( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name );
 #define QGL_EXT( type, name, params ) ( q ## name ) = NULL;
 #define QGL_WGL( type, name, params )
@@ -166,7 +166,7 @@ qboolean QGL_Init( const char *dllname )
 
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsStringInit;
 
-	return qtrue;
+	return qgl_initerr_ok;
 }
 
 /*
