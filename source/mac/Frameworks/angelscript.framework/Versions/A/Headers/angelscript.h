@@ -876,7 +876,7 @@ public:
 
 	// Behaviours
 	virtual asUINT GetBehaviourCount() const = 0;
-	virtual int    GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
+	virtual asIScriptFunction * GetBehaviourByIndex(asUINT index, asEBehaviours *outBehaviour) const = 0;
 
 	// User data
 	virtual void *SetUserData(void *data) = 0;
