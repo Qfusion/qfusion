@@ -60,9 +60,13 @@
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params ) type( APIENTRY * q ## name ) params;
 #define QGL_GLX_EXT( type, name, params ) type( APIENTRY * q ## name ) params;
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 
 #include "../ref_gl/qgl.h"
 
+#undef QGL_EGL_EXT
+#undef QGL_EGL
 #undef QGL_GLX_EXT
 #undef QGL_GLX
 #undef QGL_WGL_EXT
@@ -94,9 +98,13 @@ void QGL_Shutdown( void )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params ) ( q ## name ) = NULL;
 #define QGL_GLX_EXT( type, name, params ) ( q ## name ) = NULL;
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 
 #include "../ref_gl/qgl.h"
 
+#undef QGL_EGL_EXT
+#undef QGL_EGL
 #undef QGL_GLX_EXT
 #undef QGL_GLX
 #undef QGL_WGL_EXT
@@ -137,9 +145,13 @@ qgl_initerr_t QGL_Init( const char *dllname )
 #define QGL_GLX( type, name, params ) ( q ## name ) = ( void * )dlsym( glw_state.OpenGLLib, # name ); \
 	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qgl_initerr_invalid_driver; }
 #define QGL_GLX_EXT( type, name, params ) ( q ## name ) = NULL;
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 
 #include "../ref_gl/qgl.h"
 
+#undef QGL_EGL_EXT
+#undef QGL_EGL
 #undef QGL_GLX_EXT
 #undef QGL_GLX
 #undef QGL_WGL_EXT
