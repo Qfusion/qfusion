@@ -2,7 +2,7 @@
 
 uniform myhalf u_SoftParticlesScale;
 
-myhalf FragmentSoftness(float Depth, sampler2D DepthTexture, in vec2 ScreenCoord, in ivec4 Viewport, in vec2 ZRange)
+myhalf FragmentSoftness(float Depth, sampler2D DepthTexture, in vec2 ScreenCoord, in vec2 ZRange)
 {
 	vec2 tc = ScreenCoord * u_TextureParams.zw;
 
