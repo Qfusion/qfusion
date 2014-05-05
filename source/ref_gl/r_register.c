@@ -572,9 +572,10 @@ static void R_PrintMemoryInfo( void )
 */
 static void R_FinalizeGLExtensions( void )
 {
-	int versionMajor = 0, versionMinor = 0;
+	int versionMajor, versionMinor;
 	cvar_t *cvar;
 
+	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
 	sscanf( glConfig.versionString, "OpenGL ES %d.%d", &versionMajor, &versionMinor );
 #else
@@ -615,6 +616,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
 #endif
 
+	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
 	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d", &versionMajor, &versionMinor );
 #else
