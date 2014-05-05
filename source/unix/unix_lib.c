@@ -23,7 +23,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/sys_library.h"
 
 #include <dlfcn.h>
+
+#ifdef __linux
 #include <linux/limits.h>
+#endif
 
 /*
 * Sys_Library_Close
