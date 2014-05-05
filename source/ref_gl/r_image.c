@@ -591,7 +591,7 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	{
 		comp = GL_DEPTH_COMPONENT;
 		format = GL_DEPTH_COMPONENT;
-		type = GL_UNSIGNED_INT;
+		type = glConfig.ext.depth24 ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
 	}
 	else if( flags & IT_LUMINANCE )
 	{

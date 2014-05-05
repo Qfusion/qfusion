@@ -572,8 +572,15 @@ static void R_PrintMemoryInfo( void )
 */
 static void R_FinalizeGLExtensions( void )
 {
-	int shadingLanguageVersionMajor = 0, shadingLanguageVersionMinor = 0;
+	int versionMajor = 0, versionMinor = 0;
 	cvar_t *cvar;
+
+#ifdef GL_ES_VERSION_2_0
+	sscanf( glConfig.versionString, "OpenGL ES %d.%d", &versionMajor, &versionMinor );
+#else
+	sscanf( glConfig.versionString, "%d.%d", &versionMajor, &versionMinor );
+#endif
+	glConfig.version = versionMajor * 100 + versionMinor;
 
 	glConfig.maxTextureSize = 0;
 	qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
@@ -600,14 +607,20 @@ static void R_FinalizeGLExtensions( void )
 	if( strstr( glConfig.extensionsString, "GL_EXT_texture_filter_anisotropic" ) )
 		qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureFilterAnisotropic );
 
+	/* GL_OES_depth24 */
 #ifdef GL_ES_VERSION_2_0
-	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d",
-		&shadingLanguageVersionMajor, &shadingLanguageVersionMinor );
+	if( glConfig.version >= 300 )
+		glConfig.ext.depth24 = qtrue;
 #else
-	sscanf( glConfig.shadingLanguageVersionString, "%d.%d",
-		&shadingLanguageVersionMajor, &shadingLanguageVersionMinor );
+	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
 #endif
-	glConfig.shadingLanguageVersion = shadingLanguageVersionMajor * 100 + shadingLanguageVersionMinor;
+
+#ifdef GL_ES_VERSION_2_0
+	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d", &versionMajor, &versionMinor );
+#else
+	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
+#endif
+	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor;
 	if( !glConfig.ext.GLSL130 ) {
 		glConfig.shadingLanguageVersion = 120;
 	}

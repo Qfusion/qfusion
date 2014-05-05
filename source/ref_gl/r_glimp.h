@@ -177,6 +177,7 @@ typedef struct
 				,meminfo
 				,framebuffer_blit
 				,half_float_vertex
+				,depth24
 				;
 } glextinfo_t;
 
@@ -189,6 +190,7 @@ typedef struct
 	const char		*glwExtensionsString;
 	const char		*shadingLanguageVersionString;
 
+	int				version;
 	int				shadingLanguageVersion;
 
 	int				width, height;
