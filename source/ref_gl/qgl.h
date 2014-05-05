@@ -84,8 +84,15 @@ typedef struct qgl_driverinfo_s
 	const char *dllcvarname;	// custom driver DLL cvar name, NULL if can't override driver
 } qgl_driverinfo_t;
 
+typedef enum
+{
+	qgl_initerr_ok,
+	qgl_initerr_invalid_driver,
+	qgl_initerr_unknown
+} qgl_initerr_t;
+
 QGL_EXTERN	const qgl_driverinfo_t	*QGL_GetDriverInfo( void );
-QGL_EXTERN	qboolean				QGL_Init( const char *dllname );
+QGL_EXTERN	qgl_initerr_t			QGL_Init( const char *dllname );
 QGL_EXTERN	void					QGL_Shutdown( void );
 
 QGL_EXTERN	void					*qglGetProcAddress( const GLubyte * );
