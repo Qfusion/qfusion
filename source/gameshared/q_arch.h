@@ -163,7 +163,7 @@ typedef UINT_PTR socket_handle_t;
 
 //==============================================
 
-#if defined ( __linux__ ) || defined ( __FreeBSD__ ) || defined ( __ANDROID__ )
+#if defined ( __linux__ ) || defined ( __FreeBSD__ )
 
 #define HAVE_INLINE
 
