@@ -1541,18 +1541,24 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 
 	RB_BeginFrame();
 
-	rf.cameraSeparation = cameraSeparation;
-	if( cameraSeparation < 0 && glConfig.stereoEnabled )
+	if( rf.cameraSeparation != cameraSeparation )
 	{
-		qglDrawBuffer( GL_BACK_LEFT );
-	}
-	else if( cameraSeparation > 0 && glConfig.stereoEnabled )
-	{
-		qglDrawBuffer( GL_BACK_RIGHT );
-	}
-	else
-	{
-		qglDrawBuffer( GL_BACK );
+		rf.cameraSeparation = cameraSeparation;
+#ifdef GL_ES_VERSION_2_0
+		if( glConfig.ext.multiview_draw_buffers )
+		{
+			int location = GL_MULTIVIEW_EXT;
+			int index = ( cameraSeparation > 0 && glConfig.stereoEnabled ) ? 1 : 0;
+			qglDrawBuffersIndexedEXT( 1, &location, &index );
+		}
+#else
+		if( cameraSeparation < 0 && glConfig.stereoEnabled )
+			qglDrawBuffer( GL_BACK_LEFT );
+		else if( cameraSeparation > 0 && glConfig.stereoEnabled )
+			qglDrawBuffer( GL_BACK_RIGHT );
+		else
+			qglDrawBuffer( GL_BACK );
+#endif
 	}
 
 	if( mapConfig.forceClear )

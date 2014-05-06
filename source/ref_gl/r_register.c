@@ -296,6 +296,15 @@ static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+#else // GL_ES_VERSION_2_0
+
+/* GL_EXT_multiview_draw_buffers */
+static const gl_extension_func_t gl_ext_multiview_draw_buffers_EXT_funcs[] =
+{
+	 GL_EXTENSION_FUNC(ReadBufferIndexedEXT)
+	,GL_EXTENSION_FUNC(DrawBuffersIndexedEXT)
+};
+
 #endif // GL_ES_VERSION_2_0
 
 #ifdef _WIN32
@@ -373,6 +382,8 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
+	,GL_EXTENSION( EXT, multiview_draw_buffers, false, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
+	,GL_EXTENSION( NV, multiview_draw_buffers, false, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -433,8 +444,9 @@ static qboolean R_RegisterGLExtensions( void )
 		// let's see what the driver's got to say about this...
 		if( *extension->prefix )
 		{
-			const char *extstring = ( !strncmp( extension->prefix, "WGL", 3 ) || !strncmp( extension->prefix, "GLX", 3 ) )
-				? glConfig.glwExtensionsString : glConfig.extensionsString;
+			const char *extstring = ( !strncmp( extension->prefix, "WGL", 3 ) ||
+				!strncmp( extension->prefix, "GLX", 3 ) ||
+				!strncmp( extension->prefix, "EGL", 3 ) ) ? glConfig.glwExtensionsString : glConfig.extensionsString;
 
 			Q_snprintfz( name, sizeof( name ), "%s_%s", extension->prefix, extension->name );
 			if( !strstr( extstring, name ) )
@@ -586,6 +598,7 @@ static void R_PrintMemoryInfo( void )
 static void R_FinalizeGLExtensions( void )
 {
 	int versionMajor, versionMinor;
+	int val;
 	cvar_t *cvar;
 
 	versionMajor = versionMinor = 0;
@@ -647,6 +660,17 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
 #endif
 
+	/* GL_EXT_multiview_draw_buffers */
+#ifdef GL_ES_VERSION_2_0
+	if( glConfig.ext.multiview_draw_buffers )
+	{
+		val = 0;
+		glGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_EXT, &val );
+		if( val <= 1 )
+			glConfig.stereoEnabled = qfalse;
+	}
+#endif
+
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
 	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d", &versionMajor, &versionMinor );
@@ -671,6 +695,7 @@ static void R_FinalizeGLExtensions( void )
 		ri.Cvar_ForceSet( r_maxglslbones->name, r_maxglslbones->dvalue );
 	}
 
+#ifndef GL_ES_VERSION_2_0
 	// require GLSL 1.30+ for GPU skinning
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
@@ -679,11 +704,13 @@ static void R_FinalizeGLExtensions( void )
 	else {
 		glConfig.maxGLSLBones = 0;
 	}
+#endif
 
+#ifndef GL_ES_VERSION_2_0
 	if( glConfig.ext.texture_non_power_of_two )
 	{
 		// blacklist this extension on Radeon X1600-X1950 hardware (they support it only with certain filtering/repeat modes)
-		int val = 0;
+		val = 0;
 
 		// LordHavoc: this is blocked on Mac OS X because the drivers claim support but often can't accelerate it or crash when used.
 #ifndef __APPLE__
@@ -697,6 +724,7 @@ static void R_FinalizeGLExtensions( void )
 			ri.Cvar_ForceSet( "gl_ext_texture_non_power_of_two", "0" );
 		}
 	}
+#endif
 
 	cvar = ri.Cvar_Get( "gl_ext_vertex_buffer_object_hack", "0", CVAR_ARCHIVE|CVAR_NOSET );
 	if( cvar && !cvar->integer ) 
