@@ -386,13 +386,13 @@
     <ClInclude Include="..\qcommon\sys_threads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\gameshared\q_trie.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\qalgo\md5.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\qcommon\steam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\qalgo\q_trie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -214,8 +214,8 @@
     <ClInclude Include="..\gameshared\q_shared.h" />
     <ClInclude Include="..\qalgo\glob.h" />
     <ClInclude Include="..\qalgo\hash.h" />
+    <ClInclude Include="..\qalgo\q_trie.h" />
     <ClInclude Include="..\qcommon\patch.h" />
-    <ClInclude Include="..\gameshared\q_trie.h" />
     <ClInclude Include="..\win32\win_glw.h" />
     <ClInclude Include="iqm.h" />
     <ClInclude Include="qgl.h" />

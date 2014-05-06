@@ -215,9 +215,6 @@
     <ClInclude Include="qmesa.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\gameshared\q_trie.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\qalgo\hash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -225,6 +222,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="r_imagelib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\qalgo\q_trie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

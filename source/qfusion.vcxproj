@@ -287,10 +287,12 @@
     <ClCompile Include="qcommon\wswcurl.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="angelwrap\qas_public.h" />
     <ClInclude Include="cin\cin_public.h" />
     <ClInclude Include="client\l10n.h" />
     <ClInclude Include="ftlib\ftlib_public.h" />
     <ClInclude Include="qalgo\hash.h" />
+    <ClInclude Include="qalgo\q_trie.h" />
     <ClInclude Include="qcommon\anticheat.h" />
     <ClInclude Include="qcommon\asyncstream.h" />
     <ClInclude Include="qalgo\base64.h" />
@@ -303,7 +305,6 @@
     <ClInclude Include="qcommon\cmodel.h" />
     <ClInclude Include="gameshared\config.h" />
     <ClInclude Include="qcommon\patch.h" />
-    <ClInclude Include="qcommon\patch_eval_inc.h" />
     <ClInclude Include="qcommon\qthreads.h" />
     <ClInclude Include="qcommon\steam.h" />
     <ClInclude Include="qcommon\sys_threads.h" />
@@ -322,7 +323,6 @@
     <ClInclude Include="matchmaker\mm_common.h" />
     <ClInclude Include="matchmaker\mm_query.h" />
     <ClInclude Include="matchmaker\mm_rating.h" />
-    <ClInclude Include="gameshared\q_angelwrap.h" />
     <ClInclude Include="gameshared\q_arch.h" />
     <ClInclude Include="gameshared\q_collision.h" />
     <ClInclude Include="gameshared\q_comref.h" />
@@ -343,7 +343,6 @@
     <ClInclude Include="qcommon\sys_fs.h" />
     <ClInclude Include="qcommon\sys_library.h" />
     <ClInclude Include="qcommon\sys_net.h" />
-    <ClInclude Include="gameshared\q_trie.h" />
     <ClInclude Include="ui\ui_public.h" />
     <ClInclude Include="qcommon\version.h" />
     <ClInclude Include="client\vid.h" />
