@@ -155,7 +155,6 @@ typedef struct
 				,texture_cube_map
 				,texture_edge_clamp
 				,texture_filter_anisotropic
-				,texture_non_power_of_two
 				,texture_compression
 				,vertex_buffer_object
 				,GLSL
@@ -176,9 +175,14 @@ typedef struct
 				,gpu_memory_info
 				,meminfo
 				,framebuffer_blit
-				,half_float_vertex
 				,depth24
 				;
+	union {
+		char	texture_non_power_of_two, texture_npot;
+	};
+	union {
+		char	half_float_vertex, vertex_half_float;
+	};
 } glextinfo_t;
 
 typedef struct

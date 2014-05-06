@@ -1161,9 +1161,15 @@ void RB_DrawElementsReal( void )
 			for( i = 0; i < numInstances; i++ ) {
 				RB_SetInstanceData( 1, rb.drawInstances + i );
 
-				qglDrawRangeElementsEXT( rb.primitive, 
-					firstVert, firstVert + numVerts - 1, numElems, 
-					GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+				if( glConfig.ext.draw_range_elements ) {
+					qglDrawRangeElementsEXT( rb.primitive, 
+						firstVert, firstVert + numVerts - 1, numElems, 
+						GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+				}
+				else {
+					qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+						(GLvoid *)(firstElem * sizeof( elem_t )) );
+				}
 
 				rb.stats.c_totalDraws++;
 			}
@@ -1172,9 +1178,15 @@ void RB_DrawElementsReal( void )
 	else {
 		numInstances = 1;
 
-		qglDrawRangeElementsEXT( rb.primitive, 
-			firstVert, firstVert + numVerts - 1, numElems, 
-			GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+		if( glConfig.ext.draw_range_elements ) {
+			qglDrawRangeElementsEXT( rb.primitive, 
+				firstVert, firstVert + numVerts - 1, numElems, 
+				GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+		}
+		else {
+			qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+				(GLvoid *)(firstElem * sizeof( elem_t )) );
+		}
 
 		rb.stats.c_totalDraws++;
 	}

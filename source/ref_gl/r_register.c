@@ -155,6 +155,8 @@ typedef struct
 #define GL_EXTENSION_FUNC_EXT(name,func) { name, (void ** const)func }
 #define GL_EXTENSION_FUNC(name) GL_EXTENSION_FUNC_EXT("gl"#name,&(qgl##name))
 
+#ifndef GL_ES_VERSION_2_0
+
 /* GL_ARB_multitexture */
 static const gl_extension_func_t gl_ext_multitexture_ARB_funcs[] =
 {
@@ -294,6 +296,8 @@ static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+#endif // GL_ES_VERSION_2_0
+
 #ifdef _WIN32
 
 /* WGL_EXT_swap_interval */
@@ -333,14 +337,14 @@ static const gl_extension_func_t glx_ext_swap_control_SGI_funcs[] =
 // extended notation: vendor, name, default value, list of functions, required extension
 static const gl_extension_t gl_extensions_decl[] =
 {
+#ifndef GL_ES_VERSION_2_0
 	 GL_EXTENSION( ARB, multitexture, true, true, &gl_ext_multitexture_ARB_funcs )
 	,GL_EXTENSION( ARB, vertex_buffer_object, true, true, &gl_ext_vertex_buffer_object_ARB_funcs )
-	,GL_EXTENSION( EXT, draw_range_elements, true, true, &gl_ext_draw_range_elements_EXT_funcs )
+	,GL_EXTENSION( EXT, draw_range_elements, true, false, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
 	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
-	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
 	,GL_EXTENSION( ARB, texture_cube_map, false, false, NULL )
 	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 	,GL_EXTENSION( ARB, depth_texture, false, false, NULL )
@@ -363,6 +367,15 @@ static const gl_extension_t gl_extensions_decl[] =
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
 	,GL_EXTENSION( ATI, meminfo, true, false, NULL )
+
+#else
+	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
+	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
+	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
+	,GL_EXTENSION( OES, depth24, true, false, NULL )
+#endif
+
+	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
 
 #ifdef GLX_VERSION
 	,GL_EXTENSION( GLX_SGI, swap_control, true, false, &glx_ext_swap_control_SGI_funcs )
@@ -583,6 +596,27 @@ static void R_FinalizeGLExtensions( void )
 #endif
 	glConfig.version = versionMajor * 100 + versionMinor;
 
+#ifdef GL_ES_VERSION_2_0
+	glConfig.ext.multitexture = qtrue;
+	glConfig.ext.vertex_buffer_object = qtrue;
+	glConfig.ext.framebuffer_object = qtrue;
+	glConfig.ext.texture_edge_clamp = qtrue;
+	glConfig.ext.texture_cube_map = qtrue;
+	glConfig.ext.vertex_shader = qtrue;
+	glConfig.ext.fragment_shader = qtrue;
+	glConfig.ext.shader_objects = qtrue;
+	glConfig.ext.shading_language_100 = qtrue;
+	glConfig.ext.GLSL = qtrue;
+	if( glConfig.version >= 300 ) {
+		glConfig.ext.depth_texture = qtrue;
+		glConfig.ext.texture_non_power_of_two = qtrue;
+		glConfig.ext.draw_instanced = qtrue;
+		glConfig.ext.instanced_arrays = qtrue;
+		glConfig.ext.half_float_vertex = qtrue;
+		glConfig.ext.depth24 = qtrue;
+	}
+#endif
+
 	glConfig.maxTextureSize = 0;
 	qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
 	if( glConfig.maxTextureSize <= 0 )
@@ -609,10 +643,7 @@ static void R_FinalizeGLExtensions( void )
 		qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureFilterAnisotropic );
 
 	/* GL_OES_depth24 */
-#ifdef GL_ES_VERSION_2_0
-	if( glConfig.version >= 300 )
-		glConfig.ext.depth24 = qtrue;
-#else
+#ifndef GL_ES_VERSION_2_0
 	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
 #endif
 
