@@ -293,11 +293,13 @@ image_t	*RFB_GetObjectTextureAttachment( int object, qboolean depth )
 */
 void RFB_DisableObjectDrawBuffer( void )
 {
+#ifndef GL_ES_VERSION_2_0
 	if( !r_bound_framebuffer_object )
 		return;
 
 	qglDrawBuffer( GL_NONE );
 	qglReadBuffer( GL_NONE );
+#endif
 }
 
 /*
