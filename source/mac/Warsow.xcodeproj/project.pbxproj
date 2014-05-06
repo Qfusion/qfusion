@@ -569,6 +569,14 @@
 		F323F5D519181B5D00F8FD6C /* cin_theora.h in Headers */ = {isa = PBXBuildFile; fileRef = F323F5D319181B5D00F8FD6C /* cin_theora.h */; };
 		F388D9E9113BE43D0039559F /* libmumblelink.c in Sources */ = {isa = PBXBuildFile; fileRef = F388D9E7113BE43D0039559F /* libmumblelink.c */; };
 		F3DA081910DA33350038AE7F /* wswcurl.c in Sources */ = {isa = PBXBuildFile; fileRef = F3DA081710DA33350038AE7F /* wswcurl.c */; };
+		F3E56A441919388A00FE695F /* as_bind_l10n.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F3E56A431919388A00FE695F /* as_bind_l10n.cpp */; };
+		F3E56A471919389B00FE695F /* ui_gameajax_datasource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F3E56A451919389B00FE695F /* ui_gameajax_datasource.cpp */; };
+		F3E56A481919389B00FE695F /* ui_gameajax_datasource.h in Headers */ = {isa = PBXBuildFile; fileRef = F3E56A461919389B00FE695F /* ui_gameajax_datasource.h */; };
+		F3E56A4C191938C200FE695F /* ui_parsersound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F3E56A4A191938C200FE695F /* ui_parsersound.cpp */; };
+		F3E56A4D191938C200FE695F /* ui_parsersound.h in Headers */ = {isa = PBXBuildFile; fileRef = F3E56A4B191938C200FE695F /* ui_parsersound.h */; };
+		F3E56A4F191938D200FE695F /* ui_downloadinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = F3E56A4E191938D200FE695F /* ui_downloadinfo.h */; };
+		F3E56A50191938FD00FE695F /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F55C1917FF2B00F8FD6C /* md5.c */; };
+		F3E56A51191938FD00FE695F /* md5.h in Headers */ = {isa = PBXBuildFile; fileRef = F323F55D1917FF2B00F8FD6C /* md5.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1287,6 +1295,12 @@
 		F388D9E8113BE43D0039559F /* libmumblelink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libmumblelink.h; sourceTree = "<group>"; };
 		F3DA081710DA33350038AE7F /* wswcurl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wswcurl.c; sourceTree = "<group>"; };
 		F3DA081810DA33350038AE7F /* wswcurl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wswcurl.h; sourceTree = "<group>"; };
+		F3E56A431919388A00FE695F /* as_bind_l10n.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = as_bind_l10n.cpp; sourceTree = "<group>"; };
+		F3E56A451919389B00FE695F /* ui_gameajax_datasource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ui_gameajax_datasource.cpp; sourceTree = "<group>"; };
+		F3E56A461919389B00FE695F /* ui_gameajax_datasource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ui_gameajax_datasource.h; sourceTree = "<group>"; };
+		F3E56A4A191938C200FE695F /* ui_parsersound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ui_parsersound.cpp; sourceTree = "<group>"; };
+		F3E56A4B191938C200FE695F /* ui_parsersound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ui_parsersound.h; sourceTree = "<group>"; };
+		F3E56A4E191938D200FE695F /* ui_downloadinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ui_downloadinfo.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1983,6 +1997,7 @@
 				9D251E92159F6842001CE46F /* decorators */,
 				9D251E95159F6842001CE46F /* formatters */,
 				9D251E9D159F6842001CE46F /* kernel */,
+				F3E56A49191938C200FE695F /* parsers */,
 				9D251EBB159F6842001CE46F /* widgets */,
 				9D251ED1159F6842001CE46F /* ui_precompiled.cpp */,
 				9D251ED2159F6842001CE46F /* ui_precompiled.h */,
@@ -2073,6 +2088,7 @@
 		9D251E66159F6841001CE46F /* as */ = {
 			isa = PBXGroup;
 			children = (
+				F3E56A431919388A00FE695F /* as_bind_l10n.cpp */,
 				9D251E67159F6841001CE46F /* as_bind_datasource.cpp */,
 				9D251E68159F6841001CE46F /* as_bind_demoinfo.cpp */,
 				9D251E69159F6841001CE46F /* as_bind_dom.cpp */,
@@ -2102,6 +2118,8 @@
 		9D251E7B159F6841001CE46F /* datasources */ = {
 			isa = PBXGroup;
 			children = (
+				F3E56A451919389B00FE695F /* ui_gameajax_datasource.cpp */,
+				F3E56A461919389B00FE695F /* ui_gameajax_datasource.h */,
 				9D251E7C159F6842001CE46F /* ui_crosshair_datasource.cpp */,
 				9D251E7D159F6842001CE46F /* ui_crosshair_datasource.h */,
 				9D251E7E159F6842001CE46F /* ui_demos_datasource.cpp */,
@@ -2156,6 +2174,7 @@
 		9D251E9D159F6842001CE46F /* kernel */ = {
 			isa = PBXGroup;
 			children = (
+				F3E56A4E191938D200FE695F /* ui_downloadinfo.h */,
 				9D251E9E159F6842001CE46F /* ui_boneposes.cpp */,
 				9D251E9F159F6842001CE46F /* ui_boneposes.h */,
 				9D251EA0159F6842001CE46F /* ui_common.cpp */,
@@ -2294,6 +2313,15 @@
 			path = ../steamlib;
 			sourceTree = "<group>";
 		};
+		F3E56A49191938C200FE695F /* parsers */ = {
+			isa = PBXGroup;
+			children = (
+				F3E56A4A191938C200FE695F /* ui_parsersound.cpp */,
+				F3E56A4B191938C200FE695F /* ui_parsersound.h */,
+			);
+			path = parsers;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -2357,9 +2385,12 @@
 				9D251EE3159F6842001CE46F /* asui_local.h in Headers */,
 				9D251EE5159F6842001CE46F /* asui_scheduled.h in Headers */,
 				9D251EE8159F6842001CE46F /* asui_url.h in Headers */,
+				F3E56A4F191938D200FE695F /* ui_downloadinfo.h in Headers */,
 				9D251EEA159F6842001CE46F /* ui_crosshair_datasource.h in Headers */,
 				9D251EEC159F6842001CE46F /* ui_demos_datasource.h in Headers */,
+				F3E56A4D191938C200FE695F /* ui_parsersound.h in Headers */,
 				9D251EEE159F6842001CE46F /* ui_gametypes_datasource.h in Headers */,
+				F3E56A51191938FD00FE695F /* md5.h in Headers */,
 				9D251EF0159F6842001CE46F /* ui_huds_datasource.h in Headers */,
 				9D251EF2159F6842001CE46F /* ui_maps_datasource.h in Headers */,
 				9D251EF4159F6842001CE46F /* ui_models_datasource.h in Headers */,
@@ -2378,6 +2409,7 @@
 				9D251F07159F6842001CE46F /* ui_levelshot_formatter.h in Headers */,
 				9D251F09159F6842001CE46F /* ui_boneposes.h in Headers */,
 				9D251F0B159F6842001CE46F /* ui_common.h in Headers */,
+				F3E56A481919389B00FE695F /* ui_gameajax_datasource.h in Headers */,
 				9D251F0D159F6842001CE46F /* ui_demoinfo.h in Headers */,
 				9D251F0F159F6842001CE46F /* ui_documentloader.h in Headers */,
 				9D251F11159F6842001CE46F /* ui_eventlistener.h in Headers */,
@@ -2904,8 +2936,10 @@
 				9D251EE0159F6842001CE46F /* asmodule.cpp in Sources */,
 				9D251EE4159F6842001CE46F /* asui_scheduled.cpp in Sources */,
 				9D251EE6159F6842001CE46F /* asui_scriptdocument.cpp in Sources */,
+				F3E56A471919389B00FE695F /* ui_gameajax_datasource.cpp in Sources */,
 				9D251EE7159F6842001CE46F /* asui_scriptevent.cpp in Sources */,
 				9D251EE9159F6842001CE46F /* ui_crosshair_datasource.cpp in Sources */,
+				F3E56A441919388A00FE695F /* as_bind_l10n.cpp in Sources */,
 				9D251EEB159F6842001CE46F /* ui_demos_datasource.cpp in Sources */,
 				9D251EED159F6842001CE46F /* ui_gametypes_datasource.cpp in Sources */,
 				9D251EEF159F6842001CE46F /* ui_huds_datasource.cpp in Sources */,
@@ -2935,6 +2969,7 @@
 				9D251F26159F6842001CE46F /* ui_colorselector.cpp in Sources */,
 				9D251F27159F6842001CE46F /* ui_dataspinner.cpp in Sources */,
 				9D251F28159F6842001CE46F /* ui_field.cpp in Sources */,
+				F3E56A50191938FD00FE695F /* md5.c in Sources */,
 				9D251F2A159F6842001CE46F /* ui_idiv.cpp in Sources */,
 				9D251F2C159F6842001CE46F /* ui_image.cpp in Sources */,
 				9D251F2E159F6842001CE46F /* ui_keyselect.cpp in Sources */,
@@ -2943,6 +2978,7 @@
 				9D251F33159F6842001CE46F /* ui_optionsform.cpp in Sources */,
 				9D251F35159F6842001CE46F /* ui_selectable_datagrid.cpp in Sources */,
 				9D251F36159F6842001CE46F /* ui_video.cpp in Sources */,
+				F3E56A4C191938C200FE695F /* ui_parsersound.cpp in Sources */,
 				9D251F39159F6842001CE46F /* ui_worldview.cpp in Sources */,
 				9D251F3A159F6842001CE46F /* ui_precompiled.cpp in Sources */,
 				9D251F3C159F6842001CE46F /* ui_public.cpp in Sources */,
