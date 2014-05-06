@@ -18,8 +18,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_LOCAL_H__
-#define __R_LOCAL_H__
+#ifndef R_LOCAL_H
+#define R_LOCAL_H
 
 #include "../gameshared/q_arch.h"
 #include "../gameshared/q_math.h"
@@ -807,4 +807,4 @@ typedef struct
 extern mapconfig_t	mapConfig;
 extern refinst_t	rn;
 
-#endif /*__R_LOCAL_H__*/
+#endif // R_LOCAL_H

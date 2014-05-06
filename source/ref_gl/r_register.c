@@ -155,6 +155,8 @@ typedef struct
 #define GL_EXTENSION_FUNC_EXT(name,func) { name, (void ** const)func }
 #define GL_EXTENSION_FUNC(name) GL_EXTENSION_FUNC_EXT("gl"#name,&(qgl##name))
 
+#ifndef GL_ES_VERSION_2_0
+
 /* GL_ARB_multitexture */
 static const gl_extension_func_t gl_ext_multitexture_ARB_funcs[] =
 {
@@ -294,6 +296,17 @@ static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+#else // GL_ES_VERSION_2_0
+
+/* GL_EXT_multiview_draw_buffers */
+static const gl_extension_func_t gl_ext_multiview_draw_buffers_EXT_funcs[] =
+{
+	 GL_EXTENSION_FUNC(ReadBufferIndexedEXT)
+	,GL_EXTENSION_FUNC(DrawBuffersIndexedEXT)
+};
+
+#endif // GL_ES_VERSION_2_0
+
 #ifdef _WIN32
 
 /* WGL_EXT_swap_interval */
@@ -333,14 +346,14 @@ static const gl_extension_func_t glx_ext_swap_control_SGI_funcs[] =
 // extended notation: vendor, name, default value, list of functions, required extension
 static const gl_extension_t gl_extensions_decl[] =
 {
+#ifndef GL_ES_VERSION_2_0
 	 GL_EXTENSION( ARB, multitexture, true, true, &gl_ext_multitexture_ARB_funcs )
 	,GL_EXTENSION( ARB, vertex_buffer_object, true, true, &gl_ext_vertex_buffer_object_ARB_funcs )
-	,GL_EXTENSION( EXT, draw_range_elements, true, true, &gl_ext_draw_range_elements_EXT_funcs )
+	,GL_EXTENSION( EXT, draw_range_elements, true, false, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
 	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
-	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
 	,GL_EXTENSION( ARB, texture_cube_map, false, false, NULL )
 	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 	,GL_EXTENSION( ARB, depth_texture, false, false, NULL )
@@ -363,6 +376,17 @@ static const gl_extension_t gl_extensions_decl[] =
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
 	,GL_EXTENSION( ATI, meminfo, true, false, NULL )
+
+#else
+	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
+	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
+	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
+	,GL_EXTENSION( OES, depth24, true, false, NULL )
+	,GL_EXTENSION( EXT, multiview_draw_buffers, false, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
+	,GL_EXTENSION( NV, multiview_draw_buffers, false, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
+#endif
+
+	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
 
 #ifdef GLX_VERSION
 	,GL_EXTENSION( GLX_SGI, swap_control, true, false, &glx_ext_swap_control_SGI_funcs )
@@ -420,8 +444,9 @@ static qboolean R_RegisterGLExtensions( void )
 		// let's see what the driver's got to say about this...
 		if( *extension->prefix )
 		{
-			const char *extstring = ( !strncmp( extension->prefix, "WGL", 3 ) || !strncmp( extension->prefix, "GLX", 3 ) )
-				? glConfig.glwExtensionsString : glConfig.extensionsString;
+			const char *extstring = ( !strncmp( extension->prefix, "WGL", 3 ) ||
+				!strncmp( extension->prefix, "GLX", 3 ) ||
+				!strncmp( extension->prefix, "EGL", 3 ) ) ? glConfig.glwExtensionsString : glConfig.extensionsString;
 
 			Q_snprintfz( name, sizeof( name ), "%s_%s", extension->prefix, extension->name );
 			if( !strstr( extstring, name ) )
@@ -572,7 +597,38 @@ static void R_PrintMemoryInfo( void )
 */
 static void R_FinalizeGLExtensions( void )
 {
+	int versionMajor, versionMinor;
+	int val;
 	cvar_t *cvar;
+
+	versionMajor = versionMinor = 0;
+#ifdef GL_ES_VERSION_2_0
+	sscanf( glConfig.versionString, "OpenGL ES %d.%d", &versionMajor, &versionMinor );
+#else
+	sscanf( glConfig.versionString, "%d.%d", &versionMajor, &versionMinor );
+#endif
+	glConfig.version = versionMajor * 100 + versionMinor;
+
+#ifdef GL_ES_VERSION_2_0
+	glConfig.ext.multitexture = qtrue;
+	glConfig.ext.vertex_buffer_object = qtrue;
+	glConfig.ext.framebuffer_object = qtrue;
+	glConfig.ext.texture_edge_clamp = qtrue;
+	glConfig.ext.texture_cube_map = qtrue;
+	glConfig.ext.vertex_shader = qtrue;
+	glConfig.ext.fragment_shader = qtrue;
+	glConfig.ext.shader_objects = qtrue;
+	glConfig.ext.shading_language_100 = qtrue;
+	glConfig.ext.GLSL = qtrue;
+	if( glConfig.version >= 300 ) {
+		glConfig.ext.depth_texture = qtrue;
+		glConfig.ext.texture_non_power_of_two = qtrue;
+		glConfig.ext.draw_instanced = qtrue;
+		glConfig.ext.instanced_arrays = qtrue;
+		glConfig.ext.half_float_vertex = qtrue;
+		glConfig.ext.depth24 = qtrue;
+	}
+#endif
 
 	glConfig.maxTextureSize = 0;
 	qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
@@ -599,7 +655,29 @@ static void R_FinalizeGLExtensions( void )
 	if( strstr( glConfig.extensionsString, "GL_EXT_texture_filter_anisotropic" ) )
 		qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureFilterAnisotropic );
 
-	glConfig.shadingLanguageVersion = (int)(atof(glConfig.shadingLanguageVersionString) * 100);
+	/* GL_OES_depth24 */
+#ifndef GL_ES_VERSION_2_0
+	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
+#endif
+
+	/* GL_EXT_multiview_draw_buffers */
+#ifdef GL_ES_VERSION_2_0
+	if( glConfig.ext.multiview_draw_buffers )
+	{
+		val = 0;
+		glGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_EXT, &val );
+		if( val <= 1 )
+			glConfig.stereoEnabled = qfalse;
+	}
+#endif
+
+	versionMajor = versionMinor = 0;
+#ifdef GL_ES_VERSION_2_0
+	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d", &versionMajor, &versionMinor );
+#else
+	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
+#endif
+	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor;
 	if( !glConfig.ext.GLSL130 ) {
 		glConfig.shadingLanguageVersion = 120;
 	}
@@ -617,6 +695,7 @@ static void R_FinalizeGLExtensions( void )
 		ri.Cvar_ForceSet( r_maxglslbones->name, r_maxglslbones->dvalue );
 	}
 
+#ifndef GL_ES_VERSION_2_0
 	// require GLSL 1.30+ for GPU skinning
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
@@ -625,11 +704,13 @@ static void R_FinalizeGLExtensions( void )
 	else {
 		glConfig.maxGLSLBones = 0;
 	}
+#endif
 
+#ifndef GL_ES_VERSION_2_0
 	if( glConfig.ext.texture_non_power_of_two )
 	{
 		// blacklist this extension on Radeon X1600-X1950 hardware (they support it only with certain filtering/repeat modes)
-		int val = 0;
+		val = 0;
 
 		// LordHavoc: this is blocked on Mac OS X because the drivers claim support but often can't accelerate it or crash when used.
 #ifndef __APPLE__
@@ -643,6 +724,7 @@ static void R_FinalizeGLExtensions( void )
 			ri.Cvar_ForceSet( "gl_ext_texture_non_power_of_two", "0" );
 		}
 	}
+#endif
 
 	cvar = ri.Cvar_Get( "gl_ext_vertex_buffer_object_hack", "0", CVAR_ARCHIVE|CVAR_NOSET );
 	if( cvar && !cvar->integer ) 
@@ -662,6 +744,8 @@ static void R_FinalizeGLExtensions( void )
 
 static void R_Register( const char *screenshotsPrefix )
 {
+	const qgl_driverinfo_t *driver;
+
 	r_norefresh = ri.Cvar_Get( "r_norefresh", "0", 0 );
 	r_fullbright = ri.Cvar_Get( "r_fullbright", "0", CVAR_LATCH_VIDEO );
 	r_lightmap = ri.Cvar_Get( "r_lightmap", "0", 0 );
@@ -770,8 +854,13 @@ static void R_Register( const char *screenshotsPrefix )
 
 	gl_finish = ri.Cvar_Get( "gl_finish", "0", CVAR_ARCHIVE );
 	gl_cull = ri.Cvar_Get( "gl_cull", "1", 0 );
-	gl_driver = ri.Cvar_Get( "gl_driver", QGL_GetDriverName(), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	gl_drawbuffer = ri.Cvar_Get( "gl_drawbuffer", "GL_BACK", 0 );
+
+	driver = QGL_GetDriverInfo();
+	if( driver->dllcvarname )
+		gl_driver = ri.Cvar_Get( driver->dllcvarname, driver->dllname, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	else
+		gl_driver = NULL;
 
 	ri.Cmd_AddCommand( "imagelist", R_ImageList_f );
 	ri.Cmd_AddCommand( "shaderlist", R_ShaderList_f );
@@ -829,6 +918,8 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
 	int x, int y, int width, int height, int displayFrequency,
 	qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
+	const char *dllname;
+	qgl_initerr_t initerr;
 	int i;
 	char renderer_buffer[1024];
 	char vendor_buffer[1024];
@@ -849,15 +940,17 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
 	memset( &glConfig, 0, sizeof(glConfig) );
 
 	// initialize our QGL dynamic bindings
+	dllname = QGL_GetDriverInfo()->dllname;
 init_qgl:
-	if( !QGL_Init( gl_driver->string ) )
+	initerr = QGL_Init( gl_driver ? gl_driver->string : dllname );
+	if( initerr != qgl_initerr_ok )
 	{
 		QGL_Shutdown();
-		Com_Printf( "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver->string );
+		Com_Printf( "ref_gl::R_Init() - could not load \"%s\"\n", gl_driver ? gl_driver->string : dllname );
 
-		if( strcmp( gl_driver->string, QGL_GetDriverName() ) )
+		if( ( initerr == qgl_initerr_invalid_driver ) && gl_driver && strcmp( gl_driver->string, dllname ) )
 		{
-			ri.Cvar_ForceSet( gl_driver->name, QGL_GetDriverName() );
+			ri.Cvar_ForceSet( gl_driver->name, dllname );
 			goto init_qgl;
 		}
 

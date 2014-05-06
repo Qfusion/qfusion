@@ -23,7 +23,7 @@ qf_varying vec2 v_FogCoord;
 #include "include/vtransform.glsl"
 #include "include/rgbgen.glsl"
 
-uniform mat4 u_ReflectionTexMatrix;
+uniform mat3 u_ReflectionTexMatrix;
 
 void main(void)
 {
@@ -47,7 +47,7 @@ void main(void)
 	qf_FrontColor = vec4(outColor);
 
 	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
-	v_TexCoordCube = vec3(u_ReflectionTexMatrix * vec4(reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz), 0.0));
+	v_TexCoordCube = u_ReflectionTexMatrix * reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz);
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 }
@@ -84,8 +84,8 @@ void main(void)
 
 	myhalf4 outColor;
 	outColor = myhalf4(qf_texture(u_BaseTexture, v_TexCoord));
-#ifdef ALPHATEST
-	ALPHATEST(outColor.a * inColor.a);
+#ifdef QF_ALPHATEST
+	QF_ALPHATEST(outColor.a * inColor.a);
 #endif
 
 #ifdef APPLY_ENTITY_DECAL

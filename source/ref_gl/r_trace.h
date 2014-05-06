@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __R_TRACE_H__
-#define __R_TRACE_H__
+#ifndef R_TRACE_H
+#define R_TRACE_H
 
 typedef struct
 {
@@ -33,4 +33,4 @@ typedef struct
 
 msurface_t *R_TraceLine( rtrace_t *tr, const vec3_t start, const vec3_t end, int surfumask );
 
-#endif /*__R_TRACE_H__*/
+#endif // R_TRACE_H

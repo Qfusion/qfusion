@@ -16,8 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#ifndef __R_MATH_H__
-#define __R_MATH_H__
+#ifndef R_MATH_H
+#define R_MATH_H
 
 #include "../gameshared/q_math.h"
 
@@ -57,4 +57,4 @@ void		Matrix4_PerspectiveProjectionToInfinity( vec_t near, mat4_t m );
 void		Matrix4_Modelview( const vec3_t viewOrg, const mat3_t viewAxis, mat4_t m );
 void		Matrix4_ObliqueNearClipping( const vec3_t normal, const vec_t dist, const mat4_t cm, mat4_t pm );
 
-#endif /*__R_MATH_H__*/
+#endif // R_MATH_H

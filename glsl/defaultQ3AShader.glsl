@@ -56,7 +56,7 @@ qf_varying float v_Depth;
 #include "include/rgbgen.glsl"
 
 #if defined(APPLY_TC_GEN_REFLECTION)
-uniform mat4 u_ReflectionTexMatrix;
+uniform mat3 u_ReflectionTexMatrix;
 #elif defined(APPLY_TC_GEN_VECTOR)
 uniform mat4 u_VectorTexMatrix;
 #endif
@@ -93,7 +93,7 @@ void main(void)
 #elif defined(APPLY_TC_GEN_VECTOR)
 	v_TexCoord = vec2(u_VectorTexMatrix * Position);
 #elif defined(APPLY_TC_GEN_REFLECTION)
-	v_TexCoord = vec3(u_ReflectionTexMatrix * vec4(reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz), 0.0));
+	v_TexCoord = u_ReflectionTexMatrix * reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz);
 #elif defined(APPLY_TC_GEN_PROJECTION)
 	v_TexCoord = vec2(normalize(u_ModelViewProjectionMatrix * Position) * 0.5 + vec4(0.5));
 #else
@@ -205,12 +205,12 @@ void main(void)
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)
-	myhalf softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_Viewport, u_ZRange);
+	myhalf softness = FragmentSoftness(v_Depth, u_DepthTexture, gl_FragCoord.xy, u_ZRange);
 	color *= mix(myhalf4(1.0), myhalf4(softness), u_BlendMix.xxxy);
 #endif
 
-#ifdef ALPHATEST
-	ALPHATEST(color.a);
+#ifdef QF_ALPHATEST
+	QF_ALPHATEST(color.a);
 #endif
 
 	qf_FragColor = vec4(color);

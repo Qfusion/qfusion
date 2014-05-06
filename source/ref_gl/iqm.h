@@ -1,5 +1,5 @@
-#ifndef __IQM_H__
-#define __IQM_H__
+#ifndef IQM_H
+#define IQM_H
 
 #define IQM_MAGIC "INTERQUAKEMODEL"
 #define IQM_VERSION 2
@@ -125,5 +125,5 @@ struct iqmextension
     unsigned int ofs_extensions; // pointer to next extension
 };
 
-#endif
+#endif // IQM_H
 

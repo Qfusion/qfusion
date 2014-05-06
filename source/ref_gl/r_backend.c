@@ -165,9 +165,9 @@ static void RB_SetGLDefaults( void )
 	qglDisable( GL_POLYGON_OFFSET_FILL );
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	qglEnable( GL_DEPTH_TEST );
-	if( qglPolygonMode ) {
-		qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-	}
+#ifndef GL_ES_VERSION_2_0
+	qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+#endif
 	qglFrontFace( GL_CCW );
 
 	rb.gl.state = 0;
@@ -189,7 +189,9 @@ void RB_SelectTextureUnit( int tmu )
 	rb.gl.currentTMU = tmu;
 
 	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#ifndef GL_ES_VERSION_2_0
 	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#endif
 }
 
 /*
@@ -1161,9 +1163,19 @@ void RB_DrawElementsReal( void )
 			for( i = 0; i < numInstances; i++ ) {
 				RB_SetInstanceData( 1, rb.drawInstances + i );
 
-				qglDrawRangeElementsEXT( rb.primitive, 
-					firstVert, firstVert + numVerts - 1, numElems, 
-					GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+#ifndef GL_ES_VERSION_2_0
+				if( glConfig.ext.draw_range_elements )
+				{
+					qglDrawRangeElementsEXT( rb.primitive, 
+						firstVert, firstVert + numVerts - 1, numElems, 
+						GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+				}
+				else
+#endif
+				{
+					qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+						(GLvoid *)(firstElem * sizeof( elem_t )) );
+				}
 
 				rb.stats.c_totalDraws++;
 			}
@@ -1172,9 +1184,19 @@ void RB_DrawElementsReal( void )
 	else {
 		numInstances = 1;
 
-		qglDrawRangeElementsEXT( rb.primitive, 
-			firstVert, firstVert + numVerts - 1, numElems, 
-			GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+#ifndef GL_ES_VERSION_2_0
+		if( glConfig.ext.draw_range_elements )
+		{
+			qglDrawRangeElementsEXT( rb.primitive, 
+				firstVert, firstVert + numVerts - 1, numElems, 
+				GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
+		}
+		else
+#endif
+		{
+			qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
+				(GLvoid *)(firstElem * sizeof( elem_t )) );
+		}
 
 		rb.stats.c_totalDraws++;
 	}
@@ -1212,10 +1234,6 @@ static void RB_DrawElements_( int firstVert, int numVerts, int firstElem, int nu
 	RB_EnableVertexAttribs();
 
 	if( rb.triangleOutlines ) {
-		if( !qglPolygonMode ) {
-			// OpenGL ES systems don't support glPolygonMode
-			return;
-		}
 		RB_DrawOutlinedElements();
 	} else {
 		RB_DrawShadedElements();
@@ -1319,17 +1337,16 @@ qboolean RB_EnableTriangleOutlines( qboolean enable )
 		rb.triangleOutlines = enable;
 
 		// OpenGL ES systems don't support glPolygonMode
-		// so check whether the function is actually present
-		if( qglPolygonMode ) {
-			if( enable ) {
-				RB_SetShaderStateMask( 0, GLSTATE_NO_DEPTH_TEST );
-				qglPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-			}
-			else {
-				RB_SetShaderStateMask( ~0, 0 );
-				qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-			}
+#ifndef GL_ES_VERSION_2_0
+		if( enable ) {
+			RB_SetShaderStateMask( 0, GLSTATE_NO_DEPTH_TEST );
+			qglPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 		}
+		else {
+			RB_SetShaderStateMask( ~0, 0 );
+			qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		}
+#endif
 	}
 
 	return oldVal;

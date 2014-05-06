@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_VATTRIBS_H__
-#define __R_VATTRIBS_H__
+#ifndef R_VATTRIBS_H
+#define R_VATTRIBS_H
 
 typedef enum vattrib_e
 {
@@ -96,4 +96,4 @@ typedef unsigned int vattribmask_t;
 #define FLOAT_VATTRIB_SIZE(vattrib,halfFloatVattribs) \
 	((int)(halfFloatVattribs & vattrib) == vattrib ? sizeof(GLhalfARB) : sizeof(float))
 
-#endif
+#endif // R_VATTRIBS_H
