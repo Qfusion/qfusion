@@ -257,7 +257,9 @@
     <ClCompile Include="win32\win_threads.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="angelwrap\qas_public.h" />
     <ClInclude Include="gameshared\config.h" />
+    <ClInclude Include="qalgo\q_trie.h" />
     <ClInclude Include="qcommon\anticheat.h" />
     <ClInclude Include="qalgo\base64.h" />
     <ClInclude Include="qcommon\bsp.h" />
@@ -276,7 +278,6 @@
     <ClInclude Include="matchmaker\mm_common.h" />
     <ClInclude Include="matchmaker\mm_query.h" />
     <ClInclude Include="matchmaker\mm_rating.h" />
-    <ClInclude Include="gameshared\q_angelwrap.h" />
     <ClInclude Include="gameshared\q_arch.h" />
     <ClInclude Include="gameshared\q_collision.h" />
     <ClInclude Include="gameshared\q_comref.h" />
@@ -294,7 +295,6 @@
     <ClInclude Include="qcommon\sys_fs.h" />
     <ClInclude Include="qcommon\sys_library.h" />
     <ClInclude Include="qcommon\sys_net.h" />
-    <ClInclude Include="gameshared\q_trie.h" />
     <ClInclude Include="qcommon\version.h" />
     <ClInclude Include="qcommon\webdownload.h" />
     <ClInclude Include="win32\winquake.h" />

@@ -317,9 +317,6 @@
     <ClInclude Include="matchmaker\mm_rating.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gameshared\q_angelwrap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="gameshared\q_arch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -401,9 +398,6 @@
     <ClInclude Include="ftlib\ftlib_public.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="qcommon\patch_eval_inc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="qcommon\patch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -425,13 +419,16 @@
     <ClInclude Include="qcommon\qthreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gameshared\q_trie.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="qalgo\hash.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qcommon\steam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="angelwrap\qas_public.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="qalgo\q_trie.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
