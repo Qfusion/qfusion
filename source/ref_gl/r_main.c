@@ -1596,6 +1596,7 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 	{
 		gl_drawbuffer->modified = qfalse;
 
+#ifndef GL_ES_VERSION_2_0
 		if( cameraSeparation == 0 || !glConfig.stereoEnabled )
 		{
 			if( Q_stricmp( gl_drawbuffer->string, "GL_FRONT" ) == 0 )
@@ -1603,6 +1604,7 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 			else
 				qglDrawBuffer( GL_BACK );
 		}
+#endif
 	}
 
 	// texturemode stuff
