@@ -2124,6 +2124,7 @@ static inline const vec_t *RB_TriangleLinesColor( void )
 */
 void RB_DrawOutlinedElements( void )
 {
+#ifndef GL_ES_VERSION_2_0
 	static shaderpass_t r_triLinesPass;
 	static vec4_t r_triLinesColor;
 	shaderpass_t *pass;
@@ -2163,6 +2164,7 @@ void RB_DrawOutlinedElements( void )
 	RB_SetShaderState();
 
 	RB_RenderPass( &r_triLinesPass );
+#endif
 }
 
 /*
