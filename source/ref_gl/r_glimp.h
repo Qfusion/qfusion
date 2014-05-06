@@ -83,7 +83,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_TEXTURE_UNITS				8
 
+#ifdef GL_ES_VERSION_2_0
+#define MAX_GLSL_UNIFORM_BONES			45 // enough for Warsow BigVic player model
+#else
 #define MAX_GLSL_UNIFORM_BONES			100
+#endif
 #define MAX_GLSL_UNIFORM_INSTANCES		40
 
 extern cvar_t *r_stencilbits;
@@ -176,6 +180,7 @@ typedef struct
 				,meminfo
 				,framebuffer_blit
 				,depth24
+				,multiview_draw_buffers
 				;
 	union {
 		char	texture_non_power_of_two, texture_npot;
