@@ -66,10 +66,10 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		return rserr_invalid_mode;
 	}
 
-	glState.width = width;
-	glState.height = height;
-	glState.fullScreen = fullscreen;
-	glState.wideScreen = wideScreen;
+	glConfig.width = width;
+	glConfig.height = height;
+	glConfig.fullScreen = fullscreen;
+	glConfig.wideScreen = wideScreen;
 
 #if 0
 	//Threaded OpenGL, untested, appears to mess up colors on the UI
