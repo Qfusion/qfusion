@@ -67,8 +67,7 @@ typedef struct glsl_program_s
 
 					TextureMatrix,
 
-					GlossIntensity,
-					GlossExponent,
+					GlossFactors,
 
 					OffsetMappingScale,
 					OutlineHeight,
@@ -105,6 +104,9 @@ typedef struct glsl_program_s
 
 					AttrBonesIndices,
 					AttrBonesWeights,
+					DualQuats,
+
+					InstancePoints,
 
 					WallColor,
 					FloorColor,
@@ -124,9 +126,7 @@ typedef struct glsl_program_s
 					ViewOrigin,
 					ViewAxis,
 					MirrorSide,
-					EntityOrigin,
-					DualQuats,
-					InstancePoints;
+					EntityOrigin;
 		} builtin;
 	} loc;
 } glsl_program_t;
@@ -321,19 +321,19 @@ static void RF_DeleteProgram( glsl_program_t *program )
 	if( program->vertexShader )
 	{
 		qglDetachObjectARB( program->object, program->vertexShader );
-		qglDeleteObjectARB( program->vertexShader );
+		qglDeleteShader( program->vertexShader );
 		program->vertexShader = 0;
 	}
 
 	if( program->fragmentShader )
 	{
 		qglDetachObjectARB( program->object, program->fragmentShader );
-		qglDeleteObjectARB( program->fragmentShader );
+		qglDeleteShader( program->fragmentShader );
 		program->fragmentShader = 0;
 	}
 
 	if( program->object )
-		qglDeleteObjectARB( program->object );
+		qglDeleteProgram( program->object );
 
 	if( program->name )
 		R_Free( program->name );
@@ -361,13 +361,13 @@ static int RF_CompileShader( int program, const char *programName, const char *s
 	// if lengths is NULL, then each string is assumed to be null-terminated
 	qglShaderSourceARB( shader, numStrings, strings, NULL );
 	qglCompileShaderARB( shader );
-	qglGetObjectParameterivARB( shader, GL_OBJECT_COMPILE_STATUS_ARB, &compiled );
+	qglGetShaderiv( shader, GL_OBJECT_COMPILE_STATUS_ARB, &compiled );
 
 	if( !compiled )
 	{
 		char log[4096];
 
-		qglGetInfoLogARB( shader, sizeof( log ) - 1, NULL, log );
+		qglGetShaderInfoLog( shader, sizeof( log ) - 1, NULL, log );
 		log[sizeof( log ) - 1] = 0;
 
 		if( log[0] ) {
@@ -384,7 +384,7 @@ static int RF_CompileShader( int program, const char *programName, const char *s
 			Com_Printf( "\n" );
 		}
 
-		qglDeleteObjectARB( shader );
+		qglDeleteShader( shader );
 		return 0;
 	}
 
@@ -446,9 +446,9 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n"
 		"#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 	
-	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
-	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
-	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define QF_ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec23 vec4\n", "_ls3" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec23 vec2\n", "_ls2" },
@@ -612,9 +612,9 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_COMMON_SOFT_PARTICLE, "#define APPLY_SOFT_PARTICLE\n", "_sp" },
 	
-	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
-	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
-	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define QF_ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_Q3_TC_GEN_REFLECTION, "#define APPLY_TC_GEN_REFLECTION\n", "_tc_refl" },
 	{ GLSL_SHADER_Q3_TC_GEN_PROJECTION, "#define APPLY_TC_GEN_PROJECTION\n", "_tc_proj" },
@@ -657,9 +657,9 @@ static const glsl_feature_t glsl_features_celshade[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 	
-	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
-	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
-	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
+	{ GLSL_SHADER_COMMON_AFUNC_GE128, "#define QF_ALPHATEST(a) { if ((a) < 0.5) discard; }\n", "_afunc_ge128" },
+	{ GLSL_SHADER_COMMON_AFUNC_LT128, "#define QF_ALPHATEST(a) { if ((a) >= 0.5) discard; }\n", "_afunc_lt128" },
+	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_CELSHADE_DIFFUSE, "#define APPLY_DIFFUSE\n", "_diff" },
 	{ GLSL_SHADER_CELSHADE_DECAL, "#define APPLY_DECAL\n", "_decal" },
@@ -881,129 +881,6 @@ QF_GLSL_PI \
 "#define WAVE_INVERSESAWTOOTH(time,base,amplitude,phase,freq) (((base)+(amplitude)*QF_WaveFunc_InverseSawtooth((phase)+(time)*(freq))))\n" \
 "#endif\n" \
 "\n"
-
-#define QF_DUAL_QUAT_TRANSFORM_OVERLOAD "" \
-"#if defined(DUAL_QUAT_TRANSFORM_NORMALS)\n" \
-"#if defined(DUAL_QUAT_TRANSFORM_TANGENT)\n" \
-"void QF_VertexDualQuatsTransform(const int numWeights, inout vec4 Position, inout vec3 Normal, inout vec3 Tangent)\n" \
-"#else\n" \
-"void QF_VertexDualQuatsTransform(const int numWeights, inout vec4 Position, inout vec3 Normal)\n" \
-"#endif\n" \
-"#else\n" \
-"void QF_VertexDualQuatsTransform(const int numWeights, inout vec4 Position)\n" \
-"#endif\n" \
-"{\n" \
-"int index;\n" \
-"vec4 Indices = a_BonesIndices;\n" \
-"vec4 Weights = a_BonesWeights;\n" \
-"vec4 Indices_2 = Indices * 2.0;\n" \
-"vec4 DQReal, DQDual;\n" \
-"\n" \
-"index = int(Indices_2.x);\n" \
-"DQReal = u_QF_DualQuats[index+0];\n" \
-"DQDual = u_QF_DualQuats[index+1];\n" \
-"\n" \
-"if (numWeights > 1)\n" \
-"{\n" \
-"DQReal *= Weights.x;\n" \
-"DQDual *= Weights.x;\n" \
-"\n" \
-"vec4 DQReal1, DQDual1;\n" \
-"float scale;\n" \
-"\n" \
-"index = int(Indices_2.y);\n" \
-"DQReal1 = u_QF_DualQuats[index+0];\n" \
-"DQDual1 = u_QF_DualQuats[index+1];\n" \
-"// antipodality handling\n" \
-"scale = (dot(DQReal1, DQReal) < 0.0 ? -1.0 : 1.0) * Weights.y;\n" \
-"DQReal += DQReal1 * scale;\n" \
-"DQDual += DQDual1 * scale;\n" \
-"\n" \
-"if (numWeights > 2)\n" \
-"{\n" \
-"index = int(Indices_2.z);\n" \
-"DQReal1 = u_QF_DualQuats[index+0];\n" \
-"DQDual1 = u_QF_DualQuats[index+1];\n" \
-"// antipodality handling\n" \
-"scale = (dot(DQReal1, DQReal) < 0.0 ? -1.0 : 1.0) * Weights.z;\n" \
-"DQReal += DQReal1 * scale;\n" \
-"DQDual += DQDual1 * scale;\n" \
-"\n" \
-"if (numWeights > 3)\n" \
-"{\n" \
-"index = int(Indices_2.w);\n" \
-"DQReal1 = u_QF_DualQuats[index+0];\n" \
-"DQDual1 = u_QF_DualQuats[index+1];\n" \
-"// antipodality handling\n" \
-"scale = (dot(DQReal1, DQReal) < 0.0 ? -1.0 : 1.0) * Weights.w;\n" \
-"DQReal += DQReal1 * scale;\n" \
-"DQDual += DQDual1 * scale;\n" \
-"}\n" \
-"}\n" \
-"}\n" \
-"\n" \
-"float len = length(DQReal);\n" \
-"DQReal /= len;\n" \
-"DQDual /= len;\n" \
-"\n" \
-"Position.xyz = (cross(DQReal.xyz, cross(DQReal.xyz, Position.xyz) + Position.xyz*DQReal.w + DQDual.xyz) + " \
-	"DQDual.xyz*DQReal.w - DQReal.xyz*DQDual.w)*2.0 + Position.xyz;\n" \
-"\n" \
-"#ifdef DUAL_QUAT_TRANSFORM_NORMALS\n" \
-"Normal = cross(DQReal.xyz, cross(DQReal.xyz, Normal) + Normal*DQReal.w)*2.0 + Normal;\n" \
-"#endif\n" \
-"\n" \
-"#ifdef DUAL_QUAT_TRANSFORM_TANGENT\n" \
-"Tangent = cross(DQReal.xyz, cross(DQReal.xyz, Tangent) + Tangent*DQReal.w)*2.0 + Tangent;\n" \
-"#endif\n" \
-"}\n"
-
-// #version 130+
-#define QF_GLSL_DUAL_QUAT_TRANSFORMS \
-"#ifdef VERTEX_SHADER\n" \
-"attribute vec4 a_BonesIndices;\n" \
-"attribute vec4 a_BonesWeights;\n" \
-"\n" \
-"uniform vec4 u_QF_DualQuats[MAX_UNIFORM_BONES*2];\n" \
-"\n" \
-QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
-"\n" \
-"// use defines to overload the transform function\n" \
-"\n" \
-"#define DUAL_QUAT_TRANSFORM_NORMALS\n" \
-QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
-"\n" \
-"#define DUAL_QUAT_TRANSFORM_TANGENT\n" \
-QF_DUAL_QUAT_TRANSFORM_OVERLOAD \
-"\n" \
-"#endif\n"
-
-#define QF_GLSL_INSTANCED_TRANSFORMS \
-"#ifdef VERTEX_SHADER\n" \
-"#ifdef APPLY_INSTANCED_ATTRIB_TRANSFORMS\n" \
-"attribute vec4 a_InstanceQuat;\n" \
-"attribute vec4 a_InstancePosAndScale;\n" \
-"#elif defined(GL_ARB_draw_instanced)\n" \
-"\n" \
-"uniform vec4 u_QF_InstancePoints[MAX_UNIFORM_INSTANCES*2];\n" \
-"\n" \
-"#define a_InstanceQuat u_QF_InstancePoints[gl_InstanceID*2]\n" \
-"#define a_InstancePosAndScale u_QF_InstancePoints[gl_InstanceID*2+1]\n" \
-"#else\n" \
-"uniform vec4 u_QF_InstancePoints[2];\n" \
-"#define a_InstanceQuat u_QF_InstancePoints[0]\n" \
-"#define a_InstancePosAndScale u_QF_InstancePoints[1]\n" \
-"#endif\n" \
-"\n" \
-"void QF_InstancedTransform(inout vec4 Position, inout vec3 Normal)\n" \
-"{\n" \
-"Position.xyz = (cross(a_InstanceQuat.xyz, cross(a_InstanceQuat.xyz, Position.xyz) + " \
-	"Position.xyz*a_InstanceQuat.w)*2.0 + Position.xyz) *\n" \
-" a_InstancePosAndScale.w + a_InstancePosAndScale.xyz;\n" \
-"Normal = cross(a_InstanceQuat.xyz, cross(a_InstanceQuat.xyz, Normal) + Normal*a_InstanceQuat.w)*2.0 + Normal;\n" \
-"}\n" \
-"\n" \
-"#endif\n"
 
 #define QF_GLSL_MATH \
 "#define QF_LatLong2Norm(ll) vec3(cos((ll).y) * sin((ll).x), sin((ll).y) * sin((ll).x), cos((ll).x))\n" \
@@ -1439,7 +1316,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	ri.Com_DPrintf( "Registering GLSL program %s\n", fullName );
 
 	i = 0;
-#ifdef QGL_ES
+#ifdef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion >= 300 ) {
 		shaderStrings[i++] = QF_GLSL_VERSION300ES;
 	}
@@ -1467,7 +1344,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
-#ifdef QGL_ES
+#ifdef GL_ES_VERSION_2_0
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL100ES;
 #else
 	if( glConfig.shadingLanguageVersion >= 130 ) {
@@ -1480,8 +1357,6 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderStrings[i++] = QF_BUILTIN_GLSL_CONSTANTS;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_UNIFORMS;
 	shaderStrings[i++] = QF_GLSL_WAVEFUNCS;
-	shaderStrings[i++] = QF_GLSL_DUAL_QUAT_TRANSFORMS;
-	shaderStrings[i++] = QF_GLSL_INSTANCED_TRANSFORMS;
 	shaderStrings[i++] = QF_GLSL_MATH;
 
 	if( header ) {
@@ -1544,12 +1419,12 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 
 	// link
 	qglLinkProgramARB( program->object );
-	qglGetObjectParameterivARB( program->object, GL_OBJECT_LINK_STATUS_ARB, &linked );
+	qglGetProgramiv( program->object, GL_OBJECT_LINK_STATUS_ARB, &linked );
 	if( !linked )
 	{
 		char log[8192];
 
-		qglGetInfoLogARB( program->object, sizeof( log ), NULL, log );
+		qglGetProgramInfoLog( program->object, sizeof( log ), NULL, log );
 		log[sizeof( log ) - 1] = 0;
 
 		if( log[0] ) {
@@ -1771,10 +1646,8 @@ void RP_UpdateMaterialUniforms( int elem,
 {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
-	if( program->loc.GlossIntensity >= 0 )
-		qglUniform1fARB( program->loc.GlossIntensity, glossIntensity );
-	if( program->loc.GlossExponent >= 0 )
-		qglUniform1fARB( program->loc.GlossExponent, glossExponent );
+	if( program->loc.GlossFactors >= 0 )
+		qglUniform2fARB( program->loc.GlossFactors, glossIntensity, glossExponent );
 	if( program->loc.OffsetMappingScale >= 0 )
 		qglUniform1fARB( program->loc.OffsetMappingScale, offsetmappingScale );
 }
@@ -1919,7 +1792,13 @@ void RP_UpdateTexGenUniforms( int elem, const mat4_t reflectionMatrix, const mat
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
 	if( program->loc.ReflectionTexMatrix >= 0 )
-		qglUniformMatrix4fvARB( program->loc.ReflectionTexMatrix, 1, GL_FALSE, reflectionMatrix );
+	{
+		mat3_t m;
+		memcpy( &m[0], &reflectionMatrix[0], 3 * sizeof( vec_t ) );
+		memcpy( &m[3], &reflectionMatrix[4], 3 * sizeof( vec_t ) );
+		memcpy( &m[6], &reflectionMatrix[8], 3 * sizeof( vec_t ) );
+		qglUniformMatrix3fvARB( program->loc.ReflectionTexMatrix, 1, GL_FALSE, m );
+	}
 	if( program->loc.VectorTexMatrix >= 0 )
 		qglUniformMatrix4fvARB( program->loc.VectorTexMatrix, 1, GL_FALSE, vectorMatrix );
 }
@@ -1973,10 +1852,10 @@ void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDu
 	if( numBones > glConfig.maxGLSLBones ) {
 		return;
 	}
-	if( program->loc.builtin.DualQuats < 0 ) {
+	if( program->loc.DualQuats < 0 ) {
 		return;
 	}
-	qglUniform4fvARB( program->loc.builtin.DualQuats, numBones * 2, &animDualQuat[0][0] );
+	qglUniform4fvARB( program->loc.DualQuats, numBones * 2, &animDualQuat[0][0] );
 }
 
 /*
@@ -1991,10 +1870,10 @@ void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePo
 	if( numInstances > MAX_GLSL_UNIFORM_INSTANCES ) {
 		numInstances = MAX_GLSL_UNIFORM_INSTANCES;
 	}
-	if( program->loc.builtin.InstancePoints < 0 ) {
+	if( program->loc.InstancePoints < 0 ) {
 		return;
 	}
-	qglUniform4fvARB( program->loc.builtin.InstancePoints, numInstances * 2, &instances[0][0] );
+	qglUniform4fvARB( program->loc.InstancePoints, numInstances * 2, &instances[0][0] );
 }
 
 
@@ -2093,8 +1972,7 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 		program->loc.LightstyleColor[i] = qglGetUniformLocationARB( program->object, va( "u_LightstyleColor[%i]", i ) );
 	}
 
-	program->loc.GlossIntensity = qglGetUniformLocationARB( program->object, "u_GlossIntensity" );
-	program->loc.GlossExponent = qglGetUniformLocationARB( program->object, "u_GlossExponent" );
+	program->loc.GlossFactors = qglGetUniformLocationARB( program->object, "u_GlossFactors" );
 
 	program->loc.OffsetMappingScale = qglGetUniformLocationARB( program->object, "u_OffsetMappingScale" );
 
@@ -2127,8 +2005,6 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.builtin.MirrorSide = qglGetUniformLocationARB( program->object, "u_QF_MirrorSide" );
 	program->loc.builtin.EntityOrigin = qglGetUniformLocationARB( program->object, "u_QF_EntityOrigin" );
 	program->loc.builtin.ShaderTime = qglGetUniformLocationARB( program->object, "u_QF_ShaderTime" );
-	program->loc.builtin.DualQuats = qglGetUniformLocationARB( program->object, "u_QF_DualQuats" );
-	program->loc.builtin.InstancePoints = qglGetUniformLocationARB( program->object, "u_QF_InstancePoints" );
 
 	// dynamic lights
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
@@ -2163,6 +2039,10 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.BlendMix = qglGetUniformLocationARB( program->object, "u_BlendMix" );
 
 	program->loc.SoftParticlesScale = qglGetUniformLocationARB( program->object, "u_SoftParticlesScale" );
+
+	program->loc.DualQuats = qglGetUniformLocationARB( program->object, "u_DualQuats" );
+
+	program->loc.InstancePoints = qglGetUniformLocationARB( program->object, "u_InstancePoints" );
 	
 	program->loc.WallColor = qglGetUniformLocationARB( program->object, "u_WallColor" );
 	program->loc.FloorColor = qglGetUniformLocationARB( program->object, "u_FloorColor" );

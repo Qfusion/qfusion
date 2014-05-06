@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_PUBLIC_H__
-#define __R_PUBLIC_H__
+#ifndef R_PUBLIC_H
+#define R_PUBLIC_H
 
 #include "../cgame/ref.h"
 
@@ -202,4 +202,4 @@ extern "C" {
 #endif
 #endif
 
-#endif /*__R_PUBLIC_H__*/
+#endif // R_PUBLIC_H

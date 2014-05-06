@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __R_IMAGELIB_H__
-#define __R_IMAGELIB_H__
+#ifndef R_IMAGELIB_H
+#define R_IMAGELIB_H
 
 // odd values include alpha channel
 typedef enum
@@ -47,4 +47,4 @@ qboolean WriteJPG( const char *name, r_imginfo_t *info, int quality );
 
 r_imginfo_t LoadPNG( const char *name, qbyte *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
 
-#endif // __R_IMAGELIB_H__
+#endif // R_IMAGELIB_H

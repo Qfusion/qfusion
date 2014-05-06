@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_PROGRAM_H__
-#define __R_PROGRAM_H__
+#ifndef R_PROGRAM_H
+#define R_PROGRAM_H
 
 typedef quint64 r_glslfeat_t;
 
@@ -222,4 +222,4 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 
 void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePoint_t *instances );
 
-#endif // __R_PROGRAM_H__
+#endif // R_PROGRAM_H

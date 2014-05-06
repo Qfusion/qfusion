@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_SHADOW_H__
-#define __R_SHADOW_H__
+#ifndef R_SHADOW_H
+#define R_SHADOW_H
 
 #define MAX_SHADOWGROUPS    32
 
@@ -56,4 +56,4 @@ qboolean	R_AddLightOccluder( const entity_t *ent );
 void		R_BuildShadowGroups( void );
 void		R_DrawShadowmaps( void );
 
-#endif /*__R_SHADOW_H__*/
+#endif // R_SHADOW_H

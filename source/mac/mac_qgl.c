@@ -53,19 +53,25 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 #define QGL_EXTERN
 
 #define QGL_FUNC( type, name, params ) type( APIENTRY * q ## name ) params;
+#define QGL_FUNC_OPT( type, name, params ) type( APIENTRY * q ## name ) params;
 #define QGL_EXT( type, name, params ) type( APIENTRY * q ## name ) params;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
 #define QGL_GLX_EXT( type, name, params )
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 
 #include "../ref_gl/qgl.h"
 
+#undef QGL_EGL_EXT
+#undef QGL_EGL
 #undef QGL_GLX_EXT
 #undef QGL_GLX
 #undef QGL_WGL_EXT
 #undef QGL_WGL
 #undef QGL_EXT
+#undef QGL_FUNC_OPT
 #undef QGL_FUNC
 
 static const char *_qglGetGLWExtensionsString( void );
@@ -83,11 +89,14 @@ void QGL_Shutdown( void )
 	glw_state.OpenGLLib = NULL;
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = NULL;
+#define QGL_FUNC_OPT( type, name, params ) ( q ## name ) = NULL;
 #define QGL_EXT( type, name, params ) ( q ## name ) = NULL;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
 #define QGL_GLX_EXT( type, name, params )
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 
 #ifdef __MACOSX__
 #include <OpenGL/gl.h>
@@ -96,11 +105,14 @@ void QGL_Shutdown( void )
 
 #include "../ref_gl/qgl.h"
 
+#undef QGL_EGL_EXT
+#undef QGL_EGL
 #undef QGL_GLX_EXT
 #undef QGL_GLX
 #undef QGL_WGL_EXT
 #undef QGL_WGL
 #undef QGL_EXT
+#undef QGL_FUNC_OPT
 #undef QGL_FUNC
 }
 
@@ -114,7 +126,7 @@ void QGL_Shutdown( void )
 ** might be.
 **
 */
-qboolean QGL_Init( const char *dllname )
+qgl_initerr_t QGL_Init( const char *dllname )
 {
 	int result = -1;
 
@@ -122,7 +134,7 @@ qboolean QGL_Init( const char *dllname )
 	if( SDL_InitSubSystem( SDL_INIT_VIDEO ) < 0 )
 	{
 		Com_Printf( "SDL_InitSubSystem(SDL_INIT_VIDEO) failed: %s", SDL_GetError() );
-		return qfalse;
+		return qgl_initerr_unknown;
 	}
 
 	// try the system default first
@@ -133,7 +145,7 @@ qboolean QGL_Init( const char *dllname )
 	if( result == -1 )
 	{
 		Com_Printf( "Error loading %s: %s\n", dllname ? dllname : "OpenGL dlib", SDL_GetError() );
-		return qfalse;
+		return qgl_initerr_invalid_driver;
 	}
 	else
 	{
@@ -142,25 +154,46 @@ qboolean QGL_Init( const char *dllname )
 	}
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name ); \
-	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qfalse; }
+	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qgl_initerr_invalid_driver; }
+#define QGL_FUNC_OPT( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name );
 #define QGL_EXT( type, name, params ) ( q ## name ) = NULL;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
 #define QGL_GLX_EXT( type, name, params )
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 
 #include "../ref_gl/qgl.h"
 
+#undef QGL_EGL_EXT
+#undef QGL_EGL
 #undef QGL_GLX_EXT
 #undef QGL_GLX
 #undef QGL_WGL_EXT
 #undef QGL_WGL
 #undef QGL_EXT
+#undef QGL_FUNC_OPT
 #undef QGL_FUNC
 
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsStringInit;
 
-	return qtrue;
+	return qgl_initerr_ok;
+}
+
+/*
+** QGL_GetDriverInfo
+**
+** Returns information about the GL DLL.
+*/
+const qgl_driverinfo_t *QGL_GetDriverInfo( void )
+{
+	static const qgl_driverinfo_t driver =
+	{
+		"/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib",
+		"mac_gl_driver"
+	};
+	return &driver;
 }
 
 /*

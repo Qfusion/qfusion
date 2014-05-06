@@ -17,8 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_SURFACE_H__
-#define __R_SURFACE_H__
+#ifndef R_SURFACE_H
+#define R_SURFACE_H
 
 typedef enum
 {
@@ -87,4 +87,4 @@ typedef struct
 	int fogNum;
 } drawSurfacePoly_t;
 
-#endif // __R_SURFACE_H__
+#endif // R_SURFACE_H

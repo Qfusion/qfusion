@@ -18,8 +18,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-#ifndef __R_MODEL_H__
-#define __R_MODEL_H__
+#ifndef R_MODEL_H
+#define R_MODEL_H
 
 #include "r_surface.h"
 
@@ -429,4 +429,4 @@ void		Mod_StripLODSuffix( char *name );
 
 void		Mod_Modellist_f( void );
 
-#endif /*__R_MODEL_H__*/
+#endif // R_MODEL_H

@@ -30,6 +30,10 @@ License along with this library.
 #include "steamlib_public.h"
 #include "steamlib_syscalls.h"
 
+#if defined(__APPLE__)
+#include <stddef.h>
+#endif
+
 namespace WSWSTEAM {
 
 int SteamLib_API( void );

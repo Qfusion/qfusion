@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#ifndef __R_GLIMP_H__
-#define __R_GLIMP_H__
+#ifndef R_GLIMP_H
+#define R_GLIMP_H
 
 #ifdef __cplusplus
 #define QGL_EXTERN extern "C"
@@ -33,13 +33,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QGL_WGL_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 #define QGL_GLX( type, name, params )
 #define QGL_GLX_EXT( type, name, params )
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 #endif
 
-#if defined ( __linux__ ) || defined ( __FreeBSD__ )
+#if defined ( __ANDROID__ )
+#define QGL_WGL( type, name, params )
+#define QGL_WGL_EXT( type, name, params )
+#define QGL_GLX( type, name, params )
+#define QGL_GLX_EXT( type, name, params )
+#define QGL_EGL( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
+#define QGL_EGL_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
+
+#elif defined ( __linux__ ) || defined ( __FreeBSD__ )
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 #define QGL_GLX_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 #endif
 
 #if defined ( __MACOSX__ )
@@ -47,25 +59,35 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
 #define QGL_GLX_EXT( type, name, params )
+#define QGL_EGL( type, name, params )
+#define QGL_EGL_EXT( type, name, params )
 #endif
 
 #define QGL_FUNC( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
+#define QGL_FUNC_OPT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 #define QGL_EXT( type, name, params ) QGL_EXTERN type( APIENTRY * q ## name ) params;
 
 #include "qgl.h"
 
+#undef QGL_EGL_EXT
+#undef QGL_EGL
 #undef QGL_GLX_EXT
 #undef QGL_GLX
 #undef QGL_WGL_EXT
 #undef QGL_WGL
 #undef QGL_EXT
+#undef QGL_FUNC_OPT
 #undef QGL_FUNC
 
 //====================================================================
 
 #define MAX_TEXTURE_UNITS				8
 
+#ifdef GL_ES_VERSION_2_0
+#define MAX_GLSL_UNIFORM_BONES			45 // enough for Warsow BigVic player model
+#else
 #define MAX_GLSL_UNIFORM_BONES			100
+#endif
 #define MAX_GLSL_UNIFORM_INSTANCES		40
 
 extern cvar_t *r_stencilbits;
@@ -137,7 +159,6 @@ typedef struct
 				,texture_cube_map
 				,texture_edge_clamp
 				,texture_filter_anisotropic
-				,texture_non_power_of_two
 				,texture_compression
 				,vertex_buffer_object
 				,GLSL
@@ -158,8 +179,15 @@ typedef struct
 				,gpu_memory_info
 				,meminfo
 				,framebuffer_blit
-				,half_float_vertex
+				,depth24
+				,multiview_draw_buffers
 				;
+	union {
+		char	texture_non_power_of_two, texture_npot;
+	};
+	union {
+		char	half_float_vertex, vertex_half_float;
+	};
 } glextinfo_t;
 
 typedef struct
@@ -171,6 +199,7 @@ typedef struct
 	const char		*glwExtensionsString;
 	const char		*shadingLanguageVersionString;
 
+	int				version;
 	int				shadingLanguageVersion;
 
 	int				width, height;
@@ -217,4 +246,4 @@ void	    GLimp_AppActivate( qboolean active, qboolean destroy );
 qboolean	GLimp_GetGammaRamp( size_t stride, unsigned short *ramp );
 void		GLimp_SetGammaRamp( size_t stride, unsigned short *ramp );
 
-#endif /*__R_GLIMP_H__*/
+#endif // R_GLIMP_H
