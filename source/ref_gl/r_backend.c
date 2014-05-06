@@ -1162,13 +1162,15 @@ void RB_DrawElementsReal( void )
 				RB_SetInstanceData( 1, rb.drawInstances + i );
 
 #ifndef GL_ES_VERSION_2_0
-				if( glConfig.ext.draw_range_elements ) {
+				if( glConfig.ext.draw_range_elements )
+				{
 					qglDrawRangeElementsEXT( rb.primitive, 
 						firstVert, firstVert + numVerts - 1, numElems, 
 						GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
 				}
+				else
 #endif
-				else {
+				{
 					qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
 						(GLvoid *)(firstElem * sizeof( elem_t )) );
 				}
@@ -1181,13 +1183,15 @@ void RB_DrawElementsReal( void )
 		numInstances = 1;
 
 #ifndef GL_ES_VERSION_2_0
-		if( glConfig.ext.draw_range_elements ) {
+		if( glConfig.ext.draw_range_elements )
+		{
 			qglDrawRangeElementsEXT( rb.primitive, 
 				firstVert, firstVert + numVerts - 1, numElems, 
 				GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
 		}
+		else
 #endif
-		else {
+		{
 			qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
 				(GLvoid *)(firstElem * sizeof( elem_t )) );
 		}
