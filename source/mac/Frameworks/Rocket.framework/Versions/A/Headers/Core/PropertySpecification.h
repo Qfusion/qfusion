@@ -79,6 +79,10 @@ public:
 	/// @return The list with stored property names.
 	const PropertyNameList& GetRegisteredProperties() const;
 
+	/// Returns the list of the names of all registered inherited property definitions.
+	/// @return The list with stored property names.
+	const PropertyNameList& GetRegisteredInheritedProperties() const;
+
 	/// Registers a shorthand property definition.
 	/// @param[in] shorthand_name The name to register the new shorthand property under.
 	/// @param[in] properties A comma-separated list of the properties this definition is shorthand for. The order in which they are specified here is the order in which the values will be processed.
@@ -107,6 +111,7 @@ private:
 	PropertyMap properties;
 	ShorthandMap shorthands;
 	PropertyNameList property_names;
+	PropertyNameList inherited_property_names;
 
 	bool ParsePropertyValues(StringList& values_list, const String& values, bool split_values) const;
 };
