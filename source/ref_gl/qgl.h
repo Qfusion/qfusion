@@ -591,6 +591,14 @@ QGL_EXT(void, glGetActiveUniformARB, (GLhandleARB programObj, GLuint index, GLsi
 QGL_EXT(void, glGetUniformfvARB, (GLhandleARB programObj, GLint location, GLfloat *params));
 QGL_EXT(void, glGetUniformivARB, (GLhandleARB programObj, GLint location, GLint *params));
 QGL_EXT(void, glGetShaderSourceARB, (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source));
+#ifndef qglDeleteProgram
+#define qglDeleteProgram qglDeleteObjectARB
+#define qglDeleteShader qglDeleteObjectARB
+#define qglGetProgramiv qglGetObjectParameterivARB
+#define qglGetShaderiv qglGetObjectParameterivARB
+#define qglGetProgramInfoLog qglGetInfoLogARB
+#define qglGetShaderInfoLog qglGetInfoLogARB
+#endif
 #else
 QGL_FUNC(void, glDeleteProgram, (GLhandleARB programObj));
 QGL_FUNC(void, glDeleteShader, (GLhandleARB shaderObj));

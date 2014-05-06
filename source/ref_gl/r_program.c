@@ -321,19 +321,19 @@ static void RF_DeleteProgram( glsl_program_t *program )
 	if( program->vertexShader )
 	{
 		qglDetachObjectARB( program->object, program->vertexShader );
-		qglDeleteObjectARB( program->vertexShader );
+		qglDeleteShader( program->vertexShader );
 		program->vertexShader = 0;
 	}
 
 	if( program->fragmentShader )
 	{
 		qglDetachObjectARB( program->object, program->fragmentShader );
-		qglDeleteObjectARB( program->fragmentShader );
+		qglDeleteShader( program->fragmentShader );
 		program->fragmentShader = 0;
 	}
 
 	if( program->object )
-		qglDeleteObjectARB( program->object );
+		qglDeleteProgram( program->object );
 
 	if( program->name )
 		R_Free( program->name );
@@ -361,13 +361,13 @@ static int RF_CompileShader( int program, const char *programName, const char *s
 	// if lengths is NULL, then each string is assumed to be null-terminated
 	qglShaderSourceARB( shader, numStrings, strings, NULL );
 	qglCompileShaderARB( shader );
-	qglGetObjectParameterivARB( shader, GL_OBJECT_COMPILE_STATUS_ARB, &compiled );
+	qglGetShaderiv( shader, GL_OBJECT_COMPILE_STATUS_ARB, &compiled );
 
 	if( !compiled )
 	{
 		char log[4096];
 
-		qglGetInfoLogARB( shader, sizeof( log ) - 1, NULL, log );
+		qglGetShaderInfoLog( shader, sizeof( log ) - 1, NULL, log );
 		log[sizeof( log ) - 1] = 0;
 
 		if( log[0] ) {
@@ -384,7 +384,7 @@ static int RF_CompileShader( int program, const char *programName, const char *s
 			Com_Printf( "\n" );
 		}
 
-		qglDeleteObjectARB( shader );
+		qglDeleteShader( shader );
 		return 0;
 	}
 
@@ -1419,12 +1419,12 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 
 	// link
 	qglLinkProgramARB( program->object );
-	qglGetObjectParameterivARB( program->object, GL_OBJECT_LINK_STATUS_ARB, &linked );
+	qglGetProgramiv( program->object, GL_OBJECT_LINK_STATUS_ARB, &linked );
 	if( !linked )
 	{
 		char log[8192];
 
-		qglGetInfoLogARB( program->object, sizeof( log ), NULL, log );
+		qglGetProgramInfoLog( program->object, sizeof( log ), NULL, log );
 		log[sizeof( log ) - 1] = 0;
 
 		if( log[0] ) {
