@@ -378,7 +378,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ATI, meminfo, true, false, NULL )
 
 #else
-	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
+	 GL_EXTENSION( OES, depth_texture, false, false, NULL )
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
