@@ -1498,7 +1498,7 @@ static void R_SwapInterval( qboolean swapInterval )
 #ifdef EGL_VERSION_1_0
 		else if( qeglSwapInterval )
 		{
-			EGLDisplay *dpy = qeglGetCurrentDisplay();
+			EGLDisplay dpy = qeglGetCurrentDisplay();
 			if( dpy != EGL_NO_DISPLAY )
 				qeglSwapInterval( dpy, swapInterval );
 		}
