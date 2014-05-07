@@ -495,6 +495,7 @@ QGL_EGL(EGLBoolean, eglInitialize, (EGLDisplay dpy, EGLint *major, EGLint *minor
 QGL_EGL(EGLBoolean, eglMakeCurrent, (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx));
 QGL_EGL(const char *, eglQueryString, (EGLDisplay dpy, EGLint name));
 QGL_EGL(EGLBoolean, eglQuerySurface, (EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint *value));
+QGL_EGL(EGLBoolean, eglSwapBuffers, (EGLDisplay dpy, EGLSurface surface));
 QGL_EGL(EGLBoolean, eglSwapInterval, (EGLDisplay dpy, EGLint interval));
 QGL_EGL(EGLBoolean, eglTerminate, (EGLDisplay dpy));
 #endif
