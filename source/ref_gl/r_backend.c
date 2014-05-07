@@ -159,7 +159,6 @@ static void RB_SetGLDefaults( void )
 	qglDisable( GL_CULL_FACE );
 	qglFrontFace( GL_CCW );
 	qglDisable( GL_BLEND );
-	qglDisable( GL_ALPHA_TEST );
 	qglDepthFunc( GL_LEQUAL );
 	qglDepthMask( GL_FALSE );
 	qglDisable( GL_POLYGON_OFFSET_FILL );

@@ -490,26 +490,32 @@ static int R_TextureFormat( int samples, qboolean noCompress )
 {
 	int bits = r_texturebits->integer;
 
+#ifndef GL_ES_VERSION_2_0
 	if( glConfig.ext.texture_compression && !noCompress )
 	{
 		if( samples == 3 )
 			return GL_COMPRESSED_RGB_ARB;
 		return GL_COMPRESSED_RGBA_ARB;
 	}
+#endif
 
 	if( samples == 3 )
 	{
+#ifndef GL_ES_VERSION_2_0
 		if( bits == 16 )
 			return GL_RGB5;
 		else if( bits == 32 )
 			return GL_RGB8;
+#endif
 		return GL_RGB;
 	}
 
+#ifndef GL_ES_VERSION_2_0
 	if( bits == 16 )
 		return GL_RGBA4;
 	else if( bits == 32 )
 		return GL_RGBA8;
+#endif
 	return GL_RGBA;
 }
 
@@ -650,11 +656,13 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	}
+#ifndef GL_ES_VERSION_2_0
 	else
 	{
 		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP );
 		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP );
 	}
+#endif
 
 	if( ( scaledWidth == width ) && ( scaledHeight == height ) && ( flags & IT_NOMIPMAP ) )
 	{
