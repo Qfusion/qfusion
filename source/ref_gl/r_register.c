@@ -674,6 +674,8 @@ static void R_FinalizeGLExtensions( void )
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
 	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d", &versionMajor, &versionMinor );
+	if( !versionMajor )
+		sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL %d.%d", &versionMajor, &versionMinor );
 #else
 	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
 #endif
