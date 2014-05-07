@@ -504,10 +504,6 @@ QGL_FUNC(void, glBindTexture, (GLenum target, GLuint texture));
 QGL_FUNC(void, glBlendFunc, (GLenum sfactor, GLenum dfactor));
 QGL_FUNC(void, glClear, (GLbitfield mask));
 QGL_FUNC(void, glClearColor, (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha));
-#ifdef GL_ES_VERSION_2_0
-QGL_FUNC(void, glClearDepth, (GLclampf depth));
-#else
-#endif
 QGL_FUNC(void, glClearStencil, (GLint s));
 QGL_FUNC(void, glColorMask, (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha));
 QGL_FUNC(void, glCullFace, (GLenum mode));
