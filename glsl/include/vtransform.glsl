@@ -14,7 +14,7 @@ uniform vec4 u_DualQuats[MAX_UNIFORM_BONES*2];
 
 #if defined(APPLY_INSTANCED_ATTRIB_TRANSFORMS)
 attribute vec4 a_InstanceQuat, a_InstancePosAndScale;
-#elif (defined(GL_ES) && (__VERSION__ >= 300)) || defined(GL_ARB_draw_instanced)
+#elif defined(GL_ARB_draw_instanced) || (defined(GL_ES) && (__VERSION__ >= 300))
 uniform vec4 u_InstancePoints[MAX_UNIFORM_INSTANCES*2];
 #define a_InstanceQuat u_InstancePoints[gl_InstanceID*2]
 #define a_InstancePosAndScale u_InstancePoints[gl_InstanceID*2+1]
