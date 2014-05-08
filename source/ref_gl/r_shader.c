@@ -52,7 +52,6 @@ static shadercache_t *shadercache_hash[SHADERCACHE_HASH_SIZE];
 static deformv_t r_currentDeforms[MAX_SHADER_DEFORMVS];
 static shaderpass_t r_currentPasses[MAX_SHADER_PASSES];
 static float r_currentRGBgenArgs[MAX_SHADER_PASSES][3], r_currentAlphagenArgs[MAX_SHADER_PASSES][2];
-static shaderfunc_t r_currentRGBgenFuncs[MAX_SHADER_PASSES], r_currentAlphagenFuncs[MAX_SHADER_PASSES];
 static tcmod_t r_currentTcmods[MAX_SHADER_PASSES][MAX_SHADER_TCMODS];
 static vec4_t r_currentTcGen[MAX_SHADER_PASSES][2];
 
@@ -1382,13 +1381,13 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 		pass->rgbgen.args[0] = 1.0f;
 		pass->rgbgen.args[1] = 1.0f;
 		pass->rgbgen.args[2] = 1.0f;
-		Shader_ParseFunc( ptr, pass->rgbgen.func );
+		Shader_ParseFunc( ptr, &pass->rgbgen.func );
 	}
 	else if( ( wave = !strcmp( token, "colorwave" ) ? qtrue : qfalse ) )
 	{
 		pass->rgbgen.type = RGB_GEN_WAVE;
 		Shader_ParseVector( ptr, pass->rgbgen.args, 3 );
-		Shader_ParseFunc( ptr, pass->rgbgen.func );
+		Shader_ParseFunc( ptr, &pass->rgbgen.func );
 	}
 	else if( !strcmp( token, "custom" ) || !strcmp( token, "teamcolor" )
 		|| ( wave = !strcmp( token, "teamcolorwave" ) || !strcmp( token, "customcolorwave" ) ? qtrue : qfalse ) )
@@ -1397,18 +1396,18 @@ static void Shaderpass_RGBGen( shader_t *shader, shaderpass_t *pass, const char 
 		pass->rgbgen.args[0] = (int)Shader_ParseFloat( ptr );
 		if( pass->rgbgen.args[0] < 0 || pass->rgbgen.args[0] >= NUM_CUSTOMCOLORS )
 			pass->rgbgen.args[0] = 0;
-		pass->rgbgen.func->type = SHADER_FUNC_NONE;
+		pass->rgbgen.func.type = SHADER_FUNC_NONE;
 		if( wave )
-			Shader_ParseFunc( ptr, pass->rgbgen.func );
+			Shader_ParseFunc( ptr, &pass->rgbgen.func );
 	}
 	else if( !strcmp( token, "entity" ) || ( wave = !strcmp( token, "entitycolorwave" ) ? qtrue : qfalse ) )
 	{
 		pass->rgbgen.type = RGB_GEN_ENTITYWAVE;
-		pass->rgbgen.func->type = SHADER_FUNC_NONE;
+		pass->rgbgen.func.type = SHADER_FUNC_NONE;
 		if( wave )
 		{
 			Shader_ParseVector( ptr, pass->rgbgen.args, 3 );
-			Shader_ParseFunc( ptr, pass->rgbgen.func );
+			Shader_ParseFunc( ptr, &pass->rgbgen.func );
 		}
 	}
 	else if( !strcmp( token, "oneminusentity" ) )
@@ -1453,11 +1452,11 @@ static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const cha
 	else if( !strcmp( token, "wave" ) )
 	{
 		pass->alphagen.type = ALPHA_GEN_WAVE;
-		Shader_ParseFunc( ptr, pass->alphagen.func );
+		Shader_ParseFunc( ptr, &pass->alphagen.func );
 
 		// treat custom distanceramp as portal
-		if( pass->alphagen.func->type == SHADER_FUNC_RAMP && pass->alphagen.func->args[1] == 1 ) {
-			dist = fabs( pass->alphagen.func->args[3] );
+		if( pass->alphagen.func.type == SHADER_FUNC_RAMP && pass->alphagen.func.args[1] == 1 ) {
+			dist = fabs( pass->alphagen.func.args[3] );
 			shader->portalDistance = max( dist, shader->portalDistance );
 		}
 	}
@@ -1473,8 +1472,8 @@ static void Shaderpass_AlphaGen( shader_t *shader, shaderpass_t *pass, const cha
 			dist = 256;
 		}
 		pass->alphagen.type = ALPHA_GEN_WAVE;
-		pass->alphagen.func->type = SHADER_FUNC_RAMP;
-		Vector4Set( pass->alphagen.func->args, 0, 1, 0, dist );
+		pass->alphagen.func.type = SHADER_FUNC_RAMP;
+		Vector4Set( pass->alphagen.func.args, 0, 1, 0, dist );
 
 		shader->portalDistance = max( dist, shader->portalDistance );
 	}
@@ -1948,7 +1947,7 @@ void R_InitShaders( void )
 */
 static void R_FreeShader( shader_t *shader )
 {
-	int i;
+	unsigned i;
 	shaderpass_t *pass;
 
 	if( shader->cin ) {
@@ -1956,10 +1955,17 @@ static void R_FreeShader( shader_t *shader )
 			R_FreePassCinematics( pass );
 	}
 
-	R_Free( shader->name );
+	if( shader->deforms ) {
+		R_Free( shader->deforms );
+		shader->deforms = 0;
+	}
+	shader->numdeforms = 0;
+	shader->deformsKey = NULL;
+	R_Free( shader->passes );
+	shader->passes = NULL;
+	shader->numpasses = 0;
 	shader->name = NULL;
 	shader->flags = 0;
-	shader->numpasses = 0;
 	shader->registrationSequence = 0;
 }
 
@@ -1982,7 +1988,7 @@ static void R_UnlinkShader( shader_t *shader )
 */
 void R_TouchShader( shader_t *s )
 {
-	int i, j;
+	unsigned i, j;
 
 	if( s->registrationSequence == rsh.registrationSequence ) {
 		return;
@@ -2092,10 +2098,8 @@ static void Shader_Readpass( shader_t *shader, const char **ptr )
 	memset( pass, 0, sizeof( shaderpass_t ) );
 	pass->rgbgen.type = RGB_GEN_UNKNOWN;
 	pass->rgbgen.args = r_currentRGBgenArgs[n];
-	pass->rgbgen.func = &r_currentRGBgenFuncs[n];
 	pass->alphagen.type = ALPHA_GEN_UNKNOWN;
 	pass->alphagen.args = r_currentAlphagenArgs[n];
-	pass->alphagen.func = &r_currentAlphagenFuncs[n];
 	pass->tcgenVec = r_currentTcGen[n][0];
 	pass->tcgen = TC_GEN_BASE;
 	pass->tcmods = r_currentTcmods[n];
@@ -2167,7 +2171,7 @@ static qboolean Shader_Parsetok( shader_t *shader, shaderpass_t *pass, const sha
 
 static void Shader_SetVertexAttribs( shader_t *s )
 {
-	int i;
+	unsigned i;
 	shaderpass_t *pass;
 
 	s->vattribs |= VATTRIB_POSITION_BIT;
@@ -2221,7 +2225,7 @@ static void Shader_SetVertexAttribs( shader_t *s )
 			s->vattribs |= VATTRIB_COLOR0_BIT;
 			break;
 		case RGB_GEN_WAVE:
-			if( pass->rgbgen.func->type == SHADER_FUNC_RAMP )
+			if( pass->rgbgen.func.type == SHADER_FUNC_RAMP )
 				s->vattribs |= VATTRIB_NORMAL_BIT;
 			break;
 		}
@@ -2233,7 +2237,7 @@ static void Shader_SetVertexAttribs( shader_t *s )
 			s->vattribs |= VATTRIB_COLOR0_BIT;
 			break;
 		case ALPHA_GEN_WAVE:
-			if( pass->alphagen.func->type == SHADER_FUNC_RAMP )
+			if( pass->alphagen.func.type == SHADER_FUNC_RAMP )
 				s->vattribs |= VATTRIB_NORMAL_BIT;
 			break;
 		}
@@ -2259,11 +2263,11 @@ static void Shader_SetVertexAttribs( shader_t *s )
 
 static void Shader_Finish( shader_t *s )
 {
-	int i;
+	unsigned i;
 	int opaque = -1;
 	int blendmask;
 	const char *oldname = s->name;
-	size_t size = strlen( oldname ) + 1;
+	size_t size = 0, bufferOffset = 0;
 	shaderpass_t *pass;
 	qbyte *buffer;
 	size_t deformvKeyLen;
@@ -2308,104 +2312,90 @@ static void Shader_Finish( shader_t *s )
 		}
 	}
 
-	size += s->numdeforms * sizeof( deformv_t ) + s->numpasses * sizeof( shaderpass_t );
-	size += deformvKeyLen + 1;
+	size = s->numpasses * sizeof( shaderpass_t );
 
 	for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ )
 	{
+		size = (size + 15) & ~15;
+
 		// rgbgen args
 		if( pass->rgbgen.type == RGB_GEN_WAVE ||
 			pass->rgbgen.type == RGB_GEN_CONST )
-			size += sizeof( float ) * 3;
+			size += sizeof( float ) * 4;
 		else if( pass->rgbgen.type == RGB_GEN_CUSTOMWAVE )
-			size += sizeof( float ) * 1;
+			size += sizeof( float ) * 2;
 
 		// alphagen args
 		if( pass->alphagen.type == ALPHA_GEN_CONST )
 			size += sizeof( float ) * 2;
 
-		if( pass->rgbgen.type == RGB_GEN_WAVE ||
-			( (pass->rgbgen.type == RGB_GEN_ENTITYWAVE || pass->rgbgen.type == RGB_GEN_CUSTOMWAVE) && r_currentPasses[i].rgbgen.func->type != SHADER_FUNC_NONE) )
-			size += sizeof( shaderfunc_t );
-		if( pass->alphagen.type == ALPHA_GEN_WAVE )
-			size += sizeof( shaderfunc_t );
-		size += pass->numtcmods * sizeof( tcmod_t );
 		if( pass->tcgen == TC_GEN_VECTOR )
 			size += sizeof( vec4_t ) * 2;
+
+		size += pass->numtcmods * sizeof( tcmod_t );
 	}
+	
+	size += strlen( oldname ) + 1;
 
 	buffer = R_Malloc( size );
+	bufferOffset = 0;
 
-	s->name = ( char * )buffer; buffer += strlen( oldname ) + 1;
-	s->passes = ( shaderpass_t * )buffer; buffer += s->numpasses * sizeof( shaderpass_t );
-	s->deformsKey = ( char * )buffer; buffer += deformvKeyLen + 1;
-
-	strcpy( s->name, oldname );
+	s->passes = ( shaderpass_t * )(buffer + bufferOffset); bufferOffset += s->numpasses * sizeof( shaderpass_t );
 	memcpy( s->passes, r_currentPasses, s->numpasses * sizeof( shaderpass_t ) );
-	memcpy( s->deformsKey, r_shaderDeformvKey, deformvKeyLen + 1 );
 
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ )
 	{
+		bufferOffset = (bufferOffset + 15) & ~15;
+
 		if( pass->rgbgen.type == RGB_GEN_WAVE ||
 			pass->rgbgen.type == RGB_GEN_CONST )
 		{
-			pass->rgbgen.args = ( float * )buffer; buffer += sizeof( float ) * 3;
+			pass->rgbgen.args = ( float * )(buffer + bufferOffset); bufferOffset += sizeof( float ) * 4;
 			memcpy( pass->rgbgen.args, r_currentPasses[i].rgbgen.args, sizeof( float ) * 3 );
 		}
 		else if( pass->rgbgen.type == RGB_GEN_CUSTOMWAVE )
 		{
-			pass->rgbgen.args = ( float * )buffer; buffer += sizeof( float ) * 1;
+			pass->rgbgen.args = ( float * )(buffer + bufferOffset); bufferOffset += sizeof( float ) * 2;
 			memcpy( pass->rgbgen.args, r_currentPasses[i].rgbgen.args, sizeof( float ) * 1 );
 		}
 
 		if( pass->alphagen.type == ALPHA_GEN_CONST )
 		{
-			pass->alphagen.args = ( float * )buffer; buffer += sizeof( float ) * 2;
+			pass->alphagen.args = ( float * )(buffer + bufferOffset); bufferOffset += sizeof( float ) * 2;
 			memcpy( pass->alphagen.args, r_currentPasses[i].alphagen.args, sizeof( float ) * 2 );
-		}
-
-		if( pass->rgbgen.type == RGB_GEN_WAVE ||
-			( (pass->rgbgen.type == RGB_GEN_ENTITYWAVE || pass->rgbgen.type == RGB_GEN_CUSTOMWAVE) 
-			&& r_currentPasses[i].rgbgen.func->type != SHADER_FUNC_NONE) )
-		{
-			pass->rgbgen.func = ( shaderfunc_t * )buffer; buffer += sizeof( shaderfunc_t );
-			memcpy( pass->rgbgen.func, r_currentPasses[i].rgbgen.func, sizeof( shaderfunc_t ) );
-		}
-		else
-		{
-			pass->rgbgen.func = NULL;
-		}
-
-		if( pass->alphagen.type == ALPHA_GEN_WAVE )
-		{
-			pass->alphagen.func = ( shaderfunc_t * )buffer; buffer += sizeof( shaderfunc_t );
-			memcpy( pass->alphagen.func, r_currentPasses[i].alphagen.func, sizeof( shaderfunc_t ) );
-		}
-		else
-		{
-			pass->alphagen.func = NULL;
-		}
-
-		if( pass->numtcmods )
-		{
-			pass->tcmods = ( tcmod_t * )buffer; buffer += r_currentPasses[i].numtcmods * sizeof( tcmod_t );
-			pass->numtcmods = r_currentPasses[i].numtcmods;
-			memcpy( pass->tcmods, r_currentPasses[i].tcmods, r_currentPasses[i].numtcmods * sizeof( tcmod_t ) );
 		}
 
 		if( pass->tcgen == TC_GEN_VECTOR )
 		{
-			pass->tcgenVec = ( vec_t * )buffer; buffer += sizeof( vec4_t ) * 2;
+			pass->tcgenVec = ( vec_t * )(buffer + bufferOffset); bufferOffset += sizeof( vec4_t ) * 2;
 			Vector4Copy( &r_currentPasses[i].tcgenVec[0], &pass->tcgenVec[0] );
 			Vector4Copy( &r_currentPasses[i].tcgenVec[4], &pass->tcgenVec[4] );
 		}
+
+		if( pass->numtcmods )
+		{
+			pass->tcmods = ( tcmod_t * )(buffer + bufferOffset); bufferOffset += pass->numtcmods * sizeof( tcmod_t );
+			memcpy( pass->tcmods, r_currentPasses[i].tcmods, pass->numtcmods * sizeof( tcmod_t ) );
+		}
 	}
+
+	s->name = ( char * )(buffer + bufferOffset);
+	strcpy( s->name, oldname );
+
+	size = s->numdeforms * sizeof( deformv_t );
+	size += deformvKeyLen + 1;
+
+	buffer = R_Malloc( size );
+	bufferOffset = 0;
 
 	if( s->numdeforms )
 	{
-		s->deforms = ( deformv_t * )buffer;
+		s->deforms = ( deformv_t * )(buffer + bufferOffset); bufferOffset += s->numdeforms * sizeof( deformv_t );
 		memcpy( s->deforms, r_currentDeforms, s->numdeforms * sizeof( deformv_t ) );
 	}
+
+	s->deformsKey = ( char * )(buffer + bufferOffset);
+	memcpy( s->deformsKey, r_shaderDeformvKey, deformvKeyLen + 1 );
 
 	if( s->flags & SHADER_AUTOSPRITE )
 		s->flags &= ~( SHADER_CULL_FRONT|SHADER_CULL_BACK );
@@ -2478,7 +2468,7 @@ static void Shader_Finish( shader_t *s )
 */
 void R_UploadCinematicShader( const shader_t *shader )
 {
-	int j;
+	unsigned j;
 	const shaderpass_t *pass;
 
 	// upload cinematics
@@ -2523,6 +2513,7 @@ static size_t R_ShaderCleanName( const char *name, char *shortname, size_t short
 static void R_LoadShaderReal( shader_t *s, char *shortname, 
 	size_t shortname_length, shaderType_e type, qboolean forceDefault )
 {
+	void *data;
 	shadercache_t *cache;
 	shaderpass_t *pass;
 	image_t *materialImages[MAX_SHADER_images];
@@ -2589,13 +2580,14 @@ create_default:
 		switch( type ) {
 		case SHADER_TYPE_VERTEX:
 			// vertex lighting
+			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT;
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->passes = ( shaderpass_t * )data;
+			s->name = ( char * )( s->passes + 1 );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
 
 			s->numpasses = 0;
 			pass = &s->passes[s->numpasses++];
@@ -2609,13 +2601,14 @@ create_default:
 			// deluxemapping
 			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, 1 );
 
+			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_LIGHTMAP;
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS0_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->passes = ( shaderpass_t * )data;
+			s->name = ( char * )( s->passes + 1 );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_DEPTHWRITE;
@@ -2630,13 +2623,14 @@ create_default:
 			break;
 		case SHADER_TYPE_LIGHTMAP:
 			// lightmapping
+			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * 2 );
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_LIGHTMAP;
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS0_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 2;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->passes = ( shaderpass_t * )data;
+			s->name = ( char * )( s->passes + 2 );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
 			s->numpasses = 0;
 
 			pass = &s->passes[s->numpasses++];
@@ -2653,12 +2647,13 @@ create_default:
 			pass->images[0] = Shader_FindImage( s, shortname, 0, 0 );
 			break;
 		case SHADER_TYPE_CORONA:
+			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * 1 );
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->passes = ( shaderpass_t * )data;
+			s->name = ( char * )( s->passes + 1 );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ONE;
@@ -2671,13 +2666,14 @@ create_default:
 			// load material images
 			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, 1 );
 
+			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT;
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->passes = ( shaderpass_t * )data;
+			s->name = ( char * )( s->passes + 1 );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_DEPTHWRITE;
@@ -2694,13 +2690,15 @@ create_default:
 		case SHADER_TYPE_2D:
 		case SHADER_TYPE_2D_RAW:
 		case SHADER_TYPE_VIDEO:
+			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
+
 			s->flags = 0;
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->passes = ( shaderpass_t * )data;
+			s->name = ( char * )( s->passes + 1 );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
@@ -2721,31 +2719,36 @@ create_default:
 			}
 			break;
 		case SHADER_TYPE_OPAQUE_ENV:
+			// pad to 4 floats
+			data = R_Malloc( ((sizeof( shaderpass_t ) + 15) & ~15) + 4 * sizeof( float ) + shortname_length + 1 );
+
 			s->vattribs = VATTRIB_POSITION_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->flags = SHADER_CULL_FRONT|SHADER_DEPTHWRITE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses + 3 * sizeof( float ) );
+			s->passes = ( shaderpass_t * )( data );
+			s->passes[0].rgbgen.args = ( float * )((qbyte *)data + ((sizeof( shaderpass_t ) + 15) & ~15));
+			s->name = ( char * )( s->passes[0].rgbgen.args + 4 );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_DEPTHWRITE;
 			pass->rgbgen.type = RGB_GEN_ENVIRONMENT;
-			pass->rgbgen.args = ( float * )( ( qbyte * )s->passes + sizeof( shaderpass_t ) * s->numpasses );
 			VectorClear( pass->rgbgen.args );
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_NONE;
 			pass->images[0] = rsh.whiteTexture;
 			break;
 		case SHADER_TYPE_SKYBOX:
+			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
+
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
 			s->sort = SHADER_SORT_SKY;
 			s->flags = SHADER_CULL_FRONT|SHADER_SKY;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->passes = ( shaderpass_t * )data;
+			s->name = ( char * )( s->passes + 1 );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
 
 			pass = &s->passes[0];
 			pass->rgbgen.type = RGB_GEN_IDENTITY;

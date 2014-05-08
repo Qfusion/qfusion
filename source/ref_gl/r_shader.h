@@ -184,26 +184,26 @@ enum
 
 typedef struct
 {
-	unsigned short		type;			// SHADER_FUNC enum
+	unsigned int		type;			// SHADER_FUNC enum
 	float				args[4];		// offset, amplitude, phase_offset, rate
 } shaderfunc_t;
 
 typedef struct
 {
-	unsigned short		type;
+	unsigned int		type;
 	float				args[6];
 } tcmod_t;
 
 typedef struct
 {
-	unsigned short		type;
+	unsigned int		type;
 	float				*args;
-	shaderfunc_t		*func;
+	shaderfunc_t		func;
 } colorgen_t;
 
 typedef struct
 {
-	unsigned short		type;
+	unsigned int		type;
 	float				args[4];
 	shaderfunc_t		func;
 } deformv_t;
@@ -216,20 +216,20 @@ typedef struct
 	colorgen_t			rgbgen;
 	colorgen_t			alphagen;
 
-	unsigned short		tcgen;
+	unsigned int		tcgen;
 	vec_t				*tcgenVec;
 
-	unsigned short		numtcmods;
+	unsigned int		numtcmods;
 	tcmod_t				*tcmods;
 
 	unsigned int		cin;
 
-	unsigned short		program_type;
+	unsigned int		program_type;
 
 	image_t				*images[MAX_SHADER_images]; // texture refs
 
 	float				anim_fps;					// animation frames per sec
-	unsigned short		anim_numframes;
+	unsigned int		anim_numframes;
 } shaderpass_t;
 
 // Shader information
@@ -245,10 +245,10 @@ typedef struct shader_s
 	unsigned int		sort;
 	unsigned int		sortkey;
 
-	unsigned short		numpasses;
+	unsigned int		numpasses;
 	shaderpass_t		*passes;
 
-	unsigned short		numdeforms;
+	unsigned int		numdeforms;
 	deformv_t			*deforms;
 	char				*deformsKey;
 

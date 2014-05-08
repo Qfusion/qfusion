@@ -294,7 +294,7 @@ void RB_VertexTCCelshadeMatrix( mat4_t matrix )
 */
 void RB_ApplyTCMods( const shaderpass_t *pass, mat4_t result )
 {
-	int i;
+	unsigned i;
 	const float *table;
 	double t1, t2, sint, cost;
 	mat4_t m1, m2;
@@ -366,8 +366,8 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 	double temp;
 	float *table, a;
 	vec3_t v;
-	const shaderfunc_t *rgbgenfunc = pass->rgbgen.func;
-	const shaderfunc_t *alphagenfunc = pass->alphagen.func;
+	const shaderfunc_t *rgbgenfunc = &pass->rgbgen.func;
+	const shaderfunc_t *alphagenfunc = &pass->alphagen.func;
 
 	Vector4Set( rgba, 255, 255, 255, 255 );
 
@@ -555,7 +555,7 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 		case RGB_GEN_WAVE:
 		case RGB_GEN_CUSTOMWAVE:
 			programFeatures |= GLSL_SHADER_COMMON_RGB_GEN_CONST;
-			if( rgbgen->func && rgbgen->func->type == SHADER_FUNC_RAMP ) {
+			if( rgbgen->func.type == SHADER_FUNC_RAMP ) {
 				programFeatures |= GLSL_SHADER_COMMON_RGB_DISTANCERAMP;
 			}
 			break;
@@ -574,7 +574,7 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 			break;
 		case ALPHA_GEN_WAVE:
 			programFeatures |= GLSL_SHADER_COMMON_ALPHA_GEN_CONST;
-			if( alphagen->func && alphagen->func->type == SHADER_FUNC_RAMP ) {
+			if( alphagen->func.type == SHADER_FUNC_RAMP ) {
 				programFeatures |= GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP;
 			}
 			break;
@@ -739,8 +739,8 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 		rb.currentShaderTime, 
 		entOrigin, entDist, rb.entityColor,
 		constColor, 
-		pass->rgbgen.func ? pass->rgbgen.func->args : pass->rgbgen.args, 
-		pass->alphagen.func ? pass->alphagen.func->args : pass->alphagen.args,
+		pass->rgbgen.func.type != SHADER_FUNC_NONE ? pass->rgbgen.func.args : pass->rgbgen.args, 
+		pass->alphagen.func.type != SHADER_FUNC_NONE ? pass->alphagen.func.args : pass->alphagen.args,
 		texMatrix );
 
 	RP_UpdateBlendMixUniform( program, blendMix );
@@ -2172,7 +2172,7 @@ void RB_DrawOutlinedElements( void )
 */
 void RB_DrawShadedElements( void )
 {
-	int i;
+	unsigned i;
 	qboolean addGLSLOutline = qfalse;
 	shaderpass_t *pass;
 
