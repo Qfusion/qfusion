@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -469,6 +469,288 @@
 		6EF3BCFE12481DD40014316D /* WString.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBFF12481DD40014316D /* WString.h */; };
 		6EF3BCFF12481DD40014316D /* XMLNodeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BC0012481DD40014316D /* XMLNodeHandler.h */; };
 		6EF3BD0012481DD40014316D /* XMLParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BC0112481DD40014316D /* XMLParser.h */; };
+		F33196EE1918945E00D96120 /* BaseXMLParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBA912481DD40014316D /* BaseXMLParser.h */; };
+		F33196EF1918945E00D96120 /* Box.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBAA12481DD40014316D /* Box.h */; };
+		F33196F01918945E00D96120 /* Colour.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBAB12481DD40014316D /* Colour.h */; };
+		F33196F11918945E00D96120 /* Context.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBAD12481DD40014316D /* Context.h */; };
+		F33196F21918945E00D96120 /* ContextInstancer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBAE12481DD40014316D /* ContextInstancer.h */; };
+		F33196F31918945E00D96120 /* ConvolutionFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBAF12481DD40014316D /* ConvolutionFilter.h */; };
+		F33196F41918945E00D96120 /* Core.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBB012481DD40014316D /* Core.h */; };
+		F33196F51918945E00D96120 /* Debug.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBB112481DD40014316D /* Debug.h */; };
+		F33196F61918945E00D96120 /* Decorator.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBB212481DD40014316D /* Decorator.h */; };
+		F33196F71918945E00D96120 /* DecoratorInstancer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBB312481DD40014316D /* DecoratorInstancer.h */; };
+		F33196F81918945E00D96120 /* Dictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBB412481DD40014316D /* Dictionary.h */; };
+		F33196F91918945E00D96120 /* Element.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBB612481DD40014316D /* Element.h */; };
+		F33196FA1918945E00D96120 /* ElementDocument.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBB812481DD40014316D /* ElementDocument.h */; };
+		F33196FB1918945E00D96120 /* ElementInstancer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBB912481DD40014316D /* ElementInstancer.h */; };
+		F33196FC1918945E00D96120 /* ElementInstancerGeneric.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBBA12481DD40014316D /* ElementInstancerGeneric.h */; };
+		F33196FD1918945E00D96120 /* ElementReference.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBBC12481DD40014316D /* ElementReference.h */; };
+		F33196FE1918945E00D96120 /* ElementScroll.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBBD12481DD40014316D /* ElementScroll.h */; };
+		F33196FF1918945E00D96120 /* ElementText.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBBE12481DD40014316D /* ElementText.h */; };
+		F33197001918945E00D96120 /* ElementUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBBF12481DD40014316D /* ElementUtilities.h */; };
+		F33197011918945E00D96120 /* Event.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC012481DD40014316D /* Event.h */; };
+		F33197021918945E00D96120 /* EventInstancer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC112481DD40014316D /* EventInstancer.h */; };
+		F33197031918945E00D96120 /* EventListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC212481DD40014316D /* EventListener.h */; };
+		F33197041918945E00D96120 /* EventListenerInstancer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC312481DD40014316D /* EventListenerInstancer.h */; };
+		F33197051918945E00D96120 /* Factory.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC412481DD40014316D /* Factory.h */; };
+		F33197061918945E00D96120 /* FileInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC512481DD40014316D /* FileInterface.h */; };
+		F33197071918945E00D96120 /* Font.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC612481DD40014316D /* Font.h */; };
+		F33197081918945E00D96120 /* FontDatabase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC712481DD40014316D /* FontDatabase.h */; };
+		F33197091918945E00D96120 /* FontEffect.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC812481DD40014316D /* FontEffect.h */; };
+		F331970A1918945E00D96120 /* FontEffectInstancer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBC912481DD40014316D /* FontEffectInstancer.h */; };
+		F331970B1918945E00D96120 /* FontGlyph.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBCA12481DD40014316D /* FontGlyph.h */; };
+		F331970C1918945E00D96120 /* Geometry.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBCB12481DD40014316D /* Geometry.h */; };
+		F331970D1918945E00D96120 /* GeometryUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBCC12481DD40014316D /* GeometryUtilities.h */; };
+		F331970E1918945E00D96120 /* Header.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBCD12481DD40014316D /* Header.h */; };
+		F331970F1918945E00D96120 /* Input.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBCE12481DD40014316D /* Input.h */; };
+		F33197101918945E00D96120 /* Log.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBCF12481DD40014316D /* Log.h */; };
+		F33197111918945E00D96120 /* Math.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBD012481DD40014316D /* Math.h */; };
+		F33197121918945E00D96120 /* MathTypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBD112481DD40014316D /* MathTypes.h */; };
+		F33197131918945E00D96120 /* Platform.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBD212481DD40014316D /* Platform.h */; };
+		F33197141918945E00D96120 /* Plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBD312481DD40014316D /* Plugin.h */; };
+		F33197151918945E00D96120 /* Property.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBD612481DD40014316D /* Property.h */; };
+		F33197161918945E00D96120 /* PropertyDefinition.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBD712481DD40014316D /* PropertyDefinition.h */; };
+		F33197171918945E00D96120 /* PropertyDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBD812481DD40014316D /* PropertyDictionary.h */; };
+		F33197181918945E00D96120 /* PropertyParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBD912481DD40014316D /* PropertyParser.h */; };
+		F33197191918945E00D96120 /* PropertySpecification.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBDA12481DD40014316D /* PropertySpecification.h */; };
+		F331971A1918945E00D96120 /* ReferenceCountable.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBE712481DD40014316D /* ReferenceCountable.h */; };
+		F331971B1918945E00D96120 /* RenderInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBE812481DD40014316D /* RenderInterface.h */; };
+		F331971C1918945E00D96120 /* ScriptInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBE912481DD40014316D /* ScriptInterface.h */; };
+		F331971D1918945E00D96120 /* Stream.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBEA12481DD40014316D /* Stream.h */; };
+		F331971E1918945E00D96120 /* StreamMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBEB12481DD40014316D /* StreamMemory.h */; };
+		F331971F1918945E00D96120 /* String.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBEC12481DD40014316D /* String.h */; };
+		F33197201918945E00D96120 /* StringBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBED12481DD40014316D /* StringBase.h */; };
+		F33197211918945E00D96120 /* StringUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF012481DD40014316D /* StringUtilities.h */; };
+		F33197221918945E00D96120 /* StyleSheet.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF112481DD40014316D /* StyleSheet.h */; };
+		F33197231918945E00D96120 /* StyleSheetKeywords.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF212481DD40014316D /* StyleSheetKeywords.h */; };
+		F33197241918945E00D96120 /* StyleSheetSpecification.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF312481DD40014316D /* StyleSheetSpecification.h */; };
+		F33197251918945E00D96120 /* SystemInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF412481DD40014316D /* SystemInterface.h */; };
+		F33197261918945E00D96120 /* Texture.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF512481DD40014316D /* Texture.h */; };
+		F33197271918945E00D96120 /* TypeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF612481DD40014316D /* TypeConverter.h */; };
+		F33197281918945E00D96120 /* Types.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF812481DD40014316D /* Types.h */; };
+		F33197291918945E00D96120 /* URL.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBF912481DD40014316D /* URL.h */; };
+		F331972A1918945E00D96120 /* Variant.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBFA12481DD40014316D /* Variant.h */; };
+		F331972B1918945E00D96120 /* Vector2.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBFC12481DD40014316D /* Vector2.h */; };
+		F331972C1918945E00D96120 /* Vertex.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBFE12481DD40014316D /* Vertex.h */; };
+		F331972D1918945E00D96120 /* WString.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BBFF12481DD40014316D /* WString.h */; };
+		F331972E1918945E00D96120 /* XMLNodeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BC0012481DD40014316D /* XMLNodeHandler.h */; };
+		F331972F1918945E00D96120 /* XMLParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BC0112481DD40014316D /* XMLParser.h */; };
+		F33197301918945E00D96120 /* ElementStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E2C557116AA3EA9007E581B /* ElementStyle.h */; };
+		F33197311918945E00D96120 /* ElementStyleCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E2C557316AA3EA9007E581B /* ElementStyleCache.h */; };
+		F33197331918945E00D96120 /* Colour.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBAC12481DD40014316D /* Colour.inl */; };
+		F33197341918945E00D96120 /* Dictionary.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBB512481DD40014316D /* Dictionary.inl */; };
+		F33197351918945E00D96120 /* Element.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBB712481DD40014316D /* Element.inl */; };
+		F33197361918945E00D96120 /* ElementInstancerGeneric.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBBB12481DD40014316D /* ElementInstancerGeneric.inl */; };
+		F33197371918945E00D96120 /* Pool.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBD512481DD40014316D /* Pool.inl */; };
+		F33197381918945E00D96120 /* StringBase.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBEE12481DD40014316D /* StringBase.inl */; };
+		F33197391918945E00D96120 /* TypeConverter.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBF712481DD40014316D /* TypeConverter.inl */; };
+		F331973A1918945E00D96120 /* Variant.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBFB12481DD40014316D /* Variant.inl */; };
+		F331973B1918945E00D96120 /* Vector2.inl in Resources */ = {isa = PBXBuildFile; fileRef = 6EF3BBFD12481DD40014316D /* Vector2.inl */; };
+		F331973D1918945E00D96120 /* BaseXMLParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D09261209823B00099E1A /* BaseXMLParser.cpp */; };
+		F331973E1918945E00D96120 /* Box.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28B78120580DA000FAF17 /* Box.cpp */; };
+		F331973F1918945E00D96120 /* Clock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0312058A45000FAF17 /* Clock.cpp */; };
+		F33197401918945E00D96120 /* Context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0512058A45000FAF17 /* Context.cpp */; };
+		F33197411918945E00D96120 /* ContextInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0612058A45000FAF17 /* ContextInstancer.cpp */; };
+		F33197421918945E00D96120 /* ContextInstancerDefault.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0712058A45000FAF17 /* ContextInstancerDefault.cpp */; };
+		F33197431918945E00D96120 /* ConvolutionFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0912058A45000FAF17 /* ConvolutionFilter.cpp */; };
+		F33197441918945E00D96120 /* Core.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0A12058A45000FAF17 /* Core.cpp */; };
+		F33197451918945E00D96120 /* Decorator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0C12058A45000FAF17 /* Decorator.cpp */; };
+		F33197461918945E00D96120 /* DecoratorInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0D12058A45000FAF17 /* DecoratorInstancer.cpp */; };
+		F33197471918945E00D96120 /* DecoratorNone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D0E12058A45000FAF17 /* DecoratorNone.cpp */; };
+		F33197481918945E00D96120 /* DecoratorNoneInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D1012058A45000FAF17 /* DecoratorNoneInstancer.cpp */; };
+		F33197491918945E00D96120 /* DecoratorTiled.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D1212058A45000FAF17 /* DecoratorTiled.cpp */; };
+		F331974A1918945E00D96120 /* DecoratorTiledBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D1412058A45000FAF17 /* DecoratorTiledBox.cpp */; };
+		F331974B1918945E00D96120 /* DecoratorTiledBoxInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D1612058A45000FAF17 /* DecoratorTiledBoxInstancer.cpp */; };
+		F331974C1918945E00D96120 /* DecoratorTiledHorizontal.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D1812058A45000FAF17 /* DecoratorTiledHorizontal.cpp */; };
+		F331974D1918945E00D96120 /* DecoratorTiledHorizontalInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D1A12058A45000FAF17 /* DecoratorTiledHorizontalInstancer.cpp */; };
+		F331974E1918945E00D96120 /* DecoratorTiledImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D1C12058A45000FAF17 /* DecoratorTiledImage.cpp */; };
+		F331974F1918945E00D96120 /* DecoratorTiledImageInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D1E12058A45000FAF17 /* DecoratorTiledImageInstancer.cpp */; };
+		F33197501918945E00D96120 /* DecoratorTiledInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2012058A45000FAF17 /* DecoratorTiledInstancer.cpp */; };
+		F33197511918945E00D96120 /* DecoratorTiledVertical.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2212058A45000FAF17 /* DecoratorTiledVertical.cpp */; };
+		F33197521918945E00D96120 /* DecoratorTiledVerticalInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2412058A45000FAF17 /* DecoratorTiledVerticalInstancer.cpp */; };
+		F33197531918945E00D96120 /* Dictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D09271209823B00099E1A /* Dictionary.cpp */; };
+		F33197541918945E00D96120 /* DocumentHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2612058A45000FAF17 /* DocumentHeader.cpp */; };
+		F33197551918945E00D96120 /* Element.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2812058A45000FAF17 /* Element.cpp */; };
+		F33197561918945E00D96120 /* ElementBackground.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2912058A45000FAF17 /* ElementBackground.cpp */; };
+		F33197571918945E00D96120 /* ElementBorder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2B12058A45000FAF17 /* ElementBorder.cpp */; };
+		F33197581918945E00D96120 /* ElementDecoration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2D12058A45000FAF17 /* ElementDecoration.cpp */; };
+		F33197591918945E00D96120 /* ElementDefinition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D2F12058A45000FAF17 /* ElementDefinition.cpp */; };
+		F331975A1918945E00D96120 /* ElementDocument.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3112058A45000FAF17 /* ElementDocument.cpp */; };
+		F331975B1918945E00D96120 /* ElementHandle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3212058A45000FAF17 /* ElementHandle.cpp */; };
+		F331975C1918945E00D96120 /* ElementImage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3412058A45000FAF17 /* ElementImage.cpp */; };
+		F331975D1918945E00D96120 /* ElementInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3612058A45000FAF17 /* ElementInstancer.cpp */; };
+		F331975E1918945E00D96120 /* ElementReference.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3712058A45000FAF17 /* ElementReference.cpp */; };
+		F331975F1918945E00D96120 /* ElementScroll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3812058A45000FAF17 /* ElementScroll.cpp */; };
+		F33197601918945E00D96120 /* ElementText.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3B12058A45000FAF17 /* ElementText.cpp */; };
+		F33197611918945E00D96120 /* ElementTextDefault.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3C12058A45000FAF17 /* ElementTextDefault.cpp */; };
+		F33197621918945E00D96120 /* ElementUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3E12058A45000FAF17 /* ElementUtilities.cpp */; };
+		F33197631918945E00D96120 /* Event.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D3F12058A45000FAF17 /* Event.cpp */; };
+		F33197641918945E00D96120 /* EventDispatcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4012058A45000FAF17 /* EventDispatcher.cpp */; };
+		F33197651918945E00D96120 /* EventInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4212058A45000FAF17 /* EventInstancer.cpp */; };
+		F33197661918945E00D96120 /* EventInstancerDefault.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4312058A45000FAF17 /* EventInstancerDefault.cpp */; };
+		F33197671918945E00D96120 /* EventListenerInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4612058A45000FAF17 /* EventListenerInstancer.cpp */; };
+		F33197681918945E00D96120 /* Factory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4712058A45000FAF17 /* Factory.cpp */; };
+		F33197691918945E00D96120 /* FileInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4812058A45000FAF17 /* FileInterface.cpp */; };
+		F331976A1918945E00D96120 /* FileInterfaceDefault.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4912058A45000FAF17 /* FileInterfaceDefault.cpp */; };
+		F331976B1918945E00D96120 /* FontDatabase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4B12058A45000FAF17 /* FontDatabase.cpp */; };
+		F331976C1918945E00D96120 /* FontEffect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4C12058A45000FAF17 /* FontEffect.cpp */; };
+		F331976D1918945E00D96120 /* FontEffectInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4D12058A45000FAF17 /* FontEffectInstancer.cpp */; };
+		F331976E1918945E00D96120 /* FontEffectNone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D4E12058A45000FAF17 /* FontEffectNone.cpp */; };
+		F331976F1918945E00D96120 /* FontEffectNoneInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D5012058A45000FAF17 /* FontEffectNoneInstancer.cpp */; };
+		F33197701918945E00D96120 /* FontEffectOutline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D5212058A45000FAF17 /* FontEffectOutline.cpp */; };
+		F33197711918945E00D96120 /* FontEffectOutlineInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D5412058A45000FAF17 /* FontEffectOutlineInstancer.cpp */; };
+		F33197721918945E00D96120 /* FontEffectShadow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D5612058A45000FAF17 /* FontEffectShadow.cpp */; };
+		F33197731918945E00D96120 /* FontEffectShadowInstancer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D5812058A45000FAF17 /* FontEffectShadowInstancer.cpp */; };
+		F33197741918945E00D96120 /* FontFace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D5A12058A45000FAF17 /* FontFace.cpp */; };
+		F33197751918945E00D96120 /* FontFaceHandle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D5C12058A45000FAF17 /* FontFaceHandle.cpp */; };
+		F33197761918945E00D96120 /* FontFaceLayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D5E12058A45000FAF17 /* FontFaceLayer.cpp */; };
+		F33197771918945E00D96120 /* FontFamily.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6012058A45000FAF17 /* FontFamily.cpp */; };
+		F33197781918945E00D96120 /* Geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6212058A45000FAF17 /* Geometry.cpp */; };
+		F33197791918945E00D96120 /* GeometryDatabase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6312058A45000FAF17 /* GeometryDatabase.cpp */; };
+		F331977A1918945E00D96120 /* GeometryUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6512058A45000FAF17 /* GeometryUtilities.cpp */; };
+		F331977B1918945E00D96120 /* LayoutBlockBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6612058A45000FAF17 /* LayoutBlockBox.cpp */; };
+		F331977C1918945E00D96120 /* LayoutBlockBoxSpace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6812058A45000FAF17 /* LayoutBlockBoxSpace.cpp */; };
+		F331977D1918945E00D96120 /* LayoutEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6A12058A45000FAF17 /* LayoutEngine.cpp */; };
+		F331977E1918945E00D96120 /* LayoutInlineBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6C12058A45000FAF17 /* LayoutInlineBox.cpp */; };
+		F331977F1918945E00D96120 /* LayoutInlineBoxText.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D6E12058A45000FAF17 /* LayoutInlineBoxText.cpp */; };
+		F33197801918945E00D96120 /* LayoutLineBox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7012058A45000FAF17 /* LayoutLineBox.cpp */; };
+		F33197811918945E00D96120 /* Log.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7212058A45000FAF17 /* Log.cpp */; };
+		F33197821918945E00D96120 /* Math.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D09771209858B00099E1A /* Math.cpp */; };
+		F33197831918945E00D96120 /* Plugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7312058A45000FAF17 /* Plugin.cpp */; };
+		F33197841918945E00D96120 /* PluginRegistry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7412058A45000FAF17 /* PluginRegistry.cpp */; };
+		F33197851918945E00D96120 /* Property.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7812058A45000FAF17 /* Property.cpp */; };
+		F33197861918945E00D96120 /* PropertyDefinition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7912058A45000FAF17 /* PropertyDefinition.cpp */; };
+		F33197871918945E00D96120 /* PropertyDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7A12058A45000FAF17 /* PropertyDictionary.cpp */; };
+		F33197881918945E00D96120 /* PropertyParserColour.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7B12058A45000FAF17 /* PropertyParserColour.cpp */; };
+		F33197891918945E00D96120 /* PropertyParserKeyword.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7D12058A45000FAF17 /* PropertyParserKeyword.cpp */; };
+		F331978A1918945E00D96120 /* PropertyParserNumber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D7F12058A45000FAF17 /* PropertyParserNumber.cpp */; };
+		F331978B1918945E00D96120 /* PropertyParserString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D8112058A45000FAF17 /* PropertyParserString.cpp */; };
+		F331978C1918945E00D96120 /* PropertySpecification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28D8412058A45000FAF17 /* PropertySpecification.cpp */; };
+		F331978D1918945E00D96120 /* ReferenceCountable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D0987120986B600099E1A /* ReferenceCountable.cpp */; };
+		F331978E1918945E00D96120 /* RenderInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DE212058A45000FAF17 /* RenderInterface.cpp */; };
+		F331978F1918945E00D96120 /* Stream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D09281209823B00099E1A /* Stream.cpp */; };
+		F33197901918945E00D96120 /* StreamFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DE312058A45000FAF17 /* StreamFile.cpp */; };
+		F33197911918945E00D96120 /* StreamMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D09291209823B00099E1A /* StreamMemory.cpp */; };
+		F33197921918945E00D96120 /* String.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D099B1209878A00099E1A /* String.cpp */; };
+		F33197931918945E00D96120 /* StringCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DE612058A45000FAF17 /* StringCache.cpp */; };
+		F33197941918945E00D96120 /* StringUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D092A1209823B00099E1A /* StringUtilities.cpp */; };
+		F33197951918945E00D96120 /* StyleSheet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DE812058A45000FAF17 /* StyleSheet.cpp */; };
+		F33197961918945E00D96120 /* StyleSheetFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DE912058A45000FAF17 /* StyleSheetFactory.cpp */; };
+		F33197971918945E00D96120 /* StyleSheetNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DEB12058A45000FAF17 /* StyleSheetNode.cpp */; };
+		F33197981918945E00D96120 /* StyleSheetNodeSelector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DED12058A45000FAF17 /* StyleSheetNodeSelector.cpp */; };
+		F33197991918945E00D96120 /* StyleSheetNodeSelectorEmpty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DEF12058A45000FAF17 /* StyleSheetNodeSelectorEmpty.cpp */; };
+		F331979A1918945E00D96120 /* StyleSheetNodeSelectorFirstChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DF112058A45000FAF17 /* StyleSheetNodeSelectorFirstChild.cpp */; };
+		F331979B1918945E00D96120 /* StyleSheetNodeSelectorFirstOfType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DF312058A45000FAF17 /* StyleSheetNodeSelectorFirstOfType.cpp */; };
+		F331979C1918945E00D96120 /* StyleSheetNodeSelectorLastChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DF512058A45000FAF17 /* StyleSheetNodeSelectorLastChild.cpp */; };
+		F331979D1918945E00D96120 /* StyleSheetNodeSelectorLastOfType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DF712058A45000FAF17 /* StyleSheetNodeSelectorLastOfType.cpp */; };
+		F331979E1918945E00D96120 /* StyleSheetNodeSelectorNthChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DF912058A45000FAF17 /* StyleSheetNodeSelectorNthChild.cpp */; };
+		F331979F1918945E00D96120 /* StyleSheetNodeSelectorNthLastChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DFB12058A45000FAF17 /* StyleSheetNodeSelectorNthLastChild.cpp */; };
+		F33197A01918945E00D96120 /* StyleSheetNodeSelectorNthLastOfType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DFD12058A45000FAF17 /* StyleSheetNodeSelectorNthLastOfType.cpp */; };
+		F33197A11918945E00D96120 /* StyleSheetNodeSelectorNthOfType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DFF12058A45000FAF17 /* StyleSheetNodeSelectorNthOfType.cpp */; };
+		F33197A21918945E00D96120 /* StyleSheetNodeSelectorOnlyChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0112058A45000FAF17 /* StyleSheetNodeSelectorOnlyChild.cpp */; };
+		F33197A31918945E00D96120 /* StyleSheetNodeSelectorOnlyOfType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0312058A45000FAF17 /* StyleSheetNodeSelectorOnlyOfType.cpp */; };
+		F33197A41918945E00D96120 /* StyleSheetParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0512058A45000FAF17 /* StyleSheetParser.cpp */; };
+		F33197A51918945E00D96120 /* StyleSheetSpecification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0712058A45000FAF17 /* StyleSheetSpecification.cpp */; };
+		F33197A61918945E00D96120 /* SystemInterface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0812058A45000FAF17 /* SystemInterface.cpp */; };
+		F33197A71918945E00D96120 /* Template.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0912058A45000FAF17 /* Template.cpp */; };
+		F33197A81918945E00D96120 /* TemplateCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0B12058A45000FAF17 /* TemplateCache.cpp */; };
+		F33197A91918945E00D96120 /* Texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0D12058A45000FAF17 /* Texture.cpp */; };
+		F33197AA1918945E00D96120 /* TextureDatabase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E0E12058A45000FAF17 /* TextureDatabase.cpp */; };
+		F33197AB1918945E00D96120 /* TextureLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E1012058A45000FAF17 /* TextureLayout.cpp */; };
+		F33197AC1918945E00D96120 /* TextureLayoutRectangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E1212058A45000FAF17 /* TextureLayoutRectangle.cpp */; };
+		F33197AD1918945E00D96120 /* TextureLayoutRow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E1412058A45000FAF17 /* TextureLayoutRow.cpp */; };
+		F33197AE1918945E00D96120 /* TextureLayoutTexture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E1612058A45000FAF17 /* TextureLayoutTexture.cpp */; };
+		F33197AF1918945E00D96120 /* TextureResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E1812058A45000FAF17 /* TextureResource.cpp */; };
+		F33197B01918945E00D96120 /* UnicodeRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E1D12058A45000FAF17 /* UnicodeRange.cpp */; };
+		F33197B11918945E00D96120 /* URL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D092B1209823B00099E1A /* URL.cpp */; };
+		F33197B21918945E00D96120 /* Variant.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E9D092C1209823B00099E1A /* Variant.cpp */; };
+		F33197B31918945E00D96120 /* WidgetSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E1F12058A45000FAF17 /* WidgetSlider.cpp */; };
+		F33197B41918945E00D96120 /* WidgetSliderScroll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2112058A45000FAF17 /* WidgetSliderScroll.cpp */; };
+		F33197B51918945E00D96120 /* WString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28DE512058A45000FAF17 /* WString.cpp */; };
+		F33197B61918945E00D96120 /* XMLNodeHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2312058A45000FAF17 /* XMLNodeHandler.cpp */; };
+		F33197B71918945E00D96120 /* XMLNodeHandlerBody.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2412058A45000FAF17 /* XMLNodeHandlerBody.cpp */; };
+		F33197B81918945E00D96120 /* XMLNodeHandlerDefault.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2612058A45000FAF17 /* XMLNodeHandlerDefault.cpp */; };
+		F33197B91918945E00D96120 /* XMLNodeHandlerHead.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2812058A45000FAF17 /* XMLNodeHandlerHead.cpp */; };
+		F33197BA1918945E00D96120 /* XMLNodeHandlerTemplate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2A12058A45000FAF17 /* XMLNodeHandlerTemplate.cpp */; };
+		F33197BB1918945E00D96120 /* XMLParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2C12058A45000FAF17 /* XMLParser.cpp */; };
+		F33197BC1918945E00D96120 /* XMLParseTools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2D12058A45000FAF17 /* XMLParseTools.cpp */; };
+		F33197BD1918945E00D96120 /* ElementStyle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E2C557016AA3EA9007E581B /* ElementStyle.cpp */; };
+		F33197BE1918945E00D96120 /* ElementStyleCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E2C557216AA3EA9007E581B /* ElementStyleCache.cpp */; };
+		F33197C01918945E00D96120 /* libfreetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E8B1DC2123AB7A500C451C8 /* libfreetype.a */; };
+		F33197C11918945E00D96120 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E8B1DD1123ABA3A00C451C8 /* libz.dylib */; };
+		F3E0B609191895DD00AED602 /* Clipboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C2D123AB0CC00C451C8 /* Clipboard.cpp */; };
+		F3E0B60A191895DD00AED602 /* Controls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C2E123AB0CC00C451C8 /* Controls.cpp */; };
+		F3E0B60B191895DD00AED602 /* DataFormatter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C2F123AB0CC00C451C8 /* DataFormatter.cpp */; };
+		F3E0B60C191895DD00AED602 /* DataQuery.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C30123AB0CC00C451C8 /* DataQuery.cpp */; };
+		F3E0B60D191895DD00AED602 /* DataSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C31123AB0CC00C451C8 /* DataSource.cpp */; };
+		F3E0B60E191895DD00AED602 /* DataSourceListener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C32123AB0CC00C451C8 /* DataSourceListener.cpp */; };
+		F3E0B60F191895DD00AED602 /* ElementDataGrid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C33123AB0CC00C451C8 /* ElementDataGrid.cpp */; };
+		F3E0B610191895DD00AED602 /* ElementDataGridCell.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C34123AB0CC00C451C8 /* ElementDataGridCell.cpp */; };
+		F3E0B611191895DD00AED602 /* ElementDataGridExpandButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C35123AB0CC00C451C8 /* ElementDataGridExpandButton.cpp */; };
+		F3E0B612191895DD00AED602 /* ElementDataGridRow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C36123AB0CC00C451C8 /* ElementDataGridRow.cpp */; };
+		F3E0B613191895DD00AED602 /* ElementForm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C37123AB0CC00C451C8 /* ElementForm.cpp */; };
+		F3E0B614191895DD00AED602 /* ElementFormControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C38123AB0CC00C451C8 /* ElementFormControl.cpp */; };
+		F3E0B615191895DD00AED602 /* ElementFormControlDataSelect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C39123AB0CC00C451C8 /* ElementFormControlDataSelect.cpp */; };
+		F3E0B616191895DD00AED602 /* ElementFormControlInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C3A123AB0CC00C451C8 /* ElementFormControlInput.cpp */; };
+		F3E0B617191895DD00AED602 /* ElementFormControlSelect.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C3B123AB0CC00C451C8 /* ElementFormControlSelect.cpp */; };
+		F3E0B618191895DD00AED602 /* ElementFormControlTextArea.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C3C123AB0CC00C451C8 /* ElementFormControlTextArea.cpp */; };
+		F3E0B619191895DD00AED602 /* ElementTabSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C3D123AB0CC00C451C8 /* ElementTabSet.cpp */; };
+		F3E0B61A191895DD00AED602 /* ElementTextSelection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C3E123AB0CC00C451C8 /* ElementTextSelection.cpp */; };
+		F3E0B61B191895DD00AED602 /* InputType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C40123AB0CC00C451C8 /* InputType.cpp */; };
+		F3E0B61C191895DD00AED602 /* InputTypeButton.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C42123AB0CC00C451C8 /* InputTypeButton.cpp */; };
+		F3E0B61D191895DD00AED602 /* InputTypeCheckbox.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C44123AB0CC00C451C8 /* InputTypeCheckbox.cpp */; };
+		F3E0B61E191895DD00AED602 /* InputTypeRadio.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C46123AB0CC00C451C8 /* InputTypeRadio.cpp */; };
+		F3E0B61F191895DD00AED602 /* InputTypeRange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C48123AB0CC00C451C8 /* InputTypeRange.cpp */; };
+		F3E0B620191895DD00AED602 /* InputTypeSubmit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C4A123AB0CC00C451C8 /* InputTypeSubmit.cpp */; };
+		F3E0B621191895DD00AED602 /* InputTypeText.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C4C123AB0CC00C451C8 /* InputTypeText.cpp */; };
+		F3E0B622191895DD00AED602 /* SelectOption.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C5D123AB0CC00C451C8 /* SelectOption.cpp */; };
+		F3E0B623191895DD00AED602 /* WidgetDropDown.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C5E123AB0CC00C451C8 /* WidgetDropDown.cpp */; };
+		F3E0B624191895DD00AED602 /* WidgetSlider.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C60123AB0CC00C451C8 /* WidgetSlider.cpp */; };
+		F3E0B625191895DD00AED602 /* WidgetSliderInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C62123AB0CC00C451C8 /* WidgetSliderInput.cpp */; };
+		F3E0B626191895DD00AED602 /* WidgetTextInput.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C64123AB0CC00C451C8 /* WidgetTextInput.cpp */; };
+		F3E0B627191895DD00AED602 /* WidgetTextInputMultiLine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C66123AB0CC00C451C8 /* WidgetTextInputMultiLine.cpp */; };
+		F3E0B628191895DD00AED602 /* WidgetTextInputSingleLine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C68123AB0CC00C451C8 /* WidgetTextInputSingleLine.cpp */; };
+		F3E0B629191895DD00AED602 /* WidgetTextInputSingleLinePassword.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C6A123AB0CC00C451C8 /* WidgetTextInputSingleLinePassword.cpp */; };
+		F3E0B62A191895DD00AED602 /* XMLNodeHandlerDataGrid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C6C123AB0CC00C451C8 /* XMLNodeHandlerDataGrid.cpp */; };
+		F3E0B62B191895DD00AED602 /* XMLNodeHandlerTabSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C6E123AB0CC00C451C8 /* XMLNodeHandlerTabSet.cpp */; };
+		F3E0B62C191895DD00AED602 /* XMLNodeHandlerTextArea.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C70123AB0CC00C451C8 /* XMLNodeHandlerTextArea.cpp */; };
+		F3E0B62D191895DD00AED602 /* Clipboard.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB5A12481D140014316D /* Clipboard.h */; };
+		F3E0B62E191895DD00AED602 /* Controls.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB5B12481D140014316D /* Controls.h */; };
+		F3E0B62F191895DD00AED602 /* DataFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB5C12481D140014316D /* DataFormatter.h */; };
+		F3E0B630191895DD00AED602 /* DataQuery.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB5D12481D140014316D /* DataQuery.h */; };
+		F3E0B631191895DD00AED602 /* DataSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB5E12481D140014316D /* DataSource.h */; };
+		F3E0B632191895DD00AED602 /* DataSourceListener.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB5F12481D140014316D /* DataSourceListener.h */; };
+		F3E0B633191895DD00AED602 /* ElementDataGrid.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6012481D140014316D /* ElementDataGrid.h */; };
+		F3E0B634191895DD00AED602 /* ElementDataGridCell.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6112481D140014316D /* ElementDataGridCell.h */; };
+		F3E0B635191895DD00AED602 /* ElementDataGridExpandButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6212481D140014316D /* ElementDataGridExpandButton.h */; };
+		F3E0B636191895DD00AED602 /* ElementDataGridRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6312481D140014316D /* ElementDataGridRow.h */; };
+		F3E0B637191895DD00AED602 /* ElementForm.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6412481D140014316D /* ElementForm.h */; };
+		F3E0B638191895DD00AED602 /* ElementFormControl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6512481D140014316D /* ElementFormControl.h */; };
+		F3E0B639191895DD00AED602 /* ElementFormControlDataSelect.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6612481D140014316D /* ElementFormControlDataSelect.h */; };
+		F3E0B63A191895DD00AED602 /* ElementFormControlInput.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6712481D140014316D /* ElementFormControlInput.h */; };
+		F3E0B63B191895DD00AED602 /* ElementFormControlSelect.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6812481D140014316D /* ElementFormControlSelect.h */; };
+		F3E0B63C191895DD00AED602 /* ElementFormControlTextArea.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6912481D140014316D /* ElementFormControlTextArea.h */; };
+		F3E0B63D191895DD00AED602 /* ElementTabSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6A12481D140014316D /* ElementTabSet.h */; };
+		F3E0B63E191895DD00AED602 /* ElementTextSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C3F123AB0CC00C451C8 /* ElementTextSelection.h */; };
+		F3E0B63F191895DD00AED602 /* Header.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6B12481D140014316D /* Header.h */; };
+		F3E0B640191895DD00AED602 /* InputType.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C41123AB0CC00C451C8 /* InputType.h */; };
+		F3E0B641191895DD00AED602 /* InputTypeButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C43123AB0CC00C451C8 /* InputTypeButton.h */; };
+		F3E0B642191895DD00AED602 /* InputTypeCheckbox.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C45123AB0CC00C451C8 /* InputTypeCheckbox.h */; };
+		F3E0B643191895DD00AED602 /* InputTypeRadio.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C47123AB0CC00C451C8 /* InputTypeRadio.h */; };
+		F3E0B644191895DD00AED602 /* InputTypeRange.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C49123AB0CC00C451C8 /* InputTypeRange.h */; };
+		F3E0B645191895DD00AED602 /* InputTypeSubmit.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C4B123AB0CC00C451C8 /* InputTypeSubmit.h */; };
+		F3E0B646191895DD00AED602 /* InputTypeText.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C4D123AB0CC00C451C8 /* InputTypeText.h */; };
+		F3E0B647191895DD00AED602 /* SelectOption.h in Headers */ = {isa = PBXBuildFile; fileRef = 6EF3BB6C12481D140014316D /* SelectOption.h */; };
+		F3E0B648191895DD00AED602 /* WidgetDropDown.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C5F123AB0CC00C451C8 /* WidgetDropDown.h */; };
+		F3E0B649191895DD00AED602 /* WidgetSlider.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C61123AB0CC00C451C8 /* WidgetSlider.h */; };
+		F3E0B64A191895DD00AED602 /* WidgetSliderInput.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C63123AB0CC00C451C8 /* WidgetSliderInput.h */; };
+		F3E0B64B191895DD00AED602 /* WidgetTextInput.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C65123AB0CC00C451C8 /* WidgetTextInput.h */; };
+		F3E0B64C191895DD00AED602 /* WidgetTextInputMultiLine.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C67123AB0CC00C451C8 /* WidgetTextInputMultiLine.h */; };
+		F3E0B64D191895DD00AED602 /* WidgetTextInputSingleLine.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C69123AB0CC00C451C8 /* WidgetTextInputSingleLine.h */; };
+		F3E0B64E191895DD00AED602 /* WidgetTextInputSingleLinePassword.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C6B123AB0CC00C451C8 /* WidgetTextInputSingleLinePassword.h */; };
+		F3E0B64F191895DD00AED602 /* XMLNodeHandlerDataGrid.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C6D123AB0CC00C451C8 /* XMLNodeHandlerDataGrid.h */; };
+		F3E0B650191895DD00AED602 /* XMLNodeHandlerTabSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C6F123AB0CC00C451C8 /* XMLNodeHandlerTabSet.h */; };
+		F3E0B651191895DD00AED602 /* XMLNodeHandlerTextArea.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E8B1C71123AB0CC00C451C8 /* XMLNodeHandlerTextArea.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -816,6 +1098,15 @@
 		6EF3BBFF12481DD40014316D /* WString.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WString.h; path = ../Include/Rocket/Core/WString.h; sourceTree = SOURCE_ROOT; };
 		6EF3BC0012481DD40014316D /* XMLNodeHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = XMLNodeHandler.h; path = ../Include/Rocket/Core/XMLNodeHandler.h; sourceTree = SOURCE_ROOT; };
 		6EF3BC0112481DD40014316D /* XMLParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = XMLParser.h; path = ../Include/Rocket/Core/XMLParser.h; sourceTree = SOURCE_ROOT; };
+		F31AC2441918837F004C4845 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		F31AC2471918837F004C4845 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		F31AC2481918837F004C4845 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		F31AC2491918837F004C4845 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		F31AC25919188380004C4845 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		F31AC26119188380004C4845 /* RocketTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "RocketTests-Info.plist"; sourceTree = "<group>"; };
+		F31AC26319188380004C4845 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		F31AC26519188380004C4845 /* RocketTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RocketTests.m; sourceTree = "<group>"; };
+		F33197C51918945E00D96120 /* Rocket.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Rocket.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -866,6 +1157,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F33197BF1918945E00D96120 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F33197C01918945E00D96120 /* libfreetype.a in Frameworks */,
+				F33197C11918945E00D96120 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -876,6 +1176,10 @@
 				6E8B1BE2123AADEB00C451C8 /* Controls */,
 				6E8B1BD8123AABCD00C451C8 /* Core */,
 				6E9D09201209807A00099E1A /* Libraries */,
+				F31AC24A1918837F004C4845 /* Rocket */,
+				F31AC25F19188380004C4845 /* RocketTests */,
+				F31AC2431918837F004C4845 /* Frameworks */,
+				F33197C51918945E00D96120 /* Rocket.framework */,
 			);
 			name = test;
 			sourceTree = "<group>";
@@ -884,26 +1188,15 @@
 			isa = PBXGroup;
 			children = (
 				6E9D09261209823B00099E1A /* BaseXMLParser.cpp */,
-				6EF3BBA912481DD40014316D /* BaseXMLParser.h */,
 				6EF28B78120580DA000FAF17 /* Box.cpp */,
-				6EF3BBAA12481DD40014316D /* Box.h */,
 				6EF28D0312058A45000FAF17 /* Clock.cpp */,
-				6EF3BBAB12481DD40014316D /* Colour.h */,
-				6EF3BBAC12481DD40014316D /* Colour.inl */,
 				6EF28D0512058A45000FAF17 /* Context.cpp */,
-				6EF3BBAD12481DD40014316D /* Context.h */,
 				6EF28D0612058A45000FAF17 /* ContextInstancer.cpp */,
-				6EF3BBAE12481DD40014316D /* ContextInstancer.h */,
 				6EF28D0712058A45000FAF17 /* ContextInstancerDefault.cpp */,
 				6EF28D0912058A45000FAF17 /* ConvolutionFilter.cpp */,
-				6EF3BBAF12481DD40014316D /* ConvolutionFilter.h */,
 				6EF28D0A12058A45000FAF17 /* Core.cpp */,
-				6EF3BBB012481DD40014316D /* Core.h */,
-				6EF3BBB112481DD40014316D /* Debug.h */,
 				6EF28D0C12058A45000FAF17 /* Decorator.cpp */,
-				6EF3BBB212481DD40014316D /* Decorator.h */,
 				6EF28D0D12058A45000FAF17 /* DecoratorInstancer.cpp */,
-				6EF3BBB312481DD40014316D /* DecoratorInstancer.h */,
 				6EF28D0E12058A45000FAF17 /* DecoratorNone.cpp */,
 				6EF28D1012058A45000FAF17 /* DecoratorNoneInstancer.cpp */,
 				6EF28D1212058A45000FAF17 /* DecoratorTiled.cpp */,
@@ -917,58 +1210,34 @@
 				6EF28D2212058A45000FAF17 /* DecoratorTiledVertical.cpp */,
 				6EF28D2412058A45000FAF17 /* DecoratorTiledVerticalInstancer.cpp */,
 				6E9D09271209823B00099E1A /* Dictionary.cpp */,
-				6EF3BBB412481DD40014316D /* Dictionary.h */,
-				6EF3BBB512481DD40014316D /* Dictionary.inl */,
 				6EF28D2612058A45000FAF17 /* DocumentHeader.cpp */,
 				6EF28D2812058A45000FAF17 /* Element.cpp */,
-				6EF3BBB612481DD40014316D /* Element.h */,
-				6EF3BBB712481DD40014316D /* Element.inl */,
 				6EF28D2912058A45000FAF17 /* ElementBackground.cpp */,
 				6EF28D2B12058A45000FAF17 /* ElementBorder.cpp */,
 				6EF28D2D12058A45000FAF17 /* ElementDecoration.cpp */,
 				6EF28D2F12058A45000FAF17 /* ElementDefinition.cpp */,
 				6EF28D3112058A45000FAF17 /* ElementDocument.cpp */,
-				6EF3BBB812481DD40014316D /* ElementDocument.h */,
 				6EF28D3212058A45000FAF17 /* ElementHandle.cpp */,
 				6EF28D3412058A45000FAF17 /* ElementImage.cpp */,
 				6EF28D3612058A45000FAF17 /* ElementInstancer.cpp */,
-				6EF3BBB912481DD40014316D /* ElementInstancer.h */,
-				6EF3BBBA12481DD40014316D /* ElementInstancerGeneric.h */,
-				6EF3BBBB12481DD40014316D /* ElementInstancerGeneric.inl */,
 				6EF28D3712058A45000FAF17 /* ElementReference.cpp */,
-				6EF3BBBC12481DD40014316D /* ElementReference.h */,
 				6EF28D3812058A45000FAF17 /* ElementScroll.cpp */,
-				6EF3BBBD12481DD40014316D /* ElementScroll.h */,
 				6E2C557016AA3EA9007E581B /* ElementStyle.cpp */,
-				6E2C557116AA3EA9007E581B /* ElementStyle.h */,
 				6E2C557216AA3EA9007E581B /* ElementStyleCache.cpp */,
-				6E2C557316AA3EA9007E581B /* ElementStyleCache.h */,
 				6EF28D3B12058A45000FAF17 /* ElementText.cpp */,
-				6EF3BBBE12481DD40014316D /* ElementText.h */,
 				6EF28D3C12058A45000FAF17 /* ElementTextDefault.cpp */,
 				6EF28D3E12058A45000FAF17 /* ElementUtilities.cpp */,
-				6EF3BBBF12481DD40014316D /* ElementUtilities.h */,
 				6EF28D3F12058A45000FAF17 /* Event.cpp */,
-				6EF3BBC012481DD40014316D /* Event.h */,
 				6EF28D4012058A45000FAF17 /* EventDispatcher.cpp */,
 				6EF28D4212058A45000FAF17 /* EventInstancer.cpp */,
-				6EF3BBC112481DD40014316D /* EventInstancer.h */,
 				6EF28D4312058A45000FAF17 /* EventInstancerDefault.cpp */,
-				6EF3BBC212481DD40014316D /* EventListener.h */,
 				6EF28D4612058A45000FAF17 /* EventListenerInstancer.cpp */,
-				6EF3BBC312481DD40014316D /* EventListenerInstancer.h */,
 				6EF28D4712058A45000FAF17 /* Factory.cpp */,
-				6EF3BBC412481DD40014316D /* Factory.h */,
 				6EF28D4812058A45000FAF17 /* FileInterface.cpp */,
-				6EF3BBC512481DD40014316D /* FileInterface.h */,
 				6EF28D4912058A45000FAF17 /* FileInterfaceDefault.cpp */,
-				6EF3BBC612481DD40014316D /* Font.h */,
 				6EF28D4B12058A45000FAF17 /* FontDatabase.cpp */,
-				6EF3BBC712481DD40014316D /* FontDatabase.h */,
 				6EF28D4C12058A45000FAF17 /* FontEffect.cpp */,
-				6EF3BBC812481DD40014316D /* FontEffect.h */,
 				6EF28D4D12058A45000FAF17 /* FontEffectInstancer.cpp */,
-				6EF3BBC912481DD40014316D /* FontEffectInstancer.h */,
 				6EF28D4E12058A45000FAF17 /* FontEffectNone.cpp */,
 				6EF28D5012058A45000FAF17 /* FontEffectNoneInstancer.cpp */,
 				6EF28D5212058A45000FAF17 /* FontEffectOutline.cpp */,
@@ -979,14 +1248,9 @@
 				6EF28D5C12058A45000FAF17 /* FontFaceHandle.cpp */,
 				6EF28D5E12058A45000FAF17 /* FontFaceLayer.cpp */,
 				6EF28D6012058A45000FAF17 /* FontFamily.cpp */,
-				6EF3BBCA12481DD40014316D /* FontGlyph.h */,
 				6EF28D6212058A45000FAF17 /* Geometry.cpp */,
-				6EF3BBCB12481DD40014316D /* Geometry.h */,
 				6EF28D6312058A45000FAF17 /* GeometryDatabase.cpp */,
 				6EF28D6512058A45000FAF17 /* GeometryUtilities.cpp */,
-				6EF3BBCC12481DD40014316D /* GeometryUtilities.h */,
-				6EF3BBCD12481DD40014316D /* Header.h */,
-				6EF3BBCE12481DD40014316D /* Input.h */,
 				6EF28D6612058A45000FAF17 /* LayoutBlockBox.cpp */,
 				6EF28D6812058A45000FAF17 /* LayoutBlockBoxSpace.cpp */,
 				6EF28D6A12058A45000FAF17 /* LayoutEngine.cpp */,
@@ -994,49 +1258,27 @@
 				6EF28D6E12058A45000FAF17 /* LayoutInlineBoxText.cpp */,
 				6EF28D7012058A45000FAF17 /* LayoutLineBox.cpp */,
 				6EF28D7212058A45000FAF17 /* Log.cpp */,
-				6EF3BBCF12481DD40014316D /* Log.h */,
 				6E9D09771209858B00099E1A /* Math.cpp */,
-				6EF3BBD012481DD40014316D /* Math.h */,
-				6EF3BBD112481DD40014316D /* MathTypes.h */,
-				6EF3BBD212481DD40014316D /* Platform.h */,
 				6EF28D7312058A45000FAF17 /* Plugin.cpp */,
-				6EF3BBD312481DD40014316D /* Plugin.h */,
 				6EF28D7412058A45000FAF17 /* PluginRegistry.cpp */,
-				6EF3BBD512481DD40014316D /* Pool.inl */,
 				6EF28D7812058A45000FAF17 /* Property.cpp */,
-				6EF3BBD612481DD40014316D /* Property.h */,
 				6EF28D7912058A45000FAF17 /* PropertyDefinition.cpp */,
-				6EF3BBD712481DD40014316D /* PropertyDefinition.h */,
 				6EF28D7A12058A45000FAF17 /* PropertyDictionary.cpp */,
-				6EF3BBD812481DD40014316D /* PropertyDictionary.h */,
-				6EF3BBD912481DD40014316D /* PropertyParser.h */,
 				6EF28D7B12058A45000FAF17 /* PropertyParserColour.cpp */,
 				6EF28D7D12058A45000FAF17 /* PropertyParserKeyword.cpp */,
 				6EF28D7F12058A45000FAF17 /* PropertyParserNumber.cpp */,
 				6EF28D8112058A45000FAF17 /* PropertyParserString.cpp */,
 				6EF28D8412058A45000FAF17 /* PropertySpecification.cpp */,
-				6EF3BBDA12481DD40014316D /* PropertySpecification.h */,
 				6E9D0987120986B600099E1A /* ReferenceCountable.cpp */,
-				6EF3BBE712481DD40014316D /* ReferenceCountable.h */,
 				6EF28DE212058A45000FAF17 /* RenderInterface.cpp */,
-				6EF3BBE812481DD40014316D /* RenderInterface.h */,
-				6EF3BBE912481DD40014316D /* ScriptInterface.h */,
 				6E9D09281209823B00099E1A /* Stream.cpp */,
-				6EF3BBEA12481DD40014316D /* Stream.h */,
 				6EF28DE312058A45000FAF17 /* StreamFile.cpp */,
 				6E9D09291209823B00099E1A /* StreamMemory.cpp */,
-				6EF3BBEB12481DD40014316D /* StreamMemory.h */,
 				6E9D099B1209878A00099E1A /* String.cpp */,
-				6EF3BBEC12481DD40014316D /* String.h */,
-				6EF3BBED12481DD40014316D /* StringBase.h */,
-				6EF3BBEE12481DD40014316D /* StringBase.inl */,
 				6EF28DE612058A45000FAF17 /* StringCache.cpp */,
 				6E9D092A1209823B00099E1A /* StringUtilities.cpp */,
-				6EF3BBF012481DD40014316D /* StringUtilities.h */,
 				6EF28DE812058A45000FAF17 /* StyleSheet.cpp */,
-				6EF3BBF112481DD40014316D /* StyleSheet.h */,
 				6EF28DE912058A45000FAF17 /* StyleSheetFactory.cpp */,
-				6EF3BBF212481DD40014316D /* StyleSheetKeywords.h */,
 				6EF28DEB12058A45000FAF17 /* StyleSheetNode.cpp */,
 				6EF28DED12058A45000FAF17 /* StyleSheetNodeSelector.cpp */,
 				6EF28DEF12058A45000FAF17 /* StyleSheetNodeSelectorEmpty.cpp */,
@@ -1052,44 +1294,106 @@
 				6EF28E0312058A45000FAF17 /* StyleSheetNodeSelectorOnlyOfType.cpp */,
 				6EF28E0512058A45000FAF17 /* StyleSheetParser.cpp */,
 				6EF28E0712058A45000FAF17 /* StyleSheetSpecification.cpp */,
-				6EF3BBF312481DD40014316D /* StyleSheetSpecification.h */,
 				6EF28E0812058A45000FAF17 /* SystemInterface.cpp */,
-				6EF3BBF412481DD40014316D /* SystemInterface.h */,
 				6EF28E0912058A45000FAF17 /* Template.cpp */,
 				6EF28E0B12058A45000FAF17 /* TemplateCache.cpp */,
 				6EF28E0D12058A45000FAF17 /* Texture.cpp */,
-				6EF3BBF512481DD40014316D /* Texture.h */,
 				6EF28E0E12058A45000FAF17 /* TextureDatabase.cpp */,
 				6EF28E1012058A45000FAF17 /* TextureLayout.cpp */,
 				6EF28E1212058A45000FAF17 /* TextureLayoutRectangle.cpp */,
 				6EF28E1412058A45000FAF17 /* TextureLayoutRow.cpp */,
 				6EF28E1612058A45000FAF17 /* TextureLayoutTexture.cpp */,
 				6EF28E1812058A45000FAF17 /* TextureResource.cpp */,
-				6EF3BBF612481DD40014316D /* TypeConverter.h */,
-				6EF3BBF712481DD40014316D /* TypeConverter.inl */,
-				6EF3BBF812481DD40014316D /* Types.h */,
 				6EF28E1D12058A45000FAF17 /* UnicodeRange.cpp */,
 				6E9D092B1209823B00099E1A /* URL.cpp */,
-				6EF3BBF912481DD40014316D /* URL.h */,
 				6E9D092C1209823B00099E1A /* Variant.cpp */,
-				6EF3BBFA12481DD40014316D /* Variant.h */,
-				6EF3BBFB12481DD40014316D /* Variant.inl */,
-				6EF3BBFC12481DD40014316D /* Vector2.h */,
-				6EF3BBFD12481DD40014316D /* Vector2.inl */,
-				6EF3BBFE12481DD40014316D /* Vertex.h */,
 				6EF28E1F12058A45000FAF17 /* WidgetSlider.cpp */,
 				6EF28E2112058A45000FAF17 /* WidgetSliderScroll.cpp */,
 				6EF28DE512058A45000FAF17 /* WString.cpp */,
-				6EF3BBFF12481DD40014316D /* WString.h */,
 				6EF28E2312058A45000FAF17 /* XMLNodeHandler.cpp */,
-				6EF3BC0012481DD40014316D /* XMLNodeHandler.h */,
 				6EF28E2412058A45000FAF17 /* XMLNodeHandlerBody.cpp */,
 				6EF28E2612058A45000FAF17 /* XMLNodeHandlerDefault.cpp */,
 				6EF28E2812058A45000FAF17 /* XMLNodeHandlerHead.cpp */,
 				6EF28E2A12058A45000FAF17 /* XMLNodeHandlerTemplate.cpp */,
 				6EF28E2C12058A45000FAF17 /* XMLParser.cpp */,
-				6EF3BC0112481DD40014316D /* XMLParser.h */,
 				6EF28E2D12058A45000FAF17 /* XMLParseTools.cpp */,
+				6EF3BBA912481DD40014316D /* BaseXMLParser.h */,
+				6EF3BBAA12481DD40014316D /* Box.h */,
+				6EF3BBAB12481DD40014316D /* Colour.h */,
+				6EF3BBAD12481DD40014316D /* Context.h */,
+				6EF3BBAE12481DD40014316D /* ContextInstancer.h */,
+				6EF3BBAF12481DD40014316D /* ConvolutionFilter.h */,
+				6EF3BBB012481DD40014316D /* Core.h */,
+				6EF3BBB112481DD40014316D /* Debug.h */,
+				6EF3BBB212481DD40014316D /* Decorator.h */,
+				6EF3BBB312481DD40014316D /* DecoratorInstancer.h */,
+				6EF3BBB412481DD40014316D /* Dictionary.h */,
+				6EF3BBB612481DD40014316D /* Element.h */,
+				6EF3BBB812481DD40014316D /* ElementDocument.h */,
+				6EF3BBB912481DD40014316D /* ElementInstancer.h */,
+				6EF3BBBA12481DD40014316D /* ElementInstancerGeneric.h */,
+				6EF3BBBC12481DD40014316D /* ElementReference.h */,
+				6EF3BBBD12481DD40014316D /* ElementScroll.h */,
+				6E2C557116AA3EA9007E581B /* ElementStyle.h */,
+				6E2C557316AA3EA9007E581B /* ElementStyleCache.h */,
+				6EF3BBBE12481DD40014316D /* ElementText.h */,
+				6EF3BBBF12481DD40014316D /* ElementUtilities.h */,
+				6EF3BBC012481DD40014316D /* Event.h */,
+				6EF3BBC112481DD40014316D /* EventInstancer.h */,
+				6EF3BBC212481DD40014316D /* EventListener.h */,
+				6EF3BBC312481DD40014316D /* EventListenerInstancer.h */,
+				6EF3BBC412481DD40014316D /* Factory.h */,
+				6EF3BBC512481DD40014316D /* FileInterface.h */,
+				6EF3BBC612481DD40014316D /* Font.h */,
+				6EF3BBC712481DD40014316D /* FontDatabase.h */,
+				6EF3BBC812481DD40014316D /* FontEffect.h */,
+				6EF3BBC912481DD40014316D /* FontEffectInstancer.h */,
+				6EF3BBCA12481DD40014316D /* FontGlyph.h */,
+				6EF3BBCB12481DD40014316D /* Geometry.h */,
+				6EF3BBCC12481DD40014316D /* GeometryUtilities.h */,
+				6EF3BBCD12481DD40014316D /* Header.h */,
+				6EF3BBCE12481DD40014316D /* Input.h */,
+				6EF3BBCF12481DD40014316D /* Log.h */,
+				6EF3BBD012481DD40014316D /* Math.h */,
+				6EF3BBD112481DD40014316D /* MathTypes.h */,
+				6EF3BBD212481DD40014316D /* Platform.h */,
+				6EF3BBD312481DD40014316D /* Plugin.h */,
+				6EF3BBD612481DD40014316D /* Property.h */,
+				6EF3BBD712481DD40014316D /* PropertyDefinition.h */,
+				6EF3BBD812481DD40014316D /* PropertyDictionary.h */,
+				6EF3BBD912481DD40014316D /* PropertyParser.h */,
+				6EF3BBDA12481DD40014316D /* PropertySpecification.h */,
+				6EF3BBE712481DD40014316D /* ReferenceCountable.h */,
+				6EF3BBE812481DD40014316D /* RenderInterface.h */,
+				6EF3BBE912481DD40014316D /* ScriptInterface.h */,
+				6EF3BBEA12481DD40014316D /* Stream.h */,
+				6EF3BBEB12481DD40014316D /* StreamMemory.h */,
+				6EF3BBEC12481DD40014316D /* String.h */,
+				6EF3BBED12481DD40014316D /* StringBase.h */,
+				6EF3BBF012481DD40014316D /* StringUtilities.h */,
+				6EF3BBF112481DD40014316D /* StyleSheet.h */,
+				6EF3BBF212481DD40014316D /* StyleSheetKeywords.h */,
+				6EF3BBF312481DD40014316D /* StyleSheetSpecification.h */,
+				6EF3BBF412481DD40014316D /* SystemInterface.h */,
+				6EF3BBF512481DD40014316D /* Texture.h */,
+				6EF3BBF612481DD40014316D /* TypeConverter.h */,
+				6EF3BBF812481DD40014316D /* Types.h */,
+				6EF3BBF912481DD40014316D /* URL.h */,
+				6EF3BBFA12481DD40014316D /* Variant.h */,
+				6EF3BBFC12481DD40014316D /* Vector2.h */,
+				6EF3BBFE12481DD40014316D /* Vertex.h */,
+				6EF3BBFF12481DD40014316D /* WString.h */,
+				6EF3BC0012481DD40014316D /* XMLNodeHandler.h */,
+				6EF3BC0112481DD40014316D /* XMLParser.h */,
+				6EF3BBAC12481DD40014316D /* Colour.inl */,
+				6EF3BBB512481DD40014316D /* Dictionary.inl */,
+				6EF3BBB712481DD40014316D /* Element.inl */,
+				6EF3BBBB12481DD40014316D /* ElementInstancerGeneric.inl */,
+				6EF3BBD512481DD40014316D /* Pool.inl */,
+				6EF3BBEE12481DD40014316D /* StringBase.inl */,
+				6EF3BBF712481DD40014316D /* TypeConverter.inl */,
+				6EF3BBFB12481DD40014316D /* Variant.inl */,
+				6EF3BBFD12481DD40014316D /* Vector2.inl */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -1098,77 +1402,77 @@
 			isa = PBXGroup;
 			children = (
 				6E8B1C2D123AB0CC00C451C8 /* Clipboard.cpp */,
-				6EF3BB5A12481D140014316D /* Clipboard.h */,
 				6E8B1C2E123AB0CC00C451C8 /* Controls.cpp */,
-				6EF3BB5B12481D140014316D /* Controls.h */,
 				6E8B1C2F123AB0CC00C451C8 /* DataFormatter.cpp */,
-				6EF3BB5C12481D140014316D /* DataFormatter.h */,
 				6E8B1C30123AB0CC00C451C8 /* DataQuery.cpp */,
-				6EF3BB5D12481D140014316D /* DataQuery.h */,
 				6E8B1C31123AB0CC00C451C8 /* DataSource.cpp */,
-				6EF3BB5E12481D140014316D /* DataSource.h */,
 				6E8B1C32123AB0CC00C451C8 /* DataSourceListener.cpp */,
-				6EF3BB5F12481D140014316D /* DataSourceListener.h */,
 				6E8B1C33123AB0CC00C451C8 /* ElementDataGrid.cpp */,
-				6EF3BB6012481D140014316D /* ElementDataGrid.h */,
 				6E8B1C34123AB0CC00C451C8 /* ElementDataGridCell.cpp */,
-				6EF3BB6112481D140014316D /* ElementDataGridCell.h */,
 				6E8B1C35123AB0CC00C451C8 /* ElementDataGridExpandButton.cpp */,
-				6EF3BB6212481D140014316D /* ElementDataGridExpandButton.h */,
 				6E8B1C36123AB0CC00C451C8 /* ElementDataGridRow.cpp */,
-				6EF3BB6312481D140014316D /* ElementDataGridRow.h */,
 				6E8B1C37123AB0CC00C451C8 /* ElementForm.cpp */,
-				6EF3BB6412481D140014316D /* ElementForm.h */,
 				6E8B1C38123AB0CC00C451C8 /* ElementFormControl.cpp */,
-				6EF3BB6512481D140014316D /* ElementFormControl.h */,
 				6E8B1C39123AB0CC00C451C8 /* ElementFormControlDataSelect.cpp */,
-				6EF3BB6612481D140014316D /* ElementFormControlDataSelect.h */,
 				6E8B1C3A123AB0CC00C451C8 /* ElementFormControlInput.cpp */,
-				6EF3BB6712481D140014316D /* ElementFormControlInput.h */,
 				6E8B1C3B123AB0CC00C451C8 /* ElementFormControlSelect.cpp */,
-				6EF3BB6812481D140014316D /* ElementFormControlSelect.h */,
 				6E8B1C3C123AB0CC00C451C8 /* ElementFormControlTextArea.cpp */,
-				6EF3BB6912481D140014316D /* ElementFormControlTextArea.h */,
 				6E8B1C3D123AB0CC00C451C8 /* ElementTabSet.cpp */,
-				6EF3BB6A12481D140014316D /* ElementTabSet.h */,
 				6E8B1C3E123AB0CC00C451C8 /* ElementTextSelection.cpp */,
+				6E8B1C40123AB0CC00C451C8 /* InputType.cpp */,
+				6E8B1C42123AB0CC00C451C8 /* InputTypeButton.cpp */,
+				6E8B1C44123AB0CC00C451C8 /* InputTypeCheckbox.cpp */,
+				6E8B1C46123AB0CC00C451C8 /* InputTypeRadio.cpp */,
+				6E8B1C48123AB0CC00C451C8 /* InputTypeRange.cpp */,
+				6E8B1C4A123AB0CC00C451C8 /* InputTypeSubmit.cpp */,
+				6E8B1C4C123AB0CC00C451C8 /* InputTypeText.cpp */,
+				6E8B1C5D123AB0CC00C451C8 /* SelectOption.cpp */,
+				6E8B1C5E123AB0CC00C451C8 /* WidgetDropDown.cpp */,
+				6E8B1C60123AB0CC00C451C8 /* WidgetSlider.cpp */,
+				6E8B1C62123AB0CC00C451C8 /* WidgetSliderInput.cpp */,
+				6E8B1C64123AB0CC00C451C8 /* WidgetTextInput.cpp */,
+				6E8B1C66123AB0CC00C451C8 /* WidgetTextInputMultiLine.cpp */,
+				6E8B1C68123AB0CC00C451C8 /* WidgetTextInputSingleLine.cpp */,
+				6E8B1C6A123AB0CC00C451C8 /* WidgetTextInputSingleLinePassword.cpp */,
+				6E8B1C6C123AB0CC00C451C8 /* XMLNodeHandlerDataGrid.cpp */,
+				6E8B1C6E123AB0CC00C451C8 /* XMLNodeHandlerTabSet.cpp */,
+				6E8B1C70123AB0CC00C451C8 /* XMLNodeHandlerTextArea.cpp */,
+				6EF3BB5A12481D140014316D /* Clipboard.h */,
+				6EF3BB5B12481D140014316D /* Controls.h */,
+				6EF3BB5C12481D140014316D /* DataFormatter.h */,
+				6EF3BB5D12481D140014316D /* DataQuery.h */,
+				6EF3BB5E12481D140014316D /* DataSource.h */,
+				6EF3BB5F12481D140014316D /* DataSourceListener.h */,
+				6EF3BB6012481D140014316D /* ElementDataGrid.h */,
+				6EF3BB6112481D140014316D /* ElementDataGridCell.h */,
+				6EF3BB6212481D140014316D /* ElementDataGridExpandButton.h */,
+				6EF3BB6312481D140014316D /* ElementDataGridRow.h */,
+				6EF3BB6412481D140014316D /* ElementForm.h */,
+				6EF3BB6512481D140014316D /* ElementFormControl.h */,
+				6EF3BB6612481D140014316D /* ElementFormControlDataSelect.h */,
+				6EF3BB6712481D140014316D /* ElementFormControlInput.h */,
+				6EF3BB6812481D140014316D /* ElementFormControlSelect.h */,
+				6EF3BB6912481D140014316D /* ElementFormControlTextArea.h */,
+				6EF3BB6A12481D140014316D /* ElementTabSet.h */,
 				6E8B1C3F123AB0CC00C451C8 /* ElementTextSelection.h */,
 				6EF3BB6B12481D140014316D /* Header.h */,
-				6E8B1C40123AB0CC00C451C8 /* InputType.cpp */,
 				6E8B1C41123AB0CC00C451C8 /* InputType.h */,
-				6E8B1C42123AB0CC00C451C8 /* InputTypeButton.cpp */,
 				6E8B1C43123AB0CC00C451C8 /* InputTypeButton.h */,
-				6E8B1C44123AB0CC00C451C8 /* InputTypeCheckbox.cpp */,
 				6E8B1C45123AB0CC00C451C8 /* InputTypeCheckbox.h */,
-				6E8B1C46123AB0CC00C451C8 /* InputTypeRadio.cpp */,
 				6E8B1C47123AB0CC00C451C8 /* InputTypeRadio.h */,
-				6E8B1C48123AB0CC00C451C8 /* InputTypeRange.cpp */,
 				6E8B1C49123AB0CC00C451C8 /* InputTypeRange.h */,
-				6E8B1C4A123AB0CC00C451C8 /* InputTypeSubmit.cpp */,
 				6E8B1C4B123AB0CC00C451C8 /* InputTypeSubmit.h */,
-				6E8B1C4C123AB0CC00C451C8 /* InputTypeText.cpp */,
 				6E8B1C4D123AB0CC00C451C8 /* InputTypeText.h */,
-				6E8B1C5D123AB0CC00C451C8 /* SelectOption.cpp */,
 				6EF3BB6C12481D140014316D /* SelectOption.h */,
-				6E8B1C5E123AB0CC00C451C8 /* WidgetDropDown.cpp */,
 				6E8B1C5F123AB0CC00C451C8 /* WidgetDropDown.h */,
-				6E8B1C60123AB0CC00C451C8 /* WidgetSlider.cpp */,
 				6E8B1C61123AB0CC00C451C8 /* WidgetSlider.h */,
-				6E8B1C62123AB0CC00C451C8 /* WidgetSliderInput.cpp */,
 				6E8B1C63123AB0CC00C451C8 /* WidgetSliderInput.h */,
-				6E8B1C64123AB0CC00C451C8 /* WidgetTextInput.cpp */,
 				6E8B1C65123AB0CC00C451C8 /* WidgetTextInput.h */,
-				6E8B1C66123AB0CC00C451C8 /* WidgetTextInputMultiLine.cpp */,
 				6E8B1C67123AB0CC00C451C8 /* WidgetTextInputMultiLine.h */,
-				6E8B1C68123AB0CC00C451C8 /* WidgetTextInputSingleLine.cpp */,
 				6E8B1C69123AB0CC00C451C8 /* WidgetTextInputSingleLine.h */,
-				6E8B1C6A123AB0CC00C451C8 /* WidgetTextInputSingleLinePassword.cpp */,
 				6E8B1C6B123AB0CC00C451C8 /* WidgetTextInputSingleLinePassword.h */,
-				6E8B1C6C123AB0CC00C451C8 /* XMLNodeHandlerDataGrid.cpp */,
 				6E8B1C6D123AB0CC00C451C8 /* XMLNodeHandlerDataGrid.h */,
-				6E8B1C6E123AB0CC00C451C8 /* XMLNodeHandlerTabSet.cpp */,
 				6E8B1C6F123AB0CC00C451C8 /* XMLNodeHandlerTabSet.h */,
-				6E8B1C70123AB0CC00C451C8 /* XMLNodeHandlerTextArea.cpp */,
 				6E8B1C71123AB0CC00C451C8 /* XMLNodeHandlerTextArea.h */,
 			);
 			name = Controls;
@@ -1219,6 +1523,59 @@
 				6E8B1B0C123A0E2A00C451C8 /* libRocketCoreiOS.a */,
 			);
 			name = Libraries;
+			sourceTree = "<group>";
+		};
+		F31AC2431918837F004C4845 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F31AC2441918837F004C4845 /* Cocoa.framework */,
+				F31AC25919188380004C4845 /* XCTest.framework */,
+				F31AC2461918837F004C4845 /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F31AC2461918837F004C4845 /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F31AC2471918837F004C4845 /* Foundation.framework */,
+				F31AC2481918837F004C4845 /* CoreData.framework */,
+				F31AC2491918837F004C4845 /* AppKit.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		F31AC24A1918837F004C4845 /* Rocket */ = {
+			isa = PBXGroup;
+			children = (
+				F31AC24B1918837F004C4845 /* Supporting Files */,
+			);
+			path = Rocket;
+			sourceTree = "<group>";
+		};
+		F31AC24B1918837F004C4845 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		F31AC25F19188380004C4845 /* RocketTests */ = {
+			isa = PBXGroup;
+			children = (
+				F31AC26519188380004C4845 /* RocketTests.m */,
+				F31AC26019188380004C4845 /* Supporting Files */,
+			);
+			path = RocketTests;
+			sourceTree = "<group>";
+		};
+		F31AC26019188380004C4845 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				F31AC26119188380004C4845 /* RocketTests-Info.plist */,
+				F31AC26219188380004C4845 /* InfoPlist.strings */,
+			);
+			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1359,6 +1716,118 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F33196ED1918945E00D96120 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F33196EE1918945E00D96120 /* BaseXMLParser.h in Headers */,
+				F33196EF1918945E00D96120 /* Box.h in Headers */,
+				F3E0B64A191895DD00AED602 /* WidgetSliderInput.h in Headers */,
+				F33196F01918945E00D96120 /* Colour.h in Headers */,
+				F3E0B639191895DD00AED602 /* ElementFormControlDataSelect.h in Headers */,
+				F33196F11918945E00D96120 /* Context.h in Headers */,
+				F33196F21918945E00D96120 /* ContextInstancer.h in Headers */,
+				F3E0B635191895DD00AED602 /* ElementDataGridExpandButton.h in Headers */,
+				F3E0B64F191895DD00AED602 /* XMLNodeHandlerDataGrid.h in Headers */,
+				F33196F31918945E00D96120 /* ConvolutionFilter.h in Headers */,
+				F3E0B63A191895DD00AED602 /* ElementFormControlInput.h in Headers */,
+				F33196F41918945E00D96120 /* Core.h in Headers */,
+				F3E0B647191895DD00AED602 /* SelectOption.h in Headers */,
+				F33196F51918945E00D96120 /* Debug.h in Headers */,
+				F3E0B638191895DD00AED602 /* ElementFormControl.h in Headers */,
+				F3E0B63B191895DD00AED602 /* ElementFormControlSelect.h in Headers */,
+				F33196F61918945E00D96120 /* Decorator.h in Headers */,
+				F33196F71918945E00D96120 /* DecoratorInstancer.h in Headers */,
+				F33196F81918945E00D96120 /* Dictionary.h in Headers */,
+				F33196F91918945E00D96120 /* Element.h in Headers */,
+				F3E0B644191895DD00AED602 /* InputTypeRange.h in Headers */,
+				F3E0B64C191895DD00AED602 /* WidgetTextInputMultiLine.h in Headers */,
+				F33196FA1918945E00D96120 /* ElementDocument.h in Headers */,
+				F33196FB1918945E00D96120 /* ElementInstancer.h in Headers */,
+				F33196FC1918945E00D96120 /* ElementInstancerGeneric.h in Headers */,
+				F3E0B642191895DD00AED602 /* InputTypeCheckbox.h in Headers */,
+				F3E0B648191895DD00AED602 /* WidgetDropDown.h in Headers */,
+				F33196FD1918945E00D96120 /* ElementReference.h in Headers */,
+				F3E0B650191895DD00AED602 /* XMLNodeHandlerTabSet.h in Headers */,
+				F33196FE1918945E00D96120 /* ElementScroll.h in Headers */,
+				F33196FF1918945E00D96120 /* ElementText.h in Headers */,
+				F3E0B63C191895DD00AED602 /* ElementFormControlTextArea.h in Headers */,
+				F33197001918945E00D96120 /* ElementUtilities.h in Headers */,
+				F3E0B63D191895DD00AED602 /* ElementTabSet.h in Headers */,
+				F33197011918945E00D96120 /* Event.h in Headers */,
+				F33197021918945E00D96120 /* EventInstancer.h in Headers */,
+				F33197031918945E00D96120 /* EventListener.h in Headers */,
+				F33197041918945E00D96120 /* EventListenerInstancer.h in Headers */,
+				F33197051918945E00D96120 /* Factory.h in Headers */,
+				F33197061918945E00D96120 /* FileInterface.h in Headers */,
+				F33197071918945E00D96120 /* Font.h in Headers */,
+				F33197081918945E00D96120 /* FontDatabase.h in Headers */,
+				F33197091918945E00D96120 /* FontEffect.h in Headers */,
+				F331970A1918945E00D96120 /* FontEffectInstancer.h in Headers */,
+				F331970B1918945E00D96120 /* FontGlyph.h in Headers */,
+				F331970C1918945E00D96120 /* Geometry.h in Headers */,
+				F331970D1918945E00D96120 /* GeometryUtilities.h in Headers */,
+				F331970E1918945E00D96120 /* Header.h in Headers */,
+				F331970F1918945E00D96120 /* Input.h in Headers */,
+				F33197101918945E00D96120 /* Log.h in Headers */,
+				F3E0B632191895DD00AED602 /* DataSourceListener.h in Headers */,
+				F33197111918945E00D96120 /* Math.h in Headers */,
+				F3E0B631191895DD00AED602 /* DataSource.h in Headers */,
+				F33197121918945E00D96120 /* MathTypes.h in Headers */,
+				F33197131918945E00D96120 /* Platform.h in Headers */,
+				F33197141918945E00D96120 /* Plugin.h in Headers */,
+				F33197151918945E00D96120 /* Property.h in Headers */,
+				F33197161918945E00D96120 /* PropertyDefinition.h in Headers */,
+				F33197171918945E00D96120 /* PropertyDictionary.h in Headers */,
+				F33197181918945E00D96120 /* PropertyParser.h in Headers */,
+				F3E0B646191895DD00AED602 /* InputTypeText.h in Headers */,
+				F3E0B649191895DD00AED602 /* WidgetSlider.h in Headers */,
+				F33197191918945E00D96120 /* PropertySpecification.h in Headers */,
+				F331971A1918945E00D96120 /* ReferenceCountable.h in Headers */,
+				F3E0B62D191895DD00AED602 /* Clipboard.h in Headers */,
+				F3E0B641191895DD00AED602 /* InputTypeButton.h in Headers */,
+				F331971B1918945E00D96120 /* RenderInterface.h in Headers */,
+				F3E0B634191895DD00AED602 /* ElementDataGridCell.h in Headers */,
+				F331971C1918945E00D96120 /* ScriptInterface.h in Headers */,
+				F3E0B636191895DD00AED602 /* ElementDataGridRow.h in Headers */,
+				F331971D1918945E00D96120 /* Stream.h in Headers */,
+				F331971E1918945E00D96120 /* StreamMemory.h in Headers */,
+				F331971F1918945E00D96120 /* String.h in Headers */,
+				F3E0B64D191895DD00AED602 /* WidgetTextInputSingleLine.h in Headers */,
+				F33197201918945E00D96120 /* StringBase.h in Headers */,
+				F33197211918945E00D96120 /* StringUtilities.h in Headers */,
+				F33197221918945E00D96120 /* StyleSheet.h in Headers */,
+				F3E0B63E191895DD00AED602 /* ElementTextSelection.h in Headers */,
+				F33197231918945E00D96120 /* StyleSheetKeywords.h in Headers */,
+				F33197241918945E00D96120 /* StyleSheetSpecification.h in Headers */,
+				F3E0B637191895DD00AED602 /* ElementForm.h in Headers */,
+				F33197251918945E00D96120 /* SystemInterface.h in Headers */,
+				F3E0B645191895DD00AED602 /* InputTypeSubmit.h in Headers */,
+				F3E0B64B191895DD00AED602 /* WidgetTextInput.h in Headers */,
+				F3E0B633191895DD00AED602 /* ElementDataGrid.h in Headers */,
+				F33197261918945E00D96120 /* Texture.h in Headers */,
+				F3E0B62F191895DD00AED602 /* DataFormatter.h in Headers */,
+				F3E0B62E191895DD00AED602 /* Controls.h in Headers */,
+				F33197271918945E00D96120 /* TypeConverter.h in Headers */,
+				F3E0B64E191895DD00AED602 /* WidgetTextInputSingleLinePassword.h in Headers */,
+				F33197281918945E00D96120 /* Types.h in Headers */,
+				F33197291918945E00D96120 /* URL.h in Headers */,
+				F331972A1918945E00D96120 /* Variant.h in Headers */,
+				F331972B1918945E00D96120 /* Vector2.h in Headers */,
+				F3E0B630191895DD00AED602 /* DataQuery.h in Headers */,
+				F3E0B651191895DD00AED602 /* XMLNodeHandlerTextArea.h in Headers */,
+				F331972C1918945E00D96120 /* Vertex.h in Headers */,
+				F331972D1918945E00D96120 /* WString.h in Headers */,
+				F331972E1918945E00D96120 /* XMLNodeHandler.h in Headers */,
+				F3E0B643191895DD00AED602 /* InputTypeRadio.h in Headers */,
+				F3E0B640191895DD00AED602 /* InputType.h in Headers */,
+				F331972F1918945E00D96120 /* XMLParser.h in Headers */,
+				F3E0B63F191895DD00AED602 /* Header.h in Headers */,
+				F33197301918945E00D96120 /* ElementStyle.h in Headers */,
+				F33197311918945E00D96120 /* ElementStyleCache.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
@@ -1471,13 +1940,34 @@
 			productReference = 6E8B1B0C123A0E2A00C451C8 /* libRocketCoreiOS.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		F33196EC1918945E00D96120 /* Rocket */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F33197C21918945E00D96120 /* Build configuration list for PBXNativeTarget "Rocket" */;
+			buildPhases = (
+				F33196ED1918945E00D96120 /* Headers */,
+				F33197321918945E00D96120 /* Resources */,
+				F331973C1918945E00D96120 /* Sources */,
+				F33197BF1918945E00D96120 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Rocket;
+			productName = RocketCoreOSX;
+			productReference = F33197C51918945E00D96120 /* Rocket.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		0867D690FE84028FC02AAC07 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0510;
+			};
 			buildConfigurationList = 1DEB922208733DC00010E9CD /* Build configuration list for PBXProject "Rocket" */;
-			compatibilityVersion = "Xcode 3.1";
+			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
@@ -1494,6 +1984,7 @@
 				6E8B1DDB123ABC7800C451C8 /* RocketCoreOSX */,
 				6E8B1EBB123AC7A200C451C8 /* RocketDebuggeriOS */,
 				6E8B1EC5123AC80700C451C8 /* RocketDebuggerOSX */,
+				F33196EC1918945E00D96120 /* Rocket */,
 			);
 		};
 /* End PBXProject section */
@@ -1535,6 +2026,22 @@
 				6EF3BC4F12481DD40014316D /* TypeConverter.inl in Resources */,
 				6EF3BC5312481DD40014316D /* Variant.inl in Resources */,
 				6EF3BC5512481DD40014316D /* Vector2.inl in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F33197321918945E00D96120 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F33197331918945E00D96120 /* Colour.inl in Resources */,
+				F33197341918945E00D96120 /* Dictionary.inl in Resources */,
+				F33197351918945E00D96120 /* Element.inl in Resources */,
+				F33197361918945E00D96120 /* ElementInstancerGeneric.inl in Resources */,
+				F33197371918945E00D96120 /* Pool.inl in Resources */,
+				F33197381918945E00D96120 /* StringBase.inl in Resources */,
+				F33197391918945E00D96120 /* TypeConverter.inl in Resources */,
+				F331973A1918945E00D96120 /* Variant.inl in Resources */,
+				F331973B1918945E00D96120 /* Vector2.inl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1929,6 +2436,179 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F331973C1918945E00D96120 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F331973D1918945E00D96120 /* BaseXMLParser.cpp in Sources */,
+				F331973E1918945E00D96120 /* Box.cpp in Sources */,
+				F3E0B60C191895DD00AED602 /* DataQuery.cpp in Sources */,
+				F331973F1918945E00D96120 /* Clock.cpp in Sources */,
+				F33197401918945E00D96120 /* Context.cpp in Sources */,
+				F33197411918945E00D96120 /* ContextInstancer.cpp in Sources */,
+				F33197421918945E00D96120 /* ContextInstancerDefault.cpp in Sources */,
+				F33197431918945E00D96120 /* ConvolutionFilter.cpp in Sources */,
+				F33197441918945E00D96120 /* Core.cpp in Sources */,
+				F33197451918945E00D96120 /* Decorator.cpp in Sources */,
+				F33197461918945E00D96120 /* DecoratorInstancer.cpp in Sources */,
+				F3E0B616191895DD00AED602 /* ElementFormControlInput.cpp in Sources */,
+				F33197471918945E00D96120 /* DecoratorNone.cpp in Sources */,
+				F33197481918945E00D96120 /* DecoratorNoneInstancer.cpp in Sources */,
+				F33197491918945E00D96120 /* DecoratorTiled.cpp in Sources */,
+				F331974A1918945E00D96120 /* DecoratorTiledBox.cpp in Sources */,
+				F3E0B60D191895DD00AED602 /* DataSource.cpp in Sources */,
+				F331974B1918945E00D96120 /* DecoratorTiledBoxInstancer.cpp in Sources */,
+				F3E0B61C191895DD00AED602 /* InputTypeButton.cpp in Sources */,
+				F331974C1918945E00D96120 /* DecoratorTiledHorizontal.cpp in Sources */,
+				F331974D1918945E00D96120 /* DecoratorTiledHorizontalInstancer.cpp in Sources */,
+				F331974E1918945E00D96120 /* DecoratorTiledImage.cpp in Sources */,
+				F331974F1918945E00D96120 /* DecoratorTiledImageInstancer.cpp in Sources */,
+				F33197501918945E00D96120 /* DecoratorTiledInstancer.cpp in Sources */,
+				F33197511918945E00D96120 /* DecoratorTiledVertical.cpp in Sources */,
+				F33197521918945E00D96120 /* DecoratorTiledVerticalInstancer.cpp in Sources */,
+				F33197531918945E00D96120 /* Dictionary.cpp in Sources */,
+				F3E0B612191895DD00AED602 /* ElementDataGridRow.cpp in Sources */,
+				F33197541918945E00D96120 /* DocumentHeader.cpp in Sources */,
+				F3E0B626191895DD00AED602 /* WidgetTextInput.cpp in Sources */,
+				F33197551918945E00D96120 /* Element.cpp in Sources */,
+				F3E0B622191895DD00AED602 /* SelectOption.cpp in Sources */,
+				F33197561918945E00D96120 /* ElementBackground.cpp in Sources */,
+				F33197571918945E00D96120 /* ElementBorder.cpp in Sources */,
+				F33197581918945E00D96120 /* ElementDecoration.cpp in Sources */,
+				F33197591918945E00D96120 /* ElementDefinition.cpp in Sources */,
+				F331975A1918945E00D96120 /* ElementDocument.cpp in Sources */,
+				F331975B1918945E00D96120 /* ElementHandle.cpp in Sources */,
+				F3E0B611191895DD00AED602 /* ElementDataGridExpandButton.cpp in Sources */,
+				F331975C1918945E00D96120 /* ElementImage.cpp in Sources */,
+				F331975D1918945E00D96120 /* ElementInstancer.cpp in Sources */,
+				F3E0B60B191895DD00AED602 /* DataFormatter.cpp in Sources */,
+				F331975E1918945E00D96120 /* ElementReference.cpp in Sources */,
+				F331975F1918945E00D96120 /* ElementScroll.cpp in Sources */,
+				F33197601918945E00D96120 /* ElementText.cpp in Sources */,
+				F33197611918945E00D96120 /* ElementTextDefault.cpp in Sources */,
+				F3E0B60A191895DD00AED602 /* Controls.cpp in Sources */,
+				F33197621918945E00D96120 /* ElementUtilities.cpp in Sources */,
+				F3E0B62A191895DD00AED602 /* XMLNodeHandlerDataGrid.cpp in Sources */,
+				F33197631918945E00D96120 /* Event.cpp in Sources */,
+				F33197641918945E00D96120 /* EventDispatcher.cpp in Sources */,
+				F33197651918945E00D96120 /* EventInstancer.cpp in Sources */,
+				F3E0B619191895DD00AED602 /* ElementTabSet.cpp in Sources */,
+				F33197661918945E00D96120 /* EventInstancerDefault.cpp in Sources */,
+				F33197671918945E00D96120 /* EventListenerInstancer.cpp in Sources */,
+				F33197681918945E00D96120 /* Factory.cpp in Sources */,
+				F33197691918945E00D96120 /* FileInterface.cpp in Sources */,
+				F331976A1918945E00D96120 /* FileInterfaceDefault.cpp in Sources */,
+				F3E0B62C191895DD00AED602 /* XMLNodeHandlerTextArea.cpp in Sources */,
+				F331976B1918945E00D96120 /* FontDatabase.cpp in Sources */,
+				F331976C1918945E00D96120 /* FontEffect.cpp in Sources */,
+				F331976D1918945E00D96120 /* FontEffectInstancer.cpp in Sources */,
+				F331976E1918945E00D96120 /* FontEffectNone.cpp in Sources */,
+				F331976F1918945E00D96120 /* FontEffectNoneInstancer.cpp in Sources */,
+				F33197701918945E00D96120 /* FontEffectOutline.cpp in Sources */,
+				F33197711918945E00D96120 /* FontEffectOutlineInstancer.cpp in Sources */,
+				F33197721918945E00D96120 /* FontEffectShadow.cpp in Sources */,
+				F33197731918945E00D96120 /* FontEffectShadowInstancer.cpp in Sources */,
+				F33197741918945E00D96120 /* FontFace.cpp in Sources */,
+				F33197751918945E00D96120 /* FontFaceHandle.cpp in Sources */,
+				F33197761918945E00D96120 /* FontFaceLayer.cpp in Sources */,
+				F33197771918945E00D96120 /* FontFamily.cpp in Sources */,
+				F3E0B623191895DD00AED602 /* WidgetDropDown.cpp in Sources */,
+				F33197781918945E00D96120 /* Geometry.cpp in Sources */,
+				F33197791918945E00D96120 /* GeometryDatabase.cpp in Sources */,
+				F331977A1918945E00D96120 /* GeometryUtilities.cpp in Sources */,
+				F331977B1918945E00D96120 /* LayoutBlockBox.cpp in Sources */,
+				F331977C1918945E00D96120 /* LayoutBlockBoxSpace.cpp in Sources */,
+				F331977D1918945E00D96120 /* LayoutEngine.cpp in Sources */,
+				F331977E1918945E00D96120 /* LayoutInlineBox.cpp in Sources */,
+				F331977F1918945E00D96120 /* LayoutInlineBoxText.cpp in Sources */,
+				F3E0B61E191895DD00AED602 /* InputTypeRadio.cpp in Sources */,
+				F33197801918945E00D96120 /* LayoutLineBox.cpp in Sources */,
+				F33197811918945E00D96120 /* Log.cpp in Sources */,
+				F33197821918945E00D96120 /* Math.cpp in Sources */,
+				F3E0B627191895DD00AED602 /* WidgetTextInputMultiLine.cpp in Sources */,
+				F33197831918945E00D96120 /* Plugin.cpp in Sources */,
+				F33197841918945E00D96120 /* PluginRegistry.cpp in Sources */,
+				F33197851918945E00D96120 /* Property.cpp in Sources */,
+				F33197861918945E00D96120 /* PropertyDefinition.cpp in Sources */,
+				F33197871918945E00D96120 /* PropertyDictionary.cpp in Sources */,
+				F33197881918945E00D96120 /* PropertyParserColour.cpp in Sources */,
+				F33197891918945E00D96120 /* PropertyParserKeyword.cpp in Sources */,
+				F331978A1918945E00D96120 /* PropertyParserNumber.cpp in Sources */,
+				F3E0B61D191895DD00AED602 /* InputTypeCheckbox.cpp in Sources */,
+				F3E0B628191895DD00AED602 /* WidgetTextInputSingleLine.cpp in Sources */,
+				F331978B1918945E00D96120 /* PropertyParserString.cpp in Sources */,
+				F331978C1918945E00D96120 /* PropertySpecification.cpp in Sources */,
+				F331978D1918945E00D96120 /* ReferenceCountable.cpp in Sources */,
+				F331978E1918945E00D96120 /* RenderInterface.cpp in Sources */,
+				F331978F1918945E00D96120 /* Stream.cpp in Sources */,
+				F33197901918945E00D96120 /* StreamFile.cpp in Sources */,
+				F3E0B613191895DD00AED602 /* ElementForm.cpp in Sources */,
+				F33197911918945E00D96120 /* StreamMemory.cpp in Sources */,
+				F33197921918945E00D96120 /* String.cpp in Sources */,
+				F33197931918945E00D96120 /* StringCache.cpp in Sources */,
+				F33197941918945E00D96120 /* StringUtilities.cpp in Sources */,
+				F3E0B609191895DD00AED602 /* Clipboard.cpp in Sources */,
+				F33197951918945E00D96120 /* StyleSheet.cpp in Sources */,
+				F33197961918945E00D96120 /* StyleSheetFactory.cpp in Sources */,
+				F33197971918945E00D96120 /* StyleSheetNode.cpp in Sources */,
+				F33197981918945E00D96120 /* StyleSheetNodeSelector.cpp in Sources */,
+				F33197991918945E00D96120 /* StyleSheetNodeSelectorEmpty.cpp in Sources */,
+				F3E0B618191895DD00AED602 /* ElementFormControlTextArea.cpp in Sources */,
+				F331979A1918945E00D96120 /* StyleSheetNodeSelectorFirstChild.cpp in Sources */,
+				F331979B1918945E00D96120 /* StyleSheetNodeSelectorFirstOfType.cpp in Sources */,
+				F331979C1918945E00D96120 /* StyleSheetNodeSelectorLastChild.cpp in Sources */,
+				F3E0B614191895DD00AED602 /* ElementFormControl.cpp in Sources */,
+				F3E0B61B191895DD00AED602 /* InputType.cpp in Sources */,
+				F3E0B62B191895DD00AED602 /* XMLNodeHandlerTabSet.cpp in Sources */,
+				F3E0B624191895DD00AED602 /* WidgetSlider.cpp in Sources */,
+				F331979D1918945E00D96120 /* StyleSheetNodeSelectorLastOfType.cpp in Sources */,
+				F331979E1918945E00D96120 /* StyleSheetNodeSelectorNthChild.cpp in Sources */,
+				F331979F1918945E00D96120 /* StyleSheetNodeSelectorNthLastChild.cpp in Sources */,
+				F33197A01918945E00D96120 /* StyleSheetNodeSelectorNthLastOfType.cpp in Sources */,
+				F33197A11918945E00D96120 /* StyleSheetNodeSelectorNthOfType.cpp in Sources */,
+				F33197A21918945E00D96120 /* StyleSheetNodeSelectorOnlyChild.cpp in Sources */,
+				F3E0B621191895DD00AED602 /* InputTypeText.cpp in Sources */,
+				F33197A31918945E00D96120 /* StyleSheetNodeSelectorOnlyOfType.cpp in Sources */,
+				F3E0B61F191895DD00AED602 /* InputTypeRange.cpp in Sources */,
+				F33197A41918945E00D96120 /* StyleSheetParser.cpp in Sources */,
+				F33197A51918945E00D96120 /* StyleSheetSpecification.cpp in Sources */,
+				F33197A61918945E00D96120 /* SystemInterface.cpp in Sources */,
+				F33197A71918945E00D96120 /* Template.cpp in Sources */,
+				F33197A81918945E00D96120 /* TemplateCache.cpp in Sources */,
+				F33197A91918945E00D96120 /* Texture.cpp in Sources */,
+				F33197AA1918945E00D96120 /* TextureDatabase.cpp in Sources */,
+				F33197AB1918945E00D96120 /* TextureLayout.cpp in Sources */,
+				F3E0B620191895DD00AED602 /* InputTypeSubmit.cpp in Sources */,
+				F3E0B610191895DD00AED602 /* ElementDataGridCell.cpp in Sources */,
+				F33197AC1918945E00D96120 /* TextureLayoutRectangle.cpp in Sources */,
+				F33197AD1918945E00D96120 /* TextureLayoutRow.cpp in Sources */,
+				F33197AE1918945E00D96120 /* TextureLayoutTexture.cpp in Sources */,
+				F3E0B629191895DD00AED602 /* WidgetTextInputSingleLinePassword.cpp in Sources */,
+				F33197AF1918945E00D96120 /* TextureResource.cpp in Sources */,
+				F3E0B60E191895DD00AED602 /* DataSourceListener.cpp in Sources */,
+				F33197B01918945E00D96120 /* UnicodeRange.cpp in Sources */,
+				F3E0B617191895DD00AED602 /* ElementFormControlSelect.cpp in Sources */,
+				F3E0B625191895DD00AED602 /* WidgetSliderInput.cpp in Sources */,
+				F33197B11918945E00D96120 /* URL.cpp in Sources */,
+				F33197B21918945E00D96120 /* Variant.cpp in Sources */,
+				F33197B31918945E00D96120 /* WidgetSlider.cpp in Sources */,
+				F33197B41918945E00D96120 /* WidgetSliderScroll.cpp in Sources */,
+				F33197B51918945E00D96120 /* WString.cpp in Sources */,
+				F33197B61918945E00D96120 /* XMLNodeHandler.cpp in Sources */,
+				F33197B71918945E00D96120 /* XMLNodeHandlerBody.cpp in Sources */,
+				F33197B81918945E00D96120 /* XMLNodeHandlerDefault.cpp in Sources */,
+				F33197B91918945E00D96120 /* XMLNodeHandlerHead.cpp in Sources */,
+				F3E0B60F191895DD00AED602 /* ElementDataGrid.cpp in Sources */,
+				F33197BA1918945E00D96120 /* XMLNodeHandlerTemplate.cpp in Sources */,
+				F3E0B61A191895DD00AED602 /* ElementTextSelection.cpp in Sources */,
+				F33197BB1918945E00D96120 /* XMLParser.cpp in Sources */,
+				F3E0B615191895DD00AED602 /* ElementFormControlDataSelect.cpp in Sources */,
+				F33197BC1918945E00D96120 /* XMLParseTools.cpp in Sources */,
+				F33197BD1918945E00D96120 /* ElementStyle.cpp in Sources */,
+				F33197BE1918945E00D96120 /* ElementStyleCache.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -1953,6 +2633,17 @@
 			targetProxy = 6E8B1F97123ACC3B00C451C8 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		F31AC26219188380004C4845 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F31AC26319188380004C4845 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		1DEB921F08733DC00010E9CD /* Debug */ = {
@@ -1997,7 +2688,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
@@ -2006,7 +2696,10 @@
 				HEADER_SEARCH_PATHS = (
 					../Include,
 					../../Support/freetype/include,
+					/opt/local/include/freetype2/,
 				);
+				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				PREBINDING = NO;
 				SDKROOT = iphoneos;
@@ -2018,7 +2711,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -2026,7 +2718,9 @@
 				HEADER_SEARCH_PATHS = (
 					../Include,
 					../../Support/freetype/include,
+					/opt/local/include/freetype2/,
 				);
+				LIBRARY_SEARCH_PATHS = /opt/local/lib;
 				OTHER_LDFLAGS = "-ObjC";
 				PREBINDING = NO;
 				SDKROOT = iphoneos;
@@ -2065,7 +2759,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -2098,7 +2792,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -2131,7 +2825,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -2160,7 +2854,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -2216,7 +2910,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -2245,7 +2939,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -2265,6 +2959,72 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RocketDebuggerOSX;
+				SDKROOT = macosx;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		F33197C31918945E00D96120 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_VERSION = A;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = Rocket_Prefix.pch;
+				INFOPLIST_FILE = "plist/Rocket-Info.plist";
+				INSTALL_PATH = "$(HOME)/Library/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../support/lib\"",
+				);
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = Rocket;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		F33197C41918945E00D96120 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_VERSION = A;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = Rocket_Prefix.pch;
+				INFOPLIST_FILE = "plist/Rocket-Info.plist";
+				INSTALL_PATH = "$(HOME)/Library/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../support/lib\"",
+				);
+				OTHER_LDFLAGS = (
+					"-framework",
+					Foundation,
+					"-framework",
+					AppKit,
+				);
+				PREBINDING = NO;
+				PRODUCT_NAME = Rocket;
 				SDKROOT = macosx;
 				ZERO_LINK = NO;
 			};
@@ -2332,6 +3092,15 @@
 			buildConfigurations = (
 				6E8B1EC8123AC80800C451C8 /* Debug */,
 				6E8B1EC9123AC80800C451C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F33197C21918945E00D96120 /* Build configuration list for PBXNativeTarget "Rocket" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F33197C31918945E00D96120 /* Debug */,
+				F33197C41918945E00D96120 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

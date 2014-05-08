@@ -62,7 +62,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define GL_GLEXT_LEGACY
 #define GLX_GLXEXT_LEGACY
 
-#if !defined (__MACOSX__)
+#if !defined (__MACOSX__) && !defined (__ANDROID__)
 #include <GL/gl.h>
 #endif
 
@@ -480,6 +480,8 @@ QGL_GLX(Bool, glXQueryVersion, (Display *dpy, int *major, int *minor));
 QGL_GLX(const char *, glXQueryExtensionsString, (Display *dpy, int screen));
 
 // EGL Functions
+#ifdef EGL_VERSION_1_0
+QGL_EGL(void *, eglGetProcAddress, (const char *procname));
 QGL_EGL(EGLBoolean, eglChooseConfig, (EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config));
 QGL_EGL(EGLContext, eglCreateContext, (EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint *attrib_list));
 QGL_EGL(EGLSurface, eglCreateWindowSurface, (EGLDisplay dpy, EGLConfig config, EGLNativeWindowType win, const EGLint *attrib_list));
@@ -491,16 +493,17 @@ QGL_EGL(EGLDisplay, eglGetDisplay, (EGLNativeDisplayType display_id));
 QGL_EGL(EGLint, eglGetError, (void));
 QGL_EGL(EGLBoolean, eglInitialize, (EGLDisplay dpy, EGLint *major, EGLint *minor));
 QGL_EGL(EGLBoolean, eglMakeCurrent, (EGLDisplay dpy, EGLSurface draw, EGLSurface read, EGLContext ctx));
-QGL_EGL(EGLBoolean, eglQuerySurface, (EGLDisplay dpy, EGLSurface surface, EGLint attribute, EGLint *value));
+QGL_EGL(const char *, eglQueryString, (EGLDisplay dpy, EGLint name));
+QGL_EGL(EGLBoolean, eglSwapBuffers, (EGLDisplay dpy, EGLSurface surface));
 QGL_EGL(EGLBoolean, eglSwapInterval, (EGLDisplay dpy, EGLint interval));
 QGL_EGL(EGLBoolean, eglTerminate, (EGLDisplay dpy));
+#endif
 
 // GL Functions
 QGL_FUNC(void, glBindTexture, (GLenum target, GLuint texture));
 QGL_FUNC(void, glBlendFunc, (GLenum sfactor, GLenum dfactor));
 QGL_FUNC(void, glClear, (GLbitfield mask));
 QGL_FUNC(void, glClearColor, (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha));
-QGL_FUNC(void, glClearDepth, (GLclampd depth));
 QGL_FUNC(void, glClearStencil, (GLint s));
 QGL_FUNC(void, glColorMask, (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha));
 QGL_FUNC(void, glCullFace, (GLenum mode));
@@ -508,7 +511,6 @@ QGL_FUNC(void, glGenTextures, (GLsizei n, const GLuint *textures));
 QGL_FUNC(void, glDeleteTextures, (GLsizei n, const GLuint *textures));
 QGL_FUNC(void, glDepthFunc, (GLenum func));
 QGL_FUNC(void, glDepthMask, (GLboolean flag));
-QGL_FUNC(void, glDepthRange, (GLclampd zNear, GLclampd zFar));
 QGL_FUNC(void, glDisable, (GLenum cap));
 QGL_FUNC(void, glDrawElements, (GLenum, GLsizei, GLenum, const GLvoid *));
 QGL_FUNC(void, glEnable, (GLenum cap));
@@ -531,9 +533,18 @@ QGL_FUNC(void, glTexSubImage2D, (GLenum target, GLint level, GLint xoffset, GLin
 QGL_FUNC(void, glViewport, (GLint x, GLint y, GLsizei width, GLsizei height));
 
 #ifndef GL_ES_VERSION_2_0
+QGL_FUNC(void, glClearDepth, (GLclampd depth));
+QGL_FUNC(void, glDepthRange, (GLclampd zNear, GLclampd zFar));
 QGL_FUNC(void, glDrawBuffer, (GLenum mode));
 QGL_FUNC(void, glReadBuffer, (GLenum mode));
 QGL_FUNC(void, glPolygonMode, (GLenum face, GLenum mode));
+#else
+QGL_FUNC(void, glClearDepthf, (GLclampf depth));
+QGL_FUNC(void, glDepthRangef, (GLclampf zNear, GLclampf zFar));
+#ifndef qglClearDepth
+#define qglClearDepth qglClearDepthf
+#define qglDepthRange qglDepthRangef
+#endif
 #endif
 
 #ifndef GL_ES_VERSION_2_0
