@@ -2123,9 +2123,11 @@ static void RF_BindAttrbibutesLocations( glsl_program_t *program )
 		qglBindAttribLocationARB( program->object, VATTRIB_INSTANCE_XYZS, "a_InstancePosAndScale" );
 	}
 
+#ifndef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		qglBindFragDataLocation( program->object, 0, "qf_FragColor" );
 	}
+#endif
 }
 
 /*
