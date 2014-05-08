@@ -627,6 +627,7 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.instanced_arrays = qtrue;
 		glConfig.ext.half_float_vertex = qtrue;
 		glConfig.ext.depth24 = qtrue;
+		glConfig.ext.GLSL130 = qtrue;
 	}
 #endif
 
@@ -680,9 +681,11 @@ static void R_FinalizeGLExtensions( void )
 	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
 #endif
 	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor;
+#ifndef GL_ES_VERSION_2_0
 	if( !glConfig.ext.GLSL130 ) {
 		glConfig.shadingLanguageVersion = 120;
 	}
+#endif
 
 	glConfig.maxVaryingFloats = 0;
 	glConfig.maxVertexUniformComponents = glConfig.maxFragmentUniformComponents = 0;
