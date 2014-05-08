@@ -815,7 +815,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#  define qf_varying varying\n" \
 "# endif\n" \
 "#endif\n" \
-" qf_varying qf_FrontColor;\n" \
+" qf_varying myhalf4 qf_FrontColor;\n" \
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
