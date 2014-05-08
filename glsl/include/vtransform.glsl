@@ -1,6 +1,6 @@
 #ifdef NUM_BONE_INFLUENCES
 
-attribute vec4 a_BonesIndices, a_BonesWeights;
+qf_attribute vec4 a_BonesIndices, a_BonesWeights;
 uniform vec4 u_DualQuats[MAX_UNIFORM_BONES*2];
 
 #define DUAL_QUAT_TRANSFORM_TANGENT
@@ -13,7 +13,7 @@ uniform vec4 u_DualQuats[MAX_UNIFORM_BONES*2];
 #ifdef APPLY_INSTANCED_TRANSFORMS
 
 #if defined(APPLY_INSTANCED_ATTRIB_TRANSFORMS)
-attribute vec4 a_InstanceQuat, a_InstancePosAndScale;
+qf_attribute vec4 a_InstanceQuat, a_InstancePosAndScale;
 #elif defined(GL_ARB_draw_instanced) || (defined(GL_ES) && (__VERSION__ >= 300))
 uniform vec4 u_InstancePoints[MAX_UNIFORM_INSTANCES*2];
 #define a_InstanceQuat u_InstancePoints[gl_InstanceID*2]

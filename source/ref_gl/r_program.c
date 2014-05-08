@@ -797,29 +797,34 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "\n"
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL100ES "" \
+"#define qf_varying varying\n" \
 "#ifdef VERTEX_SHADER\n" \
-"# if QF_GLSL_VERSION >= 300\n" \
-"#  define qf_varying out\n" \
-"#  define qf_attribute in\n" \
-"# else\n" \
-"#  define qf_varying varying\n" \
-"#  define qf_attribute attribute\n" \
-"# endif\n" \
+"# define qf_attribute attribute\n" \
 "#endif\n" \
 "#ifdef FRAGMENT_SHADER\n" \
 "  precision mediump float;\n" \
 "# define qf_FragColor gl_FragColor\n" \
-"# if QF_GLSL_VERSION >= 300\n" \
-"#  define qf_varying in\n" \
-"# else\n" \
-"#  define qf_varying varying\n" \
-"# endif\n" \
 "#endif\n" \
 " qf_varying myhalf4 qf_FrontColor;\n" \
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
 "\n"
+
+#define QF_BUILTIN_GLSL_MACROS_GLSL300ES "" \
+"#ifdef VERTEX_SHADER\n" \
+"# define qf_varying out\n" \
+"# define qf_attribute in\n" \
+"#endif\n" \
+"#ifdef FRAGMENT_SHADER\n" \
+"  precision highp float;\n" \
+"  layout(location = 0) out lowp vec4 qf_FragColor;\n" \
+"# define qf_varying in\n" \
+"#endif\n" \
+" qf_varying myhalf4 qf_FrontColor;\n" \
+"#define qf_texture texture\n" \
+"#define qf_textureLod textureLod\n" \
+"#define qf_textureCube textureCube\n" \
 
 #define QF_GLSL_PI "" \
 "#ifndef M_PI\n" \
@@ -1345,7 +1350,12 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
 #ifdef GL_ES_VERSION_2_0
-	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL100ES;
+	if( glConfig.shadingLanguageVersion >= 300 ) {
+		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL300ES;
+	}
+	else {
+		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL100ES;
+	}
 #else
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL130;
