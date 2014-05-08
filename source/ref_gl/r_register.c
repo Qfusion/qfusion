@@ -688,20 +688,29 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.maxVertexUniformComponents = glConfig.maxFragmentUniformComponents = 0;
 
 	qglGetIntegerv( GL_MAX_VARYING_FLOATS_ARB, &glConfig.maxVaryingFloats );
-	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig.maxVertexUniformComponents );
 	qglGetIntegerv( GL_MAX_VERTEX_ATTRIBS_ARB, &glConfig.maxVertexAttribs );
+#ifdef GL_ES_VERSION_2_0
+	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig.maxVertexUniformComponents );
 	qglGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &glConfig.maxFragmentUniformComponents );
+	glConfig.maxVertexUniformComponents *= 4;
+	glConfig.maxFragmentUniformComponents *= 4;
+#else
+	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig.maxVertexUniformComponents );
+	qglGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &glConfig.maxFragmentUniformComponents );
+#endif
 
 	// keep the maximum number of bones we can do in GLSL sane
 	if( r_maxglslbones->integer > MAX_GLSL_UNIFORM_BONES ) {
 		ri.Cvar_ForceSet( r_maxglslbones->name, r_maxglslbones->dvalue );
 	}
 
-#ifndef GL_ES_VERSION_2_0
+#ifdef GL_ES_VERSION_2_0
+	glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
+#else
 	// require GLSL 1.30+ for GPU skinning
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
-		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 20, r_maxglslbones->integer );
+		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
 	}
 	else {
 		glConfig.maxGLSLBones = 0;
