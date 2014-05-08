@@ -486,6 +486,7 @@ static void R_MipMap( qbyte *in, int width, int height, int samples )
 /*
 * R_TextureFormat
 */
+#ifndef GL_ES_VERSION_2_0
 static int R_TextureFormat( int samples, qboolean noCompress )
 {
 	int bits = r_texturebits->integer;
@@ -512,6 +513,7 @@ static int R_TextureFormat( int samples, qboolean noCompress )
 		return GL_RGBA8;
 	return GL_RGBA;
 }
+#endif
 
 /*
 * R_Upload32
@@ -601,11 +603,15 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	}
 	else
 	{
-		comp = R_TextureFormat( samples, flags & IT_NOCOMPRESS ? qtrue : qfalse );
 		if( samples == 4 )
 			format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
 		else
 			format = ( flags & IT_BGRA ? GL_BGR_EXT : GL_RGB );
+#ifdef GL_ES_VERSION_2_0
+		comp = format;
+#else
+		comp = R_TextureFormat( samples, flags & IT_NOCOMPRESS ? qtrue : qfalse );
+#endif
 		type = GL_UNSIGNED_BYTE;
 	}
 
@@ -650,11 +656,13 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	}
+#ifndef GL_ES_VERSION_2_0
 	else
 	{
 		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP );
 		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP );
 	}
+#endif
 
 	if( ( scaledWidth == width ) && ( scaledHeight == height ) && ( flags & IT_NOMIPMAP ) )
 	{

@@ -741,7 +741,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_GLSL_VERSION300ES "" \
 "#version 300 es\n"
 
-#define QF_GLSL_ENABLE_ARB_DRAW_INSTACED "" \
+#define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "" \
 "#extension GL_ARB_draw_instanced : enable\n"
 
 #define QF_BUILTIN_GLSL_MACROS "" \
@@ -797,28 +797,34 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "\n"
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL100ES "" \
+"#define qf_varying varying\n" \
 "#ifdef VERTEX_SHADER\n" \
-"# if QF_GLSL_VERSION >= 300\n" \
-"#  define qf_varying out\n" \
-"#  define qf_attribute in\n" \
-"# else\n" \
-"#  define qf_varying varying\n" \
-"#  define qf_attribute attribute\n" \
-"# endif\n" \
+"# define qf_attribute attribute\n" \
 "#endif\n" \
 "#ifdef FRAGMENT_SHADER\n" \
 "  precision mediump float;\n" \
 "# define qf_FragColor gl_FragColor\n" \
-"# if QF_GLSL_VERSION >= 300\n" \
-"#  define qf_varying in\n" \
-"# else\n" \
-"#  define qf_varying varying\n" \
-"# endif\n" \
 "#endif\n" \
-" qf_varying qf_FrontColor;\n" \
+" qf_varying myhalf4 qf_FrontColor;\n" \
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
+"\n"
+
+#define QF_BUILTIN_GLSL_MACROS_GLSL300ES "" \
+"#ifdef VERTEX_SHADER\n" \
+"# define qf_varying out\n" \
+"# define qf_attribute in\n" \
+"#endif\n" \
+"#ifdef FRAGMENT_SHADER\n" \
+"  precision highp float;\n" \
+"  layout(location = 0) out lowp vec4 qf_FragColor;\n" \
+"# define qf_varying in\n" \
+"#endif\n" \
+" qf_varying myhalf4 qf_FrontColor;\n" \
+"#define qf_texture texture\n" \
+"#define qf_textureLod textureLod\n" \
+"#define qf_textureCube texture\n" \
 "\n"
 
 #define QF_GLSL_PI "" \
@@ -1333,19 +1339,24 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 #endif
 
 	instancedIdx = i;
-	if( glConfig.shadingLanguageVersion < 400 && glConfig.ext.draw_instanced ) {
-		shaderStrings[i++] = QF_GLSL_ENABLE_ARB_DRAW_INSTACED;
-	}
-	else {
+#ifndef GL_ES_VERSION_2_0
+	if( glConfig.shadingLanguageVersion < 400 && glConfig.ext.draw_instanced )
+		shaderStrings[i++] = QF_GLSL_ENABLE_ARB_DRAW_INSTANCED;
+	else
+#endif
 		shaderStrings[i++] = "\n";
-	}
 
 	shaderStrings[i++] = shaderVersion;
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
 #ifdef GL_ES_VERSION_2_0
-	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL100ES;
+	if( glConfig.shadingLanguageVersion >= 300 ) {
+		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL300ES;
+	}
+	else {
+		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL100ES;
+	}
 #else
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL130;
@@ -2123,9 +2134,11 @@ static void RF_BindAttrbibutesLocations( glsl_program_t *program )
 		qglBindAttribLocationARB( program->object, VATTRIB_INSTANCE_XYZS, "a_InstancePosAndScale" );
 	}
 
+#ifndef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		qglBindFragDataLocation( program->object, 0, "qf_FragColor" );
 	}
+#endif
 }
 
 /*

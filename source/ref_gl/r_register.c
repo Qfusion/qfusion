@@ -378,12 +378,12 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ATI, meminfo, true, false, NULL )
 
 #else
-	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
+	 GL_EXTENSION( OES, depth_texture, false, false, NULL )
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
-	,GL_EXTENSION( EXT, multiview_draw_buffers, false, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
-	,GL_EXTENSION( NV, multiview_draw_buffers, false, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
+	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
+	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -627,6 +627,7 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.instanced_arrays = qtrue;
 		glConfig.ext.half_float_vertex = qtrue;
 		glConfig.ext.depth24 = qtrue;
+		glConfig.ext.GLSL130 = qtrue;
 	}
 #endif
 
@@ -665,7 +666,7 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.ext.multiview_draw_buffers )
 	{
 		val = 0;
-		glGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_EXT, &val );
+		qglGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_EXT, &val );
 		if( val <= 1 )
 			glConfig.stereoEnabled = qfalse;
 	}
@@ -674,32 +675,45 @@ static void R_FinalizeGLExtensions( void )
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
 	sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL ES %d.%d", &versionMajor, &versionMinor );
+	if( !versionMajor )
+		sscanf( glConfig.shadingLanguageVersionString, "OpenGL ES GLSL %d.%d", &versionMajor, &versionMinor );
 #else
 	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
 #endif
 	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor;
+#ifndef GL_ES_VERSION_2_0
 	if( !glConfig.ext.GLSL130 ) {
 		glConfig.shadingLanguageVersion = 120;
 	}
+#endif
 
 	glConfig.maxVaryingFloats = 0;
 	glConfig.maxVertexUniformComponents = glConfig.maxFragmentUniformComponents = 0;
 
 	qglGetIntegerv( GL_MAX_VARYING_FLOATS_ARB, &glConfig.maxVaryingFloats );
-	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig.maxVertexUniformComponents );
 	qglGetIntegerv( GL_MAX_VERTEX_ATTRIBS_ARB, &glConfig.maxVertexAttribs );
+#ifdef GL_ES_VERSION_2_0
+	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig.maxVertexUniformComponents );
 	qglGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &glConfig.maxFragmentUniformComponents );
+	glConfig.maxVertexUniformComponents *= 4;
+	glConfig.maxFragmentUniformComponents *= 4;
+#else
+	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig.maxVertexUniformComponents );
+	qglGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &glConfig.maxFragmentUniformComponents );
+#endif
 
 	// keep the maximum number of bones we can do in GLSL sane
 	if( r_maxglslbones->integer > MAX_GLSL_UNIFORM_BONES ) {
 		ri.Cvar_ForceSet( r_maxglslbones->name, r_maxglslbones->dvalue );
 	}
 
-#ifndef GL_ES_VERSION_2_0
+#ifdef GL_ES_VERSION_2_0
+	glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
+#else
 	// require GLSL 1.30+ for GPU skinning
 	if( glConfig.shadingLanguageVersion >= 130 ) {
 		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
-		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 20, r_maxglslbones->integer );
+		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
 	}
 	else {
 		glConfig.maxGLSLBones = 0;

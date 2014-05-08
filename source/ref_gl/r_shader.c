@@ -2268,6 +2268,7 @@ static void Shader_Finish( shader_t *s )
 	int blendmask;
 	const char *oldname = s->name;
 	size_t size = 0, bufferOffset = 0;
+
 	shaderpass_t *pass;
 	qbyte *buffer;
 	size_t deformvKeyLen;
@@ -2516,6 +2517,7 @@ static void R_LoadShaderReal( shader_t *s, char *shortname,
 	void *data;
 	shadercache_t *cache;
 	shaderpass_t *pass;
+	size_t passOffset = ( shortname_length + 1 + 15 ) & ~15;
 	image_t *materialImages[MAX_SHADER_images];
 
 	s->name = shortname;
