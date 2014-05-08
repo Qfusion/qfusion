@@ -2263,7 +2263,7 @@ static void Shader_Finish( shader_t *s )
 	int opaque = -1;
 	int blendmask;
 	const char *oldname = s->name;
-	size_t size = strlen( oldname ) + 1;
+	size_t size = strlen( oldname ) + 1, headerSize;
 	shaderpass_t *pass;
 	qbyte *buffer;
 	size_t deformvKeyLen;
@@ -2308,8 +2308,10 @@ static void Shader_Finish( shader_t *s )
 		}
 	}
 
-	size += s->numdeforms * sizeof( deformv_t ) + s->numpasses * sizeof( shaderpass_t );
 	size += deformvKeyLen + 1;
+	size = ( size + 15 ) & ~15;
+	headerSize = size;
+	size += s->numdeforms * sizeof( deformv_t ) + s->numpasses * sizeof( shaderpass_t );
 
 	for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ )
 	{
@@ -2336,13 +2338,13 @@ static void Shader_Finish( shader_t *s )
 
 	buffer = R_Malloc( size );
 
-	s->name = ( char * )buffer; buffer += strlen( oldname ) + 1;
+	s->name = ( char * )buffer;
+	s->deformsKey = ( char * )( buffer + strlen( oldname ) + 1 ); buffer += headerSize;
 	s->passes = ( shaderpass_t * )buffer; buffer += s->numpasses * sizeof( shaderpass_t );
-	s->deformsKey = ( char * )buffer; buffer += deformvKeyLen + 1;
 
 	strcpy( s->name, oldname );
-	memcpy( s->passes, r_currentPasses, s->numpasses * sizeof( shaderpass_t ) );
 	memcpy( s->deformsKey, r_shaderDeformvKey, deformvKeyLen + 1 );
+	memcpy( s->passes, r_currentPasses, s->numpasses * sizeof( shaderpass_t ) );
 
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ )
 	{
