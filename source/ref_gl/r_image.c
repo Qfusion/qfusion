@@ -486,38 +486,34 @@ static void R_MipMap( qbyte *in, int width, int height, int samples )
 /*
 * R_TextureFormat
 */
+#ifndef GL_ES_VERSION_2_0
 static int R_TextureFormat( int samples, qboolean noCompress )
 {
 	int bits = r_texturebits->integer;
 
-#ifndef GL_ES_VERSION_2_0
 	if( glConfig.ext.texture_compression && !noCompress )
 	{
 		if( samples == 3 )
 			return GL_COMPRESSED_RGB_ARB;
 		return GL_COMPRESSED_RGBA_ARB;
 	}
-#endif
 
 	if( samples == 3 )
 	{
-#ifndef GL_ES_VERSION_2_0
 		if( bits == 16 )
 			return GL_RGB5;
 		else if( bits == 32 )
 			return GL_RGB8;
-#endif
 		return GL_RGB;
 	}
 
-#ifndef GL_ES_VERSION_2_0
 	if( bits == 16 )
 		return GL_RGBA4;
 	else if( bits == 32 )
 		return GL_RGBA8;
-#endif
 	return GL_RGBA;
 }
+#endif
 
 /*
 * R_Upload32
@@ -607,11 +603,15 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 	}
 	else
 	{
-		comp = R_TextureFormat( samples, flags & IT_NOCOMPRESS ? qtrue : qfalse );
 		if( samples == 4 )
 			format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
 		else
 			format = ( flags & IT_BGRA ? GL_BGR_EXT : GL_RGB );
+#ifdef GL_ES_VERSION_2_0
+		comp = format;
+#else
+		comp = R_TextureFormat( samples, flags & IT_NOCOMPRESS ? qtrue : qfalse );
+#endif
 		type = GL_UNSIGNED_BYTE;
 	}
 
