@@ -2525,6 +2525,7 @@ static void R_LoadShaderReal( shader_t *s, char *shortname,
 {
 	shadercache_t *cache;
 	shaderpass_t *pass;
+	size_t passOffset = ( shortname_length + 1 + 15 ) & ~15;
 	image_t *materialImages[MAX_SHADER_images];
 
 	s->name = shortname;
@@ -2593,9 +2594,9 @@ create_default:
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->name = R_Malloc( passOffset + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
+			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + passOffset );
 
 			s->numpasses = 0;
 			pass = &s->passes[s->numpasses++];
@@ -2613,9 +2614,9 @@ create_default:
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS0_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->name = R_Malloc( passOffset + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
+			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + passOffset );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_DEPTHWRITE;
@@ -2634,9 +2635,9 @@ create_default:
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS0_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 2;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->name = R_Malloc( passOffset + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
+			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + passOffset );
 			s->numpasses = 0;
 
 			pass = &s->passes[s->numpasses++];
@@ -2656,9 +2657,9 @@ create_default:
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->name = R_Malloc( passOffset + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
+			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + passOffset );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ONE;
@@ -2675,9 +2676,9 @@ create_default:
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT;
 			s->sort = SHADER_SORT_OPAQUE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->name = R_Malloc( passOffset + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
+			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + passOffset );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_DEPTHWRITE;
@@ -2698,9 +2699,9 @@ create_default:
 			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_COLOR0_BIT;
 			s->sort = SHADER_SORT_ADDITIVE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->name = R_Malloc( passOffset + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
+			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + passOffset );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
@@ -2725,9 +2726,9 @@ create_default:
 			s->sort = SHADER_SORT_OPAQUE;
 			s->flags = SHADER_CULL_FRONT|SHADER_DEPTHWRITE;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses + 3 * sizeof( float ) );
+			s->name = R_Malloc( passOffset + sizeof( shaderpass_t ) * s->numpasses + 3 * sizeof( float ) );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
+			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + passOffset );
 
 			pass = &s->passes[0];
 			pass->flags = GLSTATE_DEPTHWRITE;
@@ -2743,9 +2744,9 @@ create_default:
 			s->sort = SHADER_SORT_SKY;
 			s->flags = SHADER_CULL_FRONT|SHADER_SKY;
 			s->numpasses = 1;
-			s->name = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * s->numpasses );
+			s->name = R_Malloc( passOffset + sizeof( shaderpass_t ) * s->numpasses );
 			strcpy( s->name, shortname );
-			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + shortname_length + 1 );
+			s->passes = ( shaderpass_t * )( ( qbyte * )s->name + passOffset );
 
 			pass = &s->passes[0];
 			pass->rgbgen.type = RGB_GEN_IDENTITY;
