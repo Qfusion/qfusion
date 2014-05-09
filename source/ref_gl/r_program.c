@@ -843,10 +843,6 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_BUILTIN_GLSL_CONSTANTS \
 QF_GLSL_PI \
 "\n" \
-"#ifndef MAX_UNIFORM_BONES\n" \
-"#define MAX_UNIFORM_BONES " STR_TOSTR( MAX_GLSL_UNIFORM_BONES ) "\n" \
-"#endif\n" \
-"\n" \
 "#ifndef MAX_UNIFORM_INSTANCES\n" \
 "#define MAX_UNIFORM_INSTANCES " STR_TOSTR( MAX_GLSL_UNIFORM_INSTANCES ) "\n" \
 "#endif\n"
@@ -1252,6 +1248,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	char *shaderBuffers[100];
 	const char *shaderStrings[MAX_DEFINES_FEATURES+100];
 	char shaderVersion[100];
+	char maxBones[100];
 	glslParser_t parser;
 
 	if( type <= GLSL_PROGRAM_TYPE_NONE || type >= GLSL_PROGRAM_TYPE_MAXTYPE )
@@ -1373,6 +1370,9 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	}
 #endif
 	shaderStrings[i++] = QF_BUILTIN_GLSL_CONSTANTS;
+	Q_snprintfz( maxBones, sizeof( maxBones ),
+		"#define MAX_UNIFORM_BONES %i\n", glConfig.maxGLSLBones );
+	shaderStrings[i++] = maxBones;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_UNIFORMS;
 	shaderStrings[i++] = QF_GLSL_WAVEFUNCS;
 	shaderStrings[i++] = QF_GLSL_MATH;
