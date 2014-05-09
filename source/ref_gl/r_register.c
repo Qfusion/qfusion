@@ -379,6 +379,7 @@ static const gl_extension_t gl_extensions_decl[] =
 
 #else
 	 GL_EXTENSION( OES, depth_texture, false, false, NULL )
+	,GL_EXTENSION_EXT( NV, shadow, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
@@ -622,6 +623,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.GLSL = qtrue;
 	if( glConfig.version >= 300 ) {
 		glConfig.ext.depth_texture = qtrue;
+		glConfig.ext.shadow = qtrue;
 		glConfig.ext.texture_non_power_of_two = qtrue;
 		glConfig.ext.draw_instanced = qtrue;
 		glConfig.ext.instanced_arrays = qtrue;
