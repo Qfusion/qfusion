@@ -81,7 +81,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		Com_Printf( "Couldn't enable threaded GL engine: %d\n", (int) err );
 #endif
 
-	VID_NewWindow( width, height );
+//	VID_NewWindow( width, height );
 	
 	// Restart Input ...
 	SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL );
@@ -112,7 +112,8 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	hinstance = NULL;
 	wndproc = NULL;
 	parenthWnd = NULL;
-	vid_fullscreen->flags &= ~( CVAR_LATCH_VIDEO );
+//	vid_fullscreen->flags &= ~( CVAR_LATCH_VIDEO );
+
 	Com_Printf( "Display initialization\n" );
 
 	const SDL_VideoInfo *info = NULL;
@@ -151,12 +152,14 @@ void GLimp_EndFrame( void )
 {
 	SDL_GL_SwapBuffers();
 
+/*
 	if( vid_fullscreen->modified || ( vid_fullscreen->integer && vid_multiscreen_head->modified ) )
 	{
 		Cbuf_ExecuteText( EXEC_APPEND, "vid_restart\n");
 		vid_fullscreen->modified = qfalse;
 		vid_multiscreen_head->modified = qfalse;
 	}
+*/
 }
 
 
@@ -198,62 +201,3 @@ void GLimp_AppActivate( qboolean active, qboolean destroy)
 {
 }
 
-/*****************************************************************************/
-
-/*
-   =================
-   Sys_GetClipboardData
-
-   Orginally from EzQuake
-   There should be a smarter place to put this
-   =================
- */
-char *Sys_GetClipboardData( qboolean primary )
-{
-	char* clipboard = NULL;
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSPasteboard	*myPasteboard = NULL;
-    NSArray 		*myPasteboardTypes = NULL;
-	
-    myPasteboard = [NSPasteboard generalPasteboard];
-    myPasteboardTypes = [myPasteboard types];
-    if ([myPasteboardTypes containsObject: NSStringPboardType])
-    {
-        NSString	*myClipboardString;
-		
-        myClipboardString = [myPasteboard stringForType: NSStringPboardType];
-        if (myClipboardString != NULL && [myClipboardString length] > 0)
-        {
-			int bytes = [myClipboardString length];
-			clipboard = Q_malloc( bytes + 1 );
-			Q_strncpyz( clipboard, (char *)[myClipboardString UTF8String], bytes + 1 );
-        }
-    }
-	[pool release];
-    return (clipboard);
-}
-
-/*
-* Sys_SetClipboardData
-*/
-qboolean Sys_SetClipboardData( char *data )
-{
-	return qtrue;
-}
-
-/*
-   =================
-   Sys_FreeClipboardData
-   =================
- */
-void Sys_FreeClipboardData( char *data )
-{
-	Q_free( data );
-}
-
-void	Sys_OpenURLInBrowser( const char *url )
-{
-  NSString *string_url = [NSString stringWithUTF8String:url];
-  NSURL *ns_url = [NSURL URLWithString:string_url];
-  [[NSWorkspace sharedWorkspace] openURL:ns_url];
-}

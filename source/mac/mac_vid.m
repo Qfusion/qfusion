@@ -32,7 +32,7 @@ static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, 
 	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
-	return R_Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
+	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
 				NULL, NULL, parentWindow, 
                 x, y, width, height, displayFrequency,
 				fullScreen, wideScreen, verbose );
@@ -101,10 +101,20 @@ qboolean VID_GetScreenSize( int *width, int *height )
 }
 
 /*
+ ** VID_GetDisplaySize
+ */
+qboolean VID_GetDisplaySize( int *width, int *height )
+{
+  return VID_GetScreenSize(width, height);
+}
+
+/*
  ** VID_NewWindow
  */
 void VID_NewWindow( int width, int height )
 {
+#ifndef REF_GL_LIBRARY
 	viddef.width  = width;
 	viddef.height = height;
+#endif
 }
