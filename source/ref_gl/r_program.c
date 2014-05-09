@@ -744,6 +744,9 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "" \
 "#extension GL_ARB_draw_instanced : enable\n"
 
+#define QF_GLSL_ENABLE_NV_SHADOW "" \
+"#extension GL_NV_shadow : enable\n"
+
 #define QF_BUILTIN_GLSL_MACROS "" \
 "#if !defined(myhalf)\n" \
 "//#if !defined(__GLSL_CG_DATA_TYPES)\n" \
@@ -809,6 +812,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
+"#define qf_shadow shadow2D\n" \
 "\n"
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL300ES "" \
@@ -825,6 +829,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_texture texture\n" \
 "#define qf_textureLod textureLod\n" \
 "#define qf_textureCube texture\n" \
+"#define qf_shadow texture\n" \
 "\n"
 
 #define QF_GLSL_PI "" \
@@ -919,13 +924,13 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 		"#define APPLY_DEFORMVERTS\n"
 		"\n"
 		"#if defined(APPLY_AUTOSPRITE) || defined(APPLY_AUTOSPRITE2)\n"
-		"attribute vec4 a_SpritePoint;\n"
+		"qf_attribute vec4 a_SpritePoint;\n"
 		"#else\n"
 		"#define a_SpritePoint vec4(0.0)\n"
 		"#endif\n"
 		"\n"
 		"#if defined(APPLY_AUTOSPRITE2)\n"
-		"attribute vec4 a_SpriteRightUpAxis;\n"
+		"qf_attribute vec4 a_SpriteRightUpAxis;\n"
 		"#else\n"
 		"#define a_SpriteRightUpAxis vec4(0.0)\n"
 		"#endif\n"
@@ -1238,7 +1243,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	unsigned int i;
 	int hash;
 	int linked, error = 0;
-	int shaderTypeIdx, deformvIdx, instancedIdx;
+	int shaderTypeIdx, deformvIdx, instancedIdx, shadowIdx;
 	int body_start, num_init_strings, num_shader_strings;
 	glsl_program_t *program;
 	char fullName[1024];
@@ -1346,6 +1351,8 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 #endif
 		shaderStrings[i++] = "\n";
 
+	shadowIdx = i;
+	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = shaderVersion;
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
@@ -1418,6 +1425,10 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 
 	// fragment shader
 	shaderStrings[instancedIdx] = "\n"; // GL_ARB_draw_instanced is unsupported in fragment shader
+#ifdef GL_ES_VERSION_2_0
+	if( glConfig.shadingLanguageVersion < 300 && glConfig.ext.shadow )
+		shaderStrings[shadowIdx] = QF_GLSL_ENABLE_NV_SHADOW;
+#endif
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
 	shaderStrings[deformvIdx] = "\n";
 	program->fragmentShader = RF_CompileShader( program->object, fullName, "fragment", GL_FRAGMENT_SHADER_ARB, 
