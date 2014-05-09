@@ -466,7 +466,7 @@ static qboolean VID_LoadRefresh( const char *name )
 	}
 	else
 	{
-		Com_Printf( "Not found.\n" );
+		Com_Printf( "Not found %s.\n", va( LIB_DIRECTORY "/%s_" ARCH LIB_SUFFIX, name ) );
 		return qfalse;
 	}
 
