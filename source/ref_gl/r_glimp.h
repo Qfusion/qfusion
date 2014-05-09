@@ -160,7 +160,6 @@ typedef struct
 				,GLSL
 				,GLSL130
 				,depth_texture
-				,shadow
 				,framebuffer_object
 				,vertex_shader
 				,fragment_shader
@@ -178,6 +177,9 @@ typedef struct
 				,depth24
 				,multiview_draw_buffers
 				;
+	union {
+		char	shadow, shadow_samplers;
+	};
 	union {
 		char	texture_non_power_of_two, texture_npot;
 	};

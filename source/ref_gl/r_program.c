@@ -744,8 +744,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "" \
 "#extension GL_ARB_draw_instanced : enable\n"
 
-#define QF_GLSL_ENABLE_NV_SHADOW "" \
-"#extension GL_NV_shadow : enable\n"
+#define QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS "" \
+"#extension GL_EXT_shadow_samplers : enable\n"
 
 #define QF_BUILTIN_GLSL_MACROS "" \
 "#if !defined(myhalf)\n" \
@@ -812,7 +812,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
-"#define qf_shadow shadow2D\n" \
+"#define qf_shadow shadow2DEXT\n" \
 "\n"
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL300ES "" \
@@ -1427,7 +1427,7 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey, cons
 	shaderStrings[instancedIdx] = "\n"; // GL_ARB_draw_instanced is unsupported in fragment shader
 #ifdef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion < 300 && glConfig.ext.shadow )
-		shaderStrings[shadowIdx] = QF_GLSL_ENABLE_NV_SHADOW;
+		shaderStrings[shadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
 #endif
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
 	shaderStrings[deformvIdx] = "\n";
