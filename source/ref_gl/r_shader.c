@@ -2517,7 +2517,6 @@ static void R_LoadShaderReal( shader_t *s, char *shortname,
 	void *data;
 	shadercache_t *cache;
 	shaderpass_t *pass;
-	size_t passOffset = ( shortname_length + 1 + 15 ) & ~15;
 	image_t *materialImages[MAX_SHADER_images];
 
 	s->name = shortname;
