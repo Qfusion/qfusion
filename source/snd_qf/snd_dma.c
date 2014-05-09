@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include "snd_local.h"
+#include "../qalgo/q_trie.h"
 
 // =======================================================================
 // Internal sound data & structures
@@ -1879,12 +1880,14 @@ void S_StartBackgroundTrack( const char *intro, const char *loop )
 	s_bgTrack = introTrack;
 
 start_playback:
-	// this effectively precaches the first 15 scheduled tracks in the playlist
-	for( count = 0, t = s_bgTrack; count < 15 && t; count++ )
+	count = 0;
+
+	// let the FS precache locations of files in the playlist
+	for( t = s_bgTrack; t; t = t->next )
 	{
 		if( !t->isUrl )
 		{
-			S_OpenMusicTrack( t );
+			trap_FS_FOpenFile( t->filename, NULL, FS_READ|FS_NOSIZE );
 
 			if( t->next == t || t->next == s_bgTrack )
 				break; // break on an endless loop or full cycle
@@ -1895,7 +1898,7 @@ start_playback:
 				break;
 			}
 		}
-		t = t->next;
+		count++;
 	}
 
 	// start playback with the first valid track
@@ -1905,7 +1908,7 @@ start_playback:
 		f.next = s_bgTrack;
 		s_bgTrack = S_NextMusicTrack( &f );
 	}
-	else if( s_bgTrack && s_bgTrack->isUrl )
+	else if( s_bgTrack )
 	{
 		S_OpenMusicTrack( s_bgTrack );
 	}
