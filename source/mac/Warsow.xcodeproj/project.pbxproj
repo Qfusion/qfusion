@@ -607,6 +607,18 @@
 		F3FBE431191D30AF00FE6900 /* unix_lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 28A722D90F5DEAA0006FB1A8 /* unix_lib.c */; };
 		F3FBE432191D30B500FE6900 /* unix_net.c in Sources */ = {isa = PBXBuildFile; fileRef = 28A722DA0F5DEAA0006FB1A8 /* unix_net.c */; };
 		F3FBE434191D313B00FE6900 /* mac_vid.m in Sources */ = {isa = PBXBuildFile; fileRef = 9D25226215A09B5B001CE46F /* mac_vid.m */; };
+		F3FDBAA0191D8C140021E994 /* glsl in copy shaders (glsl) */ = {isa = PBXBuildFile; fileRef = F3FDBA9F191D8C140021E994 /* glsl */; };
+		F3FDBAEE191DB0A30021E994 /* ftlib.c in Sources */ = {isa = PBXBuildFile; fileRef = F3FDBAE5191DB0A30021E994 /* ftlib.c */; };
+		F3FDBAEF191DB0A30021E994 /* ftlib_draw.c in Sources */ = {isa = PBXBuildFile; fileRef = F3FDBAE8191DB0A30021E994 /* ftlib_draw.c */; };
+		F3FDBAF0191DB0A30021E994 /* ftlib_local.h in Headers */ = {isa = PBXBuildFile; fileRef = F3FDBAE9191DB0A30021E994 /* ftlib_local.h */; };
+		F3FDBAF1191DB0A30021E994 /* ftlib_main.c in Sources */ = {isa = PBXBuildFile; fileRef = F3FDBAEA191DB0A30021E994 /* ftlib_main.c */; };
+		F3FDBAF2191DB0A30021E994 /* ftlib_public.h in Headers */ = {isa = PBXBuildFile; fileRef = F3FDBAEB191DB0A30021E994 /* ftlib_public.h */; };
+		F3FDBAF3191DB0A30021E994 /* ftlib_syscalls.c in Sources */ = {isa = PBXBuildFile; fileRef = F3FDBAEC191DB0A30021E994 /* ftlib_syscalls.c */; };
+		F3FDBAF4191DB0A30021E994 /* ftlib_syscalls.h in Headers */ = {isa = PBXBuildFile; fileRef = F3FDBAED191DB0A30021E994 /* ftlib_syscalls.h */; };
+		F3FDBAF5191DB0E40021E994 /* q_math.c in Sources */ = {isa = PBXBuildFile; fileRef = 289762C00F682681001563E7 /* q_math.c */; };
+		F3FDBAF6191DB0E70021E994 /* q_shared.c in Sources */ = {isa = PBXBuildFile; fileRef = 289762C20F682681001563E7 /* q_shared.c */; };
+		F3FDBAF8191DB2300021E994 /* libfreetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F3FDBAF7191DB2300021E994 /* libfreetype.a */; };
+		F3FDBAF9191DB4790021E994 /* ftlib_mac.dylib in libs */ = {isa = PBXBuildFile; fileRef = F3FDBAD3191D97560021E994 /* ftlib_mac.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -748,6 +760,7 @@
 			dstPath = libs;
 			dstSubfolderSpec = 7;
 			files = (
+				F3FDBAF9191DB4790021E994 /* ftlib_mac.dylib in libs */,
 				F3DB9AC2191C47DC00AD6FE8 /* ref_gl_mac.dylib in libs */,
 				9D48C5E115C2FC2D007A1955 /* cin_mac.dylib in libs */,
 				2867570D0F5DFCCF00C05B53 /* angelwrap_mac.dylib in libs */,
@@ -768,6 +781,17 @@
 				9D5728DB15B99CDB00727DB0 /* docs in copy basewsw pk3, docs */,
 			);
 			name = "copy basewsw pk3, docs";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3FDBA64191D8A7D0021E994 /* copy shaders (glsl) */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				F3FDBAA0191D8C140021E994 /* glsl in copy shaders (glsl) */,
+			);
+			name = "copy shaders (glsl)";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -1364,6 +1388,16 @@
 		F3E56A4A191938C200FE695F /* ui_parsersound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ui_parsersound.cpp; sourceTree = "<group>"; };
 		F3E56A4B191938C200FE695F /* ui_parsersound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ui_parsersound.h; sourceTree = "<group>"; };
 		F3E56A4E191938D200FE695F /* ui_downloadinfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ui_downloadinfo.h; sourceTree = "<group>"; };
+		F3FDBA9F191D8C140021E994 /* glsl */ = {isa = PBXFileReference; lastKnownFileType = folder; name = glsl; path = ../../glsl; sourceTree = "<group>"; };
+		F3FDBAD3191D97560021E994 /* ftlib_mac.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = ftlib_mac.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3FDBAE5191DB0A30021E994 /* ftlib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ftlib.c; sourceTree = "<group>"; };
+		F3FDBAE8191DB0A30021E994 /* ftlib_draw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ftlib_draw.c; sourceTree = "<group>"; };
+		F3FDBAE9191DB0A30021E994 /* ftlib_local.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftlib_local.h; sourceTree = "<group>"; };
+		F3FDBAEA191DB0A30021E994 /* ftlib_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ftlib_main.c; sourceTree = "<group>"; };
+		F3FDBAEB191DB0A30021E994 /* ftlib_public.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftlib_public.h; sourceTree = "<group>"; };
+		F3FDBAEC191DB0A30021E994 /* ftlib_syscalls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ftlib_syscalls.c; sourceTree = "<group>"; };
+		F3FDBAED191DB0A30021E994 /* ftlib_syscalls.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftlib_syscalls.h; sourceTree = "<group>"; };
+		F3FDBAF7191DB2300021E994 /* libfreetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype.a; path = ../../../../../../opt/local/lib/libfreetype.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1490,6 +1524,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F3FDBACA191D97560021E994 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3FDBAF8191DB2300021E994 /* libfreetype.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -1534,6 +1576,7 @@
 				9D48C5BF15C2F94E007A1955 /* cin_mac.dylib */,
 				F323F5A81918080400F8FD6C /* steam.dylib */,
 				F319F337191B3B2A001A1D4B /* ref_gl_mac.dylib */,
+				F3FDBAD3191D97560021E994 /* ftlib_mac.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1545,6 +1588,7 @@
 				28A7208D0F5DEA9F006FB1A8 /* angelwrap */,
 				28A720B50F5DEA9F006FB1A8 /* cgame */,
 				28A720D90F5DEA9F006FB1A8 /* client */,
+				F3FDBAE3191DB0A30021E994 /* ftlib */,
 				28A720F10F5DEA9F006FB1A8 /* game */,
 				28A7212C0F5DEAA0006FB1A8 /* gameshared */,
 				28A721380F5DEAA0006FB1A8 /* gnu.txt */,
@@ -2124,6 +2168,7 @@
 		29B97314FDCFA39411CA2CEA /* Warsow */ = {
 			isa = PBXGroup;
 			children = (
+				F3FDBA9F191D8C140021E994 /* glsl */,
 				283CA5460EA32E7300209134 /* Warsow Source */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
@@ -2146,6 +2191,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F3FDBAF7191DB2300021E994 /* libfreetype.a */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
@@ -2414,6 +2460,21 @@
 			path = parsers;
 			sourceTree = "<group>";
 		};
+		F3FDBAE3191DB0A30021E994 /* ftlib */ = {
+			isa = PBXGroup;
+			children = (
+				F3FDBAE5191DB0A30021E994 /* ftlib.c */,
+				F3FDBAE8191DB0A30021E994 /* ftlib_draw.c */,
+				F3FDBAE9191DB0A30021E994 /* ftlib_local.h */,
+				F3FDBAEA191DB0A30021E994 /* ftlib_main.c */,
+				F3FDBAEB191DB0A30021E994 /* ftlib_public.h */,
+				F3FDBAEC191DB0A30021E994 /* ftlib_syscalls.c */,
+				F3FDBAED191DB0A30021E994 /* ftlib_syscalls.h */,
+			);
+			name = ftlib;
+			path = ../ftlib;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -2578,6 +2639,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F3FDBAA2191D97560021E994 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3FDBAF4191DB0A30021E994 /* ftlib_syscalls.h in Headers */,
+				F3FDBAF0191DB0A30021E994 /* ftlib_local.h in Headers */,
+				F3FDBAF2191DB0A30021E994 /* ftlib_public.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
@@ -2696,6 +2767,7 @@
 				286757290F5DFCF900C05B53 /* libs */,
 				2807570C0F6076DE00566D02 /* set some cvars */,
 				282252200F6BEAF7002F3547 /* command line tools */,
+				F3FDBA64191D8A7D0021E994 /* copy shaders (glsl) */,
 			);
 			buildRules = (
 			);
@@ -2818,6 +2890,23 @@
 			productReference = F323F5A81918080400F8FD6C /* steam.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
+		F3FDBAA1191D97560021E994 /* ftlib_mac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F3FDBAD0191D97560021E994 /* Build configuration list for PBXNativeTarget "ftlib_mac" */;
+			buildPhases = (
+				F3FDBAA2191D97560021E994 /* Headers */,
+				F3FDBAA3191D97560021E994 /* Sources */,
+				F3FDBACA191D97560021E994 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ftlib_mac;
+			productName = mac_irc;
+			productReference = F3FDBAD3191D97560021E994 /* ftlib_mac.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -2850,6 +2939,7 @@
 				9D48C54715C2F94E007A1955 /* cin_mac */,
 				F323F5621918080400F8FD6C /* steamlib */,
 				F319F326191B3B2A001A1D4B /* ref_gl */,
+				F3FDBAA1191D97560021E994 /* ftlib_mac */,
 			);
 		};
 /* End PBXProject section */
@@ -3424,6 +3514,19 @@
 				F323F5BC191809E400F8FD6C /* steamlib.cpp in Sources */,
 				F323F5C0191809E400F8FD6C /* steamlib_syscalls.cpp in Sources */,
 				F323F5BE191809E400F8FD6C /* steamlib_main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3FDBAA3191D97560021E994 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3FDBAF1191DB0A30021E994 /* ftlib_main.c in Sources */,
+				F3FDBAEE191DB0A30021E994 /* ftlib.c in Sources */,
+				F3FDBAEF191DB0A30021E994 /* ftlib_draw.c in Sources */,
+				F3FDBAF5191DB0E40021E994 /* q_math.c in Sources */,
+				F3FDBAF6191DB0E70021E994 /* q_shared.c in Sources */,
+				F3FDBAF3191DB0A30021E994 /* ftlib_syscalls.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -4176,6 +4279,66 @@
 			};
 			name = Release;
 		};
+		F3FDBAD1191D97560021E994 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				EXECUTABLE_PREFIX = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/opt/local/include/freetype2,
+				);
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				PRODUCT_NAME = ftlib_mac;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		F3FDBAD2191D97560021E994 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				EXECUTABLE_PREFIX = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Frameworks",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_FAST_MATH = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
+				GCC_UNROLL_LOOPS = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/opt/local/include/freetype2,
+				);
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				OTHER_CFLAGS = "-fno-strict-aliasing";
+				PRODUCT_NAME = ftlib_mac;
+				SDKROOT = macosx;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -4301,6 +4464,15 @@
 			buildConfigurations = (
 				F323F5A61918080400F8FD6C /* Debug */,
 				F323F5A71918080400F8FD6C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F3FDBAD0191D97560021E994 /* Build configuration list for PBXNativeTarget "ftlib_mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3FDBAD1191D97560021E994 /* Debug */,
+				F3FDBAD2191D97560021E994 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
