@@ -104,10 +104,13 @@ void S_StartLocalSound( const char *s );
 void S_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
 // cinema
-void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
+void S_RawSamples( unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
+void S_RawSamples2( unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data, qboolean music, float fvol );
 void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
-		unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const qbyte *data );
+	unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data );
 unsigned int S_GetRawSamplesLength( void );
 unsigned int S_GetPositionedRawSamplesLength( int entnum );
 
@@ -211,6 +214,7 @@ typedef struct bgTrack_s
 	char *filename;
 	qboolean ignore;
 	qboolean isUrl;
+	qboolean loop;
 	snd_stream_t *stream;
 
 	struct bgTrack_s *next; // the next track to be played, the looping part aways points to itself
