@@ -418,8 +418,11 @@ void Sys_FreeClipboardData( char *data )
 
 #endif
 
+#ifndef __APPLE__
 /*
-* Sys_OpenURLInBrowser
+* Sys_OpenURLInBrowser for Linux-based systems.
+* OSX systems have their own function defined
+* in mac_sys.m.
 */
 void Sys_OpenURLInBrowser( const char *url )
 {
@@ -432,6 +435,7 @@ void Sys_OpenURLInBrowser( const char *url )
 		// XIconifyWindow( x11display.dpy, x11display.win, x11display.scr );
     }
 }
+#endif
 
 /*
 * Sys_GetPreferredLanguage
