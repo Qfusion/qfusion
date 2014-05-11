@@ -84,28 +84,20 @@ void VID_FlashWindow( int count )
 }
 
 /*
- ** VID_GetScreenSize
- */
-qboolean VID_GetScreenSize( int *width, int *height )
-{
-  NSScreen* screen = [NSScreen mainScreen];
-  if (screen)
-  {
-    NSRect rect = [screen frame];
-    *width = floor(rect.size.width);
-    *height = floor(rect.size.height);
-    return qtrue;
-  }
-
-	return qfalse;
-}
-
-/*
  ** VID_GetDisplaySize
  */
 qboolean VID_GetDisplaySize( int *width, int *height )
 {
-  return VID_GetScreenSize(width, height);
+    NSScreen* screen = [NSScreen mainScreen];
+    if (screen)
+    {
+        NSRect rect = [screen frame];
+        *width = floor(rect.size.width);
+        *height = floor(rect.size.height);
+        return qtrue;
+    }
+    
+	return qfalse;
 }
 
 /*
