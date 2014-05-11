@@ -639,7 +639,7 @@ static inline int CPU_haveCPUID()
 {
 	int has_CPUID = 0;
 #if defined(__GNUC__) && defined(i386)
-	has_CPUID = !__get_cpuid_max( 0, NULL );
+	has_CPUID = __get_cpuid_max( 0, NULL ) ? 1 : 0;
 #elif defined(_MSC_VER) && defined(_M_IX86)
 	__asm {
 		pushfd                      ; Get original EFLAGS
