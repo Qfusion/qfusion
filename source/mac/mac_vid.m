@@ -113,8 +113,6 @@ qboolean VID_GetDisplaySize( int *width, int *height )
  */
 void VID_NewWindow( int width, int height )
 {
-#ifndef REF_GL_LIBRARY
 	viddef.width  = width;
 	viddef.height = height;
-#endif
 }
