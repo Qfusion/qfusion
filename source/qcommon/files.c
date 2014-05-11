@@ -3676,6 +3676,7 @@ static void Cmd_FileMTime_f( void )
 void FS_Init( void )
 {
 	int i;
+	const char *homedir;
 
 	assert( !fs_initialized );
 
