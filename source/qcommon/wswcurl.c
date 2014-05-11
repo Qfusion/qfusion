@@ -311,11 +311,13 @@ void wswcurl_start(wswcurl_req *req)
 
 size_t wswcurl_getsize( wswcurl_req *req, size_t *rxreceived )
 {
+#if 0
 	while( !req->headers_done && req->status >= 0 && req->status != WSTATUS_FINISHED/* && req->status != WSTATUS_QUEUED*/ ) {
 		// blocking read until we finish reading all headers
 		CURLDBG(("   CURL BLOCKING GETSIZE LOOP\n"));
 		wswcurl_perform_single( req );
 	}
+#endif
 
 	if( rxreceived ) {
 		*rxreceived = req->rxreceived;
@@ -344,11 +346,13 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 	if( (req->rxreceived-req->rxreturned) < (size+WMINBUFFERING) && req->paused )
 		wswcurl_unpause(req);
 
+#if 0
 	// Make sure we have data in buffer
 	while ( req->status >= 0 && req->status != WSTATUS_FINISHED && req->status != WSTATUS_QUEUED && (req->rxreceived-req->rxreturned) < size ) {
 		CURLDBG(("   CURL BLOCKING READ LOOP\n"));
 		wswcurl_perform_single (req);
 	}
+#endif
 
 	// hmm, signal an error?
 	if( req->status < 0 )
@@ -362,6 +366,8 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 		size_t numb = cb->rxsize - cb->rxoffset;
 		if( numb + written > size )
 			numb = size - written;
+		if( !numb )
+			break;
 
 		if( req->ignore_bytes >= numb ) {
 			req->ignore_bytes -= numb;
