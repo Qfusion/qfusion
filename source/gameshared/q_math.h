@@ -139,6 +139,8 @@ extern vec4_t color_table[MAX_S_COLORS];
 #define clamp_low( a, low ) ( ( a ) = ( a ) < ( low ) ? ( low ) : ( a ) )
 #define clamp_high( a, high ) ( ( a ) = ( a ) > ( high ) ? ( high ) : ( a ) )
 
+#define ALIGN_INT( x, a ) ( ( ( x ) + ( ( a ) - 1 ) ) & ~( ( a ) - 1 ) )
+
 #define random()	( ( rand() & 0x7fff ) / ( (float)0x7fff ) )  // 0..1
 #define brandom( a, b )	   ( ( a )+random()*( ( b )-( a ) ) )                // a..b
 #define crandom()	brandom( -1, 1 )                           // -1..1
