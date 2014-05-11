@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // common.c -- misc functions used in client and server
 #include "qcommon.h"
+#if defined(__GNUC__) && defined(i386)
+#include <cpuid.h>
+#endif
 #include <setjmp.h>
 #include "wswcurl.h"
 #include "steam.h"
@@ -636,23 +639,7 @@ static inline int CPU_haveCPUID()
 {
 	int has_CPUID = 0;
 #if defined(__GNUC__) && defined(i386)
-	__asm__ (
-		"        pushfl                      # Get original EFLAGS             \n"
-		"        popl    %%eax                                                 \n"
-		"        movl    %%eax,%%ecx                                           \n"
-		"        xorl    $0x200000,%%eax     # Flip ID bit in EFLAGS           \n"
-		"        pushl   %%eax               # Save new EFLAGS value on stack  \n"
-		"        popfl                       # Replace current EFLAGS value    \n"
-		"        pushfl                      # Get new EFLAGS                  \n"
-		"        popl    %%eax               # Store new EFLAGS in EAX         \n"
-		"        xorl    %%ecx,%%eax         # Can not toggle ID bit,          \n"
-		"        jz      1f                  # Processor=80486                 \n"
-		"        movl    $1,%0               # We have CPUID support           \n"
-		"1:                                                                    \n"
-		: "=m" (has_CPUID)
-		:
-	: "%eax", "%ecx"
-		);
+	has_CPUID = __get_cpuid_max( 0, NULL ) ? 1 : 0;
 #elif defined(_MSC_VER) && defined(_M_IX86)
 	__asm {
 		pushfd                      ; Get original EFLAGS
@@ -676,22 +663,10 @@ static inline int CPU_getCPUIDFeatures()
 {
 	int features = 0;
 #if defined(__GNUC__) && defined(i386)
-	__asm__ (
-		"        movl    %%ebx,%%edi\n"
-		"        xorl    %%eax,%%eax         # Set up for CPUID instruction    \n"
-		"        cpuid                       # Get and save vendor ID          \n"
-		"        cmpl    $1,%%eax            # Make sure 1 is valid input for CPUID\n"
-		"        jl      1f                  # We dont have the CPUID instruction\n"
-		"        xorl    %%eax,%%eax                                           \n"
-		"        incl    %%eax                                                 \n"
-		"        cpuid                       # Get family/model/stepping/features\n"
-		"        movl    %%edx,%0                                              \n"
-		"1:                                                                    \n"
-		"        movl    %%edi,%%ebx\n"
-		: "=m" (features)
-		:
-	: "%eax", "%ebx", "%ecx", "%edx", "%edi"
-		);
+	if( __get_cpuid_max( 0, NULL ) >= 1 ) {
+		int temp, temp2, temp3;
+		__get_cpuid( 1, &temp, &temp2, &temp3, &features );
+	}
 #elif defined(_MSC_VER) && defined(_M_IX86)
 	__asm {
 		xor     eax, eax            ; Set up for CPUID instruction
@@ -712,21 +687,10 @@ static inline int CPU_getCPUIDFeaturesExt()
 {
 	int features = 0;
 #if defined(__GNUC__) && defined(i386)
-	__asm__ (
-		"        movl    %%ebx,%%edi\n"
-		"        movl    $0x80000000,%%eax   # Query for extended functions    \n"
-		"        cpuid                       # Get extended function limit     \n"
-		"        cmpl    $0x80000001,%%eax                                     \n"
-		"        jl      1f                  # Nope, we dont have function 800000001h\n"
-		"        movl    $0x80000001,%%eax   # Setup extended function 800000001h\n"
-		"        cpuid                       # and get the information         \n"
-		"        movl    %%edx,%0                                              \n"
-		"1:                                                                    \n"
-		"        movl    %%edi,%%ebx\n"
-		: "=m" (features)
-		:
-	: "%eax", "%ebx", "%ecx", "%edx", "%edi"
-		);
+	if( __get_cpuid_max( 0x80000000, NULL ) >= 0x80000001 ) {
+		int temp, temp2, temp3;
+		__get_cpuid( 0x80000001, &temp, &temp2, &temp3, &features );
+	}
 #elif defined(_MSC_VER) && defined(_M_IX86)
 	__asm {
 		mov     eax,80000000h       ; Query for extended functions

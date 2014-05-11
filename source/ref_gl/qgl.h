@@ -558,6 +558,7 @@ QGL_EXT(void, glBufferDataARB, (GLenum target, GLsizeiptrARB size, const GLvoid 
 QGL_EXT(void, glBufferSubDataARB, (GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid *data));
 #else
 QGL_FUNC(void, glActiveTexture, (GLenum ));
+QGL_FUNC_OPT(void, glDrawRangeElements, (GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *));
 QGL_FUNC(void, glBindBuffer, (GLenum target, GLuint buffer));
 QGL_FUNC(void, glDeleteBuffers, (GLsizei n, const GLuint *buffers));
 QGL_FUNC(void, glGenBuffers, (GLsizei n, GLuint *buffers));
@@ -565,6 +566,7 @@ QGL_FUNC(void, glBufferData, (GLenum target, GLsizeiptrARB size, const GLvoid *d
 QGL_FUNC(void, glBufferSubData, (GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid *data));
 #ifndef qglActiveTextureARB
 #define qglActiveTextureARB qglActiveTexture
+#define qglDrawRangeElementsEXT qglDrawRangeElements
 #define qglBindBufferARB qglBindBuffer
 #define qglDeleteBuffersARB qglDeleteBuffers
 #define qglGenBuffersARB qglGenBuffers
@@ -797,6 +799,11 @@ QGL_FUNC(void, glGenerateMipmap, (GLenum));
 
 #ifndef GL_ES_VERSION_2_0
 QGL_EXT(void, glBlitFramebufferEXT, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
+#else
+QGL_FUNC_OPT(void, glBlitFramebuffer, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
+#ifndef qglBlitFramebufferEXT
+#define qglBlitFramebufferEXT qglBlitFramebuffer
+#endif
 #endif
 
 #ifdef GL_ES_VERSION_2_0
