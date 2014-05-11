@@ -310,7 +310,6 @@ void RFB_DisableObjectDrawBuffer( void )
 */
 void RFB_BlitObject( int dest, int bitMask, int mode )
 {
-#ifndef GL_ES_VERSION_2_0
 	int bits;
 	int dx, dy, dw, dh;
 	r_fbo_t *fbo = r_bound_framebuffer_object, 
@@ -363,7 +362,6 @@ void RFB_BlitObject( int dest, int bitMask, int mode )
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
 	assert( qglGetError() == GL_NO_ERROR );
-#endif
 }
 
 /*
