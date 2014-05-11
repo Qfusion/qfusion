@@ -786,8 +786,8 @@
 		F3FDBA64191D8A7D0021E994 /* copy shaders (glsl) */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 6;
+			dstPath = basewsw;
+			dstSubfolderSpec = 7;
 			files = (
 				F3FDBAA0191D8C140021E994 /* glsl in copy shaders (glsl) */,
 			);
@@ -2768,6 +2768,7 @@
 				2807570C0F6076DE00566D02 /* set some cvars */,
 				282252200F6BEAF7002F3547 /* command line tools */,
 				F3FDBA64191D8A7D0021E994 /* copy shaders (glsl) */,
+				F35FC253191DE699003A502A /* make base a symbolic link to basewsw */,
 			);
 			buildRules = (
 			);
@@ -2969,6 +2970,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "echo \"seta r_ignorehwgamma 1\" > $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/basewsw/autoexec.cfg";
+		};
+		F35FC253191DE699003A502A /* make base a symbolic link to basewsw */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "make base a symbolic link to basewsw";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "rm -f $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/base\nln -s $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/basewsw/ $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/base";
 		};
 /* End PBXShellScriptBuildPhase section */
 
