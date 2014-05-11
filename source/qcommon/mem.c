@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Z_zone.c
 
 #include "qcommon.h"
+#include "sys_threads.h"
 
 //#define MEMTRASH
 
@@ -111,6 +112,8 @@ mempool_t *tempMemPool;
 // only for zone
 mempool_t *zoneMemPool;
 
+static qmutex_t *memMutex;
+
 static qboolean memory_initialized = qfalse;
 static qboolean commands_initialized = qfalse;
 
@@ -151,6 +154,8 @@ void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int 
 	if( developerMemory && developerMemory->integer )
 		Com_DPrintf( "Mem_Alloc: pool %s, file %s:%i, size %i bytes\n", pool->name, filename, fileline, size );
 
+	QMutex_Lock( memMutex );
+
 	pool->totalsize += size;
 	realsize = sizeof( memheader_t ) + size + alignment + sizeof( int );
 
@@ -179,6 +184,8 @@ void *_Mem_AllocExt( mempool_t *pool, size_t size, size_t alignment, int z, int 
 	pool->chain = mem;
 	if( mem->next )
 		mem->next->prev = mem;
+
+	QMutex_Unlock( memMutex );
 
 	if( z )
 		memset( (void *)( (qbyte *) mem + sizeof( memheader_t ) ), 0, mem->size );
@@ -257,6 +264,8 @@ void _Mem_Free( void *data, int musthave, int canthave, const char *filename, in
 	if( developerMemory && developerMemory->integer )
 		Com_DPrintf( "Mem_Free: pool %s, alloc %s:%i, free %s:%i, size %i bytes\n", pool->name, mem->filename, mem->fileline, filename, fileline, mem->size );
 
+	QMutex_Lock( memMutex );
+
 	// unlink memheader from doubly linked list
 	if( ( mem->prev ? mem->prev->next != mem : pool->chain != mem ) || ( mem->next && mem->next->prev != mem ) )
 		_Mem_Error( "Mem_Free: not allocated or double freed (free at %s:%i)", filename, fileline );
@@ -273,6 +282,9 @@ void _Mem_Free( void *data, int musthave, int canthave, const char *filename, in
 
 	base = mem->baseaddress;
 	pool->realsize -= mem->realsize;
+
+	QMutex_Unlock( memMutex );
+
 #ifdef MEMTRASH
 	memset( mem, 0xBF, sizeof( memheader_t ) + mem->size + sizeof( int ) );
 #endif
@@ -650,6 +662,8 @@ void Memory_Init( void )
 {
 	assert( !memory_initialized );
 
+	memMutex = QMutex_Create();
+
 	zoneMemPool = Mem_AllocPool( NULL, "Zone" );
 	tempMemPool = Mem_AllocTempPool( "Temporary Memory" );
 
@@ -663,6 +677,7 @@ void Memory_InitCommands( void )
 {
 	assert( !commands_initialized );
 
+	
 	developerMemory = Cvar_Get( "developerMemory", "0", 0 );
 
 	Cmd_AddCommand( "memlist", MemList_f );
@@ -701,6 +716,8 @@ void Memory_Shutdown( void )
 #endif
 		Mem_FreePool( &pool );
 	}
+
+	QMutex_Destroy( &memMutex );
 
 	memory_initialized = qfalse;
 }
