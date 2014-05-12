@@ -32,7 +32,7 @@ static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, 
 	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
-	return R_Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
+	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX,
 				NULL, NULL, parentWindow, 
                 x, y, width, height, displayFrequency,
 				fullScreen, wideScreen, verbose );
@@ -84,19 +84,19 @@ void VID_FlashWindow( int count )
 }
 
 /*
- ** VID_GetScreenSize
+ ** VID_GetDisplaySize
  */
-qboolean VID_GetScreenSize( int *width, int *height )
+qboolean VID_GetDisplaySize( int *width, int *height )
 {
-  NSScreen* screen = [NSScreen mainScreen];
-  if (screen)
-  {
-    NSRect rect = [screen frame];
-    *width = floor(rect.size.width);
-    *height = floor(rect.size.height);
-    return qtrue;
-  }
-
+    NSScreen* screen = [NSScreen mainScreen];
+    if (screen)
+    {
+        NSRect rect = [screen frame];
+        *width = floor(rect.size.width);
+        *height = floor(rect.size.height);
+        return qtrue;
+    }
+    
 	return qfalse;
 }
 

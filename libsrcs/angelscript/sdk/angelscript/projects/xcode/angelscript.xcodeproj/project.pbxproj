@@ -219,7 +219,6 @@
 		F33CABD519185D9300F88979 /* as_variablescope.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD421523FF2300EFAB3F /* as_variablescope.h */; };
 		F33CABD719185EE100F88979 /* as_callfunc_x64_gcc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD061523FF2300EFAB3F /* as_callfunc_x64_gcc.cpp */; };
 		F3FCC66819184F470014D1D4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3FCC66719184F470014D1D4 /* Cocoa.framework */; };
-		F3FCC67619184F470014D1D4 /* angelscript.m in Sources */ = {isa = PBXBuildFile; fileRef = F3FCC67519184F470014D1D4 /* angelscript.m */; };
 		F3FCC67E19184F480014D1D4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3FCC66719184F470014D1D4 /* Cocoa.framework */; };
 		F3FCC68119184F480014D1D4 /* angelscript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3FCC66619184F470014D1D4 /* angelscript.framework */; };
 		F3FCC68719184F480014D1D4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = F3FCC68519184F480014D1D4 /* InfoPlist.strings */; };
@@ -322,11 +321,8 @@
 		F3FCC66A19184F470014D1D4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		F3FCC66B19184F470014D1D4 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		F3FCC66C19184F470014D1D4 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
-		F3FCC66F19184F470014D1D4 /* angelscript-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "angelscript-Info.plist"; sourceTree = "<group>"; };
-		F3FCC67119184F470014D1D4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		F3FCC67319184F470014D1D4 /* angelscript-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "angelscript-Prefix.pch"; sourceTree = "<group>"; };
-		F3FCC67419184F470014D1D4 /* angelscript.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = angelscript.h; sourceTree = "<group>"; };
-		F3FCC67519184F470014D1D4 /* angelscript.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = angelscript.m; sourceTree = "<group>"; };
+		F3FCC66F19184F470014D1D4 /* angelscript-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = "angelscript-Info.plist"; path = "angelscript/angelscript-Info.plist"; sourceTree = "<group>"; };
+		F3FCC67319184F470014D1D4 /* angelscript-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "angelscript-Prefix.pch"; path = "angelscript/angelscript-Prefix.pch"; sourceTree = "<group>"; };
 		F3FCC67B19184F480014D1D4 /* angelscriptTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = angelscriptTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3FCC68419184F480014D1D4 /* angelscriptTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "angelscriptTests-Info.plist"; sourceTree = "<group>"; };
 		F3FCC68619184F480014D1D4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -516,8 +512,6 @@
 		F3FCC66D19184F470014D1D4 /* angelscript */ = {
 			isa = PBXGroup;
 			children = (
-				F3FCC67419184F470014D1D4 /* angelscript.h */,
-				F3FCC67519184F470014D1D4 /* angelscript.m */,
 				F3FCC66E19184F470014D1D4 /* Supporting Files */,
 			);
 			path = angelscript;
@@ -527,7 +521,6 @@
 			isa = PBXGroup;
 			children = (
 				F3FCC66F19184F470014D1D4 /* angelscript-Info.plist */,
-				F3FCC67019184F470014D1D4 /* InfoPlist.strings */,
 				F3FCC67319184F470014D1D4 /* angelscript-Prefix.pch */,
 			);
 			name = "Supporting Files";
@@ -933,7 +926,6 @@
 				F33CABD419185D9300F88979 /* as_variablescope.cpp in Sources */,
 				F33CABC419185D9300F88979 /* as_scriptnode.cpp in Sources */,
 				F33CABAF19185D9300F88979 /* as_globalproperty.cpp in Sources */,
-				F3FCC67619184F470014D1D4 /* angelscript.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -956,14 +948,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		F3FCC67019184F470014D1D4 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				F3FCC67119184F470014D1D4 /* en */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
 		F3FCC68519184F480014D1D4 /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1111,6 +1095,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				INFOPLIST_FILE = "angelscript/angelscript-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -1152,6 +1137,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				INFOPLIST_FILE = "angelscript/angelscript-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
