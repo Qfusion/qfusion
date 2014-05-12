@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>angelscript</string>
 	<key>CFBundleIdentifier</key>
-	<string>AngelCode.angelscript</string>
+	<string>com.angelcode.angelscript</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -18,8 +18,6 @@
 	<string>FMWK</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>DTCompiler</key>
