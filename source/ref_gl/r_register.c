@@ -355,7 +355,6 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( ARB, texture_cube_map, false, false, NULL )
-	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 	,GL_EXTENSION( ARB, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( ARB, shadow, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( ARB, texture_non_power_of_two, false, false, NULL )
@@ -387,6 +386,7 @@ static const gl_extension_t gl_extensions_decl[] =
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
+	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 
 #ifdef GLX_VERSION
 	,GL_EXTENSION( GLX_SGI, swap_control, true, false, &glx_ext_swap_control_SGI_funcs )
