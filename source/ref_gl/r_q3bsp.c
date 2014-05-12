@@ -511,17 +511,17 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numVerts = size[0] * size[1];
 			numElems = ( size[0] - 1 ) * ( size[1] - 1 ) * 6;
 
-			bufSize = ALIGN_INT( sizeof( mesh_t ), sizeof( vec_t ) );
+			bufSize = ALIGN( sizeof( mesh_t ), sizeof( vec_t ) );
 			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( vec2_t );
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( byte_vec4_t );
-			bufSize = ALIGN_INT( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
+			bufSize = ALIGN( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
 			buffer = ( qbyte * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
-			mesh = ( mesh_t * )buffer; bufPos += ALIGN_INT( sizeof( mesh_t ), sizeof( vec_t ) );
+			mesh = ( mesh_t * )buffer; bufPos += ALIGN( sizeof( mesh_t ), sizeof( vec_t ) );
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
@@ -561,7 +561,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			}
 
 			// compute new elems
-			bufPos = ALIGN_INT( bufPos, sizeof( elem_t ) );
+			bufPos = ALIGN( bufPos, sizeof( elem_t ) );
 			mesh->elems = elems = ( elem_t * )( buffer + bufPos ); bufPos += numElems * sizeof( elem_t );
 			for( v = 0, i = 0; v < size[1] - 1; v++ )
 			{
@@ -605,21 +605,21 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numElems = LittleLong( in->numelems );
 			firstElem = LittleLong( in->firstelem );
 
-			bufSize = ALIGN_INT( sizeof( mesh_t ), sizeof( vec_t ) );
+			bufSize = ALIGN( sizeof( mesh_t ), sizeof( vec_t ) );
 			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( vec2_t );
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( byte_vec4_t );
-			bufSize = ALIGN_INT( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
+			bufSize = ALIGN( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
 			if( out->facetype == FACETYPE_PLANAR )
-				bufSize = ALIGN_INT( bufSize, 16 ) + sizeof( cplane_t );
-			bufSize = ALIGN_INT( bufSize, 16 ) + numFoliageInstances * sizeof( instancePoint_t );
+				bufSize = ALIGN( bufSize, 16 ) + sizeof( cplane_t );
+			bufSize = ALIGN( bufSize, 16 ) + numFoliageInstances * sizeof( instancePoint_t );
 
 			buffer = ( qbyte * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
-			mesh = ( mesh_t * )buffer; bufPos += ALIGN_INT( sizeof( mesh_t ), sizeof( vec_t ) );
+			mesh = ( mesh_t * )buffer; bufPos += ALIGN( sizeof( mesh_t ), sizeof( vec_t ) );
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
@@ -649,7 +649,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				memcpy( mesh->colorsArray[j], loadmodel_colors_array[j] + firstVert, numVerts * sizeof( byte_vec4_t ) );
 			}
 
-			bufPos = ALIGN_INT( bufPos, sizeof( elem_t ) );
+			bufPos = ALIGN( bufPos, sizeof( elem_t ) );
 			mesh->elems = ( elem_t * )( buffer + bufPos ); bufPos += numElems * sizeof( elem_t );
 			memcpy( mesh->elems, loadmodel_surfelems + firstElem, numElems * sizeof( elem_t ) );
 
@@ -660,7 +660,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				cplane_t *plane;
 
 				// don't trust q3map, recalculate surface plane from the first triangle
-				bufPos = ALIGN_INT( bufPos, 16 );
+				bufPos = ALIGN( bufPos, 16 );
 				plane = out->plane = ( cplane_t * )( buffer + bufPos ); bufPos += sizeof( cplane_t );
 				for( j = 0; j < 3; j++ ) {
 					plane->normal[j] = LittleFloat( in->normal[j] );
@@ -676,7 +676,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				instancePoint_t *instance;
 
 				out->numInstances = numFoliageInstances;
-				out->instances = ( instancePoint_t * )( buffer + ALIGN_INT( bufPos, 16 ) );
+				out->instances = ( instancePoint_t * )( buffer + ALIGN( bufPos, 16 ) );
 
 				for( j = 0; j < out->numInstances; j++ ) {
 					// add pseudo random YAW-angle rotation  

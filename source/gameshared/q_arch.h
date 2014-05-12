@@ -368,17 +368,17 @@ typedef int socket_handle_t;
 #endif
 
 #if defined ( __GNUC__ )
-#define ALIGN( x )   __attribute__( ( aligned( x ) ) )
-#define NOINLINE     __attribute__((noinline))
-#define NAKED
+#define ATTRIBUTE_ALIGN( x )   __attribute__( ( aligned( x ) ) )
+#define ATTRIBUTE_NOINLINE     __attribute__((noinline))
+#define ATTRIBUTE_NAKED
 #elif defined ( _MSC_VER )
-#define ALIGN( x )   __declspec( align( x ) )
-#define NOINLINE
-#define NAKED        __declspec( naked )
+#define ATTRIBUTE_ALIGN( x )   __declspec( align( x ) )
+#define ATTRIBUTE_NOINLINE
+#define ATTRIBUTE_NAKED        __declspec( naked )
 #else
-#define ALIGN( x )
-#define NOINLINE
-#define NAKED
+#define ATTRIBUTE_ALIGN( x )
+#define ATTRIBUTE_NOINLINE
+#define ATTRIBUTE_NAKED
 #endif
 
 #ifdef HAVE___STRTOI64
