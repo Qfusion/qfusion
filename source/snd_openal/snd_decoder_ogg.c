@@ -206,7 +206,13 @@ void *decoder_ogg_load( const char *filename, snd_info_t *info )
 		callbacks.tell_func = NULL;
 	}
 
-	qov_open_callbacks( (void *) (qintptr) filenum, &vorbisfile, NULL, 0, callbacks );
+	if( qov_open_callbacks( (void *) (qintptr) filenum, &vorbisfile, NULL, 0, callbacks ) < 0 )
+	{
+		Com_Printf( "Could not open %s for reading\n", filename );
+		trap_FS_FCloseFile( filenum );
+		qov_clear( &vorbisfile );
+		return NULL;
+	}
 
 	if( callbacks.seek_func && !qov_seekable( &vorbisfile ) )
 	{
@@ -311,7 +317,12 @@ qboolean decoder_ogg_cont_open( snd_stream_t *stream )
 		callbacks.tell_func = NULL;
 	}
 
-	qov_open_callbacks( (void *) (qintptr) ogg_stream->filenum, &ogg_stream->vorbisfile, NULL, 0, callbacks );
+	if( qov_open_callbacks( (void *) (qintptr) ogg_stream->filenum, &ogg_stream->vorbisfile, NULL, 0, callbacks ) < 0 )
+	{
+		Com_Printf( "Couldn't open .ogg file for reading\n" );
+		trap_FS_FCloseFile( ogg_stream->filenum );
+		return qfalse;
+	}
 
 	if( callbacks.seek_func && !qov_seekable( &ogg_stream->vorbisfile ) )
 	{

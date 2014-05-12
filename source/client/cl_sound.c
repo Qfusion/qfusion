@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 #include "client.h"
+#include "../qcommon/sys_threads.h"
 
 static sound_export_t *se;
 static mempool_t *cl_soundmodulepool;
@@ -266,6 +267,13 @@ void CL_SoundModule_Init( qboolean verbose )
 
 	import.LoadLibrary = Com_LoadLibrary;
 	import.UnloadLibrary = Com_UnloadLibrary;
+
+	import.Thread_Create = Sys_Thread_Create;
+	import.Thread_Join = Sys_Thread_Join;
+	import.Mutex_Create = Sys_Mutex_Create;
+	import.Mutex_Destroy = Sys_Mutex_Destroy;
+	import.Mutex_Lock = Sys_Mutex_Lock;
+	import.Mutex_Unlock = Sys_Mutex_Unlock;
 
 	if( !CL_SoundModule_Load( sound_modules[s_module->integer-1], &import, verbose ) )
 	{
@@ -670,7 +678,7 @@ void CL_Mumble_Unlink( void )
 /*
 * CL_Mumble_Update
 */
-void CL_Mumble_Update( const vec3_t origin, const mat3_t axis, const char *identity )
+void CL_Mumble_Update( vec3_t origin, vec3_t forward, vec3_t right, vec3_t up, const char *identity )
 {
 }
 

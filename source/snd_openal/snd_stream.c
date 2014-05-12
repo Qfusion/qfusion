@@ -257,11 +257,24 @@ static void S_RawSamples_( int entNum, float fvol, float attenuation,
 
 	rs->samples_length += (ALuint)((ALfloat)samples * 1000.0 / rate + 0.5f);
 
+	rs->src->fvol = fvol;
+	qalSourcef( rs->source, AL_GAIN, rs->src->fvol * rs->src->volumeVar->value );
+
 	qalGetSourcei( rs->source, AL_SOURCE_STATE, &state );
 	if( state != AL_PLAYING )
 	{
 		qalSourcePlay( rs->source );
 	}
+}
+
+/*
+* S_RawSamples2
+*/
+void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data, qboolean music, float fvol )
+{
+	S_RawSamples_( RAW_SOUND_ENTNUM, fvol, ATTN_NONE, samples, rate, width, 
+		channels, data, music ? s_musicvolume : s_volume );
 }
 
 /*

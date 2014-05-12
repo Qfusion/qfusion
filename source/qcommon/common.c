@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qalgo/glob.h"
 #include "../qalgo/md5.h"
 #include "../matchmaker/mm_common.h"
+#include "sys_threads.h"
 
 #define MAX_NUM_ARGVS	50
 
@@ -57,6 +58,8 @@ static cvar_t *logconsole_flush;
 static cvar_t *logconsole_timestamp;
 static cvar_t *com_showtrace;
 static cvar_t *com_introPlayed3;
+
+static qmutex_t *com_print_mutex;
 
 int log_stats_file = 0;
 static int log_file = 0;
@@ -198,6 +201,8 @@ void Com_Printf( const char *format, ... )
 		return;
 	}
 
+	QMutex_Lock( com_print_mutex );
+
 	Con_Print( msg );
 
 	// also echo to debugging console
@@ -242,6 +247,8 @@ void Com_Printf( const char *format, ... )
 		if( logconsole_flush && logconsole_flush->integer )
 			FS_Flush( log_file ); // force it to save every time
 	}
+
+	QMutex_Unlock( com_print_mutex );
 }
 
 
@@ -877,6 +884,8 @@ void Qcommon_Init( int argc, char **argv )
 
 	QThreads_Init();
 
+	com_print_mutex = QMutex_Create();
+
 	// initialize memory manager
 	Memory_Init();
 
@@ -1226,5 +1235,8 @@ void Qcommon_Shutdown( void )
 	Cmd_Shutdown();
 	Cbuf_Shutdown();
 	Memory_Shutdown();
+	
+	QMutex_Destroy( &com_print_mutex );
+
 	QThreads_Shutdown();
 }

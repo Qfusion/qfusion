@@ -143,6 +143,7 @@ typedef struct bgTrack_s
 	int file;
 	wavinfo_t info;
 	qboolean isUrl;
+	qboolean loop;
 
 	void *vorbisFile;
 	qboolean ( *open )( struct bgTrack_s *track, qboolean *delay );

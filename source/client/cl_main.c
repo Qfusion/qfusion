@@ -1789,6 +1789,8 @@ void CL_SetClientState( int state )
 	case CA_CONNECTING:
 		Con_Close();
 		CL_UIModule_ForceMenuOff();
+		CL_SoundModule_StopBackgroundTrack();
+		CL_SoundModule_Clear();
 		CL_SetKeyDest( key_game );
 		//SCR_UpdateScreen();
 		break;
@@ -1798,7 +1800,7 @@ void CL_SetClientState( int state )
 		//SCR_UpdateScreen();
 		break;
 	case CA_ACTIVE:
-	case CA_CINEMATIC:	
+	case CA_CINEMATIC:
 		FTLIB_TouchAllFonts();
 		re.EndRegistration();
 		CL_SoundModule_EndRegistration();

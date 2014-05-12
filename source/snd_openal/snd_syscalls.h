@@ -210,3 +210,34 @@ static inline void trap_UnloadLibrary( void **lib )
 {
 	SOUND_IMPORT.UnloadLibrary( lib );
 }
+
+static inline int trap_Thread_Create( struct qthread_s **pthread, void *(*routine) (void*), void *param )
+{
+	return SOUND_IMPORT.Thread_Create( pthread, routine, param );
+}
+
+static inline void trap_Thread_Join( struct qthread_s *thread )
+{
+	SOUND_IMPORT.Thread_Join( thread );
+}
+
+static inline int trap_Mutex_Create( struct qmutex_s **pmutex )
+{
+	return SOUND_IMPORT.Mutex_Create( pmutex );
+}
+
+static inline void trap_Mutex_Destroy( struct qmutex_s *mutex )
+{
+	SOUND_IMPORT.Mutex_Destroy( mutex );
+}
+
+static inline void trap_Mutex_Lock( struct qmutex_s *mutex )
+{
+	SOUND_IMPORT.Mutex_Lock( mutex );
+}
+
+static inline void trap_Mutex_Unlock( struct qmutex_s *mutex )
+{
+	SOUND_IMPORT.Mutex_Unlock( mutex );
+}
+
