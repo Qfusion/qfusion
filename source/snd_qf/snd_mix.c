@@ -66,8 +66,8 @@ static void S_WriteSwappedLinearBlastStereo16( void )
 }
 #elif defined ( __GNUC__ )
 
-NOINLINE void S_WriteSwappedLinearBlastStereo16( void );
-NOINLINE void S_WriteLinearBlastStereo16( void );
+ATTRIBUTE_NOINLINE void S_WriteSwappedLinearBlastStereo16( void );
+ATTRIBUTE_NOINLINE void S_WriteLinearBlastStereo16( void );
 
 void S_WriteLinearBlastStereo16( void )
 {
@@ -157,7 +157,7 @@ void S_WriteSwappedLinearBlastStereo16( void )
 	);
 }
 #elif defined (_WIN32)
-static NAKED void S_WriteLinearBlastStereo16( void )
+static ATTRIBUTE_NAKED void S_WriteLinearBlastStereo16( void )
 {
 	__asm {
 		push edi
@@ -205,7 +205,7 @@ LClampDone2:
 	}
 }
 
-static NAKED void S_WriteSwappedLinearBlastStereo16( void )
+static ATTRIBUTE_NAKED void S_WriteSwappedLinearBlastStereo16( void )
 {
 	__asm {
 		push edi

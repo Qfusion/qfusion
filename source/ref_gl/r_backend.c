@@ -21,13 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_backend_local.h"
 
-ALIGN( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec4_t batchSVectorsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec2_t batchSTCoordsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec2_t batchLMCoordsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
-ALIGN( 16 ) byte_vec4_t batchColorsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
-ALIGN( 16 ) elem_t batchElements[MAX_BATCH_ELEMENTS];
+ATTRIBUTE_ALIGNED( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) vec4_t batchSVectorsArray[MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) vec2_t batchSTCoordsArray[MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) vec2_t batchLMCoordsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) byte_vec4_t batchColorsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) elem_t batchElements[MAX_BATCH_ELEMENTS];
 
 rbackend_t rb;
 
