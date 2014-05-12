@@ -298,6 +298,14 @@ static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 
 #else // GL_ES_VERSION_2_0
 
+/* GL_ANGLE_framebuffer_blit */
+static const gl_extension_func_t gl_ext_framebuffer_blit_ANGLE_funcs[] =
+{
+	GL_EXTENSION_FUNC(BlitFramebufferANGLE)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 /* GL_NV_framebuffer_blit */
 static const gl_extension_func_t gl_ext_framebuffer_blit_NV_funcs[] =
 {
@@ -385,7 +393,8 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ATI, meminfo, true, false, NULL )
 
 #else
-	 GL_EXTENSION( NV, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_NV_funcs )
+	 GL_EXTENSION( ANGLE, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_ANGLE_funcs )
+	,GL_EXTENSION( NV, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_NV_funcs )
 	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( EXT, shadow_samplers, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
@@ -671,7 +680,14 @@ static void R_FinalizeGLExtensions( void )
 	/* GL_EXT_framebuffer_blit */
 #ifdef GL_ES_VERSION_2_0
 	if( glConfig.ext.framebuffer_blit && !qglBlitFramebufferEXT )
-		qglBlitFramebufferEXT = qglBlitFramebufferNV;
+	{
+		if( qglBlitFramebufferANGLE )
+			qglBlitFramebufferEXT = qglBlitFramebufferANGLE;
+		else if( qglBlitFramebufferNV )
+			qglBlitFramebufferEXT = qglBlitFramebufferNV;
+		else
+			glConfig.ext.framebuffer_blit = qfalse;
+	}
 #endif
 
 	/* GL_OES_depth24 */
