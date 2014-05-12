@@ -298,11 +298,11 @@ static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 
 #else // GL_ES_VERSION_2_0
 
-/* GL_EXT_multiview_draw_buffers */
-static const gl_extension_func_t gl_ext_multiview_draw_buffers_EXT_funcs[] =
+/* GL_NV_multiview_draw_buffers */
+static const gl_extension_func_t gl_ext_multiview_draw_buffers_NV_funcs[] =
 {
-	 GL_EXTENSION_FUNC(ReadBufferIndexedEXT)
-	,GL_EXTENSION_FUNC(DrawBuffersIndexedEXT)
+	 GL_EXTENSION_FUNC(ReadBufferIndexedNV)
+	,GL_EXTENSION_FUNC(DrawBuffersIndexedNV)
 };
 
 #endif // GL_ES_VERSION_2_0
@@ -383,8 +383,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
-	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
-	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
+	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
