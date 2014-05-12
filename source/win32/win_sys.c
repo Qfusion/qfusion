@@ -721,6 +721,7 @@ static dynvar_get_status_t Sys_GetAffinity_f( void **affinity )
 
 		if( !affinityAutoSet )
 		{
+#if 0
 			// set the affinity string to something like 0001
 			const char *lastBit = strrchr( affinityString, '1' );
 			if( lastBit )
@@ -728,6 +729,7 @@ static dynvar_get_status_t Sys_GetAffinity_f( void **affinity )
 				for( i = 0; i < (DWORD)( lastBit - affinityString ); i++ )
 					affinityString[i] = '0';
 			}
+#endif
 			affinityAutoSet = qtrue;
 		}
 

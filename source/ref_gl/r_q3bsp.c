@@ -477,7 +477,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 {
 	mesh_t *mesh = NULL;
 	qbyte *buffer;
-	size_t bufSize;
+	size_t bufSize, bufPos = 0;
 
 	switch( out->facetype )
 	{
@@ -511,22 +511,24 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numVerts = size[0] * size[1];
 			numElems = ( size[0] - 1 ) * ( size[1] - 1 ) * 6;
 
-			bufSize = sizeof( mesh_t ) + numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
-			bufSize += numElems * sizeof( elem_t );
+			bufSize = ALIGN_INT( sizeof( mesh_t ), sizeof( vec_t ) );
+			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( vec2_t );
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( byte_vec4_t );
-			bufSize += numVerts * sizeof( vec4_t );
+			bufSize = ALIGN_INT( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
 			buffer = ( qbyte * )Mod_Malloc( loadmodel, bufSize );
+			bufPos = 0;
 
-			mesh = ( mesh_t * )buffer; buffer += sizeof( mesh_t );
+			mesh = ( mesh_t * )buffer; bufPos += ALIGN_INT( sizeof( mesh_t ), sizeof( vec_t ) );
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
-			mesh->xyzArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
-			mesh->normalsArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
-			mesh->stArray = ( vec2_t * )buffer; buffer += numVerts * sizeof( vec2_t );
+			mesh->xyzArray = ( vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec4_t );
+			mesh->normalsArray = ( vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec4_t );
+			mesh->sVectorsArray = ( vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec4_t );
+			mesh->stArray = ( vec2_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec2_t );
 
 			Patch_Evaluate( vec_t, 3, loadmodel_xyz_array[inFirstVert], 
 				patch_cp, step, mesh->xyzArray[0], 4 );
@@ -546,20 +548,21 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255 && LittleLong( in->lm_texnum[j] ) >= 0; j++ )
 			{
-				mesh->lmstArray[j] = ( vec2_t * )buffer; buffer += numVerts * sizeof( vec2_t );
+				mesh->lmstArray[j] = ( vec2_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec2_t );
 				Patch_Evaluate( vec_t, 2, loadmodel_lmst_array[j][inFirstVert], 
 					patch_cp, step, mesh->lmstArray[j][0], 0 );
 			}
 
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 			{
-				mesh->colorsArray[j] = ( byte_vec4_t * )buffer; buffer += numVerts * sizeof( byte_vec4_t );
+				mesh->colorsArray[j] = ( byte_vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( byte_vec4_t );
 				Patch_Evaluate( qbyte, 4, loadmodel_colors_array[j][inFirstVert + i], 
 					patch_cp, step, mesh->colorsArray[j][0], 0 );
 			}
 
 			// compute new elems
-			mesh->elems = elems = ( elem_t * )buffer; buffer += numElems * sizeof( elem_t );
+			bufPos = ALIGN_INT( bufPos, sizeof( elem_t ) );
+			mesh->elems = elems = ( elem_t * )( buffer + bufPos ); bufPos += numElems * sizeof( elem_t );
 			for( v = 0, i = 0; v < size[1] - 1; v++ )
 			{
 				for( u = 0; u < size[0] - 1; u++ )
@@ -575,7 +578,6 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				}
 			}
 
-			mesh->sVectorsArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
 			R_BuildTangentVectors( mesh->numVerts, mesh->xyzArray, mesh->normalsArray, mesh->stArray, mesh->numElems / 3, mesh->elems, mesh->sVectorsArray );
 			break;
 		}
@@ -603,26 +605,28 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numElems = LittleLong( in->numelems );
 			firstElem = LittleLong( in->firstelem );
 
-			bufSize = sizeof( mesh_t ) + numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
-			bufSize += numElems * sizeof( elem_t );
+			bufSize = ALIGN_INT( sizeof( mesh_t ), sizeof( vec_t ) );
+			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( vec2_t );
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( byte_vec4_t );
-			bufSize += numVerts * sizeof( vec4_t );
+			bufSize = ALIGN_INT( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
 			if( out->facetype == FACETYPE_PLANAR )
-				bufSize += sizeof( cplane_t );
-			bufSize += numFoliageInstances * sizeof( instancePoint_t );
+				bufSize = ALIGN_INT( bufSize, 16 ) + sizeof( cplane_t );
+			bufSize = ALIGN_INT( bufSize, 16 ) + numFoliageInstances * sizeof( instancePoint_t );
 
 			buffer = ( qbyte * )Mod_Malloc( loadmodel, bufSize );
+			bufPos = 0;
 
-			mesh = ( mesh_t * )buffer; buffer += sizeof( mesh_t );
+			mesh = ( mesh_t * )buffer; bufPos += ALIGN_INT( sizeof( mesh_t ), sizeof( vec_t ) );
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
-			mesh->xyzArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
-			mesh->normalsArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
-			mesh->stArray = ( vec2_t * )buffer; buffer += numVerts * sizeof( vec2_t );
+			mesh->xyzArray = ( vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec4_t );
+			mesh->normalsArray = ( vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec4_t );
+			mesh->sVectorsArray = ( vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec4_t );
+			mesh->stArray = ( vec2_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec2_t );
 
 			for( j = 0; j < numVerts; j++ ) {
 				VectorCopy( loadmodel_xyz_array[firstVert+j], mesh->xyzArray[j] );
@@ -636,19 +640,19 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255 && LittleLong( in->lm_texnum[j] ) >= 0; j++ )
 			{
-				mesh->lmstArray[j] = ( vec2_t * )buffer; buffer += numVerts * sizeof( vec2_t );
+				mesh->lmstArray[j] = ( vec2_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec2_t );
 				memcpy( mesh->lmstArray[j], loadmodel_lmst_array[j] + firstVert, numVerts * sizeof( vec2_t ) );
 			}
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 			{
-				mesh->colorsArray[j] = ( byte_vec4_t * )buffer; buffer += numVerts * sizeof( byte_vec4_t );
+				mesh->colorsArray[j] = ( byte_vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( byte_vec4_t );
 				memcpy( mesh->colorsArray[j], loadmodel_colors_array[j] + firstVert, numVerts * sizeof( byte_vec4_t ) );
 			}
 
-			mesh->elems = ( elem_t * )buffer; buffer += numElems * sizeof( elem_t );
+			bufPos = ALIGN_INT( bufPos, sizeof( elem_t ) );
+			mesh->elems = ( elem_t * )( buffer + bufPos ); bufPos += numElems * sizeof( elem_t );
 			memcpy( mesh->elems, loadmodel_surfelems + firstElem, numElems * sizeof( elem_t ) );
 
-			mesh->sVectorsArray = ( vec4_t * )buffer; buffer += numVerts * sizeof( vec4_t );
 			R_BuildTangentVectors( mesh->numVerts, mesh->xyzArray, mesh->normalsArray, mesh->stArray, mesh->numElems / 3, mesh->elems, mesh->sVectorsArray );
 
 			if( out->facetype == FACETYPE_PLANAR )
@@ -656,7 +660,8 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				cplane_t *plane;
 
 				// don't trust q3map, recalculate surface plane from the first triangle
-				plane = out->plane = ( cplane_t * )buffer; buffer += sizeof( cplane_t );
+				bufPos = ALIGN_INT( bufPos, 16 );
+				plane = out->plane = ( cplane_t * )( buffer + bufPos ); bufPos += sizeof( cplane_t );
 				for( j = 0; j < 3; j++ ) {
 					plane->normal[j] = LittleFloat( in->normal[j] );
 				}
@@ -671,7 +676,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				instancePoint_t *instance;
 
 				out->numInstances = numFoliageInstances;
-				out->instances = ( instancePoint_t * )buffer;
+				out->instances = ( instancePoint_t * )( buffer + ALIGN_INT( bufPos, 16 ) );
 
 				for( j = 0; j < out->numInstances; j++ ) {
 					// add pseudo random YAW-angle rotation  

@@ -186,7 +186,7 @@ sfxcache_t *SNDOGG_Load( sfx_t *s )
 
 	if( qov_open_callbacks( (void *)(qintptr)filenum, &vorbisfile, NULL, 0, callbacks ) < 0 )
 	{
-		Com_Printf( "Error getting OGG callbacks: %s\n", s->name );
+		Com_Printf( "Couldn't open %s for reading: %s\n", s->name );
 		trap_FS_FCloseFile( filenum );
 		return NULL;
 	}
@@ -341,27 +341,21 @@ qboolean SNDOGG_OpenTrack( bgTrack_t *track, qboolean *delay )
 	{
 		Com_Printf( "SNDOGG_OpenTrack: couldn't open %s for reading\n", real_path );
 		S_Free( vf );
-		trap_FS_FCloseFile( track->file );
-		track->file = 0;
-		track->vorbisFile = NULL;
-		track->read = NULL;
-		track->seek = NULL;
-		track->close = NULL;
-		return qfalse;
+		vf = NULL;
+		goto error;
 	}
 
 	vi = qov_info( vf, -1 );
 	if( ( vi->channels != 1 ) && ( vi->channels != 2 ) )
 	{
 		Com_Printf( "SNDOGG_OpenTrack: %s has an unsupported number of channels: %i\n", real_path, vi->channels );
-		qov_clear( vf );
-		S_Free( vf );
-		track->file = 0;
-		track->vorbisFile = NULL;
-		track->read = NULL;
-		track->seek = NULL;
-		track->close = NULL;
-		return qfalse;
+		goto error;
+	}
+
+	if( qov_streams( vf ) != 1 )
+	{
+		Com_Printf( "Error unsupported .ogg file (multiple logical bitstreams): %s\n", real_path );
+		goto error;
 	}
 
 	track->info.channels = vi->channels;
@@ -372,6 +366,19 @@ qboolean SNDOGG_OpenTrack( bgTrack_t *track, qboolean *delay )
 	track->info.loopstart = track->info.samples;
 
 	return qtrue;
+
+error:
+	if( vf ) {
+		qov_clear( vf );
+		S_Free( vf );
+	}
+	trap_FS_FCloseFile( track->file );
+	track->file = 0;
+	track->vorbisFile = NULL;
+	track->read = NULL;
+	track->seek = NULL;
+	track->close = NULL;
+	return qfalse;
 }
 
 /*
