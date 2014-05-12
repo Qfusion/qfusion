@@ -801,6 +801,7 @@ QGL_FUNC(void, glGenerateMipmap, (GLenum));
 QGL_EXT(void, glBlitFramebufferEXT, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
 #else
 QGL_FUNC_OPT(void, glBlitFramebuffer, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
+QGL_EXT(void, glBlitFramebufferNV, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
 #ifndef qglBlitFramebufferEXT
 #define qglBlitFramebufferEXT qglBlitFramebuffer
 #endif
