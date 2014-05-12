@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 
+set(CMAKE_FRAMEWORK_PATH "mac/Frameworks")
+
 find_package(Ogg REQUIRED)
 find_package(Vorbis REQUIRED)
 find_package(Theora REQUIRED)
