@@ -700,7 +700,7 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.ext.multiview_draw_buffers )
 	{
 		val = 0;
-		qglGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_EXT, &val );
+		qglGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_NV, &val );
 		if( val <= 1 )
 			glConfig.stereoEnabled = qfalse;
 	}
