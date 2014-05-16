@@ -352,7 +352,7 @@ void QAL_Shutdown( void )
 	qalcGetIntegerv = NULL;
 }
 #else
-qboolean QAL_Init( const char *libname )
+qboolean QAL_Init( const char *libname, qboolean verbose )
 {
 	return qtrue;
 }
