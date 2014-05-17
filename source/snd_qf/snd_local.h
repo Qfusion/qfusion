@@ -31,7 +31,6 @@ typedef struct { char *name; void **funcPointer; } dllfunc_t;
 
 #include "../client/snd_public.h"
 #include "snd_syscalls.h"
-#include "snd_cmdque.h"
 
 // !!! if this is changed, the asm code must change !!!
 typedef struct
