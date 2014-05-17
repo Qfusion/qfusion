@@ -85,7 +85,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\win32\include\msvc;..\win32\include;..\..\libsrcs\libogg\include;..\win32\include\msvc;..\win32\include;..\..\libsrcs\libvorbis\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\win32\include\msvc;..\win32\include;..\..\libsrcs\libogg\include;..\win32\include\msvc;..\win32\include;..\..\libsrcs\libvorbis\include;..\snd_common;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -142,7 +142,7 @@
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>..\win32\include\msvc;..\win32\include;..\..\libsrcs\libogg\include;..\win32\include\msvc;..\win32\include;..\..\libsrcs\libvorbis\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\win32\include\msvc;..\win32\include;..\..\libsrcs\libogg\include;..\win32\include\msvc;..\win32\include;..\..\libsrcs\libvorbis\include;..\snd_common;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>
@@ -185,16 +185,21 @@
   <ItemGroup>
     <ClCompile Include="..\gameshared\q_math.c" />
     <ClCompile Include="..\gameshared\q_shared.c" />
+    <ClCompile Include="..\snd_common\snd_cmdque.c" />
     <ClCompile Include="snd_dma.c" />
+    <ClCompile Include="snd_main.c" />
     <ClCompile Include="snd_mem.c" />
     <ClCompile Include="snd_mix.c" />
+    <ClCompile Include="snd_music.c" />
     <ClCompile Include="snd_ogg.c" />
-    <ClCompile Include="snd_syscalls.c" />
     <ClCompile Include="..\win32\win_snd.c" />
+    <ClCompile Include="snd_syscalls.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\gameshared\q_arch.h" />
     <ClInclude Include="..\gameshared\q_math.h" />
     <ClInclude Include="..\gameshared\q_shared.h" />
+    <ClInclude Include="..\snd_common\snd_cmdque.h" />
     <ClInclude Include="snd_local.h" />
     <ClInclude Include="..\client\snd_public.h" />
     <ClInclude Include="snd_syscalls.h" />

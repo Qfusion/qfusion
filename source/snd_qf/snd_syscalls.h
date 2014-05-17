@@ -171,6 +171,11 @@ static inline void trap_PageInMemory( qbyte *buffer, int size )
 	SOUND_IMPORT.PageInMemory( buffer, size );
 }
 
+static inline void trap_Sleep( unsigned int milliseconds )
+{
+	SOUND_IMPORT.Sleep( milliseconds );
+}
+
 static inline struct mempool_s *trap_MemAllocPool( const char *name, const char *filename, int fileline )
 {
 	return SOUND_IMPORT.Mem_AllocPool( name, filename, fileline );

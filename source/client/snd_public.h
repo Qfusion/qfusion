@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // snd_public.h -- sound dll information visible to engine
 
-#define	SOUND_API_VERSION   34
+#define	SOUND_API_VERSION   35
 
 #define	ATTN_NONE 0
 
@@ -79,6 +79,7 @@ typedef struct
 
 	unsigned int ( *Milliseconds )( void );
 	void ( *PageInMemory )( qbyte *buffer, int size );
+	void ( *Sleep )( unsigned int milliseconds );
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
@@ -123,15 +124,14 @@ typedef struct
 	void ( *Activate )( qboolean active );
 
 	void ( *SetAttenuationModel )( int model, float maxdistance, float refdistance );
+	void ( *SetEntitySpatialization )( int entnum, const vec3_t origin, const vec3_t velocity );
 
 	// playing
 	struct sfx_s *( *RegisterSound )( const char *sample );
 	void ( *StartFixedSound )( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 	void ( *StartRelativeSound )( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
 	void ( *StartGlobalSound )( struct sfx_s *sfx, int channel, float fvol );
-
 	void ( *StartLocalSound )( const char *s );
-
 	void ( *AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
 	// cinema

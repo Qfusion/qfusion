@@ -208,6 +208,10 @@ qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 
 	type = &cin_types[cin->type];
 
+	if( !cin->frame ) {
+		// update the start time to account for possible loading/init time
+		cin->start_time = cin->cur_time = curtime;
+	}
 	cin->cur_time = curtime;
 	cin->s_samples_length = CIN_GetRawSamplesLengthFromListeners( cin );
 

@@ -191,8 +191,8 @@ LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/lib -lRocketWSW -lfreetypestat
 
 # openal
 ifeq ($(BUILD_SND_OPENAL),YES)
-CFLAGS_OPENAL=-I../libsrcs/libogg/include -I../libsrcs/libvorbis/include
-LDFLAGS_OPENAL=-lvorbisfilestat -lvorbisstat -loggstat -L../dxsdk/lib/ -ldsound
+CFLAGS_OPENAL=-I../libsrcs/libogg/include -I../libsrcs/libvorbis/include -I./snd_openal -I./snd_common
+LDFLAGS_OPENAL=-lvorbisfilestat -lvorbisstat -loggstat -L../dxsdk/lib/ -ldsound -I./snd_openal -I./snd_common
 endif
 
 ifeq ($(BUILD_SND_QF),YES)
@@ -277,7 +277,7 @@ LDFLAGS_ROCKET=-L$(LIBROCKET_DIR)/lib -lRocketWSW -lfreetype
 ifeq ($(BUILD_SND_OPENAL),YES)
 OPENAL_CONFIG?=pkg-config openal
 
-CFLAGS_OPENAL=$(shell $(OPENAL_CONFIG) --cflags)
+CFLAGS_OPENAL=$(shell $(OPENAL_CONFIG) --cflags) -I./snd_openal -I./snd_common 
 LDFLAGS_OPENAL=-lvorbisfile
 endif
 
@@ -285,7 +285,7 @@ endif
 ifeq ($(BUILD_SND_QF),YES)
 SDL_CONFIG?=sdl-config
 
-CFLAGS_SDL=$(shell $(SDL_CONFIG) --cflags)
+CFLAGS_QF=$(shell $(SDL_CONFIG) --cflags) -I./snd_openal -I./snd_common 
 LDFLAGS_QF=$(shell $(SDL_CONFIG) --libs) -lvorbisfile
 endif # BUILD_SND_QF
 
@@ -333,7 +333,6 @@ CFLAGS_COMMON+=$(CFLAGS_RELEASE)
 endif
 CFLAGS_OPENAL=-I/System/Library/Frameworks/OpenAL.framework/Headers
 CFLAGS_QF=-I/Library/Frameworks/SDL.framework/Headers
-CFLAGS_SDL=-I/Library/Frameworks/SDL.framework/Headers
 CFLAGS_CLIENT=-std=gnu99 -I/Library/Frameworks/SDL.framework/Headers -I/System/Library/Frameworks/OpenAL.framework/Headers
 CFLAGS_DED=-DDEDICATED_ONLY -DC_ONLY
 CFLAGS_CIN=-I/Library/Frameworks/SDL.framework/Headers
@@ -413,6 +412,7 @@ OBJS_CLIENT = $(addprefix $(BUILDDIR)/client/, $(OFILES_CLIENT) )
 # OPENAL
 #########
 CFILES_OPENAL  = $(wildcard snd_openal/*.c)
+CFILES_OPENAL += $(wildcard snd_common/*.c)
 CFILES_OPENAL += $(wildcard gameshared/q_*.c)
 CFILES_OPENAL += $(wildcard qalgo/*.c)
 
@@ -424,6 +424,7 @@ OBJS_OPENAL = $(addprefix $(BUILDDIR)/openal/, $(OFILES_OPENAL) )
 # QF
 #########
 CFILES_QF  = $(wildcard snd_qf/*.c)
+CFILES_QF += $(wildcard snd_common/*.c)
 ifeq ($(USE_MINGW),YES)
 CFILES_QF += win32/win_snd.c
 else
@@ -994,7 +995,9 @@ $(BINDIR)/qfusion: unix/start_script.sh
 ########
 $(BUILDDIR)/openal/%.o: snd_openal/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_OPENAL)
-
+$(BUILDDIR)/openal/%.o: snd_common/%.c
+	@$(DO_CC_MODULE) $(CFLAGS_OPENAL)
+	
 $(BUILDDIR)/openal/%.o: gameshared/%.c
 	@$(DO_CC_MODULE)
 $(BUILDDIR)/openal/%.o: qalgo/%.c
@@ -1005,13 +1008,15 @@ $(BUILDDIR)/openal/%.o: qalgo/%.c
 ########
 $(BUILDDIR)/qf/%.o: snd_qf/%.c
 	@$(DO_CC_MODULE) $(CFLAGS_QF)
+$(BUILDDIR)/qf/%.o: snd_common/%.c
+	@$(DO_CC_MODULE) $(CFLAGS_QF)
 
 ifeq ($(USE_MINGW),YES)
 $(BUILDDIR)/qf/win_snd.o: win32/win_snd.c
 	@$(DO_CC_MODULE) $(CFLAGS_DSOUND)
 else
 $(BUILDDIR)/qf/unix_snd.o: unix/unix_snd.c
-	@$(DO_CC_MODULE) $(CFLAGS_SDL)
+	@$(DO_CC_MODULE) $(CFLAGS_QF)
 endif
 
 $(BUILDDIR)/qf/%.o: gameshared/%.c

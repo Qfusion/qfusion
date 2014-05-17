@@ -166,6 +166,11 @@ static inline unsigned int trap_Milliseconds( void )
 	return SOUND_IMPORT.Milliseconds();
 }
 
+static inline void trap_Sleep( unsigned int milliseconds )
+{
+	SOUND_IMPORT.Sleep( milliseconds );
+}
+
 static inline void trap_PageInMemory( qbyte *buffer, int size )
 {
 	SOUND_IMPORT.PageInMemory( buffer, size );

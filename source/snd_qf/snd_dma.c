@@ -37,23 +37,12 @@ qboolean snd_initialized = qfalse;
 
 dma_t dma;
 
-vec3_t listenerOrigin;
-vec3_t listenerVelocity;
-mat3_t listenerAxis;
+static vec3_t listenerOrigin;
+static vec3_t listenerVelocity;
+static mat3_t listenerAxis;
 
-unsigned int soundtime;      // sample PAIRS
-unsigned int paintedtime;    // sample PAIRS
-
-static int		s_registration_sequence;
-static qboolean	s_registering;
-
-// during registration it is possible to have more sounds
-// than could actually be referenced during gameplay,
-// because we don't want to free anything until we are
-// sure we won't need it.
-#define	    MAX_SFX	512
-sfx_t known_sfx[MAX_SFX];
-int num_sfx;
+volatile unsigned int soundtime;      // sample PAIRS
+volatile unsigned int paintedtime;    // sample PAIRS
 
 #define	    MAX_LOOPSFX	128
 loopsfx_t loop_sfx[MAX_LOOPSFX];
@@ -66,47 +55,28 @@ playsound_t s_pendingplays;
 
 rawsound_t *raw_sounds[MAX_RAW_SOUNDS];
 
-cvar_t *developer;
-
-cvar_t *s_volume;
-cvar_t *s_musicvolume;
-cvar_t *s_testsound;
-cvar_t *s_khz;
-cvar_t *s_show;
-cvar_t *s_mixahead;
-cvar_t *s_swapstereo;
-cvar_t *s_vorbis;
-cvar_t *s_pseudoAcoustics;
-cvar_t *s_separationDelay;
-
 static int s_attenuation_model = 0;
 static float s_attenuation_maxdistance = 0;
 static float s_attenuation_refdistance = 0;
 
-struct mempool_s *soundpool;
+qboolean s_active = qfalse;
 
-#define BACKGROUND_TRACK_PRELOAD_MSEC		200
-#define BACKGROUND_TRACK_BUFFERING_SIZE		MAX_RAW_SAMPLES*4+4000
-#define BACKGROUND_TRACK_BUFFERING_TIMEOUT	5000
+static qboolean s_respatialize;
 
-bgTrack_t *s_bgTrack;
-bgTrack_t *s_bgTrackHead;
-static qboolean s_bgTrackPaused = qfalse;  // the track is manually paused
-static qboolean s_bgTrackLocked = qfalse;  // the track is blocked by the game (e.g. the window's minimized)
-static qboolean s_bgTrackMuted = qfalse;
-static volatile qboolean s_bgTrackBuffering = qfalse;
-static volatile qboolean s_bgTrackLoading = qfalse; // unset by s_bgOpenTread when finished loading
-static struct qthread_s *s_bgOpenTread;
+static qboolean s_aviDump;
+static unsigned s_aviNumSamples;
 
-static int s_aviNumSamples;
 static int s_aviDumpFile;
 static char *s_aviDumpFileName;
 
-static void S_PrevBackgroundTrack( void );
-static void S_NextBackgroundTrack( void );
-static void S_PauseBackgroundTrack( void );
+static entity_spatialization_t s_ent_spatialization[MAX_EDICTS];
 
+static void S_StopAllSounds( void );
+static void S_ClearSoundTime( void );
 static void S_ClearRawSounds( void );
+static void S_FreeRawSounds( void );
+static void S_BeginAviDemo( void );
+static void S_StopAviDemo( void );
 
 // highfrequency attenuation parameters
 // 340/0.15 (speed of sound/width of head) gives us 2267hz
@@ -118,39 +88,10 @@ static void S_ClearRawSounds( void );
 
 static float s_lpf_cw;
 
-#define ENABLE_PLAY
-
-/*
-===============================================================================
-
-console functions
-
-===============================================================================
-*/
-
-#ifdef ENABLE_PLAY
-static void S_Play( void )
-{
-	int i;
-	sfx_t *sfx;
-
-	for( i = 1; i < trap_Cmd_Argc(); i++ )
-	{
-		sfx = S_RegisterSound( trap_Cmd_Argv( i ) );
-		if( !sfx )
-		{
-			Com_Printf( "Couldn't play: %s\n", trap_Cmd_Argv( i ) );
-			continue;
-		}
-		S_StartGlobalSound( sfx, S_CHANNEL_AUTO, 1.0 );
-	}
-}
-#endif // ENABLE_PLAY
-
 /*
 * S_SoundList
 */
-void S_SoundList( void )
+static void S_SoundList_f( void )
 {
 	int i;
 	sfx_t *sfx;
@@ -185,305 +126,63 @@ void S_SoundList( void )
 }
 
 /*
-* S_Music
-*/
-static void S_Music( void )
-{
-	if( trap_Cmd_Argc() < 2 )
-	{
-		Com_Printf( "music: <introfile|playlist> [loopfile|shuffle]\n" );
-		return;
-	}
-
-	S_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ) );
-}
-
-// ====================================================================
-// User-setable variables
-// ====================================================================
-
-/*
-* S_SoundInfo_f
-*/
-static void S_SoundInfo_f( void )
-{
-	Com_Printf( "%5d stereo\n", dma.channels - 1 );
-	Com_Printf( "%5d samples\n", dma.samples );
-	Com_Printf( "%5d samplepos\n", dma.samplepos );
-	Com_Printf( "%5d samplebits\n", dma.samplebits );
-	Com_Printf( "%5d submission_chunk\n", dma.submission_chunk );
-	Com_Printf( "%5d speed\n", dma.speed );
-	Com_Printf( "0x%x dma buffer\n", dma.buffer );
-}
-
-/*
 * S_Init
 */
-qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
+static qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
 {
-	developer = trap_Cvar_Get( "developer", "0", 0 );
-
-	s_volume = trap_Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
-	s_musicvolume = trap_Cvar_Get( "s_musicvolume", "0.2", CVAR_ARCHIVE );
-	s_khz = trap_Cvar_Get( "s_khz", "44", CVAR_ARCHIVE|CVAR_LATCH_SOUND );
-	s_mixahead = trap_Cvar_Get( "s_mixahead", "0.2", CVAR_ARCHIVE );
-	s_show = trap_Cvar_Get( "s_show", "0", CVAR_CHEAT );
-	s_testsound = trap_Cvar_Get( "s_testsound", "0", 0 );
-	s_swapstereo = trap_Cvar_Get( "s_swapstereo", "0", CVAR_ARCHIVE );
-	s_vorbis = trap_Cvar_Get( "s_vorbis", "1", CVAR_ARCHIVE );
-	s_pseudoAcoustics = trap_Cvar_Get( "s_pseudoAcoustics", "0", CVAR_ARCHIVE );
-	s_separationDelay = trap_Cvar_Get( "s_separationDelay", "1.0", CVAR_ARCHIVE );
-
-#ifdef ENABLE_PLAY
-	trap_Cmd_AddCommand( "play", S_Play );
-#endif
-	trap_Cmd_AddCommand( "music", S_Music );
-	trap_Cmd_AddCommand( "stopsound", S_StopAllSounds );
-	trap_Cmd_AddCommand( "stopmusic", S_StopBackgroundTrack );
-	trap_Cmd_AddCommand( "prevmusic", S_PrevBackgroundTrack );
-	trap_Cmd_AddCommand( "nextmusic", S_NextBackgroundTrack );
-	trap_Cmd_AddCommand( "pausemusic", S_PauseBackgroundTrack );
-	trap_Cmd_AddCommand( "soundlist", S_SoundList );
-	trap_Cmd_AddCommand( "soundinfo", S_SoundInfo_f );
-
-	s_bgTrack = s_bgTrackHead = NULL;
-	s_bgTrackPaused = qfalse;
-
-	s_registration_sequence = 1;
-	s_registering = qfalse;
-
-	S_LockBackgroundTrack( qfalse );
-
 	if( !SNDDMA_Init( hwnd, verbose ) )
 		return qfalse;
-
-	SNDOGG_Init( verbose );
-
-	S_InitScaletable();
-
-	S_SetAttenuationModel( S_DEFAULT_ATTENUATION_MODEL, S_DEFAULT_ATTENUATION_MAXDISTANCE, S_DEFAULT_ATTENUATION_REFDISTANCE );
-
-	// highfrequency attenuation filter
-	s_lpf_cw = S_LowpassCW( HQ_HF_FREQUENCY, dma.speed );
-
-	num_sfx = 0;
-	num_loopsfx = 0;
-
-	memset( raw_sounds, 0, sizeof( raw_sounds ) );
-
-	S_ClearSoundTime();
+	
+	s_active = qtrue;
 
 	if( verbose )
 		Com_Printf( "Sound sampling rate: %i\n", dma.speed );
 
-	soundpool = S_MemAllocPool( "QF Sound Module" );
+	SNDOGG_Init( verbose );
+
+	num_loopsfx = 0;
+
+	memset( raw_sounds, 0, sizeof( raw_sounds ) );
+
+	S_InitScaletable();
+
+	// highfrequency attenuation filter
+	s_lpf_cw = S_LowpassCW( HQ_HF_FREQUENCY, dma.speed );
+
+	S_ClearSoundTime();
 
 	S_StopAllSounds();
+
+	S_LockBackgroundTrack( qfalse );
 
 	return qtrue;
 }
 
-
-// =======================================================================
-// Shutdown sound engine
-// =======================================================================
-
 /*
 * S_Shutdown
 */
-void S_Shutdown( qboolean verbose )
+static void S_Shutdown( qboolean verbose )
 {
+	S_StopAllSounds();
+
 	S_StopAviDemo();
 
-	// free all sounds
-	S_FreeSounds();
+	S_StopBackgroundTrack();
+	
+	S_FreeRawSounds();
 
 	SNDDMA_Shutdown( verbose );
+
 	SNDOGG_Shutdown( verbose );
 
-#ifdef ENABLE_PLAY
-	trap_Cmd_RemoveCommand( "play" );
-#endif
-	trap_Cmd_RemoveCommand( "music" );
-	trap_Cmd_RemoveCommand( "stopsound" );
-	trap_Cmd_RemoveCommand( "stopmusic" );
-	trap_Cmd_RemoveCommand( "prevmusic" );
-	trap_Cmd_RemoveCommand( "nextmusic" );
-	trap_Cmd_RemoveCommand( "pausemusic" );
-	trap_Cmd_RemoveCommand( "soundlist" );
-	trap_Cmd_RemoveCommand( "soundinfo" );
-
-	S_MemFreePool( &soundpool );
-
-	s_registering = qfalse;
-
-	num_sfx = 0;
 	num_loopsfx = 0;
 }
 
 
-// =======================================================================
-// Load a sound
-// =======================================================================
-
-/*
-* S_FindName
-*/
-static sfx_t *S_FindName( const char *name, qboolean create )
-{
-	int i;
-	sfx_t *sfx;
-
-	if( !name )
-		S_Error( "S_FindName: NULL" );
-	if( !name[0] != '\0' )
-	{
-		assert( name[0] != '\0' );
-		S_Error( "S_FindName: empty name" );
-	}
-
-	if( strlen( name ) >= MAX_QPATH )
-		S_Error( "Sound name too long: %s", name );
-
-	// see if already loaded
-	for( i = 0; i < num_sfx; i++ )
-	{
-		if( !strcmp( known_sfx[i].name, name ) )
-			return &known_sfx[i];
-	}
-
-	if( !create )
-		return NULL;
-
-	// find a free sfx
-	for( i = 0; i < num_sfx; i++ )
-	{
-		if( !known_sfx[i].name[0] )
-			break;
-	}
-
-	if( i == num_sfx )
-	{
-		if( num_sfx == MAX_SFX )
-			S_Error( "S_FindName: out of sfx_t" );
-		num_sfx++;
-	}
-
-	sfx = &known_sfx[i];
-	memset( sfx, 0, sizeof( *sfx ) );
-	Q_strncpyz( sfx->name, name, sizeof( sfx->name ) );
-	sfx->isUrl = trap_FS_IsUrl( name );
-	sfx->registration_sequence = s_registration_sequence;
-
-	return sfx;
-}
-
-/*
-* S_BeginRegistration
-*/
-void S_BeginRegistration (void)
-{
-	s_registration_sequence++;
-	if( !s_registration_sequence ) {
-		s_registration_sequence = 1;
-	}
-	s_registering = qtrue;
-}
-
-/*
-* S_RegisterSound
-*/
-sfx_t *S_RegisterSound( const char *name )
-{
-	sfx_t *sfx;
-
-	assert( name );
-
-	sfx = S_FindName( name, qtrue );
-	sfx->registration_sequence = s_registration_sequence;
-	if( !s_registering ) {
-		S_LoadSound( sfx );
-	}
-
-	return sfx;
-}
-
-/*
-* S_FreeSounds
-*/
-void S_FreeSounds( void )
-{
-	int i;
-	sfx_t *sfx;
-
-	// free all sounds
-	for( i = 0, sfx = known_sfx; i < num_sfx; i++, sfx++ )
-	{
-		if( !sfx->name[0] ) {
-			continue;
-		}
-		if( sfx->cache ) {
-			S_Free( sfx->cache );
-		}
-		memset( sfx, 0, sizeof( *sfx ) );
-	}
-
-	// free raw samples
-	for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
-		if( raw_sounds[i] ) {
-			S_Free( raw_sounds[i] );
-		}
-	}
-	memset( raw_sounds, 0, sizeof( raw_sounds ) );
-
-	S_StopBackgroundTrack();
-}
-
-/*
-* S_EndRegistration
-*/
-void S_EndRegistration( void )
-{
-	int i, size;
-	sfx_t *sfx;
-
-	s_registering = qfalse;
-
-	// free any sounds not from this registration sequence
-	for( i = 0, sfx = known_sfx; i < num_sfx; i++, sfx++ ) {
-		if( !sfx->name[0] ) {
-			continue;
-		}
-		if( sfx->registration_sequence != s_registration_sequence ) {
-			// we don't need this sound
-			if( sfx->cache ) {
-				S_Free( sfx->cache );
-			}
-			memset( sfx, 0, sizeof( *sfx ) );
-			continue;
-		}
-
-		// make sure it is paged in
-		if( sfx->cache ) {
-			size = sfx->cache->length * sfx->cache->width;
-			trap_PageInMemory( (qbyte *)sfx->cache, size );
-		}
-	}
-
-	for( i = 0, sfx = known_sfx; i < num_sfx; i++, sfx++ ) {
-		if( !sfx->name[0] ) {
-			continue;
-		}
-		if( !sfx->cache ) {
-			S_LoadSound( sfx );
-		}
-	}
-}
-
 /*
 * S_ClearSoundTime
 */
-void S_ClearSoundTime( void )
+static void S_ClearSoundTime( void )
 {
 	soundtime = 0;
 	paintedtime = 0;
@@ -494,6 +193,8 @@ void S_ClearSoundTime( void )
 
 /*
 * S_PickChannel
+*
+* Picks a channel based on priorities, empty slots, number of channels
 */
 channel_t *S_PickChannel( int entnum, int entchannel )
 {
@@ -542,7 +243,7 @@ channel_t *S_PickChannel( int entnum, int entchannel )
 /*
 * S_SetAttenuationModel
 */
-void S_SetAttenuationModel( int model, float maxdistance, float refdistance )
+static void S_SetAttenuationModel( int model, float maxdistance, float refdistance )
 {
 	s_attenuation_model = model;
 	s_attenuation_maxdistance = maxdistance;
@@ -563,7 +264,7 @@ static float S_GainForAttenuation( float dist, float attenuation )
 * S_SpatializeOrigin
 */
 #define Q3STEREODIRECTION
-static void S_SpatializeOrigin( vec3_t origin, float master_vol, float dist_mult, int *left_vol, int *right_vol )
+static void S_SpatializeOrigin( const vec3_t origin, float master_vol, float dist_mult, int *left_vol, int *right_vol )
 {
 	vec_t dot;
 	vec_t dist;
@@ -618,8 +319,8 @@ static void S_SpatializeOrigin( vec3_t origin, float master_vol, float dist_mult
 /*
 * S_SpatializeOriginHF
 */
-static void S_SpatializeOriginHQ( vec3_t origin, float master_vol, float dist_mult, int *left_vol, int *right_vol,
-									int *lcoeff, int *rcoeff, unsigned int *ldelay, unsigned int *rdelay )
+static void S_SpatializeOriginHQ( const vec3_t origin, float master_vol, float dist_mult, 
+	int *left_vol, int *right_vol, int *lcoeff, int *rcoeff, unsigned int *ldelay, unsigned int *rdelay )
 {
 	vec_t dot;
 	vec_t dist;
@@ -732,10 +433,14 @@ void S_Spatialize( channel_t *ch )
 {
 	vec3_t origin, velocity;
 
-	if( ch->fixed_origin )
+	if( ch->fixed_origin ) {
 		VectorCopy( ch->origin, origin );
-	else
-		trap_GetEntitySpatilization( ch->entnum, origin, velocity );
+		VectorClear( velocity );
+	}
+	else {
+		VectorCopy( s_ent_spatialization[ch->entnum].origin, origin );
+		VectorCopy( s_ent_spatialization[ch->entnum].velocity, velocity );
+	}
 
 	if( s_pseudoAcoustics->value )
 	{
@@ -750,6 +455,17 @@ void S_Spatialize( channel_t *ch )
 	}
 }
 
+/*
+* S_SetEntitySpatialization
+*/
+void S_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t velocity )
+{
+	if( entnum < 0 || entnum >= MAX_EDICTS ) {
+		return;
+	}
+	VectorCopy( origin, s_ent_spatialization[entnum].origin );
+	VectorCopy( velocity, s_ent_spatialization[entnum].velocity );
+}
 
 /*
 * S_AllocPlaysound
@@ -831,9 +547,11 @@ void S_IssuePlaysound( playsound_t *ps )
 /*
 * S_ClearPlaysounds
 */
-void S_ClearPlaysounds( void )
+static void S_ClearPlaysounds( void )
 {
 	int i;
+
+	num_loopsfx = 0;
 
 	memset( s_playsounds, 0, sizeof( s_playsounds ) );
 	s_freeplays.next = s_freeplays.prev = &s_freeplays;
@@ -910,7 +628,7 @@ static void S_StartSound( sfx_t *sfx, const vec3_t origin, int entnum, int entch
 /*
 * S_StartFixedSound
 */
-void S_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation )
+static void S_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation )
 {
 	S_StartSound( sfx, origin, 0, channel, fvol, attenuation );
 }
@@ -918,7 +636,7 @@ void S_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol
 /*
 * S_StartRelativeSound
 */
-void S_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation )
+static void S_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation )
 {
 	S_StartSound( sfx, NULL, entnum, channel, fvol, attenuation );
 }
@@ -926,34 +644,19 @@ void S_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, floa
 /*
 * S_StartGlobalSound
 */
-void S_StartGlobalSound( sfx_t *sfx, int channel, float fvol )
+static void S_StartGlobalSound( sfx_t *sfx, int channel, float fvol )
 {
 	S_StartSound( sfx, NULL, 0, channel, fvol, ATTN_NONE );
 }
 
 /*
-* S_StartLocalSound
-*/
-void S_StartLocalSound( const char *sound )
-{
-	sfx_t *sfx;
-
-	sfx = S_RegisterSound( sound );
-	if( !sfx )
-	{
-		Com_Printf( "S_StartLocalSound: can't cache %s\n", sound );
-		return;
-	}
-
-	S_StartGlobalSound( sfx, S_CHANNEL_AUTO, 1 );
-}
-
-/*
 * S_Clear
 */
-void S_Clear( void )
+static void S_Clear( void )
 {
 	int clear;
+
+	num_loopsfx = 0;
 
 	S_ClearRawSounds();
 
@@ -971,7 +674,7 @@ void S_Clear( void )
 /*
 * S_StopAllSounds
 */
-void S_StopAllSounds( void )
+static void S_StopAllSounds( void )
 {
 	// clear all the playsounds and channels
 	S_ClearPlaysounds();
@@ -986,16 +689,31 @@ void S_StopAllSounds( void )
 */
 void S_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation )
 {
+	vec3_t origin;
+
 	if( !sfx || num_loopsfx >= MAX_LOOPSFX )
 		return;
+	if( entnum < 0 || entnum >= MAX_EDICTS )
+		return;
+
+	VectorCopy( s_ent_spatialization[entnum].origin, origin );
 
 	loop_sfx[num_loopsfx].sfx = sfx;
 	loop_sfx[num_loopsfx].volume = 255.0 * fvol;
 	loop_sfx[num_loopsfx].attenuation = attenuation;
-
-	trap_GetEntitySpatilization( entnum, loop_sfx[num_loopsfx].origin, NULL );
+	loop_sfx[num_loopsfx].entnum = entnum;
 
 	num_loopsfx++;
+}
+
+/*
+* S_LoopSoundOrigin
+*/
+static const vec_t *S_LoopSoundOrigin( loopsfx_t *loopsfx )
+{
+	int entnum = loopsfx->entnum;
+	return entnum < 0 || entnum >= MAX_EDICTS ? listenerOrigin : 
+		s_ent_spatialization[entnum].origin;
 }
 
 /*
@@ -1008,7 +726,7 @@ static void S_AddLoopSounds( void )
 	channel_t *ch;
 	sfx_t *sfx;
 	sfxcache_t *sc;
-
+	
 	for( i = 0; i < num_loopsfx; i++ )
 	{
 		if( !loop_sfx[i].sfx )
@@ -1022,14 +740,23 @@ static void S_AddLoopSounds( void )
 		// find the total contribution of all sounds of this type
 		if( loop_sfx[i].attenuation )
 		{
-			S_SpatializeOrigin( loop_sfx[i].origin, loop_sfx[i].volume, loop_sfx[i].attenuation, &left_total, &right_total );
+			S_SpatializeOrigin( S_LoopSoundOrigin( &loop_sfx[i] ),
+				loop_sfx[i].volume, loop_sfx[i].attenuation, &left_total, &right_total );
+
 			for( j = i+1; j < num_loopsfx; j++ )
 			{
 				if( loop_sfx[j].sfx != loop_sfx[i].sfx )
 					continue;
+				if( loop_sfx[j].entnum == loop_sfx[i].entnum )
+				{
+					loop_sfx[j].sfx = NULL; // don't check this again later
+					continue;
+				}
+
 				loop_sfx[j].sfx = NULL; // don't check this again later
 
-				S_SpatializeOrigin( loop_sfx[j].origin, loop_sfx[i].volume, loop_sfx[i].attenuation, &left, &right );
+				S_SpatializeOrigin( S_LoopSoundOrigin( &loop_sfx[j] ), 
+					loop_sfx[i].volume, loop_sfx[i].attenuation, &left, &right );
 				left_total += left;
 				right_total += right;
 			}
@@ -1039,6 +766,16 @@ static void S_AddLoopSounds( void )
 		}
 		else
 		{
+			for( j = i+1; j < num_loopsfx; j++ )
+			{
+				if( loop_sfx[j].sfx != loop_sfx[i].sfx )
+					continue;
+				if( loop_sfx[j].entnum == loop_sfx[i].entnum )
+				{
+					loop_sfx[j].sfx = NULL; // don't check this again later
+					continue;
+				}
+			}
 			left_total = loop_sfx[i].volume;
 			right_total = loop_sfx[i].volume;
 		}
@@ -1262,9 +999,9 @@ static unsigned int S_RawSamplesStereo( portable_samplepair_t *rawsamples, unsig
 }
 
 /*
-* S_RawSamples_
+* S_RawSamples2
 */
-static void S_RawSamples_( unsigned int samples, unsigned int rate, unsigned short width, 
+void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width, 
 	unsigned short channels, const qbyte *data, int snd_vol )
 {
 	rawsound_t *rawsound;
@@ -1296,20 +1033,20 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 	if( snd_vol < 0 )
 		snd_vol = 0;
 
-	S_RawSamples_( samples, rate, width, channels, data, snd_vol );
+	S_RawSamples2( samples, rate, width, channels, data, snd_vol );
 }
 
 /*
 * S_PositionedRawSamples
 */
-void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+static void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 		unsigned int samples, unsigned int rate, 
 		unsigned short width, unsigned short channels, const qbyte *data )
 {
 	rawsound_t *rawsound;
 	
-	if( entnum < 0 )
-		entnum = 0;
+	if( entnum < 0 || entnum >= MAX_EDICTS )
+		return;
 
 	rawsound = S_FindRawSound( entnum, qtrue );
 	if( !rawsound ) {
@@ -1320,8 +1057,6 @@ void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
 	rawsound->attenuation = attenuation;
 	rawsound->rawend = S_RawSamplesMono( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );
-
-	trap_GetEntitySpatilization( entnum, rawsound->origin, NULL );
 }
 
 /*
@@ -1425,9 +1160,9 @@ static void S_SpatializeRawSounds( void )
 		}
 
 		// spatialization
-		if( rawsound->attenuation ) {
-			S_SpatializeOrigin( rawsound->origin, rawsound->volume, 
-				rawsound->attenuation, &left, &right );
+		if( rawsound->attenuation && rawsound->entnum >= 0 && rawsound->entnum < MAX_EDICTS ) {
+			S_SpatializeOrigin( s_ent_spatialization[rawsound->entnum].origin, 
+				rawsound->volume, rawsound->attenuation, &left, &right );
 		}
 		else {
 			left = right = rawsound->volume;
@@ -1438,740 +1173,23 @@ static void S_SpatializeRawSounds( void )
 	}
 }
 
-//=============================================================================
-
 /*
-* S_BackgroundTrack_FindNextChunk
+* S_FreeRawSounds
 */
-static qboolean S_BackgroundTrack_FindNextChunk( char *name, int *last_chunk, int file )
-{
-	char chunkName[4];
-	int iff_chunk_len;
-
-	while( 1 )
-	{
-		trap_FS_Seek( file, *last_chunk, FS_SEEK_SET );
-
-		if( trap_FS_Eof( file ) )
-			return qfalse; // didn't find the chunk
-
-		trap_FS_Seek( file, 4, FS_SEEK_CUR );
-		trap_FS_Read( &iff_chunk_len, sizeof( iff_chunk_len ), file );
-		iff_chunk_len = LittleLong( iff_chunk_len );
-		if( iff_chunk_len < 0 )
-			return qfalse; // didn't find the chunk
-
-		trap_FS_Seek( file, -8, FS_SEEK_CUR );
-		*last_chunk = trap_FS_Tell( file ) + 8 + ( ( iff_chunk_len + 1 ) & ~1 );
-		trap_FS_Read( chunkName, 4, file );
-		if( !strncmp( chunkName, name, 4 ) )
-			return qtrue;
-	}
-}
-
-/*
-* S_BackgroundTrack_GetWavinfo
-*/
-static int S_BackgroundTrack_GetWavinfo( const char *name, wavinfo_t *info )
-{
-	short t;
-	int samples, file;
-	int iff_data, last_chunk;
-	char chunkName[4];
-
-	last_chunk = 0;
-	memset( info, 0, sizeof( wavinfo_t ) );
-
-	trap_FS_FOpenFile( name, &file, FS_READ );
-	if( !file )
-		return 0;
-
-	// find "RIFF" chunk
-	if( !S_BackgroundTrack_FindNextChunk( "RIFF", &last_chunk, file ) )
-	{
-		Com_Printf( "Missing RIFF chunk\n" );
-		return 0;
-	}
-
-	trap_FS_Read( chunkName, 4, file );
-	if( !strncmp( chunkName, "WAVE", 4 ) )
-	{
-		Com_Printf( "Missing WAVE chunk\n" );
-		return 0;
-	}
-
-	// get "fmt " chunk
-	iff_data = trap_FS_Tell( file ) + 4;
-	last_chunk = iff_data;
-	if( !S_BackgroundTrack_FindNextChunk( "fmt ", &last_chunk, file ) )
-	{
-		Com_Printf( "Missing fmt chunk\n" );
-		return 0;
-	}
-
-	trap_FS_Read( chunkName, 4, file );
-
-	trap_FS_Read( &t, sizeof( t ), file );
-	if( LittleShort( t ) != 1 )
-	{
-		Com_Printf( "Microsoft PCM format only\n" );
-		return 0;
-	}
-
-	trap_FS_Read( &t, sizeof( t ), file );
-	info->channels = LittleShort( t );
-
-	trap_FS_Read( &info->rate, sizeof( info->rate ), file );
-	info->rate = LittleLong( info->rate );
-
-	trap_FS_Seek( file, 4 + 2, FS_SEEK_CUR );
-
-	trap_FS_Read( &t, sizeof( t ), file );
-	info->width = LittleShort( t ) / 8;
-
-	info->loopstart = 0;
-
-	// find data chunk
-	last_chunk = iff_data;
-	if( !S_BackgroundTrack_FindNextChunk( "data", &last_chunk, file ) )
-	{
-		Com_Printf( "Missing data chunk\n" );
-		return 0;
-	}
-
-	trap_FS_Read( &samples, sizeof( samples ), file );
-	info->samples = LittleLong( samples ) / info->width / info->channels;
-
-	info->dataofs = trap_FS_Tell( file );
-
-	return file;
-}
-
-/*
-* S_BackgroundTrack_OpenWav
-*/
-static qboolean S_BackgroundTrack_OpenWav( struct bgTrack_s *track, qboolean *delay )
-{
-	if( delay )
-		*delay = qfalse;
-	if( track->isUrl )
-		return qfalse;
-
-	track->file = S_BackgroundTrack_GetWavinfo( track->filename, &track->info );
-	return (track->file != 0);
-}
-
-// =================================
-
-/*
-* S_AllocTrack
-*/
-static bgTrack_t *S_AllocTrack( const char *filename )
-{
-	bgTrack_t *track;
-
-	track = S_Malloc( sizeof( *track ) + strlen( filename ) + 1 );
-	track->ignore = qfalse;
-	track->filename = (char *)((qbyte *)track + sizeof( *track ));
-	strcpy( track->filename, filename );
-	track->isUrl = trap_FS_IsUrl( track->filename );
-	track->anext = s_bgTrackHead;
-	s_bgTrackHead = track;
-
-	return track;
-}
-
-/*
-* S_ValidMusicFile
-*/
-static qboolean S_ValidMusicFile( bgTrack_t *track )
-{
-	return (track->file && (!track->isUrl || !trap_FS_Eof( track->file )));
-}
-
-/*
-* S_CloseMusicTrack
-*/
-static void S_CloseMusicTrack( bgTrack_t *track )
-{
-	if( !track->file )
-		return;
-
-	if( track->close )
-		track->close( track );
-	else
-		trap_FS_FCloseFile( track->file );
-	track->file = 0;
-}
-
-/*
-* S_OpenMusicTrack
-*/
-static qboolean S_OpenMusicTrack( bgTrack_t *track, qboolean *buffering )
-{
-	if( track->ignore )
-		return qfalse;
-
-mark0:
-	if( buffering )
-		*buffering = qfalse;
-
-	if( !track->file )
-	{
-		qboolean opened, delay = qfalse;
-
-		memset( &track->info, 0, sizeof( track->info ) );
-
-		// try ogg
-		track->open = SNDOGG_OpenTrack;
-		opened = track->open( track, &delay );
-
-		// try wav
-		if( !opened )
-		{
-			track->open = S_BackgroundTrack_OpenWav;
-			opened = track->open( track, &delay );
-		}
-
-		if( opened && delay )
-		{
-			// let the background track buffer for a while
-			// Com_Printf( "S_OpenMusicTrack: buffering %s...\n", track->filename );
-			if( buffering )
-				*buffering = qtrue;
-		}
-	}
-	else
-	{
-		int seek;
-
-		if( track->seek )
-			seek = track->seek( track, 0 );
-		else
-			seek = trap_FS_Seek( track->file, track->info.dataofs, FS_SEEK_SET );
-
-		// if seeking failed for whatever reason (stream?), try reopening again
-		if( seek )
-		{
-			S_CloseMusicTrack( track );
-			goto mark0;
-		}
-	}
-
-	return qtrue;
-}
-
-/*
-* S_PrevMusicTrack
-*/
-static bgTrack_t *S_PrevMusicTrack( bgTrack_t *track )
-{
-	bgTrack_t *prev;
-
-	prev = track ? track->prev : NULL;
-	if( prev ) track = prev->next; // HACK to prevent endless loops where original 'track' comes from stack
-	while( prev && prev != track )
-	{
-		if( !prev->ignore )
-			break;
-		prev = prev->next;
-	}
-
-	return prev;
-}
-
-/*
-* S_NextMusicTrack
-*/
-static bgTrack_t *S_NextMusicTrack( bgTrack_t *track )
-{
-	bgTrack_t *next;
-
-	next = track ? track->next : NULL;
-	if( next ) track = next->prev; // HACK to prevent endless loops where original 'track' comes from stack
-	while( next && next != track )
-	{
-		if( !next->ignore )
-			break;
-		next = next->next;
-	}
-
-	return next;
-}
-
-// =================================
-
-#define MAX_PLAYLIST_ITEMS 1024
-typedef struct playlistItem_s
-{
-	bgTrack_t *track;
-	int order;
-} playlistItem_t;
-
-/*
-* R_SortPlaylistItems
-*/
-static int R_PlaylistItemCmp( const playlistItem_t *i1, const playlistItem_t *i2 )
-{
-	if( i1->order > i2->order )
-		return 1;
-	if( i2->order > i1->order )
-		return -1;
-	return 0;
-}
-
-void R_SortPlaylistItems( int numItems, playlistItem_t *items )
-{
-	qsort( items, numItems, sizeof( *items ), (int (*)(const void *, const void *))R_PlaylistItemCmp );
-}
-
-/*
-* S_ReadPlaylistFile
-*/
-static bgTrack_t *S_ReadPlaylistFile( const char *filename, qboolean shuffle, qboolean loop )
-{
-	int filenum, length;
-	char *tmpname = 0;
-	size_t tmpname_size = 0;
-	char *data, *line, *entry;
-	playlistItem_t items[MAX_PLAYLIST_ITEMS];
-	int i, numItems = 0;
-
-	length = trap_FS_FOpenFile( filename, &filenum, FS_READ );
-	if( length < 0 )
-		return NULL;
-
-	// load the playlist into memory
-	data = S_Malloc( length + 1 );
-	trap_FS_Read( data, length, filenum );
-	trap_FS_FCloseFile( filenum );
-
-	srand( time( NULL ) );
-
-	while( *data )
-	{
-		size_t s;
-
-		entry = data;
-
-		// read the whole line
-		for( line = data; *line != '\0' && *line != '\n'; line++ );
-
-		// continue reading from the next character, if possible
-		data = (*line == '\0' ? line : line + 1);
-
-		*line = '\0';
-
-		// trim whitespaces, tabs, etc
-		entry = Q_trim( entry );
-
-		// special M3U entry or comment
-		if( !*entry || *entry == '#' )
-			continue;
-
-		if( trap_FS_IsUrl( entry ) )
-		{
-			items[numItems].track = S_AllocTrack( entry );
-		}
-		else
-		{
-			// append the entry name to playlist path
-			s = strlen( filename ) + 1 + strlen( entry ) + 1;
-			if( s > tmpname_size )
-			{
-				if( tmpname )
-					S_Free( tmpname );
-				tmpname_size = s;
-				tmpname = S_Malloc( tmpname_size );
-			}
-
-			Q_strncpyz( tmpname, filename, tmpname_size );
-			COM_StripFilename( tmpname );
-			Q_strncatz( tmpname, "/", tmpname_size );
-			Q_strncatz( tmpname, entry, tmpname_size );
-			COM_SanitizeFilePath( tmpname );
-
-			items[numItems].track = S_AllocTrack( tmpname );
-		}
-
-		if( ++numItems == MAX_PLAYLIST_ITEMS )
-			break;
-	}
-
-	if( tmpname )
-	{
-		S_Free( tmpname );
-		tmpname = NULL;
-	}
-
-	if( !numItems )
-		return NULL;
-
-	// set the playing order
-	for( i = 0; i < numItems; i++ )
-		items[i].order = (shuffle ? (rand() % numItems) : i);
-
-	// sort the playlist
-	R_SortPlaylistItems( numItems, items );
-
-	// link the playlist
-	for( i = 1; i < numItems; i++ )
-	{
-		items[i-1].track->next = items[i].track;
-		items[i].track->prev = items[i-1].track;
-		items[i].track->loop = loop;
-	}
-	items[numItems-1].track->next = items[0].track;
-	items[0].track->prev = items[numItems-1].track;
-	items[0].track->loop = loop;
-
-	return items[0].track;
-}
-
-// =================================
-
-/*
-* S_OpenBackgroundTrackProc
-*/
-static void *S_OpenBackgroundTrackProc( void *ptrack )
-{
-	bgTrack_t *track = ptrack;
-	unsigned start;
-	qboolean buffering;
-
-	S_OpenMusicTrack( track, &buffering );
-
-	s_bgTrackBuffering = buffering;
-
-	start = trap_Milliseconds();
-	while( s_bgTrackBuffering )
-	{
-		if( trap_Milliseconds() > start + BACKGROUND_TRACK_BUFFERING_TIMEOUT ) {
-		}
-		else if( trap_FS_Eof( track->file ) ) {
-		}
-		else {
-			if( trap_FS_Seek( track->file, BACKGROUND_TRACK_BUFFERING_SIZE, FS_SEEK_SET ) < 0 )
-				continue;
-			trap_FS_Seek( track->file, 0, FS_SEEK_SET );
-		}
-
-		// in case we delayed openening to let the stream cache for a while,
-		// start actually reading from it now
-		if( !track->open( track, NULL ) ) {
-			track->ignore = qtrue;
-		}
-		s_bgTrackBuffering = qfalse;
-	}
-
-	s_bgTrack = track;
-	s_bgTrackLoading = qfalse;
-	return NULL;
-}
-
-/*
-* S_OpenBackgroundTrackTask
-*/
-static void S_OpenBackgroundTrackTask( bgTrack_t *track )
-{
-	s_bgTrackLoading = qtrue;
-	s_bgTrackBuffering = qfalse;
-	trap_Thread_Create( &s_bgOpenTread, S_OpenBackgroundTrackProc, track );
-}
-
-/*
-* S_CloseBackgroundTrackTask
-*/
-static void S_CloseBackgroundTrackTask( void )
-{
-	s_bgTrackBuffering = qfalse;
-	trap_Thread_Join( s_bgOpenTread );
-	s_bgOpenTread = NULL;
-}
-
-/*
-* S_StartBackgroundTrack
-*/
-void S_StartBackgroundTrack( const char *intro, const char *loop )
-{
-	const char *ext;
-	bgTrack_t *introTrack, *loopTrack;
-	bgTrack_t *firstTrack = NULL;
-
-	S_StopBackgroundTrack();
-
-	if( !intro || !intro[0] )
-		return;
-
-	s_bgTrackMuted = qfalse;
-	s_bgTrackPaused = qfalse;
-
-	ext = COM_FileExtension( intro );
-	if( ext && !Q_stricmp( ext, ".m3u" ) )
-	{
-		int mode = 0;
-
-		// mode bits:
-		// 1 - shuffle
-		// 2 - loop the selected track
-		if( loop && loop[0] )
-			mode = atoi( loop );
-
-		firstTrack = S_ReadPlaylistFile( intro, 
-			mode & 1 ? qtrue : qfalse, mode & 2 ? qtrue : qfalse );
-		if( firstTrack )
-		{
-			goto start_playback;
-		}
-	}
-
-	// the intro track loops unless another loop track has been specified
-	introTrack = S_AllocTrack( intro );
-	introTrack->loop = qtrue;
-	introTrack->next = introTrack->prev = introTrack;
-
-	if( loop && loop[0] && Q_stricmp( intro, loop ) )
-	{
-		loopTrack = S_AllocTrack( loop );
-		if( S_OpenMusicTrack( loopTrack, NULL ) )
-		{
-			S_CloseMusicTrack( loopTrack );
-
-			introTrack->next = introTrack->prev = loopTrack;
-			introTrack->loop = qfalse;
-
-			loopTrack->loop = qtrue;
-			loopTrack->next = loopTrack->prev = loopTrack;
-		}
-	}
-
-	firstTrack = introTrack;
-
-start_playback:
-
-	if( !firstTrack || firstTrack->ignore )
-	{
-		S_StopBackgroundTrack();
-		return;
-	}
-
-	S_OpenBackgroundTrackTask( firstTrack );
-}
-
-/*
-* S_StopBackgroundTrack
-*/
-void S_StopBackgroundTrack( void )
-{
-	bgTrack_t *next;
-
-	S_CloseBackgroundTrackTask();
-
-	while( s_bgTrackHead )
-	{
-		next = s_bgTrackHead->anext;
-
-		S_CloseMusicTrack( s_bgTrackHead );
-		S_Free( s_bgTrackHead );
-
-		s_bgTrackHead = next;
-	}
-
-	s_bgTrack = NULL;
-	s_bgTrackHead = NULL;
-
-	s_bgTrackMuted = qfalse;
-	s_bgTrackPaused = qfalse;
-}
-
-/*
-* S_AdvanceBackgroundTrack
-*/
-static qboolean S_AdvanceBackgroundTrack( int n )
-{
-	bgTrack_t *track;
-
-	if( n < 0 )
-		track = S_PrevMusicTrack( s_bgTrack );
-	else
-		track = S_NextMusicTrack( s_bgTrack );
-
-	if( track && track != s_bgTrack )
-	{
-		S_CloseBackgroundTrackTask();
-		S_CloseMusicTrack( s_bgTrack );
-		S_OpenBackgroundTrackTask( track );
-		return qtrue;
-	}
-
-	return qfalse;
-}
-
-/*
-* S_PrevBackgroundTrack
-*/
-static void S_PrevBackgroundTrack( void )
-{
-	S_AdvanceBackgroundTrack( -1 );
-}
-
-/*
-* S_NextBackgroundTrack
-*/
-static void S_NextBackgroundTrack( void )
-{
-	S_AdvanceBackgroundTrack(  1 );
-}
-
-/*
-* S_PauseBackgroundTrack
-*/
-static void S_PauseBackgroundTrack( void )
-{
-	if( !s_bgTrack ) {
-		return;
-	}
-
-	// in case of a streaming URL, just mute/unmute so
-	// the stream is not interrupted
-	if( s_bgTrack->isUrl ) {
-		s_bgTrackMuted = !s_bgTrackMuted;
-		return;
-	}
-
-	s_bgTrackPaused = !s_bgTrackPaused;
-}
-
-/*
-* S_LockBackgroundTrack
-*/
-void S_LockBackgroundTrack( qboolean lock )
-{
-	if( !s_bgTrack || !s_bgTrack->isUrl ) {
-		s_bgTrackLocked = lock;
-	} else {
-		s_bgTrackLocked = qfalse;
-	}
-}
-
-//=============================================================================
-
-/*
-* byteSwapRawSamples
-* Medar: untested
-*/
-static void byteSwapRawSamples( int samples, int width, int channels, const qbyte *data )
+static void S_FreeRawSounds( void )
 {
 	int i;
 
-	if( LittleShort( 256 ) == 256 )
-		return;
-
-	if( width != 2 )
-		return;
-
-	if( channels == 2 )
-		samples <<= 1;
-
-	for( i = 0; i < samples; i++ )
-		( (short *)data )[i] = BigShort( ( (short *)data )[i] );
-}
-
-/*
-* S_UpdateBackgroundTrack
-*/
-static void S_UpdateBackgroundTrack( void )
-{
-	int samples, maxSamples;
-	int read, maxRead, total;
-	float scale;
-	qbyte data[MAX_RAW_SAMPLES*4];
-
-	if( !s_bgTrack )
-		return;
-	if( !s_musicvolume->value && !s_bgTrack->isUrl )
-		return;
-	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked )
-		return;
-
-	if( !s_bgTrack->info.channels || ! s_bgTrack->info.width )
-	{
-		s_bgTrack->ignore = qtrue;
-		S_AdvanceBackgroundTrack( 1 );
-		return;
-	}
-
-	scale = (float)s_bgTrack->info.rate / dma.speed;
-	maxSamples = sizeof( data ) / s_bgTrack->info.channels / s_bgTrack->info.width;
-
-	while( 1 )
-	{
-		unsigned int rawSamplesLength;
-
-		rawSamplesLength = S_GetRawSamplesLength();
-		if( rawSamplesLength >= BACKGROUND_TRACK_PRELOAD_MSEC )
-			return;
-
-		samples = BACKGROUND_TRACK_PRELOAD_MSEC - rawSamplesLength;
-		samples = (float)samples / 1000.0 * s_bgTrack->info.rate / scale;
-
-		if( samples > maxSamples )
-			samples = maxSamples;
-		if( samples > MAX_RAW_SAMPLES )
-			samples = MAX_RAW_SAMPLES;
-
-		maxRead = samples * s_bgTrack->info.channels * s_bgTrack->info.width;
-
-		total = 0;
-		while( total < maxRead )
-		{
-			int seek;
-
-			if( s_bgTrack->read )
-				read = s_bgTrack->read( s_bgTrack, data + total, maxRead - total );
-			else
-				read = trap_FS_Read( data + total, maxRead - total, s_bgTrack->file );
-
-			if( !read )
-			{
-				if( !s_bgTrack->loop )
-				{
-					if( !S_AdvanceBackgroundTrack( 1 ) )
-					{
-						if( !S_ValidMusicFile( s_bgTrack ) )
-						{
-							S_StopBackgroundTrack();
-							return;
-						}
-					}
-					if( s_bgTrackBuffering || s_bgTrackLoading ) {
-						return;
-					}
-				}
-
-				if( s_bgTrack->seek )
-					seek = s_bgTrack->seek( s_bgTrack, s_bgTrack->info.dataofs );
-				else
-					seek = trap_FS_Seek( s_bgTrack->file, s_bgTrack->info.dataofs, FS_SEEK_SET );
-				if( seek )
-				{
-					// if the seek have failed we're going to loop here forever unless
-					// we stop now
-					S_StopBackgroundTrack();
-					return;
-				}
-			}
-
-			total += read;
+	// free raw samples
+	for( i = 0; i < MAX_RAW_SOUNDS; i++ ) {
+		if( raw_sounds[i] ) {
+			S_Free( raw_sounds[i] );
 		}
-
-		byteSwapRawSamples( samples, s_bgTrack->info.width, 
-			s_bgTrack->info.channels, data );
-
-		S_RawSamples_( samples, s_bgTrack->info.rate, s_bgTrack->info.width, 
-			s_bgTrack->info.channels, data, s_bgTrackMuted ? 0 : s_musicvolume->value * 255 );
 	}
+	memset( raw_sounds, 0, sizeof( raw_sounds ) );
 }
+
+//=============================================================================
 
 /*
 * GetSoundtime
@@ -2209,7 +1227,7 @@ static void GetSoundtime( void )
 /*
 * S_Update_
 */
-static void S_Update_( qboolean avidump )
+static void S_Update_()
 {
 	unsigned endtime;
 	unsigned samps;
@@ -2238,7 +1256,7 @@ static void S_Update_( qboolean avidump )
 	if( (int)( endtime - soundtime ) > samps )
 		endtime = soundtime + samps;
 
-	if( avidump && s_aviDumpFile )
+	if( s_aviDump && s_aviDumpFile )
 		s_aviNumSamples += S_PaintChannels( endtime, s_aviDumpFile );
 	else
 		S_PaintChannels( endtime, 0 );
@@ -2248,8 +1266,10 @@ static void S_Update_( qboolean avidump )
 
 /*
 * S_Update
+*
+* newFrame - true if there were any commands in the queue
 */
-void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump )
+static void S_Update( void )
 {
 	int i;
 	int total;
@@ -2259,30 +1279,33 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qb
 	if( s_volume->modified )
 		S_InitScaletable();
 
-	VectorCopy( origin, listenerOrigin );
-	VectorCopy( velocity, listenerVelocity );
-	Matrix3_Copy( axis, listenerAxis );
-
 	// update spatialization for dynamic sounds
-	ch = channels;
-	for( i = 0; i < MAX_CHANNELS; i++, ch++ )
-	{
-		if( !ch->sfx )
-			continue;
-		if( ch->autosound )
-		{ // autosounds are regenerated fresh each frame
-			memset( ch, 0, sizeof( *ch ) );
-			continue;
-		}
-		S_Spatialize( ch ); // respatialize channel
-		if( !ch->leftvol && !ch->rightvol )
+	if( s_respatialize ) {
+		ch = channels;
+		for( i = 0; i < MAX_CHANNELS; i++, ch++ )
 		{
-			memset( ch, 0, sizeof( *ch ) );
-			continue;
+			if( !ch->sfx )
+				continue;
+			if( ch->autosound )
+			{
+				// autosounds are regenerated fresh each frame
+				memset( ch, 0, sizeof( *ch ) );
+				continue;
+			}
+			S_Spatialize( ch ); // respatialize channel
+			if( !ch->leftvol && !ch->rightvol )
+			{
+				memset( ch, 0, sizeof( *ch ) );
+				continue;
+			}
 		}
-	}
+		
+		// reset autosounds on respatialization for backwards compatibility
+		// with quake and warsow
+		S_AddLoopSounds();
 
-	S_AddLoopSounds();
+		s_respatialize = qfalse;
+	}
 
 	S_FreeIdleRawSounds();
 
@@ -2308,13 +1331,13 @@ void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qb
 	// mix some sound
 	S_UpdateBackgroundTrack();
 
-	S_Update_( avidump );
+	S_Update_();
 }
 
 /*
 * S_BeginAviDemo
 */
-void S_BeginAviDemo( void )
+static void S_BeginAviDemo( void )
 {
 	size_t checkname_size;
 	char *checkname;
@@ -2373,7 +1396,7 @@ void S_BeginAviDemo( void )
 /*
 * S_StopAviDemo
 */
-void S_StopAviDemo( void )
+static void S_StopAviDemo( void )
 {
 	if( s_aviDumpFile )
 	{
@@ -2385,7 +1408,7 @@ void S_StopAviDemo( void )
 		}
 		else
 		{
-			int size;
+			unsigned size;
 
 			// fill in the missing values in RIFF header
 			size = (s_aviNumSamples * dma.channels * (dma.samplebits/8)) + 36;
@@ -2411,52 +1434,347 @@ void S_StopAviDemo( void )
 	}
 }
 
-/*
-* S_API
-*/
-int S_API( void )
-{
-	return SOUND_API_VERSION;
-}
+// =====================================================================
 
 /*
-* S_Error
+* S_HandleInitCmd
 */
-void S_Error( const char *format, ... )
+static unsigned S_HandleInitCmd( const sndCmdInit_t *cmd )
 {
-	va_list	argptr;
-	char msg[1024];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Error( msg );
+	//Com_Printf("S_HandleShutdownCmd\n");
+	S_Init( cmd->hwnd, cmd->maxents, cmd->verbose );
+	return sizeof( *cmd );
 }
 
-#ifndef SOUND_HARD_LINKED
-// this is only here so the functions in q_shared.c and q_math.c can link
-void Sys_Error( const char *format, ... )
+/*
+* S_HandleShutdownCmd
+*/
+static unsigned S_HandleShutdownCmd( const sndCmdShutdown_t *cmd )
 {
-	va_list	argptr;
-	char msg[3072];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Error( msg );
+	//Com_Printf("S_HandleShutdownCmd\n");
+	S_Shutdown( cmd->verbose );
+	return sizeof( *cmd );
 }
 
-void Com_Printf( const char *format, ... )
+/*
+* S_HandleClearCmd
+*/
+static unsigned S_HandleClearCmd( const sndCmdClear_t *cmd )
 {
-	va_list	argptr;
-	char msg[3072];
-
-	va_start( argptr, format );
-	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
-	va_end( argptr );
-
-	trap_Print( msg );
+	//Com_Printf("S_HandleClearCmd\n");
+	S_Clear();
+	return sizeof( *cmd );
 }
-#endif
+
+/*
+* S_HandleStopCmd
+*/
+static unsigned S_HandleStopCmd( const sndCmdStop_t *cmd )
+{
+	//Com_Printf("S_HandleStopCmd\n");
+	S_StopAllSounds();
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleFreeSfxCmd
+*/
+static unsigned S_HandleFreeSfxCmd( const sndCmdFreeSfx_t *cmd )
+{
+	sfx_t *sfx;
+	//Com_Printf("S_HandleFreeSfxCmd\n");
+	sfx = known_sfx + cmd->sfx;
+	if( sfx->cache ) {
+		S_Free( sfx->cache );
+		sfx->cache = NULL;
+	}
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleLoadSfxCmd
+*/
+static unsigned S_HandleLoadSfxCmd( const sndCmdLoadSfx_t *cmd )
+{
+	sfx_t *sfx;
+	//Com_Printf("S_HandleLoadSfxCmd\n");
+	sfx = known_sfx + cmd->sfx;
+	S_LoadSound( sfx );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleSetAttenuationModelCmd
+*/
+static unsigned S_HandleSetAttenuationModelCmd( const sndCmdSetAttenuationModel_t *cmd )
+{
+	//Com_Printf("S_HandleSetAttenuationModelCmd\n");
+	S_SetAttenuationModel( cmd->model, cmd->maxdistance, cmd->refdistance );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleSetEntitySpatializationCmd
+*/
+static unsigned S_HandleSetEntitySpatializationCmd( const sndCmdSetEntitySpatialization_t *cmd )
+{
+	//Com_Printf("S_HandleSetEntitySpatializationCmd\n");
+	s_respatialize = qtrue;
+	S_SetEntitySpatialization( cmd->entnum, cmd->origin, cmd->velocity );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleSetListernerCmd
+*/
+static unsigned S_HandleSetListernerCmd( const sndCmdSetListener_t *cmd )
+{
+	//Com_Printf("S_HandleSetListernerCmd\n");
+	s_respatialize = qtrue;
+	VectorCopy( cmd->origin, listenerOrigin );
+	VectorCopy( cmd->velocity, listenerVelocity );
+	Matrix3_Copy( cmd->axis, listenerAxis );
+	s_aviDump = cmd->avidump;
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleStartLocalSoundCmd
+*/
+static unsigned S_HandleStartLocalSoundCmd( const sndCmdStartLocalSound_t *cmd )
+{
+	//Com_Printf("S_HandleStartLocalSoundCmd\n");
+	S_StartGlobalSound( known_sfx + cmd->sfx, S_CHANNEL_AUTO, 1 );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleStartFixedSoundCmd
+*/
+static unsigned S_HandleStartFixedSoundCmd( const sndCmdStartFixedSound_t *cmd )
+{
+	//Com_Printf("S_HandleStartFixedSoundCmd\n");
+	S_StartFixedSound( known_sfx + cmd->sfx, cmd->origin, cmd->channel, cmd->fvol, cmd->attenuation );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleStartRelativeSoundCmd
+*/
+static unsigned S_HandleStartRelativeSoundCmd( const sndCmdStartRelativeSound_t *cmd )
+{
+	//Com_Printf("S_HandleStartRelativeSoundCmd\n");
+	S_StartRelativeSound( known_sfx + cmd->sfx, cmd->entnum, cmd->channel, cmd->fvol, cmd->attenuation );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleStartGlobalSoundCmd
+*/
+static unsigned S_HandleStartGlobalSoundCmd( const sndCmdStartGlobalSound_t *cmd )
+{
+	//Com_Printf("S_HandleStartGlobalSoundCmd\n");
+	S_StartGlobalSound( known_sfx + cmd->sfx, cmd->channel, cmd->fvol );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleStartBackgroundTrackCmd
+*/
+static unsigned S_HandleStartBackgroundTrackCmd( const sndCmdStartBackgroundTrack_t *cmd )
+{
+	//Com_Printf("S_HandleStartBackgroundTrackCmd\n");
+	S_StartBackgroundTrack( cmd->intro, cmd->loop );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleStopBackgroundTrackCmd
+*/
+static unsigned S_HandleStopBackgroundTrackCmd( const sndCmdStopBackgroundTrack_t *cmd )
+{
+	//Com_Printf("S_HandleStopBackgroundTrackCmd\n");
+	S_StopBackgroundTrack();
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleLockBackgroundTrackCmd
+*/
+static unsigned S_HandleLockBackgroundTrackCmd( const sndCmdLockBackgroundTrack_t *cmd )
+{
+	//Com_Printf("S_HandleLockBackgroundTrackCmd\n");
+	S_LockBackgroundTrack( cmd->lock );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleAddLoopSoundCmd
+*/
+static unsigned S_HandleAddLoopSoundCmd( const sndAddLoopSoundCmd_t *cmd )
+{
+	//Com_Printf("S_HandleAddLoopSoundCmd\n");
+	S_AddLoopSound( known_sfx + cmd->sfx, cmd->entnum, cmd->fvol, cmd->attenuation );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleAdvanceBackgroundTrackCmd
+*/
+static unsigned S_HandleAdvanceBackgroundTrackCmd( const sndAdvanceBackgroundTrackCmd_t *cmd )
+{
+	//Com_Printf("S_HandleAdvanceBackgroundTrackCmd\n");
+	if( cmd->val < 0 ) {
+		S_PrevBackgroundTrack();
+	} else if( cmd->val > 0 ) {
+		S_NextBackgroundTrack();
+	}
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandlePauseBackgroundTrackCmd
+*/
+static unsigned S_HandlePauseBackgroundTrackCmd( const sndPauseBackgroundTrackCmd_t *cmd )
+{
+	//Com_Printf("S_HandlePauseBackgroundTrackCmd\n");
+	S_PauseBackgroundTrack();
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleActivateCmd
+*/
+static unsigned S_HandleActivateCmd( const sndActivateCmd_t *cmd )
+{
+	//Com_Printf("S_HandleActivateCmd\n");
+	s_active = cmd->active ? qtrue : qfalse;
+
+	S_Clear();
+
+	S_Activate( s_active );
+
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleAviDemoCmd
+*/
+static unsigned S_HandleAviDemoCmd( const sndAviDemo_t *cmd )
+{
+	if( cmd->begin )
+		S_BeginAviDemo();
+	else
+		S_StopAviDemo();
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleRawSamplesCmd
+*/
+static unsigned S_HandleRawSamplesCmd( const sndRawSamplesCmd_t *cmd )
+{
+	S_RawSamples( cmd->samples, cmd->rate, cmd->width, cmd->channels,
+		cmd->data, cmd->music );
+	S_Free( ( void * )cmd->data );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandlePositionedRawSamplesCmd
+*/
+static unsigned S_HandlePositionedRawSamplesCmd( const sndPositionedRawSamplesCmd_t *cmd )
+{
+	S_PositionedRawSamples( cmd->entnum, cmd->fvol, cmd->attenuation,
+		cmd->samples, cmd->rate, cmd->width, cmd->channels, cmd->data );
+	S_Free( ( void * )cmd->data );
+	return sizeof( *cmd );
+}
+
+/*
+* S_HandleStuffCmd
+*/
+static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd )
+{
+	if( !Q_stricmp( cmd->text, "soundlist" ) ) {
+		S_SoundList_f();
+	}
+	return sizeof( *cmd );
+}
+
+static const queueCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
+{
+	/* SND_CMD_INIT */
+	(queueCmdHandler_t)S_HandleInitCmd,
+	/* SND_CMD_SHUTDOWN */
+	(queueCmdHandler_t)S_HandleShutdownCmd,
+	/* SND_CMD_PTR_RESET */
+	(queueCmdHandler_t)NULL,
+	/* SND_CMD_CLEAR */
+	(queueCmdHandler_t)S_HandleClearCmd,
+	/* SND_CMD_STOP_ALL_SOUNDS */
+	(queueCmdHandler_t)S_HandleStopCmd,
+	/* SND_CMD_FREE_SFX */
+	(queueCmdHandler_t)S_HandleFreeSfxCmd,
+	/* SND_CMD_LOAD_SFX */
+	(queueCmdHandler_t)S_HandleLoadSfxCmd,
+	/* SND_CMD_SET_ATTENUATION_MODEL */
+	(queueCmdHandler_t)S_HandleSetAttenuationModelCmd,
+	/* SND_CMD_SET_ENTITY_SPATIALIZATION */
+	(queueCmdHandler_t)S_HandleSetEntitySpatializationCmd,
+	/* SND_CMD_SET_LISTENER */
+	(queueCmdHandler_t)S_HandleSetListernerCmd,
+	/* SND_CMD_START_LOCAL_SOUND */
+	(queueCmdHandler_t)S_HandleStartLocalSoundCmd,
+	/* SND_CMD_START_FIXED_SOUND */
+	(queueCmdHandler_t)S_HandleStartFixedSoundCmd,
+	/* SND_CMD_START_GLOBAL_SOUND */
+	(queueCmdHandler_t)S_HandleStartGlobalSoundCmd,
+	/* SND_CMD_START_RELATIVE_SOUND */
+	(queueCmdHandler_t)S_HandleStartRelativeSoundCmd,
+	/* SND_CMD_START_BACKGROUND_TRACK */
+	(queueCmdHandler_t)S_HandleStartBackgroundTrackCmd,
+	/* SND_CMD_STOP_BACKGROUND_TRACK */
+	(queueCmdHandler_t)S_HandleStopBackgroundTrackCmd,
+	/* SND_CMD_LOCK_BACKGROUND_TRACK */
+	(queueCmdHandler_t)S_HandleLockBackgroundTrackCmd,
+	/* SND_CMD_ADD_LOOP_SOUND */
+	(queueCmdHandler_t)S_HandleAddLoopSoundCmd,
+	/* SND_CMD_ADVANCE_BACKGROUND_TRACK */
+	(queueCmdHandler_t)S_HandleAdvanceBackgroundTrackCmd,
+	/* SND_CMD_PAUSE_BACKGROUND_TRACK */
+	(queueCmdHandler_t)S_HandlePauseBackgroundTrackCmd,
+	/* SND_CMD_ACTIVATE */
+	(queueCmdHandler_t)S_HandleActivateCmd,
+	/* SND_CMD_AVI_DEMO */
+	(queueCmdHandler_t)S_HandleAviDemoCmd,
+	/* SND_CMD_RAW_SAMPLES */
+	(queueCmdHandler_t)S_HandleRawSamplesCmd,
+	/* SND_CMD_POSITIONED_RAW_SAMPLES */
+	(queueCmdHandler_t)S_HandlePositionedRawSamplesCmd,
+	/* SND_CMD_STUFFCMD */
+	(queueCmdHandler_t)S_HandleStuffCmd
+};
+
+/*
+* S_BackgroundUpdateProc
+*/
+void *S_BackgroundUpdateProc( void *param )
+{
+	sndQueue_t *s_cmdQueue = param;
+
+	while ( 1 ){
+		int read = S_ReadEnqueuedCmds( s_cmdQueue, sndCmdHandlers, SND_CMD_SHUTDOWN );
+		
+		if( read < 0 ) {
+			// shutdown
+			break;
+		}
+
+		S_Update();
+
+		trap_Sleep( 5 );
+	}
+ 
+	return NULL;
+}

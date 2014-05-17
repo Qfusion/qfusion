@@ -301,6 +301,14 @@ typedef int socket_handle_t;
 
 //==============================================
 
+#if (defined __i386__ || defined __x86_64__) && defined __GNUC__
+#define HAVE__BUILTIN_ATOMIC
+#elif (defined _WIN32)
+#define HAVE__INTERLOCKED_API
+#endif
+
+//==============================================
+
 #ifdef HAVE___INLINE
 #ifndef inline
 #define inline __inline
