@@ -461,6 +461,9 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 				fdsize += (pose.mask >> k) & 1;
 			}
 			memcpy( fd, framedata, sizeof( unsigned short ) * fdsize );
+			for( k = 0; k < fdsize; k++ ) {
+				fd[k] = LittleShort( fd[k] );
+			}
 			pfd = fd;
 			framedata += fdsize;
 
@@ -502,7 +505,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		int e[3];
 		memcpy( e, inelems, sizeof( int ) * 3 );
 		for( j = 0; j < 3; j++ ) {
-			outelems[j] = e[j];
+			outelems[j] = LittleLong( e[j] );
 		}
 		inelems += 3;
 		outelems += 3;
