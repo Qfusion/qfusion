@@ -214,6 +214,7 @@ typedef struct bgTrack_s
 	qboolean ignore;
 	qboolean isUrl;
 	snd_stream_t *stream;
+	qboolean loop;
 
 	struct bgTrack_s *next; // the next track to be played, the looping part aways points to itself
 	struct bgTrack_s *prev; // previous track in the playlist
