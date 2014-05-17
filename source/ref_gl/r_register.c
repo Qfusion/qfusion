@@ -370,6 +370,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
 	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
+	,GL_EXTENSION( SGIS, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( ARB, texture_cube_map, false, false, NULL )
 	,GL_EXTENSION( ARB, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( ARB, shadow, 1, false, false, NULL, depth_texture )
