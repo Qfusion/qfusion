@@ -33,10 +33,19 @@
     <ClCompile Include="snd_ogg.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\win32\win_snd.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_music.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="snd_syscalls.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\win32\win_snd.c">
+    <ClCompile Include="snd_main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\snd_common\snd_cmdque.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -54,6 +63,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="snd_syscalls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gameshared\q_arch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\snd_common\snd_cmdque.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

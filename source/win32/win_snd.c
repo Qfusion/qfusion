@@ -65,8 +65,6 @@ LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
 HINSTANCE hInstDS;
 HWND cl_hwnd;
 
-static qboolean s_active = qfalse;
-
 static qboolean SNDDMA_InitWav( qboolean verbose );
 static sndinitstat SNDDMA_InitDirect( qboolean verbose );
 
@@ -654,7 +652,6 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 		return qfalse;
 	}
 
-	s_active = qtrue;
 	return qtrue;
 }
 
@@ -727,7 +724,7 @@ void SNDDMA_BeginPainting( void )
 		if( hresult != DSERR_BUFFERLOST )
 		{
 			Com_Printf( "S_TransferStereo16: Lock failed with error '%s'\n", DSoundError( hresult ) );
-			S_Shutdown( qtrue );
+			SF_Shutdown( qtrue );
 			return;
 		}
 		else
@@ -829,11 +826,6 @@ void SNDDMA_Shutdown( qboolean verbose )
 */
 void S_Activate( qboolean active )
 {
-	s_active = active;
-
-	// block the background track from being read from disk
-	S_LockBackgroundTrack( !active );
-
 	if( !pDS )
 		return;
 

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 1997-2001 Id Software, Inc.
+Copyright (C) 2002-2003 Victor Luchits
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -24,62 +24,53 @@ static sndQueue_t *s_cmdQueue;
 
 static struct qthread_s *s_backThread;
 
+static int		s_registration_sequence;
+static qboolean	s_registering;
+
 struct mempool_s *soundpool;
+
+cvar_t *developer;
 
 cvar_t *s_volume;
 cvar_t *s_musicvolume;
-cvar_t *s_openAL_device;
+cvar_t *s_testsound;
+cvar_t *s_khz;
+cvar_t *s_show;
+cvar_t *s_mixahead;
+cvar_t *s_swapstereo;
+cvar_t *s_vorbis;
+cvar_t *s_pseudoAcoustics;
+cvar_t *s_separationDelay;
 
-cvar_t *s_doppler;
-cvar_t *s_sound_velocity;
-cvar_t *s_stereo2mono;
-
-static int s_registration_sequence = 1;
-static qboolean s_registering;
-
-static void SF_UnregisterSound( sfx_t *sfx );
-static void SF_FreeSound( sfx_t *sfx );
+sfx_t known_sfx[MAX_SFX];
+int num_sfx;
 
 /*
-* Commands
+===============================================================================
+
+console functions
+
+===============================================================================
 */
 
 #ifdef ENABLE_PLAY
 static void SF_Play_f( void )
 {
 	int i;
-	char name[MAX_QPATH];
+	sfx_t *sfx;
 
-	i = 1;
-	while( i < trap_Cmd_Argc() )
+	for( i = 1; i < trap_Cmd_Argc(); i++ )
 	{
-		Q_strncpyz( name, trap_Cmd_Argv( i ), sizeof( name ) );
-
-		S_StartLocalSound( name );
-		i++;
+		sfx = SF_RegisterSound( trap_Cmd_Argv( i ) );
+		if( !sfx )
+		{
+			Com_Printf( "Couldn't play: %s\n", trap_Cmd_Argv( i ) );
+			continue;
+		}
+		S_StartGlobalSound( sfx, S_CHANNEL_AUTO, 1.0 );
 	}
 }
 #endif // ENABLE_PLAY
-
-/*
-* SF_Music
-*/
-static void SF_Music_f( void )
-{
-	if( trap_Cmd_Argc() == 2 )
-	{
-		SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 1 ) );
-	}
-	else if( trap_Cmd_Argc() == 3 )
-	{
-		SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ) );
-	}
-	else
-	{
-		Com_Printf( "music <intro|playlist> [loop|shuffle]\n" );
-		return;
-	}
-}
 
 /*
 * SF_SoundList
@@ -90,11 +81,171 @@ static void SF_SoundList_f( void )
 }
 
 /*
-* SF_ListDevices_f
+* S_Music
 */
-static void SF_ListDevices_f( void )
+static void SF_Music_f( void )
 {
-	S_IssueStuffCmd( s_cmdQueue, "devicelist" );
+	if( trap_Cmd_Argc() < 2 )
+	{
+		Com_Printf( "music: <introfile|playlist> [loopfile|shuffle]\n" );
+		return;
+	}
+
+	SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ) );
+}
+
+/*
+* S_SoundInfo_f
+*/
+static void SF_SoundInfo_f( void )
+{
+	Com_Printf( "%5d stereo\n", dma.channels - 1 );
+	Com_Printf( "%5d samples\n", dma.samples );
+	Com_Printf( "%5d samplepos\n", dma.samplepos );
+	Com_Printf( "%5d samplebits\n", dma.samplebits );
+	Com_Printf( "%5d submission_chunk\n", dma.submission_chunk );
+	Com_Printf( "%5d speed\n", dma.speed );
+	Com_Printf( "0x%x dma buffer\n", dma.buffer );
+}
+
+// =======================================================================
+// Load a sound
+// =======================================================================
+
+/*
+* SF_FindName
+*/
+static sfx_t *SF_FindName( const char *name, qboolean create )
+{
+	int i;
+	sfx_t *sfx;
+
+	if( !name )
+		S_Error( "SF_FindName: NULL" );
+	if( !name[0] != '\0' )
+	{
+		assert( name[0] != '\0' );
+		S_Error( "SF_FindName: empty name" );
+	}
+
+	if( strlen( name ) >= MAX_QPATH )
+		S_Error( "Sound name too long: %s", name );
+
+	// see if already loaded
+	for( i = 0; i < num_sfx; i++ )
+	{
+		if( !strcmp( known_sfx[i].name, name ) )
+			return &known_sfx[i];
+	}
+
+	if( !create )
+		return NULL;
+
+	// find a free sfx
+	for( i = 0; i < num_sfx; i++ )
+	{
+		if( !known_sfx[i].name[0] )
+			break;
+	}
+
+	if( i == num_sfx )
+	{
+		if( num_sfx == MAX_SFX )
+			S_Error( "S_FindName: out of sfx_t" );
+		num_sfx++;
+	}
+
+	sfx = &known_sfx[i];
+	memset( sfx, 0, sizeof( *sfx ) );
+	Q_strncpyz( sfx->name, name, sizeof( sfx->name ) );
+	sfx->isUrl = trap_FS_IsUrl( name );
+	sfx->registration_sequence = s_registration_sequence;
+
+	return sfx;
+}
+
+/*
+* SF_BeginRegistration
+*/
+void SF_BeginRegistration( void )
+{
+	s_registration_sequence++;
+	if( !s_registration_sequence ) {
+		s_registration_sequence = 1;
+	}
+	s_registering = qtrue;
+
+	// wait for the queue to be processed
+	S_FinishSoundQueue( s_cmdQueue );
+}
+
+/*
+* SF_RegisterSound
+*/
+sfx_t *SF_RegisterSound( const char *name )
+{
+	sfx_t *sfx;
+
+	assert( name );
+
+	sfx = SF_FindName( name, qtrue );
+	sfx->registration_sequence = s_registration_sequence;
+	if( !s_registering ) {
+		S_IssueLoadSfxCmd( s_cmdQueue, sfx - known_sfx );
+	}
+	return sfx;
+}
+
+/*
+* SF_FreeSounds
+*/
+void SF_FreeSounds( void )
+{
+	int i;
+	sfx_t *sfx;
+
+	// wait for the queue to be processed
+	S_FinishSoundQueue( s_cmdQueue );
+
+	// free all sounds
+	for( i = 0, sfx = known_sfx; i < num_sfx; i++, sfx++ )
+	{
+		if( !sfx->name[0] ) {
+			continue;
+		}
+		S_Free( sfx->cache );
+		memset( sfx, 0, sizeof( *sfx ) );
+	}
+}
+
+/*
+* SF_EndRegistration
+*/
+void SF_EndRegistration( void )
+{
+	int i;
+	sfx_t *sfx;
+
+	// wait for the queue to be processed
+	S_FinishSoundQueue( s_cmdQueue );
+
+	s_registering = qfalse;
+
+	// free any sounds not from this registration sequence
+	for( i = 0, sfx = known_sfx; i < num_sfx; i++, sfx++ ) {
+		if( !sfx->name[0] ) {
+			continue;
+		}
+		if( sfx->registration_sequence != s_registration_sequence ) {
+			// we don't need this sound
+			S_Free( sfx->cache );
+			memset( sfx, 0, sizeof( *sfx ) );
+		}
+		else
+		{
+			S_LoadSound( sfx );
+		}
+	}
 }
 
 /*
@@ -102,37 +253,37 @@ static void SF_ListDevices_f( void )
 */
 qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose )
 {
-	soundpool = S_MemAllocPool( "OpenAL sound module" );
+	soundpool = S_MemAllocPool( "QF Sound Module" );
 
-#ifdef OPENAL_RUNTIME
-	if( !QAL_Init( ALDRIVER, verbose ) )
-	{
-#ifdef ALDRIVER_ALT
-		if( !QAL_Init( ALDRIVER_ALT, verbose ) )
-#endif
-		{
-			Com_Printf( "Failed to load OpenAL library: %s\n", ALDRIVER );
-			return qfalse;
-		}
-	}
-#endif
+	developer = trap_Cvar_Get( "developer", "0", 0 );
 
 	s_volume = trap_Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
 	s_musicvolume = trap_Cvar_Get( "s_musicvolume", "0.2", CVAR_ARCHIVE );
-	s_doppler = trap_Cvar_Get( "s_doppler", "1.0", CVAR_ARCHIVE );
-	s_sound_velocity = trap_Cvar_Get( "s_sound_velocity", "10976", CVAR_DEVELOPER );
-	s_stereo2mono = trap_Cvar_Get ( "s_stereo2mono", "0", CVAR_ARCHIVE );
+	s_khz = trap_Cvar_Get( "s_khz", "44", CVAR_ARCHIVE|CVAR_LATCH_SOUND );
+	s_mixahead = trap_Cvar_Get( "s_mixahead", "0.2", CVAR_ARCHIVE );
+	s_show = trap_Cvar_Get( "s_show", "0", CVAR_CHEAT );
+	s_testsound = trap_Cvar_Get( "s_testsound", "0", 0 );
+	s_swapstereo = trap_Cvar_Get( "s_swapstereo", "0", CVAR_ARCHIVE );
+	s_vorbis = trap_Cvar_Get( "s_vorbis", "1", CVAR_ARCHIVE );
+	s_pseudoAcoustics = trap_Cvar_Get( "s_pseudoAcoustics", "0", CVAR_ARCHIVE );
+	s_separationDelay = trap_Cvar_Get( "s_separationDelay", "1.0", CVAR_ARCHIVE );
 
 #ifdef ENABLE_PLAY
 	trap_Cmd_AddCommand( "play", SF_Play_f );
 #endif
 	trap_Cmd_AddCommand( "music", SF_Music_f );
+	trap_Cmd_AddCommand( "stopsound", SF_StopAllSounds );
 	trap_Cmd_AddCommand( "stopmusic", SF_StopBackgroundTrack );
 	trap_Cmd_AddCommand( "prevmusic", SF_PrevBackgroundTrack );
 	trap_Cmd_AddCommand( "nextmusic", SF_NextBackgroundTrack );
 	trap_Cmd_AddCommand( "pausemusic", SF_PauseBackgroundTrack );
 	trap_Cmd_AddCommand( "soundlist", SF_SoundList_f );
-	trap_Cmd_AddCommand( "s_devices", SF_ListDevices_f );
+	trap_Cmd_AddCommand( "soundinfo", SF_SoundInfo_f );
+
+	num_sfx = 0;
+
+	s_registration_sequence = 1;
+	s_registering = qfalse;
 
 	s_cmdQueue = S_CreateSoundQueue();
 	if( !s_cmdQueue ) {
@@ -145,14 +296,15 @@ qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose )
 
 	S_FinishSoundQueue( s_cmdQueue );
 
-	if( !alContext ) {
+	if( !dma.buffer )
 		return qfalse;
-	}
 
-	S_InitBuffers();
+	SF_SetAttenuationModel( S_DEFAULT_ATTENUATION_MODEL, 
+		S_DEFAULT_ATTENUATION_MAXDISTANCE, S_DEFAULT_ATTENUATION_REFDISTANCE );
 
 	return qtrue;
 }
+
 
 /*
 * SF_Shutdown
@@ -162,20 +314,16 @@ void SF_Shutdown( qboolean verbose )
 	if( !soundpool ) {
 		return;
 	}
-	
-	SF_StopAllSounds();
 
-	// wait for the queue to be processed
-	S_FinishSoundQueue( s_cmdQueue );
-
-	S_ShutdownBuffers();
+	// free all sounds
+	SF_FreeSounds();
 
 	// shutdown backend
 	S_IssueShutdownCmd( s_cmdQueue, verbose );
 
 	// wait for the queue to be processed
 	S_FinishSoundQueue( s_cmdQueue );
-
+	
 	// wait for the backend thread to die
 	trap_Thread_Join( s_backThread );
 	s_backThread = NULL;
@@ -186,83 +334,19 @@ void SF_Shutdown( qboolean verbose )
 	trap_Cmd_RemoveCommand( "play" );
 #endif
 	trap_Cmd_RemoveCommand( "music" );
+	trap_Cmd_RemoveCommand( "stopsound" );
 	trap_Cmd_RemoveCommand( "stopmusic" );
 	trap_Cmd_RemoveCommand( "prevmusic" );
 	trap_Cmd_RemoveCommand( "nextmusic" );
 	trap_Cmd_RemoveCommand( "pausemusic" );
 	trap_Cmd_RemoveCommand( "soundlist" );
-	trap_Cmd_RemoveCommand( "s_devices" );
-
-	QAL_Shutdown();
+	trap_Cmd_RemoveCommand( "soundinfo" );
 
 	S_MemFreePool( &soundpool );
-}
-
-void SF_BeginRegistration( void )
-{
-	s_registration_sequence++;
-	if( !s_registration_sequence ) {
-		s_registration_sequence = 1;
-	}
-	s_registering = qtrue;
-}
-
-void SF_EndRegistration( void )
-{
-	// wait for the queue to be processed
-	S_FinishSoundQueue( s_cmdQueue );
-
-	S_ForEachBuffer( SF_UnregisterSound );
-
-	// wait for the queue to be processed
-	S_FinishSoundQueue( s_cmdQueue );
-
-	S_ForEachBuffer( SF_FreeSound );
 
 	s_registering = qfalse;
 
-}
-
-/*
-* SF_RegisterSound
-*/
-sfx_t *SF_RegisterSound( const char *name )
-{
-	sfx_t *sfx;
-
-	assert( name );
-
-	sfx = S_FindBuffer( name );
-	S_IssueLoadSfxCmd( s_cmdQueue, sfx->id );
-	sfx->used = trap_Milliseconds();
-	sfx->registration_sequence = s_registration_sequence;
-	return sfx;
-}
-
-/*
-* SF_UnregisterSound
-*/
-static void SF_UnregisterSound( sfx_t *sfx )
-{
-	if( sfx->filename[0] == '\0' ) {
-		return;
-	}
-	if( sfx->registration_sequence != s_registration_sequence ) {
-		S_IssueFreeSfxCmd( s_cmdQueue, sfx->id );
-	}
-}
-
-/*
-* SF_FreeSound
-*/
-static void SF_FreeSound( sfx_t *sfx )
-{
-	if( !sfx->registration_sequence ) {
-		return;
-	}
-	if( sfx->registration_sequence != s_registration_sequence ) {
-		S_MarkBufferFree( sfx );
-	}
+	num_sfx = 0;
 }
 
 /*
@@ -368,7 +452,7 @@ void SF_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t v
 */
 void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation )
 {
-	S_IssueStartFixedSoundCmd( s_cmdQueue, sfx->id, origin, channel, fvol, attenuation );
+	S_IssueStartFixedSoundCmd( s_cmdQueue, sfx - known_sfx, origin, channel, fvol, attenuation );
 }
 
 /*
@@ -376,7 +460,7 @@ void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvo
 */
 void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation )
 {
-	S_IssueStartRelativeSoundCmd( s_cmdQueue, sfx->id, entnum, channel, fvol, attenuation );
+	S_IssueStartRelativeSoundCmd( s_cmdQueue, sfx - known_sfx, entnum, channel, fvol, attenuation );
 }
 
 /*
@@ -384,7 +468,7 @@ void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, flo
 */
 void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol )
 {
-	S_IssueStartGlobalSoundCmd( s_cmdQueue, sfx->id, channel, fvol );
+	S_IssueStartGlobalSoundCmd( s_cmdQueue, sfx - known_sfx, channel, fvol );
 }
 
 /*
@@ -401,7 +485,7 @@ void SF_StartLocalSound( const char *sound )
 		return;
 	}
 
-	S_IssueStartLocalSoundCmd( s_cmdQueue, sfx->id );
+	S_IssueStartLocalSoundCmd( s_cmdQueue, sfx - known_sfx );
 }
 
 /*
@@ -417,7 +501,7 @@ void SF_Clear( void )
 */
 void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation )
 {
-	S_IssueAddLoopSoundCmd( s_cmdQueue, sfx->id, entnum, fvol, attenuation );
+	S_IssueAddLoopSoundCmd( s_cmdQueue, sfx - known_sfx, entnum, fvol, attenuation );
 }
 
 /*

@@ -36,8 +36,11 @@ typedef struct sentity_s
 {
 	src_t *src;
 	int touched;    // Sound present this update?
+	vec3_t origin;
+	vec3_t velocity;
 } sentity_t;
 static sentity_t *entlist = NULL; //[MAX_EDICTS];
+static int max_ents;
 
 /*
 * source_setup
@@ -142,8 +145,10 @@ static void source_spatialize( src_t *src )
 		return;
 	}
 
-	if( src->isTracking )
-		trap_GetEntitySpatilization( src->entNum, src->origin, src->velocity );
+	if( src->isTracking ) {
+		VectorCopy( entlist[src->entNum].origin, src->origin );
+		VectorCopy( entlist[src->entNum].velocity, src->velocity );
+	}
 
 	qalSourcei( src->source, AL_SOURCE_RELATIVE, AL_FALSE );
 	qalSourcefv( src->source, AL_POSITION, src->origin );
@@ -240,6 +245,7 @@ qboolean S_InitSources( int maxEntities, qboolean verbose )
 		return qfalse;
 
 	entlist = ( sentity_t * )S_Malloc( sizeof( sentity_t ) * maxEntities );
+	max_ents = maxEntities;
 
 	src_inited = qtrue;
 	return qtrue;
@@ -268,6 +274,21 @@ void S_ShutdownSources( void )
 	entlist = NULL;
 
 	src_inited = qfalse;
+}
+
+/*
+* S_SetEntitySpatialization
+*/
+void S_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t velocity )
+{
+	sentity_t *sent;
+
+	if( entnum < 0 || entnum > max_ents )
+		return;
+
+	sent = entlist + entnum;
+	VectorCopy( origin, sent->origin );
+	VectorCopy( velocity, sent->velocity );
 }
 
 /*
@@ -400,18 +421,18 @@ ALuint S_GetALSource( const src_t *src )
 /*
 * S_StartLocalSound
 */
-void S_StartLocalSound( const char *name )
+void S_StartLocalSound( sfx_t *sfx )
 {
-	sfx_t *sfx;
 	src_t *src;
+
+	if( !sfx )
+		return;
 
 	src = S_AllocSource( SRCPRI_LOCAL, -1, S_CHANNEL_AUTO );
 	if( !src )
 		return;
 
-	sfx = S_RegisterSound( name );
-	if( !sfx )
-		return;
+	S_UseBuffer( sfx );
 
 	source_setup( src, sfx, SRCPRI_LOCAL, -1, S_CHANNEL_AUTO, 1.0, ATTN_NONE );
 	qalSourcei( src->source, AL_SOURCE_RELATIVE, AL_TRUE );
