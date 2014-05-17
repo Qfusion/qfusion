@@ -161,15 +161,15 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	qbyte *pmem;
 	iqmheader_t *header;
 	char *texts;
-	iqmvertexarray_t *va;
-	iqmjoint_t *joints;
+	iqmvertexarray_t *vas, va;
+	iqmjoint_t *joints, joint;
 	bonepose_t *baseposes;
-	iqmpose_t *poses;
+	iqmpose_t *poses, pose;
 	unsigned short *framedata;
 	const int *inelems;
 	elem_t *outelems;
-	iqmmesh_t *inmesh;
-	iqmbounds_t *inbounds;
+	iqmmesh_t *inmeshes, inmesh;
+	iqmbounds_t *inbounds, inbound;
 	float *vposition, *vtexcoord, *vnormal, *vtangent;
 	qbyte *vblendindices_byte, *vblendweights_byte;
 	int *vblendindexes_int;
@@ -276,18 +276,20 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	vblendweights_byte = NULL;
 	vblendweights_float = NULL;
 
-	va = ( iqmvertexarray_t * )( pbase + header->ofs_vertexarrays );
+	vas = ( iqmvertexarray_t * )( pbase + header->ofs_vertexarrays );
 	for( i = 0; i < header->num_vertexarrays; i++ ) {
 		size_t vsize;
 
-		va[i].type = LittleLong( va[i].type );
-		va[i].flags = LittleLong( va[i].flags );
-		va[i].format = LittleLong( va[i].format );
-		va[i].size = LittleLong( va[i].size );
-		va[i].offset = LittleLong( va[i].offset );
+		memcpy( &va, &vas[i], sizeof( iqmvertexarray_t ) );
 
-		vsize = header->num_vertexes*va[i].size;
-		switch( va[i].format ) { 
+		va.type = LittleLong( va.type );
+		va.flags = LittleLong( va.flags );
+		va.format = LittleLong( va.format );
+		va.size = LittleLong( va.size );
+		va.offset = LittleLong( va.offset );
+
+		vsize = header->num_vertexes*va.size;
+		switch( va.format ) { 
 			case IQM_FLOAT:
 				vsize *= sizeof( float );
 				break;
@@ -303,49 +305,49 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 				continue;
 		}
 
-		if( va[i].offset + vsize > filesize ) {
+		if( va.offset + vsize > filesize ) {
 			continue;
 		}
 
-		switch( va[i].type ) {
+		switch( va.type ) {
 			case IQM_POSITION:
-				if( va[i].format == IQM_FLOAT && va[i].size == 3 ) {
-					vposition = ( float * )( pbase + va[i].offset );
+				if( va.format == IQM_FLOAT && va.size == 3 ) {
+					vposition = ( float * )( pbase + va.offset );
 				}
 				break;
 			case IQM_TEXCOORD:
-				if( va[i].format == IQM_FLOAT && va[i].size == 2 ) {
-					vtexcoord = ( float * )( pbase + va[i].offset );
+				if( va.format == IQM_FLOAT && va.size == 2 ) {
+					vtexcoord = ( float * )( pbase + va.offset );
 				}
 				break;
 			case IQM_NORMAL:
-				if( va[i].format == IQM_FLOAT && va[i].size == 3 ) {
-					vnormal = ( float * )( pbase + va[i].offset );
+				if( va.format == IQM_FLOAT && va.size == 3 ) {
+					vnormal = ( float * )( pbase + va.offset );
 				}
 				break;
 			case IQM_TANGENT:
-				if( va[i].format == IQM_FLOAT && va[i].size == 4 ) {
-					vtangent = ( float * )( pbase + va[i].offset );
+				if( va.format == IQM_FLOAT && va.size == 4 ) {
+					vtangent = ( float * )( pbase + va.offset );
 				}
 				break;
 			case IQM_BLENDINDEXES:
-				if( va[i].size != SKM_MAX_WEIGHTS )
+				if( va.size != SKM_MAX_WEIGHTS )
 					break;
-				if( va[i].format == IQM_BYTE || va[i].format == IQM_UBYTE ) {
-					vblendindices_byte = ( qbyte * )( pbase + va[i].offset );
+				if( va.format == IQM_BYTE || va.format == IQM_UBYTE ) {
+					vblendindices_byte = ( qbyte * )( pbase + va.offset );
 				}
-				else if( va[i].format == IQM_INT || va[i].format == IQM_UINT ) {
-					vblendindexes_int = ( int * )( pbase + va[i].offset );
+				else if( va.format == IQM_INT || va.format == IQM_UINT ) {
+					vblendindexes_int = ( int * )( pbase + va.offset );
 				}
 				break;
 			case IQM_BLENDWEIGHTS:
-				if( va[i].size != SKM_MAX_WEIGHTS )
+				if( va.size != SKM_MAX_WEIGHTS )
 					break;
-				if( va[i].format == IQM_UBYTE ) {
-					vblendweights_byte = ( qbyte * )( pbase + va[i].offset );
+				if( va.format == IQM_UBYTE ) {
+					vblendweights_byte = ( qbyte * )( pbase + va.offset );
 				}
-				else if( va[i].format == IQM_FLOAT ) {
-					vblendweights_float = ( float * )( pbase + va[i].offset );
+				else if( va.format == IQM_FLOAT ) {
+					vblendweights_float = ( float * )( pbase + va.offset );
 				}
 				break;
 			default:
@@ -378,34 +380,36 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	joints = ( iqmjoint_t * )( pbase + header->ofs_joints );
 	for( i = 0; i < poutmodel->numbones; i++ ) {
-		joints[i].name = LittleLong( joints[i].name );
-		joints[i].parent = LittleLong( joints[i].parent );
+		memcpy( &joint, &joints[i], sizeof( iqmjoint_t ) );
+
+		joint.name = LittleLong( joint.name );
+		joint.parent = LittleLong( joint.parent );
 
 		for( j = 0; j < 3; j++ ) {
-			joints[i].translate[j] = LittleFloat( joints[i].translate[j] );
-			joints[i].rotate[j] = LittleFloat( joints[i].rotate[j] );
-			joints[i].scale[j] = LittleFloat( joints[i].scale[j] );
+			joint.translate[j] = LittleFloat( joint.translate[j] );
+			joint.rotate[j] = LittleFloat( joint.rotate[j] );
+			joint.scale[j] = LittleFloat( joint.scale[j] );
 		}
 
 		if( joints[i].parent >= (int)i ) {
-			ri.Com_Printf( S_COLOR_RED "ERROR: %s bone[%i].parent(%i) >= %i\n", mod->name, i, joints[i].parent, i );
+			ri.Com_Printf( S_COLOR_RED "ERROR: %s bone[%i].parent(%i) >= %i\n", mod->name, i, joint.parent, i );
 			goto error;
 		}
 
-		poutmodel->bones[i].name = texts + joints[i].name;
-		poutmodel->bones[i].parent = joints[i].parent;
+		poutmodel->bones[i].name = texts + joint.name;
+		poutmodel->bones[i].parent = joint.parent;
 
-		DualQuat_FromQuat3AndVector( joints[i].rotate, joints[i].translate, baseposes[i].dualquat );
+		DualQuat_FromQuat3AndVector( joint.rotate, joint.translate, baseposes[i].dualquat );
 
 		// scale is unused
 
 		// reconstruct invserse bone pose
 
-		if( joints[i].parent >= 0 )
+		if( joint.parent >= 0 )
 		{
 			bonepose_t bp, *pbp;
 			bp = baseposes[i];
-			pbp = &baseposes[joints[i].parent];
+			pbp = &baseposes[joint.parent];
 
 			DualQuat_Multiply( pbp->dualquat, bp.dualquat, baseposes[i].dualquat );
 		}
@@ -418,13 +422,17 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	// load frames
 	poses = ( iqmpose_t * )( pbase + header->ofs_poses );
 	for( i = 0; i < header->num_poses; i++ ) {
-		poses[i].parent = LittleLong( poses[i].parent );
-		poses[i].mask = LittleLong( poses[i].mask );
+		memcpy( &pose, &poses[i], sizeof( iqmpose_t ) );
+
+		pose.parent = LittleLong( pose.parent );
+		pose.mask = LittleLong( pose.mask );
 
 		for( j = 0; j < 10; j++ ) {
-			poses[i].channeloffset[j] = LittleFloat( poses[i].channeloffset[j] );
-			poses[i].channelscale[j] = LittleFloat( poses[i].channelscale[j] );
+			pose.channeloffset[j] = LittleFloat( pose.channeloffset[j] );
+			pose.channelscale[j] = LittleFloat( pose.channelscale[j] );
 		}
+
+		memcpy( &poses[i], &pose, sizeof( iqmpose_t ) );
 	}
 
 	memsize = 0;
@@ -438,29 +446,41 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	framedata = ( unsigned short * )( pbase + header->ofs_frames );
 	for( i = 0; i < header->num_frames; i++ ) {
 		bonepose_t *pbp;
+		unsigned short fd[7], *pfd;
+		int fdsize;
 		vec3_t translate;
 		quat_t rotate;
 
 		poutmodel->frames[i].boneposes = ( bonepose_t * )pmem; pmem += sizeof( bonepose_t ) * poutmodel->numbones;
 
 		for( j = 0, pbp = poutmodel->frames[i].boneposes; j < header->num_poses; j++, pbp++ ) {
-			translate[0] = poses[j].channeloffset[0]; if( poses[j].mask & 0x01 ) translate[0] += *framedata++ * poses[j].channelscale[0];
-			translate[1] = poses[j].channeloffset[1]; if( poses[j].mask & 0x02 ) translate[1] += *framedata++ * poses[j].channelscale[1];
-			translate[2] = poses[j].channeloffset[2]; if( poses[j].mask & 0x04 ) translate[2] += *framedata++ * poses[j].channelscale[2];
+			memcpy( &pose, &poses[j], sizeof( iqmpose_t ) );
 
-			rotate[0] = poses[j].channeloffset[3]; if( poses[j].mask & 0x08 ) rotate[0] += *framedata++ * poses[j].channelscale[3];
-			rotate[1] = poses[j].channeloffset[4]; if( poses[j].mask & 0x10 ) rotate[1] += *framedata++ * poses[j].channelscale[4];
-			rotate[2] = poses[j].channeloffset[5]; if( poses[j].mask & 0x20 ) rotate[2] += *framedata++ * poses[j].channelscale[5];
-			rotate[3] = poses[j].channeloffset[6]; if( poses[j].mask & 0x40 ) rotate[3] += *framedata++ * poses[j].channelscale[6];
+			fdsize = 0;
+			for( k = 0; k < 7; k++ ) {
+				fdsize += (pose.mask >> k) & 1;
+			}
+			memcpy( fd, framedata, sizeof( unsigned short ) * fdsize );
+			pfd = fd;
+			framedata += fdsize;
+
+			translate[0] = pose.channeloffset[0]; if( pose.mask & 0x01 ) translate[0] += *(pfd++) * pose.channelscale[0];
+			translate[1] = pose.channeloffset[1]; if( pose.mask & 0x02 ) translate[1] += *(pfd++) * pose.channelscale[1];
+			translate[2] = pose.channeloffset[2]; if( pose.mask & 0x04 ) translate[2] += *(pfd++) * pose.channelscale[2];
+
+			rotate[0] = pose.channeloffset[3]; if( pose.mask & 0x08 ) rotate[0] += *(pfd++) * pose.channelscale[3];
+			rotate[1] = pose.channeloffset[4]; if( pose.mask & 0x10 ) rotate[1] += *(pfd++) * pose.channelscale[4];
+			rotate[2] = pose.channeloffset[5]; if( pose.mask & 0x20 ) rotate[2] += *(pfd++) * pose.channelscale[5];
+			rotate[3] = pose.channeloffset[6]; if( pose.mask & 0x40 ) rotate[3] += *(pfd++) * pose.channelscale[6];
 			if( rotate[3] > 0 ) {
 				Vector4Inverse( rotate );
 			}
 			Vector4Normalize( rotate );
 
 			// scale is unused
-			if( poses[j].mask & 0x80  ) framedata++;
-			if( poses[j].mask & 0x100 ) framedata++;
-			if( poses[j].mask & 0x200 ) framedata++;
+			if( pose.mask & 0x80  ) framedata++;
+			if( pose.mask & 0x100 ) framedata++;
+			if( pose.mask & 0x200 ) framedata++;
 
 			DualQuat_FromQuatAndVector( rotate, translate, pbp->dualquat );
 		}
@@ -479,8 +499,10 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	outelems = poutmodel->elems;
 
 	for( i = 0; i < header->num_triangles; i++ ) {
+		int e[3];
+		memcpy( e, inelems, sizeof( int ) * 3 );
 		for( j = 0; j < 3; j++ ) {
-			outelems[j] = LittleLong( inelems[j] );
+			outelems[j] = e[j];
 		}
 		inelems += 3;
 		outelems += 3;
@@ -504,8 +526,9 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	if( vtangent ) {
 		for( i = 0; i < header->num_vertexes; i++ ) {
+			memcpy( poutmodel->sVectorsArray[i], vtangent, sizeof( vec4_t ) );
 			for( j = 0; j < 4; j++ ) {
-				poutmodel->sVectorsArray[i][j] = LittleFloat( vtangent[j] );
+				poutmodel->sVectorsArray[i][j] = LittleFloat( poutmodel->sVectorsArray[i][j] );
 			}
 			vtangent += 4;
 		}
@@ -514,28 +537,31 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	// XYZ positions
 	poutmodel->xyzArray = ( vec4_t * )pmem; pmem += sizeof( *poutmodel->xyzArray ) * header->num_vertexes;
 	for( i = 0; i < header->num_vertexes; i++ ) {
+		memcpy( poutmodel->xyzArray[i], vposition, sizeof( vec3_t ) );
 		for( j = 0; j < 3; j++ ) {
-			poutmodel->xyzArray[i][j] = LittleFloat( vposition[j] );
+			poutmodel->xyzArray[i][j] = LittleFloat( poutmodel->xyzArray[i][j] );
 		}
-		poutmodel->xyzArray[i][3] = 1;
+		poutmodel->xyzArray[i][3] = 1.0f;
 		vposition += 3;
 	}
 
 	// normals
 	poutmodel->normalsArray = ( vec4_t * )pmem; pmem += sizeof( *poutmodel->normalsArray ) * header->num_vertexes;
 	for( i = 0; i < header->num_vertexes; i++ ) {
+		memcpy( poutmodel->normalsArray[i], vnormal, sizeof( vec3_t ) );
 		for( j = 0; j < 3; j++ ) {
-			poutmodel->normalsArray[i][j] = LittleFloat( vnormal[j] );
+			poutmodel->normalsArray[i][j] = LittleFloat( poutmodel->normalsArray[i][j] );
 		}
-		poutmodel->normalsArray[i][3] = 0;
+		poutmodel->normalsArray[i][3] = 0.0f;
 		vnormal += 3;
 	}
 
 	// texture coordinates
 	poutmodel->stArray = ( vec2_t * )pmem; pmem += sizeof( *poutmodel->stArray ) * header->num_vertexes;
 	for( i = 0; i < header->num_vertexes; i++ ) {
+		memcpy( poutmodel->stArray[i], vtexcoord, sizeof( vec2_t ) );
 		for( j = 0; j < 2; j++ ) {
-			poutmodel->stArray[i][j] = LittleFloat( vtexcoord[j] );
+			poutmodel->stArray[i][j] = LittleFloat( poutmodel->stArray[i][j] );
 		}
 		vtexcoord += 2;
 	}
@@ -551,8 +577,13 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	if( vblendindices_byte ) {
 		memcpy( poutmodel->blendIndices, vblendindices_byte, sizeof( qbyte ) * header->num_vertexes * SKM_MAX_WEIGHTS );
 	} else if( vblendindexes_int ) {
-		for( j = 0; j < header->num_vertexes * SKM_MAX_WEIGHTS; j++ ) {
-			poutmodel->blendIndices[j] = LittleLong( vblendindexes_int[j] );
+		int bi[SKM_MAX_WEIGHTS];
+		qbyte *pbi = poutmodel->blendIndices;
+		for( j = 0; j < header->num_vertexes; j++ ) {
+			memcpy( bi, &vblendindexes_int[j * SKM_MAX_WEIGHTS], sizeof( int ) * SKM_MAX_WEIGHTS );
+			for( k = 0; k < SKM_MAX_WEIGHTS; k++ ) {
+				*( pbi++ ) = LittleLong( bi[k] );
+			}
 		}
 	}
 
@@ -562,8 +593,13 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		memcpy( poutmodel->blendWeights, vblendweights_byte, sizeof( qbyte ) * header->num_vertexes * SKM_MAX_WEIGHTS );
 	}
 	else if( vblendweights_float ) {
-		for( j = 0; j < header->num_vertexes * SKM_MAX_WEIGHTS; j++ ) {
-			poutmodel->blendWeights[j] = LittleFloat( vblendweights_float[j] ) * 255.0f;
+		float bw[SKM_MAX_WEIGHTS];
+		qbyte *pbw = poutmodel->blendWeights;
+		for( j = 0; j < header->num_vertexes; j++ ) {
+			memcpy( bw, &vblendweights_float[j * SKM_MAX_WEIGHTS], sizeof( float ) * SKM_MAX_WEIGHTS );
+			for( k = 0; k < SKM_MAX_WEIGHTS; k++ ) {
+				*( pbw++ ) = LittleFloat( bw[k] ) * 255.0f;
+			}
 		}
 	}
 
@@ -603,41 +639,43 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	poutmodel->nummeshes = header->num_meshes;
 	poutmodel->meshes = ( mskmesh_t * )pmem; pmem += sizeof( *poutmodel->meshes ) * header->num_meshes;
 
-	inmesh = ( iqmmesh_t * )(pbase + header->ofs_meshes);
+	inmeshes = ( iqmmesh_t * )(pbase + header->ofs_meshes);
 	for( i = 0; i < header->num_meshes; i++ ) {
-		inmesh[i].name = LittleLong( inmesh[i].name );
-		inmesh[i].material = LittleLong( inmesh[i].material );
-		inmesh[i].first_vertex = LittleLong( inmesh[i].first_vertex );
-		inmesh[i].num_vertexes = LittleLong( inmesh[i].num_vertexes );
-		inmesh[i].first_triangle = LittleLong( inmesh[i].first_triangle );
-		inmesh[i].num_triangles = LittleLong( inmesh[i].num_triangles );
+		memcpy( &inmesh, &inmeshes[i], sizeof( iqmmesh_t ) );
 
-		poutmodel->meshes[i].name = texts + inmesh[i].name;
+		inmesh.name = LittleLong( inmesh.name );
+		inmesh.material = LittleLong( inmesh.material );
+		inmesh.first_vertex = LittleLong( inmesh.first_vertex );
+		inmesh.num_vertexes = LittleLong( inmesh.num_vertexes );
+		inmesh.first_triangle = LittleLong( inmesh.first_triangle );
+		inmesh.num_triangles = LittleLong( inmesh.num_triangles );
+
+		poutmodel->meshes[i].name = texts + inmesh.name;
 		Mod_StripLODSuffix( poutmodel->meshes[i].name );
 
-		poutmodel->meshes[i].skin.name = texts + inmesh[i].material;
+		poutmodel->meshes[i].skin.name = texts + inmesh.material;
 		poutmodel->meshes[i].skin.shader = R_RegisterSkin( poutmodel->meshes[i].skin.name );
 
-		poutmodel->meshes[i].elems = poutmodel->elems + inmesh[i].first_triangle * 3;
-		poutmodel->meshes[i].numtris = inmesh[i].num_triangles;
+		poutmodel->meshes[i].elems = poutmodel->elems + inmesh.first_triangle * 3;
+		poutmodel->meshes[i].numtris = inmesh.num_triangles;
 
-		poutmodel->meshes[i].numverts = inmesh[i].num_vertexes;
-		poutmodel->meshes[i].xyzArray = poutmodel->xyzArray + inmesh[i].first_vertex;
-		poutmodel->meshes[i].normalsArray = poutmodel->normalsArray + inmesh[i].first_vertex;
-		poutmodel->meshes[i].stArray = poutmodel->stArray + inmesh[i].first_vertex;
-		poutmodel->meshes[i].sVectorsArray = poutmodel->sVectorsArray + inmesh[i].first_vertex;
+		poutmodel->meshes[i].numverts = inmesh.num_vertexes;
+		poutmodel->meshes[i].xyzArray = poutmodel->xyzArray + inmesh.first_vertex;
+		poutmodel->meshes[i].normalsArray = poutmodel->normalsArray + inmesh.first_vertex;
+		poutmodel->meshes[i].stArray = poutmodel->stArray + inmesh.first_vertex;
+		poutmodel->meshes[i].sVectorsArray = poutmodel->sVectorsArray + inmesh.first_vertex;
 
-		poutmodel->meshes[i].blendIndices = poutmodel->blendIndices + inmesh[i].first_vertex * SKM_MAX_WEIGHTS;
-		poutmodel->meshes[i].blendWeights = poutmodel->blendWeights + inmesh[i].first_vertex * SKM_MAX_WEIGHTS;
+		poutmodel->meshes[i].blendIndices = poutmodel->blendIndices + inmesh.first_vertex * SKM_MAX_WEIGHTS;
+		poutmodel->meshes[i].blendWeights = poutmodel->blendWeights + inmesh.first_vertex * SKM_MAX_WEIGHTS;
 
-		poutmodel->meshes[i].vertexBlends = poutmodel->vertexBlends + inmesh[i].first_vertex;
+		poutmodel->meshes[i].vertexBlends = poutmodel->vertexBlends + inmesh.first_vertex;
 
 		// elements are always offset to start vertex 0 for each mesh
 		outelems = poutmodel->meshes[i].elems;
 		for( j = 0; j < poutmodel->meshes[i].numtris; j++ ) {
-			outelems[0] -= inmesh[i].first_vertex;
-			outelems[1] -= inmesh[i].first_vertex;
-			outelems[2] -= inmesh[i].first_vertex;
+			outelems[0] -= inmesh.first_vertex;
+			outelems[1] -= inmesh.first_vertex;
+			outelems[2] -= inmesh.first_vertex;
 			outelems += 3;
 		}
 
@@ -676,16 +714,18 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	inbounds = ( iqmbounds_t * )(pbase + header->ofs_bounds);
 	for( i = 0; i < header->num_frames; i++ ) {
-		for( j = 0; j < 3; j++ ) {
-			inbounds[i].bbmin[j] = LittleFloat( inbounds[i].bbmin[j] );
-			inbounds[i].bbmax[j] = LittleFloat( inbounds[i].bbmax[j] );
-		}
-		inbounds[i].radius = LittleFloat( inbounds[i].radius );
-		inbounds[i].xyradius = LittleFloat( inbounds[i].xyradius );
+		memcpy( &inbound, &inbounds[i], sizeof( iqmbounds_t ) );
 
-		VectorCopy( inbounds[i].bbmin, poutmodel->frames[i].mins );
-		VectorCopy( inbounds[i].bbmax, poutmodel->frames[i].maxs );
-		poutmodel->frames[i].radius = inbounds[i].radius;
+		for( j = 0; j < 3; j++ ) {
+			inbound.bbmin[j] = LittleFloat( inbound.bbmin[j] );
+			inbound.bbmax[j] = LittleFloat( inbound.bbmax[j] );
+		}
+		inbound.radius = LittleFloat( inbound.radius );
+		inbound.xyradius = LittleFloat( inbound.xyradius );
+
+		VectorCopy( inbound.bbmin, poutmodel->frames[i].mins );
+		VectorCopy( inbound.bbmax, poutmodel->frames[i].maxs );
+		poutmodel->frames[i].radius = inbound.radius;
 
 		AddPointToBounds( poutmodel->frames[i].mins, mod->mins, mod->maxs );
 		AddPointToBounds( poutmodel->frames[i].maxs, mod->mins, mod->maxs );
