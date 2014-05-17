@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include "snd_local.h"
+#include "snd_cmdque.h"
 #include "../qalgo/q_trie.h"
 
 // =======================================================================
@@ -65,7 +66,6 @@ static qboolean s_respatialize;
 
 static qboolean s_aviDump;
 static unsigned s_aviNumSamples;
-
 static int s_aviDumpFile;
 static char *s_aviDumpFileName;
 
@@ -689,14 +689,10 @@ static void S_StopAllSounds( void )
 */
 void S_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation )
 {
-	vec3_t origin;
-
 	if( !sfx || num_loopsfx >= MAX_LOOPSFX )
 		return;
 	if( entnum < 0 || entnum >= MAX_EDICTS )
 		return;
-
-	VectorCopy( s_ent_spatialization[entnum].origin, origin );
 
 	loop_sfx[num_loopsfx].sfx = sfx;
 	loop_sfx[num_loopsfx].volume = 255.0 * fvol;
@@ -1019,7 +1015,6 @@ void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short widt
 	rawsound->rawend = S_RawSamplesStereo( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );
 }
-
 
 /*
 * S_RawSamples

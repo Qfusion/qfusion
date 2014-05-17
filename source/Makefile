@@ -196,7 +196,7 @@ LDFLAGS_OPENAL=-lvorbisfilestat -lvorbisstat -loggstat -L../dxsdk/lib/ -ldsound 
 endif
 
 ifeq ($(BUILD_SND_QF),YES)
-CFLAGS_QF=-I../libsrcs/libogg/include -I../libsrcs/libvorbis/include
+CFLAGS_QF=-I../libsrcs/libogg/include -I../libsrcs/libvorbis/include -I./snd_qf -I./snd_common
 CFLAGS_DSOUND=-I../dxsdk/include
 LDFLAGS_QF=-lvorbisfilestat -lvorbisstat -loggstat
 endif
