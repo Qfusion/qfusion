@@ -711,7 +711,7 @@ void CL_Mumble_Unlink( void )
 /*
 * CL_Mumble_Update
 */
-void CL_Mumble_Update( vec3_t origin, vec3_t forward, vec3_t right, vec3_t up, const char *identity )
+void CL_Mumble_Update( const vec3_t origin, const mat3_t axis, const char *identity )
 {
 }
 

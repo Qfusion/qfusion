@@ -19,7 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // snd_local.h -- private OpenAL sound functions
 
+#ifndef __ANDROID__
 #define OPENAL_RUNTIME
+#endif
 //#define VORBISLIB_RUNTIME // enable this define for dynamic linked vorbis libraries
 
 // it's in qcommon.h too, but we don't include it for modules
