@@ -573,6 +573,11 @@
 		F323F5D119181ADA00F8FD6C /* steam.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5C31918169700F8FD6C /* steam.c */; };
 		F323F5D419181B5D00F8FD6C /* cin_theora.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5D219181B5D00F8FD6C /* cin_theora.c */; };
 		F323F5D519181B5D00F8FD6C /* cin_theora.h in Headers */ = {isa = PBXBuildFile; fileRef = F323F5D319181B5D00F8FD6C /* cin_theora.h */; };
+		F3503D0019286D3600ED8408 /* snd_cmdque.c in Sources */ = {isa = PBXBuildFile; fileRef = F3503CFE19286D1D00ED8408 /* snd_cmdque.c */; };
+		F3503D0119286D3700ED8408 /* snd_cmdque.c in Sources */ = {isa = PBXBuildFile; fileRef = F3503CFE19286D1D00ED8408 /* snd_cmdque.c */; };
+		F3503D0319286D7D00ED8408 /* snd_al.c in Sources */ = {isa = PBXBuildFile; fileRef = F3503D0219286D7D00ED8408 /* snd_al.c */; };
+		F3503D0619286DD200ED8408 /* snd_main.c in Sources */ = {isa = PBXBuildFile; fileRef = F3503D0419286DD200ED8408 /* snd_main.c */; };
+		F3503D0719286DD200ED8408 /* snd_music.c in Sources */ = {isa = PBXBuildFile; fileRef = F3503D0519286DD200ED8408 /* snd_music.c */; };
 		F36F06FF191ADF7D0018371F /* threads.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5511917FE7300F8FD6C /* threads.c */; };
 		F36F0700191ADF960018371F /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5561917FF2B00F8FD6C /* base64.c */; };
 		F36F0702191ADF9C0018371F /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F55C1917FF2B00F8FD6C /* md5.c */; };
@@ -1359,6 +1364,11 @@
 		F323F5C7191816C000F8FD6C /* bsp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bsp.h; sourceTree = "<group>"; };
 		F323F5D219181B5D00F8FD6C /* cin_theora.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cin_theora.c; sourceTree = "<group>"; };
 		F323F5D319181B5D00F8FD6C /* cin_theora.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cin_theora.h; sourceTree = "<group>"; };
+		F3503CFE19286D1D00ED8408 /* snd_cmdque.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = snd_cmdque.c; sourceTree = "<group>"; };
+		F3503CFF19286D1D00ED8408 /* snd_cmdque.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = snd_cmdque.h; sourceTree = "<group>"; };
+		F3503D0219286D7D00ED8408 /* snd_al.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = snd_al.c; sourceTree = "<group>"; };
+		F3503D0419286DD200ED8408 /* snd_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = snd_main.c; sourceTree = "<group>"; };
+		F3503D0519286DD200ED8408 /* snd_music.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = snd_music.c; sourceTree = "<group>"; };
 		F36F0705191AE0650018371F /* qmesa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qmesa.h; sourceTree = "<group>"; };
 		F36F0706191AE0650018371F /* r_backend_program.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_backend_program.c; sourceTree = "<group>"; };
 		F36F0709191AE0CA0018371F /* ftlib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ftlib.c; sourceTree = "<group>"; };
@@ -1601,6 +1611,7 @@
 				28A721930F5DEAA0006FB1A8 /* qcommon */,
 				28A721CA0F5DEAA0006FB1A8 /* ref_gl */,
 				28A721EC0F5DEAA0006FB1A8 /* server */,
+				F3503CFD19286D1D00ED8408 /* snd_common */,
 				28A721F80F5DEAA0006FB1A8 /* snd_openal */,
 				28A7220A0F5DEAA0006FB1A8 /* snd_qf */,
 				F323F5B2191809E400F8FD6C /* steamlib */,
@@ -2010,6 +2021,7 @@
 		28A721F80F5DEAA0006FB1A8 /* snd_openal */ = {
 			isa = PBXGroup;
 			children = (
+				F3503D0219286D7D00ED8408 /* snd_al.c */,
 				28A721F90F5DEAA0006FB1A8 /* qal.c */,
 				28A721FA0F5DEAA0006FB1A8 /* qal.h */,
 				28A721FB0F5DEAA0006FB1A8 /* snd_buffers.c */,
@@ -2032,6 +2044,8 @@
 		28A7220A0F5DEAA0006FB1A8 /* snd_qf */ = {
 			isa = PBXGroup;
 			children = (
+				F3503D0419286DD200ED8408 /* snd_main.c */,
+				F3503D0519286DD200ED8408 /* snd_music.c */,
 				28A7220B0F5DEAA0006FB1A8 /* snd_dma.c */,
 				28A7220C0F5DEAA0006FB1A8 /* snd_local.h */,
 				28A7220D0F5DEAA0006FB1A8 /* snd_mem.c */,
@@ -2449,6 +2463,16 @@
 			);
 			name = steamlib;
 			path = ../steamlib;
+			sourceTree = "<group>";
+		};
+		F3503CFD19286D1D00ED8408 /* snd_common */ = {
+			isa = PBXGroup;
+			children = (
+				F3503CFE19286D1D00ED8408 /* snd_cmdque.c */,
+				F3503CFF19286D1D00ED8408 /* snd_cmdque.h */,
+			);
+			name = snd_common;
+			path = ../snd_common;
 			sourceTree = "<group>";
 		};
 		F3E56A49191938C200FE695F /* parsers */ = {
@@ -3011,12 +3035,14 @@
 			files = (
 				289762D00F682716001563E7 /* q_math.c in Sources */,
 				289762D10F682716001563E7 /* q_shared.c in Sources */,
+				F3503D0319286D7D00ED8408 /* snd_al.c in Sources */,
 				28A723590F5DED1A006FB1A8 /* snd_decoder.c in Sources */,
 				28A7235A0F5DED1A006FB1A8 /* snd_stream.c in Sources */,
 				28A7235B0F5DED1A006FB1A8 /* snd_syscalls.c in Sources */,
 				28A7235C0F5DED1A006FB1A8 /* snd_decoder_wav.c in Sources */,
 				28A7235D0F5DED1A006FB1A8 /* snd_sources.c in Sources */,
 				28A7235E0F5DED1A006FB1A8 /* qal.c in Sources */,
+				F3503D0019286D3600ED8408 /* snd_cmdque.c in Sources */,
 				28A7235F0F5DED1A006FB1A8 /* snd_decoder_ogg.c in Sources */,
 				28A723600F5DED1A006FB1A8 /* snd_buffers.c in Sources */,
 				28A723610F5DED1A006FB1A8 /* snd_main.c in Sources */,
@@ -3028,7 +3054,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F3503D0719286DD200ED8408 /* snd_music.c in Sources */,
 				289762D40F68272E001563E7 /* q_math.c in Sources */,
+				F3503D0119286D3700ED8408 /* snd_cmdque.c in Sources */,
+				F3503D0619286DD200ED8408 /* snd_main.c in Sources */,
 				289762D50F68272E001563E7 /* q_shared.c in Sources */,
 				28A723740F5DEDFB006FB1A8 /* unix_snd.c in Sources */,
 				28A7236D0F5DEDD3006FB1A8 /* snd_ogg.c in Sources */,
