@@ -93,13 +93,13 @@ extern "C" {
 #define HAVE_WSIPX
 #endif
 
-#define MUMBLE_SUPPORT
-
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".dll"
 
 #define VID_INITFIRST
 
+#define MUMBLE_SUPPORT
+#define OPENAL_RUNTIME
 #define VORBISFILE_LIBNAME "libvorbisfile.dll"
 
 #ifdef NDEBUG
@@ -176,8 +176,8 @@ typedef UINT_PTR socket_handle_t;
 
 #ifndef __ANDROID__
 #define MUMBLE_SUPPORT
+#define OPENAL_RUNTIME
 #endif
-
 #define VORBISFILE_LIBNAME "libvorbisfile.so"
 
 #if defined ( __FreeBSD__ )
@@ -269,11 +269,11 @@ typedef int socket_handle_t;
 #define HAVE_STRCASECMP
 #endif
 
-#define MUMBLE_SUPPORT
-
 #define LIB_DIRECTORY "libs"
 #define LIB_SUFFIX ".dylib"
 
+#define MUMBLE_SUPPORT
+#define OPENAL_RUNTIME
 #define VORBISFILE_LIBNAME "libvorbisfile.dylib"
 
 //Mac OSX has universal binaries, no need for cpu dependency

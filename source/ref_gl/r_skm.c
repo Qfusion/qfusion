@@ -447,7 +447,7 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	for( i = 0; i < header->num_frames; i++ ) {
 		bonepose_t *pbp;
 		unsigned short fd[7], *pfd;
-		int fdsize;
+		unsigned int fdsize;
 		vec3_t translate;
 		quat_t rotate;
 
