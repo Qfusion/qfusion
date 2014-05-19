@@ -449,7 +449,7 @@ static qboolean R_RegisterGLExtensions( void )
 
 		cvar = ri.Cvar_Get( name, extension->cvar_default ? extension->cvar_default : "0", cvar_flags );
 		if( !cvar->integer )
-			goto non_avail;
+			continue;
 
 		// an alternative extension of higher priority is available so ignore this one
 		var = &(GLINF_FROM( &glConfig.ext, extension->offset ));
@@ -469,7 +469,7 @@ static qboolean R_RegisterGLExtensions( void )
 
 			Q_snprintfz( name, sizeof( name ), "%s_%s", extension->prefix, extension->name );
 			if( !strstr( extstring, name ) )
-				goto non_avail;
+				continue;
 		}
 
 		// initialize function pointers
@@ -498,16 +498,24 @@ static qboolean R_RegisterGLExtensions( void )
 					*(func2->pointer) = NULL;
 				} while( (++func2)->name && func2 != func );
 
-				goto non_avail;
+				continue;
 			}
 		}
 
 		// mark extension as available
 		*var = qtrue;
-		continue;
 
-non_avail:
-		if( extension->mandatory ) {
+	}
+
+	for( i = 0, extension = gl_extensions_decl; i < num_gl_extensions; i++, extension++ )
+	{
+		if( !extension->mandatory ) {
+			continue;
+		}
+		
+		var = &(GLINF_FROM( &glConfig.ext, extension->offset ));
+
+		if( !*var ) {
 			Sys_Error( "R_RegisterGLExtensions: '%s_%s' is not available, aborting\n", 
 				extension->prefix, extension->name );
 			return qfalse;
