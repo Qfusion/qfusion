@@ -96,6 +96,7 @@ cvar_t *r_gamma;
 cvar_t *r_texturebits;
 cvar_t *r_texturemode;
 cvar_t *r_texturefilter;
+cvar_t *r_texturecompression;
 cvar_t *r_picmip;
 cvar_t *r_skymip;
 cvar_t *r_nobind;
@@ -368,7 +369,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, draw_range_elements, true, false, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
-	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
+	,GL_EXTENSION( ARB, texture_compression, false, false, NULL )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( SGIS, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( ARB, texture_cube_map, false, false, NULL )
@@ -632,6 +633,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.multitexture = qtrue;
 	glConfig.ext.vertex_buffer_object = qtrue;
 	glConfig.ext.framebuffer_object = qtrue;
+	glConfig.ext.texture_compression = qtrue;
 	glConfig.ext.texture_edge_clamp = qtrue;
 	glConfig.ext.texture_cube_map = qtrue;
 	glConfig.ext.vertex_shader = qtrue;
@@ -878,6 +880,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_texturebits = ri.Cvar_Get( "r_texturebits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_texturemode = ri.Cvar_Get( "r_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE );
 	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
+	r_texturecompression = ri.Cvar_Get( "r_texturecompression", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "8", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );

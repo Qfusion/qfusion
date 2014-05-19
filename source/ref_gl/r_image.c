@@ -491,7 +491,7 @@ static int R_TextureFormat( int samples, qboolean noCompress )
 {
 	int bits = r_texturebits->integer;
 
-	if( glConfig.ext.texture_compression && !noCompress )
+	if( r_texturecompression->integer && glConfig.ext.texture_compression && !noCompress )
 	{
 		if( samples == 3 )
 			return GL_COMPRESSED_RGB_ARB;
