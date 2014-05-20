@@ -15,10 +15,12 @@ if(OGG_FOUND)
     find_path(VORBIS_INCLUDE_DIR vorbis/vorbisfile.h PATH_SUFFIXES include)
     # MSVC built vorbis may be named vorbis_static
     # The provided project files name the library with the lib prefix.
-    find_library(VORBIS_LIBRARY
-        NAMES vorbis vorbis_static libvorbis libvorbis_static)
-    find_library(VORBISFILE_LIBRARY
-        NAMES vorbisfile vorbisfile_static libvorbisfile libvorbisfile_static)
+    find_library(VORBIS_LIBRARY NAMES vorbis vorbis_static libvorbis libvorbis_static)
+    if (NOT ${VORBIS_LIBRARY} MATCHES ".framework")
+        find_library(VORBISFILE_LIBRARY NAMES vorbisfile vorbisfile_static libvorbisfile libvorbisfile_static)
+    else()
+        set(VORBISFILE_LIBRARY ${VORBIS_LIBRARY})
+    endif()
     # Handle the QUIETLY and REQUIRED arguments and set VORBIS_FOUND
     # to TRUE if all listed variables are TRUE.
     include(FindPackageHandleStandardArgs)
