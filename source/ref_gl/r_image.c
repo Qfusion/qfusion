@@ -461,60 +461,24 @@ static int R_HeightmapToNormalmap( const qbyte *in, qbyte *out, int width, int h
 * note: if given odd width/height this discards the last row/column of
 * pixels, rather than doing a proper box-filter scale down (LordHavoc)
 */
-static void R_MipMap( qbyte *in, int width, int height, int samples, int alignment )
+static void R_MipMap( qbyte *in, int width, int height, int samples )
 {
-	int i, j, k, samples2, inPadding, outPadding;
+	int i, j, k, samples2;
 	qbyte *out;
 
 	// width <<= 2;
 	width *= samples;
 	height >>= 1;
 	samples2 = samples << 1;
-	inPadding = ALIGN( width, alignment ) - width;
-	outPadding = ALIGN( width >> 1, alignment ) - ( width >> 1 );
 
 
 	out = in;
-	for( i = 0; i < height; i++, in += width + inPadding, out += outPadding )
+	for( i = 0; i < height; i++, in += width )
 	{
 		for( j = 0; j < width; j += samples2, out += samples, in += samples2 )
 		{
 			for( k = 0; k < samples; k++ )
-				out[k] = ( in[k] + in[k+samples] + in[width+inPadding+k] + in[width+inPadding+k+samples] )>>2;
-		}
-	}
-}
-
-/*
-* R_MipMap16
-* 
-* 16-bit version of R_MipMap.
-* Assuming unpack alignment of 4 (odd widths will be aligned to 4 bytes).
-*/
-static void R_MipMap16( unsigned short *in, int width, int height, int rMask, int gMask, int bMask, int aMask )
-{
-	int i, j, inPadding, inStride;
-	unsigned short *out = in;
-	int p[4];
-
-	inPadding = width & 1;
-	inStride = width + inPadding;
-	inPadding <<= 1;
-	width >>= 1;
-	height >>= 1;
-
-	for( i = 0; i < height; i++, in += inPadding + inStride, out += width & 1 )
-	{
-		for( j = 0; j < width; j++, in += 2, out++ )
-		{
-			p[0] = in[0];
-			p[1] = in[1];
-			p[2] = in[inStride];
-			p[3] = in[inStride + 1];
-			*out = ( ( ( ( p[0] & rMask ) + ( p[1] & rMask ) + ( p[2] & rMask ) + ( p[3] & rMask ) ) >> 2 ) & rMask ) |
-				   ( ( ( ( p[0] & gMask ) + ( p[1] & gMask ) + ( p[2] & gMask ) + ( p[3] & gMask ) ) >> 2 ) & gMask ) |
-				   ( ( ( ( p[0] & bMask ) + ( p[1] & bMask ) + ( p[2] & bMask ) + ( p[3] & bMask ) ) >> 2 ) & bMask ) |
-				   ( ( ( ( p[0] & aMask ) + ( p[1] & aMask ) + ( p[2] & aMask ) + ( p[3] & aMask ) ) >> 2 ) & aMask );
+				out[k] = ( in[k] + in[k+samples] + in[width+k] + in[width+k+samples] )>>2;
 		}
 	}
 }
@@ -744,7 +708,7 @@ static void R_Upload32( qbyte **data, int width, int height, int flags,
 				h = scaledHeight;
 				while( w > 1 || h > 1 )
 				{
-					R_MipMap( mip, w, h, samples, 1 );
+					R_MipMap( mip, w, h, samples );
 
 					w >>= 1;
 					h >>= 1;
