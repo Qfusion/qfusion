@@ -1,0 +1,4 @@
+/Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeFiles/ALL_BUILD.dir
+/Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeFiles/ZERO_CHECK.dir
+/Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeFiles/dist.dir
+/Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeFiles/freetype.dir
