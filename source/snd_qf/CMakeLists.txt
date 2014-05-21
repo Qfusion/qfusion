@@ -10,6 +10,7 @@ file(GLOB SND_QF_SOURCES
     "*.c"
     "../gameshared/q_*.c"
     "../qalgo/*.c"
+    "../unix/unix_snd.c"
 )
 
 qf_add_library(snd_qf SHARED ${SND_QF_SOURCES} ${SND_QF_HEADERS})
