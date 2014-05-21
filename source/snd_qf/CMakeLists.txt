@@ -15,5 +15,5 @@ file(GLOB SND_QF_SOURCES
 )
 
 qf_add_library(snd_qf SHARED ${SND_QF_SOURCES} ${SND_QF_HEADERS})
-target_link_libraries(snd_qf ${OGG_LIBRARY} ${VORBIS_LIBRARIES})
+target_link_libraries(snd_qf ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${SDL_LIBRARY})
 qf_set_output_dir(snd_qf libs)
