@@ -1,0 +1,1717 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		03AEB71F701441319130D6F3 /* install */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 8AF58102C833404C93521CC5 /* Build configuration list for PBXAggregateTarget "install" */;
+			buildPhases = (
+				4826150FC72D45A5BFBBC50A /* CMake PostBuild Rules */,
+			);
+			dependencies = (
+				CF09EAF339CF4A73AA68A6F6 /* PBXTargetDependency */,
+			);
+			name = install;
+			productName = install;
+		};
+		11160A7FFB1544989849B8A6 /* ALL_BUILD */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = BCC9B6A832E6468AB5DB50D0 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
+			buildPhases = (
+				0E0DD2C5F9C74472AA144AA5 /* CMake Rules */,
+			);
+			dependencies = (
+				DD2CE0EB090B47FCB2B351FE /* PBXTargetDependency */,
+				10316A0AFD7D4DF2B8FDFF2D /* PBXTargetDependency */,
+			);
+			name = ALL_BUILD;
+			productName = ALL_BUILD;
+		};
+		13FA4908E484452096D59AA4 /* dist */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = B8E318147F5842529B9ADB2A /* Build configuration list for PBXAggregateTarget "dist" */;
+			buildPhases = (
+				026E8CD09D9943B09940148D /* CMake Rules */,
+			);
+			dependencies = (
+				B6AE9595974540BD80FA706E /* PBXTargetDependency */,
+			);
+			name = dist;
+			productName = dist;
+		};
+		932A3F8042E8456FB558EB43 /* ZERO_CHECK */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 07AAA84E5E8F4B0B8660C462 /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
+			buildPhases = (
+				1096883EAEF246C691BC751B /* CMake Rules */,
+			);
+			dependencies = (
+			);
+			name = ZERO_CHECK;
+			productName = ZERO_CHECK;
+		};
+		F0B4EA9E606B4D8CB3F0B05E /* package */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = A71380FD39344108851D9FA9 /* Build configuration list for PBXAggregateTarget "package" */;
+			buildPhases = (
+				226ECAB342AC43518A7E54D4 /* CMake PostBuild Rules */,
+			);
+			dependencies = (
+				C1B4906B14F647B7889398DB /* PBXTargetDependency */,
+			);
+			name = package;
+			productName = package;
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		11E72D4BE6E64A1884077E79 /* sfnt.c in Sources */ = {isa = PBXBuildFile; fileRef = 1F1A4CD991884B128F4C2E52 /* sfnt.c */; settings = {COMPILER_FLAGS = ""; }; };
+		14613B1723974FD595677501 /* fttrigon.c in Sources */ = {isa = PBXBuildFile; fileRef = DB65056F865A4F0CA988E25B /* fttrigon.c */; settings = {COMPILER_FLAGS = ""; }; };
+		1B545FB2727B4861B564CFA9 /* type1.c in Sources */ = {isa = PBXBuildFile; fileRef = E4742FCE89B442FFA197630A /* type1.c */; settings = {COMPILER_FLAGS = ""; }; };
+		1D97FB74DDC543AAA73F3AD1 /* ftcalc.c in Sources */ = {isa = PBXBuildFile; fileRef = 37DD2A4959694A1485DC2EBE /* ftcalc.c */; settings = {COMPILER_FLAGS = ""; }; };
+		20326A85BBB64E178718A334 /* ftsnames.c in Sources */ = {isa = PBXBuildFile; fileRef = 3ACACF1DB99D4770A30C2A52 /* ftsnames.c */; settings = {COMPILER_FLAGS = ""; }; };
+		248ADBB956C548ECB43AC4DE /* cff.c in Sources */ = {isa = PBXBuildFile; fileRef = D44E0C67A6664807BB0250E5 /* cff.c */; settings = {COMPILER_FLAGS = ""; }; };
+		3C386F5395EF471E9AF1198F /* ft2build.h in Headers */ = {isa = PBXBuildFile; fileRef = D068D846835B4EEDA48FBC4B /* ft2build.h */; settings = {ATTRIBUTES = (Public, ); COMPILER_FLAGS = ""; }; };
+		3DDE71F9A09743D095FC0DA3 /* ftpfr.c in Sources */ = {isa = PBXBuildFile; fileRef = 5A06FB7554BD4EA889FCAECE /* ftpfr.c */; settings = {COMPILER_FLAGS = ""; }; };
+		41522C777DB0474FB83CB3CC /* ftdbgmem.c in Sources */ = {isa = PBXBuildFile; fileRef = DD330E3636104DEC9A4D8335 /* ftdbgmem.c */; settings = {COMPILER_FLAGS = ""; }; };
+		4558FB7DA8744C5DAE46A749 /* ftgzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 8FA5B36243514438A6888941 /* ftgzip.c */; settings = {COMPILER_FLAGS = ""; }; };
+		45C30C8515B2481FB6ED3E65 /* type42.c in Sources */ = {isa = PBXBuildFile; fileRef = 4698172F9B8744A8AF460911 /* type42.c */; settings = {COMPILER_FLAGS = ""; }; };
+		46242820010E4F218B72C8F9 /* ftwinfnt.c in Sources */ = {isa = PBXBuildFile; fileRef = D1C79C448BD8473BA3A891B3 /* ftwinfnt.c */; settings = {COMPILER_FLAGS = ""; }; };
+		4A027D96BDB2426CBCA9C023 /* ftglyph.c in Sources */ = {isa = PBXBuildFile; fileRef = 37AE78973C0642829B205DE2 /* ftglyph.c */; settings = {COMPILER_FLAGS = ""; }; };
+		4BE5A724254E4A96A8512698 /* raster.c in Sources */ = {isa = PBXBuildFile; fileRef = 41FEEDF6168248E9A94C3E97 /* raster.c */; settings = {COMPILER_FLAGS = ""; }; };
+		4E66B11D381F44FA8F5DF0AA /* fttype1.c in Sources */ = {isa = PBXBuildFile; fileRef = 63D3A61BD78647BFADFC13F0 /* fttype1.c */; settings = {COMPILER_FLAGS = ""; }; };
+		5695549A5B164A619372EBBC /* ftadvanc.c in Sources */ = {isa = PBXBuildFile; fileRef = C334A1EF91094C2A8443092A /* ftadvanc.c */; settings = {COMPILER_FLAGS = ""; }; };
+		5766AC0811DE4A0FAB0313AD /* ftcid.c in Sources */ = {isa = PBXBuildFile; fileRef = 9C9A933D8E4E44CD9934A689 /* ftcid.c */; settings = {COMPILER_FLAGS = ""; }; };
+		66CBC7542E5B4876892FC675 /* ftsystem.c in Sources */ = {isa = PBXBuildFile; fileRef = 3E03218ADB4F4C14B34EB4F6 /* ftsystem.c */; settings = {COMPILER_FLAGS = ""; }; };
+		68284EC4D42C4924A1F82DC1 /* ftlcdfil.c in Sources */ = {isa = PBXBuildFile; fileRef = 4CE8829FD9864ACDA8D8C5F0 /* ftlcdfil.c */; settings = {COMPILER_FLAGS = ""; }; };
+		6861704697154F30A40E67AA /* winfnt.c in Sources */ = {isa = PBXBuildFile; fileRef = A9E35F8A82E34485AB45CB1A /* winfnt.c */; settings = {COMPILER_FLAGS = ""; }; };
+		69BE27C678084B26BF0C624A /* smooth.c in Sources */ = {isa = PBXBuildFile; fileRef = 8FFAD56BFB074684A70287E8 /* smooth.c */; settings = {COMPILER_FLAGS = ""; }; };
+		6AD352D0190743D79A91BDE6 /* autofit.c in Sources */ = {isa = PBXBuildFile; fileRef = E1D2E95F3CB3453CBA9D2096 /* autofit.c */; settings = {COMPILER_FLAGS = ""; }; };
+		6C2331DABFA14C669AAEC13F /* ftgloadr.c in Sources */ = {isa = PBXBuildFile; fileRef = F0E8102FACAF4D0C8D820CB6 /* ftgloadr.c */; settings = {COMPILER_FLAGS = ""; }; };
+		74F4E3A8A26D4205A0F1B6BC /* ftinit.c in Sources */ = {isa = PBXBuildFile; fileRef = 7B48EB0572F74EC5A5A04892 /* ftinit.c */; settings = {COMPILER_FLAGS = ""; }; };
+		7AAC2C4BF94248D4965008E3 /* ftpatent.c in Sources */ = {isa = PBXBuildFile; fileRef = 86ECCDA6C56A420EA17DCF0D /* ftpatent.c */; settings = {COMPILER_FLAGS = ""; }; };
+		7BDC99C3F2AB448281D1CE54 /* ftbdf.c in Sources */ = {isa = PBXBuildFile; fileRef = B21D9EEF5CD14605AC69A0FB /* ftbdf.c */; settings = {COMPILER_FLAGS = ""; }; };
+		8005C72EA1164280862AA645 /* ftstroke.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9713688CDF4DF6BAD60580 /* ftstroke.c */; settings = {COMPILER_FLAGS = ""; }; };
+		800BECFE6A64474DBBD356F0 /* ftoutln.c in Sources */ = {isa = PBXBuildFile; fileRef = A9A7F71708954DC193AE3651 /* ftoutln.c */; settings = {COMPILER_FLAGS = ""; }; };
+		80A726EF06224A21BB2B53FE /* ftotval.c in Sources */ = {isa = PBXBuildFile; fileRef = C396160A6B014367A15C8B70 /* ftotval.c */; settings = {COMPILER_FLAGS = ""; }; };
+		858B100D3D7B483399D39AF0 /* ftutil.c in Sources */ = {isa = PBXBuildFile; fileRef = CF149897B7D946CB975AE19F /* ftutil.c */; settings = {COMPILER_FLAGS = ""; }; };
+		8AC72DE8E6D247C99023957B /* ftbitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 2364B1628FAB4546BC3FDEB5 /* ftbitmap.c */; settings = {COMPILER_FLAGS = ""; }; };
+		8CD346E4C11C4643AB041684 /* pcf.c in Sources */ = {isa = PBXBuildFile; fileRef = A105ACC74E214F72ABBEEFA4 /* pcf.c */; settings = {COMPILER_FLAGS = ""; }; };
+		8D2CF74B87C64380851FB22A /* ftdebug.c in Sources */ = {isa = PBXBuildFile; fileRef = 2D4F1FB77AE3448BACA09185 /* ftdebug.c */; settings = {COMPILER_FLAGS = ""; }; };
+		927B353E5E1E41359419DF97 /* pfr.c in Sources */ = {isa = PBXBuildFile; fileRef = 131A416D187F491994431D28 /* pfr.c */; settings = {COMPILER_FLAGS = ""; }; };
+		9BDAAA9E4EAE4C29AA12E3BB /* ftlzw.c in Sources */ = {isa = PBXBuildFile; fileRef = 5194EF4500414659B82A5D13 /* ftlzw.c */; settings = {COMPILER_FLAGS = ""; }; };
+		A2F50A9D6A464774B7011475 /* ftbbox.c in Sources */ = {isa = PBXBuildFile; fileRef = C0C784AE50924F5AAB943944 /* ftbbox.c */; settings = {COMPILER_FLAGS = ""; }; };
+		B0938E33E7304777A0B8C467 /* truetype.c in Sources */ = {isa = PBXBuildFile; fileRef = 2FB6F6FE03D546A1BE8DC38B /* truetype.c */; settings = {COMPILER_FLAGS = ""; }; };
+		B31CE39BD6B34CBA8A627741 /* ftxf86.c in Sources */ = {isa = PBXBuildFile; fileRef = ABE1F8192A0140C1894304AF /* ftxf86.c */; settings = {COMPILER_FLAGS = ""; }; };
+		BAD1A918F70048BFA5FFBD78 /* ftcache.c in Sources */ = {isa = PBXBuildFile; fileRef = 81BBB0113ED74D778C965130 /* ftcache.c */; settings = {COMPILER_FLAGS = ""; }; };
+		BBC178CD928947ABB6895580 /* ftstream.c in Sources */ = {isa = PBXBuildFile; fileRef = B27CAB7F850B435492380D77 /* ftstream.c */; settings = {COMPILER_FLAGS = ""; }; };
+		C72D1EEE7E104E55AC89A629 /* bdf.c in Sources */ = {isa = PBXBuildFile; fileRef = 44E05B20A4414092A9694AE9 /* bdf.c */; settings = {COMPILER_FLAGS = ""; }; };
+		D36A301CDBDC47C38CF1A221 /* ftrfork.c in Sources */ = {isa = PBXBuildFile; fileRef = AC5147BB54C944D78E3B02B0 /* ftrfork.c */; settings = {COMPILER_FLAGS = ""; }; };
+		D7AB92B36D4E4C6CA501B023 /* ftgasp.c in Sources */ = {isa = PBXBuildFile; fileRef = 48ACFEF31C5A41C2A4A7EE98 /* ftgasp.c */; settings = {COMPILER_FLAGS = ""; }; };
+		DEBF5E76892E498493146158 /* ftgxval.c in Sources */ = {isa = PBXBuildFile; fileRef = 8ACCC504176C40B0BC979F17 /* ftgxval.c */; settings = {COMPILER_FLAGS = ""; }; };
+		E31973EC0F5B4A0BAD5E44F1 /* ftbzip2.c in Sources */ = {isa = PBXBuildFile; fileRef = FBC8E54E5E7A4ACB9E86F647 /* ftbzip2.c */; settings = {COMPILER_FLAGS = ""; }; };
+		E39C0034B03F49F2B23F90B4 /* psmodule.c in Sources */ = {isa = PBXBuildFile; fileRef = 55769EE27EB84AA592F182F7 /* psmodule.c */; settings = {COMPILER_FLAGS = ""; }; };
+		E5ED407EA05B4D9483B04FE0 /* ftobjs.c in Sources */ = {isa = PBXBuildFile; fileRef = DE768A38D30548BDA319A4CA /* ftobjs.c */; settings = {COMPILER_FLAGS = ""; }; };
+		EBFE28B38D374EAAA50A236B /* type1cid.c in Sources */ = {isa = PBXBuildFile; fileRef = 71636CF397144310B826E921 /* type1cid.c */; settings = {COMPILER_FLAGS = ""; }; };
+		EF0DFD18527F46EAA6A8A21D /* ftsynth.c in Sources */ = {isa = PBXBuildFile; fileRef = 923574D4E2414168B956E7BF /* ftsynth.c */; settings = {COMPILER_FLAGS = ""; }; };
+		F4DE7A163C254D0A940A8F39 /* pshinter.c in Sources */ = {isa = PBXBuildFile; fileRef = 5817E7F789444510A8EFC8FC /* pshinter.c */; settings = {COMPILER_FLAGS = ""; }; };
+		F73F16E7271E4625BEBDB301 /* ftfstype.c in Sources */ = {isa = PBXBuildFile; fileRef = 384F7D3CF0CD43E8BBE5AB20 /* ftfstype.c */; settings = {COMPILER_FLAGS = ""; }; };
+		F98452A3E35044B68A6AEEB1 /* psaux.c in Sources */ = {isa = PBXBuildFile; fileRef = 48256989E5064ACE8888AD69 /* psaux.c */; settings = {COMPILER_FLAGS = ""; }; };
+		FEDE56B980104510AD9A3F8B /* ftmm.c in Sources */ = {isa = PBXBuildFile; fileRef = 568B55D445E94D4BB3ED1061 /* ftmm.c */; settings = {COMPILER_FLAGS = ""; }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0F34204E5E714EA3B5673BD9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 606B0C25E0504BEA99388DA9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 932A3F8042E8456FB558EB43;
+			remoteInfo = ZERO_CHECK;
+		};
+		54DD903FF2D64B23BA1B0B78 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 606B0C25E0504BEA99388DA9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 11160A7FFB1544989849B8A6;
+			remoteInfo = ALL_BUILD;
+		};
+		59EBD134106E469C9AF50858 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 606B0C25E0504BEA99388DA9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 932A3F8042E8456FB558EB43;
+			remoteInfo = ZERO_CHECK;
+		};
+		D12D5D786F364CCB9239CEF2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 606B0C25E0504BEA99388DA9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 932A3F8042E8456FB558EB43;
+			remoteInfo = ZERO_CHECK;
+		};
+		F059348893A04520A4F38E5B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 606B0C25E0504BEA99388DA9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E21DFB5C488843B2A50CB400;
+			remoteInfo = freetype;
+		};
+		FA44C12EAF9C45EFAE105BBE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 606B0C25E0504BEA99388DA9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 11160A7FFB1544989849B8A6;
+			remoteInfo = ALL_BUILD;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		131A416D187F491994431D28 /* pfr.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = pfr.c; path = src/pfr/pfr.c; sourceTree = SOURCE_ROOT; };
+		1F1A4CD991884B128F4C2E52 /* sfnt.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = sfnt.c; path = src/sfnt/sfnt.c; sourceTree = SOURCE_ROOT; };
+		2364B1628FAB4546BC3FDEB5 /* ftbitmap.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftbitmap.c; path = src/base/ftbitmap.c; sourceTree = SOURCE_ROOT; };
+		2D4F1FB77AE3448BACA09185 /* ftdebug.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftdebug.c; path = src/base/ftdebug.c; sourceTree = SOURCE_ROOT; };
+		2DC264A653E64AD5B5D697D4 /* freetype-Info.plist */ = {isa = PBXFileReference; explicitFileType = sourcecode.text.plist; fileEncoding = 4; lastKnownFileType = text.plist; name = "freetype-Info.plist"; path = "builds/mac/freetype-Info.plist"; sourceTree = SOURCE_ROOT; };
+		2FB6F6FE03D546A1BE8DC38B /* truetype.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = truetype.c; path = src/truetype/truetype.c; sourceTree = SOURCE_ROOT; };
+		37AE78973C0642829B205DE2 /* ftglyph.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftglyph.c; path = src/base/ftglyph.c; sourceTree = SOURCE_ROOT; };
+		37DD2A4959694A1485DC2EBE /* ftcalc.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftcalc.c; path = src/base/ftcalc.c; sourceTree = SOURCE_ROOT; };
+		384F7D3CF0CD43E8BBE5AB20 /* ftfstype.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftfstype.c; path = src/base/ftfstype.c; sourceTree = SOURCE_ROOT; };
+		3ACACF1DB99D4770A30C2A52 /* ftsnames.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftsnames.c; path = src/base/ftsnames.c; sourceTree = SOURCE_ROOT; };
+		3E03218ADB4F4C14B34EB4F6 /* ftsystem.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftsystem.c; path = src/base/ftsystem.c; sourceTree = SOURCE_ROOT; };
+		41FEEDF6168248E9A94C3E97 /* raster.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = raster.c; path = src/raster/raster.c; sourceTree = SOURCE_ROOT; };
+		44E05B20A4414092A9694AE9 /* bdf.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = bdf.c; path = src/bdf/bdf.c; sourceTree = SOURCE_ROOT; };
+		4698172F9B8744A8AF460911 /* type42.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = type42.c; path = src/type42/type42.c; sourceTree = SOURCE_ROOT; };
+		48256989E5064ACE8888AD69 /* psaux.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = psaux.c; path = src/psaux/psaux.c; sourceTree = SOURCE_ROOT; };
+		48ACFEF31C5A41C2A4A7EE98 /* ftgasp.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftgasp.c; path = src/base/ftgasp.c; sourceTree = SOURCE_ROOT; };
+		4CE8829FD9864ACDA8D8C5F0 /* ftlcdfil.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftlcdfil.c; path = src/base/ftlcdfil.c; sourceTree = SOURCE_ROOT; };
+		5194EF4500414659B82A5D13 /* ftlzw.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftlzw.c; path = src/lzw/ftlzw.c; sourceTree = SOURCE_ROOT; };
+		55769EE27EB84AA592F182F7 /* psmodule.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = psmodule.c; path = src/psnames/psmodule.c; sourceTree = SOURCE_ROOT; };
+		568B55D445E94D4BB3ED1061 /* ftmm.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftmm.c; path = src/base/ftmm.c; sourceTree = SOURCE_ROOT; };
+		5817E7F789444510A8EFC8FC /* pshinter.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = pshinter.c; path = src/pshinter/pshinter.c; sourceTree = SOURCE_ROOT; };
+		5A06FB7554BD4EA889FCAECE /* ftpfr.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftpfr.c; path = src/base/ftpfr.c; sourceTree = SOURCE_ROOT; };
+		63D3A61BD78647BFADFC13F0 /* fttype1.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = fttype1.c; path = src/base/fttype1.c; sourceTree = SOURCE_ROOT; };
+		650BA491D93744639A91C0AD /* freetype.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = freetype.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		71636CF397144310B826E921 /* type1cid.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = type1cid.c; path = src/cid/type1cid.c; sourceTree = SOURCE_ROOT; };
+		7B48EB0572F74EC5A5A04892 /* ftinit.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftinit.c; path = src/base/ftinit.c; sourceTree = SOURCE_ROOT; };
+		81BBB0113ED74D778C965130 /* ftcache.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftcache.c; path = src/cache/ftcache.c; sourceTree = SOURCE_ROOT; };
+		86ECCDA6C56A420EA17DCF0D /* ftpatent.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftpatent.c; path = src/base/ftpatent.c; sourceTree = SOURCE_ROOT; };
+		8ACCC504176C40B0BC979F17 /* ftgxval.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftgxval.c; path = src/base/ftgxval.c; sourceTree = SOURCE_ROOT; };
+		8FA5B36243514438A6888941 /* ftgzip.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftgzip.c; path = src/gzip/ftgzip.c; sourceTree = SOURCE_ROOT; };
+		8FFAD56BFB074684A70287E8 /* smooth.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = smooth.c; path = src/smooth/smooth.c; sourceTree = SOURCE_ROOT; };
+		923574D4E2414168B956E7BF /* ftsynth.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftsynth.c; path = src/base/ftsynth.c; sourceTree = SOURCE_ROOT; };
+		9C9A933D8E4E44CD9934A689 /* ftcid.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftcid.c; path = src/base/ftcid.c; sourceTree = SOURCE_ROOT; };
+		A105ACC74E214F72ABBEEFA4 /* pcf.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = pcf.c; path = src/pcf/pcf.c; sourceTree = SOURCE_ROOT; };
+		A9A7F71708954DC193AE3651 /* ftoutln.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftoutln.c; path = src/base/ftoutln.c; sourceTree = SOURCE_ROOT; };
+		A9E35F8A82E34485AB45CB1A /* winfnt.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = winfnt.c; path = src/winfonts/winfnt.c; sourceTree = SOURCE_ROOT; };
+		ABE1F8192A0140C1894304AF /* ftxf86.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftxf86.c; path = src/base/ftxf86.c; sourceTree = SOURCE_ROOT; };
+		AC5147BB54C944D78E3B02B0 /* ftrfork.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftrfork.c; path = src/base/ftrfork.c; sourceTree = SOURCE_ROOT; };
+		AF9713688CDF4DF6BAD60580 /* ftstroke.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftstroke.c; path = src/base/ftstroke.c; sourceTree = SOURCE_ROOT; };
+		B21D9EEF5CD14605AC69A0FB /* ftbdf.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftbdf.c; path = src/base/ftbdf.c; sourceTree = SOURCE_ROOT; };
+		B27CAB7F850B435492380D77 /* ftstream.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftstream.c; path = src/base/ftstream.c; sourceTree = SOURCE_ROOT; };
+		C0C784AE50924F5AAB943944 /* ftbbox.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftbbox.c; path = src/base/ftbbox.c; sourceTree = SOURCE_ROOT; };
+		C334A1EF91094C2A8443092A /* ftadvanc.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftadvanc.c; path = src/base/ftadvanc.c; sourceTree = SOURCE_ROOT; };
+		C396160A6B014367A15C8B70 /* ftotval.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftotval.c; path = src/base/ftotval.c; sourceTree = SOURCE_ROOT; };
+		CF149897B7D946CB975AE19F /* ftutil.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftutil.c; path = src/base/ftutil.c; sourceTree = SOURCE_ROOT; };
+		D068D846835B4EEDA48FBC4B /* ft2build.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ft2build.h; path = include/ft2build.h; sourceTree = SOURCE_ROOT; };
+		D1C79C448BD8473BA3A891B3 /* ftwinfnt.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftwinfnt.c; path = src/base/ftwinfnt.c; sourceTree = SOURCE_ROOT; };
+		D44E0C67A6664807BB0250E5 /* cff.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = cff.c; path = src/cff/cff.c; sourceTree = SOURCE_ROOT; };
+		DB65056F865A4F0CA988E25B /* fttrigon.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = fttrigon.c; path = src/base/fttrigon.c; sourceTree = SOURCE_ROOT; };
+		DD330E3636104DEC9A4D8335 /* ftdbgmem.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftdbgmem.c; path = src/base/ftdbgmem.c; sourceTree = SOURCE_ROOT; };
+		DE768A38D30548BDA319A4CA /* ftobjs.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftobjs.c; path = src/base/ftobjs.c; sourceTree = SOURCE_ROOT; };
+		E1D2E95F3CB3453CBA9D2096 /* autofit.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = autofit.c; path = src/autofit/autofit.c; sourceTree = SOURCE_ROOT; };
+		E4742FCE89B442FFA197630A /* type1.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = type1.c; path = src/type1/type1.c; sourceTree = SOURCE_ROOT; };
+		F0E8102FACAF4D0C8D820CB6 /* ftgloadr.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftgloadr.c; path = src/base/ftgloadr.c; sourceTree = SOURCE_ROOT; };
+		FBC8E54E5E7A4ACB9E86F647 /* ftbzip2.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = ftbzip2.c; path = src/bzip2/ftbzip2.c; sourceTree = SOURCE_ROOT; };
+		FEA0772AB7C2479C8D84EF61 /* CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0134C2BC015D4586BF084E00 = {
+			isa = PBXGroup;
+			children = (
+				737009CF019F426C86338215 /* Sources */,
+				E6F5B65462F14B54B9D93224 /* Resources */,
+				DD23BC4E21364AFD9F3022D2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0B03BED10847431286F65831 /* CMake Rules */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "CMake Rules";
+			sourceTree = "<group>";
+		};
+		559E2F547E1548F999CFCFAE /* freetype */ = {
+			isa = PBXGroup;
+			children = (
+				997E4E3486154E8AA5B24111 /* Header Files */,
+				6AF71188129D435BA0B48AF2 /* Source Files */,
+				AAC0ECC425EF49DF98A5362B /* Resources */,
+				FEA0772AB7C2479C8D84EF61 /* CMakeLists.txt */,
+			);
+			name = freetype;
+			sourceTree = "<group>";
+		};
+		58F27681B27E48F9BF05AC16 /* CMake Rules */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "CMake Rules";
+			sourceTree = "<group>";
+		};
+		6AF71188129D435BA0B48AF2 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				E1D2E95F3CB3453CBA9D2096 /* autofit.c */,
+				C334A1EF91094C2A8443092A /* ftadvanc.c */,
+				C0C784AE50924F5AAB943944 /* ftbbox.c */,
+				B21D9EEF5CD14605AC69A0FB /* ftbdf.c */,
+				2364B1628FAB4546BC3FDEB5 /* ftbitmap.c */,
+				37DD2A4959694A1485DC2EBE /* ftcalc.c */,
+				9C9A933D8E4E44CD9934A689 /* ftcid.c */,
+				DD330E3636104DEC9A4D8335 /* ftdbgmem.c */,
+				2D4F1FB77AE3448BACA09185 /* ftdebug.c */,
+				384F7D3CF0CD43E8BBE5AB20 /* ftfstype.c */,
+				48ACFEF31C5A41C2A4A7EE98 /* ftgasp.c */,
+				F0E8102FACAF4D0C8D820CB6 /* ftgloadr.c */,
+				37AE78973C0642829B205DE2 /* ftglyph.c */,
+				8ACCC504176C40B0BC979F17 /* ftgxval.c */,
+				7B48EB0572F74EC5A5A04892 /* ftinit.c */,
+				4CE8829FD9864ACDA8D8C5F0 /* ftlcdfil.c */,
+				568B55D445E94D4BB3ED1061 /* ftmm.c */,
+				DE768A38D30548BDA319A4CA /* ftobjs.c */,
+				C396160A6B014367A15C8B70 /* ftotval.c */,
+				A9A7F71708954DC193AE3651 /* ftoutln.c */,
+				86ECCDA6C56A420EA17DCF0D /* ftpatent.c */,
+				5A06FB7554BD4EA889FCAECE /* ftpfr.c */,
+				AC5147BB54C944D78E3B02B0 /* ftrfork.c */,
+				3ACACF1DB99D4770A30C2A52 /* ftsnames.c */,
+				B27CAB7F850B435492380D77 /* ftstream.c */,
+				AF9713688CDF4DF6BAD60580 /* ftstroke.c */,
+				923574D4E2414168B956E7BF /* ftsynth.c */,
+				3E03218ADB4F4C14B34EB4F6 /* ftsystem.c */,
+				DB65056F865A4F0CA988E25B /* fttrigon.c */,
+				63D3A61BD78647BFADFC13F0 /* fttype1.c */,
+				CF149897B7D946CB975AE19F /* ftutil.c */,
+				D1C79C448BD8473BA3A891B3 /* ftwinfnt.c */,
+				ABE1F8192A0140C1894304AF /* ftxf86.c */,
+				44E05B20A4414092A9694AE9 /* bdf.c */,
+				FBC8E54E5E7A4ACB9E86F647 /* ftbzip2.c */,
+				81BBB0113ED74D778C965130 /* ftcache.c */,
+				D44E0C67A6664807BB0250E5 /* cff.c */,
+				71636CF397144310B826E921 /* type1cid.c */,
+				8FA5B36243514438A6888941 /* ftgzip.c */,
+				5194EF4500414659B82A5D13 /* ftlzw.c */,
+				A105ACC74E214F72ABBEEFA4 /* pcf.c */,
+				131A416D187F491994431D28 /* pfr.c */,
+				48256989E5064ACE8888AD69 /* psaux.c */,
+				5817E7F789444510A8EFC8FC /* pshinter.c */,
+				55769EE27EB84AA592F182F7 /* psmodule.c */,
+				41FEEDF6168248E9A94C3E97 /* raster.c */,
+				1F1A4CD991884B128F4C2E52 /* sfnt.c */,
+				8FFAD56BFB074684A70287E8 /* smooth.c */,
+				2FB6F6FE03D546A1BE8DC38B /* truetype.c */,
+				E4742FCE89B442FFA197630A /* type1.c */,
+				4698172F9B8744A8AF460911 /* type42.c */,
+				A9E35F8A82E34485AB45CB1A /* winfnt.c */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		6BF61EDB6CA64F238AD1F875 /* ALL_BUILD */ = {
+			isa = PBXGroup;
+			children = (
+				0B03BED10847431286F65831 /* CMake Rules */,
+				FEA0772AB7C2479C8D84EF61 /* CMakeLists.txt */,
+			);
+			name = ALL_BUILD;
+			sourceTree = "<group>";
+		};
+		737009CF019F426C86338215 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				6BF61EDB6CA64F238AD1F875 /* ALL_BUILD */,
+				739B3AFED2644775B4DE2198 /* ZERO_CHECK */,
+				DF5A8C6F096846D798452A0A /* dist */,
+				559E2F547E1548F999CFCFAE /* freetype */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		739B3AFED2644775B4DE2198 /* ZERO_CHECK */ = {
+			isa = PBXGroup;
+			children = (
+				7D8D7D488CAE4BB2B76D8E83 /* CMake Rules */,
+				FEA0772AB7C2479C8D84EF61 /* CMakeLists.txt */,
+			);
+			name = ZERO_CHECK;
+			sourceTree = "<group>";
+		};
+		7D8D7D488CAE4BB2B76D8E83 /* CMake Rules */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "CMake Rules";
+			sourceTree = "<group>";
+		};
+		997E4E3486154E8AA5B24111 /* Header Files */ = {
+			isa = PBXGroup;
+			children = (
+				D068D846835B4EEDA48FBC4B /* ft2build.h */,
+			);
+			name = "Header Files";
+			sourceTree = "<group>";
+		};
+		AAC0ECC425EF49DF98A5362B /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				2DC264A653E64AD5B5D697D4 /* freetype-Info.plist */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		DD23BC4E21364AFD9F3022D2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				650BA491D93744639A91C0AD /* freetype.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DF5A8C6F096846D798452A0A /* dist */ = {
+			isa = PBXGroup;
+			children = (
+				58F27681B27E48F9BF05AC16 /* CMake Rules */,
+				FEA0772AB7C2479C8D84EF61 /* CMakeLists.txt */,
+			);
+			name = dist;
+			sourceTree = "<group>";
+		};
+		E6F5B65462F14B54B9D93224 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				D068D846835B4EEDA48FBC4B /* ft2build.h */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		83B959A2BCD04B929137F515 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C386F5395EF471E9AF1198F /* ft2build.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		E21DFB5C488843B2A50CB400 /* freetype */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4FBD79AD3DDB48F79BBDE52D /* Build configuration list for PBXNativeTarget "freetype" */;
+			buildPhases = (
+				83B959A2BCD04B929137F515 /* Headers */,
+				ACB9EECB2FA146C893D46E2B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				CEE2A3AD826A4AA1AC929BD2 /* PBXTargetDependency */,
+			);
+			name = freetype;
+			productName = freetype;
+			productReference = 650BA491D93744639A91C0AD /* freetype.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		606B0C25E0504BEA99388DA9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+			};
+			buildConfigurationList = B6E7A761071A44A7854720E3 /* Build configuration list for PBXProject "freetype" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 0134C2BC015D4586BF084E00;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				11160A7FFB1544989849B8A6 /* ALL_BUILD */,
+				932A3F8042E8456FB558EB43 /* ZERO_CHECK */,
+				13FA4908E484452096D59AA4 /* dist */,
+				E21DFB5C488843B2A50CB400 /* freetype */,
+				03AEB71F701441319130D6F3 /* install */,
+				F0B4EA9E606B4D8CB3F0B05E /* package */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		026E8CD09D9943B09940148D /* CMake Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake Rules";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "make -C /Users/elena/Documents/qfusion/libsrcs/libfreetype -f /Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeScripts/dist_cmakeRulesBuildPhase.make$CONFIGURATION all";
+			showEnvVarsInLog = 0;
+		};
+		0E0DD2C5F9C74472AA144AA5 /* CMake Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake Rules";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "make -C /Users/elena/Documents/qfusion/libsrcs/libfreetype -f /Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeScripts/ALL_BUILD_cmakeRulesBuildPhase.make$CONFIGURATION all";
+			showEnvVarsInLog = 0;
+		};
+		1096883EAEF246C691BC751B /* CMake Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake Rules";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "make -C /Users/elena/Documents/qfusion/libsrcs/libfreetype -f /Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeScripts/ZERO_CHECK_cmakeRulesBuildPhase.make$CONFIGURATION all";
+			showEnvVarsInLog = 0;
+		};
+		226ECAB342AC43518A7E54D4 /* CMake PostBuild Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake PostBuild Rules";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "make -C /Users/elena/Documents/qfusion/libsrcs/libfreetype -f /Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeScripts/package_postBuildPhase.make$CONFIGURATION all";
+			showEnvVarsInLog = 0;
+		};
+		4826150FC72D45A5BFBBC50A /* CMake PostBuild Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake PostBuild Rules";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "make -C /Users/elena/Documents/qfusion/libsrcs/libfreetype -f /Users/elena/Documents/qfusion/libsrcs/libfreetype/CMakeScripts/install_postBuildPhase.make$CONFIGURATION all";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		ACB9EECB2FA146C893D46E2B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6AD352D0190743D79A91BDE6 /* autofit.c in Sources */,
+				5695549A5B164A619372EBBC /* ftadvanc.c in Sources */,
+				A2F50A9D6A464774B7011475 /* ftbbox.c in Sources */,
+				7BDC99C3F2AB448281D1CE54 /* ftbdf.c in Sources */,
+				8AC72DE8E6D247C99023957B /* ftbitmap.c in Sources */,
+				1D97FB74DDC543AAA73F3AD1 /* ftcalc.c in Sources */,
+				5766AC0811DE4A0FAB0313AD /* ftcid.c in Sources */,
+				41522C777DB0474FB83CB3CC /* ftdbgmem.c in Sources */,
+				8D2CF74B87C64380851FB22A /* ftdebug.c in Sources */,
+				F73F16E7271E4625BEBDB301 /* ftfstype.c in Sources */,
+				D7AB92B36D4E4C6CA501B023 /* ftgasp.c in Sources */,
+				6C2331DABFA14C669AAEC13F /* ftgloadr.c in Sources */,
+				4A027D96BDB2426CBCA9C023 /* ftglyph.c in Sources */,
+				DEBF5E76892E498493146158 /* ftgxval.c in Sources */,
+				74F4E3A8A26D4205A0F1B6BC /* ftinit.c in Sources */,
+				68284EC4D42C4924A1F82DC1 /* ftlcdfil.c in Sources */,
+				FEDE56B980104510AD9A3F8B /* ftmm.c in Sources */,
+				E5ED407EA05B4D9483B04FE0 /* ftobjs.c in Sources */,
+				80A726EF06224A21BB2B53FE /* ftotval.c in Sources */,
+				800BECFE6A64474DBBD356F0 /* ftoutln.c in Sources */,
+				7AAC2C4BF94248D4965008E3 /* ftpatent.c in Sources */,
+				3DDE71F9A09743D095FC0DA3 /* ftpfr.c in Sources */,
+				D36A301CDBDC47C38CF1A221 /* ftrfork.c in Sources */,
+				20326A85BBB64E178718A334 /* ftsnames.c in Sources */,
+				BBC178CD928947ABB6895580 /* ftstream.c in Sources */,
+				8005C72EA1164280862AA645 /* ftstroke.c in Sources */,
+				EF0DFD18527F46EAA6A8A21D /* ftsynth.c in Sources */,
+				66CBC7542E5B4876892FC675 /* ftsystem.c in Sources */,
+				14613B1723974FD595677501 /* fttrigon.c in Sources */,
+				4E66B11D381F44FA8F5DF0AA /* fttype1.c in Sources */,
+				858B100D3D7B483399D39AF0 /* ftutil.c in Sources */,
+				46242820010E4F218B72C8F9 /* ftwinfnt.c in Sources */,
+				B31CE39BD6B34CBA8A627741 /* ftxf86.c in Sources */,
+				C72D1EEE7E104E55AC89A629 /* bdf.c in Sources */,
+				E31973EC0F5B4A0BAD5E44F1 /* ftbzip2.c in Sources */,
+				BAD1A918F70048BFA5FFBD78 /* ftcache.c in Sources */,
+				248ADBB956C548ECB43AC4DE /* cff.c in Sources */,
+				EBFE28B38D374EAAA50A236B /* type1cid.c in Sources */,
+				4558FB7DA8744C5DAE46A749 /* ftgzip.c in Sources */,
+				9BDAAA9E4EAE4C29AA12E3BB /* ftlzw.c in Sources */,
+				8CD346E4C11C4643AB041684 /* pcf.c in Sources */,
+				927B353E5E1E41359419DF97 /* pfr.c in Sources */,
+				F98452A3E35044B68A6AEEB1 /* psaux.c in Sources */,
+				F4DE7A163C254D0A940A8F39 /* pshinter.c in Sources */,
+				E39C0034B03F49F2B23F90B4 /* psmodule.c in Sources */,
+				4BE5A724254E4A96A8512698 /* raster.c in Sources */,
+				11E72D4BE6E64A1884077E79 /* sfnt.c in Sources */,
+				69BE27C678084B26BF0C624A /* smooth.c in Sources */,
+				B0938E33E7304777A0B8C467 /* truetype.c in Sources */,
+				1B545FB2727B4861B564CFA9 /* type1.c in Sources */,
+				45C30C8515B2481FB6ED3E65 /* type42.c in Sources */,
+				6861704697154F30A40E67AA /* winfnt.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		10316A0AFD7D4DF2B8FDFF2D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E21DFB5C488843B2A50CB400 /* freetype */;
+			targetProxy = F059348893A04520A4F38E5B /* PBXContainerItemProxy */;
+		};
+		B6AE9595974540BD80FA706E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 932A3F8042E8456FB558EB43 /* ZERO_CHECK */;
+			targetProxy = D12D5D786F364CCB9239CEF2 /* PBXContainerItemProxy */;
+		};
+		C1B4906B14F647B7889398DB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 11160A7FFB1544989849B8A6 /* ALL_BUILD */;
+			targetProxy = 54DD903FF2D64B23BA1B0B78 /* PBXContainerItemProxy */;
+		};
+		CEE2A3AD826A4AA1AC929BD2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 932A3F8042E8456FB558EB43 /* ZERO_CHECK */;
+			targetProxy = 0F34204E5E714EA3B5673BD9 /* PBXContainerItemProxy */;
+		};
+		CF09EAF339CF4A73AA68A6F6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 11160A7FFB1544989849B8A6 /* ALL_BUILD */;
+			targetProxy = FA44C12EAF9C45EFAE105BBE /* PBXContainerItemProxy */;
+		};
+		DD2CE0EB090B47FCB2B351FE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 932A3F8042E8456FB558EB43 /* ZERO_CHECK */;
+			targetProxy = 59EBD134106E469C9AF50858 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0179E35667554E8E9DB51477 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = RelWithDebInfo;
+		};
+		0B17F3ABC8124286889BEC3F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = dist;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		0B8FA9C81B814634BD6A1E76 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = MinSizeRel;
+		};
+		0E3CE754F1E34F00A29AA1EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		16E1F4D8A351471E98FBF706 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				FRAMEWORK_VERSION = A;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					freetype_EXPORTS,
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					include/freetype2,
+					include,
+				);
+				INFOPLIST_FILE = "builds/mac/freetype-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = DYNAMIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (
+					"-DNDEBUG",
+					"-fPIC",
+				);
+				OTHER_LDFLAGS = "   ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = freetype;
+				SDKROOT = macosx;
+				SECTORDER_FLAGS = "";
+				SYMROOT = build;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = MinSizeRel;
+		};
+		1B7DE0D37137479C85012AD8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		2F63BD0B324E4988A74DD75B /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = MinSizeRel;
+		};
+		347D91B9387E4353944F388D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		34CAF6C333804BE0AC10BC07 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		530ECD13C7A046B0A4E7A32C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk;
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype/build;
+			};
+			name = Release;
+		};
+		5C8B8087E5B24089B264493B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		5D1A31D94C814F2A9C3D251C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		5F43702E11EB408E829484C4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		692B93C4271641F187788F35 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = dist;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = MinSizeRel;
+		};
+		7D6502E282CC41A885D3ADE9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		8B77CBA12A624016BDB83069 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				FRAMEWORK_VERSION = A;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					freetype_EXPORTS,
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					include/freetype2,
+					include,
+				);
+				INFOPLIST_FILE = "builds/mac/freetype-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = DYNAMIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "   -fPIC  ";
+				OTHER_LDFLAGS = "   ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = freetype;
+				SDKROOT = macosx;
+				SECTORDER_FLAGS = "";
+				SYMROOT = build;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		925220B877764B62A8B0B245 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = dist;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = RelWithDebInfo;
+		};
+		9F50D1E10D264DBAA039810B /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = RelWithDebInfo;
+		};
+		ABF3D6DAD8CA444DA5C46ED8 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk;
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype/build;
+			};
+			name = MinSizeRel;
+		};
+		B733B100DFD04AB4BDE0658D /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = MinSizeRel;
+		};
+		B8C1D78522F546DF967844E4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk;
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype/build;
+			};
+			name = Debug;
+		};
+		C255662E9724439C9FBDFD59 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				FRAMEWORK_VERSION = A;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					freetype_EXPORTS,
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					include/freetype2,
+					include,
+				);
+				INFOPLIST_FILE = "builds/mac/freetype-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = DYNAMIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (
+					"-DNDEBUG",
+					"-fPIC",
+				);
+				OTHER_LDFLAGS = "   ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = freetype;
+				SDKROOT = macosx;
+				SECTORDER_FLAGS = "";
+				SYMROOT = build;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		C58A496666C0491CACAD0C3B /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = RelWithDebInfo;
+		};
+		E5B175155F89495187453F8F /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = MinSizeRel;
+		};
+		EA5E42B13D004089B2C1D857 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				FRAMEWORK_VERSION = A;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					freetype_EXPORTS,
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					include/freetype2,
+					include,
+				);
+				INFOPLIST_FILE = "builds/mac/freetype-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = "";
+				LIBRARY_STYLE = DYNAMIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (
+					"-DNDEBUG",
+					"-fPIC",
+				);
+				OTHER_LDFLAGS = "   ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = freetype;
+				SDKROOT = macosx;
+				SECTORDER_FLAGS = "";
+				SYMROOT = build;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = RelWithDebInfo;
+		};
+		EEFED8E41FA743E3848D81FF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = dist;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		F18AD480811A4EBAA8251012 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",
+					FT2_BUILD_LIBRARY,
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = (
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include/freetype2,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/include,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/truetype,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/sfnt,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/autofit,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/smooth,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/raster,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psaux,
+					/Users/elena/Documents/qfusion/libsrcs/libfreetype/src/psnames,
+				);
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = "  ";
+				OTHER_LDFLAGS = " ";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype;
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = RelWithDebInfo;
+		};
+		FB7D7E69EFB64C18A6B9FB87 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk;
+				SYMROOT = /Users/elena/Documents/qfusion/libsrcs/libfreetype/build;
+			};
+			name = RelWithDebInfo;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		07AAA84E5E8F4B0B8660C462 /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1B7DE0D37137479C85012AD8 /* Debug */,
+				34CAF6C333804BE0AC10BC07 /* Release */,
+				B733B100DFD04AB4BDE0658D /* MinSizeRel */,
+				C58A496666C0491CACAD0C3B /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4FBD79AD3DDB48F79BBDE52D /* Build configuration list for PBXNativeTarget "freetype" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8B77CBA12A624016BDB83069 /* Debug */,
+				C255662E9724439C9FBDFD59 /* Release */,
+				16E1F4D8A351471E98FBF706 /* MinSizeRel */,
+				EA5E42B13D004089B2C1D857 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8AF58102C833404C93521CC5 /* Build configuration list for PBXAggregateTarget "install" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5D1A31D94C814F2A9C3D251C /* Debug */,
+				7D6502E282CC41A885D3ADE9 /* Release */,
+				0B8FA9C81B814634BD6A1E76 /* MinSizeRel */,
+				0179E35667554E8E9DB51477 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A71380FD39344108851D9FA9 /* Build configuration list for PBXAggregateTarget "package" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F43702E11EB408E829484C4 /* Debug */,
+				5C8B8087E5B24089B264493B /* Release */,
+				2F63BD0B324E4988A74DD75B /* MinSizeRel */,
+				9F50D1E10D264DBAA039810B /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B6E7A761071A44A7854720E3 /* Build configuration list for PBXProject "freetype" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B8C1D78522F546DF967844E4 /* Debug */,
+				530ECD13C7A046B0A4E7A32C /* Release */,
+				ABF3D6DAD8CA444DA5C46ED8 /* MinSizeRel */,
+				FB7D7E69EFB64C18A6B9FB87 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B8E318147F5842529B9ADB2A /* Build configuration list for PBXAggregateTarget "dist" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0B17F3ABC8124286889BEC3F /* Debug */,
+				EEFED8E41FA743E3848D81FF /* Release */,
+				692B93C4271641F187788F35 /* MinSizeRel */,
+				925220B877764B62A8B0B245 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		BCC9B6A832E6468AB5DB50D0 /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				347D91B9387E4353944F388D /* Debug */,
+				0E3CE754F1E34F00A29AA1EF /* Release */,
+				E5B175155F89495187453F8F /* MinSizeRel */,
+				F18AD480811A4EBAA8251012 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 606B0C25E0504BEA99388DA9 /* Project object */;
+}
