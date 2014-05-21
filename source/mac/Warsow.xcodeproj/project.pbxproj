@@ -587,6 +587,8 @@
 		F36F070F191AE0F10018371F /* sv_web.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F54F1917FC0C00F8FD6C /* sv_web.c */; };
 		F36F0710191AE1220018371F /* hash.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F55A1917FF2B00F8FD6C /* hash.c */; };
 		F36F0711191AE14E0018371F /* bsp.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5C6191816C000F8FD6C /* bsp.c */; };
+		F36FC42F192D556300110982 /* freetype.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F36FC42E192D556300110982 /* freetype.framework */; };
+		F36FC430192D55D800110982 /* freetype.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F36FC42E192D556300110982 /* freetype.framework */; };
 		F3862969191AE6C600708946 /* glob.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5581917FF2B00F8FD6C /* glob.c */; };
 		F388D9E9113BE43D0039559F /* libmumblelink.c in Sources */ = {isa = PBXBuildFile; fileRef = F388D9E7113BE43D0039559F /* libmumblelink.c */; };
 		F3D1FA1F191BF9ED00DF3B4C /* r_q3bsp.c in Sources */ = {isa = PBXBuildFile; fileRef = 28A721E20F5DEAA0006FB1A8 /* r_q3bsp.c */; };
@@ -622,7 +624,6 @@
 		F3FDBAF4191DB0A30021E994 /* ftlib_syscalls.h in Headers */ = {isa = PBXBuildFile; fileRef = F3FDBAED191DB0A30021E994 /* ftlib_syscalls.h */; };
 		F3FDBAF5191DB0E40021E994 /* q_math.c in Sources */ = {isa = PBXBuildFile; fileRef = 289762C00F682681001563E7 /* q_math.c */; };
 		F3FDBAF6191DB0E70021E994 /* q_shared.c in Sources */ = {isa = PBXBuildFile; fileRef = 289762C20F682681001563E7 /* q_shared.c */; };
-		F3FDBAF8191DB2300021E994 /* libfreetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F3FDBAF7191DB2300021E994 /* libfreetype.a */; };
 		F3FDBAF9191DB4790021E994 /* ftlib_mac.dylib in libs */ = {isa = PBXBuildFile; fileRef = F3FDBAD3191D97560021E994 /* ftlib_mac.dylib */; };
 /* End PBXBuildFile section */
 
@@ -732,6 +733,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				F36FC430192D55D800110982 /* freetype.framework in Frameworks */,
 				9DA731DA15A1C49200910C34 /* Theora.framework in Frameworks */,
 				9D2522AA15A0AE9B001CE46F /* png.framework in Frameworks */,
 				9D25226D15A0A897001CE46F /* Rocket.framework in Frameworks */,
@@ -1375,6 +1377,7 @@
 		F36F070A191AE0CA0018371F /* ftlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftlib.h; sourceTree = "<group>"; };
 		F36F070B191AE0CA0018371F /* l10n.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = l10n.c; sourceTree = "<group>"; };
 		F36F070C191AE0CA0018371F /* l10n.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = l10n.h; sourceTree = "<group>"; };
+		F36FC42E192D556300110982 /* freetype.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = freetype.framework; path = Frameworks/freetype.framework; sourceTree = "<group>"; };
 		F388D9E7113BE43D0039559F /* libmumblelink.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = libmumblelink.c; sourceTree = "<group>"; };
 		F388D9E8113BE43D0039559F /* libmumblelink.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libmumblelink.h; sourceTree = "<group>"; };
 		F3A9E64A191ADBF0000BBC02 /* r_surface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = r_surface.h; sourceTree = "<group>"; };
@@ -1407,7 +1410,6 @@
 		F3FDBAEB191DB0A30021E994 /* ftlib_public.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftlib_public.h; sourceTree = "<group>"; };
 		F3FDBAEC191DB0A30021E994 /* ftlib_syscalls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ftlib_syscalls.c; sourceTree = "<group>"; };
 		F3FDBAED191DB0A30021E994 /* ftlib_syscalls.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ftlib_syscalls.h; sourceTree = "<group>"; };
-		F3FDBAF7191DB2300021E994 /* libfreetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype.a; path = ../../../../../../opt/local/lib/libfreetype.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1538,7 +1540,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F3FDBAF8191DB2300021E994 /* libfreetype.a in Frameworks */,
+				F36FC42F192D556300110982 /* freetype.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1548,6 +1550,7 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F36FC42E192D556300110982 /* freetype.framework */,
 				9DA731D715A1C46D00910C34 /* Theora.framework */,
 				9D2522A815A0AE8E001CE46F /* png.framework */,
 				9D2521E8159F744B001CE46F /* Rocket.framework */,
@@ -2205,7 +2208,6 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				F3FDBAF7191DB2300021E994 /* libfreetype.a */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
@@ -3007,7 +3009,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "rm -f $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/base\nln -s $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/basewsw/ $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/base";
+			shellScript = "rm -f $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/base\ncd $TARGET_BUILD_DIR/$PRODUCT_NAME.app/Contents/Resources/\nln -s basewsw/ base";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -4342,7 +4344,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/opt/local/include/freetype2,
+					../../libsrcs/libfreetype/include/,
 				);
 				INSTALL_PATH = /usr/local/lib;
 				LIBRARY_SEARCH_PATHS = /opt/local/lib;
@@ -4372,7 +4374,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/opt/local/include/freetype2,
+					../../libsrcs/libfreetype/include/,
 				);
 				INSTALL_PATH = /usr/local/lib;
 				LIBRARY_SEARCH_PATHS = /opt/local/lib;
