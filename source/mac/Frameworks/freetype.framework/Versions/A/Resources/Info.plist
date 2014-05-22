@@ -7,21 +7,19 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>Rocket</string>
-	<key>CFBundleIdentifier</key>
-	<string>QFusion.Rocket</string>
+	<string>FreeType</string>
+	<key>CFBundleGetInfoString</key>
+	<string>FreeType </string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Rocket</string>
+	<string>FreeType</string>
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string></string>
 	<key>DTCompiler</key>
 	<string>com.apple.compilers.llvm.clang.1_0</string>
 	<key>DTPlatformBuild</key>
