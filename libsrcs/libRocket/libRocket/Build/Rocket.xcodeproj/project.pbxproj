@@ -676,8 +676,8 @@
 		F33197BC1918945E00D96120 /* XMLParseTools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6EF28E2D12058A45000FAF17 /* XMLParseTools.cpp */; };
 		F33197BD1918945E00D96120 /* ElementStyle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E2C557016AA3EA9007E581B /* ElementStyle.cpp */; };
 		F33197BE1918945E00D96120 /* ElementStyleCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E2C557216AA3EA9007E581B /* ElementStyleCache.cpp */; };
-		F33197C01918945E00D96120 /* libfreetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E8B1DC2123AB7A500C451C8 /* libfreetype.a */; };
 		F33197C11918945E00D96120 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E8B1DD1123ABA3A00C451C8 /* libz.dylib */; };
+		F3413C8D192D4E7C00EE1ED8 /* freetype.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3413C8C192D4E7C00EE1ED8 /* freetype.framework */; };
 		F3E0B609191895DD00AED602 /* Clipboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C2D123AB0CC00C451C8 /* Clipboard.cpp */; };
 		F3E0B60A191895DD00AED602 /* Controls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C2E123AB0CC00C451C8 /* Controls.cpp */; };
 		F3E0B60B191895DD00AED602 /* DataFormatter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6E8B1C2F123AB0CC00C451C8 /* DataFormatter.cpp */; };
@@ -1107,6 +1107,7 @@
 		F31AC26319188380004C4845 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		F31AC26519188380004C4845 /* RocketTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RocketTests.m; sourceTree = "<group>"; };
 		F33197C51918945E00D96120 /* Rocket.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Rocket.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3413C8C192D4E7C00EE1ED8 /* freetype.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = freetype.framework; path = ../../../../source/mac/Frameworks/freetype.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1161,7 +1162,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F33197C01918945E00D96120 /* libfreetype.a in Frameworks */,
+				F3413C8D192D4E7C00EE1ED8 /* freetype.framework in Frameworks */,
 				F33197C11918945E00D96120 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1528,6 +1529,7 @@
 		F31AC2431918837F004C4845 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F3413C8C192D4E7C00EE1ED8 /* freetype.framework */,
 				F31AC2441918837F004C4845 /* Cocoa.framework */,
 				F31AC25919188380004C4845 /* XCTest.framework */,
 				F31AC2461918837F004C4845 /* Other Frameworks */,
@@ -2694,11 +2696,10 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
+					../../../libfreetype/include/,
 					../Include,
-					../../Support/freetype/include,
-					/opt/local/include/freetype2/,
 				);
-				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				LIBRARY_SEARCH_PATHS = "";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = "-ObjC";
 				PREBINDING = NO;
@@ -2716,11 +2717,10 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
+					../../../libfreetype/include/,
 					../Include,
-					../../Support/freetype/include,
-					/opt/local/include/freetype2/,
 				);
-				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				LIBRARY_SEARCH_PATHS = "";
 				OTHER_LDFLAGS = "-ObjC";
 				PREBINDING = NO;
 				SDKROOT = iphoneos;
@@ -2972,6 +2972,10 @@
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/elena/Documents/qfusion/source/mac/Frameworks,
+				);
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -3006,6 +3010,10 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/elena/Documents/qfusion/source/mac/Frameworks,
+				);
 				FRAMEWORK_VERSION = A;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
