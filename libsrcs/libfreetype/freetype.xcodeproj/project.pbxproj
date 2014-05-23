@@ -775,7 +775,7 @@
 		16E1F4D8A351471E98FBF706 /* MinSizeRel */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
@@ -807,7 +807,7 @@
 				OTHER_LDFLAGS = "   ";
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = freetype;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				SECTORDER_FLAGS = "";
 				SYMROOT = build;
 				USE_HEADERMAP = NO;
@@ -1185,7 +1185,7 @@
 		8B77CBA12A624016BDB83069 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
@@ -1214,7 +1214,7 @@
 				OTHER_LDFLAGS = "   ";
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = freetype;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				SECTORDER_FLAGS = "";
 				SYMROOT = build;
 				USE_HEADERMAP = NO;
@@ -1367,7 +1367,7 @@
 		C255662E9724439C9FBDFD59 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
@@ -1399,7 +1399,7 @@
 				OTHER_LDFLAGS = "   ";
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = freetype;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				SECTORDER_FLAGS = "";
 				SYMROOT = build;
 				USE_HEADERMAP = NO;
@@ -1496,7 +1496,7 @@
 		EA5E42B13D004089B2C1D857 /* RelWithDebInfo */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
@@ -1528,7 +1528,7 @@
 				OTHER_LDFLAGS = "   ";
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = freetype;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				SECTORDER_FLAGS = "";
 				SYMROOT = build;
 				USE_HEADERMAP = NO;

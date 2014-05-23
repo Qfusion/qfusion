@@ -3656,7 +3656,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = irc_mac;
-				SDKROOT = macosx;
+				SDKROOT = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -3677,7 +3677,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = irc_mac;
-				SDKROOT = macosx;
+				SDKROOT = "$(inherited)";
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3700,7 +3700,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = snd_openal_mac;
-				SDKROOT = macosx;
+				SDKROOT = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -3725,7 +3725,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = snd_openal_mac;
-				SDKROOT = macosx;
+				SDKROOT = "$(inherited)";
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -4198,7 +4198,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4221,7 +4221,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = NO;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Release;
 		};
@@ -4246,7 +4246,7 @@
 				);
 				INSTALL_PATH = /usr/local/lib;
 				PRODUCT_NAME = ref_gl_mac;
-				SDKROOT = macosx;
+				SDKROOT = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -4274,7 +4274,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = ref_gl_mac;
-				SDKROOT = macosx;
+				SDKROOT = "$(inherited)";
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -4349,7 +4349,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				LIBRARY_SEARCH_PATHS = "";
 				PRODUCT_NAME = ftlib_mac;
-				SDKROOT = macosx;
+				SDKROOT = "$(inherited)";
 			};
 			name = Debug;
 		};
@@ -4380,7 +4380,7 @@
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = ftlib_mac;
-				SDKROOT = macosx;
+				SDKROOT = "$(inherited)";
 				ZERO_LINK = NO;
 			};
 			name = Release;
