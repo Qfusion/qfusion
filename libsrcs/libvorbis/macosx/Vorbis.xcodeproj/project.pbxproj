@@ -669,7 +669,7 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = /Library/Frameworks;
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = Vorbis;
@@ -696,7 +696,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = Info.plist;
-				INSTALL_PATH = /Library/Frameworks;
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = Vorbis;
