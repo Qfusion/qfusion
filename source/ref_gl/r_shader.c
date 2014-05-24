@@ -2376,7 +2376,8 @@ static void Shader_Finish( shader_t *s )
 			pass->flags |= GLSTATE_DEPTHWRITE;
 		if( pass->cin )
 			s->cin = pass->cin;
-		if( pass->flags & SHADERPASS_LIGHTMAP )
+		if( ( pass->flags & SHADERPASS_LIGHTMAP || 
+			pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) && ( s->type >= SHADER_TYPE_LIGHTMAP ) )
 			s->flags |= SHADER_LIGHTMAP;
 		if( pass->flags & GLSTATE_DEPTHWRITE )
 		{
