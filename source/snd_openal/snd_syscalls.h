@@ -166,6 +166,11 @@ static inline unsigned int trap_Milliseconds( void )
 	return SOUND_IMPORT.Milliseconds();
 }
 
+static inline void trap_Sleep( unsigned int milliseconds )
+{
+	SOUND_IMPORT.Sleep( milliseconds );
+}
+
 static inline void trap_PageInMemory( qbyte *buffer, int size )
 {
 	SOUND_IMPORT.PageInMemory( buffer, size );
@@ -209,4 +214,59 @@ static inline void *trap_LoadLibrary( char *name, dllfunc_t *funcs )
 static inline void trap_UnloadLibrary( void **lib )
 {
 	SOUND_IMPORT.UnloadLibrary( lib );
+}
+
+static inline int trap_Thread_Create( struct qthread_s **pthread, void *(*routine) (void*), void *param )
+{
+	return SOUND_IMPORT.Thread_Create( pthread, routine, param );
+}
+
+static inline void trap_Thread_Join( struct qthread_s *thread )
+{
+	SOUND_IMPORT.Thread_Join( thread );
+}
+
+static inline int trap_Mutex_Create( struct qmutex_s **pmutex )
+{
+	return SOUND_IMPORT.Mutex_Create( pmutex );
+}
+
+static inline void trap_Mutex_Destroy( struct qmutex_s *mutex )
+{
+	SOUND_IMPORT.Mutex_Destroy( mutex );
+}
+
+static inline void trap_Mutex_Lock( struct qmutex_s *mutex )
+{
+	SOUND_IMPORT.Mutex_Lock( mutex );
+}
+
+static inline void trap_Mutex_Unlock( struct qmutex_s *mutex )
+{
+	SOUND_IMPORT.Mutex_Unlock( mutex );
+}
+
+static inline qbufQueue_t *trap_BufQueue_Create( size_t bufSize, int flags )
+{
+	return SOUND_IMPORT.BufQueue_Create( bufSize, flags );
+}
+
+static inline void trap_BufQueue_Destroy( qbufQueue_t **pqueue )
+{
+	SOUND_IMPORT.BufQueue_Destroy( pqueue );
+}
+
+static inline void trap_BufQueue_Finish( qbufQueue_t *queue )
+{
+	SOUND_IMPORT.BufQueue_Finish( queue );
+}
+
+static inline void trap_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_size )
+{
+	SOUND_IMPORT.BufQueue_EnqueueCmd( queue, cmd, cmd_size );
+}
+
+static inline int trap_BufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) )
+{
+	return SOUND_IMPORT.BufQueue_ReadCmds( queue, cmdHandlers );
 }

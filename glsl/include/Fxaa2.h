@@ -39,12 +39,8 @@ vec4 FxaaPixelShader(
 	float dirMin = min(abs(dir.x), abs(dir.y)) + max(dot(lumas, vec4(0.25 * FXAA_REDUCE_MUL)), FXAA_REDUCE_MIN);
 	dir = min(vec2(FXAA_SPAN_MAX), max(vec2(-FXAA_SPAN_MAX), dir / dirMin)) * fxaaQualityRcpFrame;
 
-	vec3 rgbA = 0.5 * (
-		TexOfs(dir * (1.0 / 3.0 - 0.5)) +
-		TexOfs(dir * (2.0 / 3.0 - 0.5)));
-	vec3 rgbB = rgbA * 0.5 + 0.25 * (
-		TexOfs(dir * (0.0 / 3.0 - 0.5)) +
-		TexOfs(dir * (3.0 / 3.0 - 0.5)));
+	vec3 rgbA = 0.5 * (TexOfs(dir * (1.0 / 3.0 - 0.5)) + TexOfs(dir * (2.0 / 3.0 - 0.5)));
+	vec3 rgbB = rgbA * 0.5 + 0.25 * (TexOfs(dir * -0.5) + TexOfs(dir * 0.5));
 	float lumaB = dot(rgbB, luma);
 
 	return vec4(mix(rgbA, rgbB, min(step(lumaMin, lumaB), step(lumaB, lumaMax))), 1.0);

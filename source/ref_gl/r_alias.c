@@ -291,30 +291,20 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		else if( poutmesh->numverts > MD3_MAX_VERTS )
 			ri.Com_Error( ERR_DROP, "mesh %i in model %s has too many vertices", i, mod->name );
 
-		bufsize = sizeof( maliasskin_t ) * poutmesh->numskins + poutmesh->numtris * sizeof( elem_t ) * 3 +
-			numverts * ( sizeof( vec2_t ) + sizeof( maliasvertex_t ) * poutmodel->numframes );
+		bufsize = ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) ) +
+			numverts * ( sizeof( vec2_t ) + sizeof( maliasvertex_t ) * poutmodel->numframes ) +
+			poutmesh->numtris * sizeof( elem_t ) * 3;
 		buf = ( qbyte * )Mod_Malloc( mod, bufsize );
 
 		//
 		// load the skins
 		//
 		pinskin = ( dmd3skin_t * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_skins ) );
-		poutskin = poutmesh->skins = ( maliasskin_t * )buf; buf += sizeof( maliasskin_t ) * poutmesh->numskins;
+		poutskin = poutmesh->skins = ( maliasskin_t * )buf;
+		buf += ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) );
 		for( j = 0; j < poutmesh->numskins; j++, pinskin++, poutskin++ ) {
 			Q_strncpyz( poutskin->name, pinskin->name, sizeof( poutskin->name ) );
 			poutskin->shader = R_RegisterSkin( poutskin->name );
-		}
-		
-		//
-		// load the elems
-		//
-		pinelem = ( unsigned int * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_elems ) );
-		poutelem = poutmesh->elems = ( elem_t * )buf; buf += poutmesh->numtris * sizeof( elem_t ) * 3;
-		for( j = 0; j < poutmesh->numtris; j++, pinelem += 3, poutelem += 3 )
-		{
-			poutelem[0] = (elem_t)LittleLong( pinelem[0] );
-			poutelem[1] = (elem_t)LittleLong( pinelem[1] );
-			poutelem[2] = (elem_t)LittleLong( pinelem[2] );
 		}
 
 		//
@@ -333,6 +323,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		pinvert = ( dmd3vertex_t * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_verts ) );
 		poutvert = poutmesh->vertexes = ( maliasvertex_t * )buf;
+		buf += poutmesh->numverts * sizeof( maliasvertex_t ) * poutmodel->numframes;
 		for( l = 0, poutframe = poutmodel->frames; l < poutmodel->numframes; l++, poutframe++, pinvert += poutmesh->numverts, poutvert += poutmesh->numverts )
 		{
 			vec3_t v;
@@ -349,6 +340,18 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 				VectorCopy( poutvert[j].point, v );
 				AddPointToBounds( v, poutframe->mins, poutframe->maxs );
 			}
+		}
+		
+		//
+		// load the elems
+		//
+		pinelem = ( unsigned int * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_elems ) );
+		poutelem = poutmesh->elems = ( elem_t * )buf;
+		for( j = 0; j < poutmesh->numtris; j++, pinelem += 3, poutelem += 3 )
+		{
+			poutelem[0] = (elem_t)LittleLong( pinelem[0] );
+			poutelem[1] = (elem_t)LittleLong( pinelem[1] );
+			poutelem[2] = (elem_t)LittleLong( pinelem[2] );
 		}
 
 		pinmesh = ( dmd3mesh_t * )( ( qbyte * )pinmesh + LittleLong( pinmesh->meshsize ) );

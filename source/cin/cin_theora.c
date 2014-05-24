@@ -101,33 +101,26 @@ static void Ogg_LoadPagesToStreams( qtheora_info_t *qth, ogg_page *page )
 
 
 #define RAW_BUFFER_SIZE		8*1024
-#define AUDIO_PRELOAD_MSEC	250
+#define AUDIO_PRELOAD_MSEC	200
 
 /*
 * OggVorbis_NeedAudioData
 */
 static qboolean OggVorbis_NeedAudioData( cinematics_t *cin )
 {
+	ogg_int64_t samples_need;
 	qtheora_info_t *qth = cin->fdata;
 
 	if( !qth->a_stream || qth->a_eos ) {
 		return qfalse;
 	}
 
-	if( !cin->num_listeners ) {
-		ogg_int64_t samples_need = (ogg_int64_t)((double)(cin->cur_time 
-			- cin->start_time) * qth->s_rate_msec);	
-		// read only as much samples as we need according to the timer
-		if( qth->s_samples_read >= samples_need ) {
-			return qfalse;
-		}
-	}
-	else {
-		// prevent sound buffer overruns:
-		// if there's more samples queued than we need for preloading, abort
-		if( cin->s_samples_length >= AUDIO_PRELOAD_MSEC ) {
-			return qfalse;
-		}
+	samples_need = (ogg_int64_t)((double)(cin->cur_time 
+		- cin->start_time - cin->s_samples_length + AUDIO_PRELOAD_MSEC) * qth->s_rate_msec);	
+
+	// read only as much samples as we need according to the timer
+	if( qth->s_samples_read >= samples_need ) {
+		return qfalse;
 	}
 
 	return qtrue;

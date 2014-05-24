@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 #include "client.h"
+#include "../qcommon/sys_threads.h"
 
 static sound_export_t *se;
 static mempool_t *cl_soundmodulepool;
@@ -26,6 +27,8 @@ static void *sound_library = NULL;
 
 static cvar_t *s_module = NULL;
 static cvar_t *s_module_fallback = NULL;
+
+static int max_spatialization_num;
 
 static void CL_SoundModule_SetAttenuationModel( void );
 
@@ -191,6 +194,8 @@ void CL_SoundModule_Init( qboolean verbose )
 	// unload anything we have now
 	CL_SoundModule_Shutdown( verbose );
 
+	max_spatialization_num = 0;
+
 	if( verbose )
 		Com_Printf( "------- sound initialization -------\n" );
 
@@ -255,6 +260,7 @@ void CL_SoundModule_Init( qboolean verbose )
 
 	import.Milliseconds = Sys_Milliseconds;
 	import.PageInMemory = Com_PageInMemory;
+	import.Sleep = Sys_Sleep;
 
 	import.Mem_Alloc = CL_SoundModule_MemAlloc;
 	import.Mem_Free = CL_SoundModule_MemFree;
@@ -266,6 +272,19 @@ void CL_SoundModule_Init( qboolean verbose )
 
 	import.LoadLibrary = Com_LoadLibrary;
 	import.UnloadLibrary = Com_UnloadLibrary;
+
+	import.Thread_Create = Sys_Thread_Create;
+	import.Thread_Join = Sys_Thread_Join;
+	import.Mutex_Create = Sys_Mutex_Create;
+	import.Mutex_Destroy = Sys_Mutex_Destroy;
+	import.Mutex_Lock = Sys_Mutex_Lock;
+	import.Mutex_Unlock = Sys_Mutex_Unlock;
+
+	import.BufQueue_Create = Sys_BufQueue_Create;
+	import.BufQueue_Destroy = Sys_BufQueue_Destroy;
+	import.BufQueue_Finish = Sys_BufQueue_Finish;
+	import.BufQueue_EnqueueCmd = Sys_BufQueue_EnqueueCmd;
+	import.BufQueue_ReadCmds = Sys_BufQueue_ReadCmds;
 
 	if( !CL_SoundModule_Load( sound_modules[s_module->integer-1], &import, verbose ) )
 	{
@@ -329,6 +348,7 @@ void CL_SoundModule_EndRegistration( void )
 */
 void CL_SoundModule_StopAllSounds( void )
 {
+	max_spatialization_num = 0;
 	if( se )
 		se->StopAllSounds();
 }
@@ -348,8 +368,26 @@ void CL_SoundModule_Clear( void )
 void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, 
 	const char *identity, qboolean avidump )
 {
-	if( se )
+	if( se ) {
+		if( cls.state == CA_ACTIVE ) {
+			int i;
+			vec3_t origin, velocity;
+
+			if( max_spatialization_num >= MAX_EDICTS ) {
+				max_spatialization_num = MAX_EDICTS - 1;
+			}
+
+			for( i = 0; i <= max_spatialization_num; i++ ) {
+				VectorClear( origin );
+				VectorClear( velocity );
+				CL_GameModule_GetEntitySpatilization( i, origin, velocity );
+				se->SetEntitySpatialization( i, origin, velocity );
+			}
+		}
+
 		se->Update( origin, velocity, axis, avidump );
+	}
+
 	CL_Mumble_Update( origin, axis, identity );
 }
 
@@ -424,6 +462,9 @@ void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int
 */
 void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation )
 {
+	if( entnum > max_spatialization_num ) {
+		max_spatialization_num = entnum;
+	}
 	if( se )
 		se->StartRelativeSound( sfx, entnum, channel, fvol, attenuation );
 }
@@ -459,6 +500,9 @@ void CL_SoundModule_StartLocalSound( const char *name )
 */
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation )
 {
+	if( entnum > max_spatialization_num ) {
+		max_spatialization_num = entnum;
+	}
 	if( se )
 		se->AddLoopSound( sfx, entnum, fvol, attenuation );
 }
@@ -480,6 +524,9 @@ void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuat
 		unsigned int samples, unsigned int rate, 
 		unsigned short width, unsigned short channels, const qbyte *data )
 {
+	if( entnum > max_spatialization_num ) {
+		max_spatialization_num = entnum;
+	}
 	if( se )
 		se->PositionedRawSamples( entnum, fvol, attenuation,
 			samples, rate, width, channels, data );

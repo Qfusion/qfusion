@@ -780,10 +780,10 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	// handy pointers
 	base = RB_ShaderpassTex( pass );
-	normalmap = pass->images[1];
-	glossmap = pass->images[2];
-	decalmap = pass->images[3];
-	entdecalmap = pass->images[4];
+	normalmap = pass->images[1] && !pass->images[1]->missing ? pass->images[1] : rsh.blankBumpTexture;
+	glossmap = pass->images[2] && !pass->images[2]->missing ?  pass->images[2] : NULL;
+	decalmap = pass->images[3] && !pass->images[3]->missing ?  pass->images[3] : NULL;
+	entdecalmap = pass->images[4] && !pass->images[4]->missing ?  pass->images[4] : NULL;
 
 	assert( normalmap );
 
@@ -794,6 +794,11 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	glossIntensity = rb.currentShader->glossIntensity ? rb.currentShader->glossIntensity : r_lighting_glossintensity->value;
 	glossExponent = rb.currentShader->glossExponent ? rb.currentShader->glossExponent : r_lighting_glossexponent->value;
+
+	// use blank image if the normalmap is too tiny due to high picmip value
+	if( normalmap && normalmap->upload_width < 2 || normalmap->upload_height < 2 ) {
+		normalmap = rsh.blankBumpTexture;
+	}
 
 	applyDecal = decalmap != NULL;
 
@@ -894,7 +899,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	}
 
 	if( offsetmappingScale > 0 )
-		programFeatures |= r_offsetmapping_reliefmapping->integer ? GLSL_SHADER_MATERIAL_RELIEFMAPPING : GLSL_SHADER_MATERIAL_OFFSETMAPPING;
+		programFeatures |= r_offsetmapping_reliefmapping->integer ? 
+			GLSL_SHADER_MATERIAL_RELIEFMAPPING : GLSL_SHADER_MATERIAL_OFFSETMAPPING;
 
 	if( rb.currentModelType == mod_brush )
 	{
@@ -1029,6 +1035,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	image_t *portaltexture[2];
 	qboolean frontPlane;
 	mat4_t texMatrix;
+	const image_t *dudvmap, *normalmap;
 
 	if( !rb.currentPortalSurface ) {
 		return;
@@ -1044,7 +1051,10 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 		}
 	}
 
-	if( pass->images[0] != rsh.blankBumpTexture )
+	dudvmap = pass->images[0] && !pass->images[0]->missing ? pass->images[0] : rsh.blankBumpTexture;
+	normalmap = pass->images[1] && !pass->images[1]->missing ? pass->images[1] : rsh.blankBumpTexture;
+
+	if( dudvmap != rsh.blankBumpTexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_DUDV;
 	if( portaltexture[0] != rsh.blackTexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_REFLECTION;
@@ -1061,7 +1071,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 
 	Matrix4_Identity( texMatrix );
 
-	RB_BindTexture( 0, pass->images[0] );  // dudvmap
+	RB_BindTexture( 0, dudvmap );
 	
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
@@ -1071,12 +1081,12 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	if( pass->images[1] )
+	if( normalmap != rsh.blankBumpTexture )
 	{
 		// eyeDot
 		programFeatures |= GLSL_SHADER_DISTORTION_EYEDOT;
 
-		RB_BindTexture( 1, pass->images[1] ); // normalmap
+		RB_BindTexture( 1, normalmap );
 	}
 
 	RB_BindTexture( 2, portaltexture[0] );           // reflection
@@ -1580,8 +1590,8 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 
 	// bind white texture for shadow map view
 #define CELSHADE_BIND(tmu,tex,feature,canAdd) \
-	if( tex ) { \
-		if( rb.renderFlags & RF_SHADOWMAPVIEW ) { \
+	if( tex && !tex->missing ) { \
+		if( rb.renderFlags & RF_SHADOWMAPVIEW || !tex->loaded ) { \
 			tex = rsh.whiteTexture; \
 		} else {\
 			programFeatures |= feature; \

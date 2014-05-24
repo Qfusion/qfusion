@@ -234,7 +234,7 @@ sfxcache_t *S_LoadSound_Wav( sfx_t *s )
 	len = (int) ( (double) info.samples * (double) dma.speed / (double) info.rate );
 	len = len * info.width * info.channels;
 
-	sc = s->cache = S_Malloc( len + sizeof( sfxcache_t ) );
+	sc = S_Malloc( len + sizeof( sfxcache_t ) );
 	if( !sc )
 	{
 		S_Free( data );
@@ -257,6 +257,7 @@ sfxcache_t *S_LoadSound_Wav( sfx_t *s )
 	sc->width = info.width;
 	sc->speed = dma.speed;
 	sc->loopstart = info.loopstart < 0 ? sc->length : info.loopstart * ((double)sc->length / (double)info.samples);
+	s->cache = sc;
 
 	S_Free( data );
 

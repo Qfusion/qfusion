@@ -81,7 +81,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		Com_Printf( "Couldn't enable threaded GL engine: %d\n", (int) err );
 #endif
 
-	VID_NewWindow( width, height );
+//	VID_NewWindow( width, height );
 	
 	// Restart Input ...
 	SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL );
@@ -112,7 +112,8 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	hinstance = NULL;
 	wndproc = NULL;
 	parenthWnd = NULL;
-	vid_fullscreen->flags &= ~( CVAR_LATCH_VIDEO );
+//	vid_fullscreen->flags &= ~( CVAR_LATCH_VIDEO );
+
 	Com_Printf( "Display initialization\n" );
 
 	const SDL_VideoInfo *info = NULL;
@@ -151,12 +152,14 @@ void GLimp_EndFrame( void )
 {
 	SDL_GL_SwapBuffers();
 
+/*
 	if( vid_fullscreen->modified || ( vid_fullscreen->integer && vid_multiscreen_head->modified ) )
 	{
 		Cbuf_ExecuteText( EXEC_APPEND, "vid_restart\n");
 		vid_fullscreen->modified = qfalse;
 		vid_multiscreen_head->modified = qfalse;
 	}
+*/
 }
 
 
@@ -198,6 +201,30 @@ void GLimp_AppActivate( qboolean active, qboolean destroy)
 {
 }
 
+/*
+** GLimp_SharedContext_Create
+*/
+void *GLimp_SharedContext_Create( void )
+{
+	return NULL;
+}
+
+/*
+** GLimp_SharedContext_MakeCurrent
+*/
+qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
+{
+	return qfalse;
+}
+
+/*
+** GLimp_SharedContext_Destroy
+*/
+void GLimp_SharedContext_Destroy( void *ctx )
+{
+	(void)ctx;
+}
+
 /*****************************************************************************/
 
 /*
@@ -225,7 +252,7 @@ char *Sys_GetClipboardData( qboolean primary )
         if (myClipboardString != NULL && [myClipboardString length] > 0)
         {
 			int bytes = [myClipboardString length];
-			clipboard = Q_malloc( bytes + 1 );
+			clipboard = malloc( bytes + 1 );
 			Q_strncpyz( clipboard, (char *)[myClipboardString UTF8String], bytes + 1 );
         }
     }
@@ -248,7 +275,7 @@ qboolean Sys_SetClipboardData( char *data )
  */
 void Sys_FreeClipboardData( char *data )
 {
-	Q_free( data );
+	free( data );
 }
 
 void	Sys_OpenURLInBrowser( const char *url )

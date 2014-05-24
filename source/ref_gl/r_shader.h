@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_SHADERS					2048
 #define MAX_SHADER_PASSES			8
 #define MAX_SHADER_DEFORMVS			8
-#define MAX_SHADER_images		16
+#define MAX_SHADER_IMAGES			16
 #define MAX_SHADER_TCMODS			8
 
 // shader types (by superlightstyle)
@@ -226,7 +226,7 @@ typedef struct
 
 	unsigned int		program_type;
 
-	image_t				*images[MAX_SHADER_images]; // texture refs
+	image_t				*images[MAX_SHADER_IMAGES]; // texture refs
 
 	float				anim_fps;					// animation frames per sec
 	unsigned int		anim_numframes;

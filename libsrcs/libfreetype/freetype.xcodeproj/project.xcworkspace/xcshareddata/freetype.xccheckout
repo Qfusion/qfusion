@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>0146C15D-300D-49D4-898C-50A9B89D0823</string>
+	<key>IDESourceControlProjectName</key>
+	<string>freetype</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>9AD2A8BB-70AC-48A3-9ACE-970252CCCF24</key>
+		<string>https://github.com/vkni/qfusion.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>libsrcs/libfreetype/freetype.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>9AD2A8BB-70AC-48A3-9ACE-970252CCCF24</key>
+		<string>../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/vkni/qfusion.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>9AD2A8BB-70AC-48A3-9ACE-970252CCCF24</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>9AD2A8BB-70AC-48A3-9ACE-970252CCCF24</string>
+			<key>IDESourceControlWCCName</key>
+			<string>qfusion</string>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -51,6 +51,12 @@
     <ClCompile Include="snd_syscalls.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\snd_common\snd_cmdque.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snd_al.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\gameshared\q_math.h">
@@ -72,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="snd_syscalls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\snd_common\snd_cmdque.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

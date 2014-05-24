@@ -78,9 +78,7 @@ void S_Activate( qboolean active )
 	else
 		SNDDMA_BeginPainting();
 
-	S_ClearSoundTime();
 	S_ClearPaintBuffer();
-	S_ClearPlaysounds();
 }
 
 /* The audio callback. All the magic happens here. */

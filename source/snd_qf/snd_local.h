@@ -60,7 +60,7 @@ typedef struct sfx_s
 typedef struct
 {
 	sfx_t *sfx;
-	vec3_t origin;
+	int entnum;
 	float volume;
 	float attenuation;
 } loopsfx_t;
@@ -70,9 +70,8 @@ typedef struct
 	int entnum;
 	float volume;
 	float attenuation;
-	vec3_t origin;
 	int left_volume, right_volume;
-	unsigned int rawend;
+	volatile unsigned int rawend;
 	portable_samplepair_t rawsamples[1];
 } rawsound_t;
 
@@ -143,6 +142,7 @@ typedef struct bgTrack_s
 	int file;
 	wavinfo_t info;
 	qboolean isUrl;
+	qboolean loop;
 
 	void *vorbisFile;
 	qboolean ( *open )( struct bgTrack_s *track, qboolean *delay );
@@ -155,55 +155,34 @@ typedef struct bgTrack_s
 	struct bgTrack_s *anext; // allocation linked list
 } bgTrack_t;
 
-/*
-* Exported functions
-*/
+typedef struct
+{
+	vec3_t origin;
+	vec3_t velocity;
+} entity_spatialization_t;
+
 int S_API( void );
 void S_Error( const char *format, ... );
-
-qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose );
-void S_Shutdown( qboolean verbose );
-
-void S_BeginRegistration( void );
-void S_EndRegistration( void );
-
-void S_FreeSounds( void );
-void S_StopAllSounds( void );
-
-void S_Clear( void );
-void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
 void S_Activate( qboolean active );
-void S_ClearPlaysounds( void );
 
-void S_ClearSoundTime( void );
+void *S_BackgroundUpdateProc( void *param );
 
 void S_ClearPaintBuffer( void );
 
-void S_SetAttenuationModel( int model, float maxdistance, float refdistance );
+// music cinema
 
-// playing
-struct sfx_s *S_RegisterSound( const char *sample );
-
-void S_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
-void S_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
-void S_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
-
-void S_StartLocalSound( const char *s );
-
-void S_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
-
-// cinema
-void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
-void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
-		unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const qbyte *data );
-unsigned int S_GetRawSamplesLength( void );
-unsigned int S_GetPositionedRawSamplesLength( int entnum );
-
-// music
 void S_StartBackgroundTrack( const char *intro, const char *loop );
 void S_StopBackgroundTrack( void );
+void S_PauseBackgroundTrack( void );
 void S_LockBackgroundTrack( qboolean lock );
+void S_PrevBackgroundTrack( void );
+void S_NextBackgroundTrack( void );
+void S_UpdateBackgroundTrack( void );
+
+void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data, int snd_vol );
+unsigned int S_GetRawSamplesLength( void );
+unsigned int S_GetPositionedRawSamplesLength( int entnum );
 
 /*
 ====================================================================
@@ -233,12 +212,22 @@ sfxcache_t *SNDOGG_Load( sfx_t *s );
 
 //====================================================================
 
+// during registration it is possible to have more sounds
+// than could actually be referenced during gameplay,
+// because we don't want to free anything until we are
+// sure we won't need it.
+#define	    MAX_SFX	512
+extern sfx_t known_sfx[MAX_SFX];
+extern int num_sfx;
+
 #define	MAX_CHANNELS		128
 extern channel_t channels[MAX_CHANNELS];
 
-extern unsigned int paintedtime;
+extern volatile unsigned int paintedtime;
 extern dma_t dma;
 extern playsound_t s_pendingplays;
+
+extern qboolean s_active;
 
 #define	MAX_RAW_SAMPLES	16384
 
@@ -257,6 +246,7 @@ extern cvar_t *s_testsound;
 extern cvar_t *s_swapstereo;
 extern cvar_t *s_vorbis;
 extern cvar_t *s_pseudoAcoustics;
+extern cvar_t *s_separationDelay;
 
 extern struct mempool_s *soundpool;
 
@@ -280,14 +270,41 @@ void S_IssuePlaysound( playsound_t *ps );
 
 int S_PaintChannels( unsigned int endtime, int dumpfile );
 
-// picks a channel based on priorities, empty slots, number of channels
-channel_t *S_PickChannel( int entnum, int entchannel );
+//====================================================================
 
-// spatializes a channel
-void S_Spatialize( channel_t *ch );
-
-void S_BeginAviDemo( void );
-void S_StopAviDemo( void );
+/*
+* Exported functions
+*/
+qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose );
+void SF_Shutdown( qboolean verbose );
+void SF_EndRegistration( void );
+void SF_BeginRegistration( void );
+sfx_t *SF_RegisterSound( const char *name );
+void SF_StartBackgroundTrack( const char *intro, const char *loop );
+void SF_StopBackgroundTrack( void );
+void SF_LockBackgroundTrack( qboolean lock );
+void SF_StopAllSounds( void );
+void SF_PrevBackgroundTrack( void );
+void SF_NextBackgroundTrack( void );
+void SF_PauseBackgroundTrack( void );
+void SF_Activate( qboolean active );
+void SF_BeginAviDemo( void );
+void SF_StopAviDemo( void );
+void SF_SetAttenuationModel( int model, float maxdistance, float refdistance );
+void SF_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t velocity );
+void SF_SetAttenuationModel( int model, float maxdistance, float refdistance );
+void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
+void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation );
+void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol );
+void SF_StartLocalSound( const char *sound );
+void SF_Clear( void );
+void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation );
+void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
+void SF_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data, qboolean music );
+void SF_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+	unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data );
 
 //====================================================================
 
