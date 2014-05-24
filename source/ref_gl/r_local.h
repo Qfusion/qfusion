@@ -36,6 +36,14 @@ typedef unsigned short elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
+enum
+{
+	GL_CONTEXT_MAIN,
+	GL_CONTEXT_LOADER,
+
+	NUM_GL_CONTEXTS
+};
+
 #include "r_math.h"
 #include "r_public.h"
 #include "r_vattribs.h"
@@ -418,6 +426,7 @@ void		R_FreeCinematic( unsigned int id );
 void		R_RunAllCinematics( void );
 void		R_TouchCinematic( unsigned int id );
 void		R_FreeUnusedCinematics( void );
+void		R_FinishLoadingImages( void );
 void		R_UploadCinematic( unsigned int id );
 image_t		*R_GetCinematicImage( unsigned int id );
 struct cinematics_s *R_GetCinematicById( unsigned int id );

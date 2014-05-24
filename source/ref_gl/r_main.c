@@ -1677,9 +1677,6 @@ void R_EndFrame( void )
 	// properly set back again in R_BeginFrame
 	R_Set2DMode( qfalse );
 
-	// free temporary image buffers
-	R_FreeImageBuffers();
-
 	RB_EndFrame();
 
 	GLimp_EndFrame();

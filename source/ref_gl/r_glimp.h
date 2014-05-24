@@ -244,4 +244,8 @@ void	    GLimp_AppActivate( qboolean active, qboolean destroy );
 qboolean	GLimp_GetGammaRamp( size_t stride, unsigned short *ramp );
 void		GLimp_SetGammaRamp( size_t stride, unsigned short *ramp );
 
+void		*GLimp_SharedContext_Create( void );
+qboolean	GLimp_SharedContext_MakeCurrent( void *ctx );
+void		GLimp_SharedContext_Destroy( void *ctx );
+
 #endif // R_GLIMP_H

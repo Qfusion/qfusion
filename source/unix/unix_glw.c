@@ -1072,3 +1072,27 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short *ramp )
 void GLimp_AppActivate( qboolean active, qboolean destroy )
 {
 }
+
+/*
+** GLimp_SharedContext_Create
+*/
+void *GLimp_SharedContext_Create( void )
+{
+	return qglXCreateContext( x11display.dpy, x11display.visinfo, x11display.ctx, True );
+}
+
+/*
+** GLimp_SharedContext_MakeCurrent
+*/
+qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
+{
+	return qglXMakeCurrent( x11display.dpy, x11display.gl_win, ctx ) == True ? qtrue : qfalse;
+}
+
+/*
+** GLimp_SharedContext_Destroy
+*/
+void GLimp_SharedContext_Destroy( void *ctx )
+{
+	qglXDestroyContext( x11display.dpy, ctx );
+}

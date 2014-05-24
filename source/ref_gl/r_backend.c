@@ -137,8 +137,6 @@ void RB_StatsMessage( char *msg, size_t size )
 */
 static void RB_SetGLDefaults( void )
 {
-	int i;
-
 	qglClearColor( 1, 0, 0.5, 0.5 );
 
 	if( glConfig.stencilEnabled )
@@ -147,14 +145,6 @@ static void RB_SetGLDefaults( void )
 		qglStencilFunc( GL_EQUAL, 128, 0xFF );
 		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
 	}
-
-	// properly disable multitexturing at startup
-	for( i = glConfig.maxTextureUnits-1; i >= 0; i-- )
-	{
-		RB_SelectTextureUnit( i );
-		qglDisable( GL_TEXTURE_2D );
-	}
-	qglEnable( GL_TEXTURE_2D );
 
 	qglDisable( GL_CULL_FACE );
 	qglFrontFace( GL_CCW );
@@ -169,12 +159,17 @@ static void RB_SetGLDefaults( void )
 #endif
 	qglFrontFace( GL_CCW );
 
-	rb.gl.state = 0;
-	rb.gl.frontFace = qfalse;
+	memset( &rb.gl, 0, sizeof( rb.gl ) );
 	rb.gl.currentTMU = -1;
-	rb.gl.faceCull = 0;
-	rb.gl.polygonOffset[0] = rb.gl.polygonOffset[1] = 0;
-	memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
+}
+
+/*
+* RB_SelectContextTexture
+*/
+void RB_SelectContextTexture( int tmu )
+{
+	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
 }
 
 /*
@@ -186,11 +181,20 @@ void RB_SelectTextureUnit( int tmu )
 		return;
 
 	rb.gl.currentTMU = tmu;
+	RB_SelectContextTexture( tmu );
+}
 
-	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#ifndef GL_ES_VERSION_2_0
-	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#endif
+/*
+* RB_BindContextTexture
+*/
+void RB_BindContextTexture( int tmu, const image_t *tex )
+{
+	assert( tex != NULL );
+
+	if( tex->flags & IT_CUBEMAP )
+		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, tex->texnum );
+	else
+		qglBindTexture( GL_TEXTURE_2D, tex->texnum );
 }
 
 /*
@@ -202,8 +206,15 @@ void RB_BindTexture( int tmu, const image_t *tex )
 
 	assert( tex != NULL );
 
-	if( r_nobind->integer && rsh.noTexture && tex->texnum != 0 )  // performance evaluation option
+	if( tex->missing ) {
 		tex = rsh.noTexture;
+	} else if( !tex->loaded ) {
+		// not yet loaded from disk
+		tex = rsh.whiteTexture;
+	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
+		// performance evaluation option
+		tex = rsh.noTexture;
+	}
 
 	RB_SelectTextureUnit( tmu );
 
@@ -211,12 +222,8 @@ void RB_BindTexture( int tmu, const image_t *tex )
 	if( rb.gl.currentTextures[tmu] == texnum )
 		return;
 
-	rb.gl.anyTexturesBound = 1;
 	rb.gl.currentTextures[tmu] = texnum;
-	if( tex->flags & IT_CUBEMAP )
-		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, texnum );
-	else
-		qglBindTexture( GL_TEXTURE_2D, texnum );
+	RB_BindContextTexture( tmu, tex );
 }
 
 /*
@@ -232,13 +239,9 @@ void RB_AllocTextureNum( image_t *tex )
 */
 void RB_FreeTextureNum( image_t *tex )
 {
-	qglDeleteTextures( 1, &tex->texnum );
-	tex->texnum = 0;
-
-	// Ensures that the RB_BindTexture call that may follow will work
-	if( rb.gl.anyTexturesBound ) {
-		rb.gl.anyTexturesBound = 0;
-		memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
+	if( tex->texnum ) {
+		qglDeleteTextures( 1, &tex->texnum );
+		tex->texnum = 0;
 	}
 }
 

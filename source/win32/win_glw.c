@@ -629,3 +629,36 @@ void GLimp_AppActivate( qboolean active, qboolean destroy )
 		}
 	}
 }
+
+/*
+** GLimp_SharedContext_Create
+*/
+void *GLimp_SharedContext_Create( void )
+{
+	HGLRC ctx = qwglCreateContext( glw_state.hDC );
+	if( ctx ) {
+		qwglShareLists( glw_state.hGLRC, ctx );
+	}
+	return ctx;
+}
+
+/*
+** GLimp_SharedContext_MakeCurrent
+*/
+qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
+{
+	if( qwglMakeCurrent && !qwglMakeCurrent( glw_state.hDC, ctx ) ) {
+		return qfalse;
+	}
+	return qtrue;
+}
+
+/*
+** GLimp_SharedContext_Destroy
+*/
+void GLimp_SharedContext_Destroy( void *ctx )
+{
+	if( qwglDeleteContext ) {
+		qwglDeleteContext( ctx );
+	}
+}
