@@ -35,47 +35,39 @@ QF_DLL_EXPORT sound_export_t *GetSoundAPI( sound_import_t *import )
 
 	globals.API = S_API;
 
-	globals.Init = S_Init;
-	globals.Shutdown = S_Shutdown;
+	globals.Init = SF_Init;
+	globals.Shutdown = SF_Shutdown;
 
-	globals.BeginRegistration = S_BeginRegistration;
-	globals.EndRegistration = S_EndRegistration;
+	globals.BeginRegistration = SF_BeginRegistration;
+	globals.EndRegistration = SF_EndRegistration;
 
-	globals.StopAllSounds = S_StopAllSounds;
+	globals.StopAllSounds = SF_StopAllSounds;
 
-	globals.Clear = S_Clear;
-	globals.Update = S_Update;
-	globals.Activate = S_Activate;
+	globals.Clear = SF_Clear;
+	globals.Update = SF_Update;
+	globals.Activate = SF_Activate;
 
-	globals.SetAttenuationModel = S_SetAttenuationModel;
+	globals.SetAttenuationModel = SF_SetAttenuationModel;
+	globals.SetEntitySpatialization = SF_SetEntitySpatialization;
 
-	globals.RegisterSound = S_RegisterSound;
+	globals.RegisterSound = SF_RegisterSound;
 
-	globals.StartFixedSound = S_StartFixedSound;
-	globals.StartRelativeSound = S_StartRelativeSound;
-	globals.StartGlobalSound = S_StartGlobalSound;
+	globals.StartFixedSound = SF_StartFixedSound;
+	globals.StartRelativeSound = SF_StartRelativeSound;
+	globals.StartGlobalSound = SF_StartGlobalSound;
+	globals.StartLocalSound = SF_StartLocalSound;
+	globals.AddLoopSound = SF_AddLoopSound;
 
-	globals.StartLocalSound = S_StartLocalSound;
-
-	globals.AddLoopSound = S_AddLoopSound;
-
-	globals.RawSamples = S_RawSamples;
-	globals.PositionedRawSamples = S_PositionedRawSamples;
+	globals.RawSamples = SF_RawSamples;
+	globals.PositionedRawSamples = SF_PositionedRawSamples;
 	globals.GetRawSamplesLength = S_GetRawSamplesLength;
 	globals.GetPositionedRawSamplesLength = S_GetPositionedRawSamplesLength;
 
-	globals.StartBackgroundTrack = S_StartBackgroundTrack;
-	globals.StopBackgroundTrack = S_StopBackgroundTrack;
+	globals.StartBackgroundTrack = SF_StartBackgroundTrack;
+	globals.StopBackgroundTrack = SF_StopBackgroundTrack;
 
-	globals.BeginAviDemo = S_BeginAviDemo;
-	globals.StopAviDemo = S_StopAviDemo;
+	globals.BeginAviDemo = SF_BeginAviDemo;
+	globals.StopAviDemo = SF_StopAviDemo;
 
 	return &globals;
 }
-
-#if defined ( HAVE_DLLMAIN ) && !defined ( SOUND_HARD_LINKED )
-int _stdcall DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
-{
-	return 1;
-}
-#endif

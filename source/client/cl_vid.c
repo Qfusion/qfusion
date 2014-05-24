@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "cin.h"
 #include "ftlib.h"
+#include "../qcommon/sys_threads.h"
 
 cvar_t *vid_ref;
 cvar_t *vid_mode;
@@ -387,6 +388,7 @@ static qboolean VID_LoadRefresh( const char *name )
 
 	import.Sys_Milliseconds = &Sys_Milliseconds;
 	import.Sys_Microseconds = &Sys_Microseconds;
+	import.Sys_Sleep = &Sys_Sleep;
 
 	import.Cvar_Get = &Cvar_Get;
 	import.Cvar_Set = &Cvar_Set;
@@ -440,6 +442,19 @@ static qboolean VID_LoadRefresh( const char *name )
 	import.Mem_Realloc = &_Mem_Realloc;
 	import.Mem_PoolTotalSize = &Mem_PoolTotalSize;
 
+	import.Thread_Create = Sys_Thread_Create;
+	import.Thread_Join = Sys_Thread_Join;
+	import.Mutex_Create = Sys_Mutex_Create;
+	import.Mutex_Destroy = Sys_Mutex_Destroy;
+	import.Mutex_Lock = Sys_Mutex_Lock;
+	import.Mutex_Unlock = Sys_Mutex_Unlock;
+
+	import.BufQueue_Create = Sys_BufQueue_Create;
+	import.BufQueue_Destroy = Sys_BufQueue_Destroy;
+	import.BufQueue_Finish = Sys_BufQueue_Finish;
+	import.BufQueue_EnqueueCmd = Sys_BufQueue_EnqueueCmd;
+	import.BufQueue_ReadCmds = Sys_BufQueue_ReadCmds;
+
 	// load dynamic library
 	Com_Printf( "Loading refresh module %s... ", name );
 	funcs[0].name = "GetRefAPI";
@@ -466,7 +481,7 @@ static qboolean VID_LoadRefresh( const char *name )
 	}
 	else
 	{
-		Com_Printf( "Not found.\n" );
+		Com_Printf( "Not found %s.\n", va( LIB_DIRECTORY "/%s_" ARCH LIB_SUFFIX, name ) );
 		return qfalse;
 	}
 

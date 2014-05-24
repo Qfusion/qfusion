@@ -20,13 +20,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // snd_public.h -- sound dll information visible to engine
 
-#define	SOUND_API_VERSION   33
+#define	SOUND_API_VERSION   35
 
 #define	ATTN_NONE 0
 
 //===============================================================
 
-struct sfx_s;
+typedef struct sfx_s sfx_t;
+typedef struct qthread_s qthread_t;
+typedef struct qmutex_s qmutex_t;
+typedef struct qbufQueue_s qbufQueue_t;
 
 //
 // functions provided by the main engine
@@ -77,6 +80,7 @@ typedef struct
 
 	unsigned int ( *Milliseconds )( void );
 	void ( *PageInMemory )( qbyte *buffer, int size );
+	void ( *Sleep )( unsigned int milliseconds );
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
@@ -89,6 +93,20 @@ typedef struct
 
 	void *( *LoadLibrary )( const char *name, dllfunc_t *funcs );
 	void ( *UnloadLibrary )( void **lib );
+
+	// multithreading
+	int ( *Thread_Create )( struct qthread_s **pthread, void *(*routine) (void*), void *param );
+	void ( *Thread_Join )( struct qthread_s *thread );
+	int ( *Mutex_Create )( struct qmutex_s **pmutex );
+	void ( *Mutex_Destroy )( struct qmutex_s *mutex );
+	void ( *Mutex_Lock )( struct qmutex_s *mutex );
+	void ( *Mutex_Unlock )( struct qmutex_s *mutex );
+
+	qbufQueue_t *( *BufQueue_Create )( size_t bufSize, int flags );
+	void ( *BufQueue_Destroy )( qbufQueue_t **pqueue );
+	void ( *BufQueue_Finish )( qbufQueue_t *queue );
+	void ( *BufQueue_EnqueueCmd )( qbufQueue_t *queue, const void *cmd, unsigned cmd_size );
+	int ( *BufQueue_ReadCmds )( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) );
 } sound_import_t;
 
 //
@@ -113,15 +131,14 @@ typedef struct
 	void ( *Activate )( qboolean active );
 
 	void ( *SetAttenuationModel )( int model, float maxdistance, float refdistance );
+	void ( *SetEntitySpatialization )( int entnum, const vec3_t origin, const vec3_t velocity );
 
 	// playing
 	struct sfx_s *( *RegisterSound )( const char *sample );
 	void ( *StartFixedSound )( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
 	void ( *StartRelativeSound )( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
 	void ( *StartGlobalSound )( struct sfx_s *sfx, int channel, float fvol );
-
 	void ( *StartLocalSound )( const char *s );
-
 	void ( *AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
 	// cinema

@@ -227,6 +227,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		if( shader->flags & SHADER_SKY ) {
 			if( !R_FASTSKY() ) {
 				R_AddSkyToDrawList( surf );
+				rn.numVisSurfaces++;
 			}
 			return;
 		}

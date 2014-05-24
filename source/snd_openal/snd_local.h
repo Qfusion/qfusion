@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // snd_local.h -- private OpenAL sound functions
 
-#define OPENAL_RUNTIME
 //#define VORBISLIB_RUNTIME // enable this define for dynamic linked vorbis libraries
 
 // it's in qcommon.h too, but we don't include it for modules
@@ -35,6 +34,18 @@ typedef struct { char *name; void **funcPointer; } dllfunc_t;
 
 #include "qal.h"
 
+#ifdef _WIN32
+#define ALDRIVER "OpenAL32.dll"
+#define ALDEVICE_DEFAULT "Generic Software"
+#elif defined ( __MACOSX__ )
+#define ALDRIVER "/System/Library/Frameworks/OpenAL.framework/OpenAL"
+#define ALDEVICE_DEFAULT NULL
+#else
+#define ALDRIVER "libopenal.so.1"
+#define ALDRIVER_ALT "libopenal.so.0"
+#define ALDEVICE_DEFAULT NULL
+#endif
+
 extern struct mempool_s *soundpool;
 
 #define S_MemAlloc( pool, size ) trap_MemAlloc( pool, size, __FILE__, __LINE__ )
@@ -48,6 +59,7 @@ extern struct mempool_s *soundpool;
 
 typedef struct sfx_s
 {
+	int id;
 	char filename[MAX_QPATH];
 	int registration_sequence;
 	ALuint buffer;      // OpenAL buffer
@@ -61,9 +73,15 @@ extern cvar_t *s_musicvolume;
 extern cvar_t *s_sources;
 extern cvar_t *s_stereo2mono;
 
+extern cvar_t *s_doppler;
+extern cvar_t *s_sound_velocity;
+
 extern int s_attenuation_model;
 extern float s_attenuation_maxdistance;
 extern float s_attenuation_refdistance;
+
+extern ALCdevice *alDevice;
+extern ALCcontext *alContext;
 
 #define SRCPRI_AMBIENT	0   // Ambient sound effects
 #define SRCPRI_LOOP	1   // Looping (not ambient) sound effects
@@ -77,17 +95,10 @@ extern float s_attenuation_refdistance;
 int S_API( void );
 void S_Error( const char *format, ... );
 
-qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose );
-void S_Shutdown( qboolean verbose );
-
-void S_BeginRegistration( void );
-void S_EndRegistration( void );
-
 void S_FreeSounds( void );
 void S_StopAllSounds( void );
 
 void S_Clear( void );
-void S_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
 void S_Activate( qboolean active );
 
 void S_SetAttenuationModel( int model, float maxdistance, float refdistance );
@@ -99,15 +110,18 @@ void S_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, flo
 void S_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation );
 void S_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol );
 
-void S_StartLocalSound( const char *s );
+void S_StartLocalSound( sfx_t *sfx );
 
 void S_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
 // cinema
-void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
+void S_RawSamples( unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
+void S_RawSamples2( unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data, qboolean music, float fvol );
 void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
-		unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const qbyte *data );
+	unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data );
 unsigned int S_GetRawSamplesLength( void );
 unsigned int S_GetPositionedRawSamplesLength( int entnum );
 
@@ -120,20 +134,28 @@ void S_PauseBackgroundTrack( void );
 void S_LockBackgroundTrack( qboolean lock );
 
 /*
-* Util (snd_main.c)
+* Util (snd_al.c)
 */
 ALuint S_SoundFormat( int width, int channels );
 const char *S_ErrorMessage( ALenum error );
 ALuint S_GetBufferLength( ALuint buffer );
+void *S_BackgroundUpdateProc( void *param );
 
 /*
 * Buffer management
 */
-qboolean S_InitBuffers( void );
+void S_InitBuffers( void );
 void S_ShutdownBuffers( void );
-void S_SoundList( void );
+void S_SoundList_f( void );
 void S_UseBuffer( sfx_t *sfx );
 ALuint S_GetALBuffer( const sfx_t *sfx );
+sfx_t *S_FindBuffer( const char *filename );
+void S_MarkBufferFree( sfx_t *sfx );
+sfx_t *S_FindFreeBuffer( void );
+void S_ForEachBuffer( void (*callback)(sfx_t *sfx) );
+sfx_t *S_GetBufferById( int id );
+qboolean S_LoadBuffer( sfx_t *sfx );
+qboolean S_UnloadBuffer( sfx_t *sfx );
 
 /*
 * Source management
@@ -172,6 +194,7 @@ void S_UnlockSource( src_t *src );
 void S_StopAllSources( void );
 ALuint S_GetALSource( const src_t *src );
 src_t *S_AllocRawSource( int entNum, float fvol, float attenuation, cvar_t *volumeVar );
+void S_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t velocity );
 
 /*
 * Music
@@ -211,6 +234,7 @@ typedef struct bgTrack_s
 	char *filename;
 	qboolean ignore;
 	qboolean isUrl;
+	qboolean loop;
 	snd_stream_t *stream;
 
 	struct bgTrack_s *next; // the next track to be played, the looping part aways points to itself
@@ -231,3 +255,39 @@ int S_SeekSteam( snd_stream_t *stream, int ofs, int whence );
 
 void S_BeginAviDemo( void );
 void S_StopAviDemo( void );
+
+//====================================================================
+
+/*
+* Exported functions
+*/
+qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose );
+void SF_Shutdown( qboolean verbose );
+void SF_EndRegistration( void );
+void SF_BeginRegistration( void );
+sfx_t *SF_RegisterSound( const char *name );
+void SF_StartBackgroundTrack( const char *intro, const char *loop );
+void SF_StopBackgroundTrack( void );
+void SF_LockBackgroundTrack( qboolean lock );
+void SF_StopAllSounds( void );
+void SF_PrevBackgroundTrack( void );
+void SF_NextBackgroundTrack( void );
+void SF_PauseBackgroundTrack( void );
+void SF_Activate( qboolean active );
+void SF_BeginAviDemo( void );
+void SF_StopAviDemo( void );
+void SF_SetAttenuationModel( int model, float maxdistance, float refdistance );
+void SF_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t velocity );
+void SF_SetAttenuationModel( int model, float maxdistance, float refdistance );
+void SF_StartFixedSound( sfx_t *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
+void SF_StartRelativeSound( sfx_t *sfx, int entnum, int channel, float fvol, float attenuation );
+void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol );
+void SF_StartLocalSound( const char *sound );
+void SF_Clear( void );
+void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation );
+void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
+void SF_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data, qboolean music );
+void SF_PositionedRawSamples( int entnum, float fvol, float attenuation, 
+	unsigned int samples, unsigned int rate, 
+	unsigned short width, unsigned short channels, const qbyte *data );

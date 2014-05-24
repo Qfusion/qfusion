@@ -96,6 +96,7 @@ cvar_t *r_gamma;
 cvar_t *r_texturebits;
 cvar_t *r_texturemode;
 cvar_t *r_texturefilter;
+cvar_t *r_texturecompression;
 cvar_t *r_picmip;
 cvar_t *r_skymip;
 cvar_t *r_nobind;
@@ -298,11 +299,27 @@ static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 
 #else // GL_ES_VERSION_2_0
 
-/* GL_EXT_multiview_draw_buffers */
-static const gl_extension_func_t gl_ext_multiview_draw_buffers_EXT_funcs[] =
+/* GL_ANGLE_framebuffer_blit */
+static const gl_extension_func_t gl_ext_framebuffer_blit_ANGLE_funcs[] =
 {
-	 GL_EXTENSION_FUNC(ReadBufferIndexedEXT)
-	,GL_EXTENSION_FUNC(DrawBuffersIndexedEXT)
+	GL_EXTENSION_FUNC(BlitFramebufferANGLE)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
+/* GL_NV_framebuffer_blit */
+static const gl_extension_func_t gl_ext_framebuffer_blit_NV_funcs[] =
+{
+	GL_EXTENSION_FUNC(BlitFramebufferNV)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
+/* GL_NV_multiview_draw_buffers */
+static const gl_extension_func_t gl_ext_multiview_draw_buffers_NV_funcs[] =
+{
+	 GL_EXTENSION_FUNC(ReadBufferIndexedNV)
+	,GL_EXTENSION_FUNC(DrawBuffersIndexedNV)
 };
 
 #endif // GL_ES_VERSION_2_0
@@ -352,10 +369,10 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, draw_range_elements, true, false, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
-	,GL_EXTENSION_EXT( ARB, texture_compression, 0, false, false, NULL, _extMarker )
+	,GL_EXTENSION( ARB, texture_compression, false, false, NULL )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
+	,GL_EXTENSION( SGIS, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( ARB, texture_cube_map, false, false, NULL )
-	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 	,GL_EXTENSION( ARB, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( ARB, shadow, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( ARB, texture_non_power_of_two, false, false, NULL )
@@ -378,16 +395,18 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ATI, meminfo, true, false, NULL )
 
 #else
-	 GL_EXTENSION( OES, depth_texture, false, false, NULL )
+	 GL_EXTENSION( NV, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_NV_funcs )
+	,GL_EXTENSION( ANGLE, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_ANGLE_funcs )
+	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( EXT, shadow_samplers, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
-	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
-	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
+	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
+	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 
 #ifdef GLX_VERSION
 	,GL_EXTENSION( GLX_SGI, swap_control, true, false, &glx_ext_swap_control_SGI_funcs )
@@ -431,7 +450,7 @@ static qboolean R_RegisterGLExtensions( void )
 
 		cvar = ri.Cvar_Get( name, extension->cvar_default ? extension->cvar_default : "0", cvar_flags );
 		if( !cvar->integer )
-			goto non_avail;
+			continue;
 
 		// an alternative extension of higher priority is available so ignore this one
 		var = &(GLINF_FROM( &glConfig.ext, extension->offset ));
@@ -451,7 +470,7 @@ static qboolean R_RegisterGLExtensions( void )
 
 			Q_snprintfz( name, sizeof( name ), "%s_%s", extension->prefix, extension->name );
 			if( !strstr( extstring, name ) )
-				goto non_avail;
+				continue;
 		}
 
 		// initialize function pointers
@@ -480,16 +499,24 @@ static qboolean R_RegisterGLExtensions( void )
 					*(func2->pointer) = NULL;
 				} while( (++func2)->name && func2 != func );
 
-				goto non_avail;
+				continue;
 			}
 		}
 
 		// mark extension as available
 		*var = qtrue;
-		continue;
 
-non_avail:
-		if( extension->mandatory ) {
+	}
+
+	for( i = 0, extension = gl_extensions_decl; i < num_gl_extensions; i++, extension++ )
+	{
+		if( !extension->mandatory ) {
+			continue;
+		}
+		
+		var = &(GLINF_FROM( &glConfig.ext, extension->offset ));
+
+		if( !*var ) {
 			Sys_Error( "R_RegisterGLExtensions: '%s_%s' is not available, aborting\n", 
 				extension->prefix, extension->name );
 			return qfalse;
@@ -614,6 +641,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.multitexture = qtrue;
 	glConfig.ext.vertex_buffer_object = qtrue;
 	glConfig.ext.framebuffer_object = qtrue;
+	glConfig.ext.texture_compression = qtrue;
 	glConfig.ext.texture_edge_clamp = qtrue;
 	glConfig.ext.texture_cube_map = qtrue;
 	glConfig.ext.vertex_shader = qtrue;
@@ -622,12 +650,14 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.shading_language_100 = qtrue;
 	glConfig.ext.GLSL = qtrue;
 	if( glConfig.version >= 300 ) {
+		glConfig.ext.draw_range_elements = qtrue;
 		glConfig.ext.depth_texture = qtrue;
 		glConfig.ext.shadow = qtrue;
 		glConfig.ext.texture_non_power_of_two = qtrue;
 		glConfig.ext.draw_instanced = qtrue;
 		glConfig.ext.instanced_arrays = qtrue;
 		glConfig.ext.half_float_vertex = qtrue;
+		glConfig.ext.framebuffer_blit = qtrue;
 		glConfig.ext.depth24 = qtrue;
 		glConfig.ext.GLSL130 = qtrue;
 	}
@@ -658,6 +688,19 @@ static void R_FinalizeGLExtensions( void )
 	if( strstr( glConfig.extensionsString, "GL_EXT_texture_filter_anisotropic" ) )
 		qglGetIntegerv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.maxTextureFilterAnisotropic );
 
+	/* GL_EXT_framebuffer_blit */
+#ifdef GL_ES_VERSION_2_0
+	if( glConfig.ext.framebuffer_blit && !qglBlitFramebufferEXT )
+	{
+		if( qglBlitFramebufferNV )
+			qglBlitFramebufferEXT = qglBlitFramebufferNV;
+		else if( qglBlitFramebufferANGLE )
+			qglBlitFramebufferEXT = qglBlitFramebufferANGLE;
+		else
+			glConfig.ext.framebuffer_blit = qfalse;
+	}
+#endif
+
 	/* GL_OES_depth24 */
 #ifndef GL_ES_VERSION_2_0
 	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
@@ -668,7 +711,7 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.ext.multiview_draw_buffers )
 	{
 		val = 0;
-		qglGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_EXT, &val );
+		qglGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_NV, &val );
 		if( val <= 1 )
 			glConfig.stereoEnabled = qfalse;
 	}
@@ -692,15 +735,17 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.maxVaryingFloats = 0;
 	glConfig.maxVertexUniformComponents = glConfig.maxFragmentUniformComponents = 0;
 
-	qglGetIntegerv( GL_MAX_VARYING_FLOATS_ARB, &glConfig.maxVaryingFloats );
 	qglGetIntegerv( GL_MAX_VERTEX_ATTRIBS_ARB, &glConfig.maxVertexAttribs );
 #ifdef GL_ES_VERSION_2_0
+	qglGetIntegerv( GL_MAX_VARYING_VECTORS, &glConfig.maxVaryingFloats );
 	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_VECTORS, &glConfig.maxVertexUniformComponents );
 	qglGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_VECTORS, &glConfig.maxFragmentUniformComponents );
+	glConfig.maxVaryingFloats *= 4;
 	glConfig.maxVertexUniformComponents *= 4;
 	glConfig.maxFragmentUniformComponents *= 4;
 #else
 	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig.maxVertexUniformComponents );
+	qglGetIntegerv( GL_MAX_VARYING_FLOATS_ARB, &glConfig.maxVaryingFloats );
 	qglGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &glConfig.maxFragmentUniformComponents );
 #endif
 
@@ -843,6 +888,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_texturebits = ri.Cvar_Get( "r_texturebits", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_texturemode = ri.Cvar_Get( "r_texturemode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE );
 	r_texturefilter = ri.Cvar_Get( "r_texturefilter", "4", CVAR_ARCHIVE );
+	r_texturecompression = ri.Cvar_Get( "r_texturecompression", "0", CVAR_ARCHIVE | CVAR_LATCH_VIDEO );
 	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "8", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );

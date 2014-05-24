@@ -24,11 +24,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "snd_local.h"
 
 #define MAX_SFX 4096
-static sfx_t knownSfx[MAX_SFX];
+sfx_t knownSfx[MAX_SFX];
 static qboolean buffers_inited = qfalse;
-
-static int s_registration_sequence = 1;
-static qboolean s_registering;
 
 /*
 * Local helper functions
@@ -94,30 +91,21 @@ static sfx_t *buffer_find_free( void )
 	return NULL;
 }
 
-// Find a sound effect if loaded, set up a handle otherwise
-static sfx_t *buffer_find( const char *filename )
+sfx_t *S_GetBufferById( int id )
 {
-	sfx_t *sfx;
-	int i;
-
-	for( i = 0; i < MAX_SFX; i++ )
-	{
-		if( !Q_stricmp( knownSfx[i].filename, filename ) )
-			return &knownSfx[i];
+	if( id < 0 || id >= MAX_SFX ) {
+		return NULL;
 	}
-
-	sfx = buffer_find_free();
-
-	memset( sfx, 0, sizeof( *sfx ) );
-	Q_strncpyz( sfx->filename, filename, sizeof( sfx->filename ) );
-
-	return sfx;
+	return knownSfx + id;
 }
 
-static qboolean buffer_unload( sfx_t *sfx )
+qboolean S_UnloadBuffer( sfx_t *sfx )
 {
 	ALenum error;
 
+	if( !sfx ) {
+		return qfalse;
+	}
 	if( sfx->filename[0] == '\0' || sfx->isLocked || !sfx->inMemory )
 		return qfalse;
 
@@ -155,20 +143,22 @@ static qboolean buffer_evict()
 
 	if( candinate != -1 )
 	{
-		return buffer_unload( &knownSfx[candinate] );
+		return S_UnloadBuffer( &knownSfx[candinate] );
 	}
 
 	return qfalse;
 }
 
-static qboolean buffer_load( sfx_t *sfx )
+qboolean S_LoadBuffer( sfx_t *sfx )
 {
 	ALenum error;
-
 	void *data;
 	snd_info_t info;
 	ALuint format;
 
+	if( !sfx ) {
+		return qfalse;
+	}
 	if( sfx->filename[0] == '\0' || sfx->inMemory )
 		return qfalse;
 
@@ -236,17 +226,54 @@ static qboolean buffer_load( sfx_t *sfx )
 * Sound system wide functions (snd_al_local.h)
 */
 
-qboolean S_InitBuffers( void )
+// Find a sound effect if loaded, set up a handle otherwise
+sfx_t *S_FindBuffer( const char *filename )
+{
+	sfx_t *sfx;
+	int i;
+
+	for( i = 0; i < MAX_SFX; i++ )
+	{
+		if( !Q_stricmp( knownSfx[i].filename, filename ) )
+			return &knownSfx[i];
+	}
+
+	sfx = buffer_find_free();
+
+	memset( sfx, 0, sizeof( *sfx ) );
+	sfx->id = sfx - knownSfx;
+	Q_strncpyz( sfx->filename, filename, sizeof( sfx->filename ) );
+
+	return sfx;
+}
+
+void S_MarkBufferFree( sfx_t *sfx )
+{
+	sfx->filename[0] = '\0';
+	sfx->registration_sequence = 0;
+	sfx->used = 0;
+}
+
+void S_ForEachBuffer( void (*callback)(sfx_t *sfx) )
+{
+	int i;
+
+	if( !buffers_inited )
+		return;
+
+	for( i = 0; i < MAX_SFX; i++ ) {
+		callback( knownSfx + i );
+	}
+}
+
+void S_InitBuffers( void )
 {
 	if( buffers_inited )
-		return qtrue;
+		return;
 
 	memset( knownSfx, 0, sizeof( knownSfx ) );
 
 	buffers_inited = qtrue;
-	s_registration_sequence = 1;
-	s_registering = qfalse;
-	return qtrue;
 }
 
 void S_ShutdownBuffers( void )
@@ -257,15 +284,13 @@ void S_ShutdownBuffers( void )
 		return;
 
 	for( i = 0; i < MAX_SFX; i++ )
-		buffer_unload( &knownSfx[i] );
-
-	s_registering = qfalse;
+		S_UnloadBuffer( &knownSfx[i] );
 
 	memset( knownSfx, 0, sizeof( knownSfx ) );
 	buffers_inited = qfalse;
 }
 
-void S_SoundList( void )
+void S_SoundList_f( void )
 {
 	int i;
 
@@ -294,7 +319,7 @@ void S_UseBuffer( sfx_t *sfx )
 		return;
 
 	if( !sfx->inMemory )
-		buffer_load( sfx );
+		S_LoadBuffer( sfx );
 
 	sfx->used = trap_Milliseconds();
 }
@@ -307,60 +332,6 @@ ALuint S_GetALBuffer( const sfx_t *sfx )
 /**
 * Global functions (sound.h)
 */
-
-sfx_t *S_RegisterSound( const char *name )
-{
-	sfx_t *sfx;
-
-	sfx = buffer_find( name );
-
-	if( !sfx->inMemory )
-	{
-		if( !buffer_load( sfx ) )
-		{
-			sfx->filename[0] = '\0';
-			sfx->registration_sequence = 0;
-			sfx->used = 0;
-			return NULL;
-		}
-	}
-
-	sfx->used = trap_Milliseconds();
-	sfx->registration_sequence = s_registration_sequence;
-	return sfx;
-}
-
-void S_BeginRegistration( void )
-{
-	s_registration_sequence++;
-	if( !s_registration_sequence ) {
-		s_registration_sequence = 1;
-	}
-	s_registering = qtrue;
-}
-
-void S_EndRegistration( void )
-{
-	int i;
-
-	s_registering = qfalse;
-
-	if( !buffers_inited )
-		return;
-
-	for( i = 0; i < MAX_SFX; i++ ) {
-		if( knownSfx[i].filename[0] == '\0' ) {
-			continue;
-		}
-		if( knownSfx[i].registration_sequence == s_registration_sequence ) {
-			if ( !knownSfx[i].inMemory ) {
-				buffer_load( &knownSfx[i] );
-			}
-			continue;
-		}
-		buffer_unload( &knownSfx[i] );
-	}
-}
 
 void S_FreeSounds()
 {

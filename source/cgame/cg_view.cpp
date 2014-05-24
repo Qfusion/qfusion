@@ -132,7 +132,6 @@ static void CG_AddLocalSounds( void )
 	{
 		if( !postmatchsound_set && !demostream )
 		{
-			trap_S_StopBackgroundTrack();
 			trap_S_StartBackgroundTrack( S_PLAYLIST_POSTMATCH, "3" ); // loop random track from the playlist
 			postmatchsound_set = true;
 			background = false;
@@ -142,7 +141,6 @@ static void CG_AddLocalSounds( void )
 	{
 		if( cgs.demoPlaying && cgs.demoAudioStream && !demostream )
 		{
-			trap_S_StopBackgroundTrack();
 			trap_S_StartBackgroundTrack( cgs.demoAudioStream, NULL );
 			demostream = true;
 		}
@@ -156,13 +154,8 @@ static void CG_AddLocalSounds( void )
 
 		if( (!postmatchsound_set && !demostream) && !background )
 		{
-			// delay the playback of background track until we're finished loading
-			// everything to prevent audible gaps
-			if( cg.time > GS_MatchStartTime() + 200 )
-			{
-				CG_StartBackgroundTrack();
-				background = true;
-			}
+			CG_StartBackgroundTrack();
+			background = true;
 		}
 
 		// notice: these 2 sound files aren't used anymore

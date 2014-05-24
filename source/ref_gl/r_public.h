@@ -22,10 +22,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 2
+#define REF_API_VERSION 3
 
 struct mempool_s;
 struct cinematics_s;
+
+typedef struct qthread_s qthread_t;
+typedef struct qmutex_s qmutex_t;
+typedef struct qbufQueue_s qbufQueue_t;
 
 //
 // these are the functions exported by the refresh module
@@ -58,6 +62,7 @@ typedef struct
 
 	unsigned int ( *Sys_Milliseconds )( void );
 	quint64 ( *Sys_Microseconds )( void );
+	void ( *Sys_Sleep )( unsigned int milliseconds );
 
 	int ( *FS_FOpenFile )( const char *filename, int *filenum, int mode );
 	int ( *FS_FOpenAbsoluteFile )( const char *filename, int *filenum, int mode );
@@ -96,6 +101,20 @@ typedef struct
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 	void *( *Mem_Realloc )( void *data, size_t size, const char *filename, int fileline );
 	size_t ( *Mem_PoolTotalSize )( struct mempool_s *pool );
+
+	// multithreading
+	int ( *Thread_Create )( struct qthread_s **pthread, void *(*routine) (void*), void *param );
+	void ( *Thread_Join )( struct qthread_s *thread );
+	int ( *Mutex_Create )( struct qmutex_s **pmutex );
+	void ( *Mutex_Destroy )( struct qmutex_s *mutex );
+	void ( *Mutex_Lock )( struct qmutex_s *mutex );
+	void ( *Mutex_Unlock )( struct qmutex_s *mutex );
+
+	qbufQueue_t *( *BufQueue_Create )( size_t bufSize, int flags );
+	void ( *BufQueue_Destroy )( qbufQueue_t **pqueue );
+	void ( *BufQueue_Finish )( qbufQueue_t *queue );
+	void ( *BufQueue_EnqueueCmd )( qbufQueue_t *queue, const void *cmd, unsigned cmd_size );
+	int ( *BufQueue_ReadCmds )( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) );
 } ref_import_t;
 
 typedef struct

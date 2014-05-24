@@ -346,14 +346,19 @@ static int SV_Web_Send( sv_http_connection_t *con, void *sendbuf, size_t sendbuf
 */
 static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 {
-	const char *ptr;
+	char *ptr;
 	char *token, *delim;
 
 	ptr = line;
 
-	// FIXME: don't use COM_Parse for this!
+	token = ptr;
+	ptr = strchr( token, ' ' );
+	if( !ptr ) {
+		request->error = HTTP_RESP_BAD_REQUEST;
+		return;
+	}
+	*ptr = '\0';
 
-	token = COM_ParseExt( &ptr, qfalse );
 	if( !Q_stricmp( token, "GET" ) ) {
 		request->method = HTTP_METHOD_GET;
 	} else if( !Q_stricmp( token, "POST" ) ) {
@@ -368,11 +373,17 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 
 	request->method_str = ZoneCopyString( token );
 
-	// COM_Parse may get confused about double slash and treat it as single-line comment
-	while( *ptr <= ' ' || *ptr == '/' ) {
-		ptr++;
+	token = ptr + 1;
+	while( *token <= ' ' || *token == '/' ) {
+		token++;
 	}
-	token = COM_ParseExt( &ptr, qfalse );
+	ptr = strrchr( token, ' ' );
+	if( !ptr ) {
+		request->error = HTTP_RESP_BAD_REQUEST;
+		return;
+	}
+	*ptr = '\0';
+
 	request->resource = ZoneCopyString( *token ? token : "/" );
 
 	// split resource into filepath and query string
@@ -382,7 +393,10 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 		request->query_string = delim + 1;
 	}
 
-	token = COM_ParseExt( &ptr, qfalse );
+	token = ptr + 1;
+	while( *token <= ' ' ) {
+		token++;
+	}
 	request->http_ver = ZoneCopyString( token );
 
 	// check for HTTP/1.1 and greater
@@ -692,7 +706,10 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 	*content = NULL;
 	*content_length = 0;
 
-	if( !Q_strnicmp( resource, "game/", 5 ) ) {
+	if( !resource ) {
+		response->code = HTTP_RESP_BAD_REQUEST;
+	}
+	else if( !Q_strnicmp( resource, "game/", 5 ) ) {
 		// request to game module
 		if( ge ) {
 			response->code = ge->WebRequest( request->method, resource + 5, query_string, content, content_length );

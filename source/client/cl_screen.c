@@ -734,8 +734,8 @@ void SCR_UpdateScreen( void )
 		}
 		else if( cls.state == CA_LOADING )
 		{
-			SCR_RenderView( separation[i] );
 			CL_UIModule_UpdateConnectScreen( qfalse );
+			SCR_RenderView( separation[i] );
 		}
 		else if( cls.state == CA_ACTIVE )
 		{

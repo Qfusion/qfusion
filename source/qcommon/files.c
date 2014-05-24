@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "wswcurl.h"
 #include "../qalgo/md5.h"
 #include "../qalgo/q_trie.h"
+#include "sys_threads.h"
 
 /*
 =============================================================================
@@ -34,6 +35,8 @@ QUAKE FILESYSTEM
 
 =============================================================================
 */
+
+#define FS_MAX_PATH					1024
 
 #define FS_ZIP_BUFSIZE				0x00004000
 
@@ -49,7 +52,7 @@ QUAKE FILESYSTEM
 
 #define FZ_GZ_BUFSIZE				0x00020000
 
-const char *pak_extensions[] = { "pk3", "pk2", NULL };
+static const char *pak_extensions[] = { "pk3", "pk2", NULL };
 
 static const char *forbidden_gamedirs[] = {
 	"docs",
@@ -141,16 +144,13 @@ static cvar_t *fs_usehomedir;
 static cvar_t *fs_basegame;
 static cvar_t *fs_game;
 
-// these are used in couple of functions to temporary store a full path to filenames
-// so that it doesn't need to be constantly reallocated
-static char *tempname = NULL;
-static size_t tempname_size = 0;
-
 static searchpath_t *fs_basepaths = NULL;       // directories without gamedirs
 static searchpath_t *fs_searchpaths = NULL;     // game search directories, plus paks
 static searchpath_t *fs_base_searchpaths;       // same as above, but without extra gamedirs
 
 static mempool_t *fs_mempool;
+
+static qmutex_t *fs_mutex;
 
 #define FS_Malloc( size ) Mem_Alloc( fs_mempool, size )
 #define FS_Realloc( data, size ) Mem_Realloc( data, size )
@@ -161,11 +161,6 @@ static mempool_t *fs_mempool;
 
 static filehandle_t fs_filehandles[FS_MAX_HANDLES];
 static filehandle_t fs_filehandles_headnode, *fs_free_filehandles;
-
-// we mostly read from one file at a time, so keep a global copy of one
-// zipEntry to save on malloc calls and linking in FS_FOpenFile
-static zipEntry_t fs_globalZipEntry;
-static filehandle_t *fs_globalZipEntryUser;
 
 static int fs_notifications = 0;
 
@@ -245,20 +240,6 @@ static char *FS_CopyString( const char *in )
 }
 
 /*
-* FS_CheckTempnameSize
-*/
-static inline void FS_CheckTempnameSize( size_t size )
-{
-	if( tempname_size < size )
-	{
-		if( tempname )
-			FS_Free( tempname );
-		tempname = ( char* )FS_Malloc( size );
-		tempname_size = size;
-	}
-}
-
-/*
 * FS_ListFiles
 */
 static char **FS_ListFiles( char *findname, int *numfiles, unsigned musthave, unsigned canthave )
@@ -330,24 +311,23 @@ static qboolean FS_SearchPakForFile( pack_t *pak, const char *filename, packfile
 /*
 * FS_SearchDirectoryForFile
 */
-static qboolean FS_SearchDirectoryForFile( searchpath_t *search, const char *filename, FILE **out )
+static qboolean FS_SearchDirectoryForFile( searchpath_t *search, const char *filename, char *path, size_t path_size )
 {
 	FILE *f;
+	char tempname[FS_MAX_PATH];
 
 	assert( search );
 	assert( !search->pack );
 	assert( filename );
 
-	FS_CheckTempnameSize( sizeof( char ) * ( strlen( search->path ) + 1 + strlen( filename ) + 1 ) );
-	Q_snprintfz( tempname, tempname_size, "%s/%s", search->path, filename );
+	Q_snprintfz( tempname, sizeof( tempname ), "%s/%s", search->path, filename );
 
 	f = fopen( tempname, "rb" );
 	if( f )
 	{
-		if( out )
-			*out = f;
-		else
-			fclose( f );
+		if( path )
+			Q_strncpyz( path, tempname, path_size );
+		fclose( f );
 		return qtrue;
 	}
 
@@ -379,13 +359,16 @@ static int FS_FileLength( FILE *f, qboolean close )
 * 
 * Gives the searchpath element where this file exists, or NULL if it doesn't
 */
-static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **pout, FILE **fout )
+static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **pout, char *path, size_t path_size )
 {
 	searchpath_t *search;
 	qboolean purepass;
 
 	if( !COM_ValidateRelativeFilename( filename ) )
 		return NULL;
+
+	if( path && path_size )
+		path[0] = '\0';
 
 	// search through the path, one element at a time
 	search = fs_searchpaths;
@@ -405,7 +388,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 		{
 			if( !purepass )
 			{
-				if( FS_SearchDirectoryForFile( search, filename, fout ) )
+				if( FS_SearchDirectoryForFile( search, filename, path, path_size ) )
 					return search;
 			}
 		}
@@ -429,18 +412,21 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 * 
 * Gives the searchpath element where this file exists, or NULL if it doesn't
 */
-static searchpath_t *FS_SearchPathForBaseFile( const char *filename, FILE **fout )
+static searchpath_t *FS_SearchPathForBaseFile( const char *filename, char *path, size_t path_size )
 {
 	searchpath_t *search;
 
 	if( !COM_ValidateRelativeFilename( filename ) )
 		return NULL;
 
+	if( path && path_size )
+		path[0] = '\0';
+
 	// search through the path, one element at a time
 	search = fs_basepaths;
 	while( search )
 	{
-		if( FS_SearchDirectoryForFile( search, filename, fout ) )
+		if( FS_SearchDirectoryForFile( search, filename, path, path_size ) )
 			return search;
 
 		search = search->next;
@@ -477,7 +463,7 @@ static const char *FS_PakNameForPath( pack_t *pack )
 */
 const char *FS_PakNameForFile( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
 
 	if( !search || !search->pack )
 		return NULL;
@@ -566,8 +552,12 @@ static int FS_OpenFileHandle( void )
 {
 	filehandle_t *fh;
 
-	if( !fs_free_filehandles )
+	QMutex_Lock( fs_mutex );
+
+	if( !fs_free_filehandles ) {
+		QMutex_Unlock( fs_mutex );
 		Sys_Error( "FS_OpenFileHandle: no free file handles" );
+	}
 
 	fh = fs_free_filehandles;
 	fs_free_filehandles = fh->next;
@@ -577,6 +567,8 @@ static int FS_OpenFileHandle( void )
 	fh->next = fs_filehandles_headnode.next;
 	fh->next->prev = fh;
 	fh->prev->next = fh;
+
+	QMutex_Unlock( fs_mutex );
 
 	return ( fh - fs_filehandles ) + 1;
 }
@@ -609,6 +601,8 @@ static inline int FS_FileNumForHandle( filehandle_t *fh )
 */
 static void FS_CloseFileHandle( filehandle_t *fh )
 {
+	QMutex_Lock( fs_mutex );
+
 	// remove from linked open list
 	fh->prev->next = fh->next;
 	fh->next->prev = fh->prev;
@@ -616,6 +610,8 @@ static void FS_CloseFileHandle( filehandle_t *fh )
 	// insert into linked free list
 	fh->next = fs_free_filehandles;
 	fs_free_filehandles = fh;
+
+	QMutex_Unlock( fs_mutex );
 }
 
 /*
@@ -693,7 +689,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 			{
 				for( i = 0; i < num_extensions; i++ )
 				{
-					if( FS_SearchDirectoryForFile( search, filenames[i], NULL ) )
+					if( FS_SearchDirectoryForFile( search, filenames[i], NULL, 0 ) )
 					{
 						Mem_TempFree( filenames[0] );
 						Mem_TempFree( filenames );
@@ -726,7 +722,7 @@ static int FS_FileExists( const char *filename, qboolean base )
 {
 	searchpath_t *search;
 	packfile_t *pakFile = NULL;
-	FILE *f = NULL;
+	char tempname[FS_MAX_PATH];
 
 	if ( FS_IsUrl( filename ) )
 	{
@@ -741,9 +737,9 @@ static int FS_FileExists( const char *filename, qboolean base )
 	}
 
 	if( base )
-		search = FS_SearchPathForBaseFile( filename, &f );
+		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ) );
 	else
-		search = FS_SearchPathForFile( filename, &pakFile, &f );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ) );
 
 	if( !search )
 		return -1;
@@ -755,8 +751,10 @@ static int FS_FileExists( const char *filename, qboolean base )
 	}
 	else
 	{
-		assert( f );
-		return FS_FileLength( f, qtrue );
+		assert( tempname[0] != '\0' );
+		if( tempname[0] != '\0' ) {
+			return FS_FileLength( fopen( tempname, "rb" ), qtrue );
+		}
 	}
 
 	return -1;
@@ -928,17 +926,7 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum )
 
 	if( pakFile->flags & FS_PACKFILE_DEFLATED )
 	{
-		if( fs_globalZipEntryUser )
-			file->zipEntry = ( zipEntry_t* )Mem_Alloc( fs_mempool, sizeof( zipEntry_t ) );
-		else
-		{
-			// reset zstream here too, Mem_Alloc does it for us above
-			memset( &fs_globalZipEntry.zstream, 0, sizeof( fs_globalZipEntry.zstream ) );
-
-			file->zipEntry = &fs_globalZipEntry;
-			fs_globalZipEntryUser = file;
-		}
-
+		file->zipEntry = ( zipEntry_t* )Mem_Alloc( fs_mempool, sizeof( zipEntry_t ) );
 		file->zipEntry->compressedSize = pakFile->compressedSize;
 		file->zipEntry->restReadCompressed = pakFile->compressedSize;
 
@@ -976,10 +964,10 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	qboolean noSize;
 	qboolean gz;
 	qboolean update;
-	FILE *f = NULL;
 	packfile_t *pakFile = NULL;
 	gzFile gzf = NULL;
 	int realmode;
+	char tempname[FS_MAX_PATH];
 
 	// FS_NOSIZE bit tells that we're not interested in real size of the file
 	// probably useful for streamed URLS
@@ -1053,16 +1041,15 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	{
 		int end;
 		char modestr[4] = { 0, 0, 0, 0 };
+		FILE *f = NULL;
 
 		if( base )
 		{
-			FS_CheckTempnameSize( strlen( FS_WriteDirectory() ) + 1 + strlen( filename ) + 1 );
-			Q_snprintfz( tempname, tempname_size, "%s/%s", FS_WriteDirectory(), filename );
+			Q_snprintfz( tempname, sizeof( tempname ), "%s/%s", FS_WriteDirectory(), filename );
 		}
 		else
 		{
-			FS_CheckTempnameSize( strlen( FS_WriteDirectory() ) + 1 + strlen( FS_GameDirectory() ) + 1 + strlen( filename ) + 1 );
-			Q_snprintfz( tempname, tempname_size, "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), filename );
+			Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), filename );
 		}
 		FS_CreateAbsolutePath( tempname );
 
@@ -1100,9 +1087,9 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	}
 
 	if( base )
-		search = FS_SearchPathForBaseFile( filename, &f );
+		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ) );
 	else
-		search = FS_SearchPathForFile( filename, &pakFile, &f );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ) );
 	if( !search )
 		goto notfound_dprint;
 
@@ -1126,8 +1113,14 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	else
 	{
 		int end;
+		FILE *f;
 
-		assert( f );
+		assert( tempname[0] != '\0' );
+		if( tempname[0] == '\0' ) {
+			goto notfound;
+		}
+
+		f = fopen( tempname, "rb" );
 		end = FS_FileLength( f, gz );
 
 		if( gz ) {
@@ -1193,10 +1186,7 @@ void FS_FCloseFile( int file )
 	if( fh->zipEntry )
 	{
 		inflateEnd( &fh->zipEntry->zstream );
-		if( fh != fs_globalZipEntryUser )
-			Mem_Free( fh->zipEntry );
-		else
-			fs_globalZipEntryUser = NULL;
+		Mem_Free( fh->zipEntry );
 		fh->zipEntry = NULL;
 	}
 	if( fh->fstream )
@@ -1437,6 +1427,10 @@ int FS_Seek( int file, int offset, int whence )
 			(whence == FS_SEEK_SET ? SEEK_SET : -1)) );
 	}
 
+	if( fh->streamHandle ) {
+		fh->uncompressedSize = wswcurl_getsize( fh->streamHandle, NULL );
+	}
+
 	currentOffset = (int)fh->offset;
 
 	if( whence == FS_SEEK_CUR )
@@ -1483,7 +1477,6 @@ int FS_Seek( int file, int offset, int whence )
 		wswcurl_set_resume_from( newreq, offset );
 		wswcurl_stream_callbacks( newreq, NULL, FS_StreamDoneSimpleCb, NULL, fh );
 		wswcurl_start( newreq );
-		wswcurl_perform();
 
 		FS_Free( url );
 
@@ -1834,7 +1827,7 @@ void FS_RemovePurePaks( void )
 */
 qboolean FS_IsPureFile( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
 
 	if( !search || !search->pack )
 		return qfalse;
@@ -1847,7 +1840,7 @@ qboolean FS_IsPureFile( const char *filename )
 */
 const char *FS_FileManifest( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
 
 	if( !search || !search->pack )
 		return NULL;
@@ -2023,12 +2016,12 @@ static time_t _FS_FileMTime( const char *filename, qboolean base )
 {
 	searchpath_t *search;
 	packfile_t *pakFile = NULL;
-	FILE *f = NULL;
+	char tempname[FS_MAX_PATH];
 
 	if( base ) {
-		search = FS_SearchPathForBaseFile( filename, &f );
+		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ) );
 	} else {
-		search = FS_SearchPathForFile( filename, &pakFile, &f );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ) );
 	}
 
 	if( !search ) {
@@ -2039,8 +2032,7 @@ static time_t _FS_FileMTime( const char *filename, qboolean base )
 		assert( !base );
 		return pakFile->mtime;
 	} else {
-		assert( f );
-		fclose( f );
+		assert( tempname[0] != '\0' );
 		return Sys_FS_FileMTime( tempname );
 	}
 
@@ -2459,9 +2451,9 @@ error:
 static pack_t *FS_LoadPackFile( const char *packfilename, qboolean silent )
 {
 	const char *ext;
+	char tempname[FS_MAX_PATH];
 
-	FS_CheckTempnameSize( sizeof( char ) * ( strlen( packfilename ) + 1 ) );
-	strcpy( tempname, packfilename );
+	Q_strncpyz( tempname, packfilename, sizeof( tempname ) );
 
 	ext = COM_FileExtension( tempname );
 	if( !ext || !*ext )
@@ -2634,6 +2626,7 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 	int i;
 	unsigned found;
 	size_t dirlen, extlen;
+	char tempname[FS_MAX_PATH];
 
 	assert( search );
 	assert( !dir || dir[strlen( dir )-1] != '/' );
@@ -2665,14 +2658,13 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 		musthave = 0;
 		canthave = SFF_HIDDEN | SFF_SYSTEM;
 
-		FS_CheckTempnameSize( sizeof( char ) * ( strlen( search->path ) + 1 + dirlen + 1 + 1 /* asterisk */ + extlen + 1 ) );
-		Q_strncpyz( tempname, search->path, tempname_size );
-		Q_strncatz( tempname, "/", tempname_size );
+		Q_strncpyz( tempname, search->path, sizeof( tempname ) );
+		Q_strncatz( tempname, "/", sizeof( tempname ) );
 
 		if( dirlen )
 		{
-			Q_strncatz( tempname, dir, tempname_size );
-			Q_strncatz( tempname, "/", tempname_size );
+			Q_strncatz( tempname, dir, sizeof( tempname ) );
+			Q_strncatz( tempname, "/", sizeof( tempname ) );
 		}
 		searchlen = strlen( tempname );
 
@@ -2680,19 +2672,19 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 		{
 			if( extension[0] != '/' )
 			{
-				Q_strncatz( tempname, "*", tempname_size );
-				Q_strncatz( tempname, extension, tempname_size );
+				Q_strncatz( tempname, "*", sizeof( tempname ) );
+				Q_strncatz( tempname, extension, sizeof( tempname ) );
 				canthave |= SFF_SUBDIR;
 			}
 			else
 			{
-				Q_strncatz( tempname, "*.*", tempname_size );
+				Q_strncatz( tempname, "*.*", sizeof( tempname ) );
 				musthave |= SFF_SUBDIR;
 			}
 		}
 		else
 		{
-			Q_strncatz( tempname, "*.*", tempname_size );
+			Q_strncatz( tempname, "*.*", sizeof( tempname ) );
 		}
 
 		if( ( filenames = FS_ListFiles( tempname, &numfiles, musthave, canthave ) ) )
@@ -2743,8 +2735,7 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 		trie_error_t trie_err;
 		char *pattern;
 
-		FS_CheckTempnameSize( dirlen + extlen + 10 );
-		Q_snprintfz( tempname, tempname_size, "%s%s*%s", 
+		Q_snprintfz( tempname, sizeof( tempname ), "%s%s*%s", 
 			dirlen ? dir : "", 
 			dirlen ? "/" : "",
 			extension );
@@ -3040,7 +3031,7 @@ void FS_CreateAbsolutePath( const char *path )
 const char *FS_AbsoluteNameForFile( const char *filename )
 {
 	static char absolutename[1024]; // fixme
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
 
 	if( !search || search->pack )
 		return NULL;
@@ -3058,7 +3049,7 @@ const char *FS_AbsoluteNameForFile( const char *filename )
 const char *FS_AbsoluteNameForBaseFile( const char *filename )
 {
 	static char absolutename[1024]; // fixme
-	searchpath_t *search = FS_SearchPathForBaseFile( filename, NULL );
+	searchpath_t *search = FS_SearchPathForBaseFile( filename, NULL, 0 );
 
 	if( !search )
 		return NULL;
@@ -3073,7 +3064,7 @@ const char *FS_AbsoluteNameForBaseFile( const char *filename )
 const char *FS_BaseNameForFile( const char *filename )
 {
 	const char *p;
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
 
 	if( !search || search->pack )
 		return NULL;
@@ -3162,6 +3153,7 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 	char **paknames = NULL;
 	const char *pakbasename, *extension;
 	size_t pakname_len, extension_len;
+	char tempname[FS_MAX_PATH];
 
 	numpakfiles = 0;
 	for( e = 0; pak_extensions[e]; e++ )
@@ -3169,8 +3161,7 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 		int numfiles;
 		char **filenames;
 
-		FS_CheckTempnameSize( sizeof( char ) * ( strlen( basepath ) + 1 + strlen( gamedir ) + strlen( "/*." ) + strlen( pak_extensions[e] ) + 1 ) );
-		Q_snprintfz( tempname, tempname_size, "%s/%s/*.%s", basepath, gamedir, pak_extensions[e] );
+		Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/*.%s", basepath, gamedir, pak_extensions[e] );
 	
 		if( ( filenames = FS_ListFiles( tempname, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM ) ) != 0 )
 		{
@@ -3689,8 +3680,10 @@ void FS_Init( void )
 
 	assert( !fs_initialized );
 
-	fs_mempool = Mem_AllocPool( NULL, "Filesystem" );
+	fs_mutex = QMutex_Create();
 
+	fs_mempool = Mem_AllocPool( NULL, "Filesystem" );
+	
 	Cmd_AddCommand( "fs_path", FS_Path_f );
 	Cmd_AddCommand( "fs_pakfile", Cmd_PakFile_f );
 	Cmd_AddCommand( "fs_search", Cmd_FS_Search_f );
@@ -3700,7 +3693,6 @@ void FS_Init( void )
 	fs_numsearchfiles = FS_MIN_SEARCHFILES;
 	fs_searchfiles = ( searchfile_t* )FS_Malloc( sizeof( searchfile_t ) * fs_numsearchfiles );
 
-	fs_globalZipEntryUser = NULL;
 	memset( fs_filehandles, 0, sizeof( fs_filehandles ) );
 
 	//
@@ -3824,14 +3816,9 @@ void FS_Shutdown( void )
 		FS_Free( search );
 	}
 
-	if( tempname )
-	{
-		FS_Free( tempname );
-		tempname = NULL;
-		tempname_size = 0;
-	}
-
 	Mem_FreePool( &fs_mempool );
+
+	QMutex_Destroy( &fs_mutex );
 
 	fs_initialized = qfalse;
 }

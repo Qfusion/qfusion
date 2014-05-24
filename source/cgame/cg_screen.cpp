@@ -1104,16 +1104,7 @@ void CG_LoadingString( const char *str )
 */
 void CG_LoadingItemName( const char *str )
 {
-	cg.precacheCount++;
-	if( !cg_debugLoading->integer )
-	{
-		cg.checkname[0] = 0;
-		trap_R_UpdateScreen();
-		return;
-	}
-
-	Q_strncpyz( cg.checkname, str, sizeof( cg.checkname ) );
-	trap_R_UpdateScreen();
+	cg.precacheCount++;	
 }
 
 /*

@@ -21,13 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_backend_local.h"
 
-ALIGN( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec4_t batchSVectorsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec2_t batchSTCoordsArray[MAX_BATCH_VERTS];
-ALIGN( 16 ) vec2_t batchLMCoordsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
-ALIGN( 16 ) byte_vec4_t batchColorsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
-ALIGN( 16 ) elem_t batchElements[MAX_BATCH_ELEMENTS];
+ATTRIBUTE_ALIGNED( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) vec4_t batchSVectorsArray[MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) vec2_t batchSTCoordsArray[MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) vec2_t batchLMCoordsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) byte_vec4_t batchColorsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) elem_t batchElements[MAX_BATCH_ELEMENTS];
 
 rbackend_t rb;
 
@@ -137,8 +137,6 @@ void RB_StatsMessage( char *msg, size_t size )
 */
 static void RB_SetGLDefaults( void )
 {
-	int i;
-
 	qglClearColor( 1, 0, 0.5, 0.5 );
 
 	if( glConfig.stencilEnabled )
@@ -147,14 +145,6 @@ static void RB_SetGLDefaults( void )
 		qglStencilFunc( GL_EQUAL, 128, 0xFF );
 		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
 	}
-
-	// properly disable multitexturing at startup
-	for( i = glConfig.maxTextureUnits-1; i >= 0; i-- )
-	{
-		RB_SelectTextureUnit( i );
-		qglDisable( GL_TEXTURE_2D );
-	}
-	qglEnable( GL_TEXTURE_2D );
 
 	qglDisable( GL_CULL_FACE );
 	qglFrontFace( GL_CCW );
@@ -169,12 +159,17 @@ static void RB_SetGLDefaults( void )
 #endif
 	qglFrontFace( GL_CCW );
 
-	rb.gl.state = 0;
-	rb.gl.frontFace = qfalse;
+	memset( &rb.gl, 0, sizeof( rb.gl ) );
 	rb.gl.currentTMU = -1;
-	rb.gl.faceCull = 0;
-	rb.gl.polygonOffset[0] = rb.gl.polygonOffset[1] = 0;
-	memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
+}
+
+/*
+* RB_SelectContextTexture
+*/
+void RB_SelectContextTexture( int tmu )
+{
+	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
 }
 
 /*
@@ -186,11 +181,20 @@ void RB_SelectTextureUnit( int tmu )
 		return;
 
 	rb.gl.currentTMU = tmu;
+	RB_SelectContextTexture( tmu );
+}
 
-	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#ifndef GL_ES_VERSION_2_0
-	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#endif
+/*
+* RB_BindContextTexture
+*/
+void RB_BindContextTexture( int tmu, const image_t *tex )
+{
+	assert( tex != NULL );
+
+	if( tex->flags & IT_CUBEMAP )
+		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, tex->texnum );
+	else
+		qglBindTexture( GL_TEXTURE_2D, tex->texnum );
 }
 
 /*
@@ -202,8 +206,15 @@ void RB_BindTexture( int tmu, const image_t *tex )
 
 	assert( tex != NULL );
 
-	if( r_nobind->integer && rsh.noTexture && tex->texnum != 0 )  // performance evaluation option
+	if( tex->missing ) {
 		tex = rsh.noTexture;
+	} else if( !tex->loaded ) {
+		// not yet loaded from disk
+		tex = rsh.whiteTexture;
+	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
+		// performance evaluation option
+		tex = rsh.noTexture;
+	}
 
 	RB_SelectTextureUnit( tmu );
 
@@ -211,12 +222,8 @@ void RB_BindTexture( int tmu, const image_t *tex )
 	if( rb.gl.currentTextures[tmu] == texnum )
 		return;
 
-	rb.gl.anyTexturesBound = 1;
 	rb.gl.currentTextures[tmu] = texnum;
-	if( tex->flags & IT_CUBEMAP )
-		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, texnum );
-	else
-		qglBindTexture( GL_TEXTURE_2D, texnum );
+	RB_BindContextTexture( tmu, tex );
 }
 
 /*
@@ -232,13 +239,9 @@ void RB_AllocTextureNum( image_t *tex )
 */
 void RB_FreeTextureNum( image_t *tex )
 {
-	qglDeleteTextures( 1, &tex->texnum );
-	tex->texnum = 0;
-
-	// Ensures that the RB_BindTexture call that may follow will work
-	if( rb.gl.anyTexturesBound ) {
-		rb.gl.anyTexturesBound = 0;
-		memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
+	if( tex->texnum ) {
+		qglDeleteTextures( 1, &tex->texnum );
+		tex->texnum = 0;
 	}
 }
 
@@ -1162,16 +1165,11 @@ void RB_DrawElementsReal( void )
 			for( i = 0; i < numInstances; i++ ) {
 				RB_SetInstanceData( 1, rb.drawInstances + i );
 
-#ifndef GL_ES_VERSION_2_0
-				if( glConfig.ext.draw_range_elements )
-				{
+				if( glConfig.ext.draw_range_elements ) {
 					qglDrawRangeElementsEXT( rb.primitive, 
 						firstVert, firstVert + numVerts - 1, numElems, 
 						GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
-				}
-				else
-#endif
-				{
+				} else {
 					qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
 						(GLvoid *)(firstElem * sizeof( elem_t )) );
 				}
@@ -1183,16 +1181,11 @@ void RB_DrawElementsReal( void )
 	else {
 		numInstances = 1;
 
-#ifndef GL_ES_VERSION_2_0
-		if( glConfig.ext.draw_range_elements )
-		{
+		if( glConfig.ext.draw_range_elements ) {
 			qglDrawRangeElementsEXT( rb.primitive, 
 				firstVert, firstVert + numVerts - 1, numElems, 
 				GL_UNSIGNED_SHORT, (GLvoid *)(firstElem * sizeof( elem_t )) );
-		}
-		else
-#endif
-		{
+		} else {
 			qglDrawElements( rb.primitive, numElems, GL_UNSIGNED_SHORT,
 				(GLvoid *)(firstElem * sizeof( elem_t )) );
 		}
