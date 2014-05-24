@@ -1131,6 +1131,9 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
 	rsh.worldBrushModel->pvs = ( dvis_t * )pvsData;
+
+	// load all world images before proceeding
+	R_FinishLoadingImages();
 }
 
 /*

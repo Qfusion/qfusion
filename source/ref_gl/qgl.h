@@ -396,7 +396,7 @@ typedef unsigned int GLhandleARB;
 #define GL_RENDERBUFFER_STENCIL_SIZE_EXT					0x8D55
 #endif /* GL_EXT_framebuffer_object */
 
-/* GL_EXT_framebuffer_object */
+/* GL_EXT_framebuffer_blit */
 #ifndef GL_EXT_framebuffer_blit
 #define GL_EXT_framebuffer_blit
 
@@ -467,6 +467,7 @@ QGL_WGL(BOOL, wglSwapBuffers, (HDC));
 QGL_WGL(HGLRC, wglCreateContext, (HDC));
 QGL_WGL(BOOL, wglDeleteContext, (HGLRC));
 QGL_WGL(BOOL, wglMakeCurrent, (HDC, HGLRC));
+QGL_WGL(BOOL, wglShareLists, (HGLRC, HGLRC));
 
 // GLX Functions
 QGL_GLX(void *, glXGetProcAddressARB, (const GLubyte *procName));

@@ -52,7 +52,6 @@ typedef struct r_backend_s
 
 		int				currentTMU;
 		GLuint			currentTextures[MAX_TEXTURE_UNITS];
-		GLuint			anyTexturesBound;
 		int 			currentArrayVBO;
 		int 			currentElemArrayVBO;
 

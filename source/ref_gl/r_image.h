@@ -40,6 +40,7 @@ enum
 	,IT_NOFILTERING		= 1<<13
 	,IT_LUMINANCE		= 1<<14
 	,IT_BGRA			= 1<<15
+	,IT_SYNC			= 1<<16		// load image synchronously
 };
 
 #define IT_CINEMATIC		( IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP|IT_NOCOMPRESS )
@@ -49,7 +50,12 @@ enum
 typedef struct image_s
 {
 	char			*name;						// game path, not including extension
+	size_t			name_size;
 	int				registrationSequence;
+	volatile qboolean	
+					loaded;
+	volatile qboolean
+					missing;
 
 	char			extension[8];				// file extension
 	int				flags;
