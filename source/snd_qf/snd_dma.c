@@ -1448,7 +1448,7 @@ static unsigned S_HandleShutdownCmd( const sndCmdShutdown_t *cmd )
 {
 	//Com_Printf("S_HandleShutdownCmd\n");
 	S_Shutdown( cmd->verbose );
-	return sizeof( *cmd );
+	return 0; // terminate
 }
 
 /*
@@ -1514,7 +1514,6 @@ static unsigned S_HandleSetAttenuationModelCmd( const sndCmdSetAttenuationModel_
 static unsigned S_HandleSetEntitySpatializationCmd( const sndCmdSetEntitySpatialization_t *cmd )
 {
 	//Com_Printf("S_HandleSetEntitySpatializationCmd\n");
-	s_respatialize = qtrue;
 	S_SetEntitySpatialization( cmd->entnum, cmd->origin, cmd->velocity );
 	return sizeof( *cmd );
 }
@@ -1697,14 +1696,12 @@ static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd )
 	return sizeof( *cmd );
 }
 
-static const queueCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
+static queueCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 {
 	/* SND_CMD_INIT */
 	(queueCmdHandler_t)S_HandleInitCmd,
 	/* SND_CMD_SHUTDOWN */
 	(queueCmdHandler_t)S_HandleShutdownCmd,
-	/* SND_CMD_PTR_RESET */
-	(queueCmdHandler_t)NULL,
 	/* SND_CMD_CLEAR */
 	(queueCmdHandler_t)S_HandleClearCmd,
 	/* SND_CMD_STOP_ALL_SOUNDS */
@@ -1759,7 +1756,7 @@ void *S_BackgroundUpdateProc( void *param )
 	sndQueue_t *s_cmdQueue = param;
 
 	while ( 1 ){
-		int read = S_ReadEnqueuedCmds( s_cmdQueue, sndCmdHandlers, SND_CMD_SHUTDOWN );
+		int read = S_ReadEnqueuedCmds( s_cmdQueue, sndCmdHandlers );
 		
 		if( read < 0 ) {
 			// shutdown

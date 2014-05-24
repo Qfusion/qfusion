@@ -280,6 +280,12 @@ void CL_SoundModule_Init( qboolean verbose )
 	import.Mutex_Lock = Sys_Mutex_Lock;
 	import.Mutex_Unlock = Sys_Mutex_Unlock;
 
+	import.BufQueue_Create = Sys_BufQueue_Create;
+	import.BufQueue_Destroy = Sys_BufQueue_Destroy;
+	import.BufQueue_Finish = Sys_BufQueue_Finish;
+	import.BufQueue_EnqueueCmd = Sys_BufQueue_EnqueueCmd;
+	import.BufQueue_ReadCmds = Sys_BufQueue_ReadCmds;
+
 	if( !CL_SoundModule_Load( sound_modules[s_module->integer-1], &import, verbose ) )
 	{
 		if( s_module->integer == s_module_fallback->integer ||

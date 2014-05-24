@@ -246,3 +246,27 @@ static inline void trap_Mutex_Unlock( struct qmutex_s *mutex )
 	SOUND_IMPORT.Mutex_Unlock( mutex );
 }
 
+static inline qbufQueue_t *trap_BufQueue_Create( size_t bufSize, int flags )
+{
+	return SOUND_IMPORT.BufQueue_Create( bufSize, flags );
+}
+
+static inline void trap_BufQueue_Destroy( qbufQueue_t **pqueue )
+{
+	SOUND_IMPORT.BufQueue_Destroy( pqueue );
+}
+
+static inline void trap_BufQueue_Finish( qbufQueue_t *queue )
+{
+	SOUND_IMPORT.BufQueue_Finish( queue );
+}
+
+static inline void trap_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_size )
+{
+	SOUND_IMPORT.BufQueue_EnqueueCmd( queue, cmd, cmd_size );
+}
+
+static inline int trap_BufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) )
+{
+	return SOUND_IMPORT.BufQueue_ReadCmds( queue, cmdHandlers );
+}
