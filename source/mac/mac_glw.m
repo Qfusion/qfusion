@@ -27,9 +27,8 @@
 #include "../client/client.h"
 #include "mac_glw.h"
 
-void VID_NewWindow( int width, int height );
-
 glwstate_t glw_state = { NULL, qfalse };
+cvar_t * vid_fullscreen;
 
 /**
  * Set video mode.
@@ -81,8 +80,6 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		Com_Printf( "Couldn't enable threaded GL engine: %d\n", (int) err );
 #endif
 
-//	VID_NewWindow( width, height );
-	
 	// Restart Input ...
 	SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL );
 	SDL_ShowCursor( SDL_DISABLE );
@@ -112,7 +109,8 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	hinstance = NULL;
 	wndproc = NULL;
 	parenthWnd = NULL;
-//	vid_fullscreen->flags &= ~( CVAR_LATCH_VIDEO );
+	vid_fullscreen = ri.Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
+	vid_fullscreen->flags &= ~( CVAR_LATCH_VIDEO );
 
 	Com_Printf( "Display initialization\n" );
 
@@ -151,15 +149,6 @@ void GLimp_BeginFrame( void )
 void GLimp_EndFrame( void )
 {
 	SDL_GL_SwapBuffers();
-
-/*
-	if( vid_fullscreen->modified || ( vid_fullscreen->integer && vid_multiscreen_head->modified ) )
-	{
-		Cbuf_ExecuteText( EXEC_APPEND, "vid_restart\n");
-		vid_fullscreen->modified = qfalse;
-		vid_multiscreen_head->modified = qfalse;
-	}
-*/
 }
 
 
