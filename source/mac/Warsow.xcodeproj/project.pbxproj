@@ -559,7 +559,6 @@
 		F323F5BF191809E400F8FD6C /* steamlib_public.h in Headers */ = {isa = PBXBuildFile; fileRef = F323F5B9191809E400F8FD6C /* steamlib_public.h */; };
 		F323F5C0191809E400F8FD6C /* steamlib_syscalls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F323F5BA191809E400F8FD6C /* steamlib_syscalls.cpp */; };
 		F323F5C1191809E400F8FD6C /* steamlib_syscalls.h in Headers */ = {isa = PBXBuildFile; fileRef = F323F5BB191809E400F8FD6C /* steamlib_syscalls.h */; };
-		F323F5C2191810FA00F8FD6C /* steam.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F323F5A81918080400F8FD6C /* steam.dylib */; };
 		F323F5C51918169700F8FD6C /* steam.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5C31918169700F8FD6C /* steam.c */; };
 		F323F5C8191816C000F8FD6C /* bsp.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5C6191816C000F8FD6C /* bsp.c */; };
 		F323F5C9191816F400F8FD6C /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5561917FF2B00F8FD6C /* base64.c */; };
@@ -705,7 +704,7 @@
 			remoteGlobalIDString = F319F326191B3B2A001A1D4B;
 			remoteInfo = ref_gl;
 		};
-		F319F342191B3C0F001A1D4B /* PBXContainerItemProxy */ = {
+		F369E0CF19305B3200610AC9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
 			proxyType = 1;
@@ -1350,7 +1349,7 @@
 		F323F55D1917FF2B00F8FD6C /* md5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
 		F323F55E1917FF2B00F8FD6C /* q_trie.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = q_trie.c; sourceTree = "<group>"; };
 		F323F55F1917FF2B00F8FD6C /* q_trie.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = q_trie.h; sourceTree = "<group>"; };
-		F323F5A81918080400F8FD6C /* steam.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = steam.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		F323F5A81918080400F8FD6C /* steam_mac.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = steam_mac.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		F323F5B3191809E400F8FD6C /* lgpl-3.0.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "lgpl-3.0.txt"; sourceTree = "<group>"; };
 		F323F5B4191809E400F8FD6C /* steamlib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = steamlib.cpp; sourceTree = "<group>"; };
 		F323F5B5191809E400F8FD6C /* steamlib.vcxproj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = steamlib.vcxproj; sourceTree = "<group>"; };
@@ -1493,7 +1492,6 @@
 			files = (
 				2822521B0F6BEAA9002F3547 /* libz.dylib in Frameworks */,
 				9D251E4E159F5B2C001CE46F /* libcurl.framework in Frameworks */,
-				F323F5C2191810FA00F8FD6C /* steam.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1587,7 +1585,7 @@
 				28F121CD0F6B1DE00053E51D /* wsw_server */,
 				28F121D90F6B1DFA0053E51D /* wswtv_server */,
 				9D48C5BF15C2F94E007A1955 /* cin_mac.dylib */,
-				F323F5A81918080400F8FD6C /* steam.dylib */,
+				F323F5A81918080400F8FD6C /* steam_mac.dylib */,
 				F319F337191B3B2A001A1D4B /* ref_gl_mac.dylib */,
 				F3FDBAD3191D97560021E994 /* ftlib_mac.dylib */,
 			);
@@ -2799,7 +2797,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				F319F343191B3C0F001A1D4B /* PBXTargetDependency */,
+				F369E0D019305B3200610AC9 /* PBXTargetDependency */,
 				F319F341191B3C0A001A1D4B /* PBXTargetDependency */,
 				282252460F6BEE25002F3547 /* PBXTargetDependency */,
 				282254D70F6C3C20002F3547 /* PBXTargetDependency */,
@@ -2914,7 +2912,7 @@
 			);
 			name = steamlib;
 			productName = game_mac;
-			productReference = F323F5A81918080400F8FD6C /* steam.dylib */;
+			productReference = F323F5A81918080400F8FD6C /* steam_mac.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 		F3FDBAA1191D97560021E994 /* ftlib_mac */ = {
@@ -3634,10 +3632,10 @@
 			target = F319F326191B3B2A001A1D4B /* ref_gl */;
 			targetProxy = F319F340191B3C0A001A1D4B /* PBXContainerItemProxy */;
 		};
-		F319F343191B3C0F001A1D4B /* PBXTargetDependency */ = {
+		F369E0D019305B3200610AC9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F323F5621918080400F8FD6C /* steamlib */;
-			targetProxy = F319F342191B3C0F001A1D4B /* PBXContainerItemProxy */;
+			targetProxy = F369E0CF19305B3200610AC9 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -4296,7 +4294,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
-				PRODUCT_NAME = steam;
+				PRODUCT_NAME = steam_mac;
 			};
 			name = Debug;
 		};
@@ -4320,7 +4318,7 @@
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
-				PRODUCT_NAME = steam;
+				PRODUCT_NAME = steam_mac;
 				ZERO_LINK = NO;
 			};
 			name = Release;
