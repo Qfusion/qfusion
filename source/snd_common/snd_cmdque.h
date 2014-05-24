@@ -23,13 +23,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define SND_COMMANDS_BUFSIZE	0x100000
 
-struct qmutex_s;
+typedef struct qbufQueue_s sndQueue_t;
+typedef unsigned (*queueCmdHandler_t)( const void * );
 
 enum
 {
 	SND_CMD_INIT,
 	SND_CMD_SHUTDOWN,
-	SND_CMD_PTR_RESET,
 	SND_CMD_CLEAR,
 	SND_CMD_STOP_ALL_SOUNDS,
 	SND_CMD_FREE_SFX,
@@ -69,11 +69,6 @@ typedef struct
 	int id;
 	int verbose;
 } sndCmdShutdown_t;
-
-typedef struct
-{
-	int id;
-} sndCmdPtrReset_t;
 
 typedef struct
 {
@@ -236,21 +231,9 @@ typedef struct
 	char text[80];
 } sndStuffCmd_t;
 
-typedef unsigned (*queueCmdHandler_t)( const void * );
-
-typedef struct
-{
-	volatile int terminated;
-	unsigned write_pos;
-	unsigned read_pos;
-	volatile int cmdbuf_len;
-	struct qmutex_s	*cmdbuf_mutex;
-	char buf[SND_COMMANDS_BUFSIZE];
-} sndQueue_t;
-
 sndQueue_t *S_CreateSoundQueue( void );
 void S_DestroySoundQueue( sndQueue_t **pqueue );
-int S_ReadEnqueuedCmds( sndQueue_t *queue, const queueCmdHandler_t *cmdHandlers, int shutdownCmdId );
+int S_ReadEnqueuedCmds( sndQueue_t *queue, queueCmdHandler_t *cmdHandlers );
 void S_FinishSoundQueue( sndQueue_t *queue );
 
 void S_IssueInitCmd( sndQueue_t *queue, void *hwnd, int maxents, qboolean verbose );

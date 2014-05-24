@@ -21,21 +21,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "snd_local.h"
 #include "snd_cmdque.h"
 
-#if defined(HAVE__BUILTIN_ATOMIC)
-#elif defined(HAVE__INTERLOCKED_API)
-# include <Windows.h>
-#endif
-
 // =====================================================================
 
 /*
 * S_CreateSoundQueue
 */
-sndQueue_t *S_CreateSoundQueue( void )
+qbufQueue_t *S_CreateSoundQueue( void )
 {
-	sndQueue_t *queue = S_Malloc( sizeof( *queue ) );
-	trap_Mutex_Create( &queue->cmdbuf_mutex );
-	return queue;
+	return trap_BufQueue_Create( SND_COMMANDS_BUFSIZE, 0 );
 }
 
 /*
@@ -43,18 +36,7 @@ sndQueue_t *S_CreateSoundQueue( void )
 */
 void S_DestroySoundQueue( sndQueue_t **pqueue )
 {
-	sndQueue_t *queue;
-
-	assert( pqueue != NULL );
-	if( !pqueue ) {
-		return;
-	}
-
-	queue = *pqueue;
-	*pqueue = NULL;
-
-	trap_Mutex_Destroy( queue->cmdbuf_mutex );
-	S_Free( queue );
+	trap_BufQueue_Destroy( pqueue );
 }
 
 /*
@@ -65,98 +47,15 @@ void S_DestroySoundQueue( sndQueue_t **pqueue )
 */
 void S_FinishSoundQueue( sndQueue_t *queue )
 {
-	while( queue->cmdbuf_len > 0 && !queue->terminated ) {
-		trap_Sleep( 0 );
-	}
-}
-
-/*
-* S_AllocQueueCmdBuf
-*/
-static void *S_AllocQueueCmdBuf( sndQueue_t *queue, unsigned cmd_size )
-{
-	void *buf = &queue->buf[queue->write_pos];
-	queue->write_pos += cmd_size;
-	return buf;
-}
-
-/*
-* S_AtomicBufLenAdd
-*/
-static void S_AtomicBufLenAdd( sndQueue_t *queue, int val )
-{
-#if defined(HAVE__BUILTIN_ATOMIC)
-	__sync_fetch_and_add( &queue->cmdbuf_len, val );
-#elif defined(HAVE__INTERLOCKED_API)
-	InterlockedExchangeAdd( (volatile LONG*)&queue->cmdbuf_len, val );
-#else
-	trap_Mutex_Lock( queue->cmdbuf_mutex );
-	queue->cmdbuf_len += val;
-	trap_Mutex_Unlock( queue->cmdbuf_mutex );
-#endif
+	trap_BufQueue_Finish( queue );
 }
 
 /*
 * S_EnqueueCmd
-*
-* Add new command to buffer. Never allow the distance between the reader
-* and the writer to grow beyond the size of the buffer.
-*
-* Note that there are race conditions here but in the worst case we're going
-* to erroneously drop cmd's instead of stepping on the reader's toes.
 */
 static void S_EnqueueCmd( sndQueue_t *queue, const void *cmd, unsigned cmd_size )
 {
-	void *buf;
-	unsigned write_remains;
-	
-	if( !queue ) {
-		return;
-	}
-	if( queue->terminated ) {
-		return;
-	}
-
-	assert( sizeof( queue->buf ) >= queue->write_pos );
-	if( sizeof( queue->buf ) < queue->write_pos ) {
-		queue->write_pos = 0;
-	}
-
-	write_remains = sizeof( queue->buf ) - queue->write_pos;
-
-	if( sizeof( sndCmdPtrReset_t ) > write_remains ) {
-		if( queue->cmdbuf_len + cmd_size + write_remains > sizeof( queue->buf ) ) {
-			return;
-		}
-
-		// not enough space to enqueue even the reset cmd, rewind
-		S_AtomicBufLenAdd( queue, write_remains ); // atomic
-		queue->write_pos = 0;
-	} else if( cmd_size > write_remains ) {
-		sndCmdPtrReset_t *cmd;
-
-		if( queue->cmdbuf_len + sizeof( sndCmdPtrReset_t ) + cmd_size 
-			+ write_remains > sizeof( queue->buf ) ) {
-			return;
-		}
-
-		// explicit pointer reset cmd
-		cmd = S_AllocQueueCmdBuf( queue, sizeof( *cmd ) );
-		cmd->id = SND_CMD_PTR_RESET;
-
-		S_AtomicBufLenAdd( queue, sizeof( *cmd ) + write_remains ); // atomic
-		queue->write_pos = 0;
-	}
-	else
-	{
-		if( queue->cmdbuf_len + cmd_size > sizeof( queue->buf ) ) {
-			return;
-		}
-	}
-
-	buf = S_AllocQueueCmdBuf( queue, cmd_size );
-	memcpy( buf, cmd, cmd_size );
-	S_AtomicBufLenAdd( queue, cmd_size ); // atomic
+	trap_BufQueue_EnqueueCmd( queue, cmd, cmd_size );
 }
 
 /*
@@ -488,57 +387,7 @@ void S_IssueStuffCmd( sndQueue_t *queue, const char *text )
 /*
 * S_ReadEnqueuedCmds
 */
-int S_ReadEnqueuedCmds( sndQueue_t *queue, const queueCmdHandler_t *cmdHandlers, int shutdownCmdId )
+int S_ReadEnqueuedCmds( sndQueue_t *queue, queueCmdHandler_t *cmdHandlers )
 {
-	int read = 0;
-
-	if( !queue ) {
-		return -1;
-	}
-
-	while( queue->cmdbuf_len > 0 && !queue->terminated ) {
-		int cmd;
-		int cmd_size;
-		int read_remains;
-	
-		assert( sizeof( queue->buf ) >= queue->read_pos );
-		if( sizeof( queue->buf ) < queue->read_pos ) {
-			queue->read_pos = 0;
-		}
-
-		read_remains = sizeof( queue->buf ) - queue->read_pos;
-
-		if( sizeof( sndCmdPtrReset_t ) > read_remains ) {
-			// implicit reset
-			queue->read_pos = 0;
-			S_AtomicBufLenAdd( queue, -read_remains );
-		}
-
-		cmd = *((int *)(queue->buf + queue->read_pos));
-		if( cmd == SND_CMD_PTR_RESET ) {
-			// this cmd is special
-			queue->read_pos = 0;
-			S_AtomicBufLenAdd( queue, -((int)(sizeof(sndCmdPtrReset_t) + read_remains)) ); // atomic
-			continue;
-		}
-
-		cmd_size = cmdHandlers[cmd](queue->buf + queue->read_pos);
-		read++;
-
-		if( cmd == shutdownCmdId ) {
-			queue->terminated = 1;
-			return -1;
-		}
-		
-		if( cmd_size > queue->cmdbuf_len ) {
-			assert( 0 );
-			queue->terminated = 1;
-			return -1;
-		}
-
-		queue->read_pos += cmd_size;
-		S_AtomicBufLenAdd( queue, -cmd_size ); // atomic
-	}
-
-	return read;
+	return trap_BufQueue_ReadCmds( queue, cmdHandlers );
 }

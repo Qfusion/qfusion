@@ -26,9 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //===============================================================
 
-struct sfx_s;
-struct qthread_s;
-struct qmutex_s;
+typedef struct sfx_s sfx_t;
+typedef struct qthread_s qthread_t;
+typedef struct qmutex_s qmutex_t;
+typedef struct qbufQueue_s qbufQueue_t;
 
 //
 // functions provided by the main engine
@@ -100,6 +101,12 @@ typedef struct
 	void ( *Mutex_Destroy )( struct qmutex_s *mutex );
 	void ( *Mutex_Lock )( struct qmutex_s *mutex );
 	void ( *Mutex_Unlock )( struct qmutex_s *mutex );
+
+	qbufQueue_t *( *BufQueue_Create )( size_t bufSize, int flags );
+	void ( *BufQueue_Destroy )( qbufQueue_t **pqueue );
+	void ( *BufQueue_Finish )( qbufQueue_t *queue );
+	void ( *BufQueue_EnqueueCmd )( qbufQueue_t *queue, const void *cmd, unsigned cmd_size );
+	int ( *BufQueue_ReadCmds )( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) );
 } sound_import_t;
 
 //
