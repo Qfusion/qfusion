@@ -2975,6 +2975,8 @@ void CL_Init( void )
 	if( dedicated->integer )
 		return; // nothing running on the client
 
+	cl_initialized = qtrue;
+
 	// all archived variables will now be loaded
 
 	Con_Init();
@@ -3026,8 +3028,6 @@ void CL_Init( void )
 	ML_Init();
 
 	CL_Mumble_Init();
-
-	cl_initialized = qtrue;
 }
 
 /*
