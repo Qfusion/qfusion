@@ -169,7 +169,9 @@ static void RB_SetGLDefaults( void )
 void RB_SelectContextTexture( int tmu )
 {
 	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#ifndef GL_ES_VERSION_2_0
 	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#endif
 }
 
 /*
