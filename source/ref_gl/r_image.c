@@ -229,8 +229,8 @@ enum
 static qbyte *r_screenShotBuffer;
 static size_t r_screenShotBufferSize;
 
-static qbyte *r_imageBuffers[NUM_GL_CONTEXTS][NUM_IMAGE_BUFFERS];
-static size_t r_imageBufSize[NUM_GL_CONTEXTS][NUM_IMAGE_BUFFERS];
+static qbyte *r_imageBuffers[NUM_QGL_CONTEXTS][NUM_IMAGE_BUFFERS];
+static size_t r_imageBufSize[NUM_QGL_CONTEXTS][NUM_IMAGE_BUFFERS];
 
 #define R_PrepareImageBuffer(ctx,buffer,size) _R_PrepareImageBuffer(ctx,buffer,size,__FILE__,__LINE__)
 
@@ -260,7 +260,7 @@ void R_FreeImageBuffers( void )
 {
 	int i, j;
 
-	for( i = 0; i < NUM_GL_CONTEXTS; i++ )
+	for( i = 0; i < NUM_QGL_CONTEXTS; i++ )
 		for( j = 0; j < NUM_IMAGE_BUFFERS; j++ )
 		{
 			if( r_imageBuffers[i][j] )
@@ -839,7 +839,7 @@ static void R_LoadImageFromDisk( int ctx, image_t *image )
 			R_Upload32( ctx, pic, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
 
-			if( ctx == GL_CONTEXT_LOADER ) {
+			if( ctx == QGL_CONTEXT_LOADER ) {
 				// let the main thread know about the new texture data
 				RB_Finish();
 			}
@@ -882,7 +882,7 @@ static void R_LoadImageFromDisk( int ctx, image_t *image )
 			R_Upload32( ctx, &pic, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
 
-			if( ctx == GL_CONTEXT_LOADER ) {
+			if( ctx == QGL_CONTEXT_LOADER ) {
 				// let the main thread know about the new texture data
 				RB_Finish();
 			}
@@ -969,7 +969,7 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 
 	RB_BindTexture( 0, image );
 
-	R_Upload32( GL_CONTEXT_MAIN, pic, width, height, flags, 
+	R_Upload32( QGL_CONTEXT_MAIN, pic, width, height, flags, 
 		&image->upload_width, &image->upload_height, image->samples, qfalse, qfalse );
 
 	image_cur_hash = IMAGES_HASH_SIZE+1;
@@ -1003,10 +1003,10 @@ void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int fla
 	RB_BindTexture( 0, image );
 
 	if( image->width != width || image->height != height )
-		R_Upload32( GL_CONTEXT_MAIN, pic, width, height, flags, 
+		R_Upload32( QGL_CONTEXT_MAIN, pic, width, height, flags, 
 		&(image->upload_width), &(image->upload_height), samples, qfalse, qfalse );
 	else
-		R_Upload32( GL_CONTEXT_MAIN, pic, width, height, flags, 
+		R_Upload32( QGL_CONTEXT_MAIN, pic, width, height, flags, 
 		&(image->upload_width), &(image->upload_height), samples, qtrue, qfalse );
 
 	image->flags = flags;
@@ -1030,7 +1030,7 @@ void R_ReplaceSubImage( image_t *image, qbyte **pic, int width, int height )
 
 	RB_BindTexture( 0, image );
 
-	R_Upload32( GL_CONTEXT_MAIN, pic, width, height, image->flags,
+	R_Upload32( QGL_CONTEXT_MAIN, pic, width, height, image->flags,
 		&w, &h, image->samples, qtrue, qtrue );
 
 	image->registrationSequence = rsh.registrationSequence;
@@ -1126,7 +1126,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 		return image;
 	}
 
-	R_LoadImageFromDisk( GL_CONTEXT_MAIN, image );
+	R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image );
 	if( image->missing ) {
 		R_FreeImage( image );
 		image = NULL;
@@ -1243,7 +1243,7 @@ static void R_InitNoTexture( int *w, int *h, int *flags, int *samples )
 	*samples = 3;
 
 	// ch : check samples
-	data = R_PrepareImageBuffer( GL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 8 * 8 * 3 );
+	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 8 * 8 * 3 );
 	for( x = 0; x < 8; x++ )
 	{
 		for( y = 0; y < 8; y++ )
@@ -1270,7 +1270,7 @@ static qbyte *R_InitSolidColorTexture( int *w, int *h, int *flags, int *samples,
 	*samples = 3;
 
 	// ch : check samples
-	data = R_PrepareImageBuffer( GL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 1 * 1 * 3 );
+	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 1 * 1 * 3 );
 	data[0] = data[1] = data[2] = color;
 	return data;
 }
@@ -1292,7 +1292,7 @@ static void R_InitParticleTexture( int *w, int *h, int *flags, int *samples )
 	*flags = IT_NOPICMIP|IT_NOMIPMAP;
 	*samples = 4;
 
-	data = R_PrepareImageBuffer( GL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 16 * 16 * 4 );
+	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 16 * 16 * 4 );
 	for( x = 0; x < 16; x++ )
 	{
 		dx2 = x - 8;
@@ -1363,7 +1363,7 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples )
 	*flags = IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS|IT_CLAMP;
 	*samples = 4;
 
-	data = R_PrepareImageBuffer( GL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 32 * 32 * 4 );
+	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 32 * 32 * 4 );
 	for( y = 0; y < 32; y++ )
 	{
 		dy = ( y - 15.5f ) * ( 1.0f / 16.0f );
@@ -1457,7 +1457,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			RB_BindTexture( 0, t );
 			t->width = width;
 			t->height = height;
-			R_Upload32( GL_CONTEXT_MAIN, &data, width, height, flags, 
+			R_Upload32( QGL_CONTEXT_MAIN, &data, width, height, flags, 
 				&t->upload_width, &t->upload_height, t->samples, qfalse, qfalse );
 		}
 
@@ -2038,7 +2038,7 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 {
 	loaderPicCmd_t *cmd = pcmd;
 	image_t *image = images + cmd->pic;
-	R_LoadImageFromDisk( GL_CONTEXT_LOADER, image );
+	R_LoadImageFromDisk( QGL_CONTEXT_LOADER, image );
 	return sizeof( *cmd );
 }
 
