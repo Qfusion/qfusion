@@ -631,11 +631,13 @@ static void CL_MasterAddressCache_Shutdown( void )
 	QMutex_Destroy( &resolveLock );
 
 	// free allocated memory
-	Trie_Dump( serverlist_masters_trie, "", TRIE_DUMP_BOTH, &dump );
-	for( i = 0; i < dump->size; ++i ) {
-		free( dump->key_value_vector[i].value );
+	if( serverlist_masters_trie ) {
+		Trie_Dump( serverlist_masters_trie, "", TRIE_DUMP_BOTH, &dump );
+		for( i = 0; i < dump->size; ++i ) {
+			free( dump->key_value_vector[i].value );
+		}
+		Trie_Destroy( serverlist_masters_trie );
 	}
-	Trie_Destroy( serverlist_masters_trie );
 }
 
 /*
