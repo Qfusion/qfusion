@@ -796,6 +796,11 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	decalmap = pass->images[3] && !pass->images[3]->missing ?  pass->images[3] : NULL;
 	entdecalmap = pass->images[4] && !pass->images[4]->missing ?  pass->images[4] : NULL;
 
+	// use blank image if the normalmap is too tiny due to high picmip value
+	if( normalmap && normalmap->upload_width < 2 || normalmap->upload_height < 2 ) {
+		normalmap = rsh.blankBumpTexture;
+	}
+
 	if( normalmap == rsh.blankBumpTexture && !glossmap && !decalmap && !entdecalmap ) {
 		// render as plain Q3A shader, which is less computation-intensive
 		RB_RenderMeshGLSL_Q3AShader( pass, programFeatures );
@@ -809,11 +814,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	glossIntensity = rb.currentShader->glossIntensity ? rb.currentShader->glossIntensity : r_lighting_glossintensity->value;
 	glossExponent = rb.currentShader->glossExponent ? rb.currentShader->glossExponent : r_lighting_glossexponent->value;
-
-	// use blank image if the normalmap is too tiny due to high picmip value
-	if( normalmap && normalmap->upload_width < 2 || normalmap->upload_height < 2 ) {
-		normalmap = rsh.blankBumpTexture;
-	}
 
 	applyDecal = decalmap != NULL;
 
