@@ -1317,6 +1317,24 @@ static void R_InitWhiteTexture( int *w, int *h, int *flags, int *samples )
 }
 
 /*
+* R_InitWhiteCubemapTexture
+*/
+static void R_InitWhiteCubemapTexture( int *w, int *h, int *flags, int *samples )
+{
+	int i;
+
+	*w = *h = 1;
+	*flags = IT_NOPICMIP|IT_NOCOMPRESS|IT_CUBEMAP;
+	*samples = 3;
+
+	for( i = 0; i < 6; i++ ) {
+		qbyte *data;
+		data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0+i, 1 * 1 * 3 );
+		data[0] = data[1] = data[2] = 255;
+	}
+}
+
+/*
 * R_InitBlackTexture
 */
 static void R_InitBlackTexture( int *w, int *h, int *flags, int *samples )
@@ -1689,6 +1707,7 @@ static void R_InitBuiltinTextures( void )
 	{
 		{ "***r_notexture***", &rsh.noTexture, &R_InitNoTexture },
 		{ "***r_whitetexture***", &rsh.whiteTexture, &R_InitWhiteTexture },
+		{ "***r_whitecubemaptexture***", &rsh.whiteCubemapTexture, &R_InitWhiteCubemapTexture },
 		{ "***r_blacktexture***", &rsh.blackTexture, &R_InitBlackTexture },
 		{ "***r_greytexture***", &rsh.greyTexture, &R_InitGreyTexture },
 		{ "***r_blankbumptexture***", &rsh.blankBumpTexture, &R_InitBlankBumpTexture },
@@ -1702,7 +1721,7 @@ static void R_InitBuiltinTextures( void )
 	{
 		textures[i].init( &w, &h, &flags, &samples );
 
-		image = R_LoadImage( textures[i].name, r_imageBuffers[0], w, h, flags, samples );
+		image = R_LoadImage( textures[i].name, r_imageBuffers[QGL_CONTEXT_MAIN], w, h, flags, samples );
 
 		if( textures[i].image )
 			*( textures[i].image ) = image;
@@ -1720,6 +1739,7 @@ static void R_TouchBuiltinTextures( void )
 	R_TouchImage( rsh.rawYUVTextures[2] );
 	R_TouchImage( rsh.noTexture );
 	R_TouchImage( rsh.whiteTexture );
+	R_TouchImage( rsh.whiteCubemapTexture );
 	R_TouchImage( rsh.blackTexture ); 
 	R_TouchImage( rsh.greyTexture );
 	R_TouchImage( rsh.blankBumpTexture ); 
@@ -1742,6 +1762,7 @@ static void R_ReleaseBuiltinTextures( void )
 	rsh.rawYUVTextures[0] = rsh.rawYUVTextures[1] = rsh.rawYUVTextures[2] = NULL;
 	rsh.noTexture = NULL;
 	rsh.whiteTexture = rsh.blackTexture = rsh.greyTexture = NULL;
+	rsh.whiteCubemapTexture = NULL;
 	rsh.blankBumpTexture = NULL;
 	rsh.particleTexture = NULL;
 	rsh.coronaTexture = NULL;

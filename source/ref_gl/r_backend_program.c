@@ -1606,8 +1606,8 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	// bind white texture for shadow map view
 #define CELSHADE_BIND(tmu,tex,feature,canAdd) \
 	if( tex && !tex->missing ) { \
-		if( rb.renderFlags & RF_SHADOWMAPVIEW || !tex->loaded ) { \
-			tex = rsh.whiteTexture; \
+		if( rb.renderFlags & RF_SHADOWMAPVIEW ) { \
+			tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture; \
 		} else {\
 			programFeatures |= feature; \
 			if( canAdd && tex->samples == 3 ) programFeatures |= ((feature) << 1); \

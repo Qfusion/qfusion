@@ -214,6 +214,7 @@ typedef struct
 	image_t			*rawYUVTextures[3];			// 8bit cinematic textures (YCbCr)
 	image_t			*noTexture;					// use for bad textures
 	image_t			*whiteTexture;
+	image_t			*whiteCubemapTexture;
 	image_t			*blackTexture;
 	image_t			*greyTexture;
 	image_t			*blankBumpTexture;
