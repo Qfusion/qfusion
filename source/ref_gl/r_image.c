@@ -839,6 +839,11 @@ static void R_LoadImageFromDisk( int ctx, image_t *image )
 			R_Upload32( ctx, pic, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
 
+			if( ctx == GL_CONTEXT_LOADER ) {
+				// let the main thread know about the new texture data
+				RB_Finish();
+			}
+
 			image->extension[0] = '.';
 			Q_strncpyz( &image->extension[1], &pathname[len+4], sizeof( image->extension )-1 );
 			image->loaded = qtrue;
@@ -873,8 +878,15 @@ static void R_LoadImageFromDisk( int ctx, image_t *image )
 			image->width = width;
 			image->height = height;
 			image->samples = samples;
+
 			R_Upload32( ctx, &pic, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
+
+			if( ctx == GL_CONTEXT_LOADER ) {
+				// let the main thread know about the new texture data
+				RB_Finish();
+			}
+
 			image->extension[0] = '.';
 			Q_strncpyz( &image->extension[1], &pathname[len+1], sizeof( image->extension )-1 );
 			image->loaded = qtrue;

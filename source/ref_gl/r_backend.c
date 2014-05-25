@@ -1317,6 +1317,22 @@ void RB_SetRenderFlags( int flags )
 }
 
 /*
+* RB_Finish
+*/
+void RB_Finish( void )
+{
+	qglFinish();
+}
+	
+/*
+* RB_Flush
+*/
+void RB_Flush( void )
+{
+	qglFlush();
+}
+
+/*
 * RB_EnableTriangleOutlines
 *
 * Returns triangle outlines state before the call

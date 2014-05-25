@@ -294,7 +294,7 @@ void R_RenderScene( const refdef_t *fd )
 	VectorCopy( fd->vieworg, rn.lodOrigin );
 
 	if( gl_finish->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
-		qglFinish();
+		RB_Finish();
 
 	if( fbFlags & 2 ) {
 		// clear the framebuffer we're going to render the weapon model to
