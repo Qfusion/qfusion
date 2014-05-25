@@ -516,6 +516,10 @@ static int Shader_SetImageFlags( shader_t *shader )
 		flags |= IT_NOCOMPRESS;
 	if( r_shaderNoFiltering )
 		flags |= IT_NOFILTERING;
+	if( shader->type == SHADER_TYPE_2D 
+		|| shader->type == SHADER_TYPE_2D_RAW 
+		|| shader->type == SHADER_TYPE_VIDEO )
+		flags |= IT_SYNC;
 	//if( r_shaderHasAutosprite )
 	//	flags |= IT_CLAMP;
 
