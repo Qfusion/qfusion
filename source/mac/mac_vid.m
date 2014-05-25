@@ -100,11 +100,3 @@ qboolean VID_GetDisplaySize( int *width, int *height )
 	return qfalse;
 }
 
-/*
- ** VID_NewWindow
- */
-void VID_NewWindow( int width, int height )
-{
-	viddef.width  = width;
-	viddef.height = height;
-}
