@@ -137,8 +137,6 @@ void RB_StatsMessage( char *msg, size_t size )
 */
 static void RB_SetGLDefaults( void )
 {
-	qglClearColor( 1, 0, 0.5, 0.5 );
-
 	if( glConfig.stencilEnabled )
 	{
 		qglStencilMask( ( GLuint ) ~0 );
@@ -158,6 +156,9 @@ static void RB_SetGLDefaults( void )
 	qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 #endif
 	qglFrontFace( GL_CCW );
+
+	qglClearColor( 0.1, 0.09, 0.12, 1.0 );
+	qglClear( GL_COLOR_BUFFER_BIT );
 
 	memset( &rb.gl, 0, sizeof( rb.gl ) );
 	rb.gl.currentTMU = -1;
