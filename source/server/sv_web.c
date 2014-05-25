@@ -385,6 +385,7 @@ static void SV_Web_ParseStartLine( sv_http_request_t *request, char *line )
 	*ptr = '\0';
 
 	request->resource = ZoneCopyString( *token ? token : "/" );
+	Q_urldecode( request->resource, request->resource, strlen( request->resource ) + 1 );
 
 	// split resource into filepath and query string
 	delim = strstr( request->resource, "?" );

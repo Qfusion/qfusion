@@ -203,6 +203,17 @@ qboolean Q_isdigit( const char *str );
 char *Q_trim( char *s );
 char *Q_chrreplace( char *s, const char subj, const char repl );
 
+/**
+ * Converts the given null-terminated string to an URL encoded null-terminated string.
+ * Only "unsafe" subset of characters are encoded.
+ */
+void Q_urlencode_unsafechars( const char *src, char *dst, size_t dst_size );
+/**
+ * Converts the given URL-encoded string to a null-terminated plain string. Returns 
+ * total (untruncated) length of the resulting string.
+ */
+size_t Q_urldecode( const char *src, char *dst, size_t dst_size );
+
 void *Q_memset32( void *dest, int c, size_t dwords );
 
 // color string functions ("^1text" etc)

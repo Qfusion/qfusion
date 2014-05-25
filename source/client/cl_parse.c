@@ -543,9 +543,11 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 			Q_snprintfz( fullurl, alloc_size, "%s/%s", cls.httpbaseurl, url );
 		}
 		else {
-			alloc_size = strlen( url ) + 1 + strlen( filename ) + 1;
+			size_t url_len = strlen( url );
+			alloc_size = url_len + 1 + strlen( filename ) * 3 + 1;
 			fullurl = Mem_ZoneMalloc( alloc_size );
-			Q_snprintfz( fullurl, alloc_size, "%s/%s", url, filename );
+			Q_snprintfz( fullurl, alloc_size, "%s/", url );
+			Q_urlencode_unsafechars( filename, fullurl + url_len + 1, alloc_size - url_len - 1 );
 		}
 
 		headers[0] = "Referer";
