@@ -38,10 +38,10 @@ typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform
 
 enum
 {
-	GL_CONTEXT_MAIN,
-	GL_CONTEXT_LOADER,
+	QGL_CONTEXT_MAIN,
+	QGL_CONTEXT_LOADER,
 
-	NUM_GL_CONTEXTS
+	NUM_QGL_CONTEXTS
 };
 
 #include "r_math.h"
