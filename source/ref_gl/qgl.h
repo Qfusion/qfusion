@@ -485,6 +485,7 @@ QGL_GLX(const char *, glXQueryExtensionsString, (Display *dpy, int screen));
 QGL_EGL(void *, eglGetProcAddress, (const char *procname));
 QGL_EGL(EGLBoolean, eglChooseConfig, (EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs, EGLint config_size, EGLint *num_config));
 QGL_EGL(EGLContext, eglCreateContext, (EGLDisplay dpy, EGLConfig config, EGLContext share_context, const EGLint *attrib_list));
+QGL_EGL(EGLSurface, eglCreatePbufferSurface, (EGLDisplay dpy, EGLConfig config, const EGLint *attrib_list));
 QGL_EGL(EGLSurface, eglCreateWindowSurface, (EGLDisplay dpy, EGLConfig config, EGLNativeWindowType win, const EGLint *attrib_list));
 QGL_EGL(EGLBoolean, eglDestroyContext, (EGLDisplay dpy, EGLContext ctx));
 QGL_EGL(EGLBoolean, eglDestroySurface, (EGLDisplay dpy, EGLSurface surface));
