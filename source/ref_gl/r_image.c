@@ -761,8 +761,6 @@ static void R_LoadImageFromDisk( int ctx, image_t *image )
 	const char *extension = "";
 	int width = 1, height = 1, samples = 1;
 
-	//Com_Printf( "Load pic %s\n", image->name );
-
 	if( flags & IT_CUBEMAP )
 	{
 		int i, j;
@@ -842,7 +840,7 @@ static void R_LoadImageFromDisk( int ctx, image_t *image )
 				&image->upload_height, samples, qfalse, qfalse );
 
 			image->extension[0] = '.';
-			//Q_strncpyz( &image->extension[1], &pathname[len+4], sizeof( image->extension )-1 );
+			Q_strncpyz( &image->extension[1], &pathname[len+4], sizeof( image->extension )-1 );
 			image->loaded = qtrue;
 		}
 		else
@@ -878,7 +876,7 @@ static void R_LoadImageFromDisk( int ctx, image_t *image )
 			R_Upload32( ctx, &pic, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
 			image->extension[0] = '.';
-			//Q_strncpyz( &image->extension[1], &pathname[len+1], sizeof( image->extension )-1 );`s_mo	`
+			Q_strncpyz( &image->extension[1], &pathname[len+1], sizeof( image->extension )-1 );
 			image->loaded = qtrue;
 		}
 		else
@@ -1038,8 +1036,6 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 	unsigned int len, key;
 	image_t	*image, *hnode;
 	char *pathname;
-	const char *extension = "";
-	size_t pathsize;
 	qbyte *empty_data[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
 
 	if( !name || !name[0] )
@@ -1047,7 +1043,6 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 
 	ENSUREBUFSIZE( imagePathBuf, strlen( name ) + (suffix ? strlen( suffix ) : 0) + 5 );
 	pathname = r_imagePathBuf;
-	pathsize = r_sizeof_imagePathBuf;
 
 	lastDot = -1;
 	lastSlash = -1;
@@ -1073,10 +1068,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 	}
 
 	if( lastDot != -1 )
-	{
 		len = lastDot;
-		extension = &name[len];
-	}
 
 	if( suffix )
 	{
@@ -1570,20 +1562,25 @@ static void R_InitStretchRawTexture( void )
 {
 	const char * const name = "*** raw ***";
 	int name_len = strlen( name );
+	image_t *rawtexture;
 
 	// reserve a dummy texture slot
 	image_cur_hash = COM_SuperFastHash( ( const qbyte *)name, name_len, name_len ) % IMAGES_HASH_SIZE;
-	rsh.rawTexture = R_LinkPic();
+	rawtexture = R_LinkPic();
 
-	assert( rsh.rawTexture );
-	if( !rsh.rawTexture ) {
+	assert( rawtexture );
+	if( !rawtexture ) {
 		ri.Com_Error( ERR_FATAL, "Failed to register cinematic texture" );
 	}
 
-	rsh.rawTexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-	rsh.rawTexture->flags = IT_CINEMATIC;
-	strcpy( rsh.rawTexture->name, name );
-	RB_AllocTextureNum( rsh.rawTexture );
+	rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
+	rawtexture->flags = IT_CINEMATIC;
+	strcpy( rawtexture->name, name );
+	RB_AllocTextureNum( rawtexture );
+	rawtexture->loaded = qtrue;
+	rawtexture->missing = qfalse;
+
+	rsh.rawTexture = rawtexture;
 }
 
 /*
@@ -1611,6 +1608,8 @@ static void R_InitStretchRawYUVTextures( void )
 		rawtexture->flags = IT_CINEMATIC|IT_LUMINANCE;
 		strcpy( rawtexture->name, name[i] );
 		RB_AllocTextureNum( rawtexture );
+		rawtexture->loaded = qtrue;
+		rawtexture->missing = qfalse;
 
 		rsh.rawYUVTextures[i] = rawtexture;
 	}
