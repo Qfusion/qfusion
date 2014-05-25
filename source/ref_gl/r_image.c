@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_imagelib.h"
 #include "../qalgo/hash.h"
 
-#define	MAX_GLIMAGES	    4096
+#define	MAX_GLIMAGES	    8192
 #define IMAGES_HASH_SIZE    64
 
 typedef struct
@@ -439,45 +439,6 @@ static void R_ResampleTexture( int ctx, const qbyte *in, int inwidth, int inheig
 }
 
 /*
-* R_HeightmapToNormalmap
-*/
-static int R_HeightmapToNormalmap( const qbyte *in, qbyte *out, int width, int height, float bumpScale, int samples )
-{
-	int x, y;
-	vec3_t n;
-	float ibumpScale;
-	const qbyte *p0, *p1, *p2;
-
-	if( !bumpScale )
-		bumpScale = 1.0f;
-	bumpScale *= max( 0, r_lighting_bumpscale->value );
-	ibumpScale = ( 255.0 * 3.0 ) / bumpScale;
-
-	memset( out, 255, width * height * 4 );
-	for( y = 0; y < height; y++ )
-	{
-		for( x = 0; x < width; x++, out += 4 )
-		{
-			p0 = in + ( y * width + x ) * samples;
-			p1 = ( x == width - 1 ) ? p0 - x * samples : p0 + samples;
-			p2 = ( y == height - 1 ) ? in + x * samples : p0 + width * samples;
-
-			n[0] = ( p0[0] + p0[1] + p0[2] ) - ( p1[0] + p1[1] + p1[2] );
-			n[1] = ( p2[0] + p2[1] + p2[2] ) - ( p0[0] + p0[1] + p0[2] );
-			n[2] = ibumpScale;
-			VectorNormalize( n );
-
-			out[0] = ( n[0] + 1 ) * 127.5f;
-			out[1] = ( n[1] + 1 ) * 127.5f;
-			out[2] = ( n[2] + 1 ) * 127.5f;
-			out[3] = ( p0[0] + p0[1] + p0[2] ) / 3;
-		}
-	}
-
-	return 4;
-}
-
-/*
 * R_MipMap
 * 
 * Operates in place, quartering the size of the texture
@@ -863,15 +824,6 @@ static void R_LoadImageFromDisk( int ctx, image_t *image )
 
 		if( pic )
 		{
-			qbyte *temp;
-
-			if( flags & IT_HEIGHTMAP )
-			{
-				temp = R_PrepareImageBuffer( ctx, TEXTURE_FLIPPING_BUF0, width * height * 4 );
-				samples = R_HeightmapToNormalmap( pic, temp, width, height, 1, samples );
-				pic = temp;
-			}
-
 			RB_BindContextTexture( 0, image );
 
 			pathname[len] = 0;
@@ -1042,7 +994,7 @@ void R_ReplaceSubImage( image_t *image, qbyte **pic, int width, int height )
 * Finds and loads the given image. IT_SYNC images are loaded synchronously.
 * For synchronous missing images, NULL is returned.
 */
-image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bumpScale )
+image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 {
 	int i, lastDot, lastSlash;
 	unsigned int len, key;
@@ -1093,24 +1045,11 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bum
 	// look for it
 	key = image_cur_hash = COM_SuperFastHash( ( const qbyte *)pathname, len, len ) % IMAGES_HASH_SIZE;
 	hnode = &images_hash_headnode[key];
-	if( flags & IT_HEIGHTMAP )
+	for( image = hnode->prev; image != hnode; image = image->prev )
 	{
-		for( image = hnode->prev; image != hnode; image = image->prev )
-		{
-			if( ( ( image->flags & flags ) == flags ) && ( image->bumpScale == bumpScale ) && !strcmp( image->name, pathname ) ) {
-				R_TouchImage( image );
-				return image;
-			}
-		}
-	}
-	else
-	{
-		for( image = hnode->prev; image != hnode; image = image->prev )
-		{
-			if( ( ( image->flags & flags ) == flags ) && !strcmp( image->name, pathname ) ) {
-				R_TouchImage( image );
-				return image;
-			}
+		if( ( ( image->flags & flags ) == flags ) && !strcmp( image->name, pathname ) ) {
+			R_TouchImage( image );
+			return image;
 		}
 	}
 
