@@ -21,11 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 #include "../qalgo/q_trie.h"
 #include "../client/console.h"
+#include "sys_threads.h"
 
 static qboolean	cvar_initialized = qfalse;
 static qboolean	cvar_preinitialized = qfalse;
 
 static trie_t *cvar_trie = NULL;
+static qmutex_t *cvar_mutex = NULL;
 static const trie_casing_t CVAR_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;;
 
 static int Cvar_HasFlags( void *cvar, void *flags )
@@ -72,7 +74,9 @@ cvar_t *Cvar_Find ( const char *var_name )
 {
 	cvar_t *cvar;
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_Find( cvar_trie, var_name, TRIE_EXACT_MATCH, (void **)&cvar );
+	QMutex_Unlock( cvar_mutex );
 	return cvar;
 }
 
@@ -136,7 +140,9 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 	}
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_Find( cvar_trie, var_name, TRIE_EXACT_MATCH, (void **)&var );
+	QMutex_Unlock( cvar_mutex );
 
 	if( var )
 	{
@@ -194,7 +200,9 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 	var->integer = Q_rint( var->value );
 	var->flags = flags;
 
+	QMutex_Lock( cvar_mutex );
 	Trie_Insert( cvar_trie, var_name, var );
+	QMutex_Unlock( cvar_mutex );
 
 	return var;
 }
@@ -394,7 +402,9 @@ void Cvar_GetLatchedVars( cvar_flag_t flags )
 		return;
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_DumpIf( cvar_trie, "", TRIE_DUMP_VALUES, Cvar_IsLatched, &flags, &dump );
+	QMutex_Unlock( cvar_mutex );
 	for( i = 0; i < dump->size; ++i )
 	{
 		cvar_t *const var = (cvar_t *) dump->key_value_vector[i].value;
@@ -427,7 +437,9 @@ void Cvar_FixCheatVars( void )
 		return;
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_DumpIf( cvar_trie, "", TRIE_DUMP_VALUES, Cvar_HasFlags, &flags, &dump );
+	QMutex_Unlock( cvar_mutex );
 	for( i = 0; i < dump->size; ++i )
 	{
 		cvar_t *const var = (cvar_t *) dump->key_value_vector[i].value;
@@ -582,7 +594,9 @@ void Cvar_WriteVariables( int file )
 	cvar_flag_t cvar_archive = CVAR_ARCHIVE;
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_DumpIf( cvar_trie, "", TRIE_DUMP_VALUES, Cvar_HasFlags, &cvar_archive, &dump );
+	QMutex_Unlock( cvar_mutex );
 	for( i = 0; i < dump->size; ++i )
 	{
 		cvar_t *const var = dump->key_value_vector[i].value;
@@ -625,7 +639,9 @@ static void Cvar_List_f( void )
 		pattern = Cmd_Args();
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_DumpIf( cvar_trie, "", TRIE_DUMP_VALUES, Cvar_PatternMatches, pattern, &dump );
+	QMutex_Unlock( cvar_mutex );
 
 	Com_Printf( "\nConsole variables:\n" );
 	for( i = 0; i < dump->size; ++i )
@@ -677,7 +693,9 @@ static void Cvar_ArchiveList_f( void )
 	unsigned int i;
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_Dump( cvar_trie, "", TRIE_DUMP_VALUES, &dump );
+	QMutex_Unlock( cvar_mutex );
 
 	for( i = 0; i < dump->size; ++i )
 	{
@@ -704,7 +722,9 @@ static char *Cvar_BitInfo( int bit )
 	info[0] = 0;
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_DumpIf( cvar_trie, "", TRIE_DUMP_VALUES, Cvar_HasFlags, &bit, &dump );
+	QMutex_Unlock( cvar_mutex );
 
 	// make sure versioncvar comes first
 	for( i = dump->size; i > 0; --i )
@@ -766,11 +786,13 @@ int Cvar_CompleteCountPossible( const char *partial )
 	unsigned int matches;
 	assert( cvar_trie );
 	assert( partial );
+	QMutex_Lock( cvar_mutex );
 #ifdef PUBLIC_BUILD
 	Trie_NoOfMatchesIf( cvar_trie, partial, Cvar_NotDeveloper, NULL, &matches );
 #else
 	Trie_NoOfMatches( cvar_trie, partial, &matches );
 #endif
+	QMutex_Unlock( cvar_mutex );
 	return matches;
 }
 
@@ -784,11 +806,13 @@ char **Cvar_CompleteBuildList( const char *partial )
 	unsigned int i;
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 #ifdef PUBLIC_BUILD
 	Trie_DumpIf( cvar_trie, partial, TRIE_DUMP_VALUES, Cvar_NotDeveloper, NULL, &dump );
 #else
 	Trie_Dump( cvar_trie, partial, TRIE_DUMP_VALUES, &dump );
 #endif
+	QMutex_Unlock( cvar_mutex );
 	buf = (char **) Mem_TempMalloc( sizeof( char * ) * ( dump->size + 1 ) );
 	for( i = 0; i < dump->size; ++i )
 		buf[i] = ( (cvar_t *) ( dump->key_value_vector[i].value ) )->name;
@@ -807,7 +831,9 @@ char **Cvar_CompleteBuildListWithFlag( const char *partial, cvar_flag_t flag )
 	unsigned int i;
 
 	assert( cvar_trie );
+	QMutex_Lock( cvar_mutex );
 	Trie_DumpIf( cvar_trie, partial, TRIE_DUMP_VALUES, Cvar_HasFlags, &flag, &dump );
+	QMutex_Unlock( cvar_mutex );
 	buf = (char **) Mem_TempMalloc( sizeof( char * ) * ( dump->size + 1 ) );
 	for( i = 0; i < dump->size; ++i )
 		buf[i] = ( (cvar_t *) ( dump->key_value_vector[i].value ) )->name;
@@ -841,6 +867,8 @@ void Cvar_PreInit( void )
 	assert( !cvar_preinitialized );
 
 	assert( !cvar_trie );
+
+	cvar_mutex = QMutex_Create();
 
 	Trie_Create( CVAR_TRIE_CASING, &cvar_trie );
 
@@ -926,7 +954,9 @@ void Cvar_Shutdown( void )
 		Cmd_RemoveCommand( "cvararchivelist" );
 #endif
 
+		QMutex_Lock( cvar_mutex );
 		Trie_Dump( cvar_trie, "", TRIE_DUMP_VALUES, &dump );
+		QMutex_Unlock( cvar_mutex );
 		for( i = 0; i < dump->size; ++i )
 		{
 			cvar_t *const var = dump->key_value_vector[i].value;
@@ -946,8 +976,12 @@ void Cvar_Shutdown( void )
 	{
 		assert( cvar_trie );
 
+		QMutex_Lock( cvar_mutex );
 		Trie_Destroy( cvar_trie );
+		QMutex_Unlock( cvar_mutex );
 		cvar_trie = NULL;
+
+		QMutex_Destroy( &cvar_mutex );
 
 		cvar_preinitialized = qfalse;
 	}
