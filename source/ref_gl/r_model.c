@@ -300,7 +300,9 @@ static void Mod_SetupSubmodels( model_t *mod )
 		bmodel = ( mbrushmodel_t * )starmod->extradata;
 
 		memcpy( starmod, mod, sizeof( model_t ) );
-		memcpy( bmodel, mod->extradata, sizeof( mbrushmodel_t ) );
+		if( i ) {
+		    memcpy( bmodel, mod->extradata, sizeof( mbrushmodel_t ) );
+		}
 
 		bmodel->firstmodelsurface = bmodel->surfaces + bm->firstface;
 		bmodel->nummodelsurfaces = bm->numfaces;
@@ -364,8 +366,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 
 		// build visibility data for each face, based on what leafs
 		// this face belongs to (visible from)
-		visdata = ( qbyte * )Mod_Malloc( mod, rowlongs * 4 * loadbmodel->numsurfaces );
-		areadata = ( qbyte * )Mod_Malloc( mod, areabytes * loadbmodel->numsurfaces );
+		visdata = Mod_Malloc( mod, rowlongs * 4 * loadbmodel->numsurfaces );
+		areadata = Mod_Malloc( mod, areabytes * loadbmodel->numsurfaces );
 		for( pleaf = loadbmodel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
 		{
 			mark = leaf->firstVisSurface;
@@ -406,7 +408,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	// vertex buffer objects if they share shader, lightmap texture and we can render
 	// them in hardware (some Q3A shaders require GLSL for that)
 
-	surfmap = ( msurface_t ** )Mod_Malloc( mod, bm->numfaces * sizeof( *surfmap ) );
+	surfmap = Mod_Malloc( mod, bm->numfaces * sizeof( *surfmap ) );
 
 	num_vbos = 0;
 	*vbo_total_size = 0;
@@ -456,8 +458,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 				if( surf2->shader != surf->shader || surf2->superLightStyle != surf->superLightStyle )
 					continue;
 				if( surf2->fog != surf->fog )
-					continue;
-				if( vcount + surf2->mesh->numVerts > USHRT_MAX )
 					continue;
 
 				// unvised maps and submodels submodel can simply skip PVS checks
