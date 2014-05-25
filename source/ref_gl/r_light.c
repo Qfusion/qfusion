@@ -51,7 +51,8 @@ void R_InitCoronas( void )
 /*
 * R_BeginCoronaSurf
 */
-qboolean R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf )
+qboolean R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, 
+	const mfog_t *fog, drawSurfaceType_t *drawSurf )
 {
 	RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
 	return qtrue;
@@ -60,7 +61,8 @@ qboolean R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, const mfo
 /*
 * R_BatchCoronaSurf
 */
-void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf )
+void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, 
+	const mfog_t *fog, drawSurfaceType_t *drawSurf )
 {
 	int i;
 	vec3_t origin, point;
@@ -200,8 +202,10 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 
 	for( i = 0; i < 4; i++ )
 	{
-		lightarray[i*2+0] = *rsh.worldBrushModel->lightarray[bound( 0, elem[i]+0, (int)rsh.worldBrushModel->numlightarrayelems-1)];
-		lightarray[i*2+1] = *rsh.worldBrushModel->lightarray[bound( 1, elem[i]+1, (int)rsh.worldBrushModel->numlightarrayelems-1)];
+		lightarray[i*2+0] = *rsh.worldBrushModel->lightarray[bound( 0, elem[i]+0, 
+			(int)rsh.worldBrushModel->numlightarrayelems-1)];
+		lightarray[i*2+1] = *rsh.worldBrushModel->lightarray[bound( 1, elem[i]+1, 
+			(int)rsh.worldBrushModel->numlightarrayelems-1)];
 	}
 
 	t[0] = vf2[0] * vf2[1] * vf2[2];
@@ -591,8 +595,8 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte
 
 	if( mapConfig.deluxeMappingEnabled && ( ( size == w ) || ( size == h ) ) )
 	{
-		Com_Printf( S_COLOR_YELLOW "Lightmap blocks larger than %ix%i aren't supported, deluxemaps will be disabled\n", 
-			size, size );
+		Com_Printf( S_COLOR_YELLOW "Lightmap blocks larger than %ix%i aren't supported" 
+			", deluxemaps will be disabled\n", size, size );
 		mapConfig.deluxeMappingEnabled = qfalse;
 	}
 
@@ -615,13 +619,15 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte
 	}
 
 	for( i = 0, j = 0; i < numBlocks; i += p * m, j += p )
-		p = R_PackLightmaps( numLightmaps - j, w, h, size, stride, qfalse, "*lm", lmData + j * size * stride, &rects[i] );
+		p = R_PackLightmaps( numLightmaps - j, w, h, size, stride, 
+		qfalse, "*lm", lmData + j * size * stride, &rects[i] );
 
 	if( r_lightmapBuffer )
 		R_Free( r_lightmapBuffer );
 
 	loadbmodel->lightmapImages = Mod_Malloc( mod, sizeof( *loadbmodel->lightmapImages ) * r_numUploadedLightmaps );
-	memcpy( loadbmodel->lightmapImages, r_lightmapTextures, sizeof( *loadbmodel->lightmapImages ) * r_numUploadedLightmaps );
+	memcpy( loadbmodel->lightmapImages, r_lightmapTextures, 
+		sizeof( *loadbmodel->lightmapImages ) * r_numUploadedLightmaps );
 	loadbmodel->numLightmapImages = r_numUploadedLightmaps;
 
 	ri.Com_DPrintf( "Packed %i lightmap blocks into %i texture(s)\n", numBlocks, r_numUploadedLightmaps );
