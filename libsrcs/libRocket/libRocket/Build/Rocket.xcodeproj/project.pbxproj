@@ -2997,7 +2997,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Rocket;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -3033,7 +3033,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Rocket;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;

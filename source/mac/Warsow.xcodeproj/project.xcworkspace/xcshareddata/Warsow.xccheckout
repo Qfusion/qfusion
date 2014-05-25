@@ -5,19 +5,19 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>51AF16D3-D04F-47F6-90E1-D119B2C9BBC0</string>
+	<string>6F29A253-64E4-40C9-831D-38491C993F1A</string>
 	<key>IDESourceControlProjectName</key>
 	<string>Warsow</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>F4519F97-8CDF-49C0-8F19-40A641486A6E</key>
+		<key>52C206F8-F6C6-4B74-A0CE-6A79CCCB5228</key>
 		<string>https://github.com/vkni/qfusion.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>source/mac/Warsow.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>F4519F97-8CDF-49C0-8F19-40A641486A6E</key>
+		<key>52C206F8-F6C6-4B74-A0CE-6A79CCCB5228</key>
 		<string>../../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
@@ -25,14 +25,14 @@
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>F4519F97-8CDF-49C0-8F19-40A641486A6E</string>
+	<string>52C206F8-F6C6-4B74-A0CE-6A79CCCB5228</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>F4519F97-8CDF-49C0-8F19-40A641486A6E</string>
+			<string>52C206F8-F6C6-4B74-A0CE-6A79CCCB5228</string>
 			<key>IDESourceControlWCCName</key>
 			<string>qfusion</string>
 		</dict>
