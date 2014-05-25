@@ -92,16 +92,6 @@ int wswcurl_set_postfields( wswcurl_req *req, const char *fields, size_t size );
  */
 void wswcurl_urlencode( const char *src, char *dst, size_t size );
 /**
- * Converts the given URL-encoded string to a null-terminated plain string. Returns 
- * total (untruncated) length of the resulting string.
- */
-size_t wswcurl_urldecode( const char *src, char *dst, size_t size );
-/**
- * Converts the given null-terminated string to an URL encoded null-terminated string.
- * Only "unsafe" subset of characters are encoded.
- */
-void wswcurl_urlencode_unsafechars( const char *src, char *dst, size_t size );
-/**
  * Checks if a handle is still known in the wswcurl pool.
  */
 int wswcurl_isvalidhandle(wswcurl_req *req);

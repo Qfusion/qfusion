@@ -1344,6 +1344,82 @@ char *Q_chrreplace( char *s, const char subj, const char repl )
 	return s;
 }
 
+/*
+* Q_urlencode_unsafechars
+*/
+void Q_urlencode_unsafechars( const char *src, char *dst, size_t dst_size )
+{
+	size_t i, n, len;
+
+	assert( src );
+	assert( dst );
+
+	if( !src || !dst || !dst_size ) {
+		return;
+	}
+
+	len = strlen( src );
+	if( len >= dst_size ) {
+		len = dst_size - 1;
+	}
+
+	// urlencode
+	n = 0;
+	for( i = 0; i < len && n < dst_size - 1; i++ ) {
+		char c = src[i];
+
+		if( c == ' ' || c == '#' || c == '%' || 
+			c == '<' || c == '>' || c == '{' || c == '}' || 
+			c == '|' || c == '\\' || c == '^' || c == '~' || 
+			c == '[' || c == ']' ) {
+			// urlencode
+			if( n + 3 >= dst_size ) {
+				// not enough space
+				break;
+			}
+
+			dst[n  ] = '%';
+			sprintf( &dst[n+1], "%02x", (int)c );
+			n += 3;
+		}
+		else {
+			dst[n] = src[i];
+			n++;
+		}
+	}
+	dst[n] = '\0';
+}
+
+/*
+* Q_urldecode
+*/
+#define hex2dec(x) (((x) <= '9' ? (x) - '0' : ((x) <= 'F') ? (x) - 'A' + 10 : (x) - 'a' + 10))
+size_t Q_urldecode( const char *src, char *dst, size_t dst_size )
+{
+	char *dst_start = dst, *dst_end = dst + dst_size - 1;
+	const char *src_end = src + strlen( src );
+
+	if( !src || !dst || !dst_size ) {
+		return 0;
+	}
+
+	while( src < src_end ) {
+		if( dst == dst_end ) {
+			break;
+		}
+		if( ( *src == '%' ) && ( src + 2 < src_end ) &&
+			( isxdigit( src[1] ) && isxdigit( src[2] ) )) {
+			*dst++ = (hex2dec( src[1] ) << 4) + hex2dec( src[2] );
+			src += 3;
+		} else {
+			*dst++ = *src++;
+		}
+	}
+
+	*dst = '\0';
+	return dst - dst_start;
+}
+
 //=====================================================================
 //
 //  INFO STRINGS

@@ -161,7 +161,7 @@ void AsyncStream_UrlEncode( const char *src, char *dst, size_t size )
 */
 size_t AsyncStream_UrlDecode( const char *src, char *dst, size_t size )
 {
-	return wswcurl_urldecode( src, dst, size );
+	return Q_urldecode( src, dst, size );
 }
 
 /*
@@ -169,7 +169,7 @@ size_t AsyncStream_UrlDecode( const char *src, char *dst, size_t size )
 */
 void AsyncStream_UrlEncodeUnsafeChars( const char *src, char *dst, size_t size )
 {
-	wswcurl_urlencode_unsafechars( src, dst, size );
+	Q_urlencode_unsafechars( src, dst, size );
 }
 
 /*
