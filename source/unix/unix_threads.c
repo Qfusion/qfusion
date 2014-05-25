@@ -113,5 +113,5 @@ void Sys_Thread_Join( qthread_t *thread )
 */
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 {
-	return __sync_fetch_and_add( &queue->cmdbuf_len, add ) + add;
+	return __sync_fetch_and_add( value, add ) + add;
 }
