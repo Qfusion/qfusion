@@ -210,7 +210,7 @@ void RB_BindTexture( int tmu, const image_t *tex )
 		tex = rsh.noTexture;
 	} else if( !tex->loaded ) {
 		// not yet loaded from disk
-		tex = rsh.whiteTexture;
+		tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture;
 	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
 		// performance evaluation option
 		tex = rsh.noTexture;
