@@ -16,5 +16,8 @@ libsrcs/libRocket/libRocket/Build/obj/
 # ignore cmake generated files
 source/CMakeCache.txt
 source/**/CMakeFiles/
-source/*/Makefile
+source/**/CMakeScripts/
+**/qfusion.build/
+**/*.xcodeproj
+**/Makefile
 *cmake_install.cmake
