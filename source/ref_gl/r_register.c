@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 glconfig_t glConfig;
 
-r_shared_t rsh;
+r_shared_t rsh;c
 
 mempool_t *r_mempool;
 
@@ -804,11 +804,11 @@ static void R_FinalizeGLExtensions( void )
 }
 
 /*
-* R_ClearFirstFrame
+* R_FillStartupBackgroundColor
 *
 * Fills the window with a color during the initialization.
 */
-static void R_ClearFirstFrame( void )
+static void R_FillStartupBackgroundColor( void )
 {
 	qglClearColor( 0.1, 0.09, 0.12, 1.0 );
 #ifdef GL_ES_VERSION_2_0
@@ -1117,7 +1117,7 @@ init_qgl:
 		return rserr_unknown;
 	}
 
-	R_ClearFirstFrame();
+	R_FillStartupBackgroundColor();
 
 	R_TextureMode( r_texturemode->string );
 
