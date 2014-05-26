@@ -26,7 +26,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../mac/mac_sys.m"
     )
 
-    set(CLIENT_PLATFORM_LIBRARIES ${SDL_LIBRARY})
+    set(CLIENT_PLATFORM_LIBRARIES ${SDL_LIBRARY} "-framework IOKit")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
