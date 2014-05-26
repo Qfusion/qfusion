@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 glconfig_t glConfig;
 
-r_shared_t rsh;c
+r_shared_t rsh;
 
 mempool_t *r_mempool;
 
