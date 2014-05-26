@@ -807,7 +807,7 @@ static void R_ClearFirstFrame( void )
 {
 	qglClearColor( 0.1, 0.09, 0.12, 1.0 );
 #ifdef GL_ES_VERSION_2_0
-	if( glConfig.ext.multiview_draw_buffers )
+	if( glConfig.ext.multiview_draw_buffers && glConfig.stereoEnabled )
 	{
 		int location = GL_MULTIVIEW_NV;
 		int index = 1;
