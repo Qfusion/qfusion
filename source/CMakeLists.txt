@@ -58,15 +58,24 @@ endmacro()
 macro(qf_add_library name)
     add_library(${name} ${ARGN})
 
-    set_target_properties(${name} PROPERTIES PREFIX "")
-    set_target_properties(${name} PROPERTIES SUFFIX "_x86_64${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set_target_properties(${name} PROPERTIES PREFIX "")
+        set_target_properties(${name} PROPERTIES SUFFIX "_x86_64${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    endif()
+
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set_target_properties(${name} PROPERTIES PREFIX "")
+        set_target_properties(${name} PROPERTIES SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    endif()
 endmacro()
 
 macro(qf_add_executable name)
     add_executable(${name} ${ARGN})
 
-    set_target_properties(${name} PROPERTIES PREFIX "")
-    set_target_properties(${name} PROPERTIES SUFFIX ".x86_64${CMAKE_EXECUTABLE_SUFFIX}")
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set_target_properties(${name} PROPERTIES PREFIX "")
+        set_target_properties(${name} PROPERTIES SUFFIX ".x86_64${CMAKE_EXECUTABLE_SUFFIX}")
+    endif()
 endmacro()
 
 add_subdirectory(angelwrap)
