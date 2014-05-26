@@ -137,8 +137,6 @@ void RB_StatsMessage( char *msg, size_t size )
 */
 static void RB_SetGLDefaults( void )
 {
-	qglClearColor( 1, 0, 0.5, 0.5 );
-
 	if( glConfig.stencilEnabled )
 	{
 		qglStencilMask( ( GLuint ) ~0 );
@@ -169,7 +167,9 @@ static void RB_SetGLDefaults( void )
 void RB_SelectContextTexture( int tmu )
 {
 	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#ifndef GL_ES_VERSION_2_0
 	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#endif
 }
 
 /*
@@ -210,7 +210,7 @@ void RB_BindTexture( int tmu, const image_t *tex )
 		tex = rsh.noTexture;
 	} else if( !tex->loaded ) {
 		// not yet loaded from disk
-		tex = rsh.whiteTexture;
+		tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture;
 	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
 		// performance evaluation option
 		tex = rsh.noTexture;
@@ -1314,6 +1314,22 @@ void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis )
 void RB_SetRenderFlags( int flags )
 {
 	rb.renderFlags = flags;
+}
+
+/*
+* RB_Finish
+*/
+void RB_Finish( void )
+{
+	qglFinish();
+}
+	
+/*
+* RB_Flush
+*/
+void RB_Flush( void )
+{
+	qglFlush();
 }
 
 /*

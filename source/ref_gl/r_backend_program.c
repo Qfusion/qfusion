@@ -53,6 +53,17 @@ static shaderpass_t r_GLSLpasses[MAX_BUILTIN_GLSLPASSES];
 
 static void RB_SetShaderpassState( int state );
 
+static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t programFeatures );
+
 /*
 * RB_InitBuiltinPasses
 */
@@ -785,7 +796,16 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	decalmap = pass->images[3] && !pass->images[3]->missing ?  pass->images[3] : NULL;
 	entdecalmap = pass->images[4] && !pass->images[4]->missing ?  pass->images[4] : NULL;
 
-	assert( normalmap );
+	// use blank image if the normalmap is too tiny due to high picmip value
+	if( normalmap && normalmap->upload_width < 2 || normalmap->upload_height < 2 ) {
+		normalmap = rsh.blankBumpTexture;
+	}
+
+	if( normalmap == rsh.blankBumpTexture && !glossmap && !decalmap && !entdecalmap ) {
+		// render as plain Q3A shader, which is less computation-intensive
+		RB_RenderMeshGLSL_Q3AShader( pass, programFeatures );
+		return;
+	}
 
 	if( normalmap->samples == 4 )
 		offsetmappingScale = r_offsetmapping_scale->value * rb.currentShader->offsetmappingScale;
@@ -794,11 +814,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	glossIntensity = rb.currentShader->glossIntensity ? rb.currentShader->glossIntensity : r_lighting_glossintensity->value;
 	glossExponent = rb.currentShader->glossExponent ? rb.currentShader->glossExponent : r_lighting_glossexponent->value;
-
-	// use blank image if the normalmap is too tiny due to high picmip value
-	if( normalmap && normalmap->upload_width < 2 || normalmap->upload_height < 2 ) {
-		normalmap = rsh.blankBumpTexture;
-	}
 
 	applyDecal = decalmap != NULL;
 
@@ -1591,8 +1606,8 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	// bind white texture for shadow map view
 #define CELSHADE_BIND(tmu,tex,feature,canAdd) \
 	if( tex && !tex->missing ) { \
-		if( rb.renderFlags & RF_SHADOWMAPVIEW || !tex->loaded ) { \
-			tex = rsh.whiteTexture; \
+		if( rb.renderFlags & RF_SHADOWMAPVIEW ) { \
+			tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture; \
 		} else {\
 			programFeatures |= feature; \
 			if( canAdd && tex->samples == 3 ) programFeatures |= ((feature) << 1); \

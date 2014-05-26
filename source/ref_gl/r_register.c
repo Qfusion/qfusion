@@ -803,6 +803,43 @@ static void R_FinalizeGLExtensions( void )
 		ri.Cvar_ForceSet( "r_lighting_maxlmblocksize", va( "%i", glConfig.maxTextureSize / 4 ) );
 }
 
+/*
+* R_ClearFirstFrame
+*
+* Fills the window with a color during the initialization.
+*/
+static void R_ClearFirstFrame( void )
+{
+	qglClearColor( 0.1, 0.09, 0.12, 1.0 );
+#ifdef GL_ES_VERSION_2_0
+	if( glConfig.ext.multiview_draw_buffers && glConfig.stereoEnabled )
+	{
+		int location = GL_MULTIVIEW_NV;
+		int index = 1;
+		qglDrawBuffersIndexedNV( 1, &location, &index );
+		GLimp_BeginFrame();
+		qglClear( GL_COLOR_BUFFER_BIT );
+		GLimp_EndFrame();
+		index = 0;
+		qglDrawBuffersIndexedNV( 1, &location, &index );
+	}
+	GLimp_BeginFrame();
+	qglClear( GL_COLOR_BUFFER_BIT );
+	GLimp_EndFrame();
+#else
+	if( glConfig.stereoEnabled )
+	{
+		qglDrawBuffer( GL_FRONT_LEFT );
+		qglClear( GL_COLOR_BUFFER_BIT );
+		qglDrawBuffer( GL_FRONT_RIGHT );
+		qglClear( GL_COLOR_BUFFER_BIT );
+	}
+	qglDrawBuffer( GL_FRONT );
+	qglClear( GL_COLOR_BUFFER_BIT );
+	qglDrawBuffer( GL_BACK );
+#endif
+}
+
 static void R_Register( const char *screenshotsPrefix )
 {
 	const qgl_driverinfo_t *driver;
@@ -1079,6 +1116,8 @@ init_qgl:
 		QGL_Shutdown();
 		return rserr_unknown;
 	}
+
+	R_ClearFirstFrame();
 
 	R_TextureMode( r_texturemode->string );
 

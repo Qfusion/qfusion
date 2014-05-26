@@ -29,18 +29,17 @@ enum
 	,IT_NOPICMIP		= 1<<2
 	,IT_SKY				= 1<<3
 	,IT_CUBEMAP			= 1<<4
-	,IT_HEIGHTMAP		= 1<<5
-	,IT_FLIPX			= 1<<6
-	,IT_FLIPY			= 1<<7
-	,IT_FLIPDIAGONAL	= 1<<8
-	,IT_NOCOMPRESS		= 1<<9
-	,IT_DEPTH			= 1<<10
-	,IT_NORMALMAP		= 1<<11
-	,IT_FRAMEBUFFER		= 1<<12
-	,IT_NOFILTERING		= 1<<13
-	,IT_LUMINANCE		= 1<<14
-	,IT_BGRA			= 1<<15
-	,IT_SYNC			= 1<<16		// load image synchronously
+	,IT_FLIPX			= 1<<5
+	,IT_FLIPY			= 1<<6
+	,IT_FLIPDIAGONAL	= 1<<7
+	,IT_NOCOMPRESS		= 1<<8
+	,IT_DEPTH			= 1<<9
+	,IT_NORMALMAP		= 1<<10
+	,IT_FRAMEBUFFER		= 1<<11
+	,IT_NOFILTERING		= 1<<12
+	,IT_LUMINANCE		= 1<<13
+	,IT_BGRA			= 1<<14
+	,IT_SYNC			= 1<<15		// load image synchronously
 };
 
 #define IT_CINEMATIC		( IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP|IT_NOCOMPRESS )
@@ -66,7 +65,6 @@ typedef struct image_s
 	int				samples;
 	int				fbo;						// frame buffer object texture is attached to
 	unsigned int	framenum;					// rf.frameCount texture was updated (rendered to)
-	float			bumpScale;
 	struct image_s	*next, *prev;
 } image_t;
 
@@ -89,7 +87,7 @@ void R_TextureMode( char *string );
 void R_AnisotropicFilter( int value );
 
 image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int flags, int samples );
-image_t	*R_FindImage( const char *name, const char *suffix, int flags, float bumpScale );
+image_t	*R_FindImage( const char *name, const char *suffix, int flags );
 void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int flags, int samples );
 void R_ReplaceSubImage( image_t *image, qbyte **pic, int width, int height );
 
