@@ -53,8 +53,8 @@ if (BUILD_FRAMEWORK)
 endif ()
 
 set(VERSION_MAJOR "2")
-set(VERSION_MINOR "5")
-set(VERSION_PATCH "3")
+set(VERSION_MINOR "4")
+set(VERSION_PATCH "6")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 # Compiler definitions for building the library
@@ -77,7 +77,8 @@ execute_process(
 )
 
 file(GLOB PUBLIC_HEADERS "include/*.h")
-file(GLOB PUBLIC_CONFIG_HEADERS "include/config/*.h")
+file(GLOB PUBLIC_FREETYPE_HEADERS "include/freetype/*.h")
+file(GLOB PUBLIC_FREETYPE_CONFIG_HEADERS "include/freetype/config/*.h")
 file(GLOB PRIVATE_HEADERS "include/internal/*.h")
 
 set(BASE_SRCS
@@ -152,14 +153,18 @@ endif ()
 
 add_library(freetype
   ${PUBLIC_HEADERS}
-  ${PUBLIC_CONFIG_HEADERS}
+  ${PUBLIC_FREETYPE_HEADERS}
+  ${PUBLIC_FREETYPE_CONFIG_HEADERS}
   ${PRIVATE_HEADERS}
   ${BASE_SRCS}
 )
 
 if (BUILD_FRAMEWORK)
-  set_property(SOURCE ${PUBLIC_CONFIG_HEADERS}
-    PROPERTY MACOSX_PACKAGE_LOCATION Headers/config
+  set_property(SOURCE ${PUBLIC_FREETYPE_HEADERS}
+    PROPERTY MACOSX_PACKAGE_LOCATION Headers/freetype
+  )
+  set_property(SOURCE ${PUBLIC_FREETYPE_CONFIG_HEADERS}
+    PROPERTY MACOSX_PACKAGE_LOCATION Headers/freetype/config
   )
   set_target_properties(freetype PROPERTIES
     FRAMEWORK TRUE
