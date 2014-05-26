@@ -803,6 +803,11 @@ static void R_FinalizeGLExtensions( void )
 		ri.Cvar_ForceSet( "r_lighting_maxlmblocksize", va( "%i", glConfig.maxTextureSize / 4 ) );
 }
 
+/*
+* R_ClearFirstFrame
+*
+* Fills the window with a color during the initialization.
+*/
 static void R_ClearFirstFrame( void )
 {
 	qglClearColor( 0.1, 0.09, 0.12, 1.0 );
