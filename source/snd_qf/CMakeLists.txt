@@ -1,6 +1,6 @@
 project(snd_qf)
 
-include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR})
+include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR} ${SDL_INCLUDE_DIR} "../snd_common" ".")
 
 file(GLOB SND_QF_HEADERS
     "*.h"
@@ -8,6 +8,7 @@ file(GLOB SND_QF_HEADERS
 
 file(GLOB SND_QF_SOURCES
     "*.c"
+    "../snd_common/*.c"
     "../gameshared/q_*.c"
     "../qalgo/*.c"
     "../unix/unix_snd.c"

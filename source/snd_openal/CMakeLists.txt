@@ -1,6 +1,6 @@
 project(snd_openal)
 
-include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR})
+include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR} "../snd_common" ".")
 
 file(GLOB SND_OPENAL_HEADERS
     "*.h"
@@ -8,6 +8,7 @@ file(GLOB SND_OPENAL_HEADERS
 
 file(GLOB SND_OPENAL_SOURCES
     "*.c"
+    "../snd_common/*.c"
     "../gameshared/q_*.c"
     "../qalgo/*.c"
 )
