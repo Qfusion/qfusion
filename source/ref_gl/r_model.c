@@ -300,7 +300,9 @@ static void Mod_SetupSubmodels( model_t *mod )
 		bmodel = ( mbrushmodel_t * )starmod->extradata;
 
 		memcpy( starmod, mod, sizeof( model_t ) );
-		memcpy( bmodel, mod->extradata, sizeof( mbrushmodel_t ) );
+		if( i ) {
+		    memcpy( bmodel, mod->extradata, sizeof( mbrushmodel_t ) );
+		}
 
 		bmodel->firstmodelsurface = bmodel->surfaces + bm->firstface;
 		bmodel->nummodelsurfaces = bm->numfaces;

@@ -789,7 +789,7 @@ static void SV_BeginDownload_f( client_t *client )
 		// .pk3 and .pak download from the web
 		if( local_http )
 		{
-			url = TempCopyString( va( "files/%s", uploadname ) );
+			goto local_download;
 		}
 		else
 		{
@@ -803,7 +803,11 @@ static void SV_BeginDownload_f( client_t *client )
 		// demo file download from the web
 		if( local_http )
 		{
-			url = TempCopyString( va( "files/%s", uploadname ) );
+local_download:
+			alloc_size = sizeof( char ) * ( 6 + strlen( uploadname ) * 3 + 1 );
+			url = Mem_TempMalloc( alloc_size );
+			Q_snprintfz( url, alloc_size, "files/" );
+			Q_urlencode_unsafechars( uploadname, url + 6, alloc_size - 6 );
 		}
 		else
 		{

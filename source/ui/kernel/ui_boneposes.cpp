@@ -21,6 +21,13 @@ UI_BonePoses::UI_BonePoses()
 
 UI_BonePoses::~UI_BonePoses()
 {
+	cgs_skeleton_t *skel, *next;
+
+	for( skel = skel_headnode; skel; skel = next ) {
+		next = skel->next;
+		__operator_delete__(skel);
+	}
+
 	__operator_delete__(TBC);
 }
 

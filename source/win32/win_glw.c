@@ -138,7 +138,7 @@ static qboolean VID_CreateWindow( void )
 	wc.hInstance     = glw_state.hInstance;
 	wc.hIcon         = LoadIcon( glw_state.hInstance, MAKEINTRESOURCE( IDI_APPICON_VALUE ) );
 	wc.hCursor       = LoadCursor( NULL, IDC_ARROW );
-	wc.hbrBackground = (HBRUSH)GetStockObject( GRAY_BRUSH );
+	wc.hbrBackground = (HBRUSH)GetStockObject( BLACK_BRUSH );
 	wc.lpszMenuName  = 0;
 #ifdef WITH_UTF8
 	wc.lpszClassName = (LPCWSTR)glw_state.windowClassNameW;

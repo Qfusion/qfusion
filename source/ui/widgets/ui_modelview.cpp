@@ -34,7 +34,7 @@ public:
 	bool AutoRotationCenter;
 	bool Initialized;
 	bool RecomputePosition;
-	UI_BonePoses BonePoses;
+	UI_BonePoses *BonePoses;
 	cgs_skeleton_t *skel;
 	String modelName;
 	String skinName;
@@ -42,7 +42,7 @@ public:
 	UI_ModelviewWidget( const String &tag )
 		: Element( tag ), 
 		time( 0 ), AutoRotationCenter( false), Initialized( false ), RecomputePosition( false ), 
-		skel( NULL ), modelName( "" ), skinName( "" )
+		BonePoses( NULL ), skel( NULL ), modelName( "" ), skinName( "" )
 	{
 		memset( &entity, 0, sizeof( entity ) );
 		memset( &refdef, 0, sizeof( refdef ) );
@@ -134,7 +134,7 @@ public:
 		trap::R_RenderScene( &refdef );
 
 		// TODO: Should this be done here or in ComputePosition?
-		BonePoses.ResetTemporaryBoneposesCache();
+		BonePoses->ResetTemporaryBoneposesCache();
 		time = curtime;
 	}
 
@@ -250,17 +250,24 @@ public:
 	{
 		if( evt == "invalidate" ) {
 			Initialized = false;
+			if( BonePoses ) {
+				__delete__( BonePoses );
+				BonePoses = NULL;
+			}
 		}
 	}
 
 	virtual ~UI_ModelviewWidget()
 	{
-	
+		if( BonePoses ) {
+			__delete__( BonePoses );
+		}
 	}
 
 private:
 	void Initialize()
 	{
+		BonePoses = __new__(UI_BonePoses)();
 		RecomputePosition = true;
 
 		if( modelName.Empty() ) {
@@ -288,8 +295,8 @@ private:
 		skel = NULL;
 		if (trap::R_SkeletalGetNumBones( entity.model, NULL ))
 		{
-			skel = BonePoses.SkeletonForModel( entity.model );
-			BonePoses.SetBoneposesForTemporaryEntity( &entity );
+			skel = BonePoses->SkeletonForModel( entity.model );
+			BonePoses->SetBoneposesForTemporaryEntity( &entity );
 		}
 
 		// entity setup
