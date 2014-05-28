@@ -111,21 +111,11 @@ extern "C" {
 #define OSNAME "Windows"
 
 #ifdef _M_IX86
-#if defined __FreeBSD__
-#define CPUSTRING "i386"
-#define ARCH "freebsd_i386"
-#else
 #define CPUSTRING "x86"
 #define ARCH "x86"
-#endif
 #elif defined ( __x86_64__ ) || defined( _M_AMD64 )
-#if defined __FreeBSD__
-#define CPUSTRING "x86_64"
-#define ARCH "freebsd_x86_64"
-#else
 #define CPUSTRING "x64"
 #define ARCH "x64"
-#endif
 #elif defined ( _M_ALPHA )
 #define CPUSTRING "axp"
 #define ARCH	  "axp"
@@ -141,6 +131,13 @@ extern "C" {
 
 #ifdef _MSC_VER
 #define HAVE___CDECL
+#endif
+
+#if defined ( __GNUC__ )
+#include <alloca.h>
+#elif defined ( _MSC_VER )
+#include <malloc.h>
+#define HAVE__ALLOCA
 #endif
 
 // wsw : aiwa : 64bit integers and integer-pointer types
@@ -239,6 +236,8 @@ typedef UINT_PTR socket_handle_t;
 
 #define VAR( x ) # x
 
+#include <alloca.h>
+
 // wsw : aiwa : 64bit integers and integer-pointer types
 #include <stdint.h>
 typedef int64_t qint64;
@@ -283,6 +282,8 @@ typedef int socket_handle_t;
 #define ARCH "mac"
 
 #define VAR( x ) # x
+
+#include <alloca.h>
 
 #include <stdint.h>
 typedef int64_t qint64;
@@ -346,6 +347,12 @@ typedef int socket_handle_t;
 #endif
 #ifndef Q_strnicmp
 #define Q_strnicmp( s1, s2, n ) strncasecmp( ( s1 ), ( s2 ), ( n ) )
+#endif
+#endif
+
+#ifdef HAVE__ALLOCA
+#ifndef alloca
+#define alloca _alloca
 #endif
 #endif
 

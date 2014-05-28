@@ -463,7 +463,7 @@ r_imginfo_t LoadTGA( const char *name, qbyte *(*allocbuf)( void *, size_t, const
 		// Flip the image vertically
 		int rowsize = columns * samples;
 		qbyte *row1, *row2;
-		qbyte *tmpLine = malloc( rowsize );
+		qbyte *tmpLine = alloca( rowsize );
 
 		for( i = 0, j = rows - 1; i < j; i++, j-- )
 		{
@@ -473,8 +473,6 @@ r_imginfo_t LoadTGA( const char *name, qbyte *(*allocbuf)( void *, size_t, const
 			memcpy( row1, row2, rowsize );
 			memcpy( row2, tmpLine, rowsize );
 		}
-
-		free( tmpLine );
 	}
 
 	R_FreeFile( buffer );
@@ -646,7 +644,7 @@ error:
 
 	jpg_rgb = img = allocbuf( uptr, cinfo.output_width * cinfo.output_height * 3, __FILE__, __LINE__ );
 	widthXsamples = cinfo.output_width * samples;
-	line = malloc( widthXsamples );
+	line = alloca( widthXsamples );
 
 	while( cinfo.output_scanline < cinfo.output_height )
 	{
@@ -675,7 +673,6 @@ error:
 	jpeg_destroy_decompress( &cinfo );
 
 	R_FreeFile( buffer );
-	free( line );
 
 	imginfo.comp = IMGCOMP_RGB;
 	imginfo.width = cinfo.output_width;
@@ -945,7 +942,7 @@ error:
 	// allocate the memory to hold the image using the fields of info_ptr
 
 	row_bytes = png_get_rowbytes( png_ptr, info_ptr );
-	row_pointers = malloc( p_height * sizeof( *row_pointers ) );
+	row_pointers = alloca( p_height * sizeof( *row_pointers ) );
 
 	img = allocbuf( uptr, p_height * row_bytes, __FILE__, __LINE__ );
 
@@ -961,8 +958,6 @@ error:
 
 	// clean up after the read, and free any memory allocated - REQUIRED
     png_destroy_read_struct( &png_ptr, &info_ptr, 0 );
-
-	free( row_pointers );
 
 	R_FreeFile( png_data );
 
