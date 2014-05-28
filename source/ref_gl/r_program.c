@@ -282,7 +282,7 @@ static void RF_PrecachePrograms( void )
 
 			// read optional binary cache
 			token = COM_ParseExt( ptr, qfalse );
-			if( token[0] ) {
+			if( handleBin && token[0] ) {
 				binaryPos = atoi( token );
 				if( binaryPos ) {
 					ri.FS_Seek( handleBin, binaryPos, FS_SEEK_SET );
