@@ -14,9 +14,11 @@ libsrcs/libRocket/libRocket/Build/obj/
 *.suo
 
 # ignore cmake generated files
-source/CMakeCache.txt
-source/**/CMakeFiles/
-source/**/CMakeScripts/
+**/CMakeCache.txt
+**/CPackConfig.cmake
+**/CPackSourceConfig.cmake
+**/CMakeFiles/
+**/CMakeScripts/
 **/qfusion.build/
 **/*.xcodeproj
 **/Makefile
