@@ -266,6 +266,17 @@ static const gl_extension_func_t gl_ext_instanced_arrays_ARB_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_ARB_get_program_binary */
+static const gl_extension_func_t gl_ext_get_program_binary_ARB_funcs[] =
+{
+	 GL_EXTENSION_FUNC(ProgramParameteri)
+	,GL_EXTENSION_FUNC(GetProgramBinary)
+	,GL_EXTENSION_FUNC(ProgramBinary)
+	,GL_EXTENSION_FUNC(GetProgramiv)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 /* GL_EXT_framebuffer_object */
 static const gl_extension_func_t gl_ext_framebuffer_object_EXT_funcs[] =
 {
@@ -379,6 +390,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, draw_instanced, true, false, &gl_ext_draw_instanced_ARB_funcs )
 	,GL_EXTENSION( ARB, instanced_arrays, false, false, &gl_ext_instanced_arrays_ARB_funcs )
 	,GL_EXTENSION( ARB, half_float_vertex, false, false, NULL )
+	,GL_EXTENSION( ARB, get_program_binary, false, false, &gl_ext_get_program_binary_ARB_funcs )
 
 	// extensions required by meta-extension gl_ext_GLSL
 	,GL_EXTENSION_EXT( ARB, vertex_shader, 1, true, true, NULL, multitexture )

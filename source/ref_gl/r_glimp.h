@@ -176,6 +176,7 @@ typedef struct
 				,framebuffer_blit
 				,depth24
 				,multiview_draw_buffers
+				,get_program_binary
 				;
 	union {
 		char	shadow, shadow_samplers;

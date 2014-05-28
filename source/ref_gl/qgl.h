@@ -448,6 +448,14 @@ typedef unsigned short GLhalfARB;
 #define GL_MAX_MULTIVIEW_BUFFERS_NV							0x90F2
 #endif /* GL_NV_multiview_draw_buffers */
 
+/* GL_ARB_get_program_binary */
+#ifndef GL_ARB_get_program_binary
+#define GL_PROGRAM_BINARY_RETRIEVABLE_HINT					0x8257
+#define GL_PROGRAM_BINARY_LENGTH							0x8741
+#define GL_NUM_PROGRAM_BINARY_FORMATS						0x87FE
+#define GL_PROGRAM_BINARY_FORMATS							0x87FF
+#endif /* GL_ARB_get_program_binary */
+
 #endif // QGL_H
 
 #ifndef APIENTRY
@@ -816,6 +824,11 @@ QGL_EXT(void, glDrawBuffersIndexedNV, (GLint, const GLenum *, const GLint *));
 #endif
 
 QGL_EXT(void, glSwapInterval, (int interval));
+
+QGL_EXT(void, glProgramParameteri, (GLuint program, GLenum pname, GLint value));
+QGL_EXT(void, glGetProgramBinary, (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary));
+QGL_EXT(void, glProgramBinary, (GLuint program, GLenum binaryFormat, const GLvoid *binary, GLsizei length));
+QGL_EXT(void, glGetProgramiv, (GLuint program, GLenum pname, GLint *params));
 
 // WGL_EXT Functions
 QGL_WGL_EXT(const char *, wglGetExtensionsStringEXT, (void));
