@@ -1,0 +1,29 @@
+# - Find Rocket
+# Find the native libRocket includes and libraries
+#
+#  LIBROCKET_INCLUDE_DIR - where to find Rocket/Core.h, etc.
+#  LIBROCKET_LIBRARIES   - List of libraries when using libRocket.
+#  LIBROCKET_FOUND       - True if libRocket found.
+
+if(LIBROCKET_INCLUDE_DIR)
+    # Already in cache, be silent
+    set(LIBROCKET_FIND_QUIETLY TRUE)
+endif(LIBROCKET_INCLUDE_DIR)
+find_path(LIBROCKET_INCLUDE_DIR Rocket/Core.h)
+# MSVC built libRocket may be named angelscript_static.
+# The provided project files name the library with the lib prefix.
+find_library(LIBROCKET_CORE_LIBRARY NAMES RocketCore Rocket)
+if (NOT ${ROCKET_CORE_LIBRARY} MATCHES ".framework")
+    find_library(LIBROCKET_CONTROLS_LIBRARY NAMES RocketControls)
+else()
+    set(LIBROCKET_CONTROLS_LIBRARY ${LIBROCKET_CORE_LIBRARY})
+endif()
+# Handle the QUIETLY and REQUIRED arguments and set ANGELSCRIPT_FOUND
+# to TRUE if all listed variables are TRUE.
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(ROCKET DEFAULT_MSG LIBROCKET_INCLUDE_DIR LIBROCKET_CORE_LIBRARY LIBROCKET_CONTROLS_LIBRARY)
+
+set(LIBROCKET_LIBRARIES ${LIBROCKET_CORE_LIBRARY} ${LIBROCKET_CONTROLS_LIBRARY})
+
+mark_as_advanced(LIBROCKET_INCLUDE_DIR)
+mark_as_advanced(LIBROCKET_CORE_LIBRARY LIBROCKET_CONTROLS_LIBRARY)
