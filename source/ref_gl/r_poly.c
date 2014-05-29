@@ -48,6 +48,7 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	mesh.stArray = poly->stArray;
 	mesh.colorsArray[0] = poly->colorsArray;
 	mesh.colorsArray[1] = NULL;
+	mesh.sVectorsArray = NULL;
 
 	RB_BatchMesh( &mesh );
 }

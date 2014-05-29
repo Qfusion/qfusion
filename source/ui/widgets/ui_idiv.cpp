@@ -43,11 +43,12 @@ void InlineDiv::ReadFromFile( const char *fileName )
 	}
 	else {
 		// allocate temporary buffer
-		char *buffer = __newa__( char, length );
+		char *buffer = __newa__( char, length + 1 );
 
 		// read the whole file contents
 		trap::FS_Read( buffer, length, file );
 		trap::FS_FCloseFile( file );
+		buffer[length] = '\0';
 
 		// set elements RML code
 		SetInnerRML( buffer );
