@@ -134,6 +134,8 @@ typedef struct glsl_program_s
 
 trie_t *glsl_cache_trie = NULL;
 
+static qboolean r_glslprograms_initialized;
+
 static unsigned int r_numglslprograms;
 static glsl_program_t r_glslprograms[MAX_GLSL_PROGRAMS];
 static glsl_program_t *r_glslprograms_hash[GLSL_PROGRAM_TYPE_MAXTYPE][GLSL_PROGRAMS_HASH_SIZE];
@@ -154,6 +156,10 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 void RP_Init( void )
 {
 	int program;
+
+	if( r_glslprograms_initialized ) {
+		return;
+	}
 
 	memset( r_glslprograms, 0, sizeof( r_glslprograms ) );
 	memset( r_glslprograms_hash, 0, sizeof( r_glslprograms_hash ) );
@@ -181,6 +187,8 @@ void RP_Init( void )
 	}
 
 	RF_PrecachePrograms();
+
+	r_glslprograms_initialized = qtrue;
 }
 
 /*
@@ -2299,7 +2307,9 @@ void RP_Shutdown( void )
 	unsigned int i;
 	glsl_program_t *program;
 
-	RF_StorePrecacheList();
+	if( r_glslprograms_initialized ) {
+		RF_StorePrecacheList();
+	}
 
 	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ )
 		RF_DeleteProgram( program );
@@ -2308,4 +2318,5 @@ void RP_Shutdown( void )
 	glsl_cache_trie = NULL;
 
 	r_numglslprograms = 0;
+	r_glslprograms_initialized = qfalse;
 }
