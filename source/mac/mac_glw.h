@@ -21,17 +21,23 @@
 #ifndef __MAC_GLW_H_
 #define __MAC_GLW_H_
 
+#include <SDL2/SDL.h>
+
 typedef struct
 {
-	void *OpenGLLib; // instance of OpenGL library
-	qboolean videonotthefirsttime;
+    char *applicationName;
+
+    SDL_Window* sdl_window;
+    SDL_GLContext sdl_glcontext;
+
+    void *OpenGLLib; // instance of OpenGL library
+
+    int win_x, win_y;
 } glwstate_t;
 
 extern glwstate_t glw_state;
 
 extern cvar_t *vid_fullscreen;
 extern cvar_t *vid_multiscreen_head;
-
-#define VIDEOMODE_HACK
 
 #endif // __MAC_GLW_H_

@@ -19,6 +19,8 @@ if (NOT QFUSION_TVSERVER_NAME)
     set(QFUSION_TVSERVER_NAME qfusiontv_server)
 endif()
 
+option(USE_SDL2 "Build using SDL2" OFF)
+
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(QFUSION_WINDOWS_ARCH "x86")
@@ -58,6 +60,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_FRAMEWORK_PATH "mac/Frameworks")
     set(CMAKE_MACOSX_RPATH 1)
     set(JPEG_NAMES libjpeg) # libjpeg.framework should be renamed to jpeg.framework to remove this hack
+    set(USE_SDL2 1)
 endif()
 
 # Linux specific settings
@@ -79,7 +82,11 @@ find_package(PNG REQUIRED)
 
 # We need SDL only on non-Windows platforms
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    find_package(SDL REQUIRED)
+    if (USE_SDL2)
+        find_package(SDL2 REQUIRED)
+    else()
+        find_package(SDL REQUIRED)
+    endif()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)

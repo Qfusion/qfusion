@@ -50,7 +50,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../unix/unix_threads.c"
         "../null/sys_vfs_null.c"
 
-        "../mac/SDLMain.m"
         "../mac/mac_input.m"
         "../mac/mac_vid.m"
         "../mac/mac_sys.m"
@@ -58,7 +57,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../mac/Warsow-Info.plist"
     )
 
-    set(CLIENT_PLATFORM_LIBRARIES ${SDL_LIBRARY} "-framework IOKit")
+    set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "-framework IOKit" "-framework Cocoa")
     set(CLIENT_BINARY_TYPE MACOSX_BUNDLE)
 
     set(BUNDLE_RESOURCES

@@ -18,9 +18,7 @@
 
  */
 
-#import <Cocoa/Cocoa.h>
-
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #include <OpenGL/OpenGL.h>
 
 #include "../ref_gl/r_local.h"
@@ -29,6 +27,42 @@
 
 glwstate_t glw_state = { NULL, qfalse };
 cvar_t *vid_fullscreen;
+
+static int GLimp_InitGL( void );
+
+static void VID_SetWindowSize( qboolean fullscreen )
+{
+	if (fullscreen)
+	{
+		SDL_SetWindowFullscreen(glw_state.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+	}
+	else
+	{
+		SDL_SetWindowSize(glw_state.sdl_window, glConfig.width, glConfig.height);
+	}
+}
+    
+static qboolean VID_CreateWindow( void )
+{
+	qboolean fullscreen = glConfig.fullScreen;
+    
+	glw_state.sdl_window = SDL_CreateWindow(glw_state.applicationName,
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL);
+    
+	if( !glw_state.sdl_window )
+		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
+    
+    VID_SetWindowSize( fullscreen );
+    
+	// init all the gl stuff for the window
+	if( !GLimp_InitGL() )
+	{
+		ri.Com_Printf( "VID_CreateWindow() - GLimp_InitGL failed\n" );
+		return qfalse;
+	}
+    
+	return qtrue;
+}
 
 /**
  * Set video mode.
@@ -39,56 +73,32 @@ cvar_t *vid_fullscreen;
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
 	qboolean fullscreen, qboolean wideScreen )
 {
-	int colorbits = 0;
-
-#ifdef VIDEOMODE_HACK
-	/*
-	   SDL Hack
-	    We cant switch from one OpenGL video mode to another.
-	    Thus we first switch to some stupid 2D mode and then back to OpenGL.
-	 */
-	if( !glw_state.videonotthefirsttime )
-		SDL_SetVideoMode( 0, 0, 0, 0 );
-	glw_state.videonotthefirsttime = qtrue;
-#endif
-
-	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4 );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-  
-  if (r_swapinterval->integer == 0) {
-    SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 );
-  }
-  
-	if( SDL_SetVideoMode( width, height, colorbits,
-	                     SDL_OPENGL | ( fullscreen == qtrue ? SDL_FULLSCREEN : 0 ) ) == NULL )
+    const char *win_fs[] = { "W", "FS" };
+    
+    ri.Com_Printf( "Initializing OpenGL display\n" );
+	ri.Com_Printf( "...setting mode:" );
+    ri.Com_Printf( " %d %d %s\n", width, height, win_fs[fullscreen] );
+    
+    // destroy the existing window
+	if( glw_state.sdl_window )
 	{
-		Com_Printf( " setting the video mode failed: %s", SDL_GetError() );
-		return rserr_invalid_mode;
+		GLimp_Shutdown();
 	}
-
+    
+    glw_state.win_x = x;
+	glw_state.win_y = y;
+    
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.fullScreen = fullscreen;
 	glConfig.wideScreen = wideScreen;
-
-#if 0
-	//Threaded OpenGL, untested, appears to mess up colors on the UI
-	CGLContextObj ctx = CGLGetCurrentContext();
-	const CGLError err = CGLEnable( ctx, kCGLCEMPEngine );
-	if( err == kCGLNoError )
-		Com_Printf( "Enabled threaded GL engine" );
-	else
-		Com_Printf( "Couldn't enable threaded GL engine: %d\n", (int) err );
-#endif
-
-	// Restart Input ...
-	SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL );
-	SDL_ShowCursor( SDL_DISABLE );
-	SDL_EnableUNICODE( SDL_ENABLE );
-	SDL_WM_GrabInput( SDL_GRAB_ON );
-	SDL_SetCursor( NULL );
-
-	return rserr_ok;
+    // TODO: SDL2
+	glConfig.fullScreen = fullscreen;//VID_SetFullscreenMode( displayFrequency, fullscreen );
+    
+	if( !VID_CreateWindow() ) {
+		return rserr_invalid_mode;
+	}
+    
+    return ( fullscreen == glConfig.fullScreen ? rserr_ok : rserr_invalid_fullscreen );
 }
 
 /**
@@ -96,7 +106,24 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
  */
 void GLimp_Shutdown()
 {
-
+    SDL_DestroyWindow(glw_state.sdl_window);
+    
+    if( glConfig.fullScreen )
+    {
+        glConfig.fullScreen = qfalse;
+    }
+    
+    if( glw_state.applicationName )
+    {
+        free( glw_state.applicationName );
+        glw_state.applicationName = NULL;
+    }
+    
+    glw_state.win_x = 0;
+    glw_state.win_y = 0;
+    
+    glConfig.width = 0;
+    glConfig.height = 0;
 }
 
 /**
@@ -107,33 +134,64 @@ void GLimp_Shutdown()
 
 int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
 {
-	hinstance = NULL;
-	wndproc = NULL;
-	parenthWnd = NULL;
-
-	vid_fullscreen = ri.Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-
-	Com_Printf( "Display initialization\n" );
-
-	const SDL_VideoInfo *info = NULL;
-	info = SDL_GetVideoInfo();
-	if( !info )
-	{
-		Com_Printf( "Video query failed: %s\n", SDL_GetError() );
-		return 0;
-	}
-
-	SDL_WM_SetCaption( APPLICATION_UTF8, NULL );
-	// Restart Input ...
-	SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL );
-	SDL_ShowCursor( SDL_DISABLE );
-	SDL_EnableUNICODE( SDL_ENABLE );
-	SDL_WM_GrabInput( SDL_GRAB_ON );
-	SDL_SetCursor( NULL );
-	
-	return 1;
+	glw_state.applicationName = (char*)malloc( strlen( applicationName ) + 1 );
+	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );
+    
+	return qtrue;
 }
 
+static int GLimp_InitGL( void )
+{
+    int colorBits, depthBits, stencilBits;
+	
+	cvar_t *stereo;
+	stereo = ri.Cvar_Get( "cl_stereo", "0", 0 );
+    
+    glConfig.stencilBits = r_stencilbits->integer;
+// TODO: SDL2
+//	if( max( 0, r_stencilbits->integer ) != 0 )
+//		glConfig.stencilEnabled = qtrue;
+//	else
+//		glConfig.stencilEnabled = qfalse;
+    
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, max( 0, r_stencilbits->integer ));
+    
+	if( stereo->integer != 0)
+	{
+		ri.Com_DPrintf( "...attempting to use stereo\n" );
+		SDL_GL_SetAttribute(SDL_GL_STEREO, 1);
+		glConfig.stereoEnabled = qtrue;
+	}
+	else
+	{
+		glConfig.stereoEnabled = qfalse;
+	}
+    
+	glw_state.sdl_glcontext = SDL_GL_CreateContext(glw_state.sdl_window);
+	if (glw_state.sdl_glcontext == 0) {
+		ri.Com_Printf( "GLimp_Init() - SDL_GL_CreateContext failed: \"%s\"\n", SDL_GetError() );
+		goto fail;
+	}
+    
+	if (SDL_GL_MakeCurrent(glw_state.sdl_window, glw_state.sdl_glcontext)) {
+		ri.Com_Printf( "GLimp_Init() - SDL_GL_MakeCurrent failed: \"%s\"\n", SDL_GetError() );
+		goto fail;
+	}
+    
+	/*
+     ** print out PFD specifics
+     */
+	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &colorBits);
+	SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &depthBits);
+	SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stencilBits);
+	
+	ri.Com_Printf( "GL PFD: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", colorBits, depthBits, stencilBits);
+    
+	return qtrue;
+    
+fail:
+	return qfalse;
+}
 
 /**
  * TODO documentation
@@ -149,7 +207,7 @@ void GLimp_BeginFrame( void )
  */
 void GLimp_EndFrame( void )
 {
-	SDL_GL_SwapBuffers();
+    SDL_GL_SwapWindow(glw_state.sdl_window);
 }
 
 
@@ -158,21 +216,22 @@ void GLimp_EndFrame( void )
  */
 qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
 {
-	unsigned short ramp256[3*256];
+//  TODO: SDL2
+	// unsigned short ramp256[3*256];
 	
-	if( stride < 256 )
-	{
-		// SDL only supports gamma ramps with 256 mappings per channel
-		return qfalse;
-	}
+	// if( stride < 256 )
+	// {
+	// 	// SDL only supports gamma ramps with 256 mappings per channel
+	// 	return qfalse;
+	// }
 	
-	if( SDL_GetGammaRamp( ramp256, ramp256+256, ramp256+( 256<<1 ) ) != -1 )
-	{
-		*psize = 256;
-		memcpy( ramp,          ramp256,       256*sizeof(*ramp) );
-		memcpy( ramp+  stride, ramp256+  256, 256*sizeof(*ramp) );
-		memcpy( ramp+2*stride, ramp256+2*256, 256*sizeof(*ramp) );
-	}
+	// if( SDL_GetGammaRamp( ramp256, ramp256+256, ramp256+( 256<<1 ) ) != -1 )
+	// {
+	// 	*psize = 256;
+	// 	memcpy( ramp,          ramp256,       256*sizeof(*ramp) );
+	// 	memcpy( ramp+  stride, ramp256+  256, 256*sizeof(*ramp) );
+	// 	memcpy( ramp+2*stride, ramp256+2*256, 256*sizeof(*ramp) );
+	// }
 	return qfalse;
 }
 
@@ -182,19 +241,20 @@ qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned shor
  */
 void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp )
 {
-	unsigned short ramp256[3*256];
-	
-	if( size != 256 )
-		return;
-	
-	
-	memcpy( ramp256,       ramp         , size*sizeof(*ramp));
-	memcpy( ramp256+  256, ramp+  stride, size*sizeof(*ramp));
-	memcpy( ramp256+2*256, ramp+2*stride, size*sizeof(*ramp));
-	if( SDL_SetGammaRamp( ramp256, ramp256+256, ramp256+( 256<<1 ) ) == -1 )
-	{
-		Com_Printf( "SDL_SetGammaRamp(...) failed: ", SDL_GetError() );
-	}
+//  TODO: SDL2
+//	unsigned short ramp256[3*256];
+//	
+//	if( size != 256 )
+//		return;
+//	
+//	
+//	memcpy( ramp256,       ramp         , size*sizeof(*ramp));
+//	memcpy( ramp256+  256, ramp+  stride, size*sizeof(*ramp));
+//	memcpy( ramp256+2*256, ramp+2*stride, size*sizeof(*ramp));
+//	if( SDL_SetGammaRamp( ramp256, ramp256+256, ramp256+( 256<<1 ) ) == -1 )
+//	{
+//		Com_Printf( "SDL_SetGammaRamp(...) failed: ", SDL_GetError() );
+//	}
 }
 
 
@@ -243,63 +303,4 @@ qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 void GLimp_SharedContext_Destroy( void *context, void *surface )
 {
 	(void)context;
-}
-
-/*****************************************************************************/
-
-/*
-* Sys_GetClipboardData
-*
-* Orginally from EzQuake
-* There should be a smarter place to put this
-*/
-char *Sys_GetClipboardData( qboolean primary )
-{
-	char* clipboard = NULL;
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSPasteboard	*myPasteboard = NULL;
-    NSArray 		*myPasteboardTypes = NULL;
-	
-    myPasteboard = [NSPasteboard generalPasteboard];
-    myPasteboardTypes = [myPasteboard types];
-    if ([myPasteboardTypes containsObject: NSStringPboardType])
-    {
-        NSString	*myClipboardString;
-		
-        myClipboardString = [myPasteboard stringForType: NSStringPboardType];
-        if (myClipboardString != NULL && [myClipboardString length] > 0)
-        {
-			int bytes = [myClipboardString length];
-			clipboard = malloc( bytes + 1 );
-			Q_strncpyz( clipboard, (char *)[myClipboardString UTF8String], bytes + 1 );
-        }
-    }
-	[pool release];
-    return (clipboard);
-}
-
-/*
-* Sys_SetClipboardData
-*/
-qboolean Sys_SetClipboardData( char *data )
-{
-	return qtrue;
-}
-
-/*
-* Sys_FreeClipboardData
-*/
-void Sys_FreeClipboardData( char *data )
-{
-	free( data );
-}
-
-/*
-* Sys_OpenURLInBrowser
-*/
-void Sys_OpenURLInBrowser( const char *url )
-{
-  NSString *string_url = [NSString stringWithUTF8String:url];
-  NSURL *ns_url = [NSURL URLWithString:string_url];
-  [[NSWorkspace sharedWorkspace] openURL:ns_url];
 }
