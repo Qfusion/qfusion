@@ -19,7 +19,7 @@
  */
 
 #include "../client/client.h"
-#import <AppKit/NSScreen.h>
+#include <SDL2/SDL.h>
 
 static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 {
@@ -88,16 +88,13 @@ void VID_FlashWindow( int count )
  */
 qboolean VID_GetDisplaySize( int *width, int *height )
 {
-    NSScreen* screen = [NSScreen mainScreen];
-    if (screen)
-    {
-        NSRect rect = [screen frame];
-        *width = floor(rect.size.width);
-        *height = floor(rect.size.height);
-        return qtrue;
-    }
-    
-	return qfalse;
+	SDL_DisplayMode mode;
+	SDL_GetDesktopDisplayMode(0, &mode);
+
+	*width = mode.w;
+	*height = mode.h;
+
+	return qtrue;
 }
 
 /*

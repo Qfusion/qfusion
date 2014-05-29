@@ -30,7 +30,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	    "../unix/unix_xpm.c"
 	)
 
-	set(REF_GL_PLATFORM_LIBRARIES ${SDL_LIBRARY})
+	set(REF_GL_PLATFORM_LIBRARIES ${SDL2_LIBRARY})
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
