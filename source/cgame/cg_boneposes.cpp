@@ -216,7 +216,7 @@ void CG_TransformBoneposes( cgs_skeleton_t *skel, bonepose_t *outboneposes, bone
 			memcpy( &temppose, &sourceboneposes[j], sizeof( bonepose_t ) );
 			DualQuat_Multiply( outboneposes[skel->bones[j].parent].dualquat, temppose.dualquat, outboneposes[j].dualquat );
 		}
-		else
+		else if( outboneposes != sourceboneposes )
 			memcpy( &outboneposes[j], &sourceboneposes[j], sizeof( bonepose_t ) );
 	}
 }

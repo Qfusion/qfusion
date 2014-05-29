@@ -444,6 +444,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	mesh.stArray = texcoords;
 	mesh.colorsArray[0] = colors;
 	mesh.colorsArray[1] = NULL;
+	mesh.sVectorsArray = NULL;
 
 	RB_BatchMesh( &mesh );
 }
