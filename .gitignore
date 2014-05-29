@@ -12,3 +12,14 @@ libsrcs/libRocket/libRocket/Build/obj/
 *.opensdf
 *.vcxproj.user
 *.suo
+
+# ignore cmake generated files
+**/CMakeCache.txt
+**/CPackConfig.cmake
+**/CPackSourceConfig.cmake
+**/CMakeFiles/
+**/CMakeScripts/
+**/qfusion.build/
+**/*.xcodeproj
+**/Makefile
+*cmake_install.cmake
