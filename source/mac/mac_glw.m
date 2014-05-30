@@ -158,26 +158,40 @@ void GLimp_EndFrame( void )
  */
 qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *ramp )
 {
-	if( stride != 256 )
+	unsigned short ramp256[3*256];
+	
+	if( stride < 256 )
 	{
 		// SDL only supports gamma ramps with 256 mappings per channel
 		return qfalse;
 	}
-	return SDL_GetGammaRamp( ramp, ramp+stride, ramp+( stride<<1 ) ) == -1 ? qfalse : qtrue;
+	
+	if( SDL_GetGammaRamp( ramp256, ramp256+256, ramp256+( 256<<1 ) ) != -1 )
+	{
+		*psize = 256;
+		memcpy( ramp,          ramp256,       256*sizeof(*ramp) );
+		memcpy( ramp+  stride, ramp256+  256, 256*sizeof(*ramp) );
+		memcpy( ramp+2*stride, ramp256+2*256, 256*sizeof(*ramp) );
+	}
+	return qfalse;
 }
 
 
 /**
  * TODO documentation
  */
-void GLimp_SetGammaRamp( size_t stride, unsigned short *ramp )
+void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp )
 {
-	if( stride != 256 )
-	{
-		// SDL only supports gamma ramps with 256 mappings per channel
+	unsigned short ramp256[3*256];
+	
+	if( size != 256 )
 		return;
-	}
-	if( SDL_SetGammaRamp( ramp, ramp+stride, ramp+( stride<<1 ) ) == -1 )
+	
+	
+	memcpy( ramp256,       ramp         , size*sizeof(*ramp));
+	memcpy( ramp256+  256, ramp+  stride, size*sizeof(*ramp));
+	memcpy( ramp256+2*256, ramp+2*stride, size*sizeof(*ramp));
+	if( SDL_SetGammaRamp( ramp256, ramp256+256, ramp256+( 256<<1 ) ) == -1 )
 	{
 		Com_Printf( "SDL_SetGammaRamp(...) failed: ", SDL_GetError() );
 	}
@@ -218,13 +232,11 @@ void GLimp_SharedContext_Destroy( void *ctx )
 /*****************************************************************************/
 
 /*
-   =================
-   Sys_GetClipboardData
-
-   Orginally from EzQuake
-   There should be a smarter place to put this
-   =================
- */
+* Sys_GetClipboardData
+*
+* Orginally from EzQuake
+* There should be a smarter place to put this
+*/
 char *Sys_GetClipboardData( qboolean primary )
 {
 	char* clipboard = NULL;
@@ -259,16 +271,17 @@ qboolean Sys_SetClipboardData( char *data )
 }
 
 /*
-   =================
-   Sys_FreeClipboardData
-   =================
- */
+* Sys_FreeClipboardData
+*/
 void Sys_FreeClipboardData( char *data )
 {
 	free( data );
 }
 
-void	Sys_OpenURLInBrowser( const char *url )
+/*
+* Sys_OpenURLInBrowser
+*/
+void Sys_OpenURLInBrowser( const char *url )
 {
   NSString *string_url = [NSString stringWithUTF8String:url];
   NSURL *ns_url = [NSURL URLWithString:string_url];
