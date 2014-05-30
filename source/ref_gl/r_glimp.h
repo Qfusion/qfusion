@@ -158,6 +158,7 @@ typedef struct
 				,texture_compression
 				,vertex_buffer_object
 				,GLSL
+				,GLSL_core
 				,GLSL130
 				,depth_texture
 				,framebuffer_object

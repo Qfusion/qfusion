@@ -587,7 +587,6 @@ QGL_FUNC(void, glBufferSubData, (GLenum target, GLintptrARB offset, GLsizeiptrAR
 
 #ifndef GL_ES_VERSION_2_0
 QGL_EXT(void, glDeleteObjectARB, (GLhandleARB obj));
-QGL_EXT(GLhandleARB, glGetHandleARB, (GLenum pname));
 QGL_EXT(void, glDetachObjectARB, (GLhandleARB containerObj, GLhandleARB attachedObj));
 QGL_EXT(GLhandleARB, glCreateShaderObjectARB, (GLenum shaderType));
 QGL_EXT(void, glShaderSourceARB, (GLhandleARB shaderObj, GLsizei count, const GLcharARB **string, const GLint *length));
@@ -616,7 +615,6 @@ QGL_EXT(void, glUniform4ivARB, (GLint location, GLsizei count, const GLint *valu
 QGL_EXT(void, glUniformMatrix2fvARB, (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value));
 QGL_EXT(void, glUniformMatrix3fvARB, (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value));
 QGL_EXT(void, glUniformMatrix4fvARB, (GLint location, GLsizei count, GLboolean transpose, const GLfloat *value));
-QGL_EXT(void, glGetObjectParameterfvARB, (GLhandleARB obj, GLenum pname, GLfloat *params));
 QGL_EXT(void, glGetObjectParameterivARB, (GLhandleARB obj, GLenum pname, GLint *params));
 QGL_EXT(void, glGetInfoLogARB, (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog));
 QGL_EXT(void, glGetAttachedObjectsARB, (GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj));
@@ -625,14 +623,19 @@ QGL_EXT(void, glGetActiveUniformARB, (GLhandleARB programObj, GLuint index, GLsi
 QGL_EXT(void, glGetUniformfvARB, (GLhandleARB programObj, GLint location, GLfloat *params));
 QGL_EXT(void, glGetUniformivARB, (GLhandleARB programObj, GLint location, GLint *params));
 QGL_EXT(void, glGetShaderSourceARB, (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source));
-#ifndef qglDeleteProgram
-#define qglDeleteProgram qglDeleteObjectARB
-#define qglDeleteShader qglDeleteObjectARB
-#define qglGetProgramiv qglGetObjectParameterivARB
-#define qglGetShaderiv qglGetObjectParameterivARB
-#define qglGetProgramInfoLog qglGetInfoLogARB
-#define qglGetShaderInfoLog qglGetInfoLogARB
-#endif
+
+QGL_EXT(void, glDeleteProgram, (GLhandleARB programObj));
+QGL_EXT(void, glDeleteShader, (GLhandleARB shaderObj));
+QGL_EXT(void, glDetachShader, (GLhandleARB programObj, GLhandleARB shaderObj));
+QGL_EXT(GLhandleARB, glCreateShader, (GLenum shaderType));
+QGL_EXT(GLhandleARB, glCreateProgram, (void));
+QGL_EXT(void, glAttachShader, (GLhandleARB programObj, GLhandleARB shaderObj));
+QGL_EXT(void, glUseProgram, (GLhandleARB programObj));
+QGL_EXT(void, glGetProgramiv, (GLhandleARB programObj, GLenum pname, GLint *params));
+QGL_EXT(void, glGetShaderiv, (GLhandleARB shaderObj, GLenum pname, GLint *params));
+QGL_EXT(void, glGetProgramInfoLog, (GLhandleARB programObj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog));
+QGL_EXT(void, glGetShaderInfoLog, (GLhandleARB shaderObj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog));
+QGL_EXT(void, glGetAttachedShaders, (GLhandleARB programObj, GLsizei maxCount, GLsizei *count, GLhandleARB *shaders));
 #else
 QGL_FUNC(void, glDeleteProgram, (GLhandleARB programObj));
 QGL_FUNC(void, glDeleteShader, (GLhandleARB shaderObj));
@@ -825,10 +828,17 @@ QGL_EXT(void, glDrawBuffersIndexedNV, (GLint, const GLenum *, const GLint *));
 
 QGL_EXT(void, glSwapInterval, (int interval));
 
+#ifndef GL_ES_VERSION_2_0
 QGL_EXT(void, glProgramParameteri, (GLuint program, GLenum pname, GLint value));
 QGL_EXT(void, glGetProgramBinary, (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary));
 QGL_EXT(void, glProgramBinary, (GLuint program, GLenum binaryFormat, const GLvoid *binary, GLsizei length));
-QGL_EXT(void, glGetProgramiv, (GLuint program, GLenum pname, GLint *params));
+#else
+QGL_EXT(void, glGetProgramBinaryOES, (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary));
+QGL_EXT(void, glProgramBinaryOES, (GLuint program, GLenum binaryFormat, const GLvoid *binary, GLsizei length));
+QGL_FUNC_OPT(void, glProgramParameteri, (GLuint program, GLenum pname, GLint value));
+QGL_FUNC_OPT(void, glGetProgramBinary, (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary));
+QGL_FUNC_OPT(void, glProgramBinary, (GLuint program, GLenum binaryFormat, const GLvoid *binary, GLsizei length));
+#endif
 
 // WGL_EXT Functions
 QGL_WGL_EXT(const char *, wglGetExtensionsStringEXT, (void));

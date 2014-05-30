@@ -1397,7 +1397,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		goto done;
 	}
 
-	if( glConfig.ext.get_program_binary ) {
+	if( glConfig.ext.get_program_binary && qglProgramParameteri ) {
 		qglProgramParameteri( program->object, GL_PROGRAM_BINARY_RETRIEVABLE_HINT, GL_TRUE );
 	}
 
