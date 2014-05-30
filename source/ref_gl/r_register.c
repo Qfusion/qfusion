@@ -688,6 +688,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.shader_objects = qtrue;
 	glConfig.ext.shading_language_100 = qtrue;
 	glConfig.ext.GLSL = qtrue;
+	glConfig.ext.GLSL_core = qtrue;
 	if( glConfig.version >= 300 )
 	{
 		glConfig.ext.draw_range_elements = qtrue;
