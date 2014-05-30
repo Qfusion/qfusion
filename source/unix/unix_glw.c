@@ -1049,10 +1049,21 @@ void GLimp_EndFrame( void )
 /*
 ** GLimp_GetGammaRamp
 */
-qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *ramp )
+qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
 {
-	if( XF86VidModeGetGammaRamp( x11display.dpy, x11display.scr, 
-		stride, ramp, ramp + stride, ramp + ( stride << 1 ) ) != 0 )
+	int size;
+#ifndef X_XF86VidModeGetGammaRampSize
+	if( XF86VidModeGetGammaRampSize( x11display.dpy, x11display.scr,
+		&size ) == 0 )
+		return qfalse;
+#else
+	size = 256;
+#endif
+	if( size > stride )
+		return qfalse;
+	*psize = size;
+	if( XF86VidModeGetGammaRamp( x11display.dpy, x11display.scr,
+		size, ramp, ramp + stride, ramp + ( stride << 1 ) ) != 0 )
 		return qtrue;
 	return qfalse;
 }
@@ -1060,10 +1071,10 @@ qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *ramp )
 /*
 ** GLimp_SetGammaRamp
 */
-void GLimp_SetGammaRamp( size_t stride, unsigned short *ramp )
+void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp )
 {
-	XF86VidModeSetGammaRamp( x11display.dpy, x11display.scr, 
-		stride, ramp, ramp + stride, ramp + ( stride << 1 ) );
+	XF86VidModeSetGammaRamp( x11display.dpy, x11display.scr,
+		size, ramp, ramp + stride, ramp + ( stride << 1 ) );
 }
 
 /*

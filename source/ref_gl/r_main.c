@@ -1526,21 +1526,21 @@ static void R_UpdateHWGamma( void )
 {
 	int i, v;
 	double invGamma, div;
-	unsigned short gammaRamp[3*256];
+	unsigned short gammaRamp[3*GAMMARAMP_STRIDE];
 
 	if( !glConfig.hwGamma )
 		return;
 
 	invGamma = 1.0 / bound( 0.5, r_gamma->value, 3.0 );
-	div = (double)( 1 << 0 ) / 255.5;
+	div = (double)( 1 << 0 ) / (glConfig.gammaRampSize - 0.5);
 
-	for( i = 0; i < 256; i++ )
+	for( i = 0; i < glConfig.gammaRampSize; i++ )
 	{
 		v = ( int )( 65535.0 * pow( ( (double)i + 0.5 ) * div, invGamma ) + 0.5 );
-		gammaRamp[i] = gammaRamp[i + 256] = gammaRamp[i + 512] = ( ( unsigned short )bound( 0, v, 65535 ) );
+		gammaRamp[i] = gammaRamp[i + GAMMARAMP_STRIDE] = gammaRamp[i + 2*GAMMARAMP_STRIDE] = ( ( unsigned short )bound( 0, v, 65535 ) );
 	}
 
-	GLimp_SetGammaRamp( 256, gammaRamp );
+	GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, gammaRamp );
 }
 
 /*
