@@ -405,14 +405,14 @@ static void RF_DeleteProgram( glsl_program_t *program )
 
 	if( program->vertexShader )
 	{
-		qglDetachObjectARB( program->object, program->vertexShader );
+		qglDetachShader( program->object, program->vertexShader );
 		qglDeleteShader( program->vertexShader );
 		program->vertexShader = 0;
 	}
 
 	if( program->fragmentShader )
 	{
-		qglDetachObjectARB( program->object, program->fragmentShader );
+		qglDetachShader( program->object, program->fragmentShader );
 		qglDeleteShader( program->fragmentShader );
 		program->fragmentShader = 0;
 	}
@@ -439,7 +439,7 @@ static int RF_CompileShader( int program, const char *programName, const char *s
 	GLhandleARB shader;
 	GLint compiled;
 
-	shader = qglCreateShaderObjectARB( (GLenum)shaderType );
+	shader = qglCreateShader( (GLenum)shaderType );
 	if( !shader )
 		return 0;
 
@@ -473,7 +473,7 @@ static int RF_CompileShader( int program, const char *programName, const char *s
 		return 0;
 	}
 
-	qglAttachObjectARB( program, shader );
+	qglAttachShader( program, shader );
 
 	return shader;
 }
@@ -1390,7 +1390,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	memset( &parser, 0, sizeof( parser ) );
 
 	program = r_glslprograms + r_numglslprograms++;
-	program->object = qglCreateProgramObjectARB();
+	program->object = qglCreateProgram();
 	if( !program->object )
 	{
 		error = 1;
@@ -1582,7 +1582,7 @@ done:
 
 	if( program->object )
 	{
-		qglUseProgramObjectARB( program->object );
+		qglUseProgram( program->object );
 		RF_GetUniformLocations( program );
 	}
 
