@@ -1603,24 +1603,31 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	// bind white texture for shadow map view
-#define CELSHADE_BIND(tmu,tex,feature,canAdd) \
+	// replacement images are there to ensure that the entity is still
+	// properly colored despite real images still being loaded in a separate thread
+#define CELSHADE_BIND(tmu,tex,feature,canAdd,replacement) \
 	if( tex && !tex->missing ) { \
+		image_t *btex = tex; \
 		if( rb.renderFlags & RF_SHADOWMAPVIEW ) { \
-			tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture; \
+			btex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture; \
 		} else {\
-			programFeatures |= feature; \
-			if( canAdd && tex->samples == 3 ) programFeatures |= ((feature) << 1); \
+			btex = tex->loaded ? tex : replacement; \
+			if( btex ) { \
+				programFeatures |= feature; \
+				if( canAdd && btex->samples == 3 ) programFeatures |= ((feature) << 1); \
+			} \
 		} \
-		RB_BindTexture(tmu, tex); \
+		if( btex ) { \
+			RB_BindTexture( tmu, btex ); \
+		} \
 	}
 
-	CELSHADE_BIND( 1, shade, 0, qfalse );
-	CELSHADE_BIND( 2, diffuse, GLSL_SHADER_CELSHADE_DIFFUSE, qfalse );
-	CELSHADE_BIND( 3, decal, GLSL_SHADER_CELSHADE_DECAL, qtrue );
-	CELSHADE_BIND( 4, entdecal, GLSL_SHADER_CELSHADE_ENTITY_DECAL, qtrue );
-	CELSHADE_BIND( 5, stripes, GLSL_SHADER_CELSHADE_STRIPES, qtrue );
-	CELSHADE_BIND( 6, light, GLSL_SHADER_CELSHADE_CEL_LIGHT, qtrue );
+	CELSHADE_BIND( 1, shade, 0, qfalse, rsh.whiteCubemapTexture );
+	CELSHADE_BIND( 2, diffuse, GLSL_SHADER_CELSHADE_DIFFUSE, qfalse, NULL );
+	CELSHADE_BIND( 3, decal, GLSL_SHADER_CELSHADE_DECAL, qtrue, NULL );
+	CELSHADE_BIND( 4, entdecal, GLSL_SHADER_CELSHADE_ENTITY_DECAL, qtrue, rsh.whiteTexture );
+	CELSHADE_BIND( 5, stripes, GLSL_SHADER_CELSHADE_STRIPES, qtrue, NULL );
+	CELSHADE_BIND( 6, light, GLSL_SHADER_CELSHADE_CEL_LIGHT, qtrue, NULL );
 
 #undef CELSHADE_BIND
 
