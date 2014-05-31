@@ -432,7 +432,10 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	VectorMA( point, -radius, v_left, xyz[2] );
 
 	for( i = 0; i < 4; i++ )
+	{
+		VectorNegate( &rn.viewAxis[AXIS_FORWARD], normals[i] );
 		Vector4Copy( e->color, colors[i] );
+	}
 
 	// backend knows how to count elements for quads
 	mesh.elems = NULL;
