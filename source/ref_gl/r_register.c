@@ -442,6 +442,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, get_program_binary, false, false, &gl_ext_get_program_binary_OES_funcs )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
 	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
+	,GL_EXTENSION( OES, rgb8_rgba8, false, false, NULL )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -702,7 +703,10 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.get_program_binary = qtrue;
 		glConfig.ext.depth24 = qtrue;
 		glConfig.ext.GLSL130 = qtrue;
+		glConfig.ext.rgb8_rgba8 = qtrue;
 	}
+#else
+	glConfig.ext.rgb8_rgba8 = qtrue;
 #endif
 
 	glConfig.maxTextureSize = 0;

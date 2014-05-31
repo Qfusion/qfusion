@@ -1148,7 +1148,11 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 	}
 	if( !glConfig.ext.shadow ) {
 		// pack depth into RGB triplet of the colorbuffer
-		programFeatures |= GLSL_SHADER_SHADOWMAP_RGB_SHADOW;
+		programFeatures |= GLSL_SHADER_SHADOWMAP_RGB;
+		if( !glConfig.ext.rgb8_rgba8 ) {
+			// pack depth into RGB565 triplet
+			programFeatures |= GLSL_SHADER_SHADOWMAP_RGB_16BIT;
+		}
 	}
 
 	// update uniforms
@@ -1203,6 +1207,10 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 {
 	int program;
 	mat4_t texMatrix;
+
+	if( !glConfig.ext.rgb8_rgba8 ) {
+		programFeatures |= GLSL_SHADER_RGBSHADOW_16BIT;
+	}
 
 	Matrix4_Identity( texMatrix );
 

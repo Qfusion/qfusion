@@ -180,6 +180,7 @@ typedef struct
 				,depth24
 				,multiview_draw_buffers
 				,get_program_binary
+				,rgb8_rgba8
 				;
 	union {
 		char	shadow, shadow_samplers;

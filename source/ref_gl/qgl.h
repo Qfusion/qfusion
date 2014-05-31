@@ -113,6 +113,12 @@ QGL_EXTERN	const char				*(*qglGetGLWExtensionsString)( void );
 #define GL_FLOAT											0x1406
 #endif
 
+#ifndef GL_UNSIGNED_SHORT_4_4_4_4
+#define GL_UNSIGNED_SHORT_4_4_4_4							0x8033
+#define GL_UNSIGNED_SHORT_5_5_5_1							0x8034
+#define GL_UNSIGNED_SHORT_5_6_5								0x8363
+#endif
+
 #define GL_TEXTURE0_ARB										0x84C0
 #define GL_MAX_TEXTURE_UNITS_ARB							0x84E2
 
