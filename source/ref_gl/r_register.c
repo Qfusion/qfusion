@@ -705,8 +705,6 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.GLSL130 = qtrue;
 		glConfig.ext.rgb8_rgba8 = qtrue;
 	}
-#else
-	glConfig.ext.rgb8_rgba8 = qtrue;
 #endif
 
 	glConfig.maxTextureSize = 0;
@@ -748,6 +746,12 @@ static void R_FinalizeGLExtensions( void )
 	qglGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &glConfig.maxTextureUnits );
 	clamp( glConfig.maxTextureUnits, 1, MAX_TEXTURE_UNITS );
 
+	/* GL_EXT_framebuffer_object */
+#ifndef GL_ES_VERSION_2_0
+	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
+	glConfig.ext.rgb8_rgba8 = glConfig.ext.framebuffer_object;
+#endif
+
 	/* GL_EXT_texture_filter_anisotropic */
 	glConfig.maxTextureFilterAnisotropic = 0;
 	if( strstr( glConfig.extensionsString, "GL_EXT_texture_filter_anisotropic" ) )
@@ -773,11 +777,6 @@ static void R_FinalizeGLExtensions( void )
 		qglGetProgramBinary = qglGetProgramBinaryOES;
 		qglProgramBinary = qglProgramBinaryOES;
 	}
-#endif
-
-	/* GL_OES_depth24 */
-#ifndef GL_ES_VERSION_2_0
-	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
 #endif
 
 	/* GL_EXT_multiview_draw_buffers */
