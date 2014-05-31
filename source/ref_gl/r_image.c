@@ -1950,7 +1950,10 @@ static void R_LoadAsyncImageFromDisk( image_t *image )
 */
 static void R_ShutdownImageLoader( void )
 {
-	if( !gl_loader_context ) {
+	void *context = gl_loader_context;
+
+	gl_loader_context = NULL;
+	if( !context ) {
 		return;
 	}
 
@@ -1963,8 +1966,7 @@ static void R_ShutdownImageLoader( void )
 
 	ri.BufQueue_Destroy( &loader_queue );
 
-	GLimp_SharedContext_Destroy( gl_loader_context );
-	gl_loader_context = NULL;
+	GLimp_SharedContext_Destroy( context );
 }
 
 //
