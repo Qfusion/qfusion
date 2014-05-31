@@ -575,14 +575,25 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 
 	if( flags & IT_DEPTH )
 	{
-		comp = GL_DEPTH_COMPONENT;
-		format = GL_DEPTH_COMPONENT;
+		comp = format = GL_DEPTH_COMPONENT;
 		type = glConfig.ext.depth24 ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
+	}
+	else if( flags & IT_FRAMEBUFFER )
+	{
+		if( samples == 4 )
+		{
+			comp = format = GL_RGBA;
+			type = glConfig.ext.rgb8_rgba8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_4_4_4_4;
+		}
+		else
+		{
+			comp = format = GL_RGB;
+			type = glConfig.ext.rgb8_rgba8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5;
+		}
 	}
 	else if( flags & IT_LUMINANCE )
 	{
-		comp = GL_LUMINANCE;
-		format = GL_LUMINANCE;
+		comp = format = GL_LUMINANCE;
 		type = GL_UNSIGNED_BYTE;
 	}
 	else

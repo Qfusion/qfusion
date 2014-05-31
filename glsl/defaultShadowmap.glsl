@@ -46,7 +46,11 @@ void main(void)
 
 #ifdef APPLY_RGB_SHADOW
 uniform sampler2D u_ShadowmapTexture[NUM_SHADOWS];
-# define dshadow2D(t,v) step(v.z, decodedepthmacro(qf_texture(t, v.xy)))
+# ifdef APPLY_RGB_SHADOW_16BIT
+#  define dshadow2D(t,v) step(v.z, decodedepthmacro16(qf_texture(t, v.xy)))
+# else
+#  define dshadow2D(t,v) step(v.z, decodedepthmacro(qf_texture(t, v.xy)))
+# endif
 #else
 uniform sampler2DShadow u_ShadowmapTexture[NUM_SHADOWS];
 # define dshadow2D(t,v) float(qf_shadow(t,v))

@@ -606,6 +606,8 @@ static const glsl_feature_t glsl_features_rgbshadow[] =
 	{ GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n", "_instanced" },
 	{ GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS, "#define APPLY_INSTANCED_TRANSFORMS\n#define APPLY_INSTANCED_ATTRIB_TRANSFORMS\n", "_instanced_va" },
 
+	{ GLSL_SHADER_RGBSHADOW_16BIT, "#define APPLY_RGB_SHADOW_16BIT\n", "_rgb16" },
+
 	{ 0, NULL, NULL }
 };
 
@@ -624,7 +626,8 @@ static const glsl_feature_t glsl_features_shadowmap[] =
 	{ GLSL_SHADER_SHADOWMAP_SHADOW2, "#define NUM_SHADOWS 2\n", "_2" },
 	{ GLSL_SHADER_SHADOWMAP_SHADOW3, "#define NUM_SHADOWS 3\n", "_3" },
 	{ GLSL_SHADER_SHADOWMAP_SHADOW4, "#define NUM_SHADOWS 4\n", "_4" },
-	{ GLSL_SHADER_SHADOWMAP_RGB_SHADOW, "#define APPLY_RGB_SHADOW\n", "_rgb" },
+	{ GLSL_SHADER_SHADOWMAP_RGB, "#define APPLY_RGB_SHADOW\n", "_rgb" },
+	{ GLSL_SHADER_SHADOWMAP_RGB_16BIT, "#define APPLY_RGB_SHADOW_16BIT\n", "_rgb16" },
 
 	{ 0, NULL, NULL }
 };
