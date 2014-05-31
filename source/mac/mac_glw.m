@@ -156,7 +156,7 @@ void GLimp_EndFrame( void )
 /**
  * TODO documentation
  */
-qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *ramp )
+qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
 {
 	unsigned short ramp256[3*256];
 	
