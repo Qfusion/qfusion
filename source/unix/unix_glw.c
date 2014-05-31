@@ -1097,7 +1097,7 @@ void *GLimp_SharedContext_Create( void )
 */
 qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
 {
-	return qglXMakeCurrent( x11display.dpy, x11display.gl_win, ctx ) == True ? qtrue : qfalse;
+	return qglXMakeCurrent( x11display.dpy, ctx ? x11display.gl_win : NULL, ctx ) == True ? qtrue : qfalse;
 }
 
 /*
