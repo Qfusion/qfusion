@@ -110,8 +110,7 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	wndproc = NULL;
 	parenthWnd = NULL;
 
-	vid_fullscreen = ri.Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
-	vid_fullscreen->flags &= ~( CVAR_LATCH_VIDEO );
+	vid_fullscreen = ri.Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	Com_Printf( "Display initialization\n" );
 
