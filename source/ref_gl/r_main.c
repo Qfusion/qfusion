@@ -1580,11 +1580,9 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 
 	if( r_clear->integer || forceClear )
 	{
-		byte_vec4_t color;
-
-		Vector4Copy( mapConfig.environmentColor, color );
-		qglClearColor( color[0]*( 1.0/255.0 ), color[1]*( 1.0/255.0 ), color[2]*( 1.0/255.0 ), 1 );
-		qglClear( GL_COLOR_BUFFER_BIT );
+		const qbyte *color = mapConfig.environmentColor;
+		RB_Clear( GL_COLOR_BUFFER_BIT, 
+			color[0]*( 1.0/255.0 ), color[1]*( 1.0/255.0 ), color[2]*( 1.0/255.0 ), 1 );
 	}
 
 	// update gamma

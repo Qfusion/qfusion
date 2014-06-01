@@ -589,8 +589,7 @@ void RB_Viewport( int x, int y, int w, int h )
 */
 void RB_Clear( int bits, float r, float g, float b, float a )
 {
-	// this is required for glClear(GL_DEPTH_BUFFER_BIT) to work
-	if( bits & GL_DEPTH_BUFFER_BIT )
+	if( bits & (GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT) )
 		RB_SetState( GLSTATE_DEPTHWRITE );
 
 	if( bits & GL_STENCIL_BUFFER_BIT )
