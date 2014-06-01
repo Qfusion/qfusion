@@ -892,14 +892,17 @@ static void R_FillStartupBackgroundColor( void )
 		qglDrawBuffersIndexedNV( 1, &location, &index );
 		GLimp_BeginFrame();
 		qglClear( GL_COLOR_BUFFER_BIT );
+		qglFinish();
 		GLimp_EndFrame();
 		index = 0;
 		qglDrawBuffersIndexedNV( 1, &location, &index );
 	}
 	GLimp_BeginFrame();
 	qglClear( GL_COLOR_BUFFER_BIT );
+	qglFinish();
 	GLimp_EndFrame();
 #else
+	GLimp_BeginFrame();
 	if( glConfig.stereoEnabled )
 	{
 		qglDrawBuffer( GL_FRONT_LEFT );
@@ -907,9 +910,10 @@ static void R_FillStartupBackgroundColor( void )
 		qglDrawBuffer( GL_FRONT_RIGHT );
 		qglClear( GL_COLOR_BUFFER_BIT );
 	}
-	qglDrawBuffer( GL_FRONT );
-	qglClear( GL_COLOR_BUFFER_BIT );
 	qglDrawBuffer( GL_BACK );
+	qglClear( GL_COLOR_BUFFER_BIT );
+	qglFinish();
+	GLimp_EndFrame();
 #endif
 }
 
