@@ -119,7 +119,7 @@ void S_IssueFreeSfxCmd( sndQueue_t *queue, int sfx )
 void S_IssueLoadSfxCmd( sndQueue_t *queue, int sfx )
 {
 	sndCmdLoadSfx_t cmd;
-	cmd.id = SND_CMD_FREE_SFX;
+	cmd.id = SND_CMD_LOAD_SFX;
 	cmd.sfx = sfx;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }
