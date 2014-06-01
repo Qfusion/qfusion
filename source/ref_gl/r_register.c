@@ -884,37 +884,27 @@ static void R_FinalizeGLExtensions( void )
 static void R_FillStartupBackgroundColor( void )
 {
 	qglClearColor( 0.1, 0.09, 0.12, 1.0 );
-#ifdef GL_ES_VERSION_2_0
-	if( glConfig.ext.multiview_draw_buffers && glConfig.stereoEnabled )
-	{
-		int location = GL_MULTIVIEW_NV;
-		int index = 1;
-		qglDrawBuffersIndexedNV( 1, &location, &index );
-		GLimp_BeginFrame();
-		qglClear( GL_COLOR_BUFFER_BIT );
-		qglFinish();
-		GLimp_EndFrame();
-		index = 0;
-		qglDrawBuffersIndexedNV( 1, &location, &index );
-	}
-	GLimp_BeginFrame();
-	qglClear( GL_COLOR_BUFFER_BIT );
-	qglFinish();
-	GLimp_EndFrame();
-#else
 	GLimp_BeginFrame();
 	if( glConfig.stereoEnabled )
 	{
-		qglDrawBuffer( GL_FRONT_LEFT );
+#ifdef GL_ES_VERSION_2_0
+		int location = GL_MULTIVIEW_NV;
+		int index = 1;
+		qglDrawBuffersIndexedNV( 1, &location, &index );
 		qglClear( GL_COLOR_BUFFER_BIT );
-		qglDrawBuffer( GL_FRONT_RIGHT );
+		index = 0;
+		qglDrawBuffersIndexedNV( 1, &location, &index );
+#else
+		qglDrawBuffer( GL_BACK_LEFT );
 		qglClear( GL_COLOR_BUFFER_BIT );
+		qglDrawBuffer( GL_BACK_RIGHT );
+		qglClear( GL_COLOR_BUFFER_BIT );
+		qglDrawBuffer( GL_BACK );
+#endif
 	}
-	qglDrawBuffer( GL_BACK );
 	qglClear( GL_COLOR_BUFFER_BIT );
 	qglFinish();
 	GLimp_EndFrame();
-#endif
 }
 
 static void R_Register( const char *screenshotsPrefix )
