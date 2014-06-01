@@ -1873,6 +1873,7 @@ enum
 	CMD_LOADER_INIT,
 	CMD_LOADER_SHUTDOWN,
 	CMD_LOADER_LOAD_PIC,
+	CMD_LOADER_UNBIND,
 
 	NUM_LOADER_CMDS
 };
@@ -1920,6 +1921,15 @@ static void R_IssueLoadPicLoaderCmd( int pic )
 }
 
 /*
+* R_IssueUnbindLoaderCmd
+*/
+static void R_IssueUnbindLoaderCmd( void )
+{
+	int cmd = CMD_LOADER_UNBIND;
+	ri.BufQueue_EnqueueCmd( loader_queue, &cmd, sizeof( cmd ) );
+}
+
+/*
 * R_InitImageLoader
 */
 static void R_InitImageLoader( void )
@@ -1943,6 +1953,7 @@ void R_FinishLoadingImages( void )
 	if( !gl_loader_context ) {
 		return;
 	}
+	R_IssueUnbindLoaderCmd();
 	ri.BufQueue_Finish( loader_queue );
 }
 
@@ -2016,6 +2027,24 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 }
 
 /*
+* R_HandleUnbindLoaderCmd
+*/
+static unsigned R_HandleUnbindLoaderCmd( void *pcmd )
+{
+	image_t tex;
+
+	memset( &tex, 0, sizeof( tex ) );
+
+	RB_BindContextTexture( 0, &tex );
+
+	tex.flags |= IT_CUBEMAP;
+
+	RB_BindContextTexture( 0, &tex );
+
+	return sizeof( int );
+}
+
+/*
 * R_ImageLoaderThreadProc
 */
 static void *R_ImageLoaderThreadProc( void *param )
@@ -2025,7 +2054,8 @@ static void *R_ImageLoaderThreadProc( void *param )
 	{
 		(queueCmdHandler_t)R_HandleInitLoaderCmd,
 		(queueCmdHandler_t)R_HandleShutdownLoaderCmd,
-		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd
+		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd,
+		(queueCmdHandler_t)R_HandleUnbindLoaderCmd
 	};
 
 	while ( 1 ){
