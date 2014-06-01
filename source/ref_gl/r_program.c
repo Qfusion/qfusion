@@ -1621,11 +1621,17 @@ static void *RP_GetProgramBinary( int elem, int *format, unsigned *length )
 	glsl_program_t *program = r_glslprograms + elem - 1;
 	GLenum GLFormat;
 	GLint GLlength;
+	GLint linked = 0;
 
 	if( !glConfig.ext.get_program_binary ) {
 		return NULL;
 	}
 	if( !program->object ) {
+		return NULL;
+	}
+
+	qglGetProgramiv( program->object, GL_OBJECT_LINK_STATUS_ARB, &linked );
+	if( !linked ) {
 		return NULL;
 	}
 
