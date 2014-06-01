@@ -186,13 +186,20 @@ void SF_BeginRegistration( void )
 sfx_t *SF_RegisterSound( const char *name )
 {
 	sfx_t *sfx;
+	int sfxnum;
 
 	assert( name );
 
 	sfx = SF_FindName( name, qtrue );
 	sfx->registration_sequence = s_registration_sequence;
-	if( !s_registering ) {
-		S_IssueLoadSfxCmd( s_cmdQueue, sfx - known_sfx );
+
+	// evenly balance the load between two threads during registration
+	sfxnum = sfx - known_sfx;
+	if( !s_registering || sfxnum & 1 ) {
+		S_IssueLoadSfxCmd( s_cmdQueue, sfxnum );
+	}
+	else {
+		S_LoadSound( sfx );
 	}
 	return sfx;
 }
