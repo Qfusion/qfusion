@@ -446,8 +446,9 @@ static void CG_RegisterModels( void )
 	name = cgs.configStrings[CS_WORLDMODEL];
 	if( name[0] )
 	{
-		trap_R_RegisterWorldModel( name );
+		CG_LoadingItemName( name );
 		CG_LoadingString( name );
+		trap_R_RegisterWorldModel( name );
 	}
 
 	CG_LoadingString( "models" );
@@ -878,7 +879,15 @@ static void CG_RegisterConfigStrings( void )
 		trap_GetConfigString( i, cgs.configStrings[i], MAX_CONFIGSTRING_CHARS );
 
 		cs = cgs.configStrings[i];
-		if( i >= CS_MODELS && cs[0] )
+		if( !cs[0] ) {
+			continue;
+		}
+
+		if( i == CS_WORLDMODEL )
+		{
+			cg.precacheTotal++;
+		}
+		else if( i >= CS_MODELS )
 		{
 			if( i >= CS_LOCATIONS && i < CS_LOCATIONS + MAX_LOCATIONS )
 				continue;
