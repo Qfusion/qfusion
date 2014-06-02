@@ -175,9 +175,6 @@ void SF_BeginRegistration( void )
 		s_registration_sequence = 1;
 	}
 	s_registering = qtrue;
-
-	// wait for the queue to be processed
-	S_FinishSoundQueue( s_cmdQueue );
 }
 
 /*
