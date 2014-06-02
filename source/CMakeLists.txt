@@ -26,7 +26,11 @@ find_package(ZLIB REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
-find_package(SDL REQUIRED)
+
+if (WIN32)
+else()
+    find_package(SDL REQUIRED)
+endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
