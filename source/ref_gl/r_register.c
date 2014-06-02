@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // r_register.c
 #include "r_local.h"
+#include "../qalgo/hash.h"
 
 glconfig_t glConfig;
 
@@ -1077,6 +1078,42 @@ static void R_GfxInfo_f( void )
 }
 
 /*
+* R_GLVersionHash
+*/
+static unsigned R_GLVersionHash( const char *vendorString, 
+	const char *rendererString, const char *versionString )
+{
+	qbyte *tmp;
+	size_t csize;
+	size_t tmp_size, pos;
+	unsigned hash;
+
+	tmp_size = strlen( vendorString ) + strlen( rendererString ) +
+		strlen( versionString ) + 1;
+
+	pos = 0;
+	tmp = R_Malloc( tmp_size );
+
+	csize = strlen( vendorString );
+	memcpy( tmp + pos, vendorString, csize );
+	pos += csize;
+
+	csize = strlen( rendererString );
+	memcpy( tmp + pos, rendererString, csize );
+	pos += csize;
+
+	csize = strlen( versionString );
+	memcpy( tmp + pos, versionString, csize );
+	pos += csize;
+
+	hash = COM_SuperFastHash( tmp, tmp_size, tmp_size );
+
+	R_Free( tmp );
+
+	return hash;
+}
+
+/*
 * R_Init
 */
 rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
@@ -1087,8 +1124,6 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
 	const char *dllname;
 	qgl_initerr_t initerr;
 	int i;
-	char renderer_buffer[1024];
-	char vendor_buffer[1024];
 	rserr_t err;
 	GLenum glerr;
 
@@ -1160,11 +1195,8 @@ init_qgl:
 	if( !glConfig.glwExtensionsString ) glConfig.glwExtensionsString = "";
 	if( !glConfig.shadingLanguageVersionString ) glConfig.shadingLanguageVersionString = "";
 
-	Q_strncpyz( renderer_buffer, glConfig.rendererString, sizeof( renderer_buffer ) );
-	Q_strlwr( renderer_buffer );
-
-	Q_strncpyz( vendor_buffer, glConfig.vendorString, sizeof( vendor_buffer ) );
-	Q_strlwr( vendor_buffer );
+	glConfig.versionHash = R_GLVersionHash( glConfig.vendorString, glConfig.rendererString,
+		glConfig.versionString );
 
 	memset( &rsh, 0, sizeof( rsh ) );
 	memset( &rf, 0, sizeof( rf ) );

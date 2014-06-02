@@ -201,6 +201,7 @@ typedef struct
 	const char		*extensionsString;
 	const char		*glwExtensionsString;
 	const char		*shadingLanguageVersionString;
+	unsigned		versionHash;
 
 	int				version;
 	int				shadingLanguageVersion;

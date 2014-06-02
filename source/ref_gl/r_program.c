@@ -222,9 +222,15 @@ static void RF_PrecachePrograms( void )
 	if( glConfig.ext.get_program_binary ) {
 		fileName = GLSL_BINARY_CACHE_FILE_NAME;
 		if( ri.FS_FOpenFile( fileName, &handleBin, FS_READ ) != -1 ) {
+			unsigned hash;
+
 			version = 0;
+			hash = 0;
+
 			ri.FS_Read( &version, sizeof( version ), handleBin );
-			if( version != GLSL_BITS_VERSION ) {
+			ri.FS_Read( &hash, sizeof( hash ), handleBin );
+			
+			if( version != GLSL_BITS_VERSION || hash != glConfig.versionHash ) {
 				ri.FS_FCloseFile( handleBin );
 				handleBin = 0;
 			}
@@ -353,7 +359,12 @@ static void RF_StorePrecacheList( void )
 			Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", fileNameBin );
 		}
 		else {
-			int temp = GLSL_BITS_VERSION;
+			unsigned temp;
+			
+			temp = GLSL_BITS_VERSION;
+			ri.FS_Write( &temp, sizeof( temp ), handleBin );
+
+			temp = glConfig.versionHash;
 			ri.FS_Write( &temp, sizeof( temp ), handleBin );
 		}
 	}
