@@ -191,15 +191,17 @@ sfx_t *SF_RegisterSound( const char *name )
 	assert( name );
 
 	sfx = SF_FindName( name, qtrue );
-	sfx->registration_sequence = s_registration_sequence;
+	if( sfx->registration_sequence != s_registration_sequence ) {
+		sfx->registration_sequence = s_registration_sequence;
 
-	// evenly balance the load between two threads during registration
-	sfxnum = sfx - known_sfx;
-	if( !s_registering || sfxnum & 1 ) {
-		S_IssueLoadSfxCmd( s_cmdQueue, sfxnum );
-	}
-	else {
-		S_LoadSound( sfx );
+		// evenly balance the load between two threads during registration
+		sfxnum = sfx - known_sfx;
+		if( !s_registering || sfxnum & 1 ) {
+			S_IssueLoadSfxCmd( s_cmdQueue, sfxnum );
+		}
+		else {
+			S_LoadSound( sfx );
+		}
 	}
 	return sfx;
 }
@@ -248,10 +250,6 @@ void SF_EndRegistration( void )
 			// we don't need this sound
 			S_Free( sfx->cache );
 			memset( sfx, 0, sizeof( *sfx ) );
-		}
-		else
-		{
-			S_LoadSound( sfx );
 		}
 	}
 }
