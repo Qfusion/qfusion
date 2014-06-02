@@ -207,7 +207,7 @@ void SF_BeginRegistration( void )
 	}
 	s_registering = qtrue;
 
-	// wait for the queue to be processed
+	// wait for the queue to be processed so that we can have the cmd buffer empty
 	S_FinishSoundQueue( s_cmdQueue );
 }
 
