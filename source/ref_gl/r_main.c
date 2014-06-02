@@ -1105,6 +1105,9 @@ static void R_SetupFrame( void )
 			rf.frameCount = 0;
 			rf.viewcluster = -1; // force R_MarkLeaves
 			rf.worldModelSequence = rsh.worldModelSequence;
+
+			// load all world images if not yet
+			R_FinishLoadingImages();
 		}
 	}
 	else
@@ -1481,8 +1484,10 @@ void R_PopRefInst( int clearBitMask )
 	if( !riStackSize ) {
 		return;
 	}
+
 	rn = riStack[--riStackSize];
 	R_BindRefInstFBO();
+
 	R_SetupGL( clearBitMask );
 }
 
