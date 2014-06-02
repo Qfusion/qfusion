@@ -100,7 +100,7 @@ typedef struct glsl_program_s
 					LightstyleColor[MAX_LIGHTMAPS],
 
 					DynamicLightsPosition[MAX_DLIGHTS],
-					DynamicLightsDiffuseAndRadius[MAX_DLIGHTS],
+					DynamicLightsDiffuseAndInvRadius[MAX_DLIGHTS],
 					NumDynamicLights,
 
 					AttrBonesIndices,
@@ -1938,7 +1938,8 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			VectorScale( dl->color, colorScale, dlcolor );
 
 			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, dlorigin );
-			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndRadius[n], dlcolor[0], dlcolor[1], dlcolor[2], dl->intensity );
+			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndInvRadius[n],
+				dlcolor[0], dlcolor[1], dlcolor[2], 1.0f / dl->intensity );
 
 			n++;
 			dlightbits &= ~(1<<i);
@@ -1955,7 +1956,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
-			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndRadius[n], 0.0f, 0.0f, 0.0f, 1.0f );
+			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndInvRadius[n], 0.0f, 0.0f, 0.0f, 1.0f );
 		}
 	}
 	
@@ -2189,15 +2190,15 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 		int locP, locD;
 
 		locP = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].Position", i ) );
-		locD = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].DiffuseAndRadius", i ) );
+		locD = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].DiffuseAndInvRadius", i ) );
 
 		if( locP < 0 || locD < 0 ) {
-			program->loc.DynamicLightsPosition[i] = program->loc.DynamicLightsDiffuseAndRadius[i] = -1;
+			program->loc.DynamicLightsPosition[i] = program->loc.DynamicLightsDiffuseAndInvRadius[i] = -1;
 			break;
 		}
 
 		program->loc.DynamicLightsPosition[i] = locP;
-		program->loc.DynamicLightsDiffuseAndRadius[i] = locD;
+		program->loc.DynamicLightsDiffuseAndInvRadius[i] = locD;
 	}
 	program->loc.NumDynamicLights = qglGetUniformLocationARB( program->object, "u_NumDynamicLights" );
 
