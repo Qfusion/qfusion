@@ -464,7 +464,7 @@ static unsigned S_HandleStopCmd( const sndCmdStop_t *cmd )
 static unsigned S_HandleFreeSfxCmd( const sndCmdFreeSfx_t *cmd )
 {
 	//Com_Printf("S_HandleFreeSfxCmd\n");
-	S_LoadBuffer( S_GetBufferById( cmd->sfx ) );
+	S_UnloadBuffer( S_GetBufferById( cmd->sfx ) );
 	return sizeof( *cmd );
 }
 
@@ -474,7 +474,7 @@ static unsigned S_HandleFreeSfxCmd( const sndCmdFreeSfx_t *cmd )
 static unsigned S_HandleLoadSfxCmd( const sndCmdLoadSfx_t *cmd )
 {
 	//Com_Printf("S_HandleLoadSfxCmd\n");
-	S_UnloadBuffer( S_GetBufferById( cmd->sfx ) );
+	S_LoadBuffer( S_GetBufferById( cmd->sfx ) );
 	return sizeof( *cmd );
 }
 
