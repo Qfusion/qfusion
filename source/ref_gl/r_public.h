@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 3
+#define REF_API_VERSION 4
 
 struct mempool_s;
 struct cinematics_s;
@@ -105,6 +105,7 @@ typedef struct
 	// multithreading
 	int ( *Thread_Create )( struct qthread_s **pthread, void *(*routine) (void*), void *param );
 	void ( *Thread_Join )( struct qthread_s *thread );
+	void ( *Thread_Yield )( void );
 	int ( *Mutex_Create )( struct qmutex_s **pmutex );
 	void ( *Mutex_Destroy )( struct qmutex_s *mutex );
 	void ( *Mutex_Lock )( struct qmutex_s *mutex );

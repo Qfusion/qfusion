@@ -226,6 +226,11 @@ static inline void trap_Thread_Join( struct qthread_s *thread )
 	SOUND_IMPORT.Thread_Join( thread );
 }
 
+static inline void trap_Thread_Yield( void )
+{
+	SOUND_IMPORT.Thread_Yield();
+}
+
 static inline int trap_Mutex_Create( struct qmutex_s **pmutex )
 {
 	return SOUND_IMPORT.Mutex_Create( pmutex );

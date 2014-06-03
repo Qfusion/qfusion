@@ -2066,7 +2066,7 @@ static void *R_ImageLoaderThreadProc( void *param )
 			break;
 		}
 
-		ri.Sys_Sleep( 2 );
+		ri.Thread_Yield();
 	}
  
 	return NULL;	

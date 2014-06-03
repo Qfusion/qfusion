@@ -25,6 +25,7 @@ typedef struct qbufQueue_s qbufQueue_t;
 
 int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *param );
 void Sys_Thread_Join( qthread_t *thread );
+void Sys_Thread_Yield( void );
 
 int Sys_Mutex_Create( qmutex_t **pmutex );
 void Sys_Mutex_Destroy( qmutex_t *mutex );

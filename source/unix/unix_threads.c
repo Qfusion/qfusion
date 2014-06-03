@@ -109,6 +109,14 @@ void Sys_Thread_Join( qthread_t *thread )
 }
 
 /*
+* Sys_Thread_Yield
+*/
+void Sys_Thread_Yield( void )
+{
+	pthread_yield();
+}
+
+/*
 * Sys_Atomic_Add
 */
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )

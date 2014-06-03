@@ -444,6 +444,7 @@ static qboolean VID_LoadRefresh( const char *name )
 
 	import.Thread_Create = Sys_Thread_Create;
 	import.Thread_Join = Sys_Thread_Join;
+	import.Thread_Yield = Sys_Thread_Yield;
 	import.Mutex_Create = Sys_Mutex_Create;
 	import.Mutex_Destroy = Sys_Mutex_Destroy;
 	import.Mutex_Lock = Sys_Mutex_Lock;
