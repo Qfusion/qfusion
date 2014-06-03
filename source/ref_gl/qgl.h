@@ -684,14 +684,9 @@ QGL_FUNC(void, glGetUniformfv, (GLhandleARB programObj, GLint location, GLfloat 
 QGL_FUNC(void, glGetUniformiv, (GLhandleARB programObj, GLint location, GLint *params));
 QGL_FUNC(void, glGetShaderSource, (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source));
 #ifndef qglDetachObjectARB
-#define qglDetachObjectARB qglDetachShader
-#define qglCreateShaderObjectARB qglCreateShader
 #define qglShaderSourceARB qglShaderSource
 #define qglCompileShaderARB qglCompileShader
-#define qglCreateProgramObjectARB qglCreateProgram
-#define qglAttachObjectARB qglAttachShader
 #define qglLinkProgramARB qglLinkProgram
-#define qglUseProgramObjectARB qglUseProgram
 #define qglValidateProgramARB qglValidateProgram
 #define qglUniform1fARB qglUniform1f
 #define qglUniform2fARB qglUniform2f
@@ -712,7 +707,6 @@ QGL_FUNC(void, glGetShaderSource, (GLhandleARB obj, GLsizei maxLength, GLsizei *
 #define qglUniformMatrix2fvARB qglUniformMatrix2fv
 #define qglUniformMatrix3fvARB qglUniformMatrix3fv
 #define qglUniformMatrix4fvARB qglUniformMatrix4fv
-#define qglGetAttachedObjectsARB qglGetAttachedShaders
 #define qglGetUniformLocationARB qglGetUniformLocation
 #define qglGetActiveUniformARB qglGetActiveUniform
 #define qglGetUniformfvARB qglGetUniformfv
