@@ -2018,13 +2018,13 @@ int RB_BindProgram( int program )
 	rb.currentProgram = program;
 	if( !program ) {
 		rb.currentProgramObject = 0;
-		qglUseProgramObjectARB( 0 );
+		qglUseProgram( 0 );
 		return 0;
 	}
 
 	object = RP_GetProgramObject( program );
 	if( object ) {
-		qglUseProgramObjectARB( object );
+		qglUseProgram( object );
 	}
 	rb.currentProgramObject = object;
 	rb.dirtyUniformState = qtrue;
