@@ -139,6 +139,13 @@ QGL_EXTERN	const char				*(*qglGetGLWExtensionsString)( void );
 #define GL_COMPRESSED_TEXTURE_FORMATS_ARB					0x86A3
 #endif /* GL_ARB_texture_compression */
 
+/* GL_OES_compressed_ETC1_RGB8_texture */
+#ifndef GL_OES_compressed_ETC1_RGB8_texture
+#define GL_OES_compressed_ETC1_RGB8_texture
+
+#define	GL_ETC1_RGB8_OES									0x8D64
+#endif /* GL_OES_compressed_ETC1_RGB8_texture */
+
 /* GL_EXT_texture_filter_anisotropic */
 #ifndef GL_EXT_texture_filter_anisotropic
 #define GL_EXT_texture_filter_anisotropic
@@ -683,7 +690,7 @@ QGL_FUNC(void, glGetActiveUniform, (GLhandleARB programObj, GLuint index, GLsize
 QGL_FUNC(void, glGetUniformfv, (GLhandleARB programObj, GLint location, GLfloat *params));
 QGL_FUNC(void, glGetUniformiv, (GLhandleARB programObj, GLint location, GLint *params));
 QGL_FUNC(void, glGetShaderSource, (GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source));
-#ifndef qglDetachObjectARB
+#ifndef qglShaderSourceARB
 #define qglShaderSourceARB qglShaderSource
 #define qglCompileShaderARB qglCompileShader
 #define qglLinkProgramARB qglLinkProgram
