@@ -7,7 +7,7 @@
 	<key>CFBundleIconFile</key>
 	<string>wsw_icon.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.chasseurdebots.${PRODUCT_NAME:identifier}</string>
+	<string>org.chasseurdebots.Warsow</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
@@ -18,7 +18,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>org.chasseurdebots.${PRODUCT_NAME:identifier}</string>
+			<string>org.chasseurdebots.Warsow</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>warsow</string>

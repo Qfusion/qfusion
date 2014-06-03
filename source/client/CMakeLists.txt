@@ -24,6 +24,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../mac/mac_input.m"
         "../mac/mac_vid.m"
         "../mac/mac_sys.m"
+        "../mac/Warsow-Info.plist"
     )
 
     set(CLIENT_PLATFORM_LIBRARIES ${SDL_LIBRARY} "-framework IOKit")
@@ -34,6 +35,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../../../Warsow_1_5_1/basewsw
         ../../../Warsow_1_5_1/docs
         ../../glsl
+        ../mac/wsw_icon.icns
     )
 endif()
 
@@ -53,6 +55,9 @@ qf_add_executable(qfusion ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_COMMO
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_dependencies(qfusion angelwrap cgame cin ftlib game irc ref_gl snd_openal snd_qf tv_server ui)
+
+    set_target_properties(qfusion PROPERTIES MACOSX_BUNDLE_INFO_PLIST ../mac/Warsow-Info.plist)
+    set_source_files_properties(../mac/wsw_icon.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
     set_source_files_properties(../mac/Frameworks              PROPERTIES MACOSX_PACKAGE_LOCATION .)
     set_source_files_properties(../../../Warsow_1_5/basewsw    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
