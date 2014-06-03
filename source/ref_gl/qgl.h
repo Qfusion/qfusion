@@ -143,7 +143,7 @@ QGL_EXTERN	const char				*(*qglGetGLWExtensionsString)( void );
 #ifndef GL_OES_compressed_ETC1_RGB8_texture
 #define GL_OES_compressed_ETC1_RGB8_texture
 
-#define	GL_ETC1_RGB8_OES									0x8D64
+#define GL_ETC1_RGB8_OES									0x8D64
 #endif /* GL_OES_compressed_ETC1_RGB8_texture */
 
 /* GL_EXT_texture_filter_anisotropic */
