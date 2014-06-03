@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // snd_public.h -- sound dll information visible to engine
 
-#define	SOUND_API_VERSION   35
+#define	SOUND_API_VERSION   36
 
 #define	ATTN_NONE 0
 
@@ -97,6 +97,7 @@ typedef struct
 	// multithreading
 	int ( *Thread_Create )( struct qthread_s **pthread, void *(*routine) (void*), void *param );
 	void ( *Thread_Join )( struct qthread_s *thread );
+	void ( *Thread_Yield )( void );
 	int ( *Mutex_Create )( struct qmutex_s **pmutex );
 	void ( *Mutex_Destroy )( struct qmutex_s *mutex );
 	void ( *Mutex_Lock )( struct qmutex_s *mutex );

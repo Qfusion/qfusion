@@ -173,7 +173,7 @@ void Sys_BufQueue_Destroy( qbufQueue_t **pqueue )
 void Sys_BufQueue_Finish( qbufQueue_t *queue )
 {
 	while( queue->cmdbuf_len > 0 && !queue->terminated ) {
-		Sys_Sleep( 0 );
+		Sys_Thread_Yield();
 	}
 }
 
@@ -226,7 +226,7 @@ void Sys_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_
 	if( sizeof( int ) > write_remains ) {
 		while( queue->cmdbuf_len + cmd_size + write_remains > queue->bufSize ) {
 			if( queue->blockWrite ) {
-				Sys_Sleep( 0 );
+				Sys_Thread_Yield();
 				continue;
 			}
 			return;
@@ -240,7 +240,7 @@ void Sys_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_
 
 		while( queue->cmdbuf_len + sizeof( int ) + cmd_size + write_remains > queue->bufSize ) {
 			if( queue->blockWrite ) {
-				Sys_Sleep( 0 );
+				Sys_Thread_Yield();
 				continue;
 			}
 			return;
@@ -257,7 +257,7 @@ void Sys_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_
 	{
 		while( queue->cmdbuf_len + cmd_size > queue->bufSize ) {
 			if( queue->blockWrite ) {
-				Sys_Sleep( 0 );
+				Sys_Thread_Yield();
 				continue;
 			}
 			return;
