@@ -1687,6 +1687,7 @@ void R_EndFrame( void )
 */
 void R_AppActivate( qboolean active, qboolean destroy )
 {
+	qglFlush();
 	GLimp_AppActivate( active, destroy );
 }
 
