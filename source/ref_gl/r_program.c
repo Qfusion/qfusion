@@ -2328,13 +2328,16 @@ void RP_Shutdown( void )
 	unsigned int i;
 	glsl_program_t *program;
 
+	qglUseProgram( 0 );
+
 	if( r_glslprograms_initialized ) {
 		RF_StorePrecacheList();
 	}
 
-	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ )
+	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ ) {
 		RF_DeleteProgram( program );
-
+	}
+	
 	Trie_Destroy( glsl_cache_trie );
 	glsl_cache_trie = NULL;
 
