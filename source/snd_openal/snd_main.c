@@ -238,14 +238,16 @@ sfx_t *SF_RegisterSound( const char *name )
 
 	sfx = S_FindBuffer( name );
 	sfx->used = trap_Milliseconds();
-	sfx->registration_sequence = s_registration_sequence;
+	if( sfx->registration_sequence != s_registration_sequence ) {
+		sfx->registration_sequence = s_registration_sequence;
 
-	// evenly balance the load between two threads during registration
-	if( !s_registering || sfx->id & 1 ) {
-		S_IssueLoadSfxCmd( s_cmdQueue, sfx->id );
-	}
-	else {
-		S_LoadBuffer( sfx );
+		// evenly balance the load between two threads during registration
+		if( !s_registering || sfx->id & 1 ) {
+			S_IssueLoadSfxCmd( s_cmdQueue, sfx->id );
+		}
+		else {
+			S_LoadBuffer( sfx );
+		}
 	}
 	return sfx;
 }
