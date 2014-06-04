@@ -946,6 +946,7 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 	image->registrationSequence = rsh.registrationSequence;
 	image->loaded = qtrue;
 	image->missing = qfalse;
+	image->extension[0] = '\0';
 
 	R_AllocTextureNum( image );
 
