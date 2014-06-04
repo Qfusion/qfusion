@@ -84,6 +84,10 @@ void RB_BeginRegistration( void )
 void RB_EndRegistration( void )
 {
 	RB_BindVBO( 0, 0 );
+
+	// start with clean cache
+	memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
+	rb.gl.currentTMU = -1;
 }
 
 /*
@@ -162,17 +166,6 @@ static void RB_SetGLDefaults( void )
 }
 
 /*
-* RB_SelectContextTexture
-*/
-void RB_SelectContextTexture( int tmu )
-{
-	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#ifndef GL_ES_VERSION_2_0
-	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#endif
-}
-
-/*
 * RB_SelectTextureUnit
 */
 void RB_SelectTextureUnit( int tmu )
@@ -181,20 +174,10 @@ void RB_SelectTextureUnit( int tmu )
 		return;
 
 	rb.gl.currentTMU = tmu;
-	RB_SelectContextTexture( tmu );
-}
-
-/*
-* RB_BindContextTexture
-*/
-void RB_BindContextTexture( int tmu, const image_t *tex )
-{
-	assert( tex != NULL );
-
-	if( tex->flags & IT_CUBEMAP )
-		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, tex->texnum );
-	else
-		qglBindTexture( GL_TEXTURE_2D, tex->texnum );
+	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#ifndef GL_ES_VERSION_2_0
+	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#endif
 }
 
 /*
@@ -205,6 +188,7 @@ void RB_BindTexture( int tmu, const image_t *tex )
 	GLuint texnum;
 
 	assert( tex != NULL );
+	assert( tex->texnum != 0 );
 
 	if( tex->missing ) {
 		tex = rsh.noTexture;
@@ -223,26 +207,10 @@ void RB_BindTexture( int tmu, const image_t *tex )
 		return;
 
 	rb.gl.currentTextures[tmu] = texnum;
-	RB_BindContextTexture( tmu, tex );
-}
-
-/*
-* RB_AllocTextureNum
-*/
-void RB_AllocTextureNum( image_t *tex )
-{
-	qglGenTextures( 1, &tex->texnum );
-}
-
-/*
-* RB_FreeTextureNum
-*/
-void RB_FreeTextureNum( image_t *tex )
-{
-	if( tex->texnum ) {
-		qglDeleteTextures( 1, &tex->texnum );
-		tex->texnum = 0;
-	}
+	if( tex->flags & IT_CUBEMAP )
+		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, tex->texnum );
+	else
+		qglBindTexture( GL_TEXTURE_2D, tex->texnum );
 }
 
 /*
