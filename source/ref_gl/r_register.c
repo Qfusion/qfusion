@@ -1368,12 +1368,6 @@ void R_Shutdown( qboolean verbose )
 
 	R_StopAviDemo();
 
-	// destroy compiled GLSL programs
-	RP_Shutdown();
-
-	// shutdown rendering backend
-	RB_Shutdown();
-
 	// free shaders, models, etc.
 
 	R_DestroyVolatileAssets();
@@ -1391,6 +1385,12 @@ void R_Shutdown( qboolean verbose )
 	R_ShutdownImages();
 
 	RFB_Shutdown();
+
+	// shutdown rendering backend
+	RB_Shutdown();
+
+	// destroy compiled GLSL programs
+	RP_Shutdown();
 
 	// restore original gamma
 	if( glConfig.hwGamma )
