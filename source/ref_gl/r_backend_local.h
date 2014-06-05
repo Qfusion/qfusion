@@ -50,8 +50,6 @@ typedef struct r_backend_s
 	{
 		int				state;
 
-		int				currentTMU;
-		GLuint			currentTextures[MAX_TEXTURE_UNITS];
 		int 			currentArrayVBO;
 		int 			currentElemArrayVBO;
 
@@ -158,8 +156,6 @@ void RB_DrawElementsReal( void );
 #define RB_IsAlphaBlending(blendsrc,blenddst) \
 	( (blendsrc) == GLSTATE_SRCBLEND_SRC_ALPHA || (blenddst) == GLSTATE_DSTBLEND_SRC_ALPHA ) || \
 	( (blendsrc) == GLSTATE_SRCBLEND_ONE_MINUS_SRC_ALPHA || (blenddst) == GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA )
-
-void RB_SelectTextureUnit( int tmu );
 
 // r_backend_program.c
 void RB_InitShading( void );

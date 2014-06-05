@@ -84,10 +84,6 @@ void RB_BeginRegistration( void )
 void RB_EndRegistration( void )
 {
 	RB_BindVBO( 0, 0 );
-
-	// start with clean cache
-	memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
-	rb.gl.currentTMU = -1;
 }
 
 /*
@@ -165,53 +161,6 @@ static void RB_SetGLDefaults( void )
 	rb.gl.currentTMU = -1;
 }
 
-/*
-* RB_SelectTextureUnit
-*/
-void RB_SelectTextureUnit( int tmu )
-{
-	if( tmu == rb.gl.currentTMU )
-		return;
-
-	rb.gl.currentTMU = tmu;
-	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#ifndef GL_ES_VERSION_2_0
-	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
-#endif
-}
-
-/*
-* RB_BindTexture
-*/
-void RB_BindTexture( int tmu, const image_t *tex )
-{
-	GLuint texnum;
-
-	assert( tex != NULL );
-	assert( tex->texnum != 0 );
-
-	if( tex->missing ) {
-		tex = rsh.noTexture;
-	} else if( !tex->loaded ) {
-		// not yet loaded from disk
-		tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture;
-	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
-		// performance evaluation option
-		tex = rsh.noTexture;
-	}
-
-	RB_SelectTextureUnit( tmu );
-
-	texnum = tex->texnum;
-	if( rb.gl.currentTextures[tmu] == texnum )
-		return;
-
-	rb.gl.currentTextures[tmu] = texnum;
-	if( tex->flags & IT_CUBEMAP )
-		qglBindTexture( GL_TEXTURE_CUBE_MAP_ARB, tex->texnum );
-	else
-		qglBindTexture( GL_TEXTURE_2D, tex->texnum );
-}
 
 /*
 * RB_DepthRange

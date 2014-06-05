@@ -33,6 +33,9 @@ typedef struct
 static image_t images[MAX_GLIMAGES];
 static image_t images_hash_headnode[IMAGES_HASH_SIZE], *free_images;
 
+int	currentTMU;
+GLuint currentTextures[MAX_TEXTURE_UNITS];
+
 static int *r_8to24table;
 
 static mempool_t *r_imagesPool;
@@ -96,17 +99,68 @@ static void R_FreeTextureNum( image_t *tex )
 	if( tex->texnum ) {
 		qglDeleteTextures( 1, &tex->texnum );
 		tex->texnum = 0;
+		currentTMU = -1;
 	}
+}
+
+/*
+* R_SelectTextureUnit
+*/
+void R_SelectTextureUnit( int tmu )
+{
+	if( tmu == currentTMU )
+		return;
+
+	currentTMU = tmu;
+	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#ifndef GL_ES_VERSION_2_0
+	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#endif
+}
+
+/*
+* R_BindContextTexture
+*/
+static void R_BindContextTexture( const image_t *tex )
+{
+	qglBindTexture( tex->flags & IT_CUBEMAP ? 
+		GL_TEXTURE_CUBE_MAP_ARB : GL_TEXTURE_2D, tex->texnum );
 }
 
 /*
 * R_BindTexture
 */
-static void R_BindTexture( const image_t *tex )
+void R_BindTexture( int tmu, const image_t *tex )
 {
+	GLuint texnum;
+
 	assert( tex != NULL );
-	qglBindTexture( tex->flags & IT_CUBEMAP ? 
-		GL_TEXTURE_CUBE_MAP_ARB : GL_TEXTURE_2D, tex->texnum );
+	assert( tex->texnum != 0 );
+
+	if( tex->missing ) {
+		tex = rsh.noTexture;
+	} else if( !tex->loaded ) {
+		// not yet loaded from disk
+		tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture;
+	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
+		// performance evaluation option
+		tex = rsh.noTexture;
+	}
+
+	if( currentTMU < 0 ) {
+		// flush cached texture nums
+		memset( currentTextures, 0, sizeof( currentTextures ) );
+	}
+
+	R_SelectTextureUnit( tmu );
+
+	texnum = tex->texnum;
+	if( currentTextures[tmu] == texnum )
+		return;
+
+	currentTextures[tmu] = texnum;
+
+	R_BindContextTexture( tex );
 }
 
 /*
@@ -142,7 +196,7 @@ void R_TextureMode( char *string )
 			continue;
 		}
 
-		R_BindTexture( glt );
+		R_BindTexture( 0, glt );
 
 		if( !( glt->flags & IT_NOMIPMAP ) )
 		{
@@ -183,7 +237,7 @@ void R_AnisotropicFilter( int value )
 			continue;
 		}
 
-		R_BindTexture( glt );
+		R_BindTexture( 0, glt );
 		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
 	}
 }
@@ -753,7 +807,10 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 	}
 }
 
-static qboolean R_LoadImageFromDisk( int ctx, image_t *image )
+/*
+* R_LoadImageFromDisk
+*/
+static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(int, const image_t *) )
 {
 	int flags = image->flags;
 	char *pathname = image->name;
@@ -835,7 +892,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image )
 			image->height = height;
 			image->samples = samples;
 
-			R_BindTexture( image );
+			bind( 0, image );
 
 			R_Upload32( ctx, pic, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
@@ -863,7 +920,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image )
 			image->height = height;
 			image->samples = samples;
 
-			R_BindTexture( image );
+			bind( 0, image );
 
 			R_Upload32( ctx, &pic, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
@@ -950,7 +1007,7 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 
 	R_AllocTextureNum( image );
 
-	R_BindTexture( image );
+	R_BindTexture( 0, image );
 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, width, height, flags, 
 		&image->upload_width, &image->upload_height, image->samples, qfalse, qfalse );
@@ -982,7 +1039,7 @@ void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int fla
 	assert( image );
 	assert( image->texnum );
 
-	R_BindTexture( image );
+	R_BindTexture( 0, image );
 
 	if( image->width != width || image->height != height )
 		R_Upload32( QGL_CONTEXT_MAIN, pic, width, height, flags, 
@@ -1010,7 +1067,7 @@ void R_ReplaceSubImage( image_t *image, qbyte **pic, int width, int height )
 	assert( image );
 	assert( image->texnum );
 
-	R_BindTexture( image );
+	R_BindTexture( 0, image );
 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, width, height, image->flags,
 		&w, &h, image->samples, qtrue, qtrue );
@@ -1095,7 +1152,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 		return image;
 	}
 
-	image->loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image );
+	image->loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image, R_BindTexture );
 	if( !image->loaded ) {
 		R_FreeImage( image );
 		image = NULL;
@@ -1444,7 +1501,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			t->width = width;
 			t->height = height;
 
-			R_BindTexture( t );
+			R_BindTexture( 0, t );
 
 			R_Upload32( QGL_CONTEXT_MAIN, &data, width, height, flags, 
 				&t->upload_width, &t->upload_height, t->samples, qfalse, qfalse );
@@ -2036,6 +2093,14 @@ static unsigned R_HandleShutdownLoaderCmd( void *pcmd )
 }
 
 /*
+* R_BindLoaderTexture
+*/
+static void R_BindLoaderTexture( int tmu, const image_t *tex )
+{
+	R_BindContextTexture( tex );
+}
+
+/*
 * R_HandleLoadPicLoaderCmd
 */
 static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
@@ -2044,7 +2109,7 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 	image_t *image = images + cmd->pic;
 	qboolean loaded;
 
-	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER, image );
+	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER, image, R_BindLoaderTexture );
 	if( !loaded ) {
 		image->missing = qtrue;
 	} else {
@@ -2064,11 +2129,11 @@ static unsigned R_HandleUnbindLoaderCmd( void *pcmd )
 
 	memset( &tex, 0, sizeof( tex ) );
 
-	R_BindTexture( &tex );
+	R_BindContextTexture( &tex );
 
 	tex.flags |= IT_CUBEMAP;
 
-	R_BindTexture( &tex );
+	R_BindContextTexture( &tex );
 
 	return sizeof( int );
 }
