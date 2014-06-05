@@ -342,30 +342,26 @@ static void RF_StorePrecacheList( void )
 {
 	unsigned int i;
 	int handle, handleBin;
-	const char *fileName, *fileNameBin;
 	glsl_program_t *program;
+	unsigned dummy;
 
 	handle = 0;
-	fileName = GLSL_CACHE_FILE_NAME;
-	if( ri.FS_FOpenFile( fileName, &handle, FS_WRITE ) == -1 ) {
-		Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", fileName );
+	if( ri.FS_FOpenFile( GLSL_CACHE_FILE_NAME, &handle, FS_WRITE ) == -1 ) {
+		Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", GLSL_CACHE_FILE_NAME );
 		return;
 	}
 
 	handleBin = 0;
 	if( glConfig.ext.get_program_binary ) {
-		fileNameBin = GLSL_BINARY_CACHE_FILE_NAME;
-		if( ri.FS_FOpenFile( fileNameBin, &handleBin, FS_WRITE ) == -1 ) {
-			Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", fileNameBin );
+		if( ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, FS_WRITE ) == -1 ) {
+			Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", GLSL_BINARY_CACHE_FILE_NAME );
 		}
 		else {
-			unsigned temp;
-			
-			temp = GLSL_BITS_VERSION;
-			ri.FS_Write( &temp, sizeof( temp ), handleBin );
+			dummy = 0;
+			ri.FS_Write( &dummy, sizeof( dummy ), handleBin );
 
-			temp = glConfig.versionHash;
-			ri.FS_Write( &temp, sizeof( temp ), handleBin );
+			dummy = glConfig.versionHash;
+			ri.FS_Write( &dummy, sizeof( dummy ), handleBin );
 		}
 	}
 
@@ -379,6 +375,9 @@ static void RF_StorePrecacheList( void )
 		int binaryPos = 0;
 
 		if( *program->deformsKey ) {
+			continue;
+		}
+		if( !program->features ) {
 			continue;
 		}
 
@@ -405,6 +404,12 @@ static void RF_StorePrecacheList( void )
 
 	ri.FS_FCloseFile( handle );
 	ri.FS_FCloseFile( handleBin );
+
+	if( handleBin && ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, FS_UPDATE ) != -1 ) {
+		dummy = GLSL_BITS_VERSION;
+		ri.FS_Write( &dummy, sizeof( dummy ), handleBin );
+		ri.FS_FCloseFile( handleBin );
+	}
 }
 
 /*

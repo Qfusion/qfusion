@@ -427,7 +427,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, draw_instanced, true, false, &gl_ext_draw_instanced_ARB_funcs )
 	,GL_EXTENSION( ARB, instanced_arrays, false, false, &gl_ext_instanced_arrays_ARB_funcs )
 	,GL_EXTENSION( ARB, half_float_vertex, false, false, NULL )
-	,GL_EXTENSION_EXT( ARB, get_program_binary, 1, false, false, &gl_ext_get_program_binary_ARB_funcs, GLSL_core )
+	,GL_EXTENSION_EXT( ARB, get_program_binary, 0, false, false, &gl_ext_get_program_binary_ARB_funcs, _extMarker )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
