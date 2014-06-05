@@ -68,6 +68,9 @@ typedef struct image_s
 	struct image_s	*next, *prev;
 } image_t;
 
+void R_SelectTextureUnit( int tmu );
+void R_BindTexture( int tmu, const image_t *tex );
+
 void R_InitImages( void );
 void R_TouchImage( image_t *image );
 void R_FreeUnusedImages( void );

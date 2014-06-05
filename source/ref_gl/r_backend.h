@@ -48,8 +48,6 @@ void RB_LoadObjectMatrix( const mat4_t m );
 void RB_LoadModelviewMatrix( const mat4_t m );
 void RB_LoadProjectionMatrix( const mat4_t m );
 
-void RB_BindTexture( int tmu, const image_t *tex );
-
 void RB_DepthRange( float depthmin, float depthmax );
 void RB_GetDepthRange( float* depthmin, float *depthmax );
 void RB_Cull( int cull );
