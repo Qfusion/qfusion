@@ -377,7 +377,7 @@ void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessa
 	this->rejectMessage = rejectMessage ? rejectMessage : "";
 	this->downloadInfo = dlinfo;
 
-	navigator->pushDocument( ui_connectscreen, true, true );
+	navigator->pushDocument( ui_connectscreen, false, true );
 
 	forceUI( true );
 	showUI( true );
