@@ -156,9 +156,6 @@ static void RB_SetGLDefaults( void )
 	qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 #endif
 	qglFrontFace( GL_CCW );
-
-	memset( &rb.gl, 0, sizeof( rb.gl ) );
-	rb.gl.currentTMU = -1;
 }
 
 
