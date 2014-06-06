@@ -344,7 +344,7 @@ static void _R_DrawSurfaces( void )
 	const mfog_t *fog;
 	const portalSurface_t *portalSurface;
 	drawList_t *list = rn.meshlist;
-	float depthmin = 0, depthmax = 0;
+	float depthmin = 0.0f, depthmax = 0.0f, depthoffset = 0.0f;
 	qboolean depthHack = qfalse, cullHack = qfalse;
 	qboolean infiniteProj = qfalse, prevInfiniteProj = qfalse;
 	qboolean depthWrite = qfalse;
@@ -398,14 +398,14 @@ static void _R_DrawSurfaces( void )
 					}
 					if( !depthHack ) {
 						depthHack = qtrue;
-						RB_GetDepthRange( &depthmin, &depthmax );
-						RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
+						RB_GetDepthRange( &depthmin, &depthmax, &depthoffset );
+						RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ), 0.0f );
 					}
 				} else if( depthHack ) {
 					// bind the main framebuffer back
 					R_BindFrameBufferObject( riFBO );
 					depthHack = qfalse;
-					RB_DepthRange( depthmin, depthmax );
+					RB_DepthRange( depthmin, depthmax, depthoffset );
 				}
 
 				// backface culling for left-handed weapons
@@ -474,7 +474,7 @@ static void _R_DrawSurfaces( void )
 		RB_EndBatch();
 	}
 	if( depthHack ) {
-		RB_DepthRange( depthmin, depthmax );
+		RB_DepthRange( depthmin, depthmax, depthoffset );
 	}
 	if( cullHack ) {
 		RB_FlipFrontFace();
