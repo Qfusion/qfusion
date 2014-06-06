@@ -2022,6 +2022,9 @@ static void R_InitImageLoader( void )
 	ri.Thread_Create( &loader_thread, R_ImageLoaderThreadProc, loader_queue );
 
 	R_IssueInitLoaderCmd();
+
+	// wait for the thread to complete context setup
+	ri.BufQueue_Finish( loader_queue );
 }
 
 /*
