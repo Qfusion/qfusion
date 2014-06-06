@@ -65,7 +65,7 @@ typedef struct r_backend_s
 
 		float			polygonOffset[2];
 
-		float			depthmin, depthmax;
+		float			depthmin, depthmax, depthoffset;
 	} gl;
 
 	unsigned int time;
