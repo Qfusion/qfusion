@@ -62,8 +62,6 @@ static float s_attenuation_refdistance = 0;
 
 qboolean s_active = qfalse;
 
-static qboolean s_respatialize;
-
 static qboolean s_aviDump;
 static unsigned s_aviNumSamples;
 static int s_aviDumpFile;
@@ -429,7 +427,7 @@ static void S_SpatializeOriginHQ( const vec3_t origin, float master_vol, float d
 /*
 * S_Spatialize
 */
-void S_Spatialize( channel_t *ch )
+static void S_SpatializeChannel( channel_t *ch )
 {
 	vec3_t origin, velocity;
 
@@ -535,7 +533,7 @@ void S_IssuePlaysound( playsound_t *ps )
 	VectorCopy( ps->origin, ch->origin );
 	ch->fixed_origin = ps->fixed_origin;
 
-	S_Spatialize( ch );
+	S_SpatializeChannel( ch );
 
 	ch->pos = 0;
 	ch->end = paintedtime + sc->length;
@@ -799,7 +797,8 @@ static void S_AddLoopSounds( void )
 //=============================================================================
 
 #define S_RAW_SOUND_IDLE_SEC			10	// time interval for idling raw sound before it's freed
-#define S_RAW_SOUND_BGTRACK				-1
+#define S_RAW_SOUND_BGTRACK				-2
+#define S_RAW_SOUND_OTHER				-1
 #define S_RAW_SAMPLES_PRECISION_BITS	14
 
 /*
@@ -995,9 +994,9 @@ static unsigned int S_RawSamplesStereo( portable_samplepair_t *rawsamples, unsig
 }
 
 /*
-* S_RawSamples2
+* S_RawEntSamples
 */
-void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width, 
+static void S_RawEntSamples( int entnum, unsigned int samples, unsigned int rate, unsigned short width, 
 	unsigned short channels, const qbyte *data, int snd_vol )
 {
 	rawsound_t *rawsound;
@@ -1005,7 +1004,7 @@ void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short widt
 	if( snd_vol < 0 )
 		snd_vol = 0;
 
-	rawsound = S_FindRawSound( S_RAW_SOUND_BGTRACK, qtrue );
+	rawsound = S_FindRawSound( entnum, qtrue );
 	if( !rawsound ) {
 		return;
 	}
@@ -1017,18 +1016,35 @@ void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short widt
 }
 
 /*
+* S_RawSamples2
+*/
+void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width, 
+	unsigned short channels, const qbyte *data, int snd_vol )
+{
+	S_RawEntSamples( S_RAW_SOUND_BGTRACK, samples, rate, width, channels, data, snd_vol );
+}
+
+/*
 * S_RawSamples
 */
 void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
 	unsigned short channels, const qbyte *data, qboolean music )
 {
 	int snd_vol;
-	
-	snd_vol = (int)( ( music ? s_musicvolume->value : s_volume->value ) * 255 );
+	int entnum;
+
+	if( music ) {
+		snd_vol = s_musicvolume->value * 255;
+		entnum = S_RAW_SOUND_BGTRACK;
+	}
+	else {
+		snd_vol = s_volume->value * 255;
+		entnum = S_RAW_SOUND_OTHER;
+	}
 	if( snd_vol < 0 )
 		snd_vol = 0;
 
-	S_RawSamples2( samples, rate, width, channels, data, snd_vol );
+	S_RawEntSamples( entnum, samples, rate, width, channels, data, snd_vol );
 }
 
 /*
@@ -1260,9 +1276,42 @@ static void S_Update_()
 }
 
 /*
+* S_Spatialize
+*/
+static void S_Spatialize( void )
+{
+	int i;
+	channel_t *ch;
+
+	S_FreeIdleRawSounds();
+
+	// update spatialization for dynamic sounds
+	ch = channels;
+	for( i = 0; i < MAX_CHANNELS; i++, ch++ )
+	{
+		if( !ch->sfx )
+			continue;
+		if( ch->autosound )
+		{
+			// autosounds are regenerated fresh each frame
+			memset( ch, 0, sizeof( *ch ) );
+			continue;
+		}
+		S_SpatializeChannel( ch ); // respatialize channel
+		if( !ch->leftvol && !ch->rightvol )
+		{
+			memset( ch, 0, sizeof( *ch ) );
+			continue;
+		}
+	}
+
+	S_AddLoopSounds();
+
+	S_SpatializeRawSounds();
+}
+
+/*
 * S_Update
-*
-* newFrame - true if there were any commands in the queue
 */
 static void S_Update( void )
 {
@@ -1273,38 +1322,6 @@ static void S_Update( void )
 	// rebuild scale tables if volume is modified
 	if( s_volume->modified )
 		S_InitScaletable();
-
-	// update spatialization for dynamic sounds
-	if( s_respatialize ) {
-		ch = channels;
-		for( i = 0; i < MAX_CHANNELS; i++, ch++ )
-		{
-			if( !ch->sfx )
-				continue;
-			if( ch->autosound )
-			{
-				// autosounds are regenerated fresh each frame
-				memset( ch, 0, sizeof( *ch ) );
-				continue;
-			}
-			S_Spatialize( ch ); // respatialize channel
-			if( !ch->leftvol && !ch->rightvol )
-			{
-				memset( ch, 0, sizeof( *ch ) );
-				continue;
-			}
-		}
-		
-		// reset autosounds on respatialization for backwards compatibility
-		// with quake and warsow
-		S_AddLoopSounds();
-
-		s_respatialize = qfalse;
-	}
-
-	S_FreeIdleRawSounds();
-
-	S_SpatializeRawSounds();
 
 	//
 	// debugging output
@@ -1524,11 +1541,11 @@ static unsigned S_HandleSetEntitySpatializationCmd( const sndCmdSetEntitySpatial
 static unsigned S_HandleSetListernerCmd( const sndCmdSetListener_t *cmd )
 {
 	//Com_Printf("S_HandleSetListernerCmd\n");
-	s_respatialize = qtrue;
 	VectorCopy( cmd->origin, listenerOrigin );
 	VectorCopy( cmd->velocity, listenerVelocity );
 	Matrix3_Copy( cmd->axis, listenerAxis );
 	s_aviDump = cmd->avidump;
+	S_Spatialize();
 	return sizeof( *cmd );
 }
 
