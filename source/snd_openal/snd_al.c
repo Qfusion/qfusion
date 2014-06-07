@@ -28,8 +28,6 @@ int s_attenuation_model = 0;
 float s_attenuation_maxdistance = 0;
 float s_attenuation_refdistance = 0;
 
-static qboolean s_respatialize = qfalse;
-
 static qboolean snd_shutdown_bug = qfalse;
 
 /*
@@ -351,11 +349,6 @@ static void S_Update( void )
 	
 	S_UpdateStreams();
 	
-	if( s_respatialize ) {
-		// this is consistent with how quake and warsow work
-		S_UpdateSources();
-		s_respatialize = qfalse;
-	}
 
 	s_volume->modified = qfalse; // Checked by src and stream
 	s_musicvolume->modified = qfalse; // Checked by stream and music
@@ -504,8 +497,8 @@ static unsigned S_HandleSetEntitySpatializationCmd( const sndCmdSetEntitySpatial
 static unsigned S_HandleSetListernerCmd( const sndCmdSetListener_t *cmd )
 {
 	//Com_Printf("S_HandleSetListernerCmd\n");
-	s_respatialize = qtrue;
 	S_SetListener( cmd->origin, cmd->velocity, cmd->axis );
+	S_UpdateSources();
 	return sizeof( *cmd );
 }
 
