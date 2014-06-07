@@ -522,6 +522,63 @@ static void R_ResampleTexture( int ctx, const qbyte *in, int inwidth, int inheig
 }
 
 /*
+* R_ResampleTexture16
+*/
+static void R_ResampleTexture16( int ctx, const unsigned short *in, int inwidth, int inheight,
+	unsigned short *out, int outwidth, int outheight, int rMask, int gMask, int bMask, int aMask )
+{
+	int i, j;
+	unsigned int frac, fracstep;
+	const unsigned short *inrow, *inrow2, *pix1, *pix2, *pix3, *pix4;
+	unsigned *p1, *p2;
+	unsigned short *opix;
+
+	if( inwidth == outwidth && inheight == outheight )
+	{
+		memcpy( out, in, inwidth * inheight * sizeof( unsigned short ) );
+		return;
+	}
+
+	p1 = ( unsigned * )R_PrepareImageBuffer( ctx, TEXTURE_LINE_BUF, outwidth * sizeof( *p1 ) * 2 );
+	p2 = p1 + outwidth;
+
+	fracstep = inwidth * 0x10000 / outwidth;
+
+	frac = fracstep >> 2;
+	for( i = 0; i < outwidth; i++ )
+	{
+		p1[i] = frac >> 16;
+		frac += fracstep;
+	}
+
+	frac = 3 * ( fracstep >> 2 );
+	for( i = 0; i < outwidth; i++ )
+	{
+		p2[i] = frac >> 16;
+		frac += fracstep;
+	}
+
+	for( i = 0; i < outheight; i++, out += outwidth )
+	{
+		inrow = in + inwidth * (int)( ( i + 0.25 ) * inheight / outheight );
+		inrow2 = in + inwidth * (int)( ( i + 0.75 ) * inheight / outheight );
+		for( j = 0; j < outwidth; j++ )
+		{
+			pix1 = inrow + p1[j];
+			pix2 = inrow + p2[j];
+			pix3 = inrow2 + p1[j];
+			pix4 = inrow2 + p2[j];
+			opix = out + j;
+
+			*opix =	( ( ( ( *pix1 & rMask ) + ( *pix2 & rMask ) + ( *pix3 & rMask ) + ( *pix4 & rMask ) ) >> 2 ) & rMask ) |
+					( ( ( ( *pix1 & gMask ) + ( *pix2 & gMask ) + ( *pix3 & gMask ) + ( *pix4 & gMask ) ) >> 2 ) & gMask ) |
+					( ( ( ( *pix1 & bMask ) + ( *pix2 & bMask ) + ( *pix3 & bMask ) + ( *pix4 & bMask ) ) >> 2 ) & bMask ) |
+					( ( ( ( *pix1 & aMask ) + ( *pix2 & aMask ) + ( *pix3 & aMask ) + ( *pix4 & aMask ) ) >> 2 ) & aMask );
+		}
+	}
+}
+
+/*
 * R_MipMap
 * 
 * Operates in place, quartering the size of the texture
@@ -546,6 +603,36 @@ static void R_MipMap( qbyte *in, int width, int height, int samples )
 		{
 			for( k = 0; k < samples; k++ )
 				out[k] = ( in[k] + in[k+samples] + in[width+k] + in[width+k+samples] )>>2;
+		}
+	}
+}
+
+/*
+* R_MipMap16
+*
+* A version of R_MipMap for 16-bit images.
+*/
+static void R_MipMap16( unsigned short *in, int width, int height, int rMask, int gMask, int bMask, int aMask )
+{
+	int i, j;
+	unsigned short *out;
+	int p[4];
+	
+	height >>= 1;
+
+	out = in;
+	for( i = 0; i < height; i++, in += width )
+	{
+		for( j = 0; j < width; j += 2, out += 1, in += 2 )
+		{
+			p[0] = in[0];
+			p[1] = in[1];
+			p[2] = in[width];
+			p[3] = in[width + 1];
+			*out =	( ( ( ( p[0] & rMask ) + ( p[1] & rMask ) + ( p[2] & rMask ) + ( p[3] & rMask ) ) >> 2 ) & rMask ) |
+					( ( ( ( p[0] & gMask ) + ( p[1] & gMask ) + ( p[2] & gMask ) + ( p[3] & gMask ) ) >> 2 ) & gMask ) |
+					( ( ( ( p[0] & bMask ) + ( p[1] & bMask ) + ( p[2] & bMask ) + ( p[3] & bMask ) ) >> 2 ) & bMask ) |
+					( ( ( ( p[0] & aMask ) + ( p[1] & aMask ) + ( p[2] & aMask ) + ( p[3] & aMask ) ) >> 2 ) & aMask );
 		}
 	}
 }
