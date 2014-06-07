@@ -2013,6 +2013,11 @@ static void R_IssueUnbindLoaderCmd( void )
 */
 static void R_InitImageLoader( void )
 {
+	if( !r_multithreading->integer ) {
+		gl_loader_context = NULL;
+		return;
+	}
+
 	gl_loader_context = GLimp_SharedContext_Create();
 	if( !gl_loader_context ) {
 		return;

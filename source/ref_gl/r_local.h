@@ -393,6 +393,8 @@ extern cvar_t *r_floorcolor;
 
 extern cvar_t *r_maxglslbones;
 
+extern cvar_t *r_multithreading;
+
 extern cvar_t *gl_finish;
 extern cvar_t *gl_cull;
 
