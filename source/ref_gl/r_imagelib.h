@@ -47,4 +47,6 @@ qboolean WriteJPG( const char *name, r_imginfo_t *info, int quality );
 
 r_imginfo_t LoadPNG( const char *name, qbyte *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
 
+void DecompressETC1( const qbyte *in, int width, int height, qbyte *out, qboolean bgr );
+
 #endif // R_IMAGELIB_H
