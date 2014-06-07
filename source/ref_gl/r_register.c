@@ -121,6 +121,7 @@ cvar_t *gl_drawbuffer;
 cvar_t *gl_driver;
 cvar_t *gl_finish;
 cvar_t *gl_cull;
+cvar_t *r_multithreading;
 
 static qboolean	r_verbose;
 
@@ -1018,6 +1019,8 @@ static void R_Register( const char *screenshotsPrefix )
 	r_wallcolor->modified = r_floorcolor->modified = qtrue;
 
 	r_maxglslbones = ri.Cvar_Get( "r_maxglslbones", STR_TOSTR( MAX_GLSL_UNIFORM_BONES ), CVAR_LATCH_VIDEO );
+
+	r_multithreading = ri.Cvar_Get( "r_multithreading", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	gl_finish = ri.Cvar_Get( "gl_finish", "0", CVAR_ARCHIVE );
 	gl_cull = ri.Cvar_Get( "gl_cull", "1", 0 );
