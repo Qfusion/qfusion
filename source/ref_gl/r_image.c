@@ -434,6 +434,49 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 }
 
 /*
+* R_ScaledImageSize
+*/
+static void R_ScaledImageSize( int width, int height, int *scaledWidth, int *scaledHeight, int flags, qboolean fromMipmap )
+{
+	int maxSize = ( flags & IT_CUBEMAP ) ? glConfig.maxTextureCubemapSize : glConfig.maxTextureSize;
+
+	if( !( flags & IT_NOPICMIP ) )
+	{
+		// let people sample down the sky textures for speed
+		int mip = ( flags & IT_SKY ) ? r_skymip->integer : r_picmip->integer;
+		width >>= mip;
+		height >>= mip;
+		if( !width )
+			width = 1;
+		if( !height )
+			height = 1;
+	}
+
+	if( fromMipmap )
+	{
+		while( ( width > maxSize ) || ( height > maxSize ) )
+		{
+			width >>= 1;
+			height >>= 1;
+			if( !width )
+				width = 1;
+			if( !height )
+				height = 1;
+		}
+	}
+	else
+	{
+		if( width > maxSize )
+			width = maxSize;
+		if( height > maxSize )
+			height = maxSize;
+	}
+
+	*scaledWidth = width;
+	*scaledHeight = height;
+}
+
+/*
 * R_FlipTexture
 */
 static void R_FlipTexture( const qbyte *in, qbyte *out, int width, int height, 
@@ -900,6 +943,43 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 			}
 		}
 	}
+}
+
+/*
+* R_PixelFormatSize
+*/
+static int R_PixelFormatSize( int format, int type )
+{
+	switch( type )
+	{
+	case GL_UNSIGNED_BYTE:
+		switch( format )
+		{
+		case GL_RGBA:
+		case GL_BGRA_EXT:
+			return 4;
+		case GL_RGB:
+		case GL_BGR_EXT:
+			return 3;
+		case GL_LUMINANCE_ALPHA:
+			return 2;
+		case GL_ALPHA:
+		case GL_LUMINANCE:
+			return 1;
+		}
+		break;
+	case GL_UNSIGNED_SHORT_4_4_4_4:
+	case GL_UNSIGNED_SHORT_5_5_5_1:
+	case GL_UNSIGNED_SHORT_5_6_5:
+		return 2;
+	case 0: // 4x4 block sizes
+		switch( format )
+		{
+		case GL_ETC1_RGB8_OES:
+			return 8;
+		}
+	}
+	return 0;
 }
 
 /*
