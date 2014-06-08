@@ -7,6 +7,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 set(QFUSION_CLIENT_NAME QFusion)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)")
     set(CMAKE_FRAMEWORK_PATH "mac/Frameworks")
     set(JPEG_NAMES libjpeg) # libjpeg.framework should be renamed to jpeg.framework to remove this hack
 endif()
