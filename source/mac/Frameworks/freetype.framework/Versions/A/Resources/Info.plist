@@ -9,19 +9,17 @@
 	<key>CFBundleExecutable</key>
 	<string>FreeType</string>
 	<key>CFBundleGetInfoString</key>
-	<string>FreeType 2.4.6</string>
+	<string>FreeType </string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>FreeType</string>
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
-	<key>CFBundleShortVersionString</key>
-	<string>2.4.6</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>2.4.6</string>
+	<string></string>
 	<key>DTCompiler</key>
 	<string>com.apple.compilers.llvm.clang.1_0</string>
 	<key>DTPlatformBuild</key>
@@ -29,9 +27,9 @@
 	<key>DTPlatformVersion</key>
 	<string>GM</string>
 	<key>DTSDKBuild</key>
-	<string>13C64</string>
+	<string>12F37</string>
 	<key>DTSDKName</key>
-	<string>macosx10.9</string>
+	<string>macosx10.8</string>
 	<key>DTXcode</key>
 	<string>0511</string>
 	<key>DTXcodeBuild</key>
