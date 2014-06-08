@@ -1239,8 +1239,8 @@
 		9D48C5CC15C2FA5B007A1955 /* cin_syscalls.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cin_syscalls.c; sourceTree = "<group>"; };
 		9D48C5CD15C2FA5B007A1955 /* cin_syscalls.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cin_syscalls.h; sourceTree = "<group>"; };
 		9D48C5CE15C2FA5B007A1955 /* roq.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = roq.h; sourceTree = "<group>"; };
-		9D5728D815B99CDB00727DB0 /* basewsw */ = {isa = PBXFileReference; lastKnownFileType = folder; name = basewsw; path = ../../../Warsow_1_5/basewsw; sourceTree = "<group>"; };
-		9D5728D915B99CDB00727DB0 /* docs */ = {isa = PBXFileReference; lastKnownFileType = folder; name = docs; path = ../../../Warsow_1_5/docs; sourceTree = "<group>"; };
+		9D5728D815B99CDB00727DB0 /* basewsw */ = {isa = PBXFileReference; lastKnownFileType = folder; name = basewsw; path = ../../../Warsow_1_5_1/basewsw; sourceTree = "<group>"; };
+		9D5728D915B99CDB00727DB0 /* docs */ = {isa = PBXFileReference; lastKnownFileType = folder; name = docs; path = ../../../Warsow_1_5_1/docs; sourceTree = "<group>"; };
 		9DA731D715A1C46D00910C34 /* Theora.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Theora.framework; path = Frameworks/Theora.framework; sourceTree = "<group>"; };
 		9DD8CD2E15B74CA80020C7B4 /* as_bind_irc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = as_bind_irc.cpp; sourceTree = "<group>"; };
 		9DD8CD3015B74CC90020C7B4 /* as_bind_downloadinfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = as_bind_downloadinfo.cpp; sourceTree = "<group>"; };
