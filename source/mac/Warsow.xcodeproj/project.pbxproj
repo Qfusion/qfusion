@@ -1349,7 +1349,7 @@
 		F323F55D1917FF2B00F8FD6C /* md5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = md5.h; sourceTree = "<group>"; };
 		F323F55E1917FF2B00F8FD6C /* q_trie.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = q_trie.c; sourceTree = "<group>"; };
 		F323F55F1917FF2B00F8FD6C /* q_trie.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = q_trie.h; sourceTree = "<group>"; };
-		F323F5A81918080400F8FD6C /* steam.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = steam.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		F323F5A81918080400F8FD6C /* steam_mac.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = steam_mac.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		F323F5B3191809E400F8FD6C /* lgpl-3.0.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "lgpl-3.0.txt"; sourceTree = "<group>"; };
 		F323F5B4191809E400F8FD6C /* steamlib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = steamlib.cpp; sourceTree = "<group>"; };
 		F323F5B5191809E400F8FD6C /* steamlib.vcxproj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = steamlib.vcxproj; sourceTree = "<group>"; };
@@ -1585,7 +1585,7 @@
 				28F121CD0F6B1DE00053E51D /* wsw_server */,
 				28F121D90F6B1DFA0053E51D /* wswtv_server */,
 				9D48C5BF15C2F94E007A1955 /* cin_mac.dylib */,
-				F323F5A81918080400F8FD6C /* steam.dylib */,
+				F323F5A81918080400F8FD6C /* steam_mac.dylib */,
 				F319F337191B3B2A001A1D4B /* ref_gl_mac.dylib */,
 				F3FDBAD3191D97560021E994 /* ftlib_mac.dylib */,
 			);
@@ -2912,7 +2912,7 @@
 			);
 			name = steamlib;
 			productName = game_mac;
-			productReference = F323F5A81918080400F8FD6C /* steam.dylib */;
+			productReference = F323F5A81918080400F8FD6C /* steam_mac.dylib */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 		F3FDBAA1191D97560021E994 /* ftlib_mac */ = {
@@ -3653,8 +3653,9 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = irc_mac;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -3673,9 +3674,10 @@
 				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = irc_mac;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3697,8 +3699,9 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = snd_openal_mac;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -3721,9 +3724,10 @@
 				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = snd_openal_mac;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3745,7 +3749,9 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = snd_qf_mac;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -3768,8 +3774,10 @@
 				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = snd_qf_mac;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3791,7 +3799,9 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = game_mac;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -3814,8 +3824,10 @@
 				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = game_mac;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3833,7 +3845,9 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = cgame_mac;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -3852,8 +3866,10 @@
 				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = cgame_mac;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3878,7 +3894,9 @@
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = ui_mac;
+				SDKROOT = macosx10.8;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ui/";
 			};
 			name = Debug;
@@ -3905,8 +3923,10 @@
 				GCC_UNROLL_LOOPS = YES;
 				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = ui_mac;
+				SDKROOT = macosx10.8;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/../ui/";
 				ZERO_LINK = NO;
 			};
@@ -3936,10 +3956,11 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "";
-				ONLY_ACTIVE_ARCH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mdynamic-no-pic";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = Warsow;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -3970,9 +3991,11 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "";
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = Warsow;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -3997,7 +4020,9 @@
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = angelwrap_mac;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4023,8 +4048,10 @@
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks";
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = angelwrap_mac;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -4048,8 +4075,10 @@
 					DEDICATED_ONLY,
 				);
 				INSTALL_PATH = /usr/local/bin;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mdynamic-no-pic";
 				PRODUCT_NAME = wsw_server;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4073,8 +4102,10 @@
 				);
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/bin;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = wsw_server;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -4100,8 +4131,10 @@
 					TV_MODULE_HARD_LINKED,
 				);
 				INSTALL_PATH = /usr/local/bin;
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mdynamic-no-pic";
 				PRODUCT_NAME = wswtv_server;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4128,8 +4161,10 @@
 				);
 				GCC_UNROLL_LOOPS = NO;
 				INSTALL_PATH = /usr/local/bin;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = wswtv_server;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -4149,7 +4184,9 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = cin_mac;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4170,8 +4207,10 @@
 				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = cin_mac;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -4196,7 +4235,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4219,7 +4258,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = NO;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Release;
 		};
@@ -4243,8 +4282,9 @@
 					_DEBUG,
 				);
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = ref_gl_mac;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4270,9 +4310,10 @@
 				);
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = ref_gl_mac;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -4294,7 +4335,9 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = _DEBUG;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = steam_mac;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4317,8 +4360,10 @@
 				GCC_PREPROCESSOR_DEFINITIONS = NDEBUG;
 				GCC_UNROLL_LOOPS = YES;
 				INSTALL_PATH = /usr/local/lib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = steam_mac;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -4346,8 +4391,9 @@
 				);
 				INSTALL_PATH = /usr/local/lib;
 				LIBRARY_SEARCH_PATHS = "";
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = ftlib_mac;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
@@ -4376,9 +4422,10 @@
 				);
 				INSTALL_PATH = /usr/local/lib;
 				LIBRARY_SEARCH_PATHS = "";
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-fno-strict-aliasing";
 				PRODUCT_NAME = ftlib_mac;
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 				ZERO_LINK = NO;
 			};
 			name = Release;
