@@ -399,7 +399,7 @@ static void _R_DrawSurfaces( void )
 					if( !depthHack ) {
 						depthHack = qtrue;
 						RB_GetDepthRange( &depthmin, &depthmax, &depthoffset );
-						RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ), 0.0f );
+						RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ), depthoffset );
 					}
 				} else if( depthHack ) {
 					// bind the main framebuffer back
