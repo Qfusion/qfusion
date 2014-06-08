@@ -670,6 +670,61 @@ static int R_TextureFormat( int samples, qboolean noCompress )
 #endif
 
 /*
+* R_SetupTexParameters
+*/
+static void R_SetupTexParameters( int target, int flags )
+{
+	if( flags & IT_NOFILTERING )
+	{
+		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	}
+	else if( flags & IT_DEPTH )
+	{
+		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_depth );
+		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_depth );
+
+		if( glConfig.ext.texture_filter_anisotropic )
+			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
+	}
+	else if( !( flags & IT_NOMIPMAP ) )
+	{
+		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
+		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+
+		if( glConfig.ext.texture_filter_anisotropic )
+			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
+	}
+	else
+	{
+		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
+		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+
+		if( glConfig.ext.texture_filter_anisotropic )
+			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
+	}
+
+	// clamp if required
+	if( !( flags & IT_CLAMP ) )
+	{
+		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_REPEAT );
+		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	}
+	else if( glConfig.ext.texture_edge_clamp )
+	{
+		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	}
+#ifndef GL_ES_VERSION_2_0
+	else
+	{
+		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP );
+		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP );
+	}
+#endif
+}
+
+/*
 * R_Upload32
 */
 static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags, 
@@ -780,54 +835,7 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 		type = GL_UNSIGNED_BYTE;
 	}
 
-	if( flags & IT_NOFILTERING )
-	{
-		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	}
-	else if( flags & IT_DEPTH )
-	{
-		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_depth );
-		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_depth );
-
-		if( glConfig.ext.texture_filter_anisotropic )
-			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
-	}
-	else if( !( flags & IT_NOMIPMAP ) )
-	{
-		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
-		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
-
-		if( glConfig.ext.texture_filter_anisotropic )
-			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
-	}
-	else
-	{
-		qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
-		qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
-
-		if( glConfig.ext.texture_filter_anisotropic )
-			qglTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1 );
-	}
-
-	// clamp if required
-	if( !( flags & IT_CLAMP ) )
-	{
-		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_REPEAT );
-		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	}
-	else if( glConfig.ext.texture_edge_clamp )
-	{
-		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-	}
-#ifndef GL_ES_VERSION_2_0
-	else
-	{
-		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP );
-	}
-#endif
+	R_SetupTexParameters( target, flags );
 
 	if( ( scaledWidth == width ) && ( scaledHeight == height ) && ( flags & IT_NOMIPMAP ) )
 	{
