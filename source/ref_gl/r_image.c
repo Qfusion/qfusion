@@ -795,18 +795,7 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 		for( scaledHeight = 1; scaledHeight < height; scaledHeight <<= 1 );
 	}
 
-	if( !( flags & IT_NOPICMIP ) ) {
-		if( flags & IT_SKY ) {
-			// let people sample down the sky textures for speed
-			scaledWidth >>= r_skymip->integer;
-			scaledHeight >>= r_skymip->integer;
-		}
-		else {
-			// let people sample down the world textures for speed
-			scaledWidth >>= r_picmip->integer;
-			scaledHeight >>= r_picmip->integer;
-		}
-	}
+	R_ScaledImageSize( scaledWidth, scaledHeight, &scaledWidth, &scaledHeight, flags, qfalse );
 
 	// don't ever bother with > maxSize textures
 	if( flags & IT_CUBEMAP )
@@ -814,8 +803,6 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 		numTextures = 6;
 		target = GL_TEXTURE_CUBE_MAP_ARB;
 		target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
-		clamp( scaledWidth, 1, glConfig.maxTextureCubemapSize );
-		clamp( scaledHeight, 1, glConfig.maxTextureCubemapSize );
 	}
 	else
 	{
@@ -832,8 +819,6 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 		numTextures = 1;
 		target = GL_TEXTURE_2D;
 		target2 = GL_TEXTURE_2D;
-		clamp( scaledWidth, 1, glConfig.maxTextureSize );
-		clamp( scaledHeight, 1, glConfig.maxTextureSize );
 	}
 
 	if( upload_width )
