@@ -978,6 +978,7 @@ static int R_PixelFormatSize( int format, int type )
 		case GL_ETC1_RGB8_OES:
 			return 8;
 		}
+		break;
 	}
 	return 0;
 }
