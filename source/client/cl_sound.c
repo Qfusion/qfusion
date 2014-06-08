@@ -27,6 +27,7 @@ static void *sound_library = NULL;
 
 static cvar_t *s_module = NULL;
 static cvar_t *s_module_fallback = NULL;
+static qboolean s_loaded = qfalse;
 
 static int max_spatialization_num;
 
@@ -154,6 +155,8 @@ static qboolean CL_SoundModule_Load( const char *name, sound_import_t *import, q
 		Com_Printf( "Loading %s failed\n", name );
 		return qfalse;
 	}
+
+	s_loaded = qtrue;
 
 	se = ( sound_export_t * )GetSoundAPI( import );
 	apiversion = se->API();
@@ -317,6 +320,12 @@ void CL_SoundModule_Init( qboolean verbose )
 */
 void CL_SoundModule_Shutdown( qboolean verbose )
 {
+	if( !s_loaded ) {
+		return;
+	}
+
+	s_loaded = qfalse;
+
 	if( se && se->API() == SOUND_API_VERSION ) {
 		se->Shutdown( verbose );
 		se = NULL;
