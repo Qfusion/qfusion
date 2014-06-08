@@ -688,12 +688,13 @@
 		4FADC24308B4156D00ABE55E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_SEARCH_PATHS = (
+					../../../source/mac/Frameworks,
 					"$(inherited)",
-					/Library/Frameworks,
 				);
 				FRAMEWORK_VERSION = A;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -704,6 +705,7 @@
 				LIBRARY_STYLE = DYNAMIC;
 				OTHER_LDFLAGS_i386 = "-Wl,-read_only_relocs,suppress";
 				PRODUCT_NAME = Theora;
+				SDKROOT = macosx10.8;
 				WRAPPER_EXTENSION = framework;
 				ZERO_LINK = YES;
 			};
@@ -712,11 +714,12 @@
 		4FADC24408B4156D00ABE55E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_SEARCH_PATHS = (
+					../../../source/mac/Frameworks,
 					"$(inherited)",
-					/Library/Frameworks,
 				);
 				FRAMEWORK_VERSION = A;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -726,6 +729,7 @@
 				LIBRARY_STYLE = DYNAMIC;
 				OTHER_LDFLAGS_i386 = "-Wl,-read_only_relocs,suppress";
 				PRODUCT_NAME = Theora;
+				SDKROOT = macosx10.8;
 				WRAPPER_EXTENSION = framework;
 			};
 			name = Release;
@@ -733,7 +737,7 @@
 		4FADC24708B4156D00ABE55E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",
@@ -747,14 +751,14 @@
 					"../lib/**",
 				);
 				OTHER_CFLAGS = "";
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Debug;
 		};
 		4FADC24808B4156D00ABE55E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = "$(ARCHS_STANDARD)";
 				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",
@@ -767,16 +771,9 @@
 					../include,
 					"../lib/**",
 				);
-				OTHER_CFLAGS = (
-					"$(OTHER_CFLAGS)",
-					"-falign-loops=16",
-					"-fforce-addr",
-					"-fomit-frame-pointer",
-					"-finline-functions",
-					"-funroll-loops",
-				);
+				OTHER_CFLAGS = "$(OTHER_CFLAGS)";
 				PER_ARCH_CFLAGS_i386 = "-DOC_X86_ASM";
-				SDKROOT = macosx;
+				SDKROOT = macosx10.8;
 			};
 			name = Release;
 		};

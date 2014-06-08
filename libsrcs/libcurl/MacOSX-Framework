@@ -17,7 +17,7 @@ PPC_NEEDED=0
 
 # For me the default is to develop for the platform I am on, and if you
 #desire compatibility with older versions then change USE_OLD to 1 :)
-USE_OLD=0
+USE_OLD=1
 
 VERSION=`/usr/bin/sed -ne 's/^#define LIBCURL_VERSION "\(.*\)"/\1/p' include/curl/curlver.h`
 FRAMEWORK_VERSION=Versions/Release-$VERSION
