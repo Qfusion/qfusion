@@ -903,6 +903,46 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 }
 
 /*
+* R_MipCount
+*/
+static int R_MipCount( int width, int height )
+{
+	int mips = 1;
+	while( ( width > 1 ) || ( height > 1 ) )
+	{
+		++mips;
+		width >>= 1;
+		height >>= 1;
+		if( !width )
+			width = 1;
+		if( !height )
+			height = 1;
+	}
+	return mips;
+}
+
+/*
+* R_MipLevel
+*/
+static int R_MipLevel( int width, int height, int scaledWidth, int scaledHeight )
+{
+	int mip = 0;
+	while ( (width > scaledWidth ) || ( height > scaledHeight ) )
+    {
+        width >>= 1;
+        height >>= 1;
+        if ( !width )
+            width = 1;
+        if ( !height )
+            height = 1;
+        ++mip;
+    }
+	if( ( width != scaledWidth ) && ( height != scaledHeight ) )
+		return -1;
+	return mip;
+}
+
+/*
 * R_LoadImageFromDisk
 */
 static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(int, const image_t *) )
