@@ -637,6 +637,7 @@ static void CL_MasterAddressCache_Shutdown( void )
 			free( dump->key_value_vector[i].value );
 		}
 		Trie_Destroy( serverlist_masters_trie );
+		serverlist_masters_trie = NULL;
 	}
 }
 

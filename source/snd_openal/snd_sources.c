@@ -166,7 +166,7 @@ static void source_loop( int priority, sfx_t *sfx, int entNum, float fvol, float
 	if( !sfx )
 		return;
 
-	if( entNum < 0 )
+	if( entNum < 0 || entNum >= max_ents )
 		return;
 
 	// Do we need to start a new sound playing?
@@ -309,15 +309,18 @@ void S_UpdateSources( void )
 		if( srclist[i].volumeVar->modified )
 			qalSourcef( srclist[i].source, AL_GAIN, srclist[i].fvol * srclist[i].volumeVar->value );
 
+		entNum = srclist[i].entNum;
+
 		// Check if it's done, and flag it
 		qalGetSourcei( srclist[i].source, AL_SOURCE_STATE, &state );
 		if( state == AL_STOPPED )
 		{
 			source_kill( &srclist[i] );
+			if( entNum >= 0 && entNum < max_ents ) {
+				entlist[entNum].src = NULL;
+			}
 			continue;
 		}
-
-		entNum = srclist[i].entNum;
 
 		if( srclist[i].isLooping )
 		{

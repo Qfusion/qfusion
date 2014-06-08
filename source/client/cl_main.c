@@ -3062,7 +3062,10 @@ void CL_Shutdown( void )
 	NET_CloseSocket( &cls.socket_udp6 );
 	// TOCHECK: Shouldn't we close the TCP socket too?
 	if( cls.servername )
+	{
 		Mem_ZoneFree( cls.servername );
+		cls.servername = NULL;
+	}
 
 	CL_UIModule_Shutdown();
 	CL_GameModule_Shutdown();
