@@ -31,8 +31,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     set(BUNDLE_RESOURCES
         ../mac/Frameworks
-        ../../../Warsow_1_5/basewsw
-        ../../../Warsow_1_5/docs
+        ../../../Warsow_1_5_1/basewsw
+        ../../../Warsow_1_5_1/docs
         ../../glsl
     )
 endif()
