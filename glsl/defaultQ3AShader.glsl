@@ -89,7 +89,7 @@ void main(void)
 	Projection = normalize(Projection);
 
 	float Depth = dot(Normal.xyz, Projection) * 2.0;
-	v_TexCoord = vec2(0.5 + (Normal.y * Depth - Projection.y) * 0.5, 0.5 - (Normal.z * Depth - Projection.z) * 0.5);
+	v_TexCoord = 0.5 + (Normal.yz * Depth - Projection.yz) * vec2(0.5, -0.5);
 #elif defined(APPLY_TC_GEN_VECTOR)
 	v_TexCoord = vec2(u_VectorTexMatrix * Position);
 #elif defined(APPLY_TC_GEN_REFLECTION)
