@@ -273,7 +273,7 @@ void IN_Init()
 	Com_Printf("Initializing SDL Input\n");
 	
 	SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL );
-	Com_Printf("SDL_ShowCursor = %i", SDL_ShowCursor( SDL_QUERY ));
+	Com_Printf("SDL_ShowCursor = %i\n", SDL_ShowCursor( SDL_QUERY ));
 	SDL_ShowCursor( SDL_DISABLE );
 	SDL_EnableUNICODE( SDL_ENABLE );
 	SDL_WM_GrabInput( SDL_GRAB_ON );
