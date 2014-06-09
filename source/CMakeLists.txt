@@ -4,8 +4,12 @@ cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 
-set(QFUSION_CLIENT_NAME QFusion)
+# You can override this var with commandline option -DQFUSION_CLIENT_NAME=name
+if (NOT QFUSION_CLIENT_NAME)
+    set(QFUSION_CLIENT_NAME QFusion)
+endif()
 
+# OS X specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)") # Compile only 64-bit version
     set(CMAKE_OSX_SYSROOT "macosx10.8")                     # With OS X 10.8 base SDK
