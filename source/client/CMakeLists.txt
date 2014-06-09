@@ -59,10 +59,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ../mac/Warsow-Info.plist)
     set_source_files_properties(../mac/wsw_icon.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
-    set_source_files_properties(../mac/Frameworks              PROPERTIES MACOSX_PACKAGE_LOCATION .)
-    set_source_files_properties(../../../Warsow_1_5/basewsw    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties(../../../Warsow_1_5/docs       PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties(../../glsl                     PROPERTIES MACOSX_PACKAGE_LOCATION Resources/basewsw)
+    set_source_files_properties(../mac/Frameworks             PROPERTIES MACOSX_PACKAGE_LOCATION .)
+    set_source_files_properties(../../../Warsow_1_5_1/basewsw PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties(../../../Warsow_1_5_1/docs    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties(../../glsl                    PROPERTIES MACOSX_PACKAGE_LOCATION Resources/basewsw)
 
     set(BUNDLE_PATH ${CMAKE_HOME_DIRECTORY}/build/$(CONFIGURATION)/${QFUSION_CLIENT_NAME}.app/Contents)
     set(COPY_DYLIBS
