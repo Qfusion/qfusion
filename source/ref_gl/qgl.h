@@ -445,7 +445,12 @@ typedef unsigned int GLhandleARB;
 
 typedef unsigned short GLhalfARB;
 
-#ifndef GL_HALF_FLOAT
+#ifdef GL_HALF_FLOAT
+#undef GL_HALF_FLOAT
+#endif
+#ifdef GL_ES_VERSION_2_0
+#define GL_HALF_FLOAT										0x8D61
+#else
 #define GL_HALF_FLOAT										0x140B
 #endif
 #endif /* GL_ARB_half_float_vertex */
