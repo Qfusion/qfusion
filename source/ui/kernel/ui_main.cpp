@@ -397,11 +397,17 @@ void UI_Main::customRender( void )
 
 // CALLBACKS FROM MAIN PROGRAM
 
-void UI_Main::mouseMove( int dx, int dy )
+void UI_Main::mouseMove( int x, int y, bool absolute )
 {
 	// change the delta to window coordinates.
-	mousex += dx;
-	mousey += dy;
+	if( absolute ) {
+		mousex = x;
+		mousey = y;
+	} else {
+		mousex += x;
+		mousey += y;
+	}
+
 	if( mousex < 0 )
 		mousex = 0;
 	else if( mousex > refreshState.width )

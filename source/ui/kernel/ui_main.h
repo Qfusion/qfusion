@@ -66,7 +66,7 @@ public:
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
 
-	void mouseMove( int dx, int dy );
+	void mouseMove( int x, int y, bool absolute );
 	void textInput( qwchar c );
 	void keyEvent( int key, bool pressed );
 
