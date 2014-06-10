@@ -118,7 +118,14 @@ namespace WSWUI
 	void MouseMove( int dx, int dy )
 	{
 		if( ui_main ) {
-			ui_main->mouseMove( dx, dy );
+			ui_main->mouseMove( dx, dy, false );
+		}
+	}
+
+	void MouseSet( int x, int y )
+	{
+		if( ui_main ) {
+			ui_main->mouseMove( x, y, true );
 		}
 	}
 
