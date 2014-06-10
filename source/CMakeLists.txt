@@ -14,6 +14,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_64_BIT)") # Compile only 64-bit version
     set(CMAKE_OSX_SYSROOT "macosx10.8")                     # With OS X 10.8 base SDK
     set(CMAKE_FRAMEWORK_PATH "mac/Frameworks")
+    set(CMAKE_MACOSX_RPATH 1)
     set(JPEG_NAMES libjpeg) # libjpeg.framework should be renamed to jpeg.framework to remove this hack
 endif()
 

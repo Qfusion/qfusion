@@ -19,6 +19,8 @@ file(GLOB CLIENT_COMMON_SOURCES
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(GAME_DATA_DIR Warsow_1_5_1)
+
     file(GLOB CLIENT_PLATFORM_SOURCES
         "../mac/SDLMain.m"
         "../mac/mac_input.m"
@@ -32,8 +34,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     set(BUNDLE_RESOURCES
         ../mac/Frameworks
-        ../../../Warsow_1_5_1/basewsw
-        ../../../Warsow_1_5_1/docs
+        ../../../${GAME_DATA_DIR}/basewsw
+        ../../../${GAME_DATA_DIR}/docs
         ../../glsl
         ../mac/wsw_icon.icns
     )
@@ -57,12 +59,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame cin ftlib game irc ref_gl snd_openal snd_qf tv_server ui)
 
     set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ../mac/Warsow-Info.plist)
+    set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/../Frameworks @executable_path/../Resources/base @executable_path/../Resources/libs")
     set_source_files_properties(../mac/wsw_icon.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
-    set_source_files_properties(../mac/Frameworks             PROPERTIES MACOSX_PACKAGE_LOCATION .)
-    set_source_files_properties(../../../Warsow_1_5_1/basewsw PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties(../../../Warsow_1_5_1/docs    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties(../../glsl                    PROPERTIES MACOSX_PACKAGE_LOCATION Resources/basewsw)
+    set_source_files_properties(../mac/Frameworks                 PROPERTIES MACOSX_PACKAGE_LOCATION .)
+    set_source_files_properties(../../../${GAME_DATA_DIR}/basewsw PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties(../../../${GAME_DATA_DIR}/docs    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties(../../glsl                        PROPERTIES MACOSX_PACKAGE_LOCATION Resources/basewsw)
 
     set(BUNDLE_PATH ${CMAKE_HOME_DIRECTORY}/build/$(CONFIGURATION)/${QFUSION_CLIENT_NAME}.app/Contents)
     set(COPY_DYLIBS
