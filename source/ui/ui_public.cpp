@@ -167,6 +167,7 @@ ui_export_t *GetUIAPI( ui_import_t *import )
 	globals.Keyup = WSWUI::Keyup;
 	globals.CharEvent = WSWUI::CharEvent;
 	globals.MouseMove = WSWUI::MouseMove;
+	globals.MouseSet = WSWUI::MouseSet;
 
 	globals.ForceMenuOff = WSWUI::ForceMenuOff;
 
