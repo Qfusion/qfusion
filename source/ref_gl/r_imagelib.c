@@ -1084,7 +1084,7 @@ void DecompressETC1( const qbyte *in, int width, int height, qbyte *out, qboolea
 {
 	int stride = ALIGN( width, 4 ) * 3;
 	qbyte *uncompressed = alloca( 4 * stride );
-	int i, j, rows, rowSize = width * 3;
+	int i, j, rows, rowSize = width * 3, rowSizeAligned = ALIGN( rowSize, 4 );
 	for( i = 0; i < height; i += 4 )
 	{
 		for( j = 0; j < width; j += 4 )
@@ -1098,7 +1098,7 @@ void DecompressETC1( const qbyte *in, int width, int height, qbyte *out, qboolea
 		for( j = 0; j < rows; ++j )
 		{
 			memcpy( out, uncompressed + j * stride, rowSize );
-			out += rowSize;
+			out += rowSizeAligned;
 		}
 	}
 }
