@@ -625,27 +625,31 @@ static void R_ResampleTexture16( int ctx, const unsigned short *in, int inwidth,
 * R_MipMap
 * 
 * Operates in place, quartering the size of the texture
-* note: if given odd width/height this discards the last row/column of
-* pixels, rather than doing a proper box-filter scale down (LordHavoc)
 */
-static void R_MipMap( qbyte *in, int width, int height, int samples )
+static void R_MipMap( qbyte *in, int width, int height, int samples, int alignment )
 {
-	int i, j, k, samples2;
-	qbyte *out;
+	int i, j, k;
+	int instride = ALIGN( width * samples, alignment );
+	int outpadding = ALIGN( ( width >> 1 ) * samples, alignment ) - ( width >> 1 ) * samples;
+	qbyte *out = in;
+	qbyte *next;
+	int inofs;
 
-	// width <<= 2;
-	width *= samples;
-	height >>= 1;
-	samples2 = samples << 1;
-
-
-	out = in;
-	for( i = 0; i < height; i++, in += width )
+	for( i = 0; i < height; i += 2, in += instride * 2, out += outpadding )
 	{
-		for( j = 0; j < width; j += samples2, out += samples, in += samples2 )
+		next = ( ( i + 1 ) < height ) ? ( in + instride ) : in;
+		for( j = 0, inofs = 0; j < width; j += 2, inofs += samples )
 		{
-			for( k = 0; k < samples; k++ )
-				out[k] = ( in[k] + in[k+samples] + in[width+k] + in[width+k+samples] )>>2;
+			if( ( j + 1 ) < width )
+			{
+				for( k = 0; k < samples; ++k, ++inofs )
+					*( out++ ) = ( in[inofs] + in[inofs + samples] + next[inofs] + next[inofs + samples] ) >> 2;
+			}
+			else
+			{
+				for( k = 0; k < samples; ++k, ++inofs )
+					*( out++ ) = ( in[inofs] + next[inofs] ) >> 1;
+			}
 		}
 	}
 }
@@ -653,29 +657,40 @@ static void R_MipMap( qbyte *in, int width, int height, int samples )
 /*
 * R_MipMap16
 *
-* A version of R_MipMap for 16-bit images.
+* Operates in place, quartering the size of the 16-bit texture, assumes unpack alignment of 4
 */
 static void R_MipMap16( unsigned short *in, int width, int height, int rMask, int gMask, int bMask, int aMask )
 {
 	int i, j;
-	unsigned short *out;
+	int instride = ALIGN( width, 2 );
+	int outpadding = ( width >> 1 ) & 1;
+	unsigned short *out = in;
+	unsigned short *next;
 	int p[4];
-	
-	height >>= 1;
 
-	out = in;
-	for( i = 0; i < height; i++, in += width )
+	for( i = 0; i < height; i += 2, in += instride * 2, out += outpadding )
 	{
-		for( j = 0; j < width; j += 2, out += 1, in += 2 )
+		next = ( ( i + 1 ) < height ) ? ( in + instride ) : in;
+		for( j = 0; j < width; j += 2 )
 		{
 			p[0] = in[0];
-			p[1] = in[1];
-			p[2] = in[width];
-			p[3] = in[width + 1];
-			*out =	( ( ( ( p[0] & rMask ) + ( p[1] & rMask ) + ( p[2] & rMask ) + ( p[3] & rMask ) ) >> 2 ) & rMask ) |
-					( ( ( ( p[0] & gMask ) + ( p[1] & gMask ) + ( p[2] & gMask ) + ( p[3] & gMask ) ) >> 2 ) & gMask ) |
-					( ( ( ( p[0] & bMask ) + ( p[1] & bMask ) + ( p[2] & bMask ) + ( p[3] & bMask ) ) >> 2 ) & bMask ) |
-					( ( ( ( p[0] & aMask ) + ( p[1] & aMask ) + ( p[2] & aMask ) + ( p[3] & aMask ) ) >> 2 ) & aMask );
+			p[1] = next[0];
+			if( ( j + 1 ) < width )
+			{
+				p[2] = in[1];
+				p[3] = next[1];
+				*( out++ ) =	( ( ( ( p[0] & rMask ) + ( p[1] & rMask ) + ( p[2] & rMask ) + ( p[3] & rMask ) ) >> 2 ) & rMask ) |
+								( ( ( ( p[0] & gMask ) + ( p[1] & gMask ) + ( p[2] & gMask ) + ( p[3] & gMask ) ) >> 2 ) & gMask ) |
+								( ( ( ( p[0] & bMask ) + ( p[1] & bMask ) + ( p[2] & bMask ) + ( p[3] & bMask ) ) >> 2 ) & bMask ) |
+								( ( ( ( p[0] & aMask ) + ( p[1] & aMask ) + ( p[2] & aMask ) + ( p[3] & aMask ) ) >> 2 ) & aMask );
+			}
+			else
+			{
+				*( out++ ) =	( ( ( ( p[0] & rMask ) + ( p[1] & rMask ) ) >> 1 ) & rMask ) |
+								( ( ( ( p[0] & gMask ) + ( p[1] & gMask ) ) >> 1 ) & gMask ) |
+								( ( ( ( p[0] & bMask ) + ( p[1] & bMask ) ) >> 1 ) & bMask ) |
+								( ( ( ( p[0] & aMask ) + ( p[1] & aMask ) ) >> 1 ) & aMask );
+			}
 		}
 	}
 }
@@ -910,7 +925,7 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 				h = scaledHeight;
 				while( w > 1 || h > 1 )
 				{
-					R_MipMap( mip, w, h, samples );
+					R_MipMap( mip, w, h, samples, 1 );
 
 					w >>= 1;
 					h >>= 1;
