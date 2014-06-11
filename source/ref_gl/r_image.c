@@ -33,8 +33,10 @@ typedef struct
 static image_t images[MAX_GLIMAGES];
 static image_t images_hash_headnode[IMAGES_HASH_SIZE], *free_images;
 
-int	currentTMU;
-GLuint currentTextures[MAX_TEXTURE_UNITS];
+static int currentTMU;
+static GLuint currentTextures[MAX_TEXTURE_UNITS];
+
+static int unpackAlignment[NUM_QGL_CONTEXTS];
 
 static int *r_8to24table;
 
@@ -209,6 +211,18 @@ void R_TextureMode( char *string )
 			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		}
 	}
+}
+
+/*
+* R_UnpackAlignment
+*/
+static void R_UnpackAlignment( int ctx, int value )
+{
+	if( unpackAlignment[ctx] == value )
+		return;
+
+	unpackAlignment[ctx] = value;
+	qglPixelStorei( GL_UNPACK_ALIGNMENT, value );
 }
 
 /*
@@ -887,6 +901,8 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 	}
 
 	R_SetupTexParameters( target, flags );
+
+	R_UnpackAlignment( ctx, 1 );
 
 	if( ( scaledWidth == width ) && ( scaledHeight == height ) && ( flags & IT_NOMIPMAP ) )
 	{
@@ -2035,8 +2051,7 @@ void R_InitImages( void )
 {
 	int i;
 
-	// allow any alignment
-	qglPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+	unpackAlignment[QGL_CONTEXT_MAIN] = 4;
 	qglPixelStorei( GL_PACK_ALIGNMENT, 1 );
 
 	r_imagesPool = R_AllocPool( r_mempool, "Images" );
@@ -2310,6 +2325,7 @@ static void R_ShutdownImageLoader( void )
 static unsigned R_HandleInitLoaderCmd( void *pcmd )
 {
 	GLimp_SharedContext_MakeCurrent( gl_loader_context );
+	unpackAlignment[QGL_CONTEXT_LOADER] = 4;
 
 	return sizeof( int );
 }
