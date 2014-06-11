@@ -367,8 +367,8 @@ float ElementStyle::ResolveProperty(const Property* property, float base_value)
 	if (property->unit & Property::PPI_UNIT)
 	{
 		float inch = property->value.Get< float >() * element->GetRenderInterface()->GetPixelsPerInch();
-
-		if (property->unit & Property::IN) // inch
+		
+		if (property->unit & Property::INCH) // inch
 			return inch;
 		if (property->unit & Property::CM) // centimeter
 			return inch * (1.0f / 2.54f);
