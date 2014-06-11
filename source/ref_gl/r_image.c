@@ -358,19 +358,22 @@ void R_FreeImageBuffers( void )
 /*
 * R_SwapBlueRed
 */
-static void R_SwapBlueRed( qbyte *data, int width, int height, int samples )
+static void R_SwapBlueRed( qbyte *data, int width, int height, int samples, int alignment )
 {
-	int i, j, size;
+	int i, j, k, padding;
 
-	size = width * height;
-	for( i = 0; i < size; i++, data += samples )
+	padding = ALIGN( width * samples, alignment ) - width * samples;
+	for( i = 0; i < height; i++, data += padding )
 	{
-		j = data[0];
-		data[0] = data[2];
-		data[2] = j;
-		// data[0] ^= data[2];
-		// data[2] = data[0] ^ data[2];
-		// data[0] ^= data[2];
+		for( j = 0; j < width; j++, data += samples )
+		{
+			k = data[0];
+			data[0] = data[2];
+			data[2] = k;
+			// data[0] ^= data[2];
+			// data[2] = data[0] ^ data[2];
+			// data[0] ^= data[2];
+		}
 	}
 }
 
@@ -417,7 +420,7 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 		{
 			if( ( (imginfo.comp & ~1) == IMGCOMP_BGR ) && ( !glConfig.ext.bgra || !flags ) )
 			{
-				R_SwapBlueRed( imginfo.pixels, imginfo.width, imginfo.height, imginfo.samples );
+				R_SwapBlueRed( imginfo.pixels, imginfo.width, imginfo.height, imginfo.samples, 1 );
 				imginfo.comp = IMGCOMP_RGB | (imginfo.comp & 1);
 			}
 		}
@@ -510,7 +513,7 @@ static void R_FlipTexture( const qbyte *in, qbyte *out, int width, int height,
 * R_ResampleTexture
 */
 static void R_ResampleTexture( int ctx, const qbyte *in, int inwidth, int inheight, qbyte *out, 
-	int outwidth, int outheight, int samples )
+	int outwidth, int outheight, int samples, int alignment )
 {
 	int i, j, k;
 	int inwidthS, outwidthS;
@@ -521,7 +524,7 @@ static void R_ResampleTexture( int ctx, const qbyte *in, int inwidth, int inheig
 
 	if( inwidth == outwidth && inheight == outheight )
 	{
-		memcpy( out, in, inwidth * inheight * samples );
+		memcpy( out, in, inheight * ALIGN( inwidth * samples, alignment ) );
 		return;
 	}
 
@@ -544,8 +547,8 @@ static void R_ResampleTexture( int ctx, const qbyte *in, int inwidth, int inheig
 		frac += fracstep;
 	}
 
-	inwidthS = inwidth * samples;
-	outwidthS = outwidth * samples;
+	inwidthS = ALIGN( inwidth * samples, alignment );
+	outwidthS = ALIGN( outwidth * samples, alignment );
 	for( i = 0; i < outheight; i++, out += outwidthS )
 	{
 		inrow = in + inwidthS * (int)( ( i + 0.25 ) * inheight / outheight );
@@ -566,11 +569,14 @@ static void R_ResampleTexture( int ctx, const qbyte *in, int inwidth, int inheig
 
 /*
 * R_ResampleTexture16
+*
+* Assumes 16-bit unpack alignment
 */
 static void R_ResampleTexture16( int ctx, const unsigned short *in, int inwidth, int inheight,
 	unsigned short *out, int outwidth, int outheight, int rMask, int gMask, int bMask, int aMask )
 {
 	int i, j;
+	int inwidthA, outwidthA;
 	unsigned int frac, fracstep;
 	const unsigned short *inrow, *inrow2, *pix1, *pix2, *pix3, *pix4;
 	unsigned *p1, *p2;
@@ -578,7 +584,7 @@ static void R_ResampleTexture16( int ctx, const unsigned short *in, int inwidth,
 
 	if( inwidth == outwidth && inheight == outheight )
 	{
-		memcpy( out, in, inwidth * inheight * sizeof( unsigned short ) );
+		memcpy( out, in, inheight * ALIGN( inwidth * sizeof( unsigned short ), 4 ) );
 		return;
 	}
 
@@ -601,10 +607,12 @@ static void R_ResampleTexture16( int ctx, const unsigned short *in, int inwidth,
 		frac += fracstep;
 	}
 
-	for( i = 0; i < outheight; i++, out += outwidth )
+	inwidthA = ALIGN( inwidth, 2 );
+	outwidthA = ALIGN( outwidth, 2 );
+	for( i = 0; i < outheight; i++, out += outwidthA )
 	{
-		inrow = in + inwidth * (int)( ( i + 0.25 ) * inheight / outheight );
-		inrow2 = in + inwidth * (int)( ( i + 0.75 ) * inheight / outheight );
+		inrow = in + inwidthA * (int)( ( i + 0.25 ) * inheight / outheight );
+		inrow2 = in + inwidthA * (int)( ( i + 0.75 ) * inheight / outheight );
 		for( j = 0; j < outwidth; j++ )
 		{
 			pix1 = inrow + p1[j];
@@ -906,7 +914,7 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 			// resample the texture
 			mip = scaled;
 			if( data && data[i] )
-				R_ResampleTexture( ctx, data[i], width, height, (qbyte*)mip, scaledWidth, scaledHeight, samples );
+				R_ResampleTexture( ctx, data[i], width, height, (qbyte*)mip, scaledWidth, scaledHeight, samples, 1 );
 			else
 				mip = NULL;
 
