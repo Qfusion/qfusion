@@ -453,14 +453,31 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 /*
 * R_ScaledImageSize
 */
-static void R_ScaledImageSize( int width, int height, int *scaledWidth, int *scaledHeight, int flags, qboolean fromMipmap )
+static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scaledHeight, int flags,
+	int smallestMip, qboolean forceNPOT )
 {
+	int mip = 0;
 	int maxSize = ( flags & IT_CUBEMAP ) ? glConfig.maxTextureCubemapSize : glConfig.maxTextureSize;
+	int clampedWidth, clampedHeight;
+
+	if( !glConfig.ext.texture_non_power_of_two && !forceNPOT )
+	{
+		int potWidth, potHeight;
+
+		for( potWidth = 1; potWidth < width; potWidth <<= 1 );
+		for( potHeight = 1; potHeight < height; potHeight <<= 1 );
+
+		if( ( width != potWidth ) || ( height != potHeight ) )
+			smallestMip = 0;
+
+		width = potWidth;
+		height = potHeight;
+	}
 
 	if( !( flags & IT_NOPICMIP ) )
 	{
 		// let people sample down the sky textures for speed
-		int mip = ( flags & IT_SKY ) ? r_skymip->integer : r_picmip->integer;
+		mip = ( flags & IT_SKY ) ? r_skymip->integer : r_picmip->integer;
 		width >>= mip;
 		height >>= mip;
 		if( !width )
@@ -469,28 +486,31 @@ static void R_ScaledImageSize( int width, int height, int *scaledWidth, int *sca
 			height = 1;
 	}
 
-	if( fromMipmap )
+	// try to find the smallest supported texture size from mipmaps
+	clampedWidth = width;
+	clampedHeight = height;
+	while( ( clampedWidth > maxSize ) || ( clampedHeight > maxSize ) )
 	{
-		while( ( width > maxSize ) || ( height > maxSize ) )
-		{
-			width >>= 1;
-			height >>= 1;
-			if( !width )
-				width = 1;
-			if( !height )
-				height = 1;
-		}
-	}
-	else
-	{
-		if( width > maxSize )
-			width = maxSize;
-		if( height > maxSize )
-			height = maxSize;
+		++mip;
+		clampedWidth >>= 1;
+		clampedHeight >>= 1;
+		if( !clampedWidth )
+			clampedWidth = 1;
+		if( !clampedHeight )
+			clampedHeight = 1;
 	}
 
-	*scaledWidth = width;
-	*scaledHeight = height;
+	if( mip > smallestMip )
+	{
+		// the smallest size is not in mipmaps, so ignore mipmaps and aspect ratio and simply clamp
+		*scaledWidth = min( width, maxSize );
+		*scaledHeight = min( height, maxSize );
+		return -1;
+	}
+
+	*scaledWidth = clampedWidth;
+	*scaledHeight = clampedHeight;
+	return mip;
 }
 
 /*
@@ -820,8 +840,7 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 	assert( samples );
 
 	// we can't properly mipmap a NPT-texture in software
-	if( ( glConfig.ext.texture_non_power_of_two && ( flags & IT_NOMIPMAP ) )
-		|| ( subImage && noScale ) )
+	if( glConfig.ext.texture_non_power_of_two || ( subImage && noScale ) )
 	{
 		scaledWidth = width;
 		scaledHeight = height;
@@ -832,7 +851,8 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 		for( scaledHeight = 1; scaledHeight < height; scaledHeight <<= 1 );
 	}
 
-	R_ScaledImageSize( scaledWidth, scaledHeight, &scaledWidth, &scaledHeight, flags, qfalse );
+	R_ScaledImageSize( scaledWidth, scaledHeight, &scaledWidth, &scaledHeight, flags, 0,
+		( subImage && noScale ) ? qtrue : qfalse );
 
 	// don't ever bother with > maxSize textures
 	if( flags & IT_CUBEMAP )
@@ -1027,24 +1047,125 @@ static int R_MipCount( int width, int height )
 }
 
 /*
-* R_MipLevel
+* R_UploadMipmapped
 */
-static int R_MipLevel( int width, int height, int scaledWidth, int scaledHeight )
+static void R_UploadMipmapped( int ctx, int face, qbyte **data,
+	int width, int height, int smallestMip, int flags,
+	int *upload_width, int *upload_height,
+	int format, int type )
 {
-	int mip = 0;
-	while ( (width > scaledWidth ) || ( height > scaledHeight ) )
-    {
-        width >>= 1;
-        height >>= 1;
-        if ( !width )
-            width = 1;
-        if ( !height )
-            height = 1;
-        ++mip;
-    }
-	if( ( width != scaledWidth ) && ( height != scaledHeight ) )
-		return -1;
-	return mip;
+	int pixelSize = R_PixelFormatSize( format, type );
+	int scaledWidth, scaledHeight;
+	int mip;
+	qbyte *scaled = NULL;
+	int rMask = 0, gMask = 0, bMask = 0, aMask = 0;
+	int target, target2, comp;
+	int i, mips;
+	int oldWidth = 0, oldHeight = 0;
+
+	switch( type )
+	{
+	case GL_UNSIGNED_SHORT_4_4_4_4:
+		rMask = 15;
+		gMask = 15 << 4;
+		bMask = 15 << 8;
+		aMask = 15 << 12;
+		break;
+	case GL_UNSIGNED_SHORT_5_5_5_1:
+		rMask = 31;
+		gMask = 31 << 5;
+		bMask = 31 << 10;
+		aMask = 1 << 15;
+		break;
+	case GL_UNSIGNED_SHORT_5_6_5:
+		rMask = 31;
+		gMask = 63 << 5;
+		bMask = 31 << 11;
+		break;
+	}
+
+	mip = R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, smallestMip, qfalse );
+
+	if( mip < 0 )
+	{
+		scaled = R_PrepareImageBuffer( ctx, TEXTURE_RESAMPLING_BUF,
+			scaledHeight * ALIGN( scaledWidth * pixelSize, 4 ) );
+		if( type == GL_UNSIGNED_BYTE )
+		{
+			R_ResampleTexture( ctx, data[0], width, height,
+				scaled, scaledWidth, scaledHeight, pixelSize, 4 );
+		}
+		else
+		{
+			R_ResampleTexture16( ctx, ( unsigned short * )( data[0] ), width, height,
+				( unsigned short * )scaled, scaledWidth, scaledHeight, rMask, gMask, bMask, aMask );
+		}
+		data = &scaled;
+		mip = 0;
+		smallestMip = 0;
+	}
+
+	if( flags & IT_CUBEMAP )
+	{
+		target = GL_TEXTURE_CUBE_MAP_ARB;
+		target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + face;
+	}
+	else
+	{
+		target = target2 = GL_TEXTURE_2D;
+	}
+#ifdef GL_ES_VERSION_2_0
+	comp = format;
+#else
+	comp = R_TextureFormat( ( type == GL_UNSIGNED_BYTE ) ? pixelSize : ( ( format == GL_RGB ) ? 3 : 4 ),
+		( flags & IT_NOCOMPRESS ) ? qtrue : qfalse );
+#endif
+
+	R_SetupTexParameters( target, flags );
+
+	R_UnpackAlignment( ctx, 4 );
+
+	mips = ( flags & IT_NOMIPMAP ) ? 1 : R_MipCount( scaledWidth, scaledHeight );
+	for( i = 0; ( i < mips ) && ( mip <= smallestMip ); ++i, ++mip )
+	{
+		qglTexImage2D( target2, i, comp, scaledWidth, scaledHeight, 0, format, type, data[mip] );
+		oldWidth = scaledWidth;
+		oldHeight = scaledHeight;
+		scaledWidth >>= 1;
+		scaledHeight >>= 1;
+		if( !scaledWidth )
+			scaledWidth = 1;
+		if( !scaledHeight )
+			scaledHeight = 1;
+	}
+
+	for( ; i < mips; ++i )
+	{
+		if( !scaled )
+		{
+			int size = oldHeight * ALIGN( oldWidth * pixelSize, 4 );
+			scaled = R_PrepareImageBuffer( ctx, TEXTURE_RESAMPLING_BUF, size );
+			memcpy( scaled, data[mip - 1], size );
+			if( type == GL_UNSIGNED_BYTE )
+				R_MipMap( scaled, oldWidth, oldHeight, pixelSize, 4 );
+			else
+				R_MipMap16( ( unsigned short * )scaled, oldWidth, oldHeight, rMask, gMask, bMask, aMask );
+		}
+
+		qglTexImage2D( target2, i, comp, scaledWidth, scaledHeight, 0, format, type, scaled );
+
+		if( type == GL_UNSIGNED_BYTE )
+			R_MipMap( scaled, scaledWidth, scaledHeight, pixelSize, 4 );
+		else
+			R_MipMap16( ( unsigned short * )scaled, scaledWidth, scaledHeight, rMask, gMask, bMask, aMask );
+
+		scaledWidth >>= 1;
+		scaledHeight >>= 1;
+		if( !scaledWidth )
+			scaledWidth = 1;
+		if( !scaledHeight )
+			scaledHeight = 1;
+	}
 }
 
 /*
