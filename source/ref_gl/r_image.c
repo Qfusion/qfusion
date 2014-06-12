@@ -1146,11 +1146,12 @@ static void R_UploadMipmapped( int ctx, int face, qbyte **data,
 			int size = oldHeight * ALIGN( oldWidth * pixelSize, 4 );
 			scaled = R_PrepareImageBuffer( ctx, TEXTURE_RESAMPLING_BUF, size );
 			memcpy( scaled, data[mip - 1], size );
-			if( type == GL_UNSIGNED_BYTE )
-				R_MipMap( scaled, oldWidth, oldHeight, pixelSize, 4 );
-			else
-				R_MipMap16( ( unsigned short * )scaled, oldWidth, oldHeight, rMask, gMask, bMask, aMask );
 		}
+
+		if( type == GL_UNSIGNED_BYTE )
+			R_MipMap( scaled, oldWidth, oldHeight, pixelSize, 4 );
+		else
+			R_MipMap16( ( unsigned short * )scaled, oldWidth, oldHeight, rMask, gMask, bMask, aMask );
 
 		qglTexImage2D( target2, i, comp, scaledWidth, scaledHeight, 0, format, type, scaled );
 
@@ -1159,6 +1160,8 @@ static void R_UploadMipmapped( int ctx, int face, qbyte **data,
 		else
 			R_MipMap16( ( unsigned short * )scaled, scaledWidth, scaledHeight, rMask, gMask, bMask, aMask );
 
+		oldWidth = scaledWidth;
+		oldHeight = scaledHeight;
 		scaledWidth >>= 1;
 		scaledHeight >>= 1;
 		if( !scaledWidth )
