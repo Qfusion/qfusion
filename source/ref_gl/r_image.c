@@ -1064,19 +1064,24 @@ static int R_MipCount( int width, int height )
 
 /*
 * R_UploadMipmapped
+*
+* Loads a 16/24/32-bit image or cubemap (faces are consecutive) with mipmaps.
 */
-static void R_UploadMipmapped( int ctx, int face, qbyte **data,
+static void R_UploadMipmapped( int ctx, qbyte **data,
 	int width, int height, int smallestMip, int flags,
 	int *upload_width, int *upload_height,
 	int format, int type )
 {
+	int i, j;
 	int pixelSize = R_PixelFormatSize( format, type );
+	int rMask = 0, gMask = 0, bMask = 0, aMask = 0;
 	int scaledWidth, scaledHeight;
 	int mip;
 	qbyte *scaled = NULL;
-	int rMask = 0, gMask = 0, bMask = 0, aMask = 0;
+	int faces, faceSize;
 	int target, target2, comp;
-	int i, mips;
+	int mips;
+	qbyte *face;
 	int oldWidth = 0, oldHeight = 0;
 
 	switch( type )
@@ -1100,36 +1105,46 @@ static void R_UploadMipmapped( int ctx, int face, qbyte **data,
 		break;
 	}
 
+	if( flags & IT_CUBEMAP )
+	{
+		target = GL_TEXTURE_CUBE_MAP_ARB;
+		target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
+		faces = 6;
+	}
+	else
+	{
+		target = target2 = GL_TEXTURE_2D;
+		faces = 1;
+	}
+
 	mip = R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, smallestMip, qfalse );
 
 	if( mip < 0 )
 	{
-		scaled = R_PrepareImageBuffer( ctx, TEXTURE_RESAMPLING_BUF,
-			scaledHeight * ALIGN( scaledWidth * pixelSize, 4 ) );
+		int oldFaceSize = ALIGN( width * pixelSize, 4 ) * height;
+		faceSize = ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight;
+		scaled = R_PrepareImageBuffer( ctx, TEXTURE_RESAMPLING_BUF, faceSize * faces );
 		if( type == GL_UNSIGNED_BYTE )
 		{
-			R_ResampleTexture( ctx, data[0], width, height,
-				scaled, scaledWidth, scaledHeight, pixelSize, 4 );
+			for( i = 0; i < faces; i++ )
+			{
+				R_ResampleTexture( ctx, data[0] + i * oldFaceSize, width, height,
+					scaled + i * faceSize, scaledWidth, scaledHeight, pixelSize, 4 );
+			}
 		}
 		else
 		{
-			R_ResampleTexture16( ctx, ( unsigned short * )( data[0] ), width, height,
-				( unsigned short * )scaled, scaledWidth, scaledHeight, rMask, gMask, bMask, aMask );
+			for( i = 0; i < faces; i++ )
+			{
+				R_ResampleTexture16( ctx, ( unsigned short * )( data[0] + i * oldFaceSize ), width, height,
+					( unsigned short * )( scaled + i * faceSize ), scaledWidth, scaledHeight, rMask, gMask, bMask, aMask );
+			}
 		}
 		data = &scaled;
 		mip = 0;
 		smallestMip = 0;
 	}
 
-	if( flags & IT_CUBEMAP )
-	{
-		target = GL_TEXTURE_CUBE_MAP_ARB;
-		target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + face;
-	}
-	else
-	{
-		target = target2 = GL_TEXTURE_2D;
-	}
 #ifdef GL_ES_VERSION_2_0
 	comp = format;
 #else
@@ -1144,7 +1159,13 @@ static void R_UploadMipmapped( int ctx, int face, qbyte **data,
 	mips = ( flags & IT_NOMIPMAP ) ? 1 : R_MipCount( scaledWidth, scaledHeight );
 	for( i = 0; ( i < mips ) && ( mip <= smallestMip ); ++i, ++mip )
 	{
-		qglTexImage2D( target2, i, comp, scaledWidth, scaledHeight, 0, format, type, data[mip] );
+		face = data[mip];
+		faceSize = ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight;
+		for( j = 0; j < faces; j++ )
+		{
+			qglTexImage2D( target2 + j, i, comp, scaledWidth, scaledHeight, 0, format, type, face );
+			face += faceSize;
+		}
 		oldWidth = scaledWidth;
 		oldHeight = scaledHeight;
 		scaledWidth >>= 1;
@@ -1159,17 +1180,20 @@ static void R_UploadMipmapped( int ctx, int face, qbyte **data,
 	{
 		if( !scaled )
 		{
-			int size = oldHeight * ALIGN( oldWidth * pixelSize, 4 );
-			scaled = R_PrepareImageBuffer( ctx, TEXTURE_RESAMPLING_BUF, size );
-			memcpy( scaled, data[mip - 1], size );
+			scaled = R_PrepareImageBuffer( ctx, TEXTURE_RESAMPLING_BUF, faces * faceSize );
+			memcpy( scaled, data[mip - 1], faces * faceSize );
 		}
 
-		if( type == GL_UNSIGNED_BYTE )
-			R_MipMap( scaled, oldWidth, oldHeight, pixelSize, 4 );
-		else
-			R_MipMap16( ( unsigned short * )scaled, oldWidth, oldHeight, rMask, gMask, bMask, aMask );
-
-		qglTexImage2D( target2, i, comp, scaledWidth, scaledHeight, 0, format, type, scaled );
+		face = scaled;
+		for( j = 0; j < faces; j++ )
+		{
+			if( type == GL_UNSIGNED_BYTE )
+				R_MipMap( face, oldWidth, oldHeight, pixelSize, 4 );
+			else
+				R_MipMap16( ( unsigned short * )face, oldWidth, oldHeight, rMask, gMask, bMask, aMask );
+			qglTexImage2D( target2 + j, i, comp, scaledWidth, scaledHeight, 0, format, type, face );
+			face += faceSize;
+		}
 
 		oldWidth = scaledWidth;
 		oldHeight = scaledHeight;
