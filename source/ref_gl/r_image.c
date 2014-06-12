@@ -1155,11 +1155,6 @@ static void R_UploadMipmapped( int ctx, int face, qbyte **data,
 
 		qglTexImage2D( target2, i, comp, scaledWidth, scaledHeight, 0, format, type, scaled );
 
-		if( type == GL_UNSIGNED_BYTE )
-			R_MipMap( scaled, scaledWidth, scaledHeight, pixelSize, 4 );
-		else
-			R_MipMap16( ( unsigned short * )scaled, scaledWidth, scaledHeight, rMask, gMask, bMask, aMask );
-
 		oldWidth = scaledWidth;
 		oldHeight = scaledHeight;
 		scaledWidth >>= 1;
