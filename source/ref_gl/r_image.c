@@ -672,17 +672,25 @@ static void R_MipMap( qbyte *in, int width, int height, int samples, int alignme
 {
 	int i, j, k;
 	int instride = ALIGN( width * samples, alignment );
-	int outpadding = ALIGN( ( width >> 1 ) * samples, alignment ) - ( width >> 1 ) * samples;
+	int outwidth, outheight, outpadding;
 	qbyte *out = in;
 	qbyte *next;
 	int inofs;
 
-	for( i = 0; i < height; i += 2, in += instride * 2, out += outpadding )
+	outwidth = width >> 1;
+	outheight = height >> 1;
+	if( !outwidth )
+		outwidth = 1;
+	if( !outheight )
+		outheight = 1;
+	outpadding = ALIGN( outwidth * samples, alignment ) - outwidth * samples;
+
+	for( i = 0; i < outheight; i++, in += instride * 2, out += outpadding )
 	{
-		next = ( ( i + 1 ) < height ) ? ( in + instride ) : in;
-		for( j = 0, inofs = 0; j < width; j += 2, inofs += samples )
+		next = ( ( ( i << 1 ) + 1 ) < height ) ? ( in + instride ) : in;
+		for( j = 0, inofs = 0; j < outwidth; j++, inofs += samples )
 		{
-			if( ( j + 1 ) < width )
+			if( ( ( j << 1 ) + 1 ) < width )
 			{
 				for( k = 0; k < samples; ++k, ++inofs )
 					*( out++ ) = ( in[inofs] + in[inofs + samples] + next[inofs] + next[inofs + samples] ) >> 2;
@@ -705,19 +713,27 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 {
 	int i, j;
 	int instride = ALIGN( width, 2 );
-	int outpadding = ( width >> 1 ) & 1;
+	int outwidth, outheight, outpadding;
 	unsigned short *out = in;
 	unsigned short *next;
 	int p[4];
 
-	for( i = 0; i < height; i += 2, in += instride * 2, out += outpadding )
+	outwidth = width >> 1;
+	outheight = height >> 1;
+	if( !outwidth )
+		outwidth = 1;
+	if( !outheight )
+		outheight = 1;
+	outpadding = outwidth & 1;
+
+	for( i = 0; i < outheight; i++, in += instride * 2, out += outpadding )
 	{
-		next = ( ( i + 1 ) < height ) ? ( in + instride ) : in;
-		for( j = 0; j < width; j += 2 )
+		next = ( ( ( i << 1 ) + 1 ) < height ) ? ( in + instride ) : in;
+		for( j = 0; j < outwidth; j++ )
 		{
 			p[0] = in[0];
 			p[1] = next[0];
-			if( ( j + 1 ) < width )
+			if( ( ( j << 1 ) + 1 ) < width )
 			{
 				p[2] = in[1];
 				p[3] = next[1];
