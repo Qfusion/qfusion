@@ -477,13 +477,17 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 	if( !( flags & IT_NOPICMIP ) )
 	{
 		// let people sample down the sky textures for speed
-		mip = ( flags & IT_SKY ) ? r_skymip->integer : r_picmip->integer;
-		width >>= mip;
-		height >>= mip;
-		if( !width )
-			width = 1;
-		if( !height )
-			height = 1;
+		int mips = ( flags & IT_SKY ) ? r_skymip->integer : r_picmip->integer;
+		while( ( mip < mips ) && ( ( width > 1 ) || ( height > 1 ) ) ) // loop since picmip can be out of range
+		{
+			++mip;
+			width >>= 1;
+			height >>= 1;
+			if( !width )
+				width = 1;
+			if( !height )
+				height = 1;
+		}
 	}
 
 	// try to find the smallest supported texture size from mipmaps
