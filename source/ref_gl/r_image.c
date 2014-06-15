@@ -1494,7 +1494,7 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( int, const i
 	}
 	
 	COM_StripExtension( image->name );
-	Q_strncpyz( image->extension, ".ktx", sizeof( image->extension ) - 1 );
+	Q_strncpyz( image->extension, ".ktx", sizeof( image->extension ) );
 	image->width = header->pixelWidth;
 	image->height = header->pixelHeight;
 	image->loaded = qtrue;
