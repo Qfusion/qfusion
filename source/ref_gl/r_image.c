@@ -467,8 +467,7 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 /*
 * R_ScaledImageSize
 */
-static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scaledHeight, int flags,
-	int smallestMip, qboolean forceNPOT )
+static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scaledHeight, int flags, int mips, qboolean forceNPOT )
 {
 	int mip = 0;
 	int maxSize = ( flags & IT_CUBEMAP ) ? glConfig.maxTextureCubemapSize : glConfig.maxTextureSize;
@@ -482,7 +481,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 		for( potHeight = 1; potHeight < height; potHeight <<= 1 );
 
 		if( ( width != potWidth ) || ( height != potHeight ) )
-			smallestMip = 0;
+			mips = 1;
 
 		width = potWidth;
 		height = potHeight;
@@ -518,7 +517,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 			clampedHeight = 1;
 	}
 
-	if( mip > smallestMip )
+	if( mip >= mips )
 	{
 		// the smallest size is not in mipmaps, so ignore mipmaps and aspect ratio and simply clamp
 		*scaledWidth = min( width, maxSize );
@@ -885,7 +884,7 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 		for( scaledHeight = 1; scaledHeight < height; scaledHeight <<= 1 );
 	}
 
-	R_ScaledImageSize( scaledWidth, scaledHeight, &scaledWidth, &scaledHeight, flags, 0,
+	R_ScaledImageSize( scaledWidth, scaledHeight, &scaledWidth, &scaledHeight, flags, 1,
 		( subImage && noScale ) ? qtrue : qfalse );
 
 	// don't ever bother with > maxSize textures
@@ -1086,7 +1085,7 @@ static int R_MipCount( int width, int height )
 * Loads a 16/24/32-bit image or cubemap (faces are consecutive) with mipmaps.
 */
 static void R_UploadMipmapped( int ctx, qbyte **data,
-	int width, int height, int smallestMip, int flags,
+	int width, int height, int mipLevels, int flags,
 	int *upload_width, int *upload_height,
 	int format, int type )
 {
@@ -1135,7 +1134,7 @@ static void R_UploadMipmapped( int ctx, qbyte **data,
 		faces = 1;
 	}
 
-	mip = R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, smallestMip, qfalse );
+	mip = R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, mipLevels, qfalse );
 
 	if( mip < 0 )
 	{
@@ -1160,7 +1159,7 @@ static void R_UploadMipmapped( int ctx, qbyte **data,
 		}
 		data = &scaled;
 		mip = 0;
-		smallestMip = 0;
+		mipLevels = 1;
 	}
 
 #ifdef GL_ES_VERSION_2_0
@@ -1175,7 +1174,7 @@ static void R_UploadMipmapped( int ctx, qbyte **data,
 	R_UnpackAlignment( ctx, 4 );
 
 	mips = ( flags & IT_NOMIPMAP ) ? 1 : R_MipCount( scaledWidth, scaledHeight );
-	for( i = 0; ( i < mips ) && ( mip <= smallestMip ); ++i, ++mip )
+	for( i = 0; ( i < mips ) && ( mip < mipLevels ); ++i, ++mip )
 	{
 		face = data[mip];
 		faceSize = ALIGN( scaledWidth * pixelSize, 4 ) * scaledHeight;
@@ -1360,7 +1359,7 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( int, const i
 		}
 
 		mip = R_ScaledImageSize( header->pixelWidth, header->pixelHeight, &scaledWidth, &scaledHeight,
-			image->flags, mips - 1, qfalse );
+			image->flags, mips, qfalse );
 
 		// If different compression formats are added, make this more general-purpose!
 
