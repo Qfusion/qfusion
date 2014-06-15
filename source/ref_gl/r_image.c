@@ -392,6 +392,20 @@ static void R_SwapBlueRed( qbyte *data, int width, int height, int samples, int 
 }
 
 /*
+* R_EndianSwap16BitImage
+*/
+static void R_EndianSwap16BitImage( unsigned short *data, int width, int height )
+{
+	int i;
+	while( height-- > 0 )
+	{
+		for( i = 0; i < width; i++, data++ )
+			*data = ( ( *data & 255 ) << 8 ) | ( *data >> 8 );
+		data += width & 1; // 4 unpack alignment
+	}
+}
+
+/*
 * R_AllocImageBufferCb
 */
 static qbyte *_R_AllocImageBufferCb( void *ptr, size_t size, const char *filename, int linenum )
@@ -1082,7 +1096,7 @@ static void R_UploadMipmapped( int ctx, qbyte **data,
 	int scaledWidth, scaledHeight;
 	int mip;
 	qbyte *scaled = NULL;
-	int faces, faceSize;
+	int faces, faceSize = 0;
 	int target, target2, comp;
 	int mips;
 	qbyte *face;
@@ -1211,6 +1225,288 @@ static void R_UploadMipmapped( int ctx, qbyte **data,
 }
 
 /*
+* R_IsKTXFormatValid
+*/
+static qboolean R_IsKTXFormatValid( int format, int type )
+{
+	switch( type )
+	{
+	case GL_UNSIGNED_BYTE:
+		switch( format )
+		{
+		case GL_RGBA:
+		case GL_BGRA_EXT:
+		case GL_RGB:
+		case GL_BGR_EXT:
+		case GL_LUMINANCE_ALPHA:
+		case GL_ALPHA:
+		case GL_LUMINANCE:
+			return qtrue;
+		}
+		return qfalse;
+	case GL_UNSIGNED_SHORT_4_4_4_4:
+	case GL_UNSIGNED_SHORT_5_5_5_1:
+		return ( format == GL_RGBA ) ? qtrue : qfalse;
+	case GL_UNSIGNED_SHORT_5_6_5:
+		return ( format == GL_RGB ) ? qtrue : qfalse;
+	case 0:
+		return ( format == GL_ETC1_RGB8_OES ) ? qtrue : qfalse;
+	}
+	return qfalse;
+}
+
+typedef struct ktx_header_s
+{
+	char identifier[12];
+	int endianness;
+	int type;
+	int typeSize;
+	int format;
+	int internalFormat;
+	int baseInternalFormat;
+	int pixelWidth;
+	int pixelHeight;
+	int pixelDepth;
+	int numberOfArrayElements;
+	int numberOfFaces;
+	int numberOfMipmapLevels;
+	int bytesOfKeyValueData;
+} ktx_header_t;
+
+/*
+* R_LoadKTX
+*/
+static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( int, const image_t * ) )
+{
+	int i, j;
+	qbyte *buffer;
+	ktx_header_t *header;
+	qboolean swapEndian;
+	qbyte *data;
+
+	COM_ReplaceExtension( image->name, ".ktx", image->name_size );
+	R_LoadFile( image->name, ( void ** )&buffer );
+	if( !buffer )
+		return qfalse;
+
+	header = ( ktx_header_t * )buffer;
+	if( memcmp( header->identifier, "\xABKTX 11\xBB\r\n\x1A\n", 12 ) )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Bad file identifier: %s\n", image->name );
+		goto error;
+	}
+
+	swapEndian = ( header->endianness != 0x04030201 ) ? qtrue : qfalse;
+	if( swapEndian )
+	{
+		unsigned int field;
+		for( i = 3; i < 16; ++i )
+		{
+			field = ( ( unsigned int * )header )[i];
+			( ( unsigned int * )header )[i] =
+				( field >> 24 ) |
+				( ( ( field >> 16 ) & 255 ) << 8 ) |
+				( ( ( field >> 8 ) & 255 ) << 16 ) |
+				( ( field & 255 ) << 24 );
+		}
+	}
+
+	if( !R_IsKTXFormatValid( header->internalFormat, header->type ) )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Unsupported pixel format: %s\n", image->name );
+		goto error;
+	}
+	if( ( image->flags & IT_CUBEMAP ) && ( header->pixelWidth != header->pixelHeight ) )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Not square cubemap image: %s\n", image->name );
+		goto error;
+	}
+	if( ( header->pixelWidth < 1 ) || ( header->pixelHeight < 1 ) )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Zero or negative texture size: %s\n", image->name );
+		goto error;
+	}
+	if( ( header->pixelDepth > 1 ) || ( header->numberOfArrayElements > 1 ) )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: 3D textures and texture arrays are not supported: %s\n", image->name );
+		goto error;
+	}
+	if( header->numberOfFaces != ( ( image->flags & IT_CUBEMAP ) ? 6 : 1 ) )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Bad number of cubemap faces: %s\n", image->name );
+		goto error;
+	}
+	if( header->numberOfMipmapLevels < 1 )
+		header->numberOfMipmapLevels = 1;
+
+	data = buffer + sizeof( ktx_header_t ) + header->bytesOfKeyValueData;
+	
+	bind( 0, image );
+
+	if( header->type == 0 )
+	{
+		int mips = R_MipCount( header->pixelWidth, header->pixelHeight );
+		int mip;
+		int scaledWidth, scaledHeight;
+
+		if( ( header->numberOfMipmapLevels == 1 ) && ( image->flags & IT_NOMIPMAP ) )
+		{
+			mips = 1;
+		}
+		else if( header->numberOfMipmapLevels < mips )
+		{
+			ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Compressed image has too few mip levels: %s\n", image->name );
+			goto error;
+		}
+
+		mip = R_ScaledImageSize( header->pixelWidth, header->pixelHeight, &scaledWidth, &scaledHeight,
+			image->flags, mips - 1, qfalse );
+
+		// If different compression formats are added, make this more general-purpose!
+
+		if( !( glConfig.ext.compressed_ETC1_RGB8_texture || glConfig.ext.ES3_compatibility ) || ( mip < 0 ) )
+		{
+			int inSize = ( ( ALIGN( header->pixelWidth, 4 ) * ALIGN( header->pixelHeight, 4 ) ) >> 4 ) * 8;
+			int outSize = ALIGN( header->pixelWidth * 3, 4 ) * header->pixelHeight;
+			qbyte *in = data + sizeof( int );
+			qbyte *decompressed = R_PrepareImageBuffer( ctx, TEXTURE_LOADING_BUF0, outSize * header->numberOfFaces );
+			qbyte *out = decompressed;
+			for( i = 0; i < header->numberOfFaces; ++i )
+			{
+				DecompressETC1( in, header->pixelWidth, header->pixelHeight, out, glConfig.ext.bgra ? qtrue : qfalse );
+				in += inSize;
+				out += outSize;
+			}
+			R_UploadMipmapped( ctx, &decompressed, header->pixelWidth, header->pixelHeight, 0,
+				image->flags, &image->upload_width, &image->upload_height, GL_RGB, GL_UNSIGNED_BYTE );
+		}
+		else
+		{
+			int target, target2;
+			int faceSize;
+			qbyte *in;
+			
+			if( image->flags & IT_CUBEMAP )
+			{
+				target = GL_TEXTURE_CUBE_MAP_ARB;
+				target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
+			}
+			else
+			{
+				target = target2 = GL_TEXTURE_2D;
+			}
+
+			R_SetupTexParameters( target, image->flags );
+
+			for( i = 0; i < mip; ++i )
+				data += sizeof( int ) + *( ( unsigned int * )data );
+
+			mips -= mip;
+			for( i = 0; i < mips; ++i )
+			{
+				faceSize = ( ( ALIGN( scaledWidth, 4 ) * ALIGN( scaledHeight, 4 ) ) >> 4 ) * 8;
+				in = data + sizeof( int );
+				for( j = 0; j < header->numberOfFaces; ++j )
+				{
+					qglCompressedTexImage2DARB( target2 + j, i,
+						glConfig.ext.ES3_compatibility ? GL_COMPRESSED_RGB8_ETC2 : GL_ETC1_RGB8_OES,
+						scaledWidth, scaledHeight, 0, faceSize, in );
+					in += faceSize;
+				}
+				scaledWidth >>= 1;
+				scaledHeight >>= 1;
+				if( !scaledWidth )
+					scaledWidth = 1;
+				if( !scaledHeight )
+					scaledHeight = 1;
+				data += sizeof( int ) + *( ( unsigned int * )data );
+			}
+		}
+
+		image->samples = 3;
+	}
+	else
+	{
+		int mips = ( image->flags & IT_NOMIPMAP ) ? 1 :
+			min( header->numberOfMipmapLevels, R_MipCount( header->pixelWidth, header->pixelHeight ) );
+		qbyte *images[32];
+		int mipWidth = header->pixelWidth, mipHeight = header->pixelHeight;
+
+		for( i = 0; i < mips; ++i )
+		{
+			images[i] = data + sizeof( int );
+			data += sizeof( int ) + *( ( unsigned int * )data );
+		}
+
+		if( !glConfig.ext.bgra &&
+			( ( header->internalFormat == GL_BGR_EXT ) || ( header->internalFormat == GL_BGRA_EXT ) ) )
+		{
+			for( i = 0; i < mips; ++i )
+			{
+				R_SwapBlueRed( images[i], mipWidth, mipHeight * header->numberOfFaces,
+					( header->internalFormat == GL_BGR_EXT ) ? 3 : 4, 4 );
+				mipWidth >>= 1;
+				mipHeight >>= 1;
+				if( !mipWidth )
+					mipWidth = 1;
+				if( !mipHeight )
+					mipHeight = 1;
+			}
+			header->internalFormat = ( header->internalFormat == GL_BGR_EXT ) ? GL_RGB : GL_RGBA;
+		}
+		else if( swapEndian && (
+			( header->type == GL_UNSIGNED_SHORT_4_4_4_4 ) || ( header->type == GL_UNSIGNED_SHORT_5_5_5_1 ) ||
+			( header->type == GL_UNSIGNED_SHORT_5_6_5 ) ) )
+		{
+			for( i = 0; i < mips; ++i )
+			{
+				R_EndianSwap16BitImage( ( unsigned short * )( images[i] ), mipWidth, mipHeight * header->numberOfFaces );
+				mipWidth >>= 1;
+				mipHeight >>= 1;
+				if( !mipWidth )
+					mipWidth = 1;
+				if( !mipHeight )
+					mipHeight = 1;
+			}
+		}
+
+		R_UploadMipmapped( ctx, images, header->pixelWidth, header->pixelHeight, mips - 1, image->flags,
+			&image->upload_width, &image->upload_height, header->internalFormat, header->type );
+
+		switch( header->type )
+		{
+		case GL_RGBA:
+		case GL_BGRA_EXT:
+			image->samples = 4;
+			break;
+		case GL_RGB:
+		case GL_BGR_EXT:
+			image->samples = 3;
+			break;
+		case GL_LUMINANCE_ALPHA:
+			image->samples = 2;
+			break;
+		case GL_ALPHA:
+		case GL_LUMINANCE:
+			image->samples = 1;
+			break;
+		}
+	}
+	
+	COM_StripExtension( image->name );
+	Q_strncpyz( image->extension, ".ktx", sizeof( image->extension ) - 1 );
+	image->width = header->pixelWidth;
+	image->height = header->pixelHeight;
+	image->loaded = qtrue;
+	R_FreeFile( buffer );
+	return qtrue;
+
+error:
+	R_FreeFile( buffer );
+	return qfalse;
+}
+
+/*
 * R_LoadImageFromDisk
 */
 static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(int, const image_t *) )
@@ -1221,6 +1517,9 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(int, 
 	size_t len = strlen( pathname );
 	const char *extension = "";
 	int width = 1, height = 1, samples = 1;
+
+	if( R_LoadKTX( ctx, image, bind ) )
+		return qtrue;
 
 	if( flags & IT_CUBEMAP )
 	{
