@@ -1376,7 +1376,7 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( int, const i
 				in += inSize;
 				out += outSize;
 			}
-			R_UploadMipmapped( ctx, &decompressed, header->pixelWidth, header->pixelHeight, 0,
+			R_UploadMipmapped( ctx, &decompressed, header->pixelWidth, header->pixelHeight, 1,
 				image->flags, &image->upload_width, &image->upload_height, GL_RGB, GL_UNSIGNED_BYTE );
 		}
 		else
@@ -1469,7 +1469,7 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( int, const i
 			}
 		}
 
-		R_UploadMipmapped( ctx, images, header->pixelWidth, header->pixelHeight, mips - 1, image->flags,
+		R_UploadMipmapped( ctx, images, header->pixelWidth, header->pixelHeight, mips, image->flags,
 			&image->upload_width, &image->upload_height, header->internalFormat, header->type );
 
 		switch( header->type )
