@@ -447,7 +447,6 @@ static const gl_extension_t gl_extensions_decl[] =
 #else
 	 GL_EXTENSION( NV, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_NV_funcs )
 	,GL_EXTENSION( ANGLE, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_ANGLE_funcs )
-	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
 	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( EXT, shadow_samplers, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
@@ -459,6 +458,7 @@ static const gl_extension_t gl_extensions_decl[] =
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
+	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
 	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 
 #ifdef GLX_VERSION
