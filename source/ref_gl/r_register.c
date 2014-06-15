@@ -326,6 +326,15 @@ static const gl_extension_func_t gl_ext_framebuffer_blit_EXT_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_ARB_texture_compression */
+static const gl_extension_func_t gl_ext_texture_compression_ARB_funcs[] =
+{
+	 GL_EXTENSION_FUNC(CompressedTexImage2DARB)
+	,GL_EXTENSION_FUNC(CompressedTexSubImage2DARB)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 #else // GL_ES_VERSION_2_0
 
 /* GL_ANGLE_framebuffer_blit */
@@ -418,7 +427,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, draw_range_elements, true, false, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
-	,GL_EXTENSION( ARB, texture_compression, false, false, NULL )
+	,GL_EXTENSION( ARB, texture_compression, false, false, &gl_ext_texture_compression_ARB_funcs )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( SGIS, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( ARB, texture_cube_map, false, false, NULL )
@@ -429,6 +438,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, instanced_arrays, false, false, &gl_ext_instanced_arrays_ARB_funcs )
 	,GL_EXTENSION( ARB, half_float_vertex, false, false, NULL )
 	,GL_EXTENSION_EXT( ARB, get_program_binary, 0, false, false, &gl_ext_get_program_binary_ARB_funcs, _extMarker )
+	,GL_EXTENSION_EXT( ARB, ES3_compatibility, 0, false, false, NULL, _extMarker )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
@@ -437,6 +447,7 @@ static const gl_extension_t gl_extensions_decl[] =
 #else
 	 GL_EXTENSION( NV, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_NV_funcs )
 	,GL_EXTENSION( ANGLE, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_ANGLE_funcs )
+	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
 	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( EXT, shadow_samplers, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
@@ -695,6 +706,7 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.version >= 300 )
 	{
 		glConfig.ext.draw_range_elements = qtrue;
+		glConfig.ext.compressed_ETC1_RGB8_texture = qtrue;
 		glConfig.ext.depth_texture = qtrue;
 		glConfig.ext.shadow = qtrue;
 		glConfig.ext.texture_non_power_of_two = qtrue;
@@ -706,6 +718,7 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.depth24 = qtrue;
 		glConfig.ext.GLSL130 = qtrue;
 		glConfig.ext.rgb8_rgba8 = qtrue;
+		glConfig.ext.ES3_compatibility = qtrue;
 	}
 #endif
 

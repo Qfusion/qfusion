@@ -158,6 +158,7 @@ typedef struct
 				,texture_edge_clamp
 				,texture_filter_anisotropic
 				,texture_compression
+				,compressed_ETC1_RGB8_texture
 				,vertex_buffer_object
 				,GLSL
 				,GLSL_core
@@ -181,6 +182,7 @@ typedef struct
 				,multiview_draw_buffers
 				,get_program_binary
 				,rgb8_rgba8
+				,ES3_compatibility
 				;
 	union {
 		char	shadow, shadow_samplers;
