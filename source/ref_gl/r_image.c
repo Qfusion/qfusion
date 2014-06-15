@@ -1377,7 +1377,8 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( int, const i
 				out += outSize;
 			}
 			R_UploadMipmapped( ctx, &decompressed, header->pixelWidth, header->pixelHeight, 1,
-				image->flags, &image->upload_width, &image->upload_height, GL_RGB, GL_UNSIGNED_BYTE );
+				image->flags, &image->upload_width, &image->upload_height,
+				glConfig.ext.bgra ? GL_BGR_EXT : GL_RGB, GL_UNSIGNED_BYTE );
 		}
 		else
 		{
