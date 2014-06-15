@@ -501,7 +501,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 
 	if( cl_downloads_from_web->integer && allow_localhttpdownload && url && url[0] != 0 ) {
 		cls.download.web = qtrue;
-		Com_Printf( "Web download: %s from %s%s\n", cls.download.tempname, cls.httpbaseurl, url );
+		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, cls.httpbaseurl, url );
 	}
 	else if( cl_downloads_from_web->integer && url && url[0] != 0 ) {
 		cls.download.web = qtrue;
