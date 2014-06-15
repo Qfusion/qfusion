@@ -463,6 +463,7 @@ void CL_UIModule_ForceMenuOn( void );
 void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
 void CL_UIModule_MouseMove( int dx, int dy );
+void CL_UIModule_MouseSet( int x, int y );
 
 //
 // cl_serverlist.c
