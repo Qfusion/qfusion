@@ -706,7 +706,6 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.version >= 300 )
 	{
 		glConfig.ext.draw_range_elements = qtrue;
-		glConfig.ext.compressed_ETC1_RGB8_texture = qtrue;
 		glConfig.ext.depth_texture = qtrue;
 		glConfig.ext.shadow = qtrue;
 		glConfig.ext.texture_non_power_of_two = qtrue;
