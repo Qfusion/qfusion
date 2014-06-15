@@ -522,3 +522,12 @@ void CL_UIModule_MouseMove( int dx, int dy )
 	if( uie )
 		uie->MouseMove( dx, dy );
 }
+
+/*
+* CL_UIModule_MouseSet
+*/
+void CL_UIModule_MouseSet( int x, int y )
+{
+	if( uie )
+		uie->MouseSet( x, y );
+}
