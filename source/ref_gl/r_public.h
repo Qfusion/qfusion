@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 4
+#define REF_API_VERSION 5
 
 struct mempool_s;
 struct cinematics_s;
@@ -129,6 +129,7 @@ typedef struct
 					qboolean fullScreen, qboolean wideScreen, qboolean verbose );
 	rserr_t		( *SetMode )( int x, int y, int width, int height, int displayFrequency,
 					qboolean fullScreen, qboolean wideScreen );
+	qboolean	( *SetWindow )( void *hinstance, void *wndproc, void *parenthWnd );
 	void		( *Shutdown )( qboolean verbose );
 
 	// All data that will be used in a level should be
@@ -199,6 +200,7 @@ typedef struct
 
 	void		( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 
+	qboolean	( *ScreenEnabled )( void );
 	void		( *BeginFrame )( float cameraSeparation, qboolean forceClear, qboolean forceVsync );
 	void		( *EndFrame )( void );
 	const char *( *SpeedsMessage )( char *out, size_t size );

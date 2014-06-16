@@ -205,6 +205,22 @@ void GLimp_AppActivate( qboolean active, qboolean destroy)
 }
 
 /*
+** GLimp_SetWindow
+*/
+qboolean GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+{
+	return qfalse; // surface cannot be lost
+}
+
+/*
+** GLimp_ScreenEnabled
+*/
+qboolean GLimp_ScreenEnabled( void )
+{
+	return qtrue;
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 void *GLimp_SharedContext_Create( void )

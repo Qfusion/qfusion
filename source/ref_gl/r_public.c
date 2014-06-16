@@ -49,6 +49,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.Init = R_Init;
 	globals.SetMode = R_SetMode;
+	globals.SetWindow = R_SetWindow;
 	globals.BeginRegistration = R_BeginRegistration;
 	globals.EndRegistration = R_EndRegistration;
 	globals.Shutdown = R_Shutdown;
@@ -100,6 +101,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.TransformVectorToScreen = R_TransformVectorToScreen;
 
+	globals.ScreenEnabled = R_ScreenEnabled;
 	globals.BeginFrame = R_BeginFrame;
 	globals.EndFrame = R_EndFrame;
 	globals.SpeedsMessage = R_SpeedsMessage;
