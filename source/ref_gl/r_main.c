@@ -1497,14 +1497,6 @@ static void R_SwapInterval( qboolean swapInterval )
 		{
 			qglSwapInterval( swapInterval );
 		}
-#ifdef EGL_VERSION_1_0
-		else if( qeglSwapInterval )
-		{
-			EGLDisplay dpy = qeglGetCurrentDisplay();
-			if( dpy != EGL_NO_DISPLAY )
-				qeglSwapInterval( dpy, swapInterval );
-		}
-#endif
 	}
 }
 
@@ -1542,6 +1534,14 @@ static void R_UpdateHWGamma( void )
 	}
 
 	GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, gammaRamp );
+}
+
+/*
+* R_ScreenDisabled
+*/
+qboolean R_ScreenEnabled( void )
+{
+	return GLimp_ScreenEnabled();
 }
 
 /*

@@ -668,8 +668,8 @@ void SCR_UpdateScreen( void )
 		return;
 	}
 
-	if( !scr_initialized || !con_initialized || !cls.mediaInitialized )
-		return;     // not initialized yet
+	if( !scr_initialized || !con_initialized || !cls.mediaInitialized || !re.ScreenEnabled() )
+		return;     // not ready yet
 
 	Con_CheckResize();
 

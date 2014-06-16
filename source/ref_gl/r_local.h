@@ -526,6 +526,7 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define		R_LoadFile(path,buffer) R_LoadFile_(path,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
+qboolean	R_ScreenEnabled( void );
 void		R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVsync );
 void		R_EndFrame( void );
 void		R_Set2DMode( qboolean enable );
@@ -649,6 +650,7 @@ void		R_EndRegistration( void );
 void		R_Shutdown( qboolean verbose );
 rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency,
 				qboolean fullScreen, qboolean wideScreen );
+qboolean	R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 
 //
 // r_scene.c

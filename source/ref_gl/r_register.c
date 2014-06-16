@@ -1291,6 +1291,14 @@ rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency,
 }
 
 /*
+* R_SetWindow
+*/
+qboolean R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+{
+	return GLimp_SetWindow( hinstance, wndproc, parenthWnd );
+}
+
+/*
 * R_InitVolatileAssets
 */
 static void R_InitVolatileAssets( void )
