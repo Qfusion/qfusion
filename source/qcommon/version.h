@@ -98,7 +98,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_UI_BASEPATH
-#define APP_UI_BASEPATH					"baseui"
+#define APP_UI_BASEPATH					"/ui/baseui"
 #endif
 
 //
