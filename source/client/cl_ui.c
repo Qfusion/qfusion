@@ -341,7 +341,8 @@ void CL_UIModule_Init( void )
 
 	CL_UIModule_AsyncStream_Init();
 
-	uie->Init( viddef.width, viddef.height, APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR );
+	uie->Init( viddef.width, viddef.height, APP_PROTOCOL_VERSION,
+		APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
 
 	Com_Printf( "------------------------------------\n" );
 }

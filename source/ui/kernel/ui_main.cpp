@@ -45,7 +45,8 @@ UI_Main *UI_Main::self = 0;
 const std::string UI_Main::ui_index( "index.rml" );
 const std::string UI_Main::ui_connectscreen( "connectscreen.rml" );
 
-UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, const char *demoExtension )
+UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol,
+	const char *demoExtension, const char *basePath )
 	// pointers to zero
 	: asmodule(0), rocketModule(0),
 	levelshot_fmt(0), datetime_fmt(0), duration_fmt(0), filetype_fmt(0), colorcode_fmt(0), 
@@ -65,7 +66,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, const char *demoExt
 	self = this;
 
 	Vector4Set( colorWhite, 1, 1, 1, 1 );
-	ui_basepath = trap::Cvar_Get( "ui_basepath", "/ui/" APP_UI_BASEPATH, CVAR_ARCHIVE );
+	ui_basepath = trap::Cvar_Get( "ui_basepath", basePath, CVAR_ARCHIVE );
 	ui_cursor = trap::Cvar_Get( "ui_cursor", "cursors/default.rml", CVAR_DEVELOPER );
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
 
@@ -524,10 +525,12 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 
 //==================================
 
-UI_Main *UI_Main::Instance( int vidWidth, int vidHeight, int protocol, const char *demoExtension  )
+UI_Main *UI_Main::Instance( int vidWidth, int vidHeight, int protocol,
+	const char *demoExtension, const char *basePath )
 {
 	if( !self ) {
-		self = __new__( UI_Main )( vidWidth, vidHeight, protocol, demoExtension );
+		self = __new__( UI_Main )( vidWidth, vidHeight, protocol,
+			demoExtension, basePath );
 	}
 	return self;
 }
