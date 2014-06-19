@@ -65,7 +65,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol, const char *demoExt
 	self = this;
 
 	Vector4Set( colorWhite, 1, 1, 1, 1 );
-	ui_basepath = trap::Cvar_Get( "ui_basepath", "/ui/baseui", CVAR_ARCHIVE );
+	ui_basepath = trap::Cvar_Get( "ui_basepath", "/ui/" APP_UI_BASEPATH, CVAR_ARCHIVE );
 	ui_cursor = trap::Cvar_Get( "ui_cursor", "cursors/default.rml", CVAR_DEVELOPER );
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
 

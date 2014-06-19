@@ -97,6 +97,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_MATCHMAKER_WEB_URL			"http://www.e4m5.net/wmm/"
 #endif
 
+#define APP_UI_BASEPATH					"baseui"
+
 //
 // the following macros are only used by the windows resource file
 //
