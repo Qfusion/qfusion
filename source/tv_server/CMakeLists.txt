@@ -1,5 +1,7 @@
 project(qfusiontv_server)
 
+include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
+
 file(GLOB TV_SERVER_HEADERS
     "*.h"
 )
@@ -32,18 +34,38 @@ file(GLOB TV_SERVER_SOURCES
     "../null/cl_null.c"
     "../null/ascript_null.c"
     "../null/mm_null.c"
-    "../unix/unix_fs.c"
-    "../unix/unix_net.c"
-    "../unix/unix_sys.c"
-    "../unix/unix_lib.c"
-    "../unix/unix_threads.c"
     "../gameshared/q_*.c"
     "../qalgo/*.c"
     "tv_module/*.c"
 )
 
-qf_add_executable(qfusiontv_server ${TV_SERVER_HEADERS} ${TV_SERVER_SOURCES})
-target_link_libraries(qfusiontv_server cin ${CURL_LIBRARIES} ${ZLIB_LIBRARY} "pthread" "dl" "m")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    file(GLOB TV_SERVER_PLATFORM_SOURCES 
+        "../win32/win_fs.c"
+        "../win32/win_net.c"
+        "../win32/win_sys.c"
+        "../win32/win_lib.c"
+        "../win32/win_threads.c"
+        "../win32/conproc.c"
+    )
+
+    set(TV_SERVER_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib")
+    set(TV_SERVER_BINARY_TYPE WIN32)
+else()
+    file(GLOB TV_SERVER_PLATFORM_SOURCES 
+        "../unix/unix_fs.c"
+        "../unix/unix_net.c"
+        "../unix/unix_sys.c"
+        "../unix/unix_lib.c"
+        "../unix/unix_threads.c"
+    )
+
+    set(TV_SERVER_PLATFORM_LIBRARIES "pthread" "dl" "m")
+    set(TV_SERVER_BINARY_TYPE "")
+endif()
+
+qf_add_executable(qfusiontv_server ${TV_SERVER_BINARY_TYPE} ${TV_SERVER_HEADERS} ${TV_SERVER_SOURCES} ${TV_SERVER_PLATFORM_SOURCES})
+target_link_libraries(qfusiontv_server cin ${CURL_LIBRARIES} ${ZLIB_LIBRARY} ${TV_SERVER_PLATFORM_LIBRARIES})
 qf_set_output_dir(qfusiontv_server "")
 
 set_target_properties(qfusiontv_server PROPERTIES COMPILE_DEFINITIONS "DEDICATED_ONLY;TV_SERVER_ONLY;TV_MODULE_HARD_LINKED")

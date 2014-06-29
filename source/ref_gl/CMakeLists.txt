@@ -14,6 +14,15 @@ file(GLOB REF_GL_COMMON_SOURCES
     "../qcommon/patch.c"
 )
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    file(GLOB REF_GL_PLATFORM_SOURCES
+        "../win32/win_glw.c"
+        "../win32/win_qgl.c"
+    )
+
+    set(REF_GL_PLATFORM_LIBRARIES "")
+endif()
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	file(GLOB REF_GL_PLATFORM_SOURCES
 		"../mac/mac_glw.m"
