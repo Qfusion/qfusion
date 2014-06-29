@@ -10,15 +10,14 @@ if(LIBROCKET_INCLUDE_DIR)
     set(LIBROCKET_FIND_QUIETLY TRUE)
 endif(LIBROCKET_INCLUDE_DIR)
 find_path(LIBROCKET_INCLUDE_DIR Rocket/Core.h)
-# MSVC built libRocket may be named angelscript_static.
 # The provided project files name the library with the lib prefix.
 find_library(LIBROCKET_CORE_LIBRARY NAMES RocketCore Rocket)
-if (NOT ${ROCKET_CORE_LIBRARY} MATCHES ".framework")
-    find_library(LIBROCKET_CONTROLS_LIBRARY NAMES RocketControls)
-else()
+if (${LIBROCKET_CORE_LIBRARY} MATCHES ".framework")
     set(LIBROCKET_CONTROLS_LIBRARY ${LIBROCKET_CORE_LIBRARY})
+else()
+    find_library(LIBROCKET_CONTROLS_LIBRARY NAMES RocketControls)
 endif()
-# Handle the QUIETLY and REQUIRED arguments and set ANGELSCRIPT_FOUND
+# Handle the QUIETLY and REQUIRED arguments and set ROCKET_FOUND
 # to TRUE if all listed variables are TRUE.
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(ROCKET DEFAULT_MSG LIBROCKET_INCLUDE_DIR LIBROCKET_CORE_LIBRARY LIBROCKET_CONTROLS_LIBRARY)
