@@ -12,6 +12,6 @@ file(GLOB CIN_SOURCES
     "../qalgo/*.c"
 )
 
-qf_add_library(cin SHARED ${CIN_SOURCES} ${CIN_HEADERS})
+add_library(cin SHARED ${CIN_SOURCES} ${CIN_HEADERS})
 target_link_libraries(cin ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${THEORA_LIBRARY})
 qf_set_output_dir(cin libs)

@@ -15,6 +15,6 @@ file(GLOB GAME_SOURCES
     "../matchmaker/mm_rating.c"
 )
 
-qf_add_library(game SHARED ${GAME_SOURCES} ${GAME_HEADERS})
+add_library(game SHARED ${GAME_SOURCES} ${GAME_HEADERS})
 target_link_libraries(game ${ANGELSCRIPT_LIBRARY})
 qf_set_output_dir(game base)
