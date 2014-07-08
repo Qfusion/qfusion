@@ -60,7 +60,6 @@ find_package(PNG REQUIRED)
 # We need SDL only on non-Windows platforms
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_package(SDL REQUIRED)
-    
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -128,9 +127,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
-    #set(CMAKE_EXECUTABLE_SUFFIX "._x86_64")
-    #set(CMAKE_SHARED_LIBRARY_PREFIX "")
-    #set(CMAKE_SHARED_LIBRARY_SUFFIX "_x86_64${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(CMAKE_EXECUTABLE_SUFFIX ".x86_64${CMAKE_EXECUTABLE_SUFFIX}")
+    set(CMAKE_SHARED_LIBRARY_PREFIX "")
+    set(CMAKE_SHARED_LIBRARY_SUFFIX "_x86_64${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -141,6 +140,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+
+    set(CMAKE_SHARED_LIBRARY_PREFIX "")
+    set(CMAKE_SHARED_LIBRARY_SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
 
@@ -155,29 +157,6 @@ macro(qf_set_output_dir name dir)
     set_target_properties(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/build/${dir})
     set_target_properties(${name} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/build/${dir})
     set_target_properties(${name} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_HOME_DIRECTORY}/build/${dir})
-endmacro()
-
-macro(qf_add_library name)
-    add_library(${name} ${ARGN})
-
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        set_target_properties(${name} PROPERTIES PREFIX "")
-        set_target_properties(${name} PROPERTIES SUFFIX "_x86_64${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    endif()
-
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        set_target_properties(${name} PROPERTIES PREFIX "")
-        set_target_properties(${name} PROPERTIES SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    endif()
-endmacro()
-
-macro(qf_add_executable name)
-    add_executable(${name} ${ARGN})
-
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        set_target_properties(${name} PROPERTIES PREFIX "")
-        set_target_properties(${name} PROPERTIES SUFFIX ".x86_64${CMAKE_EXECUTABLE_SUFFIX}")
-    endif()
 endmacro()
 
 add_subdirectory(angelwrap)

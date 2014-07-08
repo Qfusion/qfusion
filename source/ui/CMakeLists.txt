@@ -25,7 +25,7 @@ file(GLOB UI_SOURCES
 include_directories(${ANGELSCRIPT_INCLUDE_DIR} ${LIBROCKET_INCLUDE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}) # for ui_precompiled.h
 
-qf_add_library(ui SHARED ${UI_SOURCES} ${UI_HEADERS})
+add_library(ui SHARED ${UI_SOURCES} ${UI_HEADERS})
 target_link_libraries(ui ${LIBROCKET_LIBRARIES} ${FREETYPE_LIBRARIES})
 set_target_properties(ui PROPERTIES COMPILE_DEFINITIONS "STATIC_LIB;_SECURE_SCL=0")
 qf_set_output_dir(ui base)
