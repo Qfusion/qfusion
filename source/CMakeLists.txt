@@ -9,6 +9,16 @@ if (NOT QFUSION_CLIENT_NAME)
     set(QFUSION_CLIENT_NAME QFusion)
 endif()
 
+# You can override this var with commandline option -DQFUSION_SERVER_NAME=name
+if (NOT QFUSION_SERVER_NAME)
+    set(QFUSION_SERVER_NAME qfusion)
+endif()
+
+# You can override this var with commandline option -DQFUSION_TVSERVER_NAME=name
+if (NOT QFUSION_TVSERVER_NAME)
+    set(QFUSION_TVSERVER_NAME qfusiontv_server)
+endif()
+
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_INCLUDE_PATH
@@ -50,6 +60,7 @@ find_package(PNG REQUIRED)
 # We need SDL only on non-Windows platforms
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_package(SDL REQUIRED)
+    
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -106,7 +117,23 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_windows_release_libs(CURL_LIBRARY)
     find_windows_release_libs(ANGELSCRIPT_LIBRARY)
     find_windows_release_libs(LIBROCKET_LIBRARIES)
-else()
+endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch")
+    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
+    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+
+    #set(CMAKE_EXECUTABLE_SUFFIX "._x86_64")
+    #set(CMAKE_SHARED_LIBRARY_PREFIX "")
+    #set(CMAKE_SHARED_LIBRARY_SUFFIX "_x86_64${CMAKE_SHARED_LIBRARY_SUFFIX}")
+endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2")
@@ -115,6 +142,7 @@ else()
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
+
 
 macro(qf_set_output_dir name dir)
     foreach (OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
@@ -162,5 +190,6 @@ add_subdirectory(ref_gl)
 add_subdirectory(snd_openal)
 add_subdirectory(snd_qf)
 add_subdirectory(tv_server)
+add_subdirectory(server)
 add_subdirectory(ui)
 add_subdirectory(client)
