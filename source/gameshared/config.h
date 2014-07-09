@@ -3,7 +3,7 @@
 /* define this when we compile for a public release                     */
 /* this will protect dangerous and untested pieces of code              */
 /************************************************************************/
-//#define PUBLIC_BUILD
+#define PUBLIC_BUILD
 
 //==============================================
 // wsw : jal :	these defines affect every project file. They are
@@ -27,7 +27,7 @@
 //==============================================
 // undecided status
 
-//#define PURE_CHEAT
+#define PURE_CHEAT
 
 //#define ANTICHEAT_MODULE
 

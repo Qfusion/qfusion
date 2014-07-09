@@ -411,6 +411,9 @@ float CL_GameModule_SetSensitivityScale( const float sens );
 qboolean CL_GameModule_NewSnapshot( int pendingSnapshot );
 void CL_GameModule_RenderView( float stereo_separation );
 void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t velocity );
+void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y );
+void CL_GameModule_TouchFrame( qboolean active );
+void CL_GameModule_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime );
 
 //
 // cl_sound.c
@@ -501,6 +504,7 @@ void CL_UserInputFrame( void );
 void CL_NewUserCommand( int msec );
 void CL_WriteUcmdsToMessage( msg_t *msg );
 void CL_MouseMove( usercmd_t *cmd, int mx, int my );
+void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 void CL_UpdateCommandInput( void );
 void IN_CenterView( void );
 

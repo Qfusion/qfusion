@@ -45,6 +45,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define GAMECHAT_STRING_SIZE	150
 #define GAMECHAT_STACK_SIZE		20
 
+#define CG_MAX_TOUCHES 10
+
 enum
 {
 	LOCALEFFECT_EV_PLAYER_TELEPORT_IN
@@ -721,14 +723,14 @@ void CG_LoadStatusBar( void );
 void CG_LoadingString( const char *str );
 void CG_LoadingItemName( const char *str );
 
-void CG_DrawCrosshair( int x, int y, int align );
+void CG_DrawCrosshair( int x, int y, int align, bool touch );
 void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key );
 
 void CG_ScreenCrosshairDamageUpdate( void );
 
 int CG_ParseValue( const char **s );
 
-void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color );
+void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color, bool touch );
 void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color );
 void CG_DrawTeamMates( void );
 void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, int charheight, int value );
@@ -737,6 +739,27 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color );
 
 void CG_GameMenu_f( void );
 
+enum
+{
+	TOUCHAREA_SCREEN,
+	TOUCHAREA_HUD = 0x100
+};
+
+int CG_TouchArea( int area, int x, int y, int w, int h, bool sticky, void ( *upfunc )( int id ) );
+void CG_TouchEvent( int id, touchevent_t type, int x, int y );
+void CG_TouchFrame( qboolean active );
+void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime );
+
+enum
+{
+	TOUCHPAD_MOVE,
+	TOUCHPAD_VIEW,
+
+	TOUCHPAD_COUNT
+};
+
+void CG_SetTouchpad( int padID, int touchID );
+
 //
 // cg_hud.c
 //
@@ -744,10 +767,12 @@ extern cvar_t *cg_showminimap;
 extern cvar_t *cg_showitemtimers;
 extern cvar_t *cg_placebo;
 extern cvar_t *cg_strafeHUD;
+extern cvar_t *cg_touch_flip;
 
 void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );
-void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode );
+void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch );
+void CG_GetHUDTouchButtons( int &buttons, int &upmove );
 
 //
 // cg_damage_indicator.c
