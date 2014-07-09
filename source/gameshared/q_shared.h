@@ -403,6 +403,14 @@ typedef enum {
 	QFONT_STYLE_MASK			= (1<<2)-1
 } qfontstyle_t;
 
+typedef enum
+{
+	TOUCH_DOWN,
+	TOUCH_UP,
+	TOUCH_MOVE,
+	TOUCH_CANCEL
+} touchevent_t;
+
 #ifdef __cplusplus
 };
 #endif
