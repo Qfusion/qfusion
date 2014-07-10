@@ -12,6 +12,6 @@ file(GLOB FTLIB_SOURCES
     "../qalgo/*.c"
 )
 
-qf_add_library(ftlib SHARED ${FTLIB_SOURCES} ${FTLIB_HEADERS})
+add_library(ftlib SHARED ${FTLIB_SOURCES} ${FTLIB_HEADERS})
 target_link_libraries(ftlib ${FREETYPE_LIBRARIES})
 qf_set_output_dir(ftlib libs)
