@@ -1416,7 +1416,7 @@ TOUCH INPUT
 typedef struct {
 	bool down; // is the finger currently down?
 	int x, y; // current x and y of the touch
-	int area; // hud area unique id (0 = not caught by hud)
+	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
 	int area_x, area_y, area_x2, area_y2; // dimensions of the area to discard the touch if out of range
 	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
 	bool sticky; // if true, the touch won't be cancelled when the finger leaves the area
@@ -1462,7 +1462,8 @@ int CG_TouchArea( int area, int x, int y, int w, int h, bool sticky, void ( *upf
 	{
 		cg_touch_t &touch = cg_touches[i];
 
-		if( touch.down && !touch.area && ( touch.x >= x ) && ( touch.y >= y ) && ( touch.x < x2 ) && ( touch.y < y2 ) )
+		if( touch.down && ( touch.area == TOUCHAREA_NONE ) &&
+			( touch.x >= x ) && ( touch.y >= y ) && ( touch.x < x2 ) && ( touch.y < y2 ) )
 		{
 			touch.area = area;
 			touch.area_x = x;
@@ -1498,15 +1499,15 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 		if( !touch.down )
 		{
 			touch.down = true;
-			touch.area = 0;
+			touch.area = TOUCHAREA_NONE;
 		}
-		else if( touch.area && !touch.sticky )
+		else if( ( touch.area != TOUCHAREA_NONE ) && !touch.sticky )
 		{
 			if( ( x < touch.area_x ) || ( y < touch.area_y ) || ( x >= touch.area_x2 ) || ( y >= touch.area_y2 ) )
 			{
 				if( touch.upfunc )
 					touch.upfunc( id );
-				touch.area = 0;
+				touch.area = TOUCHAREA_NONE;
 			}
 		}
 		break;
@@ -1516,7 +1517,7 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 		if( touch.down )
 		{
 			touch.down = false;
-			if( touch.area && touch.upfunc )
+			if( ( touch.area != TOUCHAREA_NONE ) && touch.upfunc )
 				touch.upfunc( id );
 		}
 		break;
@@ -1547,11 +1548,11 @@ void CG_TouchFrame( qboolean active )
 		cg_touch_t &touch = cg_touches[i];
 		if( touch.down )
 		{
-			if( touch.area && !touch.area_valid )
+			if( ( touch.area != TOUCHAREA_NONE ) && !touch.area_valid )
 			{
 				if( touch.upfunc )
 					touch.upfunc( i );
-				touch.area = 0;
+				touch.area = TOUCHAREA_NONE;
 			}
 			if( !active )
 				touch.down = false;
