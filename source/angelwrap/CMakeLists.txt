@@ -15,7 +15,7 @@ file(GLOB angelwrap_SOURCES
     "qalgo/*.c"
 )
 
-qf_add_library(angelwrap SHARED ${angelwrap_SOURCES} ${angelwrap_HEADERS})
+add_library(angelwrap SHARED ${angelwrap_SOURCES} ${angelwrap_HEADERS})
 target_link_libraries(angelwrap ${ANGELSCRIPT_LIBRARY})
 qf_set_output_dir(angelwrap libs)
 
