@@ -741,8 +741,9 @@ void CG_GameMenu_f( void );
 
 enum
 {
+	TOUCHAREA_NONE,
 	TOUCHAREA_SCREEN,
-	TOUCHAREA_HUD = 0x100
+	TOUCHAREA_HUD = 0x101
 };
 
 int CG_TouchArea( int area, int x, int y, int w, int h, bool sticky, void ( *upfunc )( int id ) );
