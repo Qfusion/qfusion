@@ -133,7 +133,7 @@ qgl_initerr_t QGL_Init( const char *dllname )
 	}
 	else
 	{
-		Com_Printf( "Using %s for OpenGL...", dllname );
+		Com_Printf( "Using %s for OpenGL...\n", dllname );
 	}
 
 #define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( (const GLubyte *)# name ); \
