@@ -769,6 +769,7 @@ extern cvar_t *cg_showitemtimers;
 extern cvar_t *cg_placebo;
 extern cvar_t *cg_strafeHUD;
 extern cvar_t *cg_touch_flip;
+extern cvar_t *cg_touch_scale;
 
 void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );
