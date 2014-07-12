@@ -38,6 +38,7 @@ cvar_t *cg_showitemtimers;
 cvar_t *cg_placebo;
 cvar_t *cg_strafeHUD;
 cvar_t *cg_touch_flip;
+cvar_t *cg_touch_scale;
 
 static int cg_hud_touch_buttons, cg_hud_touch_upmove;
 
