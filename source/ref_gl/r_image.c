@@ -1878,7 +1878,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	qboolean flipx, qboolean flipy, qboolean flipdiagonal, qboolean silent )
 {
 	size_t size, buf_size;
-	qbyte *buffer, *flipped;
+	qbyte *buffer, *flipped, *rgb, *rgba;
 	r_imginfo_t imginfo;
 	const char *extension;
 
@@ -1899,8 +1899,8 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	}
 
 	size = width * height * 3;
-	buf_size = size * 2;
-	if( size > r_screenShotBufferSize ) {
+	buf_size = width * height * 4;
+	if( buf_size > r_screenShotBufferSize ) {
 		if( r_screenShotBuffer ) {
 			R_Free( r_screenShotBuffer );
 		}
@@ -1920,15 +1920,18 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	imginfo.height = height;
 	imginfo.samples = 3;
 	imginfo.pixels = flipped ? flipped : buffer;
+	imginfo.comp = IMGCOMP_RGB;
 
-	if( !Q_stricmp( extension, ".jpg" ) ) {
-		imginfo.comp = IMGCOMP_RGB;
-	} else {
-		imginfo.comp = glConfig.ext.bgra ? IMGCOMP_BGR : IMGCOMP_RGB;
+	qglReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
+
+	rgb = rgba = buffer;
+	while( ( rgb - buffer ) < size )
+	{
+		*( rgb++ ) = *( rgba++ );
+		*( rgb++ ) = *( rgba++ );
+		*( rgb++ ) = *( rgba++ );
+		rgba++;
 	}
-
-	qglReadPixels( 0, 0, width, height, 
-		imginfo.comp == IMGCOMP_BGR ? GL_BGR_EXT : GL_RGB, GL_UNSIGNED_BYTE, buffer );
 
 	if( flipped ) {
 		R_FlipTexture( buffer, flipped, width, height, 3, 
