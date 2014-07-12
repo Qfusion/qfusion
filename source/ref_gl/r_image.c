@@ -1920,17 +1920,30 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	imginfo.height = height;
 	imginfo.samples = 3;
 	imginfo.pixels = flipped ? flipped : buffer;
-	imginfo.comp = IMGCOMP_RGB;
+	imginfo.comp = Q_stricmp( extension, ".jpg" ) ? IMGCOMP_BGR : IMGCOMP_RGB;
 
 	qglReadPixels( 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
 
 	rgb = rgba = buffer;
-	while( ( rgb - buffer ) < size )
+	if( imginfo.comp == IMGCOMP_BGR )
 	{
-		*( rgb++ ) = *( rgba++ );
-		*( rgb++ ) = *( rgba++ );
-		*( rgb++ ) = *( rgba++ );
-		rgba++;
+		while( ( rgb - buffer ) < size )
+		{
+			*( rgb++ ) = rgba[2];
+			*( rgb++ ) = rgba[1];
+			*( rgb++ ) = rgba[0];
+			rgba += 4;
+		}
+	}
+	else
+	{
+		while( ( rgb - buffer ) < size )
+		{
+			*( rgb++ ) = *( rgba++ );
+			*( rgb++ ) = *( rgba++ );
+			*( rgb++ ) = *( rgba++ );
+			rgba++;
+		}
 	}
 
 	if( flipped ) {
