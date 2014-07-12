@@ -615,6 +615,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "CHAT_MODE", CG_GetCvar, "con_messageMode" },
 
 	{ "TOUCH_FLIP", CG_GetCvar, "cg_touch_flip" },
+	{ "TOUCH_SCALE", CG_GetCvar, "cg_touch_scale" },
 
 	{ "ITEM_TIMER0", CG_GetItemTimer, (void *)0 },
 	{ "ITEM_TIMER0_COUNT", CG_GetItemTimerCount, (void *)0 },
