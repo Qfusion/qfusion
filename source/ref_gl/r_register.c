@@ -897,7 +897,7 @@ static void R_FinalizeGLExtensions( void )
 */
 static void R_FillStartupBackgroundColor( void )
 {
-	qglClearColor( 0.1, 0.09, 0.12, 1.0 );
+	qglClearColor( 22.0 / 255.0, 20.0 / 255.0, 28.0 / 255.0, 1.0 );
 	GLimp_BeginFrame();
 	if( glConfig.stereoEnabled )
 	{
