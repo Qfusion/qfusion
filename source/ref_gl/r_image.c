@@ -1136,6 +1136,11 @@ static void R_UploadMipmapped( int ctx, qbyte **data,
 
 	mip = R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, mipLevels, qfalse );
 
+	if( upload_width )
+		*upload_width = scaledWidth;
+	if( upload_height )
+		*upload_height = scaledHeight;
+
 	if( mip < 0 )
 	{
 		int oldFaceSize = ALIGN( width * pixelSize, 4 ) * height;
@@ -1360,6 +1365,9 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( int, const i
 
 		mip = R_ScaledImageSize( header->pixelWidth, header->pixelHeight, &scaledWidth, &scaledHeight,
 			image->flags, mips, qfalse );
+
+		image->upload_width = scaledWidth;
+		image->upload_height = scaledHeight;
 
 		// If different compression formats are added, make this more general-purpose!
 
