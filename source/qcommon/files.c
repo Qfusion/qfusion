@@ -3195,8 +3195,8 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 			extension_len = strlen( extension );
 
 			// ignore pure data and modules pk3 files from other versions
-			if( !Q_strnicmp( pakbasename + pakname_len - strlen( "pure" ) - extension_len - 1, "pure", strlen ( "pure" ) ) &&
-				Q_strnicmp( pakbasename + pakname_len - strlen( APP_VERSION_STR_MAJORMINOR "pure" ) - extension_len - 1, APP_VERSION_STR_MAJORMINOR, strlen( APP_VERSION_STR_MAJORMINOR ) ) )
+			if( !Q_strnicmp( pakbasename + pakname_len - strlen( "pure" ) - extension_len, "pure", strlen ( "pure" ) ) &&
+				Q_strnicmp( pakbasename + pakname_len - strlen( APP_VERSION_STR_MAJORMINOR "pure" ) - extension_len, APP_VERSION_STR_MAJORMINOR, strlen( APP_VERSION_STR_MAJORMINOR ) ) )
 			{
 				if( !Q_strnicmp( pakbasename, "data", strlen( "data" ) ) || !Q_strnicmp( pakbasename, "modules", strlen( "modules" ) ) )
 				{
