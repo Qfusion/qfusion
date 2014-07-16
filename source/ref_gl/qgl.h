@@ -845,16 +845,14 @@ QGL_FUNC(void, glGenerateMipmap, (GLenum));
 QGL_EXT(void, glBlitFramebufferEXT, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
 #else
 QGL_FUNC_OPT(void, glBlitFramebuffer, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
-QGL_EXT(void, glBlitFramebufferANGLE, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
-QGL_EXT(void, glBlitFramebufferNV, (GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum));
 #ifndef qglBlitFramebufferEXT
 #define qglBlitFramebufferEXT qglBlitFramebuffer
 #endif
 #endif
 
 #ifdef GL_ES_VERSION_2_0
-QGL_EXT(void, glReadBufferIndexedNV, (GLenum, GLint));
-QGL_EXT(void, glDrawBuffersIndexedNV, (GLint, const GLenum *, const GLint *));
+QGL_EXT(void, glReadBufferIndexedEXT, (GLenum, GLint));
+QGL_EXT(void, glDrawBuffersIndexedEXT, (GLint, const GLenum *, const GLint *));
 #endif
 
 QGL_EXT(void, glSwapInterval, (int interval));
