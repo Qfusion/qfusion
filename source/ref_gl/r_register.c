@@ -362,11 +362,22 @@ static const gl_extension_func_t gl_ext_get_program_binary_OES_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_EXT_multiview_draw_buffers */
+static const gl_extension_func_t gl_ext_multiview_draw_buffers_EXT_funcs[] =
+{
+	 GL_EXTENSION_FUNC(ReadBufferIndexedEXT)
+	,GL_EXTENSION_FUNC(DrawBuffersIndexedEXT)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 /* GL_NV_multiview_draw_buffers */
 static const gl_extension_func_t gl_ext_multiview_draw_buffers_NV_funcs[] =
 {
-	 GL_EXTENSION_FUNC(ReadBufferIndexedNV)
-	,GL_EXTENSION_FUNC(DrawBuffersIndexedNV)
+	 GL_EXTENSION_FUNC_EXT("glReadBufferIndexedNV",&qglReadBufferIndexedEXT)
+	,GL_EXTENSION_FUNC_EXT("glDrawBuffersIndexedNV",&qglDrawBuffersIndexedEXT)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
 #endif // GL_ES_VERSION_2_0
@@ -453,6 +464,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, get_program_binary, false, false, &gl_ext_get_program_binary_OES_funcs )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
+	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
 	,GL_EXTENSION( OES, rgb8_rgba8, false, false, NULL )
 #endif
@@ -904,10 +916,10 @@ static void R_FillStartupBackgroundColor( void )
 #ifdef GL_ES_VERSION_2_0
 		int location = GL_MULTIVIEW_NV;
 		int index = 1;
-		qglDrawBuffersIndexedNV( 1, &location, &index );
+		qglDrawBuffersIndexedEXT( 1, &location, &index );
 		qglClear( GL_COLOR_BUFFER_BIT );
 		index = 0;
-		qglDrawBuffersIndexedNV( 1, &location, &index );
+		qglDrawBuffersIndexedEXT( 1, &location, &index );
 #else
 		qglDrawBuffer( GL_BACK_LEFT );
 		qglClear( GL_COLOR_BUFFER_BIT );

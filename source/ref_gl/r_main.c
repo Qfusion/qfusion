@@ -1561,7 +1561,7 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 		{
 			int location = GL_MULTIVIEW_NV;
 			int index = ( cameraSeparation > 0 && glConfig.stereoEnabled ) ? 1 : 0;
-			qglDrawBuffersIndexedNV( 1, &location, &index );
+			qglDrawBuffersIndexedEXT( 1, &location, &index );
 		}
 #else
 		if( cameraSeparation < 0 && glConfig.stereoEnabled )
