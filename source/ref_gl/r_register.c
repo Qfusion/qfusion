@@ -543,12 +543,9 @@ static qboolean R_RegisterGLExtensions( void )
 		if( func )
 		{
 			do {
-				if( !*(func->pointer) ) // if the function is declared as QGL_FUNC_OPT, prefer core version over the extension
-				{
-					*(func->pointer) = ( void * )qglGetProcAddress( (const GLubyte *)func->name );
-					if( !*(func->pointer) )
-						break;
-				}
+				*(func->pointer) = ( void * )qglGetProcAddress( (const GLubyte *)func->name );
+				if( !*(func->pointer) )
+					break;
 			} while( (++func)->name );
 
 			// some function is missing
