@@ -1935,7 +1935,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	rgb = rgba = buffer;
 	if( imginfo.comp == IMGCOMP_BGR )
 	{
-		while( ( rgb - buffer ) < size )
+		while( ( size_t )( rgb - buffer ) < size )
 		{
 			*( rgb++ ) = rgba[2];
 			*( rgb++ ) = rgba[1];
@@ -1945,7 +1945,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	}
 	else
 	{
-		while( ( rgb - buffer ) < size )
+		while( ( size_t )( rgb - buffer ) < size )
 		{
 			*( rgb++ ) = *( rgba++ );
 			*( rgb++ ) = *( rgba++ );
