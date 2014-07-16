@@ -20,7 +20,6 @@ vec4 FxaaPixelShader(
     float fxaaConsoleEdgeThresholdMin,
     vec4 fxaaConsole360ConstDir
 ) {
-#define Tex() qf_texture(tex, pos).rgb
 #define TexOfs(ofs) qf_texture(tex, pos + (ofs)).rgb
 #define TexOfsInv(ofs) qf_texture(tex, pos + (ofs) * fxaaQualityRcpFrame).rgb
 
@@ -30,7 +29,7 @@ vec4 FxaaPixelShader(
 		dot(TexOfsInv(vec2(1.0, -1.0)), luma),
 		dot(TexOfsInv(vec2(-1.0, 1.0)), luma),
 		dot(TexOfsInv(vec2(1.0, 1.0)), luma));
-	float lumaM = dot(Tex(), luma);
+	float lumaM = dot(qf_texture(tex, pos).rgb, luma);
 
 	float lumaMin = min(lumaM, min(min(lumas.x, lumas.y), min(lumas.z, lumas.w)));
 	float lumaMax = max(lumaM, max(max(lumas.x, lumas.y), max(lumas.z, lumas.w)));
