@@ -1158,7 +1158,7 @@ static void R_Clear( int bitMask )
 
 	if( ( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() ) || rgbShadow )
 		bits |= GL_COLOR_BUFFER_BIT;
-	if( glConfig.stencilEnabled )
+	if( glConfig.stencilBits )
 		bits |= GL_STENCIL_BUFFER_BIT;
 
 	bits &= bitMask;
