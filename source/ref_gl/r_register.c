@@ -843,16 +843,16 @@ static void R_FinalizeGLExtensions( void )
 	}
 #endif
 
-	glConfig.maxVaryingFloats = 0;
 	glConfig.maxVertexUniformComponents = glConfig.maxFragmentUniformComponents = 0;
+	glConfig.maxVaryingFloats = 0;
 
 	qglGetIntegerv( GL_MAX_VERTEX_ATTRIBS_ARB, &glConfig.maxVertexAttribs );
 #ifdef GL_ES_VERSION_2_0
-	qglGetIntegerv( GL_MAX_VARYING_VECTORS, &glConfig.maxVaryingFloats );
 	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_VECTORS, &glConfig.maxVertexUniformComponents );
+	qglGetIntegerv( GL_MAX_VARYING_VECTORS, &glConfig.maxVaryingFloats );
 	qglGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_VECTORS, &glConfig.maxFragmentUniformComponents );
-	glConfig.maxVaryingFloats *= 4;
 	glConfig.maxVertexUniformComponents *= 4;
+	glConfig.maxVaryingFloats *= 4;
 	glConfig.maxFragmentUniformComponents *= 4;
 #else
 	qglGetIntegerv( GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &glConfig.maxVertexUniformComponents );
