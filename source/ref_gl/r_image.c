@@ -2242,7 +2242,8 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			t->fbo = 0;
 		}
 		if( t->flags & IT_FRAMEBUFFER ) {
-			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height );
+			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height,
+				( flags & IT_DEPTHRB ) ? qtrue : qfalse );
 			RFB_AttachTextureToObject( t->fbo, t );
 		}
 	}
@@ -2257,7 +2258,7 @@ static int R_GetPortalTextureId( const int viewportWidth, const int viewportHeig
 	int i;
 	int best = -1;
 	int realwidth, realheight;
-	int realflags = IT_PORTALMAP|IT_FRAMEBUFFER|flags;
+	int realflags = IT_PORTALMAP|IT_FRAMEBUFFER|IT_DEPTHRB|flags;
 	image_t *image;
 
 	R_GetViewportTextureSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
@@ -2306,7 +2307,7 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 
 	R_InitViewportTexture( &rsh.portalTextures[id], "r_portaltexture", id, 
 		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
-		IT_PORTALMAP|IT_FRAMEBUFFER|flags, 3 );
+		IT_PORTALMAP|IT_FRAMEBUFFER|IT_DEPTHRB|flags, 3 );
 
 	if( rsh.portalTextures[id] ) {
 		rsh.portalTextures[id]->framenum = frameNum;
@@ -2412,6 +2413,8 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 {
 	int flags;
 
+	assert( !depth || glConfig.ext.depth_texture );
+
 	flags = IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP;
 	if( noFilter ) {
 		flags |= IT_NOFILTERING;
@@ -2420,12 +2423,12 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 	if( color ) {
 		R_InitViewportTexture( color, name, 0, 
 			glConfig.width, glConfig.height, 0, 
-			flags|IT_FRAMEBUFFER, samples );
+			flags | IT_FRAMEBUFFER | ( depth ? 0 : IT_DEPTHRB ), samples );
 	}
 	if( depth && *color ) {
 		R_InitViewportTexture( depth, va( "%s_depth", name ), 0,
 			glConfig.width, glConfig.height, 0, 
-			flags|IT_DEPTH, 1 );
+			flags | IT_DEPTH, 1 );
 
 		RFB_AttachTextureToObject( (*color)->fbo, *depth );
 	}
@@ -2436,11 +2439,14 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 */
 static void R_InitScreenTextures( void )
 {
-	R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
-		&rsh.screenDepthTexture, 3, qtrue ); 
+	if( glConfig.ext.depth_texture && glConfig.ext.framebuffer_blit )
+	{
+		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
+			&rsh.screenDepthTexture, 3, qtrue ); 
 
-	R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
-		&rsh.screenDepthTextureCopy, 3, qtrue );
+		R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
+			&rsh.screenDepthTextureCopy, 3, qtrue );
+	}
 
 	R_InitScreenTexturesPair( "rsh.screenFxaaCopy", &rsh.screenFxaaCopy, 
 		NULL, 3, qfalse );

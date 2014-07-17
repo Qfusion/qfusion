@@ -788,11 +788,18 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.ext.framebuffer_blit && !qglBlitFramebufferEXT )
 	{
 		if( qglBlitFramebufferNV )
+		{
 			qglBlitFramebufferEXT = qglBlitFramebufferNV;
+		}
 		else if( qglBlitFramebufferANGLE )
+		{
 			qglBlitFramebufferEXT = qglBlitFramebufferANGLE;
+		}
 		else
+		{
 			glConfig.ext.framebuffer_blit = qfalse;
+			ri.Cvar_ForceSet( "gl_ext_framebuffer_blit", "0" );
+		}
 	}
 #endif
 

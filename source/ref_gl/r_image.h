@@ -36,10 +36,11 @@ enum
 	,IT_DEPTH			= 1<<9
 	,IT_NORMALMAP		= 1<<10
 	,IT_FRAMEBUFFER		= 1<<11
-	,IT_NOFILTERING		= 1<<12
-	,IT_LUMINANCE		= 1<<13
-	,IT_BGRA			= 1<<14
-	,IT_SYNC			= 1<<15		// load image synchronously
+	,IT_DEPTHRB			= 1<<12		// framebuffer has a depth renderbuffer
+	,IT_NOFILTERING		= 1<<13
+	,IT_LUMINANCE		= 1<<14
+	,IT_BGRA			= 1<<15
+	,IT_SYNC			= 1<<16		// load image synchronously
 };
 
 #define IT_CINEMATIC		( IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP|IT_NOCOMPRESS )
