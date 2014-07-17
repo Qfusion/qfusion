@@ -822,7 +822,7 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.ext.multiview_draw_buffers )
 	{
 		val = 0;
-		qglGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_NV, &val );
+		qglGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_EXT, &val );
 		if( val <= 1 )
 			glConfig.stereoEnabled = qfalse;
 	}
@@ -926,7 +926,7 @@ static void R_FillStartupBackgroundColor( void )
 	if( glConfig.stereoEnabled )
 	{
 #ifdef GL_ES_VERSION_2_0
-		int location = GL_MULTIVIEW_NV;
+		int location = GL_MULTIVIEW_EXT;
 		int index = 1;
 		qglDrawBuffersIndexedEXT( 1, &location, &index );
 		qglClear( GL_COLOR_BUFFER_BIT );

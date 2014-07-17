@@ -455,16 +455,16 @@ typedef unsigned short GLhalfARB;
 #endif
 #endif /* GL_ARB_half_float_vertex */
 
-/* GL_NV_multiview_draw_buffers */
-#ifndef GL_NV_multiview_draw_buffers
-#define GL_NV_multiview_draw_buffers
+/* GL_EXT_multiview_draw_buffers */
+#ifndef GL_EXT_multiview_draw_buffers
+#define GL_EXT_multiview_draw_buffers
 
-#define GL_COLOR_ATTACHMENT_NV								0x90F0
-#define GL_MULTIVIEW_NV										0x90F1
-#define GL_DRAW_BUFFER_NV									0x0C01
-#define GL_READ_BUFFER_NV									0x0C02
-#define GL_MAX_MULTIVIEW_BUFFERS_NV							0x90F2
-#endif /* GL_NV_multiview_draw_buffers */
+#define GL_COLOR_ATTACHMENT_EXT								0x90F0
+#define GL_MULTIVIEW_EXT									0x90F1
+#define GL_DRAW_BUFFER_EXT									0x0C01
+#define GL_READ_BUFFER_EXT									0x0C02
+#define GL_MAX_MULTIVIEW_BUFFERS_EXT						0x90F2
+#endif /* GL_EXT_multiview_draw_buffers */
 
 /* GL_ARB_get_program_binary */
 #ifndef GL_ARB_get_program_binary
