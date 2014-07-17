@@ -774,7 +774,7 @@ static void R_FinalizeGLExtensions( void )
 
 	/* GL_ARB_multitexture */
 	glConfig.maxTextureUnits = 1;
-	qglGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, &glConfig.maxTextureUnits );
+	qglGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &glConfig.maxTextureUnits );
 	clamp( glConfig.maxTextureUnits, 1, MAX_TEXTURE_UNITS );
 
 	/* GL_EXT_framebuffer_object */
@@ -1093,7 +1093,7 @@ static void R_GfxInfo_f( void )
 	R_PrintGLExtensionsString( "GLXW_EXTENSIONS", glConfig.glwExtensionsString );
 
 	Com_Printf( "GL_MAX_TEXTURE_SIZE: %i\n", glConfig.maxTextureSize );
-	Com_Printf( "GL_MAX_TEXTURE_UNITS: %i\n", glConfig.maxTextureUnits );
+	Com_Printf( "GL_MAX_TEXTURE_IMAGE_UNITS: %i\n", glConfig.maxTextureUnits );
 	if( glConfig.ext.texture_cube_map )
 		Com_Printf( "GL_MAX_CUBE_MAP_TEXTURE_SIZE: %i\n", glConfig.maxTextureCubemapSize );
 	if( glConfig.ext.texture_filter_anisotropic )

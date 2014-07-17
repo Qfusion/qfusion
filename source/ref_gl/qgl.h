@@ -120,7 +120,7 @@ QGL_EXTERN	const char				*(*qglGetGLWExtensionsString)( void );
 #endif
 
 #define GL_TEXTURE0_ARB										0x84C0
-#define GL_MAX_TEXTURE_UNITS_ARB							0x84E2
+#define GL_MAX_TEXTURE_IMAGE_UNITS_ARB						0x8872
 
 /* GL_ARB_texture_compression */
 #ifndef GL_ARB_texture_compression
