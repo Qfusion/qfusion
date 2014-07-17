@@ -884,7 +884,7 @@ void GLimp_Shutdown( void )
 	}
 }
 
-static qboolean gotstencil = qfalse; // evil hack!
+static int gotstencil = 0; // evil hack!
 static qboolean ChooseVisual( int colorbits, int stencilbits )
 {
 	int colorsize;
@@ -914,7 +914,7 @@ static qboolean ChooseVisual( int colorbits, int stencilbits )
 		else
 		{
 			ri.Com_Printf( "..Got colorbits %i, depthbits %i, stencilbits %i\n", colorbits, depthbits, stencilbits );
-			if( stencilbits > 0 ) gotstencil = qtrue;
+			gotstencil = stencilbits;
 			return qtrue;
 		}
 	}
@@ -968,7 +968,7 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	if( r_stencilbits->integer == 8 || r_stencilbits->integer == 16 ) stencilbits = r_stencilbits->integer;
 	else stencilbits = 0;
 
-	gotstencil = qfalse;
+	gotstencil = 0;
 	if( colorbits > 0 )
 	{
 		ChooseVisual( colorbits, stencilbits );
@@ -993,7 +993,7 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 		return 0;
 	}
 
-	glConfig.stencilEnabled = gotstencil;
+	glConfig.stencilBits = gotstencil;
 
 	x11display.ctx = qglXCreateContext( x11display.dpy, x11display.visinfo, NULL, True );
 	x11display.cmap = XCreateColormap( x11display.dpy, x11display.root, x11display.visinfo->visual, AllocNone );

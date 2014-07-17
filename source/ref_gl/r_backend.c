@@ -137,7 +137,7 @@ void RB_StatsMessage( char *msg, size_t size )
 */
 static void RB_SetGLDefaults( void )
 {
-	if( glConfig.stencilEnabled )
+	if( glConfig.stencilBits )
 	{
 		qglStencilMask( ( GLuint ) ~0 );
 		qglStencilFunc( GL_EQUAL, 128, 0xFF );
@@ -375,7 +375,7 @@ void RB_SetState( int state )
 
 	if( diff & GLSTATE_STENCIL_TEST )
 	{
-		if( glConfig.stencilEnabled )
+		if( glConfig.stencilBits )
 		{
 			if( state & GLSTATE_STENCIL_TEST )
 				qglEnable( GL_STENCIL_TEST );

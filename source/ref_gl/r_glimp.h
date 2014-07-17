@@ -213,7 +213,7 @@ typedef struct
 	qboolean		wideScreen;
 
 	qboolean		stereoEnabled;
-	qboolean		stencilEnabled;
+	int				stencilBits;
 
 	qboolean		hwGamma;
 	unsigned short	gammaRampSize;

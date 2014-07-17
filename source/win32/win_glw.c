@@ -495,10 +495,7 @@ static int GLimp_InitGL( void )
 	}
 	DescribePixelFormat( glw_state.hDC, pixelformat, sizeof( pfd ), &pfd );
 
-	if( pfd.cStencilBits != 0 )
-		glConfig.stencilEnabled = qtrue;
-	else
-		glConfig.stencilEnabled = qfalse;
+	glConfig.stencilBits = pfd.cStencilBits;
 
 	/*
 	** report if stereo is desired but unavailable
