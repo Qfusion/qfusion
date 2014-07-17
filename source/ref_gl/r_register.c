@@ -764,8 +764,13 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.maxTextureCubemapSize = 0;
 	if( glConfig.ext.texture_cube_map )
 		qglGetIntegerv( GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, &glConfig.maxTextureCubemapSize );
+#ifndef GL_ES_VERSION_2_0
 	if( glConfig.maxTextureCubemapSize <= 1 )
+	{
 		glConfig.ext.texture_cube_map = qfalse;
+		ri.Cvar_ForceSet( "gl_ext_texture_cube_map", "0" );
+	}
+#endif
 
 	/* GL_ARB_multitexture */
 	glConfig.maxTextureUnits = 1;
