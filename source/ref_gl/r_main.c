@@ -1559,7 +1559,7 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 #ifdef GL_ES_VERSION_2_0
 		if( glConfig.ext.multiview_draw_buffers )
 		{
-			int location = GL_MULTIVIEW_NV;
+			int location = GL_MULTIVIEW_EXT;
 			int index = ( cameraSeparation > 0 && glConfig.stereoEnabled ) ? 1 : 0;
 			qglDrawBuffersIndexedEXT( 1, &location, &index );
 		}
