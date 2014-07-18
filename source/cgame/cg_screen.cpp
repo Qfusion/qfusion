@@ -55,6 +55,10 @@ cvar_t *cg_crosshair_strong_color;
 
 cvar_t *cg_crosshair_damage_color;
 
+cvar_t *cg_crosshair_touch_size;
+
+static bool cg_crosshair_zoom;
+
 cvar_t *cg_clientHUD;
 cvar_t *cg_specHUD;
 cvar_t *cg_debugHUD;
@@ -80,6 +84,13 @@ cvar_t *cg_scoreboardWidthScale;
 
 cvar_t *cg_showTeamLocations;
 cvar_t *cg_showViewBlends;
+
+cvar_t *cg_touch_moveThreshold;
+cvar_t *cg_touch_strafeThreshold;
+cvar_t *cg_touch_pitchThreshold;
+cvar_t *cg_touch_pitchSpeed;
+cvar_t *cg_touch_yawThreshold;
+cvar_t *cg_touch_yawSpeed;
 
 float scr_damagetime_start;
 float scr_damagetime_off;
@@ -258,6 +269,12 @@ static void CG_SizeDown_f( void )
 
 //============================================================================
 
+enum
+{
+	TOUCHAREA_SCREEN_CROSSHAIR = TOUCHAREA_SCREEN,
+	TOUCHAREA_SCREEN_TIMER
+};
+
 /*
 * CG_ScreenInit
 */
@@ -275,6 +292,7 @@ void CG_ScreenInit( void )
 	cg_crosshair_size =	trap_Cvar_Get( "cg_crosshair_size", "32", CVAR_ARCHIVE );
 	cg_crosshair_color =	trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_damage_color =	trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
+	cg_crosshair_touch_size =	trap_Cvar_Get( "cg_crosshair_touch_size", "96", CVAR_ARCHIVE );
 	cg_crosshair_color->modified = qtrue;
 	cg_crosshair_damage_color->modified = qfalse;
 
@@ -311,6 +329,13 @@ void CG_ScreenInit( void )
 	// wsw : hud debug prints
 	cg_debugHUD =		    trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
+	cg_touch_moveThreshold = trap_Cvar_Get( "cg_touch_moveThreshold", "12", CVAR_ARCHIVE );
+	cg_touch_strafeThreshold = trap_Cvar_Get( "cg_touch_strafeThreshold", "12", CVAR_ARCHIVE );
+	cg_touch_pitchThreshold = trap_Cvar_Get( "cg_touch_pitchThreshold", "12", CVAR_ARCHIVE );
+	cg_touch_pitchSpeed = trap_Cvar_Get( "cg_touch_pitchSpeed", "4", CVAR_ARCHIVE );
+	cg_touch_yawThreshold = trap_Cvar_Get( "cg_touch_yawThreshold", "8", CVAR_ARCHIVE );
+	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "4", CVAR_ARCHIVE );
+
 	//
 	// register our commands
 	//
@@ -318,6 +343,10 @@ void CG_ScreenInit( void )
 	trap_Cmd_AddCommand( "sizedown", CG_SizeDown_f );
 	trap_Cmd_AddCommand( "help_hud", Cmd_CG_PrintHudHelp_f );
 	trap_Cmd_AddCommand( "gamemenu", CG_GameMenu_f );
+
+	int i;
+	for( i = 0; i < TOUCHPAD_COUNT; ++i )
+		CG_SetTouchpad( i, -1 );
 }
 
 /*
@@ -372,9 +401,9 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color )
 }
 
 /*
-*  CG_DrawCrosshair
+* CG_DrawCrosshair
 */
-void CG_DrawCrosshair( int x, int y, int align )
+void CG_DrawCrosshair( int x, int y, int align, bool touch )
 {
 	static vec4_t chColor = { 255, 255, 255, 255 };
 	static vec4_t chColorStrong = { 255, 255, 255, 255 };
@@ -383,15 +412,22 @@ void CG_DrawCrosshair( int x, int y, int align )
 	if( cg_crosshair->modified )
 	{
 		if( cg_crosshair->integer >= NUM_CROSSHAIRS || cg_crosshair->integer < 0 )
-			trap_Cvar_Set( "cg_crosshair", va( "%i", 0 ) );
+			trap_Cvar_Set( "cg_crosshair", "0" );
 		cg_crosshair->modified = qfalse;
 	}
 
 	if( cg_crosshair_size->modified )
 	{
 		if( cg_crosshair_size->integer < 0 || cg_crosshair_size->integer > 2000 )
-			trap_Cvar_Set( "cg_crosshair_size", va( "%i", 32 ) );
+			trap_Cvar_Set( "cg_crosshair_size", "32" );
 		cg_crosshair_size->modified = qfalse;
+	}
+
+	if( cg_crosshair_touch_size->modified )
+	{
+		if( cg_crosshair_touch_size->integer < 0 || cg_crosshair_touch_size->integer > 2000 )
+			trap_Cvar_Set( "cg_crosshair_touch_size", "96" );
+		cg_crosshair_touch_size->modified = qfalse;
 	}
 
 	if( cg_crosshair_color->modified || cg_crosshair_damage_color->modified )
@@ -421,14 +457,14 @@ void CG_DrawCrosshair( int x, int y, int align )
 	if( cg_crosshair_strong->modified )
 	{
 		if( cg_crosshair_strong->integer >= NUM_CROSSHAIRS || cg_crosshair_strong->integer < 0 )
-			trap_Cvar_Set( "cg_crosshair_strong", va( "%i", 0 ) );
+			trap_Cvar_Set( "cg_crosshair_strong", "0" );
 		cg_crosshair_strong->modified = qfalse;
 	}
 
 	if( cg_crosshair_strong_size->modified )
 	{
 		if( cg_crosshair_strong_size->integer < 0 || cg_crosshair_strong_size->integer > 2000 )
-			trap_Cvar_Set( "cg_crosshair_strong_size", va( "%i", 32 ) );
+			trap_Cvar_Set( "cg_crosshair_strong_size", "32" );
 		cg_crosshair_strong_size->modified = qfalse;
 	}
 
@@ -451,28 +487,44 @@ void CG_DrawCrosshair( int x, int y, int align )
 		cg_crosshair_strong_color->modified = qfalse;
 	}
 
+	float scale = cgs.vidHeight * ( 1.0f / 600.0f );
+
 	if( cg_crosshair_strong->integer )
 	{
 		firedef_t *firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
 		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) // strong
 		{
+			int size = cg_crosshair_strong_size->integer * scale;
 			int sx, sy;
-			sx = CG_HorizontalAlignForWidth( x, align, cg_crosshair_strong_size->integer );
-			sy = CG_VerticalAlignForHeight( y, align, cg_crosshair_strong_size->integer );
+			sx = CG_HorizontalAlignForWidth( x, align, size );
+			sy = CG_VerticalAlignForHeight( y, align, size );
 
-			trap_R_DrawStretchPic( sx, sy, cg_crosshair_strong_size->integer, cg_crosshair_strong_size->integer,
-				0, 0, 1, 1, chColorStrong,
-				CG_MediaShader( cgs.media.shaderCrosshair[cg_crosshair_strong->integer] ) );
+			if( !touch )
+			{
+				trap_R_DrawStretchPic( sx, sy, size, size, 0, 0, 1, 1, chColorStrong,
+					CG_MediaShader( cgs.media.shaderCrosshair[cg_crosshair_strong->integer] ) );
+			}
 		}
 	}
 
 	if( cg_crosshair->integer && cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE )
 	{
-		x = CG_HorizontalAlignForWidth( x, align, cg_crosshair_size->integer );
-		y = CG_VerticalAlignForHeight( y, align, cg_crosshair_size->integer );
+		int size = cg_crosshair_size->integer * scale;
+		x = CG_HorizontalAlignForWidth( x, align, size );
+		y = CG_VerticalAlignForHeight( y, align, size );
 
-		trap_R_DrawStretchPic( x, y, cg_crosshair_size->integer, cg_crosshair_size->integer,
-			0, 0, 1, 1, chColor, CG_MediaShader( cgs.media.shaderCrosshair[cg_crosshair->integer] ) );
+		if( touch )
+		{
+			int touch_size = cg_crosshair_touch_size->integer * scale;
+			int offset = ( touch_size - size ) / 2;
+			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, x - offset, y - offset, touch_size, touch_size, true, NULL ) >= 0 )
+				cg_crosshair_zoom = !cg_crosshair_zoom;
+		}
+		else
+		{
+			trap_R_DrawStretchPic( x, y, size, size, 0, 0, 1, 1, chColor,
+				CG_MediaShader( cgs.media.shaderCrosshair[cg_crosshair->integer] ) );
+		}
 	}
 }
 
@@ -508,13 +560,22 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 }
 
 /*
+* CG_ClockUpFunc
+*/
+void CG_ClockUpFunc( int id )
+{
+	CG_ScoresOff_f();
+}
+
+/*
 * CG_DrawClock
 */
-void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color )
+void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color, bool touch )
 {
 	unsigned int clocktime, startTime, duration, curtime;
 	double seconds;
 	int minutes;
+	char string[12];
 
 	if( !cg_showTimer->integer )
 		return;
@@ -557,11 +618,27 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 	if( cg.predictedPlayerState.stats[STAT_NEXT_RESPAWN] )
 	{
 		int respawn = cg.predictedPlayerState.stats[STAT_NEXT_RESPAWN];
-		trap_SCR_DrawString( x, y, align, va( "%02i:%02i R:%02i", minutes, (int)seconds, respawn ), font, color );
+		Q_snprintfz( string, sizeof( string ), "%02i:%02i R:%02i", minutes, (int)seconds, respawn );
 	}
 	else
 	{
-		trap_SCR_DrawString( x, y, align, va( "%02i:%02i", minutes, (int)seconds ), font, color );
+		Q_snprintfz( string, sizeof( string ), "%02i:%02i", minutes, (int)seconds );
+	}
+
+	if( touch )
+	{
+		int w = trap_SCR_strWidth( string, font, 0 );
+		int h = trap_SCR_strHeight( font );
+		if( CG_TouchArea( TOUCHAREA_SCREEN_TIMER,
+			CG_HorizontalAlignForWidth( x, align, w ), CG_VerticalAlignForHeight( y, align, h ),
+			w, h, true, CG_ClockUpFunc ) >= 0 )
+		{
+			CG_ScoresOn_f();
+		}
+	}
+	else
+	{
+		trap_SCR_DrawString( x, y, align, string, font, color );
 	}
 }
 
@@ -1304,7 +1381,7 @@ void CG_Draw2DView( void )
 	}
 
 	if( cg_showHUD->integer )
-		CG_ExecuteLayoutProgram( cg.statusBar );
+		CG_ExecuteLayoutProgram( cg.statusBar, false );
 
 	if( drawScoreboard )
 		CG_DrawScoreboard();
@@ -1326,4 +1403,262 @@ void CG_Draw2D( void )
 
 	CG_Draw2DView();
 	CG_DrawDemocam2D();
+}
+
+/*
+===============================================================================
+
+TOUCH INPUT
+
+===============================================================================
+*/
+
+typedef struct {
+	bool down; // is the finger currently down?
+	int x, y; // current x and y of the touch
+	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
+	int area_x, area_y, area_x2, area_y2; // dimensions of the area to discard the touch if out of range
+	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
+	bool sticky; // if true, the touch won't be cancelled when the finger leaves the area
+	void ( *upfunc )( int id ); // function to call when the finger is released
+} cg_touch_t;
+
+static cg_touch_t cg_touches[CG_MAX_TOUCHES];
+
+typedef struct {
+	int touch;
+	int x, y;
+} cg_touchpad_t;
+
+static cg_touchpad_t cg_touchpads[TOUCHPAD_COUNT];
+
+/*
+* CG_TouchArea
+*
+* Touches a rectangle. Returns touch id if it's a new touch.
+*/
+int CG_TouchArea( int area, int x, int y, int w, int h, bool sticky, void ( *upfunc )( int id ) )
+{
+	if( ( w <= 0 ) || ( h <= 0 ) )
+		return -1;
+
+	int i;
+
+	// first check if already touched
+	for( i = 0; i < CG_MAX_TOUCHES; ++i )
+	{
+		cg_touch_t &touch = cg_touches[i];
+
+		if( touch.down && ( touch.area == area ) )
+		{
+			touch.area_valid = true;
+			return -1;
+		}
+	}
+
+	// now add a new touch
+	int x2 = x + w, y2 = y + h;
+	for( i = 0; i < CG_MAX_TOUCHES; ++i )
+	{
+		cg_touch_t &touch = cg_touches[i];
+
+		if( touch.down && ( touch.area == TOUCHAREA_NONE ) &&
+			( touch.x >= x ) && ( touch.y >= y ) && ( touch.x < x2 ) && ( touch.y < y2 ) )
+		{
+			touch.area = area;
+			touch.area_x = x;
+			touch.area_y = y;
+			touch.area_x2 = x2;
+			touch.area_y2 = y2;
+			touch.area_valid = true;
+			touch.sticky = sticky;
+			touch.upfunc = upfunc;
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+/*
+* CG_TouchEvent
+*/
+void CG_TouchEvent( int id, touchevent_t type, int x, int y )
+{
+	if( id >= CG_MAX_TOUCHES )
+		return;
+
+	cg_touch_t &touch = cg_touches[id];
+
+	switch( type )
+	{
+	case TOUCH_DOWN:
+	case TOUCH_MOVE:
+		touch.x = x;
+		touch.y = y;
+		if( !touch.down )
+		{
+			touch.down = true;
+			touch.area = TOUCHAREA_NONE;
+		}
+		else if( ( touch.area != TOUCHAREA_NONE ) && !touch.sticky )
+		{
+			if( ( x < touch.area_x ) || ( y < touch.area_y ) || ( x >= touch.area_x2 ) || ( y >= touch.area_y2 ) )
+			{
+				if( touch.upfunc )
+					touch.upfunc( id );
+				touch.area = TOUCHAREA_NONE;
+			}
+		}
+		break;
+
+	case TOUCH_UP:
+	case TOUCH_CANCEL:
+		if( touch.down )
+		{
+			touch.down = false;
+			if( ( touch.area != TOUCHAREA_NONE ) && touch.upfunc )
+				touch.upfunc( id );
+		}
+		break;
+	}
+}
+
+/*
+* CG_TouchFrame
+*/
+void CG_TouchFrame( qboolean active )
+{
+	int i;
+
+	if( !cg.view.draw2D || !cg_showHUD->integer )
+		active = qfalse;
+
+	for( i = 0; i < CG_MAX_TOUCHES; ++i )
+	{
+		cg_touches[i].area_valid = false;
+	}
+	
+	if( active )
+		CG_ExecuteLayoutProgram( cg.statusBar, true );
+
+	// cancel non-existent areas
+	for( i = 0; i < CG_MAX_TOUCHES; ++i )
+	{
+		cg_touch_t &touch = cg_touches[i];
+		if( touch.down )
+		{
+			if( ( touch.area != TOUCHAREA_NONE ) && !touch.area_valid )
+			{
+				if( touch.upfunc )
+					touch.upfunc( i );
+				touch.area = TOUCHAREA_NONE;
+			}
+			if( !active )
+				touch.down = false;
+		}
+	}
+}
+
+/*
+* CG_TouchMove
+*/
+void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
+{
+	int buttons, upmove;
+	CG_GetHUDTouchButtons( buttons, upmove );
+
+	cmd->buttons |= buttons;
+	if( cg_crosshair_zoom )
+		cmd->buttons |= BUTTON_ZOOM;
+
+	if( frametime )
+	{
+		float scale = 600.0f / ( float )cgs.vidHeight;
+
+		cg_touchpad_t &movepad = cg_touchpads[TOUCHPAD_MOVE];
+		if( movepad.touch >= 0 )
+		{
+			if( cg_touch_moveThreshold->modified )
+			{
+				if( cg_touch_moveThreshold->integer < 0 )
+					trap_Cvar_Set( "cg_touch_moveThreshold", "12" );
+				cg_touch_moveThreshold->modified = qfalse;
+			}
+			if( cg_touch_strafeThreshold->modified )
+			{
+				if( cg_touch_strafeThreshold->integer < 0 )
+					trap_Cvar_Set( "cg_touch_strafeThreshold", "12" );
+				cg_touch_strafeThreshold->modified = qfalse;
+			}
+
+			cg_touch_t &touch = cg_touches[movepad.touch];
+
+			int move = movepad.y - touch.y;
+			if( abs( move * scale ) > cg_touch_moveThreshold->integer )
+				cmd->forwardmove += ( move < 0 ) ? -frametime : frametime;
+
+			move = touch.x - movepad.x;
+			if( abs( move * scale ) > cg_touch_strafeThreshold->integer )
+				cmd->sidemove += ( move < 0 ) ? -frametime : frametime;
+		}
+
+		cg_touchpad_t &viewpad = cg_touchpads[TOUCHPAD_VIEW];
+		if( viewpad.touch >= 0 )
+		{
+			if( cg_touch_pitchThreshold->modified )
+			{
+				if( cg_touch_pitchThreshold->integer < 0 )
+					trap_Cvar_Set( "cg_touch_pitchThreshold", "12" );
+				cg_touch_pitchThreshold->modified = qfalse;
+			}
+			if( cg_touch_yawThreshold->modified )
+			{
+				if( cg_touch_yawThreshold->integer < 0 )
+					trap_Cvar_Set( "cg_touch_yawThreshold", "8" );
+				cg_touch_yawThreshold->modified = qfalse;
+			}
+
+			float sensScale;
+			if( !cgs.demoPlaying && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) )
+				sensScale = cg.predictedPlayerState.fov / cgs.clientInfo[cgs.playerNum].fov;
+			else
+				sensScale = 1.0f;
+
+			cg_touch_t &touch = cg_touches[viewpad.touch];
+
+			float angle = ( touch.y - viewpad.y ) * scale;
+			if( fabs( angle ) > cg_touch_pitchThreshold->value )
+			{
+				angle -= cg_touch_pitchThreshold->value * ( angle < 0.0f ? -1.0f : 1.0f );
+				viewangles[PITCH] += angle * cg_touch_pitchSpeed->value * sensScale * ( float )frametime * 0.001f;
+			}
+
+			angle = ( viewpad.x - touch.x ) * scale;
+			if( fabs( angle ) > cg_touch_yawThreshold->value )
+			{
+				angle -= cg_touch_yawThreshold->value * ( angle < 0.0f ? -1.0f : 1.0f );
+				viewangles[YAW] += angle * cg_touch_yawSpeed->value * sensScale * ( float )frametime * 0.001f;
+			}
+		}
+
+		cmd->upmove += upmove * frametime;
+	}
+}
+
+/*
+* CG_SetTouchpad
+*/
+void CG_SetTouchpad( int padID, int touchID )
+{
+	cg_touchpad_t &pad = cg_touchpads[padID];
+
+	pad.touch = touchID;
+
+	if( touchID >= 0 )
+	{
+		cg_touch_t &touch = cg_touches[touchID];
+		pad.x = touch.x;
+		pad.y = touch.y;
+	}
 }
