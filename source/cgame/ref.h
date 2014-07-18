@@ -83,6 +83,8 @@ typedef struct poly_s
 	vec4_t *normals;
 	vec2_t *stcoords;
 	byte_vec4_t *colors;
+	int numelems;
+	unsigned short *elems;
 	struct shader_s	*shader;
 	int fognum;
 } poly_t;

@@ -122,6 +122,8 @@ void R_AddLightToScene( const vec3_t org, float intensity, float r, float g, flo
 */
 void R_AddPolyToScene( const poly_t *poly )
 {
+	assert( sizeof( *poly->elems ) == sizeof( elem_t ) );
+
 	if( ( rsc.numPolys < MAX_POLYS ) && poly && poly->numverts )
 	{
 		drawSurfacePoly_t *dp = &rsc.polys[rsc.numPolys];
@@ -138,6 +140,8 @@ void R_AddPolyToScene( const poly_t *poly )
 		dp->normalsArray = poly->normals;
 		dp->stArray = poly->stcoords;
 		dp->colorsArray = poly->colors;
+		dp->numElems = poly->numelems;
+		dp->elems = ( elem_t * )poly->elems;
 		dp->fogNum = poly->fognum;
 
 		// if fogNum is unset, we need to find the volume for polygon bounds

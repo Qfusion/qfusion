@@ -532,7 +532,7 @@ void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset
 	int i;
 	int numTris = numElems / 3;
 
-	for( i = 2; i < numTris; i++, inelems += 3, outelems += 3 ) {
+	for( i = 0; i < numTris; i++, inelems += 3, outelems += 3 ) {
 		outelems[0] = vertsOffset + inelems[0];
 		outelems[1] = vertsOffset + inelems[1];
 		outelems[2] = vertsOffset + inelems[2];

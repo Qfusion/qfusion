@@ -194,6 +194,9 @@ poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex
 		poly->colors[i][3] = vertices[i].colour.alpha;
 	}
 
+	for( i = 0; i < num_indices; i++ )
+		poly->elems[i] = indices[i];
+
 	poly->shader = ( texture == 0 ? whiteShader : ( shader_t* )texture );
 
 	return poly;

@@ -30,11 +30,13 @@ void PolyAllocator::assignPointers( poly_t *p, unsigned char *b )
 	p->normals = ( vec4_t* )( p->verts + p->numverts );
 	p->stcoords = ( vec2_t* )( p->normals + p->numverts );
 	p->colors = ( byte_vec4_t* )( p->stcoords + p->numverts );
+	p->elems = ( unsigned short* )( p->colors + p->numverts );
 }
 
 size_t PolyAllocator::sizeForPolyData( int numverts, int numelems )
 {
-	return numverts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) + sizeof( byte_vec4_t ) );
+	return numverts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) + sizeof( byte_vec4_t ) ) +
+		numelems * sizeof( unsigned short );
 }
 
 poly_t *PolyAllocator::get_temp( int numverts, int numelems )
@@ -53,6 +55,7 @@ poly_t *PolyAllocator::get_temp( int numverts, int numelems )
 	}
 
 	poly_temp.numverts = numverts;
+	poly_temp.numelems = numelems;
 	assignPointers( &poly_temp, base_temp );
 	return &poly_temp;
 }
@@ -66,6 +69,7 @@ poly_t *PolyAllocator::alloc( int numverts, int numelems )
 
 	poly_t *poly = ( poly_t * )base;
 	poly->numverts = numverts;
+	poly->numelems = numelems;
 	assignPointers( poly, base + sizeof( poly_t ) );
 	return poly;
 }
