@@ -555,7 +555,7 @@ qboolean	R_ScissorForEntity( const entity_t *ent, vec3_t mins, vec3_t maxs, int 
 
 void		R_AddDebugBounds( const vec3_t mins, const vec3_t maxs );
 
-void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset );
+void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset, qboolean quad );
 void		R_EndStretchBatch( void );
 void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, const shader_t *shader );

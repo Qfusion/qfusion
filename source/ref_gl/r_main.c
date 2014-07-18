@@ -584,7 +584,7 @@ static void R_ResetStretchPic( void )
 /*
 * R_BeginStretchBatch
 */
-void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset )
+void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset, qboolean quad )
 {
 	if( pic_mbuffer_shader != shader
 		|| x_offset != pic_x_offset || y_offset != pic_y_offset ) {
@@ -605,7 +605,7 @@ void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset
 
 		RB_BindShader( NULL, shader, NULL );
 
-		RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
+		RB_BindVBO( quad ? RB_VBO_STREAM_QUAD : RB_VBO_STREAM, GL_TRIANGLES );
 
 		RB_BeginBatch();
 	}
@@ -697,7 +697,7 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		return;
 	}
 
-	R_BeginStretchBatch( shader, 0, 0 );
+	R_BeginStretchBatch( shader, 0, 0, qtrue );
 
 	// lower-left
 	Vector2Set( pic_xyz[0], x, y );

@@ -83,6 +83,8 @@ typedef struct
 	vec4_t *normalsArray;
 	vec2_t *stArray;
 	byte_vec4_t *colorsArray;
+	int numElems;
+	elem_t *elems;
 	struct shader_s	*shader;
 	int fogNum;
 } drawSurfacePoly_t;

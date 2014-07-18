@@ -38,9 +38,8 @@ void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 {
 	mesh_t mesh;
 
-	// backend knows how to count elements for quads
-	mesh.elems = NULL;
-	mesh.numElems = 0;
+	mesh.elems = poly->elems;
+	mesh.numElems = poly->numElems;
 	mesh.numVerts = poly->numVerts;
 	mesh.xyzArray = poly->xyzArray;
 	mesh.normalsArray = poly->normalsArray;
@@ -86,11 +85,13 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 {
 	mesh_t mesh;
 
+	assert( sizeof( *poly->elems ) == sizeof( elem_t ) );
+
 	if( !poly || !poly->shader ) {
 		return;
 	}
 
-	R_BeginStretchBatch( poly->shader, x_offset, y_offset );
+	R_BeginStretchBatch( poly->shader, x_offset, y_offset, !poly->elems ? qtrue : qfalse );
 
 	memset( &mesh, 0, sizeof( mesh ) );
 	mesh.numVerts = poly->numverts;
@@ -98,6 +99,8 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 	mesh.normalsArray = poly->normals;
 	mesh.stArray = poly->stcoords;
 	mesh.colorsArray[0] = poly->colors;
+	mesh.numElems = poly->numelems;
+	mesh.elems = ( elem_t * )poly->elems;
 
 	RB_BatchMesh( &mesh );
 }
