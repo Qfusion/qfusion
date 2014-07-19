@@ -713,9 +713,15 @@ static void RB_UpdateCommonUniforms( int program, const shaderpass_t *pass, mat4
 	vec3_t tmp;
 	vec2_t blendMix = { 0, 0 };
 
-	VectorCopy( e->origin, entOrigin );
-	VectorSubtract( rb.cameraOrigin, e->origin, tmp );
-	Matrix3_TransformVector( e->axis, tmp, entDist );
+	// the logic here should match R_TransformForEntity
+	if( e->rtype != RT_MODEL ) {
+		VectorClear( entOrigin );
+		VectorCopy( rb.cameraOrigin, entDist );
+	} else {
+		VectorCopy( e->origin, entOrigin );
+		VectorSubtract( rb.cameraOrigin, e->origin, tmp );
+		Matrix3_TransformVector( e->axis, tmp, entDist );
+	}
 
 	// calculate constant color
 	RB_GetShaderpassColor( pass, constColor );
