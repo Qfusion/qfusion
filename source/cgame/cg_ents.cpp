@@ -574,11 +574,12 @@ void CG_DrawEntityBox( centity_t *cent )
 */
 static void CG_EntAddBobEffect( centity_t *cent )
 {
-	static float scale;
-	static float bob;
+	double scale;
+	double bob;
 
-	scale = 0.005f + cent->current.number * 0.00001f;
+	scale = 0.005 + cent->current.number * 0.00001;
 	bob = 4 + cos( ( cg.time + 1000 ) * scale ) * 4;
+
 	cent->ent.origin2[2] += bob;
 	cent->ent.origin[2] += bob;
 	cent->ent.lightingOrigin[2] += bob;
