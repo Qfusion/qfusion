@@ -1523,7 +1523,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(int, 
 	char *pathname = image->name;
 	size_t pathsize = image->name_size;
 	size_t len = strlen( pathname );
-	const char *extension = "";
+	const char *extension = ".tga";
 	int width = 1, height = 1, samples = 1;
 
 	if( R_LoadKTX( ctx, image, bind ) )
