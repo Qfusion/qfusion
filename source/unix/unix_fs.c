@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/stat.h>
 
 // Mac OS X and FreeBSD don't know the readdir64 and dirent64
-#if ( defined (__FreeBSD__) || !defined(_LARGEFILE64_SOURCE) )
+#if ( defined (__FreeBSD__) || defined (__ANDROID__) || !defined(_LARGEFILE64_SOURCE) )
 #define readdir64 readdir
 #define dirent64 dirent
 #endif
@@ -200,6 +200,7 @@ void Sys_FS_FindClose( void )
 */
 const char *Sys_FS_GetHomeDirectory( void )
 {
+#ifndef __ANDROID__
 	static char home[PATH_MAX] = { '\0' };
 	const char *homeEnv;
 
@@ -217,6 +218,10 @@ const char *Sys_FS_GetHomeDirectory( void )
 		( (const char *)APPLICATION ) + 1, APP_VERSION_MAJOR, APP_VERSION_MINOR );
 #endif
 	return home;
+
+#else
+	return NULL;
+#endif
 }
 
 /*
