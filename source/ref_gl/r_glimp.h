@@ -224,6 +224,7 @@ typedef struct
 					,maxTextureCubemapSize
 					,maxTextureSize3D
 					,maxTextureFilterAnisotropic
+					,maxRenderbufferSize
 					,maxVaryingFloats
 					,maxVertexUniformComponents
 					,maxVertexAttribs
