@@ -1295,7 +1295,6 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( int, const i
 	qboolean swapEndian;
 	qbyte *data;
 
-	COM_ReplaceExtension( image->name, ".ktx", image->name_size );
 	R_LoadFile( image->name, ( void ** )&buffer );
 	if( !buffer )
 		return qfalse;
@@ -1530,11 +1529,12 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(int, 
 	char *pathname = image->name;
 	size_t pathsize = image->name_size;
 	size_t len = strlen( pathname );
-	const char *extension = ".tga";
 	int width = 1, height = 1, samples = 1;
-
+	
+	Q_strncatz( pathname, ".ktx", pathsize );
 	if( R_LoadKTX( ctx, image, bind ) )
 		return qtrue;
+	pathname[len] = 0;
 
 	if( flags & IT_CUBEMAP )
 	{
@@ -1564,7 +1564,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(int, 
 				pathname[len+2] = cubemapSides[i][j].suf[1];
 				pathname[len+3] = 0;
 
-				Q_strncatz( pathname, extension, pathsize );
+				Q_strncatz( pathname, ".tga", pathsize );
 				samples = R_ReadImageFromDisk( ctx, pathname, pathsize, 
 					&(pic[j]), &width, &height, &flags, j );
 				if( pic[j] )
@@ -1627,7 +1627,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(int, 
 	{
 		qbyte *pic = NULL;
 
-		Q_strncatz( pathname, extension, pathsize );
+		Q_strncatz( pathname, ".tga", pathsize );
 		samples = R_ReadImageFromDisk( ctx, pathname, pathsize, &pic, &width, &height, &flags, 0 );
 
 		if( pic )
