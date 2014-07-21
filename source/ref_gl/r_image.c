@@ -469,9 +469,16 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 */
 static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scaledHeight, int flags, int mips, qboolean forceNPOT )
 {
+	int maxSize;
 	int mip = 0;
-	int maxSize = ( flags & IT_CUBEMAP ) ? glConfig.maxTextureCubemapSize : glConfig.maxTextureSize;
 	int clampedWidth, clampedHeight;
+
+	if( flags & IT_DEPTHRB )
+		maxSize = glConfig.maxRenderbufferSize;
+	else if( flags & IT_CUBEMAP )
+		maxSize = glConfig.maxTextureCubemapSize;
+	else
+		maxSize = glConfig.maxTextureSize;
 
 	if( !glConfig.ext.texture_non_power_of_two && !forceNPOT )
 	{
@@ -2154,14 +2161,14 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples )
 * R_GetViewportTextureSize
 */
 static void R_GetViewportTextureSize( const int viewportWidth, const int viewportHeight, 
-	const int size, int *width, int *height )
+	const int size, const int flags, int *width, int *height )
 {
 	int limit;
 	int width_, height_;
 
 	// limit the texture size to either screen resolution in case we can't use FBO
 	// or hardware limits and ensure it's a POW2-texture if we don't support such textures
-	limit = glConfig.maxTextureSize;
+	limit = flags & IT_DEPTHRB ? glConfig.maxRenderbufferSize : glConfig.maxTextureSize;
 	if( size )
 		limit = min( limit, size );
 	if( limit < 1 )
@@ -2212,7 +2219,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 		return;
 	}
 
-	R_GetViewportTextureSize( viewportWidth, viewportHeight, size, &width, &height );
+	R_GetViewportTextureSize( viewportWidth, viewportHeight, size, flags, &width, &height );
 
 	// create a new texture or update the old one
 	if( !( *texture ) || ( *texture )->width != width || ( *texture )->height != height )
@@ -2262,7 +2269,7 @@ static int R_GetPortalTextureId( const int viewportWidth, const int viewportHeig
 	image_t *image;
 
 	R_GetViewportTextureSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
-		&realwidth, &realheight );
+		flags, &realwidth, &realheight );
 
 	for( i = 0; i < MAX_PORTAL_TEXTURES; i++ )
 	{

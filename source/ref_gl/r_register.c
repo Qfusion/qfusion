@@ -737,6 +737,7 @@ static void R_FinalizeGLExtensions( void )
 	qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );
 	if( glConfig.maxTextureSize <= 0 )
 		glConfig.maxTextureSize = 256;
+	glConfig.maxTextureSize = 1 << Q_log2( glConfig.maxTextureSize );
 
 	ri.Cvar_Get( "gl_max_texture_size", "0", CVAR_READONLY );
 	ri.Cvar_ForceSet( "gl_max_texture_size", va( "%i", glConfig.maxTextureSize ) );
@@ -764,6 +765,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.maxTextureCubemapSize = 0;
 	if( glConfig.ext.texture_cube_map )
 		qglGetIntegerv( GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, &glConfig.maxTextureCubemapSize );
+	glConfig.maxTextureCubemapSize = 1 << Q_log2( glConfig.maxTextureCubemapSize );
 #ifndef GL_ES_VERSION_2_0
 	if( glConfig.maxTextureCubemapSize <= 1 )
 	{
@@ -778,10 +780,18 @@ static void R_FinalizeGLExtensions( void )
 	clamp( glConfig.maxTextureUnits, 1, MAX_TEXTURE_UNITS );
 
 	/* GL_EXT_framebuffer_object */
+	glConfig.maxRenderbufferSize = 0;
+	if( glConfig.ext.framebuffer_object )
+	{
+		qglGetIntegerv( GL_MAX_RENDERBUFFER_SIZE_EXT, &glConfig.maxRenderbufferSize );
+		glConfig.maxRenderbufferSize = 1 << Q_log2( glConfig.maxRenderbufferSize );
+		if( glConfig.maxRenderbufferSize > glConfig.maxTextureSize )
+			glConfig.maxRenderbufferSize = glConfig.maxTextureSize;
 #ifndef GL_ES_VERSION_2_0
-	glConfig.ext.depth24 = glConfig.ext.framebuffer_object;
-	glConfig.ext.rgb8_rgba8 = glConfig.ext.framebuffer_object;
+		glConfig.ext.depth24 = qtrue;
+		glConfig.ext.rgb8_rgba8 = qtrue;
 #endif
+	}
 
 	/* GL_EXT_texture_filter_anisotropic */
 	glConfig.maxTextureFilterAnisotropic = 0;
@@ -1098,6 +1108,7 @@ static void R_GfxInfo_f( void )
 		Com_Printf( "GL_MAX_CUBE_MAP_TEXTURE_SIZE: %i\n", glConfig.maxTextureCubemapSize );
 	if( glConfig.ext.texture_filter_anisotropic )
 		Com_Printf( "GL_MAX_TEXTURE_MAX_ANISOTROPY: %i\n", glConfig.maxTextureFilterAnisotropic );
+	Com_Printf( "GL_MAX_RENDERBUFFER_SIZE: %i\n", glConfig.maxRenderbufferSize );
 	Com_Printf( "GL_MAX_VARYING_FLOATS: %i\n", glConfig.maxVaryingFloats );
 	Com_Printf( "GL_MAX_VERTEX_UNIFORM_COMPONENTS: %i\n", glConfig.maxVertexUniformComponents );
 	Com_Printf( "GL_MAX_VERTEX_ATTRIBS: %i\n", glConfig.maxVertexAttribs );
