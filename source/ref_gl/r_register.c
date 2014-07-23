@@ -71,6 +71,9 @@ cvar_t *r_offsetmapping;
 cvar_t *r_offsetmapping_scale;
 cvar_t *r_offsetmapping_reliefmapping;
 
+cvar_t *r_polygon_offset_factor;
+cvar_t *r_polygon_offset_units;
+
 cvar_t *r_shadows;
 cvar_t *r_shadows_alpha;
 cvar_t *r_shadows_nudge;
@@ -79,6 +82,8 @@ cvar_t *r_shadows_maxtexsize;
 cvar_t *r_shadows_pcf;
 cvar_t *r_shadows_self_shadow;
 cvar_t *r_shadows_dither;
+cvar_t *r_shadows_polygon_offset_factor;
+cvar_t *r_shadows_polygon_offset_units;
 
 cvar_t *r_outlines_world;
 cvar_t *r_outlines_scale;
@@ -1012,6 +1017,9 @@ static void R_Register( const char *screenshotsPrefix )
 	r_offsetmapping_scale = ri.Cvar_Get( "r_offsetmapping_scale", "0.02", CVAR_ARCHIVE );
 	r_offsetmapping_reliefmapping = ri.Cvar_Get( "r_offsetmapping_reliefmapping", "0", CVAR_ARCHIVE );
 
+	r_polygon_offset_factor = ri.Cvar_Get( "r_polygon_offset_factor", "-1", CVAR_ARCHIVE );
+	r_polygon_offset_units = ri.Cvar_Get( "r_polygon_offset_units", "-2", CVAR_ARCHIVE );
+
 #ifdef CGAMEGETLIGHTORIGIN
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
 #else
@@ -1024,6 +1032,8 @@ static void R_Register( const char *screenshotsPrefix )
 	r_shadows_pcf = ri.Cvar_Get( "r_shadows_pcf", "4", CVAR_ARCHIVE );
 	r_shadows_self_shadow = ri.Cvar_Get( "r_shadows_self_shadow", "0", CVAR_ARCHIVE );
 	r_shadows_dither = ri.Cvar_Get( "r_shadows_dither", "0", CVAR_ARCHIVE );
+	r_shadows_polygon_offset_factor = ri.Cvar_Get( "r_shadows_polygon_offset_factor", "4", CVAR_ARCHIVE );
+	r_shadows_polygon_offset_units = ri.Cvar_Get( "r_shadows_polygon_offset_units", "1", CVAR_ARCHIVE );
 
 	r_outlines_world = ri.Cvar_Get( "r_outlines_world", "1.8", CVAR_ARCHIVE );
 	r_outlines_scale = ri.Cvar_Get( "r_outlines_scale", "1", CVAR_ARCHIVE );
