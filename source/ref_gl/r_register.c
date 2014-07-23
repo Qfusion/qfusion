@@ -1018,7 +1018,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_offsetmapping_reliefmapping = ri.Cvar_Get( "r_offsetmapping_reliefmapping", "0", CVAR_ARCHIVE );
 
 	r_polygon_offset_factor = ri.Cvar_Get( "r_polygon_offset_factor", "-1", CVAR_ARCHIVE );
-	r_polygon_offset_units = ri.Cvar_Get( "r_polygon_offset_units", "-2", CVAR_ARCHIVE );
+	r_polygon_offset_units = ri.Cvar_Get( "r_polygon_offset_units", "-1", CVAR_ARCHIVE );
 
 #ifdef CGAMEGETLIGHTORIGIN
 	r_shadows = ri.Cvar_Get( "cg_shadows", "1", CVAR_ARCHIVE );
