@@ -179,6 +179,7 @@ typedef struct
 				,meminfo
 				,framebuffer_blit
 				,depth24
+				,depth_nonlinear
 				,multiview_draw_buffers
 				,get_program_binary
 				,rgb8_rgba8

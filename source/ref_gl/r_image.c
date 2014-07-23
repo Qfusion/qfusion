@@ -926,7 +926,16 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 	if( flags & IT_DEPTH )
 	{
 		comp = format = GL_DEPTH_COMPONENT;
-		type = glConfig.ext.depth24 ? GL_UNSIGNED_INT : GL_UNSIGNED_SHORT;
+		if( glConfig.ext.depth24 )
+		{
+			type = GL_UNSIGNED_INT;
+		}
+		else
+		{
+			type = GL_UNSIGNED_SHORT;
+			if( glConfig.ext.depth_nonlinear )
+				comp = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
+		}
 	}
 	else if( flags & IT_FRAMEBUFFER )
 	{

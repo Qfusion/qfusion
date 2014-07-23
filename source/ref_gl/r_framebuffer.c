@@ -121,6 +121,8 @@ found:
 
 	if( depthRB )
 	{
+		int format;
+
 		qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
 		qglGenRenderbuffersEXT( 1, &rbID );
@@ -128,7 +130,13 @@ found:
 
 		// setup 24bit depth buffer for render-to-texture
 		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, fbo->renderBufferAttachment );
-		qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, glConfig.ext.depth24 ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16, width, height );
+		if( glConfig.ext.depth24 )
+			format = GL_DEPTH_COMPONENT24;
+		else if( glConfig.ext.depth_nonlinear )
+			format = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
+		else
+			format = GL_DEPTH_COMPONENT16;
+		qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
 		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
 
 		// attach depth renderbuffer

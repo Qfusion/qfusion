@@ -493,6 +493,23 @@ typedef unsigned short GLhalfARB;
 #define GL_MAX_ELEMENT_INDEX								0x8D6B
 #endif
 
+/* GL_NV_depth_nonlinear */
+#ifndef GL_NV_depth_nonlinear
+#define GL_NV_depth_nonlinear
+
+#define GL_DEPTH_COMPONENT16_NONLINEAR_NV					0x8E2C
+#define EGL_DEPTH_ENCODING_NV								0x30E2
+#define EGL_DEPTH_ENCODING_NONE_NV							0
+#define EGL_DEPTH_ENCODING_NONLINEAR_NV						0x30E3
+#endif
+
+/* EGL_EXT_multiview_window */
+#ifndef EGL_EXT_multiview_window
+#define EGL_EXT_multiview_window
+
+#define EGL_MULTIVIEW_VIEW_COUNT_EXT						0x3134
+#endif
+
 #endif // QGL_H
 
 #ifndef APIENTRY
