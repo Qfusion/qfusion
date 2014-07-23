@@ -162,31 +162,20 @@ static void RB_SetGLDefaults( void )
 /*
 * RB_DepthRange
 */
-void RB_DepthRange( float depthmin, float depthmax, float depthoffset )
+void RB_DepthRange( float depthmin, float depthmax )
 {
-	clamp( depthmin, 0.0f, 1.0f );
-	clamp( depthmax, 0.0f, 1.0f );
-	if( ( rb.gl.depthmin == depthmin ) && ( rb.gl.depthmax == depthmax ) && ( rb.gl.depthoffset == depthoffset ) )
-		return;
-
-	rb.gl.depthmin = depthmin;
-	rb.gl.depthmax = depthmax;
-	rb.gl.depthoffset = depthoffset;
-
-	depthmax -= depthoffset;
-	clamp( depthmax, 0.0f, 1.0f );
-
-	qglDepthRange( depthmin, depthmax );
+	rb.gl.depthmin = bound( 0, depthmin, 1 );
+	rb.gl.depthmax = bound( 0, depthmax, 1 );
+	qglDepthRange( rb.gl.depthmin, rb.gl.depthmax );
 }
 
 /*
 * RB_GetDepthRange
 */
-void RB_GetDepthRange( float* depthmin, float *depthmax, float *depthoffset )
+void RB_GetDepthRange( float* depthmin, float *depthmax )
 {
 	*depthmin = rb.gl.depthmin;
 	*depthmax = rb.gl.depthmax;
-	*depthoffset = rb.gl.depthoffset;
 }
 
 /*
@@ -525,7 +514,7 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 
 	qglClear( bits );
 
-	RB_DepthRange( 0.0f, 1.0f, 0.0f );
+	RB_DepthRange( 0.0f, 1.0f );
 }
 
 /*
