@@ -156,23 +156,30 @@ void RocketModule::keyEvent( int key, bool pressed )
 	}
 	else
 	{
+		Element *element = context->GetFocusElement();
+
 		// send the blur event, to the current focused element,
 		// when ESC key is pressed
-		if( key == K_ESCAPE )
+		if( ( key == K_ESCAPE ) && element )
+			element->Blur();
+
+		if( pressed && element && ( element->GetTagName() == "keyselect" ) )
 		{
-			Element* element = context->GetFocusElement();
-			if( element )
-				element->Blur();
+			Rocket::Core::Dictionary parameters;
+			parameters.Set( "key", key );
+			element->DispatchEvent( "keyselect", parameters );
 		}
-
-		int rkey = keyconv.toRocketKey( key );
-
-		if( rkey != 0 )
+		else
 		{
-			if( pressed )
-				context->ProcessKeyDown( Rocket::Core::Input::KeyIdentifier( rkey ), keyconv.getModifiers() );
-			else
-				context->ProcessKeyUp( Rocket::Core::Input::KeyIdentifier( rkey ), keyconv.getModifiers() );
+			int rkey = keyconv.toRocketKey( key );
+
+			if( rkey != 0 )
+			{
+				if( pressed )
+					context->ProcessKeyDown( Rocket::Core::Input::KeyIdentifier( rkey ), keyconv.getModifiers() );
+				else
+					context->ProcessKeyUp( Rocket::Core::Input::KeyIdentifier( rkey ), keyconv.getModifiers() );
+			}
 		}
 	}
 }
