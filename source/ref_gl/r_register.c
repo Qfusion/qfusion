@@ -997,7 +997,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
 	r_portalonly = ri.Cvar_Get( "r_portalonly", "0", 0 );
 	r_portalmaps = ri.Cvar_Get( "r_portalmaps", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_portalmaps_maxtexsize = ri.Cvar_Get( "r_portalmaps_maxtexsize", "1024", CVAR_ARCHIVE );
+	r_portalmaps_maxtexsize = ri.Cvar_Get( "r_portalmaps_maxtexsize", "256", CVAR_ARCHIVE );
 
 	r_lighting_bumpscale = ri.Cvar_Get( "r_lighting_bumpscale", "8", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_deluxemapping = ri.Cvar_Get( "r_lighting_deluxemapping", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
@@ -1029,7 +1029,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_shadows_nudge = ri.Cvar_Get( "r_shadows_nudge", "1", CVAR_ARCHIVE );
 	r_shadows_projection_distance = ri.Cvar_Get( "r_shadows_projection_distance", "128", CVAR_CHEAT );
 	r_shadows_maxtexsize = ri.Cvar_Get( "r_shadows_maxtexsize", "128", CVAR_ARCHIVE );
-	r_shadows_pcf = ri.Cvar_Get( "r_shadows_pcf", "4", CVAR_ARCHIVE );
+	r_shadows_pcf = ri.Cvar_Get( "r_shadows_pcf", "1", CVAR_ARCHIVE );
 	r_shadows_self_shadow = ri.Cvar_Get( "r_shadows_self_shadow", "0", CVAR_ARCHIVE );
 	r_shadows_dither = ri.Cvar_Get( "r_shadows_dither", "0", CVAR_ARCHIVE );
 	r_shadows_polygon_offset_factor = ri.Cvar_Get( "r_shadows_polygon_offset_factor", "4", CVAR_ARCHIVE );
