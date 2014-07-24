@@ -239,6 +239,15 @@ using namespace Rocket::Core;
 				}
 				return;
 			}
+			else if( event == "keyselect" )
+			{
+				key = event.GetParameter< int >( "key", 0 );
+				if( key != K_ESCAPE ) {
+					this->SetKeybind( key );
+					event.StopPropagation();
+				}
+				return;
+			}
 			else if( event == "textinput" )
 			{
 				// not supported yet
