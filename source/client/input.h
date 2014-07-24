@@ -25,7 +25,7 @@ void IN_Restart( void );
 
 void IN_Commands( void ); // opportunity for devices to stick commands on the script buffer
 void IN_MouseMove( usercmd_t *cmd );
-void IN_JoyMove( usercmd_t *cmd );
+void IN_JoyMove( usercmd_t *cmd, int frametime );
 
 void IN_Frame( void );
 void IN_Activate( qboolean active );

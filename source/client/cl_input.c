@@ -649,7 +649,7 @@ void CL_UpdateCommandInput( void )
 
 		CL_AddAnglesFromKeys( keys_frame_time );
 		CL_AddMovementFromKeys( &cmd->forwardmove, &cmd->sidemove, &cmd->upmove, keys_frame_time );
-		IN_JoyMove( cmd );
+		IN_JoyMove( cmd, keys_frame_time );
 		old_keys_frame_time = sys_frame_time;
 	}
 

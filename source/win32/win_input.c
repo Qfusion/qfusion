@@ -1397,13 +1397,13 @@ static qboolean IN_ReadJoystick( void )
 /*
 * IN_JoyMove
 */
-void IN_JoyMove( usercmd_t *cmd )
+void IN_JoyMove( usercmd_t *cmd, int frametime )
 {
 	float speed, aspeed;
 	float fAxisValue;
 	int i;
 
-	if( !ActiveApp )
+	if( !ActiveApp || !frametime )
 		return;
 
 	// complete initialization if first time in
@@ -1428,7 +1428,7 @@ void IN_JoyMove( usercmd_t *cmd )
 	//else
 	speed = 1;
 	//aspeed = speed * cls.frametime;
-	aspeed =  cls.frametime;
+	aspeed = frametime * 0.001f;
 
 	// loop through the axes
 	for( i = 0; i < JOY_MAX_AXES; i++ )
@@ -1461,18 +1461,18 @@ void IN_JoyMove( usercmd_t *cmd )
 			{
 				// user wants forward control to be forward control
 				if( fabs( fAxisValue ) > joy_forwardthreshold->value )
-					cmd->forwardmove += ( fAxisValue * joy_forwardsensitivity->value ) * speed * JOY_SPEED_KEY;
+					cmd->forwardmove += ( fAxisValue * joy_forwardsensitivity->value ) * speed * frametime;
 			}
 			break;
 
 		case AxisSide:
 			if( fabs( fAxisValue ) > joy_sidethreshold->value )
-				cmd->sidemove += ( fAxisValue * joy_sidesensitivity->value ) * speed * JOY_SPEED_KEY;
+				cmd->sidemove += ( fAxisValue * joy_sidesensitivity->value ) * speed * frametime;
 			break;
 
 		case AxisUp:
 			if( fabs( fAxisValue ) > joy_upthreshold->value )
-				cmd->upmove += ( fAxisValue * joy_upsensitivity->value ) * speed * JOY_SPEED_KEY;
+				cmd->upmove += ( fAxisValue * joy_upsensitivity->value ) * speed * frametime;
 			break;
 
 		case AxisTurn:
@@ -1480,7 +1480,7 @@ void IN_JoyMove( usercmd_t *cmd )
 			{
 				// user wants turn control to become side control
 				if( fabs( fAxisValue ) > joy_sidethreshold->value )
-					cmd->sidemove -= ( fAxisValue * joy_sidesensitivity->value ) * speed * JOY_SPEED_KEY;
+					cmd->sidemove -= ( fAxisValue * joy_sidesensitivity->value ) * speed * frametime;
 			}
 			else
 			{
