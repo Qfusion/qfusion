@@ -30,7 +30,7 @@ typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   66
+#define	CGAME_API_VERSION   67
 
 //
 // structs and variables shared with the main engine
@@ -272,7 +272,7 @@ typedef struct
 
 	void ( *GetEntitySpatilization )( int entNum, vec3_t origin, vec3_t velocity );
 
-	float ( *SetSensitivityScale )( const float sens );
+	float ( *SetSensitivityScale )( float sens, float zoomSens );
 
 	void ( *Trace )( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask );
 

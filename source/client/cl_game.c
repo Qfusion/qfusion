@@ -636,10 +636,10 @@ void CL_GameModule_ConfigString( int number, const char *value )
 /*
 * CL_GameModule_SetSensitivityScale
 */
-float CL_GameModule_SetSensitivityScale( const float sens )
+float CL_GameModule_SetSensitivityScale( float sens, float zoomSens )
 {
 	if( cge )
-		return cge->SetSensitivityScale( sens );
+		return cge->SetSensitivityScale( sens, zoomSens );
 	else
 		return 1.0f;
 }

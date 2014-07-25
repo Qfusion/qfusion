@@ -49,6 +49,7 @@ cvar_t *cl_demoavi_fps;
 cvar_t *cl_demoavi_scissor;
 
 cvar_t *sensitivity;
+cvar_t *zoomsens;
 cvar_t *m_accel;
 cvar_t *m_accelStyle;
 cvar_t *m_accelOffset;
@@ -2013,6 +2014,7 @@ static void CL_InitLocal( void )
 
 	cl_run =		Cvar_Get( "cl_run", "1", CVAR_ARCHIVE );
 	sensitivity =		Cvar_Get( "sensitivity", "3", CVAR_ARCHIVE );
+	zoomsens =		Cvar_Get( "zoomsens", "0", CVAR_ARCHIVE );
 	m_accel =		Cvar_Get( "m_accel", "0", CVAR_ARCHIVE );
 	m_accelStyle =	Cvar_Get( "m_accelStyle", "0", CVAR_ARCHIVE );
 	m_accelOffset =	Cvar_Get( "m_accelOffset", "0", CVAR_ARCHIVE );
@@ -2061,7 +2063,6 @@ static void CL_InitLocal( void )
 	Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "fov", "100", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "zoomfov", "30", CVAR_USERINFO | CVAR_ARCHIVE );
-	Cvar_Get( "zoomsens", "0", CVAR_ARCHIVE );
 
 	Cvar_Get( "cl_download_name", "", CVAR_READONLY );
 	Cvar_Get( "cl_download_percent", "0", CVAR_READONLY );

@@ -302,7 +302,7 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 		}
 	}
 
-	accelSensitivity *= CL_GameModule_SetSensitivityScale( sensitivity->value );
+	accelSensitivity *= CL_GameModule_SetSensitivityScale( sensitivity->value, zoomsens->value );
 
 	mouse_x *= accelSensitivity;
 	mouse_y *= accelSensitivity;
