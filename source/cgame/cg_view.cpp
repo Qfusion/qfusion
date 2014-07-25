@@ -210,10 +210,10 @@ static void CG_FlashGameWindow( void )
 }
 
 /*
-* CG_SetSensitivityScale
+* CG_GetSensitivityScale
 * Scale sensitivity for different view effects
 */
-float CG_SetSensitivityScale( float sens, float zoomSens )
+float CG_GetSensitivityScale( float sens, float zoomSens )
 {
 	float sensScale = 1.0f;
 

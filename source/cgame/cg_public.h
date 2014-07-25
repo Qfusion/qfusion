@@ -272,7 +272,7 @@ typedef struct
 
 	void ( *GetEntitySpatilization )( int entNum, vec3_t origin, vec3_t velocity );
 
-	float ( *SetSensitivityScale )( float sens, float zoomSens );
+	float ( *GetSensitivityScale )( float sens, float zoomSens );
 
 	void ( *Trace )( trace_t *tr, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask );
 
