@@ -45,7 +45,7 @@ extern "C" QF_DLL_EXPORT cgame_export_t *GetCGameAPI( cgame_import_t *import )
 
 	globals.GetEntitySpatilization = CG_GetEntitySpatilization;
 
-	globals.SetSensitivityScale = CG_SetSensitivityScale;
+	globals.GetSensitivityScale = CG_GetSensitivityScale;
 
 	globals.Trace = CG_Trace;
 	globals.RenderView = CG_RenderView;
