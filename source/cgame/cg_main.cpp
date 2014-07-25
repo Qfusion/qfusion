@@ -80,7 +80,6 @@ cvar_t *cg_drawEntityBoxes;
 cvar_t *cg_fov;
 cvar_t *cg_oldMovement;
 cvar_t *cg_noAutohop;
-cvar_t *cg_zoomSens;
 cvar_t *cg_predictLaserBeam;
 cvar_t *cg_voiceChats;
 cvar_t *cg_shadows;
@@ -630,7 +629,6 @@ static void CG_RegisterVariables( void )
 	cg_oldMovement =	trap_Cvar_Get( "cg_oldMovement", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_noAutohop =	trap_Cvar_Get( "cg_noAutohop", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_fov =	    trap_Cvar_Get( "fov", "100", CVAR_USERINFO | CVAR_ARCHIVE );
-	cg_zoomSens =	    trap_Cvar_Get( "zoomsens", "0", CVAR_ARCHIVE );
 
 	cg_addDecals =	    trap_Cvar_Get( "cg_decals", "1", CVAR_ARCHIVE );
 	//cg_footSteps =	    trap_Cvar_Get( "cg_footSteps", "1", 0 );

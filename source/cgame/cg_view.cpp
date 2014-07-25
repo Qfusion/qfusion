@@ -213,14 +213,14 @@ static void CG_FlashGameWindow( void )
 * CG_SetSensitivityScale
 * Scale sensitivity for different view effects
 */
-float CG_SetSensitivityScale( const float sens )
+float CG_SetSensitivityScale( float sens, float zoomSens )
 {
 	float sensScale = 1.0f;
 
 	if( !cgs.demoPlaying && sens && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) )
 	{
-		if( cg_zoomSens->value )
-			return cg_zoomSens->value/sens;
+		if( zoomSens )
+			return zoomSens/sens;
 
 		return ( cg.predictedPlayerState.fov / cgs.clientInfo[cgs.playerNum].fov );
 	}

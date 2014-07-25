@@ -836,7 +836,6 @@ extern cvar_t *cg_drawEntityBoxes;
 extern cvar_t *cg_fov;
 extern cvar_t *cg_oldMovement;
 extern cvar_t *cg_noAutohop;
-extern cvar_t *cg_zoomSens;
 extern cvar_t *cg_particles;
 extern cvar_t *cg_showhelp;
 extern cvar_t *cg_predictLaserBeam;
@@ -934,7 +933,7 @@ void CG_ResetColorBlend( void );
 
 void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int time );
 void CG_StartColorBlendEffect( float r, float g, float b, float a, int time );
-float CG_SetSensitivityScale( const float sens );
+float CG_SetSensitivityScale( float sens, float zoomSens );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
 void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime );
 void CG_AddKickAngles( vec3_t viewangles );
