@@ -31,8 +31,7 @@ cvar_t *cl_ucmdTimeNudge;
 extern cvar_t *cl_maxfps;
 
 extern unsigned	sys_frame_time;
-unsigned keys_frame_time;
-unsigned old_keys_frame_time;
+static unsigned keys_frame_time;
 
 /*
 ===============================================================================
@@ -631,6 +630,7 @@ static void CL_AddMovementFromKeys( short *forwardmove, short *sidemove, short *
 */
 void CL_UpdateCommandInput( void )
 {
+	static unsigned old_keys_frame_time;
 	usercmd_t *cmd = &cl.cmds[cls.ucmdHead & CMD_MASK];
 
 	if( cl.inputRefreshed )

@@ -1392,8 +1392,6 @@ static qboolean IN_ReadJoystick( void )
 	}
 }
 
-#define JOY_SPEED_KEY 400
-
 /*
 * IN_JoyMove
 */
