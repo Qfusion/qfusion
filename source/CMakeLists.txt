@@ -11,7 +11,7 @@ endif()
 
 # You can override this var with commandline option -DQFUSION_SERVER_NAME=name
 if (NOT QFUSION_SERVER_NAME)
-    set(QFUSION_SERVER_NAME qfusion)
+    set(QFUSION_SERVER_NAME qfusion_server)
 endif()
 
 # You can override this var with commandline option -DQFUSION_TVSERVER_NAME=name
