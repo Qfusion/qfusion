@@ -577,6 +577,9 @@
 		F3503D0319286D7D00ED8408 /* snd_al.c in Sources */ = {isa = PBXBuildFile; fileRef = F3503D0219286D7D00ED8408 /* snd_al.c */; };
 		F3503D0619286DD200ED8408 /* snd_main.c in Sources */ = {isa = PBXBuildFile; fileRef = F3503D0419286DD200ED8408 /* snd_main.c */; };
 		F3503D0719286DD200ED8408 /* snd_music.c in Sources */ = {isa = PBXBuildFile; fileRef = F3503D0519286DD200ED8408 /* snd_music.c */; };
+		F35BA1AC198D6636007A2D49 /* sys_vfs_null.c in Sources */ = {isa = PBXBuildFile; fileRef = F35BA1AB198D6636007A2D49 /* sys_vfs_null.c */; };
+		F35BA1AD198D68AD007A2D49 /* sys_vfs_null.c in Sources */ = {isa = PBXBuildFile; fileRef = F35BA1AB198D6636007A2D49 /* sys_vfs_null.c */; };
+		F35BA1AE198D6928007A2D49 /* sys_vfs_null.c in Sources */ = {isa = PBXBuildFile; fileRef = F35BA1AB198D6636007A2D49 /* sys_vfs_null.c */; };
 		F36F06FF191ADF7D0018371F /* threads.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5511917FE7300F8FD6C /* threads.c */; };
 		F36F0700191ADF960018371F /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5561917FF2B00F8FD6C /* base64.c */; };
 		F36F0702191ADF9C0018371F /* md5.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F55C1917FF2B00F8FD6C /* md5.c */; };
@@ -1370,6 +1373,7 @@
 		F3503D0219286D7D00ED8408 /* snd_al.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = snd_al.c; sourceTree = "<group>"; };
 		F3503D0419286DD200ED8408 /* snd_main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = snd_main.c; sourceTree = "<group>"; };
 		F3503D0519286DD200ED8408 /* snd_music.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = snd_music.c; sourceTree = "<group>"; };
+		F35BA1AB198D6636007A2D49 /* sys_vfs_null.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = sys_vfs_null.c; sourceTree = "<group>"; };
 		F36F0705191AE0650018371F /* qmesa.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qmesa.h; sourceTree = "<group>"; };
 		F36F0706191AE0650018371F /* r_backend_program.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_backend_program.c; sourceTree = "<group>"; };
 		F36F0709191AE0CA0018371F /* ftlib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ftlib.c; sourceTree = "<group>"; };
@@ -1873,6 +1877,7 @@
 		28A7218A0F5DEAA0006FB1A8 /* null */ = {
 			isa = PBXGroup;
 			children = (
+				F35BA1AB198D6636007A2D49 /* sys_vfs_null.c */,
 				28A7218B0F5DEAA0006FB1A8 /* ascript_null.c */,
 				28A7218C0F5DEAA0006FB1A8 /* cl_null.c */,
 				28A7218D0F5DEAA0006FB1A8 /* cm_null.c */,
@@ -3266,6 +3271,7 @@
 				286755B20F5DF54900C05B53 /* mac_input.m in Sources */,
 				286755B30F5DF54900C05B53 /* SDLMain.m in Sources */,
 				286755A60F5DF53000C05B53 /* sv_mm.c in Sources */,
+				F35BA1AE198D6928007A2D49 /* sys_vfs_null.c in Sources */,
 				286755A80F5DF53000C05B53 /* sv_motd.c in Sources */,
 				286755A90F5DF53000C05B53 /* sv_oob.c in Sources */,
 				F3FBE42E191D307500FE6900 /* unix_sys.c in Sources */,
@@ -3368,6 +3374,7 @@
 				282252070F6BEA6F002F3547 /* unix_lib.c in Sources */,
 				282252080F6BEA6F002F3547 /* unix_sys.c in Sources */,
 				282252090F6BEA6F002F3547 /* unix_fs.c in Sources */,
+				F35BA1AC198D6636007A2D49 /* sys_vfs_null.c in Sources */,
 				282252040F6BEA55002F3547 /* cl_null.c in Sources */,
 				282251FA0F6BEA46002F3547 /* sv_mm.c in Sources */,
 				282251FB0F6BEA46002F3547 /* sv_send.c in Sources */,
@@ -3472,6 +3479,7 @@
 				2822548D0F6C394D002F3547 /* tv_upstream_demos.c in Sources */,
 				F323F5CF19181A9600F8FD6C /* md5.c in Sources */,
 				2822548E0F6C394D002F3547 /* tv_downstream_parse.c in Sources */,
+				F35BA1AD198D68AD007A2D49 /* sys_vfs_null.c in Sources */,
 				2822548F0F6C394D002F3547 /* tv_relay_module.c in Sources */,
 				282254900F6C394D002F3547 /* tv_cmds.c in Sources */,
 				282254910F6C394D002F3547 /* tv_upstream_oob.c in Sources */,
