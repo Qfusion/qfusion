@@ -35,7 +35,7 @@ void	    Sys_FS_UnlockFile( void *handle );
 
 time_t		Sys_FS_FileMTime( const char *filename );
 
-// virtual storage of pack files, such as .oob on Android
+// virtual storage of pack files, such as .obb on Android
 void		Sys_VFS_Init( void );
 void		Sys_VFS_TouchGamePath( const char *gamedir, qboolean initial );
 char		**Sys_VFS_ListFiles( const char *basepath, const char *gamedir, const char *extension, int *numfiles );
