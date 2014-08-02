@@ -255,6 +255,7 @@
     <ClCompile Include="qcommon\library.c" />
     <ClCompile Include="win32\win_lib.c" />
     <ClCompile Include="win32\win_threads.c" />
+    <ClCompile Include="qcommon\sys_vfs_null.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelwrap\qas_public.h" />

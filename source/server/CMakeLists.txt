@@ -48,6 +48,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../win32/win_sys.c"
         "../win32/win_lib.c"
         "../win32/win_threads.c"
+        "../qcommon/sys_vfs_null.c"
         "../win32/conproc.c"
     )
 
@@ -60,6 +61,7 @@ else()
         "../unix/unix_sys.c"
         "../unix/unix_lib.c"
         "../unix/unix_threads.c"
+        "../qcommon/sys_vfs_null.c"
     )
 
     set(SERVER_PLATFORM_LIBRARIES "pthread" "dl" "m")

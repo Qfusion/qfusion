@@ -165,6 +165,9 @@
     <ClCompile Include="..\win32\win_sys.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\qcommon\sys_vfs_null.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\qcommon\wswcurl.c">
       <Filter>Source Files</Filter>
     </ClCompile>

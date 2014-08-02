@@ -283,6 +283,7 @@
     <ClCompile Include="win32\win_net.c" />
     <ClCompile Include="win32\win_sys.c" />
     <ClCompile Include="win32\win_threads.c" />
+    <ClCompile Include="qcommon\sys_vfs_null.c" />
     <ClCompile Include="win32\win_vid.c" />
     <ClCompile Include="qcommon\wswcurl.c" />
   </ItemGroup>
