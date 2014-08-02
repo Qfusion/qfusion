@@ -78,6 +78,7 @@ typedef struct packfile_s
 {
 	char *name;
 	char *pakname;
+	void *vfsHandle;			// handle to the pack in VFS
 	unsigned flags;
 	unsigned compressedSize;    // compressed size
 	unsigned uncompressedSize;  // uncompressed size
@@ -95,6 +96,7 @@ typedef struct
 	unsigned checksum;
 	qboolean pure;
 	void *sysHandle;
+	void *vfsHandle;
 	int numFiles;
 	packfile_t *files;
 	char *fileNames;
@@ -196,7 +198,7 @@ static unsigned FS_PK3CheckFileCoherency( FILE *f, packfile_t *file )
 	unsigned flags;
 	unsigned char localHeader[31], compressed;
 
-	if( fseek( f, file->offset, SEEK_SET ) != 0 )
+	if( fseek( f, Sys_VFS_FileOffset( file->vfsHandle ) + file->offset, SEEK_SET ) != 0 )
 		return 0;
 	if( fread( localHeader, 1, sizeof( localHeader ), f ) != sizeof( localHeader ) )
 		return 0;
@@ -904,7 +906,7 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum )
 
 	*filenum = FS_OpenFileHandle();
 	file = &fs_filehandles[*filenum - 1];
-	file->fstream = fopen( pakFile->pakname, "rb" );
+	file->fstream = fopen( pakFile->vfsHandle ? Sys_VFS_VFSName( pakFile->vfsHandle ) : pakFile->pakname, "rb" );
 	if( !file->fstream )
 		Com_Error( ERR_FATAL, "Error opening pak file: %s", pakFile->pakname );
 	file->uncompressedSize = pakFile->uncompressedSize;
@@ -922,7 +924,7 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum )
 		pakFile->offset += offset;
 		pakFile->flags |= FS_PACKFILE_COHERENT;
 	}
-	file->pakOffset = pakFile->offset;
+	file->pakOffset = Sys_VFS_FileOffset( pakFile->vfsHandle ) + pakFile->offset;
 
 	if( pakFile->flags & FS_PACKFILE_DEFLATED )
 	{
@@ -2119,16 +2121,26 @@ static void FS_ReadPackManifest( pack_t *pack )
 * 
 * Locate the central directory of a zipfile (at the end, just before the global comment)
 */
-static unsigned FS_PK3SearchCentralDir( FILE *fin )
+static unsigned FS_PK3SearchCentralDir( FILE *fin, void *vfsHandle )
 {
 	unsigned fileSize, backRead;
 	unsigned maxBack = 0xffff; // maximum size of global comment
 	unsigned char buf[FS_ZIP_BUFREADCOMMENT+4];
+	unsigned vfsOffset = 0;
 
-	if( fseek( fin, 0, SEEK_END ) != 0 )
-		return 0;
+	if( vfsHandle )
+	{
+		vfsOffset = Sys_VFS_FileOffset( vfsHandle );
+		if( fseek( fin, vfsOffset + Sys_VFS_FileSize( vfsHandle ), SEEK_SET ) != 0 )
+			return 0;
+	}
+	else
+	{
+		if( fseek( fin, 0, SEEK_END ) != 0 )
+			return 0;
+	}
 
-	fileSize = ftell( fin );
+	fileSize = ftell( fin ) - vfsOffset;
 	if( maxBack > fileSize )
 		maxBack = fileSize;
 
@@ -2147,7 +2159,7 @@ static unsigned FS_PK3SearchCentralDir( FILE *fin )
 		if( readSize < 4 )
 			continue;
 
-		if( fseek( fin, readPos, SEEK_SET ) != 0 )
+		if( fseek( fin, vfsOffset + readPos, SEEK_SET ) != 0 )
 			break;
 		if( fread( buf, 1, readSize, fin ) != readSize )
 			break;
@@ -2193,7 +2205,7 @@ static time_t FS_DosTimeToUnixtime( unsigned dosDateTime )
 * 
 * Get Info about the current file in the zipfile, with internal only info
 */
-static unsigned FS_PK3GetFileInfo( FILE *f, unsigned pos, unsigned byteBeforeTheZipFile, 
+static unsigned FS_PK3GetFileInfo( FILE *f, void *vfsHandle, unsigned pos, unsigned byteBeforeTheZipFile, 
 	packfile_t *file, size_t *fileNameLen, int *crc )
 {
 	size_t sizeRead;
@@ -2201,7 +2213,7 @@ static unsigned FS_PK3GetFileInfo( FILE *f, unsigned pos, unsigned byteBeforeThe
 	unsigned compressed;
 	unsigned char infoHeader[46]; // we can't use a struct here because of packing
 
-	if( fseek( f, pos, SEEK_SET ) != 0 )
+	if( fseek( f, Sys_VFS_FileOffset( vfsHandle ) + pos, SEEK_SET ) != 0 )
 		return 0;
 	if( fread( infoHeader, 1, sizeof( infoHeader ), f ) != sizeof( infoHeader ) )
 		return 0;
@@ -2272,28 +2284,35 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 	qboolean modulepack;
 	int manifestFilesize;
 	void *handle = NULL;
+	void *vfsHandle = NULL;
 
-	// lock the file for reading, but don't throw fatal error
-	handle = Sys_FS_LockFile( packfilename );
-	if( handle == NULL )
+	// if( FS_FileExists( packfilename, qtrue ) == -1 )
+		vfsHandle = Sys_VFS_FindFile( packfilename );
+
+	if( !vfsHandle )
 	{
-		if( !silent ) Com_Printf( "Error locking PK3 file: %s\n", packfilename );
-		goto error;
+		// lock the file for reading, but don't throw fatal error
+		handle = Sys_FS_LockFile( packfilename );
+		if( handle == NULL )
+		{
+			if( !silent ) Com_Printf( "Error locking PK3 file: %s\n", packfilename );
+			goto error;
+		}
 	}
 
-	fin = fopen( packfilename, "rb" );
+	fin = fopen( vfsHandle ? Sys_VFS_VFSName( vfsHandle ) : packfilename, "rb" );
 	if( fin == NULL )
 	{
 		if( !silent ) Com_Printf( "Error opening PK3 file: %s\n", packfilename );
 		goto error;
 	}
-	centralPos = FS_PK3SearchCentralDir( fin );
+	centralPos = FS_PK3SearchCentralDir( fin, vfsHandle );
 	if( centralPos == 0 )
 	{
 		if( !silent ) Com_Printf( "No central directory found for PK3 file: %s\n", packfilename );
 		goto error;
 	}
-	if( fseek( fin, centralPos, SEEK_SET ) != 0 )
+	if( fseek( fin, Sys_VFS_FileOffset( vfsHandle ) + centralPos, SEEK_SET ) != 0 )
 	{
 		if( !silent ) Com_Printf( "Error seeking PK3 file: %s\n", packfilename );
 		goto error;
@@ -2332,7 +2351,7 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 
 	for( i = 0, namesLen = 0, centralPos = offsetCentralDir + byteBeforeTheZipFile; i < numFiles; i++, centralPos += offset )
 	{
-		offset = FS_PK3GetFileInfo( fin, centralPos, byteBeforeTheZipFile, NULL, &len, NULL );
+		offset = FS_PK3GetFileInfo( fin, vfsHandle, centralPos, byteBeforeTheZipFile, NULL, &len, NULL );
 		if( !offset )
 		{
 			if( !silent ) Com_Printf( "%s is not a valid pk3 file\n", packfilename );
@@ -2349,6 +2368,7 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 	pack->fileNames = names = ( char * )( ( qbyte * )pack->files + numFiles * sizeof( packfile_t ) );
 	pack->numFiles = numFiles;
 	pack->sysHandle = handle;
+	pack->vfsHandle = vfsHandle;
 	pack->trie = NULL;
 
 	Trie_Create( TRIE_CASE_INSENSITIVE, &pack->trie );
@@ -2372,8 +2392,9 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 
 		file->name = names;
 		file->pakname = pack->filename;
+		file->vfsHandle = vfsHandle;
 
-		offset = FS_PK3GetFileInfo( fin, centralPos, byteBeforeTheZipFile, file, &len, &checksums[i] );
+		offset = FS_PK3GetFileInfo( fin, vfsHandle, centralPos, byteBeforeTheZipFile, file, &len, &checksums[i] );
 
 		if( !COM_ValidateRelativeFilename( file->name ) )
 		{
@@ -3158,28 +3179,45 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 	numpakfiles = 0;
 	for( e = 0; pak_extensions[e]; e++ )
 	{
-		int numfiles;
-		char **filenames;
+		int numvfsfiles = 0, numfiles = 0;
+		char **vfsfilenames, **filenames;
 
 		Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/*.%s", basepath, gamedir, pak_extensions[e] );
-	
-		if( ( filenames = FS_ListFiles( tempname, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM ) ) != 0 )
+
+		vfsfilenames = Sys_VFS_ListFiles( basepath, gamedir, pak_extensions[e], &numvfsfiles );
+		filenames = FS_ListFiles( tempname, &numfiles, 0, SFF_SUBDIR | SFF_HIDDEN | SFF_SYSTEM );
+		if( vfsfilenames || filenames )
 		{
-			if( !numpakfiles )
+			if( numpakfiles || ( vfsfilenames && filenames ) )
+			{
+				if( paknames )
+					paknames = ( char** )Mem_Realloc( paknames, sizeof( *paknames ) * (numpakfiles + numvfsfiles + numfiles + 1) );
+				else
+					paknames = ( char** )Mem_ZoneMalloc( sizeof( *paknames ) * (numpakfiles + numvfsfiles + numfiles + 1) );
+
+				for( i = 0; i < numvfsfiles; i++ )
+					paknames[numpakfiles+i] = vfsfilenames[i];
+				for( i = 0; i < numfiles; i++ )
+					paknames[numpakfiles+numvfsfiles+i] = filenames[i];
+				paknames[numpakfiles+numvfsfiles+i] = NULL;
+
+				numpakfiles += numvfsfiles + numfiles;
+
+				if( filenames )
+					Mem_Free( filenames );
+				if( vfsfilenames )
+					Mem_Free( vfsfilenames );
+			}
+			else if( vfsfilenames && !filenames )
+			{
+				paknames = vfsfilenames;
+				numpakfiles = numvfsfiles;
+			}
+			else
 			{
 				paknames = filenames;
 				numpakfiles = numfiles;
-				continue;
 			}
-
-			paknames = ( char** )Mem_Realloc( paknames, sizeof( *paknames ) * (numpakfiles + numfiles + 1) );
-			for( i = 0; i < numfiles; i++ )
-				paknames[numpakfiles+i] = filenames[i];
-			paknames[numpakfiles+i] = NULL;
-
-			numpakfiles += numfiles;
-
-			Mem_Free( filenames );
 		}
 	}
 
@@ -3189,6 +3227,13 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 
 		for( i = 0; i < numpakfiles; )
 		{
+			// ignore similarly named paks if they appear in both vfs and fs
+			if( i && !Q_stricmp( paknames[i], paknames[i-1] ) )
+			{
+				Mem_Free( paknames[i] );
+				memmove( &paknames[i], &paknames[i+1], (numpakfiles-- - i) * sizeof( *paknames ) );
+			}
+
 			pakbasename = COM_FileBase( paknames[i] );
 			pakname_len = strlen( pakbasename );
 			extension = COM_FileExtension( pakbasename );
@@ -3225,6 +3270,8 @@ static int FS_TouchGamePath( const char *basepath, const char *gamedir, qboolean
 	searchpath_t *search, *prev, *next;
 	pack_t *pak;
 	char **paknames;
+
+	Sys_VFS_TouchGamePath( gamedir, initial );
 
 	// add directory to the list of search paths so pak files can stack properly
 	if( initial )
@@ -3723,6 +3770,8 @@ void FS_Init( void )
 	if( homedir != NULL && fs_usehomedir->integer )
 		FS_AddBasePath( homedir );
 
+	Sys_VFS_Init();
+
 	//
 	// set game directories
 	//
@@ -3815,6 +3864,8 @@ void FS_Shutdown( void )
 		FS_Free( search->path );
 		FS_Free( search );
 	}
+
+	Sys_VFS_Shutdown();
 
 	Mem_FreePool( &fs_mempool );
 
