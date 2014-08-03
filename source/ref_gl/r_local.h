@@ -389,6 +389,7 @@ extern cvar_t *r_screenshot_fmtstr;
 extern cvar_t *r_screenshot_jpeg;
 extern cvar_t *r_screenshot_jpeg_quality;
 extern cvar_t *r_swapinterval;
+extern cvar_t *r_fragment_highp;
 
 extern cvar_t *r_temp1;
 
