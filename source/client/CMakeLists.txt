@@ -25,7 +25,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../win32/win_net.c"
         "../win32/win_sys.c"
         "../win32/win_threads.c"
-        "../qcommon/sys_vfs_null.c"
+        "../null/sys_vfs_null.c"
 
         "../win32/win_input.c"
         "../win32/win_vid.c"
@@ -49,7 +49,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../unix/unix_net.c"
         "../unix/unix_sys.c"
         "../unix/unix_threads.c"
-        "../qcommon/sys_vfs_null.c"
+        "../null/sys_vfs_null.c"
 
         "../mac/SDLMain.m"
         "../mac/mac_input.m"
@@ -78,7 +78,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         "../unix/unix_net.c"
         "../unix/unix_sys.c"
         "../unix/unix_threads.c"
-        "../qcommon/sys_vfs_null.c"
+        "../null/sys_vfs_null.c"
 
         "../unix/keysym2ucs.c"
         "../unix/unix_input.c"

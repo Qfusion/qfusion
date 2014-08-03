@@ -388,14 +388,14 @@ CFILES_CLIENT += $(wildcard server/*.c)
 endif
 CFILES_CLIENT += $(wildcard client/*.c)
 ifeq ($(USE_MINGW),YES)
-CFILES_CLIENT += win32/win_vid.c win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_input.c win32/win_sys.c win32/win_lib.c win32/win_threads.c qcommon/sys_vfs_null.c
+CFILES_CLIENT += win32/win_vid.c win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_input.c win32/win_sys.c win32/win_lib.c win32/win_threads.c null/sys_vfs_null.c
 RESFILES_CLIENT += win32/qfusion.rc
 else
 ifeq ($(OS),Darwin)
 else
 CFILES_CLIENT += unix/unix_input.c unix/keysym2ucs.c
 endif
-CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c unix/unix_threads.c qcommon/sys_vfs_null.c
+CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_vid.c unix/unix_threads.c null/sys_vfs_null.c
 endif
 CFILES_CLIENT += $(wildcard gameshared/q_*.c)
 CFILES_CLIENT += $(wildcard qalgo/*.c)
@@ -444,9 +444,9 @@ CFILES_DED  = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcommon/bs
 CFILES_DED += $(wildcard server/*.c)
 CFILES_DED += null/cl_null.c
 ifeq ($(USE_MINGW),YES)
-CFILES_DED += win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_sys.c win32/win_lib.c win32/win_threads.c qcommon/sys_vfs_null.c
+CFILES_DED += win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_sys.c win32/win_lib.c win32/win_threads.c null/sys_vfs_null.c
 else
-CFILES_DED += unix/unix_fs.c unix/unix_net.c unix/unix_lib.c unix/unix_sys.c unix/unix_threads.c qcommon/sys_vfs_null.c
+CFILES_DED += unix/unix_fs.c unix/unix_net.c unix/unix_lib.c unix/unix_sys.c unix/unix_threads.c null/sys_vfs_null.c
 endif
 CFILES_DED += $(wildcard gameshared/q_*.c)
 CFILES_DED += $(wildcard qalgo/*.c)
@@ -591,9 +591,9 @@ CFILES_TV_SERVER = qcommon/cm_main.c qcommon/cm_q3bsp.c qcommon/cm_trace.c qcomm
 CFILES_TV_SERVER += $(wildcard tv_server/*.c)
 CFILES_TV_SERVER += null/cl_null.c null/ascript_null.c null/mm_null.c
 ifeq ($(USE_MINGW),YES)
-CFILES_TV_SERVER += win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_sys.c win32/win_lib.c win32/win_threads.c qcommon/sys_vfs_null.c
+CFILES_TV_SERVER += win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_sys.c win32/win_lib.c win32/win_threads.c null/sys_vfs_null.c
 else
-CFILES_TV_SERVER += unix/unix_fs.c unix/unix_net.c unix/unix_sys.c unix/unix_lib.c unix/unix_threads.c qcommon/sys_vfs_null.c
+CFILES_TV_SERVER += unix/unix_fs.c unix/unix_net.c unix/unix_sys.c unix/unix_lib.c unix/unix_threads.c null/sys_vfs_null.c
 endif
 CFILES_TV_SERVER += $(wildcard gameshared/q_*.c)
 CFILES_TV_SERVER += $(wildcard qalgo/*.c)
