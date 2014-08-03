@@ -909,7 +909,11 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "# define qf_attribute attribute\n" \
 "#endif\n" \
 "#ifdef FRAGMENT_SHADER\n" \
-"  precision mediump float;\n" \
+"# if defined(GL_FRAGMENT_PRECISION_HIGH) && defined(QF_FRAGMENT_PRECISION_HIGH)\n" \
+"   precision highp float;\n" \
+"# else\n" \
+"   precision mediump float;\n" \
+"# endif\n" \
 "# define qf_FragColor gl_FragColor\n" \
 "#endif\n" \
 " qf_varying myhalf4 qf_FrontColor;\n" \
@@ -925,7 +929,11 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "# define qf_attribute in\n" \
 "#endif\n" \
 "#ifdef FRAGMENT_SHADER\n" \
-"  precision highp float;\n" \
+"# ifdef QF_FRAGMENT_PRECISION_HIGH\n" \
+"   precision highp float;\n" \
+"# else\n" \
+"   precision mediump float;\n" \
+"# endif\n" \
 "  layout(location = 0) out lowp vec4 qf_FragColor;\n" \
 "# define qf_varying in\n" \
 "#endif\n" \
@@ -1474,6 +1482,10 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS;
 #ifdef GL_ES_VERSION_2_0
+	if( features & GLSL_SHADER_COMMON_FRAGMENT_HIGHP ) {
+		shaderStrings[i++] = "#define QF_FRAGMENT_PRECISION_HIGH\n";
+	}
+
 	if( glConfig.shadingLanguageVersion >= 300 ) {
 		shaderStrings[i++] = QF_BUILTIN_GLSL_MACROS_GLSL300ES;
 	}

@@ -113,6 +113,7 @@ cvar_t *r_screenshot_fmtstr;
 cvar_t *r_screenshot_jpeg;
 cvar_t *r_screenshot_jpeg_quality;
 cvar_t *r_swapinterval;
+cvar_t *r_fragment_highp;
 
 cvar_t *r_temp1;
 
@@ -1065,6 +1066,8 @@ static void R_Register( const char *screenshotsPrefix )
 #endif
 	// make sure r_swapinterval is checked after vid_restart
 	r_swapinterval->modified = qtrue;
+
+	r_fragment_highp = ri.Cvar_Get( "r_fragment_highp", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
 
