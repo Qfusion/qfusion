@@ -233,9 +233,12 @@ void RB_PolygonOffset( float factor, float offset )
 	if( rb.gl.polygonOffset[0] == factor && rb.gl.polygonOffset[1] == offset )
 		return;
 
-	qglPolygonOffset( factor, offset );
 	rb.gl.polygonOffset[0] = factor;
 	rb.gl.polygonOffset[1] = offset;
+
+	if( !glConfig.ext.depth24 )
+		offset *= ( 1.0 / 256.0 ); // fix for Tegra
+	qglPolygonOffset( factor, offset );
 }
 
 /*
