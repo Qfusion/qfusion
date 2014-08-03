@@ -159,7 +159,7 @@
     <ClCompile Include="win32\win_lib.c">
       <Filter>Resource Files</Filter>
     </ClCompile>
-    <ClCompile Include="qcommon\sys_vfs_null.c">
+    <ClCompile Include="null\sys_vfs_null.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="server\sv_web.c">
