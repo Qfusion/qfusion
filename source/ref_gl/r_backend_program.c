@@ -2099,15 +2099,7 @@ static void RB_SetShaderState( void )
 	state = 0;
 
 	if( shaderFlags & SHADER_POLYGONOFFSET )
-	{
 		state |= GLSTATE_OFFSET_FILL;
-		RB_PolygonOffset( r_polygon_offset_factor->value, r_polygon_offset_units->value );
-	}
-	else if( rb.renderFlags & RF_SHADOWMAPVIEW )
-	{
-		state |= GLSTATE_OFFSET_FILL;
-		RB_PolygonOffset( r_shadows_polygon_offset_factor->value, r_shadows_polygon_offset_units->value );
-	}
 
 	if( shaderFlags & SHADER_NO_DEPTH_TEST )
 		state |= GLSTATE_NO_DEPTH_TEST;
