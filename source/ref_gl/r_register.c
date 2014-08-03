@@ -473,7 +473,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( NV, depth_nonlinear, true, false, NULL )
 	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
-	,GL_EXTENSION( OES, rgb8_rgba8, false, false, NULL )
+	,GL_EXTENSION( OES, rgb8_rgba8, true, false, NULL )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -732,7 +732,7 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.instanced_arrays = qtrue;
 		glConfig.ext.half_float_vertex = qtrue;
 		glConfig.ext.framebuffer_blit = qtrue;
-		glConfig.ext.get_program_binary = qtrue;
+		glConfig.ext.get_program_binary = ri.Cvar_Get( "gl_ext_get_program_binary", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 		glConfig.ext.depth24 = qtrue;
 		glConfig.ext.GLSL130 = qtrue;
 		glConfig.ext.rgb8_rgba8 = qtrue;
