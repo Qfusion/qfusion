@@ -732,7 +732,8 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.instanced_arrays = qtrue;
 		glConfig.ext.half_float_vertex = qtrue;
 		glConfig.ext.framebuffer_blit = qtrue;
-		glConfig.ext.get_program_binary = ri.Cvar_Get( "gl_ext_get_program_binary", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+		glConfig.ext.get_program_binary =
+			ri.Cvar_Get( "gl_ext_get_program_binary", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? qtrue : qfalse;
 		glConfig.ext.depth24 = qtrue;
 		glConfig.ext.GLSL130 = qtrue;
 		glConfig.ext.rgb8_rgba8 = qtrue;
