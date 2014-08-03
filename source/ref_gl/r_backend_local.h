@@ -63,8 +63,6 @@ typedef struct r_backend_s
 
 		int				fbWidth, fbHeight;
 
-		float			polygonOffset[2];
-
 		float			depthmin, depthmax;
 	} gl;
 

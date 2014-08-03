@@ -149,7 +149,6 @@ static void RB_SetGLDefaults( void )
 	qglDisable( GL_BLEND );
 	qglDepthFunc( GL_LEQUAL );
 	qglDepthMask( GL_FALSE );
-	qglDisable( GL_POLYGON_OFFSET_FILL );
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	qglEnable( GL_DEPTH_TEST );
 #ifndef GL_ES_VERSION_2_0
@@ -223,22 +222,6 @@ void RB_Cull( int cull )
 		qglEnable( GL_CULL_FACE );
 	qglCullFace( cull );
 	rb.gl.faceCull = cull;
-}
-
-/*
-* RB_PolygonOffset
-*/
-void RB_PolygonOffset( float factor, float offset )
-{
-	if( rb.gl.polygonOffset[0] == factor && rb.gl.polygonOffset[1] == offset )
-		return;
-
-	rb.gl.polygonOffset[0] = factor;
-	rb.gl.polygonOffset[1] = offset;
-
-	if( !glConfig.ext.depth24 )
-		offset *= ( 1.0 / 256.0 ); // fix for Tegra
-	qglPolygonOffset( factor, offset );
 }
 
 /*
@@ -360,9 +343,9 @@ void RB_SetState( int state )
 	if( diff & GLSTATE_OFFSET_FILL )
 	{
 		if( state & GLSTATE_OFFSET_FILL )
-			qglEnable( GL_POLYGON_OFFSET_FILL );
+			RB_DepthRange( 0.0f, 1.0f - 2.0f / 65535.0f );
 		else
-			qglDisable( GL_POLYGON_OFFSET_FILL );
+			RB_DepthRange( 2.0f / 65535.0f, 1.0f );
 	}
 
 	if( diff & GLSTATE_STENCIL_TEST )
@@ -517,7 +500,7 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 
 	qglClear( bits );
 
-	RB_DepthRange( 0.0f, 1.0f );
+	RB_DepthRange( 2.0f / 65535.0f, 1.0f );
 }
 
 /*

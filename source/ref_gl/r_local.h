@@ -347,9 +347,6 @@ extern cvar_t *r_offsetmapping;
 extern cvar_t *r_offsetmapping_scale;
 extern cvar_t *r_offsetmapping_reliefmapping;
 
-extern cvar_t *r_polygon_offset_factor;
-extern cvar_t *r_polygon_offset_units;
-
 extern cvar_t *r_shadows;
 extern cvar_t *r_shadows_alpha;
 extern cvar_t *r_shadows_nudge;
@@ -358,8 +355,6 @@ extern cvar_t *r_shadows_maxtexsize;
 extern cvar_t *r_shadows_pcf;
 extern cvar_t *r_shadows_self_shadow;
 extern cvar_t *r_shadows_dither;
-extern cvar_t *r_shadows_polygon_offset_factor;
-extern cvar_t *r_shadows_polygon_offset_units;
 
 extern cvar_t *r_outlines_world;
 extern cvar_t *r_outlines_scale;

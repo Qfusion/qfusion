@@ -585,7 +585,6 @@ QGL_FUNC(GLenum, glGetError, (void));
 QGL_FUNC(void, glGetIntegerv, (GLenum pname, GLint *params));
 QGL_FUNC(const GLubyte *, glGetString, (GLenum name));
 QGL_FUNC(void, glPixelStorei, (GLenum pname, GLint param));
-QGL_FUNC(void, glPolygonOffset, (GLfloat factor, GLfloat units));
 QGL_FUNC(void, glReadPixels, (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels));
 QGL_FUNC(void, glScissor, (GLint x, GLint y, GLsizei width, GLsizei height));
 QGL_FUNC(void, glStencilFunc, (GLenum func, GLint ref, GLuint mask));

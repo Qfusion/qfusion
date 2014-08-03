@@ -54,7 +54,6 @@ void RB_Cull( int cull );
 void RB_SetState( int state );
 void RB_FrontFace( qboolean front );
 void RB_FlipFrontFace( void );
-void RB_PolygonOffset( float factor, float offset );
 void RB_BindArrayBuffer( int buffer );
 void RB_BindElementArrayBuffer( int buffer );
 void RB_EnableScissor( qboolean enable );
