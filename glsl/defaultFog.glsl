@@ -32,7 +32,7 @@ void main(void)
 void main(void)
 {
 	float fogDensity = FogDensity(v_FogCoord);
-	qf_FragColor = vec4(u_Fog.Color, fogDensity);
+	qf_FragColor = vec4(u_FogColor, fogDensity);
 }
 
 #endif // FRAGMENT_SHADER

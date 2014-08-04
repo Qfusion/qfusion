@@ -201,7 +201,7 @@ void main(void)
 #endif
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-	color.rgb = mix(color.rgb, u_Fog.Color, fogDensity);
+	color.rgb = mix(color.rgb, u_FogColor, fogDensity);
 #endif
 
 #if defined(APPLY_SOFT_PARTICLE)

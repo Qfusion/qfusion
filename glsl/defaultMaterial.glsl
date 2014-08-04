@@ -378,7 +378,7 @@ color = color * diffuse;
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
 	myhalf fogDensity = FogDensity(v_FogCoord);
-	color.rgb = mix(color.rgb, u_Fog.Color, fogDensity);
+	color.rgb = mix(color.rgb, u_FogColor, fogDensity);
 #endif
 
 	qf_FragColor = vec4(color);

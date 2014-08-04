@@ -31,7 +31,7 @@ void main(void)
 #ifdef APPLY_FOG
 	myhalf4 tempColor = myhalf4(1.0);
 	FogGen(Position, tempColor, myhalf2(0.0, 1.0));
-	outColor.rgb = mix(u_Fog.Color, outColor.rgb, tempColor.a);
+	outColor.rgb = mix(u_FogColor, outColor.rgb, tempColor.a);
 #endif
 
 	qf_FrontColor = vec4(outColor);
