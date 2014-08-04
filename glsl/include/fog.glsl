@@ -1,11 +1,6 @@
-struct Fog
-{
-	vec2 ScaleAndEyeDist;
-	vec4 EyePlane, Plane;
-	myhalf3 Color;
-};
-
-uniform Fog u_Fog;
+uniform vec2 u_FogScaleAndEyeDist;
+uniform vec4 u_FogEyePlane, u_FogPlane;
+uniform myhalf3 u_FogColor;
 
 #define FOG_TEXCOORD_STEP 1.0/256.0
 
