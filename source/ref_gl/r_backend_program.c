@@ -1156,9 +1156,9 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 		programFeatures |= GLSL_SHADER_SHADOWMAP_SAMPLERS;
 	} else {
 		// pack depth into RGB triplet of the colorbuffer
-		if( !glConfig.ext.rgb8_rgba8 ) {
-			// pack depth into RGB565 triplet
-			programFeatures |= GLSL_SHADER_SHADOWMAP_16BIT;
+		if( glConfig.ext.rgb8_rgba8 ) {
+			// pack depth into RGB888 triplet
+			programFeatures |= GLSL_SHADER_SHADOWMAP_24BIT;
 		}
 	}
 
@@ -1215,8 +1215,8 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 	int program;
 	mat4_t texMatrix;
 
-	if( !glConfig.ext.rgb8_rgba8 ) {
-		programFeatures |= GLSL_SHADER_RGBSHADOW_16BIT;
+	if( glConfig.ext.rgb8_rgba8 ) {
+		programFeatures |= GLSL_SHADER_RGBSHADOW_24BIT;
 	}
 
 	Matrix4_Identity( texMatrix );
