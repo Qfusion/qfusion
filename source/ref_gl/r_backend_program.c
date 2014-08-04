@@ -1152,12 +1152,13 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 	if( numShadows > 1 ) {
 		programFeatures |= GLSL_SHADER_SHADOWMAP_SHADOW2 << (numShadows - 2);
 	}
-	if( !glConfig.ext.shadow ) {
+	if( glConfig.ext.shadow ) {
+		programFeatures |= GLSL_SHADER_SHADOWMAP_SAMPLERS;
+	} else {
 		// pack depth into RGB triplet of the colorbuffer
-		programFeatures |= GLSL_SHADER_SHADOWMAP_RGB;
 		if( !glConfig.ext.rgb8_rgba8 ) {
 			// pack depth into RGB565 triplet
-			programFeatures |= GLSL_SHADER_SHADOWMAP_RGB_16BIT;
+			programFeatures |= GLSL_SHADER_SHADOWMAP_16BIT;
 		}
 	}
 

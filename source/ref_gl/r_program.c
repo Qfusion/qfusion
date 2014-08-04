@@ -642,8 +642,8 @@ static const glsl_feature_t glsl_features_shadowmap[] =
 	{ GLSL_SHADER_SHADOWMAP_SHADOW2, "#define NUM_SHADOWS 2\n", "_2" },
 	{ GLSL_SHADER_SHADOWMAP_SHADOW3, "#define NUM_SHADOWS 3\n", "_3" },
 	{ GLSL_SHADER_SHADOWMAP_SHADOW4, "#define NUM_SHADOWS 4\n", "_4" },
-	{ GLSL_SHADER_SHADOWMAP_RGB, "#define APPLY_RGB_SHADOW\n", "_rgb" },
-	{ GLSL_SHADER_SHADOWMAP_RGB_16BIT, "#define APPLY_RGB_SHADOW_16BIT\n", "_rgb16" },
+	{ GLSL_SHADER_SHADOWMAP_SAMPLERS, "#define APPLY_SHADOW_SAMPLERS\n", "_shadowsamp" },
+	{ GLSL_SHADER_SHADOWMAP_16BIT, "#define APPLY_SHADOW_16BIT\n", "_rgb16" },
 
 	{ 0, NULL, NULL }
 };

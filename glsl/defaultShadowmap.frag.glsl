@@ -8,16 +8,16 @@
 
 qf_varying vec4 v_ShadowProjVector[NUM_SHADOWS];
 
-#ifdef APPLY_RGB_SHADOW
+#ifdef APPLY_SHADOW_SAMPLERS
+uniform sampler2DShadow u_ShadowmapTexture[NUM_SHADOWS];
+# define dshadow2D(t,v) float(qf_shadow(t,v))
+#else
 uniform sampler2D u_ShadowmapTexture[NUM_SHADOWS];
-# ifdef APPLY_RGB_SHADOW_16BIT
+# ifdef APPLY_SHADOW_16BIT
 #  define dshadow2D(t,v) step(v.z, decodedepthmacro16(qf_texture(t, v.xy)))
 # else
 #  define dshadow2D(t,v) step(v.z, decodedepthmacro(qf_texture(t, v.xy)))
 # endif
-#else
-uniform sampler2DShadow u_ShadowmapTexture[NUM_SHADOWS];
-# define dshadow2D(t,v) float(qf_shadow(t,v))
 #endif
 
 uniform float u_ShadowAlpha;
