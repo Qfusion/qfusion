@@ -728,7 +728,7 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.half_float_vertex = qtrue;
 		glConfig.ext.framebuffer_blit = qtrue;
 		glConfig.ext.get_program_binary =
-			ri.Cvar_Get( "gl_ext_get_program_binary", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? qtrue : qfalse;
+			ri.Cvar_Get( "gl_ext_get_program_binary", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? qtrue : qfalse;
 		glConfig.ext.depth24 = qtrue;
 		glConfig.ext.GLSL130 = qtrue;
 		glConfig.ext.rgb8_rgba8 = qtrue;
@@ -1007,7 +1007,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_lighting_packlightmaps = ri.Cvar_Get( "r_lighting_packlightmaps", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "8", CVAR_ARCHIVE|CVAR_READONLY );
+	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "4", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
