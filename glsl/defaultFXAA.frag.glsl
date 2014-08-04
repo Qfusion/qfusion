@@ -1,25 +1,7 @@
-// FXAA shader
-// Original algorithm and code by Timothy Lottes
-
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 
 qf_varying vec2 v_TexCoord;
-
-#ifdef VERTEX_SHADER
-
-#include "include/attributes.glsl"
-
-void main(void)
-{
-    gl_Position = u_ModelViewProjectionMatrix * a_Position;
-    v_TexCoord = a_TexCoord;
-}
-
-#endif // VERTEX_SHADER
-
-#ifdef FRAGMENT_SHADER
-// Fragment shader
 
 #define FXAA_PC 1
 #if (!defined(GL_ES) && (QF_GLSL_VERSION >= 130)) || (defined(GL_ES) && (QF_GLSL_VERSION >= 300))
@@ -80,5 +62,3 @@ void main(void)
         QualitySubpix, QualityEdgeThreshold, QualityEdgeThresholdMin, ConsoleEdgeSharpness, 
         ConsoleEdgeThreshold, ConsoleEdgeThresholdMin, Console360ConstDir);
 }
-
-#endif // FRAGMENT_SHADER

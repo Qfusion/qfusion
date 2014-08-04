@@ -1,16 +1,10 @@
-// RGB-encoded depth GLSL shader
-
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 #include "include/rgbdepth.glsl"
-
-qf_varying float v_Depth;
-
-#ifdef VERTEX_SHADER
-// Vertex shader
-
 #include "include/attributes.glsl"
 #include "include/vtransform.glsl"
+
+qf_varying float v_Depth;
 
 void main(void)
 {
@@ -23,19 +17,3 @@ void main(void)
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 	v_Depth = gl_Position.z;
 }
-
-#endif // VERTEX_SHADER
-
-#ifdef FRAGMENT_SHADER
-// Fragment shader
-
-void main(void)
-{
-#ifdef APPLY_RGB_SHADOW_16BIT
-	qf_FragColor = encodedepthmacro16(v_Depth);
-#else
-	qf_FragColor = encodedepthmacro(v_Depth);
-#endif
-}
-
-#endif // FRAGMENT_SHADER

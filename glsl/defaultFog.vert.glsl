@@ -1,15 +1,10 @@
-// Fog shader
-
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 #include "include/fog.glsl"
-
-qf_varying vec2 v_FogCoord;
-
-#ifdef VERTEX_SHADER
-
 #include "include/attributes.glsl"
 #include "include/vtransform.glsl"
+
+qf_varying vec2 v_FogCoord;
 
 void main(void)
 {
@@ -23,17 +18,3 @@ void main(void)
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 }
-
-#endif // VERTEX_SHADER
-
-#ifdef FRAGMENT_SHADER
-// Fragment shader
-
-void main(void)
-{
-	float fogDensity = FogDensity(v_FogCoord);
-	qf_FragColor = vec4(u_FogColor, fogDensity);
-}
-
-#endif // FRAGMENT_SHADER
-
