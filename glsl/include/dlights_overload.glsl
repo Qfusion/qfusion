@@ -12,9 +12,9 @@ myhalf3 DynamicLightsSummaryColor(in vec3 Position)
 	for (int i = 0; i < NUM_DLIGHTS; i++)
 #endif
 	{
-		myhalf3 STR = myhalf3(u_DynamicLights[i].Position - Position);
+		myhalf3 STR = myhalf3(u_DlightPosition[i] - Position);
 		myhalf distance = length(STR);
-		myhalf falloff = clamp(1.0 - distance * u_DynamicLights[i].DiffuseAndInvRadius.w, 0.0, 1.0);
+		myhalf falloff = clamp(1.0 - distance * u_DlightDiffuseAndInvRadius[i].a, 0.0, 1.0);
 
 		falloff *= falloff;
 
@@ -22,7 +22,7 @@ myhalf3 DynamicLightsSummaryColor(in vec3 Position)
 		falloff *= myhalf(max(dot(normalize(STR), surfaceNormalModelspace), 0.0));
 		#endif
 
-		Color += falloff * u_DynamicLights[i].DiffuseAndInvRadius.xyz;
+		Color += falloff * u_DlightDiffuseAndInvRadius[i].rgb;
 	}
 
 	return Color;

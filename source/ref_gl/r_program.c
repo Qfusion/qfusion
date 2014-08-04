@@ -2197,10 +2197,10 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.RGBGenFuncArgs = qglGetUniformLocationARB( program->object, "u_RGBGenFuncArgs" );
 	program->loc.AlphaGenFuncArgs = qglGetUniformLocationARB( program->object, "u_AlphaGenFuncArgs" );
 
-	program->loc.Fog.Plane = qglGetUniformLocationARB( program->object, "u_Fog.Plane" );
-	program->loc.Fog.Color = qglGetUniformLocationARB( program->object, "u_Fog.Color" );
-	program->loc.Fog.ScaleAndEyeDist = qglGetUniformLocationARB( program->object, "u_Fog.ScaleAndEyeDist" );
-	program->loc.Fog.EyePlane = qglGetUniformLocationARB( program->object, "u_Fog.EyePlane" );
+	program->loc.Fog.Plane = qglGetUniformLocationARB( program->object, "u_FogPlane" );
+	program->loc.Fog.Color = qglGetUniformLocationARB( program->object, "u_FogColor" );
+	program->loc.Fog.ScaleAndEyeDist = qglGetUniformLocationARB( program->object, "u_FogScaleAndEyeDist" );
+	program->loc.Fog.EyePlane = qglGetUniformLocationARB( program->object, "u_FogEyePlane" );
 
 	program->loc.ShaderTime = qglGetUniformLocationARB( program->object, "u_ShaderTime" );
 
@@ -2217,8 +2217,8 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
 		int locP, locD;
 
-		locP = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].Position", i ) );
-		locD = qglGetUniformLocationARB( program->object, va( "u_DynamicLights[%i].DiffuseAndInvRadius", i ) );
+		locP = qglGetUniformLocationARB( program->object, va( "u_DlightPosition[%i]", i ) );
+		locD = qglGetUniformLocationARB( program->object, va( "u_DlightDiffuseAndInvRadius[%i]", i ) );
 
 		if( locP < 0 || locD < 0 ) {
 			program->loc.DynamicLightsPosition[i] = program->loc.DynamicLightsDiffuseAndInvRadius[i] = -1;
