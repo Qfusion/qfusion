@@ -1,14 +1,8 @@
-// GLSL shader for surfaces with per-pixel lighting
-
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
-
 #if defined(NUM_DLIGHTS)
-#if defined(FRAGMENT_SHADER)
 #include "include/dlights.glsl"
 #endif
-#endif
-
 #ifdef APPLY_FOG
 #include "include/fog.glsl"
 #endif
@@ -16,82 +10,7 @@
 #include "include/greyscale.glsl"
 #endif
 
-qf_varying vec2 v_TexCoord;
-#ifdef NUM_LIGHTMAPS
-qf_varying qf_lmvec01 v_LightmapTexCoord01;
-#if NUM_LIGHTMAPS > 2 
-qf_varying qf_lmvec23 v_LightmapTexCoord23;
-#endif
-#endif
-
-qf_varying vec3 v_Position;
-
-#if defined(APPLY_SPECULAR) || defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
-qf_varying vec3 v_EyeVector;
-#endif
-
-qf_varying mat3 v_StrMatrix; // directions of S/T/R texcoords (tangent, binormal, normal)
-
-#if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)
-qf_varying vec2 v_FogCoord;
-#endif
-
-#ifdef VERTEX_SHADER
-// Vertex shader
-
-#include "include/attributes.glsl"
-#include "include/vtransform.glsl"
-#include "include/rgbgen.glsl"
-
-void main()
-{
-	vec4 Position = a_Position;
-	vec3 Normal = a_Normal.xyz;
-	myhalf4 inColor = myhalf4(a_Color);
-	vec2 TexCoord = a_TexCoord;
-	vec3 Tangent = a_SVector.xyz;
-	float TangentDir = a_SVector.w;
-
-	TransformVerts(Position, Normal, Tangent, TexCoord);
-
-	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
-
-#ifdef APPLY_FOG
-#if defined(APPLY_FOG_COLOR)
-	FogGen(Position, outColor, u_BlendMix);
-#else
-	FogGen(Position, v_FogCoord);
-#endif
-#endif // APPLY_FOG
-
-	qf_FrontColor = vec4(outColor);
-
-	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
-
-#ifdef NUM_LIGHTMAPS
-	v_LightmapTexCoord01 = a_LightmapCoord01;
-#if NUM_LIGHTMAPS > 2
-	v_LightmapTexCoord23 = a_LightmapCoord23;
-#endif // NUM_LIGHTMAPS > 2
-#endif // NUM_LIGHTMAPS
-
-	v_StrMatrix[0] = Tangent;
-	v_StrMatrix[2] = Normal;
-	v_StrMatrix[1] = TangentDir * cross(Normal, Tangent);
-
-#if defined(APPLY_SPECULAR) || defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
-	vec3 EyeVectorWorld = u_ViewOrigin - Position.xyz;
-	v_EyeVector = EyeVectorWorld * v_StrMatrix;
-#endif
-
-	v_Position = Position.xyz;
-	gl_Position = u_ModelViewProjectionMatrix * Position;
-}
-
-#endif // VERTEX_SHADER
-
-#ifdef FRAGMENT_SHADER
-// Fragment shader
+#include "include/varying_material.glsl"
 
 #ifdef NUM_LIGHTMAPS
 uniform vec4 u_DeluxemapOffset[(NUM_LIGHTMAPS + 3) / 4]; // s-offset for v_LightmapTexCoord
@@ -383,5 +302,3 @@ color = color * diffuse;
 
 	qf_FragColor = vec4(color);
 }
-
-#endif // FRAGMENT_SHADER

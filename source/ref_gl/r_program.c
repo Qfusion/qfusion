@@ -1097,7 +1097,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 						"right = (1.0 + TexCoord.s * -2.0) * u_QF_ViewAxis[1] * u_QF_MirrorSide;\n;"
 						"up = (1.0 + TexCoord.t * -2.0) * u_QF_ViewAxis[2];\n"
 						"forward = -1.0 * u_QF_ViewAxis[0];\n"
-						"// prevent the particle from disappearing at large distances\n"
+						// prevent the particle from disappearing at large distances
 						"t = dot(a_SpritePoint.xyz + u_QF_EntityOrigin - u_QF_ViewOrigin, u_QF_ViewAxis[0]);\n"
 						"t = 1.5 + step(20.0, t) * t * 0.006;\n"
 						"Position.xyz = a_SpritePoint.xyz + (right + up) * t * a_SpritePoint.w;\n"
@@ -1106,20 +1106,20 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 				break;
 			case DEFORMV_AUTOSPRITE2:
 				Q_strncatz( program,
-					"// local sprite axes\n"
+					// local sprite axes
 					"right = QF_LatLong2Norm(a_SpriteRightUpAxis.xy) * u_QF_MirrorSide;\n"
 					"up = QF_LatLong2Norm(a_SpriteRightUpAxis.zw);\n"
-					"\n"
-					"// mid of quad to camera vector\n"
+
+					// mid of quad to camera vector
 					"dist = u_QF_ViewOrigin - u_QF_EntityOrigin - a_SpritePoint.xyz;\n"
-					"\n"
-					"// filter any longest-axis-parts off the camera-direction\n"
+
+					// filter any longest-axis-parts off the camera-direction
 					"forward = normalize(dist - up * dot(dist, up));\n"
-					"\n"
-					"// the right axis vector as it should be to face the camera\n"
+
+					// the right axis vector as it should be to face the camera
 					"newright = cross(up, forward);\n"
-					"\n"
-					"// rotate the quad vertex around the up axis vector\n"
+
+					// rotate the quad vertex around the up axis vector
 					"t = dot(right, Position.xyz - a_SpritePoint.xyz);\n"
 					"Position.xyz += t * (newright - right);\n"
 					"Normal.xyz = forward;\n", 
@@ -1353,8 +1353,8 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	unsigned int i;
 	int hash;
 	int linked, error = 0;
-	int shaderTypeIdx, deformvIdx, instancedIdx, shadowIdx;
-	int body_start, num_init_strings, num_shader_strings;
+	int shaderTypeIdx, wavefuncsIdx, deformvIdx, instancedIdx, shadowIdx;
+	int body_start, num_init_strings;
 	glsl_program_t *program;
 	char fullName[1024];
 	char fileName[1024];
@@ -1414,8 +1414,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		}
 	}
 
-	memset( &parser, 0, sizeof( parser ) );
-
 	program = r_glslprograms + r_numglslprograms++;
 	program->object = qglCreateProgram();
 	if( !program->object )
@@ -1439,8 +1437,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 
 	Q_strncpyz( fullName, name, sizeof( fullName ) );
 	header = R_ProgramFeatures2Defines( glsl_programtypes_features[type], features, fullName, sizeof( fullName ) );
-
-	Q_snprintfz( fileName, sizeof( fileName ), "glsl/%s.glsl", name );
 
 	Q_snprintfz( shaderVersion, sizeof( shaderVersion ), 
 		"#define QF_GLSL_VERSION %i\n", glConfig.shadingLanguageVersion );
@@ -1505,6 +1501,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		"#define MAX_UNIFORM_BONES %i\n", glConfig.maxGLSLBones );
 	shaderStrings[i++] = maxBones;
 	shaderStrings[i++] = QF_BUILTIN_GLSL_UNIFORMS;
+	wavefuncsIdx = i;
 	shaderStrings[i++] = QF_GLSL_WAVEFUNCS;
 	shaderStrings[i++] = QF_GLSL_MATH;
 
@@ -1518,24 +1515,15 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	deformvIdx = i;
 	shaderStrings[i++] = R_GLSLBuildDeformv( deforms, numDeforms );
 
+	// setup the parser
 	num_init_strings = i;
-
-	// load program body
+	memset( &parser, 0, sizeof( parser ) );
 	parser.topFile = fileName;
-	parser.error = qfalse;
-
 	parser.buffers = &shaderBuffers[0];
-	parser.numBuffers = 0;
 	parser.maxBuffers = sizeof( shaderBuffers ) / sizeof( shaderBuffers[0] );
-
 	parser.strings = &shaderStrings[num_init_strings];
-	parser.numStrings = 0;
 	parser.maxStrings = sizeof( shaderStrings ) / sizeof( shaderStrings[0] ) - num_init_strings;
-
-	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
-
-	num_shader_strings = num_init_strings + parser.numStrings;
-
+	
 	// compile
 	//
 
@@ -1546,8 +1534,15 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	if( shaderStrings[deformvIdx] == NULL ) {
 		shaderStrings[deformvIdx] = "\n";
 	}
+	Q_snprintfz( fileName, sizeof( fileName ), "glsl/%s.vert.glsl", name );
+	parser.error = qfalse;
+	parser.numBuffers = 0;
+	parser.numStrings = 0;
+	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
 	program->vertexShader = RF_CompileShader( program->object, fullName, "vertex", GL_VERTEX_SHADER_ARB, 
-		shaderStrings, num_shader_strings );
+		shaderStrings, num_init_strings + parser.numStrings );
+	for( i = 0; i < parser.numBuffers; i++ )
+		R_Free( parser.buffers[i] );
 	if( !program->vertexShader )
 	{
 		error = 1;
@@ -1561,9 +1556,17 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		shaderStrings[shadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
 #endif
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
+	shaderStrings[wavefuncsIdx] = "\n";
 	shaderStrings[deformvIdx] = "\n";
+	Q_snprintfz( fileName, sizeof( fileName ), "glsl/%s.frag.glsl", name );
+	parser.error = qfalse;
+	parser.numBuffers = 0;
+	parser.numStrings = 0;
+	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
 	program->fragmentShader = RF_CompileShader( program->object, fullName, "fragment", GL_FRAGMENT_SHADER_ARB, 
-		shaderStrings, num_shader_strings );
+		shaderStrings, num_init_strings + parser.numStrings );
+	for( i = 0; i < parser.numBuffers; i++ )
+		R_Free( parser.buffers[i] );
 	if( !program->fragmentShader )
 	{
 		error = 1;
@@ -1595,10 +1598,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 done:
 	if( error )
 		RF_DeleteProgram( program );
-
-	for( i = 0; i < parser.numBuffers; i++ ) {
-		R_Free( parser.buffers[i] );
-	}
 
 	program->type = type;
 	program->features = features;
