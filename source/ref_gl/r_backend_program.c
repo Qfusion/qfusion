@@ -1268,7 +1268,7 @@ static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t 
 		int groupScissor[4] = { 0, 0, 0, 0 };
 
 		group = rsc.shadowGroups + i;
-		if( !( rb.currentShadowBits & group->bit ) ) {
+		if( !( rb.currentShadowBits & group->bit ) || ( group->projDist <= 0.0f ) ) {
 			continue;
 		}
 

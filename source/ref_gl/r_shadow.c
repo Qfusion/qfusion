@@ -385,6 +385,10 @@ void R_DrawShadowmaps( void )
 		}
 		rsc.renderedShadowBits |= group->bit;
 
+		if( group->projDist <= 0.0f ) {
+			continue;
+		}
+
 		// calculate LOD for shadowmap
 		lod = (int)((DistanceFast( group->origin, lodOrigin ) * lodScale) / group->projDist);
 		if( lod < 0 ) {
