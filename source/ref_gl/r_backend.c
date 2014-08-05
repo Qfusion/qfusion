@@ -163,9 +163,15 @@ static void RB_SetGLDefaults( void )
 */
 void RB_DepthRange( float depthmin, float depthmax )
 {
-	rb.gl.depthmin = bound( 0, depthmin, 1 );
-	rb.gl.depthmax = bound( 0, depthmax, 1 );
-	qglDepthRange( rb.gl.depthmin, rb.gl.depthmax );
+	clamp( depthmin, 0.0f, 1.0f );
+	clamp( depthmax, 0.0f, 1.0f );
+	rb.gl.depthmin = depthmin;
+	rb.gl.depthmax = depthmax;
+	if( rb.gl.depthoffset )
+		depthmax -= 2.0f / 65535.0f;
+	else
+		depthmin += 2.0f / 65535.0f;
+	qglDepthRange( depthmin, depthmax );
 }
 
 /*
@@ -175,6 +181,21 @@ void RB_GetDepthRange( float* depthmin, float *depthmax )
 {
 	*depthmin = rb.gl.depthmin;
 	*depthmax = rb.gl.depthmax;
+}
+
+/*
+* RB_DepthOffset
+*/
+void RB_DepthOffset( qboolean enable )
+{
+	float depthmin = rb.gl.depthmin;
+	float depthmax = rb.gl.depthmax;
+	rb.gl.depthoffset = enable;
+	if( enable )
+		depthmax -= 2.0f / 65535.0f;
+	else
+		depthmin += 2.0f / 65535.0f;
+	qglDepthRange( depthmin, depthmax );
 }
 
 /*
@@ -342,10 +363,7 @@ void RB_SetState( int state )
 
 	if( diff & GLSTATE_OFFSET_FILL )
 	{
-		if( state & GLSTATE_OFFSET_FILL )
-			RB_DepthRange( 0.0f, 1.0f - 2.0f / 65535.0f );
-		else
-			RB_DepthRange( 2.0f / 65535.0f, 1.0f );
+		RB_DepthOffset( state & GLSTATE_OFFSET_FILL ? qtrue : qfalse );
 	}
 
 	if( diff & GLSTATE_STENCIL_TEST )
@@ -500,7 +518,7 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 
 	qglClear( bits );
 
-	RB_DepthRange( 2.0f / 65535.0f, 1.0f );
+	RB_DepthRange( 0.0f, 1.0f );
 }
 
 /*
