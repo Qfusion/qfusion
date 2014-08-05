@@ -64,6 +64,8 @@ typedef struct r_backend_s
 		int				fbWidth, fbHeight;
 
 		float			depthmin, depthmax;
+
+		qboolean		depthoffset;
 	} gl;
 
 	unsigned int time;
