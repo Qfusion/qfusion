@@ -329,12 +329,12 @@ void CG_ScreenInit( void )
 	// wsw : hud debug prints
 	cg_debugHUD =		    trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
-	cg_touch_moveThreshold = trap_Cvar_Get( "cg_touch_moveThreshold", "12", CVAR_ARCHIVE );
-	cg_touch_strafeThreshold = trap_Cvar_Get( "cg_touch_strafeThreshold", "12", CVAR_ARCHIVE );
-	cg_touch_pitchThreshold = trap_Cvar_Get( "cg_touch_pitchThreshold", "12", CVAR_ARCHIVE );
+	cg_touch_moveThreshold = trap_Cvar_Get( "cg_touch_moveThreshold", "8", CVAR_ARCHIVE );
+	cg_touch_strafeThreshold = trap_Cvar_Get( "cg_touch_strafeThreshold", "8", CVAR_ARCHIVE );
+	cg_touch_pitchThreshold = trap_Cvar_Get( "cg_touch_pitchThreshold", "6", CVAR_ARCHIVE );
 	cg_touch_pitchSpeed = trap_Cvar_Get( "cg_touch_pitchSpeed", "4", CVAR_ARCHIVE );
-	cg_touch_yawThreshold = trap_Cvar_Get( "cg_touch_yawThreshold", "8", CVAR_ARCHIVE );
-	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "4", CVAR_ARCHIVE );
+	cg_touch_yawThreshold = trap_Cvar_Get( "cg_touch_yawThreshold", "4", CVAR_ARCHIVE );
+	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "4.5", CVAR_ARCHIVE );
 
 	//
 	// register our commands
