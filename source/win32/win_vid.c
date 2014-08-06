@@ -607,3 +607,11 @@ void VID_FlashWindow( int count )
 
 	FlashWindowEx(&fwi);
 }
+
+/*
+** VID_GetPixelRatio
+*/
+float VID_GetPixelRatio( void )
+{
+	return 1.0f; // TODO: return real dpi/96?
+}
