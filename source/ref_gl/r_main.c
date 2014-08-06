@@ -1820,7 +1820,7 @@ void R_WriteAviFrame( int frame, qboolean scissor )
 	checkname_size = sizeof( char ) * ( strlen( "avi/avi" ) + 6 + strlen( extension ) + 1 );
 	checkname = malloc( checkname_size );
 	Q_snprintfz( checkname, checkname_size, "avi/avi%06i", frame );
-	COM_DefaultExtension( checkname, ".jpg", checkname_size );
+	COM_DefaultExtension( checkname, extension, checkname_size );
 
 	R_ScreenShot( checkname, x, y, w, h, quality, qfalse, qfalse, qfalse, qtrue );
 
