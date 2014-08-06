@@ -385,7 +385,7 @@ void R_DrawShadowmaps( void )
 		}
 		rsc.renderedShadowBits |= group->bit;
 
-		if( group->projDist <= 0.0f ) {
+		if( group->projDist <= 1.0f ) {
 			continue;
 		}
 
