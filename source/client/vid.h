@@ -43,5 +43,6 @@ void	VID_AppActivate( qboolean active, qboolean destroy );
 qboolean VID_RefreshActive( void );
 int		VID_GetWindowWidth( void );
 int		VID_GetWindowHeight( void );
+float	VID_GetPixelRatio( void );
 
 #endif

@@ -151,3 +151,11 @@ qboolean VID_GetDisplaySize( int *width, int *height )
 
 	return qfalse;
 }
+
+/*
+** VID_GetPixelRatio
+*/
+float VID_GetPixelRatio( void )
+{
+	return 1.0f;
+}
