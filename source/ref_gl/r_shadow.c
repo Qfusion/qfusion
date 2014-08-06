@@ -175,6 +175,11 @@ static void R_ComputeShadowmapBounds( void )
 	for( i = 0; i < rsc.numShadowGroups; i++ ) {
 		group = rsc.shadowGroups + i;
 
+		if( group->projDist <= 1.0f ) {
+			group->bit = 0;
+			continue;
+		}
+
 		// get projection dir from lightgrid
 		R_LightForOrigin( group->origin, lightDir, group->lightAmbient, lightDiffuse, group->projDist * 0.5 );
 
@@ -384,10 +389,6 @@ void R_DrawShadowmaps( void )
 			continue;
 		}
 		rsc.renderedShadowBits |= group->bit;
-
-		if( group->projDist <= 1.0f ) {
-			continue;
-		}
 
 		// calculate LOD for shadowmap
 		lod = (int)((DistanceFast( group->origin, lodOrigin ) * lodScale) / group->projDist);
