@@ -484,18 +484,9 @@ void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags 
 		CG_MediaModel( cgs.media.modElectroBoltWallHit ), NULL );
 
 	le->ent.rotation = rand() % 360;
+	le->ent.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
 
-	if( fire_mode == FIRE_MODE_STRONG )
-	{
-		le->ent.scale = 1.5f;
-		// add white energy particles on the impact
-		CG_ImpactPuffParticles( pos, dir, 12, 1.25f, 1, 1, 1, 1, CG_MediaShader( cgs.media.shaderAdditiveParticleShine ) );
-	}
-	else
-	{
-		le->ent.scale = 1.0f;
-		CG_ImpactPuffParticles( pos, dir, 12, 1.0f, 1, 1, 1, 1, NULL );
-	}
+	CG_ImpactPuffParticles( pos, dir, 15, 1.25f, 1, 1, 1, 1, NULL );
 }
 
 /*
