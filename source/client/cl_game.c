@@ -684,10 +684,10 @@ void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y )
 /*
 * CL_GameModule_TouchFrame
 */
-void CL_GameModule_TouchFrame( qboolean active )
+void CL_GameModule_TouchFrame( void )
 {
 	if( cge )
-		cge->TouchFrame( active );
+		cge->TouchFrame();
 }
 
 /*
@@ -697,4 +697,13 @@ void CL_GameModule_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 {
 	if( cge )
 		cge->TouchMove( cmd, viewangles, frametime );
+}
+
+/*
+* CL_GameModule_CancelTouches
+*/
+void CL_GameModule_CancelTouches( void )
+{
+	if( cge )
+		cge->CancelTouches();
 }

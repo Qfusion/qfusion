@@ -748,8 +748,9 @@ enum
 
 int CG_TouchArea( int area, int x, int y, int w, int h, bool sticky, void ( *upfunc )( int id ) );
 void CG_TouchEvent( int id, touchevent_t type, int x, int y );
-void CG_TouchFrame( qboolean active );
+void CG_TouchFrame( void );
 void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime );
+void CG_CancelTouches( void );
 
 enum
 {

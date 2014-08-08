@@ -68,6 +68,9 @@ static int chat_prestep = 0;
 static unsigned int chat_linepos = 0;
 static unsigned int chat_bufferlen = 0;
 
+static int touch_y;
+static qboolean touch_imeShown;
+
 static int Con_NumPadValue( int key )
 {
 	switch( key )
@@ -164,6 +167,7 @@ void Con_ToggleConsole_f( void )
 		// open console
 		CL_SetOldKeyDest( cls.key_dest );
 		CL_SetKeyDest( key_console );
+		IN_ShowIME( qtrue );
 	}
 }
 
@@ -329,7 +333,8 @@ static void Con_MessageMode2_f( void )
 */
 void Con_CheckResize( void )
 {
-	int width = viddef.width / SMALL_CHAR_WIDTH - 2;
+	float pixelRatio = VID_GetPixelRatio();
+	int width = viddef.width / ( SMALL_CHAR_WIDTH * pixelRatio ) - 2;
 
 	if( width == con.linewidth )
 		return;
@@ -369,6 +374,9 @@ void Con_Init( void )
 	con.numlines = 0;
 	con.display = 0;
 	con.linewidth = 78;
+
+	touch_y = -1;
+	touch_imeShown = qfalse;
 
 	Com_Printf( "Console initialized.\n" );
 
@@ -624,12 +632,13 @@ static void Con_DrawInput( int vislines )
 {
 	char draw_search_text[MAXCMDLINE*2+4];
 	const char *text = key_lines[edit_line];
-	int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
-	int text_y = vislines - 14 - smallCharHeight;
-	const int left_margin = 8, right_margin = 8;
-	int promptwidth = SCR_strWidth( "]", cls.fontSystemSmall, 1 );
-	int cursorwidth = SCR_strWidth( "_", cls.fontSystemSmall, 1 );
-	int input_width = viddef.width - left_margin - right_margin;
+	int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
+	float pixelRatio = VID_GetPixelRatio();
+	int text_y = vislines - 14 * pixelRatio - smallCharHeight;
+	int margin = 8 * pixelRatio;
+	int promptwidth = SCR_strWidth( "]", cls.fontSystemSmallScaled, 1 );
+	int cursorwidth = SCR_strWidth( "_", cls.fontSystemSmallScaled, 1 );
+	int input_width = viddef.width - margin * 2;
 	int prewidth;	// width of input line before cursor
 
 	if( cls.key_dest != key_console )
@@ -640,20 +649,20 @@ static void Con_DrawInput( int vislines )
 		Q_snprintfz( draw_search_text, sizeof( draw_search_text ), "%s : %s", key_lines[edit_line], search_text );
 	}
 
-	prewidth = SCR_strWidth( text, cls.fontSystemSmall, key_linepos );
+	prewidth = SCR_strWidth( text, cls.fontSystemSmallScaled, key_linepos );
 
 	// don't let the cursor go beyond the left screen edge
 	clamp_high( input_prestep, prewidth - promptwidth);
 	// don't let it go beyond the right screen edge
 	clamp_low( input_prestep, prewidth - ( input_width - cursorwidth ) );
 
-	SCR_DrawClampString( left_margin - input_prestep,
-		text_y, text, left_margin, text_y,
-		viddef.width - right_margin, viddef.height, cls.fontSystemSmall, colorWhite );
+	SCR_DrawClampString( margin - input_prestep,
+		text_y, text, margin, text_y,
+		viddef.width - margin, viddef.height, cls.fontSystemSmallScaled, colorWhite );
 
 	if( (int)( cls.realtime>>8 )&1 )
-		SCR_DrawRawChar( left_margin + prewidth - input_prestep, text_y, '_',
-		cls.fontSystemSmall, colorWhite );
+		SCR_DrawRawChar( margin + prewidth - input_prestep, text_y, '_',
+		cls.fontSystemSmallScaled, colorWhite );
 }
 
 /*
@@ -663,6 +672,7 @@ static void Con_DrawInput( int vislines )
 */
 void Con_DrawNotify( void )
 {
+	float pixelRatio = VID_GetPixelRatio();
 	int v;
 	char *text;
 	const char *say;
@@ -684,9 +694,9 @@ void Con_DrawNotify( void )
 				continue;
 			text = con.text[i] ? con.text[i] : "";
 
-			SCR_DrawString( 8, v, ALIGN_LEFT_TOP, text, cls.fontSystemSmall, colorWhite );
+			SCR_DrawString( 8 * pixelRatio, v, ALIGN_LEFT_TOP, text, cls.fontSystemSmallScaled, colorWhite );
 
-			v += SCR_strHeight( cls.fontSystemSmall );
+			v += SCR_strHeight( cls.fontSystemSmallScaled );
 		}
 	}
 
@@ -763,8 +773,9 @@ void Con_DrawNotify( void )
 * 
 * Draws the console with the solid background
 */
-void Con_DrawConsole( float frac )
+void Con_DrawConsole( void )
 {
+	float pixelRatio = VID_GetPixelRatio();
 	int i, x, y;
 	int rows;
 	char *text;
@@ -773,9 +784,9 @@ void Con_DrawConsole( float frac )
 	char version[256];
 	time_t long_time;
 	struct tm *newtime;
-	int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
+	int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
 
-	lines = viddef.height * frac;
+	lines = viddef.height * scr_con_current;
 	if( lines <= 0 )
 		return;
 	if( !smallCharHeight )
@@ -786,7 +797,7 @@ void Con_DrawConsole( float frac )
 
 	// draw the background
 	re.DrawStretchPic( 0, 0, viddef.width, lines, 0, 0, 1, 1, colorWhite, cls.consoleShader );
-	SCR_DrawFillRect( 0, lines - 2, viddef.width, 2, colorRed );
+	SCR_DrawFillRect( 0, lines - 2 * pixelRatio, viddef.width, 2 * pixelRatio, colorRed );
 
 	// get date from system
 	time( &long_time );
@@ -801,21 +812,22 @@ void Con_DrawConsole( float frac )
 #endif
 
 	SCR_DrawString( viddef.width-SCR_strWidth( version, 
-		cls.fontSystemSmall, 0 )-4, lines-SCR_strHeight( cls.fontSystemSmall ) - 4, 
-		ALIGN_LEFT_TOP, version, cls.fontSystemSmall, colorRed );
+		cls.fontSystemSmallScaled, 0 ) - 4 * pixelRatio,
+		lines - SCR_strHeight( cls.fontSystemSmallScaled ) - 4 * pixelRatio, 
+		ALIGN_LEFT_TOP, version, cls.fontSystemSmallScaled, colorRed );
 
 	// prepare to draw the text
-	rows = ( lines-smallCharHeight-14 ) / smallCharHeight;  // rows of text to draw
-	y = lines - smallCharHeight-14-smallCharHeight;
+	rows = ( lines - smallCharHeight - 14 * pixelRatio ) / smallCharHeight;  // rows of text to draw
+	y = lines - smallCharHeight - 14 * pixelRatio - smallCharHeight;
 
 	row = con.display;	// first line to be drawn
 	if( con.display )
 	{
-		int width = SCR_strWidth( "^", cls.fontSystemSmall, 0 );
+		int width = SCR_strWidth( "^", cls.fontSystemSmallScaled, 0 );
 
 		// draw arrows to show the buffer is backscrolled
 		for( x = 0; x < con.linewidth; x += 4 )
-			SCR_DrawRawChar( ( x+1 )*width, y, '^', cls.fontSystemSmall, colorRed );
+			SCR_DrawRawChar( ( x+1 )*width, y, '^', cls.fontSystemSmallScaled, colorRed );
 
 		// the arrows obscure one line of scrollback
 		y -= smallCharHeight;
@@ -831,7 +843,7 @@ void Con_DrawConsole( float frac )
 
 		text = con.text[row] ? con.text[row] : "";
 
-		SCR_DrawString( 8, y, ALIGN_LEFT_TOP, text, cls.fontSystemSmall, colorWhite );
+		SCR_DrawString( 8 * pixelRatio, y, ALIGN_LEFT_TOP, text, cls.fontSystemSmallScaled, colorWhite );
 	}
 
 	// draw the input prompt, user text, and cursor if desired
@@ -1436,7 +1448,7 @@ void Con_KeyDown( int key )
 	{
 		if( key_linepos > 1 )
 		{
-			int oldwidth = SCR_strWidth( key_lines[edit_line], cls.fontSystemSmall, key_linepos );
+			int oldwidth = SCR_strWidth( key_lines[edit_line], cls.fontSystemSmallScaled, key_linepos );
 			int newwidth;
 
 			// skip to the end of color sequence
@@ -1459,7 +1471,7 @@ void Con_KeyDown( int key )
 			}
 
 			// keep the cursor in the same on-screen position if possible
-			newwidth = SCR_strWidth( key_lines[edit_line], cls.fontSystemSmall, key_linepos );
+			newwidth = SCR_strWidth( key_lines[edit_line], cls.fontSystemSmallScaled, key_linepos );
 			input_prestep += ( newwidth - oldwidth );
 			clamp_low( input_prestep, 0 );
 		}
@@ -1566,7 +1578,7 @@ void Con_KeyDown( int key )
 	{
 		if( ctrl_is_down )
 		{
-			int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
+			int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
 			int vislines = (int)( viddef.height * bound( 0.0, scr_con_current, 1.0 ) );
 			int rows = ( vislines-smallCharHeight-14 ) / smallCharHeight;  // rows of text to draw
 			con.display = con.numlines - rows + 1;
@@ -1877,6 +1889,46 @@ void Con_MessageKeyDown( int key )
 		chat_linepos = 0;
 		chat_buffer[0] = 0;
 		return;
+	}
+}
+
+void Con_TouchConsole( qboolean down, int x, int y )
+{
+	int smallCharHeight;
+
+	if( !con_initialized )
+		return;
+
+	if( !down )
+	{
+		touch_y = -1;
+		touch_imeShown = qfalse;
+		return;
+	}
+
+	smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
+
+	if( touch_y >= 0 )
+	{
+		int dist = ( y - touch_y ) / smallCharHeight;
+		con.display += dist;
+		clamp_high( con.display, con.numlines - 1 );
+		clamp_low( con.display, 0 );
+		touch_y += dist * smallCharHeight;
+		return;
+	}
+
+	if( scr_con_current )
+	{
+		if( y < ( ( viddef.height * scr_con_current ) - 14 * VID_GetPixelRatio() - smallCharHeight ) )
+		{
+			touch_y = y;
+		}
+		else if( ( y < ( viddef.height * scr_con_current ) ) && !touch_imeShown )
+		{
+			touch_imeShown = qtrue;
+			IN_ShowIME( qtrue );
+		}
 	}
 }
 

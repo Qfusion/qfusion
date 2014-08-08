@@ -345,3 +345,10 @@ void IN_Frame()
 
 	HandleEvents();
 }
+
+/**
+ * Stub for showing an on-screen keyboard.
+ */
+void IN_ShowIME( qboolean show )
+{
+}

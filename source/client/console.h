@@ -32,7 +32,7 @@ extern qboolean con_initialized;
 void Con_CheckResize( void );
 void Con_Init( void );
 void Con_Shutdown( void );
-void Con_DrawConsole( float frac );
+void Con_DrawConsole( void );
 void Con_Print( const char *txt );
 void Con_PrintSilent( const char *txt );
 void Con_CenteredPrint( char *text );
@@ -49,6 +49,7 @@ void Con_KeyDown( int key );
 void Con_CharEvent( qwchar key );
 void Con_MessageKeyDown( int key );
 void Con_MessageCharEvent( qwchar key );
+void Con_TouchConsole( qboolean down, int x, int y );
 
 int Q_ColorCharCount( const char *s, int byteofs );
 int Q_ColorCharOffset( const char *s, int charcount );
