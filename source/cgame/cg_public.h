@@ -30,7 +30,7 @@ typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   67
+#define	CGAME_API_VERSION   68
 
 //
 // structs and variables shared with the main engine
@@ -282,9 +282,11 @@ typedef struct
 
 	void ( *TouchEvent )( int id, touchevent_t type, int x, int y );
 
-	void ( *TouchFrame )( qboolean active );
+	void ( *TouchFrame )( void );
 
 	void ( *TouchMove )( usercmd_t *cmd, vec3_t viewangles, int frametime );
+
+	void ( *CancelTouches )( void );
 } cgame_export_t;
 
 #endif

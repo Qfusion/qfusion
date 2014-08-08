@@ -504,6 +504,11 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 	case key_game:
 		CL_GameModule_TouchEvent( id, type, x, y );
 		return;
+
+	case key_console:
+		if( id == 0 )
+			Con_TouchConsole( ( ( type != TOUCH_UP ) && ( type != TOUCH_CANCEL ) ) ? qtrue : qfalse, x, y );
+		return;
 		
 	case key_menu:
 		if( id != 0 )
@@ -522,6 +527,20 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 			CL_UIModule_MouseSet( 0, 0 );
 			break;
 		}
+		return;
+	}
+}
+
+void CL_CancelTouches( void )
+{
+	switch( cls.key_dest )
+	{
+	case key_game:
+		CL_GameModule_CancelTouches();
+		return;
+
+	case key_console:
+		Con_TouchConsole( qfalse, 0, 0 );
 		return;
 	}
 }
@@ -840,7 +859,8 @@ void CL_UserInputFrame( void )
 	IN_Commands();
 
 	// let the game handle touch events
-	CL_GameModule_TouchFrame( ( cls.key_dest == key_game ) ? qtrue : qfalse );
+	if( cls.key_dest == key_game )
+		CL_GameModule_TouchFrame();
 
 	// process console commands
 	Cbuf_Execute();

@@ -1512,3 +1512,10 @@ void IN_JoyMove( usercmd_t *cmd, int frametime )
 		}
 	}
 }
+
+/*
+* IN_ShowIME
+*/
+void IN_ShowIME( qboolean show )
+{
+}

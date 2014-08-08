@@ -1527,19 +1527,14 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 /*
 * CG_TouchFrame
 */
-void CG_TouchFrame( qboolean active )
+void CG_TouchFrame( void )
 {
 	int i;
 
-	if( !cg.view.draw2D || !cg_showHUD->integer )
-		active = qfalse;
-
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
-	{
 		cg_touches[i].area_valid = false;
-	}
 	
-	if( active )
+	if( cg.view.draw2D & cg_showHUD->integer )
 		CG_ExecuteLayoutProgram( cg.statusBar, true );
 
 	// cancel non-existent areas
@@ -1554,8 +1549,6 @@ void CG_TouchFrame( qboolean active )
 					touch.upfunc( i );
 				touch.area = TOUCHAREA_NONE;
 			}
-			if( !active )
-				touch.down = false;
 		}
 	}
 }
@@ -1643,6 +1636,29 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 		}
 
 		cmd->upmove += upmove * frametime;
+	}
+}
+
+/*
+* CG_CancelTouches
+*/
+void CG_CancelTouches( void )
+{
+	int i;
+
+	for( i = 0; i < CG_MAX_TOUCHES; ++i )
+	{
+		cg_touch_t &touch = cg_touches[i];
+		if( touch.down )
+		{
+			if( touch.area != TOUCHAREA_NONE )
+			{
+				if( touch.upfunc )
+					touch.upfunc( i );
+				touch.area = TOUCHAREA_NONE;
+			}
+			touch.down = qfalse;
+		}
 	}
 }
 
