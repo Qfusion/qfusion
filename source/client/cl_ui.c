@@ -293,7 +293,6 @@ void CL_UIModule_Init( void )
 
 	import.VID_GetModeInfo = VID_GetModeInfo;
 	import.VID_FlashWindow = VID_FlashWindow;
-	import.VID_GetPixelRatio = VID_GetPixelRatio;
 
 	import.Mem_Alloc = CL_UIModule_MemAlloc;
 	import.Mem_Free = CL_UIModule_MemFree;
@@ -342,8 +341,8 @@ void CL_UIModule_Init( void )
 
 	CL_UIModule_AsyncStream_Init();
 
-	uie->Init( viddef.width, viddef.height, APP_PROTOCOL_VERSION,
-		APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
+	uie->Init( viddef.width, viddef.height, VID_GetPixelRatio(),
+		APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
 
 	Com_Printf( "------------------------------------\n" );
 }

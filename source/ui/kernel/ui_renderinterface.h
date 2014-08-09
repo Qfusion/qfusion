@@ -19,7 +19,7 @@ namespace WSWUI
 class UI_RenderInterface : public Rocket::Core::RenderInterface
 {
 public:
-	UI_RenderInterface( int vidWidth, int vidHeight );
+	UI_RenderInterface( int vidWidth, int vidHeight, float pixelRatio );
 	virtual ~UI_RenderInterface();
 
 	//// Implement the RenderInterface
@@ -47,6 +47,9 @@ public:
 	/// Called by Rocket when a loaded texture is no longer required.
 	virtual void ReleaseTexture(Rocket::Core::TextureHandle texture_handle);
 
+	/// Returns the number of pixels per inch.
+	virtual float GetPixelsPerInch(void);
+
 	//// Methods
 	int GetWidth( void );
 	int GetHeight( void );
@@ -58,6 +61,8 @@ public:
 private:
 	int vid_width;
 	int vid_height;
+
+	float pixelsPerInch;
 
 	int texCounter;
 

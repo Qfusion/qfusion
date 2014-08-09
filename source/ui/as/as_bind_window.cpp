@@ -200,6 +200,12 @@ public:
 		return state.height;
 	}
 
+	float getPixelRatio( void ) const
+	{
+		const RefreshState &state = UI_Main::Get()->getRefreshState();
+		return state.pixelRatio;
+	}
+
 	unsigned int historySize( void ) const
 	{
 		WSWUI::NavigationStack *stack = UI_Main::Get()->getNavigator();
@@ -386,6 +392,7 @@ void BindWindow( ASInterface *as )
 		.method( &ASWindow::getDrawBackground, "get_drawBackground" )
 		.method( &ASWindow::getWidth, "get_width" )
 		.method( &ASWindow::getHeight, "get_height" )
+		.method( &ASWindow::getPixelRatio, "get_pixelRatio" )
 
 		.method( &ASWindow::historySize, "history_size" )
 		.method( &ASWindow::historyBack, "history_back" )

@@ -34,8 +34,8 @@ namespace WSWUI
 		return UI_API_VERSION;
 	}
 
-	void Init( int vidWidth, int vidHeight, int protocol,
-		const char *demoExtension, const char *basePath )
+	void Init( int vidWidth, int vidHeight, float pixelRatio,
+		int protocol, const char *demoExtension, const char *basePath )
 	{
 		// destructor doesnt throw
 		if( ui_main ) {
@@ -46,8 +46,8 @@ namespace WSWUI
 		// constructor may throw
 		try
 		{
-			ui_main = UI_Main::Instance( vidWidth, vidHeight, protocol,
-				demoExtension, basePath );
+			ui_main = UI_Main::Instance( vidWidth, vidHeight, pixelRatio,
+				protocol, demoExtension, basePath );
 		}
 		catch( std::runtime_error &err )
 		{

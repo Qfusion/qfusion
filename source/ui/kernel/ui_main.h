@@ -27,6 +27,7 @@ public:
 	bool drawBackground;
 	int backgroundNum;
 	int width, height;
+	float pixelRatio;
 };
 
 class ServerBrowserDataSource;
@@ -85,8 +86,8 @@ public:
 	static void PrintDocuments_Cmd( void );
 	
 	// Other static functions
-	static UI_Main *Instance( int vidWidth, int vidHeight, int protocol,
-		const char *demoExtension, const char *basePath );
+	static UI_Main *Instance( int vidWidth, int vidHeight, float pixelRatio,
+		int protocol, const char *demoExtension, const char *basePath );
 	static UI_Main *Get( void );
 	static void Destroy( void );
 
@@ -125,8 +126,8 @@ public:
 	unsigned int getConnectCount( void ) const { return connectCount; }
 
 private:
-	UI_Main( int vidWidth, int vidHeight, int protocol,
-		const char *demoExtension, const char *basePath );
+	UI_Main( int vidWidth, int vidHeight, float pixelRatio,
+		int protocol, const char *demoExtension, const char *basePath );
 
 	//// METHODS
 	bool initAS( void );
