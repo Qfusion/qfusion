@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    45
+#define	UI_API_VERSION	    46
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -131,6 +131,7 @@ typedef struct
 
 	qboolean ( *VID_GetModeInfo )( int *width, int *height, qboolean *wideScreen, int mode );
 	void ( *VID_FlashWindow )( int count );
+	float ( *VID_GetPixelRatio )( void );
 
 	void ( *GetConfigString )( int i, char *str, int size );
 	unsigned int ( *Milliseconds )( void );

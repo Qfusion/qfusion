@@ -30,7 +30,7 @@ typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   68
+#define	CGAME_API_VERSION   69
 
 //
 // structs and variables shared with the main engine
@@ -198,6 +198,7 @@ typedef struct
 	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
 
 	void ( *VID_FlashWindow )( int count );
+	float ( *VID_GetPixelRatio )( void );
 
 	// collision detection
 	int ( *CM_NumInlineModels )( void );
