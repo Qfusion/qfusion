@@ -50,6 +50,7 @@ enum
 	TOUCHAREA_HUD_CROUCH,
 	TOUCHAREA_HUD_ATTACK,
 	TOUCHAREA_HUD_SPECIAL,
+	TOUCHAREA_HUD_CLASSACTION,
 	TOUCHAREA_HUD_WEAPON = TOUCHAREA_HUD + 0x80
 };
 
@@ -2290,6 +2291,14 @@ static bool CG_LFuncTouchSpecial( struct cg_layoutnode_s *commandnode, struct cg
 	return true;
 }
 
+static bool CG_LFuncTouchClassAction( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	if( CG_TouchArea( TOUCHAREA_HUD_CLASSACTION,
+		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, true, NULL ) >= 0 )
+		trap_Cmd_ExecuteText( EXEC_NOW, va( "classAction%i", ( int )CG_GetNumericArg( &argumentnode ) ) );
+	return true;
+}
+
 
 static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
@@ -2835,6 +2844,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncTouchSpecial,
 		0,
 		"Places special button",
+		false
+	},
+
+	{
+		"touchClassAction",
+		NULL,
+		CG_LFuncTouchClassAction,
+		1,
+		"Places class action button",
 		false
 	},
 
