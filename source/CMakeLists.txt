@@ -34,7 +34,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../libsrcs/libRocket/libRocket/Include"
     )
 
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
 
     set(CMAKE_LIBRARY_PATH "win32/x86/lib/debug")
 endif()
