@@ -285,7 +285,7 @@ endif
 ifeq ($(BUILD_SND_QF),YES)
 SDL_CONFIG?=sdl-config
 
-CFLAGS_QF=$(shell $(SDL_CONFIG) --cflags) -I./snd_openal -I./snd_common 
+CFLAGS_QF=$(shell $(SDL_CONFIG) --cflags) -I./snd_qf -I./snd_common 
 LDFLAGS_QF=$(shell $(SDL_CONFIG) --libs) -lvorbisfile
 endif # BUILD_SND_QF
 
