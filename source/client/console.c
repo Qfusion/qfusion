@@ -384,7 +384,7 @@ void Con_Init( void )
 	// register our commands
 	//
 	con_notifytime = Cvar_Get( "con_notifytime", "3", CVAR_ARCHIVE );
-	con_drawNotify = Cvar_Get( "con_drawNotify", "1", CVAR_ARCHIVE );
+	con_drawNotify = Cvar_Get( "con_drawNotify", "0", CVAR_ARCHIVE );
 	con_printText  = Cvar_Get( "con_printText", "1", CVAR_ARCHIVE );
 	con_chatmode = Cvar_Get( "con_chatmode", "3", CVAR_ARCHIVE );
 
