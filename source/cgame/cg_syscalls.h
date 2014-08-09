@@ -445,6 +445,11 @@ static inline void trap_VID_FlashWindow( int count )
 	CGAME_IMPORT.VID_FlashWindow( count );
 }
 
+static inline float trap_VID_GetPixelRatio( void )
+{
+	return CGAME_IMPORT.VID_GetPixelRatio();
+}
+
 static inline struct cmodel_s *trap_CM_InlineModel( int num )
 {
 	return CGAME_IMPORT.CM_InlineModel( num );

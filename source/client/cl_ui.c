@@ -293,6 +293,7 @@ void CL_UIModule_Init( void )
 
 	import.VID_GetModeInfo = VID_GetModeInfo;
 	import.VID_FlashWindow = VID_FlashWindow;
+	import.VID_GetPixelRatio = VID_GetPixelRatio;
 
 	import.Mem_Alloc = CL_UIModule_MemAlloc;
 	import.Mem_Free = CL_UIModule_MemFree;

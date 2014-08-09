@@ -489,6 +489,7 @@ void CL_GameModule_Init( void )
 	import.R_GetShaderCinematic = re.GetShaderCinematic;
 
 	import.VID_FlashWindow = VID_FlashWindow;
+	import.VID_GetPixelRatio = VID_GetPixelRatio;
 
 	import.CM_NumInlineModels = CL_GameModule_CM_NumInlineModels;
 	import.CM_InlineModel = CL_GameModule_CM_InlineModel;
