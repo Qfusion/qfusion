@@ -1534,7 +1534,7 @@ void CG_TouchFrame( void )
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
 		cg_touches[i].area_valid = false;
 	
-	if( cg.view.draw2D & cg_showHUD->integer )
+	if( cg.view.draw2D && cg_showHUD->integer )
 		CG_ExecuteLayoutProgram( cg.statusBar, true );
 
 	// cancel non-existent areas
