@@ -22,9 +22,11 @@ typedef Rocket::Core::CompiledGeometryHandle CompiledGeometryHandle;
 
 typedef struct shader_s shader_t;
 
-UI_RenderInterface::UI_RenderInterface( int vidWidth, int vidHeight )
+UI_RenderInterface::UI_RenderInterface( int vidWidth, int vidHeight, float pixelRatio )
 	: vid_width( vidWidth ), vid_height( vidHeight ), polyAlloc()
 {
+	pixelsPerInch = 160.0f * pixelRatio;
+
 	texCounter = 0;
 
 	scissorEnabled = false;
@@ -158,6 +160,11 @@ int UI_RenderInterface::GetHeight( void )
 int UI_RenderInterface::GetWidth( void )
 {
 	return this->vid_width;
+}
+
+float UI_RenderInterface::GetPixelsPerInch( void )
+{
+	return this->pixelsPerInch;
 }
 
 poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture )

@@ -264,10 +264,6 @@ namespace trap
 			UI_IMPORT.VID_FlashWindow( count );
 		}
 
-		inline float VID_GetPixelRatio( void ) {
-			return UI_IMPORT.VID_GetPixelRatio();
-		}
-
 		inline void GetConfigString( int i, char *str, int size ) {
 			UI_IMPORT.GetConfigString( i, str, size );
 		}

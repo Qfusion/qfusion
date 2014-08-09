@@ -45,8 +45,8 @@ UI_Main *UI_Main::self = 0;
 const std::string UI_Main::ui_index( "index.rml" );
 const std::string UI_Main::ui_connectscreen( "connectscreen.rml" );
 
-UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol,
-	const char *demoExtension, const char *basePath )
+UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
+	int protocol, const char *demoExtension, const char *basePath )
 	// pointers to zero
 	: asmodule(0), rocketModule(0),
 	levelshot_fmt(0), datetime_fmt(0), duration_fmt(0), filetype_fmt(0), colorcode_fmt(0), 
@@ -74,6 +74,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, int protocol,
 	refreshState.clientState = CA_UNINITIALIZED;
 	refreshState.width = vidWidth;
 	refreshState.height = vidHeight;
+	refreshState.pixelRatio = pixelRatio;
 	refreshState.drawBackground = true;
 
 	demoInfo.setPlaying( false );
@@ -237,7 +238,7 @@ void UI_Main::loadCursor( void )
 bool UI_Main::initRocket( void )
 {
 	// this may throw runtime_error.. ok pass it back up
-	rocketModule = __new__( RocketModule )( refreshState.width, refreshState.height );
+	rocketModule = __new__( RocketModule )( refreshState.width, refreshState.height, refreshState.pixelRatio );
 	return true;
 }
 
@@ -525,12 +526,12 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 
 //==================================
 
-UI_Main *UI_Main::Instance( int vidWidth, int vidHeight, int protocol,
-	const char *demoExtension, const char *basePath )
+UI_Main *UI_Main::Instance( int vidWidth, int vidHeight, float pixelRatio,
+	int protocol, const char *demoExtension, const char *basePath )
 {
 	if( !self ) {
-		self = __new__( UI_Main )( vidWidth, vidHeight, protocol,
-			demoExtension, basePath );
+		self = __new__( UI_Main )( vidWidth, vidHeight, pixelRatio,
+			protocol, demoExtension, basePath );
 	}
 	return self;
 }

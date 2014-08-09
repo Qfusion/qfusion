@@ -131,7 +131,6 @@ typedef struct
 
 	qboolean ( *VID_GetModeInfo )( int *width, int *height, qboolean *wideScreen, int mode );
 	void ( *VID_FlashWindow )( int count );
-	float ( *VID_GetPixelRatio )( void );
 
 	void ( *GetConfigString )( int i, char *str, int size );
 	unsigned int ( *Milliseconds )( void );
@@ -207,8 +206,8 @@ typedef struct
 {
 	// if API is different, the dll cannot be used
 	int ( *API )( void );
-	void ( *Init )( int vidWidth, int vidHeight, int protocol,
-			const char *demoExtension, const char *basePath );
+	void ( *Init )( int vidWidth, int vidHeight, float pixelRatio,
+			int protocol, const char *demoExtension, const char *basePath );
 	void ( *Shutdown )( void );
 
 	void ( *TouchAllAssets )( void );

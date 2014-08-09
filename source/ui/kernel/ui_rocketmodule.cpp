@@ -53,13 +53,13 @@ public:
 
 //==================================================
 
-RocketModule::RocketModule( int vidWidth, int vidHeight )
+RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	: rocketInitialized(false),
 	// pointers
 	systemInterface(0), fsInterface(0), renderInterface(0), context(0)
 {
 
-	renderInterface = __new__( UI_RenderInterface )( vidWidth, vidHeight );
+	renderInterface = __new__( UI_RenderInterface )( vidWidth, vidHeight, pixelRatio );
 	Rocket::Core::SetRenderInterface( renderInterface );
 	systemInterface = __new__( UI_SystemInterface )();
 	Rocket::Core::SetSystemInterface( systemInterface );

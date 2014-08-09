@@ -16,7 +16,7 @@ namespace WSWUI
 		typedef Rocket::Core::Event Event;
 
 	public:
-		RocketModule( int vidWidth, int vidHeight );
+		RocketModule( int vidWidth, int vidHeight, float pixelRatio );
 		~RocketModule();
 
 		// post-initialization
