@@ -684,6 +684,8 @@ void Con_DrawNotify( void )
 	v = 0;
 	if( con_drawNotify->integer )
 	{
+		int x = 8 * pixelRatio;
+
 		for( i = min( NUM_CON_TIMES, con.numlines ) - 1; i >= 0; i-- )
 		{
 			time = con.times[i];
@@ -694,7 +696,7 @@ void Con_DrawNotify( void )
 				continue;
 			text = con.text[i] ? con.text[i] : "";
 
-			SCR_DrawString( 8 * pixelRatio, v, ALIGN_LEFT_TOP, text, cls.fontSystemSmallScaled, colorWhite );
+			SCR_DrawString( x, v, ALIGN_LEFT_TOP, text, cls.fontSystemSmallScaled, colorWhite );
 
 			v += SCR_strHeight( cls.fontSystemSmallScaled );
 		}
