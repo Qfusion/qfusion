@@ -1389,7 +1389,7 @@ void CG_Draw2DView( void )
 	{
 		CG_CheckDrawCenterString();
 		CG_CheckDamageCrosshair();
-		CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2+8, ALIGN_RIGHT_TOP, cgs.fontSystemSmall, colorWhite );
+		CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2+8, ALIGN_RIGHT_TOP, cgs.fontSystemSmallScaled, colorWhite );
 	}
 }
 
