@@ -879,7 +879,10 @@ extern cvar_t *cg_flashWindowCount;
 #define CG_Free( data ) trap_MemFree( data, __FILE__, __LINE__ )
 
 int CG_API( void );
-void CG_Init( const char *serverName, unsigned int playerNum, int vidWidth, int vidHeight, qboolean demoplaying, const char *demoName, qboolean pure, unsigned int snapFrameTime, int protocol, int sharedSeed );
+void CG_Init(	const char *serverName, unsigned int playerNum,
+				int vidWidth, int vidHeight, float pixelRatio,
+				qboolean demoplaying, const char *demoName, qboolean pure, unsigned int snapFrameTime,
+				int protocol, int sharedSeed );
 void CG_Shutdown( void );
 void CG_ValidateItemDef( int tag, char *name );
 void CG_Printf( const char *format, ... );
