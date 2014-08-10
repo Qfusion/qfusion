@@ -489,7 +489,6 @@ void CL_GameModule_Init( void )
 	import.R_GetShaderCinematic = re.GetShaderCinematic;
 
 	import.VID_FlashWindow = VID_FlashWindow;
-	import.VID_GetPixelRatio = VID_GetPixelRatio;
 
 	import.CM_NumInlineModels = CL_GameModule_CM_NumInlineModels;
 	import.CM_InlineModel = CL_GameModule_CM_InlineModel;
@@ -562,7 +561,8 @@ void CL_GameModule_Init( void )
 	CL_GameModule_AsyncStream_Init();
 
 	start = Sys_Milliseconds();
-	cge->Init( cls.servername, cl.playernum, viddef.width, viddef.height, 
+	cge->Init( cls.servername, cl.playernum,
+		viddef.width, viddef.height, VID_GetPixelRatio(),
 		cls.demo.playing, cls.demo.playing ? cls.demo.filename : "",
 		cls.sv_pure, cl.snapFrameTime, APP_PROTOCOL_VERSION, cls.mediaRandomSeed );
 

@@ -959,7 +959,8 @@ void CG_Reset( void )
 /*
 * CG_Init
 */
-void CG_Init( const char *serverName, unsigned int playerNum, int vidWidth, int vidHeight, 
+void CG_Init( const char *serverName, unsigned int playerNum,
+			 int vidWidth, int vidHeight, float pixelRatio,
 			 qboolean demoplaying, const char *demoName, qboolean pure, 
 			 unsigned int snapFrameTime, int protocol, int sharedSeed )
 {
@@ -982,6 +983,7 @@ void CG_Init( const char *serverName, unsigned int playerNum, int vidWidth, int 
 	// save current width and height
 	cgs.vidWidth = vidWidth;
 	cgs.vidHeight = vidHeight;
+	cgs.pixelRatio = pixelRatio;
 
 	// demo
 	cgs.demoPlaying = demoplaying == qtrue;
