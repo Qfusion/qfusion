@@ -1743,21 +1743,19 @@ static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_lay
 	const char *fontsize = CG_GetStringArg( &argumentnode );
 
 	if( !Q_stricmp( fontsize, "con_fontsystemsmall" ) )
-	{
 		layout_cursor_font_size = cgs.fontSystemSmallSize;
-	}
+	else if( !Q_stricmp( fontsize, "con_fontsystemsmallscaled" ) )
+		layout_cursor_font_size = cgs.fontSystemSmallScaledSize;
 	else if( !Q_stricmp( fontsize, "con_fontsystemmedium" ) )
-	{
 		layout_cursor_font_size = cgs.fontSystemMediumSize;
-	}
+	else if( !Q_stricmp( fontsize, "con_fontsystemmediumscaled" ) )
+		layout_cursor_font_size = cgs.fontSystemMediumScaledSize;
 	else if( !Q_stricmp( fontsize, "con_fontsystembig" ) )
-	{
 		layout_cursor_font_size = cgs.fontSystemBigSize;
-	}
+	else if( !Q_stricmp( fontsize, "con_fontsystembigscaled" ) )
+		layout_cursor_font_size = cgs.fontSystemBigScaledSize;
 	else
-	{
 		layout_cursor_font_size = atoi( fontsize );
-	}
 
 	font = trap_SCR_RegisterFont( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
 	if( font )
