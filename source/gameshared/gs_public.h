@@ -378,7 +378,7 @@ enum
 //===============================================================
 
 #define HEALTH_TO_INT( x )    ( ( x ) < 1.0f ? (int)ceil( ( x ) ) : (int)floor( ( x )+0.5f ) )
-#define ARMOR_TO_INT( x )     ( ( x ) < 1.0f ? (int)ceil( ( x ) ) : (int)floor( ( x )+0.5f ) )
+#define ARMOR_TO_INT( x )     ( ( x ) < 1.0f ? (int)floor( ( x )+0.5f ) : (int)floor( ( x )+0.5f ) )
 
 #define	ARMOR_DEGRADATION 0.66 // how much armor is lost per damage point taken
 #define ARMOR_PROTECTION 0.66 // how much damage is removed per damage point taken

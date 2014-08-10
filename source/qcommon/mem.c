@@ -677,7 +677,6 @@ void Memory_InitCommands( void )
 {
 	assert( !commands_initialized );
 
-	
 	developerMemory = Cvar_Get( "developerMemory", "0", 0 );
 
 	Cmd_AddCommand( "memlist", MemList_f );

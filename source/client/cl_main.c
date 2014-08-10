@@ -79,6 +79,9 @@ cvar_t *cl_downloads_from_web_timeout;
 cvar_t *cl_download_allow_modules;
 cvar_t *cl_checkForUpdate;
 
+static char cl_NextString[MAX_STRING_CHARS];
+static char cl_connectChain[MAX_STRING_CHARS];
+
 client_static_t	cls;
 client_state_t cl;
 
@@ -267,6 +270,11 @@ static void CL_CheckForResend( void )
 	{
 		if( realtime - cls.connect_time < 3000 )
 			return;
+		if( cls.connect_count > 3 )
+		{
+			CL_Disconnect( "Connection timed out" );
+			return;
+		}
 		cls.connect_count++;
 		cls.connect_time = realtime; // for retransmit requests
 
@@ -328,10 +336,13 @@ static void CL_CheckForResend( void )
 /*
 * CL_Connect
 */
-static void CL_Connect( const char *servername, socket_type_t type, netadr_t *address )
+static void CL_Connect( const char *servername, socket_type_t type, netadr_t *address, const char *serverchain )
 {
 	netadr_t socketaddress;
 	connstate_t newstate;
+
+	cl_connectChain[0] = '\0';
+	cl_NextString[0] = '\0';
 
 	CL_Disconnect( NULL );
 
@@ -393,6 +404,10 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 	}
 	CL_SetClientState( newstate );
 
+	if( serverchain[0] ) {
+		Q_strncpyz( cl_connectChain, serverchain, sizeof( cl_connectChain ) );
+	}
+
 	cls.connect_time = -99999; // CL_CheckForResend() will fire immediately
 	cls.connect_count = 0;
 	cls.rejected = qfalse;
@@ -410,8 +425,9 @@ static void CL_Connect_Cmd_f( socket_type_t socket )
 	const char *extension;
 	char *connectstring, *connectstring_base;
 	const char *tmp, *scheme = APP_URI_SCHEME, *proto_scheme = APP_URI_PROTO_SCHEME;
+	const char *serverchain;
 
-	if( Cmd_Argc() != 2 )
+	if( Cmd_Argc() < 2 )
 	{
 		Com_Printf( "Usage: %s <server>\n", Cmd_Argv(0) );
 		return;
@@ -419,7 +435,8 @@ static void CL_Connect_Cmd_f( socket_type_t socket )
 
 	connectstring_base = TempCopyString( Cmd_Argv( 1 ) );
 	connectstring = connectstring_base;
-
+	serverchain = Cmd_Argc() >= 3 ? Cmd_Argv( 2 ) : "";
+	
 	if( !Q_strnicmp( connectstring, proto_scheme, strlen( proto_scheme ) ) )
 		connectstring += strlen( proto_scheme );
 	else if( !Q_strnicmp( connectstring, scheme, strlen( scheme ) ) )
@@ -475,7 +492,8 @@ static void CL_Connect_Cmd_f( socket_type_t socket )
 	CL_MM_WaitForLogin();
 
 	servername = TempCopyString( connectstring );
-	CL_Connect( servername, ( serveraddress.type == NA_LOOPBACK ? SOCKET_LOOPBACK : socket ), &serveraddress );
+	CL_Connect( servername, ( serveraddress.type == NA_LOOPBACK ? SOCKET_LOOPBACK : socket ), 
+		&serveraddress, serverchain );
 
 	Mem_TempFree( servername );
 	Mem_TempFree( connectstring_base );
@@ -742,7 +760,6 @@ void CL_ClearState( void )
 * 
 * Next is used to set an action which is executed at disconnecting.
 */
-char cl_NextString[MAX_STRING_CHARS];
 static void CL_SetNext_f( void )
 {
 	if( Cmd_Argc() < 2 )
@@ -891,12 +908,24 @@ void CL_Disconnect( const char *message )
 		CL_DownloadDone();
 	}
 
-	if( message != NULL )
-	{
-		Q_snprintfz( menuparms, sizeof( menuparms ), "menu_open connfailed dropreason %i servername \"%s\" droptype %i rejectmessage \"%s\"",
-			( wasconnecting ? DROP_REASON_CONNFAILED : DROP_REASON_CONNERROR ), cls.servername, DROP_TYPE_GENERAL, message );
+	if( cl_connectChain[0] == '\0' ) {
+		if( message != NULL )
+		{
+			Q_snprintfz( menuparms, sizeof( menuparms ), "menu_open connfailed dropreason %i servername \"%s\" droptype %i rejectmessage \"%s\"",
+				( wasconnecting ? DROP_REASON_CONNFAILED : DROP_REASON_CONNERROR ), cls.servername, DROP_TYPE_GENERAL, message );
 
-		Cbuf_ExecuteText( EXEC_NOW, menuparms );
+			Cbuf_ExecuteText( EXEC_NOW, menuparms );
+		}
+	}
+	else {
+		const char *s = strchr( cl_connectChain, ',' );
+		if( s ) {
+			cl_connectChain[s - cl_connectChain] = '\0';
+		}
+		else {
+			s = cl_connectChain + strlen( cl_connectChain ) - 1;
+		}
+		Q_snprintfz( cl_NextString, sizeof( cl_NextString ), "connect \"%s\" \"%s\"", cl_connectChain, s + 1 );
 	}
 
 done:
@@ -910,6 +939,9 @@ done:
 
 void CL_Disconnect_f( void )
 {
+	cl_connectChain[0] = '\0';
+	cl_NextString[0] = '\0';
+
 	// We have to shut down webdownloading first
 	if( cls.download.web )
 	{
@@ -1008,11 +1040,14 @@ void CL_Reconnect_f( void )
 		return;
 	}
 
+	cl_connectChain[0] = '\0';
+	cl_NextString[0] = '\0';
+
 	servername = TempCopyString( cls.servername );
 	servertype = cls.servertype;
 	serveraddress = cls.serveraddress;
 	CL_Disconnect( NULL );
-	CL_Connect( servername, servertype, &serveraddress );
+	CL_Connect( servername, servertype, &serveraddress, "" );
 	Mem_TempFree( servername );
 }
 
@@ -1802,6 +1837,7 @@ void CL_SetClientState( int state )
 		break;
 	case CA_ACTIVE:
 	case CA_CINEMATIC:
+		cl_connectChain[0] = '\0';
 		FTLIB_TouchAllFonts();
 		re.EndRegistration();
 		CL_SoundModule_EndRegistration();
