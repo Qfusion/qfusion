@@ -336,6 +336,9 @@ void ServerInfo::fixStrings()
 // 3) hostname ASC
 bool ServerInfo::DefaultCompareBinary( const ServerInfo *lhs, const ServerInfo *rhs )
 {
+	if( lhs->mm > rhs->mm ) return true;
+	if( lhs->mm < rhs->mm ) return false;
+
 	if( lhs->curuser > rhs->curuser ) return true;
 	if( lhs->curuser < rhs->curuser ) return false;
 
@@ -801,6 +804,8 @@ void ServerBrowserDataSource::sortByColumn( const char *_column )
 		sortCompare = ServerInfo::LessPtrBinary<bool, &ServerInfo::mm>;
 	else if( column == "ping" )
 		sortCompare = ServerInfo::LessPtrBinary<unsigned int, &ServerInfo::ping>;
+	else if( column == "" )
+		sortCompare = &ServerInfo::DefaultCompareBinary;
 	else
 	{
 		Com_Printf("Serverbrowser sort: unknown column %s\n", _column );
