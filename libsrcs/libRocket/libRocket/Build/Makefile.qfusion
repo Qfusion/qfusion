@@ -17,7 +17,7 @@ endif
 ifeq ($(DEBUG_BUILD),YES)
 	CXXFLAGS += -g -DROCKET_DEBUG
 else
-	CXXFLAGS += -O2
+	CXXFLAGS += -O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG
 endif
 
 BUILDDIR=obj
