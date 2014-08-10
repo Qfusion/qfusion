@@ -159,7 +159,7 @@ void CG_CenterPrintToUpper( const char *str )
 static void CG_DrawCenterString( void )
 {
 	int y;
-	struct qfontface_s *font = cgs.fontSystemMedium;
+	struct qfontface_s *font = cgs.fontSystemMediumScaled;
 	char *helpmessage = scr_centerstring;
 	int x = cgs.vidWidth / 2;
 	int width = cgs.vidWidth / 2;
@@ -172,10 +172,10 @@ static void CG_DrawCenterString( void )
 	if( scr_center_lines <= 4 )
 		y = cgs.vidHeight*0.35;
 	else
-		y = 48;
+		y = 48 * cgs.pixelRatio;
 
-	if( width < 320 )
-		width = 320;
+	if( width < 320 * cgs.pixelRatio )
+		width = 320 * cgs.pixelRatio;
 
 	while( ( len = trap_SCR_DrawStringWidth( x, y, ALIGN_CENTER_TOP, helpmessage, width, font, colorWhite ) ) )
 	{
