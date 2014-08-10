@@ -198,7 +198,6 @@ typedef struct
 	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
 
 	void ( *VID_FlashWindow )( int count );
-	float ( *VID_GetPixelRatio )( void );
 
 	// collision detection
 	int ( *CM_NumInlineModels )( void );
@@ -258,7 +257,8 @@ typedef struct
 	int ( *API )( void );
 
 	// the init function will be called at each restart
-	void ( *Init )( const char *serverName, unsigned int playerNum, int vidWidth, int vidHeight, 
+	void ( *Init )( const char *serverName, unsigned int playerNum,
+		int vidWidth, int vidHeight, float pixelRatio,
 		qboolean demoplaying, const char *demoName, qboolean pure, unsigned int snapFrameTime, 
 		int protocol, int sharedSeed );
 
