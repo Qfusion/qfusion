@@ -723,13 +723,13 @@ void Con_DrawNotify( void )
 		else
 		{
 			width = viddef.width;
-			x = 8;
+			x = 8 * pixelRatio;
 			y = v;
-			font = cls.fontSystemSmall;
+			font = cls.fontSystemSmallScaled;
 		}
 
 		// 48 is an arbitrary offset for not overlapping the FPS and clock prints
-		width -= 48;
+		width -= 48 * viddef.height / 600;
 		cursorwidth = SCR_strWidth( "_", font, 0 );
 
 		if( chat_team )
