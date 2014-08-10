@@ -79,7 +79,7 @@ cvar_t *cl_downloads_from_web_timeout;
 cvar_t *cl_download_allow_modules;
 cvar_t *cl_checkForUpdate;
 
-static char cl_NextString[MAX_STRING_CHARS];
+static char cl_nextString[MAX_STRING_CHARS];
 static char cl_connectChain[MAX_STRING_CHARS];
 
 client_static_t	cls;
@@ -342,7 +342,7 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 	connstate_t newstate;
 
 	cl_connectChain[0] = '\0';
-	cl_NextString[0] = '\0';
+	cl_nextString[0] = '\0';
 
 	CL_Disconnect( NULL );
 
@@ -770,8 +770,8 @@ static void CL_SetNext_f( void )
 
 	// jalfixme: I'm afraid of this being too powerful, since it basically
 	// is allowed to execute everything. Shall we check for something?
-	Q_strncpyz( cl_NextString, Cmd_Args(), sizeof( cl_NextString ) );
-	Com_Printf( "NEXT: %s\n", cl_NextString );
+	Q_strncpyz( cl_nextString, Cmd_Args(), sizeof( cl_nextString ) );
+	Com_Printf( "NEXT: %s\n", cl_nextString );
 }
 
 
@@ -780,11 +780,11 @@ static void CL_SetNext_f( void )
 */
 static void CL_ExecuteNext( void )
 {
-	if( !strlen( cl_NextString ) )
+	if( !strlen( cl_nextString ) )
 		return;
 
-	Cbuf_ExecuteText( EXEC_APPEND, cl_NextString );
-	memset( cl_NextString, 0, sizeof( cl_NextString ) );
+	Cbuf_ExecuteText( EXEC_APPEND, cl_nextString );
+	memset( cl_nextString, 0, sizeof( cl_nextString ) );
 }
 
 /*
@@ -925,7 +925,7 @@ void CL_Disconnect( const char *message )
 		else {
 			s = cl_connectChain + strlen( cl_connectChain ) - 1;
 		}
-		Q_snprintfz( cl_NextString, sizeof( cl_NextString ), "connect \"%s\" \"%s\"", cl_connectChain, s + 1 );
+		Q_snprintfz( cl_nextString, sizeof( cl_nextString ), "connect \"%s\" \"%s\"", cl_connectChain, s + 1 );
 	}
 
 done:
@@ -940,7 +940,7 @@ done:
 void CL_Disconnect_f( void )
 {
 	cl_connectChain[0] = '\0';
-	cl_NextString[0] = '\0';
+	cl_nextString[0] = '\0';
 
 	// We have to shut down webdownloading first
 	if( cls.download.web )
@@ -1041,7 +1041,7 @@ void CL_Reconnect_f( void )
 	}
 
 	cl_connectChain[0] = '\0';
-	cl_NextString[0] = '\0';
+	cl_nextString[0] = '\0';
 
 	servername = TempCopyString( cls.servername );
 	servertype = cls.servertype;
