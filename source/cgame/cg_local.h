@@ -429,13 +429,13 @@ typedef struct
 
 	// fonts
 	char fontSystemFamily[MAX_QPATH];
-	int fontSystemSmallSize;
-	int fontSystemMediumSize;
-	int fontSystemBigSize;
+	int fontSystemSmallSize, fontSystemSmallScaledSize;
+	int fontSystemMediumSize, fontSystemMediumScaledSize;
+	int fontSystemBigSize, fontSystemBigScaledSize;
 
-	struct qfontface_s *fontSystemSmall;
-	struct qfontface_s *fontSystemMedium;
-	struct qfontface_s *fontSystemBig;
+	struct qfontface_s *fontSystemSmall, *fontSystemSmallScaled;
+	struct qfontface_s *fontSystemMedium, *fontSystemMediumScaled;
+	struct qfontface_s *fontSystemBig, *fontSystemBigScaled;
 
 	int initialSharedSeed;
 
