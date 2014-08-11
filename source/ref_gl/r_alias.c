@@ -545,8 +545,8 @@ qboolean R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_
 	// see what vertex attribs backend needs
 	vattribs = RB_GetVertexAttribs();
 
-	framenum = bound( e->frame, 0, model->numframes );
-	oldframenum = bound( e->oldframe, 0, model->numframes );
+	framenum = bound( e->frame, 0, model->numframes - 1 );
+	oldframenum = bound( e->oldframe, 0, model->numframes - 1 );
 
 	frame = model->frames + framenum;
 	oldframe = model->frames + oldframenum;
