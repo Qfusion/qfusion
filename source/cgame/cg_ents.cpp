@@ -1034,6 +1034,7 @@ void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *t
 		flag.frame = flag.oldframe = 0;
 		flag.radius = 32.0f;
 		flag.customShader = CG_MediaShader( cgs.media.shaderFlagFlare );
+		flag.outlineHeight = 0;
 
 		CG_AddEntityToScene( &flag );
 	}
