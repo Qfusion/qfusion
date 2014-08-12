@@ -133,12 +133,8 @@ extern "C" {
 #define HAVE___CDECL
 #endif
 
-#if defined ( __GNUC__ )
-#include <alloca.h>
-#elif defined ( _MSC_VER )
 #include <malloc.h>
 #define HAVE__ALLOCA
-#endif
 
 // wsw : aiwa : 64bit integers and integer-pointer types
 #include <basetsd.h>
