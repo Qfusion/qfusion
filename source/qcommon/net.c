@@ -101,41 +101,42 @@ static const char *GetLastErrorString( void )
 */
 static void GetLocalAddress( void )
 {
-	struct hostent *hostInfo;
+	struct addrinfo hints = { 0 }, *hostInfo, *i;
 	char hostname[256];
 	char *p;
 	int ip;
-	int n;
 
 	if( gethostname( hostname, 256 ) == SOCKET_ERROR )
 		return;
 
-	hostInfo = gethostbyname( hostname );
-	if( !hostInfo )
+	hints.ai_family = AF_INET; // AF_INET6 for IPv6
+	if( getaddrinfo( hostname, NULL, &hints, &hostInfo ) != 0 ) {
 		return;
-
-	Com_Printf( "Hostname: %s\n", hostInfo->h_name );
-	n = 0;
-	while( ( p = hostInfo->h_aliases[n++] ) != NULL )
-	{
-		Com_Printf( "Alias: %s\n", p );
 	}
-
-	// FIXME: IPv6?
-	if( hostInfo->h_addrtype != AF_INET )
+	if( !hostInfo ) {
 		return;
+	}
+	
+	Com_Printf( "Hostname: %s\n", hostname );
 
 	numIP = 0;
-	while( ( p = hostInfo->h_addr_list[numIP] ) != NULL && numIP < MAX_IPS )
-	{
-		ip = ntohl( *(int *)p );
+	for( i = hostInfo; i; i = i->ai_next) {
+		if( numIP >= MAX_IPS ) {
+			break;
+		}
+
+		ip = ((struct sockaddr_in *)i->ai_addr)->sin_addr.s_addr;
+		p = (char *)&ip;
+
 		localIP[numIP][0] = p[0];
 		localIP[numIP][1] = p[1];
 		localIP[numIP][2] = p[2];
 		localIP[numIP][3] = p[3];
-		Com_Printf( "IP: %i.%i.%i.%i\n", ( ip >> 24 ) & 0xff, ( ip >> 16 ) & 0xff, ( ip >> 8 ) & 0xff, ip & 0xff );
+		Com_Printf( "IP: %i.%i.%i.%i\n", (ip >> 24) & 0xff, (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff );
 		numIP++;
 	}
+
+	freeaddrinfo( hostInfo );
 }
 
 /*

@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 #	include <winerror.h>
+#   include <ws2tcpip.h>
 #else
 #	include <netinet/in.h>
 #	include <arpa/inet.h>
@@ -18,14 +19,14 @@ qboolean Irc_Net_Connect(const char *host, unsigned short port, irc_socket_t *so
 	*sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (*sock >= 0) {
 		struct sockaddr_in addr;
-		struct hostent *he;
 		memset(&addr, 0, sizeof(addr));
-		he = gethostbyname(host);		// DNS lookup
-		if (he) {
+		struct addrinfo hints = { 0 }, *hostInfo;
+		hints.ai_family = AF_INET; // AF_INET6 for IPv6
+		if (getaddrinfo(host, NULL, &hints, &hostInfo) == 0 && hostInfo != NULL) {	// DNS lookup
 			int status;
 			// convert host entry to sockaddr_in
 			addr.sin_port = htons(port);
-			addr.sin_addr.s_addr = ((struct in_addr*) he->h_addr)->s_addr;
+			addr.sin_addr.s_addr = ((struct sockaddr_in *)hostInfo->ai_addr)->sin_addr.s_addr;
 			addr.sin_family = AF_INET;
 			status = connect(*sock, (const struct sockaddr*) &addr, sizeof(addr));
 			if (!status) {
@@ -39,6 +40,7 @@ qboolean Irc_Net_Connect(const char *host, unsigned short port, irc_socket_t *so
 				close(*sock);
 #endif
 			}
+			freeaddrinfo(hostInfo);
 		} else {
 			strcpy(IRC_ERROR_MSG, "Unknown host");
 #ifdef _WIN32
