@@ -136,7 +136,7 @@ static void SCR_RegisterSystemFonts( void )
 			Com_Error( ERR_FATAL, "Couldn't load default font \"%s\"", con_fontSystemFamily->dvalue );
 	}
 
-	cls.fontSystemSmallScaled = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size * pixelRatio );
+	cls.fontSystemSmallScaled = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size * pixelRatio + 0.5f );
 	if( !cls.fontSystemSmallScaled )
 		cls.fontSystemSmallScaled = cls.fontSystemSmall;
 
@@ -148,7 +148,7 @@ static void SCR_RegisterSystemFonts( void )
 		cls.fontSystemMedium = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
 	}
 
-	cls.fontSystemMediumScaled = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size * pixelRatio );
+	cls.fontSystemMediumScaled = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size * pixelRatio + 0.5f );
 	if( !cls.fontSystemMediumScaled )
 		cls.fontSystemMediumScaled = cls.fontSystemMedium;
 
@@ -160,7 +160,7 @@ static void SCR_RegisterSystemFonts( void )
 		cls.fontSystemBig = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
 	}
 
-	cls.fontSystemBigScaled = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size * pixelRatio );
+	cls.fontSystemBigScaled = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size * pixelRatio + 0.5f );
 	if( !cls.fontSystemBigScaled )
 		cls.fontSystemBigScaled = cls.fontSystemBig;
 }
