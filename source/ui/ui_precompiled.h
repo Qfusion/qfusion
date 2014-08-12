@@ -17,6 +17,7 @@
 // STD
 #include <string>
 #include <new>
+#include <functional>
 #include <algorithm>
 #include <stdexcept>
 #include <utility>
