@@ -217,19 +217,10 @@ void *Sys_GetSymbol( const char *moduleName, const char *symbolName )
 */
 void Sys_Init( void )
 {
-	OSVERSIONINFO vinfo;
-
 	timeBeginPeriod( 1 );
+
 	Sys_InitTime();
 
-	vinfo.dwOSVersionInfoSize = sizeof( vinfo );
-
-	if( !GetVersionEx( &vinfo ) )
-		Sys_Error( "Couldn't get OS info" );
-
-	if( vinfo.dwMajorVersion < 5 )
-		Sys_Error( "%s requires windows version 5 or greater", APPLICATION );
-	
 	if( dedicated->integer )
 	{
 		SetPriorityClass( GetCurrentProcess(), HIGH_PRIORITY_CLASS );
