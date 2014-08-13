@@ -528,9 +528,84 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 }
 
 /*
+* SCR_DrawNameTab
+*/
+static int SCR_DrawNameTab( const char **ptrptr, int team, int *curplayer, int x, int y, int panelWidth, struct qfontface_s *font )
+{
+	int player;
+	const char *player_name, *player_clan = NULL;
+	bool trans = false;
+	int height;
+	vec4_t teamcolor, color;
+	const char *oldptr;
+
+	if( !( *ptrptr ) || !( *ptrptr[0] ) || ( *ptrptr[0] == '&' ) )
+		return 0;
+
+	if( GS_TeamBasedGametype() )
+	{
+		if( team == TEAM_ALPHA )
+			x += CG_HorizontalAlignForWidth( 0, ALIGN_RIGHT_TOP, panelWidth ) - SCB_CENTERMARGIN;
+		else
+			x += SCB_CENTERMARGIN;
+	}
+	else
+	{
+		x += CG_HorizontalAlignForWidth( 0, ALIGN_CENTER_TOP, panelWidth );
+	}
+
+	player = CG_ParseValue( ptrptr );
+	*curplayer = player;
+	if( player < 0 ) // negative numbers toggle transparency on
+	{
+		trans = true;
+		player = -1 - player;
+	}
+
+	height = trap_SCR_strHeight( cgs.fontSystemMedium );
+
+	// draw the background
+	CG_TeamColor( team, teamcolor );
+	teamcolor[3] = SCB_BACKGROUND_ALPHA + 0.15;
+	if( ISVIEWERENTITY( player + 1 ) )
+		teamcolor[3] += 0.3;
+	trap_R_DrawStretchPic( x, y, panelWidth, height, 0, 0, 1, 1, teamcolor, cgs.shaderWhite );
+
+	// draw the name
+	player_name = ( player < gs.maxclients ) ? cgs.clientInfo[player].name : "invalid";
+	if( *ptrptr[0] != '&' )
+	{
+		oldptr = *ptrptr; // in case we need to revert
+		player_clan = COM_ParseExt( ptrptr, qtrue );
+		if( player_clan[0] == '&' )
+		{
+			*ptrptr = oldptr; // failed, but revert so it can continue with the next player
+			player_clan = NULL;
+		}
+	}
+
+	Vector4Copy( colorWhite, color );
+	if( trans )
+		color[3] = 0.3;
+
+	if( player_clan && player_clan[0] )
+	{
+		trap_SCR_DrawClampString( x, y, va( "%s" S_COLOR_WHITE "/%s", player_clan, player_name ),
+			x, y, x + panelWidth, y + height, cgs.fontSystemMedium, color );
+	}
+	else
+	{
+		trap_SCR_DrawClampString( x, y, player_name,
+			x, y, x + panelWidth, y + height, cgs.fontSystemMedium, color );
+	}
+
+	return height;
+}
+
+/*
 * SCR_DrawPlayerTab
 */
-static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int panelWidth, struct qfontface_s *font )
+static int SCR_DrawPlayerTab( const char **ptrptr, int team, int player, int x, int y, int panelWidth, struct qfontface_s *font )
 {
 	int dir, align, i, columncount;
 	char type, string[MAX_STRING_CHARS];
@@ -539,7 +614,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 	int height, width, xoffset, yoffset;
 	vec4_t teamcolor, color;
 	struct shader_s *shader;
-	bool highlight = false, trans = false;
+	bool trans = false, highlight = false;
 
 	if( GS_TeamBasedGametype() )
 	{
@@ -550,6 +625,12 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 	{
 		dir = 0;
 		align = ALIGN_CENTER_TOP;
+	}
+
+	if( player < 0 ) // negative numbers toggle transparency on
+	{
+		trans = true;
+		player = -1 - player;
 	}
 
 	xoffset = 0;
@@ -599,20 +680,23 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 			break;
 
 		case 'n': // is a player name indicated by player number
-			i = atoi( token );
+			player = atoi( token );
 
-			if( i < 0 ) // negative numbers toggle transparency on
+			if( player < 0 ) // negative numbers toggle transparency on
 			{
 				trans = true;
-				i = abs( i ) - 1;
+				player = -1 - player;
 			}
 
-			if( i < 0 || i >= gs.maxclients )
+			if( player >= gs.maxclients )
 				Q_strncpyz( string, "invalid", sizeof( string ) );
 			else
-				Q_strncpyz( string, cgs.clientInfo[i].name, sizeof( string ) );
+				Q_strncpyz( string, cgs.clientInfo[player].name, sizeof( string ) );
 
-			if( ISVIEWERENTITY( i + 1 ) ) // highlight if it's our own player
+			// highlight if it's our own player
+			// for backwards compatibility - if there is a name tab, only highlight
+			// the name tab to prevent two adjacent rows from having the same color
+			if( ISVIEWERENTITY( player + 1 ) )
 				highlight = true;
 
 			break;
@@ -725,6 +809,7 @@ void CG_DrawScoreboard( void )
 {
 	char *ptr, *token, *layout, title[MAX_STRING_CHARS];
 	int team = TEAM_PLAYERS;
+	int player = 0;
 	int xpos;
 	int ypos, yoffset, maxyoffset;
 	struct qfontface_s *font;
@@ -772,12 +857,17 @@ void CG_DrawScoreboard( void )
 
 		if( !Q_stricmp( token, "&t" ) ) // team tab
 		{
+			player = 0;
 			yoffset = 0;
 			yoffset += SCR_DrawTeamTab( (const char **)&ptr, &team, xpos, ypos + yoffset, panelWidth, font );
 		}
+		else if( !Q_stricmp( token, "&n" ) ) // player name tab
+		{
+			yoffset += SCR_DrawNameTab( (const char **)&ptr, team, &player, xpos, ypos + yoffset, panelWidth, font );
+		}
 		else if( !Q_stricmp( token, "&p" ) ) // player tab
 		{
-			yoffset += SCR_DrawPlayerTab( (const char **)&ptr, team, xpos, ypos + yoffset, panelWidth, font );
+			yoffset += SCR_DrawPlayerTab( (const char **)&ptr, team, player, xpos, ypos + yoffset, panelWidth, font );
 		}
 		else if( !Q_stricmp( token, "&w" ) ) // list of challengers
 		{
