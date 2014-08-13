@@ -2752,7 +2752,7 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 	else
 	{
 		unsigned int t;
-		struct trie_dump_s *trie_dump;
+		struct trie_dump_s *trie_dump = NULL;
 		trie_error_t trie_err;
 		char *pattern;
 
@@ -3608,7 +3608,7 @@ static void Cmd_FS_Search_f( void )
 		pack_t *pack;
 		packfile_t *pakfile;
 		qboolean first;
-		struct trie_dump_s *trie_dump;
+		struct trie_dump_s *trie_dump = NULL;
 		trie_error_t trie_err;
 
 		pack = search->pack;

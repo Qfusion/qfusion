@@ -314,7 +314,7 @@ static void ML_MapListCmd( void )
 	mapinfo_t *map;
 	int argc = Cmd_Argc();
 	unsigned int i;
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 
 	if( argc > 2 )
 	{

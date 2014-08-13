@@ -68,9 +68,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\libsrcs\angelscript\angelSVN\sdk\angelscript\include\angelscript.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\gameshared\q_math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -117,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="qas_precompiled.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\libsrcs\angelscript\sdk\angelscript\include\angelscript.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
