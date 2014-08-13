@@ -21,9 +21,6 @@
     <ClCompile Include="cin_main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cin_ogg.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="cin_roq.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -36,12 +33,12 @@
     <ClCompile Include="..\gameshared\q_shared.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cin_theora.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cin_local.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cin_ogg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cin_public.h">
@@ -60,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="roq.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cin_theora.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
