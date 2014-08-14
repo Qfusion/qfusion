@@ -310,6 +310,8 @@ extern cvar_t *cl_run;
 
 extern cvar_t *cl_anglespeedkey;
 
+extern cvar_t *cl_zoom;
+
 extern cvar_t *cl_compresspackets;
 extern cvar_t *cl_shownet;
 
