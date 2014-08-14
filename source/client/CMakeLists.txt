@@ -17,7 +17,6 @@ file(GLOB CLIENT_COMMON_SOURCES
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     include_directories("../win32/include/msvc") # For inttypes.h
-    link_directories("$ENV{DXSDK_DIR}Lib/x86")   # For dxguid.lib
 
     file(GLOB CLIENT_PLATFORM_SOURCES
         "../win32/win_fs.c"
