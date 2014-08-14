@@ -215,7 +215,7 @@ Rocket::Core::ElementDocument *RocketModule::loadDocument( const char *filename,
 
 void RocketModule::closeDocument( Rocket::Core::ElementDocument *doc )
 {
-	context->UnloadDocument( doc );
+	doc->GetContext()->UnloadDocument( doc );
 }
 
 //==================================================

@@ -227,13 +227,9 @@ public:
 		if( !engine ) {
 			return NULL;
 		}
-
 		asIScriptContext *activeContext = UI_Main::Get()->getAS()->getActiveContext();
 		asIScriptFunction *currentFunction = activeContext ? activeContext->GetFunction( 0 ) : NULL;
-		if( currentFunction ) {
-			return engine->GetModule( currentFunction->GetModuleName(), asGM_CREATE_IF_NOT_EXISTS );
-		}
-		return NULL;
+		return currentFunction->GetModule();
 	}
 
 	virtual asIObjectType *getStringObjectType( void ) 
