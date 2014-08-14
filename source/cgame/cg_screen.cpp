@@ -57,8 +57,6 @@ cvar_t *cg_crosshair_damage_color;
 
 cvar_t *cg_crosshair_touch_size;
 
-static bool cg_crosshair_zoom;
-
 cvar_t *cg_clientHUD;
 cvar_t *cg_specHUD;
 cvar_t *cg_debugHUD;
@@ -516,7 +514,7 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 			int touch_size = cg_crosshair_touch_size->integer * cgs.pixelRatio;
 			int offset = ( touch_size - size ) / 2;
 			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, x - offset, y - offset, touch_size, touch_size, true, NULL ) >= 0 )
-				cg_crosshair_zoom = !cg_crosshair_zoom;
+				trap_Cmd_ExecuteText( EXEC_NOW, "toggle zoom" );
 		}
 		else
 		{
@@ -1561,8 +1559,6 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 	CG_GetHUDTouchButtons( buttons, upmove );
 
 	cmd->buttons |= buttons;
-	if( cg_crosshair_zoom )
-		cmd->buttons |= BUTTON_ZOOM;
 
 	if( frametime )
 	{
