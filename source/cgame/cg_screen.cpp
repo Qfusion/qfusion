@@ -487,14 +487,12 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		cg_crosshair_strong_color->modified = qfalse;
 	}
 
-	float scale = cgs.vidHeight * ( 1.0f / 600.0f );
-
 	if( cg_crosshair_strong->integer )
 	{
 		firedef_t *firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
 		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) // strong
 		{
-			int size = cg_crosshair_strong_size->integer * scale;
+			int size = cg_crosshair_strong_size->integer * cgs.pixelRatio;
 			int sx, sy;
 			sx = CG_HorizontalAlignForWidth( x, align, size );
 			sy = CG_VerticalAlignForHeight( y, align, size );
@@ -509,13 +507,13 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 
 	if( cg_crosshair->integer && cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE )
 	{
-		int size = cg_crosshair_size->integer * scale;
+		int size = cg_crosshair_size->integer * cgs.pixelRatio;
 		x = CG_HorizontalAlignForWidth( x, align, size );
 		y = CG_VerticalAlignForHeight( y, align, size );
 
 		if( touch )
 		{
-			int touch_size = cg_crosshair_touch_size->integer * scale;
+			int touch_size = cg_crosshair_touch_size->integer * cgs.pixelRatio;
 			int offset = ( touch_size - size ) / 2;
 			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, x - offset, y - offset, touch_size, touch_size, true, NULL ) >= 0 )
 				cg_crosshair_zoom = !cg_crosshair_zoom;
