@@ -15,7 +15,7 @@
 			           -left: 0.25;
 			ninep-coord: 0.125 0.25 0.9375 0.875;		<-- shortcut
 
-			ninep-size-top: 4px;						<-- size of the border on the element
+			ninep-size-top: 4px|auto;					<-- size of the border on the element
 			          -right: 4px;
 			          -bottom: 2px;
 			          -left: 8px;
@@ -40,6 +40,8 @@ namespace WSWUI
 			if( texture_index < 0 )
 				return false;
 
+			Vector2i texture_dimensions = GetTexture( texture_index )->GetDimensions( 
+
 			coord[0].x = Math::Max( 0.0f, properties.GetProperty( "coord-left" )->Get< float >() );
 			coord[0].y = Math::Max( 0.0f, properties.GetProperty( "coord-top" )->Get< float >() );
 			coord[1].x = Math::Max( 0.0f, properties.GetProperty( "coord-right" )->Get< float >() );
@@ -53,14 +55,30 @@ namespace WSWUI
 		virtual DecoratorDataHandle GenerateElementData( Element *element )
 		{
 			int i, j;
+			const Texture *texture = GetTexture( texture_index );
 
 			Vector2f padded_size = element->GetBox().GetSize( Box::PADDING );
 
+			RenderInterface *render_interface = element->GetRenderInterface();
+			Vector2i texture_dimensions = texture->GetDimensions( render_interface );
+
 			Vector2f dimensions[2];
-			dimensions[0].x = Math::Max( 0.0f, ResolveProperty( properties, "size-left", padded_size.x ) );
-			dimensions[0].y = Math::Max( 0.0f, ResolveProperty( properties, "size-top", padded_size.y ) );
-			dimensions[1].x = Math::Max( 0.0f, ResolveProperty( properties, "size-right", padded_size.x ) );
-			dimensions[1].y = Math::Max( 0.0f, ResolveProperty( properties, "size-bottom", padded_size.y ) );
+			if( properties.GetProperty( "size-left" )->unit == Property::KEYWORD )
+				dimensions[0].x = ( float )texture_dimensions.x * coord[0].x;
+			else
+				dimensions[0].x = Math::Max( 0.0f, ResolveProperty( properties, "size-left", padded_size.x ) );
+			if( properties.GetProperty( "size-top" )->unit == Property::KEYWORD )
+				dimensions[0].y = ( float )texture_dimensions.y * coord[0].y;
+			else
+				dimensions[0].y = Math::Max( 0.0f, ResolveProperty( properties, "size-top", padded_size.y ) );
+			if( properties.GetProperty( "size-right" )->unit == Property::KEYWORD )
+				dimensions[1].x = ( float )texture_dimensions.x * coord[1].x;
+			else
+				dimensions[1].x = Math::Max( 0.0f, ResolveProperty( properties, "size-right", padded_size.x ) );
+			if( properties.GetProperty( "size-bottom" )->unit == Property::KEYWORD )
+				dimensions[1].y = ( float )texture_dimensions.y * coord[1].y;
+			else
+				dimensions[1].y = Math::Max( 0.0f, ResolveProperty( properties, "size-bottom", padded_size.y ) );
 
 			// Shrink the sizes if necessary.
 			Vector2f total_dimensions = dimensions[0] + dimensions[1];
@@ -199,7 +217,7 @@ namespace WSWUI
 			}
 
 			Geometry *data = __new__( Geometry )( element );
-			data->SetTexture( GetTexture( texture_index ) );
+			data->SetTexture( &texture );
 
 			std::vector< Vertex > &data_vertices = data->GetVertices();
 			int old_num_vertices = data_vertices.size();
@@ -245,10 +263,18 @@ namespace WSWUI
 			RegisterProperty( "coord-right", "0" ).AddParser( "number" );
 			RegisterShorthand( "coord", "coord-top, coord-right, coord-bottom, coord-left" );
 
-			RegisterProperty( "size-top", "0px" ).AddParser( "number" );
-			RegisterProperty( "size-left", "0px" ).AddParser( "number" );
-			RegisterProperty( "size-bottom", "0px" ).AddParser( "number" );
-			RegisterProperty( "size-right", "0px" ).AddParser( "number" );
+			RegisterProperty( "size-top", "auto" )
+				.AddParser( "keyword", "auto" )
+				.AddParser( "number" );
+			RegisterProperty( "size-left", "auto" )
+				.AddParser( "keyword", "auto" )
+				.AddParser( "number" );
+			RegisterProperty( "size-bottom", "auto" )
+				.AddParser( "keyword", "auto" )
+				.AddParser( "number" );
+			RegisterProperty( "size-right", "auto" )
+				.AddParser( "keyword", "auto" )
+				.AddParser( "number" );
 			RegisterShorthand( "size", "size-top, size-right, size-bottom, size-left" );
 		}
 
