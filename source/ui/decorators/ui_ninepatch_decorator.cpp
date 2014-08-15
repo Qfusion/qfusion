@@ -40,8 +40,6 @@ namespace WSWUI
 			if( texture_index < 0 )
 				return false;
 
-			Vector2i texture_dimensions = GetTexture( texture_index )->GetDimensions( 
-
 			coord[0].x = Math::Max( 0.0f, properties.GetProperty( "coord-left" )->Get< float >() );
 			coord[0].y = Math::Max( 0.0f, properties.GetProperty( "coord-top" )->Get< float >() );
 			coord[1].x = Math::Max( 0.0f, properties.GetProperty( "coord-right" )->Get< float >() );
@@ -217,7 +215,7 @@ namespace WSWUI
 			}
 
 			Geometry *data = __new__( Geometry )( element );
-			data->SetTexture( &texture );
+			data->SetTexture( texture );
 
 			std::vector< Vertex > &data_vertices = data->GetVertices();
 			int old_num_vertices = data_vertices.size();
