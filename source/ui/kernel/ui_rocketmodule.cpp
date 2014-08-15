@@ -333,6 +333,7 @@ void RocketModule::registerCustoms()
 	//
 	// DECORATORS
 	registerDecorator( "gradient", GetGradientDecoratorInstancer() );
+	registerDecorator( "ninepatch", GetNinePatchDecoratorInstancer() );
 
 	//
 	// GLOBAL CUSTOM PROPERTIES
