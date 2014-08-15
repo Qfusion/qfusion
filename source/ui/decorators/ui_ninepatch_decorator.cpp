@@ -10,20 +10,16 @@
 			ninep-image: /ui/porkui/gfx/controls/button	<-- texture
 
 			ninep-coord-top: 0.125;						<-- offset to the center part of texture
-			           -left: 0.25;						    from the corresponding edge
+			           -right: 0.875;					    from the corresponding edge
 			           -bottom: 0.9375;
-			           -right: 0.875;
+			           -left: 0.25;
 			ninep-coord: 0.125 0.25 0.9375 0.875;		<-- shortcut
-			           -top-left: 0.125 0.25;
-			           -bottom-right: 0.9375 0.875;
 
 			ninep-size-top: 4px;						<-- size of the border on the element
-			          -left: 8px;
-			          -bottom: 2px;
 			          -right: 4px;
-			ninep-size: 4px 8px 2px 4px;				<-- shortcut
-			          -top-left: 4px 8px;
-			          -bottom-right: 2px 4px;
+			          -bottom: 2px;
+			          -left: 8px;
+			ninep-size: 4px 4px 2px 8px;				<-- shortcut
 */
 
 namespace WSWUI
@@ -56,7 +52,7 @@ namespace WSWUI
 
 		virtual DecoratorDataHandle GenerateElementData( Element *element )
 		{
-			int i;
+			int i, j;
 
 			Vector2f padded_size = element->GetBox().GetSize( Box::PADDING );
 
@@ -94,17 +90,13 @@ namespace WSWUI
 
 			// Generate the corners.
 			vertices[0].position = Vector2f( 0.0f, 0.0f );
-			vertices[0].tex_coord = Vector2f( 0.0f, 0.0f );
-			vertices[0].colour = colour;
+			vertices[0].tex_coord = coord[0];
 			vertices[1].position = Vector2f( padded_size.x, 0.0f );
-			vertices[1].tex_coord = Vector2f( 1.0f, 0.0f );
-			vertices[1].colour = colour;
+			vertices[1].tex_coord = Vector2f( 1.0f - coord[1].x, coord[0].y );
 			vertices[2].position = Vector2f( 0.0f, padded_size.y );
-			vertices[2].tex_coord = Vector2f( 0.0f, 1.0f );
-			vertices[2].colour = colour;
+			vertices[2].tex_coord = Vector2f( coord[0].x, 1.0f - coord[1].y );
 			vertices[3].position = Vector2f( padded_size.x, padded_size.y );
-			vertices[3].tex_coord = Vector2f( 1.0f, 1.0f );
-			vertices[3].colour = colour;
+			vertices[3].tex_coord = Vector2f( 1.0f - coord[1].x, 1.0f - coord[1].y );
 
 			// Generate the edge vertices.
 			for( i = 0; i < 2; i++ )
@@ -113,24 +105,24 @@ namespace WSWUI
 				Vector2f tex_coord = ( i ? ( Vector2f( 1.0f, 1.0f ) - coord[1] ) : coord[0] );
 				if( dimensions[i].x > 0.0f )
 				{
+					for( j = 0; j < 2; j++ )
+						vertices[j * 2 + i].tex_coord.x = ( float )i;
 					vertices[num_vertices].position = Vector2f( position.x, 0.0f );
 					vertices[num_vertices].tex_coord = Vector2f( tex_coord.x, 0.0f );
-					vertices[num_vertices].colour = colour;
 					edge_indices[i * 2] = centre_indices[i] = num_vertices++;
 					vertices[num_vertices].position = Vector2f( position.x, padded_size.y );
 					vertices[num_vertices].tex_coord = Vector2f( tex_coord.x, 1.0f );
-					vertices[num_vertices].colour = colour;
 					edge_indices[i * 2 + 4] = centre_indices[i + 2] = num_vertices++;
 				}
 				if( dimensions[i].y > 0.0f )
 				{
+					for( j = 0; j < 2; j++ )
+						vertices[i * 2 + j].tex_coord.y = ( float )i;
 					vertices[num_vertices].position = Vector2f( 0.0f, position.y );
 					vertices[num_vertices].tex_coord = Vector2f( 0.0f, tex_coord.y );
-					vertices[num_vertices].colour = colour;
 					edge_indices[i * 4 + 1] = centre_indices[i * 2] = num_vertices++;
 					vertices[num_vertices].position = Vector2f( padded_size.x, position.y );
 					vertices[num_vertices].tex_coord = Vector2f( 1.0f, tex_coord.y );
-					vertices[num_vertices].colour = colour;
 					edge_indices[i * 4 + 3] = centre_indices[i * 2 + 1] = num_vertices++;
 				}
 			}
@@ -146,15 +138,16 @@ namespace WSWUI
 					vertices[num_vertices].tex_coord = Vector2f(
 						( i & 1 ) ? ( 1.0f - coord[1].x ) : coord[0].x,
 						( i >> 1 ) ? ( 1.0f - coord[1].y ) : coord[0].y );
-					vertices[num_vertices].colour = colour;
 					centre_indices[i] = num_vertices++;
 
-					indices[num_indices++] = i;
-					indices[num_indices++] = edge_indices[i * 2];
-					indices[num_indices++] = centre_indices[i];
-					indices[num_indices++] = i;
-					indices[num_indices++] = centre_indices[i];
-					indices[num_indices++] = edge_indices[i * 2 + 1];
+					int flip = ( ( ( i & 1 ) ^ ( i >> 1 ) ) ? 1 : -1 );
+					indices[num_indices + 1 + flip] = i;
+					indices[num_indices + 1] = edge_indices[i * 2];
+					indices[num_indices + 1 - flip] = centre_indices[i];
+					indices[num_indices + 4 + flip] = i;
+					indices[num_indices + 4] = centre_indices[i];
+					indices[num_indices + 4 - flip] = edge_indices[i * 2 + 1];
+					num_indices += 6;
 				}
 			}
 
@@ -165,12 +158,14 @@ namespace WSWUI
 				{
 					if( dimensions[i].y > 0.0f )
 					{
-						indices[num_indices++] = edge_indices[i * 4];
-						indices[num_indices++] = edge_indices[i * 4 + 2];
-						indices[num_indices++] = centre_indices[i * 2 + 1];
-						indices[num_indices++] = edge_indices[i * 4];
-						indices[num_indices++] = centre_indices[i * 2 + 1];
-						indices[num_indices++] = centre_indices[i * 2];
+						int flip = i * 2;
+						indices[num_indices + flip] = edge_indices[i * 4];
+						indices[num_indices + 1] = edge_indices[i * 4 + 2];
+						indices[num_indices + 2 - flip] = centre_indices[i * 2 + 1];
+						indices[num_indices + 3 + flip] = edge_indices[i * 4];
+						indices[num_indices + 4] = centre_indices[i * 2 + 1];
+						indices[num_indices + 5 - flip] = centre_indices[i * 2];
+						num_indices += 6;
 					}
 				}
 			}
@@ -180,12 +175,14 @@ namespace WSWUI
 				{
 					if( dimensions[i].x > 0.0f )
 					{
-						indices[num_indices++] = edge_indices[i * 2 + 1];
-						indices[num_indices++] = centre_indices[i];
-						indices[num_indices++] = centre_indices[i + 2];
-						indices[num_indices++] = edge_indices[i * 2 + 1];
-						indices[num_indices++] = centre_indices[i + 2];
-						indices[num_indices++] = edge_indices[i * 2 + 5];
+						int flip = i * 2;
+						indices[num_indices + flip] = edge_indices[i * 2 + 1];
+						indices[num_indices + 1] = centre_indices[i];
+						indices[num_indices + 2 - flip] = centre_indices[i + 2];
+						indices[num_indices + 3 + flip] = edge_indices[i * 2 + 1];
+						indices[num_indices + 4] = centre_indices[i + 2];
+						indices[num_indices + 5 - flip] = edge_indices[i * 2 + 5];
+						num_indices += 6;
 					}
 				}
 			}
@@ -207,7 +204,11 @@ namespace WSWUI
 			std::vector< Vertex > &data_vertices = data->GetVertices();
 			int old_num_vertices = data_vertices.size();
 			data_vertices.resize( old_num_vertices + num_vertices );
-			memcpy( &data_vertices[old_num_vertices], vertices, sizeof( Vertex ) * num_vertices );
+			for( i = 0; i < num_vertices; i++ )
+			{
+				vertices[i].colour = colour;
+				data_vertices[old_num_vertices + i] = vertices[i];
+			}
 
 			std::vector< int > &data_indices = data->GetIndices();
 			int old_num_indices = data_indices.size();
@@ -220,7 +221,7 @@ namespace WSWUI
 
 		virtual void ReleaseElementData( DecoratorDataHandle element_data )
 		{
-			delete reinterpret_cast< Geometry * >( element_data );
+			__delete__( reinterpret_cast< Geometry * >( element_data ) );
 		}
 
 		virtual void RenderElement( Element *element, DecoratorDataHandle element_data )
@@ -240,19 +241,15 @@ namespace WSWUI
 
 			RegisterProperty( "coord-top", "0" ).AddParser( "number" );
 			RegisterProperty( "coord-left", "0" ).AddParser( "number" );
-			RegisterShorthand( "coord-top-left", "coord-top, coord-left" );
 			RegisterProperty( "coord-bottom", "0" ).AddParser( "number" );
 			RegisterProperty( "coord-right", "0" ).AddParser( "number" );
-			RegisterShorthand( "coord-bottom-right", "coord-bottom, coord-right" );
-			RegisterShorthand( "coord", "coord-top, coord-left, coord-bottom, coord-right" );
+			RegisterShorthand( "coord", "coord-top, coord-right, coord-bottom, coord-left" );
 
-			RegisterProperty( "size-top", "0" ).AddParser( "number" );
-			RegisterProperty( "size-left", "0" ).AddParser( "number" );
-			RegisterShorthand( "size-top-left", "size-top, size-left" );
-			RegisterProperty( "size-bottom", "0" ).AddParser( "number" );
-			RegisterProperty( "size-right", "0" ).AddParser( "number" );
-			RegisterShorthand( "size-bottom-right", "size-bottom, size-right" );
-			RegisterShorthand( "size", "size-top, size-left, size-bottom, size-right" );
+			RegisterProperty( "size-top", "0px" ).AddParser( "number" );
+			RegisterProperty( "size-left", "0px" ).AddParser( "number" );
+			RegisterProperty( "size-bottom", "0px" ).AddParser( "number" );
+			RegisterProperty( "size-right", "0px" ).AddParser( "number" );
+			RegisterShorthand( "size", "size-top, size-right, size-bottom, size-left" );
 		}
 
 		virtual Decorator *InstanceDecorator(const String &name, const PropertyDictionary &properties)
