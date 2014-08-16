@@ -7,12 +7,12 @@
 
 			ninep-decorator: ninepatch;					<-- keyword
 
-			ninep-image: /ui/porkui/gfx/controls/button	<-- texture
+			ninep-src: /ui/porkui/gfx/controls/button	<-- texture
 
-			ninep-coord-top: 0.125;						<-- offset to the center part of texture
-			           -right: 0.875;					    from the corresponding edge
-			           -bottom: 0.9375;
-			           -left: 0.25;
+			ninep-coords-top: 0.125|4px;				<-- offset to the center part of texture
+			            -right: 0.125;					    from the corresponding edge
+			            -bottom: 0.0625;
+			            -left: 0.25;
 			ninep-coord: 0.125 0.25 0.9375 0.875;		<-- shortcut
 
 			ninep-size-top: 4px|auto;					<-- size of the border on the element
@@ -29,21 +29,30 @@ namespace WSWUI
 	class NinePatchDecorator : public Decorator
 	{
 		int texture_index;
-		Vector2f coord[2];
+		Vector2f coords[2];
+		bool coords_absolute[2][2];
 		PropertyDictionary properties;
 
 	public:
 		bool Initialise( const PropertyDictionary &properties )
 		{
-			const Property *texture_property = properties.GetProperty( "image" );
-			texture_index = LoadTexture( texture_property->Get< String >(), texture_property->source );
+			const Property *property = properties.GetProperty( "src" );
+			texture_index = LoadTexture( property->Get< String >(), property->source );
 			if( texture_index < 0 )
 				return false;
 
-			coord[0].x = Math::Max( 0.0f, properties.GetProperty( "coord-left" )->Get< float >() );
-			coord[0].y = Math::Max( 0.0f, properties.GetProperty( "coord-top" )->Get< float >() );
-			coord[1].x = Math::Max( 0.0f, properties.GetProperty( "coord-right" )->Get< float >() );
-			coord[1].y = Math::Max( 0.0f, properties.GetProperty( "coord-bottom" )->Get< float >() );
+			property = properties.GetProperty( "coords-left" );
+			coords[0].x = Math::Max( 0.0f, property->Get< float >() );
+			coords_absolute[0][0] = ( property->unit == Property::PX );
+			property = properties.GetProperty( "coords-top" );
+			coords[0].y = Math::Max( 0.0f, property->Get< float >() );
+			coords_absolute[0][1] = ( property->unit == Property::PX );
+			property = properties.GetProperty( "coords-right" );
+			coords[1].x = Math::Max( 0.0f, property->Get< float >() );
+			coords_absolute[1][0] = ( property->unit == Property::PX );
+			property = properties.GetProperty( "coords-bottom" );
+			coords[1].y = Math::Max( 0.0f, property->Get< float >() );
+			coords_absolute[1][1] = ( property->unit == Property::PX );
 
 			this->properties = properties;
 
@@ -60,21 +69,33 @@ namespace WSWUI
 			RenderInterface *render_interface = element->GetRenderInterface();
 			Vector2i texture_dimensions = texture->GetDimensions( render_interface );
 
+			Vector2f tex_coords[2];
+			tex_coords[0] = coords[0];
+			tex_coords[1] = coords[1];
+			if( coords_absolute[0][0] )
+				tex_coords[0].x /= texture_dimensions.x;
+			if( coords_absolute[0][1] )
+				tex_coords[0].y /= texture_dimensions.y;
+			if( coords_absolute[1][0] )
+				tex_coords[1].x /= texture_dimensions.x;
+			if( coords_absolute[1][1] )
+				tex_coords[1].y /= texture_dimensions.y;
+
 			Vector2f dimensions[2];
 			if( properties.GetProperty( "size-left" )->unit == Property::KEYWORD )
-				dimensions[0].x = ( float )texture_dimensions.x * coord[0].x;
+				dimensions[0].x = ( float )texture_dimensions.x * tex_coords[0].x;
 			else
 				dimensions[0].x = Math::Max( 0.0f, ResolveProperty( properties, "size-left", padded_size.x ) );
 			if( properties.GetProperty( "size-top" )->unit == Property::KEYWORD )
-				dimensions[0].y = ( float )texture_dimensions.y * coord[0].y;
+				dimensions[0].y = ( float )texture_dimensions.y * tex_coords[0].y;
 			else
 				dimensions[0].y = Math::Max( 0.0f, ResolveProperty( properties, "size-top", padded_size.y ) );
 			if( properties.GetProperty( "size-right" )->unit == Property::KEYWORD )
-				dimensions[1].x = ( float )texture_dimensions.x * coord[1].x;
+				dimensions[1].x = ( float )texture_dimensions.x * tex_coords[1].x;
 			else
 				dimensions[1].x = Math::Max( 0.0f, ResolveProperty( properties, "size-right", padded_size.x ) );
 			if( properties.GetProperty( "size-bottom" )->unit == Property::KEYWORD )
-				dimensions[1].y = ( float )texture_dimensions.y * coord[1].y;
+				dimensions[1].y = ( float )texture_dimensions.y * tex_coords[1].y;
 			else
 				dimensions[1].y = Math::Max( 0.0f, ResolveProperty( properties, "size-bottom", padded_size.y ) );
 
@@ -106,19 +127,19 @@ namespace WSWUI
 
 			// Generate the corners.
 			vertices[0].position = Vector2f( 0.0f, 0.0f );
-			vertices[0].tex_coord = coord[0];
+			vertices[0].tex_coord = tex_coords[0];
 			vertices[1].position = Vector2f( padded_size.x, 0.0f );
-			vertices[1].tex_coord = Vector2f( 1.0f - coord[1].x, coord[0].y );
+			vertices[1].tex_coord = Vector2f( 1.0f - tex_coords[1].x, tex_coords[0].y );
 			vertices[2].position = Vector2f( 0.0f, padded_size.y );
-			vertices[2].tex_coord = Vector2f( coord[0].x, 1.0f - coord[1].y );
+			vertices[2].tex_coord = Vector2f( tex_coords[0].x, 1.0f - tex_coords[1].y );
 			vertices[3].position = Vector2f( padded_size.x, padded_size.y );
-			vertices[3].tex_coord = Vector2f( 1.0f - coord[1].x, 1.0f - coord[1].y );
+			vertices[3].tex_coord = Vector2f( 1.0f - tex_coords[1].x, 1.0f - tex_coords[1].y );
 
 			// Generate the edge vertices.
 			for( i = 0; i < 2; i++ )
 			{
 				Vector2f position = ( i ? ( padded_size - dimensions[1] ) : dimensions[0] );
-				Vector2f tex_coord = ( i ? ( Vector2f( 1.0f, 1.0f ) - coord[1] ) : coord[0] );
+				Vector2f tex_coord = ( i ? ( Vector2f( 1.0f, 1.0f ) - tex_coords[1] ) : tex_coords[0] );
 				if( dimensions[i].x > 0.0f )
 				{
 					for( j = 0; j < 2; j++ )
@@ -152,8 +173,8 @@ namespace WSWUI
 						( i & 1 ) ? ( padded_size.x - dimensions[1].x ) : dimensions[0].x,
 						( i >> 1 ) ? ( padded_size.y - dimensions[1].y ) : dimensions[0].y );
 					vertices[num_vertices].tex_coord = Vector2f(
-						( i & 1 ) ? ( 1.0f - coord[1].x ) : coord[0].x,
-						( i >> 1 ) ? ( 1.0f - coord[1].y ) : coord[0].y );
+						( i & 1 ) ? ( 1.0f - tex_coords[1].x ) : tex_coords[0].x,
+						( i >> 1 ) ? ( 1.0f - tex_coords[1].y ) : tex_coords[0].y );
 					centre_indices[i] = num_vertices++;
 
 					int flip = ( ( ( i & 1 ) ^ ( i >> 1 ) ) ? 1 : -1 );
@@ -253,13 +274,13 @@ namespace WSWUI
 	public:
 		NinePatchDecoratorInstancer()
 		{
-			RegisterProperty( "image", "" ).AddParser( "string" );
+			RegisterProperty( "src", "" ).AddParser( "string" );
 
-			RegisterProperty( "coord-top", "0" ).AddParser( "number" );
-			RegisterProperty( "coord-left", "0" ).AddParser( "number" );
-			RegisterProperty( "coord-bottom", "0" ).AddParser( "number" );
-			RegisterProperty( "coord-right", "0" ).AddParser( "number" );
-			RegisterShorthand( "coord", "coord-top, coord-right, coord-bottom, coord-left" );
+			RegisterProperty( "coords-top", "0" ).AddParser( "number" );
+			RegisterProperty( "coords-left", "0" ).AddParser( "number" );
+			RegisterProperty( "coords-bottom", "0" ).AddParser( "number" );
+			RegisterProperty( "coords-right", "0" ).AddParser( "number" );
+			RegisterShorthand( "coords", "coords-top, coords-right, coords-bottom, coords-left" );
 
 			RegisterProperty( "size-top", "auto" )
 				.AddParser( "keyword", "auto" )
