@@ -13,7 +13,7 @@
 			            -right: 0.125;					    from the corresponding edge
 			            -bottom: 0.0625;
 			            -left: 0.25;
-			ninep-coord: 0.125 0.25 0.9375 0.875;		<-- shortcut
+			ninep-coords: 0.125 0.25 0.9375 0.875;		<-- shortcut
 
 			ninep-size-top: 4px|auto;					<-- size of the border on the element
 			          -right: 4px;
@@ -272,7 +272,7 @@ namespace WSWUI
 	class NinePatchDecoratorInstancer : public DecoratorInstancer
 	{
 	public:
-		NinePatchDecoratorInstancer()
+		NinePatchDecoratorInstancer( void )
 		{
 			RegisterProperty( "src", "" ).AddParser( "string" );
 
@@ -297,7 +297,7 @@ namespace WSWUI
 			RegisterShorthand( "size", "size-top, size-right, size-bottom, size-left" );
 		}
 
-		virtual Decorator *InstanceDecorator(const String &name, const PropertyDictionary &properties)
+		virtual Decorator *InstanceDecorator( const String &name, const PropertyDictionary &properties )
 		{
 			NinePatchDecorator *decorator = __new__( NinePatchDecorator );
 			if( decorator->Initialise( properties ) )
@@ -313,7 +313,7 @@ namespace WSWUI
 			__delete__( decorator );
 		}
 
-		virtual void Release()
+		virtual void Release( void )
 		{
 			__delete__( this );
 		}
