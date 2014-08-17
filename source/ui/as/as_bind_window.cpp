@@ -292,6 +292,11 @@ public:
 		return UI_Main::Get()->getConnectCount();
 	}
 
+	void showIME( bool show )
+	{
+		trap::IN_ShowIME( show ? qtrue : qfalse );
+	}
+
 private:
 	typedef std::map<ElementDocument *, FunctionCallScheduler *>  SchedulerMap;
 	SchedulerMap schedulers;
@@ -431,6 +436,8 @@ void BindWindow( ASInterface *as )
 		.method( &ASWindow::flash, "flash" )
 
 		.method( &ASWindow::getConnectCount, "get_connectCount" )
+
+		.method( &ASWindow::showIME, "showIME" );
 	;
 }
 
