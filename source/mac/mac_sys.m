@@ -61,3 +61,22 @@ void	Sys_OpenURLInBrowser( const char *url )
   [[NSWorkspace sharedWorkspace] openURL:ns_url];
 }
 
+
+/*
+   =================
+   Sys_AcquireWakeLock
+   =================
+ */
+void *Sys_AcquireWakeLock( void )
+{
+	return NULL;
+}
+
+/*
+   =================
+   Sys_ReleaseWakeLock
+   =================
+ */
+void Sys_ReleaseWakeLock( void *wl )
+{
+}

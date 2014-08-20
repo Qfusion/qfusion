@@ -754,6 +754,12 @@ void CL_ClearState( void )
 	cls.lastPacketReceivedTime = 0;
 
 	cls.sv_pure = qfalse;
+
+	if( cls.wakelock )
+	{
+		Sys_ReleaseWakeLock( cls.wakelock );
+		cls.wakelock = NULL;
+	}
 }
 
 

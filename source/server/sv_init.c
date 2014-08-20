@@ -462,6 +462,10 @@ void SV_InitGame( void )
 	assert( !svs.cms );
 	svs.cms = CM_New( NULL );
 	CM_AddReference( svs.cms );
+
+	// keep CPU awake
+	assert( !svs.wakelock );
+	svs.wakelock = Sys_AcquireWakeLock();
 }
 
 /*
@@ -566,6 +570,12 @@ void SV_ShutdownGame( const char *finalmsg, qboolean reconnect )
 
 	if( sv_mempool )
 		Mem_EmptyPool( sv_mempool );
+
+	if( svs.wakelock )
+	{
+		Sys_ReleaseWakeLock( svs.wakelock );
+		svs.wakelock = NULL;
+	}
 
 	memset( &svs, 0, sizeof( svs ) );
 
