@@ -1582,7 +1582,7 @@ void Con_KeyDown( int key )
 		{
 			int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
 			int vislines = (int)( viddef.height * bound( 0.0, scr_con_current, 1.0 ) );
-			int rows = ( vislines-smallCharHeight-14 ) / smallCharHeight;  // rows of text to draw
+			int rows = ( vislines-smallCharHeight-14*VID_GetPixelRatio() ) / smallCharHeight;  // rows of text to draw
 			con.display = con.numlines - rows + 1;
 			clamp_low( con.display, 0 );
 		}
