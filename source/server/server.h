@@ -285,6 +285,8 @@ typedef struct
 	fatvis_t fatvis;
 
 	char *motd;
+
+	void *wakelock;
 } server_static_t;
 
 typedef struct

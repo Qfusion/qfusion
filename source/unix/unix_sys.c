@@ -469,6 +469,21 @@ const char *Sys_GetPreferredLanguage( void )
 	return Q_strlwr( lang );
 }
 
+/*
+* Sys_AcquireWakeLock
+*/
+void *Sys_AcquireWakeLock( void )
+{
+	return NULL;
+}
+
+/*
+* Sys_ReleaseWakeLock
+*/
+void Sys_ReleaseWakeLock( void *wl )
+{
+}
+
 /*****************************************************************************/
 
 int main( int argc, char **argv )
