@@ -583,11 +583,6 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 void SCR_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color );
 void SCR_DrawFillRect( int x, int y, int w, int h, vec4_t color );
-// wrappers/stubs for irc
-struct shader_s *SCR_RegisterPic( const char *name );
-void SCRR_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const float *color, const struct shader_s *shader );
-unsigned int SCR_GetScreenWidth( void );
-unsigned int SCR_GetScreenHeight( void );
 
 void CL_InitMedia( void );
 void CL_ShutdownMedia( void );
