@@ -9,12 +9,13 @@
 #define __WIDGETS_H__
 
 #include "kernel/ui_main.h"
+#include "kernel/ui_eventlistener.h"
 #include <Rocket/Core/Element.h>
 
 namespace WSWUI
 {
 
-	// "my generic element instancer
+	// "my generic element instancer"
 	template<typename T>
 	struct GenericElementInstancer : Rocket::Core::ElementInstancer
 	{
@@ -55,6 +56,19 @@ namespace WSWUI
 		void Release ()
 		{
 			__delete__(this);
+		}
+	};
+
+	// "my generic element instancer" that attaches focus/blur events that toggle the IME
+	template<typename T>
+	struct GenericElementInstancerIME : GenericElementInstancer<T>
+	{
+		Rocket::Core::Element *InstanceElement(Rocket::Core::Element *parent, const String &tag, const Rocket::Core::XMLAttributes &attributes)
+		{
+			Rocket::Core::Element *elem = GenericElementInstancer<T>::InstanceElement( parent, tag, attributes );
+			elem->AddEventListener( "focus", UI_GetIMEListener() );
+			elem->AddEventListener( "blur", UI_GetIMEListener() );
+			return elem;
 		}
 	};
 

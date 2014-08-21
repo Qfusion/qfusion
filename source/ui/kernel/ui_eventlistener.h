@@ -30,9 +30,11 @@ private:
 };
 
 // Basic event listener with default handling for all elements
-Rocket::Core::EventListener * GetBaseEventListener( void );
+Rocket::Core::EventListener *GetBaseEventListener( void );
 // get instance of global eventlistener
-Rocket::Core::EventListener * UI_GetMainListener( void );
+Rocket::Core::EventListener *UI_GetMainListener( void );
+// get instance of eventlistener that opens IME for text inputs
+Rocket::Core::EventListener *UI_GetIMEListener( void );
 
 }
 

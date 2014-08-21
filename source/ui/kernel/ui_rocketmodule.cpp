@@ -223,7 +223,6 @@ void RocketModule::closeDocument( Rocket::Core::ElementDocument *doc )
 void RocketModule::registerElementDefaults( Rocket::Core::Element *element )
 {
 	// add these as they pile up in BaseEventListener
-	element->AddEventListener( "keydown", GetBaseEventListener() );
 	element->AddEventListener( "mouseover", GetBaseEventListener() );
 	element->AddEventListener( "click", GetBaseEventListener() );
 }
@@ -297,6 +296,11 @@ void RocketModule::registerCustoms()
 
 	// Main document that implements <script> tags
 	registerElement( "body", ASUI::GetScriptDocumentInstancer() );
+	// IME overrides
+	registerElement( "input",
+		__new__( GenericElementInstancerIME<Rocket::Controls::ElementFormControlInput> )() );
+	registerElement( "textarea",
+		__new__( GenericElementInstancerIME<Rocket::Controls::ElementFormControlTextArea> )() );
 	// other widgets
 	registerElement( "keyselect", GetKeySelectInstancer() );
 	registerElement( "a", GetAnchorWidgetInstancer() );
