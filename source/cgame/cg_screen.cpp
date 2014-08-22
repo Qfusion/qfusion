@@ -1384,11 +1384,10 @@ void CG_Draw2DView( void )
 	if( drawScoreboard )
 		CG_DrawScoreboard();
 	else
-	{
 		CG_CheckDrawCenterString();
-		CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2 + 8*cgs.vidHeight/600,
-			ALIGN_RIGHT_TOP, cgs.fontSystemSmallScaled, colorWhite );
-	}
+
+	CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2 + 8*cgs.vidHeight/600,
+		ALIGN_RIGHT_TOP, cgs.fontSystemSmallScaled, colorWhite );
 }
 
 /*
