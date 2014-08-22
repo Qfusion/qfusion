@@ -86,10 +86,8 @@ cvar_t *cg_showViewBlends;
 cvar_t *cg_touch_moveThreshold;
 cvar_t *cg_touch_strafeThreshold;
 cvar_t *cg_touch_pitchThreshold;
-cvar_t *cg_touch_pitchMinScale;
 cvar_t *cg_touch_pitchSpeed;
 cvar_t *cg_touch_yawThreshold;
-cvar_t *cg_touch_yawMinScale;
 cvar_t *cg_touch_yawSpeed;
 
 float scr_damagetime_start;
@@ -329,14 +327,12 @@ void CG_ScreenInit( void )
 	// wsw : hud debug prints
 	cg_debugHUD =		    trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
-	cg_touch_moveThreshold = trap_Cvar_Get( "cg_touch_moveThreshold", "8", CVAR_ARCHIVE );
-	cg_touch_strafeThreshold = trap_Cvar_Get( "cg_touch_strafeThreshold", "8", CVAR_ARCHIVE );
-	cg_touch_pitchThreshold = trap_Cvar_Get( "cg_touch_pitchThreshold", "6", CVAR_ARCHIVE );
-	cg_touch_pitchMinScale = trap_Cvar_Get( "cg_touch_pitchMinScale", "0.5", CVAR_ARCHIVE );
-	cg_touch_pitchSpeed = trap_Cvar_Get( "cg_touch_pitchSpeed", "5", CVAR_ARCHIVE );
+	cg_touch_moveThreshold = trap_Cvar_Get( "cg_touch_moveThreshold", "4", CVAR_ARCHIVE );
+	cg_touch_strafeThreshold = trap_Cvar_Get( "cg_touch_strafeThreshold", "4", CVAR_ARCHIVE );
+	cg_touch_pitchThreshold = trap_Cvar_Get( "cg_touch_pitchThreshold", "4", CVAR_ARCHIVE );
+	cg_touch_pitchSpeed = trap_Cvar_Get( "cg_touch_pitchSpeed", "4.25", CVAR_ARCHIVE );
 	cg_touch_yawThreshold = trap_Cvar_Get( "cg_touch_yawThreshold", "4", CVAR_ARCHIVE );
-	cg_touch_yawMinScale = trap_Cvar_Get( "cg_touch_yawMinScale", "0.3", CVAR_ARCHIVE );
-	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "6", CVAR_ARCHIVE );
+	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "4.25", CVAR_ARCHIVE );
 
 	//
 	// register our commands
@@ -1573,13 +1569,13 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 		{
 			if( cg_touch_moveThreshold->modified )
 			{
-				if( cg_touch_moveThreshold->integer < 0 )
+				if( cg_touch_moveThreshold->value < 0.0f )
 					trap_Cvar_Set( cg_touch_moveThreshold->name, cg_touch_moveThreshold->dvalue );
 				cg_touch_moveThreshold->modified = qfalse;
 			}
 			if( cg_touch_strafeThreshold->modified )
 			{
-				if( cg_touch_strafeThreshold->integer < 0 )
+				if( cg_touch_strafeThreshold->value < 0.0f )
 					trap_Cvar_Set( cg_touch_strafeThreshold->name, cg_touch_strafeThreshold->dvalue );
 				cg_touch_strafeThreshold->modified = qfalse;
 			}
@@ -1587,11 +1583,11 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 			cg_touch_t &touch = cg_touches[movepad.touch];
 
 			int move = movepad.y - touch.y;
-			if( abs( move * scale ) > cg_touch_moveThreshold->integer )
+			if( fabsf( move * scale ) > cg_touch_moveThreshold->value )
 				cmd->forwardmove += ( move < 0 ) ? -frametime : frametime;
 
 			move = touch.x - movepad.x;
-			if( abs( move * scale ) > cg_touch_strafeThreshold->integer )
+			if( fabsf( move * scale ) > cg_touch_strafeThreshold->value )
 				cmd->sidemove += ( move < 0 ) ? -frametime : frametime;
 		}
 
@@ -1613,40 +1609,23 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 
 			cg_touch_t &touch = cg_touches[viewpad.touch];
 
-			float dx, dy;
-			dx = ( viewpad.x - touch.x ) * scale;
-			if( fabsf( dx ) > cg_touch_yawThreshold->value )
-				dx -= cg_touch_yawThreshold->value * scale * ( dx < 0.0f ? -1.0f : 1.0f );
-			else
-				dx = 0.0f;
-			dy = ( touch.y - viewpad.y ) * scale;
-			if( fabsf( dy ) > cg_touch_pitchThreshold->value )
-				dy -= cg_touch_pitchThreshold->value * scale * ( dy < 0.0f ? -1.0f : 1.0f );
-			else
-				dy = 0.0f;
-
-			float length = sqrtf( dx * dx + dy * dy );
-			if( length > 1.0f )
-			{
-				float deltaScale = fabsf( dx ) / length;
-				float deltaMinScale = bound( 0.0f, cg_touch_yawMinScale->value, 1.0f );
-				dx *= max( deltaScale, deltaMinScale );
-				deltaScale = fabsf( dy ) / length;
-				deltaMinScale = bound( 0.0f, cg_touch_pitchMinScale->value, 1.0f );
-				dy *= max( deltaScale, deltaMinScale );
-			}
-			else
-			{
-				dx = dy = 0.0f;
-			}
-
 			float sensScale;
 			if( !cgs.demoPlaying && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) )
 				sensScale = cg.predictedPlayerState.fov / cgs.clientInfo[cgs.playerNum].fov;
 			else
 				sensScale = 1.0f;
-			viewangles[YAW] += dx * cg_touch_pitchSpeed->value * sensScale * ( float )frametime * 0.001f;
-			viewangles[PITCH] += dy * cg_touch_pitchSpeed->value * sensScale * ( float )frametime * 0.001f;
+
+			float angle = ( touch.y - viewpad.y ) * scale;
+			float dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
+			angle = fabsf( angle ) - cg_touch_pitchThreshold->value;
+			if( angle > 0.0f )
+				viewangles[PITCH] += angle * dir * cg_touch_pitchSpeed->value * sensScale * ( float )frametime * 0.001f;
+
+			angle = ( viewpad.x - touch.x ) * scale;
+			dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
+			angle = fabsf( angle ) - cg_touch_yawThreshold->value;
+			if( angle > 0.0f )
+				viewangles[YAW] += angle * dir * cg_touch_yawSpeed->value * sensScale * ( float )frametime * 0.001f;
 		}
 
 		cmd->upmove += upmove * frametime;
