@@ -1379,12 +1379,13 @@ void CG_Draw2DView( void )
 	if( cg_showHUD->integer )
 		CG_ExecuteLayoutProgram( cg.statusBar, false );
 
+	CG_CheckDamageCrosshair();
+
 	if( drawScoreboard )
 		CG_DrawScoreboard();
 	else
 	{
 		CG_CheckDrawCenterString();
-		CG_CheckDamageCrosshair();
 		CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2 + 8*cgs.vidHeight/600,
 			ALIGN_RIGHT_TOP, cgs.fontSystemSmallScaled, colorWhite );
 	}
