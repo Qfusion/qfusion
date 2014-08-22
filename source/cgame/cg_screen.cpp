@@ -330,9 +330,9 @@ void CG_ScreenInit( void )
 	cg_touch_moveThreshold = trap_Cvar_Get( "cg_touch_moveThreshold", "4", CVAR_ARCHIVE );
 	cg_touch_strafeThreshold = trap_Cvar_Get( "cg_touch_strafeThreshold", "4", CVAR_ARCHIVE );
 	cg_touch_pitchThreshold = trap_Cvar_Get( "cg_touch_pitchThreshold", "4", CVAR_ARCHIVE );
-	cg_touch_pitchSpeed = trap_Cvar_Get( "cg_touch_pitchSpeed", "4.25", CVAR_ARCHIVE );
+	cg_touch_pitchSpeed = trap_Cvar_Get( "cg_touch_pitchSpeed", "3.9", CVAR_ARCHIVE );
 	cg_touch_yawThreshold = trap_Cvar_Get( "cg_touch_yawThreshold", "4", CVAR_ARCHIVE );
-	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "4.25", CVAR_ARCHIVE );
+	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "4.1", CVAR_ARCHIVE );
 
 	//
 	// register our commands
