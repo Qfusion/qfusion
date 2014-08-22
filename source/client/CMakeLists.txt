@@ -84,7 +84,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         "../unix/unix_vid.c"
     )
     
-    set(CLIENT_PLATFORM_LIBRARIES "pthread" "dl" "m" "X11" "Xext" "Xi" "Xrandr" "rt")
+    set(CLIENT_PLATFORM_LIBRARIES "pthread" "dl" "m" "X11" "Xi" "Xext" "Xrandr" "rt")
     set(CLIENT_BINARY_TYPE "")
 
     set(BUNDLE_RESOURCES "")
