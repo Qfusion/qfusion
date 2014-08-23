@@ -996,10 +996,7 @@ static void RB_EnableVertexAttribs( void )
 		vattrib_t lmattr;
 		vattribbit_t lmattrbit;
 
-		GL_EnableVertexAttrib( VATTRIB_BONESINDICES, qfalse );
-		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, qfalse );
-
-		// lightmap texture coordinates
+		// lightmap texture coordinates - aliasing bones, so not disabling bones
 		lmattr = VATTRIB_LMCOORDS01;
 		lmattrbit = VATTRIB_LMCOORDS0_BIT;
 
