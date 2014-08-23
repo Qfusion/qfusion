@@ -313,7 +313,10 @@ static void Con_MessageMode_f( void )
 {
 	chat_team = qfalse;
 	if( cls.state == CA_ACTIVE )
+	{
 		CL_SetKeyDest( key_message );
+		IN_ShowIME( qtrue );
+	}
 }
 
 /*
@@ -323,7 +326,10 @@ static void Con_MessageMode2_f( void )
 {
 	chat_team = Cmd_Exists( "say_team" ); // if not, make it a normal "say: "
 	if( cls.state == CA_ACTIVE )
+	{
 		CL_SetKeyDest( key_message );
+		IN_ShowIME( qtrue );
+	}
 }
 
 /*
@@ -768,6 +774,60 @@ void Con_DrawNotify( void )
 			SCR_DrawRawChar( x + promptwidth + prewidth - chat_prestep, y, '_',
 			font, colorWhite );
 	}
+}
+
+/*
+* Con_GetMessageArea
+*/
+static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2 )
+{
+	int x, y;
+	int width;
+	struct qfontface_s *font = NULL;
+
+	if( con_chatCGame->integer )
+	{
+		width = con_chatWidth->integer;
+
+		if( *con_chatFontFamily->string && con_chatFontSize->integer ) {
+			font = SCR_RegisterFont( con_chatFontFamily->string, con_chatFontStyle->integer, con_chatFontSize->integer );
+		}
+		if( !font )
+			font = cls.fontSystemSmall;
+
+		x = con_chatX->integer;
+		y = con_chatY->integer;
+	}
+	else
+	{
+		int i;
+		int time;
+
+		width = viddef.width;
+		x = 8 * VID_GetPixelRatio();
+		y = 0;
+		font = cls.fontSystemSmallScaled;
+
+		for( i = min( NUM_CON_TIMES, con.numlines ) - 1; i >= 0; i-- )
+		{
+			time = con.times[i];
+			if( time == 0 )
+				continue;
+			time = cls.realtime - time;
+			if( time > con_notifytime->value*1000 )
+				continue;
+
+			y += SCR_strHeight( cls.fontSystemSmallScaled );
+		}
+	}
+
+	// 48 is an arbitrary offset for not overlapping the FPS and clock prints
+	width -= 48 * viddef.height / 600;
+
+	*x1 = x;
+	*y1 = y;
+	*x2 = x + width;
+	*y2 = y + SCR_strHeight( font );
 }
 
 /*
@@ -1894,7 +1954,7 @@ void Con_MessageKeyDown( int key )
 	}
 }
 
-void Con_TouchConsole( qboolean down, int x, int y )
+void Con_TouchEvent( qboolean down, int x, int y )
 {
 	int smallCharHeight;
 
@@ -1910,23 +1970,36 @@ void Con_TouchConsole( qboolean down, int x, int y )
 
 	smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
 
-	if( touch_y >= 0 )
+	if( cls.key_dest == key_console )
 	{
-		int dist = ( y - touch_y ) / smallCharHeight;
-		con.display += dist;
-		clamp_high( con.display, con.numlines - 1 );
-		clamp_low( con.display, 0 );
-		touch_y += dist * smallCharHeight;
-		return;
-	}
-
-	if( scr_con_current )
-	{
-		if( y < ( ( viddef.height * scr_con_current ) - 14 * VID_GetPixelRatio() - smallCharHeight ) )
+		if( touch_y >= 0 )
 		{
-			touch_y = y;
+			int dist = ( y - touch_y ) / smallCharHeight;
+			con.display += dist;
+			clamp_high( con.display, con.numlines - 1 );
+			clamp_low( con.display, 0 );
+			touch_y += dist * smallCharHeight;
+			return;
 		}
-		else if( ( y < ( viddef.height * scr_con_current ) ) && !touch_imeShown )
+
+		if( scr_con_current )
+		{
+			if( y < ( ( viddef.height * scr_con_current ) - 14 * VID_GetPixelRatio() - smallCharHeight ) )
+			{
+				touch_y = y;
+			}
+			else if( !touch_imeShown && ( y < ( viddef.height * scr_con_current ) ) )
+			{
+				touch_imeShown = qtrue;
+				IN_ShowIME( qtrue );
+			}
+		}
+	}
+	else if( cls.key_dest == key_message )
+	{
+		int x1, y1, x2, y2;
+		Con_GetMessageArea( &x1, &y1, &x2, &y2 );
+		if( !touch_imeShown && ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) )
 		{
 			touch_imeShown = qtrue;
 			IN_ShowIME( qtrue );
