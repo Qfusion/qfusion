@@ -1161,6 +1161,9 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 			programFeatures |= GLSL_SHADER_SHADOWMAP_24BIT;
 		}
 	}
+	if ( rb.currentShadowBits && (rb.currentModelType == mod_brush) ) {
+		programFeatures |= GLSL_SHADER_SHADOWMAP_NORMALCHECK;
+	}
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, NULL,
@@ -1190,7 +1193,7 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	RB_UpdateCommonUniforms( program, pass, texMatrix );
 
-	RP_UpdateShadowsUniforms( program, numShadows, shadowGroups, rb.objectMatrix );
+	RP_UpdateShadowsUniforms( program, numShadows, shadowGroups, rb.objectMatrix, rb.currentEntity->origin, rb.currentEntity->axis );
 
 	// submit animation data
 	if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
@@ -1835,6 +1838,9 @@ static void RB_UpdateVertexAttribs( void )
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
 	if( ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+		vattribs |= VATTRIB_NORMAL_BIT;
+	}
+	if ( rb.currentShadowBits && ( rb.currentModelType == mod_brush ) ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
 	rb.currentVAttribs = vattribs;

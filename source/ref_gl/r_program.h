@@ -157,6 +157,7 @@ enum
 #define GLSL_SHADER_SHADOWMAP_SHADOW4			GLSL_BIT(36)
 #define GLSL_SHADER_SHADOWMAP_SAMPLERS			GLSL_BIT(37)
 #define GLSL_SHADER_SHADOWMAP_24BIT				GLSL_BIT(38)
+#define GLSL_SHADER_SHADOWMAP_NORMALCHECK		GLSL_BIT(39)
 
 // outlines
 #define GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF		GLSL_BIT(32)
@@ -223,7 +224,8 @@ void RP_UpdateBonesUniforms( int elem, unsigned int numBones, dualquat_t *animDu
 
 void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t floorColor );
 
-void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **groups, const mat4_t objectMatrix );
+void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **groups, const mat4_t objectMatrix,
+	const vec3_t objectOrigin, const mat3_t objectAxis );
 
 void RP_UpdateInstancesUniforms( int elem, unsigned int numInstances, instancePoint_t *instances );
 
