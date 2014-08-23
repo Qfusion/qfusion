@@ -185,15 +185,6 @@ static void CG_DrawCenterString( void )
 	}
 }
 
-static void CG_CheckDrawCenterString( void )
-{
-	scr_centertime_off -= cg.frameTime;
-	if( scr_centertime_off <= 0 )
-		return;
-
-	CG_DrawCenterString();
-}
-
 //=============================================================================
 
 static void CG_CheckDamageCrosshair( void )
@@ -1383,8 +1374,10 @@ void CG_Draw2DView( void )
 
 	if( drawScoreboard )
 		CG_DrawScoreboard();
-	else
-		CG_CheckDrawCenterString();
+
+	scr_centertime_off -= cg.frameTime;
+	if( !drawScoreboard && ( scr_centertime_off > 0 ) )
+		CG_DrawCenterString();
 
 	CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2 + 8*cgs.vidHeight/600,
 		ALIGN_RIGHT_TOP, cgs.fontSystemSmallScaled, colorWhite );
