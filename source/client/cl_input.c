@@ -506,8 +506,9 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 		return;
 
 	case key_console:
+	case key_message:
 		if( id == 0 )
-			Con_TouchConsole( ( ( type != TOUCH_UP ) && ( type != TOUCH_CANCEL ) ) ? qtrue : qfalse, x, y );
+			Con_TouchEvent( ( ( type != TOUCH_UP ) && ( type != TOUCH_CANCEL ) ) ? qtrue : qfalse, x, y );
 		return;
 		
 	case key_menu:
@@ -540,7 +541,8 @@ void CL_CancelTouches( void )
 		return;
 
 	case key_console:
-		Con_TouchConsole( qfalse, 0, 0 );
+	case key_message:
+		Con_TouchEvent( qfalse, 0, 0 );
 		return;
 	}
 }
