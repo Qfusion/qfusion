@@ -163,10 +163,6 @@ static void CG_DrawCenterString( void )
 	int width = cgs.vidWidth / 2;
 	size_t len;
 
-	// don't draw when scoreboard is up
-	if( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD )
-		return;
-
 	if( scr_center_lines <= 4 )
 		y = cgs.vidHeight*0.35;
 	else
