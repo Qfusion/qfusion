@@ -1313,21 +1313,11 @@ static void CG_CheckHUDChanges( void )
 		cg.specStateChanged = qfalse;
 	}
 
-	if (ISREALSPECTATOR())
+	cvar_t *hud = ISREALSPECTATOR() ? cg_specHUD : cg_clientHUD;
+	if( hud->modified )
 	{
-		if( cg_specHUD->modified )
-		{
-			CG_LoadStatusBar();
-			cg_specHUD->modified = qfalse;
-		}
-	}
-	else
-	{
-		if( cg_clientHUD->modified )
-		{
-			CG_LoadStatusBar();
-			cg_clientHUD->modified = qfalse;
-		}
+		CG_LoadStatusBar();
+		hud->modified = qfalse;
 	}
 }
 
