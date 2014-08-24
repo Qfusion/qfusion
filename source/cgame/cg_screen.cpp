@@ -1296,7 +1296,8 @@ static void CG_SCRDrawViewBlend( void )
 		return;
 
 	CG_CalcColorBlend( colorblend );
-	trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0, 0, 1, 1, colorblend, cgs.shaderWhite );
+	if( colorblend[3] > 0.0f )
+		trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0, 0, 1, 1, colorblend, cgs.shaderWhite );
 }
 
 
