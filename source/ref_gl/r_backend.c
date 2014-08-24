@@ -149,6 +149,8 @@ static void RB_SetGLDefaults( void )
 	qglDisable( GL_BLEND );
 	qglDepthFunc( GL_LEQUAL );
 	qglDepthMask( GL_FALSE );
+	qglDisable( GL_POLYGON_OFFSET_FILL );
+	qglPolygonOffset( -1.0f, 0.0f ); // units will be handled by RB_DepthOffset
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	qglEnable( GL_DEPTH_TEST );
 #ifndef GL_ES_VERSION_2_0
@@ -363,7 +365,16 @@ void RB_SetState( int state )
 
 	if( diff & GLSTATE_OFFSET_FILL )
 	{
-		RB_DepthOffset( state & GLSTATE_OFFSET_FILL ? qtrue : qfalse );
+		if( state & GLSTATE_OFFSET_FILL )
+		{
+			qglEnable( GL_POLYGON_OFFSET_FILL );
+			RB_DepthOffset( qtrue );
+		}
+		else
+		{
+			qglDisable( GL_POLYGON_OFFSET_FILL );
+			RB_DepthOffset( qfalse );
+		}
 	}
 
 	if( diff & GLSTATE_STENCIL_TEST )
