@@ -1303,6 +1303,35 @@ static void CG_SCRDrawViewBlend( void )
 //=======================================================
 
 /*
+* CG_CheckHUDChanges
+*/
+static void CG_CheckHUDChanges( void )
+{
+	// if changed from or to spec, reload the HUD
+	if (cg.specStateChanged) {
+		cg_specHUD->modified = cg_clientHUD->modified = qtrue;
+		cg.specStateChanged = qfalse;
+	}
+
+	if (ISREALSPECTATOR())
+	{
+		if( cg_specHUD->modified )
+		{
+			CG_LoadStatusBar();
+			cg_specHUD->modified = qfalse;
+		}
+	}
+	else
+	{
+		if( cg_clientHUD->modified )
+		{
+			CG_LoadStatusBar();
+			cg_clientHUD->modified = qfalse;
+		}
+	}
+}
+
+/*
 * CG_Draw2DView
 */
 void CG_Draw2DView( void )
@@ -1328,29 +1357,6 @@ void CG_Draw2DView( void )
 		cg.motd = NULL;
 	}
 
-	// if changed from or to spec, reload the HUD
-	if (cg.specStateChanged) {
-		cg_specHUD->modified = cg_clientHUD->modified = qtrue;
-		cg.specStateChanged = qfalse;
-	}
-
-	if (ISREALSPECTATOR())
-	{
-		if( cg_specHUD->modified )
-		{
-			CG_LoadStatusBar();
-			cg_specHUD->modified = qfalse;
-		}
-	}
-	else
-	{
-		if( cg_clientHUD->modified )
-		{
-			CG_LoadStatusBar();
-			cg_clientHUD->modified = qfalse;
-		}
-	}
-
 	drawScoreboard = false;
 	if( cgs.demoPlaying || cg.frame.multipov || cgs.tv )
 	{
@@ -1364,7 +1370,10 @@ void CG_Draw2DView( void )
 	}
 
 	if( cg_showHUD->integer )
+	{
+		CG_CheckHUDChanges();
 		CG_ExecuteLayoutProgram( cg.statusBar, false );
+	}
 
 	CG_CheckDamageCrosshair();
 
@@ -1520,8 +1529,11 @@ void CG_TouchFrame( void )
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
 		cg_touches[i].area_valid = false;
 	
-	if( cg.view.draw2D && cg_showHUD->integer )
+	if( cg_showHUD->integer )
+	{
+		CG_CheckHUDChanges();
 		CG_ExecuteLayoutProgram( cg.statusBar, true );
+	}
 
 	// cancel non-existent areas
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
