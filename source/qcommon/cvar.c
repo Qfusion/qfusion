@@ -589,7 +589,7 @@ static void Cvar_Toggle_f( void )
 void Cvar_WriteVariables( int file )
 {
 	char buffer[MAX_PRINTMSG];
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 	unsigned int i;
 	cvar_flag_t cvar_archive = CVAR_ARCHIVE;
 

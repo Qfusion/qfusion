@@ -712,7 +712,7 @@ static void Cmd_UnaliasAll_f( void )
 */
 void Cmd_WriteAliases( int file )
 {
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 	unsigned int i;
 
 	// Vic: Why on earth this line was written _below_ aliases?
