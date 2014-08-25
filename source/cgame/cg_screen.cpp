@@ -1272,10 +1272,10 @@ static void CG_CalcColorBlend( float *color )
 		time = (float)( ( cg.colorblends[i].timestamp + cg.colorblends[i].blendtime ) - cg.time );
 		uptime = ( (float)cg.colorblends[i].blendtime ) * 0.5f;
 		delta = 1.0f - ( abs( time - uptime ) / uptime );
-		if( delta > 1.0f )
-			delta = 1.0f;
 		if( delta <= 0.0f )
 			continue;
+		if( delta > 1.0f )
+			delta = 1.0f;
 
 		CG_AddBlend( cg.colorblends[i].blend[0],
 			cg.colorblends[i].blend[1],
