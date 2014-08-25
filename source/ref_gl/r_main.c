@@ -675,6 +675,8 @@ void R_Set2DMode( qboolean enable )
 		RB_LoadModelviewMatrix( rn.modelviewMatrix );
 
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
+
+		RB_SetRenderFlags( 0 );
 	}
 	else
 	{
