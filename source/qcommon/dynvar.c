@@ -327,7 +327,7 @@ const char **Dynvar_CompleteBuildList(
         const char *partial
 )
 {
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 	const char **buf;
 	unsigned int i;
 
