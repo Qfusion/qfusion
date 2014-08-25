@@ -82,6 +82,10 @@ void R_AddEntityToScene( const entity_t *ent )
 				R_AddLightOccluder( de ); // build groups and mark shadow casters
 			}
 		}
+		else if( de->rtype == RT_SPRITE ) {
+			// simplifies further checks
+			de->model = NULL;
+		}
 
 		if( de->renderfx & RF_ALPHAHACK ) {
 			if( de->shaderRGBA[3] == 255 ) {
