@@ -43,6 +43,7 @@ void R_ClearScene( void )
 
 	rsc.polyent = R_NUM2ENT( rsc.numLocalEntities );
 	rsc.polyent->scale = 1.0f;
+	rsc.polyent->model = NULL;
 	rsc.polyent->rtype = RT_MODEL;
 	Matrix3_Identity( rsc.polyent->axis );
 	rsc.numLocalEntities++;
