@@ -242,6 +242,7 @@ typedef struct
 	unsigned int	frameCount;
 
 	unsigned int	numEntities;
+	unsigned int	numRefEntities;
 	entity_t		entities[MAX_REF_ENTITIES];
 	entity_t		*worldent;
 	entity_t		*polyent;
