@@ -904,7 +904,7 @@ mempool_t *r_skmcachepool;
 
 static skmcacheentry_t *r_skmcache_head;	// actual entries are linked to this
 static skmcacheentry_t *r_skmcache_free;	// actual entries are linked to this
-static skmcacheentry_t *r_skmcachekeys[MAX_REF_ENTITIES*(MOD_MAX_LODS+1)];		// entities linked to cache entries
+static skmcacheentry_t *r_skmcachekeys[MAX_ENTITIES*(MOD_MAX_LODS+1)];		// entities linked to cache entries
 
 #define R_SKMCacheAlloc(size) R_MallocExt(r_skmcachepool, (size), 16, 1)
 
