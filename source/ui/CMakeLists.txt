@@ -31,6 +31,6 @@ set_target_properties(ui PROPERTIES COMPILE_DEFINITIONS "STATIC_LIB;_SECURE_SCL=
 qf_set_output_dir(ui base)
 
 # TODO: Remove this hack from here
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     add_dependencies(ui ${LIBROCKET})
 endif()
