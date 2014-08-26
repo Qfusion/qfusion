@@ -1247,7 +1247,7 @@ static void R_DrawEntities( void )
 		return;
 	}
 
-	for( i = 1; i < rsc.numEntities; i++ )
+	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ )
 	{
 		e = R_NUM2ENT(i);
 		culled = qtrue;

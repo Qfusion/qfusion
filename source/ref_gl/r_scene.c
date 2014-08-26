@@ -30,15 +30,24 @@ static void R_RenderDebugBounds( void );
 */
 void R_ClearScene( void )
 {
+	rsc.numLocalEntities = 0;
 	rsc.numDlights = 0;
 	rsc.numPolys = 0;
 
-	rsc.worldent = R_NUM2ENT(0);
+	rsc.worldent = R_NUM2ENT( rsc.numLocalEntities );
 	rsc.worldent->scale = 1.0f;
 	rsc.worldent->model = rsh.worldModel;
 	rsc.worldent->rtype = RT_MODEL;
 	Matrix3_Identity( rsc.worldent->axis );
-	rsc.numEntities = 1;
+	rsc.numLocalEntities++;
+
+	rsc.polyent = R_NUM2ENT( rsc.numLocalEntities );
+	rsc.polyent->scale = 1.0f;
+	rsc.polyent->rtype = RT_MODEL;
+	Matrix3_Identity( rsc.polyent->axis );
+	rsc.numLocalEntities++;
+
+	rsc.numEntities = rsc.numLocalEntities;
 
 	rsc.numBmodelEntities = 0;
 
@@ -62,7 +71,7 @@ void R_AddEntityToScene( const entity_t *ent )
 	if( !r_drawentities->integer )
 		return;
 
-	if( ( rsc.numEntities < MAX_ENTITIES ) && ent )
+	if( ( ( rsc.numEntities - rsc.numLocalEntities ) < MAX_ENTITIES ) && ent )
 	{
 		int eNum = rsc.numEntities;
 		entity_t *de = R_NUM2ENT(eNum);

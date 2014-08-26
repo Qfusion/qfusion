@@ -1871,7 +1871,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	rb.dirtyUniformState = qtrue;
 
 	rb.currentEntity = e ? e : &rb.nullEnt;
-	rb.currentModelType = e->rtype == RT_MODEL && rb.currentEntity->model ? rb.currentEntity->model->type : mod_bad;
+	rb.currentModelType = ( rb.currentEntity->rtype == RT_MODEL && rb.currentEntity->model ) ? rb.currentEntity->model->type : mod_bad;
 	rb.currentDlightBits = 0;
 	rb.currentShadowBits = 0;
 	rb.superLightStyle = NULL;
@@ -1885,7 +1885,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	rb.skyboxSide = -1;
 
 	if( !e ) {
-		rb.currentEntity = &rb.nullEnt;
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
 		rb.alphaHack = qfalse;
 		rb.greyscale = qfalse;
