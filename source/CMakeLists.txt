@@ -36,7 +36,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
 
-    set(CMAKE_LIBRARY_PATH "win32/x86/lib/debug")
+    if (NOT MINGW)
+        set(CMAKE_LIBRARY_PATH "win32/x86/lib/debug")
+    else()
+        set(CMAKE_LIBRARY_PATH "win32/x86/lib/mingw")
+    endif()
 endif()
 
 # OS X specific settings
@@ -70,27 +74,31 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_package(SDL REQUIRED)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     # On Linux we build angelscript from source
     set(ANGELSCRIPT_DIR ${CMAKE_HOME_DIRECTORY}/../libsrcs/angelscript/sdk/angelscript)
-    set(ANGELSCRIPT_PROJECT_DIR ${ANGELSCRIPT_DIR}/projects/gnuc)
+    if (MINGW)
+        set(ANGELSCRIPT_PROJECT_DIR ${ANGELSCRIPT_DIR}/projects/mingw)
+    else()
+        set(ANGELSCRIPT_PROJECT_DIR ${ANGELSCRIPT_DIR}/projects/gnuc)
+    endif()
     set(ANGELSCRIPT_INCLUDE_DIR ${ANGELSCRIPT_DIR}/include/)
     set(ANGELSCRIPT_LIBRARY ${ANGELSCRIPT_DIR}/lib/libangelscript.a)
 
     set(ANGELSCRIPT angelscript)
-    add_custom_target(angelscript CFLAGS=${CMAKE_C_FLAGS} CXXFLAGS=${CMAKE_CXX_FLAGS} make -C ${ANGELSCRIPT_PROJECT_DIR})
+    add_custom_target(angelscript CXX=${CMAKE_CXX_COMPILER} AR=${CMAKE_AR} RANLIB=${CMAKE_RANLIB} CFLAGS=${CMAKE_C_FLAGS} CXXFLAGS=${CMAKE_CXX_FLAGS} make -C ${ANGELSCRIPT_PROJECT_DIR})
 else()
     find_package(Angelscript REQUIRED)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     # On Linux we build libRocket from source
     set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../libsrcs/libRocket/libRocket)
     set(LIBROCKET_INCLUDE_DIR ${LIBROCKET_DIR}/Include)
     set(LIBROCKET_LIBRARIES ${LIBROCKET_DIR}/lib/libRocketWSW.a)
 
     set(LIBROCKET libRocket)
-    add_custom_target(libRocket CFLAGS=${CMAKE_C_FLAGS} CXXFLAGS=${CMAKE_CXX_FLAGS} make -C ${LIBROCKET_DIR} -f Build/Makefile.qfusion)
+    add_custom_target(libRocket CXX=${CMAKE_CXX_COMPILER} AR=${CMAKE_AR} RANLIB=${CMAKE_RANLIB} CFLAGS=${CMAKE_C_FLAGS} CXXFLAGS=${CMAKE_CXX_FLAGS} make -C ${LIBROCKET_DIR} -f Build/Makefile.qfusion)
 else()
     find_package(Rocket REQUIRED)
 endif()
@@ -111,8 +119,15 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
 
-    set(CMAKE_EXECUTABLE_SUFFIX "_x86")
-    set(CMAKE_SHARED_LIBRARY_SUFFIX "_x86")
+    set(CMAKE_EXECUTABLE_SUFFIX "_x86${CMAKE_EXECUTABLE_SUFFIX}")
+    set(CMAKE_SHARED_LIBRARY_PREFIX "")
+    set(CMAKE_SHARED_LIBRARY_SUFFIX "_x86${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+    if (MINGW)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+        set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+    endif()
 
     find_windows_release_libs(ZLIB_LIBRARY)
     find_windows_release_libs(JPEG_LIBRARIES)
