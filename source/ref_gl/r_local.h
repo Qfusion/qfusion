@@ -119,6 +119,8 @@ typedef struct superLightStyle_s
 #define RF_CUBEMAPVIEW			( RF_ENVVIEW )
 #define RF_NONVIEWERREF			( RF_PORTALVIEW|RF_MIRRORVIEW|RF_ENVVIEW|RF_SKYPORTALVIEW|RF_SHADOWMAPVIEW )
 
+#define MAX_REF_ENTITIES		( MAX_ENTITIES + 48 ) // must not exceed 2048
+
 //===================================================================
 
 typedef struct portalSurface_s
@@ -240,8 +242,9 @@ typedef struct
 	unsigned int	frameCount;
 
 	unsigned int	numEntities;
-	entity_t		entities[MAX_ENTITIES];
+	entity_t		entities[MAX_REF_ENTITIES];
 	entity_t		*worldent;
+	entity_t		*polyent;
 
 	unsigned int	numDlights;
 	dlight_t		dlights[MAX_DLIGHTS];
@@ -252,12 +255,12 @@ typedef struct
 	lightstyle_t	lightStyles[MAX_LIGHTSTYLES];
 
 	unsigned int	numBmodelEntities;
-	entity_t		*bmodelEntities[MAX_ENTITIES];
+	entity_t		*bmodelEntities[MAX_REF_ENTITIES];
 
 	unsigned int	numShadowGroups;
 	shadowGroup_t	shadowGroups[MAX_SHADOWGROUPS];
-	unsigned int	entShadowGroups[MAX_ENTITIES];
-	unsigned int	entShadowBits[MAX_ENTITIES];
+	unsigned int	entShadowGroups[MAX_REF_ENTITIES];
+	unsigned int	entShadowBits[MAX_REF_ENTITIES];
 
 	float			farClipMin, farClipBias;
 
