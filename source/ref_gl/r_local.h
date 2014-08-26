@@ -119,7 +119,7 @@ typedef struct superLightStyle_s
 #define RF_CUBEMAPVIEW			( RF_ENVVIEW )
 #define RF_NONVIEWERREF			( RF_PORTALVIEW|RF_MIRRORVIEW|RF_ENVVIEW|RF_SKYPORTALVIEW|RF_SHADOWMAPVIEW )
 
-#define MAX_REF_ENTITIES		( MAX_ENTITIES + 48 ) // must not exceed 2048
+#define MAX_REF_ENTITIES		( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
 //===================================================================
 
