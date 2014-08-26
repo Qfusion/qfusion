@@ -72,7 +72,7 @@ void R_DrawPolys( void )
 		else
 			fog = rsh.worldBrushModel->fogs + p->fogNum - 1;
 
-		if( !R_AddDSurfToDrawList( rsc.worldent, fog, p->shader, 0, i, NULL, p ) ) {
+		if( !R_AddDSurfToDrawList( rsc.polyent, fog, p->shader, 0, i, NULL, p ) ) {
 			continue;
 		}
 	}
