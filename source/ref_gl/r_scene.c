@@ -33,18 +33,12 @@ void R_ClearScene( void )
 	rsc.numDlights = 0;
 	rsc.numPolys = 0;
 
-	rsc.worldent = R_NUM2ENT( 0 );
+	rsc.worldent = R_NUM2ENT(0);
 	rsc.worldent->scale = 1.0f;
 	rsc.worldent->model = rsh.worldModel;
 	rsc.worldent->rtype = RT_MODEL;
 	Matrix3_Identity( rsc.worldent->axis );
 	rsc.numEntities = 1;
-
-	rsc.numRefEntities = 0;
-	rsc.polyent = R_NUM2ENT( MAX_ENTITIES + ( rsc.numRefEntities++ ) );
-	rsc.polyent->scale = 1.0f;
-	rsc.polyent->rtype = RT_MODEL;
-	Matrix3_Identity( rsc.polyent->axis );
 
 	rsc.numBmodelEntities = 0;
 

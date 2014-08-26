@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // FIXME: move these to r_local.h?
 #define	MAX_DLIGHTS				32
-#define	MAX_ENTITIES			2000
+#define	MAX_ENTITIES			2048
 #define MAX_POLY_VERTS			3000
 #define MAX_POLYS				2048
 
