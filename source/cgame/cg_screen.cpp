@@ -1501,7 +1501,6 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 		break;
 
 	case TOUCH_UP:
-	case TOUCH_CANCEL:
 		if( touch.down )
 		{
 			touch.down = false;
