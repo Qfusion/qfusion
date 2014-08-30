@@ -407,8 +407,7 @@ typedef enum
 {
 	TOUCH_DOWN,
 	TOUCH_UP,
-	TOUCH_MOVE,
-	TOUCH_CANCEL
+	TOUCH_MOVE
 } touchevent_t;
 
 #ifdef __cplusplus
