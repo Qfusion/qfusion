@@ -171,9 +171,16 @@ static unsigned int R_SurfaceShadowBits( const msurface_t *surf, unsigned int ch
 */
 qboolean R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf )
 {
-	vboSlice_t *slice;
+	const vboSlice_t *slice;
+	const vboSlice_t *shadowSlice;
+	static const vboSlice_t nullSlice = { 0 };
 
 	slice = R_GetVBOSlice( drawSurf - rsh.worldBrushModel->drawSurfaces );
+	shadowSlice = R_GetVBOSlice( rsh.worldBrushModel->numDrawSurfaces + ( drawSurf - rsh.worldBrushModel->drawSurfaces ) );
+	if( !shadowSlice ) {
+		shadowSlice = &nullSlice;
+	}
+
 	assert( slice != NULL );
 
 	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
@@ -196,10 +203,12 @@ qboolean R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 	if( drawSurf->numInstances ) {
 		RB_DrawElementsInstanced( slice->firstVert, slice->numVerts, slice->firstElem, slice->numElems, 
+			shadowSlice->firstVert, shadowSlice->numVerts, shadowSlice->firstElem, shadowSlice->numElems,
 			drawSurf->numInstances, drawSurf->instances );
 	}
 	else {
-		RB_DrawElements( slice->firstVert, slice->numVerts, slice->firstElem, slice->numElems );
+		RB_DrawElements( slice->firstVert, slice->numVerts, slice->firstElem, slice->numElems,
+			shadowSlice->firstVert, shadowSlice->numVerts, shadowSlice->firstElem, shadowSlice->numElems );
 	}
 
 	return qfalse;
@@ -270,6 +279,10 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 
 	// shadows that are projected onto the surface
 	if( shadowBits && R_SurfPotentiallyShadowed( surf ) ) {
+		R_AddVBOSlice( rsh.worldBrushModel->numDrawSurfaces + (drawSurf - rsh.worldBrushModel->drawSurfaces),
+			surf->mesh->numVerts, surf->mesh->numElems,
+			surf->firstDrawSurfVert, surf->firstDrawSurfElem );
+
 		// ignore shadows that have already been marked as affectors
 		if( drawSurf->shadowFrame == rsc.frameCount ) {
 			drawSurf->shadowBits |= shadowBits;

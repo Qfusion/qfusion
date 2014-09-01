@@ -1043,7 +1043,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 			RP_UpdateDrawFlatUniforms( program, rsh.wallColor, rsh.floorColor );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1126,7 +1126,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 
 		RP_UpdateTextureUniforms( program, width, height );
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1202,7 +1202,7 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 		RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 	}
 
-	RB_DrawElementsReal();
+	RB_DrawElementsReal( &rb.drawShadowElements );
 
 	for( i--; i >= 0; i-- ) {
 		R_SelectTextureUnit( i );
@@ -1241,7 +1241,7 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1369,7 +1369,7 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 		RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 	}
 
-	RB_DrawElementsReal();
+	RB_DrawElementsReal( &rb.drawElements );
 
 	RB_Cull( faceCull );
 }
@@ -1577,7 +1577,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 				rsh.screenDepthTexture->upload_width, rsh.screenDepthTexture->upload_height );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1669,7 +1669,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1701,7 +1701,7 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1729,7 +1729,7 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 
 		RP_UpdateTextureUniforms( program, image->upload_width, image->upload_height );
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1755,7 +1755,7 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -2141,7 +2141,7 @@ static qboolean RB_CleanSinglePass( void )
 {
 	// reuse current GLSL state (same program bound, same uniform values)
 	if( !rb.dirtyUniformState && rb.donePassesTotal == 1 ) {
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 		return qtrue;
 	}
 	return qfalse;

@@ -544,7 +544,7 @@ qboolean R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t
 
 	RB_BindVBO( rsh.nullVBO->index, GL_LINES );
 
-	RB_DrawElements( 0, 6, 0, 6 );
+	RB_DrawElements( 0, 6, 0, 6, 0, 0, 0, 0 );
 
 	return qfalse;
 }
