@@ -274,7 +274,6 @@ vboSlice_t *R_GetVBOSlice( unsigned int index )
 {
 	drawList_t *list = rn.meshlist;
 
-	assert( index < list->maxVboSlices );
 	if( index >= list->maxVboSlices ) {
 		return NULL;
 	}
