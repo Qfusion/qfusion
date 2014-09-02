@@ -12,6 +12,10 @@
 *.rc text eol=crlf
 *.vcxproj text eol=crlf
 *.vcxproj.* text eol=crlf
+*.vcproj text eol=crlf
+*.dsp text eol=crlf
+*.dsw text eol=crlf
+*.vc text eol=crlf
 
 # Declare files that will always have LF line endings on checkout.
 *.xpm text eol=lf
