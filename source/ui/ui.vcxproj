@@ -254,6 +254,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="decorators\ui_gradient_decorator.cpp" />
+    <ClCompile Include="decorators\ui_ninepatch_decorator.cpp" />
     <ClCompile Include="datasources\ui_crosshair_datasource.cpp" />
     <ClCompile Include="datasources\ui_demos_datasource.cpp" />
     <ClCompile Include="datasources\ui_gametypes_datasource.cpp" />

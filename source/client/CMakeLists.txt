@@ -16,8 +16,7 @@ file(GLOB CLIENT_COMMON_SOURCES
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    include_directories("../win32/include/msvc") # For inttypes.h
-    link_directories("$ENV{DXSDK_DIR}Lib/x86")   # For dxguid.lib
+    include_directories("../win32/include/msvc")
 
     file(GLOB CLIENT_PLATFORM_SOURCES
         "../win32/win_fs.c"
@@ -85,7 +84,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         "../unix/unix_vid.c"
     )
     
-    set(CLIENT_PLATFORM_LIBRARIES "pthread" "dl" "m" "X11" "Xext" "Xi" "Xrandr" "rt")
+    set(CLIENT_PLATFORM_LIBRARIES "pthread" "dl" "m" "X11" "Xi" "Xext" "Xrandr" "rt")
     set(CLIENT_BINARY_TYPE "")
 
     set(BUNDLE_RESOURCES "")

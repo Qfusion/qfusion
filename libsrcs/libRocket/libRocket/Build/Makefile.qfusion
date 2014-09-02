@@ -11,7 +11,7 @@ CXXFLAGS+=-DSTATIC_LIB -IInclude
 CXXFLAGS+=$(FREETYPE_INC)
 
 ifneq ($(USE_MINGW),YES)
-CXXFLAGS+=-I$(LOCALBASE)/include -fPIC
+CXXFLAGS+=-I$(LOCALBASE)/include -fPIC -fvisibility=hidden
 endif
 
 ifeq ($(DEBUG_BUILD),YES)

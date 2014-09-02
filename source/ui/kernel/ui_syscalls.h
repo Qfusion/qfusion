@@ -256,6 +256,10 @@ namespace trap
 			return UI_IMPORT.Key_IsDown( keynum );
 		}
 
+		inline void IN_ShowIME( qboolean show ) {
+			UI_IMPORT.IN_ShowIME( show );
+		}
+
 		inline qboolean VID_GetModeInfo( int *width, int *height, qboolean *wideScreen, int mode ) {
 			return UI_IMPORT.VID_GetModeInfo( width, height, wideScreen, mode );
 		}

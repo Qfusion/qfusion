@@ -561,7 +561,8 @@ qboolean R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_
 	{
 		RB_BindVBO( aliasmesh->vbo->index, GL_TRIANGLES );
 
-		RB_DrawElements( 0, aliasmesh->numverts, 0, aliasmesh->numtris * 3 );
+		RB_DrawElements( 0, aliasmesh->numverts, 0, aliasmesh->numtris * 3, 
+			0, aliasmesh->numverts, 0, aliasmesh->numtris * 3 );
 	}
 	else
 	{

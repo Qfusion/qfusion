@@ -36,16 +36,16 @@ typedef struct vbohandle_s
 	struct vbohandle_s *prev, *next;
 } vbohandle_t;
 
-#define MAX_MESH_VERTREX_BUFFER_OBJECTS 	8192
+#define MAX_MESH_VERTEX_BUFFER_OBJECTS 	8192
 
 #define VBO_ARRAY_USAGE_FOR_TAG(tag) \
-	(GLenum)((tag) == VBO_TAG_STREAM || (tag) == VBO_TAG_STREAM_STATIC_ELEMS ? GL_STREAM_DRAW_ARB : GL_STATIC_DRAW_ARB)
+	(GLenum)((tag) == VBO_TAG_STREAM || (tag) == VBO_TAG_STREAM_STATIC_ELEMS ? GL_DYNAMIC_DRAW_ARB : GL_STATIC_DRAW_ARB)
 #define VBO_ELEM_USAGE_FOR_TAG(tag) \
-	(GLenum)((tag) == VBO_TAG_STREAM_STATIC_ELEMS ? GL_STREAM_DRAW_ARB : GL_STATIC_DRAW_ARB)
+	(GLenum)((tag) == VBO_TAG_STREAM ? GL_DYNAMIC_DRAW_ARB : GL_STATIC_DRAW_ARB)
 
-static mesh_vbo_t r_mesh_vbo[MAX_MESH_VERTREX_BUFFER_OBJECTS];
+static mesh_vbo_t r_mesh_vbo[MAX_MESH_VERTEX_BUFFER_OBJECTS];
 
-static vbohandle_t r_vbohandles[MAX_MESH_VERTREX_BUFFER_OBJECTS];
+static vbohandle_t r_vbohandles[MAX_MESH_VERTEX_BUFFER_OBJECTS];
 static vbohandle_t r_vbohandles_headnode, *r_free_vbohandles;
 
 static elem_t *r_vbo_tempelems;
@@ -81,11 +81,11 @@ void R_InitVBO( void )
 	r_free_vbohandles = r_vbohandles;
 	r_vbohandles_headnode.prev = &r_vbohandles_headnode;
 	r_vbohandles_headnode.next = &r_vbohandles_headnode;
-	for( i = 0; i < MAX_MESH_VERTREX_BUFFER_OBJECTS; i++ ) {
+	for( i = 0; i < MAX_MESH_VERTEX_BUFFER_OBJECTS; i++ ) {
 		r_vbohandles[i].index = i;
 		r_vbohandles[i].vbo = &r_mesh_vbo[i];
 	}
-	for( i = 0; i < MAX_MESH_VERTREX_BUFFER_OBJECTS - 1; i++ ) {
+	for( i = 0; i < MAX_MESH_VERTEX_BUFFER_OBJECTS - 1; i++ ) {
 		r_vbohandles[i].next = &r_vbohandles[i+1];
 	}
 }
@@ -293,7 +293,7 @@ void R_TouchMeshVBO( mesh_vbo_t *vbo )
 */
 mesh_vbo_t *R_GetVBOByIndex( int index )
 {
-	if( index >= 1 && index <= MAX_MESH_VERTREX_BUFFER_OBJECTS ) {
+	if( index >= 1 && index <= MAX_MESH_VERTEX_BUFFER_OBJECTS ) {
 		return r_mesh_vbo + index - 1;
 	}
 	return NULL;
@@ -318,7 +318,7 @@ void R_ReleaseMeshVBO( mesh_vbo_t *vbo )
 		qglDeleteBuffersARB( 1, &vbo_id );
 	}
 
-	if( vbo->index >= 1 && vbo->index <= MAX_MESH_VERTREX_BUFFER_OBJECTS ) {
+	if( vbo->index >= 1 && vbo->index <= MAX_MESH_VERTEX_BUFFER_OBJECTS ) {
 		vbohandle_t *vboh = &r_vbohandles[vbo->index - 1];
 
 		// remove from linked active list

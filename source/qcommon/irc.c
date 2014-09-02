@@ -26,6 +26,8 @@ static void *irc_libhandle = NULL;
 static cvar_t *irc_server;
 static dynvar_t *irc_connected;
 
+static void *irc_wakelock;
+
 static mempool_t *irc_pool;
 static qboolean connected_b = qfalse;
 static qboolean irc_initialized = qfalse;
@@ -293,7 +295,11 @@ void Irc_Connect_f( void )
 				Dynvar_AddListener( irc_connected, Irc_ConnectedListener_f );
 				irc_export->Connect();
 				Dynvar_GetValue( irc_connected, (void **) &c );
-				if( !*c )
+				if( *c )
+				{
+					irc_wakelock = Sys_AcquireWakeLock();
+				}
+				else
 				{
 					// connect failed
 					Com_Printf( "Could not connect to %s (%s).\n", Cvar_GetStringValue( irc_server ), irc_export->ERROR_MSG );
@@ -323,6 +329,11 @@ void Irc_Disconnect_f( void )
 		if( *c )
 		{
 			// still connected, proceed
+			if( irc_wakelock )
+			{
+				Sys_ReleaseWakeLock( irc_wakelock );
+				irc_wakelock = NULL;
+			}
 			irc_export->Disconnect();
 			Dynvar_RemoveListener( irc_connected, Irc_ConnectedListener_f );
 		}

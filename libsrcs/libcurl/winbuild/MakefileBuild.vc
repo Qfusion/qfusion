@@ -106,6 +106,15 @@ DEVEL_BIN      = $(WITH_DEVEL)/bin
 CFLAGS         = $(CFLAGS) /I"$(DEVEL_INCLUDE)"
 LFLAGS         = $(LFLAGS) "/LIBPATH:$(DEVEL_LIB)"
 
+!IFNDEF ZLIB_PATH
+ZLIB_PATH          = ../../zlib
+!ENDIF
+
+ZLIB_INCLUDE  = $(ZLIB_PATH)
+ZLIB_LIB      = $(ZLIB_PATH)
+
+CFLAGS         = $(CFLAGS) /I"$(ZLIB_INCLUDE)"
+LFLAGS         = $(LFLAGS) "/LIBPATH:$(ZLIB_LIB)"
 
 !IF "$(WITH_SSL)"=="dll"
 SSL_LIBS     = libeay32.lib ssleay32.lib

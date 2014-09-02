@@ -49,7 +49,7 @@ void Con_KeyDown( int key );
 void Con_CharEvent( qwchar key );
 void Con_MessageKeyDown( int key );
 void Con_MessageCharEvent( qwchar key );
-void Con_TouchConsole( qboolean down, int x, int y );
+void Con_TouchEvent( qboolean down, int x, int y );
 
 int Q_ColorCharCount( const char *s, int byteofs );
 int Q_ColorCharOffset( const char *s, int charcount );

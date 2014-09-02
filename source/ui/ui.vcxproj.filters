@@ -210,6 +210,9 @@
     <ClCompile Include="decorators\ui_gradient_decorator.cpp">
       <Filter>Source Files\decorators</Filter>
     </ClCompile>
+    <ClCompile Include="decorators\ui_ninepatch_decorator.cpp">
+      <Filter>Source Files\decorators</Filter>
+    </ClCompile>
     <ClCompile Include="datasources\ui_crosshair_datasource.cpp">
       <Filter>Source Files\datasources</Filter>
     </ClCompile>

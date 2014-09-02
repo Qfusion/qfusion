@@ -60,4 +60,3 @@ void	Sys_OpenURLInBrowser( const char *url )
   NSURL *ns_url = [NSURL URLWithString:string_url];
   [[NSWorkspace sharedWorkspace] openURL:ns_url];
 }
-

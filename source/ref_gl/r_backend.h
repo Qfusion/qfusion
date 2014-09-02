@@ -75,8 +75,10 @@ void RB_UploadMesh( const mesh_t *mesh );
 void RB_BatchMesh( const mesh_t *mesh );
 void RB_EndBatch( void );
 
-void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems );
-void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems, 
+void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
+	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems );
+void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems,
+	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
 	int numInstances, instancePoint_t *instances );
 
 void RB_Finish( void );

@@ -501,7 +501,7 @@ merge:
 
 		// don't use half-floats for XYZ due to precision issues
 		vbo = R_CreateMeshVBO( ( void * )surf, vcount, ecount, surf->numInstances, vattribs, 
-			VBO_TAG_WORLD, vattribs & ~(VATTRIB_POSITION_BIT|VATTRIB_NORMAL_BIT|VATTRIB_LMCOORDS_BITS) );
+			VBO_TAG_WORLD, vattribs & ~(VATTRIB_POSITION_BIT|VATTRIB_LMCOORDS_BITS) );
 		if( vbo )
 		{
 			vattribmask_t errMask;

@@ -904,7 +904,7 @@ mempool_t *r_skmcachepool;
 
 static skmcacheentry_t *r_skmcache_head;	// actual entries are linked to this
 static skmcacheentry_t *r_skmcache_free;	// actual entries are linked to this
-static skmcacheentry_t *r_skmcachekeys[MAX_ENTITIES*(MOD_MAX_LODS+1)];		// entities linked to cache entries
+static skmcacheentry_t *r_skmcachekeys[MAX_REF_ENTITIES*(MOD_MAX_LODS+1)];		// entities linked to cache entries
 
 #define R_SKMCacheAlloc(size) R_MallocExt(r_skmcachepool, (size), 16, 1)
 
@@ -1214,7 +1214,8 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 		// fastpath: render static frame 0 as is
 		RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
 
-		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3 );
+		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3, 
+			0, skmesh->numverts, 0, skmesh->numtris * 3 );
 
 		return qfalse;
 	}
@@ -1318,7 +1319,8 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 	{
 		RB_BindVBO( skmesh->vbo->index, GL_TRIANGLES );
 		RB_SetBonesData( skmodel->numbones, bonePoseRelativeDQ, skmesh->maxWeights );
-		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3 );
+		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3, 
+			0, skmesh->numverts, 0, skmesh->numtris * 3 );
 	}
 	else
 	{

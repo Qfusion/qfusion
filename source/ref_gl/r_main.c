@@ -544,7 +544,7 @@ qboolean R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t
 
 	RB_BindVBO( rsh.nullVBO->index, GL_LINES );
 
-	RB_DrawElements( 0, 6, 0, 6 );
+	RB_DrawElements( 0, 6, 0, 6, 0, 0, 0, 0 );
 
 	return qfalse;
 }
@@ -675,6 +675,8 @@ void R_Set2DMode( qboolean enable )
 		RB_LoadModelviewMatrix( rn.modelviewMatrix );
 
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
+
+		RB_SetRenderFlags( 0 );
 	}
 	else
 	{
@@ -1245,7 +1247,7 @@ static void R_DrawEntities( void )
 		return;
 	}
 
-	for( i = 1; i < rsc.numEntities; i++ )
+	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ )
 	{
 		e = R_NUM2ENT(i);
 		culled = qtrue;

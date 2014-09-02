@@ -1102,9 +1102,7 @@ static void CG_AddFlagBaseEnt( centity_t *cent )
 	}
 
 	// render effects
-	cent->ent.renderfx = cent->renderfx;
-	if( cg_shadows->integer <= 1 )
-		cent->ent.renderfx |= RF_NOSHADOW;
+	cent->ent.renderfx = cent->renderfx|RF_NOSHADOW;
 
 	// let's see: We add first the modelindex 1 (the base)
 

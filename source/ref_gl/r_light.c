@@ -140,7 +140,7 @@ void R_DrawCoronas( void )
 		if( tr.fraction != 1.0f )
 			continue;
 
-		R_AddDSurfToDrawList( rsc.worldent, 
+		R_AddDSurfToDrawList( rsc.polyent, 
 			R_FogForSphere( light->origin, 1 ), 
 			r_coronaShader, 
 			Distance( rn.viewOrigin, light->origin ), 0, NULL, &r_coronaSurfs[i] );

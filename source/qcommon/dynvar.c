@@ -327,7 +327,7 @@ const char **Dynvar_CompleteBuildList(
         const char *partial
 )
 {
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 	const char **buf;
 	unsigned int i;
 
@@ -458,7 +458,7 @@ static int Dynvar_Console( void *dynvar, void *pattern )
 
 void Dynvar_List_f( void )
 {
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 	unsigned int i, size;
 	char *pattern;
 

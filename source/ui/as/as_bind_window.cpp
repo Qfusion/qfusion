@@ -161,6 +161,7 @@ public:
 	ElementDocument *getDocument( void ) const
 	{
 		ElementDocument *document = GetCurrentUIDocument();
+		assert( document != NULL );
 		document->AddReference();
 		return document;
 	}
@@ -168,6 +169,7 @@ public:
 	ASURL getLocation( void ) const
 	{
 		ElementDocument *document = GetCurrentUIDocument();
+		assert( document != NULL );
 		return ASURL( document->GetSourceURL().CString() );
 	}
 
@@ -290,6 +292,11 @@ public:
 		return UI_Main::Get()->getConnectCount();
 	}
 
+	void showIME( bool show )
+	{
+		trap::IN_ShowIME( show ? qtrue : qfalse );
+	}
+
 private:
 	typedef std::map<ElementDocument *, FunctionCallScheduler *>  SchedulerMap;
 	SchedulerMap schedulers;
@@ -310,9 +317,18 @@ private:
 
 	static ElementDocument *GetCurrentUIDocument( void )
 	{
-		// we assume we set the user data at document instancing in asui_scriptdocument.cpp
-		// also note that this method can called outside of AS execution context!
-		return static_cast<ElementDocument *>( UI_Main::Get()->getAS()->getActiveModule()->GetUserData() );
+		// we assume we have set user data during instancing in asui_scriptdocument.cpp
+		// also note that this method can be called outside the AS execution context!
+		asIScriptModule *m = UI_Main::Get()->getAS()->getActiveModule();
+		if( !m ) {
+			return NULL;
+		}
+
+		void *data = m->GetUserData();
+		if( !data ) {
+			return NULL;
+		}
+		return static_cast<ElementDocument *>( data );
 	}
 
 	void detachAsEventListener( void )
@@ -327,6 +343,9 @@ private:
 	FunctionCallScheduler *getSchedulerForCurrentUIDocument( void )
 	{
 		ElementDocument *doc = GetCurrentUIDocument();
+
+		assert( doc != NULL );
+
 		SchedulerMap::iterator it = schedulers.find( doc );
 
 		FunctionCallScheduler *scheduler;
@@ -417,6 +436,8 @@ void BindWindow( ASInterface *as )
 		.method( &ASWindow::flash, "flash" )
 
 		.method( &ASWindow::getConnectCount, "get_connectCount" )
+
+		.method( &ASWindow::showIME, "showIME" );
 	;
 }
 
