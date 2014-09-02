@@ -7,6 +7,7 @@
 namespace WSWUI {
 
 	Rocket::Core::DecoratorInstancer *GetGradientDecoratorInstancer( void );
+	Rocket::Core::DecoratorInstancer *GetNinePatchDecoratorInstancer( void );
 
 }
 #endif

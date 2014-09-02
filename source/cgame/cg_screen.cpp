@@ -57,8 +57,6 @@ cvar_t *cg_crosshair_damage_color;
 
 cvar_t *cg_crosshair_touch_size;
 
-static bool cg_crosshair_zoom;
-
 cvar_t *cg_clientHUD;
 cvar_t *cg_specHUD;
 cvar_t *cg_debugHUD;
@@ -165,10 +163,6 @@ static void CG_DrawCenterString( void )
 	int width = cgs.vidWidth / 2;
 	size_t len;
 
-	// don't draw when scoreboard is up
-	if( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD )
-		return;
-
 	if( scr_center_lines <= 4 )
 		y = cgs.vidHeight*0.35;
 	else
@@ -185,15 +179,6 @@ static void CG_DrawCenterString( void )
 		}
 		helpmessage += len;
 	}
-}
-
-static void CG_CheckDrawCenterString( void )
-{
-	scr_centertime_off -= cg.frameTime;
-	if( scr_centertime_off <= 0 )
-		return;
-
-	CG_DrawCenterString();
 }
 
 //=============================================================================
@@ -329,12 +314,12 @@ void CG_ScreenInit( void )
 	// wsw : hud debug prints
 	cg_debugHUD =		    trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
-	cg_touch_moveThreshold = trap_Cvar_Get( "cg_touch_moveThreshold", "8", CVAR_ARCHIVE );
-	cg_touch_strafeThreshold = trap_Cvar_Get( "cg_touch_strafeThreshold", "8", CVAR_ARCHIVE );
-	cg_touch_pitchThreshold = trap_Cvar_Get( "cg_touch_pitchThreshold", "6", CVAR_ARCHIVE );
-	cg_touch_pitchSpeed = trap_Cvar_Get( "cg_touch_pitchSpeed", "4", CVAR_ARCHIVE );
+	cg_touch_moveThreshold = trap_Cvar_Get( "cg_touch_moveThreshold", "4", CVAR_ARCHIVE );
+	cg_touch_strafeThreshold = trap_Cvar_Get( "cg_touch_strafeThreshold", "4", CVAR_ARCHIVE );
+	cg_touch_pitchThreshold = trap_Cvar_Get( "cg_touch_pitchThreshold", "4", CVAR_ARCHIVE );
+	cg_touch_pitchSpeed = trap_Cvar_Get( "cg_touch_pitchSpeed", "3.9", CVAR_ARCHIVE );
 	cg_touch_yawThreshold = trap_Cvar_Get( "cg_touch_yawThreshold", "4", CVAR_ARCHIVE );
-	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "4.5", CVAR_ARCHIVE );
+	cg_touch_yawSpeed = trap_Cvar_Get( "cg_touch_yawSpeed", "4.1", CVAR_ARCHIVE );
 
 	//
 	// register our commands
@@ -487,14 +472,12 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		cg_crosshair_strong_color->modified = qfalse;
 	}
 
-	float scale = cgs.vidHeight * ( 1.0f / 600.0f );
-
 	if( cg_crosshair_strong->integer )
 	{
 		firedef_t *firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
 		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) // strong
 		{
-			int size = cg_crosshair_strong_size->integer * scale;
+			int size = cg_crosshair_strong_size->integer * cgs.pixelRatio;
 			int sx, sy;
 			sx = CG_HorizontalAlignForWidth( x, align, size );
 			sy = CG_VerticalAlignForHeight( y, align, size );
@@ -509,16 +492,16 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 
 	if( cg_crosshair->integer && cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE )
 	{
-		int size = cg_crosshair_size->integer * scale;
+		int size = cg_crosshair_size->integer * cgs.pixelRatio;
 		x = CG_HorizontalAlignForWidth( x, align, size );
 		y = CG_VerticalAlignForHeight( y, align, size );
 
 		if( touch )
 		{
-			int touch_size = cg_crosshair_touch_size->integer * scale;
+			int touch_size = cg_crosshair_touch_size->integer * cgs.pixelRatio;
 			int offset = ( touch_size - size ) / 2;
 			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, x - offset, y - offset, touch_size, touch_size, true, NULL ) >= 0 )
-				cg_crosshair_zoom = !cg_crosshair_zoom;
+				trap_Cmd_ExecuteText( EXEC_NOW, "toggle zoom" );
 		}
 		else
 		{
@@ -1289,10 +1272,10 @@ static void CG_CalcColorBlend( float *color )
 		time = (float)( ( cg.colorblends[i].timestamp + cg.colorblends[i].blendtime ) - cg.time );
 		uptime = ( (float)cg.colorblends[i].blendtime ) * 0.5f;
 		delta = 1.0f - ( abs( time - uptime ) / uptime );
-		if( delta > 1.0f )
-			delta = 1.0f;
 		if( delta <= 0.0f )
 			continue;
+		if( delta > 1.0f )
+			delta = 1.0f;
 
 		CG_AddBlend( cg.colorblends[i].blend[0],
 			cg.colorblends[i].blend[1],
@@ -1313,11 +1296,33 @@ static void CG_SCRDrawViewBlend( void )
 		return;
 
 	CG_CalcColorBlend( colorblend );
+	if( colorblend[3] < 0.01f )
+		return;
+
 	trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0, 0, 1, 1, colorblend, cgs.shaderWhite );
 }
 
 
 //=======================================================
+
+/*
+* CG_CheckHUDChanges
+*/
+static void CG_CheckHUDChanges( void )
+{
+	// if changed from or to spec, reload the HUD
+	if (cg.specStateChanged) {
+		cg_specHUD->modified = cg_clientHUD->modified = qtrue;
+		cg.specStateChanged = qfalse;
+	}
+
+	cvar_t *hud = ISREALSPECTATOR() ? cg_specHUD : cg_clientHUD;
+	if( hud->modified )
+	{
+		CG_LoadStatusBar();
+		hud->modified = qfalse;
+	}
+}
 
 /*
 * CG_Draw2DView
@@ -1345,29 +1350,6 @@ void CG_Draw2DView( void )
 		cg.motd = NULL;
 	}
 
-	// if changed from or to spec, reload the HUD
-	if (cg.specStateChanged) {
-		cg_specHUD->modified = cg_clientHUD->modified = qtrue;
-		cg.specStateChanged = qfalse;
-	}
-
-	if (ISREALSPECTATOR())
-	{
-		if( cg_specHUD->modified )
-		{
-			CG_LoadStatusBar();
-			cg_specHUD->modified = qfalse;
-		}
-	}
-	else
-	{
-		if( cg_clientHUD->modified )
-		{
-			CG_LoadStatusBar();
-			cg_clientHUD->modified = qfalse;
-		}
-	}
-
 	drawScoreboard = false;
 	if( cgs.demoPlaying || cg.frame.multipov || cgs.tv )
 	{
@@ -1381,17 +1363,22 @@ void CG_Draw2DView( void )
 	}
 
 	if( cg_showHUD->integer )
+	{
+		CG_CheckHUDChanges();
 		CG_ExecuteLayoutProgram( cg.statusBar, false );
+	}
+
+	CG_CheckDamageCrosshair();
 
 	if( drawScoreboard )
 		CG_DrawScoreboard();
-	else
-	{
-		CG_CheckDrawCenterString();
-		CG_CheckDamageCrosshair();
-		CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2 + 8*cgs.vidHeight/600,
-			ALIGN_RIGHT_TOP, cgs.fontSystemSmallScaled, colorWhite );
-	}
+
+	scr_centertime_off -= cg.frameTime;
+	if( !drawScoreboard && ( scr_centertime_off > 0 ) )
+		CG_DrawCenterString();
+
+	CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2 + 8*cgs.vidHeight/600,
+		ALIGN_RIGHT_TOP, cgs.fontSystemSmallScaled, colorWhite );
 }
 
 /*
@@ -1514,7 +1501,6 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 		break;
 
 	case TOUCH_UP:
-	case TOUCH_CANCEL:
 		if( touch.down )
 		{
 			touch.down = false;
@@ -1535,8 +1521,11 @@ void CG_TouchFrame( void )
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
 		cg_touches[i].area_valid = false;
 	
-	if( cg.view.draw2D && cg_showHUD->integer )
+	if( cg_showHUD->integer )
+	{
+		CG_CheckHUDChanges();
 		CG_ExecuteLayoutProgram( cg.statusBar, true );
+	}
 
 	// cancel non-existent areas
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
@@ -1563,8 +1552,6 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 	CG_GetHUDTouchButtons( buttons, upmove );
 
 	cmd->buttons |= buttons;
-	if( cg_crosshair_zoom )
-		cmd->buttons |= BUTTON_ZOOM;
 
 	if( frametime )
 	{
@@ -1575,25 +1562,25 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 		{
 			if( cg_touch_moveThreshold->modified )
 			{
-				if( cg_touch_moveThreshold->integer < 0 )
-					trap_Cvar_Set( "cg_touch_moveThreshold", "12" );
+				if( cg_touch_moveThreshold->value < 0.0f )
+					trap_Cvar_Set( cg_touch_moveThreshold->name, cg_touch_moveThreshold->dvalue );
 				cg_touch_moveThreshold->modified = qfalse;
 			}
 			if( cg_touch_strafeThreshold->modified )
 			{
-				if( cg_touch_strafeThreshold->integer < 0 )
-					trap_Cvar_Set( "cg_touch_strafeThreshold", "12" );
+				if( cg_touch_strafeThreshold->value < 0.0f )
+					trap_Cvar_Set( cg_touch_strafeThreshold->name, cg_touch_strafeThreshold->dvalue );
 				cg_touch_strafeThreshold->modified = qfalse;
 			}
 
 			cg_touch_t &touch = cg_touches[movepad.touch];
 
 			int move = movepad.y - touch.y;
-			if( abs( move * scale ) > cg_touch_moveThreshold->integer )
+			if( fabsf( move * scale ) > cg_touch_moveThreshold->value )
 				cmd->forwardmove += ( move < 0 ) ? -frametime : frametime;
 
 			move = touch.x - movepad.x;
-			if( abs( move * scale ) > cg_touch_strafeThreshold->integer )
+			if( fabsf( move * scale ) > cg_touch_strafeThreshold->value )
 				cmd->sidemove += ( move < 0 ) ? -frametime : frametime;
 		}
 
@@ -1602,16 +1589,18 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 		{
 			if( cg_touch_pitchThreshold->modified )
 			{
-				if( cg_touch_pitchThreshold->integer < 0 )
-					trap_Cvar_Set( "cg_touch_pitchThreshold", "12" );
+				if( cg_touch_pitchThreshold->value < 0.0f )
+					trap_Cvar_Set( cg_touch_pitchThreshold->name, cg_touch_pitchThreshold->dvalue );
 				cg_touch_pitchThreshold->modified = qfalse;
 			}
 			if( cg_touch_yawThreshold->modified )
 			{
-				if( cg_touch_yawThreshold->integer < 0 )
-					trap_Cvar_Set( "cg_touch_yawThreshold", "8" );
+				if( cg_touch_yawThreshold->value < 0.0f )
+					trap_Cvar_Set( cg_touch_yawThreshold->name, cg_touch_yawThreshold->dvalue );
 				cg_touch_yawThreshold->modified = qfalse;
 			}
+
+			cg_touch_t &touch = cg_touches[viewpad.touch];
 
 			float sensScale;
 			if( !cgs.demoPlaying && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) )
@@ -1619,21 +1608,17 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 			else
 				sensScale = 1.0f;
 
-			cg_touch_t &touch = cg_touches[viewpad.touch];
-
 			float angle = ( touch.y - viewpad.y ) * scale;
-			if( fabs( angle ) > cg_touch_pitchThreshold->value )
-			{
-				angle -= cg_touch_pitchThreshold->value * ( angle < 0.0f ? -1.0f : 1.0f );
-				viewangles[PITCH] += angle * cg_touch_pitchSpeed->value * sensScale * ( float )frametime * 0.001f;
-			}
+			float dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
+			angle = fabsf( angle ) - cg_touch_pitchThreshold->value;
+			if( angle > 0.0f )
+				viewangles[PITCH] += angle * dir * cg_touch_pitchSpeed->value * sensScale * ( float )frametime * 0.001f;
 
 			angle = ( viewpad.x - touch.x ) * scale;
-			if( fabs( angle ) > cg_touch_yawThreshold->value )
-			{
-				angle -= cg_touch_yawThreshold->value * ( angle < 0.0f ? -1.0f : 1.0f );
-				viewangles[YAW] += angle * cg_touch_yawSpeed->value * sensScale * ( float )frametime * 0.001f;
-			}
+			dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
+			angle = fabsf( angle ) - cg_touch_yawThreshold->value;
+			if( angle > 0.0f )
+				viewangles[YAW] += angle * dir * cg_touch_yawSpeed->value * sensScale * ( float )frametime * 0.001f;
 		}
 
 		cmd->upmove += upmove * frametime;

@@ -755,7 +755,7 @@ static void CG_RegisterVariables( void )
 	cg_placebo =  trap_Cvar_Get( "cg_placebo", "0", CVAR_ARCHIVE );
 	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
 	cg_touch_flip = trap_Cvar_Get( "cg_touch_flip", "0", CVAR_ARCHIVE );
-	cg_touch_scale = trap_Cvar_Get( "cg_touch_scale", "1", CVAR_ARCHIVE );
+	cg_touch_scale = trap_Cvar_Get( "cg_touch_scale", "100", CVAR_ARCHIVE );
 
 	cg_playList = trap_Cvar_Get( "cg_playList", S_PLAYLIST_MATCH, CVAR_ARCHIVE );
 	cg_playListShuffle = trap_Cvar_Get( "cg_playListShuffle", "1", CVAR_ARCHIVE );

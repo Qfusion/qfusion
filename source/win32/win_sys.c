@@ -630,6 +630,21 @@ const char *Sys_GetPreferredLanguage( void )
 }
 
 /*
+* Sys_AcquireWakeLock
+*/
+void *Sys_AcquireWakeLock( void )
+{
+	return NULL;
+}
+
+/*
+* Sys_ReleaseWakeLock
+*/
+void Sys_ReleaseWakeLock( void *wl )
+{
+}
+
+/*
 ==============================================================================
 
 WINDOWS CRAP

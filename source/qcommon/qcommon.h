@@ -957,6 +957,9 @@ const char *Sys_GetPreferredLanguage( void );
 
 void	Sys_OpenURLInBrowser( const char *url );
 
+void	*Sys_AcquireWakeLock( void );
+void	Sys_ReleaseWakeLock( void *wl );
+
 // wsw : aiwa : get symbol address in executable
 #ifdef SYS_SYMBOL
 void *Sys_GetSymbol( const char *moduleName, const char *symbolName );

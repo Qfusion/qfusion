@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define FTABLE_CLAMP( x ) ( ( (int)( ( x )*FTABLE_SIZE ) & ( FTABLE_SIZE-1 ) ) )
 #define FTABLE_EVALUATE( table, x ) ( ( table )[FTABLE_CLAMP( x )] )
 
+#define DRAWFLAT() ( ( rb.currentModelType == mod_brush ) && ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) )
+
 enum
 {
 	BUILTIN_GLSLPASS_FOG,
@@ -843,7 +845,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		if( rb.renderFlags & RF_LIGHTMAP ) {
 			programFeatures |= GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY;
 		}
-		if( ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+		if( DRAWFLAT() ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT|GLSL_SHADER_MATERIAL_BASETEX_ALPHA_ONLY;
 		}
 	}
@@ -1041,7 +1043,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 			RP_UpdateDrawFlatUniforms( program, rsh.wallColor, rsh.floorColor );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1124,7 +1126,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 
 		RP_UpdateTextureUniforms( program, width, height );
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1161,6 +1163,9 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 			programFeatures |= GLSL_SHADER_SHADOWMAP_24BIT;
 		}
 	}
+	if ( rb.currentShadowBits && (rb.currentModelType == mod_brush) ) {
+		programFeatures |= GLSL_SHADER_SHADOWMAP_NORMALCHECK;
+	}
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, NULL,
@@ -1190,14 +1195,14 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	RB_UpdateCommonUniforms( program, pass, texMatrix );
 
-	RP_UpdateShadowsUniforms( program, numShadows, shadowGroups, rb.objectMatrix );
+	RP_UpdateShadowsUniforms( program, numShadows, shadowGroups, rb.objectMatrix, rb.currentEntity->origin, rb.currentEntity->axis );
 
 	// submit animation data
 	if( programFeatures & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
 		RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 	}
 
-	RB_DrawElementsReal();
+	RB_DrawElementsReal( &rb.drawShadowElements );
 
 	for( i--; i >= 0; i-- ) {
 		R_SelectTextureUnit( i );
@@ -1236,7 +1241,7 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1364,7 +1369,7 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 		RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 	}
 
-	RB_DrawElementsReal();
+	RB_DrawElementsReal( &rb.drawElements );
 
 	RB_Cull( faceCull );
 }
@@ -1493,7 +1498,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		if( rb.currentDlightBits ) {
 			programFeatures |= RB_DlightbitsToProgramFeatures( rb.currentDlightBits );
 		}
-		if( ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+		if( DRAWFLAT() ) {
 			programFeatures |= GLSL_SHADER_COMMON_DRAWFLAT;
 		}
 		if( rb.renderFlags & RF_LIGHTMAP ) {
@@ -1572,7 +1577,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 				rsh.screenDepthTexture->upload_width, rsh.screenDepthTexture->upload_height );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1664,7 +1669,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1696,7 +1701,7 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 			RP_UpdateBonesUniforms( program, rb.bonesData.numBones, rb.bonesData.dualQuats );
 		}
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1724,7 +1729,7 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 
 		RP_UpdateTextureUniforms( program, image->upload_width, image->upload_height );
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1750,7 +1755,7 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 	{
 		RB_UpdateCommonUniforms( program, pass, texMatrix );
 
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 	}
 }
 
@@ -1834,7 +1839,10 @@ static void RB_UpdateVertexAttribs( void )
 	if( rb.currentEntity->outlineHeight ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
-	if( ( rb.renderFlags & RF_DRAWFLAT ) && !( rb.currentShader->flags & SHADER_NODRAWFLAT ) ) {
+	if( DRAWFLAT() ) {
+		vattribs |= VATTRIB_NORMAL_BIT;
+	}
+	if ( rb.currentShadowBits && ( rb.currentModelType == mod_brush ) ) {
 		vattribs |= VATTRIB_NORMAL_BIT;
 	}
 	rb.currentVAttribs = vattribs;
@@ -1863,7 +1871,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	rb.dirtyUniformState = qtrue;
 
 	rb.currentEntity = e ? e : &rb.nullEnt;
-	rb.currentModelType = rb.currentEntity->model ? rb.currentEntity->model->type : mod_bad;
+	rb.currentModelType = ( rb.currentEntity->rtype == RT_MODEL && rb.currentEntity->model ) ? rb.currentEntity->model->type : mod_bad;
 	rb.currentDlightBits = 0;
 	rb.currentShadowBits = 0;
 	rb.superLightStyle = NULL;
@@ -1877,7 +1885,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	rb.skyboxSide = -1;
 
 	if( !e ) {
-		rb.currentEntity = &rb.nullEnt;
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
 		rb.alphaHack = qfalse;
 		rb.greyscale = qfalse;
@@ -2134,7 +2141,7 @@ static qboolean RB_CleanSinglePass( void )
 {
 	// reuse current GLSL state (same program bound, same uniform values)
 	if( !rb.dirtyUniformState && rb.donePassesTotal == 1 ) {
-		RB_DrawElementsReal();
+		RB_DrawElementsReal( &rb.drawElements );
 		return qtrue;
 	}
 	return qfalse;

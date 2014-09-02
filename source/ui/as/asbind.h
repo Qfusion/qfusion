@@ -1022,6 +1022,12 @@ struct FunctionPtrBase {
 	void addref( void ) { if (fptr != NULL) { fptr->AddRef(); } }
 	void release( void ) { if (fptr != NULL) { asIScriptFunction *fptr_ = fptr; fptr = NULL; fptr_->Release(); } }
 	void setContext( asIScriptContext *_ctx ) { ctx = _ctx; }
+	asIScriptModule *getModule( void ) {
+		asIScriptFunction *f = fptr; 
+		while (f && f->GetFuncType() == asFUNC_DELEGATE)
+			f = f->GetDelegateFunction();
+		return f ? f->GetModule() : NULL;
+	}
 
 	// general calling function
 	void precall( void ) { if( fptr ) ctx->Prepare( fptr ); }

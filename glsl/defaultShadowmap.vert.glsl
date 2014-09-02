@@ -11,6 +11,10 @@ qf_varying vec4 v_ShadowProjVector[NUM_SHADOWS];
 
 uniform mat4 u_ShadowmapMatrix[NUM_SHADOWS];
 
+#ifdef APPLY_NORMAL_CHECK
+qf_varying vec3 v_Normal;
+#endif
+
 void main(void)
 {
 	vec4 Position = a_Position;
@@ -29,4 +33,8 @@ void main(void)
 		// computation in the fragment shader
 		v_ShadowProjVector[i].xyz = (v_ShadowProjVector[i].xyz + vec3(v_ShadowProjVector[i].w)) * 0.5;
 	}
+	
+	# ifdef APPLY_NORMAL_CHECK
+	v_Normal = Normal;
+	# endif
 }

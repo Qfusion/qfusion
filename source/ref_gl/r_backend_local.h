@@ -42,6 +42,15 @@ typedef struct
 	unsigned int maxWeights;
 } rbBonesData_t;
 
+typedef struct
+{
+	unsigned int firstVert;
+	unsigned int numVerts;
+	unsigned int firstElem;
+	unsigned int numElems;
+	unsigned int numInstances;
+} rbDrawElements_t;
+
 typedef struct r_backend_s
 {
 	mempool_t			*mempool;
@@ -92,27 +101,22 @@ typedef struct r_backend_s
 	int currentProgramObject;
 
 	mesh_t batchMesh;
-	vboSlice_t batches[RB_VBO_NUM_STREAMS];
-	vboSlice_t streamOffset[RB_VBO_NUM_STREAMS];
+	rbDrawElements_t batches[RB_VBO_NUM_STREAMS];
+	rbDrawElements_t streamOffset[RB_VBO_NUM_STREAMS];
 	mesh_vbo_t *streamVBOs[RB_VBO_NUM_STREAMS];
 
 	instancePoint_t *drawInstances;
 	int maxDrawInstances;
 
-	struct {
-		unsigned int firstVert;
-		unsigned int numVerts;
-		unsigned int firstElem;
-		unsigned int numElems;
-		unsigned int numInstances;
-	} drawElements;
+	rbDrawElements_t drawElements;
+	rbDrawElements_t drawShadowElements;
 
 	vattribmask_t currentVAttribs;
 
 	int primitive;
 	int currentVBOId;
 	mesh_vbo_t *currentVBO;
-	vboSlice_t *currentBatch;
+	rbDrawElements_t *currentBatch;
 
 	unsigned int currentDlightBits;
 	unsigned int currentShadowBits;
@@ -152,7 +156,7 @@ extern rbackend_t rb;
 #define RB_Alloc(size) R_MallocExt( rb.mempool, size, 16, 1 )
 #define RB_Free(data) R_Free(data)
 
-void RB_DrawElementsReal( void );
+void RB_DrawElementsReal( rbDrawElements_t *de );
 #define RB_IsAlphaBlending(blendsrc,blenddst) \
 	( (blendsrc) == GLSTATE_SRCBLEND_SRC_ALPHA || (blenddst) == GLSTATE_DSTBLEND_SRC_ALPHA ) || \
 	( (blendsrc) == GLSTATE_SRCBLEND_ONE_MINUS_SRC_ALPHA || (blenddst) == GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA )

@@ -53,12 +53,24 @@ bool ScheduledFunction::run()
 
 			try {
 				if( funcPtr2.isValid() ) {
-					funcPtr2.setContext( sched->getAS()->getContext() );
-					res = funcPtr2( any );
+					if (!funcPtr2.getModule()) {
+						// the module is gone (freed, etc)
+						res = false;
+					}
+					else {
+						funcPtr2.setContext( sched->getAS()->getContext() );
+						res = funcPtr2( any );
+					}
 				}
 				else {
-					funcPtr.setContext( sched->getAS()->getContext() );
-					res = funcPtr();
+					if (!funcPtr.getModule ()) {
+						// the module is gone (freed, etc)
+						res = false;
+					}
+					else {
+						funcPtr.setContext( sched->getAS ()->getContext () );
+						res = funcPtr ();
+					}
 				}
 			} catch( ASBind::Exception & ) {
 				Com_Printf( S_COLOR_RED "SheduledFunction: Failed to call function %s\n", funcPtr.getName() );

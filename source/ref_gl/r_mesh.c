@@ -274,7 +274,6 @@ vboSlice_t *R_GetVBOSlice( unsigned int index )
 {
 	drawList_t *list = rn.meshlist;
 
-	assert( index < list->maxVboSlices );
 	if( index >= list->maxVboSlices ) {
 		return NULL;
 	}
@@ -333,7 +332,7 @@ static void _R_DrawSurfaces( void )
 	unsigned int i;
 	unsigned int sortKey;
 	unsigned int shaderNum = 0, prevShaderNum = MAX_SHADERS;
-	unsigned int entNum = 0, prevEntNum = MAX_ENTITIES;
+	unsigned int entNum = 0, prevEntNum = MAX_REF_ENTITIES;
 	int portalNum = -1, prevPortalNum = -100500;
 	int fogNum = -1, prevFogNum = -100500;
 	sortedDrawSurf_t *sds;

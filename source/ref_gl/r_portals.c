@@ -226,7 +226,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 
 	best = NULL;
 	best_d = 100000000;
-	for( i = 1; i < rsc.numEntities; i++ )
+	for( i = rsc.numLocalEntities; i < rsc.numEntities; i++ )
 	{
 		ent = R_NUM2ENT(i);
 		if( ent->rtype != RT_PORTALSURFACE )

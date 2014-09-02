@@ -20,6 +20,11 @@ uniform sampler2D u_ShadowmapTexture[NUM_SHADOWS];
 # endif
 #endif
 
+#ifdef APPLY_NORMAL_CHECK
+uniform vec3 u_ShadowDir[NUM_SHADOWS];
+qf_varying vec3 v_Normal;
+#endif
+
 uniform float u_ShadowAlpha;
 uniform vec4 u_ShadowmapTextureParams[NUM_SHADOWS];
 

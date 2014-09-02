@@ -540,7 +540,7 @@ static void Cmd_AliasList_f( void )
 	char *pattern;
 	unsigned int size;
 	unsigned int i;
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 
 	assert( cmd_alias_trie );
 
@@ -712,7 +712,7 @@ static void Cmd_UnaliasAll_f( void )
 */
 void Cmd_WriteAliases( int file )
 {
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 	unsigned int i;
 
 	// Vic: Why on earth this line was written _below_ aliases?
@@ -1364,7 +1364,7 @@ void Cmd_ExecuteString( const char *text )
 */
 static void Cmd_List_f( void )
 {
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 	unsigned int i;
 	char *pattern;
 

@@ -149,6 +149,8 @@ static void RB_SetGLDefaults( void )
 	qglDisable( GL_BLEND );
 	qglDepthFunc( GL_LEQUAL );
 	qglDepthMask( GL_FALSE );
+	qglDisable( GL_POLYGON_OFFSET_FILL );
+	qglPolygonOffset( -1.0f, 0.0f ); // units will be handled by RB_DepthOffset
 	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	qglEnable( GL_DEPTH_TEST );
 #ifndef GL_ES_VERSION_2_0
@@ -363,7 +365,16 @@ void RB_SetState( int state )
 
 	if( diff & GLSTATE_OFFSET_FILL )
 	{
-		RB_DepthOffset( state & GLSTATE_OFFSET_FILL ? qtrue : qfalse );
+		if( state & GLSTATE_OFFSET_FILL )
+		{
+			qglEnable( GL_POLYGON_OFFSET_FILL );
+			RB_DepthOffset( qtrue );
+		}
+		else
+		{
+			qglDisable( GL_POLYGON_OFFSET_FILL );
+			RB_DepthOffset( qfalse );
+		}
 	}
 
 	if( diff & GLSTATE_STENCIL_TEST )
@@ -606,7 +617,7 @@ void RB_RegisterStreamVBOs( void )
 		}
 		rb.streamVBOs[i] = R_CreateMeshVBO( &rb, 
 			MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, MAX_STREAM_VBO_INSTANCES,
-			VATTRIBS_MASK, tags[i], 0 );
+			VATTRIBS_MASK, tags[i], VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT );
 	}
 }
 
@@ -637,7 +648,7 @@ static void RB_InitBatchMesh( void )
 void RB_BindVBO( int id, int primitive )
 {
 	mesh_vbo_t *vbo;
-	vboSlice_t *batch;
+	rbDrawElements_t *batch;
 
 	if( rb.currentVBOId == id ) {
 		return;
@@ -676,7 +687,7 @@ void RB_UploadMesh( const mesh_t *mesh )
 {
 	int stream;
 	mesh_vbo_t *vbo;
-	vboSlice_t *offset;
+	rbDrawElements_t *offset;
 	vbo_hint_t vbo_hint = VBO_HINT_NONE;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
 
@@ -702,8 +713,8 @@ void RB_UploadMesh( const mesh_t *mesh )
 	if( offset->firstVert+offset->numVerts+numVerts > MAX_STREAM_VBO_VERTS || 
 		offset->firstElem+offset->numVerts+numElems > MAX_STREAM_VBO_ELEMENTS ) {
 
-		RB_DrawElements( offset->firstVert, offset->numVerts, 
-			offset->firstElem, offset->numElems );
+		RB_DrawElements( offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems, 
+			offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems );
 
 		R_DiscardVBOVertexData( vbo );
 		if( rb.currentVBOId != RB_VBO_STREAM_QUAD ) {
@@ -748,7 +759,7 @@ void RB_UploadMesh( const mesh_t *mesh )
 /*
 * RB_UploadBatchMesh
 */
-static void RB_UploadBatchMesh( vboSlice_t *batch )
+static void RB_UploadBatchMesh( rbDrawElements_t *batch )
 {
 	rb.batchMesh.numVerts = batch->numVerts;
 	rb.batchMesh.numElems = batch->numElems;
@@ -765,7 +776,7 @@ static void RB_UploadBatchMesh( vboSlice_t *batch )
 mesh_t *RB_MapBatchMesh( int numVerts, int numElems )
 {
 	int stream;
-	vboSlice_t *batch;
+	rbDrawElements_t *batch;
 
 	assert( rb.currentVBOId < RB_VBO_NONE );
 	if( rb.currentVBOId >= RB_VBO_NONE ) {
@@ -802,7 +813,7 @@ void RB_BeginBatch( void )
 void RB_BatchMesh( const mesh_t *mesh )
 {
 	int stream;
-	vboSlice_t *batch;
+	rbDrawElements_t *batch;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
 
 	if( rb.currentVBOId == RB_VBO_STREAM_QUAD ) {
@@ -887,8 +898,8 @@ void RB_BatchMesh( const mesh_t *mesh )
 void RB_EndBatch( void )
 {
 	int stream;
-	vboSlice_t *batch;
-	vboSlice_t *offset;
+	rbDrawElements_t *batch;
+	rbDrawElements_t *offset;
 
 	if( rb.currentVBOId >= RB_VBO_NONE ) {
 		return;
@@ -906,7 +917,8 @@ void RB_EndBatch( void )
 		return;
 	}
 
-	RB_DrawElements( offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems );
+	RB_DrawElements( offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems,
+		offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems );
 
 	offset->firstVert += offset->numVerts;
 	offset->firstElem += offset->numElems;
@@ -996,10 +1008,7 @@ static void RB_EnableVertexAttribs( void )
 		vattrib_t lmattr;
 		vattribbit_t lmattrbit;
 
-		GL_EnableVertexAttrib( VATTRIB_BONESINDICES, qfalse );
-		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, qfalse );
-
-		// lightmap texture coordinates
+		// lightmap texture coordinates - aliasing bones, so not disabling bones
 		lmattr = VATTRIB_LMCOORDS01;
 		lmattrbit = VATTRIB_LMCOORDS0_BIT;
 
@@ -1038,19 +1047,19 @@ static void RB_EnableVertexAttribs( void )
 /*
 * RB_DrawElementsReal
 */
-void RB_DrawElementsReal( void )
+void RB_DrawElementsReal( rbDrawElements_t *de )
 {
 	int firstVert, numVerts, firstElem, numElems;
 	int numInstances;
 
-	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt ) )
+	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt ) || !de )
 		return;
 
-	numVerts = rb.drawElements.numVerts;
-	numElems = rb.drawElements.numElems;
-	firstVert = rb.drawElements.firstVert;
-	firstElem = rb.drawElements.firstElem;
-	numInstances = rb.drawElements.numInstances;
+	numVerts = de->numVerts;
+	numElems = de->numElems;
+	firstVert = de->firstVert;
+	firstElem = de->firstElem;
+	numInstances = de->numInstances;
 
 	if( numInstances ) {
 		if( glConfig.ext.instanced_arrays ) {
@@ -1127,18 +1136,13 @@ vattribmask_t RB_GetVertexAttribs( void )
 /*
 * RB_DrawElements_
 */
-static void RB_DrawElements_( int firstVert, int numVerts, int firstElem, int numElems )
+static void RB_DrawElements_( void )
 {
-	if( !numVerts || !numElems ) {
+	if ( !rb.drawElements.numVerts || !rb.drawElements.numElems ) {
 		return;
 	}
 
 	assert( rb.currentShader != NULL );
-
-	rb.drawElements.numVerts = numVerts;
-	rb.drawElements.numElems = numElems;
-	rb.drawElements.firstVert = firstVert;
-	rb.drawElements.firstElem = firstElem;
 
 	RB_EnableVertexAttribs();
 
@@ -1150,13 +1154,26 @@ static void RB_DrawElements_( int firstVert, int numVerts, int firstElem, int nu
 }
 
 /*
-* RB_DrawElements_
+* RB_DrawElements
 */
-void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems )
+void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
+	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems )
 {
 	rb.currentVAttribs &= ~VATTRIB_INSTANCES_BITS;
+
+	rb.drawElements.numVerts = numVerts;
+	rb.drawElements.numElems = numElems;
+	rb.drawElements.firstVert = firstVert;
+	rb.drawElements.firstElem = firstElem;
 	rb.drawElements.numInstances = 0;
-	RB_DrawElements_( firstVert, numVerts, firstElem, numElems );
+
+	rb.drawShadowElements.numVerts = numVerts;
+	rb.drawShadowElements.numElems = numElems;
+	rb.drawShadowElements.firstVert = firstVert;
+	rb.drawShadowElements.firstElem = firstElem;
+	rb.drawShadowElements.numInstances = 0;
+
+	RB_DrawElements_();
 }
 
 /*
@@ -1164,12 +1181,25 @@ void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems )
 *
 * Draws <numInstances> instances of elements
 */
-void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems, 
+void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int numElems,
+	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
 	int numInstances, instancePoint_t *instances )
 {
 	if( !numInstances ) {
 		return;
 	}
+
+	rb.drawElements.numVerts = numVerts;
+	rb.drawElements.numElems = numElems;
+	rb.drawElements.firstVert = firstVert;
+	rb.drawElements.firstElem = firstElem;
+	rb.drawElements.numInstances = 0;
+
+	rb.drawShadowElements.numVerts = numVerts;
+	rb.drawShadowElements.numElems = numElems;
+	rb.drawShadowElements.firstVert = firstVert;
+	rb.drawShadowElements.firstElem = firstElem;
+	rb.drawShadowElements.numInstances = 0;
 
 	// check for vertex-attrib-divisor style instancing
 	if( glConfig.ext.instanced_arrays ) {
@@ -1182,7 +1212,8 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 				R_UploadVBOInstancesData( rb.currentVBO, 0, MAX_STREAM_VBO_INSTANCES, instances );
 
 				rb.drawElements.numInstances = MAX_STREAM_VBO_INSTANCES;
-				RB_DrawElements_( firstVert, numVerts, firstElem, numElems );
+				rb.drawShadowElements.numInstances = MAX_STREAM_VBO_INSTANCES;
+				RB_DrawElements_();
 
 				instances += MAX_STREAM_VBO_INSTANCES;
 				numInstances -= MAX_STREAM_VBO_INSTANCES;
@@ -1213,7 +1244,8 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	}
 
 	rb.drawElements.numInstances = numInstances;
-	RB_DrawElements_( firstVert, numVerts, firstElem, numElems );
+	rb.drawShadowElements.numInstances = numInstances;
+	RB_DrawElements_();
 }
 
 /*

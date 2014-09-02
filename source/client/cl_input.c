@@ -506,8 +506,9 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 		return;
 
 	case key_console:
+	case key_message:
 		if( id == 0 )
-			Con_TouchConsole( ( ( type != TOUCH_UP ) && ( type != TOUCH_CANCEL ) ) ? qtrue : qfalse, x, y );
+			Con_TouchEvent( ( type != TOUCH_UP ) ? qtrue : qfalse, x, y );
 		return;
 		
 	case key_menu:
@@ -522,7 +523,6 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 			Key_MouseEvent( K_MOUSE1, qtrue, time );
 			break;
 		case TOUCH_UP:
-		case TOUCH_CANCEL:
 			Key_MouseEvent( K_MOUSE1, qfalse, time );
 			CL_UIModule_MouseSet( 0, 0 );
 			break;
@@ -540,7 +540,8 @@ void CL_CancelTouches( void )
 		return;
 
 	case key_console:
-		Con_TouchConsole( qfalse, 0, 0 );
+	case key_message:
+		Con_TouchEvent( qfalse, 0, 0 );
 		return;
 	}
 }
@@ -551,6 +552,7 @@ cvar_t *cl_yawspeed;
 cvar_t *cl_pitchspeed;
 cvar_t *cl_run;
 cvar_t *cl_anglespeedkey;
+cvar_t *cl_zoom;
 
 /*
 * CL_AddButtonBits
@@ -582,7 +584,7 @@ static void CL_AddButtonBits( qbyte *buttons )
 	if( cls.key_dest != key_game )
 		*buttons |= BUTTON_BUSYICON;
 
-	if( in_zoom.state & 3 )
+	if( ( ( in_zoom.state & 3 ) ? 1 : 0 ) ^ ( cl_zoom->integer ? 1 : 0 ) )
 		*buttons |= BUTTON_ZOOM;
 	in_zoom.state &= ~2;
 }
