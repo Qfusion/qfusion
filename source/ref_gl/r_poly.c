@@ -133,19 +133,16 @@ static int r_fragmentframecount;
 * a convex fragment (polygon, trifan) which the result of clipping
 * the input winding by six fragment planes.
 */
-static qboolean R_WindingClipFragment( const vec3_t *wVerts, int numVerts, const msurface_t *surf, const vec3_t snorm )
+static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *surf, vec3_t snorm )
 {
 	int i, j;
 	int stage, newc, numv;
 	cplane_t *plane;
 	qboolean front;
-	const float *v;
-	float *nextv;
-	float d;
+	float *v, *nextv, d;
 	float dists[MAX_FRAGMENT_VERTS+1];
 	int sides[MAX_FRAGMENT_VERTS+1];
-	const vec3_t *verts;
-	vec3_t *newverts, newv[2][MAX_FRAGMENT_VERTS], t;
+	vec3_t *verts, *newverts, newv[2][MAX_FRAGMENT_VERTS], t;
 	fragment_t *fr;
 
 	numv = numVerts;
@@ -153,7 +150,6 @@ static qboolean R_WindingClipFragment( const vec3_t *wVerts, int numVerts, const
 
 	for( stage = 0, plane = fragmentPlanes; stage < 6; stage++, plane++ )
 	{
-		const float *tv;
 		for( i = 0, v = verts[0], front = qfalse; i < numv; i++, v += 3 )
 		{
 			d = PlaneDiff( v, plane );
@@ -210,9 +206,9 @@ static qboolean R_WindingClipFragment( const vec3_t *wVerts, int numVerts, const
 				return qfalse;
 
 			d = dists[i] / ( dists[i] - dists[i+1] );
-			tv = ( i == numv - 1 ) ? verts[0] : v + 3;
+			nextv = ( i == numv - 1 ) ? verts[0] : v + 3;
 			for( j = 0; j < 3; j++ )
-				newverts[newc][j] = v[j] + d * ( tv[j] - v[j] );
+				newverts[newc][j] = v[j] + d * ( nextv[j] - v[j] );
 			newc++;
 		}
 
@@ -254,7 +250,7 @@ static qboolean R_WindingClipFragment( const vec3_t *wVerts, int numVerts, const
 	{
 		for( i = 0, v = verts[0]; i < numv; i++, v += 3 )
 		{
-			const float *nextv = (i == 3) ? verts[0] : v + 3;
+			nextv = ( i == 3 ) ? verts[0] : v + 3;
 			VectorSubtract( v, nextv, t );
 
 			d = fragmentDiameterSquared - DotProduct( t, t );
@@ -275,12 +271,12 @@ static qboolean R_WindingClipFragment( const vec3_t *wVerts, int numVerts, const
 * q2 polys) or tristrips for ultra-fast clipping, providing there's
 * enough stack space (depending on MAX_FRAGMENT_VERTS value).
 */
-static qboolean R_PlanarSurfClipFragment( const msurface_t *surf, const vec3_t normal )
+static qboolean R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
 {
 	int i;
-	const mesh_t *mesh;
-	const elem_t *elem;
-	const vec4_t *verts;
+	mesh_t *mesh;
+	elem_t	*elem;
+	vec4_t *verts;
 	vec3_t poly[4];
 	vec3_t dir1, dir2, snorm;
 	qboolean planar;
@@ -330,12 +326,12 @@ static qboolean R_PlanarSurfClipFragment( const msurface_t *surf, const vec3_t n
 /*
 * R_PatchSurfClipFragment
 */
-static qboolean R_PatchSurfClipFragment( const msurface_t *surf, const vec3_t normal )
+static qboolean R_PatchSurfClipFragment( msurface_t *surf, vec3_t normal )
 {
 	int i, j;
-	const mesh_t *mesh;
-	const elem_t *elem;
-	const vec4_t *verts;
+	mesh_t *mesh;
+	elem_t	*elem;
+	vec4_t *verts;
 	vec3_t poly[3];
 	vec3_t dir1, dir2, snorm;
 
@@ -397,23 +393,13 @@ qboolean R_SurfPotentiallyFragmented( const msurface_t *surf )
 }
 
 /*
-* R_SurfClipFragments
-*/
-void R_SurfClipFragments( const msurface_t *surf, const vec3_t normal )
-{
-	if ( surf->facetype == FACETYPE_PATCH )
-		R_PatchSurfClipFragment( surf, normal );
-	else
-		R_PlanarSurfClipFragment( surf, normal );
-}
-
-/*
 * R_RecursiveFragmentNode
 */
 static void R_RecursiveFragmentNode( void )
 {
 	int stackdepth = 0;
 	float dist;
+	qboolean inside;
 	mnode_t	*node, *localstack[2048];
 	mleaf_t	*leaf;
 	msurface_t *surf, **mark;
@@ -440,7 +426,16 @@ static void R_RecursiveFragmentNode( void )
 				if( !BoundsAndSphereIntersect( surf->mins, surf->maxs, fragmentOrigin, fragmentRadius ) )
 					continue;
 
-				R_SurfClipFragments( surf, fragmentNormal );
+				if( surf->facetype == FACETYPE_PATCH )
+					inside = R_PatchSurfClipFragment( surf, fragmentNormal );
+				else
+					inside = R_PlanarSurfClipFragment( surf, fragmentNormal );
+
+				// if there some fragments that are inside a surface, that doesn't mean that
+				// there are no fragments that are OUTSIDE, so the check below is disabled
+				//if( inside )
+				//	return;
+				(void)inside; // hush compiler warning
 			} while( *mark );
 
 			if( numFragmentVerts == maxFragmentVerts || numClippedFragments == maxClippedFragments )
