@@ -805,7 +805,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	entdecalmap = pass->images[4] && !pass->images[4]->missing ?  pass->images[4] : NULL;
 
 	// use blank image if the normalmap is too tiny due to high picmip value
-	if( normalmap && normalmap->upload_width < 2 || normalmap->upload_height < 2 ) {
+	if( normalmap && ( normalmap->upload_width < 2 || normalmap->upload_height < 2 ) ) {
 		normalmap = rsh.blankBumpTexture;
 	}
 
