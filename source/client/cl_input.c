@@ -501,36 +501,37 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 {
 	switch( cls.key_dest )
 	{
-	case key_game:
-		CL_GameModule_TouchEvent( id, type, x, y );
-		break;
+		case key_game:
+			CL_GameModule_TouchEvent( id, type, x, y );
+			break;
 
-	case key_console:
-	case key_message:
-		if( id == 0 )
-			Con_TouchEvent( ( type != TOUCH_UP ) ? qtrue : qfalse, x, y );
-		break;
+		case key_console:
+		case key_message:
+			if( id == 0 )
+				Con_TouchEvent( ( type != TOUCH_UP ) ? qtrue : qfalse, x, y );
+			break;
 		
-	case key_menu:
-		if( id != 0 )
-			break;
+		case key_menu:
+			if( id != 0 )
+				break;
 
-		CL_UIModule_MouseSet( x, y );
+			CL_UIModule_MouseSet( x, y );
 
-		switch( type )
-		{
-		case TOUCH_DOWN:
-			Key_MouseEvent( K_MOUSE1, qtrue, time );
-			break;
-		case TOUCH_UP:
-			Key_MouseEvent( K_MOUSE1, qfalse, time );
-			CL_UIModule_MouseSet( 0, 0 );
+			switch( type )
+			{
+				case TOUCH_DOWN:
+					Key_MouseEvent( K_MOUSE1, qtrue, time );
+					break;
+				case TOUCH_UP:
+					Key_MouseEvent( K_MOUSE1, qfalse, time );
+					CL_UIModule_MouseSet( 0, 0 );
+					break;
+				default:
+					break;
+			}
 			break;
 		default:
-		}
-		break;
-
-	default:
+			break;
 	}
 }
 
@@ -538,14 +539,15 @@ void CL_CancelTouches( void )
 {
 	switch( cls.key_dest )
 	{
-	case key_game:
-		CL_GameModule_CancelTouches();
-		break;
-	case key_console:
-	case key_message:
-		Con_TouchEvent( qfalse, 0, 0 );
-		break;
-	default:
+		case key_game:
+			CL_GameModule_CancelTouches();
+			break;
+		case key_console:
+		case key_message:
+			Con_TouchEvent( qfalse, 0, 0 );
+			break;
+		default:
+			break;
 	}
 }
 
