@@ -2048,8 +2048,7 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 		}
 
 		if( program->loc.ShadowDir[i] >= 0 ) {
-			vec3_t tmp, lightDir;
-			VectorSubtract( group->origin, objectOrigin, tmp );
+			vec3_t lightDir;
 			Matrix3_TransformVector( objectAxis, group->lightDir, lightDir );
 			qglUniform3fvARB( program->loc.ShadowDir[i], 1, lightDir );
 		}
