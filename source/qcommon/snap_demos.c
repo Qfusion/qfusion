@@ -160,7 +160,7 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 
 	// serverdata message
 	MSG_WriteByte( &msg, svc_serverdata );
-	MSG_WriteLong( &msg, APP_PROTOCOL_VERSION );
+	MSG_WriteLong( &msg, APP_DEMO_PROTOCOL_VERSION );
 	MSG_WriteLong( &msg, spawncount );
 	MSG_WriteShort( &msg, (unsigned short)snapFrameTime );
 	MSG_WriteString( &msg, FS_BaseGameDirectory() );

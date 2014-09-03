@@ -497,6 +497,10 @@ TOUCHSCREEN
 
 ===============================================================================
 */
+
+/*
+* CL_TouchEvent
+*/
 void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 {
 	switch( cls.key_dest )
@@ -535,6 +539,9 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 	}
 }
 
+/*
+* CL_CancelTouches
+*/
 void CL_CancelTouches( void )
 {
 	switch( cls.key_dest )
