@@ -503,17 +503,17 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 	{
 	case key_game:
 		CL_GameModule_TouchEvent( id, type, x, y );
-		return;
+		break;
 
 	case key_console:
 	case key_message:
 		if( id == 0 )
 			Con_TouchEvent( ( type != TOUCH_UP ) ? qtrue : qfalse, x, y );
-		return;
+		break;
 		
 	case key_menu:
 		if( id != 0 )
-			return;
+			break;
 
 		CL_UIModule_MouseSet( x, y );
 
@@ -526,8 +526,11 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 			Key_MouseEvent( K_MOUSE1, qfalse, time );
 			CL_UIModule_MouseSet( 0, 0 );
 			break;
+		default:
 		}
-		return;
+		break;
+
+	default:
 	}
 }
 
@@ -537,12 +540,12 @@ void CL_CancelTouches( void )
 	{
 	case key_game:
 		CL_GameModule_CancelTouches();
-		return;
-
+		break;
 	case key_console:
 	case key_message:
 		Con_TouchEvent( qfalse, 0, 0 );
-		return;
+		break;
+	default:
 	}
 }
 
