@@ -50,6 +50,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_PROTOCOL_VERSION			6096	// we're using revision number as protocol version for internal builds
 #endif
 
+#ifdef PUBLIC_BUILD
+#define APP_DEMO_PROTOCOL_VERSION		20
+#else
+#define APP_DEMO_PROTOCOL_VERSION		6096
+#endif
+
 #ifndef APP_URL
 #define	APP_URL							"http://www.warsow.net/"
 #endif
