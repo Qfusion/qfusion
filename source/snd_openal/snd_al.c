@@ -267,6 +267,7 @@ static qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
 static void S_Shutdown( qboolean verbose )
 {
 	S_StopStreams();
+	S_LockBackgroundTrack( qfalse );
 	S_StopBackgroundTrack();
 
 	S_ShutdownSources();

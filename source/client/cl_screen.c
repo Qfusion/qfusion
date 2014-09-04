@@ -593,7 +593,7 @@ static void SCR_DrawConsole( void )
 */
 void SCR_BeginLoadingPlaque( void )
 {
-	CL_SoundModule_StopAllSounds();
+	CL_SoundModule_StopAllSounds( qtrue );
 
 	memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
 

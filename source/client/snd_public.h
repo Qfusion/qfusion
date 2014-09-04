@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // snd_public.h -- sound dll information visible to engine
 
-#define	SOUND_API_VERSION   36
+#define	SOUND_API_VERSION   37
 
 #define	ATTN_NONE 0
 
@@ -125,7 +125,7 @@ typedef struct
 	void ( *BeginRegistration )( void );
 	void ( *EndRegistration )( void );
 
-	void ( *StopAllSounds )( void );
+	void ( *StopAllSounds )( qboolean clear );
 
 	void ( *Clear )( void );
 	void ( *Update )( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
@@ -153,6 +153,7 @@ typedef struct
 	// music
 	void ( *StartBackgroundTrack )( const char *intro, const char *loop );
 	void ( *StopBackgroundTrack )( void );
+	void ( *LockBackgroundTrack )( qboolean lock );
 
 	// avi dump
 	void ( *BeginAviDemo )( void );

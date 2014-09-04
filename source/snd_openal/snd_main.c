@@ -164,7 +164,7 @@ void SF_Shutdown( qboolean verbose )
 		return;
 	}
 	
-	SF_StopAllSounds();
+	SF_StopAllSounds( qtrue );
 
 	// wait for the queue to be processed
 	S_FinishSoundQueue( s_cmdQueue );
@@ -306,9 +306,9 @@ void SF_LockBackgroundTrack( qboolean lock )
 /*
 * SF_StopAllSounds
 */
-void SF_StopAllSounds( void )
+void SF_StopAllSounds( qboolean clear )
 {
-	S_IssueStopAllSoundsCmd( s_cmdQueue );
+	S_IssueStopAllSoundsCmd( s_cmdQueue, clear );
 }
 
 /*
