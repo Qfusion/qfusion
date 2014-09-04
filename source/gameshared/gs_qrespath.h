@@ -457,9 +457,8 @@ extern "C" {
 #define UI_SHADER_BIGLOGO			"gfx/ui/logo512"
 #define UI_SHADER_CURSOR			"gfx/ui/cursor"
 
-#define UI_SHADER_PROGRESSBAR		"gfx/ui/progressbar"
-#define UI_SHADER_BACKGROUND		"gfx/ui/loadingscreen"
-#define UI_SHADER_BACKGROUND_LOADING "gfx/ui/loadingscreen%02i"
+#define UI_SHADER_LOADINGLOGO		"gfx/ui/loadinglogo"
+#define UI_SHADER_LOADINGBAR		"gfx/ui/loadingbar"
 
 // vsay icons
 #define PATH_VSAY_GENERIC_ICON	    "gfx/hud/icons/vsay/generic"

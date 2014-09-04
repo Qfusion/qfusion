@@ -1132,20 +1132,30 @@ void CG_EscapeKey( void )
 */
 void CG_DrawLoading( void )
 {
-	int percent;
-	int pic;
-
 	if( !cgs.configStrings[CS_MAPNAME][0] )
 		return;
 
-	trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( UI_SHADER_BACKGROUND ) );
+	float scale = cgs.vidHeight / 1080.0f;
+
+	const vec4_t color = { 22.0 / 255.0, 20.0 / 255.0, 28.0 / 255.0, 1.0 };
+	trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0, 0, 1, 1, color, cgs.shaderWhite );
+	trap_R_DrawStretchPic( cgs.vidWidth / 2 - ( int )( 256 * scale ), cgs.vidHeight / 2 - ( int )( 64 * scale ),
+		512 * scale, 128 * scale, 0.0f, 0.0f, 1.0f, 1.0f, colorWhite, trap_R_RegisterPic( UI_SHADER_LOADINGLOGO ) );
 
 	if( cg.precacheCount && cg.precacheTotal )
 	{
-		percent = ( (float)cg.precacheCount / (float)cg.precacheTotal ) * 100.0f;
-		pic = bound( 0, (percent - 1) / 20, 4 );
+		struct shader_s *shader = trap_R_RegisterPic( UI_SHADER_LOADINGBAR );
+		int width = 480 * scale; 
+		int height = 32 * scale;
+		int barWidth = ( width - height / 2 ) * ( (float)cg.precacheCount / (float)cg.precacheTotal );
+		int x = ( cgs.vidWidth - width ) / 2;
+		int y = cgs.vidHeight / 2 + ( int )( 32 * scale );
 
-		trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, cgs.vidHeight, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( va( UI_SHADER_BACKGROUND_LOADING, pic ) ) );
+		trap_R_DrawStretchPic( x, y, height, height, 0.0f, 0.0f, 0.5f, 0.5f, colorWhite, shader );
+		trap_R_DrawStretchPic( x + height, y, width - height * 2, height, 0.5f, 0.0f, 0.5f, 0.5f, colorWhite, shader );
+		trap_R_DrawStretchPic( x + width - height, y, height, height, 0.5f, 0.0f, 1.0f, 0.5f, colorWhite, shader );
+		trap_R_DrawStretchPic( x + height / 2, y, barWidth, height, 0.25f, 0.5f, 0.25f, 1.0f, colorWhite, shader );
+		trap_R_DrawStretchPic( x + barWidth, y, height, height, 0.5f, 0.5f, 1.0f, 1.0f, colorWhite, shader );
 	}
 }
 
