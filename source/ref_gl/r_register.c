@@ -932,9 +932,9 @@ static void R_FinalizeGLExtensions( void )
 *
 * Fills the window with a color during the initialization.
 */
-static void R_FillStartupBackgroundColor( void )
+static void R_FillStartupBackgroundColor( float r, float g, float b )
 {
-	qglClearColor( 22.0 / 255.0, 20.0 / 255.0, 28.0 / 255.0, 1.0 );
+	qglClearColor( r, g, b, 1.0 );
 	GLimp_BeginFrame();
 	if( glConfig.stereoEnabled )
 	{
@@ -1171,7 +1171,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 /*
 * R_Init
 */
-rserr_t R_Init( const char *applicationName, const char *screenshotPrefix,
+rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 	void *hinstance, void *wndproc, void *parenthWnd, 
 	int x, int y, int width, int height, int displayFrequency,
 	qboolean fullScreen, qboolean wideScreen, qboolean verbose )
@@ -1271,7 +1271,10 @@ init_qgl:
 		return rserr_unknown;
 	}
 
-	R_FillStartupBackgroundColor();
+	R_FillStartupBackgroundColor(
+		( startupColor >> 16 ) / 255.0f,
+		( ( startupColor >> 8 ) & 255 ) / 255.0f,
+		( startupColor & 255 ) / 255.0f );
 
 	R_TextureMode( r_texturemode->string );
 

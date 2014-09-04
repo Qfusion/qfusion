@@ -108,6 +108,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_UI_BASEPATH					"porkui"
 #endif
 
+#ifndef APP_STARTUP_COLOR
+#define APP_STARTUP_COLOR				0x16141c
+#endif
+
 //
 // the following macros are only used by the windows resource file
 //
