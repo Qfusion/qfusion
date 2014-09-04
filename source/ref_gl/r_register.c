@@ -1271,7 +1271,8 @@ init_qgl:
 		return rserr_unknown;
 	}
 
-	R_FillStartupBackgroundColor( COLOR_R( startupColor ) / 255.0f, COLOR_G( startupColor ) / 255.0f, COLOR_B( startupColor ) / 255.0f );
+	R_FillStartupBackgroundColor( COLOR_R( startupColor ) / 255.0f,
+		COLOR_G( startupColor ) / 255.0f, COLOR_B( startupColor ) / 255.0f );
 
 	R_TextureMode( r_texturemode->string );
 
