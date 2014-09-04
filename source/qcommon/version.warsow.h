@@ -109,7 +109,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_STARTUP_COLOR
-#define APP_STARTUP_COLOR				0x16141c
+#define APP_STARTUP_COLOR				COLOR_RGB( 22, 20, 28 )
 #endif
 
 //
