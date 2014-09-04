@@ -323,7 +323,7 @@ static void uninstall_grabs_mouse( void )
 
 static void install_grabs_keyboard( void )
 {
-	int i;
+	//int i;
 	int num_devices;
 	XIDeviceInfo *info;
 	XIEventMask mask;
@@ -345,6 +345,11 @@ static void install_grabs_keyboard( void )
 	XISelectEvents(x11display.dpy, x11display.win, &mask, 1);
 
 	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
+	
+	//Grabing the entire keyboard breaks all global hotkeys (Alt+Tab, volume keys, PrtSc, etc).
+	//There is no way to avoid this: 'active' grabs (= grab the entire keyboard) 
+	//always get priority over 'passive' grabs (= grab one key).
+	/* 
 	for(i = 0; i < num_devices; i++) {
 		int id = info[i].deviceid;
 		if(info[i].use == XIMasterKeyboard)
@@ -352,6 +357,7 @@ static void install_grabs_keyboard( void )
 			XIGrabDevice(x11display.dpy, id, x11display.win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &mask);
 		}
 	}
+	*/
 	XIFreeDeviceInfo(info);
 
 	free(mask.mask);
@@ -363,7 +369,7 @@ static void install_grabs_keyboard( void )
 
 static void uninstall_grabs_keyboard( void )
 {
-	int i;
+	//int i;
 	int num_devices;
 	XIDeviceInfo *info;
 
@@ -374,11 +380,13 @@ static void uninstall_grabs_keyboard( void )
 
 	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
 
+	/*
 	for(i = 0; i < num_devices; i++) {
 		if(info[i].use == XIMasterKeyboard) {
 			XIUngrabDevice(x11display.dpy, info[i].deviceid, CurrentTime);
 		}
 	}
+	*/
 	XIFreeDeviceInfo(info);
 
 	input_active = qfalse;
@@ -652,7 +660,7 @@ static void HandleEvents( void )
 			}
 			if( focus )
 			{
-				if( Cvar_Value( "vid_fullscreen" ) ) {
+				if( Cvar_Value( "vid_fullscreen" ) != 0) {
 					Cbuf_ExecuteText( EXEC_APPEND, "set vid_fullscreen 0\n" );
 				}
 				uninstall_grabs_keyboard();
