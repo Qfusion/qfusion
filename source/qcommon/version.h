@@ -108,6 +108,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_UI_BASEPATH					"/ui/baseui"
 #endif
 
+// Hex-encoded Big Endian RGB value
 #ifndef APP_STARTUP_COLOR
 #define APP_STARTUP_COLOR				0x16141c
 #endif
