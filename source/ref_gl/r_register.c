@@ -1271,11 +1271,7 @@ init_qgl:
 		return rserr_unknown;
 	}
 
-	// COLOR_R,G,B macros won't work here since they assume 0xBGR format
-	R_FillStartupBackgroundColor(
-		( ( startupColor >> 16 ) & 255 ) / 255.0f,
-		( ( startupColor >> 8  ) & 255 ) / 255.0f,
-		( ( startupColor       ) & 255 ) / 255.0f );
+	R_FillStartupBackgroundColor( COLOR_R( startupColor ) / 255.0f, COLOR_G( startupColor ) / 255.0f, COLOR_B( startupColor ) / 255.0f );
 
 	R_TextureMode( r_texturemode->string );
 
