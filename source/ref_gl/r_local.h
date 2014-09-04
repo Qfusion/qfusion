@@ -646,7 +646,7 @@ int			R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], 
 //
 // r_register.c
 //
-rserr_t		R_Init( const char *applicationName, const char *screenshotPrefix,
+rserr_t		R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 				void *hinstance, void *wndproc, void *parenthWnd, 
 				int x, int y, int width, int height, int displayFrequency,
 				qboolean fullscreen, qboolean wideScreen, qboolean verbose );

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 6
+#define REF_API_VERSION 7
 
 struct mempool_s;
 struct cinematics_s;
@@ -123,7 +123,7 @@ typedef struct
 	// if API is different, the dll cannot be used
 	int			( *API )( void );
 
-	rserr_t		( *Init )( const char *applicationName, const char *screenshotsPrefix,
+	rserr_t		( *Init )( const char *applicationName, const char *screenshotsPrefix, int startupColor,
 					void *hinstance, void *wndproc, void *parenthWnd, 
 					int x, int y, int width, int height, int displayFrequency,
 					qboolean fullScreen, qboolean wideScreen, qboolean verbose );
