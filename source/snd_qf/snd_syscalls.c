@@ -65,6 +65,7 @@ QF_DLL_EXPORT sound_export_t *GetSoundAPI( sound_import_t *import )
 
 	globals.StartBackgroundTrack = SF_StartBackgroundTrack;
 	globals.StopBackgroundTrack = SF_StopBackgroundTrack;
+	globals.LockBackgroundTrack = SF_LockBackgroundTrack;
 
 	globals.BeginAviDemo = SF_BeginAviDemo;
 	globals.StopAviDemo = SF_StopAviDemo;

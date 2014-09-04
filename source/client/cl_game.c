@@ -382,7 +382,7 @@ void CL_GameModule_Init( void )
 #endif
 
 	// stop all playing sounds
-	CL_SoundModule_StopAllSounds();
+	CL_SoundModule_StopAllSounds( qtrue );
 
 	CL_GameModule_Shutdown();
 

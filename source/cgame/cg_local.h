@@ -773,6 +773,7 @@ extern cvar_t *cg_strafeHUD;
 extern cvar_t *cg_touch_flip;
 extern cvar_t *cg_touch_scale;
 
+void CG_SC_ResetObituaries( void );
 void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );
 void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch );

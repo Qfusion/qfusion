@@ -69,7 +69,7 @@ static char *s_aviDumpFileName;
 
 static entity_spatialization_t s_ent_spatialization[MAX_EDICTS];
 
-static void S_StopAllSounds( void );
+static void S_StopAllSounds( qboolean clear );
 static void S_ClearSoundTime( void );
 static void S_ClearRawSounds( void );
 static void S_FreeRawSounds( void );
@@ -149,7 +149,7 @@ static qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
 
 	S_ClearSoundTime();
 
-	S_StopAllSounds();
+	S_StopAllSounds( qtrue );
 
 	S_LockBackgroundTrack( qfalse );
 
@@ -161,11 +161,13 @@ static qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
 */
 static void S_Shutdown( qboolean verbose )
 {
-	S_StopAllSounds();
+	S_StopAllSounds( qtrue );
 
 	S_StopAviDemo();
 
-	S_StopBackgroundTrack();
+	S_LockBackgroundTrack( qfalse );
+
+	S_StopBackgroundTrack( );
 	
 	S_FreeRawSounds();
 
@@ -672,14 +674,15 @@ static void S_Clear( void )
 /*
 * S_StopAllSounds
 */
-static void S_StopAllSounds( void )
+static void S_StopAllSounds( qboolean clear )
 {
 	// clear all the playsounds and channels
 	S_ClearPlaysounds();
 
-	S_Clear();
-
 	S_StopBackgroundTrack();
+
+	if ( clear )
+		S_Clear( );
 }
 
 /*
@@ -1227,7 +1230,7 @@ static void GetSoundtime( void )
 			// time to chop things off to avoid 32 bit limits
 			buffers = 0;
 			paintedtime = fullsamples;
-			S_StopAllSounds();
+			S_StopAllSounds( qtrue );
 		}
 	}
 	oldsamplepos = samplepos;
@@ -1484,7 +1487,7 @@ static unsigned S_HandleClearCmd( const sndCmdClear_t *cmd )
 static unsigned S_HandleStopCmd( const sndCmdStop_t *cmd )
 {
 	//Com_Printf("S_HandleStopCmd\n");
-	S_StopAllSounds();
+	S_StopAllSounds( cmd->clear );
 	return sizeof( *cmd );
 }
 

@@ -1016,7 +1016,7 @@ void CL_ServerReconnect_f( void )
 	cls.rejected = qfalse;
 
 	CL_GameModule_Shutdown();
-	CL_SoundModule_StopAllSounds();
+	CL_SoundModule_StopAllSounds( qtrue );
 
 	Com_Printf( "Reconnecting...\n" );
 
@@ -1728,7 +1728,10 @@ void CL_Precache_f( void )
 		}
 		else
 		{
+			CL_SoundModule_LockBackgroundTrack( qtrue );
 			CL_GameModule_Reset();
+			CL_SoundModule_StopAllSounds( qfalse );
+			CL_SoundModule_LockBackgroundTrack( qfalse );
 		}
 
 		cls.demo.play_ignore_next_frametime = qtrue;
@@ -1901,7 +1904,9 @@ void CL_InitMedia( void )
 	// check memory integrity
 	Mem_CheckSentinelsGlobal();
 
-	CL_SoundModule_StopAllSounds();
+	CL_SoundModule_LockBackgroundTrack( qfalse );
+
+	CL_SoundModule_StopAllSounds( qtrue );
 }
 
 /*
@@ -1926,7 +1931,9 @@ void CL_ShutdownMedia( void )
 
 	SCR_StopCinematic();
 
-	CL_SoundModule_StopAllSounds();
+	CL_SoundModule_LockBackgroundTrack( qfalse );
+
+	CL_SoundModule_StopAllSounds( qtrue );
 }
 
 /*
@@ -1945,7 +1952,9 @@ void CL_RestartMedia( void )
 		cls.mediaInitialized = qfalse;
 	}
 
-	CL_SoundModule_StopAllSounds();
+	CL_SoundModule_LockBackgroundTrack( qfalse );
+
+	CL_SoundModule_StopAllSounds( qtrue );
 
 	// random seed to be shared among game modules so pseudo-random stuff is in sync
 	if ( cls.state != CA_CONNECTED )
@@ -3096,7 +3105,7 @@ void CL_Shutdown( void )
 	if( !cl_initialized )
 		return;
 
-	CL_SoundModule_StopAllSounds();
+	CL_SoundModule_StopAllSounds( qtrue );
 
 	ML_Shutdown();
 	CL_MM_Shutdown( qtrue );

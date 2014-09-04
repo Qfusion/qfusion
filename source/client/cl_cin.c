@@ -265,7 +265,7 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 
 	CL_SetClientState( CA_CINEMATIC );
 
-	CL_SoundModule_StopAllSounds();
+	CL_SoundModule_StopAllSounds( qtrue );
 
 	SCR_EndLoadingPlaque();
 

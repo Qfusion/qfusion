@@ -697,6 +697,15 @@ void CG_SC_PrintObituary( const char *format, ... )
 }
 
 /*
+* CG_SC_ResetObituaries
+*/
+void CG_SC_ResetObituaries( void )
+{
+	memset( cg_obituaries, 0, sizeof( cg_obituaries ) );
+	cg_obituaries_current = -1;
+}
+
+/*
 * CG_SC_Obituary
 */
 void CG_SC_Obituary( void )

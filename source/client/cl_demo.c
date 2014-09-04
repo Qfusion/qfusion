@@ -506,7 +506,7 @@ void CL_DemoJump_f( void )
 	if( Cmd_Argv( 1 )[0] == '-' )
 		time = -time;
 
-	CL_SoundModule_Clear();
+	//CL_SoundModule_Clear();
 
 	if( relative )
 		cls.gametime += time;

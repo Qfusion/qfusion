@@ -939,6 +939,8 @@ void CG_Reset( void )
 	CG_ResetDamageIndicator();
 	CG_ResetItemTimers();
 
+	CG_SC_ResetObituaries();
+
 	CG_ClearDecals();
 	CG_ClearPolys();
 	CG_ClearEffects();

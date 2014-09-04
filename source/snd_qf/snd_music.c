@@ -491,6 +491,10 @@ void S_StartBackgroundTrack( const char *intro, const char *loop )
 	bgTrack_t *introTrack, *loopTrack;
 	bgTrack_t *firstTrack = NULL;
 
+	if( s_bgTrackLocked ) {
+		return;
+	}
+
 	S_StopBackgroundTrack();
 
 	if( !intro || !intro[0] )
@@ -558,6 +562,9 @@ void S_StopBackgroundTrack( void )
 {
 	bgTrack_t *next;
 
+	if( s_bgTrackLocked ) {
+		return;
+	}
 	S_CloseBackgroundTrackTask();
 
 	while( s_bgTrackHead )

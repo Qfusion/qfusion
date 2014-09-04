@@ -356,11 +356,11 @@ void CL_SoundModule_EndRegistration( void )
 /*
 * CL_SoundModule_StopAllSounds
 */
-void CL_SoundModule_StopAllSounds( void )
+void CL_SoundModule_StopAllSounds( qboolean clear )
 {
 	max_spatialization_num = 0;
 	if( se )
-		se->StopAllSounds();
+		se->StopAllSounds( clear );
 }
 
 /*
@@ -592,6 +592,15 @@ void CL_SoundModule_StopBackgroundTrack( void )
 {
 	if( se )
 		se->StopBackgroundTrack();
+}
+
+/*
+* CL_SoundModule_LockBackgroundTrack
+*/
+void CL_SoundModule_LockBackgroundTrack( qboolean lock )
+{
+	if ( se )
+		se->LockBackgroundTrack( lock );
 }
 
 /*

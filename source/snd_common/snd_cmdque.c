@@ -95,10 +95,11 @@ void S_IssueClearCmd( sndQueue_t *queue )
 /*
 * S_IssueStopAllSoundsCmd
 */
-void S_IssueStopAllSoundsCmd( sndQueue_t *queue )
+void S_IssueStopAllSoundsCmd( sndQueue_t *queue, qboolean clear )
 {
 	sndCmdStop_t cmd;
 	cmd.id = SND_CMD_STOP_ALL_SOUNDS;
+	cmd.clear = clear;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }
 
