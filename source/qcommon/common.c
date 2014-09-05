@@ -28,7 +28,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qalgo/glob.h"
 #include "../qalgo/md5.h"
 #include "../matchmaker/mm_common.h"
-#include "sys_threads.h"
 
 #define MAX_NUM_ARGVS	50
 

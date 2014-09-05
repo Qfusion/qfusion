@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 #include "../qalgo/q_trie.h"
 #include "../client/console.h"
-#include "sys_threads.h"
 
 static qboolean	cvar_initialized = qfalse;
 static qboolean	cvar_preinitialized = qfalse;
