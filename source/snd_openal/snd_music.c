@@ -39,8 +39,8 @@ static qboolean s_bgTrackPaused = qfalse;  // the track is manually paused
 static qboolean s_bgTrackLocked = qfalse;  // the track is blocked by the game (e.g. the window's minimized)
 static qboolean s_bgTrackMuted = qfalse;
 static volatile qboolean s_bgTrackBuffering = qfalse;
-static volatile qboolean s_bgTrackLoading = qfalse; // unset by s_bgOpenTread when finished loading
-static struct qthread_s *s_bgOpenTread;
+static volatile qboolean s_bgTrackLoading = qfalse; // unset by s_bgOpenThread when finished loading
+static struct qthread_s *s_bgOpenThread;
 
 /*
 * S_AllocTrack
@@ -205,7 +205,7 @@ static void S_OpenBackgroundTrackTask( bgTrack_t *track )
 {
 	s_bgTrackLoading = qtrue;
 	s_bgTrackBuffering = qfalse;
-	trap_Thread_Create( &s_bgOpenTread, S_OpenBackgroundTrackProc, track );
+	s_bgOpenThread = trap_Thread_Create( S_OpenBackgroundTrackProc, track );
 }
 
 /*
@@ -214,8 +214,8 @@ static void S_OpenBackgroundTrackTask( bgTrack_t *track )
 static void S_CloseBackgroundTrackTask( void )
 {
 	s_bgTrackBuffering = qfalse;
-	trap_Thread_Join( s_bgOpenTread );
-	s_bgOpenTread = NULL;
+	trap_Thread_Join( s_bgOpenThread );
+	s_bgOpenThread = NULL;
 }
 
 // =================================

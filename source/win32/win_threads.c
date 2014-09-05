@@ -39,10 +39,10 @@ int Sys_Mutex_Create( qmutex_t **pmutex )
 
 	HANDLE h = CreateMutex( NULL, FALSE, NULL );
 	if( h == NULL ) {
-		return 1;
+		return GetLastError();
 	}
 	
-	mutex = ( qmutex_t * )malloc( sizeof( *mutex ) );
+	mutex = ( qmutex_t * )Q_malloc( sizeof( *mutex ) );
 	mutex->h = h;
 	*pmutex = mutex;
 	return 0;
@@ -57,7 +57,7 @@ void Sys_Mutex_Destroy( qmutex_t *mutex )
 		return;
 	}
 	CloseHandle( mutex->h );
-	free( mutex );
+	Q_free( mutex );
 }
 
 /*
@@ -93,10 +93,10 @@ int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *para
 	);
 
 	if( h == NULL ) {
-		return 1;
+		return GetLastError();
 	}
 
-	thread = ( qthread_t * )malloc( sizeof( *thread ) );
+	thread = ( qthread_t * )Q_malloc( sizeof( *thread ) );
 	thread->h = h;
 	*pthread = thread;
 	return 0;

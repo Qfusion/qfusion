@@ -300,7 +300,7 @@ qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose )
 		return qfalse;
 	}
 
-	trap_Thread_Create( &s_backThread, S_BackgroundUpdateProc, s_cmdQueue );
+	s_backThread = trap_Thread_Create( S_BackgroundUpdateProc, s_cmdQueue );
 
 	S_IssueInitCmd( s_cmdQueue, hwnd, maxEntities, verbose );
 

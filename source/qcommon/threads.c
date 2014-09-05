@@ -33,7 +33,7 @@ qmutex_t *QMutex_Create( void )
 
 	ret = Sys_Mutex_Create( &mutex );
 	if( ret != 0 ) {
-		return NULL;
+		Sys_Error( "QMutex_Create: failed with code %i", ret );
 	}
 	return mutex;
 }
@@ -78,7 +78,7 @@ qthread_t *QThread_Create( void *(*routine) (void*), void *param )
 
 	ret = Sys_Thread_Create( &thread, routine, param );
 	if( ret != 0 ) {
-		return NULL;
+		Sys_Error( "QThread_Create: failed with code %i", ret );
 	}
 	return thread;
 }
