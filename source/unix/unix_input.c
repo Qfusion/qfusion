@@ -660,9 +660,9 @@ static void HandleEvents( void )
 			}
 			if( focus )
 			{
-				if( Cvar_Value( "vid_fullscreen" ) != 0) {
-					Cbuf_ExecuteText( EXEC_APPEND, "set vid_fullscreen 0\n" );
-				}
+				if( Cvar_Value( "vid_fullscreen" ) ) {
+					XIconifyWindow( x11display.dpy, x11display.win, x11display.scr ); // minimize
+                                }
 				uninstall_grabs_keyboard();
 				Key_ClearStates();
 				focus = qfalse;
