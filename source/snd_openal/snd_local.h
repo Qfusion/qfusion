@@ -96,7 +96,7 @@ int S_API( void );
 void S_Error( const char *format, ... );
 
 void S_FreeSounds( void );
-void S_StopAllSounds( void );
+void S_StopAllSounds( qboolean stopMusic );
 
 void S_Clear( void );
 void S_Activate( qboolean active );
@@ -269,7 +269,7 @@ sfx_t *SF_RegisterSound( const char *name );
 void SF_StartBackgroundTrack( const char *intro, const char *loop );
 void SF_StopBackgroundTrack( void );
 void SF_LockBackgroundTrack( qboolean lock );
-void SF_StopAllSounds( qboolean clear );
+void SF_StopAllSounds( qboolean clear, qboolean stopMusic );
 void SF_PrevBackgroundTrack( void );
 void SF_NextBackgroundTrack( void );
 void SF_PauseBackgroundTrack( void );

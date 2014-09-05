@@ -114,7 +114,7 @@ static void SF_SoundInfo_f( void )
 */
 static void SF_StopAllSounds_f( void )
 {
-	SF_StopAllSounds( qtrue );
+	SF_StopAllSounds( qtrue, qtrue );
 }
 
 // =======================================================================
@@ -396,9 +396,9 @@ void SF_LockBackgroundTrack( qboolean lock )
 /*
 * SF_StopAllSounds
 */
-void SF_StopAllSounds( qboolean clear )
+void SF_StopAllSounds( qboolean clear, qboolean stopMusic )
 {
-	S_IssueStopAllSoundsCmd( s_cmdQueue, clear );
+	S_IssueStopAllSoundsCmd( s_cmdQueue, clear, stopMusic );
 }
 
 /*

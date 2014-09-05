@@ -428,7 +428,7 @@ void CL_SoundModule_Init( qboolean verbose );
 void CL_SoundModule_Shutdown( qboolean verbose );
 void CL_SoundModule_BeginRegistration( void );
 void CL_SoundModule_EndRegistration( void );
-void CL_SoundModule_StopAllSounds( qboolean clear );
+void CL_SoundModule_StopAllSounds( qboolean clear, qboolean stopMusic );
 void CL_SoundModule_Clear( void );
 void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity, qboolean avidump );
 void CL_SoundModule_Activate( qboolean activate );
@@ -448,7 +448,6 @@ unsigned int CL_SoundModule_GetRawSamplesLength( void );
 unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum );
 void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop );
 void CL_SoundModule_StopBackgroundTrack( void );
-void CL_SoundModule_LockBackgroundTrack( qboolean lock );
 void CL_SoundModule_BeginAviDemo( void );
 void CL_SoundModule_StopAviDemo( void );
 

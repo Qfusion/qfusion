@@ -125,7 +125,7 @@ typedef struct
 	void ( *BeginRegistration )( void );
 	void ( *EndRegistration )( void );
 
-	void ( *StopAllSounds )( qboolean clear );
+	void ( *StopAllSounds )( qboolean clear, qboolean stopMusic );
 
 	void ( *Clear )( void );
 	void ( *Update )( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
@@ -153,7 +153,6 @@ typedef struct
 	// music
 	void ( *StartBackgroundTrack )( const char *intro, const char *loop );
 	void ( *StopBackgroundTrack )( void );
-	void ( *LockBackgroundTrack )( qboolean lock );
 
 	// avi dump
 	void ( *BeginAviDemo )( void );
