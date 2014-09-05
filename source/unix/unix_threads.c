@@ -45,7 +45,7 @@ int Sys_Mutex_Create( qmutex_t **pmutex )
 		return res;
 	}
 	
-	mutex = ( qmutex_t * )malloc( sizeof( *mutex ) );
+	mutex = ( qmutex_t * )Q_malloc( sizeof( *mutex ) );
 	mutex->m = m;
 	*pmutex = mutex;
 	return 0;
@@ -60,7 +60,7 @@ void Sys_Mutex_Destroy( qmutex_t *mutex )
 		return;
 	}
 	pthread_mutex_destroy( &mutex->m );
-	free( mutex );
+	Q_free( mutex );
 }
 
 /*
@@ -93,7 +93,7 @@ int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *para
 		return res;
 	}
 
-	thread = ( qthread_t * )malloc( sizeof( *thread ) );
+	thread = ( qthread_t * )Q_malloc( sizeof( *thread ) );
 	thread->t = t;
 	*pthread = thread;
 	return 0;
