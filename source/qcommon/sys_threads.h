@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef SYS_THREADS_H
 #define SYS_THREADS_H
 
-typedef struct qbufQueue_s qbufQueue_t;
-
 int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *param );
 void Sys_Thread_Join( qthread_t *thread );
 void Sys_Thread_Yield( void );
@@ -32,11 +30,5 @@ void Sys_Mutex_Destroy( qmutex_t *mutex );
 void Sys_Mutex_Lock( qmutex_t *mutex );
 void Sys_Mutex_Unlock( qmutex_t *mutex );
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex );
-
-qbufQueue_t *Sys_BufQueue_Create( size_t bufSize, int flags );
-void Sys_BufQueue_Destroy( qbufQueue_t **pqueue );
-void Sys_BufQueue_Finish( qbufQueue_t *queue );
-void Sys_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_size );
-int Sys_BufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) );
 
 #endif // SYS_THREADS_H

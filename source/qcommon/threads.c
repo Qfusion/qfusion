@@ -92,6 +92,14 @@ void QThread_Join( qthread_t *thread )
 }
 
 /*
+* QThread_Yield
+*/
+void QThread_Yield( void )
+{
+	Sys_Thread_Yield();
+}
+
+/*
 * QThreads_Init
 */
 void QThreads_Init( void )
@@ -132,23 +140,23 @@ typedef struct qbufQueue_s
 } qbufQueue_t;
 
 /*
-* Sys_BufQueue_Create
+* QBufQueue_Create
 */
-qbufQueue_t *Sys_BufQueue_Create( size_t bufSize, int flags )
+qbufQueue_t *QBufQueue_Create( size_t bufSize, int flags )
 {
 	qbufQueue_t *queue = malloc( sizeof( *queue ) + bufSize );
 	memset( queue, 0, sizeof( *queue ) );
 	queue->blockWrite = flags & 1;
 	queue->buf = (char *)(queue + 1);
 	queue->bufSize = bufSize;
-	Sys_Mutex_Create( &queue->cmdbuf_mutex );
+	queue->cmdbuf_mutex = QMutex_Create();
 	return queue;
 }
 
 /*
-* Sys_BufQueue_Destroy
+* QBufQueue_Destroy
 */
-void Sys_BufQueue_Destroy( qbufQueue_t **pqueue )
+void QBufQueue_Destroy( qbufQueue_t **pqueue )
 {
 	qbufQueue_t *queue;
 
@@ -160,27 +168,27 @@ void Sys_BufQueue_Destroy( qbufQueue_t **pqueue )
 	queue = *pqueue;
 	*pqueue = NULL;
 
-	Sys_Mutex_Destroy( queue->cmdbuf_mutex );
+	QMutex_Destroy( &queue->cmdbuf_mutex );
 	free( queue );
 }
 
 /*
-* Sys_BufQueue_Finish
+* QBufQueue_Finish
 *
 * Blocks until the reader thread handles all commands
 * or terminates with an error.
 */
-void Sys_BufQueue_Finish( qbufQueue_t *queue )
+void QBufQueue_Finish( qbufQueue_t *queue )
 {
 	while( queue->cmdbuf_len > 0 && !queue->terminated ) {
-		Sys_Thread_Yield();
+		QThread_Yield();
 	}
 }
 
 /*
-* Sys_BufQueue_AllocCmd
+* QBufQueue_AllocCmd
 */
-static void *Sys_BufQueue_AllocCmd( qbufQueue_t *queue, unsigned cmd_size )
+static void *QBufQueue_AllocCmd( qbufQueue_t *queue, unsigned cmd_size )
 {
 	void *buf = &queue->buf[queue->write_pos];
 	queue->write_pos += cmd_size;
@@ -188,15 +196,15 @@ static void *Sys_BufQueue_AllocCmd( qbufQueue_t *queue, unsigned cmd_size )
 }
 
 /*
-* Sys_BufQueue_BufLenAdd
+* QBufQueue_BufLenAdd
 */
-static void Sys_BufQueue_BufLenAdd( qbufQueue_t *queue, int val )
+static void QBufQueue_BufLenAdd( qbufQueue_t *queue, int val )
 {
 	Sys_Atomic_Add( &queue->cmdbuf_len, val, queue->cmdbuf_mutex );
 }
 
 /*
-* Sys_BufQueue_EnqueueCmd
+* QBufQueue_EnqueueCmd
 *
 * Add new command to buffer. Never allow the distance between the reader
 * and the writer to grow beyond the size of the buffer.
@@ -204,7 +212,7 @@ static void Sys_BufQueue_BufLenAdd( qbufQueue_t *queue, int val )
 * Note that there are race conditions here but in the worst case we're going
 * to erroneously drop cmd's instead of stepping on the reader's toes.
 */
-void Sys_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_size )
+void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_size )
 {
 	void *buf;
 	unsigned write_remains;
@@ -233,7 +241,7 @@ void Sys_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_
 		}
 
 		// not enough space to enqueue even the reset cmd, rewind
-		Sys_BufQueue_BufLenAdd( queue, write_remains ); // atomic
+		QBufQueue_BufLenAdd( queue, write_remains ); // atomic
 		queue->write_pos = 0;
 	} else if( cmd_size > write_remains ) {
 		int *cmd;
@@ -247,10 +255,10 @@ void Sys_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_
 		}
 
 		// explicit pointer reset cmd
-		cmd = Sys_BufQueue_AllocCmd( queue, sizeof( int ) );
+		cmd = QBufQueue_AllocCmd( queue, sizeof( int ) );
 		*cmd = -1;
 
-		Sys_BufQueue_BufLenAdd( queue, sizeof( *cmd ) + write_remains ); // atomic
+		QBufQueue_BufLenAdd( queue, sizeof( *cmd ) + write_remains ); // atomic
 		queue->write_pos = 0;
 	}
 	else
@@ -264,15 +272,15 @@ void Sys_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_
 		}
 	}
 
-	buf = Sys_BufQueue_AllocCmd( queue, cmd_size );
+	buf = QBufQueue_AllocCmd( queue, cmd_size );
 	memcpy( buf, cmd, cmd_size );
-	Sys_BufQueue_BufLenAdd( queue, cmd_size ); // atomic
+	QBufQueue_BufLenAdd( queue, cmd_size ); // atomic
 }
 
 /*
-* Sys_BufQueue_ReadCmds
+* QBufQueue_ReadCmds
 */
-int Sys_BufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) )
+int QBufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) )
 {
 	int read = 0;
 
@@ -295,14 +303,14 @@ int Sys_BufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const v
 		if( sizeof( int ) > read_remains ) {
 			// implicit reset
 			queue->read_pos = 0;
-			Sys_BufQueue_BufLenAdd( queue, -read_remains );
+			QBufQueue_BufLenAdd( queue, -read_remains );
 		}
 
 		cmd = *((int *)(queue->buf + queue->read_pos));
 		if( cmd == -1 ) {
 			// this cmd is special
 			queue->read_pos = 0;
-			Sys_BufQueue_BufLenAdd( queue, -((int)(sizeof(int) + read_remains)) ); // atomic
+			QBufQueue_BufLenAdd( queue, -((int)(sizeof(int) + read_remains)) ); // atomic
 			continue;
 		}
 
@@ -321,7 +329,7 @@ int Sys_BufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const v
 		}
 
 		queue->read_pos += cmd_size;
-		Sys_BufQueue_BufLenAdd( queue, -cmd_size ); // atomic
+		QBufQueue_BufLenAdd( queue, -cmd_size ); // atomic
 	}
 
 	return read;
