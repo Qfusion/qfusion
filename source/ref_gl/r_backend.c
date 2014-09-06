@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_backend_local.h"
 
+#define SMALL_STREAM_VATTRIBS ( VATTRIB_POSITION_BIT | VATTRIB_COLOR0_BIT | VATTRIB_TEXCOORDS_BIT )
+#define CURRENT_VBO_IS_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM ) || ( rb.currentVBOId == RB_VBO_STREAM_SMALL ) )
+#define CURRENT_VBO_IS_QUAD_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM_QUAD ) || ( rb.currentVBOId == RB_VBO_STREAM_QUAD_SMALL ) )
+
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchSVectorsArray[MAX_BATCH_VERTS];
@@ -34,7 +38,7 @@ rbackend_t rb;
 static void RB_InitBatchMesh( void );
 static void RB_SetGLDefaults( void );
 static void RB_RegisterStreamVBOs( void );
-static void RB_UploadStaticQuadIndices( void );
+static void RB_UploadStaticQuadIndices( int id );
 
 /*
 * RB_Init
@@ -58,7 +62,8 @@ void RB_Init( void )
 	RB_RegisterStreamVBOs();
 
 	// upload persistent quad indices
-	RB_UploadStaticQuadIndices();
+	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD );
+	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD_SMALL );
 }
 
 /*
@@ -564,14 +569,14 @@ void RB_BlitFrameBufferObject( int dest, int bitMask, int mode )
 }
 
 /*
-* RB_UploadQuadIndicesToStream
+* RB_UploadStaticQuadIndices
 */
-static void RB_UploadStaticQuadIndices( void )
+static void RB_UploadStaticQuadIndices( int id )
 {
 	int leftVerts, numVerts, numElems;
 	int vertsOffset, elemsOffset;
 	mesh_t mesh;
-	mesh_vbo_t *vbo = rb.streamVBOs[-RB_VBO_STREAM_QUAD - 1];
+	mesh_vbo_t *vbo = rb.streamVBOs[-id - 1];
 
 	assert( MAX_BATCH_VERTS < MAX_STREAM_VBO_VERTS );
 
@@ -605,7 +610,15 @@ void RB_RegisterStreamVBOs( void )
 	mesh_vbo_t *vbo;
 	vbo_tag_t tags[RB_VBO_NUM_STREAMS] = {
 		VBO_TAG_STREAM,
+		VBO_TAG_STREAM,
+		VBO_TAG_STREAM_STATIC_ELEMS,
 		VBO_TAG_STREAM_STATIC_ELEMS
+	};
+	vattribmask_t vattribs[RB_VBO_NUM_STREAMS] = {
+		VATTRIBS_MASK,
+		SMALL_STREAM_VATTRIBS,
+		VATTRIBS_MASK,
+		SMALL_STREAM_VATTRIBS
 	};
 
 	// allocate stream VBO's
@@ -617,7 +630,7 @@ void RB_RegisterStreamVBOs( void )
 		}
 		rb.streamVBOs[i] = R_CreateMeshVBO( &rb, 
 			MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, MAX_STREAM_VBO_INSTANCES,
-			VATTRIBS_MASK, tags[i], VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT );
+			vattribs[i], tags[i], VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT );
 	}
 }
 
@@ -681,6 +694,17 @@ void RB_BindVBO( int id, int primitive )
 }
 
 /*
+* RB_BindStreamVBO
+*/
+void RB_BindStreamVBO( qboolean quad, int primitive )
+{
+	if( !( rb.currentVAttribs & ~SMALL_STREAM_VATTRIBS ) )
+		RB_BindVBO( quad ? RB_VBO_STREAM_QUAD_SMALL : RB_VBO_STREAM_SMALL, primitive );
+	else
+		RB_BindVBO( quad ? RB_VBO_STREAM_QUAD : RB_VBO_STREAM, primitive );
+}
+
+/*
 * RB_UploadMesh
 */
 void RB_UploadMesh( const mesh_t *mesh )
@@ -696,9 +720,9 @@ void RB_UploadMesh( const mesh_t *mesh )
 		return;
 	}
 	
-	if( rb.currentVBOId == RB_VBO_STREAM_QUAD ) {
+	if( CURRENT_VBO_IS_QUAD_STREAM() ) {
 		numElems = numVerts/4*6;
-	} else if( !numElems && rb.currentVBOId == RB_VBO_STREAM ) {
+	} else if( !numElems && CURRENT_VBO_IS_STREAM() ) {
 		numElems = (max(numVerts, 2) - 2) * 3;
 	}
 
@@ -717,7 +741,7 @@ void RB_UploadMesh( const mesh_t *mesh )
 			offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems );
 
 		R_DiscardVBOVertexData( vbo );
-		if( rb.currentVBOId != RB_VBO_STREAM_QUAD ) {
+		if( !CURRENT_VBO_IS_QUAD_STREAM() ) {
 			R_DiscardVBOElemData( vbo );
 		}
 
@@ -733,14 +757,14 @@ void RB_UploadMesh( const mesh_t *mesh )
 		return;
 	}
 
-	if( rb.currentVBOId == RB_VBO_STREAM_QUAD ) {
+	if( CURRENT_VBO_IS_QUAD_STREAM() ) {
 		vbo_hint = VBO_HINT_ELEMS_QUAD;
 
 		// quad indices are stored in a static vbo, don't call R_UploadVBOElemData
 	} else {
 		if( mesh->elems ) {
 			vbo_hint = VBO_HINT_NONE;
-		} else if( rb.currentVBOId == RB_VBO_STREAM ) {
+		} else if( CURRENT_VBO_IS_STREAM() ) {
 			vbo_hint = VBO_HINT_ELEMS_TRIFAN;
 		} else {
 			assert( 0 );
@@ -816,9 +840,9 @@ void RB_BatchMesh( const mesh_t *mesh )
 	rbDrawElements_t *batch;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
 
-	if( rb.currentVBOId == RB_VBO_STREAM_QUAD ) {
+	if( CURRENT_VBO_IS_QUAD_STREAM() ) {
 		numElems = numVerts/4*6;
-	} else if( !numElems && rb.currentVBOId == RB_VBO_STREAM ) {
+	} else if( !numElems && CURRENT_VBO_IS_STREAM() ) {
 		numElems = (max(numVerts, 2) - 2) * 3;
 	}
 
@@ -848,7 +872,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 		vattribmask_t vattribs = rb.currentVAttribs;
 
 		memcpy( rb.batchMesh.xyzArray + batch->numVerts, mesh->xyzArray, numVerts * sizeof( vec4_t ) );
-		if( rb.currentVBOId == RB_VBO_STREAM_QUAD ) {
+		if( CURRENT_VBO_IS_QUAD_STREAM() ) {
 			// quad indices are stored in a static vbo
 		} else if( mesh->elems ) {
 			if( rb.primitive == GL_TRIANGLES ) {
@@ -857,7 +881,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 			else {
 				R_CopyOffsetElements( mesh->elems, numElems, batch->numVerts, rb.batchMesh.elems + batch->numElems );
 			}
-		} else if( rb.currentVBOId == RB_VBO_STREAM ) {
+		} else if( CURRENT_VBO_IS_STREAM() ) {
 			R_BuildTrifanElements( batch->numVerts, numElems, rb.batchMesh.elems + batch->numElems );
 		} else {
 			assert( 0 );

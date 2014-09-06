@@ -1326,7 +1326,7 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 	{
 		mesh_t *rb_mesh;
 
-		RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
+		RB_BindStreamVBO( qfalse, GL_TRIANGLES );
 
 		rb_mesh = RB_MapBatchMesh( skmesh->numverts, skmesh->numtris * 3 );
 		if( !rb_mesh ) {
