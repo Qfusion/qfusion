@@ -22,12 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 enum
 {
-	RB_VBO_STREAM_QUAD_SMALL	= -4,
+	RB_VBO_STREAM_QUAD_COMPACT	= -4, // bind RB_VBO_STREAM_QUAD instead
 	RB_VBO_STREAM_QUAD			= -3,
-	RB_VBO_STREAM_SMALL			= -2,
+	RB_VBO_STREAM_COMPACT		= -2, // bind RB_VBO_STREAM instead
 	RB_VBO_STREAM				= -1,
 	RB_VBO_NONE					= 0,
-	RB_VBO_NUM_STREAMS			= -RB_VBO_STREAM_QUAD_SMALL
+	RB_VBO_NUM_STREAMS			= -RB_VBO_STREAM_QUAD_COMPACT
 };
 
 //===================================================================
@@ -71,7 +71,6 @@ int RB_BoundFrameBufferObject( void );
 void RB_BlitFrameBufferObject( int dest, int bitMask, int mode );
 
 void RB_BindVBO( int id, int primitive );
-void RB_BindStreamVBO( qboolean quad, int primitive );
 mesh_t *RB_MapBatchMesh( int numVerts, int numElems );
 void RB_BeginBatch( void );
 void RB_UploadMesh( const mesh_t *mesh );

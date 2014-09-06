@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 qboolean R_BeginPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfacePoly_t *drawSurf )
 {
-	RB_BindStreamVBO( qfalse, GL_TRIANGLES );
+	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
 	return qtrue;
 }
 

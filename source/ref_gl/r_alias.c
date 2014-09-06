@@ -571,7 +571,7 @@ qboolean R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_
 		vec4_t *inNormalsArray;
 		vec4_t *inSVectorsArray;
 
-		RB_BindStreamVBO( qfalse, GL_TRIANGLES );
+		RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
 
 		rb_mesh = RB_MapBatchMesh( aliasmesh->numverts, aliasmesh->numtris * 3 );
 		if( !rb_mesh ) {

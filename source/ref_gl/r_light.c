@@ -54,7 +54,7 @@ void R_InitCoronas( void )
 qboolean R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, 
 	const mfog_t *fog, drawSurfaceType_t *drawSurf )
 {
-	RB_BindStreamVBO( qtrue, GL_TRIANGLES );
+	RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
 	return qtrue;
 }
 

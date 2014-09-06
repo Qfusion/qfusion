@@ -424,7 +424,7 @@ static void R_RenderDebugBounds( void )
 
 	RB_BindShader( rsc.worldent, rsh.whiteShader, NULL );
 
-	RB_BindStreamVBO( qfalse, GL_TRIANGLE_STRIP );
+	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLE_STRIP );
 
 	for( i = 0; i < r_num_debug_bounds; i++ )
 	{
