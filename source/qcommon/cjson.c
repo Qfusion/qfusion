@@ -200,7 +200,7 @@ static const char *parse_string(cJSON *item,const char *str)
 						case 4: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
 						case 3: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
 						case 2: *--ptr2 =((uc | 0x80) & 0xBF); uc >>= 6;
-						case 1: *--ptr2 =(uc | firstByteMark[len]);
+						case 1: *--ptr2 =(char)(uc | firstByteMark[len]);
 					}
 					ptr2+=len;
 					break;
