@@ -21,6 +21,12 @@ endif()
 
 # Windows specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(QFUSION_WINDOWS_ARCH "x86")
+
+    if (MINGW AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+        set(QFUSION_WINDOWS_ARCH "x64")
+    endif()
+
     set(CMAKE_INCLUDE_PATH
         "../libsrcs/libogg"
         "../libsrcs/libvorbis"
@@ -37,9 +43,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
 
     if (NOT MINGW)
-        set(CMAKE_LIBRARY_PATH "win32/x86/lib/debug")
+        set(CMAKE_LIBRARY_PATH "win32/${QFUSION_WINDOWS_ARCH}/lib/debug")
     else()
-        set(CMAKE_LIBRARY_PATH "win32/x86/lib/mingw")
+        set(CMAKE_LIBRARY_PATH "win32/${QFUSION_WINDOWS_ARCH}/lib/mingw")
     endif()
 endif()
 
@@ -114,19 +120,19 @@ macro(find_windows_release_libs libs)
 endmacro()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-    set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
-    set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
-
-    set(CMAKE_EXECUTABLE_SUFFIX "_x86${CMAKE_EXECUTABLE_SUFFIX}")
+    set(CMAKE_EXECUTABLE_SUFFIX "_${QFUSION_WINDOWS_ARCH}${CMAKE_EXECUTABLE_SUFFIX}")
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
-    set(CMAKE_SHARED_LIBRARY_SUFFIX "_x86${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    set(CMAKE_SHARED_LIBRARY_SUFFIX "_${QFUSION_WINDOWS_ARCH}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
     if (MINGW)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
         set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+    else()
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
     endif()
 
     find_windows_release_libs(ZLIB_LIBRARY)
