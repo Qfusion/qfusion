@@ -389,7 +389,7 @@ drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 */
 qboolean R_BeginSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf )
 {
-	RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
+	RB_BindStreamVBO( qtrue, GL_TRIANGLES );
 	return qtrue;
 }
 
@@ -605,7 +605,7 @@ void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset
 
 		RB_BindShader( NULL, shader, NULL );
 
-		RB_BindVBO( quad ? RB_VBO_STREAM_QUAD : RB_VBO_STREAM, GL_TRIANGLES );
+		RB_BindStreamVBO( quad, GL_TRIANGLES );
 
 		RB_BeginBatch();
 	}
