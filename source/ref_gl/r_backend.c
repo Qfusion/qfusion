@@ -21,9 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_backend_local.h"
 
-#define SMALL_STREAM_VATTRIBS ( VATTRIB_POSITION_BIT | VATTRIB_COLOR0_BIT | VATTRIB_TEXCOORDS_BIT )
-#define CURRENT_VBO_IS_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM ) || ( rb.currentVBOId == RB_VBO_STREAM_SMALL ) )
-#define CURRENT_VBO_IS_QUAD_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM_QUAD ) || ( rb.currentVBOId == RB_VBO_STREAM_QUAD_SMALL ) )
+#define COMPACT_STREAM_VATTRIBS ( VATTRIB_POSITION_BIT | VATTRIB_COLOR0_BIT | VATTRIB_TEXCOORDS_BIT )
+#define CURRENT_VBO_IS_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM ) || ( rb.currentVBOId == RB_VBO_STREAM_COMPACT ) )
+#define CURRENT_VBO_IS_QUAD_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM_QUAD ) || ( rb.currentVBOId == RB_VBO_STREAM_QUAD_COMPACT ) )
 
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
@@ -63,7 +63,7 @@ void RB_Init( void )
 
 	// upload persistent quad indices
 	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD );
-	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD_SMALL );
+	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD_COMPACT );
 }
 
 /*
@@ -616,9 +616,9 @@ void RB_RegisterStreamVBOs( void )
 	};
 	vattribmask_t vattribs[RB_VBO_NUM_STREAMS] = {
 		VATTRIBS_MASK,
-		SMALL_STREAM_VATTRIBS,
+		COMPACT_STREAM_VATTRIBS,
 		VATTRIBS_MASK,
-		SMALL_STREAM_VATTRIBS
+		COMPACT_STREAM_VATTRIBS
 	};
 
 	// allocate stream VBO's
@@ -663,6 +663,14 @@ void RB_BindVBO( int id, int primitive )
 	mesh_vbo_t *vbo;
 	rbDrawElements_t *batch;
 
+	if( !( rb.currentVAttribs & ~COMPACT_STREAM_VATTRIBS ) ) {
+		if( id == RB_VBO_STREAM ) {
+			id = RB_VBO_STREAM_COMPACT;
+		} else if( id == RB_VBO_STREAM_QUAD ) {
+			id = RB_VBO_STREAM_QUAD_COMPACT;
+		}
+	}
+
 	if( rb.currentVBOId == id ) {
 		return;
 	}
@@ -691,17 +699,6 @@ void RB_BindVBO( int id, int primitive )
 
 	RB_BindArrayBuffer( vbo->vertexId );
 	RB_BindElementArrayBuffer( vbo->elemId );
-}
-
-/*
-* RB_BindStreamVBO
-*/
-void RB_BindStreamVBO( qboolean quad, int primitive )
-{
-	if( !( rb.currentVAttribs & ~SMALL_STREAM_VATTRIBS ) )
-		RB_BindVBO( quad ? RB_VBO_STREAM_QUAD_SMALL : RB_VBO_STREAM_SMALL, primitive );
-	else
-		RB_BindVBO( quad ? RB_VBO_STREAM_QUAD : RB_VBO_STREAM, primitive );
 }
 
 /*
