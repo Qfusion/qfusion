@@ -593,6 +593,7 @@
 		F36FC430192D55D800110982 /* freetype.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F36FC42E192D556300110982 /* freetype.framework */; };
 		F3862969191AE6C600708946 /* glob.c in Sources */ = {isa = PBXBuildFile; fileRef = F323F5581917FF2B00F8FD6C /* glob.c */; };
 		F388D9E9113BE43D0039559F /* libmumblelink.c in Sources */ = {isa = PBXBuildFile; fileRef = F388D9E7113BE43D0039559F /* libmumblelink.c */; };
+		F3B58D0419BBE9ED00ECFA14 /* ui_ninepatch_decorator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F3B58D0319BBE9ED00ECFA14 /* ui_ninepatch_decorator.cpp */; };
 		F3D1FA1F191BF9ED00DF3B4C /* r_q3bsp.c in Sources */ = {isa = PBXBuildFile; fileRef = 28A721E20F5DEAA0006FB1A8 /* r_q3bsp.c */; };
 		F3DA081910DA33350038AE7F /* wswcurl.c in Sources */ = {isa = PBXBuildFile; fileRef = F3DA081710DA33350038AE7F /* wswcurl.c */; };
 		F3DB9AB8191C294A00AD6FE8 /* patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 28A721B30F5DEAA0006FB1A8 /* patch.c */; };
@@ -1395,6 +1396,7 @@
 		F3A9E654191ADC04000BBC02 /* r_program.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = r_program.h; sourceTree = "<group>"; };
 		F3A9E655191ADC04000BBC02 /* r_public.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_public.c; sourceTree = "<group>"; };
 		F3A9E656191ADC04000BBC02 /* r_scene.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = r_scene.c; sourceTree = "<group>"; };
+		F3B58D0319BBE9ED00ECFA14 /* ui_ninepatch_decorator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ui_ninepatch_decorator.cpp; sourceTree = "<group>"; };
 		F3DA081710DA33350038AE7F /* wswcurl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wswcurl.c; sourceTree = "<group>"; };
 		F3DA081810DA33350038AE7F /* wswcurl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wswcurl.h; sourceTree = "<group>"; };
 		F3DB9ABD191C443400AD6FE8 /* mac_sys.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mac_sys.m; sourceTree = "<group>"; };
@@ -2308,6 +2310,7 @@
 		9D251E92159F6842001CE46F /* decorators */ = {
 			isa = PBXGroup;
 			children = (
+				F3B58D0319BBE9ED00ECFA14 /* ui_ninepatch_decorator.cpp */,
 				9D251E93159F6842001CE46F /* ui_decorators.h */,
 				9D251E94159F6842001CE46F /* ui_gradient_decorator.cpp */,
 			);
@@ -3193,6 +3196,7 @@
 				9D251EDE159F6842001CE46F /* as_bind_window.cpp in Sources */,
 				9D251EE0159F6842001CE46F /* asmodule.cpp in Sources */,
 				9D251EE4159F6842001CE46F /* asui_scheduled.cpp in Sources */,
+				F3B58D0419BBE9ED00ECFA14 /* ui_ninepatch_decorator.cpp in Sources */,
 				9D251EE6159F6842001CE46F /* asui_scriptdocument.cpp in Sources */,
 				F3E56A471919389B00FE695F /* ui_gameajax_datasource.cpp in Sources */,
 				9D251EE7159F6842001CE46F /* asui_scriptevent.cpp in Sources */,
