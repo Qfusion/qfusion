@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_backend_local.h"
 
 #define COMPACT_STREAM_VATTRIBS ( VATTRIB_POSITION_BIT | VATTRIB_COLOR0_BIT | VATTRIB_TEXCOORDS_BIT )
-#define CURRENT_VBO_IS_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM ) || ( rb.currentVBOId == RB_VBO_STREAM_COMPACT ) )
+#define CURRENT_VBO_IS_GENERIC_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM ) || ( rb.currentVBOId == RB_VBO_STREAM_COMPACT ) )
 #define CURRENT_VBO_IS_QUAD_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM_QUAD ) || ( rb.currentVBOId == RB_VBO_STREAM_QUAD_COMPACT ) )
 
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
@@ -711,15 +711,19 @@ void RB_UploadMesh( const mesh_t *mesh )
 	rbDrawElements_t *offset;
 	vbo_hint_t vbo_hint = VBO_HINT_NONE;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
+	qboolean isQuadStream, isGenericStream;
 
 	assert( rb.currentVBOId < RB_VBO_NONE );
 	if( rb.currentVBOId >= RB_VBO_NONE ) {
 		return;
 	}
 	
-	if( CURRENT_VBO_IS_QUAD_STREAM() ) {
+	isQuadStream = CURRENT_VBO_IS_QUAD_STREAM();
+	isGenericStream = CURRENT_VBO_IS_GENERIC_STREAM( );
+
+	if( isQuadStream ) {
 		numElems = numVerts/4*6;
-	} else if( !numElems && CURRENT_VBO_IS_STREAM() ) {
+	} else if( !numElems && isGenericStream ) {
 		numElems = (max(numVerts, 2) - 2) * 3;
 	}
 
@@ -738,7 +742,7 @@ void RB_UploadMesh( const mesh_t *mesh )
 			offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems );
 
 		R_DiscardVBOVertexData( vbo );
-		if( !CURRENT_VBO_IS_QUAD_STREAM() ) {
+		if( !isQuadStream ) {
 			R_DiscardVBOElemData( vbo );
 		}
 
@@ -754,14 +758,14 @@ void RB_UploadMesh( const mesh_t *mesh )
 		return;
 	}
 
-	if( CURRENT_VBO_IS_QUAD_STREAM() ) {
+	if( isQuadStream ) {
 		vbo_hint = VBO_HINT_ELEMS_QUAD;
 
 		// quad indices are stored in a static vbo, don't call R_UploadVBOElemData
 	} else {
 		if( mesh->elems ) {
 			vbo_hint = VBO_HINT_NONE;
-		} else if( CURRENT_VBO_IS_STREAM() ) {
+		} else if( isGenericStream ) {
 			vbo_hint = VBO_HINT_ELEMS_TRIFAN;
 		} else {
 			assert( 0 );
@@ -836,10 +840,14 @@ void RB_BatchMesh( const mesh_t *mesh )
 	int stream;
 	rbDrawElements_t *batch;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
+	qboolean isQuadStream, isGenericStream;
 
-	if( CURRENT_VBO_IS_QUAD_STREAM() ) {
+	isQuadStream = CURRENT_VBO_IS_QUAD_STREAM();
+	isGenericStream = CURRENT_VBO_IS_GENERIC_STREAM( );
+
+	if( isQuadStream ) {
 		numElems = numVerts/4*6;
-	} else if( !numElems && CURRENT_VBO_IS_STREAM() ) {
+	} else if( !numElems && isGenericStream ) {
 		numElems = (max(numVerts, 2) - 2) * 3;
 	}
 
@@ -869,7 +877,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 		vattribmask_t vattribs = rb.currentVAttribs;
 
 		memcpy( rb.batchMesh.xyzArray + batch->numVerts, mesh->xyzArray, numVerts * sizeof( vec4_t ) );
-		if( CURRENT_VBO_IS_QUAD_STREAM() ) {
+		if( isQuadStream ) {
 			// quad indices are stored in a static vbo
 		} else if( mesh->elems ) {
 			if( rb.primitive == GL_TRIANGLES ) {
@@ -878,7 +886,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 			else {
 				R_CopyOffsetElements( mesh->elems, numElems, batch->numVerts, rb.batchMesh.elems + batch->numElems );
 			}
-		} else if( CURRENT_VBO_IS_STREAM() ) {
+		} else if( isGenericStream ) {
 			R_BuildTrifanElements( batch->numVerts, numElems, rb.batchMesh.elems + batch->numElems );
 		} else {
 			assert( 0 );
