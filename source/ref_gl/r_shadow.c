@@ -295,10 +295,13 @@ static float R_SetupShadowmapView( shadowGroup_t *group, refdef_t *refdef, int l
 	int width, height;
 	float farClip;
 	image_t *shadowmap;
+
+	// clamp LOD to a sane value
+	clamp( lod, 0, 15 );
 	
 	shadowmap = group->shadowmap;
 	// >= so it fails if r_shadows_maxtexsize is 0 (and 1x1 is still too small)
-	if( ( lod >= Q_log2( shadowmap->upload_width ) ) || ( lod >= Q_log2( shadowmap->upload_height ) ) ) {
+	if( shadowmap->upload_width <= (1<<lod) || shadowmap->upload_height <= (1<<lod) ) {
 		return 1.0f;
 	}
 
