@@ -658,14 +658,18 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			if( out->facetype == FACETYPE_PLANAR )
 			{
 				cplane_t *plane;
+				vec3_t v[3];
 
 				// don't trust q3map, recalculate surface plane from the first triangle
 				bufPos = ALIGN( bufPos, 16 );
 				plane = out->plane = ( cplane_t * )( buffer + bufPos ); bufPos += sizeof( cplane_t );
+
+				// do not trust compiler on surface normal
 				for( j = 0; j < 3; j++ ) {
-					plane->normal[j] = LittleFloat( in->normal[j] );
+					VectorCopy( mesh->xyzArray[mesh->elems[j]], v[j] );
 				}
-				plane->dist = DotProduct( mesh->xyzArray[0], plane->normal );
+
+				PlaneFromPoints( v, plane );
 				CategorizePlane( plane );
 			}
 
