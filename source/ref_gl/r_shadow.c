@@ -30,6 +30,7 @@ STANDARD PROJECTIVE SHADOW MAPS (SSM)
 
 #define SHADOWMAP_ORTHO_NUDGE			8
 #define SHADOWMAP_MIN_VIEWPORT_SIZE		16
+#define SHADOWMAP_MAX_LOD				15
 
 //static qboolean r_shadowGroups_sorted;
 
@@ -297,7 +298,7 @@ static float R_SetupShadowmapView( shadowGroup_t *group, refdef_t *refdef, int l
 	image_t *shadowmap;
 
 	// clamp LOD to a sane value
-	clamp( lod, 0, 15 );
+	clamp( lod, 0, SHADOWMAP_MAX_LOD );
 	
 	shadowmap = group->shadowmap;
 	width = shadowmap->upload_width >> lod;
@@ -389,7 +390,6 @@ void R_DrawShadowmaps( void )
 		if( rsc.renderedShadowBits & group->bit ) {
 			continue;
 		}
-		rsc.renderedShadowBits |= group->bit;
 
 		// calculate LOD for shadowmap
 		lod = (int)((DistanceFast( group->origin, lodOrigin ) * lodScale) / group->projDist);
@@ -442,6 +442,8 @@ void R_DrawShadowmaps( void )
 		R_RenderView( &refdef );
 
 		Matrix4_Copy( rn.cameraProjectionMatrix, group->cameraProjectionMatrix );
+
+		rsc.renderedShadowBits |= group->bit;
 	}
 
 	R_PopRefInst( 0 );
