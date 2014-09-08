@@ -297,13 +297,13 @@ static float R_SetupShadowmapView( shadowGroup_t *group, refdef_t *refdef, int l
 	image_t *shadowmap;
 
 	// clamp LOD to a sane value
-	clamp( lod, 0, 9 );
+	clamp( lod, 0, 15 );
 	
 	shadowmap = group->shadowmap;
 	width = shadowmap->upload_width >> lod;
 	height = shadowmap->upload_height >> lod;
 	if( !width || !height )
-		return 1.0f;
+		return 0.0f;
 
 	refdef->x = 0;
 	refdef->y = 0;
@@ -411,6 +411,9 @@ void R_DrawShadowmaps( void )
 		}
 
 		farClip = R_SetupShadowmapView( group, &refdef, lod );
+		if( farClip <= 0.0f ) {
+			continue;
+		}
 
 		// ignore shadowmaps of very low detail level
 		if( refdef.width < SHADOWMAP_MIN_VIEWPORT_SIZE || refdef.height < SHADOWMAP_MIN_VIEWPORT_SIZE ) {
