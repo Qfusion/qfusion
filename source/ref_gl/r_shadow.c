@@ -393,9 +393,6 @@ void R_DrawShadowmaps( void )
 
 		// calculate LOD for shadowmap
 		lod = (int)((DistanceFast( group->origin, lodOrigin ) * lodScale) / group->projDist);
-		if( lod < 0 ) {
-			lod = 0;
-		}
 
 		// allocate/resize the texture if needed
 		shadowmap = R_GetShadowmapTexture( i, rsc.refdef.width, rsc.refdef.height, 0 );
