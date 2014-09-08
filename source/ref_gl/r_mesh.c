@@ -444,7 +444,7 @@ static void _R_DrawSurfaces( void )
 
 			RB_BindShader( entity, shader, fog );
 
-			RB_SetShadowBits( rsc.entShadowBits[entNum] & rn.shadowBits );
+			RB_SetShadowBits( (rsc.entShadowBits[entNum] & rn.shadowBits) & rsc.renderedShadowBits );
 
 			RB_SetPortalSurface( portalSurface );
 

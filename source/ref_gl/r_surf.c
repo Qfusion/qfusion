@@ -193,7 +193,7 @@ qboolean R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	}
 
 	if( drawSurf->shadowFrame == rsc.frameCount ) {
-		RB_SetShadowBits( drawSurf->shadowBits & rn.shadowBits );
+		RB_SetShadowBits( (drawSurf->shadowBits & rn.shadowBits) & rsc.renderedShadowBits );
 	}
 	else {
 		RB_SetShadowBits( 0 );
