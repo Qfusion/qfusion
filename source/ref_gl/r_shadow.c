@@ -297,16 +297,13 @@ static float R_SetupShadowmapView( shadowGroup_t *group, refdef_t *refdef, int l
 	image_t *shadowmap;
 
 	// clamp LOD to a sane value
-	clamp( lod, 0, 15 );
+	clamp( lod, 0, 9 );
 	
 	shadowmap = group->shadowmap;
-	// >= so it fails if r_shadows_maxtexsize is 0 (and 1x1 is still too small)
-	if( shadowmap->upload_width <= (1<<lod) || shadowmap->upload_height <= (1<<lod) ) {
-		return 1.0f;
-	}
-
 	width = shadowmap->upload_width >> lod;
 	height = shadowmap->upload_height >> lod;
+	if( !width || !height )
+		return 1.0f;
 
 	refdef->x = 0;
 	refdef->y = 0;
