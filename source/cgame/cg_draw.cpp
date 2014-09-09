@@ -72,6 +72,7 @@ void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, in
 	char num[16], *ptr;
 	int length;
 	int frame;
+	float u, v;
 
 	// draw number string
 	Q_snprintfz( num, sizeof( num ), "%i", value );
@@ -88,7 +89,9 @@ void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, in
 			frame = STAT_MINUS;
 		else
 			frame = *ptr - '0';
-		trap_R_DrawStretchPic( x, y, charwidth, charheight, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.sbNums[frame] ) );
+		u = ( frame & 3 ) * 0.25f;
+		v = ( frame >> 2 ) * 0.25f;
+		trap_R_DrawStretchPic( x, y, charwidth, charheight, u, v, u + 0.25f, v + 0.25f, color, CG_MediaShader( cgs.media.shaderSbNums ) );
 		x += charwidth;
 		ptr++;
 		length--;
@@ -103,6 +106,7 @@ void CG_DrawHUDField( int x, int y, int align, float *color, int size, int width
 	char num[16], *ptr;
 	int length, maxwidth, w, h;
 	int frame;
+	float u, v;
 
 	if( width < 0 )
 		return;
@@ -134,7 +138,9 @@ void CG_DrawHUDField( int x, int y, int align, float *color, int size, int width
 			frame = STAT_MINUS;
 		else
 			frame = *ptr -'0';
-		trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.sbNums[frame] ) );
+		u = ( frame & 3 ) * 0.25f;
+		v = ( frame >> 2 ) * 0.25f;
+		trap_R_DrawStretchPic( x, y, w, h, u, v, u + 0.25f, v + 0.25f, color, CG_MediaShader( cgs.media.shaderSbNums ) );
 		x += w;
 		ptr++;
 		length--;

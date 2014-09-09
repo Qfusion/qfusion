@@ -285,16 +285,6 @@ struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader )
 	return ( struct shader_s * )mediashader->data;
 }
 
-static const char *sb_nums[11] =
-{
-	"gfx/hud/0", "gfx/hud/1",
-	"gfx/hud/2", "gfx/hud/3",
-	"gfx/hud/4", "gfx/hud/5",
-	"gfx/hud/6", "gfx/hud/7",
-	"gfx/hud/8", "gfx/hud/9",
-	"gfx/hud/minus"
-};
-
 
 /*
 * CG_RegisterMediaShaders
@@ -361,7 +351,10 @@ void CG_RegisterMediaShaders( void )
 
 	cgs.media.shaderLaser = CG_RegisterMediaShader( "gfx/misc/laser", false );
 
-	cgs.media.shaderFlagFlare = CG_RegisterMediaShader( PATH_FLAG_FLARE_SHADER, false ); // load only in ctf
+	// ctf
+	cgs.media.shaderFlagFlare = CG_RegisterMediaShader( PATH_FLAG_FLARE_SHADER, false );
+	for( i = 0; i < 10; i++ )
+		cgs.media.shaderFlagNums[i] = CG_RegisterMediaShader( va( "gfx/hud/%i", i ), false );
 
 	cgs.media.shaderRaceGhostEffect = CG_RegisterMediaShader( "gfx/raceghost", false );
 
@@ -404,11 +397,7 @@ void CG_RegisterMediaShaders( void )
 	cgs.media.shaderKeyIconOff[KEYICON_CROUCH] = CG_RegisterMediaShader( PATH_KEYICON_CROUCH_OFF, true );
 	cgs.media.shaderKeyIconOff[KEYICON_SPECIAL] = CG_RegisterMediaShader( PATH_KEYICON_SPECIAL_OFF, true );
 
-	for( i = 0; i < 11; i++ )
-	{
-		cgs.media.sbNums[i] = CG_RegisterMediaShader( sb_nums[i], true );
-	}
-
+	cgs.media.shaderSbNums = CG_RegisterMediaShader( "gfx/hud/sbnums", true );
 	for( i = 0; i < NUM_CROSSHAIRS; i++ )
 		cgs.media.shaderCrosshair[i] = CG_RegisterMediaShader( va( "gfx/hud/crosshair%i", i ), true );
 
