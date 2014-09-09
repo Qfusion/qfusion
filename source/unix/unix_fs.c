@@ -30,6 +30,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <unistd.h>
 #include <sys/stat.h>
 
+#ifdef __ANDROID__
+#include "../android/android_sys.h"
+#endif
+
 // Mac OS X and FreeBSD don't know the readdir64 and dirent64
 #if ( defined (__FreeBSD__) || defined (__ANDROID__) || !defined(_LARGEFILE64_SOURCE) )
 #define readdir64 readdir
@@ -219,6 +223,18 @@ const char *Sys_FS_GetHomeDirectory( void )
 #endif
 	return home;
 
+#else
+	return NULL;
+#endif
+}
+
+/*
+* Sys_FS_GetSecureDirectory
+*/
+const char *Sys_FS_GetSecureDirectory( void )
+{
+#ifdef __ANDROID__
+	return sys_android_app->activity->internalDataPath;
 #else
 	return NULL;
 #endif

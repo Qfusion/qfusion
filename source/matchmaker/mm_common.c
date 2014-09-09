@@ -40,8 +40,8 @@ static const char *mm_passwordFilename( const char *user )
 
 	user64 = (char*)base64_encode( (unsigned char*)user, strlen(user), NULL );
 
-	Q_strncpyz( filename, user64, sizeof( filename ) - 1 );
-	Q_strncatz( filename, ".profile", sizeof( filename ) - 1 );
+	Q_snprintfz( filename, sizeof( filename ), "%s/%s/%s.profile",
+		FS_SecureDirectory(), FS_GameDirectory(), user64 );
 
 	free( user64 );
 
@@ -59,7 +59,7 @@ const char *MM_PasswordRead( const char *user )
 	Com_DPrintf( "MM_PasswordRead %s\n", user );
 
 	filename = mm_passwordFilename( user );
-	if( FS_FOpenFile( filename, &filenum, FS_READ ) == -1 )
+	if( FS_FOpenAbsoluteFile( filename, &filenum, FS_READ ) == -1 )
 	{
 		Com_Printf( "MM_PasswordRead: Couldnt open file %s\n", filename);
 		return NULL;
@@ -84,7 +84,7 @@ void MM_PasswordWrite( const char *user, const char *password )
 	Com_DPrintf( "MM_PasswordWrite: %s %s\n", user, password );
 
 	filename = mm_passwordFilename( user );
-	if( FS_FOpenFile( filename, &filenum, FS_WRITE ) == -1 )
+	if( FS_FOpenAbsoluteFile( filename, &filenum, FS_WRITE ) == -1 )
 	{
 		Com_Printf( "MM_PasswordWrite: Failed to open %s for writing\n", filename );
 		return;
