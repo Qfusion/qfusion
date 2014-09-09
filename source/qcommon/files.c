@@ -3000,6 +3000,17 @@ const char *FS_WriteDirectory( void )
 }
 
 /*
+* FS_SecureDirectory
+*
+* Returns directory with higher security (for instance, not accessible for other apps)
+*/
+const char *FS_SecureDirectory( void )
+{
+	const char *dir = Sys_FS_GetSecureDirectory();
+	return dir ? dir : FS_WriteDirectory();
+}
+
+/*
 * FS_Path_f
 */
 static void FS_Path_f( void )
