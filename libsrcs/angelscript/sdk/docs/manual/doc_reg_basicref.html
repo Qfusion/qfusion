@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -61,7 +64,7 @@ $(document).ready(function(){initNavTree('doc_reg_basicref.html','');});
 <a class="el" href="doc_gc_object.html">Garbage collected objects</a>, <a class="el" href="doc_adv_class_hierarchy.html">Class hierarchies</a>, <a class="el" href="doc_adv_scoped_type.html">Registering a scoped reference type</a>, and <a class="el" href="doc_adv_single_ref_type.html">Registering a single-reference type</a> for more advanced types.</dd></dl>
 <h1><a class="anchor" id="doc_reg_basicref_1"></a>
 Factory function</h1>
-<p>The factory function is the one that AngelScript will use to instanciate objects of this type when a variable is declared. It is responsible for allocating and initializing the object memory.</p>
+<p>The factory function is the one that AngelScript will use to instantiate objects of this type when a variable is declared. It is responsible for allocating and initializing the object memory.</p>
 <p>The default factory function doesn't take any parameters and should return an object handle for the new object. Make sure the object's reference counter is accounting for the reference being returned by the factory function, so that the object is properly released when all references to it are removed.</p>
 <div class="fragment"><div class="line">CRef::CRef()</div>
 <div class="line">{</div>
@@ -106,12 +109,12 @@ Reference types without reference counting</h1>
 <div class="fragment"><div class="line"><span class="comment">// Registering the reference type</span></div>
 <div class="line">r = engine-&gt;<a class="code" href="classas_i_script_engine.html#a29c6c087c8c5b5cdb6271cfd161cc5a6" title="Registers a new object type.">RegisterObjectType</a>(<span class="stringliteral">&quot;ref&quot;</span>, 0, <a class="code" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa9450e038342b36c745858d2e5ae4b861" title="A reference type.">asOBJ_REF</a> | <a class="code" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aad8b12da6bf9cd48990d48c2ddf13584d" title="The type doesn&#39;t use reference counting. Only valid for reference types.">asOBJ_NOCOUNT</a>); assert( r &gt;= 0 );</div>
 </div><!-- fragment --><p>Without the addref and release behaviours the application must be careful to not destroy any objects that may potentially still be referenced by the script engine, e.g. in a global variable, or other location.</p>
-<p>Unless the objects are guaranteed to stay alive as long as the script engine is instanciated, you may want to consider disabling global variables with engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fab81c81f4fdeb616dd6487da48a0c3456">asEP_DISALLOW_GLOBAL_VARS</a>. This will make it much easier for the application to know where references to the objects are kept. An alternative to disabling all global variables, is to selectively disallow only the global variables, that can eventually store a reference to the object type. This can be done by <a class="el" href="classas_i_script_module.html#a87e29773f7e6f2980d75288faaa74d02">enumerating the compiled global variables</a> after script has been built and giving an error to the user incase he includes a variable he shouldn't.</p>
+<p>Unless the objects are guaranteed to stay alive as long as the script engine is instantiated, you may want to consider disabling global variables with engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fab81c81f4fdeb616dd6487da48a0c3456">asEP_DISALLOW_GLOBAL_VARS</a>. This will make it much easier for the application to know where references to the objects are kept. An alternative to disabling all global variables, is to selectively disallow only the global variables, that can eventually store a reference to the object type. This can be done by <a class="el" href="classas_i_script_module.html#a87e29773f7e6f2980d75288faaa74d02">enumerating the compiled global variables</a> after script has been built and giving an error to the user in case he includes a variable he shouldn't.</p>
 <h1><a class="anchor" id="doc_reg_basicref_4"></a>
 List factory function</h1>
 <p>The list factory function is a special <a class="el" href="doc_reg_basicref.html#doc_reg_basicref_1">factory function</a> that can be registered to allow a type to be created from an initialization list. The list factory function takes only a single pointer as argument. AngelScript will pass a pointer to the initialization list buffer in that argument. The buffer will contain all the values necessary to create and initialize the object.</p>
-<p>In order for the script engine to know what information must be placed in the buffer the application must provide the list pattern when registering the list factory. The list pattern is declared with a special syntax involving datatypes and the following tokens: {, }, ?, and repeat.</p>
-<p>The tokens { } are used to declare that the list pattern expects a list of values or a sublist of values. The repeat token is used to signal that the next type or sub list can be repeated 0 or more times. Any data type can be used in the list pattern, as long as it can be passed by value. When a variable type is desired the token ? can be used.</p>
+<p>In order for the script engine to know what information must be placed in the buffer the application must provide the list pattern when registering the list factory. The list pattern is declared with a special syntax involving datatypes and the following tokens: {, }, ?, repeat, and repeat_same.</p>
+<p>The tokens { } are used to declare that the list pattern expects a list of values or a sublist of values. The repeat token is used to signal that the next type or sub list can be repeated 0 or more times. The repeat_same token is similar to repeat except that it also tells the compiler that every time the same list is repeated it should have the same length. Any data type can be used in the list pattern, as long as it can be passed by value. When a variable type is desired the token ? can be used.</p>
 <p>Here's a couple of examples for registering list factories with list patterns:</p>
 <div class="fragment"><div class="line"><span class="comment">// The array type can be initialized for example with: intarray a = {1,2,3};</span></div>
 <div class="line">engine-&gt;<a class="code" href="classas_i_script_engine.html#a7754e9c37f9fbf2c763a41fbcf54fd12" title="Registers a behaviour for the object type.">RegisterObjectBehaviour</a>(<span class="stringliteral">&quot;intarray&quot;</span>, <a class="code" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aea078bc3b877ce33a2335e78ddb4938d" title="Factory used exclusively for initialization lists.">asBEHAVE_LIST_FACTORY</a>, </div>
@@ -120,6 +123,10 @@ List factory function</h1>
 <div class="line"><span class="comment">// The dictionary type can be initialized with: dictionary d = {{&#39;a&#39;,1}, {&#39;b&#39;,2}, {&#39;c&#39;,3}};</span></div>
 <div class="line">engine-&gt;<a class="code" href="classas_i_script_engine.html#a7754e9c37f9fbf2c763a41fbcf54fd12" title="Registers a behaviour for the object type.">RegisterObjectBehaviour</a>(<span class="stringliteral">&quot;dictionary&quot;</span>, <a class="code" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aea078bc3b877ce33a2335e78ddb4938d" title="Factory used exclusively for initialization lists.">asBEHAVE_LIST_FACTORY</a>, </div>
 <div class="line">  <span class="stringliteral">&quot;dictionary @f(int &amp;in) {repeat {string, ?}}&quot;</span>, ...);</div>
+<div class="line">  </div>
+<div class="line"><span class="comment">// The grid type can be initialized with: grid a = {{1,2},{3,4}};</span></div>
+<div class="line">engine-&gt;RgisterObjectBehaviour(<span class="stringliteral">&quot;grid&quot;</span>, <a class="code" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aea078bc3b877ce33a2335e78ddb4938d" title="Factory used exclusively for initialization lists.">asBEHAVE_LIST_FACTORY</a>,</div>
+<div class="line">  <span class="stringliteral">&quot;grid @f(int &amp;in) {repeat {repeat_same int}}&quot;</span>, ...);</div>
 </div><!-- fragment --><p>The list buffer passed to the factory function will be populated using the following rules:</p>
 <ul>
 <li>Whenever the pattern expects a repeat, the buffer will contain a 32bit integer with the number of repeated values that will come afterwards</li>
@@ -130,15 +137,15 @@ List factory function</h1>
 </ul>
 <dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_addon_array.html">array template object</a> and <a class="el" href="doc_addon_dict.html">dictionary object</a> for example implementations of list factories.</dd></dl>
 <h1><a class="anchor" id="doc_reg_noinst"></a>
-Registering an uninstanciable reference type</h1>
-<p>Sometimes it may be useful to register types that cannot be instanciated by the scripts, yet can be interacted with. You can do this by registering the type as a normal reference type, but omit the registration of the factory behaviour. You can later register global properties, or functions that allow the scripts to access objects created by the application via object handles.</p>
+Registering an uninstantiable reference type</h1>
+<p>Sometimes it may be useful to register types that cannot be instantiated by the scripts, yet can be interacted with. You can do this by registering the type as a normal reference type, but omit the registration of the factory behaviour. You can later register global properties, or functions that allow the scripts to access objects created by the application via object handles.</p>
 <p>This would be used when the application has a limited number of objects available and doesn't want to create new ones. For example singletons, or pooled objects. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:47 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

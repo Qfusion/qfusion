@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -225,12 +228,12 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <tr class="memdesc:a214cc16c4dd889072c1c24c089223a6a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the registered function that is currently being called by the context.  <a href="#a214cc16c4dd889072c1c24c089223a6a">More...</a><br/></td></tr>
 <tr class="separator:a214cc16c4dd889072c1c24c089223a6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">User data</div></td></tr>
-<tr class="memitem:a78e92b53c248534cd278a1498b88680d"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#a78e92b53c248534cd278a1498b88680d">SetUserData</a> (void *data)=0</td></tr>
-<tr class="memdesc:a78e92b53c248534cd278a1498b88680d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register the memory address of some user data.  <a href="#a78e92b53c248534cd278a1498b88680d">More...</a><br/></td></tr>
-<tr class="separator:a78e92b53c248534cd278a1498b88680d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a392613f1140a864cf671ffe2b11c5eae"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#a392613f1140a864cf671ffe2b11c5eae">GetUserData</a> () const =0</td></tr>
-<tr class="memdesc:a392613f1140a864cf671ffe2b11c5eae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the address of the previously registered user data.  <a href="#a392613f1140a864cf671ffe2b11c5eae">More...</a><br/></td></tr>
-<tr class="separator:a392613f1140a864cf671ffe2b11c5eae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a263dc70abb2a8c77adcea7c9ede0a479"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#a263dc70abb2a8c77adcea7c9ede0a479">SetUserData</a> (void *data, <a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a> type=0)=0</td></tr>
+<tr class="memdesc:a263dc70abb2a8c77adcea7c9ede0a479"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register the memory address of some user data.  <a href="#a263dc70abb2a8c77adcea7c9ede0a479">More...</a><br/></td></tr>
+<tr class="separator:a263dc70abb2a8c77adcea7c9ede0a479"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f8503675abfd473915d66a92c6e6df7"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#a0f8503675abfd473915d66a92c6e6df7">GetUserData</a> (<a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a> type=0) const =0</td></tr>
+<tr class="memdesc:a0f8503675abfd473915d66a92c6e6df7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the address of the previously registered user data.  <a href="#a0f8503675abfd473915d66a92c6e6df7">More...</a><br/></td></tr>
+<tr class="separator:a0f8503675abfd473915d66a92c6e6df7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>The script context provides the interface for a single script execution. The object stores the call stack where the local variables used by the execution are kept, however it doesn't keep copies of global variables as these are stored in the <a class="el" href="classas_i_script_module.html">asIScriptModule</a>, and only referenced by the context.</p>
@@ -963,7 +966,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 
 </div>
 </div>
-<a class="anchor" id="a392613f1140a864cf671ffe2b11c5eae"></a>
+<a class="anchor" id="a0f8503675abfd473915d66a92c6e6df7"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -973,7 +976,8 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
         <tr>
           <td class="memname">virtual void* asIScriptContext::GetUserData </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a>&#160;</td>
+          <td class="paramname"><em>type</em> = <code>0</code></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -983,6 +987,12 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
   </tr>
 </table>
 </div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">type</td><td>An identifier specifying the user data to set. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>The pointer to the user data. </dd></dl>
 
 </div>
@@ -1298,7 +1308,10 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <dl class="section return"><dt>Returns</dt><dd>A negative value on error. </dd></dl>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
-    <tr><td class="paramname">asCONTEXT_ACTIVE</td><td>The context is still active or suspended.</td></tr>
+    <tr><td class="paramname">asCONTEXT_ACTIVE</td><td>The context is still active or suspended. </td></tr>
+    <tr><td class="paramname">asNO_FUNCTION</td><td>The function pointer is null. </td></tr>
+    <tr><td class="paramname">asINVALID_ARG</td><td>The function is from a different engine than the context. </td></tr>
+    <tr><td class="paramname">asOUT_OF_MEMORY</td><td>The context ran out of memory while allocating call stack.</td></tr>
   </table>
   </dd>
 </dl>
@@ -1973,7 +1986,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 
 </div>
 </div>
-<a class="anchor" id="a78e92b53c248534cd278a1498b88680d"></a>
+<a class="anchor" id="a263dc70abb2a8c77adcea7c9ede0a479"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1984,8 +1997,18 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
           <td class="memname">virtual void* asIScriptContext::SetUserData </td>
           <td>(</td>
           <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>data</em></td><td>)</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a>&#160;</td>
+          <td class="paramname"><em>type</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -1997,12 +2020,14 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>A pointer to the user data. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">type</td><td>An identifier specifying the user data to set. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The previous pointer stored in the context.</dd></dl>
 <p>This method allows the application to associate a value, e.g. a pointer, with the context instance.</p>
-<p>Optionally, a callback function can be <a class="el" href="classas_i_script_engine.html#aafa5ed8214fc2029a6b5228e5cf60d6e">registered</a> to clean up the user data when the context is destroyed. As the callback is registered with the engine, it is only necessary to do it once, even if more than one context is used. </p>
+<p>The type values 1000 through 1999 are reserved for use by the official add-ons.</p>
+<p>Optionally, a callback function can be <a class="el" href="classas_i_script_engine.html#acaced7eb9ebe013ede23f7593daf58e3">registered</a> to clean up the user data when the context is destroyed. As the callback is registered with the engine, it is only necessary to do it once, even if more than one context is used. </p>
 
 </div>
 </div>
@@ -2078,7 +2103,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classas_i_script_context.html">asIScriptContext</a></li>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:48 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

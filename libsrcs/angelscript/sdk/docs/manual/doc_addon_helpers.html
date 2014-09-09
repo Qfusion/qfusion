@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -84,20 +87,14 @@ Public C++ interface</h1>
 <div class="line"><span class="comment">// file manually.</span></div>
 <div class="line"><span class="keywordtype">int</span> WriteConfigToFile(<a class="code" href="classas_i_script_engine.html" title="The engine interface.">asIScriptEngine</a> *engine, <span class="keyword">const</span> <span class="keywordtype">char</span> *filename);</div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Print information on script exception to the standard output.</span></div>
+<div class="line"><span class="comment">// Format the details of the script exception into a human readable text.</span></div>
 <div class="line"><span class="comment">// Whenever the asIScriptContext::Execute method returns asEXECUTION_EXCEPTION, the application </span></div>
-<div class="line"><span class="comment">// can call this function to print some more information about that exception onto the standard</span></div>
-<div class="line"><span class="comment">// output. The information obtained includes the current function, the script source section, </span></div>
+<div class="line"><span class="comment">// can call this function to get more information about that exception in a human readable form.</span></div>
+<div class="line"><span class="comment">// The information obtained includes the current function, the script source section, </span></div>
 <div class="line"><span class="comment">// program position in the source section, and the exception description itself.</span></div>
-<div class="line"><span class="keywordtype">void</span> PrintException(<a class="code" href="classas_i_script_context.html" title="The interface to the virtual machine.">asIScriptContext</a> *ctx, <span class="keywordtype">bool</span> printStack = <span class="keyword">false</span>);</div>
-<div class="line"></div>
-<div class="line"><span class="comment">// Determine the application type flags to use when registering the object type as a value type with </span></div>
-<div class="line"><span class="comment">// AngelScript. The function is not capable of determining the flags that describes the content of the </span></div>
-<div class="line"><span class="comment">// type though, so those flags must still be informed manually if needed. This template function will </span></div>
-<div class="line"><span class="comment">// only compile correctly if the C++ compiler supports the C++11 standard. </span></div>
-<div class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> GetTypeTraits();</div>
-</div><!-- fragment --><h1><a class="anchor" id="doc_addon_helpers_2"></a>
+<div class="line">std::string GetExceptionInfo(<a class="code" href="classas_i_script_context.html" title="The interface to the virtual machine.">asIScriptContext</a> *ctx, <span class="keywordtype">bool</span> showStack = <span class="keyword">false</span>);</div>
+</div><!-- fragment --><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000001">Todo:</a></b></dt><dd>WriteConfigToStream, ConfigEngineFromStream</dd></dl>
+<h1><a class="anchor" id="doc_addon_helpers_2"></a>
 Example</h1>
 <p>To compare two script objects the application can execute the following code:</p>
 <div class="fragment"><div class="line"><span class="keywordtype">void</span> Compare(<a class="code" href="classas_i_script_object.html" title="The interface for an instance of a script object.">asIScriptObject</a> *a, <a class="code" href="classas_i_script_object.html" title="The interface for an instance of a script object.">asIScriptObject</a> *b)</div>
@@ -126,7 +123,7 @@ Example</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:46 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:27 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

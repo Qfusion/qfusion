@@ -27,7 +27,7 @@ var classas_i_script_context =
     [ "GetSystemFunction", "classas_i_script_context.html#a214cc16c4dd889072c1c24c089223a6a", null ],
     [ "GetThisPointer", "classas_i_script_context.html#a4f6761a7a0c872dda681d8e180830ff9", null ],
     [ "GetThisTypeId", "classas_i_script_context.html#a404681f8950c1ebd9382d30ef1ed3b89", null ],
-    [ "GetUserData", "classas_i_script_context.html#a392613f1140a864cf671ffe2b11c5eae", null ],
+    [ "GetUserData", "classas_i_script_context.html#a0f8503675abfd473915d66a92c6e6df7", null ],
     [ "GetVarCount", "classas_i_script_context.html#a3d735c6c7c5a166302cc4ba8ea38e3e8", null ],
     [ "GetVarDeclaration", "classas_i_script_context.html#ae3419d239a51d702870b1ab8ee1b7140", null ],
     [ "GetVarName", "classas_i_script_context.html#aac398eb23d9f17fcbeaa3f3809f8923d", null ],
@@ -50,7 +50,7 @@ var classas_i_script_context =
     [ "SetExceptionCallback", "classas_i_script_context.html#a4d1f481473df3f7aefccc5bb6904e405", null ],
     [ "SetLineCallback", "classas_i_script_context.html#ae2747f643bf9a07364f922c460ef57dd", null ],
     [ "SetObject", "classas_i_script_context.html#a10d3c152b25d07584999f4d9fe5ce8b1", null ],
-    [ "SetUserData", "classas_i_script_context.html#a78e92b53c248534cd278a1498b88680d", null ],
+    [ "SetUserData", "classas_i_script_context.html#a263dc70abb2a8c77adcea7c9ede0a479", null ],
     [ "Suspend", "classas_i_script_context.html#ad4ac8be3586c46069b5870e40c86544a", null ],
     [ "Unprepare", "classas_i_script_context.html#ae3c18a2cc66c56f840e6ee4310287f65", null ]
 ];

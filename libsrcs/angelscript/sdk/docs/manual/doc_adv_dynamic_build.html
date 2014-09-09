@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -83,7 +86,7 @@ Things to consider</h2>
 <li><a class="el" href="doc_script_shared.html">Shared script entities</a> will not be recompiled if some module or existing object (including those pending destruction in the garbage collector) still refers to the code. It's recommended that you minimize the use of shared entities to where necessary so as to minimize the need to modify them.</li>
 <li>The <a class="el" href="classas_i_script_context.html">asIScriptContext</a> cannot be serialized so avoid reloading scripts that may still be referred to by a context, e.g. in a suspended state. It is quite likely that the application will crash if the module is reloaded while a context has one of the functions on the callstack.</li>
 <li>Before discarding the original objects, consider doing a test compilation of the modified scripts in a temporary module first, and only go ahead with the hot reloading if the test compilation is successful. That way you can catch compilation errors that would otherwise cause the recreation of the new objects to fail.</li>
-<li>When recreating object instances you can take advantage of the method <a class="el" href="classas_i_script_engine.html#a8fe709ccb1d13977afb35f8726f380fb">asIScriptEngine::CreateUninitializedScriptObject</a> to create the objects without actually executing the script class constructor, which may have unwanted side effects during the reload.</li>
+<li>When recreating object instances you can take advantage of the method <a class="el" href="classas_i_script_engine.html#a13affe923adb90b90d4b6e869f00c4e2">asIScriptEngine::CreateUninitializedScriptObject</a> to create the objects without actually executing the script class constructor, which may have unwanted side effects during the reload.</li>
 <li>Decide what to do when the script modifications introduces new object properties or removes existing properties, as you will not be able to restore the exact same object state then. Perhaps the new property can be filled with some default value to allow the continuation of the execution? Or perhaps the script itself can have a special event handler to provide the initial value of the new member?</li>
 <li>The <a class="el" href="doc_addon_serializer.html">Serializer</a> add-on has been implemented to aid the implementation of hot reloading scripts, though it may not suit all types of applications.</li>
 </ul>
@@ -93,7 +96,7 @@ Things to consider</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:46 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

@@ -46,26 +46,28 @@ BEGIN_AS_NAMESPACE
 
 asCDataType::asCDataType()
 {
-	tokenType      = ttUnrecognizedToken;
-	objectType     = 0;
-	isReference    = false;
-	isReadOnly     = false;
-	isAuto         = false;
-	isObjectHandle = false;
-	isConstHandle  = false;
-	funcDef        = 0;
+	tokenType              = ttUnrecognizedToken;
+	objectType             = 0;
+	isReference            = false;
+	isReadOnly             = false;
+	isAuto                 = false;
+	isObjectHandle         = false;
+	isConstHandle          = false;
+	funcDef                = 0;
+	isHandleToAsHandleType = false;
 }
 
 asCDataType::asCDataType(const asCDataType &dt)
 {
-	tokenType      = dt.tokenType;
-	objectType     = dt.objectType;
-	isReference    = dt.isReference;
-	isReadOnly     = dt.isReadOnly;
-	isAuto         = dt.isAuto;
-	isObjectHandle = dt.isObjectHandle;
-	isConstHandle  = dt.isConstHandle;
-	funcDef        = dt.funcDef;
+	tokenType              = dt.tokenType;
+	objectType             = dt.objectType;
+	isReference            = dt.isReference;
+	isReadOnly             = dt.isReadOnly;
+	isAuto                 = dt.isAuto;
+	isObjectHandle         = dt.isObjectHandle;
+	isConstHandle          = dt.isConstHandle;
+	funcDef                = dt.funcDef;
+	isHandleToAsHandleType = dt.isHandleToAsHandleType;
 }
 
 asCDataType::~asCDataType()
@@ -231,14 +233,15 @@ asCString asCDataType::Format(bool includeNamespace) const
 
 asCDataType &asCDataType::operator =(const asCDataType &dt)
 {
-	tokenType        = dt.tokenType;
-	isReference      = dt.isReference;
-	objectType       = dt.objectType;
-	isReadOnly       = dt.isReadOnly;
-	isObjectHandle   = dt.isObjectHandle;
-	isConstHandle    = dt.isConstHandle;
-	isAuto           = dt.isAuto;
-	funcDef          = dt.funcDef;
+	tokenType              = dt.tokenType;
+	isReference            = dt.isReference;
+	objectType             = dt.objectType;
+	isReadOnly             = dt.isReadOnly;
+	isObjectHandle         = dt.isObjectHandle;
+	isConstHandle          = dt.isConstHandle;
+	isAuto                 = dt.isAuto;
+	funcDef                = dt.funcDef;
+	isHandleToAsHandleType = dt.isHandleToAsHandleType;
 
 	return (asCDataType &)*this;
 }
@@ -249,6 +252,7 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 	{
 		isObjectHandle = false;
 		isConstHandle = false;
+		isHandleToAsHandleType = false;
 	}
 	else
 	{
@@ -275,7 +279,10 @@ int asCDataType::MakeHandle(bool b, bool acceptHandleForScope)
 
 			// ASHANDLE supports being handle, but as it really is a value type it will not be marked as a handle
 			if( (objectType->flags & asOBJ_ASHANDLE) )
+			{
 				isObjectHandle = false;
+				isHandleToAsHandleType = true;
+			}
 		}
 	}
 
@@ -333,7 +340,7 @@ int asCDataType::MakeHandleToConst(bool b)
 bool asCDataType::SupportHandles() const
 {
 	if( objectType &&
-		(objectType->flags & asOBJ_REF) && 
+		(objectType->flags & (asOBJ_REF | asOBJ_ASHANDLE)) && 
 		!(objectType->flags & asOBJ_NOHANDLE) &&
 		!isObjectHandle )
 		return true;
@@ -341,17 +348,37 @@ bool asCDataType::SupportHandles() const
 	return false;
 }
 
-bool asCDataType::CanBeInstanciated() const
+bool asCDataType::CanBeInstantiated() const
 {
-	if( GetSizeOnStackDWords() == 0 ||
-		(IsObject() && 
-		 (objectType->flags & asOBJ_REF) &&        // It's a ref type and
-		 ((objectType->flags & asOBJ_NOHANDLE) ||  // the ref type doesn't support handles or
-		  (!IsObjectHandle() &&                    // it's not a handle and
-		   objectType->beh.factories.GetLength() == 0))) ) // the ref type cannot be instanciated
+	if( GetSizeOnStackDWords() == 0 ) // Void
+		return false;
+
+	if( !IsObject() ) // Primitives
+		return true; 
+
+	if( IsObjectHandle() && !(objectType->flags & asOBJ_NOHANDLE) ) // Handles
+		return true;
+
+	if( funcDef ) // Funcdefs can be instantiated as delegates
+		 return true;
+
+	if( (objectType->flags & asOBJ_REF) && objectType->beh.factories.GetLength() == 0 ) // ref types without factories
+		return false;
+
+	if( (objectType->flags & asOBJ_ABSTRACT) && !IsObjectHandle() ) // Can't instantiate abstract classes
 		return false;
 
 	return true;
+}
+
+bool asCDataType::IsAbstractClass() const
+{
+	return objectType && (objectType->flags & asOBJ_ABSTRACT) ? true : false;
+}
+
+bool asCDataType::IsInterface() const
+{
+	return objectType && objectType->IsInterface();
 }
 
 bool asCDataType::CanBeCopied() const
@@ -362,8 +389,8 @@ bool asCDataType::CanBeCopied() const
 	// Plain-old-data structures can always be copied
 	if( objectType->flags & asOBJ_POD ) return true;
 
-	// It must be possible to instanciate the type
-	if( !CanBeInstanciated() ) return false;
+	// It must be possible to instantiate the type
+	if( !CanBeInstantiated() ) return false;
 
 	// It must have a default constructor or factory
 	if( objectType->beh.construct == 0 &&

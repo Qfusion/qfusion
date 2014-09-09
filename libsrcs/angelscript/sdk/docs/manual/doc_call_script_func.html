@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -167,13 +170,13 @@ Exception handling</h1>
 <div class="line">  printf(<span class="stringliteral">&quot;line: %d\n&quot;</span>, ctx-&gt;<a class="code" href="classas_i_script_context.html#a22e3c351fe6b13ba0a62010dfc305080" title="Returns the line number where the exception occurred.">GetExceptionLineNumber</a>());</div>
 <div class="line">}</div>
 </div><!-- fragment --><p>If desired, it is also possible to <a class="el" href="classas_i_script_context.html#a4d1f481473df3f7aefccc5bb6904e405">register a callback function</a> that will be called at the moment the exception occurred, before the <a class="el" href="classas_i_script_context.html#a8e52894432737acac2e1a422e496bf84">Execute</a> method returns.</p>
-<dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_debug.html">Debugging scripts</a> for information on examining the callstack, and <a class="el" href="doc_addon_helpers.html">PrintException</a> for an helper function to get information on exceptions. </dd></dl>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_debug.html">Debugging scripts</a> for information on examining the callstack, and <a class="el" href="doc_addon_helpers.html">GetExceptionInfo</a> for a helper function to get information on exceptions. </dd></dl>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:47 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

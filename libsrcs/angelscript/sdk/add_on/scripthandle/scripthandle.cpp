@@ -136,6 +136,14 @@ CScriptHandle &CScriptHandle::Assign(void *ref, int typeId)
 	asIScriptEngine  *engine = ctx->GetEngine();
 	asIObjectType    *type   = engine->GetObjectTypeById(typeId);
 
+	// If the argument is another CScriptHandle, we should copy the content instead
+	if( type && strcmp(type->GetName(), "ref") == 0 )
+	{
+		CScriptHandle *r = (CScriptHandle*)ref;
+		ref  = r->m_ref;
+		type = r->m_type;
+	}
+
 	Set(ref, type);
 
 	return *this;
@@ -227,9 +235,9 @@ void CScriptHandle::Cast(void **outRef, int typeId)
 	}
 	else
 	{
-		// TODO: Check for the existance of a reference cast behaviour. 
+		// TODO: Check for the existance of a reference cast behaviour.
 		//       Both implicit and explicit casts may be used
-		//       Calling the reference cast behaviour may change the actual 
+		//       Calling the reference cast behaviour may change the actual
 		//       pointer so the AddRef must be called on the new pointer
 	}
 }
@@ -246,8 +254,8 @@ void RegisterScriptHandle_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_CONSTRUCT, "void f(const ?&in)", asFUNCTIONPR(Construct, (CScriptHandle *, void *, int), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_DESTRUCT, "void f()", asFUNCTIONPR(Destruct, (CScriptHandle *), void), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("ref", asBEHAVE_REF_CAST, "void f(?&out)", asMETHODPR(CScriptHandle, Cast, (void **, int), void), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ref &in)", asMETHOD(CScriptHandle, operator=), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("ref", "ref &opAssign(const ?&in)", asMETHOD(CScriptHandle, Assign), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ref &in)", asMETHOD(CScriptHandle, operator=), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("ref", "ref &opHndlAssign(const ?&in)", asMETHOD(CScriptHandle, Assign), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ref &in) const", asMETHODPR(CScriptHandle, operator==, (const CScriptHandle &) const, bool), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("ref", "bool opEquals(const ?&in) const", asMETHODPR(CScriptHandle, Equals, (void*, int) const, bool), asCALL_THISCALL); assert( r >= 0 );
 }

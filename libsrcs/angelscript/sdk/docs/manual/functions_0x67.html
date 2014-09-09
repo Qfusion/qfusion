@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -53,7 +56,7 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 
 <h3><a class="anchor" id="index_g"></a>- g -</h3><ul>
 <li>GarbageCollect()
-: <a class="el" href="classas_i_script_engine.html#a4beff0f3d176199019c60d282e87c8d1">asIScriptEngine</a>
+: <a class="el" href="classas_i_script_engine.html#a17511a1de72ecdb836b974768f2ec422">asIScriptEngine</a>
 </li>
 <li>GCEnumCallback()
 : <a class="el" href="classas_i_script_engine.html#a58ceeafd780dea3543e0ede4106199fd">asIScriptEngine</a>
@@ -134,7 +137,7 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 , <a class="el" href="classas_i_script_function.html#afea841f0923573cea81467ac90b71996">asIScriptFunction</a>
 </li>
 <li>GetDeclaration()
-: <a class="el" href="classas_i_script_function.html#a863e61c60b5274adab2e38af28c08de5">asIScriptFunction</a>
+: <a class="el" href="classas_i_script_function.html#a2fb021b09ae0e7e87f8fa4fdfd39df83">asIScriptFunction</a>
 </li>
 <li>GetDefaultArrayTypeId()
 : <a class="el" href="classas_i_script_engine.html#ae86e5444979b0abd92777be83c53fc80">asIScriptEngine</a>
@@ -342,19 +345,23 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 : <a class="el" href="classas_i_script_function.html#a69e30464d13867fb72e66ce3365fdec8">asIScriptFunction</a>
 </li>
 <li>GetObjectType()
-: <a class="el" href="classas_i_script_object.html#aeafb60827d684cdc1df38894a3fb47ef">asIScriptObject</a>
-, <a class="el" href="classas_i_script_function.html#a73442bb7c6dca067ae2f4d3d069d19de">asIScriptFunction</a>
+: <a class="el" href="classas_i_script_function.html#a73442bb7c6dca067ae2f4d3d069d19de">asIScriptFunction</a>
+, <a class="el" href="classas_i_script_object.html#aeafb60827d684cdc1df38894a3fb47ef">asIScriptObject</a>
+</li>
+<li>GetObjectTypeByDecl()
+: <a class="el" href="classas_i_script_engine.html#ad144e0bdfbc87041e88aaaf1b51ec8ad">asIScriptEngine</a>
+, <a class="el" href="classas_i_script_module.html#a258e9b92f64468af1e12f8dff59d9969">asIScriptModule</a>
 </li>
 <li>GetObjectTypeById()
 : <a class="el" href="classas_i_script_engine.html#a52f3e08240c9fc493793036721cbd5ce">asIScriptEngine</a>
 </li>
 <li>GetObjectTypeByIndex()
-: <a class="el" href="classas_i_script_engine.html#ac0a40a93ca9df41b7e56dd846a98cd92">asIScriptEngine</a>
-, <a class="el" href="classas_i_script_module.html#a33ebba99a6358ccfb0c154fca7f58f77">asIScriptModule</a>
+: <a class="el" href="classas_i_script_module.html#a33ebba99a6358ccfb0c154fca7f58f77">asIScriptModule</a>
+, <a class="el" href="classas_i_script_engine.html#ac0a40a93ca9df41b7e56dd846a98cd92">asIScriptEngine</a>
 </li>
 <li>GetObjectTypeByName()
-: <a class="el" href="classas_i_script_module.html#a81b15d88f98902173400dd1e32722b58">asIScriptModule</a>
-, <a class="el" href="classas_i_script_engine.html#a4c44c6cc32407c92d0bb4dfb871ee943">asIScriptEngine</a>
+: <a class="el" href="classas_i_script_engine.html#a4c44c6cc32407c92d0bb4dfb871ee943">asIScriptEngine</a>
+, <a class="el" href="classas_i_script_module.html#a81b15d88f98902173400dd1e32722b58">asIScriptModule</a>
 </li>
 <li>GetObjectTypeCount()
 : <a class="el" href="classas_i_script_engine.html#ac2667fbe30dd00ed14bc14e6ef7fc725">asIScriptEngine</a>
@@ -362,6 +369,9 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 </li>
 <li>GetObjectTypeId()
 : <a class="el" href="classas_i_script_generic.html#a3de95071fa358d554137cae88a5229ea">asIScriptGeneric</a>
+</li>
+<li>GetParam()
+: <a class="el" href="classas_i_script_function.html#a2b3000b9fc5d3f2cfeea490d8c0c062a">asIScriptFunction</a>
 </li>
 <li>GetParamCount()
 : <a class="el" href="classas_i_script_function.html#a8ca059886317b944c52933b7bbe85cfa">asIScriptFunction</a>
@@ -407,8 +417,8 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 : <a class="el" href="classas_i_script_context.html#a22bdd3b67dee3b1dbcb3f9f9a1f21fa4">asIScriptContext</a>
 </li>
 <li>GetReturnTypeId()
-: <a class="el" href="classas_i_script_function.html#a18968d49065c6af9833ee589b6d1e864">asIScriptFunction</a>
-, <a class="el" href="classas_i_script_generic.html#a9da6f7f81392cd25733ebc6c803a397a">asIScriptGeneric</a>
+: <a class="el" href="classas_i_script_generic.html#a9da6f7f81392cd25733ebc6c803a397a">asIScriptGeneric</a>
+, <a class="el" href="classas_i_script_function.html#a18968d49065c6af9833ee589b6d1e864">asIScriptFunction</a>
 </li>
 <li>GetReturnWord()
 : <a class="el" href="classas_i_script_context.html#a5a3e054d35a6a361af67448d0a4930f9">asIScriptContext</a>
@@ -426,7 +436,7 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 : <a class="el" href="classas_i_script_context.html#a17024a9e1648f66711a3182b21676aa7">asIScriptContext</a>
 </li>
 <li>GetStringFactoryReturnTypeId()
-: <a class="el" href="classas_i_script_engine.html#a0bc701479de273e47e6ed6276e8fbb3e">asIScriptEngine</a>
+: <a class="el" href="classas_i_script_engine.html#afb3935d85494231e2f02af5816ba9830">asIScriptEngine</a>
 </li>
 <li>GetSubType()
 : <a class="el" href="classas_i_object_type.html#a9339bba5fbc5c59acccc0926dbcb20b2">asIObjectType</a>
@@ -458,8 +468,8 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 , <a class="el" href="classas_i_script_engine.html#a0ebbbb86ea0e314cc2695f6276ebe507">asIScriptEngine</a>
 </li>
 <li>GetTypeId()
-: <a class="el" href="classas_i_script_object.html#a19c5ab9d8adb0f921bf0b6474d97f468">asIScriptObject</a>
-, <a class="el" href="classas_i_object_type.html#abca86b08edf43ca6d92366fb6572c4df">asIObjectType</a>
+: <a class="el" href="classas_i_object_type.html#abca86b08edf43ca6d92366fb6572c4df">asIObjectType</a>
+, <a class="el" href="classas_i_script_object.html#a19c5ab9d8adb0f921bf0b6474d97f468">asIScriptObject</a>
 , <a class="el" href="classas_i_script_function.html#a4a5e24c464e423a2a6724cb849babd21">asIScriptFunction</a>
 </li>
 <li>GetTypeIdByDecl()
@@ -467,11 +477,11 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 , <a class="el" href="classas_i_script_module.html#a7fbc2bd888b248d2c2ee2d953b49eefc">asIScriptModule</a>
 </li>
 <li>GetUserData()
-: <a class="el" href="classas_i_script_function.html#a74d7dccdc0de6cef550bad52a2b40156">asIScriptFunction</a>
-, <a class="el" href="classas_i_object_type.html#a3ee5349863c7fc3fd07ba00838a261df">asIObjectType</a>
-, <a class="el" href="classas_i_script_module.html#acfe8b510171e4d330a88847bf31e2208">asIScriptModule</a>
-, <a class="el" href="classas_i_script_context.html#a392613f1140a864cf671ffe2b11c5eae">asIScriptContext</a>
+: <a class="el" href="classas_i_script_context.html#a0f8503675abfd473915d66a92c6e6df7">asIScriptContext</a>
 , <a class="el" href="classas_i_script_engine.html#a701aa6a7ddf51a22c62281f3dec9a772">asIScriptEngine</a>
+, <a class="el" href="classas_i_script_function.html#a0d0d4671e524fcd868a34bee33ee9fde">asIScriptFunction</a>
+, <a class="el" href="classas_i_object_type.html#a3ee5349863c7fc3fd07ba00838a261df">asIObjectType</a>
+, <a class="el" href="classas_i_script_module.html#af292f99799d8358277298f749efedaaa">asIScriptModule</a>
 </li>
 <li>GetVar()
 : <a class="el" href="classas_i_script_function.html#aaf11dde60bec710bcd729127bfe12dd4">asIScriptFunction</a>
@@ -501,7 +511,7 @@ $(document).ready(function(){initNavTree('functions_0x67.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:48 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

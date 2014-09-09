@@ -51,6 +51,7 @@ static bool ScriptWeakRefTemplateCallback(asIObjectType *ot, bool &/*dontGarbage
 			return true;
 	}
 
+	ot->GetEngine()->WriteMessage("weakref", 0, 0, asMSGTYPE_ERROR, "The subtype doesn't support weak references");
 	return false;
 }
 

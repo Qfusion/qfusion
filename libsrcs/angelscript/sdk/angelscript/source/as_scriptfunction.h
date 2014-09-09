@@ -168,8 +168,8 @@ public:
 	asDWORD             *GetByteCode(asUINT *length = 0);
 
 	// User data
-	void                *SetUserData(void *userData);
-	void                *GetUserData() const;
+	void                *SetUserData(void *userData, asPWORD type);
+	void                *GetUserData(asPWORD type) const;
 
 public:
 	//-----------------------------------
@@ -177,6 +177,16 @@ public:
 
 	asCScriptFunction(asCScriptEngine *engine, asCModule *mod, asEFuncType funcType);
 	~asCScriptFunction();
+
+	void     DestroyHalfCreated();
+
+	// TODO: 2.29.0: operator==
+	// TODO: 2.29.0: The asIScriptFunction should provide operator== and operator!= that should do a
+	//               a value comparison. Two delegate objects that point to the same object and class method should compare as equal
+	// TODO: 2.29.0: The operator== should also be provided in script as opEquals to allow the same comparison in script
+	//               To do this we'll need some way to adapt the argtype for opEquals for each funcdef, preferrably without instantiating lots of different methods
+	//               Perhaps reusing 'auto' to mean the same type as the object
+	//bool      operator==(const asCScriptFunction &other) const;
 
 	void      DestroyInternal();
 	void      Orphan(asIScriptModule *mod);
@@ -230,7 +240,7 @@ public:
 	asCScriptEngine             *engine;
 	asCModule                   *module;
 
-	void                        *userData;
+	asCArray<asPWORD>            userData;
 
 	// Function signature
 	asCString                    name;
@@ -270,7 +280,7 @@ public:
 		// The stack space needed for the local variables
 		asDWORD                         variableSpace;
 
-		// These hold information objects and function pointers, including temporary
+		// These hold information on objects and function pointers, including temporary
 		// variables used by exception handler and when saving bytecode
 		asCArray<asCObjectType*>        objVariableTypes;
 		asCArray<asCScriptFunction*>    funcVariableTypes;

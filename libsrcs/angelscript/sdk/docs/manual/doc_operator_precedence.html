@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -64,11 +67,11 @@ Unary operators</h1>
 <tr>
 <td width="150" valign="top"><code>[]</code> </td><td valign="top">indexing operator </td></tr>
 <tr>
-<td width="150" valign="top"><code>++ &ndash;</code> </td><td valign="top">post increment and decrement </td></tr>
+<td width="150" valign="top"><code>++ --</code> </td><td valign="top">post increment and decrement </td></tr>
 <tr>
 <td width="150" valign="top"><code>.</code> </td><td valign="top">member access </td></tr>
 <tr>
-<td width="150" valign="top"><code>++ &ndash;</code> </td><td valign="top">pre increment and decrement </td></tr>
+<td width="150" valign="top"><code>++ --</code> </td><td valign="top">pre increment and decrement </td></tr>
 <tr>
 <td width="150" valign="top"><code>not !</code> </td><td valign="top">logical not </td></tr>
 <tr>
@@ -83,7 +86,9 @@ Binary and ternary operators</h1>
 <p>This list shows the dual and ternary operator precedence in decreasing order.</p>
 <table  cellspacing="0" cellpadding="0" border="0">
 <tr>
-<td width="180" valign="top"><code>* / %</code> </td><td width="350" valign="top">multiply, divide, and modulo </td></tr>
+<td width="200" valign="top"><code>**</code> </td><td width="350" valign="top">exponent </td></tr>
+<tr>
+<td valign="top"><code>* / %</code> </td><td valign="top">multiply, divide, and modulo </td></tr>
 <tr>
 <td valign="top"><code>+ -</code> </td><td valign="top">add and subtract </td></tr>
 <tr>
@@ -105,7 +110,7 @@ Binary and ternary operators</h1>
 <tr>
 <td valign="top"><code>?:</code> </td><td valign="top">condition </td></tr>
 <tr>
-<td valign="top"><code>= += -= *= /= %= &amp;=<br/>
+<td valign="top"><code>= += -= *= /= %= **= &amp;=<br/>
  |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code> </td><td valign="top">assignment and compound assignments  </td></tr>
 </table>
 </div></div><!-- contents -->
@@ -113,7 +118,7 @@ Binary and ternary operators</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:48 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

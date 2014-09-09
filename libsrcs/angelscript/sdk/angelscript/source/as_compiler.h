@@ -219,13 +219,13 @@ protected:
 	void CompileBitwiseOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 	void CompileComparisonOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
 	void CompileBooleanOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
-	bool CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out);
+	bool CompileOverloadedDualOperator(asCScriptNode *node, asSExprContext *l, asSExprContext *r, asSExprContext *out, bool isHandle = false);
 	int  CompileOverloadedDualOperator2(asCScriptNode *node, const char *methodName, asSExprContext *l, asSExprContext *r, asSExprContext *out, bool specificReturn = false, const asCDataType &returnType = asCDataType::CreatePrimitive(ttVoid, false));
 
 	void CompileInitList(asCTypeInfo *var, asCScriptNode *node, asCByteCode *bc, int isVarGlobOrMem);
 	int  CompileInitListElement(asSListPatternNode *&patternNode, asCScriptNode *&valueNode, int bufferTypeId, short bufferVar, asUINT &bufferSize, asCByteCode &byteCode, int &elementsInSubList);
 
-	int  CallDefaultConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, int isVarGlobOrMem = 0, bool derefDest = false);
+	int  CallDefaultConstructor(const asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asCScriptNode *node, int isVarGlobOrMem = 0, bool derefDest = false);
 	int  CallCopyConstructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool isGlobalVar = false, bool derefDestination = false);
 	void CallDestructor(asCDataType &type, int offset, bool isObjectOnHeap, asCByteCode *bc);
 	int  CompileArgumentList(asCScriptNode *node, asCArray<asSExprContext *> &args, asCArray<asSNamedArgument> &namedArgs);
@@ -233,7 +233,7 @@ protected:
 	asUINT MatchFunctions(asCArray<int> &funcs, asCArray<asSExprContext*> &args, asCScriptNode *node, const char *name, asCArray<asSNamedArgument> *namedArgs = NULL, asCObjectType *objectType = NULL, bool isConstMethod = false, bool silent = false, bool allowObjectConstruct = true, const asCString &scope = "");
 	int  CompileVariableAccess(const asCString &name, const asCString &scope, asSExprContext *ctx, asCScriptNode *errNode, bool isOptional = false, bool noFunction = false, bool noGlobal = false, asCObjectType *objType = 0);
 	void CompileMemberInitialization(asCByteCode *bc, bool onlyDefaults);
-	bool CompileAutoType(asCDataType &autoType, asSExprContext &compiledCtx, asCScriptNode *node);
+	bool CompileAutoType(asCDataType &autoType, asSExprContext &compiledCtx, asCScriptNode *exprNode, asCScriptNode *errNode);
 	bool CompileInitialization(asCScriptNode *node, asCByteCode *bc, asCDataType &type, asCScriptNode *errNode, int offset, asQWORD *constantValue, int isVarGlobOrMem, asSExprContext *preCompiled = 0);
 	void CompileInitAsCopy(asCDataType &type, int offset, asCByteCode *bc, asSExprContext *arg, asCScriptNode *node, bool derefDestination);
 

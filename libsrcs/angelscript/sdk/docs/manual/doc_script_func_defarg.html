@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -53,7 +56,7 @@ $(document).ready(function(){initNavTree('doc_script_func_defarg.html','');});
 <div class="title">Default arguments </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Sometimes implementing different functions for each overload is unecessary when the difference can be provided with a default value to a parameter. This is where default arguments come in handy.</p>
+<div class="textblock"><p>Sometimes implementing different functions for each overload is unnecessary when the difference can be provided with a default value to a parameter. This is where default arguments come in handy.</p>
 <p>By defining default arguments in the declaration of the function, the script doesn't have to provide these values specifically when calling the function as the compiler will automatically fill in the default arguments.</p>
 <pre>
   void Function(int a, int b = 1, string c = "")
@@ -68,14 +71,14 @@ $(document).ready(function(){initNavTree('doc_script_func_defarg.html','');});
     Function(0,1,"");
   }
 </pre><p>When defining a default argument to one of the parameters, all subsequent parameters must have a default argument too.</p>
-<p>The default argument expression will be evaluated in the context that the function is called, so if the expression contains any identifiers you need to remember that those will be resolved in the local scope where the function is called and not in the scope where the function in declared.</p>
+<p>The default argument expression can include references to variables or call functions, but only if the variables or functions are visible in the global scope.</p>
 <pre>
   int myvar = 42;
   void Function(int a, int b = myvar) {}
   void main()
   {
     int myvar = 1;
-    Function(1);    // This will use the local myvar and not the global myvar
+    Function(1);    // This will use the global myvar and not the local myvar
   }
 </pre><p>The special 'void' expression can be used as default argument to make an optional output parameter.</p>
 <pre>
@@ -85,7 +88,7 @@ $(document).ready(function(){initNavTree('doc_script_func_defarg.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:47 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

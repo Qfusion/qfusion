@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -86,23 +89,26 @@ Things to remember</h1>
 <li>The script engine doesn't perform validation of the pre-compiled bytecode, so the application is responsible for authenticating the source. If this authentication isn't performed by the application you'll have potential security risks in your application as the bytecode may have been manually manipulated to perform otherwise illegal tasks.</li>
 </ul>
 <ul>
-<li>If the application that compiles the script code is separate from the application that will execute them, then you may register the functions and methods with null pointers so you don't need to actually implement all of them. Object properties must be registered with different offsets so that they can be differentiated by the bytecode loader. You should also set the engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facac241d97facce4eaf9e5b0ca40dfcf1">asEP_INIT_GLOBAL_VARS_AFTER_BUILD</a> to false with <a class="el" href="classas_i_script_engine.html#a1bce4e5f573a2ca0ff55163e28f761dd">asIScriptEngine::SetEngineProperty</a>, so the script engine doesn't attempt to initialize the global variables after the script has been built.</li>
-</ul>
-<ul>
-<li>The saved bytecode is almost fully platform independent. The following is properly handled, pointer size, size of registered types, offsets of registered properties, CPU endianess, etc. Some things that are not handled include difference in size of primitive types (e.g. bool on older Mac PPC platforms) and CPU floating point representation (e.g. IEEE 754 versus non-IEEE 754).</li>
+<li>If the application that compiles the script code is separate from the application that will execute them, then you may register the functions and methods with null pointers so you don't need to actually implement all of them. Object properties must be registered with different offsets so that they can be differentiated by the bytecode loader. You should also set the engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facac241d97facce4eaf9e5b0ca40dfcf1">asEP_INIT_GLOBAL_VARS_AFTER_BUILD</a> to false with <a class="el" href="classas_i_script_engine.html#a1bce4e5f573a2ca0ff55163e28f761dd">asIScriptEngine::SetEngineProperty</a>, so the script engine doesn't attempt to initialize the global variables after the script has been built. The <a class="el" href="doc_addon_helpers.html">helper add-on</a> has a couple of functions to facilitate building an offline compiler.</li>
 </ul>
 <ul>
 <li>If the application is not going to compile scripts from source code, but only load pre-compiled scripts, then it may be beneficial to compile the library with the AS_NO_COMPILER define so as to reduce the size of the executable.</li>
 </ul>
 <ul>
-<li>To reduce the size of the saved bytecode you can strip the debug information from the code. This will skip saving information that is not necessary for executing the scripts, such as the name of script sections, line numbers, and the name and type of local variables. </li>
+<li>To reduce the size of the saved bytecode you can strip the debug information from the code. This will skip saving information that is not necessary for executing the scripts, such as the name of script sections, line numbers, and the name and type of local variables.</li>
+</ul>
+<ul>
+<li>The saved bytecode is platform independent with only a couple of exceptions that is unlikely to affect application developers. The exceptions are 1) difference in size of primitive types (e.g. bool on older Mac PPC platforms) and 2) CPU floating point representation (i.e. IEEE 754 versus non-IEEE 754). Differences in pointer size (32bit vs 64bit), CPU endianess, different size of registered types and offsets of registered properties are all handled to provide platform independence.</li>
+</ul>
+<ul>
+<li>The saved bytecode is not guaranteed to be compatible for different versions of the AngelScript library so make sure you use the same library version when saving the bytecode that will be used when loading it. </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:47 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

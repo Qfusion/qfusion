@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -62,11 +65,14 @@ Public C++ interface</h1>
 <div class="fragment"><div class="line"><span class="keyword">class </span>CScriptArray</div>
 <div class="line">{</div>
 <div class="line"><span class="keyword">public</span>:</div>
-<div class="line">  <span class="comment">// Constructor</span></div>
-<div class="line">  CScriptArray(<span class="keyword">const</span> CScriptArray &amp;other);</div>
-<div class="line">  CScriptArray(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> length, <a class="code" href="classas_i_object_type.html" title="The interface for an object type.">asIObjectType</a> *ot);</div>
-<div class="line">  CscriptArray(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> length, <span class="keywordtype">void</span> *defaultValue, <a class="code" href="classas_i_object_type.html" title="The interface for an object type.">asIObjectType</a> *ot);</div>
-<div class="line">  <span class="keyword">virtual</span> ~CScriptArray();</div>
+<div class="line">  <span class="comment">// Set the memory functions that should be used by all CScriptArrays</span></div>
+<div class="line">  <span class="keyword">static</span> <span class="keywordtype">void</span> SetMemoryFunctions(<a class="code" href="angelscript_8h.html#a9813f6b04d4879aefc203794fe04a5b0" title="The function signature for the custom memory allocation function.">asALLOCFUNC_t</a> allocFunc, <a class="code" href="angelscript_8h.html#a9dd42e5d8378d6a8aa8f35efacfb772e" title="The function signature for the custom memory deallocation function.">asFREEFUNC_t</a> freeFunc);</div>
+<div class="line"></div>
+<div class="line">  <span class="comment">// Factory functions</span></div>
+<div class="line">  <span class="keyword">static</span> CScriptArray *Create(<a class="code" href="classas_i_object_type.html" title="The interface for an object type.">asIObjectType</a> *ot);</div>
+<div class="line">  <span class="keyword">static</span> CScriptArray *Create(<a class="code" href="classas_i_object_type.html" title="The interface for an object type.">asIObjectType</a> *ot, <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> length);</div>
+<div class="line">  <span class="keyword">static</span> CScriptArray *Create(<a class="code" href="classas_i_object_type.html" title="The interface for an object type.">asIObjectType</a> *ot, <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> length, <span class="keywordtype">void</span> *defaultValue);</div>
+<div class="line">  <span class="keyword">static</span> CScriptArray *Create(<a class="code" href="classas_i_object_type.html" title="The interface for an object type.">asIObjectType</a> *ot, <span class="keywordtype">void</span> *listBuffer);</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">// Memory management</span></div>
 <div class="line">  <span class="keywordtype">void</span> AddRef() <span class="keyword">const</span>;</div>
@@ -93,8 +99,10 @@ Public C++ interface</h1>
 <div class="line">  <span class="keywordtype">void</span>       *At(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> index);</div>
 <div class="line">  <span class="keyword">const</span> <span class="keywordtype">void</span> *At(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> index) <span class="keyword">const</span>;</div>
 <div class="line"></div>
-<div class="line">  <span class="comment">// Set value of an element. The value arg should be a pointer</span></div>
-<div class="line">  <span class="comment">// to the value that will be copied to the element</span></div>
+<div class="line">  <span class="comment">// Set value of an element. </span></div>
+<div class="line">  <span class="comment">// The value arg should be a pointer to the value that will be copied to the element.</span></div>
+<div class="line">  <span class="comment">// Remember, if the array holds handles the value parameter should be the </span></div>
+<div class="line">  <span class="comment">// address of the handle. The refCount of the object will also be incremented</span></div>
 <div class="line">  <span class="keywordtype">void</span>  SetValue(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> index, <span class="keywordtype">void</span> *value);</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">// Copy the contents of one array to another (only if the types are the same)</span></div>
@@ -109,12 +117,15 @@ Public C++ interface</h1>
 <div class="line">  <span class="keywordtype">void</span> InsertLast(<span class="keywordtype">void</span> *value);</div>
 <div class="line">  <span class="keywordtype">void</span> RemoveLast();</div>
 <div class="line">  <span class="keywordtype">void</span> SortAsc();</div>
-<div class="line">  <span class="keywordtype">void</span> SortAsc(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> index, <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> count);</div>
+<div class="line">  <span class="keywordtype">void</span> SortAsc(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> startAt, <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> count);</div>
 <div class="line">  <span class="keywordtype">void</span> SortDesc();</div>
-<div class="line">  <span class="keywordtype">void</span> SortDesc(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> index, <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> count);</div>
+<div class="line">  <span class="keywordtype">void</span> SortDesc(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> startAt, <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> count);</div>
+<div class="line">  <span class="keywordtype">void</span> Sort(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> startAt, <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> count, <span class="keywordtype">bool</span> asc);</div>
 <div class="line">  <span class="keywordtype">void</span> Reverse();</div>
 <div class="line">  <span class="keywordtype">int</span>  Find(<span class="keywordtype">void</span> *value) <span class="keyword">const</span>;</div>
-<div class="line">  <span class="keywordtype">int</span>  Find(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> index, <span class="keywordtype">void</span> *value) <span class="keyword">const</span>;</div>
+<div class="line">  <span class="keywordtype">int</span>  Find(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> startAt, <span class="keywordtype">void</span> *value) <span class="keyword">const</span>;</div>
+<div class="line">  <span class="keywordtype">int</span>  FindByRef(<span class="keywordtype">void</span> *ref) <span class="keyword">const</span>;</div>
+<div class="line">  <span class="keywordtype">int</span>  FindByRef(<a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> startAt, <span class="keywordtype">void</span> *ref) <span class="keyword">const</span>;</div>
 <div class="line">};</div>
 </div><!-- fragment --><h1><a class="anchor" id="doc_addon_array_2"></a>
 Public script interface</h1>
@@ -138,7 +149,7 @@ C++ example</h1>
 <div class="line">    <a class="code" href="classas_i_object_type.html" title="The interface for an object type.">asIObjectType</a>* t = engine-&gt;<a class="code" href="classas_i_script_engine.html#a52f3e08240c9fc493793036721cbd5ce" title="Returns the object type interface for type.">GetObjectTypeById</a>(engine-&gt;<a class="code" href="classas_i_script_engine.html#ad1f6fecb0f53fd7966736b01f65c3dcb" title="Returns a type id by declaration.">GetTypeIdByDecl</a>(<span class="stringliteral">&quot;array&lt;string&gt;&quot;</span>));</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">// Create an array with the initial size of 3 elements</span></div>
-<div class="line">    CScriptArray* arr = <span class="keyword">new</span> CScriptArray(3, t);</div>
+<div class="line">    CScriptArray* arr = CScriptArray::Create(t, 3);</div>
 <div class="line">    <span class="keywordflow">for</span>( <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> i = 0; i &lt; arr-&gt;GetSize(); i++ )</div>
 <div class="line">    {</div>
 <div class="line">      <span class="comment">// Set the value of each element</span></div>
@@ -156,7 +167,7 @@ C++ example</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:46 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:27 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -73,10 +76,7 @@ Things to think about with a multithreaded environment</h1>
 <li>The engine will only allow one thread to build scripts at any one time, since this is something that changes the internal state of the engine and cannot safely be done in multiple threads simultaneously.</li>
 </ul>
 <ul>
-<li>Do not execute the <a class="el" href="doc_gc.html">garbage collector</a> while other script threads are executed, as the garbage collector may be traversing the reference graph while the objects are modified by the other threads.</li>
-</ul>
-<ul>
-<li>Reference counters for objects that will be refered to by scripts in different threads must be thread safe in order to avoid race conditions as multiple threads attempt to update the same reference counter. The library provides a pair of functions to facilitate the implementation of thread safe reference counters. See <a class="el" href="angelscript_8h.html#af0074d581ac2edd06e63e56e4be52c8e">asAtomicInc</a> and <a class="el" href="angelscript_8h.html#a0565bcb53be170dd85ae27a5b6f2b828">asAtomicDec</a>.</li>
+<li>Reference counters for objects that will be referred to by scripts in different threads must be thread safe in order to avoid race conditions as multiple threads attempt to update the same reference counter. The library provides a pair of functions to facilitate the implementation of thread safe reference counters. See <a class="el" href="angelscript_8h.html#af0074d581ac2edd06e63e56e4be52c8e">asAtomicInc</a> and <a class="el" href="angelscript_8h.html#a0565bcb53be170dd85ae27a5b6f2b828">asAtomicDec</a>.</li>
 </ul>
 <ul>
 <li>Resources that are shared by script modules such as registered properties and objects must be protected by the application for simultaneous access, as the script engine doesn't do this automatically. A read-write lock is provided by the library that can be used for this. See <a class="el" href="angelscript_8h.html#a016dbf716a1c761b3f903b92eb8bb580">asAcquireExclusiveLock</a>, <a class="el" href="angelscript_8h.html#a8a0617637eea3d76e33a52758b2cd49f">asReleaseExclusiveLock</a>, <a class="el" href="angelscript_8h.html#aa45545a038adcc8c73348cfe9488f32d">asAcquireSharedLock</a>, and <a class="el" href="angelscript_8h.html#a44f7327c5601e8dbf74768a2f3cc0dc3">asReleaseSharedLock</a>.</li>
@@ -93,7 +93,7 @@ Fibers</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:47 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -105,9 +108,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab692c00b9a7111778acb4fbca1c63df7"><td class="memItemLeft" align="right" valign="top">virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#ab692c00b9a7111778acb4fbca1c63df7">GetNamespace</a> () const =0</td></tr>
 <tr class="memdesc:ab692c00b9a7111778acb4fbca1c63df7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the namespace of the function.  <a href="#ab692c00b9a7111778acb4fbca1c63df7">More...</a><br/></td></tr>
 <tr class="separator:ab692c00b9a7111778acb4fbca1c63df7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a863e61c60b5274adab2e38af28c08de5"><td class="memItemLeft" align="right" valign="top">virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a863e61c60b5274adab2e38af28c08de5">GetDeclaration</a> (bool includeObjectName=true, bool includeNamespace=false) const =0</td></tr>
-<tr class="memdesc:a863e61c60b5274adab2e38af28c08de5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the function declaration.  <a href="#a863e61c60b5274adab2e38af28c08de5">More...</a><br/></td></tr>
-<tr class="separator:a863e61c60b5274adab2e38af28c08de5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fb021b09ae0e7e87f8fa4fdfd39df83"><td class="memItemLeft" align="right" valign="top">virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a2fb021b09ae0e7e87f8fa4fdfd39df83">GetDeclaration</a> (bool includeObjectName=true, bool includeNamespace=false, bool includeParamNames=false) const =0</td></tr>
+<tr class="memdesc:a2fb021b09ae0e7e87f8fa4fdfd39df83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the function declaration.  <a href="#a2fb021b09ae0e7e87f8fa4fdfd39df83">More...</a><br/></td></tr>
+<tr class="separator:a2fb021b09ae0e7e87f8fa4fdfd39df83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99bbe26ae0ec3f0cc09070bf89aff2f9"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a99bbe26ae0ec3f0cc09070bf89aff2f9">IsReadOnly</a> () const =0</td></tr>
 <tr class="memdesc:a99bbe26ae0ec3f0cc09070bf89aff2f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the class method is read-only.  <a href="#a99bbe26ae0ec3f0cc09070bf89aff2f9">More...</a><br/></td></tr>
 <tr class="separator:a99bbe26ae0ec3f0cc09070bf89aff2f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -126,8 +129,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8ca059886317b944c52933b7bbe85cfa"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815">asUINT</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a8ca059886317b944c52933b7bbe85cfa">GetParamCount</a> () const =0</td></tr>
 <tr class="memdesc:a8ca059886317b944c52933b7bbe85cfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of parameters for this function.  <a href="#a8ca059886317b944c52933b7bbe85cfa">More...</a><br/></td></tr>
 <tr class="separator:a8ca059886317b944c52933b7bbe85cfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2b3000b9fc5d3f2cfeea490d8c0c062a"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a2b3000b9fc5d3f2cfeea490d8c0c062a">GetParam</a> (<a class="el" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815">asUINT</a> index, int *typeId, <a class="el" href="angelscript_8h.html#a5428f0c940201e5f3bbb28304aeb81bc">asDWORD</a> *flags=0, const char **name=0, const char **defaultArg=0) const =0</td></tr>
+<tr class="memdesc:a2b3000b9fc5d3f2cfeea490d8c0c062a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the type id of the specified parameter.  <a href="#a2b3000b9fc5d3f2cfeea490d8c0c062a">More...</a><br/></td></tr>
+<tr class="separator:a2b3000b9fc5d3f2cfeea490d8c0c062a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af75544f2e9216b5ee611cefe4cfa7672"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#af75544f2e9216b5ee611cefe4cfa7672">GetParamTypeId</a> (<a class="el" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815">asUINT</a> index, <a class="el" href="angelscript_8h.html#a5428f0c940201e5f3bbb28304aeb81bc">asDWORD</a> *flags=0) const =0</td></tr>
-<tr class="memdesc:af75544f2e9216b5ee611cefe4cfa7672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the type id of the specified parameter.  <a href="#af75544f2e9216b5ee611cefe4cfa7672">More...</a><br/></td></tr>
 <tr class="separator:af75544f2e9216b5ee611cefe4cfa7672"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18968d49065c6af9833ee589b6d1e864"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a18968d49065c6af9833ee589b6d1e864">GetReturnTypeId</a> (<a class="el" href="angelscript_8h.html#a5428f0c940201e5f3bbb28304aeb81bc">asDWORD</a> *flags=0) const =0</td></tr>
 <tr class="memdesc:a18968d49065c6af9833ee589b6d1e864"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the type id of the return type.  <a href="#a18968d49065c6af9833ee589b6d1e864">More...</a><br/></td></tr>
@@ -167,12 +172,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:afb38e9ba77ce8b49378e43dadd83ef94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the byte code buffer and length.  <a href="#afb38e9ba77ce8b49378e43dadd83ef94">More...</a><br/></td></tr>
 <tr class="separator:afb38e9ba77ce8b49378e43dadd83ef94"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">User data</div></td></tr>
-<tr class="memitem:a2d01c604a619cbb9a4356a05d041e252"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a2d01c604a619cbb9a4356a05d041e252">SetUserData</a> (void *userData)=0</td></tr>
-<tr class="memdesc:a2d01c604a619cbb9a4356a05d041e252"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register the memory address of some user data.  <a href="#a2d01c604a619cbb9a4356a05d041e252">More...</a><br/></td></tr>
-<tr class="separator:a2d01c604a619cbb9a4356a05d041e252"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a74d7dccdc0de6cef550bad52a2b40156"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a74d7dccdc0de6cef550bad52a2b40156">GetUserData</a> () const =0</td></tr>
-<tr class="memdesc:a74d7dccdc0de6cef550bad52a2b40156"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the address of the previously registered user data.  <a href="#a74d7dccdc0de6cef550bad52a2b40156">More...</a><br/></td></tr>
-<tr class="separator:a74d7dccdc0de6cef550bad52a2b40156"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9dd036ce8e91d335eb5a3ad8851f1a41"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a9dd036ce8e91d335eb5a3ad8851f1a41">SetUserData</a> (void *userData, <a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a> type=0)=0</td></tr>
+<tr class="memdesc:a9dd036ce8e91d335eb5a3ad8851f1a41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register the memory address of some user data.  <a href="#a9dd036ce8e91d335eb5a3ad8851f1a41">More...</a><br/></td></tr>
+<tr class="separator:a9dd036ce8e91d335eb5a3ad8851f1a41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d0d4671e524fcd868a34bee33ee9fde"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_function.html#a0d0d4671e524fcd868a34bee33ee9fde">GetUserData</a> (<a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a> type=0) const =0</td></tr>
+<tr class="memdesc:a0d0d4671e524fcd868a34bee33ee9fde"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the address of the previously registered user data.  <a href="#a0d0d4671e524fcd868a34bee33ee9fde">More...</a><br/></td></tr>
+<tr class="separator:a0d0d4671e524fcd868a34bee33ee9fde"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a0a00f9581e7ece5f2a536d0e22c10d0c"></a>
@@ -311,7 +316,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a863e61c60b5274adab2e38af28c08de5"></a>
+<a class="anchor" id="a2fb021b09ae0e7e87f8fa4fdfd39df83"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -328,7 +333,13 @@ Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>includeNamespace</em> = <code>false</code>&#160;</td>
+          <td class="paramname"><em>includeNamespace</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>includeParamNames</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -346,6 +357,7 @@ Public Member Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">includeObjectName</td><td>Indicate whether the object name should be prepended to the function name </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">includeNamespace</td><td>Indicates whether the namespace should be prepended to the function name </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">includeParamNames</td><td>Indicates whether parameter names should be added to the declaration </td></tr>
   </table>
   </dd>
 </dl>
@@ -643,6 +655,75 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a2b3000b9fc5d3f2cfeea490d8c0c062a"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual int asIScriptFunction::GetParam </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815">asUINT</a>&#160;</td>
+          <td class="paramname"><em>index</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>typeId</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="angelscript_8h.html#a5428f0c940201e5f3bbb28304aeb81bc">asDWORD</a> *&#160;</td>
+          <td class="paramname"><em>flags</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char **&#160;</td>
+          <td class="paramname"><em>name</em> = <code>0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char **&#160;</td>
+          <td class="paramname"><em>defaultArg</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">index</td><td>The zero based parameter index. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">typeId</td><td>The typeId of the parameter. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">flags</td><td>A combination of <a class="el" href="angelscript_8h.html#a335bd4a1384b6e408bf9b37ffdeb54c7">asETypeModifiers</a>. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">name</td><td>The name of the parameter (or null if not defined). </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">defaultArg</td><td>The default argument expression (or null if not defined). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A negative value on error. </dd></dl>
+<dl class="retval"><dt>Return values</dt><dd>
+  <table class="retval">
+    <tr><td class="paramname">asINVALID_ARG</td><td>The index is out of bounds. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="a8ca059886317b944c52933b7bbe85cfa"></a>
 <div class="memitem">
 <div class="memproto">
@@ -698,20 +779,7 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">index</td><td>The zero based parameter index. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">flags</td><td>A combination of <a class="el" href="angelscript_8h.html#a335bd4a1384b6e408bf9b37ffdeb54c7">asETypeModifiers</a>. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A negative value on error, or the type id of the specified parameter. </dd></dl>
-<dl class="retval"><dt>Return values</dt><dd>
-  <table class="retval">
-    <tr><td class="paramname">asINVALID_ARG</td><td>The index is out of bounds. </td></tr>
-  </table>
-  </dd>
-</dl>
+<dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000001">Deprecated:</a></b></dt><dd>Since 2.29.0. Use <a class="el" href="classas_i_script_function.html#a2b3000b9fc5d3f2cfeea490d8c0c062a">asIScriptFunction::GetParam</a> instead. </dd></dl>
 
 </div>
 </div>
@@ -795,7 +863,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a74d7dccdc0de6cef550bad52a2b40156"></a>
+<a class="anchor" id="a0d0d4671e524fcd868a34bee33ee9fde"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -805,7 +873,8 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">virtual void* asIScriptFunction::GetUserData </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a>&#160;</td>
+          <td class="paramname"><em>type</em> = <code>0</code></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -815,6 +884,12 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">type</td><td>An identifier specifying the user data to set. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>The pointer to the user data. </dd></dl>
 
 </div>
@@ -1111,7 +1186,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a2d01c604a619cbb9a4356a05d041e252"></a>
+<a class="anchor" id="a9dd036ce8e91d335eb5a3ad8851f1a41"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1122,8 +1197,18 @@ Public Member Functions</h2></td></tr>
           <td class="memname">virtual void* asIScriptFunction::SetUserData </td>
           <td>(</td>
           <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userData</em></td><td>)</td>
+          <td class="paramname"><em>userData</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a>&#160;</td>
+          <td class="paramname"><em>type</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -1135,12 +1220,14 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">userData</td><td>A pointer to the user data. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">type</td><td>An identifier specifying the user data to set. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The previous pointer stored in the context.</dd></dl>
 <p>This method allows the application to associate a value, e.g. a pointer, with the context instance.</p>
-<p>Optionally, a callback function can be <a class="el" href="classas_i_script_engine.html#ae9585d4e65618b02c6005d3beaca4377">registered</a> to clean up the user data when the function is destroyed. As the callback is registered with the engine, it is only necessary to do it once. </p>
+<p>The type values 1000 through 1999 are reserved for use by the official add-ons.</p>
+<p>Optionally, a callback function can be <a class="el" href="classas_i_script_engine.html#ae75ee087fe6608cf0af1c24794ca73c7">registered</a> to clean up the user data when the function is destroyed. As the callback is registered with the engine, it is only necessary to do it once. </p>
 
 </div>
 </div>
@@ -1153,7 +1240,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classas_i_script_function.html">asIScriptFunction</a></li>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:48 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

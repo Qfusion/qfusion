@@ -27,7 +27,8 @@ var doc_script =
       [ "Member access", "doc_expressions.html#member", null ],
       [ "Handle-of", "doc_expressions.html#handle", null ],
       [ "Parenthesis", "doc_expressions.html#parenthesis", null ],
-      [ "Scope resolution", "doc_expressions.html#scope", null ]
+      [ "Scope resolution", "doc_expressions.html#scope", null ],
+      [ "Anonymous objects", "doc_expressions.html#anonobj", null ]
     ] ],
     [ "Data types", "doc_datatypes.html", "doc_datatypes" ],
     [ "Object handles", "doc_script_handle.html", [

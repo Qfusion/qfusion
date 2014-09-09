@@ -16,7 +16,7 @@ var doc_addon_script =
     ] ],
     [ "ref object", "doc_addon_handle.html", [
       [ "Public C++ interface", "doc_addon_handle.html#doc_addon_handle_1", null ],
-      [ "Example usage in script", "doc_addon_handle.html#doc_addon_handle_3", null ],
+      [ "Public script interface", "doc_addon_handle.html#doc_addon_handle_3", null ],
       [ "Example usage from C++", "doc_addon_handle.html#doc_addon_handle_4", null ]
     ] ],
     [ "weakref object", "doc_addon_weakref.html", [
@@ -25,8 +25,7 @@ var doc_addon_script =
     ] ],
     [ "dictionary object", "doc_addon_dict.html", [
       [ "Public C++ interface", "doc_addon_dict.html#doc_addon_dict_1", null ],
-      [ "Public script interface", "doc_addon_dict.html#doc_addon_dict_2", null ],
-      [ "Script example", "doc_addon_dict.html#doc_addon_dict_3", null ]
+      [ "Public script interface", "doc_addon_dict.html#doc_addon_dict_2", null ]
     ] ],
     [ "file object", "doc_addon_file.html", [
       [ "Public C++ interface", "doc_addon_file.html#doc_addon_file_1", null ],
@@ -35,5 +34,10 @@ var doc_addon_script =
     ] ],
     [ "math functions", "doc_addon_math.html", [
       [ "Public script interface", "doc_addon_math.html#doc_addon_math_1", null ]
+    ] ],
+    [ "grid template object", "doc_addon_grid.html", [
+      [ "Public C++ interface", "doc_addon_grid.html#doc_addon_grid_1", null ],
+      [ "Public script interface", "doc_addon_grid.html#doc_addon_grid_2", null ],
+      [ "Example usage in script", "doc_addon_grid.html#doc_addon_grid_3", null ]
     ] ]
 ];

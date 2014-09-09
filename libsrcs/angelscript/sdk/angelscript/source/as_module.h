@@ -160,8 +160,8 @@ public:
 	virtual int LoadByteCode(asIBinaryStream *in, bool *wasDebugInfoStripped);
 
 	// User data
-	virtual void *SetUserData(void *data);
-	virtual void *GetUserData() const;
+	virtual void *SetUserData(void *data, asPWORD type);
+	virtual void *GetUserData(asPWORD type) const;
 
 //-----------------------------------------------
 // Internal
@@ -198,11 +198,11 @@ public:
 
 	asCString name;
 
-	asCScriptEngine *engine;
-	asCBuilder      *builder;
-	void            *userData;
-	asDWORD          accessMask;
-	asSNameSpace    *defaultNamespace;
+	asCScriptEngine  *engine;
+	asCBuilder       *builder;
+	asCArray<asPWORD> userData;
+	asDWORD           accessMask;
+	asSNameSpace     *defaultNamespace;
 
 	// This array holds all functions, class members, factories, etc that were compiled with the module
 	asCArray<asCScriptFunction *>     scriptFunctions;

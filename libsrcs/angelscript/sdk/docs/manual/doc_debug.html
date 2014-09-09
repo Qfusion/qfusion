@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -94,7 +97,7 @@ Viewing the call stack</h1>
 <div class="line">    func = ctx-&gt;<a class="code" href="classas_i_script_context.html#a1c101300447f2909e5d188409a7180f6" title="Returns the function at the specified callstack level.">GetFunction</a>(n);</div>
 <div class="line">    line = ctx-&gt;<a class="code" href="classas_i_script_context.html#adf82981def59c6ec5dd9f74f034be2af" title="Returns the line number at the specified callstack level.">GetLineNumber</a>(n, &amp;column, &amp;scriptSection);</div>
 <div class="line">    printf(<span class="stringliteral">&quot;%s:%s:%d,%d\n&quot;</span>, scriptSection,</div>
-<div class="line">                            func-&gt;<a class="code" href="classas_i_script_function.html#a863e61c60b5274adab2e38af28c08de5" title="Returns the function declaration.">GetDeclaration</a>(),</div>
+<div class="line">                            func-&gt;<a class="code" href="classas_i_script_function.html#a2fb021b09ae0e7e87f8fa4fdfd39df83" title="Returns the function declaration.">GetDeclaration</a>(),</div>
 <div class="line">                            line, column);</div>
 <div class="line">  }</div>
 <div class="line">}</div>
@@ -152,13 +155,16 @@ Inspecting variables</h1>
 <div class="line">}</div>
 </div><!-- fragment --><p>The above code is only an example to give an idea of how it can be done. It is not complete and only recognizes a few types. To make it useful it would have to be expanded to recognize all types, and perhaps add some generic way of converting an object to human readable string for printing.</p>
 <p>For script objects that conversion can be done by enumerating the members of an object through the <a class="el" href="classas_i_script_object.html">asIScriptObject</a> interface.</p>
-<p>The debugger may also need to be able to inspect the global variables that the functions access. As the global variables are stored in the module, there is the place to look for them. The <a class="el" href="classas_i_script_module.html">asIScriptModule</a> interface can be obtained by querying the module name from the function, and then getting the module pointer from the engine. Once the module is determined the global variables are enumerated much the same way as in the example above, except that the appropriate methods on the <a class="el" href="classas_i_script_module.html" title="The interface to the script modules.">asIScriptModule</a> interface are used instead. </p>
+<p>The debugger may also need to be able to inspect the global variables that the functions access. As the global variables are stored in the module, there is the place to look for them. The <a class="el" href="classas_i_script_module.html">asIScriptModule</a> interface can be obtained by querying the module name from the function, and then getting the module pointer from the engine. Once the module is determined the global variables are enumerated much the same way as in the example above, except that the appropriate methods on the <a class="el" href="classas_i_script_module.html" title="The interface to the script modules.">asIScriptModule</a> interface are used instead.</p>
+<h1><a class="anchor" id="doc_debug_4"></a>
+Debugging internally executed scripts</h1>
+<p>Some script execution is not initiated by the application, e.g. the initialization of global variables or the call to the script class destructor when destroying objects from the garbage collector. If these executions should be debugged, the application must set the context callback functions with a call to <a class="el" href="classas_i_script_engine.html#ae5ba9fe99b72c60392cdaeef164f2c65">asIScriptEngine::SetContextCallbacks</a>. The engine will invoke these callbacks to request a context from the application when it will execute a script internally. The application can then attach the debugger to the context it provides to the engine. </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:47 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

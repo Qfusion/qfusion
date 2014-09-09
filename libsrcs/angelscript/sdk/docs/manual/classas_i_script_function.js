@@ -5,7 +5,7 @@ var classas_i_script_function =
     [ "GetAccessMask", "classas_i_script_function.html#a5c49841eb92a0993a16eb855577b590c", null ],
     [ "GetByteCode", "classas_i_script_function.html#afb38e9ba77ce8b49378e43dadd83ef94", null ],
     [ "GetConfigGroup", "classas_i_script_function.html#afea841f0923573cea81467ac90b71996", null ],
-    [ "GetDeclaration", "classas_i_script_function.html#a863e61c60b5274adab2e38af28c08de5", null ],
+    [ "GetDeclaration", "classas_i_script_function.html#a2fb021b09ae0e7e87f8fa4fdfd39df83", null ],
     [ "GetDelegateFunction", "classas_i_script_function.html#aa28f4e68da8abb770d7f725375bcd2bb", null ],
     [ "GetDelegateObject", "classas_i_script_function.html#ae1786c3f4341dc3bfcaacc3cb8900a57", null ],
     [ "GetDelegateObjectType", "classas_i_script_function.html#a233a2158b94c00b7163b2ef3e30b8aba", null ],
@@ -18,12 +18,13 @@ var classas_i_script_function =
     [ "GetNamespace", "classas_i_script_function.html#ab692c00b9a7111778acb4fbca1c63df7", null ],
     [ "GetObjectName", "classas_i_script_function.html#a69e30464d13867fb72e66ce3365fdec8", null ],
     [ "GetObjectType", "classas_i_script_function.html#a73442bb7c6dca067ae2f4d3d069d19de", null ],
+    [ "GetParam", "classas_i_script_function.html#a2b3000b9fc5d3f2cfeea490d8c0c062a", null ],
     [ "GetParamCount", "classas_i_script_function.html#a8ca059886317b944c52933b7bbe85cfa", null ],
     [ "GetParamTypeId", "classas_i_script_function.html#af75544f2e9216b5ee611cefe4cfa7672", null ],
     [ "GetReturnTypeId", "classas_i_script_function.html#a18968d49065c6af9833ee589b6d1e864", null ],
     [ "GetScriptSectionName", "classas_i_script_function.html#a62a77c029782162135d98d6e2b383eca", null ],
     [ "GetTypeId", "classas_i_script_function.html#a4a5e24c464e423a2a6724cb849babd21", null ],
-    [ "GetUserData", "classas_i_script_function.html#a74d7dccdc0de6cef550bad52a2b40156", null ],
+    [ "GetUserData", "classas_i_script_function.html#a0d0d4671e524fcd868a34bee33ee9fde", null ],
     [ "GetVar", "classas_i_script_function.html#aaf11dde60bec710bcd729127bfe12dd4", null ],
     [ "GetVarCount", "classas_i_script_function.html#a92e14168997c0f67a975e7ed042d8328", null ],
     [ "GetVarDecl", "classas_i_script_function.html#acef067f00f2a6a997d6955f5cf3c6d13", null ],
@@ -34,5 +35,5 @@ var classas_i_script_function =
     [ "IsReadOnly", "classas_i_script_function.html#a99bbe26ae0ec3f0cc09070bf89aff2f9", null ],
     [ "IsShared", "classas_i_script_function.html#a805ae8064598ad12f44bb583118b6cc5", null ],
     [ "Release", "classas_i_script_function.html#a0a98f1f7f91574a11d7d8c5062bdcdee", null ],
-    [ "SetUserData", "classas_i_script_function.html#a2d01c604a619cbb9a4356a05d041e252", null ]
+    [ "SetUserData", "classas_i_script_function.html#a9dd036ce8e91d335eb5a3ad8851f1a41", null ]
 ];

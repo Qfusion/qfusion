@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -53,7 +56,7 @@ $(document).ready(function(){initNavTree('doc_datatypes_strings.html','');});
 <div class="title">Strings </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><b>Observe:</b> Strings are only available in the scripts if the application registers the support for them. The syntax for using strings may differ for the application you're working with so consult the application's manual for more details.</p>
+<div class="textblock"><dl class="section note"><dt>Note</dt><dd>Strings are only available in the scripts if the application registers the support for them. The syntax for using strings may differ for the application you're working with so consult the application's manual for more details.</dd></dl>
 <dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_addon_std_string.html">string object</a></dd></dl>
 <p>Strings hold an array of bytes or 16bit words depending on the application settings. Normally they are used to store text but can really store any kind of binary data.</p>
 <p>There are two types of string constants supported in the AngelScript language, the normal quoted string, and the documentation strings, called heredoc strings.</p>
@@ -118,22 +121,22 @@ Operators</h2>
 <h2><a class="anchor" id="doc_datatypes_strings_addon_mthd"></a>
 Methods</h2>
 <ul>
-<li>uint length() const;</li>
-<li>void resize(uint);</li>
-<li>bool isEmpty() const;</li>
-<li>string substr(uint start = 0, int count = -1) const;</li>
-<li>int findFirst(const string &amp;in str, uint start = 0) const;</li>
-<li>int findLast(const string &amp;in str, int start = -1) const;</li>
-<li>array&lt;string&gt;@ split(const string &amp;in delimiter) const;</li>
+<li>uint length() const</li>
+<li>void resize(uint)</li>
+<li>bool isEmpty() const</li>
+<li>string substr(uint start = 0, int count = -1) const</li>
+<li>int findFirst(const string &amp;in str, uint start = 0) const</li>
+<li>int findLast(const string &amp;in str, int start = -1) const</li>
+<li>array&lt;string&gt;@ split(const string &amp;in delimiter) const</li>
 </ul>
 <h2><a class="anchor" id="doc_datatypes_strings_addon_funcs"></a>
 Functions</h2>
 <ul>
-<li>string join(const array&lt;string&gt; &amp;in arr, const string &amp;in delimiter);</li>
-<li>int64 parseInt(const string &amp;in, uint base = 10, uint &amp;out byteCount = 0);</li>
-<li>double parseFloat(const string &amp;in, uint &amp;out byteCount = 0);</li>
-<li>string formatInt(int64 val, const string &amp;in options, uint width = 0);</li>
-<li>string formatFloat(double val, const string &amp;in options, uint width = 0, uint precision = 0);</li>
+<li>string join(const array&lt;string&gt; &amp;in arr, const string &amp;in delimiter)</li>
+<li>int64 parseInt(const string &amp;in, uint base = 10, uint &amp;out byteCount = 0)</li>
+<li>double parseFloat(const string &amp;in, uint &amp;out byteCount = 0)</li>
+<li>string formatInt(int64 val, const string &amp;in options, uint width = 0)</li>
+<li>string formatFloat(double val, const string &amp;in options, uint width = 0, uint precision = 0)</li>
 </ul>
 <p>The format functions takes a string that defines how the number should be formatted. The string is a combination of the following characters:</p>
 <ul>
@@ -157,7 +160,7 @@ Functions</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:47 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

@@ -11,8 +11,9 @@ using namespace std;
 BEGIN_AS_NAMESPACE
 
 // Set the default memory routines
-static asALLOCFUNC_t userAlloc = ::malloc;
-static asFREEFUNC_t  userFree  = ::free;
+// Use the angelscript engine's memory routines by default
+static asALLOCFUNC_t userAlloc = asAllocMem;
+static asFREEFUNC_t  userFree  = asFreeMem;
 
 // Allows the application to set which memory routines should be used by the array object
 void CScriptArray::SetMemoryFunctions(asALLOCFUNC_t allocFunc, asFREEFUNC_t freeFunc)
@@ -144,14 +145,14 @@ CScriptArray* CScriptArray::Create(asIObjectType *ot)
 }
 
 // This optional callback is called when the template type is first used by the compiler.
-// It allows the application to validate if the template can be instanciated for the requested
+// It allows the application to validate if the template can be instantiated for the requested
 // subtype at compile time, instead of at runtime. The output argument dontGarbageCollect
 // allow the callback to tell the engine if the template instance type shouldn't be garbage collected,
 // i.e. no asOBJ_GC flag.
 static bool ScriptArrayTemplateCallback(asIObjectType *ot, bool &dontGarbageCollect)
 {
-	// Make sure the subtype can be instanciated with a default factory/constructor,
-	// otherwise we won't be able to instanciate the elements.
+	// Make sure the subtype can be instantiated with a default factory/constructor,
+	// otherwise we won't be able to instantiate the elements.
 	int typeId = ot->GetSubTypeId();
 	if( typeId == asTYPEID_VOID )
 		return false;
@@ -180,6 +181,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot, bool &dontGarbageColl
 			if( !found )
 			{
 				// There is no default constructor
+				ot->GetEngine()->WriteMessage("array", 0, 0, asMSGTYPE_ERROR, "The subtype has no default constructor");
 				return false;
 			}
 		}
@@ -207,6 +209,7 @@ static bool ScriptArrayTemplateCallback(asIObjectType *ot, bool &dontGarbageColl
 			if( !found )
 			{
 				// No default factory
+				ot->GetEngine()->WriteMessage("array", 0, 0, asMSGTYPE_ERROR, "The subtype has no default factory");
 				return false;
 			}
 		}
@@ -588,7 +591,7 @@ void CScriptArray::Reserve(asUINT maxElements)
 	}
 
 	// TODO: memcpy assumes the objects in the array doesn't hold pointers to themselves
-	//       This should really be using the objects copy constructor to copy each object
+	//       This should really be using the objects copy/move constructor to copy each object
 	//       to the new location. It would most likely be a hit on the performance though.
 	memcpy(newBuffer->data, buffer->data, buffer->numElements*elementSize);
 
@@ -647,14 +650,14 @@ void CScriptArray::Resize(int delta, asUINT at)
 		}
 
 		// TODO: memcpy assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy constructor to copy each object
+		//       This should really be using the objects copy/move constructor to copy each object
 		//       to the new location. It would most likely be a hit on the performance though.
 		memcpy(newBuffer->data, buffer->data, at*elementSize);
 		if( at < buffer->numElements )
 			memcpy(newBuffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements-at)*elementSize);
 
-		if( subTypeId & asTYPEID_MASK_OBJECT )
-			Construct(newBuffer, at, at+delta);
+		// Initialize the new elements with default values
+		Construct(newBuffer, at, at+delta);
 
 		// Release the old buffer
 		userFree(buffer);
@@ -665,7 +668,7 @@ void CScriptArray::Resize(int delta, asUINT at)
 	{
 		Destruct(buffer, at, at-delta);
 		// TODO: memmove assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy constructor to copy each object
+		//       This should really be using the objects copy/move constructor to copy each object
 		//       to the new location. It would most likely be a hit on the performance though.
 		memmove(buffer->data + at*elementSize, buffer->data + (at-delta)*elementSize, (buffer->numElements - (at-delta))*elementSize);
 		buffer->numElements += delta;
@@ -673,7 +676,7 @@ void CScriptArray::Resize(int delta, asUINT at)
 	else
 	{
 		// TODO: memmove assumes the objects in the array doesn't hold pointers to themselves
-		//       This should really be using the objects copy constructor to copy each object
+		//       This should really be using the objects copy/move constructor to copy each object
 		//       to the new location. It would most likely be a hit on the performance though.
 		memmove(buffer->data + (at+delta)*elementSize, buffer->data + at*elementSize, (buffer->numElements - at)*elementSize);
 		Construct(buffer, at, at+delta);
@@ -817,14 +820,9 @@ void CScriptArray::DeleteBuffer(SArrayBuffer *buf)
 // internal
 void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 {
-	if( subTypeId & asTYPEID_OBJHANDLE )
+	if( (subTypeId & asTYPEID_MASK_OBJECT) && !(subTypeId & asTYPEID_OBJHANDLE) )
 	{
-		// Set all object handles to null
-		void *d = (void*)(buf->data + start * sizeof(void*));
-		memset(d, 0, (end-start)*sizeof(void*));
-	}
-	else if( subTypeId & asTYPEID_MASK_OBJECT )
-	{
+		// Create an object using the default constructor/factory for each element
 		void **max = (void**)(buf->data + end * sizeof(void*));
 		void **d = (void**)(buf->data + start * sizeof(void*));
 
@@ -832,7 +830,25 @@ void CScriptArray::Construct(SArrayBuffer *buf, asUINT start, asUINT end)
 		asIObjectType *subType = objType->GetSubType();
 
 		for( ; d < max; d++ )
+		{
 			*d = (void*)engine->CreateScriptObject(subType);
+			if( *d == 0 )
+			{
+				// Set the remaining entries to null so the destructor 
+				// won't attempt to destroy invalid objects later
+				memset(d, 0, sizeof(void*)*(max-d));
+
+				// There is no need to set an exception on the context,
+				// as CreateScriptObject has already done that
+				return;
+			}
+		}
+	}
+	else
+	{
+		// Set all elements to zero whether they are handles or primitives
+		void *d = (void*)(buf->data + start * elementSize);
+		memset(d, 0, (end-start)*elementSize);
 	}
 }
 
@@ -1572,7 +1588,7 @@ void CScriptArray::EnumReferences(asIScriptEngine *engine)
 }
 
 // GC behaviour
-void CScriptArray::ReleaseAllHandles(asIScriptEngine *engine)
+void CScriptArray::ReleaseAllHandles(asIScriptEngine *)
 {
 	// Resizing to zero will release everything
 	Resize(0);

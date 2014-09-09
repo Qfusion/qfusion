@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -115,9 +118,13 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
 <tr class="memitem:a99c6b8b0882e45e5d0b2ed19f6f7a157"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a99c6b8b0882e45e5d0b2ed19f6f7a157"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a99c6b8b0882e45e5d0b2ed19f6f7a157">ANGELSCRIPT_VERSION</a>&#160;&#160;&#160;22800</td></tr>
-<tr class="memdesc:a99c6b8b0882e45e5d0b2ed19f6f7a157"><td class="mdescLeft">&#160;</td><td class="mdescRight">Version 2.27.8. <br/></td></tr>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a99c6b8b0882e45e5d0b2ed19f6f7a157">ANGELSCRIPT_VERSION</a>&#160;&#160;&#160;22901</td></tr>
+<tr class="memdesc:a99c6b8b0882e45e5d0b2ed19f6f7a157"><td class="mdescLeft">&#160;</td><td class="mdescRight">Version 2.29.1. <br/></td></tr>
 <tr class="separator:a99c6b8b0882e45e5d0b2ed19f6f7a157"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e0eb27a2013e875a33565dd3fe76f79"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9e0eb27a2013e875a33565dd3fe76f79"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a9e0eb27a2013e875a33565dd3fe76f79">AS_CAN_USE_CPP11</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:a9e0eb27a2013e875a33565dd3fe76f79"><td class="mdescLeft">&#160;</td><td class="mdescRight">This macro is defined if the compiler supports the C++11 feature set. <br/></td></tr>
+<tr class="separator:a9e0eb27a2013e875a33565dd3fe76f79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a717eccea17214bc1eb64bb9789c4915a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a717eccea17214bc1eb64bb9789c4915a"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a717eccea17214bc1eb64bb9789c4915a">asOFFSET</a>(s, m)&#160;&#160;&#160;((size_t)(&amp;reinterpret_cast&lt;s*&gt;(100000)-&gt;m)-100000)</td></tr>
 <tr class="memdesc:a717eccea17214bc1eb64bb9789c4915a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the offset of an attribute in a struct. <br/></td></tr>
@@ -241,194 +248,20 @@ typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a8bbbe3a90082461266acf8f98ce9216e">asCLEANOBJECTTYPEFUNC_t</a> )(<a class="el" href="classas_i_object_type.html">asIObjectType</a> *)</td></tr>
 <tr class="memdesc:a8bbbe3a90082461266acf8f98ce9216e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The function signature for the object type cleanup callback function. <br/></td></tr>
 <tr class="separator:a8bbbe3a90082461266acf8f98ce9216e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a23f3c055107b52e232a7884c4f649f22"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23f3c055107b52e232a7884c4f649f22"></a>
+typedef <a class="el" href="classas_i_script_context.html">asIScriptContext</a> *(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a23f3c055107b52e232a7884c4f649f22">asREQUESTCONTEXTFUNC_t</a> )(<a class="el" href="classas_i_script_engine.html">asIScriptEngine</a> *, void *)</td></tr>
+<tr class="memdesc:a23f3c055107b52e232a7884c4f649f22"><td class="mdescLeft">&#160;</td><td class="mdescRight">The function signature for the request context callback. <br/></td></tr>
+<tr class="separator:a23f3c055107b52e232a7884c4f649f22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87ef2f38dfff65c88902d346d752958e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a87ef2f38dfff65c88902d346d752958e"></a>
+typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a87ef2f38dfff65c88902d346d752958e">asRETURNCONTEXTFUNC_t</a> )(<a class="el" href="classas_i_script_engine.html">asIScriptEngine</a> *, <a class="el" href="classas_i_script_context.html">asIScriptContext</a> *, void *)</td></tr>
+<tr class="memdesc:a87ef2f38dfff65c88902d346d752958e"><td class="mdescLeft">&#160;</td><td class="mdescRight">The function signature for the return context callback. <br/></td></tr>
+<tr class="separator:a87ef2f38dfff65c88902d346d752958e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad98ca65b7b5e09d50bcc73a5f184c719"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#ad98ca65b7b5e09d50bcc73a5f184c719">asJITFunction</a> )(<a class="el" href="structas_s_v_m_registers.html">asSVMRegisters</a> *registers, <a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a> jitArg)</td></tr>
 <tr class="memdesc:ad98ca65b7b5e09d50bcc73a5f184c719"><td class="mdescLeft">&#160;</td><td class="mdescRight">The function signature of a JIT compiled function.  <a href="#ad98ca65b7b5e09d50bcc73a5f184c719">More...</a><br/></td></tr>
 <tr class="separator:ad98ca65b7b5e09d50bcc73a5f184c719"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a53c2e8a74ade77c928316396394ebe0f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0f">asEEngineProp</a> { <br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa8facaf887921a6b26e5a1f06e01ec37a">asEP_ALLOW_UNSAFE_REFERENCES</a> = 1, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa6159294272e4d20dd4b35359a25f3ac6">asEP_OPTIMIZE_BYTECODE</a> = 2, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fabf1577418b716c92f0a85be3e2617243">asEP_COPY_SCRIPT_SECTIONS</a> = 3, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa1ab4c8f8734f0d90bee4005afd810f83">asEP_MAX_STACK_SIZE</a> = 4, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa6dc1c33f9227c66f18fc0f95a0c798b2">asEP_USE_CHARACTER_LITERALS</a> = 5, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa218fdf7e181bf9ee0498112f5a87c415">asEP_ALLOW_MULTILINE_STRINGS</a> = 6, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa77c3747503489ca122aa61276dae3c1f">asEP_ALLOW_IMPLICIT_HANDLE_TYPES</a> = 7, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa73b396e4ea6376f0962d19add962bd91">asEP_BUILD_WITHOUT_LINE_CUES</a> = 8, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facac241d97facce4eaf9e5b0ca40dfcf1">asEP_INIT_GLOBAL_VARS_AFTER_BUILD</a> = 9, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa90adb1e54ce0217235545941daa2dccd">asEP_REQUIRE_ENUM_SCOPE</a> = 10, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa02405d96a12b81aa816986b22bf752c2">asEP_SCRIPT_SCANNER</a> = 11, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa7ff74f4afa490b55839daaf217cf898c">asEP_INCLUDE_JIT_INSTRUCTIONS</a> = 12, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fab6daa2ae0c712da7f6f16d698305fba1">asEP_STRING_ENCODING</a> = 13, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facc694c9d52274a113262ebf5984f20ad">asEP_PROPERTY_ACCESSOR_MODE</a> = 14, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa530e8d9576f94a258446c5fb9b7bd7a5">asEP_EXPAND_DEF_ARRAY_TO_TMPL</a> = 15, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa9b5d1d8ff5143a6a77dfd18143d87c7d">asEP_AUTO_GARBAGE_COLLECT</a> = 16, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fab81c81f4fdeb616dd6487da48a0c3456">asEP_DISALLOW_GLOBAL_VARS</a> = 17, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa6d80b60995ad046918b2376d7d79f2af">asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT</a> = 18, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fadd96da828860b5de2352de07c2456633">asEP_COMPILER_WARNINGS</a> = 19, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa563bec877e91b0646c47197b2ae7ac0c">asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE</a> = 20
-<br/>
- }</td></tr>
-<tr class="memdesc:a53c2e8a74ade77c928316396394ebe0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Engine properties.  <a href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0f">More...</a><br/></td></tr>
-<tr class="separator:a53c2e8a74ade77c928316396394ebe0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ec92ea3c4762e44c2df788ceccdd1e4"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4">asECallConvTypes</a> { <br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a68ae43cc91cdfc3fa4590c9e6164e4f4">asCALL_CDECL</a> = 0, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a138a08e8363ebc695636dfe987674e2e">asCALL_STDCALL</a> = 1, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4aa241a0c1deedaa2d55eb99a83829efad">asCALL_THISCALL_ASGLOBAL</a> = 2, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4aea516c8742acc1edff6a43dc1bb09e96">asCALL_THISCALL</a> = 3, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4ac08652c72f1cc0dc81c37812fab0e253">asCALL_CDECL_OBJLAST</a> = 4, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a7c3e88628c2722d0a103b411d4aceaa0">asCALL_CDECL_OBJFIRST</a> = 5, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a750c26b6a6e0c9ccbb93078f532ef8ce">asCALL_GENERIC</a> = 6
-<br/>
- }</td></tr>
-<tr class="memdesc:a3ec92ea3c4762e44c2df788ceccdd1e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling conventions.  <a href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4">More...</a><br/></td></tr>
-<tr class="separator:a3ec92ea3c4762e44c2df788ceccdd1e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a855d86fa9ee15b9f75e553ee376b5c7a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7a">asEObjTypeFlags</a> { <br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa9450e038342b36c745858d2e5ae4b861">asOBJ_REF</a> = 0x01, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa9fc16a8ac0f30f9ff9c6568e0b7be91d">asOBJ_VALUE</a> = 0x02, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aacc1d835f9c25043cef86026a4aa6a470">asOBJ_GC</a> = 0x04, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa8ad017ddf25368870b28ee0fba96495a">asOBJ_POD</a> = 0x08, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aafa1830b02c4d51ddc25451e7ad1a7592">asOBJ_NOHANDLE</a> = 0x10, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaaae92b24e278976320f19d9dc75fe6db">asOBJ_SCOPED</a> = 0x20, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aae8de459b4106475aa8766edb5b088aac">asOBJ_TEMPLATE</a> = 0x40, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aadf3d1f30658e593f48c5c5f542ac4845">asOBJ_ASHANDLE</a> = 0x80, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa103297ed88696a3c30ec12e533d902c3">asOBJ_APP_CLASS</a> = 0x100, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aafd799c0705cee720a12ceb2838796024">asOBJ_APP_CLASS_CONSTRUCTOR</a> = 0x200, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa18d80c6d92e4bc104955da393c966917">asOBJ_APP_CLASS_DESTRUCTOR</a> = 0x400, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa6bf9b7bead31a40e7983538d8cecc3a4">asOBJ_APP_CLASS_ASSIGNMENT</a> = 0x800, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa925febfd30b150d97a84b7c6ee6a8677">asOBJ_APP_CLASS_COPY_CONSTRUCTOR</a> = 0x1000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa3eb67e27cc0fac7602934c1ff101aed5">asOBJ_APP_CLASS_C</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaf15f3dd82be0e77e05ee0dbea096bb36">asOBJ_APP_CLASS_CD</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa90b85700943e8acb45316943f1951d04">asOBJ_APP_CLASS_CA</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa619d54158a026e44bc5cffbb30794497">asOBJ_APP_CLASS_CK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aae13159e3ea949d52803cb635538a77f2">asOBJ_APP_CLASS_CDA</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa2aa6c871af75df3852f52658bf284765">asOBJ_APP_CLASS_CDK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa97b022a4656cd9f351cd68c3903170b2">asOBJ_APP_CLASS_CAK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa12d358962300537f2b0da20106eb270c">asOBJ_APP_CLASS_CDAK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa30a67a6e98721d20d41b70fe961ff778">asOBJ_APP_CLASS_D</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa38dd93911127894c5594474b4f06db1a">asOBJ_APP_CLASS_DA</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aab59c583cdcee2acce632f35db39139ae">asOBJ_APP_CLASS_DK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa4b7a67f596940218860dc36ad9a4c66c">asOBJ_APP_CLASS_DAK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaf7389e5dc914e6ab121580430be6d88b">asOBJ_APP_CLASS_A</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa7b1ce7e4c79ba23fd26b01474d550173">asOBJ_APP_CLASS_AK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa54236f54163e1df076bef918a862bd82">asOBJ_APP_CLASS_K</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa539ede421d313b03464c88cb15f08c75">asOBJ_APP_PRIMITIVE</a> = 0x2000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa7f7690d53d9bfc580e09ac7bf5868175">asOBJ_APP_FLOAT</a> = 0x4000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa5b8de58c5be3145aaa3e54008fb2edeb">asOBJ_APP_CLASS_ALLINTS</a> = 0x8000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa12afb6a0fa4ac874ce89815d3611823d">asOBJ_APP_CLASS_ALLFLOATS</a> = 0x10000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aad8b12da6bf9cd48990d48c2ddf13584d">asOBJ_NOCOUNT</a> = 0x20000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa244efb813b401b3a6d087c3add802818">asOBJ_APP_CLASS_ALIGN8</a> = 0x40000
-, <br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaa82f3ef517372e0db029f7dcfe7f88eb">asOBJ_SCRIPT_OBJECT</a> = 0x80000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa92354ace56201eb543c818b6c0852baf">asOBJ_SHARED</a> = 0x100000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa770f4012f052a1190edbac8931140091">asOBJ_NOINHERIT</a> = 0x200000, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa817bffd72a92219d1dc5c6d2361f6e09">asOBJ_SCRIPT_FUNCTION</a> = 0x400000
-<br/>
- }</td></tr>
-<tr class="memdesc:a855d86fa9ee15b9f75e553ee376b5c7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Object type flags.  <a href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7a">More...</a><br/></td></tr>
-<tr class="separator:a855d86fa9ee15b9f75e553ee376b5c7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e38df5b10ec8cbf2a688f1d114097c5"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5">asEBehaviours</a> { <br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aa4cf235bfbf72ec03d0f651cea324101">asBEHAVE_CONSTRUCT</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a04c0b561986c6814e8a54ce3679178a2">asBEHAVE_LIST_CONSTRUCT</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a0748a0f3a559354761ce15c2d1de2e51">asBEHAVE_DESTRUCT</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a0b3db16eea35213b6f41f8d19dc1bd4c">asBEHAVE_FACTORY</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aea078bc3b877ce33a2335e78ddb4938d">asBEHAVE_LIST_FACTORY</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a1dfa5b72ad69a7bf70636d4fcb1b1d84">asBEHAVE_ADDREF</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a7134ce13c81967191af401a1e5170a0c">asBEHAVE_RELEASE</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a7a5e435e88a5fc1dcdee13fce091b081">asBEHAVE_GET_WEAKREF_FLAG</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5ae0b54db9bbd5bf49d0e22cafd886b833">asBEHAVE_VALUE_CAST</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a03d72ae8d0f1e1b4e16f903346a694c6">asBEHAVE_IMPLICIT_VALUE_CAST</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a20746394824509f369f860ea1e96d1f6">asBEHAVE_REF_CAST</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a9b23cc523e8aa4984e5e56e54b95dee4">asBEHAVE_IMPLICIT_REF_CAST</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a8c9afe12ff833cd09bd893e1408b9103">asBEHAVE_TEMPLATE_CALLBACK</a>
-, <br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5af998529f8ea1e54567997b8fb2867640">asBEHAVE_GETREFCOUNT</a> = asBEHAVE_FIRST_GC, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aadbad474a338c3a0fe6e90df679bb2e6">asBEHAVE_SETGCFLAG</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5abfce2539609e667f15b24bbc8551c7b7">asBEHAVE_GETGCFLAG</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a08ccf78a37567b5dd192ff5d95c6667b">asBEHAVE_ENUMREFS</a>, 
-<br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a4275ebe0b4852f2d4a10d4d9db333fe9">asBEHAVE_RELEASEREFS</a>
-<br/>
- }</td></tr>
-<tr class="memdesc:a7e38df5b10ec8cbf2a688f1d114097c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Behaviours.  <a href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5">More...</a><br/></td></tr>
-<tr class="separator:a7e38df5b10ec8cbf2a688f1d114097c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e2a1647f02f2c5da931bab09e860f54"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a6e2a1647f02f2c5da931bab09e860f54">asERetCodes</a> { <br/>
 &#160;&#160;<a class="el" href="angelscript_8h.html#a6e2a1647f02f2c5da931bab09e860f54a0bf59062f03c90599e66a87275f37854">asSUCCESS</a> = 0, 
 <br/>
@@ -489,6 +322,198 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a6e2a1647f02f2c5da931bab09e860f54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return codes.  <a href="angelscript_8h.html#a6e2a1647f02f2c5da931bab09e860f54">More...</a><br/></td></tr>
 <tr class="separator:a6e2a1647f02f2c5da931bab09e860f54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53c2e8a74ade77c928316396394ebe0f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0f">asEEngineProp</a> { <br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa8facaf887921a6b26e5a1f06e01ec37a">asEP_ALLOW_UNSAFE_REFERENCES</a> = 1, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa6159294272e4d20dd4b35359a25f3ac6">asEP_OPTIMIZE_BYTECODE</a> = 2, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fabf1577418b716c92f0a85be3e2617243">asEP_COPY_SCRIPT_SECTIONS</a> = 3, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa1ab4c8f8734f0d90bee4005afd810f83">asEP_MAX_STACK_SIZE</a> = 4, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa6dc1c33f9227c66f18fc0f95a0c798b2">asEP_USE_CHARACTER_LITERALS</a> = 5, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa218fdf7e181bf9ee0498112f5a87c415">asEP_ALLOW_MULTILINE_STRINGS</a> = 6, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa77c3747503489ca122aa61276dae3c1f">asEP_ALLOW_IMPLICIT_HANDLE_TYPES</a> = 7, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa73b396e4ea6376f0962d19add962bd91">asEP_BUILD_WITHOUT_LINE_CUES</a> = 8, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facac241d97facce4eaf9e5b0ca40dfcf1">asEP_INIT_GLOBAL_VARS_AFTER_BUILD</a> = 9, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa90adb1e54ce0217235545941daa2dccd">asEP_REQUIRE_ENUM_SCOPE</a> = 10, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa02405d96a12b81aa816986b22bf752c2">asEP_SCRIPT_SCANNER</a> = 11, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa7ff74f4afa490b55839daaf217cf898c">asEP_INCLUDE_JIT_INSTRUCTIONS</a> = 12, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fab6daa2ae0c712da7f6f16d698305fba1">asEP_STRING_ENCODING</a> = 13, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facc694c9d52274a113262ebf5984f20ad">asEP_PROPERTY_ACCESSOR_MODE</a> = 14, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa530e8d9576f94a258446c5fb9b7bd7a5">asEP_EXPAND_DEF_ARRAY_TO_TMPL</a> = 15, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa9b5d1d8ff5143a6a77dfd18143d87c7d">asEP_AUTO_GARBAGE_COLLECT</a> = 16, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fab81c81f4fdeb616dd6487da48a0c3456">asEP_DISALLOW_GLOBAL_VARS</a> = 17, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa6d80b60995ad046918b2376d7d79f2af">asEP_ALWAYS_IMPL_DEFAULT_CONSTRUCT</a> = 18, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fadd96da828860b5de2352de07c2456633">asEP_COMPILER_WARNINGS</a> = 19, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa563bec877e91b0646c47197b2ae7ac0c">asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE</a> = 20, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa9c876445c7d138ad096705fc18f311d1">asEP_ALTER_SYNTAX_NAMED_ARGS</a> = 21
+<br/>
+ }</td></tr>
+<tr class="memdesc:a53c2e8a74ade77c928316396394ebe0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Engine properties.  <a href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0f">More...</a><br/></td></tr>
+<tr class="separator:a53c2e8a74ade77c928316396394ebe0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ec92ea3c4762e44c2df788ceccdd1e4"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4">asECallConvTypes</a> { <br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a68ae43cc91cdfc3fa4590c9e6164e4f4">asCALL_CDECL</a> = 0, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a138a08e8363ebc695636dfe987674e2e">asCALL_STDCALL</a> = 1, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4aa241a0c1deedaa2d55eb99a83829efad">asCALL_THISCALL_ASGLOBAL</a> = 2, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4aea516c8742acc1edff6a43dc1bb09e96">asCALL_THISCALL</a> = 3, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4ac08652c72f1cc0dc81c37812fab0e253">asCALL_CDECL_OBJLAST</a> = 4, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a7c3e88628c2722d0a103b411d4aceaa0">asCALL_CDECL_OBJFIRST</a> = 5, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a750c26b6a6e0c9ccbb93078f532ef8ce">asCALL_GENERIC</a> = 6, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a491f0ab2b66032a7b5541364f7f225b1">asCALL_THISCALL_OBJLAST</a> = 7, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4a613a388ed51315f6fce19f3824d6b17a">asCALL_THISCALL_OBJFIRST</a> = 8
+<br/>
+ }</td></tr>
+<tr class="memdesc:a3ec92ea3c4762e44c2df788ceccdd1e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calling conventions.  <a href="angelscript_8h.html#a3ec92ea3c4762e44c2df788ceccdd1e4">More...</a><br/></td></tr>
+<tr class="separator:a3ec92ea3c4762e44c2df788ceccdd1e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a855d86fa9ee15b9f75e553ee376b5c7a"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7a">asEObjTypeFlags</a> { <br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa9450e038342b36c745858d2e5ae4b861">asOBJ_REF</a> = (1&lt;&lt;0), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa9fc16a8ac0f30f9ff9c6568e0b7be91d">asOBJ_VALUE</a> = (1&lt;&lt;1), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aacc1d835f9c25043cef86026a4aa6a470">asOBJ_GC</a> = (1&lt;&lt;2), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa8ad017ddf25368870b28ee0fba96495a">asOBJ_POD</a> = (1&lt;&lt;3), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aafa1830b02c4d51ddc25451e7ad1a7592">asOBJ_NOHANDLE</a> = (1&lt;&lt;4), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaaae92b24e278976320f19d9dc75fe6db">asOBJ_SCOPED</a> = (1&lt;&lt;5), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aae8de459b4106475aa8766edb5b088aac">asOBJ_TEMPLATE</a> = (1&lt;&lt;6), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aadf3d1f30658e593f48c5c5f542ac4845">asOBJ_ASHANDLE</a> = (1&lt;&lt;7), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa103297ed88696a3c30ec12e533d902c3">asOBJ_APP_CLASS</a> = (1&lt;&lt;8), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aafd799c0705cee720a12ceb2838796024">asOBJ_APP_CLASS_CONSTRUCTOR</a> = (1&lt;&lt;9), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa18d80c6d92e4bc104955da393c966917">asOBJ_APP_CLASS_DESTRUCTOR</a> = (1&lt;&lt;10), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa6bf9b7bead31a40e7983538d8cecc3a4">asOBJ_APP_CLASS_ASSIGNMENT</a> = (1&lt;&lt;11), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa925febfd30b150d97a84b7c6ee6a8677">asOBJ_APP_CLASS_COPY_CONSTRUCTOR</a> = (1&lt;&lt;12), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa3eb67e27cc0fac7602934c1ff101aed5">asOBJ_APP_CLASS_C</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaf15f3dd82be0e77e05ee0dbea096bb36">asOBJ_APP_CLASS_CD</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa90b85700943e8acb45316943f1951d04">asOBJ_APP_CLASS_CA</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa619d54158a026e44bc5cffbb30794497">asOBJ_APP_CLASS_CK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aae13159e3ea949d52803cb635538a77f2">asOBJ_APP_CLASS_CDA</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa2aa6c871af75df3852f52658bf284765">asOBJ_APP_CLASS_CDK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa97b022a4656cd9f351cd68c3903170b2">asOBJ_APP_CLASS_CAK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa12d358962300537f2b0da20106eb270c">asOBJ_APP_CLASS_CDAK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_CONSTRUCTOR + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa30a67a6e98721d20d41b70fe961ff778">asOBJ_APP_CLASS_D</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa38dd93911127894c5594474b4f06db1a">asOBJ_APP_CLASS_DA</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aab59c583cdcee2acce632f35db39139ae">asOBJ_APP_CLASS_DK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa4b7a67f596940218860dc36ad9a4c66c">asOBJ_APP_CLASS_DAK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_DESTRUCTOR + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaf7389e5dc914e6ab121580430be6d88b">asOBJ_APP_CLASS_A</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa7b1ce7e4c79ba23fd26b01474d550173">asOBJ_APP_CLASS_AK</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_ASSIGNMENT + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa54236f54163e1df076bef918a862bd82">asOBJ_APP_CLASS_K</a> = (asOBJ_APP_CLASS + asOBJ_APP_CLASS_COPY_CONSTRUCTOR), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa539ede421d313b03464c88cb15f08c75">asOBJ_APP_PRIMITIVE</a> = (1&lt;&lt;13), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa7f7690d53d9bfc580e09ac7bf5868175">asOBJ_APP_FLOAT</a> = (1&lt;&lt;14), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa84a949c5cc6d4d872054baac1a085419">asOBJ_APP_ARRAY</a> = (1&lt;&lt;15), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa5b8de58c5be3145aaa3e54008fb2edeb">asOBJ_APP_CLASS_ALLINTS</a> = (1&lt;&lt;16), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa12afb6a0fa4ac874ce89815d3611823d">asOBJ_APP_CLASS_ALLFLOATS</a> = (1&lt;&lt;17), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aad8b12da6bf9cd48990d48c2ddf13584d">asOBJ_NOCOUNT</a> = (1&lt;&lt;18), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa244efb813b401b3a6d087c3add802818">asOBJ_APP_CLASS_ALIGN8</a> = (1&lt;&lt;19)
+, <br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaa82f3ef517372e0db029f7dcfe7f88eb">asOBJ_SCRIPT_OBJECT</a> = (1&lt;&lt;20), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa92354ace56201eb543c818b6c0852baf">asOBJ_SHARED</a> = (1&lt;&lt;21), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa770f4012f052a1190edbac8931140091">asOBJ_NOINHERIT</a> = (1&lt;&lt;22), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa817bffd72a92219d1dc5c6d2361f6e09">asOBJ_SCRIPT_FUNCTION</a> = (1&lt;&lt;23), 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aaee8bfdbc6c2faac1938bba7e3a8b5ff2">asOBJ_IMPLICIT_HANDLE</a> = (1&lt;&lt;24)
+<br/>
+ }</td></tr>
+<tr class="memdesc:a855d86fa9ee15b9f75e553ee376b5c7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Object type flags.  <a href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7a">More...</a><br/></td></tr>
+<tr class="separator:a855d86fa9ee15b9f75e553ee376b5c7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e38df5b10ec8cbf2a688f1d114097c5"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5">asEBehaviours</a> { <br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aa4cf235bfbf72ec03d0f651cea324101">asBEHAVE_CONSTRUCT</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a04c0b561986c6814e8a54ce3679178a2">asBEHAVE_LIST_CONSTRUCT</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a0748a0f3a559354761ce15c2d1de2e51">asBEHAVE_DESTRUCT</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a0b3db16eea35213b6f41f8d19dc1bd4c">asBEHAVE_FACTORY</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aea078bc3b877ce33a2335e78ddb4938d">asBEHAVE_LIST_FACTORY</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a1dfa5b72ad69a7bf70636d4fcb1b1d84">asBEHAVE_ADDREF</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a7134ce13c81967191af401a1e5170a0c">asBEHAVE_RELEASE</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a7a5e435e88a5fc1dcdee13fce091b081">asBEHAVE_GET_WEAKREF_FLAG</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5ae0b54db9bbd5bf49d0e22cafd886b833">asBEHAVE_VALUE_CAST</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a03d72ae8d0f1e1b4e16f903346a694c6">asBEHAVE_IMPLICIT_VALUE_CAST</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a20746394824509f369f860ea1e96d1f6">asBEHAVE_REF_CAST</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a9b23cc523e8aa4984e5e56e54b95dee4">asBEHAVE_IMPLICIT_REF_CAST</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a8c9afe12ff833cd09bd893e1408b9103">asBEHAVE_TEMPLATE_CALLBACK</a>
+, <br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5af998529f8ea1e54567997b8fb2867640">asBEHAVE_GETREFCOUNT</a> = asBEHAVE_FIRST_GC, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5aadbad474a338c3a0fe6e90df679bb2e6">asBEHAVE_SETGCFLAG</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5abfce2539609e667f15b24bbc8551c7b7">asBEHAVE_GETGCFLAG</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a08ccf78a37567b5dd192ff5d95c6667b">asBEHAVE_ENUMREFS</a>, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5a4275ebe0b4852f2d4a10d4d9db333fe9">asBEHAVE_RELEASEREFS</a>
+<br/>
+ }</td></tr>
+<tr class="memdesc:a7e38df5b10ec8cbf2a688f1d114097c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Behaviours.  <a href="angelscript_8h.html#a7e38df5b10ec8cbf2a688f1d114097c5">More...</a><br/></td></tr>
+<tr class="separator:a7e38df5b10ec8cbf2a688f1d114097c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a867f14b4137dd4602fda1e616b217a69"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a867f14b4137dd4602fda1e616b217a69">asEContextState</a> { <br/>
 &#160;&#160;<a class="el" href="angelscript_8h.html#a867f14b4137dd4602fda1e616b217a69a6d3730dd7a91aff81cafaaca4e93efaa">asEXECUTION_FINISHED</a> = 0, 
 <br/>
@@ -1020,7 +1045,21 @@ Enumerations</h2></td></tr>
 <br/>
 &#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a980fccdeeebe67503f9623722ed893a5">asBC_PshListElmnt</a> = 191, 
 <br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a7abb1d21f26401e75305a2b4cf7a4733">asBC_SetListType</a> = 192
+&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a7abb1d21f26401e75305a2b4cf7a4733">asBC_SetListType</a> = 192, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a1b9ae2022b484a3c44820b6528c68ac0">asBC_POWi</a> = 193, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a45adae8be4e9dde1b77dc9346786cfef">asBC_POWu</a> = 194, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0aedc33b037796cfbb5879799a6bea3b0d">asBC_POWf</a> = 195, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a17794eb37e2e24d3f92945e492fd8fdc">asBC_POWd</a> = 196, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a550ee3e286be8a70a06194206c0ae1b9">asBC_POWdi</a> = 197, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a7546139b9cafeae5d71a345ec3b4424d">asBC_POWi64</a> = 198, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0a23bbb267da86c108b4fe23f0443d5f1d">asBC_POWu64</a> = 199
 <br/>
  }</td></tr>
 <tr class="memdesc:ab3692c4e5d47fc93f8c9646d1783aef0"><td class="mdescLeft">&#160;</td><td class="mdescRight">The bytecode instructions used by the VM.  <a href="angelscript_8h.html#ab3692c4e5d47fc93f8c9646d1783aef0">More...</a><br/></td></tr>
@@ -1120,9 +1159,19 @@ Functions</h2></td></tr>
 <tr class="memitem:a9267c4ad35aceaf7cc0961cd42147ee7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="angelscript_8h.html#a6412a04ba6b2737922fdb2d8f822f51c">AS_API</a> int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a9267c4ad35aceaf7cc0961cd42147ee7">asResetGlobalMemoryFunctions</a> ()</td></tr>
 <tr class="memdesc:a9267c4ad35aceaf7cc0961cd42147ee7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove previously registered memory management functions.  <a href="#a9267c4ad35aceaf7cc0961cd42147ee7">More...</a><br/></td></tr>
 <tr class="separator:a9267c4ad35aceaf7cc0961cd42147ee7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54a201f99d19e648526abf30ae31e466"><td class="memItemLeft" align="right" valign="top"><a class="el" href="angelscript_8h.html#a6412a04ba6b2737922fdb2d8f822f51c">AS_API</a> void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a54a201f99d19e648526abf30ae31e466">asAllocMem</a> (size_t size)</td></tr>
+<tr class="memdesc:a54a201f99d19e648526abf30ae31e466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Allocate memory using the memory function registered with AngelScript.  <a href="#a54a201f99d19e648526abf30ae31e466">More...</a><br/></td></tr>
+<tr class="separator:a54a201f99d19e648526abf30ae31e466"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9da61275bbfd5f7bd55ed411d05fe103"><td class="memItemLeft" align="right" valign="top"><a class="el" href="angelscript_8h.html#a6412a04ba6b2737922fdb2d8f822f51c">AS_API</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a9da61275bbfd5f7bd55ed411d05fe103">asFreeMem</a> (void *mem)</td></tr>
+<tr class="memdesc:a9da61275bbfd5f7bd55ed411d05fe103"><td class="mdescLeft">&#160;</td><td class="mdescRight">Deallocates memory using the memory function registered with AngelScript.  <a href="#a9da61275bbfd5f7bd55ed411d05fe103">More...</a><br/></td></tr>
+<tr class="separator:a9da61275bbfd5f7bd55ed411d05fe103"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0ffb789dab56b5617e2f961f9c79fdb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="angelscript_8h.html#a6412a04ba6b2737922fdb2d8f822f51c">AS_API</a> <a class="el" href="classas_i_lockable_shared_bool.html">asILockableSharedBool</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#aa0ffb789dab56b5617e2f961f9c79fdb">asCreateLockableSharedBool</a> ()</td></tr>
 <tr class="memdesc:aa0ffb789dab56b5617e2f961f9c79fdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a lockable shared boolean.  <a href="#aa0ffb789dab56b5617e2f961f9c79fdb">More...</a><br/></td></tr>
 <tr class="separator:aa0ffb789dab56b5617e2f961f9c79fdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a863f2a1e60e6c19eea9c6b34690dcc00"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a863f2a1e60e6c19eea9c6b34690dcc00"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815">asUINT</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="angelscript_8h.html#a863f2a1e60e6c19eea9c6b34690dcc00">asGetTypeTraits</a> ()</td></tr>
+<tr class="memdesc:a863f2a1e60e6c19eea9c6b34690dcc00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the appropriate flags for use with RegisterObjectType.  <a href="#a863f2a1e60e6c19eea9c6b34690dcc00">More...</a><br/></td></tr>
+<tr class="separator:a863f2a1e60e6c19eea9c6b34690dcc00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -1750,6 +1799,27 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 <tr><td class="fieldname"><em><a class="anchor" id="ab3692c4e5d47fc93f8c9646d1783aef0a7abb1d21f26401e75305a2b4cf7a4733"></a>asBC_SetListType</em>&nbsp;</td><td class="fielddoc">
 <p>Sets the type of the next element in the list buffer. </p>
 </td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="ab3692c4e5d47fc93f8c9646d1783aef0a1b9ae2022b484a3c44820b6528c68ac0"></a>asBC_POWi</em>&nbsp;</td><td class="fielddoc">
+<p>Computes the power of for two int values. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="ab3692c4e5d47fc93f8c9646d1783aef0a45adae8be4e9dde1b77dc9346786cfef"></a>asBC_POWu</em>&nbsp;</td><td class="fielddoc">
+<p>Computes the power of for two uint values. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="ab3692c4e5d47fc93f8c9646d1783aef0aedc33b037796cfbb5879799a6bea3b0d"></a>asBC_POWf</em>&nbsp;</td><td class="fielddoc">
+<p>Computes the power of for two float values. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="ab3692c4e5d47fc93f8c9646d1783aef0a17794eb37e2e24d3f92945e492fd8fdc"></a>asBC_POWd</em>&nbsp;</td><td class="fielddoc">
+<p>Computes the power of for two double values. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="ab3692c4e5d47fc93f8c9646d1783aef0a550ee3e286be8a70a06194206c0ae1b9"></a>asBC_POWdi</em>&nbsp;</td><td class="fielddoc">
+<p>Computes the power of where base is a double and exponent is an int value. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="ab3692c4e5d47fc93f8c9646d1783aef0a7546139b9cafeae5d71a345ec3b4424d"></a>asBC_POWi64</em>&nbsp;</td><td class="fielddoc">
+<p>Computes the power of for two int64 values. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="ab3692c4e5d47fc93f8c9646d1783aef0a23bbb267da86c108b4fe23f0443d5f1d"></a>asBC_POWu64</em>&nbsp;</td><td class="fielddoc">
+<p>Computes the power of for two uint64 values. </p>
+</td></tr>
 </table>
 
 </div>
@@ -1927,6 +1997,12 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 <tr><td class="fieldname"><em><a class="anchor" id="a3ec92ea3c4762e44c2df788ceccdd1e4a750c26b6a6e0c9ccbb93078f532ef8ce"></a>asCALL_GENERIC</em>&nbsp;</td><td class="fielddoc">
 <p>A function using the generic calling convention. </p>
 </td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a3ec92ea3c4762e44c2df788ceccdd1e4a491f0ab2b66032a7b5541364f7f225b1"></a>asCALL_THISCALL_OBJLAST</em>&nbsp;</td><td class="fielddoc">
+<p>A thiscall class method registered as a functor object. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a3ec92ea3c4762e44c2df788ceccdd1e4a613a388ed51315f6fce19f3824d6b17a"></a>asCALL_THISCALL_OBJFIRST</em>&nbsp;</td><td class="fielddoc">
+<p>A thiscall class method registered as a functor object. </p>
+</td></tr>
 </table>
 
 </div>
@@ -2055,6 +2131,9 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 </td></tr>
 <tr><td class="fieldname"><em><a class="anchor" id="a53c2e8a74ade77c928316396394ebe0fa563bec877e91b0646c47197b2ae7ac0c"></a>asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE</em>&nbsp;</td><td class="fielddoc">
 <p>Disallow value assignment for reference types to avoid ambiguity. Default: false. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a53c2e8a74ade77c928316396394ebe0fa9c876445c7d138ad096705fc18f311d1"></a>asEP_ALTER_SYNTAX_NAMED_ARGS</em>&nbsp;</td><td class="fielddoc">
+<p>Change the script syntax for named arguments: 0 - no change, 1 - accept = but warn, 2 - accept = without warning. Default: 0. </p>
 </td></tr>
 </table>
 
@@ -2267,6 +2346,9 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 <tr><td class="fieldname"><em><a class="anchor" id="a855d86fa9ee15b9f75e553ee376b5c7aa7f7690d53d9bfc580e09ac7bf5868175"></a>asOBJ_APP_FLOAT</em>&nbsp;</td><td class="fielddoc">
 <p>The C++ type is a float or double. Only valid for value types. </p>
 </td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a855d86fa9ee15b9f75e553ee376b5c7aa84a949c5cc6d4d872054baac1a085419"></a>asOBJ_APP_ARRAY</em>&nbsp;</td><td class="fielddoc">
+<p>The C++ type is a static array. Only valid for value types. </p>
+</td></tr>
 <tr><td class="fieldname"><em><a class="anchor" id="a855d86fa9ee15b9f75e553ee376b5c7aa5b8de58c5be3145aaa3e54008fb2edeb"></a>asOBJ_APP_CLASS_ALLINTS</em>&nbsp;</td><td class="fielddoc">
 <p>The C++ class can be treated as if all its members are integers. </p>
 </td></tr>
@@ -2290,6 +2372,9 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 </td></tr>
 <tr><td class="fieldname"><em><a class="anchor" id="a855d86fa9ee15b9f75e553ee376b5c7aa817bffd72a92219d1dc5c6d2361f6e09"></a>asOBJ_SCRIPT_FUNCTION</em>&nbsp;</td><td class="fielddoc">
 <p>The object type is a script function. </p>
+</td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a855d86fa9ee15b9f75e553ee376b5c7aaee8bfdbc6c2faac1938bba7e3a8b5ff2"></a>asOBJ_IMPLICIT_HANDLE</em>&nbsp;</td><td class="fielddoc">
+<p>The object is declared for implicit handle. </p>
 </td></tr>
 </table>
 
@@ -2558,6 +2643,29 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 
 </div>
 </div>
+<a class="anchor" id="a54a201f99d19e648526abf30ae31e466"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="angelscript_8h.html#a6412a04ba6b2737922fdb2d8f822f51c">AS_API</a> void* asAllocMem </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>size</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">size</td><td>The size of the buffer to allocate </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pointer to the allocated buffer, or null on error. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a0565bcb53be170dd85ae27a5b6f2b828"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2648,6 +2756,28 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 
 </div>
 </div>
+<a class="anchor" id="a9da61275bbfd5f7bd55ed411d05fe103"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="angelscript_8h.html#a6412a04ba6b2737922fdb2d8f822f51c">AS_API</a> void asFreeMem </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>mem</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">mem</td><td>A pointer to the buffer to deallocate </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="ad3a20dc58093b92a5a44c7b6ada34a10"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2714,6 +2844,34 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
       </table>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>The thread manager prepared with <a class="el" href="angelscript_8h.html#aa5bea65c3f2a224bb1c677515e3bb0e2">asPrepareMultithread()</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a863f2a1e60e6c19eea9c6b34690dcc00"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815">asUINT</a> asGetTypeTraits </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type for which the flags should be determined </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The flags necessary to register this type as a value type</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>This function is only availabe if the compiler supports C++11 feature set. Check existance with #if <a class="el" href="angelscript_8h.html#a9e0eb27a2013e875a33565dd3fe76f79">AS_CAN_USE_CPP11</a>.</dd></dl>
+<p>This template function uses C++11 STL template functions to determine the appropriate flags to use when registering the desired type as a value type with <a class="el" href="classas_i_script_engine.html#a29c6c087c8c5b5cdb6271cfd161cc5a6">asIScriptEngine::RegisterObjectType</a>.</p>
+<p>It is capable to determine all the <a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7a">asOBJ_APP_xxx</a> flags, except for <a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa5b8de58c5be3145aaa3e54008fb2edeb">asOBJ_APP_CLASS_ALLINTS</a>, <a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa12afb6a0fa4ac874ce89815d3611823d">asOBJ_APP_CLASS_ALLFLOATS</a>, and <a class="el" href="angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa244efb813b401b3a6d087c3add802818">asOBJ_APP_CLASS_ALIGN8</a>. These flags must still be informed manually when needed.</p>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_register_val_type.html#doc_reg_val_2">Value types and native calling conventions</a> </dd></dl>
 
 </div>
 </div>
@@ -2880,7 +3038,7 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_b2f33c71d4aa5e7af42a1ca61ff5af1b.html">source</a></li><li class="navelem"><a class="el" href="angelscript_8h.html">angelscript.h</a></li>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:46 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:27 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

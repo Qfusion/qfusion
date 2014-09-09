@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -71,6 +74,7 @@ $(document).ready(function(){initNavTree('doc_expressions.html','');});
 <li><a class="el" href="doc_expressions.html#handle">Handle-of</a></li>
 <li><a class="el" href="doc_expressions.html#parenthesis">Parenthesis</a></li>
 <li><a class="el" href="doc_expressions.html#scope">Scope resolution</a></li>
+<li><a class="el" href="doc_expressions.html#anonobj">Anonymous objects</a></li>
 </ul>
 <h1><a class="anchor" id="assignment"></a>
 Assignments</h1>
@@ -81,7 +85,7 @@ Compound assignments</h1>
   lvalue += rvalue;
   lvalue = lvalue + rvalue;
 </pre><p>A compound assignment is a combination of an operator followed by the assignment. The two expressions above means practically the same thing. Except that first one is more efficient in that the lvalue is only evaluated once, which can make a difference if the lvalue is complex expression in itself.</p>
-<p>Available operators: <code>+= -= *= /= %= &amp;= |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code></p>
+<p>Available operators: <code>+= -= *= /= %= **= &amp;= |= ^= &lt;&lt;= &gt;&gt;= &gt;&gt;&gt;=</code></p>
 <h1><a class="anchor" id="function"></a>
 Function call</h1>
 <pre>
@@ -100,6 +104,11 @@ Function call</h1>
   int value;
   func(value);</pre><pre>  // Call the function with 'void' argument to ignore the output value
   func(void);
+</pre><p>Arguments can also be named and passed to a specific argument independent of the order the parameters were declared in. No positional arguments may follow any named arguments.</p>
+<pre>
+  void func(int flagA = false, int flagB = false, int flagC = false) {}</pre><pre>  // Call the function, setting only a subset of its parameters
+  func(flagC: true);
+  func(flagB: true, flagA: true);
 </pre><h1><a class="anchor" id="conversion"></a>
 Type conversions</h1>
 <pre>
@@ -134,7 +143,7 @@ Math operators</h1>
 <tr>
 <td width="70" valign="top"><code>/</code> </td><td width="100" valign="top">division </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 <tr>
-<td width="70" valign="top"><code>%</code> </td><td width="100" valign="top">modulos </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
+<td width="70" valign="top"><code>%</code> </td><td width="100" valign="top">modulos </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td></td><td width="70" valign="top"><code>**</code> </td><td width="100" valign="top">exponent </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 </table>
 <p>Plus and minus can be used as unary operators as well. NUM can be exchanged for any numeric type, e.g. <code>int</code> or <code>float</code>. Both terms of the dual operations will be implicitly converted to have the same type. The result is always the same type as the original terms. One exception is unary negative which is not available for <code>uint</code>.</p>
 <h1><a class="anchor" id="bits"></a>
@@ -143,23 +152,24 @@ Bitwise operators</h1>
   c = ~(a | b);
 </pre><table  cellspacing="0" cellpadding="0" border="0">
 <tr>
-<td width="70" valign="top"><b>operator</b> </td><td width="130" valign="top"><b>description</b> </td><td width="80" valign="top"><b>left hand</b> </td><td width="80" valign="top"><b>right hand</b> </td><td width="80" valign="top"><b>result</b> </td></tr>
+<td width="70" valign="top"><b>operator</b> </td><td width="130" valign="top"><b>description</b> </td><td width="80" valign="top"><b>left hand</b></td><td width="80" valign="top"><b>right hand</b></td><td width="80" valign="top"><b>result</b> </td></tr>
 <tr>
-<td width="70" valign="top"><code>~</code> </td><td width="130" valign="top">bitwise complement </td><td width="80" valign="top">&#160; </td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em> </td></tr>
+<td width="70" valign="top"><code>~</code> </td><td width="130" valign="top">bitwise complement </td><td width="80" valign="top">&#160; </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 <tr>
-<td width="70" valign="top"><code>&amp;</code> </td><td width="130" valign="top">bitwise and </td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em> </td></tr>
+<td width="70" valign="top"><code>&amp;</code> </td><td width="130" valign="top">bitwise and </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 <tr>
-<td width="70" valign="top"><code>|</code> </td><td width="130" valign="top">bitwise or </td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em> </td></tr>
+<td width="70" valign="top"><code>|</code> </td><td width="130" valign="top">bitwise or </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 <tr>
-<td width="70" valign="top"><code>^</code> </td><td width="130" valign="top">bitwise xor </td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em> </td></tr>
+<td width="70" valign="top"><code>^</code> </td><td width="130" valign="top">bitwise xor </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 <tr>
-<td width="70" valign="top"><code>&lt;&lt;</code> </td><td width="130" valign="top">left shift </td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em> </td></tr>
+<td width="70" valign="top"><code>&lt;&lt;</code> </td><td width="130" valign="top">left shift </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 <tr>
-<td width="70" valign="top"><code>&gt;&gt;</code> </td><td width="130" valign="top">right shift </td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em> </td></tr>
+<td width="70" valign="top"><code>&gt;&gt;</code> </td><td width="130" valign="top">right shift </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 <tr>
-<td width="70" valign="top"><code>&gt;&gt;&gt;</code></td><td width="130" valign="top">arithmetic right shift</td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em></td><td width="80" valign="top"><em>NUM</em> </td></tr>
+<td width="70" valign="top"><code>&gt;&gt;&gt;</code></td><td width="130" valign="top">arithmetic right shift</td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td><td width="80" valign="top"><em>NUM</em> </td></tr>
 </table>
 <p>All except <code>~</code> are dual operators.</p>
+<p>Both operands will be converted to integers while keeping the sign of the original type before the operation. The resulting type will be the same as the left hand operand.</p>
 <h1><a class="anchor" id="logic"></a>
 Logic operators</h1>
 <pre>
@@ -169,7 +179,7 @@ Logic operators</h1>
   }
 </pre><table  cellspacing="0" cellpadding="0" border="0">
 <tr>
-<td width="70" valign="top"><b>operator</b> </td><td width="130" valign="top"><b>description</b> </td><td width="80" valign="top"><b>left hand</b> </td><td width="80" valign="top"><b>right hand</b> </td><td width="80" valign="top"><b>result</b> </td></tr>
+<td width="70" valign="top"><b>operator</b> </td><td width="130" valign="top"><b>description</b> </td><td width="80" valign="top"><b>left hand</b> </td><td width="80" valign="top"><b>right hand</b></td><td width="80" valign="top"><b>result</b> </td></tr>
 <tr>
 <td width="70" valign="top"><code>not</code></td><td width="130" valign="top">logical not </td><td width="80" valign="top">&#160; </td><td width="80" valign="top"><code>bool</code></td><td width="80" valign="top"><code>bool</code> </td></tr>
 <tr>
@@ -262,13 +272,23 @@ Scope resolution</h1>
     ::value = value; // use scope resolution operator to refer to the global variable 
   } 
 </pre><p>The scope resolution operator <code>::</code> can be used to access variables or functions from another scope when the name is overloaded by a local variable or function. Write the scope name on the left (or blank for the global scope) and the name of the variable/function on the right.</p>
-<dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_global_namespace.html">Namespaces</a> </dd></dl>
-</div></div><!-- contents -->
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_global_namespace.html">Namespaces</a></dd></dl>
+<h1><a class="anchor" id="anonobj"></a>
+Anonymous objects</h1>
+<p>Anonymous objects, i.e. objects that are created without being declared as variables, can be instantiated in expressions by calling invoking the object's constructor as if it was a function. Both reference types and value types can be created like this.</p>
+<pre>
+  // Call the function with a new object of the type MyClass
+  func(MyClass(1,2,3));
+</pre><p>For types that support it, the anonymous objects can also be initialized with initialization lists.</p>
+<pre>
+  // Call the function with a dictionary
+  func(dictionary = {{'banana',1}, {'apple',2}, {'orange',3}});
+</pre> </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:47 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

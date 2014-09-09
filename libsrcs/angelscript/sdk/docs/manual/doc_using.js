@@ -13,11 +13,14 @@ var doc_using =
       [ "Exception handling", "doc_call_script_func.html#doc_call_script_4", null ]
     ] ],
     [ "Using script classes", "doc_use_script_class.html", [
-      [ "Instanciating the script class", "doc_use_script_class.html#doc_use_script_class_1", null ],
+      [ "Instantiating the script class", "doc_use_script_class.html#doc_use_script_class_1", null ],
       [ "Calling a method on the script class", "doc_use_script_class.html#doc_use_script_class_2", null ],
       [ "Receiving script classes", "doc_use_script_class.html#doc_use_script_class_3", null ],
       [ "Returning script classes", "doc_use_script_class.html#doc_use_script_class_4", null ]
     ] ],
-    [ "Funcdefs and script callback functions", "doc_callbacks.html", null ],
+    [ "Funcdefs and script callback functions", "doc_callbacks.html", [
+      [ "An example", "doc_callbacks.html#doc_callbacks_example", null ],
+      [ "Delegates", "doc_callbacks.html#doc_callbacks_delegate", null ]
+    ] ],
     [ "Advanced topics", "doc_advanced.html", "doc_advanced" ]
 ];

@@ -3,7 +3,8 @@ var doc_advanced =
     [ "Debugging scripts", "doc_debug.html", [
       [ "Setting line breaks", "doc_debug.html#doc_debug_1", null ],
       [ "Viewing the call stack", "doc_debug.html#doc_debug_2", null ],
-      [ "Inspecting variables", "doc_debug.html#doc_debug_3", null ]
+      [ "Inspecting variables", "doc_debug.html#doc_debug_3", null ],
+      [ "Debugging internally executed scripts", "doc_debug.html#doc_debug_4", null ]
     ] ],
     [ "Timeout long running scripts", "doc_adv_timeout.html", [
       [ "With the line callback", "doc_adv_timeout.html#doc_adv_timeout_1", null ],

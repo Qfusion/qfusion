@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -147,6 +150,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a81b15d88f98902173400dd1e32722b58"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classas_i_object_type.html">asIObjectType</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#a81b15d88f98902173400dd1e32722b58">GetObjectTypeByName</a> (const char *name) const =0</td></tr>
 <tr class="memdesc:a81b15d88f98902173400dd1e32722b58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the object type interface by name.  <a href="#a81b15d88f98902173400dd1e32722b58">More...</a><br/></td></tr>
 <tr class="separator:a81b15d88f98902173400dd1e32722b58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a258e9b92f64468af1e12f8dff59d9969"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classas_i_object_type.html">asIObjectType</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#a258e9b92f64468af1e12f8dff59d9969">GetObjectTypeByDecl</a> (const char *decl) const =0</td></tr>
+<tr class="memdesc:a258e9b92f64468af1e12f8dff59d9969"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a type by declaration.  <a href="#a258e9b92f64468af1e12f8dff59d9969">More...</a><br/></td></tr>
+<tr class="separator:a258e9b92f64468af1e12f8dff59d9969"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7fbc2bd888b248d2c2ee2d953b49eefc"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#a7fbc2bd888b248d2c2ee2d953b49eefc">GetTypeIdByDecl</a> (const char *decl) const =0</td></tr>
 <tr class="memdesc:a7fbc2bd888b248d2c2ee2d953b49eefc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a type id by declaration.  <a href="#a7fbc2bd888b248d2c2ee2d953b49eefc">More...</a><br/></td></tr>
 <tr class="separator:a7fbc2bd888b248d2c2ee2d953b49eefc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -203,12 +209,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a8b4a222e5309c6b367f136b6d2f664ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load pre-compiled bytecode from a binary stream.  <a href="#a8b4a222e5309c6b367f136b6d2f664ba">More...</a><br/></td></tr>
 <tr class="separator:a8b4a222e5309c6b367f136b6d2f664ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">User data</div></td></tr>
-<tr class="memitem:aa6560a0c5e187695664da2859a9da437"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#aa6560a0c5e187695664da2859a9da437">SetUserData</a> (void *data)=0</td></tr>
-<tr class="memdesc:aa6560a0c5e187695664da2859a9da437"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register the memory address of some user data.  <a href="#aa6560a0c5e187695664da2859a9da437">More...</a><br/></td></tr>
-<tr class="separator:aa6560a0c5e187695664da2859a9da437"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acfe8b510171e4d330a88847bf31e2208"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#acfe8b510171e4d330a88847bf31e2208">GetUserData</a> () const =0</td></tr>
-<tr class="memdesc:acfe8b510171e4d330a88847bf31e2208"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the address of the previously registered user data.  <a href="#acfe8b510171e4d330a88847bf31e2208">More...</a><br/></td></tr>
-<tr class="separator:acfe8b510171e4d330a88847bf31e2208"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06582e57e7101df4157ee36c81867c13"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#a06582e57e7101df4157ee36c81867c13">SetUserData</a> (void *data, <a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a> type=0)=0</td></tr>
+<tr class="memdesc:a06582e57e7101df4157ee36c81867c13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register the memory address of some user data.  <a href="#a06582e57e7101df4157ee36c81867c13">More...</a><br/></td></tr>
+<tr class="separator:a06582e57e7101df4157ee36c81867c13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af292f99799d8358277298f749efedaaa"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#af292f99799d8358277298f749efedaaa">GetUserData</a> (<a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a> type=0) const =0</td></tr>
+<tr class="memdesc:af292f99799d8358277298f749efedaaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the address of the previously registered user data.  <a href="#af292f99799d8358277298f749efedaaa">More...</a><br/></td></tr>
+<tr class="separator:af292f99799d8358277298f749efedaaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A script module can be thought of a library of script functions, classes, and global variables.</p>
@@ -276,7 +282,8 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<p>This adds a script section to the module. All sections added will be treated as if one large script. Errors reported will give the name of the corresponding section.</p>
+<p>This adds a script section to the module. The script section isn't processed with this call. Only when <a class="el" href="classas_i_script_module.html#a8acf107194c5f079d7f7507309ebe613">Build</a> is called will the script be parsed and compiled into executable byte code.</p>
+<p>Error messages from the compiler will refer to the name of the script section and the position within it. Normally each section is the content of a source file, so it is recommended to name the script sections as the name of the source file.</p>
 <p>The code added is copied by the engine, so there is no need to keep the original buffer after the call. Note that this can be changed by setting the engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fabf1577418b716c92f0a85be3e2617243">asEP_COPY_SCRIPT_SECTIONS</a> with <a class="el" href="classas_i_script_engine.html#a1bce4e5f573a2ca0ff55163e28f761dd">asIScriptEngine::SetEngineProperty</a>. </p>
 
 </div>
@@ -394,9 +401,11 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<p>Builds the script based on the added sections, and registered types and functions. After the build is complete the script sections are removed to free memory. If the script module needs to be rebuilt all of the script sections needs to be added again.</p>
+<p>Builds the script based on the previously <a class="el" href="classas_i_script_module.html#a330835919b565c76c25e9425536f50b7">added sections</a>, <a class="el" href="doc_register_api.html">registered types and functions</a>. After the build is complete the script sections are removed to free memory.</p>
+<p>Before starting the build the <a class="el" href="classas_i_script_module.html#a8acf107194c5f079d7f7507309ebe613">Build</a> method removes any previously compiled script content, including the dynamically added content from <a class="el" href="classas_i_script_module.html#a1258d7cfeed965f36ba312beeb49e81c">CompileFunction</a> and <a class="el" href="classas_i_script_module.html#a34850e152dcdcb58c53a2b6929cebf77">CompileGlobalVar</a>. If the script module needs to be rebuilt all of the script sections needs to be added again.</p>
 <p>Compiler messages are sent to the message callback function set with <a class="el" href="classas_i_script_engine.html#a74192fe950808eb72a64e3e371f0ea02">asIScriptEngine::SetMessageCallback</a>. If there are no errors or warnings, no messages will be sent to the callback function.</p>
-<p>Any global variables found in the script will be initialized by the compiler if the engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facac241d97facce4eaf9e5b0ca40dfcf1">asEP_INIT_GLOBAL_VARS_AFTER_BUILD</a> is set. If you get the error asINIT_GLOBAL_VARS_FAILED, then it is probable that one of the global variables during the initialization is trying to access another global variable before it has been initialized. </p>
+<p>Any global variables found in the script will be initialized by the compiler if the engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facac241d97facce4eaf9e5b0ca40dfcf1">asEP_INIT_GLOBAL_VARS_AFTER_BUILD</a> is set. If you get the error <a class="el" href="angelscript_8h.html#a6e2a1647f02f2c5da931bab09e860f54a539a1fcf3f48feaaf7c0776c88123430">asINIT_GLOBAL_VARS_FAILED</a>, then it is probable that one of the global variables during the initialization is trying to access another global variable before it has been initialized.</p>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_compile_script.html">Compiling scripts</a> </dd></dl>
 
 </div>
 </div>
@@ -470,7 +479,8 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<p>Use this to compile a single function. The function can be optionally added to the scope of the module, in which case it will be available for subsequent compilations. If not added to the module, the function can still be returned in the output parameter, which will allow the application to execute it, and then discard it when it is no longer needed.</p>
+<p>Use this to compile a single function. Any existing compiled code in the module can be used by the function.</p>
+<p>The newly compiled function can be optionally added to the scope of the module where it can later be referred to by the application or used in subsequent compilations. If not added to the module the function can still be returned in the output parameter, which will allow the application to execute it and then discard it when it is no longer needed.</p>
 <p>If the output function parameter is set, remember to release the function object when you're done with it. </p>
 
 </div>
@@ -532,7 +542,8 @@ Public Member Functions</h2></td></tr>
   </dd>
 </dl>
 <p>Use this to add a single global variable to the scope of a module. The variable can then be referred to by the application and subsequent compilations.</p>
-<p>The script code may contain an initialization expression, which will be executed by the compiler if the engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facac241d97facce4eaf9e5b0ca40dfcf1">asEP_INIT_GLOBAL_VARS_AFTER_BUILD</a> is set. </p>
+<p>The script code may contain an initialization expression, which will be executed by the compiler if the engine property <a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0facac241d97facce4eaf9e5b0ca40dfcf1">asEP_INIT_GLOBAL_VARS_AFTER_BUILD</a> is set.</p>
+<p>Any existing compiled code in the module can be used in the initialization expression. </p>
 
 </div>
 </div>
@@ -1286,6 +1297,38 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a258e9b92f64468af1e12f8dff59d9969"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="classas_i_object_type.html">asIObjectType</a>* asIScriptModule::GetObjectTypeByDecl </td>
+          <td>(</td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>decl</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">decl</td><td>The declaration of the type. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The object type or null on error.</dd></dl>
+<p>Translates a type declaration into the object type. The returned object type is valid for as long as the type is valid, so you can safely store it for later use to avoid potential overhead from calling this function each time. Just remember to update the object type, any time the type is changed within the engine, e.g. when recompiling script declared classes, or changing the engine configuration. </p>
+
+</div>
+</div>
 <a class="anchor" id="a33ebba99a6358ccfb0c154fca7f58f77"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1481,13 +1524,13 @@ Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<p>Translates a type declaration into a type id. The returned type id is valid for as long as the type is valid, so you can safely store it for later use to avoid potential overhead by calling this function each time. Just remember to update the type id, any time the type is changed within the engine, e.g. when recompiling script declared classes, or changing the engine configuration.</p>
+<p>Translates a type declaration into a type id. The returned type id is valid for as long as the type is valid, so you can safely store it for later use to avoid potential overhead from calling this function each time. Just remember to update the type id, any time the type is changed within the engine, e.g. when recompiling script declared classes, or changing the engine configuration.</p>
 <p>The type id is based on a sequence number and depends on the order in which the type ids are queried, thus is not guaranteed to always be the same for each execution of the application. The <a class="el" href="angelscript_8h.html#ae8c3a67a97321be53181e9ed396ad83a">asETypeIdFlags</a> can be used to obtain some information about the type directly from the id.</p>
 <p>A base type yields the same type id whether the declaration is const or not, however if the const is for the subtype then the type id is different, e.g. string@ isn't the same as const string@ but string is the same as const string. </p>
 
 </div>
 </div>
-<a class="anchor" id="acfe8b510171e4d330a88847bf31e2208"></a>
+<a class="anchor" id="af292f99799d8358277298f749efedaaa"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1497,7 +1540,8 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">virtual void* asIScriptModule::GetUserData </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype"><a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a>&#160;</td>
+          <td class="paramname"><em>type</em> = <code>0</code></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -1507,6 +1551,12 @@ Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">type</td><td>An identifier specifying the user data to set. </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>The pointer to the user data. </dd></dl>
 
 </div>
@@ -1720,7 +1770,8 @@ Public Member Functions</h2></td></tr>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">asINVALID_ARG</td><td>The stream object wasn't specified. </td></tr>
-    <tr><td class="paramname">asNOT_SUPPORTED</td><td>Compiler support is disabled in the engine.</td></tr>
+    <tr><td class="paramname">asNOT_SUPPORTED</td><td>Compiler support is disabled in the engine. </td></tr>
+    <tr><td class="paramname">asERROR</td><td>Nothing has been compiled in the module.</td></tr>
   </table>
   </dd>
 </dl>
@@ -1833,7 +1884,7 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aa6560a0c5e187695664da2859a9da437"></a>
+<a class="anchor" id="a06582e57e7101df4157ee36c81867c13"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -1844,8 +1895,18 @@ Public Member Functions</h2></td></tr>
           <td class="memname">virtual void* asIScriptModule::SetUserData </td>
           <td>(</td>
           <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>data</em></td><td>)</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a>&#160;</td>
+          <td class="paramname"><em>type</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -1857,12 +1918,14 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">data</td><td>A pointer to the user data. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">type</td><td>An identifier specifying the user data to set. </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The previous pointer stored in the module</dd></dl>
 <p>This method allows the application to associate a value, e.g. a pointer, with the module instance.</p>
-<p>Optionally, a callback function can be <a class="el" href="classas_i_script_engine.html#afb7a5e52a2232262ef2863e58bb2c7d1">registered</a> to clean up the user data when the module is destroyed. </p>
+<p>The type values 1000 through 1999 are reserved for use by the official add-ons.</p>
+<p>Optionally, a callback function can be <a class="el" href="classas_i_script_engine.html#a7523853b9a9bf7dab603fa6a06393d51">registered</a> to clean up the user data when the module is destroyed. </p>
 
 </div>
 </div>
@@ -1938,7 +2001,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classas_i_script_module.html">asIScriptModule</a></li>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:48 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

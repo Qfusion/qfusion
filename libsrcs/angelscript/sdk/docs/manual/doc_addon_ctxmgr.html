@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -56,8 +59,9 @@ $(document).ready(function(){initNavTree('doc_addon_ctxmgr.html','');});
 <div class="textblock"><p><b>Path:</b> /sdk/add_on/contextmgr/</p>
 <p>The <code>CContextMgr</code> is a class designed to aid the management of multiple simultaneous scripts executing in parallel. It supports both <a class="el" href="doc_adv_concurrent.html">concurrent script threads</a> and <a class="el" href="doc_adv_coroutine.html">co-routines</a>.</p>
 <p>If the application doesn't need multiple contexts, i.e. all scripts that are executed always complete before the next script is executed, then this class is not necessary.</p>
-<p>Multiple context managers can be used, for example when you have a group of scripts controlling ingame objects, and another group of scripts controlling GUI elements, then each of these groups may be managed by different context managers.</p>
-<p>Observe, that the context manager class hasn't been designed for multithreading, so you need to be careful if your application needs to execute scripts from multiple threads.</p>
+<p>The context manager uses <a class="el" href="classas_i_script_engine.html#a32391ee83e58083b406ba068ab2ee049">asIScriptEngine::RequestContext</a> to take advantage of any context callbacks registered with the engine, e.g. for debugging or pooling.</p>
+<p>Multiple context managers can be used, for example when you have a group of scripts controlling in-game objects, and another group of scripts controlling GUI elements, then each of these groups may be managed by different context managers.</p>
+<p>Observe that the context manager class hasn't been designed for multi-threading, so you need to be careful if your application needs to execute scripts from multiple threads.</p>
 <dl class="section see"><dt>See Also</dt><dd>The samples <a class="el" href="doc_samples_concurrent.html">Concurrent scripts</a> and <a class="el" href="doc_samples_corout.html">Co-routines</a> for uses</dd></dl>
 <h1><a class="anchor" id="doc_addon_ctxmgr_1"></a>
 Public C++ interface</h1>
@@ -70,16 +74,17 @@ Public C++ interface</h1>
 <div class="line">  <span class="comment">// Set the function that the manager will use to obtain the time in milliseconds.</span></div>
 <div class="line">  <span class="keywordtype">void</span> SetGetTimeCallback(TIMEFUNC_t func);</div>
 <div class="line"></div>
-<div class="line">  <span class="comment">// Registers the script function</span></div>
+<div class="line">  <span class="comment">// Registers the following:</span></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">//  void sleep(uint milliseconds)</span></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// The application must set the get time callback for this to work</span></div>
 <div class="line">  <span class="keywordtype">void</span> RegisterThreadSupport(<a class="code" href="classas_i_script_engine.html" title="The engine interface.">asIScriptEngine</a> *engine);</div>
 <div class="line"></div>
-<div class="line">  <span class="comment">// Registers the script functions</span></div>
+<div class="line">  <span class="comment">// Registers the following:</span></div>
 <div class="line">  <span class="comment">//</span></div>
-<div class="line">  <span class="comment">//  void createCoRoutine(const string &amp;in functionName, any @arg)</span></div>
+<div class="line">  <span class="comment">//  funcdef void coroutine(dictionary@)</span></div>
+<div class="line">  <span class="comment">//  void createCoRoutine(coroutine @func, dictionary @args)</span></div>
 <div class="line">  <span class="comment">//  void yield()</span></div>
 <div class="line">  <span class="keywordtype">void</span> RegisterCoRoutineSupport(<a class="code" href="classas_i_script_engine.html" title="The engine interface.">asIScriptEngine</a> *engine);</div>
 <div class="line"></div>
@@ -96,7 +101,8 @@ Public C++ interface</h1>
 <div class="line">  <span class="comment">// Execute each script that is not currently sleeping. The function returns after </span></div>
 <div class="line">  <span class="comment">// each script has been executed once. The application should call this function</span></div>
 <div class="line">  <span class="comment">// for each iteration of the message pump, or game loop, or whatever.</span></div>
-<div class="line">  <span class="keywordtype">void</span> ExecuteScripts();</div>
+<div class="line">  <span class="comment">// Returns the number of scripts still in execution.</span></div>
+<div class="line">  <span class="keywordtype">int</span> ExecuteScripts();</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">// Put a script to sleep for a while</span></div>
 <div class="line">  <span class="keywordtype">void</span> SetSleeping(<a class="code" href="classas_i_script_context.html" title="The interface to the virtual machine.">asIScriptContext</a> *ctx, <a class="code" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815" title="32 bit unsigned integer">asUINT</a> milliSeconds);</div>
@@ -113,7 +119,7 @@ Public C++ interface</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:46 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:27 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

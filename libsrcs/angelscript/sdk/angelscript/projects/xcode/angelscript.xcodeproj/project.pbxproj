@@ -152,88 +152,7 @@
 		7547BD8F1523FF2300EFAB3F /* as_typeinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD401523FF2300EFAB3F /* as_typeinfo.h */; };
 		7547BD901523FF2300EFAB3F /* as_variablescope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD411523FF2300EFAB3F /* as_variablescope.cpp */; };
 		7547BD911523FF2300EFAB3F /* as_variablescope.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD421523FF2300EFAB3F /* as_variablescope.h */; };
-		F3116DC519187155007F18A9 /* angelscript.h in Headers */ = {isa = PBXBuildFile; fileRef = 6E91005B1823FC7000D59009 /* angelscript.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		F33CAB8919185D9300F88979 /* as_array.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BCF51523FF2300EFAB3F /* as_array.h */; };
-		F33CAB8A19185D9300F88979 /* as_atomic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BCF61523FF2300EFAB3F /* as_atomic.cpp */; };
-		F33CAB8B19185D9300F88979 /* as_atomic.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BCF71523FF2300EFAB3F /* as_atomic.h */; };
-		F33CAB8C19185D9300F88979 /* as_builder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BCF81523FF2300EFAB3F /* as_builder.cpp */; };
-		F33CAB8D19185D9300F88979 /* as_builder.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BCF91523FF2300EFAB3F /* as_builder.h */; };
-		F33CAB8E19185D9300F88979 /* as_bytecode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BCFA1523FF2300EFAB3F /* as_bytecode.cpp */; };
-		F33CAB8F19185D9300F88979 /* as_bytecode.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BCFB1523FF2300EFAB3F /* as_bytecode.h */; };
-		F33CAB9019185D9300F88979 /* as_callfunc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BCFC1523FF2300EFAB3F /* as_callfunc.cpp */; };
-		F33CAB9119185D9300F88979 /* as_callfunc.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BCFD1523FF2300EFAB3F /* as_callfunc.h */; };
-		F33CAB9E19185D9300F88979 /* as_callfunc_x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD0A1523FF2300EFAB3F /* as_callfunc_x86.cpp */; };
-		F33CABA019185D9300F88979 /* as_compiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD0C1523FF2300EFAB3F /* as_compiler.cpp */; };
-		F33CABA119185D9300F88979 /* as_compiler.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD0D1523FF2300EFAB3F /* as_compiler.h */; };
-		F33CABA219185D9300F88979 /* as_config.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD0E1523FF2300EFAB3F /* as_config.h */; };
-		F33CABA319185D9300F88979 /* as_configgroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD101523FF2300EFAB3F /* as_configgroup.cpp */; };
-		F33CABA419185D9300F88979 /* as_configgroup.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD111523FF2300EFAB3F /* as_configgroup.h */; };
-		F33CABA519185D9300F88979 /* as_context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD121523FF2300EFAB3F /* as_context.cpp */; };
-		F33CABA619185D9300F88979 /* as_context.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD131523FF2300EFAB3F /* as_context.h */; };
-		F33CABA719185D9300F88979 /* as_criticalsection.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD141523FF2300EFAB3F /* as_criticalsection.h */; };
-		F33CABA819185D9300F88979 /* as_datatype.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD151523FF2300EFAB3F /* as_datatype.cpp */; };
-		F33CABA919185D9300F88979 /* as_datatype.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD161523FF2300EFAB3F /* as_datatype.h */; };
-		F33CABAA19185D9300F88979 /* as_debug.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD171523FF2300EFAB3F /* as_debug.h */; };
-		F33CABAB19185D9300F88979 /* as_gc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD181523FF2300EFAB3F /* as_gc.cpp */; };
-		F33CABAC19185D9300F88979 /* as_gc.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD191523FF2300EFAB3F /* as_gc.h */; };
-		F33CABAD19185D9300F88979 /* as_generic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD1A1523FF2300EFAB3F /* as_generic.cpp */; };
-		F33CABAE19185D9300F88979 /* as_generic.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD1B1523FF2300EFAB3F /* as_generic.h */; };
-		F33CABAF19185D9300F88979 /* as_globalproperty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD1C1523FF2300EFAB3F /* as_globalproperty.cpp */; };
-		F33CABB019185D9300F88979 /* as_map.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD1D1523FF2300EFAB3F /* as_map.h */; };
-		F33CABB119185D9300F88979 /* as_memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD1E1523FF2300EFAB3F /* as_memory.cpp */; };
-		F33CABB219185D9300F88979 /* as_memory.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD1F1523FF2300EFAB3F /* as_memory.h */; };
-		F33CABB319185D9300F88979 /* as_module.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD201523FF2300EFAB3F /* as_module.cpp */; };
-		F33CABB419185D9300F88979 /* as_module.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD211523FF2300EFAB3F /* as_module.h */; };
-		F33CABB519185D9300F88979 /* as_objecttype.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD221523FF2300EFAB3F /* as_objecttype.cpp */; };
-		F33CABB619185D9300F88979 /* as_objecttype.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD231523FF2300EFAB3F /* as_objecttype.h */; };
-		F33CABB719185D9300F88979 /* as_outputbuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD241523FF2300EFAB3F /* as_outputbuffer.cpp */; };
-		F33CABB819185D9300F88979 /* as_outputbuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD251523FF2300EFAB3F /* as_outputbuffer.h */; };
-		F33CABB919185D9300F88979 /* as_parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD261523FF2300EFAB3F /* as_parser.cpp */; };
-		F33CABBA19185D9300F88979 /* as_parser.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD271523FF2300EFAB3F /* as_parser.h */; };
-		F33CABBB19185D9300F88979 /* as_property.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD281523FF2300EFAB3F /* as_property.h */; };
-		F33CABBC19185D9300F88979 /* as_restore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD291523FF2300EFAB3F /* as_restore.cpp */; };
-		F33CABBD19185D9300F88979 /* as_restore.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD2A1523FF2300EFAB3F /* as_restore.h */; };
-		F33CABBE19185D9300F88979 /* as_scriptcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD2B1523FF2300EFAB3F /* as_scriptcode.cpp */; };
-		F33CABBF19185D9300F88979 /* as_scriptcode.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD2C1523FF2300EFAB3F /* as_scriptcode.h */; };
-		F33CABC019185D9300F88979 /* as_scriptengine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD2D1523FF2300EFAB3F /* as_scriptengine.cpp */; };
-		F33CABC119185D9300F88979 /* as_scriptengine.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD2E1523FF2300EFAB3F /* as_scriptengine.h */; };
-		F33CABC219185D9300F88979 /* as_scriptfunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD2F1523FF2300EFAB3F /* as_scriptfunction.cpp */; };
-		F33CABC319185D9300F88979 /* as_scriptfunction.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD301523FF2300EFAB3F /* as_scriptfunction.h */; };
-		F33CABC419185D9300F88979 /* as_scriptnode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD311523FF2300EFAB3F /* as_scriptnode.cpp */; };
-		F33CABC519185D9300F88979 /* as_scriptnode.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD321523FF2300EFAB3F /* as_scriptnode.h */; };
-		F33CABC619185D9300F88979 /* as_scriptobject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD331523FF2300EFAB3F /* as_scriptobject.cpp */; };
-		F33CABC719185D9300F88979 /* as_scriptobject.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD341523FF2300EFAB3F /* as_scriptobject.h */; };
-		F33CABC819185D9300F88979 /* as_string.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD351523FF2300EFAB3F /* as_string.cpp */; };
-		F33CABC919185D9300F88979 /* as_string.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD361523FF2300EFAB3F /* as_string.h */; };
-		F33CABCA19185D9300F88979 /* as_string_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD371523FF2300EFAB3F /* as_string_util.cpp */; };
-		F33CABCB19185D9300F88979 /* as_string_util.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD381523FF2300EFAB3F /* as_string_util.h */; };
-		F33CABCC19185D9300F88979 /* as_texts.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD391523FF2300EFAB3F /* as_texts.h */; };
-		F33CABCD19185D9300F88979 /* as_thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD3A1523FF2300EFAB3F /* as_thread.cpp */; };
-		F33CABCE19185D9300F88979 /* as_thread.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD3B1523FF2300EFAB3F /* as_thread.h */; };
-		F33CABCF19185D9300F88979 /* as_tokendef.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD3C1523FF2300EFAB3F /* as_tokendef.h */; };
-		F33CABD019185D9300F88979 /* as_tokenizer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD3D1523FF2300EFAB3F /* as_tokenizer.cpp */; };
-		F33CABD119185D9300F88979 /* as_tokenizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD3E1523FF2300EFAB3F /* as_tokenizer.h */; };
-		F33CABD219185D9300F88979 /* as_typeinfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD3F1523FF2300EFAB3F /* as_typeinfo.cpp */; };
-		F33CABD319185D9300F88979 /* as_typeinfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD401523FF2300EFAB3F /* as_typeinfo.h */; };
-		F33CABD419185D9300F88979 /* as_variablescope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD411523FF2300EFAB3F /* as_variablescope.cpp */; };
-		F33CABD519185D9300F88979 /* as_variablescope.h in Headers */ = {isa = PBXBuildFile; fileRef = 7547BD421523FF2300EFAB3F /* as_variablescope.h */; };
-		F33CABD719185EE100F88979 /* as_callfunc_x64_gcc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7547BD061523FF2300EFAB3F /* as_callfunc_x64_gcc.cpp */; };
-		F3FCC66819184F470014D1D4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3FCC66719184F470014D1D4 /* Cocoa.framework */; };
-		F3FCC67E19184F480014D1D4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3FCC66719184F470014D1D4 /* Cocoa.framework */; };
-		F3FCC68119184F480014D1D4 /* angelscript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3FCC66619184F470014D1D4 /* angelscript.framework */; };
-		F3FCC68719184F480014D1D4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = F3FCC68519184F480014D1D4 /* InfoPlist.strings */; };
-		F3FCC68919184F480014D1D4 /* angelscriptTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F3FCC68819184F480014D1D4 /* angelscriptTests.m */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		F3FCC67F19184F480014D1D4 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0867D690FE84028FC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F3FCC66519184F470014D1D4;
-			remoteInfo = angelscript;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		6E91005B1823FC7000D59009 /* angelscript.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = angelscript.h; sourceTree = "<group>"; };
@@ -316,17 +235,6 @@
 		7547BD411523FF2300EFAB3F /* as_variablescope.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = as_variablescope.cpp; sourceTree = "<group>"; };
 		7547BD421523FF2300EFAB3F /* as_variablescope.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = as_variablescope.h; sourceTree = "<group>"; };
 		D2AAC07E0554694100DB518D /* libangelscript.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libangelscript.a; sourceTree = BUILT_PRODUCTS_DIR; };
-		F3FCC66619184F470014D1D4 /* angelscript.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = angelscript.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		F3FCC66719184F470014D1D4 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
-		F3FCC66A19184F470014D1D4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		F3FCC66B19184F470014D1D4 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
-		F3FCC66C19184F470014D1D4 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
-		F3FCC66F19184F470014D1D4 /* angelscript-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = "angelscript-Info.plist"; path = "angelscript/angelscript-Info.plist"; sourceTree = "<group>"; };
-		F3FCC67319184F470014D1D4 /* angelscript-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "angelscript-Prefix.pch"; path = "angelscript/angelscript-Prefix.pch"; sourceTree = "<group>"; };
-		F3FCC67B19184F480014D1D4 /* angelscriptTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = angelscriptTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		F3FCC68419184F480014D1D4 /* angelscriptTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "angelscriptTests-Info.plist"; sourceTree = "<group>"; };
-		F3FCC68619184F480014D1D4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		F3FCC68819184F480014D1D4 /* angelscriptTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = angelscriptTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -344,23 +252,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F3FCC66219184F470014D1D4 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F3FCC66819184F470014D1D4 /* Cocoa.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F3FCC67819184F480014D1D4 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F3FCC67E19184F480014D1D4 /* Cocoa.framework in Frameworks */,
-				F3FCC68119184F480014D1D4 /* angelscript.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -369,8 +260,6 @@
 			children = (
 				D2AAC07E0554694100DB518D /* libangelscript.a */,
 				6E91FFE31823DA0D00D59009 /* libangelscript.a */,
-				F3FCC66619184F470014D1D4 /* angelscript.framework */,
-				F3FCC67B19184F480014D1D4 /* angelscriptTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -381,8 +270,6 @@
 				6E91005A1823FC7000D59009 /* include */,
 				7547BCF41523FF2300EFAB3F /* source */,
 				08FB77AEFE84172EC02AAC07 /* Classes */,
-				F3FCC66D19184F470014D1D4 /* angelscript */,
-				F3FCC68219184F480014D1D4 /* angelscriptTests */,
 				0867D69AFE84028FC02AAC07 /* Frameworks */,
 				034768DFFF38A50411DB9C8B /* Products */,
 			);
@@ -392,8 +279,6 @@
 		0867D69AFE84028FC02AAC07 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				F3FCC66719184F470014D1D4 /* Cocoa.framework */,
-				F3FCC66919184F470014D1D4 /* Other Frameworks */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -499,51 +384,6 @@
 			path = ../../source;
 			sourceTree = SOURCE_ROOT;
 		};
-		F3FCC66919184F470014D1D4 /* Other Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				F3FCC66A19184F470014D1D4 /* Foundation.framework */,
-				F3FCC66B19184F470014D1D4 /* CoreData.framework */,
-				F3FCC66C19184F470014D1D4 /* AppKit.framework */,
-			);
-			name = "Other Frameworks";
-			sourceTree = "<group>";
-		};
-		F3FCC66D19184F470014D1D4 /* angelscript */ = {
-			isa = PBXGroup;
-			children = (
-				F3FCC66E19184F470014D1D4 /* Supporting Files */,
-			);
-			path = angelscript;
-			sourceTree = "<group>";
-		};
-		F3FCC66E19184F470014D1D4 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				F3FCC66F19184F470014D1D4 /* angelscript-Info.plist */,
-				F3FCC67319184F470014D1D4 /* angelscript-Prefix.pch */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
-		F3FCC68219184F480014D1D4 /* angelscriptTests */ = {
-			isa = PBXGroup;
-			children = (
-				F3FCC68819184F480014D1D4 /* angelscriptTests.m */,
-				F3FCC68319184F480014D1D4 /* Supporting Files */,
-			);
-			path = angelscriptTests;
-			sourceTree = "<group>";
-		};
-		F3FCC68319184F480014D1D4 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				F3FCC68419184F480014D1D4 /* angelscriptTests-Info.plist */,
-				F3FCC68519184F480014D1D4 /* InfoPlist.strings */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -633,49 +473,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F3FCC66319184F470014D1D4 /* Headers */ = {
-			isa = PBXHeadersBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F33CABBF19185D9300F88979 /* as_scriptcode.h in Headers */,
-				F33CABC319185D9300F88979 /* as_scriptfunction.h in Headers */,
-				F33CABD319185D9300F88979 /* as_typeinfo.h in Headers */,
-				F33CABC719185D9300F88979 /* as_scriptobject.h in Headers */,
-				F33CABCB19185D9300F88979 /* as_string_util.h in Headers */,
-				F3116DC519187155007F18A9 /* angelscript.h in Headers */,
-				F33CABA619185D9300F88979 /* as_context.h in Headers */,
-				F33CAB9119185D9300F88979 /* as_callfunc.h in Headers */,
-				F33CABD519185D9300F88979 /* as_variablescope.h in Headers */,
-				F33CAB8D19185D9300F88979 /* as_builder.h in Headers */,
-				F33CABBB19185D9300F88979 /* as_property.h in Headers */,
-				F33CABBA19185D9300F88979 /* as_parser.h in Headers */,
-				F33CABA719185D9300F88979 /* as_criticalsection.h in Headers */,
-				F33CABAC19185D9300F88979 /* as_gc.h in Headers */,
-				F33CABC519185D9300F88979 /* as_scriptnode.h in Headers */,
-				F33CABCE19185D9300F88979 /* as_thread.h in Headers */,
-				F33CABC919185D9300F88979 /* as_string.h in Headers */,
-				F33CABA219185D9300F88979 /* as_config.h in Headers */,
-				F33CABB419185D9300F88979 /* as_module.h in Headers */,
-				F33CAB8919185D9300F88979 /* as_array.h in Headers */,
-				F33CAB8F19185D9300F88979 /* as_bytecode.h in Headers */,
-				F33CABCC19185D9300F88979 /* as_texts.h in Headers */,
-				F33CABB819185D9300F88979 /* as_outputbuffer.h in Headers */,
-				F33CABBD19185D9300F88979 /* as_restore.h in Headers */,
-				F33CABB619185D9300F88979 /* as_objecttype.h in Headers */,
-				F33CABA119185D9300F88979 /* as_compiler.h in Headers */,
-				F33CAB8B19185D9300F88979 /* as_atomic.h in Headers */,
-				F33CABD119185D9300F88979 /* as_tokenizer.h in Headers */,
-				F33CABAA19185D9300F88979 /* as_debug.h in Headers */,
-				F33CABA419185D9300F88979 /* as_configgroup.h in Headers */,
-				F33CABAE19185D9300F88979 /* as_generic.h in Headers */,
-				F33CABB219185D9300F88979 /* as_memory.h in Headers */,
-				F33CABA919185D9300F88979 /* as_datatype.h in Headers */,
-				F33CABC119185D9300F88979 /* as_scriptengine.h in Headers */,
-				F33CABCF19185D9300F88979 /* as_tokendef.h in Headers */,
-				F33CABB019185D9300F88979 /* as_map.h in Headers */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
@@ -713,42 +510,6 @@
 			productReference = D2AAC07E0554694100DB518D /* libangelscript.a */;
 			productType = "com.apple.product-type.library.static";
 		};
-		F3FCC66519184F470014D1D4 /* angelscript */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F3FCC68E19184F480014D1D4 /* Build configuration list for PBXNativeTarget "angelscript" */;
-			buildPhases = (
-				F3FCC66119184F470014D1D4 /* Sources */,
-				F3FCC66219184F470014D1D4 /* Frameworks */,
-				F3FCC66319184F470014D1D4 /* Headers */,
-				F3FCC66419184F470014D1D4 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = angelscript;
-			productName = angelscript;
-			productReference = F3FCC66619184F470014D1D4 /* angelscript.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		F3FCC67A19184F480014D1D4 /* angelscriptTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F3FCC68F19184F480014D1D4 /* Build configuration list for PBXNativeTarget "angelscriptTests" */;
-			buildPhases = (
-				F3FCC67719184F480014D1D4 /* Sources */,
-				F3FCC67819184F480014D1D4 /* Frameworks */,
-				F3FCC67919184F480014D1D4 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				F3FCC68019184F480014D1D4 /* PBXTargetDependency */,
-			);
-			name = angelscriptTests;
-			productName = angelscriptTests;
-			productReference = F3FCC67B19184F480014D1D4 /* angelscriptTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -756,11 +517,6 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0510;
-				TargetAttributes = {
-					F3FCC67A19184F480014D1D4 = {
-						TestTargetID = F3FCC66519184F470014D1D4;
-					};
-				};
 			};
 			buildConfigurationList = 1DEB922208733DC00010E9CD /* Build configuration list for PBXProject "angelscript" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -771,7 +527,6 @@
 				Japanese,
 				French,
 				German,
-				en,
 			);
 			mainGroup = 0867D691FE84028FC02AAC07 /* angelscript */;
 			productRefGroup = 034768DFFF38A50411DB9C8B /* Products */;
@@ -780,29 +535,9 @@
 			targets = (
 				D2AAC07D0554694100DB518D /* angelscript OSX */,
 				6E91FF8F1823DA0D00D59009 /* angelscript iOS */,
-				F3FCC66519184F470014D1D4 /* angelscript */,
-				F3FCC67A19184F480014D1D4 /* angelscriptTests */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		F3FCC66419184F470014D1D4 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F3FCC67919184F480014D1D4 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F3FCC68719184F480014D1D4 /* InfoPlist.strings in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6E91FFB41823DA0D00D59009 /* Sources */ = {
@@ -892,78 +627,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F3FCC66119184F470014D1D4 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F33CABCD19185D9300F88979 /* as_thread.cpp in Sources */,
-				F33CAB8C19185D9300F88979 /* as_builder.cpp in Sources */,
-				F33CABB119185D9300F88979 /* as_memory.cpp in Sources */,
-				F33CABC219185D9300F88979 /* as_scriptfunction.cpp in Sources */,
-				F33CABA519185D9300F88979 /* as_context.cpp in Sources */,
-				F33CABAB19185D9300F88979 /* as_gc.cpp in Sources */,
-				F33CAB9E19185D9300F88979 /* as_callfunc_x86.cpp in Sources */,
-				F33CABC019185D9300F88979 /* as_scriptengine.cpp in Sources */,
-				F33CAB8A19185D9300F88979 /* as_atomic.cpp in Sources */,
-				F33CABA819185D9300F88979 /* as_datatype.cpp in Sources */,
-				F33CABA019185D9300F88979 /* as_compiler.cpp in Sources */,
-				F33CABB519185D9300F88979 /* as_objecttype.cpp in Sources */,
-				F33CAB9019185D9300F88979 /* as_callfunc.cpp in Sources */,
-				F33CAB8E19185D9300F88979 /* as_bytecode.cpp in Sources */,
-				F33CABB719185D9300F88979 /* as_outputbuffer.cpp in Sources */,
-				F33CABD719185EE100F88979 /* as_callfunc_x64_gcc.cpp in Sources */,
-				F33CABB319185D9300F88979 /* as_module.cpp in Sources */,
-				F33CABBC19185D9300F88979 /* as_restore.cpp in Sources */,
-				F33CABB919185D9300F88979 /* as_parser.cpp in Sources */,
-				F33CABA319185D9300F88979 /* as_configgroup.cpp in Sources */,
-				F33CABAD19185D9300F88979 /* as_generic.cpp in Sources */,
-				F33CABBE19185D9300F88979 /* as_scriptcode.cpp in Sources */,
-				F33CABC619185D9300F88979 /* as_scriptobject.cpp in Sources */,
-				F33CABD219185D9300F88979 /* as_typeinfo.cpp in Sources */,
-				F33CABC819185D9300F88979 /* as_string.cpp in Sources */,
-				F33CABCA19185D9300F88979 /* as_string_util.cpp in Sources */,
-				F33CABD019185D9300F88979 /* as_tokenizer.cpp in Sources */,
-				F33CABD419185D9300F88979 /* as_variablescope.cpp in Sources */,
-				F33CABC419185D9300F88979 /* as_scriptnode.cpp in Sources */,
-				F33CABAF19185D9300F88979 /* as_globalproperty.cpp in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F3FCC67719184F480014D1D4 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				F3FCC68919184F480014D1D4 /* angelscriptTests.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		F3FCC68019184F480014D1D4 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = F3FCC66519184F470014D1D4 /* angelscript */;
-			targetProxy = F3FCC67F19184F480014D1D4 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		F3FCC68519184F480014D1D4 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				F3FCC68619184F480014D1D4 /* en */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		1DEB921F08733DC00010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "compiler-default";
 				COPY_PHASE_STRIP = NO;
 				DSTROOT = /tmp/angelscript.dst;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -982,7 +655,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "compiler-default";
+				CLANG_CXX_LIBRARY = "compiler-default";
 				DSTROOT = /tmp/angelscript.dst;
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -996,7 +671,7 @@
 		1DEB922308733DC00010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++98";
 				CLANG_CXX_LIBRARY = "libstdc++";
 				GCC_C_LANGUAGE_STANDARD = c99;
@@ -1012,7 +687,7 @@
 		1DEB922408733DC00010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD)";
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++98";
 				CLANG_CXX_LIBRARY = "libstdc++";
 				GCC_C_LANGUAGE_STANDARD = c99;
@@ -1057,184 +732,6 @@
 			};
 			name = Release;
 		};
-		F3FCC68A19184F480014D1D4 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = NO;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				FRAMEWORK_VERSION = A;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "angelscript/angelscript-Prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				INFOPLIST_FILE = "angelscript/angelscript-Info.plist";
-				INSTALL_PATH = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.8;
-				WRAPPER_EXTENSION = framework;
-			};
-			name = Debug;
-		};
-		F3FCC68B19184F480014D1D4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				ENABLE_NS_ASSERTIONS = NO;
-				FRAMEWORK_VERSION = A;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "angelscript/angelscript-Prefix.pch";
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				INFOPLIST_FILE = "angelscript/angelscript-Info.plist";
-				INSTALL_PATH = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.8;
-				WRAPPER_EXTENSION = framework;
-			};
-			name = Release;
-		};
-		F3FCC68C19184F480014D1D4 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/angelscript.framework/Versions/A/angelscript";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = NO;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-					"$(inherited)",
-				);
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "angelscript/angelscript-Prefix.pch";
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				INFOPLIST_FILE = "angelscriptTests/angelscriptTests-Info.plist";
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = xctest;
-			};
-			name = Debug;
-		};
-		F3FCC68D19184F480014D1D4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/angelscript.framework/Versions/A/angelscript";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-					"$(inherited)",
-				);
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "angelscript/angelscript-Prefix.pch";
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				INFOPLIST_FILE = "angelscriptTests/angelscriptTests-Info.plist";
-				MACOSX_DEPLOYMENT_TARGET = 10.9;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = xctest;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1261,24 +758,6 @@
 			buildConfigurations = (
 				6E91FFE11823DA0D00D59009 /* Debug */,
 				6E91FFE21823DA0D00D59009 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		F3FCC68E19184F480014D1D4 /* Build configuration list for PBXNativeTarget "angelscript" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				F3FCC68A19184F480014D1D4 /* Debug */,
-				F3FCC68B19184F480014D1D4 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		F3FCC68F19184F480014D1D4 /* Build configuration list for PBXNativeTarget "angelscriptTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				F3FCC68C19184F480014D1D4 /* Debug */,
-				F3FCC68D19184F480014D1D4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

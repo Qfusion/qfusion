@@ -44,11 +44,6 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 	int r = 0;
 	bool isNested = false;
 
-	// TODO: runtime optimize: There should be a pool for the context so it doesn't 
-	//                         have to be allocated just for creating the script object
-
-	// TODO: It must be possible for the application to debug the creation of the object too
-
 	// Use nested call in the context if there is an active context
 	ctx = asGetActiveContext();
 	if( ctx )
@@ -63,9 +58,13 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 	
 	if( ctx == 0 )
 	{
-		r = engine->CreateContext(&ctx, true);
-		if( r < 0 )
+		// Request a context from the engine
+		ctx = engine->RequestContext();
+		if( ctx == 0 )
+		{
+			// TODO: How to best report this failure?
 			return 0;
+		}
 	}
 
 	r = ctx->Prepare(engine->scriptFunctions[objType->beh.factory]);
@@ -74,7 +73,7 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 		if( isNested )
 			ctx->PopState();
 		else
-			ctx->Release();
+			engine->ReturnContext(ctx);
 		return 0;
 	}
 
@@ -105,7 +104,7 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 				ctx->Abort();
 		}
 		else
-			ctx->Release();
+			engine->ReturnContext(ctx);
 		return 0;
 	}
 
@@ -117,7 +116,7 @@ asIScriptObject *ScriptObjectFactory(const asCObjectType *objType, asCScriptEngi
 	if( isNested )
 		ctx->PopState();
 	else
-		ctx->Release();
+		engine->ReturnContext(ctx);
 
 	return ptr;
 }
@@ -250,7 +249,7 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 
 	// Initialize members to zero. Technically we only need to zero the pointer
 	// members, but just the memset is faster than having to loop and check the datatypes
-	memset(this+1, 0, objType->size - sizeof(asCScriptObject));
+	memset((void*)(this+1), 0, objType->size - sizeof(asCScriptObject));
 
 	if( doInitialize )
 	{
@@ -491,10 +490,13 @@ void asCScriptObject::CallDestructor()
 
 				if( ctx == 0 )
 				{
-					// Setup a context for calling the default constructor
-					asCScriptEngine *engine = objType->engine;
-					int r = engine->CreateContext(&ctx, true);
-					if( r < 0 ) return;
+					// Request a context from the engine
+					ctx = objType->engine->RequestContext();
+					if( ctx == 0 )
+					{
+						// TODO: How to best report this failure?
+						return;
+					}
 				}
 			}
 
@@ -538,7 +540,10 @@ void asCScriptObject::CallDestructor()
 				ctx->Abort();
 		}
 		else
-			ctx->Release();
+		{
+			// Return the context to engine
+			objType->engine->ReturnContext(ctx);
+		}
 	}
 }
 
@@ -726,9 +731,13 @@ asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 
 			if( ctx == 0 )
 			{
-				r = engine->CreateContext(&ctx, true);
-				if( r < 0 )
+				// Request a context from the engine
+				ctx = engine->RequestContext();
+				if( ctx == 0 )
+				{
+					// TODO: How to best report this failure?
 					return *this;
+				}
 			}
 
 			r = ctx->Prepare(engine->scriptFunctions[objType->beh.copy]);
@@ -737,7 +746,8 @@ asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 				if( isNested )
 					ctx->PopState();
 				else
-					ctx->Release();
+					engine->ReturnContext(ctx);
+				// TODO: How to best report this failure?
 				return *this;
 			}
 
@@ -773,14 +783,20 @@ asCScriptObject &asCScriptObject::operator=(const asCScriptObject &other)
 						ctx->Abort();
 				}
 				else
-					ctx->Release();
+				{
+					// Return the context to the engine
+					engine->ReturnContext(ctx);
+				}
 				return *this;
 			}
 
 			if( isNested )
 				ctx->PopState();
 			else
-				ctx->Release();
+			{
+				// Return the context to the engine
+				engine->ReturnContext(ctx);
+			}
 		}
 	}
 

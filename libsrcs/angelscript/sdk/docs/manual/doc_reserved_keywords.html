@@ -1,3 +1,4 @@
+<!-- HTML header for doxygen 1.8.3.1-->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -8,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="test/javascript" src="touch.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="navtree.js"></script>
@@ -23,6 +25,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="aslogo_small.png"/></td>
   <td style="padding-left: 0.5em;">
    <div id="projectname">AngelScript
    </div>
@@ -57,6 +60,8 @@ $(document).ready(function(){initNavTree('doc_reserved_keywords.html','');});
 <table  cellspacing="0" cellpadding="0" border="0">
 <tr>
 <td width="100" valign="top"><code> and<br/>
+ abstract*<br/>
+ auto<br/>
  bool<br/>
  break<br/>
  case<br/>
@@ -66,8 +71,8 @@ $(document).ready(function(){initNavTree('doc_reserved_keywords.html','');});
  continue<br/>
  default<br/>
  do<br/>
- double<br/>
- </code> </td><td width="100" valign="top"><code> else<br/>
+ </code> </td><td width="100" valign="top"><code> double<br/>
+ else<br/>
  enum<br/>
  false<br/>
  final*<br/>
@@ -117,7 +122,8 @@ $(document).ready(function(){initNavTree('doc_reserved_keywords.html','');});
 <p>These are the non-alphabetical tokens that are also used in the language syntax.</p>
 <table  cellspacing="0" cellpadding="0" border="0">
 <tr>
-<td width="100" valign="top"><code> %*<br/>
+<td width="100" valign="top"><code> *<br/>
+ **<br/>
  /<br/>
  %<br/>
  +<br/>
@@ -135,11 +141,12 @@ $(document).ready(function(){initNavTree('doc_reserved_keywords.html','');});
  =<br/>
  +=<br/>
  -=<br/>
- =<br/>
+ *=<br/>
  /=<br/>
- </code></td><td width="100" valign="top"><code> %=<br/>
+ %=<br/>
+ </code></td><td width="100" valign="top"><code> **=<br/>
  ++<br/>
- &ndash;<br/>
+ --<br/>
  &amp;<br/>
  ,<br/>
  {<br/>
@@ -191,7 +198,7 @@ _Abc123
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sat Nov 2 2013 14:43:48 for AngelScript by
+    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

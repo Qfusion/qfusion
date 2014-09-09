@@ -110,10 +110,10 @@ bool closeTo(float a, float b, float epsilon)
 	// Equal numbers and infinity will return immediately
 	if( a == b ) return true;
 
+	// When very close to 0, we can use the absolute comparison
 	float diff = fabs(a - b);
-	if( a == 0 || b == 0 || diff < FLT_MIN )
-		// When very close to 0, we can use the absolute comparison
-		return diff < (epsilon * FLT_MIN);
+	if( (a == 0 || b == 0) && (diff < epsilon) )
+		return true;
 	
 	// Otherwise we need to use relative comparison to account for precision
 	return diff / (fabs(a) + fabs(b)) < epsilon;
@@ -124,8 +124,8 @@ bool closeTo(double a, double b, double epsilon)
 	if( a == b ) return true;
 
 	double diff = fabs(a - b);
-	if( a == 0 || b == 0 || diff < DBL_MIN )
-		return diff < (epsilon * DBL_MIN);
+	if( (a == 0 || b == 0) && (diff < epsilon) )
+		return true;
 	
 	return diff / (fabs(a) + fabs(b)) < epsilon;
 }

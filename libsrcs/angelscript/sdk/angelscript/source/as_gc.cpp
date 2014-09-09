@@ -156,6 +156,13 @@ int asCGarbageCollector::GetObjectInGC(asUINT idx, asUINT *seqNbr, void **obj, a
 	return asSUCCESS;
 }
 
+// TODO: Should have a flag to tell the garbage collector to automatically determine how many iterations are needed
+//       It should then gather statistics such as how many objects has been created since last run, and how many objects
+//       are destroyed per iteration, and how many objects are detected as cyclic garbage per iteration.
+//       It should try to reach a stable number of objects, i.e. so that on average the number of objects added to 
+//       the garbage collector is the same as the number of objects destroyed. And it should try to minimize the number
+//       of iterations of detections that must be executed per cycle while still identifying the cyclic garbage
+//       These variables should also be available for inspection through the gcstatistics.
 int asCGarbageCollector::GarbageCollect(asDWORD flags, asUINT iterations)
 {
 	// If the GC is already processing in another thread, then don't enter here again
@@ -183,7 +190,10 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags, asUINT iterations)
 				detectState  = clearCounters_init;
 			}
 			if( doDestroy )
+			{
+				destroyNewState = destroyGarbage_init;
 				destroyOldState = destroyGarbage_init;
+			}
 
 			// The full cycle only works with the objects in the old list so that the
 			// set of objects scanned for garbage is fixed even if new objects are added
@@ -197,7 +207,11 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags, asUINT iterations)
 
 				// Now destroy all known garbage
 				if( doDestroy )
+				{
+					if( !doDetect )
+						while( DestroyNewGarbage() == 1 ) {}
 					while( DestroyOldGarbage() == 1 ) {}
+				}
 
 				// Run another iteration if any garbage was destroyed
 				if( count != (unsigned int)(gcOldObjects.GetLength()) )
@@ -245,6 +259,20 @@ int asCGarbageCollector::GarbageCollect(asDWORD flags, asUINT iterations)
 	return 1;
 }
 
+// TODO: Additional statistics to gather
+//
+//       - How many objects are added on average between each destroyed object
+//       - How many objects are added on average between each detected object
+//       - how many iterations are needed for each destroyed object
+//       - how many iterations are needed for each detected object
+//
+//       The average must have a decay so that long running applications will not suffer
+//       from objects being created early on in the application and then never destroyed.
+//
+//       This ought to be possible to accomplish by holding two buckets.
+//       Numbers will be accumulated in one bucket while the other is held fixed.
+//       When returning the average it should use a weighted average between the two buckets using the size as weight.
+//       When a bucket is filled up, the buckets are switched, and then new bucket is emptied to gather new statistics.
 void asCGarbageCollector::GetStatistics(asUINT *currentSize, asUINT *totalDestroyed, asUINT *totalDetected, asUINT *newObjects, asUINT *totalNewDestroyed) const
 {
 	// It is not necessary to protect this with critical sections, however
