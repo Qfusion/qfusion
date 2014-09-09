@@ -1142,7 +1142,7 @@ static void CG_AddFlagBaseEnt( centity_t *cent )
 		number.origin2[2] += 24;
 		number.model = NULL;
 		number.radius = 12;
-		number.customShader = CG_MediaShader( cgs.media.sbNums[cent->current.modelindex2 - 1] );
+		number.customShader = CG_MediaShader( cgs.media.shaderFlagNums[cent->current.modelindex2 - 1] );
 		CG_AddEntityToScene( &number );
 	}
 }
