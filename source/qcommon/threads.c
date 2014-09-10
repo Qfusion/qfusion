@@ -84,13 +84,20 @@ qthread_t *QThread_Create( void *(*routine) (void*), void *param )
 }
 
 /*
-* QThread_Create
+* QThread_Join
 */
 void QThread_Join( qthread_t *thread )
 {
 	Sys_Thread_Join( thread );
 }
 
+/*
+* QThread_Cancel
+*/
+int QThread_Cancel( qthread_t *thread )
+{
+	return Sys_Thread_Cancel( thread );
+}
 /*
 * QThread_Yield
 */
