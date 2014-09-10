@@ -116,6 +116,16 @@ void Sys_Thread_Yield( void )
 {
 	sched_yield();
 }
+/*
+* Sys_Thread_Cancel
+*/
+int Sys_Thread_Cancel( qthread_t *thread )
+{
+	if( thread ) {
+		return pthread_cancel( thread->t );
+	}
+	return 1;
+}
 
 /*
 * Sys_Atomic_Add
