@@ -306,6 +306,8 @@ typedef int socket_handle_t;
 
 //==============================================
 
+#if !defined(__cplusplus)
+
 #ifdef HAVE___INLINE
 #ifndef inline
 #define inline __inline
@@ -314,6 +316,8 @@ typedef int socket_handle_t;
 #ifndef inline
 #define inline
 #endif
+#endif
+
 #endif
 
 #ifdef HAVE__SNPRINTF
