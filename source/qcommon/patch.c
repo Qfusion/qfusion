@@ -163,3 +163,97 @@ PATCH_EVALUATE_DECL(type)													\
 PATCH_EVALUATE_BODY(vec_t)
 
 PATCH_EVALUATE_BODY(qbyte)
+
+/*
+* Patch_RemoveLinearColumnsRows
+*/
+void Patch_RemoveLinearColumnsRows( vec_t *verts, int comp, int *pwidth, int *pheight,
+	int numattribs, qbyte * const *attribs, const int *attribsizes )
+{
+	int i, j, k, l;
+	const vec_t *v0, *v1, *v2;
+	float len, maxLength;
+	int maxWidth = *pwidth;
+	int src, dst;
+	int width = *pwidth, height = *pheight;
+	vec3_t dir, proj;
+
+	for( j = 1; j < width - 1; j++ )
+	{
+		maxLength = 0;
+		for( i = 0; i < height; i++ )
+		{
+			v0 = &verts[(i * maxWidth + j - 1) * comp];
+			v1 = &verts[(i * maxWidth + j + 1) * comp];
+			v2 = &verts[(i * maxWidth + j) * comp];
+			VectorSubtract( v1, v0, dir );
+			VectorNormalize( dir );
+			ProjectPointOntoVector( v2, v0, dir, proj );
+			VectorSubtract( v2, proj, dir );
+			len = VectorLengthSquared( dir );
+			if ( len > maxLength )
+				maxLength = len;
+		}
+		if( maxLength < 0.01f )
+		{
+			width--;
+			for ( i = 0; i < height; i++ )
+			{
+				dst = i * maxWidth + j;
+				src = dst + 1;
+				memmove( &verts[dst * comp], &verts[src * comp], ( width - j ) * sizeof( vec_t ) * comp );
+				for( k = 0; k < numattribs; k++ )
+					memmove( &attribs[k][dst * attribsizes[k]], &attribs[k][src * attribsizes[k]], ( width - j ) * attribsizes[k] );
+			}
+			j--;
+		}
+	}
+
+	for( j = 1; j < height - 1; j++ )
+	{
+		maxLength = 0;
+		for ( i = 0; i < width; i++ )
+		{
+			v0 = &verts[((j - 1) * maxWidth + i) * comp];
+			v1 = &verts[((j + 1) * maxWidth + i) * comp];
+			v2 = &verts[(j * maxWidth + i) * comp];
+			VectorSubtract( v1, v0, dir );
+			VectorNormalize( dir );
+			ProjectPointOntoVector( v2, v0, dir, proj );
+			VectorSubtract( v2, proj, dir );
+			len = VectorLengthSquared( dir );
+			if ( len > maxLength )
+				maxLength = len;
+		}
+		if( maxLength < 0.01f ) {
+			height--;
+			for( i = 0; i < width; i++ )
+			{
+				for ( k = j; k < height; k++ )
+				{
+					src = ( k + 1 ) * maxWidth + i;
+					dst = k * maxWidth + i;
+					memcpy( &verts[dst * comp], &verts[src * comp], sizeof( vec_t ) * comp );
+					for( l = 0; l < numattribs; l++ )
+						memcpy( &attribs[l][dst * attribsizes[l]], &attribs[l][src * attribsizes[l]], attribsizes[l] );
+				}
+			}
+			j--;
+		}
+	}
+
+	if ( maxWidth != width )
+	{
+		for ( i = 0; i < height; i++ )
+		{
+			src = i * maxWidth;
+			dst = i * width;
+			memmove( &verts[dst * comp], &verts[src * comp], width * sizeof( vec_t ) * comp );
+			for( j = 0; j < numattribs; j++ )
+				memmove( &attribs[j][dst * attribsizes[j]], &attribs[j][src * attribsizes[j]], width * attribsizes[j] );
+		}
+	}
+
+	*pwidth = width;
+	*pheight = height;
+}

@@ -29,3 +29,6 @@ PATCH_EVALUATE_DECL(qbyte);
 	Patch_Evaluate_##type(p,numcp,tess,dest,comp,stride)
 
 void Patch_GetFlatness( float maxflat, const float *points, int comp, const int *patch_cp, int *flat );
+
+void Patch_RemoveLinearColumnsRows( vec_t *verts, int comp, int *pwidth, int *pheight,
+	int numattribs, qbyte * const *attribs, const int *attribsizes );
