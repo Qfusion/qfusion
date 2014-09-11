@@ -317,9 +317,9 @@ void CG_ScreenInit( void )
 	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "4", CVAR_ARCHIVE );
 	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "4", CVAR_ARCHIVE );
 	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "4", CVAR_ARCHIVE );
-	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "3.75", CVAR_ARCHIVE );
+	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "3.5", CVAR_ARCHIVE );
 	cg_touch_lookInvert = trap_Cvar_Get( "cg_touch_lookInvert", "0", CVAR_ARCHIVE );
-	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "0.0045", CVAR_ARCHIVE );
+	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "0.5", CVAR_ARCHIVE );
 
 	//
 	// register our commands
@@ -1610,7 +1610,7 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 			if( !cgs.demoPlaying && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) )
 				speed *= cg.predictedPlayerState.fov / cgs.clientInfo[cgs.playerNum].fov;
 
-			float decel = ( float )frametime * cg_touch_lookDecel->value;
+			float decel = cg_touch_lookDecel->value * ( float )frametime * 0.01f;
 
 			float angle = ( ( float )touch.y - viewpad.y ) * scale;
 			if( cg_touch_lookInvert->integer )
