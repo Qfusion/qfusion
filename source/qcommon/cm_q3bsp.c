@@ -183,6 +183,7 @@ static int CM_CreateFacetFromPoints( cmodel_state_t *cms, cbrush_t *facet, vec3_
 static void CM_CreatePatch( cmodel_state_t *cms, cface_t *patch, cshaderref_t *shaderref, vec3_t *verts, int *patch_cp )
 {
 	int step[2], size[2], flat[2];
+	vec3_t *patchpoints;
 	int i, j, k ,u, v;
 	int numsides, totalsides;
 	cbrush_t *facets, *facet;
@@ -201,6 +202,10 @@ static void CM_CreatePatch( cmodel_state_t *cms, cface_t *patch, cshaderref_t *s
 	if( size[0] <= 0 || size[1] <= 0 )
 		return;
 
+	patchpoints = Mem_TempMalloc( size[0] * size[1] * sizeof( vec3_t ) );
+	Patch_Evaluate( vec_t, 3, verts[0], patch_cp, step, patchpoints[0], 0 );
+	Patch_RemoveLinearColumnsRows( patchpoints[0], 3, &size[0], &size[1], 0, NULL, NULL );
+
 	data = Mem_Alloc( cms->mempool, size[0] * size[1] * sizeof( vec3_t ) + 
 		( size[0]-1 ) * ( size[1]-1 ) * 2 * ( sizeof( cbrush_t ) + 32 * sizeof( cplane_t ) ) );
 
@@ -209,7 +214,8 @@ static void CM_CreatePatch( cmodel_state_t *cms, cface_t *patch, cshaderref_t *s
 	brushplanes = ( cplane_t * )data; data += ( size[0]-1 ) * ( size[1]-1 ) * 2 * MAX_FACET_PLANES * sizeof( cplane_t );
 
 	// fill in
-	Patch_Evaluate( vec_t, 3, verts[0], patch_cp, step, points[0], 0 );
+	memcpy( points, patchpoints, size[0] * size[1] * sizeof( vec3_t ) );
+	Mem_TempFree( patchpoints );
 
 	totalsides = 0;
 	patch->numfacets = 0;

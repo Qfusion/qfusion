@@ -473,6 +473,7 @@ static int Mod_AddUpdatePatchGroup( const rdface_t *in )
 /*
 * Mod_CreateMeshForSurface
 */
+#define MESH_T_SIZE_ALIGNED ALIGN( sizeof( mesh_t ), sizeof( vec_t ) )
 static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int faceNum )
 {
 	mesh_t *mesh = NULL;
@@ -487,6 +488,9 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			int patch_cp[2], step[2], size[2], flat[2];
 			int numVerts, numElems;
 			int inFirstVert;
+			int numattribs = 0;
+			qbyte *attribs[2 + MAX_LIGHTMAPS * 2];
+			int attribsizes[2 + MAX_LIGHTMAPS * 2];
 			elem_t *elems;
 
 			j = loadmodel_patchgrouprefs[faceNum];
@@ -511,7 +515,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numVerts = size[0] * size[1];
 			numElems = ( size[0] - 1 ) * ( size[1] - 1 ) * 6;
 
-			bufSize = ALIGN( sizeof( mesh_t ), sizeof( vec_t ) );
+			bufSize = MESH_T_SIZE_ALIGNED;
 			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( vec2_t );
@@ -521,7 +525,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			buffer = ( qbyte * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
-			mesh = ( mesh_t * )buffer; bufPos += ALIGN( sizeof( mesh_t ), sizeof( vec_t ) );
+			mesh = ( mesh_t * )buffer; bufPos += MESH_T_SIZE_ALIGNED;
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
@@ -533,9 +537,13 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			Patch_Evaluate( vec_t, 3, loadmodel_xyz_array[inFirstVert], 
 				patch_cp, step, mesh->xyzArray[0], 4 );
 
+			attribs[numattribs] = ( qbyte * )mesh->normalsArray[0];
+			attribsizes[numattribs++] = sizeof( vec4_t );
 			Patch_Evaluate( vec_t, 3, loadmodel_normals_array[inFirstVert],
 				patch_cp, step, mesh->normalsArray[0], 4 );
 
+			attribs[numattribs] = ( qbyte * )mesh->stArray[0];
+			attribsizes[numattribs++] = sizeof( vec2_t );
 			Patch_Evaluate( vec_t, 2, loadmodel_st_array[inFirstVert], 
 				patch_cp, step, mesh->stArray[0], 0 );
 
@@ -549,6 +557,8 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255 && LittleLong( in->lm_texnum[j] ) >= 0; j++ )
 			{
 				mesh->lmstArray[j] = ( vec2_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec2_t );
+				attribs[numattribs] = ( qbyte * )mesh->lmstArray[j];
+				attribsizes[numattribs++] = sizeof( vec2_t );
 				Patch_Evaluate( vec_t, 2, loadmodel_lmst_array[j][inFirstVert], 
 					patch_cp, step, mesh->lmstArray[j][0], 0 );
 			}
@@ -556,8 +566,78 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 			{
 				mesh->colorsArray[j] = ( byte_vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( byte_vec4_t );
+				attribs[numattribs] = ( qbyte * )mesh->colorsArray[j];
+				attribsizes[numattribs++] = sizeof( byte_vec4_t );
 				Patch_Evaluate( qbyte, 4, loadmodel_colors_array[j][inFirstVert + i], 
 					patch_cp, step, mesh->colorsArray[j][0], 0 );
+			}
+
+			Patch_RemoveLinearColumnsRows( mesh->xyzArray[0], 4, &size[0], &size[1], numattribs, attribs, attribsizes );
+			numVerts = size[0] * size[1];
+			numElems = (size[0] - 1) * (size[1] - 1) * 6;
+			if( numVerts != mesh->numVerts )
+			{
+				size_t normalsPos, sVectorsPos, stPos, lmstPos[MAX_LIGHTMAPS], colorsPos[MAX_LIGHTMAPS];
+
+				mesh->numVerts = numVerts;
+				mesh->numElems = numElems;
+
+				bufPos = MESH_T_SIZE_ALIGNED + numVerts * sizeof( vec4_t );
+
+				normalsPos = bufPos;
+				memmove( buffer + normalsPos, mesh->normalsArray, numVerts * sizeof( vec4_t ) );
+				bufPos += numVerts * sizeof( vec4_t );
+
+				sVectorsPos = bufPos;
+				bufPos += numVerts * sizeof( vec4_t );
+
+				stPos = bufPos;
+				memmove( buffer + stPos, mesh->stArray, numVerts * sizeof( vec2_t ) );
+				bufPos += numVerts * sizeof( vec2_t );
+
+				for( j = 0; j < MAX_LIGHTMAPS; j++ )
+				{
+					if( mesh->lmstArray[j] )
+					{
+						lmstPos[j] = bufPos;
+						memmove( buffer + lmstPos[j], mesh->lmstArray[j], numVerts * sizeof( vec2_t ) );
+						bufPos += numVerts * sizeof( vec2_t );
+					}
+					else
+					{
+						lmstPos[j] = 0;
+					}
+				}
+
+				for( j = 0; j < MAX_LIGHTMAPS; j++ )
+				{
+					if( mesh->colorsArray[j] )
+					{
+						colorsPos[j] = bufPos;
+						memmove( buffer + colorsPos[j], mesh->colorsArray[j], numVerts * sizeof( byte_vec4_t ) );
+						bufPos += numVerts * sizeof( byte_vec4_t );
+					}
+					else
+					{
+						colorsPos[j] = 0;
+					}
+				}
+
+				bufSize = ALIGN( bufPos, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
+				buffer = R_Realloc( buffer, bufSize );
+
+				mesh = ( mesh_t * )buffer;
+				mesh->xyzArray = ( vec4_t * )( buffer + MESH_T_SIZE_ALIGNED );
+				mesh->normalsArray = ( vec4_t * )( buffer + normalsPos );
+				mesh->sVectorsArray = ( vec4_t * )( buffer + sVectorsPos );
+				mesh->stArray = ( vec2_t * )( buffer + stPos );
+				for( j = 0; j < MAX_LIGHTMAPS; j++ )
+				{
+					if( lmstPos[j] )
+						mesh->lmstArray[j] = ( vec2_t * )( buffer + lmstPos[j] );
+					if( colorsPos[j] )
+						mesh->colorsArray[j] = ( byte_vec4_t * )( buffer + colorsPos[j] );
+				}
 			}
 
 			// compute new elems
@@ -605,7 +685,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			numElems = LittleLong( in->numelems );
 			firstElem = LittleLong( in->firstelem );
 
-			bufSize = ALIGN( sizeof( mesh_t ), sizeof( vec_t ) );
+			bufSize = MESH_T_SIZE_ALIGNED;
 			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( vec2_t );
@@ -619,7 +699,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			buffer = ( qbyte * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
-			mesh = ( mesh_t * )buffer; bufPos += ALIGN( sizeof( mesh_t ), sizeof( vec_t ) );
+			mesh = ( mesh_t * )buffer; bufPos += MESH_T_SIZE_ALIGNED;
 			mesh->numVerts = numVerts;
 			mesh->numElems = numElems;
 
