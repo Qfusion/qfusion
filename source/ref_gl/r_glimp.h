@@ -184,6 +184,7 @@ typedef struct
 				,get_program_binary
 				,rgb8_rgba8
 				,ES3_compatibility
+				,blend_func_separate
 				;
 	union {
 		char	shadow, shadow_samplers;

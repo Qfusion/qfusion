@@ -900,6 +900,15 @@ QGL_FUNC(void, glCompressedTexSubImage2D, (GLenum, GLint, GLint, GLint, GLsizei,
 #endif
 #endif
 
+#ifndef GL_ES_VERSION_2_0
+QGL_EXT(void, glBlendFuncSeparateEXT, (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha));
+#else
+QGL_FUNC(void, glBlendFuncSeparate, (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha));
+#ifndef qglBlendFuncSeparateEXT
+#define qglBlendFuncSeparateEXT qglBlendFuncSeparate
+#endif
+#endif
+
 // WGL_EXT Functions
 QGL_WGL_EXT(const char *, wglGetExtensionsStringEXT, (void));
 QGL_WGL_EXT(BOOL, wglGetDeviceGammaRamp3DFX, (HDC, WORD *));
