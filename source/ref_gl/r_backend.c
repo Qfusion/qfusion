@@ -329,7 +329,11 @@ void RB_SetState( int state )
 
 			if( !( rb.gl.state & ( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK ) ) )
 				qglEnable( GL_BLEND );
-			qglBlendFunc( blendsrc, blenddst );
+
+			if( glConfig.ext.blend_func_separate )
+				qglBlendFuncSeparateEXT( blendsrc, blenddst, GL_ONE, GL_ONE );
+			else
+				qglBlendFunc( blendsrc, blenddst );
 		}
 		else
 		{

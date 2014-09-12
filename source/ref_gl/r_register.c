@@ -336,6 +336,14 @@ static const gl_extension_func_t gl_ext_texture_compression_ARB_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_EXT_blend_func_separate */
+static const gl_extension_func_t gl_ext_blend_func_separate_EXT_funcs[] =
+{
+	 GL_EXTENSION_FUNC(BlendFuncSeparateEXT)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 #else // GL_ES_VERSION_2_0
 
 /* GL_ANGLE_framebuffer_blit */
@@ -451,6 +459,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, half_float_vertex, false, false, NULL )
 	,GL_EXTENSION_EXT( ARB, get_program_binary, 0, false, false, &gl_ext_get_program_binary_ARB_funcs, _extMarker )
 	,GL_EXTENSION_EXT( ARB, ES3_compatibility, 0, false, false, NULL, _extMarker )
+	,GL_EXTENSION( EXT, blend_func_separate, true, false, &gl_ext_blend_func_separate_EXT_funcs )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
@@ -717,6 +726,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.shading_language_100 = qtrue;
 	glConfig.ext.GLSL = qtrue;
 	glConfig.ext.GLSL_core = qtrue;
+	glConfig.ext.blend_func_separate = qtrue;
 	if( glConfig.version >= 300 )
 	{
 		glConfig.ext.draw_range_elements = qtrue;
