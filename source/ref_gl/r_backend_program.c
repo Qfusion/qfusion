@@ -253,9 +253,13 @@ static float RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal,
 		else
 			VectorCopy( rb.cameraOrigin, viewtofog );
 	}
-	else
+	else if( e->rtype == RT_MODEL )
 	{
 		VectorCopy( e->origin, viewtofog );
+	}
+	else
+	{
+		VectorClear( viewtofog );
 	}
 
 	// some math tricks to take entity's rotation matrix into account
