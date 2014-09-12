@@ -3,8 +3,11 @@
 #include "include/attributes.glsl"
 #include "include/vtransform.glsl"
 #include "include/rgbgen.glsl"
+
 #ifdef APPLY_FOG
 #include "include/fog.glsl"
+
+qf_varying vec2 v_FogCoord;
 #endif
 
 uniform float u_OutlineHeight;
@@ -24,9 +27,7 @@ void main(void)
 	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
 
 #ifdef APPLY_FOG
-	myhalf4 tempColor = myhalf4(1.0);
-	FogGen(Position, tempColor, myhalf2(0.0, 1.0));
-	outColor.rgb = mix(u_FogColor, outColor.rgb, tempColor.a);
+	FogGen(Position, v_FogCoord);
 #endif
 
 	qf_FrontColor = vec4(outColor);
