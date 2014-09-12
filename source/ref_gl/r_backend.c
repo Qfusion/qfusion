@@ -327,7 +327,8 @@ void RB_SetState( int state )
 				break;
 			}
 
-			qglEnable( GL_BLEND );
+			if( !( rb.gl.state & ( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK ) ) )
+				qglEnable( GL_BLEND );
 			qglBlendFunc( blendsrc, blenddst );
 		}
 		else
