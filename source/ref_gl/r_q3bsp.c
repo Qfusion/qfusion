@@ -547,13 +547,6 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			Patch_Evaluate( vec_t, 2, loadmodel_st_array[inFirstVert], 
 				patch_cp, step, mesh->stArray[0], 0 );
 
-			for( i = 0; i < numVerts; i++ )
-			{
-				mesh->xyzArray[i][3] = 1;
-				mesh->normalsArray[i][3] = 0;
-				VectorNormalize( mesh->normalsArray[i] );
-			}
-
 			for( j = 0; j < MAX_LIGHTMAPS && in->lightmapStyles[j] != 255 && LittleLong( in->lm_texnum[j] ) >= 0; j++ )
 			{
 				mesh->lmstArray[j] = ( vec2_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec2_t );
@@ -656,6 +649,13 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 					elems[5] = p + size[0] + 1;
 					elems += 6;
 				}
+			}
+
+			for( i = 0; i < numVerts; i++ )
+			{
+				mesh->xyzArray[i][3] = 1;
+				mesh->normalsArray[i][3] = 0;
+				VectorNormalize( mesh->normalsArray[i] );
 			}
 
 			R_BuildTangentVectors( mesh->numVerts, mesh->xyzArray, mesh->normalsArray, mesh->stArray, mesh->numElems / 3, mesh->elems, mesh->sVectorsArray );
