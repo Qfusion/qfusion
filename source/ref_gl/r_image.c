@@ -2323,7 +2323,7 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 
 	R_InitViewportTexture( &rsh.portalTextures[id], "r_portaltexture", id, 
 		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
-		IT_PORTALMAP|IT_FRAMEBUFFER|IT_DEPTHRB|flags, 3 );
+		IT_PORTALMAP|IT_FRAMEBUFFER|IT_DEPTHRB|flags, 4 );
 
 	if( rsh.portalTextures[id] ) {
 		rsh.portalTextures[id]->framenum = frameNum;
@@ -2425,7 +2425,7 @@ static void R_InitStretchRawYUVTextures( void )
 * R_InitScreenTexturesPair
 */
 static void R_InitScreenTexturesPair( const char *name, image_t **color, 
-	image_t **depth, int samples, qboolean noFilter )
+	image_t **depth, qboolean noFilter )
 {
 	int flags;
 
@@ -2439,7 +2439,7 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 	if( color ) {
 		R_InitViewportTexture( color, name, 0, 
 			glConfig.width, glConfig.height, 0, 
-			flags | IT_FRAMEBUFFER | ( depth ? 0 : IT_DEPTHRB ), samples );
+			flags | IT_FRAMEBUFFER | ( depth ? 0 : IT_DEPTHRB ), 4 );
 	}
 	if( depth && *color ) {
 		R_InitViewportTexture( depth, va( "%s_depth", name ), 0,
@@ -2458,17 +2458,17 @@ static void R_InitScreenTextures( void )
 	if( glConfig.ext.depth_texture && glConfig.ext.framebuffer_blit )
 	{
 		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
-			&rsh.screenDepthTexture, 3, qtrue ); 
+			&rsh.screenDepthTexture, qtrue ); 
 
 		R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
-			&rsh.screenDepthTextureCopy, 3, qtrue );
+			&rsh.screenDepthTextureCopy, qtrue );
 	}
 
 	R_InitScreenTexturesPair( "rsh.screenFxaaCopy", &rsh.screenFxaaCopy, 
-		NULL, 3, qfalse );
+		NULL, qfalse );
 
 	R_InitScreenTexturesPair( "rsh.screenWeaponTexture", &rsh.screenWeaponTexture, 
-		NULL, 4, qtrue );
+		NULL, qtrue );
 }
 
 /*

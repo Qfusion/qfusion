@@ -459,7 +459,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, half_float_vertex, false, false, NULL )
 	,GL_EXTENSION_EXT( ARB, get_program_binary, 0, false, false, &gl_ext_get_program_binary_ARB_funcs, _extMarker )
 	,GL_EXTENSION_EXT( ARB, ES3_compatibility, 0, false, false, NULL, _extMarker )
-	,GL_EXTENSION( EXT, blend_func_separate, true, false, &gl_ext_blend_func_separate_EXT_funcs )
+	,GL_EXTENSION( EXT, blend_func_separate, true, true, &gl_ext_blend_func_separate_EXT_funcs )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )

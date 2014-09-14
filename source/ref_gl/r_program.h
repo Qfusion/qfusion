@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef quint64 r_glslfeat_t;
 
 #define GLSL_BIT(x)							(1ULL << (x))
-#define GLSL_BITS_VERSION					5
+#define GLSL_BITS_VERSION					6
 
 #define DEFAULT_GLSL_MATERIAL_PROGRAM		"defaultMaterial"
 #define DEFAULT_GLSL_DISTORTION_PROGRAM		"defaultDistortion"
@@ -101,6 +101,8 @@ enum
 #define GLSL_SHADER_COMMON_AFUNC_GE128			(GLSL_SHADER_COMMON_AFUNC_GT0 | GLSL_SHADER_COMMON_AFUNC_LT128)
 
 #define GLSL_SHADER_COMMON_FRAGMENT_HIGHP		GLSL_BIT(26)
+
+#define GLSL_SHADER_COMMON_BLEND				GLSL_BIT(27)
 
 // material prgoram type features
 #define GLSL_SHADER_MATERIAL_LIGHTSTYLE0		GLSL_BIT(32)
