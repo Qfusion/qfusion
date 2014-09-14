@@ -263,9 +263,9 @@ void RB_SetState( int state )
 	if( !diff )
 		return;
 
-	if( diff & ( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK ) )
+	if( diff & GLSTATE_BLEND_MASK )
 	{
-		if( state & ( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK ) )
+		if( state & GLSTATE_BLEND_MASK )
 		{
 			int blendsrc, blenddst;
 
@@ -327,7 +327,7 @@ void RB_SetState( int state )
 				break;
 			}
 
-			if( !( rb.gl.state & ( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK ) ) )
+			if( !( rb.gl.state & GLSTATE_BLEND_MASK ) )
 				qglEnable( GL_BLEND );
 
 			if( glConfig.ext.blend_func_separate )
