@@ -1526,7 +1526,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		!(state & GLSTATE_DEPTHWRITE) &&
 		(rb.currentShader->flags & SHADER_DEPTHWRITE) ) {
 		if( !(pass->flags & SHADERPASS_ALPHAFUNC) ) {
-			state &= ~( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK );
+			state &= ~GLSTATE_BLEND_MASK;
 		}
 		state |= GLSTATE_DEPTHWRITE;
 	}
@@ -2126,7 +2126,7 @@ static void RB_SetShaderpassState( int state )
 {
 	state |= rb.currentShaderState;
 	if( rb.alphaHack ) {
-		if( !(state &GLSTATE_SRCBLEND_MASK) && !(state & GLSTATE_DSTBLEND_MASK) ) {
+		if( !( state & GLSTATE_BLEND_MASK ) ) {
 			// force alpha blending
 			state = (state & ~ GLSTATE_DEPTHWRITE)|GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 		}

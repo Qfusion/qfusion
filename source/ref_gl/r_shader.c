@@ -1473,7 +1473,7 @@ static void Shaderpass_BlendFunc( shader_t *shader, shaderpass_t *pass, const ch
 
 	token = Shader_ParseString( ptr );
 
-	pass->flags &= ~(GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK);
+	pass->flags &= ~GLSTATE_BLEND_MASK;
 	if( !strcmp( token, "blend" ) )
 		pass->flags |= GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 	else if( !strcmp( token, "filter" ) )
@@ -2062,7 +2062,7 @@ static void Shader_Readpass( shader_t *shader, const char **ptr )
 			break;
 	}
 
-	blendmask = (pass->flags & (GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK));
+	blendmask = (pass->flags & GLSTATE_BLEND_MASK);
 
 	if( (pass->flags & (SHADERPASS_LIGHTMAP)) && r_lighting_vertexlight->integer )
 		return;
@@ -2239,7 +2239,7 @@ static void Shader_Finish( shader_t *s )
 	{
 		for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ )
 		{
-			blendmask = pass->flags & ( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK );
+			blendmask = pass->flags & GLSTATE_BLEND_MASK;
 
 			if( !blendmask || blendmask == (GLSTATE_SRCBLEND_DST_COLOR|GLSTATE_DSTBLEND_ZERO) || s->numpasses == 1 )
 			{
@@ -2351,7 +2351,7 @@ static void Shader_Finish( shader_t *s )
 
 	for( i = 0, pass = s->passes; i < s->numpasses; i++, pass++ )
 	{
-		blendmask = pass->flags & ( GLSTATE_SRCBLEND_MASK|GLSTATE_DSTBLEND_MASK );
+		blendmask = pass->flags & GLSTATE_BLEND_MASK;
 
 		if( opaque == -1 && !blendmask )
 			opaque = i;
