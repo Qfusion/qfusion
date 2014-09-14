@@ -1527,6 +1527,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		(rb.currentShader->flags & SHADER_DEPTHWRITE) ) {
 		if( !(pass->flags & SHADERPASS_ALPHAFUNC) ) {
 			state &= ~GLSTATE_BLEND_MASK;
+			programFeatures &= ~GLSL_SHADER_COMMON_BLEND;
 		}
 		state |= GLSTATE_DEPTHWRITE;
 	}
@@ -1775,6 +1776,9 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	}
 	if( r_fragment_highp->integer ) {
 		features |= GLSL_SHADER_COMMON_FRAGMENT_HIGHP;
+	}
+	if( pass->flags & GLSTATE_BLEND_MASK ) {
+		features |= GLSL_SHADER_COMMON_BLEND;
 	}
 
 	features |= RB_BonesTransformsToProgramFeatures();

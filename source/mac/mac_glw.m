@@ -52,6 +52,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glw_state.videonotthefirsttime = qtrue;
 #endif
 
+	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 4 );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
   
   if (r_swapinterval->integer == 0) {

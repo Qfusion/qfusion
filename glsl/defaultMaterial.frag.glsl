@@ -263,7 +263,7 @@ void main()
 
 #endif // APPLY_ENTITY_DECAL
 
-color = color * diffuse;
+	color = color * diffuse;
 #endif // defined(APPLY_BASETEX_ALPHA_ONLY) && !defined(APPLY_DRAWFLAT)
 
 #ifdef APPLY_DECAL
@@ -300,5 +300,9 @@ color = color * diffuse;
 	color.rgb = mix(color.rgb, u_FogColor, fogDensity);
 #endif
 
+#ifdef APPLY_BLEND
 	qf_FragColor = vec4(color);
+#else
+	qf_FragColor = vec4(vec3(color), 1.0);
+#endif
 }
