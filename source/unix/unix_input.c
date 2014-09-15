@@ -841,3 +841,8 @@ void IN_Frame( void )
 void IN_ShowIME( qboolean show )
 {
 }
+
+qboolean IN_ShowUICursor( void )
+{
+	return qtrue;
+}

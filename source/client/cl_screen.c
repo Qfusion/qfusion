@@ -743,7 +743,7 @@ void SCR_UpdateScreen( void )
 		}
 		else if( cls.state == CA_DISCONNECTED )
 		{
-			CL_UIModule_Refresh( qtrue, qtrue );
+			CL_UIModule_Refresh( qtrue, IN_ShowUICursor() );
 			SCR_DrawConsole();
 		}
 		else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CONNECTED || cls.state == CA_HANDSHAKE )
@@ -759,7 +759,7 @@ void SCR_UpdateScreen( void )
 		{
 			SCR_RenderView( separation[i] );
 
-			CL_UIModule_Refresh( qfalse, qtrue );
+			CL_UIModule_Refresh( qfalse, IN_ShowUICursor() );
 
 			if( scr_timegraph->integer )
 				SCR_DebugGraph( cls.frametime*300, 1, 1, 1 );
