@@ -352,3 +352,11 @@ void IN_Frame()
 void IN_ShowIME( qboolean show )
 {
 }
+
+/**
+ * Display the mouse cursor in the UI.
+ */
+qboolean IN_ShowUICursor( void )
+{
+	return qtrue;
+}
