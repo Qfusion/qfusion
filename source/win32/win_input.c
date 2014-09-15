@@ -1519,3 +1519,11 @@ void IN_JoyMove( usercmd_t *cmd, int frametime )
 void IN_ShowIME( qboolean show )
 {
 }
+
+/*
+* IN_ShowUICursor
+*/
+qboolean IN_ShowUICursor( void )
+{
+	return qtrue;
+}
