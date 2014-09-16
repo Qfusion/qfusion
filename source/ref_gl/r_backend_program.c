@@ -887,6 +887,10 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
+	if( rb.gl.state & GLSTATE_BLEND_MASK ) {
+		programFeatures |= GLSL_SHADER_COMMON_BLEND;
+	}
+
 	// we only send S-vectors to GPU and recalc T-vectors as cross product
 	// in vertex shader
 	R_BindTexture( 1, normalmap );         // normalmap
@@ -1527,13 +1531,15 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		(rb.currentShader->flags & SHADER_DEPTHWRITE) ) {
 		if( !(pass->flags & SHADERPASS_ALPHAFUNC) ) {
 			state &= ~GLSTATE_BLEND_MASK;
-			if( !rb.alphaHack )
-				programFeatures &= ~GLSL_SHADER_COMMON_BLEND;
 		}
 		state |= GLSTATE_DEPTHWRITE;
 	}
 
 	RB_SetShaderpassState( state );
+
+	if( rb.gl.state & GLSTATE_BLEND_MASK ) {
+		programFeatures |= GLSL_SHADER_COMMON_BLEND;
+	}
 
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
 		R_BindTexture( 3, rsh.screenDepthTextureCopy );
@@ -1628,6 +1634,10 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
+
+	if( rb.gl.state & GLSTATE_BLEND_MASK ) {
+		programFeatures |= GLSL_SHADER_COMMON_BLEND;
+	}
 
 	// replacement images are there to ensure that the entity is still
 	// properly colored despite real images still being loaded in a separate thread
@@ -1777,9 +1787,6 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	}
 	if( r_fragment_highp->integer ) {
 		features |= GLSL_SHADER_COMMON_FRAGMENT_HIGHP;
-	}
-	if( ( pass->flags & GLSTATE_BLEND_MASK ) || rb.alphaHack ) {
-		features |= GLSL_SHADER_COMMON_BLEND;
 	}
 
 	features |= RB_BonesTransformsToProgramFeatures();
