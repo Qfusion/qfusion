@@ -800,7 +800,7 @@ int Cvar_CompleteCountPossible( const char *partial )
 */
 char **Cvar_CompleteBuildList( const char *partial )
 {
-	struct trie_dump_s *dump;
+	struct trie_dump_s *dump = NULL;
 	char **buf;
 	unsigned int i;
 
