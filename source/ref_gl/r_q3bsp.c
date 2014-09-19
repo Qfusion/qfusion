@@ -561,7 +561,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				mesh->colorsArray[j] = ( byte_vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( byte_vec4_t );
 				attribs[numattribs] = ( qbyte * )mesh->colorsArray[j];
 				attribsizes[numattribs++] = sizeof( byte_vec4_t );
-				Patch_Evaluate( qbyte, 4, loadmodel_colors_array[j][inFirstVert + i], 
+				Patch_Evaluate( qbyte, 4, loadmodel_colors_array[j][inFirstVert], 
 					patch_cp, step, mesh->colorsArray[j][0], 0 );
 			}
 
