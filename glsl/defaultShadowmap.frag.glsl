@@ -9,16 +9,27 @@
 qf_varying vec4 v_ShadowProjVector[NUM_SHADOWS];
 
 #ifdef APPLY_SHADOW_SAMPLERS
-uniform sampler2DShadow u_ShadowmapTexture[NUM_SHADOWS];
+# define SHADOW_SAMPLER sampler2DShadow
 # define dshadow2D(t,v) float(qf_shadow(t,v))
 #else
-uniform sampler2D u_ShadowmapTexture[NUM_SHADOWS];
+# define SHADOW_SAMPLER sampler2D
 # ifdef APPLY_RGB_SHADOW_24BIT
 #  define dshadow2D(t,v) step(v.z, decodedepthmacro24(qf_texture(t, v.xy)))
 # else
 #  define dshadow2D(t,v) step(v.z, decodedepthmacro16(qf_texture(t, v.xy)))
 # endif
 #endif
+
+uniform SHADOW_SAMPLER u_ShadowmapTexture0;
+#if NUM_SHADOWS >= 2
+uniform SHADOW_SAMPLER u_ShadowmapTexture1;
+#if NUM_SHADOWS >= 3
+uniform SHADOW_SAMPLER u_ShadowmapTexture2;
+#if NUM_SHADOWS >= 4
+uniform SHADOW_SAMPLER u_ShadowmapTexture3;
+#endif // NUM_SHADOWS >= 4
+#endif // NUM_SHADOWS >= 3
+#endif // NUM_SHADOWS >= 2
 
 #ifdef APPLY_NORMAL_CHECK
 uniform vec3 u_ShadowDir[NUM_SHADOWS];
@@ -34,25 +45,33 @@ void main(void)
 
 #if NUM_SHADOWS >= 1
 #define SHADOW_INDEX 0
+#define SHADOW_TEXTURE u_ShadowmapTexture0
 #include "include/shadowmap_inc.glsl"
+#undef SHADOW_TEXTURE
 #undef SHADOW_INDEX
 #endif
 
 #if NUM_SHADOWS >= 2
 #define SHADOW_INDEX 1
+#define SHADOW_TEXTURE u_ShadowmapTexture1
 #include "include/shadowmap_inc.glsl"
+#undef SHADOW_TEXTURE
 #undef SHADOW_INDEX
 #endif
 
 #if NUM_SHADOWS >= 3
 #define SHADOW_INDEX 2
+#define SHADOW_TEXTURE u_ShadowmapTexture2
 #include "include/shadowmap_inc.glsl"
+#undef SHADOW_TEXTURE
 #undef SHADOW_INDEX
 #endif
 
 #if NUM_SHADOWS >= 4
 #define SHADOW_INDEX 3
+#define SHADOW_TEXTURE u_ShadowmapTexture3
 #include "include/shadowmap_inc.glsl"
+#undef SHADOW_TEXTURE
 #undef SHADOW_INDEX
 #endif
 
