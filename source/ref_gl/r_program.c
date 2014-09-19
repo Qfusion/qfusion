@@ -2168,7 +2168,7 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	locRefractionTexture = qglGetUniformLocationARB( program->object, "u_RefractionTexture" );
 
 	for( i = 0; i < GLSL_SHADOWMAP_LIMIT; i++ ) {
-		locShadowmapTexture[i] = qglGetUniformLocationARB( program->object, va( "u_ShadowmapTexture[%i]", i ) );
+		locShadowmapTexture[i] = qglGetUniformLocationARB( program->object, va( "u_ShadowmapTexture%i", i ) );
 		if( locShadowmapTexture[i] < 0 )
 			break;
 	}
@@ -2187,7 +2187,8 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 	program->loc.DeluxemapOffset = qglGetUniformLocationARB( program->object, "u_DeluxemapOffset" );
 
 	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
-		locLightmapTexture[i] = qglGetUniformLocationARB( program->object, va( "u_LightmapTexture[%i]", i ) );
+		// arrays of samplers are broken on ARM Mali so get u_LightmapTexture%i instead of u_LightmapTexture[%i]
+		locLightmapTexture[i] = qglGetUniformLocationARB( program->object, va( "u_LightmapTexture%i", i ) );
 		if( locLightmapTexture[i] < 0 )
 			break;
 		program->loc.LightstyleColor[i] = qglGetUniformLocationARB( program->object, va( "u_LightstyleColor[%i]", i ) );

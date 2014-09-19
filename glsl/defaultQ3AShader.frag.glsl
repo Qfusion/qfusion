@@ -24,8 +24,17 @@ uniform myhalf3 u_FloorColor;
 #endif
 
 #ifdef NUM_LIGHTMAPS
-uniform sampler2D u_LightmapTexture[NUM_LIGHTMAPS];
-#endif
+uniform sampler2D u_LightmapTexture0;
+#if NUM_LIGHTMAPS >= 2
+uniform sampler2D u_LightmapTexture1;
+#if NUM_LIGHTMAPS >= 3
+uniform sampler2D u_LightmapTexture2;
+#if NUM_LIGHTMAPS >= 4
+uniform sampler2D u_LightmapTexture3;
+#endif // NUM_LIGHTMAPS >= 4
+#endif // NUM_LIGHTMAPS >= 3
+#endif // NUM_LIGHTMAPS >= 2
+#endif // NUM_LIGHTMAPS
 
 #if defined(APPLY_SOFT_PARTICLE)
 #include "include/softparticle.glsl"
@@ -38,13 +47,13 @@ void main(void)
 
 #ifdef NUM_LIGHTMAPS
 	color = myhalf4(0.0, 0.0, 0.0, qf_FrontColor.a);
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture[0], v_LightmapTexCoord01.st)) * u_LightstyleColor[0];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture0, v_LightmapTexCoord01.st)) * u_LightstyleColor[0];
 #if NUM_LIGHTMAPS >= 2
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture[1], v_LightmapTexCoord01.pq)) * u_LightstyleColor[1];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture1, v_LightmapTexCoord01.pq)) * u_LightstyleColor[1];
 #if NUM_LIGHTMAPS >= 3
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture[2], v_LightmapTexCoord23.st)) * u_LightstyleColor[2];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture2, v_LightmapTexCoord23.st)) * u_LightstyleColor[2];
 #if NUM_LIGHTMAPS >= 4
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture[3], v_LightmapTexCoord23.pq)) * u_LightstyleColor[3];
+	color.rgb += myhalf3(qf_texture(u_LightmapTexture3, v_LightmapTexCoord23.pq)) * u_LightstyleColor[3];
 #endif // NUM_LIGHTMAPS >= 4
 #endif // NUM_LIGHTMAPS >= 3
 #endif // NUM_LIGHTMAPS >= 2
