@@ -98,8 +98,8 @@ static void _LaserImpact( trace_t *trace, vec3_t dir )
 		if( laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] + TRAILTIME < cg.time )
 		{
 			laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] = cg.time;
-			CG_ImpactSmokePuff( trace->endpos, trace->plane.normal, 2, 1.0f, 8, 12 );
-			CG_ImpactPuffParticles( trace->endpos, trace->plane.normal, 4, 1.25f, 1.0f, 0.8f, 0.2f, 0.9f, NULL);
+			CG_ImpactSmokePuff( trace->endpos, trace->plane.normal, 1, 1.0f, 8, 12 );
+			CG_ImpactPuffParticles( trace->endpos, trace->plane.normal, 2, 0.9f, 1.0f, 0.8f, 0.2f, 1.0f, NULL);
 		}
 #undef TRAILTIME
 	}
