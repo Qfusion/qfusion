@@ -68,8 +68,7 @@ static int chat_prestep = 0;
 static unsigned int chat_linepos = 0;
 static unsigned int chat_bufferlen = 0;
 
-static int touch_y;
-static qboolean touch_imeShown;
+static int touch_x, touch_y;
 
 static int Con_NumPadValue( int key )
 {
@@ -381,8 +380,7 @@ void Con_Init( void )
 	con.display = 0;
 	con.linewidth = 78;
 
-	touch_y = -1;
-	touch_imeShown = qfalse;
+	touch_x = touch_y = -1;
 
 	Com_Printf( "Console initialized.\n" );
 
@@ -1456,6 +1454,45 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 	// may take some time
 }
 
+static void Con_HistoryUp( void )
+{
+	do
+	{
+		history_line = ( history_line - 1 ) & 31;
+	} while( history_line != edit_line && !key_lines[history_line][1] );
+
+	if( history_line == edit_line )
+		history_line = ( edit_line+1 )&31;
+
+	Q_strncpyz( key_lines[edit_line], key_lines[history_line], sizeof( key_lines[edit_line] ) );
+	key_linepos = (unsigned int)strlen( key_lines[edit_line] );
+	input_prestep = 0;
+}
+
+static void Con_HistoryDown( void )
+{
+	if( history_line == edit_line )
+		return;
+
+	do
+	{
+		history_line = ( history_line + 1 ) & 31;
+	} while( history_line != edit_line && !key_lines[history_line][1] );
+
+	if( history_line == edit_line )
+	{
+		key_lines[edit_line][0] = ']';
+		key_lines[edit_line][1] = 0;
+		key_linepos = 1;
+	}
+	else
+	{
+		Q_strncpyz( key_lines[edit_line], key_lines[history_line], sizeof( key_lines[edit_line] ) );
+		key_linepos = (unsigned int)strlen( key_lines[edit_line] );
+		input_prestep = 0;
+	}
+}
+
 /*
 * Con_KeyDown
 * 
@@ -1575,41 +1612,13 @@ void Con_KeyDown( int key )
 
 	if( ( key == K_UPARROW ) || ( key == KP_UPARROW ) )
 	{
-		do
-		{
-			history_line = ( history_line - 1 ) & 31;
-		} while( history_line != edit_line && !key_lines[history_line][1] );
-
-		if( history_line == edit_line )
-			history_line = ( edit_line+1 )&31;
-
-		Q_strncpyz( key_lines[edit_line], key_lines[history_line], sizeof( key_lines[edit_line] ) );
-		key_linepos = (unsigned int)strlen( key_lines[edit_line] );
-		input_prestep = 0;
+		Con_HistoryUp();
 		return;
 	}
 
 	if( ( key == K_DOWNARROW ) || ( key == KP_DOWNARROW ) )
 	{
-		if( history_line == edit_line )
-			return;
-
-		do
-		{
-			history_line = ( history_line + 1 ) & 31;
-		} while( history_line != edit_line && !key_lines[history_line][1] );
-
-		if( history_line == edit_line )
-		{
-			key_lines[edit_line][0] = ']';
-			key_linepos = 1;
-		}
-		else
-		{
-			Q_strncpyz( key_lines[edit_line], key_lines[history_line], sizeof( key_lines[edit_line] ) );
-			key_linepos = (unsigned int)strlen( key_lines[edit_line] );
-			input_prestep = 0;
-		}
+		Con_HistoryDown();
 		return;
 	}
 	
@@ -1954,24 +1963,15 @@ void Con_MessageKeyDown( int key )
 	}
 }
 
-void Con_TouchEvent( qboolean down, int x, int y )
+static void Con_TouchDown( int x, int y )
 {
-	int smallCharHeight;
-
-	if( !con_initialized )
-		return;
-
-	if( !down )
-	{
-		touch_y = -1;
-		touch_imeShown = qfalse;
-		return;
-	}
-
-	smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
+	int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
 
 	if( cls.key_dest == key_console )
 	{
+		if( touch_x >= 0 )
+			return;
+
 		if( touch_y >= 0 )
 		{
 			int dist = ( y - touch_y ) / smallCharHeight;
@@ -1979,32 +1979,75 @@ void Con_TouchEvent( qboolean down, int x, int y )
 			clamp_high( con.display, con.numlines - 1 );
 			clamp_low( con.display, 0 );
 			touch_y += dist * smallCharHeight;
-			return;
 		}
-
-		if( scr_con_current )
+		else if( scr_con_current )
 		{
 			if( y < ( ( viddef.height * scr_con_current ) - 14 * VID_GetPixelRatio() - smallCharHeight ) )
 			{
+				touch_x = -1;
 				touch_y = y;
 			}
-			else if( !touch_imeShown && ( y < ( viddef.height * scr_con_current ) ) )
+			else if( y < ( viddef.height * scr_con_current ) )
 			{
-				touch_imeShown = qtrue;
-				IN_ShowIME( qtrue );
+				touch_x = x;
+				touch_y = y;
 			}
+		}
+	}
+	else if( cls.key_dest == key_message )
+	{
+		touch_x = x;
+		touch_y = y;
+	}
+}
+
+static void Con_TouchUp( int x, int y )
+{
+	if( ( touch_x < 0 ) && ( touch_y < 0 ) )
+		return;
+
+	if( ( x < 0 ) || ( y < 0 ) )
+	{
+		touch_x = touch_y = -1;
+		return;
+	}
+
+	if( cls.key_dest == key_console )
+	{
+		if( touch_x >= 0 )
+		{
+			int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
+
+			if( ( x - touch_x ) >= ( smallCharHeight * 4 ) )
+				Con_CompleteCommandLine();
+			else if( ( y - touch_y ) >= ( smallCharHeight * 2 ) )
+				Con_HistoryUp();
+			else if( ( touch_y - y ) >= ( smallCharHeight * 2 ) )
+				Con_HistoryDown();
+			else
+				IN_ShowIME( qtrue );
 		}
 	}
 	else if( cls.key_dest == key_message )
 	{
 		int x1, y1, x2, y2;
 		Con_GetMessageArea( &x1, &y1, &x2, &y2 );
-		if( !touch_imeShown && ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) )
-		{
-			touch_imeShown = qtrue;
+		if( ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) )
 			IN_ShowIME( qtrue );
-		}
 	}
+
+	touch_x = touch_y = -1;
+}
+
+void Con_TouchEvent( qboolean down, int x, int y )
+{
+	if( !con_initialized )
+		return;
+
+	if( down )
+		Con_TouchDown( x, y );
+	else
+		Con_TouchUp( x, y );
 }
 
 //============================================================================
