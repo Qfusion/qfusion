@@ -235,7 +235,7 @@ public:
 			!dynamic_cast< Rocket::Controls::ElementFormControlTextArea * >( input ) )
 			return;
 
-		trap::IN_ShowIME( ( event.GetType() == "focus" ) ? qtrue : qfalse );
+		trap::IN_ShowIME( ( event.GetType() == "click" ) ? qtrue : qfalse );
 	}
 };
 
