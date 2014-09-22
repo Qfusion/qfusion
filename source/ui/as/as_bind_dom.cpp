@@ -774,6 +774,25 @@ static asstring_t *DataGrid_GetColumn( ElementDataGrid *self, int idx ) {
 	return ASSTR( ret.Substring( 0, std::max( 0U, ret.Length() - 1 ) ) );
 }
 
+static Element *DataGrid_GetColumnHeader( ElementDataGrid *self, int idx ) {
+	const ElementDataGrid::Column *column = self->GetColumn( idx );
+	if ( !column )
+		return NULL;
+	Element *e = column->header->GetChild( idx );
+	_RETREF(e);
+}
+
+static float DataGrid_GetColumnWidth( ElementDataGrid *self, int idx ) {
+	const ElementDataGrid::Column *column = self->GetColumn( idx );
+	if ( !column )
+		return 0.0f;
+	return column->current_width;
+}
+
+static unsigned int DataGrid_GetNumColumns( ElementDataGrid *self ) {
+	return self->GetNumColumns();
+}
+
 static void DataGrid_SetDataSource( ElementDataGrid *self, const asstring_t &source ) {
 	self->SetDataSource( ASSTR( source ) );
 }
@@ -793,6 +812,9 @@ static void BindElementDataGrid( ASInterface *as )
 		.method( &DataGrid_GetRow, "getRow", true )
 		.method( &DataGrid_GetNumRows, "getNumRows", true )
 		.method( &DataGrid_GetColumn, "getColumn", true )
+		.method( &DataGrid_GetColumnHeader, "getColumnHeader", true )
+		.method( &DataGrid_GetColumnWidth, "getColumnWidth", true )
+		.method( &DataGrid_GetNumColumns, "getNumColumns", true )
 		.method( &DataGrid_SetDataSource, "setDataSource", true )
 		.refcast( &DataGrid_CastToElement, true, true )
 		;
