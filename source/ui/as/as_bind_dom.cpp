@@ -803,10 +803,10 @@ static void BindElementDataGrid( ASInterface *as )
 		.refs( &ElementDataGrid::AddReference, &ElementDataGrid::RemoveReference )
 
 		.method( &DataGrid_GetRow, "getRow", true )
-		.method( &DataGrid_GetNumRows, "getNumRows", true )
-		.method( &DataGrid_GetColumn, "getColumn", true )
+		.constmethod( &DataGrid_GetNumRows, "getNumRows", true )
+		.constmethod( &DataGrid_GetColumn, "getColumn", true )
 		.method( &DataGrid_GetColumnHeader, "getColumnHeader", true )
-		.method( &DataGrid_GetNumColumns, "getNumColumns", true )
+		.constmethod( &DataGrid_GetNumColumns, "getNumColumns", true )
 		.method( &DataGrid_SetDataSource, "setDataSource", true )
 		.refcast( &DataGrid_CastToElement, true, true )
 		;
