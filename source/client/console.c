@@ -70,6 +70,9 @@ static unsigned int chat_bufferlen = 0;
 
 static int touch_x, touch_y;
 
+/*
+* Con_NumPadValue
+*/
 static int Con_NumPadValue( int key )
 {
 	switch( key )
@@ -123,6 +126,9 @@ static int Con_NumPadValue( int key )
 	return key;
 }
 
+/*
+* Con_ClearTyping
+*/
 static void Con_ClearTyping( void )
 {
 	key_lines[edit_line][1] = 0; // clear any typing
@@ -560,6 +566,9 @@ DRAWING
 ==============================================================================
 */
 
+/*
+* Q_ColorCharCount
+*/
 int Q_ColorCharCount( const char *s, int byteofs )
 {
 	char c;
@@ -582,6 +591,9 @@ int Q_ColorCharCount( const char *s, int byteofs )
 	return charcount;
 }
 
+/*
+* Q_ColorCharOffset
+*/
 int Q_ColorCharOffset( const char *s, int charcount )
 {
 	const char *start = s;
@@ -604,6 +616,9 @@ int Q_ColorCharOffset( const char *s, int charcount )
 }
 
 #if 0
+/*
+* Q_ColorStrLastColor
+*/
 static int Q_ColorStrLastColor( const char *s, int byteofs )
 {
 	char c;
@@ -1363,6 +1378,9 @@ void Con_CharEvent( qwchar key )
 	}
 }
 
+/*
+* Con_SendChatMessage
+*/
 static void Con_SendChatMessage( const char *text, qboolean team )
 {
 	char *cmd;
@@ -1384,8 +1402,12 @@ static void Con_SendChatMessage( const char *text, qboolean team )
 	Cbuf_AddText( va("%s \"%s\"\n", cmd, buf) );
 }
 
-// handle K_ENTER keypress in console
-// set "ignore_ctrldown" to prevent Ctrl-M/J from sending the message to chat
+/*
+* Con_Key_Enter
+*
+* Handle K_ENTER keypress in console
+* Set "ignore_ctrldown" to prevent Ctrl-M/J from sending the message to chat
+*/
 static void Con_Key_Enter( qboolean ignore_ctrl )
 {
 	enum {COMMAND, CHAT, TEAMCHAT} type;
@@ -1454,6 +1476,9 @@ static void Con_Key_Enter( qboolean ignore_ctrl )
 	// may take some time
 }
 
+/*
+* Con_HistoryUp
+*/
 static void Con_HistoryUp( void )
 {
 	do
@@ -1469,6 +1494,9 @@ static void Con_HistoryUp( void )
 	input_prestep = 0;
 }
 
+/*
+* Con_HistoryDown
+*/
 static void Con_HistoryDown( void )
 {
 	if( history_line == edit_line )
@@ -1674,6 +1702,9 @@ void Con_KeyDown( int key )
 
 //============================================================================
 
+/*
+* Con_MessageKeyPaste
+*/
 static void Con_MessageKeyPaste( qboolean primary )
 {
 	char *cbd;
@@ -1716,6 +1747,9 @@ static void Con_MessageKeyPaste( qboolean primary )
 	}
 }
 
+/*
+* Con_MessageCharEvent
+*/
 void Con_MessageCharEvent( qwchar key )
 {
 	if( !con_initialized )
@@ -1841,6 +1875,9 @@ static void Con_MessageCompletion( const char *partial, qboolean teamonly )
 	chat_linepos += comp_len;
 }
 
+/*
+* Con_MessageKeyDown
+*/
 void Con_MessageKeyDown( int key )
 {
 	qboolean ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
@@ -1963,6 +2000,9 @@ void Con_MessageKeyDown( int key )
 	}
 }
 
+/*
+* Con_TouchDown
+*/
 static void Con_TouchDown( int x, int y )
 {
 	int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
@@ -2001,6 +2041,9 @@ static void Con_TouchDown( int x, int y )
 	}
 }
 
+/*
+* Con_TouchUp
+*/
 static void Con_TouchUp( int x, int y )
 {
 	if( ( touch_x < 0 ) && ( touch_y < 0 ) )
@@ -2039,6 +2082,9 @@ static void Con_TouchUp( int x, int y )
 	touch_x = touch_y = -1;
 }
 
+/*
+* Con_TouchEvent
+*/
 void Con_TouchEvent( qboolean down, int x, int y )
 {
 	if( !con_initialized )
