@@ -100,6 +100,8 @@ static void _LaserImpact( trace_t *trace, vec3_t dir )
 			laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] = cg.time;
 			CG_ImpactSmokePuff( trace->endpos, trace->plane.normal, 1, 1.0f, 8, 12 );
 			CG_ImpactPuffParticles( trace->endpos, trace->plane.normal, 2, 0.9f, 1.0f, 0.8f, 0.2f, 1.0f, NULL);
+			trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxLasergunHit[rand()&2] ), trace->endpos, CHAN_AUTO,
+				cg_volume_effects->value, ATTN_STATIC );
 		}
 #undef TRAILTIME
 	}
