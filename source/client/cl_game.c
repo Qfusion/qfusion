@@ -674,6 +674,15 @@ void CL_GameModule_RenderView( float stereo_separation )
 }
 
 /*
+* CL_GameModule_AddMovement
+*/
+void CL_GameModule_AddMovement( usercmd_t *cmd, vec3_t viewangles, int frametime )
+{
+	if( cge )
+		cge->AddMovement( cmd, viewangles, frametime );
+}
+
+/*
 * CL_GameModule_TouchEvent
 */
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y )
@@ -689,15 +698,6 @@ void CL_GameModule_TouchFrame( void )
 {
 	if( cge )
 		cge->TouchFrame();
-}
-
-/*
-* CL_GameModule_TouchMove
-*/
-void CL_GameModule_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
-{
-	if( cge )
-		cge->TouchMove( cmd, viewangles, frametime );
 }
 
 /*

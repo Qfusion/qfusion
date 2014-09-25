@@ -551,7 +551,7 @@ void CL_CancelTouches( void )
 			break;
 		case key_console:
 		case key_message:
-			Con_TouchEvent( qfalse, 0, 0 );
+			Con_TouchEvent( qfalse, -1, -1 );
 			break;
 		default:
 			break;
@@ -674,7 +674,7 @@ void CL_UpdateCommandInput( void )
 	// always let the mouse refresh cl.viewangles
 	IN_MouseMove( cmd );
 	CL_AddButtonBits( &cmd->buttons );
-	CL_GameModule_TouchMove( cmd, cl.viewangles, keys_frame_time );
+	CL_GameModule_AddMovement( cmd, cl.viewangles, keys_frame_time );
 
 	if( keys_frame_time )
 	{
