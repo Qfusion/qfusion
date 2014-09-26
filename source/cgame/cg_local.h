@@ -910,7 +910,7 @@ int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const 
 
 const char *CG_TranslateString( const char *string );
 
-void CG_AddMovement( usercmd_t *cmd, vec3_t viewangles, int frametime )
+void CG_AddMovement( usercmd_t *cmd, vec3_t viewangles, int frametime );
 
 //
 // cg_svcmds.c

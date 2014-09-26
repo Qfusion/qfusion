@@ -387,6 +387,9 @@ extern "C" {
 #define S_WEAPON_LASERGUN_W_QUAD_HUM		"sounds/weapons/laser_weak_quad_hum"
 #define S_WEAPON_LASERGUN_S_STOP		"sounds/weapons/laser_strong_stop"
 #define S_WEAPON_LASERGUN_W_STOP		"sounds/weapons/laser_weak_stop"
+#define S_WEAPON_LASERGUN_HIT_0			"sounds/weapons/laser_hit0"
+#define S_WEAPON_LASERGUN_HIT_1			"sounds/weapons/laser_hit1"
+#define S_WEAPON_LASERGUN_HIT_2			"sounds/weapons/laser_hit2"
 
 // announcer sounds
 // readyup
