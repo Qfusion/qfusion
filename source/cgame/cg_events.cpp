@@ -555,7 +555,7 @@ static void CG_BulletImpact( trace_t *tr )
 		CG_ParticleEffect( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 20 );
 
 	// impact sound
-	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRic[rand()&2] ), tr->endpos, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRic[rand()%3] ), tr->endpos, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );
 }
 
 /*
@@ -634,7 +634,7 @@ static void CG_Event_FireMachinegun( vec3_t origin, vec3_t dir, int weapon, int 
 				// flesh impact sound
 			}
 			else
-				trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRic[ rand()&2 ] ), trace.endpos, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );
+				trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRic[ rand()%3 ] ), trace.endpos, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );
 		}
 	}
 
@@ -1358,7 +1358,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 		ByteToDir( parm, dir );
 		CG_BulletExplosion( ent->origin, dir, NULL );
 		CG_ParticleEffect( ent->origin, dir, 1.0f, 0.67f, 0.0f, 6 );
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRic[rand()&2] ), ent->origin, CHAN_AUTO,
+		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRic[rand()%3] ), ent->origin, CHAN_AUTO,
 			cg_volume_effects->value, ATTN_STATIC );
 		break;
 
