@@ -133,6 +133,8 @@ public:
 
 		trap::R_RenderScene( &refdef );
 
+		trap::R_Scissor( scissor_x, scissor_y, scissor_w, scissor_h );
+
 		// TODO: Should this be done here or in ComputePosition?
 		BonePoses->ResetTemporaryBoneposesCache();
 		time = curtime;
