@@ -105,6 +105,8 @@ public:
 		trap::R_ClearScene();
 
 		trap::R_RenderScene( &refdef );
+
+		trap::R_Scissor( scissor_x, scissor_y, scissor_w, scissor_h );
 	}
 
 	virtual void OnPropertyChange(const Rocket::Core::PropertyNameList& changed_properties)
