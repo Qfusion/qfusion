@@ -60,6 +60,16 @@ static asstring_t *Game_Name( Game *game )
 	return ASSTR( trap::Cvar_String( "gamename" ) );
 }
 
+static asstring_t *Game_Version( Game *game )
+{
+	return ASSTR( trap::Cvar_String( "version" ) );
+}
+
+static asstring_t *Game_Revision( Game *game )
+{
+	return ASSTR( trap::Cvar_String( "revision" ) );
+}
+
 static asstring_t *Game_ServerName( Game *game )
 {
 	return ASSTR( UI_Main::Get()->getServerName() );
@@ -195,6 +205,8 @@ void BindGame( ASInterface *as )
 		.constmethod( Game_GetDemoInfo, "get_demo", true )
 
 		.constmethod( Game_Name, "get_name", true )
+		.constmethod( Game_Version, "get_version", true )
+		.constmethod( Game_Revision, "get_revision", true )
 
 		.constmethod( Game_ConfigString, "configString", true )
 		.constmethod( Game_ConfigString, "cs", true )
