@@ -345,7 +345,7 @@ static void Con_MessageMode2_f( void )
 void Con_CheckResize( void )
 {
 	float pixelRatio = VID_GetPixelRatio();
-	int width = viddef.width / ( SMALL_CHAR_WIDTH * pixelRatio ) - 2;
+	int width = viddef.width / ( int )( SMALL_CHAR_WIDTH * pixelRatio ) - 2;
 
 	if( width == con.linewidth )
 		return;
@@ -653,7 +653,7 @@ static void Con_DrawInput( int vislines )
 	const char *text = key_lines[edit_line];
 	int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
 	float pixelRatio = VID_GetPixelRatio();
-	int text_y = vislines - 14 * pixelRatio - smallCharHeight;
+	int text_y = vislines - ( int )( 14 * pixelRatio ) - smallCharHeight;
 	int margin = 8 * pixelRatio;
 	int promptwidth = SCR_strWidth( "]", cls.fontSystemSmallScaled, 1 );
 	int cursorwidth = SCR_strWidth( "_", cls.fontSystemSmallScaled, 1 );
@@ -872,7 +872,7 @@ void Con_DrawConsole( void )
 
 	// draw the background
 	re.DrawStretchPic( 0, 0, viddef.width, lines, 0, 0, 1, 1, colorWhite, cls.consoleShader );
-	SCR_DrawFillRect( 0, lines - 2 * pixelRatio, viddef.width, 2 * pixelRatio, colorRed );
+	SCR_DrawFillRect( 0, lines - ( int )( 2 * pixelRatio ), viddef.width, 2 * pixelRatio, colorRed );
 
 	// get date from system
 	time( &long_time );
@@ -887,13 +887,13 @@ void Con_DrawConsole( void )
 #endif
 
 	SCR_DrawString( viddef.width-SCR_strWidth( version, 
-		cls.fontSystemSmallScaled, 0 ) - 4 * pixelRatio,
-		lines - SCR_strHeight( cls.fontSystemSmallScaled ) - 4 * pixelRatio, 
+		cls.fontSystemSmallScaled, 0 ) - ( int )( 4 * pixelRatio ),
+		lines - SCR_strHeight( cls.fontSystemSmallScaled ) - ( int )( 4 * pixelRatio ), 
 		ALIGN_LEFT_TOP, version, cls.fontSystemSmallScaled, colorRed );
 
 	// prepare to draw the text
-	rows = ( lines - smallCharHeight - 14 * pixelRatio ) / smallCharHeight;  // rows of text to draw
-	y = lines - smallCharHeight - 14 * pixelRatio - smallCharHeight;
+	rows = ( lines - smallCharHeight - ( int )( 14 * pixelRatio ) ) / smallCharHeight;  // rows of text to draw
+	y = lines - smallCharHeight - ( int )( 14 * pixelRatio ) - smallCharHeight;
 
 	row = con.display;	// first line to be drawn
 	if( con.display )
@@ -1679,7 +1679,7 @@ void Con_KeyDown( int key )
 		{
 			int smallCharHeight = SCR_strHeight( cls.fontSystemSmallScaled );
 			int vislines = (int)( viddef.height * bound( 0.0, scr_con_current, 1.0 ) );
-			int rows = ( vislines-smallCharHeight-14*VID_GetPixelRatio() ) / smallCharHeight;  // rows of text to draw
+			int rows = ( vislines - smallCharHeight - ( int )( 14 * VID_GetPixelRatio() ) ) / smallCharHeight;  // rows of text to draw
 			con.display = con.numlines - rows + 1;
 			clamp_low( con.display, 0 );
 		}
@@ -2022,7 +2022,7 @@ static void Con_TouchDown( int x, int y )
 		}
 		else if( scr_con_current )
 		{
-			if( y < ( ( viddef.height * scr_con_current ) - 14 * VID_GetPixelRatio() - smallCharHeight ) )
+			if( y < ( ( viddef.height * scr_con_current ) - ( int )( 14 * VID_GetPixelRatio() ) - smallCharHeight ) )
 			{
 				touch_x = -1;
 				touch_y = y;
