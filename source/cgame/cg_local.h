@@ -150,7 +150,7 @@ typedef struct
 	cgs_media_handle_t *sfxTimerBipBip;
 	cgs_media_handle_t *sfxTimerPloink;
 
-	cgs_media_handle_t *sfxRic[3];
+	cgs_media_handle_t *sfxRic[2];
 
 	cgs_media_handle_t *sfxWeaponUp;
 	cgs_media_handle_t *sfxWeaponUpNoAmmo;

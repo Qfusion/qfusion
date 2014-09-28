@@ -70,7 +70,7 @@ void CG_RegisterMediaSounds( void )
 	cgs.media.sfxTimerBipBip = CG_RegisterMediaSfx( S_TIMER_BIP_BIP, true );
 	cgs.media.sfxTimerPloink = CG_RegisterMediaSfx( S_TIMER_PLOINK, true );
 
-	for( i = 0; i < 3; i++ )
+	for( i = 0; i < 2; i++ )
 		cgs.media.sfxRic[i] = CG_RegisterMediaSfx( va( "sounds/weapons/ric%i", i+1 ), true );
 
 	// weapon
