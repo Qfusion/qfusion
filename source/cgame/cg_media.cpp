@@ -124,6 +124,8 @@ void CG_RegisterMediaSounds( void )
 	cgs.media.sfxLasergunHit[1] = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HIT_1, true );
 	cgs.media.sfxLasergunHit[2] = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HIT_2, true );
 
+	cgs.media.sfxElectroboltHit = CG_RegisterMediaSfx( S_WEAPON_ELECTROBOLT_HIT, true );
+	
 	cgs.media.sfxQuadFireSound = CG_RegisterMediaSfx( S_QUAD_FIRE, true );
 
 	//VSAY sounds
