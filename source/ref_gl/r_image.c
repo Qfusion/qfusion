@@ -61,10 +61,10 @@ static int gl_filter_depth = GL_LINEAR;
 
 static int gl_anisotropic_filter = 0;
 
-static void *gl_loader_context = NULL;
+static void *gl_loader_context[NUM_LOADER_THREADS] = { NULL };
 
-static void R_InitImageLoader( void );
-static void R_ShutdownImageLoader( void );
+static void R_InitImageLoader( int id );
+static void R_ShutdownImageLoader( int id );
 static void R_LoadAsyncImageFromDisk( image_t *image );
 
 typedef struct
@@ -1873,7 +1873,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	//
 	image = R_LoadImage( pathname, empty_data, 1, 1, flags, 1 );
 
-	if( !( image->flags & IT_SYNC ) && ( gl_loader_context != NULL ) ) {
+	if( !( image->flags & IT_SYNC ) && ( gl_loader_context[0] != NULL ) ) {
 		R_LoadAsyncImageFromDisk( image );
 		return image;
 	}
@@ -2584,7 +2584,9 @@ void R_InitImages( void )
 		images[i].next = &images[i+1];
 	}
 
-	R_InitImageLoader();
+	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
+		R_InitImageLoader( i );
+	}
 
 	R_InitStretchRawTexture();
 	R_InitStretchRawYUVTextures();
@@ -2658,7 +2660,9 @@ void R_ShutdownImages( void )
 	if( !r_imagesPool )
 		return;
 
-	R_ShutdownImageLoader();
+	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
+		R_ShutdownImageLoader( i );
+	}
 
 	R_ReleaseBuiltinTextures();
 
@@ -2710,76 +2714,87 @@ enum
 typedef struct
 {
 	int id;
+	int self;
+} loaderInitCmd_t;
+
+typedef struct
+{
+	int id;
+	int self;
 	int pic;
 } loaderPicCmd_t;
 
 typedef unsigned (*queueCmdHandler_t)( const void * );
 
-static qbufQueue_t *loader_queue;
-static qthread_t *loader_thread = NULL;
+static qbufQueue_t *loader_queue[NUM_LOADER_THREADS] = { NULL };
+static qthread_t *loader_thread[NUM_LOADER_THREADS] = { NULL };
 
 static void *R_ImageLoaderThreadProc( void *param );
 
 /*
 * R_IssueInitLoaderCmd
 */
-static void R_IssueInitLoaderCmd( void )
+static void R_IssueInitLoaderCmd( int id )
 {
-	int cmd = CMD_LOADER_INIT;
-	ri.BufQueue_EnqueueCmd( loader_queue, &cmd, sizeof( cmd ) );
+	loaderInitCmd_t cmd;
+	cmd.id = CMD_LOADER_INIT;
+	cmd.self = id;
+	ri.BufQueue_EnqueueCmd( loader_queue[id], &cmd, sizeof( cmd ) );
 }
 
 /*
 * R_IssueShutdownLoaderCmd
 */
-static void R_IssueShutdownLoaderCmd( void )
+static void R_IssueShutdownLoaderCmd( int id )
 {
-	int cmd = CMD_LOADER_SHUTDOWN;
-	ri.BufQueue_EnqueueCmd( loader_queue, &cmd, sizeof( cmd ) );
+	int cmd;
+	cmd = CMD_LOADER_SHUTDOWN;
+	ri.BufQueue_EnqueueCmd( loader_queue[id], &cmd, sizeof( cmd ) );
 }
 
 /*
 * R_IssueLoadPicLoaderCmd
 */
-static void R_IssueLoadPicLoaderCmd( int pic )
+static void R_IssueLoadPicLoaderCmd( int id, int pic )
 {
 	loaderPicCmd_t cmd;
 	cmd.id = CMD_LOADER_LOAD_PIC;
+	cmd.self = id;
 	cmd.pic = pic;
-	ri.BufQueue_EnqueueCmd( loader_queue, &cmd, sizeof( cmd ) );
+	ri.BufQueue_EnqueueCmd( loader_queue[id], &cmd, sizeof( cmd ) );
 }
 
 /*
 * R_IssueUnbindLoaderCmd
 */
-static void R_IssueUnbindLoaderCmd( void )
+static void R_IssueUnbindLoaderCmd( int id )
 {
 	int cmd = CMD_LOADER_UNBIND;
-	ri.BufQueue_EnqueueCmd( loader_queue, &cmd, sizeof( cmd ) );
+	ri.BufQueue_EnqueueCmd( loader_queue[id], &cmd, sizeof( cmd ) );
 }
 
 /*
 * R_InitImageLoader
 */
-static void R_InitImageLoader( void )
+static void R_InitImageLoader( int id )
 {
 	if( !r_multithreading->integer ) {
-		gl_loader_context = NULL;
+		gl_loader_context[id] = NULL;
 		return;
 	}
 
-	gl_loader_context = GLimp_SharedContext_Create();
-	if( !gl_loader_context ) {
+	gl_loader_context[id] = GLimp_SharedContext_Create();
+	if( !gl_loader_context[id] ) {
 		return;
 	}
 
-	loader_queue = ri.BufQueue_Create( 0x100000, 1 );
-	loader_thread = ri.Thread_Create( R_ImageLoaderThreadProc, loader_queue );
+	loader_queue[id] = ri.BufQueue_Create( 0x100000, 1 );
+	loader_thread[id] = ri.Thread_Create( R_ImageLoaderThreadProc, loader_queue[id] );
 
-	R_IssueInitLoaderCmd();
+	R_IssueInitLoaderCmd( id );
 
 	// wait for the thread to complete context setup
-	ri.BufQueue_Finish( loader_queue );
+	ri.BufQueue_Finish( loader_queue[id] );
 }
 
 /*
@@ -2787,11 +2802,14 @@ static void R_InitImageLoader( void )
 */
 void R_FinishLoadingImages( void )
 {
-	if( !gl_loader_context ) {
-		return;
+	int i;
+
+	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
+		if( gl_loader_context[i] ) {
+			R_IssueUnbindLoaderCmd( i );
+			ri.BufQueue_Finish( loader_queue[i] );
+		}
 	}
-	R_IssueUnbindLoaderCmd();
-	ri.BufQueue_Finish( loader_queue );
 }
 
 /*
@@ -2799,31 +2817,37 @@ void R_FinishLoadingImages( void )
 */
 static void R_LoadAsyncImageFromDisk( image_t *image )
 {
+	int id = (image - images) % NUM_LOADER_THREADS;
+	if ( !gl_loader_context[id] ) {
+		id = 0;
+	}
+
 	image->loaded = qfalse;
 	image->missing = qfalse;
-	R_IssueLoadPicLoaderCmd( image - images );
+
+	R_IssueLoadPicLoaderCmd( id, image - images );
 }
 
 /*
 * R_ShutdownImageLoader
 */
-static void R_ShutdownImageLoader( void )
+static void R_ShutdownImageLoader( int id )
 {
-	void *context = gl_loader_context;
+	void *context = gl_loader_context[id];
 
-	gl_loader_context = NULL;
+	gl_loader_context[id] = NULL;
 	if( !context ) {
 		return;
 	}
 
-	R_IssueShutdownLoaderCmd();
+	R_IssueShutdownLoaderCmd( id );
 
-	ri.BufQueue_Finish( loader_queue );
+	ri.BufQueue_Finish( loader_queue[id] );
 
-	ri.Thread_Join( loader_thread );
-	loader_thread = NULL;
+	ri.Thread_Join( loader_thread[id] );
+	loader_thread[id] = NULL;
 
-	ri.BufQueue_Destroy( &loader_queue );
+	ri.BufQueue_Destroy( &loader_queue[id] );
 
 	GLimp_SharedContext_Destroy( context );
 }
@@ -2835,10 +2859,12 @@ static void R_ShutdownImageLoader( void )
 */
 static unsigned R_HandleInitLoaderCmd( void *pcmd )
 {
-	GLimp_SharedContext_MakeCurrent( gl_loader_context );
-	unpackAlignment[QGL_CONTEXT_LOADER] = 4;
+	loaderInitCmd_t *cmd = pcmd;
 
-	return sizeof( int );
+	GLimp_SharedContext_MakeCurrent( gl_loader_context[cmd->self] );
+	unpackAlignment[QGL_CONTEXT_LOADER + cmd->self] = 4;
+
+	return sizeof( *cmd );
 }
 
 /*
@@ -2868,7 +2894,7 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 	image_t *image = images + cmd->pic;
 	qboolean loaded;
 
-	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER, image, R_BindLoaderTexture );
+	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER + cmd->self, image, R_BindLoaderTexture );
 	if( !loaded ) {
 		image->missing = qtrue;
 	} else {

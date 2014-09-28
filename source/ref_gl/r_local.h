@@ -36,12 +36,13 @@ typedef unsigned short elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
+#define NUM_LOADER_THREADS		2
+
 enum
 {
 	QGL_CONTEXT_MAIN,
 	QGL_CONTEXT_LOADER,
-
-	NUM_QGL_CONTEXTS
+	NUM_QGL_CONTEXTS = QGL_CONTEXT_LOADER + NUM_LOADER_THREADS
 };
 
 #include "r_math.h"
