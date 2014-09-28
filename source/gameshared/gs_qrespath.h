@@ -391,6 +391,8 @@ extern "C" {
 #define S_WEAPON_LASERGUN_HIT_1			"sounds/weapons/laser_hit1"
 #define S_WEAPON_LASERGUN_HIT_2			"sounds/weapons/laser_hit2"
 
+#define S_WEAPON_ELECTROBOLT_HIT		"sounds/weapons/electrobolt_hit"
+
 // announcer sounds
 // readyup
 #define S_ANNOUNCER_READY_UP_POLITE		"sounds/announcer/pleasereadyup"
