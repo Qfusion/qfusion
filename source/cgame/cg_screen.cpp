@@ -168,7 +168,7 @@ static void CG_DrawCenterString( void )
 	else
 		y = 48 * cgs.pixelRatio;
 
-	if( width < 320 * cgs.pixelRatio )
+	if( width < ( int )( 320 * cgs.pixelRatio ) )
 		width = 320 * cgs.pixelRatio;
 
 	while( ( len = trap_SCR_DrawStringWidth( x, y, ALIGN_CENTER_TOP, helpmessage, width, font, colorWhite ) ) )
