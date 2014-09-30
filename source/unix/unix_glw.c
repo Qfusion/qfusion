@@ -1104,23 +1104,29 @@ qboolean GLimp_ScreenEnabled( void )
 /*
 ** GLimp_SharedContext_Create
 */
-void *GLimp_SharedContext_Create( void )
+qboolean GLimp_SharedContext_Create( void **context, void **surface )
 {
-	return qglXCreateContext( x11display.dpy, x11display.visinfo, x11display.ctx, True );
+	GLXContext ctx = qglXCreateContext( x11display.dpy, x11display.visinfo, x11display.ctx, True );
+	if( !ctx )
+		return qfalse;
+
+	*context = ctx;
+	*surface = x11display.gl_win;
+	return qtrue;
 }
 
 /*
 ** GLimp_SharedContext_MakeCurrent
 */
-qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
+qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
-	return qglXMakeCurrent( x11display.dpy, ctx ? x11display.gl_win : NULL, ctx ) == True ? qtrue : qfalse;
+	return qglXMakeCurrent( x11display.dpy, surface, context ) == True ? qtrue : qfalse;
 }
 
 /*
 ** GLimp_SharedContext_Destroy
 */
-void GLimp_SharedContext_Destroy( void *ctx )
+void GLimp_SharedContext_Destroy( void *context, void *surface )
 {
-	qglXDestroyContext( x11display.dpy, ctx );
+	qglXDestroyContext( x11display.dpy, context );
 }

@@ -62,6 +62,7 @@ static int gl_filter_depth = GL_LINEAR;
 static int gl_anisotropic_filter = 0;
 
 static void *gl_loader_context[NUM_LOADER_THREADS] = { NULL };
+static void *gl_loader_surface[NUM_LOADER_THREADS] = { NULL };
 
 static void R_InitImageLoader( int id );
 static void R_ShutdownImageLoader( int id );
@@ -2780,11 +2781,11 @@ static void R_InitImageLoader( int id )
 {
 	if( !r_multithreading->integer ) {
 		gl_loader_context[id] = NULL;
+		gl_loader_surface[id] = NULL;
 		return;
 	}
 
-	gl_loader_context[id] = GLimp_SharedContext_Create();
-	if( !gl_loader_context[id] ) {
+	if( !GLimp_SharedContext_Create( &gl_loader_context[id], &gl_loader_surface[id] ) ) {
 		return;
 	}
 
@@ -2834,8 +2835,10 @@ static void R_LoadAsyncImageFromDisk( image_t *image )
 static void R_ShutdownImageLoader( int id )
 {
 	void *context = gl_loader_context[id];
+	void *surface = gl_loader_surface[id];
 
 	gl_loader_context[id] = NULL;
+	gl_loader_surface[id] = NULL;
 	if( !context ) {
 		return;
 	}
@@ -2849,7 +2852,7 @@ static void R_ShutdownImageLoader( int id )
 
 	ri.BufQueue_Destroy( &loader_queue[id] );
 
-	GLimp_SharedContext_Destroy( context );
+	GLimp_SharedContext_Destroy( context, surface );
 }
 
 //
@@ -2861,7 +2864,7 @@ static unsigned R_HandleInitLoaderCmd( void *pcmd )
 {
 	loaderInitCmd_t *cmd = pcmd;
 
-	GLimp_SharedContext_MakeCurrent( gl_loader_context[cmd->self] );
+	GLimp_SharedContext_MakeCurrent( gl_loader_context[cmd->self], gl_loader_surface[cmd->self] );
 	unpackAlignment[QGL_CONTEXT_LOADER + cmd->self] = 4;
 
 	return sizeof( *cmd );
@@ -2872,7 +2875,7 @@ static unsigned R_HandleInitLoaderCmd( void *pcmd )
 */
 static unsigned R_HandleShutdownLoaderCmd( void *pcmd )
 {
-	GLimp_SharedContext_MakeCurrent( NULL );
+	GLimp_SharedContext_MakeCurrent( NULL, NULL );
 
 	return 0;
 }
