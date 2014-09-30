@@ -51,7 +51,7 @@ enum
 	TOUCHAREA_HUD_ATTACK,
 	TOUCHAREA_HUD_SPECIAL,
 	TOUCHAREA_HUD_CLASSACTION,
-	TOUCHAREA_HUD_WEAPON = TOUCHAREA_HUD + 0x80
+	TOUCHAREA_HUD_WEAPON
 };
 
 //=============================================================================
@@ -1098,7 +1098,7 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 		{
 			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] && !selected_weapon )
 			{
-				if( CG_TouchArea( TOUCHAREA_HUD_WEAPON + j, curx, cury, curw, curh, false, NULL ) >= 0 )
+				if( CG_TouchArea( TOUCHAREA_HUD_WEAPON | ( i << TOUCHAREA_SUB_SHIFT ), curx, cury, curw, curh, NULL ) >= 0 )
 				{
 					gsitem_t *item = GS_FindItemByTag( WEAP_GUNBLADE+i );
 					if( item )
@@ -2231,7 +2231,7 @@ static void CG_MoveUpFunc( int id )
 static bool CG_LFuncTouchMove( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int touch = CG_TouchArea( TOUCHAREA_HUD_MOVE,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, true, CG_MoveUpFunc );
+		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_MoveUpFunc );
 	if( touch >= 0 )
 		CG_SetTouchpad( TOUCHPAD_MOVE, touch );
 	return true;
@@ -2245,7 +2245,7 @@ static void CG_ViewUpFunc( int id )
 static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int touch = CG_TouchArea( TOUCHAREA_HUD_VIEW,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, true, CG_ViewUpFunc );
+		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_ViewUpFunc );
 	if( touch >= 0 )
 		CG_SetTouchpad( TOUCHPAD_VIEW, touch );
 	return true;
@@ -2259,7 +2259,7 @@ static void CG_UpmoveUpFunc( int id )
 static bool CG_LFuncTouchJump( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_JUMP,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, true, CG_UpmoveUpFunc ) >= 0 )
+		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 )
 		cg_hud_touch_upmove = 1;
 	return true;
 }
@@ -2267,7 +2267,7 @@ static bool CG_LFuncTouchJump( struct cg_layoutnode_s *commandnode, struct cg_la
 static bool CG_LFuncTouchCrouch( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_CROUCH,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, true, CG_UpmoveUpFunc ) >= 0 )
+		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 )
 		cg_hud_touch_upmove = -1;
 	return true;
 }
@@ -2280,7 +2280,7 @@ static void CG_AttackUpFunc( int id )
 static bool CG_LFuncTouchAttack( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_ATTACK,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, true, CG_AttackUpFunc ) >= 0 )
+		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_AttackUpFunc ) >= 0 )
 		cg_hud_touch_buttons |= BUTTON_ATTACK;
 	return true;
 }
@@ -2293,7 +2293,7 @@ static void CG_SpecialUpFunc( int id )
 static bool CG_LFuncTouchSpecial( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_SPECIAL,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, true, CG_SpecialUpFunc ) >= 0 )
+		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_SpecialUpFunc ) >= 0 )
 		cg_hud_touch_buttons |= BUTTON_SPECIAL;
 	return true;
 }
@@ -2301,7 +2301,7 @@ static bool CG_LFuncTouchSpecial( struct cg_layoutnode_s *commandnode, struct cg
 static bool CG_LFuncTouchClassAction( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_CLASSACTION,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, true, NULL ) >= 0 )
+		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, NULL ) >= 0 )
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "classAction%i", ( int )CG_GetNumericArg( &argumentnode ) ) );
 	return true;
 }

@@ -500,7 +500,7 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		{
 			int touch_size = cg_crosshair_touch_size->integer * cgs.pixelRatio;
 			int offset = ( touch_size - size ) / 2;
-			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, x - offset, y - offset, touch_size, touch_size, true, NULL ) >= 0 )
+			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, x - offset, y - offset, touch_size, touch_size, NULL ) >= 0 )
 				trap_Cmd_ExecuteText( EXEC_NOW, "toggle zoom" );
 		}
 		else
@@ -614,7 +614,7 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 		int h = trap_SCR_strHeight( font );
 		if( CG_TouchArea( TOUCHAREA_SCREEN_TIMER,
 			CG_HorizontalAlignForWidth( x, align, w ), CG_VerticalAlignForHeight( y, align, h ),
-			w, h, true, CG_ClockUpFunc ) >= 0 )
+			w, h, CG_ClockUpFunc ) >= 0 )
 		{
 			CG_ScoresOn_f();
 		}
@@ -1415,9 +1415,7 @@ typedef struct {
 	bool down; // is the finger currently down?
 	int x, y; // current x and y of the touch
 	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
-	int area_x, area_y, area_x2, area_y2; // dimensions of the area to discard the touch if out of range
 	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
-	bool sticky; // if true, the touch won't be cancelled when the finger leaves the area
 	void ( *upfunc )( int id ); // function to call when the finger is released
 } cg_touch_t;
 
@@ -1435,27 +1433,35 @@ static cg_touchpad_t cg_touchpads[TOUCHPAD_COUNT];
 *
 * Touches a rectangle. Returns touch id if it's a new touch.
 */
-int CG_TouchArea( int area, int x, int y, int w, int h, bool sticky, void ( *upfunc )( int id ) )
+int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id ) )
 {
 	if( ( w <= 0 ) || ( h <= 0 ) )
 		return -1;
 
 	int i;
+	int x2 = x + w, y2 = y + h;
 
 	// first check if already touched
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
 	{
 		cg_touch_t &touch = cg_touches[i];
 
-		if( touch.down && ( touch.area == area ) )
+		if( touch.down && ( ( touch.area & TOUCHAREA_MASK ) == ( area & TOUCHAREA_MASK ) ) )
 		{
 			touch.area_valid = true;
+			if( ( ( touch.area >> TOUCHAREA_SUB_SHIFT ) != ( area >> TOUCHAREA_SUB_SHIFT ) ) &&
+				( touch.x >= x ) && ( touch.y >= y ) && ( touch.x < x2 ) && ( touch.y < y2 ) )
+			{
+				if( touch.upfunc )
+					touch.upfunc( i );
+				touch.area = area;
+				return i;
+			}
 			return -1;
 		}
 	}
 
 	// now add a new touch
-	int x2 = x + w, y2 = y + h;
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
 	{
 		cg_touch_t &touch = cg_touches[i];
@@ -1464,12 +1470,7 @@ int CG_TouchArea( int area, int x, int y, int w, int h, bool sticky, void ( *upf
 			( touch.x >= x ) && ( touch.y >= y ) && ( touch.x < x2 ) && ( touch.y < y2 ) )
 		{
 			touch.area = area;
-			touch.area_x = x;
-			touch.area_y = y;
-			touch.area_x2 = x2;
-			touch.area_y2 = y2;
 			touch.area_valid = true;
-			touch.sticky = sticky;
 			touch.upfunc = upfunc;
 			return i;
 		}
@@ -1498,15 +1499,6 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 		{
 			touch.down = true;
 			touch.area = TOUCHAREA_NONE;
-		}
-		else if( ( touch.area != TOUCHAREA_NONE ) && !touch.sticky )
-		{
-			if( ( x < touch.area_x ) || ( y < touch.area_y ) || ( x >= touch.area_x2 ) || ( y >= touch.area_y2 ) )
-			{
-				if( touch.upfunc )
-					touch.upfunc( id );
-				touch.area = TOUCHAREA_NONE;
-			}
 		}
 		break;
 

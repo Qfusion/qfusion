@@ -751,7 +751,10 @@ enum
 	TOUCHAREA_HUD = 0x101
 };
 
-int CG_TouchArea( int area, int x, int y, int w, int h, bool sticky, void ( *upfunc )( int id ) );
+#define TOUCHAREA_SUB_SHIFT 16
+#define TOUCHAREA_MASK ( ( 1 << TOUCHAREA_SUB_SHIFT ) - 1 )
+
+int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id ) );
 void CG_TouchEvent( int id, touchevent_t type, int x, int y );
 void CG_TouchFrame( void );
 void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime );
