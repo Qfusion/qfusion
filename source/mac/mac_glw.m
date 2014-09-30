@@ -242,7 +242,7 @@ qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 */
 void GLimp_SharedContext_Destroy( void *context, void *surface )
 {
-	(void)ctx;
+	(void)context;
 }
 
 /*****************************************************************************/
