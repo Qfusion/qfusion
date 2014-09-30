@@ -224,15 +224,15 @@ qboolean GLimp_ScreenEnabled( void )
 /*
 ** GLimp_SharedContext_Create
 */
-void *GLimp_SharedContext_Create( void )
+qboolean GLimp_SharedContext_Create( void **context, void **surface )
 {
-	return NULL;
+	return qfalse;
 }
 
 /*
 ** GLimp_SharedContext_MakeCurrent
 */
-qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
+qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
 	return qfalse;
 }
@@ -240,7 +240,7 @@ qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
 /*
 ** GLimp_SharedContext_Destroy
 */
-void GLimp_SharedContext_Destroy( void *ctx )
+void GLimp_SharedContext_Destroy( void *context, void *surface )
 {
 	(void)ctx;
 }
