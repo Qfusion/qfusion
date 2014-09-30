@@ -258,8 +258,8 @@ void	    GLimp_AppActivate( qboolean active, qboolean destroy );
 qboolean	GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp );
 void		GLimp_SetGammaRamp( size_t stride, unsigned short   size, unsigned short *ramp );
 
-void		*GLimp_SharedContext_Create( void );
-qboolean	GLimp_SharedContext_MakeCurrent( void *ctx );
-void		GLimp_SharedContext_Destroy( void *ctx );
+qboolean	GLimp_SharedContext_Create( void **context, void **surface );
+qboolean	GLimp_SharedContext_MakeCurrent( void *context, void *surface );
+void		GLimp_SharedContext_Destroy( void *context, void *surface );
 
 #endif // R_GLIMP_H

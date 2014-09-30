@@ -676,21 +676,25 @@ qboolean GLimp_ScreenEnabled( void )
 /*
 ** GLimp_SharedContext_Create
 */
-void *GLimp_SharedContext_Create( void )
+qboolean GLimp_SharedContext_Create( void **context, void **surface )
 {
 	HGLRC ctx = qwglCreateContext( glw_state.hDC );
-	if( ctx ) {
-		qwglShareLists( glw_state.hGLRC, ctx );
+	if( !ctx ) {
+		return qfalse;
 	}
-	return ctx;
+
+	qwglShareLists( glw_state.hGLRC, ctx );
+	*context = ctx;
+	*surface = ( void * )1;
+	return qtrue;
 }
 
 /*
 ** GLimp_SharedContext_MakeCurrent
 */
-qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
+qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
-	if( qwglMakeCurrent && !qwglMakeCurrent( glw_state.hDC, ctx ) ) {
+	if( qwglMakeCurrent && !qwglMakeCurrent( glw_state.hDC, context ) ) {
 		return qfalse;
 	}
 	return qtrue;
@@ -699,9 +703,9 @@ qboolean GLimp_SharedContext_MakeCurrent( void *ctx )
 /*
 ** GLimp_SharedContext_Destroy
 */
-void GLimp_SharedContext_Destroy( void *ctx )
+void GLimp_SharedContext_Destroy( void *context, void *surface )
 {
 	if( qwglDeleteContext ) {
-		qwglDeleteContext( ctx );
+		qwglDeleteContext( context );
 	}
 }
