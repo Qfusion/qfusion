@@ -613,9 +613,7 @@ const char *Sys_GetPreferredLanguage( void )
 			lang[sizeof(lang)-1] = '\0';
 
 			p = strchr( lang, '-' );
-			if( p ) { *p = '\0'; }
-			p = strchr( lang, '_' );
-			if( p ) { *p = '\0'; }
+			if( p ) { *p = '_'; }
 		}
 
 		Q_free( pwszLanguagesBuffer );	

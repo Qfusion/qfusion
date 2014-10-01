@@ -453,10 +453,6 @@ const char *Sys_GetPreferredLanguage( void )
 
 	setlocale( LC_ALL, "C" );
 
-	p = strchr( lang, '-' );
-	if( p ) { *p = '\0'; }
-	p = strchr( lang, '_' );
-	if( p ) { *p = '\0'; }
 	p = strchr( lang, '.' );
 	if( p ) { *p = '\0'; }
 
