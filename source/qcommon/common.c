@@ -1051,7 +1051,7 @@ void Qcommon_Init( int argc, char **argv )
 			if( !com_introPlayed3->integer )
 			{
 				Cvar_ForceSet( com_introPlayed3->name, "1" );
-#if !defined(__MACOSX__) && !defined(__ANDROID__)
+#if !defined(__MACOSX__) && (!defined(__ANDROID__) || defined (__i386__) || defined (__x86_64__))
 				Cbuf_AddText( "cinematic intro.roq\n" );
 #endif
 			}
