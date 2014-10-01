@@ -171,8 +171,15 @@ static void SCR_RegisterSystemFonts( void )
 */
 static void SCR_CheckFontLastChar( void )
 {
-	const char *lang = L10n_GetUserLanguage();
+	char lang[MAX_STRING_CHARS];
+	char *underscore;
 	int lastChar = 0;
+
+	Q_strncpyz( lang, L10n_GetUserLanguage(), sizeof( lang ) );
+	underscore = strchr( lang, '_' );
+	if( underscore ) {
+		*underscore = '\0';
+	}
 
 	if( !strcmp( lang, "ja" ) || !strcmp( lang, "zh" ) || !strcmp( lang, "ko" ) ) {
 		// CJK_Unified_Ideographs
