@@ -2622,8 +2622,6 @@ void R_FreeUnusedImages( void )
 	image_t *image;
 
 	R_TouchBuiltinTextures();
-	
-	R_FinishLoadingImages();
 
 	for( i = 0, image = images; i < MAX_GLIMAGES; i++, image++ ) {
 		if( !image->name ) {
@@ -2636,6 +2634,8 @@ void R_FreeUnusedImages( void )
 		}
 		R_FreeImage( image );
 	}
+
+	R_FinishLoadingImages();
 
 	for( i = 0; i < MAX_PORTAL_TEXTURES; i++ ) {
 		if( rsh.portalTextures[i] && rsh.portalTextures[i]->registrationSequence != rsh.registrationSequence ) {
