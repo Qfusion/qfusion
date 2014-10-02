@@ -94,6 +94,7 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 
 	memset( &mesh, 0, sizeof( mesh ) );
 	mesh.numVerts = poly->numverts;
+	mesh.xyzArray = poly->verts;
 	mesh.normalsArray = poly->normals;
 	mesh.stArray = poly->stcoords;
 	mesh.colorsArray[0] = poly->colors;
@@ -116,8 +117,6 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 		y_offset = 0;
 
 		mesh.xyzArray = translated;
-	} else {
-		mesh.xyzArray = poly->verts;
 	}
 
 	R_BeginStretchBatch( poly->shader, x_offset, y_offset, !poly->elems ? qtrue : qfalse );
