@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // ftlib_public.h - font provider subsystem
 
-#define	FTLIB_API_VERSION			2
+#define	FTLIB_API_VERSION			3
 
 //===============================================================
 
@@ -123,6 +123,7 @@ typedef struct
 	size_t ( *StringWidth )( const char *str, struct qfontface_s *font, size_t maxlen );
 	size_t ( *StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth );
 	void ( *DrawRawChar )( int x, int y, qwchar num, struct qfontface_s *font, vec4_t color );
+	void ( *DrawClampChar )( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 	void ( *DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
 	size_t ( *DrawRawString )( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color );
 } ftlib_export_t;

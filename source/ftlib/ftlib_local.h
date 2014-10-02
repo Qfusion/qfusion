@@ -135,6 +135,7 @@ size_t FTLIB_fontHeight( qfontface_t *font );
 size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen );
 size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth );
 void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color );
+void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color );
 

@@ -323,6 +323,11 @@ void SCR_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color 
 	FTLIB_DrawRawChar( x, y, num, font, color );
 }
 
+void SCR_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
+{
+	FTLIB_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, color );
+}
+
 void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
 {
 	FTLIB_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color );
