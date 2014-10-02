@@ -481,7 +481,11 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 	else
 		maxSize = glConfig.maxTextureSize;
 
+#ifdef GL_ES_VERSION_2_0
+	if( !glConfig.ext.texture_non_power_of_two && ( ( flags & IT_GL_ES_NPOT ) != IT_GL_ES_NPOT ) && !forceNPOT )
+#else
 	if( !glConfig.ext.texture_non_power_of_two && !forceNPOT )
+#endif
 	{
 		int potWidth, potHeight;
 
@@ -880,19 +884,7 @@ static void R_Upload32( int ctx, qbyte **data, int width, int height, int flags,
 
 	assert( samples );
 
-	// we can't properly mipmap a NPT-texture in software
-	if( glConfig.ext.texture_non_power_of_two || ( subImage && noScale ) )
-	{
-		scaledWidth = width;
-		scaledHeight = height;
-	}
-	else
-	{
-		for( scaledWidth = 1; scaledWidth < width; scaledWidth <<= 1 );
-		for( scaledHeight = 1; scaledHeight < height; scaledHeight <<= 1 );
-	}
-
-	R_ScaledImageSize( scaledWidth, scaledHeight, &scaledWidth, &scaledHeight, flags, 1,
+	R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, 1,
 		( subImage && noScale ) ? qtrue : qfalse );
 
 	// don't ever bother with > maxSize textures
@@ -2185,7 +2177,11 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 		limit = 1;
 	width_ = height_ = limit;
 
+#ifdef GL_ES_VERSION_2_0
+	if( glConfig.ext.texture_non_power_of_two || ( ( flags & IT_GL_ES_NPOT ) == IT_GL_ES_NPOT ) )
+#else
 	if( glConfig.ext.texture_non_power_of_two )
+#endif
 	{
 		width_ = min( viewportWidth, limit );
 		height_ = min( viewportHeight, limit );
