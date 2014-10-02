@@ -180,6 +180,73 @@ void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t colo
 }
 
 /*
+* FTLIB_DrawClampChar
+* 
+* Draws one graphics character with 0 being transparent.
+* Clipped to [xmin, ymin; xmax, ymax].
+*/
+void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
+{
+	qglyph_t *glyph;
+	int x2, y2;
+	float s1 = 0.0f, t1 = 0.0f, s2 = 1.0f, t2 = 1.0f;
+	float tw, th;
+
+	if( !font || !font->height )
+		return;
+	if( ( xmax <= xmin ) || ( ymax <= ymin ) )
+		return;
+
+	if( num <= ' ' )
+		return;
+	if( num < font->minChar || num > font->maxChar )
+		num = FTLIB_REPLACEMENT_GLYPH;
+
+	glyph = &font->glyphs[num];
+	if( !glyph->width )
+		return;
+
+	x += glyph->x_offset;
+	y += glyph->y_offset;
+	x2 = x + glyph->width;
+	y2 = y + font->height;
+	if( ( x > xmax ) || ( y > ymax ) || ( x2 <= xmin ) || ( y2 <= ymin ) )
+		return;
+
+	++xmax;
+	++ymax;
+
+	if( x < xmin )
+	{
+		s1 = ( xmin - x ) / ( float )glyph->width;
+		x = xmin;
+	}
+	if( y < ymin )
+	{
+		t1 = ( ymin - y ) / ( float )font->height;
+		y = ymin;
+	}
+	if( x2 > xmax )
+	{
+		s2 = 1.0f - ( x2 - xmax ) / ( float )glyph->width;
+		x2 = xmax;
+	}
+	if( y2 > ymax )
+	{
+		t2 = 1.0f - ( y2 - ymax ) / ( float )font->height;
+		y2 = ymax;
+	}
+
+	tw = glyph->s2 - glyph->s1;
+	th = glyph->t2 - glyph->t1;
+
+	trap_R_DrawStretchPic( x, y, x2 - x, y2 - y,
+		glyph->s1 + tw * s1, glyph->t1 + th * t1,
+		glyph->s1 + tw * s2, glyph->t1 + th * t2,
+		color, glyph->shader );
+}
+
+/*
 * FTLIB_DrawClampString
 */
 void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
@@ -190,7 +257,6 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 	qwchar num, prev_num = 0;
 	const char *s = str;
 	int gc;
-	struct { int x, y, w, h; } oldscissor;
 
 	if( !str )
 		return;
@@ -198,13 +264,6 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 		return;
 	if( xmax <= xmin || ymax <= ymin || x > xmax || y > ymax )
 		return;
-
-	trap_R_GetScissor( &oldscissor.x, &oldscissor.y, &oldscissor.w, &oldscissor.h );
-	trap_R_Scissor( 
-		max( xmin, oldscissor.x ),
-		max( ymin, oldscissor.y ), 
-		min( xmax - xmin + 1, oldscissor.w ), 
-		min( ymax - ymin + 1, oldscissor.h ) );
 
 	Vector4Copy( color, scolor );
 
@@ -228,7 +287,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 			if( x + xoffset > xmax )
 				break;
 
-			FTLIB_DrawRawChar( x + xoffset, y, num, font, scolor );
+			FTLIB_DrawClampChar( x + xoffset, y, num, xmin, ymin, xmax, ymax, font, scolor );
 
 			prev_num = num;
 		}
@@ -242,8 +301,6 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 		else
 			assert( 0 );
 	}
-
-	trap_R_Scissor( oldscissor.x, oldscissor.y, oldscissor.w, oldscissor.h );
 }
 
 /*
