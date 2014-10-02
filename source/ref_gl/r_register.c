@@ -1387,6 +1387,8 @@ static void R_DestroyVolatileAssets( void )
 */
 void R_BeginRegistration( void )
 {
+	R_FinishLoadingImages();
+
 	R_DestroyVolatileAssets();
 
 	rsh.registrationSequence++;
