@@ -1017,7 +1017,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_lighting_packlightmaps = ri.Cvar_Get( "r_lighting_packlightmaps", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_maxlmblocksize = ri.Cvar_Get( "r_lighting_maxlmblocksize", "2048", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_vertexlight = ri.Cvar_Get( "r_lighting_vertexlight", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "4", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	r_lighting_maxglsldlights = ri.Cvar_Get( "r_lighting_maxglsldlights", "8", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_grayscale = ri.Cvar_Get( "r_lighting_grayscale", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	r_offsetmapping = ri.Cvar_Get( "r_offsetmapping", "2", CVAR_ARCHIVE );
