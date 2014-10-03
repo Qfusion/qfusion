@@ -498,8 +498,8 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		}
 
 		xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen(va("%i", team_score)) + 16 ) * dir );
-		CG_PingColor( team_ping, pingcolor );
 		if( pass ) {
+			CG_PingColor( team_ping, pingcolor );
 			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_strHeight( font ) + 1),
 				align, va( "%i", team_ping ), SCB_TINYFIELD_PIXELWIDTH, font, pingcolor );
 		}
@@ -545,6 +545,68 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	return yoffset;
 }
 
+typedef struct
+{
+	int image;
+	int x, y;
+	float alpha;
+} scr_playericon_t;
+
+static scr_playericon_t scr_playericons[128];
+static int scr_numplayericons;
+
+/*
+* SCR_ComparePlayerIcons
+*/
+static int SCR_ComparePlayerIcons( const scr_playericon_t *first, const scr_playericon_t *second )
+{
+	return ( first->image < second->image ) ? -1 : ( first->image > second->image );
+}
+
+/*
+* SCR_DrawPlayerIcons
+*/
+static void SCR_DrawPlayerIcons( struct qfontface_s *font )
+{
+	if( !scr_numplayericons )
+		return;
+
+	qsort( scr_playericons, scr_numplayericons, sizeof( scr_playericons[0] ),
+		( int (*)( const void *, const void * ) )SCR_ComparePlayerIcons );
+
+	int height = trap_SCR_strHeight( font );
+	vec4_t color;
+	Vector4Copy( colorWhite, color );
+
+	for( int i = 0; i < scr_numplayericons; i++ )
+	{
+		scr_playericon_t &icon = scr_playericons[i];
+		color[3] = icon.alpha;
+		trap_R_DrawStretchPic( icon.x, icon.y, height, height, 0, 0, 1, 1, color, cgs.imagePrecache[icon.image] );
+	}
+
+	scr_numplayericons = 0;
+}
+
+/*
+* SCR_AddPlayerIcon
+*/
+static void SCR_AddPlayerIcon( int image, int x, int y, float alpha, struct qfontface_s *font )
+{
+	if( !cgs.imagePrecache[image] )
+		return;
+
+	scr_playericon_t &icon = scr_playericons[scr_numplayericons++];
+
+	icon.image = image;
+	icon.x = x;
+	icon.y = y;
+	icon.alpha = alpha;
+
+	if( scr_numplayericons >= ( sizeof( scr_playericons ) / sizeof( scr_playericons[0] ) ) )
+		SCR_DrawPlayerIcons( font );
+}
+
 /*
 * SCR_DrawPlayerTab
 */
@@ -556,7 +618,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 	char *token, *layout;
 	int height, width, xoffset, yoffset;
 	vec4_t teamcolor, color;
-	struct shader_s *shader;
+	int icon;
 	bool highlight = false, trans = false;
 
 	if( GS_TeamBasedGametype() )
@@ -602,7 +664,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 			break;
 
 		Vector4Copy( colorWhite, color ); // reset to white after each column
-		shader = NULL;
+		icon = 0;
 		string[0] = 0;
 
 		// interpret the data based on the type defined in the layout
@@ -658,9 +720,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 			break;
 
 		case 'p': // is a picture. It uses height for width to get a square
-			i = atoi( token );
-			if( i )
-				shader = cgs.imagePrecache[i];
+			icon = atoi( token );
 			break;
 
 		case 't': // is a race time. Convert time into MM:SS:mm
@@ -708,8 +768,8 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 		}
 
 		if( !pass ) {
-			if ( shader )
-				trap_R_DrawStretchPic( x + xoffset, y + yoffset, height, height, 0, 0, 1, 1, color, shader );
+			if ( icon )
+				SCR_AddPlayerIcon( icon, x + xoffset, y + yoffset, color[3], font );
 		}
 
 		columncount++;
@@ -824,6 +884,8 @@ void CG_DrawScoreboard( void )
 			if ( yoffset > maxyoffset )
 				maxyoffset = yoffset;
 		}
+		if( !pass )
+			SCR_DrawPlayerIcons( font );
 	}
 
 	// add the player stats
