@@ -560,7 +560,7 @@ static int scr_numplayericons;
 */
 static int SCR_ComparePlayerIcons( const scr_playericon_t *first, const scr_playericon_t *second )
 {
-	return ( first->image < second->image ) ? -1 : ( first->image > second->image );
+	return first->image - second->image;
 }
 
 /*
@@ -850,9 +850,8 @@ void CG_DrawScoreboard( void )
 	{
 		yoffset = 0;
 		maxyoffset = 0;
-		ptr = scoreboardString;
-
 		scr_numplayericons = 0;
+		ptr = scoreboardString;
 		while ( ptr )
 		{
 			token = COM_ParseExt( &ptr, qtrue );
