@@ -243,7 +243,6 @@ typedef struct shader_s
 	unsigned int		flags;
 	vattribmask_t		vattribs;
 	unsigned int		sort;
-	unsigned int		sortkey;
 
 	unsigned int		numpasses;
 	shaderpass_t		*passes;

@@ -53,10 +53,8 @@ typedef struct image_s
 	char			*name;						// game path, not including extension
 	size_t			name_size;
 	int				registrationSequence;
-	volatile qboolean	
-					loaded;
-	volatile qboolean
-					missing;
+	volatile qboolean loaded;
+	volatile qboolean missing;
 
 	char			extension[8];				// file extension
 	int				flags;

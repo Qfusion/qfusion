@@ -27,8 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SHADERS_HASH_SIZE	128
 #define SHADERCACHE_HASH_SIZE	128
 
-#define	Shader_Sortkey( shader, sort ) ( ( ( sort )<<26 )|( shader-r_shaders ) )
-
 typedef struct
 {
 	const char *keyword;
@@ -2539,7 +2537,7 @@ create_default:
 
 			s->numpasses = 0;
 			pass = &s->passes[s->numpasses++];
-			pass->flags = GLSTATE_DEPTHWRITE/*|GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ZERO*/;
+			pass->flags = GLSTATE_DEPTHWRITE;
 			pass->tcgen = TC_GEN_BASE;
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
@@ -2712,8 +2710,6 @@ create_default:
 		}
 	}
 
-	// calculate sortkey
-	s->sortkey = Shader_Sortkey( s, s->sort );
 	s->registrationSequence = rsh.registrationSequence;
 }
 
