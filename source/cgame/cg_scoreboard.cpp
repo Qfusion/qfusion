@@ -851,6 +851,8 @@ void CG_DrawScoreboard( void )
 		yoffset = 0;
 		maxyoffset = 0;
 		ptr = scoreboardString;
+
+		scr_numplayericons = 0;
 		while ( ptr )
 		{
 			token = COM_ParseExt( &ptr, qtrue );
