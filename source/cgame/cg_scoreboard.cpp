@@ -491,23 +491,21 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 				width, height, align, teamcolor, cgs.shaderWhite );
 		}
 
-		xoffset += ( 16 * dir );
-		if( !pass ) {
+		if( pass ) {
+			xoffset += ( 16 * dir );
+
 			CG_DrawHUDNumeric( x + xoffset, y + yoffset, align, colorWhite,
 				SCB_SCORENUMBER_SIZE, SCB_SCORENUMBER_SIZE, team_score );
-		}
 
-		xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen(va("%i", team_score)) + 16 ) * dir );
-		if( pass ) {
-			CG_PingColor( team_ping, pingcolor );
-			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_strHeight( font ) + 1),
-				align, va( "%i", team_ping ), SCB_TINYFIELD_PIXELWIDTH, font, pingcolor );
-		}
-
-		xoffset += ( ( SCB_TINYFIELD_PIXELWIDTH + 16 ) * dir );
-		if( !pass ) {
-			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_strHeight( cgs.fontSystemBig ) + 1),
+			xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen(va("%i", team_score)) + 16 ) * dir );
+			trap_SCR_DrawStringWidth( x + xoffset + ( ( SCB_TINYFIELD_PIXELWIDTH + 16 ) * dir ),
+				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_strHeight( cgs.fontSystemBig ) + 1),
 				align, GS_TeamName( team ), SCB_TEAMNAME_PIXELWIDTH, cgs.fontSystemBig, colorWhite );
+
+			CG_PingColor( team_ping, pingcolor );
+			trap_SCR_DrawStringWidth( x + xoffset,
+				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_strHeight( font ) + 1),
+				align, va( "%i", team_ping ), SCB_TINYFIELD_PIXELWIDTH, font, pingcolor );
 		}
 
 		yoffset += SCB_SCORENUMBER_SIZE;
