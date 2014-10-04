@@ -250,6 +250,8 @@ typedef struct
 
 	download_t download;
 
+	qboolean registrationOpen;
+
 	// demo recording info must be here, so it isn't cleared on level change
 	cl_demo_t demo;
 
