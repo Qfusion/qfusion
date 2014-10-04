@@ -307,7 +307,7 @@ static char **CL_CinematicsComplete_f( const char *partial )
 */
 void CL_PlayCinematic_f( void )
 {
-	if( Cmd_Argc() < 1 )
+	if( Cmd_Argc() < 2 )
 	{
 		Com_Printf( "Usage: %s <name> [flags]\n", Cmd_Argv( 0 ) );
 		return;
