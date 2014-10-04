@@ -693,17 +693,15 @@ void CL_ResetServerCount( void )
 	cl.servercount = -1;
 }
 
-static qboolean cl_registrationOpen = qfalse;
-
 /*
 * CL_BeginRegistration
 */
 static void CL_BeginRegistration( void )
 {
-	if( cl_registrationOpen )
+	if( cls.registrationOpen )
 		return;
 
-	cl_registrationOpen = qtrue;
+	cls.registrationOpen = qtrue;
 
 	re.BeginRegistration();
 	CL_SoundModule_BeginRegistration();
@@ -714,10 +712,10 @@ static void CL_BeginRegistration( void )
 */
 static void CL_EndRegistration( void )
 {
-	if( !cl_registrationOpen )
+	if( !cls.registrationOpen )
 		return;
 
-	cl_registrationOpen = qfalse;
+	cls.registrationOpen = qfalse;
 
 	FTLIB_TouchAllFonts();
 	re.EndRegistration();
