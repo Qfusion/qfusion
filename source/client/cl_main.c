@@ -693,6 +693,37 @@ void CL_ResetServerCount( void )
 	cl.servercount = -1;
 }
 
+static qboolean cl_registrationOpen = qfalse;
+
+/*
+* CL_BeginRegistration
+*/
+static void CL_BeginRegistration( void )
+{
+	if( cl_registrationOpen )
+		return;
+
+	cl_registrationOpen = qtrue;
+
+	re.BeginRegistration();
+	CL_SoundModule_BeginRegistration();
+}
+
+/*
+* CL_EndRegistration
+*/
+static void CL_EndRegistration( void )
+{
+	if( !cl_registrationOpen )
+		return;
+
+	cl_registrationOpen = qfalse;
+
+	FTLIB_TouchAllFonts();
+	re.EndRegistration();
+	CL_SoundModule_EndRegistration();
+}
+
 /*
 * CL_ClearState
 */
@@ -896,6 +927,8 @@ void CL_Disconnect( const char *message )
 		Mem_Free( cls.httpbaseurl );
 		cls.httpbaseurl = NULL;
 	}
+
+	CL_EndRegistration();
 
 	CL_RestartMedia();
 
@@ -1652,8 +1685,7 @@ void CL_RequestNextDownload( void )
 			restart_msg = "Files downloaded. Restarting media...";
 		}
 
-		re.BeginRegistration();
-		CL_SoundModule_BeginRegistration();
+		CL_BeginRegistration();
 
 		if( restart ) {
 			Com_Printf( "%s\n", restart_msg );
@@ -1664,13 +1696,9 @@ void CL_RequestNextDownload( void )
 			}
 			else {
 				// make sure all media assets will be freed
-				FTLIB_TouchAllFonts();
 				CL_UIModule_TouchAllAssets();
-				re.EndRegistration();
-				CL_SoundModule_EndRegistration();
-
-				re.BeginRegistration();
-				CL_SoundModule_BeginRegistration();
+				CL_EndRegistration();
+				CL_BeginRegistration();
 			}
 		}
 
@@ -1847,9 +1875,7 @@ void CL_SetClientState( int state )
 	case CA_ACTIVE:
 	case CA_CINEMATIC:
 		cl_connectChain[0] = '\0';
-		FTLIB_TouchAllFonts();
-		re.EndRegistration();
-		CL_SoundModule_EndRegistration();
+		CL_EndRegistration();
 		Con_Close();
 		CL_UIModule_Refresh( qfalse, qfalse );
 		CL_UIModule_ForceMenuOff();
