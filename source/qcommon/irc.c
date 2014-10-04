@@ -241,7 +241,9 @@ static void Irc_LoadLibrary( void )
 		Com_Printf( "Not found.\n" );
 	}
 
+#ifdef NDEBUG
 	Mem_CheckSentinelsGlobal();
+#endif
 }
 
 static void Irc_UnloadLibrary( void )

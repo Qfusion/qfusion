@@ -39,9 +39,9 @@ float scr_con_current;    // aproaches scr_conlines at scr_conspeed
 float scr_con_previous;
 float scr_conlines;       // 0.0 to 1.0 lines of console to display
 
-qboolean scr_initialized;    // ready to draw
+static qboolean scr_initialized;    // ready to draw
 
-int scr_draw_loading;
+static int scr_draw_loading;
 
 static qboolean scr_cjk;
 static int scr_fontSystemLastChar;
