@@ -400,7 +400,7 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 				rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
 				continue;
 
-			RB_BindShader( rsc.worldent, shader, rn.skyFog ); // must be called every side to reset backend state
+			RB_BindShader( rsc.worldent, shader, rn.skyFog ); // must be called for every side to reset backend state
 
 			RB_BindVBO( skydome->sphereVbos[i]->index, GL_TRIANGLES );
 
