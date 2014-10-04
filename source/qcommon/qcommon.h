@@ -901,6 +901,11 @@ size_t Mem_PoolTotalSize( mempool_t *pool );
 
 #define Mem_CheckSentinels( data ) _Mem_CheckSentinels( data, __FILE__, __LINE__ )
 #define Mem_CheckSentinelsGlobal() _Mem_CheckSentinelsGlobal( __FILE__, __LINE__ )
+#ifdef NDEBUG
+#define Mem_DebugCheckSentinelsGlobal()
+#else
+#define Mem_DebugCheckSentinelsGlobal() _Mem_CheckSentinelsGlobal( __FILE__, __LINE__ )
+#endif
 
 // used for temporary allocations
 extern mempool_t *tempMemPool;

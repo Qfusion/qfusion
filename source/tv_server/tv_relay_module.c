@@ -662,9 +662,7 @@ void TV_Relay_InitModule( relay_t *relay )
 	relay->module_mempool = _Mem_AllocPool( relay->upstream->mempool, va( "TV Module Progs" ), MEMPOOL_GAMEPROGS, __FILE__, __LINE__ );
 	relay->module = relay->module_export->InitRelay( relay, relay->snapFrameTime, relay->playernum );
 
-#ifdef NDEBUG
-	Mem_CheckSentinelsGlobal();
-#endif
+	Mem_DebugCheckSentinelsGlobal( );
 
 	// update upstream name for upstream
 	TV_Relay_UpstreamUserinfoChanged( relay );
