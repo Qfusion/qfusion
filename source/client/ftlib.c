@@ -85,6 +85,11 @@ static void CL_FTLibModule_GetScissor( int *x, int *y, int *w, int *h )
 	re.GetScissor( x, y, w, h );
 }
 
+static void CL_FTLibModule_ResetScissor( void )
+{
+	re.ResetScissor();
+}
+
 /*
 * FTLIB_LoadLibrary
 */
@@ -134,6 +139,7 @@ void FTLIB_LoadLibrary( qboolean verbose )
 	import.R_DrawStretchPic = &CL_FTLibModule_DrawStretchPic;
 	import.R_Scissor = &CL_FTLibModule_Scissor;
 	import.R_GetScissor = &CL_FTLibModule_GetScissor;
+	import.R_ResetScissor = &CL_FTLibModule_ResetScissor;
 
 	import.Milliseconds = &Sys_Milliseconds;
 	import.Microseconds = &Sys_Microseconds;

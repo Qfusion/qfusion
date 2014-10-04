@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 8
+#define REF_API_VERSION 9
 
 struct mempool_s;
 struct cinematics_s;
@@ -181,6 +181,7 @@ typedef struct
 	void		( *DrawStretchPoly )( const poly_t *poly, float x_offset, float y_offset );
 	void		( *Scissor )( int x, int y, int w, int h );
 	void		( *GetScissor )( int *x, int *y, int *w, int *h );
+	void		( *ResetScissor )( void );
 
 	void		( *SetCustomColor )( int num, int r, int g, int b );
 	void		( *LightForOrigin )( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );

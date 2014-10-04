@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    47
+#define	UI_API_VERSION	    48
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -92,6 +92,7 @@ typedef struct
 	void ( *R_DrawRotatedStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, const vec4_t color, const struct shader_s *shader );
 	void ( *R_Scissor )( int x, int y, int w, int h );
 	void ( *R_GetScissor )( int *x, int *y, int *w, int *h );
+	void ( *R_ResetScissor )( void );
 	void ( *R_GetShaderDimensions )( const struct shader_s *shader, int *width, int *height );
 	void ( *R_TransformVectorToScreen )( const refdef_t *rd, vec3_t const in, vec2_t out );
 	int ( *R_SkeletalGetNumBones )( const struct model_s *mod, int *numFrames );

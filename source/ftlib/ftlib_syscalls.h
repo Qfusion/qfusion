@@ -196,6 +196,11 @@ static inline void trap_R_GetScissor( int *x, int *y, int *w, int *h )
 	FTLIB_IMPORT.R_GetScissor( x, y, w, h );
 }
 
+static inline void trap_R_ResetScissor( void )
+{
+	FTLIB_IMPORT.R_ResetScissor();
+}
+
 // memory
 static inline struct mempool_s *trap_MemAllocPool( const char *name, const char *filename, int fileline )
 {
