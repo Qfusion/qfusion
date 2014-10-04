@@ -309,7 +309,9 @@ void CL_SoundModule_Init( qboolean verbose )
 	CL_SoundModule_SetAttenuationModel();
 
 	// check memory integrity
+#ifdef NDEBUG
 	Mem_CheckSentinelsGlobal();
+#endif
 	if( verbose )
 		Com_Printf( "------------------------------------\n" );
 }

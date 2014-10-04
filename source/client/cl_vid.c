@@ -535,7 +535,7 @@ void VID_CheckChanges( void )
 		qboolean cgameActive;
 
 		cgameActive = cls.cgameActive;
-		cls.disable_screen = qtrue;
+		cls.disable_screen = 1;
 
 		CL_ShutdownMedia();
 
@@ -611,7 +611,7 @@ load_refresh:
 
 		CL_InitMedia();
 
-		cls.disable_screen = qfalse;
+		cls.disable_screen = 0;
 
 		Con_Close();
 
