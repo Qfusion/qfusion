@@ -37,8 +37,7 @@ typedef enum
 	SHADER_TYPE_2D_RAW			= -3,
 	SHADER_TYPE_2D				= -2,
 	SHADER_TYPE_DIFFUSE			= -1,
-	SHADER_TYPE_LIGHTMAP		= 0,
-	SHADER_TYPE_DELUXEMAP		= 1
+	SHADER_TYPE_DELUXEMAP		= 0
 } shaderType_e;
 
 // shader flags

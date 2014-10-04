@@ -838,10 +838,8 @@ static inline void Mod_LoadFaceCommon( const rdface_t *in, msurface_t *out, int 
 
 	if( lightmaps[0] < 0 ) {
 		shaderType = SHADER_TYPE_VERTEX;
-	} else if( mapConfig.deluxeMappingEnabled ) {
-		shaderType = SHADER_TYPE_DELUXEMAP;
 	} else {
-		shaderType = SHADER_TYPE_LIGHTMAP;
+		shaderType = SHADER_TYPE_DELUXEMAP;
 	}
 
 	out->shader = R_RegisterShader( shaderref->name, shaderType );
