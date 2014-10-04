@@ -1145,10 +1145,8 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	token = Shader_ParseString( ptr );
 
 	if ( !token[0] ) {
-		// load default images
-		pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-		Shaderpass_LoadMaterial( &pass->images[1], &pass->images[2], &pass->images[3], shader->name, flags );
-		return;
+		// single-word syntax
+		token = shader->name;
 	}
 
 	pass->images[0] = Shader_FindImage( shader, token, flags );
