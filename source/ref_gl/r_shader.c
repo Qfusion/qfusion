@@ -1144,6 +1144,13 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	flags = Shader_SetImageFlags( shader );
 	token = Shader_ParseString( ptr );
 
+	if ( !token[0] ) {
+		// load default images
+		pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
+		Shaderpass_LoadMaterial( &pass->images[1], &pass->images[2], &pass->images[3], shader->name, flags );
+		return;
+	}
+
 	pass->images[0] = Shader_FindImage( shader, token, flags );
 	if( !pass->images[0] )
 	{
@@ -2062,7 +2069,7 @@ static void Shader_Readpass( shader_t *shader, const char **ptr )
 
 	blendmask = (pass->flags & GLSTATE_BLEND_MASK);
 
-	if( (pass->flags & (SHADERPASS_LIGHTMAP)) && r_lighting_vertexlight->integer )
+	if( (pass->flags & SHADERPASS_LIGHTMAP) && r_lighting_vertexlight->integer )
 		return;
 
 	// keep track of detail passes. if all passes are detail, the whole shader is also detail
@@ -2359,7 +2366,7 @@ static void Shader_Finish( shader_t *s )
 		if( pass->cin )
 			s->cin = pass->cin;
 		if( ( pass->flags & SHADERPASS_LIGHTMAP || 
-			pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) && ( s->type >= SHADER_TYPE_LIGHTMAP ) )
+			pass->program_type == GLSL_PROGRAM_TYPE_MATERIAL ) && ( s->type >= SHADER_TYPE_DELUXEMAP ) )
 			s->flags |= SHADER_LIGHTMAP;
 		if( pass->flags & GLSTATE_DEPTHWRITE )
 		{
@@ -2566,31 +2573,6 @@ create_default:
 			pass->images[1] = materialImages[0]; // normalmap
 			pass->images[2] = materialImages[1]; // glossmap
 			pass->images[3] = materialImages[2]; // decalmap
-			break;
-		case SHADER_TYPE_LIGHTMAP:
-			// lightmapping
-			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * 2 );
-			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_LIGHTMAP;
-			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT|VATTRIB_LMCOORDS0_BIT;
-			s->sort = SHADER_SORT_OPAQUE;
-			s->numpasses = 2;
-			s->passes = ( shaderpass_t * )data;
-			s->name = ( char * )( s->passes + 2 );
-			strcpy( s->name, shortname );
-			s->numpasses = 0;
-
-			pass = &s->passes[s->numpasses++];
-			pass->flags = SHADERPASS_LIGHTMAP|GLSTATE_DEPTHWRITE;
-			pass->tcgen = TC_GEN_LIGHTMAP;
-			pass->rgbgen.type = RGB_GEN_IDENTITY;
-			pass->alphagen.type = ALPHA_GEN_IDENTITY;
-
-			pass = &s->passes[s->numpasses++];
-			pass->flags = GLSTATE_SRCBLEND_ZERO|GLSTATE_DSTBLEND_SRC_COLOR;
-			pass->tcgen = TC_GEN_BASE;
-			pass->rgbgen.type = RGB_GEN_IDENTITY;
-			pass->alphagen.type = ALPHA_GEN_IDENTITY;
-			pass->images[0] = Shader_FindImage( s, shortname, 0 );
 			break;
 		case SHADER_TYPE_CORONA:
 			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) * 1 );

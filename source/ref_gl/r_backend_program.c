@@ -813,7 +813,8 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		normalmap = rsh.blankBumpTexture;
 	}
 
-	if( normalmap == rsh.blankBumpTexture && !glossmap && !decalmap && !entdecalmap ) {
+	if( rb.currentModelType == mod_brush && !mapConfig.deluxeMappingEnabled 
+		|| normalmap == rsh.blankBumpTexture && !glossmap && !decalmap && !entdecalmap ) {
 		// render as plain Q3A shader, which is less computation-intensive
 		RB_RenderMeshGLSL_Q3AShader( pass, programFeatures );
 		return;
@@ -2254,12 +2255,11 @@ void RB_DrawShadedElements( void )
 
 	RB_SetShaderState();
 
-	// accumulate passes for dynamic merging
 	for( i = 0, pass = rb.currentShader->passes; i < rb.currentShader->numpasses; i++, pass++ )
 	{
 		if( ( pass->flags & SHADERPASS_DETAIL ) && !r_detailtextures->integer )
 			continue;
-		if( ( pass->flags & SHADERPASS_LIGHTMAP ) )
+		if( pass->flags & SHADERPASS_LIGHTMAP )
 			continue;
 		RB_RenderPass( pass );
 	}
