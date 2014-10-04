@@ -594,6 +594,7 @@ void		R_BindFrameBufferObject( int object );
 
 void		R_Scissor( int x, int y, int w, int h );
 void		R_GetScissor( int *x, int *y, int *w, int *h );
+void		R_ResetScissor( void );
 void		R_EnableScissor( qboolean enable );
 
 shader_t	*R_GetShaderForOrigin( const vec3_t origin );

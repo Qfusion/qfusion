@@ -95,7 +95,7 @@ void UI_RenderInterface::EnableScissorRegion(bool enable)
 	if( enable )
 		trap::R_Scissor( scissorX, scissorY, scissorWidth, scissorHeight );
 	else
-		trap::R_Scissor( -1, -1, -1, -1 );
+		trap::R_ResetScissor();
 
 	scissorEnabled = enable;
 }
