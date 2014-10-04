@@ -198,9 +198,7 @@ void FTLIB_LoadLibrary( qboolean verbose )
 		}
 	}
 
-#ifdef NDEBUG
-	Mem_CheckSentinelsGlobal();
-#endif
+	Mem_DebugCheckSentinelsGlobal();
 }
 
 /*

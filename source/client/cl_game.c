@@ -572,9 +572,7 @@ void CL_GameModule_Init( void )
 	cls.cgameActive = qtrue;
 
 	// check memory integrity
-#ifdef NDEBUG
-	Mem_CheckSentinelsGlobal();
-#endif
+	Mem_DebugCheckSentinelsGlobal();
 
 	Sys_SendKeyEvents(); // pump message loop
 }

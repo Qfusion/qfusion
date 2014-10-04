@@ -1524,9 +1524,7 @@ static unsigned int CL_LoadMap( const char *name )
 	}
 
 	// check memory integrity
-#ifdef NDEBUG
-	Mem_CheckSentinelsGlobal();
-#endif
+	Mem_DebugCheckSentinelsGlobal();
 
 	return map_checksum;
 }
@@ -1928,9 +1926,7 @@ void CL_InitMedia( void )
 	CL_UIModule_Init();
 
 	// check memory integrity
-#ifdef NDEBUG
-	Mem_CheckSentinelsGlobal();
-#endif
+	Mem_DebugCheckSentinelsGlobal();
 
 	CL_SoundModule_StopAllSounds( qtrue, qtrue );
 }
@@ -1997,9 +1993,7 @@ void CL_RestartMedia( void )
 	CL_UIModule_TouchAllAssets();
 
 	// check memory integrity
-#ifdef NDEBUG
-	Mem_CheckSentinelsGlobal();
-#endif
+	Mem_DebugCheckSentinelsGlobal();
 }
 
 /*
