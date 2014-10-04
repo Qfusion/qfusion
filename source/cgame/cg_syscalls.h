@@ -420,6 +420,11 @@ static inline void trap_R_GetScissor( int *x, int *y, int *w, int *h )
 	CGAME_IMPORT.R_GetScissor( x, y, w, h );
 }
 
+static inline void trap_R_ResetScissor( void )
+{
+	CGAME_IMPORT.R_ResetScissor();
+}
+
 static inline void trap_R_GetShaderDimensions( const struct shader_s *shader, int *width, int *height )
 {
 	CGAME_IMPORT.R_GetShaderDimensions( shader, width, height );

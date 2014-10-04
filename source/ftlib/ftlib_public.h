@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // ftlib_public.h - font provider subsystem
 
-#define	FTLIB_API_VERSION			3
+#define	FTLIB_API_VERSION			4
 
 //===============================================================
 
@@ -87,6 +87,7 @@ typedef struct
 	void ( *R_DrawStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 	void ( *R_Scissor )( int x, int y, int w, int h );
 	void ( *R_GetScissor )( int *x, int *y, int *w, int *h );
+	void ( *R_ResetScissor )( void );
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );

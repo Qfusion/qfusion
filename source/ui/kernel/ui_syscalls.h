@@ -50,6 +50,10 @@ namespace trap
 			UI_IMPORT.R_GetScissor( x, y, w, h );
 		}
 
+		inline void R_ResetScissor( void ) {
+			UI_IMPORT.R_ResetScissor();
+		}
+
 		inline void R_AddEntityToScene( entity_t *ent ) {
 			UI_IMPORT.R_AddEntityToScene( ent );
 		}

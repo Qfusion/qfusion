@@ -945,22 +945,13 @@ void R_BindFrameBufferObject( int object )
 /*
 * R_Scissor
 *
-* Set scissor region for 2D drawing. Passing a negative value
-* for any of the variables sets the scissor region to full screen.
-* x and y represent the bottom left corner of the region/rectangle.
+* Set scissor region for 2D drawing.
+* x and y represent the top left corner of the region/rectangle.
 */
 void R_Scissor( int x, int y, int w, int h )
 {
-	// flush batched 2D geometry
-	R_EndStretchBatch();
-
-	if( x < 0 || y < 0 || w < 0 || h < 0 ) {
-		// reset
-		RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
-	}
-	else {
-		RB_Scissor( x, y, w, h );
-	}
+	R_EndStretchBatch(); // flush batched 2D geometry
+	RB_Scissor( x, y, w, h );
 }
 
 /*
@@ -969,6 +960,15 @@ void R_Scissor( int x, int y, int w, int h )
 void R_GetScissor( int *x, int *y, int *w, int *h )
 {
 	RB_GetScissor( x, y, w, h );
+}
+
+/*
+* R_ResetScissor
+*/
+void R_ResetScissor( void )
+{
+	R_EndStretchBatch(); // flush batched 2D geometry
+	RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
 }
 
 /*

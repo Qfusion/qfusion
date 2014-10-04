@@ -30,7 +30,7 @@ typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   70
+#define	CGAME_API_VERSION   71
 
 //
 // structs and variables shared with the main engine
@@ -189,6 +189,7 @@ typedef struct
 	void ( *R_DrawRotatedStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, const vec4_t color, const struct shader_s *shader );
 	void ( *R_Scissor )( int x, int y, int w, int h );
 	void ( *R_GetScissor )( int *x, int *y, int *w, int *h );
+	void ( *R_ResetScissor )( void );
 	void ( *R_GetShaderDimensions )( const struct shader_s *shader, int *width, int *height );
 	void ( *R_TransformVectorToScreen )( const struct refdef_s *rd, const vec3_t in, vec2_t out );
 	int ( *R_SkeletalGetNumBones )( const struct model_s *mod, int *numFrames );
