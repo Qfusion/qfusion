@@ -1443,7 +1443,9 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		(rgbgen == RGB_GEN_IDENTITY 
 			|| rgbgen == RGB_GEN_CONST 
 			|| rgbgen == RGB_GEN_WAVE 
-			|| rgbgen == RGB_GEN_CUSTOMWAVE) && 
+			|| rgbgen == RGB_GEN_CUSTOMWAVE
+			|| rgbgen == RGB_GEN_VERTEX
+			|| rgbgen == RGB_GEN_EXACT_VERTEX) && 
 		(rb.currentShader->flags & SHADER_LIGHTMAP) && 
 		(pass->flags & GLSTATE_BLEND_ADD) != GLSTATE_BLEND_ADD ) {
 		lightStyle = rb.superLightStyle;
@@ -1526,7 +1528,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	state = pass->flags;
 
 	// possibly force depthwrite and give up blending when doing a lightmapped pass
-	if( isLightmapped && 
+	if ( ( isLightmapped || isWorldVertexLight ) &&
 		!rb.doneDepthPass &&
 		!(state & GLSTATE_DEPTHWRITE) &&
 		(rb.currentShader->flags & SHADER_DEPTHWRITE) ) {
