@@ -30,7 +30,10 @@ UI_RenderInterface::UI_RenderInterface( int vidWidth, int vidHeight, float pixel
 	texCounter = 0;
 
 	scissorEnabled = false;
-	scissorX = scissorY = scissorWidth = scissorHeight = -1;
+	scissorX = 0;
+	scissorY = 0;
+	scissorWidth = vid_width;
+	scissorHeight = vid_height;
 
 	whiteShader = trap::R_RegisterPic( "$whiteimage" );
 }
