@@ -160,7 +160,7 @@ void R_ShutdownCoronas( void )
 /*
 * R_LightForOrigin
 */
-void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
+void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, qboolean noWorldLight )
 {
 	int i, j;
 	int k, s;
@@ -176,8 +176,12 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	VectorSet( ambientLocal, 0, 0, 0 );
 	VectorSet( diffuseLocal, 0, 0, 0 );
 
-	if( !rsh.worldModel /* || (rn.refdef.rdflags & RDF_NOWORLDMODEL)*/ ||
-		!rsh.worldBrushModel->lightgrid || !rsh.worldBrushModel->numlightgridelems )
+	if( noWorldLight )
+	{
+		VectorSet( dir, 0.0f, 0.0f, 0.0f );
+		goto dynamic;
+	}
+	if( !rsh.worldModel || !rsh.worldBrushModel->lightgrid || !rsh.worldBrushModel->numlightgridelems )
 	{
 		VectorSet( dir, 0.1f, 0.2f, 0.7f );
 		goto dynamic;
@@ -348,6 +352,14 @@ dynamic:
 
 		diffuse[3] = 1.0f;
 	}
+}
+
+/*
+* R_LightForOrigin2
+*/
+void R_LightForOrigin2( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
+{
+	R_LightForOrigin( origin, dir, ambient, diffuse, radius, rn.refdef.rdflags & RDF_NOWORLDMODEL ? qtrue : qfalse );
 }
 
 /*

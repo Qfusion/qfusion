@@ -182,7 +182,7 @@ static void R_ComputeShadowmapBounds( void )
 		}
 
 		// get projection dir from lightgrid
-		R_LightForOrigin( group->origin, lightDir, group->lightAmbient, lightDiffuse, group->projDist * 0.5 );
+		R_LightForOrigin( group->origin, lightDir, group->lightAmbient, lightDiffuse, group->projDist * 0.5, qfalse );
 
 		// prevent light dir from going upwards
 		VectorSet( lightDir, -lightDir[0], -lightDir[1], -fabs( lightDir[2] ) );

@@ -148,6 +148,7 @@ typedef struct r_backend_s
 	float hackedAlpha;
 
 	float minLight;
+	qboolean noWorldLight;
 } rbackend_t;
 
 extern rbackend_t rb;

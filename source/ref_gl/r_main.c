@@ -1191,7 +1191,7 @@ static void R_SetupGL( int clearBitMask )
 
 	RB_SetCamera( rn.viewOrigin, rn.viewAxis );
 
-	RB_SetMinLight( rn.refdef.minLight );
+	RB_SetLightParams( rn.refdef.minLight, rn.refdef.rdflags & RDF_NOWORLDMODEL ? qtrue : qfalse );
 
 	RB_SetRenderFlags( rn.renderFlags );
 
