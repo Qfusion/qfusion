@@ -279,7 +279,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//projectile def
 			INSTANT,						// speed
-			1500,							// spread
+			1200,							// spread
 			500,                            // v_spread
 
 			//ammo
@@ -313,7 +313,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//projectile def
 			INSTANT,						// speed
-			1500,							// spread
+			1200,							// spread
 			500,                            // v_spread
 
 			//ammo
