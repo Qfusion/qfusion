@@ -1138,13 +1138,15 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 {
 	int i, flags;
 	char *token;
+	qboolean endl;
 
 	R_FreePassCinematics( pass );
 
 	flags = Shader_SetImageFlags( shader );
 	token = Shader_ParseString( ptr );
 
-	if ( !token[0] ) {
+	endl = token[0] == '\0';
+	if( endl ) {
 		// single-word syntax
 		token = shader->name;
 	}
@@ -1163,7 +1165,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	if( pass->rgbgen.type == RGB_GEN_UNKNOWN )
 		pass->rgbgen.type = RGB_GEN_IDENTITY;
 
-	while( 1 )
+	while( !endl )
 	{
 		token = Shader_ParseString( ptr );
 		if( !*token )
