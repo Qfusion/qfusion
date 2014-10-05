@@ -87,7 +87,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.ResetScissor = R_ResetScissor;
 
 	globals.SetCustomColor = R_SetCustomColor;
-	globals.LightForOrigin = R_LightForOrigin;
+	globals.LightForOrigin = R_LightForOrigin2;
 
 	globals.LerpTag = R_LerpTag;
 

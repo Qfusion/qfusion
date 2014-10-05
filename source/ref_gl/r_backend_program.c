@@ -293,7 +293,7 @@ void RB_VertexTCCelshadeMatrix( mat4_t matrix )
 
 	if( e->model != NULL && !( rb.renderFlags & RF_SHADOWMAPVIEW ) )
 	{
-		R_LightForOrigin( e->lightingOrigin, dir, NULL, NULL, e->model->radius * e->scale );
+		R_LightForOrigin( e->lightingOrigin, dir, NULL, NULL, e->model->radius * e->scale, rb.noWorldLight );
 
 		Matrix4_Identity( m );
 
@@ -1002,7 +1002,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 				{
 					// get weighted incoming direction of world and dynamic lights
 					R_LightForOrigin( e->lightingOrigin, temp, ambient, diffuse, 
-						e->model->radius * e->scale );
+						e->model->radius * e->scale, rb.noWorldLight );
 				}
 				else
 				{
@@ -1484,7 +1484,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 
 		// get weighted incoming direction of world and dynamic lights
-		R_LightForOrigin( e->lightingOrigin, temp, lightAmbient, lightDiffuse, radius * e->scale );
+		R_LightForOrigin( e->lightingOrigin, temp, lightAmbient, lightDiffuse, radius * e->scale, rb.noWorldLight );
 
 		if( e->flags & RF_MINLIGHT ) 	{
 			if( lightAmbient[0] <= 0.1f || lightAmbient[1] <= 0.1f || lightAmbient[2] <= 0.1f ) {
@@ -2031,11 +2031,12 @@ void RB_SetZClip( float zNear, float zFar )
 }
 
 /*
-* RB_SetMinLight
+* RB_SetLightParams
 */
-void RB_SetMinLight( float minLight )
+void RB_SetLightParams( float minLight, qboolean noWorldLight )
 {
 	rb.minLight = minLight;
+	rb.noWorldLight = noWorldLight;
 }
 
 /*
