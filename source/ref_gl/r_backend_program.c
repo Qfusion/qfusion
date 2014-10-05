@@ -1445,6 +1445,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 			|| rgbgen == RGB_GEN_WAVE 
 			|| rgbgen == RGB_GEN_CUSTOMWAVE
 			|| rgbgen == RGB_GEN_VERTEX
+			|| rgbgen == RGB_GEN_ONE_MINUS_VERTEX
 			|| rgbgen == RGB_GEN_EXACT_VERTEX) && 
 		(rb.currentShader->flags & SHADER_LIGHTMAP) && 
 		(pass->flags & GLSTATE_BLEND_ADD) != GLSTATE_BLEND_ADD ) {
