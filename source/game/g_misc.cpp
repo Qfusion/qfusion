@@ -52,8 +52,12 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage )
 	for( i = 0; i < 3; i++ )
 		origin[i] = self->s.origin[i] + ( 0.5f * ( self->r.maxs[i] + self->r.mins[i] ) ) + 24;
 
+	// clamp the damage value since events do bitwise & 0xFF on the passed param
+	damage = bound( 0, damage, 255 );
+
 	event = G_SpawnEvent( EV_SPOG, damage, origin );
 	event->r.svflags |= SVF_TRANSMITORIGIN2;
+	event->s.team = self->s.team;
 	VectorCopy( self->velocity, event->s.origin2 );
 }
 
