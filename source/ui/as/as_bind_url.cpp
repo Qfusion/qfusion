@@ -171,7 +171,8 @@ void ASURL::ClearParameters( void )
 
 asstring_t *ASURL::CastToString( const ASURL &url )
 {
-	return url.GetURL();
+	const asstring_t *str = url.GetURL();
+	return UI_Main::Get( )->getAS( )->createString( str->buffer, str->len );
 }
 
 ASURL ASURL::CastFromString( const asstring_t &str )
