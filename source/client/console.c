@@ -701,7 +701,7 @@ void Con_DrawNotify( void )
 	char *s;
 
 	v = 0;
-	if( con_drawNotify->integer )
+	if( con_drawNotify->integer || developer->integer )
 	{
 		int x = 8 * pixelRatio;
 
