@@ -35,7 +35,7 @@ class UI_WorldviewWidgetInstancer;
 
 class UI_WorldviewWidget : public Element, EventListener
 {
-public:
+private:
 	refdef_t refdef;
 	vec3_t baseAngles;
 	vec3_t aWaveAmplitude;
@@ -44,6 +44,7 @@ public:
 	String mapName;
 	bool Initialized;
 
+public:
 	UI_WorldviewWidget( const String &tag )
 		: Element( tag ), 
 		mapName( "" ), Initialized( false )

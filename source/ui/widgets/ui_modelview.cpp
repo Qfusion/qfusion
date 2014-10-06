@@ -24,9 +24,8 @@ class UI_ModelviewWidgetInstancer;
 
 class UI_ModelviewWidget : public Element, EventListener
 {
-	float fov_x, fov_y;
-
 public:
+	float fov_x, fov_y;
 	entity_t entity;
 	refdef_t refdef;
 	vec3_t baseangles;
@@ -41,6 +40,7 @@ public:
 	String modelName;
 	String skinName;
 
+public:
 	UI_ModelviewWidget( const String &tag )
 		: Element( tag ), 
 		time( 0 ), AutoRotationCenter( false), Initialized( false ), RecomputePosition( false ), 
