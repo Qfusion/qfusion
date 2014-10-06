@@ -55,7 +55,7 @@ public:
 		// Some default values
 		VectorSet(baseangles, 0, 0, 0);
 		VectorSet(anglespeed, 0, 0, 0);
-		refdef.fov_x = 30.0f;
+		refdef.fov_y = 30.0f;
 		entity.scale = 1.0f;
 		entity.outlineHeight = 0.3f;
 		Vector4Set(entity.outlineRGBA, 64, 64, 64, 255);
@@ -175,10 +175,10 @@ public:
 				int shaderColor = COM_ValidatePlayerColor( COLOR_RGB( color.red, color.green, color.blue ) );
 				Vector4Set(entity.shaderRGBA, COLOR_R( shaderColor ), COLOR_G( shaderColor ), COLOR_B( shaderColor ), color.alpha);
 			}
-			else if (*it == "model-fov-x")
+			else if (*it == "model-fov-y")
 			{
-				refdef.fov_x = GetProperty(*it)->Get<float>();
-				clamp(refdef.fov_x, 1, 179);
+				refdef.fov_y = GetProperty(*it)->Get<float>();
+				clamp(refdef.fov_y, 1, 179);
 				RecomputePosition = true;
 			}
 			else if (*it == "model-rotation-pitch")
@@ -292,7 +292,7 @@ private:
 		refdef.y = 0;
 		refdef.width = box.x;
 		refdef.height = box.y;
-		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
+		refdef.fov_x = CalcFov( refdef.fov_y, refdef.height, refdef.width );
 
 		skel = NULL;
 		if (trap::R_SkeletalGetNumBones( entity.model, NULL ))
@@ -326,7 +326,7 @@ public:
 	{
 		StyleSheetSpecification::RegisterProperty("model-modelpath", "", false).AddParser("string");
 		StyleSheetSpecification::RegisterProperty("model-skinpath", "", false).AddParser("string");
-		StyleSheetSpecification::RegisterProperty("model-fov-x", "30", false).AddParser("number");
+		StyleSheetSpecification::RegisterProperty("model-fov-y", "30", false).AddParser("number");
 		StyleSheetSpecification::RegisterProperty("model-scale", "1", false).AddParser("number");
 		StyleSheetSpecification::RegisterProperty("model-outline-height", "0.3", false).AddParser("number"); // DEFAULT_OUTLINE_HEIGHT
 		StyleSheetSpecification::RegisterProperty("model-outline-color", "#404040FF", false).AddParser("color");
