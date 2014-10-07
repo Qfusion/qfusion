@@ -24,7 +24,7 @@ class UI_ModelviewWidgetInstancer;
 
 class UI_ModelviewWidget : public Element, EventListener
 {
-public:
+private:
 	float fov_x, fov_y;
 	entity_t entity;
 	refdef_t refdef;
@@ -317,16 +317,14 @@ private:
 		refdef.width = box.x;
 		refdef.height = box.y;
 
-		if (!fov_x && !fov_y)
-			fov_x = 30.0f;
-
 		refdef.fov_x = fov_x;
 		refdef.fov_y = fov_y;
-
-		if (!fov_x)
-			refdef.fov_x = CalcFov( fov_y, refdef.height, refdef.width );
-		else if (!fov_y)
-			refdef.fov_y = CalcFov( fov_x, refdef.width, refdef.height );
+		if (!refdef.fov_x && !refdef.fov_y)
+			refdef.fov_x = 30.0f;
+		if (!refdef.fov_x)
+			refdef.fov_x = CalcFov( refdef.fov_y, refdef.height, refdef.width );
+		else if (!refdef.fov_y)
+			refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
 
 		skel = NULL;
 		if (trap::R_SkeletalGetNumBones( entity.model, NULL ))
