@@ -15,7 +15,7 @@
 			            -left: 0.25;
 			ninep-coords: 0.125 0.25 0.9375 0.875;		<-- shortcut
 
-			ninep-size-top: 4px|auto;					<-- size of the border on the element
+			ninep-size-top: 4px|auto;					<-- size of the border on the element (> 0 - from edges, < 0 - from centre)
 			          -right: 4px;
 			          -bottom: 2px;
 			          -left: 8px;
@@ -85,19 +85,29 @@ namespace WSWUI
 			if( properties.GetProperty( "size-left" )->unit == Property::KEYWORD )
 				dimensions[0].x = ( float )texture_dimensions.x * tex_coords[0].x;
 			else
-				dimensions[0].x = Math::Max( 0.0f, ResolveProperty( properties, "size-left", padded_size.x ) );
+				dimensions[0].x = ResolveProperty( properties, "size-left", padded_size.x );
 			if( properties.GetProperty( "size-top" )->unit == Property::KEYWORD )
 				dimensions[0].y = ( float )texture_dimensions.y * tex_coords[0].y;
 			else
-				dimensions[0].y = Math::Max( 0.0f, ResolveProperty( properties, "size-top", padded_size.y ) );
+				dimensions[0].y = ResolveProperty( properties, "size-top", padded_size.y );
 			if( properties.GetProperty( "size-right" )->unit == Property::KEYWORD )
 				dimensions[1].x = ( float )texture_dimensions.x * tex_coords[1].x;
 			else
-				dimensions[1].x = Math::Max( 0.0f, ResolveProperty( properties, "size-right", padded_size.x ) );
+				dimensions[1].x = ResolveProperty( properties, "size-right", padded_size.x );
 			if( properties.GetProperty( "size-bottom" )->unit == Property::KEYWORD )
 				dimensions[1].y = ( float )texture_dimensions.y * tex_coords[1].y;
 			else
-				dimensions[1].y = Math::Max( 0.0f, ResolveProperty( properties, "size-bottom", padded_size.y ) );
+				dimensions[1].y = ResolveProperty( properties, "size-bottom", padded_size.y );
+
+			// Negative sizes make the dimensions be calculated from the centre, not the edges.
+			if( dimensions[0].x < 0.0f )
+				dimensions[0].x = Math::Max( 0.0f, padded_size.x * 0.5f + dimensions[0].x );
+			if( dimensions[0].y < 0.0f )
+				dimensions[0].y = Math::Max( 0.0f, padded_size.y * 0.5f + dimensions[0].y );
+			if( dimensions[1].x < 0.0f )
+				dimensions[1].x = Math::Max( 0.0f, padded_size.x * 0.5f + dimensions[1].x );
+			if( dimensions[1].y < 0.0f )
+				dimensions[1].y = Math::Max( 0.0f, padded_size.y * 0.5f + dimensions[1].y );
 
 			// Shrink the sizes if necessary.
 			Vector2f total_dimensions = dimensions[0] + dimensions[1];
