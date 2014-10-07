@@ -22,10 +22,59 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/sys_threads.h"
 #include "winquake.h"
 
+#define QF_USE_CRITICAL_SECTIONS
+
 struct qthread_s {
 	HANDLE h;
 };
 
+#ifdef QF_USE_CRITICAL_SECTION
+struct qmutex_s {
+	CRITICAL_SECTION h;
+};
+
+/*
+* Sys_Mutex_Create
+*/
+int Sys_Mutex_Create( qmutex_t **pmutex )
+{
+	qmutex_t *mutex;
+
+	mutex = ( qmutex_t * )Q_malloc( sizeof( *mutex ) );
+	InitializeCriticalSection( &mutex->h );
+
+	*pmutex = mutex;
+	return 0;
+}
+
+/*
+* Sys_Mutex_Destroy
+*/
+void Sys_Mutex_Destroy( qmutex_t *mutex )
+{
+	if( !mutex ) {
+		return;
+	}
+	DeleteCriticalSection( &mutex->h );
+	Q_free( mutex );
+}
+
+/*
+* Sys_Mutex_Lock
+*/
+void Sys_Mutex_Lock( qmutex_t *mutex )
+{
+	EnterCriticalSection( &mutex->h );
+}
+
+/*
+* Sys_Mutex_Unlock
+*/
+void Sys_Mutex_Unlock( qmutex_t *mutex )
+{
+	LeaveCriticalSection( &mutex->h );
+}
+#else
 struct qmutex_s {
 	HANDLE h;
 };
@@ -75,6 +124,7 @@ void Sys_Mutex_Unlock( qmutex_t *mutex )
 {
 	ReleaseMutex( mutex->h );
 }
+#endif
 
 /*
 * Sys_Thread_Create
