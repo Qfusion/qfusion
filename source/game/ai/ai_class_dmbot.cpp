@@ -1609,6 +1609,9 @@ static void BOT_DMclass_RunFrame( edict_t *self )
 
 		VectorSet( self->r.client->ps.pmove.delta_angles, 0, 0, 0 );
 	}
+	else {
+	    self->r.client->level.last_activity = level.time;
+	}
 
 	// set approximate ping and show values
 	ucmd.msec = game.frametime;
