@@ -28,7 +28,7 @@ struct qthread_s {
 	HANDLE h;
 };
 
-#ifdef QF_USE_CRITICAL_SECTION
+#ifdef QF_USE_CRITICAL_SECTIONS
 struct qmutex_s {
 	CRITICAL_SECTION h;
 };
