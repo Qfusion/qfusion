@@ -125,7 +125,7 @@ static void GetLocalAddress( void )
 			break;
 		}
 
-		ip = ((struct sockaddr_in *)i->ai_addr)->sin_addr.s_addr;
+		ip = ntohl( ((struct sockaddr_in *)i->ai_addr)->sin_addr.s_addr );
 		p = (char *)&ip;
 
 		localIP[numIP][0] = p[0];
