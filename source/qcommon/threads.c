@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 #include "sys_threads.h"
 
-qmutex_t *global_mutex;
-
 /*
 * QMutex_Create
 */
@@ -111,14 +109,6 @@ void QThread_Yield( void )
 */
 void QThreads_Init( void )
 {
-	int ret;
-
-	global_mutex = NULL;
-
-	ret = Sys_Mutex_Create( &global_mutex );
-	if( ret != 0 ) { 
-		return;
-	}
 }
 
 /*
@@ -126,10 +116,6 @@ void QThreads_Init( void )
 */
 void QThreads_Shutdown( void )
 {
-	if( global_mutex != NULL ) {
-		Sys_Mutex_Destroy( global_mutex );
-		global_mutex = NULL;
-	}
 }
 
 // ============================================================================
