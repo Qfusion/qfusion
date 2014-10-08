@@ -622,6 +622,9 @@ snapshot_t *SNAP_ParseFrame( msg_t *msg, snapshot_t *lastFrame, int *suppressCou
 				numtargets = MSG_ReadByte( msg );
 				if( numtargets )
 				{
+					if( numtargets > sizeof( gcmd->targets ) ) {
+						Com_Error( ERR_DROP, "SNAP_ParseFrame: too many gamecommand targets" );
+					}
 					gcmd->all = qfalse;
 					MSG_ReadData( msg, gcmd->targets, numtargets );
 				}
