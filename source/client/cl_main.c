@@ -718,6 +718,7 @@ static void CL_EndRegistration( void )
 	cls.registrationOpen = qfalse;
 
 	FTLIB_TouchAllFonts();
+	CL_UIModule_TouchAllAssets();
 	re.EndRegistration();
 	CL_SoundModule_EndRegistration();
 }
@@ -1694,7 +1695,6 @@ void CL_RequestNextDownload( void )
 			}
 			else {
 				// make sure all media assets will be freed
-				CL_UIModule_TouchAllAssets();
 				CL_EndRegistration();
 				CL_BeginRegistration();
 			}
