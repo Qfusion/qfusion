@@ -57,7 +57,7 @@ typedef struct snapshot_s
 	game_state_t gameState;
 	int numgamecommands;
 	gcommand_t gamecommands[MAX_PARSE_GAMECOMMANDS];
-	char gamecommandsData[MAX_STRING_CHARS * ( MAX_PARSE_GAMECOMMANDS / 4 )];
+	char gamecommandsData[(MAX_STRING_CHARS / 16) * MAX_PARSE_GAMECOMMANDS];
 	size_t gamecommandsDataHead;
 } snapshot_t;
 
