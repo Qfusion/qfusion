@@ -203,9 +203,6 @@ void UI_Main::reloadUI( void )
 	// clear the navigation stack from previous installment
 	navigator->getCache()->clearCaches();
 
-	// forget about all previously registed shaders
-	rocketModule->clearShaderCache();
-
 	if( serverBrowser ) {
 		serverBrowser->stopUpdate();
 	}
