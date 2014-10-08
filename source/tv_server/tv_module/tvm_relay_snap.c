@@ -128,7 +128,6 @@ static void TVM_NewPlayerState( edict_t *ent, player_state_t *ps )
 {
 	assert( ent && ent->r.inuse && !ent->local && ent->r.client );
 	assert( ps );
-	assert( ( unsigned int )ENTNUM( ent ) == ps->POVnum );
 
 	ent->r.client->ps = *ps;
 }
@@ -192,7 +191,7 @@ void TVM_NewFrameSnapshot( tvm_relay_t *relay, snapshot_t *frame )
 	maxclients = 0;
 	for( i = 0; i < frame->numplayers; i++ )
 	{
-		num = frame->playerStates[i].POVnum;
+		num = frame->playerStates[i].playerNum + 1;
 		if( num < 1 || num >= relay->maxentities || num > MAX_CLIENTS )
 			TVM_RelayError( relay, "Invalid playerstate number" );
 		while( j < num )

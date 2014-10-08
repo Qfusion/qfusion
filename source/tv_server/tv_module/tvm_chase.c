@@ -281,7 +281,6 @@ void TVM_ChaseClientEndSnapFrame( edict_t *ent )
 	// chasecam uses PM_CHASECAM
 	ent->r.client->ps.pmove.pm_type = PM_CHASECAM;
 	ent->r.client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;
-	ent->r.client->ps.POVnum = PLAYERNUM( target ) + 1;
 
 	VectorCopy( ent->r.client->ps.pmove.origin, ent->s.origin );
 	VectorCopy( ent->r.client->ps.viewangles, ent->s.angles );
