@@ -439,7 +439,7 @@ typedef struct
 
 //==============================================
 
-#define	MAX_PARSE_GAMECOMMANDS	64
+#define	MAX_PARSE_GAMECOMMANDS	256
 
 typedef struct
 {
