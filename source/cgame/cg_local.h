@@ -981,7 +981,7 @@ void CG_RocketExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, float radius
 void CG_ElectroTrail2( vec3_t start, vec3_t end, int team );
 void CG_ImpactSmokePuff( vec3_t origin, vec3_t dir, float radius, float alpha, int time, int speed );
 void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags );
-void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags );
+void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags, int owner );
 void CG_BladeImpact( vec3_t pos, vec3_t dir );
 void CG_GunBladeBlastImpact( vec3_t pos, vec3_t dir, float radius );
 void CG_PModel_SpawnTeleportEffect( centity_t *cent );
