@@ -495,13 +495,26 @@ void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags 
 /*
 * CG_InstaExplosionMode
 */
-void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags )
+void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags, int owner )
 {
+	int team = -1;
+	vec4_t tcolor = { 0.65f, 0.0f, 0.0f, 1.0f };
 	lentity_t *le;
 	vec3_t angles;
 
+	if( cg_teamColoredBeams->integer && owner && ( owner < gs.maxclients + 1 ) )
+		team = cg_entities[owner].current.team;
+	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) )
+	{
+		CG_TeamColor( team, tcolor );
+		tcolor[0] *= 0.65f;
+		tcolor[1] *= 0.65f;
+		tcolor[2] *= 0.65f;
+	}
+
 	if( !CG_SpawnDecal( pos, dir, random()*360, 12, 
-		1, 1, 1, 1, 10, 1, true, CG_MediaShader( cgs.media.shaderInstagunMark ) ) ) {
+		tcolor[0], tcolor[1], tcolor[2], 1.0f,
+		10, 1, true, CG_MediaShader( cgs.media.shaderInstagunMark ) ) ) {
 		if( surfFlags & (SURF_SKY|SURF_NOMARKS|SURF_NOIMPACT) ) {
 			return;
 		}
@@ -510,7 +523,7 @@ void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags
 	VecToAngles( dir, angles );
 
 	le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 6, // 6 is time
-		1, 1, 1, 1, //full white no inducted alpha
+		tcolor[0], tcolor[1], tcolor[2], 1,
 		250, 0.65, 0.65, 0.65, //white dlight
 		CG_MediaModel( cgs.media.modInstagunWallHit ), NULL );
 
