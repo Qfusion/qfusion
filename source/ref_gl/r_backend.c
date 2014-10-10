@@ -206,20 +206,21 @@ void RB_DepthOffset( qboolean enable )
 }
 
 /*
+* RB_LoadCameraMatrix
+*/
+void RB_LoadCameraMatrix( const mat4_t m )
+{
+	Matrix4_Copy( m, rb.cameraMatrix );
+}
+
+/*
 * RB_LoadObjectMatrix
 */
 void RB_LoadObjectMatrix( const mat4_t m )
 {
 	Matrix4_Copy( m, rb.objectMatrix );
-}
-
-/*
-* RB_LoadModelviewMatrix
-*/
-void RB_LoadModelviewMatrix( const mat4_t m )
-{
-	Matrix4_Copy( m, rb.modelviewMatrix );
-	Matrix4_Multiply( rb.projectionMatrix, m, rb.modelviewProjectionMatrix );
+	Matrix4_MultiplyFast( rb.cameraMatrix, m, rb.modelviewMatrix );
+	Matrix4_Multiply( rb.projectionMatrix, rb.modelviewMatrix, rb.modelviewProjectionMatrix );
 }
 
 /*
@@ -1349,6 +1350,9 @@ qboolean RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
 	int ix1, iy1, ix2, iy2;
 	float x1, y1, x2, y2;
 	vec4_t corner = { 0, 0, 0, 1 }, proj = { 0, 0, 0, 1 }, v = { 0, 0, 0, 1 };
+	mat4_t cameraProjectionMatrix;
+
+	Matrix4_Multiply( rb.projectionMatrix, rb.cameraMatrix, cameraProjectionMatrix );
 
 	x1 = y1 = 999999;
 	x2 = y2 = -999999;
@@ -1357,7 +1361,7 @@ qboolean RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
 		// compute and rotate the full bounding box
 		VectorCopy( bbox[i], corner );
 
-		Matrix4_Multiply_Vector( rb.modelviewProjectionMatrix, corner, proj );
+		Matrix4_Multiply_Vector( cameraProjectionMatrix, corner, proj );
 
 		if( proj[3] ) {
 			v[0] = ( proj[0] / proj[3] + 1.0f ) * 0.5f * rb.gl.viewport[2];
