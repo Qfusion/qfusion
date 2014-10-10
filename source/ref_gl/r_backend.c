@@ -1198,10 +1198,10 @@ void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
 	rb.drawElements.firstElem = firstElem;
 	rb.drawElements.numInstances = 0;
 
-	rb.drawShadowElements.numVerts = numVerts;
-	rb.drawShadowElements.numElems = numElems;
-	rb.drawShadowElements.firstVert = firstVert;
-	rb.drawShadowElements.firstElem = firstElem;
+	rb.drawShadowElements.numVerts = numShadowVerts;
+	rb.drawShadowElements.numElems = numShadowElems;
+	rb.drawShadowElements.firstVert = firstShadowVert;
+	rb.drawShadowElements.firstElem = firstShadowElem;
 	rb.drawShadowElements.numInstances = 0;
 
 	RB_DrawElements_();
@@ -1226,10 +1226,10 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	rb.drawElements.firstElem = firstElem;
 	rb.drawElements.numInstances = 0;
 
-	rb.drawShadowElements.numVerts = numVerts;
-	rb.drawShadowElements.numElems = numElems;
-	rb.drawShadowElements.firstVert = firstVert;
-	rb.drawShadowElements.firstElem = firstElem;
+	rb.drawShadowElements.numVerts = numShadowVerts;
+	rb.drawShadowElements.numElems = numShadowElems;
+	rb.drawShadowElements.firstVert = firstShadowVert;
+	rb.drawShadowElements.firstElem = firstShadowElem;
 	rb.drawShadowElements.numInstances = 0;
 
 	// check for vertex-attrib-divisor style instancing
