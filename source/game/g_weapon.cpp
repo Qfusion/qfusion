@@ -1368,6 +1368,7 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 			G_Damage( &game.edicts[tr.ent], self, self, dir, dir, tr.endpos, damage, knockback, stun, dmgflags, mod );
 			// spawn a impact event on each damaged ent
 			event = G_SpawnEvent( EV_INSTA_EXPLOSION, DirToByte( tr.plane.normal ), tr.endpos );
+			event->s.ownerNum = ENTNUM( self );
 			event->s.firemode = FIRE_MODE_STRONG;
 			if( game.edicts[tr.ent].r.client )
 				missed = false;
