@@ -498,7 +498,7 @@ void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags 
 void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags, int owner )
 {
 	int team = -1;
-	vec4_t tcolor = { 0.65f, 0.0f, 0.0f, 1.0f };
+	vec4_t tcolor = { 0.65f, 0.0f, 0.26f, 1.0f };
 	lentity_t *le;
 	vec3_t angles;
 
