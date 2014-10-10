@@ -924,3 +924,60 @@ void SP_target_give( edict_t *self )
 	self->use = target_give_use;
 }
 
+
+//==========================================================
+
+//QUAKED target_teleporter (1 0 0) (-8 -8 -8) (8 8 8)
+//The activator will be teleported away.
+//-------- KEYS --------
+//target : point this to a misc_teleporter_dest entity to set the teleport destination.
+//targetname : activating trigger points to this.
+//notsingle : when set to 1, entity will not spawn in Single Player mode
+//notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
+//notduel : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
+//notteam : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes.
+//notctf : when set to 1, entity will not spawn in "Teamplay" and "CTF" modes. (jal: todo)
+//-------- SPAWNFLAGS --------
+//SPECTATOR : &1 only teleport players moving in spectator mode
+
+static void target_teleporter_use( edict_t *self, edict_t *other, edict_t *activator )
+{
+	edict_t	*dest;
+
+	if( !CanTeleportPlayer( activator ) )
+		return;
+
+	if( ( self->s.team != TEAM_SPECTATOR ) && ( self->s.team != activator->s.team ) )
+		return;
+	if( self->spawnflags & 1 && activator->r.client->ps.pmove.pm_type != PM_SPECTATOR )
+		return;
+
+	dest = G_Find( NULL, FOFS( targetname ), self->target );
+	if( !dest )
+	{
+		if( developer->integer )
+			G_Printf( "Couldn't find destination.\n" );
+		return;
+	}
+
+	TeleportPlayer( activator, dest );
+}
+
+void SP_target_teleporter( edict_t *self )
+{
+	self->r.svflags |= SVF_NOCLIENT;
+
+	if( !self->targetname )
+	{
+		if( developer->integer )
+			G_Printf( "untargeted %s at %s\n", self->classname, vtos( self->s.origin ) );
+	}
+
+	if( st.gameteam >= TEAM_SPECTATOR && st.gameteam < GS_MAX_TEAMS )
+		self->s.team = st.gameteam;
+	else
+		self->s.team = TEAM_SPECTATOR;
+
+	self->use = target_teleporter_use;
+}
+

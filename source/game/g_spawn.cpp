@@ -143,6 +143,7 @@ spawn_t	spawns[] = {
 	{ "target_changelevel", SP_target_changelevel },
 	{ "target_relay", SP_target_relay },
 	{ "target_delay", SP_target_delay },
+	{ "target_teleporter", SP_target_teleporter },
 
 	{ "worldspawn", SP_worldspawn },
 

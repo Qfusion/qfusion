@@ -772,6 +772,9 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage );
 
 void BecomeExplosion1( edict_t *self );
 
+bool CanTeleportPlayer( edict_t *player );
+void TeleportPlayer( edict_t *player, edict_t *dest );
+
 void SP_light( edict_t *self );
 void SP_light_mine( edict_t *ent );
 void SP_info_null( edict_t *self );
@@ -873,6 +876,7 @@ void SP_target_give( edict_t *self );
 void SP_target_changelevel( edict_t *ent );
 void SP_target_relay( edict_t *self );
 void SP_target_delay( edict_t *ent );
+void SP_target_teleporter( edict_t *self );
 
 //
 // g_svcmds.c
