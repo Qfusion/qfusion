@@ -142,8 +142,7 @@ void R_TransformForWorld( void )
 	Matrix4_Identity( rn.objectMatrix );
 	Matrix4_Copy( rn.cameraMatrix, rn.modelviewMatrix );
 
-	RB_LoadObjectMatrix( rn.objectMatrix );
-	RB_LoadModelviewMatrix( rn.modelviewMatrix );
+	RB_LoadObjectMatrix( mat4x4_identity );
 }
 
 /*
@@ -160,10 +159,7 @@ static void R_TranslateForEntity( const entity_t *e )
 	rn.objectMatrix[13] = e->origin[1];
 	rn.objectMatrix[14] = e->origin[2];
 
-	Matrix4_MultiplyFast( rn.cameraMatrix, rn.objectMatrix, rn.modelviewMatrix );
-
 	RB_LoadObjectMatrix( rn.objectMatrix );
-	RB_LoadModelviewMatrix( rn.modelviewMatrix );
 }
 
 /*
@@ -213,7 +209,6 @@ void R_TransformForEntity( const entity_t *e )
 	Matrix4_MultiplyFast( rn.cameraMatrix, rn.objectMatrix, rn.modelviewMatrix );
 
 	RB_LoadObjectMatrix( rn.objectMatrix );
-	RB_LoadModelviewMatrix( rn.modelviewMatrix );
 }
 
 /*
@@ -600,7 +595,7 @@ void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset
 			Matrix4_Identity( translation );
 			Matrix4_Translate2D( translation, pic_x_offset, pic_y_offset );
 
-			RB_LoadModelviewMatrix( translation );
+			RB_LoadObjectMatrix( translation );
 		}
 
 		RB_BindShader( NULL, shader, NULL );
@@ -629,7 +624,7 @@ void R_EndStretchBatch( void )
 
 	// reset matrix
 	if( pic_x_offset != 0 || pic_y_offset != 0 ) {
-		RB_LoadModelviewMatrix( mat4x4_identity );
+		RB_LoadObjectMatrix( mat4x4_identity );
 	}
 
 	R_ResetStretchPic();
@@ -672,7 +667,8 @@ void R_Set2DMode( qboolean enable )
 		RB_Viewport( 0, 0, width, height );
 
 		RB_LoadProjectionMatrix( rn.projectionMatrix );
-		RB_LoadModelviewMatrix( rn.modelviewMatrix );
+		RB_LoadCameraMatrix( mat4x4_identity );
+		RB_LoadObjectMatrix( mat4x4_identity );
 
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
@@ -1197,7 +1193,9 @@ static void R_SetupGL( int clearBitMask )
 
 	RB_LoadProjectionMatrix( rn.projectionMatrix );
 
-	RB_LoadModelviewMatrix( rn.cameraMatrix );
+	RB_LoadCameraMatrix( rn.cameraMatrix );
+
+	RB_LoadObjectMatrix( mat4x4_identity );
 
 	if( rn.renderFlags & RF_FLIPFRONTFACE )
 		RB_FlipFrontFace();

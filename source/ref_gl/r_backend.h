@@ -46,8 +46,8 @@ void RB_EndFrame( void );
 void RB_BeginRegistration( void );
 void RB_EndRegistration( void );
 
+void RB_LoadCameraMatrix( const mat4_t m );
 void RB_LoadObjectMatrix( const mat4_t m );
-void RB_LoadModelviewMatrix( const mat4_t m );
 void RB_LoadProjectionMatrix( const mat4_t m );
 
 void RB_DepthRange( float depthmin, float depthmax );

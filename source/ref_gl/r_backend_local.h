@@ -81,6 +81,7 @@ typedef struct r_backend_s
 
 	rbStats_t stats;
 
+	mat4_t cameraMatrix;
 	mat4_t objectMatrix;
 	mat4_t modelviewMatrix;
 	mat4_t projectionMatrix;
