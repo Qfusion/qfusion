@@ -708,7 +708,7 @@ static void old_teleporter_touch( edict_t *self, edict_t *other, cplane_t *plane
 {
 	edict_t	*dest;
 
-	if( !CanTeleportPlayer( other ) )
+	if( !G_PlayerCanTeleport( other ) )
 		return;
 
 	if( ( self->s.team != TEAM_SPECTATOR ) && ( self->s.team != other->s.team ) )
@@ -747,7 +747,7 @@ static void old_teleporter_touch( edict_t *self, edict_t *other, cplane_t *plane
 		G_PositionedSound( org, CHAN_AUTO, self->noise_index, ATTN_NORM );
 	}
 
-	TeleportPlayer( other, dest );
+	G_TeleportPlayer( other, dest );
 }
 
 void SP_trigger_teleport( edict_t *ent )

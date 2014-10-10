@@ -772,9 +772,6 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage );
 
 void BecomeExplosion1( edict_t *self );
 
-bool CanTeleportPlayer( edict_t *player );
-void TeleportPlayer( edict_t *player, edict_t *dest );
-
 void SP_light( edict_t *self );
 void SP_light_mine( edict_t *ent );
 void SP_info_null( edict_t *self );
@@ -846,6 +843,8 @@ void ClientDisconnect( edict_t *ent, const char *reason );
 void ClientBegin( edict_t *ent );
 void ClientCommand( edict_t *ent );
 void G_PredictedEvent( int entNum, int ev, int parm );
+void G_TeleportPlayer( edict_t *player, edict_t *dest );
+bool G_PlayerCanTeleport( edict_t *player );
 
 //
 // g_player.c
