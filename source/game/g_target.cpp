@@ -944,7 +944,7 @@ static void target_teleporter_use( edict_t *self, edict_t *other, edict_t *activ
 {
 	edict_t	*dest;
 
-	if( !CanTeleportPlayer( activator ) )
+	if( !G_PlayerCanTeleport( activator ) )
 		return;
 
 	if( ( self->s.team != TEAM_SPECTATOR ) && ( self->s.team != activator->s.team ) )
@@ -960,7 +960,7 @@ static void target_teleporter_use( edict_t *self, edict_t *other, edict_t *activ
 		return;
 	}
 
-	TeleportPlayer( activator, dest );
+	G_TeleportPlayer( activator, dest );
 }
 
 void SP_target_teleporter( edict_t *self )
