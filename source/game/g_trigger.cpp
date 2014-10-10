@@ -707,23 +707,13 @@ void SP_trigger_gravity( edict_t *self )
 static void old_teleporter_touch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
 {
 	edict_t	*dest;
-	int i;
-	vec3_t velocity, angles;
-	mat3_t axis;
-	float speed;
-	vec3_t org;
 
-	if( !other->r.client )
+	if( !CanTeleportPlayer( other ) )
 		return;
-	if( self->s.team && self->s.team != other->s.team )
-		return;
-	if( other->r.client->ps.pmove.pm_type > PM_SPECTATOR )
+
+	if( ( self->s.team != TEAM_SPECTATOR ) && ( self->s.team != other->s.team ) )
 		return;
 	if( self->spawnflags & 1 && other->r.client->ps.pmove.pm_type != PM_SPECTATOR )
-		return;
-
-	// match countdown
-	if( GS_MatchState() == MATCH_STATE_COUNTDOWN )
 		return;
 
 	// wait delay
@@ -740,78 +730,24 @@ static void old_teleporter_touch( edict_t *self, edict_t *other, cplane_t *plane
 		return;
 	}
 
-	if( self->s.modelindex )
-	{
-		org[0] = self->s.origin[0] + 0.5 * ( self->r.mins[0] + self->r.maxs[0] );
-		org[1] = self->s.origin[1] + 0.5 * ( self->r.mins[1] + self->r.maxs[1] );
-		org[2] = self->s.origin[2] + 0.5 * ( self->r.mins[2] + self->r.maxs[2] );
-	}
-	else
-		VectorCopy( self->s.origin, org );
-
 	// play custom sound if any (played from the teleporter entrance)
 	if( self->noise_index )
-		G_PositionedSound( org, CHAN_AUTO, self->noise_index, ATTN_NORM );
-
-	// draw the teleport entering effect
-	G_TeleportEffect( other, false );
-
-	//
-	// teleport the player
-	//
-
-	VectorCopy( other->r.client->ps.pmove.velocity, velocity );
-
-	velocity[2] = 0; // ignore vertical velocity
-	speed = VectorLengthFast( velocity );
-
-	// if someone enters a portal backwards, inverse the destination YAW angle
-#if 0
-	VectorCopy( other->s.angles, angles );
-	angles[PITCH] = 0;
-	AngleVectors( angles, axis[0], NULL, NULL );
-	VectorSubtract( org, other->s.origin, org );
-
-	VectorCopy( dest->s.angles, angles );
-	if( DotProduct( org, axis[0] ) < 0 )
-		angles[YAW] = anglemod( angles[YAW] - 180 );
-#else
-	VectorCopy( dest->s.angles, angles );
-#endif
-
-	AnglesToAxis( dest->s.angles, axis );
-	VectorScale( &axis[AXIS_FORWARD], speed, other->r.client->ps.pmove.velocity );
-
-	VectorCopy( angles, other->r.client->ps.viewangles );
-	VectorCopy( dest->s.origin, other->r.client->ps.pmove.origin );
-
-	// set the delta angle
-	for( i = 0; i < 3; i++ )
-		other->r.client->ps.pmove.delta_angles[i] = ANGLE2SHORT( other->r.client->ps.viewangles[i] ) - other->r.client->ucmd.angles[i];
-
-	other->r.client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
-	other->s.teleported = qtrue;
-	other->r.client->ps.pmove.pm_time = 1; // force the minimum no control delay
-
-	// update the entity from the pmove
-	VectorCopy( other->r.client->ps.viewangles, other->s.angles );
-	VectorCopy( other->r.client->ps.pmove.origin, other->s.origin );
-	VectorCopy( other->r.client->ps.pmove.origin, other->s.old_origin );
-	VectorCopy( other->r.client->ps.pmove.origin, other->olds.origin );
-	VectorCopy( other->r.client->ps.pmove.velocity, other->velocity );
-
-	// unlink to make sure it can't possibly interfere with KillBox
-	GClip_UnlinkEntity( other );
-
-	// kill anything at the destination
-	if( !KillBox( other ) )
 	{
+		vec3_t org;
+
+		if( self->s.modelindex )
+		{
+			org[0] = self->s.origin[0] + 0.5 * ( self->r.mins[0] + self->r.maxs[0] );
+			org[1] = self->s.origin[1] + 0.5 * ( self->r.mins[1] + self->r.maxs[1] );
+			org[2] = self->s.origin[2] + 0.5 * ( self->r.mins[2] + self->r.maxs[2] );
+		}
+		else
+			VectorCopy( self->s.origin, org );
+
+		G_PositionedSound( org, CHAN_AUTO, self->noise_index, ATTN_NORM );
 	}
 
-	GClip_LinkEntity( other );
-
-	// add the teleport effect at the destination
-	G_TeleportEffect( other, true );
+	TeleportPlayer( other, dest );
 }
 
 void SP_trigger_teleport( edict_t *ent )
