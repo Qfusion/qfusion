@@ -136,8 +136,6 @@ static unsigned int R_SurfaceShadowBits( const msurface_t *surf, unsigned int ch
 	}
 
 	for( i = 0; i < rsc.numShadowGroups; i++ ) {
-		float dist;
-
 		if( !checkShadowBits ) {
 			break;
 		}
@@ -148,10 +146,12 @@ static unsigned int R_SurfaceShadowBits( const msurface_t *surf, unsigned int ch
 		if( checkShadowBits & bit ) {
 			switch( surf->facetype ) {
 				case FACETYPE_PLANAR:
-					dist = PlaneDiff( grp->visOrigin, surf->plane );
-					if( dist > -grp->visRadius && dist <= grp->visRadius ) {
-						// crossed by plane
-						surfShadowBits |= bit;
+					if ( BoundsIntersect( surf->mins, surf->maxs, grp->visMins, grp->visMaxs ) ) {
+						float dist = PlaneDiff( grp->visOrigin, surf->plane );
+						if ( dist > -grp->visRadius && dist <= grp->visRadius ) {
+							// crossed by plane
+							surfShadowBits |= bit;
+						}
 					}
 					break;
 				case FACETYPE_PATCH:
