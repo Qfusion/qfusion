@@ -144,6 +144,7 @@ spawn_t	spawns[] = {
 	{ "target_relay", SP_target_relay },
 	{ "target_delay", SP_target_delay },
 	{ "target_teleporter", SP_target_teleporter },
+	{ "target_kill", SP_target_kill },
 
 	{ "worldspawn", SP_worldspawn },
 

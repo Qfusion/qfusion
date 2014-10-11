@@ -981,3 +981,20 @@ void SP_target_teleporter( edict_t *self )
 	self->use = target_teleporter_use;
 }
 
+
+//==========================================================
+
+//QUAKED target_kill (.5 .5 .5) (-8 -8 -8) (8 8 8)
+//Kills the activator.
+
+static void target_kill_use( edict_t *self, edict_t *other, edict_t *activator )
+{
+	G_Damage( activator, self, world, vec3_origin, vec3_origin, activator->s.origin, 100000, 0, 0, DAMAGE_NO_PROTECTION, MOD_TRIGGER_HURT );
+}
+
+void SP_target_kill( edict_t *self )
+{
+	self->r.svflags |= SVF_NOCLIENT;
+	self->use = target_kill_use;
+}
+
