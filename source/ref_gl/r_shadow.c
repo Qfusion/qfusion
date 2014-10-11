@@ -182,13 +182,14 @@ static void R_ComputeShadowmapBounds( void )
 		}
 
 		// get projection dir from lightgrid
-		R_LightForOrigin( group->origin, lightDir, group->lightAmbient, lightDiffuse, group->projDist * 0.5, qfalse );
+		R_LightForOrigin( group->origin, lightDir, group->lightAmbient, lightDiffuse, group->projDist, qfalse );
 
 		// prevent light dir from going upwards
 		VectorSet( lightDir, -lightDir[0], -lightDir[1], -fabs( lightDir[2] ) );
 		VectorNormalize2( lightDir, group->lightDir );
 
 		VectorScale( group->lightDir, group->projDist, lightDir );
+		VectorScale( group->lightDir, group->projDist * 2.0f, lightDir );
 		VectorAdd( group->mins, lightDir, mins );
 		VectorAdd( group->maxs, lightDir, maxs );
 
@@ -196,6 +197,12 @@ static void R_ComputeShadowmapBounds( void )
 		AddPointToBounds( group->maxs, group->visMins, group->visMaxs );
 		AddPointToBounds( mins, group->visMins, group->visMaxs );
 		AddPointToBounds( maxs, group->visMins, group->visMaxs );
+
+		VectorAdd( group->visMins, group->visMaxs, group->visOrigin );
+		VectorScale( group->visOrigin, 0.5, group->visOrigin );
+		VectorSubtract( group->visMins, group->visOrigin, mins );
+		VectorSubtract( group->visMaxs, group->visOrigin, maxs );
+		group->visRadius = RadiusFromBounds( mins, maxs );
 	}
 }
 

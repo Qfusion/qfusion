@@ -136,6 +136,8 @@ static unsigned int R_SurfaceShadowBits( const msurface_t *surf, unsigned int ch
 	}
 
 	for( i = 0; i < rsc.numShadowGroups; i++ ) {
+		float dist;
+
 		if( !checkShadowBits ) {
 			break;
 		}
@@ -146,7 +148,8 @@ static unsigned int R_SurfaceShadowBits( const msurface_t *surf, unsigned int ch
 		if( checkShadowBits & bit ) {
 			switch( surf->facetype ) {
 				case FACETYPE_PLANAR:
-					if( BOX_ON_PLANE_SIDE( grp->visMins, grp->visMaxs, surf->plane ) == 3 ) {
+					dist = PlaneDiff( grp->visOrigin, surf->plane );
+					if( dist > -grp->visRadius && dist <= grp->visRadius ) {
 						// crossed by plane
 						surfShadowBits |= bit;
 					}
@@ -267,7 +270,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		surf->firstDrawSurfVert, surf->firstDrawSurfElem );
 
 	// dynamic lights that affect the surface
-	if( dlightBits && R_SurfPotentiallyLit( surf ) ) {
+	if( dlightBits ) {
 		// ignore dlights that have already been marked as affectors
 		if( drawSurf->dlightFrame == rsc.frameCount ) {
 			drawSurf->dlightBits |= dlightBits;
@@ -278,7 +281,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 	}
 
 	// shadows that are projected onto the surface
-	if( shadowBits && R_SurfPotentiallyShadowed( surf ) ) {
+	if( shadowBits ) {
 		R_AddVBOSlice( rsh.worldBrushModel->numDrawSurfaces + (drawSurf - rsh.worldBrushModel->drawSurfaces),
 			surf->mesh->numVerts, surf->mesh->numElems,
 			surf->firstDrawSurfVert, surf->firstDrawSurfElem );
@@ -410,12 +413,18 @@ qboolean R_AddBrushModelToDrawList( const entity_t *e )
 	}
 
 	for( i = 0, surf = bmodel->firstmodelsurface; i < bmodel->nummodelsurfaces; i++, surf++ ) {
+		int surfDlightBits, surfShadowBits;
+
 		if( !surf->drawSurf ) {
 			continue;
 		}
 		if( surf->visFrame != rf.frameCount ) {
 			surf->visFrame = rf.frameCount;
-			R_AddSurfaceToDrawList( e, surf, fog, 0, dlightBits, shadowBits, distance );
+
+			surfDlightBits = R_SurfPotentiallyLit( surf ) ? dlightBits : 0;
+			surfShadowBits = R_SurfPotentiallyShadowed( surf ) ? shadowBits : 0;
+
+			R_AddSurfaceToDrawList( e, surf, fog, 0, surfDlightBits, surfShadowBits, distance );
 		}
 	}
 
@@ -437,7 +446,8 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 	unsigned int dlightBits, unsigned int shadowBits )
 {
 	msurface_t *surf;
-	unsigned int newDlightBits, newShadowBits;
+	unsigned int newDlightBits;
+	unsigned int newShadowBits;
 	drawSurfaceBSP_t *drawSurf;
 	vec3_t centre;
 	float distance;
@@ -456,14 +466,7 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 			newDlightBits = R_SurfaceDlightBits( surf, newDlightBits );
 		}
 
-		// avoid double-checking shadows that have already been added to drawSurf
-		newShadowBits = shadowBits;
-		if( drawSurf->shadowFrame == rsc.frameCount ) {
-			newShadowBits &= ~drawSurf->shadowBits;
-		}
-		if( newShadowBits ) {
-			newShadowBits = R_SurfaceShadowBits( surf, newShadowBits );
-		}
+		newShadowBits = R_SurfaceShadowBits( surf, shadowBits );
 
 		if( surf->visFrame != rf.frameCount || newDlightBits || newShadowBits ) {
 			VectorAdd( surf->mins, surf->maxs, centre );
@@ -541,6 +544,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 		shadowBits1 = 0;
 		if( shadowBits )
 		{
+			float dist;
 			unsigned int checkBits = shadowBits;
 
 			for( i = 0; i < rsc.numShadowGroups; i++ )
@@ -549,10 +553,10 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 				bit = group->bit;
 				if( checkBits & bit )
 				{
-					int clipped = BOX_ON_PLANE_SIDE( group->visMins, group->visMaxs, node->plane );
-					if( !(clipped & 1) )
+					dist = PlaneDiff( group->visOrigin, node->plane );
+					if( dist < -group->visRadius )
 						shadowBits &= ~bit;
-					if( clipped & 2 )
+					if( dist < group->visRadius )
 						shadowBits1 |= bit;
 
 					checkBits &= ~bit;

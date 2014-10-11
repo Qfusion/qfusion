@@ -43,6 +43,8 @@ typedef struct shadowGroup_s
 	float				projDist;
 	vec3_t				mins, maxs;
 	vec3_t				visMins, visMaxs;
+	float				visRadius;
+	vec3_t				visOrigin;
 
 	qboolean			useOrtho;
 	mat4_t			cameraProjectionMatrix;

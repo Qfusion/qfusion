@@ -1197,8 +1197,10 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	Matrix4_Identity( texMatrix );
 
-	RB_Scissor( rb.gl.viewport[0] + scissor[0], rb.gl.viewport[1] + scissor[1], 
-		scissor[2] - scissor[0], scissor[3] - scissor[1] );
+	if( rb.currentModelType == mod_brush ) {
+		RB_Scissor( rb.gl.viewport[0] + scissor[0], rb.gl.viewport[1] + scissor[1],
+			scissor[2] - scissor[0], scissor[3] - scissor[1] );
+	}
 
 	RB_SetShaderpassState( pass->flags );
 
