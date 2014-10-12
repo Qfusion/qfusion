@@ -1023,7 +1023,7 @@ static void Cmd_Awards_f ( edict_t *ent )
 	assert( ent && ent->r.client );
 	client = ent->r.client;
 
-	Q_snprintfz ( entry, sizeof( entry ), "Awards for %s \n", client->netname );
+	Q_snprintfz ( entry, sizeof( entry ), "Awards for %s\n", client->netname );
 
 	if ( client->level.stats.awardAllocator )
 	{

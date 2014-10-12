@@ -503,7 +503,7 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 
 	if( mm_session == 0 )
 	{
-		G_Printf( "G_AddPlayerReport: Client without session-id (%s) %d\n\t(%s)\n", cl->netname, mm_session, cl->userinfo );
+		G_Printf( "G_AddPlayerReport: Client without session-id (%s" S_COLOR_WHITE ") %d\n\t(%s)\n", cl->netname, mm_session, cl->userinfo );
 		return;
 	}
 
@@ -519,7 +519,7 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 	}
 
 	// debug :
-	G_Printf("G_AddPlayerReport %s, session %d\n", cl->netname, mm_session );
+	G_Printf("G_AddPlayerReport %s" S_COLOR_WHITE ", session %d\n", cl->netname, mm_session );
 
 	if( quit )
 	{
