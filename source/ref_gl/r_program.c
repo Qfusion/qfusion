@@ -115,7 +115,7 @@ typedef struct glsl_program_s
 					ShadowProjDistance,
 					ShadowmapTextureParams[GLSL_SHADOWMAP_LIMIT],
 					ShadowmapMatrix[GLSL_SHADOWMAP_LIMIT],
-					ShadowAlpha,
+					ShadowAlpha[( GLSL_SHADOWMAP_LIMIT + 3 ) / 4],
 					ShadowDir[GLSL_SHADOWMAP_LIMIT],
 					
 					BlendMix,
@@ -2026,6 +2026,7 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 	int i;
 	const shadowGroup_t *group;
 	mat4_t matrix;
+	vec4_t alpha;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
 	assert( groups != NULL );
@@ -2050,7 +2051,10 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 		}
 
 		if( program->loc.ShadowAlpha >= 0 ) {
-			qglUniform1fARB( program->loc.ShadowAlpha, group->alpha );
+			alpha[i & 3] = group->alpha;
+			if( ( i & 3 ) == 3 ) {
+				qglUniform4fvARB( program->loc.ShadowAlpha[i >> 2], 1, alpha );
+			}
 		}
 
 		if( program->loc.ShadowDir[i] >= 0 ) {
@@ -2058,6 +2062,10 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 			Matrix3_TransformVector( objectAxis, group->lightDir, lightDir );
 			qglUniform3fvARB( program->loc.ShadowDir[i], 1, lightDir );
 		}
+	}
+
+	if( i & 3 ) {
+		qglUniform4fvARB( program->loc.ShadowAlpha[i >> 2], 1, alpha );
 	}
 }
 
@@ -2257,9 +2265,12 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 
 		program->loc.ShadowDir[i] =
 			qglGetUniformLocationARB( program->object, va( "u_ShadowDir[%i]", i ) );
-	}
 
-	program->loc.ShadowAlpha = qglGetUniformLocationARB( program->object, "u_ShadowAlpha" );
+		if( !( i & 3 ) ) {
+			program->loc.ShadowAlpha[i >> 2] =
+				qglGetUniformLocationARB( program->object, va( "u_ShadowAlpha[%i]", i >> 2 ) );
+		}
+	}
 
 	program->loc.BlendMix = qglGetUniformLocationARB( program->object, "u_BlendMix" );
 

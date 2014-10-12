@@ -74,5 +74,5 @@
 		
 		#endif // APPLY_DITHER
 
-		finalcolor *= clamp(max(max(f, d), u_ShadowAlpha), 0.0, 1.0);
+		finalcolor *= clamp(max(max(f, d), u_ShadowAlpha[SHADOW_INDEX / 4].SHADOW_INDEX_COMPONENT), 0.0, 1.0);
 	}
