@@ -214,7 +214,7 @@ void use_target_changelevel( edict_t *self, edict_t *other, edict_t *activator )
 
 	// let everyone know who hit the exit
 	if( other && other->client )
-	G_Printf( "%s exited the level.\n", other->client->pers.netname);
+	G_Printf( "%s" S_COLOR_WHITE " exited the level.\n", other->client->pers.netname);
 	}
 	*/
 	trap_Cvar_SetValue( "g_maprotation", -1 );
