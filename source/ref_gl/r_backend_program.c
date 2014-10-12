@@ -1215,9 +1215,9 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 
 	RB_DrawElementsReal( &rb.drawShadowElements );
 
-	for( i--; i >= 0; i-- ) {
-		R_SelectTextureUnit( i );
-		if( glConfig.ext.shadow ) {
+	if( glConfig.ext.shadow ) {
+		for( i--; i >= 0; i-- ) {
+			R_SelectTextureUnit( i );
 			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE );
 		}
 	}
