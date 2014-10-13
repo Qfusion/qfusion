@@ -2050,7 +2050,7 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 			qglUniformMatrix4fvARB( program->loc.ShadowmapMatrix[i], 1, GL_FALSE, matrix );
 		}
 
-		if( program->loc.ShadowAlpha >= 0 ) {
+		if( program->loc.ShadowAlpha[i >> 2] >= 0 ) {
 			alpha[i & 3] = group->alpha;
 			if( ( i & 3 ) == 3 ) {
 				qglUniform4fvARB( program->loc.ShadowAlpha[i >> 2], 1, alpha );
@@ -2064,7 +2064,7 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 		}
 	}
 
-	if( i & 3 ) {
+	if( ( i & 3 ) && ( program->loc.ShadowAlpha[i >> 2] >= 0 ) ) {
 		qglUniform4fvARB( program->loc.ShadowAlpha[i >> 2], 1, alpha );
 	}
 }
