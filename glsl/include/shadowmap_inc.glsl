@@ -37,6 +37,8 @@
 		float group3 = texval( 0.4, -1.0);
 		float group4 = texval( 1.0,  0.4);
 
+		#  undef texval
+
 		f = dot(vec4(0.25), vec4(group1, group2, group3, group4));
 		# else
 		f = dshadow2D(SHADOW_TEXTURE, vec3(shadowmaptc.xy*ShadowMap_TextureScale, shadowmaptc.z));
@@ -65,6 +67,8 @@
 		vec2 offset = fract(shadowmaptc.xy - 0.5);
 		vec4 size = vec4(offset + 1.0, 2.0 - offset), weight = (vec4(2.0 - 1.0 / size.xy, 1.0 / size.zw - 1.0) + (shadowmaptc.xy - offset).xyxy)*ShadowMap_TextureScale.xyxy;
 		f = (1.0/9.0)*dot(size.zxzx*size.wwyy, vec4(texval(weight.zw), texval(weight.xw), texval(weight.zy), texval(weight.xy)));
+
+		# undef texval
 		
 		#else
 		
