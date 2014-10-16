@@ -9,7 +9,16 @@
 
 qf_varying vec4 v_ShadowProjVector[NUM_SHADOWS];
 
-uniform mat4 u_ShadowmapMatrix[NUM_SHADOWS];
+uniform mat4 u_ShadowmapMatrix0;
+#if NUM_SHADOWS >= 2
+uniform mat4 u_ShadowmapMatrix1;
+#if NUM_SHADOWS >= 3
+uniform mat4 u_ShadowmapMatrix2;
+#if NUM_SHADOWS >= 4
+uniform mat4 u_ShadowmapMatrix3;
+#endif // NUM_SHADOWS >= 4
+#endif // NUM_SHADOWS >= 3
+#endif // NUM_SHADOWS >= 2
 
 #ifdef APPLY_NORMAL_CHECK
 qf_varying vec3 v_Normal;
@@ -25,15 +34,21 @@ void main(void)
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 
-	for (int i = 0; i < NUM_SHADOWS; i++)
-	{
-		v_ShadowProjVector[i] = u_ShadowmapMatrix[i] * Position;
-		// a trick whish allows us not to perform the
-		// 'shadowmaptc = (shadowmaptc + vec3 (1.0)) * vec3 (0.5)'
-		// computation in the fragment shader
-		v_ShadowProjVector[i].xyz = (v_ShadowProjVector[i].xyz + vec3(v_ShadowProjVector[i].w)) * 0.5;
-	}
-	
+	v_ShadowProjVector[0] = u_ShadowmapMatrix0 * Position;
+	v_ShadowProjVector[0].xyz = (v_ShadowProjVector[0].xyz + vec3(v_ShadowProjVector[0].w)) * 0.5;
+#if NUM_SHADOWS >= 2
+	v_ShadowProjVector[1] = u_ShadowmapMatrix1 * Position;
+	v_ShadowProjVector[1].xyz = (v_ShadowProjVector[1].xyz + vec3(v_ShadowProjVector[1].w)) * 0.5;
+#if NUM_SHADOWS >= 3
+	v_ShadowProjVector[2] = u_ShadowmapMatrix2 * Position;
+	v_ShadowProjVector[2].xyz = (v_ShadowProjVector[2].xyz + vec3(v_ShadowProjVector[2].w)) * 0.5;
+#if NUM_SHADOWS >= 4
+	v_ShadowProjVector[3] = u_ShadowmapMatrix3 * Position;
+	v_ShadowProjVector[3].xyz = (v_ShadowProjVector[3].xyz + vec3(v_ShadowProjVector[3].w)) * 0.5;
+#endif // NUM_SHADOWS >= 4
+#endif // NUM_SHADOWS >= 3
+#endif // NUM_SHADOWS >= 2
+
 	# ifdef APPLY_NORMAL_CHECK
 	v_Normal = Normal;
 	# endif

@@ -2261,7 +2261,7 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 			break;
 
 		program->loc.ShadowmapMatrix[i] = 
-			qglGetUniformLocationARB( program->object, va( "u_ShadowmapMatrix[%i]", i ) );
+			qglGetUniformLocationARB( program->object, va( "u_ShadowmapMatrix%i", i ) );
 
 		program->loc.ShadowDir[i] =
 			qglGetUniformLocationARB( program->object, va( "u_ShadowDir[%i]", i ) );
