@@ -228,7 +228,7 @@ void CL_MM_Heartbeat( void )
 		return;
 
 	// push a request
-	query = sq_api->CreateQuery( "chb", qfalse );
+	query = sq_api->CreateQuery( NULL, "chb", qfalse );
 	if( query == NULL )
 		return;
 
@@ -285,7 +285,7 @@ qboolean CL_MM_Connect( const netadr_t *address )
 		return qfalse;
 
 	// TODO: validate the parameters
-	query = sq_api->CreateQuery( "ccc", qfalse );
+	query = sq_api->CreateQuery( NULL, "ccc", qfalse );
 	if( query == NULL )
 		return qfalse;
 
@@ -412,7 +412,7 @@ qboolean CL_MM_Logout( qboolean force )
 		return qfalse;
 	}
 
-	query = sq_api->CreateQuery( "clogout", qfalse );
+	query = sq_api->CreateQuery( NULL, "clogout", qfalse );
 	if( query == NULL )
 		return qfalse;
 
@@ -601,7 +601,7 @@ static qboolean CL_MM_Login2( void )
 	}
 
 	// TODO: validate the parameters
-	query = sq_api->CreateQuery( "clogin", qfalse );
+	query = sq_api->CreateQuery( NULL, "clogin", qfalse );
 	if( query == NULL ) {
 		Com_Printf( "CL_MM_Login2: Failed to create StatQuery object\n");
 		return qfalse;
@@ -642,7 +642,7 @@ static qboolean CL_MM_LoginReal( const char *user, const char *password )
 	}
 
 	// TODO: validate the parameters
-	query = sq_api->CreateQuery( "clogin", qfalse );
+	query = sq_api->CreateQuery( NULL, "clogin", qfalse );
 	if( query == NULL )
 		return qfalse;
 

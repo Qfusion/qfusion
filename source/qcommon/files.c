@@ -1010,7 +1010,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 		file->streamOffset = 0;
 		file->customp = file;
 
-		file->streamHandle = wswcurl_create( "%s", filename );
+		file->streamHandle = wswcurl_create( NULL, "%s", filename );
  
 		if( !file->streamHandle )
 		{
@@ -1466,7 +1466,7 @@ int FS_Seek( int file, int offset, int whence )
 		// start a new one with byte offset
 		url = FS_CopyString( wswcurl_get_url( fh->streamHandle ) );
 
-		newreq = wswcurl_create( "%s", url );
+		newreq = wswcurl_create( NULL, "%s", url );
 		if( !newreq ) {
 			FS_Free( url );
 			return -1;

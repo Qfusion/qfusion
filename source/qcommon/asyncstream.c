@@ -211,11 +211,11 @@ int AsyncStream_PerformRequestExt( async_stream_module_t *module, const char *ur
 
 		// append data to query string
 		sep = strchr( url, '?' );
-		request = wswcurl_create( "%s%s%s", url, sep ? "&" : "?", data );
+		request = wswcurl_create( NULL, "%s%s%s", url, sep ? "&" : "?", data );
 		postfields = NULL;
 	}
 	else if( !Q_stricmp( method, "POST" ) ) {
-		request = wswcurl_create( "%s", url );
+		request = wswcurl_create( NULL, "%s", url );
 		postfields = data;
 	}
 	else {
