@@ -672,14 +672,13 @@ static stat_query_t *G_Match_GenerateReport( void )
 	//stat_query_section_t *weapindexarray;
 	gclient_quit_t *cl;
 	int i, teamGame, duelGame;
-	// FIXME: globalize this
-	const char *weapnames[] = { "gb", "mg", "rg", "gl", "rl", "pg", "lg", "eb", "ig" };
+	static const char *weapnames[WEAP_TOTAL] = { NULL };
 
 	// Feature: do not report matches with duration less than 1 minute (actually 66 seconds)
 	if( ( game.serverTime - GS_MatchStartTime() ) <= 66 * 1000 )
 		return 0;
 
-	query = sq_api->CreateQuery( "smr", qfalse );
+	query = sq_api->CreateQuery( NULL, "smr", qfalse );
 	if( !query )
 		return 0;
 
@@ -805,6 +804,12 @@ static stat_query_t *G_Match_GenerateReport( void )
 				if ( stats->accuracy_shots[j] == 0 && stats->accuracy_shots[weak] == 0)
 					continue;
 
+				if( !weapnames[j] ) {
+					gsitem_t *it = GS_FindItemByTag( WEAP_GUNBLADE + j );
+					if( it ) {
+						weapnames[j] = it->shortname;
+					}
+				}
 				weapsection = sq_api->CreateSection( query, accsection, weapnames[j] );
 
 				// STRONG
@@ -953,7 +958,7 @@ static void G_Match_RaceReport( void )
 	* ]
 	*  ( TODO: get the nickname there )
 	*/
-	query = sq_api->CreateQuery( "smr", qfalse );
+	query = sq_api->CreateQuery( NULL, "smr", qfalse );
 	if( !query )
 	{
 		G_Printf("G_Match_RaceReport.. failed to create query object\n");

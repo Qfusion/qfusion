@@ -538,6 +538,7 @@ int SV_MM_GenerateLocalSession( void );
 
 // match report
 #include "../matchmaker/mm_common.h"
+struct stat_query_s *SV_MM_CreateQuery( const char *iface, const char *url, qboolean get );
 void SV_MM_SendQuery( stat_query_t *query );
 void SV_MM_GameState( qboolean state );
 void SV_MM_GetMatchUUID( void (*callback_fn)( const char *uuid ) );

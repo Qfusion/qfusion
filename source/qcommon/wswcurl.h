@@ -22,7 +22,7 @@ void wswcurl_init(void);
  * This request can be modified by various functions available here.
  * The function can dynamicly format the url like printf. Note that the maximum URL size is 4kb
  */
-wswcurl_req *wswcurl_create(const char *furl, ...);
+wswcurl_req *wswcurl_create(const char *iface, const char *furl, ... );
 /**
  * Starts previously created wswcurl_req request
  */

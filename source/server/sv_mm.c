@@ -110,6 +110,11 @@ int SV_MM_GenerateLocalSession( void )
 //		HTTP REQUESTS
 //======================================
 
+struct stat_query_s *SV_MM_CreateQuery( const char *iface, const char *url, qboolean get )
+{
+	return sq_api->CreateQuery( sv_ip->string, url, qfalse );
+}
+
 void SV_MM_SendQuery( struct stat_query_s *query )
 {
 	// add our session id
@@ -136,7 +141,7 @@ void SV_MM_Heartbeat( void )
 		return;
 
 	// push a request
-	query = sq_api->CreateQuery( "shb", qfalse );
+	query = sq_api->CreateQuery( sv_ip->string, "shb", qfalse );
 	if( query == NULL )
 		return;
 
@@ -172,7 +177,7 @@ void SV_MM_ClientDisconnect( client_t *client )
 		return;
 
 	// push a request
-	query = sq_api->CreateQuery( "scd", qfalse );
+	query = sq_api->CreateQuery( sv_ip->string, "scd", qfalse );
 	if( query == NULL )
 		return;
 
@@ -348,7 +353,7 @@ int SV_MM_ClientConnect( const netadr_t *address, char *userinfo, unsigned int t
 	}
 
 	// push a request
-	query = sq_api->CreateQuery( "scc", qfalse );
+	query = sq_api->CreateQuery( sv_ip->string, "scc", qfalse );
 	if( query == NULL )
 		return 0;
 
@@ -427,7 +432,7 @@ static void SV_MM_Logout( qboolean force )
 	if( !sv_mm_initialized || !sv_mm_session )
 		return;
 
-	query = sq_api->CreateQuery( "slogout", qfalse );
+	query = sq_api->CreateQuery( sv_ip->string, "slogout", qfalse );
 	if( query == NULL )
 		return;
 
@@ -521,7 +526,7 @@ static qboolean SV_MM_Login( void )
 
 	Com_Printf( "SV_MM_Login: Creating query\n" );
 
-	query = sq_api->CreateQuery( "slogin", qfalse );
+	query = sq_api->CreateQuery( sv_ip->string, "slogin", qfalse );
 	if( query == NULL )
 		return qfalse;
 
@@ -604,7 +609,7 @@ static void SV_MM_GetMatchUUIDThink( void )
 	// ok, get it now!
 	Com_DPrintf( "SV_MM_GetMatchUUIDThink: Creating query\n" );
 
-	query = sq_api->CreateQuery( "smuuid", qfalse );
+	query = sq_api->CreateQuery( sv_ip->string, "smuuid", qfalse );
 	if( query == NULL ) {
 		return;
 	}

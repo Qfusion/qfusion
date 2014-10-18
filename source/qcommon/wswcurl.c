@@ -524,7 +524,7 @@ static int wswcurl_debug_callback( CURL *curl, curl_infotype infotype, char *buf
 	return 0;
 }
 
-wswcurl_req *wswcurl_create( const char *furl, ... )
+wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 {
 	wswcurl_req *retreq;
 	CURL *curl;
@@ -564,6 +564,7 @@ wswcurl_req *wswcurl_create( const char *furl, ... )
 	CURLSETOPT( curl, res, CURLOPT_WRITEDATA, ( void * )retreq );
 	CURLSETOPT( curl, res, CURLOPT_WRITEHEADER, ( void * )retreq );
 	CURLSETOPT( curl, res, CURLOPT_PRIVATE, ( void * )retreq );
+	CURLSETOPT( curl, res, CURLOPT_INTERFACE, ( void * )iface );
 
 	if( developer->integer ) {
 		CURLSETOPT( curl, res, CURLOPT_DEBUGFUNCTION, &wswcurl_debug_callback );
