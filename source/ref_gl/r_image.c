@@ -190,6 +190,7 @@ void R_TextureMode( char *string )
 {
 	int i;
 	image_t	*glt;
+	int target;
 
 	for( i = 0; i < NUM_GL_MODES; i++ )
 	{
@@ -216,17 +217,19 @@ void R_TextureMode( char *string )
 			continue;
 		}
 
+		target = ( glt->flags & IT_CUBEMAP ) ? GL_TEXTURE_CUBE_MAP_ARB : GL_TEXTURE_2D;
+
 		R_BindModifyTexture( glt );
 
 		if( !( glt->flags & IT_NOMIPMAP ) )
 		{
-			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min );
-			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+			qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_min );
+			qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		}
 		else 
 		{
-			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max );
-			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max );
+			qglTexParameteri( target, GL_TEXTURE_MIN_FILTER, gl_filter_max );
+			qglTexParameteri( target, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		}
 	}
 }
@@ -270,7 +273,9 @@ void R_AnisotropicFilter( int value )
 		}
 
 		R_BindModifyTexture( glt );
-		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
+
+		qglTexParameteri( ( glt->flags & IT_CUBEMAP ) ? GL_TEXTURE_CUBE_MAP_ARB : GL_TEXTURE_2D,
+			GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_anisotropic_filter );
 	}
 }
 
@@ -887,8 +892,8 @@ static void R_SetupTexParameters( int target, int flags )
 
 	if( ( flags & IT_DEPTH ) && ( flags & IT_DEPTHCOMPARE ) && glConfig.ext.shadow )
 	{
-		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB );
-		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL );
+		qglTexParameteri( target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB );
+		qglTexParameteri( target, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL );
 	}
 }
 
