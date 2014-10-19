@@ -35,6 +35,7 @@ static image_t images_hash_headnode[IMAGES_HASH_SIZE], *free_images;
 
 static int currentTMU;
 static GLuint currentTextures[MAX_TEXTURE_UNITS];
+static qboolean flushCurrentTextures;
 
 static int unpackAlignment[NUM_QGL_CONTEXTS];
 
@@ -99,18 +100,12 @@ static void R_AllocTextureNum( image_t *tex )
 */
 static void R_FreeTextureNum( image_t *tex )
 {
-	int i;
-
 	if( !tex->texnum )
 		return;
 
 	qglDeleteTextures( 1, &tex->texnum );
-	for( i = 0; i < MAX_TEXTURE_UNITS; i++ )
-	{
-		if( currentTextures[i] == tex->texnum )
-			currentTextures[i] = 0;
-	}
 	tex->texnum = 0;
+	flushCurrentTextures = qtrue;
 }
 
 /*
@@ -155,6 +150,11 @@ void R_BindTexture( int tmu, const image_t *tex )
 	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
 		// performance evaluation option
 		tex = rsh.noTexture;
+	}
+
+	if( flushCurrentTextures ) {
+		flushCurrentTextures = qfalse;
+		memset( currentTextures, 0, sizeof( currentTextures ) );
 	}
 
 	texnum = tex->texnum;
