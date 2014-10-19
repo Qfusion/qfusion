@@ -296,7 +296,7 @@ static stat_query_t *StatQuery_CreateQuery( const char *iface, const char *str, 
 	}
 
 	if( !get )
-		query->req = wswcurl_create( "%s/%s", mm_url->string, str );
+		query->req = wswcurl_create( iface, "%s/%s", mm_url->string, str );
 	else
 	{
 		// add in '/', '?' and '\0' = 3
