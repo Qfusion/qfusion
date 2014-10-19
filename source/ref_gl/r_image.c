@@ -138,11 +138,9 @@ static void R_BindContextTexture( const image_t *tex )
 }
 
 /*
-* R_SetTexture
-*
-* Binds a texture to a sampler.
+* R_BindTexture
 */
-void R_SetTexture( int tmu, const image_t *tex )
+void R_BindTexture( int tmu, const image_t *tex )
 {
 	GLuint texnum;
 
@@ -167,17 +165,6 @@ void R_SetTexture( int tmu, const image_t *tex )
 
 	R_SelectTextureUnit( tmu );
 	R_BindContextTexture( tex );
-}
-
-/*
-* R_BindTexture
-*
-* Binds a texture for modification.
-*/
-void R_BindTexture( int tmu, const image_t *tex )
-{
-	R_SelectTextureUnit( tmu );
-	R_SetTexture( tmu, tex );
 }
 
 /*
