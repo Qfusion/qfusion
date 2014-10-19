@@ -99,18 +99,11 @@ static void R_AllocTextureNum( image_t *tex )
 */
 static void R_FreeTextureNum( image_t *tex )
 {
-	int i;
-
-	if( !tex->texnum )
-		return;
-
-	qglDeleteTextures( 1, &tex->texnum );
-	for( i = 0; i < MAX_TEXTURE_UNITS; i++ )
-	{
-		if( currentTextures[i] == tex->texnum )
-			currentTextures[i] = 0;
+	if( tex->texnum ) {
+		qglDeleteTextures( 1, &tex->texnum );
+		tex->texnum = 0;
+		currentTMU = -1;
 	}
-	tex->texnum = 0;
 }
 
 /*
@@ -157,13 +150,19 @@ void R_BindTexture( int tmu, const image_t *tex )
 		tex = rsh.noTexture;
 	}
 
+	if( currentTMU < 0 ) {
+		// flush cached texture nums
+		memset( currentTextures, 0, sizeof( currentTextures ) );
+	}
+
+	R_SelectTextureUnit( tmu );
+
 	texnum = tex->texnum;
 	if( currentTextures[tmu] == texnum )
 		return;
 
 	currentTextures[tmu] = texnum;
 
-	R_SelectTextureUnit( tmu );
 	R_BindContextTexture( tex );
 }
 
