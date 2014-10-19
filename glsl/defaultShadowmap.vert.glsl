@@ -36,16 +36,16 @@ void main(void)
 
 	v_ShadowProjVector[0] = u_ShadowmapMatrix0 * Position;
 	// a trick which allows us not to perform 'shadowmaptc = (shadowmaptc + 1.0) * 0.5' in the fragment shader
-	v_ShadowProjVector[0].xyz = (v_ShadowProjVector[0].xyz + v_ShadowProjVector[0].w) * 0.5;
+	v_ShadowProjVector[0].xyz = (v_ShadowProjVector[0].xyz + vec3(v_ShadowProjVector[0].w)) * 0.5;
 #if NUM_SHADOWS >= 2
 	v_ShadowProjVector[1] = u_ShadowmapMatrix1 * Position;
-	v_ShadowProjVector[1].xyz = (v_ShadowProjVector[1].xyz + v_ShadowProjVector[1].w) * 0.5;
+	v_ShadowProjVector[1].xyz = (v_ShadowProjVector[1].xyz + vec3(v_ShadowProjVector[1].w)) * 0.5;
 #if NUM_SHADOWS >= 3
 	v_ShadowProjVector[2] = u_ShadowmapMatrix2 * Position;
-	v_ShadowProjVector[2].xyz = (v_ShadowProjVector[2].xyz + v_ShadowProjVector[2].w) * 0.5;
+	v_ShadowProjVector[2].xyz = (v_ShadowProjVector[2].xyz + vec3(v_ShadowProjVector[2].w)) * 0.5;
 #if NUM_SHADOWS >= 4
 	v_ShadowProjVector[3] = u_ShadowmapMatrix3 * Position;
-	v_ShadowProjVector[3].xyz = (v_ShadowProjVector[3].xyz + v_ShadowProjVector[3].w) * 0.5;
+	v_ShadowProjVector[3].xyz = (v_ShadowProjVector[3].xyz + vec3(v_ShadowProjVector[3].w)) * 0.5;
 #endif // NUM_SHADOWS >= 4
 #endif // NUM_SHADOWS >= 3
 #endif // NUM_SHADOWS >= 2

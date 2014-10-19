@@ -13,9 +13,8 @@
 
 		//shadowmaptc = (shadowmaptc + vec3 (1.0)) * vec3 (0.5);
 		shadowmaptc.xy = shadowmaptc.xy * u_ShadowmapTextureParams[SHADOW_INDEX].xy; // .x - texture width
-		d += step(shadowmaptc.xy, vec2(3.0));
-		d += step(u_ShadowmapTextureParams[SHADOW_INDEX].xy - 3.0, shadowmaptc.xy);
 		shadowmaptc.z = clamp(shadowmaptc.z, 0.0, 1.0);
+		shadowmaptc.xy = vec2(clamp(shadowmaptc.x, 0.0, u_ShadowmapTextureParams[SHADOW_INDEX].x), clamp(shadowmaptc.y, 0.0, u_ShadowmapTextureParams[SHADOW_INDEX].y));
 
 		vec2 ShadowMap_TextureScale = u_ShadowmapTextureParams[SHADOW_INDEX].zw;
 
