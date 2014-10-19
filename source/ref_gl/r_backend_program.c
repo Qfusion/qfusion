@@ -1150,8 +1150,6 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 	int i;
 	int program;
 	mat4_t texMatrix;
-	const shadowGroup_t *group;
-	const image_t *shadowmap;
 
 	assert( numShadows <= GLSL_SHADOWMAP_LIMIT );
 
@@ -1184,15 +1182,7 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 		return;
 
 	for( i = 0; i < numShadows; i++ ) {
-		group = shadowGroups[i];
-		shadowmap = group->shadowmap;
-
-		R_BindTexture( i, shadowmap );
-
-		if( glConfig.ext.shadow ) {
-			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB );
-			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL );
-		}
+		R_BindTexture( i, shadowGroups[i]->shadowmap );
 	}
 
 	Matrix4_Identity( texMatrix );
@@ -1214,13 +1204,6 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 	}
 
 	RB_DrawElementsReal( &rb.drawShadowElements );
-
-	if( glConfig.ext.shadow ) {
-		for( i--; i >= 0; i-- ) {
-			R_SelectTextureUnit( i );
-			qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE );
-		}
-	}
 }
 
 /*
