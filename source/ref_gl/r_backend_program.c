@@ -1393,6 +1393,8 @@ r_glslfeat_t RB_TcGenToProgramFeatures( int tcgen, vec_t *tcgenVec, mat4_t texMa
 		break;
 	case TC_GEN_REFLECTION_CELSHADE:
 		RB_VertexTCCelshadeMatrix( texMatrix );
+		programFeatures |= GLSL_SHADER_Q3_TC_GEN_CELSHADE;
+		break;
 	case TC_GEN_REFLECTION:
 		programFeatures |= GLSL_SHADER_Q3_TC_GEN_REFLECTION;
 		break;

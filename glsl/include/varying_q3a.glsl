@@ -1,16 +1,18 @@
 qf_varying vec3 v_Position;
 
-#ifdef APPLY_DRAWFLAT
-qf_varying myhalf v_NormalZ;
-#endif
-
-#ifdef APPLY_TC_GEN_REFLECTION
+#if defined(APPLY_TC_GEN_REFLECTION)
 #define APPLY_CUBEMAP
+#elif defined(APPLY_TC_GEN_CELSHADE)
+#define APPLY_CUBEMAP_VERTEX
 #endif
 
-#ifdef APPLY_CUBEMAP
+#if defined(APPLY_CUBEMAP) || defined(APPLY_DRAWFLAT)
+qf_varying myhalf3 v_Normal;
+#endif
+
+#if defined(APPLY_CUBEMAP_VERTEX)
 qf_varying vec3 v_TexCoord;
-#else
+#elif !defined(APPLY_CUBEMAP)
 qf_varying vec2 v_TexCoord;
 #endif
 

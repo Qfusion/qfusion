@@ -9,7 +9,7 @@
 
 #include "include/varying_q3a.glsl"
 
-#if defined(APPLY_TC_GEN_REFLECTION)
+#if defined(APPLY_TC_GEN_CELSHADE)
 uniform mat3 u_ReflectionTexMatrix;
 #elif defined(APPLY_TC_GEN_VECTOR)
 uniform mat4 u_VectorTexMatrix;
@@ -47,6 +47,7 @@ void main(void)
 #elif defined(APPLY_TC_GEN_VECTOR)
 	v_TexCoord = vec2(u_VectorTexMatrix * Position);
 #elif defined(APPLY_TC_GEN_REFLECTION)
+#elif defined(APPLY_TC_GEN_CELSHADE)
 	v_TexCoord = u_ReflectionTexMatrix * reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz);
 #elif defined(APPLY_TC_GEN_PROJECTION)
 	v_TexCoord = vec2(normalize(u_ModelViewProjectionMatrix * Position) * 0.5 + vec4(0.5));
@@ -56,8 +57,8 @@ void main(void)
 
 	v_Position = Position.xyz;
 
-#ifdef APPLY_DRAWFLAT
-	v_NormalZ = Normal.z;
+#if defined(APPLY_CUBEMAP) || defined(APPLY_DRAWFLAT)
+	v_Normal = Normal;
 #endif
 
 #ifdef NUM_LIGHTMAPS
