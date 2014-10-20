@@ -31,9 +31,12 @@ static vec3_t modelOrg;							// relative to view point
 */
 qboolean R_SurfPotentiallyVisible( const msurface_t *surf )
 {
+	const shader_t *shader = surf->shader;
 	if( surf->flags & SURF_NODRAW )
 		return qfalse;
 	if( !surf->mesh )
+		return qfalse;
+	if( !shader || (!shader->numpasses && !(shader->flags & SHADER_SKY) && !surf->fog) )
 		return qfalse;
 	return qtrue;
 }
