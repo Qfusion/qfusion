@@ -274,6 +274,7 @@ typedef struct shader_s
 
 void		R_InitShaders( void );
 void		R_ShutdownShaders( void );
+qboolean	R_PrecacheShaders( void );
 
 void		R_UploadCinematicShader( const shader_t *shader );
 

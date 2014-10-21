@@ -1927,6 +1927,8 @@ void CL_InitMedia( void )
 	Mem_DebugCheckSentinelsGlobal();
 
 	CL_SoundModule_StopAllSounds( qtrue, qtrue );
+
+	SCR_EndLoadingPlaque();
 }
 
 /*
