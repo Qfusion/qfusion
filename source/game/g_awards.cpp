@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void G_PlayerAward( edict_t *ent, const char *awardMsg )
 {
-	edict_t *other, *third;
+	edict_t *other;
 	gameaward_t *ga;
 	int i, size;
 	score_stats_t *stats;
@@ -82,19 +82,8 @@ void G_PlayerAward( edict_t *ent, const char *awardMsg )
 		if( !other->r.client || !other->r.inuse || !other->r.client->resp.chase.active )
 			continue;
 
-		if( other->r.client->resp.chase.target == ent->s.number )
-		{
+		if( other->r.client->ps.POVnum == (unsigned)ENTNUM( ent ) ) {
 			trap_GameCmd( other, va( "aw \"%s\"", awardMsg ) );
-
-			// someone could also be chase-caming the guy in the chasecam
-			for( third = game.edicts + 1; PLAYERNUM( third ) < gs.maxclients; third++ )
-			{
-				if( !third->r.client || !third->r.inuse || !third->r.client->resp.chase.active )
-					continue;
-
-				if( third->r.client->resp.chase.target == other->s.number )
-					trap_GameCmd( third, va( "aw \"%s\"", awardMsg ) );
-			}
 		}
 	}
 }
