@@ -1826,13 +1826,15 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache )
 }
 
 /*
-* R_InitShadersCache
+* R_PrecacheShaders
 */
-static qboolean R_InitShadersCache( void )
+qboolean R_PrecacheShaders( void )
 {
 	int i, j, k, numfiles;
 	const char *fileptr;
 	char shaderPaths[1024];
+
+	r_shaderTemplateBuf = NULL;
 
 	memset( shadercache_hash, 0, sizeof( shadercache_t * )*SHADERCACHE_HASH_SIZE );
 	
@@ -1841,6 +1843,8 @@ static qboolean R_InitShadersCache( void )
 	if( !numfiles ) {
 		return qfalse;
 	}
+
+	Com_Printf( "Initializing Shaders:\n" );
 
 	// now load them all
 	for( i = 0; i < numfiles; i += k ) {
@@ -1860,6 +1864,8 @@ static qboolean R_InitShadersCache( void )
 		}
 	}
 
+	Com_Printf( "--------------------------------------\n\n" );
+
 	return qtrue;
 }
 
@@ -1869,14 +1875,6 @@ static qboolean R_InitShadersCache( void )
 void R_InitShaders( void )
 {
 	int i;
-
-	Com_Printf( "Initializing Shaders:\n" );
-
-	r_shaderTemplateBuf = NULL;
-
-	if( !R_InitShadersCache() ) {
-		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
-	}
 
 	memset( r_shaders, 0, sizeof( r_shaders ) );
 
@@ -1889,8 +1887,6 @@ void R_InitShaders( void )
 	for( i = 0; i < MAX_SHADERS - 1; i++ ) {
 		r_shaders[i].next = &r_shaders[i+1];
 	}
-
-	Com_Printf( "--------------------------------------\n\n" );
 }
 
 /*
@@ -2016,6 +2012,9 @@ void R_ShutdownShaders( void )
 		}
 		R_FreeShader( s );
 	}
+
+	R_Free( r_shaderTemplateBuf );
+	R_Free( r_shortShaderName );
 
 	r_shaderTemplateBuf = NULL;
 	r_shortShaderName = NULL;

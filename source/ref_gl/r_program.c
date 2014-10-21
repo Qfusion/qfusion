@@ -141,11 +141,10 @@ static unsigned int r_numglslprograms;
 static glsl_program_t r_glslprograms[MAX_GLSL_PROGRAMS];
 static glsl_program_t *r_glslprograms_hash[GLSL_PROGRAM_TYPE_MAXTYPE][GLSL_PROGRAMS_HASH_SIZE];
 
-static void RF_GetUniformLocations( glsl_program_t *program );
-static void RF_BindAttrbibutesLocations( glsl_program_t *program );
+static void RP_GetUniformLocations( glsl_program_t *program );
+static void RP_BindAttrbibutesLocations( glsl_program_t *program );
 
-static void RF_PrecachePrograms( void );
-static void RF_StorePrecacheList( void );
+static void RP_StorePrecacheList( void );
 static void *RP_GetProgramBinary( int elem, int *format, unsigned *length );
 static int RP_RegisterProgramBinary( int type, const char *name, const char *deformsKey, 
 	const deformv_t *deforms, int numDeforms, r_glslfeat_t features, 
@@ -156,8 +155,6 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 */
 void RP_Init( void )
 {
-	int program;
-
 	if( r_glslprograms_initialized ) {
 		return;
 	}
@@ -167,33 +164,41 @@ void RP_Init( void )
 
 	Trie_Create( TRIE_CASE_INSENSITIVE, &glsl_cache_trie );
 
+	// register the program we're going to use for 2D graphics
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
+
+	r_glslprograms_initialized = qtrue;
+}
+
+/*
+* RP_RegisterBasePrograms
+*/
+static void RP_RegisterBasePrograms( void )
+{
+	int program;
+
 	// register base programs
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, DEFAULT_GLSL_MATERIAL_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, DEFAULT_GLSL_DISTORTION_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, DEFAULT_GLSL_RGB_SHADOW_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, DEFAULT_GLSL_SHADOWMAP_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, DEFAULT_GLSL_OUTLINE_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, DEFAULT_GLSL_CELSHADE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, DEFAULT_GLSL_YUV_PROGRAM, NULL, NULL, 0, 0 );
-	
+
 	// check whether compilation of the shader with GPU skinning succeeds, if not, disable GPU bone transforms
-	if( glConfig.maxGLSLBones ) {
+	if ( glConfig.maxGLSLBones ) {
 		program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, DEFAULT_GLSL_MATERIAL_PROGRAM, NULL, NULL, 0, GLSL_SHADER_COMMON_BONE_TRANSFORMS1 );
-		if( !program ) {
+		if ( !program ) {
 			glConfig.maxGLSLBones = 0;
 		}
 	}
-
-	RF_PrecachePrograms();
-
-	r_glslprograms_initialized = qtrue;
 }
 
 /*
-* RF_PrecachePrograms
+* RP_PrecachePrograms
 *
 * Loads the list of known program permutations from disk file.
 *
@@ -204,13 +209,15 @@ void RP_Init( void )
 * ..
 * program_typeN features_lower_bitsN features_higher_bitsN program_nameN
 */
-static void RF_PrecachePrograms( void )
+void RP_PrecachePrograms( void )
 {
 	int version;
 	char *buffer = NULL, *data, **ptr;
 	const char *token;
 	const char *fileName;
 	int handleBin;
+
+	RP_RegisterBasePrograms();
 
 	fileName = GLSL_CACHE_FILE_NAME;
 
@@ -334,12 +341,12 @@ static void RF_PrecachePrograms( void )
 
 
 /*
-* RF_StorePrecacheList
+* RP_StorePrecacheList
 *
 * Stores the list of known GLSL program permutations to file on the disk.
-* File format matches that expected by RF_PrecachePrograms.
+* File format matches that expected by RP_PrecachePrograms.
 */
-static void RF_StorePrecacheList( void )
+static void RP_StorePrecacheList( void )
 {
 	unsigned int i;
 	int handle, handleBin;
@@ -1536,7 +1543,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	// compile
 	//
 
-	RF_BindAttrbibutesLocations( program );
+	RP_BindAttrbibutesLocations( program );
 
 	// vertex shader
 	shaderStrings[shaderTypeIdx] = "#define VERTEX_SHADER\n";
@@ -1622,7 +1629,7 @@ done:
 	if( program->object )
 	{
 		qglUseProgram( program->object );
-		RF_GetUniformLocations( program );
+		RP_GetUniformLocations( program );
 	}
 
 	return ( program - r_glslprograms ) + 1;
@@ -2121,9 +2128,9 @@ void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t f
 }
 
 /*
-* RF_GetUniformLocations
+* RP_GetUniformLocations
 */
-static void RF_GetUniformLocations( glsl_program_t *program )
+static void RP_GetUniformLocations( glsl_program_t *program )
 {
 	unsigned int i;
 	int		locBaseTexture,
@@ -2336,9 +2343,9 @@ static void RF_GetUniformLocations( glsl_program_t *program )
 }
 
 /*
-* RF_BindAttrbibutesLocations
+* RP_BindAttrbibutesLocations
 */
-static void RF_BindAttrbibutesLocations( glsl_program_t *program )
+static void RP_BindAttrbibutesLocations( glsl_program_t *program )
 {
 	qglBindAttribLocationARB( program->object, VATTRIB_POSITION, "a_Position" ); 
 	qglBindAttribLocationARB( program->object, VATTRIB_SVECTOR, "a_SVector" ); 
@@ -2378,7 +2385,7 @@ void RP_Shutdown( void )
 	qglUseProgram( 0 );
 
 	if( r_glslprograms_initialized ) {
-		RF_StorePrecacheList();
+		RP_StorePrecacheList();
 	}
 
 	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ ) {

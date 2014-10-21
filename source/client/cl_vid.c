@@ -63,7 +63,7 @@ static mempool_t *vid_ref_mempool = NULL;
 
 // These are system specific functions
 rserr_t VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow,
-	qboolean fullscreen, qboolean wideScreen, qboolean verbose ); // wrapper around R_Init
+	qboolean fullscreen, qboolean wideScreen, qboolean verbose, void (*initcb)(void) ); // wrapper around R_Init
 static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow,
 	qboolean fullScreen, qboolean wideScreen );
 void VID_Front_f( void );
@@ -204,7 +204,7 @@ static rserr_t VID_Sys_Init_( int x, int y, int width, int height, int displayFr
 	void *parentWindow, qboolean fullScreen, qboolean wideScreen )
 {
 	return VID_Sys_Init( x, y, width, height, displayFrequency, parentWindow, 
-		fullScreen, wideScreen, vid_ref_verbose );
+		fullScreen, wideScreen, vid_ref_verbose, SCR_BeginLoadingPlaque );
 }
 
 /*
@@ -610,8 +610,6 @@ load_refresh:
 		}
 
 		CL_InitMedia();
-
-		cls.disable_screen = 0;
 
 		Con_Close();
 

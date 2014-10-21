@@ -1184,7 +1184,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 	void *hinstance, void *wndproc, void *parenthWnd, 
 	int x, int y, int width, int height, int displayFrequency,
-	qboolean fullScreen, qboolean wideScreen, qboolean verbose )
+	qboolean fullScreen, qboolean wideScreen, qboolean verbose, void (*initcb)(void) )
 {
 	const char *dllname;
 	qgl_initerr_t initerr;
@@ -1288,9 +1288,6 @@ init_qgl:
 
 	R_AnisotropicFilter( r_texturefilter->integer );
 
-	if( r_verbose )
-		R_GfxInfo_f();
-
 	for( i = 0; i < 256; i++ )
 		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
 
@@ -1307,17 +1304,15 @@ init_qgl:
 
 	RB_EnableScissor( qtrue );
 
-	R_InitCinematics();
-
 	R_InitShaders();
+
+	R_InitCinematics();
 
 	R_InitSkinFiles();
 
 	R_InitModels();
 
 	R_ClearScene();
-
-	R_InitVolatileAssets();
 
 	R_ClearRefInstStack();
 
@@ -1326,6 +1321,20 @@ init_qgl:
 	glerr = qglGetError();
 	if( glerr != GL_NO_ERROR )
 		Com_Printf( "glGetError() = 0x%x\n", err );
+
+	// initialization callback, used to display the loading plaque
+	initcb();
+
+	R_InitVolatileAssets();
+
+	if ( !R_PrecacheShaders() ) {
+		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
+	}
+
+	RP_PrecachePrograms();
+
+	if ( r_verbose )
+		R_GfxInfo_f( );
 
 	Com_Printf( "----- finished R_Init -----\n" );
 
