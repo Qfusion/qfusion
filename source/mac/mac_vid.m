@@ -30,12 +30,12 @@ static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
  * VID_Sys_Init
  */
 int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, 
-	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
+	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose, void (*initcb)(void) )
 {
 	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR,
 				NULL, NULL, parentWindow, 
                 x, y, width, height, displayFrequency,
-				fullScreen, wideScreen, verbose );
+				fullScreen, wideScreen, verbose, initcb );
 }
 
 /*
