@@ -251,6 +251,7 @@ void		GLimp_BeginFrame( void );
 void		GLimp_EndFrame( void );
 int			GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd );
 void	    GLimp_Shutdown( void );
+qboolean	GLimp_FullscreenSupported( void );
 rserr_t		GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
 				qboolean fullscreen, qboolean wideScreen );
 qboolean	GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );

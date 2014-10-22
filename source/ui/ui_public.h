@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    48
+#define	UI_API_VERSION	    49
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -99,6 +99,7 @@ typedef struct
 	int ( *R_SkeletalGetBoneInfo )( const struct model_s *mod, int bone, char *name, size_t name_size, int *flags );
 	void ( *R_SkeletalGetBonePose )( const struct model_s *mod, int bone, int frame, bonepose_t *bonepose );
 	struct cinematics_s *( *R_GetShaderCinematic )( struct shader_s *shader );
+	int ( *R_OptionSupported )( const char *cvar );
 
 	struct sfx_s *( *S_RegisterSound )( const char *name );
 	void ( *S_StartLocalSound )( const char *s );

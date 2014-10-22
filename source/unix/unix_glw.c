@@ -1102,6 +1102,14 @@ qboolean GLimp_ScreenEnabled( void )
 }
 
 /*
+** GLimp_FullscreenSupported
+*/
+qboolean GLimp_FullscreenSupported( void )
+{
+	return qtrue;
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 qboolean GLimp_SharedContext_Create( void **context, void **surface )
