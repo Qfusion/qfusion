@@ -464,7 +464,6 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 {
 	gclient_t *cl;
 	gclient_quit_t *quit;
-	const char *mm_session_str;
 	int i, mm_session;
 	cvar_t *report_bots;
 
@@ -495,11 +494,7 @@ void G_AddPlayerReport( edict_t *ent, bool final )
 		return;
 
 	// FIXME: mm_session now exists in gclient_t
-	mm_session = 0;
-	mm_session_str = Info_ValueForKey( cl->userinfo, "cl_mm_session" );
-
-	if( mm_session_str != NULL )
-		mm_session = atoi( mm_session_str );
+	mm_session = cl->mm_session;
 
 	if( mm_session == 0 )
 	{
