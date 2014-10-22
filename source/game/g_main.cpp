@@ -41,6 +41,7 @@ cvar_t *g_maxvelocity;
 cvar_t *g_gravity;
 
 cvar_t *sv_cheats;
+cvar_t *sv_mm_enable;
 
 cvar_t *cm_mapHeader;
 cvar_t *cm_mapVersion;
@@ -260,7 +261,8 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol )
 	dedicated = trap_Cvar_Get( "dedicated", "0", CVAR_NOSET );
 
 	// latched vars
-	sv_cheats = trap_Cvar_Get( "sv_cheats", "0", CVAR_SERVERINFO|CVAR_LATCH );
+	sv_cheats = trap_Cvar_Get( "sv_cheats", "0", CVAR_SERVERINFO | CVAR_LATCH );
+	sv_mm_enable = trap_Cvar_Get( "sv_mm_enable", "0", CVAR_ARCHIVE | CVAR_NOSET | CVAR_SERVERINFO );
 
 	// hack in CVAR_SERVERINFO flag
 	trap_Cvar_Get( "gamename", trap_Cvar_String( "gamename" ), CVAR_SERVERINFO );

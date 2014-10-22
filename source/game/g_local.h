@@ -306,6 +306,7 @@ extern cvar_t *g_gravity;
 extern cvar_t *g_maxvelocity;
 
 extern cvar_t *sv_cheats;
+extern cvar_t *sv_mm_enable;
 
 extern cvar_t *cm_mapHeader;
 extern cvar_t *cm_mapVersion;
