@@ -931,6 +931,10 @@ static void R_FinalizeGLExtensions( void )
 	ri.Cvar_Get( "gl_ext_texture_filter_anisotropic_max", "0", CVAR_READONLY );
 	ri.Cvar_ForceSet( "gl_ext_texture_filter_anisotropic_max", va( "%i", glConfig.maxTextureFilterAnisotropic ) );
 
+	ri.Cvar_Get( "r_soft_particles_available", "0", CVAR_READONLY );
+	if( glConfig.ext.depth_texture && glConfig.ext.framebuffer_blit )
+		ri.Cvar_ForceSet( "r_soft_particles_available", "1" );
+
 	// don't allow too high values for lightmap block size as they negatively impact performance
 	if( r_lighting_maxlmblocksize->integer > glConfig.maxTextureSize / 4 &&
 		!(glConfig.maxTextureSize / 4 < min(QF_LIGHTMAP_WIDTH,QF_LIGHTMAP_HEIGHT)*2) )
