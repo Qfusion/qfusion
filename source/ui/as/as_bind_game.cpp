@@ -149,11 +149,6 @@ static bool Game_isTV( Game *game )
 	return atoi( tv ) != 0;
 }
 
-static int Game_refOptionSupported( Game *game, const asstring_t &s )
-{
-	return trap::R_OptionSupported( s.buffer );
-}
-
 void BindGame( ASInterface *as )
 {
 	ASBind::Enum( as->getEngine(), "eConfigString" )
@@ -233,8 +228,6 @@ void BindGame( ASInterface *as )
 		.constmethod( Game_GetDownloadInfo, "get_download", true )
 
 		.constmethod( Game_isTV, "get_isTV", true )
-
-		.constmethod( Game_refOptionSupported, "refOptionSupported", true )
 	;
 }
 

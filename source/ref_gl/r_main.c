@@ -2019,27 +2019,3 @@ void R_FreeFile_( void *buffer, const char *filename, int fileline )
 {
 	ri.Mem_Free( buffer, filename, fileline );
 }
-
-//==================================================================================
-
-/*
-* R_OptionSupported
-*
-* Tells other subsystems such as UI whether a graphics option is supported.
-* May return a boolean or a special value containing the support level.
-*/
-int R_OptionSupported( const char *cvar )
-{
-	if( !Q_stricmp( cvar, "r_soft_particles" ) )
-		return ( rsh.screenTexture != NULL ) ? 1 : 0;
-
-	if( !Q_stricmp( cvar, "r_texturefilter" ) )
-		return glConfig.maxTextureFilterAnisotropic;
-
-	// does the system support switching between windowed and fullscreen modes
-	if( !Q_stricmp( cvar, "vid_fullscreen" ) )
-		return GLimp_FullscreenSupported() ? 1 : 0;
-
-	return -1;
-}
-

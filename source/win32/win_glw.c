@@ -286,14 +286,6 @@ static qboolean VID_SetFullscreenMode( int displayFrequency, qboolean fullscreen
 }
 
 /*
-** GLimp_FullscreenSupported
-*/
-qboolean GLimp_FullscreenSupported( void )
-{
-	return qtrue;
-}
-
-/*
 ** GLimp_SetMode
 */
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, 
