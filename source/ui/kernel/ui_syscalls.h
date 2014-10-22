@@ -150,10 +150,6 @@ namespace trap
 			UI_IMPORT.R_SkeletalGetBonePose( mod, bone, frame, bonepose );
 		}
 
-		inline int R_OptionSupported( const char *cvar ) {
-			return UI_IMPORT.R_OptionSupported( cvar );
-		}
-
 		inline const char *ML_GetFullname( const char *name ) {
 			return UI_IMPORT.ML_GetFullname( name );
 		}

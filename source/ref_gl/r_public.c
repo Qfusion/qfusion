@@ -113,8 +113,6 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.AppActivate = R_AppActivate;
 
-	globals.OptionSupported = R_OptionSupported;
-
 	return &globals;
 }
 
