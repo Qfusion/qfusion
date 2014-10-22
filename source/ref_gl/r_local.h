@@ -601,6 +601,8 @@ void		R_EnableScissor( qboolean enable );
 shader_t	*R_GetShaderForOrigin( const vec3_t origin );
 struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
 
+int			R_OptionSupported( const char *cvar );
+
 //
 // r_mesh.c
 //
