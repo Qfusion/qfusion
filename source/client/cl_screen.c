@@ -521,17 +521,24 @@ static void SCR_DrawDebugGraph( void )
 */
 static void SCR_DrawLoadingPlaque( void )
 {
-#ifdef __ANDROID__
-	float scale;
-	int w, h;
-	shader_t *s;
-	
-	s = re.RegisterPic( "gfx/ui/loadinglogo" );
-	re.GetShaderDimensions( s, &w, &h );
+	{
+		const vec4_t color = { COLOR_R( APP_STARTUP_COLOR ) / 255.0f, COLOR_G( APP_STARTUP_COLOR ) / 255.0f, COLOR_B( APP_STARTUP_COLOR ) / 255.0f, 1.0f };
+		re.DrawStretchPic( 0, 0, viddef.width , viddef.height, 0.0f, 0.0f, 1.0f, 1.0f, color, re.RegisterPic( "$whiteimage" ) );
+	}
 
-	scale = viddef.height / 1080.0f;
-	re.DrawStretchPic( viddef.width / 2 - w / 2 * scale, viddef.height / 2 - h / 2 * scale, w * scale, h * scale, 
-		0, 0, 1, 1, colorWhite, s );
+#ifdef __ANDROID__
+	{
+		float scale;
+		int w, h;
+		shader_t *s;
+	
+		s = re.RegisterPic( "gfx/ui/loadinglogo" );
+		re.GetShaderDimensions( s, &w, &h );
+
+		scale = viddef.height / 1080.0f;
+		re.DrawStretchPic( viddef.width / 2 - w / 2 * scale, viddef.height / 2 - h / 2 * scale, w * scale, h * scale, 
+			0, 0, 1, 1, colorWhite, s );
+	}
 #endif
 }
 
@@ -761,7 +768,7 @@ void SCR_UpdateScreen( void )
 
 		if( scr_draw_loading == 2 )
 		{ 
-			// loading plaque over black screen
+			// loading plaque over APP_STARTUP_COLOR screen
 			scr_draw_loading = 0;
 			SCR_DrawLoadingPlaque();
 		}

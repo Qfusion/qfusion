@@ -1314,6 +1314,8 @@ init_qgl:
 
 	R_ClearScene();
 
+	R_InitVolatileAssets();
+
 	R_ClearRefInstStack();
 
 	R_BindFrameBufferObject( 0 );
@@ -1324,8 +1326,6 @@ init_qgl:
 
 	// initialization callback, used to display the loading plaque
 	initcb();
-
-	R_InitVolatileAssets();
 
 	if ( !R_PrecacheShaders() ) {
 		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
