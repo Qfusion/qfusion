@@ -2030,9 +2030,6 @@ void R_FreeFile_( void *buffer, const char *filename, int fileline )
 */
 int R_OptionSupported( const char *cvar )
 {
-	if( !Q_stricmp( cvar, "cg_shadows" ) || !Q_stricmp( cvar, "r_shadows" ) )
-		return glConfig.ext.shadow;
-
 	if( !Q_stricmp( cvar, "r_soft_particles" ) )
 		return ( rsh.screenTexture != NULL ) ? 1 : 0;
 
