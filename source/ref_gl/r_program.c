@@ -144,6 +144,7 @@ static glsl_program_t *r_glslprograms_hash[GLSL_PROGRAM_TYPE_MAXTYPE][GLSL_PROGR
 static void RP_GetUniformLocations( glsl_program_t *program );
 static void RP_BindAttrbibutesLocations( glsl_program_t *program );
 
+static void RP_PrecachePrograms( void );
 static void RP_StorePrecacheList( void );
 static void *RP_GetProgramBinary( int elem, int *format, unsigned *length );
 static int RP_RegisterProgramBinary( int type, const char *name, const char *deformsKey, 
@@ -155,6 +156,8 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 */
 void RP_Init( void )
 {
+	int program;
+
 	if( r_glslprograms_initialized ) {
 		return;
 	}
@@ -164,25 +167,13 @@ void RP_Init( void )
 
 	Trie_Create( TRIE_CASE_INSENSITIVE, &glsl_cache_trie );
 
-	// register the program we're going to use for 2D graphics
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
-
-	r_glslprograms_initialized = qtrue;
-}
-
-/*
-* RP_RegisterBasePrograms
-*/
-static void RP_RegisterBasePrograms( void )
-{
-	int program;
-
 	// register base programs
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, DEFAULT_GLSL_MATERIAL_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, DEFAULT_GLSL_DISTORTION_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, DEFAULT_GLSL_RGB_SHADOW_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, DEFAULT_GLSL_SHADOWMAP_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, DEFAULT_GLSL_OUTLINE_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, DEFAULT_GLSL_Q3A_SHADER_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, DEFAULT_GLSL_CELSHADE_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
@@ -195,6 +186,10 @@ static void RP_RegisterBasePrograms( void )
 			glConfig.maxGLSLBones = 0;
 		}
 	}
+
+	RP_PrecachePrograms();
+
+	r_glslprograms_initialized = qtrue;
 }
 
 /*
@@ -209,15 +204,13 @@ static void RP_RegisterBasePrograms( void )
 * ..
 * program_typeN features_lower_bitsN features_higher_bitsN program_nameN
 */
-void RP_PrecachePrograms( void )
+static void RP_PrecachePrograms( void )
 {
 	int version;
 	char *buffer = NULL, *data, **ptr;
 	const char *token;
 	const char *fileName;
 	int handleBin;
-
-	RP_RegisterBasePrograms();
 
 	fileName = GLSL_CACHE_FILE_NAME;
 
