@@ -79,6 +79,7 @@ public:
 			if( urlProtocol == gameProtocol.ToLower() || urlProtocol == gameProtocolSchema.ToLower() ) {
 				// connect to game server
 				trap::Cmd_ExecuteText( EXEC_APPEND, va( "connect \"%s\"\n", href.CString() ) );
+				return;
 			}
 			else if( trap::FS_IsUrl( href.CString() ) ) {
 				String target = GetAttribute<String>("target", "");
