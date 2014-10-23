@@ -928,8 +928,8 @@ static void R_FinalizeGLExtensions( void )
 		ri.Cvar_ForceSet( "gl_ext_vertex_buffer_object", "1" );
 	}
 
-	ri.Cvar_Get( "gl_ext_texture_filter_anisotropic_max", "0", CVAR_READONLY );
-	ri.Cvar_ForceSet( "gl_ext_texture_filter_anisotropic_max", va( "%i", glConfig.maxTextureFilterAnisotropic ) );
+	ri.Cvar_Get( "r_texturefilter_max", "0", CVAR_READONLY );
+	ri.Cvar_ForceSet( "r_texturefilter_max", va( "%i", glConfig.maxTextureFilterAnisotropic ) );
 
 	ri.Cvar_Get( "r_soft_particles_available", "0", CVAR_READONLY );
 	if( glConfig.ext.depth_texture && glConfig.ext.framebuffer_blit )
