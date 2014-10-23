@@ -2164,7 +2164,7 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 		return;
 	}
 
-	if( !isopcall && callvote->need_auth && sv_mm_enable->integer && ent->r.client->mm_session <= 0 ) {
+	if( callvote->need_auth && sv_mm_enable->integer && ent->r.client->mm_session <= 0 ) {
 		G_PrintMsg( ent, "%sCallvote %s requires authentication\n", S_COLOR_RED, callvote->name );
 		return;
 	}
