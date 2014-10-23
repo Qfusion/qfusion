@@ -694,7 +694,7 @@ static inline int CPU_getCPUIDFeaturesExt()
 	int features = 0;
 #if defined(__GNUC__) && defined(i386)
 	if( __get_cpuid_max( 0x80000000, NULL ) >= 0x80000001 ) {
-		int temp, temp2, temp3;
+		unsigned temp, temp2, temp3;
 		__get_cpuid( 0x80000001, &temp, &temp2, &temp3, &features );
 	}
 #elif defined(_MSC_VER) && defined(_M_IX86)

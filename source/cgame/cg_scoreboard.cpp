@@ -551,7 +551,7 @@ typedef struct
 } scr_playericon_t;
 
 static scr_playericon_t scr_playericons[128];
-static int scr_numplayericons;
+static unsigned scr_numplayericons;
 
 /*
 * SCR_ComparePlayerIcons
@@ -576,7 +576,7 @@ static void SCR_DrawPlayerIcons( struct qfontface_s *font )
 	vec4_t color;
 	Vector4Copy( colorWhite, color );
 
-	for( int i = 0; i < scr_numplayericons; i++ )
+	for( unsigned i = 0; i < scr_numplayericons; i++ )
 	{
 		scr_playericon_t &icon = scr_playericons[i];
 		color[3] = icon.alpha;
@@ -694,7 +694,6 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 				highlight = true;
 
 			break;
-
 		case 'i': // is a integer (negatives are colored in red)
 			i = atoi( token );
 			Q_snprintfz( string, sizeof( string ), "%i", i );

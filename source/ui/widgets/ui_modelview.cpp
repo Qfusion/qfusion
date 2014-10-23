@@ -25,7 +25,6 @@ class UI_ModelviewWidgetInstancer;
 class UI_ModelviewWidget : public Element, EventListener
 {
 private:
-	float fov_x, fov_y;
 	entity_t entity;
 	refdef_t refdef;
 	vec3_t baseangles;
@@ -39,6 +38,7 @@ private:
 	cgs_skeleton_t *skel;
 	String modelName;
 	String skinName;
+	float fov_x, fov_y;
 
 public:
 	UI_ModelviewWidget( const String &tag )
