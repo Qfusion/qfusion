@@ -665,12 +665,12 @@ done:
 	return has_CPUID;
 }
 
-static inline int CPU_getCPUIDFeatures()
+static inline unsigned CPU_getCPUIDFeatures()
 {
-	int features = 0;
+	unsigned features = 0;
 #if defined(__GNUC__) && defined(i386)
 	if( __get_cpuid_max( 0, NULL ) >= 1 ) {
-		int temp, temp2, temp3;
+		unsigned temp, temp2, temp3;
 		__get_cpuid( 1, &temp, &temp2, &temp3, &features );
 	}
 #elif defined(_MSC_VER) && defined(_M_IX86)
@@ -689,9 +689,9 @@ done:
 	return features;
 }
 
-static inline int CPU_getCPUIDFeaturesExt()
+static inline unsigned CPU_getCPUIDFeaturesExt( )
 {
-	int features = 0;
+	unsigned features = 0;
 #if defined(__GNUC__) && defined(i386)
 	if( __get_cpuid_max( 0x80000000, NULL ) >= 0x80000001 ) {
 		unsigned temp, temp2, temp3;
