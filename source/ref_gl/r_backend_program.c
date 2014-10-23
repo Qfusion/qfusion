@@ -813,7 +813,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		normalmap = rsh.blankBumpTexture;
 	}
 
-	if( rb.currentModelType == mod_brush && !mapConfig.deluxeMappingEnabled 
+	if( ( rb.currentModelType == mod_brush && !mapConfig.deluxeMappingEnabled )
 		|| normalmap == rsh.blankBumpTexture && !glossmap && !decalmap && !entdecalmap ) {
 		// render as plain Q3A shader, which is less computation-intensive
 		RB_RenderMeshGLSL_Q3AShader( pass, programFeatures );

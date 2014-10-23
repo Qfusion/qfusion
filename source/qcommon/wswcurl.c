@@ -509,7 +509,6 @@ int wswcurl_header( wswcurl_req *req, const char *key, const char *value, ...)
 static int wswcurl_debug_callback( CURL *curl, curl_infotype infotype, char *buf, size_t buf_size, void *userp )
 {
 	char *temp;
-	wswcurl_req *req = userp;
 	
 	if( infotype != CURLINFO_TEXT ) {
 		return 0;
