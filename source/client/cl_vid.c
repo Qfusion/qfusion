@@ -204,7 +204,7 @@ static rserr_t VID_Sys_Init_( int x, int y, int width, int height, int displayFr
 	void *parentWindow, qboolean fullScreen, qboolean wideScreen )
 {
 	return VID_Sys_Init( x, y, width, height, displayFrequency, parentWindow, 
-		fullScreen, wideScreen, vid_ref_verbose, SCR_BeginLoadingPlaque );
+		fullScreen, wideScreen, vid_ref_verbose );
 }
 
 /*
