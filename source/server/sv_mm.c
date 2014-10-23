@@ -159,8 +159,10 @@ void SV_MM_Heartbeat( void )
 */
 static void sv_mm_clientdisconnect_done( stat_query_t *query, qboolean success, void *customp )
 {
+	intptr_t p = (uintptr_t)customp;
+
 	if( success == qtrue )
-		Com_Printf("SV_MM_ClientDisconnect: Acknowledged %d\n", (int)customp );
+		Com_Printf("SV_MM_ClientDisconnect: Acknowledged %i\n", (int)p);
 	else
 		Com_Printf("SV_MM_ClientDisconnect: Error\n" );
 }
@@ -188,7 +190,7 @@ void SV_MM_ClientDisconnect( client_t *client )
 	sq_api->SetField( query, "csession", va("%d", client->mm_session ) );
 	sq_api->SetField( query, "gameon", sv_mm_gameon == qtrue ? "1" : "0" );
 
-	sq_api->SetCallback( query, sv_mm_clientdisconnect_done, (void*)client->mm_session );
+	sq_api->SetCallback( query, sv_mm_clientdisconnect_done, (void *)((intptr_t)client->mm_session) );
 	sq_api->Send( query );
 }
 
@@ -222,7 +224,7 @@ static void sv_mm_clientconnect_done( stat_query_t *query, qboolean success, voi
 	 * (currently we dont even tell MM about these so ignore)
 	 */
 	
-	session_id = (int)customp;
+	session_id = (int)((intptr_t )customp);
 	isession_id = 0;
 	cl = SV_MM_ClientForSession( session_id );
 
@@ -365,7 +367,7 @@ int SV_MM_ClientConnect( const netadr_t *address, char *userinfo, unsigned int t
 	sq_api->SetField( query, "csession", va("%d", session_id ) );
 	sq_api->SetField( query, "cip", NET_AddressToString( address ) );
 
-	sq_api->SetCallback( query, sv_mm_clientconnect_done, (void*)session_id );
+	sq_api->SetCallback( query, sv_mm_clientconnect_done, (void*)((intptr_t)session_id) );
 	sq_api->Send( query );
 
 	return session_id;

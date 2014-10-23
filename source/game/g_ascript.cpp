@@ -2343,7 +2343,6 @@ static void objectGameEntity_splashDamage( edict_t *attacker, int radius, float 
 
 static void objectGameEntity_explosionEffect( int radius, edict_t *self )
 {
-	edict_t *event;
 	int i, eventType, eventRadius;
 	vec3_t center;
 
@@ -2368,7 +2367,7 @@ static void objectGameEntity_explosionEffect( int radius, edict_t *self )
 	for( i = 0; i < 3; i++ )
 		center[i] = self->s.origin[i] + ( 0.5f * ( self->r.maxs[i] + self->r.mins[i] ) );
 
-	event = G_SpawnEvent( eventType, eventRadius, center );
+	G_SpawnEvent( eventType, eventRadius, center );
 }
 
 static const asFuncdef_t gedict_Funcdefs[] =
