@@ -1110,8 +1110,8 @@ qboolean GLimp_SharedContext_Create( void **context, void **surface )
 	if( !ctx )
 		return qfalse;
 
-	*context = ctx;
-	*surface = x11display.gl_win;
+	*context = (void *)ctx;
+	*surface = (void *)x11display.gl_win;
 	return qtrue;
 }
 
@@ -1120,7 +1120,7 @@ qboolean GLimp_SharedContext_Create( void **context, void **surface )
 */
 qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
-	return qglXMakeCurrent( x11display.dpy, surface, context ) == True ? qtrue : qfalse;
+	return qglXMakeCurrent( x11display.dpy, (GLXDrawable)surface, (GLXContext)context ) == True ? qtrue : qfalse;
 }
 
 /*

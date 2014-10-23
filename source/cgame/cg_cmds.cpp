@@ -186,7 +186,7 @@ static void CG_SC_Scoreboard( void )
 static void CG_SC_PrintPlayerStats( const char *s, void ( *pp )( const char *format, ... ) )
 {
 	int playerNum;
-	int i, shot_weak, hit_weak, shot_strong, hit_strong, hit_total, shot_total;
+	int i, shot_strong, hit_strong, hit_total, shot_total;
 	int total_damage_given, total_damage_received, health_taken, armor_taken;
 	gsitem_t *item;
 	void ( *print )( const char *format, ... ) = pp;
@@ -212,9 +212,6 @@ static void CG_SC_PrintPlayerStats( const char *s, void ( *pp )( const char *for
 
 		shot_strong = CG_ParseValue( &s );
 		hit_strong = (shot_strong != shot_total ? CG_ParseValue( &s ) : hit_total);
-
-		shot_weak = shot_total - shot_strong;
-		hit_weak = hit_total - hit_strong;
 
 		// name
 		print( "%s%2s" S_COLOR_WHITE ": ", item->color, item->shortname );

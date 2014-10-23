@@ -309,8 +309,6 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage )
 */
 void player_die( edict_t *ent, edict_t *inflictor, edict_t *attacker, int damage, const vec3_t point )
 {
-	edict_t	*body;
-
 	VectorClear( ent->avelocity );
 
 	ent->s.angles[0] = 0;
@@ -326,7 +324,7 @@ void player_die( edict_t *ent, edict_t *inflictor, edict_t *attacker, int damage
 	ClientObituary( ent, inflictor, attacker );
 
 	// create a body
-	body = CopyToBodyQue( ent, attacker, damage );
+	CopyToBodyQue( ent, attacker, damage );
 	ent->enemy = NULL;
 
 	// clear his combo stats

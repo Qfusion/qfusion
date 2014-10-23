@@ -140,7 +140,6 @@ static void target_explosion_explode( edict_t *self )
 {
 	float save;
 	int radius;
-	edict_t *event;
 
 	G_RadiusDamage( self, self->activator, NULL, NULL, MOD_EXPLOSIVE );
 
@@ -149,14 +148,14 @@ static void target_explosion_explode( edict_t *self )
 		radius = ( self->projectileInfo.radius * 1/16 ) & 0xFF;
 		if( radius < 1 )
 			radius = 1;
-		event = G_SpawnEvent( EV_EXPLOSION2, radius, self->s.origin );
+		G_SpawnEvent( EV_EXPLOSION2, radius, self->s.origin );
 	}
 	else
 	{
 		radius = ( self->projectileInfo.radius * 1/8 ) & 0xFF;
 		if( radius < 1 )
 			radius = 1;
-		event = G_SpawnEvent( EV_EXPLOSION1, radius, self->s.origin );
+		G_SpawnEvent( EV_EXPLOSION1, radius, self->s.origin );
 	}
 
 	save = self->delay;
