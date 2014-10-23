@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-// cl_scrn.c -- master for refresh, status bar, console, chat, notify, etc
+// cl_screen.c -- master for refresh, status bar, console, chat, notify, etc
 
 /*
 
@@ -516,32 +516,6 @@ static void SCR_DrawDebugGraph( void )
 	}
 }
 
-/*
-* SCR_DrawLoadingPlaque
-*/
-static void SCR_DrawLoadingPlaque( void )
-{
-	{
-		const vec4_t color = { COLOR_R( APP_STARTUP_COLOR ) / 255.0f, COLOR_G( APP_STARTUP_COLOR ) / 255.0f, COLOR_B( APP_STARTUP_COLOR ) / 255.0f, 1.0f };
-		re.DrawStretchPic( 0, 0, viddef.width , viddef.height, 0.0f, 0.0f, 1.0f, 1.0f, color, re.RegisterPic( "$whiteimage" ) );
-	}
-
-#ifdef __ANDROID__
-	{
-		float scale;
-		int w, h;
-		shader_t *s;
-	
-		s = re.RegisterPic( "gfx/ui/loadinglogo" );
-		re.GetShaderDimensions( s, &w, &h );
-
-		scale = viddef.height / 1080.0f;
-		re.DrawStretchPic( viddef.width / 2 - w / 2 * scale, viddef.height / 2 - h / 2 * scale, w * scale, h * scale, 
-			0, 0, 1, 1, colorWhite, s );
-	}
-#endif
-}
-
 //============================================================================
 
 /*
@@ -770,7 +744,7 @@ void SCR_UpdateScreen( void )
 		{ 
 			// loading plaque over APP_STARTUP_COLOR screen
 			scr_draw_loading = 0;
-			SCR_DrawLoadingPlaque();
+			CL_UIModule_UpdateConnectScreen( qtrue );
 		}
 		// if a cinematic is supposed to be running, handle menus
 		// and console specially

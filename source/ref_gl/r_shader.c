@@ -1828,7 +1828,7 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache )
 /*
 * R_PrecacheShaders
 */
-qboolean R_PrecacheShaders( void )
+static void R_InitShadersCache( void )
 {
 	int i, j, k, numfiles;
 	const char *fileptr;
@@ -1841,7 +1841,7 @@ qboolean R_PrecacheShaders( void )
 	// enumerate shaders
 	numfiles = ri.FS_GetFileList( "scripts", ".shader", NULL, 0, 0, 0 );
 	if( !numfiles ) {
-		return qfalse;
+		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
 	}
 
 	Com_Printf( "Initializing Shaders:\n" );
@@ -1865,8 +1865,6 @@ qboolean R_PrecacheShaders( void )
 	}
 
 	Com_Printf( "--------------------------------------\n\n" );
-
-	return qtrue;
 }
 
 /*
@@ -1875,6 +1873,8 @@ qboolean R_PrecacheShaders( void )
 void R_InitShaders( void )
 {
 	int i;
+
+	R_InitShadersCache();
 
 	memset( r_shaders, 0, sizeof( r_shaders ) );
 

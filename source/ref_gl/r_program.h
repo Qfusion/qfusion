@@ -178,7 +178,6 @@ enum
 
 void RP_Init( void );
 void RP_Shutdown( void );
-void RP_PrecachePrograms( void );
 
 void RP_ProgramList_f( void );
 

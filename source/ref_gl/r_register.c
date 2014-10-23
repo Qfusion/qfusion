@@ -1188,7 +1188,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 	void *hinstance, void *wndproc, void *parenthWnd, 
 	int x, int y, int width, int height, int displayFrequency,
-	qboolean fullScreen, qboolean wideScreen, qboolean verbose, void (*initcb)(void) )
+	qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
 	const char *dllname;
 	qgl_initerr_t initerr;
@@ -1327,15 +1327,6 @@ init_qgl:
 	glerr = qglGetError();
 	if( glerr != GL_NO_ERROR )
 		Com_Printf( "glGetError() = 0x%x\n", err );
-
-	// initialization callback, used to display the loading plaque
-	initcb();
-
-	if ( !R_PrecacheShaders() ) {
-		ri.Com_Error( ERR_DROP, "Could not find any shaders!" );
-	}
-
-	RP_PrecachePrograms();
 
 	if ( r_verbose )
 		R_GfxInfo_f( );
