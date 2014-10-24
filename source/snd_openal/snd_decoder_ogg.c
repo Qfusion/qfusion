@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#define OV_EXCLUDE_STATIC_CALLBACKS
+
 #include "snd_decoder.h"
 #include <vorbis/vorbisfile.h>
 
