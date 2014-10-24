@@ -63,6 +63,8 @@ void PreRegisterTimeAddon( asIScriptEngine *engine )
 
 	// register the time type
 	r = engine->RegisterObjectType( "Time", sizeof( astime_t ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLINTS ); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 void RegisterTimeAddon( asIScriptEngine *engine )
@@ -93,4 +95,6 @@ void RegisterTimeAddon( asIScriptEngine *engine )
 	r = engine->RegisterObjectProperty( "Time", "const int wday", asOFFSET( astime_t, localtime.tm_wday ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Time", "const int yday", asOFFSET( astime_t, localtime.tm_yday ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Time", "const int isdst", asOFFSET( astime_t, localtime.tm_isdst ) ); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
