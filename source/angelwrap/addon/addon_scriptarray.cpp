@@ -241,6 +241,8 @@ static void RegisterScriptArray_Native(asIScriptEngine *engine)
 	// Same as removeAt
 	r = engine->RegisterObjectMethod("array<T>", "void erase(uint)", asMETHOD(CScriptArray, RemoveAt), asCALL_THISCALL); assert( r >= 0 );
 #endif
+
+	(void)sizeof(r); // hush the compiler
 }
 
 CScriptArray &CScriptArray::operator=(const CScriptArray &other)
@@ -1789,6 +1791,8 @@ static void RegisterScriptArray_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptArrayGetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptArrayEnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("array<T>", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptArrayReleaseAllHandles_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 // Registers the template array type
@@ -1801,6 +1805,8 @@ void PreRegisterScriptArray(asIScriptEngine *engine, bool defaultArray)
 
 	// Register the array type as a template
 	r = engine->RegisterObjectType("array<class T>", 0, asOBJ_REF | asOBJ_GC | asOBJ_TEMPLATE); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 // Registers the template array type
@@ -1816,6 +1822,7 @@ void RegisterScriptArray(asIScriptEngine *engine, bool defaultArray)
 		int r;
 		r = engine->RegisterDefaultArrayType("array<T>");
 		assert( r >= 0 );
+		(void)sizeof(r); // hush the compiler
 	}
 }
 

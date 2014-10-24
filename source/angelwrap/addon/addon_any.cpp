@@ -153,6 +153,8 @@ static void RegisterScriptAny_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_GETGCFLAG, "bool f()", asMETHOD(CScriptAny,GetFlag), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_ENUMREFS, "void f(int&in)", asMETHOD(CScriptAny,EnumReferences), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_RELEASEREFS, "void f(int&in)", asMETHOD(CScriptAny,ReleaseAllHandles), asCALL_THISCALL); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 static void RegisterScriptAny_Generic(asIScriptEngine *engine)
@@ -179,12 +181,15 @@ static void RegisterScriptAny_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptAny_GetFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptAny_EnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("any", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptAny_ReleaseAllHandles_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 void PreRegisterScriptAny(asIScriptEngine *engine)
 {
 	int r;
 	r = engine->RegisterObjectType("any", sizeof(CScriptAny), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
+	(void)sizeof(r); // hush the compiler
 }
 
 void RegisterScriptAny(asIScriptEngine *engine)
