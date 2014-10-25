@@ -171,6 +171,8 @@ void PreRegisterCvarAddon( asIScriptEngine *engine )
 
 	// register the cvar flags enum
 	r = engine->RegisterEnum( "eCvarFlag" ); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 void RegisterCvarAddon( asIScriptEngine *engine )
@@ -215,4 +217,5 @@ void RegisterCvarAddon( asIScriptEngine *engine )
 	r = engine->RegisterEnumValue( "eCvarFlag", "CVAR_CHEAT", CVAR_CHEAT ); assert( r >= 0 );
 	r = engine->RegisterEnumValue( "eCvarFlag", "CVAR_READONLY", CVAR_READONLY ); assert( r >= 0 );
 
+	(void)sizeof(r); // hush the compiler
 }

@@ -504,11 +504,11 @@ static asstring_t *objectString_Replace( const asstring_t &assearch, const asstr
 	std::string replace(asreplace.buffer);
 	std::string subject(self->buffer);
 
-    size_t pos = 0;
-    while ((pos = subject.find(search, pos)) != std::string::npos) {
-         subject.replace(pos, search.length(), replace);
-         pos += replace.length();
-    }
+	size_t pos = 0;
+	while ((pos = subject.find(search, pos)) != std::string::npos) {
+		subject.replace(pos, search.length(), replace);
+		pos += replace.length();
+	}
 
 	return objectString_FactoryBuffer( subject.c_str(), subject.size() );
 }
@@ -519,6 +519,8 @@ void PreRegisterStringAddon( asIScriptEngine *engine )
 
 	// register the string type
 	r = engine->RegisterObjectType( "String", sizeof( asstring_t ), asOBJ_REF ); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 void RegisterStringAddon( asIScriptEngine *engine )
@@ -599,4 +601,6 @@ void RegisterStringAddon( asIScriptEngine *engine )
 	r = engine->RegisterObjectMethod( "String", "bool isNumerical() const", asFUNCTION( objectString_IsNumeric ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "String", "bool isNumeric() const", asFUNCTION( objectString_IsNumeric ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
 	r = engine->RegisterObjectMethod( "String", "bool isAlphaNumerical() const", asFUNCTION( objectString_IsAlphaNumerical ), asCALL_CDECL_OBJLAST ); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }

@@ -218,6 +218,8 @@ void PreRegisterVec3Addon( asIScriptEngine *engine )
 
 	// register the vector type
 	r = engine->RegisterObjectType( "Vec3", sizeof( asvec3_t ), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_C | asOBJ_APP_CLASS_ALLFLOATS ); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 void RegisterVec3Addon( asIScriptEngine *engine )
@@ -269,4 +271,6 @@ void RegisterVec3Addon( asIScriptEngine *engine )
 	r = engine->RegisterObjectProperty( "Vec3", "float x", asOFFSET( asvec3_t, v[0] ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Vec3", "float y", asOFFSET( asvec3_t, v[1] ) ); assert( r >= 0 );
 	r = engine->RegisterObjectProperty( "Vec3", "float z", asOFFSET( asvec3_t, v[2] ) ); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }

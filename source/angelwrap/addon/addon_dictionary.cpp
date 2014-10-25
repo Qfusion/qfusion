@@ -635,6 +635,8 @@ static void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 	// Same as deleteAll
 	r = engine->RegisterObjectMethod("Dictionary", "void clear()", asMETHOD(CScriptDictionary,DeleteAll), asCALL_THISCALL); assert( r >= 0 );
 #endif
+
+	(void)sizeof(r); // hush the compiler
 }
 
 static void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
@@ -672,13 +674,15 @@ static void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("Dictionary", asBEHAVE_GETGCFLAG, "bool f()", asFUNCTION(ScriptDictionaryGetGCFlag_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Dictionary", asBEHAVE_ENUMREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryEnumReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("Dictionary", asBEHAVE_RELEASEREFS, "void f(int&in)", asFUNCTION(ScriptDictionaryReleaseAllReferences_Generic), asCALL_GENERIC); assert( r >= 0 );
+
+	(void)sizeof(r); // hush the compiler
 }
 
 void PreRegisterScriptDictionary(asIScriptEngine *engine)
 {
 	int r;
-
 	r = engine->RegisterObjectType("Dictionary", sizeof(CScriptDictionary), asOBJ_REF | asOBJ_GC); assert( r >= 0 );
+	(void)sizeof(r); // hush the compiler
 }
 
 void RegisterScriptDictionary(asIScriptEngine *engine)
