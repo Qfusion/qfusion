@@ -143,9 +143,11 @@ void RegisterMathAddon( asIScriptEngine *engine )
 
 		{ NULL, asFUNCTION(0) }
 	}, *func;
-	int r;
+	int r = 0;
 
 	for( func = math_asGlobFuncs; func->declaration; func++ ) {
 		r = engine->RegisterGlobalFunction( func->declaration, func->ptr, asCALL_CDECL ); assert( r >= 0 );
 	}
+
+  (void)sizeof(r); // hush the compiler
 }
