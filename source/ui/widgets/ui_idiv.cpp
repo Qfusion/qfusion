@@ -28,7 +28,7 @@ namespace WSWUI {
 
 using namespace Rocket::Core;
 
-InlineDiv::InlineDiv( const String &tag ) : Element(tag), timeout(WSW_UI_STREAMCACHE_TIMEOUT)
+InlineDiv::InlineDiv( const String &tag ) : Element( tag ), timeout( WSW_UI_STREAMCACHE_TIMEOUT ), onAddLoad( false )
 {
 }
 
@@ -36,6 +36,10 @@ void InlineDiv::ReadFromFile( const char *fileName )
 {
 	int file, length;
 	
+	while( *fileName == '/' ) {
+		fileName++;
+	}
+
 	length = trap::FS_FOpenFile( fileName, &file, FS_READ );
 	if( length < 1 ) {
 		// missing file
@@ -70,11 +74,26 @@ void InlineDiv::CacheRead( const char *fileName, void *privatep )
 	element->RemoveReference();
 }
 
+void InlineDiv::OnChildAdd( Element* element )
+{
+	Element::OnChildAdd( element );
+
+	if( element == this ) {
+		Element *document = GetOwnerDocument();
+		if( document == NULL )
+			return;
+		if( onAddLoad )
+			LoadSource();
+	}
+}
+
 void InlineDiv::LoadSource()
 {
 	// Get the source URL for the image.
 	String source = GetAttribute< String >("src", "");
 	bool nocache = GetAttribute< int >("nocache", 0) != 0;
+
+	onAddLoad = false;
 
 	if( source.Empty() ) {
 		SetInnerRML( "" );
@@ -99,6 +118,12 @@ void InlineDiv::LoadSource()
 		// get full path to the source.
 		// without the leading "/", path is considered to be relative to the document
 		Rocket::Core::ElementDocument* document = GetOwnerDocument();
+
+		if( !document && source.Substring( 0, 1 ) != "/" ) {
+			onAddLoad = true;
+			return;
+		}
+
 		URL source_url( document == NULL ? "" : document->GetSourceURL() );
 		String source_directory = source_url.GetPath();
 

@@ -35,6 +35,7 @@ namespace WSWUI
 
 		/// Checks for changes to source address.
 		virtual void OnAttributeChange(const Rocket::Core::AttributeNameList&);
+		virtual void InlineDiv::OnChildAdd( Element* element );
 
 		// streaming callbacks
 		static void CacheRead( const char *fileName, void *privatep );
@@ -45,6 +46,7 @@ namespace WSWUI
 		void LoadSource();
 
 		int timeout;
+		bool onAddLoad;
 	};
 }
 
