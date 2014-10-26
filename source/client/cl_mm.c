@@ -821,7 +821,7 @@ void CL_MM_Init( void )
 	* create cvars
 	*/
 	cl_mm_session = Cvar_Get( "cl_mm_session", "0", CVAR_READONLY | CVAR_USERINFO );
-	cl_mm_autologin = Cvar_Get( "cl_mm_autologin", "0", CVAR_ARCHIVE );
+	cl_mm_autologin = Cvar_Get( "cl_mm_autologin", "1", CVAR_ARCHIVE );
 
 	// TODO: remove as cvar
 	cl_mm_user = Cvar_Get( "cl_mm_user", "", CVAR_ARCHIVE );
