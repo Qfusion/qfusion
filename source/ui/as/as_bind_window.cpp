@@ -62,19 +62,19 @@ public:
 	}
 
 	/// Loads document from the passed URL.
-	void open( const ASURL &location )
+	void open( const asstring_t &location )
 	{
 		WSWUI::NavigationStack *stack = UI_Main::Get()->getNavigator();
 		if( stack == NULL ) {
 			return;
 		}
 
-		stack->pushDocument( location.GetURL()->buffer );
+		stack->pushDocument( location.buffer );
 	}
 
 	/// Loads modal document from the URL.
 	/// FIXME: move to window.
-	void modal( const ASURL &location, int defaultCode = -1 )
+	void modal( const asstring_t &location, int defaultCode = -1 )
 	{
 		WSWUI::NavigationStack *stack = UI_Main::Get()->getNavigator();
 
@@ -92,7 +92,7 @@ public:
 		if( suspendedContext ) {
 			// attach itself as a listener of hide event so the context
 			// can be resumed after the modal document is hidden
-			WSWUI::Document *doc = stack->pushDocument( location.GetURL()->buffer, true, true );
+			WSWUI::Document *doc = stack->pushDocument( location.buffer, true, true );
 			if( doc ) {
 				attachedModalDocument = doc->getRocketDocument();
 				attachedModalDocument->AddEventListener( "hide", this );
@@ -166,14 +166,14 @@ public:
 		return document;
 	}
 
-	ASURL getLocation( void ) const
+	asstring_t *getLocation( void ) const
 	{
 		ElementDocument *document = GetCurrentUIDocument();
 		assert( document != NULL );
-		return ASURL( document->GetSourceURL().CString() );
+		return ASSTR( document->GetSourceURL().CString() );
 	}
 
-	void setLocation( const ASURL &location )
+	void setLocation( const asstring_t &location )
 	{
 		open( location );
 	}
