@@ -1483,6 +1483,9 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 #endif
 		shaderStrings[i++] = "\n";
 
+#ifdef GL_ES_VERSION_2_0
+	shadowIdx = i;
+#endif
 	shaderStrings[i++] = "\n";
 	shaderStrings[i++] = shaderVersion;
 	shaderTypeIdx = i;
