@@ -12,8 +12,8 @@ namespace Core = Rocket::Core;
 
 // Document
 
-Document::Document( const std::string &name, Core::ElementDocument *elem )
-	: documentName( name ), rocketDocument( elem ), viewed( false )
+Document::Document( const std::string &name, NavigationStack *stack )
+	: documentName( name ), rocketDocument( NULL ), viewed( false ), stack( stack )
 {}
 
 Document::~Document()
@@ -115,12 +115,12 @@ Document *DocumentCache::getDocument( const std::string &name )
 	if( it == documentSet.end() )
 	{
 		// load it up, and keep the reference for the stack
-		DocumentLoader loader( name.c_str() );
+		DocumentLoader loader;
 
-		if( !loader.getDocument() )
+		document = loader.loadDocument(name.c_str());
+		if( !document )
 			return 0;
 
-		document = __new__( Document )( name, loader.getDocument() );
 		documentSet.insert( document );
 
 		if( UI_Main::Get()->debugOn() ) {
@@ -158,7 +158,7 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 	// the modal flag set
 	if( doc->IsModal() ) {
 		DocumentLoader loader;
-		loader.closeDocument( doc->getRocketDocument() );
+		loader.closeDocument( doc );
 		documentSet.erase( it );
 	}
 	
@@ -217,7 +217,7 @@ void DocumentCache::clearCaches()
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
 		if( (*it)->getRocketDocument() ) {
 			//(*it)->removeReference();
-			loader.closeDocument( (*it)->getRocketDocument() );
+			loader.closeDocument( (*it) );
 		}
 	}
 
@@ -253,7 +253,7 @@ void DocumentCache::invalidateAssets(void)
 
 NavigationStack::NavigationStack() : modalTop( false ), stackLocked( false )
 {
-
+	documentStack.clear();
 }
 
 NavigationStack::~NavigationStack()
@@ -299,6 +299,8 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	Document *doc = cache.getDocument( documentRealname );
 	if( !doc || !doc->getRocketDocument() )
 		return NULL;
+
+	doc->setStack( this );
 
 	// the loading document might have pushed another document onto the stack 
 	// in the onload event, pushing ourselves on top of it now is going to fuck up the order
@@ -541,17 +543,8 @@ void NavigationStack::printStack()
 //==========================================
 
 DocumentLoader::DocumentLoader()
-	: isLoading(false), loadedDocument(0)
 {
 	// register itself to UI_Main
-
-}
-
-DocumentLoader::DocumentLoader(const char *filename)
-	: isLoading(false), loadedDocument(0)
-{
-	// this will set loadedDocument if succeeded
-	loadDocument( filename );
 }
 
 DocumentLoader::~DocumentLoader()
@@ -559,43 +552,39 @@ DocumentLoader::~DocumentLoader()
 
 }
 
-// TODO: return UI_Document
-Core::ElementDocument *DocumentLoader::loadDocument(const char *path)
+Document *DocumentLoader::loadDocument(const char *path)
 {
 	// FIXME: use RocketModule
 	UI_Main *ui = UI_Main::Get();
 	RocketModule *rm = ui->getRocket();
 	ASUI::ASInterface *as = ui->getAS();
+	Document *loadedDocument;
 
-	isLoading = true;
-	currentLoadPath = path;
-
-	// backwards development compatibility TODO: eliminate this system
-	ui->setDocumentLoader( this );
+	loadedDocument = __new__( Document )( path );
 
 	// clear the postponed onload events
 	onloads.clear();
 
 	// tell angelscript to start building a new module
-	as->startBuilding(path);
+	as->startBuilding( path, static_cast<void *>(loadedDocument), static_cast<void *>(this) );
 
 	// load the .rml
-	loadedDocument = rm->loadDocument(path, /* true */ false);
-	if( !loadedDocument )
-	{
-		// TODO: failsafe instead of this
-		// trap::Error( va("DocumentLoader::loadDocument failed to load %s", filename) );
+	Rocket::Core::ElementDocument *rocketDocument = rm->loadDocument(path, /* true */ false);
+	loadedDocument->setRocketDocument(rocketDocument);
+
+	if( !rocketDocument ) {
 		Com_Printf( "DocumentLoader::loadDocument failed to load %s\n", path);
 	}
 
 	// tell angelscript it can compile and link the module
 	// has to be called even if document loading fails!
 	// also ensure the 1-to-1 match between the build and document names
-	as->finishBuilding( loadedDocument ? loadedDocument->GetSourceURL().CString() : NULL );
+	as->finishBuilding( rocketDocument ? rocketDocument->GetSourceURL().CString() : NULL );
 
 	// handle postponed onload events (HOWTO handle these in cached documents?)
-	if( loadedDocument )
+	if( rocketDocument )
 	{
+		rocketDocument->SetUserData(static_cast<void *>(loadedDocument));
 		for( PostponedList::iterator it = onloads.begin(); it != onloads.end(); ++it )
 		{
 			it->first->ProcessEvent( *it->second );
@@ -605,32 +594,28 @@ Core::ElementDocument *DocumentLoader::loadDocument(const char *path)
 
 	// and clear the events
 	onloads.clear();
-	isLoading = false;
 
-	// backwards development compatibility TODO: eliminate this system
-	ui->setDocumentLoader( 0 );
+	if( !rocketDocument ) {
+		__delete__( loadedDocument );
+		loadedDocument = NULL;
+	}
 
-	return loadedDocument;
-}
-
-// get last document
-Rocket::Core::ElementDocument *DocumentLoader::getDocument()
-{
 	return loadedDocument;
 }
 
 // TODO: redundant
-void DocumentLoader::closeDocument(Rocket::Core::ElementDocument *document)
+void DocumentLoader::closeDocument(Document *document)
 {
 	UI_Main *ui = UI_Main::Get();
 	ASUI::ASInterface *as = ui ? ui->getAS() : 0;
+	Rocket::Core::ElementDocument *rocketDocument = document->getRocketDocument();
 
 	if( as ) {
 		// we need to release AS handles referencing libRocket resources
-		as->buildReset( document->GetSourceURL().CString() );
+		as->buildReset( rocketDocument->GetSourceURL().CString() );
 	}
 
-	ui->getRocketContext()->UnloadDocument(document);
+	ui->getRocketContext()->UnloadDocument(rocketDocument);
 }
 
 void DocumentLoader::postponeOnload(Rocket::Core::EventListener *listener, Rocket::Core::Event &event)

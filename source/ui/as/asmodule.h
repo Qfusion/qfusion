@@ -37,7 +37,7 @@ public:
 	// called to start a building round
 	// note that temporary name assigned to the build (module)
 	// may be changed in the finishBuilding call
-	virtual void startBuilding( const char *tempModuleName ) = 0;
+	virtual void startBuilding( const char *tempModuleName, void *userData = NULL, void *loader = NULL ) = 0;
 
 	// compile all added scripts, set final module name
 	virtual bool finishBuilding( const char *finalModuleName = NULL ) = 0;

@@ -124,18 +124,25 @@ public:
 			return;
 		}
 
+		Element *elem = event.GetTargetElement();
+		String docURL = elem->GetOwnerDocument()->GetSourceURL();
+
 		// onloads cant be called within building process
 		if( /* event.GetType() == "load" && */ asmodule->isBuilding() )
 		{
 			// TODO: we should eliminate chain to DocumentLoader like this, so move
 			// event postponing somewhere else
-			UI_Main::Get()->getDocumentLoader()->postponeOnload( this, event );
-			return;
+			asIScriptModule *module = asmodule->getModule( docURL.CString() );
+			if( module ) {
+				WSWUI::DocumentLoader *loader = static_cast<WSWUI::DocumentLoader *>( module->GetUserData( 1 ) );
+				if( loader ) {
+					loader->postponeOnload( this, event );
+				}
+				return;
+			}
 		}
 
-		Element *elem = event.GetTargetElement();
-
-		fetchFunctionPtr( elem->GetOwnerDocument()->GetSourceURL() );
+		fetchFunctionPtr( docURL );
 
 		// push elem and event as parameters to the internal function
 		// and call it
@@ -213,11 +220,18 @@ public:
 		// onloads cant be called within building process
 		if( /* event.GetType() == "load" && */ asmodule->isBuilding() )
 		{
-			UI_Main::Get()->getDocumentLoader()->postponeOnload( this, event );
+			asIScriptModule *module = funcPtr.getModule();
+			if( module ) {
+				WSWUI::DocumentLoader *loader = static_cast<WSWUI::DocumentLoader *>( module->GetUserData( 1 ) );
+				if( loader ) {
+					loader->postponeOnload( this, event );
+				}
+				return;
+			}
 			return;
 		}
 
-		Element *elem = event.GetTargetElement();
+		Element *elem = event.GetTargetElement();		
 
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "ScriptEventCaller: Event %s, target %s, func %s\n",

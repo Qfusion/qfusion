@@ -62,21 +62,25 @@ public:
 	}
 
 	/// Loads document from the passed URL.
-	void open( const asstring_t &location )
+	ElementDocument *open( const asstring_t &location )
 	{
-		WSWUI::NavigationStack *stack = UI_Main::Get()->getNavigator();
+		WSWUI::NavigationStack *stack = UI_Main::Get()->createStack();
 		if( stack == NULL ) {
-			return;
+			return NULL;
 		}
-
-		stack->pushDocument( location.buffer );
+		WSWUI::Document *ui_document = stack->pushDocument( location.buffer );
+		if( !ui_document ) {
+			return NULL;
+		}
+		ui_document->addReference();
+		return ui_document->getRocketDocument();
 	}
 
 	/// Loads modal document from the URL.
 	/// FIXME: move to window.
 	void modal( const asstring_t &location, int defaultCode = -1 )
 	{
-		WSWUI::NavigationStack *stack = UI_Main::Get()->getNavigator();
+		WSWUI::NavigationStack *stack = GetCurrenUIStack();
 
 		// default return value when modal window is not closed via window.close()
 		modalValue = defaultCode;
@@ -110,7 +114,7 @@ public:
 	/// Stores exit code to be passed to suspended context if modal.
 	void close( int code = 0 )
 	{
-		WSWUI::NavigationStack *stack = UI_Main::Get()->getNavigator();
+		WSWUI::NavigationStack *stack = GetCurrenUIStack();
 		if( stack == NULL ) {
 			return;
 		}
@@ -130,7 +134,7 @@ public:
 		}
 		else {
 			// not really a modal window, clear the stack
-			UI_Main::Get()->showUI( false );
+			stack->popAllDocuments();
 		}
 	}
 
@@ -175,7 +179,11 @@ public:
 
 	void setLocation( const asstring_t &location )
 	{
-		open( location );
+		WSWUI::NavigationStack *stack = GetCurrenUIStack();
+		if( stack == NULL ) {
+			return;
+		}
+		stack->pushDocument( location.buffer );
 	}
 
 	unsigned int getTime( void ) const
@@ -210,7 +218,7 @@ public:
 
 	unsigned int historySize( void ) const
 	{
-		WSWUI::NavigationStack *stack = UI_Main::Get()->getNavigator();
+		WSWUI::NavigationStack *stack = GetCurrenUIStack();
 		if( stack != NULL ) {
 			return stack->getStackSize();
 		}
@@ -219,7 +227,7 @@ public:
 
 	void historyBack( void ) const
 	{
-		WSWUI::NavigationStack *stack = UI_Main::Get()->getNavigator();
+		WSWUI::NavigationStack *stack = GetCurrenUIStack();
 		if( stack != NULL && stack->hasAtLeastTwoDocuments() && !stack->isTopModal() ) {
 			stack->popDocument();
 		}
@@ -317,18 +325,24 @@ private:
 
 	static ElementDocument *GetCurrentUIDocument( void )
 	{
-		// we assume we have set user data during instancing in asui_scriptdocument.cpp
-		// also note that this method can be called outside the AS execution context!
+		// note that this method can be called outside the AS execution context!
 		asIScriptModule *m = UI_Main::Get()->getAS()->getActiveModule();
 		if( !m ) {
 			return NULL;
 		}
+		WSWUI::Document *ui_document = static_cast<WSWUI::Document *>( m->GetUserData() );
+		return ui_document ? ui_document->getRocketDocument() : NULL;
+	}
 
-		void *data = m->GetUserData();
-		if( !data ) {
+	static WSWUI::NavigationStack *GetCurrenUIStack( void )
+	{
+		// note that this method can be called outside the AS execution context!
+		asIScriptModule *m = UI_Main::Get()->getAS()->getActiveModule();
+		if( !m ) {
 			return NULL;
 		}
-		return static_cast<ElementDocument *>( data );
+		WSWUI::Document *ui_document = static_cast<WSWUI::Document *>( m->GetUserData() );
+		return ui_document ? ui_document->getStack() : NULL;
 	}
 
 	void detachAsEventListener( void )

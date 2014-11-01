@@ -55,6 +55,8 @@ class EmptyFormatter;
 class UI_Main
 {
 public:
+	typedef std::list<NavigationStack *> UI_Navigation;
+
 	virtual ~UI_Main();
 
 	void refreshScreen( unsigned int time, int clientState, int serverState, 
@@ -97,7 +99,7 @@ public:
 
 	ASUI::ASInterface *getAS( void ) { return asmodule; };
 	RocketModule *getRocket( void ) { return rocketModule; }
-	NavigationStack *getNavigator( void ) { return navigator; }
+	//NavigationStack *getNavigator( void ) { return navigator; }
 	ServerBrowserDataSource *getServerBrowser( void ) { return serverBrowser; }
 	DemoInfo *getDemoInfo( void ) { return &demoInfo; }
 
@@ -105,10 +107,6 @@ public:
 	Rocket::Core::Context *getRocketContext( void );
 
 	StreamCache *getStreamCache( void ) { return streamCache; }
-
-	// backwards development compatibility
-	DocumentLoader *getDocumentLoader() { return currentLoader; }
-	void setDocumentLoader( DocumentLoader *loader ) { currentLoader = loader; }
 
 	const RefreshState &getRefreshState( void ) { return refreshState; }
 
@@ -124,6 +122,8 @@ public:
 	void flushAjaxCache( void );
 
 	unsigned int getConnectCount( void ) const { return connectCount; }
+
+	NavigationStack *createStack( void );
 
 private:
 	UI_Main( int vidWidth, int vidHeight, float pixelRatio,
@@ -180,9 +180,7 @@ private:
 	IrcChannelsDataSource *ircchannels;
 	GameAjaxDataSource *gameajax;
 
-	NavigationStack *navigator;
-
-	DocumentLoader *currentLoader;
+	UI_Navigation navigation;
 
 	StreamCache *streamCache;
 

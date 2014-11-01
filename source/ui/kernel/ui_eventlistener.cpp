@@ -94,23 +94,24 @@ public:
 			( event.GetPhase() == Rocket::Core::Event::PHASE_TARGET || event.GetPhase() == Rocket::Core::Event::PHASE_BUBBLE ) )
 		{
 			int key = event.GetParameter<int>( "key_identifier", 0 );
+			ElementDocument *document = event.GetTargetElement()->GetOwnerDocument();
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetUserData());
+			WSWUI::NavigationStack *stack = ui_document ? ui_document->getStack() : NULL;
 
 			if( key == Input::KI_ESCAPE ) {
-				NavigationStack *stack = UI_Main::Get()->getNavigator();
-
-				if( stack->isTopModal() ) {
-					// pop the top document
-					stack->popDocument();
-				}
-				else {
-					// hide all documents
-					UI_Main::Get()->showUI( false );
+				if( stack ) {
+					if( stack->isTopModal() ) {
+						// pop the top document
+						stack->popDocument();
+					}
+					else {
+						// hide all documents
+						UI_Main::Get()->showUI( false );
+					}
 				}
 				event.StopPropagation();
 			}
 			else if( key == Rocket::Core::Input::KI_BROWSER_BACK || key == Rocket::Core::Input::KI_BACK ) {
-				NavigationStack *stack = UI_Main::Get()->getNavigator();
-
 				// act as history.back()
 				if( stack && stack->hasAtLeastTwoDocuments() ) {
 					stack->popDocument();

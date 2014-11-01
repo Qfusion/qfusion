@@ -43,7 +43,11 @@ public:
 			idiv->ReadFromFile( fileName );
 		}
 		else {
-			UI_Main::Get()->getNavigator()->pushDocument( fileName );
+			ElementDocument *document = element->GetOwnerDocument();
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetUserData());
+			if( ui_document ) {
+				ui_document->getStack()->pushDocument( fileName );
+			}
 		}
 
 		element->RemoveReference();
@@ -99,7 +103,10 @@ public:
 				return;
 			}
 
-			UI_Main::Get()->getNavigator()->pushDocument( href.CString() );
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(GetOwnerDocument()->GetUserData());
+			if( ui_document ) {
+				ui_document->getStack()->pushDocument( href.CString() );
+			}
 		}
 		else
 		{

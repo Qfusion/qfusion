@@ -70,6 +70,7 @@ void UI_RenderInterface::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHa
 
 	poly_t *poly = ( poly_t * )geometry;
 
+	if( !trap::Cvar_Value("foo"))
 	trap::R_DrawStretchPoly( poly, translation.x, translation.y );
 }
 
@@ -79,6 +80,7 @@ void UI_RenderInterface::RenderGeometry(Rocket::Core::Vertex *vertices, int num_
 
 	poly = RocketGeometry2Poly( true, vertices, num_vertices, indices, num_indices, texture );
 
+	if( !trap::Cvar_Value("foo"))
 	trap::R_DrawStretchPoly( poly, translation.x, translation.y );
 }
 

@@ -48,15 +48,18 @@ namespace WSWUI {
 
 //==================================================
 
+	class NavigationStack;
+
 	// Document that stores references to Rocket's element and Angelscript info
 	class Document
 	{
 	public:
-		Document(const std::string &name="", Rocket::Core::ElementDocument *elem=0);
+		Document(const std::string &name="", NavigationStack *stack = NULL);
 		~Document();
 
 		const std::string &getName() const { return documentName; }
 		// addref? nah.. make sure you dont leave a pointer hanging and also check for NULL
+		void setRocketDocument(Rocket::Core::ElementDocument *elem) { rocketDocument = elem; }
 		Rocket::Core::ElementDocument *getRocketDocument() { return rocketDocument; }
 
 		// refcount wrappers for rocket's element,
@@ -70,14 +73,17 @@ namespace WSWUI {
 		void Show(bool show=true, bool modal=false);
 		void Hide();
 		void Focus();
-		void SetViewed(void) { viewed = true; }
-		bool IsViewed(void) { return viewed; }
+		void SetViewed (void) { viewed = true; }
+		bool IsViewed (void) const { return viewed; }
 		bool IsModal(void);
+		NavigationStack *getStack() const { return stack; }
+		void setStack(NavigationStack *stack) { this->stack = stack; }
 
 	private:
 		// this will also be the name for the asmodule!
 		std::string documentName;
 		Rocket::Core::ElementDocument *rocketDocument;
+		NavigationStack *stack;
 		bool viewed;
 	};
 
@@ -147,6 +153,7 @@ namespace WSWUI {
 		void popAllDocuments(void);
 		bool hasDocuments(void) const;
 		bool hasOneDocument(void) const;
+		bool empty(void) const { return !hasDocuments(); }
 		bool hasAtLeastTwoDocuments(void) const;
 		bool isTopModal(void) const { return modalTop; }
 		void markTopAsViewed(void);
@@ -194,16 +201,12 @@ namespace WSWUI {
 	{
 	public:
 		DocumentLoader();
-		DocumentLoader(const char *filename);
-
 		~DocumentLoader();
 
 		// cached?
-		Rocket::Core::ElementDocument *loadDocument(const char *path);
-		// get last document
-		Rocket::Core::ElementDocument *getDocument();
+		Document *loadDocument(const char *path);
 		// TODO: redundant
-		void closeDocument(Rocket::Core::ElementDocument*);
+		void closeDocument(Document*);
 
 		// TODO: propagate these from UI_Main
 		// set onload event to be called after document loading is done
@@ -219,10 +222,6 @@ namespace WSWUI {
 		typedef std::list<PostponedEvent> PostponedList;
 
 		PostponedList onloads;
-
-		bool isLoading;	// redundant here?
-		Rocket::Core::String currentLoadPath;
-		Rocket::Core::ElementDocument *loadedDocument;
 	};
 
 }
