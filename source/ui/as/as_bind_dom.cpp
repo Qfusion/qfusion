@@ -230,24 +230,33 @@ static Element *Element_GetChild(Element *self, unsigned int index) {
 }
 
 static void Element_AppendChild(Element *self, Element *child) {
-	self->AppendChild(child);
-	_DECREF(child);
+	if( child ) {
+		self->AppendChild(child);
+		_DECREF(child);
+	}
 }
 
 static void Element_InsertBefore(Element *self, Element *a, Element *b) {
-	self->InsertBefore(a,b);
-	_DECREF(a);
-	_DECREF(b);
+	if( a && b ) {
+		self->InsertBefore(a,b);
+		_DECREF(a);
+		_DECREF(b);
+	}
 }
 
 static void Element_RemoveChild(Element *self, Element *a) {
-	self->RemoveChild(a);
-	_DECREF(a);
+	if( a ) {
+		self->RemoveChild(a);
+		_DECREF(a);
+	}
 }
 
 static Element *Element_Clone(Element *self) {
-	Element *e = self->Clone();
-	_RETREF(e);
+	if( self ) {
+		Element *e = self->Clone();
+		_RETREF(e);
+	}
+	return NULL;
 }
 
 // CONTENTS
