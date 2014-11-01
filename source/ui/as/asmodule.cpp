@@ -237,11 +237,13 @@ public:
 		return stringObjectType;
 	}
 
-	virtual void startBuilding( const char *tempModuleName )
+	virtual void startBuilding( const char *tempModuleName, void *userData, void *loader )
 	{
 		_isBuilding = true;
 		scriptCount = 0;
 		module = engine->GetModule( tempModuleName, asGM_CREATE_IF_NOT_EXISTS );
+		module->SetUserData( userData );
+		module->SetUserData( loader, 1 );
 	}
 
 	virtual bool finishBuilding( const char *finalModuleName )
@@ -252,6 +254,7 @@ public:
 			return false;
 		}
 		module->SetName( finalModuleName );
+		module->SetUserData( NULL, 1 );
 		return module->Build() >= 0;
 	}
 

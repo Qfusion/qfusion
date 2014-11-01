@@ -54,7 +54,6 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	serverBrowser(0), gameTypes(0), maps(0), vidProfiles(0), huds(0), videoModes(0), 
 	demos(0), mods(0), 
 	playerModels(0), crosshairs(0), tvchannels(0), ircchannels(0), gameajax(0),
-	navigator(0), /* backwards development compatibility: */ currentLoader(0),
 
 	// other members
 	mousex(0), mousey(0), gameProtocol(protocol),
@@ -86,8 +85,8 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 
 	createDataSources();
 	createFormatters();
+	createStack();
 
-	navigator = __new__( NavigationStack )();
 	streamCache = __new__( StreamCache )();
 
 	streamCache->Init();
@@ -172,10 +171,20 @@ Rocket::Core::Context *UI_Main::getRocketContext( void )
 
 void UI_Main::preloadUI( void )
 {
-	navigator->popAllDocuments();
+	NavigationStack *navigator = navigation.front();
 
-	// initialize with default document
-	navigator->setDefaultPath( ui_basepath->string );
+	while( !navigation.empty() ) {
+		NavigationStack *stack = navigation.front();
+		navigation.pop_front();
+
+		// clear the navigation stack
+		stack->popAllDocuments();
+		if( stack != navigator ) {
+			__delete__( stack );
+		}
+	}
+
+	navigation.push_front(navigator);
 
 	// load translation strings
 
@@ -185,6 +194,10 @@ void UI_Main::preloadUI( void )
 	trap::L10n_LoadLangPOFile( "l10n/ui" );
 	
 	// load strings provided by the theme: e.g. ui/l10n/porkui
+
+	// initialize with default document
+	navigator->setDefaultPath( ui_basepath->string );
+
 	String l10nLocalPath( navigator->getDefaultPath().c_str() );
 	l10nLocalPath += "l10n";
 	l10nLocalPath.Erase( 0, 1 );
@@ -197,11 +210,21 @@ void UI_Main::preloadUI( void )
 
 void UI_Main::reloadUI( void )
 {
-	// clear the navigation stack
-	navigator->popAllDocuments();
+	NavigationStack *navigator = navigation.front();
 
-	// clear the navigation stack from previous installment
-	navigator->getCache()->clearCaches();
+	while( !navigation.empty() ) {
+		NavigationStack *stack = navigation.front();
+		navigation.pop_front();
+
+		// clear the navigation stack
+		stack->popAllDocuments();
+		stack->getCache()->clearCaches();
+		if( stack != navigator ) {
+			__delete__( stack );
+		}
+	}
+
+	navigation.push_front(navigator);
 
 	if( serverBrowser ) {
 		serverBrowser->stopUpdate();
@@ -251,17 +274,23 @@ void UI_Main::unregisterRocketCustoms( void )
 
 void UI_Main::shutdownRocket( void )
 {
-	// clear the navigation stack
-	navigator->popAllDocuments();
-	// clear the navigation stack from previous installment
-	navigator->getCache()->clearCaches();
+	for (UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it) {
+		// clear the navigation stack
+		(*it)->popAllDocuments();
+		(*it)->getCache()->clearCaches();
+	}
+
 	// forget about all previously registed shaders
 	rocketModule->clearShaderCache();
 
 	destroyDataSources();
 	destroyFormatters();
 
-	__SAFE_DELETE_NULLIFY( navigator );
+	while( !navigation.empty() ) {
+		NavigationStack *stack = navigation.front();
+		__SAFE_DELETE_NULLIFY( stack );
+		navigation.pop_front();
+	}
 
 	__SAFE_DELETE_NULLIFY( rocketModule );
 }
@@ -279,12 +308,25 @@ void UI_Main::touchAllCachedShaders( void )
 	if( rocketModule != NULL ) {
 		rocketModule->touchAllCachedShaders();
 	}
-	navigator->invalidateAssets();
+	for (UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it) {
+		(*it)->invalidateAssets();
+	}
 }
 
 void UI_Main::flushAjaxCache( void )
 {
 	this->invalidateAjaxCache = true;
+}
+
+NavigationStack *UI_Main::createStack( void )
+{
+	NavigationStack *stack = __new__( NavigationStack )();
+	if( !stack ) {
+		return NULL;
+	}
+	stack->setDefaultPath( ui_basepath->string );
+	navigation.push_back( stack );
+	return stack;
 }
 
 void UI_Main::createDataSources( void )
@@ -359,8 +401,20 @@ void UI_Main::showUI( bool show )
 	menuVisible = show;
 	trap::CL_SetKeyDest( show ? key_menu : key_game );
 
-	if( !show )
-		navigator->popAllDocuments();
+	if( !show ) {
+		NavigationStack *navigator = navigation.front();
+
+		while( !navigation.empty() ) {
+			NavigationStack *stack = navigation.front();
+			navigation.pop_front();
+			stack->popAllDocuments();
+			if( stack != navigator ) {
+				__delete__( stack );
+			}
+		}
+
+		navigation.push_back( navigator );
+	}
 }
 
 void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessage, 
@@ -376,6 +430,7 @@ void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessa
 	this->rejectMessage = rejectMessage ? rejectMessage : "";
 	this->downloadInfo = dlinfo;
 
+	NavigationStack *navigator = navigation.front();
 	navigator->pushDocument( ui_connectscreen, false, true );
 
 	forceUI( true );
@@ -454,6 +509,8 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
 	bool backGround, bool showCursor )
 {
+	UI_Navigation::iterator it, it_next;
+
 	refreshState.time = time;
 	refreshState.clientState = clientState;
 	refreshState.serverState = serverState;
@@ -468,6 +525,7 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 
 	// postponed showing of the stacked document, we need to set the refresh state first
 	if( showNavigationStack ) {
+		NavigationStack *navigator = navigation.front();
 		navigator->showStack( true );
 		showNavigationStack = false;
 	}
@@ -493,6 +551,20 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	// run incremental garbage collection
 	asmodule->garbageCollectOneStep();
 
+	NavigationStack *navigator = navigation.front();
+
+	// free empty navigation stacks
+	for( it = navigation.begin(); it != navigation.end(); it = it_next ) {
+		it_next = it;
+		it_next++;
+
+		NavigationStack *stack = *it;
+		if( stack != navigator && stack->empty() ) {
+			__delete__( stack );
+			navigation.erase( it );
+		}
+	}
+
 	if( showCursor ) { 
 		rocketModule->showCursor();
 	}
@@ -515,7 +587,9 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	rocketModule->render();
 
 	// mark the top stack document as viwed for history tracking
-	navigator->markTopAsViewed();
+	for( it = navigation.begin(); it != navigation.end(); ++it ) {
+		(*it)->markTopAsViewed();
+	}
 
 	// stuff we need to render without using rocket
 	customRender();
@@ -571,7 +645,7 @@ void UI_Main::M_Menu_Force_f( void )
 
 	//Com_Printf("UI_Main::M_Menu_Force_F..\n");
 
-	NavigationStack *nav = self->getNavigator();
+	NavigationStack *nav = self->navigation.front();
 	if( !nav )
 		return;
 
@@ -610,7 +684,7 @@ void UI_Main::M_Menu_Open_f( void )
 	Rocket::Core::String urlString = url.GetURL();
 	//Com_Printf( "UI_Main::M_Menu_Open_f %s\n", urlString.CString() );
 
-	NavigationStack *nav = self->getNavigator();
+	NavigationStack *nav = self->navigation.front();
 	if( !nav )
 		return;
 
@@ -683,16 +757,21 @@ void UI_Main::PrintDocuments_Cmd( void )
 	if( !self )
 		return;
 
-	NavigationStack *nav = self->getNavigator();
-	if( !nav )
-		return;
 	Com_Printf("Navigation stack:\n");
-	nav->printStack();
 
-	DocumentCache *cache = nav->getCache();
-	if( !cache )
-		return;
-	Com_Printf("Document cache:\n");
-	cache->printCache();
+	for( UI_Navigation::iterator it = self->navigation.begin(); it != self->navigation.end(); ++it ) {
+		NavigationStack *nav = *it;
+
+		nav->printStack();
+
+		DocumentCache *cache = nav->getCache();
+		if( cache ) {
+			Com_Printf("Document cache:\n");
+			cache->printCache();
+		}
+
+		Com_Printf("\n");
+	}
 }
+
 }

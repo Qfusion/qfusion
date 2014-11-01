@@ -19,12 +19,6 @@ public:
 		: ElementDocument( tag ), numScriptsAdded(0)
 	{
 		asmodule = UI_Main::Get()->getAS();
-
-		// establish our relationship with the building module
-		asIScriptModule *scriptModule = asmodule->getModule();
-		if( scriptModule ) {
-			scriptModule->SetUserData( static_cast<void *>(this) );
-		}
 	}
 
 	virtual ~UI_ScriptDocument(void)
