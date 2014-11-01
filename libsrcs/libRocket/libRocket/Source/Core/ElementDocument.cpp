@@ -51,6 +51,8 @@ ElementDocument::ElementDocument(const String& tag) : Element(tag)
 	layout_dirty = true;
 	lock_layout = 0;
 
+	user_data = NULL;
+
 	ForceLocalStackingContext();
 
 	SetProperty(POSITION, "absolute");
