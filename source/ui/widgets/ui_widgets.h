@@ -89,6 +89,7 @@ namespace WSWUI
 	Rocket::Core::ElementInstancer *GetElementFieldInstancer( void );
 	Rocket::Core::ElementInstancer *GetVideoInstancer( void );
 	Rocket::Core::ElementInstancer *GetIrcLogWidgetInstancer( void );
+	Rocket::Core::ElementInstancer *GetIFrameWidgetInstancer( void );
 }
 
 #endif /* __WIDGETS_H__ */
