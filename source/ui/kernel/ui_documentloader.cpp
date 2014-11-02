@@ -13,7 +13,7 @@ namespace Core = Rocket::Core;
 // Document
 
 Document::Document( const std::string &name, NavigationStack *stack )
-	: documentName( name ), rocketDocument( NULL ), viewed( false ), stack( stack )
+	: documentName( name ), rocketDocument( NULL ), stack( stack ), viewed( false )
 {}
 
 Document::~Document()
