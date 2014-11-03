@@ -267,6 +267,9 @@
     <ClCompile Include="parsers\ui_parsersound.cpp">
       <Filter>Source Files\parsers</Filter>
     </ClCompile>
+    <ClCompile Include="widgets\ui_iframe.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ui_public.h">

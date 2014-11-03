@@ -56,7 +56,7 @@ class ScriptEventListener : public EventListener
 		return String( os.str().c_str() );
 	}
 
-	void fetchFunctionPtr( const String &document_name )
+	void fetchFunctionPtr( asIScriptModule *module )
 	{
 		if( loaded ) {
 			return;
@@ -64,12 +64,9 @@ class ScriptEventListener : public EventListener
 
 		loaded = true;
 
-		asIScriptModule *module = asmodule->getModule( document_name.CString() );
-
 		assert( module != NULL );
 		if( module == NULL ) {
-			Com_Printf( S_COLOR_YELLOW "WARNING: ScriptEventListener unable to find module %s\n", 
-				document_name.CString() );
+			return;
 		}
 
 		// check direct function-name
@@ -125,24 +122,13 @@ public:
 		}
 
 		Element *elem = event.GetTargetElement();
-		String docURL = elem->GetOwnerDocument()->GetSourceURL();
 
-		// onloads cant be called within building process
-		if( /* event.GetType() == "load" && */ asmodule->isBuilding() )
-		{
-			// TODO: we should eliminate chain to DocumentLoader like this, so move
-			// event postponing somewhere else
-			asIScriptModule *module = asmodule->getModule( docURL.CString() );
-			if( module ) {
-				WSWUI::DocumentLoader *loader = static_cast<WSWUI::DocumentLoader *>( module->GetUserData( 1 ) );
-				if( loader ) {
-					loader->postponeOnload( this, event );
-				}
-				return;
-			}
+		UI_ScriptDocument *document = dynamic_cast<UI_ScriptDocument *>(elem->GetOwnerDocument());
+		if( !document || document->IsLoading() ) {
+			return;
 		}
 
-		fetchFunctionPtr( docURL );
+		fetchFunctionPtr( document->GetModule() );
 
 		// push elem and event as parameters to the internal function
 		// and call it
@@ -190,12 +176,12 @@ public:
 // TODO: make it possible to input inline scripts as event callbacks!
 class ScriptEventCaller : public EventListener
 {
-	ASInterface *asmodule;
+	ASInterface *as;
 	// We have to make Event const, cause we cant use &inout with value-types
 	ASBind::FunctionPtr<void( Element*, Event* )> funcPtr;
 
 public:
-	ScriptEventCaller( ASInterface *as, asIScriptFunction *func ) : asmodule( as )
+	ScriptEventCaller( ASInterface *as, asIScriptFunction *func ) : as( as )
 	{
 		funcPtr = ASBind::CreateFunctionPtr( func, funcPtr );
 		if( !funcPtr.isValid() ) {
@@ -217,21 +203,12 @@ public:
 
 	virtual void ProcessEvent( Event &event )
 	{
-		// onloads cant be called within building process
-		if( /* event.GetType() == "load" && */ asmodule->isBuilding() )
-		{
-			asIScriptModule *module = funcPtr.getModule();
-			if( module ) {
-				WSWUI::DocumentLoader *loader = static_cast<WSWUI::DocumentLoader *>( module->GetUserData( 1 ) );
-				if( loader ) {
-					loader->postponeOnload( this, event );
-				}
-				return;
-			}
+		Element *elem = event.GetTargetElement();
+
+		UI_ScriptDocument *document = dynamic_cast<UI_ScriptDocument *>(elem->GetOwnerDocument());
+		if( !document || document->IsLoading() ) {
 			return;
 		}
-
-		Element *elem = event.GetTargetElement();		
 
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "ScriptEventCaller: Event %s, target %s, func %s\n",
@@ -244,7 +221,7 @@ public:
 			elem->AddReference();
 			event.AddReference();
 			try {
-				asIScriptContext *context = asmodule->getContext();
+				asIScriptContext *context = as->getContext();
 
 				// the context may actually be NULL after AS shutdown
 				if( context ) {

@@ -24,26 +24,27 @@ public:
 	virtual bool Init( void ) = 0;
 	virtual void Shutdown( void ) = 0;
 
-	virtual asIScriptEngine *getEngine( void ) = 0;
-	virtual asIScriptContext *getContext( void ) = 0;
-	virtual asIScriptModule *getModule( const char *name = NULL ) = 0;
+	virtual asIScriptEngine *getEngine( void ) const = 0;
+	virtual asIScriptContext *getContext( void ) const = 0;
+	virtual asIScriptModule *getModule( const char *name ) const = 0;
+
+	virtual void *setModuleUserData( asIScriptModule *m, void *data, unsigned type = 0 ) = 0;
+	virtual void *getModuleUserData( asIScriptModule *m, unsigned type = 0 ) const = 0;
+	virtual const char *getModuleName( asIScriptModule *m ) const = 0;
 
 	// only valid during execution of script functions
-	virtual asIScriptContext *getActiveContext( void ) = 0;
-	virtual asIScriptModule *getActiveModule( void ) = 0;
+	virtual asIScriptContext *getActiveContext( void ) const = 0;
+	virtual asIScriptModule *getActiveModule( void ) const = 0;
 
-	virtual asIObjectType *getStringObjectType( void ) = 0;
+	virtual asIObjectType *getStringObjectType( void ) const = 0;
 
 	// called to start a building round
 	// note that temporary name assigned to the build (module)
 	// may be changed in the finishBuilding call
-	virtual void startBuilding( const char *tempModuleName, void *userData = NULL, void *loader = NULL ) = 0;
+	virtual asIScriptModule *startBuilding( const char *moduleName ) = 0;
 
 	// compile all added scripts, set final module name
-	virtual bool finishBuilding( const char *finalModuleName = NULL ) = 0;
-
-	// are we in the middle of start/finishBuilding?
-	virtual bool isBuilding( void ) = 0;
+	virtual bool finishBuilding( asIScriptModule *module ) = 0;
 
 	// adds a script either to module, or the following.
 	// If no name is provided, script_XXX is used
@@ -57,7 +58,7 @@ public:
 
 	// reset all potentially referenced global vars
 	// (used for releasing reference-counted Rocket objects)
-	virtual void buildReset( const char *moduleName ) = 0;
+	virtual void buildReset( asIScriptModule *module ) = 0;
 
 	// garbage collector interfaces
 	virtual void garbageCollectOneStep( void ) = 0;

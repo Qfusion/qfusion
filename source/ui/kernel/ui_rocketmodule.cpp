@@ -186,14 +186,14 @@ void RocketModule::keyEvent( int key, bool pressed )
 
 //==================================================
 
-Rocket::Core::ElementDocument *RocketModule::loadDocument( const char *filename, bool show )
+Rocket::Core::ElementDocument *RocketModule::loadDocument( const char *filename, bool show, void *user_data )
 {
-	Rocket::Core::ElementDocument *document;
+	ASUI::UI_ScriptDocument *document = dynamic_cast<ASUI::UI_ScriptDocument *>(context->LoadDocument( filename ));
+	if( !document ) {
+		return NULL;
+	}
 
-	// YES I really had to make a function for this!
-	document = context->LoadDocument( filename );
-
-	if( show && document )
+	if( show )
 	{
 		// load documents with autofocus disabled
 		document->Show( Rocket::Core::ElementDocument::NONE );
@@ -317,6 +317,7 @@ void RocketModule::registerCustoms()
 	registerElement( "field", GetElementFieldInstancer() );
 	registerElement( "video", GetVideoInstancer() );
 	registerElement( "irclog", GetIrcLogWidgetInstancer() );
+	registerElement( "iframe", GetIFrameWidgetInstancer() );
 
 	//
 	// EVENTS

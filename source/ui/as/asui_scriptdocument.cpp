@@ -9,35 +9,91 @@ namespace ASUI {
 
 using namespace Rocket::Core;
 
-class UI_ScriptDocument : public ElementDocument
+UI_ScriptDocument::UI_ScriptDocument( const String &tag = "body" )
+	: ElementDocument( tag ), numScriptsAdded( 0 ), as( NULL ), module( NULL ), isLoading( false )
 {
-	int numScriptsAdded;
-	ASInterface *asmodule;
+	isLoading = true;
+	onloads.clear();
+}
 
-public:
-	UI_ScriptDocument( const String &tag = "body" )
-		: ElementDocument( tag ), numScriptsAdded(0)
-	{
-		asmodule = UI_Main::Get()->getAS();
+UI_ScriptDocument::~UI_ScriptDocument( void )
+{
+}
+
+asIScriptModule *UI_ScriptDocument::GetModule( void ) const
+{
+	return module;
+}
+	
+void UI_ScriptDocument::LoadScript( Stream *stream, const String &source_name )
+{
+	String code;
+
+	stream->Read( code, stream->Length() );
+
+	if( !isLoading ) {
+		return;
 	}
 
-	virtual ~UI_ScriptDocument(void)
-	{
-	}
+	as = UI_Main::Get()->getAS();
 
-	virtual void LoadScript( Stream *stream, const String &source_name)
-	{
-		String code;
-
-		stream->Read( code, stream->Length() );
-
-		if( asmodule && code.Length() > 0 && asmodule->isBuilding() ) {
-			asmodule->addScript( asmodule->getModule(), source_name.CString(), code.CString() );
-			//Com_Printf( "UI_ScriptDocument: Added <script> from %s\n", source_name.CString() );
-			numScriptsAdded++;
+	if( !module ) {
+		if( !as ) {
+			return;
 		}
+		module = as->startBuilding( GetSourceURL().CString() );
 	}
-};
+
+	if( module && !code.Empty() && isLoading ) {
+		as->addScript( module, source_name.CString(), code.CString() );
+		numScriptsAdded++;
+	}
+}
+
+void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
+{
+	if( event.GetType() == "afterLoad" && event.GetTargetElement() == this ) {
+		if( module ) {
+			void *owner = event.GetParameter<void *>( "owner", NULL );
+
+			this->SetUserData( owner );
+
+			as->finishBuilding( module );
+			as->setModuleUserData( module, owner );
+		}
+
+		isLoading = false;
+
+		// handle postponed onload events (HOWTO handle these in cached documents?)
+		for( PostponedList::iterator it = onloads.begin(); it != onloads.end(); ++it ) {
+			Rocket::Core::Event *load = *it;
+			this->DispatchEvent( load->GetType(), *(load->GetParameters()), true );
+			load->RemoveReference();
+		}
+
+		// and clear the events
+		onloads.clear();
+		return;
+	}
+
+	if( event.GetType() == "beforeUnload" && event.GetTargetElement() == this ) {
+		if( module ) {
+			as->buildReset( module );
+			module = NULL;
+		}
+		return;
+	}
+
+	if( isLoading ) {
+		Rocket::Core::Event *instanced = Rocket::Core::Factory::InstanceEvent( event.GetTargetElement(),
+			event.GetType(), *event.GetParameters(), true );
+		onloads.push_back( instanced );
+		event.StopPropagation();
+		return;
+	}
+
+	Rocket::Core::ElementDocument::ProcessEvent( event );
+}
 
 //=========================================================
 

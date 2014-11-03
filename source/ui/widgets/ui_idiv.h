@@ -47,6 +47,7 @@ namespace WSWUI
 
 		int timeout;
 		bool onAddLoad;
+		bool loading;
 	};
 }
 

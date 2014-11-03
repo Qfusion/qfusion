@@ -557,48 +557,24 @@ Document *DocumentLoader::loadDocument(const char *path)
 	// FIXME: use RocketModule
 	UI_Main *ui = UI_Main::Get();
 	RocketModule *rm = ui->getRocket();
-	ASUI::ASInterface *as = ui->getAS();
 	Document *loadedDocument;
 
 	loadedDocument = __new__( Document )( path );
 
-	// clear the postponed onload events
-	onloads.clear();
-
-	// tell angelscript to start building a new module
-	as->startBuilding( path, static_cast<void *>(loadedDocument), static_cast<void *>(this) );
-
 	// load the .rml
-	Rocket::Core::ElementDocument *rocketDocument = rm->loadDocument(path, /* true */ false);
-	loadedDocument->setRocketDocument(rocketDocument);
+	Rocket::Core::ElementDocument *rocketDocument = rm->loadDocument( path, /* true */ false, loadedDocument );
+	loadedDocument->setRocketDocument( rocketDocument );
 
 	if( !rocketDocument ) {
 		Com_Printf( "DocumentLoader::loadDocument failed to load %s\n", path);
+		__delete__( loadedDocument );
+		return NULL;
 	}
-
-	// tell angelscript it can compile and link the module
-	// has to be called even if document loading fails!
-	// also ensure the 1-to-1 match between the build and document names
-	as->finishBuilding( rocketDocument ? rocketDocument->GetSourceURL().CString() : NULL );
 
 	// handle postponed onload events (HOWTO handle these in cached documents?)
-	if( rocketDocument )
-	{
-		rocketDocument->SetUserData(static_cast<void *>(loadedDocument));
-		for( PostponedList::iterator it = onloads.begin(); it != onloads.end(); ++it )
-		{
-			it->first->ProcessEvent( *it->second );
-			it->second->RemoveReference();
-		}
-	}
-
-	// and clear the events
-	onloads.clear();
-
-	if( !rocketDocument ) {
-		__delete__( loadedDocument );
-		loadedDocument = NULL;
-	}
+	Rocket::Core::Dictionary ev_parms;
+	ev_parms.Set( "owner", loadedDocument );
+	rocketDocument->DispatchEvent( "afterLoad", ev_parms );
 
 	return loadedDocument;
 }
@@ -607,30 +583,14 @@ Document *DocumentLoader::loadDocument(const char *path)
 void DocumentLoader::closeDocument(Document *document)
 {
 	UI_Main *ui = UI_Main::Get();
-	ASUI::ASInterface *as = ui ? ui->getAS() : 0;
 	Rocket::Core::ElementDocument *rocketDocument = document->getRocketDocument();
 
-	if( as ) {
-		// we need to release AS handles referencing libRocket resources
-		as->buildReset( rocketDocument->GetSourceURL().CString() );
-	}
+	// handle postponed onload events (HOWTO handle these in cached documents?)
+	Rocket::Core::Dictionary ev_parms;
+	rocketDocument->DispatchEvent( "beforeUnload", ev_parms );
 
 	ui->getRocketContext()->UnloadDocument(rocketDocument);
 }
 
-void DocumentLoader::postponeOnload(Rocket::Core::EventListener *listener, Rocket::Core::Event &event)
-{
-	// use InstanceEvent here, I have no clue what to use as interruptible here
-	Rocket::Core::Event *instanced = Rocket::Core::Factory::InstanceEvent( event.GetTargetElement(),
-														event.GetType(), *event.GetParameters(), true );
-	instanced->SetPhase( event.GetPhase() );
-
-	// DEBUG
-	if( UI_Main::Get()->debugOn() ) {
-		Com_Printf("Reference count of instanced event %d\n", instanced->GetReferenceCount() );
-	}
-
-	onloads.push_back( PostponedEvent( listener, instanced ) );
-}
 
 }

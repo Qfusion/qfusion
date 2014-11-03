@@ -29,14 +29,13 @@ namespace WSWUI {
 
 using namespace Rocket::Core;
 
-class IFrameWidget : public Element, EventListener
+class IFrameWidget : public Element
 {
 public:
 	IFrameWidget( const String &tag ) : Element(tag)
 	{
-		SetProperty( "display", "block" );
-		SetProperty( "overflow-y", "auto" );
-		SetProperty( "overflow-x", "auto" );
+		SetProperty( "display", "inline-block" );
+		SetProperty( "overflow", "auto" );
 	}
 
 	virtual ~IFrameWidget()
@@ -54,15 +53,6 @@ public:
 		it = changed_attributes.find( "src" );
 		if( it != changed_attributes.end() ) {
 			LoadSource();
-		}
-	}
-
-	void ProcessEvent( Event &event )
-	{
-		if( event.GetPhase() == Event::PHASE_TARGET ) {
-			Element *document = event.GetTargetElement();
-			document->SetProperty( "width", GetProperty<String>("width") );
-			document->SetProperty( "height", GetProperty<String>("height") );
 		}
 	}
 
@@ -86,9 +76,10 @@ private:
 			return;
 		}
 
-		Element *document = ui_document->getRocketDocument();
-		document->AddEventListener( "load", this );
+		ElementDocument *document = ui_document->getRocketDocument();
 		AppendChild( document );
+		document->SetProperty( "overflow", "auto" );
+		document->PullToFront();
 	}
 };
 
