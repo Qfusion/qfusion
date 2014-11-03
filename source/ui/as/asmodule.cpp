@@ -132,20 +132,15 @@ class ASModule : public ASInterface
 	UI_Main *ui_main;
 
 	asIScriptEngine *engine;
-	asIScriptModule *module;
 	struct angelwrap_api_s *as_api;
 	asIObjectType *stringObjectType;
-	int scriptCount;
-	bool _isBuilding;
 
 // private class, its ok to have everything as public :)
 public:
-
 	ASModule()
 		: ui_main(0), engine(0),
-		module(0), as_api(0),
-		stringObjectType(0),
-		scriptCount(0), _isBuilding( false )
+		as_api(0),
+		stringObjectType(0)
 	{
 	}
 
@@ -183,7 +178,7 @@ public:
 
 	virtual void Shutdown( void )
 	{
-		module = 0;
+		//module = 0;
 
 		if( as_api && engine != NULL )
 			as_api->asReleaseEngine( engine );
@@ -197,32 +192,35 @@ public:
 
 	virtual void setUI( UI_Main *ui ) { ui_main = ui; }
 
-	virtual asIScriptEngine *getEngine( void ) { return engine; }
+	virtual asIScriptEngine *getEngine( void ) const { 
+		return engine;
+	}
 
-	virtual asIScriptModule *getModule( const char *name )
-	{
-		if( !name ) {
-			// return current module
-			return module;
-		}
+	virtual asIScriptModule *getModule( const char *name ) const {
 		return engine->GetModule( name, asGM_ONLY_IF_EXISTS );
 	}
 
-	virtual asIScriptContext *getContext( void )
-	{
-		if( !as_api ) {
-			return NULL;
-		}
-
-		return as_api->asAcquireContext( engine );
+	virtual void *setModuleUserData( asIScriptModule *module, void *data, unsigned type ) {
+		return module ? module->SetUserData( data, type ) : NULL;
 	}
 
-	virtual asIScriptContext *getActiveContext( void )
-	{ 
+	virtual void *getModuleUserData( asIScriptModule *module, unsigned type ) const {
+		return module ? module->GetUserData( type ) : NULL;
+	}
+
+	virtual const char *getModuleName( asIScriptModule *module ) const {
+		return module ? module->GetName() : NULL;
+	}
+
+	virtual asIScriptContext *getContext( void ) const {
+		return as_api ? as_api->asAcquireContext( engine ) : NULL;
+	}
+
+	virtual asIScriptContext *getActiveContext( void ) const { 
 		return as_api ? as_api->asGetActiveContext() : NULL;
 	}
 
-	virtual asIScriptModule *getActiveModule( void )
+	virtual asIScriptModule *getActiveModule( void ) const
 	{
 		if( !engine ) {
 			return NULL;
@@ -232,35 +230,22 @@ public:
 		return currentFunction->GetModule();
 	}
 
-	virtual asIObjectType *getStringObjectType( void ) 
-	{
+	virtual asIObjectType *getStringObjectType( void ) const {
 		return stringObjectType;
 	}
 
-	virtual void startBuilding( const char *tempModuleName, void *userData, void *loader )
+	virtual asIScriptModule *startBuilding( const char *moduleName )
 	{
-		_isBuilding = true;
-		scriptCount = 0;
-		module = engine->GetModule( tempModuleName, asGM_CREATE_IF_NOT_EXISTS );
-		module->SetUserData( userData );
-		module->SetUserData( loader, 1 );
+		asIScriptModule *module = engine->GetModule( moduleName, asGM_CREATE_IF_NOT_EXISTS );
+		return module;
 	}
 
-	virtual bool finishBuilding( const char *finalModuleName )
+	virtual bool finishBuilding( asIScriptModule *module )
 	{
-		_isBuilding = false;
-		scriptCount = 0;
 		if( !module ) {
 			return false;
 		}
-		module->SetName( finalModuleName );
-		module->SetUserData( NULL, 1 );
 		return module->Build() >= 0;
-	}
-
-	virtual bool isBuilding( void )
-	{
-		return _isBuilding;
 	}
 
 	virtual bool addScript( asIScriptModule *module, const char *name, const char *code )
@@ -273,33 +258,11 @@ public:
 		if( !module )
 			return false;
 
-		std::string actualName;
-
-		// if theres no name given for this script-section,
-		// use MODULENAME_script_COUNT
-		if( !name || name[0] == '\0' )
-		{
-			std::stringstream ss( module->GetName() );
-			ss << "_script_" << scriptCount++;
-			actualName = ss.str();
-		}
-		else
-			actualName = name;
-
-		return module->AddScriptSection( actualName.c_str(), code ) >= 0;
+		return module->AddScriptSection( name, code ) >= 0;
 	}
 
 	virtual bool addFunction( asIScriptModule *module, const char *name, const char *code, asIScriptFunction **outFunction )
 	{
-		if( _isBuilding )
-		{
-			// just add it as a script section
-			return addScript( module, name, code );
-		}
-
-		// add to currently active module. note that this->module may actually point
-		// to other module which was compiled last
-
 		// note that reference count for outFunction is increased here!
 		return module ? (module->CompileFunction( name, code, 0, asCOMP_ADD_TO_MODULE, outFunction ) >= 0) : false;
 	}
@@ -457,17 +420,11 @@ public:
 		}
 	}
 
-	virtual void buildReset( const char *moduleName )
+	virtual void buildReset( asIScriptModule *module )
 	{
-		if( !engine ) {
-			return;
+		if( engine && module ) {
+			module->Discard();
 		}
-
-		asIScriptModule *module = engine->GetModule( moduleName, asGM_ONLY_IF_EXISTS );
-		if( module ) {
-			engine->DiscardModule( moduleName );
-		}
-
 		garbageCollectFullCycle();
 	}
 

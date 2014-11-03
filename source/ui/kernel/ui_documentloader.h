@@ -208,10 +208,6 @@ namespace WSWUI {
 		// TODO: redundant
 		void closeDocument(Document*);
 
-		// TODO: propagate these from UI_Main
-		// set onload event to be called after document loading is done
-		void postponeOnload(Rocket::Core::EventListener *listener, Rocket::Core::Event &event);
-
 	private:
 
 		// TODO: proper PostponedEvent that handles reference counting and event instancing!

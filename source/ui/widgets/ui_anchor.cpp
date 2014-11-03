@@ -46,7 +46,9 @@ public:
 			ElementDocument *document = element->GetOwnerDocument();
 			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetUserData());
 			if( ui_document ) {
-				ui_document->getStack()->pushDocument( fileName );
+				WSWUI::NavigationStack *stack = ui_document->getStack();
+				if( stack )
+					stack->pushDocument( fileName );
 			}
 		}
 

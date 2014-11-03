@@ -28,7 +28,7 @@ namespace WSWUI {
 
 using namespace Rocket::Core;
 
-InlineDiv::InlineDiv( const String &tag ) : Element( tag ), timeout( WSW_UI_STREAMCACHE_TIMEOUT ), onAddLoad( false )
+InlineDiv::InlineDiv( const String &tag ) : Element( tag ), timeout( WSW_UI_STREAMCACHE_TIMEOUT ), onAddLoad( false ), loading( false )
 {
 }
 
@@ -89,16 +89,23 @@ void InlineDiv::OnChildAdd( Element* element )
 
 void InlineDiv::LoadSource()
 {
+	if( loading ) {
+		// prevent recursive entries
+		return;
+	}
+
 	// Get the source URL for the image.
 	String source = GetAttribute< String >("src", "");
 	bool nocache = GetAttribute< int >("nocache", 0) != 0;
 
 	onAddLoad = false;
+	loading = true;
 
 	if( source.Empty() ) {
 		SetInnerRML( "" );
 		SetPseudoClass( "loading", false );
 		DispatchEvent( "load", Dictionary(), false );
+		loading = false;
 		return;
 	}
 
@@ -121,6 +128,7 @@ void InlineDiv::LoadSource()
 
 		if( !document && source.Substring( 0, 1 ) != "/" ) {
 			onAddLoad = true;
+			loading = false;
 			return;
 		}
 
@@ -138,6 +146,8 @@ void InlineDiv::LoadSource()
 
 		SetPseudoClass( "loading", false );
 	}
+
+	loading = false;
 }
 
 // Called when attributes on the element are changed.

@@ -204,6 +204,7 @@
     <ClCompile Include="widgets\ui_dataspinner.cpp" />
     <ClCompile Include="widgets\ui_field.cpp" />
     <ClCompile Include="widgets\ui_idiv.cpp" />
+    <ClCompile Include="widgets\ui_iframe.cpp" />
     <ClCompile Include="widgets\ui_image.cpp" />
     <ClCompile Include="widgets\ui_irc.cpp" />
     <ClCompile Include="widgets\ui_keyselect.cpp" />
