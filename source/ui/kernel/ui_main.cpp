@@ -403,17 +403,7 @@ void UI_Main::showUI( bool show )
 
 	if( !show ) {
 		NavigationStack *navigator = navigation.front();
-
-		while( !navigation.empty() ) {
-			NavigationStack *stack = navigation.front();
-			navigation.pop_front();
-			stack->popAllDocuments();
-			if( stack != navigator ) {
-				__delete__( stack );
-			}
-		}
-
-		navigation.push_back( navigator );
+		navigator->popAllDocuments();
 	}
 }
 

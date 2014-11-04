@@ -38,6 +38,7 @@ class ScriptEventListener : public EventListener
 	bool loaded;
 	bool released;
 	int uniqueId;
+	Rocket::Core::Element *target;
 
 	/** DAMN MIXTURE OF Rocket::String, std::string and std::ostringstream!! **/
 
@@ -103,18 +104,27 @@ class ScriptEventListener : public EventListener
 
 public:
 
-	ScriptEventListener( const String &s, int uniqueId ) : script( s ), 
-		loaded( false ), released( false ),  uniqueId( uniqueId )
+	ScriptEventListener( const String &s, int uniqueId, Element *target ) : script( s ), 
+		loaded( false ), released( false ),  uniqueId( uniqueId ), target( target )
 	{
 		asmodule = UI_Main::Get()->getAS();
+		if( target ) {
+			//target->AddReference();
+		}
 	}
 
 	virtual ~ScriptEventListener() {
+		if( target ) {
+			//target->RemoveReference();
+		}
 		releaseFunctionPtr();
 	}
 
 	virtual void ProcessEvent( Event &event )
 	{
+		if( event.GetTargetElement() != target ) {
+			return;
+		}
 		if( released ) {
 			// the function pointer has been released, but
 			// we're hanging around, waiting for shutdown or GC
@@ -269,7 +279,7 @@ public:
 		if( !value.Length() )
 			return 0;
 
-		ScriptEventListener *listener = __new__( ScriptEventListener )( value, idCounter++ );
+		ScriptEventListener *listener = __new__( ScriptEventListener )( value, idCounter++, elem );
 		listeners.push_back( listener );
 		return listener;
 	}

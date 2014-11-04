@@ -29,17 +29,23 @@ namespace WSWUI {
 
 using namespace Rocket::Core;
 
-class IFrameWidget : public Element
+class IFrameWidget : public Element, EventListener
 {
 public:
-	IFrameWidget( const String &tag ) : Element(tag)
+	IFrameWidget( const String &tag ) : Element( tag ), framed_document( NULL )
 	{
 		SetProperty( "display", "inline-block" );
 		SetProperty( "overflow", "auto" );
 	}
 
 	virtual ~IFrameWidget()
-	{}
+	{
+		ElementDocument *owner_document = GetOwnerDocument();
+		if( owner_document ) {
+			owner_document->RemoveEventListener( "show", this );
+			owner_document->RemoveEventListener( "hide", this );
+		}
+	}
 	
 	// Called when attributes on the element are changed.
 	void OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes )
@@ -51,7 +57,28 @@ public:
 		// Check for a changed 'src' attribute. If this changes, we need to reload
 		// contents of the element.
 		it = changed_attributes.find( "src" );
-		if( it != changed_attributes.end() ) {
+		if( it != changed_attributes.end() && GetOwnerDocument() != NULL ) {
+			LoadSource();
+		}
+	}
+
+	virtual void ProcessEvent( Event &ev )
+	{
+		if( framed_document != NULL ) {
+			if( ev.GetTargetElement() == GetOwnerDocument() ) {
+				if( ev.GetType() == "hide" ) {
+					framed_document->Hide();
+				}
+				else if( ev.GetType() == "show" ) {
+					framed_document->Show();
+				}
+			}
+		}
+	}
+
+	virtual void OnChildAdd( Element *child )
+	{
+		if( this == child ) {
 			LoadSource();
 		}
 	}
@@ -61,26 +88,43 @@ private:
 	{
 		String source = GetAttribute< String >("src", "");
 
-		SetInnerRML( "" );
+		WSWUI::NavigationStack *stack = NULL;
 
 		if( source.Empty() ) {
+			SetInnerRML( "" );
+
+			if( framed_document ) {
+				stack = framed_document->getStack();
+				//framed_document->RemoveReference();
+				if( stack ) {
+					stack->popAllDocuments();
+				}
+				framed_document = NULL;
+			}
 			return;
 		}
 
-		WSWUI::NavigationStack *stack = UI_Main::Get()->createStack();
-		if( stack == NULL ) {
-			return;
-		}
-		WSWUI::Document *ui_document = stack->pushDocument( source.CString() );
-		if( !ui_document ) {
+		stack = UI_Main::Get()->createStack();
+
+		framed_document = stack->pushDocument( source.CString() );
+		if( !framed_document ) {
 			return;
 		}
 
-		ElementDocument *document = ui_document->getRocketDocument();
-		AppendChild( document );
-		document->SetProperty( "overflow", "auto" );
-		document->PullToFront();
+		ElementDocument *rocket_document = framed_document->getRocketDocument();
+
+		AppendChild( rocket_document );
+		rocket_document->SetProperty( "overflow", "auto" );
+		rocket_document->PullToFront();
+
+		ElementDocument *owner_document = GetOwnerDocument();
+		if( owner_document ) {
+			owner_document->AddEventListener( "show", this );
+			owner_document->AddEventListener( "hide", this );
+		}
 	}
+
+	WSWUI::Document *framed_document;
 };
 
 //==============================================================
