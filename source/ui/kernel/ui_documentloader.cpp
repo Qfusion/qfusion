@@ -338,6 +338,7 @@ void NavigationStack::_popDocument(bool focusOnNext)
 
 	Document *doc = documentStack.back();
 	documentStack.pop_back();
+	doc->setStack( NULL );
 	Document *top = hasDocuments() ? documentStack.back() : NULL;
 
 	doc->Hide();
@@ -361,6 +362,7 @@ void NavigationStack::_popDocument(bool focusOnNext)
 		}
 
 		while( top && !top->IsViewed() ) {
+			top->setStack( NULL );
 			documentStack.pop_back();
 			top = documentStack.back();
 		}

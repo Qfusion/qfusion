@@ -9,8 +9,8 @@ namespace ASUI {
 
 using namespace Rocket::Core;
 
-UI_ScriptDocument::UI_ScriptDocument( const String &tag = "body" )
-	: ElementDocument( tag ), numScriptsAdded( 0 ), as( NULL ), module( NULL ), isLoading( false )
+UI_ScriptDocument::UI_ScriptDocument( const String &tag )
+	: ElementDocument( tag ), numScriptsAdded( 0 ), as( NULL ), module( NULL ), isLoading( false ), numScripts( 0 )
 {
 	isLoading = true;
 	onloads.clear();
@@ -44,8 +44,14 @@ void UI_ScriptDocument::LoadScript( Stream *stream, const String &source_name )
 		module = as->startBuilding( GetSourceURL().CString() );
 	}
 
+	String script_name = source_name;
+	if( script_name.Empty() ) {
+		script_name.FormatString( 100, "_script_%d", numScripts );
+	}
+	numScripts++;
+
 	if( module && !code.Empty() && isLoading ) {
-		as->addScript( module, source_name.CString(), code.CString() );
+		as->addScript( module, script_name.CString(), code.CString() );
 		numScriptsAdded++;
 	}
 }

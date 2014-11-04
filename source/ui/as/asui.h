@@ -27,6 +27,7 @@ namespace ASUI {
 			ASInterface *as;
 			asIScriptModule *module;
 			bool isLoading;
+			unsigned numScripts;
 
 			// TODO: proper PostponedEvent that handles reference counting and event instancing!
 
@@ -35,7 +36,7 @@ namespace ASUI {
 			PostponedList onloads;
 
 		public:
-			UI_ScriptDocument( const Rocket::Core::String & );
+			UI_ScriptDocument( const Rocket::Core::String &tag = "body" );
 			virtual ~UI_ScriptDocument( void );
 
 			asIScriptModule *GetModule( void ) const;
