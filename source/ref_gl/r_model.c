@@ -1160,6 +1160,7 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 
 	R_TouchModel( rsh.worldModel );
 	rsh.worldBrushModel = ( mbrushmodel_t * )rsh.worldModel->extradata;
+	rsh.worldBrushModel->pvs = ( dvis_t * )pvsData;
 }
 
 /*
