@@ -294,6 +294,8 @@ typedef struct
 
 	struct {
 		unsigned int	c_brush_polys, c_world_leafs;
+		unsigned int	c_slices_verts, c_slices_verts_real;
+		unsigned int	c_slices_elems, c_slices_elems_real;
 		unsigned int	t_mark_leaves, t_world_node;
 		unsigned int	t_add_polys, t_add_entities;
 		unsigned int	t_draw_meshes;

@@ -55,6 +55,9 @@ void R_ClearDrawList( void )
 	// clear counters
 	list->numDrawSurfs = 0;
 
+	list->numSliceElems = list->numSliceElemsReal = 0;
+	list->numSliceVerts = list->numSliceVertsReal = 0;
+
 	// clear VBO slices
 	if( list->vboSlices ) {
 		memset( list->vboSlices, 0, sizeof( *list->vboSlices ) * list->maxVboSlices );
@@ -253,18 +256,28 @@ void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numE
 		slice->numVerts = numVerts;
 		slice->numElems = numElems;
 	}
-	else if( firstVert < slice->firstVert ) {
-		// prepend
-		slice->numVerts = slice->numVerts + slice->firstVert - firstVert;
-		slice->numElems = slice->numElems + slice->firstElem - firstElem;
+	else {
+		list->numSliceVertsReal -= slice->numVerts;
+		list->numSliceElemsReal -= slice->numElems;
 
-		slice->firstVert = firstVert;
-		slice->firstElem = firstElem;
-	} else {
-		// append
-		slice->numVerts = max( slice->numVerts, numVerts + firstVert - slice->firstVert );
-		slice->numElems = max( slice->numElems, numElems + firstElem - slice->firstElem );
+		if( firstVert < slice->firstVert ) {
+			// prepend
+			slice->numVerts = slice->numVerts + slice->firstVert - firstVert;
+			slice->numElems = slice->numElems + slice->firstElem - firstElem;
+
+			slice->firstVert = firstVert;
+			slice->firstElem = firstElem;
+		} else {
+			// append
+			slice->numVerts = max( slice->numVerts, numVerts + firstVert - slice->firstVert );
+			slice->numElems = max( slice->numElems, numElems + firstElem - slice->firstElem );
+		}
 	}
+
+	list->numSliceVerts += numVerts;
+	list->numSliceVertsReal += slice->numVerts;
+	list->numSliceElems += numElems;
+	list->numSliceElemsReal += slice->numElems;
 }
 
 /*

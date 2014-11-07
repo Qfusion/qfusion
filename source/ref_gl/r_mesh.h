@@ -62,6 +62,9 @@ typedef struct
 
 	unsigned int		maxVboSlices;
 	vboSlice_t			*vboSlices;
+
+	unsigned			numSliceVerts, numSliceVertsReal;
+	unsigned			numSliceElems, numSliceElemsReal;
 } drawList_t;
 
 typedef qboolean (*beginDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, void * );
