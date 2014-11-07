@@ -1436,6 +1436,12 @@ void R_RenderView( const refdef_t *fd )
 	if( r_speeds->integer )
 		rf.stats.t_draw_meshes += ( ri.Sys_Milliseconds() - msec );
 
+	rf.stats.c_slices_verts += rn.meshlist->numSliceVerts;
+	rf.stats.c_slices_verts_real += rn.meshlist->numSliceVertsReal;
+
+	rf.stats.c_slices_elems += rn.meshlist->numSliceElems;
+	rf.stats.c_slices_elems_real += rn.meshlist->numSliceElemsReal;
+
 	if( r_showtris->integer )
 		R_DrawOutlinedSurfaces();
 
@@ -1712,17 +1718,19 @@ const char *R_SpeedsMessage( char *out, size_t size )
 			RB_StatsMessage( backend_msg, sizeof( backend_msg ) );
 
 			Q_snprintfz( out, size,
-				"%4i wpoly %4i leafs\n"
+				"%4u wpoly %4u leafs\n"
+				"sverts: %5u\\%5u  stris: %5u\\%5u\n"
 				"%s",
 				rf.stats.c_brush_polys, rf.stats.c_world_leafs,
+				rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems/3, rf.stats.c_slices_elems_real/3,
 				backend_msg
 			);
 			break;
 		case 2:
 		case 3:
 			Q_snprintfz( out, size,
-				"lvs: %5i  node: %5i\n"
-				"polys\\ents: %5i\\%5i  draw: %5i",
+				"lvs: %5u  node: %5u\n"
+				"polys\\ents: %5u\\%5i  draw: %5u\n",
 				rf.stats.t_mark_leaves, rf.stats.t_world_node,
 				rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
 			);
