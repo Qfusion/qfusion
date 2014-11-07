@@ -36,7 +36,7 @@ typedef struct vbohandle_s
 	struct vbohandle_s *prev, *next;
 } vbohandle_t;
 
-#define MAX_MESH_VERTEX_BUFFER_OBJECTS 	8192
+#define MAX_MESH_VERTEX_BUFFER_OBJECTS 	0x4000
 
 #define VBO_ARRAY_USAGE_FOR_TAG(tag) \
 	(GLenum)((tag) == VBO_TAG_STREAM || (tag) == VBO_TAG_STREAM_STATIC_ELEMS ? GL_DYNAMIC_DRAW_ARB : GL_STATIC_DRAW_ARB)
