@@ -1239,7 +1239,7 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 
 		out->plane = NULL;
 		out->area = LittleLong( in->area );
-		if( out->area > 0 && (unsigned)out->area >= loadbmodel->numareas )
+		if( out->area >= loadbmodel->numareas )
 			loadbmodel->numareas = out->area + 1;
 
 		numVisSurfaces = numFragmentSurfaces = 0;
