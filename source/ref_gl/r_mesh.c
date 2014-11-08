@@ -503,7 +503,10 @@ void R_DrawSurfaces( void )
 	qboolean triOutlines;
 	
 	triOutlines = RB_EnableTriangleOutlines( qfalse );
-	_R_DrawSurfaces();
+	if( !triOutlines ) {
+		// do not recurse into normal mode when rendering triangle outlines
+		_R_DrawSurfaces();
+	}
 	RB_EnableTriangleOutlines( triOutlines );
 }
 
