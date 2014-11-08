@@ -444,6 +444,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		int fcount;
 		int vcount, ecount;
 		vattribmask_t vattribs;
+		unsigned last_merged = i;
 
 		// ignore faces already merged
 		if( surfmap[i] )
@@ -463,11 +464,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		if( !(shader->flags & (SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2)) && !surf->numInstances )
 		{
 			// scan remaining face checking whether we merge them with the current one
-			for( j = 0; j < numSurfaces; j++ )
+			for( j = i + 1; j < numSurfaces; j++ )
 			{
-				if( i == j )
-					continue;
-
 				surf2 = surfaces[j];
 
 				// already merged
@@ -510,6 +508,7 @@ merge:
 					vcount += mesh2->numVerts;
 					ecount += mesh2->numElems;
 					surfmap[j] = surf;
+					last_merged = j;
 				}
 			}
 		}
@@ -550,7 +549,7 @@ merge:
 			// now if there are any merged faces upload them to the same VBO
 			if( fcount > 1 )
 			{
-				for( j = 0; j < numSurfaces; j++ )
+				for( j = i + 1; j <= last_merged; j++ )
 				{
 					if( surfmap[j] != surf )
 						continue;
