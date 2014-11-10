@@ -259,7 +259,10 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 
 			portalSurface = R_AddPortalSurface( e, surf->mesh, surf->mins, surf->maxs, shader );
 		}
-
+		else {
+			// just ignore the distance since we're drawing batched geometry anyway
+			dist = 0;
+		}
 		drawSurf->visFrame = rf.frameCount;
 
 		if( !R_AddDSurfToDrawList( e, fog, shader, dist, order, portalSurface, drawSurf ) ) {
