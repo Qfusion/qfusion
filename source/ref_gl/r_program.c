@@ -49,6 +49,8 @@ typedef struct glsl_program_s
 	int				vertexShader;
 	int				fragmentShader;
 
+	int				binaryCachePos;
+
 	struct loc_s {
 		int			ModelViewMatrix,
 					ModelViewProjectionMatrix,
@@ -141,6 +143,8 @@ static unsigned int r_numglslprograms;
 static glsl_program_t r_glslprograms[MAX_GLSL_PROGRAMS];
 static glsl_program_t *r_glslprograms_hash[GLSL_PROGRAM_TYPE_MAXTYPE][GLSL_PROGRAMS_HASH_SIZE];
 
+static int r_glslbincache_storemode;
+
 static void RP_GetUniformLocations( glsl_program_t *program );
 static void RP_BindAttrbibutesLocations( glsl_program_t *program );
 
@@ -222,6 +226,7 @@ static void RP_PrecachePrograms( void )
 	handleBin = 0;
 	if( glConfig.ext.get_program_binary ) {
 		fileName = GLSL_BINARY_CACHE_FILE_NAME;
+		r_glslbincache_storemode = FS_APPEND;
 		if( ri.FS_FOpenFile( fileName, &handleBin, FS_READ ) != -1 ) {
 			unsigned hash;
 
@@ -234,6 +239,7 @@ static void RP_PrecachePrograms( void )
 			if( version != GLSL_BITS_VERSION || hash != glConfig.versionHash ) {
 				ri.FS_FCloseFile( handleBin );
 				handleBin = 0;
+				r_glslbincache_storemode = FS_WRITE;
 			}
 		}
 	}
@@ -314,10 +320,21 @@ static void RP_PrecachePrograms( void )
 			}
 
 			if( binary ) {
+				int elem;
+
 				ri.Com_DPrintf( "Loading binary program %s...\n", name );
 
-				RP_RegisterProgramBinary( type, name, NULL, NULL, 0, features, 
+				elem = RP_RegisterProgramBinary( type, name, NULL, NULL, 0, features, 
 					binaryFormat, binaryLength, binary );
+
+				if( !elem ) {
+					// rewrite this binary cache on exit
+					r_glslbincache_storemode = FS_WRITE;
+				}
+				else {
+					glsl_program_t *program = r_glslprograms + elem - 1;
+					program->binaryCachePos = binaryPos;
+				}
 
 				R_Free( binary );
 				continue;
@@ -354,15 +371,18 @@ static void RP_StorePrecacheList( void )
 
 	handleBin = 0;
 	if( glConfig.ext.get_program_binary ) {
-		if( ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, FS_WRITE ) == -1 ) {
+		if( ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, r_glslbincache_storemode ) == -1 ) {
 			Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", GLSL_BINARY_CACHE_FILE_NAME );
 		}
-		else {
+		else if( r_glslbincache_storemode == FS_WRITE ) {
 			dummy = 0;
 			ri.FS_Write( &dummy, sizeof( dummy ), handleBin );
 
 			dummy = glConfig.versionHash;
 			ri.FS_Write( &dummy, sizeof( dummy ), handleBin );
+		}
+		else {
+			ri.FS_Seek( handleBin, 0, FS_SEEK_END );
 		}
 	}
 
@@ -383,9 +403,15 @@ static void RP_StorePrecacheList( void )
 		}
 
 		if( handleBin ) {
-			binary = RP_GetProgramBinary( i + 1, &binaryFormat, &binaryLength );
-			if( binary ) {
-				binaryPos = ri.FS_Tell( handleBin );
+			if( r_glslbincache_storemode == FS_APPEND && program->binaryCachePos ) {
+				// this program is already cached
+				binaryPos = program->binaryCachePos;
+			}
+			else {		
+				binary = RP_GetProgramBinary( i + 1, &binaryFormat, &binaryLength );
+				if( binary ) {
+					binaryPos = ri.FS_Tell( handleBin );
+				}
 			}
 		}
 
