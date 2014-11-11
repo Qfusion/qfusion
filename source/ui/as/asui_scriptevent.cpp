@@ -122,7 +122,8 @@ public:
 
 	virtual void ProcessEvent( Event &event )
 	{
-		if( event.GetTargetElement() != target ) {
+		if( event.GetTargetElement()->GetOwnerDocument() != target->GetOwnerDocument() ) {
+			// make sure the event originated from the same document as the original target
 			return;
 		}
 		if( released ) {
