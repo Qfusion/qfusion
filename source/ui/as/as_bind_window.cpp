@@ -80,7 +80,7 @@ public:
 	/// FIXME: move to window.
 	void modal( const asstring_t &location, int defaultCode = -1 )
 	{
-		WSWUI::NavigationStack *stack = GetCurrenUIStack();
+		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 
 		// default return value when modal window is not closed via window.close()
 		modalValue = defaultCode;
@@ -114,7 +114,7 @@ public:
 	/// Stores exit code to be passed to suspended context if modal.
 	void close( int code = 0 )
 	{
-		WSWUI::NavigationStack *stack = GetCurrenUIStack();
+		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack == NULL ) {
 			return;
 		}
@@ -179,7 +179,7 @@ public:
 
 	void setLocation( const asstring_t &location )
 	{
-		WSWUI::NavigationStack *stack = GetCurrenUIStack();
+		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack == NULL ) {
 			return;
 		}
@@ -218,7 +218,7 @@ public:
 
 	unsigned int historySize( void ) const
 	{
-		WSWUI::NavigationStack *stack = GetCurrenUIStack();
+		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack != NULL ) {
 			return stack->getStackSize();
 		}
@@ -227,7 +227,7 @@ public:
 
 	void historyBack( void ) const
 	{
-		WSWUI::NavigationStack *stack = GetCurrenUIStack();
+		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack != NULL && stack->hasAtLeastTwoDocuments() && !stack->isTopModal() ) {
 			stack->popDocument();
 		}
@@ -334,7 +334,7 @@ private:
 		return ui_document ? ui_document->getRocketDocument() : NULL;
 	}
 
-	static WSWUI::NavigationStack *GetCurrenUIStack( void )
+	static WSWUI::NavigationStack *GetCurrentUIStack( void )
 	{
 		// note that this method can be called outside the AS execution context!
 		asIScriptModule *m = UI_Main::Get()->getAS()->getActiveModule();
