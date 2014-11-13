@@ -213,12 +213,13 @@ static void RP_PrecachePrograms( void )
 	int version;
 	char *buffer = NULL, *data, **ptr;
 	const char *token;
+	const char *cacheDir = ri.FS_CacheDirectory(), *gameDir = ri.FS_GameDirectory();
 	const char *fileName;
 	int handleBin;
 
 	fileName = GLSL_CACHE_FILE_NAME;
 
-	R_LoadFile( fileName, ( void ** )&buffer );
+	R_LoadAbsoluteFile( va( "%s/%s/%s", cacheDir, gameDir, fileName ), ( void ** )&buffer );
 	if( !buffer ) {
 		return;
 	}
@@ -227,7 +228,7 @@ static void RP_PrecachePrograms( void )
 	if( glConfig.ext.get_program_binary ) {
 		fileName = GLSL_BINARY_CACHE_FILE_NAME;
 		r_glslbincache_storemode = FS_APPEND;
-		if( ri.FS_FOpenFile( fileName, &handleBin, FS_READ ) != -1 ) {
+		if( ri.FS_FOpenAbsoluteFile( va( "%s/%s/%s", cacheDir, gameDir, fileName ), &handleBin, FS_READ ) != -1 ) {
 			unsigned hash;
 
 			version = 0;
@@ -362,16 +363,17 @@ static void RP_StorePrecacheList( void )
 	int handle, handleBin;
 	glsl_program_t *program;
 	unsigned dummy;
+	const char *cacheDir = ri.FS_CacheDirectory(), *gameDir = ri.FS_GameDirectory();
 
 	handle = 0;
-	if( ri.FS_FOpenFile( GLSL_CACHE_FILE_NAME, &handle, FS_WRITE ) == -1 ) {
+	if( ri.FS_FOpenAbsoluteFile( va( "%s/%s/%s", cacheDir, gameDir, GLSL_CACHE_FILE_NAME ), &handle, FS_WRITE ) == -1 ) {
 		Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", GLSL_CACHE_FILE_NAME );
 		return;
 	}
 
 	handleBin = 0;
 	if( glConfig.ext.get_program_binary ) {
-		if( ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, r_glslbincache_storemode ) == -1 ) {
+		if( ri.FS_FOpenAbsoluteFile( va( "%s/%s/%s", cacheDir, gameDir, GLSL_BINARY_CACHE_FILE_NAME ), &handleBin, r_glslbincache_storemode ) == -1 ) {
 			Com_Printf( S_COLOR_YELLOW "Could not open %s for writing.\n", GLSL_BINARY_CACHE_FILE_NAME );
 		}
 		else if( r_glslbincache_storemode == FS_WRITE ) {
@@ -432,7 +434,7 @@ static void RP_StorePrecacheList( void )
 	ri.FS_FCloseFile( handle );
 	ri.FS_FCloseFile( handleBin );
 
-	if( handleBin && ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, FS_UPDATE ) != -1 ) {
+	if( handleBin && ri.FS_FOpenAbsoluteFile( va( "%s/%s/%s", cacheDir, gameDir, GLSL_BINARY_CACHE_FILE_NAME ), &handleBin, FS_UPDATE ) != -1 ) {
 		dummy = GLSL_BITS_VERSION;
 		ri.FS_Write( &dummy, sizeof( dummy ), handleBin );
 		ri.FS_FCloseFile( handleBin );

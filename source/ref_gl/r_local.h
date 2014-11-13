@@ -529,10 +529,11 @@ extern mempool_t *r_mempool;
 char		*R_CopyString_( const char *in, const char *filename, int fileline );
 #define		R_CopyString(in) R_CopyString_(in,__FILE__,__LINE__)
 
-int			R_LoadFile_( const char *path, void **buffer, const char *filename, int fileline );
+int			R_LoadFile_( const char *path, qboolean absolute, void **buffer, const char *filename, int fileline );
 void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 
-#define		R_LoadFile(path,buffer) R_LoadFile_(path,buffer,__FILE__,__LINE__)
+#define		R_LoadFile(path,buffer) R_LoadFile_(path,qfalse,buffer,__FILE__,__LINE__)
+#define		R_LoadAbsoluteFile(path,buffer) R_LoadFile_(path,qtrue,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
 qboolean	R_ScreenEnabled( void );

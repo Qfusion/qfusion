@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 9
+#define REF_API_VERSION 10
 
 struct mempool_s;
 struct cinematics_s;
@@ -84,6 +84,7 @@ typedef struct
 	qboolean ( *FS_RemoveDirectory )( const char *dirname );
 	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
+	const char * ( *FS_CacheDirectory )( void );
 
 	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean *yuv, float *framerate );
 	qboolean ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );

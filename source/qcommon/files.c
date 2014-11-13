@@ -3002,6 +3002,17 @@ const char *FS_WriteDirectory( void )
 }
 
 /*
+* FS_CacheDirectory
+*
+* Returns directory where we can write cached files
+*/
+const char *FS_CacheDirectory( void )
+{
+	const char *dir = Sys_FS_GetCacheDirectory();
+	return dir ? dir : FS_WriteDirectory();
+}
+
+/*
 * FS_SecureDirectory
 *
 * Returns directory with higher security (for instance, not accessible for other apps)

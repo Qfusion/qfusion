@@ -229,6 +229,21 @@ const char *Sys_FS_GetHomeDirectory( void )
 }
 
 /*
+* Sys_FS_GetCacheDirectory
+*/
+const char *Sys_FS_GetCacheDirectory( void )
+{
+#ifdef __ANDROID_
+	char cache[PATH_MAX] = { '\0' };
+	if( !cache[0] )
+		Q_snprintfz( cache, sizeof( cache ), "/data/data/%s/cache", sys_android_packageName );
+	return cache;
+#else
+	return NULL;
+#endif
+}
+
+/*
 * Sys_FS_GetSecureDirectory
 */
 const char *Sys_FS_GetSecureDirectory( void )
