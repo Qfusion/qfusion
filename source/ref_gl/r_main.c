@@ -1987,7 +1987,7 @@ char *R_CopyString_( const char *in, const char *filename, int fileline )
 /*
 * R_LoadFile
 */
-int R_LoadFile_( const char *path, void **buffer, const char *filename, int fileline )
+int R_LoadFile_( const char *path, qboolean absolute, void **buffer, const char *filename, int fileline )
 {
 	qbyte *buf;
 	unsigned int len;
@@ -1996,7 +1996,11 @@ int R_LoadFile_( const char *path, void **buffer, const char *filename, int file
 	buf = NULL; // quiet compiler warning
 
 	// look for it in the filesystem or pack files
-	len = ri.FS_FOpenFile( path, &fhandle, FS_READ );
+	if( absolute )
+		len = ri.FS_FOpenAbsoluteFile( path, &fhandle, FS_READ );
+	else
+		len = ri.FS_FOpenFile( path, &fhandle, FS_READ );
+
 	if( !fhandle )
 	{
 		if( buffer )

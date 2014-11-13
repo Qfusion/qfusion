@@ -730,6 +730,7 @@ int			FS_GetExplicitPurePakList( char ***paknames );
 // handling of absolute filenames
 // only to be used if necessary (library not supporting custom file handling functions etc.)
 const char *FS_WriteDirectory( void );
+const char *FS_CacheDirectory( void );
 const char *FS_SecureDirectory( void );
 void	    FS_CreateAbsolutePath( const char *path );
 const char *FS_AbsoluteNameForFile( const char *filename );
