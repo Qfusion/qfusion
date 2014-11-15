@@ -227,7 +227,7 @@ void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_siz
 	if( sizeof( int ) > write_remains ) {
 		while( queue->cmdbuf_len + cmd_size + write_remains > queue->bufSize ) {
 			if( queue->blockWrite ) {
-				Sys_Thread_Yield();
+				QThread_Yield();
 				continue;
 			}
 			return;
@@ -241,7 +241,7 @@ void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_siz
 
 		while( queue->cmdbuf_len + sizeof( int ) + cmd_size + write_remains > queue->bufSize ) {
 			if( queue->blockWrite ) {
-				Sys_Thread_Yield();
+				QThread_Yield();
 				continue;
 			}
 			return;
@@ -258,7 +258,7 @@ void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_siz
 	{
 		while( queue->cmdbuf_len + cmd_size > queue->bufSize ) {
 			if( queue->blockWrite ) {
-				Sys_Thread_Yield();
+				QThread_Yield();
 				continue;
 			}
 			return;
