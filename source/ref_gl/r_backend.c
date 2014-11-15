@@ -131,9 +131,9 @@ void RB_StatsMessage( char *msg, size_t size )
 {
 	Q_snprintfz( msg, size, 
 		"%4i verts %4i tris\n"
-		"%4i draws",		
+		"%4i draws %4i binds",		
 		rb.stats.c_totalVerts, rb.stats.c_totalTris,
-		rb.stats.c_totalDraws
+		rb.stats.c_totalDraws, rb.stats.c_totalBinds
 	);
 }
 
@@ -164,6 +164,15 @@ static void RB_SetGLDefaults( void )
 	qglFrontFace( GL_CCW );
 }
 
+/*
+* RB_BindTexture
+*/
+void RB_BindTexture( int tmu, const image_t *tex )
+{
+	if( R_BindTexture( tmu, tex ) ) {
+		rb.stats.c_totalBinds++;
+	}
+}
 
 /*
 * RB_DepthRange
