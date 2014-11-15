@@ -32,7 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct r_backend_stats_s
 {
 	unsigned int numVerts, numElems;
-	unsigned int c_totalVerts, c_totalTris, c_totalStaticVerts, c_totalStaticTris, c_totalDraws;
+	unsigned int c_totalVerts, c_totalTris, c_totalStaticVerts, c_totalStaticTris, c_totalDraws, c_totalBinds;
 } rbStats_t;
 
 typedef struct
@@ -168,6 +168,7 @@ void RB_InitShading( void );
 void RB_DrawOutlinedElements( void );
 void RB_DrawShadedElements( void );
 int RB_BindProgram( int program );
+void RB_BindTexture( int tmu, const image_t *tex );
 void RB_SetInstanceData( int numInstances, instancePoint_t *instances );
 qboolean RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
 

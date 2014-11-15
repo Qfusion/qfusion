@@ -135,7 +135,7 @@ static void R_BindContextTexture( const image_t *tex )
 /*
 * R_BindTexture
 */
-void R_BindTexture( int tmu, const image_t *tex )
+qboolean R_BindTexture( int tmu, const image_t *tex )
 {
 	GLuint texnum;
 
@@ -159,12 +159,13 @@ void R_BindTexture( int tmu, const image_t *tex )
 
 	texnum = tex->texnum;
 	if( currentTextures[tmu] == texnum )
-		return;
+		return qfalse;
 
 	currentTextures[tmu] = texnum;
 
 	R_SelectTextureUnit( tmu );
 	R_BindContextTexture( tex );
+	return qtrue;
 }
 
 /*

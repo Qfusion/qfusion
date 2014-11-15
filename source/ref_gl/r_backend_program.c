@@ -880,7 +880,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	Matrix4_Identity( texMatrix );
 
-	R_BindTexture( 0, base );
+	RB_BindTexture( 0, base );
 
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
@@ -894,12 +894,12 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 	// we only send S-vectors to GPU and recalc T-vectors as cross product
 	// in vertex shader
-	R_BindTexture( 1, normalmap );         // normalmap
+	RB_BindTexture( 1, normalmap );         // normalmap
 
 	if( glossmap && glossIntensity )
 	{
 		programFeatures |= GLSL_SHADER_MATERIAL_SPECULAR;
-		R_BindTexture( 2, glossmap ); // gloss
+		RB_BindTexture( 2, glossmap ); // gloss
 	}
 
 	if( applyDecal )
@@ -916,7 +916,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 				programFeatures |= GLSL_SHADER_MATERIAL_DECAL_ADD;
 		}
 
-		R_BindTexture( 3, decalmap ); // decal
+		RB_BindTexture( 3, decalmap ); // decal
 	}
 
 	if( entdecalmap )
@@ -927,7 +927,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		if( entdecalmap->samples == 3 )
 			programFeatures |= GLSL_SHADER_MATERIAL_ENTITY_DECAL_ADD;
 
-		R_BindTexture( 4, entdecalmap ); // decal
+		RB_BindTexture( 4, entdecalmap ); // decal
 	}
 
 	if( offsetmappingScale > 0 )
@@ -943,7 +943,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 			// bind lightmap textures and set program's features for lightstyles
 			for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-				R_BindTexture( i+4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] );
+				RB_BindTexture( i+4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] );
 
 			programFeatures |= ( i * GLSL_SHADER_MATERIAL_LIGHTSTYLE0 );
 
@@ -1103,7 +1103,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 
 	Matrix4_Identity( texMatrix );
 
-	R_BindTexture( 0, dudvmap );
+	RB_BindTexture( 0, dudvmap );
 	
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
@@ -1118,11 +1118,11 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 		// eyeDot
 		programFeatures |= GLSL_SHADER_DISTORTION_EYEDOT;
 
-		R_BindTexture( 1, normalmap );
+		RB_BindTexture( 1, normalmap );
 	}
 
-	R_BindTexture( 2, portaltexture[0] );           // reflection
-	R_BindTexture( 3, portaltexture[1] );           // refraction
+	RB_BindTexture( 2, portaltexture[0] );           // reflection
+	RB_BindTexture( 3, portaltexture[1] );           // refraction
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, NULL,
@@ -1182,7 +1182,7 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 		return;
 
 	for( i = 0; i < numShadows; i++ ) {
-		R_BindTexture( i, shadowGroups[i]->shadowmap );
+		RB_BindTexture( i, shadowGroups[i]->shadowmap );
 	}
 
 	Matrix4_Identity( texMatrix );
@@ -1505,7 +1505,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 	}
 
-	R_BindTexture( 0, image );
+	RB_BindTexture( 0, image );
 
 	// convert rgbgen and alphagen to GLSL feature defines
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
@@ -1533,7 +1533,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	}
 
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
-		R_BindTexture( 3, rsh.screenDepthTextureCopy );
+		RB_BindTexture( 3, rsh.screenDepthTextureCopy );
 	}
 
 	if( isLightmapped ) {
@@ -1541,7 +1541,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 		// bind lightmap textures and set program's features for lightstyles
 		for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
-			R_BindTexture( i+4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
+			RB_BindTexture( i+4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
 		programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
 	}
 
@@ -1605,7 +1605,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 
 	Matrix4_Identity( texMatrix );
 
-	R_BindTexture( 0, base );
+	RB_BindTexture( 0, base );
 
 	RB_VertexTCCelshadeMatrix( reflectionMatrix );
 
@@ -1645,7 +1645,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 			} \
 		} \
 		if( btex ) { \
-			R_BindTexture( tmu, btex ); \
+			RB_BindTexture( tmu, btex ); \
 		} \
 	}
 
@@ -1724,7 +1724,7 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	R_BindTexture( 0, image );
+	RB_BindTexture( 0, image );
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
@@ -1751,9 +1751,9 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	R_BindTexture( 0, pass->images[0] );
-	R_BindTexture( 1, pass->images[1] );
-	R_BindTexture( 2, pass->images[2] );
+	RB_BindTexture( 0, pass->images[0] );
+	RB_BindTexture( 1, pass->images[1] );
+	RB_BindTexture( 2, pass->images[2] );
 
 	// update uniforms
 	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, NULL,
