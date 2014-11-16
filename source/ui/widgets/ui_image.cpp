@@ -224,9 +224,10 @@ bool ElementImage::LoadCachedTexture()
 		return false;
 	}
 
-	geometry_dirty = true;
+ 	geometry_dirty = true;
 
-	bool res = texture.Load( image_source );
+	URL image_url( image_source );
+	bool res = texture.Load( image_url.GetHost() + "/" + image_url.GetPathedFileName() );
 
 	SetPseudoClass( "loading", false );
 

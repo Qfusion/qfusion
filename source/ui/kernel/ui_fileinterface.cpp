@@ -29,14 +29,15 @@ Rocket::Core::FileHandle UI_FileInterface::Open(const Rocket::Core::String & pat
 	int length = -1;
 	Rocket::Core::URL url( path );
 	Rocket::Core::String protocol = url.GetProtocol();
+	bool cache = protocol == "cache";
 
 	// local
-	if( protocol.Empty() || protocol == "file" ) {
-		Rocket::Core::String path2( url.GetPathedFileName() );
-		if( path2[0] == '/' ) {
+	if( protocol.Empty() || protocol == "file" || cache ) {
+		Rocket::Core::String path2( url.GetHost() + "/" + url.GetPathedFileName() );
+		while( path2[0] == '/' ) {
 			path2.Erase( 0, 1 );
 		}
-		length = trap::FS_FOpenFile( path2.CString(), &filenum, FS_READ );
+		length = trap::FS_FOpenFile( path2.CString(), &filenum, FS_READ | (cache ? FS_CACHE : 0) );
 	}
 	else if( protocol == "http" ) {
 		// allow blocking download of remote resources

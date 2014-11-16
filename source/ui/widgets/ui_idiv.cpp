@@ -34,24 +34,21 @@ InlineDiv::InlineDiv( const String &tag ) : Element( tag ), timeout( WSW_UI_STRE
 
 void InlineDiv::ReadFromFile( const char *fileName )
 {
-	int file, length;
-	
-	while( *fileName == '/' ) {
-		fileName++;
-	}
+	FileHandle handle = GetFileInterface()->Open( fileName );
 
-	length = trap::FS_FOpenFile( fileName, &file, FS_READ );
-	if( length < 1 ) {
+	if( !handle ) {
 		// missing file
 		SetInnerRML( String( "Failed to load " ) + fileName );
 	}
 	else {
+		size_t length = GetFileInterface()->Length( handle );
+
 		// allocate temporary buffer
 		char *buffer = __newa__( char, length + 1 );
 
 		// read the whole file contents
-		trap::FS_Read( buffer, length, file );
-		trap::FS_FCloseFile( file );
+		GetFileInterface()->Read( buffer, length, handle );
+		GetFileInterface()->Close( handle );
 		buffer[length] = '\0';
 
 		// set elements RML code

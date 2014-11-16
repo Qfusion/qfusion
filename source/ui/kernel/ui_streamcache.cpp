@@ -44,6 +44,7 @@ StreamCache::StreamCache()
 
 void StreamCache::Init()
 {
+#if 0
 	bool cacheEmpty = true;
 
 	// remove the cache dir on the 1st and 15nth days of month
@@ -57,9 +58,10 @@ void StreamCache::Init()
 	if( ui_cachepurgedate->string[0] != '\0') {
 		int year, month, day;
 
-		cacheEmpty = false;
-		if( sscanf( ui_cachepurgedate->string, "%i-%i-%i", &year, &month, &day ) == 3 ) {
+		if( sscanf( ui_cachepurgedate->string, "%04i %02i %02i", &year, &month, &day ) == 3 ) {
 			struct tm purgetime;
+
+			cacheEmpty = false;
 
 			memset( &purgetime, 0, sizeof( purgetime ) );
 			purgetime.tm_year = year - 1900;
@@ -77,8 +79,9 @@ void StreamCache::Init()
 	if( cacheEmpty ) {
 		long_time += time_t( WSW_UI_STREAMCACHE_CACHE_PURGE_INTERVAL ) * 24 * 60 * 60;
 		nt = localtime( &long_time );
-		trap::Cvar_ForceSet( ui_cachepurgedate->name, va( "%04i-%02i-%02i", nt->tm_year + 1900, nt->tm_mon+1, nt->tm_mday ) );
+		trap::Cvar_ForceSet( ui_cachepurgedate->name, va( "%04i %02i %02i", nt->tm_year + 1900, nt->tm_mon+1, nt->tm_mday ) );
 	}
+#endif
 }
 
 void StreamCache::Shutdown()
@@ -87,14 +90,20 @@ void StreamCache::Shutdown()
 
 void StreamCache::PurgeCache( void )
 {
+#if 0
 	std::string cacheDir( WSW_UI_STREAMCACHE_DIR );
 
 	std::vector<std::string> cachedFiles;
 	getFileList( cachedFiles, cacheDir, "*", true );
 
 	for( std::vector<std::string>::const_iterator it = cachedFiles.begin(); it != cachedFiles.end(); ++it ) {
-		trap::FS_RemoveFile( (cacheDir + "/" + *it).c_str() );
+		std::string fileName( cacheDir + "/" + *it );
+
+		if( trap::FS_FOpenFile( fileName.c_str(), NULL, FS_READ|FS_CACHE ) != -1 ) {
+			trap::FS_RemoveFile( fileName.c_str() );
+		}
 	}
+#endif
 }
 
 size_t StreamCache::StreamRead( const void *buf, size_t numb, float percentage, int status,
@@ -202,7 +211,7 @@ void StreamCache::PerformRequest( const char *url, const char *method, const cha
 	// check in cache first
 	if( cache_cb ) {
 		// redundant check
-		//if( trap::FS_FOpenFile( cacheFilename.c_str(), NULL, FS_READ ) >= 0 )
+		//if( trap::FS_FOpenFile( cacheFilename.c_str(), NULL, FS_READ|FS_CACHE ) >= 0 )
 		{
 			time_t mTime;
 
@@ -211,6 +220,7 @@ void StreamCache::PerformRequest( const char *url, const char *method, const cha
 			// or 0 if mTime could not be obtained)
 			mTime = trap::FS_FileMTime( cacheFilename.c_str() );
 			if( mTime + cacheTTL * 60 > time( NULL ) ) {
+				cacheFilename = "cache://" + cacheFilename;
 				cache_cb( cacheFilename.c_str(), privatep );
 				return;
 			}
@@ -245,7 +255,7 @@ void StreamCache::PerformRequest( const char *url, const char *method, const cha
 		if( !inProgress ) {
 			stream->tmpFilename = tmpFilename;
 
-			if( trap::FS_FOpenFile( tmpFilename.c_str(), &stream->tmpFilenum, FS_WRITE ) < 0 ) {
+			if( trap::FS_FOpenFile( tmpFilename.c_str(), &stream->tmpFilenum, FS_WRITE|FS_CACHE ) < 0 ) {
 				Com_Printf( S_COLOR_YELLOW "WARNING: Failed to open %s for writing\n", tmpFilename.c_str() );
 				__delete__( stream );
 				return;
@@ -290,7 +300,7 @@ std::string StreamCache::CacheFileForUrl( const std::string url, bool noCache )
 	std::string linkName = cacheName + LINK_EXTENSION;
 	int filenum, length;
 
-	length = trap::FS_FOpenFile( linkName.c_str(), &filenum, FS_READ );
+	length = trap::FS_FOpenFile( linkName.c_str(), &filenum, FS_READ|FS_CACHE );
 	if( length >= 0 ) {
 		if( length > 0 ) {
 			char *buf = new char[length+1];
@@ -340,7 +350,7 @@ std::string StreamCache::RealFileForCacheFile( const std::string cacheFile, cons
 		int filenum;
 		std::string linkFile = cacheFile + LINK_EXTENSION;
 
-		if( trap::FS_FOpenFile( linkFile.c_str(), &filenum, FS_WRITE ) >= 0 ) {
+		if( trap::FS_FOpenFile( linkFile.c_str(), &filenum, FS_WRITE|FS_CACHE ) >= 0 ) {
 			trap::FS_Write( realFile.c_str(), realFile.length(), filenum );
 			trap::FS_FCloseFile( filenum );
 		}
