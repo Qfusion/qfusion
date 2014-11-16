@@ -204,9 +204,9 @@ void RP_Init( void )
 * Expected file format:
 * application_name\n
 * version_number\n*
-* program_type1 features_lower_bits1 features_higher_bits1 program_name1
+* program_type1 features_lower_bits1 features_higher_bits1 program_name1 binary_offset
 * ..
-* program_typeN features_lower_bitsN features_higher_bitsN program_nameN
+* program_typeN features_lower_bitsN features_higher_bitsN program_nameN binary_offset
 */
 static void RP_PrecachePrograms( void )
 {
