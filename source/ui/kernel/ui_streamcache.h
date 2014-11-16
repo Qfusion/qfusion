@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "kernel/ui_utils.h"
 
 #define WSW_UI_STREAMCACHE_EXT					".tmp"
-#define WSW_UI_STREAMCACHE_DIR					"ui/.cache"
+#define WSW_UI_STREAMCACHE_DIR					"cache/ui"
 #define WSW_UI_STREAMCACHE_TIMEOUT				15					// timeout in seconds
 #define WSW_UI_STREAMCACHE_CACHE_TTL			60					// TTL in minutes
 #define WSW_UI_STREAMCACHE_CACHE_PURGE_INTERVAL	15					// purge interval in days
