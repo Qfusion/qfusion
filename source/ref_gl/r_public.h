@@ -84,7 +84,6 @@ typedef struct
 	qboolean ( *FS_RemoveDirectory )( const char *dirname );
 	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
-	const char * ( *FS_CacheDirectory )( void );
 
 	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean *yuv, float *framerate );
 	qboolean ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );

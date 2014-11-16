@@ -343,6 +343,8 @@ void Com_Error( com_error_code_t code, const char *format, ... );
 #define FS_GZ				0x100	// compress on write and decompress on read automatically
 									// doesn't work for pk3 files
 #define FS_UPDATE			0x200
+#define FS_SECURE			0x400
+#define FS_CACHE			0x800
 
 #define FS_RWA_MASK			(FS_READ|FS_WRITE|FS_APPEND)
 

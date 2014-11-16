@@ -51,6 +51,14 @@ QUAKE FILESYSTEM
 
 #define FZ_GZ_BUFSIZE				0x00020000
 
+enum
+{
+	FS_SEARCH_NONE = 0,
+	FS_SEARCH_PAKS = 1 << 0,
+	FS_SEARCH_DIRS = 1 << 1,
+	FS_SEARCH_ALL = (FS_SEARCH_PAKS|FS_SEARCH_DIRS)
+};
+
 static const char *pak_extensions[] = { "pk3", "pk2", NULL };
 
 static const char *forbidden_gamedirs[] = {
@@ -360,7 +368,7 @@ static int FS_FileLength( FILE *f, qboolean close )
 * 
 * Gives the searchpath element where this file exists, or NULL if it doesn't
 */
-static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **pout, char *path, size_t path_size )
+static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **pout, char *path, size_t path_size, int mode )
 {
 	searchpath_t *search;
 	qboolean purepass;
@@ -379,18 +387,24 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 		// is the element a pak file?
 		if( search->pack )
 		{
-			if( search->pack->pure == purepass )
+			if( mode & FS_SEARCH_PAKS )
 			{
-				if( FS_SearchPakForFile( search->pack, filename, pout ) )
-					return search;
+				if( search->pack->pure == purepass )
+				{
+					if( FS_SearchPakForFile( search->pack, filename, pout ) )
+						return search;
+				}
 			}
 		}
 		else
 		{
-			if( !purepass )
+			if( mode & FS_SEARCH_DIRS )
 			{
-				if( FS_SearchDirectoryForFile( search, filename, path, path_size ) )
-					return search;
+				if( !purepass )
+				{
+					if( FS_SearchDirectoryForFile( search, filename, path, path_size ) )
+						return search;
+				}
 			}
 		}
 
@@ -464,7 +478,7 @@ static const char *FS_PakNameForPath( pack_t *pack )
 */
 const char *FS_PakNameForFile( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0, FS_SEARCH_PAKS );
 
 	if( !search || !search->pack )
 		return NULL;
@@ -740,7 +754,7 @@ static int FS_FileExists( const char *filename, qboolean base )
 	if( base )
 		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ) );
 	else
-		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ) );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), FS_SEARCH_ALL );
 
 	if( !search )
 		return -1;
@@ -965,6 +979,8 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	qboolean noSize;
 	qboolean gz;
 	qboolean update;
+	qboolean secure;
+	qboolean cache;
 	packfile_t *pakFile = NULL;
 	gzFile gzf = NULL;
 	int realmode;
@@ -977,6 +993,8 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	gz = mode & FS_GZ ? qtrue : qfalse;
 	noSize = mode & FS_NOSIZE ? qtrue : qfalse;
 	update = mode & FS_UPDATE ? qtrue : qfalse;
+	secure = mode & FS_SECURE ? qtrue : qfalse;
+	cache = mode & FS_CACHE ? qtrue : qfalse;
 	mode = mode & FS_RWA_MASK;
 
 	assert( mode == FS_READ || mode == FS_WRITE || mode == FS_APPEND );
@@ -1038,19 +1056,26 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 		return rxSize;
 	}
 
-	if( ( mode == FS_WRITE || mode == FS_APPEND ) || update )
+	if( ( mode == FS_WRITE || mode == FS_APPEND ) || update || secure || cache )
 	{
 		int end;
 		char modestr[4] = { 0, 0, 0, 0 };
 		FILE *f = NULL;
+		const char *dir;
+
+		dir = FS_WriteDirectory();
+		if( secure )
+			dir = FS_SecureDirectory();
+		else if( cache )
+			dir = FS_CacheDirectory();
 
 		if( base )
 		{
-			Q_snprintfz( tempname, sizeof( tempname ), "%s/%s", FS_WriteDirectory(), filename );
+			Q_snprintfz( tempname, sizeof( tempname ), "%s/%s", dir, filename );
 		}
 		else
 		{
-			Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), filename );
+			Q_snprintfz( tempname, sizeof( tempname ), "%s/%s/%s", dir, FS_GameDirectory(), filename );
 		}
 		FS_CreateAbsolutePath( tempname );
 
@@ -1065,7 +1090,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 			return -1;
 
 		end = 0;
-		if( mode == FS_APPEND ) {
+		if( mode == FS_APPEND || mode == FS_READ || update ) {
 			end = f ? FS_FileLength( f, qfalse ) : 0;
 		}
 
@@ -1090,7 +1115,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	if( base )
 		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ) );
 	else
-		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ) );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), FS_SEARCH_ALL );
 	if( !search )
 		goto notfound_dprint;
 
@@ -1828,7 +1853,7 @@ void FS_RemovePurePaks( void )
 */
 qboolean FS_IsPureFile( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0, FS_SEARCH_PAKS );
 
 	if( !search || !search->pack )
 		return qfalse;
@@ -1841,7 +1866,7 @@ qboolean FS_IsPureFile( const char *filename )
 */
 const char *FS_FileManifest( const char *filename )
 {
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0, FS_SEARCH_PAKS );
 
 	if( !search || !search->pack )
 		return NULL;
@@ -2022,7 +2047,7 @@ static time_t _FS_FileMTime( const char *filename, qboolean base )
 	if( base ) {
 		search = FS_SearchPathForBaseFile( filename, tempname, sizeof( tempname ) );
 	} else {
-		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ) );
+		search = FS_SearchPathForFile( filename, &pakFile, tempname, sizeof( tempname ), FS_SEARCH_ALL );
 	}
 
 	if( !search ) {
@@ -3075,7 +3100,7 @@ void FS_CreateAbsolutePath( const char *path )
 const char *FS_AbsoluteNameForFile( const char *filename )
 {
 	static char absolutename[1024]; // fixme
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0, FS_SEARCH_DIRS );
 
 	if( !search || search->pack )
 		return NULL;
@@ -3108,7 +3133,7 @@ const char *FS_AbsoluteNameForBaseFile( const char *filename )
 const char *FS_BaseNameForFile( const char *filename )
 {
 	const char *p;
-	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0 );
+	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0, FS_SEARCH_DIRS );
 
 	if( !search || search->pack )
 		return NULL;
@@ -3747,6 +3772,8 @@ void FS_Init( void )
 {
 	int i;
 	const char *homedir;
+	const char *cachedir;
+	const char *securedir;
 
 	assert( !fs_initialized );
 
@@ -3792,6 +3819,14 @@ void FS_Init( void )
 	FS_AddBasePath( fs_basepath->string );
 	if( homedir != NULL && fs_usehomedir->integer )
 		FS_AddBasePath( homedir );
+
+	securedir = Sys_FS_GetSecureDirectory();
+	if( securedir != NULL && securedir )
+		FS_AddBasePath( securedir );
+
+	cachedir = Sys_FS_GetCacheDirectory();
+	if( cachedir != NULL && cachedir )
+		FS_AddBasePath( cachedir );
 
 	Sys_VFS_Init();
 
