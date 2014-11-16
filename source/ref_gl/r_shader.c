@@ -524,7 +524,7 @@ static int Shader_SetImageFlags( shader_t *shader )
 	return flags;
 }
 
-static image_t *Shader_FindImage( shader_t *shader, char *name, int flags )
+static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags )
 {
 	image_t *image;
 
@@ -2439,19 +2439,27 @@ static size_t R_ShaderCleanName( const char *name, char *shortname, size_t short
 	int i;
 	size_t length = 0;
 	size_t lastDot = 0;
+	size_t lastSlash = 0;
 
-	for( i = ( name[0] == '/' || name[0] == '\\' ), length = 0; name[i] && ( length < shortname_size-1 ); i++ )
+	for( i = 0; name[i] && (name[0] == '/' || name[0] == '\\'); i++ );
+
+	for( length = 0; name[i] && ( length < shortname_size-1 ); i++ )
 	{
 		if( name[i] == '.' )
 			lastDot = length;
 		if( name[i] == '\\' )
-			shortname[length++] = '/';
+			shortname[length] = '/';
 		else
-			shortname[length++] = tolower( name[i] );
+			shortname[length] = tolower( name[i] );
+		if( shortname[length] == '/' )
+			lastSlash = length;
+		length++;
 	}
 
 	if( !length )
 		return 0;
+	if( lastDot < lastSlash )
+		lastDot = 0;
 	if( lastDot )
 		length = lastDot;
 	shortname[length] = 0;
@@ -2462,15 +2470,15 @@ static size_t R_ShaderCleanName( const char *name, char *shortname, size_t short
 /*
 * R_LoadShaderReal
 */
-static void R_LoadShaderReal( shader_t *s, char *shortname, 
-	size_t shortname_length, shaderType_e type, qboolean forceDefault )
+static void R_LoadShaderReal( shader_t *s, const char *shortname, 
+	size_t shortname_length, const char *longname, shaderType_e type, qboolean forceDefault )
 {
 	void *data;
 	shadercache_t *cache;
 	shaderpass_t *pass;
 	image_t *materialImages[MAX_SHADER_IMAGES];
 
-	s->name = shortname;
+	s->name = ( char * )shortname; // HACK, will be copied over in Shader_Finish
 	s->type = type;
 
 	// set defaults
@@ -2547,7 +2555,7 @@ create_default:
 			pass->tcgen = TC_GEN_BASE;
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
-			pass->images[0] = Shader_FindImage( s, shortname, 0 );
+			pass->images[0] = Shader_FindImage( s, longname, 0 );
 			break;
 		case SHADER_TYPE_DELUXEMAP:
 			// deluxemapping
@@ -2568,7 +2576,7 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_IDENTITY;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-			pass->images[0] = Shader_FindImage( s, shortname, 0 );
+			pass->images[0] = Shader_FindImage( s, longname, 0 );
 			pass->images[1] = materialImages[0]; // normalmap
 			pass->images[2] = materialImages[1]; // glossmap
 			pass->images[3] = materialImages[2]; // decalmap
@@ -2587,7 +2595,7 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
-			pass->images[0] = Shader_FindImage( s, shortname, IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS|IT_CLAMP );
+			pass->images[0] = Shader_FindImage( s, longname, IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS|IT_CLAMP );
 			break;
 		case SHADER_TYPE_DIFFUSE:
 			// load material images
@@ -2635,14 +2643,14 @@ create_default:
 			if( type == SHADER_TYPE_VIDEO )
 			{
 				// we don't want "video/" to be there since it's hardcoded into cinematics
-				if( !Q_strnicmp(shortname, "video/", 6 ) )
+				if( !Q_strnicmp( shortname, "video/", 6 ) )
 					pass->cin = R_StartCinematic( shortname+6 );
 				else
 					pass->cin = R_StartCinematic( shortname );
 				s->cin = pass->cin;
 				pass->images[0] = rsh.noTexture;
 			} else if( type != SHADER_TYPE_2D_RAW ) {
-				pass->images[0] = Shader_FindImage( s, shortname, 
+				pass->images[0] = Shader_FindImage( s, longname, 
 					IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS|IT_SYNC );
 			}
 			break;
@@ -2767,7 +2775,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 	s->next = next;
 	s->prev = prev;
 	s->id = s - r_shaders;
-	R_LoadShaderReal( s, shortname, nameLength, type, forceDefault );
+	R_LoadShaderReal( s, shortname, nameLength, name, type, forceDefault );
 
 	// add to linked lists
 	s->prev = hnode;
