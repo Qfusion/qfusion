@@ -35,7 +35,9 @@ static void Mod_AliasBuildStaticVBOForMesh( maliasmesh_t *mesh )
 	
 	vattribs = VATTRIB_POSITION_BIT | VATTRIB_TEXCOORDS_BIT | VATTRIB_NORMAL_BIT | VATTRIB_SVECTOR_BIT;
 	for( i = 0; i < mesh->numskins; i++ ) {
-		vattribs |= mesh->skins[i].shader->vattribs;
+		if( mesh->skins[i].shader ) {
+			vattribs |= mesh->skins[i].shader->vattribs;
+		}
 	}
 
 	mesh->vbo = R_CreateMeshVBO( ( void * )mesh, 

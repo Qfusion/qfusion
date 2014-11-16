@@ -53,7 +53,9 @@ static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh )
 	if( glConfig.maxGLSLBones > 0 ) {
 		vattribs |= VATTRIB_BONES_BITS;
 	}
-	vattribs |= mesh->skin.shader->vattribs;
+	if( mesh->skin.shader ) {
+		vattribs |= mesh->skin.shader->vattribs;
+	}
 
 	mesh->vbo = R_CreateMeshVBO( ( void * )mesh, 
 		mesh->numverts, mesh->numtris * 3, 0, vattribs, VBO_TAG_MODEL, vattribs );
