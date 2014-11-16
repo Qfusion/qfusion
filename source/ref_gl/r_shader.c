@@ -2441,7 +2441,7 @@ static size_t R_ShaderCleanName( const char *name, char *shortname, size_t short
 	size_t lastDot = 0;
 	size_t lastSlash = 0;
 
-	for( i = 0; name[i] && (name[0] == '/' || name[0] == '\\'); i++ );
+	for( i = 0; name[i] && (name[i] == '/' || name[i] == '\\'); i++ );
 
 	for( length = 0; name[i] && ( length < shortname_size-1 ); i++ )
 	{
