@@ -94,6 +94,7 @@ void InlineDiv::LoadSource()
 	// Get the source URL for the image.
 	String source = GetAttribute< String >("src", "");
 	bool nocache = GetAttribute< int >("nocache", 0) != 0;
+	int expires = GetAttribute< int >("expires", WSW_UI_STREAMCACHE_CACHE_TTL);
 
 	onAddLoad = false;
 	loading = true;
@@ -115,7 +116,7 @@ void InlineDiv::LoadSource()
 
 		UI_Main::Get()->getStreamCache()->PerformRequest( 
 			source.CString(), "GET", NULL, 
-			NULL, NULL, &CacheRead, ( void * )this, timeout, nocache ? 0 : WSW_UI_STREAMCACHE_CACHE_TTL
+			NULL, NULL, &CacheRead, ( void * )this, timeout, nocache ? 0 : expires
 		);
 	}
 	else {
