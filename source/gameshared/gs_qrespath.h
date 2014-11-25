@@ -272,6 +272,7 @@ extern "C" {
 #define S_CHAT			"sounds/misc/chat"
 #define S_TIMER_BIP_BIP		"sounds/misc/timer_bip_bip"
 #define S_TIMER_PLOINK		"sounds/misc/timer_ploink"
+#define S_GIBS_EXPLOSION	"sounds/misc/gibs_explosion"
 
 //wsw: pb disable unreferenced sounds
 //#define S_LAND					"sounds/misc/land"

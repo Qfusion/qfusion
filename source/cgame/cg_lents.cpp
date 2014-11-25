@@ -59,6 +59,8 @@ typedef struct lentity_s
 	vec3_t lightcolor;
 
 	vec3_t velocity;
+	vec3_t avelocity;
+	vec3_t angles;
 	vec3_t accel;
 
 	int bounce;     //is activator and bounceability value at once
@@ -194,6 +196,7 @@ static lentity_t *CG_AllocModel( letype_t type, const vec3_t origin, const vec3_
 	le->ent.shaderTime = cg.time;
 	le->ent.scale = 1.0f;
 
+	VectorCopy( angles, le->angles );
 	AnglesToAxis( angles, le->ent.axis );
 	VectorCopy( origin, le->ent.origin );
 
@@ -1401,10 +1404,10 @@ void CG_ExplosionsDust( vec3_t pos, vec3_t dir, float radius )
 	}       
 }
 
-void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity )
+void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity, int team )
 {
 	lentity_t *le;
-	int i, count;
+	int i, j, count;
 	vec3_t angles, velocity;
 	int time;
 
@@ -1414,45 +1417,73 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 	if( cg_gibs->integer > 1 )
 	{
 		time = 50;
-		count = cg_gibs->integer;
-		clamp( count, 2, 128 );
+		count = 28 + cg_gibs->integer; // 30 models minimum
+		clamp( count, 25, 128 );
 
 		for( i = 0; i < count; i++ )
 		{
-			le = CG_AllocModel( LE_NO_FADE, origin, vec3_origin, time + time * random(),
-				1, 1, 1, 1,
+			vec4_t color;
+
+			// coloring
+			switch ( rand( ) % 3 ) {
+			case 0:
+				// orange
+				Vector4Set( color, 1, 0.5, 0, 1 );
+				break;
+			case 1:
+				// purple
+				Vector4Set( color, 1, 0, 1, 1 );
+				break;
+			case 2:
+			default:
+				// team
+				CG_TeamColor( team, color );
+				for( j = 0; j < 3; j++ ) {
+					color[j] = bound( 60.0f / 255.0f, color[j], 1.0f );
+				}
+				break;
+			}
+
+			le = CG_AllocModel( LE_ALPHA_FADE, origin, vec3_origin, time + time * random( ),
+				color[0], color[1], color[2], color[3],
 				0, 0, 0, 0,
-				CG_MediaModel( cgs.media.modMeatyGibs[((int)brandom( 0, MAX_MEATY_GIBS )) % (MAX_MEATY_GIBS)] ),
+				CG_MediaModel( cgs.media.modIlluminatiGibs ),
 				NULL );
 
 			// random rotation and scale variations
 			VectorSet( angles, crandom() * 360, crandom() * 360, crandom() * 360 );
 			AnglesToAxis( angles, le->ent.axis );
-			le->ent.scale = 0.75f - ( random() * 0.25 );
+			le->ent.scale = 0.6f - ( random() * 0.25 );
 			le->ent.renderfx = RF_FULLBRIGHT|RF_NOSHADOW;
 
-			velocity[0] = 20.0 * crandom();
-			velocity[1] = 20.0 * crandom();
-			velocity[2] = 20.0 + 20.0 * random();
-			VectorScale( velocity, damage * 0.1, velocity );
+			velocity[0] = crandom() * damage * 100;
+			velocity[1] = crandom() * damage * 100;
+			velocity[2] = random() * damage * 300;
+
+			clamp( velocity[0], -100, 100 );
+			clamp( velocity[1], -100, 100 );
+			clamp( velocity[2], 150, 300 );  // always have upwards
+
+			velocity[0] += crandom() * bound( 0, damage, 150 );
+			velocity[1] += crandom() * bound( 0, damage, 150 );
+			velocity[2] += random() * bound( 0, damage, 250 );
 
 			VectorAdd( initialVelocity, velocity, le->velocity );
-			clamp( le->velocity[0], -200, 200 );
-			clamp( le->velocity[1], -200, 200 );
-			clamp( le->velocity[2], 100, 400 );  // always have upwards
 
-			// velocity brought by game + random variations
-			le->velocity[0] += crandom() * 75;
-			le->velocity[1] += crandom() * 75;
-			le->velocity[2] += random() * 75;
+			le->avelocity[0] = random() * 1200;
+			le->avelocity[1] = random() * 1200;
+			le->avelocity[2] = random() * 1200;
 
 			//friction and gravity
-			VectorSet( le->accel, -0.2f, -0.2f, -500 );
+			VectorSet( le->accel, -0.2f, -0.2f, -900 );
 
-			le->bounce = 35;
+			le->bounce = 75;
 		}
 
-		CG_ImpactPuffParticles( origin, vec3_origin, 16, 2.5f, 1, 0, 0, 1, NULL );
+		CG_ImpactPuffParticles( origin, vec3_origin, 16, 2.5f, 1, 1, 0.6, 1, NULL );
+		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxGibsExplosion ), origin, CHAN_AUTO,
+			cg_volume_effects->value, ATTN_STATIC );
+
 	}
 	else
 	{
@@ -1673,6 +1704,32 @@ void CG_AddLocalEntities( void )
 
 		ent->backlerp = backlerp;
 
+		if ( le->avelocity[0] || le->avelocity[1] || le->avelocity[2] ) {
+			VectorMA( le->angles, time, le->avelocity, le->angles );
+			AnglesToAxis( le->angles, le->ent.axis );
+		}
+
+		// apply rotational friction
+		if( le->bounce ) { // FIXME?
+			int i;
+			const float adj = 100 * 6 * time; // magic constants here
+
+			for( i = 0; i < 3; i++ ) {
+				if( le->avelocity[i] > 0.0f ) {
+					le->avelocity[i] -= adj;
+					if( le->avelocity[i] < 0.0f ) {
+						le->avelocity[i] = 0.0f;
+					}
+				}
+				else if ( le->avelocity[i] < 0.0f ) {
+					le->avelocity[i] += adj;
+					if ( le->avelocity[i] > 0.0f ) {
+						le->avelocity[i] = 0.0f;
+					}
+				}
+			}
+		}
+
 		if( le->bounce )
 		{
 			trace_t	trace;
@@ -1715,8 +1772,10 @@ void CG_AddLocalEntities( void )
 						le->bounce = false;
 						VectorClear( le->velocity );
 						VectorClear( le->accel );
+						VectorClear( le->avelocity );
 						if( le->type == LE_EXPLOSION_TRACER )
-						{               // blx
+						{
+							// blx
 							le->type = LE_FREE;
 							CG_FreeLocalEntity( le );
 						}

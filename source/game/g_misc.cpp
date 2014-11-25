@@ -153,6 +153,7 @@ void BecomeExplosion1( edict_t *self )
 	self->r.svflags &= ~SVF_NOCLIENT;
 }
 
+
 //QUAKED path_corner (.5 .3 0) (-8 -8 -8) (8 8 8) TELEPORT
 //Path corner entity that func_trains can be made to follow.
 //-------- KEYS --------
