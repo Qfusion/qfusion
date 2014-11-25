@@ -1380,7 +1380,7 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 		break;
 
 	case EV_SPOG:
-		CG_SmallPileOfGibs( ent->origin, parm, ent->origin2 );
+		CG_SmallPileOfGibs( ent->origin, parm, ent->origin2, ent->team );
 		break;
 
 	case EV_ITEM_RESPAWN:

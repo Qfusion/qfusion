@@ -238,6 +238,7 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage )
 	VectorCopy( ent->r.absmin, body->r.absmin );
 	VectorCopy( ent->r.absmax, body->r.absmax );
 	VectorCopy( ent->r.size, body->r.size );
+	VectorCopy( ent->velocity, body->velocity );
 	body->r.maxs[2] = body->r.mins[2] + 8;
 
 	body->r.solid = SOLID_YES;
@@ -251,7 +252,11 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage )
 		|| meansOfDeath == MOD_ELECTROBOLT_S /* electrobolt always gibs */ )
 	{
 		ThrowSmallPileOfGibs( body, damage );
+
+		// reset gib impulse
+		VectorClear( body->velocity );
 		ThrowClientHead( body, damage ); // sets ET_GIB
+
 		body->s.frame = 0;
 		body->nextThink = level.time + 3000 + random() * 3000;
 		body->deadflag = DEAD_DEAD;
@@ -264,9 +269,6 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage )
 		body->s.bodyOwner = ent->s.number; // bodyOwner is the same as modelindex2
 		body->s.skinnum = ent->s.skinnum;
 		body->s.teleported = qtrue;
-
-		// when it's not a gib (they get their own impulse) copy player's velocity (knockback deads)
-		VectorCopy( ent->velocity, body->velocity );
 
 		// launch the death animation on the body
 		{
@@ -295,6 +297,7 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage )
 	}
 	else // wasn't a player, just copy it's model
 	{
+		VectorClear( body->velocity );
 		body->s.modelindex = ent->s.modelindex;
 		body->s.frame = ent->s.frame;
 		body->nextThink = level.time + 5000 + random()*10000;

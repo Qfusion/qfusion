@@ -546,7 +546,7 @@ void G_PrecacheMedia( void )
 	trap_SkinIndex( "models/players/bigvic/default" );
 
 	// FIXME: Temporarily use normal gib until the head is fixed
-	trap_ModelIndex( "models/objects/gibs/gib1/gib1.md3" );
+	trap_ModelIndex( "models/objects/gibs/illuminati1/illuminati1.md3" );
 
 	//
 	// SOUNDS

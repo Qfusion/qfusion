@@ -162,6 +162,7 @@ typedef struct
 	cgs_media_handle_t *sfxWeaponHit[4];
 	cgs_media_handle_t *sfxWeaponKill;
 	cgs_media_handle_t *sfxWeaponHitTeam;
+	cgs_media_handle_t *sfxGibsExplosion;
 
 	cgs_media_handle_t *sfxItemRespawn;
 	cgs_media_handle_t *sfxTeleportIn;
@@ -214,6 +215,7 @@ typedef struct
 	cgs_media_handle_t *modDash;
 	cgs_media_handle_t *modHeadStun;
 
+	cgs_media_handle_t *modIlluminatiGibs;
 	cgs_media_handle_t *modTechyGibs[MAX_TECHY_GIBS];
 	cgs_media_handle_t *modMeatyGibs[MAX_MEATY_GIBS];
 
@@ -973,7 +975,7 @@ void CG_CartoonHitEffect( vec3_t origin, vec3_t dir, int damage );
 void CG_NewElectroBeamPuff( centity_t *cent, vec3_t origin, vec3_t dir );
 void CG_FlagTrail( vec3_t origin, vec3_t start, vec3_t end, float r, float g, float b );
 void CG_GreenLaser( vec3_t start, vec3_t end );
-void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity );
+void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity, int team );
 void CG_PlasmaExplosion( vec3_t pos, vec3_t dir, int fire_mode, float radius );
 void CG_GrenadeExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, float radius );
 void CG_GenericExplosion( vec3_t pos, vec3_t dir, int fire_mode, float radius );
