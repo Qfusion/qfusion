@@ -342,6 +342,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	unsigned numSurfaces;
 	drawSurfaceBSP_t *drawSurf;
 	int num_vbos;
+	vattribmask_t floatVattribs;
 
 	assert( mod );
 
@@ -434,6 +435,14 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	// vertex buffer objects if they share shader, lightmap texture and we can render
 	// them in hardware (some Q3A shaders require GLSL for that)
 
+	// don't use half-floats for XYZ due to precision issues
+	floatVattribs = VATTRIB_POSITION_BIT;
+	if( mapConfig.maxLightmapSize > 1024 )
+	{
+		// don't use half-floats for lightmaps if there's not enough precision (half mantissa is 10 bits)
+		floatVattribs |= VATTRIB_LMCOORDS_BITS;
+	}
+
 	num_vbos = 0;
 	*vbo_total_size = 0;
 	for( i = 0; i < numSurfaces; i++ )
@@ -521,7 +530,7 @@ merge:
 
 		// don't use half-floats for XYZ due to precision issues
 		vbo = R_CreateMeshVBO( ( void * )surf, vcount, ecount, surf->numInstances, vattribs, 
-			VBO_TAG_WORLD, vattribs & ~(VATTRIB_POSITION_BIT|VATTRIB_LMCOORDS_BITS) );
+			VBO_TAG_WORLD, vattribs & ~floatVattribs );
 		if( vbo )
 		{
 			vattribmask_t errMask;
@@ -582,6 +591,8 @@ merge:
 					VBO_Printf( " st" );
 				if( errMask & VATTRIB_LMCOORDS0_BIT )
 					VBO_Printf( " lmst" );
+				if( errMask & VATTRIB_LMLAYERS0123_BIT )
+					VBO_Printf( " lmlayers" );
 				if( errMask & VATTRIB_COLOR0_BIT )
 					VBO_Printf( " colors" );
 				VBO_Printf( "\n" );
@@ -1065,6 +1076,8 @@ static void R_InitMapConfig( const char *model )
 
 	mapConfig.pow2MapOvrbr = 0;
 	mapConfig.lightmapsPacking = qfalse;
+	mapConfig.lightmapArrays = qfalse;
+	mapConfig.maxLightmapSize = 0;
 	mapConfig.deluxeMaps = qfalse;
 	mapConfig.deluxeMappingEnabled = qfalse;
 	mapConfig.overbrightBits = max( 0, r_mapoverbrightbits->integer );

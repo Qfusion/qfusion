@@ -21,6 +21,9 @@ qf_varying qf_lmvec01 v_LightmapTexCoord01;
 #if NUM_LIGHTMAPS > 2 
 qf_varying qf_lmvec23 v_LightmapTexCoord23;
 #endif
+#ifdef LIGHTMAP_ARRAYS
+qf_varying vec4 v_LightmapLayer0123;
+#endif
 #endif
 
 #if defined(APPLY_FOG) && !defined(APPLY_FOG_COLOR)

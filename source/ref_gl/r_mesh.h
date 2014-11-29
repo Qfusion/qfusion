@@ -33,6 +33,7 @@ typedef struct mesh_s
 	vec4_t				*sVectorsArray;
 	vec2_t				*stArray;
 	vec2_t				*lmstArray[MAX_LIGHTMAPS];
+	byte_vec4_t			*lmlayersArray[( MAX_LIGHTMAPS + 3 ) / 4];
 	byte_vec4_t			*colorsArray[MAX_LIGHTMAPS];
 
 	qbyte				*blendIndices;

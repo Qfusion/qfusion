@@ -30,6 +30,7 @@ ATTRIBUTE_ALIGNED( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchSVectorsArray[MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) vec2_t batchSTCoordsArray[MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) vec2_t batchLMCoordsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
+ATTRIBUTE_ALIGNED( 16 ) byte_vec4_t batchLMLayersArray[( MAX_LIGHTMAPS + 3 ) / 4][MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) byte_vec4_t batchColorsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) elem_t batchElements[MAX_BATCH_ELEMENTS];
 
@@ -663,6 +664,9 @@ static void RB_InitBatchMesh( void )
 	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
 		mesh->lmstArray[i] = batchLMCoordsArray[i];
 		mesh->colorsArray[i] = batchColorsArray[i];
+		if( !( i & 3 ) ) {
+			mesh->lmlayersArray[i >> 2] = batchLMLayersArray[i >> 2];
+		}
 	}
 	mesh->elems = batchElements;
 }
@@ -915,12 +919,19 @@ void RB_BatchMesh( const mesh_t *mesh )
 		
 		if( mesh->lmstArray[0] && (vattribs & VATTRIB_LMCOORDS0_BIT) ) {
 			memcpy( rb.batchMesh.lmstArray[0] + batch->numVerts, mesh->lmstArray[0], numVerts * sizeof( vec2_t ) );
+			if( mesh->lmlayersArray[0] && ( vattribs & VATTRIB_LMLAYERS0123_BIT ) ) {
+				memcpy( rb.batchMesh.lmlayersArray[0] + batch->numVerts, mesh->lmlayersArray[0], numVerts * sizeof( byte_vec4_t ) );
+			}
 
 			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
 				if( !mesh->lmstArray[i] || !(vattribs & (VATTRIB_LMCOORDS1_BIT<<(i-1))) ) {
 					break;
 				}
 				memcpy( rb.batchMesh.lmstArray[i] + batch->numVerts, mesh->lmstArray[i], numVerts * sizeof( vec2_t ) );
+				if( !( i & 3 ) && mesh->lmlayersArray[i >> 2] && ( vattribs & ( VATTRIB_LMLAYERS0123_BIT << ( i >> 2 ) ) ) ) {
+					memcpy( rb.batchMesh.lmlayersArray[i >> 2] + batch->numVerts,
+						mesh->lmlayersArray[i >> 2], numVerts * sizeof( byte_vec4_t ) );
+				}
 			}
 		}
 
@@ -1053,7 +1064,7 @@ static void RB_EnableVertexAttribs( void )
 		lmattr = VATTRIB_LMCOORDS01;
 		lmattrbit = VATTRIB_LMCOORDS0_BIT;
 
-		for( i = 0; i < MAX_LIGHTMAPS/2; i++ ) {
+		for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
 			if( vattribs & lmattrbit ) {
 				GL_EnableVertexAttrib( lmattr, qtrue );
 				qglVertexAttribPointerARB( lmattr, vbo->lmstSize[i], 
@@ -1066,6 +1077,22 @@ static void RB_EnableVertexAttribs( void )
 
 			lmattr++;
 			lmattrbit <<= 2;
+		}
+
+		// lightmap array texture layers
+		lmattr = VATTRIB_LMLAYERS0123;
+
+		for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
+			if( vattribs & ( VATTRIB_LMLAYERS0123_BIT << i ) ) {
+				GL_EnableVertexAttrib( lmattr, qtrue );
+				qglVertexAttribPointerARB( lmattr, 4, GL_UNSIGNED_BYTE,
+					GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmlayersOffset[i] );
+			}
+			else {
+				GL_EnableVertexAttrib( lmattr, qfalse );
+			}
+
+			lmattr++;
 		}
 	}
 

@@ -26,19 +26,22 @@ void main()
 #if defined(APPLY_FOG_COLOR)
 	FogGen(Position, outColor, u_BlendMix);
 #else
-	FogGen(Position, v_FogCoord);
+	FogGen(Position, v_TexCoord_FogCoord.pq);
 #endif
 #endif // APPLY_FOG
 
 	qf_FrontColor = vec4(outColor);
 
-	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
+	v_TexCoord_FogCoord.st = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 
 #ifdef NUM_LIGHTMAPS
 	v_LightmapTexCoord01 = a_LightmapCoord01;
 #if NUM_LIGHTMAPS > 2
 	v_LightmapTexCoord23 = a_LightmapCoord23;
 #endif // NUM_LIGHTMAPS > 2
+#ifdef LIGHTMAP_ARRAYS
+	v_LightmapLayer0123 = a_LightmapLayer0123;
+#endif // LIGHTMAP_ARRAYS
 #endif // NUM_LIGHTMAPS
 
 	v_StrMatrix[0] = Tangent;

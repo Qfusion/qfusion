@@ -468,7 +468,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 	int i, x, y, root;
 	qbyte *block;
 	int lightmapNum;
-	int rectX, rectY, rectSize;
+	int rectX, rectY, rectW, rectH, rectSize;
 	int maxX, maxY, max, xStride;
 	double tw, th, tx, ty;
 	mlightmapRect_t *rect;
@@ -488,6 +488,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 		if( rects )
 		{
 			rects[0].texNum = lightmapNum;
+			rects[0].texLayer = 0;
 
 			// this is not a real texture matrix, but who cares?
 			rects[0].texMatrix[0][0] = 1; rects[0].texMatrix[0][1] = 0;
@@ -544,7 +545,9 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 	th = 1.0 / (double)rectY;
 
 	xStride = w * LIGHTMAP_BYTES;
-	rectSize = ( rectX * w ) * ( rectY * h ) * LIGHTMAP_BYTES * sizeof( *r_lightmapBuffer );
+	rectW = rectX * w;
+	rectH = rectY * h;
+	rectSize = rectW * rectH * LIGHTMAP_BYTES * sizeof( *r_lightmapBuffer );
 	if( rectSize > r_lightmapBufferSize )
 	{
 		if( r_lightmapBuffer )
@@ -554,7 +557,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 		r_lightmapBufferSize = rectSize;
 	}
 
-	ri.Com_DPrintf( "%ix%i : %ix%i\n", rectX, rectY, rectX * w, rectY * h );
+	ri.Com_DPrintf( "%ix%i : %ix%i\n", rectX, rectY, rectW, rectH );
 
 	block = r_lightmapBuffer;
 	for( y = 0, ty = 0.0, num = 0, rect = rects; y < rectY; y++, ty += th, block += rectX * xStride * h )
@@ -575,12 +578,20 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 		}
 	}
 
-	lightmapNum = R_UploadLightmap( name, r_lightmapBuffer, rectX * w, rectY * h );
+	lightmapNum = R_UploadLightmap( name, r_lightmapBuffer, rectW, rectH );
 	if( rects )
 	{
 		for( i = 0, rect = rects; i < num; i++, rect += stride )
+		{
 			rect->texNum = lightmapNum;
+			rect->texLayer = 0;
+		}
 	}
+
+	if( rectW > mapConfig.maxLightmapSize )
+		mapConfig.maxLightmapSize = rectW;
+	if( rectH > mapConfig.maxLightmapSize )
+		mapConfig.maxLightmapSize = rectH;
 
 	return num;
 }
@@ -590,49 +601,128 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 */
 void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte *data, mlightmapRect_t *rects )
 {
-	int i, j, p, m;
-	int numBlocks, size, stride;
-	const qbyte *lmData;
+	int i, j, p;
+	int numBlocks = numLightmaps;
+	int layerWidth, size;
 	mbrushmodel_t *loadbmodel;
 
 	assert( mod );
 
 	loadbmodel = (( mbrushmodel_t * )mod->extradata);
 
-	if( !mapConfig.lightmapsPacking )
-		size = max( w, h );
-	else
-		for( size = 1; ( size < r_lighting_maxlmblocksize->integer ) 
-			&& ( size < glConfig.maxTextureSize ); size <<= 1 ) ;
+	layerWidth = w * ( 1 + ( int )mapConfig.deluxeMappingEnabled );
 
-	if( mapConfig.deluxeMappingEnabled && ( ( size == w ) || ( size == h ) ) )
+	mapConfig.maxLightmapSize = 0;
+	mapConfig.lightmapArrays = glConfig.ext.texture_array
+		&& ( glConfig.maxVertexAttribs > VATTRIB_LMLAYERS0123 )
+		&& ( glConfig.maxVaryingFloats >= ( 9 * 4 ) ) // 9th varying is required by material shaders
+		&& ( layerWidth <= glConfig.maxTextureSize ) && ( h <= glConfig.maxTextureSize );
+
+	if( mapConfig.lightmapArrays )
 	{
-		Com_Printf( S_COLOR_YELLOW "Lightmap blocks larger than %ix%i aren't supported" 
-			", deluxemaps will be disabled\n", size, size );
-		mapConfig.deluxeMappingEnabled = qfalse;
+		mapConfig.maxLightmapSize = layerWidth;
+
+		size = layerWidth * h * LIGHTMAP_BYTES;
+	}
+	else
+	{
+		if( !mapConfig.lightmapsPacking )
+			size = max( w, h );
+		else
+			for( size = 1; ( size < r_lighting_maxlmblocksize->integer ) 
+				&& ( size < glConfig.maxTextureSize ); size <<= 1 ) ;
+
+		if( mapConfig.deluxeMappingEnabled && ( ( size == w ) || ( size == h ) ) )
+		{
+			Com_Printf( S_COLOR_YELLOW "Lightmap blocks larger than %ix%i aren't supported" 
+				", deluxemaps will be disabled\n", size, size );
+			mapConfig.deluxeMappingEnabled = qfalse;
+		}
+
+		r_maxLightmapBlockSize = size;
+
+		size = w * h * LIGHTMAP_BYTES;
 	}
 
-	r_maxLightmapBlockSize = size;
-	size = w * h * LIGHTMAP_BYTES;
 	r_lightmapBufferSize = size;
 	r_lightmapBuffer = R_MallocExt( r_mempool, r_lightmapBufferSize, 0, 0 );
 	r_numUploadedLightmaps = 0;
 
-	m = 1;
-	lmData = data;
-	stride = 1;
-	numBlocks = numLightmaps;
-
-	if( mapConfig.deluxeMaps && !mapConfig.deluxeMappingEnabled )
+	if( mapConfig.lightmapArrays )
 	{
-		m = 2;
-		stride = 2;
-		numLightmaps /= 2;
-	}
+		int numLayers = min( glConfig.maxTextureLayers, 256 ); // layer index is a qbyte
+		int layer = 0;
+		int lightmapNum = 0;
+		image_t *image = NULL;
+		mlightmapRect_t *rect = rects;
+		int blockSize = w * h * LIGHTMAP_BYTES;
+		float texScale = 1.0f;
 
-	for( i = 0, j = 0; i < numBlocks; i += p * m, j += p )
-		p = R_PackLightmaps( numLightmaps - j, w, h, size, stride, 
-		qfalse, "*lm", lmData + j * size * stride, &rects[i] );
+		if( mapConfig.deluxeMaps )
+			numLightmaps /= 2;
+
+		if( mapConfig.deluxeMappingEnabled )
+			texScale = 0.5f;
+
+		for( i = 0; i < numLightmaps; i++ )
+		{
+			if( !layer )
+			{
+				if( r_numUploadedLightmaps == MAX_LIGHTMAP_IMAGES )
+				{
+					// not sure what I'm supposed to do here.. an unrealistic scenario
+					Com_Printf( S_COLOR_YELLOW "Warning: r_numUploadedLightmaps == MAX_LIGHTMAP_IMAGES\n" );
+					break;
+				}
+				lightmapNum = r_numUploadedLightmaps++;
+				image = R_CreateArrayImage( va( "*lm%i", lightmapNum ), layerWidth, h,
+					( ( i + numLayers ) <= numLightmaps ) ? numLayers : numLightmaps % numLayers,
+					IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, LIGHTMAP_BYTES );
+				r_lightmapTextures[lightmapNum] = image;
+			}
+
+			R_BuildLightmap( w, h, qfalse, data, r_lightmapBuffer, layerWidth * LIGHTMAP_BYTES );
+			data += blockSize;
+
+			rect->texNum = lightmapNum;
+			rect->texLayer = layer;
+			// this is not a real texture matrix, but who cares?
+			rect->texMatrix[0][0] = texScale; rect->texMatrix[0][1] = 0.0f;
+			rect->texMatrix[1][0] = 1.0f; rect->texMatrix[1][1] = 0.0f;
+			++rect;
+
+			if( mapConfig.deluxeMappingEnabled )
+				R_BuildLightmap( w, h, qtrue, data, r_lightmapBuffer + w * LIGHTMAP_BYTES, layerWidth * LIGHTMAP_BYTES );
+
+			if( mapConfig.deluxeMaps )
+			{
+				data += blockSize;
+				++rect;
+			}
+
+			R_ReplaceImageLayer( image, layer, &r_lightmapBuffer );
+
+			++layer;
+			if( layer == numLayers )
+				layer = 0;
+		}
+	}
+	else
+	{
+		int stride = 1;
+
+		if( mapConfig.deluxeMaps && !mapConfig.deluxeMappingEnabled )
+		{
+			stride = 2;
+			numLightmaps /= 2;
+		}
+
+		for( i = 0, j = 0; i < numBlocks; i += p * stride, j += p )
+		{
+			p = R_PackLightmaps( numLightmaps - j, w, h, size, stride, 
+				qfalse, "*lm", data + j * size * stride, &rects[i] );
+		}
+	}
 
 	if( r_lightmapBuffer )
 		R_Free( r_lightmapBuffer );
@@ -745,6 +835,9 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
 			if( lightmapStyles[j] != 255 )
 				sls->vattribs |= ( VATTRIB_LMCOORDS1_BIT << (j-1) );
 		}
+
+		if( !( j & 3 ) && mapConfig.lightmapArrays )
+			sls->vattribs |= VATTRIB_LMLAYERS0123_BIT << ( j >> 2 );
 	}
 
 	return sls;

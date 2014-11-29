@@ -947,6 +947,9 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 
 			programFeatures |= ( i * GLSL_SHADER_MATERIAL_LIGHTSTYLE0 );
 
+			if( mapConfig.lightmapArrays )
+				programFeatures |= GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS;
+
 			if( i == 1 && !mapConfig.lightingIntensity )
 			{
 				vec_t *rgb = rsc.lightStyles[lightStyle->lightmapStyles[0]].rgb;
@@ -1543,6 +1546,8 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		for( i = 0; i < MAX_LIGHTMAPS && lightStyle->lightmapStyles[i] != 255; i++ )
 			RB_BindTexture( i+4, rsh.worldBrushModel->lightmapImages[lightStyle->lightmapNum[i]] ); // lightmap
 		programFeatures |= ( i * GLSL_SHADER_Q3_LIGHTSTYLE0 );
+		if( mapConfig.lightmapArrays )
+			programFeatures |= GLSL_SHADER_Q3_LIGHTMAP_ARRAYS;
 	}
 
 	// update uniforms

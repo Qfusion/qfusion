@@ -135,6 +135,7 @@ typedef struct
 typedef struct
 {
 	int				texNum;
+	int				texLayer;
 	float			texMatrix[2][2];
 } mlightmapRect_t;
 

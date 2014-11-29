@@ -185,6 +185,8 @@ typedef struct
 				,rgb8_rgba8
 				,ES3_compatibility
 				,blend_func_separate
+				,texture3D
+				,texture_array
 				;
 	union {
 		char	shadow, shadow_samplers;
@@ -224,7 +226,7 @@ typedef struct
 	int				maxTextureSize
 					,maxTextureUnits
 					,maxTextureCubemapSize
-					,maxTextureSize3D
+					,maxTextureLayers
 					,maxTextureFilterAnisotropic
 					,maxRenderbufferSize
 					,maxVaryingFloats

@@ -757,8 +757,9 @@ typedef struct mesh_vbo_s
 	size_t 				normalsOffset;
 	size_t 				sVectorsOffset;
 	size_t 				stOffset;
-	size_t 				lmstOffset[MAX_LIGHTMAPS/2];
-	size_t 				lmstSize[MAX_LIGHTMAPS/2];
+	size_t 				lmstOffset[( MAX_LIGHTMAPS + 1 ) / 2];
+	size_t 				lmstSize[( MAX_LIGHTMAPS + 1 ) / 2];
+	size_t				lmlayersOffset[( MAX_LIGHTMAPS + 3 ) / 4];
 	size_t 				colorsOffset[MAX_LIGHTMAPS];
 	size_t				bonesIndicesOffset;
 	size_t				bonesWeightsOffset;
@@ -820,6 +821,8 @@ typedef struct
 	float			lightingIntensity;
 
 	qboolean		lightmapsPacking;
+	qboolean		lightmapArrays;			// true if using array textures for lightmaps
+	int				maxLightmapSize;		// biggest dimension of the largest lightmap
 	qboolean		deluxeMaps;				// true if there are valid deluxemaps in the .bsp
 	qboolean		deluxeMappingEnabled;	// true if deluxeMaps is true and r_lighting_deluxemaps->integer != 0
 
