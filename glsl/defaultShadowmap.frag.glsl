@@ -7,6 +7,7 @@
 #endif
 
 qf_varying vec4 v_ShadowProjVector[NUM_SHADOWS];
+qf_varying vec4 v_Position[NUM_SHADOWS];
 
 #ifdef APPLY_SHADOW_SAMPLERS
 # define SHADOW_SAMPLER sampler2DShadow
@@ -31,13 +32,16 @@ uniform SHADOW_SAMPLER u_ShadowmapTexture3;
 #endif // NUM_SHADOWS >= 3
 #endif // NUM_SHADOWS >= 2
 
-#ifdef APPLY_NORMAL_CHECK
-uniform vec3 u_ShadowDir[NUM_SHADOWS];
+uniform vec4 u_ShadowDir[NUM_SHADOWS];
+
+#ifdef APPLY_SHADOW_NORMAL_CHECK
 qf_varying vec3 v_Normal;
 #endif
 
 uniform vec4 u_ShadowAlpha[(NUM_SHADOWS + 3) / 4];
 uniform vec4 u_ShadowmapTextureParams[NUM_SHADOWS];
+
+uniform vec3 u_ShadowEntityDist[NUM_SHADOWS];
 
 void main(void)
 {

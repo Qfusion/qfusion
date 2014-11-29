@@ -6,10 +6,12 @@
 		// this keeps shadows from appearing on surfaces behind frustum's nearplane
 		float d = step(v_ShadowProjVector[SHADOW_INDEX].w, 0.0);
 
-		# ifdef APPLY_NORMAL_CHECK
-		f = dot(u_ShadowDir[SHADOW_INDEX], v_Normal);
+		# ifdef APPLY_SHADOW_NORMAL_CHECK
+		f = dot(u_ShadowDir[SHADOW_INDEX].xyz, v_Normal);
 		d += step(0.0, f);
 		# endif
+		
+		d += length(v_Position[SHADOW_INDEX].xyz - u_ShadowEntityDist[SHADOW_INDEX].xyz) / u_ShadowDir[SHADOW_INDEX].w;
 
 		//shadowmaptc = (shadowmaptc + vec3 (1.0)) * vec3 (0.5);
 		shadowmaptc.xy = shadowmaptc.xy * u_ShadowmapTextureParams[SHADOW_INDEX].xy; // .x - texture width

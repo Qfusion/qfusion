@@ -157,7 +157,7 @@ add:
 	VectorSubtract( group->mins, origin, mins );
 	VectorSubtract( group->maxs, origin, maxs );
 	group->radius = RadiusFromBounds( mins, maxs );
-	group->projDist = max( group->projDist, group->radius + min( r_shadows_projection_distance->value, 256 ) );
+	group->projDist = max( group->projDist, group->radius + min( r_shadows_projection_distance->value, 64.0f ) );
 
 	return qtrue;
 }
