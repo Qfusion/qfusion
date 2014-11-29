@@ -852,7 +852,7 @@ static int key_delegate_stack_index = 0;
 */
 keydest_t Key_DelegatePush( key_delegate_f key_del, key_char_delegate_f char_del )
 {
-	assert( key_delegate_stack_index < sizeof( key_delegate_stack ) / sizeof( key_delegate_f ) );
+	assert( key_delegate_stack_index < sizeof( key_delegate_stack ) / sizeof( key_delegates_t ) );
 	key_delegate_stack[key_delegate_stack_index].key_del = key_del;
 	key_delegate_stack[key_delegate_stack_index].char_del = char_del;
 	++key_delegate_stack_index;

@@ -213,7 +213,7 @@ static size_t Con_BufferText( char *buffer, const char *delim )
 		line = con.text[l] ? con.text[l] : "";
 		x = strlen( line );
 
-		if( buffer && line )
+		if( buffer && *line )
 		{
 			memcpy( buffer + length, line, x );
 			memcpy( buffer + length + x, delim, delim_len );

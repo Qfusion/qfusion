@@ -1397,12 +1397,13 @@ void Q_urlencode_unsafechars( const char *src, char *dst, size_t dst_size )
 size_t Q_urldecode( const char *src, char *dst, size_t dst_size )
 {
 	char *dst_start = dst, *dst_end = dst + dst_size - 1;
-	const char *src_end = src + strlen( src );
+	const char *src_end;
 
 	if( !src || !dst || !dst_size ) {
 		return 0;
 	}
 
+	src_end = src + strlen( src );
 	while( src < src_end ) {
 		if( dst == dst_end ) {
 			break;

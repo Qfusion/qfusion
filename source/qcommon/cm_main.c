@@ -195,7 +195,7 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload
 	assert( name && strlen( name ) < MAX_CONFIGSTRING_CHARS );
 	assert( checksum );
 
-	if( !strcmp( cms->map_name, name ) && ( clientload || !Cvar_Value( "flushmap" ) ) )
+	if( name && !strcmp( cms->map_name, name ) && ( clientload || !Cvar_Value( "flushmap" ) ) )
 	{
 		*checksum = cms->checksum;
 
