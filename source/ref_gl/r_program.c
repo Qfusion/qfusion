@@ -580,6 +580,7 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec2\n", "_ls2" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n#define qf_lmvec01 vec4\n", "_ls1" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE0, "#define NUM_LIGHTMAPS 1\n#define qf_lmvec01 vec2\n", "_ls0" },
+	{ GLSL_SHADER_MATERIAL_LIGHTMAP_ARRAYS, "#define LIGHTMAP_ARRAYS\n", "_lmarray" },
 	{ GLSL_SHADER_MATERIAL_FB_LIGHTMAP, "#define APPLY_FBLIGHTMAP\n", "_fb" },
 	{ GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT, "#define APPLY_DIRECTIONAL_LIGHT\n", "_dirlight" },
 
@@ -759,6 +760,8 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_Q3_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n#define qf_lmvec01 vec4\n", "_ls1" },
 	{ GLSL_SHADER_Q3_LIGHTSTYLE0, "#define NUM_LIGHTMAPS 1\n#define qf_lmvec01 vec2\n", "_ls0" },
 
+	{ GLSL_SHADER_Q3_LIGHTMAP_ARRAYS, "#define LIGHTMAP_ARRAYS\n", "_lmarray" },
+
 	{ 0, NULL, NULL }
 };
 
@@ -864,23 +867,18 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define STR_TOSTR( x )					STR_HELPER( x )
 #endif
 
-#define QF_GLSL_VERSION120 "" \
-"#version 120\n"
+#define QF_GLSL_VERSION120 "#version 120\n"
+#define QF_GLSL_VERSION130 "#version 130\n"
+#define QF_GLSL_VERSION140 "#version 140\n"
+#define QF_GLSL_VERSION300ES "#version 300 es\n"
 
-#define QF_GLSL_VERSION130 "" \
-"#version 130\n"
-
-#define QF_GLSL_VERSION140 "" \
-"#version 140\n"
-
-#define QF_GLSL_VERSION300ES "" \
-"#version 300 es\n"
-
-#define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "" \
-"#extension GL_ARB_draw_instanced : enable\n"
-
-#define QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS "" \
-"#extension GL_EXT_shadow_samplers : enable\n"
+#define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "#extension GL_ARB_draw_instanced : enable\n"
+#ifdef GL_ES_VERSION_2_0
+#define QF_GLSL_ENABLE_ARB_SHADOW "#extension GL_EXT_shadow_samplers : enable\n"
+#else
+#define QF_GLSL_ENABLE_ARB_SHADOW "#extension GL_ARB_shadow : enable\n"
+#endif
+#define QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY "#extension GL_EXT_texture_array : enable\n"
 
 #define QF_BUILTIN_GLSL_MACROS "" \
 "#if !defined(myhalf)\n" \
@@ -911,6 +909,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
+"#define qf_textureArray texture2DArray\n" \
 "#define qf_textureOffset(a,b,c,d) texture2DOffset(a,b,ivec2(c,d))\n" \
 "#define qf_shadow shadow2D\n" \
 "\n"
@@ -930,6 +929,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_texture texture\n" \
 "#define qf_textureCube texture\n" \
 "#define qf_textureLod textureLod\n" \
+"#define qf_textureArray texture\n" \
 "#define qf_textureOffset(a,b,c,d) textureOffset(a,b,ivec2(c,d))\n" \
 "#define qf_shadow texture\n" \
 "\n"
@@ -951,6 +951,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
+"#define qf_textureArray texture2DArray\n" \
 "#define qf_shadow shadow2DEXT\n" \
 "\n"
 
@@ -972,6 +973,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_texture texture\n" \
 "#define qf_textureLod textureLod\n" \
 "#define qf_textureCube texture\n" \
+"#define qf_textureArray texture\n" \
 "#define qf_shadow texture\n" \
 "\n"
 
@@ -1384,10 +1386,8 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	unsigned int i;
 	int hash;
 	int linked, error = 0;
-	int shaderTypeIdx, wavefuncsIdx, deformvIdx, instancedIdx;
-#ifdef GL_ES_VERSION_2_0
-	int shadowIdx;
-#endif
+	int shaderTypeIdx, wavefuncsIdx, deformvIdx;
+	int instancedIdx, shadowIdx, textureArrayIdx;
 	int body_start, num_init_strings;
 	glsl_program_t *program;
 	char fullName[1024];
@@ -1505,10 +1505,11 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 #endif
 		shaderStrings[i++] = "\n";
 
-#ifdef GL_ES_VERSION_2_0
 	shadowIdx = i;
-#endif
 	shaderStrings[i++] = "\n";
+	textureArrayIdx = i;
+	shaderStrings[i++] = "\n";
+
 	shaderStrings[i++] = shaderVersion;
 	shaderTypeIdx = i;
 	shaderStrings[i++] = "\n";
@@ -1586,11 +1587,16 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	}
 
 	// fragment shader
-	shaderStrings[instancedIdx] = "\n"; // GL_ARB_draw_instanced is unsupported in fragment shader
+	shaderStrings[instancedIdx] = "\n";
 #ifdef GL_ES_VERSION_2_0
-	if( glConfig.shadingLanguageVersion < 300 && glConfig.ext.shadow )
-		shaderStrings[shadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
+	if( glConfig.shadingLanguageVersion < 300 )
 #endif
+	{
+		if( glConfig.ext.shadow )
+			shaderStrings[shadowIdx] = QF_GLSL_ENABLE_ARB_SHADOW;
+		if( glConfig.ext.texture_array )
+			shaderStrings[textureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;
+	}
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
 	shaderStrings[wavefuncsIdx] = "\n";
 	shaderStrings[deformvIdx] = "\n";
@@ -2381,6 +2387,10 @@ static void RP_BindAttrbibutesLocations( glsl_program_t *program )
 
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS01, "a_LightmapCoord01" );
 	qglBindAttribLocationARB( program->object, VATTRIB_LMCOORDS23, "a_LightmapCoord23" );
+
+	if( glConfig.ext.texture_array ) {
+		qglBindAttribLocationARB( program->object, VATTRIB_LMLAYERS0123, "a_LightmapLayer0123" );
+	}
 
 	if( glConfig.ext.instanced_arrays ) {
 		qglBindAttribLocationARB( program->object, VATTRIB_INSTANCE_QUAT, "a_InstanceQuat" );
