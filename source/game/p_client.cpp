@@ -575,9 +575,9 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 	client->ps.POVnum = ENTNUM( self );
 
 	// set movement info
-	client->ps.pmove.stats[PM_STAT_MAXSPEED] = DEFAULT_PLAYERSPEED;
-	client->ps.pmove.stats[PM_STAT_JUMPSPEED] = DEFAULT_JUMPSPEED;
-	client->ps.pmove.stats[PM_STAT_DASHSPEED] = DEFAULT_DASHSPEED;
+	client->ps.pmove.stats[PM_STAT_MAXSPEED] = (short)DEFAULT_PLAYERSPEED;
+	client->ps.pmove.stats[PM_STAT_JUMPSPEED] = (short)DEFAULT_JUMPSPEED;
+	client->ps.pmove.stats[PM_STAT_DASHSPEED] = (short)DEFAULT_DASHSPEED;
 
 	if( ghost )
 	{

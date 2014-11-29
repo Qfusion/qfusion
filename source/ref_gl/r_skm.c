@@ -531,9 +531,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 
 	if( vtangent ) {
 		for( i = 0; i < header->num_vertexes; i++ ) {
-			memcpy( poutmodel->sVectorsArray[i], vtangent, sizeof( vec4_t ) );
 			for( j = 0; j < 4; j++ ) {
-				poutmodel->sVectorsArray[i][j] = LittleFloat( poutmodel->sVectorsArray[i][j] );
+				poutmodel->sVectorsArray[i][j] = LittleFloat( vtangent[j] );
 			}
 			vtangent += 4;
 		}
@@ -542,9 +541,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	// XYZ positions
 	poutmodel->xyzArray = ( vec4_t * )pmem; pmem += sizeof( *poutmodel->xyzArray ) * header->num_vertexes;
 	for( i = 0; i < header->num_vertexes; i++ ) {
-		memcpy( poutmodel->xyzArray[i], vposition, sizeof( vec3_t ) );
 		for( j = 0; j < 3; j++ ) {
-			poutmodel->xyzArray[i][j] = LittleFloat( poutmodel->xyzArray[i][j] );
+			poutmodel->xyzArray[i][j] = LittleFloat( vposition[j] );
 		}
 		poutmodel->xyzArray[i][3] = 1.0f;
 		vposition += 3;
@@ -553,9 +551,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	// normals
 	poutmodel->normalsArray = ( vec4_t * )pmem; pmem += sizeof( *poutmodel->normalsArray ) * header->num_vertexes;
 	for( i = 0; i < header->num_vertexes; i++ ) {
-		memcpy( poutmodel->normalsArray[i], vnormal, sizeof( vec3_t ) );
 		for( j = 0; j < 3; j++ ) {
-			poutmodel->normalsArray[i][j] = LittleFloat( poutmodel->normalsArray[i][j] );
+			poutmodel->normalsArray[i][j] = LittleFloat( vnormal[j] );
 		}
 		poutmodel->normalsArray[i][3] = 0.0f;
 		vnormal += 3;
@@ -564,9 +561,8 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 	// texture coordinates
 	poutmodel->stArray = ( vec2_t * )pmem; pmem += sizeof( *poutmodel->stArray ) * header->num_vertexes;
 	for( i = 0; i < header->num_vertexes; i++ ) {
-		memcpy( poutmodel->stArray[i], vtexcoord, sizeof( vec2_t ) );
 		for( j = 0; j < 2; j++ ) {
-			poutmodel->stArray[i][j] = LittleFloat( poutmodel->stArray[i][j] );
+			poutmodel->stArray[i][j] = LittleFloat( vtexcoord[j] );
 		}
 		vtexcoord += 2;
 	}

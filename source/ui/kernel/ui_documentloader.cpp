@@ -403,17 +403,21 @@ void NavigationStack::attachMainEventListenerToTop( Document *prev )
 	}
 
 	Document *top = documentStack.back();
+	if( !top ) {
+		return;
+	}
 
 	// global event listeners, TODO: if we ever change eventlistener to be
 	// dynamically instanced, then we cant call GetMainListener every time?
 	// only for UI documents!
 	Rocket::Core::EventListener *listener = UI_GetMainListener();
+
 	if( prev && prev->getRocketDocument() ) {
 		top->getRocketDocument()->RemoveEventListener( "keydown", listener );
 		top->getRocketDocument()->RemoveEventListener( "change", listener );
 	}
 
-	if( top && top->getRocketDocument() ) {
+	if( top->getRocketDocument() ) {
 		top->getRocketDocument()->AddEventListener( "keydown", listener );
 		top->getRocketDocument()->AddEventListener( "change", listener );
 	}

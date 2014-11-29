@@ -2719,7 +2719,7 @@ void CL_Frame( int realmsec, int gamemsec )
 	}
 
 	// update audio
-	if( cls.state != CA_ACTIVE || cls.state == CA_CINEMATIC )
+	if( cls.state != CA_ACTIVE )
 	{
 		// if the loading plaque is up, clear everything out to make sure we aren't looping a dirty
 		// dma buffer while loading
