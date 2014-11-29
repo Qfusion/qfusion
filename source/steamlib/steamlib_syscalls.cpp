@@ -49,6 +49,9 @@ extern "C" STEAMDLL_EXPORT steamlib_export_t *GetSteamLibAPI( steamlib_import_t 
 	globals.RunFrame = &WSWSTEAM::SteamLib_RunFrame;
 	globals.Shutdown = &WSWSTEAM::SteamLib_Shutdown;
 
+	globals.GetSteamID = &WSWSTEAM::SteamLib_GetSteamID;
+	globals.GetAuthSessionTicket = &WSWSTEAM::SteamLib_GetAuthSessionTicket;
+
 	return &globals;
 }
 
