@@ -1170,7 +1170,7 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 			programFeatures |= GLSL_SHADER_SHADOWMAP_24BIT;
 		}
 	}
-	if ( rb.currentShadowBits && (rb.currentModelType == mod_brush) ) {
+	if( rb.currentShadowBits && (rb.currentModelType == mod_brush) ) {
 		programFeatures |= GLSL_SHADER_SHADOWMAP_NORMALCHECK;
 	}
 

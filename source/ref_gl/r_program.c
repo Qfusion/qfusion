@@ -114,11 +114,11 @@ typedef struct glsl_program_s
 					WallColor,
 					FloorColor,
 
-					ShadowProjDistance,
 					ShadowmapTextureParams[GLSL_SHADOWMAP_LIMIT],
 					ShadowmapMatrix[GLSL_SHADOWMAP_LIMIT],
 					ShadowAlpha[( GLSL_SHADOWMAP_LIMIT + 3 ) / 4],
 					ShadowDir[GLSL_SHADOWMAP_LIMIT],
+					ShadowEntityDist[GLSL_SHADOWMAP_LIMIT],
 					
 					BlendMix,
 					
@@ -2086,9 +2086,17 @@ void RP_UpdateShadowsUniforms( int elem, int numShadows, const shadowGroup_t **g
 		}
 
 		if( program->loc.ShadowDir[i] >= 0 ) {
-			vec3_t lightDir;
+			vec4_t lightDir;
 			Matrix3_TransformVector( objectAxis, group->lightDir, lightDir );
-			qglUniform3fvARB( program->loc.ShadowDir[i], 1, lightDir );
+			lightDir[3] = group->projDist;
+			qglUniform4fvARB( program->loc.ShadowDir[i], 1, lightDir );
+		}
+
+		if( program->loc.ShadowEntityDist[i] >= 0 ) {
+			vec3_t tmp, entDist;
+			VectorSubtract( group->origin, objectOrigin, tmp );
+			Matrix3_TransformVector( objectAxis, tmp, entDist );
+			qglUniform3fvARB( program->loc.ShadowEntityDist[i], 1, entDist );
 		}
 	}
 
@@ -2293,6 +2301,9 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 
 		program->loc.ShadowDir[i] =
 			qglGetUniformLocationARB( program->object, va( "u_ShadowDir[%i]", i ) );
+
+		program->loc.ShadowEntityDist[i] =
+			qglGetUniformLocationARB( program->object, va( "u_ShadowEntityDist[%i]", i ) );
 
 		if( !( i & 3 ) ) {
 			program->loc.ShadowAlpha[i >> 2] =
