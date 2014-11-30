@@ -31,6 +31,7 @@ STANDARD PROJECTIVE SHADOW MAPS (SSM)
 #define SHADOWMAP_ORTHO_NUDGE			8
 #define SHADOWMAP_MIN_VIEWPORT_SIZE		16
 #define SHADOWMAP_MAX_LOD				15
+#define SHADOWMAP_LODBIAS				1
 
 //static qboolean r_shadowGroups_sorted;
 
@@ -360,6 +361,7 @@ void R_DrawShadowmaps( void )
 	refdef_t refdef;
 	int lod;
 	float farClip;
+	float dist;
 
 	if( !rsc.numShadowGroups )
 		return;
@@ -399,7 +401,11 @@ void R_DrawShadowmaps( void )
 		}
 
 		// calculate LOD for shadowmap
-		lod = (int)((DistanceFast( group->origin, lodOrigin ) * lodScale) / group->projDist);
+		dist = DistanceFast( group->origin, lodOrigin );
+		lod = (int)(dist * lodScale) / group->projDist - SHADOWMAP_LODBIAS;
+		if( lod < 0 ) {
+			lod = 0;
+		}
 
 		// allocate/resize the texture if needed
 		shadowmap = R_GetShadowmapTexture( i, rsc.refdef.width, rsc.refdef.height, 0 );
