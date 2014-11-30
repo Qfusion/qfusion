@@ -1,4 +1,5 @@
 #include "include/common.glsl"
+#include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
 #if defined(NUM_DLIGHTS)
 #include "include/dlights.glsl"
@@ -24,13 +25,13 @@ uniform myhalf3 u_FloorColor;
 #endif
 
 #ifdef NUM_LIGHTMAPS
-uniform sampler2D u_LightmapTexture0;
+uniform LightmapSampler u_LightmapTexture0;
 #if NUM_LIGHTMAPS >= 2
-uniform sampler2D u_LightmapTexture1;
+uniform LightmapSampler u_LightmapTexture1;
 #if NUM_LIGHTMAPS >= 3
-uniform sampler2D u_LightmapTexture2;
+uniform LightmapSampler u_LightmapTexture2;
 #if NUM_LIGHTMAPS >= 4
-uniform sampler2D u_LightmapTexture3;
+uniform LightmapSampler u_LightmapTexture3;
 #endif // NUM_LIGHTMAPS >= 4
 #endif // NUM_LIGHTMAPS >= 3
 #endif // NUM_LIGHTMAPS >= 2
@@ -47,13 +48,13 @@ void main(void)
 
 #ifdef NUM_LIGHTMAPS
 	color = myhalf4(0.0, 0.0, 0.0, qf_FrontColor.a);
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture0, v_LightmapTexCoord01.st)) * u_LightstyleColor[0];
+	color.rgb += myhalf3(Lightmap(u_LightmapTexture0, v_LightmapTexCoord01.st, v_LightmapLayer0123.x)) * u_LightstyleColor[0];
 #if NUM_LIGHTMAPS >= 2
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture1, v_LightmapTexCoord01.pq)) * u_LightstyleColor[1];
+	color.rgb += myhalf3(Lightmap(u_LightmapTexture1, v_LightmapTexCoord01.pq, v_LightmapLayer0123.y)) * u_LightstyleColor[1];
 #if NUM_LIGHTMAPS >= 3
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture2, v_LightmapTexCoord23.st)) * u_LightstyleColor[2];
+	color.rgb += myhalf3(Lightmap(u_LightmapTexture2, v_LightmapTexCoord23.st, v_LightmapLayer0123.z)) * u_LightstyleColor[2];
 #if NUM_LIGHTMAPS >= 4
-	color.rgb += myhalf3(qf_texture(u_LightmapTexture3, v_LightmapTexCoord23.pq)) * u_LightstyleColor[3];
+	color.rgb += myhalf3(Lightmap(u_LightmapTexture3, v_LightmapTexCoord23.pq, v_LightmapLayer0123.w)) * u_LightstyleColor[3];
 #endif // NUM_LIGHTMAPS >= 4
 #endif // NUM_LIGHTMAPS >= 3
 #endif // NUM_LIGHTMAPS >= 2

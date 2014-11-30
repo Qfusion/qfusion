@@ -439,6 +439,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	mesh.xyzArray = xyz;
 	mesh.normalsArray = normals;
 	mesh.lmstArray[0] = NULL;
+	mesh.lmlayersArray[0] = NULL;
 	mesh.stArray = texcoords;
 	mesh.colorsArray[0] = colors;
 	mesh.colorsArray[1] = NULL;
@@ -563,7 +564,7 @@ static vec4_t pic_xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
 static vec4_t pic_normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 static vec2_t pic_st[4];
 static byte_vec4_t pic_colors[4];
-static mesh_t pic_mesh = { 4, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, 0, NULL };
+static mesh_t pic_mesh = { 4, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, 0, NULL };
 static const shader_t *pic_mbuffer_shader;
 static float pic_x_offset, pic_y_offset;
 
@@ -772,7 +773,7 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 			qbyte *nodata[1] = { NULL };
 			R_ReplaceImage( rsh.rawTexture, nodata, cols, rows, rsh.rawTexture->flags, 3 );
 		}
-		R_ReplaceSubImage( rsh.rawTexture, &data, cols, rows );
+		R_ReplaceSubImage( rsh.rawTexture, 0, &data, cols, rows );
 	}
 
 	h_scale = (float)rsh.rawTexture->width / rsh.rawTexture->upload_width;
@@ -837,7 +838,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 				qbyte *nodata[1] = { NULL };
 				R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1 );
 			}
-			R_ReplaceSubImage( yuvTextures[i], &data, stride, height );
+			R_ReplaceSubImage( yuvTextures[i], 0, &data, stride, height );
 		}
 	}
 

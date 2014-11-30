@@ -168,7 +168,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 
 	// lightmap texture coordinates
 	lmattrbit = VATTRIB_LMCOORDS0_BIT;
-	for( i = 0; i < MAX_LIGHTMAPS/2; i++ ) {
+	for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
 		if( !(vattribs & lmattrbit) ) {
 			break;
 		}
@@ -177,6 +177,16 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		vbo->lmstSize[i] = vattribs & VATTRIB_LMCOORDS0_BIT<<1 ? 4 : 2;
 		vertexSize += FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS0_BIT, halfFloatVattribs) * vbo->lmstSize[i];
 		lmattrbit = ( vattribbit_t )( ( vattribmask_t )lmattrbit << 2 );
+	}
+
+	// lightmap array texture layers
+	for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
+		if( !( vattribs & ( VATTRIB_LMLAYERS0123_BIT << i ) ) ) {
+			break;
+		}
+		assert( !( vertexSize & 3 ) );
+		vbo->lmlayersOffset[i] = vertexSize;
+		vertexSize += sizeof( int );
 	}
 
 	// vertex colors
@@ -464,7 +474,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 
 		lmattrbit = VATTRIB_LMCOORDS0_BIT;
 
-		for( i = 0; i < MAX_LIGHTMAPS/2; i++ ) {
+		for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
 			if( !(vattribs & lmattrbit) ) {
 				break;
 			}
@@ -488,6 +498,30 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 			}
 
 			lmattrbit <<= 2;
+		}
+	}
+
+	// upload lightmap array texture layers
+	if( vbo->lmlayersOffset[0] && ( vattribs & VATTRIB_LMLAYERS0123_BIT ) ) {
+		int i;
+		vattribbit_t lmattrbit;
+
+		lmattrbit = VATTRIB_LMLAYERS0123_BIT;
+
+		for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
+			if( !( vattribs & lmattrbit ) ) {
+				break;
+			}
+			if( !mesh->lmlayersArray[i] ) {
+				errMask |= lmattrbit;
+				break;
+			}
+
+			R_FillVertexBuffer( int, int, 
+				( int * )&mesh->lmlayersArray[i][0],
+				1, vertSize, numVerts, data + vbo->lmlayersOffset[i] );
+
+			lmattrbit <<= 1;
 		}
 	}
 
