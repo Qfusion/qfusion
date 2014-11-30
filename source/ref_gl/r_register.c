@@ -391,6 +391,14 @@ static const gl_extension_func_t gl_ext_multiview_draw_buffers_NV_funcs[] =
 
 #endif // GL_ES_VERSION_2_0
 
+static const gl_extension_func_t gl_ext_texture3D_EXT_funcs[] =
+{
+	 GL_EXTENSION_FUNC(TexImage3DEXT)
+	,GL_EXTENSION_FUNC(TexSubImage3DEXT)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 #ifdef _WIN32
 
 /* WGL_EXT_swap_interval */
@@ -461,6 +469,8 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, get_program_binary, false, false, &gl_ext_get_program_binary_ARB_funcs )
 	,GL_EXTENSION_EXT( ARB, ES3_compatibility, 0, false, false, NULL, _extMarker )
 	,GL_EXTENSION( EXT, blend_func_separate, true, true, &gl_ext_blend_func_separate_EXT_funcs )
+	,GL_EXTENSION( EXT, texture3D, false, false, &gl_ext_texture3D_EXT_funcs )
+	,GL_EXTENSION_EXT( EXT, texture_array, 1, false, false, NULL, texture3D )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
@@ -479,6 +489,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
 	,GL_EXTENSION( OES, rgb8_rgba8, true, false, NULL )
+	,GL_EXTENSION( EXT, texture_array, false, false, &gl_ext_texture3D_EXT_funcs )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -730,20 +741,26 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.ext.blend_func_separate = qtrue;
 	if( glConfig.version >= 300 )
 	{
-		glConfig.ext.draw_range_elements = qtrue;
-		glConfig.ext.depth_texture = qtrue;
-		glConfig.ext.shadow = qtrue;
-		glConfig.ext.texture_non_power_of_two = qtrue;
-		glConfig.ext.draw_instanced = qtrue;
-		glConfig.ext.instanced_arrays = qtrue;
-		glConfig.ext.half_float_vertex = qtrue;
-		glConfig.ext.framebuffer_blit = qtrue;
-		glConfig.ext.get_program_binary =
-			ri.Cvar_Get( "gl_ext_get_program_binary", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? qtrue : qfalse;
+#define GL_OPTIONAL_CORE_EXTENSION(name) \
+	( glConfig.ext.name = ( ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? qtrue : qfalse ) )
+#define GL_OPTIONAL_CORE_EXTENSION_DEP(name,dep) \
+	( glConfig.ext.name = ( ( glConfig.ext.dep && ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ) ? qtrue : qfalse ) )
 		glConfig.ext.depth24 = qtrue;
+		glConfig.ext.draw_instanced = qtrue;
+		glConfig.ext.draw_range_elements = qtrue;
+		glConfig.ext.ES3_compatibility = qtrue;
+		glConfig.ext.framebuffer_blit = qtrue;
 		glConfig.ext.GLSL130 = qtrue;
 		glConfig.ext.rgb8_rgba8 = qtrue;
-		glConfig.ext.ES3_compatibility = qtrue;
+		GL_OPTIONAL_CORE_EXTENSION(depth_texture);
+		GL_OPTIONAL_CORE_EXTENSION(get_program_binary);
+		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);
+		GL_OPTIONAL_CORE_EXTENSION(texture_array);
+		GL_OPTIONAL_CORE_EXTENSION(texture_npot);
+		GL_OPTIONAL_CORE_EXTENSION(vertex_half_float);
+		GL_OPTIONAL_CORE_EXTENSION_DEP(shadow_samplers, depth_texture);
+#undef GL_OPTIONAL_CORE_EXTENSION_DEP
+#undef GL_OPTIONAL_CORE_EXTENSION
 	}
 #endif
 
@@ -782,10 +799,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.maxTextureCubemapSize = 1 << Q_log2( glConfig.maxTextureCubemapSize );
 #ifndef GL_ES_VERSION_2_0
 	if( glConfig.maxTextureCubemapSize <= 1 )
-	{
 		glConfig.ext.texture_cube_map = qfalse;
-		ri.Cvar_ForceSet( "gl_ext_texture_cube_map", "0" );
-	}
 #endif
 
 	/* GL_ARB_multitexture */
@@ -817,18 +831,11 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.ext.framebuffer_blit && !qglBlitFramebufferEXT )
 	{
 		if( qglBlitFramebufferNV )
-		{
 			qglBlitFramebufferEXT = qglBlitFramebufferNV;
-		}
 		else if( qglBlitFramebufferANGLE )
-		{
 			qglBlitFramebufferEXT = qglBlitFramebufferANGLE;
-		}
 		else
-		{
 			glConfig.ext.framebuffer_blit = qfalse;
-			ri.Cvar_ForceSet( "gl_ext_framebuffer_blit", "0" );
-		}
 	}
 #endif
 
@@ -851,6 +858,20 @@ static void R_FinalizeGLExtensions( void )
 			glConfig.stereoEnabled = qfalse;
 	}
 #endif
+
+	/* GL_EXT_texture_array */
+	glConfig.maxTextureLayers = 0;
+	if( glConfig.ext.texture_array )
+	{
+		qglGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS_EXT, &glConfig.maxTextureLayers );
+#ifdef GL_ES_VERSION_2_0
+		if( qglTexImage3D )
+		{
+			qglTexImage3DEXT = qglTexImage3D;
+			qglTexSubImage3DEXT = qglTexSubImage3D;
+		}
+#endif
+	}
 
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
@@ -884,6 +905,11 @@ static void R_FinalizeGLExtensions( void )
 	qglGetIntegerv( GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &glConfig.maxFragmentUniformComponents );
 #endif
 
+	// instance attributes are beyond the minimum number of attributes supported by GLES2
+	if( glConfig.maxVertexAttribs <= VATTRIB_INSTANCE_XYZS ) {
+		glConfig.ext.instanced_arrays = qfalse;
+	}
+
 	// keep the maximum number of bones we can do in GLSL sane
 	if( r_maxglslbones->integer > MAX_GLSL_UNIFORM_BONES ) {
 		ri.Cvar_ForceSet( r_maxglslbones->name, r_maxglslbones->dvalue );
@@ -915,10 +941,7 @@ static void R_FinalizeGLExtensions( void )
 #endif
 
 		if( val <= 0 )
-		{
 			glConfig.ext.texture_non_power_of_two = qfalse;
-			ri.Cvar_ForceSet( "gl_ext_texture_non_power_of_two", "0" );
-		}
 	}
 #endif
 
@@ -1126,6 +1149,8 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "GL_MAX_TEXTURE_IMAGE_UNITS: %i\n", glConfig.maxTextureUnits );
 	if( glConfig.ext.texture_cube_map )
 		Com_Printf( "GL_MAX_CUBE_MAP_TEXTURE_SIZE: %i\n", glConfig.maxTextureCubemapSize );
+	if( glConfig.ext.texture_array )
+		Com_Printf( "GL_MAX_ARRAY_TEXTURE_LAYERS: %i\n", glConfig.maxTextureLayers );
 	if( glConfig.ext.texture_filter_anisotropic )
 		Com_Printf( "GL_MAX_TEXTURE_MAX_ANISOTROPY: %i\n", glConfig.maxTextureFilterAnisotropic );
 	Com_Printf( "GL_MAX_RENDERBUFFER_SIZE: %i\n", glConfig.maxRenderbufferSize );
