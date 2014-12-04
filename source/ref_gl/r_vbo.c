@@ -174,7 +174,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		}
 		assert( !(vertexSize & 3) );
 		vbo->lmstOffset[i] = vertexSize;
-		vbo->lmstSize[i] = vattribs & VATTRIB_LMCOORDS0_BIT<<1 ? 4 : 2;
+		vbo->lmstSize[i] = ( vattribs & ( lmattrbit << 1 ) ) ? 4 : 2;
 		vertexSize += FLOAT_VATTRIB_SIZE(VATTRIB_LMCOORDS0_BIT, halfFloatVattribs) * vbo->lmstSize[i];
 		lmattrbit = ( vattribbit_t )( ( vattribmask_t )lmattrbit << 2 );
 	}
@@ -471,6 +471,8 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 	if( vbo->lmstOffset[0] && ( vattribs & VATTRIB_LMCOORDS0_BIT ) ) {
 		int i;
 		vattribbit_t lmattrbit;
+		int type = FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa );
+		int lmstSize = ( ( type == GL_HALF_FLOAT ) ? 2 * sizeof( GLhalfARB ) : 2 * sizeof( float ) );
 
 		lmattrbit = VATTRIB_LMCOORDS0_BIT;
 
@@ -483,7 +485,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 				break;
 			}
 
-			R_FillVertexBuffer_float_or_half( FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), 
+			R_FillVertexBuffer_float_or_half( type, 
 				mesh->lmstArray[i*2+0][0],
 				2, vertSize, numVerts, data + vbo->lmstOffset[i] );
 
@@ -492,9 +494,9 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 					errMask |= lmattrbit<<1;
 					break;
 				}
-				R_FillVertexBuffer_float_or_half( FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), 
+				R_FillVertexBuffer_float_or_half( type,
 					mesh->lmstArray[i*2+1][0],
-					2, vertSize, numVerts, data + vbo->lmstOffset[i] + 2 * sizeof( float ) );
+					2, vertSize, numVerts, data + vbo->lmstOffset[i] + lmstSize );
 			}
 
 			lmattrbit <<= 2;
