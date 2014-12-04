@@ -836,7 +836,7 @@ superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
 				sls->vattribs |= ( VATTRIB_LMCOORDS1_BIT << (j-1) );
 		}
 
-		if( !( j & 3 ) && mapConfig.lightmapArrays )
+		if( mapConfig.lightmapArrays && !( j & 3 ) && ( lightmapStyles[j] != 255 ) )
 			sls->vattribs |= VATTRIB_LMLAYERS0123_BIT << ( j >> 2 );
 	}
 
