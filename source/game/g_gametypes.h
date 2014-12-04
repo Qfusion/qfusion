@@ -94,6 +94,7 @@ typedef struct
 	int bombs_planted;
 	int bombs_defused;
 	int flags_capped;
+	int fairplay_count;
 
 	// loggedFrag_t
 	linear_allocator_t *fragAllocator;

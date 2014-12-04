@@ -52,7 +52,7 @@ void G_PlayerAward( edict_t *ent, const char *awardMsg )
 		stats->awardAllocator = LinearAllocator( sizeof( gameaward_t ), 0, _G_LevelMalloc, _G_LevelFree );
 
 	// ch : this doesnt work for race right?
-	if( GS_MatchState() == MATCH_STATE_PLAYTIME )
+	if( GS_MatchState() == MATCH_STATE_PLAYTIME || GS_MatchState() == MATCH_STATE_POSTMATCH )
 	{
 		// ch : we store this locally to send to MM
 		// first check if we already have this one on the clients list
@@ -486,4 +486,39 @@ void G_AwardPlayerPickup( edict_t *self, edict_t *item )
 void G_AwardRaceRecord( edict_t *self )
 {
 	G_PlayerAward( self, S_COLOR_CYAN "New Record!" );
+}
+
+void G_PlayerAwardOfs( edict_t *ent, const char *awardMsg, int ofs, int limit, bool meta )
+{
+	if( ofs >= 0 ) {
+		if( ofs == AWOFS( goodgame_award ) ) {
+			// only count the "Good game award" during postmatch
+			if( gs.gameState.stats[GAMESTAT_MATCHSTATE] != MATCH_STATE_POSTMATCH ) {
+				return;
+			}
+		}
+
+		int *award = (int *)((qbyte *)&ent->r.client->resp.awardInfo + ofs);
+		if( *award >= limit ) {
+			return;
+		}
+		
+		*award = *award + 1;
+		if( *award != limit ) {
+			return;
+		}
+
+		if( ofs == AWOFS( goodgame_award ) ) {
+			ent->r.client->level.stats.fairplay_count++;
+			G_PlayerAward( ent, S_COLOR_CYAN FAIR_PLAY_AWARD );
+			return;
+		}
+	}
+
+	if( meta ) {
+		G_PlayerMetaAward( ent, awardMsg );
+		return;
+	}
+
+	G_PlayerAward( ent, va( S_COLOR_CYAN "%s ", awardMsg ) );
 }

@@ -1356,8 +1356,9 @@ void ClientDisconnect( edict_t *ent, const char *reason )
 		return;
 
 	// always report in RACE mode
-	if( GS_RaceGametype() || ( ent->r.client->team != TEAM_SPECTATOR && GS_MatchState() == MATCH_STATE_PLAYTIME ) )
-		G_AddPlayerReport( ent, false );
+	if( GS_RaceGametype() 
+		|| ( ent->r.client->team != TEAM_SPECTATOR && ( GS_MatchState() == MATCH_STATE_PLAYTIME || GS_MatchState() == MATCH_STATE_POSTMATCH ) ) )
+		G_AddPlayerReport( ent, GS_MatchState() == MATCH_STATE_POSTMATCH );
 
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 		G_Teams_UnInvitePlayer( team, ent );

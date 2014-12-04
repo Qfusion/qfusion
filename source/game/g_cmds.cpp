@@ -733,46 +733,48 @@ typedef struct
 	const char *name;
 	int id;
 	const char *message;
+	int award_ofs;
+	int award_limit;
 } g_vsays_t;
 
-static g_vsays_t g_vsays[] = {
-	{ "needhealth", VSAY_NEEDHEALTH, "Need health!" },
-	{ "needweapon", VSAY_NEEDWEAPON, "Need weapon!" },
-	{ "needarmor", VSAY_NEEDARMOR, "Need armor!" },
-	{ "affirmative", VSAY_AFFIRMATIVE, "Affirmative!" },
-	{ "negative", VSAY_NEGATIVE, "Negative!" },
-	{ "yes", VSAY_YES, "Yes!" },
-	{ "no", VSAY_NO, "No!" },
-	{ "ondefense", VSAY_ONDEFENSE, "I'm on defense!" },
-	{ "onoffense", VSAY_ONOFFENSE, "I'm on offense!" },
-	{ "oops", VSAY_OOPS, "Oops!" },
-	{ "sorry", VSAY_SORRY, "Sorry!" },
-	{ "thanks", VSAY_THANKS, "Thanks!" },
-	{ "noproblem", VSAY_NOPROBLEM, "No problem!" },
-	{ "yeehaa", VSAY_YEEHAA, "Yeehaa!" },
-	{ "goodgame", VSAY_GOODGAME, "Good game!" },
-	{ "defend", VSAY_DEFEND, "Defend!" },
-	{ "attack", VSAY_ATTACK, "Attack!" },
-	{ "needbackup", VSAY_NEEDBACKUP, "Need backup!" },
-	{ "booo", VSAY_BOOO, "Booo!" },
-	{ "needdefense", VSAY_NEEDDEFENSE, "Need defense!" },
-	{ "needoffense", VSAY_NEEDOFFENSE, "Need offense!" },
-	{ "needhelp", VSAY_NEEDHELP, "Need help!" },
-	{ "roger", VSAY_ROGER, "Roger!" },
-	{ "armorfree", VSAY_ARMORFREE, "Armor free!" },
-	{ "areasecured", VSAY_AREASECURED, "Area secured!" },
-	{ "shutup", VSAY_SHUTUP, "Shut up!" },
-	{ "boomstick", VSAY_BOOMSTICK, "Need a weapon!" },
-	{ "gotopowerup", VSAY_GOTOPOWERUP, "Go to main powerup!" },
-	{ "gotoquad", VSAY_GOTOQUAD, "Go to quad!" },
-	{ "ok", VSAY_OK, "Ok!" },
-	{ NULL, 0, NULL }
+static const g_vsays_t g_vsays[] = {
+	{ "needhealth", VSAY_NEEDHEALTH, "Need health!", -1, 0 },
+	{ "needweapon", VSAY_NEEDWEAPON, "Need weapon!", -1, 0 },
+	{ "needarmor", VSAY_NEEDARMOR, "Need armor!", -1, 0 },
+	{ "affirmative", VSAY_AFFIRMATIVE, "Affirmative!", -1, 0 },
+	{ "negative", VSAY_NEGATIVE, "Negative!", -1, 0 },
+	{ "yes", VSAY_YES, "Yes!", -1, 0 },
+	{ "no", VSAY_NO, "No!", -1, 0 },
+	{ "ondefense", VSAY_ONDEFENSE, "I'm on defense!", -1, 0 },
+	{ "onoffense", VSAY_ONOFFENSE, "I'm on offense!", -1, 0 },
+	{ "oops", VSAY_OOPS, "Oops!", -1, 0 },
+	{ "sorry", VSAY_SORRY, "Sorry!", -1, 0 },
+	{ "thanks", VSAY_THANKS, "Thanks!", -1, 0 },
+	{ "noproblem", VSAY_NOPROBLEM, "No problem!", -1, 0 },
+	{ "yeehaa", VSAY_YEEHAA, "Yeehaa!", -1, 0 },
+	{ "goodgame", VSAY_GOODGAME, "Good game!", AWOFS( goodgame_award ), 1 },
+	{ "defend", VSAY_DEFEND, "Defend!", -1, 0 },
+	{ "attack", VSAY_ATTACK, "Attack!", -1, 0 },
+	{ "needbackup", VSAY_NEEDBACKUP, "Need backup!", -1, 0 },
+	{ "booo", VSAY_BOOO, "Booo!", -1, 0 },
+	{ "needdefense", VSAY_NEEDDEFENSE, "Need defense!", -1, 0 },
+	{ "needoffense", VSAY_NEEDOFFENSE, "Need offense!", -1, 0 },
+	{ "needhelp", VSAY_NEEDHELP, "Need help!", -1, 0 },
+	{ "roger", VSAY_ROGER, "Roger!", -1, 0 },
+	{ "armorfree", VSAY_ARMORFREE, "Armor free!", -1, 0 },
+	{ "areasecured", VSAY_AREASECURED, "Area secured!", -1, 0 },
+	{ "shutup", VSAY_SHUTUP, "Shut up!", -1, 0 },
+	{ "boomstick", VSAY_BOOMSTICK, "Need a weapon!", -1, 0 },
+	{ "gotopowerup", VSAY_GOTOPOWERUP, "Go to main powerup!", -1, 0 },
+	{ "gotoquad", VSAY_GOTOQUAD, "Go to quad!", -1, 0 },
+	{ "ok", VSAY_OK, "Ok!", -1, 0 },
+	{ NULL, 0, NULL, -1 }
 };
 
 void G_BOTvsay_f( edict_t *ent, const char *msg, bool team )
 {
 	edict_t	*event = NULL;
-	g_vsays_t *vsay;
+	const g_vsays_t *vsay;
 	const char *text = NULL;
 
 	if( !( ent->r.svflags & SVF_FAKECLIENT ) )
@@ -814,7 +816,7 @@ void G_BOTvsay_f( edict_t *ent, const char *msg, bool team )
 static void G_vsay_f( edict_t *ent, bool team )
 {
 	edict_t	*event = NULL;
-	g_vsays_t *vsay;
+	const g_vsays_t *vsay;
 	const char *text = NULL;
 	char *msg = trap_Cmd_Argv( 1 );
 
@@ -824,8 +826,8 @@ static void G_vsay_f( edict_t *ent, bool team )
 	if( ( !GS_TeamBasedGametype() || GS_InvidualGameType() ) && ent->s.team != TEAM_SPECTATOR )
 		team = false;
 
-	if( !( ent->r.svflags & SVF_FAKECLIENT ) )
-	{                                      // ignore flood checks on bots
+	if( !( ent->r.svflags & SVF_FAKECLIENT ) ) // ignore flood checks on bots
+	{
 		if( ent->r.client->level.last_vsay > game.realtime - 500 )
 			return; // ignore silently vsays in that come in rapid succession
 		ent->r.client->level.last_vsay = game.realtime;
@@ -854,6 +856,10 @@ static void G_vsay_f( edict_t *ent, bool team )
 		{
 			event->s.team = ent->s.team;
 			event->r.svflags |= SVF_ONLYTEAM; // send only to clients with the same ->s.team value
+		}
+
+		if( !team && vsay->name && vsay->award_ofs >= 0 && vsay->award_limit > 0 ) {
+			G_PlayerAwardOfs( ent, vsay->message, vsay->award_ofs, vsay->award_limit, false );
 		}
 
 		if( trap_Cmd_Argc() > 2 )
