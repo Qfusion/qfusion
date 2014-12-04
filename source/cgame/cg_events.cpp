@@ -832,6 +832,10 @@ static void CG_StartVoiceTokenEffect( int entNum, int type, int vsay )
 
 	cent = &cg_entities[entNum];
 
+	// ignore repeated/flooded events
+	if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time )
+		return;
+
 	// set the icon effect
 	cent->localEffects[LOCALEFFECT_VSAY_HEADICON] = vsay;
 	cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] = cg.time + HEADICON_TIMEOUT;

@@ -766,6 +766,18 @@ void G_Match_LaunchState( int matchState )
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_MATCHEXTENDED, false );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_WAITING, false );
+	
+	if( matchState == MATCH_STATE_POSTMATCH ) {
+		level.finalMatchDuration = game.serverTime - GS_MatchStartTime();
+	}
+
+	if( matchState == MATCH_STATE_POSTMATCH && GS_RaceGametype() 
+		|| matchState != MATCH_STATE_POSTMATCH && gs.gameState.stats[GAMESTAT_MATCHSTATE] == MATCH_STATE_POSTMATCH )
+	{
+		// entering postmatch in race or leaving postmatch in normal gt
+		G_Match_SendReport();
+		trap_MM_GameState( false );
+	}
 
 	switch( matchState )
 	{
@@ -820,15 +832,7 @@ void G_Match_LaunchState( int matchState )
 
 	case MATCH_STATE_POSTMATCH:
 		{
-			short lastState = gs.gameState.stats[GAMESTAT_MATCHSTATE];
 			gs.gameState.stats[GAMESTAT_MATCHSTATE] = MATCH_STATE_POSTMATCH;
-
-			if( lastState == MATCH_STATE_PLAYTIME || GS_RaceGametype() )
-			{
-				G_Match_SendReport();
-				trap_MM_GameState( false );
-			}
-
 			gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( g_postmatch_timelimit->value * 1000 ); // postmatch time in seconds
 			gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
 
