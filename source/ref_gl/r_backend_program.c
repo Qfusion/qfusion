@@ -1252,7 +1252,7 @@ static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t 
 {
 	unsigned int i, j;
 	int scissor[4], old_scissor[4];
-	int numShadows;
+	int numShadows, maxShadows;
 	shadowGroup_t *group, *shadowGroups[GLSL_SHADOWMAP_LIMIT];
 
 	if( r_shadows_pcf->integer )
@@ -1261,6 +1261,11 @@ static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t 
 		programFeatures |= GLSL_SHADER_SHADOWMAP_DITHER;
 
 	Vector4Copy( rb.gl.scissor, old_scissor );
+
+	// the shader uses 2 varying vectors per shadow and 1 additional varying
+	maxShadows = ( ( glConfig.maxVaryingFloats & ~3 ) - 4 ) / 8;
+	if( maxShadows > GLSL_SHADOWMAP_LIMIT )
+		maxShadows = GLSL_SHADOWMAP_LIMIT;
 
 	numShadows = 0;
 	for( i = 0; i < rsc.numShadowGroups; i++ )
@@ -1306,7 +1311,7 @@ static void RB_RenderMeshGLSL_Shadowmap( const shaderpass_t *pass, r_glslfeat_t 
 		}
 
 		shadowGroups[numShadows++] = group;
-		if( numShadows >= GLSL_SHADOWMAP_LIMIT ) {
+		if( numShadows >= maxShadows ) {
 			RB_RenderMeshGLSL_ShadowmapArray( pass, programFeatures, numShadows, 
 				(const shadowGroup_t **)shadowGroups, scissor );
 			numShadows = 0;
