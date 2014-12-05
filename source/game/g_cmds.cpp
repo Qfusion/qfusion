@@ -672,13 +672,23 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood )
 	char *p;
 	char text[2048];
 
+	if( sv_mm_enable->integer && ent->r.client && ent->r.client->mm_session <= 0 )
+	{
+		// unauthed players are only allowed to chat to public at non play-time
+		if( GS_MatchState() == MATCH_STATE_PLAYTIME )
+		{
+			G_PrintMsg( ent, "%s", S_COLOR_YELLOW "You must authenticate to be able to communicate to other players during the match.\n");
+			return;
+		}
+	}
+
 	if( checkflood )
 	{
 		if( CheckFlood( ent, false ) )
 			return;
 	}
 
-	if( ent->r.client && ent->r.client->muted & 1 )
+	if( ent->r.client && ( ent->r.client->muted & 1 ) )
 		return;
 
 	if( trap_Cmd_Argc() < 2 && !arg0 )
@@ -820,7 +830,7 @@ static void G_vsay_f( edict_t *ent, bool team )
 	const char *text = NULL;
 	char *msg = trap_Cmd_Argv( 1 );
 
-	if( ent->r.client && ent->r.client->muted & 2 )
+	if( ent->r.client && ( ent->r.client->muted & 2 ) )
 		return;
 
 	if( ( !GS_TeamBasedGametype() || GS_InvidualGameType() ) && ent->s.team != TEAM_SPECTATOR )
@@ -834,6 +844,17 @@ static void G_vsay_f( edict_t *ent, bool team )
 
 		if( CheckFlood( ent, false ) )
 			return;
+	}
+
+	if( sv_mm_enable->integer && ent->r.client && ent->r.client->mm_session <= 0 )
+	{
+		// unauthed players are only allowed to chat to public at non play-time
+		// they are allowed to team-chat at any time
+		if( GS_MatchState() == MATCH_STATE_PLAYTIME && !( team && ent->s.team == TEAM_SPECTATOR ) )
+		{
+			G_PrintMsg( ent, "%s", S_COLOR_YELLOW "You must authenticate to be able to communicate to other players during the match.\n");
+			return;
+		}
 	}
 
 	for( vsay = g_vsays; vsay->name; vsay++ )
