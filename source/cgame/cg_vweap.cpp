@@ -159,7 +159,10 @@ static int CG_ViewWeapon_baseanimFromWeaponState( int weaponState )
 		/* fall through. Not used */
 	default:
 	case WEAPON_STATE_READY:
+		if( cg_gunbob->integer )
 		anim = WEAPMODEL_STANDBY;
+		else
+		anim = WEAPMODEL_NOANIM;
 		break;
 	}
 
