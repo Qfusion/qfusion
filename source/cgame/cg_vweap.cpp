@@ -106,7 +106,7 @@ static void CG_ViewWeapon_AddAngleEffects( vec3_t angles )
 	}
 
 	// gun angles from kicks
-	if( !cg_damage_kick->integer )
+	if( cg_damage_kick->integer )
 		CG_AddKickAngles( angles );
 }
 
