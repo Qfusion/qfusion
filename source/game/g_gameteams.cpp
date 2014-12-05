@@ -1297,6 +1297,17 @@ void G_Say_Team( edict_t *who, char *msg, bool checkflood )
 		return;
 	}
 
+	if( sv_mm_enable->integer && who->r.client && who->r.client->mm_session <= 0 )
+	{
+		// unauthed players are only allowed to chat to public at non play-time
+		// they are allowed to team-chat at any time
+		if( GS_MatchState() == MATCH_STATE_PLAYTIME )
+		{
+			G_PrintMsg( who, "%s", S_COLOR_YELLOW "You must authenticate to be able to communicate to other players during the match.\n");
+			return;
+		}
+	}
+
 	Q_strncpyz( current_color, S_COLOR_WHITE, sizeof( current_color ) );
 
 	memset( outmsg, 0, sizeof( outmsg ) );
