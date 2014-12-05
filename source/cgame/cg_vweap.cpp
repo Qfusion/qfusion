@@ -106,7 +106,7 @@ static void CG_ViewWeapon_AddAngleEffects( vec3_t angles )
 	}
 
 	// gun angles from kicks
-	if( !cg_damage_kick->integer )
+	if( cg_damage_kick->integer )
 		CG_AddKickAngles( angles );
 }
 
@@ -159,7 +159,10 @@ static int CG_ViewWeapon_baseanimFromWeaponState( int weaponState )
 		/* fall through. Not used */
 	default:
 	case WEAPON_STATE_READY:
+		if( cg_gunbob->integer )
 		anim = WEAPMODEL_STANDBY;
+		else
+		anim = WEAPMODEL_NOANIM;
 		break;
 	}
 
