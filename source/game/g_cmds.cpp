@@ -846,17 +846,6 @@ static void G_vsay_f( edict_t *ent, bool team )
 			return;
 	}
 
-	if( sv_mm_enable->integer && ent->r.client && ent->r.client->mm_session <= 0 )
-	{
-		// unauthed players are only allowed to chat to public at non play-time
-		// they are allowed to team-chat at any time
-		if( GS_MatchState() == MATCH_STATE_PLAYTIME && !( team && ent->s.team == TEAM_SPECTATOR ) )
-		{
-			G_PrintMsg( ent, "%s", S_COLOR_YELLOW "You must authenticate to be able to communicate to other players during the match.\n");
-			return;
-		}
-	}
-
 	for( vsay = g_vsays; vsay->name; vsay++ )
 	{
 		if( !Q_stricmp( msg, vsay->name ) )

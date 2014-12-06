@@ -1303,7 +1303,7 @@ void G_Say_Team( edict_t *who, char *msg, bool checkflood )
 		// they are allowed to team-chat at any time
 		if( GS_MatchState() == MATCH_STATE_PLAYTIME )
 		{
-			G_PrintMsg( who, "%s", S_COLOR_YELLOW "You must authenticate to be able to communicate to other players during the match.\n");
+			G_PrintMsg( who, "%s", S_COLOR_YELLOW "You must authenticate to be able to chat with other players during the match.\n");
 			return;
 		}
 	}
