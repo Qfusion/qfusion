@@ -771,8 +771,8 @@ void G_Match_LaunchState( int matchState )
 		level.finalMatchDuration = game.serverTime - GS_MatchStartTime();
 	}
 
-	if( matchState == MATCH_STATE_POSTMATCH && GS_RaceGametype() 
-		|| matchState != MATCH_STATE_POSTMATCH && gs.gameState.stats[GAMESTAT_MATCHSTATE] == MATCH_STATE_POSTMATCH )
+    if( ( matchState == MATCH_STATE_POSTMATCH && GS_RaceGametype() )
+        || ( matchState != MATCH_STATE_POSTMATCH && gs.gameState.stats[GAMESTAT_MATCHSTATE] == MATCH_STATE_POSTMATCH ) )
 	{
 		// entering postmatch in race or leaving postmatch in normal gt
 		G_Match_SendReport();
