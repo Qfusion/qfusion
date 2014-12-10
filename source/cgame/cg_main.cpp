@@ -108,7 +108,6 @@ cvar_t *cg_showhelp;
 cvar_t *cg_scoreboardStats;
 cvar_t *cg_showClamp;
 
-cvar_t *cg_damage_kick;
 cvar_t *cg_damage_indicator;
 cvar_t *cg_damage_indicator_time;
 cvar_t *cg_pickup_flash;
@@ -686,7 +685,6 @@ static void CG_RegisterVariables( void )
 	cg_cartoonEffects =		trap_Cvar_Get( "cg_cartoonEffects", "7", CVAR_ARCHIVE );
 	cg_cartoonHitEffect =	trap_Cvar_Get( "cg_cartoonHitEffect", "0", CVAR_ARCHIVE );
 
-	cg_damage_kick =	trap_Cvar_Get( "cg_damage_kick", "0", CVAR_ARCHIVE );
 	cg_damage_indicator =	trap_Cvar_Get( "cg_damage_indicator", "1", CVAR_ARCHIVE );
 	cg_damage_indicator_time =	trap_Cvar_Get( "cg_damage_indicator_time", "50", CVAR_ARCHIVE );
 	cg_pickup_flash =	trap_Cvar_Get( "cg_pickup_flash", "0", CVAR_ARCHIVE );
