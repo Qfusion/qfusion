@@ -197,7 +197,7 @@ void GS_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce )
 //==================================================
 
 /*
-* GS_ClipVelocity
+* GS_AddTouchEnt
 */
 static void GS_AddTouchEnt( move_t *move, int entNum )
 {

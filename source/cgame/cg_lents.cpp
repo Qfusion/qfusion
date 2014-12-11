@@ -1196,7 +1196,7 @@ void CG_FlagTrail( vec3_t origin, vec3_t start, vec3_t end, float r, float g, fl
 
 	//friction and gravity
 	VectorSet( le->accel, -0.2f, -0.2f, -9.8f * mass );
-	le->bounce = 20;
+	le->bounce = 50;
 }
 
 /*
@@ -1237,7 +1237,7 @@ void CG_SpawnTracer( vec3_t origin, vec3_t dir, vec3_t dir_per1, vec3_t dir_per2
 	tracer = CG_AllocSprite( LE_EXPLOSION_TRACER, origin, 30, 7, 1, 1, 1, 1, 0, 0, 0, 0, CG_MediaShader( cgs.media.shaderSmokePuff3 ) );
 	VectorCopy( dir_temp, tracer->velocity );
 	VectorSet( tracer->accel, -0.2f, -0.2f, -9.8f*170 );
-	tracer->bounce = 500;
+	tracer->bounce = 50;
 	tracer->ent.rotation = cg.time;
 }
 
@@ -1520,7 +1520,7 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 			le->velocity[2] = velocity[2] + 125 + crandom() * radialspeed;
 
 			VectorSet( le->accel, -0.2f, -0.2f, -900 );
-			le->bounce = 35;
+			le->bounce = 50;
 		}
 
 		CG_ImpactPuffParticles( origin, vec3_origin, 16, 2.5f, 1, 0.5, 0, 1, NULL );
@@ -1747,19 +1747,28 @@ void CG_AddLocalEntities( void )
 			else if( trace.fraction != 1.0 ) // found solid
 			{
 				float dot;
-				vec3_t vel;
-				float xzyspeed;
+				float xyzspeed, orig_xyzspeed;
+				float bounce;
+				
+				orig_xyzspeed = VectorLength( le->velocity );
 
 				// Reflect velocity
-				VectorSubtract( next_origin, ent->origin, vel );
-				dot = -2 *DotProduct( vel, trace.plane.normal );
-				VectorMA( vel, dot, trace.plane.normal, le->velocity );
+				dot = DotProduct( le->velocity, trace.plane.normal );
+				VectorMA( le->velocity, -2.0f * dot, trace.plane.normal, le->velocity );
 				//put new origin in the impact point, but move it out a bit along the normal
 				VectorMA( trace.endpos, 1, trace.plane.normal, ent->origin );
 
+				// make sure we don't gain speed from bouncing off
+				bounce = 2.0f * le->bounce * 0.01f;
+				if( bounce < 1.5f )
+					bounce = 1.5f;
+				xyzspeed = orig_xyzspeed / bounce;
+
+				VectorNormalize( le->velocity );
+				VectorScale( le->velocity, xyzspeed, le->velocity );
+	
 				//the entity has not speed enough. Stop checks
-				xzyspeed = sqrt( le->velocity[0]*le->velocity[0] + le->velocity[1]*le->velocity[1] + le->velocity[2]*le->velocity[2] );
-				if( xzyspeed * time < 1.0f )
+				if( xyzspeed * time < 1.0f )
 				{
 					trace_t traceground;
 					vec3_t ground_origin;
@@ -1769,7 +1778,7 @@ void CG_AddLocalEntities( void )
 					CG_Trace( &traceground, ent->origin, debris_mins, debris_maxs, ground_origin, 0, MASK_SOLID );
 					if( traceground.fraction != 1.0 )
 					{
-						le->bounce = false;
+						le->bounce = 0;
 						VectorClear( le->velocity );
 						VectorClear( le->accel );
 						VectorClear( le->avelocity );
@@ -1781,8 +1790,7 @@ void CG_AddLocalEntities( void )
 						}
 					}
 				}
-				else
-					VectorScale( le->velocity, le->bounce * time, le->velocity );
+
 			}
 			else
 			{
