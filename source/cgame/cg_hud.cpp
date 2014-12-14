@@ -1749,7 +1749,8 @@ static bool CG_LFuncSpecialFontFamily( struct cg_layoutnode_s *commandnode, stru
 static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	struct qfontface_s *font;
-	const char *fontsize = CG_GetStringArg( &argumentnode );
+	struct cg_layoutnode_s *charnode = argumentnode;
+	const char *fontsize = CG_GetStringArg( &charnode );
 
 	if( !Q_stricmp( fontsize, "con_fontsystemsmall" ) )
 		layout_cursor_font_size = cgs.fontSystemSmallSize;
@@ -1764,7 +1765,7 @@ static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_lay
 	else if( !Q_stricmp( fontsize, "con_fontsystembigscaled" ) )
 		layout_cursor_font_size = cgs.fontSystemBigScaledSize;
 	else
-		layout_cursor_font_size = atoi( fontsize );
+		layout_cursor_font_size = (int)CG_GetNumericArg( &argumentnode );
 
 	font = trap_SCR_RegisterFont( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
 	if( font )
@@ -2952,7 +2953,7 @@ static const char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode )
 	struct cg_layoutnode_s *anode = *argumentsnode;
 
 	if( !anode || anode->type == LNODE_COMMAND )
-		CG_Error( "'CG_LayoutGetIntegerArg': bad arg count" );
+        CG_Error( "'CG_LayoutGetIntegerArg': bad arg count (CG_GetStringArg)" );
 
 	// we can return anything as string
 	*argumentsnode = anode->next;
@@ -2969,7 +2970,7 @@ static float CG_GetNumericArg( struct cg_layoutnode_s **argumentsnode )
 	float value;
 
 	if( !anode || anode->type == LNODE_COMMAND )
-		CG_Error( "'CG_LayoutGetIntegerArg': bad arg count" );
+		CG_Error( "'CG_LayoutGetIntegerArg': bad arg count (CG_GetNumericArg)" );
 
 	if( anode->type != LNODE_NUMERIC && anode->type != LNODE_REFERENCE_NUMERIC )
 		CG_Printf( "WARNING: 'CG_LayoutGetIntegerArg': arg %s is not numeric", anode->string );
