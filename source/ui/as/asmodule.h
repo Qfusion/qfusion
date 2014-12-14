@@ -59,6 +59,7 @@ public:
 	// reset all potentially referenced global vars
 	// (used for releasing reference-counted Rocket objects)
 	virtual void buildReset( asIScriptModule *module ) = 0;
+	virtual void buildReset( const char *name ) = 0;
 
 	// garbage collector interfaces
 	virtual void garbageCollectOneStep( void ) = 0;

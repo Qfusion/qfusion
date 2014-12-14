@@ -428,6 +428,13 @@ public:
 		garbageCollectFullCycle();
 	}
 
+	virtual void buildReset( const char *name )
+	{
+		if( engine && name ) {
+			buildReset( engine->GetModule( name, asGM_ONLY_IF_EXISTS ) );
+		}
+	}
+
 	virtual void garbageCollectOneStep( void )
 	{
 		if( engine ) {
