@@ -84,7 +84,8 @@ void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
 
 	if( event.GetType() == "beforeUnload" && event.GetTargetElement() == this ) {
 		if( module ) {
-			as->buildReset( module );
+			// destroy the AS module by name to prevent crashes in case multiple document instances share the same module pointer
+			as->buildReset( GetSourceURL().CString() );
 			module = NULL;
 		}
 		return;
