@@ -278,6 +278,8 @@ bool ElementImage::LoadTexture()
 
 	if( !source.Empty() ) {
 		if( trap::FS_IsUrl( source.CString() ) ) {
+			texture_dirty = false;
+
 			// the stream cache object references this element
 			// (passed as the void * pointer below)
 			AddReference();
