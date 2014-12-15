@@ -2953,7 +2953,7 @@ static const char *CG_GetStringArg( struct cg_layoutnode_s **argumentsnode )
 	struct cg_layoutnode_s *anode = *argumentsnode;
 
 	if( !anode || anode->type == LNODE_COMMAND )
-        CG_Error( "'CG_LayoutGetIntegerArg': bad arg count (CG_GetStringArg)" );
+		CG_Error( "'CG_LayoutGetIntegerArg': bad arg count" );
 
 	// we can return anything as string
 	*argumentsnode = anode->next;
@@ -2970,7 +2970,7 @@ static float CG_GetNumericArg( struct cg_layoutnode_s **argumentsnode )
 	float value;
 
 	if( !anode || anode->type == LNODE_COMMAND )
-		CG_Error( "'CG_LayoutGetIntegerArg': bad arg count (CG_GetNumericArg)" );
+		CG_Error( "'CG_LayoutGetIntegerArg': bad arg count" );
 
 	if( anode->type != LNODE_NUMERIC && anode->type != LNODE_REFERENCE_NUMERIC )
 		CG_Printf( "WARNING: 'CG_LayoutGetIntegerArg': arg %s is not numeric", anode->string );
