@@ -183,7 +183,7 @@ static int CG_GetFPS( const void *parameter )
 
 	frameTimes[cg.frameCount & FPSSAMPLESMASK] = cg.realFrameTime;
 
-	if( cg_showFPS->integer != 2 )
+	if( cg_showFPS->integer != 1 )
 	{
 		for( avFrameTime = 0.0f, i = 0; i < FPSSAMPLESCOUNT; i++ )
 		{
