@@ -312,6 +312,9 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage )
 */
 void player_die( edict_t *ent, edict_t *inflictor, edict_t *attacker, int damage, const vec3_t point )
 {
+	snap_edict_t snap_backup = ent->snap;
+	client_snapreset_t resp_snap_backup = ent->r.client->resp.snap;
+
 	VectorClear( ent->avelocity );
 
 	ent->s.angles[0] = 0;
@@ -333,13 +336,15 @@ void player_die( edict_t *ent, edict_t *inflictor, edict_t *attacker, int damage
 	// clear his combo stats
 	G_AwardResetPlayerComboStats( ent );
 
-	// go ghost
+	// go ghost (also resets snap)
 	G_GhostClient( ent );
 
 	ent->deathTimeStamp = level.time;
 
 	VectorClear( ent->velocity );
 	VectorClear( ent->avelocity );
+	ent->snap = snap_backup;
+	ent->r.client->resp.snap = resp_snap_backup;
 	ent->r.client->resp.snap.buttons = 0;
 	GClip_LinkEntity( ent );
 }
