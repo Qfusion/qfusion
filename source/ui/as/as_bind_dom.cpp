@@ -154,6 +154,25 @@ static void Element_EventListenerCallback( Element *elem, Event *event )
 {
 }
 
+
+static Element *Element_Factory( void ) {
+	Element *e = dynamic_cast<Element *>(Factory::InstanceElement( NULL, "#text#", "#text", XMLAttributes()));
+	return e;
+}
+
+static Element *Element_Factory2( Element *parent ) {
+	Element *e = dynamic_cast<Element *>(Factory::InstanceElement( parent, "#text#", "#text", XMLAttributes()));
+	return e;
+}
+
+static Element *Element_FactoryRML( Element *parent, const asstring_t &rml ) {
+	Element *e = dynamic_cast<Element *>(Factory::InstanceElement( parent, "#text#", "#text", XMLAttributes()));
+	if( e ) {
+		e->SetInnerRML( ASSTR(rml) );
+	}
+	return e;
+}
+
 static EventListener *Element_AddEventListener( Element *elem, const asstring_t &event, asIScriptFunction *func ) {
 	EventListener *listener = CreateScriptEventCaller( UI_Main::Get()->getAS(), func );
 	elem->AddEventListener( ASSTR(event), listener );
@@ -229,9 +248,9 @@ static Element *Element_GetChild(Element *self, unsigned int index) {
 	_RETREF(e);
 }
 
-static void Element_AppendChild(Element *self, Element *child) {
+static void Element_AppendChild(Element *self, Element *child, bool dom_element) {
 	if( child ) {
-		self->AppendChild(child);
+		self->AppendChild(child, dom_element);
 		_DECREF(child);
 	}
 }
@@ -860,8 +879,11 @@ void BindElement( ASInterface *as )
 		.funcdef( &Element_EventListenerCallback, "EventListenerCallback" )
 	;
 
-	// Elements are bound as reference types that cant be explicitly constructed
+	// Elements are bound as reference types
 	ASBind::GetClass<Element>( engine )
+		.factory( &Element_Factory )
+		.factory( &Element_Factory2 )
+		.factory( &Element_FactoryRML )
 		.refs( &Element::AddReference, &Element::RemoveReference )
 
 		// css/style
@@ -910,7 +932,7 @@ void BindElement( ASInterface *as )
 		.method( &Element::Focus, "focus" )
 		.method( &Element::Blur, "unfocus" )
 		.method( &Element::Click, "click" )
-		.method( &Element_AppendChild, "addChild", true )
+		.method2( &Element_AppendChild, "void addChild( bool dom_element = true )", true )
 		.method( &Element_InsertBefore, "insertChild", true )
 		.method( &Element_RemoveChild, "removeChild", true )
 		.method( &Element::HasChildNodes, "hasChildren" )
