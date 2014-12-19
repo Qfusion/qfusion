@@ -876,7 +876,7 @@ void BindElement( ASInterface *as )
 
 	ASBind::Global( as->getEngine() )
 		// setTimeout and setInterval callback funcdefs
-		.funcdef( &Element_EventListenerCallback, "EventListenerCallback" )
+		.funcdef( &Element_EventListenerCallback, "DOMEventListenerCallback" )
 	;
 
 	// Elements are bound as reference types
@@ -943,7 +943,7 @@ void BindElement( ASInterface *as )
 		.method( Element_GetElementsByClassName, "getElementsByClassName", true )
 		.method( Element_GetOwnerDocument, "get_ownerDocument", true )
 
-		.method2( Element_AddEventListener, "void addEventListener( const String &event, EventListenerCallback @callback )", true )
+		.method2( Element_AddEventListener, "void addEventListener( const String &event, DOMEventListenerCallback @callback )", true )
 		.method( Element_RemoveEventListener, "removeEventListener", true )
 
 		.method( &Element::GetClientLeft, "clientLeft" )

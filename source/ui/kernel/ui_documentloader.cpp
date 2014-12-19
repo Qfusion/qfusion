@@ -121,6 +121,7 @@ Document *DocumentCache::getDocument( const std::string &name )
 		if( !document )
 			return 0;
 
+		document->addReference();
 		documentSet.insert( document );
 
 		if( UI_Main::Get()->debugOn() ) {
@@ -130,7 +131,6 @@ Document *DocumentCache::getDocument( const std::string &name )
 	else
 	{
 		document = *it;
-		document->addReference();
 
 		// document has refcount of 1*cache + 1*previous owners + 1*caller
 		if( UI_Main::Get()->debugOn() ) {
@@ -148,9 +148,6 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 	DocumentSet::iterator next = it;
 	++next;
 
-	// just trust the reference-counting
-	doc->removeReference();
-
 	// unload modal documents as we may actually have many of them
 	// during the UI session, keeping all of them in memory seems rather wasteful
 	// another reason is that modal document will keep stealing focus
@@ -160,6 +157,7 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 		DocumentLoader loader;
 		loader.closeDocument( doc );
 		documentSet.erase( it );
+		doc->removeReference();
 	}
 	
 	return next;
@@ -211,12 +209,12 @@ void DocumentCache::clearCaches()
 	}
 
 	// force destroy all documents
-	// purgeAllDocuments();
+	purgeAllDocuments();
 
 	DocumentLoader loader;
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
 		if( (*it)->getRocketDocument() ) {
-			//(*it)->removeReference();
+			(*it)->removeReference();
 			loader.closeDocument( (*it) );
 		}
 	}
@@ -560,7 +558,6 @@ DocumentLoader::~DocumentLoader()
 
 Document *DocumentLoader::loadDocument(const char *path)
 {
-	// FIXME: use RocketModule
 	UI_Main *ui = UI_Main::Get();
 	RocketModule *rm = ui->getRocket();
 	Document *loadedDocument;
@@ -589,13 +586,14 @@ Document *DocumentLoader::loadDocument(const char *path)
 void DocumentLoader::closeDocument(Document *document)
 {
 	UI_Main *ui = UI_Main::Get();
+	RocketModule *rm = ui->getRocket();
 	Rocket::Core::ElementDocument *rocketDocument = document->getRocketDocument();
 
 	// handle postponed onload events (HOWTO handle these in cached documents?)
 	Rocket::Core::Dictionary ev_parms;
 	rocketDocument->DispatchEvent( "beforeUnload", ev_parms );
 
-	ui->getRocketContext()->UnloadDocument(rocketDocument);
+	rm->closeDocument(rocketDocument);
 }
 
 
