@@ -96,12 +96,9 @@ RocketModule::~RocketModule()
 		context->RemoveReference();
 	context = 0;
 
-	if(rocketInitialized)
+	if( rocketInitialized )
 		Rocket::Core::Shutdown();
 	rocketInitialized = false;
-
-	// instancers bye bye
-	// std::for_each( elementInstancers.begin(), elementInstancers.end(), unref_object<Rocket::Core::ElementInstancer> );
 
 	__SAFE_DELETE_NULLIFY( fsInterface );
 	__SAFE_DELETE_NULLIFY( systemInterface );

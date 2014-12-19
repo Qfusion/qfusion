@@ -96,6 +96,7 @@ namespace ASUI
 	void PrebindMatchMaker( ASInterface *as );
 	void BindMatchMaker( ASInterface *as );
 	void BindMatchMakerGlobal( ASInterface *as );
+	void RunMatchMakerFrame( void );
 
 	// as_bind_irc.cpp
 	void PrebindIrc( ASInterface *as );

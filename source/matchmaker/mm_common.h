@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MM_LOGOUT_TIMEOUT		3*1000
 
 // for client only
-#define MM_LOGIN2_INTERVAL		6*1000	// milliseconds
+#define MM_LOGIN2_INTERVAL		2*1000	// milliseconds
 #define MM_LOGIN2_RETRIES		7
 
 extern cvar_t *mm_url;

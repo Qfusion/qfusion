@@ -109,21 +109,17 @@ public:
 	{
 		asmodule = UI_Main::Get()->getAS();
 		if( target ) {
-			//target->AddReference();
+			target->AddReference();
 		}
 	}
 
 	virtual ~ScriptEventListener() {
-		if( target ) {
-			//target->RemoveReference();
-		}
 		releaseFunctionPtr();
 	}
 
 	virtual void ProcessEvent( Event &event )
 	{
-		if( event.GetTargetElement()->GetOwnerDocument() != target->GetOwnerDocument() ) {
-			// make sure the event originated from the same document as the original target
+		if( !target ) {
 			return;
 		}
 		if( released ) {
@@ -133,6 +129,11 @@ public:
 		}
 
 		Element *elem = event.GetTargetElement();
+
+		if( elem->GetOwnerDocument() != target->GetOwnerDocument() ) {
+			// make sure the event originated from the same document as the original target
+			return;
+		}
 
 		UI_ScriptDocument *document = dynamic_cast<UI_ScriptDocument *>(elem->GetOwnerDocument());
 		if( !document || document->IsLoading() ) {
@@ -152,7 +153,7 @@ public:
 		}
 
 		if( funcPtr.isValid() ) {
-			elem->AddReference();
+			target->AddReference();
 			event.AddReference();
 			try {
 				asIScriptContext *context = asmodule->getContext();
@@ -160,7 +161,7 @@ public:
 				// the context may actually be NULL after AS shutdown
 				if( context ) {
 					funcPtr.setContext( context );
-					funcPtr( elem, &event );
+					funcPtr( target, &event );
 				}
 			} catch( ASBind::Exception & ) {
 				Com_Printf( S_COLOR_RED "ScriptEventListener: Failed to call function %s %s\n", funcName.CString(), script.CString() );
@@ -173,8 +174,17 @@ public:
 
 	void releaseFunctionPtr()
 	{
+		if( released ) {
+			return;
+		}
+
 		released = true;
 		funcPtr.release();
+
+		if( target ) {
+			target->RemoveReference();
+			target = NULL;
+		}
 	}
 };
 
@@ -229,7 +239,6 @@ public:
 		}
 
 		if( funcPtr.isValid() ) {
-			elem->AddReference();
 			event.AddReference();
 			try {
 				asIScriptContext *context = as->getContext();
@@ -237,7 +246,7 @@ public:
 				// the context may actually be NULL after AS shutdown
 				if( context ) {
 					funcPtr.setContext( context );
-					funcPtr( elem, &event );
+					funcPtr( NULL, &event );
 				}
 			} catch( ASBind::Exception & ) {
 				Com_Printf( S_COLOR_RED "ScriptEventListener: Failed to call function %s\n", funcPtr.getName() );
@@ -286,7 +295,7 @@ public:
 	}
 
 	/// Releases pointers to AS functions held by allocated listeners
-	void ReleaseListnersFunctions()
+	void ReleaseListenersFunctions()
 	{
 		listenerList::iterator it;
 		for( it = listeners.begin(); it != listeners.end(); ++it ) {
@@ -295,7 +304,7 @@ public:
 	}
 
 	/// Releases all allocated listeners
-	void ReleaseListners()
+	void ReleaseListeners()
 	{
 		listenerList::iterator it;
 		for( it = listeners.begin(); it != listeners.end(); ++it ) {
@@ -306,7 +315,7 @@ public:
 
 	void Release()
 	{
-		ReleaseListners();
+		ReleaseListeners();
 		__delete__( this );
 	}
 };
@@ -322,7 +331,7 @@ void ReleaseScriptEventListenersFunctions( EventListenerInstancer *instancer )
 {
 	ScriptEventListenerInstancer *scriptInstancer = static_cast<ScriptEventListenerInstancer *>( instancer );
 	if( scriptInstancer ) {
-		scriptInstancer->ReleaseListnersFunctions();
+		scriptInstancer->ReleaseListenersFunctions();
 	}
 }
 

@@ -40,11 +40,7 @@ public:
 
 	virtual ~IFrameWidget()
 	{
-		ElementDocument *owner_document = GetOwnerDocument();
-		if( owner_document ) {
-			owner_document->RemoveEventListener( "show", this );
-			owner_document->RemoveEventListener( "hide", this );
-		}
+		DetachFromOwnerDocument();
 	}
 	
 	// Called when attributes on the element are changed.
@@ -83,6 +79,13 @@ public:
 		}
 	}
 
+	virtual void OnChildRemove( Element *child )
+	{
+		if( this == child ) {
+			DetachFromOwnerDocument();
+		}
+	}
+
 private:
 	void LoadSource()
 	{
@@ -117,10 +120,24 @@ private:
 		rocket_document->SetProperty( "overflow", "auto" );
 		rocket_document->PullToFront();
 
+		AttachToOwnerDocument();
+	}
+
+	void AttachToOwnerDocument( void )
+	{
 		ElementDocument *owner_document = GetOwnerDocument();
 		if( owner_document ) {
 			owner_document->AddEventListener( "show", this );
 			owner_document->AddEventListener( "hide", this );
+		}
+	}
+
+	void DetachFromOwnerDocument( void )
+	{
+		ElementDocument *owner_document = GetOwnerDocument();
+		if( owner_document ) {
+			owner_document->RemoveEventListener( "show", this );
+			owner_document->RemoveEventListener( "hide", this );
 		}
 	}
 
