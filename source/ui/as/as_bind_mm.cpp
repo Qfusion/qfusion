@@ -125,12 +125,29 @@ private:
 
 		ev->SetPhase( Rocket::Core::Event::PHASE_BUBBLE ); // FIXME?
 
-		for( ListenersList::iterator it = listeners.begin(); it != listeners.end(); ++it ) {
+		for( ListenersList::iterator it = listeners.begin(); it != listeners.end(); ) {
+			EventCallback func = it->second;
+
+			if( !func.isValid() || !func.getModule() ) {
+erase:
+				func.release();
+				it = listeners.erase( it );
+				continue;
+			}
+
 			if( it->first == event ) {
 				ev->AddReference();
-				it->second.setContext( asmodule->getContext() );
-				it->second( ev );
+				
+				try {
+					func.setContext( asmodule->getContext() );
+					func( ev );
+				} catch( ASBind::Exception & ) {
+					Com_Printf( S_COLOR_RED "ASMatchMaker: Failed to call function %s\n", func.getName() );
+					goto erase;
+				}
 			}
+
+			 ++it;
 		}
 
 		ev->RemoveReference();
