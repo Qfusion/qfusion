@@ -35,15 +35,6 @@ int Document::removeReference()
 {
 	if( rocketDocument )
 	{
-		// here we have to handle releasing
-		if( rocketDocument->GetReferenceCount() == 1 )
-		{
-			Core::ElementDocument *tempDoc = rocketDocument;
-			rocketDocument = 0;
-			tempDoc->RemoveReference();
-			return 0;
-		}
-		// else
 		rocketDocument->RemoveReference();
 		return rocketDocument->GetReferenceCount();
 	}
@@ -121,7 +112,6 @@ Document *DocumentCache::getDocument( const std::string &name )
 		if( !document )
 			return 0;
 
-		document->addReference();
 		documentSet.insert( document );
 
 		if( UI_Main::Get()->debugOn() ) {
@@ -132,7 +122,6 @@ Document *DocumentCache::getDocument( const std::string &name )
 	{
 		document = *it;
 
-		// document has refcount of 1*cache + 1*previous owners + 1*caller
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf( "DocumentCache::getDocument, found document %s from cache (refcount %d)\n", name.c_str(), document->getReference() );
 		}

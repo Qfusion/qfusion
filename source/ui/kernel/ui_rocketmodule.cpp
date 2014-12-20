@@ -212,7 +212,7 @@ Rocket::Core::ElementDocument *RocketModule::loadDocument( const char *filename,
 
 void RocketModule::closeDocument( Rocket::Core::ElementDocument *doc )
 {
-	doc->GetContext()->UnloadDocument( doc );
+	doc->Close();
 }
 
 //==================================================
@@ -277,6 +277,8 @@ void RocketModule::hideCursor( void )
 
 void RocketModule::update( void )
 {
+	ASUI::GarbageCollectEventListenersFunctions( scriptEventListenerInstancer );
+
 	context->Update();
 }
 
