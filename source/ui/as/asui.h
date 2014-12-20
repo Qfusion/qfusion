@@ -19,6 +19,7 @@ namespace ASUI {
 	Rocket::Core::EventListenerInstancer *GetScriptEventListenerInstancer( void );
 	/// Releases Angelscript function pointers held by event listeners
 	void ReleaseScriptEventListenersFunctions( Rocket::Core::EventListenerInstancer * );
+	void GarbageCollectEventListenersFunctions( Rocket::Core::EventListenerInstancer *instancer );
 
 	class UI_ScriptDocument : public Rocket::Core::ElementDocument
 	{

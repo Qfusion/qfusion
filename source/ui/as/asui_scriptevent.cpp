@@ -117,6 +117,10 @@ public:
 		releaseFunctionPtr();
 	}
 
+	virtual void OnDetach( Element *element ) {
+		releaseFunctionPtr();
+	}
+
 	virtual void ProcessEvent( Event &event )
 	{
 		if( !target ) {
@@ -185,6 +189,14 @@ public:
 			target->RemoveReference();
 			target = NULL;
 		}
+	}
+
+	bool isValid()
+	{
+		if( released ) {
+			return false;
+		}
+		return true;
 	}
 };
 
@@ -297,8 +309,7 @@ public:
 	/// Releases pointers to AS functions held by allocated listeners
 	void ReleaseListenersFunctions()
 	{
-		listenerList::iterator it;
-		for( it = listeners.begin(); it != listeners.end(); ++it ) {
+		for( listenerList::iterator it = listeners.begin(); it != listeners.end(); ++it ) {
 			(*it)->releaseFunctionPtr();
 		}
 	}
@@ -306,8 +317,7 @@ public:
 	/// Releases all allocated listeners
 	void ReleaseListeners()
 	{
-		listenerList::iterator it;
-		for( it = listeners.begin(); it != listeners.end(); ++it ) {
+		for( listenerList::iterator it = listeners.begin(); it != listeners.end(); ++it ) {
 			__delete__( *it );
 		}
 		listeners.clear();
@@ -317,6 +327,19 @@ public:
 	{
 		ReleaseListeners();
 		__delete__( this );
+	}
+
+	void GarbageCollect( void )
+	{
+		for( listenerList::iterator it = listeners.begin(); it != listeners.end(); ) {
+			ScriptEventListener *listener = *it;
+			if( !listener->isValid() ) {
+				it = listeners.erase( it );
+				__delete__( listener );
+				continue;
+			}
+			 ++it;
+		}
 	}
 };
 
@@ -332,6 +355,14 @@ void ReleaseScriptEventListenersFunctions( EventListenerInstancer *instancer )
 	ScriptEventListenerInstancer *scriptInstancer = static_cast<ScriptEventListenerInstancer *>( instancer );
 	if( scriptInstancer ) {
 		scriptInstancer->ReleaseListenersFunctions();
+	}
+}
+
+void GarbageCollectEventListenersFunctions( EventListenerInstancer *instancer )
+{
+	ScriptEventListenerInstancer *scriptInstancer = static_cast<ScriptEventListenerInstancer *>( instancer );
+	if( scriptInstancer ) {
+		scriptInstancer->GarbageCollect();
 	}
 }
 

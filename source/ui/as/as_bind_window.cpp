@@ -46,6 +46,13 @@ public:
 
 	~ASWindow()
 	{
+		shutdown();
+	}
+
+	void shutdown()
+	{
+		shuttingDown = true;
+
 		// detatch itself from the possibly opened modal window
 		detachAsEventListener();
 
@@ -55,6 +62,8 @@ public:
 			FunctionCallScheduler *scheduler = it->second;
 
 			doc->RemoveReference();
+			doc->RemoveEventListener( "beforeUnload", this );
+
 			scheduler->shutdown();
 			__delete__( scheduler );
 		}
@@ -144,22 +153,31 @@ public:
 	{
 		SchedulerMap::iterator it = schedulers.begin();
 		while( it != schedulers.end() ) {
-			ElementDocument *doc = it->first;
 			FunctionCallScheduler *scheduler = it->second;
-
-			if( doc->GetReferenceCount() == 1 ) {
-				scheduler->shutdown();
-				__delete__( scheduler );
-
-				doc->RemoveReference();
-
-				schedulers.erase( it++ );
-			}
-			else {
-				scheduler->update();
-				++it;
-			}
+			scheduler->update();
+			++it;
 		}
+	}
+
+	virtual void OnDetach( Element *element ) {
+		if( shuttingDown ) {
+			return;
+		}
+
+		ElementDocument *doc = dynamic_cast<ElementDocument *>(element);
+		SchedulerMap::iterator it = schedulers.find( doc );
+		if( it == schedulers.end() ) {
+			// FIXME
+			return;
+		}
+
+		FunctionCallScheduler *scheduler = it->second;
+		scheduler->shutdown();
+		__delete__( scheduler );
+
+		doc->RemoveReference();
+
+		schedulers.erase( it );
 	}
 
 	ElementDocument *getDocument( void ) const
@@ -365,6 +383,7 @@ private:
 		FunctionCallScheduler *scheduler;
 		if( it == schedulers.end() ) {
 			doc->AddReference();
+			doc->AddEventListener( "beforeUnload", this );
 
 			scheduler = __new__( FunctionCallScheduler )();
 			scheduler->init( UI_Main::Get()->getAS() );
@@ -387,6 +406,7 @@ private:
 
 	// exit code passed via document.close() of the modal document
 	int modalValue;
+	bool shuttingDown;
 
 	bool backgroundTrackPlaying;
 };
