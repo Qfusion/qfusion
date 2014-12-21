@@ -1217,6 +1217,19 @@ void Quat_Multiply( const quat_t q1, const quat_t q2, quat_t out )
 	out[3] = q1[3] * q2[3] - q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2];
 }
 
+static void Quat_LLerp( const quat_t q1, const quat_t q2, vec_t t, quat_t out )
+{
+	vec_t scale0, scale1;
+
+	scale0 = 1.0 - t;
+	scale1 = t;
+
+	out[0] = scale0 * q1[0] + scale1 * q2[0];
+	out[1] = scale0 * q1[1] + scale1 * q2[1];
+	out[2] = scale0 * q1[2] + scale1 * q2[2];
+	out[3] = scale0 * q1[3] + scale1 * q2[3];
+}
+
 void Quat_Lerp( const quat_t q1, const quat_t q2, vec_t t, quat_t out )
 {
 	quat_t p1;
@@ -1241,19 +1254,16 @@ void Quat_Lerp( const quat_t q1, const quat_t q2, vec_t t, quat_t out )
 		p1[2] = q1[2]; p1[3] = q1[3];
 	}
 
-	if( cosom < 1.0 - 0.0001 )
-	{
-		sinsqr = 1.0 - cosom * cosom;
-		sinom = Q_RSqrt( sinsqr );
-		omega = atan2( sinsqr * sinom, cosom );
-		scale0 = sin( ( 1.0 - t ) * omega ) * sinom;
-		scale1 = sin( t * omega ) * sinom;
+	if( cosom >= 1.0 - 0.0001 ) {
+		Quat_LLerp( q1, q2, t, out );
+		return;
 	}
-	else
-	{
-		scale0 = 1.0 - t;
-		scale1 = t;
-	}
+
+	sinsqr = 1.0 - cosom * cosom;
+	sinom = Q_RSqrt( sinsqr );
+	omega = atan2( sinsqr * sinom, cosom );
+	scale0 = sin( ( 1.0 - t ) * omega ) * sinom;
+	scale1 = sin( t * omega ) * sinom;
 
 	out[0] = scale0 * p1[0] + scale1 * q2[0];
 	out[1] = scale0 * p1[1] + scale1 * q2[1];
@@ -1361,6 +1371,7 @@ void DualQuat_FromQuatAndVector( const quat_t q, const vec3_t v, dualquat_t out 
 {
 	// regular quaternion, copy
 	Quat_Copy( q, &out[0] );
+	Quat_Normalize( &out[0] );
 
 	// convert translation vector to dual part
 	DualQuat_SetVector( out, v );
@@ -1370,6 +1381,7 @@ void DualQuat_FromQuat3AndVector( const vec3_t q, const vec3_t v, dualquat_t out
 {
 	// regular quaternion, copy
 	Quat_Quat3( q, &out[0] );
+	Quat_Normalize( &out[0] );
 
 	// convert translation vector to dual part
 	DualQuat_SetVector( out, v );
@@ -1448,8 +1460,19 @@ void DualQuat_Multiply( const dualquat_t dq1, const dualquat_t dq2, dualquat_t o
 
 void DualQuat_Lerp( const dualquat_t dq1, const dualquat_t dq2, vec_t t, dualquat_t out )
 {
-	Quat_Lerp( &dq1[0], &dq2[0], t, &out[0] );
-	Quat_Lerp( &dq1[4], &dq2[4], t, &out[4] );
+	int i, j;
+	vec_t k;
+	
+	k = dq1[0] * dq2[0] + dq1[1] * dq2[1] + dq1[2] * dq2[2] + dq1[3] * dq2[3];
+	k = k < 0 ? -t : t;
+	t = 1.0 - t;
+
+	for( i = 0; i < 4; i++ )
+		out[i] = dq1[i] * t + dq2[i] * k;
+	for( j = 4; j < 8; j++ )
+		out[j] = dq1[j] * t + dq2[j] * k;
+
+	Quat_Normalize( &out[0] );
 }
 
 /*
