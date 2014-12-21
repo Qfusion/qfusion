@@ -2954,7 +2954,7 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 			for( i = start; i < end; i++ )
 			{
 				len = strlen( files[i].name );
-				if( *bufsize <= len + 1 + alllen + 1 )
+				if( *bufsize < len + 1 + alllen + 1 )
 					break; // we are done
 				strcpy( buf + alllen, files[i].name );
 				alllen += len + 1;
