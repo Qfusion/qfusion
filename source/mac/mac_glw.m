@@ -216,22 +216,21 @@ void GLimp_EndFrame( void )
  */
 qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
 {
-//  TODO: SDL2
-	// unsigned short ramp256[3*256];
+	unsigned short ramp256[3*256];
 	
-	// if( stride < 256 )
-	// {
-	// 	// SDL only supports gamma ramps with 256 mappings per channel
-	// 	return qfalse;
-	// }
+	if( stride < 256 )
+	{
+        // SDL only supports gamma ramps with 256 mappings per channel
+        return qfalse;
+	}
 	
-	// if( SDL_GetGammaRamp( ramp256, ramp256+256, ramp256+( 256<<1 ) ) != -1 )
-	// {
-	// 	*psize = 256;
-	// 	memcpy( ramp,          ramp256,       256*sizeof(*ramp) );
-	// 	memcpy( ramp+  stride, ramp256+  256, 256*sizeof(*ramp) );
-	// 	memcpy( ramp+2*stride, ramp256+2*256, 256*sizeof(*ramp) );
-	// }
+	if( SDL_GetWindowGammaRamp( glw_state.sdl_window, ramp256, ramp256+256, ramp256+( 256<<1 ) ) != -1 )
+	{
+	 	*psize = 256;
+	 	memcpy( ramp,          ramp256,       256*sizeof(*ramp) );
+	 	memcpy( ramp+  stride, ramp256+  256, 256*sizeof(*ramp) );
+	 	memcpy( ramp+2*stride, ramp256+2*256, 256*sizeof(*ramp) );
+	}
 	return qfalse;
 }
 
@@ -241,20 +240,18 @@ qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned shor
  */
 void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ramp )
 {
-//  TODO: SDL2
-//	unsigned short ramp256[3*256];
-//	
-//	if( size != 256 )
-//		return;
-//	
-//	
-//	memcpy( ramp256,       ramp         , size*sizeof(*ramp));
-//	memcpy( ramp256+  256, ramp+  stride, size*sizeof(*ramp));
-//	memcpy( ramp256+2*256, ramp+2*stride, size*sizeof(*ramp));
-//	if( SDL_SetGammaRamp( ramp256, ramp256+256, ramp256+( 256<<1 ) ) == -1 )
-//	{
-//		Com_Printf( "SDL_SetGammaRamp(...) failed: ", SDL_GetError() );
-//	}
+    unsigned short ramp256[3*256];
+	
+	if( size != 256 )
+		return;
+    
+    memcpy( ramp256,       ramp         , size*sizeof(*ramp));
+    memcpy( ramp256+  256, ramp+  stride, size*sizeof(*ramp));
+    memcpy( ramp256+2*256, ramp+2*stride, size*sizeof(*ramp));
+    if( SDL_SetWindowGammaRamp( glw_state.sdl_window, ramp256, ramp256+256, ramp256+( 256<<1 ) ) == -1 )
+    {
+        Com_Printf( "SDL_SetWindowGammaRamp(...) failed: ", SDL_GetError() );
+    }
 }
 
 
