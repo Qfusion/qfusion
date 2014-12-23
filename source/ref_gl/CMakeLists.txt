@@ -25,7 +25,7 @@ endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	file(GLOB REF_GL_PLATFORM_SOURCES
-		"../mac/mac_glw.m"
+		"../mac/mac_glw.c"
 		"../mac/mac_qgl.c"
 	    "../unix/unix_xpm.c"
 	)

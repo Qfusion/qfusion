@@ -51,7 +51,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../null/sys_vfs_null.c"
 
         "../mac/mac_input.m"
-        "../mac/mac_vid.m"
+        "../mac/mac_vid.c"
         "../mac/mac_sys.m"
 
         "../mac/Warsow-Info.plist"
