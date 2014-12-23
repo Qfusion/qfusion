@@ -702,7 +702,8 @@ void G_TeleportPlayer( edict_t *player, edict_t *dest )
 	// teleport the player
 	//
 
-	VectorCopy( client->ps.pmove.velocity, velocity );
+	// from racesow - use old pmove velocity
+	VectorCopy( client->old_pmove.velocity, velocity );
 
 	velocity[2] = 0; // ignore vertical velocity
 	speed = VectorLengthFast( velocity );
