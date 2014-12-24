@@ -643,7 +643,7 @@ static void CG_Event_FireMachinegun( vec3_t origin, vec3_t dir, int weapon, int 
 }
 
 /*
-* G_Fire_SunflowerPattern
+* CG_Fire_SunflowerPattern
 */
 static void CG_Fire_SunflowerPattern( vec3_t start, vec3_t dir, int *seed, int ignore, int count, 
 	int hspread, int vspread, int range, void ( *impact )(trace_t *tr) )
