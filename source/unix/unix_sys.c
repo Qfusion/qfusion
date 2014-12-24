@@ -22,7 +22,9 @@ which defines HAVE_STRCASECMP if SDL.h isn't called first, causing a bunch of wa
 FIXME:  This will be remidied once a native Mac port is complete
 */
 #if defined ( __APPLE__ ) && !defined ( DEDICATED_ONLY )
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <sys/param.h>
 #endif
 
 #include <signal.h>
@@ -489,8 +491,11 @@ int main( int argc, char **argv )
 	InitSig();
 
 #if defined ( __MACOSX__ ) && !defined (DEDICATED_ONLY)
-	SDL_Init( 0 );
-	SDL_EnableUNICODE( SDL_ENABLE );
+	char resourcesPath[MAXPATHLEN];
+	CFURLGetFileSystemRepresentation(CFBundleCopyResourcesDirectoryURL(CFBundleGetMainBundle()), 1, (UInt8 *)resourcesPath, MAXPATHLEN);
+	chdir(resourcesPath);
+	
+	SDL_Init( SDL_INIT_VIDEO );
 #endif
 
 	Qcommon_Init( argc, argv );
