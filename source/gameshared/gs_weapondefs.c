@@ -279,8 +279,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//projectile def
 			INSTANT,						// speed
-			1200,							// spread
-			500,                            // v_spread
+			180,							// spread
+			90,                            // v_spread
 
 			//ammo
 			10,                             // weapon pickup amount

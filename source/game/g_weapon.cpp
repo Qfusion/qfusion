@@ -534,18 +534,21 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	}
 }
 
-#if 0
-static void G_Fire_SpiralPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, int spread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
+//Sunflower spiral with Fibonacci numbers 
+static void G_Fire_SunflowerPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, 
+	int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
 {
 	int i;
 	float r;
 	float u;
+	float fi;
 	trace_t trace;
 
 	for( i = 0; i < count; i++ )
 	{
-		r = cos( (float)*seed + i ) * spread * i;
-		u = sin( (float)*seed + i ) * spread * i;
+		fi = i * 2.4; //magic value creating Fibonacci numbers
+		r = cos( (float)*seed + fi ) * hspread * sqrt(fi);
+		u = sin( (float)*seed + fi ) * vspread * sqrt(fi); 
 
 		GS_TraceBullet( &trace, start, dir, r, u, range, ENTNUM( self ), timeDelta );
 		if( trace.ent != -1 )
@@ -563,8 +566,8 @@ static void G_Fire_SpiralPattern( edict_t *self, vec3_t start, vec3_t dir, int *
 		}
 	}
 }
-#endif
 
+#if 0
 static void G_Fire_RandomPattern( edict_t *self, vec3_t start, vec3_t dir, int *seed, int count, 
 	int hspread, int vspread, int range, float damage, int kick, int stun, int dflags, int mod, int timeDelta )
 {
@@ -594,6 +597,7 @@ static void G_Fire_RandomPattern( edict_t *self, vec3_t start, vec3_t dir, int *
 		}
 	}
 }
+#endif
 
 void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int range, int hspread, int vspread,
 					int count, float damage, int knockback, int stun, int mod, int timeDelta )
@@ -616,7 +620,7 @@ void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int r
 	if( mod == MOD_RIOTGUN_S )
 		event->s.weapon |= EV_INVERSE;
 
-	G_Fire_RandomPattern( self, start, dir, &seed, count, hspread, vspread,
+	G_Fire_SunflowerPattern( self, start, dir, &seed, count, hspread, vspread,
 		range, damage, knockback, stun, dmgflags, mod, timeDelta );
 }
 
