@@ -345,7 +345,7 @@ static void Con_MessageMode2_f( void )
 void Con_CheckResize( void )
 {
 	float pixelRatio = VID_GetPixelRatio();
-	int width = viddef.width / ( int )( SMALL_CHAR_WIDTH * pixelRatio ) - 2;
+	int width = viddef.width / max( ( int )( SMALL_CHAR_WIDTH * pixelRatio ), 1 ) - 2;
 
 	if( width == con.linewidth )
 		return;
@@ -872,7 +872,7 @@ void Con_DrawConsole( void )
 
 	// draw the background
 	re.DrawStretchPic( 0, 0, viddef.width, lines, 0, 0, 1, 1, colorWhite, cls.consoleShader );
-	SCR_DrawFillRect( 0, lines - ( int )( 2 * pixelRatio ), viddef.width, 2 * pixelRatio, colorRed );
+	SCR_DrawFillRect( 0, lines - ( int )( 2 * max( pixelRatio, 0.5f ) ), viddef.width, 2 * max( pixelRatio, 0.5f ), colorRed );
 
 	// get date from system
 	time( &long_time );
@@ -887,8 +887,8 @@ void Con_DrawConsole( void )
 #endif
 
 	SCR_DrawString( viddef.width-SCR_strWidth( version, 
-		cls.fontSystemSmallScaled, 0 ) - ( int )( 4 * pixelRatio ),
-		lines - SCR_strHeight( cls.fontSystemSmallScaled ) - ( int )( 4 * pixelRatio ), 
+		cls.fontSystemSmallScaled, 0 ) - ( int )( 4 * max( pixelRatio, 1.0f ) ),
+		lines - SCR_strHeight( cls.fontSystemSmallScaled ) - ( int )( 4 * max( pixelRatio, 1.0f ) ), 
 		ALIGN_LEFT_TOP, version, cls.fontSystemSmallScaled, colorRed );
 
 	// prepare to draw the text
