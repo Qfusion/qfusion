@@ -317,7 +317,6 @@ unsigned int S_GetRawSamplesLength( void )
 
 	rs = find_rawsound( RAW_SOUND_ENTNUM );
 	if( rs && rs->src ) {
-		update_rawsound( rs );
 		return rs->samples_length;
 	}
 	return 0;
@@ -336,7 +335,6 @@ unsigned int S_GetPositionedRawSamplesLength( int entnum )
 
 	rs = find_rawsound( entnum );
 	if( rs && rs->src ) {
-		update_rawsound( rs );
 		return rs->samples_length;
 	}
 	return 0;

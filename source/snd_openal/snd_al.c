@@ -350,7 +350,6 @@ static void S_Update( void )
 	
 	S_UpdateStreams();
 	
-
 	s_volume->modified = qfalse; // Checked by src and stream
 	s_musicvolume->modified = qfalse; // Checked by stream and music
 
