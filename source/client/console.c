@@ -344,9 +344,9 @@ static void Con_MessageMode2_f( void )
 */
 void Con_CheckResize( void )
 {
-	int charWidth = SMALL_CHAR_WIDTH * viddef.height / 600;
-	int width;
+	int charWidth, width;
 
+	charWidth = SMALL_CHAR_WIDTH * VID_GetPixelRatio();
 	if( !charWidth )
 		charWidth = 1;
 
@@ -655,11 +655,12 @@ static void Con_DrawInput( int vislines )
 {
 	char draw_search_text[MAXCMDLINE*2+4];
 	const char *text = key_lines[edit_line];
-	int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
-	int text_y = vislines - ( 14 * viddef.height / 600 ) - smallCharHeight;
-	int margin = 8 * viddef.height / 600;
-	int promptwidth = SCR_strWidth( "]", cls.fontSystemSmall, 1 );
-	int cursorwidth = SCR_strWidth( "_", cls.fontSystemSmall, 1 );
+	float pixelRatio = VID_GetPixelRatio();
+	int smallCharHeight = SCR_strHeight( cls.consoleFont );
+	int text_y = vislines - (int)( 14 * pixelRatio ) - smallCharHeight;
+	int margin = 8 * pixelRatio;
+	int promptwidth = SCR_strWidth( "]", cls.consoleFont, 1 );
+	int cursorwidth = SCR_strWidth( "_", cls.consoleFont, 1 );
 	int input_width = viddef.width - margin * 2;
 	int prewidth;	// width of input line before cursor
 
@@ -671,7 +672,7 @@ static void Con_DrawInput( int vislines )
 		Q_snprintfz( draw_search_text, sizeof( draw_search_text ), "%s : %s", key_lines[edit_line], search_text );
 	}
 
-	prewidth = SCR_strWidth( text, cls.fontSystemSmall, key_linepos );
+	prewidth = SCR_strWidth( text, cls.consoleFont, key_linepos );
 
 	// don't let the cursor go beyond the left screen edge
 	clamp_high( input_prestep, prewidth - promptwidth);
@@ -680,11 +681,11 @@ static void Con_DrawInput( int vislines )
 
 	SCR_DrawClampString( margin - input_prestep,
 		text_y, text, margin, text_y,
-		viddef.width - margin, viddef.height, cls.fontSystemSmall, colorWhite );
+		viddef.width - margin, viddef.height, cls.consoleFont, colorWhite );
 
 	if( (int)( cls.realtime>>8 )&1 )
 		SCR_DrawRawChar( margin + prewidth - input_prestep, text_y, '_',
-		cls.fontSystemSmall, colorWhite );
+		cls.consoleFont, colorWhite );
 }
 
 /*
@@ -701,11 +702,12 @@ void Con_DrawNotify( void )
 	int i;
 	int time;
 	char *s;
+	float pixelRatio = VID_GetPixelRatio();
 
 	v = 0;
 	if( con_drawNotify->integer || developer->integer )
 	{
-		int x = 8 * viddef.height / 600;
+		int x = 8 * pixelRatio;
 
 		for( i = min( NUM_CON_TIMES, con.numlines ) - 1; i >= 0; i-- )
 		{
@@ -717,9 +719,9 @@ void Con_DrawNotify( void )
 				continue;
 			text = con.text[i] ? con.text[i] : "";
 
-			SCR_DrawString( x, v, ALIGN_LEFT_TOP, text, cls.fontSystemSmall, colorWhite );
+			SCR_DrawString( x, v, ALIGN_LEFT_TOP, text, cls.consoleFont, colorWhite );
 
-			v += SCR_strHeight( cls.fontSystemSmall );
+			v += SCR_strHeight( cls.consoleFont );
 		}
 	}
 
@@ -738,7 +740,7 @@ void Con_DrawNotify( void )
 				font = SCR_RegisterFont( con_chatFontFamily->string, con_chatFontStyle->integer, con_chatFontSize->integer );
 			}
 			if( !font )
-				font = cls.fontSystemSmall;
+				font = cls.consoleFont;
 
 			x = con_chatX->integer;
 			y = con_chatY->integer;
@@ -746,9 +748,9 @@ void Con_DrawNotify( void )
 		else
 		{
 			width = viddef.width;
-			x = 8 * viddef.height / 600;
+			x = 8 * pixelRatio;
 			y = v;
-			font = cls.fontSystemSmall;
+			font = cls.consoleFont;
 		}
 
 		// 48 is an arbitrary offset for not overlapping the FPS and clock prints
@@ -808,7 +810,7 @@ static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2 )
 			font = SCR_RegisterFont( con_chatFontFamily->string, con_chatFontStyle->integer, con_chatFontSize->integer );
 		}
 		if( !font )
-			font = cls.fontSystemSmall;
+			font = cls.consoleFont;
 
 		x = con_chatX->integer;
 		y = con_chatY->integer;
@@ -819,9 +821,9 @@ static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2 )
 		int time;
 
 		width = viddef.width;
-		x = 8 * viddef.height / 600;
+		x = 8 * VID_GetPixelRatio();
 		y = 0;
-		font = cls.fontSystemSmall;
+		font = cls.consoleFont;
 
 		for( i = min( NUM_CON_TIMES, con.numlines ) - 1; i >= 0; i-- )
 		{
@@ -832,7 +834,7 @@ static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2 )
 			if( time > con_notifytime->value*1000 )
 				continue;
 
-			y += SCR_strHeight( cls.fontSystemSmall );
+			y += SCR_strHeight( cls.consoleFont );
 		}
 	}
 
@@ -860,7 +862,8 @@ void Con_DrawConsole( void )
 	char version[256];
 	time_t long_time;
 	struct tm *newtime;
-	int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
+	int smallCharHeight = SCR_strHeight( cls.consoleFont );
+	float pixelRatio = VID_GetPixelRatio();
 	int scaled;
 
 	lines = viddef.height * scr_con_current;
@@ -874,7 +877,7 @@ void Con_DrawConsole( void )
 
 	// draw the background
 	re.DrawStretchPic( 0, 0, viddef.width, lines, 0, 0, 1, 1, colorWhite, cls.consoleShader );
-	scaled = ( ( viddef.height >= 600 ) ? 2 * viddef.height / 600 : 1 );
+	scaled = ( ( pixelRatio >= 1.0f ) ? 2 * pixelRatio : 1 );
 	SCR_DrawFillRect( 0, lines - scaled, viddef.width, scaled, colorRed );
 
 	// get date from system
@@ -889,24 +892,24 @@ void Con_DrawConsole( void )
 		APPLICATION, APP_VERSION, revisioncvar->string );
 #endif
 
-	scaled = ( ( viddef.height >= 750 ) ? 4 * viddef.height / 600 : 4 );
-	SCR_DrawString( viddef.width-SCR_strWidth( version, cls.fontSystemSmall, 0 ) - scaled,
-		lines - SCR_strHeight( cls.fontSystemSmall ) - scaled, 
-		ALIGN_LEFT_TOP, version, cls.fontSystemSmall, colorRed );
+	scaled = ( ( pixelRatio >= 1.25f ) ? 4 * pixelRatio : 4 );
+	SCR_DrawString( viddef.width-SCR_strWidth( version, cls.consoleFont, 0 ) - scaled,
+		lines - SCR_strHeight( cls.consoleFont ) - scaled, 
+		ALIGN_LEFT_TOP, version, cls.consoleFont, colorRed );
 
 	// prepare to draw the text
-	scaled = 14 * viddef.height / 600;
+	scaled = 14 * pixelRatio;
 	rows = ( lines - smallCharHeight - scaled ) / smallCharHeight;  // rows of text to draw
 	y = lines - smallCharHeight - scaled - smallCharHeight;
 
 	row = con.display;	// first line to be drawn
 	if( con.display )
 	{
-		int width = SCR_strWidth( "^", cls.fontSystemSmall, 0 );
+		int width = SCR_strWidth( "^", cls.consoleFont, 0 );
 
 		// draw arrows to show the buffer is backscrolled
 		for( x = 0; x < con.linewidth; x += 4 )
-			SCR_DrawRawChar( ( x+1 )*width, y, '^', cls.fontSystemSmall, colorRed );
+			SCR_DrawRawChar( ( x+1 )*width, y, '^', cls.consoleFont, colorRed );
 
 		// the arrows obscure one line of scrollback
 		y -= smallCharHeight;
@@ -922,7 +925,7 @@ void Con_DrawConsole( void )
 
 		text = con.text[row] ? con.text[row] : "";
 
-		SCR_DrawString( 8 * viddef.height / 600, y, ALIGN_LEFT_TOP, text, cls.fontSystemSmall, colorWhite );
+		SCR_DrawString( 8 * pixelRatio, y, ALIGN_LEFT_TOP, text, cls.consoleFont, colorWhite );
 	}
 
 	// draw the input prompt, user text, and cursor if desired
@@ -1579,7 +1582,7 @@ void Con_KeyDown( int key )
 	{
 		if( key_linepos > 1 )
 		{
-			int oldwidth = SCR_strWidth( key_lines[edit_line], cls.fontSystemSmall, key_linepos );
+			int oldwidth = SCR_strWidth( key_lines[edit_line], cls.consoleFont, key_linepos );
 			int newwidth;
 
 			// skip to the end of color sequence
@@ -1602,7 +1605,7 @@ void Con_KeyDown( int key )
 			}
 
 			// keep the cursor in the same on-screen position if possible
-			newwidth = SCR_strWidth( key_lines[edit_line], cls.fontSystemSmall, key_linepos );
+			newwidth = SCR_strWidth( key_lines[edit_line], cls.consoleFont, key_linepos );
 			input_prestep += ( newwidth - oldwidth );
 			clamp_low( input_prestep, 0 );
 		}
@@ -1681,9 +1684,9 @@ void Con_KeyDown( int key )
 	{
 		if( ctrl_is_down )
 		{
-			int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
+			int smallCharHeight = SCR_strHeight( cls.consoleFont );
 			int vislines = (int)( viddef.height * bound( 0.0, scr_con_current, 1.0 ) );
-			int rows = ( vislines - smallCharHeight - 14 * viddef.height / 600 ) / smallCharHeight;  // rows of text to draw
+			int rows = ( vislines - smallCharHeight - (int)( 14 * VID_GetPixelRatio() ) ) / smallCharHeight;  // rows of text to draw
 			con.display = con.numlines - rows + 1;
 			clamp_low( con.display, 0 );
 		}
@@ -2009,7 +2012,7 @@ void Con_MessageKeyDown( int key )
 */
 static void Con_TouchDown( int x, int y )
 {
-	int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
+	int smallCharHeight = SCR_strHeight( cls.consoleFont );
 
 	if( cls.key_dest == key_console )
 	{
@@ -2026,7 +2029,7 @@ static void Con_TouchDown( int x, int y )
 		}
 		else if( scr_con_current )
 		{
-			if( y < ( ( viddef.height * scr_con_current ) - 14 * viddef.height / 600 - smallCharHeight ) )
+			if( y < ( ( viddef.height * scr_con_current ) - (int)( 14 * VID_GetPixelRatio() ) - smallCharHeight ) )
 			{
 				touch_x = -1;
 				touch_y = y;
@@ -2063,7 +2066,7 @@ static void Con_TouchUp( int x, int y )
 	{
 		if( touch_x >= 0 )
 		{
-			int smallCharHeight = SCR_strHeight( cls.fontSystemSmall );
+			int smallCharHeight = SCR_strHeight( cls.consoleFont );
 
 			if( ( x - touch_x ) >= ( smallCharHeight * 4 ) )
 				Con_CompleteCommandLine();

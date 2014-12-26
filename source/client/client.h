@@ -259,10 +259,8 @@ typedef struct
 	shader_t *whiteShader;
 	shader_t *consoleShader;
 
-	// system fonts
-	qfontface_t *fontSystemSmall;
-	qfontface_t *fontSystemMedium;
-	qfontface_t *fontSystemBig;
+	// system font
+	qfontface_t *consoleFont;
 
 	// these are our reliable messages that go to the server
 	unsigned int reliableSequence;          // the last one we put in the list to be sent

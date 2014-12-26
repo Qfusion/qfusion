@@ -95,7 +95,7 @@ static void SCR_RegisterSystemFonts( void )
 	const char *con_fontSystemFamilyName;
 	const int con_fontSystemStyle = DEFAULT_SYSTEM_FONT_STYLE;
 	int size;
-	float scale = viddef.height / 600.0f;
+	float pixelRatio = VID_GetPixelRatio();
 
 	// register system fonts
 	con_fontSystemFamilyName = con_fontSystemFamily->string;
@@ -123,36 +123,20 @@ static void SCR_RegisterSystemFonts( void )
 		Cvar_SetValue( con_fontSystemBigSize->name, DEFAULT_SYSTEM_FONT_BIG_SIZE / 2 );
 	}
 
-	if( scale < 0.4f )
-		scale = 0.4f;
+	if( pixelRatio < 0.5f )
+		pixelRatio = 0.5f;
 
-	size = ceil( con_fontSystemSmallSize->integer * scale );
-	cls.fontSystemSmall = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
-	if( !cls.fontSystemSmall )
+	size = ceil( con_fontSystemSmallSize->integer * pixelRatio );
+	cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
+	if( !cls.consoleFont )
 	{
 		Cvar_ForceSet( con_fontSystemFamily->name, con_fontSystemFamily->dvalue );
 		con_fontSystemFamilyName = con_fontSystemFamily->dvalue;
 
 		size = DEFAULT_SYSTEM_FONT_SMALL_SIZE;
-		cls.fontSystemSmall = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
-		if( !cls.fontSystemSmall )
+		cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
+		if( !cls.consoleFont )
 			Com_Error( ERR_FATAL, "Couldn't load default font \"%s\"", con_fontSystemFamily->dvalue );
-	}
-
-	size = ceilf( con_fontSystemMediumSize->integer * scale );
-	cls.fontSystemMedium = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
-	if( !cls.fontSystemMedium )
-	{
-		size = DEFAULT_SYSTEM_FONT_MEDIUM_SIZE;
-		cls.fontSystemMedium = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
-	}
-
-	size = con_fontSystemBigSize->integer;
-	cls.fontSystemBig = SCR_RegisterFont( con_fontSystemFamily->string, con_fontSystemStyle, size );
-	if( !cls.fontSystemBig )
-	{
-		size = DEFAULT_SYSTEM_FONT_BIG_SIZE;
-		cls.fontSystemBig = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
 	}
 }
 
@@ -208,9 +192,7 @@ static void SCR_InitFonts( void )
 */
 static void SCR_ShutdownFonts( void )
 {
-	cls.fontSystemSmall = NULL;
-	cls.fontSystemMedium = NULL;
-	cls.fontSystemBig = NULL;
+	cls.consoleFont = NULL;
 
 	con_fontSystemFamily = NULL;
 	con_fontSystemSmallSize = con_fontSystemMediumSize = con_fontSystemBigSize = NULL;
@@ -336,7 +318,7 @@ void SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font
 		return;
 
 	if( !font )
-		font = cls.fontSystemSmall;
+		font = cls.consoleFont;
 	fontHeight = FTLIB_FontHeight( font );
 
 	width = FTLIB_StringWidth( str, font, 0 );
@@ -369,7 +351,7 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 		return 0;
 
 	if( !font )
-		font = cls.fontSystemSmall;
+		font = cls.consoleFont;
 	fontHeight = FTLIB_FontHeight( font );
 
 	width = FTLIB_StringWidth( str, font, 0 );
