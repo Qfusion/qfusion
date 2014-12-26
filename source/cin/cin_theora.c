@@ -108,6 +108,7 @@ static void Ogg_LoadPagesToStreams( qtheora_info_t *qth, ogg_page *page )
 */
 static qboolean OggVorbis_NeedAudioData( cinematics_t *cin )
 {
+	ogg_int64_t audio_time;
 	ogg_int64_t samples_need;
 	qtheora_info_t *qth = cin->fdata;
 
@@ -115,8 +116,12 @@ static qboolean OggVorbis_NeedAudioData( cinematics_t *cin )
 		return qfalse;
 	}
 
-	samples_need = (ogg_int64_t)((double)(cin->cur_time 
-		- cin->start_time - cin->s_samples_length + AUDIO_PRELOAD_MSEC) * qth->s_rate_msec);	
+	audio_time = (ogg_int64_t)cin->cur_time - cin->start_time - cin->s_samples_length + AUDIO_PRELOAD_MSEC;
+	if( audio_time <= 0 ) {
+		return qfalse;
+	}
+
+	samples_need = (ogg_int64_t)((double)audio_time * qth->s_rate_msec);	
 
 	// read only as much samples as we need according to the timer
 	if( qth->s_samples_read >= samples_need ) {
