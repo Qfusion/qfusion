@@ -393,25 +393,20 @@ static qboolean music_process( void )
 
 		if( !l )
 		{
-			bgTrack_t *cur = s_bgTrack;
-			
-			if( !cur->loop )
+			if( !s_bgTrack->loop )
 			{
 				if( !S_AdvanceBackgroundTrack( 1 ) )
 				{
 					if( !S_ValidMusicFile( s_bgTrack ) )
-					{
-						S_StopBackgroundTrack();
 						return qfalse;
-					}
 				}
 
-				if( s_bgTrackBuffering || s_bgTrackLoading ) {
+				if( s_bgTrackBuffering || s_bgTrackLoading )
 					return qtrue;
-				}
 			}
 
-			if( !S_ResetStream( music_stream ) )
+			music_stream = s_bgTrack->stream;
+			if( !music_stream || !S_ResetStream( music_stream ) )
 			{
 				// if failed, close the track?
 				return qfalse;
