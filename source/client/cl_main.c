@@ -1917,6 +1917,8 @@ void CL_InitMedia( void )
 
 	cls.mediaInitialized = qtrue;
 
+	CL_SoundModule_StopAllSounds( qtrue, qtrue );
+
 	// register console font and background
 	SCR_RegisterConsoleMedia();
 
@@ -1925,8 +1927,6 @@ void CL_InitMedia( void )
 
 	// check memory integrity
 	Mem_DebugCheckSentinelsGlobal();
-
-	CL_SoundModule_StopAllSounds( qtrue, qtrue );
 }
 
 /*
@@ -1940,6 +1940,8 @@ void CL_ShutdownMedia( void )
 		return;
 
 	cls.mediaInitialized = qfalse;
+	
+	CL_SoundModule_StopAllSounds( qtrue, qtrue );
 
 	// shutdown cgame
 	CL_GameModule_Shutdown();
@@ -1950,8 +1952,6 @@ void CL_ShutdownMedia( void )
 	SCR_ShutDownConsoleMedia();
 
 	SCR_StopCinematic();
-
-	CL_SoundModule_StopAllSounds( qtrue, qtrue );
 }
 
 /*
