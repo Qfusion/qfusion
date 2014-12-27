@@ -806,7 +806,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
                                int internal_align, unsigned int icon_size )
 {
 	int i, num, skip, next, w, num_max;
-	size_t line_height;
+	int line_height;
 	int xoffset, yoffset;
 	obituary_t *obr;
 	struct shader_s *pic;
@@ -919,9 +919,9 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 
 		w = 0;
 		if( obr->type != OBITUARY_ACCIDENT )
-			w += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size * cgs.vidWidth/800 ) / 2 );
-		w += icon_size * cgs.vidWidth/800;
-		w += min( trap_SCR_strWidth( obr->victim, font, 0 ), ( width - icon_size * cgs.vidWidth/800 ) / 2 );
+			w += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
+		w += icon_size;
+		w += min( trap_SCR_strWidth( obr->victim, font, 0 ), ( width - icon_size ) / 2 );
 
 		if( internal_align == 1 )
 		{
@@ -950,13 +950,13 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 				Vector4Set( teamcolor, 255, 255, 255, 255 );
 			}
 			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + ( line_height - trap_SCR_strHeight( font ) ) / 2,
-			                          ALIGN_LEFT_TOP, COM_RemoveColorTokensExt( obr->attacker, qtrue ), ( width - icon_size * cgs.vidWidth/800 ) / 2,
+			                          ALIGN_LEFT_TOP, COM_RemoveColorTokensExt( obr->attacker, qtrue ), ( width - icon_size ) / 2,
 			                          font, teamcolor );
-			xoffset += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size * cgs.vidWidth/800 ) / 2 );
+			xoffset += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
 		}
-		trap_R_DrawStretchPic( x + xoffset, y + yoffset + ( line_height - icon_size ) / 2, icon_size * cgs.vidWidth/800,
-		                       icon_size * cgs.vidHeight/600, 0, 0, 1, 1, colorWhite, pic );
-		xoffset += icon_size * cgs.vidWidth/800;
+		trap_R_DrawStretchPic( x + xoffset, y + yoffset + ( line_height - icon_size ) / 2, icon_size,
+		                       icon_size, 0, 0, 1, 1, colorWhite, pic );
+		xoffset += icon_size;
 		if( GS_TeamBasedGametype() )
 		{
 			CG_TeamColor( obr->victim_team, teamcolor );
@@ -965,9 +965,9 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 		{
 			Vector4Set( teamcolor, 255, 255, 255, 255 );
 		}
-		trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + ( (int) line_height ) / 2, ALIGN_LEFT_MIDDLE,
-		                          COM_RemoveColorTokensExt( obr->victim, qtrue ), ( width - icon_size * cgs.vidWidth/800 ) / 2, font, teamcolor );
-		xoffset += min( trap_SCR_strWidth( obr->victim, font, 0 ), ( width - icon_size * cgs.vidWidth/800 ) / 2 );
+		trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + line_height / 2, ALIGN_LEFT_MIDDLE,
+		                          COM_RemoveColorTokensExt( obr->victim, qtrue ), ( width - icon_size ) / 2, font, teamcolor );
+		xoffset += min( trap_SCR_strWidth( obr->victim, font, 0 ), ( width - icon_size ) / 2 );
 
 		yoffset += line_height;
 	}
@@ -1813,7 +1813,7 @@ static bool CG_LFuncDrawObituaries( struct cg_layoutnode_s *commandnode, struct 
 	int icon_size = (int)CG_GetNumericArg( &argumentnode );
 
 	CG_DrawObituaries( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color,
-	                   layout_cursor_width, layout_cursor_height, internal_align, icon_size );
+	                   layout_cursor_width, layout_cursor_height, internal_align, icon_size * cgs.vidHeight / 600 );
 	return true;
 }
 
