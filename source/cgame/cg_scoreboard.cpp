@@ -29,12 +29,12 @@ extern cvar_t *cg_scoreboardWidthScale;
 
 #define SCB_BACKGROUND_ALPHA 0.25f
 
-#define SCB_TEAMNAME_PIXELWIDTH ( 260 * cg_scoreboardWidthScale->value )
-#define SCB_SMALLFIELD_PIXELWIDTH ( 40 * cg_scoreboardWidthScale->value )
-#define SCB_TINYFIELD_PIXELWIDTH ( 26 * cg_scoreboardWidthScale->value )
+#define SCB_TEAMNAME_PIXELWIDTH ( (int)( 260 * cg_scoreboardWidthScale->value ) * cgs.vidHeight / 600 )
+#define SCB_SMALLFIELD_PIXELWIDTH ( (int)( 40 * cg_scoreboardWidthScale->value ) * cgs.vidHeight / 600 )
+#define SCB_TINYFIELD_PIXELWIDTH ( (int)( 26 * cg_scoreboardWidthScale->value ) * cgs.vidHeight / 600 )
 
-#define SCB_SCORENUMBER_SIZE 48
-#define SCB_CENTERMARGIN 16
+#define SCB_SCORENUMBER_SIZE ( 48 * cgs.vidHeight / 600 )
+#define SCB_CENTERMARGIN ( 16 * cgs.vidHeight / 600 )
 
 void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, int charheight, int value );
 
@@ -417,7 +417,7 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 
 	if( width )
 	{
-		*width = ( atoi( token ) * cg_scoreboardWidthScale->value );
+		*width = (int)( atoi( token ) * cg_scoreboardWidthScale->value ) * cgs.vidHeight / 600;
 
 		if( *width < 0 )
 			*width = 0;
@@ -492,13 +492,13 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		}
 
 		if( pass ) {
-			xoffset += ( 16 * dir );
+			xoffset += ( ( 16 * cgs.vidHeight / 600 ) * dir );
 
 			CG_DrawHUDNumeric( x + xoffset, y + yoffset, align, colorWhite,
 				SCB_SCORENUMBER_SIZE, SCB_SCORENUMBER_SIZE, team_score );
 
-			xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen(va("%i", team_score)) + 16 ) * dir );
-			trap_SCR_DrawStringWidth( x + xoffset + ( ( SCB_TINYFIELD_PIXELWIDTH + 16 ) * dir ),
+			xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen(va("%i", team_score)) + ( 16 * cgs.vidHeight / 600 ) ) * dir );
+			trap_SCR_DrawStringWidth( x + xoffset + ( ( SCB_TINYFIELD_PIXELWIDTH + ( 16 * cgs.vidHeight / 600 ) ) * dir ),
 				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_strHeight( cgs.fontSystemBig ) + 1),
 				align, GS_TeamName( team ), SCB_TEAMNAME_PIXELWIDTH, cgs.fontSystemBig, colorWhite );
 
@@ -785,7 +785,7 @@ struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar )
 {
 	struct qfontface_s *font;
 
-	font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, cg_scoreboardFontSize->integer );
+	font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, ceilf( cg_scoreboardFontSize->integer * ( (float)cgs.vidHeight / 600.0f ) ) );
 	if( !font )
 	{
 		CG_Printf( "%sWarning: Invalid font in '%s'. Reseting to default\n", familyCvar->name, S_COLOR_YELLOW );
@@ -825,7 +825,7 @@ void CG_DrawScoreboard( void )
 	monofont = CG_ScoreboardFont( cg_scoreboardMonoFontFamily );
 
 	xpos = (int)( cgs.vidWidth * 0.5 );
-	ypos = (int)( cgs.vidHeight * 0.25 ) - 24;
+	ypos = (int)( cgs.vidHeight * 0.2 ) - 24 * cgs.vidHeight / 600;
 
 	// draw title
 	Q_snprintfz( title, sizeof( title ), va( "%s %s", trap_Cvar_String( "gamename" ), gs.gametypeName ) );

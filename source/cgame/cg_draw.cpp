@@ -362,7 +362,7 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 			if( draw_playernames == true )
 				trap_SCR_DrawString( x + (int)coords[0] + 8 * cgs.vidHeight / 600, y + (int)coords[1] - 4 * cgs.vidHeight / 600,
 					ALIGN_LEFT_TOP,	COM_RemoveColorTokensExt( cgs.clientInfo[cent->current.number-1].name, qtrue ),
-					cgs.fontSystemSmallScaled, tmp_yellow_alpha );
+					cgs.fontSystemSmall, tmp_yellow_alpha );
 		}
 		else if( cent->current.type == ET_MINIMAP_ICON )
 		{
@@ -397,7 +397,7 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 			if( draw_itemnames == true )
 			{
 				trap_SCR_DrawString( x + (int)coords[0] + 2 * thisOffset, y + (int)coords[1] - thisOffset,
-					ALIGN_LEFT_TOP, cent->item->shortname, cgs.fontSystemSmallScaled, tmp_yellow_alpha );
+					ALIGN_LEFT_TOP, cent->item->shortname, cgs.fontSystemSmall, tmp_yellow_alpha );
 			}
 		}
 	}

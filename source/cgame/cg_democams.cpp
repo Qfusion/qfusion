@@ -659,7 +659,7 @@ static void CG_DrawEntityNumbers( void )
 	float dist;
 	trace_t	trace;
 	vec3_t eorigin;
-	int shadowOffset = max( 1.0f, cgs.pixelRatio );
+	int shadowOffset = max( 1, cgs.vidHeight / 600 );
 
 	for( i = 0; i < cg.frame.numEntities; i++ )
 	{
@@ -692,9 +692,9 @@ static void CG_DrawEntityNumbers( void )
 				return;
 
 			trap_SCR_DrawString( coords[0] + shadowOffset, coords[1] + shadowOffset,
-				ALIGN_LEFT_MIDDLE, va( "%i", cent->current.number ), cgs.fontSystemSmallScaled, colorBlack );
+				ALIGN_LEFT_MIDDLE, va( "%i", cent->current.number ), cgs.fontSystemSmall, colorBlack );
 			trap_SCR_DrawString( coords[0], coords[1],
-				ALIGN_LEFT_MIDDLE, va( "%i", cent->current.number ), cgs.fontSystemSmallScaled, colorWhite );
+				ALIGN_LEFT_MIDDLE, va( "%i", cent->current.number ), cgs.fontSystemSmall, colorWhite );
 		}
 	}
 }
@@ -703,10 +703,13 @@ void CG_Democam_DrawCenterSubtitle( int y, unsigned int maxwidth, struct qfontfa
 {
 	char *ptr, *s, *t, c, d;
 	int x = cgs.vidWidth / 2;
-	int shadowOffset = max( 1.0f, 2.0f * cgs.pixelRatio );
 
 	if( !text || !text[0] )
 		return;
+
+	int shadowOffset = 2 * cgs.vidHeight / 600;
+	if( !shadowOffset )
+		shadowOffset = 1;
 
 	if( !maxwidth || trap_SCR_strWidth( text, font, 0 ) <= maxwidth )
 	{
@@ -789,7 +792,7 @@ void CG_DrawDemocam2D( void )
 			else
 				y = cgs.vidHeight - ( cgs.vidHeight * 0.30f );
 
-			CG_Democam_DrawCenterSubtitle( y, cgs.vidWidth * 0.75, cgs.fontSystemBigScaled, sub->text );
+			CG_Democam_DrawCenterSubtitle( y, cgs.vidWidth * 0.75, cgs.fontSystemBig, sub->text );
 		}
 	}
 
@@ -799,20 +802,20 @@ void CG_DrawDemocam2D( void )
 		CG_DrawEntityNumbers();
 
 		// draw the cams info
-		xpos = 8 * cgs.pixelRatio;
-		ypos = 100 * cgs.pixelRatio;
+		xpos = 8 * cgs.vidHeight / 600;
+		ypos = 100 * cgs.vidHeight / 600;
 
 		if( *cgs.demoName )
 		{
-			trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Demo: %s", cgs.demoName ), cgs.fontSystemSmallScaled, colorWhite );
-			ypos += trap_SCR_strHeight( cgs.fontSystemSmallScaled );
+			trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Demo: %s", cgs.demoName ), cgs.fontSystemSmall, colorWhite );
+			ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
 		}
 
-		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Play mode: %s%s%s", S_COLOR_ORANGE, CamIsFree ? "Free Fly" : "Preview", S_COLOR_WHITE ), cgs.fontSystemSmallScaled, colorWhite );
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmallScaled );
+		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Play mode: %s%s%s", S_COLOR_ORANGE, CamIsFree ? "Free Fly" : "Preview", S_COLOR_WHITE ), cgs.fontSystemSmall, colorWhite );
+		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
 
-		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Time: %i", demo_time ), cgs.fontSystemSmallScaled, colorWhite );
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmallScaled );
+		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Time: %i", demo_time ), cgs.fontSystemSmall, colorWhite );
+		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
 
 		cam_type_name = "none";
 		cam_timestamp = 0;
@@ -832,16 +835,16 @@ void CG_DrawDemocam2D( void )
 
 		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Current cam: " S_COLOR_ORANGE "%s" S_COLOR_WHITE " Fov " S_COLOR_ORANGE "%s" S_COLOR_WHITE " Start %i Tracking " S_COLOR_ORANGE "%s" S_COLOR_WHITE,
 			cam_type_name, sfov, cam_timestamp, strack ),
-			cgs.fontSystemSmallScaled, colorWhite );
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmallScaled );
+			cgs.fontSystemSmall, colorWhite );
+		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
 
 		if( currentcam )
 		{
 			trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Pitch: " S_COLOR_ORANGE "%.2f" S_COLOR_WHITE " Yaw: " S_COLOR_ORANGE "%.2f" S_COLOR_WHITE " Roll: " S_COLOR_ORANGE "%.2f" S_COLOR_WHITE,
 				currentcam->angles[PITCH], currentcam->angles[YAW], currentcam->angles[ROLL] ),
-				cgs.fontSystemSmallScaled, colorWhite );
+				cgs.fontSystemSmall, colorWhite );
 		}
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmallScaled );
+		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
 
 		cam_type_name = "none";
 		cam_timestamp = 0;
@@ -861,16 +864,16 @@ void CG_DrawDemocam2D( void )
 
 		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Next cam: " S_COLOR_ORANGE "%s" S_COLOR_WHITE " Fov " S_COLOR_ORANGE "%s" S_COLOR_WHITE " Start %i Tracking " S_COLOR_ORANGE "%s" S_COLOR_WHITE,
 			cam_type_name, sfov, cam_timestamp, strack ),
-			cgs.fontSystemSmallScaled, colorWhite );
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmallScaled );
+			cgs.fontSystemSmall, colorWhite );
+		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
 
 		if( nextcam )
 		{
 			trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Pitch: " S_COLOR_ORANGE "%.2f" S_COLOR_WHITE " Yaw: " S_COLOR_ORANGE "%.2f" S_COLOR_WHITE " Roll: " S_COLOR_ORANGE "%.2f" S_COLOR_WHITE,
 				nextcam->angles[PITCH], nextcam->angles[YAW], nextcam->angles[ROLL] ),
-				cgs.fontSystemSmallScaled, colorWhite );
+				cgs.fontSystemSmall, colorWhite );
 		}
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmallScaled );
+		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
 	}
 }
 

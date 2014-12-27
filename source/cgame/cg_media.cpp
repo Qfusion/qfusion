@@ -486,7 +486,11 @@ void CG_RegisterFonts( void )
 		trap_Cvar_Set( con_fontSystemBigSize->name, con_fontSystemBigSize->dvalue );
 	}
 
-	cgs.fontSystemSmallSize = con_fontSystemSmallSize->integer;
+	float scale = cgs.vidHeight / 600.0f;
+	if( scale < 0.4f )
+		scale = 0.4f;
+
+	cgs.fontSystemSmallSize = ceilf( con_fontSystemSmallSize->integer * scale );
 	cgs.fontSystemSmall = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemSmallSize );
 	if( !cgs.fontSystemSmall )
 	{
@@ -498,42 +502,17 @@ void CG_RegisterFonts( void )
 			CG_Error( "Couldn't load default font \"%s\"", cgs.fontSystemFamily );
 	}
 
-	cgs.fontSystemSmallScaledSize = cgs.fontSystemSmallSize * cgs.pixelRatio + 0.5f;
-	cgs.fontSystemSmallScaled = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemSmallScaledSize );
-	if( !cgs.fontSystemSmallScaled )
-	{
-		cgs.fontSystemSmallScaledSize = cgs.fontSystemSmallSize;
-		cgs.fontSystemSmallScaled = cgs.fontSystemSmall;
-	}
-	
-
-	cgs.fontSystemMediumSize = con_fontSystemMediumSize->integer;
+	cgs.fontSystemMediumSize = ceilf( con_fontSystemMediumSize->integer * scale );
 	cgs.fontSystemMedium = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemMediumSize );
 	if( !cgs.fontSystemMedium ) {
 		cgs.fontSystemMediumSize = DEFAULT_SYSTEM_FONT_MEDIUM_SIZE;
 		cgs.fontSystemMedium = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemMediumSize );
 	}
 
-	cgs.fontSystemMediumScaledSize = cgs.fontSystemMediumSize * cgs.pixelRatio + 0.5f;
-	cgs.fontSystemMediumScaled = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemMediumScaledSize );
-	if( !cgs.fontSystemMediumScaled )
-	{
-		cgs.fontSystemMediumScaledSize = cgs.fontSystemMediumSize;
-		cgs.fontSystemMediumScaled = cgs.fontSystemMedium;
-	}
-
-	cgs.fontSystemBigSize = con_fontSystemBigSize->integer;
+	cgs.fontSystemBigSize = ceilf( con_fontSystemBigSize->integer * scale );
 	cgs.fontSystemBig = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemBigSize );
 	if( !cgs.fontSystemBig ) {
 		cgs.fontSystemBigSize = DEFAULT_SYSTEM_FONT_BIG_SIZE;
 		cgs.fontSystemBig = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemBigSize );
-	}
-
-	cgs.fontSystemBigScaledSize = cgs.fontSystemBigSize * cgs.pixelRatio + 0.5f;
-	cgs.fontSystemBigScaled = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemBigScaledSize );
-	if( !cgs.fontSystemBigScaled )
-	{
-		cgs.fontSystemBigScaledSize = cgs.fontSystemBigSize;
-		cgs.fontSystemBigScaled = cgs.fontSystemBig;
 	}
 }
