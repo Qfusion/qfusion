@@ -1099,7 +1099,7 @@ extern cvar_t *con_chatCGame;
 
 void CG_InitChat( cg_gamechat_t *chat );
 void CG_StackChatString( cg_gamechat_t *chat, const char *str );
-void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, 
+void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, int fontSize,
 				 int width, int height, int padding_x, int padding_y, vec4_t backColor, struct shader_s *backShader );
 
 //=================================================

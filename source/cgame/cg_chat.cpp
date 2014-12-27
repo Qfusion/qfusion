@@ -75,12 +75,15 @@ static void CG_ColorStrLastColor( int *lastcolor, const char *s, int byteofs )
 /*
 ** CG_SetChatCvars
 */
-static void CG_SetChatCvars( int x, int y, char *fontName, int font_height, int width, int height, int padding_x, int padding_y )
+static void CG_SetChatCvars( int x, int y, char *fontName, int fontSize, int font_height, int width, int height, int padding_x, int padding_y )
 {
 	char tstr[32];
 
 	trap_Cvar_ForceSet( "con_chatCGame", "1" );
-	trap_Cvar_ForceSet( "con_chatFont",  fontName );
+
+	trap_Cvar_ForceSet( "con_chatFontFamily",  fontName );
+	Q_snprintfz( tstr, sizeof( tstr ), "%i", fontSize );
+	trap_Cvar_ForceSet( "con_chatFontSize",  tstr );
 
 	Q_snprintfz( tstr, sizeof( tstr ), "%i", x + padding_x );
 	trap_Cvar_ForceSet( "con_chatX",  tstr );
@@ -101,7 +104,7 @@ static void CG_SetChatCvars( int x, int y, char *fontName, int font_height, int 
 /*
 ** CG_DrawChat
 */
-void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, 
+void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, int fontSize,
 				 int width, int height, int padding_x, int padding_y, vec4_t backColor, struct shader_s *backShader )
 {
 	int i, j;
@@ -167,7 +170,7 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 		backColor[3] *= (1.0 - chat->activeFrac);
 
 	// let the engine know where the input line should be drawn
-	CG_SetChatCvars( x, y, fontName, font_height, width, height, padding_x, padding_y );
+	CG_SetChatCvars( x, y, fontName, fontSize, font_height, width, height, padding_x, padding_y );
 
 	for( i = 0; i < GAMECHAT_STACK_SIZE; i++ )
 	{
