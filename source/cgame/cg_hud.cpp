@@ -1759,7 +1759,7 @@ static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_lay
 	else if( !Q_stricmp( fontsize, "con_fontsystembig" ) )
 		layout_cursor_font_size = cgs.fontSystemBigSize;
 	else
-		layout_cursor_font_size = (int)CG_GetNumericArg( &argumentnode );
+		layout_cursor_font_size = (int)ceilf( CG_GetNumericArg( &argumentnode ) );
 
 	font = trap_SCR_RegisterFont( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
 	if( font )
@@ -2213,7 +2213,7 @@ static bool CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_lay
 	padding_y = (int)( CG_GetNumericArg( &argumentnode ) )*cgs.vidHeight/600;
 	shader = trap_R_RegisterPic( CG_GetStringArg( &argumentnode ) );
 
-	CG_DrawChat( &cg.chat, layout_cursor_x, layout_cursor_y, layout_cursor_font_name, layout_cursor_font, 
+	CG_DrawChat( &cg.chat, layout_cursor_x, layout_cursor_y, layout_cursor_font_name, layout_cursor_font, layout_cursor_font_size,
 		layout_cursor_width, layout_cursor_height, padding_x, padding_y, layout_cursor_color, shader );
 	return true;
 }
