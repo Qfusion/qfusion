@@ -26,19 +26,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "tvm_clip.h"
 
-//===============
-//GClip_ClearWorld
-// called after the world model has been loaded, before linking any entities
-//===============
+/*
+* GClip_ClearWorld
+* called after the world model has been loaded, before linking any entities
+*/
 void GClip_ClearWorld( tvm_relay_t *relay )
 {
 }
 
-//===============
-//GClip_UnlinkEntity
-// call before removing an entity, and before trying to move one,
-// so it doesn't clip against itself
-//===============
+/*
+* GClip_UnlinkEntity
+* call before removing an entity, and before trying to move one,
+* so it doesn't clip against itself
+*/
 void GClip_UnlinkEntity( tvm_relay_t *relay, edict_t *ent )
 {
 }
@@ -62,14 +62,14 @@ void GClip_MoveLinearProjectile( tvm_relay_t *relay, edict_t *ent )
 		VectorCopy( ent->s.origin2, ent->s.origin );
 }
 
-//===============
-//GClip_LinkEntity
-// Needs to be called any time an entity changes origin, mins, maxs,
-// or solid.  Automatically unlinks if needed.
-// sets ent->v.absmin and ent->v.absmax
-// sets ent->leafnums[] for pvs determination even if the entity
-// is not solid
-//===============
+/*
+* GClip_LinkEntity
+* Needs to be called any time an entity changes origin, mins, maxs,
+* or solid. Automatically unlinks if needed.
+* sets ent->v.absmin and ent->v.absmax
+* sets ent->leafnums[] for pvs determination even if the entity
+* is not solid
+*/
 #define MAX_TOTAL_ENT_LEAFS	128
 void GClip_LinkEntity( tvm_relay_t *relay, edict_t *ent )
 {

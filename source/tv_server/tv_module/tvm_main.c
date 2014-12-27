@@ -60,9 +60,9 @@ void Com_Printf( const char *format, ... )
 
 //===================================================================
 
-//============
-//TVM_Printf
-//============
+/*
+* TVM_Printf
+*/
 void TVM_Printf( const char *format, ... )
 {
 	va_list	argptr;
@@ -75,9 +75,9 @@ void TVM_Printf( const char *format, ... )
 	trap_Print( msg );
 }
 
-//============
-//TVM_Error
-//============
+/*
+* TVM_Error
+*/
 void TVM_Error( const char *format, ... )
 {
 	va_list	argptr;
@@ -90,9 +90,9 @@ void TVM_Error( const char *format, ... )
 	trap_Error( msg );
 }
 
-//============
-//TVM_RelayError
-//============
+/*
+* TVM_RelayError
+*/
 void TVM_RelayError( tvm_relay_t *relay, const char *format, ... )
 {
 	va_list	argptr;
@@ -109,17 +109,17 @@ void TVM_RelayError( tvm_relay_t *relay, const char *format, ... )
 
 //===================================================================
 
-//=================
-//TVM_API
-//=================
+/*
+* TVM_API
+*/
 int TVM_API( void )
 {
 	return TV_MODULE_API_VERSION;
 }
 
-//============
-//TVM_InitRelay
-//============
+/*
+* TVM_InitRelay
+*/
 tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, int playernum )
 {
 	tvm_relay_t *relay;
@@ -174,9 +174,9 @@ tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, i
 	return relay;
 }
 
-//=================
-//TVM_ShutdownRelay
-//=================
+/*
+* TVM_ShutdownRelay
+*/
 void TVM_ShutdownRelay( tvm_relay_t *relay )
 {
 	assert( relay );
@@ -186,11 +186,11 @@ void TVM_ShutdownRelay( tvm_relay_t *relay )
 	TVM_Free( relay );
 }
 
-//============
-//TVM_Init
-//
-//This will be called when the dll is first loaded
-//============
+/*
+* TVM_Init
+* 
+* This will be called when the dll is first loaded
+*/
 void TVM_Init( const char *game, unsigned int maxclients )
 {
 	TVM_Printf( "==== TVM_Init ====\n" );
@@ -204,9 +204,9 @@ void TVM_Init( const char *game, unsigned int maxclients )
 	tvm.maxclients = maxclients;
 }
 
-//=================
-//TVM_Shutdown
-//=================
+/*
+* TVM_Shutdown
+*/
 void TVM_Shutdown( void )
 {
 	TVM_Printf( "==== TVM_Shutdown ====\n" );

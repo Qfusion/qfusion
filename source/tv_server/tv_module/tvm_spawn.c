@@ -25,12 +25,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tvm_cmds.h"
 #include "tvm_clip.h"
 
-//==============
-//TVM_SpawnEntities
-//
-//Creates a server's entity / program execution context by
-//parsing textual entity definitions out of an ent file.
-//==============
+/*
+* TVM_SpawnEntities
+* 
+* Creates a server's entity / program execution context by
+* parsing textual entity definitions out of an ent file.
+*/
 void TVM_SpawnEntities( tvm_relay_t *relay, const char *mapname, const char *entities, int entstrlen )
 {
 	edict_t	*ent;

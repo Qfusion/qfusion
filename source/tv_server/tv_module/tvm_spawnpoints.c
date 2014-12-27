@@ -28,9 +28,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tvm_pmove.h"
 #include "tvm_misc.h"
 
-//===========
-//TVM_SelectSpawnPoint
-//============
+/*
+* TVM_SelectSpawnPoint
+*/
 edict_t *TVM_SelectSpawnPoint( edict_t *ent )
 {
 	// pick a target to chase and spawn there

@@ -31,11 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 tv_module_import_t TV_MODULE_IMPORT;
 
-//=================
-//GetTVModuleAPI
-//
-//Returns a pointer to the structure with all entry points
-//=================
+/*
+* GetTVModuleAPI
+* 
+* Returns a pointer to the structure with all entry points
+*/
 tv_module_export_t *GetTVModuleAPI( tv_module_import_t *import )
 {
 	static tv_module_export_t globals;
