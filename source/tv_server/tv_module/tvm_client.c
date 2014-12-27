@@ -29,9 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //==============================================================
 
-//==============
-//InitClientPersistant
-//==============
+/*
+* InitClientPersistant
+*/
 static void InitClientPersistant( gclient_t *client )
 {
 	assert( client );
@@ -41,12 +41,12 @@ static void InitClientPersistant( gclient_t *client )
 	client->pers.connected = qtrue;
 }
 
-//=================
-//TVM_ClientEndSnapFrame
-//
-//Called for each player at the end of the server frame
-//and right after spawning
-//=================
+/*
+* TVM_ClientEndSnapFrame
+* 
+* Called for each player at the end of the server frame
+* and right after spawning
+*/
 void TVM_ClientEndSnapFrame( edict_t *ent )
 {
 	edict_t *spec;
@@ -93,9 +93,9 @@ void TVM_ClientEndSnapFrame( edict_t *ent )
 		ent->r.client->ps.fov = ent->r.client->pers.fov;
 }
 
-//=================
-//TVM_ClientIsZoom
-//=================
+/*
+* TVM_ClientIsZoom
+*/
 qboolean TVM_ClientIsZoom( edict_t *ent )
 {
 	assert( ent && ent->local && ent->r.client );
@@ -111,12 +111,12 @@ qboolean TVM_ClientIsZoom( edict_t *ent )
 	return qfalse;
 }
 
-//===========
-//TVM_ClientBegin
-//
-//called when a client has finished connecting, and is ready
-//to be placed into the game.  This will happen every level load.
-//============
+/*
+* TVM_ClientBegin
+* 
+* called when a client has finished connecting, and is ready
+* to be placed into the game. This will happen every level load.
+*/
 void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent )
 {
 	edict_t *spot, *other;
@@ -177,14 +177,14 @@ void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent )
 		TVM_ClientEndSnapFrame( ent );
 }
 
-//===========
-//TVM_ClientUserInfoChanged
-//
-//called whenever the player updates a userinfo variable.
-//
-//The game can override any of the settings in place
-//(forcing skins or names, etc) before copying it off.
-//============
+/*
+* TVM_ClientUserInfoChanged
+* 
+* called whenever the player updates a userinfo variable.
+* 
+* The game can override any of the settings in place
+* (forcing skins or names, etc) before copying it off.
+*/
 void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo )
 {
 	gclient_t *cl;
@@ -237,17 +237,17 @@ void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo
 	Q_strncpyz( cl->pers.userinfo, userinfo, sizeof( cl->pers.userinfo ) );
 }
 
-//===========
-//TVM_CanConnect
-//============
+/*
+* TVM_CanConnect
+*/
 qboolean TVM_CanConnect( tvm_relay_t *relay, char *userinfo )
 {
 	return qtrue;
 }
 
-//===========
-//TVM_ClientConnect
-//============
+/*
+* TVM_ClientConnect
+*/
 void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo )
 {
 	edict_t *spec;
@@ -280,12 +280,12 @@ void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo )
 	ent->r.client->pers.connecting = qtrue;
 }
 
-//===========
-//TVM_ClientDisconnect
-//
-//Called when a player drops from the server.
-//Will not be called between levels.
-//============
+/*
+* TVM_ClientDisconnect
+* 
+* Called when a player drops from the server.
+* Will not be called between levels.
+*/
 void TVM_ClientDisconnect( tvm_relay_t *relay, edict_t *ent )
 {
 	assert( ent && ent->local && ent->r.client );
@@ -300,12 +300,12 @@ void TVM_ClientDisconnect( tvm_relay_t *relay, edict_t *ent )
 	GClip_UnlinkEntity( ent->relay, ent );
 }
 
-//==============
-//TVM_ClientMultiviewChanged
-//
-//This will be called when client tries to change multiview mode
-//Mode change can be disallowed by returning qfalse
-//==============
+/*
+* TVM_ClientMultiviewChanged
+* 
+* This will be called when client tries to change multiview mode
+* Mode change can be disallowed by returning qfalse
+*/
 qboolean TVM_ClientMultiviewChanged( tvm_relay_t *relay, edict_t *ent, qboolean multiview )
 {
 	assert( ent && ent->local && ent->r.client );
@@ -339,12 +339,12 @@ static void TVM_ClientMakePlrkeys( gclient_t *client, usercmd_t *ucmd )
 		client->plrkeys |= ( 1 << KEYICON_SPECIAL );
 }
 
-//==============
-//TVM_ClientThink
-//
-//This will be called once for each client frame, which will
-//usually be a couple times for each server frame.
-//==============
+/*
+* TVM_ClientThink
+* 
+* This will be called once for each client frame, which will
+* usually be a couple times for each server frame.
+*/
 void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int timeDelta )
 {
 	gclient_t *client;

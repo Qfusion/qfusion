@@ -22,9 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tvm_relay_cmds.h"
 #include "tvm_client.h"
 
-//==================
-//TVM_RelayCommand_Pass
-//==================
+/*
+* TVM_RelayCommand_Pass
+*/
 static void TVM_RelayCommand_Pass( tvm_relay_t *relay, snapshot_t *frame, gcommand_t *gcmd )
 {
 	int i;
@@ -47,9 +47,9 @@ static void TVM_RelayCommand_Pass( tvm_relay_t *relay, snapshot_t *frame, gcomma
 	}
 }
 
-//==================
-//TVM_RelayCommand
-//==================
+/*
+* TVM_RelayCommand
+*/
 void TVM_RelayCommand( tvm_relay_t *relay, snapshot_t *frame, gcommand_t *gcmd )
 {
 	TVM_RelayCommand_Pass( relay, frame, gcmd );

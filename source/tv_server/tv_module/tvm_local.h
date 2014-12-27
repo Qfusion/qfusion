@@ -29,9 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../../gameshared/q_comref.h"
 #include "../../gameshared/q_collision.h"
 
-//==================================================================
-// shared with server and module
-//==================================================================
+/*
+* shared with server and module
+*/
 #include "tvm_public.h"
 
 struct tvm_relay_s
@@ -85,9 +85,9 @@ typedef struct
 	int maxclients;
 } tv_module_locals_t;
 
-//==================================================================
-// edict stuff
-//==================================================================
+/*
+* edict stuff
+*/
 
 #define	FOFS( x ) (size_t)&( ( (edict_t *)0 )->x )
 
@@ -137,22 +137,22 @@ struct edict_s
 	int waterlevel;
 };
 
-//==================================================================
-// trap_* functions
-//==================================================================
+/*
+* trap_* functions
+*/
 
 #include "tvm_syscalls.h"
 
-//==================================================================
-// mem stuff
-//==================================================================
+/*
+* mem stuff
+*/
 
 #define TVM_Malloc( relay_server, size ) trap_MemAlloc( relay_server, size, __FILE__, __LINE__ )
 #define TVM_Free( data ) trap_MemFree( data, __FILE__, __LINE__ )
 
-//==================================================================
-// tv module wide things
-//==================================================================
+/*
+* tv module wide things
+*/
 
 extern tv_module_locals_t tvm;
 
