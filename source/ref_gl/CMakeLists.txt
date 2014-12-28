@@ -2,6 +2,10 @@ project(ref_gl)
 
 include_directories(${JPEG_INCLUDE_DIR} ${PNG_INCLUDE_DIR})
 
+if (USE_SDL2)
+    include_directories(${SDL2_INCLUDE_DIRS})
+endif()
+
 file(GLOB REF_GL_HEADERS
     "*.h"
 )
@@ -25,8 +29,8 @@ endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	file(GLOB REF_GL_PLATFORM_SOURCES
-		"../mac/mac_glw.c"
-		"../mac/mac_qgl.c"
+		"../sdl/sdl_glw.c"
+		"../sdl/sdl_qgl.c"
 	    "../unix/unix_xpm.c"
 	)
 

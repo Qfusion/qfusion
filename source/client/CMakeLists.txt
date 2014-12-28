@@ -2,6 +2,10 @@ project(${QFUSION_CLIENT_NAME})
 
 include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
 
+if (USE_SDL2)
+    include_directories(${SDL2_INCLUDE_DIRS})
+endif()
+
 file(GLOB CLIENT_HEADERS
     "*.h"
 )
@@ -50,9 +54,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../unix/unix_threads.c"
         "../null/sys_vfs_null.c"
 
-        "../mac/mac_input.m"
-        "../mac/mac_vid.c"
-        "../mac/mac_sys.m"
+        "../sdl/sdl_input.c"
+        "../sdl/sdl_input_osx.m"
+        "../sdl/sdl_vid.c"
+        "../sdl/sdl_sys.c"
+        "../sdl/sdl_sys_osx.m"
 
         "../mac/Warsow-Info.plist"
     )

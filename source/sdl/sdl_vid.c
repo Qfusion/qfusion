@@ -19,7 +19,7 @@
  */
 
 #include "../client/client.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 {
@@ -29,13 +29,9 @@ static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 /*
  * VID_Sys_Init
  */
-int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, 
-	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
+int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
-	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR,
-				NULL, NULL, parentWindow, 
-                x, y, width, height, displayFrequency,
-				fullScreen, wideScreen, verbose );
+	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, NULL, NULL, parentWindow, x, y, width, height, displayFrequency, fullScreen, wideScreen, verbose );
 }
 
 /*
@@ -64,7 +60,7 @@ void VID_EnableAltTab( qboolean enable )
  */
 void *VID_GetWindowHandle( void )
 {
-	return ( void * )NULL;
+	return (void *)NULL;
 }
 
 /*
@@ -75,7 +71,7 @@ void VID_EnableWinKeys( qboolean enable )
 }
 
 /*
- ** VID_FlashWindow
+ * VID_FlashWindow
  *
  * Sends a flash message to inactive window
  */
@@ -84,12 +80,12 @@ void VID_FlashWindow( int count )
 }
 
 /*
- ** VID_GetDisplaySize
+ * VID_GetDisplaySize
  */
 qboolean VID_GetDisplaySize( int *width, int *height )
 {
 	SDL_DisplayMode mode;
-	SDL_GetDesktopDisplayMode(0, &mode);
+	SDL_GetDesktopDisplayMode( 0, &mode );
 
 	*width = mode.w;
 	*height = mode.h;
@@ -98,7 +94,7 @@ qboolean VID_GetDisplaySize( int *width, int *height )
 }
 
 /*
- ** VID_GetPixelRatio
+ * VID_GetPixelRatio
  */
 float VID_GetPixelRatio( void )
 {
