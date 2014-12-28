@@ -344,6 +344,15 @@ static const gl_extension_func_t gl_ext_blend_func_separate_EXT_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
+/* GL_EXT_texture3D */
+static const gl_extension_func_t gl_ext_texture3D_EXT_funcs[] =
+{
+	 GL_EXTENSION_FUNC(TexImage3DEXT)
+	,GL_EXTENSION_FUNC(TexSubImage3DEXT)
+
+	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
+};
+
 #else // GL_ES_VERSION_2_0
 
 /* GL_ANGLE_framebuffer_blit */
@@ -389,15 +398,16 @@ static const gl_extension_func_t gl_ext_multiview_draw_buffers_NV_funcs[] =
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
 
-#endif // GL_ES_VERSION_2_0
-
-static const gl_extension_func_t gl_ext_texture3D_EXT_funcs[] =
+/* GL_OES_texture_3D */
+static const gl_extension_func_t gl_ext_texture_3D_OES_funcs[] =
 {
-	 GL_EXTENSION_FUNC(TexImage3DEXT)
-	,GL_EXTENSION_FUNC(TexSubImage3DEXT)
+	 GL_EXTENSION_FUNC(TexImage3DOES)
+	,GL_EXTENSION_FUNC(TexSubImage3DOES)
 
 	,GL_EXTENSION_FUNC_EXT(NULL,NULL)
 };
+
+#endif // GL_ES_VERSION_2_0
 
 #ifdef _WIN32
 
@@ -489,7 +499,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
 	,GL_EXTENSION( OES, rgb8_rgba8, true, false, NULL )
-	,GL_EXTENSION( EXT, texture_array, false, false, &gl_ext_texture3D_EXT_funcs )
+	,GL_EXTENSION( EXT, texture_array, false, false, &gl_ext_texture_3D_OES_funcs )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )

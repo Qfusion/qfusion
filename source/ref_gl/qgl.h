@@ -927,12 +927,19 @@ QGL_FUNC(void, glBlendFuncSeparate, (GLenum sfactorRGB, GLenum dfactorRGB, GLenu
 #endif
 #endif
 
-#ifdef GL_ES_VERSION_2_0
-QGL_FUNC_OPT(void, glTexImage3D, (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels));
-QGL_FUNC_OPT(void, glTexSubImage3D, (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels));
-#endif
+#ifndef GL_ES_VERSION_2_0
 QGL_EXT(void, glTexImage3DEXT, (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels));
 QGL_EXT(void, glTexSubImage3DEXT, (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels));
+#else
+QGL_EXT(void, glTexImage3DOES, (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels));
+QGL_EXT(void, glTexSubImage3DOES, (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels));
+QGL_FUNC_OPT(void, glTexImage3D, (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels));
+QGL_FUNC_OPT(void, glTexSubImage3D, (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels));
+#ifndef qglTexImage3DEXT
+#define qglTexImage3DEXT qglTexImage3DOES
+#define qglTexSubImage3DEXT qglTexSubImage3DOES
+#endif
+#endif
 
 // WGL_EXT Functions
 QGL_WGL_EXT(const char *, wglGetExtensionsStringEXT, (void));
