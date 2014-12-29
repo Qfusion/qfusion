@@ -33,7 +33,7 @@ SERVER COMMANDS
 */
 static void CG_SC_Print( void )
 {
-	CG_LocalPrint( false, "%s", trap_Cmd_Argv( 1 ) );
+	CG_LocalPrint( "%s", trap_Cmd_Argv( 1 ) );
 }
 
 /*
@@ -51,12 +51,12 @@ static void CG_SC_ChatPrint( void )
 		return;
 
 	if( !name )
-		CG_LocalPrint( false, S_COLOR_GREEN "console: %s\n", text );
+		CG_LocalPrint( S_COLOR_GREEN "console: %s\n", text );
 	else if( teamonly )
-		CG_LocalPrint( true, S_COLOR_YELLOW "[%s]" S_COLOR_WHITE "%s" S_COLOR_YELLOW ": %s\n",
+		CG_LocalPrint( S_COLOR_YELLOW "[%s]" S_COLOR_WHITE "%s" S_COLOR_YELLOW ": %s\n",
 			cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR ? "SPEC" : "TEAM", name, text );
 	else
-		CG_LocalPrint( false, "%s" S_COLOR_GREEN ": %s\n", name, text );
+		CG_LocalPrint( "%s" S_COLOR_GREEN ": %s\n", name, text );
 
 	if( cg_chatBeep->integer )
 		trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
@@ -74,7 +74,7 @@ static void CG_SC_TVChatPrint( void )
 	if( filter->integer & 4 )
 		return;
 
-	CG_LocalPrint( false, S_COLOR_RED "[TV]" S_COLOR_WHITE "%s" S_COLOR_GREEN ": %s", name, text );
+	CG_LocalPrint( S_COLOR_RED "[TV]" S_COLOR_WHITE "%s" S_COLOR_GREEN ": %s", name, text );
 	if( cg_chatBeep->integer )
 		trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxChat ), CHAN_AUTO, 1.0f );
 }
@@ -183,21 +183,23 @@ static void CG_SC_Scoreboard( void )
 /*
 * CG_SC_PrintPlayerStats
 */
-static void CG_SC_PrintPlayerStats( const char *s, void ( *pp )( const char *format, ... ) )
+static void CG_SC_PrintPlayerStats( const char *s, void ( *print )( const char *format, ... ), void ( *printDmg )( const char *format, ... ) )
 {
 	int playerNum;
 	int i, shot_strong, hit_total, shot_total;
 	int total_damage_given, total_damage_received, health_taken, armor_taken;
 	gsitem_t *item;
-	void ( *print )( const char *format, ... ) = pp;
 
 	playerNum = CG_ParseValue( &s );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
+	if( !printDmg )
+		printDmg = print;
+
 	// print stats to console/file
-	print( "Stats for %s" S_COLOR_WHITE ":\r\n\r\n", cgs.clientInfo[playerNum].name );
-	print( "Weapon\r\n" );
+	printDmg( "Stats for %s" S_COLOR_WHITE ":\r\n", cgs.clientInfo[playerNum].name );
+	print( "\r\nWeapon\r\n" );
 	print( "    hit/shot percent\r\n" );
 
 	for( i = WEAP_GUNBLADE; i < WEAP_TOTAL; i++ )
@@ -232,7 +234,7 @@ static void CG_SC_PrintPlayerStats( const char *s, void ( *pp )( const char *for
 	total_damage_given = CG_ParseValue( &s );
 	total_damage_received = CG_ParseValue( &s );
 
-	print( S_COLOR_YELLOW "Damage given/received: " S_COLOR_WHITE "%i/%i " S_COLOR_YELLOW "ratio: %s%3.2f\r\n",
+	printDmg( S_COLOR_YELLOW "Damage given/received: " S_COLOR_WHITE "%i/%i " S_COLOR_YELLOW "ratio: %s%3.2f\r\n",
 		total_damage_given, total_damage_received,
 		( total_damage_given > total_damage_received ? S_COLOR_GREEN : S_COLOR_RED ),
 		STATS_PERCENT( total_damage_given, total_damage_given + total_damage_received ) );
@@ -240,7 +242,7 @@ static void CG_SC_PrintPlayerStats( const char *s, void ( *pp )( const char *for
 	health_taken = CG_ParseValue( &s );
 	armor_taken = CG_ParseValue( &s );
 
-	print( S_COLOR_YELLOW "Health/Armor taken : " S_COLOR_CYAN "%i" S_COLOR_WHITE "/" S_COLOR_CYAN "%i\r\n",
+	printDmg( S_COLOR_YELLOW "Health/Armor taken: " S_COLOR_CYAN "%i" S_COLOR_WHITE "/" S_COLOR_CYAN "%i\r\n",
 		health_taken, armor_taken );
 
 #undef STATS_PERCENT
@@ -276,7 +278,7 @@ static void CG_SC_DumpPlayerStats( const char *filename, const char *stats )
 		return;
 	}
 
-	CG_SC_PrintPlayerStats( stats, CG_SC_PrintStatsToFile );
+	CG_SC_PrintPlayerStats( stats, CG_SC_PrintStatsToFile, NULL );
 
 	trap_FS_FCloseFile( cg_statsFileHandle );
 }
@@ -298,7 +300,7 @@ static void CG_SC_PlayerStats( void )
 		return;
 	}
 
-	CG_SC_PrintPlayerStats( s, CG_Printf );
+	CG_SC_PrintPlayerStats( s, CG_Printf, CG_LocalPrint );
 
 	if( print == 2 )
 		CG_SC_AutoRecordAction( "stats" );
