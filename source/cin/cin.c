@@ -105,7 +105,9 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 	qboolean res;
 	struct mempool_s *mempool;
 	cinematics_t *cin = NULL;
+	unsigned load_msec;
 
+	load_msec = trap_Milliseconds();
 	name_size = strlen( "video/" ) + strlen( name ) + /*strlen( ".roq" )*/10 + 1;
 
 	mempool = CIN_AllocPool( name );
@@ -193,6 +195,10 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 	if( framerate )
 		*framerate = cin->framerate;
 
+	// update the timers to account for loading
+	load_msec = trap_Milliseconds() - load_msec;
+	cin->start_time = cin->cur_time = start_time + load_msec;
+
 	return cin;
 }
 
@@ -208,10 +214,6 @@ qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 
 	type = &cin_types[cin->type];
 
-	if( !cin->frame ) {
-		// update the start time to account for possible loading/init time
-		cin->start_time = cin->cur_time = curtime;
-	}
 	cin->cur_time = curtime;
 	cin->s_samples_length = CIN_GetRawSamplesLengthFromListeners( cin );
 
