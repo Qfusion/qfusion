@@ -82,7 +82,7 @@ int decoder_wav_seek( snd_stream_t *stream, int offset, int whence );
 /**
 * Ogg Vorbis decoder
 */
-extern snd_decoder_t ogg_decoder;
+extern snd_decoder_t ogg_decoder, ogv_decoder;
 void *decoder_ogg_load( const char *filename, snd_info_t *info );
 snd_stream_t *decoder_ogg_open( const char *filename, qboolean *delay );
 qboolean decoder_ogg_cont_open( snd_stream_t *stream );

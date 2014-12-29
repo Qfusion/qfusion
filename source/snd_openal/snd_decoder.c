@@ -24,8 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "snd_decoder.h"
 
 static snd_decoder_t *decoders;
-static char *extensionlist = NULL;
-static int extensionlist_size = 0;
 
 /*
 * Local helper functions
@@ -55,17 +53,6 @@ static void decoder_register( snd_decoder_t *decoder )
 {
 	decoder->next = decoders;
 	decoders = decoder;
-
-	if( extensionlist_size - strlen( extensionlist ) - 1 < strlen( decoder->ext ) + 1 )
-	{
-		char *oldlist = extensionlist;
-		extensionlist_size = max( extensionlist_size * 2, (int)( strlen( extensionlist ) + strlen( decoder->ext ) + 1 + 1 ) );
-		extensionlist = S_Malloc( extensionlist_size );
-		Q_strncpyz( extensionlist, oldlist, extensionlist_size );
-		S_Free( oldlist );
-	}
-	Q_strncatz( extensionlist, " ", extensionlist_size );
-	Q_strncatz( extensionlist, decoder->ext, extensionlist_size );
 }
 
 /**
@@ -74,10 +61,6 @@ static void decoder_register( snd_decoder_t *decoder )
 
 qboolean S_InitDecoders( qboolean verbose )
 {
-	extensionlist_size = 32;
-	extensionlist = S_Malloc( extensionlist_size );
-	extensionlist[0] = 0;
-
 	// First codec has the priority.
 	decoders = NULL;
 
@@ -85,6 +68,7 @@ qboolean S_InitDecoders( qboolean verbose )
 	if( SNDOGG_Init( verbose ) )
 	{
 		decoder_register( &ogg_decoder );
+		decoder_register( &ogv_decoder );
 	}
 
 	return qtrue;
@@ -92,10 +76,6 @@ qboolean S_InitDecoders( qboolean verbose )
 
 void S_ShutdownDecoders( qboolean verbose )
 {
-	S_Free( extensionlist );
-	extensionlist = NULL;
-	extensionlist_size = 0;
-
 	decoders = NULL;
 	SNDOGG_Shutdown( verbose );
 }
