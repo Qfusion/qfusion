@@ -142,6 +142,7 @@ static qboolean OggVorbis_LoadAudioFrame( cinematics_t *cin )
 	short* ptr;
 	float **pcm;
 	float *right,*left;
+	qboolean haveAudio = qfalse;
 	int	samples, samplesNeeded;
 	qbyte rawBuffer[RAW_BUFFER_SIZE];
 	ogg_packet op;
@@ -196,6 +197,7 @@ read_samples:
 		// tell libvorbis how many samples we actually consumed
 		vorbis_synthesis_read( &qth->vd, samplesNeeded ); 
 
+		haveAudio = qtrue;
 		qth->s_samples_read += samplesNeeded;
 
 		if( !OggVorbis_NeedAudioData( cin ) ) {
@@ -207,18 +209,15 @@ read_samples:
 	if( ogg_stream_packetout( &qth->os_audio, &op ) ) {
 		if( op.e_o_s ) {
 			// end of stream packet
-			qth->a_eos = qfalse;
-			return qtrue;
-		}
-
-		if( vorbis_synthesis( &vb, &op ) == 0 ) {
+			qth->a_eos = qtrue;
+		} else if( vorbis_synthesis( &vb, &op ) == 0 ) {
 			vorbis_synthesis_blockin( &qth->vd, &vb );
 			goto read_samples;
 		}
 	}
 
 	vorbis_block_clear( &vb );
-	return qfalse;
+	return haveAudio;
 }
 
 /*
