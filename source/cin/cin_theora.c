@@ -42,6 +42,7 @@ typedef struct
 
 	double			 s_rate_msec;
 	ogg_int64_t		 s_samples_read;
+	ogg_int64_t		 s_samples_need;
 	unsigned int	 s_sound_time;
 
 	ogg_sync_state   oy;			/* sync and verify incoming physical bitstream */
@@ -109,7 +110,6 @@ static void Ogg_LoadPagesToStreams( qtheora_info_t *qth, ogg_page *page )
 static qboolean OggVorbis_NeedAudioData( cinematics_t *cin )
 {
 	ogg_int64_t audio_time;
-	ogg_int64_t samples_need;
 	qtheora_info_t *qth = cin->fdata;
 
 	if( !qth->a_stream || qth->a_eos ) {
@@ -121,10 +121,10 @@ static qboolean OggVorbis_NeedAudioData( cinematics_t *cin )
 		return qfalse;
 	}
 
-	samples_need = (ogg_int64_t)((double)audio_time * qth->s_rate_msec);	
+	qth->s_samples_need = (ogg_int64_t)((double)audio_time * qth->s_rate_msec);	
 
 	// read only as much samples as we need according to the timer
-	if( qth->s_samples_read >= samples_need ) {
+	if( qth->s_samples_read >= qth->s_samples_need ) {
 		return qfalse;
 	}
 
@@ -162,6 +162,8 @@ read_samples:
 		samplesNeeded = sizeof( rawBuffer ) / (cin->s_width * cin->s_channels);
 		if( samplesNeeded > samples )
 			samplesNeeded = samples;
+		if( samplesNeeded > qth->s_samples_need - qth->s_samples_read )
+			samplesNeeded = qth->s_samples_need - qth->s_samples_read;
 
 		if( cin->listeners > 0 ) {
 			if( cin->s_channels == 1 )
@@ -871,6 +873,7 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 		cin->s_channels = qth->vi.channels;
 		qth->s_rate_msec = (double)cin->s_rate / 1000.0;
 		qth->s_samples_read = 0;
+		qth->s_samples_need = 0;
 	}
 	else
 	{
@@ -878,6 +881,7 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 		qth->a_stream = qfalse;
 		qth->s_rate_msec = 0;
 		qth->s_samples_read = 0;
+		qth->s_samples_need = 0;
 
 		vorbis_comment_clear( &qth->vc );
 		vorbis_info_clear( &qth->vi );
