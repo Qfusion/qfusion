@@ -910,7 +910,7 @@ void CG_AddAward( const char *str );
 void CG_OverrideWeapondef( int index, const char *cstring );
 
 void CG_StartBackgroundTrack( void );
-void CG_LocalPrint( bool team, const char *format, ... );
+void CG_LocalPrint( const char *format, ... );
 
 int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const char *resp), void *privatep );
 

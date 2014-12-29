@@ -765,7 +765,7 @@ void CG_SC_Obituary( void )
 				current->type = OBITUARY_TEAM;
 				if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
 				{
-					CG_LocalPrint( false, "%s%s%s %s %s%s %s%s%s\n", S_COLOR_RED, "TEAMKILL:", S_COLOR_WHITE, victim->name,
+					CG_LocalPrint( "%s%s%s %s %s%s %s%s%s\n", S_COLOR_RED, "TEAMKILL:", S_COLOR_WHITE, victim->name,
 					           S_COLOR_WHITE, message, attacker->name, S_COLOR_WHITE, message2 );
 				}
 
@@ -778,7 +778,7 @@ void CG_SC_Obituary( void )
 			{
 				current->type = OBITUARY_NORMAL;
 				if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
-					CG_LocalPrint( false, "%s %s%s %s%s%s\n", victim->name, S_COLOR_WHITE, message, attacker->name, S_COLOR_WHITE,
+					CG_LocalPrint( "%s %s%s %s%s%s\n", victim->name, S_COLOR_WHITE, message, attacker->name, S_COLOR_WHITE,
 					           message2 );
 
 				if( ISVIEWERENTITY( attackerNum ) && ( cg_showObituaries->integer & CG_OBITUARY_CENTER ) )
@@ -791,14 +791,14 @@ void CG_SC_Obituary( void )
 		{
 			current->type = OBITUARY_SUICIDE;
 			if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
-				CG_LocalPrint( false, "%s %s%s\n", victim->name, S_COLOR_WHITE, message );
+				CG_LocalPrint( "%s %s%s\n", victim->name, S_COLOR_WHITE, message );
 		}
 	}
 	else // world accidents
 	{
 		current->type = OBITUARY_ACCIDENT;
 		if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
-			CG_LocalPrint( false, "%s %s%s\n", victim->name, S_COLOR_WHITE, message );
+			CG_LocalPrint( "%s %s%s\n", victim->name, S_COLOR_WHITE, message );
 	}
 }
 
