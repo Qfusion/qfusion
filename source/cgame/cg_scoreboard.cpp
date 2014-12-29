@@ -303,6 +303,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	int playerNum, ping;
 	int aligns[3], offsets[3];
 	int colwidth, fullwidth, count = 0, height;
+	bool titleDrawn = false;
 
 	fullwidth = panelWidth * 1.5;
 	if( fullwidth > cgs.vidWidth * 0.7 )
@@ -320,14 +321,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	assert( ptrptr && *ptrptr );
 
 	height = trap_SCR_strHeight( font );
-
-	// draw title
 	yoffset = height;
-	if ( pass ) {
-		trap_SCR_DrawString( x + xoffset, y + yoffset, ALIGN_CENTER_TOP,
-			CG_TranslateString( "Spectators" ), font, colorYellow );
-	}
-	yoffset += height;
 
 	// draw spectators
 	while( *ptrptr )
@@ -358,6 +352,17 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 		{
 			*ptrptr = oldptr;
 			break;
+		}
+
+		// draw title if there are any spectators
+		if( !titleDrawn )
+		{
+			titleDrawn = true;
+			if( pass ) {
+				trap_SCR_DrawString( x, y + yoffset, ALIGN_CENTER_TOP,
+					CG_TranslateString( "Spectators" ), font, colorYellow );
+			}
+			yoffset += height;
 		}
 
 		// second token is ping
