@@ -354,12 +354,6 @@ qboolean SNDOGG_OpenTrack( bgTrack_t *track, qboolean *delay )
 		goto error;
 	}
 
-	if( qov_streams( vf ) != 1 )
-	{
-		Com_Printf( "Error unsupported .ogg file (multiple logical bitstreams): %s\n", real_path );
-		goto error;
-	}
-
 	track->info.channels = vi->channels;
 	track->info.rate = vi->rate;
 	track->info.width = 2;
@@ -417,6 +411,12 @@ static int SNDOGG_FSeek( bgTrack_t *track, int pos )
 {
 	if( !track->vorbisFile )
 		return OV_ENOSEEK;
+
+	// can't use ov_pcm_seek on .ogv files because of 
+	// https://trac.xiph.org/ticket/1486
+	// so just seek to the beginning of the file
+	if( pos == 0 )
+		return trap_FS_Seek( track->file, 0, FS_SEEK_SET );
 	return qov_pcm_seek( track->vorbisFile, (ogg_int64_t)pos );
 }
 

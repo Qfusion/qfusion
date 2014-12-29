@@ -191,6 +191,21 @@ snd_decoder_t ogg_decoder =
 	NULL
 };
 
+snd_decoder_t ogv_decoder =
+{
+	".ogv",
+	decoder_ogg_load,
+	decoder_ogg_open,
+	decoder_ogg_cont_open,
+	decoder_ogg_read,
+	decoder_ogg_close,
+	decoder_ogg_reset,
+	decoder_ogg_eof,
+	decoder_ogg_tell,
+	decoder_ogg_seek,
+	NULL
+};
+
 void *decoder_ogg_load( const char *filename, snd_info_t *info )
 {
 	OggVorbis_File vorbisfile;
@@ -332,12 +347,6 @@ qboolean decoder_ogg_cont_open( snd_stream_t *stream )
 		return qfalse;
 	}
 
-	if( qov_streams( &ogg_stream->vorbisfile ) != 1 )
-	{
-		Com_Printf( "Error unsupported .ogg file (multiple logical bitstreams)\n" );
-		return qfalse;
-	}
-
 	if( !read_ogg_header( ogg_stream->vorbisfile, &stream->info ) )
 	{
 		Com_Printf( "Error reading .ogg file header\n" );
@@ -397,7 +406,11 @@ qboolean decoder_ogg_reset( snd_stream_t *stream )
 		return qfalse;
 
 	ogg_stream = (snd_ogg_stream_t *)stream->ptr;
-	return qov_pcm_seek( &ogg_stream->vorbisfile, 0 ) == 0;
+
+	// can't use ov_pcm_seek on .ogv files because of 
+	// https://trac.xiph.org/ticket/1486
+	// so just seek to the beginning of the file
+	return trap_FS_Seek( ogg_stream->filenum, 0, FS_SEEK_SET ) == 0 ? qtrue : qfalse;
 }
 
 qboolean decoder_ogg_eof( snd_stream_t *stream )
