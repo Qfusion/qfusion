@@ -58,8 +58,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../sdl/sdl_input_osx.m"
         "../sdl/sdl_vid.c"
         "../sdl/sdl_sys.c"
-        "../sdl/sdl_sys_osx.m"
 
+        "../mac/mac_sys.m"
         "../mac/Warsow-Info.plist"
     )
 
