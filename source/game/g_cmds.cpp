@@ -773,7 +773,6 @@ static const g_vsays_t g_vsays[] = {
 	{ "roger", VSAY_ROGER, "Roger!", -1, 0 },
 	{ "armorfree", VSAY_ARMORFREE, "Armor free!", -1, 0 },
 	{ "areasecured", VSAY_AREASECURED, "Area secured!", -1, 0 },
-	{ "shutup", VSAY_SHUTUP, "Shut up!", -1, 0 },
 	{ "boomstick", VSAY_BOOMSTICK, "Need a weapon!", -1, 0 },
 	{ "gotopowerup", VSAY_GOTOPOWERUP, "Go to main powerup!", -1, 0 },
 	{ "gotoquad", VSAY_GOTOQUAD, "Go to quad!", -1, 0 },
