@@ -810,7 +810,7 @@ static void IN_StartupMouse( void )
 	dinput_initialized = qfalse;
 	rawinput_initialized = qfalse;
 
-	cv = Cvar_Get( "m_raw", "0", CVAR_ARCHIVE );
+	cv = Cvar_Get( "m_raw", "1", CVAR_ARCHIVE );
 	if( cv->integer )
 		rawinput_initialized = IN_RawInput_Init();
 
