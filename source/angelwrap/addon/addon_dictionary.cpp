@@ -407,7 +407,7 @@ CScriptArrayInterface * CScriptDictionary::GetKeys() const
 	//                 Only problem is if multiple engines are used, as they may not
 	//                 share the same type id. Alternatively it can be stored in the 
 	//                 user data for the dictionary type.
-	int stringArrayType = engine->GetTypeIdByDecl("array<String>");
+	int stringArrayType = engine->GetTypeIdByDecl("array<String @>");
 	asIObjectType *ot = engine->GetObjectTypeById(stringArrayType);
 
 	// Create the array object
@@ -616,7 +616,7 @@ static void RegisterScriptDictionary_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("Dictionary", "void delete(const String &in)", asMETHOD(CScriptDictionary,Delete), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Dictionary", "void deleteAll()", asMETHOD(CScriptDictionary,DeleteAll), asCALL_THISCALL); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("Dictionary", "array<String> @getKeys() const", asMETHOD(CScriptDictionary,GetKeys), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("Dictionary", "array<String @> @getKeys() const", asMETHOD(CScriptDictionary,GetKeys), asCALL_THISCALL); assert( r >= 0 );
 
 	// Register GC behaviours
 	r = engine->RegisterObjectBehaviour("Dictionary", asBEHAVE_GETREFCOUNT, "int f()", asMETHOD(CScriptDictionary,GetRefCount), asCALL_THISCALL); assert( r >= 0 );
@@ -666,7 +666,7 @@ static void RegisterScriptDictionary_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("Dictionary", "void delete(const String &in)", asFUNCTION(ScriptDictionaryDelete_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("Dictionary", "void deleteAll()", asFUNCTION(ScriptDictionaryDeleteAll_Generic), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("Dictionary", "array<String> @getKeys() const", asFUNCTION(CScriptDictionaryGetKeys_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("Dictionary", "array<String @> @getKeys() const", asFUNCTION(CScriptDictionaryGetKeys_Generic), asCALL_GENERIC); assert( r >= 0 );
 
 	// Register GC behaviours
 	r = engine->RegisterObjectBehaviour("Dictionary", asBEHAVE_GETREFCOUNT, "int f()", asFUNCTION(ScriptDictionaryGetRefCount_Generic), asCALL_GENERIC); assert( r >= 0 );
