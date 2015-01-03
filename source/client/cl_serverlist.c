@@ -282,7 +282,6 @@ void CL_ParseGetStatusResponse( const socket_t *socket, const netadr_t *address,
 static void CL_QueryGetInfoMessage( const char *cmdname )
 {
 	netadr_t adr;
-	char *requeststring;
 	char *server;
 
 	//get what master
@@ -292,8 +291,6 @@ static void CL_QueryGetInfoMessage( const char *cmdname )
 		Com_Printf( "%s: no address provided %s...\n", Cmd_Argv( 0 ), server ? server : "" );
 		return;
 	}
-
-	requeststring = va( cmdname );
 
 	// send a broadcast packet
 	Com_DPrintf( "quering %s...\n", server );
@@ -306,7 +303,7 @@ static void CL_QueryGetInfoMessage( const char *cmdname )
 			NET_SetAddressPort( &adr, PORT_SERVER );
 
 		socket = ( adr.type == NA_IP6 ? &cls.socket_udp6 : &cls.socket_udp );
-		Netchan_OutOfBandPrint( socket, &adr, requeststring );
+		Netchan_OutOfBandPrint( socket, &adr, "%s", cmdname );
 	}
 	else
 	{
