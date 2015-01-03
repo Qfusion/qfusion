@@ -365,7 +365,7 @@ void CL_PingServer_f( void )
 		filter_allow_empty ? "empty" : "" );
 
 	socket = ( adr.type == NA_IP6 ? &cls.socket_udp6 : &cls.socket_udp );
-	Netchan_OutOfBandPrint( socket, &adr, requestString );
+	Netchan_OutOfBandPrint( socket, &adr, "%s", requestString );
 }
 
 /*
@@ -690,7 +690,7 @@ void CL_GetServers_f( void )
 		for( i = 0; i < NUM_BROADCAST_PORTS; i++ )
 		{
 			NET_BroadcastAddress( padr, PORT_SERVER + i );
-			Netchan_OutOfBandPrint( &cls.socket_udp, padr, requeststring );
+			Netchan_OutOfBandPrint( &cls.socket_udp, padr, "%s", requeststring );
 		}
 		return;
 	}
@@ -736,7 +736,7 @@ void CL_GetServers_f( void )
 		if( NET_GetAddressPort( padr ) == 0 )
 			NET_SetAddressPort( padr, PORT_MASTER );
 
-		Netchan_OutOfBandPrint( socket, padr, requeststring );
+		Netchan_OutOfBandPrint( socket, padr, "%s", requeststring );
 
 		Com_DPrintf( "quering %s...%s: %s\n", master, NET_AddressToString(padr), requeststring );
 	}
