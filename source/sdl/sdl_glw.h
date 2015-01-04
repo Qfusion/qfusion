@@ -18,10 +18,10 @@
 
  */
 
-#ifndef __MAC_GLW_H_
-#define __MAC_GLW_H_
+#ifndef __SDL_GLW_H_
+#define __SDL_GLW_H_
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 typedef struct
 {

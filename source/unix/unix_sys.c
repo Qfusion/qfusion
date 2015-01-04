@@ -22,7 +22,7 @@ which defines HAVE_STRCASECMP if SDL.h isn't called first, causing a bunch of wa
 FIXME:  This will be remidied once a native Mac port is complete
 */
 #if defined ( __APPLE__ ) && !defined ( DEDICATED_ONLY )
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <sys/param.h>
 #endif
