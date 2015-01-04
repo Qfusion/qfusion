@@ -47,6 +47,8 @@ void BindServerbrowser( ASInterface *as )
 		.method( &Serverbrowser_addFavorite, "addFavorite", true )
 		.method( &Serverbrowser_removeFavorite, "removeFavorite", true )
 		.method( &Serverbrowser_sortByColumn, "sortByColumn", true )
+		.method( &ServerBrowserDataSource::getLastActiveTime, "getLastActiveTime" )
+		.method( &ServerBrowserDataSource::getUpdateId, "getUpdateId" )
 		;
 }
 

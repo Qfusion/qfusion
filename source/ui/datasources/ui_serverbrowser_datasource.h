@@ -95,6 +95,18 @@ namespace WSWUI {
 			return lhs->*comp_member < rhs->*comp_member;
 		}
 
+		// general templated comparison function (greater)
+		template<typename T, T ServerInfo::*comp_member>
+		static bool GreaterBinary( const ServerInfo &lhs, const ServerInfo &rhs ) {
+			return lhs.*comp_member > rhs.*comp_member;
+		}
+
+		// general templated comparison function (less) for pointers
+		template<typename T, T ServerInfo::*comp_member>
+		static bool GreaterPtrBinary( const ServerInfo *lhs, const ServerInfo *rhs ) {
+			return lhs->*comp_member > rhs->*comp_member;
+		}
+
 		// General invertors for above functions
 		struct InvertCompareFunction {
 			CompareFunction function;
@@ -294,6 +306,8 @@ namespace WSWUI {
 
 		// need to separate full update and refresh?
 		bool active;
+		unsigned updateId;
+		unsigned lastActiveTime;
 
 		// DEBUG
 		int numNotifies;
@@ -390,7 +404,12 @@ namespace WSWUI {
 		// we don't like that server anymore -> export to AS
 		bool removeFavorite( const char *fav );
 
+		//
+		void compileSuggestionsList( void );
+
 		bool isUpdating( void ) { return active; }
+		unsigned getUpdateId( void ) { return updateId; }
+		unsigned getLastActiveTime( void ) { return lastActiveTime; }
 
 		// DEBUG
 		int getActivity( void ) { return numNotifies; }
