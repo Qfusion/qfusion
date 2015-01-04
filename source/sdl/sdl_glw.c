@@ -18,12 +18,12 @@
 
  */
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <OpenGL/OpenGL.h>
 
 #include "../ref_gl/r_local.h"
 #include "../client/client.h"
-#include "mac_glw.h"
+#include "sdl_glw.h"
 
 glwstate_t glw_state = { NULL, qfalse };
 cvar_t *vid_fullscreen;

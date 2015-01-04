@@ -45,9 +45,9 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 ** QGL_Shutdown() - unloads libraries, NULLs function pointers
 */
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "../qcommon/qcommon.h"
-#include "mac_glw.h"
+#include "sdl_glw.h"
 #include <dlfcn.h>
 
 #define QGL_EXTERN
