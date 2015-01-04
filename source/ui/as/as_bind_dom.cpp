@@ -616,7 +616,7 @@ static void ElementFormControl_SetName( ElementFormControl *self, const asstring
 	self->SetName( ASSTR( name ) );
 }
 
-static asstring_t *ElementFormControl_GetValue( ElementFormControl *self) {
+static asstring_t *ElementFormControl_GetValue( ElementFormControl *self ) {
 	return ASSTR( self->GetValue() );
 }
 
@@ -692,6 +692,41 @@ static void ElementFormControlDataSelect_SetDataSource( ElementFormControlDataSe
 	self->SetDataSource( ASSTR( source ) );
 }
 
+static void ElementFormControlDataSelect_SetSelection( ElementFormControlDataSelect *self, int selection ) {
+	self->SetSelection( selection );
+}
+
+static int ElementFormControlDataSelect_GetSelection( ElementFormControlDataSelect *self ) {
+	return self->GetSelection();
+}
+
+static int ElementFormControlDataSelect_GetNumOptions( ElementFormControlDataSelect *self ) {
+	return self->GetNumOptions();
+}
+
+static int ElementFormControlDataSelect_AddOption( ElementFormControlDataSelect *self, const asstring_t &rml, const asstring_t &value, int before, bool selectable ) {
+	return self->Add( ASSTR( rml ), ASSTR( value ), before, selectable );
+}
+
+static void ElementFormControlDataSelect_RemoveOption( ElementFormControlDataSelect *self, int index ) {
+	self->Remove( index );
+}
+
+static void ElementFormControlDataSelect_RemoveAllOptions( ElementFormControlDataSelect *self ) {
+	self->RemoveAll();
+}
+
+static void ElementFormControlDataSelect_Spin( ElementFormControlDataSelect *self, int dir ) {
+	int sel = self->GetSelection() + dir;
+	if( sel < 0 ) {
+		sel = self->GetNumOptions() - 1;
+	}
+	else if( sel >= self->GetNumOptions() ) {
+		sel = 0;
+	}
+	self->SetSelection( sel );
+}
+
 static void PreBindElementFormControlDataSelect( ASInterface *as )
 {
 	ASBind::Class<ElementFormControlDataSelect, ASBind::class_ref>( as->getEngine() );
@@ -705,6 +740,13 @@ static void BindElementFormControlDataSelect( ASInterface *as )
 		.refs( &ElementFormControlDataSelect::AddReference, &ElementFormControlDataSelect::RemoveReference )
 
 		.method( &ElementFormControlDataSelect_SetDataSource, "setDataSource", true )
+		.method( &ElementFormControlDataSelect_GetSelection, "getSelection", true )
+		.method( &ElementFormControlDataSelect_SetSelection, "setSelection", true )
+		.method( &ElementFormControlDataSelect_GetNumOptions, "getNumOptions", true )
+		.method2( &ElementFormControlDataSelect_AddOption, "void addOption(const String &rml, const String &value, int before = -1, bool selectable = true)", true )
+		.method( &ElementFormControlDataSelect_RemoveOption, "removeOption", true )
+		.method( &ElementFormControlDataSelect_RemoveAllOptions, "removeAllOptions", true )
+		.method( &ElementFormControlDataSelect_Spin, "spin", true )
 
 		.refcast( &FormControlDataSelect_CastToElement, true, true )
 		.refcast( &FormControlDataSelect_CastToFormControl, true, true )
