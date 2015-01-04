@@ -36,38 +36,10 @@ class UI_DataSpinner : public ElementFormControl
 public:
 	// assign element tag name
 	UI_DataSpinner( const String &tag, const XMLAttributes &attr ) :
-		ElementFormControl( tag )
+		ElementFormControl( tag ), currentItem( 0 )
 	{
-		source_attribute = attr.Get<String>( "source", "" );
-		fields_attribute = attr.Get<String>( "fields", "" );
-		valuefield_attribute = attr.Get<String>( "valuefield", "" );
-		data_formatter_attribute = attr.Get<String>( "formatter", "" );
-
-		String cvarName = attr.Get<String>( "cvar", "" );
-
-		currentItem = 0;
 		initializeData();
-
-		if( cvarName.Length() )
-		{
-			cvar_t* cvar = trap::Cvar_Get( cvarName.CString(), "", 0 );
-			SetValue( cvar->string );
-
-			if( items.size() == 0 )
-				return;
-
-			// select the item
-			for( size_t i = 0; i < items.size(); i++ )
-			{
-				if( items[i] == cvar->string )
-				{
-					currentItem = i;
-					this->SetInnerRML( formatted_items[i].CString() );
-
-					break;
-				}
-			}
-		}
+		readValueFromCvar();
 	}
 
 	~UI_DataSpinner() { }
@@ -122,6 +94,32 @@ public:
 		return items.size() != 0;
 	}
 
+	// Called when attributes on the element are changed.
+	void OnAttributeChange( const Rocket::Core::AttributeNameList& changed_attributes )
+	{
+		Element::OnAttributeChange( changed_attributes );
+
+		bool reloadData = false;
+		AttributeNameList::const_iterator it;
+
+		if( !reloadData ) {
+			reloadData = changed_attributes.find( "source" ) != changed_attributes.end();
+		}
+		if( !reloadData ) {
+			reloadData = changed_attributes.find( "fields" ) != changed_attributes.end();
+		}
+		if( !reloadData ) {
+			reloadData = changed_attributes.find( "valuefield" ) != changed_attributes.end();
+		}
+		if( !reloadData ) {
+			reloadData = changed_attributes.find( "formatter" ) != changed_attributes.end();
+		}
+
+		if( reloadData ) {
+			initializeData();
+			readValueFromCvar();
+		}
+	}
 
 private:
 
@@ -154,13 +152,21 @@ private:
 
 	void initializeData()
 	{
+		source_attribute = GetAttribute< String >( "source", "" );
+		fields_attribute = GetAttribute< String >( "fields", "" );
+		valuefield_attribute = GetAttribute< String >( "valuefield", "" );
+		data_formatter_attribute = GetAttribute< String >( "formatter", "" );
+
+		items.clear();
+		formatted_items.clear();
+
 		// koochi: [be aware] part of the code has been taken from libR
 
 		String data_table = "";
 		DataSource *data_source;
 
 		if (!parseDataSource(data_source, data_table, source_attribute))
-			return; // no data no party !
+			return; // no data no parse !
 
 		DataFormatter* data_formatter = NULL;
 
@@ -204,6 +210,30 @@ private:
 
 			// save formatted item
 			formatted_items.push_back(formatted);
+		}
+	}
+
+	void readValueFromCvar()
+	{
+		String cvarName = GetAttribute< String >("cvar", "");
+		if( !cvarName.Empty() )
+		{
+			cvar_t* cvar = trap::Cvar_Get( cvarName.CString(), "", 0 );
+			SetValue( cvar->string );
+
+			if( items.empty() )
+				return;
+
+			// select the item
+			for( size_t i = 0; i < items.size(); i++ )
+			{
+				if( items[i] == cvar->string )
+				{
+					currentItem = i;
+					this->SetInnerRML( formatted_items[i].CString() );
+					break;
+				}
+			}
 		}
 	}
 
@@ -252,8 +282,6 @@ private:
 	String fields_attribute;
 	String valuefield_attribute;
 	String data_formatter_attribute;
-
-	String cvar;
 
 	StringList items;
 	StringList formatted_items;
