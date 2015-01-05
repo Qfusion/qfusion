@@ -35,7 +35,7 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 */
 
 /*
-** MAC_QGL.C
+** SDL_QGL.C
 **
 ** This file implements the operating system binding of GL to QGL function
 ** pointers.  When doing a port of Qfusion you must implement the following
@@ -45,10 +45,8 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 ** QGL_Shutdown() - unloads libraries, NULLs function pointers
 */
 
-#include <SDL.h>
 #include "../qcommon/qcommon.h"
 #include "sdl_glw.h"
-#include <dlfcn.h>
 
 #define QGL_EXTERN
 
@@ -97,11 +95,6 @@ void QGL_Shutdown( void )
 #define QGL_GLX_EXT( type, name, params )
 #define QGL_EGL( type, name, params )
 #define QGL_EGL_EXT( type, name, params )
-
-#ifdef __MACOSX__
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#endif
 
 #include "../ref_gl/qgl.h"
 
@@ -193,10 +186,15 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 #if defined( __APPLE__ )
 		"/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib",
 		"gl_driver_mac"
+#elif defined(_WIN32)
+		"opengl32.dll",
+		"gl_driver_win"
 #else
-		NULL, NULL
+		"libGL.so.1",
+		"gl_driver_unix"
 #endif
 	};
+
 	return &driver;
 }
 
