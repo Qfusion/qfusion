@@ -64,6 +64,8 @@ public:
 
 	virtual void OnRender()
 	{
+		bool firstRender = false;
+
 		Element::OnRender();
 
 		if( !Initialized ) {
@@ -71,6 +73,7 @@ public:
 			if( mapName.Empty() ) {
 				return;
 			}
+			firstRender = true;
 			Initialized = true;
 			trap::R_RegisterWorldModel( mapName.CString() );
 		}
@@ -108,6 +111,11 @@ public:
 		trap::R_RenderScene( &refdef );
 
 		trap::R_Scissor( scissor_x, scissor_y, scissor_w, scissor_h );
+
+		if( firstRender ) {
+			Rocket::Core::Dictionary parameters;		
+			this->DispatchEvent( "firstrender", parameters, true );
+		}
 	}
 
 	virtual void OnPropertyChange(const Rocket::Core::PropertyNameList& changed_properties)
