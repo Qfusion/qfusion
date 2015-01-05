@@ -45,9 +45,6 @@ static HANDLE hinput, houtput;
 unsigned sys_msg_time;
 unsigned sys_frame_time;
 
-
-static HANDLE qwclsemaphore;
-
 #define	MAX_NUM_ARGVS	128
 int argc;
 char *argv[MAX_NUM_ARGVS];
@@ -85,8 +82,6 @@ void Sys_Error( const char *format, ... )
 	va_end( argptr );
 
 	MessageBox( NULL, msg, "Error", 0 /* MB_OK */ );
-	if( qwclsemaphore )
-		CloseHandle( qwclsemaphore );
 
 	// shut down QHOST hooks if necessary
 	DeinitConProc();
@@ -102,7 +97,6 @@ void Sys_Quit( void )
 
 	CL_Shutdown();
 
-	CloseHandle( qwclsemaphore );
 	if( dedicated && dedicated->integer )
 		FreeConsole();
 
