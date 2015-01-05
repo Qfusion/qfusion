@@ -206,6 +206,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\null\ascript_null.c" />
+    <ClCompile Include="..\null\clipboard_null.c" />
     <ClCompile Include="..\null\cl_null.c" />
     <ClCompile Include="..\qcommon\bsp.c" />
     <ClCompile Include="..\qcommon\cm_main.c" />
@@ -236,7 +237,9 @@
     <ClCompile Include="..\qcommon\snap_write.c" />
     <ClCompile Include="..\qcommon\svnrev.c" />
     <ClCompile Include="..\qalgo\q_trie.c" />
+    <ClCompile Include="..\win32\win_console.c" />
     <ClCompile Include="..\win32\win_threads.c" />
+    <ClCompile Include="..\win32\win_time.c" />
     <ClCompile Include="tv_cmds.c" />
     <ClCompile Include="tv_downstream.c" />
     <ClCompile Include="tv_downstream_clcmd.c" />
