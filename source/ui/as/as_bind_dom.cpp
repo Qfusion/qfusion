@@ -110,6 +110,10 @@ void BindEvent( ASInterface *as )
 		( "EVENT_PHASE_BUBBLE", Event::PHASE_BUBBLE )
 		;
 
+	ASBind::Enum( as->getEngine(), "eInputKey" )
+		( "KI_ESCAPE", Input::KI_ESCAPE )
+	;
+
 	// reference (without factory)
 	ASBind::GetClass<Rocket::Core::Event>( as->getEngine() )
 		.refs( &Event::AddReference, &Event::RemoveReference )
