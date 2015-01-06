@@ -102,7 +102,7 @@ void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
 	Rocket::Core::ElementDocument::ProcessEvent( event );
 }
 
-Rocket::Core::ScriptObject UI_ScriptDocument::GetScriptObject( void )
+Rocket::Core::ScriptObject UI_ScriptDocument::GetScriptObject( void ) const
 {
 	return owner;
 }
