@@ -801,7 +801,7 @@ void ServerBrowserDataSource::compileSuggestionsList( void )
 			if( gametype == "error" ) {
 				continue;
 			}
-			if( info->ping > 200 ) {
+			if( info->ping > 120 ) {
 				continue;
 			}
 
