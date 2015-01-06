@@ -1013,14 +1013,10 @@ static void S_RawEntSamples( int entnum, unsigned int samples, unsigned int rate
 		return;
 	}
 
-	rawsound->volume = snd_vol;
+	rawsound->volume = rawsound->left_volume = rawsound->right_volume = snd_vol;
 	rawsound->attenuation = ATTN_NONE;
 	rawsound->rawend = S_RawSamplesStereo( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );
-	if( entnum < 0 || entnum >= MAX_EDICTS ) {
-		// no spatialization
-		rawsound->left_volume = rawsound->right_volume = snd_vol;
-	}
 }
 
 /*
@@ -1076,6 +1072,7 @@ static void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
 	rawsound->attenuation = attenuation;
 	rawsound->rawend = S_RawSamplesMono( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );
+	rawsound->left_volume = rawsound->right_volume = 0; // will be spatialized later
 }
 
 /*
@@ -1544,11 +1541,11 @@ static unsigned S_HandleSetEntitySpatializationCmd( const sndCmdSetEntitySpatial
 }
 
 /*
-* S_HandleSetListernerCmd
+* S_HandleSetListenerCmd
 */
-static unsigned S_HandleSetListernerCmd( const sndCmdSetListener_t *cmd )
+static unsigned S_HandleSetListenerCmd( const sndCmdSetListener_t *cmd )
 {
-	//Com_Printf("S_HandleSetListernerCmd\n");
+	//Com_Printf("S_HandleSetListenerCmd\n");
 	VectorCopy( cmd->origin, listenerOrigin );
 	VectorCopy( cmd->velocity, listenerVelocity );
 	Matrix3_Copy( cmd->axis, listenerAxis );
@@ -1666,13 +1663,14 @@ static unsigned S_HandlePauseBackgroundTrackCmd( const sndPauseBackgroundTrackCm
 */
 static unsigned S_HandleActivateCmd( const sndActivateCmd_t *cmd )
 {
+	qboolean active;
 	//Com_Printf("S_HandleActivateCmd\n");
-	s_active = cmd->active ? qtrue : qfalse;
-
-	S_Clear();
-
-	S_Activate( s_active );
-
+	active = cmd->active ? qtrue : qfalse;
+	if( s_active != active ) {
+		s_active = active;
+		S_Clear();
+		S_Activate( active );
+	}
 	return sizeof( *cmd );
 }
 
@@ -1740,7 +1738,7 @@ static queueCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 	/* SND_CMD_SET_ENTITY_SPATIALIZATION */
 	(queueCmdHandler_t)S_HandleSetEntitySpatializationCmd,
 	/* SND_CMD_SET_LISTENER */
-	(queueCmdHandler_t)S_HandleSetListernerCmd,
+	(queueCmdHandler_t)S_HandleSetListenerCmd,
 	/* SND_CMD_START_LOCAL_SOUND */
 	(queueCmdHandler_t)S_HandleStartLocalSoundCmd,
 	/* SND_CMD_START_FIXED_SOUND */
