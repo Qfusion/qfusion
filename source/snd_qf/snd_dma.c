@@ -1017,6 +1017,10 @@ static void S_RawEntSamples( int entnum, unsigned int samples, unsigned int rate
 	rawsound->attenuation = ATTN_NONE;
 	rawsound->rawend = S_RawSamplesStereo( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );
+	if( entnum < 0 || entnum >= MAX_EDICTS ) {
+		// no spatialization
+		rawsound->left_volume = rawsound->right_volume = snd_vol;
+	}
 }
 
 /*
