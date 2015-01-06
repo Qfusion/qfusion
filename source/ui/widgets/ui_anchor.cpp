@@ -44,7 +44,7 @@ public:
 		}
 		else {
 			ElementDocument *document = element->GetOwnerDocument();
-			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetUserData());
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetScriptObject());
 			if( ui_document ) {
 				WSWUI::NavigationStack *stack = ui_document->getStack();
 				if( stack )
@@ -105,7 +105,7 @@ public:
 				return;
 			}
 
-			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(GetOwnerDocument()->GetUserData());
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(GetOwnerDocument()->GetScriptObject());
 			if( ui_document ) {
 				ui_document->getStack()->pushDocument( href.CString() );
 			}

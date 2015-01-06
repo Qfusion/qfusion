@@ -95,7 +95,7 @@ public:
 		{
 			int key = event.GetParameter<int>( "key_identifier", 0 );
 			ElementDocument *document = event.GetTargetElement()->GetOwnerDocument();
-			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetUserData());
+			WSWUI::Document *ui_document = static_cast<WSWUI::Document *>(document->GetScriptObject());
 			WSWUI::NavigationStack *stack = ui_document ? ui_document->getStack() : NULL;
 
 			if( key == Input::KI_ESCAPE ) {
