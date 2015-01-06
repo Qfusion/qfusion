@@ -278,6 +278,8 @@
     <ClCompile Include="qcommon\svnrev.c" />
     <ClCompile Include="qalgo\q_trie.c" />
     <ClCompile Include="qcommon\webdownload.c" />
+    <ClCompile Include="win32\win_clipboard.c" />
+    <ClCompile Include="win32\win_console.c" />
     <ClCompile Include="win32\win_fs.c" />
     <ClCompile Include="win32\win_input.c" />
     <ClCompile Include="win32\win_lib.c" />
@@ -285,6 +287,7 @@
     <ClCompile Include="win32\win_sys.c" />
     <ClCompile Include="win32\win_threads.c" />
     <ClCompile Include="null\sys_vfs_null.c" />
+    <ClCompile Include="win32\win_time.c" />
     <ClCompile Include="win32\win_vid.c" />
     <ClCompile Include="qcommon\wswcurl.c" />
   </ItemGroup>

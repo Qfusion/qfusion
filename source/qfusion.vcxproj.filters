@@ -246,6 +246,15 @@
     <ClCompile Include="qcommon\steam.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="win32\win_time.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="win32\win_clipboard.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="win32\win_console.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="qcommon\anticheat.h">
