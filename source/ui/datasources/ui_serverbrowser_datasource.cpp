@@ -801,6 +801,9 @@ void ServerBrowserDataSource::compileSuggestionsList( void )
 			if( gametype == "error" ) {
 				continue;
 			}
+			if( info->ping > 200 ) {
+				continue;
+			}
 
 			bool insertInfo = false;
 			ReferenceListMap::iterator gtBest = gtServers.find( gametype );
