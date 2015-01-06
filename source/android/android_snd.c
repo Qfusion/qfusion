@@ -22,8 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 
-cvar_t *s_bits = NULL;
-cvar_t *s_channels = NULL;
+static cvar_t *s_bits = NULL;
+static cvar_t *s_channels = NULL;
 
 static SLObjectItf snddma_android_engine = NULL;
 static SLObjectItf snddma_android_outputMix = NULL;
