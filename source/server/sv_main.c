@@ -420,7 +420,7 @@ static void SV_CheckTimeouts( void )
 		if( ( cl->state != CS_FREE && cl->state != CS_ZOMBIE ) &&
 			( cl->lastPacketReceivedTime + 1000 * sv_timeout->value < svs.realtime ) )
 		{
-			SV_DropClient( cl, DROP_TYPE_GENERAL, "Error: Connection timed out" );
+			SV_DropClient( cl, DROP_TYPE_GENERAL, "%s", "Error: Connection timed out" );
 			cl->state = CS_FREE; // don't bother with zombie state
 			if( cl->socket.open )
 				NET_CloseSocket( &cl->socket );
@@ -782,12 +782,12 @@ void SV_UserinfoChanged( client_t *client )
 		// force the IP key/value pair so the game can filter based on ip
 		if( !Info_SetValueForKey( client->userinfo, "socket", NET_SocketTypeToString( client->netchan.socket->type ) ) )
 		{
-			SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Couldn't set userinfo (socket)\n" );
+			SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Couldn't set userinfo (socket)\n" );
 			return;
 		}
 		if( !Info_SetValueForKey( client->userinfo, "ip", NET_AddressToString( &client->netchan.remoteAddress ) ) )
 		{
-			SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Couldn't set userinfo (ip)\n" );
+			SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Couldn't set userinfo (ip)\n" );
 			return;
 		}
 	}
@@ -813,7 +813,7 @@ void SV_UserinfoChanged( client_t *client )
 
 	if( !Info_Validate( client->userinfo ) )
 	{
-		SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Invalid userinfo (after game)" );
+		SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Invalid userinfo (after game)" );
 		return;
 	}
 
@@ -821,7 +821,7 @@ void SV_UserinfoChanged( client_t *client )
 	val = Info_ValueForKey( client->userinfo, "name" );
 	if( !val || !val[0] )
 	{
-		SV_DropClient( client, DROP_TYPE_GENERAL, "Error: No name set" );
+		SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: No name set" );
 		return;
 	}
 	Q_strncpyz( client->name, val, sizeof( client->name ) );

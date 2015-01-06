@@ -758,7 +758,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 			return;
 		}
 		if( newcl->state && newcl->edict && ( newcl->edict->r.svflags & SVF_FAKECLIENT ) )
-			SV_DropClient( newcl, DROP_TYPE_GENERAL, "Need room for a real player" );
+			SV_DropClient( newcl, DROP_TYPE_GENERAL, "%s", "Need room for a real player" );
 	}
 
 	// get the game a chance to reject this connection or modify the userinfo
