@@ -66,10 +66,10 @@
 
 #include "../snd_qf/snd_local.h"
 
-int snd_inited = 0;
+static int snd_inited = 0;
 
-cvar_t *s_bits = NULL;
-cvar_t *s_channels = NULL;
+static cvar_t *s_bits = NULL;
+static cvar_t *s_channels = NULL;
 
 void S_Activate( qboolean active )
 {
@@ -152,8 +152,8 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 
 	if( !s_bits )
 	{
-		s_bits = trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE );
-		s_channels = trap_Cvar_Get( "s_channels", "2", CVAR_ARCHIVE );
+		s_bits = trap_Cvar_Get( "s_bits", "16", CVAR_ARCHIVE|CVAR_LATCH_SOUND );
+		s_channels = trap_Cvar_Get( "s_channels", "2", CVAR_ARCHIVE|CVAR_LATCH_SOUND );
 	}
 
 	if( !SDL_WasInit( SDL_INIT_AUDIO ) )
