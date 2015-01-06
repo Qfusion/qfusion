@@ -27,6 +27,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../win32/win_lib.c"
         "../win32/win_net.c"
         "../win32/win_sys.c"
+        "../win32/win_console.c"
+        "../win32/win_clipboard.c"
+        "../win32/win_time.c"
         "../win32/win_threads.c"
         "../null/sys_vfs_null.c"
 
@@ -51,6 +54,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../unix/unix_lib.c"
         "../unix/unix_net.c"
         "../unix/unix_sys.c"
+        "../unix/unix_console.c"
+        "../unix/unix_time.c"
         "../unix/unix_threads.c"
         "../null/sys_vfs_null.c"
 
@@ -58,6 +63,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../sdl/sdl_input_osx.m"
         "../sdl/sdl_vid.c"
         "../sdl/sdl_sys.c"
+        "../sdl/sdl_clipboard.c"
 
         "../mac/mac_sys.m"
         "../mac/Warsow-Info.plist"
@@ -81,6 +87,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         "../unix/unix_lib.c"
         "../unix/unix_net.c"
         "../unix/unix_sys.c"
+        "../unix/unix_console.c"
+        "../unix/unix_clipboard.c"
+        "../unix/unix_time.c"
         "../unix/unix_threads.c"
         "../null/sys_vfs_null.c"
 
