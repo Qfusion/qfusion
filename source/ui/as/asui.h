@@ -48,7 +48,7 @@ namespace ASUI {
 
 			virtual void ProcessEvent( Rocket::Core::Event& event );
 
-			virtual Rocket::Core::ScriptObject GetScriptObject( void );
+			virtual Rocket::Core::ScriptObject GetScriptObject( void ) const;
 
 			bool IsLoading( void ) const { return isLoading; }
 	};
