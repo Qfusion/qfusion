@@ -859,6 +859,7 @@ static rawsound_t *S_FindRawSound( int entnum, qboolean addNew )
 	rawsound = raw_sounds[best];
 	rawsound->entnum = entnum;
 	rawsound->rawend = 0;
+	rawsound->left_volume = rawsound->right_volume = 0; // will be spatialized later
 	return rawsound;
 }
 
@@ -1073,7 +1074,6 @@ static void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
 	rawsound->attenuation = attenuation;
 	rawsound->rawend = S_RawSamplesMono( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );
-	rawsound->left_volume = rawsound->right_volume = 0; // will be spatialized later
 }
 
 /*
