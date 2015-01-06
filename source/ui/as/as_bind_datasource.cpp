@@ -48,6 +48,26 @@ static DataSource *DataSource_GetDataSource( const asstring_t &name )
 	return Rocket::Controls::DataSource::GetDataSource( ASSTR( name ) );
 }
 
+static int DataSource_FindRow( DataSource *ds, const asstring_t &table, const asstring_t &field, const asstring_t &value, int start = 0 )
+{
+	int numRows;
+	StringList fields;
+
+	fields.push_back( field.buffer );
+
+	numRows = ds->GetNumRows( ASSTR( table ) );
+	for( int i = start; i < numRows; i++ ) {
+		StringList row;
+
+		ds->GetRow( row, ASSTR(table), i, fields );
+		if( !strcmp( row[0].CString(), value.buffer ) ) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
 void PrebindDataSource( ASInterface *as )
 {
 	ASBind::Class<Rocket::Controls::DataSource, ASBind::class_ref>( as->getEngine() );
@@ -66,6 +86,7 @@ void BindDataSource( ASInterface *as )
 		.constmethod( &DataSource_GetName, "get_name", true )
 		.constmethod( &DataSource_GetNumRows, "numRows", true )
 		.constmethod( &DataSource_GetField, "getField", true )
+		.method2( &DataSource_FindRow, "int findRow( const String &table, const String &field, const String &value, int start = 0 ) const", true )
 	;
 
 	// FIXME: need singleton binding in the DataSource class
