@@ -127,7 +127,7 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 	static const qgl_driverinfo_t driver =
 	{
 		"opengl32.dll",
-		"win_gl_driver"
+		"gl_driver_win"
 	};
 	return &driver;
 }
