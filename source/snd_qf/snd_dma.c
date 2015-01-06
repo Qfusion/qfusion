@@ -1013,10 +1013,11 @@ static void S_RawEntSamples( int entnum, unsigned int samples, unsigned int rate
 		return;
 	}
 
-	rawsound->volume = rawsound->left_volume = rawsound->right_volume = snd_vol;
+	rawsound->volume = snd_vol;
 	rawsound->attenuation = ATTN_NONE;
 	rawsound->rawend = S_RawSamplesStereo( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );
+	rawsound->left_volume = rawsound->right_volume = snd_vol;
 }
 
 /*
