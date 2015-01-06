@@ -10,7 +10,7 @@ namespace ASUI {
 using namespace Rocket::Core;
 
 UI_ScriptDocument::UI_ScriptDocument( const String &tag )
-	: ElementDocument( tag ), numScriptsAdded( 0 ), as( NULL ), module( NULL ), isLoading( false ), numScripts( 0 )
+	: ElementDocument( tag ), numScriptsAdded( 0 ), as( NULL ), module( NULL ), isLoading( false ), numScripts( 0 ), owner( NULL )
 {
 	isLoading = true;
 	onloads.clear();
@@ -60,9 +60,7 @@ void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
 {
 	if( event.GetType() == "afterLoad" && event.GetTargetElement() == this ) {
 		if( module ) {
-			void *owner = event.GetParameter<void *>( "owner", NULL );
-
-			this->SetUserData( owner );
+			owner = event.GetParameter<void *>( "owner", NULL );
 
 			as->finishBuilding( module );
 			as->setModuleUserData( module, owner );
@@ -102,6 +100,11 @@ void UI_ScriptDocument::ProcessEvent( Rocket::Core::Event &event )
 	}
 
 	Rocket::Core::ElementDocument::ProcessEvent( event );
+}
+
+Rocket::Core::ScriptObject UI_ScriptDocument::GetScriptObject( void )
+{
+	return owner;
 }
 
 //=========================================================

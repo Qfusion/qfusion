@@ -36,6 +36,8 @@ namespace ASUI {
 			typedef std::list<Rocket::Core::Event*> PostponedList;
 			PostponedList onloads;
 
+			Rocket::Core::ScriptObject owner;
+
 		public:
 			UI_ScriptDocument( const Rocket::Core::String &tag = "body" );
 			virtual ~UI_ScriptDocument( void );
@@ -45,6 +47,8 @@ namespace ASUI {
 			virtual void LoadScript( Rocket::Core::Stream *stream, const Rocket::Core::String &source_name );
 
 			virtual void ProcessEvent( Rocket::Core::Event& event );
+
+			virtual Rocket::Core::ScriptObject GetScriptObject( void );
 
 			bool IsLoading( void ) const { return isLoading; }
 	};
