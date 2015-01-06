@@ -28,11 +28,11 @@
 #ifndef ROCKETCOREFONTFACELAYER_H
 #define ROCKETCOREFONTFACELAYER_H
 
-#include <Rocket/Core/FontGlyph.h>
-#include <Rocket/Core/Geometry.h>
-#include <Rocket/Core/GeometryUtilities.h>
-#include <Rocket/Core/String.h>
-#include <Rocket/Core/Texture.h>
+#include "../../Include/Rocket/Core/FontGlyph.h"
+#include "../../Include/Rocket/Core/Geometry.h"
+#include "../../Include/Rocket/Core/GeometryUtilities.h"
+#include "../../Include/Rocket/Core/String.h"
+#include "../../Include/Rocket/Core/Texture.h"
 #include "TextureLayout.h"
 
 namespace Rocket {
@@ -88,7 +88,7 @@ public:
 
 		character_vertices.resize(character_vertices.size() + 4);
 		character_indices.resize(character_indices.size() + 6);
-		GeometryUtilities::GenerateQuad(&character_vertices[0] + (character_vertices.size() - 4), &character_indices[0] + (character_indices.size() - 6), Vector2f(position.x + character.origin.x, position.y + character.origin.y), character.dimensions, colour, character.texcoords[0], character.texcoords[1], character_vertices.size() - 4);
+		GeometryUtilities::GenerateQuad(&character_vertices[0] + (character_vertices.size() - 4), &character_indices[0] + (character_indices.size() - 6), Vector2f(position.x + character.origin.x, position.y + character.origin.y), character.dimensions, colour, character.texcoords[0], character.texcoords[1], (int)character_vertices.size() - 4);
 	}
 
 	/// Returns the effect used to generate the layer.
