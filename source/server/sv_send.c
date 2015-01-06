@@ -129,7 +129,7 @@ void SV_AddServerCommand( client_t *client, const char *cmd )
 			Com_DPrintf( "cmd %5d: %s\n", i, client->reliableCommands[i & ( MAX_RELIABLE_COMMANDS-1 )] );
 		}
 		Com_DPrintf( "cmd %5d: %s\n", i, cmd );
-		SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Server command overflow" );
+		SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Server command overflow" );
 		return;
 	}
 	index = client->reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );

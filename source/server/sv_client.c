@@ -883,7 +883,7 @@ static void SV_UserinfoCommand_f( client_t *client )
 
 	if( !Info_Validate( info ) )
 	{
-		SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Invalid userinfo" );
+		SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Invalid userinfo" );
 		return;
 	}
 
@@ -1101,7 +1101,7 @@ static void SV_ParseMoveCommand( client_t *client, msg_t *msg )
 
 	if( ucmdCount > CMD_MASK )
 	{
-		SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Ucmd overflow" );
+		SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Ucmd overflow" );
 		return;
 	}
 
@@ -1166,7 +1166,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg )
 		if( msg->readcount > msg->cursize )
 		{
 			Com_Printf( "SV_ParseClientMessage: badread\n" );
-			SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Bad message" );
+			SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Bad message" );
 			return;
 		}
 
@@ -1178,7 +1178,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg )
 		{
 		default:
 			Com_Printf( "SV_ParseClientMessage: unknown command char\n" );
-			SV_DropClient( client, DROP_TYPE_GENERAL, "Error: Unknown command char" );
+			SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Unknown command char" );
 			return;
 
 		case clc_nop:
@@ -1199,13 +1199,13 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg )
 				if( client->reliable )
 				{
 					Com_Printf( "SV_ParseClientMessage: svack from reliable client\n" );
-					SV_DropClient( client, DROP_TYPE_GENERAL, "Error: svack from reliable client" );
+					SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: svack from reliable client" );
 					return;
 				}
 				cmdNum = MSG_ReadLong( msg );
 				if( cmdNum < client->reliableAcknowledge || cmdNum > client->reliableSent )
 				{
-					//SV_DropClient( client, DROP_TYPE_GENERAL, "Error: bad server command acknowledged" );
+					//SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: bad server command acknowledged" );
 					return;
 				}
 				client->reliableAcknowledge = cmdNum;
