@@ -175,7 +175,7 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 	static const qgl_driverinfo_t driver =
 	{
 		"libGL.so.1",
-		"unix_gl_driver"
+		"gl_driver_unix"
 	};
 	return &driver;
 }
