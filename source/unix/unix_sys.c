@@ -315,11 +315,6 @@ void Sys_Sleep( unsigned int millis )
 	usleep( millis * 1000 );
 }
 
-static void floating_point_exception_handler( int whatever )
-{
-	signal( SIGFPE, floating_point_exception_handler );
-}
-
 char *Sys_ConsoleInput( void )
 {
 	static char text[256];
