@@ -190,8 +190,12 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 {
 	static const qgl_driverinfo_t driver =
 	{
+#if defined( __APPLE__ )
 		"/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib",
-		"mac_gl_driver"
+		"gl_driver_mac"
+#else
+		NULL, NULL
+#endif
 	};
 	return &driver;
 }
