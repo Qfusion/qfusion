@@ -428,7 +428,7 @@ CFILES_QF += $(wildcard snd_common/*.c)
 ifeq ($(USE_MINGW),YES)
 CFILES_QF += win32/win_snd.c
 else
-CFILES_QF += unix/unix_snd.c
+CFILES_QF += sdl/sdl_snd.c
 endif
 CFILES_QF += $(wildcard gameshared/q_*.c)
 CFILES_QF += $(wildcard qalgo/*.c)
@@ -1015,7 +1015,7 @@ ifeq ($(USE_MINGW),YES)
 $(BUILDDIR)/qf/win_snd.o: win32/win_snd.c
 	@$(DO_CC_MODULE) $(CFLAGS_DSOUND)
 else
-$(BUILDDIR)/qf/unix_snd.o: unix/unix_snd.c
+$(BUILDDIR)/qf/sdl_snd.o: sdl/sdl_snd.c
 	@$(DO_CC_MODULE) $(CFLAGS_QF)
 endif
 
