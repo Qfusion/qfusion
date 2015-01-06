@@ -246,6 +246,17 @@ static void sv_mm_clientconnect_done( stat_query_t *query, qboolean success, voi
 		}
 		else
 		{
+			int banned = (int)sq_api->GetNumber( root, "banned" );
+			if( banned != 0 ) 
+			{
+				const char *reason = sq_api->GetString( root, "reason" );
+				if( !reason || *reason == '\0' )
+					reason = "Your account at " APP_URL " has been banned.";
+
+				SV_DropClient( cl, DROP_TYPE_GENERAL, "Error: %s", reason );
+				return;
+			}
+
 			isession_id = (int)sq_api->GetNumber( root, "id" );
 			if( isession_id == 0 )
 			{
@@ -290,7 +301,7 @@ static void sv_mm_clientconnect_done( stat_query_t *query, qboolean success, voi
 	{
 		if( sv_mm_loginonly->integer )
 		{
-			SV_DropClient( cl, DROP_TYPE_GENERAL, "Error: This server requires login. Create account at " APP_URL );
+			SV_DropClient( cl, DROP_TYPE_GENERAL, "%s", "Error: This server requires login. Create account at " APP_URL );
 			return;
 		}
 
