@@ -58,11 +58,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#if defined ( __APPLE__ )
-#include "SDL2/SDL.h"
-#else
-#include "SDL.h"
-#endif
+#include <SDL.h>
 
 #include "../snd_qf/snd_local.h"
 

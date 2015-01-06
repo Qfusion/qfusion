@@ -27,7 +27,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(SND_QF_PLATFORM_LIBRARIES "winmm.lib")
 else()
     file(GLOB SND_QF_PLATFORM_SOURCES
-        "../unix/unix_snd.c"
+        "../sdl/sdl_snd.c"
     )
 
     if (USE_SDL2)
