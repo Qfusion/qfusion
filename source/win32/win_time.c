@@ -7,6 +7,9 @@ static quint64 hwtimer_freq;
 static int milli_offset = 0;
 static qint64 micro_offset = 0;
 
+static unsigned int Sys_Milliseconds_TGT( void );
+static quint64 Sys_Microseconds_QPC( void );
+
 // wsw: pb adapted High Res Performance Counter code from ezquake
 
 /*
