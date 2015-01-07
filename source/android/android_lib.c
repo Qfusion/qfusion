@@ -35,7 +35,9 @@ qboolean Sys_Library_Close( void *lib )
 */
 const char *Sys_Library_GetFullName( const char *name )
 {
-	return va( "/data/data/%s/lib/lib%s", sys_android_packageName, COM_FileBase( name ) );
+	static char tempname[PATH_MAX];
+	Q_snprintfz( tempname, sizeof( tempname ), "/data/data/%s/lib/lib%s", sys_android_packageName, COM_FileBase( name ) );
+	return tempname;
 }
 
 /*
