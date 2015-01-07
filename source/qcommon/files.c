@@ -3820,14 +3820,6 @@ void FS_Init( void )
 	if( homedir != NULL && fs_usehomedir->integer )
 		FS_AddBasePath( homedir );
 
-	securedir = Sys_FS_GetSecureDirectory();
-	if( securedir != NULL && securedir )
-		FS_AddBasePath( securedir );
-
-	cachedir = Sys_FS_GetCacheDirectory();
-	if( cachedir != NULL && cachedir )
-		FS_AddBasePath( cachedir );
-
 	Sys_VFS_Init();
 
 	//
