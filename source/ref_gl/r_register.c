@@ -1126,7 +1126,7 @@ static void R_Register( const char *screenshotsPrefix )
 	gl_drawbuffer = ri.Cvar_Get( "gl_drawbuffer", "GL_BACK", 0 );
 
 	driver = QGL_GetDriverInfo();
-	if( driver->dllcvarname )
+	if( driver && driver->dllcvarname )
 		gl_driver = ri.Cvar_Get( driver->dllcvarname, driver->dllname, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	else
 		gl_driver = NULL;
@@ -1226,7 +1226,8 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int s
 	int x, int y, int width, int height, int displayFrequency,
 	qboolean fullScreen, qboolean wideScreen, qboolean verbose )
 {
-	const char *dllname;
+	const qgl_driverinfo_t *driver;
+	const char *dllname = NULL;
 	qgl_initerr_t initerr;
 	int i;
 	rserr_t err;
@@ -1246,7 +1247,9 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int s
 	memset( &glConfig, 0, sizeof(glConfig) );
 
 	// initialize our QGL dynamic bindings
-	dllname = QGL_GetDriverInfo()->dllname;
+	driver = QGL_GetDriverInfo();
+	if( driver )
+		dllname = driver->dllname;
 init_qgl:
 	initerr = QGL_Init( gl_driver ? gl_driver->string : dllname );
 	if( initerr != qgl_initerr_ok )
