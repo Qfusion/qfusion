@@ -156,6 +156,7 @@ static cvar_t *fs_game;
 static searchpath_t *fs_basepaths = NULL;       // directories without gamedirs
 static searchpath_t *fs_searchpaths = NULL;     // game search directories, plus paks
 static searchpath_t *fs_base_searchpaths;       // same as above, but without extra gamedirs
+static searchpath_t *fs_write_searchpath;       // write directory
 
 static mempool_t *fs_mempool;
 
@@ -3023,7 +3024,7 @@ const char *FS_BaseGameDirectory( void )
 */
 const char *FS_WriteDirectory( void )
 {
-	return fs_basepaths->path;
+	return fs_write_searchpath->path;
 }
 
 /*
@@ -3773,7 +3774,6 @@ void FS_Init( void )
 	int i;
 	const char *homedir;
 	const char *cachedir;
-	const char *securedir;
 
 	assert( !fs_initialized );
 
@@ -3819,6 +3819,10 @@ void FS_Init( void )
 	FS_AddBasePath( fs_basepath->string );
 	if( homedir != NULL && fs_usehomedir->integer )
 		FS_AddBasePath( homedir );
+	fs_write_searchpath = fs_basepaths;
+	cachedir = Sys_FS_GetCacheDirectory();
+	if( cachedir )
+		FS_AddBasePath( cachedir );
 
 	Sys_VFS_Init();
 
