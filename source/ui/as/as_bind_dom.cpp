@@ -839,13 +839,16 @@ static unsigned int DataGrid_GetNumRows( ElementDataGrid *self ) {
 static asstring_t *DataGrid_GetColumn( ElementDataGrid *self, int idx ) {
 	// Tricky SOB, build a string from column->fields
 	const ElementDataGrid::Column *column = self->GetColumn( idx );
+
 	if( !column )
 		return ASSTR( "" );
+
 	String ret;
-	for( StringList::const_iterator it = column->fields.begin(); it != column->fields.end(); ++it) {
-		ret += *it + " ";
+	StringList::const_iterator begin = column->fields.begin(), end = column->fields.end();
+	for( StringList::const_iterator it = begin; it != end; ++it) {
+		ret += (it == begin ? "" : " ") + *it;
 	}
-	return ASSTR( ret.Substring( 0, std::max( 0U, ret.Length() - 1 ) ) );
+	return ASSTR( ret );
 }
 
 static Element *DataGrid_GetColumnHeader( ElementDataGrid *self, int idx ) {
