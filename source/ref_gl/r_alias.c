@@ -214,10 +214,11 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	poutframe = poutmodel->frames = ( maliasframe_t * )buf; buf += sizeof( maliasframe_t ) * poutmodel->numframes;
 	for( i = 0; i < poutmodel->numframes; i++, pinframe++, poutframe++ )
 	{
+		memcpy( poutframe->translate, pinframe->translate, sizeof( vec3_t ) );
 		for( j = 0; j < 3; j++ )
 		{
 			poutframe->scale[j] = MD3_XYZ_SCALE;
-			poutframe->translate[j] = LittleFloat( pinframe->translate[j] );
+			poutframe->translate[j] = LittleFloat( poutframe->translate[j] );
 		}
 
 		// never trust the modeler utility and recalculate bbox and radius
@@ -233,20 +234,23 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	{
 		for( l = 0; l < poutmodel->numtags; l++, pintag++, pouttag++ )
 		{
+			dmd3tag_t intag;
 			mat3_t axis;
+
+			memcpy( &intag, pintag, sizeof( dmd3tag_t ) );
 
 			for( j = 0; j < 3; j++ )
 			{
-				axis[AXIS_FORWARD+j] = LittleFloat( pintag->axis[0][j] );
-				axis[AXIS_RIGHT+j] = LittleFloat( pintag->axis[1][j] );
-				axis[AXIS_UP+j] = LittleFloat( pintag->axis[2][j] );
-				pouttag->origin[j] = LittleFloat( pintag->origin[j] );
+				axis[AXIS_FORWARD+j] = LittleFloat( intag.axis[0][j] );
+				axis[AXIS_RIGHT+j] = LittleFloat( intag.axis[1][j] );
+				axis[AXIS_UP+j] = LittleFloat( intag.axis[2][j] );
+				pouttag->origin[j] = LittleFloat( intag.origin[j] );
 			}
 
 			Quat_FromMatrix3( axis, pouttag->quat );
 			Quat_Normalize( pouttag->quat );
 
-			Q_strncpyz( pouttag->name, pintag->name, MD3_MAX_PATH );
+			Q_strncpyz( pouttag->name, intag.name, MD3_MAX_PATH );
 		}
 	}
 
@@ -268,17 +272,21 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	poutmesh = poutmodel->meshes = ( maliasmesh_t * )buf; buf += sizeof( maliasmesh_t ) * poutmodel->nummeshes;
 	for( i = 0; i < poutmodel->nummeshes; i++, poutmesh++ )
 	{
-		if( strncmp( (const char *)pinmesh->id, IDMD3HEADER, 4 ) )
-			ri.Com_Error( ERR_DROP, "mesh %s in model %s has wrong id (%s should be %s)",
-			pinmesh->name, mod->name, pinmesh->id, IDMD3HEADER );
+		dmd3mesh_t inmesh;
 
-		Q_strncpyz( poutmesh->name, pinmesh->name, MD3_MAX_PATH );
+		memcpy( &inmesh, pinmesh, sizeof( dmd3mesh_t ) );
+
+		if( strncmp( (const char *)inmesh.id, IDMD3HEADER, 4 ) )
+			ri.Com_Error( ERR_DROP, "mesh %s in model %s has wrong id (%s should be %s)",
+			inmesh.name, mod->name, inmesh.id, IDMD3HEADER );
+
+		Q_strncpyz( poutmesh->name, inmesh.name, MD3_MAX_PATH );
 
 		Mod_StripLODSuffix( poutmesh->name );
 
-		poutmesh->numtris = LittleLong( pinmesh->num_tris );
-		poutmesh->numskins = LittleLong( pinmesh->num_skins );
-		poutmesh->numverts = numverts = LittleLong( pinmesh->num_verts );
+		poutmesh->numtris = LittleLong( inmesh.num_tris );
+		poutmesh->numskins = LittleLong( inmesh.num_skins );
+		poutmesh->numverts = numverts = LittleLong( inmesh.num_verts );
 
 		/*		if( poutmesh->numskins <= 0 )
 		ri.Com_Error( ERR_DROP, "mesh %i in model %s has no skins", i, mod->name );
@@ -301,7 +309,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		// load the skins
 		//
-		pinskin = ( dmd3skin_t * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_skins ) );
+		pinskin = ( dmd3skin_t * )( ( qbyte * )pinmesh + LittleLong( inmesh.ofs_skins ) );
 		poutskin = poutmesh->skins = ( maliasskin_t * )buf;
 		buf += ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) );
 		for( j = 0; j < poutmesh->numskins; j++, pinskin++, poutskin++ ) {
@@ -312,18 +320,19 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		// load the texture coordinates
 		//
-		pincoord = ( dmd3coord_t * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_tcs ) );
+		pincoord = ( dmd3coord_t * )( ( qbyte * )pinmesh + LittleLong( inmesh.ofs_tcs ) );
 		poutcoord = poutmesh->stArray = ( vec2_t * )buf; buf += poutmesh->numverts * sizeof( vec2_t );
 		for( j = 0; j < poutmesh->numverts; j++, pincoord++ )
 		{
-			poutcoord[j][0] = LittleFloat( pincoord->st[0] );
-			poutcoord[j][1] = LittleFloat( pincoord->st[1] );
+			memcpy( poutcoord[j], pincoord->st, sizeof( vec2_t ) );
+			poutcoord[j][0] = LittleFloat( poutcoord[j][0] );
+			poutcoord[j][1] = LittleFloat( poutcoord[j][1] );
 		}
 
 		//
 		// load the vertexes and normals
 		//
-		pinvert = ( dmd3vertex_t * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_verts ) );
+		pinvert = ( dmd3vertex_t * )( ( qbyte * )pinmesh + LittleLong( inmesh.ofs_verts ) );
 		poutvert = poutmesh->vertexes = ( maliasvertex_t * )buf;
 		buf += poutmesh->numverts * sizeof( maliasvertex_t ) * poutmodel->numframes;
 		for( l = 0, poutframe = poutmodel->frames; l < poutmodel->numframes; l++, poutframe++, pinvert += poutmesh->numverts, poutvert += poutmesh->numverts )
@@ -332,12 +341,16 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 
 			for( j = 0; j < poutmesh->numverts; j++ )
 			{
-				poutvert[j].point[0] = LittleShort( pinvert[j].point[0] );
-				poutvert[j].point[1] = LittleShort( pinvert[j].point[1] );
-				poutvert[j].point[2] = LittleShort( pinvert[j].point[2] );
+				dmd3vertex_t invert;
 
-				poutvert[j].latlong[0] = pinvert[j].norm[0];
-				poutvert[j].latlong[1] = pinvert[j].norm[1];
+				memcpy( &invert, &( pinvert[j] ), sizeof( dmd3vertex_t ) );
+
+				poutvert[j].point[0] = LittleShort( invert.point[0] );
+				poutvert[j].point[1] = LittleShort( invert.point[1] );
+				poutvert[j].point[2] = LittleShort( invert.point[2] );
+
+				poutvert[j].latlong[0] = invert.norm[0];
+				poutvert[j].latlong[1] = invert.norm[1];
 
 				VectorCopy( poutvert[j].point, v );
 				AddPointToBounds( v, poutframe->mins, poutframe->maxs );
@@ -347,16 +360,20 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		// load the elems
 		//
-		pinelem = ( unsigned int * )( ( qbyte * )pinmesh + LittleLong( pinmesh->ofs_elems ) );
+		pinelem = ( unsigned int * )( ( qbyte * )pinmesh + LittleLong( inmesh.ofs_elems ) );
 		poutelem = poutmesh->elems = ( elem_t * )buf;
 		for( j = 0; j < poutmesh->numtris; j++, pinelem += 3, poutelem += 3 )
 		{
-			poutelem[0] = (elem_t)LittleLong( pinelem[0] );
-			poutelem[1] = (elem_t)LittleLong( pinelem[1] );
-			poutelem[2] = (elem_t)LittleLong( pinelem[2] );
+			unsigned int inelem[3];
+
+			memcpy( inelem, pinelem, sizeof( int ) * 3 );
+
+			poutelem[0] = (elem_t)LittleLong( inelem[0] );
+			poutelem[1] = (elem_t)LittleLong( inelem[1] );
+			poutelem[2] = (elem_t)LittleLong( inelem[2] );
 		}
 
-		pinmesh = ( dmd3mesh_t * )( ( qbyte * )pinmesh + LittleLong( pinmesh->meshsize ) );
+		pinmesh = ( dmd3mesh_t * )( ( qbyte * )pinmesh + LittleLong( inmesh.meshsize ) );
 	}
 
 	//
