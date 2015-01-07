@@ -133,6 +133,8 @@ void Sys_Quit( void )
 	exit( 0 );
 }
 
+#if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+
 /*
 * Sys_Init
 */
@@ -186,6 +188,8 @@ void Sys_Sleep( unsigned int millis )
 {
 	usleep( millis * 1000 );
 }
+
+#endif
 
 /*
 * Sys_GetSymbol

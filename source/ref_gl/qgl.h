@@ -63,6 +63,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define GLX_GLXEXT_LEGACY
 
 #if !defined (__MACOSX__) && !defined (__ANDROID__)
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include <GL/gl.h>
 #endif
 
