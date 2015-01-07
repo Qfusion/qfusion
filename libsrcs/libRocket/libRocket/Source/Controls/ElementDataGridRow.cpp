@@ -249,7 +249,7 @@ ElementDataGrid* ElementDataGridRow::GetParentGrid()
 	return parent_grid;
 }
 
-void ElementDataGridRow::OnDataSourceDestroy(DataSource* data_source)
+void ElementDataGridRow::OnDataSourceDestroy(DataSource* ROCKET_UNUSED_PARAMETER(data_source_))
 {
 	if(data_source != NULL)
 	{
