@@ -53,15 +53,8 @@ char *argv[MAX_NUM_ARGVS];
 static dynvar_get_status_t Sys_GetAffinity_f( void **affinity );
 static dynvar_set_status_t Sys_SetAffinity_f( void *affinity );
 
-extern qboolean	hwtimer;
-extern dynvar_t	*hwtimer_var;
-extern qint64 hwtimer_freq;
-extern int milli_offset;
-extern qint64 micro_offset;
-
-static dynvar_get_status_t Sys_GetHwTimer_f( void **val );
-static dynvar_set_status_t Sys_SetHwTimer_f( void *val );
-static void Sys_SynchronizeTimers_f( void *val );
+void Sys_InitTimeDynvar( void );
+void Sys_InitTime( void );
 
 /*
 ===============================================================================
@@ -162,18 +155,13 @@ void Sys_InitDynvars( void )
 	char *dummyStr;
 	dynvar_t *affinity_var;
 
-	QueryPerformanceFrequency( (LARGE_INTEGER *) &hwtimer_freq );
-
 	affinity_var = Dynvar_Create( "sys_affinity", qtrue, Sys_GetAffinity_f, Sys_SetAffinity_f );
 	assert( affinity_var );
 	Dynvar_GetValue( affinity_var, (void **)&dummyStr );
 	assert( dummyStr );
 	Dynvar_SetValue( affinity_var, dummyStr );
 
-	hwtimer_var = Dynvar_Create( "sys_hwtimer", 1, Sys_GetHwTimer_f, Sys_SetHwTimer_f );
-	assert( hwtimer_var );
-	Dynvar_AddListener( hwtimer_var, Sys_SynchronizeTimers_f );
-	Dynvar_SetValue( hwtimer_var, "0" );
+	Sys_InitTimeDynvar();
 }
 
 /*
@@ -458,65 +446,6 @@ abort:
 
 	CloseHandle( proc );
 	return result;
-}
-
-static dynvar_get_status_t Sys_GetHwTimer_f( void **val )
-{
-	static char hwtimerStr[2] = { '\0', '\0' };
-	hwtimerStr[0] = '0' + hwtimer;
-	assert( val );
-	*val = hwtimerStr;
-	return DYNVAR_GET_OK;
-}
-
-static dynvar_set_status_t Sys_SetHwTimer_f( void *val )
-{
-	assert( val );
-	switch( *( (char *) val ) )
-	{
-	case '0':
-		hwtimer = 0;
-		return DYNVAR_SET_OK;
-	case '1':
-		if( hwtimer_freq )
-		{
-			hwtimer = 1;
-			return DYNVAR_SET_OK;
-		}
-		else
-			return DYNVAR_SET_TRANSIENT;
-	default:
-		return DYNVAR_SET_INVALID;
-	}
-}
-
-static void Sys_SynchronizeTimers_f( void *val )
-{
-	static int hwtimer_old = -1;
-
-	const unsigned int millis = Sys_Milliseconds_TGT();
-	const qint64 micros = Sys_Microseconds_QPC();
-	const qint64 drift = micros - millis * 1000;
-
-	const int hwtimer_new = ( *(char *) val ) - '0';
-
-	if( hwtimer_new != hwtimer_old )
-	{
-		switch( hwtimer_new )
-		{
-		case 0:
-			// switched from micro to milli precision
-			milli_offset = max( milli_offset, drift / 1000 );
-			break;
-		case 1:
-			// switched from milli to micro precision
-			micro_offset = max( micro_offset, -drift );
-			break;
-		default:
-			assert( 0 );
-		}
-		hwtimer_old = hwtimer_new;
-	}
 }
 
 /*
