@@ -55,7 +55,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../unix/unix_net.c"
         "../unix/unix_sys.c"
         "../unix/unix_console.c"
-        "../unix/unix_time.c"
         "../unix/unix_threads.c"
         "../null/sys_vfs_null.c"
 
@@ -64,6 +63,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../sdl/sdl_vid.c"
         "../sdl/sdl_sys.c"
         "../sdl/sdl_clipboard.c"
+        "../sdl/sdl_time.c"
 
         "../mac/mac_sys.m"
         "../mac/Warsow-Info.plist"

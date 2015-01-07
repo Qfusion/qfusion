@@ -57,6 +57,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_OSX_SYSROOT "macosx")                            # Compile with latest available OS X sdk
     set(CMAKE_XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "10.8") # Use 10.8 as deployment target
     set(CMAKE_XCODE_ATTRIBUTE_GCC_C_LANGUAGE_STANDARD "c99")   # Use C99 standart for compiling C files    
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")      # Use modern libc++ instead of libstdc++
     set(CMAKE_FRAMEWORK_PATH "mac/Frameworks")
     set(CMAKE_MACOSX_RPATH 1)
     set(JPEG_NAMES libjpeg) # libjpeg.framework should be renamed to jpeg.framework to remove this hack
@@ -81,10 +82,11 @@ find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 
 # We need SDL only on non-Windows platforms
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    if (USE_SDL2)
-        find_package(SDL2 REQUIRED)
-    else()
+if (USE_SDL2)
+    find_package(SDL2 REQUIRED)
+    add_definitions(-DUSE_SDL2)
+else()
+    if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         find_package(SDL REQUIRED)
     endif()
 endif()

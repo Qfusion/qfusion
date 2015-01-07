@@ -19,7 +19,6 @@
  */
 
 #include <SDL.h>
-#include <OpenGL/OpenGL.h>
 
 #include "../ref_gl/r_local.h"
 #include "../client/client.h"

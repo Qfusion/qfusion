@@ -35,7 +35,7 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 */
 
 /*
-** MAC_QGL.C
+** SDL_QGL.C
 **
 ** This file implements the operating system binding of GL to QGL function
 ** pointers.  When doing a port of Qfusion you must implement the following
@@ -45,16 +45,14 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 ** QGL_Shutdown() - unloads libraries, NULLs function pointers
 */
 
-#include <SDL.h>
 #include "../qcommon/qcommon.h"
 #include "sdl_glw.h"
-#include <dlfcn.h>
 
 #define QGL_EXTERN
 
-#define QGL_FUNC( type, name, params ) type( APIENTRY * q ## name ) params;
-#define QGL_FUNC_OPT( type, name, params ) type( APIENTRY * q ## name ) params;
-#define QGL_EXT( type, name, params ) type( APIENTRY * q ## name ) params;
+#define QGL_FUNC( type, name, params ) type( APIENTRY *q##name ) params;
+#define QGL_FUNC_OPT( type, name, params ) type( APIENTRY *q##name ) params;
+#define QGL_EXT( type, name, params ) type( APIENTRY *q##name ) params;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
@@ -88,20 +86,15 @@ void QGL_Shutdown( void )
 
 	glw_state.OpenGLLib = NULL;
 
-#define QGL_FUNC( type, name, params ) ( q ## name ) = NULL;
-#define QGL_FUNC_OPT( type, name, params ) ( q ## name ) = NULL;
-#define QGL_EXT( type, name, params ) ( q ## name ) = NULL;
+#define QGL_FUNC( type, name, params ) ( q##name ) = NULL;
+#define QGL_FUNC_OPT( type, name, params ) ( q##name ) = NULL;
+#define QGL_EXT( type, name, params ) ( q##name ) = NULL;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
 #define QGL_GLX_EXT( type, name, params )
 #define QGL_EGL( type, name, params )
 #define QGL_EGL_EXT( type, name, params )
-
-#ifdef __MACOSX__
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#endif
 
 #include "../ref_gl/qgl.h"
 
@@ -130,9 +123,8 @@ qgl_initerr_t QGL_Init( const char *dllname )
 {
 	int result = -1;
 
-	glw_state.OpenGLLib = ( void * )0;
-	if( SDL_InitSubSystem( SDL_INIT_VIDEO ) < 0 )
-	{
+	glw_state.OpenGLLib = (void *)0;
+	if( SDL_InitSubSystem( SDL_INIT_VIDEO ) < 0 ) {
 		Com_Printf( "SDL_InitSubSystem(SDL_INIT_VIDEO) failed: %s", SDL_GetError() );
 		return qgl_initerr_unknown;
 	}
@@ -142,21 +134,22 @@ qgl_initerr_t QGL_Init( const char *dllname )
 	if( result == -1 )
 		result = SDL_GL_LoadLibrary( dllname );
 
-	if( result == -1 )
-	{
+	if( result == -1 ) {
 		Com_Printf( "Error loading %s: %s\n", dllname ? dllname : "OpenGL dlib", SDL_GetError() );
 		return qgl_initerr_invalid_driver;
-	}
-	else
-	{
-		glw_state.OpenGLLib = ( void * )1;
+	} else {
+		glw_state.OpenGLLib = (void *)1;
 		Com_Printf( "Using %s for OpenGL...\n", dllname );
 	}
 
-#define QGL_FUNC( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name ); \
-	if( !( q ## name ) ) { Com_Printf( "QGL_Init: Failed to get address for %s\n", # name ); return qgl_initerr_invalid_driver; }
-#define QGL_FUNC_OPT( type, name, params ) ( q ## name ) = ( void * )qglGetProcAddress( # name );
-#define QGL_EXT( type, name, params ) ( q ## name ) = NULL;
+#define QGL_FUNC( type, name, params )                                   \
+	( q##name ) = (void *)qglGetProcAddress( #name );                    \
+	if( !( q##name ) ) {                                                 \
+		Com_Printf( "QGL_Init: Failed to get address for %s\n", #name ); \
+		return qgl_initerr_invalid_driver;                               \
+	}
+#define QGL_FUNC_OPT( type, name, params ) ( q##name ) = (void *)qglGetProcAddress( #name );
+#define QGL_EXT( type, name, params ) ( q##name ) = NULL;
 #define QGL_WGL( type, name, params )
 #define QGL_WGL_EXT( type, name, params )
 #define QGL_GLX( type, name, params )
@@ -188,16 +181,7 @@ qgl_initerr_t QGL_Init( const char *dllname )
 */
 const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 {
-	static const qgl_driverinfo_t driver =
-	{
-#if defined( __APPLE__ )
-		"/System/Library/Frameworks/OpenGL.framework/Libraries/libGL.dylib",
-		"gl_driver_mac"
-#else
-		NULL, NULL
-#endif
-	};
-	return &driver;
+	return NULL;
 }
 
 /*
@@ -206,7 +190,7 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 void *qglGetProcAddress( const GLubyte *procName )
 {
 	if( glw_state.OpenGLLib )
-		return (void *)SDL_GL_GetProcAddress( (char *) procName );
+		return (void *)SDL_GL_GetProcAddress( (char *)procName );
 	return NULL;
 }
 
