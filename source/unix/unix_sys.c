@@ -52,6 +52,8 @@ FIXME:  This will be remidied once a native Mac port is complete
 #include "../qcommon/qcommon.h"
 #include "glob.h"
 
+#if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+
 cvar_t *nostdout;
 qboolean nostdout_backup_val = qfalse;
 
@@ -133,8 +135,6 @@ void Sys_Quit( void )
 	exit( 0 );
 }
 
-#if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
-
 /*
 * Sys_Init
 */
@@ -189,8 +189,6 @@ void Sys_Sleep( unsigned int millis )
 	usleep( millis * 1000 );
 }
 
-#endif
-
 /*
 * Sys_GetSymbol
 */
@@ -227,6 +225,8 @@ void Sys_SendKeyEvents( void )
 	// grab frame time
 	sys_frame_time = Sys_Milliseconds();
 }
+
+#endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)
 
 #ifndef __APPLE__
 /*
@@ -274,6 +274,8 @@ const char *Sys_GetPreferredLanguage( void )
 	}
 	return Q_strlwr( lang );
 }
+
+#if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
 
 /*
 * Sys_AcquireWakeLock
@@ -339,3 +341,5 @@ int main( int argc, char **argv )
 	SDL_Quit();
 #endif
 }
+
+#endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)

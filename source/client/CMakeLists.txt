@@ -22,25 +22,47 @@ file(GLOB CLIENT_COMMON_SOURCES
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     include_directories("../win32/include/msvc")
 
-    file(GLOB CLIENT_PLATFORM_SOURCES
-        "../win32/win_fs.c"
-        "../win32/win_lib.c"
-        "../win32/win_net.c"
-        "../win32/win_sys.c"
-        "../win32/win_console.c"
-        "../win32/win_clipboard.c"
-        "../win32/win_time.c"
-        "../win32/win_threads.c"
-        "../null/sys_vfs_null.c"
+    if (USE_SDL2)
+        file(GLOB CLIENT_PLATFORM_SOURCES
+            "../win32/win_fs.c"
+            "../win32/win_lib.c"
+            "../win32/win_net.c"
+            "../win32/win_sys.c"
+            "../win32/win_threads.c"
+            "../null/sys_vfs_null.c"
 
-        "../win32/win_input.c"
-        "../win32/win_vid.c"
-        "../win32/conproc.c"
+            "../sdl/sdl_input.c"
+            "../sdl/sdl_vid.c"
+            "../sdl/sdl_sys.c"
+            "../sdl/sdl_clipboard.c"
+            "../sdl/sdl_time.c"
 
-        "../win32/qfusion.rc"
-    )
+            "../win32/qfusion.rc"
+        )
 
-    set(CLIENT_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib" "dxguid.lib")
+        set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARIES} "ws2_32.lib" "winmm.lib" "dxguid.lib")
+    else()
+        file(GLOB CLIENT_PLATFORM_SOURCES
+            "../win32/win_fs.c"
+            "../win32/win_lib.c"
+            "../win32/win_net.c"
+            "../win32/win_sys.c"
+            "../win32/win_console.c"
+            "../win32/win_clipboard.c"
+            "../win32/win_time.c"
+            "../win32/win_threads.c"
+            "../null/sys_vfs_null.c"
+
+            "../win32/win_input.c"
+            "../win32/win_vid.c"
+            "../win32/conproc.c"
+
+            "../win32/qfusion.rc"
+        )
+
+        set(CLIENT_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib" "dxguid.lib")
+    endif()
+
     set(CLIENT_BINARY_TYPE WIN32)
 
     set(BUNDLE_RESOURCES "")
@@ -54,7 +76,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../unix/unix_lib.c"
         "../unix/unix_net.c"
         "../unix/unix_sys.c"
-        "../unix/unix_console.c"
         "../unix/unix_threads.c"
         "../null/sys_vfs_null.c"
 
@@ -82,23 +103,40 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    file(GLOB CLIENT_PLATFORM_SOURCES
-        "../unix/unix_fs.c"
-        "../unix/unix_lib.c"
-        "../unix/unix_net.c"
-        "../unix/unix_sys.c"
-        "../unix/unix_console.c"
-        "../unix/unix_clipboard.c"
-        "../unix/unix_time.c"
-        "../unix/unix_threads.c"
-        "../null/sys_vfs_null.c"
+    if (USE_SDL2)
+        file(GLOB CLIENT_PLATFORM_SOURCES
+            "../unix/unix_fs.c"
+            "../unix/unix_lib.c"
+            "../unix/unix_net.c"
+            "../unix/unix_sys.c"
+            "../unix/unix_threads.c"
+            "../null/sys_vfs_null.c"
 
-        "../unix/keysym2ucs.c"
-        "../unix/unix_input.c"
-        "../unix/unix_vid.c"
-    )
+            "../sdl/sdl_input.c"
+            "../sdl/sdl_vid.c"
+            "../sdl/sdl_sys.c"
+        )
+
+        set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "m" "dl" "rt")
+    else()
+        file(GLOB CLIENT_PLATFORM_SOURCES
+            "../unix/unix_fs.c"
+            "../unix/unix_lib.c"
+            "../unix/unix_net.c"
+            "../unix/unix_sys.c"
+            "../unix/unix_console.c"
+            "../unix/unix_clipboard.c"
+            "../unix/unix_time.c"
+            "../unix/unix_threads.c"
+            "../null/sys_vfs_null.c"
+
+            "../unix/keysym2ucs.c"
+            "../unix/unix_input.c"
+            "../unix/unix_vid.c"
+        )
     
-    set(CLIENT_PLATFORM_LIBRARIES "pthread" "dl" "m" "X11" "Xi" "Xext" "Xrandr" "rt")
+        set(CLIENT_PLATFORM_LIBRARIES "pthread" "dl" "m" "X11" "Xi" "Xext" "Xrandr" "rt")
+    endif()
     set(CLIENT_BINARY_TYPE "")
 
     set(BUNDLE_RESOURCES "")
