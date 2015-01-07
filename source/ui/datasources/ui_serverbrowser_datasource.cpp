@@ -442,7 +442,7 @@ void ServerInfoFetcher::startQuery( const std::string &adr )
 ServerBrowserDataSource::ServerBrowserDataSource() :
 		Rocket::Controls::DataSource("serverbrowser_source"),
 		serverList(),
-		fetcher(this), active(false), updateId(0), lastActiveTime(0),
+		fetcher(), active(false), updateId(0), lastActiveTime(0),
 		lastUpdateTime(0)
 {
 	// default sorting function

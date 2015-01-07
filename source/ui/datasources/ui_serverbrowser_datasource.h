@@ -221,13 +221,10 @@ namespace WSWUI {
 		typedef std::list<ActiveQuery> ActiveList;
 
 		ActiveList activeQueries;
-		// owner
-		ServerBrowserDataSource *serverBrowser;
 
 	public:
-		ServerInfoFetcher(ServerBrowserDataSource *_serverBrowser)
-			: serverBrowser( _serverBrowser ), 
-			lastQueryTime( 0 ), numIssuedQueries( 0 )
+		ServerInfoFetcher()
+			: lastQueryTime( 0 ), numIssuedQueries( 0 )
 		{}
 		~ServerInfoFetcher() {}
 

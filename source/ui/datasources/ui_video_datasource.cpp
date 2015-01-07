@@ -32,8 +32,7 @@ namespace WSWUI
 {
 
 VideoDataSource::VideoDataSource( void ) :
-	Rocket::Controls::DataSource( VIDEO_SOURCE ), 
-		wideScreen( false )
+	Rocket::Controls::DataSource( VIDEO_SOURCE )
 {
 	updateVideoModeList();
 }
