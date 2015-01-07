@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef __ANDROID_SYS_H
-#define __ANDROID_SYS_H
+#ifndef ANDROID_SYS_H
+#define ANDROID_SYS_H
 
 #include "../qcommon/qcommon.h"
 #include "../client/client.h"
@@ -33,4 +33,4 @@ extern char sys_android_packageName[];
 
 JNIEnv *Sys_Android_GetJNIEnv( void );
 
-#endif // __ANDROID_SYS_H
+#endif // ANDROID_SYS_H
