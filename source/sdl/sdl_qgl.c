@@ -189,9 +189,11 @@ const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 #elif defined(_WIN32)
 		"opengl32.dll",
 		"gl_driver_win"
-#else
+#elif defined(__linux__)
 		"libGL.so.1",
 		"gl_driver_unix"
+#else
+		NULL, NULL
 #endif
 	};
 
