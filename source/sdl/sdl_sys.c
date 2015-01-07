@@ -17,7 +17,7 @@ void Sys_Error( const char *format, ... )
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
 
-	SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "qfusion", msg, NULL );
+	SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, APPLICATION, msg, NULL );
 
 	Qcommon_Shutdown();
 
