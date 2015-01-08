@@ -40,6 +40,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../libsrcs/libpng"
         "../libsrcs/libjpeg"
         "../libsrcs/libRocket/libRocket/Include"
+        "../libsrcs/SDL2/include"
     )
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
@@ -156,6 +157,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_windows_release_libs(CURL_LIBRARY)
     find_windows_release_libs(ANGELSCRIPT_LIBRARY)
     find_windows_release_libs(LIBROCKET_LIBRARIES)
+    find_windows_release_libs(SDL2_LIBRARIES)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")

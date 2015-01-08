@@ -35,6 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MINIMUM_WIN_MEMORY  0x0a00000
 #define MAXIMUM_WIN_MEMORY  0x1000000
 
+#if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+
 int starttime;
 int ActiveApp;
 int Minimized;
@@ -208,6 +210,8 @@ void Sys_SendKeyEvents( void )
 	sys_frame_time = timeGetTime(); // FIXME: should this be at start?
 }
 
+#endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)
+
 /*
 * Sys_OpenURLInBrowser
 */
@@ -271,6 +275,8 @@ const char *Sys_GetPreferredLanguage( void )
 	}
 	return Q_strlwr( lang );
 }
+
+#if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
 
 /*
 * Sys_AcquireWakeLock
@@ -510,3 +516,5 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	// never gets here
 	return TRUE;
 }
+
+#endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)

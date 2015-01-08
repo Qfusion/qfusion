@@ -25,14 +25,14 @@
 
 typedef struct
 {
-    char *applicationName;
+	char *applicationName;
 
-    SDL_Window* sdl_window;
-    SDL_GLContext sdl_glcontext;
+	SDL_Window *sdl_window;
+	SDL_GLContext sdl_glcontext;
 
-    void *OpenGLLib; // instance of OpenGL library
+	void *OpenGLLib; // instance of OpenGL library
 
-    int win_x, win_y;
+	int win_x, win_y;
 } glwstate_t;
 
 extern glwstate_t glw_state;
