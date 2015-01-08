@@ -67,6 +67,7 @@ void BindFrame( ASInterface *as )
 void BindShutdown( ASInterface *as )
 {
 	UnbindWindow();
+	UnbindMatchMaker();
 }
 
 }

@@ -98,7 +98,6 @@ public:
 
 	void addEventListener( const asstring_t &event, asIScriptFunction *func ) {
 		EventCallback cb = ASBind::CreateFunctionPtr( func, cb );
-		cb.addref();
 
 		Listener l( ASSTR( event ), cb );
 		listeners.push_back( l );
@@ -106,6 +105,7 @@ public:
 
 	void removeEventListener( const asstring_t &event, asIScriptFunction *func ) {
 		Listener l( ASSTR( event ), func );
+
 		for( ListenersList::iterator it = listeners.begin(); it != listeners.end(); ++it ) {
 			if( it->first == l.first && it->second.getPtr() == func ) {
 				listeners.erase(it);
@@ -113,6 +113,8 @@ public:
 				break;
 			}
 		}
+
+		func->Release();
 	}
 
 private:
