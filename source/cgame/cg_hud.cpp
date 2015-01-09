@@ -1634,6 +1634,28 @@ static bool CG_LFuncCursor( struct cg_layoutnode_s *commandnode, struct cg_layou
 	return true;
 }
 
+static bool CG_LFuncCursorX( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float x;
+
+	x = CG_GetNumericArg( &argumentnode );
+	x = SCALE_X( x );
+
+	layout_cursor_x = Q_rint( x );
+	return true;
+}
+
+static bool CG_LFuncCursorY( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float y;
+
+	y = CG_GetNumericArg( &argumentnode );
+	y = SCALE_Y( y );
+
+	layout_cursor_y = Q_rint( y );
+	return true;
+}
+
 static bool CG_LFuncMoveCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	float x, y;
@@ -1658,6 +1680,28 @@ static bool CG_LFuncSize( struct cg_layoutnode_s *commandnode, struct cg_layoutn
 	y = SCALE_Y( y );
 
 	layout_cursor_width = Q_rint( x );
+	layout_cursor_height = Q_rint( y );
+	return true;
+}
+
+static bool CG_LFuncSizeWidth( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float x;
+
+	x = CG_GetNumericArg( &argumentnode );
+	x = SCALE_X( x );
+
+	layout_cursor_width = Q_rint( x );
+	return true;
+}
+
+static bool CG_LFuncSizeHeight( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float y;
+
+	y = CG_GetNumericArg( &argumentnode );
+	y = SCALE_Y( y );
+
 	layout_cursor_height = Q_rint( y );
 	return true;
 }
@@ -2226,7 +2270,9 @@ static void CG_MoveUpFunc( int id )
 static bool CG_LFuncTouchMove( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int touch = CG_TouchArea( TOUCHAREA_HUD_MOVE,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_MoveUpFunc );
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, CG_MoveUpFunc );
 	if( touch >= 0 )
 		CG_SetTouchpad( TOUCHPAD_MOVE, touch );
 	return true;
@@ -2240,7 +2286,9 @@ static void CG_ViewUpFunc( int id )
 static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int touch = CG_TouchArea( TOUCHAREA_HUD_VIEW,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_ViewUpFunc );
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, CG_ViewUpFunc );
 	if( touch >= 0 )
 		CG_SetTouchpad( TOUCHPAD_VIEW, touch );
 	return true;
@@ -2254,16 +2302,24 @@ static void CG_UpmoveUpFunc( int id )
 static bool CG_LFuncTouchJump( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_JUMP,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 )
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 )
+	{
 		cg_hud_touch_upmove = 1;
+	}
 	return true;
 }
 
 static bool CG_LFuncTouchCrouch( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_CROUCH,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 )
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, CG_UpmoveUpFunc ) >= 0 )
+	{
 		cg_hud_touch_upmove = -1;
+	}
 	return true;
 }
 
@@ -2275,8 +2331,12 @@ static void CG_AttackUpFunc( int id )
 static bool CG_LFuncTouchAttack( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_ATTACK,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_AttackUpFunc ) >= 0 )
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, CG_AttackUpFunc ) >= 0 )
+	{
 		cg_hud_touch_buttons |= BUTTON_ATTACK;
+	}
 	return true;
 }
 
@@ -2288,16 +2348,24 @@ static void CG_SpecialUpFunc( int id )
 static bool CG_LFuncTouchSpecial( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_SPECIAL,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, CG_SpecialUpFunc ) >= 0 )
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, CG_SpecialUpFunc ) >= 0 )
+	{
 		cg_hud_touch_buttons |= BUTTON_SPECIAL;
+	}
 	return true;
 }
 
 static bool CG_LFuncTouchClassAction( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	if( CG_TouchArea( TOUCHAREA_HUD_CLASSACTION,
-		layout_cursor_x, layout_cursor_y, layout_cursor_width, layout_cursor_height, NULL ) >= 0 )
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, NULL ) >= 0 )
+	{
 		trap_Cmd_ExecuteText( EXEC_NOW, va( "classAction%i", ( int )CG_GetNumericArg( &argumentnode ) ) );
+	}
 	return true;
 }
 
@@ -2339,7 +2407,25 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	},
 
 	{
-		"MoveCursor",
+		"setCursorX",
+		CG_LFuncCursorX,
+		CG_LFuncCursorX,
+		1,
+		"Sets the cursor x position.",
+		false
+	},
+
+	{
+		"setCursorY",
+		CG_LFuncCursorY,
+		CG_LFuncCursorY,
+		1,
+		"Sets the cursor y position.",
+		false
+	},
+
+	{
+		"moveCursor",
 		CG_LFuncMoveCursor,
 		CG_LFuncMoveCursor,
 		2,
@@ -2362,6 +2448,24 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncSize,
 		2,
 		"Sets width and height. Used for pictures and models.",
+		false
+	},
+
+	{
+		"setWidth",
+		CG_LFuncSizeWidth,
+		CG_LFuncSizeWidth,
+		1,
+		"Sets width. Used for pictures and models.",
+		false
+	},
+
+	{
+		"setHeight",
+		CG_LFuncSizeHeight,
+		CG_LFuncSizeHeight,
+		1,
+		"Sets height. Used for pictures and models.",
 		false
 	},
 
