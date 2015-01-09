@@ -47,11 +47,14 @@ void CrosshairDataSource::UpdateCrosshairList( void )
 {
 	crosshairList.clear();
 
-	for( int i = 0; i < NUMBER_OF_CROSSHAIRS; i++ )
+	CrossHair noCrosshair( "0", "/" PATH_VSAY_NO_ICON );
+	crosshairList.push_back( noCrosshair );
+	NotifyRowAdd( TABLE_NAME, 0, 1 );
+
+	for( int i = 1; i < NUMBER_OF_CROSSHAIRS; i++ )
 	{
 		CrossHair c( toString( i ), va( "/gfx/hud/crosshair%i.tga", i ) );
 		crosshairList.push_back( c );
-
 		NotifyRowAdd( TABLE_NAME, i, 1 );
 	}
 }
