@@ -106,22 +106,22 @@ typedef struct snd_ogg_stream_s snd_ogg_stream_t;
 
 struct snd_ogg_stream_s
 {
-	OggVorbis_File vorbisfile;
+	OggVorbis_File *vorbisfile;
 	int filenum;
 };
 
-static qboolean read_ogg_header( OggVorbis_File vorbisfile, snd_info_t *info )
+static qboolean read_ogg_header( OggVorbis_File *vorbisfile, snd_info_t *info )
 {
 	vorbis_info *vorbisinfo;
 
-	vorbisinfo = qov_info( &vorbisfile, -1 );
+	vorbisinfo = qov_info( vorbisfile, -1 );
 	if( !vorbisinfo )
 		return qfalse;
 
 	info->rate = vorbisinfo->rate;
 	info->width = 2;
 	info->channels = vorbisinfo->channels;
-	info->samples = qov_pcm_total( &vorbisfile, -1 );
+	info->samples = qov_pcm_total( vorbisfile, -1 );
 	info->size = info->samples * info->channels * info->width;
 
 	return qtrue;
@@ -245,7 +245,7 @@ void *decoder_ogg_load( const char *filename, snd_info_t *info )
 		return NULL;
 	}
 
-	if( !read_ogg_header( vorbisfile, info ) )
+	if( !read_ogg_header( &vorbisfile, info ) )
 	{
 		Com_Printf( "Error reading .ogg file header: %s\n", filename );
 		qov_clear( &vorbisfile ); // Does FS_FCloseFile
@@ -294,7 +294,9 @@ snd_stream_t *decoder_ogg_open( const char *filename, qboolean *delay )
 
 	stream->isUrl = trap_FS_IsUrl( filename );
 	stream->ptr = S_Malloc( sizeof( snd_ogg_stream_t ) );
+
 	ogg_stream = (snd_ogg_stream_t *)stream->ptr;
+	ogg_stream->vorbisfile = NULL;
 
 	trap_FS_FOpenFile( filename, &ogg_stream->filenum, FS_READ|FS_NOSIZE );
 	if( !ogg_stream->filenum )
@@ -327,6 +329,7 @@ qboolean decoder_ogg_cont_open( snd_stream_t *stream )
 	ov_callbacks callbacks = { ovcb_read, ovcb_seek, ovcb_close, ovcb_tell };
 
 	ogg_stream = (snd_ogg_stream_t *)stream->ptr;
+	ogg_stream->vorbisfile = S_Malloc( sizeof( *ogg_stream->vorbisfile ) );
 
 	if( stream->isUrl )
 	{
@@ -334,14 +337,14 @@ qboolean decoder_ogg_cont_open( snd_stream_t *stream )
 		callbacks.tell_func = NULL;
 	}
 
-	if( qov_open_callbacks( (void *) (qintptr) ogg_stream->filenum, &ogg_stream->vorbisfile, NULL, 0, callbacks ) < 0 )
+	if( qov_open_callbacks( (void *) (qintptr) ogg_stream->filenum, ogg_stream->vorbisfile, NULL, 0, callbacks ) < 0 )
 	{
 		Com_Printf( "Couldn't open .ogg file for reading\n" );
 		trap_FS_FCloseFile( ogg_stream->filenum );
 		return qfalse;
 	}
 
-	if( callbacks.seek_func && !qov_seekable( &ogg_stream->vorbisfile ) )
+	if( callbacks.seek_func && !qov_seekable( ogg_stream->vorbisfile ) )
 	{
 		Com_Printf( "Error unsupported .ogg file (not seekable)\n" );
 		return qfalse;
@@ -365,10 +368,10 @@ int decoder_ogg_read( snd_stream_t *stream, int bytes, void *buffer )
 	do
 	{
 #ifdef ENDIAN_BIG
-		bytes_read = qov_read( &ogg_stream->vorbisfile, (char *)buffer+bytes_read_total, bytes-bytes_read_total, 1, 2, 1,
+		bytes_read = qov_read( ogg_stream->vorbisfile, (char *)buffer+bytes_read_total, bytes-bytes_read_total, 1, 2, 1,
 			&bitstream );
 #elif defined (ENDIAN_LITTLE)
-		bytes_read = qov_read( &ogg_stream->vorbisfile, (char *)buffer+bytes_read_total, bytes-bytes_read_total, 0, 2, 1,
+		bytes_read = qov_read( ogg_stream->vorbisfile, (char *)buffer+bytes_read_total, bytes-bytes_read_total, 0, 2, 1,
 			&bitstream );
 #else
 #error "runtime endianess detection support missing"
@@ -394,7 +397,15 @@ void decoder_ogg_close( snd_stream_t *stream )
 {
 	snd_ogg_stream_t *ogg_stream = (snd_ogg_stream_t *)stream->ptr;
 
-	qov_clear( &ogg_stream->vorbisfile ); // Does FS_FCloseFile
+	if( ogg_stream->vorbisfile ) {
+		qov_clear( ogg_stream->vorbisfile ); // Does FS_FCloseFile
+		S_Free( ogg_stream->vorbisfile );
+	}
+	else if( ogg_stream->filenum ) {
+		trap_FS_FCloseFile( ogg_stream->filenum );
+	}
+	ogg_stream->vorbisfile = NULL;
+	ogg_stream->filenum = 0;
 	decoder_ogg_stream_shutdown( stream );
 }
 
