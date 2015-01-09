@@ -1634,6 +1634,28 @@ static bool CG_LFuncCursor( struct cg_layoutnode_s *commandnode, struct cg_layou
 	return true;
 }
 
+static bool CG_LFuncCursorX( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float x;
+
+	x = CG_GetNumericArg( &argumentnode );
+	x = SCALE_X( x );
+
+	layout_cursor_x = Q_rint( x );
+	return true;
+}
+
+static bool CG_LFuncCursorY( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float y;
+
+	y = CG_GetNumericArg( &argumentnode );
+	y = SCALE_Y( y );
+
+	layout_cursor_y = Q_rint( y );
+	return true;
+}
+
 static bool CG_LFuncMoveCursor( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	float x, y;
@@ -1658,6 +1680,28 @@ static bool CG_LFuncSize( struct cg_layoutnode_s *commandnode, struct cg_layoutn
 	y = SCALE_Y( y );
 
 	layout_cursor_width = Q_rint( x );
+	layout_cursor_height = Q_rint( y );
+	return true;
+}
+
+static bool CG_LFuncSizeWidth( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float x;
+
+	x = CG_GetNumericArg( &argumentnode );
+	x = SCALE_X( x );
+
+	layout_cursor_width = Q_rint( x );
+	return true;
+}
+
+static bool CG_LFuncSizeHeight( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float y;
+
+	y = CG_GetNumericArg( &argumentnode );
+	y = SCALE_Y( y );
+
 	layout_cursor_height = Q_rint( y );
 	return true;
 }
@@ -2363,7 +2407,25 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	},
 
 	{
-		"MoveCursor",
+		"setCursorX",
+		CG_LFuncCursorX,
+		CG_LFuncCursorX,
+		1,
+		"Sets the cursor x position.",
+		false
+	},
+
+	{
+		"setCursorY",
+		CG_LFuncCursorY,
+		CG_LFuncCursorY,
+		1,
+		"Sets the cursor y position.",
+		false
+	},
+
+	{
+		"moveCursor",
 		CG_LFuncMoveCursor,
 		CG_LFuncMoveCursor,
 		2,
@@ -2386,6 +2448,24 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncSize,
 		2,
 		"Sets width and height. Used for pictures and models.",
+		false
+	},
+
+	{
+		"setWidth",
+		CG_LFuncSizeWidth,
+		CG_LFuncSizeWidth,
+		1,
+		"Sets width. Used for pictures and models.",
+		false
+	},
+
+	{
+		"setHeight",
+		CG_LFuncSizeHeight,
+		CG_LFuncSizeHeight,
+		1,
+		"Sets height. Used for pictures and models.",
 		false
 	},
 
