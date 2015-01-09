@@ -541,7 +541,7 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 	if( !on )
 		color[3] = 0.5f;
 
-	trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.shaderKeyIconOn[i] ) );
+	trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.shaderKeyIcon[i] ) );
 }
 
 /*
