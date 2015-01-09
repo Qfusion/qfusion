@@ -217,8 +217,9 @@ static Element *Element_SetCSS(Element *self, const asstring_t &prop, const asst
 	_RETREF(self);
 }
 
-static asstring_t *Element_GetCSS(Element *self, const asstring_t &prop) {
-	return ASSTR( self->GetProperty<String>( ASSTR(prop) ) );
+static asstring_t *Element_GetCSS(Element *self, const asstring_t &name) {
+	const Property* prop = self->GetProperty( ASSTR( name ) );
+	return ASSTR( prop ? prop->ToString() : "" );
 }
 
 // NODES
