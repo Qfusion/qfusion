@@ -516,6 +516,7 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 	int i;
 	qbyte on = 0;
 	usercmd_t cmd;
+	vec4_t color;
 
 	if( !cg_showPressedKeys->integer && !cgs.demoTutorial )
 		return;
@@ -536,10 +537,11 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 	if( cg.predictedPlayerState.plrkeys & ( 1 << i ) )
 		on = 1;
 
-	if( on )
-		trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderKeyIconOn[i] ) );
-	else
-		trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderKeyIconOff[i] ) );
+	Vector4Copy( colorWhite, color );
+	if( !on )
+		color[3] = 0.5f;
+
+	trap_R_DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.shaderKeyIconOn[i] ) );
 }
 
 /*
