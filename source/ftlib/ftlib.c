@@ -526,6 +526,8 @@ static void QFT_LoadFamilyFromFile( const char *name, const char *fileName, qboo
 	QFT_LoadFamily( name, buffer, length, verbose );
 
 	FTLIB_Free( buffer );
+
+	trap_FS_FCloseFile( fileNum );
 }
 
 /*
