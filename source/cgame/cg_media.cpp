@@ -386,22 +386,14 @@ void CG_RegisterMediaShaders( void )
 	cgs.media.shaderNoGunWeaponIcon[WEAP_INSTAGUN-1] = CG_RegisterMediaShader( PATH_NG_INSTAGUN_ICON, true );
 
 	// Kurim : keyicons
-	cgs.media.shaderKeyIconOn[KEYICON_FORWARD] = CG_RegisterMediaShader( PATH_KEYICON_FORWARD_ON, true );
-	cgs.media.shaderKeyIconOn[KEYICON_BACKWARD] = CG_RegisterMediaShader( PATH_KEYICON_BACKWARD_ON, true );
-	cgs.media.shaderKeyIconOn[KEYICON_LEFT] = CG_RegisterMediaShader( PATH_KEYICON_LEFT_ON, true );
-	cgs.media.shaderKeyIconOn[KEYICON_RIGHT] = CG_RegisterMediaShader( PATH_KEYICON_RIGHT_ON, true );
-	cgs.media.shaderKeyIconOn[KEYICON_FIRE] = CG_RegisterMediaShader( PATH_KEYICON_FIRE_ON, true );
-	cgs.media.shaderKeyIconOn[KEYICON_JUMP] = CG_RegisterMediaShader( PATH_KEYICON_JUMP_ON, true );
-	cgs.media.shaderKeyIconOn[KEYICON_CROUCH] = CG_RegisterMediaShader( PATH_KEYICON_CROUCH_ON, true );
-	cgs.media.shaderKeyIconOn[KEYICON_SPECIAL] = CG_RegisterMediaShader( PATH_KEYICON_SPECIAL_ON, true );
-	cgs.media.shaderKeyIconOff[KEYICON_FORWARD] = CG_RegisterMediaShader( PATH_KEYICON_FORWARD_OFF, true );
-	cgs.media.shaderKeyIconOff[KEYICON_BACKWARD] = CG_RegisterMediaShader( PATH_KEYICON_BACKWARD_OFF, true );
-	cgs.media.shaderKeyIconOff[KEYICON_LEFT] = CG_RegisterMediaShader( PATH_KEYICON_LEFT_OFF, true );
-	cgs.media.shaderKeyIconOff[KEYICON_RIGHT] = CG_RegisterMediaShader( PATH_KEYICON_RIGHT_OFF, true );
-	cgs.media.shaderKeyIconOff[KEYICON_FIRE] = CG_RegisterMediaShader( PATH_KEYICON_FIRE_OFF, true );
-	cgs.media.shaderKeyIconOff[KEYICON_JUMP] = CG_RegisterMediaShader( PATH_KEYICON_JUMP_OFF, true );
-	cgs.media.shaderKeyIconOff[KEYICON_CROUCH] = CG_RegisterMediaShader( PATH_KEYICON_CROUCH_OFF, true );
-	cgs.media.shaderKeyIconOff[KEYICON_SPECIAL] = CG_RegisterMediaShader( PATH_KEYICON_SPECIAL_OFF, true );
+	cgs.media.shaderKeyIcon[KEYICON_FORWARD] = CG_RegisterMediaShader( PATH_KEYICON_FORWARD, true );
+	cgs.media.shaderKeyIcon[KEYICON_BACKWARD] = CG_RegisterMediaShader( PATH_KEYICON_BACKWARD, true );
+	cgs.media.shaderKeyIcon[KEYICON_LEFT] = CG_RegisterMediaShader( PATH_KEYICON_LEFT, true );
+	cgs.media.shaderKeyIcon[KEYICON_RIGHT] = CG_RegisterMediaShader( PATH_KEYICON_RIGHT, true );
+	cgs.media.shaderKeyIcon[KEYICON_FIRE] = CG_RegisterMediaShader( PATH_KEYICON_FIRE, true );
+	cgs.media.shaderKeyIcon[KEYICON_JUMP] = CG_RegisterMediaShader( PATH_KEYICON_JUMP, true );
+	cgs.media.shaderKeyIcon[KEYICON_CROUCH] = CG_RegisterMediaShader( PATH_KEYICON_CROUCH, true );
+	cgs.media.shaderKeyIcon[KEYICON_SPECIAL] = CG_RegisterMediaShader( PATH_KEYICON_SPECIAL, true );
 
 	cgs.media.shaderSbNums = CG_RegisterMediaShader( "gfx/hud/sbnums", true );
 	for( i = 0; i < NUM_CROSSHAIRS; i++ )

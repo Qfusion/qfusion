@@ -299,8 +299,7 @@ typedef struct
 	cgs_media_handle_t *shaderWeaponIcon[WEAP_TOTAL];
 	cgs_media_handle_t *shaderNoGunWeaponIcon[WEAP_TOTAL];
 
-	cgs_media_handle_t *shaderKeyIconOn[KEYICON_TOTAL];
-	cgs_media_handle_t *shaderKeyIconOff[KEYICON_TOTAL];
+	cgs_media_handle_t *shaderKeyIcon[KEYICON_TOTAL];
 
 	//no wsw
 
