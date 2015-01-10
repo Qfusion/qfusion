@@ -1,6 +1,10 @@
 #include <SDL.h>
 #include "../client/client.h"
 
+#if defined( _WIN32 )
+#include "../win32/resource.h"
+#endif
+
 #if defined( __APPLE__ )
 #include <CoreFoundation/CoreFoundation.h>
 #include <sys/param.h>
@@ -108,8 +112,12 @@ int main( int argc, char **argv )
 	chdir( resourcesPath );
 #endif
 
-	SDL_Init( SDL_INIT_VIDEO );
+#if defined( __WIN32__ )
+	SDL_SetHint( SDL_HINT_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE, va( "%d", IDI_APPICON_VALUE ) );
+#endif
 
+	SDL_Init( SDL_INIT_VIDEO );
+	
 	Qcommon_Init( argc, argv );
 
 	oldtime = Sys_Milliseconds();

@@ -1,0 +1,44 @@
+diff --git a/libsrcs/SDL2/include/SDL_hints.h b/libsrcs/SDL2/include/SDL_hints.h
+index 673d347..d80767d 100644
+--- a/libsrcs/SDL2/include/SDL_hints.h
++++ b/libsrcs/SDL2/include/SDL_hints.h
+@@ -533,6 +533,11 @@ extern "C" {
+ #define SDL_HINT_IME_INTERNAL_EDITING "SDL_IME_INTERNAL_EDITING"
+ 
+ /**
++ * \brief A variable to specify custom icon resource id from RC file on Windows platform 
++ */
++#define SDL_HINT_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE "SDL_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE"
++
++/**
+  *  \brief  An enumeration of hint priorities
+  */
+ typedef enum
+diff --git a/libsrcs/SDL2/src/video/windows/SDL_windowsevents.c b/libsrcs/SDL2/src/video/windows/SDL_windowsevents.c
+index 9f2eff3..67a33fa 100644
+--- a/libsrcs/SDL2/src/video/windows/SDL_windowsevents.c
++++ b/libsrcs/SDL2/src/video/windows/SDL_windowsevents.c
+@@ -27,6 +27,7 @@
+ #include "SDL_syswm.h"
+ #include "SDL_timer.h"
+ #include "SDL_vkeys.h"
++#include "SDL_hints.h"
+ #include "../../events/SDL_events_c.h"
+ #include "../../events/SDL_touch_c.h"
+ #include "../../events/scancodes_windows.h"
+@@ -989,9 +990,12 @@ SDL_RegisterApp(char *name, Uint32 style, void *hInst)
+ 
+     /* Register the application class */
+     class.hCursor = NULL;
+-    class.hIcon =
+-        LoadImage(SDL_Instance, SDL_Appname, IMAGE_ICON, 0, 0,
+-                  LR_DEFAULTCOLOR);
++    const char *hint = SDL_GetHint(SDL_HINT_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE);
++    if (hint) {
++        class.hIcon = LoadIcon(SDL_Instance, MAKEINTRESOURCE(SDL_atoi(hint)));
++    } else {
++        class.hIcon = LoadImage(SDL_Instance, SDL_Appname, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
++    }
+     class.lpszMenuName = NULL;
+     class.lpszClassName = SDL_Appname;
+     class.hbrBackground = NULL;

@@ -533,6 +533,11 @@ extern "C" {
 #define SDL_HINT_IME_INTERNAL_EDITING "SDL_IME_INTERNAL_EDITING"
 
 /**
+ * \brief A variable to specify custom icon resource id from RC file on Windows platform 
+ */
+#define SDL_HINT_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE "SDL_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE"
+
+/**
  *  \brief  An enumeration of hint priorities
  */
 typedef enum

@@ -27,6 +27,7 @@
 #include "SDL_syswm.h"
 #include "SDL_timer.h"
 #include "SDL_vkeys.h"
+#include "SDL_hints.h"
 #include "../../events/SDL_events_c.h"
 #include "../../events/SDL_touch_c.h"
 #include "../../events/scancodes_windows.h"
@@ -989,9 +990,12 @@ SDL_RegisterApp(char *name, Uint32 style, void *hInst)
 
     /* Register the application class */
     class.hCursor = NULL;
-    class.hIcon =
-        LoadImage(SDL_Instance, SDL_Appname, IMAGE_ICON, 0, 0,
-                  LR_DEFAULTCOLOR);
+    const char *hint = SDL_GetHint(SDL_HINT_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE);
+    if (hint) {
+        class.hIcon = LoadIcon(SDL_Instance, MAKEINTRESOURCE(SDL_atoi(hint)));
+    } else {
+        class.hIcon = LoadImage(SDL_Instance, SDL_Appname, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+    }
     class.lpszMenuName = NULL;
     class.lpszClassName = SDL_Appname;
     class.hbrBackground = NULL;
