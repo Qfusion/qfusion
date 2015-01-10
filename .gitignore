@@ -13,7 +13,7 @@ libsrcs/libRocket/libRocket/Build/obj/
 *.vcxproj.user
 *.suo
 
-# ignore cmake generated files
+# Ignore cmake generated files
 **/CMakeCache.txt
 **/CPackConfig.cmake
 **/CPackSourceConfig.cmake
@@ -23,3 +23,13 @@ libsrcs/libRocket/libRocket/Build/obj/
 **/*.xcodeproj
 **/Makefile
 *cmake_install.cmake
+
+# Ignore windows cmake generated files
+**/*.dir/
+
+# Ignore SDL2 build files
+libsrcs/SDL2/VisualC/Win32
+libsrcs/SDL2/VisualC/SDL/Win32
+libsrcs/SDL2/VisualC/SDLmain/Win32
+libsrcs/SDL2/VisualC/SDLtest/Win32
+libsrcs/SDL2/VisualC/tests/*/Win32
