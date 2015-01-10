@@ -1994,7 +1994,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	hnode = &images_hash_headnode[key];
 	for( image = hnode->prev; image != hnode; image = image->prev )
 	{
-		if( ( ( image->flags & flags ) == flags ) && !strcmp( image->name, pathname ) ) {
+		if( image->flags == flags && !strcmp( image->name, pathname ) ) {
 			R_TouchImage( image );
 			return image;
 		}
