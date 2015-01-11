@@ -1417,8 +1417,8 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 	if( cg_gibs->integer > 1 )
 	{
 		time = 50;
-		count = 28 + cg_gibs->integer; // 30 models minimum
-		clamp( count, 25, 128 );
+		count = 13 + cg_gibs->integer; // 30 models minimum
+		clamp( count, 14, 128 );
 
 		for( i = 0; i < count; i++ )
 		{
@@ -1453,7 +1453,7 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 			// random rotation and scale variations
 			VectorSet( angles, crandom() * 360, crandom() * 360, crandom() * 360 );
 			AnglesToAxis( angles, le->ent.axis );
-			le->ent.scale = 0.6f - ( random() * 0.25 );
+			le->ent.scale = 0.8f - ( random() * 0.25 );
 			le->ent.renderfx = RF_FULLBRIGHT|RF_NOSHADOW;
 
 			velocity[0] = crandom() * damage * 100;
