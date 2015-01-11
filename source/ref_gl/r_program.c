@@ -343,6 +343,10 @@ static void RP_PrecachePrograms( void )
 	}
 
 	R_FreeFile( buffer );
+
+	if( handleBin ) {
+		ri.FS_FCloseFile( handleBin );
+	}
 }
 
 
