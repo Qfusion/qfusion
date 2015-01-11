@@ -442,8 +442,6 @@ typedef struct
 	struct qfontface_s *fontSystemMedium;
 	struct qfontface_s *fontSystemBig;
 
-	int initialSharedSeed;
-
 	cgs_media_t media;
 
 	bool precacheDone;
@@ -520,8 +518,6 @@ typedef struct
 	unsigned int firstViewRealTime;
 	int viewFrameCount;
 	bool startedMusic;
-
-	int sharedSeed;
 
 	snapshot_t frame, oldFrame;
 	bool frameSequenceRunning;

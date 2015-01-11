@@ -982,6 +982,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	CG_Printf( S_COLOR_MAGENTA"Hi, I'm an unpure bitch 7\n" );
 #endif
 
+	srand( time( NULL ) );
+
 	// save server name
 	cgs.serverName = CG_CopyString( serverName );
 
@@ -1007,9 +1009,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	// game protocol number
 	cgs.gameProtocol = protocol;
 	cgs.snapFrameTime = snapFrameTime;
-
-	cgs.initialSharedSeed = sharedSeed;
-	cg.sharedSeed = cgs.initialSharedSeed;
 
 	cgs.hasGametypeMenu = false; // this will update as soon as we receive configstrings
 
