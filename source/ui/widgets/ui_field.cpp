@@ -67,16 +67,21 @@ void ElementField::OnAttributeChange( const Rocket::Core::AttributeNameList& cha
 	// Check for value change. Apply formatter.
 	it = changed_attributes.find( "value" );
 	if( it != changed_attributes.end() || formatterChanged ) {
-		String formatted = "";
-		StringList raw_data;
-
-		raw_data.push_back( GetAttribute< String >("value", "") );
+		String value = GetAttribute< String >("value", "");
 
 		if( data_formatter ) {
-			data_formatter->FormatData( formatted, raw_data );
-		}
+			String formatted = "";
+			StringList raw_data;
 
-		SetInnerRML( formatted );
+			raw_data.push_back( value );
+
+			data_formatter->FormatData( formatted, raw_data );
+
+			SetInnerRML( formatted );
+		}
+		else {
+			SetInnerRML( value );
+		}
 	}
 }
 

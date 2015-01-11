@@ -270,6 +270,9 @@
     <ClCompile Include="widgets\ui_iframe.cpp">
       <Filter>Source Files\widgets</Filter>
     </ClCompile>
+    <ClCompile Include="widgets\ui_l10n.cpp">
+      <Filter>Source Files\widgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ui_public.h">
@@ -466,6 +469,9 @@
     </ClInclude>
     <ClInclude Include="parsers\ui_parsersound.h">
       <Filter>Header Files\parsers</Filter>
+    </ClInclude>
+    <ClInclude Include="widgets\ui_l10n.h">
+      <Filter>Header Files\widgets</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
