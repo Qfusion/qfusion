@@ -319,6 +319,7 @@ static podict_t *L10n_LoadPODict( const char *filepath )
 	podict->buffer = ( char * )( ( qbyte * )podict + sizeof( *podict ) );
 	FS_Read( podict->buffer, length, file );
 	podict->buffer[length] = '\0'; // safeguard
+	FS_FCloseFile( file );
 
 	podict->trie = L10n_ParsePOFile( filepath, podict->buffer, length );
 	return podict;
