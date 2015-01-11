@@ -418,6 +418,10 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 
 		G_PlayerAward( attacker, s );
 	}
+	else if( attacker->r.client->resp.awardInfo.frag_count == 1 )
+	{
+		G_PlayerAward( attacker, S_COLOR_YELLOW "First Frag!" );
+	}
 
 	// ch : weapon specific frags
 	if ( G_ModToAmmo( mod ) != AMMO_NONE )
