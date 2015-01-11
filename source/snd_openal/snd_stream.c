@@ -31,10 +31,10 @@ typedef struct
 	ALuint samples_length;
 } rawsrc_t;
 
-static size_t downmixbuf_size = 0;
-static qbyte *downmixbuf = NULL;
+static size_t splitmixbuf_size = 0;
+static qbyte *splitmixbuf = NULL;
 
-#define RAW_SOUND_ENTNUM	-2
+#define RAW_SOUND_ENTNUM	-9999
 #define MAX_RAW_SOUNDS		16
 
 static rawsrc_t raw_sounds[MAX_RAW_SOUNDS];
@@ -43,40 +43,40 @@ static rawsrc_t raw_sounds[MAX_RAW_SOUNDS];
 * Local helper functions
 */
 
-static const qbyte *downmix_stereo_to_mono( unsigned samples, int width, const qbyte *data )
+static const qbyte *split_stereo( unsigned samples, int width, const qbyte *data )
 {
 	unsigned i;
 	size_t buf_size;
 
-	buf_size = samples * width;
-	if( buf_size > downmixbuf_size ) {
-		if( downmixbuf )
-			S_Free( downmixbuf );
-		downmixbuf = S_Malloc( buf_size );
-		downmixbuf_size = buf_size;
+	buf_size = samples * width * 2;
+	if( buf_size > splitmixbuf_size ) {
+		if( splitmixbuf )
+			S_Free( splitmixbuf );
+		splitmixbuf = S_Malloc( buf_size );
+		splitmixbuf_size = buf_size;
 	}
 
 	if( width == 2 ) {
 		short *in = ( short * )data;
-		short *out = ( short * )downmixbuf;
+		short *out = ( short * )splitmixbuf;
 		for( i = 0; i < samples; i++ ) {
-			int m = (in[0] + in[1]) >> 1;
-			out[0] = (short)bound( -0x8000, m, 0x7fff );
-			in += 2;
+			out[0] = in[0];
+			out[samples] = in[1];
+			in+=2;
 			out++;
 		}
-		return downmixbuf;
+		return splitmixbuf;
 	}
 	else if( width == 1 ) {
 		qbyte *in = ( qbyte * )data;
-		qbyte *out = ( qbyte * )downmixbuf;
+		qbyte *out = ( qbyte * )splitmixbuf;
 		for( i = 0; i < samples; i++ ) {
-			int m = (in[0] + in[1]) >> 1;
-			out[0] = (short)bound( -0xff, m, 0x7f );
-			in += 2;
+			out[0] = in[0];
+			out[samples] = in[1];
+			in+=2;
 			out++;
 		}
-		return downmixbuf;
+		return splitmixbuf;
 	}
 	return data;
 }
@@ -297,15 +297,21 @@ void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
 	if( entnum < 0 ) {
 		entnum = 0;
 	}
-
-	// downmix stereo to mono because OpenAL doesn't spatialize stereo sources
-	if( attenuation > 0 && channels == 2 ) {
-		channels = 1;
-		data = downmix_stereo_to_mono( samples, width, data );
+	if( entnum == 0 ) {
+		attenuation = 0;
 	}
 
-	S_RawSamples_( entnum, fvol, attenuation, samples, rate, width, channels, data, 
-		s_volume );
+	// allocate separate sources because OpenAL doesn't spatialize stereo sounds
+	if( attenuation > 0 && channels == 2 ) {
+		const qbyte *split_data = split_stereo( samples, width, data );
+		const qbyte *left = split_data, *right = split_data + samples * width;
+
+		S_RawSamples_( entnum, fvol, attenuation, samples, rate, width, 1, left, s_volume );
+		S_RawSamples_( -entnum, fvol, attenuation, samples, rate, width, 1, right, s_volume );
+		return;
+	}
+
+	S_RawSamples_( entnum, fvol, attenuation, samples, rate, width, channels, data, s_volume );
 }
 
 /*
