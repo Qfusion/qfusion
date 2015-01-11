@@ -864,75 +864,6 @@ static rawsound_t *S_FindRawSound( int entnum, qboolean addNew )
 }
 
 /*
-* S_RawSamplesMono
-*/
-static unsigned int S_RawSamplesMono( portable_samplepair_t *rawsamples, unsigned int rawend,
-	unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const qbyte *data )
-{
-	int mono;
-	unsigned src, dst;
-	unsigned fracstep, samplefrac;
-
-	if( rawend < paintedtime )
-		rawend = paintedtime;
-
-	fracstep = ( (double) rate / (double) dma.speed ) * (double)(1 << S_RAW_SAMPLES_PRECISION_BITS);
-	samplefrac = 0;
-
-	if( width == 2 )
-	{
-		const short *in = (const short *)data;
-
-		if( channels == 2 )
-		{
-			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
-			{
-				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
-				mono = (in[src*2] + in[src*2+1])/2;
-				rawsamples[dst].left = mono;
-				rawsamples[dst].right = mono;
-			}
-		}
-		else
-		{
-			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
-			{
-				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
-				rawsamples[dst].left = in[src];
-				rawsamples[dst].right = in[src];
-			}
-		}
-	}
-	else
-	{
-		if( channels == 2 )
-		{
-			const char *in = (const char *)data;
-
-			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
-			{
-				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
-				mono = (in[src*2] + in[src*2+1]) << 7;
-				rawsamples[dst].left = mono;
-				rawsamples[dst].right = mono;
-			}
-		}
-		else
-		{
-			for( src = 0; src < samples; samplefrac += fracstep, src = ( samplefrac >> S_RAW_SAMPLES_PRECISION_BITS ) )
-			{
-				dst = rawend++ & ( MAX_RAW_SAMPLES - 1 );
-				rawsamples[dst].left = ( data[src] - 128 ) << 8;
-				rawsamples[dst].right = ( data[src] - 128 ) << 8;
-			}
-		}
-	}
-
-	return rawend;
-}
-
-/*
 * S_RawSamplesStereo
 */
 static unsigned int S_RawSamplesStereo( portable_samplepair_t *rawsamples, unsigned int rawend,
@@ -1072,7 +1003,7 @@ static void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
 
 	rawsound->volume = fvol * 255;
 	rawsound->attenuation = attenuation;
-	rawsound->rawend = S_RawSamplesMono( rawsound->rawsamples, rawsound->rawend, 
+	rawsound->rawend = S_RawSamplesStereo( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );
 }
 
