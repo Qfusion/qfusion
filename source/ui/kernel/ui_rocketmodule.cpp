@@ -317,6 +317,7 @@ void RocketModule::registerCustoms()
 	registerElement( "video", GetVideoInstancer() );
 	registerElement( "irclog", GetIrcLogWidgetInstancer() );
 	registerElement( "iframe", GetIFrameWidgetInstancer() );
+	registerElement( "l10n", GetElementL10nInstancer() );
 
 	//
 	// EVENTS

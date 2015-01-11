@@ -208,6 +208,7 @@
     <ClCompile Include="widgets\ui_image.cpp" />
     <ClCompile Include="widgets\ui_irc.cpp" />
     <ClCompile Include="widgets\ui_keyselect.cpp" />
+    <ClCompile Include="widgets\ui_l10n.cpp" />
     <ClCompile Include="widgets\ui_levelshot.cpp" />
     <ClCompile Include="widgets\ui_modelview.cpp" />
     <ClCompile Include="widgets\ui_optionsform.cpp" />
@@ -307,6 +308,7 @@
     <ClInclude Include="widgets\ui_idiv.h" />
     <ClInclude Include="widgets\ui_image.h" />
     <ClInclude Include="widgets\ui_keyselect.h" />
+    <ClInclude Include="widgets\ui_l10n.h" />
     <ClInclude Include="widgets\ui_levelshot.h" />
     <ClInclude Include="widgets\ui_optionsform.h" />
     <ClInclude Include="widgets\ui_video.h" />
