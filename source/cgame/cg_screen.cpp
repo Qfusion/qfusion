@@ -48,6 +48,7 @@ cvar_t *cg_debugLoading;
 cvar_t *cg_crosshair;
 cvar_t *cg_crosshair_size;
 cvar_t *cg_crosshair_color;
+cvar_t *cg_crosshair_font;
 
 cvar_t *cg_crosshair_strong;
 cvar_t *cg_crosshair_strong_size;
@@ -274,15 +275,16 @@ void CG_ScreenInit( void )
 	cg_weaponlist =		trap_Cvar_Get( "cg_weaponlist", "1", CVAR_ARCHIVE );
 
 	cg_crosshair =		trap_Cvar_Get( "cg_crosshair", "1", CVAR_ARCHIVE );
-	cg_crosshair_size =	trap_Cvar_Get( "cg_crosshair_size", "32", CVAR_ARCHIVE );
+	cg_crosshair_size =	trap_Cvar_Get( "cg_crosshair_size", "22", CVAR_ARCHIVE );
 	cg_crosshair_color =	trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
+	cg_crosshair_font =		trap_Cvar_Get( "cg_crosshair_font", "Warsow Crosshairs", CVAR_ARCHIVE );
 	cg_crosshair_damage_color =	trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
 	cg_crosshair_touch_size =	trap_Cvar_Get( "cg_crosshair_touch_size", "96", CVAR_ARCHIVE );
 	cg_crosshair_color->modified = qtrue;
 	cg_crosshair_damage_color->modified = qfalse;
 
 	cg_crosshair_strong =	    trap_Cvar_Get( "cg_crosshair_strong", "0", CVAR_ARCHIVE );
-	cg_crosshair_strong_size =  trap_Cvar_Get( "cg_crosshair_strong_size", "32", CVAR_ARCHIVE );
+	cg_crosshair_strong_size =  trap_Cvar_Get( "cg_crosshair_strong_size", "22", CVAR_ARCHIVE );
 	cg_crosshair_strong_color = trap_Cvar_Get( "cg_crosshair_strong_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_strong_color->modified = qtrue;
 
@@ -396,21 +398,21 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 
 	if( cg_crosshair->modified )
 	{
-		if( cg_crosshair->integer >= NUM_CROSSHAIRS || cg_crosshair->integer < 0 )
+		if( cg_crosshair->integer > 26 || cg_crosshair->integer < 0 )
 			trap_Cvar_Set( "cg_crosshair", "0" );
 		cg_crosshair->modified = qfalse;
 	}
 
 	if( cg_crosshair_size->modified )
 	{
-		if( cg_crosshair_size->integer < 0 || cg_crosshair_size->integer > 2000 )
+		if( cg_crosshair_size->integer <= 0 || cg_crosshair_size->integer > 64 )
 			trap_Cvar_Set( "cg_crosshair_size", "32" );
 		cg_crosshair_size->modified = qfalse;
 	}
 
 	if( cg_crosshair_touch_size->modified )
 	{
-		if( cg_crosshair_touch_size->integer < 0 || cg_crosshair_touch_size->integer > 2000 )
+		if( cg_crosshair_touch_size->integer <= 0 || cg_crosshair_touch_size->integer > 192 )
 			trap_Cvar_Set( "cg_crosshair_touch_size", "96" );
 		cg_crosshair_touch_size->modified = qfalse;
 	}
@@ -441,14 +443,14 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 
 	if( cg_crosshair_strong->modified )
 	{
-		if( cg_crosshair_strong->integer >= NUM_CROSSHAIRS || cg_crosshair_strong->integer < 0 )
+		if( cg_crosshair_strong->integer > 26 || cg_crosshair_strong->integer < 0 )
 			trap_Cvar_Set( "cg_crosshair_strong", "0" );
 		cg_crosshair_strong->modified = qfalse;
 	}
 
 	if( cg_crosshair_strong_size->modified )
 	{
-		if( cg_crosshair_strong_size->integer < 0 || cg_crosshair_strong_size->integer > 2000 )
+		if( cg_crosshair_strong_size->integer <= 0 || cg_crosshair_strong_size->integer > 64 )
 			trap_Cvar_Set( "cg_crosshair_strong_size", "32" );
 		cg_crosshair_strong_size->modified = qfalse;
 	}
@@ -472,27 +474,32 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		cg_crosshair_strong_color->modified = qfalse;
 	}
 
-	if( cg_crosshair_strong->integer )
+	if( !touch && cg_crosshair_strong->integer )
 	{
 		firedef_t *firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
 		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) // strong
 		{
-			int size = cg_crosshair_strong_size->integer * cgs.pixelRatio;
-			int sx, sy;
-			sx = CG_HorizontalAlignForWidth( x, align, size );
-			sy = CG_VerticalAlignForHeight( y, align, size );
+			int size = ceilf( cg_crosshair_strong_size->integer * (float)( cgs.vidHeight / 600.0f ) );
+			size += size & 1; // crosshairs are symmetric, so make their size even
+			int sx = CG_HorizontalAlignForWidth( x, align, size );
+			int sy = CG_VerticalAlignForHeight( y, align, size );
 
-			if( !touch )
+			struct qfontface_s *font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
+			if( !font )
 			{
-				trap_R_DrawStretchPic( sx, sy, size, size, 0, 0, 1, 1, chColorStrong,
-					CG_MediaShader( cgs.media.shaderCrosshair[cg_crosshair_strong->integer] ) );
+				trap_Cvar_Set( cg_crosshair_font->name, cg_crosshair_font->dvalue );
+				font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
 			}
+
+			trap_SCR_DrawRawChar( sx, sy, 'A' - 1 + cg_crosshair_strong->integer, font, colorBlack );
+			trap_SCR_DrawRawChar( sx, sy, 'a' - 1 + cg_crosshair_strong->integer, font, chColorStrong );
 		}
 	}
 
 	if( cg_crosshair->integer && cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE )
 	{
-		int size = cg_crosshair_size->integer * cgs.pixelRatio;
+		int size = ceilf( cg_crosshair_size->integer * (float)( cgs.vidHeight / 600.0f ) );
+		size += size & 1;
 		x = CG_HorizontalAlignForWidth( x, align, size );
 		y = CG_VerticalAlignForHeight( y, align, size );
 
@@ -505,8 +512,15 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		}
 		else
 		{
-			trap_R_DrawStretchPic( x, y, size, size, 0, 0, 1, 1, chColor,
-				CG_MediaShader( cgs.media.shaderCrosshair[cg_crosshair->integer] ) );
+			struct qfontface_s *font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
+			if( !font )
+			{
+				trap_Cvar_Set( cg_crosshair_font->name, cg_crosshair_font->dvalue );
+				font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
+			}
+
+			trap_SCR_DrawRawChar( x, y, 'A' - 1 + cg_crosshair->integer, font, colorBlack );
+			trap_SCR_DrawRawChar( x, y, 'a' - 1 + cg_crosshair->integer, font, chColor );
 		}
 	}
 }

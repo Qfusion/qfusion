@@ -518,6 +518,8 @@ void CL_GameModule_Init( void )
 	import.SCR_DrawString = SCR_DrawString;
 	import.SCR_DrawStringWidth = SCR_DrawStringWidth;
 	import.SCR_DrawClampString = SCR_DrawClampString;
+	import.SCR_DrawRawChar = SCR_DrawRawChar;
+	import.SCR_DrawClampChar = SCR_DrawClampChar;
 	import.SCR_strHeight = SCR_strHeight;
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
