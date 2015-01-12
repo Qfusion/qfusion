@@ -343,6 +343,8 @@ void RocketModule::registerCustoms()
 	//
 	// GLOBAL CUSTOM PROPERTIES
 
+	Rocket::Core::StyleSheetSpecification::RegisterProperty("background-music", "", false).AddParser("string");
+
 	Rocket::Core::StyleSheetSpecification::RegisterParser("sound", new PropertyParserSound());
 
 	Rocket::Core::StyleSheetSpecification::RegisterProperty("sound-hover", "", false)
