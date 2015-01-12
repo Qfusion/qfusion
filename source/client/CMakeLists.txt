@@ -115,6 +115,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../sdl/sdl_input.c"
             "../sdl/sdl_vid.c"
             "../sdl/sdl_sys.c"
+            "../sdl/sdl_clipboard.c"
+            "../sdl/sdl_time.c"
         )
 
         set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "m" "dl" "rt")
