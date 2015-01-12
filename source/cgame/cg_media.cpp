@@ -396,8 +396,6 @@ void CG_RegisterMediaShaders( void )
 	cgs.media.shaderKeyIcon[KEYICON_SPECIAL] = CG_RegisterMediaShader( PATH_KEYICON_SPECIAL, true );
 
 	cgs.media.shaderSbNums = CG_RegisterMediaShader( "gfx/hud/sbnums", true );
-	for( i = 0; i < NUM_CROSSHAIRS; i++ )
-		cgs.media.shaderCrosshair[i] = CG_RegisterMediaShader( va( "gfx/hud/crosshair%i", i ), true );
 
 	// VSAY icons
 	cgs.media.shaderVSayIcon[VSAY_GENERIC] = CG_RegisterMediaShader( PATH_VSAY_GENERIC_ICON, true );

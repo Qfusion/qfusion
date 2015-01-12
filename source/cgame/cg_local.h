@@ -304,7 +304,6 @@ typedef struct
 	//no wsw
 
 	cgs_media_handle_t *shaderSbNums;
-	cgs_media_handle_t *shaderCrosshair[NUM_CROSSHAIRS];
 
 	// VSAY icons
 	cgs_media_handle_t *shaderVSayIcon[VSAY_TOTAL];
