@@ -47,8 +47,8 @@ QF_DLL_EXPORT ftlib_export_t *GetFTLibAPI( ftlib_import_t *import )
 	globals.FontHeight = &FTLIB_fontHeight;
 	globals.StringWidth = &FTLIB_strWidth;
 	globals.StrlenForWidth = &FTLIB_StrlenForWidth;
-	globals.DrawRawChar = &FTLIB_DrawRawChar;
 	globals.DrawClampChar = &FTLIB_DrawClampChar;
+	globals.DrawRawChar = &FTLIB_DrawRawChar;
 	globals.DrawClampString = &FTLIB_DrawClampString;
 	globals.DrawRawString = &FTLIB_DrawRawString;
 
