@@ -275,7 +275,7 @@ void CG_ScreenInit( void )
 	cg_weaponlist =		trap_Cvar_Get( "cg_weaponlist", "1", CVAR_ARCHIVE );
 
 	cg_crosshair =		trap_Cvar_Get( "cg_crosshair", "1", CVAR_ARCHIVE );
-	cg_crosshair_size =	trap_Cvar_Get( "cg_crosshair_size", "22", CVAR_ARCHIVE );
+	cg_crosshair_size =	trap_Cvar_Get( "cg_crosshair_size", "24", CVAR_ARCHIVE );
 	cg_crosshair_color =	trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_font =		trap_Cvar_Get( "cg_crosshair_font", "Warsow Crosshairs", CVAR_ARCHIVE );
 	cg_crosshair_damage_color =	trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
@@ -284,7 +284,7 @@ void CG_ScreenInit( void )
 	cg_crosshair_damage_color->modified = qfalse;
 
 	cg_crosshair_strong =	    trap_Cvar_Get( "cg_crosshair_strong", "0", CVAR_ARCHIVE );
-	cg_crosshair_strong_size =  trap_Cvar_Get( "cg_crosshair_strong_size", "22", CVAR_ARCHIVE );
+	cg_crosshair_strong_size =  trap_Cvar_Get( "cg_crosshair_strong_size", "24", CVAR_ARCHIVE );
 	cg_crosshair_strong_color = trap_Cvar_Get( "cg_crosshair_strong_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_strong_color->modified = qtrue;
 
@@ -388,6 +388,46 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color )
 }
 
 /*
+* CG_CrosshairDimensions
+*/
+static int CG_CrosshairDimensions( int x, int y, int size, int align, int *sx, int *sy )
+{
+	size = ceilf( size * (float)( cgs.vidHeight / 600.0f ) );
+	size += size & 1; // crosshairs are symmetric, so make their size even
+	*sx = CG_HorizontalAlignForWidth( x, align, size );
+	*sy = CG_VerticalAlignForHeight( y, align, size );
+	return size;
+}
+
+/*
+* CG_DrawCrosshairChar
+*/
+static void CG_DrawCrosshairChar( int x, int y, int size, int num, vec_t *color )
+{
+	struct qfontface_s *font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
+	if( !font )
+	{
+		trap_Cvar_Set( cg_crosshair_font->name, cg_crosshair_font->dvalue );
+		font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
+	}
+
+	qwchar blackChar, colorChar;
+	if( num )
+	{
+		blackChar = 'A' - 1 + num;
+		colorChar = 'a' - 1 + num;
+	}
+	else
+	{
+		blackChar = '?';
+		colorChar = '!';
+	}
+
+	trap_SCR_DrawRawChar( x, y, blackChar, font, colorBlack );
+	trap_SCR_DrawRawChar( x, y, colorChar, font, color );
+}
+
+/*
 * CG_DrawCrosshair
 */
 void CG_DrawCrosshair( int x, int y, int align, bool touch )
@@ -406,7 +446,7 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 	if( cg_crosshair_size->modified )
 	{
 		if( cg_crosshair_size->integer <= 0 || cg_crosshair_size->integer > 64 )
-			trap_Cvar_Set( "cg_crosshair_size", "32" );
+			trap_Cvar_Set( "cg_crosshair_size", cg_crosshair_size->dvalue );
 		cg_crosshair_size->modified = qfalse;
 	}
 
@@ -451,7 +491,7 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 	if( cg_crosshair_strong_size->modified )
 	{
 		if( cg_crosshair_strong_size->integer <= 0 || cg_crosshair_strong_size->integer > 64 )
-			trap_Cvar_Set( "cg_crosshair_strong_size", "32" );
+			trap_Cvar_Set( "cg_crosshair_strong_size", cg_crosshair_strong_size->dvalue );
 		cg_crosshair_strong_size->modified = qfalse;
 	}
 
@@ -479,48 +519,28 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		firedef_t *firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
 		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) // strong
 		{
-			int size = ceilf( cg_crosshair_strong_size->integer * (float)( cgs.vidHeight / 600.0f ) );
-			size += size & 1; // crosshairs are symmetric, so make their size even
-			int sx = CG_HorizontalAlignForWidth( x, align, size );
-			int sy = CG_VerticalAlignForHeight( y, align, size );
+			int sx, sy;
+			int size = CG_CrosshairDimensions( x, y, cg_crosshair_strong_size->integer, align, &sx, &sy );
 
-			struct qfontface_s *font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
-			if( !font )
-			{
-				trap_Cvar_Set( cg_crosshair_font->name, cg_crosshair_font->dvalue );
-				font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
-			}
-
-			trap_SCR_DrawRawChar( sx, sy, 'A' - 1 + cg_crosshair_strong->integer, font, colorBlack );
-			trap_SCR_DrawRawChar( sx, sy, 'a' - 1 + cg_crosshair_strong->integer, font, chColorStrong );
+			CG_DrawCrosshairChar( sx, sy, size, cg_crosshair_strong->integer, chColorStrong );
 		}
 	}
 
-	if( cg_crosshair->integer && cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE )
+	if( cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE )
 	{
-		int size = ceilf( cg_crosshair_size->integer * (float)( cgs.vidHeight / 600.0f ) );
-		size += size & 1;
-		x = CG_HorizontalAlignForWidth( x, align, size );
-		y = CG_VerticalAlignForHeight( y, align, size );
+		int sx, sy;
+		int size = CG_CrosshairDimensions( x, y, cg_crosshair_size->integer, align, &sx, &sy );
 
 		if( touch )
 		{
-			int touch_size = cg_crosshair_touch_size->integer * cgs.pixelRatio;
+			int touch_size = cg_crosshair_touch_size->integer * cgs.vidHeight / 600;
 			int offset = ( touch_size - size ) / 2;
-			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, x - offset, y - offset, touch_size, touch_size, NULL ) >= 0 )
+			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, sx - offset, sy - offset, touch_size, touch_size, NULL ) >= 0 )
 				trap_Cmd_ExecuteText( EXEC_NOW, "toggle zoom" );
 		}
-		else
+		else if( cg_crosshair->integer )
 		{
-			struct qfontface_s *font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
-			if( !font )
-			{
-				trap_Cvar_Set( cg_crosshair_font->name, cg_crosshair_font->dvalue );
-				font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
-			}
-
-			trap_SCR_DrawRawChar( x, y, 'A' - 1 + cg_crosshair->integer, font, colorBlack );
-			trap_SCR_DrawRawChar( x, y, 'a' - 1 + cg_crosshair->integer, font, chColor );
+			CG_DrawCrosshairChar( sx, sy, size, cg_crosshair->integer, chColor );
 		}
 	}
 }
