@@ -217,9 +217,9 @@ void CG_CalcVrect( void )
 
 	// bound viewsize
 	if( cg_viewSize->integer < 40 )
-		trap_Cvar_Set( "cg_viewsize", "40" );
+		trap_Cvar_Set( cg_viewSize->name, "40" );
 	else if( cg_viewSize->integer > 100 )
-		trap_Cvar_Set( "cg_viewsize", "100" );
+		trap_Cvar_Set( cg_viewSize->name, "100" );
 
 	size = cg_viewSize->integer;
 
@@ -240,7 +240,7 @@ void CG_CalcVrect( void )
 */
 static void CG_SizeUp_f( void )
 {
-	trap_Cvar_SetValue( "cg_viewSize", cg_viewSize->integer + 10 );
+	trap_Cvar_SetValue( cg_viewSize->name, cg_viewSize->integer + 10 );
 }
 
 /*
@@ -250,7 +250,7 @@ static void CG_SizeUp_f( void )
 */
 static void CG_SizeDown_f( void )
 {
-	trap_Cvar_SetValue( "cg_viewSize", cg_viewSize->integer - 10 );
+	trap_Cvar_SetValue( cg_viewSize->name, cg_viewSize->integer - 10 );
 }
 
 //============================================================================
@@ -439,21 +439,21 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 	if( cg_crosshair->modified )
 	{
 		if( cg_crosshair->integer > 26 || cg_crosshair->integer < 0 )
-			trap_Cvar_Set( "cg_crosshair", "0" );
+			trap_Cvar_Set( cg_crosshair->name, "0" );
 		cg_crosshair->modified = qfalse;
 	}
 
 	if( cg_crosshair_size->modified )
 	{
 		if( cg_crosshair_size->integer <= 0 || cg_crosshair_size->integer > 64 )
-			trap_Cvar_Set( "cg_crosshair_size", cg_crosshair_size->dvalue );
+			trap_Cvar_Set( cg_crosshair_size->name, cg_crosshair_size->dvalue );
 		cg_crosshair_size->modified = qfalse;
 	}
 
 	if( cg_crosshair_touch_size->modified )
 	{
-		if( cg_crosshair_touch_size->integer <= 0 || cg_crosshair_touch_size->integer > 192 )
-			trap_Cvar_Set( "cg_crosshair_touch_size", "96" );
+		if( cg_crosshair_touch_size->integer <= 0 || cg_crosshair_touch_size->integer > 256 )
+			trap_Cvar_Set( cg_crosshair_touch_size->name, cg_crosshair_touch_size->dvalue );
 		cg_crosshair_touch_size->modified = qfalse;
 	}
 
@@ -484,14 +484,14 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 	if( cg_crosshair_strong->modified )
 	{
 		if( cg_crosshair_strong->integer > 26 || cg_crosshair_strong->integer < 0 )
-			trap_Cvar_Set( "cg_crosshair_strong", "0" );
+			trap_Cvar_Set( cg_crosshair_strong->name, "0" );
 		cg_crosshair_strong->modified = qfalse;
 	}
 
 	if( cg_crosshair_strong_size->modified )
 	{
 		if( cg_crosshair_strong_size->integer <= 0 || cg_crosshair_strong_size->integer > 64 )
-			trap_Cvar_Set( "cg_crosshair_strong_size", cg_crosshair_strong_size->dvalue );
+			trap_Cvar_Set( cg_crosshair_strong_size->name, cg_crosshair_strong_size->dvalue );
 		cg_crosshair_strong_size->modified = qfalse;
 	}
 
