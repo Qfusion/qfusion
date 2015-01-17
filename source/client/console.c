@@ -1368,7 +1368,7 @@ void Con_CharEvent( qwchar key )
 
 	if( key_linepos < MAXCMDLINE-1 )
 	{
-		char *utf = Q_WCharToUtf8( key );
+		char *utf = Q_WCharToUtf8Char( key );
 		int utflen = strlen( utf );
 
 		if( strlen( key_lines[edit_line] ) + utflen >= MAXCMDLINE )
@@ -1788,7 +1788,7 @@ void Con_MessageCharEvent( qwchar key )
 
 	if( chat_linepos < MAXCMDLINE-1 )
 	{
-		const char *utf = Q_WCharToUtf8( key );
+		const char *utf = Q_WCharToUtf8Char( key );
 		size_t utflen = strlen( utf );
 
 		if( chat_bufferlen + utflen >= MAXCMDLINE )

@@ -54,7 +54,7 @@ public:
 				gc = Q_GrabWCharFromColorString( &s, &num, &colorindex );
 
 				if( gc == GRABCHAR_CHAR ) {
-					colorblock += Q_WCharToUtf8( num );
+					colorblock += Q_WCharToUtf8Char( num );
 				}
 				else if( gc == GRABCHAR_COLOR ) {
 					if( !colorblock.Empty() ) {

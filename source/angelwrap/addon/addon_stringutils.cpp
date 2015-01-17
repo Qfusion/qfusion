@@ -235,6 +235,41 @@ static unsigned int QAS_Strtol( const asstring_t &str, unsigned int base )
 	return strtol( str.buffer, NULL, base );
 }
 
+static asstring_t *QAS_StringFromCharCode( unsigned int charCode )
+{
+	return objectString_FactoryBuffer( Q_WCharToUtf8Char( charCode ), Q_WCharUtf8Length( charCode ) );
+}
+
+static asstring_t *QAS_StringFromCharCodes( const CScriptArrayInterface &arr )
+{
+	unsigned int arr_size = arr.GetSize();
+	unsigned int i;
+
+	size_t str_len = 0;
+	for( i = 0; i < arr_size; i++ ) {
+		str_len += Q_WCharUtf8Length( *( (asUINT *)arr.At( i ) ) );
+	}
+	str_len++;
+
+	int buf_len = str_len + 1;
+	char *str = new char[buf_len];
+
+	char *p = str;
+	int char_len;
+	for( i = 0; i < arr_size; i++ ) {
+		char_len = Q_WCharToUtf8( p, *( (asUINT *)arr.At( i ) ), buf_len );
+		p += char_len;
+		buf_len -= char_len;
+	}
+	*p = '\0';
+
+	asstring_t *ret = objectString_FactoryBuffer( str, str_len );
+
+	delete[] str;
+
+	return ret;
+}
+
 }
 
 using namespace StringUtils;
@@ -271,6 +306,9 @@ void RegisterStringUtilsAddon( asIScriptEngine *engine )
 	r = engine->RegisterGlobalFunction( "String @Join(array<String @> &in, const String &in delimiter)", asFUNCTION( QAS_JoinString ), asCALL_CDECL ); assert( r >= 0 );
 
 	r = engine->RegisterGlobalFunction( "uint Strtol(const String &in string, uint base)", asFUNCTION( QAS_Strtol ), asCALL_CDECL ); assert( r >= 0 );
+	
+	r = engine->RegisterGlobalFunction( "String @FromCharCode(uint charCode)", asFUNCTION( QAS_StringFromCharCode ), asCALL_CDECL ); assert( r >= 0 );
+	r = engine->RegisterGlobalFunction( "String @FromCharCode(array<uint> &in charCodes)", asFUNCTION( QAS_StringFromCharCodes ), asCALL_CDECL ); assert( r >= 0 );
 
 	r = engine->SetDefaultNamespace( "" ); assert( r >= 0 );
 

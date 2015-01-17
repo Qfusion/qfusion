@@ -226,7 +226,9 @@ const char *COM_RemoveColorTokensExt( const char *str, qboolean draw );
 int COM_SanitizeColorString (const char *str, char *buf, int bufsize, int maxprintablechars, int startcolor);
 const char *Q_ColorStringTerminator( const char *str, int finalcolor );
 
-char *Q_WCharToUtf8( qwchar wc );
+size_t Q_WCharUtf8Length( qwchar wc );
+size_t Q_WCharToUtf8( char *dest, qwchar wc, size_t bufsize );
+char *Q_WCharToUtf8Char( qwchar wc );
 qwchar Q_GrabWCharFromUtf8String (const char **pstr);
 qwchar Q_GrabWCharFromColorString( const char **pstr, qwchar *wc, int *colorindex );
 #define UTF8SYNC_LEFT 0

@@ -1199,30 +1199,88 @@ char *Q_trim( char *s )
 
 #define MAX_UTF8_STRING			2048	// == MAX_TOKEN_CHARS*2, >= MAX_CMDLINE*2
 
-// assumes qwchar is unsigned
-char *Q_WCharToUtf8( qwchar wc )
+/*
+* Q_WCharUtf8Length
+*
+* Returns the length of qwchar encoded as UTF-8.
+*/
+size_t Q_WCharUtf8Length( qwchar wc )
+{
+	if( !wc )
+		return 0;
+	if( wc <= 0x7f )
+		return 1;
+	if( wc <= 0x7ff )
+		return 2;
+	if( wc <= 0xffff )
+		return 3;
+	return 1; // 4-octet sequences are replaced with '?'
+}
+
+/*
+* Q_WCharToUtf8
+*
+* Converts qwchar to UTF-8 and returns the length of the written sequence.
+*/
+size_t Q_WCharToUtf8( char *dest, qwchar wc, size_t bufsize )
+{
+	size_t ret = 0;
+
+	if( wc )
+	{
+		if( wc <= 0x7f )
+		{
+			if( bufsize > 1 )
+			{
+				*dest++ = wc;
+				ret = 1;
+			}
+		}
+		else if( wc <= 0x7ff )
+		{
+			if( bufsize > 2 )
+			{
+				*dest++ = 0xC0 | ( wc >> 6 );
+				*dest++ = 0x80 | ( wc & 0x3f );
+				ret = 2;
+			}
+		}
+		else if( wc <= 0xffff )
+		{
+			if( bufsize > 3 )
+			{
+				*dest++ = 0xE0 | ( wc >> 12 );
+				*dest++ = 0x80 | ( ( wc & 0xfc0 ) >> 6 );
+				*dest++ = 0x80 | ( wc & 0x003f );
+				ret = 3;
+			}
+		}
+		else
+		{
+			// sorry, we don't support 4-octet sequences
+			if( bufsize > 1 )
+			{
+				*dest++ = '?';
+				ret = 1;
+			}
+		}
+	}
+
+	if( ( bufsize - ret ) > 0 )
+		*dest++ = '\0';
+
+	return ret;
+}
+
+/*
+* Q_WCharToUtf8Char
+*
+* Converts qwchar to UTF-8 using a temporary buffer.
+*/
+char *Q_WCharToUtf8Char( qwchar wc )
 {
 	static char buf[5];	// longest valid utf-8 sequence is 4 bytes
-	char *out = buf;
-
-	if( wc <= 0x7f )
-		*out++ = wc & 0x7f;
-	else if( wc <= 0x7ff )
-	{
-		*out++ = 0xC0 | ( ( wc & 0x07C0 ) >> 6 );
-		*out++ = 0x80 | ( wc & 0x3f );
-	}
-	else if( wc <= 0xffff )
-	{
-		*out++ = 0xE0 | ( ( wc & 0xF000 ) >> 12 );
-		*out++ = 0x80 | ( ( wc & 0x0FC0 ) >> 6 );
-		*out++ = 0x80 | ( wc & 0x003f );
-	}
-	else
-		*out++ = '?';	// sorry, we don't support 4-octet sequences
-
-	*out = '\0';
-
+	Q_WCharToUtf8( buf, wc, sizeof( buf ) );
 	return buf;
 }
 
