@@ -970,7 +970,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "# else\n" \
 "   precision mediump float;\n" \
 "# endif\n" \
-"  layout(location = 0) out lowp vec4 qf_FragColor;\n" \
+"  layout(location = 0) out vec4 qf_FragColor;\n" \
 "# define qf_varying in\n" \
 "#endif\n" \
 " qf_varying myhalf4 qf_FrontColor;\n" \
