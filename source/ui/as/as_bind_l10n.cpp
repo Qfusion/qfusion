@@ -38,6 +38,11 @@ static const asstring_t *L10n_TranslateString( const asstring_t &input )
 	return ASSTR( translation );
 }
 
+static const asstring_t *L10n_GetUserLanguage( void )
+{
+	return ASSTR( trap::L10n_GetUserLanguage() );
+}
+
 void PrebindL10n( ASInterface *as )
 {
 	(void)as;
@@ -48,6 +53,7 @@ void BindL10n( ASInterface *as )
 	ASBind::Global( as->getEngine() )
 		.function( &L10n_TranslateString, "TranslateString" )
 		.function( &L10n_TranslateString, "_T" )
+		.function( &L10n_GetUserLanguage, "get_userLanguage" )
 	;
 }
 
