@@ -45,6 +45,7 @@ typedef struct podomain_s
 static mempool_t *pomempool;
 
 static cvar_t *cl_lang;
+static char posyslang[MAX_STRING_CHARS];
 
 static podomain_t *podomains_head;
 
@@ -447,24 +448,9 @@ static void L10n_DestroyPODomain( podomain_t *podomain )
 */
 const char *L10n_GetUserLanguage( void )
 {
-	return cl_lang->string;
-}
-
-/*
-* L10n_CheckUserLanguage
-*/
-void L10n_CheckUserLanguage( void )
-{
-	if( !cl_lang->string[0] ) {
-		const char *lang;
-
-		lang = Sys_GetPreferredLanguage();
-		if( !lang || !lang[0] ) {
-			lang = APP_DEFAULT_LANGUAGE;
-		}
-		Cvar_ForceSet( cl_lang->name, lang );
-		cl_lang->modified = qfalse;
-	}
+	if( cl_lang->string[0] )
+		return cl_lang->string;
+	return posyslang;
 }
 
 /*
@@ -472,17 +458,23 @@ void L10n_CheckUserLanguage( void )
 */
 void L10n_Init( void )
 {
+	const char *syslang;
+
 	podomains_head = NULL;
 
 	pomempool = Mem_AllocPool( NULL, "L10n" );
 
-	cl_lang = Cvar_Get( "lang", "", CVAR_USERINFO|CVAR_ARCHIVE
+	cl_lang = Cvar_Get( "lang", "", CVAR_ARCHIVE
 #ifdef PUBLIC_BUILD
 		| CVAR_LATCH_VIDEO
 #endif
 		);
 
-	L10n_CheckUserLanguage();
+	syslang = Sys_GetPreferredLanguage();
+	if( !syslang || !syslang[0] ) {
+		syslang = APP_DEFAULT_LANGUAGE;
+	}
+	Q_strncpyz( posyslang, syslang, sizeof( posyslang ) );
 }
 
 /*
@@ -517,7 +509,7 @@ void L10n_LoadLangPOFile( const char *domainname, const char *filepath )
 		}
 	}
 
-	Q_strncpyz( lang, cl_lang->string, sizeof( lang ) );
+	Q_strncpyz( lang, L10n_GetUserLanguage(), sizeof( lang ) );
 
 	tempfilename_size = strlen( filepath ) + 1 + strlen( lang ) + ( sizeof( ".po" ) - 1 ) + 1;
 	tempfilename = ( char * )L10n_Malloc( tempfilename_size );
