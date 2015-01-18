@@ -323,6 +323,7 @@ void CL_UIModule_Init( void )
 	import.L10n_LoadLangPOFile = &CL_UIModule_L10n_LoadLangPOFile;
 	import.L10n_TranslateString = &CL_UIModule_L10n_TranslateString;
 	import.L10n_ClearDomain = &CL_UIModule_L10n_ClearDomain;
+	import.L10n_GetUserLanguage = &L10n_GetUserLanguage;
 
 	if( builtinAPIfunc ) {
 		uie = (ui_export_t *)builtinAPIfunc( &import );

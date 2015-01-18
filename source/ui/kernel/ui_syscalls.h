@@ -512,6 +512,10 @@ namespace trap
 		inline void L10n_LoadLangPOFile( const char *filepath ) {
 			UI_IMPORT.L10n_LoadLangPOFile( filepath );
 		}
+
+		inline const char *L10n_GetUserLanguage( void ) {
+			return UI_IMPORT.L10n_GetUserLanguage();
+		}
 }
 
 #endif
