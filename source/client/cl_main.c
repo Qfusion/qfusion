@@ -2629,8 +2629,6 @@ void CL_Frame( int realmsec, int gamemsec )
 	CL_NetFrame( realmsec, gamemsec );
 	CL_MM_Frame();
 	
-	L10n_CheckUserLanguage();
-	
 	if( cls.state == CA_CINEMATIC )
 	{
 		maxFps = SCR_CinematicFramerate() * 2;

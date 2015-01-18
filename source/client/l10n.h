@@ -26,7 +26,6 @@ L10N SUBSYSTEM
 ==============================================================
 */
 void L10n_Init( void );
-void L10n_CheckUserLanguage( void );
 const char *L10n_GetUserLanguage( void );
 void L10n_LoadLangPOFile( const char *domainname, const char *filepath );
 const char *L10n_TranslateString( const char *domainname, const char *string );
