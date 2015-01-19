@@ -10,7 +10,7 @@ qfusion is the Quake2-derived game engine powering the game <a href="http://wars
 - Fully open-source under the GPLv2 and easy to mod
 - Runs on Linux, MacOSX, Windows and Android
 - Modern and fast OpenGL 2.0 ES renderer
-- <a href="http://librocket.com/wiki/documentation">User Interface</a> based on <a href="XHTML/CSS standards with support for remote content
+- <a href="http://librocket.com/wiki/documentation">User Interface</a> based on XHTML/CSS standards with support for remote content
 - Support for vertex and skeletal animation
 - Powerful multiplayer & e-sports features (global stats, friend lists, IRC, match streaming etc.)
 - Ready to go FPS example gametype scripts from Warsow
