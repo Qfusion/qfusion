@@ -1,7 +1,9 @@
 qfusion
 =======
 
-Source code for Quake 2-derived game engine powering the game "Warsow"
+http://qfusion.net/
+
+qfusion is the Quake2-derived game engine powering the game "Warsow"
 
 ## Features (incomplete list)
 
