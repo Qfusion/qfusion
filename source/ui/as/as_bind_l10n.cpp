@@ -53,7 +53,7 @@ void BindL10n( ASInterface *as )
 	ASBind::Global( as->getEngine() )
 		.function( &L10n_TranslateString, "TranslateString" )
 		.function( &L10n_TranslateString, "_T" )
-		.function( &L10n_GetUserLanguage, "get_userLanguage" )
+		.function( &L10n_GetUserLanguage, "GetUserLanguage" )
 	;
 }
 
