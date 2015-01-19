@@ -3,14 +3,14 @@ qfusion
 
 http://qfusion.net/
 
-qfusion is the Quake2-derived game engine powering the game "Warsow"
+qfusion is the Quake2-derived game engine powering the game <a href="http://warsow.net/">Warsow</a>
 
 ## Features (incomplete list)
 
 - Fully open-source under the GPLv2 and easy to mod
 - Runs on Linux, MacOSX, Windows and Android
 - Modern and fast OpenGL 2.0 ES renderer
-- User Interface based on XHTML/CSS standards with support for remote content
+- <a href="http://librocket.com/wiki/documentation">User Interface</a> based on <a href="XHTML/CSS standards with support for remote content
 - Support for vertex and skeletal animation
 - Powerful multiplayer & e-sports features (global stats, friend lists, IRC, match streaming etc.)
 - Ready to go FPS example gametype scripts from Warsow
@@ -18,7 +18,7 @@ qfusion is the Quake2-derived game engine powering the game "Warsow"
 ## Extensible
 
 - C/C++ mods (plugins) can ship new gameplay features while maintaining compatibility with the core
-- UI and game mechanics scriptable with AngelScript (C++ style syntax)
+- UI and game mechanics scriptable with <a href="http://www.angelcode.com/angelscript/">AngelScript</a> (C++ style syntax)
 - Flexible HUD scripting
 - "Pure" (models, maps, textures, sounds) game content is automatically delivered to players by game servers
 - Players are allowed to locally override non-"pure" game content
