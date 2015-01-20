@@ -228,6 +228,10 @@ void Mod_LoadSkeletalModel( model_t *mod, const model_t *parent, void *buffer, b
 		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no geometry\n", mod->name );
 		goto error;
 	}
+	if( header->num_vertexes > USHRT_MAX ) {
+		ri.Com_Printf( S_COLOR_RED "ERROR: %s has too many vertices\n", mod->name );
+		goto error;
+	}
 	if( header->num_frames < 1 || header->num_anims < 1 ) {
 		ri.Com_Printf( S_COLOR_RED "ERROR: %s has no animations\n", mod->name );
 		goto error;
