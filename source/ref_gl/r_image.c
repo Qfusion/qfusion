@@ -993,7 +993,8 @@ static void R_SetupTexParameters( int flags )
 /*
 * R_Upload32
 */
-static void R_Upload32( int ctx, qbyte **data, int layer, int width, int height,
+static void R_Upload32( int ctx, qbyte **data, int layer,
+	int x, int y, int width, int height,
 	int flags, int *upload_width, int *upload_height, int samples,
 	qboolean subImage, qboolean noScale )
 {
@@ -1052,7 +1053,7 @@ static void R_Upload32( int ctx, qbyte **data, int layer, int width, int height,
 		else if( subImage )
 		{
 			for( i = 0; i < numTextures; i++, target++ )
-				qglTexSubImage2D( target, 0, 0, 0, scaledWidth, scaledHeight, format, type, data[i] );
+				qglTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, data[i] );
 		}
 		else
 		{
@@ -1080,7 +1081,7 @@ static void R_Upload32( int ctx, qbyte **data, int layer, int width, int height,
 			if( flags & IT_ARRAY )
 				qglTexSubImage3DEXT( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, mip );
 			else if( subImage )
-				qglTexSubImage2D( target, 0, 0, 0, scaledWidth, scaledHeight, format, type, mip );
+				qglTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, mip );
 			else
 				qglTexImage2D( target, 0, comp, scaledWidth, scaledHeight, 0, format, type, mip );
 
@@ -1107,7 +1108,7 @@ static void R_Upload32( int ctx, qbyte **data, int layer, int width, int height,
 					if( flags & IT_ARRAY )
 						qglTexSubImage3DEXT( target, miplevel, 0, 0, layer, w, h, 1, format, type, mip );
 					else if( subImage )
-						qglTexSubImage2D( target, miplevel, 0, 0, w, h, format, type, mip );
+						qglTexSubImage2D( target, miplevel, x, y, w, h, format, type, mip );
 					else
 						qglTexImage2D( target, miplevel, comp, w, h, 0, format, type, mip );
 				}
@@ -1682,7 +1683,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const
 
 			bind( image );
 
-			R_Upload32( ctx, pic, 0, width, height, flags, &image->upload_width, 
+			R_Upload32( ctx, pic, 0, 0, 0, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
 
 			image->extension[0] = '.';
@@ -1710,7 +1711,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const
 
 			bind( image );
 
-			R_Upload32( ctx, &pic, 0, width, height, flags, &image->upload_width, 
+			R_Upload32( ctx, &pic, 0, 0, 0, width, height, flags, &image->upload_width, 
 				&image->upload_height, samples, qfalse, qfalse );
 
 			image->extension[0] = '.';
@@ -1810,7 +1811,7 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 
 	R_BindModifyTexture( image );
 
-	R_Upload32( QGL_CONTEXT_MAIN, pic, 0, width, height, flags, 
+	R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, 
 		&image->upload_width, &image->upload_height, image->samples, qfalse, qfalse );
 
 	return image;
@@ -1887,10 +1888,10 @@ void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int fla
 	R_BindModifyTexture( image );
 
 	if( image->width != width || image->height != height )
-		R_Upload32( QGL_CONTEXT_MAIN, pic, 0, width, height, flags, 
+		R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, 
 		&(image->upload_width), &(image->upload_height), samples, qfalse, qfalse );
 	else
-		R_Upload32( QGL_CONTEXT_MAIN, pic, 0, width, height, flags, 
+		R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, 
 		&(image->upload_width), &(image->upload_height), samples, qtrue, qfalse );
 
 	image->flags = flags;
@@ -1903,17 +1904,15 @@ void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int fla
 
 /*
 * R_ReplaceSubImage
-*
-* FIXME: add x,y?
 */
-void R_ReplaceSubImage( image_t *image, int layer, qbyte **pic, int width, int height )
+void R_ReplaceSubImage( image_t *image, int layer, int x, int y, qbyte **pic, int width, int height )
 {
 	assert( image );
 	assert( image->texnum );
 
 	R_BindModifyTexture( image );
 
-	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, width, height, image->flags,
+	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, x, y, width, height, image->flags,
 		NULL, NULL, image->samples, qtrue, qtrue );
 
 	image->registrationSequence = rsh.registrationSequence;
@@ -1929,7 +1928,7 @@ void R_ReplaceImageLayer( image_t *image, int layer, qbyte **pic )
 
 	R_BindModifyTexture( image );
 
-	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, image->width, image->height, image->flags,
+	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, 0, 0, image->width, image->height, image->flags,
 		NULL, NULL, image->samples, qtrue, qfalse );
 
 	image->registrationSequence = rsh.registrationSequence;
@@ -2386,7 +2385,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 
 			R_BindModifyTexture( t );
 
-			R_Upload32( QGL_CONTEXT_MAIN, &data, 0, width, height, flags, 
+			R_Upload32( QGL_CONTEXT_MAIN, &data, 0, 0, 0, width, height, flags, 
 				&t->upload_width, &t->upload_height, t->samples, qfalse, qfalse );
 		}
 

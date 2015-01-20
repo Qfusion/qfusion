@@ -96,7 +96,7 @@ image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int 
 image_t	*R_FindImage( const char *name, const char *suffix, int flags );
 image_t *R_CreateArrayImage( const char *name, int width, int height, int layers, int flags, int samples );
 void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int flags, int samples );
-void R_ReplaceSubImage( image_t *image, int layer, qbyte **pic, int width, int height );
+void R_ReplaceSubImage( image_t *image, int layer, int x, int y, qbyte **pic, int width, int height );
 void R_ReplaceImageLayer( image_t *image, int layer, qbyte **pic );
 
 void R_BeginAviDemo( void );

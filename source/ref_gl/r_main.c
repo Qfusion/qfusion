@@ -773,7 +773,7 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 			qbyte *nodata[1] = { NULL };
 			R_ReplaceImage( rsh.rawTexture, nodata, cols, rows, rsh.rawTexture->flags, 3 );
 		}
-		R_ReplaceSubImage( rsh.rawTexture, 0, &data, cols, rows );
+		R_ReplaceSubImage( rsh.rawTexture, 0, 0, 0, &data, cols, rows );
 	}
 
 	h_scale = (float)rsh.rawTexture->width / rsh.rawTexture->upload_width;
@@ -838,7 +838,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 				qbyte *nodata[1] = { NULL };
 				R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1 );
 			}
-			R_ReplaceSubImage( yuvTextures[i], 0, &data, stride, height );
+			R_ReplaceSubImage( yuvTextures[i], 0, 0, 0, &data, stride, height );
 		}
 	}
 
