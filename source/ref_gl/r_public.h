@@ -149,7 +149,7 @@ typedef struct
 	void		( *RegisterWorldModel )( const char *model, const dvis_t *pvsData );
 	struct model_s *( *RegisterModel )( const char *name );
 	struct shader_s *( *RegisterPic )( const char *name );
-	struct shader_s *( *RegisterRawPic )( const char *name, int width, int height, uint8_t *data );
+	struct shader_s *( *RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
 	struct shader_s *( *RegisterLevelshot )( const char *name, struct shader_s *defaultShader, qboolean *matchesDefault );
 	struct shader_s *( *RegisterSkin )( const char *name );
 	struct skinfile_s *( *RegisterSkinFile )( const char *name );

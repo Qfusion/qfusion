@@ -103,7 +103,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	int line, numLines;
 	int linesPerImage;
 	int numImages, imageNum;
-	uint8_t *tempRGBA = NULL;
+	uint8_t *tempPic = NULL;
 	qboolean clearImage;
 	qboolean hasKerning;
 	qttface_t *qttf = NULL;
@@ -228,8 +228,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	// render glyphs onto RGBA images
 	imageNum = 0;
 	imageHeight = 0;
-	imagePitch = imageWidth * 4;
-	tempRGBA = ( uint8_t * )FTLIB_Alloc( ftlibPool, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
+	imagePitch = imageWidth;
+	tempPic = ( uint8_t * )FTLIB_Alloc( ftlibPool, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
 	clearImage = qtrue;
 	lastStartChar = minChar;
 
@@ -261,7 +261,7 @@ upload_image:
 			Q_snprintfz( shaderName, sizeof( shaderName ), 
 				"%s %i %i (%i)", 
 				family->name, size, family->style, imageNum );
-			shader = trap_R_RegisterRawPic( shaderName, uploadWidth, uploadHeight, tempRGBA );
+			shader = trap_R_RegisterRawPic( shaderName, uploadWidth, uploadHeight, tempPic, 1 );
 
 			qfont->shaderNames[imageNum] = FTLIB_CopyString( shaderName );
 			qfont->shaders[imageNum] = shader;
@@ -285,7 +285,7 @@ upload_image:
 				
 		if( clearImage ) {
 			clearImage = qfalse;
-			memset( tempRGBA, 0, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
+			memset( tempPic, 0, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
 			lastStartChar = i;
 			imageHeight = 0;
 		}
@@ -336,7 +336,7 @@ upload_image:
 			}
 
 			src = bitmap->buffer;
-			dst = tempRGBA + yOffset * imagePitch + xOffset * 4;
+			dst = tempPic + yOffset * imagePitch + xOffset;
 
 			for( y = 0; y < bitmap_height; y++ ) {
 				src_p = src;
@@ -346,39 +346,24 @@ upload_image:
 					case FT_PIXEL_MODE_MONO:
 						for( x = 0; x < bitmap_width; x += 8 ) {
 							unsigned char ch = *src_p++;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = 255 * !!((ch & 0x80) >> 7); dst_p += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = 255 * !!((ch & 0x40) >> 6); dst_p += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = 255 * !!((ch & 0x20) >> 5); dst_p += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = 255 * !!((ch & 0x10) >> 4); dst_p += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = 255 * !!((ch & 0x08) >> 3); dst_p += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = 255 * !!((ch & 0x04) >> 2); dst_p += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = 255 * !!((ch & 0x02) >> 1); dst_p += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = 255 * !!((ch & 0x01) >> 0); dst_p += 4;
-						}
-						break;
-					case FT_PIXEL_MODE_GRAY2:
-						for( x = 0; x < bitmap_width; x += 4 ) {
-							unsigned char ch = *src_p++;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = ( ((ch & 0xA0) >> 6) * 0x55 ); ch <<= 2; dst += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = ( ((ch & 0xA0) >> 6) * 0x55 ); ch <<= 2; dst += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = ( ((ch & 0xA0) >> 6) * 0x55 ); ch <<= 2; dst += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = ( ((ch & 0xA0) >> 6) * 0x55 ); ch <<= 2; dst += 4;
-						}
-						break;
-					case FT_PIXEL_MODE_GRAY4:
-						for( x = 0; x < bitmap_width; x += 2 ) {
-							unsigned char ch = *src_p++;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = ( ((ch & 0xF0) >> 4) * 0x11); dst += 4;
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = ( ((ch & 0x0F) ) * 0x11); dst += 4;
+							dst_p[0] = 255 * !!((ch & 0x80) >> 7); dst_p++;
+							dst_p[0] = 255 * !!((ch & 0x40) >> 6); dst_p++;
+							dst_p[0] = 255 * !!((ch & 0x20) >> 5); dst_p++;
+							dst_p[0] = 255 * !!((ch & 0x10) >> 4); dst_p++;
+							dst_p[0] = 255 * !!((ch & 0x08) >> 3); dst_p++;
+							dst_p[0] = 255 * !!((ch & 0x04) >> 2); dst_p++;
+							dst_p[0] = 255 * !!((ch & 0x02) >> 1); dst_p++;
+							dst_p[0] = 255 * !!((ch & 0x01) >> 0); dst_p++;
 						}
 						break;
 					case FT_PIXEL_MODE_GRAY:
 						// in this case pitch should equal width
 
 						// copy the grey value into the alpha bytes
-						for( x = 0; x < bitmap_width; x++ ) {
-							dst_p[0] = dst_p[1] = dst_p[2] = 255; dst_p[3] = *src_p++; dst_p += 4;
-						}
+						memcpy( dst_p, src_p, bitmap_width );
+
+						src_p += bitmap_width;
+						dst_p += bitmap_width;
 						break;
 					default:
 						break;
@@ -415,8 +400,8 @@ upload_image:
 	}
 
 done:
-	if( tempRGBA ) {
-		FTLIB_Free( tempRGBA );
+	if( tempPic ) {
+		FTLIB_Free( tempPic );
 	}
 	if( !qfont && qttf ) {
 		if( qttf->ftface ) {
