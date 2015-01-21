@@ -152,7 +152,7 @@ typedef struct entity_s
 	union
 	{
 		byte_vec4_t color;
-		qbyte shaderRGBA[4];
+		uint8_t shaderRGBA[4];
 	};
 
 	float scale;
@@ -163,7 +163,7 @@ typedef struct entity_s
 	union
 	{
 		byte_vec4_t outlineColor;
-		qbyte outlineRGBA[4];
+		uint8_t outlineRGBA[4];
 	};
 } entity_t;
 
@@ -184,7 +184,7 @@ typedef struct refdef_s
 	unsigned int time;					// time is used for timing offsets
 	int rdflags;						// RDF_UNDERWATER, etc
 	skyportal_t skyportal;
-	qbyte *areabits;					// if not NULL, only areas with set bits will be drawn
+	uint8_t *areabits;					// if not NULL, only areas with set bits will be drawn
 	float weaponAlpha;
 	float minLight;						// minimum value of ambient lighting applied to RF_MINLIGHT entities
 } refdef_t;

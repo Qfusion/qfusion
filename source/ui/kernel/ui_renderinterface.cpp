@@ -116,7 +116,7 @@ bool UI_RenderInterface::GenerateTexture(Rocket::Core::TextureHandle & texture_h
 	Rocket::Core::String name( MAX_QPATH, "ui_raw_%d", texCounter++ );
 
 	// Com_Printf("RenderInterface::GenerateTexture: going to register %s %dx%d\n", name.CString(), source_dimensions.x, source_dimensions.y );
-	shader = trap::R_RegisterRawPic( name.CString(), source_dimensions.x, source_dimensions.y, (qbyte*)source );
+	shader = trap::R_RegisterRawPic( name.CString(), source_dimensions.x, source_dimensions.y, (uint8_t*)source, 4 );
 	if( !shader )
 	{
 		Com_Printf(S_COLOR_RED"Warning: RenderInterface couldnt register raw pic %s!\n", name.CString() );

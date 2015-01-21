@@ -2790,7 +2790,7 @@ static bool asFunc_AppendToFile( asstring_t *path, asstring_t *data )
 static asstring_t *asFunc_LoadFile( asstring_t *path )
 {
 	int filelen, filehandle;
-	qbyte *buf = NULL;
+	uint8_t *buf = NULL;
 	asstring_t *data;
 
 	if( !path || !path->len )
@@ -2799,7 +2799,7 @@ static asstring_t *asFunc_LoadFile( asstring_t *path )
 	filelen = trap_FS_FOpenFile( path->buffer, &filehandle, FS_READ );
 	if( filehandle && filelen > 0 )
 	{
-		buf = ( qbyte * )G_Malloc( filelen + 1 );
+		buf = ( uint8_t * )G_Malloc( filelen + 1 );
 		filelen = trap_FS_Read( buf, filelen, filehandle );
 	}
 
@@ -3633,7 +3633,7 @@ bool G_ExecutionErrorReport( int error )
 static char *G_LoadScriptSection( const char *dir, const char *script, int sectionNum )
 {
 	char filename[MAX_QPATH];
-	qbyte *data;
+	uint8_t *data;
 	int length, filenum;
 	char *sectionName;
 
@@ -3661,7 +3661,7 @@ static char *G_LoadScriptSection( const char *dir, const char *script, int secti
 	}
 
 	//load the script data into memory
-	data = ( qbyte * )G_Malloc( length + 1 );
+	data = ( uint8_t * )G_Malloc( length + 1 );
 	trap_FS_Read( data, length, filenum );
 	trap_FS_FCloseFile( filenum );
 

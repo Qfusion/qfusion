@@ -71,7 +71,7 @@ void TV_Downstream_New_f( client_t *client )
 	int tv_bitflags;
 	purelist_t *iter;
 	msg_t message;
-	qbyte messageData[MAX_MSGLEN];
+	uint8_t messageData[MAX_MSGLEN];
 
 	// if in CS_AWAITING we have sended the response packet the new once already,
 	// but client might have not got it so we send it again
@@ -250,7 +250,7 @@ static void TV_Downstream_Baselines_f( client_t *client )
 	int start;
 	entity_state_t nullstate;
 	msg_t message;
-	qbyte messageData[MAX_MSGLEN];
+	uint8_t messageData[MAX_MSGLEN];
 
 	if( client->state != CS_CONNECTED )
 		return;
@@ -443,7 +443,7 @@ static void TV_Downstream_Channels_f( client_t *client )
 static void TV_Downstream_DenyDownload( client_t *client, const char *reason )
 {
 	msg_t message;
-	qbyte messageData[MAX_MSGLEN];
+	uint8_t messageData[MAX_MSGLEN];
 
 	assert( client );
 	assert( reason && reason[0] );

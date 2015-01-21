@@ -138,8 +138,8 @@ typedef struct r_backend_s
 
 	const superLightStyle_t *superLightStyle;
 
-	qbyte entityColor[4];
-	qbyte entityOutlineColor[4];
+	uint8_t entityColor[4];
+	uint8_t entityOutlineColor[4];
 	entity_t nullEnt;
 
 	const mfog_t *fog, *texFog, *colorFog;

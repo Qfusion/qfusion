@@ -147,7 +147,7 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 {
 	unsigned int i;
 	msg_t msg;
-	qbyte msg_buffer[MAX_MSGLEN];
+	uint8_t msg_buffer[MAX_MSGLEN];
 	purelist_t *purefile;
 	entity_state_t nullstate;
 	entity_state_t *base;
@@ -327,7 +327,7 @@ void SNAP_WriteDemoMetaData( const char *filename, const char *meta_data, size_t
 	char tmpn[256];
 	int filenum, filelen;
 	msg_t msg;
-	qbyte msg_buffer[MAX_MSGLEN];
+	uint8_t msg_buffer[MAX_MSGLEN];
 	void *compressed_msg;
 
 	MSG_Init( &msg, msg_buffer, sizeof( msg_buffer ) );

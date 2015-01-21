@@ -292,7 +292,7 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 	//alignment test, to display green dot at 0,0
 	//CG_DrawHUDRect( x + x_lefttop/map_div_w -1, y + y_lefttop/map_div_h -1,ALIGN_LEFT_TOP,3,3,1,1, colorGreen, CG_MediaShader( cgs.media.shaderMiniMap ) );
 
-	for( i = 0; i < cg.frame.numEntities; i++ )
+	for( i = cg.frame.numEntities - 1; i >= 0; i-- ) // draw players above everything
 	{
 		entnum = cg.frame.parsedEntities[i&( MAX_PARSE_ENTITIES-1 )].number;
 

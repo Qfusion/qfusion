@@ -79,7 +79,7 @@ typedef struct
 	qboolean ( *FS_IsUrl )( const char *url );
 
 	unsigned int ( *Milliseconds )( void );
-	void ( *PageInMemory )( qbyte *buffer, int size );
+	void ( *PageInMemory )( uint8_t *buffer, int size );
 	void ( *Sleep )( unsigned int milliseconds );
 
 	// managed memory allocation
@@ -143,10 +143,10 @@ typedef struct
 	void ( *AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
 	// cinema
-	void ( *RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
+	void ( *RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data, qboolean music );
 	void ( *PositionedRawSamples )( int entnum, float fvol, float attenuation, 
 		unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const qbyte *data );
+		unsigned short width, unsigned short channels, const uint8_t *data );
 	unsigned int ( *GetRawSamplesLength )( void );
 	unsigned int ( *GetPositionedRawSamplesLength )( int entnum );
 

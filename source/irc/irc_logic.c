@@ -16,7 +16,7 @@ cvar_t *irc_ctcpReplies = NULL;
 
 static char *defaultChan_str = NULL;
 
-static const quint64 IRC_TRANSMIT_INTERVAL = 10;
+static const uint64_t IRC_TRANSMIT_INTERVAL = 10;
 static trie_t *chan_trie = NULL;
 
 static void Irc_Logic_Frame_f(void *frame);
@@ -293,7 +293,7 @@ static void Irc_Logic_ReadMessages(void) {
 }
 
 static void Irc_Logic_Frame_f(void *frame) {
-	const quint64 f = * (quint64*) frame;
+	const uint64_t f = * (uint64_t*) frame;
 	if (!(f % IRC_TRANSMIT_INTERVAL)) {
 		Irc_Logic_SendMessages();
 		Irc_Logic_ReadMessages();

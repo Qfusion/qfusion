@@ -33,7 +33,7 @@ typedef struct shadowGroup_s
 
 	vec3_t				origin;
 	float				radius;
-	qbyte				*vis;
+	uint8_t				*vis;
 
 	vec3_t				lightDir;
 	vec4_t				lightAmbient;

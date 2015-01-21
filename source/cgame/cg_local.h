@@ -631,7 +631,7 @@ void CG_LerpEntities( void );
 void CG_LerpGenericEnt( centity_t *cent );
 
 void CG_SetOutlineColor( byte_vec4_t outlineColor, byte_vec4_t color );
-void CG_AddColoredOutLineEffect( entity_t *ent, int effects, qbyte r, qbyte g, qbyte b, qbyte a );
+void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t g, uint8_t b, uint8_t a );
 void CG_AddCentityOutLineEffect( centity_t *cent );
 void CG_AddItemGhostEffect( centity_t *cent );
 
@@ -928,8 +928,8 @@ void CG_SetSceneTeamColors( void );
 pmodelinfo_t *CG_PModelForCentity( centity_t *cent );
 struct skinfile_s *CG_SkinForCentity( centity_t *cent );
 vec_t *CG_TeamColor( int team, vec4_t color );
-qbyte *CG_TeamColorForEntity( int entNum, byte_vec4_t color );
-qbyte *CG_PlayerColorForEntity( int entNum, byte_vec4_t color );
+uint8_t *CG_TeamColorForEntity( int entNum, byte_vec4_t color );
+uint8_t *CG_PlayerColorForEntity( int entNum, byte_vec4_t color );
 
 //
 // cg_view.c

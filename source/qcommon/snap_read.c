@@ -69,7 +69,7 @@ FRAME PARSING
 static void SNAP_ParseDeltaGameState( msg_t *msg, snapshot_t *oldframe, snapshot_t *newframe )
 {
 	short statbits;
-	qbyte bits;
+	uint8_t bits;
 	int i;
 	game_state_t *gameState;
 
@@ -85,7 +85,7 @@ static void SNAP_ParseDeltaGameState( msg_t *msg, snapshot_t *oldframe, snapshot
 
 	//memcpy( gameState, deltaGameState, sizeof( game_state_t ) );
 
-	bits = (qbyte)MSG_ReadByte( msg );
+	bits = (uint8_t)MSG_ReadByte( msg );
 	statbits = MSG_ReadShort( msg );
 
 	if( bits )
@@ -122,20 +122,20 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 	else
 		memset( state, 0, sizeof( *state ) );
 
-	flags = (qbyte)MSG_ReadByte( msg );
+	flags = (uint8_t)MSG_ReadByte( msg );
 	if( flags & PS_MOREBITS1 )
 	{
-		b = (qbyte)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadByte( msg );
 		flags |= b<<8;
 	}
 	if( flags & PS_MOREBITS2 )
 	{
-		b = (qbyte)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadByte( msg );
 		flags |= b<<16;
 	}
 	if( flags & PS_MOREBITS3 )
 	{
-		b = (qbyte)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadByte( msg );
 		flags |= b<<24;
 	}
 
@@ -143,7 +143,7 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 	// parse the pmove_state_t
 	//
 	if( flags & PS_M_TYPE )
-		state->pmove.pm_type = (qbyte)MSG_ReadByte( msg );
+		state->pmove.pm_type = (uint8_t)MSG_ReadByte( msg );
 
 	if( flags & PS_M_ORIGIN0 )
 		state->pmove.origin[0] = ( (float)MSG_ReadInt3( msg )*( 1.0/PM_VECTOR_SNAP ) );
@@ -160,7 +160,7 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 		state->pmove.velocity[2] = ( (float)MSG_ReadInt3( msg )*( 1.0/PM_VECTOR_SNAP ) );
 
 	if( flags & PS_M_TIME )
-		state->pmove.pm_time = (qbyte)MSG_ReadByte( msg );
+		state->pmove.pm_time = (uint8_t)MSG_ReadByte( msg );
 
 	if( flags & PS_M_FLAGS )
 		state->pmove.pm_flags = MSG_ReadShort( msg );
@@ -213,18 +213,18 @@ static void SNAP_ParsePlayerstate( msg_t *msg, player_state_t *oldstate, player_
 		state->pmove.gravity = MSG_ReadShort( msg );
 
 	if( flags & PS_WEAPONSTATE )
-		state->weaponState = (qbyte)MSG_ReadByte( msg );
+		state->weaponState = (uint8_t)MSG_ReadByte( msg );
 
 	if( flags & PS_FOV )
-		state->fov = (qbyte)MSG_ReadByte( msg );
+		state->fov = (uint8_t)MSG_ReadByte( msg );
 
 	if( flags & PS_POVNUM )
-		state->POVnum = (qbyte)MSG_ReadByte( msg );
+		state->POVnum = (uint8_t)MSG_ReadByte( msg );
 	if( state->POVnum == 0 )
 		Com_Error( ERR_DROP, "SNAP_ParsePlayerstate: Invalid POVnum %i", state->POVnum );
 
 	if( flags & PS_PLAYERNUM )
-		state->playerNum = (qbyte)MSG_ReadByte( msg );
+		state->playerNum = (uint8_t)MSG_ReadByte( msg );
 	if( state->playerNum >= MAX_CLIENTS )
 		Com_Error( ERR_DROP, "SNAP_ParsePlayerstate: Invalid playerNum %i", state->playerNum );
 
@@ -462,7 +462,7 @@ static snapshot_t *SNAP_ParseFrameHeader( msg_t *msg, snapshot_t *newframe, int 
 {
 	int len, pos;
 	int areabytes;
-	qbyte *areabits;
+	uint8_t *areabits;
 	unsigned int serverTime;
 	int flags, snapNum, supCnt;
 

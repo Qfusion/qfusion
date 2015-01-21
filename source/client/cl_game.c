@@ -254,7 +254,7 @@ void CL_GameModule_L10n_ClearDomain( void )
 * CL_GameModule_S_RawSamples
 */
 static void CL_GameModule_S_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const qbyte *data )
+	unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	CL_SoundModule_RawSamples( samples, rate, width, channels, data, qfalse );
 }
@@ -284,7 +284,7 @@ cg_raw_samples_listener_t cg_raw_samples_listeners[MAX_CGAME_RAW_SAMPLES_LISTENE
 */
 static void CL_GameModule_RawSamples( void *ptr, unsigned int samples, 
 	unsigned int rate, unsigned short width, unsigned short channels, 
-	const qbyte *data )
+	const uint8_t *data )
 {
 	cg_raw_samples_listener_t *cglistener;
 

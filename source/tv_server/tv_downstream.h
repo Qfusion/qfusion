@@ -35,7 +35,7 @@ void TV_Downstream_UserinfoChanged( client_t *cl );
 void TV_Downstream_AddServerCommand( client_t *client, const char *cmd );
 void TV_Downstream_SendServerCommand( client_t *cl, const char *format, ... );
 void TV_Downstream_AddReliableCommandsToMessage( client_t *client, msg_t *msg );
-void TV_Downstream_InitClientMessage( client_t *client, msg_t *msg, qbyte *data, size_t size );
+void TV_Downstream_InitClientMessage( client_t *client, msg_t *msg, uint8_t *data, size_t size );
 qboolean TV_Downstream_SendMessageToClient( client_t *client, msg_t *msg );
 void TV_Downstream_DropClient( client_t *drop, int type, const char *format, ... );
 void TV_Downstream_ReadPackets( void );

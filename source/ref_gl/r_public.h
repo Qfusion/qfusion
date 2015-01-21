@@ -61,7 +61,7 @@ typedef struct
 	void ( *Cmd_SetCompletionFunc )( const char *cmd_name, char **( *completion_func )( const char *partial ) );
 
 	unsigned int ( *Sys_Milliseconds )( void );
-	quint64 ( *Sys_Microseconds )( void );
+	uint64_t ( *Sys_Microseconds )( void );
 	void ( *Sys_Sleep )( unsigned int milliseconds );
 
 	int ( *FS_FOpenFile )( const char *filename, int *filenum, int mode );
@@ -87,7 +87,7 @@ typedef struct
 
 	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, qboolean loop, qboolean *yuv, float *framerate );
 	qboolean ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
-	qbyte *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, 
+	uint8_t *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, 
 		int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 	ref_yuv_t *( *CIN_ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, 
 		int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
@@ -149,7 +149,7 @@ typedef struct
 	void		( *RegisterWorldModel )( const char *model, const dvis_t *pvsData );
 	struct model_s *( *RegisterModel )( const char *name );
 	struct shader_s *( *RegisterPic )( const char *name );
-	struct shader_s *( *RegisterRawPic )( const char *name, int width, int height, qbyte *data );
+	struct shader_s *( *RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
 	struct shader_s *( *RegisterLevelshot )( const char *name, struct shader_s *defaultShader, qboolean *matchesDefault );
 	struct shader_s *( *RegisterSkin )( const char *name );
 	struct skinfile_s *( *RegisterSkinFile )( const char *name );
@@ -172,7 +172,7 @@ typedef struct
 
 	// Passing NULL for data redraws last uploaded frame
 	void		( *DrawStretchRaw )( int x, int y, int w, int h, int cols, int rows, 
-									float s1, float t1, float s2, float t2, qbyte *data );
+									float s1, float t1, float s2, float t2, uint8_t *data );
 
 	// Passing NULL for yuv redraws last uploaded frame
 	void		( *DrawStretchRawYUV )( int x, int y, int w, int h, 

@@ -67,7 +67,7 @@ struct gclient_s
 
 	pmove_state_t old_pmove;            // for detecting out-of-pmove changes
 	int buttons;
-	qbyte plrkeys;                      // used for displaying key icons
+	uint8_t plrkeys;                      // used for displaying key icons
 	int timeDelta;                      // time offset to adjust for shots collision (antilag)
 };
 

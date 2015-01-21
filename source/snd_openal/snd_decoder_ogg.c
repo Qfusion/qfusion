@@ -139,14 +139,14 @@ static void decoder_ogg_stream_shutdown( snd_stream_t *stream )
 
 static size_t ovcb_read( void *ptr, size_t size, size_t nb, void *datasource )
 {
-	qintptr filenum = (qintptr) datasource;
+	intptr_t filenum = (intptr_t) datasource;
 
 	return trap_FS_Read( ptr, size * nb, (int) filenum ) / size;
 }
 
 static int ovcb_seek( void *datasource, ogg_int64_t offset, int whence )
 {
-	qintptr filenum = (qintptr) datasource;
+	intptr_t filenum = (intptr_t) datasource;
 
 	switch( whence )
 	{
@@ -160,7 +160,7 @@ static int ovcb_seek( void *datasource, ogg_int64_t offset, int whence )
 
 static int ovcb_close( void *datasource )
 {
-	qintptr filenum = (qintptr) datasource;
+	intptr_t filenum = (intptr_t) datasource;
 
 	trap_FS_FCloseFile( (int) filenum );
 	return 0;
@@ -168,7 +168,7 @@ static int ovcb_close( void *datasource )
 
 static long ovcb_tell( void *datasource )
 {
-	qintptr filenum = (qintptr) datasource;
+	intptr_t filenum = (intptr_t) datasource;
 
 	return trap_FS_Tell( (int) filenum );
 }
@@ -223,7 +223,7 @@ void *decoder_ogg_load( const char *filename, snd_info_t *info )
 		callbacks.tell_func = NULL;
 	}
 
-	if( qov_open_callbacks( (void *) (qintptr) filenum, &vorbisfile, NULL, 0, callbacks ) < 0 )
+	if( qov_open_callbacks( (void *) (intptr_t) filenum, &vorbisfile, NULL, 0, callbacks ) < 0 )
 	{
 		Com_Printf( "Could not open %s for reading\n", filename );
 		trap_FS_FCloseFile( filenum );
@@ -337,7 +337,7 @@ qboolean decoder_ogg_cont_open( snd_stream_t *stream )
 		callbacks.tell_func = NULL;
 	}
 
-	if( qov_open_callbacks( (void *) (qintptr) ogg_stream->filenum, ogg_stream->vorbisfile, NULL, 0, callbacks ) < 0 )
+	if( qov_open_callbacks( (void *) (intptr_t) ogg_stream->filenum, ogg_stream->vorbisfile, NULL, 0, callbacks ) < 0 )
 	{
 		Com_Printf( "Couldn't open .ogg file for reading\n" );
 		trap_FS_FCloseFile( ogg_stream->filenum );

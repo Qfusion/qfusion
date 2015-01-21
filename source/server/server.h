@@ -81,8 +81,8 @@ struct edict_s
 	entity_shared_t	r;
 };
 
-#define EDICT_NUM( n ) ( (edict_t *)( (qbyte *)sv.gi.edicts + sv.gi.edict_size*( n ) ) )
-#define NUM_FOR_EDICT( e ) ( ( (qbyte *)( e )-(qbyte *)sv.gi.edicts ) / sv.gi.edict_size )
+#define EDICT_NUM( n ) ( (edict_t *)( (uint8_t *)sv.gi.edicts + sv.gi.edict_size*( n ) ) )
+#define NUM_FOR_EDICT( e ) ( ( (uint8_t *)( e )-(uint8_t *)sv.gi.edicts ) / sv.gi.edict_size )
 
 typedef struct
 {
@@ -92,7 +92,7 @@ typedef struct
 	int clientarea;
 	int numareas;
 	int areabytes;
-	qbyte *areabits;					// portalarea visibility bits
+	uint8_t *areabits;					// portalarea visibility bits
 	int numplayers;
 	int ps_size;
 	player_state_t *ps;                 // [numplayers]
@@ -106,7 +106,7 @@ typedef struct
 typedef struct
 {
 	char *name;
-	qbyte *data;            // file being downloaded
+	uint8_t *data;            // file being downloaded
 	int size;               // total bytes (can't use EOF because of paks)
 	unsigned int timeout;   // so we can free the file being downloaded
 	                        // if client omits sending success or failure message
@@ -245,8 +245,8 @@ typedef struct client_entities_s
 typedef struct fatvis_s
 {
 	vec_t *skyorg;
-	qbyte pvs[MAX_MAP_LEAFS/8];
-	qbyte phs[MAX_MAP_LEAFS/8];
+	uint8_t pvs[MAX_MAP_LEAFS/8];
+	uint8_t phs[MAX_MAP_LEAFS/8];
 } fatvis_t;
 
 typedef struct
@@ -303,7 +303,7 @@ typedef struct
 
 // shared message buffer to be used for occasional messages
 extern msg_t tmpMessage;
-extern qbyte tmpMessageData[MAX_MSGLEN];
+extern uint8_t tmpMessageData[MAX_MSGLEN];
 
 extern mempool_t *sv_mempool;
 
@@ -427,7 +427,7 @@ void SV_SendServerCommand( client_t *cl, const char *format, ... );
 void SV_AddGameCommand( client_t *client, const char *cmd );
 void SV_AddReliableCommandsToMessage( client_t *client, msg_t *msg );
 qboolean SV_SendClientsFragments( void );
-void SV_InitClientMessage( client_t *client, msg_t *msg, qbyte *data, size_t size );
+void SV_InitClientMessage( client_t *client, msg_t *msg, uint8_t *data, size_t size );
 qboolean SV_SendMessageToClient( client_t *client, msg_t *msg );
 void SV_ResetClientFrameCounters( void );
 

@@ -349,7 +349,7 @@ void R_SetCustomColor( int num, int r, int g, int b )
 {
 	if( num < 0 || num >= NUM_CUSTOMCOLORS )
 		return;
-	Vector4Set( r_customColors[num], (qbyte)r, (qbyte)g, (qbyte)b, 255 );
+	Vector4Set( r_customColors[num], (uint8_t)r, (uint8_t)g, (uint8_t)b, 255 );
 }
 /*
 * R_GetCustomColor
@@ -760,7 +760,7 @@ void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2,
 * Passing NULL for data redraws last uploaded frame
 */
 void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
-	float s1, float t1, float s2, float t2, qbyte *data )
+	float s1, float t1, float s2, float t2, uint8_t *data )
 {
 	float h_scale, v_scale;
 
@@ -770,10 +770,10 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 
 	if( data ) {
 		if( rsh.rawTexture->width != cols || rsh.rawTexture->height != rows ) {
-			qbyte *nodata[1] = { NULL };
+			uint8_t *nodata[1] = { NULL };
 			R_ReplaceImage( rsh.rawTexture, nodata, cols, rows, rsh.rawTexture->flags, 3 );
 		}
-		R_ReplaceSubImage( rsh.rawTexture, 0, &data, cols, rows );
+		R_ReplaceSubImage( rsh.rawTexture, 0, 0, 0, &data, cols, rows );
 	}
 
 	h_scale = (float)rsh.rawTexture->width / rsh.rawTexture->upload_width;
@@ -822,7 +822,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 		int i;
 
 		for( i = 0; i < 3; i++ ) {
-			qbyte *data = yuv[i].data;
+			uint8_t *data = yuv[i].data;
 			int flags = yuvTextures[i]->flags;
 			int stride = yuv[i].stride;
 			int height = yuv[i].height;
@@ -835,10 +835,10 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 			}
 
 			if( yuvTextures[i]->width != stride || yuvTextures[i]->height != height ) {
-				qbyte *nodata[1] = { NULL };
+				uint8_t *nodata[1] = { NULL };
 				R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1 );
 			}
-			R_ReplaceSubImage( yuvTextures[i], 0, &data, stride, height );
+			R_ReplaceSubImage( yuvTextures[i], 0, 0, 0, &data, stride, height );
 		}
 	}
 
@@ -1149,7 +1149,7 @@ static void R_SetupViewMatrices( void )
 static void R_Clear( int bitMask )
 {
 	int bits;
-	qbyte *envColor = rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ?
+	uint8_t *envColor = rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ?
 		rsh.worldBrushModel->globalfog->shader->fog_color : mapConfig.environmentColor;
 	qboolean rgbShadow = ( rn.renderFlags & RF_SHADOWMAPVIEW ) && rn.fbColorAttachment != NULL ? qtrue : qfalse;
 
@@ -1585,7 +1585,7 @@ void R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVs
 
 	if( r_clear->integer || forceClear )
 	{
-		const qbyte *color = mapConfig.environmentColor;
+		const uint8_t *color = mapConfig.environmentColor;
 		RB_Clear( GL_COLOR_BUFFER_BIT, 
 			color[0]*( 1.0/255.0 ), color[1]*( 1.0/255.0 ), color[2]*( 1.0/255.0 ), 1 );
 	}
@@ -1937,7 +1937,7 @@ struct cinematics_s *R_GetShaderCinematic( shader_t *shader )
 /*
 * R_NormToLatLong
 */
-void R_NormToLatLong( const vec_t *normal, qbyte latlong[2] )
+void R_NormToLatLong( const vec_t *normal, uint8_t latlong[2] )
 {
 	float flatlong[2];
 
@@ -1949,7 +1949,7 @@ void R_NormToLatLong( const vec_t *normal, qbyte latlong[2] )
 /*
 * R_LatLongToNorm4
 */
-void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out )
+void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out )
 {
 	static float * const sinTable = rsh.sinTableByte;
 	float sin_a, sin_b, cos_a, cos_b;
@@ -1965,7 +1965,7 @@ void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out )
 /*
 * R_LatLongToNorm
 */
-void R_LatLongToNorm( const qbyte latlong[2], vec3_t out )
+void R_LatLongToNorm( const uint8_t latlong[2], vec3_t out )
 {
 	vec4_t t;
 	R_LatLongToNorm4( latlong, t );
@@ -1990,7 +1990,7 @@ char *R_CopyString_( const char *in, const char *filename, int fileline )
 */
 int R_LoadFile_( const char *path, void **buffer, const char *filename, int fileline )
 {
-	qbyte *buf;
+	uint8_t *buf;
 	unsigned int len;
 	int fhandle;
 
@@ -2012,7 +2012,7 @@ int R_LoadFile_( const char *path, void **buffer, const char *filename, int file
 		return len;
 	}
 
-	buf = ( qbyte *)ri.Mem_AllocExt( r_mempool, len + 1, 16, 0, filename, fileline );
+	buf = ( uint8_t *)ri.Mem_AllocExt( r_mempool, len + 1, 16, 0, filename, fileline );
 	buf[len] = 0;
 	*buffer = buf;
 
