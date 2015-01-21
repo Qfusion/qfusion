@@ -419,7 +419,7 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 		G_PlayerAward( attacker, s );
 	}
 
-	if( attacker->r.client->level.stats.frags == 1 )
+	if( teamlist[attacker->s.team].stats.frags == 1 )
 	{
 		G_PlayerAward( attacker, S_COLOR_YELLOW "First Frag!" );
 	}
