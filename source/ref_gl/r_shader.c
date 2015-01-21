@@ -516,6 +516,7 @@ static int Shader_SetImageFlags( shader_t *shader )
 		flags |= IT_NOFILTERING;
 	if( shader->type == SHADER_TYPE_2D 
 		|| shader->type == SHADER_TYPE_2D_RAW 
+		|| shader->type == SHADER_TYPE_2D_RAW_LUMINANCE
 		|| shader->type == SHADER_TYPE_VIDEO )
 		flags |= IT_SYNC;
 	//if( r_shaderHasAutosprite )
@@ -2638,7 +2639,8 @@ create_default:
 
 			pass = &s->passes[0];
 			if( type == SHADER_TYPE_2D_RAW_LUMINANCE ) {
-				type = SHADER_TYPE_2D_RAW;
+				// alias raw luminance to raw but set different blend mode
+				type = s->type = SHADER_TYPE_2D_RAW;
 				pass->flags = GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ONE_MINUS_SRC_COLOR;
 			}
 			else {
