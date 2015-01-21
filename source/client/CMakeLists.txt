@@ -25,7 +25,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if (USE_SDL2)
         file(GLOB CLIENT_PLATFORM_SOURCES
             "../win32/win_fs.c"
-            "../win32/win_lib.c"
             "../win32/win_net.c"
             "../win32/win_sys.c"
             "../win32/win_threads.c"
@@ -36,6 +35,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../sdl/sdl_sys.c"
             "../sdl/sdl_clipboard.c"
             "../sdl/sdl_time.c"
+            "../sdl/sdl_lib.c"
 
             "../win32/qfusion.rc"
         )
@@ -73,7 +73,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     file(GLOB CLIENT_PLATFORM_SOURCES
         "../unix/unix_fs.c"
-        "../unix/unix_lib.c"
         "../unix/unix_net.c"
         "../unix/unix_sys.c"
         "../unix/unix_threads.c"
@@ -85,6 +84,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../sdl/sdl_sys.c"
         "../sdl/sdl_clipboard.c"
         "../sdl/sdl_time.c"
+        "../sdl/sdl_lib.c"
 
         "../mac/mac_sys.m"
         "../mac/Warsow-Info.plist"
@@ -106,7 +106,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     if (USE_SDL2)
         file(GLOB CLIENT_PLATFORM_SOURCES
             "../unix/unix_fs.c"
-            "../unix/unix_lib.c"
             "../unix/unix_net.c"
             "../unix/unix_sys.c"
             "../unix/unix_threads.c"
@@ -117,6 +116,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../sdl/sdl_sys.c"
             "../sdl/sdl_clipboard.c"
             "../sdl/sdl_time.c"
+            "../sdl/sdl_lib.c"
         )
 
         set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "m" "dl" "rt")
