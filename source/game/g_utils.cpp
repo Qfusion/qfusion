@@ -68,7 +68,7 @@ static void G_Z_ClearZone( memzone_t *zone, int size )
 
 	// set the entire zone to one free block
 	zone->blocklist.next = zone->blocklist.prev = block =
-		(memblock_t *)( (qbyte *)zone + sizeof(memzone_t) );
+		(memblock_t *)( (uint8_t *)zone + sizeof(memzone_t) );
 	zone->blocklist.tag = 1;	// in use block
 	zone->blocklist.id = 0;
 	zone->blocklist.size = 0;
@@ -94,14 +94,14 @@ static void G_Z_Free( void *ptr, const char *filename, int fileline )
 	if (!ptr)
 		G_Error( "G_Z_Free: NULL pointer" );
 
-	block = (memblock_t *) ( (qbyte *)ptr - sizeof(memblock_t));
+	block = (memblock_t *) ( (uint8_t *)ptr - sizeof(memblock_t));
 	if( block->id != ZONEID )
 		G_Error( "G_Z_Free: freed a pointer without ZONEID (file %s at line %i)", filename, fileline );
 	if( block->tag == 0 )
 		G_Error( "G_Z_Free: freed a freed pointer (file %s at line %i)", filename, fileline );
 
 	// check the memory trash tester
-	if ( *(int *)((qbyte *)block + block->size - 4 ) != ZONEID )
+	if ( *(int *)((uint8_t *)block + block->size - 4 ) != ZONEID )
 		G_Error( "G_Z_Free: memory block wrote past end" );
 
 	zone = levelzone;
@@ -175,7 +175,7 @@ static void *G_Z_TagMalloc( int size, int tag, const char *filename, int filelin
 	if( extra > MINFRAGMENT )
 	{
 		// there will be a free fragment after the allocated block
-		newb = (memblock_t *) ((qbyte *)base + size );
+		newb = (memblock_t *) ((uint8_t *)base + size );
 		newb->size = extra;
 		newb->tag = 0;			// free block
 		newb->prev = base;
@@ -193,9 +193,9 @@ static void *G_Z_TagMalloc( int size, int tag, const char *filename, int filelin
 	base->id = ZONEID;
 
 	// marker for memory trash testing
-	*(int *)((qbyte *)base + base->size - 4) = ZONEID;
+	*(int *)((uint8_t *)base + base->size - 4) = ZONEID;
 
-	return (void *) ((qbyte *)base + sizeof(memblock_t));
+	return (void *) ((uint8_t *)base + sizeof(memblock_t));
 }
 
 /*
@@ -285,7 +285,7 @@ typedef struct g_poolstring_s
 	struct g_poolstring_s *hash_next;
 } g_poolstring_t;
 
-static qbyte *g_stringpool;
+static uint8_t *g_stringpool;
 static size_t g_stringpool_offset;
 static g_poolstring_t *g_stringpool_hash[STRINGPOOL_HASH_SIZE];
 
@@ -298,7 +298,7 @@ void G_StringPoolInit( void )
 {
 	memset( g_stringpool_hash, 0, sizeof( g_stringpool_hash ) );
 
-	g_stringpool = ( qbyte * )G_LevelMalloc( STRINGPOOL_SIZE );
+	g_stringpool = ( uint8_t * )G_LevelMalloc( STRINGPOOL_SIZE );
 	g_stringpool_offset = 0;
 }
 
@@ -552,7 +552,7 @@ edict_t *G_Find( edict_t *from, size_t fieldofs, const char *match )
 	{
 		if( !from->r.inuse )
 			continue;
-		s = *(char **) ( (qbyte *)from + fieldofs );
+		s = *(char **) ( (uint8_t *)from + fieldofs );
 		if( !s )
 			continue;
 		if( !Q_stricmp( s, match ) )
@@ -2072,7 +2072,7 @@ void G_PrecacheWeapondef( int weapon, firedef_t *firedef )
 #ifdef WEAPONDEFS_FROM_DISK
 
 #define WEAPONDEF_NUMPARMS 19
-static bool G_ParseFiredefFile( qbyte *buf, int weapon, firedef_t *firedef )
+static bool G_ParseFiredefFile( uint8_t *buf, int weapon, firedef_t *firedef )
 {
 	char *ptr, *token;
 	int count = 0;
@@ -2170,7 +2170,7 @@ static bool G_ParseFiredefFile( qbyte *buf, int weapon, firedef_t *firedef )
 static bool G_LoadFiredefFromFile( int weapon, firedef_t *firedef )
 {
 	int length, filenum;
-	qbyte *data;
+	uint8_t *data;
 	char filename[MAX_QPATH];
 
 	if( !firedef )

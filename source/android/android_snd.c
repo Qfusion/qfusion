@@ -53,11 +53,11 @@ void S_Activate( qboolean active )
 
 static void SNDDMA_Android_Callback( SLAndroidSimpleBufferQueueItf bq, void *context )
 {
-	qbyte *buffer2;
+	uint8_t *buffer2;
 
 	trap_Mutex_Lock( snddma_android_mutex );
 
-	buffer2 = ( qbyte * )dma.buffer + snddma_android_size;
+	buffer2 = ( uint8_t * )dma.buffer + snddma_android_size;
 	(*bq)->Enqueue( bq, buffer2, snddma_android_size );
 	memcpy( buffer2, dma.buffer, snddma_android_size );
 	memset( dma.buffer, ( dma.samplebits == 8 ) ? 128 : 0, snddma_android_size );

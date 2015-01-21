@@ -57,7 +57,7 @@ typedef struct
 	qboolean yuv;
 	unsigned int startTime;
 	unsigned int pauseTime;
-	qbyte *pic;
+	uint8_t *pic;
 	int aspect_numerator, aspect_denominator;
 	ref_yuv_t *cyuv;
 	float framerate;
@@ -84,7 +84,7 @@ typedef struct
 	int previousSnapNum;
 	int suppressCount;				// number of messages rate suppressed
 	snapshot_t *snapShots;			// [CMD_BACKUP]
-	qbyte *frames_areabits;
+	uint8_t *frames_areabits;
 
 	cmodel_state_t *cms;
 
@@ -440,10 +440,10 @@ void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol
 void CL_SoundModule_StartLocalSound( const char *s );
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const qbyte *data, qboolean music );
+	unsigned short width, unsigned short channels, const uint8_t *data, qboolean music );
 void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 	unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const qbyte *data );
+	unsigned short width, unsigned short channels, const uint8_t *data );
 unsigned int CL_SoundModule_GetRawSamplesLength( void );
 unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum );
 void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop );

@@ -219,7 +219,7 @@ int COM_FilePathLength( const char *in )
 
 short ShortSwap( short l )
 {
-	qbyte b1, b2;
+	uint8_t b1, b2;
 
 	b1 = l&255;
 	b2 = ( l>>8 )&255;
@@ -236,7 +236,7 @@ static short ShortNoSwap( short l )
 
 int LongSwap( int l )
 {
-	qbyte b1, b2, b3, b4;
+	uint8_t b1, b2, b3, b4;
 
 	b1 = l&255;
 	b2 = ( l>>8 )&255;
@@ -258,7 +258,7 @@ float FloatSwap( float f )
 	union
 	{
 		float f;
-		qbyte b[4];
+		uint8_t b[4];
 	} dat1, dat2;
 
 
@@ -284,7 +284,7 @@ static float FloatNoSwap( float f )
 */
 static void Swap_Init( void )
 {
-	qbyte swaptest[2] = { 1, 0 };
+	uint8_t swaptest[2] = { 1, 0 };
 
 	// set the byte swapping variables in a portable manner
 	if( *(short *)swaptest == 1 )

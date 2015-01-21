@@ -59,11 +59,11 @@ asstring_t *objectString_FactoryBuffer( const char *buffer, unsigned int length 
 const asstring_t *objectString_ConstFactoryBuffer( const char *buffer, unsigned int length )
 {
 	asstring_t *object;
-	qbyte *rawmem;
+	uint8_t *rawmem;
 	unsigned int size = (length + 1) & ~CONST_STRING_BITFLAG;
 
 	length = size - 1;
-	rawmem = new qbyte[sizeof( asstring_t ) + size];
+	rawmem = new uint8_t[sizeof( asstring_t ) + size];
 	object = ( asstring_t * )rawmem;
 	object->asRefCount = 1;
 	object->buffer = ( char * )( object + 1 );
@@ -209,7 +209,7 @@ void objectString_Release( asstring_t *obj )
 		}
 		else
 		{
-			qbyte *rawmem = ( qbyte * )obj;
+			uint8_t *rawmem = ( uint8_t * )obj;
 			delete[] rawmem;
 		}
 	}

@@ -76,7 +76,7 @@ const bspFormatDesc_t *Q_FindBSPFormat( const bspFormatDesc_t *formats, const ch
 /*
 * Com_FindFormatDescriptor
 */
-const modelFormatDescr_t *Q_FindFormatDescriptor( const modelFormatDescr_t *formats, const qbyte *buf, const bspFormatDesc_t **bspFormat )
+const modelFormatDescr_t *Q_FindFormatDescriptor( const modelFormatDescr_t *formats, const uint8_t *buf, const bspFormatDesc_t **bspFormat )
 {
 	int i;
 	const modelFormatDescr_t *descr;
@@ -90,7 +90,7 @@ const modelFormatDescr_t *Q_FindFormatDescriptor( const modelFormatDescr_t *form
 			int version;
 
 			header = ( const char * )buf;
-			version = LittleLong( *((int *)((qbyte *)buf + descr->headerLen)) );
+			version = LittleLong( *((int *)((uint8_t *)buf + descr->headerLen)) );
 
 			// check whether any of specified formats matches the header/version combo
 			*bspFormat = Q_FindBSPFormat( descr->bspFormats, header, version );

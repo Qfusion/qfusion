@@ -166,7 +166,7 @@ static inline unsigned int trap_Milliseconds( void )
 	return CIN_IMPORT.Milliseconds();
 }
 
-static inline quint64 trap_Microseconds( void )
+static inline uint64_t trap_Microseconds( void )
 {
 	return CIN_IMPORT.Microseconds();
 }

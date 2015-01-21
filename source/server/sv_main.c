@@ -190,7 +190,7 @@ static void SV_ReadPackets( void )
 	netadr_t address;
 
 	static msg_t msg;
-	static qbyte msgData[MAX_MSGLEN];
+	static uint8_t msgData[MAX_MSGLEN];
 
 #ifdef TCP_ALLOW_CONNECT
 	socket_t* tcpsockets [] =

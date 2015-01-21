@@ -166,7 +166,7 @@ static inline unsigned int trap_Milliseconds( void )
 	return FTLIB_IMPORT.Milliseconds();
 }
 
-static inline quint64 trap_Microseconds( void )
+static inline uint64_t trap_Microseconds( void )
 {
 	return FTLIB_IMPORT.Microseconds();
 }
@@ -177,7 +177,7 @@ static inline struct shader_s *trap_R_RegisterPic( const char *name )
 	return FTLIB_IMPORT.R_RegisterPic( name );
 }
 
-static inline struct shader_s *trap_R_RegisterRawPic( const char *name, int width, int height, qbyte *data )
+static inline struct shader_s *trap_R_RegisterRawPic( const char *name, int width, int height, uint8_t *data )
 {
 	return FTLIB_IMPORT.R_RegisterRawPic( name, width, height, data );
 }

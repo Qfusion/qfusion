@@ -502,7 +502,7 @@ static void Cmd_Exec_f( void )
 		Com_Printf( "Executing: %s\n", name );
 
 	Cbuf_InsertText( "\n" );
-	if (len >= 3 && ((qbyte)f[0] == 0xEF && (qbyte)f[1] == 0xBB && (qbyte)f[2] == 0xBF))
+	if (len >= 3 && ((uint8_t)f[0] == 0xEF && (uint8_t)f[1] == 0xBB && (uint8_t)f[2] == 0xBF))
 		Cbuf_InsertText( f+3 );	// skip Windows UTF-8 marker
 	else
 		Cbuf_InsertText( f );
@@ -610,7 +610,7 @@ static void Cmd_Alias_f_( qboolean archive )
 	else
 	{
 		a = Mem_ZoneMalloc( (int) ( sizeof( cmd_alias_t ) + len + 1 ) );
-		a->name = (char *) ( (qbyte *)a + sizeof( cmd_alias_t ) );
+		a->name = (char *) ( (uint8_t *)a + sizeof( cmd_alias_t ) );
 		strcpy( a->name, s );
 		Trie_Insert( cmd_alias_trie, s, a );
 	}
@@ -901,7 +901,7 @@ void Cmd_AddCommand( const char *cmd_name, xcommand_t function )
 	}
 
 	cmd = Mem_ZoneMalloc( (int)( sizeof( cmd_function_t ) + strlen( cmd_name ) + 1 ) );
-	cmd->name = (char *) ( (qbyte *)cmd + sizeof( cmd_function_t ) );
+	cmd->name = (char *) ( (uint8_t *)cmd + sizeof( cmd_function_t ) );
 	strcpy( cmd->name, cmd_name );
 	cmd->function = function;
 	cmd->completion_func = NULL;

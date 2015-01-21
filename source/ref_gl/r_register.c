@@ -1188,7 +1188,7 @@ static void R_GfxInfo_f( void )
 static unsigned R_GLVersionHash( const char *vendorString, 
 	const char *rendererString, const char *versionString )
 {
-	qbyte *tmp;
+	uint8_t *tmp;
 	size_t csize;
 	size_t tmp_size, pos;
 	unsigned hash;

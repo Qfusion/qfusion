@@ -23,11 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "tv_local.h"
 
-#define EDICT_NUM( u, n ) ( (edict_t *)( (qbyte *)u->gi.edicts + u->gi.edict_size*( n ) ) )
-#define NUM_FOR_EDICT( u, e ) ( ( (qbyte *)( e )-(qbyte *)u->gi.edicts ) / u->gi.edict_size )
+#define EDICT_NUM( u, n ) ( (edict_t *)( (uint8_t *)u->gi.edicts + u->gi.edict_size*( n ) ) )
+#define NUM_FOR_EDICT( u, e ) ( ( (uint8_t *)( e )-(uint8_t *)u->gi.edicts ) / u->gi.edict_size )
 
-#define LOCAL_EDICT_NUM( u, n ) ( (edict_t *)( (qbyte *)u->gi.local_edicts + u->gi.local_edict_size*( n ) ) )
-#define NUM_FOR_LOCAL_EDICT( u, e ) ( ( (qbyte *)( e )-(qbyte *)u->gi.local_edicts ) / u->gi.local_edict_size )
+#define LOCAL_EDICT_NUM( u, n ) ( (edict_t *)( (uint8_t *)u->gi.local_edicts + u->gi.local_edict_size*( n ) ) )
+#define NUM_FOR_LOCAL_EDICT( u, e ) ( ( (uint8_t *)( e )-(uint8_t *)u->gi.local_edicts ) / u->gi.local_edict_size )
 
 typedef struct packet_s packet_t;
 
@@ -52,8 +52,8 @@ struct packet_s
 typedef struct fatvis_s
 {
 	vec_t *skyorg;
-	qbyte pvs[MAX_MAP_LEAFS/8];
-	qbyte phs[MAX_MAP_LEAFS/8];
+	uint8_t pvs[MAX_MAP_LEAFS/8];
+	uint8_t phs[MAX_MAP_LEAFS/8];
 } fatvis_t;
 
 typedef struct client_entities_s
@@ -100,7 +100,7 @@ struct relay_s
 	snapshot_t	*lastFrame;             // latest snap received from the server
 	snapshot_t	*curFrame;              // latest snap handled
 	snapshot_t	frames[UPDATE_BACKUP];
-	qbyte *frames_areabits;
+	uint8_t *frames_areabits;
 	unsigned int framenum;
 
 	client_entities_t client_entities;

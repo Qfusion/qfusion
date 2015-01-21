@@ -324,7 +324,7 @@ static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size, int bot_pe
 	//Info_SetValueForKey( userinfo, "skin", bot_skin );
 	Info_SetValueForKey( userinfo, "skin", "default" ); // JALFIXME
 	Info_SetValueForKey( userinfo, "hand", va( "%i", (int)( random()*2.5 ) ) );
-	Info_SetValueForKey( userinfo, "color", va( "%i %i %i", (qbyte)( random()*255 ), (qbyte)( random()*255 ), (qbyte)( random()*255 ) ) );
+	Info_SetValueForKey( userinfo, "color", va( "%i %i %i", (uint8_t)( random()*255 ), (uint8_t)( random()*255 ), (uint8_t)( random()*255 ) ) );
 }
 
 

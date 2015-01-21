@@ -77,8 +77,8 @@ public:
 	virtual bool Get(const asstring_t &key, void *value, int typeId) const = 0;
 
 	// Sets/Gets an integer number value for a key
-	virtual void Set(const asstring_t &key, qint64 &value) = 0;
-	virtual bool Get(const asstring_t &key, qint64 &value) const = 0;
+	virtual void Set(const asstring_t &key, int64_t &value) = 0;
+	virtual bool Get(const asstring_t &key, int64_t &value) const = 0;
 
 	// Sets/Gets a real number value for a key
 	virtual void Set(const asstring_t &key, double &value) = 0;

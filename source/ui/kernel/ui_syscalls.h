@@ -98,7 +98,7 @@ namespace trap
 			return UI_IMPORT.R_RegisterPic( name );
 		}
 
-		inline struct shader_s *R_RegisterRawPic( const char *name, int width, int height, qbyte *data ) {
+		inline struct shader_s *R_RegisterRawPic( const char *name, int width, int height, uint8_t *data ) {
 			return UI_IMPORT.R_RegisterRawPic( name, width, height, data );
 		}
 

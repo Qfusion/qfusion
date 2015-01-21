@@ -372,7 +372,7 @@ LIGHTMAP ALLOCATION
 
 #define MAX_LIGHTMAP_IMAGES		1024
 
-static qbyte *r_lightmapBuffer;
+static uint8_t *r_lightmapBuffer;
 static int r_lightmapBufferSize;
 static image_t *r_lightmapTextures[MAX_LIGHTMAP_IMAGES];
 static int r_numUploadedLightmaps;
@@ -381,10 +381,10 @@ static int r_maxLightmapBlockSize;
 /*
 * R_BuildLightmap
 */
-static void R_BuildLightmap( int w, int h, qboolean deluxe, const qbyte *data, qbyte *dest, int blockWidth )
+static void R_BuildLightmap( int w, int h, qboolean deluxe, const uint8_t *data, uint8_t *dest, int blockWidth )
 {
 	int x, y;
-	qbyte *rgba;
+	uint8_t *rgba;
 	int bits = mapConfig.pow2MapOvrbr;
 
 	if( !data || (r_fullbright->integer && !deluxe) )
@@ -426,9 +426,9 @@ static void R_BuildLightmap( int w, int h, qboolean deluxe, const qbyte *data, q
 					normalized[0] = normalized[1] = normalized[2] = bound( 0, grey, 1 );
 				}
 
-				rgba[0] = ( qbyte )( normalized[0] * 255 );
-				rgba[1] = ( qbyte )( normalized[1] * 255 );
-				rgba[2] = ( qbyte )( normalized[2] * 255 );
+				rgba[0] = ( uint8_t )( normalized[0] * 255 );
+				rgba[1] = ( uint8_t )( normalized[1] * 255 );
+				rgba[2] = ( uint8_t )( normalized[2] * 255 );
 			}
 		}
 	}
@@ -437,7 +437,7 @@ static void R_BuildLightmap( int w, int h, qboolean deluxe, const qbyte *data, q
 /*
 * R_UploadLightmap
 */
-static int R_UploadLightmap( const char *name, qbyte *data, int w, int h )
+static int R_UploadLightmap( const char *name, uint8_t *data, int w, int h )
 {
 	image_t *image;
 	char uploadName[128];
@@ -452,7 +452,7 @@ static int R_UploadLightmap( const char *name, qbyte *data, int w, int h )
 
 	Q_snprintfz( uploadName, sizeof( uploadName ), "%s%i", name, r_numUploadedLightmaps );
 
-	image = R_LoadImage( uploadName, (qbyte **)( &data ), w, h, 
+	image = R_LoadImage( uploadName, (uint8_t **)( &data ), w, h, 
 		IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, LIGHTMAP_BYTES );
 	r_lightmapTextures[r_numUploadedLightmaps] = image;
 
@@ -463,10 +463,10 @@ static int R_UploadLightmap( const char *name, qbyte *data, int w, int h )
 * R_PackLightmaps
 */
 static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolean deluxe, 
-	const char *name, const qbyte *data, mlightmapRect_t *rects )
+	const char *name, const uint8_t *data, mlightmapRect_t *rects )
 {
 	int i, x, y, root;
-	qbyte *block;
+	uint8_t *block;
 	int lightmapNum;
 	int rectX, rectY, rectW, rectH, rectSize;
 	int maxX, maxY, max, xStride;
@@ -599,7 +599,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 /*
 * R_BuildLightmaps
 */
-void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte *data, mlightmapRect_t *rects )
+void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects )
 {
 	int i, j, p;
 	int numBlocks = numLightmaps;
@@ -650,7 +650,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte
 
 	if( mapConfig.lightmapArrays )
 	{
-		int numLayers = min( glConfig.maxTextureLayers, 256 ); // layer index is a qbyte
+		int numLayers = min( glConfig.maxTextureLayers, 256 ); // layer index is a uint8_t
 		int layer = 0;
 		int lightmapNum = 0;
 		image_t *image = NULL;
@@ -786,7 +786,7 @@ void R_InitLightStyles( model_t *mod )
 * R_AddSuperLightStyle
 */
 superLightStyle_t *R_AddSuperLightStyle( model_t *mod, const int *lightmaps,
-	const qbyte *lightmapStyles, const qbyte *vertexStyles, mlightmapRect_t **lmRects )
+	const uint8_t *lightmapStyles, const uint8_t *vertexStyles, mlightmapRect_t **lmRects )
 {
 	unsigned int i, j;
 	superLightStyle_t *sls;

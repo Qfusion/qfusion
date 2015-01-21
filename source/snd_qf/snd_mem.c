@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * ResampleSfx
 */
-unsigned int ResampleSfx( unsigned int numsamples, unsigned int speed, unsigned short channels, unsigned short width, const qbyte *data, qbyte *outdata, char *name )
+unsigned int ResampleSfx( unsigned int numsamples, unsigned int speed, unsigned short channels, unsigned short width, const uint8_t *data, uint8_t *outdata, char *name )
 {
 	size_t srclength, outcount;
 
@@ -199,7 +199,7 @@ unsigned int ResampleSfx( unsigned int numsamples, unsigned int speed, unsigned 
 sfxcache_t *S_LoadSound_Wav( sfx_t *s )
 {
 	char namebuffer[MAX_QPATH];
-	qbyte *data;
+	uint8_t *data;
 	wavinfo_t info;
 	int len, file;
 	sfxcache_t *sc;
@@ -305,10 +305,10 @@ WAV loading
 */
 
 
-qbyte *data_p;
-qbyte *iff_end;
-qbyte *last_chunk;
-qbyte *iff_data;
+uint8_t *data_p;
+uint8_t *iff_end;
+uint8_t *last_chunk;
+uint8_t *iff_data;
 int iff_chunk_len;
 
 
@@ -368,7 +368,7 @@ static void FindChunk( char *name )
 /*
 * GetWavinfo
 */
-wavinfo_t GetWavinfo( const char *name, qbyte *wav, int wavlength )
+wavinfo_t GetWavinfo( const char *name, uint8_t *wav, int wavlength )
 {
 	wavinfo_t info;
 	int i;

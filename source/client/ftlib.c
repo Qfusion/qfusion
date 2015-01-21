@@ -65,7 +65,7 @@ static struct shader_s *CL_FTLibModule_RegisterPic( const char *name )
 	return re.RegisterPic( name );
 }
 
-static struct shader_s *CL_FTLibModule_RegisterRawPic( const char *name, int width, int height, qbyte *data )
+static struct shader_s *CL_FTLibModule_RegisterRawPic( const char *name, int width, int height, uint8_t *data )
 {
 	return re.RegisterRawPic( name, width, height, data );
 }

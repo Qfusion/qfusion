@@ -317,7 +317,7 @@ static podict_t *L10n_LoadPODict( const char *filepath )
 	}
 
 	podict = ( podict_t * )L10n_Malloc( sizeof( *podict ) + length + 1 );
-	podict->buffer = ( char * )( ( qbyte * )podict + sizeof( *podict ) );
+	podict->buffer = ( char * )( ( uint8_t * )podict + sizeof( *podict ) );
 	FS_Read( podict->buffer, length, file );
 	podict->buffer[length] = '\0'; // safeguard
 	FS_FCloseFile( file );
@@ -348,7 +348,7 @@ static pofile_t *L10n_CreatePOFile( const char *filepath )
 	size_t filepath_size = strlen( filepath ) + 1;
 	pofile_t *pofile;
 	pofile = ( pofile_t * )L10n_Malloc( sizeof( *pofile ) + filepath_size );
-	pofile->path = ( char * )( ( qbyte * )pofile + sizeof( *pofile ) );
+	pofile->path = ( char * )( ( uint8_t * )pofile + sizeof( *pofile ) );
 	pofile->next = NULL;
 	pofile->dict = NULL;
 	memcpy( pofile->path, filepath, filepath_size );
@@ -412,7 +412,7 @@ static podomain_t *L10n_CreatePODomain( const char *name )
 	size_t name_size = strlen( name ) + 1;
 	podomain_t *podomain;
 	podomain = ( podomain_t * )L10n_Malloc( sizeof( *podomain ) + name_size );
-	podomain->name = ( char * )( ( qbyte * )podomain + sizeof( *podomain ) );
+	podomain->name = ( char * )( ( uint8_t * )podomain + sizeof( *podomain ) );
 	podomain->next = NULL;
 	podomain->pofiles_head = NULL;
 	memcpy( podomain->name, name, name_size );

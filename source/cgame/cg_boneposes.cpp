@@ -101,7 +101,7 @@ cgs_skeleton_t *CG_SkeletonForModel( struct model_s *model )
 {
 	int i, j;
 	cgs_skeleton_t *skel;
-	qbyte *buffer;
+	uint8_t *buffer;
 	cgs_bone_t *bone;
 	bonepose_t *bonePose;
 	int numBones, numFrames;
@@ -120,7 +120,7 @@ cgs_skeleton_t *CG_SkeletonForModel( struct model_s *model )
 	}
 
 	// allocate one huge array to hold our data
-	buffer = (qbyte *)CG_Malloc( sizeof( cgs_skeleton_t ) + numBones * sizeof( cgs_bone_t ) +
+	buffer = (uint8_t *)CG_Malloc( sizeof( cgs_skeleton_t ) + numBones * sizeof( cgs_bone_t ) +
 		numFrames * ( sizeof( bonepose_t * ) + numBones * sizeof( bonepose_t ) ) );
 
 	skel = ( cgs_skeleton_t * )buffer; buffer += sizeof( cgs_skeleton_t );

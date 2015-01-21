@@ -51,7 +51,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct
 {
-	qbyte data[MAX_MSGLEN];
+	uint8_t data[MAX_MSGLEN];
 	int datalen;
 } loopmsg_t;
 
@@ -69,7 +69,7 @@ static qboolean	net_initialized = qfalse;
 
 #define MAX_IPS 16
 static int numIP;
-static qbyte localIP[MAX_IPS][4];
+static uint8_t localIP[MAX_IPS][4];
 
 /*
 =============================================================================
@@ -539,7 +539,7 @@ static int NET_TCP_Get( const socket_t *socket, netadr_t *address, void *data, s
 static int NET_TCP_GetPacket( const socket_t *socket, netadr_t *address, msg_t *message )
 {
 	int ret;
-	qbyte buffer[MAX_PACKETLEN + 4];
+	uint8_t buffer[MAX_PACKETLEN + 4];
 	int len;
 
 	assert( socket && socket->open && socket->connected && socket->type == SOCKET_TCP );
