@@ -65,9 +65,9 @@ static struct shader_s *CL_FTLibModule_RegisterPic( const char *name )
 	return re.RegisterPic( name );
 }
 
-static struct shader_s *CL_FTLibModule_RegisterRawPic( const char *name, int width, int height, uint8_t *data )
+static struct shader_s *CL_FTLibModule_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples )
 {
-	return re.RegisterRawPic( name, width, height, data );
+	return re.RegisterRawPic( name, width, height, data, samples );
 }
 
 static void CL_FTLibModule_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader )

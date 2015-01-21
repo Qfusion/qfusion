@@ -1887,7 +1887,7 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 
 	R_BindModifyTexture( image );
 
-	if( image->width != width || image->height != height )
+	if( image->width != width || image->height != height || image->samples != samples )
 		R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, 
 		&(image->upload_width), &(image->upload_height), samples, qfalse, qfalse );
 	else

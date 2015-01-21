@@ -2624,6 +2624,7 @@ create_default:
 			break;
 		case SHADER_TYPE_2D:
 		case SHADER_TYPE_2D_RAW:
+		case SHADER_TYPE_2D_RAW_LUMINANCE:
 		case SHADER_TYPE_VIDEO:
 			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 
@@ -2636,7 +2637,13 @@ create_default:
 			strcpy( s->name, shortname );
 
 			pass = &s->passes[0];
-			pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+			if( type == SHADER_TYPE_2D_RAW_LUMINANCE ) {
+				type = SHADER_TYPE_2D_RAW;
+				pass->flags = GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ONE_MINUS_SRC_COLOR;
+			}
+			else {
+				pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+			}
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_VERTEX;
 			pass->tcgen = TC_GEN_BASE;
@@ -2799,11 +2806,21 @@ shader_t *R_RegisterPic( const char *name )
 *
 * Registers default 2D shader with base image provided as RGBA data.
 */
-shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *data )
+shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples )
 {
 	shader_t *s;
+	int type;
+	int flags;
 
-	s = R_LoadShader( name, SHADER_TYPE_2D_RAW, qtrue );
+	type = SHADER_TYPE_2D_RAW;
+	flags = IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS;
+
+	if( samples == 1 ) {
+		type = SHADER_TYPE_2D_RAW_LUMINANCE;
+		flags |= IT_LUMINANCE;
+	}
+
+	s = R_LoadShader( name, type, qtrue );
 	if( s ) {
 		image_t *image;
 
@@ -2811,8 +2828,7 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *da
 		image = s->passes[0].images[0];
 		if( !image || image == rsh.noTexture ) {
 			// try to load new image
-			image = R_LoadImage( name, &data, width, height, 
-				IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, 4 );
+			image = R_LoadImage( name, &data, width, height, flags, samples );
 			s->passes[0].images[0] = image;
 		}
 		else {
