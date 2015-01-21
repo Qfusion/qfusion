@@ -288,7 +288,7 @@ void CL_DemoCompleted( void )
 */
 static void CL_ReadDemoMessage( void )
 {
-	static qbyte msgbuf[MAX_MSGLEN];
+	static uint8_t msgbuf[MAX_MSGLEN];
 	static msg_t demomsg;
 	static qboolean init = qtrue;
 	int read;

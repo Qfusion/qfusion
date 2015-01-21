@@ -410,12 +410,6 @@ typedef int socket_handle_t;
 
 //==============================================
 
-typedef uint8_t qbyte;
-typedef int64_t qint64;
-typedef uint64_t quint64;
-typedef intptr_t qintptr;
-typedef uintptr_t quintptr;
-
 typedef bool qboolean;
 #define qtrue true
 #define qfalse false

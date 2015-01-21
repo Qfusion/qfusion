@@ -42,7 +42,7 @@ static void TV_Lobby_WriteFrameSnapToClient( client_t *client, msg_t *msg )
 */
 static qboolean TV_Lobby_SendClientDatagram( client_t *client )
 {
-	qbyte msg_buf[MAX_MSGLEN];
+	uint8_t msg_buf[MAX_MSGLEN];
 	msg_t msg;
 
 	assert( client );

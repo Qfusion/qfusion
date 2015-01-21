@@ -52,7 +52,7 @@ static bgTrack_t *S_AllocTrack( const char *filename )
 	track = S_Malloc( sizeof( *track ) + strlen( filename ) + 1 );
 	track->stream = NULL;
 	track->ignore = qfalse;
-	track->filename = (char *)((qbyte *)track + sizeof( *track ));
+	track->filename = (char *)((uint8_t *)track + sizeof( *track ));
 	strcpy( track->filename, filename );
 	track->isUrl = trap_FS_IsUrl( filename );
 	track->anext = s_bgTrackHead;
@@ -379,7 +379,7 @@ static qboolean music_process( void )
 {
 	int l = 0;
 	snd_stream_t *music_stream;
-	qbyte decode_buffer[MUSIC_BUFFER_SIZE];
+	uint8_t decode_buffer[MUSIC_BUFFER_SIZE];
 
 	while( S_GetRawSamplesLength() < MUSIC_PRELOAD_MSEC )
 	{

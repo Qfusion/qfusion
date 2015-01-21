@@ -189,7 +189,7 @@ static void CM_CreatePatch( cmodel_state_t *cms, cface_t *patch, cshaderref_t *s
 	cbrush_t *facets, *facet;
 	vec3_t *points;
 	vec3_t tverts[4];
-	qbyte *data;
+	uint8_t *data;
 	cplane_t *brushplanes;
 
 	// find the degree of subdivision in the u and v directions
@@ -263,7 +263,7 @@ static void CM_CreatePatch( cmodel_state_t *cms, cface_t *patch, cshaderref_t *s
 
 	if( patch->numfacets )
 	{
-		qbyte *data;
+		uint8_t *data;
 
 		data = Mem_Alloc( cms->mempool, patch->numfacets * sizeof( cbrush_t ) + totalsides * ( sizeof( cbrushside_t ) + sizeof( cplane_t ) ) );
 
@@ -860,7 +860,7 @@ void CM_LoadQ3BrushModel( cmodel_state_t *cms, void *parent, void *buf, bspForma
 	header = *(dheader_t *)buf;
 	for( i = 0; i < sizeof( dheader_t ) / 4; i++ )
 		( (int *)&header )[i] = LittleLong( ( (int *)&header )[i] );
-	cms->cmod_base = ( qbyte * )buf;
+	cms->cmod_base = ( uint8_t * )buf;
 
 	// load into heap
 	CMod_LoadSurfaces( cms, &header.lumps[LUMP_SHADERREFS] );

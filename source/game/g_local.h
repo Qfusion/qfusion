@@ -1058,7 +1058,7 @@ typedef struct
 	int mh_control_award;
 	int ra_control_award;
 
-	qbyte combo[MAX_CLIENTS]; // combo management for award
+	uint8_t combo[MAX_CLIENTS]; // combo management for award
 	edict_t *lasthit;
 	unsigned int lasthit_time;
 
@@ -1074,7 +1074,7 @@ typedef struct
 typedef struct
 {
 	int buttons;
-	qbyte plrkeys; // used for displaying key icons
+	uint8_t plrkeys; // used for displaying key icons
 	int damageTaken;
 	vec3_t damageTakenDir;
 

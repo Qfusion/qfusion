@@ -281,7 +281,7 @@ std::string StreamCache::CacheFileForUrl( const std::string url, bool noCache )
 	std::string fileName;
 
 	// compute hash key for the URL and convert to hex
-	hashkey = md5_digest32( ( const qbyte * )url.c_str(), url.size() );
+	hashkey = md5_digest32( ( const uint8_t * )url.c_str(), url.size() );
 	std::stringstream outstream;
 	outstream << std::hex << hashkey;	// to hex
 

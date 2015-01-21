@@ -25,7 +25,7 @@ typedef struct irc_bucket_s {
 	irc_bucket_message_t *first_msg;	// pointer to first message in queue
 	unsigned int message_size;			// number of messages in bucket
 	unsigned int character_size;		// number of characters in bucket
-	quint64 last_refill;				// last refill timestamp
+	uint64_t last_refill;				// last refill timestamp
 	double message_token;
 	double character_token;
 } irc_bucket_t;
@@ -375,8 +375,8 @@ static void Irc_Proto_RefillBucket(void) {
 	const double characterBucketSize = Cvar_GetFloatValue(irc_characterBucketSize);
 	const double messageBucketRate = Cvar_GetFloatValue(irc_messageBucketRate);
 	const double characterBucketRate = Cvar_GetFloatValue(irc_characterBucketRate);
-	const quint64 micros = IRC_IMPORT.Microseconds();
-	const quint64 micros_delta = micros - irc_bucket.last_refill;
+	const uint64_t micros = IRC_IMPORT.Microseconds();
+	const uint64_t micros_delta = micros - irc_bucket.last_refill;
 	const double msg_delta = (micros_delta * messageBucketRate) / 1000000;
 	const double msg_new = irc_bucket.message_token + msg_delta;
 	const double char_delta = (micros_delta * characterBucketRate) / 1000000;

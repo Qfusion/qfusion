@@ -30,7 +30,7 @@ qboolean Theora_Init_CIN( cinematics_t *cin );
 void Theora_Shutdown_CIN( cinematics_t *cin );
 void Theora_Reset_CIN( cinematics_t *cin );
 qboolean Theora_NeedNextFrame_CIN( cinematics_t *cin );
-qbyte *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw );
+uint8_t *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw );
 cin_yuv_t *Theora_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw );
 
 #endif

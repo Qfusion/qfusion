@@ -103,7 +103,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	int line, numLines;
 	int linesPerImage;
 	int numImages, imageNum;
-	qbyte *tempRGBA = NULL;
+	uint8_t *tempRGBA = NULL;
 	qboolean clearImage;
 	qboolean hasKerning;
 	qttface_t *qttf = NULL;
@@ -189,7 +189,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 
 	// we are going to need this for kerning
 	qttf = FTLIB_Alloc( ftlibPool, sizeof( *qttf ) + (maxChar+1) * sizeof( FT_UInt ) );
-	qttf->gindices = ( FT_UInt * )( ( qbyte * )qttf + sizeof( *qttf ) );
+	qttf->gindices = ( FT_UInt * )( ( uint8_t * )qttf + sizeof( *qttf ) );
 	qttf->ftface = ftface;
 
 	// failed to find an unused slot, take a new one
@@ -229,7 +229,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	imageNum = 0;
 	imageHeight = 0;
 	imagePitch = imageWidth * 4;
-	tempRGBA = ( qbyte * )FTLIB_Alloc( ftlibPool, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
+	tempRGBA = ( uint8_t * )FTLIB_Alloc( ftlibPool, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
 	clearImage = qtrue;
 	lastStartChar = minChar;
 
@@ -295,8 +295,8 @@ upload_image:
 		gindex = FT_Get_Char_Index( ftface, charcode );
 		qttf->gindices[charcode] = gindex;
 		if( gindex > 0 ) {
-			qbyte *dst, *src;
-			qbyte *dst_p, *src_p;
+			uint8_t *dst, *src;
+			uint8_t *dst_p, *src_p;
 			FT_Bitmap *bitmap;
 			unsigned int bitmap_width, bitmap_height;
 			unsigned int bitmap_left, bitmap_top;
@@ -448,7 +448,7 @@ void QFT_UnloadFace( qfontface_t *qfont )
 /*
 * QFT_LoadFamily
 */
-static void QFT_LoadFamily( const char *fileName, const qbyte *data, size_t dataSize, qboolean verbose )
+static void QFT_LoadFamily( const char *fileName, const uint8_t *data, size_t dataSize, qboolean verbose )
 {
 	FT_Face ftface;
 	int error;
@@ -509,7 +509,7 @@ static void QFT_LoadFamilyFromFile( const char *name, const char *fileName, qboo
 {
 	int fileNum;
 	int length;
-	qbyte *buffer;
+	uint8_t *buffer;
 
 	if( numFontFamilies == FTLIB_MAX_FONT_FAMILIES ) {
 		return;
@@ -520,7 +520,7 @@ static void QFT_LoadFamilyFromFile( const char *name, const char *fileName, qboo
 		return;
 	}
 
-	buffer = ( qbyte * )FTLIB_Alloc( ftlibPool, length );
+	buffer = ( uint8_t * )FTLIB_Alloc( ftlibPool, length );
 	trap_FS_Read( buffer, length, fileNum );
 
 	QFT_LoadFamily( name, buffer, length, verbose );

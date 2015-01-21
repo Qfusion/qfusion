@@ -40,7 +40,7 @@ namespace WSWUI {
 	public:
 		// Attributes
 		std::string		address;
-		quint64			iaddress;
+		uint64_t			iaddress;
 
 		std::string		hostname;
 		std::string		cleanname;
@@ -264,10 +264,10 @@ namespace WSWUI {
 	{
 		// typedefs
 		// use set for serverinfo list to keep unique elements
-		typedef std::set<ServerInfo, ServerInfo::_LessBinary<quint64, &ServerInfo::iaddress> > ServerInfoList;
+		typedef std::set<ServerInfo, ServerInfo::_LessBinary<uint64_t, &ServerInfo::iaddress> > ServerInfoList;
 		typedef std::list<ServerInfo*> ReferenceList;
 		typedef std::map<String, ReferenceList> ReferenceListMap;
-		typedef std::set<quint64> FavoritesList;
+		typedef std::set<uint64_t> FavoritesList;
 
 		// shortcut for the set insert
 		typedef std::pair<ServerInfoList::iterator, bool> ServerInfoListPair;
@@ -417,7 +417,7 @@ namespace WSWUI {
 		void tableNameForServerInfo( const ServerInfo &, String &table ) const;
 		void addServerToTable( ServerInfo &info, String tableName );
 		void removeServerFromTable( ServerInfo &info, String tableName );
-		void notifyOfFavoriteChange( quint64 iaddr, bool add );
+		void notifyOfFavoriteChange( uint64_t iaddr, bool add );
 	};
 
 }

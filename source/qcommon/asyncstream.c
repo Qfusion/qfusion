@@ -58,7 +58,7 @@ async_stream_module_t *AsyncStream_InitModule( const char *name, async_stream_al
 
 	// allocate and initialize module, store pointers
 	module = alloc_f( sizeof( *module ) + name_size, __FILE__, __LINE__ );
-	module->name = ( char * )(( qbyte * )module + sizeof( *module ));
+	module->name = ( char * )(( uint8_t * )module + sizeof( *module ));
 	Q_strncpyz( module->name, name, name_size );
 	module->alloc_f = alloc_f;
 	module->free_f = free_f;

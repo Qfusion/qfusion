@@ -33,7 +33,7 @@ model_t *Mod_LoadModel( model_t *mod, qboolean crash );
 static void R_InitMapConfig( const char *model );
 static void R_FinishMapConfig( const model_t *mod );
 
-static qbyte mod_novis[MAX_MAP_LEAFS/8];
+static uint8_t mod_novis[MAX_MAP_LEAFS/8];
 
 #define	MAX_MOD_KNOWN	512*MOD_MAX_LODS
 static model_t mod_known[MAX_MOD_KNOWN];
@@ -92,17 +92,17 @@ mleaf_t *Mod_PointInLeaf( vec3_t p, model_t *model )
 /*
 * Mod_ClusterVS
 */
-static inline qbyte *Mod_ClusterVS( int cluster, dvis_t *vis )
+static inline uint8_t *Mod_ClusterVS( int cluster, dvis_t *vis )
 {
 	if( cluster < 0 || !vis )
 		return mod_novis;
-	return ( (qbyte *)vis->data + cluster*vis->rowsize );
+	return ( (uint8_t *)vis->data + cluster*vis->rowsize );
 }
 
 /*
 * Mod_ClusterPVS
 */
-qbyte *Mod_ClusterPVS( int cluster, model_t *model )
+uint8_t *Mod_ClusterPVS( int cluster, model_t *model )
 {
 	return Mod_ClusterVS( cluster, (( mbrushmodel_t * )model->extradata)->pvs );
 }
@@ -328,11 +328,11 @@ static void Mod_SetupSubmodels( model_t *mod )
 static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, size_t *vbo_total_size )
 {
 	unsigned int i, j, k;
-	qbyte *visdata = NULL;
-	qbyte *areadata = NULL;
+	uint8_t *visdata = NULL;
+	uint8_t *areadata = NULL;
 	unsigned int rowbytes, rowlongs;
 	int areabytes;
-	qbyte *arearow;
+	uint8_t *arearow;
 	int *longrow, *longrow2;
 	mmodel_t *bm;
 	mbrushmodel_t *loadbmodel;
@@ -373,8 +373,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 
 		// build visibility data for each face, based on what leafs
 		// this face belongs to (visible from)
-		visdata = ( qbyte * )Mod_Malloc( mod, rowlongs * 4 * loadbmodel->numsurfaces );
-		areadata = ( qbyte * )Mod_Malloc( mod, areabytes * loadbmodel->numsurfaces );
+		visdata = ( uint8_t * )Mod_Malloc( mod, rowlongs * 4 * loadbmodel->numsurfaces );
+		areadata = ( uint8_t * )Mod_Malloc( mod, areabytes * loadbmodel->numsurfaces );
 
 		for( pleaf = loadbmodel->visleafs, leaf = *pleaf; leaf; leaf = *pleaf++ )
 		{
@@ -968,7 +968,7 @@ model_t *Mod_ForName( const char *name, qboolean crash )
 		return NULL;
 
 	// call the apropriate loader
-	descr = Q_FindFormatDescriptor( mod_supportedformats, ( const qbyte * )buf, (const bspFormatDesc_t **)&bspFormat );
+	descr = Q_FindFormatDescriptor( mod_supportedformats, ( const uint8_t * )buf, (const bspFormatDesc_t **)&bspFormat );
 	if( !descr )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "Mod_NumForName: unknown fileid for %s", mod->name );

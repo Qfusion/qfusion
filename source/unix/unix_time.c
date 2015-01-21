@@ -5,7 +5,7 @@
 * Sys_Microseconds
 */
 static unsigned long sys_secbase;
-quint64 Sys_Microseconds( void )
+uint64_t Sys_Microseconds( void )
 {
 	struct timeval tp;
 	struct timezone tzp;
@@ -19,7 +19,7 @@ quint64 Sys_Microseconds( void )
 	}
 
 	// TODO handle the wrap
-	return (quint64)( tp.tv_sec - sys_secbase )*1000000 + tp.tv_usec;
+	return (uint64_t)( tp.tv_sec - sys_secbase )*1000000 + tp.tv_usec;
 }
 
 /*

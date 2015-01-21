@@ -547,10 +547,10 @@ static void CL_Rcon_f( void )
 		return;
 	}
 
-	message[0] = (qbyte)255;
-	message[1] = (qbyte)255;
-	message[2] = (qbyte)255;
-	message[3] = (qbyte)255;
+	message[0] = (uint8_t)255;
+	message[1] = (uint8_t)255;
+	message[2] = (uint8_t)255;
+	message[3] = (uint8_t)255;
 	message[4] = 0;
 
 	Q_strncatz( message, "rcon ", sizeof( message ) );
@@ -1355,7 +1355,7 @@ static qboolean CL_ProcessPacket( netchan_t *netchan, msg_t *msg )
 void CL_ReadPackets( void )
 {
 	static msg_t msg;
-	static qbyte msgData[MAX_MSGLEN];
+	static uint8_t msgData[MAX_MSGLEN];
 	int socketind, ret;
 	socket_t *socket;
 	netadr_t address;
@@ -2492,7 +2492,7 @@ static qboolean CL_MaxPacketsReached( void )
 void CL_SendMessagesToServer( qboolean sendNow )
 {
 	msg_t message;
-	qbyte messageData[MAX_MSGLEN];
+	uint8_t messageData[MAX_MSGLEN];
 
 	if( cls.state == CA_DISCONNECTED || cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CINEMATIC )
 		return;

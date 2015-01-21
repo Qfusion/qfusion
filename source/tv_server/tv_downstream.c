@@ -447,7 +447,7 @@ void TV_Downstream_AddReliableCommandsToMessage( client_t *client, msg_t *msg )
 /*
 * TV_Downstream_InitClientMessage
 */
-void TV_Downstream_InitClientMessage( client_t *client, msg_t *msg, qbyte *data, size_t size )
+void TV_Downstream_InitClientMessage( client_t *client, msg_t *msg, uint8_t *data, size_t size )
 {
 	assert( client );
 
@@ -487,7 +487,7 @@ void TV_Downstream_DropClient( client_t *drop, int type, const char *format, ...
 	va_list	argptr;
 	char string[1024];
 	msg_t Message;
-	qbyte MessageData[MAX_MSGLEN];
+	uint8_t MessageData[MAX_MSGLEN];
 
 	va_start( argptr, format );
 	Q_vsnprintfz( string, sizeof( string ), format, argptr );
@@ -631,7 +631,7 @@ void TV_Downstream_ReadPackets( void )
 	socket_t *socket;
 	netadr_t address;
 	msg_t msg;
-	qbyte msgData[MAX_MSGLEN];
+	uint8_t msgData[MAX_MSGLEN];
 
 #ifdef TCP_ALLOW_CONNECT
 	socket_t* tcpsockets [] =
@@ -918,7 +918,7 @@ void TV_Downstream_SendClientMessages( void )
 	int i;
 	client_t *client;
 	msg_t message;
-	qbyte messageData[MAX_MSGLEN];
+	uint8_t messageData[MAX_MSGLEN];
 
 	// send a message to each connected client
 	for( i = 0, client = tvs.clients; i < tv_maxclients->integer; i++, client++ )

@@ -369,7 +369,7 @@ static void R_FillVertexBuffer ## intype ## outtype( intype *in, size_t size, \
 		for( j = 0; j < size; j++ ) { \
 			out[j] = conv( *in++ ); \
 		} \
-		out = ( outtype * )(( qbyte * )out + stride); \
+		out = ( outtype * )(( uint8_t * )out + stride); \
 	} \
 }
 
@@ -404,7 +404,7 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 	size_t vertSize;
 	vattribmask_t errMask;
 	vattribmask_t hfa;
-	qbyte *data;
+	uint8_t *data;
 
 	assert( vbo != NULL );
 	assert( mesh != NULL );

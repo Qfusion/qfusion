@@ -107,7 +107,7 @@ void SNDOGG_Init( qboolean verbose )
 */
 static size_t ovcb_read( void *ptr, size_t size, size_t nb, void *datasource )
 {
-	qintptr filenum = (qintptr) datasource;
+	intptr_t filenum = (intptr_t) datasource;
 
 	return trap_FS_Read( ptr, size * nb, filenum ) / size;
 }
@@ -117,7 +117,7 @@ static size_t ovcb_read( void *ptr, size_t size, size_t nb, void *datasource )
 */
 static int ovcb_seek( void *datasource, ogg_int64_t offset, int whence )
 {
-	qintptr filenum = (qintptr) datasource;
+	intptr_t filenum = (intptr_t) datasource;
 
 	switch( whence )
 	{
@@ -137,7 +137,7 @@ static int ovcb_seek( void *datasource, ogg_int64_t offset, int whence )
 */
 static int ovcb_close( void *datasource )
 {
-	qintptr filenum = (qintptr) datasource;
+	intptr_t filenum = (intptr_t) datasource;
 
 	trap_FS_FCloseFile( (int) filenum );
 	return 0;
@@ -148,7 +148,7 @@ static int ovcb_close( void *datasource )
 */
 static long ovcb_tell( void *datasource )
 {
-	qintptr filenum = (qintptr) datasource;
+	intptr_t filenum = (intptr_t) datasource;
 
 	return trap_FS_Tell( filenum );
 }
@@ -186,7 +186,7 @@ sfxcache_t *SNDOGG_Load( sfx_t *s )
 		callbacks.tell_func = NULL;
 	}
 
-	if( qov_open_callbacks( (void *)(qintptr)filenum, &vorbisfile, NULL, 0, callbacks ) < 0 )
+	if( qov_open_callbacks( (void *)(intptr_t)filenum, &vorbisfile, NULL, 0, callbacks ) < 0 )
 	{
 		Com_Printf( "Couldn't open %s for reading: %s\n", s->name );
 		trap_FS_FCloseFile( filenum );
@@ -263,7 +263,7 @@ sfxcache_t *SNDOGG_Load( sfx_t *s )
 	}
 
 	if( sc->speed != dma.speed ) {
-		sc->length = ResampleSfx( samples, sc->speed, sc->channels, 2, (qbyte *)buffer, sc->data, s->name );
+		sc->length = ResampleSfx( samples, sc->speed, sc->channels, 2, (uint8_t *)buffer, sc->data, s->name );
 		sc->loopstart = sc->length;
 		sc->speed = dma.speed;
 	}
@@ -341,7 +341,7 @@ qboolean SNDOGG_OpenTrack( bgTrack_t *track, qboolean *delay )
 
 	track->vorbisFile = vf = S_Malloc( sizeof( OggVorbis_File ) );
 
-	if( qov_open_callbacks( (void *)(qintptr)track->file, vf, NULL, 0, callbacks ) < 0 )
+	if( qov_open_callbacks( (void *)(intptr_t)track->file, vf, NULL, 0, callbacks ) < 0 )
 	{
 		Com_Printf( "SNDOGG_OpenTrack: couldn't open %s for reading\n", real_path );
 		S_Free( vf );

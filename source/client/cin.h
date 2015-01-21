@@ -28,7 +28,7 @@ struct cinematics_s *CIN_Open( const char *name, unsigned int start_time,
 
 qboolean CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime );
 
-qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, 
+uint8_t *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, int *height, 
 	int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 
 ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, int *width, int *height, 

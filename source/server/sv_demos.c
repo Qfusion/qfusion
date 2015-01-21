@@ -55,7 +55,7 @@ void SV_Demo_WriteSnap( void )
 {
 	int i;
 	msg_t msg;
-	qbyte msg_buffer[MAX_MSGLEN];
+	uint8_t msg_buffer[MAX_MSGLEN];
 
 	if( !svs.demo.file )
 		return;

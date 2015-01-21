@@ -868,7 +868,7 @@ static rawsound_t *S_FindRawSound( int entnum, qboolean addNew )
 */
 static unsigned int S_RawSamplesStereo( portable_samplepair_t *rawsamples, unsigned int rawend,
 	unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const qbyte *data )
+	unsigned short channels, const uint8_t *data )
 {
 	unsigned src, dst;
 	unsigned fracstep, samplefrac;
@@ -933,7 +933,7 @@ static unsigned int S_RawSamplesStereo( portable_samplepair_t *rawsamples, unsig
 * S_RawEntSamples
 */
 static void S_RawEntSamples( int entnum, unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const qbyte *data, int snd_vol )
+	unsigned short channels, const uint8_t *data, int snd_vol )
 {
 	rawsound_t *rawsound;
 
@@ -956,7 +956,7 @@ static void S_RawEntSamples( int entnum, unsigned int samples, unsigned int rate
 * S_RawSamples2
 */
 void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const qbyte *data, int snd_vol )
+	unsigned short channels, const uint8_t *data, int snd_vol )
 {
 	S_RawEntSamples( S_RAW_SOUND_BGTRACK, samples, rate, width, channels, data, snd_vol );
 }
@@ -965,7 +965,7 @@ void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short widt
 * S_RawSamples
 */
 void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const qbyte *data, qboolean music )
+	unsigned short channels, const uint8_t *data, qboolean music )
 {
 	int snd_vol;
 	int entnum;
@@ -989,7 +989,7 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 */
 static void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 		unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const qbyte *data )
+		unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	rawsound_t *rawsound;
 	

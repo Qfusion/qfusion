@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	(const type *p, int *numcp, const int *tess, type *dest, int comp, int stride)
 
 PATCH_EVALUATE_DECL(vec_t);
-PATCH_EVALUATE_DECL(qbyte);
+PATCH_EVALUATE_DECL(uint8_t);
 
 #define Patch_Evaluate(type,comp,p,numcp,tess,dest,stride)				\
 	Patch_Evaluate_##type(p,numcp,tess,dest,comp,stride)
@@ -31,4 +31,4 @@ PATCH_EVALUATE_DECL(qbyte);
 void Patch_GetFlatness( float maxflat, const float *points, int comp, const int *patch_cp, int *flat );
 
 void Patch_RemoveLinearColumnsRows( vec_t *verts, int comp, int *pwidth, int *pheight,
-	int numattribs, qbyte * const *attribs, const int *attribsizes );
+	int numattribs, uint8_t * const *attribs, const int *attribsizes );
