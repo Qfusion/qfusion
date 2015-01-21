@@ -60,8 +60,8 @@ enum
 // usercmd_t is sent to the server each client frame
 typedef struct usercmd_s
 {
-	qbyte msec;
-	qbyte buttons;
+	uint8_t msec;
+	uint8_t buttons;
 	short angles[3];
 	float forwardfrac, sidefrac, upfrac;
 	short forwardmove, sidemove, upmove;
@@ -444,7 +444,7 @@ typedef struct
 typedef struct
 {
 	qboolean all;
-	qbyte targets[MAX_CLIENTS/8];
+	uint8_t targets[MAX_CLIENTS/8];
 	size_t commandOffset;			// offset of the data in gamecommandsData
 } gcommand_t;
 
@@ -470,11 +470,11 @@ typedef struct
 	float viewheight;
 	float fov;					// horizontal field of view
 
-	qbyte weaponState;
+	uint8_t weaponState;
 
 	int inventory[MAX_ITEMS];
 	short stats[PS_MAX_STATS];	// fast status bar updates
-	qbyte plrkeys;				// infos on the pressed keys of chased player (self if not chasing)
+	uint8_t plrkeys;				// infos on the pressed keys of chased player (self if not chasing)
 } player_state_t;
 
 typedef struct

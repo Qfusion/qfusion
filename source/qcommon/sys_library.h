@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 qboolean Sys_Library_Close( void *lib );
 const char *Sys_Library_GetFullName( const char *name );
-const char *Sys_Library_GetGameLibPath( const char *name, qint64 randomizer_time, int randomizer );
+const char *Sys_Library_GetGameLibPath( const char *name, int64_t randomizer_time, int randomizer );
 void *Sys_Library_Open( const char *name );
 void *Sys_Library_ProcAddress( void *lib, const char *apifuncname );
 const char *Sys_Library_ErrorString( void );

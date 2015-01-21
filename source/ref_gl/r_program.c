@@ -1756,8 +1756,8 @@ void RP_ProgramList_f( void )
 */
 void RP_UpdateShaderUniforms( int elem, 
 	float shaderTime, 
-	const vec3_t entOrigin, const vec3_t entDist, const qbyte *entityColor, 
-	const qbyte *constColor, const float *rgbGenFuncArgs, const float *alphaGenFuncArgs,
+	const vec3_t entOrigin, const vec3_t entDist, const uint8_t *entityColor, 
+	const uint8_t *constColor, const float *rgbGenFuncArgs, const float *alphaGenFuncArgs,
 	const mat4_t texMatrix )
 {
 	GLfloat m[9];

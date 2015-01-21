@@ -185,12 +185,12 @@ can be transparently merged from several sources.
 
 */
 
-static inline unsigned int LittleLongRaw( const qbyte *raw )
+static inline unsigned int LittleLongRaw( const uint8_t *raw )
 {
 	return ( raw[3] << 24 ) | ( raw[2] << 16 ) | ( raw[1] << 8 ) | raw[0];
 }
 
-static inline unsigned short LittleShortRaw( const qbyte *raw )
+static inline unsigned short LittleShortRaw( const uint8_t *raw )
 {
 	return ( raw[1] << 8 ) | raw[0];
 }
@@ -672,7 +672,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 	for( i = 0; i < num_extensions; i++ )
 	{
 		if( i )
-			filenames[i] = ( char * )( ( qbyte * )filenames[0] + filename_size * i );
+			filenames[i] = ( char * )( ( uint8_t * )filenames[0] + filename_size * i );
 		else
 			filenames[i] = ( char* )Mem_TempMalloc( filename_size * num_extensions );
 		Q_strncpyz( filenames[i], filename, filename_size );
@@ -1249,7 +1249,7 @@ void FS_FCloseFile( int file )
 /*
 * FS_ReadStream
 */
-static int FS_ReadStream( qbyte *buf, size_t len, filehandle_t *fh )
+static int FS_ReadStream( uint8_t *buf, size_t len, filehandle_t *fh )
 {
 	size_t numb;
 	
@@ -1265,7 +1265,7 @@ static int FS_ReadStream( qbyte *buf, size_t len, filehandle_t *fh )
 * 
 * Properly handles partial reads, used by FS_Read and FS_Seek
 */
-static int FS_ReadPK3File( qbyte *buf, size_t len, filehandle_t *fh )
+static int FS_ReadPK3File( uint8_t *buf, size_t len, filehandle_t *fh )
 {
 	zipEntry_t *zipEntry;
 	int error, flush;
@@ -1315,7 +1315,7 @@ static int FS_ReadPK3File( qbyte *buf, size_t len, filehandle_t *fh )
 * 
 * Properly handles partial reads
 */
-static int FS_ReadFile( qbyte *buf, size_t len, filehandle_t *fh )
+static int FS_ReadFile( uint8_t *buf, size_t len, filehandle_t *fh )
 {
 	return (int)fread( buf, 1, len, fh->fstream );
 }
@@ -1337,13 +1337,13 @@ int FS_Read( void *buffer, size_t len, int file )
 	fh = FS_FileHandleForNum( file );
 
 	if( fh->zipEntry )
-		total = FS_ReadPK3File( ( qbyte * )buffer, len, fh );
+		total = FS_ReadPK3File( ( uint8_t * )buffer, len, fh );
 	else if( fh->streamHandle )
-		total = FS_ReadStream( (qbyte *)buffer, len, fh );
+		total = FS_ReadStream( (uint8_t *)buffer, len, fh );
 	else if( fh->gzstream )
 		total = gzread( fh->gzstream, buffer, len );
 	else if( fh->fstream )
-		total = FS_ReadFile( ( qbyte * )buffer, len, fh );
+		total = FS_ReadFile( ( uint8_t * )buffer, len, fh );
 	else
 		return 0;
 
@@ -1391,7 +1391,7 @@ int FS_Write( const void *buffer, size_t len, int file )
 {
 	filehandle_t *fh;
 	size_t written;
-	qbyte *buf;
+	uint8_t *buf;
 
 	fh = FS_FileHandleForNum( file );
 	if( fh->zipEntry )
@@ -1403,7 +1403,7 @@ int FS_Write( const void *buffer, size_t len, int file )
 	if( !fh->fstream )
 		return 0;
 
-	buf = ( qbyte * )buffer;
+	buf = ( uint8_t * )buffer;
 	if( !buf )
 		return 0;
 
@@ -1443,7 +1443,7 @@ int FS_Seek( int file, int offset, int whence )
 	zipEntry_t *zipEntry;
 	int error, currentOffset;
 	size_t remaining, block;
-	qbyte buf[FS_ZIP_BUFSIZE * 4];
+	uint8_t buf[FS_ZIP_BUFSIZE * 4];
 
 	fh = FS_FileHandleForNum( file );
 
@@ -1626,7 +1626,7 @@ int	FS_GetCompressionLevel( int file )
 */
 int FS_LoadFileExt( const char *path, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline )
 {
-	qbyte *buf;
+	uint8_t *buf;
 	unsigned int len;
 	int fhandle;
 
@@ -1648,9 +1648,9 @@ int FS_LoadFileExt( const char *path, void **buffer, void *stack, size_t stackSi
 	}
 
 	if( stack && ( stackSize > len ) )
-		buf = ( qbyte* )stack;
+		buf = ( uint8_t* )stack;
 	else
-		buf = ( qbyte* )_Mem_AllocExt( tempMemPool, len + 1, 0, 0, 0, 0, filename, fileline );
+		buf = ( uint8_t* )_Mem_AllocExt( tempMemPool, len + 1, 0, 0, 0, 0, filename, fileline );
 	buf[len] = 0;
 	*buffer = buf;
 
@@ -1667,7 +1667,7 @@ int FS_LoadFileExt( const char *path, void **buffer, void *stack, size_t stackSi
 */
 int FS_LoadBaseFileExt( const char *path, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline )
 {
-	qbyte *buf;
+	uint8_t *buf;
 	unsigned int len;
 	int fhandle;
 
@@ -1689,9 +1689,9 @@ int FS_LoadBaseFileExt( const char *path, void **buffer, void *stack, size_t sta
 	}
 
 	if( stack && ( stackSize > len ) )
-		buf = ( qbyte* )stack;
+		buf = ( uint8_t* )stack;
 	else
-		buf = ( qbyte* )_Mem_AllocExt( tempMemPool, len + 1, 0, 0, 0, 0, filename, fileline );
+		buf = ( uint8_t* )_Mem_AllocExt( tempMemPool, len + 1, 0, 0, 0, 0, filename, fileline );
 	buf[len] = 0;
 	*buffer = buf;
 
@@ -1722,7 +1722,7 @@ void FS_FreeBaseFile( void *buffer )
 */
 unsigned FS_ChecksumAbsoluteFile( const char *filename )
 {
-	qbyte buffer[FS_MAX_BLOCK_SIZE];
+	uint8_t buffer[FS_MAX_BLOCK_SIZE];
 	int left, length, filenum;
 	md5_byte_t digest[16];
 	md5_state_t state;
@@ -1931,7 +1931,7 @@ qboolean FS_RemoveFile( const char *filename )
 qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base, qboolean absolute )
 {
 	int srcnum, dstnum, length, result, l;
-	qbyte buffer[FS_MAX_BLOCK_SIZE];
+	uint8_t buffer[FS_MAX_BLOCK_SIZE];
 
 	length = _FS_FOpenFile( src, &srcnum, FS_READ, base );
 	if( length == -1 )
@@ -2133,7 +2133,7 @@ static void FS_ReadPackManifest( pack_t *pack )
 		pack->manifest = ( char* )FS_Malloc( size + 1 );
 
 		// read the file into memory
-		FS_Read( ( qbyte * )pack->manifest, size, file );
+		FS_Read( ( uint8_t * )pack->manifest, size, file );
 		FS_FCloseFile( file );
 
 		// compress (get rid of comments, etc)
@@ -2389,8 +2389,8 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 
 	pack = ( pack_t* )FS_Malloc( (int)( sizeof( pack_t ) + numFiles * sizeof( packfile_t ) + namesLen) );
 	pack->filename = FS_CopyString( packfilename );
-	pack->files = ( packfile_t * )( ( qbyte * )pack + sizeof( pack_t ) );
-	pack->fileNames = names = ( char * )( ( qbyte * )pack->files + numFiles * sizeof( packfile_t ) );
+	pack->files = ( packfile_t * )( ( uint8_t * )pack + sizeof( pack_t ) );
+	pack->fileNames = names = ( char * )( ( uint8_t * )pack->files + numFiles * sizeof( packfile_t ) );
 	pack->numFiles = numFiles;
 	pack->sysHandle = handle;
 	pack->vfsHandle = vfsHandle;

@@ -31,7 +31,7 @@ static void TV_Upstream_HandleConfigstring( upstream_t *upstream, int index, con
 {
 	char hostname[MAX_CONFIGSTRING_CHARS];
 	msg_t msg;
-	qbyte msgbuf[MAX_MSGLEN];
+	uint8_t msgbuf[MAX_MSGLEN];
 
 	if( !val || !val[0] )
 		return;

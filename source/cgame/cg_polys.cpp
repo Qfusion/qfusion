@@ -218,40 +218,40 @@ static cpoly_t *CG_SpawnPolyBeam( vec3_t start, vec3_t end, vec4_t color, int wi
 	Vector4Set( poly->verts[poly->numverts], xmin, 0, ymin, 1 );
 	poly->stcoords[poly->numverts][0] = 0;
 	poly->stcoords[poly->numverts][1] = 0;
-	poly->colors[poly->numverts][0] = ( qbyte )( cgpoly->color[0] * 255 );
-	poly->colors[poly->numverts][1] = ( qbyte )( cgpoly->color[1] * 255 );
-	poly->colors[poly->numverts][2] = ( qbyte )( cgpoly->color[2] * 255 );
-	poly->colors[poly->numverts][3] = ( qbyte )( cgpoly->color[3] * 255 );
+	poly->colors[poly->numverts][0] = ( uint8_t )( cgpoly->color[0] * 255 );
+	poly->colors[poly->numverts][1] = ( uint8_t )( cgpoly->color[1] * 255 );
+	poly->colors[poly->numverts][2] = ( uint8_t )( cgpoly->color[2] * 255 );
+	poly->colors[poly->numverts][3] = ( uint8_t )( cgpoly->color[3] * 255 );
 	poly->numverts++;
 
 	// B
 	Vector4Set( poly->verts[poly->numverts], xmin, 0, ymax, 1 );
 	poly->stcoords[poly->numverts][0] = 0;
 	poly->stcoords[poly->numverts][1] = sty;
-	poly->colors[poly->numverts][0] = ( qbyte )( cgpoly->color[0] * 255 );
-	poly->colors[poly->numverts][1] = ( qbyte )( cgpoly->color[1] * 255 );
-	poly->colors[poly->numverts][2] = ( qbyte )( cgpoly->color[2] * 255 );
-	poly->colors[poly->numverts][3] = ( qbyte )( cgpoly->color[3] * 255 );
+	poly->colors[poly->numverts][0] = ( uint8_t )( cgpoly->color[0] * 255 );
+	poly->colors[poly->numverts][1] = ( uint8_t )( cgpoly->color[1] * 255 );
+	poly->colors[poly->numverts][2] = ( uint8_t )( cgpoly->color[2] * 255 );
+	poly->colors[poly->numverts][3] = ( uint8_t )( cgpoly->color[3] * 255 );
 	poly->numverts++;
 
 	// C
 	Vector4Set( poly->verts[poly->numverts], xmax, 0, ymax, 1 );
 	poly->stcoords[poly->numverts][0] = stx;
 	poly->stcoords[poly->numverts][1] = sty;
-	poly->colors[poly->numverts][0] = ( qbyte )( cgpoly->color[0] * 255 );
-	poly->colors[poly->numverts][1] = ( qbyte )( cgpoly->color[1] * 255 );
-	poly->colors[poly->numverts][2] = ( qbyte )( cgpoly->color[2] * 255 );
-	poly->colors[poly->numverts][3] = ( qbyte )( cgpoly->color[3] * 255 );
+	poly->colors[poly->numverts][0] = ( uint8_t )( cgpoly->color[0] * 255 );
+	poly->colors[poly->numverts][1] = ( uint8_t )( cgpoly->color[1] * 255 );
+	poly->colors[poly->numverts][2] = ( uint8_t )( cgpoly->color[2] * 255 );
+	poly->colors[poly->numverts][3] = ( uint8_t )( cgpoly->color[3] * 255 );
 	poly->numverts++;
 
 	// D
 	Vector4Set( poly->verts[poly->numverts], xmax, 0, ymin, 1 );
 	poly->stcoords[poly->numverts][0] = stx;
 	poly->stcoords[poly->numverts][1] = 0;
-	poly->colors[poly->numverts][0] = ( qbyte )( cgpoly->color[0] * 255 );
-	poly->colors[poly->numverts][1] = ( qbyte )( cgpoly->color[1] * 255 );
-	poly->colors[poly->numverts][2] = ( qbyte )( cgpoly->color[2] * 255 );
-	poly->colors[poly->numverts][3] = ( qbyte )( cgpoly->color[3] * 255 );
+	poly->colors[poly->numverts][0] = ( uint8_t )( cgpoly->color[0] * 255 );
+	poly->colors[poly->numverts][1] = ( uint8_t )( cgpoly->color[1] * 255 );
+	poly->colors[poly->numverts][2] = ( uint8_t )( cgpoly->color[2] * 255 );
+	poly->colors[poly->numverts][3] = ( uint8_t )( cgpoly->color[3] * 255 );
 	poly->numverts++;
 
 	// the verts data is stored inside cgpoly, cause it can be moved later
@@ -487,10 +487,10 @@ void CG_AddPolys( void )
 
 			for( i = 0; i < poly->numverts; i++ )
 			{
-				poly->colors[i][0] = ( qbyte )( cgpoly->color[0] * fade * 255 );
-				poly->colors[i][1] = ( qbyte )( cgpoly->color[1] * fade * 255 );
-				poly->colors[i][2] = ( qbyte )( cgpoly->color[2] * fade * 255 );
-				poly->colors[i][3] = ( qbyte )( cgpoly->color[3] * fade * 255 );
+				poly->colors[i][0] = ( uint8_t )( cgpoly->color[0] * fade * 255 );
+				poly->colors[i][1] = ( uint8_t )( cgpoly->color[1] * fade * 255 );
+				poly->colors[i][2] = ( uint8_t )( cgpoly->color[2] * fade * 255 );
+				poly->colors[i][3] = ( uint8_t )( cgpoly->color[3] * fade * 255 );
 			}
 		}
 

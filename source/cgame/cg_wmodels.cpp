@@ -54,7 +54,7 @@ static const char *wmPartSufix[] = { "", "_expansion", "_barrel", "_flash", "_ha
 */
 static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char *filename )
 {
-	qbyte *buf;
+	uint8_t *buf;
 	char *ptr, *token;
 	int rounder, counter, i;
 	bool debug = true;
@@ -80,7 +80,7 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 		trap_FS_FCloseFile( filenum );
 		return false;
 	}
-	buf = ( qbyte * )CG_Malloc( length + 1 );
+	buf = ( uint8_t * )CG_Malloc( length + 1 );
 	trap_FS_Read( buf, length, filenum );
 	trap_FS_FCloseFile( filenum );
 
@@ -683,12 +683,12 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 	if( weaponInfo->model[FLASH] )
 	{
 		entity_t flash;
-		qbyte c;
+		uint8_t c;
 
 		if( weaponInfo->flashFade )
 		{
 			intensity = (float)( flash_time - cg.time )/(float)weaponInfo->flashTime;
-			c = ( qbyte )( 255 * intensity );
+			c = ( uint8_t )( 255 * intensity );
 		}
 		else
 		{

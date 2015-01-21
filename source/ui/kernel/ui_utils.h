@@ -137,7 +137,7 @@ namespace WSWUI
 	// simple benchmark timer class
 	struct BenchmarkTimer
 	{
-		quint64 start;
+		uint64_t start;
 		// constructor grabs current time automatically
 		BenchmarkTimer() : start(trap::Microseconds()) {}
 		// fetch current timedelta
@@ -206,8 +206,8 @@ namespace WSWUI
 	extern std::string rgb2hex( const char *rgbstr );
 	extern std::string hex2rgb( const char *hexstr );
 
-	extern const char *int_to_addr( quint64 r );
-	extern quint64 addr_to_int( const std::string &adr );
+	extern const char *int_to_addr( uint64_t r );
+	extern uint64_t addr_to_int( const std::string &adr );
 
 	//======================================
 

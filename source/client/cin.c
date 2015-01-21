@@ -233,7 +233,7 @@ qboolean CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime )
 	return qfalse;
 }
 
-qbyte *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, 
+uint8_t *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, 
 	int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
 {
 	if( cin_export ) {

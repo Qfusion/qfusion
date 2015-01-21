@@ -60,7 +60,7 @@ void SCR_FinishCinematic( void )
 * SCR_CinematicRawSamples
 */
 static void SCR_CinematicRawSamples( void *unused, unsigned int samples, 
-	unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data )
+	unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	(void)unused;
 	
@@ -89,7 +89,7 @@ static void SCR_ReadNextCinematicFrame( void )
 			&cl.cin.redraw );
 
 		// so that various cl.cin.pic == NULL checks still make sense
-		cl.cin.pic = ( qbyte * )cl.cin.cyuv;
+		cl.cin.pic = ( uint8_t * )cl.cin.cyuv;
 	}
 	else {
 		cl.cin.pic = CIN_ReadNextFrame( cl.cin.h, 

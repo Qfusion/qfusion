@@ -87,7 +87,7 @@ DYNVARS
 static dynvar_get_status_t Com_Sys_Uptime_f( void **val )
 {
 	static char buf[32];
-	const quint64 us = Sys_Microseconds();
+	const uint64_t us = Sys_Microseconds();
 	const unsigned int h = us / 3600000000u;
 	const unsigned int min = ( us / 60000000 ) % 60;
 	const unsigned int sec = ( us / 1000000 ) % 60;
@@ -558,7 +558,7 @@ void Info_Print( char *s )
 */
 int paged_total;
 
-void Com_PageInMemory( qbyte *buffer, int size )
+void Com_PageInMemory( uint8_t *buffer, int size )
 {
 	int i;
 
@@ -577,7 +577,7 @@ void Com_AddPakToPureList( purelist_t **purelist, const char *pakname, const uns
 	const size_t len = strlen( pakname ) + 1;
 
 	purefile = ( purelist_t* )Mem_Alloc( mempool ? mempool : zoneMemPool, sizeof( purelist_t ) + len );
-	purefile->filename = ( char * )(( qbyte * )purefile + sizeof( *purefile ));
+	purefile->filename = ( char * )(( uint8_t * )purefile + sizeof( *purefile ));
 	memcpy( purefile->filename, pakname, len );
 	purefile->checksum = checksum;
 	purefile->next = *purelist;
@@ -1075,7 +1075,7 @@ void Qcommon_Init( int argc, char **argv )
 void Qcommon_Frame( unsigned int realmsec )
 {
 	static dynvar_t	*frametick = NULL;
-	static quint64 fc = 0;
+	static uint64_t fc = 0;
 	char *s;
 	int time_before = 0, time_between = 0, time_after = 0;
 	static unsigned int gamemsec;

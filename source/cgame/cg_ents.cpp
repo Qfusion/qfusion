@@ -591,7 +591,7 @@ static void CG_EntAddBobEffect( centity_t *cent )
 static void CG_EntAddTeamColorTransitionEffect( centity_t *cent )
 {
 	float f;
-	qbyte *currentcolor;
+	uint8_t *currentcolor;
 	vec4_t scaledcolor, newcolor;
 	const vec4_t neutralcolor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
@@ -606,9 +606,9 @@ static void CG_EntAddTeamColorTransitionEffect( centity_t *cent )
 	Vector4Scale( currentcolor, 1.0/255.0, scaledcolor );
 	VectorLerp( neutralcolor, f, scaledcolor, newcolor );
 
-	cent->ent.shaderRGBA[0] = (qbyte)( newcolor[0] * 255 );
-	cent->ent.shaderRGBA[1] = (qbyte)( newcolor[1] * 255 );
-	cent->ent.shaderRGBA[2] = (qbyte)( newcolor[2] * 255 );
+	cent->ent.shaderRGBA[0] = (uint8_t)( newcolor[0] * 255 );
+	cent->ent.shaderRGBA[1] = (uint8_t)( newcolor[1] * 255 );
+	cent->ent.shaderRGBA[2] = (uint8_t)( newcolor[2] * 255 );
 }
 
 /*
@@ -891,9 +891,9 @@ static void CG_AddGenericEnt( centity_t *cent )
 			{
 				vec4_t scolor;
 				Vector4Copy( color_table[ColorIndex( cent->item->color[1] )], scolor );
-				cent->ent.shaderRGBA[0] = ( qbyte )( 255 * scolor[0] );
-				cent->ent.shaderRGBA[1] = ( qbyte )( 255 * scolor[1] );
-				cent->ent.shaderRGBA[2] = ( qbyte )( 255 * scolor[2] );
+				cent->ent.shaderRGBA[0] = ( uint8_t )( 255 * scolor[0] );
+				cent->ent.shaderRGBA[1] = ( uint8_t )( 255 * scolor[1] );
+				cent->ent.shaderRGBA[2] = ( uint8_t )( 255 * scolor[2] );
 			}
 			else  // set white
 				VectorSet( cent->ent.shaderRGBA, 255, 255, 255 );
@@ -982,10 +982,10 @@ void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *t
 	flag.renderfx = cent->ent.renderfx;
 	flag.customShader = NULL;
 	flag.customSkin = NULL;
-	flag.shaderRGBA[0] = ( qbyte )teamcolor[0];
-	flag.shaderRGBA[1] = ( qbyte )teamcolor[1];
-	flag.shaderRGBA[2] = ( qbyte )teamcolor[2];
-	flag.shaderRGBA[3] = ( qbyte )teamcolor[3];
+	flag.shaderRGBA[0] = ( uint8_t )teamcolor[0];
+	flag.shaderRGBA[1] = ( uint8_t )teamcolor[1];
+	flag.shaderRGBA[2] = ( uint8_t )teamcolor[2];
+	flag.shaderRGBA[3] = ( uint8_t )teamcolor[3];
 
 	VectorCopy( cent->ent.origin, flag.origin );
 	VectorCopy( cent->ent.origin, flag.origin2 );
@@ -1014,9 +1014,9 @@ void CG_AddFlagModelOnTag( centity_t *cent, byte_vec4_t teamcolor, const char *t
 	}
 
 	CG_AddColoredOutLineEffect( &flag, EF_OUTLINE,
-		(qbyte)( teamcolor[0]*0.3 ),
-		(qbyte)( teamcolor[1]*0.3 ),
-		(qbyte)( teamcolor[2]*0.3 ),
+		(uint8_t)( teamcolor[0]*0.3 ),
+		(uint8_t)( teamcolor[1]*0.3 ),
+		(uint8_t)( teamcolor[2]*0.3 ),
 		255 );
 
 	CG_AddEntityToScene( &flag );
@@ -1642,7 +1642,7 @@ static void CG_AddPortalSurfaceEnt( centity_t *cent )
 */
 static void CG_UpdateVideoSpeakerEnt( void *centp,
 	unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const qbyte *data )
+	unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	centity_t *cent = ( centity_t * )centp;
 

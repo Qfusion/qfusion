@@ -45,7 +45,7 @@ edict_t *TVM_FindLocal( tvm_relay_t *relay, const edict_t *start, size_t fieldof
 	{
 		if( !from->r.inuse )
 			continue;
-		s = *(char **) ( (qbyte *)from + fieldofs );
+		s = *(char **) ( (uint8_t *)from + fieldofs );
 		if( !s )
 			continue;
 		if( !Q_stricmp( s, match ) )

@@ -82,8 +82,8 @@ static void Mod_AliasBuildMeshesForFrame0( model_t *mod )
 		size *= mesh->numverts;
 
 		mesh->xyzArray = ( vec4_t * )Mod_Malloc( mod, size );
-		mesh->normalsArray = ( vec4_t * )( ( qbyte * )mesh->xyzArray + mesh->numverts * sizeof( vec4_t ) );
-		mesh->sVectorsArray = ( vec4_t * )( ( qbyte * )mesh->normalsArray + mesh->numverts * sizeof( vec4_t ) );
+		mesh->normalsArray = ( vec4_t * )( ( uint8_t * )mesh->xyzArray + mesh->numverts * sizeof( vec4_t ) );
+		mesh->sVectorsArray = ( vec4_t * )( ( uint8_t * )mesh->normalsArray + mesh->numverts * sizeof( vec4_t ) );
 
 		for( i = 0; i < mesh->numverts; i++ )
 		{
@@ -145,7 +145,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 {
 	int version, i, j, l;
 	int bufsize, numverts;
-	qbyte *buf;
+	uint8_t *buf;
 	dmd3header_t *pinmodel;
 	dmd3frame_t *pinframe;
 	dmd3tag_t *pintag;
@@ -205,12 +205,12 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	bufsize = poutmodel->numframes * ( sizeof( maliasframe_t ) + sizeof( maliastag_t ) * poutmodel->numtags ) +
 		poutmodel->nummeshes * sizeof( maliasmesh_t ) + 
 		poutmodel->nummeshes * sizeof( drawSurfaceAlias_t );
-	buf = ( qbyte * )Mod_Malloc( mod, bufsize );
+	buf = ( uint8_t * )Mod_Malloc( mod, bufsize );
 
 	//
 	// load the frames
 	//
-	pinframe = ( dmd3frame_t * )( ( qbyte * )pinmodel + LittleLong( pinmodel->ofs_frames ) );
+	pinframe = ( dmd3frame_t * )( ( uint8_t * )pinmodel + LittleLong( pinmodel->ofs_frames ) );
 	poutframe = poutmodel->frames = ( maliasframe_t * )buf; buf += sizeof( maliasframe_t ) * poutmodel->numframes;
 	for( i = 0; i < poutmodel->numframes; i++, pinframe++, poutframe++ )
 	{
@@ -228,7 +228,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	//
 	// load the tags
 	//
-	pintag = ( dmd3tag_t * )( ( qbyte * )pinmodel + LittleLong( pinmodel->ofs_tags ) );
+	pintag = ( dmd3tag_t * )( ( uint8_t * )pinmodel + LittleLong( pinmodel->ofs_tags ) );
 	pouttag = poutmodel->tags = ( maliastag_t * )buf; buf += sizeof( maliastag_t ) * poutmodel->numframes * poutmodel->numtags;
 	for( i = 0; i < poutmodel->numframes; i++ )
 	{
@@ -268,7 +268,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	//
 	// load meshes
 	//
-	pinmesh = ( dmd3mesh_t * )( ( qbyte * )pinmodel + LittleLong( pinmodel->ofs_meshes ) );
+	pinmesh = ( dmd3mesh_t * )( ( uint8_t * )pinmodel + LittleLong( pinmodel->ofs_meshes ) );
 	poutmesh = poutmodel->meshes = ( maliasmesh_t * )buf; buf += sizeof( maliasmesh_t ) * poutmodel->nummeshes;
 	for( i = 0; i < poutmodel->nummeshes; i++, poutmesh++ )
 	{
@@ -304,12 +304,12 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		bufsize = ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) ) +
 			numverts * ( sizeof( vec2_t ) + sizeof( maliasvertex_t ) * poutmodel->numframes ) +
 			poutmesh->numtris * sizeof( elem_t ) * 3;
-		buf = ( qbyte * )Mod_Malloc( mod, bufsize );
+		buf = ( uint8_t * )Mod_Malloc( mod, bufsize );
 
 		//
 		// load the skins
 		//
-		pinskin = ( dmd3skin_t * )( ( qbyte * )pinmesh + LittleLong( inmesh.ofs_skins ) );
+		pinskin = ( dmd3skin_t * )( ( uint8_t * )pinmesh + LittleLong( inmesh.ofs_skins ) );
 		poutskin = poutmesh->skins = ( maliasskin_t * )buf;
 		buf += ALIGN( sizeof( maliasskin_t ) * poutmesh->numskins, sizeof( vec_t ) );
 		for( j = 0; j < poutmesh->numskins; j++, pinskin++, poutskin++ ) {
@@ -320,7 +320,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		// load the texture coordinates
 		//
-		pincoord = ( dmd3coord_t * )( ( qbyte * )pinmesh + LittleLong( inmesh.ofs_tcs ) );
+		pincoord = ( dmd3coord_t * )( ( uint8_t * )pinmesh + LittleLong( inmesh.ofs_tcs ) );
 		poutcoord = poutmesh->stArray = ( vec2_t * )buf; buf += poutmesh->numverts * sizeof( vec2_t );
 		for( j = 0; j < poutmesh->numverts; j++, pincoord++ )
 		{
@@ -332,7 +332,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		// load the vertexes and normals
 		//
-		pinvert = ( dmd3vertex_t * )( ( qbyte * )pinmesh + LittleLong( inmesh.ofs_verts ) );
+		pinvert = ( dmd3vertex_t * )( ( uint8_t * )pinmesh + LittleLong( inmesh.ofs_verts ) );
 		poutvert = poutmesh->vertexes = ( maliasvertex_t * )buf;
 		buf += poutmesh->numverts * sizeof( maliasvertex_t ) * poutmodel->numframes;
 		for( l = 0, poutframe = poutmodel->frames; l < poutmodel->numframes; l++, poutframe++, pinvert += poutmesh->numverts, poutvert += poutmesh->numverts )
@@ -360,7 +360,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		//
 		// load the elems
 		//
-		pinelem = ( unsigned int * )( ( qbyte * )pinmesh + LittleLong( inmesh.ofs_elems ) );
+		pinelem = ( unsigned int * )( ( uint8_t * )pinmesh + LittleLong( inmesh.ofs_elems ) );
 		poutelem = poutmesh->elems = ( elem_t * )buf;
 		for( j = 0; j < poutmesh->numtris; j++, pinelem += 3, poutelem += 3 )
 		{
@@ -373,7 +373,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 			poutelem[2] = (elem_t)LittleLong( inelem[2] );
 		}
 
-		pinmesh = ( dmd3mesh_t * )( ( qbyte * )pinmesh + LittleLong( inmesh.meshsize ) );
+		pinmesh = ( dmd3mesh_t * )( ( uint8_t * )pinmesh + LittleLong( inmesh.meshsize ) );
 	}
 
 	//

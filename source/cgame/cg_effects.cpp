@@ -238,10 +238,10 @@ static void CG_AddBlobShadow( vec3_t origin, vec3_t dir, float orient, float rad
 	if( b < 0 ) b = 0;else if( b > 1 ) b = 255;else b *= 255;
 	if( a < 0 ) a = 0;else if( a > 1 ) a = 255;else a *= 255;
 
-	color[0] = ( qbyte )( r );
-	color[1] = ( qbyte )( g );
-	color[2] = ( qbyte )( b );
-	color[3] = ( qbyte )( a );
+	color[0] = ( uint8_t )( r );
+	color[1] = ( uint8_t )( g );
+	color[2] = ( uint8_t )( b );
+	color[3] = ( uint8_t )( a );
 	c = *( int * )color;
 
 	radius = 0.5f / radius;
@@ -436,10 +436,10 @@ void CG_AddFragmentedDecal( vec3_t origin, vec3_t dir, float orient, float radiu
 	if( b < 0 ) b = 0;else if( b > 1 ) b = 255;else b *= 255;
 	if( a < 0 ) a = 0;else if( a > 1 ) a = 255;else a *= 255;
 
-	color[0] = ( qbyte )( r );
-	color[1] = ( qbyte )( g );
-	color[2] = ( qbyte )( b );
-	color[3] = ( qbyte )( a );
+	color[0] = ( uint8_t )( r );
+	color[1] = ( uint8_t )( g );
+	color[2] = ( uint8_t )( b );
+	color[3] = ( uint8_t )( a );
 	c = *( int * )color;
 
 	radius = 0.5f / radius;
@@ -950,10 +950,10 @@ void CG_AddParticles( void )
 		org[1] = p->org[1] + p->vel[1]*time + p->accel[1]*time2;
 		org[2] = p->org[2] + p->vel[2]*time + p->accel[2]*time2;
 
-		color[0] = (qbyte)( bound( 0, p->color[0], 1.0f ) * 255 );
-		color[1] = (qbyte)( bound( 0, p->color[1], 1.0f ) * 255 );
-		color[2] = (qbyte)( bound( 0, p->color[2], 1.0f ) * 255 );
-		color[3] = (qbyte)( bound( 0, alpha, 1.0f ) * 255 );
+		color[0] = (uint8_t)( bound( 0, p->color[0], 1.0f ) * 255 );
+		color[1] = (uint8_t)( bound( 0, p->color[1], 1.0f ) * 255 );
+		color[2] = (uint8_t)( bound( 0, p->color[2], 1.0f ) * 255 );
+		color[3] = (uint8_t)( bound( 0, alpha, 1.0f ) * 255 );
 
 		corner[0] = org[0];
 		corner[1] = org[1] - 0.5f * p->scale;

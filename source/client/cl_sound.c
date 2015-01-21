@@ -521,7 +521,7 @@ void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, flo
 * CL_SoundModule_RawSamples
 */
 void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const qbyte *data, qboolean music )
+	unsigned short width, unsigned short channels, const uint8_t *data, qboolean music )
 {
 	if( se )
 		se->RawSamples( samples, rate, width, channels, data, music );
@@ -532,7 +532,7 @@ void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate,
 */
 void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 		unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const qbyte *data )
+		unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	if( entnum > max_spatialization_num ) {
 		max_spatialization_num = entnum;

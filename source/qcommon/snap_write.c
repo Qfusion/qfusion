@@ -128,7 +128,7 @@ static void SNAP_WriteDeltaGameStateToClient( client_snapshot_t *from, client_sn
 {
 	int i;
 	short statbits;
-	qbyte bits;
+	uint8_t bits;
 	game_state_t *gameState, *deltaGameState;
 	game_state_t dummy;
 
@@ -383,13 +383,13 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 		MSG_WriteByte( msg, ps->weaponState );
 
 	if( pflags & PS_FOV )
-		MSG_WriteByte( msg, (qbyte)ps->fov );
+		MSG_WriteByte( msg, (uint8_t)ps->fov );
 
 	if( pflags & PS_POVNUM )
-		MSG_WriteByte( msg, (qbyte)ps->POVnum );
+		MSG_WriteByte( msg, (uint8_t)ps->POVnum );
 
 	if( pflags & PS_PLAYERNUM )
-		MSG_WriteByte( msg, (qbyte)ps->playerNum );
+		MSG_WriteByte( msg, (uint8_t)ps->playerNum );
 
 	if( pflags & PS_VIEWHEIGHT )
 		MSG_WriteChar( msg, (char)ps->viewheight );
@@ -433,7 +433,7 @@ static void SNAP_WritePlayerstateToClient( player_state_t *ops, player_state_t *
 		for( i = 0; i < MAX_ITEMS; i++ )
 		{
 			if( invstatbits[i>>5] & ( 1<<(i&31) ) )
-				MSG_WriteByte( msg, (qbyte)ps->inventory[i] );
+				MSG_WriteByte( msg, (uint8_t)ps->inventory[i] );
 		}
 	}
 
@@ -470,7 +470,7 @@ static void SNAP_WriteMultiPOVCommands( ginfo_t *gi, client_t *client, msg_t *ms
 	char *command;
 	int maxnumtargets, numtargets, maxtarget;
 	unsigned int framenum;
-	qbyte targets[MAX_CLIENTS/8];
+	uint8_t targets[MAX_CLIENTS/8];
 
 	// find the first command to send from every client
 	maxnumtargets = maxtarget = 0;
@@ -763,7 +763,7 @@ Build a client frame structure
 * The client will interpolate the view position,
 * so we can't use a single PVS point
 */
-static void SNAP_FatPVS( cmodel_state_t *cms, vec3_t org, qbyte *fatpvs )
+static void SNAP_FatPVS( cmodel_state_t *cms, vec3_t org, uint8_t *fatpvs )
 {
 	memset( fatpvs, 0, CM_ClusterRowSize( cms ) );
 	CM_MergePVS( cms, org, fatpvs );
@@ -772,7 +772,7 @@ static void SNAP_FatPVS( cmodel_state_t *cms, vec3_t org, qbyte *fatpvs )
 /*
 * SNAP_BitsCullEntity
 */
-static qboolean SNAP_BitsCullEntity( cmodel_state_t *cms, edict_t *ent, qbyte *bits, int max_clusters )
+static qboolean SNAP_BitsCullEntity( cmodel_state_t *cms, edict_t *ent, uint8_t *bits, int max_clusters )
 {
 	int i, l;
 
@@ -895,9 +895,9 @@ static qboolean SNAP_SnapCullSoundEntity( cmodel_state_t *cms, edict_t *ent, vec
 /*
 * SNAP_SnapCullEntity
 */
-static qboolean SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *clent, client_snapshot_t *frame, vec3_t vieworg, qbyte *fatpvs )
+static qboolean SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *clent, client_snapshot_t *frame, vec3_t vieworg, uint8_t *fatpvs )
 {
-	qbyte *areabits;
+	uint8_t *areabits;
 	qboolean snd_cull_only;
 	qboolean snd_culled;
 
@@ -959,7 +959,7 @@ static qboolean SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t 
 /*
 * SNAP_BuildSnapEntitiesList
 */
-static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, vec3_t vieworg, vec3_t skyorg, qbyte *fatpvs, client_snapshot_t *frame, snapshotEntityNumbers_t *entsList )
+static void SNAP_BuildSnapEntitiesList( cmodel_state_t *cms, ginfo_t *gi, edict_t *clent, vec3_t vieworg, vec3_t skyorg, uint8_t *fatpvs, client_snapshot_t *frame, snapshotEntityNumbers_t *entsList )
 {
 	int leafnum = -1, clusternum = -1, clientarea = -1;
 	int entNum;
@@ -1124,7 +1124,7 @@ void SNAP_BuildClientFrameSnap( cmodel_state_t *cms, ginfo_t *gi, unsigned int f
 			Mem_Free( frame->areabits );
 			frame->areabits = NULL;
 		}
-		frame->areabits = (qbyte*)Mem_Alloc( mempool, numareas );
+		frame->areabits = (uint8_t*)Mem_Alloc( mempool, numareas );
 	}
 
 	// grab the current player_state_t

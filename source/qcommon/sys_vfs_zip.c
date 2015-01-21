@@ -53,12 +53,12 @@ static int sys_vfs_zip_numvfs;
 static sys_vfs_zip_vfs_t *sys_vfs_zip_files;
 static trie_t *sys_vfs_zip_trie;
 
-static inline unsigned int LittleLongRaw( const qbyte *raw )
+static inline unsigned int LittleLongRaw( const uint8_t *raw )
 {
 	return ( raw[3] << 24 ) | ( raw[2] << 16 ) | ( raw[1] << 8 ) | raw[0];
 }
 
-static inline unsigned short LittleShortRaw( const qbyte *raw )
+static inline unsigned short LittleShortRaw( const uint8_t *raw )
 {
 	return ( raw[1] << 8 ) | raw[0];
 }

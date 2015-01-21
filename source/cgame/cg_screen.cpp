@@ -548,7 +548,7 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 {
 	int i;
-	qbyte on = 0;
+	uint8_t on = 0;
 	usercmd_t cmd;
 	vec4_t color;
 

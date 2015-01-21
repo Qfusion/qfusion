@@ -37,12 +37,12 @@
 
 typedef struct
 {
-	qbyte y[4], u, v;
+	uint8_t y[4], u, v;
 } roq_cell_t;
 
 typedef struct
 {
-	qbyte idx[4];
+	uint8_t idx[4];
 } roq_qcell_t;
 
 typedef struct

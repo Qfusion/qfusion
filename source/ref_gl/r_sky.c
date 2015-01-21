@@ -70,7 +70,7 @@ skydome_t *R_CreateSkydome( model_t *model )
 	int i, size;
 	mesh_t *mesh;
 	skydome_t *skydome;
-	qbyte *buffer;
+	uint8_t *buffer;
 
 	size = sizeof( skydome_t ) + sizeof( mesh_t ) * 6 +
 		sizeof( elem_t ) * ELEM_LEN * 6 +

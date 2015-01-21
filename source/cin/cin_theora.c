@@ -144,7 +144,7 @@ static qboolean OggVorbis_LoadAudioFrame( cinematics_t *cin )
 	float *right,*left;
 	qboolean haveAudio = qfalse;
 	int	samples, samplesNeeded;
-	qbyte rawBuffer[RAW_BUFFER_SIZE];
+	uint8_t rawBuffer[RAW_BUFFER_SIZE];
 	ogg_packet op;
 	vorbis_block vb;
 	qtheora_info_t *qth = cin->fdata;
@@ -456,7 +456,7 @@ static qboolean Theora_ReadNextFrame_CIN_( cinematics_t *cin, qboolean *redraw, 
 /*
 * Theora_DecodeYCbCr2RGB_420
 */
-static void Theora_DecodeYCbCr2RGB_420( cin_yuv_t *cyuv, int bytes, qbyte *out )
+static void Theora_DecodeYCbCr2RGB_420( cin_yuv_t *cyuv, int bytes, uint8_t *out )
 {
 	int 
 		x_offset = cyuv->x_offset, 
@@ -469,16 +469,16 @@ static void Theora_DecodeYCbCr2RGB_420( cin_yuv_t *cyuv, int bytes, qbyte *out )
 		uStride = cyuv->yuv[1].stride,
 		vStride = cyuv->yuv[2].stride,
 		outStride = width * bytes;
-	qbyte 
+	uint8_t 
 		*yData = cyuv->yuv[0].data + (x_offset     ) + yStride * (y_offset     ), 
 		*uData = cyuv->yuv[1].data + (x_offset >> 1) + uStride * (y_offset >> 1),
 		*vData = cyuv->yuv[2].data + (x_offset >> 1) + vStride * (y_offset >> 1);
-	qbyte
+	uint8_t
 		*yRow  = yData,
 		*yRow2 = yData + yStride,
 		*uRow  = uData,
 		*vRow  = vData;
-	qbyte
+	uint8_t
 		*oRow  = out,
 		*oRow2 = out + outStride;
 	unsigned int xPos, yPos;
@@ -529,7 +529,7 @@ static void Theora_DecodeYCbCr2RGB_420( cin_yuv_t *cyuv, int bytes, qbyte *out )
 /*
 * Theora_DecodeYCbCr2RGB_422
 */
-static void Theora_DecodeYCbCr2RGB_422( cin_yuv_t *cyuv, int bytes, qbyte *out )
+static void Theora_DecodeYCbCr2RGB_422( cin_yuv_t *cyuv, int bytes, uint8_t *out )
 {
 	int 
 		x_offset = cyuv->x_offset, 
@@ -542,15 +542,15 @@ static void Theora_DecodeYCbCr2RGB_422( cin_yuv_t *cyuv, int bytes, qbyte *out )
 		uStride = cyuv->yuv[1].stride,
 		vStride = cyuv->yuv[2].stride,
 		outStride = width * bytes;
-	qbyte 
+	uint8_t 
 		*yData = cyuv->yuv[0].data + (x_offset     ) + yStride * (y_offset), 
 		*uData = cyuv->yuv[1].data + (x_offset >> 1) + uStride * (y_offset),
 		*vData = cyuv->yuv[2].data + (x_offset >> 1) + vStride * (y_offset);
-	qbyte
+	uint8_t
 		*yRow  = yData,
 		*uRow  = uData,
 		*vRow  = vData;
-	qbyte
+	uint8_t
 		*oRow  = out;
 	unsigned int xPos, yPos;
 	int y = 0, u = 0, v = 0, c[3];
@@ -593,7 +593,7 @@ static void Theora_DecodeYCbCr2RGB_422( cin_yuv_t *cyuv, int bytes, qbyte *out )
 /*
 * Theora_DecodeYCbCr2RGB_444
 */
-static void Theora_DecodeYCbCr2RGB_444( cin_yuv_t *cyuv, int bytes, qbyte *out )
+static void Theora_DecodeYCbCr2RGB_444( cin_yuv_t *cyuv, int bytes, uint8_t *out )
 {
 	int 
 		x_offset = cyuv->x_offset, 
@@ -606,15 +606,15 @@ static void Theora_DecodeYCbCr2RGB_444( cin_yuv_t *cyuv, int bytes, qbyte *out )
 		uStride = cyuv->yuv[1].stride,
 		vStride = cyuv->yuv[2].stride,
 		outStride = width * bytes;
-	qbyte 
+	uint8_t 
 		*yData = cyuv->yuv[0].data + x_offset + yStride * y_offset, 
 		*uData = cyuv->yuv[1].data + x_offset + uStride * y_offset,
 		*vData = cyuv->yuv[2].data + x_offset + vStride * y_offset;
-	qbyte
+	uint8_t
 		*yRow  = yData,
 		*uRow  = uData,
 		*vRow  = vData;
-	qbyte
+	uint8_t
 		*oRow  = out;
 	unsigned int xPos, yPos;
 	int y = 0, u = 0, v = 0, c[3];
@@ -650,7 +650,7 @@ static void Theora_DecodeYCbCr2RGB_444( cin_yuv_t *cyuv, int bytes, qbyte *out )
 /*
 * Theora_DecodeYCbCr2RGB
 */
-static void Theora_DecodeYCbCr2RGB( th_pixel_fmt pfmt, cin_yuv_t *cyuv, int bytes, qbyte *out )
+static void Theora_DecodeYCbCr2RGB( th_pixel_fmt pfmt, cin_yuv_t *cyuv, int bytes, uint8_t *out )
 {
 	switch( pfmt ) {
 		case TH_PF_444:
@@ -670,7 +670,7 @@ static void Theora_DecodeYCbCr2RGB( th_pixel_fmt pfmt, cin_yuv_t *cyuv, int byte
 /*
 * Theora_ReadNextFrame_CIN
 */
-qbyte *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
+uint8_t *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 {
 	qboolean eos;
 	qboolean haveVideo;
