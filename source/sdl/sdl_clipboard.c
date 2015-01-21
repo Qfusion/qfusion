@@ -12,7 +12,7 @@ char *Sys_GetClipboardData( qboolean primary )
 /*
 * Sys_SetClipboardData
 */
-qboolean Sys_SetClipboardData( char *data )
+qboolean Sys_SetClipboardData( const char *data )
 {
 	return SDL_SetClipboardText( data );
 }

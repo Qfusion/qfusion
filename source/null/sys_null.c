@@ -76,7 +76,7 @@ char *Sys_GetClipboardData( qboolean primary )
 	return NULL;
 }
 
-qboolean Sys_SetClipboardData( char *data )
+qboolean Sys_SetClipboardData( const char *data )
 {
 }
 
