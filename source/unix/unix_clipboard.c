@@ -70,7 +70,7 @@ char *Sys_GetClipboardData( qboolean primary )
 * @param e The XEvent of the request
 * @returns The proterty Atom for the appropriate response
 */
-qboolean Sys_SetClipboardData( char *data )
+qboolean Sys_SetClipboardData( const char *data )
 {
 	// Save the message
 	Q_free( clip_data );

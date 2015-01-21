@@ -958,7 +958,7 @@ void	Sys_SendKeyEvents( void );
 void	Sys_Error( const char *error, ... );
 void	Sys_Quit( void );
 char	*Sys_GetClipboardData( qboolean primary );
-qboolean Sys_SetClipboardData( char *data );
+qboolean Sys_SetClipboardData( const char *data );
 void	Sys_FreeClipboardData( char *data );
 const char *Sys_GetPreferredLanguage( void );
 

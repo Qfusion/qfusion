@@ -374,7 +374,7 @@ void CL_RestartTimeDeltas( unsigned int newTimeDelta );
 void CL_AdjustServerTime( unsigned int gamemsec );
 
 char *CL_GetClipboardData( qboolean primary );
-qboolean CL_SetClipboardData( char *data );
+qboolean CL_SetClipboardData( const char *data );
 void CL_FreeClipboardData( char *data );
 int CL_GetKeyDest( void );              // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)
 void CL_SetKeyDest( int key_dest );

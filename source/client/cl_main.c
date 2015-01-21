@@ -609,7 +609,7 @@ char *CL_GetClipboardData( qboolean primary )
 /*
 * CL_SetClipboardData
 */
-qboolean CL_SetClipboardData( char *data )
+qboolean CL_SetClipboardData( const char *data )
 {
 	return Sys_SetClipboardData( data );
 }
