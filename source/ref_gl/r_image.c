@@ -1073,8 +1073,8 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 
 			// resample the texture
 			mip = scaled;
-			if( data && data[i] )
-				R_ResampleTexture( ctx, data[i], width, height, (uint8_t*)mip, scaledWidth, scaledHeight, samples, 1 );
+			if( data[i] )
+				R_ResampleTexture( ctx, data[i], width, height, (uint8_t *)mip, scaledWidth, scaledHeight, samples, 1 );
 			else
 				mip = NULL;
 
