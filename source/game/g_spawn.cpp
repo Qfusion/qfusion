@@ -366,7 +366,7 @@ static char *ED_NewString( const char *string )
 static void ED_ParseField( char *key, char *value, edict_t *ent )
 {
 	const field_t *f;
-	qbyte *b;
+	uint8_t *b;
 	float v;
 	vec3_t vec;
 
@@ -376,9 +376,9 @@ static void ED_ParseField( char *key, char *value, edict_t *ent )
 		{
 			// found it
 			if( f->flags & FFL_SPAWNTEMP )
-				b = (qbyte *)&st;
+				b = (uint8_t *)&st;
 			else
-				b = (qbyte *)ent;
+				b = (uint8_t *)ent;
 
 			switch( f->type )
 			{

@@ -374,7 +374,7 @@ static void S_DumpPaintBuffer( int endtime, int file )
 	int len, count;
 	int in_mask;
 	unsigned int *pbuf;
-	qbyte *raw;
+	uint8_t *raw;
 
 	pbuf = (unsigned int *)dma.buffer;
 	count = ( endtime - paintedtime ) * dma.channels;

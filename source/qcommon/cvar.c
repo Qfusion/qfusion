@@ -190,7 +190,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 	}
 
 	var = Mem_ZoneMalloc( (int)( sizeof( *var ) + strlen( var_name ) + 1 ) );
-	var->name = (char *)( (qbyte *)var + sizeof( *var ) );
+	var->name = (char *)( (uint8_t *)var + sizeof( *var ) );
 	strcpy( var->name, var_name );
 	var->dvalue = ZoneCopyString( (char *) var_value );
 	var->string = ZoneCopyString( (char *) var_value );

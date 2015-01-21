@@ -460,7 +460,7 @@ static void CG_Democam_ExecutePathAnalysis( void )
 bool CG_LoadRecamScriptFile( char *filename )
 {
 	int filelen, filehandle;
-	qbyte *buf = NULL;
+	uint8_t *buf = NULL;
 	char *ptr, *token;
 	int linecount;
 	cg_democam_t *cam = NULL;
@@ -478,7 +478,7 @@ bool CG_LoadRecamScriptFile( char *filename )
 	}
 	else
 	{
-		buf = ( qbyte * )CG_Malloc( filelen + 1 );
+		buf = ( uint8_t * )CG_Malloc( filelen + 1 );
 		filelen = trap_FS_Read( buf, filelen, filehandle );
 		trap_FS_FCloseFile( filehandle );
 	}

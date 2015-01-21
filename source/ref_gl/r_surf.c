@@ -659,14 +659,14 @@ void R_DrawWorld( void )
 */
 void R_MarkLeaves( void )
 {
-	qbyte *pvs;
+	uint8_t *pvs;
 	unsigned int i;
 	int rdflags;
 	mleaf_t	*leaf, **pleaf;
 	mnode_t *node;
-	qbyte *areabits;
+	uint8_t *areabits;
 	int cluster;
-	qbyte fatpvs[MAX_MAP_LEAFS/8];
+	uint8_t fatpvs[MAX_MAP_LEAFS/8];
 
 	rdflags = rn.refdef.rdflags;
 	if( rdflags & RDF_NOWORLDMODEL )

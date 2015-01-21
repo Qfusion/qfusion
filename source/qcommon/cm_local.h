@@ -163,7 +163,7 @@ struct cmodel_state_s
 	dvis_t *map_pvs, *map_phs;
 	int map_visdatasize;
 
-	qbyte nullrow[MAX_CM_LEAFS/8];
+	uint8_t nullrow[MAX_CM_LEAFS/8];
 
 	int numentitychars;
 	char map_entitystring_empty;
@@ -171,7 +171,7 @@ struct cmodel_state_s
 
 	int floodvalid;
 
-	qbyte *cmod_base;
+	uint8_t *cmod_base;
 
 	// cm_trace.c
 	cplane_t box_planes[6];

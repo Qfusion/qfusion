@@ -52,8 +52,8 @@ public:
     bool Get(const asstring_t &key, void *value, int typeId) const;
 
 	// Sets/Gets an integer number value for a key
-    void Set(const asstring_t &key, qint64 &value);
-    bool Get(const asstring_t &key, qint64 &value) const;
+    void Set(const asstring_t &key, int64_t &value);
+    bool Get(const asstring_t &key, int64_t &value) const;
 
 	// Sets/Gets a real number value for a key
     void Set(const asstring_t &key, double &value);

@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // shader types (by superlightstyle)
 typedef enum
 {
+	SHADER_TYPE_2D_RAW_LUMINANCE= -9,
 	SHADER_TYPE_SKYBOX			= -8,
 	SHADER_TYPE_VERTEX			= -7,
 	SHADER_TYPE_VIDEO			= -6,
@@ -250,7 +251,7 @@ typedef struct shader_s
 	deformv_t			*deforms;
 	char				*deformsKey;
 
-	qbyte				fog_color[4];
+	uint8_t				fog_color[4];
 	float				fog_dist, fog_clearDist;
 
 	unsigned int		cin;
@@ -286,7 +287,7 @@ shader_t	*R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 
 shader_t	*R_RegisterShader( const char *name, shaderType_e type );
 shader_t	*R_RegisterPic( const char *name );
-shader_t	*R_RegisterRawPic( const char *name, int width, int height, qbyte *data );
+shader_t	*R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples );
 shader_t	*R_RegisterLevelshot( const char *name, shader_t *defaultShader, qboolean *matchesDefault );
 shader_t	*R_RegisterSkin( const char *name );
 shader_t	*R_RegisterVideo( const char *name );

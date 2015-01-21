@@ -27,5 +27,5 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #undef EDICT_NUM
 #undef NUM_FOR_EDICT
 
-#define EDICT_NUM( n ) ( (edict_t *)( (qbyte *)gi->edicts + gi->edict_size*( n ) ) )
-#define NUM_FOR_EDICT( e ) ( ( (qbyte *)( e )-(qbyte *)gi->edicts ) / gi->edict_size )
+#define EDICT_NUM( n ) ( (edict_t *)( (uint8_t *)gi->edicts + gi->edict_size*( n ) ) )
+#define NUM_FOR_EDICT( e ) ( ( (uint8_t *)( e )-(uint8_t *)gi->edicts ) / gi->edict_size )

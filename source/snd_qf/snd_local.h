@@ -46,7 +46,7 @@ typedef struct
 	unsigned int speed;              // not needed, because converted on load?
 	unsigned short channels;
 	unsigned short width;
-	qbyte data[1];          // variable sized
+	uint8_t data[1];          // variable sized
 } sfxcache_t;
 
 typedef struct sfx_s
@@ -100,7 +100,7 @@ typedef struct
 	unsigned int samplebits;
 	unsigned int speed;
 	float msec_per_sample;
-	qbyte *buffer;
+	uint8_t *buffer;
 } dma_t;
 
 typedef struct
@@ -180,7 +180,7 @@ void S_NextBackgroundTrack( void );
 void S_UpdateBackgroundTrack( void );
 
 void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const qbyte *data, int snd_vol );
+	unsigned short channels, const uint8_t *data, int snd_vol );
 unsigned int S_GetRawSamplesLength( void );
 unsigned int S_GetPositionedRawSamplesLength( int entnum );
 
@@ -259,8 +259,8 @@ extern struct mempool_s *soundpool;
 #define S_Malloc( size ) S_MemAlloc( soundpool, size )
 #define S_Free( data ) S_MemFree( data )
 
-wavinfo_t GetWavinfo( const char *name, qbyte *wav, int wavlength );
-unsigned int ResampleSfx( unsigned int numsamples, unsigned int speed, unsigned short channels, unsigned short width, const qbyte *data, qbyte *outdata, char *name );
+wavinfo_t GetWavinfo( const char *name, uint8_t *wav, int wavlength );
+unsigned int ResampleSfx( unsigned int numsamples, unsigned int speed, unsigned short channels, unsigned short width, const uint8_t *data, uint8_t *outdata, char *name );
 
 void S_InitScaletable( void );
 
@@ -301,10 +301,10 @@ void SF_Clear( void );
 void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation );
 void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
 void SF_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const qbyte *data, qboolean music );
+	unsigned short channels, const uint8_t *data, qboolean music );
 void SF_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 	unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const qbyte *data );
+	unsigned short width, unsigned short channels, const uint8_t *data );
 
 //====================================================================
 

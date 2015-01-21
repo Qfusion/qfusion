@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef R_PROGRAM_H
 #define R_PROGRAM_H
 
-typedef quint64 r_glslfeat_t;
+typedef uint64_t r_glslfeat_t;
 
 #define GLSL_BIT(x)							(1ULL << (x))
 #define GLSL_BITS_VERSION					9
@@ -190,8 +190,8 @@ int	RP_GetProgramObject( int elem );
 
 void RP_UpdateShaderUniforms( int elem, 
 	float shaderTime, 
-	const vec3_t entOrigin, const vec3_t entDist, const qbyte *entityColor, 
-	const qbyte *constColor, const float *rgbGenFuncArgs, const float *alphaGenFuncArgs,
+	const vec3_t entOrigin, const vec3_t entDist, const uint8_t *entityColor, 
+	const uint8_t *constColor, const float *rgbGenFuncArgs, const float *alphaGenFuncArgs,
 	const mat4_t texMatrix );
 
 void RP_UpdateViewUniforms( int elem, 

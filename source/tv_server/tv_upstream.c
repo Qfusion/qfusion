@@ -229,7 +229,7 @@ static void TV_Upstream_WriteUcmdToMessage( upstream_t *upstream, msg_t *msg )
 static void TV_Upstream_SendMessagesToServer( upstream_t *upstream, qboolean sendNow )
 {
 	msg_t message;
-	qbyte messageData[MAX_MSGLEN];
+	uint8_t messageData[MAX_MSGLEN];
 	qboolean ucmd = qfalse;
 
 	if( upstream->demo.playing )
@@ -433,7 +433,7 @@ static void TV_Upstream_FreePackets( upstream_t *upstream )
 */
 static void TV_Upstream_ReadDemoMessage( upstream_t *upstream, int timeBias )
 {
-	static qbyte msgbuf[MAX_MSGLEN];
+	static uint8_t msgbuf[MAX_MSGLEN];
 	static msg_t demomsg;
 	qboolean init = qtrue;
 	int read;
@@ -518,7 +518,7 @@ static void TV_Upstream_ReadDemoPackets( upstream_t *upstream )
 static void TV_Upstream_ReadPackets( upstream_t *upstream )
 {
 	msg_t msg;
-	qbyte msgData[MAX_MSGLEN];
+	uint8_t msgData[MAX_MSGLEN];
 	int ret;
 	netadr_t address;
 

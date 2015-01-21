@@ -225,11 +225,11 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload
 	if( !buf )
 		Com_Error( ERR_DROP, "Couldn't load %s", name );
 
-	cms->checksum = md5_digest32( ( const qbyte * )buf, length );
+	cms->checksum = md5_digest32( ( const uint8_t * )buf, length );
 	*checksum = cms->checksum;
 
 	// call the apropriate loader
-	descr = Q_FindFormatDescriptor( cm_supportedformats, ( const qbyte * )buf, (const bspFormatDesc_t **)&bspFormat );
+	descr = Q_FindFormatDescriptor( cm_supportedformats, ( const uint8_t * )buf, (const bspFormatDesc_t **)&bspFormat );
 	if( !descr )
 		Com_Error( ERR_DROP, "CM_LoadMap: unknown fileid for %s", name );
 
@@ -243,7 +243,7 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload
 
 	// store map format description in cvars
 	Cvar_ForceSet( "cm_mapHeader", header );
-	Cvar_ForceSet( "cm_mapVersion", va( "%i", LittleLong( *((int *)((qbyte *)buf + descr->headerLen)) ) ) );
+	Cvar_ForceSet( "cm_mapVersion", va( "%i", LittleLong( *((int *)((uint8_t *)buf + descr->headerLen)) ) ) );
 
 	Mem_TempFree( header );
 
@@ -274,7 +274,7 @@ cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload
 char *CM_LoadMapMessage( char *name, char *message, int size )
 {
 	int file, len;
-	qbyte h_v[8];
+	uint8_t h_v[8];
 	char *data, *entitystring;
 	lump_t l;
 	qboolean isworld;
@@ -488,17 +488,17 @@ dvis_t *CM_PVSData( cmodel_state_t *cms )
 /*
 * CM_ClusterVS
 */
-static inline qbyte *CM_ClusterVS( int cluster, dvis_t *vis, qbyte *nullrow )
+static inline uint8_t *CM_ClusterVS( int cluster, dvis_t *vis, uint8_t *nullrow )
 {
 	if( cluster == -1 || !vis )
 		return nullrow;
-	return ( qbyte * )vis->data + cluster * vis->rowsize;
+	return ( uint8_t * )vis->data + cluster * vis->rowsize;
 }
 
 /*
 * CM_ClusterPVS
 */
-qbyte *CM_ClusterPVS( cmodel_state_t *cms, int cluster )
+uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster )
 {
 	return CM_ClusterVS( cluster, cms->map_pvs, cms->nullrow );
 }
@@ -627,7 +627,7 @@ qboolean CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 )
 /*
 * CM_MergeAreaBits
 */
-static int CM_MergeAreaBits( cmodel_state_t *cms, qbyte *buffer, int area )
+static int CM_MergeAreaBits( cmodel_state_t *cms, uint8_t *buffer, int area )
 {
 	int i;
 
@@ -646,7 +646,7 @@ static int CM_MergeAreaBits( cmodel_state_t *cms, qbyte *buffer, int area )
 /*
 * CM_WriteAreaBits
 */
-int CM_WriteAreaBits( cmodel_state_t *cms, qbyte *buffer )
+int CM_WriteAreaBits( cmodel_state_t *cms, uint8_t *buffer )
 {
 	int i;
 	int rowsize, bytes;
@@ -661,7 +661,7 @@ int CM_WriteAreaBits( cmodel_state_t *cms, qbyte *buffer )
 	}
 	else
 	{
-		qbyte *row;
+		uint8_t *row;
 
 		memset( buffer, 0, bytes );
 
@@ -678,7 +678,7 @@ int CM_WriteAreaBits( cmodel_state_t *cms, qbyte *buffer )
 /*
 * CM_ReadAreaBits
 */
-void CM_ReadAreaBits( cmodel_state_t *cms, qbyte *buffer )
+void CM_ReadAreaBits( cmodel_state_t *cms, uint8_t *buffer )
 {
 	int i, j;
 	int rowsize;
@@ -688,7 +688,7 @@ void CM_ReadAreaBits( cmodel_state_t *cms, qbyte *buffer )
 	rowsize = CM_AreaRowSize( cms );
 	for( i = 0; i < cms->numareas; i++ )
 	{
-		qbyte *row;
+		uint8_t *row;
 
 		row = buffer + i * rowsize;
 		for( j = 0; j < cms->numareas; j++ )
@@ -741,7 +741,7 @@ void CM_ReadPortalState( cmodel_state_t *cms, int file )
 * Returns true if any leaf under headnode has a cluster that
 * is potentially visible
 */
-qboolean CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, qbyte *visbits )
+qboolean CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, uint8_t *visbits )
 {
 	int cluster;
 	cnode_t	*node;
@@ -767,12 +767,12 @@ qboolean CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, qbyte *visbits )
 * CM_MergePVS
 * Merge PVS at origin into out
 */
-void CM_MergePVS( cmodel_state_t *cms, vec3_t org, qbyte *out )
+void CM_MergePVS( cmodel_state_t *cms, vec3_t org, uint8_t *out )
 {
 	int leafs[128];
 	int i, j, count;
 	int longs;
-	qbyte *src;
+	uint8_t *src;
 	vec3_t mins, maxs;
 
 	for( i = 0; i < 3; i++ )
@@ -807,7 +807,7 @@ void CM_MergePVS( cmodel_state_t *cms, vec3_t org, qbyte *out )
 /*
 * CM_MergeVisSets
 */
-int CM_MergeVisSets( cmodel_state_t *cms, vec3_t org, qbyte *pvs, qbyte *areabits )
+int CM_MergeVisSets( cmodel_state_t *cms, vec3_t org, uint8_t *pvs, uint8_t *areabits )
 {
 	int area;
 

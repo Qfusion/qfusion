@@ -552,7 +552,7 @@ void ServerBrowserDataSource::addServerToTable( ServerInfo &info, String tableNa
 
 	// Show/sort with referenceList
 	ReferenceList::iterator it = find_if( referenceList,
-							ServerInfo::EqualUnary<quint64, &ServerInfo::iaddress>( info.iaddress ) );
+							ServerInfo::EqualUnary<uint64_t, &ServerInfo::iaddress>( info.iaddress ) );
 
 	if( it == referenceList.end() ) {
 		// server isnt in the list, use insertion sort to put it in
@@ -578,7 +578,7 @@ void ServerBrowserDataSource::removeServerFromTable( ServerInfo &info, String ta
 
 	// notify rocket + remove from referenceList
 	ReferenceList::iterator it = find_if( referenceList,
-							ServerInfo::EqualUnary<quint64, &ServerInfo::iaddress>( info.iaddress ) );
+							ServerInfo::EqualUnary<uint64_t, &ServerInfo::iaddress>( info.iaddress ) );
 
 	if( it != referenceList.end() ) {
 		int index = std::distance( referenceList.begin(), it );
@@ -913,11 +913,11 @@ void ServerBrowserDataSource::filtersUpdated(void)
 
 }
 
-void ServerBrowserDataSource::notifyOfFavoriteChange( quint64 iaddr, bool add )
+void ServerBrowserDataSource::notifyOfFavoriteChange( uint64_t iaddr, bool add )
 {
 	// lets see if the server is already in our serverlist
 	ServerInfoList::iterator it_s = find_if( serverList,
-		ServerInfo::EqualUnary<quint64, &ServerInfo::iaddress>( iaddr ) );
+		ServerInfo::EqualUnary<uint64_t, &ServerInfo::iaddress>( iaddr ) );
 
 	if( it_s == serverList.end() ) {
 		return;
@@ -935,7 +935,7 @@ void ServerBrowserDataSource::notifyOfFavoriteChange( quint64 iaddr, bool add )
 	ReferenceList &referenceList = referenceListMap[tableName];
 
 	ReferenceList::iterator it = find_if( referenceList,
-							ServerInfo::EqualUnary<quint64, &ServerInfo::iaddress>( iaddr ) );
+							ServerInfo::EqualUnary<uint64_t, &ServerInfo::iaddress>( iaddr ) );
 	if( it != referenceList.end() ) {
 		NotifyRowChange( tableName, std::distance( referenceList.begin(), it ), 1 );
 	}
@@ -951,7 +951,7 @@ void ServerBrowserDataSource::notifyOfFavoriteChange( quint64 iaddr, bool add )
 
 bool ServerBrowserDataSource::addFavorite( const char *fav )
 {
-	quint64 iaddr = addr_to_int( fav );
+	uint64_t iaddr = addr_to_int( fav );
 
 	// is that address already favorited?
 	FavoritesList::const_iterator it_f = favorites.find( iaddr );
@@ -969,7 +969,7 @@ bool ServerBrowserDataSource::addFavorite( const char *fav )
 
 bool ServerBrowserDataSource::removeFavorite( const char *fav )
 {
-	quint64 iaddr = addr_to_int( fav );
+	uint64_t iaddr = addr_to_int( fav );
 
 	FavoritesList::const_iterator it_f = favorites.find( iaddr );
 	if( it_f == favorites.end() ) {

@@ -120,32 +120,32 @@ static lentity_t *CG_AllocLocalEntity( letype_t type, float r, float g, float b,
 	case LE_NO_FADE:
 		break;
 	case LE_RGB_FADE:
-		le->ent.shaderRGBA[3] = ( qbyte )( 255 * a );
+		le->ent.shaderRGBA[3] = ( uint8_t )( 255 * a );
 		break;
 	case LE_SCALE_ALPHA_FADE:
 	case LE_INVERSESCALE_ALPHA_FADE:
 	case LE_PUFF_SHRINK:
-		le->ent.shaderRGBA[0] = ( qbyte )( 255 * r );
-		le->ent.shaderRGBA[1] = ( qbyte )( 255 * g );
-		le->ent.shaderRGBA[2] = ( qbyte )( 255 * b );
-		le->ent.shaderRGBA[3] = ( qbyte )( 255 * a );
+		le->ent.shaderRGBA[0] = ( uint8_t )( 255 * r );
+		le->ent.shaderRGBA[1] = ( uint8_t )( 255 * g );
+		le->ent.shaderRGBA[2] = ( uint8_t )( 255 * b );
+		le->ent.shaderRGBA[3] = ( uint8_t )( 255 * a );
 		break;
 	case LE_PUFF_SCALE_2:
-		le->ent.shaderRGBA[0] = ( qbyte )( 255 * r );
-		le->ent.shaderRGBA[1] = ( qbyte )( 255 * g );
-		le->ent.shaderRGBA[2] = ( qbyte )( 255 * b );
-		le->ent.shaderRGBA[3] = ( qbyte )( 255 * a );
+		le->ent.shaderRGBA[0] = ( uint8_t )( 255 * r );
+		le->ent.shaderRGBA[1] = ( uint8_t )( 255 * g );
+		le->ent.shaderRGBA[2] = ( uint8_t )( 255 * b );
+		le->ent.shaderRGBA[3] = ( uint8_t )( 255 * a );
 		break;
 	case LE_PUFF_SCALE:
-		le->ent.shaderRGBA[0] = ( qbyte )( 255 * r );
-		le->ent.shaderRGBA[1] = ( qbyte )( 255 * g );
-		le->ent.shaderRGBA[2] = ( qbyte )( 255 * b );
-		le->ent.shaderRGBA[3] = ( qbyte )( 255 * a );
+		le->ent.shaderRGBA[0] = ( uint8_t )( 255 * r );
+		le->ent.shaderRGBA[1] = ( uint8_t )( 255 * g );
+		le->ent.shaderRGBA[2] = ( uint8_t )( 255 * b );
+		le->ent.shaderRGBA[3] = ( uint8_t )( 255 * a );
 		break;
 	case LE_ALPHA_FADE:
-		le->ent.shaderRGBA[0] = ( qbyte )( 255 * r );
-		le->ent.shaderRGBA[1] = ( qbyte )( 255 * g );
-		le->ent.shaderRGBA[2] = ( qbyte )( 255 * b );
+		le->ent.shaderRGBA[0] = ( uint8_t )( 255 * r );
+		le->ent.shaderRGBA[1] = ( uint8_t )( 255 * g );
+		le->ent.shaderRGBA[2] = ( uint8_t )( 255 * b );
 		break;
 	default:
 		break;
@@ -1678,25 +1678,25 @@ void CG_AddLocalEntities( void )
 			break;
 		case LE_RGB_FADE:
 			fade = min( fade, fadeIn );
-			ent->shaderRGBA[0] = ( qbyte )( fade * le->color[0] );
-			ent->shaderRGBA[1] = ( qbyte )( fade * le->color[1] );
-			ent->shaderRGBA[2] = ( qbyte )( fade * le->color[2] );
+			ent->shaderRGBA[0] = ( uint8_t )( fade * le->color[0] );
+			ent->shaderRGBA[1] = ( uint8_t )( fade * le->color[1] );
+			ent->shaderRGBA[2] = ( uint8_t )( fade * le->color[2] );
 			break;
 		case LE_SCALE_ALPHA_FADE:
 			fade = min( fade, fadeIn );
 			ent->scale = 1.0f + 1.0f / scale;
 			ent->scale = min( ent->scale, 5.0f );
-			ent->shaderRGBA[3] = ( qbyte )( fade * le->color[3] );
+			ent->shaderRGBA[3] = ( uint8_t )( fade * le->color[3] );
 			break;
 		case LE_INVERSESCALE_ALPHA_FADE:
 			fade = min( fade, fadeIn );
 			ent->scale = scale + 0.1f;
 			clamp( ent->scale, 0.1f, 1.0f );
-			ent->shaderRGBA[3] = ( qbyte )( fade * le->color[3] );
+			ent->shaderRGBA[3] = ( uint8_t )( fade * le->color[3] );
 			break;
 		case LE_ALPHA_FADE:
 			fade = min( fade, fadeIn );
-			ent->shaderRGBA[3] = ( qbyte )( fade * le->color[3] );
+			ent->shaderRGBA[3] = ( uint8_t )( fade * le->color[3] );
 			break;
 		default:
 			break;

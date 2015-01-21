@@ -411,9 +411,9 @@ extern cvar_t *vid_multiscreen_head;
 
 //====================================================================
 
-void R_NormToLatLong( const vec_t *normal, qbyte latlong[2] );
-void R_LatLongToNorm( const qbyte latlong[2], vec3_t out );
-void R_LatLongToNorm4( const qbyte latlong[2], vec4_t out );
+void R_NormToLatLong( const vec_t *normal, uint8_t latlong[2] );
+void R_LatLongToNorm( const uint8_t latlong[2], vec3_t out );
+void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 
 //====================================================================
 
@@ -499,10 +499,10 @@ unsigned int R_AddSurfaceDlighbits( const msurface_t *surf, unsigned int checkDl
 void		R_AddDynamicLights( unsigned int dlightbits, int state );
 void		R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, qboolean noWorldLight );
 void		R_LightForOrigin2( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
-void		R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const qbyte *data, mlightmapRect_t *rects );
+void		R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects );
 void		R_InitLightStyles( model_t *mod );
 superLightStyle_t	*R_AddSuperLightStyle( model_t *mod, const int *lightmaps, 
-	const qbyte *lightmapStyles, const qbyte *vertexStyles, mlightmapRect_t **lmRects );
+	const uint8_t *lightmapStyles, const uint8_t *vertexStyles, mlightmapRect_t **lmRects );
 void		R_SortSuperLightStyles( model_t *mod );
 void		R_TouchLightmapImages( model_t *mod );
 
@@ -571,7 +571,7 @@ void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2
 void		R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	float angle, const vec4_t color, const shader_t *shader );
 void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
-	float s1, float t1, float s2, float t2, qbyte *data );
+	float s1, float t1, float s2, float t2, uint8_t *data );
 void		R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	ref_img_plane_t *yuv, image_t **yuvTextures, int flip );
 void		R_DrawStretchRawYUV( int x, int y, int w, int h, 

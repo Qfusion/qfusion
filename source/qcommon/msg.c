@@ -30,7 +30,7 @@ Handles byte ordering and avoids alignment errors
 */
 #define MAX_MSG_STRING_CHARS	2048
 
-void MSG_Init( msg_t *msg, qbyte *data, size_t length )
+void MSG_Init( msg_t *msg, uint8_t *data, size_t length )
 {
 	memset( msg, 0, sizeof( *msg ) );
 	msg->data = data;
@@ -68,7 +68,7 @@ void MSG_WriteData( msg_t *msg, const void *data, size_t length )
 #if 0
 	unsigned int i;
 	for( i = 0; i < length; i++ )
-		MSG_WriteByte( msg, ( (qbyte *)data )[i] );
+		MSG_WriteByte( msg, ( (uint8_t *)data )[i] );
 #else
 	MSG_CopyData( msg, data, length );
 #endif
@@ -81,14 +81,14 @@ void MSG_CopyData( msg_t *buf, const void *data, size_t length )
 
 void MSG_WriteChar( msg_t *msg, int c )
 {
-	qbyte *buf = ( qbyte* )MSG_GetSpace( msg, 1 );
+	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 1 );
 	buf[0] = ( char )c;
 }
 
 void MSG_WriteByte( msg_t *msg, int c )
 {
-	qbyte *buf = ( qbyte* )MSG_GetSpace( msg, 1 );
-	buf[0] = ( qbyte )( c&0xff );
+	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 1 );
+	buf[0] = ( uint8_t )( c&0xff );
 }
 
 void MSG_WriteShort( msg_t *msg, int c )
@@ -99,10 +99,10 @@ void MSG_WriteShort( msg_t *msg, int c )
 
 void MSG_WriteInt3( msg_t *msg, int c )
 {
-	qbyte *buf = ( qbyte* )MSG_GetSpace( msg, 3 );
-	buf[0] = ( qbyte )( c&0xff );
-	buf[1] = ( qbyte )( ( c>>8 )&0xff );
-	buf[2] = ( qbyte )( ( c>>16 )&0xff );
+	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 3 );
+	buf[0] = ( uint8_t )( c&0xff );
+	buf[1] = ( uint8_t )( ( c>>8 )&0xff );
+	buf[2] = ( uint8_t )( ( c>>16 )&0xff );
 }
 
 void MSG_WriteLong( msg_t *msg, int c )
@@ -231,7 +231,7 @@ void MSG_ReadData( msg_t *msg, void *data, size_t length )
 	unsigned int i;
 
 	for( i = 0; i < length; i++ )
-		( (qbyte *)data )[i] = MSG_ReadByte( msg );
+		( (uint8_t *)data )[i] = MSG_ReadByte( msg );
 
 }
 
@@ -440,7 +440,7 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 
 	if( bits & U_TYPE )
 	{
-		qbyte ttype = 0;
+		uint8_t ttype = 0;
 		ttype = to->type & ~ET_INVERSE;
 		if( to->linearProjectile )
 			ttype |= ET_INVERSE;
@@ -517,39 +517,39 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	}
 
 	if( bits & U_SOUND )
-		MSG_WriteShort( msg, (qbyte)to->sound );
+		MSG_WriteShort( msg, (uint8_t)to->sound );
 
 	if( bits & U_EVENT )
 	{
 		if( !to->eventParms[0] )
 		{
-			MSG_WriteByte( msg, (qbyte)( to->events[0] & ~EV_INVERSE ) );
+			MSG_WriteByte( msg, (uint8_t)( to->events[0] & ~EV_INVERSE ) );
 		}
 		else
 		{
-			MSG_WriteByte( msg, (qbyte)( to->events[0] | EV_INVERSE ) );
-			MSG_WriteByte( msg, (qbyte)to->eventParms[0] );
+			MSG_WriteByte( msg, (uint8_t)( to->events[0] | EV_INVERSE ) );
+			MSG_WriteByte( msg, (uint8_t)to->eventParms[0] );
 		}
 	}
 	if( bits & U_EVENT2 )
 	{
 		if( !to->eventParms[1] )
 		{
-			MSG_WriteByte( msg, (qbyte)( to->events[1] & ~EV_INVERSE ) );
+			MSG_WriteByte( msg, (uint8_t)( to->events[1] & ~EV_INVERSE ) );
 		}
 		else
 		{
-			MSG_WriteByte( msg, (qbyte)( to->events[1] | EV_INVERSE ) );
-			MSG_WriteByte( msg, (qbyte)to->eventParms[1] );
+			MSG_WriteByte( msg, (uint8_t)( to->events[1] | EV_INVERSE ) );
+			MSG_WriteByte( msg, (uint8_t)to->eventParms[1] );
 		}
 	}
 
 	if( bits & U_ATTENUATION )
-		MSG_WriteByte( msg, (qbyte)(to->attenuation * 16) );
+		MSG_WriteByte( msg, (uint8_t)(to->attenuation * 16) );
 
 	if( bits & U_WEAPON )
 	{
-		qbyte tweapon = 0;
+		uint8_t tweapon = 0;
 		tweapon = to->weapon & ~ET_INVERSE;
 		if( to->teleported )
 			tweapon |= ET_INVERSE;
@@ -582,27 +582,27 @@ int MSG_ReadEntityBits( msg_t *msg, unsigned *bits )
 	unsigned b, total;
 	int number;
 
-	total = (qbyte)MSG_ReadByte( msg );
+	total = (uint8_t)MSG_ReadByte( msg );
 	if( total & U_MOREBITS1 )
 	{
-		b = (qbyte)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadByte( msg );
 		total |= ( b<<8 )&0x0000FF00;
 	}
 	if( total & U_MOREBITS2 )
 	{
-		b = (qbyte)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadByte( msg );
 		total |= ( b<<16 )&0x00FF0000;
 	}
 	if( total & U_MOREBITS3 )
 	{
-		b = (qbyte)MSG_ReadByte( msg );
+		b = (uint8_t)MSG_ReadByte( msg );
 		total |= ( b<<24 )&0xFF000000;
 	}
 
 	if( total & U_NUMBER16 )
 		number = MSG_ReadShort( msg );
 	else
-		number = (qbyte)MSG_ReadByte( msg );
+		number = (uint8_t)MSG_ReadByte( msg );
 
 	*bits = total;
 
@@ -623,8 +623,8 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 
 	if( bits & U_TYPE )
 	{
-		qbyte ttype;
-		ttype = (qbyte)MSG_ReadByte( msg );
+		uint8_t ttype;
+		ttype = (uint8_t)MSG_ReadByte( msg );
 		to->type = ttype & ~ET_INVERSE;
 		to->linearProjectile = ( ttype & ET_INVERSE ) ? qtrue : qfalse;
 	}
@@ -638,7 +638,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 		to->modelindex2 = MSG_ReadShort( msg );
 
 	if( bits & U_FRAME8 )
-		to->frame = (qbyte)MSG_ReadByte( msg );
+		to->frame = (uint8_t)MSG_ReadByte( msg );
 	if( bits & U_FRAME16 )
 		to->frame = MSG_ReadShort( msg );
 
@@ -652,7 +652,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 	if( ( bits & ( U_EFFECTS8|U_EFFECTS16 ) ) == ( U_EFFECTS8|U_EFFECTS16 ) )
 		to->effects = MSG_ReadLong( msg );
 	else if( bits & U_EFFECTS8 )
-		to->effects = (qbyte)MSG_ReadByte( msg );
+		to->effects = (uint8_t)MSG_ReadByte( msg );
 	else if( bits & U_EFFECTS16 )
 		to->effects = MSG_ReadShort( msg );
 
@@ -698,9 +698,9 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 
 	if( bits & U_EVENT )
 	{
-		int event = (qbyte)MSG_ReadByte( msg );
+		int event = (uint8_t)MSG_ReadByte( msg );
 		if( event & EV_INVERSE )
-			to->eventParms[0] = (qbyte)MSG_ReadByte( msg );
+			to->eventParms[0] = (uint8_t)MSG_ReadByte( msg );
 		else
 			to->eventParms[0] = 0;
 		to->events[0] = ( event & ~EV_INVERSE );
@@ -713,9 +713,9 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 
 	if( bits & U_EVENT2 )
 	{
-		int event = (qbyte)MSG_ReadByte( msg );
+		int event = (uint8_t)MSG_ReadByte( msg );
 		if( event & EV_INVERSE )
-			to->eventParms[1] = (qbyte)MSG_ReadByte( msg );
+			to->eventParms[1] = (uint8_t)MSG_ReadByte( msg );
 		else
 			to->eventParms[1] = 0;
 		to->events[1] = ( event & ~EV_INVERSE );
@@ -728,14 +728,14 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 
 	if( bits & U_ATTENUATION )
 	{
-		qbyte attenuation = MSG_ReadByte( msg );
+		uint8_t attenuation = MSG_ReadByte( msg );
 		to->attenuation = (float)attenuation / 16.0;
 	}
 
 	if( bits & U_WEAPON )
 	{
-		qbyte tweapon;
-		tweapon = (qbyte)MSG_ReadByte( msg );
+		uint8_t tweapon;
+		tweapon = (uint8_t)MSG_ReadByte( msg );
 		to->weapon = tweapon & ~ET_INVERSE;
 		to->teleported = ( tweapon & ET_INVERSE ) ? qtrue : qfalse;
 	}
@@ -752,7 +752,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 	}
 
 	if( bits & U_TEAM )
-		to->team = (qbyte)MSG_ReadByte( msg );
+		to->team = (uint8_t)MSG_ReadByte( msg );
 }
 
 

@@ -62,13 +62,13 @@ BRUSHMODEL LOADING
 ===============================================================================
 */
 
-static qbyte *mod_base;
+static uint8_t *mod_base;
 static mbrushmodel_t *loadbmodel;
 
 /*
 * Mod_CheckDeluxemaps
 */
-static void Mod_CheckDeluxemaps( const lump_t *l, qbyte *lmData )
+static void Mod_CheckDeluxemaps( const lump_t *l, uint8_t *lmData )
 {
 	int i, j;
 	int surfaces, lightmap;
@@ -183,7 +183,7 @@ static void Mod_LoadVertexes( const lump_t *l )
 	int i, count, j;
 	dvertex_t *in;
 	float *out_xyz, *out_normals, *out_st, *out_lmst;
-	qbyte *buffer, *out_colors;
+	uint8_t *buffer, *out_colors;
 	size_t bufSize;
 	vec3_t color;
 	float div = ( 1 << mapConfig.overbrightBits ) * (mapConfig.lightingIntensity ? mapConfig.lightingIntensity : 1.0f) / 255.0f;
@@ -249,9 +249,9 @@ static void Mod_LoadVertexes( const lump_t *l )
 				color[0] = color[1] = color[2] = bound( 0, grey, 1 );
 			}
 
-			out_colors[0] = ( qbyte )( color[0] * 255 );
-			out_colors[1] = ( qbyte )( color[1] * 255 );
-			out_colors[2] = ( qbyte )( color[2] * 255 );
+			out_colors[0] = ( uint8_t )( color[0] * 255 );
+			out_colors[1] = ( uint8_t )( color[1] * 255 );
+			out_colors[2] = ( uint8_t )( color[2] * 255 );
 			out_colors[3] = in->color[3];
 		}
 	}
@@ -265,7 +265,7 @@ static void Mod_LoadVertexes_RBSP( const lump_t *l )
 	int i, count, j;
 	rdvertex_t *in;
 	float *out_xyz, *out_normals, *out_st, *out_lmst[MAX_LIGHTMAPS];
-	qbyte *buffer, *out_colors[MAX_LIGHTMAPS];
+	uint8_t *buffer, *out_colors[MAX_LIGHTMAPS];
 	size_t bufSize;
 	vec3_t color;
 	float div = ( 1 << mapConfig.overbrightBits ) * (mapConfig.lightingIntensity ? mapConfig.lightingIntensity : 1.0f) / 255.0f;
@@ -334,9 +334,9 @@ static void Mod_LoadVertexes_RBSP( const lump_t *l )
 					color[0] = color[1] = color[2] = bound( 0, grey, 1 );
 				}
 
-				out_colors[j][0] = ( qbyte )( color[0] * 255 );
-				out_colors[j][1] = ( qbyte )( color[1] * 255 );
-				out_colors[j][2] = ( qbyte )( color[2] * 255 );
+				out_colors[j][0] = ( uint8_t )( color[0] * 255 );
+				out_colors[j][1] = ( uint8_t )( color[1] * 255 );
+				out_colors[j][2] = ( uint8_t )( color[2] * 255 );
 				out_colors[j][3] = in->color[j][3];
 			}
 		}
@@ -361,7 +361,7 @@ static void Mod_LoadSubmodels( const lump_t *l )
 	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
 
 	mod_inline = Mod_Malloc( loadmodel, count*( sizeof( *mod_inline )+sizeof( *bmodel ) ) );
-	loadmodel->extradata = bmodel = ( mbrushmodel_t * )( ( qbyte * )mod_inline + count*sizeof( *mod_inline ) );
+	loadmodel->extradata = bmodel = ( mbrushmodel_t * )( ( uint8_t * )mod_inline + count*sizeof( *mod_inline ) );
 
 	loadbmodel = bmodel;
 	loadbmodel->submodels = out;
@@ -477,7 +477,7 @@ static int Mod_AddUpdatePatchGroup( const rdface_t *in )
 static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, int faceNum )
 {
 	mesh_t *mesh = NULL;
-	qbyte *buffer;
+	uint8_t *buffer;
 	size_t bufSize, bufPos = 0;
 
 	switch( out->facetype )
@@ -490,7 +490,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			int inFirstVert;
 			qboolean hasLightmap[MAX_LIGHTMAPS];
 			int numattribs = 0;
-			qbyte *attribs[2 + MAX_LIGHTMAPS * 2];
+			uint8_t *attribs[2 + MAX_LIGHTMAPS * 2];
 			int attribsizes[2 + MAX_LIGHTMAPS * 2];
 			elem_t *elems;
 
@@ -536,7 +536,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 				bufSize += numVerts * sizeof( byte_vec4_t );
 			bufSize = ALIGN( bufSize, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
-			buffer = ( qbyte * )Mod_Malloc( loadmodel, bufSize );
+			buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
 			mesh = ( mesh_t * )buffer; bufPos += MESH_T_SIZE_ALIGNED;
@@ -551,12 +551,12 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			Patch_Evaluate( vec_t, 3, loadmodel_xyz_array[inFirstVert], 
 				patch_cp, step, mesh->xyzArray[0], 4 );
 
-			attribs[numattribs] = ( qbyte * )mesh->normalsArray[0];
+			attribs[numattribs] = ( uint8_t * )mesh->normalsArray[0];
 			attribsizes[numattribs++] = sizeof( vec4_t );
 			Patch_Evaluate( vec_t, 3, loadmodel_normals_array[inFirstVert],
 				patch_cp, step, mesh->normalsArray[0], 4 );
 
-			attribs[numattribs] = ( qbyte * )mesh->stArray[0];
+			attribs[numattribs] = ( uint8_t * )mesh->stArray[0];
 			attribsizes[numattribs++] = sizeof( vec2_t );
 			Patch_Evaluate( vec_t, 2, loadmodel_st_array[inFirstVert], 
 				patch_cp, step, mesh->stArray[0], 0 );
@@ -564,7 +564,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			for( j = 0; j < MAX_LIGHTMAPS && hasLightmap[j]; j++ )
 			{
 				mesh->lmstArray[j] = ( vec2_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( vec2_t );
-				attribs[numattribs] = ( qbyte * )mesh->lmstArray[j];
+				attribs[numattribs] = ( uint8_t * )mesh->lmstArray[j];
 				attribsizes[numattribs++] = sizeof( vec2_t );
 				Patch_Evaluate( vec_t, 2, loadmodel_lmst_array[j][inFirstVert], 
 					patch_cp, step, mesh->lmstArray[j][0], 0 );
@@ -585,9 +585,9 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			for( j = 0; j < MAX_LIGHTMAPS && in->vertexStyles[j] != 255; j++ )
 			{
 				mesh->colorsArray[j] = ( byte_vec4_t * )( buffer + bufPos ); bufPos += numVerts * sizeof( byte_vec4_t );
-				attribs[numattribs] = ( qbyte * )mesh->colorsArray[j];
+				attribs[numattribs] = ( uint8_t * )mesh->colorsArray[j];
 				attribsizes[numattribs++] = sizeof( byte_vec4_t );
-				Patch_Evaluate( qbyte, 4, loadmodel_colors_array[j][inFirstVert], 
+				Patch_Evaluate( uint8_t, 4, loadmodel_colors_array[j][inFirstVert], 
 					patch_cp, step, mesh->colorsArray[j][0], 0 );
 			}
 
@@ -753,7 +753,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				bufSize = ALIGN( bufSize, 16 ) + sizeof( cplane_t );
 			bufSize = ALIGN( bufSize, 16 ) + numFoliageInstances * sizeof( instancePoint_t );
 
-			buffer = ( qbyte * )Mod_Malloc( loadmodel, bufSize );
+			buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
 			bufPos = 0;
 
 			mesh = ( mesh_t * )buffer; bufPos += MESH_T_SIZE_ALIGNED;
@@ -865,7 +865,7 @@ static inline void Mod_LoadFaceCommon( const rdface_t *in, msurface_t *out, int 
 	int shadernum, fognum;
 	mlightmapRect_t *lmRects[MAX_LIGHTMAPS];
 	int lightmaps[MAX_LIGHTMAPS];
-	qbyte lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
+	uint8_t lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
 
 	out->facetype = LittleLong( in->facetype );
 
@@ -1261,7 +1261,7 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 	dleaf_t	*in;
 	mleaf_t	*out;
 	size_t size;
-	qbyte *buffer;
+	uint8_t *buffer;
 	qboolean badBounds;
 	int *inMarkSurfaces;
 	int numMarkSurfaces, firstMarkSurface;
@@ -1326,7 +1326,7 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 		numFragmentSurfaces = numMarkSurfaces;
 
 		size = ((numVisSurfaces + 1) + (numFragmentSurfaces + 1)) * sizeof( msurface_t * );
-		buffer = ( qbyte * )Mod_Malloc( loadmodel, size );
+		buffer = ( uint8_t * )Mod_Malloc( loadmodel, size );
 
 		out->firstVisSurface = ( msurface_t ** )buffer;
 		buffer += ( numVisSurfaces + 1 ) * sizeof( msurface_t * );
@@ -1639,11 +1639,11 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out )
 {
 	int j, k;
 	float *lmArray;
-	qbyte *lmlayersArray;
+	uint8_t *lmlayersArray;
 	mesh_t *mesh = out->mesh;
 	mlightmapRect_t *lmRects[MAX_LIGHTMAPS];
 	int lightmaps[MAX_LIGHTMAPS];
-	qbyte lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
+	uint8_t lightmapStyles[MAX_LIGHTMAPS], vertexStyles[MAX_LIGHTMAPS];
 
 	for( j = 0; j < MAX_LIGHTMAPS; j++ )
 	{
@@ -1719,7 +1719,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 	
 	// outline color
 	for( i = 0; i < 3; i++ )
-		mapConfig.outlineColor[i] = (qbyte)(bound( 0, outline[i]*255.0f, 255 ));
+		mapConfig.outlineColor[i] = (uint8_t)(bound( 0, outline[i]*255.0f, 255 ));
 	mapConfig.outlineColor[3] = 255;
 
 	R_SortSuperLightStyles( loadmodel );
@@ -1853,7 +1853,7 @@ void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 	mod_bspFormat = format;
 
 	header = (dheader_t *)buffer;
-	mod_base = (qbyte *)header;
+	mod_base = (uint8_t *)header;
 
 	// swap all the lumps
 	for( i = 0; i < sizeof( dheader_t )/4; i++ )

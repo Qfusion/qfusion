@@ -68,7 +68,7 @@ unsigned int COM_HashKey( const char *name, int hashsize )
 * Adaptation of Paul Hsieh's incremental SuperFastHash function.
 * Initialize hash to some non-zero value for the first call, like len.
 */
-unsigned int COM_SuperFastHash( const qbyte * data, size_t len, unsigned int hash )
+unsigned int COM_SuperFastHash( const uint8_t * data, size_t len, unsigned int hash )
 {
 	unsigned int tmp;
 	unsigned int rem;
@@ -116,7 +116,7 @@ unsigned int COM_SuperFastHash( const qbyte * data, size_t len, unsigned int has
 * 
 * Com_SuperFastHash that takes a 64bit integer as an argument
 */
-unsigned int COM_SuperFastHash64BitInt( quint64 data )
+unsigned int COM_SuperFastHash64BitInt( uint64_t data )
 {
 	unsigned int hash;
 	unsigned int il, ih;

@@ -95,7 +95,7 @@ void TV_Relay_BuildClientFrameSnap( relay_t *relay, client_t *client )
 */
 static qboolean TV_Relay_SendClientDatagram( relay_t *relay, client_t *client )
 {
-	qbyte msg_buf[MAX_MSGLEN];
+	uint8_t msg_buf[MAX_MSGLEN];
 	msg_t msg;
 	snapshot_t *frame;
 

@@ -91,10 +91,10 @@ static cvar_t *net_showfragments;
 * 
 * Sends an out-of-band datagram
 */
-void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t length, const qbyte *data )
+void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t length, const uint8_t *data )
 {
 	msg_t send;
-	qbyte send_buf[MAX_PACKETLEN];
+	uint8_t send_buf[MAX_PACKETLEN];
 
 	// write the packet header
 	MSG_Init( &send, send_buf, sizeof( send_buf ) );
@@ -121,7 +121,7 @@ void Netchan_OutOfBandPrint( const socket_t *socket, const netadr_t *address, co
 	Q_vsnprintfz( string, sizeof( string ), format, argptr );
 	va_end( argptr );
 
-	Netchan_OutOfBand( socket, address, sizeof( char ) * (int)strlen( string ), (qbyte *)string );
+	Netchan_OutOfBand( socket, address, sizeof( char ) * (int)strlen( string ), (uint8_t *)string );
 }
 
 /*
@@ -141,7 +141,7 @@ void Netchan_Setup( netchan_t *chan, const socket_t *socket, const netadr_t *add
 }
 
 
-static qbyte msg_process_data[MAX_MSGLEN];
+static uint8_t msg_process_data[MAX_MSGLEN];
 
 //=============================================================
 // Zlib compression
@@ -161,7 +161,7 @@ Upon exit, destLen is the actual size of the compressed buffer.
 compress2 returns Z_OK if success, Z_MEM_ERROR if there was not enough memory, Z_BUF_ERROR if there
 was not enough room in the output buffer, Z_STREAM_ERROR if the level parameter is invalid.
 */
-static int Netchan_ZLibCompressChunk( const qbyte *source, unsigned long sourceLen, qbyte *dest, unsigned long destLen,
+static int Netchan_ZLibCompressChunk( const uint8_t *source, unsigned long sourceLen, uint8_t *dest, unsigned long destLen,
 									 int level, int wbits )
 {
 	int result, zlerror;
@@ -207,7 +207,7 @@ This function can be used to decompress a whole file at once if the input file i
 uncompress returns Z_OK if success, Z_MEM_ERROR if there was not enough memory, Z_BUF_ERROR if
 there was not enough room in the output buffer, or Z_DATA_ERROR if the input data was corrupted.
 */
-static int Netchan_ZLibDecompressChunk( const qbyte *source, unsigned long sourceLen, qbyte *dest, unsigned long destLen,
+static int Netchan_ZLibDecompressChunk( const uint8_t *source, unsigned long sourceLen, uint8_t *dest, unsigned long destLen,
 									   int wbits )
 {
 	int result, zlerror;
@@ -240,7 +240,7 @@ static int Netchan_ZLibDecompressChunk( const qbyte *source, unsigned long sourc
 }
 #else // ALT_ZLIB_COMPRESSION
 
-int Netchan_ZLibDecompressChunk( qbyte *in, int inlen, qbyte *out, int outlen, int wbits )
+int Netchan_ZLibDecompressChunk( uint8_t *in, int inlen, uint8_t *out, int outlen, int wbits )
 {
 	z_stream zs;
 	int result;
@@ -280,7 +280,7 @@ int Netchan_ZLibDecompressChunk( qbyte *in, int inlen, qbyte *out, int outlen, i
 	return zs.total_out;
 }
 
-int Netchan_ZLibCompressChunk( qbyte *in, int len_in, qbyte *out, int max_len_out, int method, int wbits )
+int Netchan_ZLibCompressChunk( uint8_t *in, int len_in, uint8_t *out, int max_len_out, int method, int wbits )
 {
 	z_stream zs;
 	int result;
@@ -406,7 +406,7 @@ static void Netchan_DropAllFragments( netchan_t *chan )
 qboolean Netchan_TransmitNextFragment( netchan_t *chan )
 {
 	msg_t send;
-	qbyte send_buf[MAX_PACKETLEN];
+	uint8_t send_buf[MAX_PACKETLEN];
 	int fragmentLength;
 	qboolean last;
 
@@ -498,7 +498,7 @@ qboolean Netchan_PushAllFragments( netchan_t *chan )
 qboolean Netchan_Transmit( netchan_t *chan, msg_t *msg )
 {
 	msg_t send;
-	qbyte send_buf[MAX_PACKETLEN];
+	uint8_t send_buf[MAX_PACKETLEN];
 
 	assert( msg );
 

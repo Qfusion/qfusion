@@ -80,7 +80,7 @@ typedef struct
 typedef struct
 {
 	char *name;
-	qbyte *data;            // file being downloaded
+	uint8_t *data;            // file being downloaded
 	int size;               // total bytes (can't use EOF because of paks)
 	unsigned int timeout;   // so we can free the file being downloaded
 	// if client omits sending success or failure message
@@ -94,7 +94,7 @@ typedef struct
 	int clientarea;
 	int numareas;
 	size_t areabytes;
-	qbyte *areabits;                // portalarea visibility bits
+	uint8_t *areabits;                // portalarea visibility bits
 	int numplayers;
 	int ps_size;
 	player_state_t *ps;                 // [numplayers]
@@ -181,7 +181,7 @@ typedef struct client_s
 	// The sounds datagram is written to by multicasted sound commands
 	// It can be harmlessly overflowed.
 	msg_t soundsmsg;
-	qbyte soundsmsgData[MAX_MSGLEN];
+	uint8_t soundsmsgData[MAX_MSGLEN];
 
 	client_snapshot_t snapShots[UPDATE_BACKUP]; // updates can be delta'd from here
 

@@ -126,10 +126,10 @@ typedef struct mleaf_s
 
 typedef struct
 {
-	qbyte			ambient[MAX_LIGHTMAPS][3];
-	qbyte			diffuse[MAX_LIGHTMAPS][3];
-	qbyte			styles[MAX_LIGHTMAPS];
-	qbyte			direction[2];
+	uint8_t			ambient[MAX_LIGHTMAPS][3];
+	uint8_t			diffuse[MAX_LIGHTMAPS][3];
+	uint8_t			styles[MAX_LIGHTMAPS];
+	uint8_t			direction[2];
 } mgridlight_t;
 
 typedef struct
@@ -207,7 +207,7 @@ ALIAS MODELS
 typedef struct
 {
 	short			point[3];
-	qbyte			latlong[2];				// use bytes to keep 8-byte alignment
+	uint8_t			latlong[2];				// use bytes to keep 8-byte alignment
 } maliasvertex_t;
 
 typedef struct
@@ -292,16 +292,16 @@ typedef struct
 
 typedef struct
 {
-	qbyte			indices[SKM_MAX_WEIGHTS];
-	qbyte			weights[SKM_MAX_WEIGHTS];
+	uint8_t			indices[SKM_MAX_WEIGHTS];
+	uint8_t			weights[SKM_MAX_WEIGHTS];
 } mskblend_t;
 
 typedef struct mskmesh_s
 {
 	char			*name;
 
-	qbyte			*blendIndices;
-	qbyte			*blendWeights;
+	uint8_t			*blendIndices;
+	uint8_t			*blendWeights;
 
 	unsigned int	numverts;
 	vec4_t			*xyzArray;
@@ -353,8 +353,8 @@ typedef struct mskmodel_s
 	vec4_t			*normalsArray;
 	vec2_t			*stArray;
 	vec4_t			*sVectorsArray;
-	qbyte			*blendIndices;
-	qbyte			*blendWeights;
+	uint8_t			*blendIndices;
+	uint8_t			*blendWeights;
 
 	unsigned int	numblends;
 	mskblend_t		*blends;
@@ -417,7 +417,7 @@ struct model_s *R_RegisterModel( const char *name );
 void		Mod_ClearAll( void );
 model_t		*Mod_ForName( const char *name, qboolean crash );
 mleaf_t		*Mod_PointInLeaf( float *p, model_t *model );
-qbyte		*Mod_ClusterPVS( int cluster, model_t *model );
+uint8_t		*Mod_ClusterPVS( int cluster, model_t *model );
 
 unsigned int Mod_Handle( const model_t *mod );
 model_t		*Mod_ForHandle( unsigned int elem );

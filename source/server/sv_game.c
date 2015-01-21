@@ -371,12 +371,12 @@ static void PF_PureModel( const char *name )
 *
 * Also checks portalareas so that doors block sight
 */
-static qboolean PF_inVisSet( const vec3_t p1, const vec3_t p2, qbyte *( *vis )( cmodel_state_t *, int ) )
+static qboolean PF_inVisSet( const vec3_t p1, const vec3_t p2, uint8_t *( *vis )( cmodel_state_t *, int ) )
 {
 	int leafnum;
 	int cluster;
 	int area1, area2;
-	qbyte *mask;
+	uint8_t *mask;
 
 	leafnum = CM_PointLeafnum( svs.cms, p1 );
 	cluster = CM_LeafCluster( svs.cms, leafnum );

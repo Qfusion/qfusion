@@ -66,7 +66,7 @@ typedef vec_t mat3_t[9];
 
 typedef vec_t dualquat_t[8];
 
-typedef qbyte byte_vec4_t[4];
+typedef uint8_t byte_vec4_t[4];
 
 // 0-2 are axial planes
 #define	PLANE_X		0

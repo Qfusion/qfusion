@@ -92,12 +92,12 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 void R_TextureMode( char *string );
 void R_AnisotropicFilter( int value );
 
-image_t *R_LoadImage( const char *name, qbyte **pic, int width, int height, int flags, int samples );
+image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int samples );
 image_t	*R_FindImage( const char *name, const char *suffix, int flags );
 image_t *R_CreateArrayImage( const char *name, int width, int height, int layers, int flags, int samples );
-void R_ReplaceImage( image_t *image, qbyte **pic, int width, int height, int flags, int samples );
-void R_ReplaceSubImage( image_t *image, int layer, qbyte **pic, int width, int height );
-void R_ReplaceImageLayer( image_t *image, int layer, qbyte **pic );
+void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int flags, int samples );
+void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, int width, int height );
+void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic );
 
 void R_BeginAviDemo( void );
 void R_WriteAviFrame( int frame, qboolean scissor );

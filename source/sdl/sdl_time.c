@@ -16,7 +16,7 @@ unsigned int Sys_Milliseconds( void )
 	return Sys_Microseconds() / 1000;
 }
 
-quint64 Sys_Microseconds( void )
+uint64_t Sys_Microseconds( void )
 {
 	return 1000000 * SDL_GetPerformanceCounter() / freq;
 }

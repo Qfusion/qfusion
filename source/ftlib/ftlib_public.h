@@ -79,11 +79,11 @@ typedef struct
 
 	// clock
 	unsigned int	( *Milliseconds )( void );
-	quint64			( *Microseconds )( void );
+	uint64_t			( *Microseconds )( void );
 
 	// renderer
 	struct shader_s *( *R_RegisterPic )( const char *name );
-	struct shader_s * ( *R_RegisterRawPic )( const char *name, int width, int height, qbyte *data );
+	struct shader_s * ( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
 	void ( *R_DrawStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 	void ( *R_Scissor )( int x, int y, int w, int h );
 	void ( *R_GetScissor )( int *x, int *y, int *w, int *h );

@@ -165,7 +165,7 @@ static bgTrack_t *S_AllocTrack( const char *filename )
 
 	track = S_Malloc( sizeof( *track ) + strlen( filename ) + 1 );
 	track->ignore = qfalse;
-	track->filename = (char *)((qbyte *)track + sizeof( *track ));
+	track->filename = (char *)((uint8_t *)track + sizeof( *track ));
 	strcpy( track->filename, filename );
 	track->isUrl = trap_FS_IsUrl( track->filename );
 	track->anext = s_bgTrackHead;
@@ -653,7 +653,7 @@ void S_LockBackgroundTrack( qboolean lock )
 * byteSwapRawSamples
 * Medar: untested
 */
-static void byteSwapRawSamples( int samples, int width, int channels, const qbyte *data )
+static void byteSwapRawSamples( int samples, int width, int channels, const uint8_t *data )
 {
 	int i;
 
@@ -678,7 +678,7 @@ void S_UpdateBackgroundTrack( void )
 	int samples, maxSamples;
 	int read, maxRead, total;
 	float scale;
-	qbyte data[MAX_RAW_SAMPLES*4];
+	uint8_t data[MAX_RAW_SAMPLES*4];
 
 	if( !s_bgTrack )
 		return;

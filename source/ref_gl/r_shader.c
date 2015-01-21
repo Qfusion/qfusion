@@ -516,6 +516,7 @@ static int Shader_SetImageFlags( shader_t *shader )
 		flags |= IT_NOFILTERING;
 	if( shader->type == SHADER_TYPE_2D 
 		|| shader->type == SHADER_TYPE_2D_RAW 
+		|| shader->type == SHADER_TYPE_2D_RAW_LUMINANCE
 		|| shader->type == SHADER_TYPE_VIDEO )
 		flags |= IT_SYNC;
 	//if( r_shaderHasAutosprite )
@@ -1725,7 +1726,7 @@ static void Shader_MakeCache( const char *filename )
 	char *token, *buf, *temp = NULL;
 	const char *ptr;
 	shadercache_t *cache;
-	qbyte *cacheMemBuf;
+	uint8_t *cacheMemBuf;
 	size_t cacheMemSize;
 
 	pathNameSize = strlen( "scripts/" ) + strlen( filename ) + 1;
@@ -1781,7 +1782,7 @@ static void Shader_MakeCache( const char *filename )
 
 		cache = ( shadercache_t * )cacheMemBuf; cacheMemBuf += sizeof( shadercache_t ) + strlen( token ) + 1;
 		cache->hash_next = shadercache_hash[key];
-		cache->name = ( char * )( (qbyte *)cache + sizeof( shadercache_t ) );
+		cache->name = ( char * )( (uint8_t *)cache + sizeof( shadercache_t ) );
 		strcpy( cache->name, token );
 		shadercache_hash[key] = cache;
 
@@ -1812,7 +1813,7 @@ static unsigned int Shader_GetCache( const char *name, shadercache_t **cache )
 	*cache = NULL;
 
 	len = strlen( name );
-	key = COM_SuperFastHash( ( const qbyte * )name, len, len ) % SHADERCACHE_HASH_SIZE;
+	key = COM_SuperFastHash( ( const uint8_t * )name, len, len ) % SHADERCACHE_HASH_SIZE;
 	for( c = shadercache_hash[key]; c; c = c->hash_next )
 	{
 		if( !Q_stricmp( c->name, name ) )
@@ -2220,7 +2221,7 @@ static void Shader_Finish( shader_t *s )
 	size_t size = 0, bufferOffset = 0;
 
 	shaderpass_t *pass;
-	qbyte *buffer;
+	uint8_t *buffer;
 	size_t deformvKeyLen;
 
 	deformvKeyLen = strlen( r_shaderDeformvKey );
@@ -2624,6 +2625,7 @@ create_default:
 			break;
 		case SHADER_TYPE_2D:
 		case SHADER_TYPE_2D_RAW:
+		case SHADER_TYPE_2D_RAW_LUMINANCE:
 		case SHADER_TYPE_VIDEO:
 			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 
@@ -2636,7 +2638,14 @@ create_default:
 			strcpy( s->name, shortname );
 
 			pass = &s->passes[0];
-			pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+			if( type == SHADER_TYPE_2D_RAW_LUMINANCE ) {
+				// alias raw luminance to raw but set different blend mode
+				type = s->type = SHADER_TYPE_2D_RAW;
+				pass->flags = GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ONE_MINUS_SRC_COLOR;
+			}
+			else {
+				pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+			}
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_VERTEX;
 			pass->tcgen = TC_GEN_BASE;
@@ -2663,7 +2672,7 @@ create_default:
 			s->flags = SHADER_CULL_FRONT|SHADER_DEPTHWRITE;
 			s->numpasses = 1;
 			s->passes = ( shaderpass_t * )( data );
-			s->passes[0].rgbgen.args = ( float * )((qbyte *)data + ALIGN( sizeof( shaderpass_t ), 16 ));
+			s->passes[0].rgbgen.args = ( float * )((uint8_t *)data + ALIGN( sizeof( shaderpass_t ), 16 ));
 			s->name = ( char * )( s->passes[0].rgbgen.args + 4 );
 			strcpy( s->name, shortname );
 
@@ -2744,7 +2753,7 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, qboolean forceDefau
 		return NULL;
 
 	// test if already loaded
-	key = COM_SuperFastHash( ( const qbyte *)shortname, nameLength, nameLength ) % SHADERS_HASH_SIZE;
+	key = COM_SuperFastHash( ( const uint8_t *)shortname, nameLength, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 
 	// scan all instances of the same shader for exact match of the type
@@ -2799,11 +2808,21 @@ shader_t *R_RegisterPic( const char *name )
 *
 * Registers default 2D shader with base image provided as RGBA data.
 */
-shader_t *R_RegisterRawPic( const char *name, int width, int height, qbyte *data )
+shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples )
 {
 	shader_t *s;
+	int type;
+	int flags;
 
-	s = R_LoadShader( name, SHADER_TYPE_2D_RAW, qtrue );
+	type = SHADER_TYPE_2D_RAW;
+	flags = IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS;
+
+	if( samples == 1 ) {
+		type = SHADER_TYPE_2D_RAW_LUMINANCE;
+		flags |= IT_LUMINANCE;
+	}
+
+	s = R_LoadShader( name, type, qtrue );
 	if( s ) {
 		image_t *image;
 
@@ -2811,8 +2830,7 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, qbyte *data
 		image = s->passes[0].images[0];
 		if( !image || image == rsh.noTexture ) {
 			// try to load new image
-			image = R_LoadImage( name, &data, width, height, 
-				IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS, 4 );
+			image = R_LoadImage( name, &data, width, height, flags, samples );
 			s->passes[0].images[0] = image;
 		}
 		else {

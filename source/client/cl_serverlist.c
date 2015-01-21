@@ -196,7 +196,7 @@ void CL_WriteServerCache( void )
 void CL_ReadServerCache( void )
 {
 	int filelen, filehandle;
-	qbyte *buf = NULL;
+	uint8_t *buf = NULL;
 	char *ptr, *token;
 	netadr_t adr;
 	char adrString[64];
@@ -415,7 +415,7 @@ static void CL_ParseGetServersResponseMessage( msg_t *msg, qboolean extended )
 {
 	const char *header;
 	char adrString[64];
-	qbyte addr[16];
+	uint8_t addr[16];
 	unsigned short port;
 	netadr_t adr;
 
