@@ -87,7 +87,7 @@ typedef struct snapshot_s
 	qboolean multipov;
 	int deltaFrameNum;
 	size_t areabytes;
-	qbyte *areabits;             // portalarea visibility bits
+	uint8_t *areabits;             // portalarea visibility bits
 	int numplayers;
 	player_state_t playerState;
 	player_state_t playerStates[MAX_CLIENTS];

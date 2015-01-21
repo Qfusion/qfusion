@@ -270,7 +270,7 @@ void SV_AutoUpdateFromWeb( qboolean checkOnly )
 	unsigned int checksum;
 	qboolean success;
 	int length, filenum;
-	qbyte *data;
+	uint8_t *data;
 	const char *token, *ptr;
 	char path[MAX_QPATH];
 	int downloadCount = 0, downloadFailed = 0;

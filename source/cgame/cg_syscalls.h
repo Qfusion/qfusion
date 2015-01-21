@@ -347,7 +347,7 @@ static inline struct shader_s *trap_R_RegisterPic( const char *name )
 	return CGAME_IMPORT.R_RegisterPic( name );
 }
 
-static inline struct shader_s *trap_R_RegisterRawPic( const char *name, int width, int height, qbyte *data )
+static inline struct shader_s *trap_R_RegisterRawPic( const char *name, int width, int height, uint8_t *data )
 {
 	return CGAME_IMPORT.R_RegisterRawPic( name, width, height, data );
 }
@@ -531,14 +531,14 @@ static inline void trap_S_StopBackgroundTrack( void )
 }
 
 static inline void trap_S_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const qbyte *data )
+	unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	CGAME_IMPORT.S_RawSamples( samples, rate, width, channels, data );
 }
 
 static inline void trap_S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 		unsigned int samples, unsigned int rate, unsigned short width, 
-		unsigned short channels, const qbyte *data )
+		unsigned short channels, const uint8_t *data )
 {
 	CGAME_IMPORT.S_PositionedRawSamples( entnum, fvol, attenuation, samples, rate, width, channels, data );
 }

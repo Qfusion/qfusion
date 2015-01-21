@@ -25,7 +25,7 @@ typedef size_t (*cg_async_stream_read_cb_t)(const void *buf, size_t numb, float 
 	int status, const char *contentType, void *privatep);
 typedef void (*cg_async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
 
-typedef void (*cg_raw_samples_cb_t)(void*,unsigned int, unsigned int, unsigned short, unsigned short, const qbyte *);
+typedef void (*cg_raw_samples_cb_t)(void*,unsigned int, unsigned int, unsigned short, unsigned short, const uint8_t *);
 typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
 
 // cg_public.h -- client game dll information visible to engine
@@ -48,7 +48,7 @@ typedef struct snapshot_s
 	qboolean multipov;
 	int deltaFrameNum;
 	size_t areabytes;
-	qbyte *areabits;             // portalarea visibility bits
+	uint8_t *areabits;             // portalarea visibility bits
 	int numplayers;
 	player_state_t playerState;
 	player_state_t playerStates[MAX_CLIENTS];
@@ -146,8 +146,8 @@ typedef struct
 	unsigned int ( *Milliseconds )( void );
 	qboolean ( *DownloadRequest )( const char *filename, qboolean requestpak );
 
-	unsigned int (* Hash_BlockChecksum )( const qbyte * data, size_t len );
-	unsigned int (* Hash_SuperFastHash )( const qbyte * data, size_t len, unsigned int seed );
+	unsigned int (* Hash_BlockChecksum )( const uint8_t * data, size_t len );
+	unsigned int (* Hash_SuperFastHash )( const uint8_t * data, size_t len, unsigned int seed );
 
 	void ( *NET_GetUserCmd )( int frame, usercmd_t *cmd );
 	int ( *NET_GetCurrentUserCmdNum )( void );
@@ -176,7 +176,7 @@ typedef struct
 	void ( *R_ModelFrameBounds )( const struct model_s *mod, int frame, vec3_t mins, vec3_t maxs );
 	struct model_s *( *R_RegisterModel )( const char *name );
 	struct shader_s *( *R_RegisterPic )( const char *name );
-	struct shader_s *( *R_RegisterRawPic )( const char *name, int width, int height, qbyte *data );
+	struct shader_s *( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t *data );
 	struct shader_s *( *R_RegisterLevelshot )( const char *name, struct shader_s *defaultPic, qboolean *matchesDefault );
 	struct shader_s *( *R_RegisterSkin )( const char *name );
 	struct skinfile_s *( *R_RegisterSkinFile )( const char *name );
@@ -219,9 +219,9 @@ typedef struct
 	void ( *S_AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop );
 	void ( *S_StopBackgroundTrack )( void );
-	void ( *S_RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data );
+	void ( *S_RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
 	void ( *S_PositionedRawSamples )( int entnum, float fvol, float attenuation, 
-		unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const qbyte *data );
+		unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
 	unsigned int ( *S_GetRawSamplesLength )( void );
 	unsigned int ( *S_GetPositionedRawSamplesLength )( int entnum );
 

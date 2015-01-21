@@ -33,7 +33,7 @@ typedef struct r_cinhandle_s
 	struct cinematics_s	*cin;
 	image_t			*image;
 	int				width, height;
-	qbyte			*pic;
+	uint8_t			*pic;
 	qboolean		new_frame;
 	qboolean		yuv;
 	ref_yuv_t		*cyuv;
@@ -68,7 +68,7 @@ static qboolean R_RunCin( r_cinhandle_t *h )
 
 	if( h->yuv ) {
 		h->cyuv = ri.CIN_ReadNextFrameYUV( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
-		h->pic = ( qbyte * )h->cyuv;
+		h->pic = ( uint8_t * )h->cyuv;
 	}
 	else {
 		h->pic = ri.CIN_ReadNextFrame( h->cin, &h->width, &h->height, NULL, NULL, &redraw );
@@ -93,7 +93,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 		int i;
 
 		if( !handle->yuv_images[0] ) {
-			qbyte *fake_data[1] = { NULL };
+			uint8_t *fake_data[1] = { NULL };
 			const char *letters[3] = { "y", "u", "v" };
 
 			for( i = 0; i < 3; i++ ) {

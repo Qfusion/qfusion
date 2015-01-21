@@ -68,7 +68,7 @@ typedef struct {
 } cin_yuv_t;
 
 typedef void (*cin_raw_samples_cb_t)(void*,unsigned int, unsigned int, 
-	unsigned short, unsigned short, const qbyte *);
+	unsigned short, unsigned short, const uint8_t *);
 typedef unsigned int (*cin_get_raw_samples_cb_t)(void*);
 
 //
@@ -120,7 +120,7 @@ typedef struct
 
 	// clock
 	unsigned int	( *Milliseconds )( void );
-	quint64			( *Microseconds )( void );
+	uint64_t			( *Microseconds )( void );
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
@@ -144,7 +144,7 @@ typedef struct
 
 	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean *yuv, float *framerate );
 	qboolean ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
-	qbyte *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
+	uint8_t *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 	cin_yuv_t *( *ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 	qboolean ( *AddRawSamplesListener )( struct cinematics_s *cin, void *listener, cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs );
 	void ( *Reset )( struct cinematics_s *cin, unsigned int cur_time );

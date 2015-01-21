@@ -149,7 +149,7 @@ typedef struct
 	int			_extMarker;
 
 	//
-	// only qbytes must follow the extensionsBoolMarker
+	// only uint8_ts must follow the extensionsBoolMarker
 	//
 
 	char		draw_range_elements

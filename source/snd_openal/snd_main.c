@@ -436,10 +436,10 @@ void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, q
 * SF_RawSamples
 */
 void SF_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const qbyte *data, qboolean music )
+	unsigned short channels, const uint8_t *data, qboolean music )
 {
 	size_t data_size = samples * width * channels;
-	qbyte *data_copy = S_Malloc( data_size );
+	uint8_t *data_copy = S_Malloc( data_size );
 
 	memcpy( data_copy, data, data_size );
 
@@ -451,10 +451,10 @@ void SF_RawSamples( unsigned int samples, unsigned int rate, unsigned short widt
 */
 void SF_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 	unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const qbyte *data )
+	unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	size_t data_size = samples * width * channels;
-	qbyte *data_copy = S_Malloc( data_size );
+	uint8_t *data_copy = S_Malloc( data_size );
 
 	memcpy( data_copy, data, data_size );
 

@@ -54,7 +54,7 @@ struct fatvis_s;
 
 typedef struct
 {
-	qbyte *data;
+	uint8_t *data;
 	size_t maxsize;
 	size_t cursize;
 	size_t readcount;
@@ -62,7 +62,7 @@ typedef struct
 } msg_t;
 
 // msg.c
-void MSG_Init( msg_t *buf, qbyte *data, size_t length );
+void MSG_Init( msg_t *buf, uint8_t *data, size_t length );
 void MSG_Clear( msg_t *buf );
 void *MSG_GetSpace( msg_t *buf, size_t length );
 void MSG_WriteData( msg_t *msg, const void *data, size_t length );
@@ -191,9 +191,9 @@ void Info_Print( char *s );
 
 /* crc.h */
 void CRC_Init( unsigned short *crcvalue );
-void CRC_ProcessByte( unsigned short *crcvalue, qbyte data );
+void CRC_ProcessByte( unsigned short *crcvalue, uint8_t data );
 unsigned short CRC_Value( unsigned short crcvalue );
-unsigned short CRC_Block( qbyte *start, int count );
+unsigned short CRC_Block( uint8_t *start, int count );
 
 /*
 ==============================================================
@@ -546,13 +546,13 @@ typedef enum
 
 typedef struct netadr_ipv4_s
 {
-	qbyte ip [4];
+	uint8_t ip [4];
 	unsigned short port;
 } netadr_ipv4_t;
 
 typedef struct netadr_ipv6_s
 {
-	qbyte ip [16];
+	uint8_t ip [16];
 	unsigned short port;
 	unsigned long scope_id;
 } netadr_ipv6_t;
@@ -674,14 +674,14 @@ typedef struct
 	// incoming fragment assembly buffer
 	int fragmentSequence;
 	size_t fragmentLength;
-	qbyte fragmentBuffer[MAX_MSGLEN];
+	uint8_t fragmentBuffer[MAX_MSGLEN];
 
 	// outgoing fragment buffer
 	// we need to space out the sending of large fragmented messages
 	qboolean unsentFragments;
 	size_t unsentFragmentStart;
 	size_t unsentLength;
-	qbyte unsentBuffer[MAX_MSGLEN];
+	uint8_t unsentBuffer[MAX_MSGLEN];
 	qboolean unsentIsCompressed;
 
 	qboolean fatal_error;
@@ -699,7 +699,7 @@ qboolean Netchan_PushAllFragments( netchan_t *chan );
 qboolean Netchan_TransmitNextFragment( netchan_t *chan );
 int Netchan_CompressMessage( msg_t *msg );
 int Netchan_DecompressMessage( msg_t *msg );
-void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t length, const qbyte *data );
+void Netchan_OutOfBand( const socket_t *socket, const netadr_t *address, size_t length, const uint8_t *data );
 void Netchan_OutOfBandPrint( const socket_t *socket, const netadr_t *address, const char *format, ... );
 int Netchan_GamePort( void );
 
@@ -830,7 +830,7 @@ void	    Com_SetServerState( int state );
 struct cmodel_state_s *Com_ServerCM( unsigned *checksum );
 void		Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum );
 
-void	    Com_PageInMemory( qbyte *buffer, int size );
+void	    Com_PageInMemory( uint8_t *buffer, int size );
 
 unsigned int Com_DaysSince1900( void );
 
@@ -949,7 +949,7 @@ void	Sys_InitDynvars( void );
 void	Sys_AppActivate( void );
 
 unsigned int	Sys_Milliseconds( void );
-quint64		Sys_Microseconds( void );
+uint64_t		Sys_Microseconds( void );
 void		Sys_Sleep( unsigned int millis );
 
 char	*Sys_ConsoleInput( void );

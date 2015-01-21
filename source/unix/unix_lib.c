@@ -47,7 +47,7 @@ const char *Sys_Library_GetFullName( const char *name )
 /*
 * Sys_Library_GetGameLibPath
 */
-const char *Sys_Library_GetGameLibPath( const char *name, qint64 time, int randomizer )
+const char *Sys_Library_GetGameLibPath( const char *name, int64_t time, int randomizer )
 {
 	static char tempname[PATH_MAX];
 	Q_snprintfz( tempname, sizeof(tempname), "%s/%s/tempmodules_%lld_%d/%s", FS_WriteDirectory(), FS_GameDirectory(),

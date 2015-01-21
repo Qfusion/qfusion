@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // shared message buffer to be used for occasional messages
 msg_t tmpMessage;
-qbyte tmpMessageData[MAX_MSGLEN];
+uint8_t tmpMessageData[MAX_MSGLEN];
 
 
 
@@ -312,7 +312,7 @@ qboolean SV_Netchan_Transmit( netchan_t *netchan, msg_t *msg )
 /*
 * SV_InitClientMessage
 */
-void SV_InitClientMessage( client_t *client, msg_t *msg, qbyte *data, size_t size )
+void SV_InitClientMessage( client_t *client, msg_t *msg, uint8_t *data, size_t size )
 {
 	if( client->edict && ( client->edict->r.svflags & SVF_FAKECLIENT ) )
 		return;

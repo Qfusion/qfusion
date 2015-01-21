@@ -47,7 +47,7 @@ typedef struct
 	void ( *shutdown )( cinematics_t *cin );
 	void ( *reset )( cinematics_t *cin );
 	qboolean ( *need_next_frame )( cinematics_t *cin );
-	qbyte *( *read_next_frame )( cinematics_t *cin, qboolean *redraw );
+	uint8_t *( *read_next_frame )( cinematics_t *cin, qboolean *redraw );
 	cin_yuv_t *( *read_next_frame_yuv )( cinematics_t *cin, qboolean *redraw );
 } cin_type_t;
 
@@ -226,11 +226,11 @@ qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 /*
 * CIN_ReadNextFrame_
 */
-static qbyte *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height, 
+static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height, 
 	int *aspect_numerator, int *aspect_denominator, qboolean *redraw, qboolean yuv )
 {
 	int i;
-	qbyte *frame = NULL;
+	uint8_t *frame = NULL;
 	const cin_type_t *type;
 	qboolean redraw_ = qfalse;
 
@@ -245,7 +245,7 @@ static qbyte *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height,
 	{
 		redraw_ = qfalse;
 		if( yuv ) {
-			frame = ( qbyte * )type->read_next_frame_yuv( cin, &redraw_ );
+			frame = ( uint8_t * )type->read_next_frame_yuv( cin, &redraw_ );
 		}
 		else {
 			frame = type->read_next_frame( cin, &redraw_ );
@@ -281,7 +281,7 @@ static qbyte *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height,
 /*
 * CIN_ReadNextFrame
 */
-qbyte *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 
+uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 
 	int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
 {
 	return CIN_ReadNextFrame_( cin, width, height, 
@@ -342,7 +342,7 @@ qboolean CIN_AddRawSamplesListener( cinematics_t *cin, void *listener,
 * CIN_RawSamplesToListeners
 */
 void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const qbyte *data )
+		unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	int i;
 

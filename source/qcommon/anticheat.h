@@ -29,7 +29,7 @@ typedef struct ac_import_s
 	void (*CL_ParseServerMessage)( msg_t *msg );
 	void (*CL_Netchan_Transmit)( msg_t *msg );
 
-	void (*MSG_Init)( msg_t *buf, qbyte *data, size_t length );
+	void (*MSG_Init)( msg_t *buf, uint8_t *data, size_t length );
 	void (*MSG_Clear)( msg_t *buf );
 	void *(*MSG_GetSpace)( msg_t *buf, size_t length );
 	void (*MSG_WriteData)( msg_t *msg, const void *data, size_t length );

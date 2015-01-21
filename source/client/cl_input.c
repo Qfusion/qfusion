@@ -146,15 +146,15 @@ static void CL_MouseExtrapolate( int mx, int my, float *extra_x, float *extra_y 
 
 	static unsigned int frameNo = 0;
 	static float sub_x = 0, sub_y = 0;
-	static qint64 lastMicros = 0;
-	static qint64 avgMicros = 0;
+	static int64_t lastMicros = 0;
+	static int64_t avgMicros = 0;
 
 	float add_x = 0.0, add_y = 0.0;
 	float decay = 1.0;
 	float decaySum = buf_size > 1 ? 0.0 : decay;
 	unsigned int i;
 
-	qint64 micros;
+	int64_t micros;
 	if( !lastMicros )
 		lastMicros = Sys_Microseconds() - 10000;    // start at 100 FPS
 	micros = Sys_Microseconds();                        // get current time in us
@@ -569,7 +569,7 @@ cvar_t *cl_zoom;
 /*
 * CL_AddButtonBits
 */
-static void CL_AddButtonBits( qbyte *buttons )
+static void CL_AddButtonBits( uint8_t *buttons )
 {
 	// figure button bits
 
@@ -942,7 +942,7 @@ void CL_WriteUcmdsToMessage( msg_t *msg )
 
 	// write the id number of first ucmd to be sent, and the count
 	MSG_WriteLong( msg, ucmdHead );
-	MSG_WriteByte( msg, (qbyte)( ucmdHead - ucmdFirst ) );
+	MSG_WriteByte( msg, (uint8_t)( ucmdHead - ucmdFirst ) );
 
 	// write the ucmds
 	for( i = ucmdFirst; i < ucmdHead; i++ )

@@ -342,7 +342,7 @@ void S_IssueAviDemoCmd( sndQueue_t *queue, qboolean begin )
 */
 void S_IssueRawSamplesCmd( sndQueue_t *queue, unsigned int samples, 
 	unsigned int rate, unsigned short width, unsigned short channels, 
-	qbyte *data, qboolean music )
+	uint8_t *data, qboolean music )
 {
 	sndRawSamplesCmd_t cmd;
 	cmd.id = SND_CMD_RAW_SAMPLES;
@@ -360,7 +360,7 @@ void S_IssueRawSamplesCmd( sndQueue_t *queue, unsigned int samples,
 */
 void S_IssuePositionedRawSamplesCmd( sndQueue_t *queue, int entnum, 
 	float fvol, float attenuation, unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, qbyte *data )
+	unsigned short width, unsigned short channels, uint8_t *data )
 {
 	sndPositionedRawSamplesCmd_t cmd;
 	cmd.id = SND_CMD_POSITIONED_RAW_SAMPLES;

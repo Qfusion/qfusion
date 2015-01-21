@@ -71,7 +71,7 @@ typedef struct cinematics_s
 
 	qboolean	yuv;
 
-	qbyte		*vid_buffer;
+	uint8_t		*vid_buffer;
 
 	qboolean	haveAudio;			// only valid for the current frame
 	int			num_listeners;
@@ -94,7 +94,7 @@ struct cinematics_s *CIN_Open( const char *name, unsigned int start_time,
 
 qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime );
 
-qbyte *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 
+uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 
 	int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
 
 cin_yuv_t *CIN_ReadNextFrameYUV( cinematics_t *cin, int *width, int *height, 
@@ -106,7 +106,7 @@ qboolean CIN_AddRawSamplesListener( cinematics_t *cin, void *listener,
 	cin_raw_samples_cb_t raw_samples, cin_get_raw_samples_cb_t get_raw_samples );
 
 void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigned int rate, 
-		unsigned short width, unsigned short channels, const qbyte *data );
+		unsigned short width, unsigned short channels, const uint8_t *data );
 
 unsigned int CIN_GetRawSamplesLengthFromListeners( cinematics_t *cin );
 

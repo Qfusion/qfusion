@@ -503,7 +503,7 @@ void G_PlayerAwardOfs( edict_t *ent, const char *awardMsg, int ofs, int limit, b
 			}
 		}
 
-		int *award = (int *)((qbyte *)&ent->r.client->resp.awardInfo + ofs);
+		int *award = (int *)((uint8_t *)&ent->r.client->resp.awardInfo + ofs);
 		if( *award >= limit ) {
 			return;
 		}

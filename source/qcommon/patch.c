@@ -162,13 +162,13 @@ PATCH_EVALUATE_DECL(type)													\
 
 PATCH_EVALUATE_BODY(vec_t)
 
-PATCH_EVALUATE_BODY(qbyte)
+PATCH_EVALUATE_BODY(uint8_t)
 
 /*
 * Patch_RemoveLinearColumnsRows
 */
 void Patch_RemoveLinearColumnsRows( vec_t *verts, int comp, int *pwidth, int *pheight,
-	int numattribs, qbyte * const *attribs, const int *attribsizes )
+	int numattribs, uint8_t * const *attribs, const int *attribsizes )
 {
 	int i, j, k, l;
 	const vec_t *v0, *v1, *v2;

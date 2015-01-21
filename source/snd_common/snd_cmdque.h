@@ -210,7 +210,7 @@ typedef struct
 	unsigned int rate;
 	unsigned short width;
 	unsigned short channels;
-	qbyte *data;
+	uint8_t *data;
 	qboolean music;
 } sndRawSamplesCmd_t;
 
@@ -224,7 +224,7 @@ typedef struct
 	unsigned int rate; 
 	unsigned short width;
 	unsigned short channels;
-	qbyte *data;
+	uint8_t *data;
 } sndPositionedRawSamplesCmd_t;
 
 typedef struct
@@ -269,10 +269,10 @@ void S_IssueActivateCmd( sndQueue_t *queue, qboolean active );
 void S_IssueAviDemoCmd( sndQueue_t *queue, qboolean begin );
 void S_IssueRawSamplesCmd( sndQueue_t *queue, unsigned int samples, 
 	unsigned int rate, unsigned short width, unsigned short channels, 
-	qbyte *data, qboolean music );
+	uint8_t *data, qboolean music );
 void S_IssuePositionedRawSamplesCmd( sndQueue_t *queue, int entnum, 
 	float fvol, float attenuation, unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, qbyte *data );
+	unsigned short width, unsigned short channels, uint8_t *data );
 void S_IssueStuffCmd( sndQueue_t *queue, const char *text );
 
 #endif // SND_CMDQUEUE_H

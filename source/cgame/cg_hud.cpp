@@ -130,9 +130,9 @@ static int CG_GetStatEnemyTeam( const void *parameter )
 
 static int CG_GetStatValue( const void *parameter )
 {
-	assert( (qintptr)parameter >= 0 && (qintptr)parameter < MAX_STATS );
+	assert( (intptr_t)parameter >= 0 && (intptr_t)parameter < MAX_STATS );
 
-	return cg.predictedPlayerState.stats[(qintptr)parameter];
+	return cg.predictedPlayerState.stats[(intptr_t)parameter];
 }
 
 static int CG_GetRaceStatValue( const void *parameter )
@@ -208,7 +208,7 @@ static int CG_GetFPS( const void *parameter )
 
 static int CG_GetPowerupTime( const void *parameter )
 {
-	int powerup = (qintptr)parameter;
+	int powerup = (intptr_t)parameter;
 	return cg.predictedPlayerState.inventory[powerup];
 }
 
@@ -282,7 +282,7 @@ static int CG_GetCvar( const void *parameter )
 static int CG_GetDamageIndicatorDirValue( const void *parameter )
 {
 	float frac = 0;
-	int index = (qintptr)parameter;
+	int index = (intptr_t)parameter;
 
 	if( cg.damageBlends[index] > cg.time && !cg.view.thirdperson )
 	{
@@ -299,7 +299,7 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter )
 	firedef_t *firedef;
 	int result;
 
-	switch( (qintptr)parameter )
+	switch( (intptr_t)parameter )
 	{
 	case 0: // AMMO_ITEM
 	default:
@@ -336,7 +336,7 @@ static int CG_GetShowItemTimers( const void *parameter )
 
 static int CG_GetItemTimer( const void *parameter )
 {
-	int num = (qintptr)parameter;
+	int num = (intptr_t)parameter;
 	centity_t *cent;
 
 	cent = CG_GetItemTimerEnt( num );
@@ -347,7 +347,7 @@ static int CG_GetItemTimer( const void *parameter )
 
 static int CG_GetItemTimerCount( const void *parameter )
 {
-	int num = (qintptr)parameter;
+	int num = (intptr_t)parameter;
 	centity_t *cent;
 
 	cent = CG_GetItemTimerEnt( num );
@@ -358,7 +358,7 @@ static int CG_GetItemTimerCount( const void *parameter )
 
 static int CG_GetItemTimerLocation( const void *parameter )
 {
-	int num = (qintptr)parameter;
+	int num = (intptr_t)parameter;
 	centity_t *cent;
 
 	cent = CG_GetItemTimerEnt( num );
@@ -369,7 +369,7 @@ static int CG_GetItemTimerLocation( const void *parameter )
 
 static int CG_GetItemTimerTeam( const void *parameter )
 {
-	int num = (qintptr)parameter;
+	int num = (intptr_t)parameter;
 	centity_t *cent;
 
 	cent = CG_GetItemTimerEnt( num );
@@ -398,7 +398,7 @@ enum race_index {
 
 static int CG_GetRaceVars( const void* parameter )
 {
-	int index = (qintptr)parameter;
+	int index = (intptr_t)parameter;
 	int iNum;
 	vec3_t hor_vel, view_dir, an;
 
@@ -496,7 +496,7 @@ static int CG_GetAccel( const void* parameter )
 
 static int CG_GetTouchButtonPressed( const void *parameter )
 {
-	return ( cg_hud_touch_buttons & ( qintptr )parameter ) ? 1 : 0;
+	return ( cg_hud_touch_buttons & ( intptr_t )parameter ) ? 1 : 0;
 }
 
 static int CG_GetTouchUpmove( const void *parameter )

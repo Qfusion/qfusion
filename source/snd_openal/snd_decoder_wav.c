@@ -75,7 +75,7 @@ static int readChunkInfo( int f, char *name )
 static void skipChunk( int f, int length )
 {
 	size_t toread;
-	qbyte buffer[32*1024];
+	uint8_t buffer[32*1024];
 
 	while( length > 0 )
 	{
@@ -111,7 +111,7 @@ static int findWavChunk( int filenum, const char *chunk )
 	}
 }
 
-static void byteSwapRawSamples( int samples, int width, int channels, const qbyte *data )
+static void byteSwapRawSamples( int samples, int width, int channels, const uint8_t *data )
 {
 	int i;
 
@@ -223,7 +223,7 @@ void *decoder_wav_load( const char *filename, snd_info_t *info )
 		return NULL;
 	}
 
-	byteSwapRawSamples( info->samples, info->width, info->channels, (qbyte *)buffer );
+	byteSwapRawSamples( info->samples, info->width, info->channels, (uint8_t *)buffer );
 
 	trap_FS_FCloseFile( filenum );
 

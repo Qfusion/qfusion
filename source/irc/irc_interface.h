@@ -206,7 +206,7 @@ typedef struct
 	unsigned int	(*SCR_GetScreenHeight)( void );
 	// clock
 	unsigned int	(*Milliseconds)(void);
-	quint64			(*Microseconds)(void);
+	uint64_t			(*Microseconds)(void);
 	// managed memory allocation
 	struct mempool_s *(*Mem_AllocPool)(const char *name, const char *filename, int fileline);	
 	void		*(*Mem_Alloc)(int size, const char *filename, int fileline);
