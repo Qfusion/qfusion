@@ -143,7 +143,7 @@ void CIN_LoadLibrary( qboolean verbose )
 	funcs[0].name = "GetCinematicsAPI";
 	funcs[0].funcPointer = ( void ** ) &GetCinematicsAPI;
 	funcs[1].name = NULL;
-	cin_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/cin_" ARCH LIB_SUFFIX, funcs );
+	cin_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "cin_" ARCH LIB_SUFFIX, funcs );
 
 	if( cin_libhandle )
 	{

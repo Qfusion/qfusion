@@ -187,9 +187,9 @@ static void SV_ReloadPureList( void )
 		char *libname;
 		int libname_size;
 
-		libname_size = 5 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
+		libname_size = strlen( LIB_PREFIX ) + 5 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
 		libname = Mem_TempMalloc( libname_size );
-		Q_snprintfz( libname, libname_size, "game_" ARCH LIB_SUFFIX );
+		Q_snprintfz( libname, libname_size, LIB_PREFIX "game_" ARCH LIB_SUFFIX );
 
 		if( !FS_PakNameForFile( libname ) )
 		{

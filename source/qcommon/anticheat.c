@@ -101,7 +101,7 @@ qboolean AC_LoadLibrary( void *imports, void *exports, unsigned int flags )
 		funcs[1].name = "InitClient";
 		funcs[1].funcPointer = (void **) &InitClient_f;
 		funcs[2].name = NULL;
-		ac_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/ac_" ARCH LIB_SUFFIX, funcs );
+		ac_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "ac_" ARCH LIB_SUFFIX, funcs );
 	}
 
 	// load succeeded or already loaded and exported functions retrieved
