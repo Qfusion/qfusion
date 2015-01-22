@@ -30,7 +30,7 @@ void IN_Activate( qboolean active )
  * Function which is called whenever the mouse is moved.
  * @param ev the SDL event object containing the mouse position et all
  */
-static void _mouse_motion_event( SDL_MouseMotionEvent *event )
+static void mouse_motion_event( SDL_MouseMotionEvent *event )
 {
 	mx += event->xrel;
 	my += event->yrel;
@@ -42,7 +42,7 @@ static void _mouse_motion_event( SDL_MouseMotionEvent *event )
  * @param ev the SDL event object containing the button number et all
  * @param state either qtrue if it is a keydown event or qfalse otherwise
  */
-static void _mouse_button_event( SDL_MouseButtonEvent *event, qboolean state )
+static void mouse_button_event( SDL_MouseButtonEvent *event, qboolean state )
 {
 	Uint8 button = event->button;
 	if( button <= 5 )
@@ -63,7 +63,7 @@ static void _mouse_button_event( SDL_MouseButtonEvent *event, qboolean state )
 		Com_Printf( "sdl_input.c: Unsupported mouse button (button = %u)\n", button );
 }
 
-static void _mouse_wheel_event( SDL_MouseWheelEvent *event )
+static void mouse_wheel_event( SDL_MouseWheelEvent *event )
 {
 	int key = event->y > 0 ? K_MWHEELUP : K_MWHEELDOWN;
 	unsigned sys_msg_time = Sys_Milliseconds();
@@ -210,7 +210,7 @@ static qwchar TranslateSDLScancode(SDL_Scancode scancode)
  * @param event the SDL event object containing the keysym et all
  * @param state either qtrue if it is a keydown event or qfalse otherwise
  */
-static void _key_event( const SDL_KeyboardEvent *event, const qboolean state )
+static void key_event( const SDL_KeyboardEvent *event, const qboolean state )
 {
 	qwchar charkey = TranslateSDLScancode(event->keysym.scancode);
 	
@@ -233,7 +233,7 @@ static void HandleEvents( void )
 		switch( event.type )
 		{
 		case SDL_KEYDOWN:
-			_key_event( &event.key, qtrue );
+			key_event( &event.key, qtrue );
 				
 				// Emulate Ctrl+V
 				if (event.key.keysym.sym == SDLK_v)
@@ -247,7 +247,7 @@ static void HandleEvents( void )
 			break;
 
 		case SDL_KEYUP:
-			_key_event( &event.key, qfalse );
+			key_event( &event.key, qfalse );
 			break;
 				
 		case SDL_TEXTINPUT:
@@ -261,19 +261,19 @@ static void HandleEvents( void )
 			break;
 
 		case SDL_MOUSEMOTION:
-			_mouse_motion_event( &event.motion );
+			mouse_motion_event( &event.motion );
 			break;
 
 		case SDL_MOUSEBUTTONDOWN:
-			_mouse_button_event( &event.button, qtrue );
+			mouse_button_event( &event.button, qtrue );
 			break;
 
 		case SDL_MOUSEBUTTONUP:
-			_mouse_button_event( &event.button, qfalse );
+			mouse_button_event( &event.button, qfalse );
 			break;
 				
 		case SDL_MOUSEWHEEL:
-			_mouse_wheel_event( &event.wheel );
+			mouse_wheel_event( &event.wheel );
 			break;
 				
 		case SDL_QUIT:
