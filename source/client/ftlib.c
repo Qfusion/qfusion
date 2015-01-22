@@ -159,7 +159,7 @@ void FTLIB_LoadLibrary( qboolean verbose )
 	funcs[0].name = "GetFTLibAPI";
 	funcs[0].funcPointer = ( void ** ) &GetFTLibAPI;
 	funcs[1].name = NULL;
-	ftlib_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/ftlib_" ARCH LIB_SUFFIX, funcs );
+	ftlib_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "ftlib_" ARCH LIB_SUFFIX, funcs );
 
 	if( ftlib_libhandle )
 	{

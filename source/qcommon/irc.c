@@ -200,7 +200,7 @@ static void Irc_LoadLibrary( void )
 	funcs[0].name = "GetIrcAPI";
 	funcs[0].funcPointer = (void **) &GetIrcAPI_f;
 	funcs[1].name = NULL;
-	irc_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/irc_" ARCH LIB_SUFFIX, funcs );
+	irc_libhandle = Com_LoadLibrary( LIB_DIRECTORY "/" LIB_PREFIX "irc_" ARCH LIB_SUFFIX, funcs );
 
 	if( irc_libhandle )
 	{

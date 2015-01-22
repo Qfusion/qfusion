@@ -96,6 +96,7 @@ extern "C" {
 #endif
 
 #define LIB_DIRECTORY "libs"
+#define LIB_PREFIX ""
 #define LIB_SUFFIX ".dll"
 
 #define VID_INITFIRST
@@ -161,6 +162,7 @@ typedef UINT_PTR socket_handle_t;
 #endif
 
 #define LIB_DIRECTORY "libs"
+#define LIB_PREFIX "" // we dont use corrent prefix on Linux yet
 #define LIB_SUFFIX ".so"
 
 #ifndef __ANDROID__
@@ -255,6 +257,7 @@ typedef int socket_handle_t;
 #endif
 
 #define LIB_DIRECTORY "libs"
+#define LIB_PREFIX "lib"
 #define LIB_SUFFIX ".dylib"
 
 #define MUMBLE_SUPPORT
