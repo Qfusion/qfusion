@@ -36,7 +36,7 @@ qboolean Sys_Library_Close( void *lib )
 const char *Sys_Library_GetFullName( const char *name )
 {
 	static char tempname[PATH_MAX];
-	Q_snprintfz( tempname, sizeof( tempname ), "/data/data/%s/lib/lib%s", sys_android_packageName, COM_FileBase( name ) );
+	Q_snprintfz( tempname, sizeof( tempname ), "/data/data/%s/lib/%s", sys_android_packageName, COM_FileBase( name ) );
 	return tempname;
 }
 
@@ -46,7 +46,7 @@ const char *Sys_Library_GetFullName( const char *name )
 const char *Sys_Library_GetGameLibPath( const char *name, int64_t time, int randomizer )
 {
 	static char tempname[PATH_MAX];
-	Q_snprintfz( tempname, sizeof( tempname ), "/data/data/%s/cache/%s/tempmodules/lib%s",
+	Q_snprintfz( tempname, sizeof( tempname ), "/data/data/%s/cache/%s/tempmodules/%s",
 		sys_android_packageName, FS_GameDirectory(), name ); // no randomizer because only one instance can run at once
 	return tempname;
 }
