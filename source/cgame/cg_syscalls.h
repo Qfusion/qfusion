@@ -347,9 +347,9 @@ static inline struct shader_s *trap_R_RegisterPic( const char *name )
 	return CGAME_IMPORT.R_RegisterPic( name );
 }
 
-static inline struct shader_s *trap_R_RegisterRawPic( const char *name, int width, int height, uint8_t *data )
+static inline struct shader_s *trap_R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples )
 {
-	return CGAME_IMPORT.R_RegisterRawPic( name, width, height, data );
+	return CGAME_IMPORT.R_RegisterRawPic( name, width, height, data, samples );
 }
 
 static inline struct shader_s *trap_R_RegisterLevelshot( const char *name, struct shader_s *defaultPic, bool *matchesDefault )
