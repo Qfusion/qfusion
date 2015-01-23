@@ -48,7 +48,7 @@ typedef struct
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
-	void *( *Mem_Alloc )( struct mempool_s *pool, int size, const char *filename, int fileline );
+	void *( *Mem_Alloc )( struct mempool_s *pool, size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
