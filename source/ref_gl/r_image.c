@@ -1567,19 +1567,29 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_
 		switch( header->type )
 		{
 		case GL_RGBA:
-		case GL_BGRA_EXT:
 			image->samples = 4;
 			break;
+		case GL_BGRA_EXT:
+			image->samples = 4;
+			image->flags |= IT_BGRA;
+			break;
 		case GL_RGB:
+			image->samples = 3;
+			break;
 		case GL_BGR_EXT:
 			image->samples = 3;
+			image->flags |= IT_BGRA;
 			break;
 		case GL_LUMINANCE_ALPHA:
 			image->samples = 2;
 			break;
 		case GL_ALPHA:
+			image->samples = 1;
+			image->flags |= IT_ALPHA;
+			break;
 		case GL_LUMINANCE:
 			image->samples = 1;
+			image->flags |= IT_LUMINANCE;
 			break;
 		}
 	}
