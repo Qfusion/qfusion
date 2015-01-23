@@ -43,6 +43,7 @@ enum
 	,IT_SYNC			= 1<<16		// load image synchronously
 	,IT_DEPTHCOMPARE	= 1<<17
 	,IT_ARRAY			= 1<<18
+	,IT_ALPHA			= 1<<19		// alpha only
 };
 
 #define IT_CINEMATIC		( IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP|IT_NOCOMPRESS )

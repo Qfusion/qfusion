@@ -766,6 +766,8 @@ static const glsl_feature_t glsl_features_q3a[] =
 
 	{ GLSL_SHADER_Q3_LIGHTMAP_ARRAYS, "#define LIGHTMAP_ARRAYS\n", "_lmarray" },
 
+	{ GLSL_SHADER_Q3_ALPHA_MASK, "#define APPLY_ALPHA_MASK\n", "_alpha_mask" },
+
 	{ 0, NULL, NULL }
 };
 

@@ -1513,6 +1513,10 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 	}
 
+	if( image->flags & IT_ALPHA ) {
+		programFeatures |= GLSL_SHADER_Q3_ALPHA_MASK;
+	}
+
 	RB_BindTexture( 0, image );
 
 	// convert rgbgen and alphagen to GLSL feature defines

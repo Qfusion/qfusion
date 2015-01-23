@@ -85,7 +85,11 @@ void main(void)
 	diffuse.rgb = myhalf3(mix(u_WallColor, u_FloorColor, n));
 #endif
 
+#ifdef APPLY_ALPHA_MASK
+	color.a *= diffuse.a;
+#else
 	color *= diffuse;
+#endif
 
 #ifdef NUM_LIGHTMAPS
 	// so that team-colored shaders work

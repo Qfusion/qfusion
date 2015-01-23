@@ -912,6 +912,11 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 		*comp = *format = GL_LUMINANCE;
 		*type = GL_UNSIGNED_BYTE;
 	}
+	else if( flags & IT_ALPHA )
+	{
+		*comp = *format = GL_ALPHA;
+		*type = GL_UNSIGNED_BYTE;
+	}
 	else
 	{
 		if( samples == 4 )

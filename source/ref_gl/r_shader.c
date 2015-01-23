@@ -515,8 +515,7 @@ static int Shader_SetImageFlags( shader_t *shader )
 	if( r_shaderNoFiltering )
 		flags |= IT_NOFILTERING;
 	if( shader->type == SHADER_TYPE_2D 
-		|| shader->type == SHADER_TYPE_2D_RAW 
-		|| shader->type == SHADER_TYPE_2D_RAW_LUMINANCE
+		|| shader->type == SHADER_TYPE_2D_RAW
 		|| shader->type == SHADER_TYPE_VIDEO )
 		flags |= IT_SYNC;
 	//if( r_shaderHasAutosprite )
@@ -2625,7 +2624,6 @@ create_default:
 			break;
 		case SHADER_TYPE_2D:
 		case SHADER_TYPE_2D_RAW:
-		case SHADER_TYPE_2D_RAW_LUMINANCE:
 		case SHADER_TYPE_VIDEO:
 			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 
@@ -2638,14 +2636,7 @@ create_default:
 			strcpy( s->name, shortname );
 
 			pass = &s->passes[0];
-			if( type == SHADER_TYPE_2D_RAW_LUMINANCE ) {
-				// alias raw luminance to raw but set different blend mode
-				type = s->type = SHADER_TYPE_2D_RAW;
-				pass->flags = GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ONE_MINUS_SRC_COLOR;
-			}
-			else {
-				pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-			}
+			pass->flags = GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_VERTEX;
 			pass->tcgen = TC_GEN_BASE;
@@ -2818,8 +2809,7 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *da
 	flags = IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS;
 
 	if( samples == 1 ) {
-		type = SHADER_TYPE_2D_RAW_LUMINANCE;
-		flags |= IT_LUMINANCE;
+		flags |= IT_ALPHA;
 	}
 
 	s = R_LoadShader( name, type, qtrue );
