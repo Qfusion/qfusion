@@ -85,7 +85,7 @@ static void CL_SoundModule_Print( const char *msg )
 /*
 * CL_SoundModule_MemAlloc
 */
-static void *CL_SoundModule_MemAlloc( mempool_t *pool, int size, const char *filename, int fileline )
+static void *CL_SoundModule_MemAlloc( mempool_t *pool, size_t size, const char *filename, int fileline )
 {
 	return _Mem_Alloc( pool, size, MEMPOOL_SOUND, 0, filename, fileline );
 }
