@@ -253,9 +253,9 @@ static void HandleEvents( void )
 				
 		case SDL_TEXTINPUT:
 			// SDL_iconv_utf8_ucs2 uses "UCS-2-INTERNAL" as tocode and fails to convert text on Linux
-			// where SDL_iconv uses system iconv. "UCS-2" seems to be ok.
+			// where SDL_iconv uses system iconv. "UCS-2LE" (x86 are little-endian) as a temp solution seems to be ok.
 			// Uint16* wtext = SDL_iconv_utf8_ucs2(event.text.text);
-			wtext = (Uint16*)SDL_iconv_string("UCS-2", "UTF-8", event.text.text, SDL_strlen(event.text.text) + 1);
+			wtext = (Uint16*)SDL_iconv_string("UCS-2LE", "UTF-8", event.text.text, SDL_strlen(event.text.text) + 1);
 			if (wtext) {
 				qwchar charkey = wtext[0];
 				Key_CharEvent(charkey, charkey);
