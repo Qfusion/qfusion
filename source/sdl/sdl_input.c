@@ -74,8 +74,8 @@ static void mouse_wheel_event( SDL_MouseWheelEvent *event )
 
 static qwchar TranslateSDLScancode(SDL_Scancode scancode)
 {
-    qwchar charkey;
-    
+	qwchar charkey;
+	
 	switch(scancode)
 	{
 		// case SDLK_TAB:			    charkey = K_TAB;		break;
@@ -223,6 +223,7 @@ static void key_event( const SDL_KeyboardEvent *event, const qboolean state )
 
 static void HandleEvents( void )
 {
+	Uint16* wtext = NULL;
 	SDL_PumpEvents();
 	
 	SDL_Event event;
@@ -251,10 +252,10 @@ static void HandleEvents( void )
 			break;
 				
 		case SDL_TEXTINPUT:
-			// SDL_iconv_utf8_ucs2 uses "UCS-2-INTERNAL" as tocode and fails to convert text on Linux 
+			// SDL_iconv_utf8_ucs2 uses "UCS-2-INTERNAL" as tocode and fails to convert text on Linux
 			// where SDL_iconv uses system iconv. "UCS-2" seems to be ok.
 			// Uint16* wtext = SDL_iconv_utf8_ucs2(event.text.text);
-			Uint16* wtext = (Uint16*)SDL_iconv_string("UCS-2", "UTF-8", event.text.text, SDL_strlen(event.text.text) + 1);
+			wtext = (Uint16*)SDL_iconv_string("UCS-2", "UTF-8", event.text.text, SDL_strlen(event.text.text) + 1);
 			if (wtext) {
 				qwchar charkey = wtext[0];
 				Key_CharEvent(charkey, charkey);
