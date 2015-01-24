@@ -30,8 +30,29 @@ namespace WSWUI
 		virtual int	GetNumRows (const Rocket::Core::String &table);
 
 	private:
-		typedef std::pair<std::string, std::string> GameTypeNameIdPair;
-		typedef std::vector<GameTypeNameIdPair> GameTypeList;
+		struct gametype
+		{
+			std::string name;
+			std::string title;
+			std::string description;
+
+			gametype() : name(""), title(""), description("") {};
+			gametype(const std::string &name) : name(name), title(name), description("") {};
+		};
+
+		struct cmp_gametypes_by_id
+		{
+			typedef gametype first_argument_type;
+			typedef std::string second_argument_type;
+			typedef bool result_type;
+
+			result_type operator()(const gametype &lhs, const std::string &rhs) const
+			{
+				return lhs.name == rhs;
+			}
+		};
+
+		typedef std::vector<gametype> GameTypeList;
 		GameTypeList gameTypes; /// Contains all accessible gametypes 
 	};
 }

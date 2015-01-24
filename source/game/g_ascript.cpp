@@ -3705,7 +3705,7 @@ static asIScriptModule *G_BuildGameScript( const char *moduleName, const char *d
 	}
 
 	for( sectionNum = 0; ( section = G_LoadScriptSection( dir, script, sectionNum ) ) != NULL; sectionNum++ ) {
-		char *sectionName = G_ListNameForPosition( script, sectionNum, SECTIONS_SEPARATOR );
+		const char *sectionName = G_ListNameForPosition( script, sectionNum, SECTIONS_SEPARATOR );
 		error = asModule->AddScriptSection( sectionName, section, strlen( section ) );
 
 		G_Free( section );

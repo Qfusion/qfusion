@@ -107,6 +107,7 @@ public:
 		s = s.Replace( "<", "&lt;" );
 		s = s.Replace( ">", "&gt;" );
 		s = s.Replace( "\"", "&quot;" );
+		s = s.Replace( "\n", "<br/>" );
 	}
 };
 
