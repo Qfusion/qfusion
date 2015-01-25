@@ -99,9 +99,9 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	const int imageWidth = FTLIB_FONT_IMAGE_WIDTH;
 	int imageHeight, imagePitch;
 	int xOffset, yOffset;
-	int maxUp;
 	int line, numLines;
 	int linesPerImage;
+	int baseLine;
 	int numImages, imageNum;
 	uint8_t *tempPic = NULL;
 	qboolean clearImage;
@@ -136,10 +136,6 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 
 	hasKerning = FT_HAS_KERNING( ftface ) ? qtrue : qfalse;
 
-	// go over all characters to find the max ascent values, which
-	// corresponds to the amount of space required above the baseline
-	maxUp = 0;
-
 	// track available chars
 	minChar = FTLIB_LAST_FONT_CHAR + 1;
 	maxChar = FTLIB_FIRST_FONT_CHAR - 1;
@@ -171,9 +167,6 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 			if( i > maxChar ) {
 				maxChar = i;
 			}
-
-			// track line and font height
-			maxUp = max( maxUp, ftface->glyph->bitmap_top );
 		}
 	}
 
@@ -200,8 +193,9 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	// use scaled version of the original design text height (the vertical 
 	// distance from one baseline to the next) as font height
 	fontHeight = ftface->size->metrics.height >> 6;
+	baseLine = fontHeight - (ftface->size->metrics.ascender >> 6);
 	numGlyphs = maxChar + 1;
-	linesPerImage = FTLIB_MAX_FONT_IMAGE_HEIGHT / (fontHeight + margin);
+	linesPerImage = FTLIB_MAX_FONT_IMAGE_HEIGHT / fontHeight;
 	if( linesPerImage < 1 ) {
 		Com_Printf( S_COLOR_YELLOW "Warning: Font height limit exceeded for '%s' %i\n", family->name, size );
 		goto done;
@@ -318,10 +312,10 @@ upload_image:
 			advance = bitmap_width + margin;
 			if( xOffset + advance > imageWidth ) {
 				xOffset = 0;
-				yOffset += fontHeight + margin;
+				yOffset += fontHeight;
 				line++;
 
-				if( yOffset + fontHeight + margin > FTLIB_MAX_FONT_IMAGE_HEIGHT ) {
+				if( yOffset + fontHeight > FTLIB_MAX_FONT_IMAGE_HEIGHT ) {
 					// ran out of room, start with new image
 					advance = 0;
 					yOffset = 0;
@@ -332,7 +326,7 @@ upload_image:
 
 			if( !xOffset ) {
 				assert( imageNum < numImages );
-				imageHeight += fontHeight + margin;
+				imageHeight += fontHeight;
 			}
 
 			src = bitmap->buffer;
@@ -381,7 +375,7 @@ upload_image:
 			qglyph->s2 = xOffset + bitmap_width;
 			qglyph->t2 = yOffset + fontHeight;
 			qglyph->x_offset = bitmap_left;
-			qglyph->y_offset = maxUp - bitmap_top;
+			qglyph->y_offset = fontHeight - baseLine - bitmap_top;
 		}
 	}
 
