@@ -666,7 +666,7 @@ int Q_GrabCharFromColorString( const char **pstr, char *c, int *colorindex)
 
 // Like Q_GrabCharFromColorString, but reads whole UTF-8 sequences
 // and returns wide chars
-qwchar Q_GrabWCharFromColorString( const char **pstr, qwchar *wc, int *colorindex )
+int Q_GrabWCharFromColorString( const char **pstr, qwchar *wc, int *colorindex )
 {
 	qwchar num;
 
