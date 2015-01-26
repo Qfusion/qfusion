@@ -192,10 +192,15 @@ static void HandleEvents( void )
 			case SDL_KEYDOWN:
 				key_event( &event.key, true );
 
-				// Emulate Ctrl+V
-				if( event.key.keysym.sym == SDLK_v ) {
+				// Emulate Ctrl+C/Ctrl+V
+				if( event.key.keysym.sym == SDLK_c ) {
 					if( event.key.keysym.mod & KMOD_CTRL ) {
-						Key_CharEvent( 22, 22 );
+						Key_CharEvent( KC_CTRLC, KC_CTRLC );
+					}
+				}
+				else if( event.key.keysym.sym == SDLK_v ) {
+					if( event.key.keysym.mod & KMOD_CTRL ) {
+						Key_CharEvent( KC_CTRLV, KC_CTRLV );
 					}
 				}
 
