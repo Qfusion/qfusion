@@ -170,4 +170,10 @@ typedef enum
 	K_MOUSE1DBLCLK,
 } keyNum_t;
 
+//
+// these are the special keys that should be passed to Key_CharEvent
+//
+#define KC_CTRLC 3
+#define KC_CTRLV 22
+
 #endif // __Q_KEYCODES_H__
