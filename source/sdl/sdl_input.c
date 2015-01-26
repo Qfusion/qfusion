@@ -11,12 +11,13 @@ cvar_t *in_disablemacosxmouseaccel;
 
 static int mx, my;
 
-#if defined(__APPLE__)
-void IN_SetMouseScalingEnabled (bool isRestore);
+#if defined( __APPLE__ )
+void IN_SetMouseScalingEnabled( bool isRestore );
 #else
-void IN_SetMouseScalingEnabled (bool isRestore) {}
+void IN_SetMouseScalingEnabled( bool isRestore )
+{
+}
 #endif
-
 
 void IN_Commands( void )
 {
@@ -24,7 +25,6 @@ void IN_Commands( void )
 void IN_Activate( bool active )
 {
 }
-
 
 /**
  * Function which is called whenever the mouse is moved.
@@ -36,7 +36,6 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event )
 	my += event->yrel;
 }
 
-
 /**
  * Function which is called whenever a mouse button is pressed or released.
  * @param ev the SDL event object containing the button number et all
@@ -45,21 +44,22 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event )
 static void mouse_button_event( SDL_MouseButtonEvent *event, bool state )
 {
 	Uint8 button = event->button;
-	if( button <= 5 )
-	{
-		switch( button )
-		{
-		case SDL_BUTTON_LEFT: Key_MouseEvent( K_MOUSE1, state, Sys_Milliseconds() ); break;
-		case SDL_BUTTON_MIDDLE: Key_MouseEvent( K_MOUSE3, state, Sys_Milliseconds() ); break;
-		case SDL_BUTTON_RIGHT: Key_MouseEvent( K_MOUSE2, state, Sys_Milliseconds() ); break;
+	if( button <= 5 ) {
+		switch( button ) {
+			case SDL_BUTTON_LEFT:
+				Key_MouseEvent( K_MOUSE1, state, Sys_Milliseconds() );
+				break;
+			case SDL_BUTTON_MIDDLE:
+				Key_MouseEvent( K_MOUSE3, state, Sys_Milliseconds() );
+				break;
+			case SDL_BUTTON_RIGHT:
+				Key_MouseEvent( K_MOUSE2, state, Sys_Milliseconds() );
+				break;
 		}
-	}
-	else if( button <= 10 )
-	{
+	} else if( button <= 10 ) {
 		// The engine only supports up to 8 buttons plus the mousewheel.
 		Key_MouseEvent( K_MOUSE1 + button - 3, state, Sys_Milliseconds() );
-	}
-	else
+	} else
 		Com_Printf( "sdl_input.c: Unsupported mouse button (button = %u)\n", button );
 }
 
@@ -67,7 +67,7 @@ static void mouse_wheel_event( SDL_MouseWheelEvent *event )
 {
 	int key = event->y > 0 ? K_MWHEELUP : K_MWHEELDOWN;
 	unsigned sys_msg_time = Sys_Milliseconds();
-	
+
 	Key_Event( key, true, sys_msg_time );
 	Key_Event( key, false, sys_msg_time );
 }
@@ -170,10 +170,10 @@ static qwchar TranslateSDLScancode(SDL_Scancode scancode)
  */
 static void key_event( const SDL_KeyboardEvent *event, const bool state )
 {
-	qwchar charkey = TranslateSDLScancode(event->keysym.scancode);
-	
-	if(charkey >= 0 && charkey <= 255) {
-		Key_Event(charkey, state, Sys_Milliseconds());
+	qwchar charkey = TranslateSDLScancode( event->keysym.scancode );
+
+	if( charkey >= 0 && charkey <= 255 ) {
+		Key_Event( charkey, state, Sys_Milliseconds() );
 	}
 }
 
@@ -181,79 +181,74 @@ static void key_event( const SDL_KeyboardEvent *event, const bool state )
 
 static void HandleEvents( void )
 {
-	Uint16* wtext = NULL;
+	Uint16 *wtext = NULL;
 	SDL_PumpEvents();
-	
+
 	SDL_Event event;
 
-	while( SDL_PollEvent( &event ) )
-	{
-		//printf("Event: %u\n", event.type);
-		switch( event.type )
-		{
-		case SDL_KEYDOWN:
-			key_event( &event.key, true );
-				
+	while( SDL_PollEvent( &event ) ) {
+		// printf("Event: %u\n", event.type);
+		switch( event.type ) {
+			case SDL_KEYDOWN:
+				key_event( &event.key, true );
+
 				// Emulate Ctrl+V
-				if (event.key.keysym.sym == SDLK_v)
-				{
-					if (event.key.keysym.mod & KMOD_CTRL)
-					{
-						Key_CharEvent(22, 22);
+				if( event.key.keysym.sym == SDLK_v ) {
+					if( event.key.keysym.mod & KMOD_CTRL ) {
+						Key_CharEvent( 22, 22 );
 					}
 				}
-				
-			break;
 
-		case SDL_KEYUP:
-			key_event( &event.key, false );
-			break;
-				
-		case SDL_TEXTINPUT:
-			// SDL_iconv_utf8_ucs2 uses "UCS-2-INTERNAL" as tocode and fails to convert text on Linux
-			// where SDL_iconv uses system iconv. So we force needed encoding directly
+				break;
 
-			#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-				#define UCS_2_INTERNAL "UCS-2LE"
-			#else
-				#define UCS_2_INTERNAL "UCS-2BE"
-			#endif
-				
-			wtext = (Uint16*)SDL_iconv_string(UCS_2_INTERNAL, "UTF-8", event.text.text, SDL_strlen(event.text.text) + 1);
-			if (wtext) {
-				qwchar charkey = wtext[0];
-				Key_CharEvent(charkey, charkey);
-				SDL_free(wtext);
-			}
-			break;
+			case SDL_KEYUP:
+				key_event( &event.key, false );
+				break;
 
-		case SDL_MOUSEMOTION:
-			mouse_motion_event( &event.motion );
-			break;
+			case SDL_TEXTINPUT:
+				// SDL_iconv_utf8_ucs2 uses "UCS-2-INTERNAL" as tocode and fails to convert text on Linux
+				// where SDL_iconv uses system iconv. So we force needed encoding directly
 
-		case SDL_MOUSEBUTTONDOWN:
-			mouse_button_event( &event.button, true );
-			break;
+				#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+					#define UCS_2_INTERNAL "UCS-2LE"
+				#else
+					#define UCS_2_INTERNAL "UCS-2BE"
+				#endif
 
-		case SDL_MOUSEBUTTONUP:
-			mouse_button_event( &event.button, false );
-			break;
-				
-		case SDL_MOUSEWHEEL:
-			mouse_wheel_event( &event.wheel );
-			break;
-				
-		case SDL_QUIT:
-			Sys_Quit();
-			break;
+				wtext = (Uint16 *)SDL_iconv_string( UCS_2_INTERNAL, "UTF-8", event.text.text, SDL_strlen( event.text.text ) + 1 );
+				if( wtext ) {
+					qwchar charkey = wtext[0];
+					Key_CharEvent( charkey, charkey );
+					SDL_free( wtext );
+				}
+				break;
+
+			case SDL_MOUSEMOTION:
+				mouse_motion_event( &event.motion );
+				break;
+
+			case SDL_MOUSEBUTTONDOWN:
+				mouse_button_event( &event.button, true );
+				break;
+
+			case SDL_MOUSEBUTTONUP:
+				mouse_button_event( &event.button, false );
+				break;
+
+			case SDL_MOUSEWHEEL:
+				mouse_wheel_event( &event.wheel );
+				break;
+
+			case SDL_QUIT:
+				Sys_Quit();
+				break;
 		}
 	}
 }
 
 void IN_MouseMove( usercmd_t *cmd )
 {
-	if( ( mx || my ) && mouse_active )
-	{
+	if( ( mx || my ) && mouse_active ) {
 		CL_MouseMove( cmd, mx, my );
 		mx = my = 0;
 	}
@@ -267,17 +262,17 @@ void IN_Init()
 {
 	if( input_inited )
 		return;
-	
+
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
-	
-	Com_Printf("Initializing SDL Input\n");
-	
+
+	Com_Printf( "Initializing SDL Input\n" );
+
 	// SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL ); // Not available in SDL2
-	Com_Printf("SDL_ShowCursor = %i\n", SDL_ShowCursor( SDL_QUERY ));
+	Com_Printf( "SDL_ShowCursor = %i\n", SDL_ShowCursor( SDL_QUERY ) );
 	SDL_SetRelativeMouseMode( SDL_TRUE );
 	SDL_SetCursor( NULL );
-	
+
 	IN_SetMouseScalingEnabled( false );
 
 	input_inited = true;
@@ -292,8 +287,8 @@ void IN_Shutdown()
 	if( !input_inited )
 		return;
 
-	Com_Printf("Shutdown SDL Input\n");
-	
+	Com_Printf( "Shutdown SDL Input\n" );
+
 	IN_Activate( false );
 	input_inited = false;
 	SDL_SetRelativeMouseMode( SDL_FALSE );
@@ -318,30 +313,25 @@ void IN_Frame()
 	if( !input_inited )
 		return;
 
-	if( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer )
-	{
+	if( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer ) {
 		mouse_active = false;
 		input_active = true;
-		if(SDL_GetRelativeMouseMode())
-		{
+		if( SDL_GetRelativeMouseMode() ) {
 			IN_SetMouseScalingEnabled( true );
 			SDL_SetRelativeMouseMode( SDL_FALSE );
 		}
-	}
-	else
-	{
+	} else {
 		mouse_active = true;
 		input_active = true;
-		if(!SDL_GetRelativeMouseMode())
-		{
+		if( !SDL_GetRelativeMouseMode() ) {
 			IN_SetMouseScalingEnabled( false );
-			SDL_SetRelativeMouseMode( SDL_TRUE );	
+			SDL_SetRelativeMouseMode( SDL_TRUE );
 		}
 	}
 
 	mouse_active = true;
 	input_active = true;
-	
+
 	HandleEvents();
 }
 
