@@ -50,11 +50,11 @@ typedef struct
 {
 	void *h;
 	int width, height;
-	qboolean keepRatio;
-	qboolean allowConsole;
-	qboolean redraw;
-	qboolean paused;
-	qboolean yuv;
+	bool keepRatio;
+	bool allowConsole;
+	bool redraw;
+	bool paused;
+	bool yuv;
 	unsigned int startTime;
 	unsigned int pauseTime;
 	uint8_t *pic;
@@ -76,7 +76,7 @@ typedef struct
 	int cmdNum;						// current cmd
 	usercmd_t *cmds;				// [CMD_BACKUP] each mesage will send several old cmds
 	int *cmd_time;					// [CMD_BACKUP] time sent, for calculating pings
-	qboolean inputRefreshed;
+	bool inputRefreshed;
 
 	int receivedSnapNum;
 	int pendingSnapNum;
@@ -138,8 +138,8 @@ typedef struct
 {
 	// for request
 	char *requestname;              // file we requested from the server (NULL if none requested)
-	qboolean requestnext;           // whether to request next download after this, for precaching
-	qboolean requestpak;            // whether to only allow .pk3/.pak or only allow normal file
+	bool requestnext;           // whether to request next download after this, for precaching
+	bool requestpak;            // whether to only allow .pk3/.pak or only allow normal file
 	unsigned int timeout;
 	unsigned int timestart;
 
@@ -160,20 +160,20 @@ typedef struct
 	size_t baseoffset;				// for download speed calculation when resuming downloads
 
 	// web download
-	qboolean web;
-	qboolean disconnect;            // set when user tries to disconnect, to allow cleaning up webdownload
-	qboolean pending_reconnect;		// set when we ignored a map change command to avoid stopping the download
-	qboolean cancelled;				// to allow cleaning up of temporary download file
+	bool web;
+	bool disconnect;            // set when user tries to disconnect, to allow cleaning up webdownload
+	bool pending_reconnect;		// set when we ignored a map change command to avoid stopping the download
+	bool cancelled;				// to allow cleaning up of temporary download file
 } download_t;
 
 typedef struct
 {
 	char *name;
 
-	qboolean recording;
-	qboolean waiting;		// don't record until a non-delta message is received
-	qboolean playing;
-	qboolean paused;		// A boolean to test if demo is paused -- PLX
+	bool recording;
+	bool waiting;		// don't record until a non-delta message is received
+	bool playing;
+	bool paused;		// A boolean to test if demo is paused -- PLX
 
 	int file;
 	char *filename;
@@ -182,12 +182,12 @@ typedef struct
 	unsigned int time;		// milliseconds passed since the start of the demo
 	unsigned int duration, basetime;
 
-	qboolean play_jump;
-	qboolean play_ignore_next_frametime;
+	bool play_jump;
+	bool play_ignore_next_frametime;
 
-	qboolean avi;
-	qboolean avi_video, avi_audio;
-	qboolean pending_avi;
+	bool avi;
+	bool avi_video, avi_audio;
+	bool pending_avi;
 	int avi_frame;
 
 	char meta_data[SNAP_MAX_DEMO_META_DATA_SIZE];
@@ -216,9 +216,9 @@ typedef struct
 #endif
 
 	// screen rendering information
-	qboolean cgameActive;
+	bool cgameActive;
 	int mediaRandomSeed;
-	qboolean mediaInitialized;
+	bool mediaInitialized;
 
 	unsigned int disable_screen;    // showing loading plaque between levels
 	                                // or changing rendering dlls
@@ -232,15 +232,15 @@ typedef struct
 	int connect_count;
 
 	socket_t *socket;               // socket used by current connection
-	qboolean reliable;
-	qboolean mv;
+	bool reliable;
+	bool mv;
 
 	netadr_t rconaddress;       // address where we are sending rcon messages, to ignore other print packets
 
 	netadr_t httpaddress;           // address of the builtin HTTP server
 	char *httpbaseurl;              // http://<httpaddress>/
 
-	qboolean rejected;          // these are used when the server rejects our connection
+	bool rejected;          // these are used when the server rejects our connection
 	int rejecttype;
 	char rejectmessage[80];
 
@@ -250,7 +250,7 @@ typedef struct
 
 	download_t download;
 
-	qboolean registrationOpen;
+	bool registrationOpen;
 
 	// demo recording info must be here, so it isn't cleared on level change
 	cl_demo_t demo;
@@ -281,8 +281,8 @@ typedef struct
 	unsigned int lastPacketReceivedTime;
 
 	// pure list
-	qboolean sv_pure;
-	qboolean sv_tv;
+	bool sv_pure;
+	bool sv_tv;
 
 	purelist_t *purelist;
 
@@ -350,11 +350,11 @@ extern entity_state_t cl_baselines[MAX_EDICTS];
 // cl_cin.c
 //
 void SCR_InitCinematic( void );
-qboolean SCR_DrawCinematic( void );
+bool SCR_DrawCinematic( void );
 void SCR_RunCinematic( void );
 void SCR_StopCinematic( void );
 void SCR_FinishCinematic( void );
-qboolean SCR_AllowCinematicConsole( void );
+bool SCR_AllowCinematicConsole( void );
 void SCR_PauseCinematic( void );
 void CL_InitCinematics( void );
 void CL_ShutdownCinematics( void );
@@ -369,12 +369,12 @@ void CL_Quit( void );
 void CL_UpdateClientCommandsToServer( msg_t *msg );
 void CL_AddReliableCommand( /*const*/ char *cmd );
 void CL_Netchan_Transmit( msg_t *msg );
-void CL_SendMessagesToServer( qboolean sendNow );
+void CL_SendMessagesToServer( bool sendNow );
 void CL_RestartTimeDeltas( unsigned int newTimeDelta );
 void CL_AdjustServerTime( unsigned int gamemsec );
 
-char *CL_GetClipboardData( qboolean primary );
-qboolean CL_SetClipboardData( const char *data );
+char *CL_GetClipboardData( bool primary );
+bool CL_SetClipboardData( const char *data );
 void CL_FreeClipboardData( char *data );
 int CL_GetKeyDest( void );              // wsw : aiwa : we need this information for graphical plugins (e.g. IRC)
 void CL_SetKeyDest( int key_dest );
@@ -385,7 +385,7 @@ connstate_t CL_GetClientState( void );  // wsw : aiwa : we need this information
 void CL_ClearState( void );
 void CL_ReadPackets( void );
 void CL_Disconnect_f( void );
-void CL_S_Restart( qboolean noVideo );
+void CL_S_Restart( bool noVideo );
 
 void CL_OpenURLInBrowser( const char *url );
 
@@ -402,7 +402,7 @@ int CL_AddSessionHttpRequestHeaders( const char *url, const char **headers );
 void CL_AsyncStreamRequest( const char *url, const char **headers, int timeout, int resumeFrom,
 	size_t (*read_cb)(const void *, size_t, float, int, const char *, void *), 
 	void (*done_cb)(int, const char *, void *), 
-	void (*header_cb)(const char *, void *), void *privatep, qboolean urlencodeUnsafe );
+	void (*header_cb)(const char *, void *), void *privatep, bool urlencodeUnsafe );
 
 //
 // cl_game.c
@@ -413,7 +413,7 @@ void CL_GameModule_Shutdown( void );
 void CL_GameModule_ConfigString( int number, const char *value );
 void CL_GameModule_EscapeKey( void );
 float CL_GameModule_GetSensitivityScale( float sens, float zoomSens );
-qboolean CL_GameModule_NewSnapshot( int pendingSnapshot );
+bool CL_GameModule_NewSnapshot( int pendingSnapshot );
 void CL_GameModule_RenderView( float stereo_separation );
 void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t velocity );
 void CL_GameModule_AddMovement( usercmd_t *cmd, vec3_t viewangles, int frametime );
@@ -424,14 +424,14 @@ void CL_GameModule_CancelTouches( void );
 //
 // cl_sound.c
 //
-void CL_SoundModule_Init( qboolean verbose );
-void CL_SoundModule_Shutdown( qboolean verbose );
+void CL_SoundModule_Init( bool verbose );
+void CL_SoundModule_Shutdown( bool verbose );
 void CL_SoundModule_BeginRegistration( void );
 void CL_SoundModule_EndRegistration( void );
-void CL_SoundModule_StopAllSounds( qboolean clear, qboolean stopMusic );
+void CL_SoundModule_StopAllSounds( bool clear, bool stopMusic );
 void CL_SoundModule_Clear( void );
-void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity, qboolean avidump );
-void CL_SoundModule_Activate( qboolean activate );
+void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity, bool avidump );
+void CL_SoundModule_Activate( bool activate );
 struct sfx_s *CL_SoundModule_RegisterSound( const char *sample );
 void CL_SoundModule_FreeSound( struct sfx_s *sfx );
 void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int channel, float fvol, float attenuation );
@@ -440,7 +440,7 @@ void CL_SoundModule_StartGlobalSound( struct sfx_s *sfx, int channel, float fvol
 void CL_SoundModule_StartLocalSound( const char *s );
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data, qboolean music );
+	unsigned short width, unsigned short channels, const uint8_t *data, bool music );
 void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 	unsigned int samples, unsigned int rate, 
 	unsigned short width, unsigned short channels, const uint8_t *data );
@@ -466,8 +466,8 @@ void CL_UIModule_TouchAllAssets( void );
 void CL_UIModule_Keydown( int key );
 void CL_UIModule_Keyup( int key );
 void CL_UIModule_CharEvent( qwchar key );
-void CL_UIModule_Refresh( qboolean backGround, qboolean showCursor );
-void CL_UIModule_UpdateConnectScreen( qboolean backGround );
+void CL_UIModule_Refresh( bool backGround, bool showCursor );
+void CL_UIModule_UpdateConnectScreen( bool backGround );
 void CL_UIModule_ForceMenuOn( void );
 void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
@@ -482,7 +482,7 @@ void CL_ParseGetStatusResponse( const socket_t *socket, const netadr_t *address,
 void CL_QueryGetInfoMessage_f( void );
 void CL_QueryGetStatusMessage_f( void );
 void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg_t *msg );
-void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address, msg_t *msg, qboolean extended );
+void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address, msg_t *msg, bool extended );
 void CL_GetServers_f( void );
 void CL_PingServer_f( void );
 void CL_InitServerList( void );
@@ -542,9 +542,9 @@ void CL_ParseServerMessage( msg_t *msg );
 #define SHOWNET(msg,s) _SHOWNET(msg,s,cl_shownet->integer);
 
 void CL_FreeDownloadList( void );
-qboolean CL_CheckOrDownloadFile( const char *filename );
+bool CL_CheckOrDownloadFile( const char *filename );
 
-qboolean CL_DownloadRequest( const char *filename, qboolean requestpak );
+bool CL_DownloadRequest( const char *filename, bool requestpak );
 void CL_DownloadStatus_f( void );
 void CL_DownloadCancel_f( void );
 void CL_DownloadDone( void );
@@ -602,18 +602,18 @@ extern ref_export_t re;		// interface to refresh .dll
 //extern cvar_t *cl_mmserver;
 
 void CL_MM_Init( void );
-void CL_MM_Shutdown( qboolean logout );
+void CL_MM_Shutdown( bool logout );
 void CL_MM_Frame( void );
-qboolean CL_MM_CanConnect( void );
-qboolean CL_MM_WaitForLogin( void );
+bool CL_MM_CanConnect( void );
+bool CL_MM_WaitForLogin( void );
 
-qboolean CL_MM_Initialized( void );
-qboolean CL_MM_Connect( const netadr_t *address );
+bool CL_MM_Initialized( void );
+bool CL_MM_Connect( const netadr_t *address );
 
 // exported to UI
-qboolean CL_MM_Login( const char *user, const char *password );
-qboolean CL_MM_Logout( qboolean force );
+bool CL_MM_Login( const char *user, const char *password );
+bool CL_MM_Logout( bool force );
 int CL_MM_GetLoginState( void );
 size_t CL_MM_GetLastErrorMessage( char *buffer, size_t buffer_size );
-size_t CL_MM_GetProfileURL( char *buffer, size_t buffer_size, qboolean rml );
+size_t CL_MM_GetProfileURL( char *buffer, size_t buffer_size, bool rml );
 size_t CL_MM_GetBaseWebURL( char *buffer, size_t buffer_size );

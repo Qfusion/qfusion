@@ -9,7 +9,7 @@ extern char* clip_data;
 *
 * Orginally from EzQuake
 */
-char *Sys_GetClipboardData( qboolean primary )
+char *Sys_GetClipboardData( bool primary )
 {
 	Window win;
 	Atom type;
@@ -70,7 +70,7 @@ char *Sys_GetClipboardData( qboolean primary )
 * @param e The XEvent of the request
 * @returns The proterty Atom for the appropriate response
 */
-qboolean Sys_SetClipboardData( const char *data )
+bool Sys_SetClipboardData( const char *data )
 {
 	// Save the message
 	Q_free( clip_data );
@@ -80,15 +80,15 @@ qboolean Sys_SetClipboardData( const char *data )
 	// Requesting clipboard ownership
 	Atom XA_CLIPBOARD = XInternAtom( x11display.dpy, "CLIPBOARD", True );
 	if( XA_CLIPBOARD == None )
-		return qfalse;
+		return false;
 
 	XSetSelectionOwner( x11display.dpy, XA_CLIPBOARD, x11display.win, CurrentTime );
 
 	// Check if we got ownership
 	if( XGetSelectionOwner( x11display.dpy, XA_CLIPBOARD ) == x11display.win )
-		return qtrue;
+		return true;
 
-	return qfalse;
+	return false;
 }
 
 /*

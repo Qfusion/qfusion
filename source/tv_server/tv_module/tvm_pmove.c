@@ -256,7 +256,7 @@ void TVM_Pmove( pmove_t *pmove )
 	pm->groundentity = -1;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
-	pm->step = qfalse;
+	pm->step = false;
 
 	// clear all pmove local vars
 	memset( &pml, 0, sizeof( pml ) );

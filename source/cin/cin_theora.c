@@ -35,10 +35,10 @@ OGG THEORA FORMAT PLAYBACK
 
 typedef struct
 {
-	qboolean		 a_stream;
-	qboolean		 a_eos;
-	qboolean		 v_stream;
-	qboolean		 v_eos;
+	bool		 a_stream;
+	bool		 a_eos;
+	bool		 v_stream;
+	bool		 v_eos;
 
 	double			 s_rate_msec;
 	ogg_int64_t		 s_samples_read;
@@ -62,7 +62,7 @@ typedef struct
 	th_ycbcr_buffer th_yuv;
 	cin_yuv_t		pub_yuv;
 	unsigned int	th_seek_msec_to;
-	qboolean		th_seek_to_keyframe;
+	bool		th_seek_to_keyframe;
 	unsigned int	th_max_keyframe_interval;	/* maximum time between keyframes in msecs */
 } qtheora_info_t;
 
@@ -107,42 +107,42 @@ static void Ogg_LoadPagesToStreams( qtheora_info_t *qth, ogg_page *page )
 /*
 * OggVorbis_NeedAudioData
 */
-static qboolean OggVorbis_NeedAudioData( cinematics_t *cin )
+static bool OggVorbis_NeedAudioData( cinematics_t *cin )
 {
 	ogg_int64_t audio_time;
 	qtheora_info_t *qth = cin->fdata;
 
 	if( !qth->a_stream || qth->a_eos ) {
-		return qfalse;
+		return false;
 	}
 
 	audio_time = (ogg_int64_t)cin->cur_time - cin->start_time - cin->s_samples_length + AUDIO_PRELOAD_MSEC;
 	if( audio_time <= 0 ) {
-		return qfalse;
+		return false;
 	}
 
 	qth->s_samples_need = (ogg_int64_t)((double)audio_time * qth->s_rate_msec);	
 
 	// read only as much samples as we need according to the timer
 	if( qth->s_samples_read >= qth->s_samples_need ) {
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
 * OggVorbis_LoadAudioFrame
 *
-* Returns qtrue if no additional audio packets are needed
+* Returns true if no additional audio packets are needed
 */
-static qboolean OggVorbis_LoadAudioFrame( cinematics_t *cin )
+static bool OggVorbis_LoadAudioFrame( cinematics_t *cin )
 {
 	int	i, val;
 	short* ptr;
 	float **pcm;
 	float *right,*left;
-	qboolean haveAudio = qfalse;
+	bool haveAudio = false;
 	int	samples, samplesNeeded;
 	uint8_t rawBuffer[RAW_BUFFER_SIZE];
 	ogg_packet op;
@@ -199,19 +199,19 @@ read_samples:
 		// tell libvorbis how many samples we actually consumed
 		vorbis_synthesis_read( &qth->vd, samplesNeeded ); 
 
-		haveAudio = qtrue;
+		haveAudio = true;
 		qth->s_samples_read += samplesNeeded;
 
 		if( !OggVorbis_NeedAudioData( cin ) ) {
 			vorbis_block_clear( &vb );
-			return qtrue;
+			return true;
 		}
 	}
 
 	if( ogg_stream_packetout( &qth->os_audio, &op ) ) {
 		if( op.e_o_s ) {
 			// end of stream packet
-			qth->a_eos = qtrue;
+			qth->a_eos = true;
 		} else if( vorbis_synthesis( &vb, &op ) == 0 ) {
 			vorbis_synthesis_blockin( &qth->vd, &vb );
 			goto read_samples;
@@ -225,7 +225,7 @@ read_samples:
 /*
 * OggTheora_NeedVideoData
 */
-static qboolean OggTheora_NeedVideoData( cinematics_t *cin )
+static bool OggTheora_NeedVideoData( cinematics_t *cin )
 {
 	unsigned int realframe;
 	qtheora_info_t *qth = cin->fdata;
@@ -233,26 +233,26 @@ static qboolean OggTheora_NeedVideoData( cinematics_t *cin )
 
 	if( !cin->width ) {
 		// need at least one valid frame
-		return qtrue;
+		return true;
 	}
 
 	// sync to audio timer
 	realframe = sync_time * cin->framerate / 1000.0;
 	if( realframe > cin->frame ) {
-		return qtrue;
+		return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * OggTheora_LoadVideoFrame
 *
-* Return qtrue if a new video frame has been successfully loaded
+* Return true if a new video frame has been successfully loaded
 */
 #define VIDEO_LAG_TOLERANCE_MSEC	500
 
-static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
+static bool OggTheora_LoadVideoFrame( cinematics_t *cin )
 {
 	int i;
 	ogg_packet op;
@@ -269,7 +269,7 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 
 		if( op.e_o_s ) {
 			// we've encountered end of stream packet
-			qth->v_eos = qtrue;
+			qth->v_eos = true;
 			break;
 		}
 
@@ -281,13 +281,13 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 		// if lagging behind audio, seek forward to max_keyframe_interval before the target,
 		// then skip to nearest keyframe 
 		if( ( op.granulepos >= 0 ) 
-			&& ( qth->a_stream != qfalse )
-			&& ( qth->a_eos == qfalse )
+			&& ( qth->a_stream != false )
+			&& ( qth->a_eos == false )
 			&& ( sync_time > qth->th_granulemsec + VIDEO_LAG_TOLERANCE_MSEC ) ) {
 			qth->th_seek_msec_to = 
 				sync_time <= qth->th_max_keyframe_interval 
 					? qth->th_max_keyframe_interval : sync_time - qth->th_max_keyframe_interval;
-			qth->th_seek_to_keyframe = qtrue;
+			qth->th_seek_to_keyframe = true;
 		}
 
 		// seek to msec
@@ -308,7 +308,7 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 				Com_DPrintf( "Dropped frame %i\n", cin->frame );
 				continue;
 			}
-			qth->th_seek_to_keyframe = qfalse;
+			qth->th_seek_to_keyframe = false;
 		}
 
 		error = th_decode_packetin( qth->tctx, &op, &qth->th_granulepos );
@@ -323,7 +323,7 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 		}
 
 		if( error == TH_DUPFRAME ) {
-			return qtrue;
+			return true;
 		}
 
 		if( th_decode_ycbcr_out( qth->tctx, yuv ) != 0 ) {
@@ -367,28 +367,28 @@ static qboolean OggTheora_LoadVideoFrame( cinematics_t *cin )
 			
 		cin->frame = th_granule_frame( qth->tctx, qth->th_granulepos );
 
-		return qtrue;
+		return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * Theora_ReadNextFrame_CIN_
 */
-static qboolean Theora_ReadNextFrame_CIN_( cinematics_t *cin, qboolean *redraw, qboolean *eos )
+static bool Theora_ReadNextFrame_CIN_( cinematics_t *cin, bool *redraw, bool *eos )
 {
 	unsigned int bytes, pages = 0;
-	qboolean redraw_ = qfalse;
+	bool redraw_ = false;
 	qtheora_info_t *qth = cin->fdata;
-	qboolean haveAudio = qfalse, haveVideo = qfalse;
+	bool haveAudio = false, haveVideo = false;
 
-	*eos = qfalse;
+	*eos = false;
 
 	while( 1 )
 	{
 		ogg_page og;
-		qboolean needAudio, needVideo;
+		bool needAudio, needVideo;
 
 		needAudio = !haveAudio && OggVorbis_NeedAudioData( cin );
 		needVideo = !haveVideo && OggTheora_NeedVideoData( cin );
@@ -409,8 +409,8 @@ static qboolean Theora_ReadNextFrame_CIN_( cinematics_t *cin, qboolean *redraw, 
 
 		if( qth->v_eos ) {
 			// end of video stream
-			*eos = qtrue;
-			return qfalse;
+			*eos = true;
+			return false;
 		}
 
 		if( !needAudio && !needVideo ) {
@@ -428,8 +428,8 @@ static qboolean Theora_ReadNextFrame_CIN_( cinematics_t *cin, qboolean *redraw, 
 
 		if( !bytes && !pages ) {
 			// end of FILE, no pages remaining
-			*eos = qtrue;
-			return qfalse;
+			*eos = true;
+			return false;
 		}
 	}
 
@@ -670,10 +670,10 @@ static void Theora_DecodeYCbCr2RGB( th_pixel_fmt pfmt, cin_yuv_t *cyuv, int byte
 /*
 * Theora_ReadNextFrame_CIN
 */
-uint8_t *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
+uint8_t *Theora_ReadNextFrame_CIN( cinematics_t *cin, bool *redraw )
 {
-	qboolean eos;
-	qboolean haveVideo;
+	bool eos;
+	bool haveVideo;
 	qtheora_info_t *qth = cin->fdata;
 
 	haveVideo = Theora_ReadNextFrame_CIN_( cin, redraw, &eos );
@@ -694,9 +694,9 @@ uint8_t *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw )
 /*
 * Theora_ReadNextFrameYUV_CIN
 */
-cin_yuv_t *Theora_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw )
+cin_yuv_t *Theora_ReadNextFrameYUV_CIN( cinematics_t *cin, bool *redraw )
 {
-	qboolean eos;
+	bool eos;
 	qtheora_info_t *qth = cin->fdata;
 
 	Theora_ReadNextFrame_CIN_( cin, redraw, &eos );
@@ -710,7 +710,7 @@ cin_yuv_t *Theora_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw )
 /*
 * Theora_Init_CIN
 */
-qboolean Theora_Init_CIN( cinematics_t *cin )
+bool Theora_Init_CIN( cinematics_t *cin )
 {
 	int status;
 	ogg_page	og;
@@ -736,8 +736,8 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 	// Ogg file open; parse the headers
 	// Only interested in Vorbis/Theora streams
 	vorbis_p = theora_p = 0;
-	qth->v_stream = qth->a_stream = qfalse;
-	qth->a_eos = qth->v_eos = qfalse;
+	qth->v_stream = qth->a_stream = false;
+	qth->a_eos = qth->v_eos = false;
 
 	status = 0;
 	while( !status )
@@ -765,14 +765,14 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 			if( !qth->v_stream && th_decode_headerin( &qth->ti, &qth->tc, &qth->tsi, &op ) >= 0 )
 			{
 				// it is theora
-				qth->v_stream = qtrue;
+				qth->v_stream = true;
 				memcpy( &qth->os_video, &test, sizeof( test ) );
 				theora_p = 1;
 			}
 			else if( !qth->a_stream && !vorbis_synthesis_headerin( &qth->vi, &qth->vc, &op ) )
 			{
 				// it is vorbis
-				qth->a_stream = qtrue;
+				qth->a_stream = true;
 				memcpy( &qth->os_audio, &test, sizeof( test ) );
 				vorbis_p = 1;
 			}
@@ -793,12 +793,12 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 			if( status < 0 )
 			{
 				Com_Printf( S_COLOR_YELLOW, "File %s: error parsing Theora stream headers; corrupt stream?\n" );
-				return qfalse;
+				return false;
 			}
 			if( th_decode_headerin( &qth->ti, &qth->tc, &qth->tsi, &op ) == 0 )
 			{
 				Com_Printf( S_COLOR_YELLOW, "File %s: error parsing Theora stream headers; corrupt stream?\n" );
-				return qfalse;
+				return false;
 			}
 			theora_p++;
 		}
@@ -809,12 +809,12 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 			if( status < 0 )
 			{
 				Com_Printf( S_COLOR_YELLOW, "File %s: error parsing Vorbis stream headers; corrupt stream?\n" );
-				return qfalse;
+				return false;
 			}
 			if( vorbis_synthesis_headerin( &qth->vi, &qth->vc, &op ) != 0 )
 			{
 				Com_Printf( S_COLOR_YELLOW, "File %s: error parsing Vorbis stream headers; corrupt stream?\n" );
-				return qfalse;
+				return false;
 			}
 			vorbis_p++;
 			if( vorbis_p == 3 )
@@ -831,7 +831,7 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 		else if( !Ogg_LoadBlockToSync( cin ) )
 		{
 			Com_Printf( S_COLOR_YELLOW "File %s: end of file while searching for codec headers\n", cin->name );
-			return qfalse;
+			return false;
 		}
 	}
 
@@ -857,7 +857,7 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 	else
 	{
 		// tear down the partial theora setup
-		qth->v_stream = qfalse;
+		qth->v_stream = false;
 		th_comment_clear( &qth->tc );
 		th_info_clear( &qth->ti );
 	}
@@ -878,7 +878,7 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 	else
 	{
 		// tear down the partial vorbis setup
-		qth->a_stream = qfalse;
+		qth->a_stream = false;
 		qth->s_rate_msec = 0;
 		qth->s_samples_read = 0;
 		qth->s_samples_need = 0;
@@ -888,13 +888,13 @@ qboolean Theora_Init_CIN( cinematics_t *cin )
 	}
 
 	if( !qth->v_stream || !cin->framerate ) {
-		return qfalse;
+		return false;
 	}
 
 	cin->headerlen = trap_FS_Tell( cin->file );
-	cin->yuv = qtrue;
+	cin->yuv = true;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -906,7 +906,7 @@ void Theora_Shutdown_CIN( cinematics_t *cin )
 
 	if( qth->v_stream )
 	{
-		qth->v_stream = qfalse;
+		qth->v_stream = false;
 		th_info_clear( &qth->ti );
 		th_comment_clear( &qth->tc );
 		th_decode_free( qth->tctx );
@@ -914,7 +914,7 @@ void Theora_Shutdown_CIN( cinematics_t *cin )
 
 	if( qth->a_stream )
 	{
-		qth->a_stream = qfalse;
+		qth->a_stream = false;
 		vorbis_dsp_clear( &qth->vd );
 		vorbis_comment_clear( &qth->vc );
 		vorbis_info_clear( &qth->vi );  // must be called last (comment from vorbis example code)
@@ -944,7 +944,7 @@ void Theora_Reset_CIN( cinematics_t *cin )
 /*
 * Theora_NeedNextFrame_CIN
 */
-qboolean Theora_NeedNextFrame_CIN( cinematics_t *cin )
+bool Theora_NeedNextFrame_CIN( cinematics_t *cin )
 {
 	unsigned int sys_time;
 	qtheora_info_t *qth = cin->fdata;

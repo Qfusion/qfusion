@@ -63,8 +63,8 @@ typedef struct sfx_s
 	char filename[MAX_QPATH];
 	int registration_sequence;
 	ALuint buffer;      // OpenAL buffer
-	qboolean inMemory;
-	qboolean isLocked;
+	bool inMemory;
+	bool isLocked;
 	int used;           // Time last used
 } sfx_t;
 
@@ -96,10 +96,10 @@ int S_API( void );
 void S_Error( const char *format, ... );
 
 void S_FreeSounds( void );
-void S_StopAllSounds( qboolean stopMusic );
+void S_StopAllSounds( bool stopMusic );
 
 void S_Clear( void );
-void S_Activate( qboolean active );
+void S_Activate( bool active );
 
 void S_SetAttenuationModel( int model, float maxdistance, float refdistance );
 
@@ -116,9 +116,9 @@ void S_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuatio
 
 // cinema
 void S_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data, qboolean music );
+	unsigned short width, unsigned short channels, const uint8_t *data, bool music );
 void S_RawSamples2( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data, qboolean music, float fvol );
+	unsigned short width, unsigned short channels, const uint8_t *data, bool music, float fvol );
 void S_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 	unsigned int samples, unsigned int rate, 
 	unsigned short width, unsigned short channels, const uint8_t *data );
@@ -131,7 +131,7 @@ void S_StopBackgroundTrack( void );
 void S_PrevBackgroundTrack( void );
 void S_NextBackgroundTrack( void );
 void S_PauseBackgroundTrack( void );
-void S_LockBackgroundTrack( qboolean lock );
+void S_LockBackgroundTrack( bool lock );
 
 /*
 * Util (snd_al.c)
@@ -154,8 +154,8 @@ void S_MarkBufferFree( sfx_t *sfx );
 sfx_t *S_FindFreeBuffer( void );
 void S_ForEachBuffer( void (*callback)(sfx_t *sfx) );
 sfx_t *S_GetBufferById( int id );
-qboolean S_LoadBuffer( sfx_t *sfx );
-qboolean S_UnloadBuffer( sfx_t *sfx );
+bool S_LoadBuffer( sfx_t *sfx );
+bool S_UnloadBuffer( sfx_t *sfx );
 
 /*
 * Source management
@@ -175,16 +175,16 @@ typedef struct src_s
 	float fvol; // volume modifier, for s_volume updating
 	float attenuation;
 
-	qboolean isActive;
-	qboolean isLocked;
-	qboolean isLooping;
-	qboolean isTracking;
-	qboolean keepAlive;
+	bool isActive;
+	bool isLocked;
+	bool isLooping;
+	bool isTracking;
+	bool keepAlive;
 
 	vec3_t origin, velocity; // for local culling
 } src_t;
 
-qboolean S_InitSources( int maxEntities, qboolean verbose );
+bool S_InitSources( int maxEntities, bool verbose );
 void S_ShutdownSources( void );
 void S_UpdateSources( void );
 src_t *S_AllocSource( int priority, int entnum, int channel );
@@ -224,7 +224,7 @@ typedef struct snd_decoder_s snd_decoder_t;
 typedef struct snd_stream_s
 {
 	snd_decoder_t *decoder;
-	qboolean isUrl;
+	bool isUrl;
 	snd_info_t info; // TODO: Change to AL_FORMAT?
 	void *ptr; // decoder specific stuff
 } snd_stream_t;
@@ -232,9 +232,9 @@ typedef struct snd_stream_s
 typedef struct bgTrack_s
 {
 	char *filename;
-	qboolean ignore;
-	qboolean isUrl;
-	qboolean loop;
+	bool ignore;
+	bool isUrl;
+	bool loop;
 	snd_stream_t *stream;
 
 	struct bgTrack_s *next; // the next track to be played, the looping part aways points to itself
@@ -242,15 +242,15 @@ typedef struct bgTrack_s
 	struct bgTrack_s *anext; // allocation linked list
 } bgTrack_t;
 
-qboolean S_InitDecoders( qboolean verbose );
-void S_ShutdownDecoders( qboolean verbose );
+bool S_InitDecoders( bool verbose );
+void S_ShutdownDecoders( bool verbose );
 void *S_LoadSound( const char *filename, snd_info_t *info );
-snd_stream_t *S_OpenStream( const char *filename, qboolean *delay );
-qboolean S_ContOpenStream( snd_stream_t *stream );
+snd_stream_t *S_OpenStream( const char *filename, bool *delay );
+bool S_ContOpenStream( snd_stream_t *stream );
 int S_ReadStream( snd_stream_t *stream, int bytes, void *buffer );
 void S_CloseStream( snd_stream_t *stream );
-qboolean S_ResetStream( snd_stream_t *stream );
-qboolean S_EoStream( snd_stream_t *stream );
+bool S_ResetStream( snd_stream_t *stream );
+bool S_EoStream( snd_stream_t *stream );
 int S_SeekSteam( snd_stream_t *stream, int ofs, int whence );
 
 void S_BeginAviDemo( void );
@@ -261,19 +261,19 @@ void S_StopAviDemo( void );
 /*
 * Exported functions
 */
-qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose );
-void SF_Shutdown( qboolean verbose );
+bool SF_Init( void *hwnd, int maxEntities, bool verbose );
+void SF_Shutdown( bool verbose );
 void SF_EndRegistration( void );
 void SF_BeginRegistration( void );
 sfx_t *SF_RegisterSound( const char *name );
 void SF_StartBackgroundTrack( const char *intro, const char *loop );
 void SF_StopBackgroundTrack( void );
-void SF_LockBackgroundTrack( qboolean lock );
-void SF_StopAllSounds( qboolean clear, qboolean stopMusic );
+void SF_LockBackgroundTrack( bool lock );
+void SF_StopAllSounds( bool clear, bool stopMusic );
 void SF_PrevBackgroundTrack( void );
 void SF_NextBackgroundTrack( void );
 void SF_PauseBackgroundTrack( void );
-void SF_Activate( qboolean active );
+void SF_Activate( bool active );
 void SF_BeginAviDemo( void );
 void SF_StopAviDemo( void );
 void SF_SetAttenuationModel( int model, float maxdistance, float refdistance );
@@ -285,9 +285,9 @@ void SF_StartGlobalSound( sfx_t *sfx, int channel, float fvol );
 void SF_StartLocalSound( const char *sound );
 void SF_Clear( void );
 void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation );
-void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
+void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump );
 void SF_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const uint8_t *data, qboolean music );
+	unsigned short channels, const uint8_t *data, bool music );
 void SF_PositionedRawSamples( int entnum, float fvol, float attenuation, 
 	unsigned int samples, unsigned int rate, 
 	unsigned short width, unsigned short channels, const uint8_t *data );

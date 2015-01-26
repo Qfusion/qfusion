@@ -950,7 +950,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 				Vector4Set( teamcolor, 255, 255, 255, 255 );
 			}
 			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + ( line_height - trap_SCR_strHeight( font ) ) / 2,
-			                          ALIGN_LEFT_TOP, COM_RemoveColorTokensExt( obr->attacker, qtrue ), ( width - icon_size ) / 2,
+			                          ALIGN_LEFT_TOP, COM_RemoveColorTokensExt( obr->attacker, true ), ( width - icon_size ) / 2,
 			                          font, teamcolor );
 			xoffset += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
 		}
@@ -966,7 +966,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 			Vector4Set( teamcolor, 255, 255, 255, 255 );
 		}
 		trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + line_height / 2, ALIGN_LEFT_MIDDLE,
-		                          COM_RemoveColorTokensExt( obr->victim, qtrue ), ( width - icon_size ) / 2, font, teamcolor );
+		                          COM_RemoveColorTokensExt( obr->victim, true ), ( width - icon_size ) / 2, font, teamcolor );
 		xoffset += min( trap_SCR_strWidth( obr->victim, font, 0 ), ( width - icon_size ) / 2 );
 
 		yoffset += line_height;
@@ -3822,11 +3822,11 @@ static char *CG_LoadHUDFile( char *path )
 		{
 			break;
 		}
-		token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], qtrue, qfalse );
+		token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], true, false );
 		if( !Q_stricmp( "include", token ) )
 		{
 			// Handle include
-			token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], qfalse, qfalse );
+			token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], false, false );
 			if( ( ( rec_lvl + 1 ) < HUD_MAX_LVL ) && ( rec_ptr[rec_lvl] ) && ( token ) && ( token[0] != '\0' ) )
 			{
 				// Go to next recursive level and prepare it's filename :)
@@ -3861,7 +3861,7 @@ static char *CG_LoadHUDFile( char *path )
 			}
 			else
 			{
-				token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], qfalse, qfalse );
+				token = COM_ParseExt2( ( const char ** )&rec_ptr[rec_lvl], false, false );
 				if( ( token ) && ( token[0] != '\0' ) )
 				{
 					if( developer->integer )

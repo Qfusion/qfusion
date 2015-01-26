@@ -94,8 +94,8 @@ static void SV_Demo_InitClient( void )
 {
 	memset( &svs.demo.client, 0, sizeof( svs.demo.client ) );
 
-	svs.demo.client.mv = qtrue;
-	svs.demo.client.reliable = qtrue;
+	svs.demo.client.mv = true;
+	svs.demo.client.reliable = true;
 
 	svs.demo.client.reliableAcknowledge = 0;
 	svs.demo.client.reliableSequence = 0;
@@ -103,7 +103,7 @@ static void SV_Demo_InitClient( void )
 	memset( svs.demo.client.reliableCommands, 0, sizeof( svs.demo.client.reliableCommands ) );
 
 	svs.demo.client.lastframe = sv.framenum - 1;
-	svs.demo.client.nodelta = qfalse;
+	svs.demo.client.nodelta = false;
 }
 
 /*
@@ -195,15 +195,15 @@ void SV_Demo_Start_f( void )
 	SV_Demo_WriteStartMessages();
 
 	// write one nodelta frame
-	svs.demo.client.nodelta = qtrue;
+	svs.demo.client.nodelta = true;
 	SV_Demo_WriteSnap();
-	svs.demo.client.nodelta = qfalse;
+	svs.demo.client.nodelta = false;
 }
 
 /*
 * SV_Demo_Stop
 */
-static void SV_Demo_Stop( qboolean cancel, qboolean silent )
+static void SV_Demo_Stop( bool cancel, bool silent )
 {
 	if( !svs.demo.file )
 	{
@@ -270,7 +270,7 @@ static void SV_Demo_Stop( qboolean cancel, qboolean silent )
 */
 void SV_Demo_Stop_f( void )
 {
-	SV_Demo_Stop( qfalse, atoi( Cmd_Argv( 1 ) ) != 0 );
+	SV_Demo_Stop( false, atoi( Cmd_Argv( 1 ) ) != 0 );
 }
 
 /*
@@ -280,7 +280,7 @@ void SV_Demo_Stop_f( void )
 */
 void SV_Demo_Cancel_f( void )
 {
-	SV_Demo_Stop( qtrue, atoi( Cmd_Argv( 1 ) ) != 0 );
+	SV_Demo_Stop( true, atoi( Cmd_Argv( 1 ) ) != 0 );
 }
 
 /*
@@ -550,30 +550,30 @@ void SV_DemoGet_f( client_t *client )
 /*
 * SV_IsDemoDownloadRequest
 */
-qboolean SV_IsDemoDownloadRequest( const char *request )
+bool SV_IsDemoDownloadRequest( const char *request )
 {
 	const char *ext;
 	const char *demoDir = SV_DEMO_DIR;
 	const size_t demoDirLen = strlen( demoDir );
 
 	if( !request ) { 
-		return qfalse;
+		return false;
 	}
 	if( strlen( request ) <= demoDirLen + 1 + strlen( APP_DEMO_EXTENSION_STR ) ) {
 		// should at least contain demo dir name and demo file extension
-		return qfalse;
+		return false;
 	}
 
 	if( Q_strnicmp( request, demoDir, demoDirLen ) || request[demoDirLen] != '/' ) {
 		// nah, wrong dir
-		return qfalse;
+		return false;
 	}
 
 	ext = COM_FileExtension( request );
 	if( !ext || !*ext || Q_stricmp( ext, APP_DEMO_EXTENSION_STR ) ) {
 		// wrong extension
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }

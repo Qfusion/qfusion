@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t *mm_url;
 
-static qboolean mm_initialized = qfalse;
+static bool mm_initialized = false;
 
 //==================================================
 
@@ -217,15 +217,15 @@ void MM_Frame( const int realmsec )
 
 void MM_Init( void )
 {
-	mm_initialized = qfalse;
+	mm_initialized = false;
 
 	mm_url = Cvar_Get( "mm_url", APP_MATCHMAKER_URL, CVAR_ARCHIVE | CVAR_NOSET );
 
-	mm_initialized = qtrue;
+	mm_initialized = true;
 }
 
 void MM_Shutdown( void )
 {
 	mm_url = NULL;
-	mm_initialized = qfalse;
+	mm_initialized = false;
 }

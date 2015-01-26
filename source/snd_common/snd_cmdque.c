@@ -61,24 +61,24 @@ static void S_EnqueueCmd( sndQueue_t *queue, const void *cmd, unsigned cmd_size 
 /*
 * S_IssueInitCmd
 */
-void S_IssueInitCmd( sndQueue_t *queue, void *hwnd, int maxents, qboolean verbose )
+void S_IssueInitCmd( sndQueue_t *queue, void *hwnd, int maxents, bool verbose )
 {
 	sndCmdInit_t cmd;
 	cmd.id = SND_CMD_INIT;
 	cmd.hwnd = hwnd;
 	cmd.maxents = maxents;
-	cmd.verbose = verbose == qtrue ? 1 : 0;
+	cmd.verbose = verbose == true ? 1 : 0;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }
 
 /*
 * S_IssueShutdownCmd
 */
-void S_IssueShutdownCmd( sndQueue_t *queue, qboolean verbose )
+void S_IssueShutdownCmd( sndQueue_t *queue, bool verbose )
 {
 	sndCmdShutdown_t cmd;
 	cmd.id = SND_CMD_SHUTDOWN;
-	cmd.verbose = verbose == qtrue ? 1 : 0;
+	cmd.verbose = verbose == true ? 1 : 0;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }
 
@@ -95,7 +95,7 @@ void S_IssueClearCmd( sndQueue_t *queue )
 /*
 * S_IssueStopAllSoundsCmd
 */
-void S_IssueStopAllSoundsCmd( sndQueue_t *queue, qboolean clear, qboolean stopMusic )
+void S_IssueStopAllSoundsCmd( sndQueue_t *queue, bool clear, bool stopMusic )
 {
 	sndCmdStop_t cmd;
 	cmd.id = SND_CMD_STOP_ALL_SOUNDS;
@@ -163,7 +163,7 @@ void S_IssueSetEntitySpatializationCmd( sndQueue_t *queue, int entnum,
 * S_IssueSetListenerCmd
 */
 void S_IssueSetListenerCmd( sndQueue_t *queue, const vec3_t origin, 
-	const vec3_t velocity, const mat3_t axis, qboolean avidump )
+	const vec3_t velocity, const mat3_t axis, bool avidump )
 {
 	unsigned i;
 
@@ -271,11 +271,11 @@ void S_IssueStopBackgroundTrackCmd( sndQueue_t *queue )
 /*
 * S_IssueLockBackgroundTrackCmd
 */
-void S_IssueLockBackgroundTrackCmd( sndQueue_t *queue, qboolean lock )
+void S_IssueLockBackgroundTrackCmd( sndQueue_t *queue, bool lock )
 {
 	sndCmdLockBackgroundTrack_t cmd;
 	cmd.id = SND_CMD_LOCK_BACKGROUND_TRACK;
-	cmd.lock = lock == qtrue ? 1 : 0;
+	cmd.lock = lock == true ? 1 : 0;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }
 
@@ -318,18 +318,18 @@ void S_IssuePauseBackgroundTrackCmd( sndQueue_t *queue )
 /*
 * S_IssueActivateCmd
 */
-void S_IssueActivateCmd( sndQueue_t *queue, qboolean active )
+void S_IssueActivateCmd( sndQueue_t *queue, bool active )
 {
 	sndActivateCmd_t cmd;
 	cmd.id = SND_CMD_ACTIVATE;
-	cmd.active = active == qtrue ? 1 : 0;
+	cmd.active = active == true ? 1 : 0;
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }
 
 /*
 * S_IssueAviDemoCmd
 */
-void S_IssueAviDemoCmd( sndQueue_t *queue, qboolean begin )
+void S_IssueAviDemoCmd( sndQueue_t *queue, bool begin )
 {
 	sndAviDemo_t cmd;
 	cmd.id = SND_CMD_AVI_DEMO;
@@ -342,7 +342,7 @@ void S_IssueAviDemoCmd( sndQueue_t *queue, qboolean begin )
 */
 void S_IssueRawSamplesCmd( sndQueue_t *queue, unsigned int samples, 
 	unsigned int rate, unsigned short width, unsigned short channels, 
-	uint8_t *data, qboolean music )
+	uint8_t *data, bool music )
 {
 	sndRawSamplesCmd_t cmd;
 	cmd.id = SND_CMD_RAW_SAMPLES;

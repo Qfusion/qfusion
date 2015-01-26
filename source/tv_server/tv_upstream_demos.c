@@ -35,19 +35,19 @@ DEMO RECORDING
 /*
 * TV_Upstream_IsAutoRecordable
 */
-qboolean TV_Upstream_IsAutoRecordable( upstream_t *upstream )
+bool TV_Upstream_IsAutoRecordable( upstream_t *upstream )
 {
 	char *s, *t;
 	static const char *seps = ";";
-	qboolean match = qfalse;
+	bool match = false;
 	upstream_t *tupstream;
 
 	assert( upstream );
 
 	if( upstream->demo.playing )
-		return qfalse;
+		return false;
 	if( !Q_stricmp( tv_autorecord->string, "*" ) )
-		return qtrue;
+		return true;
 
 	// search for the given upstream in record list (semicolon separated)
 	s = TempCopyString( tv_autorecord->string );
@@ -55,10 +55,10 @@ qboolean TV_Upstream_IsAutoRecordable( upstream_t *upstream )
 	t = strtok( s, seps );
 	while( t != NULL )
 	{
-		qboolean res = TV_UpstreamForText( t, &tupstream );
+		bool res = TV_UpstreamForText( t, &tupstream );
 		if( res && (tupstream == upstream) )
 		{
-			match = qtrue;
+			match = true;
 			break; // found a match
 		}
 
@@ -67,9 +67,9 @@ qboolean TV_Upstream_IsAutoRecordable( upstream_t *upstream )
 
 	Mem_TempFree( s );
 	if( match )
-		return qtrue;
+		return true;
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -131,34 +131,34 @@ void TV_Upstream_AutoRecordAction( upstream_t *upstream, const char *action )
 		if( !TV_Upstream_IsAutoRecordable( upstream ) )
 			return;
 
-		TV_Upstream_StopDemoRecord( upstream, qtrue, qfalse );
-		TV_Upstream_StartDemoRecord( upstream, name, qfalse );
+		TV_Upstream_StopDemoRecord( upstream, true, false );
+		TV_Upstream_StartDemoRecord( upstream, name, false );
 
-		upstream->demo.autorecording = qtrue;
+		upstream->demo.autorecording = true;
 	}
 	else if( !Q_stricmp( action, "altstart" ) )
 	{
 		if( !TV_Upstream_IsAutoRecordable( upstream ) )
 			return;
 
-		TV_Upstream_StartDemoRecord( upstream, name, qtrue );
+		TV_Upstream_StartDemoRecord( upstream, name, true );
 
-		upstream->demo.autorecording = qtrue;
+		upstream->demo.autorecording = true;
 	}
 	else if( !Q_stricmp( action, "stop" ) )
 	{
 		if( upstream->demo.autorecording )
 		{
-			TV_Upstream_StopDemoRecord( upstream, qfalse, qfalse );
-			upstream->demo.autorecording = qfalse;
+			TV_Upstream_StopDemoRecord( upstream, false, false );
+			upstream->demo.autorecording = false;
 		}
 	}
 	else if( !Q_stricmp( action, "cancel" ) )
 	{
 		if( upstream->demo.autorecording )
 		{
-			TV_Upstream_StopDemoRecord( upstream, qtrue, qtrue );
-			upstream->demo.autorecording = qfalse;
+			TV_Upstream_StopDemoRecord( upstream, true, true );
+			upstream->demo.autorecording = false;
 		}
 	}
 }
@@ -172,7 +172,7 @@ void TV_Upstream_WriteDemoMessage( upstream_t *upstream, msg_t *msg )
 {
 	if( upstream->demo.filehandle <= 0 )
 	{
-		upstream->demo.recording = qfalse;
+		upstream->demo.recording = false;
 		return;
 	}
 
@@ -183,7 +183,7 @@ void TV_Upstream_WriteDemoMessage( upstream_t *upstream, msg_t *msg )
 /*
 * TV_Upstream_StartDemoRecord
 */
-void TV_Upstream_StartDemoRecord( upstream_t *upstream, const char *demoname, qboolean silent )
+void TV_Upstream_StartDemoRecord( upstream_t *upstream, const char *demoname, bool silent )
 {
 	char *servername, *temp;
 	size_t name_size;
@@ -248,13 +248,13 @@ void TV_Upstream_StartDemoRecord( upstream_t *upstream, const char *demoname, qb
 	if( !silent )
 		Com_Printf( "Recording demo: %s\n", upstream->demo.filename );
 
-	upstream->demo.recording = qtrue;
+	upstream->demo.recording = true;
 	upstream->demo.localtime = 0;
 	upstream->demo.basetime = upstream->demo.duration = 0;
 
 	// don't start saving messages until a non-delta compressed message is received
 	TV_Upstream_AddReliableCommand( upstream, "nodelta" ); // request non delta compressed frame from server
-	upstream->demo.waiting = qtrue;
+	upstream->demo.waiting = true;
 
 	// the rest of the demo file will be individual frames
 }
@@ -262,7 +262,7 @@ void TV_Upstream_StartDemoRecord( upstream_t *upstream, const char *demoname, qb
 /*
 * TV_Upstream_StopDemoRecord
 */
-void TV_Upstream_StopDemoRecord( upstream_t *upstream, qboolean silent, qboolean cancel )
+void TV_Upstream_StopDemoRecord( upstream_t *upstream, bool silent, bool cancel )
 {
 	assert( upstream );
 
@@ -317,8 +317,8 @@ void TV_Upstream_StopDemoRecord( upstream_t *upstream, qboolean silent, qboolean
 	Mem_ZoneFree( upstream->demo.tempname );
 	upstream->demo.tempname = NULL;
 
-	upstream->demo.recording = qfalse;
-	upstream->demo.autorecording = qfalse;
+	upstream->demo.recording = false;
+	upstream->demo.autorecording = false;
 }
 
 /*
@@ -332,7 +332,7 @@ DEMO PLAYBACK
 /*
 * TV_Upstream_NextDemo
 */
-void TV_Upstream_NextDemo( const char *demoname, const char *curdemo, qboolean randomize, char **name, char **filepath )
+void TV_Upstream_NextDemo( const char *demoname, const char *curdemo, bool randomize, char **name, char **filepath )
 {
 	int i, j, total;
 	size_t bufsize, len, dir_size;
@@ -449,7 +449,7 @@ void TV_Upstream_NextDemo( const char *demoname, const char *curdemo, qboolean r
 
 			if( *pattern )
 			{
-				if( !Com_GlobMatch( pattern, file, qfalse ) )
+				if( !Com_GlobMatch( pattern, file, false ) )
 					continue;
 			}
 
@@ -517,7 +517,7 @@ void TV_Upstream_NextDemo( const char *demoname, const char *curdemo, qboolean r
 /*
 * TV_Upstream_StartDemo
 */
-void TV_Upstream_StartDemo( upstream_t *upstream, const char *demoname, qboolean randomize )
+void TV_Upstream_StartDemo( upstream_t *upstream, const char *demoname, bool randomize )
 {
 	char *name, *filepath;
 	int tempdemofilehandle, tempdemofilelen;
@@ -539,19 +539,19 @@ void TV_Upstream_StartDemo( upstream_t *upstream, const char *demoname, qboolean
 	if( name )
 		Com_Printf( "Starting demo from %s\n", filepath );
 
-	upstream->demo.playing = qtrue;
+	upstream->demo.playing = true;
 	upstream->demo.filename = name ? TV_Upstream_CopyString( upstream, name ) : NULL;
 	upstream->demo.filehandle = tempdemofilehandle;
 	upstream->demo.filelen = tempdemofilelen;
 	upstream->demo.random = randomize;
 	upstream->state = CA_HANDSHAKE;
-	upstream->reliable = qfalse;
+	upstream->reliable = false;
 
 	upstream->servername = TV_Upstream_CopyString( upstream, demoname );	// can be demo filename/pattern or demolist filename
-	upstream->rejected = qfalse;
+	upstream->rejected = false;
 	upstream->lastPacketReceivedTime = tvs.realtime;	// reset the timeout limit
-	upstream->multiview = qfalse;
-	upstream->precacheDone = qfalse;
+	upstream->multiview = false;
+	upstream->precacheDone = false;
 
 	if( name )
 		Mem_TempFree( name );
@@ -577,5 +577,5 @@ void TV_Upstream_StopDemo( upstream_t *upstream )
 	}
 
 	upstream->demo.filelen = 0;
-	upstream->demo.playing = qfalse;
+	upstream->demo.playing = false;
 }

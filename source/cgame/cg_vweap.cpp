@@ -229,7 +229,7 @@ void CG_ViewWeapon_RefreshAnimation( cg_viewweapon_t *viewweapon )
 
 		framefrac = GS_FrameForTime( &curframe, cg.time, viewweapon->eventAnimStartTime, weaponInfo->frametime[viewweapon->eventAnim],
 			weaponInfo->firstframe[viewweapon->eventAnim], weaponInfo->lastframe[viewweapon->eventAnim],
-			weaponInfo->loopingframes[viewweapon->eventAnim], qfalse );
+			weaponInfo->loopingframes[viewweapon->eventAnim], false );
 
 		if( curframe >= 0 )
 			goto setupframe;
@@ -242,7 +242,7 @@ void CG_ViewWeapon_RefreshAnimation( cg_viewweapon_t *viewweapon )
 	// find new frame for the current animation
 	framefrac = GS_FrameForTime( &curframe, cg.time, viewweapon->baseAnimStartTime, weaponInfo->frametime[viewweapon->baseAnim],
 		weaponInfo->firstframe[viewweapon->baseAnim], weaponInfo->lastframe[viewweapon->baseAnim],
-		weaponInfo->loopingframes[viewweapon->baseAnim], qtrue );
+		weaponInfo->loopingframes[viewweapon->baseAnim], true );
 
 	if( curframe < 0 )
 		CG_Error( "CG_ViewWeapon_UpdateAnimation(2): Base Animation without a defined loop.\n" );

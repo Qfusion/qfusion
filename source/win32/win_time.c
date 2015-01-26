@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 #include <windows.h>
 
-static qboolean hwtimer;
+static bool hwtimer;
 static dynvar_t *hwtimer_var;
 static uint64_t hwtimer_freq;
 static int milli_offset = 0;
@@ -121,7 +121,7 @@ void Sys_InitTime( void )
 static unsigned int Sys_Milliseconds_TGT( void )
 {
 	static unsigned int base;
-	static qboolean	initialized = qfalse;
+	static bool	initialized = false;
 	unsigned int now;
 
 	if( !initialized )
@@ -129,7 +129,7 @@ static unsigned int Sys_Milliseconds_TGT( void )
 		// let base retain 16 bits of effectively random data which is used
 		//for quickly generating random numbers
 		base = timeGetTime() & 0xffff0000;
-		initialized = qtrue;
+		initialized = true;
 	}
 
 	now = timeGetTime();
@@ -139,7 +139,7 @@ static unsigned int Sys_Milliseconds_TGT( void )
 
 static uint64_t Sys_Microseconds_QPC( void )
 {
-	static qboolean first = qtrue;
+	static bool first = true;
 	static int64_t p_start;
 
 	int64_t p_now;
@@ -147,7 +147,7 @@ static uint64_t Sys_Microseconds_QPC( void )
 
 	if( first )
 	{
-		first = qfalse;
+		first = false;
 		p_start = p_now;
 	}
 

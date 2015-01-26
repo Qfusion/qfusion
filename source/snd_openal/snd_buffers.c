@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define MAX_SFX 4096
 sfx_t knownSfx[MAX_SFX];
-static qboolean buffers_inited = qfalse;
+static bool buffers_inited = false;
 
 /*
 * Local helper functions
@@ -99,31 +99,31 @@ sfx_t *S_GetBufferById( int id )
 	return knownSfx + id;
 }
 
-qboolean S_UnloadBuffer( sfx_t *sfx )
+bool S_UnloadBuffer( sfx_t *sfx )
 {
 	ALenum error;
 
 	if( !sfx ) {
-		return qfalse;
+		return false;
 	}
 	if( sfx->filename[0] == '\0' || sfx->isLocked || !sfx->inMemory )
-		return qfalse;
+		return false;
 
 	qalDeleteBuffers( 1, &sfx->buffer );
 	if( ( error = qalGetError() ) != AL_NO_ERROR )
 	{
 		Com_Printf( "Couldn't delete sound buffer for %s (%s)", sfx->filename, S_ErrorMessage( error ) );
-		sfx->isLocked = qtrue;
-		return qfalse;
+		sfx->isLocked = true;
+		return false;
 	}
 
-	sfx->inMemory = qfalse;
+	sfx->inMemory = false;
 
-	return qtrue;
+	return true;
 }
 
 // Remove the least recently used sound effect from memory
-static qboolean buffer_evict()
+static bool buffer_evict()
 {
 	int i;
 	int candinate = -1;
@@ -146,10 +146,10 @@ static qboolean buffer_evict()
 		return S_UnloadBuffer( &knownSfx[candinate] );
 	}
 
-	return qfalse;
+	return false;
 }
 
-qboolean S_LoadBuffer( sfx_t *sfx )
+bool S_LoadBuffer( sfx_t *sfx )
 {
 	ALenum error;
 	void *data;
@@ -157,16 +157,16 @@ qboolean S_LoadBuffer( sfx_t *sfx )
 	ALuint format;
 
 	if( !sfx ) {
-		return qfalse;
+		return false;
 	}
 	if( sfx->filename[0] == '\0' || sfx->inMemory )
-		return qfalse;
+		return false;
 
 	data = S_LoadSound( sfx->filename, &info );
 	if( !data )
 	{
 		//Com_DPrintf( "Couldn't load %s\n", sfx->filename );
-		return qfalse;
+		return false;
 	}
 
 	if( info.channels > 1 )
@@ -186,7 +186,7 @@ qboolean S_LoadBuffer( sfx_t *sfx )
 	{
 		S_Free( data );
 		Com_Printf( "Couldn't create a sound buffer for %s (%s)\n", sfx->filename, S_ErrorMessage( error ) );
-		return qfalse;
+		return false;
 	}
 
 	qalBufferData( sfx->buffer, format, data, info.size, info.rate );
@@ -199,7 +199,7 @@ qboolean S_LoadBuffer( sfx_t *sfx )
 		{
 			S_Free( data );
 			Com_Printf( "Out of memory loading %s\n", sfx->filename );
-			return qfalse;
+			return false;
 		}
 
 		// Try load it again
@@ -213,13 +213,13 @@ qboolean S_LoadBuffer( sfx_t *sfx )
 	{
 		S_Free( data );
 		Com_Printf( "Couldn't fill sound buffer for %s (%s)", sfx->filename, S_ErrorMessage( error ) );
-		return qfalse;
+		return false;
 	}
 
 	S_Free( data );
-	sfx->inMemory = qtrue;
+	sfx->inMemory = true;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -273,7 +273,7 @@ void S_InitBuffers( void )
 
 	memset( knownSfx, 0, sizeof( knownSfx ) );
 
-	buffers_inited = qtrue;
+	buffers_inited = true;
 }
 
 void S_ShutdownBuffers( void )
@@ -287,7 +287,7 @@ void S_ShutdownBuffers( void )
 		S_UnloadBuffer( &knownSfx[i] );
 
 	memset( knownSfx, 0, sizeof( knownSfx ) );
-	buffers_inited = qfalse;
+	buffers_inited = false;
 }
 
 void S_SoundList_f( void )

@@ -183,7 +183,7 @@ static bool CG_ClipEntityContact( vec3_t origin, vec3_t mins, vec3_t maxs, int e
 	VectorAdd( origin, mins, absmins );
 	VectorAdd( origin, maxs, absmaxs );
 	trap_CM_TransformedBoxTrace( &tr, vec3_origin, vec3_origin, absmins, absmaxs, cmodel, MASK_ALL, entorigin, entangles );
-	return tr.startsolid == qtrue || tr.allsolid == qtrue;
+	return tr.startsolid == true || tr.allsolid == true;
 }
 
 /*
@@ -276,7 +276,7 @@ static void CG_ClipMoveToEntities( vec3_t start, vec3_t mins, vec3_t maxs, vec3_
 		}
 		else if( trace.startsolid )
 		{
-			tr->startsolid = qtrue;
+			tr->startsolid = true;
 		}
 
 		if( tr->allsolid )

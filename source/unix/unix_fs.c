@@ -52,27 +52,27 @@ static int fdots = 0;
 /*
 * CompareAttributes
 */
-static qboolean CompareAttributes( const struct dirent64 *d, unsigned musthave, unsigned canthave )
+static bool CompareAttributes( const struct dirent64 *d, unsigned musthave, unsigned canthave )
 {
-	qboolean isDir;
+	bool isDir;
 
 	assert( d );
 
 	isDir = ( d->d_type == DT_DIR /* || d->d_type == DT_LINK*/ );
 	if( isDir && ( canthave & SFF_SUBDIR ) )
-		return qfalse;
+		return false;
 	if( ( musthave & SFF_SUBDIR ) && !isDir )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 /*
 * CompareAttributesForPath
 */
-static qboolean CompareAttributesForPath( const struct dirent64 *d, const char *path, unsigned musthave, unsigned canthave )
+static bool CompareAttributesForPath( const struct dirent64 *d, const char *path, unsigned musthave, unsigned canthave )
 {
-	return qtrue;
+	return true;
 }
 
 /*
@@ -273,7 +273,7 @@ void Sys_FS_UnlockFile( void *handle )
 /*
 * Sys_FS_CreateDirectory
 */
-qboolean Sys_FS_CreateDirectory( const char *path )
+bool Sys_FS_CreateDirectory( const char *path )
 {
 	return ( !mkdir( path, 0777 ) );
 }
@@ -281,7 +281,7 @@ qboolean Sys_FS_CreateDirectory( const char *path )
 /*
 * Sys_FS_RemoveDirectory
 */
-qboolean Sys_FS_RemoveDirectory( const char *path )
+bool Sys_FS_RemoveDirectory( const char *path )
 {
 	return ( !rmdir( path ) );
 }

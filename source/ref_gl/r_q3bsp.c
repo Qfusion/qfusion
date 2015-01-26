@@ -135,8 +135,8 @@ static void Mod_CheckDeluxemaps( const lump_t *l, uint8_t *lmData )
 		}
 	}
 
-	mapConfig.deluxeMaps = qtrue;
-	mapConfig.deluxeMappingEnabled = r_lighting_deluxemapping->integer ? qtrue : qfalse;
+	mapConfig.deluxeMaps = true;
+	mapConfig.deluxeMappingEnabled = r_lighting_deluxemapping->integer ? true : false;
 }
 
 /*
@@ -488,7 +488,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			int patch_cp[2], step[2], size[2], flat[2];
 			int numVerts, numElems;
 			int inFirstVert;
-			qboolean hasLightmap[MAX_LIGHTMAPS];
+			bool hasLightmap[MAX_LIGHTMAPS];
 			int numattribs = 0;
 			uint8_t *attribs[2 + MAX_LIGHTMAPS * 2];
 			int attribsizes[2 + MAX_LIGHTMAPS * 2];
@@ -520,7 +520,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS; j++ )
 			{
-				hasLightmap[j] = ( ( in->lightmapStyles[j] != 255 ) && ( LittleLong( in->lm_texnum[j] ) >= 0 ) ) ? qtrue : qfalse;
+				hasLightmap[j] = ( ( in->lightmapStyles[j] != 255 ) && ( LittleLong( in->lm_texnum[j] ) >= 0 ) ) ? true : false;
 				if( !hasLightmap[j] )
 					break;
 				bufSize += numVerts * sizeof( vec2_t );
@@ -710,7 +710,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 		{
 			int j, numVerts, firstVert, numElems, firstElem;
 			int numFoliageInstances;
-			qboolean hasLightmap[MAX_LIGHTMAPS];
+			bool hasLightmap[MAX_LIGHTMAPS];
 
 			if( out->facetype == FACETYPE_FOLIAGE )
 			{
@@ -733,7 +733,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			bufSize += numVerts * ( sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec4_t ) + sizeof( vec2_t ) );
 			for( j = 0; j < MAX_LIGHTMAPS; j++ )
 			{
-				hasLightmap[j] = ( ( in->lightmapStyles[j] != 255 ) && ( LittleLong( in->lm_texnum[j] ) >= 0 ) ) ? qtrue : qfalse;
+				hasLightmap[j] = ( ( in->lightmapStyles[j] != 255 ) && ( LittleLong( in->lm_texnum[j] ) >= 0 ) ) ? true : false;
 				if( !hasLightmap[j] )
 					break;
 				bufSize += numVerts * sizeof( vec2_t );
@@ -1112,7 +1112,7 @@ static void Mod_LoadNodes( const lump_t *l )
 	int i, j, count, p;
 	dnode_t	*in;
 	mnode_t	*out;
-	qboolean badBounds;
+	bool badBounds;
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
@@ -1136,13 +1136,13 @@ static void Mod_LoadNodes( const lump_t *l )
 				out->children[j] = ( mnode_t * )( loadbmodel->leafs + ( -1 - p ) );
 		}
 
-		badBounds = qfalse;
+		badBounds = false;
 		for( j = 0; j < 3; j++ )
 		{
 			out->mins[j] = (float)LittleLong( in->mins[j] );
 			out->maxs[j] = (float)LittleLong( in->maxs[j] );
 			if( out->mins[j] > out->maxs[j] )
-				badBounds = qtrue;
+				badBounds = true;
 		}
 
 		if( badBounds || VectorCompare( out->mins, out->maxs ) )
@@ -1262,7 +1262,7 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 	mleaf_t	*out;
 	size_t size;
 	uint8_t *buffer;
-	qboolean badBounds;
+	bool badBounds;
 	int *inMarkSurfaces;
 	int numMarkSurfaces, firstMarkSurface;
 	int numVisSurfaces, numFragmentSurfaces;
@@ -1283,13 +1283,13 @@ static void Mod_LoadLeafs( const lump_t *l, const lump_t *msLump )
 
 	for( i = 0; i < count; i++, in++, out++ )
 	{
-		badBounds = qfalse;
+		badBounds = false;
 		for( j = 0; j < 3; j++ )
 		{
 			out->mins[j] = (float)LittleLong( in->mins[j] );
 			out->maxs[j] = (float)LittleLong( in->maxs[j] );
 			if( out->mins[j] > out->maxs[j] )
-				badBounds = qtrue;
+				badBounds = true;
 		}
 		out->cluster = LittleLong( in->cluster );
 
@@ -1513,7 +1513,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 {
 	int n;
 	char *data;
-	qboolean isworld;
+	bool isworld;
 	float gridsizef[3] = { 0, 0, 0 }, colorf[3] = { 0, 0, 0 }, ambientf = 0;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
 	float celcolorf[3] = { 0, 0, 0 };
@@ -1532,7 +1532,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 
 	for(; ( token = COM_Parse( &data ) ) && token[0] == '{'; )
 	{
-		isworld = qfalse;
+		isworld = false;
 
 		while( 1 )
 		{
@@ -1555,7 +1555,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 			if( !strcmp( key, "classname" ) )
 			{
 				if( !strcmp( value, "worldspawn" ) )
-					isworld = qtrue;
+					isworld = true;
 			}
 			else if( !strcmp( key, "gridsize" ) )
 			{
@@ -1586,7 +1586,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 			else if( !strcmp( key, "_forceclear" ) )
 			{
 				if( atof( value ) != 0 )
-					mapConfig.forceClear = qtrue;
+					mapConfig.forceClear = true;
 			}
 			else if( !strcmp( key, "_lightingIntensity" ) )
 			{
@@ -1691,7 +1691,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 	unsigned int i, j;
 	msurface_t *surf;
 	mfog_t *testFog;
-	qboolean globalFog;
+	bool globalFog;
 
 	// remembe the BSP format just in case
 	loadbmodel->format = mod_bspFormat;
@@ -1738,12 +1738,12 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 	}
 
 	// make sure that the only fog in the map has valid shader
-	globalFog = ( loadbmodel->numfogs == 1 ) ? qtrue : qfalse;
+	globalFog = ( loadbmodel->numfogs == 1 ) ? true : false;
 	if( globalFog )
 	{
 		testFog = &loadbmodel->fogs[0];
 		if( !testFog->shader )
-			globalFog = qfalse;
+			globalFog = false;
 	}
 
 	// apply super-lightstyles to map surfaces
@@ -1759,7 +1759,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 			if( globalFog && surf->mesh && surf->fog != testFog )
 			{
 				if( !( surf->shader->flags & SHADER_SKY ) && !surf->shader->fog_dist )
-					globalFog = qfalse;
+					globalFog = false;
 			}
 
 			Mod_ApplySuperStylesToFace( in, surf );
@@ -1785,7 +1785,7 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 			if( globalFog && surf->mesh && surf->fog != testFog )
 			{
 				if( !( surf->shader->flags & SHADER_SKY ) && !surf->shader->fog_dist )
-					globalFog = qfalse;
+					globalFog = false;
 			}
 
 			rdf.lm_texnum[0] = LittleLong( in->lm_texnum );

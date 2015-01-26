@@ -48,7 +48,7 @@ static void TV_Downstream_Ping( const socket_t *socket, const netadr_t *address 
 * TV_Downstream_LongInfoString
 * Builds the string that is sent as heartbeats and status replies
 */
-static char *TV_Downstream_LongInfoString( qboolean fullStatus )
+static char *TV_Downstream_LongInfoString( bool fullStatus )
 {
 	char tempstr[1024] = { 0 };
 	const char *p;
@@ -199,7 +199,7 @@ static void TV_Downstream_InfoResponse( const socket_t *socket, const netadr_t *
 {
 	int i, count;
 	char *string;
-	qboolean allow_empty = qfalse, allow_full = qfalse;
+	bool allow_empty = false, allow_full = false;
 
 	// KoFFiE: When not public and coming from a LAN address
 	//         assume broadcast and respond anyway, otherwise ignore
@@ -215,9 +215,9 @@ static void TV_Downstream_InfoResponse( const socket_t *socket, const netadr_t *
 	for( i = 0; i < Cmd_Argc(); i++ )
 	{
 		if( !Q_stricmp( Cmd_Argv( i ), "full" ) )
-			allow_full = qtrue;
+			allow_full = true;
 		if( !Q_stricmp( Cmd_Argv( i ), "empty" ) )
-			allow_empty = qtrue;
+			allow_empty = true;
 	}
 
 	count = 0;
@@ -238,7 +238,7 @@ static void TV_Downstream_InfoResponse( const socket_t *socket, const netadr_t *
 /*
 * TV_Downstream_SendInfoString
 */
-static void TV_Downstream_SendInfoString( const socket_t *socket, const netadr_t *address, const char *responseType, qboolean fullStatus )
+static void TV_Downstream_SendInfoString( const socket_t *socket, const netadr_t *address, const char *responseType, bool fullStatus )
 {
 	char *string;
 
@@ -259,7 +259,7 @@ static void TV_Downstream_SendInfoString( const socket_t *socket, const netadr_t
 */
 static void TV_Downstream_GetInfoResponse( const socket_t *socket, const netadr_t *address )
 {
-	TV_Downstream_SendInfoString( socket, address, "infoResponse", qfalse );
+	TV_Downstream_SendInfoString( socket, address, "infoResponse", false );
 }
 
 /*
@@ -267,14 +267,14 @@ static void TV_Downstream_GetInfoResponse( const socket_t *socket, const netadr_
 */
 static void TV_Downstream_GetStatusResponse( const socket_t *socket, const netadr_t *address )
 {
-	TV_Downstream_SendInfoString( socket, address, "statusResponse", qtrue );
+	TV_Downstream_SendInfoString( socket, address, "statusResponse", true );
 }
 
 /*
 * TV_Downstream_ClientConnect
 */
-static qboolean TV_Downstream_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client,
-											char *userinfo, int game_port, int challenge, qboolean tv_client )
+static bool TV_Downstream_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client,
+											char *userinfo, int game_port, int challenge, bool tv_client )
 {
 	assert( socket );
 	assert( address );
@@ -289,36 +289,36 @@ static qboolean TV_Downstream_ClientConnect( const socket_t *socket, const netad
 		TV_Relay_ClientDisconnect( client->relay, client );
 
 	if( !TV_Lobby_CanConnect( client, userinfo ) )
-		return qfalse;
+		return false;
 
 	TV_Lobby_ClientConnect( client );
 
 	// the upstream is accepted, set up the client slot
 	client->challenge = challenge; // save challenge for checksumming
-	client->tv = (tv_client ? qtrue : qfalse);
+	client->tv = (tv_client ? true : false);
 
 	switch( socket->type )
 	{
 #ifdef TCP_ALLOW_CONNECT
 	case SOCKET_TCP:
-		client->reliable = qtrue;
-		client->individual_socket = qtrue;
+		client->reliable = true;
+		client->individual_socket = true;
 		client->socket = *socket;
 		break;
 #endif
 
 	case SOCKET_UDP:
 	case SOCKET_LOOPBACK:
-		client->reliable = qfalse;
-		client->individual_socket = qfalse;
-		client->socket.open = qfalse;
+		client->reliable = false;
+		client->individual_socket = false;
+		client->socket.open = false;
 		break;
 
 	default:
-		assert( qfalse );
+		assert( false );
 	}
 
-	TV_Downstream_ClientResetCommandBuffers( client, qtrue );
+	TV_Downstream_ClientResetCommandBuffers( client, true );
 
 	// reset timeouts
 	client->lastPacketReceivedTime = tvs.realtime;
@@ -338,7 +338,7 @@ static qboolean TV_Downstream_ClientConnect( const socket_t *socket, const netad
 
 	Com_Printf( "%s" S_COLOR_WHITE " connected\n", client->name );
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -353,7 +353,7 @@ static void TV_Downstream_DirectConnect( const socket_t *socket, const netadr_t 
 	char userinfo[MAX_INFO_STRING], *name;
 	client_t *cl, *newcl;
 	int i, version, game_port, challenge;
-	qboolean tv_client;
+	bool tv_client;
 
 	version = atoi( Cmd_Argv( 1 ) );
 	if( version != APP_PROTOCOL_VERSION )
@@ -373,7 +373,7 @@ static void TV_Downstream_DirectConnect( const socket_t *socket, const netadr_t 
 
 	game_port = atoi( Cmd_Argv( 2 ) );
 	challenge = atoi( Cmd_Argv( 3 ) );
-	tv_client = ( atoi( Cmd_Argv( 5 ) ) & 1 ? qtrue : qfalse );
+	tv_client = ( atoi( Cmd_Argv( 5 ) ) & 1 ? true : false );
 
 	if( !Info_Validate( Cmd_Argv( 4 ) ) )
 	{
@@ -515,8 +515,8 @@ static void TV_Downstream_DirectConnect( const socket_t *socket, const netadr_t 
 #ifdef TCP_ALLOW_CONNECT
 	if( socket->type == SOCKET_TCP )
 	{
-		tvs.incoming[incoming].active = qfalse;
-		tvs.incoming[incoming].socket.open = qfalse;
+		tvs.incoming[incoming].active = false;
+		tvs.incoming[incoming].socket.open = false;
 	}
 #endif
 }

@@ -111,7 +111,7 @@ void Com_ScriptModule_Shutdown( void )
 	ae = NULL;
 }
 
-static qboolean Com_ScriptModule_Load( const char *name, angelwrap_import_t *import )
+static bool Com_ScriptModule_Load( const char *name, angelwrap_import_t *import )
 {
 	int apiversion;
 
@@ -121,7 +121,7 @@ static qboolean Com_ScriptModule_Load( const char *name, angelwrap_import_t *imp
 	if( !ae )
 	{
 		Com_Printf( "Loading %s failed\n", name );
-		return qfalse;
+		return false;
 	}
 
 	apiversion = ae->API();
@@ -130,7 +130,7 @@ static qboolean Com_ScriptModule_Load( const char *name, angelwrap_import_t *imp
 		Com_UnloadScriptLibrary();
 		ae = NULL;
 		Com_Printf( "Wrong module version for %s: %i, not %i\n", name, apiversion, ANGELWRAP_API_VERSION );
-		return qfalse;
+		return false;
 	}
 
 	if( !ae->Init() )
@@ -138,12 +138,12 @@ static qboolean Com_ScriptModule_Load( const char *name, angelwrap_import_t *imp
 		Com_UnloadScriptLibrary();
 		ae = NULL;
 		Com_Printf( "Initialization of %s failed\n", name );
-		return qfalse;
+		return false;
 	}
 
 	Com_Printf( "Initialization of %s successful\n", name );
 
-	return qtrue;
+	return true;
 }
 
 void Com_ScriptModule_Init( void )

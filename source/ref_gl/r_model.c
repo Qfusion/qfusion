@@ -28,7 +28,7 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 void Mod_LoadSkeletalModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *unused );
 void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspFormatDesc_t *format );
 
-model_t *Mod_LoadModel( model_t *mod, qboolean crash );
+model_t *Mod_LoadModel( model_t *mod, bool crash );
 
 static void R_InitMapConfig( const char *model );
 static void R_FinishMapConfig( const model_t *mod );
@@ -39,7 +39,7 @@ static uint8_t mod_novis[MAX_MAP_LEAFS/8];
 static model_t mod_known[MAX_MOD_KNOWN];
 static int mod_numknown;
 static int modfilelen;
-static qboolean mod_isworldmodel;
+static bool mod_isworldmodel;
 static const dvis_t *mod_worldvis;
 static model_t *r_prevworldmodel;
 static mapconfig_t *mod_mapConfigs;
@@ -766,7 +766,7 @@ void R_InitModels( void )
 {
 	mod_mempool = R_AllocPool( r_mempool, "Models" );
 	memset( mod_novis, 0xff, sizeof( mod_novis ) );
-	mod_isworldmodel = qfalse;
+	mod_isworldmodel = false;
 	mod_worldvis = NULL;
 	r_prevworldmodel = NULL;
 	mod_mapConfigs = R_MallocExt( mod_mempool, sizeof( *mod_mapConfigs ) * MAX_MOD_KNOWN, 0, 1 );
@@ -910,7 +910,7 @@ model_t *Mod_ForHandle( unsigned int elem )
 * 
 * Loads in a model for the given name
 */
-model_t *Mod_ForName( const char *name, qboolean crash )
+model_t *Mod_ForName( const char *name, bool crash )
 {
 	int i;
 	model_t	*mod, *lod;
@@ -1075,15 +1075,15 @@ static void R_InitMapConfig( const char *model )
 	memset( &mapConfig, 0, sizeof( mapConfig ) );
 
 	mapConfig.pow2MapOvrbr = 0;
-	mapConfig.lightmapsPacking = qfalse;
-	mapConfig.lightmapArrays = qfalse;
+	mapConfig.lightmapsPacking = false;
+	mapConfig.lightmapArrays = false;
 	mapConfig.maxLightmapSize = 0;
-	mapConfig.deluxeMaps = qfalse;
-	mapConfig.deluxeMappingEnabled = qfalse;
+	mapConfig.deluxeMaps = false;
+	mapConfig.deluxeMappingEnabled = false;
 	mapConfig.overbrightBits = max( 0, r_mapoverbrightbits->integer );
-	mapConfig.checkWaterCrossing = qfalse;
-	mapConfig.depthWritingSky = qtrue;
-	mapConfig.forceClear = qfalse;
+	mapConfig.checkWaterCrossing = false;
+	mapConfig.depthWritingSky = true;
+	mapConfig.forceClear = false;
 	mapConfig.lightingIntensity = 0;
 
 	VectorClear( mapConfig.ambient );
@@ -1093,7 +1093,7 @@ static void R_InitMapConfig( const char *model )
 	{
 		char lightmapsPath[MAX_QPATH], *p;
 
-		mapConfig.lightmapsPacking = qtrue;
+		mapConfig.lightmapsPacking = true;
 
 		Q_strncpyz( lightmapsPath, model, sizeof( lightmapsPath ) );
 		p = strrchr( lightmapsPath, '.' );
@@ -1104,7 +1104,7 @@ static void R_InitMapConfig( const char *model )
 			if( ri.FS_FOpenFile( lightmapsPath, NULL, FS_READ ) != -1 )
 			{
 				ri.Com_DPrintf( S_COLOR_YELLOW "External lightmap stage: lightmaps packing is disabled\n" );
-				mapConfig.lightmapsPacking = qfalse;
+				mapConfig.lightmapsPacking = false;
 			}
 		}
 	}
@@ -1156,12 +1156,12 @@ void R_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 	rsh.worldBrushModel = NULL;
 	rsh.worldModelSequence++;
 
-	mod_isworldmodel = qtrue;
+	mod_isworldmodel = true;
 	mod_worldvis = pvsData;
 
-	rsh.worldModel = Mod_ForName( model, qtrue );
+	rsh.worldModel = Mod_ForName( model, true );
 
-	mod_isworldmodel = qfalse;
+	mod_isworldmodel = false;
 
 	if( !rsh.worldModel ) {
 		return;
@@ -1182,7 +1182,7 @@ struct model_s *R_RegisterModel( const char *name )
 {
 	model_t *mod;
 
-	mod = Mod_ForName( name, qfalse );
+	mod = Mod_ForName( name, false );
 	if( mod ) {
 		R_TouchModel( mod );
 	}

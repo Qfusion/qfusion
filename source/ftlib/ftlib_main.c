@@ -33,7 +33,7 @@ int FTLIB_API( void )
 /*
 * FTLIB_Init
 */
-qboolean FTLIB_Init( qboolean verbose )
+bool FTLIB_Init( bool verbose )
 {
 	ftlibPool = FTLIB_AllocPool( "Generic pool" );
 
@@ -41,13 +41,13 @@ qboolean FTLIB_Init( qboolean verbose )
 
 	trap_Cmd_AddCommand( "fontlist", &FTLIB_PrintFontList );
 
-	return qtrue;
+	return true;
 }
 
 /*
 * FTLIB_Shutdown
 */
-void FTLIB_Shutdown( qboolean verbose )
+void FTLIB_Shutdown( bool verbose )
 {
 	FTLIB_ShutdownSubsystems( verbose );
 

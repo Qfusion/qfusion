@@ -40,12 +40,12 @@ public:
 
 	bool login( const asstring_t &user, const asstring_t &password )
 	{
-		return trap::MM_Login( ASSTR( user ), ASSTR( password ) ) == qtrue;
+		return trap::MM_Login( ASSTR( user ), ASSTR( password ) ) == true;
 	}
 
 	bool logout( void )
 	{
-		return trap::MM_Logout( qfalse ) == qtrue;
+		return trap::MM_Logout( false ) == true;
 	}
 
 	int getState( void ) const
@@ -62,7 +62,7 @@ public:
 	{
 		char buffer[2048];
 
-		trap::MM_GetProfileURL( buffer, sizeof( buffer ), rml ? qtrue : qfalse );
+		trap::MM_GetProfileURL( buffer, sizeof( buffer ), rml ? true : false );
 		return ASSTR( buffer );
 	}
 

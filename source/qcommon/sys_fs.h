@@ -25,8 +25,8 @@ const char *Sys_FS_GetHomeDirectory( void );
 const char *Sys_FS_GetCacheDirectory( void );
 const char *Sys_FS_GetSecureDirectory( void );
 
-qboolean    Sys_FS_RemoveDirectory( const char *path );
-qboolean    Sys_FS_CreateDirectory( const char *path );
+bool    Sys_FS_RemoveDirectory( const char *path );
+bool    Sys_FS_CreateDirectory( const char *path );
 
 const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned canthave );
 const char *Sys_FS_FindNext( unsigned musthave, unsigned canthave );
@@ -39,7 +39,7 @@ time_t		Sys_FS_FileMTime( const char *filename );
 
 // virtual storage of pack files, such as .obb on Android
 void		Sys_VFS_Init( void );
-void		Sys_VFS_TouchGamePath( const char *gamedir, qboolean initial );
+void		Sys_VFS_TouchGamePath( const char *gamedir, bool initial );
 char		**Sys_VFS_ListFiles( const char *basepath, const char *gamedir, const char *extension, int *numfiles );
 void		*Sys_VFS_FindFile( const char *filename );
 const char	*Sys_VFS_VFSName( void *handle ); // must return null for null handle

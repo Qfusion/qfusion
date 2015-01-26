@@ -38,7 +38,7 @@ static void InitClientPersistant( gclient_t *client )
 
 	memset( &client->pers, 0, sizeof( client->pers ) );
 
-	client->pers.connected = qtrue;
+	client->pers.connected = true;
 }
 
 /*
@@ -96,19 +96,19 @@ void TVM_ClientEndSnapFrame( edict_t *ent )
 /*
 * TVM_ClientIsZoom
 */
-qboolean TVM_ClientIsZoom( edict_t *ent )
+bool TVM_ClientIsZoom( edict_t *ent )
 {
 	assert( ent && ent->local && ent->r.client );
 
 #if 0
 	if( ent->r.client->ps.stats[STAT_HEALTH] <= 0 )
-		return qfalse;
+		return false;
 #endif
 
 	if( ent->snap.buttons & BUTTON_ZOOM )
-		return qtrue;
+		return true;
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -127,7 +127,7 @@ void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent )
 
 	//TVM_Printf( "Begin: %s\n", ent->r.client->pers.netname );
 
-	ent->r.client->pers.connecting = qfalse;
+	ent->r.client->pers.connecting = false;
 
 	spot = TVM_SelectSpawnPoint( ent );
 	if( spot )
@@ -147,7 +147,7 @@ void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent )
 		VectorClear( ent->r.client->ps.viewangles );
 	}
 
-	ent->s.teleported = qtrue;
+	ent->s.teleported = true;
 	// set the delta angle
 	for( i = 0; i < 3; i++ )
 		ent->r.client->ps.pmove.delta_angles[i] = ANGLE2SHORT( ent->s.angles[i] ) - ent->r.client->pers.cmd_angles[i];
@@ -240,9 +240,9 @@ void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo
 /*
 * TVM_CanConnect
 */
-qboolean TVM_CanConnect( tvm_relay_t *relay, char *userinfo )
+bool TVM_CanConnect( tvm_relay_t *relay, char *userinfo )
 {
-	return qtrue;
+	return true;
 }
 
 /*
@@ -261,9 +261,9 @@ void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo )
 		spec = NULL;
 	else
 		spec = ent->relay->edicts + ent->relay->playernum + 1;
-	ent->local = qtrue;
+	ent->local = true;
 	ent->relay = relay;
-	ent->r.inuse = qtrue;
+	ent->r.inuse = true;
 	ent->r.svflags = SVF_NOCLIENT;
 	ent->s.team = spec ? spec->s.team : 0;
 	ent->r.client = relay->local_clients + PLAYERNUM( ent );
@@ -276,8 +276,8 @@ void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo )
 
 	//TVM_Printf( "Connect: %s\n", ent->r.client->pers.netname );
 
-	ent->r.client->pers.connected = qtrue;
-	ent->r.client->pers.connecting = qtrue;
+	ent->r.client->pers.connected = true;
+	ent->r.client->pers.connecting = true;
 }
 
 /*
@@ -292,7 +292,7 @@ void TVM_ClientDisconnect( tvm_relay_t *relay, edict_t *ent )
 
 	//TVM_Printf( "Disconnect: %s\n", ent->r.client->pers.netname );
 
-	ent->r.inuse = qfalse;
+	ent->r.inuse = false;
 	ent->r.svflags = SVF_NOCLIENT;
 	memset( ent->r.client, 0, sizeof( *ent->r.client ) );
 	ent->r.client->ps.playerNum = PLAYERNUM( ent );
@@ -304,14 +304,14 @@ void TVM_ClientDisconnect( tvm_relay_t *relay, edict_t *ent )
 * TVM_ClientMultiviewChanged
 * 
 * This will be called when client tries to change multiview mode
-* Mode change can be disallowed by returning qfalse
+* Mode change can be disallowed by returning false
 */
-qboolean TVM_ClientMultiviewChanged( tvm_relay_t *relay, edict_t *ent, qboolean multiview )
+bool TVM_ClientMultiviewChanged( tvm_relay_t *relay, edict_t *ent, bool multiview )
 {
 	assert( ent && ent->local && ent->r.client );
 
 	ent->r.client->pers.multiview = multiview;
-	return qtrue;
+	return true;
 }
 
 static void TVM_ClientMakePlrkeys( gclient_t *client, usercmd_t *ucmd )
@@ -384,7 +384,7 @@ void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int tim
 			client->ps.pmove.pm_type = PM_FREEZE;
 			if( !VectorCompare( ent->s.origin, spec->s.origin ) )
 			{
-				ent->s.teleported = qtrue;
+				ent->s.teleported = true;
 				VectorCopy( spec->s.origin, ent->s.origin );
 				VectorCopy( spec->s.angles, ent->s.angles );
 				VectorCopy( spec->s.angles, client->ps.viewangles );
@@ -409,7 +409,7 @@ void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int tim
 	VectorCopy( ent->r.maxs, pm.maxs );
 
 	if( memcmp( &client->old_pmove, &client->ps.pmove, sizeof( pmove_state_t ) ) )
-		pm.snapinitial = qtrue;
+		pm.snapinitial = true;
 
 	// perform a pmove
 	TVM_Pmove( &pm );

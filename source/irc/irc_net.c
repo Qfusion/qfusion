@@ -14,8 +14,8 @@
 #	include <errno.h>
 #endif
 
-qboolean Irc_Net_Connect(const char *host, unsigned short port, irc_socket_t *sock) {
-	qboolean failed = qtrue;
+bool Irc_Net_Connect(const char *host, unsigned short port, irc_socket_t *sock) {
+	bool failed = true;
 	*sock = socket(PF_INET, SOCK_STREAM, 0);
 	if (*sock >= 0) {
 		struct sockaddr_in addr;
@@ -31,7 +31,7 @@ qboolean Irc_Net_Connect(const char *host, unsigned short port, irc_socket_t *so
 			status = connect(*sock, (const struct sockaddr*) &addr, sizeof(addr));
 			if (!status) {
 				// connection successful
-				failed = qfalse;
+				failed = false;
 			} else {
 				strcpy(IRC_ERROR_MSG, "Connection refused");
 #ifdef _WIN32
@@ -62,14 +62,14 @@ qboolean Irc_Net_Connect(const char *host, unsigned short port, irc_socket_t *so
 #endif
 		if (status) {
 			strcpy(IRC_ERROR_MSG, "Could not set non-blocking socket mode");
-			failed = qtrue;
+			failed = true;
 		}
 	}
 
 	return failed;
 }
 
-qboolean Irc_Net_Disconnect(irc_socket_t sock) {
+bool Irc_Net_Disconnect(irc_socket_t sock) {
 #ifdef _WIN32
 	return closesocket(sock) < 0;
 #else
@@ -77,19 +77,19 @@ qboolean Irc_Net_Disconnect(irc_socket_t sock) {
 #endif
 }
 
-qboolean Irc_Net_Send(irc_socket_t sock, const char *msg, size_t msg_len) {
+bool Irc_Net_Send(irc_socket_t sock, const char *msg, size_t msg_len) {
 	int sent;
 	assert(msg);
 	sent = send(sock, msg, (int) msg_len, 0);
 	if (sent >= 0)
-		return qfalse;
+		return false;
 	else {
 		strcpy(IRC_ERROR_MSG, "send failed");
-		return qtrue;
+		return true;
 	}
 }
 
-qboolean Irc_Net_Receive(irc_socket_t sock, char *buf, size_t buf_len, int *recvd) {
+bool Irc_Net_Receive(irc_socket_t sock, char *buf, size_t buf_len, int *recvd) {
 	assert(buf);
 	assert(recvd);
 	*recvd = recv(sock, buf, (int) buf_len, 0);
@@ -101,9 +101,9 @@ qboolean Irc_Net_Receive(irc_socket_t sock, char *buf, size_t buf_len, int *recv
 		*recvd = 0;
 #endif
 	if (*recvd >= 0)
-		return qfalse;
+		return false;
 	else {
 		strcpy(IRC_ERROR_MSG, "recv failed");
-		return qtrue;
+		return true;
 	}
 }

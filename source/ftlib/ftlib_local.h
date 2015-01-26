@@ -85,7 +85,7 @@ typedef struct qfontface_s
 	unsigned int numGlyphs;
 	qglyph_t *glyphs;
 
-	qboolean hasKerning;
+	bool hasKerning;
 
 	// offsets between adjacent characters
 	short ( *getKerning )( struct qfontface_s *, unsigned int char1, unsigned int char2 );
@@ -115,19 +115,19 @@ typedef struct qfontfamily_s
 void Com_DPrintf( const char *format, ... );
 
 int FTLIB_API( void );
-qboolean FTLIB_Init( qboolean verbose );
-void FTLIB_Shutdown( qboolean verbose );
+bool FTLIB_Init( bool verbose );
+void FTLIB_Shutdown( bool verbose );
 
 char *FTLIB_CopyString( const char *in );
 
 // ftlib.c
-void FTLIB_InitSubsystems( qboolean verbose );
-void FTLIB_ShutdownSubsystems( qboolean verbose );
-void FTLIB_PrecacheFonts( qboolean verbose );
+void FTLIB_InitSubsystems( bool verbose );
+void FTLIB_ShutdownSubsystems( bool verbose );
+void FTLIB_PrecacheFonts( bool verbose );
 qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size, unsigned int lastChar );
 void FTLIB_TouchFont( qfontface_t *qfont );
 void FTLIB_TouchAllFonts( void );
-void FTLIB_FreeFonts( qboolean verbose );
+void FTLIB_FreeFonts( bool verbose );
 void FTLIB_PrintFontList( void );
 
 // ftlib_draw.c

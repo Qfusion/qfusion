@@ -36,7 +36,7 @@ static struct qmutex_s *snddma_android_mutex = NULL;
 static int snddma_android_pos;
 static int snddma_android_size;
 
-void S_Activate( qboolean active )
+void S_Activate( bool active )
 {
 	if( active )
 	{
@@ -157,12 +157,12 @@ static const char *SNDDMA_Android_Init( void )
 
 	snddma_android_pos = 0;
 
-	S_Activate( qtrue );
+	S_Activate( true );
 
 	return NULL;
 }
 
-qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
+bool SNDDMA_Init( void *hwnd, bool verbose )
 {
 	const char *initError;
 
@@ -180,13 +180,13 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 	{
 		Com_Printf( "SNDDMA_Init: %s failed.\n", initError );
 		SNDDMA_Shutdown( verbose );
-		return qfalse;
+		return false;
 	}
 
 	if( verbose )
 		Com_Printf( "OpenSL ES audio initialized.\n" );
 
-	return qtrue;
+	return true;
 }
 
 int SNDDMA_GetDMAPos( void )
@@ -194,7 +194,7 @@ int SNDDMA_GetDMAPos( void )
 	return snddma_android_pos;
 }
 
-void SNDDMA_Shutdown( qboolean verbose )
+void SNDDMA_Shutdown( bool verbose )
 {
 	if( verbose )
 		Com_Printf( "Closing OpenSL ES audio device...\n" );

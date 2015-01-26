@@ -50,7 +50,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			0,                              // reload frametime
 			0,                              // cooldown frametime
 			0,                              // projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			0,                              // damage
@@ -84,7 +84,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			0,                              // reload frametime
 			0,                              // cooldown frametime
 			0,                              // projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			0,                              // damage
@@ -122,7 +122,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			400,							// reload frametime
 			0,								// cooldown frametime
 			5000,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			45,								// damage
@@ -156,7 +156,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			800,							// reload frametime
 			0,								// cooldown frametime
 			64,								// projectile timeout  / projectile range for instant weapons
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			45,								// damage
@@ -194,7 +194,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			75,								// reload frametime
 			0,								// cooldown frametime
 			6000,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			6.75,							// damage
@@ -228,7 +228,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			75,								// reload frametime
 			0,								// cooldown frametime
 			6000,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			6.75,							// damage
@@ -266,7 +266,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			900,							// reload frametime
 			0,								// cooldown frametime
 			8192,							// projectile timeout / projectile range for instant weapons
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			4,								// damage
@@ -300,7 +300,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			900,							// reload frametime
 			0,								// cooldown frametime
 			8192,							// projectile timeout / projectile range for instant weapons
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			4,								// damage
@@ -338,7 +338,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			725,							// reload frametime
 			0,								// cooldown frametime
 			1250,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			65,								// damage
@@ -372,7 +372,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			725,							// reload frametime
 			0,								// cooldown frametime
 			1250,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			60,								// damage
@@ -410,7 +410,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			900,							// reload frametime
 			0,								// cooldown frametime
 			10000,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			75,								// damage
@@ -444,7 +444,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			900,							// reload frametime
 			0,								// cooldown frametime
 			10000,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			70,								// damage
@@ -482,7 +482,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			100,							// reload frametime
 			0,								// cooldown frametime
 			5000,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			14,								// damage
@@ -516,7 +516,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			100,							// reload frametime
 			0,								// cooldown frametime
 			5000,							// projectile timeout
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			12,								// damage
@@ -554,7 +554,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			50,								// reload frametime
 			0,								// cooldown frametime
 			850,							// projectile timeout / projectile range for instant weapons
-			qtrue,							// smooth refire
+			true,							// smooth refire
 
 			//damages
 			6.75,							// damage
@@ -588,7 +588,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			50,								// reload frametime
 			0,								// cooldown frametime
 			850,							// projectile timeout / projectile range for instant weapons
-			qtrue,							// smooth refire
+			true,							// smooth refire
 
 			//damages
 			6.5,							// damage
@@ -626,7 +626,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			1250,							// reload frametime
 			0,								// cooldown frametime
 			900,							// min damage range
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			75,								// damage
@@ -660,7 +660,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			1250,							// reload frametime
 			0,								// cooldown frametime
 			1024,							// min damage range
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			60,								// damage
@@ -698,7 +698,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			1300,							// reload frametime
 			0,								// cooldown frametime
 			8024,							// range
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			200,							// damage
@@ -732,7 +732,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			1300,							// reload frametime
 			0,								// cooldown frametime
 			8024,							// range
-			qfalse,							// smooth refire
+			false,							// smooth refire
 
 			//damages
 			125,							// damage

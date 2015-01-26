@@ -29,7 +29,7 @@ static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 /*
  * VID_Sys_Init
  */
-int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
+int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen, bool wideScreen, bool verbose )
 {
 	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, NULL, NULL, parentWindow, x, y, width, height, displayFrequency, fullScreen, wideScreen, verbose );
 }
@@ -51,7 +51,7 @@ void VID_UpdateWindowPosAndSize( int x, int y )
 /*
  * VID_EnableAltTab
  */
-void VID_EnableAltTab( qboolean enable )
+void VID_EnableAltTab( bool enable )
 {
 }
 
@@ -66,7 +66,7 @@ void *VID_GetWindowHandle( void )
 /*
  * VID_EnableWinKeys
  */
-void VID_EnableWinKeys( qboolean enable )
+void VID_EnableWinKeys( bool enable )
 {
 }
 
@@ -82,7 +82,7 @@ void VID_FlashWindow( int count )
 /*
  * VID_GetDisplaySize
  */
-qboolean VID_GetDisplaySize( int *width, int *height )
+bool VID_GetDisplaySize( int *width, int *height )
 {
 	SDL_DisplayMode mode;
 	SDL_GetDesktopDisplayMode( 0, &mode );
@@ -90,7 +90,7 @@ qboolean VID_GetDisplaySize( int *width, int *height )
 	*width = mode.w;
 	*height = mode.h;
 
-	return qtrue;
+	return true;
 }
 
 /*

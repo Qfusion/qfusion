@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * TV_Relay_UpdateConfigString
 */
-static qboolean TV_Relay_UpdateConfigString( relay_t *relay, int index, const char *val )
+static bool TV_Relay_UpdateConfigString( relay_t *relay, int index, const char *val )
 {
 	size_t len;
 
@@ -49,19 +49,19 @@ static qboolean TV_Relay_UpdateConfigString( relay_t *relay, int index, const ch
 	if( !COM_ValidateConfigstring( val ) )
 	{
 		Com_Printf( "Warning: Configstring %i invalid: %s\n", index, val );
-		return qfalse;
+		return false;
 	}
 
 	// game module can prohibit changing this configstring
 	if( relay->state == CA_ACTIVE && !relay->module_export->ConfigString( relay->module, index, val ) )
-		return qfalse;
+		return false;
 
 	// ignore if no changes
 	if( !strncmp( relay->configstrings[index], val, len ) && relay->configstrings[index][len] == '\0' )
-		return qfalse;
+		return false;
 
 	Q_strncpyz( relay->configstrings[index], val, sizeof( relay->configstrings[index] ) );
-	return qtrue;
+	return true;
 }
 
 /*

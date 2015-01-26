@@ -37,7 +37,7 @@ struct stat_query_s
 	cJSON		*json_out;		// root of all
 	cJSON		*json_in;
 
-	qboolean	has_json;
+	bool	has_json;
 
 	// if 'req' is NULL we have a GET cause that has to be created
 	// just before launch when we have all parameters
@@ -46,7 +46,7 @@ struct stat_query_s
 
 	char *iface;
 
-	void (*callback_fn)( stat_query_t *, qboolean, void * );
+	void (*callback_fn)( stat_query_t *, bool, void * );
 	void *customp;
 
 	// cached responses
@@ -171,7 +171,7 @@ static void StatQuery_CallbackGeneric( wswcurl_req *req, int status, void *custo
 {
 	const char *content_type;
 	stat_query_t *query = (stat_query_t *)customp;
-	qboolean success = status > 0 ? qtrue : qfalse;
+	bool success = status > 0 ? true : false;
 
 	// print some stuff out
 	if( status < 0 )
@@ -227,9 +227,9 @@ static double StatQuery_JsonToNumber( cJSON *obj )
 		case cJSON_String:
 			return atof( obj->valuestring );
 		case cJSON_True:
-			return (double)qtrue;
+			return (double)true;
 		case cJSON_False:
-			return (double)qfalse;
+			return (double)false;
 		default:
 			Com_Printf( "StatQuery: Couldnt cast JSON type %s to number (object name %s)\n",
 						StatQuery_JsonTypeToString( obj->type ), obj->string != 0 ? obj->string : "" );
@@ -272,7 +272,7 @@ static const char *StatQuery_JsonToString( cJSON *obj )
 //===============================================
 
 // TODO; prefer GET/POST
-static stat_query_t *StatQuery_CreateQuery( const char *iface, const char *str, qboolean get )
+static stat_query_t *StatQuery_CreateQuery( const char *iface, const char *str, bool get )
 {
 	stat_query_t *query;
 
@@ -335,7 +335,7 @@ static void StatQuery_DestroyQuery( stat_query_t *query )
 	SQFREE( query );
 }
 
-static void StatQuery_SetCallback( stat_query_t *query, void( *callback_fn )(stat_query_t *, qboolean, void *), void *customp )
+static void StatQuery_SetCallback( stat_query_t *query, void( *callback_fn )(stat_query_t *, bool, void *), void *customp )
 {
 	query->callback_fn = callback_fn;
 	query->customp = customp;
@@ -437,7 +437,7 @@ static stat_query_section_t *StatQuery_CreateSection( stat_query_t *query, stat_
 	cJSON *this_section = NULL;
 
 	// this is only set in CreateSection/Array, needless to set in atoms
-	query->has_json = qtrue;
+	query->has_json = true;
 
 	this_section = cJSON_CreateObject();
 
@@ -457,7 +457,7 @@ static stat_query_section_t *StatQuery_CreateArray( stat_query_t *query, stat_qu
 	cJSON *cparent = (cJSON *)parent;
 	cJSON *this_section = NULL;
 
-	query->has_json = qtrue;
+	query->has_json = true;
 
 	this_section = cJSON_CreateArray();
 

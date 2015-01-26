@@ -137,7 +137,7 @@ typedef struct glsl_program_s
 
 trie_t *glsl_cache_trie = NULL;
 
-static qboolean r_glslprograms_initialized;
+static bool r_glslprograms_initialized;
 
 static unsigned int r_numglslprograms;
 static glsl_program_t r_glslprograms[MAX_GLSL_PROGRAMS];
@@ -193,7 +193,7 @@ void RP_Init( void )
 
 	RP_PrecachePrograms();
 
-	r_glslprograms_initialized = qtrue;
+	r_glslprograms_initialized = true;
 }
 
 /*
@@ -275,21 +275,21 @@ static void RP_PrecachePrograms( void )
 			type = atoi( token );
 
 			// read lower bits
-			token = COM_ParseExt( ptr, qfalse );
+			token = COM_ParseExt( ptr, false );
 			if( !token[0] ) {
 				break;
 			}
 			lb = atoi( token );
 
 			// read higher bits
-			token = COM_ParseExt( ptr, qfalse );
+			token = COM_ParseExt( ptr, false );
 			if( !token[0] ) {
 				break;
 			}
 			hb = atoi( token );
 
 			// read program full name
-			token = COM_ParseExt( ptr, qfalse );
+			token = COM_ParseExt( ptr, false );
 			if( !token[0] ) {
 				break;
 			}
@@ -298,7 +298,7 @@ static void RP_PrecachePrograms( void )
 			features = (hb << 32) | lb; 
 
 			// read optional binary cache
-			token = COM_ParseExt( ptr, qfalse );
+			token = COM_ParseExt( ptr, false );
 			if( handleBin && token[0] ) {
 				binaryPos = atoi( token );
 				if( binaryPos ) {
@@ -1185,7 +1185,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 typedef struct
 {
 	const char *topFile;
-	qboolean error;
+	bool error;
 
 	const char **strings;
 	size_t maxStrings;
@@ -1199,7 +1199,7 @@ typedef struct
 /*
 * RF_LoadShaderFromFile_r
 */
-static qboolean RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
+static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 	int stackDepth )
 {
 	char *fileContents;
@@ -1232,12 +1232,12 @@ static qboolean RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 
 	if( !fileContents ) {
 		Com_Printf( S_COLOR_YELLOW "Cannot load file '%s'\n", fileName );
-		return qtrue;
+		return true;
 	}
 
 	if( parser->numBuffers == parser->maxBuffers ) {
 		Com_Printf( S_COLOR_YELLOW "numBuffers overflow in '%s' around '%s'\n", parser->topFile, fileName );
-		return qtrue;
+		return true;
 	}
 	parser->buffers[parser->numBuffers++] = fileContents;
 
@@ -1246,7 +1246,7 @@ static qboolean RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 
 	while( 1 ) {
 		prevPtr = ptr;
-		token = COM_ParseExt( &ptr, qtrue );
+		token = COM_ParseExt( &ptr, true );
 		if( !token[0] ) {
 			break;
 		}
@@ -1271,7 +1271,7 @@ static qboolean RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 
 			if( parser->numStrings == parser->maxStrings ) {
 				Com_Printf( S_COLOR_YELLOW "numStrings overflow in '%s' around '%s'\n", fileName, line );
-				return qtrue;
+				return true;
 			}
 			parser->strings[parser->numStrings++] = startBuf;
 			startBuf = NULL;
@@ -1281,12 +1281,12 @@ static qboolean RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 		token = COM_Parse( &ptr );
 		if( !token[0] ) {
 			Com_Printf( S_COLOR_YELLOW "Syntax error in '%s' around '%s'\n", fileName, line );
-			return qtrue;
+			return true;
 		}
 
 		if( stackDepth == PARSER_MAX_STACKDEPTH ) {
 			Com_Printf( S_COLOR_YELLOW "Include stack overflow in '%s' around '%s'\n", fileName, line );
-			return qtrue;
+			return true;
 		}
 
 		if( !parser->error ) {
@@ -1317,7 +1317,7 @@ static qboolean RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 			R_Free( tempFilename );
 
 			if( parser->error ) {
-				return qtrue;
+				return true;
 			}
 		}
 	}
@@ -1325,7 +1325,7 @@ static qboolean RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileN
 	if( startBuf ) {
 		if( parser->numStrings == parser->maxStrings ) {
 			Com_Printf( S_COLOR_YELLOW "numStrings overflow in '%s'\n", fileName, startBuf );
-			return qtrue;
+			return true;
 		}
 		parser->strings[parser->numStrings++] = startBuf;
 	}
@@ -1578,7 +1578,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		shaderStrings[deformvIdx] = "\n";
 	}
 	Q_snprintfz( fileName, sizeof( fileName ), "glsl/%s.vert.glsl", name );
-	parser.error = qfalse;
+	parser.error = false;
 	parser.numBuffers = 0;
 	parser.numStrings = 0;
 	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
@@ -1607,7 +1607,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	shaderStrings[wavefuncsIdx] = "\n";
 	shaderStrings[deformvIdx] = "\n";
 	Q_snprintfz( fileName, sizeof( fileName ), "glsl/%s.frag.glsl", name );
-	parser.error = qfalse;
+	parser.error = false;
 	parser.numBuffers = 0;
 	parser.numStrings = 0;
 	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
@@ -1908,7 +1908,7 @@ void RP_UpdateMaterialUniforms( int elem,
 /*
 * RP_UpdateDistortionUniforms
 */
-void RP_UpdateDistortionUniforms( int elem, qboolean frontPlane )
+void RP_UpdateDistortionUniforms( int elem, bool frontPlane )
 {
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
@@ -1972,7 +1972,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 	float colorScale = mapConfig.mapLightColorScale;
 	vec3_t dlorigin, tvec, dlcolor;
 	glsl_program_t *program = r_glslprograms + elem - 1;
-	qboolean identityAxis = Matrix3_Compare( entAxis, axis_identity );
+	bool identityAxis = Matrix3_Compare( entAxis, axis_identity );
 
 	if( superLightStyle ) {
 		int i;
@@ -2443,5 +2443,5 @@ void RP_Shutdown( void )
 	glsl_cache_trie = NULL;
 
 	r_numglslprograms = 0;
-	r_glslprograms_initialized = qfalse;
+	r_glslprograms_initialized = false;
 }

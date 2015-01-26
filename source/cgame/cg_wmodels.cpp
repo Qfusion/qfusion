@@ -99,7 +99,7 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 	ptr = ( char * )buf;
 	while( ptr )
 	{
-		token = COM_ParseExt( &ptr, qtrue );
+		token = COM_ParseExt( &ptr, true );
 		if( !token[0] )
 			break;
 
@@ -112,11 +112,11 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 					CG_Printf( "%sScript: barrel:%s", S_COLOR_BLUE, S_COLOR_WHITE );
 
 				// time
-				i = atoi( COM_ParseExt( &ptr, qfalse ) );
+				i = atoi( COM_ParseExt( &ptr, false ) );
 				weaponinfo->barrelTime = (unsigned int)( i > 0 ? i : 0 );
 
 				// speed
-				weaponinfo->barrelSpeed = atof( COM_ParseExt( &ptr, qfalse ) );
+				weaponinfo->barrelSpeed = atof( COM_ParseExt( &ptr, false ) );
 
 				if( debug )
 					CG_Printf( "%s time:%i, speed:%.2f\n", S_COLOR_BLUE, (int)weaponinfo->barrelTime, weaponinfo->barrelSpeed, S_COLOR_WHITE );
@@ -127,15 +127,15 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 					CG_Printf( "%sScript: flash:%s", S_COLOR_BLUE, S_COLOR_WHITE );
 
 				// time
-				i = atoi( COM_ParseExt( &ptr, qfalse ) );
+				i = atoi( COM_ParseExt( &ptr, false ) );
 				weaponinfo->flashTime = (unsigned int)( i > 0 ? i : 0 );
 
 				// radius
-				i = atoi( COM_ParseExt( &ptr, qfalse ) );
+				i = atoi( COM_ParseExt( &ptr, false ) );
 				weaponinfo->flashRadius = (float)( i > 0 ? i : 0 );
 
 				// fade
-				token = COM_ParseExt( &ptr, qfalse );
+				token = COM_ParseExt( &ptr, false );
 				if( !Q_stricmp( token, "no" ) )
 					weaponinfo->flashFade = false;
 
@@ -147,9 +147,9 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 				if( debug )
 					CG_Printf( "%sScript: flashColor:%s", S_COLOR_BLUE, S_COLOR_WHITE );
 
-				weaponinfo->flashColor[0] = atof( token = COM_ParseExt( &ptr, qfalse ) );
-				weaponinfo->flashColor[1] = atof( token = COM_ParseExt( &ptr, qfalse ) );
-				weaponinfo->flashColor[2] = atof( token = COM_ParseExt( &ptr, qfalse ) );
+				weaponinfo->flashColor[0] = atof( token = COM_ParseExt( &ptr, false ) );
+				weaponinfo->flashColor[1] = atof( token = COM_ParseExt( &ptr, false ) );
+				weaponinfo->flashColor[2] = atof( token = COM_ParseExt( &ptr, false ) );
 
 				if( debug )
 					CG_Printf( "%s%f %f %f%s\n", S_COLOR_BLUE,
@@ -161,12 +161,12 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 				if( debug )
 					CG_Printf( "%sScript: handPosition:%s", S_COLOR_BLUE, S_COLOR_WHITE );
 
-				weaponinfo->handpositionOrigin[FORWARD] = atof( COM_ParseExt( &ptr, qfalse ) );
-				weaponinfo->handpositionOrigin[RIGHT] = atof( COM_ParseExt( &ptr, qfalse ) );
-				weaponinfo->handpositionOrigin[UP] = atof( COM_ParseExt( &ptr, qfalse ) );
-				weaponinfo->handpositionAngles[PITCH] = atof( COM_ParseExt( &ptr, qfalse ) );
-				weaponinfo->handpositionAngles[YAW] = atof( COM_ParseExt( &ptr, qfalse ) );
-				weaponinfo->handpositionAngles[ROLL] = atof( COM_ParseExt( &ptr, qfalse ) );
+				weaponinfo->handpositionOrigin[FORWARD] = atof( COM_ParseExt( &ptr, false ) );
+				weaponinfo->handpositionOrigin[RIGHT] = atof( COM_ParseExt( &ptr, false ) );
+				weaponinfo->handpositionOrigin[UP] = atof( COM_ParseExt( &ptr, false ) );
+				weaponinfo->handpositionAngles[PITCH] = atof( COM_ParseExt( &ptr, false ) );
+				weaponinfo->handpositionAngles[YAW] = atof( COM_ParseExt( &ptr, false ) );
+				weaponinfo->handpositionAngles[ROLL] = atof( COM_ParseExt( &ptr, false ) );
 
 				if( debug )
 					CG_Printf( "%s%f %f %f %f %f %f%s\n", S_COLOR_BLUE,
@@ -186,7 +186,7 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 					break;
 				}
 
-				token = COM_ParseExt( &ptr, qfalse );
+				token = COM_ParseExt( &ptr, false );
 				if( Q_stricmp( token, "NULL" ) )
 				{
 					weaponinfo->sound_fire[weaponinfo->num_fire_sounds] = trap_S_RegisterSound( token );
@@ -207,7 +207,7 @@ static bool CG_vWeap_ParseAnimationScript( weaponinfo_t *weaponinfo, const char 
 					break;
 				}
 
-				token = COM_ParseExt( &ptr, qfalse );
+				token = COM_ParseExt( &ptr, false );
 				if( Q_stricmp( token, "NULL" ) )
 				{
 					weaponinfo->sound_strongfire[weaponinfo->num_strongfire_sounds] = trap_S_RegisterSound( token );

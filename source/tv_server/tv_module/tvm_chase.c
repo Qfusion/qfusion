@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void TVM_SpectatorMode( edict_t *ent );
 
-static void TVM_Chase_SetChaseActive( edict_t *ent, qboolean active )
+static void TVM_Chase_SetChaseActive( edict_t *ent, bool active )
 {
 	ent->r.client->chase.active = active;
 }
@@ -54,20 +54,20 @@ static void TVM_GhostClient( edict_t *ent )
 /*
 * TVM_CanChase
 */
-static qboolean TVM_Chase_IsValidTarget( edict_t *ent, edict_t *target )
+static bool TVM_Chase_IsValidTarget( edict_t *ent, edict_t *target )
 {
 	assert( ent && ent->local && ent->r.client );
 
 	if( !ent || !target )
-		return qfalse;
+		return false;
 
 	if( !target->r.inuse || target->local || !target->r.client )
-		return qfalse;
+		return false;
 
 	if( target->s.team <= 0 ) // skip spectator team
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 static int TVM_Chase_FindFollowPOV( edict_t *ent )
@@ -295,7 +295,7 @@ void TVM_ChasePlayer( edict_t *ent, char *name, int followmode )
 	gclient_t *client;
 	int targetNum = -1;
 	int oldTarget;
-	qboolean can_follow = qtrue;
+	bool can_follow = true;
 	char colorlessname[MAX_NAME_BYTES];
 
 	client = ent->r.client;
@@ -307,7 +307,7 @@ void TVM_ChasePlayer( edict_t *ent, char *name, int followmode )
 	if( !can_follow && followmode )
 	{
 		TVM_PrintMsg( ent->relay, ent, "Chasecam follow mode unavailable\n" );
-		followmode = qfalse;
+		followmode = false;
 	}
 
 	if( ent->r.client->chase.followmode && !followmode )
@@ -378,7 +378,7 @@ void TVM_ChasePlayer( edict_t *ent, char *name, int followmode )
 		// we found a target, set up the chasecam
 		client->chase.target = targetNum + 1;
 		client->chase.followmode = followmode;
-		TVM_Chase_SetChaseActive( ent, qtrue );
+		TVM_Chase_SetChaseActive( ent, true );
 	}
 	else
 	{
@@ -480,7 +480,7 @@ static void TVM_SpectatorMode( edict_t *ent )
 	assert( ent && ent->local && ent->r.client );
 
 	// was in chasecam
-	TVM_Chase_SetChaseActive( ent, qfalse );
+	TVM_Chase_SetChaseActive( ent, false );
 	ent->r.client->ps.pmove.pm_type = PM_SPECTATOR;
 	ent->r.client->ps.pmove.pm_flags &= ~PMF_NO_PREDICTION;
 	ent->r.client->ps.POVnum = ent->relay->playernum + 1;

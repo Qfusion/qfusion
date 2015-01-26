@@ -63,7 +63,7 @@ typedef struct callvotetype_s
 	char *argument_format;
 	char *help;
 	char *argument_type;
-	qboolean need_auth;
+	bool need_auth;
 	struct callvotetype_s *next;
 } callvotetype_t;
 
@@ -2559,7 +2559,7 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
 	callvote->webRequest = G_PlayerlistWebRequest;
-	callvote->need_auth = qtrue;
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Removes player from the server" );
 
 	callvote = G_RegisterCallvote( "kickban" );
@@ -2571,7 +2571,7 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
 	callvote->webRequest = G_PlayerlistWebRequest;
-	callvote->need_auth = qtrue;
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Removes player from the server and bans his IP-address for 15 minutes" );
 
 	callvote = G_RegisterCallvote( "mute" );
@@ -2583,7 +2583,7 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
 	callvote->webRequest = G_PlayerlistWebRequest;
-	callvote->need_auth = qtrue;
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Disallows chat messages from the muted player" );
 
 	callvote = G_RegisterCallvote( "vmute" );
@@ -2595,7 +2595,7 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
 	callvote->webRequest = G_PlayerlistWebRequest;
-	callvote->need_auth = qtrue;
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Disallows voice chat messages from the muted player" );
 
 	callvote = G_RegisterCallvote( "unmute" );
@@ -2607,7 +2607,7 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
 	callvote->webRequest = G_PlayerlistWebRequest;
-	callvote->need_auth = qtrue;
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Reallows chat messages from the unmuted player" );
 
 	callvote = G_RegisterCallvote( "vunmute" );
@@ -2619,7 +2619,7 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
 	callvote->webRequest = G_PlayerlistWebRequest;
-	callvote->need_auth = qtrue;
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Reallows voice chat messages from the unmuted player" );
 
 	callvote = G_RegisterCallvote( "numbots" );

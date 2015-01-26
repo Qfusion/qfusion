@@ -26,12 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // TODO: add in_mouse?
 cvar_t *in_grabinconsole;
 
-static qboolean focus = qfalse;
-static qboolean minimized = qfalse;
+static bool focus = false;
+static bool minimized = false;
 
-static qboolean input_inited = qfalse;
-static qboolean mouse_active = qfalse;
-static qboolean input_active = qfalse;
+static bool input_inited = false;
+static bool mouse_active = false;
+static bool input_active = false;
 
 static int shift_level = 0;
 
@@ -193,7 +193,7 @@ static void install_grabs_mouse( void )
 	XSync(x11display.dpy, True);
 
 	mx = my = 0;
-	mouse_active = qtrue;
+	mouse_active = true;
 }
 
 static void uninstall_grabs_mouse( void )
@@ -222,7 +222,7 @@ static void uninstall_grabs_mouse( void )
 	}
 	XIFreeDeviceInfo(info);
 
-	mouse_active = qfalse;
+	mouse_active = false;
 	mx = my = 0;
 }
 
@@ -269,7 +269,7 @@ static void install_grabs_keyboard( void )
 
 	XSync(x11display.dpy, True);
 
-	input_active = qtrue;
+	input_active = true;
 }
 
 static void uninstall_grabs_keyboard( void )
@@ -294,7 +294,7 @@ static void uninstall_grabs_keyboard( void )
 	*/
 	XIFreeDeviceInfo(info);
 
-	input_active = qfalse;
+	input_active = false;
 }
 
 // Q3 version
@@ -384,7 +384,7 @@ static void _X11_CheckWMSTATE( void )
 	int actual_format;
 	int status;
 
-	minimized = qfalse;
+	minimized = false;
 	xa_WM_STATE = x11display.wmState;
 
 	status = XGetWindowProperty ( x11display.dpy, x11display.win,
@@ -405,7 +405,7 @@ static void _X11_CheckWMSTATE( void )
 	}
 
 	if( ( *property == IconicState ) || ( *property == WithdrawnState ) )
-		minimized = qtrue;
+		minimized = true;
 
 	XFree( (char *)property );
 }
@@ -413,7 +413,7 @@ static void _X11_CheckWMSTATE( void )
 static void handle_button(XGenericEventCookie *cookie)
 {
 	XIDeviceEvent *ev = (XIDeviceEvent *)cookie->data;
-	qboolean down = cookie->evtype == XI_ButtonPress;
+	bool down = cookie->evtype == XI_ButtonPress;
 	int button = ev->detail;
 	unsigned time = Sys_XTimeToSysTime(ev->time);
 	int k_button;
@@ -443,7 +443,7 @@ static void handle_button(XGenericEventCookie *cookie)
 static void handle_key(XGenericEventCookie *cookie)
 {
 	XIDeviceEvent *ev = (XIDeviceEvent *)cookie->data;
-	qboolean down = cookie->evtype == XI_KeyPress;
+	bool down = cookie->evtype == XI_KeyPress;
 	int keycode = ev->detail;
 	unsigned time = Sys_XTimeToSysTime(ev->time);
 
@@ -553,7 +553,7 @@ static void HandleEvents( void )
 			}
 			if( !focus )
 			{
-				focus = qtrue;
+				focus = true;
 				install_grabs_keyboard();
 			}
 			break;
@@ -570,7 +570,7 @@ static void HandleEvents( void )
 				}
 				uninstall_grabs_keyboard();
 				Key_ClearStates();
-				focus = qfalse;
+				focus = false;
 				shift_level = 0;
 			}
 			break;
@@ -581,7 +581,7 @@ static void HandleEvents( void )
 			break;
 
 		case ConfigureNotify:
-			VID_AppActivate( qtrue, qfalse );
+			VID_AppActivate( true, false );
 			break;
 
 		case PropertyNotify:
@@ -589,7 +589,7 @@ static void HandleEvents( void )
 			{
 				if ( event.xproperty.atom == x11display.wmState )
 				{
-					qboolean was_minimized = minimized;
+					bool was_minimized = minimized;
 
 					_X11_CheckWMSTATE();
 
@@ -646,7 +646,7 @@ void IN_JoyMove( usercmd_t *cmd, int frametime )
 {
 }
 
-void IN_Activate( qboolean active )
+void IN_Activate( bool active )
 {
 	if( !input_inited )
 		return;
@@ -679,8 +679,8 @@ void IN_Init( void )
 
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 
-	input_active = qfalse;
-	mouse_active = qfalse;
+	input_active = false;
+	mouse_active = false;
 
 	if( !XQueryExtension( x11display.dpy, "XInputExtension", &xi_opcode, &event, &error ) ) {
 		Com_Printf( "ERROR: XInput Extension not available.\n" );
@@ -693,8 +693,8 @@ void IN_Init( void )
 
 	Com_Printf( "Successfully initialized XInput2 %d.%d\n", xi2_major, xi2_minor );
 
-	focus = qtrue;
-	input_inited = qtrue;
+	focus = true;
+	input_inited = true;
 	install_grabs_keyboard();
 	install_grabs_mouse();
 
@@ -710,8 +710,8 @@ void IN_Shutdown( void )
 
 	uninstall_grabs_keyboard();
 	uninstall_grabs_mouse();
-	input_inited = qfalse;
-	focus = qfalse;
+	input_inited = false;
+	focus = false;
 }
 
 void IN_Restart( void )
@@ -722,7 +722,7 @@ void IN_Restart( void )
 
 void IN_Frame( void )
 {
-	qboolean m_active = qfalse;
+	bool m_active = false;
 
 	if( !input_inited )
 		return;
@@ -732,22 +732,22 @@ void IN_Frame( void )
 	if( focus ) {
 		if( !Cvar_Value( "vid_fullscreen" ) && ( ( cls.key_dest == key_console ) && !in_grabinconsole->integer ) )
 		{
-			m_active = qfalse;
+			m_active = false;
 		}
 		else
 		{
-			m_active = qtrue;
+			m_active = true;
 		}
 	}
 
 	IN_Activate( m_active );
 }
 
-void IN_ShowIME( qboolean show )
+void IN_ShowIME( bool show )
 {
 }
 
-qboolean IN_ShowUICursor( void )
+bool IN_ShowUICursor( void )
 {
-	return qtrue;
+	return true;
 }

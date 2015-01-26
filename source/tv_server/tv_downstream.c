@@ -31,7 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * TV_Downstream_ClientResetCommandBuffers
 */
-void TV_Downstream_ClientResetCommandBuffers( client_t *client, qboolean resetReliable )
+void TV_Downstream_ClientResetCommandBuffers( client_t *client, bool resetReliable )
 {
 	// clear the sounds datagram
 	MSG_Init( &client->soundsmsg, client->soundsmsgData, sizeof( client->soundsmsgData ) );
@@ -92,7 +92,7 @@ void TV_Downstream_AddGameCommand( relay_t *relay, client_t *client, const char 
 * 
 * NULL sends to all the message to all clients
 */
-void TV_Downstream_Msg( client_t *client, relay_t *relay, client_t *who, qboolean chat, const char *format, ... )
+void TV_Downstream_Msg( client_t *client, relay_t *relay, client_t *who, bool chat, const char *format, ... )
 {
 	int i;
 	char msg[1024];
@@ -298,13 +298,13 @@ void TV_Downstream_UserinfoChanged( client_t *client )
 /*
 * TV_Downstream_Netchan_Transmit
 */
-static qboolean TV_Downstream_Netchan_Transmit( netchan_t *netchan, msg_t *msg )
+static bool TV_Downstream_Netchan_Transmit( netchan_t *netchan, msg_t *msg )
 {
 	int zerror;
 
 	// if we got here with unsent fragments, fire them all now
 	if( !Netchan_PushAllFragments( netchan ) )
-		return qfalse;
+		return false;
 
 	if( tv_compresspackets->integer )
 	{
@@ -470,7 +470,7 @@ void TV_Downstream_InitClientMessage( client_t *client, msg_t *msg, uint8_t *dat
 /*
 * TV_Downstream_SendMessageToClient
 */
-qboolean TV_Downstream_SendMessageToClient( client_t *client, msg_t *msg )
+bool TV_Downstream_SendMessageToClient( client_t *client, msg_t *msg )
 {
 	assert( client );
 
@@ -507,7 +507,7 @@ void TV_Downstream_DropClient( client_t *drop, int type, const char *format, ...
 		TV_Relay_ClientDisconnect( drop->relay, drop );
 
 	// make sure everything is clean
-	TV_Downstream_ClientResetCommandBuffers( drop, qtrue );
+	TV_Downstream_ClientResetCommandBuffers( drop, true );
 
 	SNAP_FreeClientFrames( drop );
 
@@ -532,14 +532,14 @@ void TV_Downstream_DropClient( client_t *drop, int type, const char *format, ...
 	if( drop->mv )
 	{
 		tvs.nummvclients--;
-		drop->mv = qfalse;
+		drop->mv = false;
 	}
 
 	memset( &drop->flood, 0, sizeof( drop->flood ) );
 
 	drop->edict = NULL;
 	drop->relay = NULL;
-	drop->tv = qfalse;
+	drop->tv = false;
 	drop->state = CS_ZOMBIE;    // become free in a few seconds
 	drop->name[0] = 0;
 }
@@ -547,7 +547,7 @@ void TV_Downstream_DropClient( client_t *drop, int type, const char *format, ...
 /*
 * TV_Downstream_ChangeStream
 */
-qboolean TV_Downstream_ChangeStream( client_t *client, relay_t *relay )
+bool TV_Downstream_ChangeStream( client_t *client, relay_t *relay )
 {
 	relay_t *oldrelay;
 
@@ -558,12 +558,12 @@ qboolean TV_Downstream_ChangeStream( client_t *client, relay_t *relay )
 	if( relay )
 	{
 		if( !TV_Relay_CanConnect( relay, client, client->userinfo ) )
-			return qfalse;
+			return false;
 	}
 	else
 	{
 		if( !TV_Lobby_CanConnect( client, client->userinfo ) )
-			return qfalse;
+			return false;
 	}
 
 	if( oldrelay )
@@ -571,7 +571,7 @@ qboolean TV_Downstream_ChangeStream( client_t *client, relay_t *relay )
 	else
 		TV_Lobby_ClientDisconnect( client );
 
-	TV_Downstream_ClientResetCommandBuffers( client, qfalse );
+	TV_Downstream_ClientResetCommandBuffers( client, false );
 
 	if( relay )
 		TV_Relay_ClientConnect( relay, client );
@@ -583,22 +583,22 @@ qboolean TV_Downstream_ChangeStream( client_t *client, relay_t *relay )
 	client->state = CS_CONNECTED;
 
 	// let upstream servers know how many clients are connected
-	userinfo_modified = qtrue;
+	userinfo_modified = true;
 
-	return qtrue;
+	return true;
 }
 
 /*
 * TV_Downstream_ProcessPacket
 */
-static qboolean TV_Downstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
+static bool TV_Downstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
 {
 	/*int sequence, sequence_ack;
 	int game_port = -1;*/
 	int zerror;
 
 	if( !Netchan_Process( netchan, msg ) )
-		return qfalse; // wasn't accepted for some reason
+		return false; // wasn't accepted for some reason
 
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
@@ -611,11 +611,11 @@ static qboolean TV_Downstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
 		if( zerror < 0 )
 		{          // compression error. Drop the packet
 			Com_DPrintf( "TV_Downstream_ProcessPacket: Compression error %i. Dropping packet\n", zerror );
-			return qfalse;
+			return false;
 		}
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -656,7 +656,7 @@ void TV_Downstream_ReadPackets( void )
 
 		if( socket->open )
 		{
-			while( qtrue )
+			while( true )
 			{
 				// find a free slot
 				for( i = 0; i < MAX_INCOMING_CONNECTIONS; i++ )
@@ -675,7 +675,7 @@ void TV_Downstream_ReadPackets( void )
 					continue;
 				}
 
-				tvs.incoming[i].active = qtrue;
+				tvs.incoming[i].active = true;
 				tvs.incoming[i].socket = newsocket;
 				tvs.incoming[i].address = address;
 				tvs.incoming[i].time = tvs.realtime;
@@ -691,7 +691,7 @@ void TV_Downstream_ReadPackets( void )
 			if( ret == -1 )
 			{
 				NET_CloseSocket( &tvs.incoming[i].socket );
-				tvs.incoming[i].active = qfalse;
+				tvs.incoming[i].active = false;
 			}
 			else if( ret == 1 )
 			{
@@ -699,7 +699,7 @@ void TV_Downstream_ReadPackets( void )
 				{
 					// sequence packet without upstreams
 					NET_CloseSocket( &tvs.incoming[i].socket );
-					tvs.incoming[i].active = qfalse;
+					tvs.incoming[i].active = false;
 					continue;
 				}
 
@@ -822,7 +822,7 @@ void TV_Downstream_CheckTimeouts( void )
 		{
 			Com_Printf( "Incoming TCP upstream from %s timed out\n", NET_AddressToString( &tvs.incoming[i].address ) );
 			NET_CloseSocket( &tvs.incoming[i].socket );
-			tvs.incoming[i].active = qfalse;
+			tvs.incoming[i].active = false;
 		}
 	}
 #endif
@@ -836,7 +836,7 @@ void TV_Downstream_CheckTimeouts( void )
 
 		if( client->state == CS_ZOMBIE && client->lastPacketReceivedTime + 1000 * tv_zombietime->value < tvs.realtime )
 		{
-			userinfo_modified = qtrue;
+			userinfo_modified = true;
 			client->state = CS_FREE; // can now be reused
 			if( client->individual_socket )
 				NET_CloseSocket( &client->socket );
@@ -846,7 +846,7 @@ void TV_Downstream_CheckTimeouts( void )
 		if( ( client->state != CS_FREE && client->state != CS_ZOMBIE ) &&
 			( client->lastPacketReceivedTime + 1000 * tv_timeout->value < tvs.realtime ) )
 		{
-			userinfo_modified = qtrue;
+			userinfo_modified = true;
 			TV_Downstream_DropClient( client, DROP_TYPE_GENERAL, "Upstream timed out" );
 			client->state = CS_FREE; // don't bother with zombie state
 			if( client->socket.open )
@@ -877,11 +877,11 @@ void TV_Downstream_CheckTimeouts( void )
 /*
 * TV_Downstream_SendClientsFragments
 */
-qboolean TV_Downstream_SendClientsFragments( void )
+bool TV_Downstream_SendClientsFragments( void )
 {
 	client_t *client;
 	int i;
-	qboolean remaining = qfalse;
+	bool remaining = false;
 
 	// send a message to each connected client
 	for( i = 0, client = tvs.clients; i < tv_maxclients->integer; i++, client++ )
@@ -904,7 +904,7 @@ qboolean TV_Downstream_SendClientsFragments( void )
 		}
 
 		if( client->netchan.unsentFragments )
-			remaining = qtrue;
+			remaining = true;
 	}
 
 	return remaining;

@@ -33,7 +33,7 @@ io_connect_t IN_GetIOHandle( void )
 	return ( myHandle );
 }
 
-void IN_SetMouseScalingEnabled( qboolean isRestore )
+void IN_SetMouseScalingEnabled( bool isRestore )
 {
 	static double myOldAcceleration = 0.0;
 

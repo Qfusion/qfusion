@@ -64,7 +64,7 @@ static void SCR_CinematicRawSamples( void *unused, unsigned int samples,
 {
 	(void)unused;
 	
-	CL_SoundModule_RawSamples( samples, rate, width, channels, data, qfalse );
+	CL_SoundModule_RawSamples( samples, rate, width, channels, data, false );
 }
 
 /*
@@ -102,7 +102,7 @@ static void SCR_ReadNextCinematicFrame( void )
 /*
 * SCR_AllowCinematicConsole
 */
-qboolean SCR_AllowCinematicConsole( void )
+bool SCR_AllowCinematicConsole( void )
 {
 	return cl.cin.allowConsole;
 }
@@ -140,7 +140,7 @@ void SCR_RunCinematic( void )
 		&SCR_CinematicRawSamples, &SCR_CinematicGetRawSamplesLength );
 
 	if( !CIN_NeedNextFrame( cl.cin.h, SCR_CinematicTime() - cl.cin.startTime ) ) {
-		cl.cin.redraw = qfalse;
+		cl.cin.redraw = false;
 		return;
 	}
 
@@ -158,17 +158,17 @@ void SCR_RunCinematic( void )
 *
 * Returns true if a cinematic is active, meaning the view rendering should be skipped
 */
-qboolean SCR_DrawCinematic( void )
+bool SCR_DrawCinematic( void )
 {
 	int x, y;
 	int w, h;
-	qboolean keepRatio;
+	bool keepRatio;
 
 	if( cls.state != CA_CINEMATIC )
-		return qfalse;
+		return false;
 
 	if( !cl.cin.pic )
-		return qtrue;
+		return true;
 
 	keepRatio = cl.cin.keepRatio && cl.cin.aspect_numerator!=0 && cl.cin.aspect_denominator!=0;
 
@@ -230,8 +230,8 @@ qboolean SCR_DrawCinematic( void )
 			0, 0, 1, 1, cl.cin.redraw ? cl.cin.pic : NULL );
 	}
 
-	cl.cin.redraw = qfalse;
-	return qtrue;
+	cl.cin.redraw = false;
+	return true;
 }
 
 /*
@@ -240,12 +240,12 @@ qboolean SCR_DrawCinematic( void )
 static void SCR_PlayCinematic( const char *arg, int flags )
 {
 	struct cinematics_s *cin;
-	qboolean yuv;
+	bool yuv;
 	float framerate;
 
 	CL_SoundModule_Clear();
 
-	cin = CIN_Open( arg, 0, qfalse, &yuv, &framerate );
+	cin = CIN_Open( arg, 0, false, &yuv, &framerate );
 	if( !cin )
 	{
 		Com_Printf( "SCR_PlayCinematic: couldn't find %s\n", arg );
@@ -255,17 +255,17 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 	CL_Disconnect( NULL );
 
 	cl.cin.h = cin;
-	cl.cin.keepRatio = (flags & 1) ? qfalse : qtrue;
-	cl.cin.allowConsole = (flags & 2) ? qfalse : qtrue;
-	cl.cin.paused = qfalse;
+	cl.cin.keepRatio = (flags & 1) ? false : true;
+	cl.cin.allowConsole = (flags & 2) ? false : true;
+	cl.cin.paused = false;
 	cl.cin.startTime = SCR_CinematicTime();
-	cl.cin.paused = qfalse;
+	cl.cin.paused = false;
 	cl.cin.yuv = yuv;
 	cl.cin.framerate = framerate;
 
 	CL_SetClientState( CA_CINEMATIC );
 
-	CL_SoundModule_StopAllSounds( qtrue, qtrue );
+	CL_SoundModule_StopAllSounds( true, true );
 
 	SCR_EndLoadingPlaque();
 
@@ -299,7 +299,7 @@ void SCR_PauseCinematic( void )
 */
 static char **CL_CinematicsComplete_f( const char *partial )
 {
-	return Cmd_CompleteFileList( partial, "video", NULL, qtrue );
+	return Cmd_CompleteFileList( partial, "video", NULL, true );
 }
 
 /*
@@ -335,7 +335,7 @@ void CL_PauseCinematic_f( void )
 */
 void CL_InitCinematics( void )
 {
-	CIN_LoadLibrary( qtrue );
+	CIN_LoadLibrary( true );
 
 	Cmd_AddCommand( "cinematic", CL_PlayCinematic_f );
 	Cmd_AddCommand( "cinepause", CL_PauseCinematic_f );
@@ -351,5 +351,5 @@ void CL_ShutdownCinematics( void )
 	Cmd_RemoveCommand( "cinematic" );
 	Cmd_RemoveCommand( "cinepause" );
 
-	CIN_UnloadLibrary( qtrue );
+	CIN_UnloadLibrary( true );
 }

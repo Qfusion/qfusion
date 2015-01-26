@@ -865,7 +865,7 @@ typedef struct
 			*( clip->trace ) = trace;
 		}
 		else if( trace.startsolid )
-			clip->trace->startsolid = qtrue;
+			clip->trace->startsolid = true;
 		if( clip->trace->allsolid )
 			return;
 	}
@@ -1042,7 +1042,7 @@ static bool GClip_EntityContact( vec3_t mins, vec3_t maxs, edict_t *ent )
 		return tr.startsolid || tr.allsolid ? true : false;
 	}
 
-	return ( BoundsIntersect( mins, maxs, ent->r.absmin, ent->r.absmax ) ) == qtrue;
+	return ( BoundsIntersect( mins, maxs, ent->r.absmin, ent->r.absmax ) ) == true;
 }
 
 

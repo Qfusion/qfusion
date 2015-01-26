@@ -36,7 +36,7 @@ static void TVM_AddEntity( edict_t *ent )
 {
 	assert( ent && !ent->r.inuse && !ent->local );
 
-	ent->r.inuse = qtrue;
+	ent->r.inuse = true;
 }
 
 /*
@@ -100,10 +100,10 @@ static void TVM_RemoveEntity( edict_t *ent )
 	memset( &ent->s, 0, sizeof( ent->s ) );
 	memset( &ent->r, 0, sizeof( ent->r ) );
 
-	ent->local = qfalse;
+	ent->local = false;
 	ent->relay = relay;
 	ent->s.number = ENTNUM( ent );
-	ent->r.inuse = qfalse;
+	ent->r.inuse = false;
 }
 
 /*

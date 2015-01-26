@@ -54,7 +54,7 @@ void TVM_SpawnEntities( tvm_relay_t *relay, const char *mapname, const char *ent
 	for( i = 0; i < MAX_GAMECOMMANDS; i++ )
 	{
 		assert( CS_GAMECOMMANDS + i < MAX_CONFIGSTRINGS );
-		relay->configStringsOverwritten[CS_GAMECOMMANDS + i] = qtrue;
+		relay->configStringsOverwritten[CS_GAMECOMMANDS + i] = true;
 		trap_ConfigString( relay, CS_GAMECOMMANDS + i, "" );
 	}
 

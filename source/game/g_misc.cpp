@@ -204,7 +204,7 @@ static void path_corner_touch( edict_t *self, edict_t *other, cplane_t *plane, i
 		v[2] -= other->r.mins[2];
 		VectorCopy( v, other->s.origin );
 		next = G_PickTarget( next->target );
-		other->s.teleported = qtrue;
+		other->s.teleported = true;
 	}
 
 	other->goalentity = other->movetarget = next;

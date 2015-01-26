@@ -361,7 +361,7 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 			// do we want names too?
 			if( draw_playernames == true )
 				trap_SCR_DrawString( x + (int)coords[0] + 8 * cgs.vidHeight / 600, y + (int)coords[1] - 4 * cgs.vidHeight / 600,
-					ALIGN_LEFT_TOP,	COM_RemoveColorTokensExt( cgs.clientInfo[cent->current.number-1].name, qtrue ),
+					ALIGN_LEFT_TOP,	COM_RemoveColorTokensExt( cgs.clientInfo[cent->current.number-1].name, true ),
 					cgs.fontSystemSmall, tmp_yellow_alpha );
 		}
 		else if( cent->current.type == ET_MINIMAP_ICON )

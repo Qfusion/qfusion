@@ -40,13 +40,13 @@ typedef struct
 } r_imginfo_t;
 
 r_imginfo_t LoadTGA( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
-qboolean WriteTGA( const char *name, r_imginfo_t *info, int quality );
+bool WriteTGA( const char *name, r_imginfo_t *info, int quality );
 
 r_imginfo_t LoadJPG( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
-qboolean WriteJPG( const char *name, r_imginfo_t *info, int quality );
+bool WriteJPG( const char *name, r_imginfo_t *info, int quality );
 
 r_imginfo_t LoadPNG( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
 
-void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, qboolean bgr );
+void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, bool bgr );
 
 #endif // R_IMAGELIB_H

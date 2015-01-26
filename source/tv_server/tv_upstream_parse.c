@@ -40,7 +40,7 @@ static void TV_Upstream_ParseFrame( upstream_t *upstream, msg_t *msg )
 	{
 		if( upstream->demo.waiting && !snap.delta && snap.multipov )
 		{
-			upstream->demo.waiting = qfalse; // we can start recording now
+			upstream->demo.waiting = false; // we can start recording now
 			upstream->demo.basetime = snap.serverTime;
 			upstream->demo.localtime = time( NULL );
 
@@ -95,7 +95,7 @@ static void TV_Upstream_ParseServerData( upstream_t *upstream, msg_t *msg )
 	Q_strncpyz( upstream->levelname, MSG_ReadString( msg ), sizeof( upstream->levelname ) );
 
 	upstream->sv_bitflags = MSG_ReadByte( msg );
-	upstream->reliable = ( ( upstream->sv_bitflags & SV_BITFLAGS_RELIABLE ) ? qtrue : qfalse );
+	upstream->reliable = ( ( upstream->sv_bitflags & SV_BITFLAGS_RELIABLE ) ? true : false );
 
 	if( ( upstream->sv_bitflags & SV_BITFLAGS_HTTP ) != 0 ) {
 		if( ( upstream->sv_bitflags & SV_BITFLAGS_HTTP_BASEURL ) != 0 ) {

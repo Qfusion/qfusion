@@ -468,7 +468,7 @@ void G_ChasePlayer( edict_t *ent, const char *name, bool teamonly, int followmod
 void G_ChaseStep( edict_t *ent, int step )
 {
 	int i, j, team;
-	qboolean player_found;
+	bool player_found;
 	int actual;
 	int start;
 	edict_t *newtarget = NULL;
@@ -480,13 +480,13 @@ void G_ChaseStep( edict_t *ent, int step )
 
 	start = ent->r.client->resp.chase.target;
 	i = -1;
-	player_found = qfalse; // needed to prevent an infinite loop if there are no players
+	player_found = false; // needed to prevent an infinite loop if there are no players
 	// find the team of the previously chased player and his index in the sorted teamlist
 	for( team = TEAM_PLAYERS; team < GS_MAX_TEAMS; team++ )
 	{
 		for( j = 0; j < teamlist[team].numplayers; j++ )
 		{
-			player_found = qtrue;
+			player_found = true;
 			if( teamlist[team].playerIndices[j] == start )
 			{
 				i = j;

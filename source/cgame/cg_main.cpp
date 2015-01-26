@@ -714,23 +714,23 @@ static void CG_RegisterVariables( void )
 	cg_teamPLAYERSmodel =	trap_Cvar_Get( "cg_teamPLAYERSmodel", "", CVAR_ARCHIVE );
 	cg_teamPLAYERSskin =	trap_Cvar_Get( "cg_teamPLAYERSskin", "default", CVAR_ARCHIVE );
 	cg_teamPLAYERScolor =	trap_Cvar_Get( "cg_teamPLAYERScolor", "", CVAR_ARCHIVE );
-	cg_teamPLAYERSmodel->modified = qtrue;
-	cg_teamPLAYERSskin->modified = qtrue;
-	cg_teamPLAYERScolor->modified = qtrue;
+	cg_teamPLAYERSmodel->modified = true;
+	cg_teamPLAYERSskin->modified = true;
+	cg_teamPLAYERScolor->modified = true;
 
 	cg_teamALPHAmodel =	trap_Cvar_Get( "cg_teamALPHAmodel", "", CVAR_ARCHIVE );
 	cg_teamALPHAskin =	trap_Cvar_Get( "cg_teamALPHAskin", "default", CVAR_ARCHIVE );
 	cg_teamALPHAcolor =	trap_Cvar_Get( "cg_teamALPHAcolor", DEFAULT_TEAMALPHA_COLOR, CVAR_ARCHIVE );
-	cg_teamALPHAmodel->modified = qtrue;
-	cg_teamALPHAskin->modified = qtrue;
-	cg_teamALPHAcolor->modified = qtrue;
+	cg_teamALPHAmodel->modified = true;
+	cg_teamALPHAskin->modified = true;
+	cg_teamALPHAcolor->modified = true;
 
 	cg_teamBETAmodel =	trap_Cvar_Get( "cg_teamBETAmodel", "", CVAR_ARCHIVE );
 	cg_teamBETAskin =	trap_Cvar_Get( "cg_teamBETAskin", "default", CVAR_ARCHIVE );
 	cg_teamBETAcolor =	trap_Cvar_Get( "cg_teamBETAcolor", DEFAULT_TEAMBETA_COLOR, CVAR_ARCHIVE );
-	cg_teamBETAmodel->modified = qtrue;
-	cg_teamBETAskin->modified = qtrue;
-	cg_teamBETAcolor->modified = qtrue;
+	cg_teamBETAmodel->modified = true;
+	cg_teamBETAskin->modified = true;
+	cg_teamBETAcolor->modified = true;
 
 	cg_forceMyTeamAlpha =		trap_Cvar_Get( "cg_forceMyTeamAlpha", "0", CVAR_ARCHIVE );
 	cg_forceTeamPlayersTeamBeta =	trap_Cvar_Get( "cg_forceTeamPlayersTeamBeta", "0", CVAR_ARCHIVE );
@@ -969,7 +969,7 @@ void CG_Reset( void )
 */
 void CG_Init( const char *serverName, unsigned int playerNum,
 			 int vidWidth, int vidHeight, float pixelRatio,
-			 qboolean demoplaying, const char *demoName, qboolean pure, 
+			 bool demoplaying, const char *demoName, bool pure, 
 			 unsigned int snapFrameTime, int protocol, int sharedSeed )
 {
 	CG_InitGameShared();
@@ -996,11 +996,11 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	cgs.pixelRatio = pixelRatio;
 
 	// demo
-	cgs.demoPlaying = demoplaying == qtrue;
+	cgs.demoPlaying = demoplaying == true;
 	cgs.demoName = demoName;
 
 	// whether to only allow pure files
-	cgs.pure = pure == qtrue;
+	cgs.pure = pure == true;
 
 	// whether we are connected to a tv-server
 	cgs.tv = false;

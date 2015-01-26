@@ -609,7 +609,7 @@ extern cg_static_t cgs;
 extern cg_state_t cg;
 
 #define ISVIEWERENTITY( entNum )  ( ( cg.predictedPlayerState.POVnum > 0 ) && ( (int)cg.predictedPlayerState.POVnum == entNum ) && ( cg.view.type == VIEWDEF_PLAYERVIEW ) )
-#define ISBRUSHMODEL( x ) ( ( ( x > 0 ) && ( (int)x < trap_CM_NumInlineModels() ) ) ? qtrue : qfalse )
+#define ISBRUSHMODEL( x ) ( ( ( x > 0 ) && ( (int)x < trap_CM_NumInlineModels() ) ) ? true : false )
 
 #define ISREALSPECTATOR()		(cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR)
 #define SPECSTATECHANGED()		((cg.frame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR) != (cg.oldFrame.playerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR))
@@ -884,7 +884,7 @@ extern cvar_t *cg_flashWindowCount;
 int CG_API( void );
 void CG_Init(	const char *serverName, unsigned int playerNum,
 				int vidWidth, int vidHeight, float pixelRatio,
-				qboolean demoplaying, const char *demoName, qboolean pure, unsigned int snapFrameTime,
+				bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime,
 				int protocol, int sharedSeed );
 void CG_Shutdown( void );
 void CG_ValidateItemDef( int tag, char *name );

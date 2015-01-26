@@ -48,8 +48,8 @@ serverlist_t *masterList, *favoritesList;
 // cache of resolved master server addresses/names
 static trie_t *serverlist_masters_trie = NULL;
 
-static qboolean filter_allow_full = qfalse;
-static qboolean filter_allow_empty = qfalse;
+static bool filter_allow_full = false;
+static bool filter_allow_empty = false;
 
 static unsigned int masterServerUpdateSeq;
 
@@ -97,16 +97,16 @@ static serverlist_t *CL_ServerFindInList( serverlist_t *serversList, char *adr )
 /*
 * CL_AddServerToList
 */
-static qboolean CL_AddServerToList( serverlist_t **serversList, char *adr, unsigned int days )
+static bool CL_AddServerToList( serverlist_t **serversList, char *adr, unsigned int days )
 {
 	serverlist_t *newserv;
 	netadr_t nadr;
 
 	if( !adr || !strlen( adr ) )
-		return qfalse;
+		return false;
 
 	if( !NET_StringToAddress( adr, &nadr ) )
-		return qfalse;
+		return false;
 
 	newserv = CL_ServerFindInList( *serversList, adr );
 	if( newserv ) {
@@ -117,7 +117,7 @@ static qboolean CL_AddServerToList( serverlist_t **serversList, char *adr, unsig
 			newserv->lastUpdatedByMasterServer = Sys_Milliseconds();
 			newserv->masterServerUpdateSeq = masterServerUpdateSeq;
 		}
-		return qfalse;
+		return false;
 	}
 
 	newserv = (serverlist_t *)Mem_ZoneMalloc( sizeof( serverlist_t ) );
@@ -132,7 +132,7 @@ static qboolean CL_AddServerToList( serverlist_t **serversList, char *adr, unsig
 	newserv->pnext = *serversList;
 	*serversList = newserv;
 
-	return qtrue;
+	return true;
 }
 
 #define SERVERSFILE "serverscache.txt"
@@ -200,7 +200,7 @@ void CL_ReadServerCache( void )
 	char *ptr, *token;
 	netadr_t adr;
 	char adrString[64];
-	qboolean favorite = qfalse;
+	bool favorite = false;
 
 	filelen = FS_FOpenFile( SERVERSFILE, &filehandle, FS_READ );
 	if( !filehandle || filelen < 1 )
@@ -220,26 +220,26 @@ void CL_ReadServerCache( void )
 	ptr = ( char * )buf;
 	while( ptr )
 	{
-		token = COM_ParseExt( &ptr, qtrue );
+		token = COM_ParseExt( &ptr, true );
 		if( !token[0] )
 			break;
 
 		if( !Q_stricmp( token, "master" ) )
 		{
-			favorite = qfalse;
+			favorite = false;
 			continue;
 		}
 
 		if( !Q_stricmp( token, "favorites" ) )
 		{
-			favorite = qtrue;
+			favorite = true;
 			continue;
 		}
 
 		if( NET_StringToAddress( token, &adr ) )
 		{
 			Q_strncpyz( adrString, token, sizeof( adrString ) );
-			token = COM_ParseExt( &ptr, qfalse );
+			token = COM_ParseExt( &ptr, false );
 			if( !token[0] )
 				continue;
 
@@ -411,7 +411,7 @@ void CL_ParseStatusMessage( const socket_t *socket, const netadr_t *address, msg
 * CL_ParseGetServersResponseMessage
 * Handle a reply from getservers message to master server
 */
-static void CL_ParseGetServersResponseMessage( msg_t *msg, qboolean extended )
+static void CL_ParseGetServersResponseMessage( msg_t *msg, bool extended )
 {
 	const char *header;
 	char adrString[64];
@@ -483,7 +483,7 @@ static void CL_ParseGetServersResponseMessage( msg_t *msg, qboolean extended )
 * CL_ParseGetServersResponse
 * Handle a reply from getservers message to master server
 */
-void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address, msg_t *msg, qboolean extended )
+void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address, msg_t *msg, bool extended )
 {
 	serverlist_t *server;
 	netadr_t adr;
@@ -658,15 +658,15 @@ void CL_GetServers_f( void )
 	char *modname, *master;
 	trie_error_t err;
 
-	filter_allow_full = qfalse;
-	filter_allow_empty = qfalse;
+	filter_allow_full = false;
+	filter_allow_empty = false;
 	for( i = 2; i < Cmd_Argc(); i++ )
 	{
 		if( !Q_stricmp( "full", Cmd_Argv( i ) ) )
-			filter_allow_full = qtrue;
+			filter_allow_full = true;
 
 		if( !Q_stricmp( "empty", Cmd_Argv( i ) ) )
-			filter_allow_empty = qtrue;
+			filter_allow_empty = true;
 	}
 
 	if( !Q_stricmp( Cmd_Argv( 1 ), "local" ) )

@@ -114,9 +114,9 @@ typedef struct
 	int ( *FS_Eof )( int file );
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
-	qboolean ( *FS_RemoveFile )( const char *filename );
+	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
-	qboolean ( *FS_IsUrl )( const char *url );
+	bool ( *FS_IsUrl )( const char *url );
 
 	// clock
 	unsigned int	( *Milliseconds )( void );
@@ -139,14 +139,14 @@ typedef struct
 	int ( *API )( void );
 
 	// the init function will be called at each restart
-	qboolean ( *Init )( qboolean verbose );
-	void ( *Shutdown )( qboolean verbose );
+	bool ( *Init )( bool verbose );
+	void ( *Shutdown )( bool verbose );
 
-	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, qboolean loop, qboolean *yuv, float *framerate );
-	qboolean ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
-	uint8_t *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-	cin_yuv_t *( *ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, qboolean *redraw );
-	qboolean ( *AddRawSamplesListener )( struct cinematics_s *cin, void *listener, cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs );
+	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, bool loop, bool *yuv, float *framerate );
+	bool ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
+	uint8_t *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw );
+	cin_yuv_t *( *ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw );
+	bool ( *AddRawSamplesListener )( struct cinematics_s *cin, void *listener, cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs );
 	void ( *Reset )( struct cinematics_s *cin, unsigned int cur_time );
 	void ( *Close )( struct cinematics_s *cin );
 } cin_export_t;

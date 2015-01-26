@@ -2,29 +2,29 @@
 #define IRC_PROTOCOL_H
 
 // connect to or disconnect from server
-qboolean Irc_Proto_Connect(const char *host, unsigned short port);
-qboolean Irc_Proto_Disconnect(void);
+bool Irc_Proto_Connect(const char *host, unsigned short port);
+bool Irc_Proto_Disconnect(void);
 
 // client -> server messages
-qboolean Irc_Proto_Quit(const char *msg);
-qboolean Irc_Proto_Nick(const char *nick);
-qboolean Irc_Proto_User(const char *user, qboolean invisible, const char *name);
-qboolean Irc_Proto_Password(const char *password);
-qboolean Irc_Proto_Join(const char *channel, const char *password);
-qboolean Irc_Proto_Part(const char *channel);
-qboolean Irc_Proto_Mode(const char *target, const char *modes, const char *params);
-qboolean Irc_Proto_Topic(const char *channel, const char *topic);
-qboolean Irc_Proto_Msg(const char *target, const char *msg);
-qboolean Irc_Proto_Notice(const char *target, const char *msg);
-qboolean Irc_Proto_Pong(const char *nick, const char *server, const char *cookie);
-qboolean Irc_Proto_Kick(const char *channel, const char *nick, const char *reason);
-qboolean Irc_Proto_Who(const char *nick);
-qboolean Irc_Proto_Whois(const char *nick);
-qboolean Irc_Proto_Whowas(const char *nick);
-qboolean Irc_Proto_Quote(const char *message);
+bool Irc_Proto_Quit(const char *msg);
+bool Irc_Proto_Nick(const char *nick);
+bool Irc_Proto_User(const char *user, bool invisible, const char *name);
+bool Irc_Proto_Password(const char *password);
+bool Irc_Proto_Join(const char *channel, const char *password);
+bool Irc_Proto_Part(const char *channel);
+bool Irc_Proto_Mode(const char *target, const char *modes, const char *params);
+bool Irc_Proto_Topic(const char *channel, const char *topic);
+bool Irc_Proto_Msg(const char *target, const char *msg);
+bool Irc_Proto_Notice(const char *target, const char *msg);
+bool Irc_Proto_Pong(const char *nick, const char *server, const char *cookie);
+bool Irc_Proto_Kick(const char *channel, const char *nick, const char *reason);
+bool Irc_Proto_Who(const char *nick);
+bool Irc_Proto_Whois(const char *nick);
+bool Irc_Proto_Whowas(const char *nick);
+bool Irc_Proto_Quote(const char *message);
 
 // flush send buffer according to leaky bucket protocol (flood protection)
-qboolean Irc_Proto_Flush(void);
+bool Irc_Proto_Flush(void);
 
 #define IRC_SEND_BUF_SIZE 512
 #define IRC_RECV_BUF_SIZE 1024
@@ -55,10 +55,10 @@ typedef struct irc_server_msg_s {
 	char trailing[IRC_SEND_BUF_SIZE];
 } irc_server_msg_t;
 
-qboolean Irc_Proto_PollServerMsg(irc_server_msg_t *msg, qboolean *msg_complete);
-qboolean Irc_Proto_ProcessServerMsg(const irc_server_msg_t *msg);
+bool Irc_Proto_PollServerMsg(irc_server_msg_t *msg, bool *msg_complete);
+bool Irc_Proto_ProcessServerMsg(const irc_server_msg_t *msg);
 
-static const qboolean IRC_INVISIBLE = qtrue;
+static const bool IRC_INVISIBLE = true;
 static const char IRC_QUIT_MSG[] = APP_URL;
 
 #endif

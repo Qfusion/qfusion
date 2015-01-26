@@ -3,7 +3,7 @@
 /*
 * Sys_GetClipboardData
 */
-char *Sys_GetClipboardData( qboolean primary )
+char *Sys_GetClipboardData( bool primary )
 {
 	return NULL;
 }
@@ -11,9 +11,9 @@ char *Sys_GetClipboardData( qboolean primary )
 /*
 * Sys_SetClipboardData
 */
-qboolean Sys_SetClipboardData( const char *data )
+bool Sys_SetClipboardData( const char *data )
 {
-	return qfalse;
+	return false;
 }
 
 /*

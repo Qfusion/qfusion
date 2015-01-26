@@ -501,7 +501,7 @@ int CG_SkyPortal( void )
 		float off = cg.view.refdef.time * 0.001f;
 
 		sp->fov = fov;
-		sp->noEnts = (noents ? qtrue : qfalse);
+		sp->noEnts = (noents ? true : false);
 		sp->scale = scale ? 1.0f / scale : 0;
 		VectorSet( sp->viewanglesOffset, anglemod( off * pitchspeed ), anglemod( off * yawspeed ), anglemod( off * rollspeed ) );
 		return RDF_SKYPORTALINVIEW;

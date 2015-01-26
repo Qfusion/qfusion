@@ -93,7 +93,7 @@ static void CL_FTLibModule_ResetScissor( void )
 /*
 * FTLIB_LoadLibrary
 */
-void FTLIB_LoadLibrary( qboolean verbose )
+void FTLIB_LoadLibrary( bool verbose )
 {
 	static ftlib_import_t import;
 	dllfunc_t funcs[2];
@@ -210,7 +210,7 @@ void FTLIB_LoadLibrary( qboolean verbose )
 /*
 * FTLIB_UnloadLibrary
 */
-void FTLIB_UnloadLibrary( qboolean verbose )
+void FTLIB_UnloadLibrary( bool verbose )
 {
 	if( ftlib_export != NULL ) {
 		ftlib_export->Shutdown( verbose );
@@ -263,7 +263,7 @@ void FTLIB_TouchAllFonts( void )
 /*
 * FTLIB_PrecacheFonts
 */
-void FTLIB_PrecacheFonts( qboolean verbose )
+void FTLIB_PrecacheFonts( bool verbose )
 {
 	if( ftlib_export ) {
 		ftlib_export->PrecacheFonts( verbose );
@@ -273,7 +273,7 @@ void FTLIB_PrecacheFonts( qboolean verbose )
 /*
 * FTLIB_FreeFonts
 */
-void FTLIB_FreeFonts( qboolean verbose )
+void FTLIB_FreeFonts( bool verbose )
 {
 	if( ftlib_export ) {
 		ftlib_export->FreeFonts( verbose );

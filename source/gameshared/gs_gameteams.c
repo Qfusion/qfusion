@@ -107,17 +107,17 @@ int GS_Teams_TeamFromName( const char *teamname )
 /*
 * GS_IsTeamDamage
 */
-qboolean GS_IsTeamDamage( entity_state_t *targ, entity_state_t *attacker )
+bool GS_IsTeamDamage( entity_state_t *targ, entity_state_t *attacker )
 {
 	if( !GS_TeamBasedGametype() )
-		return qfalse;
+		return false;
 
 	assert( targ && attacker );
 
 	if( targ->team && attacker->team &&
 		targ->team == attacker->team &&
 		targ->number != attacker->number )
-		return qtrue;
+		return true;
 
-	return qfalse;
+	return false;
 }

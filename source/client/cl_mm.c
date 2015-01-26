@@ -45,11 +45,11 @@ typedef enum
 } cl_mm_loginResponse_t;
 
 // this will be true when subsystem is started
-static qboolean cl_mm_initialized = qfalse;
+static bool cl_mm_initialized = false;
 // this will be true when we are fully logged in
-static qboolean cl_mm_enabled = qfalse;
+static bool cl_mm_enabled = false;
 // flag set when logout process is finished
-static qboolean cl_mm_logout_semaphore = qfalse;
+static bool cl_mm_logout_semaphore = false;
 // heartbeat counter
 static unsigned int cl_mm_last_heartbeat;
 
@@ -88,8 +88,8 @@ cvar_t *cl_mm_autologin;
 /*
 * prototypes
 */
-static qboolean CL_MM_Login2( void );
-static void CL_MM_ErrorMessage( qboolean printToConsole, const char *format, ... );
+static bool CL_MM_Login2( void );
+static void CL_MM_ErrorMessage( bool printToConsole, const char *format, ... );
 
 /*
 * client ratings
@@ -198,7 +198,7 @@ clientRating_t *CL_AddRating( const char *gametype, float rating, float deviatio
 
 static void CL_MM_Logout_f( void )
 {
-	CL_MM_Logout( qfalse );
+	CL_MM_Logout( false );
 }
 
 static void CL_MM_Login_f( void )
@@ -216,7 +216,7 @@ static void CL_MM_Login_f( void )
 
 //===============================================
 
-static void cl_mm_heartbeat_done( stat_query_t *query, qboolean success, void *customp )
+static void cl_mm_heartbeat_done( stat_query_t *query, bool success, void *customp )
 {
 }
 
@@ -228,7 +228,7 @@ void CL_MM_Heartbeat( void )
 		return;
 
 	// push a request
-	query = sq_api->CreateQuery( NULL, "chb", qfalse );
+	query = sq_api->CreateQuery( NULL, "chb", false );
 	if( query == NULL )
 		return;
 
@@ -240,7 +240,7 @@ void CL_MM_Heartbeat( void )
 	sq_api->Send( query );
 }
 
-void cl_mm_connect_done( stat_query_t *query, qboolean success, void *customp )
+void cl_mm_connect_done( stat_query_t *query, bool success, void *customp )
 {
 	stat_query_section_t *root;
 
@@ -254,7 +254,7 @@ void cl_mm_connect_done( stat_query_t *query, qboolean success, void *customp )
 	 */
 
 	if( !success )
-		CL_MM_ErrorMessage( qtrue, "MM Connect: StatQuery error" );
+		CL_MM_ErrorMessage( true, "MM Connect: StatQuery error" );
 	else
 	{
 		root = sq_api->GetRoot( query );
@@ -267,7 +267,7 @@ void cl_mm_connect_done( stat_query_t *query, qboolean success, void *customp )
 	Com_DPrintf("CL_MM_Connect: Using ticket %u\n", cls.mm_ticket);
 }
 
-qboolean CL_MM_Connect( const netadr_t *address )
+bool CL_MM_Connect( const netadr_t *address )
 {
 	/*
 	* ch : this here sends a ticket request to MM.
@@ -282,12 +282,12 @@ qboolean CL_MM_Connect( const netadr_t *address )
 
 	// TODO: if not logged in, force login
 	if( !cl_mm_enabled )
-		return qfalse;
+		return false;
 
 	// TODO: validate the parameters
-	query = sq_api->CreateQuery( NULL, "ccc", qfalse );
+	query = sq_api->CreateQuery( NULL, "ccc", false );
 	if( query == NULL )
-		return qfalse;
+		return false;
 
 	// TODO: put the session in a cookie
 	sq_api->SetField( query, "csession", va( "%d", cls.mm_session ) );
@@ -296,15 +296,15 @@ qboolean CL_MM_Connect( const netadr_t *address )
 	sq_api->SetCallback( query, cl_mm_connect_done, NULL );
 	sq_api->Send( query );
 
-	return qtrue;
+	return true;
 }
 
 /*
 * CL_MM_CanConnect
-* returns qtrue when we can connect to a game server
+* returns true when we can connect to a game server
 * (ie logged in to MM or MM is disabled)
 */
-qboolean CL_MM_CanConnect( void )
+bool CL_MM_CanConnect( void )
 {
 	// not sure if we're already aware of server's TV state at this point
 	return ( cl_mm_loginState == LOGIN_STATE_NONE ) || cls.sv_tv;
@@ -314,7 +314,7 @@ qboolean CL_MM_CanConnect( void )
 * CL_MM_WaitForLogin( void )
 * returns result of login
 */
-qboolean CL_MM_WaitForLogin( void )
+bool CL_MM_WaitForLogin( void )
 {
 	while( !CL_MM_CanConnect() )
 	{
@@ -344,7 +344,7 @@ void CL_MM_Frame( void )
 		{
 			// reset login
 			cl_mm_loginState = LOGIN_STATE_NONE;
-			CL_MM_ErrorMessage( qtrue, "MM Login: authentication timeout" );
+			CL_MM_ErrorMessage( true, "MM Login: authentication timeout" );
 		}
 	}
 
@@ -353,8 +353,8 @@ void CL_MM_Frame( void )
 		if( cl_mm_logout_semaphore )
 		{
 			// logout process is finished so we can shutdown game
-			// CL_MM_Shutdown( qfalse );
-			cl_mm_logout_semaphore = qfalse;
+			// CL_MM_Shutdown( false );
+			cl_mm_logout_semaphore = false;
 			return;
 		}
 
@@ -370,7 +370,7 @@ void CL_MM_Frame( void )
 /*
 * CL_MM_Initialized
 */
-qboolean CL_MM_Initialized( void )
+bool CL_MM_Initialized( void )
 {
 	return cl_mm_enabled;
 }
@@ -378,13 +378,13 @@ qboolean CL_MM_Initialized( void )
 /*
 * cl_mm_logout_done
 */
-static void cl_mm_logout_done( stat_query_t *query, qboolean success, void *customp )
+static void cl_mm_logout_done( stat_query_t *query, bool success, void *customp )
 {
 	Com_DPrintf( "MM Logout: Logged off..\n" );
 
 	// ignore response-status and just mark us as logged-out
-	cl_mm_logout_semaphore = qtrue;
-	cl_mm_enabled = qfalse;
+	cl_mm_logout_semaphore = true;
+	cl_mm_enabled = false;
 	cl_mm_loginState = LOGIN_STATE_NONE;
 	cls.mm_session = 0;
 	cl_mm_StringCopy( NULL, &cl_mm_profie_url );
@@ -394,36 +394,36 @@ static void cl_mm_logout_done( stat_query_t *query, qboolean success, void *cust
 /*
 * CL_MM_Logout
 */
-qboolean CL_MM_Logout( qboolean force )
+bool CL_MM_Logout( bool force )
 {
 	stat_query_t *query;
 	unsigned int timeout;
-	qboolean result;
+	bool result;
 
 	if( !cl_mm_enabled || !cls.mm_session ) {
-		CL_MM_ErrorMessage( qtrue, "MM Logout: not logged in");
-		return qfalse;
+		CL_MM_ErrorMessage( true, "MM Logout: not logged in");
+		return false;
 	}
 
 	// TODO: check clientstate, has to be unconnected
 	if( CL_GetClientState() > CA_DISCONNECTED )
 	{
-		CL_MM_ErrorMessage( qtrue, "MM Logout: can't logout from MM while connected to server");
-		return qfalse;
+		CL_MM_ErrorMessage( true, "MM Logout: can't logout from MM while connected to server");
+		return false;
 	}
 
-	query = sq_api->CreateQuery( NULL, "clogout", qfalse );
+	query = sq_api->CreateQuery( NULL, "clogout", false );
 	if( query == NULL )
-		return qfalse;
+		return false;
 
-	cl_mm_logout_semaphore = qfalse;
+	cl_mm_logout_semaphore = false;
 
 	// TODO: pull the authkey out of cvar into file
 	sq_api->SetField( query, "csession", va( "%d", cls.mm_session ) );
 	sq_api->SetCallback( query, cl_mm_logout_done, NULL );
 	sq_api->Send( query );
 
-	result = qtrue;
+	result = true;
 	if( force )
 	{
 		timeout = Sys_Milliseconds();
@@ -435,14 +435,14 @@ qboolean CL_MM_Logout( qboolean force )
 
 		result = cl_mm_logout_semaphore;
 		if( !cl_mm_logout_semaphore )
-			CL_MM_ErrorMessage( qtrue, "MM Logout: Failed to force logout");
+			CL_MM_ErrorMessage( true, "MM Logout: Failed to force logout");
 		else
 			Com_DPrintf("CL_MM_Logout: force logout successful\n");
 
-		cl_mm_logout_semaphore = qfalse;
+		cl_mm_logout_semaphore = false;
 
 		// dont call this, we are coming from shutdown
-		// CL_MM_Shutdown( qfalse );
+		// CL_MM_Shutdown( false );
 	}
 	return result;
 }
@@ -450,7 +450,7 @@ qboolean CL_MM_Logout( qboolean force )
 * cl_mm_login_done
 * callback for login post request
 */
-static void cl_mm_login_done( stat_query_t *query, qboolean success, void *customp )
+static void cl_mm_login_done( stat_query_t *query, bool success, void *customp )
 {
 	int rstatus;
 	unsigned int uuid;
@@ -464,14 +464,14 @@ static void cl_mm_login_done( stat_query_t *query, qboolean success, void *custo
 		return;
 	}
 
-	cl_mm_enabled = qfalse;
+	cl_mm_enabled = false;
 	cls.mm_session = 0;
 	Cvar_ForceSet( cl_mm_session->name, "0" );
 
 	if( !success )
 	{
 		// TODO: reset login
-		CL_MM_ErrorMessage( qtrue, "MM Login: StatQuery error" );
+		CL_MM_ErrorMessage( true, "MM Login: StatQuery error" );
 		cl_mm_loginState = LOGIN_STATE_NONE;
 		return;
 	}
@@ -504,7 +504,7 @@ static void cl_mm_login_done( stat_query_t *query, qboolean success, void *custo
 		if( !translated )
 			translated = msg;
 
-		CL_MM_ErrorMessage( qtrue, va( translated, cl_mm_loginState ) );
+		CL_MM_ErrorMessage( true, va( translated, cl_mm_loginState ) );
 
 		// bail out
 		cl_mm_loginHandle = 0;
@@ -569,13 +569,13 @@ static void cl_mm_login_done( stat_query_t *query, qboolean success, void *custo
 	if( cl_mm_loginState == LOGIN_STATE_NONE )
 	{
 		// we are done with the process, see if we got anything
-		cl_mm_enabled = ( cls.mm_session == 0 ? qfalse : qtrue );
+		cl_mm_enabled = ( cls.mm_session == 0 ? false : true );
 		if( cl_mm_enabled ) {
-			CL_MM_ErrorMessage( qfalse, "" );
+			CL_MM_ErrorMessage( false, "" );
 			Com_DPrintf( "MM Login: Success, session id %u\n", cls.mm_session );
 		}
 		else
-			CL_MM_ErrorMessage( qtrue, "MM Login: Failed, no session id" );
+			CL_MM_ErrorMessage( true, "MM Login: Failed, no session id" );
 
 		Cvar_ForceSet( cl_mm_session->name, va( "%d", cls.mm_session ) );
 	}
@@ -585,7 +585,7 @@ static void cl_mm_login_done( stat_query_t *query, qboolean success, void *custo
 * CL_MM_Login2
 * step 2 of login process
 */
-static qboolean CL_MM_Login2( void )
+static bool CL_MM_Login2( void )
 {
 	stat_query_t *query;
 
@@ -597,14 +597,14 @@ static qboolean CL_MM_Login2( void )
 	// mm.. does this fail or what?
 	if( cl_mm_loginState != LOGIN_STATE_READY || cl_mm_enabled ) {
 		Com_Printf( "CL_MM_Login2: quitting early\n");
-		return qfalse;
+		return false;
 	}
 
 	// TODO: validate the parameters
-	query = sq_api->CreateQuery( NULL, "clogin", qfalse );
+	query = sq_api->CreateQuery( NULL, "clogin", false );
 	if( query == NULL ) {
 		Com_Printf( "CL_MM_Login2: Failed to create StatQuery object\n");
-		return qfalse;
+		return false;
 	}
 
 	sq_api->SetField( query, "handle", va("%d", cl_mm_loginHandle ) );
@@ -615,13 +615,13 @@ static qboolean CL_MM_Login2( void )
 	cl_mm_loginTime = Sys_Milliseconds();
 	cl_mm_loginRetries++;
 
-	return qtrue;
+	return true;
 }
 
 /*
 * CL_MM_LoginReal
 */
-static qboolean CL_MM_LoginReal( const char *user, const char *password )
+static bool CL_MM_LoginReal( const char *user, const char *password )
 {
 	stat_query_t *query;
 
@@ -632,19 +632,19 @@ static qboolean CL_MM_LoginReal( const char *user, const char *password )
 	* (CL_MM_Login2)
 	*/
 	if( cl_mm_loginState >= LOGIN_STATE_WAITING || cl_mm_enabled )
-		return qfalse;
+		return false;
 
 	// TODO: check clientstate, has to be unconnected
 	if( CL_GetClientState() > CA_DISCONNECTED )
 	{
-		CL_MM_ErrorMessage( qtrue, "MM Login: Cant login to MM while connected to server" );
-		return qfalse;
+		CL_MM_ErrorMessage( true, "MM Login: Cant login to MM while connected to server" );
+		return false;
 	}
 
 	// TODO: validate the parameters
-	query = sq_api->CreateQuery( NULL, "clogin", qfalse );
+	query = sq_api->CreateQuery( NULL, "clogin", false );
 	if( query == NULL )
-		return qfalse;
+		return false;
 
 	Com_DPrintf( "Logging in with %s %s\n", user, password );
 
@@ -660,13 +660,13 @@ static qboolean CL_MM_LoginReal( const char *user, const char *password )
 	cl_mm_StringCopy( NULL, &cl_mm_profie_url );
 	cl_mm_StringCopy( NULL, &cl_mm_profie_url_rml );
 
-	return qtrue;
+	return true;
 }
 
 /*
 * CL_MM_Login
 */
-qboolean CL_MM_Login( const char *user, const char *password )
+bool CL_MM_Login( const char *user, const char *password )
 {
 	// first figure out the user
 	if( !user || user[0] == '\0' )
@@ -688,8 +688,8 @@ qboolean CL_MM_Login( const char *user, const char *password )
 
 	if( password == NULL )
 	{
-		CL_MM_ErrorMessage( qtrue, "MM Login: Password error");
-		return qfalse;
+		CL_MM_ErrorMessage( true, "MM Login: Password error");
+		return false;
 	}
 
 	return CL_MM_LoginReal( user, password );
@@ -701,7 +701,7 @@ qboolean CL_MM_Login( const char *user, const char *password )
 int CL_MM_GetLoginState( void )
 {
 	if( cl_mm_loginState == LOGIN_STATE_NONE ) {
-		return (cl_mm_enabled == qtrue ? MM_LOGIN_STATE_LOGGED_IN : MM_LOGIN_STATE_LOGGED_OUT);
+		return (cl_mm_enabled == true ? MM_LOGIN_STATE_LOGGED_IN : MM_LOGIN_STATE_LOGGED_OUT);
 	}
 	return MM_LOGIN_STATE_IN_PROGRESS;
 }
@@ -728,7 +728,7 @@ size_t CL_MM_GetLastErrorMessage( char *buffer, size_t buffer_size )
 * CL_MM_GetProfileURL
 * Copies player's profile URL we've previously received from MM server
 */
-size_t CL_MM_GetProfileURL( char *buffer, size_t buffer_size, qboolean rml )
+size_t CL_MM_GetProfileURL( char *buffer, size_t buffer_size, bool rml )
 {
 	const char *profile_url = rml ? cl_mm_profie_url_rml : cl_mm_profie_url;
 
@@ -767,7 +767,7 @@ size_t CL_MM_GetBaseWebURL( char *buffer, size_t buffer_size )
 * CL_MM_ErrorMessage
 * Stores error message in local buffer and optionally prints it to console
 */
-static void CL_MM_ErrorMessage( qboolean printToConsole, const char *format, ... )
+static void CL_MM_ErrorMessage( bool printToConsole, const char *format, ... )
 {
 	va_list	argptr;
 	char string[2048];
@@ -797,7 +797,7 @@ void CL_MM_Init( void )
 	if( cl_mm_initialized )
 		return;
 
-	cl_mm_enabled = qfalse;
+	cl_mm_enabled = false;
 
 	cls.mm_session = 0;
 
@@ -840,17 +840,17 @@ void CL_MM_Init( void )
 	if( cl_mm_autologin->integer )
 		CL_MM_Login( NULL, NULL );
 
-	cl_mm_initialized = qtrue;
+	cl_mm_initialized = true;
 }
 
-void CL_MM_Shutdown( qboolean logout )
+void CL_MM_Shutdown( bool logout )
 {
 	if( !cl_mm_initialized )
 		return;
 
 	if( logout && cl_mm_enabled )
 		// logout is always forced at this stage
-		CL_MM_Logout( qtrue );
+		CL_MM_Logout( true );
 
 	//Com_Printf("CL_MM_Shutdown..\n");
 
@@ -879,5 +879,5 @@ void CL_MM_Shutdown( qboolean logout )
 	StatQuery_Shutdown();
 	sq_api = NULL;
 
-	cl_mm_initialized = qfalse;
+	cl_mm_initialized = false;
 }

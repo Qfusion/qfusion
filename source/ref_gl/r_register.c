@@ -124,7 +124,7 @@ cvar_t *gl_finish;
 cvar_t *gl_cull;
 cvar_t *r_multithreading;
 
-static qboolean	r_verbose;
+static bool	r_verbose;
 
 static void R_FinalizeGLExtensions( void );
 static void R_GfxInfo_f( void );
@@ -149,8 +149,8 @@ typedef struct
 	const char * prefix;				// constant pointer to constant string
 	const char * name;
 	const char * cvar_default;
-	qboolean cvar_readonly;
-	qboolean mandatory;
+	bool cvar_readonly;
+	bool mandatory;
 	gl_extension_func_t *funcs;		// constant pointer to array of functions
 	size_t offset;					// offset to respective variable
 	size_t depOffset;					// offset to required pre-initialized variable
@@ -523,7 +523,7 @@ static const int num_gl_extensions = sizeof( gl_extensions_decl ) / sizeof( gl_e
 /*
 * R_RegisterGLExtensions
 */
-static qboolean R_RegisterGLExtensions( void )
+static bool R_RegisterGLExtensions( void )
 {
 	int i;
 	char *var, name[128];
@@ -602,7 +602,7 @@ static qboolean R_RegisterGLExtensions( void )
 		}
 
 		// mark extension as available
-		*var = qtrue;
+		*var = true;
 
 	}
 
@@ -617,12 +617,12 @@ static qboolean R_RegisterGLExtensions( void )
 		if( !*var ) {
 			Sys_Error( "R_RegisterGLExtensions: '%s_%s' is not available, aborting\n", 
 				extension->prefix, extension->name );
-			return qfalse;
+			return false;
 		}
 	}
 
 	R_FinalizeGLExtensions ();
-	return qtrue;
+	return true;
 }
 
 /*
@@ -736,32 +736,32 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.version = versionMajor * 100 + versionMinor;
 
 #ifdef GL_ES_VERSION_2_0
-	glConfig.ext.multitexture = qtrue;
-	glConfig.ext.vertex_buffer_object = qtrue;
-	glConfig.ext.framebuffer_object = qtrue;
-	glConfig.ext.texture_compression = qtrue;
-	glConfig.ext.texture_edge_clamp = qtrue;
-	glConfig.ext.texture_cube_map = qtrue;
-	glConfig.ext.vertex_shader = qtrue;
-	glConfig.ext.fragment_shader = qtrue;
-	glConfig.ext.shader_objects = qtrue;
-	glConfig.ext.shading_language_100 = qtrue;
-	glConfig.ext.GLSL = qtrue;
-	glConfig.ext.GLSL_core = qtrue;
-	glConfig.ext.blend_func_separate = qtrue;
+	glConfig.ext.multitexture = true;
+	glConfig.ext.vertex_buffer_object = true;
+	glConfig.ext.framebuffer_object = true;
+	glConfig.ext.texture_compression = true;
+	glConfig.ext.texture_edge_clamp = true;
+	glConfig.ext.texture_cube_map = true;
+	glConfig.ext.vertex_shader = true;
+	glConfig.ext.fragment_shader = true;
+	glConfig.ext.shader_objects = true;
+	glConfig.ext.shading_language_100 = true;
+	glConfig.ext.GLSL = true;
+	glConfig.ext.GLSL_core = true;
+	glConfig.ext.blend_func_separate = true;
 	if( glConfig.version >= 300 )
 	{
 #define GL_OPTIONAL_CORE_EXTENSION(name) \
-	( glConfig.ext.name = ( ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? qtrue : qfalse ) )
+	( glConfig.ext.name = ( ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? true : false ) )
 #define GL_OPTIONAL_CORE_EXTENSION_DEP(name,dep) \
-	( glConfig.ext.name = ( ( glConfig.ext.dep && ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ) ? qtrue : qfalse ) )
-		glConfig.ext.depth24 = qtrue;
-		glConfig.ext.draw_instanced = qtrue;
-		glConfig.ext.draw_range_elements = qtrue;
-		glConfig.ext.ES3_compatibility = qtrue;
-		glConfig.ext.framebuffer_blit = qtrue;
-		glConfig.ext.GLSL130 = qtrue;
-		glConfig.ext.rgb8_rgba8 = qtrue;
+	( glConfig.ext.name = ( ( glConfig.ext.dep && ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ) ? true : false ) )
+		glConfig.ext.depth24 = true;
+		glConfig.ext.draw_instanced = true;
+		glConfig.ext.draw_range_elements = true;
+		glConfig.ext.ES3_compatibility = true;
+		glConfig.ext.framebuffer_blit = true;
+		glConfig.ext.GLSL130 = true;
+		glConfig.ext.rgb8_rgba8 = true;
 		GL_OPTIONAL_CORE_EXTENSION(depth_texture);
 		GL_OPTIONAL_CORE_EXTENSION(get_program_binary);
 		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);
@@ -809,7 +809,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.maxTextureCubemapSize = 1 << Q_log2( glConfig.maxTextureCubemapSize );
 #ifndef GL_ES_VERSION_2_0
 	if( glConfig.maxTextureCubemapSize <= 1 )
-		glConfig.ext.texture_cube_map = qfalse;
+		glConfig.ext.texture_cube_map = false;
 #endif
 
 	/* GL_ARB_multitexture */
@@ -826,8 +826,8 @@ static void R_FinalizeGLExtensions( void )
 		if( glConfig.maxRenderbufferSize > glConfig.maxTextureSize )
 			glConfig.maxRenderbufferSize = glConfig.maxTextureSize;
 #ifndef GL_ES_VERSION_2_0
-		glConfig.ext.depth24 = qtrue;
-		glConfig.ext.rgb8_rgba8 = qtrue;
+		glConfig.ext.depth24 = true;
+		glConfig.ext.rgb8_rgba8 = true;
 #endif
 	}
 
@@ -845,7 +845,7 @@ static void R_FinalizeGLExtensions( void )
 		else if( qglBlitFramebufferANGLE )
 			qglBlitFramebufferEXT = qglBlitFramebufferANGLE;
 		else
-			glConfig.ext.framebuffer_blit = qfalse;
+			glConfig.ext.framebuffer_blit = false;
 	}
 #endif
 
@@ -865,7 +865,7 @@ static void R_FinalizeGLExtensions( void )
 		val = 0;
 		qglGetIntegerv( GL_MAX_MULTIVIEW_BUFFERS_EXT, &val );
 		if( val <= 1 )
-			glConfig.stereoEnabled = qfalse;
+			glConfig.stereoEnabled = false;
 	}
 #endif
 
@@ -917,7 +917,7 @@ static void R_FinalizeGLExtensions( void )
 
 	// instance attributes are beyond the minimum number of attributes supported by GLES2
 	if( glConfig.maxVertexAttribs <= VATTRIB_INSTANCE_XYZS ) {
-		glConfig.ext.instanced_arrays = qfalse;
+		glConfig.ext.instanced_arrays = false;
 	}
 
 	// keep the maximum number of bones we can do in GLSL sane
@@ -951,7 +951,7 @@ static void R_FinalizeGLExtensions( void )
 #endif
 
 		if( val <= 0 )
-			glConfig.ext.texture_non_power_of_two = qfalse;
+			glConfig.ext.texture_non_power_of_two = false;
 	}
 #endif
 
@@ -1104,7 +1104,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE );
 #endif
 	// make sure r_swapinterval is checked after vid_restart
-	r_swapinterval->modified = qtrue;
+	r_swapinterval->modified = true;
 
 	r_fragment_highp = ri.Cvar_Get( "r_fragment_highp", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
@@ -1115,7 +1115,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_floorcolor = ri.Cvar_Get( "r_floorcolor", "255 153 0", CVAR_ARCHIVE );
 
 	// make sure we rebuild our 3D texture after vid_restart
-	r_wallcolor->modified = r_floorcolor->modified = qtrue;
+	r_wallcolor->modified = r_floorcolor->modified = true;
 
 	r_maxglslbones = ri.Cvar_Get( "r_maxglslbones", STR_TOSTR( MAX_GLSL_UNIFORM_BONES ), CVAR_LATCH_VIDEO );
 
@@ -1224,7 +1224,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 	void *hinstance, void *wndproc, void *parenthWnd, 
 	int x, int y, int width, int height, int displayFrequency,
-	qboolean fullScreen, qboolean wideScreen, qboolean verbose )
+	bool fullScreen, bool wideScreen, bool verbose )
 {
 	const qgl_driverinfo_t *driver;
 	const char *dllname = NULL;
@@ -1284,7 +1284,7 @@ init_qgl:
 
 	glConfig.hwGamma = GLimp_GetGammaRamp( GAMMARAMP_STRIDE, &glConfig.gammaRampSize, glConfig.originalGammaRamp );
 	if( glConfig.hwGamma )
-		r_gamma->modified = qtrue;
+		r_gamma->modified = true;
 
 	/*
 	** get our various GL strings
@@ -1310,7 +1310,7 @@ init_qgl:
 	memset( &rf, 0, sizeof( rf ) );
 
 	rsh.registrationSequence = 1;
-	rsh.registrationOpen = qfalse;
+	rsh.registrationOpen = false;
 
 	rsh.worldModelSequence = 1;
 
@@ -1345,7 +1345,7 @@ init_qgl:
 
 	RB_Init();
 
-	RB_EnableScissor( qtrue );
+	RB_EnableScissor( true );
 
 	R_InitShaders();
 
@@ -1379,7 +1379,7 @@ init_qgl:
 * R_SetMode
 */
 rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, 
-	qboolean fullScreen, qboolean wideScreen )
+	bool fullScreen, bool wideScreen )
 {
 	return GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen, wideScreen );
 }
@@ -1387,7 +1387,7 @@ rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency,
 /*
 * R_SetWindow
 */
-qboolean R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+bool R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
 	return GLimp_SetWindow( hinstance, wndproc, parenthWnd );
 }
@@ -1402,9 +1402,9 @@ static void R_InitVolatileAssets( void )
 	R_InitCoronas();
 	R_InitCustomColors();
 
-	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, qtrue );
-	rsh.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, qtrue );
-	rsh.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, qtrue );
+	rsh.envShader = R_LoadShader( "$environment", SHADER_TYPE_OPAQUE_ENV, true );
+	rsh.skyShader = R_LoadShader( "$skybox", SHADER_TYPE_SKYBOX, true );
+	rsh.whiteShader = R_LoadShader( "$whiteimage", SHADER_TYPE_2D, true );
 
 	if( !rsh.nullVBO ) {
 		rsh.nullVBO = R_InitNullModelVBO();
@@ -1440,7 +1440,7 @@ void R_BeginRegistration( void )
 		// since rsh.registrationSequence never equals 0
 		rsh.registrationSequence = 1; 
 	}
-	rsh.registrationOpen = qtrue;
+	rsh.registrationOpen = true;
 
 	RB_BeginRegistration();
 
@@ -1452,11 +1452,11 @@ void R_BeginRegistration( void )
 */
 void R_EndRegistration( void )
 {
-	if( rsh.registrationOpen == qfalse ) {
+	if( rsh.registrationOpen == false ) {
 		return;
 	}
 
-	rsh.registrationOpen = qfalse;
+	rsh.registrationOpen = false;
 
 	R_FreeUnusedModels();
 	R_FreeUnusedVBOs();
@@ -1474,7 +1474,7 @@ void R_EndRegistration( void )
 /*
 * R_Shutdown
 */
-void R_Shutdown( qboolean verbose )
+void R_Shutdown( bool verbose )
 {
 	ri.Cmd_RemoveCommand( "modellist" );
 	ri.Cmd_RemoveCommand( "screenshot" );

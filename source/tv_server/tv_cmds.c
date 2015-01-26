@@ -54,7 +54,7 @@ static char *TV_ConnstateToString( connstate_t state )
 static void TV_Upstream_Status_f( void )
 {
 	int i;
-	qboolean none;
+	bool none;
 	client_t *client;
 	upstream_t *upstream;
 
@@ -77,7 +77,7 @@ static void TV_Upstream_Status_f( void )
 	}
 
 	Com_Printf( "Downstream connections:\n" );
-	none = qtrue;
+	none = true;
 	for( i = 0; i < tv_maxclients->integer; i++ )
 	{
 		client = &tvs.clients[i];
@@ -96,7 +96,7 @@ static void TV_Upstream_Status_f( void )
 		}
 
 		Com_Printf( "%3i: %s" S_COLOR_WHITE " (%s)\n", i, client->name, NET_AddressToString( &client->netchan.remoteAddress ) );
-		none = qfalse;
+		none = false;
 	}
 	if( none )
 		Com_Printf( "- No downstream connections\n" );
@@ -108,11 +108,11 @@ static void TV_Upstream_Status_f( void )
 static void TV_Status( void )
 {
 	int i;
-	qboolean none;
+	bool none;
 	client_t *client;
 
 	Com_Printf( "Upstream connections:\n" );
-	none = qtrue;
+	none = true;
 	for( i = 0; i < tvs.numupstreams; i++ )
 	{
 		if( !tvs.upstreams[i] )
@@ -120,13 +120,13 @@ static void TV_Status( void )
 
 		Com_Printf( "%3i: %22s: %s\n", i+1, NET_AddressToString( &tvs.upstreams[i]->serveraddress ),
 			tvs.upstreams[i]->name );
-		none = qfalse;
+		none = false;
 	}
 	if( none )
 		Com_Printf( "- No upstream connections\n" );
 
 	Com_Printf( "Downstream connections:\n" );
-	none = qtrue;
+	none = true;
 	for( i = 0; i < tv_maxclients->integer; i++ )
 	{
 		client = &tvs.clients[i];
@@ -136,7 +136,7 @@ static void TV_Status( void )
 
 		Com_Printf( "%3i: %s" S_COLOR_WHITE " (%s): %s" S_COLOR_WHITE " %s\n", i, client->name, NET_AddressToString( &client->netchan.remoteAddress ),
 			( client->relay ? client->relay->upstream->name : "lobby" ), client->mv ? "MV" : "" );
-		none = qfalse;
+		none = false;
 	}
 	if( none )
 		Com_Printf( "- No downstream connections\n" );
@@ -294,7 +294,7 @@ static void TV_Demo_f( void )
 	char *servername, *name, *mode;
 	upstream_t *upstream;
 	unsigned int delay;
-	qboolean randomize = qtrue;
+	bool randomize = true;
 
 	if( Cmd_Argc() < 2 )
 	{
@@ -307,7 +307,7 @@ static void TV_Demo_f( void )
 	mode = ( Cmd_Argc() >= 4 ? Cmd_Argv( 3 ) : "" );
 	delay = ( Cmd_Argc() >= 5 ? (unsigned)atoi( Cmd_Argv( 4 ) )*1000 : RELAY_MIN_DELAY );
 	if( !Q_stricmp( mode, "ordered" ) )
-		randomize = qfalse;
+		randomize = false;
 
 	if( TV_UpstreamForText( servername, &upstream ) )
 	{
@@ -338,7 +338,7 @@ exit:
 static void TV_Record_f( void )
 {
 	const char *name;
-	qboolean res, silent;
+	bool res, silent;
 	upstream_t *upstream;
 
 	if( Cmd_Argc() < 3 )
@@ -357,9 +357,9 @@ static void TV_Record_f( void )
 	}
 
 	if( Cmd_Argc() > 3 && !Q_stricmp( Cmd_Argv( 3 ), "silent" ) )
-		silent = qtrue;
+		silent = true;
 	else
-		silent = qfalse;
+		silent = false;
 
 	TV_Upstream_StartDemoRecord( upstream, Cmd_Argv( 2 ), silent );
 }
@@ -373,7 +373,7 @@ static void TV_Stop_f( void )
 {
 	int arg;
 	const char *name;
-	qboolean res, silent, cancel;
+	bool res, silent, cancel;
 	upstream_t *upstream;
 
 	if( Cmd_Argc() < 2 )
@@ -392,13 +392,13 @@ static void TV_Stop_f( void )
 	}
 
 	// look through all the args
-	silent = cancel = qfalse;
+	silent = cancel = false;
 	for( arg = 2; arg < Cmd_Argc(); arg++ )
 	{
 		if( !Q_stricmp( Cmd_Argv( arg ), "silent" ) )
-			silent = qtrue;
+			silent = true;
 		else if( !Q_stricmp( Cmd_Argv( arg ), "cancel" ) )
-			cancel = qtrue;
+			cancel = true;
 	}
 
 	TV_Upstream_StopDemoRecord( upstream, silent, cancel );
@@ -412,7 +412,7 @@ static void TV_Stop_f( void )
 void TV_Rename_f( void )
 {
 	const char *text, *newname;
-	qboolean res;
+	bool res;
 	upstream_t *upstream;
 
 	if( Cmd_Argc() < 3 )
@@ -452,7 +452,7 @@ static void SV_Heartbeat_f( void )
 static void TV_Music_f( void )
 {
 	const char *text, *music;
-	qboolean res;
+	bool res;
 	upstream_t *upstream;
 
 	if( Cmd_Argc() < 3 )

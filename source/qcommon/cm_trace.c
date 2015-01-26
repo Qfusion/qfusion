@@ -40,7 +40,7 @@ void CM_InitBoxHull( cmodel_state_t *cms )
 
 	cms->box_markbrushes[0] = cms->box_brush;
 
-	cms->box_cmodel->builtin = qtrue;
+	cms->box_cmodel->builtin = true;
 	cms->box_cmodel->nummarkfaces = 0;
 	cms->box_cmodel->markfaces = NULL;
 	cms->box_cmodel->markbrushes = cms->box_markbrushes;
@@ -96,7 +96,7 @@ void CM_InitOctagonHull( cmodel_state_t *cms )
 
 	cms->oct_markbrushes[0] = cms->oct_brush;
 
-	cms->oct_cmodel->builtin = qtrue;
+	cms->oct_cmodel->builtin = true;
 	cms->oct_cmodel->nummarkfaces = 0;
 	cms->oct_cmodel->markfaces = NULL;
 	cms->oct_cmodel->markbrushes = cms->oct_markbrushes;
@@ -500,7 +500,7 @@ static trace_t	*trace_trace;
 static float trace_realfraction;
 #endif
 static int trace_contents;
-static qboolean trace_ispoint;      // optimized case
+static bool trace_ispoint;      // optimized case
 
 /*
 * CM_ClipBoxToBrush
@@ -514,7 +514,7 @@ static void CM_ClipBoxToBrush( cmodel_state_t *cms, cbrush_t *brush )
 	float enterdist = 0, move = 1;
 #endif
 	float d1, d2, f;
-	qboolean getout, startout;
+	bool getout, startout;
 	cbrushside_t *side, *leadside;
 
 	if( !brush->numsides )
@@ -526,8 +526,8 @@ static void CM_ClipBoxToBrush( cmodel_state_t *cms, cbrush_t *brush )
 
 	c_brush_traces++;
 
-	getout = qfalse;
-	startout = qfalse;
+	getout = false;
+	startout = false;
 	leadside = NULL;
 	side = brush->brushsides;
 
@@ -585,9 +585,9 @@ static void CM_ClipBoxToBrush( cmodel_state_t *cms, cbrush_t *brush )
 		}
 
 		if( d2 > 0 )
-			getout = qtrue; // endpoint is not in solid
+			getout = true; // endpoint is not in solid
 		if( d1 > 0 )
-			startout = qtrue;
+			startout = true;
 
 		// if completely in front of face, no intersection
 		if( d1 > 0 && d2 >= d1 )
@@ -640,11 +640,11 @@ static void CM_ClipBoxToBrush( cmodel_state_t *cms, cbrush_t *brush )
 	if( !startout )
 	{
 		// original point was inside brush
-		trace_trace->startsolid = qtrue;
+		trace_trace->startsolid = true;
 		trace_trace->contents = brush->contents;
 		if( !getout )
 		{
-			trace_trace->allsolid = qtrue;
+			trace_trace->allsolid = true;
 			trace_trace->fraction = 0;
 		}
 		return;
@@ -749,7 +749,7 @@ static void CM_TestBoxInBrush( cmodel_state_t *cms, cbrush_t *brush )
 	}
 
 	// inside this brush
-	trace_trace->startsolid = trace_trace->allsolid = qtrue;
+	trace_trace->startsolid = trace_trace->allsolid = true;
 	trace_trace->fraction = 0;
 	trace_trace->contents = brush->contents;
 }
@@ -945,9 +945,9 @@ loc0:
 static void CM_BoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec3_t end, vec3_t mins, vec3_t maxs,
 						cmodel_t *cmodel, vec3_t origin, int brushmask )
 {
-	qboolean notworld;
+	bool notworld;
 
-	notworld = ( cmodel != cms->map_cmodels ? qtrue : qfalse );
+	notworld = ( cmodel != cms->map_cmodels ? true : false );
 
 	cms->checkcount++;  // for multi-check avoidance
 	c_traces++;     // for statistics, may be zeroed
@@ -1033,12 +1033,12 @@ static void CM_BoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec3_t 
 	//
 	if( VectorCompare( mins, vec3_origin ) && VectorCompare( maxs, vec3_origin ) )
 	{
-		trace_ispoint = qtrue;
+		trace_ispoint = true;
 		VectorClear( trace_extents );
 	}
 	else
 	{
-		trace_ispoint = qfalse;
+		trace_ispoint = false;
 		VectorSet( trace_extents,
 			-mins[0] > maxs[0] ? -mins[0] : maxs[0],
 			-mins[1] > maxs[1] ? -mins[1] : maxs[1],
@@ -1082,7 +1082,7 @@ void CM_TransformedBoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec
 	vec3_t start_l, end_l;
 	vec3_t a, temp;
 	mat3_t axis;
-	qboolean rotated;
+	bool rotated;
 
 	if( !tr )
 		return;
@@ -1134,9 +1134,9 @@ void CM_TransformedBoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec
 		&& !cmodel->builtin
 #endif
 		)
-		rotated = qtrue;
+		rotated = true;
 	else
-		rotated = qfalse;
+		rotated = false;
 
 	if( rotated )
 	{

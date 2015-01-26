@@ -94,7 +94,7 @@ static int findWavChunk( int filenum, const char *chunk )
 	int len;
 
 	// This is a bit dangerous...
-	while( qtrue )
+	while( true )
 	{
 		len = readChunkInfo( filenum, name );
 
@@ -128,7 +128,7 @@ static void byteSwapRawSamples( int samples, int width, int channels, const uint
 		( (short *)data )[i] = LittleShort( ( (short *)data )[i] );
 }
 
-static qboolean read_wav_header( int filenum, snd_info_t *info )
+static bool read_wav_header( int filenum, snd_info_t *info )
 {
 	char dump[16];
 	int fmtlen = 0;
@@ -140,7 +140,7 @@ static qboolean read_wav_header( int filenum, snd_info_t *info )
 	if( !( fmtlen = findWavChunk( filenum, "fmt " ) ) )
 	{
 		Com_Printf( "Error reading wav header: No fmt chunk\n" );
-		return qfalse;
+		return false;
 	}
 
 	// Save the parameters
@@ -162,11 +162,11 @@ static qboolean read_wav_header( int filenum, snd_info_t *info )
 	if( !( info->size = findWavChunk( filenum, "data" ) ) )
 	{
 		Com_Printf( "Error reading wav header: No data chunk\n" );
-		return qfalse;
+		return false;
 	}
 	info->samples = ( info->size / info->width ) / info->channels;
 
-	return qtrue;
+	return true;
 }
 
 static void decoder_wav_stream_shutdown( snd_stream_t *stream )
@@ -230,7 +230,7 @@ void *decoder_wav_load( const char *filename, snd_info_t *info )
 	return buffer;
 }
 
-snd_stream_t *decoder_wav_open( const char *filename, qboolean *delay )
+snd_stream_t *decoder_wav_open( const char *filename, bool *delay )
 {
 	snd_stream_t *stream;
 	snd_wav_stream_t *wav_stream;
@@ -244,7 +244,7 @@ snd_stream_t *decoder_wav_open( const char *filename, qboolean *delay )
 		return NULL;
 
 	if( delay )
-		*delay = qfalse;
+		*delay = false;
 
 	stream->ptr = S_Malloc( sizeof( snd_wav_stream_t ) );
 	wav_stream = (snd_wav_stream_t *)stream->ptr;
@@ -264,23 +264,23 @@ snd_stream_t *decoder_wav_open( const char *filename, qboolean *delay )
 	return stream;
 }
 
-qboolean decoder_wav_cont_open( snd_stream_t *stream )
+bool decoder_wav_cont_open( snd_stream_t *stream )
 {
 	snd_wav_stream_t *wav_stream;
 
 	if( !stream )
-		return qfalse;
+		return false;
 
 	wav_stream = (snd_wav_stream_t *)stream->ptr;
 
 	if( !read_wav_header( wav_stream->filenum, &stream->info ) )
 	{
 		decoder_wav_close( stream );
-		return qfalse;
+		return false;
 	}
 
 	wav_stream->content_start = wav_stream->position;
-	return qtrue;
+	return true;
 }
 
 int decoder_wav_read( snd_stream_t *stream, int bytes, void *buffer )
@@ -314,18 +314,18 @@ void decoder_wav_close( snd_stream_t *stream )
 	decoder_wav_stream_shutdown( stream );
 }
 
-qboolean decoder_wav_reset( snd_stream_t *stream )
+bool decoder_wav_reset( snd_stream_t *stream )
 {
 	snd_wav_stream_t *wav_stream = (snd_wav_stream_t *)stream->ptr;
 
 	if( trap_FS_Seek( wav_stream->filenum, wav_stream->content_start, FS_SEEK_SET ) )
-		return qfalse;
+		return false;
 
 	wav_stream->position = wav_stream->content_start;
-	return qtrue;
+	return true;
 }
 
-qboolean decoder_wav_eof( snd_stream_t *stream )
+bool decoder_wav_eof( snd_stream_t *stream )
 {
 	snd_wav_stream_t *wav_stream = (snd_wav_stream_t *)stream->ptr;
 	return trap_FS_Eof( wav_stream->filenum );

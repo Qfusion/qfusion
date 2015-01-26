@@ -49,7 +49,7 @@ typedef struct
 typedef struct
 {
 	gclient_t *client;
-	qboolean inuse;
+	bool inuse;
 	int linkcount;
 
 	// FIXME: move these fields to a server private sv_entity_t
@@ -78,13 +78,13 @@ typedef struct
 #define	MAX_PARSE_ENTITIES	1024
 typedef struct snapshot_s
 {
-	qboolean valid;             // cleared if delta parsing was invalid
+	bool valid;             // cleared if delta parsing was invalid
 	int serverFrame;
 	unsigned int serverTime;    // time in the server when frame was created
 	unsigned int ucmdExecuted;
-	qboolean delta;
-	qboolean allentities;
-	qboolean multipov;
+	bool delta;
+	bool allentities;
+	bool multipov;
 	int deltaFrameNum;
 	size_t areabytes;
 	uint8_t *areabits;             // portalarea visibility bits
@@ -124,7 +124,7 @@ typedef struct
 	void ( *CM_InlineModelBounds )( relay_t *relay, struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
 	struct cmodel_s	*( *CM_ModelForBBox )( relay_t *relay, vec3_t mins, vec3_t maxs );
 	struct cmodel_s	*( *CM_OctagonModelForBBox )( relay_t *relay, vec3_t mins, vec3_t maxs );
-	qboolean ( *CM_AreasConnected )( relay_t *relay, int area1, int area2 );
+	bool ( *CM_AreasConnected )( relay_t *relay, int area1, int area2 );
 	int ( *CM_BoxLeafnums )( relay_t *relay, vec3_t mins, vec3_t maxs, int *list, int listsize, int *topnode );
 	int ( *CM_LeafCluster )( relay_t *relay, int leafnum );
 	int ( *CM_LeafArea )( relay_t *relay, int leafnum );
@@ -134,7 +134,7 @@ typedef struct
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 
 	// dynvars
-	dynvar_t *( *Dynvar_Create )( const char *name, qboolean console, dynvar_getter_f getter, dynvar_setter_f setter );
+	dynvar_t *( *Dynvar_Create )( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter );
 	void ( *Dynvar_Destroy )( dynvar_t *dynvar );
 	dynvar_t *( *Dynvar_Lookup )( const char *name );
 	const char *( *Dynvar_GetName )( dynvar_t *dynvar );
@@ -174,7 +174,7 @@ typedef struct
 	int ( *FS_Eof )( int file );
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
-	qboolean ( *FS_RemoveFile )( const char *filename );
+	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
 
@@ -214,24 +214,24 @@ typedef struct
 	void ( *SpawnEntities )( tvm_relay_t *relay, const char *mapname, const char *entstring, int entstrlen );
 	void ( *SetAudoTrack )( tvm_relay_t *relay, const char *track );
 
-	qboolean ( *CanConnect )( tvm_relay_t *relay, char *userinfo );
+	bool ( *CanConnect )( tvm_relay_t *relay, char *userinfo );
 	void ( *ClientConnect )( tvm_relay_t *relay, edict_t *ent, char *userinfo );
 	void ( *ClientBegin )( tvm_relay_t *relay, edict_t *ent );
 	void ( *ClientUserinfoChanged )( tvm_relay_t *relay, edict_t *ent, char *userinfo );
-	qboolean ( *ClientMultiviewChanged )( tvm_relay_t *relay, edict_t *ent, qboolean multiview );
+	bool ( *ClientMultiviewChanged )( tvm_relay_t *relay, edict_t *ent, bool multiview );
 	void ( *ClientDisconnect )( tvm_relay_t *relay, edict_t *ent );
-	qboolean ( *ClientCommand )( tvm_relay_t *relay, edict_t *ent );
+	bool ( *ClientCommand )( tvm_relay_t *relay, edict_t *ent );
 	void ( *ClientThink )( tvm_relay_t *relay, edict_t *ent, usercmd_t *cmd, int timeDelta );
 
 	void ( *NewFrameSnapshot )( tvm_relay_t *relay, snapshot_t *frame );
-	qboolean ( *ConfigString )( tvm_relay_t *relay, int number, const char *value );
+	bool ( *ConfigString )( tvm_relay_t *relay, int number, const char *value );
 
 	void ( *RunFrame )( tvm_relay_t *relay, unsigned int msec );
 	void ( *SnapFrame )( tvm_relay_t *relay );
 	void ( *ClearSnap )( tvm_relay_t *relay );
 
 	game_state_t *( *GetGameState )( tvm_relay_t *relay );
-	qboolean ( *AllowDownload )( tvm_relay_t *relay, edict_t *ent, const char *requestname, const char *uploadname );
+	bool ( *AllowDownload )( tvm_relay_t *relay, edict_t *ent, const char *requestname, const char *uploadname );
 } tv_module_export_t;
 
 #endif // __TVM_PUBLIC_H

@@ -77,11 +77,11 @@ struct relay_s
 	unsigned int lastrun;       // last RunFrame time
 
 	int lastExecutedServerCommand;
-	qboolean multiview;
+	bool multiview;
 
 	packet_t *packetqueue_pos;
 	unsigned int delay;
-	qboolean reliable;
+	bool reliable;
 
 	cmodel_state_t *cms;
 	fatvis_t fatvis;

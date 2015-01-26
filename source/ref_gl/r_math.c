@@ -43,15 +43,15 @@ void Matrix4_Copy( const mat4_t m1, mat4_t m2 )
 	memcpy( m2, m1, sizeof( mat4_t ) );
 }
 
-qboolean Matrix4_Compare( const mat4_t m1, const mat4_t m2 )
+bool Matrix4_Compare( const mat4_t m1, const mat4_t m2 )
 {
 	int i;
 
 	for( i = 0; i < 16; i++ )
 		if( m1[i] != m2[i] )
-			return qfalse;
+			return false;
 
-	return qtrue;
+	return true;
 }
 
 void Matrix4_Multiply( const mat4_t m1, const mat4_t m2, mat4_t out )
@@ -97,7 +97,7 @@ void Matrix4_MultiplyFast( const mat4_t m1, const mat4_t m2, mat4_t out )
 // Taken from Darkplaces source code
 // Adapted from code contributed to Mesa by David Moore (Mesa 7.6 under SGI Free License B - which is MIT/X11-type)
 // added helper for common subexpression elimination by eihrul, and other optimizations by div0
-qboolean Matrix4_Invert( const mat4_t in, mat4_t out )
+bool Matrix4_Invert( const mat4_t in, mat4_t out )
 {
 	float det;
 
@@ -136,7 +136,7 @@ qboolean Matrix4_Invert( const mat4_t in, mat4_t out )
 	// so this calculates the det)
 	det = m00*out[0] + m10*out[1] + m20*out[2] + m30*out[3];
 	if (det == 0.0f)
-		return qfalse;
+		return false;
 
 	// multiplications are faster than divisions, usually
 	det = 1.0f / det;
@@ -147,7 +147,7 @@ qboolean Matrix4_Invert( const mat4_t in, mat4_t out )
 	out[8] *= det; out[9] *= det; out[10] *= det; out[11] *= det;
 	out[12] *= det; out[13] *= det; out[14] *= det; out[15] *= det;
 
-	return qtrue;
+	return true;
 }
 
 void Matrix4_FromQuaternion( const quat_t q, mat4_t out )

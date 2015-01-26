@@ -163,14 +163,14 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	const shader_t *shader = portalSurface->shader;
 	vec_t *portal_mins = portalSurface->mins, *portal_maxs = portalSurface->maxs;
 	vec_t *portal_centre = portalSurface->centre;
-	qboolean mirror, refraction = qfalse;
+	bool mirror, refraction = false;
 	image_t *captureTexture;
 	int captureTextureId = -1;
 	int prevRenderFlags = 0;
-	qboolean doReflection, doRefraction;
+	bool doReflection, doRefraction;
 	image_t *portalTexures[2] = { NULL, NULL };
 
-	doReflection = doRefraction = qtrue;
+	doReflection = doRefraction = true;
 	if( shader->flags & SHADER_PORTAL_CAPTURE )
 	{
 		shaderpass_t *pass;
@@ -183,9 +183,9 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 			if( pass->program_type == GLSL_PROGRAM_TYPE_DISTORTION )
 			{
 				if( ( pass->alphagen.type == ALPHA_GEN_CONST && pass->alphagen.args[0] == 1 ) )
-					doRefraction = qfalse;
+					doRefraction = false;
 				else if( ( pass->alphagen.type == ALPHA_GEN_CONST && pass->alphagen.args[0] == 0 ) )
-					doReflection = qfalse;
+					doReflection = false;
 				break;
 			}
 		}
@@ -208,7 +208,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 
 		// even if we're behind the portal, we still need to capture
 		// the second portal image for refraction
-		refraction = qtrue;
+		refraction = true;
 		captureTexture = NULL;
 		captureTextureId = 1;
 		if( dist < 0 )
@@ -221,7 +221,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	if( !(rn.renderFlags & RF_NOVIS) && !R_ScissorForEntity( portal_ent, portal_mins, portal_maxs, &x, &y, &w, &h ) )
 		return;
 
-	mirror = qtrue; // default to mirror view
+	mirror = true; // default to mirror view
 	// it is stupid IMO that mirrors require a RT_PORTALSURFACE entity
 
 	best = NULL;
@@ -252,7 +252,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	else
 	{
 		if( !VectorCompare( best->origin, best->origin2 ) )	// portal
-			mirror = qfalse;
+			mirror = false;
 		best->rtype = NUM_RTYPES;
 	}
 
@@ -395,7 +395,7 @@ setup_and_render:
 
 	if( doRefraction && !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) )
 	{
-		refraction = qtrue;
+		refraction = true;
 		captureTexture = NULL;
 		captureTextureId = 1;
 		goto setup_and_render;
@@ -492,7 +492,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 		rn.refdef.fov_x = skyportal->fov;
 		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
 		if( glConfig.wideScreen && !( rn.refdef.rdflags & RDF_NOFOVADJUSTMENT ) )
-			AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, qfalse );
+			AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );
 	}
 
 	R_RenderView( &rn.refdef );

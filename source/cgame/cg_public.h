@@ -39,13 +39,13 @@ typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
 #define	MAX_PARSE_ENTITIES	1024
 typedef struct snapshot_s
 {
-	qboolean valid;             // cleared if delta parsing was invalid
+	bool valid;             // cleared if delta parsing was invalid
 	int serverFrame;
 	unsigned int serverTime;    // time in the server when frame was created
 	unsigned int ucmdExecuted;
-	qboolean delta;
-	qboolean allentities;
-	qboolean multipov;
+	bool delta;
+	bool allentities;
+	bool multipov;
 	int deltaFrameNum;
 	size_t areabytes;
 	uint8_t *areabits;             // portalarea visibility bits
@@ -87,7 +87,7 @@ typedef struct
 	void ( *PrintToLog )( const char *msg );
 
 	// dynvars
-	dynvar_t *( *Dynvar_Create )( const char *name, qboolean console, dynvar_getter_f getter, dynvar_setter_f setter );
+	dynvar_t *( *Dynvar_Create )( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter );
 	void ( *Dynvar_Destroy )( dynvar_t *dynvar );
 	dynvar_t *( *Dynvar_Lookup )( const char *name );
 	const char *( *Dynvar_GetName )( dynvar_t *dynvar );
@@ -129,14 +129,14 @@ typedef struct
 	int ( *FS_Eof )( int file );
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
-	qboolean ( *FS_RemoveFile )( const char *filename );
+	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
-	qboolean ( *FS_IsPureFile )( const char *filename );
-	qboolean ( *FS_MoveFile )( const char *src, const char *dst );
-	qboolean ( *FS_IsUrl )( const char *url );
+	bool ( *FS_IsPureFile )( const char *filename );
+	bool ( *FS_MoveFile )( const char *src, const char *dst );
+	bool ( *FS_IsUrl )( const char *url );
 	time_t ( *FS_FileMTime )( const char *filename );
-	qboolean ( *FS_RemoveDirectory )( const char *dirname );
+	bool ( *FS_RemoveDirectory )( const char *dirname );
 
 	// key bindings
 	const char *( *Key_GetBindingBuf )( int binding );
@@ -144,7 +144,7 @@ typedef struct
 
 	void ( *GetConfigString )( int i, char *str, int size );
 	unsigned int ( *Milliseconds )( void );
-	qboolean ( *DownloadRequest )( const char *filename, qboolean requestpak );
+	bool ( *DownloadRequest )( const char *filename, bool requestpak );
 
 	unsigned int (* Hash_BlockChecksum )( const uint8_t * data, size_t len );
 	unsigned int (* Hash_SuperFastHash )( const uint8_t * data, size_t len, unsigned int seed );
@@ -177,11 +177,11 @@ typedef struct
 	struct model_s *( *R_RegisterModel )( const char *name );
 	struct shader_s *( *R_RegisterPic )( const char *name );
 	struct shader_s *( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
-	struct shader_s *( *R_RegisterLevelshot )( const char *name, struct shader_s *defaultPic, qboolean *matchesDefault );
+	struct shader_s *( *R_RegisterLevelshot )( const char *name, struct shader_s *defaultPic, bool *matchesDefault );
 	struct shader_s *( *R_RegisterSkin )( const char *name );
 	struct skinfile_s *( *R_RegisterSkinFile )( const char *name );
 	struct shader_s *( *R_RegisterVideo )( const char *name );
-	qboolean ( *R_LerpTag )( struct orientation_s *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name );
+	bool ( *R_LerpTag )( struct orientation_s *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name );
 	void ( *R_SetCustomColor )( int num, int r, int g, int b );
 	void ( *R_LightForOrigin )( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
 	void ( *R_DrawStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
@@ -247,7 +247,7 @@ typedef struct
 	const char *( *L10n_TranslateString )( const char *string );
 
 	// cinematics
-	qboolean ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener, 
+	bool ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener, 
 		cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
 } cgame_import_t;
 
@@ -262,7 +262,7 @@ typedef struct
 	// the init function will be called at each restart
 	void ( *Init )( const char *serverName, unsigned int playerNum,
 		int vidWidth, int vidHeight, float pixelRatio,
-		qboolean demoplaying, const char *demoName, qboolean pure, unsigned int snapFrameTime, 
+		bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime, 
 		int protocol, int sharedSeed );
 
 	// "soft restarts" at demo jumps

@@ -199,7 +199,7 @@ typedef struct
 	// any asset (model, shader, texture, etc) with has not been registered
 	// or "touched" during the last registration sequence will be freed
 	int				registrationSequence;
-	qboolean		registrationOpen;
+	bool		registrationOpen;
 
 	// bumped each time R_RegisterWorldModel is called
 	int				worldModelSequence;
@@ -275,7 +275,7 @@ typedef struct
 
 typedef struct
 {
-	qboolean		in2D;
+	bool		in2D;
 	int				width2D, height2D;
 
 	int				frameBufferWidth, frameBufferHeight;
@@ -420,9 +420,9 @@ void R_LatLongToNorm4( const uint8_t latlong[2], vec4_t out );
 //
 // r_alias.c
 //
-qboolean	R_AddAliasModelToDrawList( const entity_t *e );
-qboolean	R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceAlias_t *drawSurf );
-qboolean	R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
+bool	R_AddAliasModelToDrawList( const entity_t *e );
+bool	R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceAlias_t *drawSurf );
+bool	R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel, int framenum, int oldframenum,
 				float lerpfrac, const char *name );
 float		R_AliasModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
 void		R_AliasModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
@@ -456,12 +456,12 @@ void		R_ShaderDump_f( void );
 // r_cull.c
 //
 void		R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum );
-qboolean	R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags );
-qboolean	R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
-qboolean	R_VisCullBox( const vec3_t mins, const vec3_t maxs );
-qboolean	R_VisCullSphere( const vec3_t origin, float radius );
-int			R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, qboolean sphereCull );
-qboolean	R_CullSpriteEntity( const entity_t *e );
+bool	R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags );
+bool	R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
+bool	R_VisCullBox( const vec3_t mins, const vec3_t maxs );
+bool	R_VisCullSphere( const vec3_t origin, float radius );
+int			R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull );
+bool	R_CullSpriteEntity( const entity_t *e );
 
 //
 // r_framebuffer.c
@@ -474,17 +474,17 @@ enum
 };
 
 void		RFB_Init( void );
-int			RFB_RegisterObject( int width, int height, qboolean depthRB );
+int			RFB_RegisterObject( int width, int height, bool depthRB );
 void		RFB_UnregisterObject( int object );
 void		RFB_TouchObject( int object );
 void		RFB_BindObject( int object );
 int			RFB_BoundObject( void );
 void		RFB_AttachTextureToObject( int object, image_t *texture );
-void		RFB_DetachTextureFromObject( qboolean depth );
-image_t		*RFB_GetObjectTextureAttachment( int object, qboolean depth );
+void		RFB_DetachTextureFromObject( bool depth );
+image_t		*RFB_GetObjectTextureAttachment( int object, bool depth );
 void		RFB_DisableObjectDrawBuffer( void );
 void		RFB_BlitObject( int dest, int bitMask, int mode );
-qboolean	RFB_CheckObjectStatus( void );
+bool	RFB_CheckObjectStatus( void );
 void		RFB_GetObjectSize( int object, int *width, int *height );
 void		RFB_FreeUnusedObjects( void );
 void		RFB_Shutdown( void );
@@ -497,7 +497,7 @@ void		RFB_Shutdown( void );
 
 unsigned int R_AddSurfaceDlighbits( const msurface_t *surf, unsigned int checkDlightBits );
 void		R_AddDynamicLights( unsigned int dlightbits, int state );
-void		R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, qboolean noWorldLight );
+void		R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
 void		R_LightForOrigin2( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
 void		R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects );
 void		R_InitLightStyles( model_t *mod );
@@ -507,7 +507,7 @@ void		R_SortSuperLightStyles( model_t *mod );
 void		R_TouchLightmapImages( model_t *mod );
 
 void		R_InitCoronas( void );
-qboolean	R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
+bool	R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
 void		R_BatchCoronaSurf(  const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
 void		R_DrawCoronas( void );
 void		R_ShutdownCoronas( void );
@@ -535,36 +535,36 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define		R_LoadFile(path,buffer) R_LoadFile_(path,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
-qboolean	R_ScreenEnabled( void );
-void		R_BeginFrame( float cameraSeparation, qboolean forceClear, qboolean forceVsync );
+bool	R_ScreenEnabled( void );
+void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
-void		R_Set2DMode( qboolean enable );
+void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 const char *R_SpeedsMessage( char *out, size_t size );
-void		R_AppActivate( qboolean active, qboolean destroy );
+void		R_AppActivate( bool active, bool destroy );
 
 mfog_t		*R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t		*R_FogForSphere( const vec3_t centre, const float radius );
-qboolean	R_CompletelyFogged( const mfog_t *fog, vec3_t origin, float radius );
+bool	R_CompletelyFogged( const mfog_t *fog, vec3_t origin, float radius );
 int			R_LODForSphere( const vec3_t origin, float radius );
 float		R_DefaultFarClip( void );
 
-qboolean	R_BeginSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
+bool	R_BeginSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
 void		R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
 
 struct mesh_vbo_s *R_InitNullModelVBO( void );
-qboolean	R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
+bool	R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
 
 void		R_TransformForWorld( void );
 void		R_TransformForEntity( const entity_t *e );
 void		R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
 void		R_TransformBounds( const vec3_t origin, const mat3_t axis, vec3_t mins, vec3_t maxs, vec3_t bbox[8] );
-qboolean	R_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
-qboolean	R_ScissorForEntity( const entity_t *ent, vec3_t mins, vec3_t maxs, int *x, int *y, int *w, int *h );
+bool	R_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
+bool	R_ScissorForEntity( const entity_t *ent, vec3_t mins, vec3_t maxs, int *x, int *y, int *w, int *h );
 
 void		R_AddDebugBounds( const vec3_t mins, const vec3_t maxs );
 
-void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset, qboolean quad );
+void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset, bool quad );
 void		R_EndStretchBatch( void );
 void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, const shader_t *shader );
@@ -588,17 +588,17 @@ void		R_ShutdownCustomColors( void );
 #define ENTITY_OUTLINE(ent) (( !(rn.renderFlags & RF_MIRRORVIEW) && ((ent)->renderfx & RF_VIEWERMODEL) ) ? 0 : (ent)->outlineHeight)
 
 void		R_ClearRefInstStack( void );
-qboolean	R_PushRefInst( void );
+bool	R_PushRefInst( void );
 void		R_PopRefInst( int clearBitMask );
 
-qboolean	R_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
+bool	R_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
 
 void		R_BindFrameBufferObject( int object );
 
 void		R_Scissor( int x, int y, int w, int h );
 void		R_GetScissor( int *x, int *y, int *w, int *h );
 void		R_ResetScissor( void );
-void		R_EnableScissor( qboolean enable );
+void		R_EnableScissor( bool enable );
 
 shader_t	*R_GetShaderForOrigin( const vec3_t origin );
 struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
@@ -609,7 +609,7 @@ struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
 void R_InitDrawList( drawList_t *list );
 void R_InitDrawLists( void );
 void R_ClearDrawList( void );
-qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t *shader, 
+bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t *shader, 
 	float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
 void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems, 
 	unsigned int firstVert, unsigned int firstElem );
@@ -640,11 +640,11 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 //
 // r_poly.c
 //
-qboolean	R_BeginPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfacePoly_t *drawSurf );
+bool	R_BeginPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfacePoly_t *drawSurf );
 void		R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfacePoly_t *poly );
 void		R_DrawPolys( void );
 void		R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
-qboolean	R_SurfPotentiallyFragmented( const msurface_t *surf );
+bool	R_SurfPotentiallyFragmented( const msurface_t *surf );
 int			R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], int maxfverts,
 								  vec4_t *fverts, int maxfragments, fragment_t *fragments );
 
@@ -654,13 +654,13 @@ int			R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], 
 rserr_t		R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 				void *hinstance, void *wndproc, void *parenthWnd, 
 				int x, int y, int width, int height, int displayFrequency,
-				qboolean fullscreen, qboolean wideScreen, qboolean verbose );
+				bool fullscreen, bool wideScreen, bool verbose );
 void		R_BeginRegistration( void );
 void		R_EndRegistration( void );
-void		R_Shutdown( qboolean verbose );
+void		R_Shutdown( bool verbose );
 rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency,
-				qboolean fullScreen, qboolean wideScreen );
-qboolean	R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
+				bool fullScreen, bool wideScreen );
+bool	R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 
 //
 // r_scene.c
@@ -682,12 +682,12 @@ void R_RenderScene( const refdef_t *fd );
 
 void		R_MarkLeaves( void );
 void		R_DrawWorld( void );
-qboolean	R_SurfPotentiallyVisible( const msurface_t *surf );
-qboolean	R_SurfPotentiallyShadowed( const msurface_t *surf );
-qboolean	R_SurfPotentiallyLit( const msurface_t *surf );
-qboolean	R_AddBrushModelToDrawList( const entity_t *e );
-float		R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, qboolean *rotated );
-qboolean	R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf );
+bool	R_SurfPotentiallyVisible( const msurface_t *surf );
+bool	R_SurfPotentiallyShadowed( const msurface_t *surf );
+bool	R_SurfPotentiallyLit( const msurface_t *surf );
+bool	R_AddBrushModelToDrawList( const entity_t *e );
+float		R_BrushModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs, bool *rotated );
+bool	R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf );
 
 //
 // r_skin.c
@@ -702,8 +702,8 @@ shader_t	*R_FindShaderForSkinFile( const struct skinfile_s *skinfile, const char
 //
 // r_skm.c
 //
-qboolean	R_AddSkeletalModelToDrawList( const entity_t *e );
-qboolean	R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceSkeletal_t *drawSurf );
+bool	R_AddSkeletalModelToDrawList( const entity_t *e );
+bool	R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceSkeletal_t *drawSurf );
 float		R_SkeletalModelBBox( const entity_t *e, vec3_t mins, vec3_t maxs );
 void		R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec3_t maxs );
 int			R_SkeletalGetBoneInfo( const model_t *mod, int bonenum, char *name, size_t name_size, int *flags );
@@ -802,7 +802,7 @@ enum
 
 struct skydome_s *R_CreateSkydome( model_t *model );
 void		R_TouchSkydome( struct skydome_s *skydome );
-qboolean	R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf );
+bool	R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf );
 void		R_ClearSky( void );
 void		R_AddSkyToDrawList( const msurface_t *fa );
 
@@ -820,16 +820,16 @@ typedef struct
 
 	float			lightingIntensity;
 
-	qboolean		lightmapsPacking;
-	qboolean		lightmapArrays;			// true if using array textures for lightmaps
+	bool		lightmapsPacking;
+	bool		lightmapArrays;			// true if using array textures for lightmaps
 	int				maxLightmapSize;		// biggest dimension of the largest lightmap
-	qboolean		deluxeMaps;				// true if there are valid deluxemaps in the .bsp
-	qboolean		deluxeMappingEnabled;	// true if deluxeMaps is true and r_lighting_deluxemaps->integer != 0
+	bool		deluxeMaps;				// true if there are valid deluxemaps in the .bsp
+	bool		deluxeMappingEnabled;	// true if deluxeMaps is true and r_lighting_deluxemaps->integer != 0
 
-	qboolean		depthWritingSky;		// draw invisible sky surfaces with writing to depth buffer enabled
-	qboolean		checkWaterCrossing;		// check above and below so crossing solid water doesn't draw wrong
+	bool		depthWritingSky;		// draw invisible sky surfaces with writing to depth buffer enabled
+	bool		checkWaterCrossing;		// check above and below so crossing solid water doesn't draw wrong
 
-	qboolean		forceClear;
+	bool		forceClear;
 } mapconfig_t;
 
 extern mapconfig_t	mapConfig;

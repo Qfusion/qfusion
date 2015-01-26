@@ -28,44 +28,44 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 * 
 * The user has to give permission for modules to be downloaded
 */
-qboolean CL_CanDownloadModules( void )
+bool CL_CanDownloadModules( void )
 {
 #if 0
 	if( !Q_stricmp( FS_GameDirectory(), FS_BaseGameDirectory() ) )
 	{
 		Com_Error( ERR_DROP, "Can not download modules to the base directory" );
-		return qfalse;
+		return false;
 	}
 #endif
 	if( !cl_download_allow_modules->integer )
 	{
 		Com_Error( ERR_DROP, "Downloading of modules disabled." );
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
 * CL_DownloadRequest
 * 
 * Request file download
-* return qfalse if couldn't request it for some reason
+* return false if couldn't request it for some reason
 * Files with .pk3 or .pak extension have to have gamedir attached
 * Other files must not have gamedir
 */
-qboolean CL_DownloadRequest( const char *filename, qboolean requestpak )
+bool CL_DownloadRequest( const char *filename, bool requestpak )
 {
 	if( cls.download.requestname )
 	{
 		Com_Printf( "Can't download: %s. Download already in progress.\n", filename );
-		return qfalse;
+		return false;
 	}
 
 	if( !COM_ValidateRelativeFilename( filename ) )
 	{
 		Com_Printf( "Can't download: %s. Invalid filename.\n", filename );
-		return qfalse;
+		return false;
 	}
 
 	if( FS_CheckPakExtension( filename ) )
@@ -73,13 +73,13 @@ qboolean CL_DownloadRequest( const char *filename, qboolean requestpak )
 		if( FS_FOpenBaseFile( filename, NULL, FS_READ ) != -1 )
 		{
 			Com_Printf( "Can't download: %s. File already exists.\n", filename );
-			return qfalse;
+			return false;
 		}
 
 		if( !Q_strnicmp( COM_FileBase( filename ), "modules", strlen( "modules" ) ) )
 		{
 			if( !CL_CanDownloadModules() )
-				return qfalse;
+				return false;
 		}
 	}
 	else
@@ -87,14 +87,14 @@ qboolean CL_DownloadRequest( const char *filename, qboolean requestpak )
 		if( FS_FOpenFile( filename, NULL, FS_READ ) != -1 )
 		{
 			Com_Printf( "Can't download: %s. File already exists.\n", filename );
-			return qfalse;
+			return false;
 		}
 	}
 
 	if( cls.socket->type == SOCKET_LOOPBACK )
 	{
 		Com_DPrintf( "Can't download: %s. Loopback server.\n", filename );
-		return qfalse;
+		return false;
 	}
 
 	Com_Printf( "Asking to download: %s\n", filename );
@@ -105,7 +105,7 @@ qboolean CL_DownloadRequest( const char *filename, qboolean requestpak )
 	cls.download.timeout = Sys_Milliseconds() + 5000;
 	CL_AddReliableCommand( va( "download %i \"%s\"", requestpak, filename ) );
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -115,37 +115,37 @@ qboolean CL_DownloadRequest( const char *filename, qboolean requestpak )
 * Files with .pk3 or .pak extension have to have gamedir attached
 * Other files must not have gamedir
 */
-qboolean CL_CheckOrDownloadFile( const char *filename )
+bool CL_CheckOrDownloadFile( const char *filename )
 {
 	const char *ext;
 
 	if( !cl_downloads->integer )
-		return qtrue;
+		return true;
 
 	if( !COM_ValidateRelativeFilename( filename ) )
-		return qtrue;
+		return true;
 
 	ext = COM_FileExtension( filename );
 	if( !ext || !*ext )
-		return qtrue;
+		return true;
 
 	if( FS_CheckPakExtension( filename ) )
 	{
 		if( FS_FOpenBaseFile( filename, NULL, FS_READ ) != -1 )
-			return qtrue;
+			return true;
 	}
 	else
 	{
 		if( FS_FOpenFile( filename, NULL, FS_READ ) != -1 )
-			return qtrue;
+			return true;
 	}
 
-	if( !CL_DownloadRequest( filename, qtrue ) )
-		return qtrue;
+	if( !CL_DownloadRequest( filename, true ) )
+		return true;
 
-	cls.download.requestnext = qtrue; // call CL_RequestNextDownload when done
+	cls.download.requestnext = true; // call CL_RequestNextDownload when done
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -157,7 +157,7 @@ static void CL_DownloadComplete( void )
 {
 	unsigned checksum = 0;
 	int length;
-	qboolean updateMapList = qfalse;
+	bool updateMapList = false;
 
 	FS_FCloseFile( cls.download.filenum );
 	cls.download.filenum = 0;
@@ -197,9 +197,9 @@ static void CL_DownloadComplete( void )
 	}
 
 	if( FS_CheckPakExtension( cls.download.name ) )
-		updateMapList = qtrue;
+		updateMapList = true;
 	else if( !Q_stricmp( COM_FileExtension( cls.download.name ), ".bsp" ) )
-		updateMapList = qtrue;
+		updateMapList = true;
 
 	// Maplist hook so we also know when a new map is added
 	if( updateMapList )
@@ -230,25 +230,25 @@ void CL_FreeDownloadList( void )
 */
 void CL_DownloadDone( void )
 {
-	qboolean requestnext;
+	bool requestnext;
 
 	Mem_ZoneFree( cls.download.requestname );
 	cls.download.requestname = NULL;
 
 	requestnext = cls.download.requestnext;
-	cls.download.requestnext = qfalse;
-	cls.download.requestpak = qfalse;
+	cls.download.requestnext = false;
+	cls.download.requestpak = false;
 	cls.download.timeout = 0;
 	cls.download.timestart = 0;
 	cls.download.offset = cls.download.baseoffset = 0;
-	cls.download.web = qfalse;
+	cls.download.web = false;
 	cls.download.filenum = 0;
-	cls.download.cancelled = qfalse;
+	cls.download.cancelled = false;
 
 	// the server has changed map during the download
 	if( cls.download.pending_reconnect )
 	{
-		cls.download.pending_reconnect = qfalse;
+		cls.download.pending_reconnect = false;
 		CL_FreeDownloadList();
 		CL_ServerReconnect_f();
 		return;
@@ -263,9 +263,9 @@ void CL_DownloadDone( void )
 */
 static void CL_WebDownloadDoneCb( int status, const char *contentType, void *privatep )
 {
-	qboolean disconnect = cls.download.disconnect;
-	qboolean cancelled = cls.download.cancelled;
-	qboolean success = (cls.download.offset == cls.download.size) && (status > -1);
+	bool disconnect = cls.download.disconnect;
+	bool cancelled = cls.download.cancelled;
+	bool success = (cls.download.offset == cls.download.size) && (status > -1);
 
 	Com_Printf( "Web download %s: %s (%i)\n", success ? "successful" : "failed", cls.download.tempname, status );
 
@@ -276,9 +276,9 @@ static void CL_WebDownloadDoneCb( int status, const char *contentType, void *pri
 	CL_StopServerDownload();
 
 	if( cancelled ) {
-		cls.download.requestnext = qfalse;
+		cls.download.requestnext = false;
 	}
-	cls.download.web = qfalse;
+	cls.download.web = false;
 
 	// check if user pressed escape to stop the downloa
 	if( disconnect ) {
@@ -297,7 +297,7 @@ static void CL_WebDownloadDoneCb( int status, const char *contentType, void *pri
 static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percentage, int status,
 	const char *contentType, void *privatep )
 {
-	qboolean stop = cls.download.disconnect || cls.download.cancelled || status < 0 || status >= 300;
+	bool stop = cls.download.disconnect || cls.download.cancelled || status < 0 || status >= 300;
 	size_t write = 0;
 
 	if( !stop ) {
@@ -329,7 +329,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	const char *url;
 	int size, alloc_size;
 	unsigned checksum;
-	qboolean allow_localhttpdownload;
+	bool allow_localhttpdownload;
 	download_list_t	*dl;
 	// ignore download commands coming from demo files
 	if( cls.demo.playing )		
@@ -475,9 +475,9 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	cls.download.tempname = Mem_ZoneMalloc( alloc_size );
 	Q_snprintfz( cls.download.tempname, alloc_size, "%s.tmp", filename );
 
-	cls.download.web = qfalse;
-	cls.download.cancelled = qfalse;
-	cls.download.disconnect = qfalse;
+	cls.download.web = false;
+	cls.download.cancelled = false;
+	cls.download.disconnect = false;
 	cls.download.size = size;
 	cls.download.checksum = checksum;
 	cls.download.percent = 0;
@@ -486,7 +486,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	cls.download.timestart = Sys_Milliseconds();
 	cls.download.offset = 0;
 	cls.download.baseoffset = 0;
-	cls.download.pending_reconnect = qfalse;
+	cls.download.pending_reconnect = false;
 
 	Cvar_ForceSet( "cl_download_name", COM_FileBase( cls.download.name ) );
 	Cvar_ForceSet( "cl_download_percent", "0" );
@@ -500,11 +500,11 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	}
 
 	if( cl_downloads_from_web->integer && allow_localhttpdownload && url && url[0] != 0 ) {
-		cls.download.web = qtrue;
+		cls.download.web = true;
 		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, cls.httpbaseurl, url );
 	}
 	else if( cl_downloads_from_web->integer && url && url[0] != 0 ) {
-		cls.download.web = qtrue;
+		cls.download.web = true;
 		Com_Printf( "Web download: %s from %s\n", cls.download.tempname, url );
 	}
 	else {
@@ -556,7 +556,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		CL_AddSessionHttpRequestHeaders( fullurl, &headers[2] );
 
 		CL_AsyncStreamRequest( fullurl, headers, cl_downloads_from_web_timeout->integer / 100, cls.download.offset, 
-			CL_WebDownloadReadCb, CL_WebDownloadDoneCb, NULL, NULL, qfalse );
+			CL_WebDownloadReadCb, CL_WebDownloadDoneCb, NULL, NULL, false );
 
 		Mem_ZoneFree( fullurl );
 		Mem_ZoneFree( referer );
@@ -595,7 +595,7 @@ void CL_StopServerDownload( void )
 	cls.download.percent = 0;
 	cls.download.timeout = 0;
 	cls.download.retries = 0;
-	cls.download.web = qfalse;
+	cls.download.web = false;
 
 	Cvar_ForceSet( "cl_download_name", "" );
 	Cvar_ForceSet( "cl_download_percent", "0" );
@@ -685,7 +685,7 @@ void CL_DownloadCancel_f( void )
 
 	Com_Printf( "Canceled download of %s\n", cls.download.name );
 
-	cls.download.cancelled = qtrue;
+	cls.download.cancelled = true;
 
 	if( !cls.download.web ) {
 		CL_AddReliableCommand( va( "nextdl \"%s\" %i", cls.download.name, -2 ) ); // let the server know we're done
@@ -811,7 +811,7 @@ static void CL_ParseServerData( msg_t *msg )
 
 	// set extrapolation time to half snapshot time
 	Cvar_ForceSet( "cl_extrapolationTime", va( "%i", (unsigned int)( cl.snapFrameTime * 0.5 ) ) );
-	cl_extrapolationTime->modified = qfalse;
+	cl_extrapolationTime->modified = false;
 
 	// base game directory
 	str = MSG_ReadString( msg );
@@ -839,9 +839,9 @@ static void CL_ParseServerData( msg_t *msg )
 		// will probably fuck up (like models trying to load before the world model)
 		CL_GameModule_Shutdown();
 
-		if( !FS_SetGameDirectory( str, qtrue ) )
+		if( !FS_SetGameDirectory( str, true ) )
 			Com_Error( ERR_DROP, "Failed to load game directory set by server: %s", str );
-		ML_Restart( qtrue );
+		ML_Restart( true );
 	}
 
 	// parse player entity number
@@ -918,7 +918,7 @@ static void CL_ParseServerData( msg_t *msg )
 	cls.sv_tv = ( sv_bitflags & SV_BITFLAGS_TVSERVER ) != 0;
 
 #ifdef PURE_CHEAT
-	cls.sv_pure = qfalse;
+	cls.sv_pure = false;
 #endif
 
 	cls.wakelock = Sys_AcquireWakeLock();
@@ -955,7 +955,7 @@ static void CL_ParseFrame( msg_t *msg )
 		{
 			if( cls.demo.waiting && !snap->delta )
 			{
-				cls.demo.waiting = qfalse; // we can start recording now
+				cls.demo.waiting = false; // we can start recording now
 				cls.demo.basetime = snap->serverTime;
 				cls.demo.localtime = time( NULL );
 

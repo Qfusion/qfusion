@@ -58,9 +58,9 @@ edict_t *TVM_FindLocal( tvm_relay_t *relay, const edict_t *start, size_t fieldof
 /*
 * TVM_AllowDownload
 */
-qboolean TVM_AllowDownload( tvm_relay_t *relay, edict_t *ent, const char *requestname, const char *uploadname )
+bool TVM_AllowDownload( tvm_relay_t *relay, edict_t *ent, const char *requestname, const char *uploadname )
 {
-	return qfalse;
+	return false;
 }
 
 /*
@@ -68,7 +68,7 @@ qboolean TVM_AllowDownload( tvm_relay_t *relay, edict_t *ent, const char *reques
 */
 static void TVM_UpdateServerSettings( tvm_relay_t *relay )
 {
-	relay->configStringsOverwritten[CS_TVSERVER] = qtrue;
+	relay->configStringsOverwritten[CS_TVSERVER] = true;
 	trap_ConfigString( relay, CS_TVSERVER, "1" );
 }
 
@@ -167,7 +167,7 @@ void TVM_CenterPrintMsg( tvm_relay_t *relay, edict_t *ent, const char *format, .
 /*
 * TVM_ConfigString
 */
-qboolean TVM_ConfigString( tvm_relay_t *relay, int number, const char *value )
+bool TVM_ConfigString( tvm_relay_t *relay, int number, const char *value )
 {
 	assert( number >= 0 && number < MAX_CONFIGSTRINGS );
 	assert( value && strlen( value ) < MAX_CONFIGSTRING_CHARS );
@@ -201,10 +201,10 @@ qboolean TVM_ConfigString( tvm_relay_t *relay, int number, const char *value )
 void TVM_SetAudoTrack( tvm_relay_t *relay, const char *track )
 {
 	if( !track ) {
-		relay->configStringsOverwritten[CS_AUDIOTRACK] = qfalse;
+		relay->configStringsOverwritten[CS_AUDIOTRACK] = false;
 		track = relay->configStrings[CS_AUDIOTRACK];
 	} else {
-		relay->configStringsOverwritten[CS_AUDIOTRACK] = qtrue;
+		relay->configStringsOverwritten[CS_AUDIOTRACK] = true;
 	}
 
 	trap_ConfigString( relay, CS_AUDIOTRACK, track ? track : "" );

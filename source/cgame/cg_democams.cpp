@@ -491,7 +491,7 @@ bool CG_LoadRecamScriptFile( char *filename )
 	ptr = ( char * )buf;
 	while( ptr )
 	{
-		token = COM_ParseExt( &ptr, qtrue );
+		token = COM_ParseExt( &ptr, true );
 		if( !token[0] )
 			break;
 
@@ -502,15 +502,15 @@ bool CG_LoadRecamScriptFile( char *filename )
 			sub = CG_Democam_RegisterSubtitle();
 			sub->highprint = ( Q_stricmp( token, "print" ) == 0 );
 
-			token = COM_ParseExt( &ptr, qtrue );
+			token = COM_ParseExt( &ptr, true );
 			if( !token[0] )
 				break;
 			sub->timeStamp = (unsigned int)atoi( token );
-			token = COM_ParseExt( &ptr, qtrue );
+			token = COM_ParseExt( &ptr, true );
 			if( !token[0] )
 				break;
 			sub->maxDuration = (unsigned int)atoi( token );
-			sub->text = CG_CopyString( COM_ParseExt( &ptr, qtrue ) );
+			sub->text = CG_CopyString( COM_ParseExt( &ptr, true ) );
 
 			linecount = 0;
 		}

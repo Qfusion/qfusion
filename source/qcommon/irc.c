@@ -29,8 +29,8 @@ static dynvar_t *irc_connected;
 static void *irc_wakelock;
 
 static mempool_t *irc_pool;
-static qboolean connected_b = qfalse;
-static qboolean irc_initialized = qfalse;
+static bool connected_b = false;
+static bool irc_initialized = false;
 
 static void Irc_LoadLibrary( void );
 static void Irc_UnloadLibrary( void );
@@ -63,13 +63,13 @@ dynvar_get_status_t Irc_GetConnected_f( void **connected )
 
 dynvar_set_status_t Irc_SetConnected_f( void *connected )
 {
-	connected_b = *(qboolean *) connected;
+	connected_b = *(bool *) connected;
 	return DYNVAR_SET_OK;
 }
 
 static void Irc_ConnectedListener_f( void *connected )
 {
-	if( *(qboolean *) connected )
+	if( *(bool *) connected )
 	{
 		assert( irc_server );
 	}
@@ -84,7 +84,7 @@ static void Irc_Quit_f( void *nothing )
 {
 	if( irc_initialized )
 	{
-		qboolean *c, b;
+		bool *c, b;
 		Dynvar_GetValue( irc_connected, (void **) &c );
 		b = *c;
 		Irc_UnloadLibrary();
@@ -216,7 +216,7 @@ static void Irc_LoadLibrary( void )
 				dynvar_t *const quit = Dynvar_Lookup( "quit" );
 				if( quit )
 					Dynvar_AddListener( quit, Irc_Quit_f );
-				irc_initialized = qtrue;
+				irc_initialized = true;
 				Cmd_AddCommand( "irc_unload", Irc_UnloadLibrary );
 				Com_Printf( "Success.\n" );
 			}
@@ -250,7 +250,7 @@ static void Irc_UnloadLibrary( void )
 	if( irc_initialized )
 	{
 		dynvar_t *const quit = Dynvar_Lookup( "quit" );
-		qboolean *c;
+		bool *c;
 		if( !irc_connected )
 			irc_connected = Dynvar_Lookup( "irc_connected" );
 		Dynvar_GetValue( irc_connected, (void **) &c );
@@ -260,7 +260,7 @@ static void Irc_UnloadLibrary( void )
 		Cmd_RemoveCommand( "irc_unload" );
 		if( quit )
 			Dynvar_RemoveListener( quit, Irc_Quit_f );
-		irc_initialized = qfalse;
+		irc_initialized = false;
 	}
 	Com_UnloadLibrary( &irc_libhandle );
 	assert( !irc_libhandle );
@@ -277,7 +277,7 @@ void Irc_Connect_f( void )
 		if( irc_libhandle )
 		{
 			// library loaded, check for connection status
-			qboolean *c;
+			bool *c;
 			if( !irc_server )
 				irc_server = Cvar_Get( "irc_server", "irc.quakenet.org", CVAR_ARCHIVE );
 			if( !irc_connected )
@@ -318,7 +318,7 @@ void Irc_Disconnect_f( void )
 {
 	if( irc_libhandle )
 	{
-		qboolean *c;
+		bool *c;
 		if( !irc_server )
 			irc_server = Cvar_Get( "irc_server", "", 0 );
 		if( !irc_connected )
@@ -344,10 +344,10 @@ void Irc_Disconnect_f( void )
 		Com_Printf( "IRC module not loaded. Connect first.\n" );
 }
 
-qboolean Irc_IsConnected( void )
+bool Irc_IsConnected( void )
 {
 	if( irc_libhandle ) {
-		qboolean *c;
+		bool *c;
 
 		if( !irc_connected )
 			irc_connected = Dynvar_Lookup( "irc_connected" );
@@ -355,10 +355,10 @@ qboolean Irc_IsConnected( void )
 		
 		Dynvar_GetValue( irc_connected, (void **) &c );
 		if( *c ) {
-			return qtrue;
+			return true;
 		}
 	}
-	return qfalse;
+	return false;
 }
 
 size_t Irc_HistorySize( void )

@@ -25,7 +25,7 @@ void Sys_VFS_Init( void )
 {
 }
 
-void Sys_VFS_TouchGamePath( const char *gamedir, qboolean initial )
+void Sys_VFS_TouchGamePath( const char *gamedir, bool initial )
 {
 }
 

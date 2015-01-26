@@ -41,9 +41,9 @@ struct upstream_s
 	char *password;
 
 	char *userinfo;
-	qboolean userinfo_modified;
+	bool userinfo_modified;
 
-	qboolean individual_socket;
+	bool individual_socket;
 	socket_t *socket;
 	socket_t socket_real;
 	netchan_t netchan;
@@ -51,7 +51,7 @@ struct upstream_s
 	int connect_time;
 	int connect_count;
 	int challenge;
-	qboolean rejected;
+	bool rejected;
 
 	int timeoutcount;
 	unsigned int lastPacketReceivedTime;
@@ -66,9 +66,9 @@ struct upstream_s
 	int lastExecutedServerCommand;
 	unsigned int lastUcmdTime;
 
-	qboolean reliable;
-	qboolean multiview;                     // are we receiving multiview data?
-	qboolean precacheDone;
+	bool reliable;
+	bool multiview;                     // are we receiving multiview data?
+	bool precacheDone;
 
 	// serverdata
 	int playernum;
@@ -87,16 +87,16 @@ struct upstream_s
 	struct mempool_s *mempool;
 
 	struct {
-		qboolean recording;
-		qboolean waiting;
+		bool recording;
+		bool waiting;
 		unsigned int basetime, duration;
-		qboolean autorecording;
+		bool autorecording;
 
-		qboolean playing;
+		bool playing;
 		int filehandle;
 		int filelen;
 		char *filename, *tempname;
-		qboolean random;
+		bool random;
 
 		time_t localtime;
 
@@ -111,7 +111,7 @@ struct upstream_s
 };
 
 #define TV_Upstream_CopyString( upstream,in ) _TVCopyString_Pool( (upstream)->mempool, in, __FILE__, __LINE__ )
-qboolean TV_UpstreamForText( const char *text, upstream_t **upstream );
+bool TV_UpstreamForText( const char *text, upstream_t **upstream );
 void TV_Upstream_UpdateReliableCommandsToServer( upstream_t *upstream, msg_t *msg );
 void TV_Upstream_Error( upstream_t *upstream, const char *format, ... );
 void TV_Upstream_Disconnect( upstream_t *upstream, const char *format, ... );

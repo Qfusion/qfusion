@@ -63,7 +63,7 @@ typedef struct r_backend_s
 		int 			currentElemArrayVBO;
 
 		int				faceCull;
-		qboolean		frontFace;
+		bool		frontFace;
 
 		int				viewport[4];
 		int				scissor[4];
@@ -74,7 +74,7 @@ typedef struct r_backend_s
 
 		float			depthmin, depthmax;
 
-		qboolean		depthoffset;
+		bool		depthoffset;
 	} gl;
 
 	unsigned int time;
@@ -130,11 +130,11 @@ typedef struct r_backend_s
 	double currentShaderTime;
 	int currentShaderState;
 	int shaderStateORmask, shaderStateANDmask;
-	qboolean dirtyUniformState;
-	qboolean doneDepthPass;
+	bool dirtyUniformState;
+	bool doneDepthPass;
 	int donePassesTotal;
 
-	qboolean triangleOutlines;
+	bool triangleOutlines;
 
 	const superLightStyle_t *superLightStyle;
 
@@ -144,12 +144,12 @@ typedef struct r_backend_s
 
 	const mfog_t *fog, *texFog, *colorFog;
 
-	qboolean greyscale;
-	qboolean alphaHack;
+	bool greyscale;
+	bool alphaHack;
 	float hackedAlpha;
 
 	float minLight;
-	qboolean noWorldLight;
+	bool noWorldLight;
 } rbackend_t;
 
 extern rbackend_t rb;
@@ -170,6 +170,6 @@ void RB_DrawShadedElements( void );
 int RB_BindProgram( int program );
 void RB_BindTexture( int tmu, const image_t *tex );
 void RB_SetInstanceData( int numInstances, instancePoint_t *instances );
-qboolean RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
+bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
 
 #endif // R_BACKEND_LOCAL_H

@@ -91,7 +91,7 @@ found_player:
 * Callback function for webdownloads.
 */
 static int webDownloadPercentPrint;
-static qboolean webDownloadPercentStarted;
+static bool webDownloadPercentStarted;
 
 static int SV_WebDownloadProgress( float percent )
 {
@@ -103,7 +103,7 @@ static int SV_WebDownloadProgress( float percent )
 	if( !webDownloadPercentStarted )
 	{
 		Com_Printf( "Download progress:" );
-		webDownloadPercentStarted = qtrue;
+		webDownloadPercentStarted = true;
 	}
 
 	if( webDownloadPercentPrint + 4 < shortPercent )
@@ -118,23 +118,23 @@ static int SV_WebDownloadProgress( float percent )
 /*
 * SV_WebDownload
 */
-static qboolean SV_WebDownload( const char *baseUrl, const char *filepath, qboolean overwrite, qboolean silent )
+static bool SV_WebDownload( const char *baseUrl, const char *filepath, bool overwrite, bool silent )
 {
-	qboolean success;
+	bool success;
 	int alloc_size;
 	char *temppath, *writepath, *url;
 
 	if( developer->integer )
-		silent = qfalse;
+		silent = false;
 
 	if( !baseUrl || !baseUrl[0] || !filepath )
-		return qfalse;
+		return false;
 
 	if( !strrchr( baseUrl, '/' ) )
 	{
 		if( !silent )
 			Com_Printf( "SV_WebDownload: Invalid URL\n" );
-		return qfalse;
+		return false;
 	}
 
 	if( filepath[0] == '/' ) // filepath should never begin with a slash
@@ -144,14 +144,14 @@ static qboolean SV_WebDownload( const char *baseUrl, const char *filepath, qbool
 	{
 		if( !silent )
 			Com_Printf( "SV_WebDownload: Invalid filename\n" );
-		return qfalse;
+		return false;
 	}
 
 	if( !COM_FileExtension( filepath ) )
 	{
 		if( !silent )
 			Com_Printf( "SV_WebDownload: no file extension\n" );
-		return qfalse;
+		return false;
 	}
 
 	// full url (baseurl + path)
@@ -173,9 +173,9 @@ static qboolean SV_WebDownload( const char *baseUrl, const char *filepath, qbool
 	Q_snprintfz( writepath, alloc_size, "%s/%s", FS_WriteDirectory(), temppath );
 
 	webDownloadPercentPrint = 0;
-	webDownloadPercentStarted = qfalse;
+	webDownloadPercentStarted = false;
 
-	success = Web_Get( url, NULL, writepath, qtrue, 60 * 30, 60, SV_WebDownloadProgress, qfalse );
+	success = Web_Get( url, NULL, writepath, true, 60 * 30, 60, SV_WebDownloadProgress, false );
 
 	if( webDownloadPercentStarted )
 		Com_Printf( "\n" );
@@ -247,7 +247,7 @@ static qboolean SV_WebDownload( const char *baseUrl, const char *filepath, qbool
 	Mem_TempFree( writepath );
 	Mem_TempFree( url );
 
-	return qtrue;
+	return true;
 
 failed:
 	if( !silent )
@@ -257,25 +257,25 @@ failed:
 	Mem_TempFree( writepath );
 	Mem_TempFree( url );
 
-	return qfalse;
+	return false;
 }
 
 /*
 * SV_AutoUpdateFromWeb
 */
-void SV_AutoUpdateFromWeb( qboolean checkOnly )
+void SV_AutoUpdateFromWeb( bool checkOnly )
 {
 	static const char *autoUpdateBaseUrl = APP_UPDATE_URL APP_SERVER_UPDATE_DIRECTORY;
 	char checksumString1[32], checksumString2[32];
 	unsigned int checksum;
-	qboolean success;
+	bool success;
 	int length, filenum;
 	uint8_t *data;
 	const char *token, *ptr;
 	char path[MAX_QPATH];
 	int downloadCount = 0, downloadFailed = 0;
 	char newVersionTag[MAX_QPATH];
-	qboolean newVersion = qfalse;
+	bool newVersion = false;
 
 	if( !dedicated->integer )
 		return;
@@ -291,7 +291,7 @@ void SV_AutoUpdateFromWeb( qboolean checkOnly )
 	Com_Printf( "Checking for updates\n" );
 
 	// download the update file list
-	success = SV_WebDownload( autoUpdateBaseUrl, APP_SERVER_UPDATE_FILE, qtrue, qtrue );
+	success = SV_WebDownload( autoUpdateBaseUrl, APP_SERVER_UPDATE_FILE, true, true );
 
 	// set as last updated today
 	if( !checkOnly )
@@ -321,19 +321,19 @@ void SV_AutoUpdateFromWeb( qboolean checkOnly )
 	ptr = (const char *)data;
 
 	// first token is always the current release version
-	token = COM_ParseExt( &ptr, qtrue );
+	token = COM_ParseExt( &ptr, true );
 	if( !token[0] )
 		goto cancel;
 
 	// compare versions
 	Q_strncpyz( newVersionTag, token, sizeof( newVersionTag ) );
 	if( atof( newVersionTag ) > atof( va( "%4.3f", APP_VERSION ) ) )
-		newVersion = qtrue;
+		newVersion = true;
 
 	while( ptr )
 	{
 		// we got what should be a checksum
-		token = COM_ParseExt( &ptr, qtrue );
+		token = COM_ParseExt( &ptr, true );
 		if( !token[0] )
 			goto cancel;
 
@@ -341,7 +341,7 @@ void SV_AutoUpdateFromWeb( qboolean checkOnly )
 		Q_strncpyz( checksumString1, token, sizeof( checksumString1 ) );
 
 		// get filename
-		token = COM_ParseExt( &ptr, qtrue );
+		token = COM_ParseExt( &ptr, true );
 		if( !token[0] )
 			goto cancel;
 
@@ -386,7 +386,7 @@ void SV_AutoUpdateFromWeb( qboolean checkOnly )
 		else
 			Com_Printf( "Updating %s\n", path );
 
-		if( !SV_WebDownload( autoUpdateBaseUrl, path, qtrue, qtrue ) )
+		if( !SV_WebDownload( autoUpdateBaseUrl, path, true, true ) )
 		{
 			Com_Printf( "Failed to update %s\n", path );
 			downloadFailed++;
@@ -457,7 +457,7 @@ static void SV_AutoUpdate_f( void )
 		return;
 	}
 
-	SV_AutoUpdateFromWeb( qfalse );
+	SV_AutoUpdateFromWeb( false );
 }
 
 /*
@@ -471,7 +471,7 @@ static void SV_AutoUpdateCheck_f( void )
 		return;
 	}
 
-	SV_AutoUpdateFromWeb( qtrue );
+	SV_AutoUpdateFromWeb( true );
 }
 
 /*
@@ -480,7 +480,7 @@ static void SV_AutoUpdateCheck_f( void )
 */
 static void SV_Download_f( void )
 {
-	qboolean success;
+	bool success;
 	char *s;
 	char url[MAX_STRING_CHARS], filepath[MAX_QPATH], writepath[MAX_QPATH];
 
@@ -493,7 +493,7 @@ static void SV_Download_f( void )
 	}
 
 	s = Cmd_Argv( 1 );
-	if( !Com_GlobMatch( "*://*", s, qfalse ) )
+	if( !Com_GlobMatch( "*://*", s, false ) )
 		Q_strncpyz( url, "http://", sizeof( url ) );
 	else
 		url[0] = 0;
@@ -519,7 +519,7 @@ static void SV_Download_f( void )
 
 	webDownloadPercentPrint = 0;
 
-	success = Web_Get( url, NULL, writepath, qtrue, 60 * 30, 60, SV_WebDownloadProgress, qfalse );
+	success = Web_Get( url, NULL, writepath, true, 60 * 30, 60, SV_WebDownloadProgress, false );
 
 	if( !success )
 	{
@@ -551,7 +551,7 @@ static void SV_Map_f( void )
 {
 	char *map;
 	char mapname[MAX_CONFIGSTRING_CHARS];
-	qboolean found = qfalse;
+	bool found = false;
 
 	if( Cmd_Argc() < 2 )
 	{
@@ -580,13 +580,13 @@ static void SV_Map_f( void )
 		COM_StripExtension( mapname );
 		if( ML_FilenameExists( mapname ) )
 		{
-			found = qtrue;
+			found = true;
 		}
 		else
 		{
 			ML_Update();
 			if( ML_FilenameExists( mapname ) )
-				found = qtrue;
+				found = true;
 		}
 	}
 
@@ -596,7 +596,7 @@ static void SV_Map_f( void )
 		{
 			Q_strncpyz( mapname, ML_GetFilename( map ), sizeof( mapname ) );
 			if( *mapname )
-				found = qtrue;
+				found = true;
 		}
 
 		if( !found )
@@ -754,7 +754,7 @@ static void SV_KillServer_f( void )
 	if( !svs.initialized )
 		return;
 
-	SV_ShutdownGame( "Server was killed", qfalse );
+	SV_ShutdownGame( "Server was killed", false );
 }
 
 /*

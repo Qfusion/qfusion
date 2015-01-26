@@ -80,7 +80,7 @@ void TV_Relay_BuildClientFrameSnap( relay_t *relay, client_t *client )
 	SNAP_BuildClientFrameSnap( relay->cms, &relay->gi, relay->framenum, relay->realtime, &relay->fatvis,
 		client, relay->module_export->GetGameState( relay->module ),
 		&relay->client_entities,
-		qtrue, tv_mempool );
+		true, tv_mempool );
 
 	if( relay->playernum >= 0 )
 	{
@@ -93,7 +93,7 @@ void TV_Relay_BuildClientFrameSnap( relay_t *relay, client_t *client )
 /*
 * TV_Relay_SendClientDatagram
 */
-static qboolean TV_Relay_SendClientDatagram( relay_t *relay, client_t *client )
+static bool TV_Relay_SendClientDatagram( relay_t *relay, client_t *client )
 {
 	uint8_t msg_buf[MAX_MSGLEN];
 	msg_t msg;
@@ -206,7 +206,7 @@ void TV_Relay_ClientUserinfoChanged( relay_t *relay, client_t *client )
 /*
 * TV_Relay_ClientCommand_f
 */
-qboolean TV_Relay_ClientCommand_f( relay_t *relay, client_t *client )
+bool TV_Relay_ClientCommand_f( relay_t *relay, client_t *client )
 {
 	assert( relay );
 	assert( client );
@@ -248,13 +248,13 @@ void TV_Relay_ClientDisconnect( relay_t *relay, client_t *client )
 /*
 * TV_Relay_CanConnect
 */
-qboolean TV_Relay_CanConnect( relay_t *relay, client_t *client, char *userinfo )
+bool TV_Relay_CanConnect( relay_t *relay, client_t *client, char *userinfo )
 {
 	assert( relay );
 	assert( client );
 
 	if( relay->state == CA_CONNECTING || !relay->module_export )
-		return qfalse;
+		return false;
 
 	// get the game a chance to reject this upstream
 	return relay->module_export->CanConnect( relay->module, userinfo );

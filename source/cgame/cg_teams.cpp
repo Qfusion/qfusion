@@ -84,10 +84,10 @@ static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceSkin
 	struct skinfile_s *skin = NULL;
 
 	if( teamForceModel )
-		teamForceModel->modified = qfalse;
+		teamForceModel->modified = false;
 
 	if( teamForceSkin )
-		teamForceSkin->modified = qfalse;
+		teamForceSkin->modified = false;
 
 	if( !ppmodelinfo || !pskin )
 		return;
@@ -267,7 +267,7 @@ void CG_RegisterTeamColor( int team )
 			}
 		}
 
-		teamForceColor->modified = qfalse;
+		teamForceColor->modified = false;
 	}
 }
 

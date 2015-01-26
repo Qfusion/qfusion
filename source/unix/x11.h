@@ -26,9 +26,9 @@ typedef struct x11display_s
 
 	Atom wmState;
 	struct featureset_s {
-		qboolean wmStateFullscreen;
+		bool wmStateFullscreen;
 	} features;
-	qboolean modeset;
+	bool modeset;
 	unsigned int win_width, win_height;
 } x11display_t;
 

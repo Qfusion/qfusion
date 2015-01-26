@@ -334,7 +334,7 @@ state bit 1 is edge triggered on the up to down transition
 state bit 2 is edge triggered on the down to up transition
 
 
-Key_Event (int key, qboolean down, unsigned time);
+Key_Event (int key, bool down, unsigned time);
 
 ===============================================================================
 */
@@ -512,7 +512,7 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 		case key_console:
 		case key_message:
 			if( id == 0 )
-				Con_TouchEvent( ( type != TOUCH_UP ) ? qtrue : qfalse, x, y );
+				Con_TouchEvent( ( type != TOUCH_UP ) ? true : false, x, y );
 			break;
 		
 		case key_menu:
@@ -524,10 +524,10 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 			switch( type )
 			{
 				case TOUCH_DOWN:
-					Key_MouseEvent( K_MOUSE1, qtrue, time );
+					Key_MouseEvent( K_MOUSE1, true, time );
 					break;
 				case TOUCH_UP:
-					Key_MouseEvent( K_MOUSE1, qfalse, time );
+					Key_MouseEvent( K_MOUSE1, false, time );
 					CL_UIModule_MouseSet( 0, 0 );
 					break;
 				default:
@@ -551,7 +551,7 @@ void CL_CancelTouches( void )
 			break;
 		case key_console:
 		case key_message:
-			Con_TouchEvent( qfalse, -1, -1 );
+			Con_TouchEvent( false, -1, -1 );
 			break;
 		default:
 			break;
@@ -697,7 +697,7 @@ void CL_UpdateCommandInput( void )
 	cmd->angles[1] = ANGLE2SHORT( cl.viewangles[1] );
 	cmd->angles[2] = ANGLE2SHORT( cl.viewangles[2] );
 
-	cl.inputRefreshed = qtrue;
+	cl.inputRefreshed = true;
 }
 
 /*
@@ -713,7 +713,7 @@ void IN_CenterView( void )
 	}
 }
 
-static qboolean in_initialized = qfalse;
+static bool in_initialized = false;
 
 /*
 * CL_InitInput
@@ -778,7 +778,7 @@ void CL_InitInput( void )
 	}
 #endif
 
-	in_initialized = qtrue;
+	in_initialized = true;
 }
 
 /*
@@ -786,8 +786,8 @@ void CL_InitInput( void )
 */
 void CL_InitInputDynvars( void )
 {
-	Dynvar_Create( "m_filterBufferSize", qtrue, CL_MouseFilterBufferSizeGet_f, CL_MouseFilterBufferSizeSet_f );
-	Dynvar_Create( "m_filterBufferDecay", qtrue, CL_MouseFilterBufferDecayGet_f, CL_MouseFilterBufferDecaySet_f );
+	Dynvar_Create( "m_filterBufferSize", true, CL_MouseFilterBufferSizeGet_f, CL_MouseFilterBufferSizeSet_f );
+	Dynvar_Create( "m_filterBufferDecay", true, CL_MouseFilterBufferDecayGet_f, CL_MouseFilterBufferDecaySet_f );
 	// we could simply call Dynvar_SetValue(m_filterBufferSize, "5") here, but then the user would get a warning in the console if m_filter was != M_FILTER_EXTRAPOLATE
 	buf_size = DEFAULT_BUF_SIZE;
 	buf_x = (float *) Mem_ZoneMalloc( sizeof( float ) * buf_size );
@@ -849,7 +849,7 @@ void CL_ShutdownInput( void )
 	Mem_ZoneFree( buf_x );
 	Mem_ZoneFree( buf_y );
 
-	in_initialized = qtrue;
+	in_initialized = true;
 }
 
 //===============================================================================
@@ -967,7 +967,7 @@ void CL_WriteUcmdsToMessage( msg_t *msg )
 /*
 * CL_NextUserCommandTimeReached
 */
-static qboolean CL_NextUserCommandTimeReached( int realmsec )
+static bool CL_NextUserCommandTimeReached( int realmsec )
 {
 	static int minMsec = 1, allMsec = 0, extraMsec = 0;
 	static float roundingMsec = 0.0f;
@@ -1003,7 +1003,7 @@ static qboolean CL_NextUserCommandTimeReached( int realmsec )
 	{
 		//if( !cls.netchan.unsentFragments ) {
 		//	NET_Sleep( minMsec - allMsec );
-		return qfalse;
+		return false;
 	}
 
 	extraMsec = allMsec - minMsec;
@@ -1013,7 +1013,7 @@ static qboolean CL_NextUserCommandTimeReached( int realmsec )
 	allMsec = 0;
 
 	// send a new user command message to the server
-	return qtrue;
+	return true;
 }
 
 /*

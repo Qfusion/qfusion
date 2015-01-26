@@ -24,12 +24,12 @@
 #include "../client/client.h"
 #include "sdl_glw.h"
 
-glwstate_t glw_state = {NULL, qfalse};
+glwstate_t glw_state = {NULL, false};
 cvar_t *vid_fullscreen;
 
 static int GLimp_InitGL( void );
 
-static void VID_SetWindowSize( qboolean fullscreen )
+static void VID_SetWindowSize( bool fullscreen )
 {
 	if( fullscreen ) {
 		SDL_SetWindowFullscreen( glw_state.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP );
@@ -38,9 +38,9 @@ static void VID_SetWindowSize( qboolean fullscreen )
 	}
 }
 
-static qboolean VID_CreateWindow( void )
+static bool VID_CreateWindow( void )
 {
-	qboolean fullscreen = glConfig.fullScreen;
+	bool fullscreen = glConfig.fullScreen;
 
 	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL );
 
@@ -52,19 +52,19 @@ static qboolean VID_CreateWindow( void )
 	// init all the gl stuff for the window
 	if( !GLimp_InitGL() ) {
 		ri.Com_Printf( "VID_CreateWindow() - GLimp_InitGL failed\n" );
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 /**
  * Set video mode.
  * @param mode number of the mode to set
- * @param fullscreen <code>qtrue</code> for a fullscreen mode,
- *     <code>qfalse</code> otherwise
+ * @param fullscreen <code>true</code> for a fullscreen mode,
+ *     <code>false</code> otherwise
  */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, qboolean fullscreen, qboolean wideScreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool wideScreen )
 {
 	const char *win_fs[] = {"W", "FS"};
 
@@ -101,7 +101,7 @@ void GLimp_Shutdown()
 	SDL_DestroyWindow( glw_state.sdl_window );
 
 	if( glConfig.fullScreen ) {
-		glConfig.fullScreen = qfalse;
+		glConfig.fullScreen = false;
 	}
 
 	if( glw_state.applicationName ) {
@@ -127,7 +127,7 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	glw_state.applicationName = ( char * )malloc( strlen( applicationName ) + 1 );
 	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );
 
-	return qtrue;
+	return true;
 }
 
 static int GLimp_InitGL( void )
@@ -140,18 +140,18 @@ static int GLimp_InitGL( void )
 	glConfig.stencilBits = r_stencilbits->integer;
 	// TODO: SDL2
 	//	if( max( 0, r_stencilbits->integer ) != 0 )
-	//		glConfig.stencilEnabled = qtrue;
+	//		glConfig.stencilEnabled = true;
 	//	else
-	//		glConfig.stencilEnabled = qfalse;
+	//		glConfig.stencilEnabled = false;
 
 	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, max( 0, r_stencilbits->integer ) );
 
 	if( stereo->integer != 0 ) {
 		ri.Com_DPrintf( "...attempting to use stereo\n" );
 		SDL_GL_SetAttribute( SDL_GL_STEREO, 1 );
-		glConfig.stereoEnabled = qtrue;
+		glConfig.stereoEnabled = true;
 	} else {
-		glConfig.stereoEnabled = qfalse;
+		glConfig.stereoEnabled = false;
 	}
 
 	glw_state.sdl_glcontext = SDL_GL_CreateContext( glw_state.sdl_window );
@@ -174,10 +174,10 @@ static int GLimp_InitGL( void )
 
 	ri.Com_Printf( "GL PFD: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", colorBits, depthBits, stencilBits );
 
-	return qtrue;
+	return true;
 
 fail:
-	return qfalse;
+	return false;
 }
 
 /**
@@ -199,13 +199,13 @@ void GLimp_EndFrame( void )
 /**
  * TODO documentation
  */
-qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
+bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
 {
 	unsigned short ramp256[3 * 256];
 
 	if( stride < 256 ) {
 		// SDL only supports gamma ramps with 256 mappings per channel
-		return qfalse;
+		return false;
 	}
 
 	if( SDL_GetWindowGammaRamp( glw_state.sdl_window, ramp256, ramp256 + 256, ramp256 + ( 256 << 1 ) ) != -1 ) {
@@ -214,7 +214,7 @@ qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned shor
 		memcpy( ramp + stride, ramp256 + 256, 256 * sizeof( *ramp ) );
 		memcpy( ramp + 2 * stride, ramp256 + 2 * 256, 256 * sizeof( *ramp ) );
 	}
-	return qfalse;
+	return false;
 }
 
 /**
@@ -238,40 +238,40 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ram
 /**
  * TODO documentation
  */
-void GLimp_AppActivate( qboolean active, qboolean destroy )
+void GLimp_AppActivate( bool active, bool destroy )
 {
 }
 
 /*
 ** GLimp_SetWindow
 */
-qboolean GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+bool GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
-	return qfalse; // surface cannot be lost
+	return false; // surface cannot be lost
 }
 
 /*
 ** GLimp_ScreenEnabled
 */
-qboolean GLimp_ScreenEnabled( void )
+bool GLimp_ScreenEnabled( void )
 {
-	return qtrue;
+	return true;
 }
 
 /*
 ** GLimp_SharedContext_Create
 */
-qboolean GLimp_SharedContext_Create( void **context, void **surface )
+bool GLimp_SharedContext_Create( void **context, void **surface )
 {
-	return qfalse;
+	return false;
 }
 
 /*
 ** GLimp_SharedContext_MakeCurrent
 */
-qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
+bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
-	return qfalse;
+	return false;
 }
 
 /*

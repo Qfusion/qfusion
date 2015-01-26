@@ -107,8 +107,8 @@ extern float ( *LittleFloat )(float l);
 //==============================================================
 
 char *COM_SanitizeFilePath( char *filename );
-qboolean COM_ValidateFilename( const char *filename );
-qboolean COM_ValidateRelativeFilename( const char *filename );
+bool COM_ValidateFilename( const char *filename );
+bool COM_ValidateRelativeFilename( const char *filename );
 void COM_StripExtension( char *filename );
 const char *COM_FileExtension( const char *in );
 void COM_DefaultExtension( char *path, const char *extension, size_t size );
@@ -118,15 +118,15 @@ void COM_StripFilename( char *filename );
 int COM_FilePathLength( const char *in );
 
 // data is an in/out parm, returns a parsed out token
-char *COM_ParseExt2( const char **data_p, qboolean nl, qboolean sq );
-#define COM_ParseExt( data_p, nl ) COM_ParseExt2( (const char **)data_p, nl, qtrue )
-#define COM_Parse( data_p )   COM_ParseExt( data_p, qtrue )
+char *COM_ParseExt2( const char **data_p, bool nl, bool sq );
+#define COM_ParseExt( data_p, nl ) COM_ParseExt2( (const char **)data_p, nl, true )
+#define COM_Parse( data_p )   COM_ParseExt( data_p, true )
 
 int COM_Compress( char *data_p );
 const char *COM_RemoveJunkChars( const char *in );
 int COM_ReadColorRGBString( const char *in );
 int COM_ValidatePlayerColor( int rgbcolor );
-qboolean COM_ValidateConfigstring( const char *string );
+bool COM_ValidateConfigstring( const char *string );
 
 //==============================================================
 //
@@ -199,7 +199,7 @@ char *Q_strlwr( char *s );
 const char *Q_strlocate( const char *s, const char *substr, int skip );
 size_t Q_strcount( const char *s, const char *substr );
 const char *Q_strrstr( const char *s, const char *substr );
-qboolean Q_isdigit( const char *str );
+bool Q_isdigit( const char *str );
 char *Q_trim( char *s );
 char *Q_chrreplace( char *s, const char subj, const char repl );
 
@@ -221,8 +221,8 @@ void *Q_memset32( void *dest, int c, size_t dwords );
 #define GRABCHAR_CHAR	1
 #define GRABCHAR_COLOR	2
 int Q_GrabCharFromColorString( const char **pstr, char *c, int *colorindex );
-const char *COM_RemoveColorTokensExt( const char *str, qboolean draw );
-#define COM_RemoveColorTokens(in) COM_RemoveColorTokensExt(in,qfalse)
+const char *COM_RemoveColorTokensExt( const char *str, bool draw );
+#define COM_RemoveColorTokens(in) COM_RemoveColorTokensExt(in,false)
 int COM_SanitizeColorString (const char *str, char *buf, int bufsize, int maxprintablechars, int startcolor);
 const char *Q_ColorStringTerminator( const char *str, int finalcolor );
 
@@ -248,8 +248,8 @@ char *va( const char *format, ... );
 
 char *Info_ValueForKey( const char *s, const char *key );
 void Info_RemoveKey( char *s, const char *key );
-qboolean Info_SetValueForKey( char *s, const char *key, const char *value );
-qboolean Info_Validate( const char *s );
+bool Info_SetValueForKey( char *s, const char *key, const char *value );
+bool Info_Validate( const char *s );
 
 //==============================================
 

@@ -121,7 +121,7 @@ int main( int argc, char **argv )
 	Qcommon_Init( argc, argv );
 
 	oldtime = Sys_Milliseconds();
-	while( qtrue ) {
+	while( true ) {
 		// find time spent rendering last frame
 		do {
 			newtime = Sys_Milliseconds();

@@ -217,8 +217,8 @@ void _VectorCopy( const vec3_t in, vec3_t out );
 void ClearBounds( vec3_t mins, vec3_t maxs );
 void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
 float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
-qboolean BoundsIntersect( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 );
-qboolean BoundsAndSphereIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t centre, float radius );
+bool BoundsIntersect( const vec3_t mins1, const vec3_t maxs1, const vec3_t mins2, const vec3_t maxs2 );
+bool BoundsAndSphereIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t centre, float radius );
 
 #define NUMVERTEXNORMALS    162
 int DirToByte( vec3_t dir );
@@ -246,7 +246,7 @@ vec_t ColorNormalize( const vec_t *in, vec_t *out );
 #define ColorGrayscale(c) (0.299 * (c)[0] + 0.587 * (c)[1] + 0.114 * (c)[2])
 
 float CalcFov( float fov_x, float width, float height );
-void AdjustFov( float *fov_x, float *fov_y, float width, float height, qboolean lock_x );
+void AdjustFov( float *fov_x, float *fov_y, float width, float height, bool lock_x );
 
 #define Q_sign( x )	(( x ) < 0 ? -1 : (( x ) > 0 ? 1 : 0))
 #define Q_rint( x ) ( ( x ) < 0 ? ( (int)( ( x )-0.5f ) ) : ( (int)( ( x )+0.5f ) ) )
@@ -256,7 +256,7 @@ int PlaneTypeForNormal( const vec3_t normal );
 void CategorizePlane( cplane_t *plane );
 void PlaneFromPoints( vec3_t verts[3], cplane_t *plane );
 
-qboolean ComparePlanes( const vec3_t p1normal, vec_t p1dist, const vec3_t p2normal, vec_t p2dist );
+bool ComparePlanes( const vec3_t p1normal, vec_t p1dist, const vec3_t p2normal, vec_t p2dist );
 void SnapVector( vec3_t normal );
 void SnapPlane( vec3_t normal, vec_t *dist );
 
@@ -285,7 +285,7 @@ float DistanceFromLineSquared(const vec3_t p, const vec3_t lp1, const vec3_t lp2
 
 void Matrix3_Identity( mat3_t m );
 void Matrix3_Copy( const mat3_t m1, mat3_t m2 );
-qboolean Matrix3_Compare( const mat3_t m1, const mat3_t m2 );
+bool Matrix3_Compare( const mat3_t m1, const mat3_t m2 );
 void Matrix3_Multiply( const mat3_t m1, const mat3_t m2, mat3_t out );
 void Matrix3_TransformVector( const mat3_t m, const vec3_t v, vec3_t out );
 void Matrix3_Transpose( const mat3_t in, mat3_t out );
@@ -298,7 +298,7 @@ void Matrix3_Normalize( mat3_t m );
 void Quat_Identity( quat_t q );
 void Quat_Copy( const quat_t q1, quat_t q2 );
 void Quat_Quat3( const vec3_t in, quat_t out );
-qboolean Quat_Compare( const quat_t q1, const quat_t q2 );
+bool Quat_Compare( const quat_t q1, const quat_t q2 );
 void Quat_Conjugate( const quat_t q1, quat_t q2 );
 vec_t Quat_DotProduct( const quat_t q1, const quat_t q2 );
 vec_t Quat_Normalize( quat_t q );

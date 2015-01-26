@@ -52,14 +52,14 @@ void RB_LoadProjectionMatrix( const mat4_t m );
 
 void RB_DepthRange( float depthmin, float depthmax );
 void RB_GetDepthRange( float* depthmin, float *depthmax );
-void RB_DepthOffset( qboolean enable );
+void RB_DepthOffset( bool enable );
 void RB_Cull( int cull );
 void RB_SetState( int state );
-void RB_FrontFace( qboolean front );
+void RB_FrontFace( bool front );
 void RB_FlipFrontFace( void );
 void RB_BindArrayBuffer( int buffer );
 void RB_BindElementArrayBuffer( int buffer );
-void RB_EnableScissor( qboolean enable );
+void RB_EnableScissor( bool enable );
 void RB_Scissor( int x, int y, int w, int h );
 void RB_GetScissor( int *x, int *y, int *w, int *h );
 void RB_Viewport( int x, int y, int w, int h );
@@ -96,10 +96,10 @@ void RB_SetPortalSurface( const struct portalSurface_s *portalSurface );
 void RB_SetSkyboxShader( const shader_t *shader );
 void RB_SetSkyboxSide( int side );
 void RB_SetRenderFlags( int flags );
-void RB_SetLightParams( float minLight, qboolean noWorldLight );
+void RB_SetLightParams( float minLight, bool noWorldLight );
 void RB_SetShaderStateMask( int ANDmask, int ORmask );
 void RB_SetCamera( const vec3_t cameraOrigin, const mat3_t cameraAxis );
-qboolean RB_EnableTriangleOutlines( qboolean enable );
+bool RB_EnableTriangleOutlines( bool enable );
 
 vattribmask_t RB_GetVertexAttribs( void );
 

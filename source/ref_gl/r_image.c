@@ -35,7 +35,7 @@ static image_t images_hash_headnode[IMAGES_HASH_SIZE], *free_images;
 
 static int currentTMU;
 static GLuint currentTextures[MAX_TEXTURE_UNITS];
-static qboolean flushCurrentTextures;
+static bool flushCurrentTextures;
 
 static int unpackAlignment[NUM_QGL_CONTEXTS];
 
@@ -105,7 +105,7 @@ static void R_FreeTextureNum( image_t *tex )
 
 	qglDeleteTextures( 1, &tex->texnum );
 	tex->texnum = 0;
-	flushCurrentTextures = qtrue;
+	flushCurrentTextures = true;
 }
 
 /*
@@ -160,7 +160,7 @@ static void R_BindContextTexture( const image_t *tex )
 /*
 * R_BindTexture
 */
-qboolean R_BindTexture( int tmu, const image_t *tex )
+bool R_BindTexture( int tmu, const image_t *tex )
 {
 	GLuint texnum;
 
@@ -178,19 +178,19 @@ qboolean R_BindTexture( int tmu, const image_t *tex )
 	}
 
 	if( flushCurrentTextures ) {
-		flushCurrentTextures = qfalse;
+		flushCurrentTextures = false;
 		memset( currentTextures, 0, sizeof( currentTextures ) );
 	}
 
 	texnum = tex->texnum;
 	if( currentTextures[tmu] == texnum )
-		return qfalse;
+		return false;
 
 	currentTextures[tmu] = texnum;
 
 	R_SelectTextureUnit( tmu );
 	R_BindContextTexture( tex );
-	return qtrue;
+	return true;
 }
 
 /*
@@ -307,7 +307,7 @@ void R_AnisotropicFilter( int value )
 /*
 * R_PrintImageList
 */
-void R_PrintImageList( const char *mask, qboolean (*filter)( const char *mask, const char *value) )
+void R_PrintImageList( const char *mask, bool (*filter)( const char *mask, const char *value) )
 {
 	int i, bpp, bytes;
 	int numImages;
@@ -529,7 +529,7 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 /*
 * R_ScaledImageSize
 */
-static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scaledHeight, int flags, int mips, qboolean forceNPOT )
+static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scaledHeight, int flags, int mips, bool forceNPOT )
 {
 	int maxSize;
 	int mip = 0;
@@ -607,7 +607,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 * R_FlipTexture
 */
 static void R_FlipTexture( const uint8_t *in, uint8_t *out, int width, int height, 
-	int samples, qboolean flipx, qboolean flipy, qboolean flipdiagonal )
+	int samples, bool flipx, bool flipy, bool flipdiagonal )
 {
 	int i, x, y;
 	const uint8_t *p, *line;
@@ -847,7 +847,7 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 * R_TextureRGBFormat
 */
 #ifndef GL_ES_VERSION_2_0
-static int R_TextureRGBFormat( int samples, qboolean noCompress )
+static int R_TextureRGBFormat( int samples, bool noCompress )
 {
 	int bits = r_texturebits->integer;
 
@@ -926,7 +926,7 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 #ifdef GL_ES_VERSION_2_0
 		*comp = *format;
 #else
-		*comp = R_TextureRGBFormat( samples, flags & IT_NOCOMPRESS ? qtrue : qfalse );
+		*comp = R_TextureRGBFormat( samples, flags & IT_NOCOMPRESS ? true : false );
 #endif
 		*type = GL_UNSIGNED_BYTE;
 	}
@@ -1001,7 +1001,7 @@ static void R_SetupTexParameters( int flags )
 static void R_Upload32( int ctx, uint8_t **data, int layer,
 	int x, int y, int width, int height,
 	int flags, int *upload_width, int *upload_height, int samples,
-	qboolean subImage, qboolean noScale )
+	bool subImage, bool noScale )
 {
 	int i, comp, format, type;
 	int target;
@@ -1012,7 +1012,7 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 	assert( samples );
 
 	R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, 1,
-		( subImage && noScale ) ? qtrue : qfalse );
+		( subImage && noScale ) ? true : false );
 
 	R_TextureTarget( flags, &target );
 
@@ -1027,9 +1027,9 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 		{
 			uint8_t *temp = R_PrepareImageBuffer( ctx, TEXTURE_FLIPPING_BUF0, width * height * samples );
 			R_FlipTexture( data[0], temp, width, height, samples, 
-				(flags & IT_FLIPX) ? qtrue : qfalse, 
-				(flags & IT_FLIPY) ? qtrue : qfalse, 
-				(flags & IT_FLIPDIAGONAL) ? qtrue : qfalse );
+				(flags & IT_FLIPX) ? true : false, 
+				(flags & IT_FLIPY) ? true : false, 
+				(flags & IT_FLIPDIAGONAL) ? true : false );
 			data = &r_imageBuffers[ctx][TEXTURE_FLIPPING_BUF0];
 		}
 
@@ -1226,7 +1226,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 
 	faces = ( flags & IT_CUBEMAP ) ? 6 : 1;
 	
-	mip = R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, mipLevels, qfalse );
+	mip = R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, mipLevels, false );
 
 	if( upload_width )
 		*upload_width = scaledWidth;
@@ -1263,7 +1263,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 	comp = format;
 #else
 	comp = R_TextureRGBFormat( ( type == GL_UNSIGNED_BYTE ) ? pixelSize : ( ( format == GL_RGB ) ? 3 : 4 ),
-		( flags & IT_NOCOMPRESS ) ? qtrue : qfalse );
+		( flags & IT_NOCOMPRESS ) ? true : false );
 #endif
 
 	R_SetupTexParameters( flags );
@@ -1323,7 +1323,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 /*
 * R_IsKTXFormatValid
 */
-static qboolean R_IsKTXFormatValid( int format, int type )
+static bool R_IsKTXFormatValid( int format, int type )
 {
 	switch( type )
 	{
@@ -1337,18 +1337,18 @@ static qboolean R_IsKTXFormatValid( int format, int type )
 		case GL_LUMINANCE_ALPHA:
 		case GL_ALPHA:
 		case GL_LUMINANCE:
-			return qtrue;
+			return true;
 		}
-		return qfalse;
+		return false;
 	case GL_UNSIGNED_SHORT_4_4_4_4:
 	case GL_UNSIGNED_SHORT_5_5_5_1:
-		return ( format == GL_RGBA ) ? qtrue : qfalse;
+		return ( format == GL_RGBA ) ? true : false;
 	case GL_UNSIGNED_SHORT_5_6_5:
-		return ( format == GL_RGB ) ? qtrue : qfalse;
+		return ( format == GL_RGB ) ? true : false;
 	case 0:
-		return ( format == GL_ETC1_RGB8_OES ) ? qtrue : qfalse;
+		return ( format == GL_ETC1_RGB8_OES ) ? true : false;
 	}
-	return qfalse;
+	return false;
 }
 
 typedef struct ktx_header_s
@@ -1372,17 +1372,17 @@ typedef struct ktx_header_s
 /*
 * R_LoadKTX
 */
-static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * ) )
+static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * ) )
 {
 	int i, j;
 	uint8_t *buffer;
 	ktx_header_t *header;
-	qboolean swapEndian;
+	bool swapEndian;
 	uint8_t *data;
 
 	R_LoadFile( image->name, ( void ** )&buffer );
 	if( !buffer )
-		return qfalse;
+		return false;
 
 	header = ( ktx_header_t * )buffer;
 	if( memcmp( header->identifier, "\xABKTX 11\xBB\r\n\x1A\n", 12 ) )
@@ -1391,7 +1391,7 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_
 		goto error;
 	}
 
-	swapEndian = ( header->endianness != 0x04030201 ) ? qtrue : qfalse;
+	swapEndian = ( header->endianness != 0x04030201 ) ? true : false;
 	if( swapEndian )
 	{
 		unsigned int field;
@@ -1455,7 +1455,7 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_
 		}
 
 		mip = R_ScaledImageSize( header->pixelWidth, header->pixelHeight, &scaledWidth, &scaledHeight,
-			image->flags, mips, qfalse );
+			image->flags, mips, false );
 
 		image->upload_width = scaledWidth;
 		image->upload_height = scaledHeight;
@@ -1471,7 +1471,7 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_
 			uint8_t *out = decompressed;
 			for( i = 0; i < header->numberOfFaces; ++i )
 			{
-				DecompressETC1( in, header->pixelWidth, header->pixelHeight, out, glConfig.ext.bgra ? qtrue : qfalse );
+				DecompressETC1( in, header->pixelWidth, header->pixelHeight, out, glConfig.ext.bgra ? true : false );
 				in += inSize;
 				out += outSize;
 			}
@@ -1598,19 +1598,19 @@ static qboolean R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_
 	Q_strncpyz( image->extension, ".ktx", sizeof( image->extension ) );
 	image->width = header->pixelWidth;
 	image->height = header->pixelHeight;
-	image->loaded = qtrue;
+	image->loaded = true;
 	R_FreeFile( buffer );
-	return qtrue;
+	return true;
 
 error:
 	R_FreeFile( buffer );
-	return qfalse;
+	return false;
 }
 
 /*
 * R_LoadImageFromDisk
 */
-static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const image_t *) )
+static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const image_t *) )
 {
 	int flags = image->flags;
 	char *pathname = image->name;
@@ -1620,7 +1620,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const
 	
 	Q_strncatz( pathname, ".ktx", pathsize );
 	if( R_LoadKTX( ctx, image, bind ) )
-		return qtrue;
+		return true;
 	pathname[len] = 0;
 
 	if( flags & IT_CUBEMAP )
@@ -1676,9 +1676,9 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const
 						uint8_t *temp = R_PrepareImageBuffer( ctx,
 							TEXTURE_FLIPPING_BUF0+j, width * height * samples );
 						R_FlipTexture( pic[j], temp, width, height, 4, 
-							(flags & IT_FLIPX) ? qtrue : qfalse, 
-							(flags & IT_FLIPY) ? qtrue : qfalse, 
-							(flags & IT_FLIPDIAGONAL) ? qtrue : qfalse );
+							(flags & IT_FLIPX) ? true : false, 
+							(flags & IT_FLIPY) ? true : false, 
+							(flags & IT_FLIPDIAGONAL) ? true : false );
 						pic[j] = temp;
 					}
 					continue;
@@ -1699,11 +1699,11 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const
 			bind( image );
 
 			R_Upload32( ctx, pic, 0, 0, 0, width, height, flags, &image->upload_width, 
-				&image->upload_height, samples, qfalse, qfalse );
+				&image->upload_height, samples, false, false );
 
 			image->extension[0] = '.';
 			Q_strncpyz( &image->extension[1], &pathname[len+4], sizeof( image->extension )-1 );
-			return qtrue;
+			return true;
 		}
 		else
 		{
@@ -1727,11 +1727,11 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const
 			bind( image );
 
 			R_Upload32( ctx, &pic, 0, 0, 0, width, height, flags, &image->upload_width, 
-				&image->upload_height, samples, qfalse, qfalse );
+				&image->upload_height, samples, false, false );
 
 			image->extension[0] = '.';
 			Q_strncpyz( &image->extension[1], &pathname[len+1], sizeof( image->extension )-1 );
-			return qtrue;
+			return true;
 		}
 		else
 		{
@@ -1739,7 +1739,7 @@ static qboolean R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const
 		}
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -1806,8 +1806,8 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 	image->fbo = 0;
 	image->texnum = 0;
 	image->registrationSequence = rsh.registrationSequence;
-	image->loaded = qtrue;
-	image->missing = qfalse;
+	image->loaded = true;
+	image->missing = false;
 	image->extension[0] = '\0';
 
 	R_AllocTextureNum( image );
@@ -1827,7 +1827,7 @@ image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, in
 	R_BindModifyTexture( image );
 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, 
-		&image->upload_width, &image->upload_height, image->samples, qfalse, qfalse );
+		&image->upload_width, &image->upload_height, image->samples, false, false );
 
 	return image;
 }
@@ -1849,7 +1849,7 @@ image_t *R_CreateArrayImage( const char *name, int width, int height, int layers
 	R_BindModifyTexture( image );
 	R_SetupTexParameters( flags );
 
-	R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, 1, qfalse );
+	R_ScaledImageSize( width, height, &scaledWidth, &scaledHeight, flags, 1, false );
 	image->upload_width = scaledWidth;
 	image->upload_height = scaledHeight;
 
@@ -1904,10 +1904,10 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 
 	if( image->width != width || image->height != height || image->samples != samples )
 		R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, 
-		&(image->upload_width), &(image->upload_height), samples, qfalse, qfalse );
+		&(image->upload_width), &(image->upload_height), samples, false, false );
 	else
 		R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, 
-		&(image->upload_width), &(image->upload_height), samples, qtrue, qfalse );
+		&(image->upload_width), &(image->upload_height), samples, true, false );
 
 	image->flags = flags;
 	image->width = width;
@@ -1928,7 +1928,7 @@ void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, 
 	R_BindModifyTexture( image );
 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, x, y, width, height, image->flags,
-		NULL, NULL, image->samples, qtrue, qtrue );
+		NULL, NULL, image->samples, true, true );
 
 	image->registrationSequence = rsh.registrationSequence;
 }
@@ -1944,7 +1944,7 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic )
 	R_BindModifyTexture( image );
 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, 0, 0, image->width, image->height, image->flags,
-		NULL, NULL, image->samples, qtrue, qfalse );
+		NULL, NULL, image->samples, true, false );
 
 	image->registrationSequence = rsh.registrationSequence;
 }
@@ -2047,7 +2047,7 @@ SCREEN SHOTS
 * R_ScreenShot
 */
 void R_ScreenShot( const char *filename, int x, int y, int width, int height, int quality, 
-	qboolean flipx, qboolean flipy, qboolean flipdiagonal, qboolean silent )
+	bool flipx, bool flipy, bool flipdiagonal, bool silent )
 {
 	size_t size, buf_size;
 	uint8_t *buffer, *flipped, *rgb, *rgba;
@@ -2401,7 +2401,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			R_BindModifyTexture( t );
 
 			R_Upload32( QGL_CONTEXT_MAIN, &data, 0, 0, 0, width, height, flags, 
-				&t->upload_width, &t->upload_height, t->samples, qfalse, qfalse );
+				&t->upload_width, &t->upload_height, t->samples, false, false );
 		}
 
 		// update FBO, if attached
@@ -2411,7 +2411,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 		}
 		if( t->flags & IT_FRAMEBUFFER ) {
 			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height,
-				( flags & IT_DEPTHRB ) ? qtrue : qfalse );
+				( flags & IT_DEPTHRB ) ? true : false );
 			RFB_AttachTextureToObject( t->fbo, t );
 		}
 	}
@@ -2534,8 +2534,8 @@ static void R_InitStretchRawTexture( void )
 	rawtexture->flags = IT_CINEMATIC;
 	strcpy( rawtexture->name, name );
 	R_AllocTextureNum( rawtexture );
-	rawtexture->loaded = qtrue;
-	rawtexture->missing = qfalse;
+	rawtexture->loaded = true;
+	rawtexture->missing = false;
 
 	rsh.rawTexture = rawtexture;
 }
@@ -2566,8 +2566,8 @@ static void R_InitStretchRawYUVTextures( void )
 		rawtexture->flags = IT_CINEMATIC|IT_LUMINANCE;
 		strcpy( rawtexture->name, name[i] );
 		R_AllocTextureNum( rawtexture );
-		rawtexture->loaded = qtrue;
-		rawtexture->missing = qfalse;
+		rawtexture->loaded = true;
+		rawtexture->missing = false;
 
 		rsh.rawYUVTextures[i] = rawtexture;
 	}
@@ -2577,7 +2577,7 @@ static void R_InitStretchRawYUVTextures( void )
 * R_InitScreenTexturesPair
 */
 static void R_InitScreenTexturesPair( const char *name, image_t **color, 
-	image_t **depth, qboolean noFilter )
+	image_t **depth, bool noFilter )
 {
 	int flags;
 
@@ -2610,17 +2610,17 @@ static void R_InitScreenTextures( void )
 	if( glConfig.ext.depth_texture && glConfig.ext.framebuffer_blit )
 	{
 		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
-			&rsh.screenDepthTexture, qtrue ); 
+			&rsh.screenDepthTexture, true ); 
 
 		R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
-			&rsh.screenDepthTextureCopy, qtrue );
+			&rsh.screenDepthTextureCopy, true );
 	}
 
 	R_InitScreenTexturesPair( "rsh.screenFxaaCopy", &rsh.screenFxaaCopy, 
-		NULL, qfalse );
+		NULL, false );
 
 	R_InitScreenTexturesPair( "rsh.screenWeaponTexture", &rsh.screenWeaponTexture, 
-		NULL, qtrue );
+		NULL, true );
 }
 
 /*
@@ -2974,8 +2974,8 @@ static void R_LoadAsyncImageFromDisk( image_t *image )
 		id = 0;
 	}
 
-	image->loaded = qfalse;
-	image->missing = qfalse;
+	image->loaded = false;
+	image->missing = false;
 
 	R_IssueLoadPicLoaderCmd( id, image - images );
 }
@@ -3038,14 +3038,14 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 {
 	loaderPicCmd_t *cmd = pcmd;
 	image_t *image = images + cmd->pic;
-	qboolean loaded;
+	bool loaded;
 
 	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER + cmd->self, image, R_BindLoaderTexture );
 	if( !loaded ) {
-		image->missing = qtrue;
+		image->missing = true;
 	} else {
 		qglFinish();
-		image->loaded = qtrue;
+		image->loaded = true;
 	}
 
 	return sizeof( *cmd );

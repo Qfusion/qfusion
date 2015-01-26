@@ -46,7 +46,7 @@ static bool G_Teleport( edict_t *ent, vec3_t origin, vec3_t angles )
 	VectorCopy( origin, ent->s.origin );
 	VectorCopy( origin, ent->s.old_origin );
 	VectorCopy( origin, ent->olds.origin );
-	ent->s.teleported = qtrue;
+	ent->s.teleported = true;
 
 	VectorClear( ent->velocity );
 	ent->r.client->ps.pmove.pm_time = 1;
@@ -543,7 +543,7 @@ bool CheckFlood( edict_t *ent, bool teamonly )
 			trap_Cvar_Set( "g_floodprotection_messages", "0" );
 		if( g_floodprotection_messages->integer > MAX_FLOOD_MESSAGES )
 			trap_Cvar_Set( "g_floodprotection_messages", va( "%i", MAX_FLOOD_MESSAGES ) );
-		g_floodprotection_messages->modified = qfalse;
+		g_floodprotection_messages->modified = false;
 	}
 
 	if( g_floodprotection_team->modified )
@@ -552,21 +552,21 @@ bool CheckFlood( edict_t *ent, bool teamonly )
 			trap_Cvar_Set( "g_floodprotection_team", "0" );
 		if( g_floodprotection_team->integer > MAX_FLOOD_MESSAGES )
 			trap_Cvar_Set( "g_floodprotection_team", va( "%i", MAX_FLOOD_MESSAGES ) );
-		g_floodprotection_team->modified = qfalse;
+		g_floodprotection_team->modified = false;
 	}
 
 	if( g_floodprotection_seconds->modified )
 	{
 		if( g_floodprotection_seconds->value <= 0 )
 			trap_Cvar_Set( "g_floodprotection_seconds", "4" );
-		g_floodprotection_seconds->modified = qfalse;
+		g_floodprotection_seconds->modified = false;
 	}
 
 	if( g_floodprotection_penalty->modified )
 	{
 		if( g_floodprotection_penalty->value < 0 )
 			trap_Cvar_Set( "g_floodprotection_penalty", "10" );
-		g_floodprotection_penalty->modified = qfalse;
+		g_floodprotection_penalty->modified = false;
 	}
 
 	// old protection still active

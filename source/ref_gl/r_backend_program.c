@@ -798,7 +798,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	float offsetmappingScale, glossIntensity, glossExponent;
 	const superLightStyle_t *lightStyle = NULL;
 	const mfog_t *fog = rb.fog;
-	qboolean applyDecal;
+	bool applyDecal;
 	mat4_t texMatrix;
 
 	// handy pointers
@@ -1068,7 +1068,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	int width = 1, height = 1;
 	int program;
 	image_t *portaltexture[2];
-	qboolean frontPlane;
+	bool frontPlane;
 	mat4_t texMatrix;
 	const image_t *dudvmap, *normalmap;
 
@@ -1096,7 +1096,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	if( portaltexture[1] != rsh.blackTexture )
 		programFeatures |= GLSL_SHADER_DISTORTION_REFRACTION;
 
-	frontPlane = (PlaneDiff( rb.cameraOrigin, &rb.currentPortalSurface->untransformed_plane ) > 0 ? qtrue : qfalse);
+	frontPlane = (PlaneDiff( rb.cameraOrigin, &rb.currentPortalSurface->untransformed_plane ) > 0 ? true : false);
 
 	if( frontPlane )
 	{
@@ -1423,10 +1423,10 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	int rgbgen = pass->rgbgen.type;
 	const image_t *image;
 	const mfog_t *fog = rb.fog;
-	qboolean isWorldSurface = rb.currentModelType == mod_brush ? qtrue : qfalse;
+	bool isWorldSurface = rb.currentModelType == mod_brush ? true : false;
 	const superLightStyle_t *lightStyle = NULL;
 	const entity_t *e = rb.currentEntity;
-	qboolean isLightmapped = qfalse, isWorldVertexLight = qfalse;
+	bool isLightmapped = false, isWorldVertexLight = false;
 	vec3_t lightDir;
 	vec4_t lightAmbient, lightDiffuse;
 	mat4_t texMatrix, genVectors;
@@ -1445,17 +1445,17 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		(rb.currentShader->flags & SHADER_LIGHTMAP) && 
 		(pass->flags & GLSTATE_BLEND_ADD) != GLSTATE_BLEND_ADD ) {
 		lightStyle = rb.superLightStyle;
-		isLightmapped = qtrue;
+		isLightmapped = true;
 	}
 
 	// vertex-lit world surface
 	if( isWorldSurface
 		&& ( rgbgen == RGB_GEN_VERTEX || rgbgen == RGB_GEN_EXACT_VERTEX )
 		&& ( rb.superLightStyle != NULL ) ) {
-		isWorldVertexLight = qtrue;
+		isWorldVertexLight = true;
 	}
 	else {
-		isWorldVertexLight = qfalse;
+		isWorldVertexLight = false;
 	}
 
 	// possibly apply the fog inline
@@ -1663,12 +1663,12 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 		} \
 	}
 
-	CELSHADE_BIND( 1, shade, 0, qfalse, rsh.whiteCubemapTexture );
-	CELSHADE_BIND( 2, diffuse, GLSL_SHADER_CELSHADE_DIFFUSE, qfalse, NULL );
-	CELSHADE_BIND( 3, decal, GLSL_SHADER_CELSHADE_DECAL, qtrue, NULL );
-	CELSHADE_BIND( 4, entdecal, GLSL_SHADER_CELSHADE_ENTITY_DECAL, qtrue, rsh.whiteTexture );
-	CELSHADE_BIND( 5, stripes, GLSL_SHADER_CELSHADE_STRIPES, qtrue, NULL );
-	CELSHADE_BIND( 6, light, GLSL_SHADER_CELSHADE_CEL_LIGHT, qtrue, NULL );
+	CELSHADE_BIND( 1, shade, 0, false, rsh.whiteCubemapTexture );
+	CELSHADE_BIND( 2, diffuse, GLSL_SHADER_CELSHADE_DIFFUSE, false, NULL );
+	CELSHADE_BIND( 3, decal, GLSL_SHADER_CELSHADE_DECAL, true, NULL );
+	CELSHADE_BIND( 4, entdecal, GLSL_SHADER_CELSHADE_ENTITY_DECAL, true, rsh.whiteTexture );
+	CELSHADE_BIND( 5, stripes, GLSL_SHADER_CELSHADE_STRIPES, true, NULL );
+	CELSHADE_BIND( 6, light, GLSL_SHADER_CELSHADE_CEL_LIGHT, true, NULL );
 
 #undef CELSHADE_BIND
 
@@ -1888,8 +1888,8 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		}
 	}
 
-	rb.doneDepthPass = qfalse;
-	rb.dirtyUniformState = qtrue;
+	rb.doneDepthPass = false;
+	rb.dirtyUniformState = true;
 
 	rb.currentEntity = e ? e : &rb.nullEnt;
 	rb.currentModelType = ( rb.currentEntity->rtype == RT_MODEL && rb.currentEntity->model ) ? rb.currentEntity->model->type : mod_bad;
@@ -1907,8 +1907,8 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	if( !e ) {
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
-		rb.alphaHack = qfalse;
-		rb.greyscale = qfalse;
+		rb.alphaHack = false;
+		rb.greyscale = false;
 	} else {
 		Vector4Copy( rb.currentEntity->shaderRGBA, rb.entityColor );
 		Vector4Copy( rb.currentEntity->outlineColor, rb.entityOutlineColor );
@@ -1916,9 +1916,9 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 			rb.currentShaderTime = 0;
 		else
 			rb.currentShaderTime = (rb.time - rb.currentEntity->shaderTime) * 0.001;
-		rb.alphaHack = e->renderfx & RF_ALPHAHACK ? qtrue : qfalse;
+		rb.alphaHack = e->renderfx & RF_ALPHAHACK ? true : false;
 		rb.hackedAlpha = e->shaderRGBA[3] / 255.0;
-		rb.greyscale = e->renderfx & RF_GREYSCALE ? qtrue : qfalse;
+		rb.greyscale = e->renderfx & RF_GREYSCALE ? true : false;
 	}
 
 	RB_UpdateVertexAttribs();
@@ -1931,7 +1931,7 @@ void RB_SetLightstyle( const superLightStyle_t *lightStyle )
 {
 	assert( rb.currentShader != NULL );
 	rb.superLightStyle = lightStyle;
-	rb.dirtyUniformState = qtrue;
+	rb.dirtyUniformState = true;
 
 	RB_UpdateVertexAttribs();
 }
@@ -1943,7 +1943,7 @@ void RB_SetDlightBits( unsigned int dlightBits )
 {
 	assert( rb.currentShader != NULL );
 	rb.currentDlightBits = dlightBits;
-	rb.dirtyUniformState = qtrue;
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -1953,7 +1953,7 @@ void RB_SetShadowBits( unsigned int shadowBits )
 {
 	assert( rb.currentShader != NULL );
 	rb.currentShadowBits = shadowBits;
-	rb.dirtyUniformState = qtrue;
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -1974,7 +1974,7 @@ void RB_SetBonesData( int numBones, dualquat_t *dualQuats, int maxWeights )
 	memcpy( rb.bonesData.dualQuats, dualQuats, numBones * sizeof( *dualQuats ) );
 	rb.bonesData.maxWeights = maxWeights;
 
-	rb.dirtyUniformState = qtrue;
+	rb.dirtyUniformState = true;
 
 	RB_UpdateVertexAttribs();
 }
@@ -1986,7 +1986,7 @@ void RB_SetPortalSurface( const portalSurface_t *portalSurface )
 {
 	assert( rb.currentShader != NULL );
 	rb.currentPortalSurface = portalSurface;
-	rb.dirtyUniformState = qtrue;
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -1995,7 +1995,7 @@ void RB_SetPortalSurface( const portalSurface_t *portalSurface )
 void RB_SetSkyboxShader( const shader_t *shader )
 {
 	rb.skyboxShader = shader;
-	rb.dirtyUniformState = qtrue;
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -2008,7 +2008,7 @@ void RB_SetSkyboxSide( int side )
 	} else {
 		rb.skyboxSide = side;
 	}
-	rb.dirtyUniformState = qtrue;
+	rb.dirtyUniformState = true;
 }
 
 /*
@@ -2037,7 +2037,7 @@ void RB_SetZClip( float zNear, float zFar )
 /*
 * RB_SetLightParams
 */
-void RB_SetLightParams( float minLight, qboolean noWorldLight )
+void RB_SetLightParams( float minLight, bool noWorldLight )
 {
 	rb.minLight = minLight;
 	rb.noWorldLight = noWorldLight;
@@ -2066,7 +2066,7 @@ int RB_BindProgram( int program )
 		qglUseProgram( object );
 	}
 	rb.currentProgramObject = object;
-	rb.dirtyUniformState = qtrue;
+	rb.dirtyUniformState = true;
 	return object;
 }
 
@@ -2089,11 +2089,11 @@ static void RB_RenderPass( const shaderpass_t *pass )
 
 	if( rb.dirtyUniformState ) {
 		rb.donePassesTotal = 0;
-		rb.dirtyUniformState = qfalse;
+		rb.dirtyUniformState = false;
 	}
 
 	if( rb.gl.state & GLSTATE_DEPTHWRITE ) {
-		rb.doneDepthPass = qtrue;
+		rb.doneDepthPass = true;
 	}
 
 	rb.donePassesTotal++;
@@ -2159,14 +2159,14 @@ static void RB_SetShaderpassState( int state )
 * is not set and there have been no uniform updates, we can simply
 * call glDrawElements with fresh vertex data
 */
-static qboolean RB_CleanSinglePass( void )
+static bool RB_CleanSinglePass( void )
 {
 	// reuse current GLSL state (same program bound, same uniform values)
 	if( !rb.dirtyUniformState && rb.donePassesTotal == 1 ) {
 		RB_DrawElementsReal( &rb.drawElements );
-		return qtrue;
+		return true;
 	}
-	return qfalse;
+	return false;
 }
 
 /*
@@ -2244,7 +2244,7 @@ void RB_DrawOutlinedElements( void )
 void RB_DrawShadedElements( void )
 {
 	unsigned i;
-	qboolean addGLSLOutline = qfalse;
+	bool addGLSLOutline = false;
 	shaderpass_t *pass;
 
 	if( RB_CleanSinglePass() ) {
@@ -2255,7 +2255,7 @@ void RB_DrawShadedElements( void )
 		&& ( rb.currentShader->sort == SHADER_SORT_OPAQUE ) && ( rb.currentShader->flags & SHADER_CULL_FRONT )
 		&& !( rb.renderFlags & RF_SHADOWMAPVIEW ) )
 	{
-		addGLSLOutline = qtrue;
+		addGLSLOutline = true;
 	}
 
 	RB_SetShaderState();

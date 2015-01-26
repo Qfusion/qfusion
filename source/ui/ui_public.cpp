@@ -73,23 +73,23 @@ namespace WSWUI
 	}
 
 	void Refresh( unsigned int time, int clientState, int serverState, 
-		qboolean demoPlaying, const char *demoName, qboolean demoPaused, unsigned int demoTime, 
-		qboolean backGround, qboolean showCursor )
+		bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
+		bool backGround, bool showCursor )
 	{
 		if( ui_main ) {
 			ui_main->refreshScreen( time, clientState, serverState, 
-				demoPlaying == qtrue, demoName ? demoName : "",
-				demoPaused == qtrue, demoTime, backGround == qtrue, showCursor == qtrue );
+				demoPlaying == true, demoName ? demoName : "",
+				demoPaused == true, demoTime, backGround == true, showCursor == true );
 		}
 	}
 
 	void UpdateConnectScreen( const char *serverName, const char *rejectmessage, 
 		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
-		int connectCount, qboolean backGround )
+		int connectCount, bool backGround )
 	{
 		if( ui_main )
 			ui_main->drawConnectScreen( serverName, rejectmessage, downloadType, downloadfilename, 
-				downloadPercent, downloadSpeed, connectCount, (backGround == qtrue) );
+				downloadPercent, downloadSpeed, connectCount, (backGround == true) );
 	}
 
 	void Keydown( int key )

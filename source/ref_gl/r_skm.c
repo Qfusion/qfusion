@@ -1155,7 +1155,7 @@ static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int
 /*
 * R_DrawSkeletalSurf
 */
-qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceSkeletal_t *drawSurf )
+bool R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceSkeletal_t *drawSurf )
 {
 	unsigned int i, j;
 	int framenum = e->frame;
@@ -1172,7 +1172,7 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 	const model_t *mod = drawSurf->model;
 	const mskmodel_t *skmodel = ( const mskmodel_t * )mod->extradata;
 	const mskmesh_t *skmesh = drawSurf->mesh;
-	qboolean hardwareTransform = skmesh->vbo != NULL && glConfig.maxGLSLBones > 0 ? qtrue : qfalse;
+	bool hardwareTransform = skmesh->vbo != NULL && glConfig.maxGLSLBones > 0 ? true : false;
 	vattribmask_t vattribs;
 
 	bonePoseRelativeMat = NULL;
@@ -1222,7 +1222,7 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3, 
 			0, skmesh->numverts, 0, skmesh->numtris * 3 );
 
-		return qfalse;
+		return false;
 	}
 
 	// see what vertex attribs backend needs
@@ -1337,7 +1337,7 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 		if( !rb_mesh ) {
 			ri.Com_DPrintf( S_COLOR_YELLOW "R_DrawAliasSurf: RB_MapBatchMesh returned NULL for (%s)(%s)", 
 				drawSurf->model->name, skmesh->name );
-			return qfalse;
+			return false;
 		}
 
 		R_SkeletalTransformVerts( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
@@ -1361,7 +1361,7 @@ qboolean R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mf
 		RB_EndBatch();
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -1409,7 +1409,7 @@ void R_SkeletalModelFrameBounds( const model_t *mod, int frame, vec3_t mins, vec
 /*
 * R_AddSkeletalModelToDrawList
 */
-qboolean R_AddSkeletalModelToDrawList( const entity_t *e )
+bool R_AddSkeletalModelToDrawList( const entity_t *e )
 {
 	int i;
 	const mfog_t *fog;
@@ -1424,20 +1424,20 @@ qboolean R_AddSkeletalModelToDrawList( const entity_t *e )
 
 	mod = R_SkeletalModelLOD( e );
 	if( !( skmodel = ( ( mskmodel_t * )mod->extradata ) ) || !skmodel->nummeshes )
-		return qfalse;
+		return false;
 
 	radius = R_SkeletalModelLerpBBox( e, mod, mins, maxs );
-	clipped = R_CullModelEntity( e, mins, maxs, radius, qtrue );
+	clipped = R_CullModelEntity( e, mins, maxs, radius, true );
 	if( clipped )
-		return qfalse;
+		return false;
 
 	// never render weapon models or non-occluders into shadowmaps
 	if( rn.renderFlags & RF_SHADOWMAPVIEW ) {
 		if( e->renderfx & RF_WEAPONMODEL ) {
-			return qtrue;
+			return true;
 		}
 		if( rsc.entShadowGroups[R_ENT2NUM(e)] != rn.shadowGroup->id ) {
-			return qtrue;
+			return true;
 		}
 	}
 
@@ -1455,7 +1455,7 @@ qboolean R_AddSkeletalModelToDrawList( const entity_t *e )
 	{
 		R_SkeletalModelLerpBBox( e, mod );
 		if( R_CompletelyFogged( fog, e->origin, skm_radius ) )
-			return qfalse;
+			return false;
 	}
 #endif
 
@@ -1475,5 +1475,5 @@ qboolean R_AddSkeletalModelToDrawList( const entity_t *e )
 		}
 	}
 
-	return qtrue;
+	return true;
 }

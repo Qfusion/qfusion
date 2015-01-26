@@ -102,7 +102,7 @@ namespace trap
 			return UI_IMPORT.R_RegisterRawPic( name, width, height, data, samples );
 		}
 
-		inline struct shader_s *R_RegisterLevelshot( const char *name, struct shader_s *defaultPic, qboolean *matchesDefault ) {
+		inline struct shader_s *R_RegisterLevelshot( const char *name, struct shader_s *defaultPic, bool *matchesDefault ) {
 			return UI_IMPORT.R_RegisterLevelshot( name, defaultPic, matchesDefault );
 		}
 
@@ -118,7 +118,7 @@ namespace trap
 			UI_IMPORT.R_GetShaderDimensions( shader, width, height );
 		}
 
-		inline qboolean R_LerpTag( orientation_t *orient, struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name ) {
+		inline bool R_LerpTag( orientation_t *orient, struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name ) {
 			return UI_IMPORT.R_LerpTag( orient, mod, oldframe, frame, lerpfrac, name );
 		}
 
@@ -216,7 +216,7 @@ namespace trap
 			UI_IMPORT.CL_ResetServerCount ();
 		}
 
-		inline char *CL_GetClipboardData( qboolean primary ) {
+		inline char *CL_GetClipboardData( bool primary ) {
 			return UI_IMPORT.CL_GetClipboardData( primary );
 		}
 
@@ -256,15 +256,15 @@ namespace trap
 			UI_IMPORT.Key_SetBinding( keynum, binding );
 		}
 
-		inline qboolean Key_IsDown( int keynum ) {
+		inline bool Key_IsDown( int keynum ) {
 			return UI_IMPORT.Key_IsDown( keynum );
 		}
 
-		inline void IN_ShowIME( qboolean show ) {
+		inline void IN_ShowIME( bool show ) {
 			UI_IMPORT.IN_ShowIME( show );
 		}
 
-		inline qboolean VID_GetModeInfo( int *width, int *height, qboolean *wideScreen, int mode ) {
+		inline bool VID_GetModeInfo( int *width, int *height, bool *wideScreen, int mode ) {
 			return UI_IMPORT.VID_GetModeInfo( width, height, wideScreen, mode );
 		}
 
@@ -316,11 +316,11 @@ namespace trap
 			UI_IMPORT.FS_FCloseFile( file );
 		}
 
-		inline qboolean FS_RemoveFile( const char *filename ) {
+		inline bool FS_RemoveFile( const char *filename ) {
 			return UI_IMPORT.FS_RemoveFile( filename );
 		}
 
-		inline qboolean FS_RemoveDirectory( const char *dirname ) {
+		inline bool FS_RemoveDirectory( const char *dirname ) {
 			return UI_IMPORT.FS_RemoveDirectory( dirname );
 		}
 
@@ -336,11 +336,11 @@ namespace trap
 			return UI_IMPORT.FS_FirstExtension( filename, extensions, num_extensions );
 		}
 
-		inline qboolean FS_MoveFile( const char *src, const char *dst ) {
+		inline bool FS_MoveFile( const char *src, const char *dst ) {
 			return UI_IMPORT.FS_MoveFile( src, dst );
 		}
 
-		inline qboolean FS_IsUrl( const char *url ) {
+		inline bool FS_IsUrl( const char *url ) {
 			return UI_IMPORT.FS_IsUrl( url );
 		}
 
@@ -377,7 +377,7 @@ namespace trap
 		}
 
 		// dynvars
-		inline dynvar_t *Dynvar_Create( const char *name, qboolean console, dynvar_getter_f getter, dynvar_setter_f setter ) {
+		inline dynvar_t *Dynvar_Create( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter ) {
 			return UI_IMPORT.Dynvar_Create( name, console, getter, setter );
 		}
 
@@ -451,11 +451,11 @@ namespace trap
 			return UI_IMPORT.GetBaseServerURL( buffer, buffer_size );
 		}
 
-		inline qboolean MM_Login( const char *user, const char *password ) {
+		inline bool MM_Login( const char *user, const char *password ) {
 			return UI_IMPORT.MM_Login( user, password );
 		}
 
-		inline qboolean MM_Logout( qboolean force ) {
+		inline bool MM_Logout( bool force ) {
 			return UI_IMPORT.MM_Logout( force );
 		}
 
@@ -467,7 +467,7 @@ namespace trap
 			return UI_IMPORT.MM_GetLastErrorMessage( buffer, buffer_size );
 		}
 
-		inline size_t MM_GetProfileURL( char *buffer, size_t buffer_size, qboolean rml ) {
+		inline size_t MM_GetProfileURL( char *buffer, size_t buffer_size, bool rml ) {
 			return UI_IMPORT.MM_GetProfileURL( buffer, buffer_size, rml );
 		}
 

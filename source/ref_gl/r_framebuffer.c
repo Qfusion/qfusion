@@ -34,7 +34,7 @@ typedef struct
 	image_t *colorTexture;
 } r_fbo_t;
 
-static qboolean r_frambuffer_objects_initialized;
+static bool r_frambuffer_objects_initialized;
 static int r_bound_framebuffer_objectID;
 static r_fbo_t *r_bound_framebuffer_object;
 static int r_num_framebuffer_objects;
@@ -55,7 +55,7 @@ void RFB_Init( void )
 	r_bound_framebuffer_objectID = 0;
 	r_bound_framebuffer_object = NULL;
 
-	r_frambuffer_objects_initialized = qtrue;
+	r_frambuffer_objects_initialized = true;
 }
 
 /*
@@ -85,7 +85,7 @@ static void RFB_DeleteObject( r_fbo_t *fbo )
 /*
 * RFB_RegisterObject
 */
-int RFB_RegisterObject( int width, int height, qboolean depthRB )
+int RFB_RegisterObject( int width, int height, bool depthRB )
 {
 	int i;
 	GLuint fbID;
@@ -233,7 +233,7 @@ void RFB_BindObject( int object )
 */
 void RFB_AttachTextureToObject( int object, image_t *texture )
 {
-	qboolean depth;
+	bool depth;
 	r_fbo_t *fbo;
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
@@ -249,10 +249,10 @@ void RFB_AttachTextureToObject( int object, image_t *texture )
 	fbo = r_framebuffer_objects + object - 1;
 
 	if( texture->flags & IT_DEPTH ) {
-		depth = qtrue;
+		depth = true;
 		fbo->depthTexture = texture;
 	} else {
-		depth = qfalse;
+		depth = false;
 		fbo->colorTexture = texture;
 	}
 	texture->fbo = object;
@@ -266,7 +266,7 @@ void RFB_AttachTextureToObject( int object, image_t *texture )
 /*
 * RFB_DetachTextureFromObject
 */
-void RFB_DetachTextureFromObject( qboolean depth )
+void RFB_DetachTextureFromObject( bool depth )
 {
 	r_fbo_t *fbo = r_bound_framebuffer_object;
 
@@ -286,7 +286,7 @@ void RFB_DetachTextureFromObject( qboolean depth )
 /*
 * RFB_GetObjectTextureAttachment
 */
-image_t	*RFB_GetObjectTextureAttachment( int object, qboolean depth )
+image_t	*RFB_GetObjectTextureAttachment( int object, bool depth )
 {
 	r_fbo_t *fbo;
 
@@ -378,28 +378,28 @@ void RFB_BlitObject( int dest, int bitMask, int mode )
 /*
 * RFB_CheckObjectStatus
 * 
-* Boolean, returns qfalse in case of error
+* Boolean, returns false in case of error
 */
-qboolean RFB_CheckObjectStatus( void )
+bool RFB_CheckObjectStatus( void )
 {
 	GLenum status;
 
 	if( !r_frambuffer_objects_initialized )
-		return qfalse;
+		return false;
 
 	status = qglCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT );
 	switch( status )
 	{
 		case GL_FRAMEBUFFER_COMPLETE_EXT:
-			return qtrue;
+			return true;
 		case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
-			return qfalse;
+			return false;
 		default:
 			// programming error; will fail on all hardware
 			assert( 0 );
 	}
 	
-	return qfalse;
+	return false;
 }
 
 /*
@@ -462,7 +462,7 @@ void RFB_Shutdown( void )
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 	r_bound_framebuffer_objectID = 0;
 
-	r_frambuffer_objects_initialized = qfalse;
+	r_frambuffer_objects_initialized = false;
 	r_num_framebuffer_objects = 0;
 	memset( r_framebuffer_objects, 0, sizeof( r_framebuffer_objects ) );
 }

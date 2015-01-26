@@ -245,7 +245,7 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 	while( *ptrptr )
 	{
 		oldptr = *ptrptr;
-		token = COM_ParseExt( ptrptr, qtrue );
+		token = COM_ParseExt( ptrptr, true );
 		if( !token[0] )
 			break;
 
@@ -262,7 +262,7 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 
 		// get a second token
 		oldptr = *ptrptr;
-		token = COM_ParseExt( ptrptr, qtrue );
+		token = COM_ParseExt( ptrptr, true );
 		if( !token[0] )
 			break;
 
@@ -327,7 +327,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 	while( *ptrptr )
 	{
 		oldptr = *ptrptr;
-		token = COM_ParseExt( ptrptr, qtrue );
+		token = COM_ParseExt( ptrptr, true );
 		if( !token[0] )
 			break;
 
@@ -344,7 +344,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 
 		// get a second token
 		oldptr = *ptrptr;
-		token = COM_ParseExt( ptrptr, qtrue );
+		token = COM_ParseExt( ptrptr, true );
 		if( !token[0] )
 			break;
 
@@ -405,7 +405,7 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 	assert( ptrlay && *ptrlay );
 
 	// get the token type from the layout
-	token = COM_ParseExt( ptrlay, qtrue );
+	token = COM_ParseExt( ptrlay, true );
 	if( !token[0] )
 		return NULL;
 
@@ -416,7 +416,7 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 		*type = token[1];
 
 	// get the column width from the layout
-	token = COM_ParseExt( ptrlay, qtrue );
+	token = COM_ParseExt( ptrlay, true );
 	if( !token[0] || token[0] == '%' )
 		CG_Error( "SCR_GetNextColumnLayout: Invalid player tab layout (expecting token width. found '%s')\n", token );
 
@@ -431,7 +431,7 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 	if( ptrtitle && *ptrtitle )
 	{
 		// get the column title token from the layout
-		token = COM_ParseExt( ptrtitle, qtrue );
+		token = COM_ParseExt( ptrtitle, true );
 		if( !token[0] )
 			CG_Error( "SCR_GetNextColumnLayout: Invalid player tab layout (expecting token tittle. found '%s')\n", token );
 	}
@@ -656,7 +656,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 		// grab the actual scoreboard data
 
 		oldptr = *ptrptr; // in case we need to revert
-		token = COM_ParseExt( ptrptr, qtrue );
+		token = COM_ParseExt( ptrptr, true );
 		if( token[0] == '&' )
 		{
 			*ptrptr = oldptr; // failed, but revert so it can continue with the next player
@@ -856,7 +856,7 @@ void CG_DrawScoreboard( void )
 		ptr = scoreboardString;
 		while ( ptr )
 		{
-			token = COM_ParseExt( &ptr, qtrue );
+			token = COM_ParseExt( &ptr, true );
 			if ( token[0] != '&' )
 				break;
 

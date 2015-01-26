@@ -214,7 +214,7 @@ typedef struct
 	void		(*Mem_FreePool)(const char *filename, int fileline);
 	void		(*Mem_EmptyPool)(const char *filename, int fileline);
 	// dynvars
-	dynvar_t	*(*Dynvar_Create)(const char *name, qboolean console, dynvar_getter_f getter, dynvar_setter_f setter);
+	dynvar_t	*(*Dynvar_Create)(const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter);
 	void		(*Dynvar_Destroy)(dynvar_t *dynvar);
 	dynvar_t	*(*Dynvar_Lookup)(const char *name);
 	const char	*(*Dynvar_GetName)(dynvar_t *dynvar);
@@ -266,10 +266,10 @@ typedef struct
 
 typedef struct irc_export_s {
 	int			(*API)(void);		// API version
-	qboolean	(*Init)(void);
+	bool	(*Init)(void);
 	void		(*Shutdown)(void);
-	qboolean	(*Connect)(void);	// connects to irc_server:irc_port
-	qboolean	(*Disconnect)(void);
+	bool	(*Connect)(void);	// connects to irc_server:irc_port
+	bool	(*Disconnect)(void);
 	void		(*AddListener)(irc_command_t cmd, irc_listener_f listener);
 	void		(*RemoveListener)(irc_command_t cmd, irc_listener_f listener);
 

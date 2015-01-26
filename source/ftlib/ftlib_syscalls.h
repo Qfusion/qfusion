@@ -145,7 +145,7 @@ static inline void trap_FS_FCloseFile( int file )
 	FTLIB_IMPORT.FS_FCloseFile( file );
 }
 
-static inline qboolean trap_FS_RemoveFile( const char *filename )
+static inline bool trap_FS_RemoveFile( const char *filename )
 {
 	return FTLIB_IMPORT.FS_RemoveFile( filename );
 }
@@ -155,7 +155,7 @@ static inline int trap_FS_GetFileList( const char *dir, const char *extension, c
 	return FTLIB_IMPORT.FS_GetFileList( dir, extension, buf, bufsize, start, end );
 }
 
-static inline qboolean trap_FS_IsUrl( const char *url )
+static inline bool trap_FS_IsUrl( const char *url )
 {
 	return FTLIB_IMPORT.FS_IsUrl( url );
 }

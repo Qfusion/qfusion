@@ -71,7 +71,7 @@ typedef struct
 	int groundcontents;
 
 	vec3_t previous_origin;
-	qboolean ladder;
+	bool ladder;
 
 	float forwardPush, sidePush, upPush;
 
@@ -819,28 +819,28 @@ static void PM_Move( void )
 	}
 	else // air movement (old school)
 	{
-		qboolean inhibit = qfalse;
-		qboolean accelerating, decelerating;
+		bool inhibit = false;
+		bool accelerating, decelerating;
 
-		accelerating = ( DotProduct( pml.velocity, wishdir ) > 0.0f ) ? qtrue : qfalse;
-		decelerating = ( DotProduct( pml.velocity, wishdir ) < -0.0f ) ? qtrue : qfalse;
+		accelerating = ( DotProduct( pml.velocity, wishdir ) > 0.0f ) ? true : false;
+		decelerating = ( DotProduct( pml.velocity, wishdir ) < -0.0f ) ? true : false;
 		
 		if( ( pm->playerState->pmove.pm_flags & PMF_WALLJUMPING ) &&
 			( pm->playerState->pmove.stats[PM_STAT_WJTIME] >= ( PM_WALLJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) )
-			inhibit = qtrue;
+			inhibit = true;
 
 		if( ( pm->playerState->pmove.pm_flags & PMF_DASHING ) &&
 			( pm->playerState->pmove.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) )
-			inhibit = qtrue;
+			inhibit = true;
 
 		if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_FWDBUNNY ) ||
 			pm->playerState->pmove.stats[PM_STAT_FWDTIME] > 0 )
-			inhibit = qtrue;
+			inhibit = true;
 
 		// ch : remove this because of the knockback 'bug'?
 		/*
 		if( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] > 0 )
-			inhibit = qtrue;
+			inhibit = true;
 		*/
 
 		// (aka +fwdbunny) pressing forward or backward but not pressing strafe and not dashing
@@ -850,7 +850,7 @@ static void PM_Move( void )
 		}
 		else // strafe running
 		{
-			qboolean aircontrol = qtrue;
+			bool aircontrol = true;
 
 			wishspeed2 = wishspeed;
 			if( decelerating && 
@@ -864,15 +864,15 @@ static void PM_Move( void )
 			/*	|| ( pm->playerState->pmove.stats[PM_STAT_KNOCKBACK] > 0 ) */ )
 			{
 				accel = 0; // no stop-move while wall-jumping
-				aircontrol = qfalse;
+				aircontrol = false;
 			}
 
 			if( ( pm->playerState->pmove.pm_flags & PMF_DASHING ) &&
 				( pm->playerState->pmove.stats[PM_STAT_DASHTIME] >= ( PM_DASHJUMP_TIMEDELAY - PM_AIRCONTROL_BOUNCE_DELAY ) ) )
-				aircontrol = qfalse;
+				aircontrol = false;
 
 			if( !( pm->playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_AIRCONTROL ) )
-				aircontrol = qfalse;
+				aircontrol = false;
 
 			// +strafe bunnyhopping
 			if( aircontrol && smove && !fmove )
@@ -1286,13 +1286,13 @@ static void PM_CheckSpecialMovement( void )
 	if( pm->playerState->pmove.pm_time )
 		return;
 
-	pml.ladder = qfalse;
+	pml.ladder = false;
 
 	// check for ladder
 	VectorMA( pml.origin, 1, pml.flatforward, spot );
 	module_Trace( &trace, pml.origin, pm->mins, pm->maxs, spot, pm->playerState->POVnum, pm->contentmask, 0 );
 	if( ( trace.fraction < 1 ) && ( trace.surfFlags & SURF_LADDER ) )
-		pml.ladder = qtrue;
+		pml.ladder = true;
 
 	// check for water jump
 	if( pm->waterlevel != 2 )
@@ -1319,7 +1319,7 @@ static void PM_CheckSpecialMovement( void )
 /*
 * PM_FlyMove
 */
-static void PM_FlyMove( qboolean doclip )
+static void PM_FlyMove( bool doclip )
 {
 	float speed, drop, friction, control, newspeed;
 	float currentspeed, addspeed, accelspeed, maxspeed;
@@ -1566,20 +1566,20 @@ void PM_AdjustViewheight( void )
 		pm->playerState->viewheight -= height;
 }
 
-static qboolean PM_GoodPosition( int snaptorigin[3] )
+static bool PM_GoodPosition( int snaptorigin[3] )
 {
 	trace_t	trace;
 	vec3_t origin, end;
 	int i;
 
 	if( pm->playerState->pmove.pm_type == PM_SPECTATOR )
-		return qtrue;
+		return true;
 
 	for( i = 0; i < 3; i++ )
 		origin[i] = end[i] = snaptorigin[i]*( 1.0/PM_VECTOR_SNAP );
 	module_Trace( &trace, origin, pm->mins, pm->maxs, end, pm->playerState->POVnum, pm->contentmask, 0 );
 
-	return !trace.allsolid ? qtrue : qfalse;
+	return !trace.allsolid ? true : false;
 }
 
 /*
@@ -1749,7 +1749,7 @@ void Pmove( pmove_t *pmove )
 	pm->groundentity = -1;
 	pm->watertype = 0;
 	pm->waterlevel = 0;
-	pm->step = qfalse;
+	pm->step = false;
 
 	// clear all pmove local vars
 	memset( &pml, 0, sizeof( pml ) );
@@ -1916,7 +1916,7 @@ void Pmove( pmove_t *pmove )
 		if( pm->playerState->pmove.pm_type == PM_SPECTATOR )
 		{
 			PM_ApplyMouseAnglesClamp();
-			PM_FlyMove( qfalse );
+			PM_FlyMove( false );
 		}
 		else
 		{

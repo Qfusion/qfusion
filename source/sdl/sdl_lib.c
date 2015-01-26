@@ -6,10 +6,10 @@
 /*
 * Sys_Library_Close
 */
-qboolean Sys_Library_Close( void *lib )
+bool Sys_Library_Close( void *lib )
 {
 	SDL_UnloadObject( lib );
-	return qtrue;
+	return true;
 }
 
 /*

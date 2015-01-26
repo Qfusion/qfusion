@@ -209,7 +209,7 @@ void RP_UpdateSoftParticlesUniforms( int elem, float scale );
 void RP_UpdateMaterialUniforms( int elem, 
 	float offsetmappingScale, float glossIntensity, float glossExponent );
 
-void RP_UpdateDistortionUniforms( int elem, qboolean frontPlane );
+void RP_UpdateDistortionUniforms( int elem, bool frontPlane );
 
 void RP_UpdateTextureUniforms( int elem, int TexWidth, int TexHeight );
 

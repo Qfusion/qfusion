@@ -41,7 +41,7 @@ void R_InitCoronas( void )
 {
 	int i;
 
-	r_coronaShader = R_LoadShader( "***r_coronaTexture***", SHADER_TYPE_CORONA, qtrue );
+	r_coronaShader = R_LoadShader( "***r_coronaTexture***", SHADER_TYPE_CORONA, true );
 
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
 		r_coronaSurfs[i] = ST_CORONA;
@@ -51,11 +51,11 @@ void R_InitCoronas( void )
 /*
 * R_BeginCoronaSurf
 */
-qboolean R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, 
+bool R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, 
 	const mfog_t *fog, drawSurfaceType_t *drawSurf )
 {
 	RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
-	return qtrue;
+	return true;
 }
 
 /*
@@ -160,7 +160,7 @@ void R_ShutdownCoronas( void )
 /*
 * R_LightForOrigin
 */
-void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, qboolean noWorldLight )
+void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight )
 {
 	int i, j;
 	int k, s;
@@ -297,7 +297,7 @@ dynamic:
 		dlight_t *dl;
 		float dist, dist2, add;
 		vec3_t direction;
-		qboolean anyDlights = qfalse;
+		bool anyDlights = false;
 
 		for( lnum = 0; lnum < rsc.numDlights; lnum++ )
 		{
@@ -314,7 +314,7 @@ dynamic:
 			if( !anyDlights )
 			{
 				VectorNormalizeFast( dir );
-				anyDlights = qtrue;
+				anyDlights = true;
 			}
 
 			add = 1.0 - (dist / (dl->intensity + radius));
@@ -359,7 +359,7 @@ dynamic:
 */
 void R_LightForOrigin2( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
 {
-	R_LightForOrigin( origin, dir, ambient, diffuse, radius, rn.refdef.rdflags & RDF_NOWORLDMODEL ? qtrue : qfalse );
+	R_LightForOrigin( origin, dir, ambient, diffuse, radius, rn.refdef.rdflags & RDF_NOWORLDMODEL ? true : false );
 }
 
 /*
@@ -381,7 +381,7 @@ static int r_maxLightmapBlockSize;
 /*
 * R_BuildLightmap
 */
-static void R_BuildLightmap( int w, int h, qboolean deluxe, const uint8_t *data, uint8_t *dest, int blockWidth )
+static void R_BuildLightmap( int w, int h, bool deluxe, const uint8_t *data, uint8_t *dest, int blockWidth )
 {
 	int x, y;
 	uint8_t *rgba;
@@ -462,7 +462,7 @@ static int R_UploadLightmap( const char *name, uint8_t *data, int w, int h )
 /*
 * R_PackLightmaps
 */
-static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolean deluxe, 
+static int R_PackLightmaps( int num, int w, int h, int size, int stride, bool deluxe, 
 	const char *name, const uint8_t *data, mlightmapRect_t *rects )
 {
 	int i, x, y, root;
@@ -565,7 +565,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, qboolea
 		for( x = 0, tx = 0.0; x < rectX; x++, tx += tw, num++, data += size * stride )
 		{
 			R_BuildLightmap( w, h, 
-				mapConfig.deluxeMappingEnabled && ( num & 1 ) ? qtrue : qfalse, 
+				mapConfig.deluxeMappingEnabled && ( num & 1 ) ? true : false, 
 				data, block + x * xStride, rectX * xStride );
 
 			// this is not a real texture matrix, but who cares?
@@ -636,7 +636,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 		{
 			Com_Printf( S_COLOR_YELLOW "Lightmap blocks larger than %ix%i aren't supported" 
 				", deluxemaps will be disabled\n", size, size );
-			mapConfig.deluxeMappingEnabled = qfalse;
+			mapConfig.deluxeMappingEnabled = false;
 		}
 
 		r_maxLightmapBlockSize = size;
@@ -681,7 +681,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 				r_lightmapTextures[lightmapNum] = image;
 			}
 
-			R_BuildLightmap( w, h, qfalse, data, r_lightmapBuffer, layerWidth * LIGHTMAP_BYTES );
+			R_BuildLightmap( w, h, false, data, r_lightmapBuffer, layerWidth * LIGHTMAP_BYTES );
 			data += blockSize;
 
 			rect->texNum = lightmapNum;
@@ -692,7 +692,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 			++rect;
 
 			if( mapConfig.deluxeMappingEnabled )
-				R_BuildLightmap( w, h, qtrue, data, r_lightmapBuffer + w * LIGHTMAP_BYTES, layerWidth * LIGHTMAP_BYTES );
+				R_BuildLightmap( w, h, true, data, r_lightmapBuffer + w * LIGHTMAP_BYTES, layerWidth * LIGHTMAP_BYTES );
 
 			if( mapConfig.deluxeMaps )
 			{
@@ -720,7 +720,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 		for( i = 0, j = 0; i < numBlocks; i += p * stride, j += p )
 		{
 			p = R_PackLightmaps( numLightmaps - j, w, h, size, stride, 
-				qfalse, "*lm", data + j * size * stride, &rects[i] );
+				false, "*lm", data + j * size * stride, &rects[i] );
 		}
 	}
 

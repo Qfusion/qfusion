@@ -59,7 +59,7 @@ static void decoder_register( snd_decoder_t *decoder )
 * Sound system wide functions (snd_local.h)
 */
 
-qboolean S_InitDecoders( qboolean verbose )
+bool S_InitDecoders( bool verbose )
 {
 	// First codec has the priority.
 	decoders = NULL;
@@ -71,10 +71,10 @@ qboolean S_InitDecoders( qboolean verbose )
 		decoder_register( &ogv_decoder );
 	}
 
-	return qtrue;
+	return true;
 }
 
-void S_ShutdownDecoders( qboolean verbose )
+void S_ShutdownDecoders( bool verbose )
 {
 	decoders = NULL;
 	SNDOGG_Shutdown( verbose );
@@ -98,7 +98,7 @@ void *S_LoadSound( const char *filename, snd_info_t *info )
 	return decoder->load( fn, info );
 }
 
-snd_stream_t *S_OpenStream( const char *filename, qboolean *delay )
+snd_stream_t *S_OpenStream( const char *filename, bool *delay )
 {
 	snd_decoder_t *decoder;
 	char fn[MAX_QPATH];
@@ -116,7 +116,7 @@ snd_stream_t *S_OpenStream( const char *filename, qboolean *delay )
 	return decoder->open( fn, delay );
 }
 
-qboolean S_ContOpenStream( snd_stream_t *stream )
+bool S_ContOpenStream( snd_stream_t *stream )
 {
 	return stream->decoder->cont_open( stream );
 }
@@ -131,12 +131,12 @@ void S_CloseStream( snd_stream_t *stream )
 	stream->decoder->close( stream );
 }
 
-qboolean S_ResetStream( snd_stream_t *stream )
+bool S_ResetStream( snd_stream_t *stream )
 {
 	return stream->decoder->reset( stream );
 }
 
-qboolean S_EoStream( snd_stream_t *stream )
+bool S_EoStream( snd_stream_t *stream )
 {
 	return stream->decoder->eof( stream );
 }

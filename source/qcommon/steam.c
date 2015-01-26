@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static steamlib_export_t *steamlib_export;
 static void *steamlib_libhandle = NULL;
-static qboolean steamlib_initialized = qfalse;
+static bool steamlib_initialized = false;
 
 void Steam_LoadLibrary( void );
 void Steam_UnloadLibrary( void );
@@ -91,7 +91,7 @@ void Steam_UnloadLibrary( void )
 	}
 
 	steamlib_export = NULL;
-	steamlib_initialized = qfalse;
+	steamlib_initialized = false;
 }
 
 /*
@@ -104,7 +104,7 @@ void Steam_Init( void )
 			Com_Printf( "Steam initialization failed.\n" );
 			return;
 		}
-		steamlib_initialized = qtrue;
+		steamlib_initialized = true;
 	}
 }
 

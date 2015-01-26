@@ -21,7 +21,7 @@ typedef struct irc_removed_listener_node_s {
 	irc_listener_f listener;
 	struct irc_removed_listener_node_s *next;
 } irc_removed_listener_node_t;
-static qboolean immutable_listeners = qfalse;
+static bool immutable_listeners = false;
 static irc_removed_listener_node_t *removed_listeners = NULL;
 
 static void Irc_Proto_FreeListenerList(irc_listener_node_t *n) {
@@ -211,10 +211,10 @@ void Irc_Proto_CallListeners(irc_command_t cmd, const char *prefix, const char *
 		// no specific listeners found, call generic listeners
 		n = generic_listeners;
 	// call all listeners in list
-	immutable_listeners = qtrue;
+	immutable_listeners = true;
 	for (; n; n = n->next)
 		n->listener(cmd, prefix, params, trailing);
-	immutable_listeners = qfalse;
+	immutable_listeners = false;
 	// perform pending concurrent removals
 	if (removed_listeners) {
 		irc_removed_listener_node_t *prev = NULL, *n = removed_listeners;

@@ -39,13 +39,13 @@ float scr_con_current;    // aproaches scr_conlines at scr_conspeed
 float scr_con_previous;
 float scr_conlines;       // 0.0 to 1.0 lines of console to display
 
-static qboolean scr_initialized;    // ready to draw
+static bool scr_initialized;    // ready to draw
 
 static int scr_draw_loading;
 
-static qboolean scr_cjk;
+static bool scr_cjk;
 static int scr_fontSystemLastChar;
-static qboolean scr_fontSystemLastCharModified;
+static bool scr_fontSystemLastCharModified;
 
 static cvar_t *scr_consize;
 static cvar_t *scr_conspeed;
@@ -159,16 +159,16 @@ static void SCR_CheckFontLastChar( void )
 	if( !strcmp( lang, "ja" ) || !strcmp( lang, "zh" ) || !strcmp( lang, "ko" ) ) {
 		// CJK_Unified_Ideographs
 		lastChar = 0x9FCC;
-		scr_cjk = qtrue;
+		scr_cjk = true;
 	} else {
 		// cyrillic
 		lastChar = 0x04FF;
-		scr_cjk = qfalse;
+		scr_cjk = false;
 	}
 
 	if( scr_fontSystemLastChar != lastChar ) {
 		scr_fontSystemLastChar = lastChar;
-		scr_fontSystemLastCharModified = qtrue;
+		scr_fontSystemLastCharModified = true;
 	}
 }
 
@@ -218,11 +218,11 @@ static void SCR_CheckSystemFontsModified( void )
 		|| scr_fontSystemLastCharModified
 		) {
 		SCR_RegisterSystemFonts();
-		con_fontSystemFamily->modified = qfalse;
-		con_fontSystemSmallSize->modified = qfalse;
-		con_fontSystemMediumSize->modified = qfalse;
-		con_fontSystemBigSize->modified = qfalse;
-		scr_fontSystemLastCharModified = qfalse;
+		con_fontSystemFamily->modified = false;
+		con_fontSystemSmallSize->modified = false;
+		con_fontSystemMediumSize->modified = false;
+		con_fontSystemBigSize->modified = false;
+		scr_fontSystemLastCharModified = false;
 	}
 }
 
@@ -506,7 +506,7 @@ void SCR_InitScreen( void )
 	scr_graphshift = Cvar_Get( "graphshift", "0", 0 );
 	scr_forceclear = Cvar_Get( "scr_forceclear", "0", CVAR_READONLY );
 
-	scr_initialized = qtrue;
+	scr_initialized = true;
 }
 
 /*
@@ -578,7 +578,7 @@ static void SCR_DrawConsole( void )
 */
 void SCR_BeginLoadingPlaque( void )
 {
-	CL_SoundModule_StopAllSounds( qtrue, qtrue );
+	CL_SoundModule_StopAllSounds( true, true );
 
 	memset( cl.configstrings, 0, sizeof( cl.configstrings ) );
 
@@ -654,10 +654,10 @@ void SCR_UpdateScreen( void )
 	int numframes;
 	int i;
 	float separation[2];
-	qboolean cinematic, forceclear;
+	bool cinematic, forceclear;
 
 	if( !updatescreen )
-		updatescreen = Dynvar_Create( "updatescreen", qfalse, DYNVAR_WRITEONLY, DYNVAR_READONLY );
+		updatescreen = Dynvar_Create( "updatescreen", false, DYNVAR_WRITEONLY, DYNVAR_READONLY );
 
 	// if the screen is disabled (loading plaque is up, or vid mode changing)
 	// do nothing at all
@@ -700,8 +700,8 @@ void SCR_UpdateScreen( void )
 		numframes = 1;
 	}
 
-	cinematic = cls.state == CA_CINEMATIC ? qtrue : qfalse;
-	forceclear = cinematic || scr_forceclear->integer ? qtrue : qfalse;
+	cinematic = cls.state == CA_CINEMATIC ? true : false;
+	forceclear = cinematic || scr_forceclear->integer ? true : false;
 
 	if( cls.cgameActive && cls.state < CA_LOADING ) {
 		// this is when we've finished loading cgame media and are waiting
@@ -717,7 +717,7 @@ void SCR_UpdateScreen( void )
 		{ 
 			// loading plaque over APP_STARTUP_COLOR screen
 			scr_draw_loading = 0;
-			CL_UIModule_UpdateConnectScreen( qtrue );
+			CL_UIModule_UpdateConnectScreen( true );
 		}
 		// if a cinematic is supposed to be running, handle menus
 		// and console specially
@@ -728,23 +728,23 @@ void SCR_UpdateScreen( void )
 		}
 		else if( cls.state == CA_DISCONNECTED )
 		{
-			CL_UIModule_Refresh( qtrue, IN_ShowUICursor() );
+			CL_UIModule_Refresh( true, IN_ShowUICursor() );
 			SCR_DrawConsole();
 		}
 		else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CONNECTED || cls.state == CA_HANDSHAKE )
 		{
-			CL_UIModule_UpdateConnectScreen( qtrue );
+			CL_UIModule_UpdateConnectScreen( true );
 		}
 		else if( cls.state == CA_LOADING )
 		{
-			CL_UIModule_UpdateConnectScreen( qfalse );
+			CL_UIModule_UpdateConnectScreen( false );
 			SCR_RenderView( separation[i] );
 		}
 		else if( cls.state == CA_ACTIVE )
 		{
 			SCR_RenderView( separation[i] );
 
-			CL_UIModule_Refresh( qfalse, IN_ShowUICursor() );
+			CL_UIModule_Refresh( false, IN_ShowUICursor() );
 
 			if( scr_timegraph->integer )
 				SCR_DebugGraph( cls.frametime*300, 1, 1, 1 );

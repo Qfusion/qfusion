@@ -38,7 +38,7 @@ static void TVM_RunClients( tvm_relay_t *relay )
 	{
 		ent = relay->local_edicts + i;
 		if( ent->s.teleported )
-			ent->s.teleported = qfalse;
+			ent->s.teleported = false;
 		if( !ent->r.inuse || !ent->r.client )
 			continue;
 		if( trap_GetClientState( relay, PLAYERNUM( ent ) ) != CS_SPAWNED )

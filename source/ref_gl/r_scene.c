@@ -249,7 +249,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( r_norefresh->integer )
 		return;
 
-	R_Set2DMode( qfalse );
+	R_Set2DMode( false );
 
 	RB_SetTime( fd->time );
 
@@ -300,7 +300,7 @@ void R_RenderScene( const refdef_t *fd )
 
 	// adjust field of view for widescreen
 	if( glConfig.wideScreen && !( fd->rdflags & RDF_NOFOVADJUSTMENT ) )
-		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, qfalse );
+		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );
 
 	// clip new scissor region to the one currently set
 	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
@@ -331,7 +331,7 @@ void R_RenderScene( const refdef_t *fd )
 
 	R_BindFrameBufferObject( 0 );
 
-	R_Set2DMode( qtrue );
+	R_Set2DMode( true );
 
 	// blit and blend framebuffers in proper order
 
@@ -420,7 +420,7 @@ static void R_RenderDebugBounds( void )
 	if( !r_num_debug_bounds )
 		return;
 
-	RB_EnableTriangleOutlines( qtrue );
+	RB_EnableTriangleOutlines( true );
 
 	RB_BindShader( rsc.worldent, rsh.whiteShader, NULL );
 
@@ -448,7 +448,7 @@ static void R_RenderDebugBounds( void )
 		RB_EndBatch();
 	}
 
-	RB_EnableTriangleOutlines( qfalse );
+	RB_EnableTriangleOutlines( false );
 }
 
 //=======================================================================

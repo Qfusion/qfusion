@@ -28,8 +28,8 @@ void IN_MouseMove( usercmd_t *cmd );
 void IN_JoyMove( usercmd_t *cmd, int frametime );
 
 void IN_Frame( void );
-void IN_Activate( qboolean active );
+void IN_Activate( bool active );
 
-void IN_ShowIME( qboolean show );
+void IN_ShowIME( bool show );
 
-qboolean IN_ShowUICursor( void );
+bool IN_ShowUICursor( void );

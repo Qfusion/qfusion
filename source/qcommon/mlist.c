@@ -41,14 +41,14 @@ typedef struct mapinfo_s
 static mapinfo_t *maplist;
 static trie_t *mlist_filenames_trie = NULL, *mlist_fullnames_trie = NULL;
 
-static qboolean ml_flush = qtrue;
-static qboolean ml_initialized = qfalse;
+static bool ml_flush = true;
+static bool ml_initialized = false;
 
 static void ML_BuildCache( void );
 static void ML_InitFromCache( void );
 static void ML_InitFromMaps( void );
 static void ML_GetFullnameFromMap( const char *filename, char *fullname, size_t len );
-static qboolean ML_FilenameExistsExt( const char *filename, qboolean quick );
+static bool ML_FilenameExistsExt( const char *filename, bool quick );
 
 /*
 * ML_AddMap
@@ -76,7 +76,7 @@ static void ML_AddMap( const char *filename, const char *fullname )
 	if( !ML_ValidateFullname( fullname ) && *fullname )	// allow empty fullnames
 		return;
 
-	ml_flush = qtrue;	// tell everyone that maplist has changed
+	ml_flush = true;	// tell everyone that maplist has changed
 	buffer = ( char* )Mem_ZoneMalloc( sizeof( mapinfo_t ) + strlen( filename ) + 1 + strlen( fullname ) + 1 );
 
 	map = ( mapinfo_t * )buffer;
@@ -301,7 +301,7 @@ static void ML_InitFromMaps( void )
 static int ML_PatternMatchesMap( void *map, void *pattern )
 {
 	assert( map );
-	return !pattern || Com_GlobMatch( (const char *) pattern, ( (mapinfo_t *) map )->filename, qfalse );
+	return !pattern || Com_GlobMatch( (const char *) pattern, ( (mapinfo_t *) map )->filename, false );
 }
 
 /*
@@ -331,7 +331,7 @@ static void ML_MapListCmd( void )
 		if( !strcmp( pattern, "rebuild" ) )
 		{
 			Com_Printf( "Rebuilding map list...\n" );
-			ML_Restart( qtrue );
+			ML_Restart( true );
 			return;
 		}
 
@@ -396,8 +396,8 @@ void ML_Init( void )
 	else
 		ML_InitFromMaps();
 
-	ml_initialized = qtrue;
-	ml_flush = qtrue;
+	ml_initialized = true;
+	ml_flush = true;
 }
 
 /*
@@ -413,7 +413,7 @@ void ML_Shutdown( void )
 
 	ML_BuildCache();
 
-	ml_initialized = qfalse;
+	ml_initialized = false;
 
 	Cmd_RemoveCommand( "maplist" );
 
@@ -427,14 +427,14 @@ void ML_Shutdown( void )
 		Mem_ZoneFree( map );
 	}
 
-	ml_flush = qtrue;
+	ml_flush = true;
 }
 
 /*
 * ML_Restart
 * Restart map list stuff
 */
-void ML_Restart( qboolean forcemaps )
+void ML_Restart( bool forcemaps )
 {
 	ML_Shutdown();
 	if( forcemaps )
@@ -446,7 +446,7 @@ void ML_Restart( qboolean forcemaps )
 /*
 * ML_Update
 */
-qboolean ML_Update( void )
+bool ML_Update( void )
 {
 	int i, len, total, newpaks;
 	size_t size;
@@ -454,7 +454,7 @@ qboolean ML_Update( void )
 
 	newpaks = FS_Rescan();
 	if( !newpaks )
-		return qfalse;
+		return false;
 
 	total = FS_GetFileListExt( "maps", ".bsp", NULL, &size, 0, 0 );
 	if( size )
@@ -470,20 +470,20 @@ qboolean ML_Update( void )
 			COM_StripExtension( filename );
 
 			// don't check for existance of each file itself, as we've just got the fresh list
-			if( !ML_FilenameExistsExt( filename, qtrue ) )
+			if( !ML_FilenameExistsExt( filename, true ) )
 				ML_AddMap( filename, MLIST_UNKNOWN_MAPNAME );
 		}
 		Mem_TempFree( maps );
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
 * ML_GetFilename
 * Returns the filename for the map with the corresponding fullname
 */
-const char *ML_GetFilenameExt( const char *fullname, qboolean recursive )
+const char *ML_GetFilenameExt( const char *fullname, bool recursive )
 {
 	mapinfo_t *map;
 	trie_error_t err;
@@ -512,8 +512,8 @@ const char *ML_GetFilenameExt( const char *fullname, qboolean recursive )
 	/*
 	if( !recursive )
 	{
-	ML_Restart( qtrue );
-	return ML_GetFilenameExt( fullname, qtrue );
+	ML_Restart( true );
+	return ML_GetFilenameExt( fullname, true );
 	}
 	*/
 	return MLIST_NULL;
@@ -525,43 +525,43 @@ const char *ML_GetFilenameExt( const char *fullname, qboolean recursive )
 */
 const char *ML_GetFilename( const char *fullname )
 {
-	return ML_GetFilenameExt( fullname, qfalse );
+	return ML_GetFilenameExt( fullname, false );
 }
 
 /*
 * ML_FilenameExists
 * Checks to see if a filename is present in the map list
 */
-static qboolean ML_FilenameExistsExt( const char *filename, qboolean quick )
+static bool ML_FilenameExistsExt( const char *filename, bool quick )
 {
 	mapinfo_t *map;
 	char *filepath;
 
 	if( !ml_initialized )
-		return qfalse;
+		return false;
 
 	filepath = va( "maps/%s.bsp", filename );
 	COM_SanitizeFilePath( filepath );
 
 	if( !ML_ValidateFilename( filename ) )
-		return qfalse;
+		return false;
 
 	if( Trie_Find( mlist_filenames_trie, filename, TRIE_EXACT_MATCH, (void **)&map ) == TRIE_OK )
 	{
 		if( quick || FS_FOpenFile( filepath, NULL, FS_READ ) != -1 )
-			return qtrue;
+			return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * ML_FilenameExists
 * Checks to see if a filename is present in the map list
 */
-qboolean ML_FilenameExists( const char *filename )
+bool ML_FilenameExists( const char *filename )
 {
-	return ML_FilenameExistsExt( filename, qfalse );
+	return ML_FilenameExistsExt( filename, false );
 }
 
 /*
@@ -591,7 +591,7 @@ const char *ML_GetFullname( const char *filename )
 		return map->fullname;
 
 	// we should never get down here!
-	assert( qfalse );
+	assert( false );
 
 	return MLIST_NULL;
 }
@@ -625,43 +625,43 @@ static void ML_GetFullnameFromMap( const char *filename, char *fullname, size_t 
 * ML_ValidateFilename
 * Checks that the filename provided is valid
 */
-qboolean ML_ValidateFilename( const char *filename )
+bool ML_ValidateFilename( const char *filename )
 {
 	if( !filename || !*filename )
-		return qfalse;
+		return false;
 
 	if( !COM_FileExtension( filename ) )
 	{
 		if( strlen( "maps/" ) + strlen( filename ) + strlen( ".bsp" ) >= MAX_CONFIGSTRING_CHARS )
-			return qfalse;
+			return false;
 	}
 	else
 	{
 		if( Q_stricmp( COM_FileExtension( filename ), ".bsp" ) )
-			return qfalse;
+			return false;
 		if( strlen( "maps/" ) + strlen( filename ) >= MAX_CONFIGSTRING_CHARS )
-			return qfalse;
+			return false;
 	}
 
 	if( !COM_ValidateRelativeFilename( filename ) || strchr( filename, '/' ) )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 /*
 * ML_ValidateFullname
 * Checks that the fullname provided is valid
 */
-qboolean ML_ValidateFullname( const char *fullname )
+bool ML_ValidateFullname( const char *fullname )
 {
 	if( !fullname || !*fullname )
-		return qfalse;
+		return false;
 
 	if( strlen( fullname ) >= MAX_CONFIGSTRING_CHARS )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -686,7 +686,7 @@ size_t ML_GetMapByNum( int num, char *out, size_t size )
 			Trie_FreeDump( dump );
 			dump = NULL;
 		}
-		ml_flush = qfalse;
+		ml_flush = false;
 	}
 
 	if( !dump )

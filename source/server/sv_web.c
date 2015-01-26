@@ -49,7 +49,7 @@ typedef struct {
 	size_t header_length;
 	char header_buf[0x4000];
 	size_t header_buf_p;
-	qboolean header_done;
+	bool header_done;
 
 	char *content;
 	size_t content_p;
@@ -71,11 +71,11 @@ typedef struct {
 	char *clientSession;
 	netadr_t realAddr;
 
-	qboolean partial;
+	bool partial;
 	sv_http_content_range_t partial_content_range;
 
-	qboolean got_start_line;
-	qboolean close_after_resp;
+	bool got_start_line;
+	bool close_after_resp;
 } sv_http_request_t;
 
 typedef struct {
@@ -90,9 +90,9 @@ typedef struct {
 
 typedef struct sv_http_connection_s
 {
-	qboolean open;
+	bool open;
 	sv_http_connstate_t state;
-	qboolean close_after_resp;
+	bool close_after_resp;
 
 	socket_t socket;
 	netadr_t address;
@@ -102,12 +102,12 @@ typedef struct sv_http_connection_s
 	sv_http_request_t request;
 	sv_http_response_t response;
 
-	qboolean is_upstream;
+	bool is_upstream;
 
 	struct sv_http_connection_s *next, *prev;
 } sv_http_connection_t;
 
-static qboolean sv_http_initialized = qfalse;
+static bool sv_http_initialized = false;
 static sv_http_connection_t sv_http_connections[MAX_INCOMING_HTTP_CONNECTIONS];
 static sv_http_connection_t sv_http_connection_headnode, *sv_free_http_connections;
 
@@ -115,7 +115,7 @@ static socket_t sv_socket_http;
 static socket_t sv_socket_http6;
 
 static netadr_t sv_web_upstream_addr;
-static qboolean sv_web_upstream_is_set;
+static bool sv_web_upstream_is_set;
 
 // ============================================================================
 
@@ -124,7 +124,7 @@ static qboolean sv_web_upstream_is_set;
 */
 static void SV_Web_ResetStream( sv_http_stream_t *stream )
 {
-	stream->header_done = qfalse;
+	stream->header_done = false;
 	stream->header_length = 0;
 	stream->header_buf_p = 0;
 
@@ -169,9 +169,9 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 	
 	NET_InitAddress( &request->realAddr, NA_NOTRANSMIT );
 
-	request->partial = qfalse;
-	request->close_after_resp = qfalse;
-	request->got_start_line = qfalse;
+	request->partial = false;
+	request->close_after_resp = false;
+	request->got_start_line = false;
 	request->error = HTTP_RESP_NONE;
 	request->clientNum = -1;
 }
@@ -221,8 +221,8 @@ static sv_http_connection_t *SV_Web_AllocConnection( void )
 	con->next->prev = con;
 	con->prev->next = con;
 	con->state = HTTP_CONN_STATE_NONE;
-	con->close_after_resp = qfalse;
-	con->is_upstream = qfalse;
+	con->close_after_resp = false;
+	con->is_upstream = false;
 	return con;
 }
 
@@ -292,7 +292,7 @@ static unsigned SV_Web_ConnectionLimitReached( const netadr_t *addr )
 	const sv_http_connection_t *hnode = &sv_http_connection_headnode;
 
 	if( NET_IsLocalAddress( addr ) ) {
-		return qfalse;
+		return false;
 	}
 
 	cnt = 0;
@@ -301,12 +301,12 @@ static unsigned SV_Web_ConnectionLimitReached( const netadr_t *addr )
 		next = con->prev;
 		if( NET_CompareAddress( addr, &con->address ) ) {
 			if( cnt >= MAX_INCOMING_HTTP_CONNECTIONS_PER_ADDR ) {
-				return qtrue;
+				return true;
 			}
 		}
 		cnt++;
 	}
-	return qfalse;
+	return false;
 }
 
 /*
@@ -318,7 +318,7 @@ static int SV_Web_Get( sv_http_connection_t *con, void *recvbuf, size_t recvbuf_
 
 	read = NET_Get( &con->socket, NULL, recvbuf, recvbuf_size - 1 );
 	if( read < 0 ) {
-		con->open = qfalse;
+		con->open = false;
 		Com_DPrintf( "HTTP connection recv error from %s\n", NET_AddressToString( &con->address ) );
 	}
 	return read;
@@ -334,7 +334,7 @@ static int SV_Web_Send( sv_http_connection_t *con, void *sendbuf, size_t sendbuf
 	sent = NET_Send( &con->socket, sendbuf, sendbuf_size, &con->address );
 	if( sent < 0 ) {
 		Com_DPrintf( "HTTP transmission error to %s\n", NET_AddressToString( &con->address ) );
-		con->open = qfalse;
+		con->open = false;
 	}
 	return sent;
 }
@@ -425,7 +425,7 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 	}
 	else if( !Q_stricmp( key, "Connection" ) ) {
 		if( !Q_stricmp( value, "close" ) ) {
-			request->close_after_resp = qtrue;
+			request->close_after_resp = true;
 		}
 	}
 	else if( !Q_stricmp( key, "Host" ) ) {
@@ -442,7 +442,7 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 			request->error = HTTP_RESP_BAD_REQUEST;
 		}
 		else {
-			qboolean neg_end = qfalse;
+			bool neg_end = false;
 			const char *p = value;
 
 			// first byte pos
@@ -459,7 +459,7 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 					request->error = HTTP_RESP_REQUESTED_RANGE_NOT_SATISFIABLE;
 					return;
 				}
-				neg_end = qtrue;
+				neg_end = true;
 				p++;
 			}
 			while( *p ) {
@@ -470,14 +470,14 @@ static void SV_Web_AnalyzeHeader( sv_http_request_t *request, const char *key, c
 			// partial content request
 			if( neg_end && stream->content_range.end ) {
 				// bytes=-100
-				request->partial = qtrue;
+				request->partial = true;
 				stream->content_range.end = -stream->content_range.end;
 			} else if( stream->content_range.end >= stream->content_range.begin ) {
 				// bytes=200-300
-				request->partial = qtrue;
+				request->partial = true;
 			} else if( stream->content_range.begin >= 0 && *(delim+1) == '\0' ) {
 				// bytes=200-
-				request->partial = qtrue;
+				request->partial = true;
 			}
 
 			if( request->partial ) {
@@ -537,7 +537,7 @@ static size_t SV_Web_ParseHeaders( sv_http_request_t *request, char *data )
 	while( (p = strstr( line, "\r\n" )) != NULL ) {
 		if( p == line ) {
 			line = p + 2;
-			request->stream.header_done = qtrue;
+			request->stream.header_done = true;
 			break;
 		}
 
@@ -548,7 +548,7 @@ static size_t SV_Web_ParseHeaders( sv_http_request_t *request, char *data )
 		}
 		else {
 			SV_Web_ParseStartLine( request, line );
-			request->got_start_line = qtrue;
+			request->got_start_line = true;
 		}
 
 		line = p + 2;
@@ -661,7 +661,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 	}
 
 	if( request->error ) {
-		con->close_after_resp = qtrue;
+		con->close_after_resp = true;
 		con->state = HTTP_CONN_STATE_RESP;
 	}
 	else if( request->stream.header_done && request->stream.content_p >= request->stream.content_length ) {
@@ -670,7 +670,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 	}
 
 	if( ret == -1 ) {
-		con->open = qfalse;
+		con->open = false;
 		Com_DPrintf( "HTTP connection error from %s\n", NET_AddressToString( &con->address ) );
 	}
 }
@@ -895,7 +895,7 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 
 		stream->header_buf_p += sent;
 		if( stream->header_buf_p >= stream->header_length ) {
-			stream->header_done = qtrue;
+			stream->header_done = true;
 		}
 
 		total_sent += sent;
@@ -911,7 +911,7 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 					if( FS_Eof( response->file ) ){
 						Com_DPrintf( "HTTP file streaming error: premature EOF on %s to %s\n", 
 							response->filename, NET_AddressToString( &con->address ) );
-						con->open = qfalse;
+						con->open = false;
 						break;
 					}
 
@@ -973,7 +973,7 @@ static void SV_Web_InitSocket( const char *addrstr, netadrtype_t adrtype, socket
 
 	if( address.type == adrtype )
 	{
-		if( !NET_OpenSocket( socket, SOCKET_TCP, &address, qtrue ) )
+		if( !NET_OpenSocket( socket, SOCKET_TCP, &address, true ) )
 		{
 			Com_Printf( "Error: Couldn't open TCP socket: %s", NET_ErrorString() );
 		}
@@ -1004,8 +1004,8 @@ static void SV_Web_Listen( socket_t *socket )
 	while( ( ret = NET_Accept( socket, &newsocket, &newaddress ) ) )
 	{
 		client_t *cl;
-		qboolean block;
-		qboolean is_upstream;
+		bool block;
+		bool is_upstream;
 
 		if( ret == -1 )
 		{
@@ -1015,12 +1015,12 @@ static void SV_Web_Listen( socket_t *socket )
 
 		is_upstream = sv_web_upstream_is_set 
 			&& NET_CompareBaseAddress( &newaddress, &sv_web_upstream_addr );
-		block = qfalse;
+		block = false;
 
 		if( !NET_IsLocalAddress( &newaddress ) && !is_upstream )
 		{
 			// only accept connections from connected clients
-			block = qtrue;
+			block = true;
 			for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
 			{
 	 			if( cl->state < CS_FREE )
@@ -1042,7 +1042,7 @@ static void SV_Web_Listen( socket_t *socket )
 			con->socket = newsocket;
 			con->address = newaddress;
 			con->last_active = Sys_Milliseconds();
-			con->open = qtrue;
+			con->open = true;
 			con->state = HTTP_CONN_STATE_RECV;
 			con->is_upstream = is_upstream;
 			continue;
@@ -1058,7 +1058,7 @@ static void SV_Web_Listen( socket_t *socket )
 */
 void SV_Web_Init( void )
 {
-	sv_http_initialized = qfalse;
+	sv_http_initialized = false;
 
 	SV_Web_InitConnections();
 
@@ -1133,7 +1133,7 @@ void SV_Web_Frame( void )
 				if( con->state == HTTP_CONN_STATE_RECV ) {
 					SV_Web_ResetResponse( &con->response );
 					if( con->close_after_resp ) {
-						con->open = qfalse;
+						con->open = false;
 					}
 					else {
 						SV_Web_ResetRequest( &con->request );
@@ -1142,7 +1142,7 @@ void SV_Web_Frame( void )
 				break;
 			default:
 				Com_DPrintf( "Bad connection state %i\n", con->state );
-				con->open = qfalse;
+				con->open = false;
 				break;
 		}
 	}
@@ -1167,7 +1167,7 @@ void SV_Web_Frame( void )
 			}
 
 			if( Sys_Milliseconds() > con->last_active + timeout*1000 ) {
-				con->open = qfalse;
+				con->open = false;
 				Com_DPrintf( "HTTP connection timeout from %s\n", NET_AddressToString( &con->address ) );
 			}
 		}
@@ -1182,7 +1182,7 @@ void SV_Web_Frame( void )
 /*
 * SV_Web_Running
 */
-qboolean SV_Web_Running( void )
+bool SV_Web_Running( void )
 {
 	return sv_http_initialized;
 }
@@ -1201,7 +1201,7 @@ void SV_Web_Shutdown( void )
 	NET_CloseSocket( &sv_socket_http );
 	NET_CloseSocket( &sv_socket_http6 );
 
-	sv_http_initialized = qfalse;
+	sv_http_initialized = false;
 }
 
 /*
@@ -1238,9 +1238,9 @@ void SV_Web_Shutdown( void )
 /*
 * SV_Web_Running
 */
-qboolean SV_Web_Running( void )
+bool SV_Web_Running( void )
 {
-	return qfalse;
+	return false;
 }
 
 /*

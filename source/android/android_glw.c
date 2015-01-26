@@ -49,7 +49,7 @@ void GLimp_EndFrame( void )
 int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
 {
 	glw_state.window = ( ANativeWindow * )parenthWnd;
-	return qtrue;
+	return true;
 }
 
 /*
@@ -118,7 +118,7 @@ static void GLimp_Android_ChooseConfig( void )
 {
 	int colorSizes[] = { 8, 4 }, colorSize;
 	int depthSizes[] = { 24, 16, 16 }, depthSize;
-	qboolean depthEncodingSupported = qfalse;
+	bool depthEncodingSupported = false;
 	int depthEncodings[] = { EGL_DONT_CARE, EGL_DEPTH_ENCODING_NONLINEAR_NV, EGL_DONT_CARE }, depthEncoding;
 	int maxStencilSize = ( ( r_stencilbits->integer >= 8 ) ? 8 : 0 ), stencilSize;
 	int minSwapIntervals[] = { 0, EGL_DONT_CARE }, minSwapInterval;
@@ -126,7 +126,7 @@ static void GLimp_Android_ChooseConfig( void )
 	int i, j, k;
 
 	if( extensions && strstr( extensions, "EGL_NV_depth_nonlinear" ) )
-		depthEncodingSupported = qtrue;
+		depthEncodingSupported = true;
 
 	for( i = 0; i < sizeof( colorSizes ) / sizeof( colorSizes[0] ); i++ )
 	{
@@ -178,7 +178,7 @@ static void GLimp_Android_CreateWindowSurface( void )
 	{
 		int attribs[] = { EGL_MULTIVIEW_VIEW_COUNT_EXT, 2, EGL_NONE };
 		glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, glw_state.window, attribs );
-		glConfig.stereoEnabled = ( glw_state.surface != EGL_NO_SURFACE ) ? qtrue : qfalse;
+		glConfig.stereoEnabled = ( glw_state.surface != EGL_NO_SURFACE ) ? true : false;
 	}
 	if( glw_state.surface == EGL_NO_SURFACE )
 		glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, glw_state.window, NULL );
@@ -187,7 +187,7 @@ static void GLimp_Android_CreateWindowSurface( void )
 /*
 ** GLimp_InitGL
 */
-static qboolean GLimp_InitGL( void )
+static bool GLimp_InitGL( void )
 {
 	int format;
 	EGLConfig config;
@@ -197,70 +197,70 @@ static qboolean GLimp_InitGL( void )
 	if( !glw_state.window )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - ANativeWindow not found\n" );
-		return qfalse;
+		return false;
 	}
 
 	glw_state.display = qeglGetDisplay( EGL_DEFAULT_DISPLAY );
 	if( glw_state.display == EGL_NO_DISPLAY )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - eglGetDisplay failed\n" );
-		return qfalse;
+		return false;
 	}
 	if( !qeglInitialize( glw_state.display, NULL, NULL ) )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - eglInitialize failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	GLimp_Android_ChooseConfig();
 	if( !glw_state.config )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - GLimp_Android_ChooseConfig failed\n" );
-		return qfalse;
+		return false;
 	}
 	if ( !qeglGetConfigAttrib( glw_state.display, glw_state.config, EGL_NATIVE_VISUAL_ID, &glw_state.format ) )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - eglGetConfigAttrib failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	glw_state.pbufferSurface = qeglCreatePbufferSurface( glw_state.display, glw_state.config, pbufferAttribs );
 	if( glw_state.pbufferSurface == EGL_NO_SURFACE )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - eglCreatePbufferSurface failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	GLimp_Android_CreateWindowSurface();
 	if( glw_state.surface == EGL_NO_SURFACE )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - GLimp_Android_CreateWindowSurface failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	glw_state.context = qeglCreateContext( glw_state.display, glw_state.config, EGL_NO_CONTEXT, contextAttribs );
 	if( glw_state.context == EGL_NO_CONTEXT )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - eglCreateContext failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	if( !qeglMakeCurrent( glw_state.display, glw_state.surface, glw_state.surface, glw_state.context ) )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - eglMakeCurrent failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	glw_state.swapInterval = 1;
 
-	return qtrue;
+	return true;
 }
 
 /*
 ** GLimp_SetMode
 */
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, 
-	qboolean fullscreen, qboolean wideScreen )
+	bool fullscreen, bool wideScreen )
 {
 	ri.Com_Printf( "Initializing OpenGL display\n" );
 	if( glw_state.context != EGL_NO_CONTEXT )
@@ -268,7 +268,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.wideScreen = wideScreen;
-	glConfig.fullScreen = qtrue;
+	glConfig.fullScreen = true;
 	if( !GLimp_InitGL() )
 	{
 		ri.Com_Printf( "GLimp_SetMode() - GLimp_InitGL failed\n" );
@@ -281,12 +281,12 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 /*
 ** GLimp_SetWindow
 */
-qboolean GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+bool GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
 	EGLDisplay dpy;
 
 	if( glw_state.window == ( ANativeWindow * )parenthWnd )
-		return qtrue;
+		return true;
 
 	glw_state.window = ( ANativeWindow * )parenthWnd;
 
@@ -298,14 +298,14 @@ qboolean GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 			glw_state.surface = EGL_NO_SURFACE;
 			qeglMakeCurrent( glw_state.display, glw_state.pbufferSurface, glw_state.pbufferSurface, glw_state.context );
 		}
-		return qtrue;
+		return true;
 	}
 
 	GLimp_Android_CreateWindowSurface();
 	if( glw_state.surface == EGL_NO_SURFACE )
 	{
 		ri.Com_Printf( "GLimp_SetWindow() - GLimp_Android_CreateWindowSurface failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	if( !qeglMakeCurrent( glw_state.display, glw_state.surface, glw_state.surface, glw_state.context ) )
@@ -313,29 +313,29 @@ qboolean GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 		ri.Com_Printf( "GLimp_SetWindow() - eglMakeCurrent failed\n" );
 		qeglDestroySurface( glw_state.display, glw_state.surface );
 		glw_state.surface = EGL_NO_SURFACE;
-		return qfalse;
+		return false;
 	}
 
 	dpy = qeglGetCurrentDisplay();
 	if( dpy != EGL_NO_DISPLAY )
 		qeglSwapInterval( dpy, glw_state.swapInterval );
 
-	return qtrue;
+	return true;
 }
 
 /*
 ** GLimp_AppActivate
 */
-void GLimp_AppActivate( qboolean active, qboolean destroy )
+void GLimp_AppActivate( bool active, bool destroy )
 {
 }
 
 /*
 ** GLimp_GetGammaRamp
 */
-qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
+bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
 {
-	return qfalse;
+	return false;
 }
 
 /*
@@ -348,15 +348,15 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ram
 /*
 ** GLimp_ScreenEnabled
 */
-qboolean GLimp_ScreenEnabled( void )
+bool GLimp_ScreenEnabled( void )
 {
-	return ( glw_state.surface != EGL_NO_SURFACE ) ? qtrue : qfalse;
+	return ( glw_state.surface != EGL_NO_SURFACE ) ? true : false;
 }
 
 /*
 ** GLimp_SharedContext_Create
 */
-qboolean GLimp_SharedContext_Create( void **context, void **surface )
+bool GLimp_SharedContext_Create( void **context, void **surface )
 {
 	const int pbufferAttribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
 	const int contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
@@ -365,26 +365,26 @@ qboolean GLimp_SharedContext_Create( void **context, void **surface )
 
 	pbuffer = qeglCreatePbufferSurface( glw_state.display, glw_state.config, pbufferAttribs );
 	if( pbuffer == EGL_NO_SURFACE )
-		return qfalse;
+		return false;
 
 	ctx = qeglCreateContext( glw_state.display, glw_state.config, glw_state.context, contextAttribs );
 	if( !ctx )
 	{
 		qeglDestroySurface( glw_state.display, pbuffer );
-		return qfalse;
+		return false;
 	}
 
 	*context = ctx;
 	*surface = pbuffer;
-	return qtrue;
+	return true;
 }
 
 /*
 ** GLimp_SharedContext_MakeCurrent
 */
-qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
+bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
-	return qeglMakeCurrent( glw_state.display, surface, surface, context ) ? qtrue : qfalse;
+	return qeglMakeCurrent( glw_state.display, surface, surface, context ) ? true : false;
 }
 
 /*

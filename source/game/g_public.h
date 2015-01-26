@@ -47,7 +47,7 @@ typedef struct
 typedef struct
 {
 	gclient_t *client;
-	qboolean inuse;
+	bool inuse;
 
 	int num_clusters;           // if -1, use headnode instead
 	int clusternums[MAX_ENT_CLUSTERS];
@@ -97,7 +97,7 @@ typedef struct
 
 	unsigned int ( *Milliseconds )( void );
 
-	qboolean ( *inPVS )( const vec3_t p1, const vec3_t p2 );
+	bool ( *inPVS )( const vec3_t p1, const vec3_t p2 );
 
 	int ( *CM_NumInlineModels )( void );
 	struct cmodel_s	*( *CM_InlineModel )( int num );
@@ -107,8 +107,8 @@ typedef struct
 	void ( *CM_InlineModelBounds )( struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
 	struct cmodel_s	*( *CM_ModelForBBox )( vec3_t mins, vec3_t maxs );
 	struct cmodel_s	*( *CM_OctagonModelForBBox )( vec3_t mins, vec3_t maxs );
-	void ( *CM_SetAreaPortalState )( int area, int otherarea, qboolean open );
-	qboolean ( *CM_AreasConnected )( int area1, int area2 );
+	void ( *CM_SetAreaPortalState )( int area, int otherarea, bool open );
+	bool ( *CM_AreasConnected )( int area1, int area2 );
 	int ( *CM_BoxLeafnums )( vec3_t mins, vec3_t maxs, int *list, int listsize, int *topnode );
 	int ( *CM_LeafCluster )( int leafnum );
 	int ( *CM_LeafArea )( int leafnum );
@@ -118,7 +118,7 @@ typedef struct
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 
 	// dynvars
-	dynvar_t *( *Dynvar_Create )( const char *name, qboolean console, dynvar_getter_f getter, dynvar_setter_f setter );
+	dynvar_t *( *Dynvar_Create )( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter );
 	void ( *Dynvar_Destroy )( dynvar_t *dynvar );
 	dynvar_t *( *Dynvar_Lookup )( const char *name );
 	const char *( *Dynvar_GetName )( dynvar_t *dynvar );
@@ -157,17 +157,17 @@ typedef struct
 	int ( *FS_Eof )( int file );
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
-	qboolean ( *FS_RemoveFile )( const char *filename );
+	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
-	qboolean ( *FS_MoveFile )( const char *src, const char *dst );
-	qboolean ( *FS_IsUrl )( const char *url );
+	bool ( *FS_MoveFile )( const char *src, const char *dst );
+	bool ( *FS_IsUrl )( const char *url );
 	time_t ( *FS_FileMTime )( const char *filename );
-	qboolean ( *FS_RemoveDirectory )( const char *dirname );
+	bool ( *FS_RemoveDirectory )( const char *dirname );
 
-	qboolean ( *ML_Update )( void );
+	bool ( *ML_Update )( void );
 	size_t ( *ML_GetMapByNum )( int num, char *out, size_t size );
-	qboolean ( *ML_FilenameExists )( const char *filename );
+	bool ( *ML_FilenameExists )( const char *filename );
 	const char *( *ML_GetFullname )( const char *filename );
 
 	// add commands to the server console as if they were typed in for map changing, etc
@@ -193,7 +193,7 @@ typedef struct
 	// GAME CANT USE ->Send directly!
 	struct stat_query_api_s *( *GetStatQueryAPI )( void );
 	void ( *MM_SendQuery )( struct stat_query_s *query );
-	void ( *MM_GameState )( qboolean state );
+	void ( *MM_GameState )( bool state );
 } game_import_t;
 
 //
@@ -213,10 +213,10 @@ typedef struct
 	// each new level entered will cause a call to SpawnEntities
 	void ( *InitLevel )( char *mapname, char *entities, int entstrlen, unsigned int levelTime, unsigned int serverTime, unsigned int realTime );
 
-	qboolean ( *ClientConnect )( edict_t *ent, char *userinfo, qboolean fakeClient, qboolean tvClient );
+	bool ( *ClientConnect )( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient );
 	void ( *ClientBegin )( edict_t *ent );
 	void ( *ClientUserinfoChanged )( edict_t *ent, char *userinfo );
-	qboolean ( *ClientMultiviewChanged )( edict_t *ent, qboolean multiview );
+	bool ( *ClientMultiviewChanged )( edict_t *ent, bool multiview );
 	void ( *ClientDisconnect )( edict_t *ent, const char *reason );
 	void ( *ClientCommand )( edict_t *ent );
 	void ( *ClientThink )( edict_t *ent, usercmd_t *cmd, int timeDelta );
@@ -227,7 +227,7 @@ typedef struct
 
 	game_state_t *( *GetGameState )( void );
 
-	qboolean ( *AllowDownload )( edict_t *ent, const char *requestname, const char *uploadname );
+	bool ( *AllowDownload )( edict_t *ent, const char *requestname, const char *uploadname );
 
 	// Web requests to local HTTP server
 	http_response_code_t ( *WebRequest )( http_query_method_t method, const char *resource, 

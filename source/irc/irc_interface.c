@@ -13,10 +13,10 @@ cvar_t *irc_defaultChannel;
 
 // the functions in irc_export_t
 int Irc_If_API(void);
-qboolean Irc_If_Init(void);
+bool Irc_If_Init(void);
 void Irc_If_Shutdown(void);
-qboolean Irc_If_Connect(void);
-qboolean Irc_If_Disconnect(void);
+bool Irc_If_Connect(void);
+bool Irc_If_Disconnect(void);
 size_t Irc_If_HistorySize(void);
 size_t Irc_If_HistoryTotalSize(void);
 const char *Irc_If_GetHistoryNodeLine(const irc_chat_history_node_t *n);
@@ -48,7 +48,7 @@ int Irc_If_API(void) {
 	return IRC_API_VERSION;
 }
 
-qboolean Irc_If_Init(void) {
+bool Irc_If_Init(void) {
 	irc_connected = IRC_IMPORT.Dynvar_Lookup("irc_connected");
 	irc_server = IRC_IMPORT.Cvar_Get("irc_server", "", 0);
 	irc_port = IRC_IMPORT.Cvar_Get("irc_port", "", 0);
@@ -60,7 +60,7 @@ qboolean Irc_If_Init(void) {
 	IRC_IMPORT.Dynvar_AddListener(irc_connected, Irc_Logic_Connected_f);
 	IRC_IMPORT.Dynvar_AddListener(irc_connected, Irc_Client_Connected_f);
 	IRC_IMPORT.Dynvar_AddListener(irc_connected, Irc_Rcon_Connected_f);
-	return qtrue;
+	return true;
 }
 
 void Irc_If_Shutdown(void) {
@@ -95,18 +95,18 @@ const char *Irc_If_GetHistoryNodeLine(const irc_chat_history_node_t *n) {
 	return n ? n->line : NULL;
 }
 
-qboolean Irc_If_Connect(void) {
+bool Irc_If_Connect(void) {
 	const char * const server = Cvar_GetStringValue(irc_server);
 	const unsigned short port = Cvar_GetIntegerValue(irc_port);
-	qboolean *c;
+	bool *c;
 	Irc_Logic_Connect(server, port);						// try to connect
 	IRC_IMPORT.Dynvar_GetValue(irc_connected, (void**) &c);	// get connection status
 	return !*c;
 }
 
-qboolean Irc_If_Disconnect(void) {
-	qboolean *c;
+bool Irc_If_Disconnect(void) {
+	bool *c;
 	IRC_IMPORT.Dynvar_GetValue(irc_connected, (void**) &c);	// get connection status
 	Irc_Logic_Disconnect("");								// disconnect if connected
-	return qfalse;											// always succeed
+	return false;											// always succeed
 }

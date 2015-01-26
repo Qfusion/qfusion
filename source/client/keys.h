@@ -23,8 +23,8 @@
 extern int anykeydown;
 
 void Key_CharEvent( int key, qwchar charkey );
-void Key_Event( int key, qboolean down, unsigned time );
-void Key_MouseEvent( int key, qboolean down, unsigned time );
+void Key_Event( int key, bool down, unsigned time );
+void Key_MouseEvent( int key, bool down, unsigned time );
 void Key_Init( void );
 void Key_Shutdown( void );
 void Key_WriteBindings( int file );
@@ -35,11 +35,11 @@ const char *Key_GetBindingBuf( int binding );
 const char *Key_KeynumToString( int keynum );
 
 int Key_StringToKeynum( const char *str );
-qboolean Key_IsDown( int keynum );
+bool Key_IsDown( int keynum );
 
 // wsw : aiwa : delegate pattern to forward key strokes to arbitrary code
 // delegates can be stacked, the topmost delegate is sent the key
-typedef void ( *key_delegate_f )( int key, qboolean *key_down );
+typedef void ( *key_delegate_f )( int key, bool *key_down );
 typedef void ( *key_char_delegate_f )( qwchar c );
 keydest_t Key_DelegatePush( key_delegate_f key_del, key_char_delegate_f char_del );  // returns previous dest
 void Key_DelegatePop( keydest_t next_dest );
