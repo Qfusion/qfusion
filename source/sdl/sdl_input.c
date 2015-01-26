@@ -78,57 +78,24 @@ static qwchar TranslateSDLScancode(SDL_Scancode scancode)
 	
 	switch(scancode)
 	{
-		// case SDLK_TAB:			    charkey = K_TAB;		break;
 		case SDL_SCANCODE_TAB:          charkey = K_TAB;		break;
-		// case SDLK_RETURN:		    charkey = K_ENTER;		break;
 		case SDL_SCANCODE_RETURN:       charkey = K_ENTER;		break;
-		// case SDLK_ESCAPE:		    charkey = K_ESCAPE;		break;
 		case SDL_SCANCODE_ESCAPE:       charkey = K_ESCAPE;		break;
-		// case SDLK_SPACE:		        charkey = K_SPACE;		break;
 		case SDL_SCANCODE_SPACE:        charkey = K_SPACE;		break;
-		// case SDLK_CAPSLOCK:			charkey = K_CAPSLOCK;	break;
 		case SDL_SCANCODE_CAPSLOCK:		charkey = K_CAPSLOCK;	break;
-		// case SDLK_SCROLLOCK:         charkey = K_SCROLLLOCK;	break;
 		case SDL_SCANCODE_SCROLLLOCK:   charkey = K_SCROLLLOCK; break;
-		// case SDLK_NUMLOCK:           charkey = K_NUMLOCK;	break;
 		case SDL_SCANCODE_NUMLOCKCLEAR: charkey = K_NUMLOCK;    break;
-		// case SDLK_BACKSPACE:         charkey = K_BACKSPACE;	break;
 		case SDL_SCANCODE_BACKSPACE:    charkey = K_BACKSPACE;  break;
-		// case SDLK_UP:                charkey = K_UPARROW;	break;
 		case SDL_SCANCODE_UP:           charkey = K_UPARROW;    break;
-		// case SDLK_DOWN:              charkey = K_DOWNARROW;	break;
 		case SDL_SCANCODE_DOWN:         charkey = K_DOWNARROW;  break;
-		// case SDLK_LEFT:              charkey = K_LEFTARROW;	break;
 		case SDL_SCANCODE_LEFT:         charkey = K_LEFTARROW;  break;
-		// case SDLK_RIGHT:             charkey = K_RIGHTARROW;	break;
 		case SDL_SCANCODE_RIGHT:        charkey = K_RIGHTARROW; break;
-		// case SDLK_LALT:
-		// case SDLK_RALT:              charkey = K_OPTION;		break;
 		case SDL_SCANCODE_LALT:
 		case SDL_SCANCODE_RALT:         charkey = K_OPTION;     break;
-		// case SDLK_LCTRL:             charkey = K_LCTRL;		break;
 		case SDL_SCANCODE_LCTRL:        charkey = K_LCTRL;      break;
-		// case SDLK_RCTRL:             charkey = K_RCTRL;		break;
 		case SDL_SCANCODE_RCTRL:        charkey = K_RCTRL;      break;
-		// case SDLK_LSHIFT:            charkey = K_LSHIFT;		break;
 		case SDL_SCANCODE_LSHIFT:       charkey = K_LSHIFT;     break;
-		// case SDLK_RSHIFT:            charkey = K_RSHIFT;		break;
 		case SDL_SCANCODE_RSHIFT:       charkey = K_LSHIFT;     break;
-		// case SDLK_F1:                charkey = K_F1;			break;
-		// case SDLK_F2:                charkey = K_F2;			break;
-		// case SDLK_F3:                charkey = K_F3;			break;
-		// case SDLK_F4:                charkey = K_F4;			break;
-		// case SDLK_F5:                charkey = K_F5;			break;
-		// case SDLK_F6:                charkey = K_F6;			break;
-		// case SDLK_F7:                charkey = K_F7;			break;
-		// case SDLK_F8:                charkey = K_F8;			break;
-		// case SDLK_F9:                charkey = K_F9;			break;
-		// case SDLK_F10:               charkey = K_F10;		break;
-		// case SDLK_F11:               charkey = K_F11;		break;
-		// case SDLK_F12:               charkey = K_F12;		break;
-		// case SDLK_F13:               charkey = K_F13;		break;
-		// case SDLK_F14:               charkey = K_F14;		break;
-		// case SDLK_F15:               charkey = K_F15;		break;
 		case SDL_SCANCODE_F1:           charkey = K_F1;         break;
 		case SDL_SCANCODE_F2:           charkey = K_F2;         break;
 		case SDL_SCANCODE_F3:           charkey = K_F3;         break;
@@ -144,22 +111,13 @@ static qwchar TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_F13:          charkey = K_F13;        break;
 		case SDL_SCANCODE_F14:          charkey = K_F14;        break;
 		case SDL_SCANCODE_F15:          charkey = K_F15;        break;
-		// case SDLK_INSERT:            charkey = K_INS;		break;
 		case SDL_SCANCODE_INSERT:       charkey = K_INS;        break;
-		// case SDLK_DELETE:            charkey = K_BACKSPACE;	break;
 		case SDL_SCANCODE_DELETE:       charkey = K_BACKSPACE;  break;
-		// case SDLK_PAGEUP:            charkey = K_PGDN;		break;
 		case SDL_SCANCODE_PAGEUP:       charkey = K_PGUP;       break;
-		// case SDLK_PAGEDOWN:          charkey = K_PGUP;		break;
 		case SDL_SCANCODE_PAGEDOWN:     charkey = K_PGDN;       break;
-		// case SDLK_HOME:              charkey = K_HOME;		break;
 		case SDL_SCANCODE_HOME:         charkey = K_HOME;       break;
-		// case SDLK_END:               charkey = K_END;		break;
 		case SDL_SCANCODE_END:          charkey = K_END;        break;
-		// case SDLK_WORLD_0:           charkey = '~';			break;
 		case SDL_SCANCODE_GRAVE:        charkey = '~';          break;
-		// case SDLK_LMETA:
-		// case SDLK_RMETA:             charkey = K_COMMAND;	break;
 		case SDL_SCANCODE_LGUI:
 		case SDL_SCANCODE_RGUI:         charkey = K_COMMAND;    break;
 			
