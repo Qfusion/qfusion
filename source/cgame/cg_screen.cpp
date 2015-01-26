@@ -404,11 +404,11 @@ static int CG_CrosshairDimensions( int x, int y, int size, int align, int *sx, i
 */
 static void CG_DrawCrosshairChar( int x, int y, int size, int num, vec_t *color )
 {
-	struct qfontface_s *font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
+	struct qfontface_s *font = trap_SCR_RegisterSpecialFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
 	if( !font )
 	{
 		trap_Cvar_Set( cg_crosshair_font->name, cg_crosshair_font->dvalue );
-		font = trap_SCR_RegisterFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
+		font = trap_SCR_RegisterSpecialFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
 	}
 
 	qwchar blackChar, colorChar;
