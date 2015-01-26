@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct ac_import_s
 {
-	qboolean (*SV_SendMessageToClient)( void *client, msg_t *msg );
+	bool (*SV_SendMessageToClient)( void *client, msg_t *msg );
 	void (*SV_ParseClientMessage)( void *client, msg_t *msg );
 	void (*CL_ParseServerMessage)( msg_t *msg );
 	void (*CL_Netchan_Transmit)( msg_t *msg );
@@ -42,7 +42,7 @@ typedef struct ac_import_s
 	void (*MSG_WriteFloat)( msg_t *sb, float f );
 	void (*MSG_WriteString)( msg_t *sb, const char *s );
 	void (*MSG_WriteDeltaUsercmd)( msg_t *sb, struct usercmd_s *from, struct usercmd_s *cmd );
-	void (*MSG_WriteDeltaEntity)( struct entity_state_s *from, struct entity_state_s *to, msg_t *msg, qboolean force, qboolean newentity );
+	void (*MSG_WriteDeltaEntity)( struct entity_state_s *from, struct entity_state_s *to, msg_t *msg, bool force, bool newentity );
 	void (*MSG_WriteDir)( msg_t *sb, vec3_t vector );
 	void (*MSG_BeginReading)( msg_t *sb );
 	int (*MSG_ReadChar)( msg_t *msg );

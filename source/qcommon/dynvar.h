@@ -15,7 +15,7 @@ void Dynvar_Shutdown( void );
 // creates new dynvar
 dynvar_t *Dynvar_Create(
         const char *name,       // the name for dictionary-based lookup
-        qboolean console,       // dynvar is console-accessible
+        bool console,       // dynvar is console-accessible
         dynvar_getter_f getter, // user-provided getter function, called by Dynvar_GetValue
         dynvar_setter_f setter  // user-provided setter function, called by Dynvar_SetValue
 );
@@ -84,6 +84,6 @@ const char *Dynvar_CompleteDynvar(
         const char *partial
 );
 
-qboolean Dynvar_Command( void );
+bool Dynvar_Command( void );
 
 #endif // DYNVAR_H

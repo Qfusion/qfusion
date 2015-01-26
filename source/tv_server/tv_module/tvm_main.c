@@ -160,7 +160,7 @@ tvm_relay_t *TVM_InitRelay( relay_t *relay_server, unsigned int snapFrameTime, i
 	// set relay and local
 	for( i = 0; i < relay->local_maxentities; i++ )
 	{
-		relay->local_edicts[i].local = qtrue;
+		relay->local_edicts[i].local = true;
 		relay->local_edicts[i].relay = relay;
 	}
 

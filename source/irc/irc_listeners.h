@@ -16,7 +16,7 @@ typedef enum irc_mode_flag_e {
 } irc_mode_flag_t;
 
 typedef struct irc_mode_elem_s {
-	qboolean plus;
+	bool plus;
 	irc_mode_flag_t flag;
 } irc_mode_elem_t;
 

@@ -25,10 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * R_BeginPolySurf
 */
-qboolean R_BeginPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfacePoly_t *drawSurf )
+bool R_BeginPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfacePoly_t *drawSurf )
 {
 	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
-	return qtrue;
+	return true;
 }
 
 /*
@@ -120,7 +120,7 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 		mesh.xyzArray = translated;
 	}
 
-	R_BeginStretchBatch( poly->shader, x_offset, y_offset, !poly->elems ? qtrue : qfalse );
+	R_BeginStretchBatch( poly->shader, x_offset, y_offset, !poly->elems ? true : false );
 
 	RB_BatchMesh( &mesh );
 }
@@ -153,12 +153,12 @@ static int r_fragmentframecount;
 * a convex fragment (polygon, trifan) which the result of clipping
 * the input winding by six fragment planes.
 */
-static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *surf, vec3_t snorm )
+static bool R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t *surf, vec3_t snorm )
 {
 	int i, j;
 	int stage, newc, numv;
 	cplane_t *plane;
-	qboolean front;
+	bool front;
 	float *v, *nextv, d;
 	float dists[MAX_FRAGMENT_VERTS+1];
 	int sides[MAX_FRAGMENT_VERTS+1];
@@ -170,13 +170,13 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 
 	for( stage = 0, plane = fragmentPlanes; stage < 6; stage++, plane++ )
 	{
-		for( i = 0, v = verts[0], front = qfalse; i < numv; i++, v += 3 )
+		for( i = 0, v = verts[0], front = false; i < numv; i++, v += 3 )
 		{
 			d = PlaneDiff( v, plane );
 
 			if( d > ON_EPSILON )
 			{
-				front = qtrue;
+				front = true;
 				sides[i] = SIDE_FRONT;
 			}
 			else if( d < -ON_EPSILON )
@@ -185,14 +185,14 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 			}
 			else
 			{
-				front = qtrue;
+				front = true;
 				sides[i] = SIDE_ON;
 			}
 			dists[i] = d;
 		}
 
 		if( !front )
-			return qfalse;
+			return false;
 
 		// clip it
 		sides[i] = sides[0];
@@ -206,7 +206,7 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 			{
 			case SIDE_FRONT:
 				if( newc == MAX_FRAGMENT_VERTS )
-					return qfalse;
+					return false;
 				VectorCopy( v, newverts[newc] );
 				newc++;
 				break;
@@ -214,7 +214,7 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 				break;
 			case SIDE_ON:
 				if( newc == MAX_FRAGMENT_VERTS )
-					return qfalse;
+					return false;
 				VectorCopy( v, newverts[newc] );
 				newc++;
 				break;
@@ -223,7 +223,7 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 			if( sides[i] == SIDE_ON || sides[i+1] == SIDE_ON || sides[i+1] == sides[i] )
 				continue;
 			if( newc == MAX_FRAGMENT_VERTS )
-				return qfalse;
+				return false;
 
 			d = dists[i] / ( dists[i] - dists[i+1] );
 			nextv = ( i == numv - 1 ) ? verts[0] : v + 3;
@@ -233,7 +233,7 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 		}
 
 		if( newc <= 2 )
-			return qfalse;
+			return false;
 
 		// continue with new verts
 		numv = newc;
@@ -242,7 +242,7 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 
 	// fully clipped
 	if( numFragmentVerts + numv > maxFragmentVerts )
-		return qfalse;
+		return false;
 
 	fr = &clippedFragments[numClippedFragments++];
 	fr->numverts = numv;
@@ -257,7 +257,7 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 
 	numFragmentVerts += numv;
 	if( numFragmentVerts == maxFragmentVerts && numClippedFragments == maxClippedFragments )
-		return qtrue;
+		return true;
 
 	// if all of the following is true:
 	// a) all clipping planes are perpendicular
@@ -275,12 +275,12 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 
 			d = fragmentDiameterSquared - DotProduct( t, t );
 			if( d > 0.01 || d < -0.01 )
-				return qfalse;
+				return false;
 		}
-		return qtrue;
+		return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -291,7 +291,7 @@ static qboolean R_WindingClipFragment( vec3_t *wVerts, int numVerts, msurface_t 
 * q2 polys) or tristrips for ultra-fast clipping, providing there's
 * enough stack space (depending on MAX_FRAGMENT_VERTS value).
 */
-static qboolean R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
+static bool R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
 {
 	int i;
 	mesh_t *mesh;
@@ -299,14 +299,14 @@ static qboolean R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
 	vec4_t *verts;
 	vec3_t poly[4];
 	vec3_t dir1, dir2, snorm;
-	qboolean planar;
+	bool planar;
 
 	planar = surf->plane && !VectorCompare( surf->plane->normal, vec3_origin );
 	if( planar )
 	{
 		VectorCopy( surf->plane->normal, snorm );
 		if( DotProduct( normal, snorm ) < 0.5 )
-			return qfalse; // greater than 60 degrees
+			return false; // greater than 60 degrees
 	}
 
 	mesh = surf->mesh;
@@ -337,16 +337,16 @@ static qboolean R_PlanarSurfClipFragment( msurface_t *surf, vec3_t normal )
 		}
 
 		if( R_WindingClipFragment( poly, 3, surf, snorm ) )
-			return qtrue;
+			return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * R_PatchSurfClipFragment
 */
-static qboolean R_PatchSurfClipFragment( msurface_t *surf, vec3_t normal )
+static bool R_PatchSurfClipFragment( msurface_t *surf, vec3_t normal )
 {
 	int i, j;
 	mesh_t *mesh;
@@ -391,22 +391,22 @@ tri2:
 			continue; // greater than 60 degrees
 
 		if( R_WindingClipFragment( poly, 3, surf, snorm ) )
-			return qtrue;
+			return true;
 
 		if( !j )
 			goto tri2;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * R_SurfPotentiallyFragmented
 */
-qboolean R_SurfPotentiallyFragmented( const msurface_t *surf )
+bool R_SurfPotentiallyFragmented( const msurface_t *surf )
 {
 	if( surf->flags & ( SURF_NOMARKS|SURF_NOIMPACT|SURF_NODRAW ) )
-		return qfalse;
+		return false;
 	return ( ( surf->facetype == FACETYPE_PLANAR ) 
 		|| ( surf->facetype == FACETYPE_PATCH ) 
 		/* || (surf->facetype == FACETYPE_TRISURF)*/ );
@@ -419,7 +419,7 @@ static void R_RecursiveFragmentNode( void )
 {
 	int stackdepth = 0;
 	float dist;
-	qboolean inside;
+	bool inside;
 	mnode_t	*node, *localstack[2048];
 	mleaf_t	*leaf;
 	msurface_t *surf, **mark;

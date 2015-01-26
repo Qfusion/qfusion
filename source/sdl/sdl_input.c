@@ -3,25 +3,25 @@
 
 cvar_t *in_grabinconsole;
 
-static qboolean input_inited = qfalse;
-static qboolean mouse_active = qfalse;
-static qboolean input_active = qfalse;
+static bool input_inited = false;
+static bool mouse_active = false;
+static bool input_active = false;
 
 cvar_t *in_disablemacosxmouseaccel;
 
 static int mx, my;
 
 #if defined(__APPLE__)
-void IN_SetMouseScalingEnabled (qboolean isRestore);
+void IN_SetMouseScalingEnabled (bool isRestore);
 #else
-void IN_SetMouseScalingEnabled (qboolean isRestore) {}
+void IN_SetMouseScalingEnabled (bool isRestore) {}
 #endif
 
 
 void IN_Commands( void )
 {
 }
-void IN_Activate( qboolean active )
+void IN_Activate( bool active )
 {
 }
 
@@ -40,9 +40,9 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event )
 /**
  * Function which is called whenever a mouse button is pressed or released.
  * @param ev the SDL event object containing the button number et all
- * @param state either qtrue if it is a keydown event or qfalse otherwise
+ * @param state either true if it is a keydown event or false otherwise
  */
-static void mouse_button_event( SDL_MouseButtonEvent *event, qboolean state )
+static void mouse_button_event( SDL_MouseButtonEvent *event, bool state )
 {
 	Uint8 button = event->button;
 	if( button <= 5 )
@@ -68,8 +68,8 @@ static void mouse_wheel_event( SDL_MouseWheelEvent *event )
 	int key = event->y > 0 ? K_MWHEELUP : K_MWHEELDOWN;
 	unsigned sys_msg_time = Sys_Milliseconds();
 	
-	Key_Event( key, qtrue, sys_msg_time );
-	Key_Event( key, qfalse, sys_msg_time );
+	Key_Event( key, true, sys_msg_time );
+	Key_Event( key, false, sys_msg_time );
 }
 
 static qwchar TranslateSDLScancode(SDL_Scancode scancode)
@@ -208,9 +208,9 @@ static qwchar TranslateSDLScancode(SDL_Scancode scancode)
 /**
  * Function which is called whenever a key is pressed or released.
  * @param event the SDL event object containing the keysym et all
- * @param state either qtrue if it is a keydown event or qfalse otherwise
+ * @param state either true if it is a keydown event or false otherwise
  */
-static void key_event( const SDL_KeyboardEvent *event, const qboolean state )
+static void key_event( const SDL_KeyboardEvent *event, const bool state )
 {
 	qwchar charkey = TranslateSDLScancode(event->keysym.scancode);
 	
@@ -234,7 +234,7 @@ static void HandleEvents( void )
 		switch( event.type )
 		{
 		case SDL_KEYDOWN:
-			key_event( &event.key, qtrue );
+			key_event( &event.key, true );
 				
 				// Emulate Ctrl+V
 				if (event.key.keysym.sym == SDLK_v)
@@ -248,7 +248,7 @@ static void HandleEvents( void )
 			break;
 
 		case SDL_KEYUP:
-			key_event( &event.key, qfalse );
+			key_event( &event.key, false );
 			break;
 				
 		case SDL_TEXTINPUT:
@@ -268,11 +268,11 @@ static void HandleEvents( void )
 			break;
 
 		case SDL_MOUSEBUTTONDOWN:
-			mouse_button_event( &event.button, qtrue );
+			mouse_button_event( &event.button, true );
 			break;
 
 		case SDL_MOUSEBUTTONUP:
-			mouse_button_event( &event.button, qfalse );
+			mouse_button_event( &event.button, false );
 			break;
 				
 		case SDL_MOUSEWHEEL:
@@ -314,10 +314,10 @@ void IN_Init()
 	SDL_SetRelativeMouseMode( SDL_TRUE );
 	SDL_SetCursor( NULL );
 	
-	IN_SetMouseScalingEnabled( qfalse );
+	IN_SetMouseScalingEnabled( false );
 
-	input_inited = qtrue;
-	input_active = qtrue; // will be activated by IN_Frame if necessary
+	input_inited = true;
+	input_active = true; // will be activated by IN_Frame if necessary
 }
 
 /**
@@ -330,10 +330,10 @@ void IN_Shutdown()
 
 	Com_Printf("Shutdown SDL Input\n");
 	
-	IN_Activate( qfalse );
-	input_inited = qfalse;
+	IN_Activate( false );
+	input_inited = false;
 	SDL_SetRelativeMouseMode( SDL_FALSE );
-	IN_SetMouseScalingEnabled( qtrue );
+	IN_SetMouseScalingEnabled( true );
 }
 
 /**
@@ -356,27 +356,27 @@ void IN_Frame()
 
 	if( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer )
 	{
-		mouse_active = qfalse;
-		input_active = qtrue;
+		mouse_active = false;
+		input_active = true;
 		if(SDL_GetRelativeMouseMode())
 		{
-			IN_SetMouseScalingEnabled( qtrue );
+			IN_SetMouseScalingEnabled( true );
 			SDL_SetRelativeMouseMode( SDL_FALSE );
 		}
 	}
 	else
 	{
-		mouse_active = qtrue;
-		input_active = qtrue;
+		mouse_active = true;
+		input_active = true;
 		if(!SDL_GetRelativeMouseMode())
 		{
-			IN_SetMouseScalingEnabled( qfalse );
+			IN_SetMouseScalingEnabled( false );
 			SDL_SetRelativeMouseMode( SDL_TRUE );	
 		}
 	}
 
-	mouse_active = qtrue;
-	input_active = qtrue;
+	mouse_active = true;
+	input_active = true;
 	
 	HandleEvents();
 }
@@ -384,14 +384,14 @@ void IN_Frame()
 /**
  * Stub for showing an on-screen keyboard.
  */
-void IN_ShowIME( qboolean show )
+void IN_ShowIME( bool show )
 {
 }
 
 /**
  * Display the mouse cursor in the UI.
  */
-qboolean IN_ShowUICursor( void )
+bool IN_ShowUICursor( void )
 {
-	return qtrue;
+	return true;
 }

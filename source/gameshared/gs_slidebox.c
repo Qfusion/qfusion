@@ -39,26 +39,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * GS_GoodPosition
 */
-static qboolean GS_GoodPosition( int snaptorigin[3], vec3_t mins, vec3_t maxs, int passent, int contentmask )
+static bool GS_GoodPosition( int snaptorigin[3], vec3_t mins, vec3_t maxs, int passent, int contentmask )
 {
 	trace_t	trace;
 	vec3_t point;
 	int i;
 
 	if( !( contentmask & MASK_SOLID ) )
-		return qtrue;
+		return true;
 
 	for( i = 0; i < 3; i++ )
 		point[i] = (float)snaptorigin[i] * ( 1.0/PM_VECTOR_SNAP );
 
 	module_Trace( &trace, point, mins, maxs, point, passent, contentmask, 0 );
-	return !trace.allsolid ? qtrue : qfalse;
+	return !trace.allsolid ? true : false;
 }
 
 /*
 * GS_SnapInitialPosition
 */
-qboolean GS_SnapInitialPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int contentmask )
+bool GS_SnapInitialPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int contentmask )
 {
 	int x, y, z;
 	int base[3];
@@ -82,19 +82,19 @@ qboolean GS_SnapInitialPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int pa
 					origin[0] = originInt[0]*( 1.0/PM_VECTOR_SNAP );
 					origin[1] = originInt[1]*( 1.0/PM_VECTOR_SNAP );
 					origin[2] = originInt[2]*( 1.0/PM_VECTOR_SNAP );
-					return qtrue;
+					return true;
 				}
 			}
 		}
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * GS_SnapPosition
 */
-qboolean GS_SnapPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int contentmask )
+bool GS_SnapPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int contentmask )
 {
 	int sign[3];
 	int i, j, bits;
@@ -130,11 +130,11 @@ qboolean GS_SnapPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, 
 		if( GS_GoodPosition( originInt, mins, maxs, passent, contentmask ) )
 		{
 			VectorScale( originInt, ( 1.0/PM_VECTOR_SNAP ), origin );
-			return qtrue;
+			return true;
 		}
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -279,7 +279,7 @@ static void GS_AddClippingPlane( move_t *move, const vec3_t planeNormal )
 /*
 * GS_SlideMoveClipMove
 */
-static int GS_SlideMoveClipMove( move_t *move /*, const qboolean stepping*/ )
+static int GS_SlideMoveClipMove( move_t *move /*, const bool stepping*/ )
 {
 	vec3_t endpos;
 	trace_t	trace;

@@ -280,7 +280,7 @@ typedef struct entity_state_s
 	unsigned int svflags;
 
 	int type;							// ET_GENERIC, ET_BEAM, etc
-	qboolean linearProjectile;			// is sent inside "type" as ET_INVERSE flag
+	bool linearProjectile;			// is sent inside "type" as ET_INVERSE flag
 	vec3_t linearProjectileVelocity;	// this is transmitted instead of origin when linearProjectile is true
 
 	vec3_t origin;
@@ -325,7 +325,7 @@ typedef struct entity_state_s
 										// PVS culling)
 
 	int weapon;							// WEAP_ for players
-	qboolean teleported;				// the entity was teleported this snap (sent inside "weapon" as ET_INVERSE flag)
+	bool teleported;				// the entity was teleported this snap (sent inside "weapon" as ET_INVERSE flag)
 
 	unsigned int effects;
 
@@ -443,7 +443,7 @@ typedef struct
 
 typedef struct
 {
-	qboolean all;
+	bool all;
 	uint8_t targets[MAX_CLIENTS/8];
 	size_t commandOffset;			// offset of the data in gamecommandsData
 } gcommand_t;
@@ -484,7 +484,7 @@ typedef struct
 
 	// command (in)
 	usercmd_t cmd;
-	qboolean snapinitial;       // if s has been changed outside pmove
+	bool snapinitial;       // if s has been changed outside pmove
 
 	// results (out)
 	int numtouch;

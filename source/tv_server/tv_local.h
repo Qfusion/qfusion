@@ -58,7 +58,7 @@ struct edict_s
 #define MAX_INCOMING_CONNECTIONS 256
 typedef struct
 {
-	qboolean active;
+	bool active;
 	unsigned int time;      // for timeout
 	socket_t socket;
 	netadr_t address;
@@ -88,9 +88,9 @@ typedef struct
 
 typedef struct
 {
-	qboolean allentities;
-	qboolean multipov;
-	qboolean relay;
+	bool allentities;
+	bool multipov;
+	bool relay;
 	int clientarea;
 	int numareas;
 	size_t areabytes;
@@ -141,9 +141,9 @@ typedef struct client_s
 
 	relay_t	*relay;
 
-	qboolean reliable;                  // no need for acks, upstream is reliable
-	qboolean mv;                        // send multiview data to the client
-	qboolean individual_socket;         // client has it's own socket that has to be checked separately
+	bool reliable;                  // no need for acks, upstream is reliable
+	bool mv;                        // send multiview data to the client
+	bool individual_socket;         // client has it's own socket that has to be checked separately
 
 	socket_t socket;
 
@@ -168,7 +168,7 @@ typedef struct client_s
 	unsigned lastconnect;
 
 	int lastframe;                  // used for delta compression etc.
-	qboolean nodelta;               // send one non delta compressed frame trough
+	bool nodelta;               // send one non delta compressed frame trough
 	int nodelta_frame;              // when we get confirmation of this frame, the non-delta frame is trough
 	usercmd_t lastcmd;              // for filling in big drops
 	unsigned int lastSentFrameNum;  // for knowing which was last frame we sent
@@ -188,7 +188,7 @@ typedef struct client_s
 	client_download_t download;
 
 	int challenge;                  // challenge of this user, randomly generated
-	qboolean tv;
+	bool tv;
 	client_flood_t flood;
 
 	netchan_t netchan;

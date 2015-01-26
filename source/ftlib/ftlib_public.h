@@ -73,9 +73,9 @@ typedef struct
 	int ( *FS_Eof )( int file );
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
-	qboolean ( *FS_RemoveFile )( const char *filename );
+	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
-	qboolean ( *FS_IsUrl )( const char *url );
+	bool ( *FS_IsUrl )( const char *url );
 
 	// clock
 	unsigned int	( *Milliseconds )( void );
@@ -109,15 +109,15 @@ typedef struct
 	int ( *API )( void );
 
 	// the init function will be called at each restart
-	qboolean ( *Init )( qboolean verbose );
-	void ( *Shutdown )( qboolean verbose );
+	bool ( *Init )( bool verbose );
+	void ( *Shutdown )( bool verbose );
 
 	// core functions
-	void ( *PrecacheFonts )( qboolean verbose );
+	void ( *PrecacheFonts )( bool verbose );
 	struct qfontface_s *( *RegisterFont )( const char *family, int style, unsigned int size, unsigned int lastChar );
 	void ( *TouchFont )( struct qfontface_s *qfont );
 	void ( *TouchAllFonts )( void );
-	void ( *FreeFonts )( qboolean verbose );
+	void ( *FreeFonts )( bool verbose );
 
 	// drawing functions
 	size_t ( *FontHeight )( struct qfontface_s *font );

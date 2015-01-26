@@ -56,7 +56,7 @@ typedef struct cvar_s
 	char *dvalue;
 	char *latched_string;       // for CVAR_LATCH vars
 	cvar_flag_t flags;
-	qboolean modified;          // set each time the cvar is changed
+	bool modified;          // set each time the cvar is changed
 	float value;
 	int integer;
 } cvar_t;

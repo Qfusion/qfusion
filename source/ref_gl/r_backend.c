@@ -203,7 +203,7 @@ void RB_GetDepthRange( float* depthmin, float *depthmax )
 /*
 * RB_DepthOffset
 */
-void RB_DepthOffset( qboolean enable )
+void RB_DepthOffset( bool enable )
 {
 	float depthmin = rb.gl.depthmin;
 	float depthmax = rb.gl.depthmax;
@@ -386,12 +386,12 @@ void RB_SetState( int state )
 		if( state & GLSTATE_OFFSET_FILL )
 		{
 			qglEnable( GL_POLYGON_OFFSET_FILL );
-			RB_DepthOffset( qtrue );
+			RB_DepthOffset( true );
 		}
 		else
 		{
 			qglDisable( GL_POLYGON_OFFSET_FILL );
-			RB_DepthOffset( qfalse );
+			RB_DepthOffset( false );
 		}
 	}
 
@@ -412,7 +412,7 @@ void RB_SetState( int state )
 /*
 * RB_FrontFace
 */
-void RB_FrontFace( qboolean front )
+void RB_FrontFace( bool front )
 {
 	qglFrontFace( front ? GL_CW : GL_CCW );
 	rb.gl.frontFace = front;
@@ -453,7 +453,7 @@ void RB_BindElementArrayBuffer( int buffer )
 /*
 * GL_EnableVertexAttrib
 */
-static void GL_EnableVertexAttrib( int index, qboolean enable )
+static void GL_EnableVertexAttrib( int index, bool enable )
 {
 	unsigned int bit;
 	unsigned int diff;
@@ -509,7 +509,7 @@ void RB_GetScissor( int *x, int *y, int *w, int *h )
 /*
 * RB_EnableScissor
 */
-void RB_EnableScissor( qboolean enable )
+void RB_EnableScissor( bool enable )
 {
 	if( enable ) {
 		qglEnable( GL_SCISSOR_TEST );
@@ -727,7 +727,7 @@ void RB_UploadMesh( const mesh_t *mesh )
 	rbDrawElements_t *offset;
 	vbo_hint_t vbo_hint = VBO_HINT_NONE;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
-	qboolean isQuadStream, isGenericStream;
+	bool isQuadStream, isGenericStream;
 
 	assert( rb.currentVBOId < RB_VBO_NONE );
 	if( rb.currentVBOId >= RB_VBO_NONE ) {
@@ -856,7 +856,7 @@ void RB_BatchMesh( const mesh_t *mesh )
 	int stream;
 	rbDrawElements_t *batch;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
-	qboolean isQuadStream, isGenericStream;
+	bool isQuadStream, isGenericStream;
 
 	isQuadStream = CURRENT_VBO_IS_QUAD_STREAM();
 	isGenericStream = CURRENT_VBO_IS_GENERIC_STREAM( );
@@ -989,69 +989,69 @@ static void RB_EnableVertexAttribs( void )
 	assert( vattribs & VATTRIB_POSITION_BIT );
 
 	// xyz position
-	GL_EnableVertexAttrib( VATTRIB_POSITION, qtrue );
+	GL_EnableVertexAttrib( VATTRIB_POSITION, true );
 	qglVertexAttribPointerARB( VATTRIB_POSITION, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_POSITION_BIT, hfa ), 
 		GL_FALSE, vbo->vertexSize, ( const GLvoid * )0 );
 
 	// normal
 	if( vattribs & VATTRIB_NORMAL_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_NORMAL, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_NORMAL, true );
 		qglVertexAttribPointerARB( VATTRIB_NORMAL, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_NORMAL_BIT, hfa ), 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->normalsOffset );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_NORMAL, qfalse );
+		GL_EnableVertexAttrib( VATTRIB_NORMAL, false );
 	}
 
 	// s-vector
 	if( vattribs & VATTRIB_SVECTOR_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_SVECTOR, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_SVECTOR, true );
 		qglVertexAttribPointerARB( VATTRIB_SVECTOR, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_SVECTOR_BIT, hfa ), 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->sVectorsOffset );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_SVECTOR, qfalse );
+		GL_EnableVertexAttrib( VATTRIB_SVECTOR, false );
 	}
 	
 	// color
 	if( vattribs & VATTRIB_COLOR0_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_COLOR0, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_COLOR0, true );
 		qglVertexAttribPointerARB( VATTRIB_COLOR0, 4, GL_UNSIGNED_BYTE, 
 			GL_TRUE, vbo->vertexSize, (const GLvoid * )vbo->colorsOffset[0] );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_COLOR0, qfalse );
+		GL_EnableVertexAttrib( VATTRIB_COLOR0, false );
 	}
 
 	// texture coordinates
 	if( vattribs & VATTRIB_TEXCOORDS_BIT ) {
-		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, true );
 		qglVertexAttribPointerARB( VATTRIB_TEXCOORDS, 2, FLOAT_VATTRIB_GL_TYPE( VATTRIB_TEXCOORDS_BIT, hfa ), 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->stOffset );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, qfalse );
+		GL_EnableVertexAttrib( VATTRIB_TEXCOORDS, false );
 	}
 
 	if( (vattribs & VATTRIB_AUTOSPRITE_BIT) == VATTRIB_AUTOSPRITE_BIT ) {
 		// submit sprite point
-		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, true );
 		qglVertexAttribPointerARB( VATTRIB_SPRITEPOINT, 4, FLOAT_VATTRIB_GL_TYPE( VATTRIB_AUTOSPRITE_BIT, hfa ), 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->spritePointsOffset );
 	}
 	else {
-		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, qfalse );
+		GL_EnableVertexAttrib( VATTRIB_SPRITEPOINT, false );
 	}
 
 	// bones (skeletal models)
 	if( (vattribs & VATTRIB_BONES_BITS) == VATTRIB_BONES_BITS ) {
 		// submit indices
-		GL_EnableVertexAttrib( VATTRIB_BONESINDICES, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_BONESINDICES, true );
 		qglVertexAttribPointerARB( VATTRIB_BONESINDICES, 4, GL_UNSIGNED_BYTE, 
 			GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->bonesIndicesOffset );
 
 		// submit weights
-		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_BONESWEIGHTS, true );
 		qglVertexAttribPointerARB( VATTRIB_BONESWEIGHTS, 4, GL_UNSIGNED_BYTE, 
 			GL_TRUE, vbo->vertexSize, ( const GLvoid * )vbo->bonesWeightsOffset );
 	}
@@ -1066,13 +1066,13 @@ static void RB_EnableVertexAttribs( void )
 
 		for( i = 0; i < ( MAX_LIGHTMAPS + 1 ) / 2; i++ ) {
 			if( vattribs & lmattrbit ) {
-				GL_EnableVertexAttrib( lmattr, qtrue );
+				GL_EnableVertexAttrib( lmattr, true );
 				qglVertexAttribPointerARB( lmattr, vbo->lmstSize[i], 
 					FLOAT_VATTRIB_GL_TYPE( VATTRIB_LMCOORDS0_BIT, hfa ), 
 					GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmstOffset[i] );
 			}
 			else {
-				GL_EnableVertexAttrib( lmattr, qfalse );
+				GL_EnableVertexAttrib( lmattr, false );
 			}
 
 			lmattr++;
@@ -1084,12 +1084,12 @@ static void RB_EnableVertexAttribs( void )
 
 		for( i = 0; i < ( MAX_LIGHTMAPS + 3 ) / 4; i++ ) {
 			if( vattribs & ( VATTRIB_LMLAYERS0123_BIT << i ) ) {
-				GL_EnableVertexAttrib( lmattr, qtrue );
+				GL_EnableVertexAttrib( lmattr, true );
 				qglVertexAttribPointerARB( lmattr, 4, GL_UNSIGNED_BYTE,
 					GL_FALSE, vbo->vertexSize, ( const GLvoid * )vbo->lmlayersOffset[i] );
 			}
 			else {
-				GL_EnableVertexAttrib( lmattr, qfalse );
+				GL_EnableVertexAttrib( lmattr, false );
 			}
 
 			lmattr++;
@@ -1097,18 +1097,18 @@ static void RB_EnableVertexAttribs( void )
 	}
 
 	if( (vattribs & VATTRIB_INSTANCES_BITS) == VATTRIB_INSTANCES_BITS ) {
-		GL_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, true );
 		qglVertexAttribPointerARB( VATTRIB_INSTANCE_QUAT, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ), 
 			( const GLvoid * )vbo->instancesOffset );
 		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_QUAT, 1 );
 
-		GL_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, qtrue );
+		GL_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, true );
 		qglVertexAttribPointerARB( VATTRIB_INSTANCE_XYZS, 4, GL_FLOAT, GL_FALSE, 8 * sizeof( vec_t ), 
 			( const GLvoid * )( vbo->instancesOffset + sizeof( vec_t ) * 4 ) );
 		qglVertexAttribDivisorARB( VATTRIB_INSTANCE_XYZS, 1 );
 	} else {
-		GL_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, qfalse );
-		GL_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, qfalse );
+		GL_EnableVertexAttrib( VATTRIB_INSTANCE_QUAT, false );
+		GL_EnableVertexAttrib( VATTRIB_INSTANCE_XYZS, false );
 	}
 }
 
@@ -1354,9 +1354,9 @@ void RB_Flush( void )
 *
 * Returns triangle outlines state before the call
 */
-qboolean RB_EnableTriangleOutlines( qboolean enable )
+bool RB_EnableTriangleOutlines( bool enable )
 {
-	qboolean oldVal = rb.triangleOutlines;
+	bool oldVal = rb.triangleOutlines;
 
 	if( rb.triangleOutlines != enable ) {
 		rb.triangleOutlines = enable;
@@ -1380,7 +1380,7 @@ qboolean RB_EnableTriangleOutlines( qboolean enable )
 /*
 * RB_ScissorForBounds
 */
-qboolean RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
+bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
 {
 	int i;
 	int ix1, iy1, ix2, iy2;
@@ -1415,16 +1415,16 @@ qboolean RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h )
 
 	ix1 = max( x1 - 1.0f, 0 ); ix2 = min( x2 + 1.0f, rb.gl.viewport[2] );
 	if( ix1 >= ix2 )
-		return qfalse; // FIXME
+		return false; // FIXME
 
 	iy1 = max( y1 - 1.0f, 0 ); iy2 = min( y2 + 1.0f, rb.gl.viewport[3] );
 	if( iy1 >= iy2 )
-		return qfalse; // FIXME
+		return false; // FIXME
 
 	*x = ix1;
 	*y = rb.gl.viewport[3] - iy2;
 	*w = ix2 - ix1;
 	*h = iy2 - iy1;
 
-	return qtrue;
+	return true;
 }

@@ -49,13 +49,13 @@ x11wndproc_t x11wndproc;
 glwstate_t glw_state;
 
 static int _vid_display_refresh_rate = 0;
-static qboolean _xf86_vidmodes_supported = qfalse;
+static bool _xf86_vidmodes_supported = false;
 static int default_dotclock, default_viewport[2];
 static XF86VidModeModeLine default_modeline;
 static XF86VidModeModeInfo **_xf86_vidmodes;
 static int _xf86_vidmodes_num;
-static qboolean _xf86_vidmodes_active = qfalse;
-static qboolean _xf86_xinerama_supported = qfalse;
+static bool _xf86_vidmodes_active = false;
+static bool _xf86_xinerama_supported = false;
 
 static void _xf86_VidmodesInit( void )
 {
@@ -68,12 +68,12 @@ static void _xf86_VidmodesInit( void )
 		XF86VidModeGetViewPort( x11display.dpy, x11display.scr, &default_viewport[0], &default_viewport[1] );
 		XF86VidModeGetModeLine( x11display.dpy, x11display.scr, &default_dotclock, &default_modeline );
 		XF86VidModeGetAllModeLines( x11display.dpy, x11display.scr, &_xf86_vidmodes_num, &_xf86_vidmodes );
-		_xf86_vidmodes_supported = qtrue;
+		_xf86_vidmodes_supported = true;
 	}
 	else
 	{
 		ri.Com_Printf( "..XFree86-VidMode Extension not available\n" );
-		_xf86_vidmodes_supported = qfalse;
+		_xf86_vidmodes_supported = false;
 	}
 }
 
@@ -81,7 +81,7 @@ static void _xf86_VidmodesFree( void )
 {
 	if( _xf86_vidmodes_supported ) XFree( _xf86_vidmodes );
 
-	_xf86_vidmodes_supported = qfalse;
+	_xf86_vidmodes_supported = false;
 }
 
 static void _xf86_XineramaInit( void )
@@ -91,21 +91,21 @@ static void _xf86_XineramaInit( void )
 	if( ( XineramaQueryVersion( x11display.dpy, &MajorVersion, &MinorVersion ) ) && ( XineramaIsActive( x11display.dpy ) ) )
 	{
 		ri.Com_Printf( "..XFree86-Xinerama Extension Version %d.%d\n", MajorVersion, MinorVersion );
-		_xf86_xinerama_supported = qtrue;
+		_xf86_xinerama_supported = true;
 	}
 	else
 	{
 		ri.Com_Printf( "..XFree86-Xinerama Extension not available\n" );
-		_xf86_xinerama_supported = qfalse;
+		_xf86_xinerama_supported = false;
 	}
 }
 
 static void _xf86_XineramaFree( void )
 {
-	_xf86_xinerama_supported = qfalse;
+	_xf86_xinerama_supported = false;
 }
 
-static qboolean _xf86_XineramaFindBest( int *x, int *y, int *width, int *height, qboolean silent )
+static bool _xf86_XineramaFindBest( int *x, int *y, int *width, int *height, bool silent )
 {
 	int i, screens, head;
 	int best_dist, dist;
@@ -115,14 +115,14 @@ static qboolean _xf86_XineramaFindBest( int *x, int *y, int *width, int *height,
 	assert( _xf86_xinerama_supported );
 
 	vid_multiscreen_head = ri.Cvar_Get( "vid_multiscreen_head", "0", CVAR_ARCHIVE );
-	vid_multiscreen_head->modified = qfalse;
+	vid_multiscreen_head->modified = false;
 
 	if( vid_multiscreen_head->integer == 0 )
-		return qfalse;
+		return false;
 
 	xinerama = XineramaQueryScreens( x11display.dpy, &screens );
 	if( screens <= 1 )
-		return qfalse;
+		return false;
 
 	head = -1;
 	if( vid_multiscreen_head->integer > 0 )
@@ -175,7 +175,7 @@ static qboolean _xf86_XineramaFindBest( int *x, int *y, int *width, int *height,
 		{
 			if( !silent )
 				ri.Com_Printf( "Xinerama: No fitting head found" );
-			return qfalse;
+			return false;
 		}
 	}
 
@@ -187,7 +187,7 @@ static qboolean _xf86_XineramaFindBest( int *x, int *y, int *width, int *height,
 	if( !silent )
 		ri.Com_Printf( "Xinerama: Using screen %d: %dx%d+%d+%d\n", xinerama[head].screen_number, xinerama[head].width, xinerama[head].height, xinerama[head].x_org, xinerama[head].y_org );
 
-	return qtrue;
+	return true;
 }
 
 static void _xf86_VidmodesSwitch( int mode )
@@ -198,7 +198,7 @@ static void _xf86_VidmodesSwitch( int mode )
 		XF86VidModeSetViewPort( x11display.dpy, x11display.scr, 0, 0 );
 	}
 
-	_xf86_vidmodes_active = qtrue;
+	_xf86_vidmodes_active = true;
 }
 
 static void _xf86_VidmodesSwitchBack( void )
@@ -224,10 +224,10 @@ static void _xf86_VidmodesSwitchBack( void )
 		XF86VidModeSetViewPort( x11display.dpy, x11display.scr, default_viewport[0], default_viewport[1] );
 	}
 
-	_xf86_vidmodes_active = qfalse;
+	_xf86_vidmodes_active = false;
 }
 
-static void _xf86_VidmodesFindBest( int *mode, int *pwidth, int *pheight, qboolean silent )
+static void _xf86_VidmodesFindBest( int *mode, int *pwidth, int *pheight, bool silent )
 {
 	int i, best_fit, best_dist, dist, x, y;
 
@@ -274,8 +274,8 @@ static void _xf86_VidmodesFindBest( int *mode, int *pwidth, int *pheight, qboole
 
 #ifdef _XRANDR_OVER_VIDMODE_
 // XRANDR
-qboolean _xrandr_supported = qfalse;
-qboolean _xrandr_active = qfalse;
+bool _xrandr_supported = false;
+bool _xrandr_active = false;
 int _xrandr_eventbase;
 int _xrandr_errorbase;
 // list of resolutions
@@ -308,12 +308,12 @@ static void _xf86_XrandrInit( void )
 
 		// Get a list of resolutions (first here is actually the current resolution too ^^)
 		_xrandr_sizes = XRRSizes( x11display.dpy, 0, &_xrandr_numsizes );
-		_xrandr_supported = qtrue;
+		_xrandr_supported = true;
 	}
 	else
 	{
 		ri.Com_Printf( "..Xrandr Extension not available\n" );
-		_xrandr_supported = qfalse;
+		_xrandr_supported = false;
 	}
 }
 
@@ -323,8 +323,8 @@ static void _xf86_XrandrFree( void )
 		XRRFreeScreenConfigInfo( _xrandr_config );
 
 	_xrandr_config = 0;
-	_xrandr_supported = qfalse;
-	_xrandr_active = qfalse;
+	_xrandr_supported = false;
+	_xrandr_active = false;
 }
 
 static short _xf86_XrandrClosestRate( int mode, short preferred_rate )
@@ -375,7 +375,7 @@ static void _xf86_XrandrSwitch( int mode, int refresh_rate )
 		// ??
 	}
 
-	_xrandr_active = qtrue;
+	_xrandr_active = true;
 }
 
 static void _xf86_XrandrSwitchBack( void )
@@ -385,10 +385,10 @@ static void _xf86_XrandrSwitchBack( void )
 		XRRSetScreenConfigAndRate( x11display.dpy, _xrandr_config, x11display.root, _xrandr_default_size, _xrandr_default_rotation, _xrandr_default_rate, CurrentTime );
 	}
 
-	_xrandr_active = qfalse;
+	_xrandr_active = false;
 }
 
-static void _xf86_XrandrFindBest( int *mode, int *pwidth, int *pheight, qboolean silent )
+static void _xf86_XrandrFindBest( int *mode, int *pwidth, int *pheight, bool silent )
 {
 	int i, best_fit, best_dist, dist, x, y;
 
@@ -461,9 +461,9 @@ static void _x11_SetNoResize( Window w, int width, int height )
 /*
 * _NET_WM_CHECK_SUPPORTED
 */
-static qboolean _NET_WM_CHECK_SUPPORTED( Atom NET_ATOM )
+static bool _NET_WM_CHECK_SUPPORTED( Atom NET_ATOM )
 {
-	qboolean issupported = qfalse;
+	bool issupported = false;
 	unsigned char *atomdata;
 	Atom *atoms;
 	int status, real_format;
@@ -479,14 +479,14 @@ static qboolean _NET_WM_CHECK_SUPPORTED( Atom NET_ATOM )
 		&items_read, &items_left, &atomdata );
 
 	if( status != Success )
-		return qfalse;
+		return false;
 
 	atoms = (Atom *)atomdata;
 	for( i = 0; result && i < items_read; i++ )
 	{
 		if( atoms[i] == NET_ATOM )
 		{
-			issupported = qtrue;
+			issupported = true;
 			break;
 		}
 	}
@@ -498,7 +498,7 @@ static qboolean _NET_WM_CHECK_SUPPORTED( Atom NET_ATOM )
 /*
 * _NET_WM_STATE_FULLSCREEN_SUPPORTED
 */
-static qboolean _NET_WM_STATE_FULLSCREEN_SUPPORTED( void )
+static bool _NET_WM_STATE_FULLSCREEN_SUPPORTED( void )
 {
 	Atom _NET_WM_STATE_FULLSCREEN = XInternAtom( x11display.dpy, "_NET_WM_STATE_FULLSCREEN", 0 );
 	return _NET_WM_CHECK_SUPPORTED( _NET_WM_STATE_FULLSCREEN );
@@ -507,9 +507,9 @@ static qboolean _NET_WM_STATE_FULLSCREEN_SUPPORTED( void )
 /*
 * _NETWM_CHECK_FULLSCREEN
 */
-static qboolean _NETWM_CHECK_FULLSCREEN( void )
+static bool _NETWM_CHECK_FULLSCREEN( void )
 {
-	qboolean isfullscreen = qfalse;
+	bool isfullscreen = false;
 	unsigned char *atomdata;
 	Atom *atoms;
 	int status, real_format;
@@ -521,7 +521,7 @@ static qboolean _NETWM_CHECK_FULLSCREEN( void )
 	cvar_t *vid_fullscreen;
 
 	if( !x11display.features.wmStateFullscreen )
-		return qfalse;
+		return false;
 
 	_NET_WM_STATE = XInternAtom( x11display.dpy, "_NET_WM_STATE", 0 );
 	_NET_WM_STATE_FULLSCREEN = XInternAtom( x11display.dpy, "_NET_WM_STATE_FULLSCREEN", 0 );
@@ -531,14 +531,14 @@ static qboolean _NETWM_CHECK_FULLSCREEN( void )
 		&items_read, &items_left, &atomdata );
 
 	if( status != Success )
-		return qfalse;
+		return false;
 
 	atoms = (Atom *)atomdata;
 	for( i = 0; result && i < items_read; i++ )
 	{
 		if( atoms[i] == _NET_WM_STATE_FULLSCREEN )
 		{
-			isfullscreen = qtrue;
+			isfullscreen = true;
 			break;
 		}
 	}
@@ -546,7 +546,7 @@ static qboolean _NETWM_CHECK_FULLSCREEN( void )
 	vid_fullscreen = ri.Cvar_Get( "vid_fullscreen", "0", CVAR_ARCHIVE );
 	glConfig.fullScreen = isfullscreen;
 	ri.Cvar_SetValue( vid_fullscreen->name, isfullscreen ? 1 : 0 );
-	vid_fullscreen->modified = qfalse;
+	vid_fullscreen->modified = false;
 
 	XFree( atomdata );
 	return isfullscreen;
@@ -557,7 +557,7 @@ static qboolean _NETWM_CHECK_FULLSCREEN( void )
 *
 * Tell Window-Manager to toggle fullscreen
 */
-static void _NETWM_SET_FULLSCREEN( qboolean fullscreen )
+static void _NETWM_SET_FULLSCREEN( bool fullscreen )
 {
 	XEvent xev;
 	Atom NET_WM_STATE;
@@ -647,7 +647,7 @@ static void GLimp_SetApplicationIcon( void )
 ** GLimp_SetMode_Real
 * Hack to get rid of the prints when toggling fullscreen
 */
-static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, qboolean fullscreen, qboolean wideScreen, qboolean silent, qboolean force )
+static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, bool fullscreen, bool wideScreen, bool silent, bool force )
 {
 	int screen_x, screen_y, screen_width, screen_height, screen_mode;
 	float ratio;
@@ -735,7 +735,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 		XReparentWindow( x11display.dpy, x11display.gl_win, x11display.win, ( screen_width/2 )-( width/2 ),
 			( screen_height/2 )-( height/2 ) );
 
-		x11display.modeset = qtrue;
+		x11display.modeset = true;
 
 		XMapWindow( x11display.dpy, x11display.gl_win );
 		XMapWindow( x11display.dpy, x11display.win );
@@ -743,7 +743,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 		if ( !x11display.features.wmStateFullscreen )
 			_x11_SetNoResize( x11display.win, width, height );
 		else
-			_NETWM_SET_FULLSCREEN( qtrue );
+			_NETWM_SET_FULLSCREEN( true );
 
 		if( screen_mode != -1 )
 		{
@@ -774,7 +774,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 		XResizeWindow( x11display.dpy, x11display.gl_win, width, height );
 		XReparentWindow( x11display.dpy, x11display.gl_win, x11display.win, 0, 0 );
 
-		x11display.modeset = qtrue;
+		x11display.modeset = true;
 
 		XMapWindow( x11display.dpy, x11display.gl_win );
 		XMapWindow( x11display.dpy, x11display.win );
@@ -782,7 +782,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 		if( !x11display.features.wmStateFullscreen )
 			_x11_SetNoResize( x11display.win, width, height );
 		else
-			_NETWM_SET_FULLSCREEN( qfalse );
+			_NETWM_SET_FULLSCREEN( false );
 
 #ifdef _XRANDR_OVER_VIDMODE_
 		_xf86_XrandrSwitchBack();
@@ -836,9 +836,9 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 ** GLimp_SetMode
 */
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
-	qboolean fullscreen, qboolean wideScreen )
+	bool fullscreen, bool wideScreen )
 {
-	return GLimp_SetMode_Real( width, height, displayFrequency, fullscreen, wideScreen, qfalse, qfalse );
+	return GLimp_SetMode_Real( width, height, displayFrequency, fullscreen, wideScreen, false, false );
 }
 
 /*
@@ -866,7 +866,7 @@ void GLimp_Shutdown( void )
 	}
 
 	memset(&x11display.features, 0, sizeof(x11display.features));
-	x11display.modeset = qfalse;
+	x11display.modeset = false;
 	x11display.visinfo = NULL;
 	x11display.cmap = 0;
 	x11display.ctx = NULL;
@@ -885,7 +885,7 @@ void GLimp_Shutdown( void )
 }
 
 static int gotstencil = 0; // evil hack!
-static qboolean ChooseVisual( int colorbits, int stencilbits )
+static bool ChooseVisual( int colorbits, int stencilbits )
 {
 	int colorsize;
 	int depthbits = colorbits;
@@ -910,13 +910,13 @@ static qboolean ChooseVisual( int colorbits, int stencilbits )
 		if( !x11display.visinfo )
 		{
 			ri.Com_Printf( "..Failed to get colorbits %i, depthbits %i, stencilbits %i\n", colorbits, depthbits, stencilbits );
-			return qfalse;
+			return false;
 		}
 		else
 		{
 			ri.Com_Printf( "..Got colorbits %i, depthbits %i, stencilbits %i\n", colorbits, depthbits, stencilbits );
 			gotstencil = stencilbits;
-			return qtrue;
+			return true;
 		}
 	}
 }
@@ -1041,8 +1041,8 @@ void GLimp_EndFrame( void )
 		cvar_t *vid_multiscreen_head = ri.Cvar_Get( "vid_multiscreen_head", "0", CVAR_ARCHIVE );
 		
 		if( vid_multiscreen_head->modified ) {
-			GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, qtrue, glConfig.wideScreen, qtrue, qtrue );
-			vid_multiscreen_head->modified = qfalse;
+			GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, true, glConfig.wideScreen, true, true );
+			vid_multiscreen_head->modified = false;
 		}
 	}
 }
@@ -1050,23 +1050,23 @@ void GLimp_EndFrame( void )
 /*
 ** GLimp_GetGammaRamp
 */
-qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
+bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
 {
 	int size;
 #ifndef X_XF86VidModeGetGammaRampSize
 	if( XF86VidModeGetGammaRampSize( x11display.dpy, x11display.scr,
 		&size ) == 0 )
-		return qfalse;
+		return false;
 #else
 	size = 256;
 #endif
 	if( size > stride )
-		return qfalse;
+		return false;
 	*psize = size;
 	if( XF86VidModeGetGammaRamp( x11display.dpy, x11display.scr,
 		size, ramp, ramp + stride, ramp + ( stride << 1 ) ) != 0 )
-		return qtrue;
-	return qfalse;
+		return true;
+	return false;
 }
 
 /*
@@ -1081,46 +1081,46 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ram
 /*
 ** GLimp_AppActivate
 */
-void GLimp_AppActivate( qboolean active, qboolean destroy )
+void GLimp_AppActivate( bool active, bool destroy )
 {
 }
 
 /*
 ** GLimp_SetWindow
 */
-qboolean GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+bool GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
-	return qfalse; // surface cannot be lost
+	return false; // surface cannot be lost
 }
 
 /*
 ** GLimp_ScreenEnabled
 */
-qboolean GLimp_ScreenEnabled( void )
+bool GLimp_ScreenEnabled( void )
 {
-	return qtrue;
+	return true;
 }
 
 /*
 ** GLimp_SharedContext_Create
 */
-qboolean GLimp_SharedContext_Create( void **context, void **surface )
+bool GLimp_SharedContext_Create( void **context, void **surface )
 {
 	GLXContext ctx = qglXCreateContext( x11display.dpy, x11display.visinfo, x11display.ctx, True );
 	if( !ctx )
-		return qfalse;
+		return false;
 
 	*context = (void *)ctx;
 	*surface = (void *)x11display.gl_win;
-	return qtrue;
+	return true;
 }
 
 /*
 ** GLimp_SharedContext_MakeCurrent
 */
-qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
+bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
-	return qglXMakeCurrent( x11display.dpy, (GLXDrawable)surface, (GLXContext)context ) == True ? qtrue : qfalse;
+	return qglXMakeCurrent( x11display.dpy, (GLXDrawable)surface, (GLXContext)context ) == True ? true : false;
 }
 
 /*

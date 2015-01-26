@@ -655,7 +655,7 @@ extern game_locals_t game;
 #define PLAYERNUM( x ) ( ( x ) - game.edicts - 1 )
 #define PLAYERENT( x ) ( game.edicts + ( x ) + 1 )
 #define G_ISGHOSTING( x ) ( ( ( x )->s.modelindex == 0 ) && ( ( x )->r.solid == SOLID_NOT ) )
-#define ISBRUSHMODEL( x ) ( ( ( x > 0 ) && ( (int)x < trap_CM_NumInlineModels() ) ) ? qtrue : qfalse )
+#define ISBRUSHMODEL( x ) ( ( ( x > 0 ) && ( (int)x < trap_CM_NumInlineModels() ) ) ? true : false )
 
 void G_TeleportEffect( edict_t *ent, bool in );
 void G_RespawnEffect( edict_t *ent );
@@ -837,11 +837,11 @@ void G_ClientRespawn( edict_t *self, bool ghost );
 void G_ClientClearStats( edict_t *ent );
 void G_GhostClient( edict_t *self );
 void G_MoveClientToTV( edict_t *ent );
-qboolean ClientMultiviewChanged( edict_t *ent, qboolean multiview );
+bool ClientMultiviewChanged( edict_t *ent, bool multiview );
 void ClientThink( edict_t *ent, usercmd_t *cmd, int timeDelta );
 void G_ClientThink( edict_t *ent );
 void G_CheckClientRespawnClick( edict_t *ent );
-qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qboolean tvClient );
+bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient );
 void ClientDisconnect( edict_t *ent, const char *reason );
 void ClientBegin( edict_t *ent );
 void ClientCommand( edict_t *ent );
@@ -942,7 +942,7 @@ void G_RestartLevel( void );
 game_state_t *G_GetGameState( void );
 void	G_Timeout_Reset( void );
 
-qboolean G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname );
+bool G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname );
 
 //
 // g_frame.c

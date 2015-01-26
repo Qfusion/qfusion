@@ -38,7 +38,7 @@ static inline void trap_Error( const char *msg )
 // dynvars
 static inline dynvar_t *trap_Dynvar_Create( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter )
 {
-	return CGAME_IMPORT.Dynvar_Create( name, console == true ? qtrue : qfalse, getter, setter );
+	return CGAME_IMPORT.Dynvar_Create( name, console == true ? true : false, getter, setter );
 }
 
 static inline void trap_Dynvar_Destroy( dynvar_t *dynvar )
@@ -214,12 +214,12 @@ static inline const char *trap_FS_FirstExtension( const char *filename, const ch
 
 static inline bool trap_FS_IsPureFile( const char *filename )
 {
-	return CGAME_IMPORT.FS_IsPureFile( filename ) == qtrue;
+	return CGAME_IMPORT.FS_IsPureFile( filename ) == true;
 }
 
 static inline bool trap_FS_MoveFile( const char *src, const char *dst )
 {
-	return CGAME_IMPORT.FS_MoveFile( src, dst ) == qtrue;
+	return CGAME_IMPORT.FS_MoveFile( src, dst ) == true;
 }
 
 static inline const char *trap_Key_GetBindingBuf( int binding )
@@ -244,7 +244,7 @@ static inline unsigned int trap_Milliseconds( void )
 
 static inline bool trap_DownloadRequest( const char *filename, bool requestpak )
 {
-	return CGAME_IMPORT.DownloadRequest( filename, requestpak == true ? qtrue : qfalse ) == qtrue;
+	return CGAME_IMPORT.DownloadRequest( filename, requestpak == true ? true : false ) == true;
 }
 
 static inline void trap_NET_GetUserCmd( int frame, usercmd_t *cmd )
@@ -354,9 +354,9 @@ static inline struct shader_s *trap_R_RegisterRawPic( const char *name, int widt
 
 static inline struct shader_s *trap_R_RegisterLevelshot( const char *name, struct shader_s *defaultPic, bool *matchesDefault )
 {
-	qboolean matchesDefault_;
+	bool matchesDefault_;
 	struct shader_s *s = CGAME_IMPORT.R_RegisterLevelshot( name, defaultPic, &matchesDefault_ );
-	*matchesDefault = matchesDefault_ == qtrue ? true : false;
+	*matchesDefault = matchesDefault_ == true ? true : false;
 	return s;
 }
 
@@ -377,7 +377,7 @@ static inline struct shader_s *trap_R_RegisterVideo( const char *name )
 
 static inline bool trap_R_LerpTag( orientation_t *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name )
 {
-	return CGAME_IMPORT.R_LerpTag( orient, mod, oldframe, frame, lerpfrac, name ) == qtrue;
+	return CGAME_IMPORT.R_LerpTag( orient, mod, oldframe, frame, lerpfrac, name ) == true;
 }
 
 static inline void trap_R_SetCustomColor( int num, int r, int g, int b )
@@ -649,7 +649,7 @@ static inline const char *trap_L10n_TranslateString( const char *string )
 	return CGAME_IMPORT.L10n_TranslateString( string );
 }
 
-static inline qboolean trap_CIN_AddRawSamplesListener( struct cinematics_s *cin, 
+static inline bool trap_CIN_AddRawSamplesListener( struct cinematics_s *cin, 
 	void *listener, cg_raw_samples_cb_t rs,cg_get_raw_samples_cb_t grs )
 {
 	return CGAME_IMPORT.CIN_AddRawSamplesListener( cin, listener, rs, grs );

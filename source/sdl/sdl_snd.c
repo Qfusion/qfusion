@@ -67,7 +67,7 @@ static int snd_inited = 0;
 static cvar_t *s_bits = NULL;
 static cvar_t *s_channels = NULL;
 
-void S_Activate( qboolean active )
+void S_Activate( bool active )
 {
 	if( active )
 		SNDDMA_Submit();
@@ -132,7 +132,7 @@ static void print_audiospec( const char *str, const SDL_AudioSpec *spec )
 	Com_Printf( "\n" );
 }
 
-qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
+bool SNDDMA_Init( void *hwnd, bool verbose )
 {
 	char drivername[128];
 	SDL_AudioSpec desired;
@@ -155,7 +155,7 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 			Com_Printf( "Calling SDL_Init(SDL_INIT_AUDIO)...\n" );
 		if( SDL_Init( SDL_INIT_AUDIO ) == -1 ) {
 			Com_Printf( "SDL_Init(SDL_INIT_AUDIO) failed: %s\n", SDL_GetError() );
-			return qfalse;
+			return false;
 		}
 		if( verbose )
 			Com_Printf( "SDL_Init(SDL_INIT_AUDIO) passed.\n" );
@@ -205,7 +205,7 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 	if( SDL_OpenAudio( &desired, &obtained ) == -1 ) {
 		Com_Printf( "SDL_OpenAudio() failed: %s\n", SDL_GetError() );
 		SDL_QuitSubSystem( SDL_INIT_AUDIO );
-		return qfalse;
+		return false;
 	}
 
 	if( verbose ) {
@@ -251,7 +251,7 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 	if( verbose )
 		Com_Printf( "SDL audio initialized.\n" );
 	snd_inited = 1;
-	return qtrue;
+	return true;
 }
 
 int SNDDMA_GetDMAPos( void )
@@ -259,7 +259,7 @@ int SNDDMA_GetDMAPos( void )
 	return dmapos / ( dma.samplebits / 8 );
 }
 
-void SNDDMA_Shutdown( qboolean verbose )
+void SNDDMA_Shutdown( bool verbose )
 {
 	if( verbose )
 		Com_Printf( "Closing SDL audio device...\n" );

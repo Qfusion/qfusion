@@ -26,7 +26,7 @@ static void *sound_library = NULL;
 
 static cvar_t *s_module = NULL;
 static cvar_t *s_module_fallback = NULL;
-static qboolean s_loaded = qfalse;
+static bool s_loaded = false;
 
 static int max_spatialization_num;
 
@@ -127,7 +127,7 @@ static void CL_SoundModule_MemEmptyPool( mempool_t *pool, const char *filename, 
 * 
 * Helper function to try loading sound module with certain name
 */
-static qboolean CL_SoundModule_Load( const char *name, sound_import_t *import, qboolean verbose )
+static bool CL_SoundModule_Load( const char *name, sound_import_t *import, bool verbose )
 {
 	int apiversion;
 	size_t file_size;
@@ -152,10 +152,10 @@ static qboolean CL_SoundModule_Load( const char *name, sound_import_t *import, q
 	if( !sound_library )
 	{
 		Com_Printf( "Loading %s failed\n", name );
-		return qfalse;
+		return false;
 	}
 
-	s_loaded = qtrue;
+	s_loaded = true;
 
 	se = ( sound_export_t * )GetSoundAPI( import );
 	apiversion = se->API();
@@ -163,26 +163,26 @@ static qboolean CL_SoundModule_Load( const char *name, sound_import_t *import, q
 	{
 		CL_SoundModule_Shutdown( verbose );
 		Com_Printf( "Wrong module version for %s: %i, not %i\n", name, apiversion, SOUND_API_VERSION );
-		return qfalse;
+		return false;
 	}
 
 	if( !se->Init( VID_GetWindowHandle(), MAX_EDICTS, verbose ) )
 	{
 		CL_SoundModule_Shutdown( verbose );
 		Com_Printf( "Initialization of %s failed\n", name );
-		return qfalse;
+		return false;
 	}
 
 	if( verbose )
 		Com_Printf( "Initialization of %s succesful\n", name );
 
-	return qtrue;
+	return true;
 }
 
 /*
 * CL_SoundModule_Init
 */
-void CL_SoundModule_Init( qboolean verbose )
+void CL_SoundModule_Init( bool verbose )
 {
 	static const char *sound_modules[] = { "qf", "openal" };
 	static const int num_sound_modules = sizeof( sound_modules )/sizeof( sound_modules[0] );
@@ -318,13 +318,13 @@ void CL_SoundModule_Init( qboolean verbose )
 /*
 * CL_SoundModule_Shutdown
 */
-void CL_SoundModule_Shutdown( qboolean verbose )
+void CL_SoundModule_Shutdown( bool verbose )
 {
 	if( !s_loaded ) {
 		return;
 	}
 
-	s_loaded = qfalse;
+	s_loaded = false;
 
 	if( se && se->API() == SOUND_API_VERSION ) {
 		se->Shutdown( verbose );
@@ -356,7 +356,7 @@ void CL_SoundModule_EndRegistration( void )
 /*
 * CL_SoundModule_StopAllSounds
 */
-void CL_SoundModule_StopAllSounds( qboolean clear, qboolean stopMusic )
+void CL_SoundModule_StopAllSounds( bool clear, bool stopMusic )
 {
 	max_spatialization_num = 0;
 	if( se )
@@ -376,7 +376,7 @@ void CL_SoundModule_Clear( void )
 * CL_SoundModule_Update
 */
 void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, 
-	const char *identity, qboolean avidump )
+	const char *identity, bool avidump )
 {
 	if( se ) {
 		if( cls.state == CA_ACTIVE ) {
@@ -404,7 +404,7 @@ void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const ma
 /*
 * CL_SoundModule_Activate
 */
-void CL_SoundModule_Activate( qboolean activate )
+void CL_SoundModule_Activate( bool activate )
 {
 	if( se )
 		se->Activate( activate );
@@ -521,7 +521,7 @@ void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, flo
 * CL_SoundModule_RawSamples
 */
 void CL_SoundModule_RawSamples( unsigned int samples, unsigned int rate, 
-	unsigned short width, unsigned short channels, const uint8_t *data, qboolean music )
+	unsigned short width, unsigned short channels, const uint8_t *data, bool music )
 {
 	if( se )
 		se->RawSamples( samples, rate, width, channels, data, music );

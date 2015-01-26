@@ -111,7 +111,7 @@ static bool objectCVar_getModified( ascvar_t *self )
 	if( !self->cvar )
 		return false;
 
-	return self->cvar->modified == qtrue;
+	return self->cvar->modified == true;
 }
 
 static int objectCVar_getInteger( ascvar_t *self )
@@ -135,7 +135,7 @@ static bool objectCVar_setModified( bool modified, ascvar_t *self )
 	if( !self->cvar )
 		return false;
 
-	return self->cvar->modified == (modified ? qtrue : qfalse);
+	return self->cvar->modified == (modified ? true : false);
 }
 
 static const asstring_t *objectCVar_getName( ascvar_t *self )

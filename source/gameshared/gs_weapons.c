@@ -37,7 +37,7 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 {
 	mat3_t axis;
 	vec3_t end;
-	qboolean water = qfalse;
+	bool water = false;
 	vec3_t water_start;
 	int content_mask = MASK_SHOT | MASK_WATER;
 	static trace_t water_trace;
@@ -49,7 +49,7 @@ trace_t *GS_TraceBullet( trace_t *trace, vec3_t start, vec3_t dir, float r, floa
 
 	if( module_PointContents( start, timeDelta ) & MASK_WATER )
 	{
-		water = qtrue;
+		water = true;
 		VectorCopy( start, water_start );
 		content_mask &= ~MASK_WATER;
 
@@ -225,18 +225,18 @@ void GS_AddLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerSta
 
 	VectorMA( origin, range, dir, trail->origins[trail->head & LASERGUN_WEAK_TRAIL_MASK] );
 	trail->timeStamps[trail->head & LASERGUN_WEAK_TRAIL_MASK] = timeStamp;
-	trail->teleported[trail->head & LASERGUN_WEAK_TRAIL_MASK] = ( playerState->pmove.pm_flags & PMF_TIME_TELEPORT ) ? qtrue : qfalse;
+	trail->teleported[trail->head & LASERGUN_WEAK_TRAIL_MASK] = ( playerState->pmove.pm_flags & PMF_TIME_TELEPORT ) ? true : false;
 	trail->head++;
 }
 
-qboolean G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, unsigned int curtime, vec3_t out )
+bool G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *playerState, unsigned int curtime, vec3_t out )
 {
 	int older;
 	int current;
 	unsigned int timeStamp;
 
 	if( curtime <= CURVELASERBEAM_BACKTIME )
-		return qfalse;
+		return false;
 
 	timeStamp = curtime - CURVELASERBEAM_BACKTIME;
 
@@ -244,7 +244,7 @@ qboolean G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *player
 
 	// add current if doesn't exist
 	if( trail->timeStamps[current & LASERGUN_WEAK_TRAIL_MASK] == 0 )
-		return qfalse;
+		return false;
 
 	if( timeStamp >= trail->timeStamps[current & LASERGUN_WEAK_TRAIL_MASK] )
 		timeStamp = trail->timeStamps[current & LASERGUN_WEAK_TRAIL_MASK];
@@ -260,12 +260,12 @@ qboolean G_GetLaserbeamPoint( gs_laserbeamtrail_t *trail, player_state_t *player
 
 	// todo: add interpolation?
 	VectorCopy( trail->origins[older & LASERGUN_WEAK_TRAIL_MASK], out );
-	return qtrue;
+	return true;
 }
 #undef 	LASERGUN_WEAK_TRAIL_BACKUP
 #undef 	LASERGUN_WEAK_TRAIL_MASK
 
-static qboolean GS_CheckBladeAutoAttack( player_state_t *playerState, int timeDelta )
+static bool GS_CheckBladeAutoAttack( player_state_t *playerState, int timeDelta )
 {
 	vec3_t origin, dir, end;
 	trace_t trace;
@@ -273,10 +273,10 @@ static qboolean GS_CheckBladeAutoAttack( player_state_t *playerState, int timeDe
 	gs_weapon_definition_t *weapondef = GS_GetWeaponDef( WEAP_GUNBLADE );
 
 	if( playerState->POVnum <= 0 || (int)playerState->POVnum > gs.maxclients )
-		return qfalse;
+		return false;
 
 	if( !( playerState->pmove.stats[PM_STAT_FEATURES] & PMFEAT_GUNBLADEAUTOATTACK ) )
-		return qfalse;
+		return false;
 
 	VectorCopy( playerState->pmove.origin, origin );
 	origin[2] += playerState->viewheight;
@@ -286,17 +286,17 @@ static qboolean GS_CheckBladeAutoAttack( player_state_t *playerState, int timeDe
 	// check for a player to touch
 	module_Trace( &trace, origin, vec3_origin, vec3_origin, end, playerState->POVnum, CONTENTS_BODY, timeDelta );
 	if( trace.ent <= 0 || trace.ent > gs.maxclients )
-		return qfalse;
+		return false;
 
 	player = module_GetEntityState( playerState->POVnum, 0 );
 	targ = module_GetEntityState( trace.ent, 0 );
 	if( !( targ->effects & EF_TAKEDAMAGE ) || targ->type != ET_PLAYER )
-		return qfalse;
+		return false;
 
 	if( GS_TeamBasedGametype() && ( targ->team == player->team ) )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 
@@ -386,17 +386,17 @@ firedef_t *GS_FiredefForPlayerState( player_state_t *playerState, int checkweapo
 /*
 * GS_CheckAmmoInWeapon
 */
-qboolean GS_CheckAmmoInWeapon( player_state_t *playerState, int checkweapon )
+bool GS_CheckAmmoInWeapon( player_state_t *playerState, int checkweapon )
 {
 	firedef_t *firedef = GS_FiredefForPlayerState( playerState, checkweapon );
 
 	if( checkweapon != WEAP_NONE && !playerState->inventory[checkweapon] )
-		return qfalse;
+		return false;
 
 	if( !firedef->usage_count || firedef->ammo_id == AMMO_NONE )
-		return qtrue;
+		return true;
 
-	return ( playerState->inventory[firedef->ammo_id] >= firedef->usage_count ) ? qtrue : qfalse;
+	return ( playerState->inventory[firedef->ammo_id] >= firedef->usage_count ) ? true : false;
 }
 
 /*
@@ -405,7 +405,7 @@ qboolean GS_CheckAmmoInWeapon( player_state_t *playerState, int checkweapon )
 int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, int timeDelta )
 {
 	firedef_t *firedef;
-	qboolean refire = qfalse;
+	bool refire = false;
 
 	assert( playerState->stats[STAT_PENDING_WEAPON] >= 0 && playerState->stats[STAT_PENDING_WEAPON] < WEAP_TOTAL );
 
@@ -443,7 +443,7 @@ int GS_ThinkPlayerWeapon( player_state_t *playerState, int buttons, int msecs, i
 
 		last_firemode = ( playerState->weaponState == WEAPON_STATE_REFIRESTRONG ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 		if( last_firemode == firedef->fire_mode )
-			refire = qtrue;
+			refire = true;
 
 		playerState->weaponState = WEAPON_STATE_READY;
 	}

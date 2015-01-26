@@ -131,7 +131,7 @@ static void SNAP_RecordDemoMetaDataMessage( int demofile, msg_t *msg )
 	complevel = FS_GetCompressionLevel( demofile );
 	FS_SetCompressionLevel( demofile, 0 );
 
-	DEMO_SAFEWRITE( demofile, msg, qtrue );
+	DEMO_SAFEWRITE( demofile, msg, true );
 
 	FS_SetCompressionLevel( demofile, complevel );
 
@@ -183,7 +183,7 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 		MSG_WriteLong( &msg, purefile->checksum );
 		purefile = purefile->next;
 
-		DEMO_SAFEWRITE( demofile, &msg, qfalse );
+		DEMO_SAFEWRITE( demofile, &msg, false );
 	}
 
 	// config strings
@@ -195,7 +195,7 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 			MSG_WriteByte( &msg, svc_servercs );
 			MSG_WriteString( &msg, va( "cs %i \"%s\"", i, configstring ) );
 
-			DEMO_SAFEWRITE( demofile, &msg, qfalse );
+			DEMO_SAFEWRITE( demofile, &msg, false );
 		}
 	}
 
@@ -208,19 +208,19 @@ void SNAP_BeginDemoRecording( int demofile, unsigned int spawncount, unsigned in
 		if( base->modelindex || base->sound || base->effects )
 		{
 			MSG_WriteByte( &msg, svc_spawnbaseline );
-			MSG_WriteDeltaEntity( &nullstate, base, &msg, qtrue, qtrue );
+			MSG_WriteDeltaEntity( &nullstate, base, &msg, true, true );
 
-			DEMO_SAFEWRITE( demofile, &msg, qfalse );
+			DEMO_SAFEWRITE( demofile, &msg, false );
 		}
 	}
 
 	// client expects the server data to be in a separate packet
-	DEMO_SAFEWRITE( demofile, &msg, qtrue );
+	DEMO_SAFEWRITE( demofile, &msg, true );
 
 	MSG_WriteByte( &msg, svc_servercs );
 	MSG_WriteString( &msg, "precache" );
 
-	DEMO_SAFEWRITE( demofile, &msg, qtrue );
+	DEMO_SAFEWRITE( demofile, &msg, true );
 }
 
 /*

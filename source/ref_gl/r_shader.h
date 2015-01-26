@@ -277,17 +277,17 @@ void		R_ShutdownShaders( void );
 
 void		R_UploadCinematicShader( const shader_t *shader );
 
-void		R_PrintShaderList( const char *mask, qboolean (*filter)( const char *filter, const char *value) );
+void		R_PrintShaderList( const char *mask, bool (*filter)( const char *filter, const char *value) );
 void		R_PrintShaderCache( const char *name );
 
 shader_t	*R_ShaderById( unsigned int id );
 
-shader_t	*R_LoadShader( const char *name, shaderType_e type, qboolean forceDefault );
+shader_t	*R_LoadShader( const char *name, shaderType_e type, bool forceDefault );
 
 shader_t	*R_RegisterShader( const char *name, shaderType_e type );
 shader_t	*R_RegisterPic( const char *name );
 shader_t	*R_RegisterRawPic( const char *name, int width, int height, uint8_t *data, int samples );
-shader_t	*R_RegisterLevelshot( const char *name, shader_t *defaultShader, qboolean *matchesDefault );
+shader_t	*R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *matchesDefault );
 shader_t	*R_RegisterSkin( const char *name );
 shader_t	*R_RegisterVideo( const char *name );
 

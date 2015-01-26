@@ -96,13 +96,13 @@ void R_SetupFrustum( const refdef_t *rd, float farClip, cplane_t *frustum )
 * 
 * Returns true if the box is completely outside the frustum
 */
-qboolean R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags )
+bool R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipflags )
 {
 	unsigned int i, bit;
 	const cplane_t *p;
 
 	if( r_nocull->integer )
-		return qfalse;
+		return false;
 
 	for( i = sizeof( rn.frustum )/sizeof( rn.frustum[0] ), bit = 1, p = rn.frustum; i > 0; i--, bit<<=1, p++ )
 	{
@@ -113,43 +113,43 @@ qboolean R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int cli
 		{
 		case 0:
 			if( p->normal[0]*maxs[0] + p->normal[1]*maxs[1] + p->normal[2]*maxs[2] < p->dist )
-				return qtrue;
+				return true;
 			break;
 		case 1:
 			if( p->normal[0]*mins[0] + p->normal[1]*maxs[1] + p->normal[2]*maxs[2] < p->dist )
-				return qtrue;
+				return true;
 			break;
 		case 2:
 			if( p->normal[0]*maxs[0] + p->normal[1]*mins[1] + p->normal[2]*maxs[2] < p->dist )
-				return qtrue;
+				return true;
 			break;
 		case 3:
 			if( p->normal[0]*mins[0] + p->normal[1]*mins[1] + p->normal[2]*maxs[2] < p->dist )
-				return qtrue;
+				return true;
 			break;
 		case 4:
 			if( p->normal[0]*maxs[0] + p->normal[1]*maxs[1] + p->normal[2]*mins[2] < p->dist )
-				return qtrue;
+				return true;
 			break;
 		case 5:
 			if( p->normal[0]*mins[0] + p->normal[1]*maxs[1] + p->normal[2]*mins[2] < p->dist )
-				return qtrue;
+				return true;
 			break;
 		case 6:
 			if( p->normal[0]*maxs[0] + p->normal[1]*mins[1] + p->normal[2]*mins[2] < p->dist )
-				return qtrue;
+				return true;
 			break;
 		case 7:
 			if( p->normal[0]*mins[0] + p->normal[1]*mins[1] + p->normal[2]*mins[2] < p->dist )
-				return qtrue;
+				return true;
 			break;
 		default:
 			assert( 0 );
-			return qfalse;
+			return false;
 		}
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -157,39 +157,39 @@ qboolean R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int cli
 * 
 * Returns true if the sphere is completely outside the frustum
 */
-qboolean R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags )
+bool R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags )
 {
 	unsigned int i;
 	unsigned int bit;
 	const cplane_t *p;
 
 	if( r_nocull->integer )
-		return qfalse;
+		return false;
 
 	for( i = sizeof( rn.frustum )/sizeof( rn.frustum[0] ), bit = 1, p = rn.frustum; i > 0; i--, bit<<=1, p++ )
 	{
 		if( !( clipflags & bit ) )
 			continue;
 		if( DotProduct( centre, p->normal ) - p->dist <= -radius )
-			return qtrue;
+			return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * R_VisCullBox
 */
-qboolean R_VisCullBox( const vec3_t mins, const vec3_t maxs )
+bool R_VisCullBox( const vec3_t mins, const vec3_t maxs )
 {
 	int s, stackdepth = 0;
 	vec3_t extmins, extmaxs;
 	mnode_t *node, *localstack[2048];
 
 	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
-		return qfalse;
+		return false;
 	if( rn.renderFlags & RF_NOVIS )
-		return qfalse;
+		return false;
 
 	for( s = 0; s < 3; s++ )
 	{
@@ -202,13 +202,13 @@ qboolean R_VisCullBox( const vec3_t mins, const vec3_t maxs )
 		if( node->pvsframe != rf.pvsframecount )
 		{
 			if( !stackdepth )
-				return qtrue;
+				return true;
 			node = localstack[--stackdepth];
 			continue;
 		}
 
 		if( !node->plane )
-			return qfalse;
+			return false;
 
 		s = BOX_ON_PLANE_SIDE( extmins, extmaxs, node->plane ) - 1;
 		if( s < 2 )
@@ -223,22 +223,22 @@ qboolean R_VisCullBox( const vec3_t mins, const vec3_t maxs )
 		node = node->children[1];
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
 * R_VisCullSphere
 */
-qboolean R_VisCullSphere( const vec3_t origin, float radius )
+bool R_VisCullSphere( const vec3_t origin, float radius )
 {
 	float dist;
 	int stackdepth = 0;
 	mnode_t *node, *localstack[2048];
 
 	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
-		return qfalse;
+		return false;
 	if( rn.renderFlags & RF_NOVIS )
-		return qfalse;
+		return false;
 
 	radius += 4;
 	for( node = rsh.worldBrushModel->nodes;; )
@@ -246,13 +246,13 @@ qboolean R_VisCullSphere( const vec3_t origin, float radius )
 		if( node->pvsframe != rf.pvsframecount )
 		{
 			if( !stackdepth )
-				return qtrue;
+				return true;
 			node = localstack[--stackdepth];
 			continue;
 		}
 
 		if( !node->plane )
-			return qfalse;
+			return false;
 
 		dist = PlaneDiff( origin, node->plane );
 		if( dist > radius )
@@ -274,13 +274,13 @@ qboolean R_VisCullSphere( const vec3_t origin, float radius )
 		node = node->children[1];
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
 * R_CullModelEntity
 */
-int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, qboolean sphereCull )
+int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull )
 {
 	if( e->flags & RF_NOSHADOW )
 	{

@@ -101,7 +101,7 @@ typedef struct
 	char *filename;     // full path
 	char *manifest;
 	unsigned checksum;
-	qboolean pure;
+	bool pure;
 	void *sysHandle;
 	void *vfsHandle;
 	int numFiles;
@@ -121,7 +121,7 @@ typedef struct filehandle_s
 	int gzlevel;
 
 	wswcurl_req *streamHandle;
-	qboolean streamDone;
+	bool streamDone;
 	size_t streamOffset;
 	fs_read_cb read_cb;
 	fs_done_cb done_cb;
@@ -176,7 +176,7 @@ static int fs_notifications = 0;
 
 static int FS_AddNotifications( int bitmask );
 
-static qboolean	fs_initialized = qfalse;
+static bool	fs_initialized = false;
 
 /*
 
@@ -298,7 +298,7 @@ static char **FS_ListFiles( char *findname, int *numfiles, unsigned musthave, un
 /*
 * FS_SearchPakForFile
 */
-static qboolean FS_SearchPakForFile( pack_t *pak, const char *filename, packfile_t **pout )
+static bool FS_SearchPakForFile( pack_t *pak, const char *filename, packfile_t **pout )
 {
 	packfile_t *pakFile = NULL;
 	trie_error_t trie_error;
@@ -310,7 +310,7 @@ static qboolean FS_SearchPakForFile( pack_t *pak, const char *filename, packfile
 	if( pout ) {
 		*pout = pakFile;
 	}
-	return trie_error == TRIE_OK ? qtrue : qfalse;
+	return trie_error == TRIE_OK ? true : false;
 }
 
 /*
@@ -321,7 +321,7 @@ static qboolean FS_SearchPakForFile( pack_t *pak, const char *filename, packfile
 /*
 * FS_SearchDirectoryForFile
 */
-static qboolean FS_SearchDirectoryForFile( searchpath_t *search, const char *filename, char *path, size_t path_size )
+static bool FS_SearchDirectoryForFile( searchpath_t *search, const char *filename, char *path, size_t path_size )
 {
 	FILE *f;
 	char tempname[FS_MAX_PATH];
@@ -338,16 +338,16 @@ static qboolean FS_SearchDirectoryForFile( searchpath_t *search, const char *fil
 		if( path )
 			Q_strncpyz( path, tempname, path_size );
 		fclose( f );
-		return qtrue;
+		return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * FS_FileLength
 */
-static int FS_FileLength( FILE *f, qboolean close )
+static int FS_FileLength( FILE *f, bool close )
 {
 	int pos, end;
 
@@ -372,7 +372,7 @@ static int FS_FileLength( FILE *f, qboolean close )
 static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **pout, char *path, size_t path_size, int mode )
 {
 	searchpath_t *search;
-	qboolean purepass;
+	bool purepass;
 
 	if( !COM_ValidateRelativeFilename( filename ) )
 		return NULL;
@@ -382,7 +382,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 
 	// search through the path, one element at a time
 	search = fs_searchpaths;
-	purepass = qtrue;
+	purepass = true;
 	while( search )
 	{
 		// is the element a pak file?
@@ -412,7 +412,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 		if( !search->next && purepass )
 		{
 			search = fs_searchpaths;
-			purepass = qfalse;
+			purepass = false;
 		}
 		else
 		{
@@ -643,7 +643,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 	int i;
 	size_t max_extension_length;
 	searchpath_t *search;
-	qboolean purepass;
+	bool purepass;
 
 	assert( filename && extensions );
 
@@ -681,7 +681,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 
 	// search through the path, one element at a time
 	search = fs_searchpaths;
-	purepass = qtrue;
+	purepass = true;
 	while( search )
 	{
 		if( search->pack ) // is the element a pak file?
@@ -717,7 +717,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 		if( !search->next && purepass )
 		{
 			search = fs_searchpaths;
-			purepass = qfalse;
+			purepass = false;
 		}
 		else
 		{
@@ -734,7 +734,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 /*
 * FS_FileExists
 */
-static int FS_FileExists( const char *filename, qboolean base )
+static int FS_FileExists( const char *filename, bool base )
 {
 	searchpath_t *search;
 	packfile_t *pakFile = NULL;
@@ -769,7 +769,7 @@ static int FS_FileExists( const char *filename, qboolean base )
 	{
 		assert( tempname[0] != '\0' );
 		if( tempname[0] != '\0' ) {
-			return FS_FileLength( fopen( tempname, "rb" ), qtrue );
+			return FS_FileLength( fopen( tempname, "rb" ), true );
 		}
 	}
 
@@ -790,7 +790,7 @@ static int FS_AbsoluteFileExists( const char *filename )
 	if( !f )
 		return -1;
 
-	return FS_FileLength( f, qtrue );
+	return FS_FileLength( f, true );
 }
 
 /*
@@ -815,8 +815,8 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 	gzFile gzf = NULL;
 	filehandle_t *file;
 	int end;
-	qboolean gz;
-	qboolean update;
+	bool gz;
+	bool update;
 	int realmode;
 	char modestr[4] = { 0, 0, 0, 0 };
 
@@ -824,8 +824,8 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 	// probably useful for streamed URLS
 
 	realmode = mode;
-	gz = mode & FS_GZ ? qtrue : qfalse;
-	update = mode & FS_UPDATE ? qtrue : qfalse;
+	gz = mode & FS_GZ ? true : false;
+	update = mode & FS_UPDATE ? true : false;
 	mode = mode & FS_RWA_MASK;
 
 	assert( filenum || mode == FS_READ );
@@ -862,7 +862,7 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 		return -1;
 	}
 
-	end = (mode == FS_WRITE || gz ? 0 : FS_FileLength( f, qfalse ));
+	end = (mode == FS_WRITE || gz ? 0 : FS_FileLength( f, false ));
 
 	*filenum = FS_OpenFileHandle();
 	file = &fs_filehandles[*filenum - 1];
@@ -886,11 +886,11 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 /*
 * FS_IsUrl
 */
-qboolean FS_IsUrl( const char *url )
+bool FS_IsUrl( const char *url )
 {
 	if( !strncmp( url, "http://", 7) )
-		return qtrue;
-	return qfalse;
+		return true;
+	return false;
 }
 
 /*
@@ -901,7 +901,7 @@ qboolean FS_IsUrl( const char *url )
 static void FS_StreamDoneSimpleCb( wswcurl_req *req, int status, void *customp )
 {
 	filehandle_t *fh = (filehandle_t *)customp;
-	fh->streamDone = qtrue;
+	fh->streamDone = true;
 }
 
 /*
@@ -973,15 +973,15 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum )
 * Finds the file in the search path. Returns filesize and an open handle
 * Used for streaming data out of either a pak file or a separate file.
 */
-static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean base )
+static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool base )
 {
 	searchpath_t *search;
 	filehandle_t *file;
-	qboolean noSize;
-	qboolean gz;
-	qboolean update;
-	qboolean secure;
-	qboolean cache;
+	bool noSize;
+	bool gz;
+	bool update;
+	bool secure;
+	bool cache;
 	packfile_t *pakFile = NULL;
 	gzFile gzf = NULL;
 	int realmode;
@@ -991,11 +991,11 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 	// probably useful for streamed URLS
 
 	realmode = mode;
-	gz = mode & FS_GZ ? qtrue : qfalse;
-	noSize = mode & FS_NOSIZE ? qtrue : qfalse;
-	update = mode & FS_UPDATE ? qtrue : qfalse;
-	secure = mode & FS_SECURE ? qtrue : qfalse;
-	cache = mode & FS_CACHE ? qtrue : qfalse;
+	gz = mode & FS_GZ ? true : false;
+	noSize = mode & FS_NOSIZE ? true : false;
+	update = mode & FS_UPDATE ? true : false;
+	secure = mode & FS_SECURE ? true : false;
+	cache = mode & FS_CACHE ? true : false;
 	mode = mode & FS_RWA_MASK;
 
 	assert( mode == FS_READ || mode == FS_WRITE || mode == FS_APPEND );
@@ -1025,7 +1025,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 		file = &fs_filehandles[*filenum - 1];
 		file->read_cb = NULL;
 		file->done_cb = NULL;
-		file->streamDone = qfalse;
+		file->streamDone = false;
 		file->streamOffset = 0;
 		file->customp = file;
 
@@ -1092,7 +1092,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, qboolean
 
 		end = 0;
 		if( mode == FS_APPEND || mode == FS_READ || update ) {
-			end = f ? FS_FileLength( f, qfalse ) : 0;
+			end = f ? FS_FileLength( f, false ) : 0;
 		}
 
 		*filenum = FS_OpenFileHandle();
@@ -1185,7 +1185,7 @@ notfound:
 */
 int FS_FOpenFile( const char *filename, int *filenum, int mode )
 {
-	return _FS_FOpenFile( filename, filenum, mode, qfalse );
+	return _FS_FOpenFile( filename, filenum, mode, false );
 }
 
 /*
@@ -1195,7 +1195,7 @@ int FS_FOpenFile( const char *filename, int *filenum, int mode )
 */
 int FS_FOpenBaseFile( const char *filename, int *filenum, int mode )
 {
-	return _FS_FOpenFile( filename, filenum, mode, qtrue );
+	return _FS_FOpenFile( filename, filenum, mode, true );
 }
 
 /*
@@ -1228,7 +1228,7 @@ void FS_FCloseFile( int file )
 			// premature closing of file, call done-callback
 			// ch : FIXME proper solution for status-code for FS_ callbacks
 			// as for curl, errors are negative values
-			fh->streamDone = qtrue;
+			fh->streamDone = true;
 			fh->done_cb( file, 0, fh->customp );
 		}
 		wswcurl_delete( fh->streamHandle );
@@ -1255,7 +1255,7 @@ static int FS_ReadStream( uint8_t *buf, size_t len, filehandle_t *fh )
 	
 	numb = wswcurl_read( fh->streamHandle, buf, len );
 	if( numb < len )
-		fh->streamDone = qtrue;
+		fh->streamDone = true;
 
 	return numb;
 }
@@ -1811,7 +1811,7 @@ unsigned FS_ChecksumBaseFile( const char *filename )
 
 	fullname = FS_AbsoluteNameForBaseFile( filename );
 	if( !fullname )
-		return qfalse;
+		return false;
 
 	return FS_ChecksumAbsoluteFile( fullname );
 }
@@ -1819,7 +1819,7 @@ unsigned FS_ChecksumBaseFile( const char *filename )
 /*
 * FS_AddPurePak
 */
-qboolean FS_AddPurePak( unsigned checksum )
+bool FS_AddPurePak( unsigned checksum )
 {
 	searchpath_t *search;
 
@@ -1827,12 +1827,12 @@ qboolean FS_AddPurePak( unsigned checksum )
 	{
 		if( search->pack && search->pack->checksum == checksum )
 		{
-			search->pack->pure = qtrue;
-			return qtrue;
+			search->pack->pure = true;
+			return true;
 		}
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -1845,19 +1845,19 @@ void FS_RemovePurePaks( void )
 	for( search = fs_searchpaths; search; search = search->next )
 	{
 		if( search->pack )
-			search->pack->pure = qfalse;
+			search->pack->pure = false;
 	}
 }
 
 /*
 * FS_IsPureFile
 */
-qboolean FS_IsPureFile( const char *filename )
+bool FS_IsPureFile( const char *filename )
 {
 	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0, FS_SEARCH_PAKS );
 
 	if( !search || !search->pack )
-		return qfalse;
+		return false;
 
 	return search->pack->pure;
 }
@@ -1878,20 +1878,20 @@ const char *FS_FileManifest( const char *filename )
 /*
 * FS_RemoveAbsoluteFile
 */
-qboolean FS_RemoveAbsoluteFile( const char *filename )
+bool FS_RemoveAbsoluteFile( const char *filename )
 {
 	if( !COM_ValidateFilename( filename ) )
-		return qfalse;
+		return false;
 
-	// ch : this should return qfalse on error, qtrue on success, c++'ify:
+	// ch : this should return false on error, true on success, c++'ify:
 	// return ( !remove( filename ) );
-	return ( remove( filename ) == 0 ? qtrue : qfalse );
+	return ( remove( filename ) == 0 ? true : false );
 }
 
 /*
 * _FS_RemoveFile
 */
-static qboolean _FS_RemoveFile( const char *filename, qboolean base )
+static bool _FS_RemoveFile( const char *filename, bool base )
 {
 	const char *fullname;
 	
@@ -1901,10 +1901,10 @@ static qboolean _FS_RemoveFile( const char *filename, qboolean base )
 		fullname = FS_AbsoluteNameForFile( filename );
 
 	if( !fullname )
-		return qfalse;
+		return false;
 
 	if( strncmp( fullname, FS_WriteDirectory(), strlen( FS_WriteDirectory() ) ) )
-		return qfalse;
+		return false;
 
 	return ( FS_RemoveAbsoluteFile( fullname ) );
 }
@@ -1912,23 +1912,23 @@ static qboolean _FS_RemoveFile( const char *filename, qboolean base )
 /*
 * FS_RemoveBaseFile
 */
-qboolean FS_RemoveBaseFile( const char *filename )
+bool FS_RemoveBaseFile( const char *filename )
 {
-	return _FS_RemoveFile( filename, qtrue );
+	return _FS_RemoveFile( filename, true );
 }
 
 /*
 * FS_RemoveFile
 */
-qboolean FS_RemoveFile( const char *filename )
+bool FS_RemoveFile( const char *filename )
 {
-	return _FS_RemoveFile( filename, qfalse );
+	return _FS_RemoveFile( filename, false );
 }
 
 /*
 * _FS_CopyFile
 */
-qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base, qboolean absolute )
+bool _FS_CopyFile( const char *src, const char *dst, bool base, bool absolute )
 {
 	int srcnum, dstnum, length, result, l;
 	uint8_t buffer[FS_MAX_BLOCK_SIZE];
@@ -1936,7 +1936,7 @@ qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base, qboolean
 	length = _FS_FOpenFile( src, &srcnum, FS_READ, base );
 	if( length == -1 )
 	{
-		return qfalse;
+		return false;
 	}
 
 	if( absolute )
@@ -1946,10 +1946,10 @@ qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base, qboolean
 	if( result == -1 )
 	{
 		FS_FCloseFile( srcnum );
-		return qfalse;
+		return false;
 	}
 
-	while( qtrue )
+	while( true )
 	{
 		l = FS_Read( buffer, sizeof( buffer ), srcnum );
 		if( !l )
@@ -1964,40 +1964,40 @@ qboolean _FS_CopyFile( const char *src, const char *dst, qboolean base, qboolean
 	if( length != 0 )
 	{
 		_FS_RemoveFile( dst, base );
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
 * FS_CopyFile
 */
-qboolean FS_CopyFile( const char *src, const char *dst )
+bool FS_CopyFile( const char *src, const char *dst )
 {
-	return _FS_CopyFile( src, dst, qfalse, qfalse );
+	return _FS_CopyFile( src, dst, false, false );
 }
 
 /*
 * FS_CopyBaseFile
 */
-qboolean FS_CopyBaseFile( const char *src, const char *dst )
+bool FS_CopyBaseFile( const char *src, const char *dst )
 {
-	return _FS_CopyFile( src, dst, qtrue, qfalse );
+	return _FS_CopyFile( src, dst, true, false );
 }
 
 /*
 * FS_ExtractFile
 */
-qboolean FS_ExtractFile( const char *src, const char *dst )
+bool FS_ExtractFile( const char *src, const char *dst )
 {
-	return _FS_CopyFile( src, dst, qfalse, qtrue );
+	return _FS_CopyFile( src, dst, false, true );
 }
 
 /*
 * _FS_MoveFile
 */
-qboolean _FS_MoveFile( const char *src, const char *dst, qboolean base )
+bool _FS_MoveFile( const char *src, const char *dst, bool base )
 {
 	const char *fullname;
 
@@ -2007,39 +2007,39 @@ qboolean _FS_MoveFile( const char *src, const char *dst, qboolean base )
 		fullname = FS_AbsoluteNameForFile( src );
 
 	if( !fullname )
-		return qfalse;
+		return false;
 
 	if( strncmp( fullname, FS_WriteDirectory(), strlen( FS_WriteDirectory() ) ) )
-		return qfalse;
+		return false;
 
 	if( !COM_ValidateRelativeFilename( dst ) )
-		return qfalse;
+		return false;
 
 	if( base )
-		return ( rename( fullname, va( "%s/%s", FS_WriteDirectory(), dst ) ) == 0 ? qtrue : qfalse );
-	return ( rename( fullname, va( "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), dst ) ) == 0 ? qtrue : qfalse );
+		return ( rename( fullname, va( "%s/%s", FS_WriteDirectory(), dst ) ) == 0 ? true : false );
+	return ( rename( fullname, va( "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), dst ) ) == 0 ? true : false );
 }
 
 /*
 * FS_MoveFile
 */
-qboolean FS_MoveFile( const char *src, const char *dst )
+bool FS_MoveFile( const char *src, const char *dst )
 {
-	return _FS_MoveFile( src, dst, qfalse );
+	return _FS_MoveFile( src, dst, false );
 }
 
 /*
 * FS_MoveBaseFile
 */
-qboolean FS_MoveBaseFile( const char *src, const char *dst )
+bool FS_MoveBaseFile( const char *src, const char *dst )
 {
-	return _FS_MoveFile( src, dst, qtrue );
+	return _FS_MoveFile( src, dst, true );
 }
 
 /*
 * _FS_FileMTime
 */
-static time_t _FS_FileMTime( const char *filename, qboolean base )
+static time_t _FS_FileMTime( const char *filename, bool base )
 {
 	searchpath_t *search;
 	packfile_t *pakFile = NULL;
@@ -2071,7 +2071,7 @@ static time_t _FS_FileMTime( const char *filename, qboolean base )
 */
 time_t FS_FileMTime( const char *filename )
 {
-	return _FS_FileMTime( filename, qfalse );
+	return _FS_FileMTime( filename, false );
 }
 
 /*
@@ -2079,16 +2079,16 @@ time_t FS_FileMTime( const char *filename )
 */
 time_t FS_BaseFileMTime( const char *filename )
 {
-	return _FS_FileMTime( filename, qtrue );
+	return _FS_FileMTime( filename, true );
 }
 
 /*
 * FS_RemoveAbsoluteDirectory
 */
-qboolean FS_RemoveAbsoluteDirectory( const char *dirname )
+bool FS_RemoveAbsoluteDirectory( const char *dirname )
 {
 	if( !COM_ValidateFilename( dirname ) )
-		return qfalse;
+		return false;
 
 	return ( Sys_FS_RemoveDirectory( dirname ) );
 }
@@ -2096,10 +2096,10 @@ qboolean FS_RemoveAbsoluteDirectory( const char *dirname )
 /*
 * FS_RemoveBaseDirectory
 */
-qboolean FS_RemoveBaseDirectory( const char *dirname )
+bool FS_RemoveBaseDirectory( const char *dirname )
 {
 	if( !COM_ValidateRelativeFilename( dirname ) )
-		return qfalse;
+		return false;
 
 	return ( FS_RemoveAbsoluteDirectory( va( "%s/%s", FS_WriteDirectory(), dirname ) ) );
 }
@@ -2107,10 +2107,10 @@ qboolean FS_RemoveBaseDirectory( const char *dirname )
 /*
 * FS_RemoveDirectory
 */
-qboolean FS_RemoveDirectory( const char *dirname )
+bool FS_RemoveDirectory( const char *dirname )
 {
 	if( !COM_ValidateRelativeFilename( dirname ) )
-		return qfalse;
+		return false;
 
 	return ( FS_RemoveAbsoluteDirectory( va( "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), dirname ) ) );
 }
@@ -2294,7 +2294,7 @@ static unsigned FS_PK3GetFileInfo( FILE *f, void *vfsHandle, unsigned pos, unsig
 * Loads the header and directory, adding the files at the beginning
 * of the list so they override previous pack files.
 */
-static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
+static pack_t *FS_LoadPK3File( const char *packfilename, bool silent )
 {
 	int i;
 	int *checksums = NULL;
@@ -2306,12 +2306,12 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 	char *names;
 	unsigned char zipHeader[20]; // we can't use a struct here because of packing
 	unsigned offset, centralPos, sizeCentralDir, offsetCentralDir, byteBeforeTheZipFile;
-	qboolean modulepack;
+	bool modulepack;
 	int manifestFilesize;
 	void *handle = NULL;
 	void *vfsHandle = NULL;
 
-	// if( FS_FileExists( packfilename, qtrue ) == -1 )
+	// if( FS_FileExists( packfilename, true ) == -1 )
 		vfsHandle = Sys_VFS_FindFile( packfilename );
 
 	if( !vfsHandle )
@@ -2402,9 +2402,9 @@ static pack_t *FS_LoadPK3File( const char *packfilename, qboolean silent )
 	checksums = ( int* )Mem_TempMallocExt( ( numFiles + 1 ) * sizeof( *checksums ), 0 );
 
 	if( !Q_strnicmp( COM_FileBase( packfilename ), "modules", strlen( "modules" ) ) )
-		modulepack = qtrue;
+		modulepack = true;
 	else
-		modulepack = qfalse;
+		modulepack = false;
 
 	manifestFilesize = -1;
 
@@ -2494,7 +2494,7 @@ error:
 /*
 * FS_LoadPackFile
 */
-static pack_t *FS_LoadPackFile( const char *packfilename, qboolean silent )
+static pack_t *FS_LoadPackFile( const char *packfilename, bool silent )
 {
 	const char *ext;
 	char tempname[FS_MAX_PATH];
@@ -2524,12 +2524,12 @@ static pack_t *FS_LoadPackFile( const char *packfilename, qboolean silent )
 * 
 * Find the right position for a newly added pak file
 */
-static qboolean FS_FindPackFilePos( const char *filename, searchpath_t **psearch, searchpath_t **pprev, searchpath_t **pnext )
+static bool FS_FindPackFilePos( const char *filename, searchpath_t **psearch, searchpath_t **pprev, searchpath_t **pnext )
 {
 	const char *fullname;
 	searchpath_t *search, *compare, *prev;
 	size_t path_size;
-	qboolean founddir;
+	bool founddir;
 
 	fullname = filename;
 	path_size = sizeof( char ) * ( COM_FilePathLength( fullname ) + 1 );
@@ -2549,7 +2549,7 @@ static qboolean FS_FindPackFilePos( const char *filename, searchpath_t **psearch
 	compare = fs_searchpaths;
 
 	// find the right position
-	founddir = qfalse;
+	founddir = false;
 	while( compare )
 	{
 		int cmp = 0;
@@ -2560,7 +2560,7 @@ static qboolean FS_FindPackFilePos( const char *filename, searchpath_t **psearch
 			if( !cmp )
 			{
 				Mem_Free( search );
-				return qfalse;
+				return false;
 			}
 		}
 
@@ -2569,7 +2569,7 @@ static qboolean FS_FindPackFilePos( const char *filename, searchpath_t **psearch
 			if( compare->pack && cmp < 0 )
 				break;
 			if( !founddir )
-				founddir = qtrue;
+				founddir = true;
 		}
 		else if( founddir )
 		{
@@ -2590,7 +2590,7 @@ static qboolean FS_FindPackFilePos( const char *filename, searchpath_t **psearch
 	if( pnext )
 		*pnext = compare;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -2608,46 +2608,46 @@ static void FS_FreePakFile( pack_t *pack )
 /*
 * FS_IsPakValid
 */
-qboolean FS_IsPakValid( const char *filename, unsigned *checksum )
+bool FS_IsPakValid( const char *filename, unsigned *checksum )
 {
 	const char *fullname = FS_AbsoluteNameForBaseFile( filename );
 	pack_t *pakfile;
 
 	if( !fullname )
-		return qfalse;
+		return false;
 
-	pakfile = FS_LoadPackFile( fullname, qtrue );
+	pakfile = FS_LoadPackFile( fullname, true );
 	if( pakfile )
 	{               // unlock and free, we don't need this file anyway
 		if( checksum )
 			*checksum = pakfile->checksum;
 		FS_FreePakFile( pakfile );
-		return qtrue;
+		return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * FS_CheckPakExtension
 */
-qboolean FS_CheckPakExtension( const char *filename )
+bool FS_CheckPakExtension( const char *filename )
 {
 	int i;
 	const char *ext;
 
 	ext = COM_FileExtension( filename );
 	if( !ext || *ext != '.' )
-		return qfalse;
+		return false;
 	ext++;
 
 	for( i = 0; pak_extensions[i]; i++ )
 	{
 		if( !Q_stricmp( ext, pak_extensions[i] )  )
-			return qtrue;
+			return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -2661,7 +2661,7 @@ static int FS_PatternMatchesPackfile( void *file, void *pattern )
 	assert( cpattern != NULL );
 	assert( packfile != NULL );
 
-	return Com_GlobMatch( cpattern, packfile->name, qfalse );
+	return Com_GlobMatch( cpattern, packfile->name, false );
 }
 
 /*
@@ -2837,10 +2837,10 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 	size_t len, alllen;
 	searchpath_t *search;
 	searchfile_t *files;
-	qboolean purepass;
+	bool purepass;
 	static int maxFilesCache;
 	static char dircache[MAX_QPATH], extcache[MAX_QPATH];
-	qboolean useCache;
+	bool useCache;
 
 	assert( !dir || dir[strlen( dir )-1] != '/' );
 
@@ -2849,17 +2849,17 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 
 	if( fs_cursearchfiles )
 	{
-		useCache = ( maxFilesCache == maxFiles ? qtrue : qfalse );
+		useCache = ( maxFilesCache == maxFiles ? true : false );
 		if( useCache )
 		{
-			useCache = dir ? ( !strcmp( dircache, dir ) ? qtrue : qfalse ) : ( dircache[0] == '\0' ? qtrue : qfalse );
+			useCache = dir ? ( !strcmp( dircache, dir ) ? true : false ) : ( dircache[0] == '\0' ? true : false );
 			if( useCache )
-				useCache = extension ? ( !strcmp( extcache, extension ) ? qtrue : qfalse ) : ( extcache[0] == '\0' ? qtrue : qfalse );
+				useCache = extension ? ( !strcmp( extcache, extension ) ? true : false ) : ( extcache[0] == '\0' ? true : false );
 		}
 	}
 	else
 	{
-		useCache = qfalse;
+		useCache = false;
 	}
 
 	maxFilesCache = maxFiles;
@@ -2876,7 +2876,7 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 	if( !useCache )
 	{
 		search = fs_searchpaths;
-		purepass = qtrue;
+		purepass = true;
 		while( search )
 		{
 			if( ( search->pack && search->pack->pure == purepass ) || ( !search->pack && !purepass ) )
@@ -2907,7 +2907,7 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 			if( !search->next && purepass )
 			{
 				search = fs_searchpaths;
-				purepass = qfalse;
+				purepass = false;
 			}
 			else
 			{
@@ -3312,7 +3312,7 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 /*
 * FS_TouchGamePath
 */
-static int FS_TouchGamePath( const char *basepath, const char *gamedir, qboolean initial )
+static int FS_TouchGamePath( const char *basepath, const char *gamedir, bool initial )
 {
 	int i, totalpaks, newpaks;
 	size_t path_size;
@@ -3364,7 +3364,7 @@ static int FS_TouchGamePath( const char *basepath, const char *gamedir, qboolean
 				continue;
 			}
 
-			pak = FS_LoadPackFile( paknames[i], qfalse );
+			pak = FS_LoadPackFile( paknames[i], false );
 			if( !pak )
 				goto freename;
 
@@ -3398,7 +3398,7 @@ freename:
 */
 static int FS_AddGamePath( const char *basepath, const char *gamedir )
 {
-	return FS_TouchGamePath( basepath, gamedir, qtrue );
+	return FS_TouchGamePath( basepath, gamedir, true );
 }
 
 /*
@@ -3406,7 +3406,7 @@ static int FS_AddGamePath( const char *basepath, const char *gamedir )
 */
 static int FS_UpdateGamePath( const char *basepath, const char *gamedir )
 {
-	return FS_TouchGamePath( basepath, gamedir, qfalse );
+	return FS_TouchGamePath( basepath, gamedir, false );
 }
 
 /*
@@ -3447,7 +3447,7 @@ static void FS_RemoveExtraPaks( searchpath_t *old )
 /*
 * FS_TouchGameDirectory
 */
-static int FS_TouchGameDirectory( const char *gamedir, qboolean initial )
+static int FS_TouchGameDirectory( const char *gamedir, bool initial )
 {
 	int newpaks;
 	searchpath_t *old, *prev, *basepath;
@@ -3481,7 +3481,7 @@ static int FS_TouchGameDirectory( const char *gamedir, qboolean initial )
 */
 static int FS_AddGameDirectory( const char *gamedir )
 {
-	return FS_TouchGameDirectory( gamedir, qtrue );
+	return FS_TouchGameDirectory( gamedir, true );
 }
 
 /*
@@ -3489,7 +3489,7 @@ static int FS_AddGameDirectory( const char *gamedir )
 */
 static int FS_UpdateGameDirectory( const char *gamedir )
 {
-	return FS_TouchGameDirectory( gamedir, qfalse );
+	return FS_TouchGameDirectory( gamedir, false );
 }
 
 /*
@@ -3497,7 +3497,7 @@ static int FS_UpdateGameDirectory( const char *gamedir )
 * 
 * Sets the gamedir and path to a different directory.
 */
-qboolean FS_SetGameDirectory( const char *dir, qboolean force )
+bool FS_SetGameDirectory( const char *dir, bool force )
 {
 	int i;
 	searchpath_t *next;
@@ -3505,7 +3505,7 @@ qboolean FS_SetGameDirectory( const char *dir, qboolean force )
 	if( !force && Com_ClientState() >= CA_CONNECTED && !Com_DemoPlaying() )
 	{
 		Com_Printf( "Can't change game directory while connected\n" );
-		return qfalse;
+		return false;
 	}
 
 	Com_Printf( "Changing game directory to: %s\n", dir );
@@ -3513,13 +3513,13 @@ qboolean FS_SetGameDirectory( const char *dir, qboolean force )
 	if( !COM_ValidateRelativeFilename( dir ) )
 	{
 		Com_Printf( "Invalid name.\n" );
-		return qfalse;
+		return false;
 	}
 
 	if( strchr( dir, '/' ) )
 	{
 		Com_Printf( "Game directory must be a single filename, not a path\n" );
-		return qfalse;
+		return false;
 	}
 
 	for( i = 0; forbidden_gamedirs[i]; i++ )
@@ -3527,7 +3527,7 @@ qboolean FS_SetGameDirectory( const char *dir, qboolean force )
 		if( !Q_stricmp( forbidden_gamedirs[i], dir ) )
 		{
 			Com_Printf( "Forbidden game directory\n" );
-			return qfalse;
+			return false;
 		}
 	}
 
@@ -3573,7 +3573,7 @@ qboolean FS_SetGameDirectory( const char *dir, qboolean force )
 
 	Cbuf_Execute();
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -3656,7 +3656,7 @@ static void Cmd_FS_Search_f( void )
 		unsigned int i;
 		pack_t *pack;
 		packfile_t *pakfile;
-		qboolean first;
+		bool first;
 		struct trie_dump_s *trie_dump = NULL;
 		trie_error_t trie_err;
 
@@ -3668,7 +3668,7 @@ static void Cmd_FS_Search_f( void )
 			FS_PatternMatchesPackfile, pattern, &trie_dump );
 
 		if( trie_err == TRIE_OK ) {
-			first = qtrue;
+			first = true;
 
 			for( i = 0; i < trie_dump->size; i++ ) {
 				pakfile = ( (packfile_t *) ( trie_dump->key_value_vector[i].value ) );
@@ -3676,7 +3676,7 @@ static void Cmd_FS_Search_f( void )
 				if( first )
 				{
 					Com_Printf( "\n" S_COLOR_YELLOW "%s%s\n", pack->filename, pack->pure ? " (P)" : "" );
-					first = qfalse;
+					first = false;
 				}
 				Com_Printf( "   %s\n", pakfile->name );
 				total++;
@@ -3733,7 +3733,7 @@ static void Cmd_FileMTime_f( void )
 	time_t mtime;
 	const char *filename;
 	struct tm *newtime;
-	qboolean base;
+	bool base;
 
 	if( Cmd_Argc() < 2 )
 	{
@@ -3742,7 +3742,7 @@ static void Cmd_FileMTime_f( void )
 	}
 
 	filename = Cmd_Argv( 1 );
-	base = atoi( Cmd_Argv( 2 ) ) != 0 ? qtrue : qfalse;
+	base = atoi( Cmd_Argv( 2 ) ) != 0 ? true : false;
 
 	if( !COM_ValidateRelativeFilename( filename ) )
 	{
@@ -3841,7 +3841,7 @@ void FS_Init( void )
 	fs_base_searchpaths = fs_searchpaths;
 
 	if( strcmp( fs_game->string, fs_basegame->string ) )
-		FS_SetGameDirectory( fs_game->string, qfalse );
+		FS_SetGameDirectory( fs_game->string, false );
 
 	// no notifications after startup
 	FS_RemoveNotifications( ~0 );
@@ -3851,7 +3851,7 @@ void FS_Init( void )
 
 	fs_cursearchfiles = 0;
 
-	fs_initialized = qtrue;
+	fs_initialized = true;
 }
 
 /*
@@ -3925,5 +3925,5 @@ void FS_Shutdown( void )
 
 	QMutex_Destroy( &fs_mutex );
 
-	fs_initialized = qfalse;
+	fs_initialized = false;
 }

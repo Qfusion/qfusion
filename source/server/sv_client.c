@@ -54,8 +54,8 @@ void SV_ClientResetCommandBuffers( client_t *client )
 * accept the new client
 * this is the only place a client_t is ever initialized
 */
-qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
-						  int game_port, int challenge, qboolean fakeClient, qboolean tvClient,
+bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
+						  int game_port, int challenge, bool fakeClient, bool tvClient,
 						  unsigned int ticket_id, int session_id )
 {
 	int i;
@@ -70,7 +70,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 	// ch : rly ignore fakeClient and tvClient here?
 	session_id = SV_MM_ClientConnect( address, userinfo, ticket_id, session_id );
 	if( !session_id )
-		return qfalse;
+		return false;
 
 	// we need to set local sessions to userinfo ourselves
 	if( session_id < 0 )
@@ -78,7 +78,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 
 	// get the game a chance to reject this connection or modify the userinfo
 	if( !ge->ClientConnect( ent, userinfo, fakeClient, tvClient ) )
-		return qfalse;
+		return false;
 
 
 	// the connection is accepted, set up the client slot
@@ -97,29 +97,29 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 		{
 #ifdef TCP_ALLOW_CONNECT
 		case SOCKET_TCP:
-			client->reliable = qtrue;
-			client->individual_socket = qtrue;
+			client->reliable = true;
+			client->individual_socket = true;
 			client->socket = *socket;
 			break;
 #endif
 
 		case SOCKET_UDP:
 		case SOCKET_LOOPBACK:
-			client->reliable = qfalse;
-			client->individual_socket = qfalse;
-			client->socket.open = qfalse;
+			client->reliable = false;
+			client->individual_socket = false;
+			client->socket.open = false;
 			break;
 
 		default:
-			assert( qfalse );
+			assert( false );
 		}
 	}
 	else
 	{
 		assert( fakeClient );
-		client->reliable = qfalse;
-		client->individual_socket = qfalse;
-		client->socket.open = qfalse;
+		client->reliable = false;
+		client->individual_socket = false;
+		client->socket.open = false;
 	}
 
 	SV_ClientResetCommandBuffers( client );
@@ -165,7 +165,7 @@ qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, clie
 	}
 	client->session[i] = '\0';
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -251,10 +251,10 @@ void SV_DropClient( client_t *drop, int type, const char *format, ... )
 	if( drop->mv )
 	{
 		sv.num_mv_clients--;
-		drop->mv = qfalse;
+		drop->mv = false;
 	}
 
-	drop->tvclient = qfalse;
+	drop->tvclient = false;
 	drop->state = CS_ZOMBIE;    // become free in a few seconds
 	drop->name[0] = 0;
 }
@@ -461,7 +461,7 @@ static void SV_Baselines_f( client_t *client )
 		if( base->modelindex || base->sound || base->effects )
 		{
 			MSG_WriteByte( &tmpMessage, svc_spawnbaseline );
-			MSG_WriteDeltaEntity( &nullstate, base, &tmpMessage, qtrue, qtrue );
+			MSG_WriteDeltaEntity( &nullstate, base, &tmpMessage, true, true );
 		}
 		start++;
 	}
@@ -612,10 +612,10 @@ static void SV_NextDownload_f( client_t *client )
 * SV_GameAllowDownload
 * Asks game function whether to allow downloading of a file
 */
-static qboolean SV_GameAllowDownload( client_t *client, const char *requestname, const char *uploadname )
+static bool SV_GameAllowDownload( client_t *client, const char *requestname, const char *uploadname )
 {
 	if( client->state < CS_SPAWNED )
-		return qfalse;
+		return false;
 
 	return ge->AllowDownload( client->edict, requestname, uploadname );
 }
@@ -629,12 +629,12 @@ static void SV_DenyDownload( client_t *client, const char *reason )
 	// size -1 is used to signal that it's refused
 	// URL field is used for deny reason
 	SV_InitClientMessage( client, &tmpMessage, NULL, 0 );
-	SV_SendServerCommand( client, "initdownload \"%s\" %i %u %i \"%s\"", "", -1, 0, qfalse, reason ? reason : "" );
+	SV_SendServerCommand( client, "initdownload \"%s\" %i %u %i \"%s\"", "", -1, 0, false, reason ? reason : "" );
 	SV_AddReliableCommandsToMessage( client, &tmpMessage );
 	SV_SendMessageToClient( client, &tmpMessage );
 }
 
-static qboolean SV_FilenameForDownloadRequest( const char *requestname, qboolean requestpak,
+static bool SV_FilenameForDownloadRequest( const char *requestname, bool requestpak,
 	const char **uploadname, const char **errormsg )
 {
 	if( FS_CheckPakExtension( requestname ) )
@@ -642,12 +642,12 @@ static qboolean SV_FilenameForDownloadRequest( const char *requestname, qboolean
 		if( !requestpak )
 		{
 			*errormsg = "Pak file requested as a non pak file";
-			return qfalse;
+			return false;
 		}
 		if( FS_FOpenBaseFile( requestname, NULL, FS_READ ) == -1 )
 		{
 			*errormsg = "File not found";
-			return qfalse;
+			return false;
 		}
 
 		*uploadname = requestname;
@@ -657,7 +657,7 @@ static qboolean SV_FilenameForDownloadRequest( const char *requestname, qboolean
 		if( FS_FOpenFile( requestname, NULL, FS_READ ) == -1 )
 		{
 			*errormsg = "File not found";
-			return qfalse;
+			return false;
 		}
 
 		// check if file is inside a PAK
@@ -667,7 +667,7 @@ static qboolean SV_FilenameForDownloadRequest( const char *requestname, qboolean
 			if( !*uploadname )
 			{
 				*errormsg = "File not available in pack";
-				return qfalse;
+				return false;
 			}
 		}
 		else
@@ -676,11 +676,11 @@ static qboolean SV_FilenameForDownloadRequest( const char *requestname, qboolean
 			if( !*uploadname )
 			{
 				*errormsg = "File only available in pack";
-				return qfalse;
+				return false;
 			}
 		}
 	}
-	return qtrue;
+	return true;
 }
 
 /*
@@ -695,8 +695,8 @@ static void SV_BeginDownload_f( client_t *client )
 	unsigned checksum;
 	char *url;
 	const char *errormsg = NULL;
-	qboolean allow, requestpak;
-	qboolean local_http = SV_Web_Running() && sv_uploads_http->integer != 0;
+	bool allow, requestpak;
+	bool local_http = SV_Web_Running() && sv_uploads_http->integer != 0;
 
 	requestpak = ( atoi( Cmd_Argv( 1 ) ) == 1 );
 	requestname = Cmd_Argv( 2 );
@@ -715,7 +715,7 @@ static void SV_BeginDownload_f( client_t *client )
 
 	if( FS_CheckPakExtension( uploadname ) )
 	{
-		allow = qfalse;
+		allow = false;
 
 		// allow downloading paks from the pure list, if not spawned
 		if( client->state < CS_SPAWNED )
@@ -727,7 +727,7 @@ static void SV_BeginDownload_f( client_t *client )
 			{
 				if( !strcmp( uploadname, purefile->filename ) )
 				{
-					allow = qtrue;
+					allow = true;
 					break;
 				}
 				purefile = purefile->next;
@@ -839,13 +839,13 @@ local_download:
 /*
 * SV_ClientAllowHttpRequest
 */
-qboolean SV_ClientAllowHttpRequest( int clientNum, const char *session )
+bool SV_ClientAllowHttpRequest( int clientNum, const char *session )
 {
 	if( clientNum < 0 || clientNum >= sv_maxclients->integer ) {
-		return qfalse;
+		return false;
 	}
 	if( !session || !*session ) {
-		return qfalse;
+		return false;
 	}
 	return strcmp( svs.clients[clientNum].session, session ) == 0;
 }
@@ -896,7 +896,7 @@ static void SV_UserinfoCommand_f( client_t *client )
 */
 static void SV_NoDelta_f( client_t *client )
 {
-	client->nodelta = qtrue;
+	client->nodelta = true;
 	client->nodelta_frame = 0;
 	client->lastframe = -1; // jal : I'm not sure about this. Seems like it's missing but...
 }
@@ -906,7 +906,7 @@ static void SV_NoDelta_f( client_t *client )
 */
 static void SV_Multiview_f( client_t *client )
 {
-	qboolean mv;
+	bool mv;
 
 	mv = ( atoi( Cmd_Argv( 1 ) ) != 0 );
 
@@ -922,7 +922,7 @@ static void SV_Multiview_f( client_t *client )
 	{
 		if( sv.num_mv_clients < sv_maxmvclients->integer )
 		{
-			client->mv = qtrue;
+			client->mv = true;
 			sv.num_mv_clients++;
 		}
 		else
@@ -934,7 +934,7 @@ static void SV_Multiview_f( client_t *client )
 	else
 	{
 		assert( sv.num_mv_clients );
-		client->mv = qfalse;
+		client->mv = false;
 		sv.num_mv_clients--;
 	}
 }
@@ -1151,7 +1151,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg )
 {
 	int c;
 	char *s;
-	qboolean move_issued;
+	bool move_issued;
 	unsigned int cmdNum;
 
 	if( !msg )
@@ -1160,7 +1160,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg )
 	SV_UpdateActivity();
 
 	// only allow one move command
-	move_issued = qfalse;
+	move_issued = false;
 	while( 1 )
 	{
 		if( msg->readcount > msg->cursize )
@@ -1189,7 +1189,7 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg )
 				if( move_issued )
 					return; // someone is trying to cheat...
 
-				move_issued = qtrue;
+				move_issued = true;
 				SV_ParseMoveCommand( client, msg );
 			}
 			break;

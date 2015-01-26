@@ -269,7 +269,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol )
 	trap_Cvar_Get( "gamedate", __DATE__, CVAR_SERVERINFO | CVAR_LATCH );
 
 	password = trap_Cvar_Get( "password", "", CVAR_USERINFO );
-	password->modified = qtrue; // force an update of g_needpass in G_UpdateServerInfo
+	password->modified = true; // force an update of g_needpass in G_UpdateServerInfo
 	g_operator_password = trap_Cvar_Get( "g_operator_password", "", CVAR_ARCHIVE );
 	filterban = trap_Cvar_Get( "filterban", "1", 0 );
 
@@ -296,9 +296,9 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol )
 	g_maxtimeouts = trap_Cvar_Get( "g_maxtimeouts", "2", CVAR_ARCHIVE );
 	g_antilag = trap_Cvar_Get( "g_antilag", "1", CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_LATCH );
 	g_antilag_maxtimedelta = trap_Cvar_Get( "g_antilag_maxtimedelta", "200", CVAR_ARCHIVE );
-	g_antilag_maxtimedelta->modified = qtrue;
+	g_antilag_maxtimedelta->modified = true;
 	g_antilag_timenudge = trap_Cvar_Get( "g_antilag_timenudge", "0", CVAR_ARCHIVE );
-	g_antilag_timenudge->modified = qtrue;
+	g_antilag_timenudge->modified = true;
 
 	g_allow_spectator_voting = trap_Cvar_Get( "g_allow_spectator_voting", "1", CVAR_ARCHIVE );
 
@@ -315,16 +315,16 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol )
 
 	// flood control
 	g_floodprotection_messages = trap_Cvar_Get( "g_floodprotection_messages", "4", 0 );
-	g_floodprotection_messages->modified = qtrue;
+	g_floodprotection_messages->modified = true;
 	g_floodprotection_team = trap_Cvar_Get( "g_floodprotection_team", "0", 0 );
-	g_floodprotection_team->modified = qtrue;
+	g_floodprotection_team->modified = true;
 	g_floodprotection_seconds = trap_Cvar_Get( "g_floodprotection_seconds", "4", 0 );
-	g_floodprotection_seconds->modified = qtrue;
+	g_floodprotection_seconds->modified = true;
 	g_floodprotection_penalty = trap_Cvar_Get( "g_floodprotection_delay", "10", 0 );
-	g_floodprotection_penalty->modified = qtrue;
+	g_floodprotection_penalty->modified = true;
 
 	g_inactivity_maxtime = trap_Cvar_Get( "g_inactivity_maxtime", "90.0", 0 );
-	g_inactivity_maxtime->modified = qtrue;
+	g_inactivity_maxtime->modified = true;
 
 	// map list
 	g_maplist = trap_Cvar_Get( "g_maplist", "", CVAR_ARCHIVE );
@@ -430,7 +430,7 @@ void G_Shutdown( void )
 /*
 * G_AllowDownload
 */
-qboolean G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname )
+bool G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname )
 {
 	// allow downloading demos
 	if( g_uploads_demos->integer )
@@ -440,7 +440,7 @@ qboolean G_AllowDownload( edict_t *ent, const char *requestname, const char *upl
 		size_t extension_len, protocol_len;
 
 		if( !extension )
-			return qfalse;
+			return false;
 
 		extension_len = strlen( extension );
 		protocol_len = strlen( protocol );
@@ -452,11 +452,11 @@ qboolean G_AllowDownload( edict_t *ent, const char *requestname, const char *upl
 
 			p = strchr( uploadname, '/' );
 			if( p && !Q_strnicmp( p + 1, "demos/server/", strlen( "demos/server/" ) ) )
-				return qtrue;
+				return true;
 		}
 	}
 
-	return qfalse;
+	return false;
 }
 
 
@@ -492,7 +492,7 @@ static void G_UpdateMapRotation( void )
 
 	if( g_maplist->modified || !map_rotation_s || !map_rotation_p )
 	{
-		g_maplist->modified = qfalse;
+		g_maplist->modified = false;
 
 		// reread the maplist
 		if( map_rotation_s )
@@ -510,7 +510,7 @@ static void G_UpdateMapRotation( void )
 		count = 0;
 		lastwhitespace = true;
 		start = NULL;
-		found = qfalse;
+		found = false;
 		while( *p )
 		{
 			thiswhitespace = ( strchr( seps, *p ) != NULL ) ? true : false;
@@ -521,11 +521,11 @@ static void G_UpdateMapRotation( void )
 			}
 			else if( thiswhitespace && !lastwhitespace && !found && start )
 			{
-				found = qtrue;
+				found = true;
 				for( i = 0; start + i < p; i++ )
 				{
 					if( tolower( start[i] ) != tolower( level.mapname[i] ) )
-						found = qfalse;
+						found = false;
 				}
 				if( found )
 					map_rotation_current = count - 1;

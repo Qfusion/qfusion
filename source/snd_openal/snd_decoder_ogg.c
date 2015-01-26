@@ -69,7 +69,7 @@ int ( *qov_pcm_seek )( OggVorbis_File *vf, ogg_int64_t pos ) = ov_pcm_seek;
 /*
 * SNDOGG_Shutdown
 */
-void SNDOGG_Shutdown( qboolean verbose )
+void SNDOGG_Shutdown( bool verbose )
 {
 #ifdef VORBISLIB_RUNTIME
 	if( vorbisLibrary )
@@ -80,7 +80,7 @@ void SNDOGG_Shutdown( qboolean verbose )
 /*
 * SNDOGG_Init
 */
-qboolean SNDOGG_Init( qboolean verbose )
+bool SNDOGG_Init( bool verbose )
 {
 #ifdef VORBISLIB_RUNTIME
 	if( vorbisLibrary )
@@ -91,13 +91,13 @@ qboolean SNDOGG_Init( qboolean verbose )
 	{
 		if( verbose )
 			Com_Printf( "Couldn't load %s\n", VORBISFILE_LIBNAME );
-		return qfalse;
+		return false;
 	}
 
 	if( verbose )
 		Com_Printf( "Loaded %s\n", VORBISFILE_LIBNAME );
 #endif
-	return qtrue;
+	return true;
 }
 
 //=============================================================================
@@ -110,13 +110,13 @@ struct snd_ogg_stream_s
 	int filenum;
 };
 
-static qboolean read_ogg_header( OggVorbis_File *vorbisfile, snd_info_t *info )
+static bool read_ogg_header( OggVorbis_File *vorbisfile, snd_info_t *info )
 {
 	vorbis_info *vorbisinfo;
 
 	vorbisinfo = qov_info( vorbisfile, -1 );
 	if( !vorbisinfo )
-		return qfalse;
+		return false;
 
 	info->rate = vorbisinfo->rate;
 	info->width = 2;
@@ -124,7 +124,7 @@ static qboolean read_ogg_header( OggVorbis_File *vorbisfile, snd_info_t *info )
 	info->samples = qov_pcm_total( vorbisfile, -1 );
 	info->size = info->samples * info->channels * info->width;
 
-	return qtrue;
+	return true;
 }
 
 static void decoder_ogg_stream_shutdown( snd_stream_t *stream )
@@ -279,7 +279,7 @@ void *decoder_ogg_load( const char *filename, snd_info_t *info )
 	return buffer;
 }
 
-snd_stream_t *decoder_ogg_open( const char *filename, qboolean *delay )
+snd_stream_t *decoder_ogg_open( const char *filename, bool *delay )
 {
 	snd_stream_t *stream;
 	snd_ogg_stream_t *ogg_stream;
@@ -306,11 +306,11 @@ snd_stream_t *decoder_ogg_open( const char *filename, qboolean *delay )
 	}
 
 	if( delay )
-		*delay = qfalse;
+		*delay = false;
 
 	if( stream->isUrl && delay )
 	{
-		*delay = qtrue;
+		*delay = true;
 		return stream;
 	}
 
@@ -323,7 +323,7 @@ snd_stream_t *decoder_ogg_open( const char *filename, qboolean *delay )
 	return stream;
 }
 
-qboolean decoder_ogg_cont_open( snd_stream_t *stream )
+bool decoder_ogg_cont_open( snd_stream_t *stream )
 {
 	snd_ogg_stream_t *ogg_stream;
 	ov_callbacks callbacks = { ovcb_read, ovcb_seek, ovcb_close, ovcb_tell };
@@ -341,22 +341,22 @@ qboolean decoder_ogg_cont_open( snd_stream_t *stream )
 	{
 		Com_Printf( "Couldn't open .ogg file for reading\n" );
 		trap_FS_FCloseFile( ogg_stream->filenum );
-		return qfalse;
+		return false;
 	}
 
 	if( callbacks.seek_func && !qov_seekable( ogg_stream->vorbisfile ) )
 	{
 		Com_Printf( "Error unsupported .ogg file (not seekable)\n" );
-		return qfalse;
+		return false;
 	}
 
 	if( !read_ogg_header( ogg_stream->vorbisfile, &stream->info ) )
 	{
 		Com_Printf( "Error reading .ogg file header\n" );
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 int decoder_ogg_read( snd_stream_t *stream, int bytes, void *buffer )
@@ -409,22 +409,22 @@ void decoder_ogg_close( snd_stream_t *stream )
 	decoder_ogg_stream_shutdown( stream );
 }
 
-qboolean decoder_ogg_reset( snd_stream_t *stream )
+bool decoder_ogg_reset( snd_stream_t *stream )
 {
 	snd_ogg_stream_t *ogg_stream;
 
 	if( stream->isUrl )
-		return qfalse;
+		return false;
 
 	ogg_stream = (snd_ogg_stream_t *)stream->ptr;
 
 	// can't use ov_pcm_seek on .ogv files because of 
 	// https://trac.xiph.org/ticket/1486
 	// so just seek to the beginning of the file
-	return trap_FS_Seek( ogg_stream->filenum, 0, FS_SEEK_SET ) == 0 ? qtrue : qfalse;
+	return trap_FS_Seek( ogg_stream->filenum, 0, FS_SEEK_SET ) == 0 ? true : false;
 }
 
-qboolean decoder_ogg_eof( snd_stream_t *stream )
+bool decoder_ogg_eof( snd_stream_t *stream )
 {
 	snd_ogg_stream_t *ogg_stream = (snd_ogg_stream_t *)stream->ptr;
 

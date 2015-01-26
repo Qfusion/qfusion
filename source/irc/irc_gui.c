@@ -199,15 +199,15 @@ static int Irc_Client_DrawLine(int lines_avail, int off, int *x, int *y, const c
 
 static int Irc_Client_LastColor(const char *msg, size_t msg_len) {
 	const char *c;
-	qboolean colorflag = qfalse;
+	bool colorflag = false;
 	int last_color = -1;
 	for (c = msg; c < msg + msg_len; ++c) {
 		if (colorflag) {
 			if (isdigit(*c))
 				last_color = *c;
-			colorflag = qfalse;
+			colorflag = false;
 		} else if (*c == Q_COLOR_ESCAPE)
-			colorflag = qtrue;
+			colorflag = true;
 	}
 	return last_color;
 }

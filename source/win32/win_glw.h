@@ -43,7 +43,7 @@ typedef struct
 	HINSTANCE hinstOpenGL;      // HINSTANCE for the OpenGL library
 
 	int win_x, win_y;
-	qboolean allowdisplaydepthchange;
+	bool allowdisplaydepthchange;
 } glwstate_t;
 
 extern glwstate_t glw_state;

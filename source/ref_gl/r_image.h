@@ -56,8 +56,8 @@ typedef struct image_s
 	char			*name;						// game path, not including extension
 	size_t			name_size;
 	int				registrationSequence;
-	volatile qboolean loaded;
-	volatile qboolean missing;
+	volatile bool loaded;
+	volatile bool missing;
 
 	char			extension[8];				// file extension
 	int				flags;
@@ -73,7 +73,7 @@ typedef struct image_s
 } image_t;
 
 void R_SelectTextureUnit( int tmu );
-qboolean R_BindTexture( int tmu, const image_t *tex );
+bool R_BindTexture( int tmu, const image_t *tex );
 
 void R_InitImages( void );
 void R_TouchImage( image_t *image );
@@ -86,9 +86,9 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 void R_InitDrawFlatTexture( void );
 void R_FreeImageBuffers( void );
 
-void R_PrintImageList( const char *pattern, qboolean (*filter)( const char *filter, const char *value) );
+void R_PrintImageList( const char *pattern, bool (*filter)( const char *filter, const char *value) );
 void R_ScreenShot( const char *filename, int x, int y, int width, int height, int quality, 
-	qboolean flipx, qboolean flipy, qboolean flipdiagonal, qboolean silent );
+	bool flipx, bool flipy, bool flipdiagonal, bool silent );
 
 void R_TextureMode( char *string );
 void R_AnisotropicFilter( int value );
@@ -101,7 +101,7 @@ void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, 
 void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic );
 
 void R_BeginAviDemo( void );
-void R_WriteAviFrame( int frame, qboolean scissor );
+void R_WriteAviFrame( int frame, bool scissor );
 void R_StopAviDemo( void );
 
 #endif // R_IMAGE_H

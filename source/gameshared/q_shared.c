@@ -58,35 +58,35 @@ char *COM_SanitizeFilePath( char *path )
 /*
 * COM_ValidateFilename
 */
-qboolean COM_ValidateFilename( const char *filename )
+bool COM_ValidateFilename( const char *filename )
 {
 	assert( filename );
 
 	if( !filename || !filename[0] )
-		return qfalse;
+		return false;
 
 	// we don't allow \ in filenames, all user inputted \ characters are converted to /
 	if( strchr( filename, '\\' ) )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 /*
 * COM_ValidateRelativeFilename
 */
-qboolean COM_ValidateRelativeFilename( const char *filename )
+bool COM_ValidateRelativeFilename( const char *filename )
 {
 	if( !COM_ValidateFilename( filename ) )
-		return qfalse;
+		return false;
 
 	if( strstr( filename, ".." ) || strstr( filename, "//" ) )
-		return qfalse;
+		return false;
 
 	if( *filename == '/' || *filename == '.' )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -398,7 +398,7 @@ int COM_Compress( char *data_p )
 {
 	char *in, *out;
 	int c;
-	qboolean newline = qfalse, whitespace = qfalse;
+	bool newline = false, whitespace = false;
 
 	in = out = data_p;
 	if( in )
@@ -424,13 +424,13 @@ int COM_Compress( char *data_p )
 			}
 			else if( c == '\n' || c == '\r' )
 			{
-				newline = qtrue;
+				newline = true;
 				in++;
 				// record when we hit whitespace
 			}
 			else if( c == ' ' || c == '\t' )
 			{
-				whitespace = qtrue;
+				whitespace = true;
 				in++;
 				// an actual token
 			}
@@ -440,13 +440,13 @@ int COM_Compress( char *data_p )
 				if( newline )
 				{
 					*out++ = '\n';
-					newline = qfalse;
-					whitespace = qfalse;
+					newline = false;
+					whitespace = false;
 				}
 				if( whitespace )
 				{
 					*out++ = ' ';
-					whitespace = qfalse;
+					whitespace = false;
 				}
 
 				// copy quoted strings unmolested
@@ -493,12 +493,12 @@ static char com_token[MAX_TOKEN_CHARS];
 * 
 * Parse a token out of a string
 */
-char *COM_ParseExt2( const char **data_p, qboolean nl, qboolean sq )
+char *COM_ParseExt2( const char **data_p, bool nl, bool sq )
 {
 	int c;
 	int len;
 	const char *data;
-	qboolean newlines = qfalse;
+	bool newlines = false;
 
 	data = *data_p;
 	len = 0;
@@ -520,7 +520,7 @@ skipwhite:
 			return com_token;
 		}
 		if( c == '\n' )
-			newlines = qtrue;
+			newlines = true;
 		data++;
 	}
 
@@ -709,7 +709,7 @@ int Q_GrabWCharFromColorString( const char **pstr, qwchar *wc, int *colorindex )
 * so the result string may end up up to 1.5 times longer
 * (only a final ^ really needs duplicating, it's just easier to do it for all)
 */
-const char *COM_RemoveColorTokensExt( const char *str, qboolean draw )
+const char *COM_RemoveColorTokensExt( const char *str, bool draw )
 {
 	static char cleanString[MAX_STRING_CHARS];
 	char *out = cleanString, *end = cleanString + sizeof( cleanString );
@@ -783,7 +783,7 @@ int COM_SanitizeColorString( const char *str, char *buf, int bufsize, int maxpri
 
 		if( gc == GRABCHAR_CHAR )
 		{
-			qboolean emitcolor = ( newcolor != oldcolor && c != ' ' ) ? qtrue : qfalse;
+			bool emitcolor = ( newcolor != oldcolor && c != ' ' ) ? true : false;
 			int numbytes = ( c == Q_COLOR_ESCAPE ) ? 2 : 1; // ^ will be duplicated
 			if (emitcolor)
 				numbytes += 2;
@@ -1380,15 +1380,15 @@ qwchar Q_GrabWCharFromUtf8String (const char **pstr)
 /*
 * Q_isdigit
 */
-qboolean Q_isdigit( const char *str )
+bool Q_isdigit( const char *str )
 {
 	if( str && *str )
 	{
 		while( isdigit( *str ) ) str++;
 		if( !*str )
-			return qtrue;
+			return true;
 	}
-	return qfalse;
+	return false;
 }
 
 /*
@@ -1489,14 +1489,14 @@ size_t Q_urldecode( const char *src, char *dst, size_t dst_size )
 /*
 * COM_ValidateConfigstring
 */
-qboolean COM_ValidateConfigstring( const char *string )
+bool COM_ValidateConfigstring( const char *string )
 {
 	const char *p;
-	qboolean opened = qfalse;
+	bool opened = false;
 	int parity = 0;
 
 	if( !string )
-		return qfalse;
+		return false;
 
 	p = string;
 	while( *p )
@@ -1506,74 +1506,74 @@ qboolean COM_ValidateConfigstring( const char *string )
 			if( opened )
 			{
 				parity--;
-				opened = qfalse;
+				opened = false;
 			}
 			else
 			{
 				parity++;
-				opened = qtrue;
+				opened = true;
 			}
 		}
 		p++;
 	}
 
 	if( parity != 0 )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 /*
 * Info_ValidateValue
 */
-static qboolean Info_ValidateValue( const char *value )
+static bool Info_ValidateValue( const char *value )
 {
 	assert( value );
 
 	if( !value )
-		return qfalse;
+		return false;
 
 	if( strlen( value ) >= MAX_INFO_VALUE )
-		return qfalse;
+		return false;
 
 	if( strchr( value, '\\' ) )
-		return qfalse;
+		return false;
 
 	if( strchr( value, ';' ) )
-		return qfalse;
+		return false;
 
 	if( strchr( value, '"' ) )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 /*
 * Info_ValidateKey
 */
-static qboolean Info_ValidateKey( const char *key )
+static bool Info_ValidateKey( const char *key )
 {
 	assert( key );
 
 	if( !key )
-		return qfalse;
+		return false;
 
 	if( !key[0] )
-		return qfalse;
+		return false;
 
 	if( strlen( key ) >= MAX_INFO_KEY )
-		return qfalse;
+		return false;
 
 	if( strchr( key, '\\' ) )
-		return qfalse;
+		return false;
 
 	if( strchr( key, ';' ) )
-		return qfalse;
+		return false;
 
 	if( strchr( key, '"' ) )
-		return qfalse;
+		return false;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -1582,50 +1582,50 @@ static qboolean Info_ValidateKey( const char *key )
 * Some characters are illegal in info strings because they
 * can mess up the server's parsing
 */
-qboolean Info_Validate( const char *info )
+bool Info_Validate( const char *info )
 {
 	const char *p, *start;
 
 	assert( info );
 
 	if( !info )
-		return qfalse;
+		return false;
 
 	if( strlen( info ) >= MAX_INFO_STRING )
-		return qfalse;
+		return false;
 
 	if( strchr( info, '\"' ) )
-		return qfalse;
+		return false;
 
 	if( strchr( info, ';' ) )
-		return qfalse;
+		return false;
 
 	if( strchr( info, '"' ) )
-		return qfalse;
+		return false;
 
 	p = info;
 
 	while( p && *p )
 	{
 		if( *p++ != '\\' )
-			return qfalse;
+			return false;
 
 		start = p;
 		p = strchr( start, '\\' );
 		if( !p )  // missing key
-			return qfalse;
+			return false;
 		if( p - start >= MAX_INFO_KEY )  // too long
-			return qfalse;
+			return false;
 
 		p++; // skip the \ char
 
 		start = p;
 		p = strchr( start, '\\' );
 		if( ( p && p - start >= MAX_INFO_KEY ) || ( !p && strlen( start ) >= MAX_INFO_KEY ) )  // too long
-			return qfalse;
+			return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -1711,7 +1711,7 @@ char *Info_ValueForKey( const char *info, const char *key )
 
 	if( len >= MAX_INFO_VALUE )
 	{
-		assert( qfalse );
+		assert( false );
 		return NULL;
 	}
 	strncpy( value[valueindex], start, len );
@@ -1763,7 +1763,7 @@ void Info_RemoveKey( char *info, const char *key )
 /*
 * Info_SetValueForKey
 */
-qboolean Info_SetValueForKey( char *info, const char *key, const char *value )
+bool Info_SetValueForKey( char *info, const char *key, const char *value )
 {
 	char pair[MAX_INFO_KEY + MAX_INFO_VALUE + 1];
 
@@ -1772,18 +1772,18 @@ qboolean Info_SetValueForKey( char *info, const char *key, const char *value )
 	assert( value && Info_ValidateValue( value ) );
 
 	if( !Info_Validate( info ) || !Info_ValidateKey( key ) || !Info_ValidateValue( value ) )
-		return qfalse;
+		return false;
 
 	Info_RemoveKey( info, key );
 
 	Q_snprintfz( pair, sizeof( pair ), "\\%s\\%s", key, value );
 
 	if( strlen( pair ) + strlen( info ) > MAX_INFO_STRING )
-		return qfalse;
+		return false;
 
 	Q_strncatz( info, pair, MAX_INFO_STRING );
 
-	return qtrue;
+	return true;
 }
 
 

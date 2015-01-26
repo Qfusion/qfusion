@@ -35,7 +35,7 @@ static void TVM_Cmd_Ignore_f( edict_t *ent )
 /*
 * TVM_Cmd_PlayersExt_f
 */
-static void TVM_Cmd_PlayersExt_f( edict_t *ent, qboolean onlyspecs )
+static void TVM_Cmd_PlayersExt_f( edict_t *ent, bool onlyspecs )
 {
 	int i;
 	int count = 0;
@@ -94,7 +94,7 @@ static void TVM_Cmd_PlayersExt_f( edict_t *ent, qboolean onlyspecs )
 */
 static void TVM_Cmd_Players_f( edict_t *ent )
 {
-	TVM_Cmd_PlayersExt_f( ent, qfalse );
+	TVM_Cmd_PlayersExt_f( ent, false );
 }
 typedef struct
 {
@@ -107,7 +107,7 @@ g_gamecommands_t g_Commands[MAX_GAMECOMMANDS];
 /*
 * TVM_ClientCommand
 */
-qboolean TVM_ClientCommand( tvm_relay_t *relay, edict_t *ent )
+bool TVM_ClientCommand( tvm_relay_t *relay, edict_t *ent )
 {
 	char *cmd;
 	int i;
@@ -124,12 +124,12 @@ qboolean TVM_ClientCommand( tvm_relay_t *relay, edict_t *ent )
 		{
 			if( g_Commands[i].func )
 				g_Commands[i].func( ent );
-			return qtrue;
+			return true;
 		}
 	}
 
 	// unknown command
-	return qfalse;
+	return false;
 }
 
 /*
@@ -146,7 +146,7 @@ static void TVM_AddGameCommand( tvm_relay_t *relay, const char *name, void *call
 		if( g_Commands[i].name[0] == '\0' )
 			continue;
 		if( !Q_stricmp( g_Commands[i].name, name ) )
-			assert( qfalse );
+			assert( false );
 	}
 #endif
 

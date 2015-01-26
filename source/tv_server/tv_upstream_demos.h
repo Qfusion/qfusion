@@ -23,13 +23,13 @@
 
 #include "tv_local.h"
 
-qboolean TV_Upstream_IsAutoRecordable( upstream_t *upstream );
+bool TV_Upstream_IsAutoRecordable( upstream_t *upstream );
 void TV_Upstream_AutoRecordAction( upstream_t *upstream, const char *action );
 void TV_Upstream_WriteDemoMessage( upstream_t *upstream, msg_t *msg );
-void TV_Upstream_StartDemoRecord( upstream_t *upstream, const char *demoname, qboolean silent );
-void TV_Upstream_StopDemoRecord( upstream_t *upstream, qboolean silent, qboolean cancel );
+void TV_Upstream_StartDemoRecord( upstream_t *upstream, const char *demoname, bool silent );
+void TV_Upstream_StopDemoRecord( upstream_t *upstream, bool silent, bool cancel );
 
-void TV_Upstream_StartDemo( upstream_t *upstream, const char *demoname, qboolean randomize );
+void TV_Upstream_StartDemo( upstream_t *upstream, const char *demoname, bool randomize );
 void TV_Upstream_StopDemo( upstream_t *upstream );
 
 #endif // __TV_UPSTREAM_DEMOS_H

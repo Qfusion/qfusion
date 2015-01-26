@@ -37,7 +37,7 @@ typedef struct
 
 static console_t con;
 
-qboolean con_initialized;
+bool con_initialized;
 
 static cvar_t *con_notifytime;
 static cvar_t *con_drawNotify;
@@ -62,7 +62,7 @@ static int search_line = 0;
 static char search_text[MAXCMDLINE*2+4];
 
 // messagemode[2]
-static qboolean chat_team;
+static bool chat_team;
 static char chat_buffer[MAXCMDLINE];
 static int chat_prestep = 0;
 static unsigned int chat_linepos = 0;
@@ -172,7 +172,7 @@ void Con_ToggleConsole_f( void )
 		// open console
 		CL_SetOldKeyDest( cls.key_dest );
 		CL_SetKeyDest( key_console );
-		IN_ShowIME( qtrue );
+		IN_ShowIME( true );
 	}
 }
 
@@ -316,11 +316,11 @@ void Con_SetMessageModeCvar( void )
 */
 static void Con_MessageMode_f( void )
 {
-	chat_team = qfalse;
+	chat_team = false;
 	if( cls.state == CA_ACTIVE )
 	{
 		CL_SetKeyDest( key_message );
-		IN_ShowIME( qtrue );
+		IN_ShowIME( true );
 	}
 }
 
@@ -333,7 +333,7 @@ static void Con_MessageMode2_f( void )
 	if( cls.state == CA_ACTIVE )
 	{
 		CL_SetKeyDest( key_message );
-		IN_ShowIME( qtrue );
+		IN_ShowIME( true );
 	}
 }
 
@@ -415,7 +415,7 @@ void Con_Init( void )
 	Cmd_AddCommand( "messagemode2", Con_MessageMode2_f );
 	Cmd_AddCommand( "clear", Con_Clear_f );
 	Cmd_AddCommand( "condump", Con_Dump_f );
-	con_initialized = qtrue;
+	con_initialized = true;
 }
 
 /*
@@ -434,7 +434,7 @@ void Con_Shutdown( void )
 	Cmd_RemoveCommand( "clear" );
 	Cmd_RemoveCommand( "condump" );
 
-	con_initialized = qfalse;
+	con_initialized = false;
 }
 
 /*
@@ -476,11 +476,11 @@ static void addchartostr( char **s, int c ) {
 	newstr[len+1] = '\0';
 	*s = newstr;
 }
-static void Con_Print2( const char *txt, qboolean notify )
+static void Con_Print2( const char *txt, bool notify )
 {
 	int c, l;
 	int color;
-	qboolean colorflag = qfalse;
+	bool colorflag = false;
 
 	if( !con_initialized )
 		return;
@@ -537,10 +537,10 @@ static void Con_Print2( const char *txt, qboolean notify )
 			{
 				if( *txt != Q_COLOR_ESCAPE )
 					color = ColorIndex( *txt );
-				colorflag = qfalse;
+				colorflag = false;
 			}
 			else if( *txt == Q_COLOR_ESCAPE )
-				colorflag = qtrue;
+				colorflag = true;
 
 			//			if( Q_IsColorString( txt ) ) {
 			//				color = ColorIndex( *(txt+1) );
@@ -554,12 +554,12 @@ static void Con_Print2( const char *txt, qboolean notify )
 
 void Con_Print( const char *txt )
 {
-	Con_Print2( txt, qtrue );
+	Con_Print2( txt, true );
 }
 
 void Con_PrintSilent( const char *txt )
 {
-	Con_Print2( txt, qfalse );
+	Con_Print2( txt, false );
 }
 
 /*
@@ -1207,7 +1207,7 @@ static void Con_Key_Copy( void )
 * Inserts stuff from clipboard to console
 * Should be Con_Paste prolly
 */
-static void Con_Key_Paste( qboolean primary )
+static void Con_Key_Paste( bool primary )
 {
 	char *cbd;
 	char *tok;
@@ -1276,7 +1276,7 @@ void Con_CharEvent( qwchar key )
 	switch( key )
 	{
 	case 22: // CTRL - V : paste
-		Con_Key_Paste( qfalse );
+		Con_Key_Paste( false );
 		return;
 
 	case 12: // CTRL - L : clear
@@ -1388,7 +1388,7 @@ void Con_CharEvent( qwchar key )
 /*
 * Con_SendChatMessage
 */
-static void Con_SendChatMessage( const char *text, qboolean team )
+static void Con_SendChatMessage( const char *text, bool team )
 {
 	char *cmd;
 	char buf[MAXCMDLINE], *p;
@@ -1415,7 +1415,7 @@ static void Con_SendChatMessage( const char *text, qboolean team )
 * Handle K_ENTER keypress in console
 * Set "ignore_ctrldown" to prevent Ctrl-M/J from sending the message to chat
 */
-static void Con_Key_Enter( qboolean ignore_ctrl )
+static void Con_Key_Enter( bool ignore_ctrl )
 {
 	enum {COMMAND, CHAT, TEAMCHAT} type;
 	char *p;
@@ -1535,7 +1535,7 @@ static void Con_HistoryDown( void )
 */
 void Con_KeyDown( int key )
 {
-	qboolean ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
+	bool ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
 
 	if( !con_initialized )
 		return;
@@ -1547,13 +1547,13 @@ void Con_KeyDown( int key )
 
 	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT)) )
 	{
-		Con_Key_Paste( qtrue );
+		Con_Key_Paste( true );
 		return;
 	}
 
 	if( key == K_ENTER || key == KP_ENTER )
 	{
-		Con_Key_Enter( qfalse );
+		Con_Key_Enter( false );
 		return;
 	}
 
@@ -1712,7 +1712,7 @@ void Con_KeyDown( int key )
 /*
 * Con_MessageKeyPaste
 */
-static void Con_MessageKeyPaste( qboolean primary )
+static void Con_MessageKeyPaste( bool primary )
 {
 	char *cbd;
 	char *tok;
@@ -1779,7 +1779,7 @@ void Con_MessageCharEvent( qwchar key )
 		chat_linepos = chat_bufferlen;
 		return;
 	case 22: // CTRL - V : paste
-		Con_MessageKeyPaste( qfalse );
+		Con_MessageKeyPaste( false );
 		return;
 	}
 
@@ -1809,7 +1809,7 @@ void Con_MessageCharEvent( qwchar key )
 /*
 * Con_MessageCompletion
 */
-static void Con_MessageCompletion( const char *partial, qboolean teamonly )
+static void Con_MessageCompletion( const char *partial, bool teamonly )
 {
 	char comp[256];
 	size_t comp_len;
@@ -1887,7 +1887,7 @@ static void Con_MessageCompletion( const char *partial, qboolean teamonly )
 */
 void Con_MessageKeyDown( int key )
 {
-	qboolean ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
+	bool ctrl_is_down = Key_IsDown( K_LCTRL ) || Key_IsDown( K_RCTRL );
 
 	if( !con_initialized )
 		return;
@@ -1924,7 +1924,7 @@ void Con_MessageKeyDown( int key )
 
 	if( ( ( key == K_INS ) || ( key == KP_INS ) ) && ( Key_IsDown(K_LSHIFT) || Key_IsDown(K_RSHIFT) ) )
 	{
-		Con_MessageKeyPaste( qtrue );
+		Con_MessageKeyPaste( true );
 		return;
 	}
 
@@ -2075,7 +2075,7 @@ static void Con_TouchUp( int x, int y )
 			else if( ( touch_y - y ) >= ( smallCharHeight * 2 ) )
 				Con_HistoryDown();
 			else
-				IN_ShowIME( qtrue );
+				IN_ShowIME( true );
 		}
 	}
 	else if( cls.key_dest == key_message )
@@ -2083,7 +2083,7 @@ static void Con_TouchUp( int x, int y )
 		int x1, y1, x2, y2;
 		Con_GetMessageArea( &x1, &y1, &x2, &y2 );
 		if( ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) )
-			IN_ShowIME( qtrue );
+			IN_ShowIME( true );
 	}
 
 	touch_x = touch_y = -1;
@@ -2092,7 +2092,7 @@ static void Con_TouchUp( int x, int y )
 /*
 * Con_TouchEvent
 */
-void Con_TouchEvent( qboolean down, int x, int y )
+void Con_TouchEvent( bool down, int x, int y )
 {
 	if( !con_initialized )
 		return;

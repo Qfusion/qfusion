@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <assert.h>
 
-static qboolean dynvar_initialized = qfalse;
-static qboolean dynvar_preinitialized = qfalse;
+static bool dynvar_initialized = false;
+static bool dynvar_preinitialized = false;
 
 typedef struct dynvar_listener_node_s
 {
@@ -35,11 +35,11 @@ typedef struct dynvar_listener_node_s
 struct dynvar_s
 {
 	const char *name;               // name of the dynvar in dictionary
-	const qboolean console;         // accessible from console
+	const bool console;         // accessible from console
 	dynvar_getter_f getter;         // getter function
 	dynvar_setter_f setter;         // setter function
 	dynvar_listener_node_t *listeners; // list of listeners
-	qboolean listeners_immutable;   // Dynvar_SetValue is in call-stack
+	bool listeners_immutable;   // Dynvar_SetValue is in call-stack
 	dynvar_listener_node_t *to_remove; // list of listeners to be removed after Dynvar_SetValue
 };
 
@@ -58,7 +58,7 @@ static const char DYNVAR_NOT_FOUND_MSG[] = "no such dynvar: %s\n";
 
 static dynvar_t *Dynvar_NewDynvar(
         const char *name,
-        qboolean console,
+        bool console,
         dynvar_getter_f getter,
         dynvar_setter_f setter
 );
@@ -87,7 +87,7 @@ void Dynvar_PreInit( void )
 	assert( !dynvar_trie );
 	Trie_Create( DYNVAR_TRIE_CASING, &dynvar_trie );
 
-	dynvar_preinitialized = qtrue;
+	dynvar_preinitialized = true;
 }
 
 // externalized functions
@@ -101,7 +101,7 @@ void Dynvar_Init( void )
 	Cmd_AddCommand( "dynvarlist", Dynvar_List_f );
 	Cmd_AddCommand( "setdyn", Dynvar_Set_f );
 
-	dynvar_initialized = qtrue;
+	dynvar_initialized = true;
 }
 
 void Dynvar_Shutdown( void )
@@ -123,7 +123,7 @@ void Dynvar_Shutdown( void )
 		}
 		Trie_FreeDump( dump );
 
-		dynvar_initialized = qfalse;
+		dynvar_initialized = false;
 	}
 
 	if( dynvar_preinitialized )
@@ -133,13 +133,13 @@ void Dynvar_Shutdown( void )
 		Trie_Destroy( dynvar_trie );
 		dynvar_trie = NULL;
 
-		dynvar_preinitialized = qfalse;
+		dynvar_preinitialized = false;
 	}
 }
 
 dynvar_t *Dynvar_Create(
         const char *name,
-        qboolean console,
+        bool console,
         dynvar_getter_f getter,
         dynvar_setter_f setter
 )
@@ -223,14 +223,14 @@ void Dynvar_CallListeners(
 )
 {
 	dynvar_listener_node_t *n;
-	dynvar->listeners_immutable = qtrue; // protect against concurrent Dynvar_RemoveListener
+	dynvar->listeners_immutable = true; // protect against concurrent Dynvar_RemoveListener
 	// call listeners
 	for( n = dynvar->listeners; n; n = n->next )
 	{
 		assert( n->listener );
 		n->listener( value );
 	}
-	dynvar->listeners_immutable = qfalse; // allow Dynvar_RemoveListener to modify dynvar->listeners
+	dynvar->listeners_immutable = false; // allow Dynvar_RemoveListener to modify dynvar->listeners
 	// perform pending removals
 	if( dynvar->to_remove )
 	{
@@ -356,7 +356,7 @@ const char *Dynvar_CompleteDynvar(
 	return NULL;
 }
 
-qboolean Dynvar_Command( void )
+bool Dynvar_Command( void )
 {
 	dynvar_t *dynvar = Dynvar_Lookup( Cmd_Argv( 0 ) );
 	if( dynvar && dynvar->console )
@@ -397,18 +397,18 @@ qboolean Dynvar_Command( void )
 				break;
 			}
 		}
-		return qtrue;
+		return true;
 	}
 	else
 		// dynvar does not exist or is inaccessible
-		return qfalse;
+		return false;
 }
 
 // internal implementation
 
 static dynvar_t *Dynvar_NewDynvar(
         const char *name,
-        qboolean console,
+        bool console,
         dynvar_getter_f getter,
         dynvar_setter_f setter
 )
@@ -416,10 +416,10 @@ static dynvar_t *Dynvar_NewDynvar(
 	dynvar_t *dynvar = (dynvar_t *) Mem_ZoneMalloc( sizeof( dynvar_t ) );
 	dynvar->name = (char *) Mem_ZoneMalloc( strlen( name ) + 1 );
 	strcpy( (char *) dynvar->name, name );
-	*( (qboolean *) &dynvar->console ) = console;
+	*( (bool *) &dynvar->console ) = console;
 	dynvar->getter = getter;
 	dynvar->setter = setter;
-	dynvar->listeners_immutable = qfalse;
+	dynvar->listeners_immutable = false;
 	dynvar->to_remove = NULL;
 	return dynvar;
 }
@@ -453,7 +453,7 @@ static int Dynvar_Console( void *dynvar, void *pattern )
 	const dynvar_t *const var = ( (dynvar_t *) dynvar );
 	assert( var );
 	return var->console &&
-	       ( !pattern || Com_GlobMatch( (const char *) pattern, var->name, qfalse ) );
+	       ( !pattern || Com_GlobMatch( (const char *) pattern, var->name, false ) );
 }
 
 void Dynvar_List_f( void )

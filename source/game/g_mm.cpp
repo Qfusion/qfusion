@@ -672,7 +672,7 @@ static stat_query_t *G_Match_GenerateReport( void )
 	if( level.finalMatchDuration <= 66 * 1000 )
 		return 0;
 
-	query = sq_api->CreateQuery( NULL, "smr", qfalse );
+	query = sq_api->CreateQuery( NULL, "smr", false );
 	if( !query )
 		return 0;
 
@@ -987,7 +987,7 @@ static void G_Match_RaceReport( void )
 	* ]
 	*  ( TODO: get the nickname there )
 	*/
-	query = sq_api->CreateQuery( NULL, "smr", qfalse );
+	query = sq_api->CreateQuery( NULL, "smr", false );
 	if( !query )
 	{
 		G_Printf("G_Match_RaceReport.. failed to create query object\n");

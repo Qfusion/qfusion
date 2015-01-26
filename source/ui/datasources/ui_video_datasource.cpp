@@ -43,7 +43,7 @@ VideoDataSource::~VideoDataSource( void )
 
 void VideoDataSource::updateVideoModeList( void )
 {
-	qboolean qwideScreen;
+	bool qwideScreen;
 	char resolution[64];
 	int i, width, height;
 

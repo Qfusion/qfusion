@@ -96,7 +96,7 @@ typedef struct cmodel_s
 	float cyl_halfheight;
 	float cyl_radius;
 
-	qboolean builtin;
+	bool builtin;
 } cmodel_t;
 
 typedef struct

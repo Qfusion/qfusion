@@ -33,7 +33,7 @@ static int VID_WndProc( x11display_t *wnd, int ev, int p1, int p2 )
 * VID_Sys_Init
 */
 int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, qboolean fullScreen, qboolean wideScreen, qboolean verbose )
+	void *parentWindow, bool fullScreen, bool wideScreen, bool verbose )
 {
 	x11display.dpy = NULL;
 
@@ -60,7 +60,7 @@ void VID_UpdateWindowPosAndSize( int x, int y )
 /*
 * VID_EnableAltTab
 */
-void VID_EnableAltTab( qboolean enable )
+void VID_EnableAltTab( bool enable )
 {
 }
 
@@ -75,7 +75,7 @@ void *VID_GetWindowHandle( void )
 /*
 * VID_EnableWinKeys
 */
-void VID_EnableWinKeys( qboolean enable )
+void VID_EnableWinKeys( bool enable )
 {
 }
 
@@ -124,7 +124,7 @@ void VID_FlashWindow( int count )
 /*
 ** VID_GetDisplaySize
 */
-qboolean VID_GetDisplaySize( int *width, int *height )
+bool VID_GetDisplaySize( int *width, int *height )
 {
 	XRRScreenConfiguration *xrrConfig;
 	XRRScreenSize *xrrSizes;
@@ -146,10 +146,10 @@ qboolean VID_GetDisplaySize( int *width, int *height )
 		*height = xrrSizes[size_id].height;
 
 		XCloseDisplay( dpy );
-		return qtrue;
+		return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*

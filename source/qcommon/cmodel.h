@@ -25,7 +25,7 @@ extern cvar_t *cm_noCurves;
 // debug/performance counter vars
 int c_pointcontents, c_traces, c_brush_traces;
 
-struct cmodel_s *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload, unsigned *checksum );
+struct cmodel_s *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, unsigned *checksum );
 struct cmodel_s *CM_InlineModel( cmodel_state_t *cms, int num ); // 1, 2, etc
 char *CM_LoadMapMessage( char *name, char *message, int size );
 
@@ -66,12 +66,12 @@ int CM_BoxLeafnums( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, int *list, in
 int CM_LeafCluster( cmodel_state_t *cms, int leafnum );
 int CM_LeafArea( cmodel_state_t *cms, int leafnum );
 
-void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, qboolean open );
-qboolean CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 );
+void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, bool open );
+bool CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 );
 
 int CM_WriteAreaBits( cmodel_state_t *cms, uint8_t *buffer );
 void CM_ReadAreaBits( cmodel_state_t *cms, uint8_t *buffer );
-qboolean CM_HeadnodeVisible( cmodel_state_t *cms, int headnode, uint8_t *visbits );
+bool CM_HeadnodeVisible( cmodel_state_t *cms, int headnode, uint8_t *visbits );
 
 void CM_WritePortalState( cmodel_state_t *cms, int file );
 void CM_ReadPortalState( cmodel_state_t *cms, int file );

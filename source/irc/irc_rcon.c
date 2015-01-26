@@ -25,7 +25,7 @@ static trie_t *irc_rcon_users = NULL;
 static const char *rcon_flush_to = NULL;
 
 void Irc_Rcon_Connected_f(void *connected) {
-	qboolean * const c = (qboolean*) connected;
+	bool * const c = (bool*) connected;
 	if (!irc_rcon)
 		irc_rcon = IRC_IMPORT.Cvar_Get("irc_rcon", "0", CVAR_ARCHIVE);
 	if (!irc_rconTimeout)

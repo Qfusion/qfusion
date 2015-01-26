@@ -271,7 +271,7 @@ static void S_RawSamples_( int entNum, float fvol, float attenuation,
 * S_RawSamples2
 */
 void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const uint8_t *data, qboolean music, float fvol )
+	unsigned short channels, const uint8_t *data, bool music, float fvol )
 {
 	S_RawSamples_( RAW_SOUND_ENTNUM, fvol, ATTN_NONE, samples, rate, width, 
 		channels, data, music ? s_musicvolume : s_volume );
@@ -281,7 +281,7 @@ void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short widt
 * Global functions (sound.h)
 */
 void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const uint8_t *data, qboolean music )
+	unsigned short channels, const uint8_t *data, bool music )
 {
 	S_RawSamples_( RAW_SOUND_ENTNUM, 1, ATTN_NONE, samples, rate, width, 
 		channels, data, music ? s_musicvolume : s_volume );

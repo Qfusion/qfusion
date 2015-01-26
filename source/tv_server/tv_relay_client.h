@@ -28,9 +28,9 @@ void TV_Relay_ReconnectClients( relay_t *relay );
 void TV_Relay_ClientUserinfoChanged( relay_t *relay, client_t *client );
 void TV_Relay_ClientBegin( relay_t *relay, client_t *client );
 void TV_Relay_ClientDisconnect( relay_t *relay, client_t *client );
-qboolean TV_Relay_CanConnect( relay_t *relay, client_t *client, char *userinfo );
+bool TV_Relay_CanConnect( relay_t *relay, client_t *client, char *userinfo );
 void TV_Relay_ClientConnect( relay_t *relay, client_t *client );
-qboolean TV_Relay_ClientCommand_f( relay_t *relay, client_t *client );
+bool TV_Relay_ClientCommand_f( relay_t *relay, client_t *client );
 
 void TV_Relay_BuildClientFrameSnap( relay_t *relay, client_t *client );
 

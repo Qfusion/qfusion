@@ -18,7 +18,7 @@
 static inline cvar_flag_t Cvar_FlagSet( cvar_flag_t *flags, cvar_flag_t flag );
 static inline cvar_flag_t Cvar_FlagUnset( cvar_flag_t *flags, cvar_flag_t flag );
 static inline cvar_flag_t Cvar_FlagsClear( cvar_flag_t *flags );
-static inline qboolean Cvar_FlagIsSet( cvar_flag_t flags, cvar_flag_t flag );
+static inline bool Cvar_FlagIsSet( cvar_flag_t flags, cvar_flag_t flag );
 
 // inlined function declarations
 
@@ -30,7 +30,7 @@ static inline float	    Cvar_GetFloatValue( const cvar_t *var );
 static inline int	    Cvar_GetIntegerValue( const cvar_t *var );
 static inline cvar_flag_t   Cvar_GetFlags( const cvar_t *var );
 
-static inline qboolean	    Cvar_IsModified( const cvar_t *var );
+static inline bool	    Cvar_IsModified( const cvar_t *var );
 static inline void	    Cvar_SetModified( cvar_t *var );
 static inline void	    Cvar_UnsetModified( cvar_t *var );
 
@@ -39,7 +39,7 @@ static inline void	    Cvar_UnsetModified( cvar_t *var );
 
 // this is set each time a CVAR_USERINFO variable is changed so
 // that the client knows to send it to the server
-extern qboolean	userinfo_modified;
+extern bool	userinfo_modified;
 
 /*
 
@@ -57,7 +57,7 @@ extern qboolean	userinfo_modified;
 cvar_t *Cvar_Get( const char *var_name, const char *value, cvar_flag_t flags );
 cvar_t *Cvar_Set( const char *var_name, const char *value );
 cvar_t *Cvar_ForceSet( const char *var_name, const char *value );
-cvar_t *Cvar_FullSet( const char *var_name, const char *value, cvar_flag_t flags, qboolean overwrite_flags );
+cvar_t *Cvar_FullSet( const char *var_name, const char *value, cvar_flag_t flags, bool overwrite_flags );
 void	    Cvar_SetValue( const char *var_name, float value );
 float	    Cvar_Value( const char *var_name );
 const char *Cvar_String( const char *var_name );
@@ -69,7 +69,7 @@ char **Cvar_CompleteBuildList( const char *partial );
 char *Cvar_TabComplete( const char *partial );
 void	    Cvar_GetLatchedVars( cvar_flag_t flags );
 void	    Cvar_FixCheatVars( void );
-qboolean    Cvar_Command( void );
+bool    Cvar_Command( void );
 void	    Cvar_WriteVariables( int file );
 void	    Cvar_PreInit( void );
 void	    Cvar_Init( void );
@@ -108,17 +108,17 @@ static inline cvar_flag_t Cvar_GetFlags( const cvar_t *var )
 	return var->flags;
 }
 
-static inline qboolean Cvar_IsModified( const cvar_t *var )
+static inline bool Cvar_IsModified( const cvar_t *var )
 {
 	return var->modified;
 }
 static inline void Cvar_SetModified( cvar_t *var )
 {
-	var->modified = ( qboolean )1;
+	var->modified = ( bool )1;
 }
 static inline void Cvar_UnsetModified( cvar_t *var )
 {
-	var->modified = ( qboolean )0;
+	var->modified = ( bool )0;
 }
 
 static inline cvar_flag_t Cvar_FlagSet( cvar_flag_t *flags, cvar_flag_t flag )
@@ -133,9 +133,9 @@ static inline cvar_flag_t Cvar_FlagsClear( cvar_flag_t *flags )
 {
 	return *flags = 0;
 }
-static inline qboolean Cvar_FlagIsSet( cvar_flag_t flags, cvar_flag_t flag )
+static inline bool Cvar_FlagIsSet( cvar_flag_t flags, cvar_flag_t flag )
 {
-	return ( qboolean )( ( flags & flag ) != 0 );
+	return ( bool )( ( flags & flag ) != 0 );
 }
 
 #endif      // CVAR_H

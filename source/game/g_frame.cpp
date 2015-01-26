@@ -201,7 +201,7 @@ static void G_UpdateServerInfo( void )
 		{
 			trap_Cvar_ForceSet( "g_needpass", "0" );
 		}
-		password->modified = qfalse;
+		password->modified = false;
 	}
 
 	// g_gametypes_available
@@ -244,8 +244,8 @@ static void G_UpdateServerInfo( void )
 			G_Free( votable );
 		}
 
-		g_votable_gametypes->modified = qfalse;
-		g_disable_vote_gametype->modified = qfalse;
+		g_votable_gametypes->modified = false;
+		g_disable_vote_gametype->modified = false;
 	}
 
 	if( GS_RaceGametype() ) {
@@ -266,8 +266,8 @@ void G_CheckCvars( void )
 	{
 		if( g_antilag_maxtimedelta->integer < 0 )
 			trap_Cvar_SetValue( "g_antilag_maxtimedelta", abs( g_antilag_maxtimedelta->integer ) );
-		g_antilag_maxtimedelta->modified = qfalse;
-		g_antilag_timenudge->modified = qtrue;
+		g_antilag_maxtimedelta->modified = false;
+		g_antilag_timenudge->modified = true;
 	}
 
 	if( g_antilag_timenudge->modified )
@@ -276,7 +276,7 @@ void G_CheckCvars( void )
 			trap_Cvar_SetValue( "g_antilag_timenudge", g_antilag_maxtimedelta->integer );
 		else if( g_antilag_timenudge->integer < -g_antilag_maxtimedelta->integer )
 			trap_Cvar_SetValue( "g_antilag_timenudge", -g_antilag_maxtimedelta->integer );
-		g_antilag_timenudge->modified = qfalse;
+		g_antilag_timenudge->modified = false;
 	}
 
 	if( g_warmup_timelimit->modified )
@@ -286,7 +286,7 @@ void G_CheckCvars( void )
 		{
 			gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( 60.0f * 1000 * g_warmup_timelimit->integer );
 		}
-		g_warmup_timelimit->modified = qfalse;
+		g_warmup_timelimit->modified = false;
 	}
 
 	if( g_timelimit->modified )
@@ -300,7 +300,7 @@ void G_CheckCvars( void )
 			else
 				gs.gameState.longstats[GAMELONG_MATCHDURATION] = 0;
 		}
-		g_timelimit->modified = qfalse;
+		g_timelimit->modified = false;
 	}
 
 	if( g_match_extendedtime->modified )
@@ -311,12 +311,12 @@ void G_CheckCvars( void )
 			if( g_match_extendedtime->integer )
 				gs.gameState.longstats[GAMELONG_MATCHDURATION] = (unsigned int)fabs( 60 * 1000 * g_match_extendedtime->value );
 		}
-		g_match_extendedtime->modified = qfalse;
+		g_match_extendedtime->modified = false;
 	}
 
 	if( g_allow_falldamage->modified )
 	{
-		g_allow_falldamage->modified = qfalse;
+		g_allow_falldamage->modified = false;
 	}
 
 	// update gameshared server settings
@@ -534,7 +534,7 @@ void G_ClearSnap( void )
 		ent->s.eventParms[0] = ent->s.eventParms[1] = 0;
 		ent->numEvents = 0;
 		ent->eventPriority[0] = ent->eventPriority[1] = false;
-		ent->s.teleported = qfalse; // remove teleported bit.
+		ent->s.teleported = false; // remove teleported bit.
 
 		// remove effect bits that are (most likely) added from gametypes
 		ent->s.effects = ( ent->s.effects & (EF_TAKEDAMAGE|EF_CARRIER|EF_FLAG_TRAIL|EF_ROTATE_AND_BOB|EF_STRONG_WEAPON|EF_GHOST) );

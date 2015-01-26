@@ -100,14 +100,14 @@ static void R_TraceAgainstTriangle( const vec_t *a, const vec_t *b, const vec_t 
 /*
 * R_TraceAgainstSurface
 */
-static qboolean R_TraceAgainstSurface( msurface_t *surf )
+static bool R_TraceAgainstSurface( msurface_t *surf )
 {
 	int i;
 	mesh_t *mesh = surf->mesh;
 	elem_t	*elem = mesh->elems;
 	vec4_t *verts = mesh->xyzArray;
 	float old_frac = trace_fraction;
-	qboolean isPlanar = ( surf->facetype == FACETYPE_PLANAR ) ? qtrue : qfalse;
+	bool isPlanar = ( surf->facetype == FACETYPE_PLANAR ) ? true : false;
 
 	// clip each triangle individually
 	for( i = 0; i < mesh->numElems; i += 3, elem += 3 )
@@ -121,11 +121,11 @@ static qboolean R_TraceAgainstSurface( msurface_t *surf )
 				if( DotProduct( trace_plane.normal, surf->plane->normal ) < 0 )
 					VectorInverse( trace_plane.normal );
 			}
-			return qtrue;
+			return true;
 		}
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -265,7 +265,7 @@ static msurface_t *R_TransformedTraceLine( rtrace_t *tr, const vec3_t start, con
 			mbrushmodel_t *bmodel = ( mbrushmodel_t * )model->extradata;
 			vec3_t temp, start_l, end_l;
 			mat3_t axis;
-			qboolean rotated = !Matrix3_Compare( test->axis, axis_identity );
+			bool rotated = !Matrix3_Compare( test->axis, axis_identity );
 
 			// transform
 			VectorSubtract( start, test->origin, start_l );

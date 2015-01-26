@@ -30,21 +30,21 @@ typedef struct
 	char userinfo[MAX_INFO_STRING];
 	char netname[MAX_INFO_VALUE];
 
-	qboolean connected;     // a loadgame will leave valid entities that just don't have a connection yet
-	qboolean connecting;    // so whe know when a player is in the process of connecting for scoreboard prints
+	bool connected;     // a loadgame will leave valid entities that just don't have a connection yet
+	bool connecting;    // so whe know when a player is in the process of connecting for scoreboard prints
 
 	int fov;
 	int zoomfov;
 
-	qboolean multiview;
+	bool multiview;
 
 	short cmd_angles[3];            // angles sent over in the last command
 } client_persistant_t;
 
 typedef struct
 {
-	qboolean active;                // so target can remember the position when not chasing
-	qboolean teamonly;
+	bool active;                // so target can remember the position when not chasing
+	bool teamonly;
 	int target;
 	int mode;                       // 3rd or 1st person
 	int range;
@@ -73,14 +73,14 @@ struct gclient_s
 
 void TVM_ClientEndSnapFrame( edict_t *ent );
 
-qboolean TVM_ClientIsZoom( edict_t *ent );
+bool TVM_ClientIsZoom( edict_t *ent );
 
 void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent );
 void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo );
-qboolean TVM_CanConnect( tvm_relay_t *relay, char *userinfo );
+bool TVM_CanConnect( tvm_relay_t *relay, char *userinfo );
 void TVM_ClientConnect( tvm_relay_t *relay, edict_t *ent, char *userinfo );
 void TVM_ClientDisconnect( tvm_relay_t *relay, edict_t *ent );
-qboolean TVM_ClientMultiviewChanged( tvm_relay_t *relay, edict_t *ent, qboolean multiview );
+bool TVM_ClientMultiviewChanged( tvm_relay_t *relay, edict_t *ent, bool multiview );
 void TVM_ClientThink( tvm_relay_t *relay, edict_t *ent, usercmd_t *ucmd, int timeDelta );
 
 #endif // __TVM_CLIENT_H

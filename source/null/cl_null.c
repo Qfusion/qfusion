@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qcommon/qcommon.h"
 
-qboolean con_initialized;
+bool con_initialized;
 
 static void Key_Bind_Null_f( void )
 {

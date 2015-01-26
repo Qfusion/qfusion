@@ -33,16 +33,16 @@ int CIN_API( void )
 /*
 * CIN_Init
 */
-qboolean CIN_Init( qboolean verbose )
+bool CIN_Init( bool verbose )
 {
 	cinPool = CIN_AllocPool( "Generic pool" );
-	return qtrue;
+	return true;
 }
 
 /*
 * CIN_Shutdown
 */
-void CIN_Shutdown( qboolean verbose )
+void CIN_Shutdown( bool verbose )
 {
 	CIN_FreePool( &cinPool );
 }

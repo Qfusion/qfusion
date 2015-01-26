@@ -25,10 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define ROQ_FILE_EXTENSIONS ".roq"
 
-qboolean RoQ_Init_CIN( cinematics_t *cin );
+bool RoQ_Init_CIN( cinematics_t *cin );
 void RoQ_Shutdown_CIN( cinematics_t *cin );
 void RoQ_Reset_CIN( cinematics_t *cin );
-qboolean RoQ_NeedNextFrame_CIN( cinematics_t *cin );
-cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw );
+bool RoQ_NeedNextFrame_CIN( cinematics_t *cin );
+cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, bool *redraw );
 
 #endif

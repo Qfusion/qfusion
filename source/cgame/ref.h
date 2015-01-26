@@ -100,7 +100,7 @@ typedef struct
 	float scale;
 	vec3_t vieworg;
 	vec3_t viewanglesOffset;
-	qboolean noEnts;
+	bool noEnts;
 } skyportal_t;
 
 typedef enum

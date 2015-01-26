@@ -30,7 +30,7 @@ void SV_Shutdown( const char *finalmsg )
 {
 }
 
-void SV_ShutdownGame( const char *finalmsg, qboolean reconnect )
+void SV_ShutdownGame( const char *finalmsg, bool reconnect )
 {
 }
 
@@ -38,9 +38,9 @@ void SV_Frame( int realmsec, int gamemsec )
 {
 }
 
-qboolean SV_SendMessageToClient( struct client_s *client, msg_t *msg )
+bool SV_SendMessageToClient( struct client_s *client, msg_t *msg )
 {
-	return qtrue;
+	return true;
 }
 
 void SV_ParseClientMessage( struct client_s *client, msg_t *msg )

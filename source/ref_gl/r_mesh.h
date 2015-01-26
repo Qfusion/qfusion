@@ -68,7 +68,7 @@ typedef struct
 	unsigned			numSliceElems, numSliceElemsReal;
 } drawList_t;
 
-typedef qboolean (*beginDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, void * );
+typedef bool (*beginDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, void * );
 typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, void * );
 
 #endif // R_MESH_H

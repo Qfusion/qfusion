@@ -104,8 +104,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	int baseLine;
 	int numImages, imageNum;
 	uint8_t *tempPic = NULL;
-	qboolean clearImage;
-	qboolean hasKerning;
+	bool clearImage;
+	bool hasKerning;
 	qttface_t *qttf = NULL;
 	qfontface_t *qfont = NULL;
 
@@ -134,7 +134,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	// set the font size
 	FT_Set_Pixel_Sizes( ftface, size, 0 );
 
-	hasKerning = FT_HAS_KERNING( ftface ) ? qtrue : qfalse;
+	hasKerning = FT_HAS_KERNING( ftface ) ? true : false;
 
 	// track available chars
 	minChar = FTLIB_LAST_FONT_CHAR + 1;
@@ -224,7 +224,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	imageHeight = 0;
 	imagePitch = imageWidth;
 	tempPic = ( uint8_t * )FTLIB_Alloc( ftlibPool, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
-	clearImage = qtrue;
+	clearImage = true;
 	lastStartChar = minChar;
 
 	line = 0;
@@ -233,7 +233,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, unsi
 	yOffset = 0;
 	for( i = minChar; i <= maxChar + 1; i++ ) {
 		qglyph_t *qglyph = &qfont->glyphs[i];
-		qboolean uploadNow = i > maxChar && imageHeight > 0 ? qtrue : qfalse;
+		bool uploadNow = i > maxChar && imageHeight > 0 ? true : false;
 
 upload_image:
 		if( uploadNow )
@@ -245,7 +245,7 @@ upload_image:
 			
 			assert( imageNum < numImages );
 
-			clearImage = qtrue;
+			clearImage = true;
 
 			// round to nearest greater power of two
 			uploadWidth = imageWidth;
@@ -278,7 +278,7 @@ upload_image:
 		}
 				
 		if( clearImage ) {
-			clearImage = qfalse;
+			clearImage = false;
 			memset( tempPic, 0, imagePitch * FTLIB_MAX_FONT_IMAGE_HEIGHT );
 			lastStartChar = i;
 			imageHeight = 0;
@@ -319,7 +319,7 @@ upload_image:
 					// ran out of room, start with new image
 					advance = 0;
 					yOffset = 0;
-					uploadNow = qtrue;
+					uploadNow = true;
 					goto upload_image;
 				}
 			}
@@ -427,7 +427,7 @@ void QFT_UnloadFace( qfontface_t *qfont )
 /*
 * QFT_LoadFamily
 */
-static void QFT_LoadFamily( const char *fileName, const uint8_t *data, size_t dataSize, qboolean verbose )
+static void QFT_LoadFamily( const char *fileName, const uint8_t *data, size_t dataSize, bool verbose )
 {
 	FT_Face ftface;
 	int error;
@@ -484,7 +484,7 @@ static void QFT_LoadFamily( const char *fileName, const uint8_t *data, size_t da
 /*
 * QFT_LoadFamilyFromFile
 */
-static void QFT_LoadFamilyFromFile( const char *name, const char *fileName, qboolean verbose )
+static void QFT_LoadFamilyFromFile( const char *name, const char *fileName, bool verbose )
 {
 	int fileNum;
 	int length;
@@ -514,7 +514,7 @@ static void QFT_LoadFamilyFromFile( const char *name, const char *fileName, qboo
 *
 * Load fonts given type, storing family name, style, size
 */
-static void QFT_PrecacheFontsByExt( qboolean verbose, const char *ext )
+static void QFT_PrecacheFontsByExt( bool verbose, const char *ext )
 {
 	int i, j;
 	int numfiles;
@@ -555,7 +555,7 @@ static void QFT_PrecacheFontsByExt( qboolean verbose, const char *ext )
 /*
 * QFT_PrecacheFonts
 */
-static void QFT_PrecacheFonts( qboolean verbose )
+static void QFT_PrecacheFonts( bool verbose )
 {
 	QFT_PrecacheFontsByExt( verbose, FT_FILE_EXTENSION_TRUETYPE );
 	QFT_PrecacheFontsByExt( verbose, FT_FILE_EXTENSION_OPENTYPE );
@@ -564,7 +564,7 @@ static void QFT_PrecacheFonts( qboolean verbose )
 /*
 * QFT_Init
 */
-static void QFT_Init( qboolean verbose )
+static void QFT_Init( bool verbose )
 {
 	int error;
 
@@ -595,7 +595,7 @@ static void QFT_Shutdown( void )
 /*
 * FTLIB_InitSubsystems
 */
-void FTLIB_InitSubsystems( qboolean verbose )
+void FTLIB_InitSubsystems( bool verbose )
 {
 	QFT_Init( verbose );
 }
@@ -603,7 +603,7 @@ void FTLIB_InitSubsystems( qboolean verbose )
 /*
 * FTLIB_PrecacheFonts
 */
-void FTLIB_PrecacheFonts( qboolean verbose )
+void FTLIB_PrecacheFonts( bool verbose )
 {
 	numFontFaces = 0;
 	numFontFamilies = 0;
@@ -665,7 +665,7 @@ qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int siz
 	if( qface ) {
 		qfamily->faces[qfamily->numFaces++] = qface;
 		if( qface->hasKerning && !qface->getKerning ) {
-			qface->hasKerning = qfalse;
+			qface->hasKerning = false;
 		}
 	}
 	return qface;
@@ -712,7 +712,7 @@ void FTLIB_TouchAllFonts( void )
 /*
 * FTLIB_FreeFonts
 */
-void FTLIB_FreeFonts( qboolean verbose )
+void FTLIB_FreeFonts( bool verbose )
 {
 	unsigned int i, j, k;
 	qfontfamily_t *qfamily;
@@ -762,7 +762,7 @@ void FTLIB_FreeFonts( qboolean verbose )
 /*
 * FTLIB_ShutdownSubsystems
 */
-void FTLIB_ShutdownSubsystems( qboolean verbose )
+void FTLIB_ShutdownSubsystems( bool verbose )
 {
 	QFT_Shutdown();
 }

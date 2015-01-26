@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void TV_Lobby_ClientBegin( client_t *client );
 void TV_Lobby_ClientDisconnect( client_t *client );
-qboolean TV_Lobby_CanConnect( client_t *client, char *userinfo );
+bool TV_Lobby_CanConnect( client_t *client, char *userinfo );
 void TV_Lobby_ClientConnect( client_t *client );
 void TV_Lobby_Run( void );
 

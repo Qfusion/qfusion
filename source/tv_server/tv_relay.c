@@ -36,21 +36,21 @@ jmp_buf relay_abortframe;
 /*
 * TV_Relay_RunSnap
 */
-static qboolean TV_Relay_RunSnap( relay_t *relay )
+static bool TV_Relay_RunSnap( relay_t *relay )
 {
 	int start, i;
 
 	if( relay->state != CA_ACTIVE )
-		return qfalse;
+		return false;
 
 	if( !relay->lastFrame || !relay->lastFrame->valid )
-		return qfalse;
+		return false;
 
 	if( relay->curFrame == relay->lastFrame )
-		return qfalse;
+		return false;
 
 	if( !relay->map_checksum )
-		return qfalse; // not fully loaded yet
+		return false; // not fully loaded yet
 
 	if( relay->curFrame && relay->curFrame->valid )
 	{
@@ -70,17 +70,17 @@ static qboolean TV_Relay_RunSnap( relay_t *relay )
 		{
 			// we buffer server snaps and launch them with slight delay to add smoothness
 			if( relay->serverTime < relay->frames[i & UPDATE_MASK].serverTime + relay->snapFrameTime )
-				return qfalse;
+				return false;
 
 			relay->curFrame = &relay->frames[i & UPDATE_MASK];
 			relay->framenum = relay->curFrame->serverFrame;
 
-			return qtrue;
+			return true;
 		}
 	}
-	assert( qfalse ); // lastFrame has to match atleast
+	assert( false ); // lastFrame has to match atleast
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -127,7 +127,7 @@ void TV_Relay_InitMap( relay_t *relay )
 	int i;
 
 	// load the map
-	CM_LoadMap( relay->cms, relay->configstrings[CS_WORLDMODEL], qfalse, &relay->map_checksum );
+	CM_LoadMap( relay->cms, relay->configstrings[CS_WORLDMODEL], false, &relay->map_checksum );
 
 	// allocate areabits for frames
 	TV_Relay_InitFramesAreabits( relay );
@@ -413,7 +413,7 @@ void TV_Relay_Run( relay_t *relay, int msec )
 */
 void TV_Relay_UpstreamUserinfoChanged( relay_t *relay )
 {
-	relay->upstream->userinfo_modified = qtrue;
+	relay->upstream->userinfo_modified = true;
 }
 
 /*

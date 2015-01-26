@@ -78,7 +78,7 @@ static inline struct cmodel_s *trap_CM_ModelForBBox( tvm_relay_t *relay, vec3_t 
 {
 	return TV_MODULE_IMPORT.CM_ModelForBBox( relay->server, mins, maxs );
 }
-static inline qboolean trap_CM_AreasConnected( tvm_relay_t *relay, int area1, int area2 )
+static inline bool trap_CM_AreasConnected( tvm_relay_t *relay, int area1, int area2 )
 {
 	return TV_MODULE_IMPORT.CM_AreasConnected( relay->server, area1, area2 );
 }
@@ -106,7 +106,7 @@ static inline void trap_MemFree( void *data, const char *filename, int fileline 
 }
 
 // dynvars
-static inline dynvar_t *trap_Dynvar_Create( const char *name, qboolean console, dynvar_getter_f getter, dynvar_setter_f setter )
+static inline dynvar_t *trap_Dynvar_Create( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter )
 {
 	return TV_MODULE_IMPORT.Dynvar_Create( name, console, getter, setter );
 }
@@ -254,7 +254,7 @@ static inline void trap_FS_FCloseFile( int file )
 	TV_MODULE_IMPORT.FS_FCloseFile( file );
 }
 
-static inline qboolean trap_FS_RemoveFile( const char *filename )
+static inline bool trap_FS_RemoveFile( const char *filename )
 {
 	return TV_MODULE_IMPORT.FS_RemoveFile( filename );
 }

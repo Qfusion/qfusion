@@ -131,7 +131,7 @@ void DemoInfo::readMetaData( void )
 			break;
 		}
 
-		metaData[key] = COM_RemoveColorTokensExt( value, qfalse );
+		metaData[key] = COM_RemoveColorTokensExt( value, false );
 		s = value + strlen( value ) + 1;
 	}
 }

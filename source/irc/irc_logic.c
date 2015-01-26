@@ -51,7 +51,7 @@ static dynvar_get_status_t Irc_Logic_GetChannels_f(void **channels);
 static char *Irc_Logic_DumpChannelNames(void);
 
 void Irc_Logic_Connect(const char *server, unsigned short port) {
-	qboolean connected = qfalse;
+	bool connected = false;
 	if (!Irc_Proto_Connect(server, port)) {
 		// connected to server, send NICK and USER commands
 		cvar_t * const irc_user = IRC_IMPORT.Cvar_Get("irc_user", APPLICATION "User", CVAR_ARCHIVE);
@@ -70,11 +70,11 @@ void Irc_Logic_Connect(const char *server, unsigned short port) {
 }
 
 void Irc_Logic_Disconnect(const char *reason) {
-	qboolean *old_c;
+	bool *old_c;
 	IRC_IMPORT.Dynvar_GetValue(irc_connected, (void**) &old_c);
 	if (*old_c) {
 		char buf[1024];
-		qboolean new_c = qfalse;
+		bool new_c = false;
 		strcpy(IRC_ERROR_MSG, reason);
 		Irc_ColorFilter(IRC_QUIT_MSG, IRC_COLOR_WSW_TO_IRC, buf);
 		Irc_Proto_Quit(buf);
@@ -85,7 +85,7 @@ void Irc_Logic_Disconnect(const char *reason) {
 
 void Irc_Logic_Connected_f(void *connected) {
 	dynvar_t * const frametick = IRC_IMPORT.Dynvar_Lookup("frametick");
-	const qboolean c = * (qboolean*) connected;
+	const bool c = * (bool*) connected;
 	assert(frametick);
 	if (c) {
 		// connected
@@ -110,7 +110,7 @@ void Irc_Logic_Connected_f(void *connected) {
 		Cvar_FlagSet(&irc_nick->flags, CVAR_READONLY);
 		IRC_IMPORT.Cmd_AddCommand("irc_setNick", Irc_Logic_SetNick_f);
 		IRC_IMPORT.Cvar_Set(irc_defaultChannel->name, "");
-		irc_channels = IRC_IMPORT.Dynvar_Create("irc_channels", qtrue, Irc_Logic_GetChannels_f, IRC_IMPORT.DYNVAR_READONLY);
+		irc_channels = IRC_IMPORT.Dynvar_Create("irc_channels", true, Irc_Logic_GetChannels_f, IRC_IMPORT.DYNVAR_READONLY);
 		irc_ctcpReplies = IRC_IMPORT.Cvar_Get("irc_ctcpReplies", "1", CVAR_ARCHIVE);
 		assert(!chan_trie);
 		IRC_IMPORT.Trie_Create(TRIE_CASE_SENSITIVE, &chan_trie);
@@ -269,14 +269,14 @@ const trie_t *Irc_Logic_GetChannelNames(const irc_channel_t *channel) {
 static void Irc_Logic_SendMessages(void) {
 	if (Irc_Proto_Flush()) {
 		// flush failed, server closed connection
-		qboolean connected = qfalse;
+		bool connected = false;
 		IRC_IMPORT.Dynvar_SetValue(irc_connected, (void*) &connected);
 	}
 }
 
 static void Irc_Logic_ReadMessages(void) {
-	qboolean msg_complete;
-	qboolean *connected;
+	bool msg_complete;
+	bool *connected;
 	do {
 		irc_server_msg_t msg;
 		if (!Irc_Proto_PollServerMsg(&msg, &msg_complete)) {
@@ -331,15 +331,15 @@ static void Irc_Logic_CmdMode_f(irc_command_t cmd, const char *prefix, const cha
 			channel = Irc_Logic_GetChannel(target);
 		} else if (channel && i == 1) {
 			// mode mask
-			qboolean plus_toggle = qtrue;
+			bool plus_toggle = true;
 			const char *e;
 			for (e = p; *e; ++e) {
 				switch (*e) {
 					case '+':
-						plus_toggle = qtrue;
+						plus_toggle = true;
 						break;
 					case '-':
-						plus_toggle = qfalse;
+						plus_toggle = false;
 						break;
 					default:
 						modes[no_of_modes].plus = plus_toggle;

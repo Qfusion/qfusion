@@ -782,7 +782,7 @@ void G_FreeEdict( edict_t *ed )
 	G_asReleaseEntityBehaviors( ed );
 
 	memset( ed, 0, sizeof( *ed ) );
-	ed->r.inuse = qfalse;
+	ed->r.inuse = false;
 	ed->s.number = ENTNUM( ed );
 	ed->r.svflags = SVF_NOCLIENT;
 	ed->scriptSpawned = false;
@@ -796,7 +796,7 @@ void G_FreeEdict( edict_t *ed )
 */
 void G_InitEdict( edict_t *e )
 {
-	e->r.inuse = qtrue;
+	e->r.inuse = true;
 	e->classname = NULL;
 	e->gravity = 1.0;
 	e->s.number = ENTNUM( e );
@@ -805,9 +805,9 @@ void G_InitEdict( edict_t *e )
 	e->deadflag = DEAD_NO;
 	e->s.attenuation = ATTN_NORM;
 
-	e->s.teleported = qfalse;
+	e->s.teleported = false;
 	e->timeStamp = 0;
-	e->s.linearProjectile = qfalse;
+	e->s.linearProjectile = false;
 	e->scriptSpawned = false;
 
 	G_asResetEntityBehaviors( e );
@@ -949,7 +949,7 @@ void G_TurnEntityIntoEvent( edict_t *ent, int event, int parm )
 	ent->s.type = ET_EVENT;
 	ent->r.solid = SOLID_NOT;
 	ent->r.svflags &= ~SVF_PROJECTILE; // FIXME: Medar: should be remove all or remove this one elsewhere?
-	ent->s.linearProjectile = qfalse;
+	ent->s.linearProjectile = false;
 	G_AddEvent( ent, event, parm, true );
 
 	GClip_LinkEntity( ent );

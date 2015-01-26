@@ -211,14 +211,14 @@ void GameAjaxDataSource::StreamDone( int status, const char *contentType, void *
 
 		while( 1 )
 		{
-			token = COM_ParseExt( &data, qtrue );
+			token = COM_ParseExt( &data, true );
 			if( !token[0] )
 				break; // error
 			if( token[0] == '}' )
 				break; // end of callvote
 
 			key = Q_trim( token );
-			value = COM_ParseExt( &data, qtrue );
+			value = COM_ParseExt( &data, true );
 			row[key] = value;
 		}
 

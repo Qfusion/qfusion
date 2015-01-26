@@ -74,9 +74,9 @@ typedef struct
 	int ( *FS_Eof )( int file );
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
-	qboolean ( *FS_RemoveFile )( const char *filename );
+	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
-	qboolean ( *FS_IsUrl )( const char *url );
+	bool ( *FS_IsUrl )( const char *url );
 
 	unsigned int ( *Milliseconds )( void );
 	void ( *PageInMemory )( uint8_t *buffer, int size );
@@ -119,17 +119,17 @@ typedef struct
 	int ( *API )( void );
 
 	// the init function will be called at each restart
-	qboolean ( *Init )( void *hwnd, int maxEntities, qboolean verbose );
-	void ( *Shutdown )( qboolean verbose );
+	bool ( *Init )( void *hwnd, int maxEntities, bool verbose );
+	void ( *Shutdown )( bool verbose );
 
 	void ( *BeginRegistration )( void );
 	void ( *EndRegistration )( void );
 
-	void ( *StopAllSounds )( qboolean clear, qboolean stopMusic );
+	void ( *StopAllSounds )( bool clear, bool stopMusic );
 
 	void ( *Clear )( void );
-	void ( *Update )( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump );
-	void ( *Activate )( qboolean active );
+	void ( *Update )( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump );
+	void ( *Activate )( bool active );
 
 	void ( *SetAttenuationModel )( int model, float maxdistance, float refdistance );
 	void ( *SetEntitySpatialization )( int entnum, const vec3_t origin, const vec3_t velocity );
@@ -143,7 +143,7 @@ typedef struct
 	void ( *AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
 
 	// cinema
-	void ( *RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data, qboolean music );
+	void ( *RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data, bool music );
 	void ( *PositionedRawSamples )( int entnum, float fvol, float attenuation, 
 		unsigned int samples, unsigned int rate, 
 		unsigned short width, unsigned short channels, const uint8_t *data );

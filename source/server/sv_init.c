@@ -29,7 +29,7 @@ server_t sv;                 // local server
 /*
 * SV_FindIndex
 */
-static int SV_FindIndex( const char *name, int start, int max, qboolean create )
+static int SV_FindIndex( const char *name, int start, int max, bool create )
 {
 	int i;
 
@@ -63,22 +63,22 @@ static int SV_FindIndex( const char *name, int start, int max, qboolean create )
 
 int SV_ModelIndex( const char *name )
 {
-	return SV_FindIndex( name, CS_MODELS, MAX_MODELS, qtrue );
+	return SV_FindIndex( name, CS_MODELS, MAX_MODELS, true );
 }
 
 int SV_SoundIndex( const char *name )
 {
-	return SV_FindIndex( name, CS_SOUNDS, MAX_SOUNDS, qtrue );
+	return SV_FindIndex( name, CS_SOUNDS, MAX_SOUNDS, true );
 }
 
 int SV_ImageIndex( const char *name )
 {
-	return SV_FindIndex( name, CS_IMAGES, MAX_IMAGES, qtrue );
+	return SV_FindIndex( name, CS_IMAGES, MAX_IMAGES, true );
 }
 
 int SV_SkinIndex( const char *name )
 {
-	return SV_FindIndex( name, CS_SKINFILES, MAX_SKINFILES, qtrue );
+	return SV_FindIndex( name, CS_SKINFILES, MAX_SKINFILES, true );
 }
 
 /*
@@ -238,7 +238,7 @@ void SV_SetServerConfigStrings( void )
 * SV_SpawnServer
 * Change the server to a new map, taking all connected clients along with it.
 */
-static void SV_SpawnServer( const char *server, qboolean devmap )
+static void SV_SpawnServer( const char *server, bool devmap )
 {
 	unsigned checksum;
 	int i;
@@ -268,7 +268,7 @@ static void SV_SpawnServer( const char *server, qboolean devmap )
 	sv.nextSnapTime = 1000;
 
 	Q_snprintfz( sv.configstrings[CS_WORLDMODEL], sizeof( sv.configstrings[CS_WORLDMODEL] ), "maps/%s.bsp", server );
-	CM_LoadMap( svs.cms, sv.configstrings[CS_WORLDMODEL], qfalse, &checksum );
+	CM_LoadMap( svs.cms, sv.configstrings[CS_WORLDMODEL], false, &checksum );
 
 	Q_snprintfz( sv.configstrings[CS_MAPCHECKSUM], sizeof( sv.configstrings[CS_MAPCHECKSUM] ), "%i", checksum );
 
@@ -277,7 +277,7 @@ static void SV_SpawnServer( const char *server, qboolean devmap )
 		Q_snprintfz( sv.configstrings[CS_MODELS + i], sizeof( sv.configstrings[CS_MODELS + i] ), "*%i", i );
 
 	// set serverinfo variable
-	Cvar_FullSet( "mapname", sv.mapname, CVAR_SERVERINFO | CVAR_READONLY, qtrue );
+	Cvar_FullSet( "mapname", sv.mapname, CVAR_SERVERINFO | CVAR_READONLY, true );
 
 	//
 	// spawn the rest of the entities on the map
@@ -318,7 +318,7 @@ void SV_InitGame( void )
 	int i;
 	edict_t	*ent;
 	netadr_t address, ipv6_address;
-	qboolean socket_opened = qfalse;
+	bool socket_opened = false;
 
 	// make sure the client is down
 	CL_Disconnect( NULL );
@@ -327,7 +327,7 @@ void SV_InitGame( void )
 	if( svs.initialized )
 	{
 		// cause any connected clients to reconnect
-		SV_ShutdownGame( "Server restarted", qtrue );
+		SV_ShutdownGame( "Server restarted", true );
 
 		// SV_ShutdownGame will also call Cvar_GetLatchedVars
 	}
@@ -337,7 +337,7 @@ void SV_InitGame( void )
 		Cvar_GetLatchedVars( CVAR_LATCH );
 	}
 
-	svs.initialized = qtrue;
+	svs.initialized = true;
 
 	if( sv_skilllevel->integer > 2 )
 		Cvar_ForceSet( "sv_skilllevel", "2" );
@@ -346,9 +346,9 @@ void SV_InitGame( void )
 
 	// init clients
 	if( sv_maxclients->integer < 1 )
-		Cvar_FullSet( "sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, qtrue );
+		Cvar_FullSet( "sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, true );
 	else if( sv_maxclients->integer > MAX_CLIENTS )
-		Cvar_FullSet( "sv_maxclients", va( "%i", MAX_CLIENTS ), CVAR_SERVERINFO | CVAR_LATCH, qtrue );
+		Cvar_FullSet( "sv_maxclients", va( "%i", MAX_CLIENTS ), CVAR_SERVERINFO | CVAR_LATCH, true );
 
 	svs.spawncount = rand();
 	svs.clients = Mem_Alloc( sv_mempool, sizeof( client_t )*sv_maxclients->integer );
@@ -363,7 +363,7 @@ void SV_InitGame( void )
 	if( !dedicated->integer )
 	{
 		NET_InitAddress( &address, NA_LOOPBACK );
-		if( !NET_OpenSocket( &svs.socket_loopback, SOCKET_LOOPBACK, &address, qtrue ) )
+		if( !NET_OpenSocket( &svs.socket_loopback, SOCKET_LOOPBACK, &address, true ) )
 			Com_Error( ERR_FATAL, "Couldn't open loopback socket: %s\n", NET_ErrorString() );
 	}
 
@@ -372,20 +372,20 @@ void SV_InitGame( void )
 		// IPv4
 		NET_StringToAddress( sv_ip->string, &address );
 		NET_SetAddressPort( &address, sv_port->integer );
-		if( !NET_OpenSocket( &svs.socket_udp, SOCKET_UDP, &address, qtrue ) )
+		if( !NET_OpenSocket( &svs.socket_udp, SOCKET_UDP, &address, true ) )
 			Com_Printf( "Error: Couldn't open UDP socket: %s\n", NET_ErrorString() );
 		else
-			socket_opened = qtrue;
+			socket_opened = true;
 
 		// IPv6
 		NET_StringToAddress( sv_ip6->string, &ipv6_address );
 		if( ipv6_address.type == NA_IP6 )
 		{
 			NET_SetAddressPort( &ipv6_address, sv_port6->integer );
-			if( !NET_OpenSocket( &svs.socket_udp6, SOCKET_UDP, &ipv6_address, qtrue ) )
+			if( !NET_OpenSocket( &svs.socket_udp6, SOCKET_UDP, &ipv6_address, true ) )
 				Com_Printf( "Error: Couldn't open UDP6 socket: %s\n", NET_ErrorString() );
 			else
-				socket_opened = qtrue;
+				socket_opened = true;
 		}
 		else
 			Com_Printf( "Error: invalid IPv6 address: %s\n", sv_ip6->string );
@@ -394,9 +394,9 @@ void SV_InitGame( void )
 #ifdef TCP_ALLOW_CONNECT
 	if( sv_tcp->integer && ( dedicated->integer || sv_maxclients->integer > 1 ) )
 	{
-		qboolean err = qtrue;
+		bool err = true;
 
-		if( !NET_OpenSocket( &svs.socket_tcp, SOCKET_TCP, &address, qtrue ) )
+		if( !NET_OpenSocket( &svs.socket_tcp, SOCKET_TCP, &address, true ) )
 		{
 			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
 		}
@@ -410,14 +410,14 @@ void SV_InitGame( void )
 			}
 			else
 			{
-				err = qfalse;
-				socket_opened = qtrue;
+				err = false;
+				socket_opened = true;
 			}
 		}
 
 		if( ipv6_address.type == NA_IP6 )
 		{
-			if( !NET_OpenSocket( &svs.socket_tcp6, SOCKET_TCP, &ipv6_address, qtrue ) )
+			if( !NET_OpenSocket( &svs.socket_tcp6, SOCKET_TCP, &ipv6_address, true ) )
 			{
 				Com_Printf( "Error: Couldn't open TCP6 socket: %s\n", NET_ErrorString() );
 			}
@@ -431,8 +431,8 @@ void SV_InitGame( void )
 				}
 				else
 				{
-					err = qfalse;
-					socket_opened = qtrue;
+					err = false;
+					socket_opened = true;
 				}
 			}
 		}
@@ -476,7 +476,7 @@ void SV_InitGame( void )
 * not just stuck on the outgoing message list, because the server is going
 * to totally exit after returning from this function.
 */
-static void SV_FinalMessage( const char *message, qboolean reconnect )
+static void SV_FinalMessage( const char *message, bool reconnect )
 {
 	int i, j;
 	client_t *cl;
@@ -507,7 +507,7 @@ static void SV_FinalMessage( const char *message, qboolean reconnect )
 * 
 * Called when each game quits
 */
-void SV_ShutdownGame( const char *finalmsg, qboolean reconnect )
+void SV_ShutdownGame( const char *finalmsg, bool reconnect )
 {
 	if( !svs.initialized )
 		return;
@@ -579,14 +579,14 @@ void SV_ShutdownGame( const char *finalmsg, qboolean reconnect )
 
 	memset( &svs, 0, sizeof( svs ) );
 
-	svs.initialized = qfalse;
+	svs.initialized = false;
 }
 
 /*
 * SV_Map
 * command from the console or progs.
 */
-void SV_Map( const char *level, qboolean devmap )
+void SV_Map( const char *level, bool devmap )
 {
 	client_t *cl;
 	int i;
@@ -627,7 +627,7 @@ void SV_Map( const char *level, qboolean devmap )
 			if( sv.num_mv_clients < sv_maxmvclients->integer )
 				sv.num_mv_clients++;
 			else
-				svs.clients[i].mv = qfalse;
+				svs.clients[i].mv = false;
 		}
 
 		svs.clients[i].lastframe = -1;

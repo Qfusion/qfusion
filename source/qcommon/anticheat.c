@@ -81,12 +81,12 @@ static AC_Export_t InitServer_f = NULL;
 /*
 * AC_LoadLibrary
 */
-qboolean AC_LoadLibrary( void *imports, void *exports, unsigned int flags )
+bool AC_LoadLibrary( void *imports, void *exports, unsigned int flags )
 {
 	static ac_import_t import;
 	dllfunc_t funcs[3];
-	qboolean found = qfalse;
-	qboolean verbose = qfalse;
+	bool found = false;
+	bool verbose = false;
 
 	AC_InitImportStruct( import );
 
@@ -111,12 +111,12 @@ qboolean AC_LoadLibrary( void *imports, void *exports, unsigned int flags )
 		{
 		case ANTICHEAT_SERVER:
 			InitServer_f( &import );
-			found = qtrue;
+			found = true;
 			break;
 
 		case ANTICHEAT_CLIENT:
 			InitClient_f( &import );
-			found = qtrue;
+			found = true;
 			break;
 
 		default:
@@ -132,9 +132,9 @@ qboolean AC_LoadLibrary( void *imports, void *exports, unsigned int flags )
 
 #else
 
-qboolean AC_LoadLibrary( void *imports, void *exports, unsigned int flags )
+bool AC_LoadLibrary( void *imports, void *exports, unsigned int flags )
 {
-	return qtrue;
+	return true;
 }
 
 #endif

@@ -68,7 +68,7 @@ void R_ScreenShot_f( void )
 		int i;
 		const int maxFiles = 100000;
 		static int lastIndex = 0;
-		qboolean addIndex = qfalse;
+		bool addIndex = false;
 		time_t timestamp;
 		char timestamp_str[MAX_QPATH];
 		struct tm *timestampptr;
@@ -103,18 +103,18 @@ void R_ScreenShot_f( void )
 		// if the string format is a constant or file already exists then iterate
 		if( !*timestamp_str || !strcmp( timestamp_str, r_screenshot_fmtstr->string ) )
 		{
-			addIndex = qtrue;
+			addIndex = true;
 
 			// force a rescan in case some vars have changed..
 			if( r_screenshot_fmtstr->modified )
 			{
 				lastIndex = 0;
-				r_screenshot_fmtstr->modified = qtrue;
+				r_screenshot_fmtstr->modified = true;
 			}
 			if( r_screenshot_jpeg->modified )
 			{
 				lastIndex = 0;
-				r_screenshot_jpeg->modified = qfalse;
+				r_screenshot_jpeg->modified = false;
 			}
 		}
 		else
@@ -124,7 +124,7 @@ void R_ScreenShot_f( void )
 			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) != -1 )
 			{
 				lastIndex = 0;
-				addIndex = qtrue;
+				addIndex = true;
 			}
 		}
 
@@ -149,8 +149,8 @@ void R_ScreenShot_f( void )
 
 	R_ScreenShot( checkname + gamepath_offset, 
 		0, 0, glConfig.width, glConfig.height, quality, 
-		qfalse, qfalse, qfalse, 
-		ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? qtrue : qfalse );
+		false, false, false, 
+		ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? true : false );
 
 	free( checkname );
 }
@@ -225,10 +225,10 @@ void R_EnvShot_f( void )
 		COM_DefaultExtension( checkname, ".tga", checkname_size );
 
 		R_ScreenShot( checkname, 0, 0, size, size, 100, 
-			( cubemapShots[i].flags & IT_FLIPX ) ? qtrue : qfalse, 
-			( cubemapShots[i].flags & IT_FLIPY ) ? qtrue : qfalse, 
-			( cubemapShots[i].flags & IT_FLIPDIAGONAL ) ? qtrue : qfalse,
-			qfalse );
+			( cubemapShots[i].flags & IT_FLIPX ) ? true : false, 
+			( cubemapShots[i].flags & IT_FLIPY ) ? true : false, 
+			( cubemapShots[i].flags & IT_FLIPDIAGONAL ) ? true : false,
+			false );
 	}
 
 	// render non-bmodel entities again
@@ -240,12 +240,12 @@ void R_EnvShot_f( void )
 /*
 * R_GlobFilter
 */
-static qboolean R_GlobFilter( const char *pattern, const char *value )
+static bool R_GlobFilter( const char *pattern, const char *value )
 {
 	if( *pattern && !glob_match( pattern, value, 0 ) ) {
-		return qfalse;
+		return false;
 	}
-	return qtrue;
+	return true;
 }
 
 /*

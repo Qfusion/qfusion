@@ -62,7 +62,7 @@ struct tvm_relay_s
 	snapshot_t frame;
 	game_state_t gameState;
 	char configStrings[MAX_CONFIGSTRINGS][MAX_CONFIGSTRING_CHARS];
-	qboolean configStringsOverwritten[MAX_CONFIGSTRINGS];
+	bool configStringsOverwritten[MAX_CONFIGSTRINGS];
 
 	int playernum;
 
@@ -120,7 +120,7 @@ struct edict_s
 
 	//================================
 
-	qboolean local;             // from local_edicts, not edicts
+	bool local;             // from local_edicts, not edicts
 	tvm_relay_t *relay;
 
 	snap_edict_t snap; // information that is cleared each frame snap

@@ -28,10 +28,10 @@ typedef /* struct stat_query_section_s */ void* stat_query_section_t;
 
 typedef struct stat_query_api_s
 {
-	stat_query_t *( *CreateQuery )( const char *iface, const char *str, qboolean get );
+	stat_query_t *( *CreateQuery )( const char *iface, const char *str, bool get );
 	// this is automatically called after calling users callback function so you rarely need to call this yourself
 	void ( *DestroyQuery )( stat_query_t *query );
-	void ( *SetCallback )( stat_query_t *query, void (*callback_fn)( stat_query_t *, qboolean, void *), void *customp );
+	void ( *SetCallback )( stat_query_t *query, void (*callback_fn)( stat_query_t *, bool, void *), void *customp );
 	// you may or may not be allowed to call this directly
 	void ( *Send )( stat_query_t *query );
 

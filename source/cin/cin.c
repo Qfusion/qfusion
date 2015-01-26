@@ -43,12 +43,12 @@ enum
 typedef struct
 {
 	const char * const extensions;
-	qboolean ( *init )( cinematics_t *cin );
+	bool ( *init )( cinematics_t *cin );
 	void ( *shutdown )( cinematics_t *cin );
 	void ( *reset )( cinematics_t *cin );
-	qboolean ( *need_next_frame )( cinematics_t *cin );
-	uint8_t *( *read_next_frame )( cinematics_t *cin, qboolean *redraw );
-	cin_yuv_t *( *read_next_frame_yuv )( cinematics_t *cin, qboolean *redraw );
+	bool ( *need_next_frame )( cinematics_t *cin );
+	uint8_t *( *read_next_frame )( cinematics_t *cin, bool *redraw );
+	cin_yuv_t *( *read_next_frame_yuv )( cinematics_t *cin, bool *redraw );
 } cin_type_t;
 
 static const cin_type_t cin_types[] = 
@@ -97,12 +97,12 @@ static const cin_type_t cin_types[] =
 * CIN_Open
 */
 cinematics_t *CIN_Open( const char *name, unsigned int start_time, 
-	qboolean loop, qboolean *yuv, float *framerate )
+	bool loop, bool *yuv, float *framerate )
 {
 	int i;
 	size_t name_size;
 	const cin_type_t *type;
-	qboolean res;
+	bool res;
 	struct mempool_s *mempool;
 	cinematics_t *cin = NULL;
 	unsigned load_msec;
@@ -181,7 +181,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 		}
 	}
 	else {
-		res = qfalse;
+		res = false;
 	}
 
 	if( !res )
@@ -205,7 +205,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 /*
 * CIN_NeedNextFrame
 */
-qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
+bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 {
 	const cin_type_t *type;
 
@@ -218,7 +218,7 @@ qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 	cin->s_samples_length = CIN_GetRawSamplesLengthFromListeners( cin );
 
 	if( cin->cur_time < cin->start_time )
-		return qfalse;
+		return false;
 
 	return type->need_next_frame( cin );
 }
@@ -227,23 +227,23 @@ qboolean CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )
 * CIN_ReadNextFrame_
 */
 static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height, 
-	int *aspect_numerator, int *aspect_denominator, qboolean *redraw, qboolean yuv )
+	int *aspect_numerator, int *aspect_denominator, bool *redraw, bool yuv )
 {
 	int i;
 	uint8_t *frame = NULL;
 	const cin_type_t *type;
-	qboolean redraw_ = qfalse;
+	bool redraw_ = false;
 
 	assert( cin );
 	assert( cin->type > CIN_TYPE_NONE && cin->type < CIN_NUM_TYPES );
 
 	type = &cin_types[cin->type];
 
-	cin->haveAudio = qfalse;
+	cin->haveAudio = false;
 
 	for( i = 0; i < 2; i++ )
 	{
-		redraw_ = qfalse;
+		redraw_ = false;
 		if( yuv ) {
 			frame = ( uint8_t * )type->read_next_frame_yuv( cin, &redraw_ );
 		}
@@ -272,7 +272,7 @@ static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height,
 
 	if( cin->haveAudio ) {
 		CIN_ClearRawSamplesListeners( cin );
-		cin->haveAudio = qfalse;
+		cin->haveAudio = false;
 	}
 
 	return frame;
@@ -282,19 +282,19 @@ static uint8_t *CIN_ReadNextFrame_( cinematics_t *cin, int *width, int *height,
 * CIN_ReadNextFrame
 */
 uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 
-	int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
+	int *aspect_numerator, int *aspect_denominator, bool *redraw )
 {
 	return CIN_ReadNextFrame_( cin, width, height, 
-		aspect_numerator, aspect_denominator, redraw, qfalse );
+		aspect_numerator, aspect_denominator, redraw, false );
 }
 
 /*
 * CIN_ReadNextFrameYUV
 */
 cin_yuv_t *CIN_ReadNextFrameYUV( cinematics_t *cin, int *width, int *height, 
-	int *aspect_numerator, int *aspect_denominator, qboolean *redraw )
+	int *aspect_numerator, int *aspect_denominator, bool *redraw )
 {
-	return ( cin_yuv_t * )CIN_ReadNextFrame_( cin, width, height, aspect_numerator, aspect_denominator, redraw, qtrue );
+	return ( cin_yuv_t * )CIN_ReadNextFrame_( cin, width, height, aspect_numerator, aspect_denominator, redraw, true );
 }
 
 /*
@@ -308,26 +308,26 @@ void CIN_ClearRawSamplesListeners( cinematics_t *cin )
 /*
 * CIN_AddRawSamplesListener
 */
-qboolean CIN_AddRawSamplesListener( cinematics_t *cin, void *listener, 
+bool CIN_AddRawSamplesListener( cinematics_t *cin, void *listener, 
 	cin_raw_samples_cb_t raw_samples, cin_get_raw_samples_cb_t get_raw_samples )
 {
 	int i;
 
 	if( !cin ) {
-		return qfalse;
+		return false;
 	}
 	if( !raw_samples ) {
-		return qfalse;
+		return false;
 	}
 
 	if( cin->num_listeners >= CIN_MAX_RAW_SAMPLES_LISTENERS ) {
-		return qfalse;
+		return false;
 	}
 
 	for( i = 0; i < cin->num_listeners; i++ ) {
 		if( cin->listeners[i].listener == listener 
 			&& cin->listeners[i].raw_samples == raw_samples )
-			return qtrue;
+			return true;
 	}
 
 	cin->listeners[cin->num_listeners].listener = listener;
@@ -335,7 +335,7 @@ qboolean CIN_AddRawSamplesListener( cinematics_t *cin, void *listener,
 	cin->listeners[cin->num_listeners].get_raw_samples = get_raw_samples;
 	cin->num_listeners++;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -350,7 +350,7 @@ void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigne
 		cin->listeners[i].raw_samples( cin->listeners[i].listener, samples, rate, width, channels, data );
 	}
 
-	cin->haveAudio = qtrue;
+	cin->haveAudio = true;
 	cin->s_samples_length = CIN_GetRawSamplesLengthFromListeners( cin );
 }
 

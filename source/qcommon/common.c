@@ -31,8 +31,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_NUM_ARGVS	50
 
-static qboolean	dynvars_initialized = qfalse;
-static qboolean	commands_intialized = qfalse;
+static bool	dynvars_initialized = false;
+static bool	commands_intialized = false;
 
 static int com_argc;
 static char *com_argv[MAX_NUM_ARGVS+1];
@@ -65,7 +65,7 @@ static int log_file = 0;
 
 static int server_state = CA_UNINITIALIZED;
 static int client_state = CA_UNINITIALIZED;
-static qboolean	demo_playing = qfalse;
+static bool	demo_playing = false;
 
 struct cmodel_state_s *server_cms = NULL;
 unsigned server_map_checksum = 0;
@@ -210,7 +210,7 @@ void Com_Printf( const char *format, ... )
 	// logconsole
 	if( logconsole && logconsole->modified )
 	{
-		logconsole->modified = qfalse;
+		logconsole->modified = false;
 
 		if( log_file )
 		{
@@ -283,14 +283,14 @@ void Com_Error( com_error_code_t code, const char *format, ... )
 	va_list	argptr;
 	char *msg = com_errormsg;
 	const size_t sizeof_msg = sizeof( com_errormsg );
-	static qboolean	recursive = qfalse;
+	static bool	recursive = false;
 
 	if( recursive )
 	{
 		Com_Printf( "recursive error after: %s", msg ); // wsw : jal : log it
 		Sys_Error( "recursive error after: %s", msg );
 	}
-	recursive = qtrue;
+	recursive = true;
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof_msg, format, argptr );
@@ -299,9 +299,9 @@ void Com_Error( com_error_code_t code, const char *format, ... )
 	if( code == ERR_DROP )
 	{
 		Com_Printf( "********************\nERROR: %s\n********************\n", msg );
-		SV_ShutdownGame( va( "Server crashed: %s\n", msg ), qfalse );
+		SV_ShutdownGame( va( "Server crashed: %s\n", msg ), false );
 		CL_Disconnect( msg );
-		recursive = qfalse;
+		recursive = false;
 		longjmp( abortframe, -1 );
 	}
 	else
@@ -399,12 +399,12 @@ void Com_SetClientState( int state )
 	client_state = state;
 }
 
-qboolean Com_DemoPlaying( void )
+bool Com_DemoPlaying( void )
 {
 	return demo_playing;
 }
 
-void Com_SetDemoPlaying( qboolean state )
+void Com_SetDemoPlaying( bool state )
 {
 	demo_playing = state;
 }
@@ -493,7 +493,7 @@ void COM_AddParm( char *parm )
 	com_argv[com_argc++] = parm;
 }
 
-int Com_GlobMatch( const char *pattern, const char *text, const qboolean casecmp )
+int Com_GlobMatch( const char *pattern, const char *text, const bool casecmp )
 {
 	return glob_match( pattern, text, casecmp );
 }
@@ -845,7 +845,7 @@ void Qcommon_InitCommands( void )
 	if( dedicated->integer )
 		Cmd_AddCommand( "quit", Com_Quit );
 
-	commands_intialized = qtrue;
+	commands_intialized = true;
 }
 
 /*
@@ -870,7 +870,7 @@ void Qcommon_ShutdownCommands( void )
 	if( dedicated->integer )
 		Cmd_RemoveCommand( "quit" );
 
-	commands_intialized = qfalse;
+	commands_intialized = false;
 }
 
 /*
@@ -903,7 +903,7 @@ void Qcommon_Init( int argc, char **argv )
 	Cmd_Init();
 	Cvar_Init();
 	Dynvar_Init();
-	dynvars_initialized = qtrue;
+	dynvars_initialized = true;
 
 	wswcurl_init();
 
@@ -913,14 +913,14 @@ void Qcommon_Init( int argc, char **argv )
 	// a basepath or cdpath needs to be set before execing
 	// config files, but we want other parms to override
 	// the settings of the config files
-	Cbuf_AddEarlyCommands( qfalse );
+	Cbuf_AddEarlyCommands( false );
 	Cbuf_Execute();
 
 	// wsw : aiwa : create dynvars (needs to be completed before .cfg scripts are executed)
-	Dynvar_Create( "sys_uptime", qtrue, Com_Sys_Uptime_f, DYNVAR_READONLY );
-	Dynvar_Create( "frametick", qfalse, DYNVAR_WRITEONLY, DYNVAR_READONLY );
-	Dynvar_Create( "quit", qfalse, DYNVAR_WRITEONLY, DYNVAR_READONLY );
-	Dynvar_Create( "irc_connected", qfalse, Irc_GetConnected_f, Irc_SetConnected_f );
+	Dynvar_Create( "sys_uptime", true, Com_Sys_Uptime_f, DYNVAR_READONLY );
+	Dynvar_Create( "frametick", false, DYNVAR_WRITEONLY, DYNVAR_READONLY );
+	Dynvar_Create( "quit", false, DYNVAR_WRITEONLY, DYNVAR_READONLY );
+	Dynvar_Create( "irc_connected", false, Irc_GetConnected_f, Irc_SetConnected_f );
 
 	Sys_InitDynvars();
 	CL_InitDynvars();
@@ -967,7 +967,7 @@ void Qcommon_Init( int argc, char **argv )
 		Cbuf_AddText( "exec dedicated_autoexec.cfg\n" );
 	}
 
-	Cbuf_AddEarlyCommands( qtrue );
+	Cbuf_AddEarlyCommands( true );
 	Cbuf_Execute();
 
 	//
@@ -1085,7 +1085,7 @@ void Qcommon_Frame( unsigned int realmsec )
 
 	if( log_stats->modified )
 	{
-		log_stats->modified = qfalse;
+		log_stats->modified = false;
 
 		if( log_stats->integer && !log_stats_file )
 		{
@@ -1193,14 +1193,14 @@ void Qcommon_Frame( unsigned int realmsec )
 */
 void Qcommon_Shutdown( void )
 {
-	static qboolean isdown = qfalse;
+	static bool isdown = false;
 
 	if( isdown )
 	{
 		printf( "Recursive shutdown\n" );
 		return;
 	}
-	isdown = qtrue;
+	isdown = true;
 
 	Com_ScriptModule_Shutdown();
 	CM_Shutdown();
@@ -1229,7 +1229,7 @@ void Qcommon_Shutdown( void )
 	wswcurl_cleanup();
 
 	Dynvar_Shutdown();
-	dynvars_initialized = qfalse;
+	dynvars_initialized = false;
 	Cvar_Shutdown();
 	Cmd_Shutdown();
 	Cbuf_Shutdown();

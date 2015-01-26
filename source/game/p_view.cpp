@@ -107,7 +107,7 @@ static void G_Client_DeadView( edict_t *ent )
 	// move us to body position
 	VectorCopy( body->s.origin, ent->s.origin );
 	VectorCopy( body->s.origin, ent->s.old_origin );
-	ent->s.teleported = qtrue;
+	ent->s.teleported = true;
 	client->ps.viewangles[ROLL] = 0;
 	client->ps.viewangles[PITCH] = 0;
 

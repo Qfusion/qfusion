@@ -97,7 +97,7 @@ static int SkinFile_ParseBuffer( char *buffer, mesh_shader_pair_t *pairs )
 
 	while( ptr )
 	{
-		token = COM_ParseExt( &ptr, qfalse );
+		token = COM_ParseExt( &ptr, false );
 		if( !token[0] )
 			continue;
 

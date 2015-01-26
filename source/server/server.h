@@ -86,9 +86,9 @@ struct edict_s
 
 typedef struct
 {
-	qboolean allentities;
-	qboolean multipov;
-	qboolean relay;
+	bool allentities;
+	bool multipov;
+	bool relay;
 	int clientarea;
 	int numareas;
 	int areabytes;
@@ -127,9 +127,9 @@ typedef struct client_s
 
 	char userinfo[MAX_INFO_STRING];     // name, etc
 
-	qboolean reliable;                  // no need for acks, connection is reliable
-	qboolean mv;                        // send multiview data to the client
-	qboolean individual_socket;         // client has it's own socket that has to be checked separately
+	bool reliable;                  // no need for acks, connection is reliable
+	bool mv;                        // send multiview data to the client
+	bool individual_socket;         // client has it's own socket that has to be checked separately
 
 	socket_t socket;
 
@@ -153,7 +153,7 @@ typedef struct client_s
 	unsigned lastconnect;
 
 	int lastframe;                  // used for delta compression etc.
-	qboolean nodelta;               // send one non delta compressed frame trough
+	bool nodelta;               // send one non delta compressed frame trough
 	int nodelta_frame;              // when we get confirmation of this frame, the non-delta frame is trough
 	unsigned int lastSentFrameNum;  // for knowing which was last frame we sent
 
@@ -176,7 +176,7 @@ typedef struct client_s
 
 	netchan_t netchan;
 
-	qboolean tvclient;
+	bool tvclient;
 
 	int mm_session;
 	unsigned int mm_ticket;
@@ -226,7 +226,7 @@ typedef server_static_demo_t demorec_t;
 #define MAX_INCOMING_CONNECTIONS 256
 typedef struct
 {
-	qboolean active;
+	bool active;
 	unsigned int time;      // for timeout
 	socket_t socket;
 	netadr_t address;
@@ -251,7 +251,7 @@ typedef struct fatvis_s
 
 typedef struct
 {
-	qboolean initialized;               // sv_init has completed
+	bool initialized;               // sv_init has completed
 	unsigned int realtime;                  // real world time - always increasing, no clamping, etc
 	unsigned int gametime;                  // game world time - always increasing, no clamping, etc
 
@@ -295,7 +295,7 @@ typedef struct
 	unsigned int lastActivity;
 	unsigned int snapFrameTime;		// msecs between server packets
 	unsigned int gameFrameTime;		// msecs between game code executions
-	qboolean autostarted;
+	bool autostarted;
 	unsigned int lastMasterResolve;
 } server_constant_t;
 
@@ -382,7 +382,7 @@ int SV_SkinIndex( const char *name );
 
 void SV_WriteClientdataToMessage( client_t *client, msg_t *msg );
 
-void SV_AutoUpdateFromWeb( qboolean checkOnly );
+void SV_AutoUpdateFromWeb( bool checkOnly );
 void SV_InitOperatorCommands( void );
 void SV_ShutdownOperatorCommands( void );
 
@@ -407,7 +407,7 @@ void SV_UpdateMaster( void );
 // sv_init.c
 //
 void SV_InitGame( void );
-void SV_Map( const char *level, qboolean devmap );
+void SV_Map( const char *level, bool devmap );
 void SV_SetServerConfigStrings( void );
 
 void SV_AddPureFile( const char *filename );
@@ -421,14 +421,14 @@ void SV_PrepWorldFrame( void );
 //
 // sv_send.c
 //
-qboolean SV_Netchan_Transmit( netchan_t *netchan, msg_t *msg );
+bool SV_Netchan_Transmit( netchan_t *netchan, msg_t *msg );
 void SV_AddServerCommand( client_t *client, const char *cmd );
 void SV_SendServerCommand( client_t *cl, const char *format, ... );
 void SV_AddGameCommand( client_t *client, const char *cmd );
 void SV_AddReliableCommandsToMessage( client_t *client, msg_t *msg );
-qboolean SV_SendClientsFragments( void );
+bool SV_SendClientsFragments( void );
 void SV_InitClientMessage( client_t *client, msg_t *msg, uint8_t *data, size_t size );
-qboolean SV_SendMessageToClient( client_t *client, msg_t *msg );
+bool SV_SendMessageToClient( client_t *client, msg_t *msg );
 void SV_ResetClientFrameCounters( void );
 
 typedef enum { RD_NONE, RD_PACKET } redirect_t;
@@ -461,18 +461,18 @@ void SV_BroadcastCommand( const char *format, ... );
 // sv_client.c
 //
 void SV_ParseClientMessage( client_t *client, msg_t *msg );
-qboolean SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
-                           int game_port, int challenge, qboolean fakeClient, qboolean tvClient,
+bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t *client, char *userinfo,
+                           int game_port, int challenge, bool fakeClient, bool tvClient,
                            unsigned int ticket_id, int session_id );
 void SV_DropClient( client_t *drop, int type, const char *format, ... );
 void SV_ExecuteClientThinks( int clientNum );
 void SV_ClientResetCommandBuffers( client_t *client );
-qboolean SV_ClientAllowHttpRequest( int clientNum, const char *session );
+bool SV_ClientAllowHttpRequest( int clientNum, const char *session );
 
 //
 // sv_mv.c
 //
-qboolean SV_Multiview_CreateStartMessages( qboolean ( *callback )( msg_t *msg, void *extra ), void *extra );
+bool SV_Multiview_CreateStartMessages( bool ( *callback )( msg_t *msg, void *extra ), void *extra );
 
 
 //
@@ -515,7 +515,7 @@ void SV_DemoGet_f( client_t *client );
 
 #define SV_SetDemoMetaKeyValue(k,v) svs.demo.meta_data_realsize = SNAP_SetDemoMetaKeyValue(svs.demo.meta_data, sizeof(svs.demo.meta_data), svs.demo.meta_data_realsize, k, v)
 
-qboolean SV_IsDemoDownloadRequest( const char *request );
+bool SV_IsDemoDownloadRequest( const char *request );
 
 //
 // sv_motd.c
@@ -527,9 +527,9 @@ void SV_MOTD_Get_f( client_t *client );
 // sv_mm.c
 //
 void SV_MM_Init( void );
-void SV_MM_Shutdown( qboolean logout );
+void SV_MM_Shutdown( bool logout );
 void SV_MM_Frame( void );
-qboolean SV_MM_Initialized( void );
+bool SV_MM_Initialized( void );
 
 int SV_MM_ClientConnect( const netadr_t *address, char *userinfo, unsigned int ticket, int session );
 void SV_MM_ClientDisconnect( client_t *client );
@@ -538,9 +538,9 @@ int SV_MM_GenerateLocalSession( void );
 
 // match report
 #include "../matchmaker/mm_common.h"
-struct stat_query_s *SV_MM_CreateQuery( const char *iface, const char *url, qboolean get );
+struct stat_query_s *SV_MM_CreateQuery( const char *iface, const char *url, bool get );
 void SV_MM_SendQuery( stat_query_t *query );
-void SV_MM_GameState( qboolean state );
+void SV_MM_GameState( bool state );
 void SV_MM_GetMatchUUID( void (*callback_fn)( const char *uuid ) );
 
 // 
@@ -549,5 +549,5 @@ void SV_MM_GetMatchUUID( void (*callback_fn)( const char *uuid ) );
 void SV_Web_Init( void );
 void SV_Web_Frame( void );
 void SV_Web_Shutdown( void );
-qboolean SV_Web_Running( void );
+bool SV_Web_Running( void );
 const char *SV_Web_UpstreamBaseUrl( void );

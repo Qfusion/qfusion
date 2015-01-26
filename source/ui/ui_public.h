@@ -43,7 +43,7 @@ typedef struct
 	void ( *Print )( const char *str );
 
 	// dynvars
-	dynvar_t *( *Dynvar_Create )( const char *name, qboolean console, dynvar_getter_f getter, dynvar_setter_f setter );
+	dynvar_t *( *Dynvar_Create )( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter );
 	void ( *Dynvar_Destroy )( dynvar_t *dynvar );
 	dynvar_t *( *Dynvar_Lookup )( const char *name );
 	const char *( *Dynvar_GetName )( dynvar_t *dynvar );
@@ -83,10 +83,10 @@ typedef struct
 	struct shader_s *( *R_RegisterSkin )( const char *name );
 	struct shader_s *( *R_RegisterPic )( const char *name );
 	struct shader_s *( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
-	struct shader_s *( *R_RegisterLevelshot )( const char *name, struct shader_s *defaultPic, qboolean *matchesDefault );
+	struct shader_s *( *R_RegisterLevelshot )( const char *name, struct shader_s *defaultPic, bool *matchesDefault );
 	struct skinfile_s *( *R_RegisterSkinFile )( const char *name );
 	struct shader_s *( *R_RegisterVideo )( const char *name );
-	qboolean ( *R_LerpTag )( orientation_t *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name );
+	bool ( *R_LerpTag )( orientation_t *orient, const struct model_s *mod, int oldframe, int frame, float lerpfrac, const char *name );
 	void ( *R_DrawStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 	void ( *R_DrawStretchPoly )( const struct poly_s *poly, float x_offset, float y_offset );
 	void ( *R_DrawRotatedStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, const vec4_t color, const struct shader_s *shader );
@@ -117,7 +117,7 @@ typedef struct
 	void ( *CL_Quit )( void );
 	void ( *CL_SetKeyDest )( int key_dest );
 	void ( *CL_ResetServerCount )( void );
-	char *( *CL_GetClipboardData )( qboolean primary );
+	char *( *CL_GetClipboardData )( bool primary );
 	void ( *CL_FreeClipboardData )( char *data );
 	void ( *CL_OpenURLInBrowser )( const char *url );
 	size_t ( *CL_ReadDemoMetaData )( const char *demopath, char *meta_data, size_t meta_data_size );
@@ -128,11 +128,11 @@ typedef struct
 	const char *( *Key_KeynumToString )( int keynum );
 	int ( *Key_StringToKeynum )( const char* s );
 	void ( *Key_SetBinding )( int keynum, const char *binding );
-	qboolean ( *Key_IsDown )( int keynum );
+	bool ( *Key_IsDown )( int keynum );
 
-	void ( *IN_ShowIME )( qboolean show );
+	void ( *IN_ShowIME )( bool show );
 
-	qboolean ( *VID_GetModeInfo )( int *width, int *height, qboolean *wideScreen, int mode );
+	bool ( *VID_GetModeInfo )( int *width, int *height, bool *wideScreen, int mode );
 	void ( *VID_FlashWindow )( int count );
 
 	void ( *GetConfigString )( int i, char *str, int size );
@@ -155,14 +155,14 @@ typedef struct
 	int ( *FS_Eof )( int file );
 	int ( *FS_Flush )( int file );
 	void ( *FS_FCloseFile )( int file );
-	qboolean ( *FS_RemoveFile )( const char *filename );
+	bool ( *FS_RemoveFile )( const char *filename );
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	int ( *FS_GetGameDirectoryList )( char *buf, size_t bufsize );
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
-	qboolean ( *FS_MoveFile )( const char *src, const char *dst );
-	qboolean ( *FS_IsUrl )( const char *url );
+	bool ( *FS_MoveFile )( const char *src, const char *dst );
+	bool ( *FS_IsUrl )( const char *url );
 	time_t ( *FS_FileMTime )( const char *filename );
-	qboolean ( *FS_RemoveDirectory )( const char *dirname );
+	bool ( *FS_RemoveDirectory )( const char *dirname );
 
 	// maplist
 	const char *( *ML_GetFilename )( const char *fullname );
@@ -170,11 +170,11 @@ typedef struct
 	size_t ( *ML_GetMapByNum )( int num, char *out, size_t size );
 
 	// MatchMaker
-	qboolean ( *MM_Login )( const char *user, const char *password );
-	qboolean ( *MM_Logout)( qboolean force );
+	bool ( *MM_Login )( const char *user, const char *password );
+	bool ( *MM_Logout)( bool force );
 	int ( *MM_GetLoginState )( void );
 	size_t ( *MM_GetLastErrorMessage )( char *buffer, size_t buffer_size );
-	size_t ( *MM_GetProfileURL )( char *buffer, size_t buffer_size, qboolean rml );
+	size_t ( *MM_GetProfileURL )( char *buffer, size_t buffer_size, bool rml );
 	size_t ( *MM_GetBaseWebURL )( char *buffer, size_t buffer_size );
 
 	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );
@@ -217,12 +217,12 @@ typedef struct
 	void ( *TouchAllAssets )( void );
 
 	void ( *Refresh )( unsigned int time, int clientState, int serverState, 
-		qboolean demoPlaying, const char *demoName, qboolean demoPaused, unsigned int demoTime, 
-		qboolean backGround, qboolean showCursor );
+		bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
+		bool backGround, bool showCursor );
 
 	void ( *UpdateConnectScreen )( const char *serverName, const char *rejectmessage, 
 		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
-		int connectCount, qboolean backGround );
+		int connectCount, bool backGround );
 
 	void ( *Keydown )( int key );
 	void ( *Keyup )( int key );

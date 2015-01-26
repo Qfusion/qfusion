@@ -417,10 +417,6 @@ typedef int socket_handle_t;
 
 //==============================================
 
-typedef bool qboolean;
-#define qtrue true
-#define qfalse false
-
 typedef unsigned int qwchar;	// Unicode character
 
 #ifndef NULL

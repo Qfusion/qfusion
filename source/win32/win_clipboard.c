@@ -4,7 +4,7 @@
 /*
 * Sys_GetClipboardData
 */
-char *Sys_GetClipboardData( qboolean primary )
+char *Sys_GetClipboardData( bool primary )
 {
 	char *utf8text = NULL;
 	int utf8size;
@@ -32,7 +32,7 @@ char *Sys_GetClipboardData( qboolean primary )
 /*
 * Sys_SetClipboardData
 */
-qboolean Sys_SetClipboardData( const char *data )
+bool Sys_SetClipboardData( const char *data )
 {
 	size_t size;
 	HGLOBAL hglbCopy;
@@ -42,7 +42,7 @@ qboolean Sys_SetClipboardData( const char *data )
 
 	// open the clipboard, and empty it
 	if( !OpenClipboard( NULL ) ) 
-		return qfalse;
+		return false;
 
 	EmptyClipboard();
 
@@ -53,7 +53,7 @@ qboolean Sys_SetClipboardData( const char *data )
 	if( hglbCopy == NULL )
 	{
 		CloseClipboard(); 
-		return qfalse; 
+		return false; 
 	} 
 
 	// lock the handle and copy the text to the buffer
@@ -71,7 +71,7 @@ qboolean Sys_SetClipboardData( const char *data )
 	// close the clipboard
 	CloseClipboard();
 
-	return qtrue;
+	return true;
 }
 
 /*

@@ -76,7 +76,7 @@ void Irc_ColorFilter(const char *pre, irc_color_filter_t filter, char *post) {
 	static cvar_t *irc_colors;
 	const char *in = pre;
 	char *out = post;
-	qboolean colorflag = qfalse;
+	bool colorflag = false;
 
 	assert(in);
 	assert(out);
@@ -132,9 +132,9 @@ void Irc_ColorFilter(const char *pre, irc_color_filter_t filter, char *post) {
 								break;
 						}
 					}
-					colorflag = qfalse;
+					colorflag = false;
 				} else if(*in == Q_COLOR_ESCAPE) {
-					colorflag = qtrue;
+					colorflag = true;
 				} else if (isprint(*in)) {
 					// printable character, copy as-is
 					*out++ = *in;

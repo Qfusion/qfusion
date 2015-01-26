@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/qcommon.h"
 // this file cuts out all the irc stuff. we dont need it!
 
-static qboolean connected_b = qfalse;
+static bool connected_b = false;
 
 void Irc_Connect_f( void )
 {
@@ -38,6 +38,6 @@ dynvar_get_status_t Irc_GetConnected_f( void **connected )
 
 dynvar_set_status_t Irc_SetConnected_f( void *connected )
 {
-	connected_b = qfalse;
+	connected_b = false;
 	return DYNVAR_SET_OK;
 }

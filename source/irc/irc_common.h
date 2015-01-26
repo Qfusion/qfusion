@@ -88,7 +88,7 @@ void Irc_ParseName(const char *mask, char *nick, irc_nick_prefix_t *prefix);
 // returns pointer to equivalent prefix in static memory
 irc_nick_prefix_t *Irc_GetStaticPrefix(irc_nick_prefix_t transient_prefix);
 
-static inline qboolean Irc_IsChannel(const char *target) {
+static inline bool Irc_IsChannel(const char *target) {
 	assert(target);
 	return (*target == '#' || *target == '&');
 }

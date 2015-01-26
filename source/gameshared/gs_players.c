@@ -336,7 +336,7 @@ void GS_PModel_AnimToFrame( unsigned int curTime, gs_pmodel_animationset_t *anim
 
 			if( thisAnim->anim )
 			{
-				qboolean forceLoop = ( channel == BASE_CHANNEL ) ? qtrue : qfalse;
+				bool forceLoop = ( channel == BASE_CHANNEL ) ? true : false;
 
 				thisAnim->lerpFrac = GS_FrameForTime( &thisAnim->frame, curTime, thisAnim->startTimestamp,
 					animSet->frametime[thisAnim->anim], animSet->firstframe[thisAnim->anim], animSet->lastframe[thisAnim->anim],

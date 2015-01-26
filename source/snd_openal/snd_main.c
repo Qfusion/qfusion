@@ -36,7 +36,7 @@ cvar_t *s_sound_velocity;
 cvar_t *s_stereo2mono;
 
 static int s_registration_sequence = 1;
-static qboolean s_registering;
+static bool s_registering;
 
 static void SF_UnregisterSound( sfx_t *sfx );
 static void SF_FreeSound( sfx_t *sfx );
@@ -101,7 +101,7 @@ static void SF_ListDevices_f( void )
 /*
 * SF_Init
 */
-qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose )
+bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 {
 	soundpool = S_MemAllocPool( "OpenAL sound module" );
 
@@ -113,7 +113,7 @@ qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose )
 #endif
 		{
 			Com_Printf( "Failed to load OpenAL library: %s\n", ALDRIVER );
-			return qfalse;
+			return false;
 		}
 	}
 #endif
@@ -137,7 +137,7 @@ qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose )
 
 	s_cmdQueue = S_CreateSoundQueue();
 	if( !s_cmdQueue ) {
-		return qfalse;
+		return false;
 	}
 
 	s_backThread = trap_Thread_Create( S_BackgroundUpdateProc, s_cmdQueue );
@@ -147,24 +147,24 @@ qboolean SF_Init( void *hwnd, int maxEntities, qboolean verbose )
 	S_FinishSoundQueue( s_cmdQueue );
 
 	if( !alContext ) {
-		return qfalse;
+		return false;
 	}
 
 	S_InitBuffers();
 
-	return qtrue;
+	return true;
 }
 
 /*
 * SF_Shutdown
 */
-void SF_Shutdown( qboolean verbose )
+void SF_Shutdown( bool verbose )
 {
 	if( !soundpool ) {
 		return;
 	}
 	
-	SF_StopAllSounds( qtrue, qtrue );
+	SF_StopAllSounds( true, true );
 
 	// wait for the queue to be processed
 	S_FinishSoundQueue( s_cmdQueue );
@@ -205,7 +205,7 @@ void SF_BeginRegistration( void )
 	if( !s_registration_sequence ) {
 		s_registration_sequence = 1;
 	}
-	s_registering = qtrue;
+	s_registering = true;
 
 	// wait for the queue to be processed
 	S_FinishSoundQueue( s_cmdQueue );
@@ -223,7 +223,7 @@ void SF_EndRegistration( void )
 
 	S_ForEachBuffer( SF_FreeSound );
 
-	s_registering = qfalse;
+	s_registering = false;
 
 }
 
@@ -272,7 +272,7 @@ static void SF_FreeSound( sfx_t *sfx )
 /*
 * SF_Activate
 */
-void SF_Activate( qboolean active )
+void SF_Activate( bool active )
 {
 	SF_LockBackgroundTrack( !active );
 
@@ -298,7 +298,7 @@ void SF_StopBackgroundTrack( void )
 /*
 * SF_LockBackgroundTrack
 */
-void SF_LockBackgroundTrack( qboolean lock )
+void SF_LockBackgroundTrack( bool lock )
 {
 	S_IssueLockBackgroundTrackCmd( s_cmdQueue, lock );
 }
@@ -306,7 +306,7 @@ void SF_LockBackgroundTrack( qboolean lock )
 /*
 * SF_StopAllSounds
 */
-void SF_StopAllSounds( qboolean clear, qboolean stopMusic )
+void SF_StopAllSounds( bool clear, bool stopMusic )
 {
 	S_IssueStopAllSoundsCmd( s_cmdQueue, clear, stopMusic );
 }
@@ -340,7 +340,7 @@ void SF_PauseBackgroundTrack( void )
 */
 void SF_BeginAviDemo( void )
 {
-	S_IssueAviDemoCmd( s_cmdQueue, qtrue );
+	S_IssueAviDemoCmd( s_cmdQueue, true );
 }
 
 /*
@@ -348,7 +348,7 @@ void SF_BeginAviDemo( void )
 */
 void SF_StopAviDemo( void )
 {
-	S_IssueAviDemoCmd( s_cmdQueue, qfalse );
+	S_IssueAviDemoCmd( s_cmdQueue, false );
 }
 
 /*
@@ -427,7 +427,7 @@ void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation )
 /*
 * SF_Update
 */
-void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, qboolean avidump )
+void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump )
 {
 	S_IssueSetListenerCmd( s_cmdQueue, origin, velocity, axis, avidump );
 }
@@ -436,7 +436,7 @@ void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, q
 * SF_RawSamples
 */
 void SF_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const uint8_t *data, qboolean music )
+	unsigned short channels, const uint8_t *data, bool music )
 {
 	size_t data_size = samples * width * channels;
 	uint8_t *data_copy = S_Malloc( data_size );

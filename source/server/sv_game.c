@@ -68,11 +68,11 @@ static inline struct cmodel_s *PF_CM_OctagonModelForBBox( vec3_t mins, vec3_t ma
 	return CM_OctagonModelForBBox( svs.cms, mins, maxs );
 }
 
-static inline qboolean PF_CM_AreasConnected( int area1, int area2 ) {
+static inline bool PF_CM_AreasConnected( int area1, int area2 ) {
 	return CM_AreasConnected( svs.cms, area1, area2 );
 }
 
-static inline void PF_CM_SetAreaPortalState( int area, int otherarea, qboolean open ) {
+static inline void PF_CM_SetAreaPortalState( int area, int otherarea, bool open ) {
 	CM_SetAreaPortalState( svs.cms, area, otherarea, open );
 }
 
@@ -371,7 +371,7 @@ static void PF_PureModel( const char *name )
 *
 * Also checks portalareas so that doors block sight
 */
-static qboolean PF_inVisSet( const vec3_t p1, const vec3_t p2, uint8_t *( *vis )( cmodel_state_t *, int ) )
+static bool PF_inVisSet( const vec3_t p1, const vec3_t p2, uint8_t *( *vis )( cmodel_state_t *, int ) )
 {
 	int leafnum;
 	int cluster;
@@ -388,18 +388,18 @@ static qboolean PF_inVisSet( const vec3_t p1, const vec3_t p2, uint8_t *( *vis )
 	area2 = CM_LeafArea( svs.cms, leafnum );
 
 	if( ( !( mask[cluster>>3] & ( 1<<( cluster&7 ) ) ) ) )
-		return qfalse;
+		return false;
 
 	if( !CM_AreasConnected( svs.cms, area1, area2 ) )
-		return qfalse; // a door blocks sight
+		return false; // a door blocks sight
 
-	return qtrue;
+	return true;
 }
 
 /*
 * PF_inPVS
 */
-static qboolean PF_inPVS( const vec3_t p1, const vec3_t p2 ) {
+static bool PF_inPVS( const vec3_t p1, const vec3_t p2 ) {
 	return PF_inVisSet( p1, p2, CM_ClusterPVS );
 }
 
@@ -595,7 +595,7 @@ void SV_InitGameProgs( void )
 		ge = builtinAPIfunc( &import );
 	}
 	else {
-		ge = (game_export_t *)Com_LoadGameLibrary( "game", "GetGameAPI", &module_handle, &import, qfalse, manifest );
+		ge = (game_export_t *)Com_LoadGameLibrary( "game", "GetGameAPI", &module_handle, &import, false, manifest );
 	}
 	if( !ge )
 		Com_Error( ERR_DROP, "Failed to load game DLL" );

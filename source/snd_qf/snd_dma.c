@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 channel_t channels[MAX_CHANNELS];
 
-qboolean snd_initialized = qfalse;
+bool snd_initialized = false;
 
 dma_t dma;
 
@@ -60,16 +60,16 @@ static int s_attenuation_model = 0;
 static float s_attenuation_maxdistance = 0;
 static float s_attenuation_refdistance = 0;
 
-qboolean s_active = qfalse;
+bool s_active = false;
 
-static qboolean s_aviDump;
+static bool s_aviDump;
 static unsigned s_aviNumSamples;
 static int s_aviDumpFile;
 static char *s_aviDumpFileName;
 
 static entity_spatialization_t s_ent_spatialization[MAX_EDICTS];
 
-static void S_StopAllSounds( qboolean clear, qboolean stopMusic );
+static void S_StopAllSounds( bool clear, bool stopMusic );
 static void S_ClearSoundTime( void );
 static void S_ClearRawSounds( void );
 static void S_FreeRawSounds( void );
@@ -126,12 +126,12 @@ static void S_SoundList_f( void )
 /*
 * S_Init
 */
-static qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
+static bool S_Init( void *hwnd, int maxEntities, bool verbose )
 {
 	if( !SNDDMA_Init( hwnd, verbose ) )
-		return qfalse;
+		return false;
 	
-	s_active = qtrue;
+	s_active = true;
 
 	if( verbose )
 		Com_Printf( "Sound sampling rate: %i\n", dma.speed );
@@ -149,23 +149,23 @@ static qboolean S_Init( void *hwnd, int maxEntities, qboolean verbose )
 
 	S_ClearSoundTime();
 
-	S_StopAllSounds( qtrue, qtrue );
+	S_StopAllSounds( true, true );
 
-	S_LockBackgroundTrack( qfalse );
+	S_LockBackgroundTrack( false );
 
-	return qtrue;
+	return true;
 }
 
 /*
 * S_Shutdown
 */
-static void S_Shutdown( qboolean verbose )
+static void S_Shutdown( bool verbose )
 {
-	S_StopAllSounds( qtrue, qtrue );
+	S_StopAllSounds( true, true );
 
 	S_StopAviDemo();
 
-	S_LockBackgroundTrack( qfalse );
+	S_LockBackgroundTrack( false );
 
 	S_StopBackgroundTrack( );
 	
@@ -599,10 +599,10 @@ static void S_StartSound( sfx_t *sfx, const vec3_t origin, int entnum, int entch
 	if( origin )
 	{
 		VectorCopy( origin, ps->origin );
-		ps->fixed_origin = qtrue;
+		ps->fixed_origin = true;
 	}
 	else
-		ps->fixed_origin = qfalse;
+		ps->fixed_origin = false;
 
 	ps->entnum = entnum;
 	ps->entchannel = entchannel;
@@ -674,7 +674,7 @@ static void S_Clear( void )
 /*
 * S_StopAllSounds
 */
-static void S_StopAllSounds( qboolean clear, qboolean stopMusic )
+static void S_StopAllSounds( bool clear, bool stopMusic )
 {
 	// clear all the playsounds and channels
 	S_ClearPlaysounds();
@@ -789,7 +789,7 @@ static void S_AddLoopSounds( void )
 			right_total = 255;
 		ch->leftvol = left_total;
 		ch->rightvol = right_total;
-		ch->autosound = qtrue; // remove next frame
+		ch->autosound = true; // remove next frame
 		ch->sfx = sfx;
 		ch->pos = paintedtime % sc->length;
 		ch->end = paintedtime + sc->length - ch->pos;
@@ -808,7 +808,7 @@ static void S_AddLoopSounds( void )
 /*
 * S_FindRawSound
 */
-static rawsound_t *S_FindRawSound( int entnum, qboolean addNew )
+static rawsound_t *S_FindRawSound( int entnum, bool addNew )
 {
 	int i, free;
 	int best, best_time;
@@ -940,7 +940,7 @@ static void S_RawEntSamples( int entnum, unsigned int samples, unsigned int rate
 	if( snd_vol < 0 )
 		snd_vol = 0;
 
-	rawsound = S_FindRawSound( entnum, qtrue );
+	rawsound = S_FindRawSound( entnum, true );
 	if( !rawsound ) {
 		return;
 	}
@@ -965,7 +965,7 @@ void S_RawSamples2( unsigned int samples, unsigned int rate, unsigned short widt
 * S_RawSamples
 */
 void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width, 
-	unsigned short channels, const uint8_t *data, qboolean music )
+	unsigned short channels, const uint8_t *data, bool music )
 {
 	int snd_vol;
 	int entnum;
@@ -996,7 +996,7 @@ static void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
 	if( entnum < 0 || entnum >= MAX_EDICTS )
 		return;
 
-	rawsound = S_FindRawSound( entnum, qtrue );
+	rawsound = S_FindRawSound( entnum, true );
 	if( !rawsound ) {
 		return;
 	}
@@ -1014,7 +1014,7 @@ unsigned int S_GetRawSamplesLength( void )
 {
 	rawsound_t *rawsound;
 	
-	rawsound = S_FindRawSound( S_RAW_SOUND_BGTRACK, qfalse );
+	rawsound = S_FindRawSound( S_RAW_SOUND_BGTRACK, false );
 	if( !rawsound ) {
 		return 0;
 	}
@@ -1034,7 +1034,7 @@ unsigned int S_GetPositionedRawSamplesLength( int entnum )
 	if( entnum < 0 )
 		entnum = 0;
 
-	rawsound = S_FindRawSound( entnum, qfalse );
+	rawsound = S_FindRawSound( entnum, false );
 	if( !rawsound ) {
 		return 0;
 	}
@@ -1164,7 +1164,7 @@ static void GetSoundtime( void )
 			// time to chop things off to avoid 32 bit limits
 			buffers = 0;
 			paintedtime = fullsamples;
-			S_StopAllSounds( qtrue, qfalse );
+			S_StopAllSounds( true, false );
 		}
 	}
 	oldsamplepos = samplepos;
@@ -1595,9 +1595,9 @@ static unsigned S_HandlePauseBackgroundTrackCmd( const sndPauseBackgroundTrackCm
 */
 static unsigned S_HandleActivateCmd( const sndActivateCmd_t *cmd )
 {
-	qboolean active;
+	bool active;
 	//Com_Printf("S_HandleActivateCmd\n");
-	active = cmd->active ? qtrue : qfalse;
+	active = cmd->active ? true : false;
 	if( s_active != active ) {
 		s_active = active;
 		S_Clear();

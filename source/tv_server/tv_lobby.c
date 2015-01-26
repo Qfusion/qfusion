@@ -40,7 +40,7 @@ static void TV_Lobby_WriteFrameSnapToClient( client_t *client, msg_t *msg )
 /*
 * TV_Lobby_SendClientDatagram
 */
-static qboolean TV_Lobby_SendClientDatagram( client_t *client )
+static bool TV_Lobby_SendClientDatagram( client_t *client )
 {
 	uint8_t msg_buf[MAX_MSGLEN];
 	msg_t msg;
@@ -88,13 +88,13 @@ static void TV_Lobby_SendClientMessages( void )
 /*
 * TV_Lobby_RunSnap
 */
-static qboolean TV_Lobby_RunSnap( void )
+static bool TV_Lobby_RunSnap( void )
 {
 	if( tvs.lobby.lastrun + tvs.lobby.snapFrameTime > tvs.realtime )
-		return qfalse;
+		return false;
 
 	tvs.lobby.framenum++;
-	return qtrue;
+	return true;
 }
 
 /*
@@ -117,7 +117,7 @@ void TV_Lobby_ClientDisconnect( client_t *client )
 /*
 * TV_Lobby_CanConnect
 */
-qboolean TV_Lobby_CanConnect( client_t *client, char *userinfo )
+bool TV_Lobby_CanConnect( client_t *client, char *userinfo )
 {
 	char *value;
 
@@ -137,10 +137,10 @@ qboolean TV_Lobby_CanConnect( client_t *client, char *userinfo )
 		{
 			Info_SetValueForKey( userinfo, "rejmsg", "Password required" );
 		}
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*

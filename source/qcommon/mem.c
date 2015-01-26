@@ -113,8 +113,8 @@ mempool_t *zoneMemPool;
 
 static qmutex_t *memMutex;
 
-static qboolean memory_initialized = qfalse;
-static qboolean commands_initialized = qfalse;
+static bool memory_initialized = false;
+static bool commands_initialized = false;
 
 static void _Mem_Error( const char *format, ... )
 {
@@ -617,13 +617,13 @@ static void MemList_f( void )
 	switch( Cmd_Argc() )
 	{
 	case 1:
-		Mem_PrintList( qtrue, qfalse );
+		Mem_PrintList( true, false );
 		Mem_PrintStats();
 		return;
 	case 2:
 		if( !Q_stricmp( Cmd_Argv( 1 ), "all" ) )
 		{
-			Mem_PrintList( qtrue, qtrue );
+			Mem_PrintList( true, true );
 			Mem_PrintStats();
 			break;
 		}
@@ -639,7 +639,7 @@ static void MemList_f( void )
 		if( !Q_stricmp( pool->name, name ) )
 		{
 			Com_Printf( "memory pool list:\n" "size    name\n" );
-			Mem_PrintPoolStats( pool, qtrue, qtrue );
+			Mem_PrintPoolStats( pool, true, true );
 			return;
 		}
 	}
@@ -666,7 +666,7 @@ void Memory_Init( void )
 	zoneMemPool = Mem_AllocPool( NULL, "Zone" );
 	tempMemPool = Mem_AllocTempPool( "Temporary Memory" );
 
-	memory_initialized = qtrue;
+	memory_initialized = true;
 }
 
 /*
@@ -681,7 +681,7 @@ void Memory_InitCommands( void )
 	Cmd_AddCommand( "memlist", MemList_f );
 	Cmd_AddCommand( "memstats", MemStats_f );
 
-	commands_initialized = qtrue;
+	commands_initialized = true;
 }
 
 /*
@@ -717,7 +717,7 @@ void Memory_Shutdown( void )
 
 	QMutex_Destroy( &memMutex );
 
-	memory_initialized = qfalse;
+	memory_initialized = false;
 }
 
 /*

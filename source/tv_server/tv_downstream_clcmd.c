@@ -156,7 +156,7 @@ void TV_Downstream_New_f( client_t *client )
 		}
 	}
 
-	TV_Downstream_ClientResetCommandBuffers( client, qtrue );
+	TV_Downstream_ClientResetCommandBuffers( client, true );
 
 	TV_Downstream_SendMessageToClient( client, &message );
 
@@ -289,7 +289,7 @@ static void TV_Downstream_Baselines_f( client_t *client )
 		if( client->relay->baselines[start].number )
 		{
 			MSG_WriteByte( &message, svc_spawnbaseline );
-			MSG_WriteDeltaEntity( &nullstate, &client->relay->baselines[start], &message, qtrue, qtrue );
+			MSG_WriteDeltaEntity( &nullstate, &client->relay->baselines[start], &message, true, true );
 		}
 		start++;
 	}
@@ -371,7 +371,7 @@ static void TV_Downstream_UserinfoCommand_f( client_t *client )
 */
 static void TV_Downstream_NoDelta_f( client_t *client )
 {
-	client->nodelta = qtrue;
+	client->nodelta = true;
 	client->nodelta_frame = 0;
 }
 
@@ -380,7 +380,7 @@ static void TV_Downstream_NoDelta_f( client_t *client )
 */
 static void TV_Downstream_Multiview_f( client_t *client )
 {
-	qboolean mv;
+	bool mv;
 
 	mv = ( atoi( Cmd_Argv( 1 ) ) != 0 );
 
@@ -451,7 +451,7 @@ static void TV_Downstream_DenyDownload( client_t *client, const char *reason )
 	// size -1 is used to signal that it's refused
 	// URL field is used for deny reason
 	TV_Downstream_InitClientMessage( client, &message, messageData, sizeof( messageData ) );
-	TV_Downstream_SendServerCommand( client, "initdownload \"%s\" %i %u %i \"%s\"", "", -1, 0, qfalse, reason );
+	TV_Downstream_SendServerCommand( client, "initdownload \"%s\" %i %u %i \"%s\"", "", -1, 0, false, reason );
 	TV_Downstream_AddReliableCommandsToMessage( client, &message );
 	TV_Downstream_SendMessageToClient( client, &message );
 }
@@ -466,7 +466,7 @@ static void TV_Downstream_BeginDownload_f( client_t *client )
 }
 
 
-static qboolean CheckFlood( client_t *client )
+static bool CheckFlood( client_t *client )
 {
 	int i;
 
@@ -478,29 +478,29 @@ static qboolean CheckFlood( client_t *client )
 			Cvar_Set( "tv_floodprotection_messages", "0" );
 		if( tv_floodprotection_messages->integer > MAX_FLOOD_MESSAGES )
 			Cvar_Set( "tv_floodprotection_messages", va( "%i", MAX_FLOOD_MESSAGES ) );
-		tv_floodprotection_messages->modified = qfalse;
+		tv_floodprotection_messages->modified = false;
 	}
 
 	if( tv_floodprotection_seconds->modified )
 	{
 		if( tv_floodprotection_seconds->value <= 0 )
 			Cvar_Set( "tv_floodprotection_seconds", "4" );
-		tv_floodprotection_seconds->modified = qfalse;
+		tv_floodprotection_seconds->modified = false;
 	}
 
 	if( tv_floodprotection_penalty->modified )
 	{
 		if( tv_floodprotection_penalty->value < 0 )
 			Cvar_Set( "tv_floodprotection_penalty", "20" );
-		tv_floodprotection_penalty->modified = qfalse;
+		tv_floodprotection_penalty->modified = false;
 	}
 
 	// old protection still active
 	if( tvs.realtime < client->flood.locktill )
 	{
-		TV_Downstream_Msg( client, NULL, NULL, qfalse, "You can't talk for %d more seconds.\n",
+		TV_Downstream_Msg( client, NULL, NULL, false, "You can't talk for %d more seconds.\n",
 			(int)( ( client->flood.locktill - tvs.realtime ) / 1000.0f ) + 1 );
-		return qtrue;
+		return true;
 	}
 
 	if( tv_floodprotection_messages->integer && tv_floodprotection_penalty->value > 0 )
@@ -513,21 +513,21 @@ static qboolean CheckFlood( client_t *client )
 			( tvs.realtime < client->flood.when[i] + tv_floodprotection_seconds->integer * 1000 ) )
 		{
 			client->flood.locktill = tvs.realtime + tv_floodprotection_penalty->value * 1000;
-			TV_Downstream_Msg( client, NULL, NULL, qfalse, "Flood protection: You can't talk for %d seconds.\n", tv_floodprotection_penalty->integer );
-			return qtrue;
+			TV_Downstream_Msg( client, NULL, NULL, false, "Flood protection: You can't talk for %d seconds.\n", tv_floodprotection_penalty->integer );
+			return true;
 		}
 
 		client->flood.whenhead = ( client->flood.whenhead + 1 ) % MAX_FLOOD_MESSAGES;
 		client->flood.when[client->flood.whenhead] = tvs.realtime;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 * TV_Cmd_Say_f
 */
-void TV_Cmd_Say_f( client_t *client, qboolean arg0 )
+void TV_Cmd_Say_f( client_t *client, bool arg0 )
 {
 	char *p;
 	char text[256];
@@ -564,7 +564,7 @@ void TV_Cmd_Say_f( client_t *client, qboolean arg0 )
 
 	Q_strncatz( text, "\n", sizeof( text ) );
 
-	TV_Downstream_Msg( NULL, client->relay, client, qtrue, "%s", text );
+	TV_Downstream_Msg( NULL, client->relay, client, true, "%s", text );
 }
 
 /*
@@ -572,7 +572,7 @@ void TV_Cmd_Say_f( client_t *client, qboolean arg0 )
 */
 void TV_Cmd_SayCmd_f( client_t *client )
 {
-	TV_Cmd_Say_f( client, qfalse );
+	TV_Cmd_Say_f( client, false );
 }
 
 /*
@@ -622,10 +622,10 @@ static void TV_Cmd_Spectators_f( client_t *client )
 	if( count )
 		Q_strncatz( msg, "---------------\n", sizeof( msg ) );
 	Q_strncatz( msg, va( "%i %s\n", count, Cmd_Argv( 0 ) ), sizeof( msg ) );
-	TV_Downstream_Msg( client, relay, NULL, qfalse, "%s", msg );
+	TV_Downstream_Msg( client, relay, NULL, false, "%s", msg );
 
 	if( i < maxclients )
-		TV_Downstream_Msg( client, relay, NULL, qfalse, "Type '%s %i' for more %s\n", Cmd_Argv( 0 ), i, Cmd_Argv( 0 ) );
+		TV_Downstream_Msg( client, relay, NULL, false, "Type '%s %i' for more %s\n", Cmd_Argv( 0 ), i, Cmd_Argv( 0 ) );
 
 }
 
@@ -690,5 +690,5 @@ void TV_Downstream_ExecuteUserCommand( client_t *client, char *s )
 	}
 
 	// unknown command, chat
-	TV_Cmd_Say_f( client, qtrue );
+	TV_Cmd_Say_f( client, true );
 }

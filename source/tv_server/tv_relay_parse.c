@@ -117,7 +117,7 @@ static void TV_Relay_ParseServerData( relay_t *relay, msg_t *msg )
 
 	// using upstream->reliable won't work for TV_Relay_ParseServerMessage
 	// in case of reliable demo following unreliable demo, causing "clack message while reliable" error
-	relay->reliable = ( ( relay->sv_bitflags & SV_BITFLAGS_RELIABLE ) ? qtrue : qfalse );
+	relay->reliable = ( ( relay->sv_bitflags & SV_BITFLAGS_RELIABLE ) ? true : false );
 
 	if( ( relay->sv_bitflags & SV_BITFLAGS_HTTP ) != 0 ) {
 		if( ( relay->sv_bitflags & SV_BITFLAGS_HTTP_BASEURL ) != 0 ) {

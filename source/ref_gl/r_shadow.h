@@ -46,7 +46,7 @@ typedef struct shadowGroup_s
 	float				visRadius;
 	vec3_t				visOrigin;
 
-	qboolean			useOrtho;
+	bool			useOrtho;
 	mat4_t			cameraProjectionMatrix;
 	struct shadowGroup_s *hashNext;
 } shadowGroup_t;
@@ -54,7 +54,7 @@ typedef struct shadowGroup_s
 extern drawList_t r_shadowlist;
 
 void		R_ClearShadowGroups( void );
-qboolean	R_AddLightOccluder( const entity_t *ent );
+bool	R_AddLightOccluder( const entity_t *ent );
 void		R_BuildShadowGroups( void );
 void		R_DrawShadowmaps( void );
 

@@ -26,11 +26,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#define THEORA_SOFTWARE_YUV2RGB
 #define THEORA_FILE_EXTENSIONS ".ogg .ogv"
 
-qboolean Theora_Init_CIN( cinematics_t *cin );
+bool Theora_Init_CIN( cinematics_t *cin );
 void Theora_Shutdown_CIN( cinematics_t *cin );
 void Theora_Reset_CIN( cinematics_t *cin );
-qboolean Theora_NeedNextFrame_CIN( cinematics_t *cin );
-uint8_t *Theora_ReadNextFrame_CIN( cinematics_t *cin, qboolean *redraw );
-cin_yuv_t *Theora_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw );
+bool Theora_NeedNextFrame_CIN( cinematics_t *cin );
+uint8_t *Theora_ReadNextFrame_CIN( cinematics_t *cin, bool *redraw );
+cin_yuv_t *Theora_ReadNextFrameYUV_CIN( cinematics_t *cin, bool *redraw );
 
 #endif

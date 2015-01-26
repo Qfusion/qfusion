@@ -182,7 +182,7 @@ void SV_MasterHeartbeat( void )
 * SV_LongInfoString
 * Builds the string that is sent as heartbeats and status replies
 */
-static char *SV_LongInfoString( qboolean fullStatus )
+static char *SV_LongInfoString( bool fullStatus )
 {
 	char tempstr[1024] = { 0 };
 	const char *gametype;
@@ -405,7 +405,7 @@ static void SVC_InfoResponse( const socket_t *socket, const netadr_t *address )
 {
 	int i, count;
 	char *string;
-	qboolean allow_empty = qfalse, allow_full = qfalse;
+	bool allow_empty = false, allow_full = false;
 
 	if( sv_showInfoQueries->integer )
 		Com_Printf( "Info Packet %s\n", NET_AddressToString( address ) );
@@ -434,10 +434,10 @@ static void SVC_InfoResponse( const socket_t *socket, const netadr_t *address )
 	for( i = 0; i < Cmd_Argc(); i++ )
 	{
 		if( !Q_stricmp( Cmd_Argv( i ), "full" ) )
-			allow_full = qtrue;
+			allow_full = true;
 
 		if( !Q_stricmp( Cmd_Argv( i ), "empty" ) )
-			allow_empty = qtrue;
+			allow_empty = true;
 	}
 
 	count = 0;
@@ -467,7 +467,7 @@ static void SVC_InfoResponse( const socket_t *socket, const netadr_t *address )
 /*
 * SVC_SendInfoString
 */
-static void SVC_SendInfoString( const socket_t *socket, const netadr_t *address, const char *requestType, const char *responseType, qboolean fullStatus )
+static void SVC_SendInfoString( const socket_t *socket, const netadr_t *address, const char *requestType, const char *responseType, bool fullStatus )
 {
 	char *string;
 
@@ -501,7 +501,7 @@ static void SVC_SendInfoString( const socket_t *socket, const netadr_t *address,
 */
 static void SVC_GetInfoResponse( const socket_t *socket, const netadr_t *address )
 {
-	SVC_SendInfoString( socket, address, "GetInfo", "infoResponse", qfalse );
+	SVC_SendInfoString( socket, address, "GetInfo", "infoResponse", false );
 }
 
 /*
@@ -509,7 +509,7 @@ static void SVC_GetInfoResponse( const socket_t *socket, const netadr_t *address
 */
 static void SVC_GetStatusResponse( const socket_t *socket, const netadr_t *address )
 {
-	SVC_SendInfoString( socket, address, "GetStatus", "statusResponse", qtrue );
+	SVC_SendInfoString( socket, address, "GetStatus", "statusResponse", true );
 }
 
 
@@ -575,7 +575,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	int session_id;
 	char *session_id_str;
 	unsigned int ticket_id;
-	qboolean tv_client;
+	bool tv_client;
 
 	Com_DPrintf( "SVC_DirectConnect (%s)\n", Cmd_Args() );
 
@@ -598,7 +598,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 
 	game_port = atoi( Cmd_Argv( 2 ) );
 	challenge = atoi( Cmd_Argv( 3 ) );
-	tv_client = ( atoi( Cmd_Argv( 5 ) ) & 1 ? qtrue : qfalse );
+	tv_client = ( atoi( Cmd_Argv( 5 ) ) & 1 ? true : false );
 
 	if( !Info_Validate( Cmd_Argv( 4 ) ) )
 	{
@@ -762,7 +762,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	}
 
 	// get the game a chance to reject this connection or modify the userinfo
-	if( !SV_ClientConnect( socket, address, newcl, userinfo, game_port, challenge, qfalse, 
+	if( !SV_ClientConnect( socket, address, newcl, userinfo, game_port, challenge, false, 
 		tv_client, ticket_id, session_id ) )
 	{
 		char *rejtype, *rejflag, *rejtypeflag, *rejmsg;
@@ -793,8 +793,8 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 #ifdef TCP_ALLOW_CONNECT
 	if( socket->type == SOCKET_TCP )
 	{
-		svs.incoming[incoming].active = qfalse;
-		svs.incoming[incoming].socket.open = qfalse;
+		svs.incoming[incoming].active = false;
+		svs.incoming[incoming].socket.open = false;
 	}
 #endif
 }
@@ -846,7 +846,7 @@ int SVC_FakeConnect( char *fakeUserinfo, char *fakeSocketType, const char *fakeI
 
 	NET_InitAddress( &address, NA_NOTRANSMIT );
 	// get the game a chance to reject this connection or modify the userinfo
-	if( !SV_ClientConnect( NULL, &address, newcl, userinfo, -1, -1, qtrue, qfalse, 0, 0 ) )
+	if( !SV_ClientConnect( NULL, &address, newcl, userinfo, -1, -1, true, false, 0, 0 ) )
 	{
 		Com_DPrintf( "Game rejected a connection.\n" );
 		return -1;

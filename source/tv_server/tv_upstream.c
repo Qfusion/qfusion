@@ -37,7 +37,7 @@ jmp_buf upstream_abortframe;
 * Finds relay upstream matching given text
 * Text can be either number, name or address
 */
-qboolean TV_UpstreamForText( const char *text, upstream_t **upstream )
+bool TV_UpstreamForText( const char *text, upstream_t **upstream )
 {
 	int i;
 	static char cleanText[MAX_STRING_CHARS];
@@ -55,7 +55,7 @@ qboolean TV_UpstreamForText( const char *text, upstream_t **upstream )
 	if( !Q_stricmp( text, "lobby" ) || ( !strcmp( text, va( "%i", atoi( text ) ) ) && atoi( text ) == 0 ) )
 	{
 		*upstream = NULL;
-		return qtrue;
+		return true;
 	}
 
 	// by number
@@ -63,7 +63,7 @@ qboolean TV_UpstreamForText( const char *text, upstream_t **upstream )
 		tvs.upstreams[atoi( text )-1] )
 	{
 		*upstream = tvs.upstreams[atoi( text )-1];
-		return qtrue;
+		return true;
 	}
 
 	// by name
@@ -75,7 +75,7 @@ qboolean TV_UpstreamForText( const char *text, upstream_t **upstream )
 		if( !Q_stricmp( text, COM_RemoveColorTokens( tvs.upstreams[i]->name ) ) )
 		{
 			*upstream = tvs.upstreams[i];
-			return qtrue;
+			return true;
 		}
 	}
 
@@ -88,7 +88,7 @@ qboolean TV_UpstreamForText( const char *text, upstream_t **upstream )
 		if( !Q_stricmp( text, tvs.upstreams[i]->servername ) )
 		{
 			*upstream = tvs.upstreams[i];
-			return qtrue;
+			return true;
 		}
 	}
 
@@ -101,12 +101,12 @@ qboolean TV_UpstreamForText( const char *text, upstream_t **upstream )
 		if( !strcmp( text, NET_AddressToString( &tvs.upstreams[i]->serveraddress ) ) )
 		{
 			*upstream = tvs.upstreams[i];
-			return qtrue;
+			return true;
 		}
 	}
 
 	// nothing found
-	return qfalse;
+	return false;
 }
 
 /*
@@ -178,13 +178,13 @@ static void TV_Upstream_Netchan_Transmit( upstream_t *upstream, msg_t *msg )
 /*
 * TV_Upstream_ProcessPacket
 */
-static qboolean TV_Upstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
+static bool TV_Upstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
 {
 	/*int sequence, sequence_ack;*/
 	int zerror;
 
 	if( !Netchan_Process( netchan, msg ) )
-		return qfalse; // wasn't accepted for some reason
+		return false; // wasn't accepted for some reason
 
 	// now if compressed, expand it
 	MSG_BeginReading( msg );
@@ -196,11 +196,11 @@ static qboolean TV_Upstream_ProcessPacket( netchan_t *netchan, msg_t *msg )
 		if( zerror < 0 )
 		{          // compression error. Drop the packet
 			Com_Printf( "Compression error %i. Dropping packet\n", zerror );
-			return qfalse;
+			return false;
 		}
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -226,11 +226,11 @@ static void TV_Upstream_WriteUcmdToMessage( upstream_t *upstream, msg_t *msg )
 /*
 * TV_Upstream_SendMessagesToServer
 */
-static void TV_Upstream_SendMessagesToServer( upstream_t *upstream, qboolean sendNow )
+static void TV_Upstream_SendMessagesToServer( upstream_t *upstream, bool sendNow )
 {
 	msg_t message;
 	uint8_t messageData[MAX_MSGLEN];
-	qboolean ucmd = qfalse;
+	bool ucmd = false;
 
 	if( upstream->demo.playing )
 		return;
@@ -247,7 +247,7 @@ static void TV_Upstream_SendMessagesToServer( upstream_t *upstream, qboolean sen
 		{
 			if( sendNow || tvs.realtime > upstream->lastUcmdTime + 40 )
 			{
-				ucmd = qtrue;
+				ucmd = true;
 				upstream->lastUcmdTime = tvs.realtime;
 				TV_Upstream_WriteUcmdToMessage( upstream, &message );
 			}
@@ -265,7 +265,7 @@ static void TV_Upstream_SendMessagesToServer( upstream_t *upstream, qboolean sen
 		// send a userinfo update if needed
 		if( upstream->userinfo_modified )
 		{
-			upstream->userinfo_modified = qfalse;
+			upstream->userinfo_modified = false;
 			//Com_Printf( "modified!\n" );
 			TV_Upstream_AddReliableCommand( upstream, va( "usri \"%s\"", TV_Upstream_Userinfo( upstream ) ) );
 		}
@@ -435,7 +435,7 @@ static void TV_Upstream_ReadDemoMessage( upstream_t *upstream, int timeBias )
 {
 	static uint8_t msgbuf[MAX_MSGLEN];
 	static msg_t demomsg;
-	qboolean init = qtrue;
+	bool init = true;
 	int read;
 
 	if( !upstream->demo.filehandle )
@@ -453,7 +453,7 @@ static void TV_Upstream_ReadDemoMessage( upstream_t *upstream, int timeBias )
 	if( init )
 	{
 		MSG_Init( &demomsg, msgbuf, sizeof( msgbuf ) );
-		init = qfalse;
+		init = false;
 	}
 
 	read = SNAP_ReadDemoMessage( upstream->demo.filehandle, &demomsg );
@@ -586,7 +586,7 @@ static void TV_Upstream_ReadPackets( upstream_t *upstream )
 */
 void TV_Upstream_SendConnectPacket( upstream_t *upstream )
 {
-	upstream->userinfo_modified = qfalse;
+	upstream->userinfo_modified = false;
 
 	Netchan_OutOfBandPrint( upstream->socket, &upstream->serveraddress, "connect %i %i %i \"%s\" %i\n",
 		APP_PROTOCOL_VERSION, Netchan_GamePort(), upstream->challenge, TV_Upstream_Userinfo( upstream ), 1 );
@@ -635,7 +635,7 @@ void TV_Upstream_Disconnect( upstream_t *upstream, const char *format, ... )
 
 		for( i = 0; i < 3; i++ ) {
 			TV_Upstream_AddReliableCommand( upstream, "disconnect" );
-			TV_Upstream_SendMessagesToServer( upstream, qtrue );
+			TV_Upstream_SendMessagesToServer( upstream, true );
 		}
 	}
 
@@ -643,7 +643,7 @@ void TV_Upstream_Disconnect( upstream_t *upstream, const char *format, ... )
 		NET_CloseSocket( upstream->socket );
 
 	if( upstream->demo.recording )
-		TV_Upstream_StopDemoRecord( upstream, qfalse, qfalse );
+		TV_Upstream_StopDemoRecord( upstream, false, false );
 
 	if( upstream->demo.playing )
 		TV_Upstream_StopDemo( upstream );
@@ -821,7 +821,7 @@ void TV_Upstream_Run( upstream_t *upstream, int msec )
 			if( upstream->netchan.unsentFragments )
 				Netchan_TransmitNextFragment( &upstream->netchan );
 			else
-				TV_Upstream_SendMessagesToServer( upstream, qfalse );
+				TV_Upstream_SendMessagesToServer( upstream, false );
 		}
 	}
 	else
@@ -927,34 +927,34 @@ void TV_Upstream_Connect( upstream_t *upstream, const char *servername, const ch
 	{
 	case SOCKET_UDP:
 		NET_InitAddress( &socketaddress, address->type );
-		if( !NET_OpenSocket( &upstream->socket_real, SOCKET_UDP, &socketaddress, qfalse ) )
+		if( !NET_OpenSocket( &upstream->socket_real, SOCKET_UDP, &socketaddress, false ) )
 		{
 			Com_Printf( "Error: Couldn't open UDP socket: %s\n", NET_ErrorString() );
 			return;
 		}
 		upstream->socket = &upstream->socket_real;
-		upstream->reliable = qfalse;
-		upstream->individual_socket = qtrue;
+		upstream->reliable = false;
+		upstream->individual_socket = true;
 		break;
 
 #ifdef TCP_ALLOW_CONNECT
 	case SOCKET_TCP:
 		NET_InitAddress( &socketaddress, address->type );
-		if( !NET_OpenSocket( &upstream->socket_real, SOCKET_TCP, &socketaddress, qfalse ) )
+		if( !NET_OpenSocket( &upstream->socket_real, SOCKET_TCP, &socketaddress, false ) )
 		{
 			Com_Printf( "Error: Couldn't open TCP socket: %s\n", NET_ErrorString() );
 			return;
 		}
 		NET_SetSocketNoDelay( &upstream->socket_real, 1 );
 		upstream->socket = &upstream->socket_real;
-		upstream->reliable = qtrue;
-		upstream->individual_socket = qtrue;
+		upstream->reliable = true;
+		upstream->individual_socket = true;
 		break;
 #endif
 
 	case SOCKET_LOOPBACK:
 	default:
-		assert( qfalse );
+		assert( false );
 	}
 
 	upstream->serveraddress = *address;
@@ -983,10 +983,10 @@ void TV_Upstream_Connect( upstream_t *upstream, const char *servername, const ch
 	upstream->state = CA_CONNECTING;
 	upstream->connect_time = -99999; // CL_CheckForResend() will fire immediately
 	upstream->connect_count = 0;
-	upstream->rejected = qfalse;
+	upstream->rejected = false;
 	upstream->lastPacketReceivedTime = tvs.realtime; // reset the timeout limit
-	upstream->multiview = qfalse;
-	upstream->precacheDone = qfalse;
+	upstream->multiview = false;
+	upstream->precacheDone = false;
 }
 
 /*
@@ -1012,7 +1012,7 @@ void TV_Upstream_Reconnect_f( upstream_t *upstream )
 
 		for( i = 0; i < 3; i++ ) {
 			TV_Upstream_AddReliableCommand( upstream, "disconnect" );
-			TV_Upstream_SendMessagesToServer( upstream, qtrue );
+			TV_Upstream_SendMessagesToServer( upstream, true );
 		}
 	}
 
@@ -1020,7 +1020,7 @@ void TV_Upstream_Reconnect_f( upstream_t *upstream )
 		NET_CloseSocket( upstream->socket );
 
 	if( upstream->demo.recording )
-		TV_Upstream_StopDemoRecord( upstream, qfalse, qfalse );
+		TV_Upstream_StopDemoRecord( upstream, false, false );
 
 	if( upstream->demo.playing )
 		TV_Upstream_StopDemo( upstream );

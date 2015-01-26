@@ -26,21 +26,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	MAX_MASTERS 8               // max recipients for heartbeat packets
 #define	HEARTBEAT_SECONDS   600
 
-void TV_Downstream_Msg( client_t *client, relay_t *relay, client_t *who, qboolean chat, const char *format, ... );
-void TV_Downstream_ClientResetCommandBuffers( client_t *client, qboolean resetReliable );
+void TV_Downstream_Msg( client_t *client, relay_t *relay, client_t *who, bool chat, const char *format, ... );
+void TV_Downstream_ClientResetCommandBuffers( client_t *client, bool resetReliable );
 char *TV_Downstream_FixName( const char *orginal_name, client_t *client );
-qboolean TV_Downstream_ChangeStream( client_t *client, relay_t *relay );
+bool TV_Downstream_ChangeStream( client_t *client, relay_t *relay );
 void TV_Downstream_AddGameCommand( relay_t *relay, client_t *client, const char *cmd );
 void TV_Downstream_UserinfoChanged( client_t *cl );
 void TV_Downstream_AddServerCommand( client_t *client, const char *cmd );
 void TV_Downstream_SendServerCommand( client_t *cl, const char *format, ... );
 void TV_Downstream_AddReliableCommandsToMessage( client_t *client, msg_t *msg );
 void TV_Downstream_InitClientMessage( client_t *client, msg_t *msg, uint8_t *data, size_t size );
-qboolean TV_Downstream_SendMessageToClient( client_t *client, msg_t *msg );
+bool TV_Downstream_SendMessageToClient( client_t *client, msg_t *msg );
 void TV_Downstream_DropClient( client_t *drop, int type, const char *format, ... );
 void TV_Downstream_ReadPackets( void );
 void TV_Downstream_CheckTimeouts( void );
-qboolean TV_Downstream_SendClientsFragments( void );
+bool TV_Downstream_SendClientsFragments( void );
 void TV_Downstream_SendClientMessages( void );
 void TV_Downstream_ExecuteClientThinks( relay_t *relay, client_t *client );
 void TV_Downstream_InitMaster( void );

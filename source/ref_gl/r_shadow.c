@@ -33,7 +33,7 @@ STANDARD PROJECTIVE SHADOW MAPS (SSM)
 #define SHADOWMAP_MAX_LOD				15
 #define SHADOWMAP_LODBIAS				1
 
-//static qboolean r_shadowGroups_sorted;
+//static bool r_shadowGroups_sorted;
 
 #define SHADOWGROUPS_HASH_SIZE	8
 static shadowGroup_t *r_shadowGroups_hash[SHADOWGROUPS_HASH_SIZE];
@@ -52,7 +52,7 @@ void R_ClearShadowGroups( void )
 /*
 * R_AddLightOccluder
 */
-qboolean R_AddLightOccluder( const entity_t *ent )
+bool R_AddLightOccluder( const entity_t *ent )
 {
 	int i;
 	float maxSide;
@@ -61,12 +61,12 @@ qboolean R_AddLightOccluder( const entity_t *ent )
 	shadowGroup_t *group;
 	mleaf_t *leaf;
 	vec3_t mins, maxs, bbox[8];
-	qboolean bmodelRotated = qfalse;
+	bool bmodelRotated = false;
 
 	if( rn.refdef.rdflags & RDF_NOWORLDMODEL )
-		return qfalse;
+		return false;
 	if( !ent->model || ent->model->type == mod_brush )
-		return qfalse;
+		return false;
 
 	VectorCopy( ent->lightingOrigin, origin );
 	if( ent->model->type == mod_brush )
@@ -77,7 +77,7 @@ qboolean R_AddLightOccluder( const entity_t *ent )
 	}
 
 	if( VectorCompare( origin, vec3_origin ) )
-		return qfalse;
+		return false;
 
 	// find lighting group containing entities with same lightingOrigin as ours
 	hash_key = (unsigned int)( origin[0] * 7 + origin[1] * 5 + origin[2] * 3 );
@@ -90,7 +90,7 @@ qboolean R_AddLightOccluder( const entity_t *ent )
 	}
 
 	if( rsc.numShadowGroups == MAX_SHADOWGROUPS )
-		return qfalse; // no free groups
+		return false; // no free groups
 
 	leaf = Mod_PointInLeaf( origin, rsh.worldModel );
 
@@ -100,7 +100,7 @@ qboolean R_AddLightOccluder( const entity_t *ent )
 	group->id = group - rsc.shadowGroups + 1;
 	group->bit = ( 1<<rsc.numShadowGroups );
 	group->vis = Mod_ClusterPVS( leaf->cluster, rsh.worldModel );
-	group->useOrtho = qtrue;
+	group->useOrtho = true;
 	group->alpha = r_shadows_alpha->value;
 
 	// clear group bounds
@@ -127,18 +127,18 @@ add:
 	maxSide = 0;
 	for( i = 0; i < 3; i++ ) {
 		if( mins[i] >= maxs[i] )
-			return qfalse;
+			return false;
 		maxSide = max( maxSide, maxs[i] - mins[i] );
 	}
 
 	// ignore tiny objects
 	if( maxSide < 10 ) {
-		return qfalse;
+		return false;
 	}
 
 	rsc.entShadowGroups[R_ENT2NUM(ent)] = group->id;
 	if( ent->flags & RF_WEAPONMODEL )
-		return qtrue;
+		return true;
 
 	if( ent->model->type == mod_brush )
 	{
@@ -160,7 +160,7 @@ add:
 	group->radius = RadiusFromBounds( mins, maxs );
 	group->projDist = max( group->projDist, group->radius + min( r_shadows_projection_distance->value, 64.0f ) );
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -183,7 +183,7 @@ static void R_ComputeShadowmapBounds( void )
 		}
 
 		// get projection dir from lightgrid
-		R_LightForOrigin( group->origin, lightDir, group->lightAmbient, lightDiffuse, group->projDist, qfalse );
+		R_LightForOrigin( group->origin, lightDir, group->lightAmbient, lightDiffuse, group->projDist, false );
 
 		// prevent light dir from going upwards
 		VectorSet( lightDir, -lightDir[0], -lightDir[1], -fabs( lightDir[2] ) );
@@ -228,7 +228,7 @@ static float R_FitOccluder( const shadowGroup_t *group, refdef_t *refdef )
 	int sizex = refdef->width, sizey = refdef->height;
 	int diffx, diffy;
 	mat4_t cameraMatrix, projectionMatrix, cameraProjectionMatrix;
-	qboolean useOrtho = refdef->rdflags & RDF_USEORTHO ? qtrue : qfalse;
+	bool useOrtho = refdef->rdflags & RDF_USEORTHO ? true : false;
 
 	Matrix4_Modelview( refdef->vieworg, refdef->viewaxis, cameraMatrix );
 

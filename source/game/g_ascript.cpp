@@ -1679,7 +1679,7 @@ static bool objectGameClient_CanSelectWeapon( int index, gclient_t *self )
 	if( index < WEAP_NONE || index >= WEAP_TOTAL )
 		return false;
 
-	return ( GS_CheckAmmoInWeapon( &self->ps, index ) ) == qtrue;
+	return ( GS_CheckAmmoInWeapon( &self->ps, index ) ) == true;
 }
 
 static void objectGameClient_SelectWeapon( int index, gclient_t *self )
@@ -3397,7 +3397,7 @@ bool G_asCallMapEntitySpawnScript( const char *classname, edict_t *ent )
 	}
 
 	// the spawn function may remove the entity
-	return ent->r.inuse == qtrue;
+	return ent->r.inuse == true;
 }
 
 /*

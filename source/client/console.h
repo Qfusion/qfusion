@@ -27,7 +27,7 @@
 // wsw : aiwa : global definition to activate case-sensitivity of console (1 == activated)
 #define	    CON_CASE_SENSITIVE 0
 
-extern qboolean con_initialized;
+extern bool con_initialized;
 
 void Con_CheckResize( void );
 void Con_Init( void );
@@ -49,7 +49,7 @@ void Con_KeyDown( int key );
 void Con_CharEvent( qwchar key );
 void Con_MessageKeyDown( int key );
 void Con_MessageCharEvent( qwchar key );
-void Con_TouchEvent( qboolean down, int x, int y );
+void Con_TouchEvent( bool down, int x, int y );
 
 int Q_ColorCharCount( const char *s, int byteofs );
 int Q_ColorCharOffset( const char *s, int charcount );

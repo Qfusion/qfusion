@@ -311,7 +311,7 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 /*
 * R_DrawSkySurf
 */
-qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf )
+bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf )
 {
 	int i;
 	int numVisSides;
@@ -323,7 +323,7 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	skydome_t *skydome = rsh.worldBrushModel->skydome;
 
 	if( !skydome )
-		return qfalse;
+		return false;
 
 	numVisSides = 0;
 	ClearBounds( mins, maxs );
@@ -369,14 +369,14 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 	// no sides are truly visible, ignore
 	if( !numVisSides )
-		return qfalse;
+		return false;
 
 	VectorAdd( mins, rn.viewOrigin, mins );
 	VectorAdd( maxs, rn.viewOrigin, maxs );
 
 	if( rd->rdflags & RDF_SKYPORTALINVIEW ) {
 		R_DrawSkyPortal( e, &rd->skyportal, mins, maxs );
-		return qfalse;
+		return false;
 	}
 
 	// center skydome on camera to give the illusion of a larger space
@@ -410,13 +410,13 @@ qboolean R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t 
 
 	R_TransformForEntity( e );
 
-	return qfalse;
+	return false;
 }
 
 //===================================================================
 
 static const msurface_t *r_warpFace;
-static qboolean	r_warpFaceVis;
+static bool	r_warpFaceVis;
 static int r_warpFaceAxis;
 
 vec3_t skyclip[6] = {
@@ -482,7 +482,7 @@ static void DrawSkyPolygon( int nump, vec3_t vecs )
 	else
 		axis = ( v[2] < 0 ) ? 5 : 4;
 
-	r_warpFaceVis = qtrue;
+	r_warpFaceVis = true;
 	r_warpFaceAxis = axis;
 
 	// project new texture coords
@@ -522,7 +522,7 @@ void ClipSkyPolygon( int nump, vec3_t vecs, int stage )
 {
 	float *norm;
 	float *v;
-	qboolean front, back;
+	bool front, back;
 	float d, e;
 	float dists[MAX_CLIP_VERTS + 1];
 	int sides[MAX_CLIP_VERTS + 1];
@@ -541,19 +541,19 @@ loc1:
 		return;
 	}
 
-	front = back = qfalse;
+	front = back = false;
 	norm = skyclip[stage];
 	for( i = 0, v = vecs; i < nump; i++, v += 3 )
 	{
 		d = DotProduct( v, norm );
 		if( d > ON_EPSILON )
 		{
-			front = qtrue;
+			front = true;
 			sides[i] = SIDE_FRONT;
 		}
 		else if( d < -ON_EPSILON )
 		{
-			back = qtrue;
+			back = true;
 			sides[i] = SIDE_BACK;
 		}
 		else
@@ -627,7 +627,7 @@ void R_AddSkyToDrawList( const msurface_t *fa )
 
 	// calculate vertex values for sky box
 	r_warpFace = fa;
-	r_warpFaceVis = qfalse;
+	r_warpFaceVis = false;
 
 	mesh = fa->mesh;
 	elem = mesh->elems;

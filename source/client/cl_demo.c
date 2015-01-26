@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
-static void CL_PauseDemo( qboolean paused );
+static void CL_PauseDemo( bool paused );
 
 /*
 * CL_WriteDemoMessage
@@ -32,7 +32,7 @@ void CL_WriteDemoMessage( msg_t *msg )
 {
 	if( cls.demo.file <= 0 )
 	{
-		cls.demo.recording = qfalse;
+		cls.demo.recording = false;
 		return;
 	}
 
@@ -48,17 +48,17 @@ void CL_WriteDemoMessage( msg_t *msg )
 void CL_Stop_f( void )
 {
 	int arg;
-	qboolean silent, cancel;
+	bool silent, cancel;
 
 	// look through all the args
-	silent = qfalse;
-	cancel = qfalse;
+	silent = false;
+	cancel = false;
 	for( arg = 1; arg < Cmd_Argc(); arg++ )
 	{
 		if( !Q_stricmp( Cmd_Argv( arg ), "silent" ) )
-			silent = qtrue;
+			silent = true;
 		else if( !Q_stricmp( Cmd_Argv( arg ), "cancel" ) )
-			cancel = qtrue;
+			cancel = true;
 	}
 
 	if( !cls.demo.recording )
@@ -105,7 +105,7 @@ void CL_Stop_f( void )
 	Mem_ZoneFree( cls.demo.name );
 	cls.demo.filename = NULL;
 	cls.demo.name = NULL;
-	cls.demo.recording = qfalse;
+	cls.demo.recording = false;
 }
 
 /*
@@ -119,7 +119,7 @@ void CL_Record_f( void )
 {
 	char *name;
 	size_t name_size;
-	qboolean silent;
+	bool silent;
 	const char *demoname;
 
 	if( cls.state != CA_ACTIVE )
@@ -135,9 +135,9 @@ void CL_Record_f( void )
 	}
 
 	if( Cmd_Argc() > 2 && !Q_stricmp( Cmd_Argv( 2 ), "silent" ) )
-		silent = qtrue;
+		silent = true;
 	else
-		silent = qfalse;
+		silent = false;
 
 	if( cls.demo.playing )
 	{
@@ -184,13 +184,13 @@ void CL_Record_f( void )
 
 	// store the name in case we need it later
 	cls.demo.filename = name;
-	cls.demo.recording = qtrue;
+	cls.demo.recording = true;
 	cls.demo.basetime = cls.demo.duration = cls.demo.time = 0;
 	cls.demo.name = ZoneCopyString( demoname );
 
 	// don't start saving messages until a non-delta compressed message is received
 	CL_AddReliableCommand( "nodelta" ); // request non delta compressed frame from server
-	cls.demo.waiting = qtrue;
+	cls.demo.waiting = true;
 }
 
 
@@ -212,8 +212,8 @@ static int demofilelen, demofilelentotal;
 	if( cls.demo.avi )
 		return;
 
-	cls.demo.avi_video = (cl_demoavi_video->integer ? qtrue : qfalse);
-	cls.demo.avi_audio = (cl_demoavi_audio->integer ? qtrue : qfalse);
+	cls.demo.avi_video = (cl_demoavi_video->integer ? true : false);
+	cls.demo.avi_audio = (cl_demoavi_audio->integer ? true : false);
 	cls.demo.avi = (cls.demo.avi_video || cls.demo.avi_audio);
 	cls.demo.avi_frame = 0;
 
@@ -235,16 +235,16 @@ static void CL_StopDemoAviDump( void )
 	if( cls.demo.avi_video )
 	{
 		re.StopAviDemo();
-		cls.demo.avi_video = qfalse;
+		cls.demo.avi_video = false;
 	}
 
 	if( cls.demo.avi_audio )
 	{
 		CL_SoundModule_StopAviDemo();
-		cls.demo.avi_audio = qfalse;
+		cls.demo.avi_audio = false;
 	}
 
-	cls.demo.avi = qfalse;
+	cls.demo.avi = false;
 	cls.demo.avi_frame = 0;
 }
 
@@ -265,16 +265,16 @@ void CL_DemoCompleted( void )
 	}
 	demofilelen = demofilelentotal = 0;
 
-	cls.demo.playing = qfalse;
+	cls.demo.playing = false;
 	cls.demo.basetime = cls.demo.duration = cls.demo.time = 0;
 	Mem_ZoneFree( cls.demo.filename );
 	cls.demo.filename = NULL;
 	Mem_ZoneFree( cls.demo.name );
 	cls.demo.name = NULL;
 
-	Com_SetDemoPlaying( qfalse );
+	Com_SetDemoPlaying( false );
 
-	CL_PauseDemo( qfalse );
+	CL_PauseDemo( false );
 
 	Com_Printf( "Demo completed\n" );
 
@@ -290,7 +290,7 @@ static void CL_ReadDemoMessage( void )
 {
 	static uint8_t msgbuf[MAX_MSGLEN];
 	static msg_t demomsg;
-	static qboolean init = qtrue;
+	static bool init = true;
 	int read;
 
 	if( !demofilehandle )
@@ -302,7 +302,7 @@ static void CL_ReadDemoMessage( void )
 	if( init )
 	{
 		MSG_Init( &demomsg, msgbuf, sizeof( msgbuf ) );
-		init = qfalse;
+		init = false;
 	}
 
 	read = SNAP_ReadDemoMessage( demofilehandle, &demomsg );
@@ -329,7 +329,7 @@ void CL_ReadDemoPackets( void )
 
 	cls.demo.time = cls.gametime;
 	if( cls.demo.play_jump ) {
-		cls.demo.play_jump = qfalse;
+		cls.demo.play_jump = false;
 	}
 }
 
@@ -391,16 +391,16 @@ static void CL_StartDemo( const char *demoname )
 	COM_StripExtension( cls.servername );
 
 	CL_SetClientState( CA_HANDSHAKE );
-	Com_SetDemoPlaying( qtrue );
-	cls.demo.playing = qtrue;
+	Com_SetDemoPlaying( true );
+	cls.demo.playing = true;
 	cls.demo.basetime = cls.demo.duration = cls.demo.time = 0;
 
-	cls.demo.play_ignore_next_frametime = qfalse;
-	cls.demo.play_jump = qfalse;
+	cls.demo.play_ignore_next_frametime = false;
+	cls.demo.play_jump = false;
 	cls.demo.filename = ZoneCopyString( name );
 	cls.demo.name = ZoneCopyString( servername );
 
-	CL_PauseDemo( qfalse );
+	CL_PauseDemo( false );
 
 	// set up for timedemo settings
 	memset( &cl.timedemo, 0, sizeof( cl.timedemo ) );
@@ -414,7 +414,7 @@ static void CL_StartDemo( const char *demoname )
 */
 char **CL_DemoComplete( const char *partial )
 {
-	return Cmd_CompleteFileList( partial, "demos", APP_DEMO_EXTENSION_STR, qtrue );
+	return Cmd_CompleteFileList( partial, "demos", APP_DEMO_EXTENSION_STR, true );
 }
 
 /*
@@ -435,7 +435,7 @@ void CL_PlayDemo_f( void )
 /*
 * CL_PauseDemo
 */
-static void CL_PauseDemo( qboolean paused )
+static void CL_PauseDemo( bool paused )
 {
 	cls.demo.paused = paused;
 }
@@ -454,9 +454,9 @@ void CL_PauseDemo_f( void )
 	if( Cmd_Argc() > 1 )
 	{
 		if( !Q_stricmp( Cmd_Argv( 1 ), "on" ) )
-			CL_PauseDemo( qtrue );
+			CL_PauseDemo( true );
 		else if( !Q_stricmp( Cmd_Argv( 1 ), "off" ) )
-			CL_PauseDemo( qfalse );
+			CL_PauseDemo( false );
 		return;
 	}
 
@@ -468,7 +468,7 @@ void CL_PauseDemo_f( void )
 */
 void CL_DemoJump_f( void )
 {
-	qboolean relative;
+	bool relative;
 	int time;
 	char *p;
 
@@ -490,12 +490,12 @@ void CL_DemoJump_f( void )
 
 	if( Cmd_Argv( 1 )[0] == '+' || Cmd_Argv( 1 )[0] == '-' )
 	{
-		relative = qtrue;
+		relative = true;
 		p++;
 	}
 	else
 	{
-		relative = qfalse;
+		relative = false;
 	}
 
 	if( strchr( p, ':' ) )
@@ -525,7 +525,7 @@ void CL_DemoJump_f( void )
 		cl.currentSnapNum = cl.receivedSnapNum = 0;
 	}
 
-	cls.demo.play_jump = qtrue;
+	cls.demo.play_jump = true;
 }
 
 /*
@@ -549,7 +549,7 @@ void CL_PlayDemoToAvi_f( void )
 		CL_StartDemo( tempname );
 
 		if( cls.demo.playing )
-			cls.demo.pending_avi = qtrue;
+			cls.demo.pending_avi = true;
 
 		Mem_TempFree( tempname );
 	}

@@ -320,7 +320,7 @@ public:
 
 	void showIME( bool show )
 	{
-		trap::IN_ShowIME( show ? qtrue : qfalse );
+		trap::IN_ShowIME( show ? true : false );
 	}
 
 private:

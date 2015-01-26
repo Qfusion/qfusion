@@ -33,7 +33,7 @@ edict_t	*GClip_FindBoxInRadius4D( tvm_relay_t *relay, edict_t *from, vec3_t org,
 #endif
 void	GClip_ClearWorld( tvm_relay_t *relay );
 void	GClip_SetBrushModel( tvm_relay_t *relay, edict_t *ent, char *name );
-void	GClip_SetAreaPortalState( tvm_relay_t *relay, edict_t *ent, qboolean open );
+void	GClip_SetAreaPortalState( tvm_relay_t *relay, edict_t *ent, bool open );
 void	GClip_LinkEntity( tvm_relay_t *relay, edict_t *ent );
 void	GClip_UnlinkEntity( tvm_relay_t *relay, edict_t *ent );
 void	GClip_TouchTriggers( tvm_relay_t *relay, edict_t *ent );

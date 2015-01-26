@@ -495,17 +495,17 @@ r_imginfo_t LoadTGA( const char *name, uint8_t *(*allocbuf)( void *, size_t, con
 /*
 * WriteTGA
 */
-qboolean WriteTGA( const char *name, r_imginfo_t *info, int quality )
+bool WriteTGA( const char *name, r_imginfo_t *info, int quality )
 {
 	int file, i, c, temp;
 	int width, height, samples;
 	uint8_t header[18], *buffer;
-	qboolean bgr;
+	bool bgr;
 
 	if( ri.FS_FOpenFile( name, &file, FS_WRITE ) == -1 )
 	{
 		Com_Printf( "WriteTGA: Couldn't create %s\n", name );
-		return qfalse;
+		return false;
 	}
 
 	width = info->width;
@@ -538,7 +538,7 @@ qboolean WriteTGA( const char *name, r_imginfo_t *info, int quality )
 	ri.FS_Write( buffer, c, file );
 	ri.FS_FCloseFile( file );
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -715,7 +715,7 @@ static void q_jpg_term_destination(j_compress_ptr cinfo)
 /*
 * WriteJPG
 */
-qboolean WriteJPG( const char *name, r_imginfo_t *info, int quality )
+bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
 {
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_error_mgr jerr;
@@ -727,7 +727,7 @@ qboolean WriteJPG( const char *name, r_imginfo_t *info, int quality )
 
 	if( ri.FS_FOpenFile( name, &file, FS_WRITE ) == -1 ) {
 		Com_Printf( "WriteJPG: Couldn't create %s\n", name );
-		return qfalse;
+		return false;
 	}
 
 	// hack file handle into output buffer
@@ -765,7 +765,7 @@ qboolean WriteJPG( const char *name, r_imginfo_t *info, int quality )
 	}
 
 	// start compression
-	jpeg_start_compress( &cinfo, qtrue );
+	jpeg_start_compress( &cinfo, true );
 
 	// feed scanline data
 	w3 = cinfo.image_width * info->samples;
@@ -782,7 +782,7 @@ qboolean WriteJPG( const char *name, r_imginfo_t *info, int quality )
 
 	ri.FS_FCloseFile( file );
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -991,8 +991,8 @@ static const int q_etc1_modifierTable[] =
 
 static const int q_etc1_lookup[] = { 0, 1, 2, 3, -4, -3, -2, -1 };
 
-static void q_etc1_subblock( uint8_t *out, int stride, qboolean bgr, int r, int g, int b,
-	const int *table, unsigned int low, qboolean second, qboolean flipped )
+static void q_etc1_subblock( uint8_t *out, int stride, bool bgr, int r, int g, int b,
+	const int *table, unsigned int low, bool second, bool flipped )
 {
 	int baseX = 0, baseY = 0;
 	int i;
@@ -1036,12 +1036,12 @@ static void q_etc1_subblock( uint8_t *out, int stride, qboolean bgr, int r, int 
 	}
 }
 
-static void q_etc1_block( const uint8_t *in, uint8_t *out, int stride, qboolean bgr )
+static void q_etc1_block( const uint8_t *in, uint8_t *out, int stride, bool bgr )
 {
 	unsigned int high = ( in[0] << 24 ) | ( in[1] << 16 ) | ( in[2] << 8 ) | in[3];
 	unsigned int low = ( in[4] << 24 ) | ( in[5] << 16 ) | ( in[6] << 8 ) | in[7];
 	int r1, r2, g1, g2, b1, b2;
-	qboolean flipped = ( qboolean )( high & 1 );
+	bool flipped = ( bool )( high & 1 );
 
 	if( high & 2 )
 	{
@@ -1074,13 +1074,13 @@ static void q_etc1_block( const uint8_t *in, uint8_t *out, int stride, qboolean 
 
 	q_etc1_subblock( out, stride, bgr, r1, g1, b1,
 		q_etc1_modifierTable + ( ( high >> 3 ) & ( 7 << 2 ) ),
-		low, qfalse, flipped );
+		low, false, flipped );
 	q_etc1_subblock( out, stride, bgr, r2, g2, b2,
 		q_etc1_modifierTable + ( high & ( 7 << 2 ) ),
-		low, qtrue, flipped );
+		low, true, flipped );
 }
 
-void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, qboolean bgr )
+void DecompressETC1( const uint8_t *in, int width, int height, uint8_t *out, bool bgr )
 {
 	int stride = ALIGN( width, 4 ) * 3;
 	uint8_t *uncompressed = alloca( 4 * stride );

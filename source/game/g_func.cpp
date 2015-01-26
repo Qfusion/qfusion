@@ -1651,7 +1651,7 @@ again:
 		VectorSubtract( ent->s.origin, self->r.mins, self->s.origin );
 		VectorCopy( self->s.origin, self->olds.origin );
 		GClip_LinkEntity( self );
-		self->s.teleported = qtrue;
+		self->s.teleported = true;
 		goto again;
 	}
 

@@ -71,7 +71,7 @@ int ( *qov_pcm_seek )( OggVorbis_File *vf, ogg_int64_t pos ) = ov_pcm_seek;
 /*
 * SNDOGG_Shutdown
 */
-void SNDOGG_Shutdown( qboolean verbose )
+void SNDOGG_Shutdown( bool verbose )
 {
 #ifdef VORBISLIB_RUNTIME
 	if( vorbisLibrary )
@@ -82,7 +82,7 @@ void SNDOGG_Shutdown( qboolean verbose )
 /*
 * SNDOGG_Init
 */
-void SNDOGG_Init( qboolean verbose )
+void SNDOGG_Init( bool verbose )
 {
 #ifdef VORBISLIB_RUNTIME
 	if( vorbisLibrary )
@@ -278,35 +278,35 @@ sfxcache_t *SNDOGG_Load( sfx_t *s )
 /*
 * SNDOGG_OpenTrack
 */
-qboolean SNDOGG_OpenTrack( bgTrack_t *track, qboolean *delay )
+bool SNDOGG_OpenTrack( bgTrack_t *track, bool *delay )
 {
 	int file;
 	char path[MAX_QPATH];
 	const char *real_path;
-	qboolean reopened;
+	bool reopened;
 	vorbis_info *vi;
 	OggVorbis_File *vf;
 	ov_callbacks callbacks = { ovcb_read, ovcb_seek, ovcb_close, ovcb_tell };
 
 #ifdef VORBISLIB_RUNTIME
 	if( !vorbisLibrary )
-		return qfalse;
+		return false;
 #endif
 	if( delay )
-		*delay = qfalse;
+		*delay = false;
 	if( !track )
-		return qfalse;
+		return false;
 
 	if( track->file )
 	{
 		// probably a buffering remote URL, keep the file
-		reopened = qtrue;
+		reopened = true;
 		file = track->file;
 		real_path = track->filename;
 	}
 	else
 	{
-		reopened = qfalse;
+		reopened = false;
 		if( track->isUrl )
 		{
 			real_path = path;
@@ -320,7 +320,7 @@ qboolean SNDOGG_OpenTrack( bgTrack_t *track, qboolean *delay )
 		trap_FS_FOpenFile( real_path, &file, FS_READ|FS_NOSIZE );
 	}
 	if( !file )
-		return qfalse;
+		return false;
 
 	track->file = file;
 	track->read = SNDOGG_FRead;
@@ -335,8 +335,8 @@ qboolean SNDOGG_OpenTrack( bgTrack_t *track, qboolean *delay )
 	if( track->isUrl && !reopened )
 	{
 		if( delay )
-			*delay = qtrue;
-		return qtrue;
+			*delay = true;
+		return true;
 	}
 
 	track->vorbisFile = vf = S_Malloc( sizeof( OggVorbis_File ) );
@@ -363,7 +363,7 @@ qboolean SNDOGG_OpenTrack( bgTrack_t *track, qboolean *delay )
 	track->info.samples = qov_pcm_total( vf, -1 );
 	track->info.loopstart = track->info.samples;
 
-	return qtrue;
+	return true;
 
 error:
 	if( vf ) {
@@ -376,7 +376,7 @@ error:
 	track->read = NULL;
 	track->seek = NULL;
 	track->close = NULL;
-	return qfalse;
+	return false;
 }
 
 /*

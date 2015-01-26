@@ -193,15 +193,15 @@ static void CG_CheckDamageCrosshair( void )
 			return;
 
 		// Reset crosshair
-		cg_crosshair_color->modified = qtrue;
-		cg_crosshair_strong_color->modified = qtrue;
-		cg_crosshair_damage_color->modified = qfalse;
+		cg_crosshair_color->modified = true;
+		cg_crosshair_strong_color->modified = true;
+		cg_crosshair_damage_color->modified = false;
 	}
 }
 
 void CG_ScreenCrosshairDamageUpdate( void )
 {
-	cg_crosshair_damage_color->modified = qtrue;
+	cg_crosshair_damage_color->modified = true;
 }
 
 //=============================================================================
@@ -280,13 +280,13 @@ void CG_ScreenInit( void )
 	cg_crosshair_font =		trap_Cvar_Get( "cg_crosshair_font", "Warsow Crosshairs", CVAR_ARCHIVE );
 	cg_crosshair_damage_color =	trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
 	cg_crosshair_touch_size =	trap_Cvar_Get( "cg_crosshair_touch_size", "96", CVAR_ARCHIVE );
-	cg_crosshair_color->modified = qtrue;
-	cg_crosshair_damage_color->modified = qfalse;
+	cg_crosshair_color->modified = true;
+	cg_crosshair_damage_color->modified = false;
 
 	cg_crosshair_strong =	    trap_Cvar_Get( "cg_crosshair_strong", "0", CVAR_ARCHIVE );
 	cg_crosshair_strong_size =  trap_Cvar_Get( "cg_crosshair_strong_size", "24", CVAR_ARCHIVE );
 	cg_crosshair_strong_color = trap_Cvar_Get( "cg_crosshair_strong_color", "255 255 255", CVAR_ARCHIVE );
-	cg_crosshair_strong_color->modified = qtrue;
+	cg_crosshair_strong_color->modified = true;
 
 	cg_clientHUD =		trap_Cvar_Get( "cg_clientHUD", "default", CVAR_ARCHIVE );
 	cg_specHUD =		trap_Cvar_Get( "cg_specHUD", "default", CVAR_ARCHIVE );
@@ -440,21 +440,21 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 	{
 		if( cg_crosshair->integer > 26 || cg_crosshair->integer < 0 )
 			trap_Cvar_Set( cg_crosshair->name, "0" );
-		cg_crosshair->modified = qfalse;
+		cg_crosshair->modified = false;
 	}
 
 	if( cg_crosshair_size->modified )
 	{
 		if( cg_crosshair_size->integer <= 0 || cg_crosshair_size->integer > 64 )
 			trap_Cvar_Set( cg_crosshair_size->name, cg_crosshair_size->dvalue );
-		cg_crosshair_size->modified = qfalse;
+		cg_crosshair_size->modified = false;
 	}
 
 	if( cg_crosshair_touch_size->modified )
 	{
 		if( cg_crosshair_touch_size->integer <= 0 || cg_crosshair_touch_size->integer > 256 )
 			trap_Cvar_Set( cg_crosshair_touch_size->name, cg_crosshair_touch_size->dvalue );
-		cg_crosshair_touch_size->modified = qfalse;
+		cg_crosshair_touch_size->modified = false;
 	}
 
 	if( cg_crosshair_color->modified || cg_crosshair_damage_color->modified )
@@ -478,21 +478,21 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		{
 			Vector4Set( chColor, 255, 255, 255, 255 );
 		}
-		cg_crosshair_color->modified = qfalse;
+		cg_crosshair_color->modified = false;
 	}
 
 	if( cg_crosshair_strong->modified )
 	{
 		if( cg_crosshair_strong->integer > 26 || cg_crosshair_strong->integer < 0 )
 			trap_Cvar_Set( cg_crosshair_strong->name, "0" );
-		cg_crosshair_strong->modified = qfalse;
+		cg_crosshair_strong->modified = false;
 	}
 
 	if( cg_crosshair_strong_size->modified )
 	{
 		if( cg_crosshair_strong_size->integer <= 0 || cg_crosshair_strong_size->integer > 64 )
 			trap_Cvar_Set( cg_crosshair_strong_size->name, cg_crosshair_strong_size->dvalue );
-		cg_crosshair_strong_size->modified = qfalse;
+		cg_crosshair_strong_size->modified = false;
 	}
 
 	if( cg_crosshair_strong_color->modified || cg_crosshair_damage_color->modified )
@@ -511,7 +511,7 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		{
 			Vector4Set( chColorStrong, 255, 255, 255, 255 );
 		}
-		cg_crosshair_strong_color->modified = qfalse;
+		cg_crosshair_strong_color->modified = false;
 	}
 
 	if( !touch && cg_crosshair_strong->integer )
@@ -1358,15 +1358,15 @@ static void CG_CheckHUDChanges( void )
 {
 	// if changed from or to spec, reload the HUD
 	if (cg.specStateChanged) {
-		cg_specHUD->modified = cg_clientHUD->modified = qtrue;
-		cg.specStateChanged = qfalse;
+		cg_specHUD->modified = cg_clientHUD->modified = true;
+		cg.specStateChanged = false;
 	}
 
 	cvar_t *hud = ISREALSPECTATOR() ? cg_specHUD : cg_clientHUD;
 	if( hud->modified )
 	{
 		CG_LoadStatusBar();
-		hud->modified = qfalse;
+		hud->modified = false;
 	}
 }
 
@@ -1602,13 +1602,13 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 			{
 				if( cg_touch_moveThres->value < 0.0f )
 					trap_Cvar_Set( cg_touch_moveThres->name, cg_touch_moveThres->dvalue );
-				cg_touch_moveThres->modified = qfalse;
+				cg_touch_moveThres->modified = false;
 			}
 			if( cg_touch_strafeThres->modified )
 			{
 				if( cg_touch_strafeThres->value < 0.0f )
 					trap_Cvar_Set( cg_touch_strafeThres->name, cg_touch_strafeThres->dvalue );
-				cg_touch_strafeThres->modified = qfalse;
+				cg_touch_strafeThres->modified = false;
 			}
 
 			cg_touch_t &touch = cg_touches[movepad.touch];
@@ -1629,7 +1629,7 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime )
 			{
 				if( cg_touch_lookThres->value < 0.0f )
 					trap_Cvar_Set( cg_touch_lookThres->name, cg_touch_lookThres->dvalue );
-				cg_touch_lookThres->modified = qfalse;
+				cg_touch_lookThres->modified = false;
 			}
 
 			cg_touch_t &touch = cg_touches[viewpad.touch];
@@ -1679,7 +1679,7 @@ void CG_CancelTouches( void )
 					touch.upfunc( i );
 				touch.area = TOUCHAREA_NONE;
 			}
-			touch.down = qfalse;
+			touch.down = false;
 		}
 	}
 }

@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 static src_t srclist[MAX_SRC];
 static int src_count = 0;
-static qboolean src_inited = qfalse;
+static bool src_inited = false;
 
 typedef struct sentity_s
 {
@@ -66,10 +66,10 @@ static void source_setup( src_t *src, sfx_t *sfx, int priority, int entNum,
 	src->channel = channel;
 	src->fvol = fvol;
 	src->attenuation = attenuation;
-	src->isActive = qtrue;
-	src->isLocked = qfalse;
-	src->isLooping = qfalse;
-	src->isTracking = qfalse;
+	src->isActive = true;
+	src->isLocked = false;
+	src->isLooping = false;
+	src->isTracking = false;
 	src->volumeVar = s_volume;
 	VectorClear( src->origin );
 	VectorClear( src->velocity );
@@ -125,10 +125,10 @@ static void source_kill( src_t *src )
 	src->entNum = -1;
 	src->channel = -1;
 	src->fvol = 1;
-	src->isActive = qfalse;
-	src->isLocked = qfalse;
-	src->isLooping = qfalse;
-	src->isTracking = qfalse;
+	src->isActive = false;
+	src->isLocked = false;
+	src->isLooping = false;
+	src->isTracking = false;
 }
 
 /*
@@ -161,7 +161,7 @@ static void source_spatialize( src_t *src )
 static void source_loop( int priority, sfx_t *sfx, int entNum, float fvol, float attenuation )
 {
 	src_t *src;
-	qboolean new_source = qfalse;
+	bool new_source = false;
 
 	if( !sfx )
 		return;
@@ -175,14 +175,14 @@ static void source_loop( int priority, sfx_t *sfx, int entNum, float fvol, float
 		src = S_AllocSource( priority, entNum, 0 );
 		if( !src )
 			return;
-		new_source = qtrue;
+		new_source = true;
 	}
 	else if( entlist[entNum].src->sfx != sfx )
 	{
 		// Need to restart. Just re-use this channel
 		src = entlist[entNum].src;
 		source_kill( src );
-		new_source = qtrue;
+		new_source = true;
 	}
 	else
 	{
@@ -193,7 +193,7 @@ static void source_loop( int priority, sfx_t *sfx, int entNum, float fvol, float
 	{
 		source_setup( src, sfx, priority, entNum, -1, fvol, attenuation );
 		qalSourcei( src->source, AL_LOOPING, AL_TRUE );
-		src->isLooping = qtrue;
+		src->isLooping = true;
 
 		entlist[entNum].src = src;
 	}
@@ -207,20 +207,20 @@ static void source_loop( int priority, sfx_t *sfx, int entNum, float fvol, float
 	if( new_source )
 	{
 		if( src->attenuation )
-			src->isTracking = qtrue;
+			src->isTracking = true;
 
 		source_spatialize( src );
 
 		qalSourcePlay( src->source );
 	}
 
-	entlist[entNum].touched = qtrue;
+	entlist[entNum].touched = true;
 }
 
 /*
 * S_InitSources
 */
-qboolean S_InitSources( int maxEntities, qboolean verbose )
+bool S_InitSources( int maxEntities, bool verbose )
 {
 	int i;
 
@@ -236,19 +236,19 @@ qboolean S_InitSources( int maxEntities, qboolean verbose )
 		src_count++;
 	}
 	if( !src_count )
-		return qfalse;
+		return false;
 
 	if( verbose )
 		Com_Printf( "allocated %d sources\n", src_count );
 
 	if( maxEntities < 1 )
-		return qfalse;
+		return false;
 
 	entlist = ( sentity_t * )S_Malloc( sizeof( sentity_t ) * maxEntities );
 	max_ents = maxEntities;
 
-	src_inited = qtrue;
-	return qtrue;
+	src_inited = true;
+	return true;
 }
 
 /*
@@ -273,7 +273,7 @@ void S_ShutdownSources( void )
 	S_Free( entlist );
 	entlist = NULL;
 
-	src_inited = qfalse;
+	src_inited = false;
 }
 
 /*
@@ -332,7 +332,7 @@ void S_UpdateSources( void )
 			}
 			else
 			{
-				entlist[entNum].touched = qfalse;
+				entlist[entNum].touched = false;
 			}
 		}
 
@@ -394,7 +394,7 @@ src_t *S_AllocSource( int priority, int entNum, int channel )
 */
 void S_LockSource( src_t *src )
 {
-	src->isLocked = qtrue;
+	src->isLocked = true;
 }
 
 /*
@@ -402,13 +402,13 @@ void S_LockSource( src_t *src )
 */
 void S_UnlockSource( src_t *src )
 {
-	src->isLocked = qfalse;
+	src->isLocked = false;
 }
 
 /*
 * S_UnlockSource
 */
-void S_KeepSourceAlive( src_t *src, qboolean alive )
+void S_KeepSourceAlive( src_t *src, bool alive )
 {
 	src->keepAlive = alive;
 }
@@ -464,7 +464,7 @@ static void S_StartSound( sfx_t *sfx, const vec3_t origin, int entNum, int chann
 		if( origin )
 			VectorCopy( origin, src->origin );
 		else
-			src->isTracking = qtrue;
+			src->isTracking = true;
 	}
 
 	source_spatialize( src );
@@ -521,7 +521,7 @@ src_t *S_AllocRawSource( int entNum, float fvol, float attenuation, cvar_t *volu
 	source_setup( src, NULL, SRCPRI_STREAM, entNum, 0, fvol, attenuation );
 
 	if( src->attenuation && entNum > 0 )
-		src->isTracking = qtrue;
+		src->isTracking = true;
 
 	src->volumeVar = volumeVar;
 	qalSourcef( src->source, AL_GAIN, src->fvol * src->volumeVar->value );

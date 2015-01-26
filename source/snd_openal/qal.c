@@ -132,7 +132,7 @@ LPALCGETINTEGERV qalcGetIntegerv;
 
 static OBJTYPE OpenALLib = NULL;
 
-static qboolean alinit_fail = qfalse;
+static bool alinit_fail = false;
 
 /*
 * GPA
@@ -145,7 +145,7 @@ static void *GPA( char *str )
 	if( !rv )
 	{
 		Com_Printf( " Couldn't load symbol: %s\n", str );
-		alinit_fail = qtrue;
+		alinit_fail = true;
 		return NULL;
 	}
 	else
@@ -158,10 +158,10 @@ static void *GPA( char *str )
 /*
 * QAL_Init
 */
-qboolean QAL_Init( const char *libname, qboolean verbose )
+bool QAL_Init( const char *libname, bool verbose )
 {
 	if( OpenALLib )
-		return qtrue;
+		return true;
 
 	if( verbose )
 		Com_Printf( "Loading OpenAL library: %s\n", libname );
@@ -169,22 +169,22 @@ qboolean QAL_Init( const char *libname, qboolean verbose )
 	if( ( OpenALLib = OBJLOAD( libname ) ) == 0 )
 	{
 #ifdef _WIN32
-		return qfalse;
+		return false;
 #else
 		char fn[2048];
 
 		if( getcwd( fn, sizeof( fn ) ) == NULL )
-			return qfalse;
+			return false;
 
 		Q_strncatz( fn, "/", sizeof( fn ) );
 		Q_strncatz( fn, libname, sizeof( fn ) );
 
 		if( ( OpenALLib = OBJLOAD( fn ) ) == 0 )
-			return qfalse;
+			return false;
 #endif
 	}
 
-	alinit_fail = qfalse;
+	alinit_fail = false;
 
 	qalEnable = GPA( "alEnable" );
 	qalDisable = GPA( "alDisable" );
@@ -262,10 +262,10 @@ qboolean QAL_Init( const char *libname, qboolean verbose )
 	{
 		QAL_Shutdown();
 		Com_Printf( " Error: One or more symbols not found.\n" );
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -352,9 +352,9 @@ void QAL_Shutdown( void )
 	qalcGetIntegerv = NULL;
 }
 #else
-qboolean QAL_Init( const char *libname, qboolean verbose )
+bool QAL_Init( const char *libname, bool verbose )
 {
-	return qtrue;
+	return true;
 }
 void QAL_Shutdown( void )
 {

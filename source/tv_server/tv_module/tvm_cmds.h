@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "tvm_local.h"
 
-qboolean TVM_ClientCommand( tvm_relay_t *relay, edict_t *ent );
+bool TVM_ClientCommand( tvm_relay_t *relay, edict_t *ent );
 void TVM_RemoveGameCommands( tvm_relay_t *relay );
 void TVM_AddGameCommands( tvm_relay_t *relay );
 

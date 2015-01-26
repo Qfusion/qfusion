@@ -32,9 +32,9 @@ typedef enum { SIS_SUCCESS, SIS_FAILURE, SIS_NOTAVAIL } sndinitstat;
 
 cvar_t *s_wavonly;
 
-static qboolean	dsound_init;
-static qboolean	wav_init;
-static qboolean	snd_isdirect, snd_iswave;
+static bool	dsound_init;
+static bool	wav_init;
+static bool	snd_isdirect, snd_iswave;
 
 static int sample16;
 static unsigned int snd_sent, snd_completed;
@@ -65,10 +65,10 @@ LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
 HINSTANCE hInstDS;
 HWND cl_hwnd;
 
-static qboolean SNDDMA_InitWav( qboolean verbose );
-static sndinitstat SNDDMA_InitDirect( qboolean verbose );
+static bool SNDDMA_InitWav( bool verbose );
+static sndinitstat SNDDMA_InitDirect( bool verbose );
 
-static void FreeSound( qboolean verbose );
+static void FreeSound( bool verbose );
 
 static const char *DSoundError( int error )
 {
@@ -90,7 +90,7 @@ static const char *DSoundError( int error )
 /*
 ** DS_CreateBuffers
 */
-static qboolean DS_CreateBuffers( void )
+static bool DS_CreateBuffers( void )
 {
 	DSBUFFERDESC dsbuf;
 	DSBCAPS	dsbcaps;
@@ -115,8 +115,8 @@ static qboolean DS_CreateBuffers( void )
 	{
 		if( developer->integer )
 			Com_Printf( "failed\n" );
-		FreeSound( qfalse );
-		return qfalse;
+		FreeSound( false );
+		return false;
 	}
 	if( developer->integer )
 		Com_Printf( "ok\n" );
@@ -140,8 +140,8 @@ static qboolean DS_CreateBuffers( void )
 		{
 			if( developer->integer )
 				Com_Printf( "failed\n" );
-			FreeSound( qfalse );
-			return qfalse;
+			FreeSound( false );
+			return false;
 		}
 
 		if( developer->integer )
@@ -162,8 +162,8 @@ static qboolean DS_CreateBuffers( void )
 	{
 		if( developer->integer )
 			Com_Printf( "*** GetCaps failed ***\n" );
-		FreeSound( qfalse );
-		return qfalse;
+		FreeSound( false );
+		return false;
 	}
 
 	// Make sure mixer is active
@@ -171,8 +171,8 @@ static qboolean DS_CreateBuffers( void )
 	{
 		if( developer->integer )
 			Com_Printf( "*** Play failed ***\n" );
-		FreeSound( qfalse );
-		return qfalse;
+		FreeSound( false );
+		return false;
 	}
 
 	if( developer->integer )
@@ -196,7 +196,7 @@ static qboolean DS_CreateBuffers( void )
 	dma.buffer = (unsigned char *) lpData;
 	sample16 = ( dma.samplebits/8 ) - 1;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -237,7 +237,7 @@ static void DS_DestroyBuffers( void )
 /*
 * FreeSound
 */
-static void FreeSound( qboolean verbose )
+static void FreeSound( bool verbose )
 {
 	int i;
 
@@ -305,8 +305,8 @@ static void FreeSound( qboolean verbose )
 	hWaveHdr = 0;
 	lpData = NULL;
 	lpWaveHdr = NULL;
-	dsound_init = qfalse;
-	wav_init = qfalse;
+	dsound_init = false;
+	wav_init = false;
 }
 
 /*
@@ -314,7 +314,7 @@ static void FreeSound( qboolean verbose )
 * 
 * Direct-Sound support
 */
-sndinitstat SNDDMA_InitDirect( qboolean verbose )
+sndinitstat SNDDMA_InitDirect( bool verbose )
 {
 	DSCAPS dscaps;
 	HRESULT	hresult;
@@ -405,7 +405,7 @@ sndinitstat SNDDMA_InitDirect( qboolean verbose )
 	if( !DS_CreateBuffers() )
 		return SIS_FAILURE;
 
-	dsound_init = qtrue;
+	dsound_init = true;
 
 	if( verbose )
 		Com_Printf( "...completed successfully\n" );
@@ -418,7 +418,7 @@ sndinitstat SNDDMA_InitDirect( qboolean verbose )
 * 
 * Crappy windows multimedia base
 */
-qboolean SNDDMA_InitWav( qboolean verbose )
+bool SNDDMA_InitWav( bool verbose )
 {
 	WAVEFORMATEX format;
 	int i;
@@ -465,7 +465,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 		{
 			if( verbose )
 				Com_Printf( "failed\n" );
-			return qfalse;
+			return false;
 		}
 
 		if( MessageBox( NULL,
@@ -476,7 +476,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 		{
 			if( verbose )
 				Com_Printf( "hw in use\n" );
-			return qfalse;
+			return false;
 		}
 	}
 	if( verbose )
@@ -497,7 +497,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 		if( verbose )
 			Com_Printf( " failed\n" );
 		FreeSound( verbose );
-		return qfalse;
+		return false;
 	}
 	if( verbose )
 		Com_Printf( "ok\n" );
@@ -510,7 +510,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 		if( verbose )
 			Com_Printf( " failed\n" );
 		FreeSound( verbose );
-		return qfalse;
+		return false;
 	}
 	memset( lpData, 0, gSndBufSize );
 	if( verbose )
@@ -531,7 +531,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 		if( verbose )
 			Com_Printf( "failed\n" );
 		FreeSound( verbose );
-		return qfalse;
+		return false;
 	}
 	if( verbose )
 		Com_Printf( "ok\n" );
@@ -545,7 +545,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 		if( verbose )
 			Com_Printf( "failed\n" );
 		FreeSound( verbose );
-		return qfalse;
+		return false;
 	}
 	memset( lpWaveHdr, 0, sizeof( WAVEHDR ) * WAV_BUFFERS );
 	if( verbose )
@@ -565,7 +565,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 			if( verbose )
 				Com_Printf( "failed\n" );
 			FreeSound( verbose );
-			return qfalse;
+			return false;
 		}
 	}
 	if( verbose )
@@ -577,9 +577,9 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 	dma.buffer = (unsigned char *) lpData;
 	sample16 = ( dma.samplebits/8 ) - 1;
 
-	wav_init = qtrue;
+	wav_init = true;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -588,7 +588,7 @@ qboolean SNDDMA_InitWav( qboolean verbose )
 * Try to find a sound device to mix for.
 * Returns false if nothing is found.
 */
-qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
+bool SNDDMA_Init( void *hwnd, bool verbose )
 {
 	sndinitstat stat;
 
@@ -598,7 +598,7 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 
 	s_wavonly = trap_Cvar_Get( "s_wavonly", "0", CVAR_LATCH_SOUND );
 
-	dsound_init = wav_init = qfalse;
+	dsound_init = wav_init = false;
 
 	stat = SIS_FAILURE; // assume DirectSound won't initialize
 
@@ -611,14 +611,14 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 
 			if( stat == SIS_SUCCESS )
 			{
-				snd_isdirect = qtrue;
+				snd_isdirect = true;
 
 				if( verbose )
 					Com_Printf( "dsound init succeeded\n" );
 			}
 			else
 			{
-				snd_isdirect = qfalse;
+				snd_isdirect = false;
 				Com_Printf( "*** dsound init failed ***\n" );
 			}
 		}
@@ -649,10 +649,10 @@ qboolean SNDDMA_Init( void *hwnd, qboolean verbose )
 	if( !dsound_init && !wav_init )
 	{
 		Com_Printf( "*** No sound device initialized ***\n" );
-		return qfalse;
+		return false;
 	}
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -724,7 +724,7 @@ void SNDDMA_BeginPainting( void )
 		if( hresult != DSERR_BUFFERLOST )
 		{
 			Com_Printf( "S_TransferStereo16: Lock failed with error '%s'\n", DSoundError( hresult ) );
-			SF_Shutdown( qtrue );
+			SF_Shutdown( true );
 			return;
 		}
 		else
@@ -799,7 +799,7 @@ void SNDDMA_Submit( void )
 			if( wResult != MMSYSERR_NOERROR )
 			{
 				Com_Printf( "Failed to write block to device\n" );
-				FreeSound( qtrue );
+				FreeSound( true );
 				return;
 			}
 		}
@@ -811,7 +811,7 @@ void SNDDMA_Submit( void )
 * 
 * Reset the sound device for exiting
 */
-void SNDDMA_Shutdown( qboolean verbose )
+void SNDDMA_Shutdown( bool verbose )
 {
 	FreeSound( verbose );
 }
@@ -824,7 +824,7 @@ void SNDDMA_Shutdown( qboolean verbose )
 * The window have been destroyed and recreated
 * between a deactivate and an activate.
 */
-void S_Activate( qboolean active )
+void S_Activate( bool active )
 {
 	if( !pDS )
 		return;
@@ -833,6 +833,6 @@ void S_Activate( qboolean active )
 	if( pDS->lpVtbl->SetCooperativeLevel( pDS, cl_hwnd, DSSCL_PRIORITY ) != DS_OK )
 	{
 		Com_Printf( "DirectSound SetCooperativeLevel failed\n" );
-		SNDDMA_Shutdown( qfalse );
+		SNDDMA_Shutdown( false );
 	}
 }

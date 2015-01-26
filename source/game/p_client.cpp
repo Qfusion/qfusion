@@ -268,7 +268,7 @@ static edict_t *CopyToBodyQue( edict_t *ent, edict_t *attacker, int damage )
 		body->s.modelindex = ent->s.modelindex;
 		body->s.bodyOwner = ent->s.number; // bodyOwner is the same as modelindex2
 		body->s.skinnum = ent->s.skinnum;
-		body->s.teleported = qtrue;
+		body->s.teleported = true;
 
 		// launch the death animation on the body
 		{
@@ -377,7 +377,7 @@ void G_Client_InactivityRemove( gclient_t *client )
 		else if( g_inactivity_maxtime->value < 15.0f )
 			trap_Cvar_ForceSet( "g_inactivity_maxtime", "15.0" );
 
-		g_inactivity_maxtime->modified = qfalse;
+		g_inactivity_maxtime->modified = false;
 	}
 
 	if( g_inactivity_maxtime->value == 0.0f )
@@ -543,7 +543,7 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 	self->pain = player_pain;
 	self->die = player_die;
 	self->viewheight = playerbox_stand_viewheight;
-	self->r.inuse = qtrue;
+	self->r.inuse = true;
 	self->mass = PLAYER_MASS;
 	self->air_finished = level.time + ( 12 * 1000 );
 	self->r.clipmask = MASK_PLAYERSOLID;
@@ -631,7 +631,7 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 
 	self->s.attenuation = ATTN_NORM;
 
-	self->s.teleported = qtrue;
+	self->s.teleported = true;
 
 	// hold in place briefly
 	client->ps.pmove.pm_flags = PMF_TIME_TELEPORT;
@@ -720,7 +720,7 @@ void G_TeleportPlayer( edict_t *player, edict_t *dest )
 
 	client->ps.pmove.pm_flags |= PMF_TIME_TELEPORT;
 	client->ps.pmove.pm_time = 1; // force the minimum no control delay
-	player->s.teleported = qtrue;
+	player->s.teleported = true;
 
 	// update the entity from the pmove
 	VectorCopy( client->ps.viewangles, player->s.angles );
@@ -1259,7 +1259,7 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 * Changing levels will NOT cause this to be called again, but
 * loadgames will.
 */
-qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qboolean tvClient )
+bool ClientConnect( edict_t *ent, char *userinfo, bool fakeClient, bool tvClient )
 {
 	char *value;
 	char message[MAX_STRING_CHARS];
@@ -1274,7 +1274,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 		Info_SetValueForKey( userinfo, "rejtype", va( "%i", DROP_TYPE_GENERAL ) );
 		Info_SetValueForKey( userinfo, "rejflag", va( "%i", 0 ) );
 		Info_SetValueForKey( userinfo, "rejmsg", "Invalid userinfo" );
-		return qfalse;
+		return false;
 	}
 
 	if( !Info_ValueForKey( userinfo, "ip" ) )
@@ -1282,7 +1282,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 		Info_SetValueForKey( userinfo, "rejtype", va( "%i", DROP_TYPE_GENERAL ) );
 		Info_SetValueForKey( userinfo, "rejflag", va( "%i", 0 ) );
 		Info_SetValueForKey( userinfo, "rejmsg", "Error: Server didn't provide client IP" );
-		return qfalse;
+		return false;
 	}
 
 	if( !Info_ValueForKey( userinfo, "ip" ) )
@@ -1290,7 +1290,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 		Info_SetValueForKey( userinfo, "rejtype", va( "%i", DROP_TYPE_GENERAL ) );
 		Info_SetValueForKey( userinfo, "rejflag", va( "%i", 0 ) );
 		Info_SetValueForKey( userinfo, "rejmsg", "Error: Server didn't provide client socket" );
-		return qfalse;
+		return false;
 	}
 
 	// check to see if they are on the banned IP list
@@ -1300,7 +1300,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 		Info_SetValueForKey( userinfo, "rejtype", va( "%i", DROP_TYPE_GENERAL ) );
 		Info_SetValueForKey( userinfo, "rejflag", va( "%i", 0 ) );
 		Info_SetValueForKey( userinfo, "rejmsg", "You're banned from this server" );
-		return qfalse;
+		return false;
 	}
 
 	// check for a password
@@ -1317,7 +1317,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 		{
 			Info_SetValueForKey( userinfo, "rejmsg", "Password required" );
 		}
-		return qfalse;
+		return false;
 	}
 
 	// they can connect
@@ -1330,7 +1330,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 	memset( ent->r.client, 0, sizeof( gclient_t ) );
 	ent->r.client->ps.playerNum = PLAYERNUM( ent );
 	ent->r.client->connecting = true;
-	ent->r.client->isTV = tvClient == qtrue;
+	ent->r.client->isTV = tvClient == true;
 	ent->r.client->team = TEAM_SPECTATOR;
 	G_Client_UpdateActivity( ent->r.client ); // activity detected
 
@@ -1346,7 +1346,7 @@ qboolean ClientConnect( edict_t *ent, char *userinfo, qboolean fakeClient, qbool
 
 	G_CallVotes_ResetClient( PLAYERNUM( ent ) );
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -1388,7 +1388,7 @@ void ClientDisconnect( edict_t *ent, const char *reason )
 	G_FreeAI( ent );
 	AI_EnemyRemoved( ent );
 
-	ent->r.inuse = qfalse;
+	ent->r.inuse = false;
 	ent->r.svflags = SVF_NOCLIENT;
 
 	memset( ent->r.client, 0, sizeof( *ent->r.client ) );
@@ -1553,11 +1553,11 @@ static void ClientMakePlrkeys( gclient_t *client, usercmd_t *ucmd )
 * This will be called when client tries to change multiview mode
 * Mode change can be disallowed by returning false
 */
-qboolean ClientMultiviewChanged( edict_t *ent, qboolean multiview )
+bool ClientMultiviewChanged( edict_t *ent, bool multiview )
 {
-	ent->r.client->multiview = multiview == qtrue;
+	ent->r.client->multiview = multiview == true;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -1657,7 +1657,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta )
 		pm.cmd = *ucmd;
 
 	if( memcmp( &client->old_pmove, &client->ps.pmove, sizeof( pmove_state_t ) ) )
-		pm.snapinitial = qtrue;
+		pm.snapinitial = true;
 
 	// perform a pmove
 	Pmove( &pm );

@@ -381,7 +381,7 @@ void CL_UIModule_TouchAllAssets( void )
 /*
 * CL_UIModule_Refresh
 */
-void CL_UIModule_Refresh( qboolean backGround, qboolean showCursor )
+void CL_UIModule_Refresh( bool backGround, bool showCursor )
 {
 	if( uie )
 		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(), 
@@ -392,7 +392,7 @@ void CL_UIModule_Refresh( qboolean backGround, qboolean showCursor )
 /*
 * CL_UIModule_UpdateConnectScreen
 */
-void CL_UIModule_UpdateConnectScreen( qboolean backGround )
+void CL_UIModule_UpdateConnectScreen( bool backGround )
 {
 	if( uie )
 	{
@@ -461,7 +461,7 @@ void CL_UIModule_UpdateConnectScreen( qboolean backGround )
 			downloadType, cls.download.name, cls.download.percent * 100.0f, downloadSpeed,
 			cls.connect_count, backGround );
 
-		CL_UIModule_Refresh( backGround, qfalse );	
+		CL_UIModule_Refresh( backGround, false );	
 	}
 }
 

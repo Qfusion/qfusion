@@ -30,17 +30,17 @@ typedef struct irc_bucket_s {
 	double character_token;
 } irc_bucket_t;
 
-static qboolean Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_server_msg_t *msg);
+static bool Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_server_msg_t *msg);
 
-static qboolean Irc_Proto_Enqueue(const char *msg, size_t msg_len);
+static bool Irc_Proto_Enqueue(const char *msg, size_t msg_len);
 static void Irc_Proto_RefillBucket(void);
-static qboolean Irc_Proto_DrainBucket(void);
+static bool Irc_Proto_DrainBucket(void);
 
 static irc_bucket_t irc_bucket;
 static irc_socket_t irc_sock;
 
-qboolean Irc_Proto_Connect(const char *host, unsigned short port) {
-	const qboolean status = Irc_Net_Connect(host, port, &irc_sock);
+bool Irc_Proto_Connect(const char *host, unsigned short port) {
+	const bool status = Irc_Net_Connect(host, port, &irc_sock);
 	if (!status) {
 		if (!irc_messageBucketSize) {
 			irc_messageBucketSize = IRC_IMPORT.Cvar_Get("irc_messageBucketSize", DOUBLEQUOTE(IRC_DEFAULT_MESSAGE_BUCKET_SIZE), CVAR_ARCHIVE);
@@ -60,8 +60,8 @@ qboolean Irc_Proto_Connect(const char *host, unsigned short port) {
 	return status;
 }
 
-qboolean Irc_Proto_Disconnect(void) {
-	const qboolean status = Irc_Net_Disconnect(irc_sock);
+bool Irc_Proto_Disconnect(void) {
+	const bool status = Irc_Net_Disconnect(irc_sock);
 	if (!status) {
 		irc_bucket_message_t *msg = irc_bucket.first_msg;
 		irc_bucket_message_t *prev;
@@ -78,35 +78,35 @@ qboolean Irc_Proto_Disconnect(void) {
 	return status;
 }
 
-qboolean Irc_Proto_Quit(const char *quitmsg) {
+bool Irc_Proto_Quit(const char *quitmsg) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "QUIT %s\r\n", quitmsg);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Net_Send(irc_sock, msg, msg_len);	// send immediately
 }
 
-qboolean Irc_Proto_Nick(const char *nick) {
+bool Irc_Proto_Nick(const char *nick) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "NICK %s\r\n", nick);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_User(const char *user, qboolean invisible, const char *name) {
+bool Irc_Proto_User(const char *user, bool invisible, const char *name) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "USER %s %c * :%s\r\n", user, invisible ? '8' : '0', name);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Password(const char *password) {
+bool Irc_Proto_Password(const char *password) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "PASS %s\r\n", password);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Join(const char *channel, const char *password) {
+bool Irc_Proto_Join(const char *channel, const char *password) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = password
 		? snprintf(msg, sizeof(msg) - 1, "JOIN %s %s\r\n", channel, password)
@@ -115,14 +115,14 @@ qboolean Irc_Proto_Join(const char *channel, const char *password) {
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Part(const char *channel) {
+bool Irc_Proto_Part(const char *channel) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "PART %s\r\n", channel);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Mode(const char *target, const char *modes, const char *params) {
+bool Irc_Proto_Mode(const char *target, const char *modes, const char *params) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = params
 		? snprintf(msg, sizeof(msg) - 1, "MODE %s %s %s\r\n", target, modes, params)
@@ -131,7 +131,7 @@ qboolean Irc_Proto_Mode(const char *target, const char *modes, const char *param
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Topic(const char *channel, const char *topic) {
+bool Irc_Proto_Topic(const char *channel, const char *topic) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = topic
 		? snprintf(msg, sizeof(msg) - 1, "TOPIC %s :%s\r\n", channel, topic)
@@ -140,21 +140,21 @@ qboolean Irc_Proto_Topic(const char *channel, const char *topic) {
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Msg(const char *target, const char *text) {
+bool Irc_Proto_Msg(const char *target, const char *text) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "PRIVMSG %s :%s\r\n", target, text);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Notice(const char *target, const char *text) {
+bool Irc_Proto_Notice(const char *target, const char *text) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "NOTICE %s :%s\r\n", target, text);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Pong(const char *nick, const char *server, const char *cookie) {
+bool Irc_Proto_Pong(const char *nick, const char *server, const char *cookie) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = cookie
 		? snprintf(msg, sizeof(msg) - 1, "PONG %s %s :%s\r\n", nick, server, cookie)
@@ -163,7 +163,7 @@ qboolean Irc_Proto_Pong(const char *nick, const char *server, const char *cookie
 	return Irc_Net_Send(irc_sock, msg, msg_len);	// send immediately
 }
 
-qboolean Irc_Proto_Kick(const char *channel, const char *nick, const char *reason) {
+bool Irc_Proto_Kick(const char *channel, const char *nick, const char *reason) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = reason
 		? snprintf(msg, sizeof(msg) - 1, "KICK %s %s :%s\r\n", channel, nick, reason)
@@ -172,43 +172,43 @@ qboolean Irc_Proto_Kick(const char *channel, const char *nick, const char *reaso
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Who(const char *nick) {
+bool Irc_Proto_Who(const char *nick) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "WHO %s\r\n", nick);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Whois(const char *nick) {
+bool Irc_Proto_Whois(const char *nick) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "WHOIS %s\r\n", nick);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Whowas(const char *nick) {
+bool Irc_Proto_Whowas(const char *nick) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "WHOWAS %s\r\n", nick);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_Quote(const char *message) {
+bool Irc_Proto_Quote(const char *message) {
 	char msg[IRC_SEND_BUF_SIZE];
 	const int msg_len = snprintf(msg, sizeof(msg) - 1, "%s\r\n", message);
 	msg[sizeof(msg) - 1] = '\0';
 	return Irc_Proto_Enqueue(msg, msg_len);
 }
 
-qboolean Irc_Proto_PollServerMsg(irc_server_msg_t *msg, qboolean *msg_complete) {
+bool Irc_Proto_PollServerMsg(irc_server_msg_t *msg, bool *msg_complete) {
 	static char buf[IRC_RECV_BUF_SIZE];
 	static char *last = buf;
 	int recvd;
-	*msg_complete = qfalse;
+	*msg_complete = false;
 	// recv packet
 	if (Irc_Net_Receive(irc_sock, last, sizeof(buf) - (last - buf) - 1, &recvd)) {
 		// receive failed
-		return qtrue;
+		return true;
 	} else {
 		// terminate buf string
 		const char * const begin = buf;
@@ -225,20 +225,20 @@ qboolean Irc_Proto_PollServerMsg(irc_server_msg_t *msg, qboolean *msg_complete) 
 					// move succeeding commands to begin of buffer
 					memmove(buf, end + 2, sizeof(buf) - cmd_len);
 					last -= cmd_len;
-					*msg_complete = qtrue;
+					*msg_complete = true;
 				} else {
 					// parsing failure, fatal
 					strcpy(IRC_ERROR_MSG, "Received invalid packet from server");
-					return qtrue;
+					return true;
 				}
 			}
 		} else
-			*msg_complete = qfalse;
-		return qfalse;
+			*msg_complete = false;
+		return false;
 	}
 }
 
-qboolean Irc_Proto_ProcessServerMsg(const irc_server_msg_t *msg) {
+bool Irc_Proto_ProcessServerMsg(const irc_server_msg_t *msg) {
 	irc_command_t cmd;
 	cmd.type = msg->type;
 	switch (cmd.type) {
@@ -250,10 +250,10 @@ qboolean Irc_Proto_ProcessServerMsg(const irc_server_msg_t *msg) {
 			break;
 	}
 	Irc_Proto_CallListeners(cmd, msg->prefix, msg->params, msg->trailing);
-	return qfalse;
+	return false;
 }
 
-static qboolean Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_server_msg_t *msg) {
+static bool Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_server_msg_t *msg) {
 	const char *c = txt;
 	const char *end = txt + txt_len;
 	*(msg->prefix) = '\0';
@@ -282,7 +282,7 @@ static qboolean Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_se
 					command[i] = *c;
 					++c;
 				} else
-					return qtrue;
+					return true;
 			}
 			command[3] = '\0';
 			msg->type = IRC_COMMAND_NUMERIC;
@@ -298,7 +298,7 @@ static qboolean Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_se
 			*command = '\0';
 			msg->type = IRC_COMMAND_STRING;
 		} else
-			return qtrue;
+			return true;
 		if (c < end && *c == ' ') {
 			// parse params and trailing
 			char *params = msg->params;
@@ -333,15 +333,15 @@ static qboolean Irc_Proto_ParseServerMsg(const char *txt, size_t txt_len, irc_se
 			}
 		}
 	}
-	return qfalse;
+	return false;
 }
 
-qboolean Irc_Proto_Flush(void) {
+bool Irc_Proto_Flush(void) {
 	Irc_Proto_RefillBucket();		// first refill token
 	return Irc_Proto_DrainBucket();	// then send messages (if allowed)
 }
 
-static qboolean Irc_Proto_Enqueue(const char *msg, size_t msg_len) {
+static bool Irc_Proto_Enqueue(const char *msg, size_t msg_len) {
 	// create message node
 	const double messageBucketSize = Cvar_GetFloatValue(irc_messageBucketSize);
 	const double characterBucketSize = Cvar_GetFloatValue(irc_characterBucketSize);
@@ -362,10 +362,10 @@ static qboolean Irc_Proto_Enqueue(const char *msg, size_t msg_len) {
 		// update bucket sizes
 		++irc_bucket.message_size;
 		irc_bucket.character_size += msg_len;
-		return qfalse;
+		return false;
 	} else {
 		strcpy(IRC_ERROR_MSG, "Bucket(s) full. Could not enqueue message.");
-		return qtrue;
+		return true;
 	}
 }
 
@@ -388,9 +388,9 @@ static void Irc_Proto_RefillBucket(void) {
 	irc_bucket.last_refill = micros;
 }
 
-static qboolean Irc_Proto_DrainBucket(void) {
+static bool Irc_Proto_DrainBucket(void) {
 	const double characterBucketBurst = Cvar_GetFloatValue(irc_characterBucketBurst);
-	qboolean status = qfalse;
+	bool status = false;
 	irc_bucket_message_t *msg;
 	// remove messages whose size exceed our burst size (we can not send them)
 	for (

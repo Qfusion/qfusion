@@ -48,7 +48,7 @@ glwstate_t glw_state;
 
 #pragma warning( disable : 4055 )
 
-static void VID_SetWindowSize( qboolean fullscreen )
+static void VID_SetWindowSize( bool fullscreen )
 {
 	RECT r;
 	int stylebits;
@@ -114,9 +114,9 @@ static void VID_SetWindowSize( qboolean fullscreen )
 	SetFocus( glw_state.hWnd );
 }
 
-static qboolean VID_CreateWindow( void )
+static bool VID_CreateWindow( void )
 {
-	qboolean fullscreen = glConfig.fullScreen;
+	bool fullscreen = glConfig.fullScreen;
 	HWND parentHWND = glw_state.parenthWnd;
 #ifdef WITH_UTF8
 	WNDCLASSW wc;
@@ -169,19 +169,19 @@ static qboolean VID_CreateWindow( void )
 	if( !GLimp_InitGL() )
 	{
 		ri.Com_Printf( "VID_CreateWindow() - GLimp_InitGL failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	if( glw_state.parenthWnd )
 		PostMessage( glw_state.parenthWnd, UWM_APPACTIVE, WA_ACTIVE, 0 );
 
-	return qtrue;
+	return true;
 }
 
 /*
 ** VID_SetFullscreenMode
 */
-static qboolean VID_SetFullscreenMode( int displayFrequency, qboolean fullscreen )
+static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 {
 	// do a CDS if needed
 	if( fullscreen )
@@ -222,9 +222,9 @@ static qboolean VID_SetFullscreenMode( int displayFrequency, qboolean fullscreen
 			ri.Com_DPrintf( "ok\n" );
 
 			if( glw_state.hWnd ) {
-				VID_SetWindowSize( qtrue );
+				VID_SetWindowSize( true );
 			}
-			return qtrue;
+			return true;
 		}
 		else
 		{
@@ -256,18 +256,18 @@ static qboolean VID_SetFullscreenMode( int displayFrequency, qboolean fullscreen
 				ChangeDisplaySettings( 0, 0 );
 
 				if( glw_state.hWnd ) {
-					VID_SetWindowSize( qfalse );
+					VID_SetWindowSize( false );
 				}
-				return qfalse;
+				return false;
 			}
 			else
 			{
 				ri.Com_DPrintf( " ok\n" );
 
 				if( glw_state.hWnd ) {
-					VID_SetWindowSize( qtrue );
+					VID_SetWindowSize( true );
 				}
-				return qtrue;
+				return true;
 			}
 		}
 	}
@@ -278,18 +278,18 @@ static qboolean VID_SetFullscreenMode( int displayFrequency, qboolean fullscreen
 		ChangeDisplaySettings( 0, 0 );
 
 		if( glw_state.hWnd ) {
-			VID_SetWindowSize( qfalse );
+			VID_SetWindowSize( false );
 		}
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
 ** GLimp_SetMode
 */
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, 
-	qboolean fullscreen, qboolean wideScreen )
+	bool fullscreen, bool wideScreen )
 {
 	const char *win_fs[] = { "W", "FS" };
 
@@ -315,8 +315,8 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	if( glw_state.parenthWnd ) {
 		RECT parentWindowRect;
 
-		fullscreen = qfalse;
-		wideScreen = qfalse;
+		fullscreen = false;
+		wideScreen = false;
 
 		GetWindowRect( glw_state.parenthWnd, &parentWindowRect );
 		width = parentWindowRect.right - parentWindowRect.left;
@@ -390,7 +390,7 @@ void GLimp_Shutdown( void )
 	if( glConfig.fullScreen )
 	{
 		ChangeDisplaySettings( 0, 0 );
-		glConfig.fullScreen = qfalse;
+		glConfig.fullScreen = false;
 	}
 
 	if( glw_state.applicationName )
@@ -423,7 +423,7 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	glw_state.wndproc = wndproc;
 	glw_state.parenthWnd = ( HWND )parenthWnd;
 
-	return qtrue;
+	return true;
 }
 
 static int GLimp_InitGL( void )
@@ -464,11 +464,11 @@ static int GLimp_InitGL( void )
 	{
 		ri.Com_DPrintf( "...attempting to use stereo\n" );
 		pfd.dwFlags |= PFD_STEREO;
-		glConfig.stereoEnabled = qtrue;
+		glConfig.stereoEnabled = true;
 	}
 	else
 	{
-		glConfig.stereoEnabled = qfalse;
+		glConfig.stereoEnabled = false;
 	}
 
 	/*
@@ -480,18 +480,18 @@ static int GLimp_InitGL( void )
 	if( ( glw_state.hDC = GetDC( glw_state.hWnd ) ) == NULL )
 	{
 		ri.Com_Printf( "GLimp_Init() - GetDC failed\n" );
-		return qfalse;
+		return false;
 	}
 
 	if( ( pixelformat = ChoosePixelFormat( glw_state.hDC, &pfd ) ) == 0 )
 	{
 		ri.Com_Printf( "GLimp_Init() - ChoosePixelFormat failed\n" );
-		return qfalse;
+		return false;
 	}
 	if( SetPixelFormat( glw_state.hDC, pixelformat, &pfd ) == FALSE )
 	{
 		ri.Com_Printf( "GLimp_Init() - SetPixelFormat failed\n" );
-		return qfalse;
+		return false;
 	}
 	DescribePixelFormat( glw_state.hDC, pixelformat, sizeof( pfd ), &pfd );
 
@@ -504,7 +504,7 @@ static int GLimp_InitGL( void )
 	{
 		ri.Com_Printf( "...failed to select stereo pixel format\n" );
 		ri.Cvar_SetValue( "cl_stereo", 0 );
-		glConfig.stereoEnabled = qfalse;
+		glConfig.stereoEnabled = false;
 	}
 
 	/*
@@ -528,7 +528,7 @@ static int GLimp_InitGL( void )
 	*/
 	ri.Com_Printf( "GL PFD: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", ( int ) pfd.cColorBits, ( int ) pfd.cDepthBits, ( int )pfd.cStencilBits );
 
-	return qtrue;
+	return true;
 
 fail:
 	if( glw_state.hGLRC )
@@ -542,20 +542,20 @@ fail:
 		ReleaseDC( glw_state.hWnd, glw_state.hDC );
 		glw_state.hDC = NULL;
 	}
-	return qfalse;
+	return false;
 }
 
 /*
 ** GLimp_UpdateGammaRamp
 */
-qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
+bool GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp )
 {
 	unsigned short ramp256[3*256];
 
 	if( stride < 256 )
 	{
 		// only supports gamma ramps with 256 mappings per channel
-		return qfalse;
+		return false;
 	}
 
 	if( qwglGetDeviceGammaRamp3DFX )
@@ -566,7 +566,7 @@ qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned shor
 			memcpy( ramp,          ramp256,       256*sizeof(*ramp) );
 			memcpy( ramp+  stride, ramp256+  256, 256*sizeof(*ramp) );
 			memcpy( ramp+2*stride, ramp256+2*256, 256*sizeof(*ramp) );
-			return qtrue;
+			return true;
 		}
 	}
 
@@ -576,10 +576,10 @@ qboolean GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned shor
 		memcpy( ramp,          ramp256,       256*sizeof(*ramp) );
 		memcpy( ramp+  stride, ramp256+  256, 256*sizeof(*ramp) );
 		memcpy( ramp+2*stride, ramp256+2*256, 256*sizeof(*ramp) );
-		return qtrue;
+		return true;
 	}
 
-	return qfalse;
+	return false;
 }
 
 /*
@@ -634,7 +634,7 @@ void GLimp_EndFrame( void )
 /*
 ** GLimp_AppActivate
 */
-void GLimp_AppActivate( qboolean active, qboolean destroy )
+void GLimp_AppActivate( bool active, bool destroy )
 {
 	if( active )
 	{
@@ -660,44 +660,44 @@ void GLimp_AppActivate( qboolean active, qboolean destroy )
 /*
 ** GLimp_SetWindow
 */
-qboolean GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+bool GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
-	return qfalse; // surface cannot be lost
+	return false; // surface cannot be lost
 }
 
 /*
 ** GLimp_ScreenEnabled
 */
-qboolean GLimp_ScreenEnabled( void )
+bool GLimp_ScreenEnabled( void )
 {
-	return qtrue;
+	return true;
 }
 
 /*
 ** GLimp_SharedContext_Create
 */
-qboolean GLimp_SharedContext_Create( void **context, void **surface )
+bool GLimp_SharedContext_Create( void **context, void **surface )
 {
 	HGLRC ctx = qwglCreateContext( glw_state.hDC );
 	if( !ctx ) {
-		return qfalse;
+		return false;
 	}
 
 	qwglShareLists( glw_state.hGLRC, ctx );
 	*context = ctx;
 	*surface = ( void * )1;
-	return qtrue;
+	return true;
 }
 
 /*
 ** GLimp_SharedContext_MakeCurrent
 */
-qboolean GLimp_SharedContext_MakeCurrent( void *context, void *surface )
+bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
 	if( qwglMakeCurrent && !qwglMakeCurrent( glw_state.hDC, context ) ) {
-		return qfalse;
+		return false;
 	}
-	return qtrue;
+	return true;
 }
 
 /*

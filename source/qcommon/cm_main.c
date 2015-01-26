@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cm_local.h"
 #include "../qalgo/md5.h"
 
-static qboolean	cm_initialized = qfalse;
+static bool	cm_initialized = false;
 
 static mempool_t *cmap_mempool;
 
@@ -181,9 +181,9 @@ MAP LOADING
 * Loads in the map and all submodels
 * 
 *  for spawning a server with no map at all, call like this:
-*  CM_LoadMap( "", qfalse, &checksum );	// no real map
+*  CM_LoadMap( "", false, &checksum );	// no real map
 */
-cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, qboolean clientload, unsigned *checksum )
+cmodel_t *CM_LoadMap( cmodel_state_t *cms, const char *name, bool clientload, unsigned *checksum )
 {
 	int length;
 	unsigned *buf;
@@ -277,7 +277,7 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 	uint8_t h_v[8];
 	char *data, *entitystring;
 	lump_t l;
-	qboolean isworld;
+	bool isworld;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
 	const modelFormatDescr_t *descr;
 	const bspFormatDesc_t *bspFormat = NULL;
@@ -324,7 +324,7 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 
 	for( data = entitystring; ( token = COM_Parse( &data ) ) && token[0] == '{'; )
 	{
-		isworld = qtrue;
+		isworld = true;
 
 		while( 1 )
 		{
@@ -346,7 +346,7 @@ char *CM_LoadMapMessage( char *name, char *message, int size )
 			if( !strcmp( key, "classname" ) )
 			{
 				if( strcmp( value, "worldspawn" ) )
-					isworld = qfalse;
+					isworld = false;
 			}
 			else if( !strcmp( key, "message" ) )
 			{
@@ -577,7 +577,7 @@ void CM_FloodAreaConnections( cmodel_state_t *cms )
 /*
 * CM_SetAreaPortalState
 */
-void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, qboolean open )
+void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, bool open )
 {
 	int row1, row2;
 
@@ -604,24 +604,24 @@ void CM_SetAreaPortalState( cmodel_state_t *cms, int area1, int area2, qboolean 
 /*
 * CM_AreasConnected
 */
-qboolean CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 )
+bool CM_AreasConnected( cmodel_state_t *cms, int area1, int area2 )
 {
 	if( cm_noAreas->integer )
-		return qtrue;
+		return true;
 	if( cms->cmap_bspFormat->flags & BSP_NOAREAS )
-		return qtrue;
+		return true;
 
 	if( area1 == area2 )
-		return qtrue;
+		return true;
 	if( area1 < 0 || area2 < 0 )
-		return qtrue;
+		return true;
 
 	if( area1 >= cms->numareas || area2 >= cms->numareas )
 		Com_Error( ERR_DROP, "CM_AreasConnected: area >= numareas" );
 
 	if( cms->map_areas[area1].floodnum == cms->map_areas[area2].floodnum )
-		return qtrue;
-	return qfalse;
+		return true;
+	return false;
 }
 
 /*
@@ -741,7 +741,7 @@ void CM_ReadPortalState( cmodel_state_t *cms, int file )
 * Returns true if any leaf under headnode has a cluster that
 * is potentially visible
 */
-qboolean CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, uint8_t *visbits )
+bool CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, uint8_t *visbits )
 {
 	int cluster;
 	cnode_t	*node;
@@ -750,16 +750,16 @@ qboolean CM_HeadnodeVisible( cmodel_state_t *cms, int nodenum, uint8_t *visbits 
 	{
 		node = &cms->map_nodes[nodenum];
 		if( CM_HeadnodeVisible( cms, node->children[0], visbits ) )
-			return qtrue;
+			return true;
 		nodenum = node->children[1];
 	}
 
 	cluster = cms->map_leafs[-1 - nodenum].cluster;
 	if( cluster == -1 )
-		return qfalse;
+		return false;
 	if( visbits[cluster>>3] & ( 1<<( cluster&7 ) ) )
-		return qtrue;
-	return qfalse;
+		return true;
+	return false;
 }
 
 
@@ -895,7 +895,7 @@ void CM_Init( void )
 	cm_noAreas =	    Cvar_Get( "cm_noAreas", "0", CVAR_CHEAT );
 	cm_noCurves =	    Cvar_Get( "cm_noCurves", "0", CVAR_CHEAT );
 
-	cm_initialized = qtrue;
+	cm_initialized = true;
 }
 
 /*
@@ -908,5 +908,5 @@ void CM_Shutdown( void )
 
 	Mem_FreePool( &cmap_mempool );
 
-	cm_initialized = qfalse;
+	cm_initialized = false;
 }

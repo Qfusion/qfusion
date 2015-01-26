@@ -27,8 +27,8 @@ void TVM_PrintMsg( tvm_relay_t *relay, edict_t *ent, const char *format, ... );
 void TVM_CenterPrintMsg( tvm_relay_t *relay, edict_t *ent, const char *format, ... );
 
 edict_t *TVM_FindLocal( tvm_relay_t *relay, const edict_t *start, size_t fieldofs, const char *match );
-qboolean TVM_AllowDownload( tvm_relay_t *relay, edict_t *ent, const char *requestname, const char *uploadname );
-qboolean TVM_ConfigString( tvm_relay_t *relay, int number, const char *value );
+bool TVM_AllowDownload( tvm_relay_t *relay, edict_t *ent, const char *requestname, const char *uploadname );
+bool TVM_ConfigString( tvm_relay_t *relay, int number, const char *value );
 
 void TVM_SetAudoTrack( tvm_relay_t *relay, const char *track );
 

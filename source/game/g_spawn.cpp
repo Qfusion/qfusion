@@ -776,7 +776,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	{
 		game.edicts[i+1].s.number = i+1;
 		game.edicts[i+1].r.client = &game.clients[i];
-		game.edicts[i+1].r.inuse = ( trap_GetClientState( i ) >= CS_CONNECTED ) ? qtrue : qfalse;
+		game.edicts[i+1].r.inuse = ( trap_GetClientState( i ) >= CS_CONNECTED ) ? true : false;
 		memset( &game.clients[i].level, 0, sizeof( game.clients[0].level ) );
 		game.clients[i].level.timeStamp = level.time;
 	}
@@ -933,7 +933,7 @@ static void SP_worldspawn( edict_t *ent )
 {
 	ent->movetype = MOVETYPE_PUSH;
 	ent->r.solid = SOLID_YES;
-	ent->r.inuse = qtrue;       // since the world doesn't use G_Spawn()
+	ent->r.inuse = true;       // since the world doesn't use G_Spawn()
 	VectorClear( ent->s.origin );
 	VectorClear( ent->s.angles );
 	GClip_SetBrushModel( ent, "*0" ); // sets mins / maxs and modelindex 1

@@ -71,12 +71,12 @@ void Sys_AppActivate( void )
 {
 }
 
-char *Sys_GetClipboardData( qboolean primary )
+char *Sys_GetClipboardData( bool primary )
 {
 	return NULL;
 }
 
-qboolean Sys_SetClipboardData( const char *data )
+bool Sys_SetClipboardData( const char *data )
 {
 }
 
@@ -98,11 +98,11 @@ unsigned int Sys_Milliseconds( void )
 	return 0;
 }
 
-static qboolean	Sys_Mkdir( const char *path )
+static bool	Sys_Mkdir( const char *path )
 {
 }
 
-static qboolean	Sys_Rmdir( const char *path )
+static bool	Sys_Rmdir( const char *path )
 {
 }
 

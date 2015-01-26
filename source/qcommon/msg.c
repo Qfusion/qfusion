@@ -36,13 +36,13 @@ void MSG_Init( msg_t *msg, uint8_t *data, size_t length )
 	msg->data = data;
 	msg->maxsize = length;
 	msg->cursize = 0;
-	msg->compressed = qfalse;
+	msg->compressed = false;
 }
 
 void MSG_Clear( msg_t *msg )
 {
 	msg->cursize = 0;
-	msg->compressed = qfalse;
+	msg->compressed = false;
 }
 
 void *MSG_GetSpace( msg_t *msg, size_t length )
@@ -245,7 +245,7 @@ int MSG_SkipData( msg_t *msg, size_t length )
 	return 0;
 }
 
-static char *MSG_ReadString2( msg_t *msg, qboolean linebreak )
+static char *MSG_ReadString2( msg_t *msg, bool linebreak )
 {
 	int l, c;
 	static char string[MAX_MSG_STRING_CHARS];
@@ -268,12 +268,12 @@ static char *MSG_ReadString2( msg_t *msg, qboolean linebreak )
 
 char *MSG_ReadString( msg_t *msg )
 {
-	return MSG_ReadString2( msg, qfalse );
+	return MSG_ReadString2( msg, false );
 }
 
 char *MSG_ReadStringLine( msg_t *msg )
 {
-	return MSG_ReadString2( msg, qtrue );
+	return MSG_ReadString2( msg, true );
 }
 
 //==================================================
@@ -286,7 +286,7 @@ char *MSG_ReadStringLine( msg_t *msg )
 * Writes part of a packetentities message.
 * Can delta from either a baseline or a previous packet_entity
 */
-void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg, qboolean force, qboolean updateOtherOrigin )
+void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg, bool force, bool updateOtherOrigin )
 {
 	int bits;
 
@@ -626,7 +626,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 		uint8_t ttype;
 		ttype = (uint8_t)MSG_ReadByte( msg );
 		to->type = ttype & ~ET_INVERSE;
-		to->linearProjectile = ( ttype & ET_INVERSE ) ? qtrue : qfalse;
+		to->linearProjectile = ( ttype & ET_INVERSE ) ? true : false;
 	}
 
 	if( bits & U_SOLID )
@@ -737,7 +737,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 		uint8_t tweapon;
 		tweapon = (uint8_t)MSG_ReadByte( msg );
 		to->weapon = tweapon & ~ET_INVERSE;
-		to->teleported = ( tweapon & ET_INVERSE ) ? qtrue : qfalse;
+		to->teleported = ( tweapon & ET_INVERSE ) ? true : false;
 	}
 
 	if( bits & U_SVFLAGS )

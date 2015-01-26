@@ -32,7 +32,7 @@ namespace WSWUI
 
 						// parse single line of title
 						while( ptr ) {
-							const char *token = COM_ParseExt( &ptr, qtrue );
+							const char *token = COM_ParseExt( &ptr, true );
 							if( *token ) {
 								gt.title = "";
 							}

@@ -123,7 +123,7 @@ static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int 
 * Calculate sortkey and store info used for batching and sorting.
 * All 3D-geometry passes this function.
 */
-qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t *shader, 
+bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t *shader, 
 	float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf )
 {
 	drawList_t *list;
@@ -131,12 +131,12 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 	int shaderSort;
 
 	if( !shader ) {
-		return qfalse;
+		return false;
 	}
 
 	if( shader->flags & SHADER_PORTAL ) {
 		if( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW ) ) {
-			return qfalse;
+			return false;
 		}
 	}
 	if( shader->cin ) {
@@ -165,7 +165,7 @@ qboolean R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shade
 		portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM(e) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -350,17 +350,17 @@ static void _R_DrawSurfaces( void )
 	int fogNum = -1, prevFogNum = -100500;
 	sortedDrawSurf_t *sds;
 	int drawSurfType;
-	qboolean batchDrawSurf = qfalse, prevBatchDrawSurf = qfalse;
+	bool batchDrawSurf = false, prevBatchDrawSurf = false;
 	const shader_t *shader;
 	const entity_t *entity;
 	const mfog_t *fog;
 	const portalSurface_t *portalSurface;
 	drawList_t *list = rn.meshlist;
 	float depthmin = 0.0f, depthmax = 0.0f;
-	qboolean depthHack = qfalse, cullHack = qfalse;
-	qboolean infiniteProj = qfalse, prevInfiniteProj = qfalse;
-	qboolean depthWrite = qfalse;
-	qboolean depthCopied = qfalse;
+	bool depthHack = false, cullHack = false;
+	bool infiniteProj = false, prevInfiniteProj = false;
+	bool depthWrite = false;
+	bool depthCopied = false;
 	int entityFX = 0, prevEntityFX = -1;
 	mat4_t projectionMatrix;
 	refdef_t *rd = &rn.refdef;
@@ -409,32 +409,32 @@ static void _R_DrawSurfaces( void )
 						}
 					}
 					if( !depthHack ) {
-						depthHack = qtrue;
+						depthHack = true;
 						RB_GetDepthRange( &depthmin, &depthmax );
 						RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 					}
 				} else if( depthHack ) {
 					// bind the main framebuffer back
 					R_BindFrameBufferObject( riFBO );
-					depthHack = qfalse;
+					depthHack = false;
 					RB_DepthRange( depthmin, depthmax );
 				}
 
 				// backface culling for left-handed weapons
 				if( entity->flags & RF_CULLHACK ) {
-					cullHack = qtrue;
+					cullHack = true;
 					RB_FlipFrontFace();
 				} else if( cullHack ) {
-					cullHack = qfalse;
+					cullHack = false;
 					RB_FlipFrontFace();
 				}
 
 				R_TransformForEntity( entity );
 			}
 
-			depthWrite = shader->flags & SHADER_DEPTHWRITE ? qtrue : qfalse;
+			depthWrite = shader->flags & SHADER_DEPTHWRITE ? true : false;
 			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
-				depthCopied = qtrue;
+				depthCopied = true;
 				if( rn.fbDepthAttachment && rsh.screenTextureCopy ) {
 					RB_BlitFrameBufferObject( rsh.screenTextureCopy->fbo, 
 						GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
@@ -443,7 +443,7 @@ static void _R_DrawSurfaces( void )
 
 			// sky and things that don't use depth test use infinite projection matrix
 			// to not pollute the farclip
-			infiniteProj = shader->flags & (SHADER_NO_DEPTH_TEST|SHADER_SKY) ? qtrue : qfalse;
+			infiniteProj = shader->flags & (SHADER_NO_DEPTH_TEST|SHADER_SKY) ? true : false;
 			if( infiniteProj != prevInfiniteProj ) {
 				if( infiniteProj ) {
 					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
@@ -500,9 +500,9 @@ static void _R_DrawSurfaces( void )
 */
 void R_DrawSurfaces( void )
 {
-	qboolean triOutlines;
+	bool triOutlines;
 	
-	triOutlines = RB_EnableTriangleOutlines( qfalse );
+	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
 		// do not recurse into normal mode when rendering triangle outlines
 		_R_DrawSurfaces();
@@ -515,14 +515,14 @@ void R_DrawSurfaces( void )
 */
 void R_DrawOutlinedSurfaces( void )
 {
-	qboolean triOutlines;
+	bool triOutlines;
 	
 	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return;
 
 	// properly store and restore the state, as the 
 	// R_DrawOutlinedSurfaces calls can be nested
-	triOutlines = RB_EnableTriangleOutlines( qtrue );
+	triOutlines = RB_EnableTriangleOutlines( true );
 	_R_DrawSurfaces();
 	RB_EnableTriangleOutlines( triOutlines );
 }

@@ -86,7 +86,7 @@ static inline unsigned int trap_Milliseconds( void )
 
 static inline bool trap_inPVS( const vec3_t p1, const vec3_t p2 )
 {
-	return GAME_IMPORT.inPVS( p1, p2 ) == qtrue;
+	return GAME_IMPORT.inPVS( p1, p2 ) == true;
 }
 
 static inline int trap_CM_TransformedPointContents( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles )
@@ -131,12 +131,12 @@ static inline struct cmodel_s *trap_CM_OctagonModelForBBox( vec3_t mins, vec3_t 
 
 static inline void trap_CM_SetAreaPortalState( int area, int otherarea, bool open )
 {
-	GAME_IMPORT.CM_SetAreaPortalState( area, otherarea, open == true ? qtrue : qfalse );
+	GAME_IMPORT.CM_SetAreaPortalState( area, otherarea, open == true ? true : false );
 }
 
 static inline bool trap_CM_AreasConnected( int area1, int area2 )
 {
-	return GAME_IMPORT.CM_AreasConnected( area1, area2 ) == qtrue;
+	return GAME_IMPORT.CM_AreasConnected( area1, area2 ) == true;
 }
 
 static inline int trap_CM_BoxLeafnums( vec3_t mins, vec3_t maxs, int *list, int listsize, int *topnode )
@@ -165,7 +165,7 @@ static inline void trap_MemFree( void *data, const char *filename, int fileline 
 // dynvars
 static inline dynvar_t *trap_Dynvar_Create( const char *name, bool console, dynvar_getter_f getter, dynvar_setter_f setter )
 {
-	return GAME_IMPORT.Dynvar_Create( name, console == true ? qtrue : qfalse, getter, setter );
+	return GAME_IMPORT.Dynvar_Create( name, console == true ? true : false, getter, setter );
 }
 
 static inline void trap_Dynvar_Destroy( dynvar_t *dynvar )
@@ -307,7 +307,7 @@ static inline void trap_FS_FCloseFile( int file )
 
 static inline bool trap_FS_RemoveFile( const char *filename )
 {
-	return GAME_IMPORT.FS_RemoveFile( filename ) == qtrue;
+	return GAME_IMPORT.FS_RemoveFile( filename ) == true;
 }
 
 static inline int trap_FS_GetFileList( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end )
@@ -322,17 +322,17 @@ static inline const char *trap_FS_FirstExtension( const char *filename, const ch
 
 static inline bool trap_FS_MoveFile( const char *src, const char *dst )
 {
-	return GAME_IMPORT.FS_MoveFile( src, dst ) == qtrue;
+	return GAME_IMPORT.FS_MoveFile( src, dst ) == true;
 }
 
 static inline bool trap_ML_Update( void )
 {
-	return GAME_IMPORT.ML_Update() == qtrue;
+	return GAME_IMPORT.ML_Update() == true;
 }
 
 static inline bool trap_ML_FilenameExists( const char *filename )
 {
-	return GAME_IMPORT.ML_FilenameExists( filename ) == qtrue;
+	return GAME_IMPORT.ML_FilenameExists( filename ) == true;
 }
 
 static inline const char *trap_ML_GetFullname( const char *filename )
@@ -398,5 +398,5 @@ static inline void trap_MM_SendQuery( struct stat_query_s *query )
 
 static inline void trap_MM_GameState( bool state )
 {
-	GAME_IMPORT.MM_GameState( state == true ? qtrue : qfalse );
+	GAME_IMPORT.MM_GameState( state == true ? true : false );
 }

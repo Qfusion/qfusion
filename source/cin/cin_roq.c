@@ -53,12 +53,12 @@ static short snd_sqr_arr[256];
 static void RoQ_Init( void )
 {
 	int i;
-	static qboolean init = qfalse;
+	static bool init = false;
 
 	if( init )
 		return;
 
-	init = qtrue;
+	init = true;
 
 	for( i = 0; i < 128; i++ )
 	{
@@ -537,7 +537,7 @@ static void RoQ_ReadAudio( cinematics_t *cin )
 /*
 * RoQ_ReadNextFrameYUV_CIN
 */
-cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw )
+cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, bool *redraw )
 {
 	roq_info_t *roq = cin->fdata;
 	roq_chunk_t *chunk = &roq->chunk;
@@ -557,7 +557,7 @@ cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw )
 		else if( (chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO) && ( cin->num_listeners != 0 ) )
 			RoQ_ReadAudio( cin );
 		else if( chunk->id == RoQ_QUAD_VQ ) {
-			*redraw = qtrue;
+			*redraw = true;
 			cyuv = RoQ_ReadVideo( cin );
 			break;
 		}
@@ -589,7 +589,7 @@ cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, qboolean *redraw )
 /*
 * RoQ_Init_CIN
 */
-qboolean RoQ_Init_CIN( cinematics_t *cin )
+bool RoQ_Init_CIN( cinematics_t *cin )
 {
 	roq_info_t *roq;
 	roq_chunk_t *chunk;
@@ -602,7 +602,7 @@ qboolean RoQ_Init_CIN( cinematics_t *cin )
 	cin->framerate = RoQ_FRAMERATE;
 	cin->s_rate = 22050;
 	cin->s_width = 2;
-	cin->yuv = qtrue;
+	cin->yuv = true;
 
 	RoQ_Init();
 
@@ -611,12 +611,12 @@ qboolean RoQ_Init_CIN( cinematics_t *cin )
 	if( chunk->id != RoQ_HEADER1 || chunk->size != RoQ_HEADER2 || chunk->argument != RoQ_HEADER3 )
 	{
 		Com_Printf( S_COLOR_YELLOW "Invalid video file %s\n", cin->name );
-		return qfalse;
+		return false;
 	}
 
 	cin->headerlen = trap_FS_Tell( cin->file );
 
-	return qtrue;
+	return true;
 }
 
 /*
@@ -639,16 +639,16 @@ void RoQ_Reset_CIN( cinematics_t *cin )
 /*
 * RoQ_NeedNextFrame
 */
-qboolean RoQ_NeedNextFrame_CIN( cinematics_t *cin )
+bool RoQ_NeedNextFrame_CIN( cinematics_t *cin )
 {
 	unsigned int frame;
 
 	if( cin->cur_time <= cin->start_time )
-		return qfalse;
+		return false;
 
 	frame = ( cin->cur_time - cin->start_time ) * cin->framerate / 1000.0;
 	if( frame <= cin->frame )
-		return qfalse;
+		return false;
 
 	if( frame > cin->frame + 1 )
 	{
@@ -656,5 +656,5 @@ qboolean RoQ_NeedNextFrame_CIN( cinematics_t *cin )
 		cin->start_time = cin->cur_time - cin->frame * 1000 / cin->framerate;
 	}
 
-	return qtrue;
+	return true;
 }

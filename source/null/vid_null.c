@@ -23,8 +23,8 @@
 #include "../client/client.h"
 
 viddef_t viddef;             // global video state
-qboolean vid_ref_active;
-qboolean vid_ref_modified;
+bool vid_ref_active;
+bool vid_ref_modified;
 
 /*
    ==========================================================================
@@ -68,20 +68,20 @@ vidmode_t vid_modes[] =
 };
 #define VID_NUM_MODES ( sizeof( vid_modes ) / sizeof( vid_modes[0] ) )
 
-qboolean VID_GetModeInfo( int *width, int *height, int mode )
+bool VID_GetModeInfo( int *width, int *height, int mode )
 {
 	if( mode < 0 || mode >= VID_NUM_MODES )
-		return qfalse;
+		return false;
 
 	*width  = vid_modes[mode].width;
 	*height = vid_modes[mode].height;
 
-	return qtrue;
+	return true;
 }
 
 static void VID_Restart_f( void )
 {
-	VID_Restart( (Cmd_Argc() >= 2 ? qtrue : qfalse) );
+	VID_Restart( (Cmd_Argc() >= 2 ? true : false) );
 }
 
 void VID_Init( void )
@@ -91,8 +91,8 @@ void VID_Init( void )
 
 	Cmd_AddCommand( "vid_restart", VID_Restart_f );
 
-	vid_ref_active = qfalse;
-	vid_ref_modified = qtrue;
+	vid_ref_active = false;
+	vid_ref_modified = true;
 
 	VID_CheckChanges();
 }
@@ -102,7 +102,7 @@ void VID_Shutdown( void )
 	if( vid_ref_active )
 	{
 		R_Shutdown();
-		vid_ref_active = qfalse;
+		vid_ref_active = false;
 	}
 
 	Cmd_RemoveCommand( "vid_restart" );
@@ -115,18 +115,18 @@ void VID_CheckChanges( void )
 		if( vid_ref_active )
 		{
 			R_Shutdown();
-			vid_ref_active = qfalse;
+			vid_ref_active = false;
 		}
 
-		if( R_Init( NULL, NULL, NULL, 0, 0, 0, 0, qfalse ) == -1 )
+		if( R_Init( NULL, NULL, NULL, 0, 0, 0, 0, false ) == -1 )
 			Com_Error( ERR_FATAL, "Couldn't start refresh" );
 
-		vid_ref_active = qtrue;
-		vid_ref_modified = qfalse;
+		vid_ref_active = true;
+		vid_ref_modified = false;
 	}
 }
 
 void VID_Restart( void )
 {
-	vid_ref_modified = qtrue;
+	vid_ref_modified = true;
 }

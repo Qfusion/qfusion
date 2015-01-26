@@ -55,7 +55,7 @@ FIXME:  This will be remidied once a native Mac port is complete
 #if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
 
 cvar_t *nostdout;
-qboolean nostdout_backup_val = qfalse;
+bool nostdout_backup_val = false;
 
 unsigned sys_frame_time;
 
@@ -125,7 +125,7 @@ void Sys_Quit( void )
 {
 	// Qcommon_Shutdown is going destroy the cvar, so backup its value now
 	// and invalidate the pointer
-	nostdout_backup_val = (nostdout && nostdout->integer ? qtrue : qfalse);
+	nostdout_backup_val = (nostdout && nostdout->integer ? true : false);
 	nostdout = NULL;
 
 	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) & ~FNDELAY );
@@ -154,7 +154,7 @@ void Sys_InitDynvars( void )
 */
 void Sys_Error( const char *format, ... )
 {
-	static qboolean	recursive = qfalse;
+	static bool	recursive = false;
 	va_list	argptr;
 	char string[1024];
 
@@ -171,7 +171,7 @@ void Sys_Error( const char *format, ... )
 		_exit( 1 );
 	}
 
-	recursive = qtrue;
+	recursive = true;
 
 	fprintf( stderr, "Error: %s\n", string );
 
@@ -319,7 +319,7 @@ int main( int argc, char **argv )
 	}
 
 	oldtime = Sys_Milliseconds();
-	while( qtrue )
+	while( true )
 	{
 		// find time spent rendering last frame
 		do
