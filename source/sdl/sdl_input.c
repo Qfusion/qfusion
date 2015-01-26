@@ -187,19 +187,24 @@ static void HandleEvents( void )
 	SDL_Event event;
 
 	while( SDL_PollEvent( &event ) ) {
-		// printf("Event: %u\n", event.type);
 		switch( event.type ) {
 			case SDL_KEYDOWN:
 				key_event( &event.key, true );
 
-				// Emulate Ctrl+C/Ctrl+V
+				// Emulate copy/paste
+				#if defined( __APPLE__ )
+					#define KEYBOARD_COPY_PASTE_MODIFIER KMOD_GUI
+				#else
+					#define KEYBOARD_COPY_PASTE_MODIFIER KMOD_CTRL
+				#endif
+				
 				if( event.key.keysym.sym == SDLK_c ) {
-					if( event.key.keysym.mod & KMOD_CTRL ) {
+					if( event.key.keysym.mod & KEYBOARD_COPY_PASTE_MODIFIER ) {
 						Key_CharEvent( KC_CTRLC, KC_CTRLC );
 					}
 				}
 				else if( event.key.keysym.sym == SDLK_v ) {
-					if( event.key.keysym.mod & KMOD_CTRL ) {
+					if( event.key.keysym.mod & KEYBOARD_COPY_PASTE_MODIFIER ) {
 						Key_CharEvent( KC_CTRLV, KC_CTRLV );
 					}
 				}
