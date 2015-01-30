@@ -134,11 +134,6 @@ public:
 	/// Increment/Decrement the layout lock
 	void LockLayout(bool lock);
 
-	/// Sets internal pointer to user supplied data, which can be later retrieved by calling GetUserData
-	void SetUserData(void *data) { user_data = data; }
-	/// 
-	void *GetUserData() const { return user_data; }
-
 protected:
 	/// Refreshes the document layout if required.
 	virtual void OnUpdate();
@@ -178,8 +173,6 @@ private:
 	// Is the layout dirty?
 	bool layout_dirty;
 	int lock_layout;
-
-	void *user_data;
 
 	friend class Context;
 	friend class Factory;
