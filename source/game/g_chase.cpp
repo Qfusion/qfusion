@@ -559,8 +559,10 @@ void Cmd_ChaseCam_f( edict_t *ent )
 	if( ent->s.team != TEAM_SPECTATOR && !ent->r.client->teamstate.is_coach )
 	{
 		G_Teams_JoinTeam( ent, TEAM_SPECTATOR );
-		G_PrintMsg( NULL, "%s%s joined the %s%s team.\n", ent->r.client->netname,
-			S_COLOR_WHITE, GS_TeamName( ent->s.team ), S_COLOR_WHITE );
+		if( !CheckFlood( ent, false )) { // prevent 'joined spectators' spam
+			G_PrintMsg( NULL, "%s%s joined the %s%s team.\n", ent->r.client->netname,
+				S_COLOR_WHITE, GS_TeamName( ent->s.team ), S_COLOR_WHITE );
+		}
 	}
 
 	// & 1 = scorelead
