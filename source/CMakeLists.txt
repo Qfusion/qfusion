@@ -67,6 +67,11 @@ endif()
 
 # Linux specific settings
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # If no build type was specified - use release build settings
+    if (NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "Release")
+    endif()
+
     if (CMAKE_CROSSCOMPILING)
         set(CMAKE_LIBRARY_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
         link_directories("${CMAKE_FIND_ROOT_PATH}/usr/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
