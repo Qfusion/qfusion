@@ -136,7 +136,7 @@ option(BUILD_LUA_BINDINGS "Build Lua bindings" OFF)
 option(BUILD_ROCKET_8BPP_FONTS "Upload fonts as 8bit images" OFF)
 
 if(APPLE)
-	option(BUILD_FRAMEWORK "Build Framework bundle for OSX" OFF)
+	option(BUILD_FRAMEWORK "Build Framework bundle for OSX" ON)
 endif()
 
 option(BUILD_SAMPLES "Build samples" OFF)
