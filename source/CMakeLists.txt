@@ -6,7 +6,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 
 # You can override this var with commandline option -DQFUSION_CLIENT_NAME=name
 if (NOT QFUSION_CLIENT_NAME)
-    set(QFUSION_CLIENT_NAME QFusion)
+    set(QFUSION_CLIENT_NAME qfusion)
 endif()
 
 # You can override this var with commandline option -DQFUSION_SERVER_NAME=name
@@ -179,6 +179,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_SHARED_LIBRARY_SUFFIX "_${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
+macro(capitalize s)
+    string(SUBSTRING ${${s}} 0 1 s_1)
+    string(SUBSTRING ${${s}} 1 -1 s_2)
+    string(TOUPPER ${s_1} s_1)
+    set(${s} ${s_1}${s_2})
+endmacro()
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
@@ -189,6 +196,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
     set(CMAKE_SHARED_LIBRARY_SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+    capitalize(QFUSION_CLIENT_NAME)
 endif()
 
 
