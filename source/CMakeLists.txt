@@ -166,6 +166,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_definitions(-D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE)
+    
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2")
