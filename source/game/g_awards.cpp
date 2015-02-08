@@ -421,7 +421,17 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 
 	if( teamlist[attacker->s.team].stats.frags == 1 )
 	{
-		G_PlayerAward( attacker, S_COLOR_YELLOW "First Frag!" );
+		int i;
+
+		for( i = TEAM_PLAYERS; i < GS_MAX_TEAMS; i++ ) {
+			if( i == attacker->s.team )
+				continue;
+			if( teamlist[i].stats.frags )
+				break;
+		}
+
+		if( i != GS_MAX_TEAMS )
+			G_PlayerAward( attacker, S_COLOR_YELLOW "First Frag!" );
 	}
 
 	// ch : weapon specific frags
