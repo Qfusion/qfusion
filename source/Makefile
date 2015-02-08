@@ -229,9 +229,7 @@ SERVER_EXE=qfusion_server_$(ARCH).exe
 TV_SERVER_EXE=qfusiontv_server_$(ARCH).exe
 else # USE_MINGW
 ####################### NORMAL *NIX? ######################
-LOCALBASE?=/usr/local
-
-CFLAGS_COMMON=$(CFLAGS) -pipe -I. -I$(LOCALBASE)/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch
+CFLAGS_COMMON=$(CFLAGS) -pipe -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG -msse2
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
 ifeq ($(DEBUG_BUILD),YES)
@@ -249,9 +247,9 @@ LDFLAGS_COMMON=$(LDFLAGS)
 LXXFLAGS_COMMON=$(LDFLAGS) -lstdc++ -lsupc++
 
 ifeq ($(OS),FreeBSD)
-LDFLAGS_COMMON+= -L$(LOCALBASE)/lib -lm
+LDFLAGS_COMMON+= -lm
 else
-LDFLAGS_COMMON+= -L$(LOCALBASE)/lib -lm -ldl -O1 -Wl,--as-needed
+LDFLAGS_COMMON+= -lm -ldl -Wl,--as-needed
 endif
 
 ifneq ($(DEBUG_BUILD),YES)
@@ -322,8 +320,7 @@ endif # USE_MINGW
 ifeq ($(OS),Darwin)
 ARCH=mac
 SHARED_LIBRARY_EXTENSION=dylib
-LOCALBASE?=/usr
-CFLAGS_COMMON=-arch ppc -arch i386 -I. -I$(LOCALBASE)/include -Wall -isysroot /Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4
+CFLAGS_COMMON=-arch ppc -arch i386 -Wall -isysroot /Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG -fvisibility=hidden
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
 ifeq ($(DEBUG_BUILD),YES)
