@@ -229,9 +229,7 @@ SERVER_EXE=qfusion_server_$(ARCH).exe
 TV_SERVER_EXE=qfusiontv_server_$(ARCH).exe
 else # USE_MINGW
 ####################### NORMAL *NIX? ######################
-LOCALBASE?=/usr/local
-
-CFLAGS_COMMON=$(CFLAGS) -pipe -I. -I$(LOCALBASE)/include -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch
+CFLAGS_COMMON=$(CFLAGS) -pipe -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG -msse2
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
 ifeq ($(DEBUG_BUILD),YES)
@@ -249,9 +247,9 @@ LDFLAGS_COMMON=$(LDFLAGS)
 LXXFLAGS_COMMON=$(LDFLAGS) -lstdc++ -lsupc++
 
 ifeq ($(OS),FreeBSD)
-LDFLAGS_COMMON+= -L$(LOCALBASE)/lib -lm
+LDFLAGS_COMMON+= -lm
 else
-LDFLAGS_COMMON+= -L$(LOCALBASE)/lib -lm -ldl -O1 -Wl,--as-needed
+LDFLAGS_COMMON+= -lm -ldl -Wl,--as-needed
 endif
 
 ifneq ($(DEBUG_BUILD),YES)
@@ -317,43 +315,6 @@ SERVER_EXE=qfusion_server.$(ARCH)
 TV_SERVER_EXE=qfusiontv_server.$(ARCH)
 endif # USE_MINGW
 
-####################### MAC support ######################
-# Mac support, hacking this in at the end where it is easier than adding more if statements throughout
-ifeq ($(OS),Darwin)
-ARCH=mac
-SHARED_LIBRARY_EXTENSION=dylib
-LOCALBASE?=/usr
-CFLAGS_COMMON=-arch ppc -arch i386 -I. -I$(LOCALBASE)/include -Wall -isysroot /Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4
-CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG -fvisibility=hidden
-CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
-ifeq ($(DEBUG_BUILD),YES)
-CFLAGS_COMMON+=$(CFLAGS_DEBUG)
-else
-CFLAGS_COMMON+=$(CFLAGS_RELEASE)
-endif
-CFLAGS_OPENAL=-I/System/Library/Frameworks/OpenAL.framework/Headers
-CFLAGS_QF=-I/Library/Frameworks/SDL.framework/Headers
-CFLAGS_CLIENT=-std=gnu99 -I/Library/Frameworks/SDL.framework/Headers -I/System/Library/Frameworks/OpenAL.framework/Headers
-CFLAGS_DED=-DDEDICATED_ONLY -DC_ONLY
-CFLAGS_CIN=-I/Library/Frameworks/SDL.framework/Headers
-CFLAGS_FTLIB=-I/Library/Frameworks/SDL.framework/Headers
-CFLAGS_STEAMLIB=
-CFLAGS_REF_GL=-I/Library/Frameworks/SDL.framework/Headers -I/Library/Frameworks/libjpeg.framework/Headers
-LDFLAGS_CLIENT=-lz -lcurl -framework SDL -framework OpenGL -I/Library/Frameworks/SDL.framework/Headers
-LDFLAGS_MODULE=-bundle
-LDFLAGS_COMMON=-arch ppc -arch i386 -framework AppKit -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk
-LXXFLAGS_COMMON=$(LDFLAGS_COMMON) -lstdc++ -lsupc++
-LDFLAGS_DED=-lz -lcurl
-LDFLAGS_QF=-framework SDL -framework Ogg -framework Vorbis
-LDFLAGS_OPENAL=-framework OpenAL -framework Ogg -framework Vorbis
-LDFLAGS_IRC=
-LDFLAGS_ANGELWRAP=$(ANGELSCRIPT_LIB) -lpthread
-LDFLAGS_CIN= -framework Ogg -framework Theora
-LDFLAGS_FTLIB=
-LDFLAGS_STEAMLIB=
-LDFLAGS_REF_GL=-lz -framework libjpeg -framework libpng
-endif
-
 ######################################################################################################
 # Helper functions
 ######################################################################################################
@@ -391,10 +352,7 @@ ifeq ($(USE_MINGW),YES)
 CFILES_CLIENT += win32/win_vid.c win32/win_fs.c win32/win_net.c win32/conproc.c win32/win_input.c win32/win_sys.c win32/win_clipboard.c win32/win_time.c win32/win_console.c win32/win_lib.c win32/win_threads.c null/sys_vfs_null.c
 RESFILES_CLIENT += win32/qfusion.rc
 else
-ifeq ($(OS),Darwin)
-else
 CFILES_CLIENT += unix/unix_input.c unix/keysym2ucs.c
-endif
 CFILES_CLIENT += unix/unix_fs.c unix/unix_lib.c unix/unix_net.c unix/unix_sys.c unix/unix_clipboard.c unix/unix_time.c unix/unix_console.c unix/unix_vid.c unix/unix_threads.c null/sys_vfs_null.c
 endif
 CFILES_CLIENT += $(wildcard gameshared/q_*.c)
@@ -558,11 +516,7 @@ CFILES_REF_GL += qcommon/bsp.c qcommon/patch.c
 ifeq ($(USE_MINGW),YES)
 CFILES_REF_GL += win32/win_qgl.c win32/win_glw.c
 else
-ifeq ($(OS),Darwin)
-CFILES_REF_GL += mac/mac_qgl.c
-else
 CFILES_REF_GL += unix/unix_glw.c unix_xpm.c unix/unix_qgl.c
-endif
 endif
 
 CFILES_REF_GL_WITHOUT_PATH= $(notdir  $(CFILES_REF_GL))
@@ -868,15 +822,9 @@ $(BINDIR)/$(SERVER_EXE): $(OBJS_DED)
 #########
 # CLIENT
 #########
-ifeq ($(OS),Darwin)
-$(BINDIR)/$(CLIENT_EXE): $(OBJS_CLIENT)
-	@echo "  > Linking $@" && \
-	$(LD) -o $@ $(OBJS_CLIENT) mac/SDLMain.m $(LDFLAGS_COMMON) $(LDFLAGS_CLIENT)
-else
 $(BINDIR)/$(CLIENT_EXE): $(OBJS_CLIENT)
 	@echo "  > Linking $@" && \
 	$(LD) -o $@ $(OBJS_CLIENT) $(LDFLAGS_COMMON) $(LDFLAGS_CLIENT)
-endif
 
 #########
 # OPENAL
@@ -969,15 +917,8 @@ $(BUILDDIR)/client/%.o: win32/%.c
 $(BUILDDIR)/client/%.o: win32/%.rc
 	@$(DO_RES_CLIENT)
 else
-ifeq ($(OS),Darwin)
-$(BUILDDIR)/client/%.o: mac/%.c
-	@$(DO_CC_CLIENT)
 $(BUILDDIR)/client/%.o: unix/%.c
 	@$(DO_CC_CLIENT)
-else
-$(BUILDDIR)/client/%.o: unix/%.c
-	@$(DO_CC_CLIENT)
-endif
 endif
 
 $(BUILDDIR)/client/%.o: gameshared/%.c
@@ -1188,13 +1129,8 @@ ifeq ($(USE_MINGW),YES)
 $(BUILDDIR)/ref_gl/%.o: win32/%.c
 	@$(DO_CC_MODULE)
 else
-ifeq ($(OS),Darwin)
-$(BUILDDIR)/ref_gl/%.o: mac/%.c
-	@$(DO_CC_MODULE)
-else
 $(BUILDDIR)/ref_gl/%.o: unix/%.c
 	@$(DO_CC_MODULE)
-endif
 endif
 
 ########
