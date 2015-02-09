@@ -4,7 +4,7 @@ LOCAL_MODULE := ref_gl
 LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 
 LOCAL_LDLIBS := -landroid
-LOCAL_SHARED_LIBRARIES := jpeg png
+LOCAL_STATIC_LIBRARIES := jpeg png
 
 LOCAL_SRC_FILES := \
   android/android_glw.c \
