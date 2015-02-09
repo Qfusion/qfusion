@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)/source
 include $(CLEAR_VARS)
 LOCAL_MODULE := ref_gl
-LOCAL_MODULE_FILENAME := libref_gl_android_$(TARGET_ARCH_ABI)
+LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 
 LOCAL_LDLIBS := -landroid
 LOCAL_SHARED_LIBRARIES := jpeg png
