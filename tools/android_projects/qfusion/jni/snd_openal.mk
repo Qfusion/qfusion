@@ -9,7 +9,7 @@ LOCAL_STATIC_LIBRARIES := OpenAL-MOB vorbis
 
 LOCAL_SRC_FILES := \
   gameshared/q_math.c \
-  gameshared/q_shared.c\
+  gameshared/q_shared.c \
   snd_common/snd_cmdque.c \
   snd_openal/qal.c \
   snd_openal/snd_al.c \
