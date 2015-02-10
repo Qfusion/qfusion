@@ -16,9 +16,11 @@ APP_MODULES := \
   ogg \
   OpenAL-MOB \
   png \
+  theora \
   vorbis \
   \
   angelwrap \
+  cin \
   ftlib \
   irc \
   ref_gl \

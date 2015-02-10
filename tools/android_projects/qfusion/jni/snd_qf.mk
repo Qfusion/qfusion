@@ -11,7 +11,7 @@ LOCAL_STATIC_LIBRARIES := vorbis
 LOCAL_SRC_FILES := \
   android/android_snd.c \
   gameshared/q_math.c \
-  gameshared/q_shared.c\
+  gameshared/q_shared.c \
   snd_common/snd_cmdque.c \
   snd_qf/snd_dma.c \
   snd_qf/snd_main.c \
