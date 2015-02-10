@@ -1,0 +1,38 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenAL-MOB", "OpenAL-MOB.vcxproj", "{010E507B-C390-4509-B4FD-1B25298B1E15}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "makehrtf", "makehrtf.vcxproj", "{4D3E7FA6-571F-48A9-BA4E-E3197A8317DB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "openal-info", "openal-info.vcxproj", "{8DBF41EA-B486-496C-8491-006086E1FECE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		Shipping|Win32 = Shipping|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{010E507B-C390-4509-B4FD-1B25298B1E15}.Debug|Win32.ActiveCfg = Debug|Win32
+		{010E507B-C390-4509-B4FD-1B25298B1E15}.Debug|Win32.Build.0 = Debug|Win32
+		{010E507B-C390-4509-B4FD-1B25298B1E15}.Release|Win32.ActiveCfg = Release|Win32
+		{010E507B-C390-4509-B4FD-1B25298B1E15}.Release|Win32.Build.0 = Release|Win32
+		{010E507B-C390-4509-B4FD-1B25298B1E15}.Shipping|Win32.ActiveCfg = Shipping|Win32
+		{010E507B-C390-4509-B4FD-1B25298B1E15}.Shipping|Win32.Build.0 = Shipping|Win32
+		{4D3E7FA6-571F-48A9-BA4E-E3197A8317DB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4D3E7FA6-571F-48A9-BA4E-E3197A8317DB}.Debug|Win32.Build.0 = Debug|Win32
+		{4D3E7FA6-571F-48A9-BA4E-E3197A8317DB}.Release|Win32.ActiveCfg = Release|Win32
+		{4D3E7FA6-571F-48A9-BA4E-E3197A8317DB}.Release|Win32.Build.0 = Release|Win32
+		{4D3E7FA6-571F-48A9-BA4E-E3197A8317DB}.Shipping|Win32.ActiveCfg = Shipping|Win32
+		{4D3E7FA6-571F-48A9-BA4E-E3197A8317DB}.Shipping|Win32.Build.0 = Shipping|Win32
+		{8DBF41EA-B486-496C-8491-006086E1FECE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8DBF41EA-B486-496C-8491-006086E1FECE}.Debug|Win32.Build.0 = Debug|Win32
+		{8DBF41EA-B486-496C-8491-006086E1FECE}.Release|Win32.ActiveCfg = Release|Win32
+		{8DBF41EA-B486-496C-8491-006086E1FECE}.Release|Win32.Build.0 = Release|Win32
+		{8DBF41EA-B486-496C-8491-006086E1FECE}.Shipping|Win32.ActiveCfg = Shipping|Win32
+		{8DBF41EA-B486-496C-8491-006086E1FECE}.Shipping|Win32.Build.0 = Shipping|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

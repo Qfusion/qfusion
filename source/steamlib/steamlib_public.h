@@ -21,7 +21,7 @@ License along with this library.
 
 #include <stdint.h>
 
-#if defined(__APPLE__)
+#if !defined(_WIN32)
 #include <stddef.h> // For size_t
 #endif
 
