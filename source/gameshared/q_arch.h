@@ -40,6 +40,7 @@ extern "C" {
 #include <time.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 //==============================================
 
