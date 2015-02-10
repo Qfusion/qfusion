@@ -17,5 +17,5 @@ Individual notes:
 
   Don't forget "git add --all".
 
-  Current libRocket was built using sources with 8bpp fonts support from GitHub/Warsow/libRocket,
-  commit f4f4808e5474c9354b8746c5021c5d5bc5e14b61 (Merge branch '8bpp_fonts' by viciious; Jan 21, 2015).
+  Current libRocket was built using sources with 8bpp fonts support from GitHub/Warsow/qfusion,
+  commit f2085356392388ff9a3e794bf7e585dbbbeee856
