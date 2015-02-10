@@ -1,4 +1,4 @@
-APP_ABI := armeabi-v7a
+APP_ABI := armeabi-v7a x86
 APP_CFLAGS := -ffast-math -fno-strict-aliasing -funroll-loops -Werror=return-type
 APP_CPPFLAGS := -fexceptions -frtti
 APP_OPTIM := release
