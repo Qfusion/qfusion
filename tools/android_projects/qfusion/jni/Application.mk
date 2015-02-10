@@ -14,4 +14,5 @@ APP_MODULES := \
   png \
   angelwrap \
   ftlib \
+  irc \
   ref_gl
