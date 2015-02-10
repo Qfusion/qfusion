@@ -677,6 +677,9 @@ bool CL_MM_Login( const char *user, const char *password )
 			Cvar_ForceSet( "cl_mm_user", user );
 	}
 
+	if( user[0] == '\0' )
+		return false;
+
 	// TODO: nicer error announcing
 	if( !password || password[0] == '\0' )
 		password = MM_PasswordRead( user );
