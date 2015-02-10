@@ -1239,6 +1239,7 @@ static void G_VoteMutePassed( callvotedata_t *vote )
 		return;
 
 	ent->r.client->muted |= 1;
+	ent->r.client->level.stats.muted_count++;
 }
 
 // vsay mute
@@ -1253,6 +1254,7 @@ static void G_VoteVMutePassed( callvotedata_t *vote )
 		return;
 
 	ent->r.client->muted |= 2;
+	ent->r.client->level.stats.muted_count++;
 }
 
 /*
