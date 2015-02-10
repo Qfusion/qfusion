@@ -10,7 +10,7 @@ LOCAL_SRC_FILES := \
   android/android_glw.c \
   android/android_qgl.c \
   gameshared/q_math.c \
-  gameshared/q_shared.c\
+  gameshared/q_shared.c \
   qalgo/glob.c \
   qalgo/hash.c \
   qalgo/q_trie.c \

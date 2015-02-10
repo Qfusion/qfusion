@@ -9,7 +9,7 @@ LOCAL_STATIC_LIBRARIES := angelscript
 
 LOCAL_SRC_FILES := \
   gameshared/q_math.c \
-  gameshared/q_shared.c\
+  gameshared/q_shared.c \
   angelwrap/qas_angelwrap.cpp \
   angelwrap/qas_main.cpp \
   angelwrap/qas_precompiled.cpp \
