@@ -11,7 +11,10 @@ APP_MODULES := \
   angelscript \
   freetype \
   jpeg \
+  ogg \
   png \
+  vorbis \
+  \
   angelwrap \
   ftlib \
   irc \
