@@ -134,7 +134,7 @@ static void R_DestroyVolatileAssets( void );
 
 //=======================================================================
 
-#define	GLINF_FOFS(x) (size_t)&(((glextinfo_t *)0)->x)
+#define	GLINF_FOFS(x) offsetof(glextinfo_t,x)
 #define	GLINF_EXMRK() GLINF_FOFS(_extMarker)
 #define	GLINF_FROM(from,ofs) (*((char *)from + ofs))
 
@@ -146,14 +146,14 @@ typedef struct
 
 typedef struct
 {
-	const char * prefix;				// constant pointer to constant string
+	const char * prefix;			// constant pointer to constant string
 	const char * name;
 	const char * cvar_default;
 	bool cvar_readonly;
 	bool mandatory;
 	gl_extension_func_t *funcs;		// constant pointer to array of functions
 	size_t offset;					// offset to respective variable
-	size_t depOffset;					// offset to required pre-initialized variable
+	size_t depOffset;				// offset to required pre-initialized variable
 } gl_extension_t;
 
 #define GL_EXTENSION_FUNC_EXT(name,func) { name, (void ** const)func }

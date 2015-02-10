@@ -290,11 +290,11 @@ extern spawn_temp_t st;
 extern int meansOfDeath;
 
 
-#define	FOFS( x ) (size_t)&( ( (edict_t *)0 )->x )
-#define	STOFS( x ) (size_t)&( ( (spawn_temp_t *)0 )->x )
-#define	LLOFS( x ) (size_t)&( ( (level_locals_t *)0 )->x )
-#define	CLOFS( x ) (size_t)&( ( (gclient_t *)0 )->x )
-#define	AWOFS( x ) (size_t)&( ( (award_info_t *)0 )->x )
+#define	FOFS( x ) offsetof(edict_t,x)
+#define	STOFS( x ) offsetof(spawn_temp_t,x)
+#define	LLOFS( x ) offsetof(level_locals_t,x)
+#define	CLOFS( x ) offsetof(gclient_t,x)
+#define	AWOFS( x ) offsetof(award_info_t,x)
 
 extern cvar_t *password;
 extern cvar_t *g_operator_password;
