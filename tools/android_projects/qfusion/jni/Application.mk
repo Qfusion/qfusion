@@ -16,6 +16,8 @@ APP_MODULES := \
   ogg \
   OpenAL-MOB \
   png \
+  RocketCore \
+  RocketControls \
   theora \
   vorbis \
   \
@@ -27,4 +29,8 @@ APP_MODULES := \
   snd_openal \
   snd_qf \
   \
-  qfusion
+  qfusion \
+  \
+  cgame \
+  game \
+  ui
