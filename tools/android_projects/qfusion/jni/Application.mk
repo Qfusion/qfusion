@@ -9,6 +9,8 @@ NDK_TOOLCHAIN_VERSION := 4.9
 
 APP_MODULES := \
   angelscript \
+  cares \
+  curl \
   freetype \
   jpeg \
   ogg \
@@ -21,4 +23,6 @@ APP_MODULES := \
   irc \
   ref_gl \
   snd_openal \
-  snd_qf
+  snd_qf \
+  \
+  qfusion
