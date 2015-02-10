@@ -12,10 +12,13 @@ APP_MODULES := \
   freetype \
   jpeg \
   ogg \
+  OpenAL-MOB \
   png \
   vorbis \
   \
   angelwrap \
   ftlib \
   irc \
-  ref_gl
+  ref_gl \
+  snd_openal \
+  snd_qf
