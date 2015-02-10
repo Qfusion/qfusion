@@ -20,10 +20,7 @@ License along with this library.
 #define _STEAMLIB_PUBLIC_H_
 
 #include <stdint.h>
-
-#if !defined(_WIN32)
 #include <stddef.h> // For size_t
-#endif
 
 // steamlib_public.h - steam integration subsystem
 
