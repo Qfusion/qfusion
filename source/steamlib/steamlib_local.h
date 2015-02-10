@@ -30,7 +30,7 @@ License along with this library.
 #include "steamlib_public.h"
 #include "steamlib_syscalls.h"
 
-#if defined(__APPLE__)
+#if !defined(_WIN32)
 #include <stddef.h>
 #endif
 

@@ -8,8 +8,8 @@ Individual notes:
 
 1. libRocket. To build libRocket use cmake:
   $ cd libsrcs/libRocket/libRocket/Build/
-  $ cmake -G Xcode -DBUILD_FRAMEWORK=1 -DBUILD_ROCKET_8BPP_FONTS=1 .
-  $ xcodebuild -target Rocket -configuration Release
+  $ cmake -G Xcode -DBUILD_FRAMEWORK=1 -DBUILD_ROCKET_8BPP_FONTS=1 -DCMAKE_FRAMEWORK_PATH=../../../../source/mac/Frameworks/ .
+  $ xcodebuild -target Rocket -configuration Release ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO
 
   After build, you need to substitute old Rocket.framework with new one (from the same directory):
   $ rm -rf ../../../../source/mac/Frameworks/Rocket.framework/
@@ -17,5 +17,5 @@ Individual notes:
 
   Don't forget "git add --all".
 
-  Current libRocket was built using sources with 8bpp fonts support from GitHub/Warsow/libRocket,
-  commit f4f4808e5474c9354b8746c5021c5d5bc5e14b61 (Merge branch '8bpp_fonts' by viciious; Jan 21, 2015).
+  Current libRocket was built using sources with 8bpp fonts support from GitHub/Warsow/qfusion,
+  commit f2085356392388ff9a3e794bf7e585dbbbeee856

@@ -376,6 +376,8 @@ static void VID_RefModule_MemEmptyPool( mempool_t *pool, const char *filename, i
 static bool VID_LoadRefresh( const char *name )
 {
 	static ref_import_t import;
+	size_t file_size;
+	char *file;
 	dllfunc_t funcs[2];
 	GetRefAPI_t GetRefAPI_f;
 
@@ -455,12 +457,18 @@ static bool VID_LoadRefresh( const char *name )
 	import.BufQueue_EnqueueCmd = QBufQueue_EnqueueCmd;
 	import.BufQueue_ReadCmds = QBufQueue_ReadCmds;
 
+	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( name ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
+	file = Mem_TempMalloc( file_size );
+	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "%s_" ARCH LIB_SUFFIX, name );
+
 	// load dynamic library
 	Com_Printf( "Loading refresh module %s... ", name );
 	funcs[0].name = "GetRefAPI";
 	funcs[0].funcPointer = (void **) &GetRefAPI_f;
 	funcs[1].name = NULL;
-	vid_ref_libhandle = Com_LoadLibrary( va( LIB_DIRECTORY "/" LIB_PREFIX "%s_" ARCH LIB_SUFFIX, name ), funcs );
+	vid_ref_libhandle = Com_LoadLibrary( file, funcs );
+
+	Mem_TempFree( file );
 
 	if( vid_ref_libhandle ) {
 		// load succeeded
