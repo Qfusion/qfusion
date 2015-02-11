@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/libsrcs/libcares
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libcares
 include $(CLEAR_VARS)
 LOCAL_MODULE := cares
 

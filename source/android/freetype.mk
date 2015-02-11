@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/libsrcs/libfreetype
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libfreetype
 include $(CLEAR_VARS)
 LOCAL_MODULE := freetype
 

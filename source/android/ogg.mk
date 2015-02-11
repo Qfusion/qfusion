@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/libsrcs/libogg
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libogg
 include $(CLEAR_VARS)
 LOCAL_MODULE := ogg
 

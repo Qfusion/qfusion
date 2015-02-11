@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/libsrcs/libjpeg
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libjpeg
 include $(CLEAR_VARS)
 LOCAL_MODULE := jpeg
 

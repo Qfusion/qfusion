@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/source
+LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := qfusion
 
