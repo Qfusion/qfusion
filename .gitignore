@@ -23,6 +23,9 @@ libsrcs/libRocket/libRocket/Build/obj/
 **/*.xcodeproj
 **/Makefile
 *cmake_install.cmake
+*.sln
+*.vcxproj
+*.vcxproj.filters
 
 # Ignore windows cmake generated files
 **/*.dir/
