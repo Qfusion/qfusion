@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/libsrcs/libRocket/libRocket
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libRocket/libRocket
 include $(CLEAR_VARS)
 LOCAL_MODULE := RocketCore
 

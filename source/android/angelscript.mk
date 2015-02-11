@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/libsrcs/angelscript/sdk/angelscript
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/angelscript/sdk/angelscript
 include $(CLEAR_VARS)
 LOCAL_MODULE := angelscript
 

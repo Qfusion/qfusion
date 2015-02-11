@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/source
+LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := ftlib
 LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
@@ -6,11 +6,11 @@ LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 LOCAL_STATIC_LIBRARIES := freetype
 
 LOCAL_SRC_FILES := \
-  ftlib/ftlib.c \
-  ftlib/ftlib_draw.c \
-  ftlib/ftlib_main.c \
-  ftlib/ftlib_syscalls.c \
-  gameshared/q_math.c \
-  gameshared/q_shared.c
+  ../gameshared/q_math.c \
+  ../gameshared/q_shared.c \
+  ftlib.c \
+  ftlib_draw.c \
+  ftlib_main.c \
+  ftlib_syscalls.c
 
 include $(BUILD_SHARED_LIBRARY)

@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/libsrcs/libcurl
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libcurl
 include $(CLEAR_VARS)
 LOCAL_MODULE := curl
 

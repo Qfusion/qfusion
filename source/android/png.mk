@@ -1,4 +1,4 @@
-LOCAL_PATH := $(call my-dir)/libsrcs/libpng
+LOCAL_PATH := $(QFUSION_PATH)/libsrcs/libpng
 include $(CLEAR_VARS)
 LOCAL_MODULE := png
 
