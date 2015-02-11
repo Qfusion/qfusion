@@ -43,7 +43,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         "../libsrcs/SDL2/include"
     )
 
-    add_definitions(-DUNICODE -D_UNICODE) # Use Unicode Character Set
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
 
     if (NOT MINGW)
