@@ -40,4 +40,4 @@ extern glwstate_t glw_state;
 extern cvar_t *vid_fullscreen;
 extern cvar_t *vid_multiscreen_head;
 
-#endif // __MAC_GLW_H_
+#endif // __SDL_GLW_H_
