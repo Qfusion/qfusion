@@ -50,6 +50,7 @@ public:
 		memset( &entity, 0, sizeof( entity ) );
 		memset( &refdef, 0, sizeof( refdef ) );
 		entity.renderfx = RF_NOSHADOW | RF_FORCENOLOD | RF_MINLIGHT;
+		entity.frame = entity.oldframe = 1;
 		refdef.rdflags = RDF_NOWORLDMODEL | RDF_NOFOVADJUSTMENT;
 		refdef.areabits = 0;
 		refdef.minLight = 0.7;
@@ -94,10 +95,6 @@ public:
 			angles[i] = anglemod( angles[i] + deltatime * anglespeed[i] / 1000.0f );
 
 		AnglesToAxis( angles, entity.axis );
-
-		// TODO: 1 and 39 are the value of cvars ui_playermodel_firstframe and ui_playermodel_lastframe
-		entity.oldframe = entity.frame;
-		entity.frame = 1 + (entity.frame % 39);
 
 		if (AutoRotationCenter)
 		{
