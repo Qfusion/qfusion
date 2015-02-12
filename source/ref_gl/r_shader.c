@@ -2907,3 +2907,30 @@ void R_GetShaderDimensions( const shader_t *shader, int *width, int *height )
 		*height = baseImage->height;
 	}
 }
+
+/*
+* R_AddRawPicPart
+*
+* Adds a new subimage to the specified raw pic.
+* Must not be used to overwrite previously written areas.
+*/
+void R_AddRawPicPart( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
+{
+	image_t *baseImage;
+
+	assert( shader );
+	if( !shader )
+		return;
+
+	assert( shader->type == SHADER_TYPE_2D_RAW );
+	if( shader->type != SHADER_TYPE_2D_RAW )
+		return;
+
+	baseImage = shader->passes[0].images[0];
+
+	assert( ( ( x + width ) <= baseImage->upload_width ) && ( ( y + height ) <= baseImage->upload_height ) );
+	if( ( ( x + width ) > baseImage->upload_width ) || ( ( y + height ) > baseImage->upload_height ) )
+		return;
+
+	R_ReplaceSubImage( baseImage, 0, x, y, &data, width, height );
+}

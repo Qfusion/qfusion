@@ -1,6 +1,6 @@
 /*
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2012 Victor Luchits
+Copyright (C) 2015 Chasseur de bots
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -20,6 +20,43 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "ftlib_local.h"
+
+/*
+* FTLIB_FontForChar
+*
+* Gets the font that should render the specified glyph.
+*/
+static qfontface_t *FTLIB_FontForChar( qfontface_t *font, qwchar num, bool *render ) {
+	qfontface_t *mainfont = font;
+	qglyph_t *glyph;
+
+	while( font ) {
+		// the glyph has already been rendered
+		glyph = FTLIB_GetGlyph( font, num );
+		if( glyph && glyph->shader ) {
+			if( render ) {
+				*render = false;
+			}
+			return font;
+		}
+
+		// a new glyph can be rendered?
+		if( font->f->glyphNeedsRendering( font, mainfont, num ) ) {
+			if( render ) {
+				*render = true;
+			}
+			return font;
+		}
+
+		// try the next font in the fallback chain
+		font = font->fallback;
+	}
+
+	if( render ) {
+		*render = false;
+	}
+	return NULL;
+}
 
 //===============================================================================
 //STRINGS HELPERS
@@ -42,14 +79,13 @@ size_t FTLIB_fontHeight( qfontface_t *font )
 */
 size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 {
-	const char *s = str;
+	const char *s = str, *olds;
 	size_t width = 0;
 	qwchar num, prev_num = 0;
+	qfontface_t *dfont, *prev_dfont = NULL;
+	bool render;
 
-	if( !str )
-		return 0;
-
-	if( !font )
+	if( !str || !font )
 		return 0;
 
 	while( *s && *s != '\n' )
@@ -57,21 +93,34 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 		if( maxlen && (size_t)( s - str ) >= maxlen )  // stop counting at desired len
 			return width;
 
+		olds = s;
+
 		switch( Q_GrabWCharFromColorString( &s, &num, NULL ) )
 		{
 		case GRABCHAR_CHAR:
 			if( num < ' ' )
 				break;
-			if( num < font->minChar || num > font->maxChar )
-				num = FTLIB_REPLACEMENT_GLYPH;
 
-			if( prev_num ) {
-				if( font->hasKerning ) {
-					width += font->getKerning( font, prev_num, num );
-				}
+			dfont = FTLIB_FontForChar( font, num, &render );
+			if( !dfont )
+			{
+				dfont = font;
+				num = FTLIB_REPLACEMENT_GLYPH;
 			}
 
-			width += font->glyphs[num].x_advance;
+			if( render )
+				dfont->f->renderString( dfont, font, olds );
+
+			if( prev_num && ( dfont == prev_dfont ) )
+			{
+				if( dfont->hasKerning )
+					width += dfont->f->getKerning( dfont, prev_num, num );
+			}
+
+			width += FTLIB_GetGlyph( dfont, num )->x_advance;
+
+			prev_num = num;
+			prev_dfont = dfont;
 			break;
 
 		case GRABCHAR_COLOR:
@@ -99,11 +148,10 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 	int gc;
 	int advance = 0;
 	qwchar num, prev_num = 0;
+	qfontface_t *dfont, *prev_dfont = NULL;
+	bool render;
 
-	if( !str )
-		return 0;
-
-	if( !font )
+	if( !str || !font )
 		return 0;
 
 	s = str;
@@ -117,15 +165,23 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 			if( num == '\n' )
 				break;
 			if( num < ' ' )
-				continue;
-			if( num < font->minChar || num > font->maxChar )
-				num = FTLIB_REPLACEMENT_GLYPH;
+				break;
 
-			advance = font->glyphs[num].x_advance;
-			if( prev_num ) {
-				if( font->hasKerning ) {
-					advance += font->getKerning( font, prev_num, num );
-				}
+			dfont = FTLIB_FontForChar( font, num, &render );
+			if( !dfont )
+			{
+				dfont = font;
+				num = FTLIB_REPLACEMENT_GLYPH;
+			}
+
+			if( render )
+				dfont->f->renderString( dfont, font, olds );
+
+			advance = FTLIB_GetGlyph( dfont, num )->x_advance;
+			if( prev_num && ( dfont == prev_dfont ) )
+			{
+				if( dfont->hasKerning )
+					advance += dfont->f->getKerning( dfont, prev_num, num );
 			}
 
 			if( maxwidth && ( ( width + advance ) > maxwidth ) )
@@ -135,6 +191,9 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 			}
 
 			width += advance;
+
+			prev_num = num;
+			prev_dfont = dfont;
 		}
 		else if( gc == GRABCHAR_COLOR )
 			continue;
@@ -161,20 +220,28 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color )
 {
 	qglyph_t *glyph;
+	qfontface_t *dfont;
+	bool render;
 
-	if( !font )
+	if( ( num <= ' ' ) || ( num > 0xffff ) || !font )
 		return;
-	if( y <= -font->height )
+
+	dfont = FTLIB_FontForChar( font, num, &render );
+	if( !dfont )
+	{
+		dfont = font;
+		num = FTLIB_REPLACEMENT_GLYPH;
+	}
+
+	if( y <= -dfont->height )
 		return; // totally off screen
 
-	if( num <= ' ' )
-		return;
-	if( num < font->minChar || num > font->maxChar )
-		num = FTLIB_REPLACEMENT_GLYPH;
+	if( render )
+		dfont->f->renderString( dfont, font, Q_WCharToUtf8Char( num ) );
 
-	glyph = &font->glyphs[num];
-	trap_R_DrawStretchPic( x + glyph->x_offset, y + glyph->y_offset, 
-		glyph->width, font->height,
+	glyph = FTLIB_GetGlyph( dfont, num );
+	trap_R_DrawStretchPic( x + glyph->x_offset, y + dfont->glyphYOffset + glyph->y_offset, 
+		glyph->width, glyph->height,
 		glyph->s1, glyph->t1, glyph->s2, glyph->t2,
 		color, glyph->shader );
 }
@@ -188,28 +255,33 @@ void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t colo
 void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
 {
 	qglyph_t *glyph;
+	qfontface_t *dfont;
+	bool render;
 	int x2, y2;
 	float s1 = 0.0f, t1 = 0.0f, s2 = 1.0f, t2 = 1.0f;
 	float tw, th;
 
-	if( !font || !font->height )
-		return;
-	if( ( xmax <= xmin ) || ( ymax <= ymin ) )
+	if( ( num <= ' ' ) || ( num > 0xffff ) || !font || ( xmax <= xmin ) || ( ymax <= ymin ) )
 		return;
 
-	if( num <= ' ' )
-		return;
-	if( num < font->minChar || num > font->maxChar )
+	dfont = FTLIB_FontForChar( font, num, &render );
+	if( !dfont )
+	{
+		dfont = font;
 		num = FTLIB_REPLACEMENT_GLYPH;
+	}
 
-	glyph = &font->glyphs[num];
-	if( !glyph->width )
+	if( render )
+		dfont->f->renderString( dfont, font, Q_WCharToUtf8Char( num ) );
+
+	glyph = FTLIB_GetGlyph( dfont, num );
+	if( !glyph->width || !glyph->height )
 		return;
 
 	x += glyph->x_offset;
-	y += glyph->y_offset;
+	y += dfont->glyphYOffset + glyph->y_offset;
 	x2 = x + glyph->width;
-	y2 = y + font->height;
+	y2 = y + glyph->height;
 	if( ( x > xmax ) || ( y > ymax ) || ( x2 <= xmin ) || ( y2 <= ymin ) )
 		return;
 
@@ -223,7 +295,7 @@ void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax
 	}
 	if( y < ymin )
 	{
-		t1 = ( ymin - y ) / ( float )font->height;
+		t1 = ( ymin - y ) / ( float )glyph->height;
 		y = ymin;
 	}
 	if( x2 > xmax )
@@ -233,7 +305,7 @@ void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax
 	}
 	if( y2 > ymax )
 	{
-		t2 = 1.0f - ( y2 - ymax ) / ( float )font->height;
+		t2 = 1.0f - ( y2 - ymax ) / ( float )glyph->height;
 		y2 = ymax;
 	}
 
@@ -255,41 +327,49 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 	vec4_t scolor;
 	int colorindex;
 	qwchar num, prev_num = 0;
-	const char *s = str;
+	qfontface_t *dfont, *prev_dfont = NULL;
+	bool render;
+	const char *s = str, *olds;
 	int gc;
 
-	if( !str )
-		return;
-	if( !font )
-		return;
-	if( xmax <= xmin || ymax <= ymin || x > xmax || y > ymax )
+	if( !str || !font || ( xmax <= xmin ) || ( ymax <= ymin ) || ( x > xmax ) || ( y > ymax ) )
 		return;
 
 	Vector4Copy( color, scolor );
 
 	while( 1 )
 	{
+		olds = s;
 		gc = Q_GrabWCharFromColorString( &s, &num, &colorindex );
 		if( gc == GRABCHAR_CHAR )
 		{
 			if( num == '\n' )
 				break;
-			if( num < font->minChar || num > font->maxChar )
-				continue;
 
-			if( prev_num ) {
-				xoffset += font->glyphs[prev_num].x_advance;
-				if( font->hasKerning ) {
-					xoffset += font->getKerning( font, prev_num, num );
-				}
+			dfont = FTLIB_FontForChar( font, num, &render );
+			if( !dfont )
+			{
+				dfont = font;
+				num = FTLIB_REPLACEMENT_GLYPH;
+			}
+
+			if( render )
+				dfont->f->renderString( dfont, font, olds );
+
+			if( prev_num )
+			{
+				xoffset += FTLIB_GetGlyph( prev_dfont, prev_num )->x_advance;
+				if( ( dfont == prev_dfont ) && dfont->hasKerning )
+					xoffset += dfont->f->getKerning( dfont, prev_num, num );
 			}
 
 			if( x + xoffset > xmax )
 				break;
 
-			FTLIB_DrawClampChar( x + xoffset, y, num, xmin, ymin, xmax, ymax, font, scolor );
+			FTLIB_DrawClampChar( x + xoffset, y, num, xmin, ymin, xmax, ymax, dfont, scolor );
 
 			prev_num = num;
+			prev_dfont = dfont;
 		}
 		else if( gc == GRABCHAR_COLOR )
 		{
@@ -314,10 +394,10 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 	const char *s, *olds;
 	int gc, colorindex;
 	qwchar num, prev_num = 0;
+	qfontface_t *dfont, *prev_dfont = NULL;
+	bool render;
 
-	if( !str )
-		return 0;
-	if( !font )
+	if( !str || !font )
 		return 0;
 
 	Vector4Copy( color, scolor );
@@ -332,25 +412,34 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 		{
 			if( num == '\n' )
 				break;
-			if( num < font->minChar || num > font->maxChar )
-				continue;
 
-			if( maxwidth && ( ( xoffset + font->glyphs[num].x_advance ) > maxwidth ) )
+			dfont = FTLIB_FontForChar( font, num, &render );
+			if( !dfont )
+			{
+				dfont = font;
+				num = FTLIB_REPLACEMENT_GLYPH;
+			}
+
+			if( render )
+				dfont->f->renderString( dfont, font, olds );
+
+			if( maxwidth && ( ( xoffset + FTLIB_GetGlyph( dfont, num )->x_advance ) > maxwidth ) )
 			{
 				s = olds;
 				break;
 			}
 
-			if( prev_num ) {
-				xoffset += font->glyphs[prev_num].x_advance;
-				if( font->hasKerning ) {
-					xoffset += font->getKerning( font, prev_num, num );
-				}
+			if( prev_num )
+			{
+				xoffset += FTLIB_GetGlyph( prev_dfont, prev_num )->x_advance;
+				if( ( dfont == prev_dfont ) && dfont->hasKerning )
+					xoffset += dfont->f->getKerning( dfont, prev_num, num );
 			}
 
-			FTLIB_DrawRawChar( x + xoffset, y, num, font, scolor );
+			FTLIB_DrawRawChar( x + xoffset, y, num, dfont, scolor );
 
 			prev_num = num;
+			prev_dfont = dfont;
 		}
 		else if( gc == GRABCHAR_COLOR )
 		{
