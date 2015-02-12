@@ -236,7 +236,7 @@ public:
 			!dynamic_cast< Rocket::Controls::ElementFormControlTextArea * >( input ) )
 			return;
 
-		trap::IN_ShowIME( ( event.GetType() == "click" ) ? true : false );
+		trap::IN_ShowSoftKeyboard( ( event.GetType() == "click" ) ? true : false );
 	}
 };
 

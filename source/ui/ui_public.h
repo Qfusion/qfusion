@@ -130,7 +130,7 @@ typedef struct
 	void ( *Key_SetBinding )( int keynum, const char *binding );
 	bool ( *Key_IsDown )( int keynum );
 
-	void ( *IN_ShowIME )( bool show );
+	void ( *IN_ShowSoftKeyboard )( bool show );
 
 	bool ( *VID_GetModeInfo )( int *width, int *height, bool *wideScreen, int mode );
 	void ( *VID_FlashWindow )( int count );

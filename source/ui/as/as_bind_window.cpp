@@ -318,9 +318,9 @@ public:
 		return UI_Main::Get()->getConnectCount();
 	}
 
-	void showIME( bool show )
+	void showSoftKeyboard( bool show )
 	{
-		trap::IN_ShowIME( show ? true : false );
+		trap::IN_ShowSoftKeyboard( show ? true : false );
 	}
 
 private:
@@ -471,7 +471,7 @@ void BindWindow( ASInterface *as )
 
 		.method( &ASWindow::getConnectCount, "get_connectCount" )
 
-		.method( &ASWindow::showIME, "showIME" );
+		.method( &ASWindow::showSoftKeyboard, "showSoftKeyboard" );
 	;
 }
 
