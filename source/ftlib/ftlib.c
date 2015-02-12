@@ -207,7 +207,6 @@ static void QFT_RenderString( qfontface_t *qfont, qfontface_t *mainqfont, const 
 
 		qftglyph = QFT_GetRenderableGlyph( qfont, mainqfont, num );
 		if( !qftglyph ) {
-			assert( qftglyph->qglyph.shader || !qftglyph->gindex );
 			continue;
 		}
 
