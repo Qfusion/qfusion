@@ -13,5 +13,5 @@ file(GLOB FTLIB_SOURCES
 )
 
 add_library(ftlib SHARED ${FTLIB_SOURCES} ${FTLIB_HEADERS})
-target_link_libraries(ftlib ${FREETYPE_LIBRARIES})
+target_link_libraries(ftlib PRIVATE ${FREETYPE_LIBRARIES})
 qf_set_output_dir(ftlib libs)

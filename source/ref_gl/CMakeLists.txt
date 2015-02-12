@@ -47,5 +47,5 @@ else()
 endif()
 
 add_library(ref_gl SHARED ${REF_GL_HEADERS} ${REF_GL_COMMON_SOURCES} ${REF_GL_PLATFORM_SOURCES})
-target_link_libraries(ref_gl ${JPEG_LIBRARIES} ${PNG_LIBRARIES} ${REF_GL_PLATFORM_LIBRARIES})
+target_link_libraries(ref_gl PRIVATE ${JPEG_LIBRARIES} ${PNG_LIBRARIES} ${REF_GL_PLATFORM_LIBRARIES})
 qf_set_output_dir(ref_gl libs)

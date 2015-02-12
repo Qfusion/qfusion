@@ -16,6 +16,6 @@ file(GLOB GAME_SOURCES
 )
 
 add_library(game SHARED ${GAME_SOURCES} ${GAME_HEADERS})
-target_link_libraries(game ${ANGELSCRIPT_LIBRARY})
+target_link_libraries(game PRIVATE ${ANGELSCRIPT_LIBRARY})
 add_dependencies(game angelwrap)
 qf_set_output_dir(game base)
