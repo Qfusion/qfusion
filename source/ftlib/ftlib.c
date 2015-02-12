@@ -402,7 +402,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 		for( i = 0; i < 96; i++ ) {
 			renderStr[i] = ' ' + i;
 		}
-		renderStr[96] = '\0';
+		renderStr[i] = '\0';
 		QFT_RenderString( qfont, NULL, renderStr );
 	}
 
