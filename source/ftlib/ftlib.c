@@ -343,7 +343,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	bool hasKerning;
 	qftface_t *qttf = NULL;
 	qfontface_t *qfont = NULL;
-	char renderStr[1024];
+	char renderStr[96 + 1];
 
 	ftface = NULL;
 
@@ -398,12 +398,11 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	qttf->imageCurY = qfont->shaderHeight; // create a new shader the next time anything is rendered
 
 	if( !family->fallback ) {
-		// pre-render Latin-1
-		for( i = 32; i <= 255; ++i ) {
-			utf8Len = Q_WCharToUtf8( pRenderStr, i, sizeof( renderStr ) - renderStrLen );
-			pRenderStr += utf8Len;
-			renderStrLen += utf8Len;
+		// pre-render ASCII
+		for( i = 0; i < 96; i++ ) {
+			renderStr[i] = ' ' + i;
 		}
+		renderStr[96] = '\0';
 		QFT_RenderString( qfont, NULL, renderStr );
 	}
 
