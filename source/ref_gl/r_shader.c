@@ -2909,12 +2909,12 @@ void R_GetShaderDimensions( const shader_t *shader, int *width, int *height )
 }
 
 /*
-* R_AddRawPicPart
+* R_ReplaceRawSubPic
 *
 * Adds a new subimage to the specified raw pic.
-* Must not be used to overwrite previously written areas.
+* Must not be used to overwrite previously written areas when doing batched drawing.
 */
-void R_AddRawPicPart( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
+void R_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
 {
 	image_t *baseImage;
 
