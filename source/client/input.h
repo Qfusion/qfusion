@@ -30,6 +30,6 @@ void IN_JoyMove( usercmd_t *cmd, int frametime );
 void IN_Frame( void );
 void IN_Activate( bool active );
 
-void IN_ShowIME( bool show );
+void IN_ShowSoftKeyboard( bool show );
 
 bool IN_ShowUICursor( void );

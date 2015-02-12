@@ -260,8 +260,8 @@ namespace trap
 			return UI_IMPORT.Key_IsDown( keynum );
 		}
 
-		inline void IN_ShowIME( bool show ) {
-			UI_IMPORT.IN_ShowIME( show );
+		inline void IN_ShowSoftKeyboard( bool show ) {
+			UI_IMPORT.IN_ShowSoftKeyboard( show );
 		}
 
 		inline bool VID_GetModeInfo( int *width, int *height, bool *wideScreen, int mode ) {

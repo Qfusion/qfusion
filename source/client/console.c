@@ -172,7 +172,7 @@ void Con_ToggleConsole_f( void )
 		// open console
 		CL_SetOldKeyDest( cls.key_dest );
 		CL_SetKeyDest( key_console );
-		IN_ShowIME( true );
+		IN_ShowSoftKeyboard( true );
 	}
 }
 
@@ -320,7 +320,7 @@ static void Con_MessageMode_f( void )
 	if( cls.state == CA_ACTIVE )
 	{
 		CL_SetKeyDest( key_message );
-		IN_ShowIME( true );
+		IN_ShowSoftKeyboard( true );
 	}
 }
 
@@ -333,7 +333,7 @@ static void Con_MessageMode2_f( void )
 	if( cls.state == CA_ACTIVE )
 	{
 		CL_SetKeyDest( key_message );
-		IN_ShowIME( true );
+		IN_ShowSoftKeyboard( true );
 	}
 }
 
@@ -2075,7 +2075,7 @@ static void Con_TouchUp( int x, int y )
 			else if( ( touch_y - y ) >= ( smallCharHeight * 2 ) )
 				Con_HistoryDown();
 			else
-				IN_ShowIME( true );
+				IN_ShowSoftKeyboard( true );
 		}
 	}
 	else if( cls.key_dest == key_message )
@@ -2083,7 +2083,7 @@ static void Con_TouchUp( int x, int y )
 		int x1, y1, x2, y2;
 		Con_GetMessageArea( &x1, &y1, &x2, &y2 );
 		if( ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) )
-			IN_ShowIME( true );
+			IN_ShowSoftKeyboard( true );
 	}
 
 	touch_x = touch_y = -1;

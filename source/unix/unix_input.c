@@ -740,7 +740,7 @@ void IN_Frame( void )
 	IN_Activate( m_active );
 }
 
-void IN_ShowIME( bool show )
+void IN_ShowSoftKeyboard( bool show )
 {
 }
 

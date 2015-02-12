@@ -348,7 +348,7 @@ void IN_Frame()
 /**
  * Stub for showing an on-screen keyboard.
  */
-void IN_ShowIME( bool show )
+void IN_ShowSoftKeyboard( bool show )
 {
 }
 

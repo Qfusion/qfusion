@@ -1514,9 +1514,9 @@ void IN_JoyMove( usercmd_t *cmd, int frametime )
 }
 
 /*
-* IN_ShowIME
+* IN_ShowSoftKeyboard
 */
-void IN_ShowIME( bool show )
+void IN_ShowSoftKeyboard( bool show )
 {
 }
 

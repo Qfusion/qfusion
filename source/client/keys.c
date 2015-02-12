@@ -804,7 +804,7 @@ void Key_ClearStates( void )
 {
 	int i;
 
-	IN_ShowIME( false );
+	IN_ShowSoftKeyboard( false );
 
 	anykeydown = false;
 
