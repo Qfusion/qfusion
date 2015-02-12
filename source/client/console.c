@@ -1363,7 +1363,7 @@ void Con_CharEvent( qwchar key )
 		break;
 	}
 
-	if( key < 32 || key > 0x1FFFFF )
+	if( key < 32 || key > 0xFFFF )
 		return; // non-printable
 
 	if( key_linepos < MAXCMDLINE-1 )
@@ -1783,7 +1783,7 @@ void Con_MessageCharEvent( qwchar key )
 		return;
 	}
 
-	if( key < 32 || key > 0x1FFFFF )
+	if( key < 32 || key > 0xFFFF )
 		return; // non-printable
 
 	if( chat_linepos < MAXCMDLINE-1 )
