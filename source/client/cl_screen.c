@@ -43,10 +43,6 @@ static bool scr_initialized;    // ready to draw
 
 static int scr_draw_loading;
 
-static bool scr_cjk;
-static int scr_fontSystemLastChar;
-static bool scr_fontSystemLastCharModified;
-
 static cvar_t *scr_consize;
 static cvar_t *scr_conspeed;
 static cvar_t *scr_netgraph;
@@ -58,6 +54,7 @@ static cvar_t *scr_graphshift;
 static cvar_t *scr_forceclear;
 
 static cvar_t *con_fontSystemFamily;
+static cvar_t *con_fontSystemFallbackFamily;
 static cvar_t *con_fontSystemSmallSize;
 static cvar_t *con_fontSystemMediumSize;
 static cvar_t *con_fontSystemBigSize;
@@ -75,8 +72,7 @@ static cvar_t *con_fontSystemBigSize;
 */
 qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size )
 {
-	return FTLIB_RegisterFont( scr_cjk ? DEFAULT_SYSTEM_FONT_FAMILY_FALLBACK : family, 
-		style, size, scr_fontSystemLastChar );
+	return FTLIB_RegisterFont( family, con_fontSystemFallbackFamily->string, style, size );
 }
 
 /*
@@ -84,7 +80,7 @@ qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size 
 */
 qfontface_t *SCR_RegisterSpecialFont( const char *family, int style, unsigned int size )
 {
-	return FTLIB_RegisterFont( family, style, size, scr_fontSystemLastChar );
+	return FTLIB_RegisterFont( family, NULL, style, size );
 }
 
 /*
@@ -142,47 +138,15 @@ static void SCR_RegisterSystemFonts( void )
 
 
 /*
-* SCR_CheckFontLastChar
-*/
-static void SCR_CheckFontLastChar( void )
-{
-	char lang[MAX_STRING_CHARS];
-	char *underscore;
-	int lastChar = 0;
-
-	Q_strncpyz( lang, L10n_GetUserLanguage(), sizeof( lang ) );
-	underscore = strchr( lang, '_' );
-	if( underscore ) {
-		*underscore = '\0';
-	}
-
-	if( !strcmp( lang, "ja" ) || !strcmp( lang, "zh" ) || !strcmp( lang, "ko" ) ) {
-		// CJK_Unified_Ideographs
-		lastChar = 0x9FCC;
-		scr_cjk = true;
-	} else {
-		// cyrillic
-		lastChar = 0x04FF;
-		scr_cjk = false;
-	}
-
-	if( scr_fontSystemLastChar != lastChar ) {
-		scr_fontSystemLastChar = lastChar;
-		scr_fontSystemLastCharModified = true;
-	}
-}
-
-/*
 * SCR_InitFonts
 */
 static void SCR_InitFonts( void )
 {
 	con_fontSystemFamily = Cvar_Get( "con_fontSystemFamily", DEFAULT_SYSTEM_FONT_FAMILY, CVAR_ARCHIVE );
+	con_fontSystemFallbackFamily = Cvar_Get( "con_fontSystemFallbackFamily", DEFAULT_SYSTEM_FONT_FAMILY_FALLBACK, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	con_fontSystemSmallSize = Cvar_Get( "con_fontSystemSmallSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_SMALL_SIZE ), CVAR_ARCHIVE );
 	con_fontSystemMediumSize = Cvar_Get( "con_fontSystemMediumSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_MEDIUM_SIZE ), CVAR_ARCHIVE );
 	con_fontSystemBigSize = Cvar_Get( "con_fontSystemBigSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_BIG_SIZE ), CVAR_ARCHIVE );
-
-	SCR_CheckFontLastChar();
 
 	SCR_RegisterSystemFonts();
 }
@@ -209,20 +173,16 @@ static void SCR_CheckSystemFontsModified( void )
 		return;
 	}
 
-	SCR_CheckFontLastChar();
-
 	if( con_fontSystemFamily->modified 
 		|| con_fontSystemSmallSize->modified 
 		|| con_fontSystemMediumSize->modified 
 		|| con_fontSystemBigSize->modified 
-		|| scr_fontSystemLastCharModified
 		) {
 		SCR_RegisterSystemFonts();
 		con_fontSystemFamily->modified = false;
 		con_fontSystemSmallSize->modified = false;
 		con_fontSystemMediumSize->modified = false;
 		con_fontSystemBigSize->modified = false;
-		scr_fontSystemLastCharModified = false;
 	}
 }
 
