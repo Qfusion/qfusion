@@ -75,9 +75,9 @@ static void CL_FTLibModule_DrawStretchPic( int x, int y, int w, int h, float s1,
 	re.DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
 }
 
-static void CL_FTLibModule_AddRawPicPart( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data )
+static void CL_FTLibModule_ReplaceRawSubPic( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data )
 {
-	re.AddRawPicPart( shader, x, y, width, height, data );
+	re.ReplaceRawSubPic( shader, x, y, width, height, data );
 }
 
 static void CL_FTLibModule_Scissor( int x, int y, int w, int h )
@@ -142,7 +142,7 @@ void FTLIB_LoadLibrary( bool verbose )
 	import.R_RegisterPic = &CL_FTLibModule_RegisterPic;
 	import.R_RegisterRawPic = &CL_FTLibModule_RegisterRawPic;
 	import.R_DrawStretchPic = &CL_FTLibModule_DrawStretchPic;
-	import.R_AddRawPicPart = &CL_FTLibModule_AddRawPicPart;
+	import.R_ReplaceRawSubPic = &CL_FTLibModule_ReplaceRawSubPic;
 	import.R_Scissor = &CL_FTLibModule_Scissor;
 	import.R_GetScissor = &CL_FTLibModule_GetScissor;
 	import.R_ResetScissor = &CL_FTLibModule_ResetScissor;

@@ -186,9 +186,9 @@ static inline void trap_R_DrawStretchPic( int x, int y, int w, int h, float s1, 
 	FTLIB_IMPORT.R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
 }
 
-static inline void trap_R_AddRawPicPart( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data )
+static inline void trap_R_ReplaceRawSubPic( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data )
 {
-	FTLIB_IMPORT.R_AddRawPicPart( shader, x, y, width, height, data );
+	FTLIB_IMPORT.R_ReplaceRawSubPic( shader, x, y, width, height, data );
 }
 
 static inline void trap_R_Scissor( int x, int y, int w, int h )

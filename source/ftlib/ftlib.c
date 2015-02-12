@@ -129,7 +129,7 @@ static void QFT_UploadRenderedGlyphs( uint8_t *pic, struct shader_s *shader, int
 	for( i = 0; i < height; i++, src += FTLIB_FONT_IMAGE_WIDTH, dest += width ) {
 		memmove( dest, src, width );
 	}
-	trap_R_AddRawPicPart( shader, x, y, width, height, pic );
+	trap_R_ReplaceRawSubPic( shader, x, y, width, height, pic );
 }
 
 /*
@@ -343,8 +343,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 	bool hasKerning;
 	qftface_t *qttf = NULL;
 	qfontface_t *qfont = NULL;
-	char renderStr[1024], *pRenderStr = renderStr;
-	size_t renderStrLen = 0, utf8Len;
+	char renderStr[1024];
 
 	ftface = NULL;
 

@@ -158,7 +158,7 @@ typedef struct
 	void		( *RemapShader )( const char *from, const char *to, int timeOffset );
 	void		( *GetShaderDimensions )( const struct shader_s *shader, int *width, int *height );
 
-	void		( *AddRawPicPart )( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data );
+	void		( *ReplaceRawSubPic )( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data );
 
 	void		( *ClearScene )( void );
 	void		( *AddEntityToScene )( const entity_t *ent );
