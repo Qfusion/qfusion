@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 10
+#define REF_API_VERSION 11
 
 struct mempool_s;
 struct cinematics_s;
@@ -157,6 +157,8 @@ typedef struct
 
 	void		( *RemapShader )( const char *from, const char *to, int timeOffset );
 	void		( *GetShaderDimensions )( const struct shader_s *shader, int *width, int *height );
+
+	void		( *ReplaceRawSubPic )( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data );
 
 	void		( *ClearScene )( void );
 	void		( *AddEntityToScene )( const entity_t *ent );

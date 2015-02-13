@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012 Victor Luchits
+Copyright (C) 2015 Chasseur de bots
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -36,31 +36,49 @@ extern struct mempool_s *ftlibPool;
 typedef struct shader_s shader_t;
 
 #define FTLIB_Alloc( pool, size ) trap_MemAlloc( pool, size, __FILE__, __LINE__ )
+#define FTLIB_Realloc( data, size ) trap_MemRealloc( data, size, __FILE__, __LINE__ )
 #define FTLIB_Free( mem ) trap_MemFree( mem, __FILE__, __LINE__ )
 #define FTLIB_AllocPool( name ) trap_MemAllocPool( name, __FILE__, __LINE__ )
 #define FTLIB_FreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
 #define FTLIB_EmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
 
-#define FTLIB_REPLACEMENT_GLYPH		127
+#define FTLIB_REPLACEMENT_GLYPH			'?'
 
-#define FTLIB_FONT_IMAGE_WIDTH		1024
-#define FTLIB_MAX_FONT_IMAGE_HEIGHT	1024
-
-#define FTLIB_MAX_FONT_FAMILIES		64
-#define FTLIB_MAX_FONT_FACES		128
-
-#define FTLIB_FIRST_FONT_CHAR		32
-#define FTLIB_LAST_FONT_CHAR		0x9FCC
-#define FTLIB_MAX_FONT_CHARS		( FTLIB_LAST_FONT_CHAR - FTLIB_FIRST_FONT_CHAR + 1 )
+#define FTLIB_FONT_IMAGE_WIDTH			1024
+#define FTLIB_FONT_IMAGE_HEIGHT_SMALL	128
+#define FTLIB_FONT_IMAGE_HEIGHT_MEDIUM	256
+#define FTLIB_FONT_IMAGE_HEIGHT_LARGE	512
 
 typedef struct
 {
-	unsigned short width;
+	unsigned short loaded;
+	unsigned short width, height;
 	unsigned short x_advance;
 	short x_offset, y_offset;
-	struct shader_s	*shader;
+	struct shader_s *shader;
 	float s1, t1, s2, t2;
 } qglyph_t;
+
+typedef struct qfontface_funcs_s
+{
+	// allocates an array of glyphs
+	void *( *allocGlyphs )( struct qfontface_s *qfont, qwchar first, unsigned int count );
+
+	// initializes the newly allocated glyph
+	void ( *loadGlyph )( struct qfontface_s *qfont, qwchar num );
+
+	// gets the glyph at the offset in the array
+	qglyph_t *( *getGlyph )( struct qfontface_s *qfont, void *glyphArray, unsigned int numInArray, qwchar num );
+
+	// whether the glyph can and needs to be rendered in the font
+	bool ( *glyphNeedsRendering )( struct qfontface_s *qfont, struct qfontface_s *mainqfont, qwchar num );
+
+	// renders the glyphs for a UTF-8 string
+	void ( *renderString )( struct qfontface_s *qfont, struct qfontface_s *mainqfont, const char *str );
+
+	// offsets between adjacent characters
+	int ( *getKerning )( struct qfontface_s *qfont, qwchar char1, qwchar char2 );
+} qfontface_funcs_t;
 
 typedef struct qfontface_s
 {
@@ -69,47 +87,54 @@ typedef struct qfontface_s
 	int style;
 	unsigned int size;
 	int height;
+	int glyphYOffset;
 
 	// a font may not fit into single image
 	unsigned int numShaders;
 	shader_t **shaders;
-	char **shaderNames;
-
-	// range of characters contained within the font
-	unsigned int minChar, maxChar;
-
-	// registration char
-	unsigned int lastChar;
+	unsigned int shaderHeight;
 
 	// glyphs
-	unsigned int numGlyphs;
-	qglyph_t *glyphs;
+	size_t glyphSize;
+	void *glyphs[256]; // 256 dynamically allocated blocks of 256 glyphs, each is a { qglyph_t; userdata } struct.
 
 	bool hasKerning;
 
-	// offsets between adjacent characters
-	short ( *getKerning )( struct qfontface_s *, unsigned int char1, unsigned int char2 );
+	const qfontface_funcs_t *f;
+
+	struct qfontface_s *fallback;
+
+	struct qfontface_s *next;
 
 	void *facedata;
 } qfontface_t;
+
+typedef struct qfontfamily_funcs_s
+{
+	// method which the loader needs to call to load specific font face
+	qfontface_t *( *loadFace )( struct qfontfamily_s *family, unsigned int size, const void *data, size_t dataSize );
+
+	// method which the loader needs to call to unload font face
+	void ( *unloadFace )( qfontface_t * );
+} qfontfamily_funcs_t;
 
 typedef struct qfontfamily_s
 {
 	char *name;
 
+	bool fallback;
+
 	unsigned int numFaces;
 	int style;
 
-	void *privatep;
+	void *privatep; // must be allocated with FTLIB_Alloc
 	size_t privateSize;
 
-	// method which the loader needs to call to load specific font face
-	qfontface_t *( *loadFace )( struct qfontfamily_s *, unsigned int , unsigned int, const void *, size_t );
+	const qfontfamily_funcs_t *f;
 
-	// method which the loader needs to call to unload font face
-	void ( *unloadFace )( qfontface_t * );
+	qfontface_t *faces;
 
-	qfontface_t *faces[FTLIB_MAX_FONT_FACES];
+	struct qfontfamily_s *next;
 } qfontfamily_t;
 
 void Com_DPrintf( const char *format, ... );
@@ -124,11 +149,14 @@ char *FTLIB_CopyString( const char *in );
 void FTLIB_InitSubsystems( bool verbose );
 void FTLIB_ShutdownSubsystems( bool verbose );
 void FTLIB_PrecacheFonts( bool verbose );
-qfontface_t *FTLIB_RegisterFont( const char *family, int style, unsigned int size, unsigned int lastChar );
+qfontface_t *FTLIB_RegisterFont( const char *family, const char *fallback, int style, unsigned int size );
 void FTLIB_TouchFont( qfontface_t *qfont );
 void FTLIB_TouchAllFonts( void );
 void FTLIB_FreeFonts( bool verbose );
 void FTLIB_PrintFontList( void );
+qglyph_t *FTLIB_LoadGlyph( qfontface_t *font, qwchar num );
+qglyph_t *FTLIB_GetGlyph( qfontface_t *font, qwchar num );
+const char *FTLIB_FontShaderName( qfontface_t *qfont, unsigned int shaderNum );
 
 // ftlib_draw.c
 size_t FTLIB_fontHeight( qfontface_t *font );

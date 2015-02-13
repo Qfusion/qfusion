@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void FTLIB_LoadLibrary( bool verbose );
 void FTLIB_UnloadLibrary( bool verbose );
-struct qfontface_s *FTLIB_RegisterFont( const char *family, int style, unsigned int size, unsigned int lastChar );
+struct qfontface_s *FTLIB_RegisterFont( const char *family, const char *fallback, int style, unsigned int size );
 void FTLIB_TouchFont( struct qfontface_s *qfont );
 void FTLIB_TouchAllFonts( void );
 void FTLIB_PrecacheFonts( bool verbose );
