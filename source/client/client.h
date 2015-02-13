@@ -572,6 +572,7 @@ void SCR_DebugGraph( float value, float r, float g, float b );
 void SCR_RunConsole( int msec );
 void SCR_RegisterConsoleMedia( void );
 void SCR_ShutDownConsoleMedia( void );
+void SCR_ResetSystemFontSmallSize( void );
 void SCR_ChangeSystemFontSmallSize( int ch );
 qfontface_t *SCR_RegisterFont( const char *family, int style, unsigned int size );
 qfontface_t *SCR_RegisterSpecialFont( const char *family, int style, unsigned int size );

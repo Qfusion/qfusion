@@ -361,6 +361,14 @@ void Con_CheckResize( void )
 }
 
 /*
+* Con_ResetFontSize
+*/
+void Con_ResetFontSize()
+{
+	SCR_ResetSystemFontSmallSize();
+}
+
+/*
 * Con_ChangeFontSize
 */
 void Con_ChangeFontSize( int ch )
@@ -1702,6 +1710,15 @@ void Con_KeyDown( int key )
 		else
 			key_linepos = (unsigned int)strlen( key_lines[edit_line] );
 		return;
+	}
+
+	if( key == '0' )
+	{
+		if( ctrl_is_down )
+		{
+			Con_ResetFontSize();
+			return;
+		}
 	}
 
 	// key is a normal printable key normal which wil be HANDLE later in response to WM_CHAR event
