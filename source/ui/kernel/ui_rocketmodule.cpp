@@ -113,7 +113,7 @@ void RocketModule::mouseMove( int mousex, int mousey )
 	context->ProcessMouseMove( mousex, mousey, keyconv.getModifiers() );
 }
 
-void RocketModule::textInput( qwchar c )
+void RocketModule::textInput( wchar_t c )
 {
 	if( c >= ' ' )
 		context->ProcessTextInput( c );

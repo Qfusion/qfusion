@@ -106,7 +106,7 @@ namespace WSWUI
 		}
 	}
 
-	void CharEvent( qwchar key )
+	void CharEvent( wchar_t key )
 	{
 		// Check if the character is printable.
 		// Emitting textinput events for non-printable chars might cause 

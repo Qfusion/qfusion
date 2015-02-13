@@ -1263,7 +1263,7 @@ static void Con_Key_Paste( bool primary )
 * 
 * Interactive line editing and console scrollback only for (Unicode) chars
 */
-void Con_CharEvent( qwchar key )
+void Con_CharEvent( wchar_t key )
 {
 	if( !con_initialized )
 		return;
@@ -1757,7 +1757,7 @@ static void Con_MessageKeyPaste( bool primary )
 /*
 * Con_MessageCharEvent
 */
-void Con_MessageCharEvent( qwchar key )
+void Con_MessageCharEvent( wchar_t key )
 {
 	if( !con_initialized )
 		return;

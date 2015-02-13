@@ -316,7 +316,7 @@ size_t FTLIB_StrlenForWidth( const char *str, struct qfontface_s *font, size_t m
 /*
 * FTLIB_DrawRawChar
 */
-void FTLIB_DrawRawChar( int x, int y, qwchar num, struct qfontface_s *font, vec4_t color )
+void FTLIB_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color )
 {
 	if( ftlib_export ) {
 		ftlib_export->DrawRawChar( x, y, num, font, color );
@@ -326,7 +326,7 @@ void FTLIB_DrawRawChar( int x, int y, qwchar num, struct qfontface_s *font, vec4
 /*
 * FTLIB_DrawClampChar
 */
-void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color )
+void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color )
 {
 	if( ftlib_export ) {
 		ftlib_export->DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, color );

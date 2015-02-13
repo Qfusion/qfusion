@@ -46,9 +46,9 @@ void Con_SetMessageModeCvar( void );
 void Con_ChangeFontSize( int ch );
 
 void Con_KeyDown( int key );
-void Con_CharEvent( qwchar key );
+void Con_CharEvent( wchar_t key );
 void Con_MessageKeyDown( int key );
-void Con_MessageCharEvent( qwchar key );
+void Con_MessageCharEvent( wchar_t key );
 void Con_TouchEvent( bool down, int x, int y );
 
 int Q_ColorCharCount( const char *s, int byteofs );

@@ -666,9 +666,9 @@ int Q_GrabCharFromColorString( const char **pstr, char *c, int *colorindex)
 
 // Like Q_GrabCharFromColorString, but reads whole UTF-8 sequences
 // and returns wide chars
-int Q_GrabWCharFromColorString( const char **pstr, qwchar *wc, int *colorindex )
+int Q_GrabWCharFromColorString( const char **pstr, wchar_t *wc, int *colorindex )
 {
-	qwchar num;
+	wchar_t num;
 
 	num = Q_GrabWCharFromUtf8String( pstr );
 	switch( num )
@@ -1202,9 +1202,9 @@ char *Q_trim( char *s )
 /*
 * Q_WCharUtf8Length
 *
-* Returns the length of qwchar encoded as UTF-8.
+* Returns the length of wchar_t encoded as UTF-8.
 */
-size_t Q_WCharUtf8Length( qwchar wc )
+size_t Q_WCharUtf8Length( wchar_t wc )
 {
 	if( !wc )
 		return 0;
@@ -1220,9 +1220,9 @@ size_t Q_WCharUtf8Length( qwchar wc )
 /*
 * Q_WCharToUtf8
 *
-* Converts qwchar to UTF-8 and returns the length of the written sequence.
+* Converts wchar_t to UTF-8 and returns the length of the written sequence.
 */
-size_t Q_WCharToUtf8( char *dest, qwchar wc, size_t bufsize )
+size_t Q_WCharToUtf8( char *dest, wchar_t wc, size_t bufsize )
 {
 	size_t ret = 0;
 
@@ -1275,9 +1275,9 @@ size_t Q_WCharToUtf8( char *dest, qwchar wc, size_t bufsize )
 /*
 * Q_WCharToUtf8Char
 *
-* Converts qwchar to UTF-8 using a temporary buffer.
+* Converts wchar_t to UTF-8 using a temporary buffer.
 */
-char *Q_WCharToUtf8Char( qwchar wc )
+char *Q_WCharToUtf8Char( wchar_t wc )
 {
 	static char buf[5];	// longest valid utf-8 sequence is 4 bytes
 	Q_WCharToUtf8( buf, wc, sizeof( buf ) );
@@ -1313,10 +1313,10 @@ int Q_Utf8SyncPos( const char *str, int pos, int dir )
 
 // returns a wide char, advances (*pstr) to next char (unless at end of string)
 // only works for 2-octet sequences (latin and cyrillic chars will work)
-qwchar Q_GrabWCharFromUtf8String (const char **pstr)
+wchar_t Q_GrabWCharFromUtf8String (const char **pstr)
 {
 	int part, i;
-	qwchar val;
+	wchar_t val;
 	const char *src = *pstr;
 
 	if( !*src )

@@ -411,7 +411,7 @@ static void CG_DrawCrosshairChar( int x, int y, int size, int num, vec_t *color 
 		font = trap_SCR_RegisterSpecialFont( cg_crosshair_font->string, QFONT_STYLE_NONE, size );
 	}
 
-	qwchar blackChar, colorChar;
+	wchar_t blackChar, colorChar;
 	if( num )
 	{
 		blackChar = 'A' - 1 + num;

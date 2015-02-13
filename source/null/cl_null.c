@@ -120,7 +120,7 @@ void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int
 {
 }
 
-void SCR_DrawRawChar( int x, int y, qwchar num, struct qfontface_s *font, vec4_t color )
+void SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color )
 {
 }
 

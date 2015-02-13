@@ -486,7 +486,7 @@ void CL_UIModule_Keyup( int key )
 /*
 * CL_UIModule_CharEvent
 */
-void CL_UIModule_CharEvent( qwchar key )
+void CL_UIModule_CharEvent( wchar_t key )
 {
 	if( uie )
 		uie->CharEvent( key );

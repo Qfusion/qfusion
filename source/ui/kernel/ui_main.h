@@ -70,7 +70,7 @@ public:
 	void addToServerList( const char *adr, const char *info );
 
 	void mouseMove( int x, int y, bool absolute );
-	void textInput( qwchar c );
+	void textInput( wchar_t c );
 	void keyEvent( int key, bool pressed );
 
 	// Commands (these could be private)

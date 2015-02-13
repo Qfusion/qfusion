@@ -65,16 +65,16 @@ typedef struct
 typedef struct qfontface_funcs_s
 {
 	// allocates an array of glyphs
-	void *( *allocGlyphs )( struct qfontface_s *qfont, qwchar first, unsigned int count );
+	void *( *allocGlyphs )( struct qfontface_s *qfont, wchar_t first, unsigned int count );
 
 	// gets the glyph at the offset in the array, or NULL if it's missing in the font
-	qglyph_t *( *getGlyph )( struct qfontface_s *qfont, void *glyphArray, unsigned int numInArray, qwchar num );
+	qglyph_t *( *getGlyph )( struct qfontface_s *qfont, void *glyphArray, unsigned int numInArray, wchar_t num );
 
 	// renders the glyphs for a UTF-8 string
 	void ( *renderString )( struct qfontface_s *qfont, const char *str );
 
 	// offsets between adjacent characters
-	int ( *getKerning )( struct qfontface_s *qfont, qwchar char1, qwchar char2 );
+	int ( *getKerning )( struct qfontface_s *qfont, wchar_t char1, wchar_t char2 );
 
 	// sets the fallback font family for the font
 	void ( *setFallback )( struct qfontface_s *qfont, struct qfontfamily_s *qfamily );
@@ -154,15 +154,15 @@ void FTLIB_TouchFont( qfontface_t *qfont );
 void FTLIB_TouchAllFonts( void );
 void FTLIB_FreeFonts( bool verbose );
 void FTLIB_PrintFontList( void );
-qglyph_t *FTLIB_GetGlyph( qfontface_t *font, qwchar num );
+qglyph_t *FTLIB_GetGlyph( qfontface_t *font, wchar_t num );
 const char *FTLIB_FontShaderName( qfontface_t *qfont, unsigned int shaderNum );
 
 // ftlib_draw.c
 size_t FTLIB_fontHeight( qfontface_t *font );
 size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen );
 size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth );
-void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
-void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color );
+void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
+void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color );
 void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color );
 

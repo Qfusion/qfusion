@@ -226,11 +226,11 @@ const char *COM_RemoveColorTokensExt( const char *str, bool draw );
 int COM_SanitizeColorString (const char *str, char *buf, int bufsize, int maxprintablechars, int startcolor);
 const char *Q_ColorStringTerminator( const char *str, int finalcolor );
 
-size_t Q_WCharUtf8Length( qwchar wc );
-size_t Q_WCharToUtf8( char *dest, qwchar wc, size_t bufsize );
-char *Q_WCharToUtf8Char( qwchar wc );
-qwchar Q_GrabWCharFromUtf8String (const char **pstr);
-int Q_GrabWCharFromColorString( const char **pstr, qwchar *wc, int *colorindex );
+size_t Q_WCharUtf8Length( wchar_t wc );
+size_t Q_WCharToUtf8( char *dest, wchar_t wc, size_t bufsize );
+char *Q_WCharToUtf8Char( wchar_t wc );
+wchar_t Q_GrabWCharFromUtf8String (const char **pstr);
+int Q_GrabWCharFromColorString( const char **pstr, wchar_t *wc, int *colorindex );
 #define UTF8SYNC_LEFT 0
 #define UTF8SYNC_RIGHT 1
 int Q_Utf8SyncPos( const char *str, int pos, int dir );

@@ -251,12 +251,12 @@ size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth )
 //STRINGS DRAWING
 //===============================================================================
 
-void SCR_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color )
+void SCR_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color )
 {
 	FTLIB_DrawRawChar( x, y, num, font, color );
 }
 
-void SCR_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
+void SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
 {
 	FTLIB_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, color );
 }
