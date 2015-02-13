@@ -2,6 +2,7 @@ project(irc)
 
 file(GLOB IRC_HEADERS
     "*.h"
+	"../gameshared/q_*.h"
 )
 
 file(GLOB IRC_SOURCES

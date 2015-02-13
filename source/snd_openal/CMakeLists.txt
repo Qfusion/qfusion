@@ -8,13 +8,13 @@ endif()
 
 file(GLOB SND_OPENAL_HEADERS
     "*.h"
+	"../gameshared/q_*.h"
 )
 
 file(GLOB SND_OPENAL_SOURCES
     "*.c"
     "../snd_common/*.c"
     "../gameshared/q_*.c"
-    "../qalgo/*.c"
 )
 
 add_library(snd_openal SHARED ${SND_OPENAL_HEADERS} ${SND_OPENAL_SOURCES})

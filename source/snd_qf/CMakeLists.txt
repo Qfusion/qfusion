@@ -10,13 +10,13 @@ endif()
 
 file(GLOB SND_QF_HEADERS
     "*.h"
+	"../gameshared/q_*.h"
 )
 
 file(GLOB SND_QF_SOURCES
     "*.c"
     "../snd_common/*.c"
     "../gameshared/q_*.c"
-    "../qalgo/*.c"
 )
 
 if (USE_SDL2)

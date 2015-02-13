@@ -2,6 +2,7 @@ project(steamlib)
 
 file(GLOB STEAMLIB_HEADERS
     "*.h"
+	"../gameshared/*.h"
 )
 
 file(GLOB STEAMLIB_SOURCES

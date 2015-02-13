@@ -4,6 +4,10 @@ include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
 
 file(GLOB SERVER_HEADERS
     "*.h"
+	"../gameshared/q_*.h"
+	"../qcommon/*.h"
+	"../qalgo/*.h"
+	"../matchmaker/*.h"
 )
 
 file(GLOB SERVER_SOURCES

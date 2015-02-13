@@ -8,6 +8,9 @@ file(GLOB UI_HEADERS
     "widgets/*.h"
     "decorators/*.h"
     "parsers/*.h"
+	"formatters/*.h"
+	"../gameshared/q_*.h"
+	"../qalgo/*.h"
 )
 
 file(GLOB UI_SOURCES
@@ -19,7 +22,7 @@ file(GLOB UI_SOURCES
     "decorators/*.cpp"
     "parsers/*.cpp"
     "../gameshared/q_*.c"
-    "../qalgo/*.c"
+	"../qalgo/*.c"
 )
 
 include_directories(${ANGELSCRIPT_INCLUDE_DIR} ${LIBROCKET_INCLUDE_DIR})

@@ -8,6 +8,12 @@ endif()
 
 file(GLOB REF_GL_HEADERS
     "*.h"
+	"../gameshared/q_*.h"
+	"../qcommon/bsp.h"
+	"../qcommon/patch.h"
+	"../qcommon/iqm.h"
+	"../qcommon/config.h"
+	"../qalgo/*.h"
 )
 
 file(GLOB REF_GL_COMMON_SOURCES
