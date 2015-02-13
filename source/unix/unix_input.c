@@ -461,9 +461,9 @@ static void handle_key(XGenericEventCookie *cookie)
 	if( down )
 	{
 		// Use shift_level for chat and console input
-		qwchar wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_level));
+		wchar_t wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_level));
 		if( wc == -1 && key > K_NUMLOCK && key <= KP_EQUAL )
-			wc = ( qwchar )key;
+			wc = ( wchar_t )key;
 
 		// Convert ctrl-c / ctrl-v combinations to the expected events
 		if( Key_IsDown(K_LCTRL) || Key_IsDown(K_RCTRL) )
