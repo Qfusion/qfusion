@@ -72,9 +72,9 @@ static void mouse_wheel_event( SDL_MouseWheelEvent *event )
 	Key_Event( key, false, sys_msg_time );
 }
 
-static qwchar TranslateSDLScancode(SDL_Scancode scancode)
+static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 {
-	qwchar charkey;
+	wchar_t charkey;
 	
 	switch(scancode)
 	{
@@ -170,7 +170,7 @@ static qwchar TranslateSDLScancode(SDL_Scancode scancode)
  */
 static void key_event( const SDL_KeyboardEvent *event, const bool state )
 {
-	qwchar charkey = TranslateSDLScancode( event->keysym.scancode );
+	wchar_t charkey = TranslateSDLScancode( event->keysym.scancode );
 
 	if( charkey >= 0 && charkey <= 255 ) {
 		Key_Event( charkey, state, Sys_Milliseconds() );
@@ -227,7 +227,7 @@ static void HandleEvents( void )
 
 				wtext = (Uint16 *)SDL_iconv_string( UCS_2_INTERNAL, "UTF-8", event.text.text, SDL_strlen( event.text.text ) + 1 );
 				if( wtext ) {
-					qwchar charkey = wtext[0];
+					wchar_t charkey = wtext[0];
 					Key_CharEvent( charkey, charkey );
 					SDL_free( wtext );
 				}
