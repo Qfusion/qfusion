@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // ftlib_public.h - font provider subsystem
 
-#define	FTLIB_API_VERSION			4
+#define	FTLIB_API_VERSION			5
 
 //===============================================================
 
@@ -85,6 +85,7 @@ typedef struct
 	struct shader_s *( *R_RegisterPic )( const char *name );
 	struct shader_s * ( *R_RegisterRawPic )( const char *name, int width, int height, uint8_t *data, int samples );
 	void ( *R_DrawStretchPic )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
+	void ( *R_ReplaceRawSubPic )( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data );
 	void ( *R_Scissor )( int x, int y, int w, int h );
 	void ( *R_GetScissor )( int *x, int *y, int *w, int *h );
 	void ( *R_ResetScissor )( void );
@@ -92,6 +93,7 @@ typedef struct
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
 	void *( *Mem_Alloc )( struct mempool_s *pool, size_t size, const char *filename, int fileline );
+	void *( *Mem_Realloc )( void *data, size_t size, const char *filename, int fileline );
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
@@ -114,7 +116,7 @@ typedef struct
 
 	// core functions
 	void ( *PrecacheFonts )( bool verbose );
-	struct qfontface_s *( *RegisterFont )( const char *family, int style, unsigned int size, unsigned int lastChar );
+	struct qfontface_s *( *RegisterFont )( const char *family, const char *fallback, int style, unsigned int size );
 	void ( *TouchFont )( struct qfontface_s *qfont );
 	void ( *TouchAllFonts )( void );
 	void ( *FreeFonts )( bool verbose );

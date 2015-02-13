@@ -75,6 +75,11 @@ static void CL_FTLibModule_DrawStretchPic( int x, int y, int w, int h, float s1,
 	re.DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
 }
 
+static void CL_FTLibModule_ReplaceRawSubPic( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data )
+{
+	re.ReplaceRawSubPic( shader, x, y, width, height, data );
+}
+
 static void CL_FTLibModule_Scissor( int x, int y, int w, int h )
 {
 	re.Scissor( x, y, w, h );
@@ -137,6 +142,7 @@ void FTLIB_LoadLibrary( bool verbose )
 	import.R_RegisterPic = &CL_FTLibModule_RegisterPic;
 	import.R_RegisterRawPic = &CL_FTLibModule_RegisterRawPic;
 	import.R_DrawStretchPic = &CL_FTLibModule_DrawStretchPic;
+	import.R_ReplaceRawSubPic = &CL_FTLibModule_ReplaceRawSubPic;
 	import.R_Scissor = &CL_FTLibModule_Scissor;
 	import.R_GetScissor = &CL_FTLibModule_GetScissor;
 	import.R_ResetScissor = &CL_FTLibModule_ResetScissor;
@@ -146,6 +152,7 @@ void FTLIB_LoadLibrary( bool verbose )
 
 	import.Mem_AllocPool = &CL_FTLibModule_MemAllocPool;
 	import.Mem_Alloc = &CL_FTLibModule_MemAlloc;
+	import.Mem_Realloc = &_Mem_Realloc;
 	import.Mem_Free = &CL_FTLibModule_MemFree;
 	import.Mem_FreePool = &CL_FTLibModule_MemFreePool;
 	import.Mem_EmptyPool = &CL_FTLibModule_MemEmptyPool;
@@ -235,9 +242,9 @@ void FTLIB_UnloadLibrary( bool verbose )
 /*
 * FTLIB_RegisterFont
 */
-struct qfontface_s *FTLIB_RegisterFont( const char *family, int style, unsigned int size, unsigned int lastChar )
+struct qfontface_s *FTLIB_RegisterFont( const char *family, const char *fallback, int style, unsigned int size )
 {
-	return ftlib_export ? ftlib_export->RegisterFont( family, style, size, lastChar ) : NULL;
+	return ftlib_export ? ftlib_export->RegisterFont( family, fallback, style, size ) : NULL;
 }
 
 /*

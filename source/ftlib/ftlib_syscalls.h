@@ -186,6 +186,11 @@ static inline void trap_R_DrawStretchPic( int x, int y, int w, int h, float s1, 
 	FTLIB_IMPORT.R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
 }
 
+static inline void trap_R_ReplaceRawSubPic( struct shader_s *shader, int x, int y, int width, int height, uint8_t *data )
+{
+	FTLIB_IMPORT.R_ReplaceRawSubPic( shader, x, y, width, height, data );
+}
+
 static inline void trap_R_Scissor( int x, int y, int w, int h )
 {
 	FTLIB_IMPORT.R_Scissor( x, y, w, h );
@@ -210,6 +215,11 @@ static inline struct mempool_s *trap_MemAllocPool( const char *name, const char 
 static inline void *trap_MemAlloc( struct mempool_s *pool, size_t size, const char *filename, int fileline )
 {
 	return FTLIB_IMPORT.Mem_Alloc( pool, size, filename, fileline );
+}
+
+static inline void *trap_MemRealloc( void *data, size_t size, const char *filename, int fileline )
+{
+	return FTLIB_IMPORT.Mem_Realloc( data, size, filename, fileline );
 }
 
 static inline void trap_MemFree( void *data, const char *filename, int fileline )
