@@ -4,12 +4,12 @@ include_directories(${OGG_INCLUDE_DIR} ${VORBIS_INCLUDE_DIR} ${THEORA_INCLUDE_DI
 
 file(GLOB CIN_HEADERS
     "*.h"
+	"../gameshared/q_*.h"
 )
 
 file(GLOB CIN_SOURCES
     "*.c"
     "../gameshared/q_*.c"
-    "../qalgo/*.c"
 )
 
 add_library(cin SHARED ${CIN_SOURCES} ${CIN_HEADERS})

@@ -2,12 +2,13 @@ project (cgame)
 
 file(GLOB CGAME_HEADES
     "*.h"
+	"../gameshared/*.h"
+
 )
 
 file(GLOB CGAME_SOURCES
     "*.cpp"
     "../gameshared/*.c"
-    "../qalgo/*.c"
 )
 
 add_library(cgame SHARED ${CGAME_SOURCES} ${CGAME_HEADES})

@@ -8,6 +8,10 @@ endif()
 
 file(GLOB CLIENT_HEADERS
     "*.h"
+	"../gameshared/q_*.h"
+	"../qcommon/*.h"
+	"../qalgo/*.h"
+	"../matchmaker/*.h"
 )
 
 file(GLOB CLIENT_COMMON_SOURCES
