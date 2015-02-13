@@ -187,6 +187,18 @@ static void SCR_CheckSystemFontsModified( void )
 }
 
 /*
+* SCR_ResetSystemFontSmallSize
+*/
+void SCR_ResetSystemFontSmallSize( void )
+{
+	if( !con_fontSystemSmallSize ) {
+		return;
+	}
+	Cvar_ForceSet( con_fontSystemSmallSize->name, con_fontSystemSmallSize->dvalue );
+	SCR_CheckSystemFontsModified();
+}
+
+/*
 * SCR_ChangeSystemFontSmallSize
 */
 void SCR_ChangeSystemFontSmallSize( int ch )

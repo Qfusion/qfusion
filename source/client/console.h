@@ -43,6 +43,7 @@ void Con_ToggleConsole_f( void );
 void Con_Paste( void );
 void Con_Close( void );
 void Con_SetMessageModeCvar( void );
+void Con_ResetFontSize( void );
 void Con_ChangeFontSize( int ch );
 
 void Con_KeyDown( int key );
