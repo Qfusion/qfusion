@@ -2256,7 +2256,7 @@ static void Shader_Finish( shader_t *s )
 				//if( pass->alphagen.type == ALPHA_GEN_IDENTITY )
 				//	pass->alphagen.type = ALPHA_GEN_VERTEX;
 
-				if( !(pass->flags & SHADERPASS_ALPHAFUNC) )
+				if( !(pass->flags & SHADERPASS_ALPHAFUNC) && (blendmask != (GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA)) )
 					pass->flags &= ~blendmask;
 				break;
 			}
