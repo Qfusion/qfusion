@@ -168,8 +168,9 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 		{
 			if( num == '\n' )
 				break;
+
 			if( num < ' ' )
-				break;
+				continue;
 
 			dfont = FTLIB_FontForChar( font, num, &render );
 			if( !dfont )
@@ -227,7 +228,7 @@ void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t colo
 	qfontface_t *dfont;
 	bool render;
 
-	if( ( num <= ' ' ) || ( num > 0xffff ) || !font )
+	if( ( num <= ' ' ) || !font )
 		return;
 
 	dfont = FTLIB_FontForChar( font, num, &render );
@@ -265,7 +266,7 @@ void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax
 	float s1 = 0.0f, t1 = 0.0f, s2 = 1.0f, t2 = 1.0f;
 	float tw, th;
 
-	if( ( num <= ' ' ) || ( num > 0xffff ) || !font || ( xmax <= xmin ) || ( ymax <= ymin ) )
+	if( ( num <= ' ' ) || !font || ( xmax <= xmin ) || ( ymax <= ymin ) )
 		return;
 
 	dfont = FTLIB_FontForChar( font, num, &render );
@@ -350,6 +351,9 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 			if( num == '\n' )
 				break;
 
+			if( num < ' ' )
+				continue;
+
 			dfont = FTLIB_FontForChar( font, num, &render );
 			if( !dfont )
 			{
@@ -416,6 +420,9 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 		{
 			if( num == '\n' )
 				break;
+
+			if( num < ' ' )
+				continue;
 
 			dfont = FTLIB_FontForChar( font, num, &render );
 			if( !dfont )
