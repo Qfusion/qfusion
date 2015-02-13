@@ -74,6 +74,7 @@ else()
 endif()
 
 add_executable(${QFUSION_SERVER_NAME} ${SERVER_BINARY_TYPE} ${SERVER_HEADERS} ${SERVER_SOURCES} ${SERVER_PLATFORM_SOURCES})
+add_dependencies(${QFUSION_SERVER_NAME} angelwrap game irc)
 target_link_libraries(${QFUSION_SERVER_NAME} PRIVATE ${CURL_LIBRARY} ${ZLIB_LIBRARY} ${SERVER_PLATFORM_LIBRARIES})
 qf_set_output_dir(${QFUSION_SERVER_NAME} "")
 
