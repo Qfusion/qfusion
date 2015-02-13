@@ -1164,6 +1164,9 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 	pass->flags &= ~( SHADERPASS_LIGHTMAP|SHADERPASS_PORTALMAP );
 	if( pass->rgbgen.type == RGB_GEN_UNKNOWN )
 		pass->rgbgen.type = RGB_GEN_IDENTITY;
+	
+	// I assume materials are only applied to lightmapped surfaces
+	r_shaderHasLightmapPass = true;
 
 	while( !endl )
 	{
@@ -1186,7 +1189,7 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 		{
 			if( strcmp( token, "-" ) && r_lighting_specular->integer ) {
 				pass->images[2] = Shader_FindImage( shader, token, flags );
-			}else {
+			} else {
 				// set gloss to rsh.blackTexture so we know we have already parsed the gloss image
 				pass->images[2] = rsh.blackTexture;
 			}
@@ -2239,7 +2242,7 @@ static void Shader_Finish( shader_t *s )
 		s->sort = SHADER_SORT_DECAL;
 
 	// fix up rgbgen's and blendmodes for lightmapped shaders and vertex lighting
-	if( r_shaderHasLightmapPass )
+	if( r_shaderHasLightmapPass && r_lighting_vertexlight->integer )
 	{
 		for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ )
 		{
@@ -2247,17 +2250,14 @@ static void Shader_Finish( shader_t *s )
 
 			if( !blendmask || blendmask == (GLSTATE_SRCBLEND_DST_COLOR|GLSTATE_DSTBLEND_ZERO) || s->numpasses == 1 )
 			{
-				if( r_lighting_vertexlight->integer )
-				{
-					if( pass->rgbgen.type == RGB_GEN_IDENTITY ) {
-						pass->rgbgen.type = RGB_GEN_VERTEX;
-					}
-					//if( pass->alphagen.type == ALPHA_GEN_IDENTITY )
-					//	pass->alphagen.type = ALPHA_GEN_VERTEX;
-
-					if( !(pass->flags & SHADERPASS_ALPHAFUNC) )
-						pass->flags &= ~blendmask;
+				if( pass->rgbgen.type == RGB_GEN_IDENTITY ) {
+					pass->rgbgen.type = RGB_GEN_VERTEX;
 				}
+				//if( pass->alphagen.type == ALPHA_GEN_IDENTITY )
+				//	pass->alphagen.type = ALPHA_GEN_VERTEX;
+
+				if( !(pass->flags & SHADERPASS_ALPHAFUNC) )
+					pass->flags &= ~blendmask;
 				break;
 			}
 		}
