@@ -464,7 +464,7 @@ void UI_Main::mouseMove( int x, int y, bool absolute )
 	rocketModule->mouseMove( mousex, mousey );
 }
 
-void UI_Main::textInput( qwchar c )
+void UI_Main::textInput( wchar_t c )
 {
 	// context->ProcessTextInput( c );
 	rocketModule->textInput( c );

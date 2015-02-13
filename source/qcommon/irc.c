@@ -39,7 +39,7 @@ static void Irc_UnloadLibrary( void );
 extern struct qfontface_s *SCR_RegisterFont( const char *name, int style, unsigned int size );
 extern void SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color );
 extern size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color );
-extern void SCR_DrawRawChar( int x, int y, qwchar num, struct qfontface_s *font, vec4_t color );
+extern void SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
 extern size_t SCR_strHeight( struct qfontface_s *font );
 extern size_t SCR_strWidth( const char *str, struct qfontface_s *font, size_t maxlen );
 extern size_t SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth );

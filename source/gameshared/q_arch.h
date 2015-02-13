@@ -418,8 +418,6 @@ typedef int socket_handle_t;
 
 //==============================================
 
-typedef unsigned int qwchar;	// Unicode character
-
 #ifndef NULL
 #define NULL ( (void *)0 )
 #endif

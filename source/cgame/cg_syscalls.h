@@ -578,12 +578,12 @@ static inline void trap_SCR_DrawClampString( int x, int y, const char *str, int 
 	CGAME_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color );
 }
 
-static inline void trap_SCR_DrawRawChar( int x, int y, qwchar num, struct qfontface_s *font, vec4_t color )
+static inline void trap_SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color )
 {
 	CGAME_IMPORT.SCR_DrawRawChar( x, y, num, font, color );
 }
 
-static inline void trap_SCR_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color )
+static inline void trap_SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color )
 {
 	CGAME_IMPORT.SCR_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, color );
 }

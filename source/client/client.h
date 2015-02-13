@@ -465,7 +465,7 @@ void CL_UIModule_Shutdown( void );
 void CL_UIModule_TouchAllAssets( void );
 void CL_UIModule_Keydown( int key );
 void CL_UIModule_Keyup( int key );
-void CL_UIModule_CharEvent( qwchar key );
+void CL_UIModule_CharEvent( wchar_t key );
 void CL_UIModule_Refresh( bool backGround, bool showCursor );
 void CL_UIModule_UpdateConnectScreen( bool backGround );
 void CL_UIModule_ForceMenuOn( void );
@@ -581,8 +581,8 @@ size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth )
 void SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color );
 size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color );
 void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
-void SCR_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color );
-void SCR_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
+void SCR_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color );
+void SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 void SCR_DrawFillRect( int x, int y, int w, int h, vec4_t color );
 
 void CL_InitMedia( void );

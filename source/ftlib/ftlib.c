@@ -71,7 +71,7 @@ typedef struct
 /*
 * QFT_AllocGlyphs
 */
-static void *QFT_AllocGlyphs( qfontface_t *qfont, qwchar first, unsigned int count )
+static void *QFT_AllocGlyphs( qfontface_t *qfont, wchar_t first, unsigned int count )
 {
 	return FTLIB_Alloc( ftlibPool, count * sizeof( qftglyph_t ) );
 }
@@ -79,7 +79,7 @@ static void *QFT_AllocGlyphs( qfontface_t *qfont, qwchar first, unsigned int cou
 /*
 * QFT_GetGlyph
 */
-static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned int numInArray, qwchar num )
+static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned int numInArray, wchar_t num )
 {
 	qftglyph_t *qftglyph = &( ( ( qftglyph_t * )glyphArray )[numInArray] );
 	qftface_t *qttf = ( ( qftface_t * )( qfont->facedata ) );
@@ -126,7 +126,7 @@ static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned in
 /*
 * QFT_GetKerning
 */
-static int QFT_GetKerning( qfontface_t *qfont, qwchar char1, qwchar char2 )
+static int QFT_GetKerning( qfontface_t *qfont, wchar_t char1, wchar_t char2 )
 {
 	qftglyph_t *g1, *g2;
 	FT_UInt gi1, gi2;
@@ -181,7 +181,7 @@ static void QFT_UploadRenderedGlyphs( uint8_t *pic, struct shader_s *shader, int
 static void QFT_RenderString( qfontface_t *qfont, const char *str )
 {
 	int gc;
-	qwchar num;
+	wchar_t num;
 	qftface_t *qttf = ( qftface_t * )( qfont->facedata );
 	qftglyph_t *qftglyph;
 	qglyph_t *qglyph;
@@ -849,7 +849,7 @@ void FTLIB_PrintFontList( void )
 *
 * Gets a pointer to the glyph for its charcode, loads it if needed, or returns NULL if it's missing.
 */
-qglyph_t *FTLIB_GetGlyph( qfontface_t *font, qwchar num )
+qglyph_t *FTLIB_GetGlyph( qfontface_t *font, wchar_t num )
 {
 	void *glyphs;
 

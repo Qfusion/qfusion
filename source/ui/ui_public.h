@@ -226,7 +226,7 @@ typedef struct
 
 	void ( *Keydown )( int key );
 	void ( *Keyup )( int key );
-	void ( *CharEvent )( qwchar key );
+	void ( *CharEvent )( wchar_t key );
 
 	void ( *MouseMove )( int dx, int dy );
 	void ( *MouseSet )( int x, int y );

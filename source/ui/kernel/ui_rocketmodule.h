@@ -32,7 +32,7 @@ namespace WSWUI
 
 		// system events
 		void mouseMove( int mousex, int mousey );
-		void textInput( qwchar c );
+		void textInput( wchar_t c );
 		void keyEvent( int key, bool pressed );
 
 		void update( void );

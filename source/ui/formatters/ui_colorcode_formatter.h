@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define __UI_COLORCODE_FORMATTER_H__
 
 #include <time.h>
+#include <stddef.h>
 #include <Rocket/Controls/DataFormatter.h>
 
 namespace WSWUI
@@ -42,7 +43,7 @@ public:
 		for( Rocket::Core::StringList::const_iterator it = raw_data.begin(); it != raw_data.end(); it++ ) {
 			int colorindex, old_colorindex;
 			int gc;
-			qwchar num;
+			wchar_t num;
 			const char *s;
 			Rocket::Core::String colorblock;
 

@@ -204,7 +204,7 @@ const keyname_t keynames[] =
 };
 
 static void Key_DelegateCallKeyDel( int key );
-static void Key_DelegateCallCharDel( qwchar key );
+static void Key_DelegateCallCharDel( wchar_t key );
 
 static int consolebinded = 0;
 
@@ -541,12 +541,12 @@ void Key_Shutdown( void )
 * Called by the system between frames for key down events for standard characters
 * Should NOT be called during an interrupt!
 */
-void Key_CharEvent( int key, qwchar charkey )
+void Key_CharEvent( int key, wchar_t charkey )
 {
 	if( Key_IsToggleConsole( key ) )
 		return;
 
-	if( charkey == ( qwchar )alt_color_escape )
+	if( charkey == ( wchar_t )alt_color_escape )
 		charkey = Q_COLOR_ESCAPE;
 
 	switch( cls.key_dest )
@@ -888,7 +888,7 @@ static void Key_DelegateCallKeyDel( int key )
 /*
 * Key_DelegateCallCharDel
 */
-static void Key_DelegateCallCharDel( qwchar key )
+static void Key_DelegateCallCharDel( wchar_t key )
 {
 	assert( key_delegate_stack_index > 0 );
 	key_delegate_stack[key_delegate_stack_index - 1].char_del( key );

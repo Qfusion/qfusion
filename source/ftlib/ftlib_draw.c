@@ -44,7 +44,7 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 {
 	const char *s = str, *olds;
 	size_t width = 0;
-	qwchar num, prev_num = 0;
+	wchar_t num, prev_num = 0;
 	qglyph_t *glyph;
 
 	if( !str || !font )
@@ -105,7 +105,7 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 	size_t width = 0;
 	int gc;
 	int advance = 0;
-	qwchar num, prev_num = 0;
+	wchar_t num, prev_num = 0;
 	qglyph_t *glyph;
 
 	if( !str || !font )
@@ -172,7 +172,7 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 * It can be clipped to the top of the screen to allow the console to be
 * smoothly scrolled off.
 */
-void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t color )
+void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color )
 {
 	qglyph_t *glyph;
 
@@ -204,7 +204,7 @@ void FTLIB_DrawRawChar( int x, int y, qwchar num, qfontface_t *font, vec4_t colo
 * Draws one graphics character with 0 being transparent.
 * Clipped to [xmin, ymin; xmax, ymax].
 */
-void FTLIB_DrawClampChar( int x, int y, qwchar num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
+void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
 {
 	qglyph_t *glyph;
 	int x2, y2;
@@ -275,7 +275,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 	int xoffset = 0;
 	vec4_t scolor;
 	int colorindex;
-	qwchar num, prev_num = 0;
+	wchar_t num, prev_num = 0;
 	const char *s = str, *olds;
 	int gc;
 	qglyph_t *glyph, *prev_glyph = NULL;
@@ -344,7 +344,7 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 	vec4_t scolor;
 	const char *s, *olds;
 	int gc, colorindex;
-	qwchar num, prev_num = 0;
+	wchar_t num, prev_num = 0;
 	qglyph_t *glyph, *prev_glyph = NULL;
 
 	if( !str || !font )

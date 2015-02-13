@@ -32,7 +32,7 @@ static void Irc_Client_Messagemode2_f(void);
 // key event (for chat)
 static void Irc_Client_KeyEvent_f(int key, bool *key_down);
 static void Irc_Client_KeyEvent2_f(int key, bool *key_down);
-static void Irc_Client_CharEvent_f(qwchar key);
+static void Irc_Client_CharEvent_f(wchar_t key);
 
 // dynvar listeners
 static void Irc_Client_Draw_f(void *frametick);
@@ -760,7 +760,7 @@ static void Irc_Client_KeyEvent2_f(int key, bool *key_down) {
 	}
 }
 
-static void Irc_Client_CharEvent_f(qwchar key) {
+static void Irc_Client_CharEvent_f(wchar_t key) {
 	char *buf = NULL;
 	int *buflen = NULL;
 	switch (reading_from_keyboard) {
