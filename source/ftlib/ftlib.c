@@ -58,7 +58,7 @@ typedef struct
 /*
 * QFT_AllocGlyphs
 */
-void *QFT_AllocGlyphs( qfontface_t *qfont, qwchar first, unsigned int count )
+static void *QFT_AllocGlyphs( qfontface_t *qfont, qwchar first, unsigned int count )
 {
 	return FTLIB_Alloc( ftlibPool, count * sizeof( qftglyph_t ) );
 }
@@ -66,7 +66,7 @@ void *QFT_AllocGlyphs( qfontface_t *qfont, qwchar first, unsigned int count )
 /*
 * QFT_LoadGlyph
 */
-void QFT_LoadGlyph( qfontface_t *qfont, qwchar num )
+static void QFT_LoadGlyph( qfontface_t *qfont, qwchar num )
 {
 	( ( qftglyph_t * )( FTLIB_GetGlyph( qfont, num ) ) )->gindex =
 		FT_Get_Char_Index( ( ( qftface_t * )( qfont->facedata ) )->ftface, num );
@@ -75,7 +75,7 @@ void QFT_LoadGlyph( qfontface_t *qfont, qwchar num )
 /*
 * QFT_GetGlyph
 */
-qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned int numInArray, qwchar num )
+static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned int numInArray, qwchar num )
 {
 	return &( ( ( qftglyph_t * )glyphArray )[numInArray].qglyph );
 }
@@ -141,6 +141,10 @@ static qftglyph_t *QFT_GetRenderableGlyph( qfontface_t *qfont, qfontface_t *main
 {
 	qftglyph_t *qftglyph;
 
+	if( ( num < ' ' ) || ( num > 0xffff ) ) {
+		return NULL;
+	}
+
 	qftglyph = ( qftglyph_t * )FTLIB_GetGlyph( qfont, num );
 	if( qftglyph ) {
 		return ( ( !qftglyph->qglyph.shader && qftglyph->gindex ) ? qftglyph : NULL );
@@ -162,7 +166,7 @@ static qftglyph_t *QFT_GetRenderableGlyph( qfontface_t *qfont, qfontface_t *main
 *
 * Returns whether the glyph for the number needs to be rendered.
 */
-bool QFT_GlyphNeedsRendering( qfontface_t *qfont, qfontface_t *mainqfont, qwchar num )
+static bool QFT_GlyphNeedsRendering( qfontface_t *qfont, qfontface_t *mainqfont, qwchar num )
 {
 	return ( QFT_GetRenderableGlyph( qfont, mainqfont, num ) ? true : false );
 }
@@ -411,7 +415,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size, cons
 /*
 * QFT_UnloadFace
 */
-void QFT_UnloadFace( qfontface_t *qfont )
+static void QFT_UnloadFace( qfontface_t *qfont )
 {
 	qftface_t *qttf;
 

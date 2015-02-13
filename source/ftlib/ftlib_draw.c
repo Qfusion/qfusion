@@ -30,6 +30,10 @@ static qfontface_t *FTLIB_FontForChar( qfontface_t *font, qwchar num, bool *rend
 	qfontface_t *mainfont = font;
 	qglyph_t *glyph;
 
+	if( ( num < ' ' ) || ( num > 0xffff ) ) {
+		return NULL;
+	}
+
 	while( font ) {
 		// the glyph has already been rendered
 		glyph = FTLIB_GetGlyph( font, num );
