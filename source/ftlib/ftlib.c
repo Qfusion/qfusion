@@ -47,18 +47,27 @@ static unsigned int qftGlyphTempBitmapHeight;
 
 FT_Library ftLibrary = NULL;
 
+typedef struct qftfallback_s
+{
+	FT_Face ftface;
+	unsigned int size;
+	struct qftfallback_s *next;
+} qftfallback_t;
+
 typedef struct
 {
 	FT_Byte *file;
 	size_t fileSize;
+	qftfallback_t *fallbacks;
 } qftfamily_t;
 
 typedef struct
 {
+	unsigned int imageCurX, imageCurY, imageCurLineHeight;
+
 	FT_Face ftface, ftfallbackface;
 	qfontfamily_t *fallbackFamily;
 	bool fallbackLoaded;
-	unsigned int imageCurX, imageCurY, imageCurLineHeight;
 } qftface_t;
 
 typedef struct
@@ -77,15 +86,48 @@ static void *QFT_AllocGlyphs( qfontface_t *qfont, wchar_t first, unsigned int co
 }
 
 /*
+* QFT_GetFallbackFace
+*/
+static FT_Face QFT_GetFallbackFace( qfontfamily_t *qfamily, unsigned int size )
+{
+	qftfamily_t *qftfamily = ( ( qftfamily_t * )( qfamily->familydata ) );
+	qftfallback_t *fallback;
+	FT_Face ftface;
+	int error;
+
+	for( fallback = qftfamily->fallbacks; fallback; fallback = fallback->next ) {
+		if( fallback->size == size ) {
+			return fallback->ftface;
+		}
+	}
+
+	ftface = NULL;
+	error = FT_New_Memory_Face( ftLibrary, qftfamily->file, qftfamily->fileSize, 0, &ftface );
+	if( error ) {
+		Com_DPrintf( S_COLOR_YELLOW "Warning: Error loading fallback font face '%s': %i\n",
+			qfamily->name, error );
+		return NULL;
+	}
+
+	FT_Set_Pixel_Sizes( ftface, size, 0 );
+
+	fallback = FTLIB_Alloc( ftlibPool, sizeof( qftfallback_t ) );
+	fallback->ftface = ftface;
+	fallback->size = size;
+	fallback->next = qftfamily->fallbacks;
+	qftfamily->fallbacks = fallback;
+
+	return ftface;
+}
+
+/*
 * QFT_GetGlyph
 */
 static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned int numInArray, wchar_t num )
 {
 	qftglyph_t *qftglyph = &( ( ( qftglyph_t * )glyphArray )[numInArray] );
 	qftface_t *qttf = ( ( qftface_t * )( qfont->facedata ) );
-	qftfamily_t *qftfamily;
 	FT_Face ftface;
-	int error;
 
 	if( !qftglyph->gindex ) {
 		if( !( qftglyph->flags & QFTGLYPH_SEARCHED_MAIN ) ) {
@@ -99,16 +141,12 @@ static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned in
 		if( qttf->fallbackFamily ) {
 			if( !qttf->fallbackLoaded ) {
 				qttf->fallbackLoaded = true;
-				qftfamily = ( qftfamily_t * )( qttf->fallbackFamily->familydata );
-				error = FT_New_Memory_Face( ftLibrary, qftfamily->file, qftfamily->fileSize, 0, &ftface );
-				if( error ) {
-					Com_DPrintf( S_COLOR_YELLOW "Warning: Error loading fallback font face '%s': %i\n",
-						qttf->fallbackFamily->name, error );
+				ftface = QFT_GetFallbackFace( qttf->fallbackFamily, qfont->size );
+				if( !ftface ) {
 					return NULL;
 				}
-				FT_Set_Pixel_Sizes( ftface, qfont->size, 0 );
-				qfont->hasKerning |= ( FT_HAS_KERNING( ftface ) ? true : false );
 				qttf->ftfallbackface = ftface;
+				qfont->hasKerning |= ( FT_HAS_KERNING( qttf->ftfallbackface ) ? true : false );
 			}
 			if( qttf->ftfallbackface && !( qftglyph->flags & QFTGLYPH_SEARCHED_FALLBACK ) ) {
 				qftglyph->flags |= QFTGLYPH_SEARCHED_FALLBACK;
@@ -191,15 +229,11 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 	int srcStride = 0;
 	unsigned int bitmapWidth, bitmapHeight;
 	unsigned int tempWidth = 0, tempLineHeight = 0;
-	struct shader_s *shader = NULL;
+	struct shader_s *shader = qfont->shaders[qfont->numShaders - 1];
 	int shaderNum;
 	float invHeight = 1.0f / ( float )( qfont->shaderHeight );
 	int x, y;
 	uint8_t *src, *dest;
-
-	if( qfont->numShaders ) {
-		shader = qfont->shaders[qfont->numShaders - 1];
-	}
 
 	for( ; ; ) {
 		gc = Q_GrabWCharFromColorString( &str, &num, NULL );
@@ -272,10 +306,7 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 					shaderNum = ( qfont->numShaders )++;
 					shader = trap_R_RegisterRawPic( FTLIB_FontShaderName( qfont, shaderNum ),
 						FTLIB_FONT_IMAGE_WIDTH, qfont->shaderHeight, NULL, 1 );
-					if( shaderNum )
-						qfont->shaders = FTLIB_Realloc( qfont->shaders, qfont->numShaders * sizeof( struct shader_s * ) );
-					else
-						qfont->shaders = FTLIB_Alloc( ftlibPool, qfont->numShaders * sizeof( struct shader_s * ) );
+					qfont->shaders = FTLIB_Realloc( qfont->shaders, qfont->numShaders * sizeof( struct shader_s * ) );
 					qfont->shaders[shaderNum] = shader;
 				}
 				qttf->imageCurLineHeight = bitmapHeight;
@@ -398,6 +429,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	qfont->size = size;
 	qfont->height = fontHeight;
 	qfont->glyphYOffset = fontHeight - baseLine;
+	qfont->numShaders = 1;
 	if( fontHeight > 48 ) {
 		qfont->shaderHeight = FTLIB_FONT_IMAGE_HEIGHT_LARGE;
 	} else if( fontHeight > 24 ) {
@@ -405,14 +437,14 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	} else {
 		qfont->shaderHeight = FTLIB_FONT_IMAGE_HEIGHT_SMALL;
 	}
-	qfont->numShaders = 0;
+	qfont->shaders = FTLIB_Alloc( ftlibPool, sizeof( struct shader_s * ) );
+	qfont->shaders[0] = trap_R_RegisterRawPic( FTLIB_FontShaderName( qfont, 0 ),
+		FTLIB_FONT_IMAGE_WIDTH, qfont->shaderHeight, NULL, 1 );
 	qfont->hasKerning = hasKerning;
 	qfont->f = &qft_face_funcs;
 	qfont->facedata = ( void * )qttf;
 	qfont->next = family->faces;
 	family->faces = qfont;
-
-	qttf->imageCurY = qfont->shaderHeight; // create a new shader the next time anything is rendered
 
 	// pre-render 32-126
 	for( i = 0; i < 95; i++ ) {
@@ -436,9 +468,6 @@ static void QFT_UnloadFace( qfontface_t *qfont )
 		return;
 	}
 
-	if( qttf->ftfallbackface ) {
-		FT_Done_Face( qttf->ftfallbackface );
-	}
 	if( qttf->ftface ) {
 		FT_Done_Face( qttf->ftface );
 	}
@@ -448,11 +477,22 @@ static void QFT_UnloadFace( qfontface_t *qfont )
 static void QFT_UnloadFamily( qfontfamily_t *qfamily )
 {
 	qftfamily_t *qftfamily = ( qftfamily_t * )( qfamily->familydata );
+	qftfallback_t *fallback, *nextfallback;
 
-	if( qftfamily ) {
-		if( qftfamily->file ) {
-			FTLIB_Free( qftfamily->file );
+	if( !qftfamily ) {
+		return;
+	}
+
+	for( fallback = qftfamily->fallbacks; fallback; fallback = nextfallback ) {
+		nextfallback = fallback->next;
+		if( fallback->ftface ) {
+			FT_Done_Face( fallback->ftface );
 		}
+		FTLIB_Free( fallback );
+	}
+
+	if( qftfamily->file ) {
+		FTLIB_Free( qftfamily->file );
 	}
 }
 
