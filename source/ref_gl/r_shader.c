@@ -2242,7 +2242,7 @@ static void Shader_Finish( shader_t *s )
 		s->sort = SHADER_SORT_DECAL;
 
 	// fix up rgbgen's and blendmodes for lightmapped shaders and vertex lighting
-	if( r_shaderHasLightmapPass && r_lighting_vertexlight->integer )
+	if (r_shaderHasLightmapPass && r_lighting_vertexlight->integer && ( s->type == SHADER_TYPE_DELUXEMAP || s->type == SHADER_TYPE_VERTEX ) )
 	{
 		for( i = 0, pass = r_currentPasses; i < s->numpasses; i++, pass++ )
 		{
