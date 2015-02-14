@@ -1206,13 +1206,15 @@ char *Q_trim( char *s )
 */
 size_t Q_WCharUtf8Length( wchar_t wc )
 {
-	if( !wc )
+	unsigned int num = wc;
+
+	if( !num )
 		return 0;
-	if( wc <= 0x7f )
+	if( num <= 0x7f )
 		return 1;
-	if( wc <= 0x7ff )
+	if( num <= 0x7ff )
 		return 2;
-	if( wc <= 0xffff )
+	if( num <= 0xffff )
 		return 3;
 	return 1; // 4-octet sequences are replaced with '?'
 }
@@ -1224,34 +1226,35 @@ size_t Q_WCharUtf8Length( wchar_t wc )
 */
 size_t Q_WCharToUtf8( char *dest, wchar_t wc, size_t bufsize )
 {
+	unsigned int num = wc;
 	size_t ret = 0;
 
-	if( wc )
+	if( num )
 	{
-		if( wc <= 0x7f )
+		if( num <= 0x7f )
 		{
 			if( bufsize > 1 )
 			{
-				*dest++ = wc;
+				*dest++ = num;
 				ret = 1;
 			}
 		}
-		else if( wc <= 0x7ff )
+		else if( num <= 0x7ff )
 		{
 			if( bufsize > 2 )
 			{
-				*dest++ = 0xC0 | ( wc >> 6 );
-				*dest++ = 0x80 | ( wc & 0x3f );
+				*dest++ = 0xC0 | ( num >> 6 );
+				*dest++ = 0x80 | ( num & 0x3f );
 				ret = 2;
 			}
 		}
-		else if( wc <= 0xffff )
+		else if( num <= 0xffff )
 		{
 			if( bufsize > 3 )
 			{
-				*dest++ = 0xE0 | ( wc >> 12 );
-				*dest++ = 0x80 | ( ( wc & 0xfc0 ) >> 6 );
-				*dest++ = 0x80 | ( wc & 0x003f );
+				*dest++ = 0xE0 | ( num >> 12 );
+				*dest++ = 0x80 | ( ( num & 0xfc0 ) >> 6 );
+				*dest++ = 0x80 | ( num & 0x003f );
 				ret = 3;
 			}
 		}
