@@ -176,7 +176,7 @@ void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t col
 {
 	qglyph_t *glyph;
 
-	if( ( num <= ' ' ) || !font )
+	if( ( num <= ' ' ) || !font || ( y <= -font->height ) )
 		return;
 
 	glyph = FTLIB_GetGlyph( font, num );
@@ -186,11 +186,11 @@ void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t col
 		glyph = FTLIB_GetGlyph( font, num );
 	}
 
-	if( y <= -font->height )
-		return; // totally off screen
-
 	if( !glyph->shader )
 		font->f->renderString( font, Q_WCharToUtf8Char( num ) );
+
+	if( !glyph->width || !glyph->height )
+		return;
 
 	trap_R_DrawStretchPic( x + glyph->x_offset, y + font->glyphYOffset + glyph->y_offset, 
 		glyph->width, glyph->height,
