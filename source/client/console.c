@@ -1230,8 +1230,8 @@ static void Con_Key_Paste( bool primary )
 		while( tok != NULL )
 		{
 			i = (int)strlen( tok );
-			if( i + key_linepos >= MAXCMDLINE )
-				i = MAXCMDLINE - key_linepos;
+			if( i + key_linepos >= MAXCMDLINE-1 )
+				i = MAXCMDLINE - 1 - key_linepos;
 
 			if( i > 0 )
 			{
@@ -1379,7 +1379,7 @@ void Con_CharEvent( wchar_t key )
 		char *utf = Q_WCharToUtf8Char( key );
 		int utflen = strlen( utf );
 
-		if( strlen( key_lines[edit_line] ) + utflen >= MAXCMDLINE )
+		if( strlen( key_lines[edit_line] ) + utflen >= MAXCMDLINE-1 )
 			return;		// won't fit
 
 		// move remainder to the right
@@ -1399,7 +1399,7 @@ void Con_CharEvent( wchar_t key )
 static void Con_SendChatMessage( const char *text, bool team )
 {
 	char *cmd;
-	char buf[MAXCMDLINE], *p;
+	char buf[MAX_CHAT_BYTES], *p;
 
 	// convert double quotes to single quotes
 	Q_strncpyz( buf, text, sizeof(buf) );
@@ -1745,8 +1745,8 @@ static void Con_MessageKeyPaste( bool primary )
 		if( tok != NULL )
 		{
 			i = (int)strlen( tok );
-			if( i + chat_linepos >= MAXCMDLINE )
-				i = MAXCMDLINE - chat_linepos;
+			if( i + chat_linepos >= MAX_CHAT_BYTES-1 )
+				i = MAX_CHAT_BYTES - 1 - chat_linepos;
 
 			if( i > 0 )
 			{
@@ -1787,7 +1787,7 @@ void Con_MessageCharEvent( wchar_t key )
 		// CTRL - L : clear
 		chat_bufferlen = 0;
 		chat_linepos = 0;
-		memset( chat_buffer, 0, MAXCMDLINE );
+		chat_buffer[0] = '\0';
 		return;
 	case 1: // CTRL+A: jump to beginning of line (same as HOME)
 		chat_linepos = 0;
@@ -1803,12 +1803,12 @@ void Con_MessageCharEvent( wchar_t key )
 	if( key < 32 || key > 0xFFFF )
 		return; // non-printable
 
-	if( chat_linepos < MAXCMDLINE-1 )
+	if( chat_linepos < MAX_CHAT_BYTES-1 )
 	{
 		const char *utf = Q_WCharToUtf8Char( key );
 		size_t utflen = strlen( utf );
 
-		if( chat_bufferlen + utflen >= MAXCMDLINE )
+		if( chat_bufferlen + utflen >= MAX_CHAT_BYTES-1 )
 			return;		// won't fit
 
 		// move remainder to the right
@@ -1884,12 +1884,12 @@ static void Con_MessageCompletion( const char *partial, bool teamonly )
 	comp_len = strlen( comp );
 
 	// add ': ' to string if completing at the beginning of the string
-	if( comp[0] && ( chat_linepos == partial_len ) && ( chat_bufferlen + comp_len + 2 < MAXCMDLINE ) ) {
+	if( comp[0] && ( chat_linepos == partial_len ) && ( chat_bufferlen + comp_len + 2 < MAX_CHAT_BYTES-1 ) ) {
 		Q_strncatz( comp, ", ", sizeof( comp ) );
 		comp_len += 2;
 	}
 
-	if( chat_bufferlen + comp_len >= MAXCMDLINE )
+	if( chat_bufferlen + comp_len >= MAX_CHAT_BYTES-1 )
 		return;		// won't fit
 
 	chat_linepos -= partial_len;

@@ -1315,7 +1315,6 @@ int Q_Utf8SyncPos( const char *str, int pos, int dir )
 }
 
 // returns a wide char, advances (*pstr) to next char (unless at end of string)
-// only works for 2-octet sequences (latin and cyrillic chars will work)
 wchar_t Q_GrabWCharFromUtf8String (const char **pstr)
 {
 	int part, i;
@@ -1378,6 +1377,27 @@ wchar_t Q_GrabWCharFromUtf8String (const char **pstr)
 
 	*pstr = src;
 	return val;
+}
+
+/*
+* Q_IsBreakingSpace
+*/
+bool Q_IsBreakingSpace( const char *str )
+{
+	const unsigned char *s = ( const unsigned char * )str;
+
+	switch( s[0] )
+	{
+	case ' ':
+	case '\t':
+		return true;
+	case 0xe3:
+		return ( s[1] == 0x80 ) && ( s[2] == 0x80 );
+	case 0xe2:
+		return ( s[1] == 0x80 ) && ( s[2] >= 0x80 ) && ( s[2] <= 0x8b );
+	}
+
+	return false;
 }
 
 /*

@@ -685,7 +685,7 @@ static int cg_obituaries_current = -1;
 void CG_SC_PrintObituary( const char *format, ... )
 {
 	va_list	argptr;
-	char msg[1024];
+	char msg[GAMECHAT_STRING_SIZE];
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );

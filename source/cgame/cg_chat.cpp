@@ -45,8 +45,6 @@ void CG_StackChatString( cg_gamechat_t *chat, const char *str )
 	chat->nextMsg = (chat->nextMsg + 1) % GAMECHAT_STACK_SIZE;
 }
 
-#define WHITEPSACE_CHAR(c) ((c) == ' ' || (c) == '\t' || (c) == '\n')
-
 /*
 ** CG_ColorStrLastColor
 *
@@ -109,6 +107,7 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 {
 	int i, j;
 	int s, e, w;
+	int utf_len;
 	int l, total_lines, lines;
 	int x_offset, y_offset;
 	int str_width;
@@ -119,7 +118,7 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 	int wait_time, fade_time;
 	const cg_gamemessage_t *msg;
 	const char *text;
-	char tstr[GAMECHAT_STRING_SIZE];
+	char tstr[MAX_CHAT_BYTES];
 	vec4_t fontColor;
 	bool chat_active = false;
 	bool background_drawn = false;
@@ -215,7 +214,7 @@ parse_string:
 			memset( tstr, 0, sizeof( tstr ) );
 
 			// skip whitespaces at start
-			for( ; WHITEPSACE_CHAR( text[s] ); s++ );
+			for( ; text[s] == '\n' || Q_IsBreakingSpace( text + s ); s = Q_Utf8SyncPos( text, s + 1, UTF8SYNC_RIGHT ) );
 
 			// empty string
 			if( !text[s] )
@@ -223,12 +222,13 @@ parse_string:
 
 			w = -1;
 			j = s; // start
-			for( ; text[j] != '\0'; j++ )
+			for( ; text[j] != '\0'; j += utf_len )
 			{
-				tstr[j-s] = text[j];
+				utf_len = Q_Utf8SyncPos( text + j, 1, UTF8SYNC_RIGHT );
+				memcpy( tstr + j - s, text + j, utf_len );
 				str_width = trap_SCR_strWidth( tstr, font, 0 );
 
-				if( WHITEPSACE_CHAR( text[j] ) )
+				if( text[j] == '\n' || Q_IsBreakingSpace( text + j ) )
 					w = j; // last whitespace
 
 				if( text[j] == '\n' || str_width > width - padding_x )

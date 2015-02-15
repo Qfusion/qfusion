@@ -144,6 +144,8 @@ bool COM_ValidateConfigstring( const char *string );
 #define MAX_NAME_BYTES				32			// max length of a player name, including trailing \0
 #define MAX_NAME_CHARS				15			// max visible characters in a name (color tokens and \0 not counted)
 
+#define MAX_CHAT_BYTES				150			// max length of a chat message, including color tokens and trailing \0
+
 #ifndef STR_HELPER
 #define STR_HELPER( s )					# s
 #define STR_TOSTR( x )					STR_HELPER( x )
@@ -234,6 +236,7 @@ int Q_GrabWCharFromColorString( const char **pstr, wchar_t *wc, int *colorindex 
 #define UTF8SYNC_LEFT 0
 #define UTF8SYNC_RIGHT 1
 int Q_Utf8SyncPos( const char *str, int pos, int dir );
+bool Q_IsBreakingSpace( const char *str );
 
 float *tv( float x, float y, float z );
 char *vtos( float v[3] );
