@@ -671,6 +671,7 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood )
 {
 	char *p;
 	char text[2048];
+	size_t arg0len = 0;
 
 	if( sv_mm_enable->integer && ent->r.client && ent->r.client->mm_session <= 0 )
 	{
@@ -700,6 +701,7 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood )
 	{
 		Q_strncatz( text, trap_Cmd_Argv( 0 ), sizeof( text ) );
 		Q_strncatz( text, " ", sizeof( text ) );
+		arg0len = strlen( text );
 		Q_strncatz( text, trap_Cmd_Args(), sizeof( text ) );
 	}
 	else
@@ -716,8 +718,7 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood )
 	}
 
 	// don't let text be too long for malicious reasons
-	if( strlen( text ) > 150 )
-		text[150] = 0;
+	text[arg0len + (MAX_CHAT_BYTES - 1)] = 0;
 
 	G_ChatMsg( NULL, ent, false, "%s", text );
 }

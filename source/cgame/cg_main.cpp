@@ -187,11 +187,10 @@ void CG_Printf( const char *format, ... )
 /*
 * CG_LocalPrint
 */
-#define LOCALPRINT_MSG_SIZE 1024
 void CG_LocalPrint( const char *format, ... )
 {
 	va_list	argptr;
-	char msg[LOCALPRINT_MSG_SIZE];
+	char msg[GAMECHAT_STRING_SIZE];
 
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
