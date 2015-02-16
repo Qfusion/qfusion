@@ -53,8 +53,8 @@ public:
 
 //==================================================
 
-RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
-	: rocketInitialized(false),
+RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio, const String &fallbackFontFace )
+	: rocketInitialized( false ),
 	// pointers
 	systemInterface(0), fsInterface(0), renderInterface(0), context(0)
 {
@@ -76,9 +76,11 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	// initialize the controls plugin
 	Rocket::Controls::Initialise();
 
-	// fonts can (has to?) be loaded before context creation
+	// fonts can (have to?) be loaded before context creation
 	preloadFonts( ".ttf" );
 	preloadFonts( ".otf" );
+
+	Rocket::Core::FontDatabase::SetBackupFace( fallbackFontFace );
 
 	// Create our context
 	context = Rocket::Core::CreateContext( trap::Cvar_String( "gamename" ), Vector2i( vidWidth, vidHeight ) );
