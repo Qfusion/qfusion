@@ -28,7 +28,7 @@
 #include "precompiled.h"
 #include "../../Include/Rocket/Core/ElementUtilities.h"
 #include <queue>
-#include "FontFaceHandle.h"
+#include <Rocket/Core/FontFaceHandle.h>
 #include "LayoutEngine.h"
 #include "../../Include/Rocket/Core.h"
 

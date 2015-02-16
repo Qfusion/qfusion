@@ -276,6 +276,8 @@ foreach(library ${LIBRARIES})
     set_target_properties(${NAME} PROPERTIES
                            VERSION ${PROJECT_VERSION}
                            SOVERSION ${LIBROCKET_VERSION_MAJOR}
+                           CXX_STANDARD 11
+                           CXX_STANDARD_REQUIRED ON
     )
     
     install(TARGETS ${NAME}
