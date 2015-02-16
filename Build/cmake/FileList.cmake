@@ -37,7 +37,6 @@ set(Core_HDR_FILES
     ${PROJECT_SOURCE_DIR}/Source/Core/FontEffectShadow.h
     ${PROJECT_SOURCE_DIR}/Source/Core/FontEffectShadowInstancer.h
     ${PROJECT_SOURCE_DIR}/Source/Core/FontFace.h
-    ${PROJECT_SOURCE_DIR}/Source/Core/FontFaceHandle.h
     ${PROJECT_SOURCE_DIR}/Source/Core/FontFaceLayer.h
     ${PROJECT_SOURCE_DIR}/Source/Core/FontFamily.h
     ${PROJECT_SOURCE_DIR}/Source/Core/GeometryDatabase.h
@@ -80,7 +79,6 @@ set(Core_HDR_FILES
     ${PROJECT_SOURCE_DIR}/Source/Core/TextureLayoutRow.h
     ${PROJECT_SOURCE_DIR}/Source/Core/TextureLayoutTexture.h
     ${PROJECT_SOURCE_DIR}/Source/Core/TextureResource.h
-    ${PROJECT_SOURCE_DIR}/Source/Core/UnicodeRange.h
     ${PROJECT_SOURCE_DIR}/Source/Core/WidgetSlider.h
     ${PROJECT_SOURCE_DIR}/Source/Core/WidgetSliderScroll.h
     ${PROJECT_SOURCE_DIR}/Source/Core/XMLNodeHandlerBody.h
@@ -129,6 +127,7 @@ set(Core_PUB_HDR_FILES
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/FontEffect.h
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/FontEffectInstancer.h
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/FontGlyph.h
+    ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/FontFaceHandle.h
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/Geometry.h
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/GeometryUtilities.h
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/Header.h
@@ -161,6 +160,7 @@ set(Core_PUB_HDR_FILES
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/TypeConverter.inl
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/Types.h
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/URL.h
+    ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/UnicodeRange.h
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/Variant.h
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/Variant.inl
     ${PROJECT_SOURCE_DIR}/Include/Rocket/Core/Vector2.h

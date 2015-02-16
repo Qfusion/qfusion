@@ -14,7 +14,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,13 +29,13 @@
 #include "ElementTextDefault.h"
 #include "ElementDefinition.h"
 #include "ElementStyle.h"
-#include "FontFaceHandle.h"
-#include "../../Include/Rocket/Core/ElementDocument.h"
-#include "../../Include/Rocket/Core/ElementUtilities.h"
-#include "../../Include/Rocket/Core/Event.h"
-#include "../../Include/Rocket/Core/FontDatabase.h"
-#include "../../Include/Rocket/Core/Property.h"
-#include "../../Include/Rocket/Core/StyleSheetKeywords.h"
+#include <Rocket/Core/FontFaceHandle.h>
+#include <Rocket/Core/ElementDocument.h>
+#include <Rocket/Core/ElementUtilities.h>
+#include <Rocket/Core/Event.h>
+#include <Rocket/Core/FontDatabase.h>
+#include <Rocket/Core/Property.h>
+#include <Rocket/Core/StyleSheetKeywords.h>
 
 namespace Rocket {
 namespace Core {
@@ -81,8 +81,8 @@ void ElementTextDefault::OnRender()
 	FontFaceHandle* font_face_handle = GetFontFaceHandle();
 	if (!font_face_handle)
 		return;
-	
-	
+
+
 	// If our font configuration has potentially changed, update it and force a geometry
 	// generation if necessary.
 	if (font_dirty &&
@@ -96,7 +96,7 @@ void ElementTextDefault::OnRender()
 		GenerateGeometry(font_face_handle);
 
 	Vector2f translation = GetAbsoluteOffset();
-	
+
 	bool render = true;
 	Vector2i clip_origin;
 	Vector2i clip_dimensions;
@@ -110,17 +110,17 @@ void ElementTextDefault::OnRender()
 		
 		render = false;
 		for (size_t i = 0; i < lines.size(); ++i)
-		{			
+		{
 			const Line& line = lines[i];
 			float x = translation.x + line.position.x;
 			float y = translation.y + line.position.y;
-			
+
 			bool render_line = !(x > clip_right);
 			render_line = render_line && !(x + line.width < clip_left);
-			
+
 			render_line = render_line && !(y - line_height > clip_bottom);
 			render_line = render_line && !(y < clip_top);
-			
+
 			if (render_line)
 			{
 				render = true;
@@ -128,7 +128,7 @@ void ElementTextDefault::OnRender()
 			}
 		}
 	}
-	
+
 	if (render)
 	{
 		for (size_t i = 0; i < geometry.size(); ++i)

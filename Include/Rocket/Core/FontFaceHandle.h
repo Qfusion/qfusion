@@ -14,7 +14,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,14 +28,18 @@
 #ifndef ROCKETCOREFONTFACEHANDLE_H
 #define ROCKETCOREFONTFACEHANDLE_H
 
-#include "../../Include/Rocket/Core/ReferenceCountable.h"
-#include "UnicodeRange.h"
-#include "../../Include/Rocket/Core/Font.h"
-#include "../../Include/Rocket/Core/FontEffect.h"
-#include "../../Include/Rocket/Core/FontGlyph.h"
-#include "../../Include/Rocket/Core/Geometry.h"
-#include "../../Include/Rocket/Core/String.h"
-#include "../../Include/Rocket/Core/Texture.h"
+// HACK: Include cstdint here, for some reasons it is enough for the
+// whole librocket code.
+#include <cstdint>
+
+#include <Rocket/Core/ReferenceCountable.h>
+#include <Rocket/Core/UnicodeRange.h>
+#include <Rocket/Core/Font.h>
+#include <Rocket/Core/FontEffect.h>
+#include <Rocket/Core/FontGlyph.h>
+#include <Rocket/Core/Geometry.h>
+#include <Rocket/Core/String.h>
+#include <Rocket/Core/Texture.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -81,13 +85,13 @@ public:
 
 	/// Returns the font's glyphs.
 	/// @return The font's glyphs.
-	const FontGlyphList& GetGlyphs() const;
+	const FontGlyphMap& GetGlyphs() const;
 
 	/// Returns the width a string will take up if rendered with this handle.
 	/// @param[in] string The string to measure.
 	/// @param[in] prior_character The optionally-specified character that immediately precedes the string. This may have an impact on the string width due to kerning.
 	/// @return The width, in pixels, this string will occupy if rendered with this handle.
-	int GetStringWidth(const WString& string, word prior_character = 0) const;
+	int GetStringWidth(const WString& string, word prior_character = 0);
 
 	/// Generates, if required, the layer configuration for a given array of font effects.
 	/// @param[in] font_effects The list of font effects to generate the configuration for.
@@ -99,7 +103,7 @@ public:
 	/// @param[out] texture_samples Pixel size of the texture, in bytes.
 	/// @param[in] layer_id The id of the layer to request the texture data from.
 	/// @param[in] texture_id The index of the texture within the layer to generate.
-	bool GenerateLayerTexture(const byte*& texture_data, Vector2i& texture_dimensions, int &texture_samples, FontEffect* layer_id, int texture_id);
+	bool GenerateLayerTexture(const byte*& texture_data, Vector2i& texture_dimensions, int &texture_samples, FontEffect* layer_id, int layout_id, int texture_id);
 
 	/// Generates the geometry required to render a single line of text.
 	/// @param[out] geometry An array of geometries to generate the geometry into.
@@ -130,7 +134,7 @@ protected:
 private:
 	void GenerateMetrics(void);
 
-	void BuildGlyphMap(const UnicodeRange& unicode_range);
+	bool BuildGlyphMap( const Rocket::Core::UnicodeRange &unicode_range );
 	void BuildGlyph(FontGlyph& glyph, FT_GlyphSlot ft_glyph);
 
 	int GetKerning(word lhs, word rhs) const;
@@ -138,12 +142,14 @@ private:
 	// Generates (or shares) a layer derived from a font effect.
 	FontFaceLayer* GenerateLayer(FontEffect* font_effect);
 
-	typedef std::vector< int > GlyphKerningList;
-	typedef std::vector< GlyphKerningList > FontKerningList;
+	typedef std::map< word, int > GlyphKerningMap;
+	typedef std::map< word, GlyphKerningMap > FontKerningMap;
 
 	FT_Face ft_face;
+	FT_Face backup_face;
+	uint8_t fonts_generated[ 0xFFFF / 256 / 8 ];
 
-	FontGlyphList glyphs;
+	FontGlyphMap glyphs;
 
 	typedef std::map< const FontEffect*, FontFaceLayer* > FontLayerMap;
 	typedef std::map< String, FontFaceLayer* > FontLayerCache;
@@ -174,7 +180,6 @@ private:
 
 	String raw_charset;
 	UnicodeRangeList charset;
-	unsigned int max_codepoint;
 };
 
 }
