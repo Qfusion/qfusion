@@ -139,9 +139,9 @@ bool FontFaceLayer::AddNewGlyphs()
 	// Generate the texture layout; this will position the glyph rectangles efficiently and
 	// allocate the texture data ready for writing.
 #ifdef ROCKET_8BPP_FONTS
-    if (!texture_layout.GenerateLayout(512, 1))
+    if (!texture_layout.GenerateLayout(1024, 1))
 #else
-    if (!texture_layout.GenerateLayout(512, 4))
+	if (!texture_layout.GenerateLayout(1024, 4))
 #endif
 		return false;
 
