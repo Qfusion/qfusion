@@ -698,7 +698,7 @@ clean-ui:
 
 $(LIBROCKET_LIB):
 	@echo "> * Building Rocket library"
-	@CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) CXXFLAGS="$(CFLAGS)" DEBUG_BUILD=$(DEBUG_BUILD) USE_MINGW=$(USE_MINGW) $(MAKE) -C $(LIBROCKET_DIR) -f $(LIBROCKET_MAKEFILE) DEBUG_BUILD=$(DEBUG_BUILD)
+	@CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) CXXFLAGS="$(CXXFLAGS_COMMON) $(CFLAGS)" DEBUG_BUILD=$(DEBUG_BUILD) USE_MINGW=$(USE_MINGW) $(MAKE) -C $(LIBROCKET_DIR) -f $(LIBROCKET_MAKEFILE) DEBUG_BUILD=$(DEBUG_BUILD)
 	@echo "> * Done building RocketCore library."
 	@echo "> *********************************************************"
 	@echo "> * Continuing ui building..."
@@ -784,7 +784,7 @@ $(ANGELSCRIPT_INC)/angelscript.h:
 
 $(ANGELSCRIPT_LIB): $(ANGELSCRIPT_INC)/angelscript.h
 	@echo "> * Building Angelscript library first"
-	@CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) CXXFLAGS="$(CFLAGS)" $(MAKE) -C $(ANGELSCRIPT_PROJECT_DIR)
+	@CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) CXXFLAGS="$(CXXFLAGS_COMMON) $(CFLAGS)" $(MAKE) -C $(ANGELSCRIPT_PROJECT_DIR)
 	@echo "> * Done building angelscript library."
 	@echo "> *********************************************************"
 	@echo "> * Continuing angelwrap building..."
