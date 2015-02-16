@@ -48,7 +48,7 @@ const std::string UI_Main::ui_connectscreen( "connectscreen.rml" );
 UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	int protocol, const char *demoExtension, const char *basePath )
 	// pointers to zero
-	: asmodule(0), rocketModule(0),
+	: asmodule(nullptr), rocketModule(nullptr),
 	levelshot_fmt(0), datetime_fmt(0), duration_fmt(0), filetype_fmt(0), colorcode_fmt(0), 
 	crosshair_fmt(0), empty_fmt(0),
 	serverBrowser(0), gameTypes(0), maps(0), vidProfiles(0), huds(0), videoModes(0), 
@@ -68,6 +68,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	ui_basepath = trap::Cvar_Get( "ui_basepath", basePath, CVAR_ARCHIVE );
 	ui_cursor = trap::Cvar_Get( "ui_cursor", "cursors/default.rml", CVAR_DEVELOPER );
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
+	ui_fallbackFont = trap::Cvar_Get( "ui_fallbackFont", "fonts/fallback/DroidSansFallback.ttf", CVAR_ARCHIVE );
 
 	// temp fix for missing background on start.. populate refreshState with some nice values
 	refreshState.clientState = CA_UNINITIALIZED;
@@ -258,7 +259,7 @@ void UI_Main::loadCursor( void )
 bool UI_Main::initRocket( void )
 {
 	// this may throw runtime_error.. ok pass it back up
-	rocketModule = __new__( RocketModule )( refreshState.width, refreshState.height, refreshState.pixelRatio );
+	rocketModule = __new__(RocketModule)( refreshState.width, refreshState.height, refreshState.pixelRatio, ui_fallbackFont->string );
 	return true;
 }
 

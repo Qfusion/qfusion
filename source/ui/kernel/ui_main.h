@@ -210,6 +210,7 @@ private:
 	cvar_t *ui_basepath;
 	cvar_t *ui_cursor;
 	cvar_t *ui_developer;
+	cvar_t *ui_fallbackFont;
 };
 
 }
