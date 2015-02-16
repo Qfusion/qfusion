@@ -42,6 +42,7 @@
 #include <Rocket/Core/Texture.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_SIZES_H
 
 namespace Rocket {
 namespace Core {
@@ -146,7 +147,9 @@ private:
 	typedef std::map< word, GlyphKerningMap > FontKerningMap;
 
 	FT_Face ft_face;
+	FT_Size ft_size;
 	FT_Face backup_face;
+	FT_Size backup_size;
 	uint8_t fonts_generated[ 0xFFFF / 256 / 8 ];
 
 	FontGlyphMap glyphs;

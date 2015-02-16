@@ -65,6 +65,11 @@ FontFaceHandle::FontFaceHandle()
 
 FontFaceHandle::~FontFaceHandle()
 {
+	if (ft_face)
+		FT_Done_Size(ft_size);
+	if (backup_face)
+		FT_Done_Size(backup_size);
+
 	for (FontGlyphMap::iterator i = glyphs.begin(); i != glyphs.end(); ++i)
 		delete[] i->second.bitmap_data;
 
@@ -84,7 +89,12 @@ bool FontFaceHandle::Initialise(FT_Face ft_face, const String& _charset, int _si
 		return false;
 	}
 
+	this->ft_face = ft_face;
+	this->backup_face = (FT_Face)FontDatabase::GetBackupFace();
+
 	// Set the character size on the font face.
+	FT_New_Size(this->ft_face, &ft_size);
+	FT_Activate_Size(ft_size);
 	FT_Error error = FT_Set_Char_Size(ft_face, 0, size << 6, 0, 0);
 	if (error != 0)
 	{
@@ -92,11 +102,10 @@ bool FontFaceHandle::Initialise(FT_Face ft_face, const String& _charset, int _si
 		return false;
 	}
 
-	this->ft_face = ft_face;
-	this->backup_face = (FT_Face)FontDatabase::GetBackupFace();
-
 	if (this->backup_face)
 	{
+		FT_New_Size(this->backup_face, &backup_size);
+		FT_Activate_Size(backup_size);
 		FT_Error error = FT_Set_Char_Size(this->backup_face, 0, size << 6, 0, 0);
 		if (error != 0)
 		{
@@ -170,7 +179,7 @@ int FontFaceHandle::GetStringWidth(const WString& string, word prior_character)
 		FontGlyphMap::const_iterator iterator = glyphs.find(character_code);
 		if (iterator == glyphs.end())
 		{
-			word chunk = Math::RoundDown(character_code / 256);
+			word chunk = Math::RoundDown((float)character_code / 256);
 
 			if (!(fonts_generated[ chunk / 8 ] & (1 << (chunk % 8))))
 			{
@@ -420,6 +429,11 @@ void FontFaceHandle::GenerateMetrics()
 
 bool FontFaceHandle::BuildGlyphMap(const UnicodeRange& unicode_range)
 {
+	FT_Activate_Size(ft_size);
+
+	if (backup_face)
+		FT_Activate_Size(backup_size);
+
 	bool success = false;
 	for (size_t character_code = (Math::Max< unsigned int >(unicode_range.min_codepoint, 32)); character_code <= unicode_range.max_codepoint; ++character_code)
 	{
