@@ -1565,7 +1565,7 @@ void CG_TouchFrame( void )
 	}
 
 	if( !touching )
-		return false;
+		return;
 
 	if( cg_showHUD->integer )
 	{
