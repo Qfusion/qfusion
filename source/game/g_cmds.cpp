@@ -280,7 +280,7 @@ static void Cmd_GameOperator_f( edict_t *ent )
 	if( !Q_stricmp( trap_Cmd_Argv( 1 ), g_operator_password->string ) )
 	{
 		if( !ent->r.client->isoperator )
-			G_PrintMsg( NULL, "%s"S_COLOR_WHITE" is now a game operator\n", ent->r.client->netname );
+			G_PrintMsg( NULL, "%s" S_COLOR_WHITE " is now a game operator\n", ent->r.client->netname );
 
 		ent->r.client->isoperator = true;
 		return;

@@ -42,6 +42,19 @@ extern "C" {
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+};
+#endif
+
+#ifdef __cplusplus
+#include <type_traits>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 //==============================================
 
 #ifdef _WIN32
