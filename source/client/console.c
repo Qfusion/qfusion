@@ -700,11 +700,12 @@ static void Con_DrawInput( int vislines )
 	const char *text = key_lines[edit_line];
 	float pixelRatio = VID_GetPixelRatio();
 	int smallCharHeight = SCR_strHeight( cls.consoleFont );
-	int text_y = vislines - (int)( 14 * pixelRatio ) - smallCharHeight;
 	int margin = 8 * pixelRatio;
 	int promptwidth = SCR_strWidth( "]", cls.consoleFont, 1 );
-	int cursorwidth = SCR_strWidth( "_", cls.consoleFont, 1 );
-	int input_width = viddef.width - margin * 2;
+	int input_width = viddef.width - margin * 2 - promptwidth - SCR_strWidth( "_", cls.consoleFont, 1 );
+	int text_x = margin + promptwidth;
+	int text_y = vislines - (int)( 14 * pixelRatio ) - smallCharHeight;
+	int textwidth;
 	int prewidth;	// width of input line before cursor
 
 	if( cls.key_dest != key_console )
@@ -715,19 +716,34 @@ static void Con_DrawInput( int vislines )
 		Q_snprintfz( draw_search_text, sizeof( draw_search_text ), "%s : %s", key_lines[edit_line], search_text );
 	}
 
+	text++;
+
+	textwidth = SCR_strWidth( text, cls.consoleFont, 0 );
 	prewidth = SCR_strWidth( text, cls.consoleFont, key_linepos );
 
-	// don't let the cursor go beyond the left screen edge
-	clamp_high( input_prestep, prewidth - promptwidth);
-	// don't let it go beyond the right screen edge
-	clamp_low( input_prestep, prewidth - ( input_width - cursorwidth ) );
+	if( textwidth > input_width )
+	{
+		// don't let the cursor go beyond the left screen edge
+		clamp_high( input_prestep, prewidth );
+		// don't let it go beyond the right screen edge
+		clamp_low( input_prestep, prewidth - input_width );
+		// don't leave an empty space after the string when deleting a character
+		if( ( textwidth - input_prestep ) < input_width ) {
+			input_prestep = textwidth - input_width;
+		}
+	}
+	else
+	{
+		input_prestep = 0;
+	}
 
-	SCR_DrawClampString( margin - input_prestep,
-		text_y, text, margin, text_y,
-		viddef.width - margin, viddef.height, cls.consoleFont, colorWhite );
+	SCR_DrawRawChar( text_x - promptwidth, text_y, ']', cls.consoleFont, colorWhite );
+
+	SCR_DrawClampString( text_x - input_prestep, text_y, text, text_x, text_y,
+		text_x + input_width, viddef.height, cls.consoleFont, colorWhite );
 
 	if( (int)( cls.realtime>>8 )&1 )
-		SCR_DrawRawChar( margin + prewidth - input_prestep, text_y, '_',
+		SCR_DrawRawChar( text_x + prewidth - input_prestep, text_y, '_',
 		cls.consoleFont, colorWhite );
 }
 
@@ -842,7 +858,7 @@ void Con_DrawNotify( void )
 			clamp_low( chat_prestep, prewidth - width );
 
 			// don't leave an empty space after the string when deleting a character
-			if( ( swidth > width ) && ( ( swidth - chat_prestep ) < width ) ) {
+			if( ( swidth - chat_prestep ) < width ) {
 				chat_prestep = swidth - width;
 			}
 		}
@@ -1656,9 +1672,6 @@ void Con_KeyDown( int key )
 	{
 		if( key_linepos > 1 )
 		{
-			int oldwidth = SCR_strWidth( key_lines[edit_line], cls.consoleFont, key_linepos );
-			int newwidth;
-
 			// skip to the end of color sequence
 			while( 1 )
 			{
@@ -1677,11 +1690,6 @@ void Con_KeyDown( int key )
 				strcpy( key_lines[edit_line] + key_linepos,
 					key_lines[edit_line] + oldpos );	// safe!
 			}
-
-			// keep the cursor in the same on-screen position if possible
-			newwidth = SCR_strWidth( key_lines[edit_line], cls.consoleFont, key_linepos );
-			input_prestep += ( newwidth - oldwidth );
-			clamp_low( input_prestep, 0 );
 		}
 
 		return;
