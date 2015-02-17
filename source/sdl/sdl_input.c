@@ -359,3 +359,12 @@ bool IN_ShowUICursor( void )
 {
 	return true;
 }
+
+/**
+ * Stub for getting the current input language.
+ */
+void IN_GetInputLanguage( char *dest, size_t size )
+{
+	if( size )
+		dest[0] = '\0';
+}

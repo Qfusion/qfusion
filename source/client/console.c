@@ -738,6 +738,7 @@ void Con_DrawNotify( void )
 		int x, y;
 		int width, prewidth;
 		int promptwidth, cursorwidth;
+		char lang[16], langstr[32];
 		struct qfontface_s *font = NULL;
 
 		if( con_chatCGame->integer )
@@ -780,6 +781,14 @@ void Con_DrawNotify( void )
 		}
 		SCR_DrawString( x, y, ALIGN_LEFT_TOP, translated, font, colorWhite );
 		promptwidth = SCR_strWidth( translated, font, 0 ) + SCR_strWidth( " ", font, 0 );
+
+		IN_GetInputLanguage( lang, sizeof( lang ) );
+		if( lang[0] && strcmp( lang, "EN" ) )
+		{
+			Q_snprintfz( langstr, sizeof( langstr ), " (%s)", lang );
+			width -= SCR_strWidth( langstr, font, 0 );
+			SCR_DrawString( x + width, y, ALIGN_LEFT_TOP, langstr, font, colorWhite );
+		}
 
 		s = chat_buffer;
 		prewidth = chat_linepos ? SCR_strWidth( s, font, chat_linepos ) : 0;
