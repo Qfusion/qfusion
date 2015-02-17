@@ -323,7 +323,7 @@ endif # USE_MINGW
 ######################################################################################################
 DO_CC=echo "  > Compiling $<" && \
 	$(CC) $(CFLAGS_COMMON) -c $< -o $@
-DO_CXX=echo "  > Compiling (c++) $<" && \
+DO_CXX=echo "  > Compiling (c++ $(CXXFLAGS_COMMON)) $<" && \
 	$(CXX) $(CFLAGS_COMMON) $(CXXFLAGS_COMMON) -c $< -o $@
 DO_RES=echo "  > Compiling resource $<" && \
 	$(RES) $(RESFLAGS_COMMON) -i $< -o $@
