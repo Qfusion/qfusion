@@ -602,7 +602,7 @@ static void Cmd_Alias_f_( bool archive )
 		{
 			if( archive )
 				a->archive = true;
-			Com_Printf( "alias \"%s" S_COLOR_WHITE "\" is \"%s\"\n", a->name, a->value );
+			Com_Printf( "alias \"%s\" is \"%s" S_COLOR_WHITE "\"\n", a->name, a->value );
 			return;
 		}
 		Mem_ZoneFree( a->value );
@@ -1355,7 +1355,7 @@ void Cmd_ExecuteString( const char *text )
 	}
 	else
 	{
-		Com_Printf( "Unknown command \"%s\"\n", str );
+		Com_Printf( "Unknown command \"%s" S_COLOR_WHITE "\"\n", str );
 	}
 }
 

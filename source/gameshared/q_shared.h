@@ -144,7 +144,7 @@ bool COM_ValidateConfigstring( const char *string );
 #define MAX_NAME_BYTES				32			// max length of a player name, including trailing \0
 #define MAX_NAME_CHARS				15			// max visible characters in a name (color tokens and \0 not counted)
 
-#define MAX_CHAT_BYTES				150			// max length of a chat message, including color tokens and trailing \0
+#define MAX_CHAT_BYTES				151			// max length of a chat message, including color tokens and trailing \0
 
 #ifndef STR_HELPER
 #define STR_HELPER( s )					# s
