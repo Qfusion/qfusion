@@ -10,17 +10,7 @@ LOCAL_STATIC_LIBRARIES := OpenAL-MOB vorbis
 LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  ../snd_common/snd_cmdque.c \
-  qal.c \
-  snd_al.c \
-  snd_buffers.c \
-  snd_decoder.c \
-  snd_decoder_ogg.c \
-  snd_decoder_wav.c \
-  snd_main.c \
-  snd_music.c \
-  snd_sources.c \
-  snd_stream.c \
-  snd_syscalls.c
+  $(wildcard $(LOCAL_PATH)/../snd_common/*.c) \
+  $(wildcard $(LOCAL_PATH)/*.c)
 
 include $(BUILD_SHARED_LIBRARY)
