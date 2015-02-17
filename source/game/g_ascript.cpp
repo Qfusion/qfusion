@@ -95,7 +95,7 @@ static void asnullfunc(void) {}
 
 #define ASLIB_LOCAL_CLASS_DESCR(x)
 
-#define ASLIB_FOFFSET(s,m)						(size_t)&(((s *)0)->m)
+#define ASLIB_FOFFSET(s,m)						offsetof(s,m)
 
 #define ASLIB_ENUM_VAL(name)					{ #name,(int)name }
 #define ASLIB_ENUM_VAL_NULL						{ NULL, 0 }
