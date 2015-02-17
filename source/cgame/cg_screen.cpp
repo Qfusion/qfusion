@@ -1555,10 +1555,18 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 void CG_TouchFrame( void )
 {
 	int i;
+	bool touching = false;
 
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
+	{
 		cg_touches[i].area_valid = false;
-	
+		if( cg_touches[i].down )
+			touching = true;
+	}
+
+	if( !touching )
+		return false;
+
 	if( cg_showHUD->integer )
 	{
 		CG_CheckHUDChanges();
