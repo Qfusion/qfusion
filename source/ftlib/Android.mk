@@ -8,9 +8,6 @@ LOCAL_STATIC_LIBRARIES := freetype
 LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  ftlib.c \
-  ftlib_draw.c \
-  ftlib_main.c \
-  ftlib_syscalls.c
+  $(wildcard $(LOCAL_PATH)/*.c)
 
 include $(BUILD_SHARED_LIBRARY)
