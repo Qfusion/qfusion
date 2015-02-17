@@ -133,6 +133,8 @@ static void SCR_RegisterSystemFonts( void )
 		cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
 		if( !cls.consoleFont )
 			Com_Error( ERR_FATAL, "Couldn't load default font \"%s\"", con_fontSystemFamily->dvalue );
+
+		Con_CheckResize();
 	}
 }
 
