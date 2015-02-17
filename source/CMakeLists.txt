@@ -1,6 +1,6 @@
 project(qfusion)
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 
@@ -182,7 +182,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2 -O2")
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
@@ -223,7 +223,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -D_DEBUG")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing -ffast-math -funroll-loops -msse2")
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}  -std=c++11")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
