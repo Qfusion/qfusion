@@ -26,6 +26,7 @@ typedef struct
 {
 	char *text[CON_MAXLINES];
 	int x;              // offset in current line for next print
+	int linecolor;		// color in current line for next print
 	int linewidth;      // characters across screen (FIXME)
 	int display;        // bottom of console displays this line
 	int totallines;     // total lines in console scrollback
@@ -190,6 +191,8 @@ void Con_Clear_f( void )
 	}
 	con.numlines = 0;
 	con.display = 0;
+	con.x = 0;
+	con.linecolor = COLOR_WHITE;
 }
 
 /*
@@ -398,6 +401,7 @@ void Con_Init( void )
 	con.numlines = 0;
 	con.display = 0;
 	con.linewidth = 78;
+	con.linecolor = COLOR_WHITE;
 
 	touch_x = touch_y = -1;
 
@@ -449,7 +453,7 @@ void Con_Shutdown( void )
 /*
 * Con_Linefeed
 */
-static void Con_Linefeed( void )
+static void Con_Linefeed( bool notify )
 {
 	// shift scrollback text up in the buffer to make room for a new line
 	if (con.numlines == con.totallines )
@@ -457,8 +461,11 @@ static void Con_Linefeed( void )
 	memmove( con.text + 1, con.text, sizeof( con.text[0] ) * min( con.numlines, con.totallines - 1 ) );
 	con.text[0] = NULL;
 
-	// shift the timings array
+	// mark time for transparent overlay
 	memmove( con.times + 1, con.times, sizeof( con.times[0] ) * ( NUM_CON_TIMES - 1 ) );
+	con.times[0] = cls.realtime;
+	if( !notify )
+		con.times[0] -= con_notifytime->value*1000 + 1;
 
 	con.x = 0;
 	if( con.display )
@@ -478,21 +485,26 @@ static void Con_Linefeed( void )
 * All console printing must go through this in order to be logged to disk
 * If no console is visible, the text will appear at the top of the game window
 */
-static void addchartostr( char **s, const char *c ) {
-	size_t len = *s ? strlen( *s ) : 0;
-	size_t charlen = Q_Utf8SyncPos( c, 1, UTF8SYNC_RIGHT );
-	char *newstr = Q_realloc( *s, len + charlen + 1 );
-	memcpy( newstr + len, c, charlen );
-	newstr[len + charlen] = '\0';
+static void addcharstostr( char **s, const char *c, size_t num ) {
+	size_t len = *s ? strlen( *s ) : 0, addlen = 0;
+	char *newstr;
+
+	while( num && c[addlen] )
+	{
+		addlen = Q_Utf8SyncPos( c, addlen + 1, UTF8SYNC_RIGHT );
+		num--;
+	}
+
+	newstr = Q_realloc( *s, len + addlen + 1 );
+	memcpy( newstr + len, c, addlen );
+	newstr[len + addlen] = '\0';
 	*s = newstr;
 }
 static void Con_Print2( const char *txt, bool notify )
 {
 	int l;
 	const char *ptxt;
-	int color;
-	char colorchar[3] = { Q_COLOR_ESCAPE, 0, 0 };
-	bool colorflag = false;
+	char colorchar[] = { Q_COLOR_ESCAPE, COLOR_WHITE, 0 };
 
 	if( !con_initialized )
 		return;
@@ -500,15 +512,48 @@ static void Con_Print2( const char *txt, bool notify )
 	if( con_printText && con_printText->integer == 0 )
 		return;
 
-	color = ColorIndex( COLOR_WHITE );
-
 	while( *txt )
 	{
-		// count word length
-		for( l = 0, ptxt = txt; l < con.linewidth; l++, ptxt += Q_Utf8SyncPos( ptxt, 1, UTF8SYNC_RIGHT ) )
+		ptxt = txt;
+
+		if( txt[0] == Q_COLOR_ESCAPE )
 		{
-			if( ( ( unsigned char )( ptxt[0] ) <= ' ' ) || Q_IsBreakingSpace( ptxt ) )
+			if( txt[1] == Q_COLOR_ESCAPE )
+			{
+				txt++;
+			}
+			else if( ( txt[1] >= '0' ) && ( txt[1] < ( '0' + MAX_S_COLORS ) ) )
+			{
+				con.linecolor = colorchar[1] = txt[1];
+				addcharstostr( &con.text[0], colorchar, 2 );
+				txt += 2;
+				continue;
+			}
+		}
+
+		// count word length
+		for( l = 0; l < con.linewidth; )
+		{
+			if( ptxt[0] == Q_COLOR_ESCAPE )
+			{
+				if( ptxt[1] == Q_COLOR_ESCAPE )
+				{
+					l++;
+					ptxt += 2;
+					continue;
+				}
+				if( ( txt[1] >= '0' ) && ( txt[1] < ( '0' + MAX_S_COLORS ) ) )
+				{
+					ptxt += 2;
+					continue;
+				}
+			}
+			else if( ( ( unsigned char )( ptxt[0] ) <= ' ' ) || Q_IsBreakingSpace( ptxt ) )
+			{
 				break;
+			}
+			l++;
+			ptxt += Q_Utf8SyncPos( ptxt, 1, UTF8SYNC_RIGHT );
 		}
 
 		// word wrap
@@ -517,24 +562,19 @@ static void Con_Print2( const char *txt, bool notify )
 
 		if( !con.x )
 		{
-			Con_Linefeed();
-			// mark time for transparent overlay
-			con.times[0] = cls.realtime;
-			if( !notify )
-				con.times[0] -= con_notifytime->value*1000 + 1;
+			Con_Linefeed( notify );
 
-			if( color != ColorIndex( COLOR_WHITE ) )
+			if( con.linecolor != COLOR_WHITE )
 			{
-				colorchar[1] = '0' + color;
-				addchartostr( &con.text[0], colorchar );
-				con.x += 2;
+				colorchar[1] = con.linecolor;
+				addcharstostr( &con.text[0], colorchar, 2 );
 			}
 		}
 
 		switch( txt[0] )
 		{
 		case '\n':
-			color = ColorIndex( COLOR_WHITE );
+			con.linecolor = COLOR_WHITE;
 			con.x = 0;
 			break;
 
@@ -542,23 +582,12 @@ static void Con_Print2( const char *txt, bool notify )
 			break;
 
 		default: // display character and advance
-			addchartostr( &con.text[0], txt );
+			if( txt[0] == Q_COLOR_ESCAPE )
+				addcharstostr( &con.text[0], txt, 1 );
+			addcharstostr( &con.text[0], txt, 1 );
 			con.x++;
 			if( con.x >= con.linewidth )	// haha welcome to 1995 lol
 				con.x = 0;
-
-			if( colorflag )
-			{
-				if( *txt != Q_COLOR_ESCAPE )
-					color = ColorIndex( *txt );
-				colorflag = false;
-			}
-			else if( *txt == Q_COLOR_ESCAPE )
-				colorflag = true;
-
-			//			if( Q_IsColorString( txt ) ) {
-			//				color = ColorIndex( *(txt+1) );
-			//			}
 			break;
 		}
 
@@ -1250,23 +1279,29 @@ static void Con_Key_Paste( bool primary )
 {
 	char *cbd;
 	char *tok;
+	size_t linelen, i, next;
 
 	cbd = CL_GetClipboardData( primary );
 	if( cbd )
 	{
-		int i;
-
 		tok = strtok( cbd, "\n\r\b" );
 
 		while( tok != NULL )
 		{
-			i = (int)strlen( tok );
-			if( i + key_linepos >= MAXCMDLINE-1 )
-				i = MAXCMDLINE - 1 - key_linepos;
-
-			if( i > 0 )
+			linelen = strlen( key_lines[edit_line] );
+			i = 0;
+			while( tok[i] )
 			{
-				Q_strncatz( key_lines[edit_line], tok, sizeof( key_lines[edit_line] ) );
+				next = Q_Utf8SyncPos( tok, i + 1, UTF8SYNC_RIGHT );
+				if( next + linelen >= MAXCMDLINE )
+					break;
+				i = next;
+			}
+
+			if( i )
+			{
+				memmove( key_lines[edit_line] + key_linepos + i, key_lines[edit_line] + key_linepos, linelen - key_linepos + 1 );
+				memcpy( key_lines[edit_line] + key_linepos, tok, i );
 				key_linepos += i;
 			}
 
@@ -1410,7 +1445,7 @@ void Con_CharEvent( wchar_t key )
 		char *utf = Q_WCharToUtf8Char( key );
 		int utflen = strlen( utf );
 
-		if( strlen( key_lines[edit_line] ) + utflen >= MAXCMDLINE-1 )
+		if( strlen( key_lines[edit_line] ) + utflen >= MAXCMDLINE )
 			return;		// won't fit
 
 		// move remainder to the right
@@ -1764,24 +1799,29 @@ static void Con_MessageKeyPaste( bool primary )
 {
 	char *cbd;
 	char *tok;
+	size_t i, next;
 
 	cbd = CL_GetClipboardData( primary );
 	if( cbd )
 	{
-		int i;
-
 		tok = strtok( cbd, "\n\r\b" );
 
 		// only allow pasting of one line for malicious reasons
 		if( tok != NULL )
 		{
-			i = (int)strlen( tok );
-			if( i + chat_linepos >= MAX_CHAT_BYTES-1 )
-				i = MAX_CHAT_BYTES - 1 - chat_linepos;
-
-			if( i > 0 )
+			i = 0;
+			while( tok[i] )
 			{
-				Q_strncatz( chat_buffer, tok, sizeof( chat_buffer ) );
+				next = Q_Utf8SyncPos( tok, i + 1, UTF8SYNC_RIGHT );
+				if( next + chat_bufferlen >= MAX_CHAT_BYTES )
+					break;
+				i = next;
+			}
+
+			if( i )
+			{
+				memmove( chat_buffer + chat_linepos + i, chat_buffer + chat_linepos, chat_bufferlen - chat_linepos + 1 );
+				memcpy( chat_buffer + chat_linepos, tok, i );
 				chat_linepos += i;
 				chat_bufferlen += i;
 			}
@@ -1839,7 +1879,7 @@ void Con_MessageCharEvent( wchar_t key )
 		const char *utf = Q_WCharToUtf8Char( key );
 		size_t utflen = strlen( utf );
 
-		if( chat_bufferlen + utflen >= MAX_CHAT_BYTES-1 )
+		if( chat_bufferlen + utflen >= MAX_CHAT_BYTES )
 			return;		// won't fit
 
 		// move remainder to the right
