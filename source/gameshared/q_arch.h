@@ -62,6 +62,8 @@ extern "C" {
 // wsw : pb : zlib 1.2.3
 //# define ZLIB_WINAPI
 
+#ifdef _MSC_VER
+
 // unknown pragmas are SUPPOSED to be ignored, but....
 #pragma warning( disable : 4244 )       // MIPS
 #pragma warning( disable : 4136 )       // X86
@@ -84,6 +86,8 @@ extern "C" {
 
 #if defined _M_AMD64
 #pragma warning( disable : 4267 )       // conversion from 'size_t' to whatever, possible loss of data
+#endif
+
 #endif
 
 #if defined(_MSC_VER) && defined(_I64_MAX)
