@@ -1279,23 +1279,29 @@ static void Con_Key_Paste( bool primary )
 {
 	char *cbd;
 	char *tok;
+	size_t linelen, i, next;
 
 	cbd = CL_GetClipboardData( primary );
 	if( cbd )
 	{
-		int i;
-
 		tok = strtok( cbd, "\n\r\b" );
 
 		while( tok != NULL )
 		{
-			i = (int)strlen( tok );
-			if( i + key_linepos >= MAXCMDLINE-1 )
-				i = MAXCMDLINE - 1 - key_linepos;
-
-			if( i > 0 )
+			linelen = strlen( key_lines[edit_line] );
+			i = 0;
+			while( tok[i] )
 			{
-				Q_strncatz( key_lines[edit_line], tok, sizeof( key_lines[edit_line] ) );
+				next = Q_Utf8SyncPos( tok, i + 1, UTF8SYNC_RIGHT );
+				if( next + linelen >= MAXCMDLINE )
+					break;
+				i = next;
+			}
+
+			if( i )
+			{
+				memmove( key_lines[edit_line] + key_linepos + i, key_lines[edit_line] + key_linepos, linelen - key_linepos + 1 );
+				memcpy( key_lines[edit_line] + key_linepos, tok, i );
 				key_linepos += i;
 			}
 
@@ -1439,7 +1445,7 @@ void Con_CharEvent( wchar_t key )
 		char *utf = Q_WCharToUtf8Char( key );
 		int utflen = strlen( utf );
 
-		if( strlen( key_lines[edit_line] ) + utflen >= MAXCMDLINE-1 )
+		if( strlen( key_lines[edit_line] ) + utflen >= MAXCMDLINE )
 			return;		// won't fit
 
 		// move remainder to the right
@@ -1793,24 +1799,29 @@ static void Con_MessageKeyPaste( bool primary )
 {
 	char *cbd;
 	char *tok;
+	size_t i, next;
 
 	cbd = CL_GetClipboardData( primary );
 	if( cbd )
 	{
-		int i;
-
 		tok = strtok( cbd, "\n\r\b" );
 
 		// only allow pasting of one line for malicious reasons
 		if( tok != NULL )
 		{
-			i = (int)strlen( tok );
-			if( i + chat_linepos >= MAX_CHAT_BYTES-1 )
-				i = MAX_CHAT_BYTES - 1 - chat_linepos;
-
-			if( i > 0 )
+			i = 0;
+			while( tok[i] )
 			{
-				Q_strncatz( chat_buffer, tok, sizeof( chat_buffer ) );
+				next = Q_Utf8SyncPos( tok, i + 1, UTF8SYNC_RIGHT );
+				if( next + chat_bufferlen >= MAX_CHAT_BYTES )
+					break;
+				i = next;
+			}
+
+			if( i )
+			{
+				memmove( chat_buffer + chat_linepos + i, chat_buffer + chat_linepos, chat_bufferlen - chat_linepos + 1 );
+				memcpy( chat_buffer + chat_linepos, tok, i );
 				chat_linepos += i;
 				chat_bufferlen += i;
 			}
@@ -1868,7 +1879,7 @@ void Con_MessageCharEvent( wchar_t key )
 		const char *utf = Q_WCharToUtf8Char( key );
 		size_t utflen = strlen( utf );
 
-		if( chat_bufferlen + utflen >= MAX_CHAT_BYTES-1 )
+		if( chat_bufferlen + utflen >= MAX_CHAT_BYTES )
 			return;		// won't fit
 
 		// move remainder to the right
