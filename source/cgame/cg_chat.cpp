@@ -118,7 +118,7 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 	int wait_time, fade_time;
 	const cg_gamemessage_t *msg;
 	const char *text;
-	char tstr[MAX_CHAT_BYTES];
+	char tstr[GAMECHAT_STRING_SIZE];
 	vec4_t fontColor;
 	bool chat_active = false;
 	bool background_drawn = false;
