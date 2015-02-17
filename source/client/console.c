@@ -344,15 +344,16 @@ static void Con_MessageMode2_f( void )
 */
 void Con_CheckResize( void )
 {
-	int charWidth, width;
+	int charWidth, width = 0;
 
-	charWidth = SMALL_CHAR_WIDTH * VID_GetPixelRatio();
-	if( !charWidth )
-		charWidth = 1;
+	if( cls.consoleFont )
+	{
+		charWidth = SCR_strWidth( "M", cls.consoleFont, 0 );
+		if( !charWidth )
+			charWidth = 1;
 
-	width = viddef.width / charWidth - 2;
-	if( width == con.linewidth )
-		return;
+		width = viddef.width / charWidth - 2;
+	}
 
 	if( width < 1 )		// video hasn't been initialized yet
 		con.linewidth = 78;
@@ -477,17 +478,20 @@ static void Con_Linefeed( void )
 * All console printing must go through this in order to be logged to disk
 * If no console is visible, the text will appear at the top of the game window
 */
-static void addchartostr( char **s, int c ) {
-	int len = *s ? strlen( *s ) : 0;
-	char *newstr = Q_realloc( *s, len + 2 );
-	newstr[len] = c;
-	newstr[len+1] = '\0';
+static void addchartostr( char **s, const char *c ) {
+	size_t len = *s ? strlen( *s ) : 0;
+	size_t charlen = Q_Utf8SyncPos( c, 1, UTF8SYNC_RIGHT );
+	char *newstr = Q_realloc( *s, len + charlen + 1 );
+	memcpy( newstr + len, c, charlen );
+	newstr[len + charlen] = '\0';
 	*s = newstr;
 }
 static void Con_Print2( const char *txt, bool notify )
 {
-	int c, l;
+	int l;
+	const char *ptxt;
 	int color;
+	char colorchar[3] = { Q_COLOR_ESCAPE, 0, 0 };
 	bool colorflag = false;
 
 	if( !con_initialized )
@@ -498,12 +502,14 @@ static void Con_Print2( const char *txt, bool notify )
 
 	color = ColorIndex( COLOR_WHITE );
 
-	while( ( c = *txt ) )
+	while( *txt )
 	{
 		// count word length
-		for( l = 0; l < con.linewidth; l++ )
-			if( (unsigned char)txt[l] <= ' ' )
+		for( l = 0, ptxt = txt; l < con.linewidth; l++, ptxt += Q_Utf8SyncPos( ptxt, 1, UTF8SYNC_RIGHT ) )
+		{
+			if( ( ( unsigned char )( ptxt[0] ) <= ' ' ) || Q_IsBreakingSpace( ptxt ) )
 				break;
+		}
 
 		// word wrap
 		if( l != con.linewidth && ( con.x + l > con.linewidth ) )
@@ -519,13 +525,13 @@ static void Con_Print2( const char *txt, bool notify )
 
 			if( color != ColorIndex( COLOR_WHITE ) )
 			{
-				addchartostr( &con.text[0], Q_COLOR_ESCAPE );
-				addchartostr( &con.text[0], '0' + color );
+				colorchar[1] = '0' + color;
+				addchartostr( &con.text[0], colorchar );
 				con.x += 2;
 			}
 		}
 
-		switch( c )
+		switch( txt[0] )
 		{
 		case '\n':
 			color = ColorIndex( COLOR_WHITE );
@@ -536,7 +542,7 @@ static void Con_Print2( const char *txt, bool notify )
 			break;
 
 		default: // display character and advance
-			addchartostr( &con.text[0], c );
+			addchartostr( &con.text[0], txt );
 			con.x++;
 			if( con.x >= con.linewidth )	// haha welcome to 1995 lol
 				con.x = 0;
@@ -556,7 +562,7 @@ static void Con_Print2( const char *txt, bool notify )
 			break;
 		}
 
-		txt++;
+		txt += Q_Utf8SyncPos( txt, 1, UTF8SYNC_RIGHT );
 	}
 }
 

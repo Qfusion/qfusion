@@ -555,15 +555,6 @@ void CL_CheckDownloadTimeout( void );
 //
 // cl_screen.c
 //
-#define SMALL_CHAR_WIDTH    8
-#define SMALL_CHAR_HEIGHT   16
-
-#define BIG_CHAR_WIDTH	    16
-#define BIG_CHAR_HEIGHT	    16
-
-#define GIANT_CHAR_WIDTH    32
-#define GIANT_CHAR_HEIGHT   48
-
 void SCR_InitScreen( void );
 void SCR_UpdateScreen( void );
 void SCR_BeginLoadingPlaque( void );
