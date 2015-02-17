@@ -34,4 +34,4 @@ void IN_ShowSoftKeyboard( bool show );
 
 bool IN_ShowUICursor( void );
 
-bool IN_GetInputLanguage( char *dest, size_t size );
+void IN_GetInputLanguage( char *dest, size_t size );
