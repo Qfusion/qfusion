@@ -736,9 +736,9 @@ void Con_DrawNotify( void )
 	if( cls.key_dest == key_message )
 	{
 		int x, y;
-		int width, prewidth;
-		int promptwidth, cursorwidth;
-		char lang[16], langstr[32];
+		int width, swidth, prewidth = 0;
+		int promptwidth;
+		char lang[16], langstr[20];
 		struct qfontface_s *font = NULL;
 
 		if( con_chatCGame->integer )
@@ -764,23 +764,19 @@ void Con_DrawNotify( void )
 
 		// 48 is an arbitrary offset for not overlapping the FPS and clock prints
 		width -= 48 * viddef.height / 600;
-		cursorwidth = SCR_strWidth( "_", font, 0 );
 
 		if( chat_team )
-		{
 			say = "say_team:";
-		}
 		else
-		{
 			say = "say:";
-		}
 
 		translated = L10n_TranslateString( "common", say );
-		if( !translated ) {
+		if( !translated )
 			translated = say;
-		}
 		SCR_DrawString( x, y, ALIGN_LEFT_TOP, translated, font, colorWhite );
 		promptwidth = SCR_strWidth( translated, font, 0 ) + SCR_strWidth( " ", font, 0 );
+		x += promptwidth;
+		width -= promptwidth;
 
 		IN_GetInputLanguage( lang, sizeof( lang ) );
 		if( lang[0] && strcmp( lang, "EN" ) )
@@ -790,22 +786,42 @@ void Con_DrawNotify( void )
 			SCR_DrawString( x + width, y, ALIGN_LEFT_TOP, langstr, font, colorWhite );
 		}
 
+		width -= SCR_strWidth( "_", font, 0 );
+
 		s = chat_buffer;
-		prewidth = chat_linepos ? SCR_strWidth( s, font, chat_linepos ) : 0;
+		swidth = SCR_strWidth( s, font, 0 );
+		if( chat_linepos )
+		{
+			if( chat_linepos == chat_bufferlen )
+				prewidth = swidth;
+			else
+				prewidth = SCR_strWidth( s, font, chat_linepos );
+		}
 
-		// don't let the cursor go beyond the left screen edge
-		clamp_high( chat_prestep, prewidth );
+		if( swidth > width )
+		{
+			// don't let the cursor go beyond the left screen edge
+			clamp_high( chat_prestep, prewidth );
 
-		// don't let it go beyond the right screen edge
-		clamp_low( chat_prestep, prewidth - ( width - promptwidth - cursorwidth ) );
+			// don't let it go beyond the right screen edge
+			clamp_low( chat_prestep, prewidth - width );
+
+			// don't leave an empty space after the string when deleting a character
+			if( ( swidth > width ) && ( ( swidth - chat_prestep ) < width ) ) {
+				chat_prestep = swidth - width;
+			}
+		}
+		else
+		{
+			chat_prestep = 0;
+		}
 
 		// FIXME: we double the font height to compensate for alignment issues
-		SCR_DrawClampString( x + promptwidth - chat_prestep,
-			y, s, x + promptwidth, y,
+		SCR_DrawClampString( x - chat_prestep, y, s, x, y,
 			x + width, y + SCR_strHeight( font ) * 2, font, colorWhite );
 
 		if( (int)( cls.realtime>>8 )&1 )
-			SCR_DrawRawChar( x + promptwidth + prewidth - chat_prestep, y, '_',
+			SCR_DrawRawChar( x + prewidth - chat_prestep, y, '_',
 			font, colorWhite );
 	}
 }
