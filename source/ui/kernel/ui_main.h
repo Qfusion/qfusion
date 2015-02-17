@@ -10,6 +10,7 @@
 
 #include "kernel/ui_rocketmodule.h"
 #include "kernel/ui_documentloader.h"
+#include "kernel/ui_navigationstack.h"
 #include "kernel/ui_streamcache.h"
 #include "kernel/ui_demoinfo.h"
 #include "kernel/ui_downloadinfo.h"
