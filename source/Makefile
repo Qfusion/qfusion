@@ -151,7 +151,7 @@ ifeq ($(USE_MINGW),YES)
 BUILD_STEAMLIB=NO
 
 CFLAGS_COMMON=-D_M_IX86 $(CFLAGS) -MD -I. -Iwin32/include -I../libsrcs/zlib -I../libsrcs/libcurl/include -D__WIN32 -D__USE_LARGEFILE -D__USE_LARGEFILE64 -mwindows -Wall -Wno-unknown-pragmas -Wno-unused-function -Winvalid-pch
-CXXFLAGS_COMMON=-std=c++11
+CXXFLAGS_COMMON=-std=c++0x
 
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
@@ -232,7 +232,7 @@ TV_SERVER_EXE=qfusiontv_server_$(ARCH).exe
 else # USE_MINGW
 ####################### NORMAL *NIX? ######################
 CFLAGS_COMMON=$(CFLAGS) -pipe -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -Wall -Wno-unused-function -fvisibility=hidden -Winvalid-pch
-CXXFLAGS_COMMON=-std=c++11
+CXXFLAGS_COMMON=-std=c++0x
 CFLAGS_RELEASE=-O2 -fno-strict-aliasing -ffast-math -funroll-loops -DNDEBUG -msse2
 CFLAGS_DEBUG=-O0 -ggdb -D_DEBUG
 ifeq ($(DEBUG_BUILD),YES)
