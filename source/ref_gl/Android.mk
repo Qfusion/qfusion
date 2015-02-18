@@ -16,34 +16,6 @@ LOCAL_SRC_FILES := \
   ../qalgo/q_trie.c \
   ../qcommon/bsp.c \
   ../qcommon/patch.c \
-  r_alias.c \
-  r_backend.c \
-  r_backend_program.c \
-  r_cin.c \
-  r_cmds.c \
-  r_cull.c \
-  r_framebuffer.c \
-  r_image.c \
-  r_imagelib.c \
-  r_light.c \
-  r_main.c \
-  r_math.c \
-  r_mesh.c \
-  r_model.c \
-  r_poly.c \
-  r_portals.c \
-  r_program.c \
-  r_public.c \
-  r_q3bsp.c \
-  r_register.c \
-  r_scene.c \
-  r_shader.c \
-  r_shadow.c \
-  r_skin.c \
-  r_skm.c \
-  r_sky.c \
-  r_surf.c \
-  r_trace.c \
-  r_vbo.c
+  $(wildcard $(LOCAL_PATH)/*.c)
 
 include $(BUILD_SHARED_LIBRARY)

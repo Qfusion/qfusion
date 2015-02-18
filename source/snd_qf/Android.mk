@@ -12,13 +12,7 @@ LOCAL_SRC_FILES := \
   ../android/android_snd.c \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  ../snd_common/snd_cmdque.c \
-  snd_dma.c \
-  snd_main.c \
-  snd_mem.c \
-  snd_mix.c \
-  snd_music.c \
-  snd_ogg.c \
-  snd_syscalls.c
+  $(wildcard $(LOCAL_PATH)/../snd_common/*.c) \
+  $(wildcard $(LOCAL_PATH)/*.c)
 
 include $(BUILD_SHARED_LIBRARY)
