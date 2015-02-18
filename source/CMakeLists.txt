@@ -91,7 +91,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 # Linux specific settings
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     # If no build type was specified - use release build settings
     if (NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
