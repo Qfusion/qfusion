@@ -1538,7 +1538,7 @@ void IN_GetInputLanguage( char *dest, size_t size )
 	lang[0] = '\0';
 
 	GetLocaleInfo(
-		MAKELCID( GetKeyboardLayout( 0 ), SORT_DEFAULT ),
+		MAKELCID( ( WORD )( GetKeyboardLayout( 0 ) ), SORT_DEFAULT ),
 		LOCALE_SISO639LANGNAME,
 		lang, sizeof( lang ) );
 
