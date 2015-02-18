@@ -308,24 +308,7 @@ LONG WINAPI MainWndProc(
 						WPARAM wParam,
 						LPARAM lParam )
 {
-	if( uMsg == MSH_MOUSEWHEEL )
-	{
-		if( mouse_wheel_type != MWHEEL_DINPUT )
-		{
-			mouse_wheel_type = MWHEEL_WM;
-			if( ( ( int ) wParam ) > 0 )
-			{
-				Key_Event( K_MWHEELUP, true, sys_msg_time );
-				Key_Event( K_MWHEELUP, false, sys_msg_time );
-			}
-			else
-			{
-				Key_Event( K_MWHEELDOWN, true, sys_msg_time );
-				Key_Event( K_MWHEELDOWN, false, sys_msg_time );
-			}
-		}
-		return DefWindowProcW( hWnd, uMsg, wParam, lParam );
-	}
+	BOOL isIMEMessage = ImmIsUIMessage( NULL, uMsg, wParam, lParam );
 
 	switch( uMsg )
 	{
@@ -362,17 +345,17 @@ LONG WINAPI MainWndProc(
 		cl_parent_hwnd = GetParent( hWnd );
 		AppActivate( TRUE, FALSE, FALSE );
 		MSH_MOUSEWHEEL = RegisterWindowMessage( "MSWHEEL_ROLLMSG" );
-		return DefWindowProcW( hWnd, uMsg, wParam, lParam );
+		break;
 
 	case WM_PAINT:
-		return DefWindowProcW( hWnd, uMsg, wParam, lParam );
+		break;
 
 	case WM_DESTROY:
 		// let sound and input know about this?
 		cl_hwnd = NULL;
 		cl_parent_hwnd = NULL;
 		AppActivate( FALSE, FALSE, TRUE );
-		return DefWindowProcW( hWnd, uMsg, wParam, lParam );
+		break;
 
 	case WM_ACTIVATE:
 		{
@@ -395,7 +378,7 @@ LONG WINAPI MainWndProc(
 					ShowWindow( cl_hwnd, SW_MINIMIZE );
 			}
 		}
-		return DefWindowProcW( hWnd, uMsg, wParam, lParam );
+		break;
 
 	case WM_MOVE:
 		{
@@ -424,7 +407,7 @@ LONG WINAPI MainWndProc(
 					IN_Activate( true );
 			}
 		}
-		return DefWindowProcW( hWnd, uMsg, wParam, lParam );
+		break;
 
 		// this is complicated because Win32 seems to pack multiple mouse events into
 		// one update sometimes, so we always check all states and look for events
@@ -453,7 +436,8 @@ LONG WINAPI MainWndProc(
 	case WM_SYSCOMMAND:
 		if( wParam == SC_SCREENSAVE )
 			return 0;
-		return DefWindowProcW( hWnd, uMsg, wParam, lParam );
+		break;
+
 	case WM_SYSKEYDOWN:
 		if( wParam == VK_RETURN ) {
 			Cbuf_ExecuteText( EXEC_APPEND, "toggle vid_fullscreen\n" );
@@ -504,13 +488,28 @@ LONG WINAPI MainWndProc(
 	case WM_ENTERSIZEMOVE:
 		CL_SoundModule_Clear();
 		break;
+	}
 
-	default: // pass all unhandled messages to DefWindowProc
-		return DefWindowProcW( hWnd, uMsg, wParam, lParam );
+	if( uMsg == MSH_MOUSEWHEEL )
+	{
+		if( mouse_wheel_type != MWHEEL_DINPUT )
+		{
+			mouse_wheel_type = MWHEEL_WM;
+			if( ( ( int ) wParam ) > 0 )
+			{
+				Key_Event( K_MWHEELUP, true, sys_msg_time );
+				Key_Event( K_MWHEELUP, false, sys_msg_time );
+			}
+			else
+			{
+				Key_Event( K_MWHEELDOWN, true, sys_msg_time );
+				Key_Event( K_MWHEELDOWN, false, sys_msg_time );
+			}
+		}
 	}
 
 	/* return 0 if handled message, 1 if not */
-	return DefWindowProcW( hWnd, uMsg, wParam, lParam );
+	return isIMEMessage ? 1 : DefWindowProcW( hWnd, uMsg, wParam, lParam );
 }
 
 /*
