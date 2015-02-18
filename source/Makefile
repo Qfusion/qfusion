@@ -183,7 +183,7 @@ LDFLAGS_COMMON+= -s
 LXXFLAGS_COMMON+= -s
 endif
 
-LDFLAGS_CLIENT=-lcurlstat -lwsock32 -lgdi32 -ldinput -ldxguid -lws2_32 -lzstat
+LDFLAGS_CLIENT=-lcurlstat -lwsock32 -lgdi32 -ldinput -ldxguid -lws2_32 -lzstat -limm32
 LDFLAGS_DED=-lcurlstat -lwsock32 -lws2_32 -lzstat
 LDFLAGS_MODULE=-shared
 LDFLAGS_TV_SERVER=-lcurlstat -lwsock32 -lws2_32 -lzstat
