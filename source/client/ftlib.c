@@ -314,6 +314,21 @@ size_t FTLIB_StrlenForWidth( const char *str, struct qfontface_s *font, size_t m
 }
 
 /*
+* FTLIB_FontUnderline
+*/
+int FTLIB_FontUnderline( struct qfontface_s *font, int *thickness )
+{
+	if( ftlib_export ) {
+		return ftlib_export->FontUnderline( font, thickness );
+	}
+
+	if( thickness ) {
+		*thickness = 0;
+	}
+	return 0;
+}
+
+/*
 * FTLIB_DrawRawChar
 */
 void FTLIB_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color )

@@ -89,6 +89,8 @@ typedef struct qfontface_s
 	int height;
 	int glyphYOffset;
 
+	int underlinePosition, underlineThickness;
+
 	// a font may not fit into single image
 	unsigned int numShaders;
 	shader_t **shaders;
@@ -161,6 +163,7 @@ const char *FTLIB_FontShaderName( qfontface_t *qfont, unsigned int shaderNum );
 size_t FTLIB_fontHeight( qfontface_t *font );
 size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen );
 size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth );
+int FTLIB_FontUnderline( qfontface_t *font, int *thickness );
 void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color );
 void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
