@@ -387,6 +387,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	int fontHeight, baseLine;
 	int error;
 	FT_Face ftface;
+	float unitScale;
 	bool hasKerning;
 	qftfamily_t *qftfamily = ( qftfamily_t * )( family->familydata );
 	qftface_t *qttf = NULL;
@@ -421,7 +422,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	// use scaled version of the original design text height (the vertical 
 	// distance from one baseline to the next) as font height
 	fontHeight = ( ftface->size->metrics.height + ( 1 << 5 ) ) >> 6;
-	baseLine = ( ftface->size->metrics.height - ftface->size->metrics.ascender + ( 1 << 5 ) ) >> 6;
+	baseLine = ( ftface->size->metrics.height - ftface->size->metrics.ascender ) >> 6;
+	unitScale = ( float )fontHeight / ( float )ftface->units_per_EM;
 
 	// store font info
 	qfont = FTLIB_Alloc( ftlibPool, sizeof( qfontface_t ) );
@@ -429,6 +431,12 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	qfont->size = size;
 	qfont->height = fontHeight;
 	qfont->glyphYOffset = fontHeight - baseLine;
+	qfont->underlineThickness = ftface->underline_thickness * unitScale + 0.5f;
+	if( qfont->underlineThickness <= 0 ) {
+		qfont->underlineThickness = 1;
+	}
+	qfont->underlinePosition = qfont->glyphYOffset -
+		( int )( ftface->underline_position * unitScale ) - ( qfont->underlineThickness >> 1 );
 	qfont->numShaders = 1;
 	if( fontHeight > 48 ) {
 		qfont->shaderHeight = FTLIB_FONT_IMAGE_HEIGHT_LARGE;

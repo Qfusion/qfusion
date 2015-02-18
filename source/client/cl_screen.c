@@ -261,6 +261,11 @@ size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth )
 	return FTLIB_StrlenForWidth( str, font, maxwidth );
 }
 
+int SCR_FontUnderline( qfontface_t *font, int *thickness )
+{
+	return FTLIB_FontUnderline( font, thickness );
+}
+
 //===============================================================================
 //STRINGS DRAWING
 //===============================================================================
