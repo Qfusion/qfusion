@@ -21,7 +21,7 @@ include $(QFUSION_PATH)/source/ref_gl/Android.mk
 include $(QFUSION_PATH)/source/snd_openal/Android.mk
 include $(QFUSION_PATH)/source/snd_qf/Android.mk
 
-include $(QFUSION_PATH)/source/Android.mk
+include $(QFUSION_PATH)/source/client/Android.mk
 
 # Set NDK_APP_DST_DIR to the temporary folder where the compiled game DLLs should be located before creating a modules PK3 with them.
 # On Windows, the absolute path is relative to the disk root.

@@ -10,18 +10,8 @@ LOCAL_STATIC_LIBRARIES := angelscript
 LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  addon/addon_any.cpp \
-  addon/addon_cvar.cpp \
-  addon/addon_dictionary.cpp \
-  addon/addon_math.cpp \
-  addon/addon_scriptarray.cpp \
-  addon/addon_string.cpp \
-  addon/addon_stringutils.cpp \
-  addon/addon_time.cpp \
-  addon/addon_vec3.cpp \
-  qas_angelwrap.cpp \
-  qas_main.cpp \
-  qas_precompiled.cpp \
-  qas_syscalls.cpp
+  $(wildcard $(LOCAL_PATH)/addon/*.cpp) \
+  $(wildcard $(LOCAL_PATH)/*.c) \
+  $(wildcard $(LOCAL_PATH)/*.cpp)
 
 include $(BUILD_SHARED_LIBRARY)

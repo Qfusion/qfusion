@@ -8,10 +8,6 @@ LOCAL_STATIC_LIBRARIES := theora vorbis
 LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  cin.c \
-  cin_main.c \
-  cin_roq.c \
-  cin_syscalls.c \
-  cin_theora.c
+  $(wildcard $(LOCAL_PATH)/*.c)
 
 include $(BUILD_SHARED_LIBRARY)
