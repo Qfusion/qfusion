@@ -1,10 +1,11 @@
 #!/bin/sh
 
 MORE_OPTS=""
+[ "$ARCH" = "x64" ] && MORE_OPTS="${MORE_OPTS} --64"
 [ "$ENABLE_SHARED" != "YES" ] && MORE_OPTS="${MORE_OPTS} --static"
 
 cd ${SOURCE_DIR}libsrcs/zlib && \
-./configure --libdir={$LIB_DIR} --includedir=${INCLUDE_DIR} \
+./configure --libdir={$LIB_DIR} --includedir=${INCLUDE_DIR} --uname=Linux \
 $MORE_OPTS && \
 ${MAKE}
 
