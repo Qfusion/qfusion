@@ -3,6 +3,7 @@ project(qfusion)
 cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
+include(QfusionUtils)
 
 # You can override this var with commandline option -DQFUSION_CLIENT_NAME=name
 if (NOT QFUSION_CLIENT_NAME)
@@ -54,13 +55,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if (MINGW)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
-        set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
-        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
+        add_common_link_flags("-static -static-libgcc -static-libstdc++")
     else()
-        set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
-        set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /LTCG")
-        set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG")
+        add_release_link_flags("/LTCG")
         
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT /W4 /Ob1 /GL /Ot")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd /W4")
@@ -113,16 +110,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 
     # -Wl,--as-needed
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--as-needed")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--as-needed")
-    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -Wl,--as-needed")
+    add_common_link_flags("-Wl,--as-needed")
 
     # -s in release link flags
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -s")
-    set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} -s")
-    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -s")
-    set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} -s")
+    add_release_link_flags("-s")
 
     # Remove compilating flags from link options
     # string(REPLACE "<FLAGS>" "" CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE}")
@@ -185,16 +176,6 @@ else()
     find_package(Rocket REQUIRED)
 endif()
 
-macro(find_windows_release_libs libs)
-    foreach (lib_name ${${libs}})
-        string(REPLACE "lib/debug" "lib/release" release_lib_name ${lib_name})
-        set(${libs}_DEBUG ${${libs}_DEBUG} debug ${lib_name})
-        set(${libs}_RELEASE ${${libs}_RELEASE} optimized ${release_lib_name})
-    endforeach()
-
-    set(${libs} ${${libs}_RELEASE} ${${libs}_DEBUG})
-endmacro()
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(CMAKE_EXECUTABLE_SUFFIX "_${QFUSION_WINDOWS_ARCH}${CMAKE_EXECUTABLE_SUFFIX}")
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -219,19 +200,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_SHARED_LIBRARY_SUFFIX "_${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
-macro(capitalize s)
-    string(SUBSTRING ${${s}} 0 1 s_1)
-    string(SUBSTRING ${${s}} 1 -1 s_2)
-    string(TOUPPER ${s_1} s_1)
-    set(${s} ${s_1}${s_2})
-endmacro()
-
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_SHARED_LIBRARY_SUFFIX "_mac${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
     capitalize(QFUSION_CLIENT_NAME)
 endif()
-
 
 macro(qf_set_output_dir name dir)
     foreach (OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
