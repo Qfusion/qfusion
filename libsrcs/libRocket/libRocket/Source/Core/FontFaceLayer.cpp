@@ -107,7 +107,7 @@ bool FontFaceLayer::Initialise(const FontFaceHandle* _handle, FontEffect* _effec
 bool FontFaceLayer::AddNewGlyphs()
 {
 	const FontGlyphMap& glyphs = handle->GetGlyphs();
-	texture_layouts.push_back(std::unique_ptr<TextureLayout>(new TextureLayout()));
+	texture_layouts.push_back(std::move(std::unique_ptr<TextureLayout>(new TextureLayout())));
 	TextureLayout& texture_layout = *texture_layouts.back();
 	// Initialise the texture layout for the glyphs.
 	for (FontGlyphMap::const_iterator i = glyphs.begin(); i != glyphs.end(); ++i)
