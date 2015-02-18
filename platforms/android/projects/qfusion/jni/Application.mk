@@ -1,6 +1,6 @@
 APP_ABI := armeabi-v7a x86
 APP_CFLAGS := -ffast-math -fno-strict-aliasing -funroll-loops -Werror=return-type
-APP_CPPFLAGS := -fexceptions -frtti -std=c++11
+APP_CPPFLAGS := -fexceptions -frtti -std=c++0x
 APP_OPTIM := release
 APP_PLATFORM := android-16
 APP_STL := gnustl_shared
