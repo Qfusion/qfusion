@@ -6,7 +6,7 @@ LOCALBASE?=/usr/local
 FREETYPE_INC?=-I../../../libsrcs/libfreetype/include
 
 CXXFLAGS:=$(subst -I../libsrcs/,-I../../../libsrcs/,$(CXXFLAGS))
-CXXFLAGS+=-DROCKET_STATIC_LIB -IInclude -std=c++11
+CXXFLAGS+=-DROCKET_STATIC_LIB -IInclude
 
 CXXFLAGS+=$(FREETYPE_INC)
 
