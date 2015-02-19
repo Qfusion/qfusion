@@ -145,7 +145,7 @@ static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned in
 					return NULL;
 				}
 				qttf->ftfallbacksize = fallback->ftsize;
-				qfont->hasKerning |= ( FT_HAS_KERNING( qttf->ftsizefallback->face ) ? true : false );
+				qfont->hasKerning |= ( FT_HAS_KERNING( qttf->ftfallbacksize->face ) ? true : false );
 			}
 
 			if( qttf->ftfallbacksize && !( qftglyph->flags & QFTGLYPH_SEARCHED_FALLBACK ) ) {
