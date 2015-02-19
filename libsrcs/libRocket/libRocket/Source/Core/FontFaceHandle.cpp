@@ -589,7 +589,7 @@ int FontFaceHandle::GetKerning(word lhs, word rhs) const
 	{
 		ft_face = this->backup_face;
 		ft_size = this->backup_size;
-		if (!ftface)
+		if (!ft_face)
 			return 0;
 		if (!FT_HAS_KERNING(ft_face))
 			return 0;
