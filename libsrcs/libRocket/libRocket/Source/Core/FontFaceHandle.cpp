@@ -580,8 +580,8 @@ void FontFaceHandle::BuildGlyph(FontGlyph& glyph, FT_GlyphSlot ft_glyph)
 int FontFaceHandle::GetKerning(word lhs, word rhs) const
 {
 	FT_Vector ft_kerning;
-	FT_Face ft_face = this->ftface;
-	FT_Size ft_size = this->ftsize;
+	FT_Face ft_face = this->ft_face;
+	FT_Size ft_size = this->ft_size;
 	
 	int lindex = FT_Get_Char_Index(ft_face, lhs);
 	int rindex = FT_Get_Char_Index(ft_face, rhs);
