@@ -109,6 +109,8 @@ public:
 	/// @return The layer's colour.
 	const Colourb& GetColour() const;
 	bool AddNewGlyphs();
+	void MergeFromBase(void);
+	const FontFaceLayer *GetBaseLayer(void) const { return base; }
 
 private:
 	struct Character
@@ -130,6 +132,8 @@ private:
 
 	const FontFaceHandle* handle;
 	FontEffect* effect;
+	const FontFaceLayer* base = NULL;
+	bool deep_copy = false;
 
 	std::vector< std::unique_ptr<TextureLayout> > texture_layouts;
 

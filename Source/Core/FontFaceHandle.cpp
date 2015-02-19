@@ -55,8 +55,8 @@ FontFaceHandle::FontFaceHandle()
 	underline_position = 0;
 	underline_thickness = 0;
 
-	ft_face = NULL;
-	backup_face = NULL;
+	ft_size = NULL;
+	backup_size = NULL;
 
 	base_layer = NULL;
 
@@ -65,9 +65,9 @@ FontFaceHandle::FontFaceHandle()
 
 FontFaceHandle::~FontFaceHandle()
 {
-	if (ft_face)
+	if (ft_size)
 		FT_Done_Size(ft_size);
-	if (backup_face)
+	if (backup_size)
 		FT_Done_Size(backup_size);
 
 	for (FontGlyphMap::iterator i = glyphs.begin(); i != glyphs.end(); ++i)
@@ -89,11 +89,10 @@ bool FontFaceHandle::Initialise(FT_Face ft_face, const String& _charset, int _si
 		return false;
 	}
 
-	this->ft_face = ft_face;
-	this->backup_face = (FT_Face)FontDatabase::GetBackupFace();
+	FT_Face backup_face = (FT_Face)FontDatabase::GetBackupFace();
 
 	// Set the character size on the font face.
-	FT_New_Size(this->ft_face, &ft_size);
+	FT_New_Size(ft_face, &ft_size);
 	FT_Activate_Size(ft_size);
 	FT_Error error = FT_Set_Char_Size(ft_face, 0, size << 6, 0, 0);
 	if (error != 0)
@@ -102,14 +101,14 @@ bool FontFaceHandle::Initialise(FT_Face ft_face, const String& _charset, int _si
 		return false;
 	}
 
-	if (this->backup_face)
+	if (backup_face)
 	{
-		FT_New_Size(this->backup_face, &backup_size);
+		FT_New_Size(backup_face, &backup_size);
 		FT_Activate_Size(backup_size);
-		FT_Error error = FT_Set_Char_Size(this->backup_face, 0, size << 6, 0, 0);
+		FT_Error error = FT_Set_Char_Size(backup_face, 0, size << 6, 0, 0);
 		if (error != 0)
 		{
-			Log::Message(Log::LT_ERROR, "Unable to set the character size '%d' on the font face '%s %s'.", size, this->backup_face->family_name, this->backup_face->style_name);
+			Log::Message(Log::LT_ERROR, "Unable to set the character size '%d' on the font face '%s %s'.", size, backup_face->family_name, backup_face->style_name);
 			return false;
 		}
 	}
@@ -208,12 +207,22 @@ int FontFaceHandle::GetStringWidth(const WString& string, word prior_character)
 	if ( update )
 	{
 		GenerateMetrics();
+
+		base_layer->AddNewGlyphs();
+
 		int num = 0;
 		for (size_t j = 0; j < layer_configurations.size(); ++j)
 		{
 			for (size_t k = 0; k < layer_configurations[j].size(); ++k)
 			{
-				layer_configurations[j][k]->AddNewGlyphs();
+				FontFaceLayer *layer = layer_configurations[j][k];
+				const FontFaceLayer *base_layer_ = layer->GetBaseLayer();
+
+				if (base_layer_ != NULL)
+					layer->MergeFromBase();
+				else
+					layer->AddNewGlyphs();
+
 				num++;
 			}
 		}
@@ -404,6 +413,10 @@ void FontFaceHandle::OnReferenceDeactivate()
 
 void FontFaceHandle::GenerateMetrics()
 {
+	FT_Face ft_face = ft_size->face;
+
+	FT_Activate_Size(ft_size);
+
 	line_height = ft_face->size->metrics.height >> 6;
 	baseline = line_height - (ft_face->size->metrics.ascender >> 6);
 
@@ -429,10 +442,18 @@ void FontFaceHandle::GenerateMetrics()
 
 bool FontFaceHandle::BuildGlyphMap(const UnicodeRange& unicode_range)
 {
+	FT_Face ft_face, backup_face;
+
+	ft_face = ft_size->face;
+	backup_face = NULL;
+
 	FT_Activate_Size(ft_size);
 
-	if (backup_face)
+	if (backup_size)
+	{
+		backup_face = backup_size->face;
 		FT_Activate_Size(backup_size);
+	}
 
 	bool success = false;
 	for (size_t character_code = (Math::Max< unsigned int >(unicode_range.min_codepoint, 32)); character_code <= unicode_range.max_codepoint; ++character_code)
@@ -579,13 +600,39 @@ void FontFaceHandle::BuildGlyph(FontGlyph& glyph, FT_GlyphSlot ft_glyph)
 
 int FontFaceHandle::GetKerning(word lhs, word rhs) const
 {
-	if (!FT_HAS_KERNING(ft_face))
+	FT_Vector ft_kerning;
+	FT_Size ft_size = this->ft_size;
+	FT_Face ft_face = ft_size->face;
+
+	int lindex = FT_Get_Char_Index(ft_face, lhs);
+	int rindex = FT_Get_Char_Index(ft_face, rhs);
+	if (lindex == 0 && rindex == 0)
+	{
+		if (!backup_size)
+			return 0;
+
+		ft_size = this->backup_size;
+		ft_face = ft_size->face;
+
+		if (!FT_HAS_KERNING(ft_face))
+			return 0;
+
+		lindex = FT_Get_Char_Index(ft_face, lhs);
+		rindex = FT_Get_Char_Index(ft_face, rhs);
+	}
+	else
+	{
+		if (!FT_HAS_KERNING(ft_face))
+			return 0;
+	}
+	
+	if (lindex == 0 || rindex == 0)
 		return 0;
 
-	FT_Vector ft_kerning;
+	FT_Activate_Size(ft_size);
 
 	FT_Error ft_error = FT_Get_Kerning(ft_face,
-		FT_Get_Char_Index(ft_face, lhs), FT_Get_Char_Index(ft_face, rhs),
+		lindex, rindex,
 		FT_KERNING_DEFAULT, &ft_kerning);
 
 	if (ft_error != 0)
