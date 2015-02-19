@@ -579,13 +579,36 @@ void FontFaceHandle::BuildGlyph(FontGlyph& glyph, FT_GlyphSlot ft_glyph)
 
 int FontFaceHandle::GetKerning(word lhs, word rhs) const
 {
-	if (!FT_HAS_KERNING(ft_face))
+	FT_Vector ft_kerning;
+	FT_Face ft_face = this->ftface;
+	FT_Size ft_size = this->ftsize;
+	
+	int lindex = FT_Get_Char_Index(ft_face, lhs);
+	int rindex = FT_Get_Char_Index(ft_face, rhs);
+	if (lindex == 0 && rindex == 0)
+	{
+		ft_face = this->backup_face;
+		ft_size = this->backup_size;
+		if (!ftface)
+			return 0;
+		if (!FT_HAS_KERNING(ft_face))
+			return 0;
+		lindex = FT_Get_Char_Index(ft_face, lhs);
+		rindex = FT_Get_Char_Index(ft_face, rhs);
+	}
+	else
+	{
+		if (!FT_HAS_KERNING(ft_face))
+			return 0;
+	}
+	
+	if (lindex == 0 || rindex == 0)
 		return 0;
 
-	FT_Vector ft_kerning;
+	FT_Activate_Size(ft_size);
 
 	FT_Error ft_error = FT_Get_Kerning(ft_face,
-		FT_Get_Char_Index(ft_face, lhs), FT_Get_Char_Index(ft_face, rhs),
+		lindex, rindex,
 		FT_KERNING_DEFAULT, &ft_kerning);
 
 	if (ft_error != 0)
