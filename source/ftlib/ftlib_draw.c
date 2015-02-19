@@ -70,9 +70,6 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 				glyph = FTLIB_GetGlyph( font, num );
 			}
 
-			if( !glyph )
-				break;
-
 			if( !glyph->shader )
 				font->f->renderString( font, olds );
 
@@ -204,8 +201,6 @@ void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t col
 		num = FTLIB_REPLACEMENT_GLYPH;
 		glyph = FTLIB_GetGlyph( font, num );
 	}
-	if( !glyph )
-		return;
 
 	if( !glyph->shader )
 		font->f->renderString( font, Q_WCharToUtf8Char( num ) );

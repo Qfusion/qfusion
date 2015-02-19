@@ -50,7 +50,6 @@ FT_Library ftLibrary = NULL;
 
 typedef struct qftfallback_s
 {
-	FT_Face ftface;
 	FT_Size ftsize;
 	unsigned int size;
 	struct qftfallback_s *next;
@@ -67,7 +66,6 @@ typedef struct
 {
 	unsigned int imageCurX, imageCurY, imageCurLineHeight;
 
-	FT_Face ftface, ftfallbackface;
 	FT_Size ftsize, ftfallbacksize;
 	qfontfamily_t *fallbackFamily;
 	bool fallbackLoaded;
@@ -107,14 +105,14 @@ static qftfallback_t *QFT_GetFallbackFace( qfontfamily_t *qfamily, unsigned int 
 	}
 
 	fallback = FTLIB_Alloc( ftlibPool, sizeof( qftfallback_t ) );
-	fallback->ftface = qftfamily->ftface;
+
+	FT_New_Size( qftfamily->ftface, &( fallback->ftsize ) );
+	FT_Activate_Size( fallback->ftsize );
+	FT_Set_Pixel_Sizes( qftfamily->ftface, size, 0 );
+
 	fallback->size = size;
 	fallback->next = qftfamily->fallbacks;
 	qftfamily->fallbacks = fallback;
-
-	FT_New_Size( qftfamily->ftface, &fallback->ftsize );
-	FT_Activate_Size( fallback->ftsize );
-	FT_Set_Pixel_Sizes( qftfamily->ftface, size, 0 );
 
 	return fallback;
 }
@@ -130,7 +128,7 @@ static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned in
 	if( !qftglyph->gindex ) {
 		if( !( qftglyph->flags & QFTGLYPH_SEARCHED_MAIN ) ) {
 			qftglyph->flags |= QFTGLYPH_SEARCHED_MAIN;
-			qftglyph->gindex = FT_Get_Char_Index( qttf->ftface, num );
+			qftglyph->gindex = FT_Get_Char_Index( qttf->ftsize->face, num );
 			if( qftglyph->gindex ) {
 				return &( qftglyph->qglyph );
 			}
@@ -146,14 +144,13 @@ static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned in
 				if( !fallback ) {
 					return NULL;
 				}
-				qttf->ftfallbackface = fallback->ftface;
 				qttf->ftfallbacksize = fallback->ftsize;
-				qfont->hasKerning |= ( FT_HAS_KERNING( qttf->ftfallbackface ) ? true : false );
+				qfont->hasKerning |= ( FT_HAS_KERNING( qttf->ftsizefallback->face ) ? true : false );
 			}
 
-			if( qttf->ftfallbackface && !( qftglyph->flags & QFTGLYPH_SEARCHED_FALLBACK ) ) {
+			if( qttf->ftfallbacksize && !( qftglyph->flags & QFTGLYPH_SEARCHED_FALLBACK ) ) {
 				qftglyph->flags |= QFTGLYPH_SEARCHED_FALLBACK;
-				qftglyph->gindex = FT_Get_Char_Index( qttf->ftfallbackface, num );
+				qftglyph->gindex = FT_Get_Char_Index( qttf->ftfallbacksize->face, num );
 				if( qftglyph->gindex ) {
 					qftglyph->flags |= QFTGLYPH_FROM_FALLBACK;
 				}
@@ -172,6 +169,7 @@ static int QFT_GetKerning( qfontface_t *qfont, wchar_t char1, wchar_t char2 )
 	qftglyph_t *g1, *g2;
 	FT_UInt gi1, gi2;
 	qftface_t *qttf;
+	FT_Size ftsize;
 	FT_Vector kvec;
 
 	g1 = ( qftglyph_t * )( FTLIB_GetGlyph( qfont, char1 ) );
@@ -193,8 +191,9 @@ static int QFT_GetKerning( qfontface_t *qfont, wchar_t char1, wchar_t char2 )
 	}
 
 	qttf = ( qftface_t * )( qfont->facedata );
-	FT_Get_Kerning( ( g1->flags & QFTGLYPH_FROM_FALLBACK ) ? qttf->ftfallbackface : qttf->ftface,
-		gi1, gi2, FT_KERNING_DEFAULT, &kvec );
+	ftsize = ( ( g1->flags & QFTGLYPH_FROM_FALLBACK ) ? qttf->ftfallbacksize : qttf->ftsize );
+	FT_Activate_Size( ftsize );
+	FT_Get_Kerning( ftsize->face, gi1, gi2, FT_KERNING_DEFAULT, &kvec );
 	return kvec.x >> 6;
 }
 
@@ -227,7 +226,6 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 	qftglyph_t *qftglyph;
 	qglyph_t *qglyph;
 	FT_Error fterror;
-	FT_Face ftface;
 	FT_Size ftsize;
 	FT_GlyphSlot ftglyph;
 	FT_UInt pixelMode;
@@ -256,32 +254,25 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 		if( !qftglyph || qftglyph->qglyph.shader ) {
 			continue;
 		}
-		
-		if( qftglyph->flags & QFTGLYPH_FROM_FALLBACK ) {
-			ftsize = qttf->ftfallbacksize;
-			ftface = qttf->ftfallbackface;
-		}
-		else {
-			ftsize = qttf->ftsize;
-			ftface = qttf->ftface;
+
+		qglyph = &( qftglyph->qglyph );
+		if( qglyph->shader ) {
+			continue;
 		}
 
+		// from now, it is assumed that the current glyph's shader will be valid after this function
+		// so if continue is used, any shader, even an empty one, should be assigned to the glyph
+
+		ftsize = ( ( qftglyph->flags & QFTGLYPH_FROM_FALLBACK ) ? qttf->ftfallbacksize : qttf->ftsize );
 		FT_Activate_Size( ftsize );
-
-		fterror = FT_Load_Glyph( ftface, qftglyph->gindex, FT_LOAD_DEFAULT );
-		if( fterror != 0 ) {
-			Com_Printf( S_COLOR_YELLOW "Warning: Failed to load glyph %i for '%s', error %i\n",
+		fterror = FT_Load_Glyph( ftsize->face, qftglyph->gindex, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL );
+		if( fterror ) {
+			Com_Printf( S_COLOR_YELLOW "Warning: Failed to load and render glyph %i for '%s', error %i\n",
 				num, qfont->family->name, fterror );
+			qglyph->shader = shader;
 			continue;
 		}
-
-		ftglyph = ftface->glyph;
-		fterror = FT_Render_Glyph( ftglyph, FT_RENDER_MODE_NORMAL );
-		if( fterror != 0 ) {
-			Com_Printf( S_COLOR_YELLOW "Warning: Failed to render glyph %i for '%s', error %i\n",
-				num, qfont->family->name, fterror );
-			continue;
-		}
+		ftglyph = ftsize->face->glyph;
 
 		pixelMode = ftglyph->bitmap.pixel_mode;
 		switch( pixelMode ) {
@@ -340,7 +331,6 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 			tempLineHeight = bitmapHeight;
 		}
 
-		qglyph = &( qftglyph->qglyph );
 		qglyph->width = bitmapWidth - 2;
 		qglyph->height = bitmapHeight - 2;
 		qglyph->x_advance = ( ftglyph->advance.x + ( 1 << 5 ) ) >> 6;
@@ -429,7 +419,6 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 
 	// we are going to need this for kerning
 	qttf = FTLIB_Alloc( ftlibPool, sizeof( *qttf ) );
-	qttf->ftface = ftface;
 	qttf->ftsize = ftsize;
 
 	// use scaled version of the original design text height (the vertical 
@@ -505,7 +494,7 @@ static void QFT_UnloadFamily( qfontfamily_t *qfamily )
 
 	for( fallback = qftfamily->fallbacks; fallback; fallback = nextfallback ) {
 		nextfallback = fallback->next;
-		if( fallback->ftface ) {
+		if( fallback->ftsize ) {
 			FT_Done_Size( fallback->ftsize );
 		}
 		FTLIB_Free( fallback );
