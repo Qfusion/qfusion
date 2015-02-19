@@ -146,9 +146,7 @@ private:
 	typedef std::map< word, int > GlyphKerningMap;
 	typedef std::map< word, GlyphKerningMap > FontKerningMap;
 
-	FT_Face ft_face;
 	FT_Size ft_size;
-	FT_Face backup_face;
 	FT_Size backup_size;
 	uint8_t fonts_generated[ 0xFFFF / 256 / 8 ];
 

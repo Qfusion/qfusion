@@ -37,6 +37,8 @@ FontFaceLayer::FontFaceLayer() : colour(255, 255, 255)
 {
 	handle = NULL;
 	effect = NULL;
+	base = NULL;
+	deep_copy = 0;
 }
 
 FontFaceLayer::~FontFaceLayer()
@@ -50,6 +52,9 @@ bool FontFaceLayer::Initialise(const FontFaceHandle* _handle, FontEffect* _effec
 {
 	handle = _handle;
 	effect = _effect;
+	base = clone;
+	deep_copy = deep_clone;
+
 	if (effect != NULL)
 	{
 		effect->AddReference();
@@ -62,38 +67,7 @@ bool FontFaceLayer::Initialise(const FontFaceHandle* _handle, FontEffect* _effec
 	if (clone != NULL)
 	{
 		// Copy the cloned layer's characters.
-		characters = clone->characters;
-
-		// Copy (and reference) the cloned layer's textures.
-		for (size_t i = 0; i < clone->textures.size(); ++i)
-			textures.push_back(clone->textures[i]);
-
-		// Request the effect (if we have one) adjust the origins as appropriate.
-		if (!deep_clone &&
-			effect != NULL)
-		{
-			for (FontGlyphMap::const_iterator i = glyphs.begin(); i != glyphs.end(); ++i)
-			{
-				const FontGlyph& glyph = i->second;
-
-				CharacterMap::iterator character_iterator = characters.find(i->first);
-				if (character_iterator == characters.end())
-					continue;
-
-				Character& character = character_iterator->second;
-
-				Vector2i glyph_origin(Math::RealToInteger(character.origin.x), Math::RealToInteger(character.origin.y));
-				Vector2i glyph_dimensions(Math::RealToInteger(character.dimensions.x), Math::RealToInteger(character.dimensions.y));
-
-				if (effect->GetGlyphMetrics(glyph_origin, glyph_dimensions, glyph))
-				{
-					character.origin.x = (float) glyph_origin.x;
-					character.origin.y = (float) glyph_origin.y;
-				}
-				else
-					characters.erase(character_iterator);
-			}
-		}
+		MergeFromBase();
 	}
 	else
 	{
@@ -102,6 +76,44 @@ bool FontFaceLayer::Initialise(const FontFaceHandle* _handle, FontEffect* _effec
 
 
 	return true;
+}
+
+void FontFaceLayer::MergeFromBase()
+{
+	characters = base->characters;
+
+	const FontGlyphMap& glyphs = handle->GetGlyphs();
+
+	// Copy (and reference) the cloned layer's textures.
+	for (size_t i = textures.size(); i < base->textures.size(); ++i)
+		textures.push_back(base->textures[i]);
+
+	// Request the effect (if we have one) adjust the origins as appropriate.
+	if (!deep_copy &&
+		effect != NULL)
+	{
+		for (FontGlyphMap::const_iterator i = glyphs.begin(); i != glyphs.end(); ++i)
+		{
+			const FontGlyph& glyph = i->second;
+
+			CharacterMap::iterator character_iterator = characters.find(i->first);
+			if (character_iterator == characters.end())
+				continue;
+
+			Character& character = character_iterator->second;
+
+			Vector2i glyph_origin(Math::RealToInteger(character.origin.x), Math::RealToInteger(character.origin.y));
+			Vector2i glyph_dimensions(Math::RealToInteger(character.dimensions.x), Math::RealToInteger(character.dimensions.y));
+
+			if (effect->GetGlyphMetrics(glyph_origin, glyph_dimensions, glyph))
+			{
+				character.origin.x = (float) glyph_origin.x;
+				character.origin.y = (float) glyph_origin.y;
+			}
+			else
+				characters.erase(character_iterator);
+		}
+	}
 }
 
 bool FontFaceLayer::AddNewGlyphs()
@@ -203,8 +215,8 @@ bool FontFaceLayer::GenerateTexture(const byte*& texture_data, Vector2i& texture
 		TextureLayoutRectangle& rectangle = texture_layout.GetRectangle(i);
 		Character& character = characters[(word) rectangle.GetId()];
 
-	if (character.local_texture_index != texture_id)
-		continue;
+		if (character.local_texture_index != texture_id)
+			continue;
 
 		const FontGlyph& glyph = glyphs.find((word) rectangle.GetId())->second;
 
