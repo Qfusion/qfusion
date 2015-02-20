@@ -143,9 +143,11 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 	Trie_Find( cvar_trie, var_name, TRIE_EXACT_MATCH, (void **)&var );
 	QMutex_Unlock( cvar_mutex );
 
+	if( !var_value )
+		return NULL;
+
 	if( var )
 	{
-		assert( var_value );
 		if( !var->dvalue || strcmp( var->dvalue, var_value ) )
 		{
 			if( var->dvalue )
@@ -176,9 +178,6 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 		Cvar_FlagSet( &var->flags, flags );
 		return var;
 	}
-
-	if( !var_value )
-		return NULL;
 
 	if( Cvar_FlagIsSet( flags, CVAR_USERINFO ) || Cvar_FlagIsSet( flags, CVAR_SERVERINFO ) )
 	{
