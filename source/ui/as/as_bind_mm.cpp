@@ -97,7 +97,9 @@ public:
 	}
 
 	void addEventListener( const asstring_t &event, asIScriptFunction *func ) {
-		EventCallback cb = ASBind::CreateFunctionPtr( func, cb );
+		EventCallback cb;
+		
+		cb = ASBind::CreateFunctionPtr( func, cb );
 
 		Listener l( ASSTR( event ), cb );
 		listeners.push_back( l );

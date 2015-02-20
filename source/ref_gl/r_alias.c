@@ -431,7 +431,7 @@ static model_t *R_AliasModelLOD( const entity_t *e )
 static float R_AliasModelLerpBBox( const entity_t *e, const model_t *mod, vec3_t mins, vec3_t maxs )
 {
 	int i;
-	int framenum = framenum = e->frame, oldframenum = e->oldframe;
+	int framenum = e->frame, oldframenum = e->oldframe;
 	const maliasmodel_t *aliasmodel = ( const maliasmodel_t * )mod->extradata;
 	const maliasframe_t *pframe, *poldframe;
 

@@ -1269,7 +1269,7 @@ size_t Q_WCharToUtf8( char *dest, wchar_t wc, size_t bufsize )
 		}
 	}
 
-	if( ( bufsize - ret ) > 0 )
+	if( bufsize > ret )
 		*dest++ = '\0';
 
 	return ret;
