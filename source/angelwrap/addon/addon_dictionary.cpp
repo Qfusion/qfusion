@@ -121,6 +121,11 @@ CScriptDictionary::CScriptDictionary(asBYTE *buffer)
 	}
 }
 
+CScriptDictionary::CScriptDictionary(const CScriptDictionary &other) : CScriptDictionary(other.engine)
+{
+	this->operator=(other);
+}
+
 CScriptDictionary::~CScriptDictionary()
 {
 	// Delete all keys and values

@@ -42,6 +42,7 @@ public:
 	// Memory management
 	CScriptDictionary(asIScriptEngine *engine);
 	CScriptDictionary(asBYTE *buffer);
+	CScriptDictionary(const CScriptDictionary &other);
 	void AddRef() const;
 	void Release() const;
 
