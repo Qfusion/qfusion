@@ -270,6 +270,11 @@ CScriptAny::CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine)
 	Store(ref, refTypeId);
 }
 
+CScriptAny::CScriptAny(const CScriptAny &other) : CScriptAny(other.engine)
+{
+	this->operator=(other);
+}
+
 CScriptAny::~CScriptAny()
 {
 	FreeObject();

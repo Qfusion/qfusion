@@ -15,6 +15,7 @@ public:
 	// Constructors
 	CScriptAny(asIScriptEngine *engine);
 	CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine);
+	CScriptAny(const CScriptAny &other);
 
 	// Memory management
 	int AddRef() const;
