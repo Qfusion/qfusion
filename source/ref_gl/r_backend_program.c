@@ -401,7 +401,7 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 	case RGB_GEN_WAVE:
 	case RGB_GEN_CUSTOMWAVE:
 		
-		if( !rgbgenfunc || rgbgenfunc->type == SHADER_FUNC_NONE )
+		if( rgbgenfunc->type == SHADER_FUNC_NONE )
 		{
 			temp = 1;
 		}
