@@ -749,7 +749,7 @@ static void Con_DrawInput( int vislines )
 	if( (int)( cls.realtime>>8 )&1 )
 	{
 		SCR_DrawFillRect( text_x + prewidth - input_prestep, text_y,
-			underlineThickness, SCR_strHeight( cls.consoleFont ), colorWhite );
+			cursorwidth, SCR_strHeight( cls.consoleFont ), colorWhite );
 	}
 }
 
