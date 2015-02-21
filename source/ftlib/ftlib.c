@@ -407,12 +407,9 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	FT_Size ftsize;
 	qftface_t *qttf = NULL;
 	qfontface_t *qfont = NULL;
-	char renderStr[96];
-	int pow2;
-	int maxAdvanceX, maxAdvanceY;
+	char renderStr[FTLIB_NUM_ASCII_CHARS+1];
 	int shaderWidth, shaderHeight;
 	int maxShaderWidth, maxShaderHeight;
-	int numCols, numRows;
 
 	// set the font size
 	FT_New_Size( ftface, &ftsize );
@@ -444,7 +441,6 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	qfont->underlinePosition = qfont->glyphYOffset -
 		( int )( ftface->underline_position * unitScale ) - ( qfont->underlineThickness >> 1 );
 
-	// calculate estimate on texture size
 	maxShaderWidth = FTLIB_FONT_MAX_IMAGE_WIDTH;
 	if( fontHeight > 48 ) {
 		maxShaderHeight = FTLIB_FONT_IMAGE_HEIGHT_LARGE;
@@ -454,23 +450,35 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 		maxShaderHeight = FTLIB_FONT_IMAGE_HEIGHT_SMALL;
 	}
 
-	maxAdvanceX = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + ( 1 << 5 ) ) >> 6 ) + 2;
-	maxAdvanceY = ( (FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) + ( 1 << 5 ) ) >> 6) + 2;
+	if( ftface->num_glyphs < FTLIB_NUM_ASCII_CHARS ) {
+		int pow2;
+		int maxAdvanceX, maxAdvanceY;
+		int numCols, numRows;
 
-	numCols = maxShaderWidth / maxAdvanceX;
-	clamp( numCols, 1, ftface->num_glyphs );
+		// calculate estimate on texture size
+		maxAdvanceX = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + ( 1 << 5 ) ) >> 6 ) + 2;
+		maxAdvanceY = ( (FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) + ( 1 << 5 ) ) >> 6) + 2;
 
-	numRows = ftface->num_glyphs / numCols;
+		numCols = maxShaderWidth / maxAdvanceX;
+		clamp( numCols, 1, ftface->num_glyphs );
 
-	shaderWidth = min( numCols * maxAdvanceX, maxShaderWidth );
-	shaderHeight = min( numRows * maxAdvanceY, maxShaderHeight ) ;
+		numRows = ftface->num_glyphs / numCols;
 
-	// round to the next power of 2
-	for( pow2 = 1; pow2 < shaderWidth; pow2<<=1 );
-	qfont->shaderWidth = pow2;
+		shaderWidth = min( numCols * maxAdvanceX, maxShaderWidth );
+		shaderHeight = min( numRows * maxAdvanceY, maxShaderHeight ) ;
 
-	for( pow2 = 1; pow2 < shaderHeight; pow2<<=1 );
-	qfont->shaderHeight = pow2;
+		// round to the next power of 2
+		for( pow2 = 1; pow2 < shaderWidth; pow2<<=1 );
+		qfont->shaderWidth = pow2;
+
+		for( pow2 = 1; pow2 < shaderHeight; pow2<<=1 );
+		qfont->shaderHeight = pow2;
+	} else {
+		// assume we will eventually need some space to render fallback glyphs 
+		// for less common chars such as CJK
+		qfont->shaderWidth = maxShaderWidth;
+		qfont->shaderHeight = maxShaderHeight;
+	}
 
 	qfont->numShaders = 1;
 	qfont->shaders = FTLIB_Alloc( ftlibPool, sizeof( struct shader_s * ) );
@@ -483,8 +491,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	family->faces = qfont;
 
 	// pre-render 32-126
-	for( i = 0; i < 95; i++ ) {
-		renderStr[i] = ' ' + i;
+	for( i = 0; i < FTLIB_NUM_ASCII_CHARS; i++ ) {
+		renderStr[i] = FTLIB_FIRST_ASCII_CHAR + i;
 	}
 	renderStr[i] = '\0';
 	QFT_RenderString( qfont, renderStr );
