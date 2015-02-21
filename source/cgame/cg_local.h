@@ -715,7 +715,7 @@ void CG_CalcVrect( void );
 void CG_TileClear( void );
 void CG_DrawLoading( void );
 void CG_CenterPrint( const char *str );
-void CG_CenterPrintToUpper( const char *str );
+void CG_CenterPrintToUpper( const char *format, ... );
 
 void CG_EscapeKey( void );
 void CG_LoadStatusBar( void );

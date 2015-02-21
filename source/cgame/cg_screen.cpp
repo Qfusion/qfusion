@@ -116,7 +116,31 @@ int scr_erase_center;
 */
 void CG_CenterPrint( const char *str )
 {
-	char *s;
+	char c, *s;
+	int colorindex = -1;
+	const char *tmp;
+	char l10n_buffer[sizeof(scr_centerstring)];
+	const char *l10n = NULL;
+
+	tmp = str;
+	if( Q_GrabCharFromColorString( &tmp, &c, &colorindex ) == GRABCHAR_COLOR ) {
+		// attempt to translate the remaining string
+		l10n = trap_L10n_TranslateString( tmp );
+	} else {
+		l10n = trap_L10n_TranslateString( str );
+	}
+
+	if( l10n ) {
+		if( colorindex > 0 ) {
+			l10n_buffer[0] = '^';
+			l10n_buffer[1] = '0' + colorindex;
+			Q_strncpyz( &l10n_buffer[2], l10n, sizeof( l10n_buffer ) - 2 );
+		}
+		else {
+			Q_strncpyz( l10n_buffer, l10n, sizeof( l10n_buffer ) );
+		}
+		str = l10n_buffer;
+	}
 
 	Q_strncpyz( scr_centerstring, str, sizeof( scr_centerstring ) );
 	scr_centertime_off = cg_centerTime->value;
@@ -130,11 +154,40 @@ void CG_CenterPrint( const char *str )
 			scr_center_lines++;
 }
 
-void CG_CenterPrintToUpper( const char *str )
+void CG_CenterPrintToUpper( const char *format, ... )
 {
-	char *s;
+	char c, *s;
+	int colorindex = -1;
+	va_list	argptr;
+	const char *tmp;
+	const char *new_format = format;
+	char l10n_format[sizeof(scr_centerstring)];
+	const char *l10n = NULL;
 
-	Q_strncpyz( scr_centerstring, str, sizeof( scr_centerstring ) );
+	tmp = format;
+	if( Q_GrabCharFromColorString( &tmp, &c, &colorindex ) == GRABCHAR_COLOR ) {
+		// attempt to translate the remaining string
+		l10n = trap_L10n_TranslateString( tmp );
+	} else {
+		l10n = trap_L10n_TranslateString( format );
+	}
+
+	if( l10n ) {
+		if( colorindex > 0 ) {
+			l10n_format[0] = '^';
+			l10n_format[1] = '0' + colorindex;
+			Q_strncpyz( &l10n_format[2], l10n, sizeof( l10n_format ) - 2 );
+		}
+		else {
+			Q_strncpyz( l10n_format, l10n, sizeof( l10n_format ) );
+		}
+		new_format = l10n_format;
+	}
+
+	va_start( argptr, format );
+	Q_vsnprintfz( scr_centerstring, sizeof( scr_centerstring ), new_format, argptr );
+	va_end( argptr );
+
 	scr_centertime_off = cg_centerTime->value;
 	scr_centertime_start = cg.time;
 
