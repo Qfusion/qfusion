@@ -631,7 +631,7 @@ void CG_AddAward( const char *str )
 	if( !str || !str[0] )
 		return;
 
-	Q_strncpyz( cg.award_lines[cg.award_head % MAX_AWARD_LINES], str, MAX_CONFIGSTRING_CHARS );
+	Q_strncpyz( cg.award_lines[cg.award_head % MAX_AWARD_LINES], CG_TranslateString( str ), MAX_CONFIGSTRING_CHARS );
 	cg.award_times[cg.award_head % MAX_AWARD_LINES] = cg.time;
 	cg.award_head++;
 }
