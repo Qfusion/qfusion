@@ -702,11 +702,12 @@ static void Con_DrawInput( int vislines )
 	int smallCharHeight = SCR_strHeight( cls.consoleFont );
 	int margin = 8 * pixelRatio;
 	int promptwidth = SCR_strWidth( "]", cls.consoleFont, 1 );
-	int input_width = viddef.width - margin * 2 - promptwidth - SCR_strWidth( "_", cls.consoleFont, 1 );
+	int input_width = viddef.width - margin * 2 - promptwidth;
 	int text_x = margin + promptwidth;
 	int text_y = vislines - (int)( 14 * pixelRatio ) - smallCharHeight;
 	int textwidth;
 	int prewidth;	// width of input line before cursor
+	int cursorwidth;
 
 	if( cls.key_dest != key_console )
 		return;
@@ -720,6 +721,9 @@ static void Con_DrawInput( int vislines )
 
 	textwidth = SCR_strWidth( text, cls.consoleFont, 0 );
 	prewidth = SCR_strWidth( text, cls.consoleFont, key_linepos - 1 );
+
+	SCR_FontUnderline( cls.consoleFont, &cursorwidth );
+	input_width -= cursorwidth;
 
 	if( textwidth > input_width )
 	{
@@ -743,8 +747,10 @@ static void Con_DrawInput( int vislines )
 		text_x + input_width, viddef.height, cls.consoleFont, colorWhite );
 
 	if( (int)( cls.realtime>>8 )&1 )
-		SCR_DrawRawChar( text_x + prewidth - input_prestep, text_y, '_',
-		cls.consoleFont, colorWhite );
+	{
+		SCR_DrawFillRect( text_x + prewidth - input_prestep, text_y,
+			underlineThickness, SCR_strHeight( cls.consoleFont ), colorWhite );
+	}
 }
 
 /*
@@ -791,6 +797,8 @@ void Con_DrawNotify( void )
 		int promptwidth;
 		char lang[16], langstr[20];
 		struct qfontface_s *font = NULL;
+		int fontHeight;
+		int underlineThickness, underlinePosition;
 
 		if( con_chatCGame->integer )
 		{
@@ -812,6 +820,8 @@ void Con_DrawNotify( void )
 			y = v;
 			font = cls.consoleFont;
 		}
+
+		fontHeight = SCR_strHeight( font );
 
 		// 48 is an arbitrary offset for not overlapping the FPS and clock prints
 		width -= 48 * viddef.height / 600;
@@ -837,7 +847,9 @@ void Con_DrawNotify( void )
 			SCR_DrawString( x + width, y, ALIGN_LEFT_TOP, langstr, font, colorWhite );
 		}
 
-		width -= SCR_strWidth( "_", font, 0 );
+		// the cursor
+		underlinePosition = SCR_FontUnderline( font, &underlineThickness );
+		width -= underlineThickness;
 
 		s = chat_buffer;
 		swidth = SCR_strWidth( s, font, 0 );
@@ -869,11 +881,11 @@ void Con_DrawNotify( void )
 
 		// FIXME: we double the font height to compensate for alignment issues
 		SCR_DrawClampString( x - chat_prestep, y, s, x, y,
-			x + width, y + SCR_strHeight( font ) * 2, font, colorWhite );
+			x + width, y + fontHeight * 2, font, colorWhite );
+
 
 		if( (int)( cls.realtime>>8 )&1 )
-			SCR_DrawRawChar( x + prewidth - chat_prestep, y, '_',
-			font, colorWhite );
+			SCR_DrawFillRect( x + prewidth - chat_prestep, y, underlineThickness, fontHeight, colorWhite );
 	}
 }
 
