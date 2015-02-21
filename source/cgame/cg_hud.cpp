@@ -1403,6 +1403,10 @@ static struct qfontface_s *layout_cursor_font;
 static char layout_cursor_font_name[MAX_QPATH];
 static int layout_cursor_font_size;
 static int layout_cursor_font_style;
+struct qfontface_s *(*layout_cursor_font_regfunc)( const char *, int , unsigned int );
+static bool layout_cursor_font_dirty = true;
+
+static struct qfontface_s *CG_GetLayoutCursorFont( void );
 
 enum
 {
@@ -1431,7 +1435,7 @@ static bool CG_LFuncDrawTimer( struct cg_layoutnode_s *commandnode, struct cg_la
 	milli -= sec*10;
 	// we want MM:SS:m
 	Q_snprintfz( time, sizeof( time ), "%02d:%02d.%1d", min, sec, milli );
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, time, layout_cursor_font, layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, time, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -1752,19 +1756,26 @@ static bool CG_LFuncAlign( struct cg_layoutnode_s *commandnode, struct cg_layout
 	return true;
 }
 
-static bool CG_LFuncFontFamilyExt( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, 
-	int numArguments, struct qfontface_s *(*register_font)( const char *, int , unsigned int ) )
+static struct qfontface_s *CG_GetLayoutCursorFont( void )
 {
 	struct qfontface_s *font;
 
-	font = register_font( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
-	if( font )
-	{
-		layout_cursor_font = font;
-		return true;
+	if( !layout_cursor_font_dirty ) {
+		return layout_cursor_font;
+	}
+	if( !layout_cursor_font_regfunc ) {
+		layout_cursor_font_regfunc = trap_SCR_RegisterFont;
 	}
 
-	return false;
+	font = layout_cursor_font_regfunc( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
+	if( font ) {
+		layout_cursor_font = font;
+	} else {
+		layout_cursor_font = cgs.fontSystemSmall;
+	}
+	layout_cursor_font_dirty = false;
+
+	return layout_cursor_font;
 }
 
 static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
@@ -1779,20 +1790,25 @@ static bool CG_LFuncFontFamily( struct cg_layoutnode_s *commandnode, struct cg_l
 	{
 		Q_strncpyz( layout_cursor_font_name, fontname, sizeof( layout_cursor_font_name ) );
 	}
+	layout_cursor_font_dirty = true;
+	layout_cursor_font_regfunc = trap_SCR_RegisterFont;
 
-	return CG_LFuncFontFamilyExt( commandnode, argumentnode, numArguments, trap_SCR_RegisterFont );
+	return true;
 }
 
 static bool CG_LFuncSpecialFontFamily( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	const char *fontname = CG_GetStringArg( &argumentnode );
+
 	Q_strncpyz( layout_cursor_font_name, fontname, sizeof( layout_cursor_font_name ) );
-	return CG_LFuncFontFamilyExt( commandnode, argumentnode, numArguments, trap_SCR_RegisterSpecialFont );
+	layout_cursor_font_regfunc = trap_SCR_RegisterSpecialFont;
+	layout_cursor_font_dirty = true;
+
+	return true;
 }
 
 static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	struct qfontface_s *font;
 	struct cg_layoutnode_s *charnode = argumentnode;
 	const char *fontsize = CG_GetStringArg( &charnode );
 
@@ -1805,19 +1821,13 @@ static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_lay
 	else
 		layout_cursor_font_size = (int)ceilf( CG_GetNumericArg( &argumentnode ) );
 
-	font = trap_SCR_RegisterFont( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
-	if( font )
-	{
-		layout_cursor_font = font;
-		return true;
-	}
+	layout_cursor_font_dirty = true;
 
-	return false;
+	return true;
 }
 
 static bool CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	struct qfontface_s *font;
 	const char *fontstyle = CG_GetStringArg( &argumentnode );
 
 	if( !Q_stricmp( fontstyle, "normal" ) )
@@ -1839,16 +1849,12 @@ static bool CG_LFuncFontStyle( struct cg_layoutnode_s *commandnode, struct cg_la
 	else
 	{
 		CG_Printf( "WARNING 'CG_LFuncFontStyle' Unknown font style '%s'", fontstyle );
+		return false;
 	}
 
-	font = trap_SCR_RegisterFont( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
-	if( font )
-	{
-		layout_cursor_font = font;
-		return true;
-	}
+	layout_cursor_font_dirty = true;
 
-	return false;
+	return true;
 }
 
 static bool CG_LFuncDrawObituaries( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
@@ -1856,26 +1862,26 @@ static bool CG_LFuncDrawObituaries( struct cg_layoutnode_s *commandnode, struct 
 	int internal_align = (int)CG_GetNumericArg( &argumentnode );
 	int icon_size = (int)CG_GetNumericArg( &argumentnode );
 
-	CG_DrawObituaries( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color,
+	CG_DrawObituaries( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color,
 	                   layout_cursor_width, layout_cursor_height, internal_align, icon_size * cgs.vidHeight / 600 );
 	return true;
 }
 
 static bool CG_LFuncDrawAwards( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	CG_DrawAwards( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color );
+	CG_DrawAwards( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
 static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color, false );
+	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color, false );
 	return true;
 }
 
 static bool CG_LFuncTouchClock( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color, true );
+	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color, true );
 	return true;
 }
 
@@ -1888,7 +1894,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 		{
 			int i;
 			int y = layout_cursor_y;
-			int font_height = trap_SCR_strHeight( layout_cursor_font );
+			int font_height = trap_SCR_strHeight( CG_GetLayoutCursorFont() );
 			const char *helpmessage = "";
 
 			for( i = 0; i < 3; i++ )
@@ -1918,7 +1924,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 					do
 					{
 						len = trap_SCR_DrawStringWidth( layout_cursor_x, y, layout_cursor_align, 
-							helpmessage, layout_cursor_width, layout_cursor_font, layout_cursor_color );
+							helpmessage, layout_cursor_width, CG_GetLayoutCursorFont(), layout_cursor_color );
 						if( !len )
 						{
 							if( *helpmessage == '\r' || *helpmessage == '\n' )
@@ -1950,7 +1956,7 @@ static bool CG_LFuncDrawTeamMates( struct cg_layoutnode_s *commandnode, struct c
 
 static bool CG_LFuncDrawPointed( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	CG_DrawPlayerNames( layout_cursor_font, layout_cursor_color );
+	CG_DrawPlayerNames( CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -1961,7 +1967,7 @@ static bool CG_LFuncDrawString( struct cg_layoutnode_s *commandnode, struct cg_l
 	if( !string || !string[0] )
 		return false;
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, 
-		CG_TranslateString( string ), layout_cursor_font, layout_cursor_color );
+		CG_TranslateString( string ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -1989,7 +1995,7 @@ static bool CG_LFuncDrawStringRepeat_x( const char *string, int num_draws )
 	}
 	temps[pos] = '\0';
 
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, temps, layout_cursor_font, layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, temps, CG_GetLayoutCursorFont(), layout_cursor_color );
 
 	return true;
 }
@@ -2025,7 +2031,7 @@ static bool CG_LFuncDrawItemNameFromIndex( struct cg_layoutnode_s *commandnode, 
 	if( !item || !item->name )
 		return false;
 	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, 
-		CG_TranslateString( item->name ), layout_cursor_font, layout_cursor_color );
+		CG_TranslateString( item->name ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -2038,7 +2044,7 @@ static bool CG_LFuncDrawConfigstring( struct cg_layoutnode_s *commandnode, struc
 		CG_Printf( "WARNING 'CG_LFuncDrawConfigstring' Bad stat_string index" );
 		return false;
 	}
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, cgs.configStrings[index], layout_cursor_font, layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, cgs.configStrings[index], CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -2051,7 +2057,7 @@ static bool CG_LFuncDrawPlayername( struct cg_layoutnode_s *commandnode, struct 
 
 	if( ( index >= 0 && index < gs.maxclients ) && cgs.clientInfo[index].name[0] )
 	{
-		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, cgs.clientInfo[index].name, layout_cursor_font, layout_cursor_color );
+		trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, cgs.clientInfo[index].name, CG_GetLayoutCursorFont(), layout_cursor_color );
 		return true;
 	}
 	return false;
@@ -2087,7 +2093,7 @@ static bool CG_LFuncDrawNumeric2( struct cg_layoutnode_s *commandnode, struct cg
 {
 	int value = (int)CG_GetNumericArg( &argumentnode );
 
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, va( "%i", value ), layout_cursor_font, layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, va( "%i", value ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -2186,7 +2192,7 @@ static bool CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struc
 
 	trap_GetConfigString( CS_LOCATIONS + loc_tag, string, sizeof( string ) );
 
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, string, layout_cursor_font, layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, string, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -2218,7 +2224,7 @@ static bool CG_LFuncDrawWeaponStrongAmmo( struct cg_layoutnode_s *commandnode, s
 
 static bool CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	CG_DrawTeamInfo( layout_cursor_x, layout_cursor_y, layout_cursor_align, layout_cursor_font, layout_cursor_color );
+	CG_DrawTeamInfo( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -2257,7 +2263,7 @@ static bool CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_lay
 	padding_y = (int)( CG_GetNumericArg( &argumentnode ) )*cgs.vidHeight/600;
 	shader = trap_R_RegisterPic( CG_GetStringArg( &argumentnode ) );
 
-	CG_DrawChat( &cg.chat, layout_cursor_x, layout_cursor_y, layout_cursor_font_name, layout_cursor_font, layout_cursor_font_size,
+	CG_DrawChat( &cg.chat, layout_cursor_x, layout_cursor_y, layout_cursor_font_name, CG_GetLayoutCursorFont(), layout_cursor_font_size,
 		layout_cursor_width, layout_cursor_height, padding_x, padding_y, layout_cursor_color, shader );
 	return true;
 }
@@ -4101,8 +4107,9 @@ static void CG_LoadStatusBarFile( char *path )
 	Q_strncpyz( layout_cursor_font_name, DEFAULT_SYSTEM_FONT_FAMILY, sizeof( layout_cursor_font_name ) );
 	layout_cursor_font_style = QFONT_STYLE_NONE;
 	layout_cursor_font_size = DEFAULT_SYSTEM_FONT_SMALL_SIZE;
+	layout_cursor_font_dirty = true;
+	layout_cursor_font_regfunc = trap_SCR_RegisterFont;
 
-	layout_cursor_font = trap_SCR_RegisterFont( layout_cursor_font_name, layout_cursor_font_style, layout_cursor_font_size );
 	for( i = 0; i < WEAP_TOTAL-1; i++ )
 	{
 		customWeaponPics[i] = NULL;
