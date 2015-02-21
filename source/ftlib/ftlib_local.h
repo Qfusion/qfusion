@@ -44,7 +44,7 @@ typedef struct shader_s shader_t;
 
 #define FTLIB_REPLACEMENT_GLYPH			'?'
 
-#define FTLIB_FONT_IMAGE_WIDTH			1024
+#define FTLIB_FONT_MAX_IMAGE_WIDTH		1024
 #define FTLIB_FONT_IMAGE_HEIGHT_SMALL	128
 #define FTLIB_FONT_IMAGE_HEIGHT_MEDIUM	256
 #define FTLIB_FONT_IMAGE_HEIGHT_LARGE	512
@@ -94,6 +94,7 @@ typedef struct qfontface_s
 	// a font may not fit into single image
 	unsigned int numShaders;
 	shader_t **shaders;
+	unsigned int shaderWidth;
 	unsigned int shaderHeight;
 
 	// glyphs
