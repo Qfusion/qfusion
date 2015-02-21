@@ -43,6 +43,7 @@ size_t FTLIB_fontHeight( qfontface_t *font )
 size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 {
 	const char *s = str, *olds;
+	size_t len = 0;
 	size_t width = 0;
 	wchar_t num, prev_num = 0;
 	qglyph_t *glyph;
@@ -52,7 +53,7 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 
 	while( *s && *s != '\n' )
 	{
-		if( maxlen && (size_t)( s - str ) >= maxlen )  // stop counting at desired len
+		if( maxlen && ( len >= maxlen ) )  // stop counting at desired len
 			return width;
 
 		olds = s;
@@ -90,6 +91,8 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen )
 		default:
 			assert( 0 );
 		}
+
+		len++;
 	}
 
 	return width;
