@@ -200,7 +200,7 @@ static int QFT_GetKerning( qfontface_t *qfont, wchar_t char1, wchar_t char2 )
 /*
 * QFT_UploadRenderedGlyphs
 */
-static void QFT_UploadRenderedGlyphs( uint8_t *pic, struct shader_s *shader, int x, int y, int width, int height )
+static void QFT_UploadRenderedGlyphs( uint8_t *pic, struct shader_s *shader, int x, int y, int src_width, int width, int height )
 {
 	int i;
 	const uint8_t *src = pic;
@@ -209,7 +209,7 @@ static void QFT_UploadRenderedGlyphs( uint8_t *pic, struct shader_s *shader, int
 	if ( !width || !height )
 		return;
 
-	for( i = 0; i < height; i++, src += FTLIB_FONT_IMAGE_WIDTH, dest += width ) {
+	for( i = 0; i < height; i++, src += src_width, dest += width ) {
 		memmove( dest, src, width );
 	}
 	trap_R_ReplaceRawSubPic( shader, x, y, width, height, pic );
@@ -234,14 +234,13 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 	unsigned int tempWidth = 0, tempLineHeight = 0;
 	struct shader_s *shader = qfont->shaders[qfont->numShaders - 1];
 	int shaderNum;
-	float invHeight = 1.0f / ( float )( qfont->shaderHeight );
 	int x, y;
 	uint8_t *src, *dest;
 
 	for( ; ; ) {
 		gc = Q_GrabWCharFromColorString( &str, &num, NULL );
 		if( gc == GRABCHAR_END ) {
-			QFT_UploadRenderedGlyphs( qftGlyphTempBitmap, shader, qttf->imageCurX, qttf->imageCurY, tempWidth, tempLineHeight );
+			QFT_UploadRenderedGlyphs( qftGlyphTempBitmap, shader, qttf->imageCurX, qttf->imageCurY, qfont->shaderWidth, tempWidth, tempLineHeight );
 			qttf->imageCurX += tempWidth;
 			break;
 		}
@@ -288,10 +287,10 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 
 		bitmapWidth = ftglyph->bitmap.width + 2;
 		bitmapHeight = ftglyph->bitmap.rows + 2;
-		if( bitmapWidth > FTLIB_FONT_IMAGE_WIDTH ) {
+		if( bitmapWidth > qfont->shaderWidth ) {
 			Com_Printf( S_COLOR_YELLOW "Warning: Width limit exceeded for '%s' character %i - %i\n",
 				qfont->family->name, num, bitmapWidth - 2 );
-			bitmapWidth = FTLIB_FONT_IMAGE_WIDTH;
+			bitmapWidth = qfont->shaderWidth;
 		}
 		if( bitmapHeight > qfont->shaderHeight ) {
 			Com_Printf( S_COLOR_YELLOW "Warning: Height limit exceeded for '%s' character %i - %i\n",
@@ -299,8 +298,8 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 			bitmapHeight = qfont->shaderHeight;
 		}
 
-		if( ( qttf->imageCurX + tempWidth + bitmapWidth ) > FTLIB_FONT_IMAGE_WIDTH ) {
-			QFT_UploadRenderedGlyphs( qftGlyphTempBitmap, shader, qttf->imageCurX, qttf->imageCurY, tempWidth, tempLineHeight );
+		if( ( qttf->imageCurX + tempWidth + bitmapWidth ) > qfont->shaderWidth ) {
+			QFT_UploadRenderedGlyphs( qftGlyphTempBitmap, shader, qttf->imageCurX, qttf->imageCurY, qfont->shaderWidth, tempWidth, tempLineHeight );
 			tempWidth = 0;
 			tempLineHeight = 0;
 			qttf->imageCurX = 0;
@@ -310,19 +309,19 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 
 		if( bitmapHeight > qftGlyphTempBitmapHeight ) {
 			qftGlyphTempBitmapHeight = ALIGN( bitmapHeight, QFT_GLYPH_BITMAP_HEIGHT_INCREMENT );
-			qftGlyphTempBitmap = FTLIB_Realloc( qftGlyphTempBitmap, FTLIB_FONT_IMAGE_WIDTH * qftGlyphTempBitmapHeight );
+			qftGlyphTempBitmap = FTLIB_Realloc( qftGlyphTempBitmap, FTLIB_FONT_MAX_IMAGE_WIDTH * qftGlyphTempBitmapHeight );
 		}
 
 		if( bitmapHeight > tempLineHeight ) {
 			if( bitmapHeight > qttf->imageCurLineHeight ) {
 				if( ( qttf->imageCurY + bitmapHeight ) > qfont->shaderHeight ) {
-					QFT_UploadRenderedGlyphs( qftGlyphTempBitmap, shader, qttf->imageCurX, qttf->imageCurY, tempWidth, tempLineHeight );
+					QFT_UploadRenderedGlyphs( qftGlyphTempBitmap, shader, qttf->imageCurX, qttf->imageCurY, qfont->shaderWidth, tempWidth, tempLineHeight );
 					tempWidth = 0;
 					qttf->imageCurX = 0;
 					qttf->imageCurY = 0;
 					shaderNum = ( qfont->numShaders )++;
 					shader = trap_R_RegisterRawPic( FTLIB_FontShaderName( qfont, shaderNum ),
-						FTLIB_FONT_IMAGE_WIDTH, qfont->shaderHeight, NULL, 1 );
+						qfont->shaderWidth, qfont->shaderHeight, NULL, 1 );
 					qfont->shaders = FTLIB_Realloc( qfont->shaders, qfont->numShaders * sizeof( struct shader_s * ) );
 					qfont->shaders[shaderNum] = shader;
 				}
@@ -337,15 +336,15 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 		qglyph->x_offset = ftglyph->bitmap_left;
 		qglyph->y_offset = -( (int)( ftglyph->bitmap_top ) );
 		qglyph->shader = shader;
-		qglyph->s1 = ( float )( qttf->imageCurX + tempWidth + 1 ) * ( 1.0f / ( float )FTLIB_FONT_IMAGE_WIDTH );
-		qglyph->t1 = ( float )( qttf->imageCurY + 1 ) * invHeight;
-		qglyph->s2 = qglyph->s1 + ( float )( qglyph->width ) * ( 1.0f / ( float )FTLIB_FONT_IMAGE_WIDTH );
-		qglyph->t2 = qglyph->t1 + ( float )( qglyph->height ) * invHeight;
+		qglyph->s1 = ( float )( qttf->imageCurX + tempWidth + 1 ) / ( float )qfont->shaderWidth;
+		qglyph->t1 = ( float )( qttf->imageCurY + 1 ) / ( float )qfont->shaderHeight;
+		qglyph->s2 = ( float )( qttf->imageCurX + tempWidth + 1 + qglyph->width ) / ( float )qfont->shaderWidth;
+		qglyph->t2 = ( float )( qttf->imageCurY + 1 + qglyph->height ) / ( float )qfont->shaderHeight;
 
 		src = ftglyph->bitmap.buffer;
 		dest = qftGlyphTempBitmap + tempWidth;
 		memset( dest, 0, bitmapWidth );
-		dest += FTLIB_FONT_IMAGE_WIDTH;
+		dest += qfont->shaderWidth;
 		for( y = 0; y < qglyph->height; ++y, src += srcStride ) {
 			dest[0] = 0;
 			switch( pixelMode ) {
@@ -368,7 +367,7 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 				break;
 			}
 			dest[qglyph->width + 1] = 0;
-			dest += FTLIB_FONT_IMAGE_WIDTH;
+			dest += qfont->shaderWidth;
 		}
 		memset( dest, 0, bitmapWidth );
 
@@ -409,6 +408,11 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	qftface_t *qttf = NULL;
 	qfontface_t *qfont = NULL;
 	char renderStr[96];
+	int pow2;
+	int maxAdvanceX, maxAdvanceY;
+	int shaderWidth, shaderHeight;
+	int maxShaderWidth, maxShaderHeight;
+	int numCols, numRows;
 
 	// set the font size
 	FT_New_Size( ftface, &ftsize );
@@ -423,8 +427,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 
 	// use scaled version of the original design text height (the vertical 
 	// distance from one baseline to the next) as font height
-	fontHeight = ( ftface->size->metrics.height + ( 1 << 5 ) ) >> 6;
-	baseLine = ( ftface->size->metrics.height - ftface->size->metrics.ascender ) >> 6;
+	fontHeight = ( ftsize->metrics.height + ( 1 << 5 ) ) >> 6;
+	baseLine = ( ftsize->metrics.height - ftsize->metrics.ascender ) >> 6;
 	unitScale = ( float )fontHeight / ( float )ftface->units_per_EM;
 
 	// store font info
@@ -439,17 +443,39 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	}
 	qfont->underlinePosition = qfont->glyphYOffset -
 		( int )( ftface->underline_position * unitScale ) - ( qfont->underlineThickness >> 1 );
-	qfont->numShaders = 1;
+
+	// calculate estimate on texture size
+	maxShaderWidth = FTLIB_FONT_MAX_IMAGE_WIDTH;
 	if( fontHeight > 48 ) {
-		qfont->shaderHeight = FTLIB_FONT_IMAGE_HEIGHT_LARGE;
+		maxShaderHeight = FTLIB_FONT_IMAGE_HEIGHT_LARGE;
 	} else if( fontHeight > 24 ) {
-		qfont->shaderHeight = FTLIB_FONT_IMAGE_HEIGHT_MEDIUM;
+		maxShaderHeight = FTLIB_FONT_IMAGE_HEIGHT_MEDIUM;
 	} else {
-		qfont->shaderHeight = FTLIB_FONT_IMAGE_HEIGHT_SMALL;
+		maxShaderHeight = FTLIB_FONT_IMAGE_HEIGHT_SMALL;
 	}
+
+	maxAdvanceX = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + ( 1 << 5 ) ) >> 6 ) + 2;
+	maxAdvanceY = ( (FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) + ( 1 << 5 ) ) >> 6) + 2;
+
+	numCols = maxShaderWidth / maxAdvanceX;
+	clamp( numCols, 1, ftface->num_glyphs );
+
+	numRows = ftface->num_glyphs / numCols;
+
+	shaderWidth = min( numCols * maxAdvanceX, maxShaderWidth );
+	shaderHeight = min( numRows * maxAdvanceY, maxShaderHeight ) ;
+
+	// round to the next power of 2
+	for( pow2 = 1; pow2 < shaderWidth; pow2<<=1 );
+	qfont->shaderWidth = pow2;
+
+	for( pow2 = 1; pow2 < shaderHeight; pow2<<=1 );
+	qfont->shaderHeight = pow2;
+
+	qfont->numShaders = 1;
 	qfont->shaders = FTLIB_Alloc( ftlibPool, sizeof( struct shader_s * ) );
 	qfont->shaders[0] = trap_R_RegisterRawPic( FTLIB_FontShaderName( qfont, 0 ),
-		FTLIB_FONT_IMAGE_WIDTH, qfont->shaderHeight, NULL, 1 );
+		qfont->shaderWidth, qfont->shaderHeight, NULL, 1 );
 	qfont->hasKerning = hasKerning;
 	qfont->f = &qft_face_funcs;
 	qfont->facedata = ( void * )qttf;
@@ -675,7 +701,7 @@ static void QFT_Init( bool verbose )
 	}
 
 	assert( !qftGlyphTempBitmap );
-	qftGlyphTempBitmap = FTLIB_Alloc( ftlibPool, FTLIB_FONT_IMAGE_WIDTH * QFT_GLYPH_BITMAP_HEIGHT_INCREMENT );
+	qftGlyphTempBitmap = FTLIB_Alloc( ftlibPool, FTLIB_FONT_MAX_IMAGE_WIDTH * QFT_GLYPH_BITMAP_HEIGHT_INCREMENT );
 	qftGlyphTempBitmapHeight = QFT_GLYPH_BITMAP_HEIGHT_INCREMENT;
 }
 
@@ -898,7 +924,7 @@ void FTLIB_PrintFontList( void )
 		// print all faces for this family
 		for( qface = qfamily->faces; qface; qface = qface->next ) {
 			Com_Printf( "* size: %ipt, height: %ipx, images: %i (%ix%i)\n",
-				qface->size, qface->height, qface->numShaders, FTLIB_FONT_IMAGE_WIDTH, qface->shaderHeight );
+				qface->size, qface->height, qface->numShaders, qface->shaderWidth, qface->shaderHeight );
 		}
 	}
 }
