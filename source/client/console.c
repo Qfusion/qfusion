@@ -719,7 +719,7 @@ static void Con_DrawInput( int vislines )
 	text++;
 
 	textwidth = SCR_strWidth( text, cls.consoleFont, 0 );
-	prewidth = SCR_strWidth( text, cls.consoleFont, key_linepos );
+	prewidth = SCR_strWidth( text, cls.consoleFont, key_linepos - 1 );
 
 	if( textwidth > input_width )
 	{
