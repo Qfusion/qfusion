@@ -248,7 +248,7 @@ static void Mod_FinishFaces( model_t *mod )
 		mesh = surf->mesh;
 		shader = surf->shader;
 
-		if( !mesh )
+		if( !mesh || !shader )
 			continue;
 
 		// calculate bounding box of a surface
