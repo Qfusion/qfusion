@@ -48,6 +48,7 @@ public:
 protected:
 	virtual ~CScriptAny();
 	void FreeObject();
+	void Initialize(asIScriptEngine *engine);
 
 	mutable int refCount;
 	mutable bool gcFlag;

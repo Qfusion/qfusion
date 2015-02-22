@@ -12,18 +12,7 @@ using namespace std;
 
 CScriptDictionary::CScriptDictionary(asIScriptEngine *engine)
 {
-	// We start with one reference
-	refCount = 1;
-	gcFlag = false;
-
-	// Keep a reference to the engine for as long as we live
-	// We don't increment the reference counter, because the 
-	// engine will hold a pointer to the object. 
-	this->engine = engine;
-
-	// Notify the garbage collector of this object
-	// TODO: The type id should be cached
-	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetObjectTypeByName("Dictionary"));
+	Initialize(engine);
 }
 
 CScriptDictionary::CScriptDictionary(asBYTE *buffer)
@@ -121,9 +110,26 @@ CScriptDictionary::CScriptDictionary(asBYTE *buffer)
 	}
 }
 
-CScriptDictionary::CScriptDictionary(const CScriptDictionary &other) : CScriptDictionary(other.engine)
+CScriptDictionary::CScriptDictionary(const CScriptDictionary &other)
 {
+	Initialize(other.engine);
 	this->operator=(other);
+}
+
+void CScriptDictionary::Initialize(asIScriptEngine *engine)
+{
+	// We start with one reference
+	refCount = 1;
+	gcFlag = false;
+
+	// Keep a reference to the engine for as long as we live
+	// We don't increment the reference counter, because the 
+	// engine will hold a pointer to the object. 
+	this->engine = engine;
+
+	// Notify the garbage collector of this object
+	// TODO: The type id should be cached
+	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetObjectTypeByName("Dictionary"));
 }
 
 CScriptDictionary::~CScriptDictionary()

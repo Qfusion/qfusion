@@ -102,6 +102,7 @@ protected:
 
 	// Helper methods
 	void FreeValue(valueStruct &value);
+	void Initialize(asIScriptEngine *engine);
 
 	void Set_(const char *key, void *value, int typeId);
 	
