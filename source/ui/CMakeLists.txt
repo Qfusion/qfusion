@@ -32,7 +32,7 @@ add_library(ui SHARED ${UI_SOURCES} ${UI_HEADERS})
 target_link_libraries(ui PRIVATE ${LIBROCKET_LIBRARIES} ${FREETYPE_LIBRARIES})
 add_dependencies(ui angelwrap)
 set_target_properties(ui PROPERTIES COMPILE_DEFINITIONS "ROCKET_STATIC_LIB;_SECURE_SCL=0")
-qf_set_output_dir(ui base)
+qf_set_output_dir(ui ${QFUSION_GAME_DIR})
 set_property(TARGET ui PROPERTY CXX_STANDARD 11)
 
 # TODO: Remove this hack from here
