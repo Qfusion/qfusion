@@ -2082,8 +2082,6 @@ void Con_MessageKeyDown( int key )
 	{
 		if( chat_linepos )
 		{
-			int oldpos = chat_linepos;
-
 			// skip to the end of color sequence
 			while( 1 )
 			{
@@ -2094,9 +2092,12 @@ void Con_MessageKeyDown( int key )
 					break;
 			}
 
-			chat_linepos = Q_Utf8SyncPos( chat_buffer, chat_linepos - 1, UTF8SYNC_LEFT );
-			strcpy( chat_buffer + chat_linepos, chat_buffer + oldpos );	// safe!
-			chat_bufferlen -= (oldpos - chat_linepos);
+			{
+				int oldpos = chat_linepos;
+				chat_linepos = Q_Utf8SyncPos( chat_buffer, chat_linepos - 1, UTF8SYNC_LEFT );
+				strcpy( chat_buffer + chat_linepos, chat_buffer + oldpos );	// safe!
+				chat_bufferlen -= (oldpos - chat_linepos);
+			}
 		}
 		return;
 	}
