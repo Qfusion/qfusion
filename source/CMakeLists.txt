@@ -5,6 +5,11 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MODULE_PATH ${CMAKE_HOME_DIRECTORY}/cmake)
 include(QfusionUtils)
 
+# You can override this var with commandline option -DQFUSION_GAME_DIR=name
+if (NOT QFUSION_GAME_DIR)
+    set(QFUSION_GAME_DIR base)
+endif()
+
 # You can override this var with commandline option -DQFUSION_CLIENT_NAME=name
 if (NOT QFUSION_CLIENT_NAME)
     set(QFUSION_CLIENT_NAME qfusion)
