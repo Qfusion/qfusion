@@ -702,12 +702,11 @@ static void Con_DrawInput( int vislines )
 	int smallCharHeight = SCR_strHeight( cls.consoleFont );
 	int margin = 8 * pixelRatio;
 	int promptwidth = SCR_strWidth( "]", cls.consoleFont, 1 );
-	int input_width = viddef.width - margin * 2 - promptwidth;
+	int input_width = viddef.width - margin * 2 - promptwidth - SCR_strWidth( "_", cls.consoleFont, 1 );
 	int text_x = margin + promptwidth;
 	int text_y = vislines - (int)( 14 * pixelRatio ) - smallCharHeight;
 	int textwidth;
 	int prewidth;	// width of input line before cursor
-	int cursorwidth;
 
 	if( cls.key_dest != key_console )
 		return;
@@ -721,9 +720,6 @@ static void Con_DrawInput( int vislines )
 
 	textwidth = SCR_strWidth( text, cls.consoleFont, 0 );
 	prewidth = SCR_strWidth( text, cls.consoleFont, key_linepos - 1 );
-
-	SCR_FontUnderline( cls.consoleFont, &cursorwidth );
-	input_width -= cursorwidth;
 
 	if( textwidth > input_width )
 	{
@@ -748,8 +744,8 @@ static void Con_DrawInput( int vislines )
 
 	if( (int)( cls.realtime>>8 )&1 )
 	{
-		SCR_DrawFillRect( text_x + prewidth - input_prestep, text_y,
-			cursorwidth, SCR_strHeight( cls.consoleFont ), colorWhite );
+		SCR_DrawRawChar( text_x + prewidth - input_prestep, text_y, '_',
+			cls.consoleFont, colorWhite );
 	}
 }
 
