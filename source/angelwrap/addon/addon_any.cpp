@@ -244,15 +244,7 @@ int CScriptAny::CopyFrom(const CScriptAny *other)
 
 CScriptAny::CScriptAny(asIScriptEngine *engine)
 {
-	this->engine = engine;
-	refCount = 1;
-	gcFlag = false;
-
-	value.typeId = 0;
-	value.valueInt = 0;
-
-	// Notify the garbage collector of this object
-	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetObjectTypeByName("any"));		
+	Initialize(engine);
 }
 
 CScriptAny::CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine)
@@ -270,9 +262,23 @@ CScriptAny::CScriptAny(void *ref, int refTypeId, asIScriptEngine *engine)
 	Store(ref, refTypeId);
 }
 
-CScriptAny::CScriptAny(const CScriptAny &other) : CScriptAny(other.engine)
+CScriptAny::CScriptAny(const CScriptAny &other)
 {
+	Initialize(other.engine);
 	this->operator=(other);
+}
+
+void CScriptAny::Initialize(asIScriptEngine *engine)
+{
+	this->engine = engine;
+	refCount = 1;
+	gcFlag = false;
+
+	value.typeId = 0;
+	value.valueInt = 0;
+
+	// Notify the garbage collector of this object
+	engine->NotifyGarbageCollectorOfNewObject(this, engine->GetObjectTypeByName("any"));	
 }
 
 CScriptAny::~CScriptAny()
