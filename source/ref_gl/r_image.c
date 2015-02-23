@@ -2142,23 +2142,34 @@ static void R_InitNoTexture( int *w, int *h, int *flags, int *samples )
 {
 	int x, y;
 	uint8_t *data;
+	uint8_t dottexture[8][8] =
+	{
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 1, 1, 0, 0, 0, 0 },
+		{ 0, 1, 1, 1, 1, 0, 0, 0 },
+		{ 0, 1, 1, 1, 1, 0, 0, 0 },
+		{ 0, 0, 1, 1, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+	};
 
 	//
-	// use this for bad textures, but without alpha
+	// also use this for bad textures, but without alpha
 	//
-	*w = *h = 16;
+	*w = *h = 8;
 	*flags = 0;
 	*samples = 3;
 
 	// ch : check samples
-	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 16 * 16 * 3 );
-	for( y = 0; y < 16; y++ )
+	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 8 * 8 * 3 );
+	for( x = 0; x < 8; x++ )
 	{
-		for( x = 0; x < 16; x++ )
+		for( y = 0; y < 8; y++ )
 		{
-			data[0] = data[2] = 255 * ( ( y < 8 ) ^ ( x >= 8 ) );
-			data[1] = 0;
-			data += 3;
+			data[( y*8 + x )*3+0] = dottexture[x&3][y&3]*127;
+			data[( y*8 + x )*3+1] = dottexture[x&3][y&3]*127;
+			data[( y*8 + x )*3+2] = dottexture[x&3][y&3]*127;
 		}
 	}
 }
