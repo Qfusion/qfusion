@@ -3479,13 +3479,13 @@ static void FS_LoadDeferredPaks( int newpaks )
 		return;
 	
 	if( newpaks == 1 ) {
-		FS_LoadDeferredPaks_Job( (void *)1 );
+		FS_LoadDeferredPaks_Job( (void *)((intptr_t )1) );
 		FS_ReplaceDeferredPaks();
 		return;
 	}
 
 	for( i = 0; i < num_threads; i++ )
-		threads[i] = QThread_Create( FS_LoadDeferredPaks_Job, ( void * )(i + 1) );
+		threads[i] = QThread_Create( FS_LoadDeferredPaks_Job, ( void * )((intptr_t )(i + 1)) );
 	for( i = 0; i < num_threads; i++ )
 		QThread_Join( threads[i] );
 
