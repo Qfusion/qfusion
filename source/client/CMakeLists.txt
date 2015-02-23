@@ -23,6 +23,10 @@ file(GLOB CLIENT_COMMON_SOURCES
     "../matchmaker/*.c"
 )
 
+if (NOT QFUSION_GAME_DATA_DIR)
+    set(QFUSION_GAME_DATA_DIR ${CMAKE_HOME_DIRECTORY}/../../warsow)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     include_directories("../win32/include/msvc")
 
@@ -73,8 +77,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(GAME_DATA_DIR Warsow_1_5_1)
-
     file(GLOB CLIENT_PLATFORM_SOURCES
         "../unix/unix_fs.c"
         "../unix/unix_net.c"
@@ -99,8 +101,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     set(BUNDLE_RESOURCES
         ../mac/Frameworks
-        ../../../${GAME_DATA_DIR}/basewsw
-        ../../../${GAME_DATA_DIR}/docs
+        ${QFUSION_GAME_DATA_DIR}/basewsw
+        ${QFUSION_GAME_DATA_DIR}/docs
         ../../glsl
         ../mac/wsw_icon.icns
     )
@@ -151,15 +153,24 @@ endif()
 add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
 add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame cin ftlib game irc ref_gl snd_openal snd_qf steamlib ui)
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    if (EXISTS ${QFUSION_GAME_DATA_DIR})
+        message(STATUS "Using game data dir: ${QFUSION_GAME_DATA_DIR}")
+        add_custom_command(TARGET ${QFUSION_CLIENT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ${QFUSION_GAME_DATA_DIR}/basewsw ${CMAKE_HOME_DIRECTORY}/build/$(CONFIGURATION)/${QFUSION_GAME_DIR})
+    endif()
+
+    add_custom_command(TARGET ${QFUSION_CLIENT_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory ../../glsl ${CMAKE_HOME_DIRECTORY}/build/$(CONFIGURATION)/${QFUSION_GAME_DIR}/glsl)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ../mac/Warsow-Info.plist)
     set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/../Frameworks @executable_path/../Resources/base @executable_path/../Resources/libs")
     set_source_files_properties(../mac/wsw_icon.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
-    set_source_files_properties(../mac/Frameworks                 PROPERTIES MACOSX_PACKAGE_LOCATION .)
-    set_source_files_properties(../../../${GAME_DATA_DIR}/basewsw PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties(../../../${GAME_DATA_DIR}/docs    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties(../../glsl                        PROPERTIES MACOSX_PACKAGE_LOCATION Resources/basewsw)
+    set_source_files_properties(../mac/Frameworks                PROPERTIES MACOSX_PACKAGE_LOCATION .)
+    set_source_files_properties(${QFUSION_GAME_DATA_DIR}/basewsw PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties(${QFUSION_GAME_DATA_DIR}/docs    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties(../../glsl                       PROPERTIES MACOSX_PACKAGE_LOCATION Resources/basewsw)
 
     set(BUNDLE_PATH ${CMAKE_HOME_DIRECTORY}/build/$(CONFIGURATION)/${QFUSION_CLIENT_NAME}.app/Contents)
     set(COPY_DYLIBS
