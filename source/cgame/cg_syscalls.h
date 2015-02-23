@@ -654,3 +654,9 @@ static inline bool trap_CIN_AddRawSamplesListener( struct cinematics_s *cin,
 {
 	return CGAME_IMPORT.CIN_AddRawSamplesListener( cin, listener, rs, grs );
 }
+
+static inline unsigned int trap_IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands,
+	int *selected, int *firstKey )
+{
+	return CGAME_IMPORT.IN_IME_GetCandidates( cands, candSize, maxCands, selected, firstKey );
+}

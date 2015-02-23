@@ -538,6 +538,8 @@ void CL_GameModule_Init( void )
 
 	import.CIN_AddRawSamplesListener = &CL_GameModule_AddRawSamplesListener;
 
+	import.IN_IME_GetCandidates = &IN_IME_GetCandidates;
+
 	if( builtinAPIfunc ) {
 		cge = builtinAPIfunc( &import );
 	}

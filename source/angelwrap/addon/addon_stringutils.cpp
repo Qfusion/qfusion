@@ -257,7 +257,7 @@ static asstring_t *QAS_StringFromCharCodes( const CScriptArrayInterface &arr )
 	char *p = str;
 	int char_len;
 	for( i = 0; i < arr_size; i++ ) {
-		char_len = Q_WCharToUtf8( p, *( (asUINT *)arr.At( i ) ), buf_len );
+		char_len = Q_WCharToUtf8( *( (asUINT *)arr.At( i ) ), p, buf_len );
 		p += char_len;
 		buf_len -= char_len;
 	}

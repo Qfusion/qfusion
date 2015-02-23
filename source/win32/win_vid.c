@@ -308,8 +308,6 @@ LONG WINAPI MainWndProc(
 						WPARAM wParam,
 						LPARAM lParam )
 {
-	BOOL isIMEMessage = ImmIsUIMessage( NULL, uMsg, wParam, lParam );
-
 	switch( uMsg )
 	{
 	case WM_MOUSEWHEEL:
@@ -343,6 +341,7 @@ LONG WINAPI MainWndProc(
 	case WM_CREATE:
 		cl_hwnd = hWnd;
 		cl_parent_hwnd = GetParent( hWnd );
+		IN_WinIME_AssociateContext();
 		AppActivate( TRUE, FALSE, FALSE );
 		MSH_MOUSEWHEEL = RegisterWindowMessage( "MSWHEEL_ROLLMSG" );
 		break;
@@ -354,6 +353,7 @@ LONG WINAPI MainWndProc(
 		// let sound and input know about this?
 		cl_hwnd = NULL;
 		cl_parent_hwnd = NULL;
+		IN_WinIME_AssociateContext();
 		AppActivate( FALSE, FALSE, TRUE );
 		break;
 
@@ -448,9 +448,10 @@ LONG WINAPI MainWndProc(
 			Key_Event( IN_MapKey( lParam ), true, sys_msg_time );
 			return 0;	// don't let the default handler activate the menu in windowed mode
 		}
-
 		// fall through
 	case WM_KEYDOWN:
+		if( wParam == VK_PROCESSKEY )
+			return 0;
 		Key_Event( IN_MapKey( lParam ), true, sys_msg_time );
 		break;
 
@@ -462,6 +463,8 @@ LONG WINAPI MainWndProc(
 		}
 		// fall through
 	case WM_KEYUP:
+		if( wParam == VK_PROCESSKEY )
+			return 0;
 		Key_Event( IN_MapKey( lParam ), false, sys_msg_time );
 		break;
 
@@ -488,6 +491,13 @@ LONG WINAPI MainWndProc(
 	case WM_ENTERSIZEMOVE:
 		CL_SoundModule_Clear();
 		break;
+
+	case WM_IME_STARTCOMPOSITION:
+		return 0;
+
+	case WM_IME_SETCONTEXT:
+		lParam &= ~ISC_SHOWUIALL;
+		break;
 	}
 
 	if( uMsg == MSH_MOUSEWHEEL )
@@ -509,7 +519,7 @@ LONG WINAPI MainWndProc(
 	}
 
 	/* return 0 if handled message, 1 if not */
-	return isIMEMessage ? 1 : DefWindowProcW( hWnd, uMsg, wParam, lParam );
+	return DefWindowProcW( hWnd, uMsg, wParam, lParam );
 }
 
 /*

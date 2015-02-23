@@ -64,7 +64,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../win32/qfusion.rc"
         )
 
-        set(CLIENT_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib" "dxguid.lib" "imm32.lib")
+        set(CLIENT_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib" "dxguid.lib")
     endif()
 
     set(CLIENT_BINARY_TYPE WIN32)

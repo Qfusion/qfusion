@@ -30,7 +30,7 @@ typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   72
+#define	CGAME_API_VERSION   73
 
 //
 // structs and variables shared with the main engine
@@ -249,6 +249,10 @@ typedef struct
 	// cinematics
 	bool ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener, 
 		cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
+
+	// input method editor
+	unsigned int ( *IN_IME_GetCandidates )( char * const *cands, size_t candSize, unsigned int maxCands,
+		int *selected, int *firstKey );
 } cgame_import_t;
 
 //

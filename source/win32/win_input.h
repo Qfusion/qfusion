@@ -148,3 +148,7 @@ extern int mouse_wheel_type;
 void IN_MouseEvent( int mstate );
 
 void IN_RawInput_MouseRead( HANDLE in_device_handle );
+
+void IN_WinIME_Init( void );
+void IN_WinIME_AssociateContext( void );
+void IN_WinIME_Shutdown( void );

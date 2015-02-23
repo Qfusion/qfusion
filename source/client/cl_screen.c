@@ -377,6 +377,32 @@ void SCR_DrawFillRect( int x, int y, int w, int h, vec4_t color )
 }
 
 /*
+* SCR_DrawClampFillRect
+* 
+* Fills a scissored box of pixels with a single color
+*/
+void SCR_DrawClampFillRect( int x, int y, int w, int h, int xmin, int ymin, int xmax, int ymax, vec4_t color )
+{
+	int x2 = x + w;
+	int y2 = y + h;
+
+	if( ( xmax <= xmin ) || ( ymax <= ymin ) )
+		return;
+
+	clamp_low( x, xmin );
+	clamp_low( y, ymin );
+	clamp_high( x2, xmax );
+	clamp_high( y2, ymax );
+
+	w = x2 - x;
+	h = y2 - y;
+	if( ( w <= 0 ) || ( h <= 0 ) )
+		return;
+
+	re.DrawStretchPic( x, y, w, h, 0, 0, 1, 1, color, cls.whiteShader );
+}
+
+/*
 ===============================================================================
 
 BAR GRAPHS

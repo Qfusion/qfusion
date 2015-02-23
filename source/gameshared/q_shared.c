@@ -875,6 +875,36 @@ const char *Q_ColorStringTerminator( const char *str, int finalcolor )
 	}
 }
 
+/*
+* Q_ColorStrLastColor
+*
+* Returns the last color in a string, or the previous color specified in the argument.
+*/
+int Q_ColorStrLastColor( int previous, const char *s, int maxlen )
+{
+	char c;
+	const char *end = s;
+	int lastcolor = previous, colorindex;
+
+	if( maxlen > 0 )
+		end += maxlen;
+
+	while( ( s < end ) || ( maxlen < 0 ) )
+	{
+		int gc = Q_GrabCharFromColorString( &s, &c, &colorindex );
+		if( gc == GRABCHAR_CHAR )
+			;
+		else if( gc == GRABCHAR_COLOR )
+			lastcolor = colorindex;
+		else if( gc == GRABCHAR_END )
+			break;
+		else
+			assert( 0 );
+	}
+
+	return lastcolor;
+}
+
 
 /*
 * COM_RemoveJunkChars
@@ -1197,8 +1227,6 @@ char *Q_trim( char *s )
 	return s;
 }
 
-#define MAX_UTF8_STRING			2048	// == MAX_TOKEN_CHARS*2, >= MAX_CMDLINE*2
-
 /*
 * Q_WCharUtf8Length
 *
@@ -1224,7 +1252,7 @@ size_t Q_WCharUtf8Length( wchar_t wc )
 *
 * Converts wchar_t to UTF-8 and returns the length of the written sequence.
 */
-size_t Q_WCharToUtf8( char *dest, wchar_t wc, size_t bufsize )
+size_t Q_WCharToUtf8( wchar_t wc, char *dest, size_t bufsize )
 {
 	unsigned int num = wc;
 	size_t ret = 0;
@@ -1283,8 +1311,37 @@ size_t Q_WCharToUtf8( char *dest, wchar_t wc, size_t bufsize )
 char *Q_WCharToUtf8Char( wchar_t wc )
 {
 	static char buf[5];	// longest valid utf-8 sequence is 4 bytes
-	Q_WCharToUtf8( buf, wc, sizeof( buf ) );
+	Q_WCharToUtf8( wc, buf, sizeof( buf ) );
 	return buf;
+}
+
+/*
+* Q_WCharToUtf8String
+*
+* Converts a wchar_t string (of the system native wchar size) to UTF-8.
+* Returns the length of the written string.
+*/
+size_t Q_WCharToUtf8String( const wchar_t *ws, char *dest, size_t bufsize )
+{
+	size_t len = 0, utflen;
+
+	if( !bufsize ) 
+		return 0;
+
+	dest[0] = '\0';
+
+	while( ( bufsize > 1 ) && *ws ) {
+		utflen = Q_WCharToUtf8( *ws, dest, bufsize );
+		if( !utflen )
+			break;
+
+		ws++;
+		dest += utflen;
+		bufsize -= utflen;
+		len += utflen;
+	}
+
+	return len;
 }
 
 /*
@@ -1377,6 +1434,24 @@ wchar_t Q_GrabWCharFromUtf8String (const char **pstr)
 
 	*pstr = src;
 	return val;
+}
+
+/*
+* Q_FixTruncatedUtf8
+*
+* Terminates a UTF-8 string correctly if it's cut to a specific buffer length (for instance, when using strncpyz).
+*/
+void Q_FixTruncatedUtf8( char *str )
+{
+	size_t len = strlen( str );
+	const char *temp;
+	if( !len )
+		return;
+
+	len = Q_Utf8SyncPos( str, len - 1, UTF8SYNC_LEFT );
+	temp = str + len;
+	if( ( *temp != '?' ) && ( Q_GrabWCharFromUtf8String( &temp ) == '?' ) )
+		str[len] = '\0';
 }
 
 /*
