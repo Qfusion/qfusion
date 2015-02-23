@@ -577,6 +577,7 @@ void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int
 void SCR_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color );
 void SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 void SCR_DrawFillRect( int x, int y, int w, int h, vec4_t color );
+void SCR_DrawClampFillRect( int x, int y, int w, int h, int xmin, int ymin, int xmax, int ymax, vec4_t color );
 
 void CL_InitMedia( void );
 void CL_ShutdownMedia( void );

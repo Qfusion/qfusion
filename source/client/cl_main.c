@@ -650,7 +650,7 @@ void CL_SetKeyDest( int key_dest )
 	{
 		Key_ClearStates();
 		cls.key_dest = key_dest;
-		Con_SetMessageModeCvar();
+		Con_SetMessageMode();
 		if( cl_zoom )
 			Cvar_SetValue( cl_zoom->name, 0 );
 	}

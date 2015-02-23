@@ -227,15 +227,18 @@ const char *COM_RemoveColorTokensExt( const char *str, bool draw );
 #define COM_RemoveColorTokens(in) COM_RemoveColorTokensExt(in,false)
 int COM_SanitizeColorString (const char *str, char *buf, int bufsize, int maxprintablechars, int startcolor);
 const char *Q_ColorStringTerminator( const char *str, int finalcolor );
+int Q_ColorStrLastColor( int previous, const char *s, int maxlen );
 
 size_t Q_WCharUtf8Length( wchar_t wc );
-size_t Q_WCharToUtf8( char *dest, wchar_t wc, size_t bufsize );
+size_t Q_WCharToUtf8( wchar_t wc, char *dest, size_t bufsize );
 char *Q_WCharToUtf8Char( wchar_t wc );
+size_t Q_WCharToUtf8String( const wchar_t *ws, char *dest, size_t bufsize );
 wchar_t Q_GrabWCharFromUtf8String (const char **pstr);
 int Q_GrabWCharFromColorString( const char **pstr, wchar_t *wc, int *colorindex );
 #define UTF8SYNC_LEFT 0
 #define UTF8SYNC_RIGHT 1
 int Q_Utf8SyncPos( const char *str, int pos, int dir );
+void Q_FixTruncatedUtf8( char *str );
 bool Q_IsBreakingSpace( const char *str );
 
 float *tv( float x, float y, float z );

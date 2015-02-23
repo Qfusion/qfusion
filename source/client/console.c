@@ -302,16 +302,20 @@ void Con_ClearNotify( void )
 }
 
 /*
-* Con_SetMessageModeCvar
+* Con_SetMessageMode
 * 
 * Called from CL_SetKeyDest
 */
-void Con_SetMessageModeCvar( void )
+void Con_SetMessageMode( void )
 {
-	if( cls.key_dest == key_message )
+	bool message = ( cls.key_dest == key_message );
+
+	if( message )
 		Cvar_ForceSet( "con_messageMode", chat_team ? "2" : "1" );
 	else
 		Cvar_ForceSet( "con_messageMode", "0" );
+
+	IN_IME_Enable( message );
 }
 
 /*
@@ -662,33 +666,6 @@ int Q_ColorCharOffset( const char *s, int charcount )
 	return s - start;
 }
 
-#if 0
-/*
-* Q_ColorStrLastColor
-*/
-static int Q_ColorStrLastColor( const char *s, int byteofs )
-{
-	char c;
-	const char *end = s + byteofs;
-	int lastcolor = ColorIndex(COLOR_WHITE), colorindex;
-
-	while( s < end )
-	{
-		int gc = Q_GrabCharFromColorString( &s, &c, &colorindex );
-		if( gc == GRABCHAR_CHAR )
-			;
-		else if( gc == GRABCHAR_COLOR )
-			lastcolor = colorindex;
-		else if( gc == GRABCHAR_END )
-			break;
-		else
-			assert( 0 );
-	}
-
-	return lastcolor;
-}
-#endif
-
 /*
 * Con_DrawInput
 * 
@@ -788,13 +765,21 @@ void Con_DrawNotify( void )
 
 	if( cls.key_dest == key_message )
 	{
-		int x, y;
-		int width, swidth, prewidth = 0;
-		int promptwidth;
+		int x, y, compx = 0;
+		int width, swidth, compwidth = 0, totalwidth, prewidth = 0;
+		int promptwidth, spacewidth;
 		char lang[16], langstr[20];
 		struct qfontface_s *font = NULL;
 		int fontHeight;
 		int underlineThickness, underlinePosition;
+		char comp[MAX_STRING_CHARS];
+		size_t complen, imecursor, convstart, convlen;
+		char oldchar;
+		int precompcolor = ColorIndex( COLOR_WHITE );
+		static vec4_t convcolor = { 1.0f, 1.0f, 1.0f, 0.3f };
+		int candwidth, numcands, selectedcand, firstcand, candspercol, candnumwidth;
+		int candx, candy, candsincol = 0, candprewidth;
+		char candbuf[MAX_STRING_CHARS * 10], *cands[10];
 
 		if( con_chatCGame->integer )
 		{
@@ -831,9 +816,11 @@ void Con_DrawNotify( void )
 		if( !translated )
 			translated = say;
 		SCR_DrawString( x, y, ALIGN_LEFT_TOP, translated, font, colorWhite );
-		promptwidth = SCR_strWidth( translated, font, 0 ) + SCR_strWidth( " ", font, 0 );
+		spacewidth = SCR_strWidth( " ", font, 0 );
+		promptwidth = SCR_strWidth( translated, font, 0 ) + spacewidth;
 		x += promptwidth;
 		width -= promptwidth;
+		candwidth = width / 3 - spacewidth;
 
 		IN_GetInputLanguage( lang, sizeof( lang ) );
 		if( lang[0] && strcmp( lang, "EN" ) )
@@ -843,21 +830,43 @@ void Con_DrawNotify( void )
 			SCR_DrawString( x + width, y, ALIGN_LEFT_TOP, langstr, font, colorWhite );
 		}
 
-		// the cursor
 		underlinePosition = SCR_FontUnderline( font, &underlineThickness );
 		width -= underlineThickness;
 
+
 		s = chat_buffer;
 		swidth = SCR_strWidth( s, font, 0 );
+
+		complen = IN_IME_GetComposition( comp, sizeof( comp ), &imecursor, &convstart, &convlen );		
+
+		if( complen )
+		{
+			compx = ( chat_linepos ? SCR_strWidth( s, font, chat_linepos ) : 0 );
+			compwidth = SCR_strWidth( comp, font, 0 );
+			totalwidth = compx + compwidth + SCR_strWidth( s + chat_linepos, font, 0 );
+		}
+		else
+		{
+			totalwidth = swidth;
+		}
+
+
 		if( chat_linepos )
 		{
 			if( chat_linepos == chat_bufferlen )
-				prewidth = swidth;
+				prewidth += swidth;
 			else
-				prewidth = SCR_strWidth( s, font, chat_linepos );
+				prewidth += SCR_strWidth( s, font, chat_linepos );
+		}
+		if( imecursor )
+		{
+			if( imecursor == complen )
+				prewidth += compwidth;
+			else
+				prewidth += SCR_strWidth( comp, font, imecursor );
 		}
 
-		if( swidth > width )
+		if( totalwidth > width )
 		{
 			// don't let the cursor go beyond the left screen edge
 			clamp_high( chat_prestep, prewidth );
@@ -866,8 +875,8 @@ void Con_DrawNotify( void )
 			clamp_low( chat_prestep, prewidth - width );
 
 			// don't leave an empty space after the string when deleting a character
-			if( ( swidth - chat_prestep ) < width ) {
-				chat_prestep = swidth - width;
+			if( ( totalwidth - chat_prestep ) < width ) {
+				chat_prestep = totalwidth - width;
 			}
 		}
 		else
@@ -875,13 +884,87 @@ void Con_DrawNotify( void )
 			chat_prestep = 0;
 		}
 
-		// FIXME: we double the font height to compensate for alignment issues
-		SCR_DrawClampString( x - chat_prestep, y, s, x, y,
-			x + width, y + fontHeight * 2, font, colorWhite );
 
+		if( complen && ( chat_linepos < chat_bufferlen ) )
+		{
+			oldchar = s[chat_linepos];
+			s[chat_linepos] = '\0';
+			SCR_DrawClampString( x - chat_prestep, y, s, x, y,
+				x + width, y + fontHeight, font, colorWhite );
+			precompcolor = Q_ColorStrLastColor( ColorIndex( COLOR_WHITE ), s, -1 );
+			s[chat_linepos] = oldchar;
+			SCR_DrawClampString( x - chat_prestep + compx + compwidth, y, s + chat_linepos, x, y,
+				x + width, y + fontHeight, font, color_table[precompcolor] );
+		}
+		else
+		{
+			SCR_DrawClampString( x - chat_prestep, y, s, x, y,
+				x + width, y + fontHeight, font, colorWhite );
+			if( complen )
+				precompcolor = Q_ColorStrLastColor( ColorIndex( COLOR_WHITE ), s, -1 );
+		}
+
+		if( complen )
+		{
+			if( convlen )
+			{
+				SCR_DrawClampFillRect(
+					x - chat_prestep + compx + ( convstart ? SCR_strWidth( comp, font, convstart ) : 0 ), y,
+					SCR_strWidth( comp + convstart, font, convlen ), fontHeight,
+					x, y, x + width, y + fontHeight, convcolor );
+			}
+
+			SCR_DrawClampString( x - chat_prestep + compx, y, comp, x, y,
+				x + width, y + fontHeight, font, color_table[precompcolor] );
+
+			SCR_DrawClampFillRect(
+				x - chat_prestep + compx, y + underlinePosition,
+				compwidth, underlineThickness,
+				x, y + underlinePosition, x + width, y + underlinePosition + underlineThickness, colorWhite );
+		}
 
 		if( (int)( cls.realtime>>8 )&1 )
 			SCR_DrawFillRect( x + prewidth - chat_prestep, y, underlineThickness, fontHeight, colorWhite );
+
+
+		// draw IME candidates
+		for( i = 0; i < 10; i++ )
+			cands[i] = candbuf + i * MAX_STRING_CHARS;
+		numcands = IN_IME_GetCandidates( cands, MAX_STRING_CHARS, 10, &selectedcand, &firstcand );
+		if( numcands )
+		{
+			candspercol = ( firstcand ? 3 : 5 ); // 2-column if starts from 0 (5|5), 3-column if starts from 1 (3|3|3)
+			candnumwidth = SCR_strWidth( "0 ", font, 0 );
+			if( selectedcand >= 0 )
+			{
+				candx = x + ( candwidth + spacewidth ) * ( selectedcand / candspercol );
+				candy = y + fontHeight * ( selectedcand % candspercol + 1 );
+				SCR_DrawClampFillRect( candx, candy,
+					candnumwidth + SCR_strWidth( cands[selectedcand], font, 0 ), fontHeight,
+					candx, candy, candx + candwidth, candy + fontHeight, convcolor );
+			}
+
+			candx = x;
+			candy = y;
+			for( i = 0; i < numcands; i++ )
+			{
+				candy += fontHeight;
+
+				SCR_DrawRawChar( candx, candy, '0' + firstcand + i, font, colorWhite );
+				candprewidth = SCR_strWidth( cands[i], font, 0 ) - ( candwidth - candnumwidth );
+				clamp_low( candprewidth, 0 );
+				SCR_DrawClampString( candnumwidth + candx - candprewidth, candy, cands[i],
+					candx + candnumwidth, candy, candx + candwidth, candy + fontHeight, font, colorWhite );
+
+				candsincol++;
+				if( candsincol >= candspercol )
+				{
+					candx += candwidth + spacewidth;
+					candy = y;
+					candsincol = 0;
+				}
+			}
+		}
 	}
 }
 

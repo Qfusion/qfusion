@@ -1538,10 +1538,309 @@ void IN_GetInputLanguage( char *dest, size_t size )
 	lang[0] = '\0';
 
 	GetLocaleInfo(
-		MAKELCID( ( WORD )( GetKeyboardLayout( 0 ) ), SORT_DEFAULT ),
+		MAKELCID( LOWORD( GetKeyboardLayout( 0 ) ), SORT_DEFAULT ),
 		LOCALE_SISO639LANGNAME,
 		lang, sizeof( lang ) );
 
 	Q_strupr( lang );
 	Q_strncpyz( dest, lang, size );
+}
+
+/*
+=========================================================================
+
+INPUT METHOD EDITORS
+
+=========================================================================
+*/
+
+static HINSTANCE in_winime_dll;
+static bool in_winime_initialized;
+
+static HIMC in_winime_context;
+
+static bool in_winime_enabled;
+
+static char in_winime_compStr[512];
+static int in_winime_convStart;
+static int in_winime_convLen;
+
+static CANDIDATELIST *in_winime_candList;
+static size_t in_winime_candListSize;
+
+static HIMC ( WINAPI *qimmAssociateContext )( HWND hWnd, HIMC hIMC );
+static HIMC ( WINAPI *qimmCreateContext )( void );
+static BOOL ( WINAPI *qimmDestroyContext )( HIMC hIMC );
+static DWORD ( WINAPI *qimmGetCandidateList )( HIMC hIMC, DWORD dwIndex, LPCANDIDATELIST lpCandList, DWORD dwBufLen );
+static LONG ( WINAPI *qimmGetCompositionString )( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen );
+static DWORD ( WINAPI *qimmGetProperty )( HKL hKL, DWORD fdwIndex );
+static BOOL ( WINAPI *qimmNotifyIME )( HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue );
+
+/*
+* In_WinIME_GPA
+*/
+void *In_WinIME_GPA( const char *name )
+{
+	void *p = GetProcAddress( in_winime_dll, name );
+
+	if( !p )
+	{
+		Com_Printf( "IME: Couldn't load symbol: %s\n", name );
+		in_winime_initialized = false;
+	}
+
+	return p;
+}
+
+/*
+* IN_WinIME_Init
+*/
+void IN_WinIME_Init( void )
+{
+	in_winime_dll = LoadLibrary( "imm32.dll" );
+	if( !in_winime_dll )
+	{
+		Com_Printf( "IME: Couldn't load imm32.dll\n" );
+		return;
+	}
+
+	in_winime_initialized = true;
+	qimmAssociateContext = In_WinIME_GPA( "ImmAssociateContext" );
+	qimmCreateContext = In_WinIME_GPA( "ImmCreateContext" );
+	qimmDestroyContext = In_WinIME_GPA( "ImmDestroyContext" );
+	qimmGetCandidateList = In_WinIME_GPA( "ImmGetCandidateListW" );
+	qimmGetCompositionString = In_WinIME_GPA( "ImmGetCompositionStringW" );
+	qimmGetProperty = In_WinIME_GPA( "ImmGetProperty" );
+	qimmNotifyIME = In_WinIME_GPA( "ImmNotifyIME" );
+	if( !in_winime_initialized )
+	{
+		IN_WinIME_Shutdown();
+		return;
+	}
+
+	in_winime_context = qimmCreateContext();
+	if( !in_winime_context )
+	{
+		Com_Printf( "IME: Couldn't create an input context\n" );
+		IN_WinIME_Shutdown();
+		return;
+	}
+}
+
+/*
+* IN_WinIME_AssociateContext
+*/
+void IN_WinIME_AssociateContext( void )
+{
+	if( !in_winime_initialized || !cl_hwnd )
+		return;
+
+	qimmAssociateContext( cl_hwnd, in_winime_enabled ? in_winime_context : NULL );
+}
+
+/*
+* IN_WinIME_Shutdown
+*/
+void IN_WinIME_Shutdown( void )
+{
+	if( in_winime_candList )
+	{
+		Q_free( in_winime_candList );
+		in_winime_candList = NULL;
+		in_winime_candListSize = 0;
+	}
+
+	if( in_winime_context )
+	{
+		qimmDestroyContext( in_winime_context );
+		in_winime_context = NULL;
+	}
+
+	if( in_winime_dll )
+	{
+		FreeLibrary( in_winime_dll );
+		in_winime_dll = NULL;
+	}
+
+	in_winime_initialized = false;
+}
+
+/*
+* IN_IME_Enable
+*/
+void IN_IME_Enable( bool enable )
+{
+	if( in_winime_enabled == enable )
+		return;
+
+	in_winime_enabled = enable;
+	qimmNotifyIME( in_winime_context, NI_COMPOSITIONSTR, CPS_CANCEL, 0 );
+	IN_WinIME_AssociateContext();
+}
+
+/*
+* IN_IME_GetComposition
+*
+* The returned size_t values are UTF-8 bytes, not characters.　All colors will be escaped.
+*/
+#define IN_WINIME_COMPSTR_LENGTH 100 // max length for the Japanese IME, but it's likely the same or less for Chinese
+size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen )
+{
+	WCHAR compStr[IN_WINIME_COMPSTR_LENGTH + 1];
+	size_t compStrLengths[IN_WINIME_COMPSTR_LENGTH];
+	char compAttr[IN_WINIME_COMPSTR_LENGTH + 1];
+	int len, attrLen, i, cursor, attr, start = -1;
+	size_t cursorutf = 0, startutf = 0, convutflen = 0, utflen, ret = 0;
+
+	if( !strSize )
+		str = NULL;
+
+	if( str )
+		str[0] = '\0';
+	if( cursorPos )
+		*cursorPos = 0;
+	if( convStart )
+		*convStart = 0;
+	if( convLen )
+		*convLen = 0;
+
+	if( !in_winime_initialized )
+		return 0;
+
+	len = qimmGetCompositionString( in_winime_context, GCS_COMPSTR, compStr, sizeof( compStr ) ) / sizeof( WCHAR );
+	if( len <= 0 )
+		return 0;
+
+	// store the UTF-8 length of each character including escaped colors to calculate the offsets
+	for( i = 0; i < len; i++ )
+	{
+		if( compStr[i] == Q_COLOR_ESCAPE )
+			compStrLengths[i] = 2;
+		else
+			compStrLengths[i] = Q_WCharUtf8Length( compStr[i] );
+
+		if( !str )
+			ret += compStrLengths[i];
+	}
+
+	if( str )
+	{
+		for( i = 0; i < len; i++ )
+		{
+			utflen = compStrLengths[i];
+			if( ( ret + utflen ) >= strSize )
+				break;
+
+			if( compStr[i] == Q_COLOR_ESCAPE )
+				str[ret] = str[ret + 1] = Q_COLOR_ESCAPE;
+			else
+				Q_WCharToUtf8( compStr[i], str + ret, utflen + 1 );
+			ret += utflen;
+		}
+		str[ret] = '\0';
+	}
+
+	if( cursorPos )
+	{
+		cursor = LOWORD( qimmGetCompositionString( in_winime_context, GCS_CURSORPOS, NULL, 0 ) );
+		for( i = 0; ( i < cursor ) && ( i < len ); i++ )
+			cursorutf += compStrLengths[i];
+		clamp_high( cursorutf, ret );
+		*cursorPos = cursorutf;
+	}
+
+	if( convStart || convLen )
+	{
+		attrLen = qimmGetCompositionString( in_winime_context, GCS_COMPATTR, compAttr, sizeof( compAttr ) );
+		if( attrLen == len )
+		{
+			for( i = 0; i < attrLen; i++ )
+			{
+				attr = compAttr[i];
+				if( ( attr == ATTR_TARGET_CONVERTED ) || ( attr == ATTR_TARGET_NOTCONVERTED ) )
+				{
+					if( start < 0 )
+						start = startutf;
+					convutflen += compStrLengths[i];
+				}
+				else
+				{
+					if( start >= 0 )
+						break;
+					startutf += compStrLengths[i];
+				}
+			}
+
+			if( start >= 0 )
+			{
+				if( start > ( int )ret )
+					start = ret;
+				if( ( start + convutflen ) > ( int )ret )
+					convutflen = ret - start;
+				if( convStart )
+					*convStart = start;
+				if( convLen )
+					*convLen = convutflen;
+			}
+		}
+	}
+
+	return ret;
+}
+
+/*
+* IN_IME_GetCandidates
+*/
+unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigned int maxCands, int *selected, int *firstKey )
+{
+	size_t candListSize;
+	CANDIDATELIST *candList = in_winime_candList;
+	unsigned int i;
+	char cand[MAX_STRING_CHARS];
+
+	if( selected )
+		*selected = -1;
+	if( firstKey )
+		*firstKey = 1;
+
+	candListSize = qimmGetCandidateList( in_winime_context, 0, NULL, 0 );
+	if( !candListSize )
+		return 0;
+
+	if( candListSize > in_winime_candListSize )
+	{
+		candList = Q_realloc( candList, candListSize );
+		if( !candList )
+			return 0;
+		in_winime_candList = candList;
+		in_winime_candListSize = candListSize;
+	}
+
+	if( qimmGetCandidateList( in_winime_context, 0, candList, candListSize ) != candListSize )
+		return 0;
+
+	clamp_high( maxCands, candList->dwPageSize );
+	if( ( candList->dwPageStart + maxCands ) > candList->dwCount )
+		maxCands = candList->dwCount - candList->dwPageStart;
+
+	if( cands && candSize )
+	{
+		for( i = 0; i < maxCands; i++ )
+		{
+			Q_WCharToUtf8String( ( const WCHAR * )( ( const char * )candList + candList->dwOffset[candList->dwPageStart + i] ), cand, sizeof( cand ) );
+			Q_strncpyz( cands[i], COM_RemoveColorTokensExt( cand, true ), candSize );
+			Q_FixTruncatedUtf8( cands[i] );
+		}
+	}
+
+	if( selected && ( candList->dwSelection >= candList->dwPageStart ) && ( candList->dwSelection < ( candList->dwPageStart + maxCands ) ) )
+		*selected = ( int )candList->dwSelection - ( int )candList->dwPageStart;
+
+	if( firstKey )
+	{
+		if( !( qimmGetProperty( GetKeyboardLayout( 0 ), IGP_PROPERTY ) & IME_PROP_CANDLIST_START_FROM_1 ) )
+			*firstKey = 0;
+	}
+
+	return maxCands;
 }
