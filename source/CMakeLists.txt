@@ -92,16 +92,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
-# Linux specific settings
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+# Linux or mingw specific settings
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     # If no build type was specified - use release build settings
     if (NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Release")
-    endif()
-
-    if (CMAKE_CROSSCOMPILING)
-        set(CMAKE_LIBRARY_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
-        link_directories("${CMAKE_FIND_ROOT_PATH}/usr/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
     endif()
 
     add_definitions(-D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE)
@@ -119,6 +114,14 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     # -s in release link flags
     add_release_link_flags("-s")
+endif()
+
+# Linux-only specific settings
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    if (CMAKE_CROSSCOMPILING)
+        set(CMAKE_LIBRARY_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
+        link_directories("${CMAKE_FIND_ROOT_PATH}/usr/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
+    endif()
 
     # Remove compilating flags from link options
     # string(REPLACE "<FLAGS>" "" CMAKE_C_LINK_EXECUTABLE "${CMAKE_C_LINK_EXECUTABLE}")
@@ -199,7 +202,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_windows_release_libs(SDL2_LIBRARIES)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need to use suffix-prefix settings from Windows
     set(CMAKE_EXECUTABLE_SUFFIX ".${CMAKE_SYSTEM_PROCESSOR}${CMAKE_EXECUTABLE_SUFFIX}")
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
     set(CMAKE_SHARED_LIBRARY_SUFFIX "_${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
