@@ -51,17 +51,13 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DCURL_STATICLIB -DWIN32 -D_WINDOWS)
 
-    if (NOT MINGW)
+    if (MSVC)
         set(CMAKE_LIBRARY_PATH "win32/${QFUSION_WINDOWS_ARCH}/lib/debug")
     else()
         set(CMAKE_LIBRARY_PATH "win32/${QFUSION_WINDOWS_ARCH}/lib/mingw")
     endif()
 
-    if (MINGW)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-
-        add_common_link_flags("-static -static-libgcc -static-libstdc++")
-    else()
+    if (MSVC)
         add_release_link_flags("/LTCG")
         
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT /W4 /Ob1 /GL /Ot")
@@ -114,6 +110,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
 
     # -s in release link flags
     add_release_link_flags("-s")
+
+    if (MINGW)
+        add_common_link_flags("-static -static-libgcc -static-libstdc++")
+    endif()
 endif()
 
 # Linux-only specific settings
