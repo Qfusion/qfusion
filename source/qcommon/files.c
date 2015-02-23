@@ -81,6 +81,8 @@ typedef struct
 #define FS_PACKFILE_COHERENT	    2
 #define FS_PACKFILE_DIRECTORY		4
 
+#define FS_PACKFILE_NUM_THREADS	4
+
 typedef struct packfile_s
 {
 	char *name;
@@ -96,12 +98,14 @@ typedef struct packfile_s
 //
 // in memory
 //
-typedef struct
+typedef struct pack_s
 {
 	char *filename;     // full path
 	char *manifest;
 	unsigned checksum;
 	bool pure;
+	int deferred_shard;
+	struct pack_s *deferred_pack;
 	void *sysHandle;
 	void *vfsHandle;
 	int numFiles;
@@ -2468,7 +2472,7 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent )
 	if( modulepack && manifestFilesize > 0 )
 		FS_ReadPackManifest( pack );
 
-	if( !silent ) Com_Printf( "Added pk3 file %s (%i files)\n", pack->filename, pack->numFiles, pack->checksum );
+	if( !silent ) Com_Printf( "Added pk3 file %s (%i files)\n", pack->filename, pack->numFiles );
 
 	return pack;
 
@@ -3364,9 +3368,11 @@ static int FS_TouchGamePath( const char *basepath, const char *gamedir, bool ini
 				continue;
 			}
 
-			pak = FS_LoadPackFile( paknames[i], false );
-			if( !pak )
-				goto freename;
+			// deferred loading
+			pak = ( pack_t* )FS_Malloc( sizeof( *pak ) );
+			pak->filename = FS_CopyString( paknames[i] );
+			pak->deferred_pack = NULL;
+			pak->deferred_shard = newpaks % FS_PACKFILE_NUM_THREADS + 1;
 
 			// now insert it for real
 			if( FS_FindPackFilePos( paknames[i], &search, &prev, &next ) )
@@ -3407,6 +3413,83 @@ static int FS_AddGamePath( const char *basepath, const char *gamedir )
 static int FS_UpdateGamePath( const char *basepath, const char *gamedir )
 {
 	return FS_TouchGamePath( basepath, gamedir, false );
+}
+
+/*
+* FS_ReplaceDeferredPaks
+*/
+static void FS_ReplaceDeferredPaks( void )
+{
+	searchpath_t *search;
+	searchpath_t *prev;
+
+	// scan for deferred paks with matching shard id
+	prev = NULL;
+	for( search = fs_searchpaths; search != NULL;  ) {
+		pack_t *pak = search->pack;
+		
+		if( pak && pak->deferred_shard ) {
+			if( !pak->deferred_pack ) {
+			// failed to load this one, remove
+				if( prev ) {
+					prev->next = search->next;
+				}
+				FS_FreePakFile( pak );
+				FS_Free( search );
+				search = prev;
+			}
+			else {
+				// update prev pointers
+				search->pack = pak->deferred_pack;
+				FS_FreePakFile( pak );
+			}
+		}
+		prev = search;
+		search = search->next;
+	}
+}
+
+/*
+* FS_LoadDeferredPaks_Job
+*/
+static void *FS_LoadDeferredPaks_Job( void *pshard )
+{
+	searchpath_t *search;
+	const int shard = (intptr_t)pshard;
+
+	// scan for deferred paks with matching shard id
+	for( search = fs_searchpaths; search != NULL; search = search->next ) {
+		if( search->pack && search->pack->deferred_shard == shard )	{
+			search->pack->deferred_pack = FS_LoadPackFile( search->pack->filename, false );
+		}
+	}
+	return NULL;
+}
+
+/*
+* FS_LoadDeferredPaks
+*/
+static void FS_LoadDeferredPaks( int newpaks )
+{
+	int i;
+	qthread_t *threads[FS_PACKFILE_NUM_THREADS];
+	const int num_threads = min( newpaks, FS_PACKFILE_NUM_THREADS );
+
+	if( !newpaks )
+		return;
+	
+	if( newpaks == 1 ) {
+		FS_LoadDeferredPaks_Job( (void *)1 );
+		FS_ReplaceDeferredPaks();
+		return;
+	}
+
+	for( i = 0; i < num_threads; i++ )
+		threads[i] = QThread_Create( FS_LoadDeferredPaks_Job, ( void * )(i + 1) );
+	for( i = 0; i < num_threads; i++ )
+		QThread_Join( threads[i] );
+
+	FS_ReplaceDeferredPaks();
 }
 
 /*
@@ -3467,6 +3550,10 @@ static int FS_TouchGameDirectory( const char *gamedir, bool initial )
 			newpaks += FS_UpdateGamePath( basepath->path, gamedir );
 		prev = basepath;
 	}
+
+	// possibly spawn a few threads to load deferred packs in parallel
+	if( newpaks )
+		FS_LoadDeferredPaks( newpaks );
 
 	// FIXME: remove the initial check?
 	// not sure whether removing pak files on the fly is such a good idea

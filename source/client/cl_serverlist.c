@@ -624,7 +624,7 @@ static void CL_MasterAddressCache_Shutdown( void )
 			QThread_Cancel( resolverThreads[i] );
 		}
 
-	    	QMutex_Unlock( resolveLock );
+		QMutex_Unlock( resolveLock );
 
 		for( i = 0; resolverThreads[i]; i++ ) {
 			QThread_Join( resolverThreads[i] );
