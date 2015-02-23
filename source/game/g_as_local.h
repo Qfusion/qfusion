@@ -46,5 +46,3 @@ extern angelwrap_api_t *angelExport;
 
 asIScriptModule *G_LoadGameScript( const char *moduleName, const char *dir, const char *filename, const char *ext );
 bool G_ExecutionErrorReport( int error );
-
-extern bool inMapFuncCall; // FIXME: this is a nasty hack used to avoid breaking the angelwrap API
