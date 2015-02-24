@@ -56,6 +56,16 @@ int CG_VerticalAlignForHeight( const int y, int align, int height )
 	return ny;
 }
 
+int CG_HorizontalMovementForAlign( int align )
+{
+	int m = 1; // move to the right
+
+	if( align % 3 == 2 )  // right
+		m = -1; // move to the left
+
+	return m;
+}
+
 /*
 ===============================================================================
 

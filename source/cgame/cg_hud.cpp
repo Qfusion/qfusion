@@ -976,12 +976,14 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 
 //=============================================================================
 
-static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, vec4_t basecolor )
+#define AWARDS_OVERSHOOT_DURATION 0.2f
+#define AWARDS_OVERSHOOT_FREQUENCY 6.0f
+#define AWARDS_OVERSHOOT_DECAY 10.0f
+
+static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, vec4_t color )
 {
 	int i, count, current;
 	int yoffset;
-	vec4_t color;
-	float frac;
 
 	if( !cg_showAwards->integer )
 		return;
@@ -1009,28 +1011,26 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 
 	for( i = count; i > 0; i-- )
 	{
-		unsigned int fadeTime;
+		int s_x, e_x, m_x;
+		int width;
+		float moveTime;
+		const char *str;
 
 		current = ( cg.award_head - i ) % MAX_AWARD_LINES;
+		str = cg.award_lines[ current ];
 
 		yoffset = trap_SCR_strHeight( font ) * ( MAX_AWARD_LINES - i );
+		moveTime = ( cg.time - cg.award_times[ current ] ) / 1000.0f;
 
-		Vector4Copy( basecolor, color );
+		width = trap_SCR_strWidth( str, font, 0 );
 
-		fadeTime = MAX_AWARD_DISPLAYTIME * 0.66;
-		if( cg.time - cg.award_times[ current ] < fadeTime )
-		{
-			frac = 1.0f;
-		}
-		else
-		{
-			frac = 1.0f - ( (float)( ( cg.time - cg.award_times[ current ] ) - fadeTime ) / (float)( MAX_AWARD_DISPLAYTIME - fadeTime ) );
-			clamp( frac, 0.0f, 1.0f );
-		}
+		s_x = CG_HorizontalMovementForAlign( align ) < 0 ? cgs.vidWidth : 0;
+		e_x = x;
+		m_x = LinearMovementWithOvershoot( s_x, e_x, 
+			AWARDS_OVERSHOOT_DURATION, AWARDS_OVERSHOOT_FREQUENCY, AWARDS_OVERSHOOT_DECAY, 
+			moveTime );
 
-		color[3] *= frac;
-
-		trap_SCR_DrawStringWidth( x, y + yoffset, align % 3, cg.award_lines[ current ], 0, font, color );
+		trap_SCR_DrawStringWidth( m_x, y + yoffset, align, str, 0, font, color );
 	}
 }
 
