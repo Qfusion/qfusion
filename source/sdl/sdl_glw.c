@@ -263,7 +263,12 @@ bool GLimp_ScreenEnabled( void )
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )
 {
-	return false;
+	SDL_GL_SetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1 );
+	
+	*context = (void*)SDL_GL_CreateContext( glw_state.sdl_window );
+	*surface = NULL;
+	
+	return true;
 }
 
 /*
@@ -271,7 +276,7 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 */
 bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 {
-	return false;
+	SDL_GL_MakeCurrent( glw_state.sdl_window, (SDL_GLContext)context );
 }
 
 /*
@@ -279,5 +284,5 @@ bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
 */
 void GLimp_SharedContext_Destroy( void *context, void *surface )
 {
-	( void )context;
+	SDL_GL_DeleteContext( (SDL_GLContext)context );
 }
