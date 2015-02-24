@@ -645,6 +645,7 @@ centity_t *CG_GetItemTimerEnt( int num );
 //
 int CG_HorizontalAlignForWidth( const int x, int align, int width );
 int CG_VerticalAlignForHeight( const int y, int align, int height );
+int CG_HorizontalMovementForAlign( int align );
 
 void CG_DrawHUDField( int x, int y, int align, float *color, int size, int width, int value );
 void CG_DrawHUDModel( int x, int y, int align, int w, int h, struct model_s *model, struct shader_s *shader, float yawspeed );
