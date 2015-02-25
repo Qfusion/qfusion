@@ -922,6 +922,13 @@ static inline void Mod_LoadFaceCommon( const rdface_t *in, msurface_t *out, int 
 	}
 
 	out->mesh = Mod_CreateMeshForSurface( in, out, faceNum );
+
+	// force outlines hack for old maps
+	if( !mapConfig.forceWorldOutlines 
+		&& out->shader && ( out->shader->flags & SHADER_FORCE_OUTLINE_WORLD ) 
+		&& !R_SurfPotentiallyVisible( out ) ) {
+		mapConfig.forceWorldOutlines = true;
+	}
 }
 
 /*

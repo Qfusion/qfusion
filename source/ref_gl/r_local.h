@@ -830,6 +830,8 @@ typedef struct
 	bool		checkWaterCrossing;		// check above and below so crossing solid water doesn't draw wrong
 
 	bool		forceClear;
+
+	bool		forceWorldOutlines;
 } mapconfig_t;
 
 extern mapconfig_t	mapConfig;
