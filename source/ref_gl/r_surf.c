@@ -607,6 +607,7 @@ void R_DrawWorld( void )
 	int clipFlags, msec = 0;
 	unsigned int dlightBits;
 	unsigned int shadowBits;
+	bool worldOutlines;
 
 	if( !r_drawworld->integer )
 		return;
@@ -617,7 +618,9 @@ void R_DrawWorld( void )
 
 	VectorCopy( rn.refdef.vieworg, modelOrg );
 
-	if( (rn.refdef.rdflags & RDF_WORLDOUTLINES) && (rf.viewcluster != -1) && r_outlines_scale->value > 0 )
+	worldOutlines = mapConfig.forceWorldOutlines || ( rn.refdef.rdflags & RDF_WORLDOUTLINES );
+
+	if( worldOutlines && (rf.viewcluster != -1) && r_outlines_scale->value > 0 )
 		rsc.worldent->outlineHeight = max( 0.0f, r_outlines_world->value );
 	else
 		rsc.worldent->outlineHeight = 0;
