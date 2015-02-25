@@ -1393,18 +1393,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 
 	swapEndian = ( header->endianness != 0x04030201 ) ? true : false;
 	if( swapEndian )
-	{
-		unsigned int field;
-		for( i = 3; i < 16; ++i )
-		{
-			field = ( ( unsigned int * )header )[i];
-			( ( unsigned int * )header )[i] =
-				( field >> 24 ) |
-				( ( ( field >> 16 ) & 255 ) << 8 ) |
-				( ( ( field >> 8 ) & 255 ) << 16 ) |
-				( ( field & 255 ) << 24 );
-		}
-	}
+		( ( int * )header )[i] = LongSwap( ( ( unsigned int * )header )[i] );
 
 	if( header->format && ( header->format != header->baseInternalFormat ) )
 	{
@@ -1495,7 +1484,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 			R_SetupTexParameters( image->flags );
 
 			for( i = 0; i < mip; ++i )
-				data += sizeof( int ) + *( ( unsigned int * )data );
+				data += sizeof( int ) + ( swapEndian ? LongSwap( *( ( int * )data ) ) : *( ( int * )data ) );
 
 			mips -= mip;
 			for( i = 0; i < mips; ++i )
@@ -1515,7 +1504,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 					scaledWidth = 1;
 				if( !scaledHeight )
 					scaledHeight = 1;
-				data += sizeof( int ) + *( ( unsigned int * )data );
+				data += sizeof( int ) + ( swapEndian ? LongSwap( *( ( int * )data ) ) : *( ( int * )data ) );
 			}
 		}
 
@@ -1531,7 +1520,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		for( i = 0; i < mips; ++i )
 		{
 			images[i] = data + sizeof( int );
-			data += sizeof( int ) + *( ( unsigned int * )data );
+			data += sizeof( int ) + ( swapEndian ? LongSwap( *( ( int * )data ) ) : *( ( int * )data ) );
 		}
 
 		if( !glConfig.ext.bgra &&
