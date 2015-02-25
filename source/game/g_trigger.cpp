@@ -246,7 +246,7 @@ static void trigger_counter_use( edict_t *self, edict_t *other, edict_t *activat
 	if( self->count )
 	{
 		if( !( self->spawnflags & 1 ) )
-			G_CenterPrintMsg( activator, "%i more to go...", self->count );
+			G_CenterPrintFormatMsg( activator, "%s more to go...", va( "%i", self->count ), NULL );
 		if( !( self->spawnflags & 2 ) )
 			G_Sound( activator, CHAN_AUTO, self->moveinfo.sound_start, ATTN_NORM );
 

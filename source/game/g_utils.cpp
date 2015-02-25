@@ -1239,6 +1239,82 @@ void G_CenterPrintMsg( edict_t *ent, const char *format, ... )
 }
 
 /*
+* G_CenterPrintFormatMsg
+*
+* MUST be passed NULL as the last variadic argument
+* 
+* NULL sends to all the message to all clients
+*/
+void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... )
+{
+	char cmd[MAX_STRING_CHARS];
+	char arg_fmt[MAX_TOKEN_CHARS];
+	va_list	argptr;
+	char *p, *arg_p;
+	int num_args;
+	bool overflow = false;
+
+	Q_strncpyz( cmd, "cpf ", sizeof( cmd ) );
+
+	// double quotes are bad
+	Q_strncpyz( arg_fmt, format, sizeof( arg_fmt ) );
+	arg_p = arg_fmt;
+
+	num_args = 0;
+	va_start( argptr, format );
+
+	do {
+		size_t cmd_len;
+		size_t arg_len;
+
+		if( num_args + 1 == MAX_STRING_TOKENS ) {
+			overflow = true;
+			break;
+		}
+
+		// double quotes are bad
+		p = arg_p;
+		while( ( p = strchr( p, '\"' ) ) != NULL )
+			*p = '\'';
+
+		cmd_len = strlen( cmd );
+		arg_len = strlen( arg_p );
+		if( arg_len > MAX_TOKEN_CHARS ) {
+			overflow = true;
+			break;
+		}
+
+		if( cmd_len + arg_len + 3 >= sizeof( cmd ) ) {
+			overflow = true;
+			break;
+		}
+
+		cmd[cmd_len+0] = ' ';
+		cmd[cmd_len+1] = '"';
+		memcpy( &cmd[cmd_len+2], arg_p, arg_len );
+		cmd[cmd_len+2+arg_len] = '"';
+		cmd[cmd_len+3+arg_len] = '\0';
+
+		num_args++;
+	} while( ( arg_p = va_arg( argptr, char * ) ) );
+
+	va_end( argptr );
+	
+	if( overflow ) {
+		// couldn't fit it all into the cmd buffer
+		return;
+	}
+	if( num_args < 2 ) {
+		// can't transmit formatted message with no arguments or 
+		// no strings to replace the placeholders
+		return;
+	}
+
+	trap_GameCmd( ent, cmd );
+}
+
+
+/*
 * G_Obituary
 * 
 * Prints death message to all clients

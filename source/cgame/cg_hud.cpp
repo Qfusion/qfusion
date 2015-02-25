@@ -984,6 +984,7 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 {
 	int i, count, current;
 	int yoffset;
+	int s_x, e_x, m_x;
 
 	if( !cg_showAwards->integer )
 		return;
@@ -1009,9 +1010,11 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 
 	y = CG_VerticalAlignForHeight( y, align, trap_SCR_strHeight( font ) * MAX_AWARD_LINES );
 
+	s_x = CG_HorizontalMovementForAlign( align ) < 0 ? cgs.vidWidth : 0;
+	e_x = x;
+
 	for( i = count; i > 0; i-- )
 	{
-		int s_x, e_x, m_x;
 		int width;
 		float moveTime;
 		const char *str;
@@ -1024,8 +1027,6 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 
 		width = trap_SCR_strWidth( str, font, 0 );
 
-		s_x = CG_HorizontalMovementForAlign( align ) < 0 ? cgs.vidWidth : 0;
-		e_x = x;
 		m_x = LinearMovementWithOvershoot( s_x, e_x, 
 			AWARDS_OVERSHOOT_DURATION, AWARDS_OVERSHOOT_FREQUENCY, AWARDS_OVERSHOOT_DECAY, 
 			moveTime );
