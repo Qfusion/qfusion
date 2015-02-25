@@ -97,7 +97,7 @@ static void G_Timeout_Update( unsigned int msec )
 			}
 
 			if( seconds_left > 1 )
-				G_CenterPrintMsg( NULL, "Match will resume in %i seconds", seconds_left );
+				G_CenterPrintFormatMsg( NULL, "Match will resume in %s seconds", va( "%i", seconds_left ), NULL );
 			else
 				G_CenterPrintMsg( NULL, "Match will resume in 1 second" );
 		}

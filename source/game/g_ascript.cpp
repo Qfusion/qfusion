@@ -2725,6 +2725,45 @@ static void asFunc_CenterPrintMsg( edict_t *ent, asstring_t *str )
 	G_CenterPrintMsg( ent, "%s", str->buffer );
 }
 
+static void asFunc_CenterPrintFormatMsg1( edict_t *ent, asstring_t *format, asstring_t *arg1 )
+{
+	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, NULL );
+}
+
+static void asFunc_CenterPrintFormatMsg2( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2 )
+{
+	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, NULL );
+}
+
+static void asFunc_CenterPrintFormatMsg3( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3 )
+{
+	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, NULL );
+}
+
+static void asFunc_CenterPrintFormatMsg4( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
+	asstring_t *arg4 )
+{
+	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, NULL );
+}
+
+static void asFunc_CenterPrintFormatMsg5( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
+	asstring_t *arg4, asstring_t *arg5 )
+{
+	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, NULL );
+}
+
+static void asFunc_CenterPrintFormatMsg6( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
+	asstring_t *arg4, asstring_t *arg5, asstring_t *arg6 )
+{
+	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, arg6->buffer, NULL );
+}
+
+static void asFunc_CenterPrintFormatMsg7( edict_t *ent, asstring_t *format, asstring_t *arg1, asstring_t *arg2, asstring_t *arg3,
+	asstring_t *arg4, asstring_t *arg5, asstring_t *arg6, asstring_t *arg7 )
+{
+	G_CenterPrintFormatMsg( ent, format->buffer, arg1->buffer, arg2->buffer, arg3->buffer, arg4->buffer, arg5->buffer, arg6->buffer, arg7->buffer, NULL );
+}
+
 static void asFunc_G_Sound( edict_t *owner, int channel, int soundindex, float attenuation )
 {
 	G_Sound( owner, channel, soundindex, attenuation );
@@ -3194,6 +3233,18 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "void G_Print( const String &in )", asFUNCTION(asFunc_Print), NULL },
 	{ "void G_PrintMsg( Entity @, const String &in )", asFUNCTION(asFunc_PrintMsg), NULL },
 	{ "void G_CenterPrintMsg( Entity @, const String &in )", asFUNCTION(asFunc_CenterPrintMsg), NULL },
+	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg1), NULL },
+	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg2), NULL },
+	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in" 
+		", const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg3), NULL },
+	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in" 
+		", const String &in, const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg4), NULL },
+	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in" 
+		", const String &in, const String &in, const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg5), NULL },
+	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in" 
+		", const String &in, const String &in, const String &in, const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg6), NULL },
+	{ "void G_CenterPrintFormatMsg( Entity @, const String &in, const String &in, const String &in" 
+		", const String &in, const String &in, const String &in, const String &in, const String &in )", asFUNCTION(asFunc_CenterPrintFormatMsg7), NULL },
 	{ "void G_Sound( Entity @, int channel, int soundindex, float attenuation )", asFUNCTION(asFunc_G_Sound), NULL },
 	{ "void G_PositionedSound( const Vec3 &in, int channel, int soundindex, float attenuation )", asFUNCTION(asFunc_PositionedSound), NULL },
 	{ "void G_GlobalSound( int channel, int soundindex )", asFUNCTION(asFunc_G_GlobalSound), NULL },

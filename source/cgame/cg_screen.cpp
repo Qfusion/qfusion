@@ -200,10 +200,6 @@ void CG_CenterPrintToUpper( const char *format, ... )
 		{
 			scr_center_lines++;
 		}
-		else
-		{
-			*s = toupper( *s );
-		}
 		s++;
 	}
 }
