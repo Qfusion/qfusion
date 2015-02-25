@@ -1561,10 +1561,6 @@ static HIMC in_winime_context;
 
 static bool in_winime_enabled;
 
-static char in_winime_compStr[512];
-static int in_winime_convStart;
-static int in_winime_convLen;
-
 static CANDIDATELIST *in_winime_candList;
 static size_t in_winime_candListSize;
 
