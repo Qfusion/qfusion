@@ -1406,7 +1406,12 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		}
 	}
 
-	if( !R_IsKTXFormatValid( header->internalFormat, header->type ) )
+	if( header->format && ( header->format != header->baseInternalFormat ) )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Pixel format doesn't match internal format: %s\n", image->name );
+		goto error;
+	}
+	if( !R_IsKTXFormatValid( header->format ? header->baseInternalFormat : header->internalFormat, header->type ) )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Unsupported pixel format: %s\n", image->name );
 		goto error;
@@ -1530,12 +1535,12 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		}
 
 		if( !glConfig.ext.bgra &&
-			( ( header->internalFormat == GL_BGR_EXT ) || ( header->internalFormat == GL_BGRA_EXT ) ) )
+			( ( header->baseInternalFormat == GL_BGR_EXT ) || ( header->baseInternalFormat == GL_BGRA_EXT ) ) )
 		{
 			for( i = 0; i < mips; ++i )
 			{
 				R_SwapBlueRed( images[i], mipWidth, mipHeight * header->numberOfFaces,
-					( header->internalFormat == GL_BGR_EXT ) ? 3 : 4, 4 );
+					( header->baseInternalFormat == GL_BGR_EXT ) ? 3 : 4, 4 );
 				mipWidth >>= 1;
 				mipHeight >>= 1;
 				if( !mipWidth )
@@ -1543,7 +1548,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 				if( !mipHeight )
 					mipHeight = 1;
 			}
-			header->internalFormat = ( header->internalFormat == GL_BGR_EXT ) ? GL_RGB : GL_RGBA;
+			header->baseInternalFormat = ( ( header->baseInternalFormat == GL_BGR_EXT ) ? GL_RGB : GL_RGBA );
 		}
 		else if( swapEndian && (
 			( header->type == GL_UNSIGNED_SHORT_4_4_4_4 ) || ( header->type == GL_UNSIGNED_SHORT_5_5_5_1 ) ||
@@ -1562,7 +1567,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		}
 
 		R_UploadMipmapped( ctx, images, header->pixelWidth, header->pixelHeight, mips, image->flags,
-			&image->upload_width, &image->upload_height, header->internalFormat, header->type );
+			&image->upload_width, &image->upload_height, header->baseInternalFormat, header->type );
 
 		switch( header->type )
 		{
