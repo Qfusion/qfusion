@@ -60,7 +60,7 @@ int CG_HorizontalMovementForAlign( int align )
 {
 	int m = 1; // move to the right
 
-	if( align % 3 == 2 )  // right
+	if( align % 3 == 0 )  // left
 		m = -1; // move to the left
 
 	return m;
