@@ -172,16 +172,16 @@ else()
     find_package(Angelscript REQUIRED)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
-    # On Linux we build libRocket from source
-    set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../libsrcs/libRocket/libRocket)
-    set(LIBROCKET_INCLUDE_DIR ${LIBROCKET_DIR}/Include)
-    set(LIBROCKET_LIBRARIES ${LIBROCKET_DIR}/lib/libRocketWSW.a)
+# We build libRocket from source
+set(LIBROCKET_DIR ${CMAKE_HOME_DIRECTORY}/../libsrcs/libRocket/libRocket)
+set(LIBROCKET_INCLUDE_DIR ${LIBROCKET_DIR}/Include)
+set(LIBROCKET_SOURCE_DIR ${LIBROCKET_DIR}/Source)	
 
-    set(LIBROCKET libRocket)
-    add_custom_target(libRocket CXX=${CMAKE_CXX_COMPILER} AR=${CMAKE_AR} RANLIB=${CMAKE_RANLIB} CFLAGS=${CMAKE_C_FLAGS} CXXFLAGS=${CMAKE_CXX_FLAGS} make -C ${LIBROCKET_DIR} -f Build/Makefile.qfusion)
-else()
-    find_package(Rocket REQUIRED)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
+	set(LIBROCKET_LIBRARIES ${LIBROCKET_DIR}/lib/libRocketWSW.a)
+	set(LIBROCKET libRocket)
+
+	add_custom_target(libRocket CXX=${CMAKE_CXX_COMPILER} AR=${CMAKE_AR} RANLIB=${CMAKE_RANLIB} CFLAGS=${CMAKE_C_FLAGS} CXXFLAGS=${CMAKE_CXX_FLAGS} make -C ${LIBROCKET_DIR} -f Build/Makefile.qfusion)
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
