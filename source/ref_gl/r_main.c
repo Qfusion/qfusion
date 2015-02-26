@@ -1856,7 +1856,7 @@ void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out 
 		return;
 
 	trd = *rd;
-	if( glConfig.wideScreen && !( trd.rdflags & RDF_NOFOVADJUSTMENT ) ) {
+	if( !( trd.rdflags & RDF_NOFOVADJUSTMENT ) ) {
 		AdjustFov( &trd.fov_x, &trd.fov_y, glConfig.width, glConfig.height, false );
 	}
 

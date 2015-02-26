@@ -491,7 +491,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	{
 		rn.refdef.fov_x = skyportal->fov;
 		rn.refdef.fov_y = CalcFov( rn.refdef.fov_x, rn.refdef.width, rn.refdef.height );
-		if( glConfig.wideScreen && !( rn.refdef.rdflags & RDF_NOFOVADJUSTMENT ) )
+		if( !( rn.refdef.rdflags & RDF_NOFOVADJUSTMENT ) )
 			AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );
 	}
 
