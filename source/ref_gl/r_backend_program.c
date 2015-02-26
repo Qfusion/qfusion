@@ -912,7 +912,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		}
 		else {
 			// if no alpha, use additive blending
-			if( decalmap->samples == 3 )
+			if( ( decalmap->samples == 3 ) || ( ( decalmap->flags & IT_LUMINANCE ) && ( decalmap->samples == 1 ) ) )
 				programFeatures |= GLSL_SHADER_MATERIAL_DECAL_ADD;
 		}
 
@@ -924,7 +924,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		programFeatures |= GLSL_SHADER_MATERIAL_ENTITY_DECAL;
 
 		// if no alpha, use additive blending
-		if( entdecalmap->samples == 3 )
+		if( ( entdecalmap->samples == 3 ) || ( ( entdecalmap->flags & IT_LUMINANCE ) && ( entdecalmap->samples == 1 ) ) )
 			programFeatures |= GLSL_SHADER_MATERIAL_ENTITY_DECAL_ADD;
 
 		RB_BindTexture( 4, entdecalmap ); // decal
@@ -1655,7 +1655,8 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 			btex = tex->loaded ? tex : replacement; \
 			if( btex ) { \
 				programFeatures |= feature; \
-				if( canAdd && btex->samples == 3 ) programFeatures |= ((feature) << 1); \
+				if( canAdd && ( ( btex->samples == 3 ) || ( ( btex->flags & IT_LUMINANCE ) && ( btex->samples == 1 ) ) ) ) \
+					programFeatures |= ((feature) << 1); \
 			} \
 		} \
 		if( btex ) { \
