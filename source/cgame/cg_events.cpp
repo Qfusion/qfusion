@@ -678,6 +678,7 @@ static void CG_Fire_SunflowerPattern( vec3_t start, vec3_t dir, int *seed, int i
 	}
 }
 
+#if 0
 /*
 * CG_Fire_RandomPattern
 */
@@ -711,6 +712,7 @@ static void CG_Fire_RandomPattern( vec3_t start, vec3_t dir, int *seed, int igno
 			CG_LeadBubbleTrail( &trace, water_trace->endpos );
 	}
 }
+#endif
 
 /*
 * CG_Event_FireRiotgun
