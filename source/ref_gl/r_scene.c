@@ -299,7 +299,7 @@ void R_RenderScene( const refdef_t *fd )
 	}
 
 	// adjust field of view for widescreen
-	if( glConfig.wideScreen && !( fd->rdflags & RDF_NOFOVADJUSTMENT ) )
+	if( !( fd->rdflags & RDF_NOFOVADJUSTMENT ) )
 		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );
 
 	// clip new scissor region to the one currently set

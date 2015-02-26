@@ -547,8 +547,9 @@ void AdjustFov( float *fov_x, float *fov_y, float width, float height, bool lock
 {
 	float x, y;
 
-	if( width*3 == 4*height || width*4 == height*5 )
-	{                                                   // 4:3 or 5:4 ratio
+	if( width*3 == 4*height || width*4 == height*5 || height > width )
+	{
+		// 4:3, 5:4 ratios or vertical display
 		return;
 	}
 
