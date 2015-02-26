@@ -909,7 +909,7 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 	}
 	else if( flags & IT_LUMINANCE )
 	{
-		*comp = *format = GL_LUMINANCE;
+		*comp = *format = ( ( samples == 2 ) ? GL_LUMINANCE_ALPHA : GL_LUMINANCE );
 		*type = GL_UNSIGNED_BYTE;
 	}
 	else if( flags & IT_ALPHA )
@@ -1391,19 +1391,11 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		goto error;
 	}
 
-	swapEndian = ( header->endianness != 0x04030201 ) ? true : false;
+	swapEndian = ( header->endianness == 0x01020304 ) ? true : false;
 	if( swapEndian )
 	{
-		unsigned int field;
 		for( i = 3; i < 16; ++i )
-		{
-			field = ( ( unsigned int * )header )[i];
-			( ( unsigned int * )header )[i] =
-				( field >> 24 ) |
-				( ( ( field >> 16 ) & 255 ) << 8 ) |
-				( ( ( field >> 8 ) & 255 ) << 16 ) |
-				( ( field & 255 ) << 24 );
-		}
+			( ( int * )header )[i] = LongSwap( ( ( int * )header )[i] );
 	}
 
 	if( header->format && ( header->format != header->baseInternalFormat ) )
@@ -1495,7 +1487,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 			R_SetupTexParameters( image->flags );
 
 			for( i = 0; i < mip; ++i )
-				data += sizeof( int ) + *( ( unsigned int * )data );
+				data += sizeof( int ) + ( unsigned int )( swapEndian ? LongSwap( *( ( int * )data ) ) : *( ( int * )data ) );
 
 			mips -= mip;
 			for( i = 0; i < mips; ++i )
@@ -1515,7 +1507,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 					scaledWidth = 1;
 				if( !scaledHeight )
 					scaledHeight = 1;
-				data += sizeof( int ) + *( ( unsigned int * )data );
+				data += sizeof( int ) + ( unsigned int )( swapEndian ? LongSwap( *( ( int * )data ) ) : *( ( int * )data ) );
 			}
 		}
 
@@ -1531,7 +1523,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		for( i = 0; i < mips; ++i )
 		{
 			images[i] = data + sizeof( int );
-			data += sizeof( int ) + *( ( unsigned int * )data );
+			data += sizeof( int ) + ( unsigned int )( swapEndian ? LongSwap( *( ( int * )data ) ) : *( ( int * )data ) );
 		}
 
 		if( !glConfig.ext.bgra &&
@@ -1587,6 +1579,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 			break;
 		case GL_LUMINANCE_ALPHA:
 			image->samples = 2;
+			image->flags |= IT_LUMINANCE;
 			break;
 		case GL_ALPHA:
 			image->samples = 1;
