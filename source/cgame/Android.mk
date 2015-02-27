@@ -16,6 +16,6 @@ LOCAL_SRC_FILES := \
   ../gameshared/gs_weapons.c \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  $(wildcard $(LOCAL_PATH)/*.cpp)
+  $(notdir $(wildcard $(LOCAL_PATH)/*.cpp))
 
 include $(BUILD_SHARED_LIBRARY)

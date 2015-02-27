@@ -12,7 +12,7 @@ LOCAL_SRC_FILES := \
   ../android/android_snd.c \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  $(wildcard $(LOCAL_PATH)/../snd_common/*.c) \
-  $(wildcard $(LOCAL_PATH)/*.c)
+  $(addprefix ../snd_common/,$(notdir $(wildcard $(LOCAL_PATH)/../snd_common/*.c))) \
+  $(notdir $(wildcard $(LOCAL_PATH)/*.c))
 
 include $(BUILD_SHARED_LIBRARY)

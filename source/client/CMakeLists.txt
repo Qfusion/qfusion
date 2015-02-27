@@ -21,6 +21,7 @@ file(GLOB CLIENT_COMMON_SOURCES
     "../gameshared/q_*.c"
     "../qalgo/*.c"
     "../matchmaker/*.c"
+	"libmumblelink/*.c"
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")

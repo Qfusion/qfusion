@@ -10,7 +10,7 @@ LOCAL_STATIC_LIBRARIES := OpenAL-MOB vorbis
 LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  $(wildcard $(LOCAL_PATH)/../snd_common/*.c) \
-  $(wildcard $(LOCAL_PATH)/*.c)
+  $(addprefix ../snd_common/,$(notdir $(wildcard $(LOCAL_PATH)/../snd_common/*.c))) \
+  $(notdir $(wildcard $(LOCAL_PATH)/*.c))
 
 include $(BUILD_SHARED_LIBRARY)

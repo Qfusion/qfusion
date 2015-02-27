@@ -13,12 +13,12 @@ LOCAL_SRC_FILES := \
   ../gameshared/q_shared.c \
   ../qalgo/hash.c \
   ../qalgo/md5.c \
-  $(wildcard $(LOCAL_PATH)/as/*.cpp) \
-  $(wildcard $(LOCAL_PATH)/datasources/*.cpp) \
-  $(wildcard $(LOCAL_PATH)/decorators/*.cpp) \
-  $(wildcard $(LOCAL_PATH)/kernel/*.cpp) \
-  $(wildcard $(LOCAL_PATH)/parsers/*.cpp) \
-  $(wildcard $(LOCAL_PATH)/widgets/*.cpp) \
-  $(wildcard $(LOCAL_PATH)/*.cpp)
+  $(addprefix as/,$(notdir $(wildcard $(LOCAL_PATH)/as/*.cpp))) \
+  $(addprefix datasources/,$(notdir $(wildcard $(LOCAL_PATH)/datasources/*.cpp))) \
+  $(addprefix decorators/,$(notdir $(wildcard $(LOCAL_PATH)/decorators/*.cpp))) \
+  $(addprefix kernel/,$(notdir $(wildcard $(LOCAL_PATH)/kernel/*.cpp))) \
+  $(addprefix parsers/,$(notdir $(wildcard $(LOCAL_PATH)/parsers/*.cpp))) \
+  $(addprefix widgets/,$(notdir $(wildcard $(LOCAL_PATH)/widgets/*.cpp))) \
+  $(notdir $(wildcard $(LOCAL_PATH)/*.cpp))
 
 include $(BUILD_SHARED_LIBRARY)

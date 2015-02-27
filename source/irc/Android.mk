@@ -5,6 +5,6 @@ LOCAL_MODULE_FILENAME := lib$(LOCAL_MODULE)_android_$(TARGET_ARCH_ABI)
 
 LOCAL_SRC_FILES := \
   ../gameshared/q_shared.c \
-  $(wildcard $(LOCAL_PATH)/*.c)
+  $(notdir $(wildcard $(LOCAL_PATH)/*.c))
 
 include $(BUILD_SHARED_LIBRARY)
