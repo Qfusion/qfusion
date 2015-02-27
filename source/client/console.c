@@ -776,7 +776,7 @@ void Con_DrawNotify( void )
 		size_t complen, imecursor, convstart, convlen;
 		char oldchar;
 		int precompcolor = ColorIndex( COLOR_WHITE );
-		static vec4_t convcolor = { 1.0f, 1.0f, 1.0f, 0.3f };
+		vec4_t convcolor = { 1.0f, 1.0f, 1.0f, 0.3f };
 		int candwidth, numcands, selectedcand, firstcand, candspercol, candnumwidth;
 		int candx, candy, candsincol = 0, candprewidth;
 		char candbuf[MAX_STRING_CHARS * 10], *cands[10];
