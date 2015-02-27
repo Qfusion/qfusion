@@ -184,9 +184,7 @@ void RB_DepthRange( float depthmin, float depthmax )
 	clamp( depthmax, 0.0f, 1.0f );
 	rb.gl.depthmin = depthmin;
 	rb.gl.depthmax = depthmax;
-	if( rb.gl.depthoffset )
-		depthmax -= 2.0f / 65535.0f;
-	else
+	if( !rb.gl.depthoffset )
 		depthmin += 2.0f / 65535.0f;
 	qglDepthRange( depthmin, depthmax );
 }
@@ -208,9 +206,7 @@ void RB_DepthOffset( bool enable )
 	float depthmin = rb.gl.depthmin;
 	float depthmax = rb.gl.depthmax;
 	rb.gl.depthoffset = enable;
-	if( enable )
-		depthmax -= 2.0f / 65535.0f;
-	else
+	if( !enable )
 		depthmin += 2.0f / 65535.0f;
 	qglDepthRange( depthmin, depthmax );
 }
