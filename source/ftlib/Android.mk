@@ -8,6 +8,6 @@ LOCAL_STATIC_LIBRARIES := freetype
 LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  $(wildcard $(LOCAL_PATH)/*.c)
+  $(notdir $(wildcard $(LOCAL_PATH)/*.c))
 
 include $(BUILD_SHARED_LIBRARY)

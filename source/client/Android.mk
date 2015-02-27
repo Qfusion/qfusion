@@ -14,17 +14,17 @@ LOCAL_SRC_FILES := \
   android/android_sys.c \
   android/android_vfs.c \
   android/android_vid.c \
-  $(wildcard $(LOCAL_PATH)/client/*.c) \
+  $(addprefix client/,$(notdir $(wildcard $(LOCAL_PATH)/client/*.c))) \
   gameshared/q_math.c \
   gameshared/q_shared.c \
-  $(wildcard $(LOCAL_PATH)/matchmaker/*.c) \
+  $(addprefix matchmaker/,$(notdir $(wildcard $(LOCAL_PATH)/matchmaker/*.c))) \
   qalgo/base64.c \
   qalgo/glob.c \
   qalgo/hash.c \
   qalgo/md5.c \
   qalgo/q_trie.c \
-  $(wildcard $(LOCAL_PATH)/qcommon/*.c) \
-  $(wildcard $(LOCAL_PATH)/server/*.c) \
+  $(addprefix qcommon/,$(notdir $(wildcard $(LOCAL_PATH)/qcommon/*.c))) \
+  $(addprefix server/,$(notdir $(wildcard $(LOCAL_PATH)/server/*.c))) \
   unix/unix_fs.c \
   unix/unix_net.c \
   unix/unix_threads.c \

@@ -16,6 +16,6 @@ LOCAL_SRC_FILES := \
   ../qalgo/q_trie.c \
   ../qcommon/bsp.c \
   ../qcommon/patch.c \
-  $(wildcard $(LOCAL_PATH)/*.c)
+  $(notdir $(wildcard $(LOCAL_PATH)/*.c))
 
 include $(BUILD_SHARED_LIBRARY)

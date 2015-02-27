@@ -10,8 +10,8 @@ LOCAL_STATIC_LIBRARIES := angelscript
 LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
-  $(wildcard $(LOCAL_PATH)/addon/*.cpp) \
-  $(wildcard $(LOCAL_PATH)/*.c) \
-  $(wildcard $(LOCAL_PATH)/*.cpp)
+  $(addprefix addon/,$(notdir $(wildcard $(LOCAL_PATH)/addon/*.cpp))) \
+  $(notdir $(wildcard $(LOCAL_PATH)/*.c)) \
+  $(notdir $(wildcard $(LOCAL_PATH)/*.cpp))
 
 include $(BUILD_SHARED_LIBRARY)

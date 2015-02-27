@@ -18,7 +18,7 @@ LOCAL_SRC_FILES := \
   ../gameshared/q_math.c \
   ../gameshared/q_shared.c \
   ../matchmaker/mm_rating.c \
-  $(wildcard $(LOCAL_PATH)/ai/*.cpp) \
-  $(wildcard $(LOCAL_PATH)/*.cpp)
+  $(addprefix ai/,$(notdir $(wildcard $(LOCAL_PATH)/ai/*.cpp))) \
+  $(notdir $(wildcard $(LOCAL_PATH)/*.cpp))
 
 include $(BUILD_SHARED_LIBRARY)

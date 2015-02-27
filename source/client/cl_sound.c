@@ -622,7 +622,7 @@ MUMBLE SUPPORT
 
 #ifdef MUMBLE_SUPPORT
 
-#include "libmumblelink.h"
+#include "libmumblelink/libmumblelink.h"
 
 static cvar_t *cl_mumble;
 static cvar_t *cl_mumble_scale;
