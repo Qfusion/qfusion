@@ -532,14 +532,21 @@ void RB_Viewport( int x, int y, int w, int h )
 */
 void RB_Clear( int bits, float r, float g, float b, float a )
 {
-	if( bits & (GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT) )
-		RB_SetState( GLSTATE_DEPTHWRITE );
+	int state = rb.gl.state;
+
+	if( bits & GL_DEPTH_BUFFER_BIT )
+		state |= GLSTATE_DEPTHWRITE;
 
 	if( bits & GL_STENCIL_BUFFER_BIT )
 		qglClearStencil( 128 );
 
 	if( bits & GL_COLOR_BUFFER_BIT )
+	{
+		state &= ~GLSTATE_NO_COLORWRITE;
 		qglClearColor( r, g, b, a );
+	}
+
+	RB_SetState( state );
 
 	qglClear( bits );
 
