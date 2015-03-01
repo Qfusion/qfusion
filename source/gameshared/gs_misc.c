@@ -325,25 +325,26 @@ const char *GS_MatchMessageString( matchmessage_t mm )
 		return "";
 
 	case MATCHMESSAGE_CHALLENGERS_QUEUE:
-		return "'ESC' for in-game menu.\n"
+		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
 			"You are inside the challengers queue waiting for your turn to play.\n"
 			"Use the in-game menu, or type 'spec' in the console to exit the queue.\n"
 			"--\nUse the mouse buttons for switching spectator modes.";
 
 	case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
-		return "'ESC' for in-game menu.\n"
-			"Use the in-game menu or type 'join' in the console to enter the challengers queue.\n"
+		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
+			"Use the in-game menu or press 'F3' to enter the challengers queue.\n"
 			"Only players in the queue will have a turn to play against the last winner.\n"
 			"--\nUse the mouse buttons for switching spectator modes.";
 
 	case MATCHMESSAGE_SPECTATOR_MODES:
-		return "'ESC' for in-game menu.\n"
+		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
 			"Mouse buttons for switching spectator modes.\n"
 			"This message can be hidden by disabling 'help' in player setup menu.";
 
 	case MATCHMESSAGE_GET_READY:
 		return "Set yourself READY to start the match!\n"
-			"You can use the in-game menu or type 'ready' in the console.";
+			"You can use the in-game menu or simply press 'F4'.\n"
+			"'ESC' for in-game menu or 'ENTER' for in-game chat.";
 
 	case MATCHMESSAGE_WAITING_FOR_PLAYERS:
 		return "Waiting for players.\n"
