@@ -91,7 +91,6 @@ cvar_t *cg_touch_lookSens;
 cvar_t *cg_touch_lookInvert;
 cvar_t *cg_touch_lookDecel;
 
-float scr_damagetime_start;
 float scr_damagetime_off;
 
 /*
@@ -515,10 +514,7 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		if ( cg_crosshair_damage_color->modified ) 
 		{
 			if ( scr_damagetime_off <= 0 )
-			{
 				scr_damagetime_off = 0.3;
-				scr_damagetime_start = cg.time;
-			}
 			rgbcolor = COM_ReadColorRGBString( cg_crosshair_damage_color->string );
 		} else {
 			rgbcolor = COM_ReadColorRGBString( cg_crosshair_color->string );
@@ -1466,6 +1462,8 @@ void CG_Draw2DView( void )
 		CG_CheckHUDChanges();
 		CG_ExecuteLayoutProgram( cg.statusBar, false );
 	}
+
+	CG_UpdateHUDPostDraw();
 
 	CG_CheckDamageCrosshair();
 

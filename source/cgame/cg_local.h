@@ -543,6 +543,7 @@ typedef struct
 	player_state_t predictFromPlayerState;
 
 	int lastWeapon;
+	unsigned int lastCrossWeapons; // bitfield containing the last weapons selected from the cross
 
 	mat3_t autorotateAxis;
 
@@ -781,6 +782,8 @@ void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );
 void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch );
 void CG_GetHUDTouchButtons( int &buttons, int &upmove );
+void CG_UpdateHUDPostDraw( void );
+void CG_ShowWeaponCross( void );
 
 //
 // cg_damage_indicator.c
