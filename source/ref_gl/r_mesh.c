@@ -357,7 +357,7 @@ static void _R_DrawSurfaces( void )
 	const portalSurface_t *portalSurface;
 	drawList_t *list = rn.meshlist;
 	float depthmin = 0.0f, depthmax = 0.0f;
-	bool depthHack = false, cullHack = false;
+	bool weaponAlpha = false, depthHack = false, cullHack = false;
 	bool infiniteProj = false, prevInfiniteProj = false;
 	bool depthWrite = false;
 	bool depthCopied = false;
@@ -398,28 +398,37 @@ static void _R_DrawSurfaces( void )
 				RB_EndBatch();
 			}
 
-			if( entNum != prevEntNum ) {
-				// hack the depth range to prevent view model from poking into walls
-				if( entity->flags & RF_WEAPONMODEL ) {
-					// render weapon to a different framebuffer we'll blend on top of screen
-					// at later stage
-					if( shader->flags & SHADER_DEPTHWRITE ) {
-						if( rd->rdflags & RDF_WEAPONALPHA ) {
-							R_BindFrameBufferObject( rsh.screenWeaponTexture->fbo );
-						}
+			// hack the depth range to prevent view model from poking into walls
+			if( entity->flags & RF_WEAPONMODEL ) {
+				// render weapon to a different framebuffer we'll blend on top of screen
+				// at later stage
+				if( shader->flags & SHADER_DEPTHWRITE ) {
+					if( !weaponAlpha && ( rd->rdflags & RDF_WEAPONALPHA ) ) {
+						weaponAlpha = true;
+						R_BindFrameBufferObject( rsh.screenWeaponTexture->fbo );
 					}
-					if( !depthHack ) {
-						depthHack = true;
-						RB_GetDepthRange( &depthmin, &depthmax );
-						RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
-					}
-				} else if( depthHack ) {
-					// bind the main framebuffer back
+				} else if( weaponAlpha ) {
+					weaponAlpha = false;
 					R_BindFrameBufferObject( riFBO );
+				}
+
+				if( !depthHack ) {
+					depthHack = true;
+					RB_GetDepthRange( &depthmin, &depthmax );
+					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
+				}
+			} else {
+				if( weaponAlpha ) {
+					weaponAlpha = false;
+					R_BindFrameBufferObject( riFBO );
+				}
+				if( depthHack ) {
 					depthHack = false;
 					RB_DepthRange( depthmin, depthmax );
 				}
+			}
 
+			if( entNum != prevEntNum ) {
 				// backface culling for left-handed weapons
 				if( entity->flags & RF_CULLHACK ) {
 					cullHack = true;
