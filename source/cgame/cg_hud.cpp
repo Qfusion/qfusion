@@ -1015,7 +1015,6 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 
 	for( i = count; i > 0; i-- )
 	{
-		int width;
 		float moveTime;
 		const char *str;
 
@@ -1024,8 +1023,6 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 
 		yoffset = trap_SCR_strHeight( font ) * ( MAX_AWARD_LINES - i );
 		moveTime = ( cg.time - cg.award_times[ current ] ) / 1000.0f;
-
-		width = trap_SCR_strWidth( str, font, 0 );
 
 		m_x = LinearMovementWithOvershoot( s_x, e_x, 
 			AWARDS_OVERSHOOT_DURATION, AWARDS_OVERSHOOT_FREQUENCY, AWARDS_OVERSHOOT_DECAY, 
