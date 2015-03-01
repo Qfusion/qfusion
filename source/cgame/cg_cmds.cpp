@@ -857,6 +857,82 @@ static void CG_Cmd_LastWeapon_f( void )
 }
 
 /*
+* CG_Cmd_WeaponCross_f
+*/
+static void CG_Cmd_WeaponCross_f( void )
+{
+	int i;
+	int quarter = -1, first;
+	int w[2], count = 0, selected = -1, select;
+	gsitem_t *item;
+
+	if( !cg.frame.valid || cgs.demoPlaying )
+		return;
+
+	if( trap_Cmd_Argc() )
+		quarter = atoi( trap_Cmd_Argv( 1 ) );
+
+	if( ( quarter < 0 ) || ( quarter > 4 ) )
+	{
+		CG_Printf( "Usage: 'weaponcross 0-4 (0 - just show, 1 - GB/MG, 2 - RG/GL, 3 - RL/PG, 4 - LG/EB)\n" );
+		return;
+	}
+
+	CG_ShowWeaponCross();
+
+	if( !quarter )
+		return;
+
+	quarter--;
+	first = quarter << 1;
+
+	for( i = 0; i < 2; i++ )
+	{
+		if( !cg.predictedPlayerState.inventory[WEAP_GUNBLADE + first + i] )
+		{
+			continue;
+		}
+		if( !cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
+			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] )
+		{
+			continue;
+		}
+
+		if( cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] == ( WEAP_GUNBLADE + first + i ) )
+			selected = i;
+
+		w[count] = first + i;
+		count++;
+	}
+
+	if( !count )
+		return;
+
+	if( count == 2 )
+	{
+		if( selected >= 0 )
+			select = selected ^ 1;
+		else
+			select = ( cg.lastCrossWeapons >> quarter ) & 1;
+	}
+	else
+	{
+		if( selected >= 0 )
+			return;
+		select = 0;
+	}
+
+	item = GS_Cmd_UseItem( &cg.frame.playerState, va( "%i", WEAP_GUNBLADE + w[select] ), IT_WEAPON );
+	if( item )
+	{
+		if( item->type & IT_WEAPON )
+			CG_Predict_ChangeWeapon( item->tag );
+		trap_Cmd_ExecuteText( EXEC_NOW, va( "cmd use %i", item->tag ) );
+		cg.lastCrossWeapons = ( cg.lastCrossWeapons & ~( 1 << quarter ) ) | ( ( w[select] & 1 ) << quarter );
+	}
+}
+
+/*
 * CG_Viewpos_f
 */
 static void CG_Viewpos_f( void )
@@ -988,6 +1064,7 @@ static const cgcmd_t cgcmds[] =
 	{ "weapnext", CG_Cmd_NextWeapon_f, true },
 	{ "weapprev", CG_Cmd_PrevWeapon_f, true },
 	{ "weaplast", CG_Cmd_LastWeapon_f, true },
+	{ "weapcross", CG_Cmd_WeaponCross_f, true },
 	{ "viewpos", CG_Viewpos_f, true },
 	{ "players", NULL, false },
 	{ "spectators", NULL, false },

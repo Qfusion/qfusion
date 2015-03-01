@@ -1053,8 +1053,8 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 	int curx, cury, curw, curh;
 	int i, j, n;
 	float fj, fn;
-	vec4_t color;
 	bool selected_weapon;
+	vec4_t colorTrans = { 1.0f, 1.0f, 1.0f, 0.5f };
 
 	if( !cg_weaponlist || !cg_weaponlist->integer )
 		return;
@@ -1076,8 +1076,6 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 			n++;
 	}
 
-	VectorCopy( colorWhite, color );
-
 	for( i = j = 0; i < WEAP_TOTAL-1; i++ )
 	{
 		// if player doesnt have this weapon, skip it
@@ -1085,10 +1083,6 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 			continue;
 
 		selected_weapon = CG_IsWeaponSelected( WEAP_GUNBLADE+i );
-		if( !selected_weapon )
-			color[3] = 1.0;
-		else
-			color[3] = 0.5;
 
 		fj = (float)j;
 		fn = (float)n;
@@ -1116,20 +1110,20 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 				if( selected_weapon )
 				{
 					if( customWeaponSelectPic )
-						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, color, trap_R_RegisterPic( customWeaponSelectPic ) );
+						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
 					else
-						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.shaderSelect ) );
+						trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
 				}
 				if( customWeaponPics[i] )
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, color, trap_R_RegisterPic( customWeaponPics[i] ) );
+					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customWeaponPics[i] ) );
 				else
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.shaderWeaponIcon[i] ) );
+					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderWeaponIcon[i] ) );
 			}
 			else
 				if( customNoGunWeaponPics[i] )
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, color, trap_R_RegisterPic( customNoGunWeaponPics[i] ) );
+					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customNoGunWeaponPics[i] ) );
 				else
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, color, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
+					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderNoGunWeaponIcon[i] ) );
 		}
 		j++;
 	}
@@ -1190,6 +1184,103 @@ static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, 
 			CG_DrawHUDNumeric( curx, cury, align, color, curwh, curwh, cg.predictedPlayerState.inventory[i+startammo] );
 		j++;
 	}
+}
+
+static float cg_hud_weaponcrosstime;
+
+/*
+* CG_DrawWeaponCrossQuarter
+*/
+static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, int dirx, int diry, int iw, int ih, int ammoofs, int ammosize )
+{
+	int i;
+	int first = quarter << 1;
+	int w[2], count = 0, t;
+	vec4_t color, colorTrans;
+
+	x += dirx * iw - ( iw >> 1 );
+	y += diry * ih - ( ih >> 1 );
+
+	for( i = 0; i < 2; i++ )
+	{
+		if( !cg.predictedPlayerState.inventory[WEAP_GUNBLADE + first + i] )
+		{
+			continue;
+		}
+		if( !cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
+			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] )
+		{
+			continue;
+		}
+
+		w[count] = first + i;
+		count++;
+	}
+
+	if( !count )
+		return;
+
+	if( ( count == 2 ) && !CG_IsWeaponSelected( WEAP_GUNBLADE + w[0] ) &&
+		( CG_IsWeaponSelected( WEAP_GUNBLADE + w[1] ) || ( cg.lastCrossWeapons & ( 1 << quarter ) ) ) )
+	{
+		t = w[0];
+		w[0] = w[1];
+		w[1] = t;
+	}
+
+	VectorCopy( colorWhite, color );
+	color[3] = cg_hud_weaponcrosstime * 4.0f;
+	clamp_high( color[3], 1.0f );
+	VectorCopy( colorWhite, colorTrans );
+	colorTrans[3] = color[3] * 0.5f;
+
+	if( !ammopass && CG_IsWeaponSelected( WEAP_GUNBLADE + w[0] ) )
+	{
+		if( customWeaponSelectPic )
+			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, trap_R_RegisterPic( customWeaponSelectPic ) );
+		else
+			trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, colorTrans, CG_MediaShader( cgs.media.shaderSelect ) );
+	}
+
+	for( i = 0; i < count; i++ )
+	{
+		if( !ammopass )
+		{
+			if( customWeaponPics[w[i]] )
+				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, trap_R_RegisterPic( customWeaponPics[w[i]] ) );
+			else
+				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, CG_MediaShader( cgs.media.shaderWeaponIcon[w[i]] ) );
+		}
+
+		if( ammopass )
+		{
+			CG_DrawHUDNumeric( x + ( iw >> 1 ), y + ( ih >> 1 ) + ammoofs, ALIGN_CENTER_MIDDLE,
+				CG_IsWeaponSelected( WEAP_GUNBLADE + w[i] ) ? color : colorTrans, ammosize, ammosize,
+				cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] );
+		}
+
+		x += dirx * iw;
+		y += diry * ih;
+	}
+}
+
+static void CG_CheckWeaponCross( void )
+{
+	if( cg_hud_weaponcrosstime < 0.0f )
+		return;
+
+	if( ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) ||
+		( cg.predictedPlayerState.stats[STAT_TEAM] == TEAM_SPECTATOR ) |
+		( CG_GetPOVnum( NULL ) != STAT_NOTSET ) )
+	{
+		cg_hud_weaponcrosstime = 0.0f;
+	}
+}
+
+void CG_ShowWeaponCross( void )
+{
+	cg_hud_weaponcrosstime = 0.6f;
+	CG_CheckWeaponCross();
 }
 
 //=============================================================================
@@ -2135,6 +2226,18 @@ static bool CG_LFuncCustomWeaponIcons( struct cg_layoutnode_s *commandnode, stru
 	return true;
 }
 
+static bool CG_LFuncResetCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	int weapon;
+	for( weapon = 0; weapon < WEAP_TOTAL-1; weapon++ )
+	{
+		customWeaponPics[weapon] = NULL;
+		customNoGunWeaponPics[weapon] = NULL;
+	}
+	customWeaponSelectPic = NULL;
+	return true;
+}
+
 static bool CG_LFuncCustomWeaponSelect( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	customWeaponSelectPic = CG_GetStringArg( &argumentnode );
@@ -2162,6 +2265,27 @@ static bool CG_LFuncDrawWeaponIcons( struct cg_layoutnode_s *commandnode, struct
 static bool CG_LFuncTouchWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	CG_LFuncsWeaponIcons( argumentnode, true );
+	return true;
+}
+
+static bool CG_LFuncDrawWeaponCross( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	int ammoofs = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
+	int ammosize = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
+	int ammopass;
+
+	if( cg_hud_weaponcrosstime > 0.0f )
+	{
+		for( ammopass = 0; ammopass < 2; ammopass++ )
+		{
+			CG_DrawWeaponCrossQuarter( ammopass, 0, layout_cursor_x, layout_cursor_y,  0, -1, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
+			CG_DrawWeaponCrossQuarter( ammopass, 1, layout_cursor_x, layout_cursor_y,  1,  0, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
+			CG_DrawWeaponCrossQuarter( ammopass, 2, layout_cursor_x, layout_cursor_y,  0,  1, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
+			CG_DrawWeaponCrossQuarter( ammopass, 3, layout_cursor_x, layout_cursor_y, -1,  0, layout_cursor_width, layout_cursor_height, ammoofs, ammosize );
+			if( ammosize <= 0 )
+				break;
+		}
+	}
 	return true;
 }
 
@@ -2558,6 +2682,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	},
 
 	{
+		"resetCustomWeaponIcons",
+		CG_LFuncResetCustomWeaponIcons,
+		NULL,
+		0,
+		"Resets the custom shaders for weapon icons",
+		false
+	},
+
+	{
 		"setCustomWeaponSelect",
 		CG_LFuncCustomWeaponSelect,
 		NULL,
@@ -2815,6 +2948,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncTouchWeaponIcons,
 		4,
 		"Draws the icons of weapon/ammo owned by the player, arguments are offset x, offset y, size x, size y",
+		false
+	},
+
+	{
+		"drawWeaponCross",
+		CG_LFuncDrawWeaponCross,
+		NULL,
+		2,
+		"Draws the weapon selection cross, cursor sets the center, size sets the size of each icon, arguments are ammo y offset and size",
 		false
 	},
 
@@ -4160,4 +4302,13 @@ void CG_GetHUDTouchButtons( int &buttons, int &upmove )
 {
 	buttons = cg_hud_touch_buttons;
 	upmove = cg_hud_touch_upmove;
+}
+
+/*
+* CG_UpdateHUDPostDraw
+*/
+void CG_UpdateHUDPostDraw( void )
+{
+	cg_hud_weaponcrosstime -= cg.frameTime;
+	CG_CheckWeaponCross();
 }
