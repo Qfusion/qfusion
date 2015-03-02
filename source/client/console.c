@@ -808,7 +808,7 @@ void Con_DrawNotify( void )
 		width -= 48 * viddef.height / 600;
 
 		if( chat_team )
-			say = "say_team:";
+			say = "say to team:";
 		else
 			say = "say:";
 
