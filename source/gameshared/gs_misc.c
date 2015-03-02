@@ -327,7 +327,7 @@ const char *GS_MatchMessageString( matchmessage_t mm )
 	case MATCHMESSAGE_CHALLENGERS_QUEUE:
 		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
 			"You are inside the challengers queue waiting for your turn to play.\n"
-			"Use the in-game menu, or type 'spec' in the console to exit the queue.\n"
+			"Use the in-game menu to exit the queue.\n"
 			"--\nUse the mouse buttons for switching spectator modes.";
 
 	case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
