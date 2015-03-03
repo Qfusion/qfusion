@@ -179,6 +179,7 @@ void Cbuf_FreeSpace( void )
 void Cbuf_EnsureSpace( size_t size )
 {
 	size_t free;
+	size_t diff;
 
 	if( cbuf_text_head >= cbuf_text_tail )
 	{
@@ -192,14 +193,14 @@ void Cbuf_EnsureSpace( size_t size )
 	if( free > size )
 		return;
 
-	cbuf_text_size += ( size - free ) + MIN_CMD_TEXT_SIZE;
+	diff = ( size - free ) + MIN_CMD_TEXT_SIZE;
+	cbuf_text_size += diff;
 	cbuf_text = Mem_Realloc( cbuf_text, cbuf_text_size );
 
 	if( cbuf_text_head < cbuf_text_tail )
 	{
-		memcpy( cbuf_text + cbuf_text_tail, cbuf_text + cbuf_text_tail + ( size - free ) + MIN_CMD_TEXT_SIZE,
-			cbuf_text_size - cbuf_text_tail );
-		cbuf_text_tail += ( size - free ) + MIN_CMD_TEXT_SIZE;
+		memmove( cbuf_text + cbuf_text_tail + diff, cbuf_text + cbuf_text_tail, diff );
+		cbuf_text_tail += diff;
 	}
 }
 
