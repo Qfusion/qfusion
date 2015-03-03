@@ -46,7 +46,12 @@ const char *Sys_Library_GetFullName( const char *name )
 const char *Sys_Library_GetGameLibPath( const char *name, int64_t time, int randomizer )
 {
 	static char tempname[PATH_MAX];
-	Q_snprintfz( tempname, sizeof( tempname ), "/data/data/%s/cache/%s/tempmodules/%s",
+	Q_snprintfz( tempname, sizeof( tempname ),
+#ifdef DEDICATED_ONLY
+		"/data/data/%s/cache/%s/tempmodules_server/%s",
+#else
+		"/data/data/%s/cache/%s/tempmodules/%s",
+#endif
 		sys_android_packageName, FS_GameDirectory(), name ); // no randomizer because only one instance can run at once
 	return tempname;
 }
