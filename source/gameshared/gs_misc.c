@@ -306,7 +306,7 @@ void GS_Obituary( void *victim, int gender, void *attacker, int mod, char *messa
 		break;
 
 	default:
-		strcpy( message, "was killed by" );
+		strcpy( message, "was fragged by" );
 		break;
 	}
 }

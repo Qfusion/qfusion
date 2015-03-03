@@ -765,7 +765,7 @@ void CG_SC_Obituary( void )
 				current->type = OBITUARY_TEAM;
 				if( cg_showObituaries->integer & CG_OBITUARY_CONSOLE )
 				{
-					CG_LocalPrint( "%s%s%s %s %s%s %s%s%s\n", S_COLOR_RED, "TEAMKILL:", S_COLOR_WHITE, victim->name,
+					CG_LocalPrint( "%s%s%s %s %s%s %s%s%s\n", S_COLOR_RED, "TEAMFRAG:", S_COLOR_WHITE, victim->name,
 					           S_COLOR_WHITE, message, attacker->name, S_COLOR_WHITE, message2 );
 				}
 
