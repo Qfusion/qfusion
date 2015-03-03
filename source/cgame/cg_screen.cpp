@@ -56,8 +56,6 @@ cvar_t *cg_crosshair_strong_color;
 
 cvar_t *cg_crosshair_damage_color;
 
-cvar_t *cg_crosshair_touch_size;
-
 cvar_t *cg_clientHUD;
 cvar_t *cg_specHUD;
 cvar_t *cg_debugHUD;
@@ -331,7 +329,6 @@ void CG_ScreenInit( void )
 	cg_crosshair_color =	trap_Cvar_Get( "cg_crosshair_color", "255 255 255", CVAR_ARCHIVE );
 	cg_crosshair_font =		trap_Cvar_Get( "cg_crosshair_font", "Warsow Crosshairs", CVAR_ARCHIVE );
 	cg_crosshair_damage_color =	trap_Cvar_Get( "cg_crosshair_damage_color", "255 0 0", CVAR_ARCHIVE );
-	cg_crosshair_touch_size =	trap_Cvar_Get( "cg_crosshair_touch_size", "96", CVAR_ARCHIVE );
 	cg_crosshair_color->modified = true;
 	cg_crosshair_damage_color->modified = false;
 
@@ -482,11 +479,12 @@ static void CG_DrawCrosshairChar( int x, int y, int size, int num, vec_t *color 
 /*
 * CG_DrawCrosshair
 */
-void CG_DrawCrosshair( int x, int y, int align, bool touch )
+void CG_DrawCrosshair( int x, int y, int align )
 {
 	static vec4_t chColor = { 255, 255, 255, 255 };
 	static vec4_t chColorStrong = { 255, 255, 255, 255 };
 	int rgbcolor;
+	int sx, sy, size;
 
 	if( cg_crosshair->modified )
 	{
@@ -500,13 +498,6 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		if( cg_crosshair_size->integer <= 0 || cg_crosshair_size->integer > 64 )
 			trap_Cvar_Set( cg_crosshair_size->name, cg_crosshair_size->dvalue );
 		cg_crosshair_size->modified = false;
-	}
-
-	if( cg_crosshair_touch_size->modified )
-	{
-		if( cg_crosshair_touch_size->integer <= 0 || cg_crosshair_touch_size->integer > 256 )
-			trap_Cvar_Set( cg_crosshair_touch_size->name, cg_crosshair_touch_size->dvalue );
-		cg_crosshair_touch_size->modified = false;
 	}
 
 	if( cg_crosshair_color->modified || cg_crosshair_damage_color->modified )
@@ -563,34 +554,20 @@ void CG_DrawCrosshair( int x, int y, int align, bool touch )
 		cg_crosshair_strong_color->modified = false;
 	}
 
-	if( !touch && cg_crosshair_strong->integer )
+	if( cg_crosshair_strong->integer )
 	{
 		firedef_t *firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
 		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) // strong
 		{
-			int sx, sy;
-			int size = CG_CrosshairDimensions( x, y, cg_crosshair_strong_size->integer, align, &sx, &sy );
-
+			size = CG_CrosshairDimensions( x, y, cg_crosshair_strong_size->integer, align, &sx, &sy );
 			CG_DrawCrosshairChar( sx, sy, size, cg_crosshair_strong->integer, chColorStrong );
 		}
 	}
 
-	if( cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE )
+	if( cg_crosshair->integer && ( cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE ) )
 	{
-		int sx, sy;
-		int size = CG_CrosshairDimensions( x, y, cg_crosshair_size->integer, align, &sx, &sy );
-
-		if( touch )
-		{
-			int touch_size = cg_crosshair_touch_size->integer * cgs.vidHeight / 600;
-			int offset = ( touch_size - size ) / 2;
-			if( CG_TouchArea( TOUCHAREA_SCREEN_CROSSHAIR, sx - offset, sy - offset, touch_size, touch_size, NULL ) >= 0 )
-				trap_Cmd_ExecuteText( EXEC_NOW, "toggle zoom" );
-		}
-		else if( cg_crosshair->integer )
-		{
-			CG_DrawCrosshairChar( sx, sy, size, cg_crosshair->integer, chColor );
-		}
+		size = CG_CrosshairDimensions( x, y, cg_crosshair_size->integer, align, &sx, &sy );
+		CG_DrawCrosshairChar( sx, sy, size, cg_crosshair->integer, chColor );
 	}
 }
 

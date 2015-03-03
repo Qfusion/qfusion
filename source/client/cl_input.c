@@ -564,7 +564,6 @@ cvar_t *cl_yawspeed;
 cvar_t *cl_pitchspeed;
 cvar_t *cl_run;
 cvar_t *cl_anglespeedkey;
-cvar_t *cl_zoom;
 
 /*
 * CL_AddButtonBits
@@ -596,7 +595,7 @@ static void CL_AddButtonBits( uint8_t *buttons )
 	if( cls.key_dest != key_game )
 		*buttons |= BUTTON_BUSYICON;
 
-	if( ( ( in_zoom.state & 3 ) ? 1 : 0 ) ^ ( cl_zoom->integer ? 1 : 0 ) )
+	if( in_zoom.state & 3 )
 		*buttons |= BUTTON_ZOOM;
 	in_zoom.state &= ~2;
 }

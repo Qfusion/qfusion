@@ -651,8 +651,6 @@ void CL_SetKeyDest( int key_dest )
 		Key_ClearStates();
 		cls.key_dest = key_dest;
 		Con_SetMessageMode();
-		if( cl_zoom )
-			Cvar_SetValue( cl_zoom->name, 0 );
 	}
 }
 
@@ -2093,8 +2091,6 @@ static void CL_InitLocal( void )
 	m_pitch =		Cvar_Get( "m_pitch", "0.022", CVAR_ARCHIVE );
 	m_yaw =			Cvar_Get( "m_yaw", "0.022", CVAR_ARCHIVE );
 	m_sensCap =		Cvar_Get( "m_sensCap", "0", CVAR_ARCHIVE );
-
-	cl_zoom =		Cvar_Get( "zoom", "0", 0 );
 
 	cl_masterservers =	Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, 0 );
 

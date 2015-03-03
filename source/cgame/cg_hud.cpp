@@ -2352,13 +2352,7 @@ static bool CG_LFuncDrawTeamInfo( struct cg_layoutnode_s *commandnode, struct cg
 
 static bool CG_LFuncDrawCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	CG_DrawCrosshair( layout_cursor_x, layout_cursor_y, layout_cursor_align, false );
-	return true;
-}
-
-static bool CG_LFuncTouchCrossHair( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
-	CG_DrawCrosshair( layout_cursor_x, layout_cursor_y, layout_cursor_align, true );
+	CG_DrawCrosshair( layout_cursor_x, layout_cursor_y, layout_cursor_align );
 	return true;
 }
 
@@ -2852,7 +2846,7 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawCrosshair",
 		CG_LFuncDrawCrossHair,
-		CG_LFuncTouchCrossHair,
+		NULL,
 		0,
 		"Draws the game crosshair",
 		false
