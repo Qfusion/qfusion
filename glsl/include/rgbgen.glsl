@@ -10,26 +10,28 @@ myhalf4 VertexRGBGen(in vec4 Position, in vec3 Normal, in myhalf4 VertexColor)
 #if defined(APPLY_RGB_CONST) && defined(APPLY_ALPHA_CONST)
 	myhalf4 Color = u_ConstColor;
 #else
-	myhalf4 Color = myhalf4(1.0);
-
+	myhalf4 Color = myhalf4(
 #if defined(APPLY_RGB_CONST)
-	Color.rgb = u_ConstColor.rgb;
+	u_ConstColor.rgb,
 #elif defined(APPLY_RGB_VERTEX)
-	Color.rgb = VertexColor.rgb;
+	VertexColor.rgb,
 #elif defined(APPLY_RGB_ONE_MINUS_VERTEX)
-	Color.rgb = myhalf3(1.0) - VertexColor.rgb;
+	myhalf3(1.0) - VertexColor.rgb,
 #elif defined(APPLY_RGB_GEN_DIFFUSELIGHT)
-	Color.rgb = myhalf3(u_LightAmbient + max(dot(u_LightDir, Normal), 0.0) * u_LightDiffuse);
+	myhalf3(u_LightAmbient + max(dot(u_LightDir, Normal), 0.0) * u_LightDiffuse),
+#else
+	1.0, 1.0, 1.0,
 #endif
-
 #if defined(APPLY_ALPHA_CONST)
-	Color.a = u_ConstColor.a;
+	u_ConstColor.a
 #elif defined(APPLY_ALPHA_VERTEX)
-	Color.a = VertexColor.a;
+	VertexColor.a
 #elif defined(APPLY_ALPHA_ONE_MINUS_VERTEX)
-	Color.a = 1.0 - VertexColor.a;
+	1.0 - VertexColor.a
+#else
+	1.0
 #endif
-
+	)
 #endif
 
 #ifdef APPLY_RGB_DISTANCERAMP
