@@ -1386,6 +1386,55 @@ void G_UpdatePlayersMatchMsgs( void )
 }
 
 //==================================================
+// MAP MESSAGES
+//==================================================
+
+/*
+* G_RegisterMapMessage
+*/
+unsigned G_RegisterMapMessage( const char *str )
+{
+	unsigned i;
+
+	if( !str || !*str ) {
+		return 0;
+	}
+
+	for( i = 0; i < MAX_MAPMESSAGES; i++ ) {
+		const char *cs = trap_GetConfigString( CS_MAPMESSAGES+i );
+		if( !cs[0] ) {
+			break;
+		}
+		if( !strcmp( cs, str ) ) {
+			return i+1;
+		}
+	}
+
+	if( i < MAX_MAPMESSAGES ) {
+		trap_ConfigString( CS_MAPMESSAGES+i, str );
+	}
+	return i+1;
+}
+
+/*
+* G_SetPlayerMapMessage
+*/
+void G_SetPlayerMapMessage( edict_t *ent, unsigned index )
+{
+	if( index > MAX_MAPMESSAGES ) {
+		return;
+	}
+	if( !ent || !ent->r.client ) {
+		return;
+	}
+
+	if( index != ent->r.client->level.mapmessage ) {
+		ent->r.client->level.mapmessage = index;
+		trap_GameCmd( ent, va( "mapmsg %i", index ) );
+	}
+}
+
+//==================================================
 // SOUNDS
 //==================================================
 

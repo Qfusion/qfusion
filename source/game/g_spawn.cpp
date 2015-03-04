@@ -32,6 +32,7 @@ const field_t fields[] = {
 	{ "pathtarget", FOFS( pathtarget ), F_LSTRING },
 	{ "killtarget", FOFS( killtarget ), F_LSTRING },
 	{ "message", FOFS( message ), F_LSTRING },
+	{ "mapmessage", FOFS( mapmessage ), F_LSTRING },
 	{ "team", FOFS( team ), F_LSTRING },
 	{ "wait", FOFS( wait ), F_FLOAT },
 	{ "delay", FOFS( delay ), F_FLOAT },
@@ -464,6 +465,8 @@ static char *ED_ParseEdict( char *data, edict_t *ent )
 
 	if( !init )
 		ent->classname = NULL;
+	if( ent->classname && ent->mapmessage )
+		ent->mapmessage_index = G_RegisterMapMessage( ent->mapmessage );
 
 	return data;
 }
