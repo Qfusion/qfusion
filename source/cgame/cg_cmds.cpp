@@ -499,17 +499,32 @@ static void CG_SC_MatchMessage( void )
 
 	mm = (matchmessage_t)atoi( trap_Cmd_Argv( 1 ) );
 	matchmessage = GS_MatchMessageString( mm );
-	if( !matchmessage[0] )
-		matchmessage = NULL;
+	if( !matchmessage || !matchmessage[0] )
+		return;
 
-	if( matchmessage ) {
-		const char *translated = CG_TranslateString( matchmessage );
-		if( translated ) {
-			matchmessage = translated;
-		}
+	cg.matchmessage = CG_TranslateString( matchmessage );
+}
+
+/*
+* CG_SC_MapMessage
+*/
+static void CG_SC_MapMessage( void )
+{
+	unsigned index;
+	const char *mapmessage;
+
+	cg.mapmessage = NULL;
+
+	index = atoi( trap_Cmd_Argv( 1 ) );
+	if( !index || index > MAX_MAPMESSAGES ) {
+		return;
 	}
 
-	cg.matchmessage = matchmessage;
+	mapmessage = cgs.configStrings[CS_MAPMESSAGES + index - 1];
+	if( !mapmessage[0] )
+		return;
+
+	cg.mapmessage = CG_TranslateString( mapmessage );
 }
 
 /*
@@ -699,6 +714,7 @@ static const svcmd_t cg_svcmds[] =
 	{ "scb", CG_SC_Scoreboard },
 	{ "plstats", CG_SC_PlayerStats },
 	{ "mm", CG_SC_MatchMessage },
+	{ "mapmsg", CG_SC_MapMessage },
 	{ "ti", CG_CS_UpdateTeamInfo },
 	{ "demoget", CG_SC_DemoGet },
 	{ "cha", CG_SC_ChannelAdd },

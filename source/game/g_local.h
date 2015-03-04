@@ -640,6 +640,9 @@ void G_UpdatePlayerMatchMsg( edict_t *ent );
 void G_UpdatePlayersMatchMsgs( void );
 void G_Obituary( edict_t *victim, edict_t *attacker, int mod );
 
+unsigned G_RegisterMapMessage( const char *str );
+void G_SetPlayerMapMessage( edict_t *ent, unsigned index );
+
 void G_Sound( edict_t *owner, int channel, int soundindex, float attenuation );
 void G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenuation );
 void G_GlobalSound( int channel, int soundindex );
@@ -1115,6 +1118,7 @@ typedef struct
 
 	unsigned int respawnCount;
 	matchmessage_t matchmessage;
+	unsigned int mapmessage;
 
 	unsigned int last_vsay;         // time when last vsay was said
 	unsigned int last_activity;
@@ -1337,6 +1341,9 @@ struct edict_s
 	int dmg;
 
 	const char *message;
+	const char *mapmessage;
+	unsigned mapmessage_index;
+
 	int mass;
 	unsigned int air_finished;
 	float gravity;              // per entity gravity multiplier (1.0 is normal) // use for lowgrav artifact, flares
