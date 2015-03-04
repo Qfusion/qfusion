@@ -949,7 +949,6 @@ void Qcommon_Init( int argc, char **argv )
 	FS_Init();
 
 	Cbuf_AddText( "exec default.cfg\n" );
-	Cbuf_AddText( "exec default_binds.cfg\n" );
 	if( !dedicated->integer )
 	{
 		Cbuf_AddText( "exec config.cfg\n" );
