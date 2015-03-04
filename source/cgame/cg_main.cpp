@@ -399,8 +399,18 @@ char *_CG_CopyString( const char *in, const char *filename, int fileline )
 */
 static void CG_InitL10n( void )
 {
+	char mapl10n[10+MAX_CONFIGSTRING_CHARS];
+
 	trap_L10n_ClearDomain();
 	trap_L10n_LoadLangPOFile( "l10n/cgame" );
+
+	Q_strncpyz( mapl10n, "l10n/", sizeof( mapl10n ) );
+	Q_strncpyz( mapl10n+5, cgs.configStrings[CS_WORLDMODEL], sizeof( mapl10n ) - 5 );
+	COM_StripExtension( mapl10n );
+
+	if( mapl10n[0] ) {
+		trap_L10n_LoadLangPOFile( mapl10n );
+	}
 }
 
 /*
