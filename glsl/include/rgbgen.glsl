@@ -41,7 +41,7 @@ myhalf4 VertexRGBGen(in vec4 Position, in vec3 Normal, in myhalf4 VertexColor)
 #endif
 
 	return Color;
-#if defined(APPLY_RGB_DISTANCERAMP) || defined(APPLY_ALPHA_DISTANCERAMP)
+#if defined(DISTANCERAMP)
 #undef DISTANCERAMP
 #endif
 }
