@@ -191,6 +191,8 @@ typedef struct mbrushmodel_s
 
 	unsigned int	numSuperLightStyles;
 	struct superLightStyle_s *superLightStyles;
+
+	struct image_s	*correctionImage;
 } mbrushmodel_t;
 
 /*

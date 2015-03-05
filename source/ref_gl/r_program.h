@@ -36,6 +36,7 @@ typedef uint64_t r_glslfeat_t;
 #define DEFAULT_GLSL_FOG_PROGRAM			"defaultFog"
 #define DEFAULT_GLSL_FXAA_PROGRAM			"defaultFXAA"
 #define DEFAULT_GLSL_YUV_PROGRAM			"defaultYUV"
+#define DEFAULT_GLSL_CORRECTION_PROGRAM		"defaultCorrection"
 
 // program types
 enum
@@ -52,6 +53,7 @@ enum
 	GLSL_PROGRAM_TYPE_FOG,
 	GLSL_PROGRAM_TYPE_FXAA,
 	GLSL_PROGRAM_TYPE_YUV,
+	GLSL_PROGRAM_TYPE_CORRECTION,
 
 	GLSL_PROGRAM_TYPE_MAXTYPE
 };
@@ -178,6 +180,9 @@ enum
 #define GLSL_SHADER_CELSHADE_STRIPES_ADD		GLSL_BIT(38)
 #define GLSL_SHADER_CELSHADE_CEL_LIGHT			GLSL_BIT(39)
 #define GLSL_SHADER_CELSHADE_CEL_LIGHT_ADD		GLSL_BIT(40)
+
+// color correction
+#define GLSL_SHADER_CORRECTION_3D_TEXTURE		GLSL_BIT(32)
 
 void RP_Init( void );
 void RP_Shutdown( void );

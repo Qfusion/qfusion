@@ -115,17 +115,14 @@ static int R_TextureTarget( int flags, int *uploadTarget )
 {
 	int target, target2;
 
-	if( flags & IT_ARRAY )
-	{
-		target = target2 = GL_TEXTURE_2D_ARRAY_EXT;
-	}
-	else if( flags & IT_CUBEMAP )
-	{
+	if( flags & IT_CUBEMAP ) {
 		target = GL_TEXTURE_CUBE_MAP_ARB;
 		target2 = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
-	}
-	else
-	{
+	} else if( flags & IT_ARRAY ) {
+		target = target2 = GL_TEXTURE_2D_ARRAY_EXT;
+	} else if( flags & IT_3D ) {
+		target = target2 = GL_TEXTURE_3D_EXT;
+	} else {
 		target = target2 = GL_TEXTURE_2D;
 	}
 
@@ -539,6 +536,8 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 		maxSize = glConfig.maxRenderbufferSize;
 	else if( flags & IT_CUBEMAP )
 		maxSize = glConfig.maxTextureCubemapSize;
+	else if( flags & IT_3D )
+		maxSize = glConfig.maxTexture3DSize;
 	else
 		maxSize = glConfig.maxTextureSize;
 
@@ -938,6 +937,7 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 static void R_SetupTexParameters( int flags )
 {
 	int target = R_TextureTarget( flags, NULL );
+	int wrap = GL_REPEAT;
 
 	if( flags & IT_NOFILTERING )
 	{
@@ -970,23 +970,19 @@ static void R_SetupTexParameters( int flags )
 	}
 
 	// clamp if required
-	if( !( flags & IT_CLAMP ) )
+	if( flags & IT_CLAMP )
 	{
-		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_REPEAT );
-		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	}
-	else if( glConfig.ext.texture_edge_clamp )
-	{
-		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-	}
+		if( glConfig.ext.texture_edge_clamp )
+			wrap = GL_CLAMP_TO_EDGE;
 #ifndef GL_ES_VERSION_2_0
-	else
-	{
-		qglTexParameteri( target, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		qglTexParameteri( target, GL_TEXTURE_WRAP_T, GL_CLAMP );
-	}
+		else
+			wrap = GL_CLAMP;
 #endif
+	}
+	qglTexParameteri( target, GL_TEXTURE_WRAP_S, wrap );
+	qglTexParameteri( target, GL_TEXTURE_WRAP_T, wrap );
+	if( flags & IT_3D )
+		qglTexParameteri( target, GL_TEXTURE_WRAP_R_EXT, wrap );
 
 	if( ( flags & IT_DEPTH ) && ( flags & IT_DEPTHCOMPARE ) && glConfig.ext.shadow )
 	{
@@ -1043,14 +1039,14 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 
 	R_TextureFormat( flags, samples, &comp, &format, &type );
 
-	if( !( flags & IT_ARRAY ) ) // set in R_CreateArrayImage
+	if( !( flags & ( IT_ARRAY | IT_3D ) ) ) // set in R_Create3DImage
 		R_SetupTexParameters( flags );
 
 	R_UnpackAlignment( ctx, 1 );
 
 	if( ( scaledWidth == width ) && ( scaledHeight == height ) && ( flags & IT_NOMIPMAP ) )
 	{
-		if( flags & IT_ARRAY )
+		if( flags & ( IT_ARRAY | IT_3D ) )
 		{
 			for( i = 0; i < numTextures; i++, target++ )
 				qglTexSubImage3DEXT( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, data[i] );
@@ -1083,7 +1079,7 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 			else
 				mip = NULL;
 
-			if( flags & IT_ARRAY )
+			if( flags & ( IT_ARRAY | IT_3D ) )
 				qglTexSubImage3DEXT( target, 0, 0, 0, layer, scaledWidth, scaledHeight, 1, format, type, mip );
 			else if( subImage )
 				qglTexSubImage2D( target, 0, x, y, scaledWidth, scaledHeight, format, type, mip );
@@ -1110,7 +1106,7 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 						h = 1;
 					miplevel++;
 
-					if( flags & IT_ARRAY )
+					if( flags & ( IT_ARRAY | IT_3D ) )
 						qglTexSubImage3DEXT( target, miplevel, 0, 0, layer, w, h, 1, format, type, mip );
 					else if( subImage )
 						qglTexSubImage2D( target, miplevel, x, y, w, h, format, type, mip );
@@ -1831,17 +1827,17 @@ image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, in
 }
 
 /*
-* R_CreateArrayImage
+* R_Create3DImage
 */
-image_t *R_CreateArrayImage( const char *name, int width, int height, int layers, int flags, int samples )
+image_t *R_Create3DImage( const char *name, int width, int height, int layers, int flags, int samples, bool array )
 {
 	image_t *image;
 	int scaledWidth, scaledHeight;
 	int target, comp, format, type;
 
-	assert( layers <= glConfig.maxTextureLayers );
+	assert( array ? ( layers <= glConfig.maxTextureLayers ) : ( layers <= glConfig.maxTexture3DSize ) );
 
-	flags |= IT_ARRAY;
+	flags |= ( array ? IT_ARRAY : IT_3D );
 
 	image = R_CreateImage( name, width, height, layers, flags, samples );
 	R_BindModifyTexture( image );
@@ -1948,6 +1944,42 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic )
 }
 
 /*
+* R_LoadCorrectionImage
+*/
+static image_t *R_LoadCorrectionImage( const char *name, int flags )
+{
+	uint8_t *buf, *p;
+	size_t filelen;
+	image_t *image;
+	int i;
+
+	filelen = R_LoadFile( name, ( void ** )( &buf ) );
+	if( !buf )
+		return NULL;
+
+	if( filelen < ( 32 * 32 * 32 * 3 ) )
+	{
+		R_FreeFile( buf );
+		return NULL;
+	}
+
+	if( flags & IT_3D )
+	{
+		image = R_Create3DImage( "***r_correctiontexture***", 32, 32, 32, flags, 3, false );
+		p = buf;
+		for( i = 0; i < 32; i++, p += 32 * 32 * 3 )
+			R_ReplaceImageLayer( image, i, &p );
+	}
+	else
+	{
+		image = R_LoadImage( "***r_correctiontexture***", &buf, 32, 32 * 32, flags, 3 );
+	}
+
+	R_FreeFile( buf );
+	return image;
+}
+
+/*
 * R_FindImage
 * 
 * Finds and loads the given image. IT_SYNC images are loaded synchronously.
@@ -2017,6 +2049,10 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	//
 	// load the pic from disk
 	//
+	if( flags & IT_CORRECTION ) {
+		return R_LoadCorrectionImage( name, flags );
+	}
+
 	image = R_LoadImage( pathname, empty_data, 1, 1, flags, 1 );
 
 	if( !( image->flags & IT_SYNC ) && ( gl_loader_context[0] != NULL ) ) {
@@ -2031,6 +2067,36 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	}
 
 	return image;
+}
+
+/*
+* R_FindCorrectionImage
+*/
+image_t *R_FindCorrectionImage( const char *name )
+{
+	char correctionName[128];
+	int flags = IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_CLAMP|IT_CORRECTION;
+
+	Q_snprintfz( correctionName, sizeof( correctionName ), "correction/%s.raw", mapConfig.correction );
+	if( glConfig.maxTexture3DSize >= 32 )
+		flags |= IT_3D;
+
+	return R_FindImage( correctionName, NULL, flags );
+}
+
+/*
+* R_ColorCorrectionReload_f
+*/
+static void R_ColorCorrectionReload_f( void )
+{
+	if( !rsh.worldModel || !mapConfig.correction[0] )
+		return;
+
+	if( rsh.worldBrushModel->correctionImage ) {
+		R_FreeImage( rsh.worldBrushModel->correctionImage );
+	}
+
+	rsh.worldBrushModel->correctionImage = R_FindCorrectionImage( mapConfig.correction );
 }
 
 /*
@@ -2614,7 +2680,9 @@ static void R_InitScreenTextures( void )
 			&rsh.screenDepthTextureCopy, true );
 	}
 
-	R_InitScreenTexturesPair( "rsh.screenFxaaCopy", &rsh.screenFxaaCopy, 
+	R_InitScreenTexturesPair( "rsh.screenPPCopy0", &rsh.screenPPCopies[0], 
+		NULL, false );
+	R_InitScreenTexturesPair( "rsh.screenPPCopy1", &rsh.screenPPCopies[1], 
 		NULL, false );
 
 	R_InitScreenTexturesPair( "rsh.screenWeaponTexture", &rsh.screenWeaponTexture, 
@@ -2680,7 +2748,8 @@ static void R_TouchBuiltinTextures( void )
 	R_TouchImage( rsh.screenDepthTexture );
 	R_TouchImage( rsh.screenTextureCopy ); 
 	R_TouchImage( rsh.screenDepthTextureCopy );
-	R_TouchImage( rsh.screenFxaaCopy );
+	R_TouchImage( rsh.screenPPCopies[0] );
+	R_TouchImage( rsh.screenPPCopies[1] );
 	R_TouchImage( rsh.screenWeaponTexture );
 }
 
@@ -2699,7 +2768,8 @@ static void R_ReleaseBuiltinTextures( void )
 	rsh.coronaTexture = NULL;
 	rsh.screenTexture = rsh.screenDepthTexture = NULL;
 	rsh.screenTextureCopy = rsh.screenDepthTextureCopy = NULL;
-	rsh.screenFxaaCopy = NULL;
+	rsh.screenPPCopies[0] = NULL;
+	rsh.screenPPCopies[1] = NULL;
 	rsh.screenWeaponTexture = NULL;
 }
 
@@ -2742,6 +2812,8 @@ void R_InitImages( void )
 	R_InitStretchRawYUVTextures();
 	R_InitBuiltinTextures();
 	R_InitScreenTextures();
+
+	ri.Cmd_AddCommand( "r_colorcorrection_reload", R_ColorCorrectionReload_f );
 }
 
 /*
@@ -2847,6 +2919,8 @@ void R_ShutdownImages( void )
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;
+
+	ri.Cmd_RemoveCommand( "r_colorcorrection_reload" );
 }
 
 // ============================================================================

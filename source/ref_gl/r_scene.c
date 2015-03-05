@@ -245,6 +245,8 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 void R_RenderScene( const refdef_t *fd )
 {
 	int fbFlags = 0;
+	int ppFBO = 0;
+	int firstPPFBO = 0;
 
 	if( r_norefresh->integer )
 		return;
@@ -290,11 +292,23 @@ void R_RenderScene( const refdef_t *fd )
 		if( ( fd->rdflags & RDF_WEAPONALPHA ) && ( rsh.screenWeaponTexture != NULL ) ) {
 			fbFlags |= 2;
 		}
-		if( r_fxaa->integer && ( rsh.screenFxaaCopy != NULL ) ) {
-			if( !rn.fbColorAttachment ) {
-				rn.fbColorAttachment = rsh.screenFxaaCopy;
+		if( rsh.screenPPCopies[0] && rsh.screenPPCopies[1] ) {
+			int oldFlags = fbFlags;
+
+			if( r_fxaa->integer ) {
+				fbFlags |= 4;
 			}
-			fbFlags |= 4;
+			if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && 
+				r_colorcorrection->integer && rsh.worldBrushModel->correctionImage ) {
+				fbFlags |= 8;
+			}
+
+			if( fbFlags != oldFlags ) {
+				if( !rn.fbColorAttachment ) {
+					rn.fbColorAttachment = rsh.screenPPCopies[0];
+				}
+				firstPPFBO = rsh.screenPPCopies[0]->fbo;
+			}
 		}
 	}
 
@@ -336,9 +350,10 @@ void R_RenderScene( const refdef_t *fd )
 	// blit and blend framebuffers in proper order
 
 	if( fbFlags & 1 ) {
-		// copy to FXAA or default framebuffer
+		fbFlags &= ~1;
+
 		R_BlitTextureToScrFbo( fd, rn.fbColorAttachment, 
-			fbFlags & 4 ? rsh.screenFxaaCopy->fbo : 0, 
+			firstPPFBO, 
 			GLSL_PROGRAM_TYPE_NONE, 
 			colorWhite, 0 );
 	}
@@ -347,19 +362,36 @@ void R_RenderScene( const refdef_t *fd )
 		vec4_t color = { 1, 1, 1, 1 };
 		color[3] = fd->weaponAlpha;
 
-		// blend to FXAA or default framebuffer
+		fbFlags &= ~2;
+
 		R_BlitTextureToScrFbo( fd, rsh.screenWeaponTexture, 
-			fbFlags & 4 ? rsh.screenFxaaCopy->fbo : 0, 
+			firstPPFBO, 
 			GLSL_PROGRAM_TYPE_NONE, 
 			color, GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 	}
 
-	// blit FXAA to default framebuffer
+	// apply FXAA
 	if( fbFlags & 4 ) {
-		// blend to FXAA or default framebuffer
-		R_BlitTextureToScrFbo( fd, rsh.screenFxaaCopy, 0, 
-			GLSL_PROGRAM_TYPE_FXAA, 
+		fbFlags &= ~4;
+
+		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
+			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
+			GLSL_PROGRAM_TYPE_FXAA,
 			colorWhite, 0 );
+
+		ppFBO ^= 1;
+	}
+
+	// apply color correction
+	if( fbFlags & 8 ) {
+		fbFlags &= ~8;
+
+		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
+			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
+			GLSL_PROGRAM_TYPE_CORRECTION,
+			colorWhite, 0 );
+
+		ppFBO ^= 1;
 	}
 }
 
