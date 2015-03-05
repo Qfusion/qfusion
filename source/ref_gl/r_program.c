@@ -182,6 +182,7 @@ void RP_Init( void )
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, DEFAULT_GLSL_YUV_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CORRECTION, DEFAULT_GLSL_CORRECTION_PROGRAM, NULL, NULL, 0, 0 );
 
 	// check whether compilation of the shader with GPU skinning succeeds, if not, disable GPU bone transforms
 	if ( glConfig.maxGLSLBones ) {
@@ -838,6 +839,13 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ 0, NULL, NULL }
 };
 
+static const glsl_feature_t glsl_features_correction[] =
+{
+	{ GLSL_SHADER_CORRECTION_3D_TEXTURE, "#define APPLY_3D_TEXTURE\n", "_3dtex" },
+
+	{ 0, NULL, NULL }
+};
+
 static const glsl_feature_t * const glsl_programtypes_features[] =
 {
 	// GLSL_PROGRAM_TYPE_NONE
@@ -864,6 +872,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_YUV
 	glsl_features_empty,
+	// GLSL_PROGRAM_TYPE_CORRECTION
+	glsl_features_correction
 };
 
 // ======================================================================================
@@ -879,12 +889,9 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_GLSL_VERSION300ES "#version 300 es\n"
 
 #define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "#extension GL_ARB_draw_instanced : enable\n"
-#ifdef GL_ES_VERSION_2_0
-#define QF_GLSL_ENABLE_ARB_SHADOW "#extension GL_EXT_shadow_samplers : enable\n"
-#else
-#define QF_GLSL_ENABLE_ARB_SHADOW "#extension GL_ARB_shadow : enable\n"
-#endif
+#define QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS "#extension GL_EXT_shadow_samplers : enable\n"
 #define QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY "#extension GL_EXT_texture_array : enable\n"
+#define QF_GLSL_ENABLE_OES_TEXTURE_3D "#extension GL_OES_texture_3D : enable\n"
 
 #define QF_BUILTIN_GLSL_MACROS "" \
 "#if !defined(myhalf)\n" \
@@ -916,6 +923,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
 "#define qf_textureArray texture2DArray\n" \
+"#define qf_texture3D texture3D\n" \
 "#define qf_textureOffset(a,b,c,d) texture2DOffset(a,b,ivec2(c,d))\n" \
 "#define qf_shadow shadow2D\n" \
 "\n"
@@ -936,6 +944,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_textureCube texture\n" \
 "#define qf_textureLod textureLod\n" \
 "#define qf_textureArray texture\n" \
+"#define qf_texture3D texture\n" \
 "#define qf_textureOffset(a,b,c,d) textureOffset(a,b,ivec2(c,d))\n" \
 "#define qf_shadow texture\n" \
 "\n"
@@ -958,6 +967,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_textureLod texture2DLod\n" \
 "#define qf_textureCube textureCube\n" \
 "#define qf_textureArray texture2DArray\n" \
+"#define qf_texture3D texture3D\n" \
 "#define qf_shadow shadow2DEXT\n" \
 "\n"
 
@@ -980,6 +990,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#define qf_textureLod textureLod\n" \
 "#define qf_textureCube texture\n" \
 "#define qf_textureArray texture\n" \
+"#define qf_texture3D texture\n" \
 "#define qf_shadow texture\n" \
 "\n"
 
@@ -1393,7 +1404,10 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	int hash;
 	int linked, error = 0;
 	int shaderTypeIdx, wavefuncsIdx, deformvIdx;
-	int instancedIdx, shadowIdx, textureArrayIdx;
+	int instancedIdx, textureArrayIdx;
+#ifdef GL_ES_VERSION_2_0
+	int shadowIdx, texture3DIdx;
+#endif
 	int body_start, num_init_strings;
 	glsl_program_t *program;
 	char fullName[1024];
@@ -1511,8 +1525,12 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 #endif
 		shaderStrings[i++] = "\n";
 
+#ifdef GL_ES_VERSION_2_0
 	shadowIdx = i;
 	shaderStrings[i++] = "\n";
+	texture3DIdx = i;
+	shaderStrings[i++] = "\n";
+#endif
 	textureArrayIdx = i;
 	shaderStrings[i++] = "\n";
 
@@ -1598,8 +1616,12 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	if( glConfig.shadingLanguageVersion < 300 )
 #endif
 	{
+#ifdef GL_ES_VERSION_2_0
 		if( glConfig.ext.shadow )
-			shaderStrings[shadowIdx] = QF_GLSL_ENABLE_ARB_SHADOW;
+			shaderStrings[shadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
+		if( glConfig.ext.texture3D )
+			shaderStrings[texture3DIdx] = QF_GLSL_ENABLE_OES_TEXTURE_3D;
+#endif
 		if( glConfig.ext.texture_array )
 			shaderStrings[textureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;
 	}
@@ -2190,7 +2212,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 			locDepthTexture,
 			locYUVTextureY,
 			locYUVTextureU,
-			locYUVTextureV
+			locYUVTextureV,
+			locCorrectionTexture
 			;
 
 	memset( &program->loc, -1, sizeof( program->loc ) );
@@ -2239,6 +2262,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	locYUVTextureY = qglGetUniformLocationARB( program->object, "u_YUVTextureY" );
 	locYUVTextureU = qglGetUniformLocationARB( program->object, "u_YUVTextureU" );
 	locYUVTextureV = qglGetUniformLocationARB( program->object, "u_YUVTextureV" );
+
+	locCorrectionTexture = qglGetUniformLocationARB( program->object, "u_CorrectionTexture" );
 
 	program->loc.DeluxemapOffset = qglGetUniformLocationARB( program->object, "u_DeluxemapOffset" );
 
@@ -2383,6 +2408,9 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 		qglUniform1iARB( locYUVTextureU, 1 );
 	if( locYUVTextureV >= 0 )
 		qglUniform1iARB( locYUVTextureV, 2 );
+
+	if( locCorrectionTexture >= 0 )
+		qglUniform1iARB( locCorrectionTexture, 1 );
 }
 
 /*
