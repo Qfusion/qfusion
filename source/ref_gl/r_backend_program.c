@@ -1787,11 +1787,16 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 static void RB_RenderMeshGLSL_Correction( const shaderpass_t *pass, r_glslfeat_t programFeatures )
 {
 	int program;
-	const image_t *image = rsh.worldBrushModel->correctionImage;
+	const image_t *image;
 	mat4_t texMatrix = { 0 };
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
+
+	if( r_colorcorrection_override->string[0] )
+		image = rsh.correctionOverrideTexture;
+	else
+		image = rsh.worldBrushModel->correctionImage;
 
 	RB_BindTexture( 0, pass->images[0] );
 	RB_BindTexture( 1, image );

@@ -1642,8 +1642,6 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 				VectorScale( celcolorf, 1.0f/255.0f, celcolorf );	// [0..1] RGB -> [0..255] RGB
 			VectorCopy( celcolorf, outline );
 
-			if( r_colorcorrection_force->string[0] )
-				Q_strncpyz( correction, r_colorcorrection_force->string, sizeof( correction ) );
 			Q_strncpyz( mapConfig.correction, correction, sizeof( mapConfig.correction ) );
 			break;
 		}

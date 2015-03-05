@@ -2077,26 +2077,11 @@ image_t *R_FindCorrectionImage( const char *name )
 	char correctionName[128];
 	int flags = IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_CLAMP|IT_CORRECTION;
 
-	Q_snprintfz( correctionName, sizeof( correctionName ), "correction/%s.raw", mapConfig.correction );
+	Q_snprintfz( correctionName, sizeof( correctionName ), "correction/%s.raw", name );
 	if( glConfig.maxTexture3DSize >= 32 )
 		flags |= IT_3D;
 
 	return R_FindImage( correctionName, NULL, flags );
-}
-
-/*
-* R_ColorCorrectionReload_f
-*/
-static void R_ColorCorrectionReload_f( void )
-{
-	if( !rsh.worldModel || !mapConfig.correction[0] )
-		return;
-
-	if( rsh.worldBrushModel->correctionImage ) {
-		R_FreeImage( rsh.worldBrushModel->correctionImage );
-	}
-
-	rsh.worldBrushModel->correctionImage = R_FindCorrectionImage( mapConfig.correction );
 }
 
 /*
@@ -2751,6 +2736,7 @@ static void R_TouchBuiltinTextures( void )
 	R_TouchImage( rsh.screenPPCopies[0] );
 	R_TouchImage( rsh.screenPPCopies[1] );
 	R_TouchImage( rsh.screenWeaponTexture );
+	R_TouchImage( rsh.correctionOverrideTexture );
 }
 
 /*
@@ -2813,7 +2799,8 @@ void R_InitImages( void )
 	R_InitBuiltinTextures();
 	R_InitScreenTextures();
 
-	ri.Cmd_AddCommand( "r_colorcorrection_reload", R_ColorCorrectionReload_f );
+	if( r_colorcorrection_override->string[0] )
+		r_colorcorrection_override->modified = true;
 }
 
 /*
@@ -2919,8 +2906,6 @@ void R_ShutdownImages( void )
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;
-
-	ri.Cmd_RemoveCommand( "r_colorcorrection_reload" );
 }
 
 // ============================================================================

@@ -231,6 +231,7 @@ typedef struct
 	image_t			*screenDepthTextureCopy;
 	image_t			*screenPPCopies[2];
 	image_t			*screenWeaponTexture;
+	image_t			*correctionOverrideTexture;
 
 	shader_t		*envShader;
 	shader_t		*skyShader;
@@ -373,7 +374,7 @@ extern cvar_t *r_soft_particles_scale;
 extern cvar_t *r_fxaa;
 
 extern cvar_t *r_colorcorrection;
-extern cvar_t *r_colorcorrection_force;
+extern cvar_t *r_colorcorrection_override;
 
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
