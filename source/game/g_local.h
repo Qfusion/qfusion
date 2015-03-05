@@ -654,10 +654,7 @@ void G_PureSound( const char *sound );
 void G_PureModel( const char *model );
 
 extern game_locals_t game;
-#define ENTNUM( x ) ( ( x ) != NULL ? ( x ) - game.edicts : -1 )
 
-#define PLAYERNUM( x ) ( ( x ) - game.edicts - 1 )
-#define PLAYERENT( x ) ( game.edicts + ( x ) + 1 )
 #define G_ISGHOSTING( x ) ( ( ( x )->s.modelindex == 0 ) && ( ( x )->r.solid == SOLID_NOT ) )
 #define ISBRUSHMODEL( x ) ( ( ( x > 0 ) && ( (int)x < trap_CM_NumInlineModels() ) ) ? true : false )
 
@@ -1419,6 +1416,14 @@ struct edict_s
 	void *asScriptModule;
 	void *asSpawnFunc, *asThinkFunc, *asUseFunc, *asTouchFunc, *asPainFunc, *asDieFunc, *asStopFunc;
 };
+
+static inline int ENTNUM( edict_t *x ) { return x - game.edicts; }
+static inline int ENTNUM( gclient_t *x ) { return x - game.clients + 1; }
+
+static inline int PLAYERNUM( edict_t *x ) { return x - game.edicts - 1; }
+static inline int PLAYERNUM( gclient_t *x ) { return x - game.clients; }
+
+static inline edict_t *PLAYERENT( int x ) { return game.edicts + x + 1; }
 
 // matchmaker
 
