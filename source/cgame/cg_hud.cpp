@@ -1985,6 +1985,15 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 			int y = layout_cursor_y;
 			int font_height = trap_SCR_strHeight( CG_GetLayoutCursorFont() );
 			const char *helpmessage = "";
+			vec3_t hvel;
+			vec4_t color;
+			float color_scale;
+
+			// scale alpha to text appears more faint if the player's moving
+			Vector4Copy( layout_cursor_color, color );
+			VectorCopy( cg.predictedPlayerState.pmove.velocity, hvel ), hvel[2] = 0.0f;
+			color_scale = 1.0f - VectorLength( hvel ) * 0.03;
+			color[3] *= bound( 0.3, color_scale, 1.0 );
 
 			for( i = 0; i < 3; i++ )
 			{
@@ -2013,7 +2022,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 					do
 					{
 						len = trap_SCR_DrawStringWidth( layout_cursor_x, y, layout_cursor_align, 
-							helpmessage, layout_cursor_width, CG_GetLayoutCursorFont(), layout_cursor_color );
+							helpmessage, layout_cursor_width, CG_GetLayoutCursorFont(), color );
 						if( !len )
 						{
 							if( *helpmessage == '\r' || *helpmessage == '\n' )
