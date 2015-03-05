@@ -1091,7 +1091,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_fxaa = ri.Cvar_Get( "r_fxaa", "0", CVAR_ARCHIVE );
 
 	// Default values and flags for the demo only.
-	r_colorcorrection = ri.Cvar_Get( "r_colorcorrection", "0", CVAR_ARCHIVE );
+	r_colorcorrection = ri.Cvar_Get( "r_colorcorrection", "1", CVAR_ARCHIVE );
 	r_colorcorrection_force = ri.Cvar_Get( "r_colorcorrection_force", "", CVAR_CHEAT );
 
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
