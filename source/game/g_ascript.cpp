@@ -1495,8 +1495,7 @@ static int objectGameClient_PlayerNum( gclient_t *self )
 {
 	if( self->asFactored )
 		return -1;
-
-	return (int)( self - game.clients );
+	return PLAYERNUM( self );
 }
 
 static bool objectGameClient_isReady( gclient_t *self )
@@ -1512,10 +1511,7 @@ static bool objectGameClient_isBot( gclient_t *self )
 	int playerNum;
 	const edict_t *ent;
 
-	if( self->asFactored )
-		return false;
-
-	playerNum = (int)( self - game.clients );
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 && playerNum >= gs.maxclients )
 		return false;
 
@@ -1528,10 +1524,7 @@ static ai_handle_t *objectGameClient_getBot( gclient_t *self )
 	int playerNum;
 	const edict_t *ent;
 
-	if( self->asFactored )
-		return NULL;
-
-	playerNum = (int)( self - game.clients );
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 && playerNum >= gs.maxclients )
 		return NULL;
 
@@ -1582,8 +1575,8 @@ static void objectGameClient_Respawn( bool ghost, gclient_t *self )
 	if( self->asFactored )
 		return;
 
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
+	playerNum = objectGameClient_PlayerNum( self );
+
 	if( playerNum >= 0 && playerNum < gs.maxclients )
 		G_ClientRespawn( &game.edicts[playerNum + 1], ghost );
 }
@@ -1592,16 +1585,11 @@ static edict_t *objectGameClient_GetEntity( gclient_t *self )
 {
 	int playerNum;
 
-	if( self->asFactored )
-		return NULL;
-
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return NULL;
 
-	return &game.edicts[playerNum + 1];
+	return PLAYERENT( playerNum );
 }
 
 static int objectGameClient_InventoryCount( int index, gclient_t *self )
@@ -1653,7 +1641,7 @@ static void objectGameClient_InventoryGiveItemExt( int index, int count, gclient
 	if( !(it->flags & ITFLAG_PICKABLE) )
 		return;
 
-	playerNum = self - game.clients;
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
@@ -1698,48 +1686,42 @@ static void objectGameClient_addAward( asstring_t *msg, gclient_t *self )
 {
 	int playerNum;
 
-	if( self->asFactored || !msg )
+	if( !msg )
 		return;
 
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	G_PlayerAward( &game.edicts[playerNum + 1], msg->buffer );
+	G_PlayerAward( PLAYERENT( playerNum ), msg->buffer );
 }
 
 static void objectGameClient_addMetaAward( asstring_t *msg, gclient_t *self )
 {
 	int playerNum;
 
-	if( self->asFactored || !msg )
+	if( !msg )
 		return;
 
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	G_PlayerMetaAward( &game.edicts[playerNum + 1], msg->buffer );
+	G_PlayerMetaAward( PLAYERENT( playerNum ), msg->buffer );
 }
 
 static void objectGameClient_execGameCommand( asstring_t *msg, gclient_t *self )
 {
 	int playerNum;
 
-	if( self->asFactored || !msg )
+	if( !msg )
 		return;
 
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	trap_GameCmd( &game.edicts[playerNum + 1], msg->buffer );
+	trap_GameCmd( PLAYERENT( playerNum ), msg->buffer );
 }
 
 static void objectGameClient_setHUDStat( int stat, int value, gclient_t *self )
@@ -1837,38 +1819,34 @@ static void objectGameClient_printMessage( asstring_t *str, gclient_t *self )
 	if( !str || !str->buffer )
 		return;
 
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	G_PrintMsg( &game.edicts[ playerNum + 1 ], "%s", str->buffer );
+	G_PrintMsg( PLAYERENT( playerNum ), "%s", str->buffer );
 }
 
 static void objectGameClient_ChaseCam( asstring_t *str, bool teamonly, gclient_t *self )
 {
 	int playerNum;
 
-	playerNum = (int)( self - game.clients );
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	G_ChasePlayer( &game.edicts[ playerNum + 1 ], str ? str->buffer : NULL, teamonly, 0 );
+	G_ChasePlayer( PLAYERENT( playerNum ), str ? str->buffer : NULL, teamonly, 0 );
 }
 
 static void objectGameClient_SetChaseActive( bool active, gclient_t *self )
 {
 	int playerNum;
 
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
 	self->resp.chase.active = active;
-	G_UpdatePlayerMatchMsg( &game.edicts[ playerNum + 1 ] );
+	G_UpdatePlayerMatchMsg( PLAYERENT( playerNum ) );
 }
 
 static bool objectGameClient_GetChaseActive( gclient_t *self )
@@ -1880,26 +1858,33 @@ static void objectGameClient_NewRaceRun( int numSectors, gclient_t *self )
 {
 	int playerNum;
 
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	G_NewRaceRun( &game.edicts[ playerNum + 1 ], numSectors );
+	G_NewRaceRun( PLAYERENT( playerNum ), numSectors );
 }
 
 static void objectGameClient_SetRaceTime( int sector, unsigned int time, gclient_t *self )
 {
 	int playerNum;
 
-	playerNum = (int)( self - game.clients );
-	assert( playerNum >= 0 && playerNum < gs.maxclients );
-
+	playerNum = objectGameClient_PlayerNum( self );
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	G_SetRaceTime( &game.edicts[ playerNum + 1 ], sector, time );
+	G_SetRaceTime( PLAYERENT( playerNum ), sector, time );
+}
+
+static void objectGameClient_SetMapMessage( unsigned int index, gclient_t *self )
+{
+	int playerNum;
+
+	playerNum = objectGameClient_PlayerNum( self );
+	if( playerNum < 0 || playerNum >= gs.maxclients )
+		return;
+
+	G_SetPlayerMapMessage( PLAYERENT( playerNum ), index );
 }
 
 static const asFuncdef_t gameclient_Funcdefs[] =
@@ -1951,6 +1936,7 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL(bool, get_chaseActive, () const ), asFUNCTION(objectGameClient_GetChaseActive), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, newRaceRun, ( int numSectors )), asFUNCTION(objectGameClient_NewRaceRun), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setRaceTime, ( int sector, uint time )), asFUNCTION(objectGameClient_SetRaceTime), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, setMapMessage, ( uint msg )), asFUNCTION(objectGameClient_SetMapMessage), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
@@ -3211,6 +3197,11 @@ static edict_t *asFunc_FireBlast( asvec3_t *origin, asvec3_t *angles, int speed,
 	return W_Fire_GunbladeBlast( owner, origin->v, angles->v, damage, min( 1, knockback ), knockback, stun, min( 1, damage ), radius, speed, 5000, MOD_SPLASH, 0 );
 }
 
+static unsigned asFunc_G_RegisterMapMessage( asstring_t *str )
+{
+	return G_RegisterMapMessage( str->buffer );
+}
+
 static const asglobfuncs_t asGlobFuncs[] =
 {
 	{ "Entity @G_SpawnEntity( const String &in )", asFUNCTION(asFunc_G_Spawn), NULL },
@@ -3292,6 +3283,8 @@ static const asglobfuncs_t asGlobFuncs[] =
 
 	{ "bool ML_FilenameExists( String & )", asFUNCTION(asFunc_ML_FilenameExists), NULL },
 	{ "const String @ML_GetMapByNum( int num )", asFUNCTION(asFunc_ML_GetMapByNum), NULL },
+
+	{ "uint G_RegisterMapMessage( const String &in )", asFUNCTION(asFunc_G_RegisterMapMessage), NULL },
 
 	{ NULL }
 };
