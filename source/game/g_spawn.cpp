@@ -795,6 +795,11 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	trap_ConfigString( CS_MATCHNAME, "" );
 	trap_ConfigString( CS_MATCHSCORE, "" );
 
+	// reset map messages
+	for( i = 0; i < MAX_MAPMESSAGES; i++ ) {
+		trap_ConfigString( CS_MAPMESSAGES + i, "" );
+	}
+
 	G_InitGameCommands();
 	G_MapLocations_Init();
 	G_CallVotes_Init();
