@@ -298,9 +298,21 @@ void R_RenderScene( const refdef_t *fd )
 			if( r_fxaa->integer ) {
 				fbFlags |= 4;
 			}
-			if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && 
-				r_colorcorrection->integer && rsh.worldBrushModel->correctionImage ) {
-				fbFlags |= 8;
+
+			if( r_colorcorrection->integer && rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
+				image_t *correctionImage = rsh.worldBrushModel->correctionImage;
+
+				if( r_colorcorrection_override->string[0] ) {
+					if( r_colorcorrection_override->modified ) {
+						r_colorcorrection_override->modified = false;
+						rsh.correctionOverrideTexture = R_FindCorrectionImage( r_colorcorrection_override->string );
+					}
+					correctionImage = rsh.correctionOverrideTexture;
+				}
+
+				if( correctionImage ) {
+					fbFlags |= 8;
+				}
 			}
 
 			if( fbFlags != oldFlags ) {

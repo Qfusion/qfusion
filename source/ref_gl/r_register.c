@@ -90,7 +90,7 @@ cvar_t *r_soft_particles_scale;
 cvar_t *r_fxaa;
 
 cvar_t *r_colorcorrection;
-cvar_t *r_colorcorrection_force;
+cvar_t *r_colorcorrection_override;
 
 cvar_t *r_lodbias;
 cvar_t *r_lodscale;
@@ -1092,7 +1092,7 @@ static void R_Register( const char *screenshotsPrefix )
 
 	// Default values and flags for the demo only.
 	r_colorcorrection = ri.Cvar_Get( "r_colorcorrection", "1", CVAR_ARCHIVE );
-	r_colorcorrection_force = ri.Cvar_Get( "r_colorcorrection_force", "", CVAR_CHEAT );
+	r_colorcorrection_override = ri.Cvar_Get( "r_colorcorrection_override", "", CVAR_CHEAT );
 
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
