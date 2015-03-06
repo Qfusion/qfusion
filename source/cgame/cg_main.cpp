@@ -881,7 +881,7 @@ static void CG_RegisterConfigStrings( void )
 
 	cg.precacheCount = cg.precacheTotal = 0;
 
-	for( i = 0; i < CS_GENERAL; i++ )
+	for( i = 0; i < MAX_CONFIGSTRINGS; i++ )
 	{
 		trap_GetConfigString( i, cgs.configStrings[i], MAX_CONFIGSTRING_CHARS );
 
