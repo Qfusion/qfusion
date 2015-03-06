@@ -777,6 +777,9 @@ static void R_FinalizeGLExtensions( void )
 #undef GL_OPTIONAL_CORE_EXTENSION_DEP
 #undef GL_OPTIONAL_CORE_EXTENSION
 	}
+#else // GL_ES_VERSION_2_0
+	glConfig.ext.depth24 = true;
+	glConfig.ext.rgb8_rgba8 = true;
 #endif
 
 	glConfig.maxTextureSize = 0;
@@ -824,17 +827,10 @@ static void R_FinalizeGLExtensions( void )
 
 	/* GL_EXT_framebuffer_object */
 	glConfig.maxRenderbufferSize = 0;
-	if( glConfig.ext.framebuffer_object )
-	{
-		qglGetIntegerv( GL_MAX_RENDERBUFFER_SIZE_EXT, &glConfig.maxRenderbufferSize );
-		glConfig.maxRenderbufferSize = 1 << Q_log2( glConfig.maxRenderbufferSize );
-		if( glConfig.maxRenderbufferSize > glConfig.maxTextureSize )
-			glConfig.maxRenderbufferSize = glConfig.maxTextureSize;
-#ifndef GL_ES_VERSION_2_0
-		glConfig.ext.depth24 = true;
-		glConfig.ext.rgb8_rgba8 = true;
-#endif
-	}
+	qglGetIntegerv( GL_MAX_RENDERBUFFER_SIZE_EXT, &glConfig.maxRenderbufferSize );
+	glConfig.maxRenderbufferSize = 1 << Q_log2( glConfig.maxRenderbufferSize );
+	if( glConfig.maxRenderbufferSize > glConfig.maxTextureSize )
+		glConfig.maxRenderbufferSize = glConfig.maxTextureSize;
 
 	/* GL_EXT_texture_filter_anisotropic */
 	glConfig.maxTextureFilterAnisotropic = 0;

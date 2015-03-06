@@ -231,7 +231,7 @@ typedef struct
 	image_t			*screenDepthTextureCopy;
 	image_t			*screenPPCopies[2];
 	image_t			*screenWeaponTexture;
-	image_t			*correctionOverrideTexture;
+	image_t			*colorCorrectionOverrideLUT;
 
 	shader_t		*envShader;
 	shader_t		*skyShader;
@@ -837,7 +837,7 @@ typedef struct
 
 	bool		forceWorldOutlines;
 
-	char		correction[MAX_QPATH];	// name of the color correction LUT
+	char		colorCorrection[MAX_QPATH];	// name of the color correction LUT
 } mapconfig_t;
 
 extern mapconfig_t	mapConfig;

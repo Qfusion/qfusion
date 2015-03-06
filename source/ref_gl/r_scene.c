@@ -300,17 +300,18 @@ void R_RenderScene( const refdef_t *fd )
 			}
 
 			if( r_colorcorrection->integer && rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
-				image_t *correctionImage = rsh.worldBrushModel->correctionImage;
+				image_t *colorCorrectionLUT = rsh.worldBrushModel->colorCorrectionLUT;
 
 				if( r_colorcorrection_override->string[0] ) {
 					if( r_colorcorrection_override->modified ) {
 						r_colorcorrection_override->modified = false;
-						rsh.correctionOverrideTexture = R_FindCorrectionImage( r_colorcorrection_override->string );
+						rsh.colorCorrectionOverrideLUT =
+							R_FindImage( r_colorcorrection_override->string, NULL, IT_COLORCORRECTION );
 					}
-					correctionImage = rsh.correctionOverrideTexture;
+					colorCorrectionLUT = rsh.colorCorrectionOverrideLUT;
 				}
 
-				if( correctionImage ) {
+				if( colorCorrectionLUT ) {
 					fbFlags |= 8;
 				}
 			}
@@ -400,7 +401,7 @@ void R_RenderScene( const refdef_t *fd )
 
 		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
 			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
-			GLSL_PROGRAM_TYPE_CORRECTION,
+			GLSL_PROGRAM_TYPE_COLORCORRECTION,
 			colorWhite, 0 );
 
 		ppFBO ^= 1;
