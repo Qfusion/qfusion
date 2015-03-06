@@ -1331,7 +1331,7 @@ void G_Obituary( edict_t *victim, edict_t *attacker, int mod )
 * Sends correct match msg to one client
 * Must be called whenever client's team, ready status or chase mode changes
 */
-void G_UpdatePlayerMatchMsg( edict_t *ent )
+void G_UpdatePlayerMatchMsg( edict_t *ent, bool force )
 {
 	matchmessage_t newmm;
 
@@ -1358,7 +1358,7 @@ void G_UpdatePlayerMatchMsg( edict_t *ent )
 			newmm = MATCHMESSAGE_NONE;
 	}
 
-	if( newmm != ent->r.client->level.matchmessage )
+	if( newmm != ent->r.client->level.matchmessage || force )
 	{
 		ent->r.client->level.matchmessage = newmm;
 		trap_GameCmd( ent, va( "mm %i", newmm ) );
@@ -1419,7 +1419,7 @@ unsigned G_RegisterMapMessage( const char *str )
 /*
 * G_SetPlayerMapMessage
 */
-void G_SetPlayerMapMessage( edict_t *ent, unsigned index )
+void G_SetPlayerMapMessage( edict_t *ent, unsigned index, bool force )
 {
 	if( index > MAX_MAPMESSAGES ) {
 		return;
@@ -1428,7 +1428,7 @@ void G_SetPlayerMapMessage( edict_t *ent, unsigned index )
 		return;
 	}
 
-	if( index != ent->r.client->level.mapmessage ) {
+	if( index != ent->r.client->level.mapmessage || force ) {
 		ent->r.client->level.mapmessage = index;
 		trap_GameCmd( ent, va( "mapmsg %i", index ) );
 	}

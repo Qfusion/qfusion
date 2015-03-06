@@ -636,12 +636,12 @@ void G_PrintChasersf( edict_t *self, const char *format, ... );
 void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, ... );
 void G_CenterPrintMsg( edict_t *ent, const char *format, ... );
 void G_CenterPrintFormatMsg( edict_t *ent, const char *format, ... );
-void G_UpdatePlayerMatchMsg( edict_t *ent );
+void G_UpdatePlayerMatchMsg( edict_t *ent, bool force = false );
 void G_UpdatePlayersMatchMsgs( void );
 void G_Obituary( edict_t *victim, edict_t *attacker, int mod );
 
 unsigned G_RegisterMapMessage( const char *str );
-void G_SetPlayerMapMessage( edict_t *ent, unsigned index );
+void G_SetPlayerMapMessage( edict_t *ent, unsigned index, bool force = false );
 
 void G_Sound( edict_t *owner, int channel, int soundindex, float attenuation );
 void G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenuation );

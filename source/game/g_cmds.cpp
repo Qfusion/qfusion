@@ -1210,6 +1210,17 @@ static void Cmd_TVConnect_f( edict_t *ent )
 	G_MoveClientToTV( ent );
 }
 
+/*
+* Cmd_Upstate_f
+*
+* Update client on the state of things
+*/
+static void Cmd_Upstate_f( edict_t *ent )
+{
+	G_UpdatePlayerMatchMsg( ent, true );
+	G_SetPlayerMapMessage( ent, ent->r.client->level.mapmessage, true );
+}
+
 //===========================================================
 //	client commands
 //===========================================================
@@ -1361,6 +1372,9 @@ void G_InitGameCommands( void )
 
 	// TV
 	G_AddCommand( "tvconnect", Cmd_TVConnect_f );
+
+	// misc
+	G_AddCommand( "upstate", Cmd_Upstate_f );
 }
 
 /*
