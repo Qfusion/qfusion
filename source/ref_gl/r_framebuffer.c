@@ -45,9 +45,6 @@ static r_fbo_t r_framebuffer_objects[MAX_FRAMEBUFFER_OBJECTS];
 */
 void RFB_Init( void )
 {
-	if( !glConfig.ext.framebuffer_object )
-		return;
-
 	r_num_framebuffer_objects = 0;
 	memset( r_framebuffer_objects, 0, sizeof( r_framebuffer_objects ) );
 

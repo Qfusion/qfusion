@@ -98,7 +98,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 
 			for( i = 0; i < 3; i++ ) {
 				handle->yuv_images[i] = R_LoadImage( va( "%s_%s", handle->name, letters[i] ), 
-					fake_data, 1, 1, IT_CINEMATIC|IT_LUMINANCE, 1 );
+					fake_data, 1, 1, IT_SPECIAL|IT_LUMINANCE, 1 );
 			}
 			handle->new_frame = true;
 		}
@@ -118,7 +118,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 
 			R_InitViewportTexture( &handle->image, handle->name, 0, 
 				handle->cyuv->image_width, handle->cyuv->image_height, 
-				0, IT_CINEMATIC|IT_FRAMEBUFFER, samples );
+				0, IT_SPECIAL|IT_FRAMEBUFFER, samples );
 
 			R_BindFrameBufferObject( handle->image->fbo );
 
@@ -151,7 +151,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 	else {
 		if( !handle->image ) {
 			handle->image = R_LoadImage( handle->name, &handle->pic, handle->width, handle->height, 
-				IT_CINEMATIC, samples );
+				IT_SPECIAL, samples );
 			handle->new_frame = false;
 		} else if( handle->new_frame ) {
 			R_ReplaceImage( handle->image, &handle->pic, handle->width, handle->height, 

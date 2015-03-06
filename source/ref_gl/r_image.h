@@ -45,13 +45,12 @@ enum
 	,IT_ARRAY			= 1<<18
 	,IT_ALPHA			= 1<<19		// alpha only
 	,IT_3D				= 1<<20
-	,IT_CORRECTION		= 1<<21
+	,IT_COLORLUT		= 1<<21
 };
 
-#define IT_CINEMATIC		( IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_CLAMP )
-#define IT_PORTALMAP		( IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_CLAMP )
-#define IT_SHADOWMAP		( IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_CLAMP|IT_DEPTHCOMPARE )
-#define IT_GL_ES_NPOT		( IT_NOMIPMAP|IT_CLAMP )
+#define IT_SPECIAL			( IT_CLAMP|IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS )
+#define IT_COLORCORRECTION	( ( glConfig.maxTexture3DSize >= 32 ) ? ( IT_SPECIAL|IT_COLORLUT|IT_3D ) : ( IT_SPECIAL|IT_COLORLUT ) )
+#define IT_GL_ES_NPOT		( IT_CLAMP|IT_NOMIPMAP )
 
 typedef struct image_s
 {
@@ -97,7 +96,6 @@ void R_AnisotropicFilter( int value );
 
 image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int samples );
 image_t	*R_FindImage( const char *name, const char *suffix, int flags );
-image_t	*R_FindCorrectionImage( const char *name );
 image_t *R_Create3DImage( const char *name, int width, int height, int layers, int flags, int samples, bool array );
 void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int flags, int samples );
 void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, int width, int height );

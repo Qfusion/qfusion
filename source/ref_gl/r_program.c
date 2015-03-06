@@ -182,7 +182,7 @@ void RP_Init( void )
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, DEFAULT_GLSL_FOG_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, DEFAULT_GLSL_FXAA_PROGRAM, NULL, NULL, 0, 0 );
 	RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, DEFAULT_GLSL_YUV_PROGRAM, NULL, NULL, 0, 0 );
-	RP_RegisterProgram( GLSL_PROGRAM_TYPE_CORRECTION, DEFAULT_GLSL_CORRECTION_PROGRAM, NULL, NULL, 0, 0 );
+	RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLORCORRECTION, DEFAULT_GLSL_COLORCORRECTION_PROGRAM, NULL, NULL, 0, 0 );
 
 	// check whether compilation of the shader with GPU skinning succeeds, if not, disable GPU bone transforms
 	if ( glConfig.maxGLSLBones ) {
@@ -839,9 +839,9 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_correction[] =
+static const glsl_feature_t glsl_features_colorcorrection[] =
 {
-	{ GLSL_SHADER_CORRECTION_3D_TEXTURE, "#define APPLY_3D_TEXTURE\n", "_3dtex" },
+	{ GLSL_SHADER_COLORCORRECTION_3D_LUT, "#define APPLY_3D_LUT\n", "_3dtex" },
 
 	{ 0, NULL, NULL }
 };
@@ -872,8 +872,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_YUV
 	glsl_features_empty,
-	// GLSL_PROGRAM_TYPE_CORRECTION
-	glsl_features_correction
+	// GLSL_PROGRAM_TYPE_COLORCORRECTION
+	glsl_features_colorcorrection
 };
 
 // ======================================================================================
@@ -2213,7 +2213,7 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 			locYUVTextureY,
 			locYUVTextureU,
 			locYUVTextureV,
-			locCorrectionTexture
+			locColorLUT
 			;
 
 	memset( &program->loc, -1, sizeof( program->loc ) );
@@ -2263,7 +2263,7 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	locYUVTextureU = qglGetUniformLocationARB( program->object, "u_YUVTextureU" );
 	locYUVTextureV = qglGetUniformLocationARB( program->object, "u_YUVTextureV" );
 
-	locCorrectionTexture = qglGetUniformLocationARB( program->object, "u_CorrectionTexture" );
+	locColorLUT = qglGetUniformLocationARB( program->object, "u_ColorLUT" );
 
 	program->loc.DeluxemapOffset = qglGetUniformLocationARB( program->object, "u_DeluxemapOffset" );
 
@@ -2409,8 +2409,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	if( locYUVTextureV >= 0 )
 		qglUniform1iARB( locYUVTextureV, 2 );
 
-	if( locCorrectionTexture >= 0 )
-		qglUniform1iARB( locCorrectionTexture, 1 );
+	if( locColorLUT >= 0 )
+		qglUniform1iARB( locColorLUT, 1 );
 }
 
 /*

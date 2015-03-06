@@ -1524,7 +1524,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 	float gridsizef[3] = { 0, 0, 0 }, colorf[3] = { 0, 0, 0 }, ambientf = 0;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
 	float celcolorf[3] = { 0, 0, 0 };
-	char correction[MAX_QPATH];
+	char colorCorrection[MAX_QPATH];
 
 	assert( gridSize );
 	assert( ambient );
@@ -1534,7 +1534,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 	VectorClear( ambient );
 	VectorClear( outline );
 
-	correction[0] = '\0';
+	colorCorrection[0] = '\0';
 
 	data = (char *)mod_base + l->fileofs;
 	if( !data || !data[0] )
@@ -1624,9 +1624,9 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 					VectorCopy( celcolori, celcolorf );
 				}
 			}
-			else if( !strcmp( key, "_correction" ) )
+			else if( !strcmp( key, "_colorcorrection" ) )
 			{
-				Q_strncpyz( correction, value, sizeof( correction ) );
+				Q_strncpyz( colorCorrection, value, sizeof( colorCorrection ) );
 			}
 		}
 
@@ -1642,7 +1642,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 				VectorScale( celcolorf, 1.0f/255.0f, celcolorf );	// [0..1] RGB -> [0..255] RGB
 			VectorCopy( celcolorf, outline );
 
-			Q_strncpyz( mapConfig.correction, correction, sizeof( mapConfig.correction ) );
+			Q_strncpyz( mapConfig.colorCorrection, colorCorrection, sizeof( mapConfig.colorCorrection ) );
 			break;
 		}
 	}

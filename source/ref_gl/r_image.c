@@ -1944,16 +1944,20 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic )
 }
 
 /*
-* R_LoadCorrectionImage
+* R_LoadColorLUT
 */
-static image_t *R_LoadCorrectionImage( const char *name, int flags )
+static image_t *R_LoadColorLUT( const char *name, int flags )
 {
+	char *filename;
 	uint8_t *buf, *p;
 	size_t filelen;
 	image_t *image;
 	int i;
 
-	filelen = R_LoadFile( name, ( void ** )( &buf ) );
+	filename = alloca( strlen( name ) + sizeof( ".raw" ) );
+	strcpy( filename, name );
+	strcat( filename, ".raw" );
+	filelen = R_LoadFile( filename, ( void ** )( &buf ) );
 	if( !buf )
 		return NULL;
 
@@ -1965,15 +1969,16 @@ static image_t *R_LoadCorrectionImage( const char *name, int flags )
 
 	if( flags & IT_3D )
 	{
-		image = R_Create3DImage( "***r_correctiontexture***", 32, 32, 32, flags, 3, false );
+		image = R_Create3DImage( name, 32, 32, 32, flags, 3, false );
 		p = buf;
 		for( i = 0; i < 32; i++, p += 32 * 32 * 3 )
 			R_ReplaceImageLayer( image, i, &p );
 	}
 	else
 	{
-		image = R_LoadImage( "***r_correctiontexture***", &buf, 32, 32 * 32, flags, 3 );
+		image = R_LoadImage( name, &buf, 32, 32 * 32, flags, 3 );
 	}
+	Q_strncpyz( image->extension, ".raw", sizeof( image->extension ) );
 
 	R_FreeFile( buf );
 	return image;
@@ -2049,8 +2054,8 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	//
 	// load the pic from disk
 	//
-	if( flags & IT_CORRECTION ) {
-		return R_LoadCorrectionImage( name, flags );
+	if( flags & IT_COLORLUT ) {
+		return R_LoadColorLUT( pathname, flags );
 	}
 
 	image = R_LoadImage( pathname, empty_data, 1, 1, flags, 1 );
@@ -2067,21 +2072,6 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	}
 
 	return image;
-}
-
-/*
-* R_FindCorrectionImage
-*/
-image_t *R_FindCorrectionImage( const char *name )
-{
-	char correctionName[128];
-	int flags = IT_NOMIPMAP|IT_NOCOMPRESS|IT_NOPICMIP|IT_CLAMP|IT_CORRECTION;
-
-	Q_snprintfz( correctionName, sizeof( correctionName ), "correction/%s.raw", name );
-	if( glConfig.maxTexture3DSize >= 32 )
-		flags |= IT_3D;
-
-	return R_FindImage( correctionName, NULL, flags );
 }
 
 /*
@@ -2346,7 +2336,7 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples )
 	// light corona texture
 	//
 	*w = *h = 32;
-	*flags = IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS|IT_CLAMP;
+	*flags = IT_SPECIAL;
 	*samples = 4;
 
 	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 32 * 32 * 4 );
@@ -2424,11 +2414,6 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 	int width, height;
 	image_t *t;
 
-	if( !glConfig.ext.framebuffer_object ) {
-		*texture = NULL;
-		return;
-	}
-
 	R_GetViewportTextureSize( viewportWidth, viewportHeight, size, flags, &width, &height );
 
 	// create a new texture or update the old one
@@ -2475,7 +2460,7 @@ static int R_GetPortalTextureId( const int viewportWidth, const int viewportHeig
 	int i;
 	int best = -1;
 	int realwidth, realheight;
-	int realflags = IT_PORTALMAP|IT_FRAMEBUFFER|IT_DEPTHRB|flags;
+	int realflags = IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags;
 	image_t *image;
 
 	R_GetViewportTextureSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
@@ -2524,7 +2509,7 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 
 	R_InitViewportTexture( &rsh.portalTextures[id], "r_portaltexture", id, 
 		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
-		IT_PORTALMAP|IT_FRAMEBUFFER|IT_DEPTHRB|flags, 4 );
+		IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags, 4 );
 
 	if( rsh.portalTextures[id] ) {
 		rsh.portalTextures[id]->framenum = frameNum;
@@ -2555,7 +2540,7 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 
 	R_InitViewportTexture( &rsh.shadowmapTextures[id], "r_shadowmap", id, 
 		viewportWidth, viewportHeight, r_shadows_maxtexsize->integer, 
-		IT_SHADOWMAP|IT_FRAMEBUFFER|flags, samples );
+		IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHCOMPARE|flags, samples );
 
 	return rsh.shadowmapTextures[id];
 }
@@ -2580,7 +2565,7 @@ static void R_InitStretchRawTexture( void )
 	}
 
 	rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-	rawtexture->flags = IT_CINEMATIC;
+	rawtexture->flags = IT_SPECIAL;
 	strcpy( rawtexture->name, name );
 	R_AllocTextureNum( rawtexture );
 	rawtexture->loaded = true;
@@ -2612,7 +2597,7 @@ static void R_InitStretchRawYUVTextures( void )
 		}
 
 		rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-		rawtexture->flags = IT_CINEMATIC|IT_LUMINANCE;
+		rawtexture->flags = IT_SPECIAL|IT_LUMINANCE;
 		strcpy( rawtexture->name, name[i] );
 		R_AllocTextureNum( rawtexture );
 		rawtexture->loaded = true;
@@ -2632,7 +2617,7 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 
 	assert( !depth || glConfig.ext.depth_texture );
 
-	flags = IT_NOCOMPRESS|IT_NOPICMIP|IT_NOMIPMAP|IT_CLAMP;
+	flags = IT_SPECIAL;
 	if( noFilter ) {
 		flags |= IT_NOFILTERING;
 	}
@@ -2736,7 +2721,7 @@ static void R_TouchBuiltinTextures( void )
 	R_TouchImage( rsh.screenPPCopies[0] );
 	R_TouchImage( rsh.screenPPCopies[1] );
 	R_TouchImage( rsh.screenWeaponTexture );
-	R_TouchImage( rsh.correctionOverrideTexture );
+	R_TouchImage( rsh.colorCorrectionOverrideLUT );
 }
 
 /*

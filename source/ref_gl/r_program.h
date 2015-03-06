@@ -23,20 +23,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef uint64_t r_glslfeat_t;
 
 #define GLSL_BIT(x)							(1ULL << (x))
-#define GLSL_BITS_VERSION					9
+#define GLSL_BITS_VERSION					10
 
-#define DEFAULT_GLSL_MATERIAL_PROGRAM		"defaultMaterial"
-#define DEFAULT_GLSL_DISTORTION_PROGRAM		"defaultDistortion"
-#define DEFAULT_GLSL_RGB_SHADOW_PROGRAM		"defaultRGBShadow"
-#define DEFAULT_GLSL_SHADOWMAP_PROGRAM		"defaultShadowmap"
-#define DEFAULT_GLSL_OUTLINE_PROGRAM		"defaultOutline"
-#define DEFAULT_GLSL_DYNAMIC_LIGHTS_PROGRAM "defaultDynamicLights"
-#define DEFAULT_GLSL_Q3A_SHADER_PROGRAM		"defaultQ3AShader"
-#define DEFAULT_GLSL_CELSHADE_PROGRAM		"defaultCelshade"
-#define DEFAULT_GLSL_FOG_PROGRAM			"defaultFog"
-#define DEFAULT_GLSL_FXAA_PROGRAM			"defaultFXAA"
-#define DEFAULT_GLSL_YUV_PROGRAM			"defaultYUV"
-#define DEFAULT_GLSL_CORRECTION_PROGRAM		"defaultCorrection"
+#define DEFAULT_GLSL_MATERIAL_PROGRAM			"defaultMaterial"
+#define DEFAULT_GLSL_DISTORTION_PROGRAM			"defaultDistortion"
+#define DEFAULT_GLSL_RGB_SHADOW_PROGRAM			"defaultRGBShadow"
+#define DEFAULT_GLSL_SHADOWMAP_PROGRAM			"defaultShadowmap"
+#define DEFAULT_GLSL_OUTLINE_PROGRAM			"defaultOutline"
+#define DEFAULT_GLSL_DYNAMIC_LIGHTS_PROGRAM		"defaultDynamicLights"
+#define DEFAULT_GLSL_Q3A_SHADER_PROGRAM			"defaultQ3AShader"
+#define DEFAULT_GLSL_CELSHADE_PROGRAM			"defaultCelshade"
+#define DEFAULT_GLSL_FOG_PROGRAM				"defaultFog"
+#define DEFAULT_GLSL_FXAA_PROGRAM				"defaultFXAA"
+#define DEFAULT_GLSL_YUV_PROGRAM				"defaultYUV"
+#define DEFAULT_GLSL_COLORCORRECTION_PROGRAM	"defaultColorCorrection"
 
 // program types
 enum
@@ -53,7 +53,7 @@ enum
 	GLSL_PROGRAM_TYPE_FOG,
 	GLSL_PROGRAM_TYPE_FXAA,
 	GLSL_PROGRAM_TYPE_YUV,
-	GLSL_PROGRAM_TYPE_CORRECTION,
+	GLSL_PROGRAM_TYPE_COLORCORRECTION,
 
 	GLSL_PROGRAM_TYPE_MAXTYPE
 };
@@ -182,7 +182,7 @@ enum
 #define GLSL_SHADER_CELSHADE_CEL_LIGHT_ADD		GLSL_BIT(40)
 
 // color correction
-#define GLSL_SHADER_CORRECTION_3D_TEXTURE		GLSL_BIT(32)
+#define GLSL_SHADER_COLORCORRECTION_3D_LUT		GLSL_BIT(32)
 
 void RP_Init( void );
 void RP_Shutdown( void );
