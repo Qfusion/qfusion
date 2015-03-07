@@ -339,6 +339,8 @@ void G_CheckCvars( void )
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_MMCOMPATIBLE, level.gametype.mmCompatible );
 
+	GS_GamestatSetLongFlag( GAMELONG_FLAG_ISTUTORIAL, ( level.gametype.isTutorial != 0 ) );
+
 	gs.gameState.stats[GAMESTAT_MAXPLAYERSINTEAM] = level.gametype.maxPlayersPerTeam;
 	clamp( gs.gameState.stats[GAMESTAT_MAXPLAYERSINTEAM], 0, 255 );
 

@@ -103,6 +103,7 @@ enum
 #define GAMELONG_MATCHSTART 0
 #define GAMELONG_MATCHDURATION 1
 #define GAMELONG_CLOCKOVERRIDE 2
+#define GAMELONG_FLAGS		3
 
 // shorts
 #define GAMESTAT_FLAGS 0
@@ -129,6 +130,8 @@ enum
 #define GAMESTAT_FLAG_TEAMONLYMINIMAP ( 1<<14 )
 #define GAMESTAT_FLAG_MMCOMPATIBLE ( 1<<15 )
 
+#define GAMELONG_FLAG_ISTUTORIAL (1<<0)
+
 typedef struct
 {
 	int module;
@@ -140,6 +143,7 @@ typedef struct
 extern gs_state_t gs;
 
 #define GS_GamestatSetFlag( flag, b ) ( b ? ( gs.gameState.stats[GAMESTAT_FLAGS] |= flag ) : ( gs.gameState.stats[GAMESTAT_FLAGS] &= ~flag ) )
+#define GS_GamestatSetLongFlag( flag, b ) ( b ? ( gs.gameState.longstats[GAMELONG_FLAGS] |= flag ) : ( gs.gameState.longstats[GAMELONG_FLAGS] &= ~flag ) )
 
 #define GS_Instagib() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_INSTAGIB ) ? true : false )
 #define GS_FallDamage() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_FALLDAMAGE ) ? true : false )
@@ -157,7 +161,7 @@ extern gs_state_t gs;
 #define GS_CanShowMinimap() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_CANSHOWMINIMAP ) ? true : false )
 #define GS_TeamOnlyMinimap() ( ( gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_TEAMONLYMINIMAP ) ? true : false )
 #define GS_MMCompatible() ( (gs.gameState.stats[GAMESTAT_FLAGS] & GAMESTAT_FLAG_MMCOMPATIBLE ) ? true : false )
-
+#define GS_TutorialGametype() ( gs.gameState.longstats[GAMELONG_FLAGS] & GAMELONG_FLAG_ISTUTORIAL ? true : false )
 
 #define GS_MatchState() ( gs.gameState.stats[GAMESTAT_MATCHSTATE] )
 #define GS_MaxPlayersInTeam() ( gs.gameState.stats[GAMESTAT_MAXPLAYERSINTEAM] )
