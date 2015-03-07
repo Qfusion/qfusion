@@ -525,6 +525,7 @@ static void CG_SC_HelpMessage( void )
 		return;
 
 	cg.helpmessage = CG_TranslateString( helpmessage );
+	cg.helpmessage_time = cg.time;
 }
 
 /*
