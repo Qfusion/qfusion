@@ -2002,7 +2002,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 				switch( i )
 				{
 				case 0:
-					helpmessage = ( !cg_showhelp->integer ? "" : cg.mapmessage && cg.mapmessage[0] ? cg.mapmessage : ( cg.matchmessage ? cg.matchmessage : "" ) );
+					helpmessage = ( !cg_showhelp->integer ? "" : cg.helpmessage && cg.helpmessage[0] ? cg.helpmessage : ( cg.matchmessage ? cg.matchmessage : "" ) );
 					break;
 				case 1:
 					if( !cg.motd )

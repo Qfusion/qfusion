@@ -32,7 +32,7 @@ const field_t fields[] = {
 	{ "pathtarget", FOFS( pathtarget ), F_LSTRING },
 	{ "killtarget", FOFS( killtarget ), F_LSTRING },
 	{ "message", FOFS( message ), F_LSTRING },
-	{ "mapmessage", FOFS( mapmessage ), F_LSTRING },
+	{ "helpmessage", FOFS( helpmessage ), F_LSTRING },
 	{ "team", FOFS( team ), F_LSTRING },
 	{ "wait", FOFS( wait ), F_FLOAT },
 	{ "delay", FOFS( delay ), F_FLOAT },
@@ -465,8 +465,8 @@ static char *ED_ParseEdict( char *data, edict_t *ent )
 
 	if( !init )
 		ent->classname = NULL;
-	if( ent->classname && ent->mapmessage )
-		ent->mapmessage_index = G_RegisterMapMessage( ent->mapmessage );
+	if( ent->classname && ent->helpmessage )
+		ent->mapmessage_index = G_RegisterHelpMessage( ent->helpmessage );
 
 	return data;
 }
@@ -796,8 +796,8 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	trap_ConfigString( CS_MATCHSCORE, "" );
 
 	// reset map messages
-	for( i = 0; i < MAX_MAPMESSAGES; i++ ) {
-		trap_ConfigString( CS_MAPMESSAGES + i, "" );
+	for( i = 0; i < MAX_HELPMESSAGES; i++ ) {
+		trap_ConfigString( CS_HELPMESSAGES + i, "" );
 	}
 
 	G_InitGameCommands();

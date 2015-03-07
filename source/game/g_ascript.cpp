@@ -1876,7 +1876,7 @@ static void objectGameClient_SetRaceTime( int sector, unsigned int time, gclient
 	G_SetRaceTime( PLAYERENT( playerNum ), sector, time );
 }
 
-static void objectGameClient_SetMapMessage( unsigned int index, gclient_t *self )
+static void objectGameClient_SetHelpMessage( unsigned int index, gclient_t *self )
 {
 	int playerNum;
 
@@ -1884,7 +1884,7 @@ static void objectGameClient_SetMapMessage( unsigned int index, gclient_t *self 
 	if( playerNum < 0 || playerNum >= gs.maxclients )
 		return;
 
-	G_SetPlayerMapMessage( PLAYERENT( playerNum ), index );
+	G_SetPlayerHelpMessage( PLAYERENT( playerNum ), index );
 }
 
 static const asFuncdef_t gameclient_Funcdefs[] =
@@ -1936,7 +1936,7 @@ static const asMethod_t gameclient_Methods[] =
 	{ ASLIB_FUNCTION_DECL(bool, get_chaseActive, () const ), asFUNCTION(objectGameClient_GetChaseActive), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, newRaceRun, ( int numSectors )), asFUNCTION(objectGameClient_NewRaceRun), asCALL_CDECL_OBJLAST },
 	{ ASLIB_FUNCTION_DECL(void, setRaceTime, ( int sector, uint time )), asFUNCTION(objectGameClient_SetRaceTime), asCALL_CDECL_OBJLAST },
-	{ ASLIB_FUNCTION_DECL(void, setMapMessage, ( uint msg )), asFUNCTION(objectGameClient_SetMapMessage), asCALL_CDECL_OBJLAST },
+	{ ASLIB_FUNCTION_DECL(void, setHelpMessage, ( uint msg )), asFUNCTION(objectGameClient_SetHelpMessage), asCALL_CDECL_OBJLAST },
 
 	ASLIB_METHOD_NULL
 };
@@ -3197,9 +3197,9 @@ static edict_t *asFunc_FireBlast( asvec3_t *origin, asvec3_t *angles, int speed,
 	return W_Fire_GunbladeBlast( owner, origin->v, angles->v, damage, min( 1, knockback ), knockback, stun, min( 1, damage ), radius, speed, 5000, MOD_SPLASH, 0 );
 }
 
-static unsigned asFunc_G_RegisterMapMessage( asstring_t *str )
+static unsigned asFunc_G_RegisterHelpMessage( asstring_t *str )
 {
-	return G_RegisterMapMessage( str->buffer );
+	return G_RegisterHelpMessage( str->buffer );
 }
 
 static const asglobfuncs_t asGlobFuncs[] =
@@ -3284,7 +3284,7 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "bool ML_FilenameExists( String & )", asFUNCTION(asFunc_ML_FilenameExists), NULL },
 	{ "const String @ML_GetMapByNum( int num )", asFUNCTION(asFunc_ML_GetMapByNum), NULL },
 
-	{ "uint G_RegisterMapMessage( const String &in )", asFUNCTION(asFunc_G_RegisterMapMessage), NULL },
+	{ "uint G_RegisterHelpMessage( const String &in )", asFUNCTION(asFunc_G_RegisterHelpMessage), NULL },
 
 	{ NULL }
 };

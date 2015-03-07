@@ -1218,7 +1218,7 @@ static void Cmd_TVConnect_f( edict_t *ent )
 static void Cmd_Upstate_f( edict_t *ent )
 {
 	G_UpdatePlayerMatchMsg( ent, true );
-	G_SetPlayerMapMessage( ent, ent->r.client->level.mapmessage, true );
+	G_SetPlayerHelpMessage( ent, ent->r.client->level.helpmessage, true );
 }
 
 //===========================================================

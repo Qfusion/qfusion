@@ -506,25 +506,25 @@ static void CG_SC_MatchMessage( void )
 }
 
 /*
-* CG_SC_MapMessage
+* CG_SC_HelpMessage
 */
-static void CG_SC_MapMessage( void )
+static void CG_SC_HelpMessage( void )
 {
 	unsigned index;
-	const char *mapmessage;
+	const char *helpmessage;
 
-	cg.mapmessage = NULL;
+	cg.helpmessage = NULL;
 
 	index = atoi( trap_Cmd_Argv( 1 ) );
-	if( !index || index > MAX_MAPMESSAGES ) {
+	if( !index || index > MAX_HELPMESSAGES ) {
 		return;
 	}
 
-	mapmessage = cgs.configStrings[CS_MAPMESSAGES + index - 1];
-	if( !mapmessage[0] )
+	helpmessage = cgs.configStrings[CS_HELPMESSAGES + index - 1];
+	if( !helpmessage[0] )
 		return;
 
-	cg.mapmessage = CG_TranslateString( mapmessage );
+	cg.helpmessage = CG_TranslateString( helpmessage );
 }
 
 /*
@@ -714,7 +714,7 @@ static const svcmd_t cg_svcmds[] =
 	{ "scb", CG_SC_Scoreboard },
 	{ "plstats", CG_SC_PlayerStats },
 	{ "mm", CG_SC_MatchMessage },
-	{ "mapmsg", CG_SC_MapMessage },
+	{ "mapmsg", CG_SC_HelpMessage },
 	{ "ti", CG_CS_UpdateTeamInfo },
 	{ "demoget", CG_SC_DemoGet },
 	{ "cha", CG_SC_ChannelAdd },
