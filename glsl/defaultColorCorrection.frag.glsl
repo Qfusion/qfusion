@@ -16,10 +16,12 @@ void main(void)
 #ifdef APPLY_3D_LUT
 	qf_FragColor = vec4(qf_texture3D(u_ColorLUT, coords).rgb, 1.0);
 #else
-	coords.yz *= vec2(0.03125, 32.0);
-	coords.y += floor(coords.z) * 0.03125;
-	vec3 c1 = qf_texture(u_ColorLUT, coords.xy).rgb;
-	vec3 c2 = qf_texture(u_ColorLUT, coords.xy + vec2(0.0, 0.03125 * step(coords.z, 31.0))).rgb;
-	qf_FragColor = vec4(mix(c1, c2, fract(coords.z) * 0.03125), 1.0);
+	coords *= vec3(0.125, 0.25, 32.0);
+	float blueMix = fract(coords.b);
+	coords.b = floor(coords.b) * 0.25;
+	vec3 color1 = qf_texture(u_ColorLUT, coords.rg + vec2(floor(coords.b) * 0.125, fract(coords.b))).rgb;
+	coords.b = min(coords.b + 0.25, 7.75);
+	vec3 color2 = qf_texture(u_ColorLUT, coords.rg + vec2(floor(coords.b) * 0.125, fract(coords.b))).rgb;
+	qf_FragColor = vec4(mix(color1, color2, blueMix), 1.0);
 #endif
 }
