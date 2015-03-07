@@ -249,6 +249,11 @@ static int CG_RaceGameType( const void *parameter )
 	return GS_RaceGametype();
 }
 
+static int CG_TutorialGameType( const void *parameter )
+{
+	return GS_TutorialGametype();
+}
+
 static int CG_Paused( const void *parameter )
 {
 	return GS_MatchPaused();
@@ -572,6 +577,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "TEAMBASED", CG_GetTeamBased, NULL },
 	{ "INDIVIDUAL", CG_InvidualGameType, NULL },
 	{ "RACE", CG_RaceGameType, NULL },
+	{ "TUTORIAL", CG_TutorialGameType, NULL },
 	{ "PAUSED", CG_Paused, NULL },
 	{ "ZOOM", CG_GetZoom, NULL },
 	{ "VIDWIDTH", CG_GetVidWidth, NULL },
@@ -1988,6 +1994,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 			vec3_t hvel;
 			vec4_t color;
 			float color_scale;
+			bool showhelp = cg_showhelp->integer || GS_TutorialGametype();
 
 			// scale alpha to text appears more faint if the player's moving
 			Vector4Copy( layout_cursor_color, color );
@@ -2002,7 +2009,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 				switch( i )
 				{
 				case 0:
-					helpmessage = ( !cg_showhelp->integer ? "" : cg.helpmessage && cg.helpmessage[0] ? cg.helpmessage : ( cg.matchmessage ? cg.matchmessage : "" ) );
+					helpmessage = ( !showhelp ? "" : cg.helpmessage && cg.helpmessage[0] ? cg.helpmessage : ( cg.matchmessage ? cg.matchmessage : "" ) );
 					break;
 				case 1:
 					if( !cg.motd )
