@@ -1524,6 +1524,7 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 	float gridsizef[3] = { 0, 0, 0 }, colorf[3] = { 0, 0, 0 }, ambientf = 0;
 	char key[MAX_KEY], value[MAX_VALUE], *token;
 	float celcolorf[3] = { 0, 0, 0 };
+	char colorCorrection[MAX_QPATH];
 
 	assert( gridSize );
 	assert( ambient );
@@ -1532,6 +1533,8 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 	VectorClear( gridSize );
 	VectorClear( ambient );
 	VectorClear( outline );
+
+	colorCorrection[0] = '\0';
 
 	data = (char *)mod_base + l->fileofs;
 	if( !data || !data[0] )
@@ -1621,6 +1624,10 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 					VectorCopy( celcolori, celcolorf );
 				}
 			}
+			else if( !strcmp( key, "_colorcorrection" ) )
+			{
+				Q_strncpyz( colorCorrection, value, sizeof( colorCorrection ) );
+			}
 		}
 
 		if( isworld )
@@ -1634,6 +1641,8 @@ static void Mod_LoadEntities( const lump_t *l, vec3_t gridSize, vec3_t ambient, 
 			if( max( celcolorf[0], max( celcolorf[1], celcolorf[2] ) ) > 1.0f )
 				VectorScale( celcolorf, 1.0f/255.0f, celcolorf );	// [0..1] RGB -> [0..255] RGB
 			VectorCopy( celcolorf, outline );
+
+			Q_strncpyz( mapConfig.colorCorrection, colorCorrection, sizeof( mapConfig.colorCorrection ) );
 			break;
 		}
 	}

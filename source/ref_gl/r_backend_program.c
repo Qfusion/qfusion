@@ -1782,6 +1782,40 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 }
 
 /*
+* RB_RenderMeshGLSL_ColorCorrection
+*/
+static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslfeat_t programFeatures )
+{
+	int program;
+	const image_t *image;
+	mat4_t texMatrix = { 0 };
+
+	// set shaderpass state (blending, depthwrite, etc)
+	RB_SetShaderpassState( pass->flags );
+
+	if( r_colorcorrection_override->string[0] )
+		image = rsh.colorCorrectionOverrideLUT;
+	else
+		image = rsh.worldBrushModel->colorCorrectionLUT;
+
+	RB_BindTexture( 0, pass->images[0] );
+	RB_BindTexture( 1, image );
+
+	if( image->flags & IT_3D )
+		programFeatures |= GLSL_SHADER_COLORCORRECTION_3D_LUT;
+
+	// update uniforms
+	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLORCORRECTION, NULL,
+		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
+	if( RB_BindProgram( program ) )
+	{
+		RB_UpdateCommonUniforms( program, pass, texMatrix );
+
+		RB_DrawElementsReal( &rb.drawElements );
+	}
+}
+
+/*
 * RB_RenderMeshGLSLProgrammed
 */
 void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
@@ -1837,6 +1871,9 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 		break;
 	case GLSL_PROGRAM_TYPE_YUV:
 		RB_RenderMeshGLSL_YUV( pass, features );
+		break;
+	case GLSL_PROGRAM_TYPE_COLORCORRECTION:
+		RB_RenderMeshGLSL_ColorCorrection( pass, features );
 		break;
 	default:
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: Unknown GLSL program type %i\n", programType );
