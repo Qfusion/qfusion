@@ -665,6 +665,22 @@ void G_UseTargets( edict_t *ent, edict_t *activator )
 	}
 
 	//
+	// set the help message
+	//
+	if( ent->helpmessage && ent->mapmessage_index <= MAX_HELPMESSAGES )
+	{
+		G_SetPlayerHelpMessage( activator, ent->mapmessage_index );
+
+		if( !ent->message )
+		{
+			if( ent->noise_index )
+				G_Sound( activator, CHAN_AUTO, ent->noise_index, ATTN_NORM );
+			else
+				G_Sound( activator, CHAN_AUTO, trap_SoundIndex( S_WORLD_MESSAGE ), ATTN_NORM );
+		}
+	}
+
+	//
 	// kill killtargets
 	//
 	if( ent->killtarget )
