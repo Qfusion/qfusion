@@ -640,8 +640,8 @@ void G_UpdatePlayerMatchMsg( edict_t *ent, bool force = false );
 void G_UpdatePlayersMatchMsgs( void );
 void G_Obituary( edict_t *victim, edict_t *attacker, int mod );
 
-unsigned G_RegisterMapMessage( const char *str );
-void G_SetPlayerMapMessage( edict_t *ent, unsigned index, bool force = false );
+unsigned G_RegisterHelpMessage( const char *str );
+void G_SetPlayerHelpMessage( edict_t *ent, unsigned index, bool force = false );
 
 void G_Sound( edict_t *owner, int channel, int soundindex, float attenuation );
 void G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenuation );
@@ -1115,7 +1115,7 @@ typedef struct
 
 	unsigned int respawnCount;
 	matchmessage_t matchmessage;
-	unsigned int mapmessage;
+	unsigned int helpmessage;
 
 	unsigned int last_vsay;         // time when last vsay was said
 	unsigned int last_activity;
@@ -1338,7 +1338,7 @@ struct edict_s
 	int dmg;
 
 	const char *message;
-	const char *mapmessage;
+	const char *helpmessage;
 	unsigned mapmessage_index;
 
 	int mass;

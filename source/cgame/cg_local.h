@@ -587,7 +587,7 @@ typedef struct
 	char loadingstring[MAX_QPATH];
 	int precacheCount, precacheTotal;
 	const char *matchmessage;
-	const char *mapmessage;
+	const char *helpmessage;
 	char *teaminfo;
 	size_t teaminfo_size;
 	char *motd;

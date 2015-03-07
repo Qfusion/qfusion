@@ -1390,9 +1390,9 @@ void G_UpdatePlayersMatchMsgs( void )
 //==================================================
 
 /*
-* G_RegisterMapMessage
+* G_RegisterHelpMessage
 */
-unsigned G_RegisterMapMessage( const char *str )
+unsigned G_RegisterHelpMessage( const char *str )
 {
 	unsigned i;
 
@@ -1400,8 +1400,8 @@ unsigned G_RegisterMapMessage( const char *str )
 		return 0;
 	}
 
-	for( i = 0; i < MAX_MAPMESSAGES; i++ ) {
-		const char *cs = trap_GetConfigString( CS_MAPMESSAGES+i );
+	for( i = 0; i < MAX_HELPMESSAGES; i++ ) {
+		const char *cs = trap_GetConfigString( CS_HELPMESSAGES+i );
 		if( !cs[0] ) {
 			break;
 		}
@@ -1410,26 +1410,26 @@ unsigned G_RegisterMapMessage( const char *str )
 		}
 	}
 
-	if( i < MAX_MAPMESSAGES ) {
-		trap_ConfigString( CS_MAPMESSAGES+i, str );
+	if( i < MAX_HELPMESSAGES ) {
+		trap_ConfigString( CS_HELPMESSAGES+i, str );
 	}
 	return i+1;
 }
 
 /*
-* G_SetPlayerMapMessage
+* G_SetPlayerHelpMessage
 */
-void G_SetPlayerMapMessage( edict_t *ent, unsigned index, bool force )
+void G_SetPlayerHelpMessage( edict_t *ent, unsigned index, bool force )
 {
-	if( index > MAX_MAPMESSAGES ) {
+	if( index > MAX_HELPMESSAGES ) {
 		return;
 	}
 	if( !ent || !ent->r.client ) {
 		return;
 	}
 
-	if( index != ent->r.client->level.mapmessage || force ) {
-		ent->r.client->level.mapmessage = index;
+	if( index != ent->r.client->level.helpmessage || force ) {
+		ent->r.client->level.helpmessage = index;
 		trap_GameCmd( ent, va( "mapmsg %i", index ) );
 	}
 }

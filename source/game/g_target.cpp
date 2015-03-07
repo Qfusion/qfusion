@@ -715,7 +715,7 @@ void SP_target_location( edict_t *self )
 //This will print a message on the center of the screen when triggered. By default, all the clients will see the message.
 //-------- KEYS --------
 //message : text string to print on screen.
-//mapmessage : sets persistent message to be displayed on players HUD
+//helpmessage : sets persistent message to be displayed on players HUD
 //targetname : the activating trigger points to this.
 //notsingle : when set to 1, entity will not spawn in Single Player mode
 //notfree : when set to 1, entity will not spawn in "Free for all" and "Tournament" modes.
@@ -729,8 +729,8 @@ void SP_target_location( edict_t *self )
 
 static void SP_target_print_print( edict_t *self, edict_t *activator )
 {
-	if( self->mapmessage && self->mapmessage_index <= MAX_MAPMESSAGES ) {
-		G_SetPlayerMapMessage( activator, self->mapmessage_index );
+	if( self->helpmessage && self->mapmessage_index <= MAX_HELPMESSAGES ) {
+		G_SetPlayerHelpMessage( activator, self->mapmessage_index );
 		return;
 	}
 
@@ -777,7 +777,7 @@ static void SP_target_print_use( edict_t *self, edict_t *other, edict_t *activat
 
 void SP_target_print( edict_t *self )
 {
-	if( !self->message && !self->mapmessage )
+	if( !self->message && !self->helpmessage )
 	{
 		G_FreeEdict( self );
 		return;
