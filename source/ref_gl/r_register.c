@@ -89,6 +89,9 @@ cvar_t *r_soft_particles_scale;
 
 cvar_t *r_fxaa;
 
+cvar_t *r_colorcorrection;
+cvar_t *r_colorcorrection_override;
+
 cvar_t *r_lodbias;
 cvar_t *r_lodscale;
 
@@ -499,6 +502,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
 	,GL_EXTENSION( OES, rgb8_rgba8, true, false, NULL )
+	,GL_EXTENSION( OES, texture_3D, false, false, &gl_ext_texture_3D_OES_funcs )
 	,GL_EXTENSION( EXT, texture_array, false, false, &gl_ext_texture_3D_OES_funcs )
 #endif
 
@@ -765,6 +769,7 @@ static void R_FinalizeGLExtensions( void )
 		GL_OPTIONAL_CORE_EXTENSION(depth_texture);
 		GL_OPTIONAL_CORE_EXTENSION(get_program_binary);
 		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);
+		GL_OPTIONAL_CORE_EXTENSION(texture_3D);
 		GL_OPTIONAL_CORE_EXTENSION(texture_array);
 		GL_OPTIONAL_CORE_EXTENSION(texture_npot);
 		GL_OPTIONAL_CORE_EXTENSION(vertex_half_float);
@@ -772,6 +777,9 @@ static void R_FinalizeGLExtensions( void )
 #undef GL_OPTIONAL_CORE_EXTENSION_DEP
 #undef GL_OPTIONAL_CORE_EXTENSION
 	}
+#else // GL_ES_VERSION_2_0
+	glConfig.ext.depth24 = true;
+	glConfig.ext.rgb8_rgba8 = true;
 #endif
 
 	glConfig.maxTextureSize = 0;
@@ -819,17 +827,10 @@ static void R_FinalizeGLExtensions( void )
 
 	/* GL_EXT_framebuffer_object */
 	glConfig.maxRenderbufferSize = 0;
-	if( glConfig.ext.framebuffer_object )
-	{
-		qglGetIntegerv( GL_MAX_RENDERBUFFER_SIZE_EXT, &glConfig.maxRenderbufferSize );
-		glConfig.maxRenderbufferSize = 1 << Q_log2( glConfig.maxRenderbufferSize );
-		if( glConfig.maxRenderbufferSize > glConfig.maxTextureSize )
-			glConfig.maxRenderbufferSize = glConfig.maxTextureSize;
-#ifndef GL_ES_VERSION_2_0
-		glConfig.ext.depth24 = true;
-		glConfig.ext.rgb8_rgba8 = true;
-#endif
-	}
+	qglGetIntegerv( GL_MAX_RENDERBUFFER_SIZE_EXT, &glConfig.maxRenderbufferSize );
+	glConfig.maxRenderbufferSize = 1 << Q_log2( glConfig.maxRenderbufferSize );
+	if( glConfig.maxRenderbufferSize > glConfig.maxTextureSize )
+		glConfig.maxRenderbufferSize = glConfig.maxTextureSize;
 
 	/* GL_EXT_texture_filter_anisotropic */
 	glConfig.maxTextureFilterAnisotropic = 0;
@@ -869,19 +870,20 @@ static void R_FinalizeGLExtensions( void )
 	}
 #endif
 
-	/* GL_EXT_texture_array */
+	/* GL_EXT_texture3D and GL_EXT_texture_array */
+	glConfig.maxTexture3DSize = 0;
 	glConfig.maxTextureLayers = 0;
+	if( glConfig.ext.texture3D )
+		qglGetIntegerv( GL_MAX_3D_TEXTURE_SIZE_EXT, &glConfig.maxTexture3DSize );
 	if( glConfig.ext.texture_array )
-	{
 		qglGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS_EXT, &glConfig.maxTextureLayers );
 #ifdef GL_ES_VERSION_2_0
-		if( qglTexImage3D )
-		{
-			qglTexImage3DEXT = qglTexImage3D;
-			qglTexSubImage3DEXT = qglTexSubImage3D;
-		}
-#endif
+	if( qglTexImage3D )
+	{
+		qglTexImage3DEXT = qglTexImage3D;
+		qglTexSubImage3DEXT = qglTexSubImage3D;
 	}
+#endif
 
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
@@ -1084,6 +1086,10 @@ static void R_Register( const char *screenshotsPrefix )
 
 	r_fxaa = ri.Cvar_Get( "r_fxaa", "0", CVAR_ARCHIVE );
 
+	// Default values and flags for the demo only.
+	r_colorcorrection = ri.Cvar_Get( "r_colorcorrection", "1", CVAR_ARCHIVE );
+	r_colorcorrection_override = ri.Cvar_Get( "r_colorcorrection_override", "", CVAR_CHEAT );
+
 	r_lodbias = ri.Cvar_Get( "r_lodbias", "0", CVAR_ARCHIVE );
 	r_lodscale = ri.Cvar_Get( "r_lodscale", "5.0", CVAR_ARCHIVE );
 
@@ -1159,6 +1165,8 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "GL_MAX_TEXTURE_IMAGE_UNITS: %i\n", glConfig.maxTextureUnits );
 	if( glConfig.ext.texture_cube_map )
 		Com_Printf( "GL_MAX_CUBE_MAP_TEXTURE_SIZE: %i\n", glConfig.maxTextureCubemapSize );
+	if( glConfig.ext.texture3D )
+		Com_Printf( "GL_MAX_3D_TEXTURE_SIZE: %i\n", glConfig.maxTexture3DSize );
 	if( glConfig.ext.texture_array )
 		Com_Printf( "GL_MAX_ARRAY_TEXTURE_LAYERS: %i\n", glConfig.maxTextureLayers );
 	if( glConfig.ext.texture_filter_anisotropic )

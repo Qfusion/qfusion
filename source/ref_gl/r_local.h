@@ -229,8 +229,9 @@ typedef struct
 	image_t			*screenDepthTexture;
 	image_t			*screenTextureCopy;
 	image_t			*screenDepthTextureCopy;
-	image_t			*screenFxaaCopy;
+	image_t			*screenPPCopies[2];
 	image_t			*screenWeaponTexture;
+	image_t			*colorCorrectionOverrideLUT;
 
 	shader_t		*envShader;
 	shader_t		*skyShader;
@@ -371,6 +372,9 @@ extern cvar_t *r_soft_particles;
 extern cvar_t *r_soft_particles_scale;
 
 extern cvar_t *r_fxaa;
+
+extern cvar_t *r_colorcorrection;
+extern cvar_t *r_colorcorrection_override;
 
 extern cvar_t *r_lodbias;
 extern cvar_t *r_lodscale;
@@ -832,6 +836,8 @@ typedef struct
 	bool		forceClear;
 
 	bool		forceWorldOutlines;
+
+	char		colorCorrection[MAX_QPATH];	// name of the color correction LUT
 } mapconfig_t;
 
 extern mapconfig_t	mapConfig;

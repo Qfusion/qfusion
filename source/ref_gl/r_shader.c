@@ -2601,7 +2601,7 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
-			pass->images[0] = Shader_FindImage( s, longname, IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS|IT_CLAMP );
+			pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL );
 			break;
 		case SHADER_TYPE_DIFFUSE:
 			// load material images
@@ -2656,8 +2656,7 @@ create_default:
 				s->cin = pass->cin;
 				pass->images[0] = rsh.noTexture;
 			} else if( type != SHADER_TYPE_2D_RAW ) {
-				pass->images[0] = Shader_FindImage( s, longname, 
-					IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS|IT_SYNC );
+				pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL|IT_SYNC );
 			}
 			break;
 		case SHADER_TYPE_OPAQUE_ENV:
@@ -2812,7 +2811,7 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *da
 	int flags;
 
 	type = SHADER_TYPE_2D_RAW;
-	flags = IT_CLAMP|IT_NOPICMIP|IT_NOMIPMAP|IT_NOCOMPRESS;
+	flags = IT_SPECIAL;
 
 	if( samples == 1 ) {
 		flags |= IT_ALPHA;
