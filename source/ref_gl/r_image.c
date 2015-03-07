@@ -1977,10 +1977,10 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic )
 static image_t *R_LoadColorLUT( const char *name, int flags )
 {
 	char *filename;
-	uint8_t *buf, *p;
+	uint8_t *buf, *buf2, *p, *px, *py;
 	size_t filelen;
 	image_t *image;
-	int i;
+	int i, j;
 
 	filename = alloca( strlen( name ) + sizeof( ".raw" ) );
 	strcpy( filename, name );
@@ -1995,16 +1995,28 @@ static image_t *R_LoadColorLUT( const char *name, int flags )
 		return NULL;
 	}
 
+	p = buf;
+
 	if( flags & IT_3D )
 	{
 		image = R_Create3DImage( name, 32, 32, 32, flags, 3, false );
-		p = buf;
 		for( i = 0; i < 32; i++, p += 32 * 32 * 3 )
 			R_ReplaceImageLayer( image, i, &p );
 	}
 	else
 	{
-		image = R_LoadImage( name, &buf, 32, 32 * 32, flags, 3 );
+		/*
+		* Pack the 32x32 blocks into a 256x128 image.
+		* Width is greater than height because red needs less precision than green.
+		* For the same reason, for blue, Y is least significant and X is most significant.
+		*/
+		buf2 = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_RESAMPLING_BUF0, 256 * 128 * 3 );
+		for( i = 0, px = buf2; i < 8; i++, px += 32 * 3 )
+		{
+			for( j = 0, py = px; j < 32 * 4; j++, p += 32 * 3, py += 256 * 3 )
+				memcpy( py, p, 32 * 3 );
+		}
+		image = R_LoadImage( name, &buf2, 256, 128, flags, 3 );
 	}
 	Q_strncpyz( image->extension, ".raw", sizeof( image->extension ) );
 
