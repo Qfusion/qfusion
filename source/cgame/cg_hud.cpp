@@ -1980,6 +1980,10 @@ static bool CG_LFuncTouchClock( struct cg_layoutnode_s *commandnode, struct cg_l
 	return true;
 }
 
+#define HELPMESSAGE_OVERSHOOT_DURATION 0.2f
+#define HELPMESSAGE_OVERSHOOT_FREQUENCY 6.0f
+#define HELPMESSAGE_OVERSHOOT_DECAY 10.0f
+
 static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	// hide this one when scoreboard is up
@@ -1991,25 +1995,39 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 			int y = layout_cursor_y;
 			int font_height = trap_SCR_strHeight( CG_GetLayoutCursorFont() );
 			const char *helpmessage = "";
-			vec3_t hvel;
 			vec4_t color;
-			float color_scale;
 			bool showhelp = cg_showhelp->integer || GS_TutorialGametype();
 
 			// scale alpha to text appears more faint if the player's moving
 			Vector4Copy( layout_cursor_color, color );
-			VectorCopy( cg.predictedPlayerState.pmove.velocity, hvel ), hvel[2] = 0.0f;
-			color_scale = 1.0f - VectorLength( hvel ) * 0.03;
-			color[3] *= bound( 0.3, color_scale, 1.0 );
 
 			for( i = 0; i < 3; i++ )
 			{
 				size_t len;
+				int x = layout_cursor_x;
 
 				switch( i )
 				{
 				case 0:
-					helpmessage = ( !showhelp ? "" : cg.helpmessage && cg.helpmessage[0] ? cg.helpmessage : ( cg.matchmessage ? cg.matchmessage : "" ) );
+					helpmessage = "";
+					if( showhelp ) {
+						if( cg.helpmessage && cg.helpmessage[0] ) {
+							int s_x, e_x;
+							float moveTime = ( cg.time - cg.helpmessage_time ) / 1000.0f;
+
+							s_x = CG_HorizontalMovementForAlign( layout_cursor_align ) < 0 ? cgs.vidWidth : 0;
+							e_x = x;
+
+							x = LinearMovementWithOvershoot( s_x, e_x, 
+								HELPMESSAGE_OVERSHOOT_DURATION, HELPMESSAGE_OVERSHOOT_FREQUENCY, HELPMESSAGE_OVERSHOOT_DECAY, 
+								moveTime );
+
+							helpmessage = cg.helpmessage;
+						}
+						else if( cg.matchmessage ) {
+							helpmessage = cg.matchmessage;
+						}
+					}
 					break;
 				case 1:
 					if( !cg.motd )
@@ -2028,7 +2046,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 				{
 					do
 					{
-						len = trap_SCR_DrawStringWidth( layout_cursor_x, y, layout_cursor_align, 
+						len = trap_SCR_DrawStringWidth( x, y, layout_cursor_align, 
 							helpmessage, layout_cursor_width, CG_GetLayoutCursorFont(), color );
 						if( !len )
 						{

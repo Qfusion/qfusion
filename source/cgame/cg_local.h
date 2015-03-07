@@ -588,6 +588,7 @@ typedef struct
 	int precacheCount, precacheTotal;
 	const char *matchmessage;
 	const char *helpmessage;
+	unsigned helpmessage_time;
 	char *teaminfo;
 	size_t teaminfo_size;
 	char *motd;
