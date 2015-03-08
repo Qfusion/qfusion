@@ -33,8 +33,8 @@ private:
 Rocket::Core::EventListener *GetBaseEventListener( void );
 // get instance of global eventlistener
 Rocket::Core::EventListener *UI_GetMainListener( void );
-// get instance of eventlistener that opens IME for text inputs
-Rocket::Core::EventListener *UI_GetIMEListener( void );
+// get instance of eventlistener that opens the soft keyboard for text inputs
+Rocket::Core::EventListener *UI_GetSoftKeyboardListener( void );
 
 }
 

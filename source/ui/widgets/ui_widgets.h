@@ -59,15 +59,15 @@ namespace WSWUI
 		}
 	};
 
-	// "my generic element instancer" that attaches click/blur events that toggle the IME
+	// "my generic element instancer" that attaches click/blur events that toggle the soft keyboard
 	template<typename T>
-	struct GenericElementInstancerIME : GenericElementInstancer<T>
+	struct GenericElementInstancerSoftKeyboard : GenericElementInstancer<T>
 	{
 		Rocket::Core::Element *InstanceElement(Rocket::Core::Element *parent, const String &tag, const Rocket::Core::XMLAttributes &attributes)
 		{
 			Rocket::Core::Element *elem = GenericElementInstancer<T>::InstanceElement( parent, tag, attributes );
-			elem->AddEventListener( "click", UI_GetIMEListener() );
-			elem->AddEventListener( "blur", UI_GetIMEListener() );
+			elem->AddEventListener( "click", UI_GetSoftKeyboardListener() );
+			elem->AddEventListener( "blur", UI_GetSoftKeyboardListener() );
 			return elem;
 		}
 	};

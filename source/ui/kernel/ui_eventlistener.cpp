@@ -209,16 +209,16 @@ public:
 	}
 };
 
-UI_MainListener ui_mainlistener;
+static UI_MainListener ui_mainListener;
 
 EventListener *UI_GetMainListener( void )
 {
-	return &ui_mainlistener;
+	return &ui_mainListener;
 }
 
 //===================================================
 
-class UI_IMEListener : public EventListener
+class UI_SoftKeyboardListener : public EventListener
 {
 public:
 	virtual void ProcessEvent( Event &event )
@@ -241,11 +241,11 @@ public:
 };
 
 
-UI_IMEListener ui_imelistener;
+static UI_SoftKeyboardListener ui_softKeyboardListener;
 
-EventListener *UI_GetIMEListener( void )
+EventListener *UI_GetSoftKeyboardListener( void )
 {
-	return &ui_imelistener;
+	return &ui_softKeyboardListener;
 }
 
 }
