@@ -22,7 +22,6 @@
 #include "datasources/ui_gametypes_datasource.h"
 #include "datasources/ui_maps_datasource.h"
 #include "datasources/ui_mods_datasource.h"
-#include "datasources/ui_crosshair_datasource.h"
 #include "datasources/ui_models_datasource.h"
 #include "datasources/ui_profiles_datasource.h"
 #include "datasources/ui_serverbrowser_datasource.h"
@@ -30,7 +29,6 @@
 #include "datasources/ui_ircchannels_datasource.h"
 #include "datasources/ui_gameajax_datasource.h"
 
-#include "formatters/ui_crosshair_formatter.h"
 #include "formatters/ui_levelshot_formatter.h"
 #include "formatters/ui_datetime_formatter.h"
 #include "formatters/ui_duration_formatter.h"
@@ -50,10 +48,10 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	// pointers to zero
 	: asmodule(nullptr), rocketModule(nullptr),
 	levelshot_fmt(0), datetime_fmt(0), duration_fmt(0), filetype_fmt(0), colorcode_fmt(0), 
-	crosshair_fmt(0), empty_fmt(0),
+	empty_fmt(0),
 	serverBrowser(0), gameTypes(0), maps(0), vidProfiles(0), huds(0), videoModes(0), 
 	demos(0), mods(0), 
-	playerModels(0), crosshairs(0), tvchannels(0), ircchannels(0), gameajax(0),
+	playerModels(0), tvchannels(0), ircchannels(0), gameajax(0),
 
 	// other members
 	mousex(0), mousey(0), gameProtocol(protocol),
@@ -339,7 +337,6 @@ void UI_Main::createDataSources( void )
 	videoModes = __new__( VideoDataSource )();
 	demos = __new__( DemosDataSource )( demoExtension );
 	mods = __new__( ModsDataSource )();
-	crosshairs = __new__( CrosshairDataSource )();
 	tvchannels = __new__( TVChannelsDataSource )();
 	ircchannels = __new__( IrcChannelsDataSource )();
 	gameajax = __new__( GameAjaxDataSource )();
@@ -356,7 +353,6 @@ void UI_Main::destroyDataSources( void )
 	__SAFE_DELETE_NULLIFY( videoModes );
 	__SAFE_DELETE_NULLIFY( demos );
 	__SAFE_DELETE_NULLIFY( mods );
-	__SAFE_DELETE_NULLIFY( crosshairs );
 	__SAFE_DELETE_NULLIFY( tvchannels );
 	__SAFE_DELETE_NULLIFY( ircchannels );
 	__SAFE_DELETE_NULLIFY( gameajax );
@@ -366,7 +362,6 @@ void UI_Main::destroyDataSources( void )
 
 void UI_Main::createFormatters( void )
 {
-	crosshair_fmt = __new__( CrosshairFormatter )();
 	levelshot_fmt = __new__(LevelShotFormatter)();
 	datetime_fmt = __new__( DatetimeFormatter )();
 	duration_fmt = __new__( DurationFormatter )();
@@ -377,7 +372,6 @@ void UI_Main::createFormatters( void )
 
 void UI_Main::destroyFormatters( void )
 {
-	__SAFE_DELETE_NULLIFY( crosshair_fmt );
 	__SAFE_DELETE_NULLIFY( levelshot_fmt );
 	__SAFE_DELETE_NULLIFY( datetime_fmt );
 	__SAFE_DELETE_NULLIFY( duration_fmt );
