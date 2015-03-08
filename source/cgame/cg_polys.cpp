@@ -289,10 +289,6 @@ void CG_QuickPolyBeam( vec3_t start, vec3_t end, int width, struct shader_s *sha
 		shader = CG_MediaShader( cgs.media.shaderLaser );
 
 	cgpoly = CG_SpawnPolyBeam( start, end, NULL, width, 1, 0, shader, 64, 0 );
-
-	// since autosprite doesn't work, spawn a second and rotate it 90 degrees
-	cgpoly = CG_SpawnPolyBeam( start, end, NULL, width, 1, 0, shader, 64, 0 );
-	cgpoly->angles[ROLL] += 90;
 }
 
 /*
@@ -320,16 +316,8 @@ void CG_LaserGunPolyBeam( vec3_t start, vec3_t end, vec4_t color, int tag )
 
 	if( cg_lgbeam_old->integer ) {
 		cgpoly = CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeamOld ), 64, tag );
-
-		// since autosprite doesn't work, spawn a second and rotate it 90 degrees
-		cgpoly = CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeamOld ), 64, tag );
-		cgpoly->angles[ROLL] += 90;
 	} else {
 		cgpoly = CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeam ), 64, tag );
-
-		// since autosprite doesn't work, spawn a second and rotate it 90 degrees
-		cgpoly = CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeam ), 64, tag );
-		cgpoly->angles[ROLL] += 90;
 	}
 }
 
@@ -359,10 +347,6 @@ void CG_ElectroPolyBeam( vec3_t start, vec3_t end, int team )
 		}
 
 		cgpoly = CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
-		cgpoly->angles[ROLL] += 45;
-
-		cgpoly = CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
-		cgpoly->angles[ROLL] += 135;
 	}
 	else
 	{
@@ -379,22 +363,6 @@ void CG_ElectroPolyBeam( vec3_t start, vec3_t end, int team )
 		}
 
 		cgpoly = CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
-		cgpoly->angles[ROLL] += 45;
-
-		if( cg_teamColoredBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) )
-		{
-			if( team == TEAM_ALPHA )
-				shader = CG_MediaShader( cgs.media.shaderElectroBeamBAlpha );
-			else
-				shader = CG_MediaShader( cgs.media.shaderElectroBeamBBeta );
-		}
-		else
-		{
-			shader = CG_MediaShader( cgs.media.shaderElectroBeamB );
-		}
-
-		cgpoly = CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
-		cgpoly->angles[ROLL] += 135;
 	}
 }
 
@@ -433,10 +401,6 @@ void CG_InstaPolyBeam( vec3_t start, vec3_t end, int team )
 		return;
 
 	cgpoly = CG_SpawnPolyBeam( start, end, tcolor, cg_instabeam_width->integer, cg_instabeam_time->value * 1000, cg_instabeam_time->value * 1000 * 0.4f, CG_MediaShader( cgs.media.shaderInstaBeam ), 128, 0 );
-
-	// since autosprite doesn't work, spawn a second and rotate it 90 degrees
-	cgpoly = CG_SpawnPolyBeam( start, end, tcolor, cg_instabeam_width->integer, cg_instabeam_time->value * 1000, cg_instabeam_time->value * 1000 * 0.4f, CG_MediaShader( cgs.media.shaderInstaBeam ), 128, 0 );
-	cgpoly->angles[ROLL] += 90;
 }
 
 /*
