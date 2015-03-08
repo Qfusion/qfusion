@@ -1395,7 +1395,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 	header = ( ktx_header_t * )buffer;
 	if( memcmp( header->identifier, "\xABKTX 11\xBB\r\n\x1A\n", 12 ) )
 	{
-		ri.Com_Printf( S_COLOR_YELLOW "R_LoadKTX: Bad file identifier: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Bad file identifier: %s\n", image->name );
 		goto error;
 	}
 
@@ -1408,32 +1408,32 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 
 	if( header->format && ( header->format != header->baseInternalFormat ) )
 	{
-		ri.Com_Printf( S_COLOR_YELLOW "R_LoadKTX: Pixel format doesn't match internal format: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Pixel format doesn't match internal format: %s\n", image->name );
 		goto error;
 	}
 	if( !R_IsKTXFormatValid( header->format ? header->baseInternalFormat : header->internalFormat, header->type ) )
 	{
-		ri.Com_Printf( S_COLOR_YELLOW "R_LoadKTX: Unsupported pixel format: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Unsupported pixel format: %s\n", image->name );
 		goto error;
 	}
 	if( ( image->flags & IT_CUBEMAP ) && ( header->pixelWidth != header->pixelHeight ) )
 	{
-		ri.Com_Printf( S_COLOR_YELLOW "R_LoadKTX: Not square cubemap image: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Not square cubemap image: %s\n", image->name );
 		goto error;
 	}
 	if( ( header->pixelWidth < 1 ) || ( header->pixelHeight < 1 ) )
 	{
-		ri.Com_Printf( S_COLOR_YELLOW "R_LoadKTX: Zero or negative texture size: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Zero or negative texture size: %s\n", image->name );
 		goto error;
 	}
 	if( ( header->pixelDepth > 1 ) || ( header->numberOfArrayElements > 1 ) )
 	{
-		ri.Com_Printf( S_COLOR_YELLOW "R_LoadKTX: 3D textures and texture arrays are not supported: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: 3D textures and texture arrays are not supported: %s\n", image->name );
 		goto error;
 	}
 	if( header->numberOfFaces != numFaces )
 	{
-		ri.Com_Printf( S_COLOR_YELLOW "R_LoadKTX: Bad number of cubemap faces: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Bad number of cubemap faces: %s\n", image->name );
 		goto error;
 	}
 	if( header->numberOfMipmapLevels < 1 )
@@ -1455,7 +1455,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		}
 		else if( header->numberOfMipmapLevels < mips )
 		{
-			ri.Com_Printf( S_COLOR_YELLOW "R_LoadKTX: Compressed image has too few mip levels: %s\n", image->name );
+			ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Compressed image has too few mip levels: %s\n", image->name );
 			goto error;
 		}
 
@@ -1987,10 +1987,14 @@ static image_t *R_LoadColorLUT( const char *name, int flags )
 	strcat( filename, ".raw" );
 	filelen = R_LoadFile( filename, ( void ** )( &buf ) );
 	if( !buf )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "Missing color LUT: %s\n", filename );
 		return NULL;
+	}
 
 	if( filelen < ( 32 * 32 * 32 * 3 ) )
 	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "Color LUT %s is too small, must be 32x32x32\n", filename );
 		R_FreeFile( buf );
 		return NULL;
 	}
