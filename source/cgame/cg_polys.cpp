@@ -199,6 +199,11 @@ static cpoly_t *CG_SpawnPolyBeam( vec3_t start, vec3_t end, vec4_t color, int wi
 	if( shaderlength && xmax > shaderlength )
 		stx = xmax / (float)shaderlength;
 
+	if( xmax - xmin < ymax - ymin ) {
+		// do not render polybeams which have width longer than their length
+		return NULL;
+	}
+
 	cgpoly = CG_SpawnPolygon( 1.0, 1.0, 1.0, 1.0, dietime ? dietime : cgs.snapFrameTime, fadetime, shader, tag );
 
 	VectorCopy( angles, cgpoly->angles );
