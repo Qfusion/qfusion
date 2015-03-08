@@ -297,11 +297,11 @@ void RocketModule::registerCustoms()
 
 	// Main document that implements <script> tags
 	registerElement( "body", ASUI::GetScriptDocumentInstancer() );
-	// IME overrides
+	// Soft keyboard listener
 	registerElement( "input",
-		__new__( GenericElementInstancerIME<Rocket::Controls::ElementFormControlInput> )() );
+		__new__( GenericElementInstancerSoftKeyboard<Rocket::Controls::ElementFormControlInput> )() );
 	registerElement( "textarea",
-		__new__( GenericElementInstancerIME<Rocket::Controls::ElementFormControlTextArea> )() );
+		__new__( GenericElementInstancerSoftKeyboard<Rocket::Controls::ElementFormControlTextArea> )() );
 	// other widgets
 	registerElement( "keyselect", GetKeySelectInstancer() );
 	registerElement( "a", GetAnchorWidgetInstancer() );
