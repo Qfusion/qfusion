@@ -40,7 +40,6 @@ class VideoDataSource;
 class DemosDataSource;
 class ModsDataSource;
 class ModelsDataSource;
-class CrosshairDataSource;
 class TVChannelsDataSource;
 class IrcChannelsDataSource;
 class GameAjaxDataSource;
@@ -48,7 +47,6 @@ class GameAjaxDataSource;
 class LevelShotFormatter;
 class DatetimeFormatter;
 class DurationFormatter;
-class CrosshairFormatter;
 class FiletypeFormatter;
 class ColorCodeFormatter;
 class EmptyFormatter;
@@ -164,7 +162,6 @@ private:
 	DurationFormatter *duration_fmt;
 	FiletypeFormatter *filetype_fmt;
 	ColorCodeFormatter *colorcode_fmt;
-	CrosshairFormatter *crosshair_fmt;
 	EmptyFormatter *empty_fmt;
 
 	ServerBrowserDataSource *serverBrowser;
@@ -176,7 +173,6 @@ private:
 	DemosDataSource *demos;
 	ModsDataSource *mods;
 	ModelsDataSource *playerModels;
-	CrosshairDataSource *crosshairs;
 	TVChannelsDataSource *tvchannels;
 	IrcChannelsDataSource *ircchannels;
 	GameAjaxDataSource *gameajax;
