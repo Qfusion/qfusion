@@ -83,4 +83,14 @@ int UI_SystemInterface::TranslateString(Rocket::Core::String& translated, const 
 	return 0;
 }
 
+void UI_SystemInterface::ActivateKeyboard()
+{
+	trap::IN_ShowSoftKeyboard( true );
+}
+
+void UI_SystemInterface::DeactivateKeyboard()
+{
+	trap::IN_ShowSoftKeyboard( false );
+}
+
 }
