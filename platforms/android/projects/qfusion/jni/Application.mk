@@ -8,6 +8,8 @@ NDK_APP_SHORT_COMMANDS := true
 NDK_TOOLCHAIN_VERSION := 4.9
 
 APP_MODULES := \
+  android_native_app_glue \
+  \
   angelscript \
   cares \
   curl \

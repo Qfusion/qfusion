@@ -21,9 +21,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef ANDROID_SYS_H
 #define ANDROID_SYS_H
 
+#include <android_native_app_glue.h>
 #include "../qcommon/qcommon.h"
 #include "../client/client.h"
-#include "android_native_app_glue.h"
 
 extern struct android_app *sys_android_app;
 
