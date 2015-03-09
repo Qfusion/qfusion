@@ -297,11 +297,6 @@ void RocketModule::registerCustoms()
 
 	// Main document that implements <script> tags
 	registerElement( "body", ASUI::GetScriptDocumentInstancer() );
-	// Soft keyboard listener
-	registerElement( "input",
-		__new__( GenericElementInstancerSoftKeyboard<Rocket::Controls::ElementFormControlInput> )() );
-	registerElement( "textarea",
-		__new__( GenericElementInstancerSoftKeyboard<Rocket::Controls::ElementFormControlTextArea> )() );
 	// other widgets
 	registerElement( "keyselect", GetKeySelectInstancer() );
 	registerElement( "a", GetAnchorWidgetInstancer() );
