@@ -4285,7 +4285,7 @@ static void CG_LoadStatusBarFile( char *path )
 	}
 	customWeaponSelectPic = NULL;
 
-	Cvar_ForceSet( "con_chatCGame", "0" );
+	trap_Cvar_ForceSet( "con_chatCGame", "0" );
 }
 
 /*
