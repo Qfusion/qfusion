@@ -478,22 +478,74 @@ void L10n_Init( void )
 }
 
 /*
+* L10n_LoadLangPOFile_
+*/
+static bool L10n_LoadLangPOFile_( podomain_t *podomain, const char *filepath, const char *lang )
+{
+	pofile_t *pofile;
+	podict_t *pofile_dict;
+	char *tempfilename;
+	const char *sep;
+	size_t tempfilename_size;
+
+	if( !filepath || !*filepath ) {
+		return false;
+	}
+
+	tempfilename_size = strlen( filepath ) + 1 + strlen( lang ) + ( sizeof( ".po" ) - 1 ) + 1;
+	tempfilename = ( char * )L10n_Malloc( tempfilename_size );
+
+	sep = ( filepath[strlen( filepath ) - 1] == '/' ? "" : "/" );
+	Q_snprintfz( tempfilename, tempfilename_size, "%s%s%s.po", filepath, sep, lang );
+
+	pofile = L10n_FindPOFile( podomain, tempfilename );
+	if( pofile ) {
+		// already loaded
+		return true;
+	}
+
+	pofile_dict = L10n_LoadPODict( tempfilename );
+	if( !pofile_dict ) {
+		// try to load country-independent file
+		char *underscore = strchr( lang, '_' );
+		if( underscore ) {
+			char *tempfilename2 = L10n_Malloc( tempfilename_size );
+			*underscore = '\0';
+			Q_snprintfz( tempfilename2, tempfilename_size, "%s%s%s.po", filepath, sep, lang );
+			pofile_dict = L10n_LoadPODict( tempfilename2 );
+			L10n_Free( tempfilename2 );
+		}
+	}
+
+	if( pofile_dict ) {
+		pofile = L10n_CreatePOFile( tempfilename );
+		pofile->dict = pofile_dict;
+		pofile->next = podomain->pofiles_head;
+		podomain->pofiles_head = pofile;
+	}
+
+	L10n_Free( tempfilename );
+
+	return pofile_dict != NULL;
+}
+
+/*
 * L10n_LoadLangPOFile
 */
 void L10n_LoadLangPOFile( const char *domainname, const char *filepath )
 {
 	podomain_t *podomain;
-	pofile_t *pofile;
-	podict_t *pofile_dict;
 	char lang[MAX_STRING_CHARS];
-	char *tempfilename;
-	const char *sep;
-	size_t tempfilename_size;
 
 	if( !domainname || !*domainname ) {
 		return;
 	}
 	if( !filepath || !*filepath ) {
+		return;
+	}
+
+	if( !COM_ValidateFilename( filepath ) ) {
+		Com_Printf( S_COLOR_YELLOW "LoadLangPOFile failed: invalid filename '%s'\n", filepath );
 		return;
 	}
 
@@ -511,43 +563,12 @@ void L10n_LoadLangPOFile( const char *domainname, const char *filepath )
 
 	Q_strncpyz( lang, L10n_GetUserLanguage(), sizeof( lang ) );
 
-	tempfilename_size = strlen( filepath ) + 1 + strlen( lang ) + ( sizeof( ".po" ) - 1 ) + 1;
-	tempfilename = ( char * )L10n_Malloc( tempfilename_size );
-
-	sep = ( filepath[strlen( filepath ) - 1] == '/' ? "" : "/" );
-	Q_snprintfz( tempfilename, tempfilename_size, "%s%s%s.po", filepath, sep, lang );
-
-	if( !COM_ValidateFilename( tempfilename ) ) {
-		Com_Printf( S_COLOR_YELLOW "LoadLangPOFile failed: invalid filename '%s'\n", filepath );
-		return;
-	}
-
-	pofile = L10n_FindPOFile( podomain, tempfilename );
-	if( pofile ) {
-		// already loaded
-		return;
-	}
-
-	pofile_dict = L10n_LoadPODict( tempfilename );
-	if( !pofile_dict ) {
-		// try to load country-independent file
-		char *underscore = strchr( lang, '_' );
-		if( underscore ) {
-			char *tempfilename2 = L10n_Malloc( tempfilename_size );
-			*underscore = '\0';
-			Q_snprintfz( tempfilename2, tempfilename_size, "%s%s%s.po", filepath, sep, lang );
-			pofile_dict = L10n_LoadPODict( tempfilename2 );
-			L10n_Free( tempfilename2 );
+	if( !L10n_LoadLangPOFile_( podomain, filepath, lang ) ) {
+		// load default lang .po file
+		if( strcmp( lang, posyslang ) ) {
+			L10n_LoadLangPOFile_( podomain, filepath, posyslang );
 		}
 	}
-	if( pofile_dict ) {
-		pofile = L10n_CreatePOFile( tempfilename );
-		pofile->dict = pofile_dict;
-		pofile->next = podomain->pofiles_head;
-		podomain->pofiles_head = pofile;
-	}
-
-	L10n_Free( tempfilename );
 }
 
 /*
