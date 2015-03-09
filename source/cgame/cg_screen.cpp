@@ -578,7 +578,7 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 	usercmd_t cmd;
 	vec4_t color;
 
-	if( !cg_showPressedKeys->integer && !cgs.demoTutorial )
+	if( !cg_showPressedKeys->integer && !cgs.demoTutorial && !GS_TutorialGametype() )
 		return;
 
 	if( !key )
