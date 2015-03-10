@@ -565,8 +565,8 @@ void L10n_LoadLangPOFile( const char *domainname, const char *filepath )
 
 	if( !L10n_LoadLangPOFile_( podomain, filepath, lang ) ) {
 		// load default lang .po file
-		if( strcmp( lang, posyslang ) ) {
-			L10n_LoadLangPOFile_( podomain, filepath, posyslang );
+		if( strcmp( lang, APP_DEFAULT_LANGUAGE ) ) {
+			L10n_LoadLangPOFile_( podomain, filepath, APP_DEFAULT_LANGUAGE );
 		}
 	}
 }
