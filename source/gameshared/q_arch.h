@@ -180,11 +180,7 @@ typedef UINT_PTR socket_handle_t;
 #endif
 
 #define LIB_DIRECTORY "libs"
-#ifdef __ANDROID__
 #define LIB_PREFIX "lib"
-#else
-#define LIB_PREFIX "" // we dont use corrent prefix on Linux yet
-#endif
 #define LIB_SUFFIX ".so"
 
 #ifndef __ANDROID__
