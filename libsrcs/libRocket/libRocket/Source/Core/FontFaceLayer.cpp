@@ -61,8 +61,6 @@ bool FontFaceLayer::Initialise(const FontFaceHandle* _handle, FontEffect* _effec
 		colour = effect->GetColour();
 	}
 
-	const FontGlyphMap& glyphs = handle->GetGlyphs();
-
 	// Clone the geometry and textures from the clone layer.
 	if (clone != NULL)
 	{
