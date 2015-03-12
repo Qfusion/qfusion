@@ -132,8 +132,8 @@ private:
 
 	const FontFaceHandle* handle;
 	FontEffect* effect;
-	const FontFaceLayer* base = NULL;
-	bool deep_copy = false;
+	const FontFaceLayer* base;
+	bool deep_copy;
 
 	std::vector< std::unique_ptr<TextureLayout> > texture_layouts;
 
