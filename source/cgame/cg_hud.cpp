@@ -1661,6 +1661,26 @@ static bool CG_LFuncDrawPicByName( struct cg_layoutnode_s *commandnode, struct c
 	return true;
 }
 
+static bool CG_LFuncDrawSubPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	int x, y;
+	struct shader_s *shader;
+	float s1, t1, s2, t2;
+
+	x = CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width );
+	y = CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height );
+
+	shader = trap_R_RegisterPic( CG_GetStringArg( &argumentnode ) );
+
+	s1 = CG_GetNumericArg( &argumentnode );
+	t1 = CG_GetNumericArg( &argumentnode );
+	s2 = CG_GetNumericArg( &argumentnode );
+	t2 = CG_GetNumericArg( &argumentnode );
+
+	trap_R_DrawStretchPic( x, y, layout_cursor_width, layout_cursor_height, s1, t1, s2, t2, layout_cursor_color, shader );
+	return true;
+}
+
 static bool CG_LFuncDrawModelByIndex( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	struct model_s *model;
@@ -2937,6 +2957,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		NULL,
 		1,
 		"Draws a pic with argument being the file path",
+		true
+	},
+
+	{
+		"drawSubPicByName",
+		CG_LFuncDrawSubPicByName,
+		NULL,
+		5,
+		"Draws a part of a pic with arguments being the file path and the texture coordinates",
 		true
 	},
 
