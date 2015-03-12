@@ -34,7 +34,7 @@ namespace WSWUI
 						while( ptr ) {
 							const char *token = COM_ParseExt( &ptr, true );
 							if( *token ) {
-								gt.title = "";
+								gt.title.clear();
 							}
 							while( *token ) {
 								gt.title += (gt.title.empty() ? "" : " ");

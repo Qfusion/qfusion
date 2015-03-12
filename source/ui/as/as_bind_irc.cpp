@@ -175,7 +175,7 @@ public:
 			trap::Cvar_Set( irc_perform->name, (irc_perform_str + "\n" ).c_str() );
 		}
 		else {
-			irc_perform_str = "";
+			irc_perform_str.clear();
 			trap::Cvar_Set( irc_perform->name, irc_perform->dvalue );
 		}
 	}

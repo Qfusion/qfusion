@@ -172,25 +172,6 @@ namespace WSWUI {
 
 		ServerBrowserFilter() {}
 
-		/*
-		// GET/SET inlined
-		inline void showFull(VisibilityState _full) { full = _full; }
-		inline void showEmpty(VisibilityState _empty) { empty = _empty; }
-		inline void showInstagib(VisibilityState _instagib) { instagib = _instagib; }
-		inline void showPassword(VisibilityState _password) { password = _password; }
-		inline void showRanked(VisibilityState _ranked) { ranked = _ranked; }
-		inline void showRegistered(VisibilityState _registered) { registered = _registered; }
-		inline void showGametype(const String &_gametype) { gametype = _gametype; }
-
-		inline VisibilityState getFull() { return full; }
-		inline VisibilityState getEmpty() { return empty; }
-		inline VisibilityState getInstagib() { return instagib; }
-		inline VisibilityState getPassword() { return password; }
-		inline VisibilityState getRanked() { return ranked; }
-		inline VisibilityState getRegistered() { return registered; }
-		inline const String &getGametype() { return gametype; }
-		*/
-
 		// called by ServerBrowserDataSource to filter servers as per settings
 		// TODO: proper implementation
 		bool filterServer(const ServerInfo &info) { return true; }
@@ -415,8 +396,8 @@ namespace WSWUI {
 		unsigned int lastUpdateTime;
 
 		void tableNameForServerInfo( const ServerInfo &, String &table ) const;
-		void addServerToTable( ServerInfo &info, String tableName );
-		void removeServerFromTable( ServerInfo &info, String tableName );
+		void addServerToTable( ServerInfo &info, const String &tableName );
+		void removeServerFromTable( ServerInfo &info, const String &tableName );
 		void notifyOfFavoriteChange( uint64_t iaddr, bool add );
 	};
 

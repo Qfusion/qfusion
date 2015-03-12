@@ -100,7 +100,6 @@ public:
 		Element::OnAttributeChange( changed_attributes );
 
 		bool reloadData = false;
-		AttributeNameList::const_iterator it;
 
 		if( !reloadData ) {
 			reloadData = changed_attributes.find( "source" ) != changed_attributes.end();

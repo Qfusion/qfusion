@@ -546,7 +546,7 @@ void ServerBrowserDataSource::tableNameForServerInfo( const ServerInfo &info, St
 	}
 }
 
-void ServerBrowserDataSource::addServerToTable( ServerInfo &info, String tableName )
+void ServerBrowserDataSource::addServerToTable( ServerInfo &info, const String &tableName )
 {
 	ReferenceList &referenceList = referenceListMap[tableName];
 
@@ -572,7 +572,7 @@ void ServerBrowserDataSource::addServerToTable( ServerInfo &info, String tableNa
 	}
 }
 
-void ServerBrowserDataSource::removeServerFromTable( ServerInfo &info, String tableName )
+void ServerBrowserDataSource::removeServerFromTable( ServerInfo &info, const String &tableName )
 {
 	ReferenceList &referenceList = referenceListMap[tableName];
 
@@ -874,7 +874,7 @@ void ServerBrowserDataSource::sortByColumn( const char *_column )
 		sortCompare = ServerInfo::LessPtrBinary<bool, &ServerInfo::mm>;
 	else if( column == "ping" )
 		sortCompare = ServerInfo::LessPtrBinary<unsigned int, &ServerInfo::ping>;
-	else if( column == "" )
+	else if( column.empty() )
 		sortCompare = &ServerInfo::DefaultCompareBinary;
 	else
 	{
