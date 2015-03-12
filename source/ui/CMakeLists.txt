@@ -58,8 +58,3 @@ add_dependencies(ui angelwrap)
 set_target_properties(ui PROPERTIES COMPILE_DEFINITIONS "ROCKET_STATIC_LIB;_SECURE_SCL=0")
 qf_set_output_dir(ui ${QFUSION_GAME_DIR})
 set_property(TARGET ui PROPERTY CXX_STANDARD 11)
-
-# TODO: Remove this hack from here
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
-    add_dependencies(ui ${LIBROCKET})
-endif()
