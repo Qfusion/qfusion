@@ -1639,6 +1639,8 @@ void IN_WinIME_AssociateContext( void )
 */
 void IN_WinIME_Shutdown( void )
 {
+	in_winime_enabled = false;
+
 	if( in_winime_candList )
 	{
 		Q_free( in_winime_candList );
