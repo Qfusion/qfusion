@@ -1666,7 +1666,7 @@ void IN_WinIME_Shutdown( void )
 */
 void IN_IME_Enable( bool enable )
 {
-	if( in_winime_enabled == enable )
+	if( !in_winime_initialized || ( in_winime_enabled == enable ) )
 		return;
 
 	in_winime_enabled = enable;
@@ -1700,7 +1700,7 @@ size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size
 	if( convLen )
 		*convLen = 0;
 
-	if( !in_winime_initialized )
+	if( !in_winime_enabled )
 		return 0;
 
 	len = qimmGetCompositionString( in_winime_context, GCS_COMPSTR, compStr, sizeof( compStr ) ) / sizeof( WCHAR );
@@ -1798,6 +1798,9 @@ unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigne
 		*selected = -1;
 	if( firstKey )
 		*firstKey = 1;
+
+	if( !in_winime_enabled )
+		return 0;
 
 	candListSize = qimmGetCandidateList( in_winime_context, 0, NULL, 0 );
 	if( !candListSize )
