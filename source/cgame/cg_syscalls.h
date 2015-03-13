@@ -588,9 +588,9 @@ static inline void trap_SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, 
 	CGAME_IMPORT.SCR_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, color );
 }
 
-static inline size_t trap_SCR_strHeight( struct qfontface_s *font )
+static inline int trap_SCR_FontHeight( struct qfontface_s *font )
 {
-	return CGAME_IMPORT.SCR_strHeight( font );
+	return CGAME_IMPORT.SCR_FontHeight( font );
 }
 
 static inline size_t trap_SCR_strWidth( const char *str, struct qfontface_s *font, int maxlen )

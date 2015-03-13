@@ -763,7 +763,7 @@ void CG_Democam_DrawCenterSubtitle( int y, unsigned int maxwidth, struct qfontfa
 			ptr = s;
 		}
 
-		y += trap_SCR_strHeight( font );
+		y += trap_SCR_FontHeight( font );
 	}
 }
 
@@ -808,14 +808,14 @@ void CG_DrawDemocam2D( void )
 		if( *cgs.demoName )
 		{
 			trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Demo: %s", cgs.demoName ), cgs.fontSystemSmall, colorWhite );
-			ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
+			ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
 		}
 
 		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Play mode: %s%s%s", S_COLOR_ORANGE, CamIsFree ? "Free Fly" : "Preview", S_COLOR_WHITE ), cgs.fontSystemSmall, colorWhite );
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
+		ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
 
 		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Time: %i", demo_time ), cgs.fontSystemSmall, colorWhite );
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
+		ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
 
 		cam_type_name = "none";
 		cam_timestamp = 0;
@@ -836,7 +836,7 @@ void CG_DrawDemocam2D( void )
 		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Current cam: " S_COLOR_ORANGE "%s" S_COLOR_WHITE " Fov " S_COLOR_ORANGE "%s" S_COLOR_WHITE " Start %i Tracking " S_COLOR_ORANGE "%s" S_COLOR_WHITE,
 			cam_type_name, sfov, cam_timestamp, strack ),
 			cgs.fontSystemSmall, colorWhite );
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
+		ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
 
 		if( currentcam )
 		{
@@ -844,7 +844,7 @@ void CG_DrawDemocam2D( void )
 				currentcam->angles[PITCH], currentcam->angles[YAW], currentcam->angles[ROLL] ),
 				cgs.fontSystemSmall, colorWhite );
 		}
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
+		ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
 
 		cam_type_name = "none";
 		cam_timestamp = 0;
@@ -865,7 +865,7 @@ void CG_DrawDemocam2D( void )
 		trap_SCR_DrawString( xpos, ypos, ALIGN_LEFT_TOP, va( "Next cam: " S_COLOR_ORANGE "%s" S_COLOR_WHITE " Fov " S_COLOR_ORANGE "%s" S_COLOR_WHITE " Start %i Tracking " S_COLOR_ORANGE "%s" S_COLOR_WHITE,
 			cam_type_name, sfov, cam_timestamp, strack ),
 			cgs.fontSystemSmall, colorWhite );
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
+		ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
 
 		if( nextcam )
 		{
@@ -873,7 +873,7 @@ void CG_DrawDemocam2D( void )
 				nextcam->angles[PITCH], nextcam->angles[YAW], nextcam->angles[ROLL] ),
 				cgs.fontSystemSmall, colorWhite );
 		}
-		ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
+		ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
 	}
 }
 

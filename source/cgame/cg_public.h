@@ -21,6 +21,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __CG_PUBLIC_H__
 #define __CG_PUBLIC_H__
 
+struct orientation_s;
+struct bonepose_s;
+struct shader_s;
+struct fragment_s;
+struct entity_s;
+struct refdef_s;
+struct poly_s;
+struct model_s;
+struct cmodel_s;
+struct qfontface_s;
+
 typedef size_t (*cg_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
 typedef void (*cg_async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
@@ -28,9 +39,11 @@ typedef void (*cg_async_stream_done_cb_t)(int status, const char *contentType, v
 typedef void (*cg_raw_samples_cb_t)(void*,unsigned int, unsigned int, unsigned short, unsigned short, const uint8_t *);
 typedef unsigned int (*cg_get_raw_samples_cb_t)(void*);
 
+typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
+
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   73
+#define	CGAME_API_VERSION   74
 
 //
 // structs and variables shared with the main engine
@@ -62,17 +75,6 @@ typedef struct snapshot_s
 } snapshot_t;
 
 //===============================================================
-
-struct orientation_s;
-struct bonepose_s;
-struct shader_s;
-struct fragment_s;
-struct entity_s;
-struct refdef_s;
-struct poly_s;
-struct model_s;
-struct cmodel_s;
-struct qfontface_s;
 
 //
 // functions provided by the main engine
@@ -233,9 +235,14 @@ typedef struct
 	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
 	void ( *SCR_DrawRawChar )( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
 	void ( *SCR_DrawClampChar )( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
-	size_t ( *SCR_strHeight )( struct qfontface_s *font );
+	size_t ( *SCR_FontSize )( struct qfontface_s *font );
+	size_t ( *SCR_FontHeight )( struct qfontface_s *font );
+	int ( *SCR_FontUnderline )( struct qfontface_s *font, int *thickness );
+	size_t ( *SCR_FontAdvance )( struct qfontface_s *font );
+	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth );
+	fdrawchar_t ( *SCR_SetDrawCharIntercept )( fdrawchar_t intercept );
 
 	// managed memory allocation
 	void *( *Mem_Alloc )( size_t size, const char *filename, int fileline );

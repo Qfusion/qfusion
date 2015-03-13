@@ -290,6 +290,14 @@ void FTLIB_FreeFonts( bool verbose )
 // drawing functions
 
 /*
+* FTLIB_FontSize
+*/
+size_t FTLIB_FontSize( struct qfontface_s *font )
+{
+	return ftlib_export ? ftlib_export->FontSize( font ) : 0;
+}
+
+/*
 * FTLIB_FontHeight
 */
 size_t FTLIB_FontHeight( struct qfontface_s *font )
@@ -326,6 +334,30 @@ int FTLIB_FontUnderline( struct qfontface_s *font, int *thickness )
 		*thickness = 0;
 	}
 	return 0;
+}
+
+/*
+* FTLIB_FontAdvance
+*/
+size_t FTLIB_FontAdvance( struct qfontface_s *font )
+{
+	return ftlib_export ? ftlib_export->FontAdvance( font ) : 0;
+}
+
+/*
+* FTLIB_FontXHeight
+*/
+size_t FTLIB_FontXHeight( struct qfontface_s *font )
+{
+	return ftlib_export ? ftlib_export->FontXHeight( font ) : 0;
+}
+
+/*
+* FTLIB_SetDrawCharIntercept
+*/
+fdrawchar_t FTLIB_SetDrawCharIntercept( fdrawchar_t intercept )
+{
+	return ftlib_export ? ftlib_export->SetDrawIntercept( intercept ) : 0;
 }
 
 /*

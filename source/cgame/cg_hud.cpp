@@ -819,7 +819,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
                                int internal_align, unsigned int icon_size )
 {
 	int i, num, skip, next, w, num_max;
-	int line_height;
+	unsigned line_height;
 	int xoffset, yoffset;
 	obituary_t *obr;
 	struct shader_s *pic;
@@ -828,7 +828,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 	if( !( cg_showObituaries->integer & CG_OBITUARY_HUD ) )
 		return;
 
-	line_height = max( trap_SCR_strHeight( font ), icon_size );
+	line_height = max( (unsigned)trap_SCR_FontHeight( font ), icon_size );
 	num_max = height / line_height;
 
 	if( width < (int)icon_size || !num_max )
@@ -962,7 +962,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 			{
 				Vector4Set( teamcolor, 255, 255, 255, 255 );
 			}
-			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + ( line_height - trap_SCR_strHeight( font ) ) / 2,
+			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + ( line_height - trap_SCR_FontHeight( font ) ) / 2,
 			                          ALIGN_LEFT_TOP, COM_RemoveColorTokensExt( obr->attacker, true ), ( width - icon_size ) / 2,
 			                          font, teamcolor );
 			xoffset += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
@@ -1021,7 +1021,7 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 	if( !count )
 		return;
 
-	y = CG_VerticalAlignForHeight( y, align, trap_SCR_strHeight( font ) * MAX_AWARD_LINES );
+	y = CG_VerticalAlignForHeight( y, align, trap_SCR_FontHeight( font ) * MAX_AWARD_LINES );
 
 	s_x = CG_HorizontalMovementForAlign( align ) < 0 ? cgs.vidWidth : 0;
 	e_x = x;
@@ -1034,7 +1034,7 @@ static void CG_DrawAwards( int x, int y, int align, struct qfontface_s *font, ve
 		current = ( cg.award_head - i ) % MAX_AWARD_LINES;
 		str = cg.award_lines[ current ];
 
-		yoffset = trap_SCR_strHeight( font ) * ( MAX_AWARD_LINES - i );
+		yoffset = trap_SCR_FontHeight( font ) * ( MAX_AWARD_LINES - i );
 		moveTime = ( cg.time - cg.award_times[ current ] ) / 1000.0f;
 
 		m_x = LinearMovementWithOvershoot( s_x, e_x, 
@@ -2020,7 +2020,7 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 		{
 			int i;
 			int y = layout_cursor_y;
-			int font_height = trap_SCR_strHeight( CG_GetLayoutCursorFont() );
+			int font_height = trap_SCR_FontHeight( CG_GetLayoutCursorFont() );
 			const char *helpmessage = "";
 			vec4_t color;
 			bool showhelp = cg_showhelp->integer || GS_TutorialGametype();

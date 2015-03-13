@@ -101,7 +101,7 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 	int background_y;
 	int first_candidate;
 
-	font_height = trap_SCR_strHeight( font );
+	font_height = trap_SCR_FontHeight( font );
 	message_mode = (int)trap_Cvar_Value( "con_messageMode" );
 	chat_active = ( chat->lastMsgTime + GAMECHAT_WAIT_IN_TIME + GAMECHAT_FADE_IN_TIME > cg.realTime || message_mode );
 	lines = 0;

@@ -124,7 +124,7 @@ void SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_
 {
 }
 
-size_t SCR_strHeight( struct qfontface_s *font )
+size_t SCR_FontHeight( struct qfontface_s *font )
 {
 	return 0;
 }

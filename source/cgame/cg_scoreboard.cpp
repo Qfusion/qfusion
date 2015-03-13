@@ -146,10 +146,10 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 
 	// Center the box
 	xoffset = xpos;
-	yoffset = trap_SCR_strHeight( font );
+	yoffset = trap_SCR_FontHeight( font );
 
 	// Room for header, it's actually written later if we have at least one stat
-	yoffset += trap_SCR_strHeight( font );
+	yoffset += trap_SCR_FontHeight( font );
 
 	lines = 0;
 	for( i = 0; i < num_weapons; )
@@ -184,7 +184,7 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 		if( done > 0 )
 		{
 			lines++;
-			yoffset += trap_SCR_strHeight( font );
+			yoffset += trap_SCR_FontHeight( font );
 		}
 
 		i += j;
@@ -194,18 +194,18 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 	{
 		// if we drew anything, draw header and box too
 		xoffset = xpos;
-		yoffset = trap_SCR_strHeight( font );
+		yoffset = trap_SCR_FontHeight( font );
 
 		// header
 		trap_SCR_DrawStringWidth( x + xoffset, y + yoffset, ALIGN_LEFT_TOP, 
 			CG_TranslateString( "Weapon stats" ), width, font, colorMdGrey );
-		yoffset += trap_SCR_strHeight( font );
+		yoffset += trap_SCR_FontHeight( font );
 
 		// box
 		trap_R_DrawStretchPic( x + xoffset - SCB_TINYFIELD_PIXELWIDTH/2, y + yoffset, width + SCB_TINYFIELD_PIXELWIDTH,
-			lines * trap_SCR_strHeight( font ), 0, 0, 1, 1, color, cgs.shaderWhite );
+			lines * trap_SCR_FontHeight( font ), 0, 0, 1, 1, color, cgs.shaderWhite );
 
-		return ( trap_SCR_strHeight( font ) * ( 2+lines ) );
+		return ( trap_SCR_FontHeight( font ) * ( 2+lines ) );
 	}
 
 	return 0;
@@ -231,7 +231,7 @@ static int SCR_DrawChallengers( const char **ptrptr, int x, int y, int panelWidt
 
 	assert( ptrptr && *ptrptr );
 
-	height = trap_SCR_strHeight( font );
+	height = trap_SCR_FontHeight( font );
 
 	// draw title
 	yoffset = height;
@@ -320,7 +320,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 
 	assert( ptrptr && *ptrptr );
 
-	height = trap_SCR_strHeight( font );
+	height = trap_SCR_FontHeight( font );
 	yoffset = height;
 
 	// draw spectators
@@ -489,7 +489,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		xoffset = ( SCB_CENTERMARGIN * dir );
 
 		width = ( cgs.vidWidth * 0.5 ) - SCB_CENTERMARGIN;
-		height = trap_SCR_strHeight( cgs.fontSystemBig ) + 2;
+		height = trap_SCR_FontHeight( cgs.fontSystemBig ) + 2;
 
 		if( !pass ) {
 			CG_DrawAlignPic( x + xoffset, y + yoffset + SCB_SCORENUMBER_SIZE - height,
@@ -504,12 +504,12 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 
 			xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen(va("%i", team_score)) + ( 16 * cgs.vidHeight / 600 ) ) * dir );
 			trap_SCR_DrawStringWidth( x + xoffset + ( ( SCB_TINYFIELD_PIXELWIDTH + ( 16 * cgs.vidHeight / 600 ) ) * dir ),
-				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_strHeight( cgs.fontSystemBig ) + 1),
+				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_FontHeight( cgs.fontSystemBig ) + 1),
 				align, GS_TeamName( team ), SCB_TEAMNAME_PIXELWIDTH, cgs.fontSystemBig, colorWhite );
 
 			CG_PingColor( team_ping, pingcolor );
 			trap_SCR_DrawStringWidth( x + xoffset,
-				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_strHeight( font ) + 1),
+				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_FontHeight( font ) + 1),
 				align, va( "%i", team_ping ), SCB_TINYFIELD_PIXELWIDTH, font, pingcolor );
 		}
 
@@ -525,7 +525,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
 	titles = cgs.configStrings[CS_SCB_PLAYERTAB_TITLES];
 
-	height = trap_SCR_strHeight( font );
+	height = trap_SCR_FontHeight( font );
 
 	// start from the center again
 	xoffset = CG_HorizontalAlignForWidth( 0, align, panelWidth );
@@ -543,7 +543,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		}
 	}
 
-	yoffset += trap_SCR_strHeight( font );
+	yoffset += trap_SCR_FontHeight( font );
 
 	return yoffset;
 }
@@ -577,7 +577,7 @@ static void SCR_DrawPlayerIcons( struct qfontface_s *font )
 	qsort( scr_playericons, scr_numplayericons, sizeof( scr_playericons[0] ),
 		( int (*)( const void *, const void * ) )SCR_ComparePlayerIcons );
 
-	int height = trap_SCR_strHeight( font );
+	int height = trap_SCR_FontHeight( font );
 	vec4_t color;
 	Vector4Copy( colorWhite, color );
 
@@ -638,7 +638,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 	xoffset = 0;
 	yoffset = 0;
 
-	height = trap_SCR_strHeight( font );
+	height = trap_SCR_FontHeight( font );
 
 	// start from the center again
 	xoffset = CG_HorizontalAlignForWidth( 0, align, panelWidth );
@@ -837,9 +837,9 @@ void CG_DrawScoreboard( void )
 	Q_strupr( title );
 
 	trap_SCR_DrawString( xpos, ypos, ALIGN_CENTER_TOP, title, cgs.fontSystemBig, whiteTransparent );
-	ypos += trap_SCR_strHeight( cgs.fontSystemBig );
+	ypos += trap_SCR_FontHeight( cgs.fontSystemBig );
 	trap_SCR_DrawStringWidth( xpos, ypos, ALIGN_CENTER_TOP, cgs.configStrings[CS_HOSTNAME], cgs.vidWidth*0.75, cgs.fontSystemSmall, whiteTransparent );
-	ypos += trap_SCR_strHeight( cgs.fontSystemSmall );
+	ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
 
 	// calculate the panel width from the layout
 	panelWidth = 0;
@@ -892,7 +892,7 @@ void CG_DrawScoreboard( void )
 	}
 
 	// add the player stats
-	yoffset = maxyoffset + trap_SCR_strHeight( font );
+	yoffset = maxyoffset + trap_SCR_FontHeight( font );
 	yoffset += SCB_DrawPlayerStats( xpos, ypos + yoffset, monofont );
 }
 
