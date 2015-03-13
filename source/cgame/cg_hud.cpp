@@ -140,6 +140,11 @@ static int CG_GetRaceStatValue( const void *parameter )
 	return CG_GetStatValue( parameter );
 }
 
+static int CG_GetLayoutStatFlag( const void *parameter )
+{
+	return ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & (intptr_t)parameter ) ? 1 : 0;
+}
+
 static int CG_GetPOVnum( const void *parameter )
 {
 	return ( cg.predictedPlayerState.POVnum != cgs.playerNum + 1 ) ? cg.predictedPlayerState.POVnum : STAT_NOTSET;
@@ -566,6 +571,7 @@ static const reference_numeric_t cg_numeric_references[] =
 
 	// other
 	{ "CHASING", CG_GetPOVnum, NULL },
+	{ "SPECDEAD", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_SPECDEAD },
 	{ "ARMOR_ITEM", CG_GetArmorItem, NULL },
 	{ "SPEED", CG_GetSpeed, NULL },
 	{ "SPEED_VERTICAL", CG_GetSpeedVertical, NULL },
@@ -583,6 +589,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "VIDWIDTH", CG_GetVidWidth, NULL },
 	{ "VIDHEIGHT", CG_GetVidHeight, NULL },
 	{ "STUNNED", CG_GetStunned, NULL },
+	{ "SCOREBOARD", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_SCOREBOARD },
 
 	{ "POWERUP_QUAD_TIME", CG_GetPowerupTime, (void *)POWERUP_QUAD },
 	{ "POWERUP_WARSHELL_TIME", CG_GetPowerupTime, (void *)POWERUP_SHELL },
