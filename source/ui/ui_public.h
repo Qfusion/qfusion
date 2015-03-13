@@ -21,11 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    49
+#define	UI_API_VERSION	    50
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
 typedef void (*ui_async_stream_done_cb_t)(int status, const char *contentType, void *privatep);
+
+typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
 #include "../cgame/ref.h"
 
@@ -110,9 +112,14 @@ typedef struct
 	void ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color );
 	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color );
 	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
-	size_t ( *SCR_strHeight )( struct qfontface_s *font );
+	size_t ( *SCR_FontSize )( struct qfontface_s *font );
+	size_t ( *SCR_FontHeight )( struct qfontface_s *font );
+	int ( *SCR_FontUnderline )( struct qfontface_s *font, int *thickness );
+	size_t ( *SCR_FontAdvance )( struct qfontface_s *font );
+	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
 	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth );
+	fdrawchar_t ( *SCR_SetDrawCharIntercept )( fdrawchar_t intercept );
 
 	void ( *CL_Quit )( void );
 	void ( *CL_SetKeyDest )( int key_dest );

@@ -280,7 +280,12 @@ void CL_UIModule_Init( void )
 	import.SCR_DrawString = SCR_DrawString;
 	import.SCR_DrawStringWidth = SCR_DrawStringWidth;
 	import.SCR_DrawClampString = SCR_DrawClampString;
-	import.SCR_strHeight = SCR_strHeight;
+	import.SCR_FontSize = SCR_FontSize;
+	import.SCR_FontHeight = SCR_FontHeight;
+	import.SCR_FontUnderline = SCR_FontUnderline;
+	import.SCR_FontAdvance = SCR_FontAdvance;
+	import.SCR_FontXHeight = SCR_FontXHeight;
+	import.SCR_SetDrawCharIntercept = SCR_SetDrawCharIntercept;
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
 

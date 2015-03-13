@@ -246,7 +246,12 @@ static int SCR_VerticalAlignForString( const int y, int align, int height )
 	return ny;
 }
 
-size_t SCR_strHeight( qfontface_t *font )
+size_t SCR_FontSize( qfontface_t *font )
+{
+	return FTLIB_FontSize( font );
+}
+
+size_t SCR_FontHeight( qfontface_t *font )
 {
 	return FTLIB_FontHeight( font );
 }
@@ -264,6 +269,21 @@ size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth )
 int SCR_FontUnderline( qfontface_t *font, int *thickness )
 {
 	return FTLIB_FontUnderline( font, thickness );
+}
+
+size_t SCR_FontAdvance( qfontface_t *font )
+{
+	return FTLIB_FontAdvance( font );
+}
+
+size_t SCR_FontXHeight( qfontface_t *font )
+{
+	return FTLIB_FontXHeight( font );
+}
+
+fdrawchar_t SCR_SetDrawCharIntercept( fdrawchar_t intercept )
+{
+	return FTLIB_SetDrawCharIntercept( intercept );
 }
 
 //===============================================================================

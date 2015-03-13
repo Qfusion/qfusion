@@ -192,8 +192,20 @@ namespace trap
 			UI_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color );
 		}
 
-		inline size_t SCR_strHeight( struct qfontface_s *font ) {
-			return UI_IMPORT.SCR_strHeight( font );
+		inline size_t SCR_FontSize( struct qfontface_s *font ) {
+			return UI_IMPORT.SCR_FontSize( font );
+		}
+
+		inline size_t SCR_FontHeight( struct qfontface_s *font ) {
+			return UI_IMPORT.SCR_FontHeight( font );
+		}
+
+		inline size_t SCR_FontUnderline( struct qfontface_s *font, int *thickness ) {
+			return UI_IMPORT.SCR_FontUnderline( font, thickness );
+		}
+
+		inline size_t SCR_FontXHeight( struct qfontface_s *font ) {
+			return UI_IMPORT.SCR_FontXHeight( font );
 		}
 
 		inline size_t SCR_strWidth( const char *str, struct qfontface_s *font, size_t maxlen ) {
@@ -202,6 +214,14 @@ namespace trap
 
 		inline size_t SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth ) {
 			return UI_IMPORT.SCR_StrlenForWidth( str, font, maxwidth );
+		}
+
+		inline size_t SCR_FontAdvance( struct qfontface_s *font ) {
+			return UI_IMPORT.SCR_FontAdvance( font );
+		}
+
+		inline fdrawchar_t SCR_SetDrawCharIntercept( fdrawchar_t intercept ) {
+			return UI_IMPORT.SCR_SetDrawCharIntercept( intercept );
 		}
 
 		inline void CL_Quit( void ) {

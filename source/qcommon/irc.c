@@ -40,7 +40,7 @@ extern struct qfontface_s *SCR_RegisterFont( const char *name, int style, unsign
 extern void SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color );
 extern size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color );
 extern void SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
-extern size_t SCR_strHeight( struct qfontface_s *font );
+extern size_t SCR_FontHeight( struct qfontface_s *font );
 extern size_t SCR_strWidth( const char *str, struct qfontface_s *font, size_t maxlen );
 extern size_t SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth );
 extern int CL_GetKeyDest( void );
@@ -138,7 +138,7 @@ static void Irc_LoadLibrary( void )
 	import.SCR_DrawString = SCR_DrawString;
 	import.SCR_DrawStringWidth = SCR_DrawStringWidth;
 	import.SCR_DrawRawChar = SCR_DrawRawChar;
-	import.SCR_strHeight = SCR_strHeight;
+	import.SCR_strHeight = SCR_FontHeight;
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
 	import.SCR_GetScreenWidth = SCR_GetScreenWidth;

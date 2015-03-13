@@ -182,7 +182,7 @@ static inline struct shader_s *trap_R_RegisterRawPic( const char *name, int widt
 	return FTLIB_IMPORT.R_RegisterRawPic( name, width, height, data, samples );
 }
 
-static inline void trap_R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, vec4_t color, struct shader_s *shader ) {
+static inline void trap_R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader ) {
 	FTLIB_IMPORT.R_DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
 }
 

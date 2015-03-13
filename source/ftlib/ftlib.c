@@ -433,6 +433,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	qfont->family = family;
 	qfont->size = size;
 	qfont->height = fontHeight;
+	qfont->advance = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + ( 1 << 5 ) ) >> 6 );
 	qfont->glyphYOffset = fontHeight - baseLine;
 	qfont->underlineThickness = ftface->underline_thickness * unitScale + 0.5f;
 	if( qfont->underlineThickness <= 0 ) {

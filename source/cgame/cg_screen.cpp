@@ -226,7 +226,7 @@ static void CG_DrawCenterString( void )
 	{
 		if( len && helpmessage[len-1] == '\n' )
 		{
-			y += trap_SCR_strHeight( font );
+			y += trap_SCR_FontHeight( font );
 		}
 		helpmessage += len;
 	}
@@ -673,7 +673,7 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 	if( touch )
 	{
 		int w = trap_SCR_strWidth( string, font, 0 );
-		int h = trap_SCR_strHeight( font );
+		int h = trap_SCR_FontHeight( font );
 		if( CG_TouchArea( TOUCHAREA_SCREEN_TIMER,
 			CG_HorizontalAlignForWidth( x, align, w ), CG_VerticalAlignForHeight( y, align, h ),
 			w, h, CG_ClockUpFunc ) >= 0 )
@@ -830,7 +830,7 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color )
 		{
 			int x, y;
 			int barwidth = trap_SCR_strWidth( "_", font, 0 ) * cg_showPlayerNames_barWidth->integer; // size of 8 characters
-			int barheight = trap_SCR_strHeight( font ) * 0.25; // quarter of a character height
+			int barheight = trap_SCR_FontHeight( font ) * 0.25; // quarter of a character height
 			int barseparator = barheight * 0.333;
 
 			alphagreen[3] = alphared[3] = alphayellow[3] = alphamagenta[3] = alphagrey[3] = tmpcolor[3];
@@ -968,7 +968,7 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 	if( !cg.teaminfo || !strlen( cg.teaminfo ) )
 		return;
 
-	height = trap_SCR_strHeight( font );
+	height = trap_SCR_FontHeight( font );
 
 	// find longest line
 	ptr = cg.teaminfo;
@@ -1088,7 +1088,7 @@ void CG_DrawRSpeeds( int x, int y, int align, struct qfontface_s *font, vec4_t c
 		int height;
 		const char *p, *start, *end;
 
-		height = trap_SCR_strHeight( font );
+		height = trap_SCR_FontHeight( font );
 
 		p = start = msg;
 		do
