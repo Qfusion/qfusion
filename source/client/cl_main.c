@@ -2113,7 +2113,7 @@ static void CL_InitLocal( void )
 	cl_downloads =		Cvar_Get( "cl_downloads", "1", CVAR_ARCHIVE );
 	cl_downloads_from_web =	Cvar_Get( "cl_downloads_from_web", "1", CVAR_ARCHIVE );
 	cl_downloads_from_web_timeout = Cvar_Get( "cl_downloads_from_web_timeout", "600", CVAR_ARCHIVE );
-	cl_download_allow_modules = Cvar_Get( "cl_download_allow_modules_" APP_VERSION_STR_MAJORMINOR, "1", CVAR_ARCHIVE );
+	cl_download_allow_modules = Cvar_Get( "cl_download_allow_modules_" APP_VERSION_STR_MAJORMINOR, "0", CVAR_ARCHIVE );
 	cl_checkForUpdate =	Cvar_Get( "cl_checkForUpdate", "1", CVAR_ARCHIVE );
 
 	//
