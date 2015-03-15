@@ -1797,8 +1797,9 @@ void R_BeginAviDemo( void )
 void R_WriteAviFrame( int frame, bool scissor )
 {
 	int x, y, w, h;
-	int checkname_size;
 	int quality;
+	const char *writedir, *gamedir;
+	size_t checkname_size;
 	char *checkname;
 	const char *extension;
 
@@ -1829,9 +1830,11 @@ void R_WriteAviFrame( int frame, bool scissor )
 		quality = 100;
 	}
 
-	checkname_size = sizeof( char ) * ( strlen( "avi/avi" ) + 6 + strlen( extension ) + 1 );
+	writedir = ri.FS_WriteDirectory();
+	gamedir = ri.FS_GameDirectory();
+	checkname_size = strlen( writedir ) + 1 + strlen( gamedir ) + strlen( "/avi/avi" ) + 6 + strlen( extension ) + 1;
 	checkname = alloca( checkname_size );
-	Q_snprintfz( checkname, checkname_size, "avi/avi%06i", frame );
+	Q_snprintfz( checkname, checkname_size, "%s/%s/avi/avi%06i", writedir, gamedir, frame );
 	COM_DefaultExtension( checkname, extension, checkname_size );
 
 	R_ScreenShot( checkname, x, y, w, h, quality, false, false, false, true );

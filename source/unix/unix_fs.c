@@ -256,6 +256,71 @@ const char *Sys_FS_GetSecureDirectory( void )
 }
 
 /*
+* Sys_FS_GetMediaDirectory
+*/
+const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type )
+{
+#ifdef __ANDROID__
+	static char paths[FS_MEDIA_NUM_TYPES][PATH_MAX];
+	static int pathsChecked;
+	const char *publicDir;
+	JNIEnv *env;
+	jclass envClass;
+	jmethodID getPublicDirectory;
+	jstring js;
+	jobject file;
+	jclass fileClass;
+	jmethodID getAbsolutePath;
+	const char *pathUTF;
+
+	if( paths[type][0] )
+		return paths[type];
+
+	if( pathsChecked & ( 1 << type ) )
+		return NULL;
+
+	switch( type )
+	{
+	case FS_MEDIA_IMAGES:
+		publicDir = "Pictures";
+		break;
+	default:
+		return NULL;
+	}
+
+	pathsChecked |= 1 << type;
+
+	env = Sys_Android_GetJNIEnv();
+
+	envClass = (*env)->FindClass( env, "android/os/Environment" );
+	getPublicDirectory = (*env)->GetStaticMethodID( env, envClass, "getExternalStoragePublicDirectory",
+		"(Ljava/lang/String;)Ljava/io/File;" );
+	js = (*env)->NewStringUTF( env, publicDir );
+	file = (*env)->CallStaticObjectMethod( env, envClass, getPublicDirectory, js );
+	(*env)->DeleteLocalRef( env, js );
+	(*env)->DeleteLocalRef( env, envClass );
+	if( !file )
+		return NULL;
+
+	fileClass = (*env)->FindClass( env, "java/io/File" );
+	getAbsolutePath = (*env)->GetMethodID( env, fileClass, "getAbsolutePath", "()Ljava/lang/String;" );
+	js = (*env)->CallObjectMethod( env, file, getAbsolutePath );
+	(*env)->DeleteLocalRef( env, file );
+	(*env)->DeleteLocalRef( env, fileClass );
+
+	pathUTF = (*env)->GetStringUTFChars( env, js, NULL );
+	Q_strncpyz( paths[type], pathUTF, sizeof( paths[0] ) );
+	(*env)->ReleaseStringUTFChars( env, js, pathUTF );
+	(*env)->DeleteLocalRef( env, js );
+
+	return paths[type];
+
+#else
+	return NULL;
+#endif
+}
+
+/*
 * Sys_FS_LockFile
 */
 void *Sys_FS_LockFile( const char *path )
@@ -299,4 +364,77 @@ time_t Sys_FS_FileMTime( const char *filename )
 		return -1;
 	}
 	return buffer.st_mtime;
+}
+
+/*
+* Sys_FS_AddFileToMedia
+*/
+void Sys_FS_AddFileToMedia( const char *filename )
+{
+#ifdef __ANDROID__
+	ANativeActivity *activity = sys_android_app->activity;
+	JNIEnv *env = Sys_Android_GetJNIEnv();
+	char path[PATH_MAX];
+	jobject file, uri, intent;
+
+	if( !realpath( filename, path ) )
+		return;
+
+	{
+		jclass fileClass;
+		jmethodID ctor;
+		jstring pathname;
+
+		fileClass = (*env)->FindClass( env, "java/io/File" );
+		ctor = (*env)->GetMethodID( env, fileClass, "<init>", "(Ljava/lang/String;)V" );
+		pathname = (*env)->NewStringUTF( env, path );
+		file = (*env)->NewObject( env, fileClass, ctor, pathname );
+		(*env)->DeleteLocalRef( env, pathname );
+		(*env)->DeleteLocalRef( env, fileClass );
+	}
+
+	if( !file )
+		return;
+
+	{
+		jclass uriClass;
+		jmethodID fromFile;
+
+		uriClass = (*env)->FindClass( env, "android/net/Uri" );
+		fromFile = (*env)->GetStaticMethodID( env, uriClass, "fromFile", "(Ljava/io/File;)Landroid/net/Uri;" );
+		uri = (*env)->CallStaticObjectMethod( env, uriClass, fromFile, file );
+		(*env)->DeleteLocalRef( env, file );
+		(*env)->DeleteLocalRef( env, uriClass );
+	}
+
+	if( !uri )
+		return;
+
+	{
+		jclass intentClass;
+		jmethodID ctor, setData;
+		jstring action;
+
+		intentClass = (*env)->FindClass( env, "android/content/Intent" );
+
+		ctor = (*env)->GetMethodID( env, intentClass, "<init>", "(Ljava/lang/String;)V" );
+		action = (*env)->NewStringUTF( env, "android.intent.action.MEDIA_SCANNER_SCAN_FILE" );
+		intent = (*env)->NewObject( env, intentClass, ctor, action );
+		(*env)->DeleteLocalRef( env, action );
+
+		setData = (*env)->GetMethodID( env, intentClass, "setData", "(Landroid/net/Uri;)Landroid/content/Intent;" );
+		(*env)->CallObjectMethod( env, intent, setData, uri );
+		(*env)->DeleteLocalRef( env, uri );
+
+		(*env)->DeleteLocalRef( env, intentClass );
+	}
+
+	{
+		jmethodID sendBroadcast;
+
+		sendBroadcast = (*env)->GetMethodID( env, sys_android_activityClass, "sendBroadcast", "(Landroid/content/Intent;)V" );
+		(*env)->CallVoidMethod( env, activity->clazz, sendBroadcast, intent );
+		(*env)->DeleteLocalRef( env, intent );
+	}
+#endif
 }

@@ -3054,6 +3054,16 @@ const char *FS_SecureDirectory( void )
 }
 
 /*
+* FS_MediaDirectory
+*
+* Returns the external directory for media files
+*/
+const char *FS_MediaDirectory( fs_mediatype_t type )
+{
+	return Sys_FS_GetMediaDirectory( type );
+}
+
+/*
 * FS_Path_f
 */
 static void FS_Path_f( void )
@@ -3717,6 +3727,14 @@ int FS_RemoveNotifications( int bitmask )
 {
 	fs_notifications &= ~bitmask;
 	return fs_notifications;
+}
+
+/*
+* FS_AddFileToMedia
+*/
+void FS_AddFileToMedia( const char *filename )
+{
+	Sys_FS_AddFileToMedia( filename );
 }
 
 /*

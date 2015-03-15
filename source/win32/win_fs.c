@@ -224,6 +224,15 @@ const char *Sys_FS_GetSecureDirectory( void )
 }
 
 /*
+* Sys_FS_GetMediaDirectory
+*/
+const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type )
+{
+	// TODO: Libraries / My Pictures?
+	return NULL;
+}
+
+/*
 * Sys_FS_LockFile
 */
 void *Sys_FS_LockFile( const char *path )
@@ -290,4 +299,11 @@ time_t Sys_FS_FileMTime( const char *filename )
 	CloseHandle( hFile );
 
 	return time;
+}
+
+/*
+* Sys_FS_AddFileToMedia
+*/
+void Sys_FS_AddFileToMedia( const char *filename )
+{
 }

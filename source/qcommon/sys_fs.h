@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 const char *Sys_FS_GetHomeDirectory( void );
 const char *Sys_FS_GetCacheDirectory( void );
 const char *Sys_FS_GetSecureDirectory( void );
+const char *Sys_FS_GetMediaDirectory( fs_mediatype_t type );
 
 bool    Sys_FS_RemoveDirectory( const char *path );
 bool    Sys_FS_CreateDirectory( const char *path );
@@ -36,6 +37,8 @@ void		*Sys_FS_LockFile( const char *path );
 void	    Sys_FS_UnlockFile( void *handle );
 
 time_t		Sys_FS_FileMTime( const char *filename );
+
+void		Sys_FS_AddFileToMedia( const char *filename );
 
 // virtual storage of pack files, such as .obb on Android
 void		Sys_VFS_Init( void );
