@@ -1802,6 +1802,9 @@ void R_WriteAviFrame( int frame, bool scissor )
 	char *checkname;
 	const char *extension;
 
+	if( !R_ScreenEnabled() )
+		return;
+
 	if( scissor )
 	{
 		x = rsc.refdef.x;
@@ -1827,13 +1830,11 @@ void R_WriteAviFrame( int frame, bool scissor )
 	}
 
 	checkname_size = sizeof( char ) * ( strlen( "avi/avi" ) + 6 + strlen( extension ) + 1 );
-	checkname = malloc( checkname_size );
+	checkname = alloca( checkname_size );
 	Q_snprintfz( checkname, checkname_size, "avi/avi%06i", frame );
 	COM_DefaultExtension( checkname, extension, checkname_size );
 
 	R_ScreenShot( checkname, x, y, w, h, quality, false, false, false, true );
-
-	free( checkname );
 }
 
 /*
