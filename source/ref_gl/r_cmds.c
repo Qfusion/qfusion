@@ -33,6 +33,9 @@ void R_ScreenShot_f( void )
 	size_t checkname_size = 0, gamepath_offset = 0;
 	int quality;
 
+	if( !R_ScreenEnabled() )
+		return;
+
 	name = ri.Cmd_Argv( 1 );
 	if( r_screenshot_jpeg->integer ) {
 		extension = ".jpg";
@@ -46,7 +49,7 @@ void R_ScreenShot_f( void )
 	if( name && name[0] && Q_stricmp(name, "*") )
 	{
 		checkname_size = sizeof( char ) * ( strlen( "screenshots/" ) + strlen( name ) + strlen( extension ) + 1 );
-		checkname = malloc( checkname_size );
+		checkname = alloca( checkname_size );
 		Q_snprintfz( checkname, checkname_size, "screenshots/%s", name );
 
 		COM_SanitizeFilePath( checkname );
@@ -55,7 +58,6 @@ void R_ScreenShot_f( void )
 		if( !COM_ValidateRelativeFilename( checkname ) )
 		{
 			Com_Printf( "Invalid filename\n" );
-			free( checkname );
 			return;
 		}
 	}
@@ -98,7 +100,7 @@ void R_ScreenShot_f( void )
 		checkname_size =
 			sizeof( char ) * ( gamepath_offset + strlen( "screenshots/" ) + 
 			strlen( timestamp_str ) + 5 + 1 + strlen( extension ) + 1 );
-		checkname = malloc( checkname_size );
+		checkname = alloca( checkname_size );
 
 		// if the string format is a constant or file already exists then iterate
 		if( !*timestamp_str || !strcmp( timestamp_str, r_screenshot_fmtstr->string ) )
@@ -140,7 +142,6 @@ void R_ScreenShot_f( void )
 		if( lastIndex == maxFiles )
 		{
 			Com_Printf( "Couldn't create a file\n" );
-			free( checkname );
 			return;
 		}
 
@@ -151,8 +152,6 @@ void R_ScreenShot_f( void )
 		0, 0, glConfig.width, glConfig.height, quality, 
 		false, false, false, 
 		ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? true : false );
-
-	free( checkname );
 }
 
 /*
@@ -177,7 +176,7 @@ void R_EnvShot_f( void )
 		{ "nz", { 90, 180, 0 }, IT_FLIPDIAGONAL }
 	};
 
-	if( !rsh.worldModel )
+	if( !R_ScreenEnabled() || !rsh.worldModel )
 		return;
 
 	if( ri.Cmd_Argc() != 3 )
@@ -196,7 +195,7 @@ void R_EnvShot_f( void )
 
 	checkname_size = sizeof( char ) * ( strlen( "env/" ) + 
 		strlen( ri.Cmd_Argv( 1 ) ) + 1 + strlen( cubemapShots[0].suf ) + 4 + 1 );
-	checkname = malloc( checkname_size );
+	checkname = alloca( checkname_size );
 
 	fd = rsc.refdef;
 	fd.time = 0;
@@ -233,8 +232,6 @@ void R_EnvShot_f( void )
 
 	// render non-bmodel entities again
 	rn.renderFlags &= ~RF_CUBEMAPVIEW;
-
-	free( checkname );
 }
 
 /*
