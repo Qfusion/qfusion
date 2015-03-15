@@ -502,7 +502,7 @@ bool WriteTGA( const char *name, r_imginfo_t *info, int quality )
 	uint8_t header[18], *buffer;
 	bool bgr;
 
-	if( ri.FS_FOpenFile( name, &file, FS_WRITE ) == -1 )
+	if( ri.FS_FOpenAbsoluteFile( name, &file, FS_WRITE ) == -1 )
 	{
 		Com_Printf( "WriteTGA: Couldn't create %s\n", name );
 		return false;
@@ -725,7 +725,7 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
 	int offset, w3;
 	int file;
 
-	if( ri.FS_FOpenFile( name, &file, FS_WRITE ) == -1 ) {
+	if( ri.FS_FOpenAbsoluteFile( name, &file, FS_WRITE ) == -1 ) {
 		Com_Printf( "WriteJPG: Couldn't create %s\n", name );
 		return false;
 	}

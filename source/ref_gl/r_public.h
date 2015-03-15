@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 11
+#define REF_API_VERSION 12
 
 struct mempool_s;
 struct cinematics_s;
@@ -84,6 +84,8 @@ typedef struct
 	bool ( *FS_RemoveDirectory )( const char *dirname );
 	const char * ( *FS_GameDirectory )( void );
 	const char * ( *FS_WriteDirectory )( void );
+	const char * ( *FS_MediaDirectory )( fs_mediatype_t type );
+	void ( *FS_AddFileToMedia )( const char *filename );
 
 	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, bool loop, bool *yuv, float *framerate );
 	bool ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
@@ -203,7 +205,7 @@ typedef struct
 
 	void		( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 
-	bool	( *ScreenEnabled )( void );
+	bool		( *ScreenEnabled )( void );
 	void		( *BeginFrame )( float cameraSeparation, bool forceClear, bool forceVsync );
 	void		( *EndFrame )( void );
 	const char *( *SpeedsMessage )( char *out, size_t size );

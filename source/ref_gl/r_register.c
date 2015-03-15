@@ -1245,7 +1245,7 @@ rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int s
 
 	r_verbose = verbose;
 
-	if( !applicationName ) applicationName = "Application";
+	if( !applicationName ) applicationName = "Qfusion";
 	if( !screenshotPrefix ) screenshotPrefix = "";
 
 	Com_Printf( "\n----- R_Init -----\n" );

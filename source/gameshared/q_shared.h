@@ -360,6 +360,13 @@ void Com_Error( com_error_code_t code, const char *format, ... );
 #define FS_SEEK_SET			1
 #define FS_SEEK_END			2
 
+typedef enum
+{
+	FS_MEDIA_IMAGES,
+
+	FS_MEDIA_NUM_TYPES
+} fs_mediatype_t;
+
 //==============================================================
 
 // connection state of the client in the server

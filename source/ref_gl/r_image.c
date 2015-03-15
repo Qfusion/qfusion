@@ -2141,12 +2141,6 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	if( !R_ScreenEnabled() )
 		return;
 
-	if( !COM_ValidateRelativeFilename( filename ) )
-	{
-		Com_Printf( "R_ScreenShot: Invalid filename\n" );
-		return;
-	}
-
 	extension = COM_FileExtension( filename );
 	if( !extension )
 	{
