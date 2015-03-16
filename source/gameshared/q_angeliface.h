@@ -21,11 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __Q_ANGELIFACE_H__
 #define __Q_ANGELIFACE_H__
 
-#if defined ( __APPLE__ )
-#include "angelscript/angelscript.h"
-#else
 #include "angelscript.h"
-#endif
 
 // public interfaces
 
