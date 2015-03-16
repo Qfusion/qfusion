@@ -66,7 +66,6 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	ui_basepath = trap::Cvar_Get( "ui_basepath", basePath, CVAR_ARCHIVE );
 	ui_cursor = trap::Cvar_Get( "ui_cursor", "cursors/default.rml", CVAR_DEVELOPER );
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
-	ui_fallbackFont = trap::Cvar_Get( "ui_fallbackFont", "fonts/fallback/DroidSansFallback.ttf", CVAR_ARCHIVE );
 
 	// temp fix for missing background on start.. populate refreshState with some nice values
 	refreshState.clientState = CA_UNINITIALIZED;
@@ -257,7 +256,7 @@ void UI_Main::loadCursor( void )
 bool UI_Main::initRocket( void )
 {
 	// this may throw runtime_error.. ok pass it back up
-	rocketModule = __new__(RocketModule)( refreshState.width, refreshState.height, refreshState.pixelRatio, ui_fallbackFont->string );
+	rocketModule = __new__(RocketModule)( refreshState.width, refreshState.height, refreshState.pixelRatio );
 	return true;
 }
 

@@ -53,7 +53,7 @@ public:
 
 //==================================================
 
-RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio, const String &fallbackFontFace )
+RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	: rocketInitialized( false ),
 	// pointers
 	systemInterface(0), fsInterface(0), renderInterface(0), context(0)
@@ -65,9 +65,12 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio, const
 	Rocket::Core::SetSystemInterface( systemInterface );
 	fsInterface = __new__( UI_FileInterface )();
 	Rocket::Core::SetFileInterface( fsInterface );
+	fontProviderInterface = __new__( UI_FontProviderInterface )( renderInterface );
+	Rocket::Core::SetFontProviderInterface( fontProviderInterface );
 
 	// TODO: figure out why renderinterface has +1 refcount
 	renderInterface->AddReference();
+	fontProviderInterface->AddReference();
 
 	rocketInitialized = Rocket::Core::Initialise();
 	if( !rocketInitialized )
@@ -75,12 +78,6 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio, const
 
 	// initialize the controls plugin
 	Rocket::Controls::Initialise();
-
-	// fonts can (have to?) be loaded before context creation
-	preloadFonts( ".ttf" );
-	preloadFonts( ".otf" );
-
-	Rocket::Core::FontDatabase::SetBackupFace( fallbackFontFace );
 
 	// Create our context
 	context = Rocket::Core::CreateContext( trap::Cvar_String( "gamename" ), Vector2i( vidWidth, vidHeight ) );
@@ -94,6 +91,8 @@ void unref_object( T *obj ) {
 
 RocketModule::~RocketModule()
 {
+	if( fontProviderInterface )
+		fontProviderInterface->RemoveReference();
 	if( context )
 		context->RemoveReference();
 	context = 0;
@@ -102,6 +101,7 @@ RocketModule::~RocketModule()
 		Rocket::Core::Shutdown();
 	rocketInitialized = false;
 
+	__SAFE_DELETE_NULLIFY( fontProviderInterface );
 	__SAFE_DELETE_NULLIFY( fsInterface );
 	__SAFE_DELETE_NULLIFY( systemInterface );
 	__SAFE_DELETE_NULLIFY( renderInterface );
@@ -360,43 +360,6 @@ void RocketModule::unregisterCustoms()
 }
 
 //==================================================
-
-// preload all fonts in fonts/ directory with extension ext
-void RocketModule::preloadFonts( const char *ext )
-{
-	int i, j, numFonts;
-	char listbuf[1024], scratch[MAX_QPATH + 6];
-	char *ptr;
-
-	numFonts = trap::FS_GetFileList( "fonts", ext, NULL, 0, 0, 0 );
-	if( !numFonts )
-	{
-		Com_Printf("Warning: no fonts found for preloading!\n" );
-		return;
-	}
-
-	i = 0;
-	do
-	{
-		j = trap::FS_GetFileList( "fonts", ext, listbuf, sizeof( listbuf ), i, numFonts );
-
-		if( !j )
-		{
-			i++; // can happen if the filename is too long to fit into the buffer or we're done
-			continue;
-		}
-		i += j;
-
-		for( ptr = listbuf; j > 0; j--, ptr += strlen( ptr ) + 1 )
-		{
-			strcpy( scratch, "fonts/" );
-			Q_strncatz( scratch, ptr, sizeof( scratch ) );
-			Rocket::Core::FontDatabase::LoadFontFace( scratch );
-
-			// Com_Printf("** Preloaded font %s\n", scratch );
-		}
-	} while( i < numFonts );
-}
 
 void RocketModule::clearShaderCache( void )
 {
