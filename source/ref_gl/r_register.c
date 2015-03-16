@@ -504,10 +504,10 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, rgb8_rgba8, true, false, NULL )
 	,GL_EXTENSION( OES, texture_3D, false, false, &gl_ext_texture_3D_OES_funcs )
 	,GL_EXTENSION( EXT, texture_array, false, false, &gl_ext_texture_3D_OES_funcs )
+	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
-	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
 	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 
 #ifdef GLX_VERSION
