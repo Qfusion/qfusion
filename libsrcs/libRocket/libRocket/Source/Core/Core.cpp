@@ -44,6 +44,9 @@ static RenderInterface* render_interface = NULL;
 static SystemInterface* system_interface = NULL;
 // Rocket's file I/O interface.
 FileInterface* file_interface =  NULL;
+/// Rocket's font provider.
+static FontProviderInterface *fontprovider_interface = NULL;
+
 #ifndef ROCKET_NO_FILE_INTERFACE_DEFAULT
 static FileInterfaceDefault file_interface_default;
 #endif
@@ -175,6 +178,18 @@ void SetSystemInterface(SystemInterface* _system_interface)
 SystemInterface* GetSystemInterface()
 {
 	return system_interface;
+}
+
+// Sets the interface through which all font subsystem requests are made
+void SetFontProviderInterface(FontProviderInterface* _fontprovider_interface)
+{
+	fontprovider_interface = _fontprovider_interface;
+}
+
+// Returns Rocket's font provider interface.
+FontProviderInterface* GetFontProviderInterface()
+{
+	return fontprovider_interface;
 }
 
 // Sets the interface through which all rendering requests are made.

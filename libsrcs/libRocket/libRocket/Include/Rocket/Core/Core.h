@@ -53,7 +53,7 @@
 #include "Font.h"
 #include "FontDatabase.h"
 #include "FontEffect.h"
-#include "FontGlyph.h"
+#include "FontProviderInterface.h"
 #include "Geometry.h"
 #include "GeometryUtilities.h"
 #include "Input.h"
@@ -97,11 +97,18 @@ ROCKETCORE_API void Shutdown();
 ROCKETCORE_API String GetVersion();
 
 /// Sets the interface through which all system requests are made. This must be called before Initialise().
-/// @param[in] system_interface The application-specified logging interface.
+/// @param[in] system_interface The application-specified system interface.
 ROCKETCORE_API void SetSystemInterface(SystemInterface* system_interface);
 /// Returns Rocket's system interface.
 /// @return Rocket's system interface.
 ROCKETCORE_API SystemInterface* GetSystemInterface();
+
+/// Sets the interface through which all font subsystem requests are made. This must be called before Initialise().
+/// @param[in] fontprovider_interface The application-specified font provider.
+ROCKETCORE_API void SetFontProviderInterface(FontProviderInterface* fontprovider_interface);
+/// Returns Rocket's system interface.
+/// @return Rocket's system interface.
+ROCKETCORE_API FontProviderInterface* GetFontProviderInterface();
 
 /// Sets the interface through which all rendering requests are made. This is not required to be called, but if it is
 /// it must be called before Initialise(). If no render interface is specified, then all contexts must have a custom

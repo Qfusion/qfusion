@@ -126,27 +126,7 @@ bool TextureResource::Load(RenderInterface* render_interface) const
 		int samples = 4;
 
 		// Find the generation protocol and generate the data accordingly.
-		String protocol = source.Substring(1, source.Find("::") - 1);
-		if (protocol == "font")
-		{
-			// The requested texture is a font layer.
-			delete_data = true;
-
-			FontFaceHandle* handle;
-			FontEffect* layer_id;
-			int layout_id;
-			int texture_id;
-
-			if (sscanf(source.CString(), "?font::%p/%p/%d/%d", &handle, &layer_id, &layout_id, &texture_id) == 4)
-			{
-				handle->GenerateLayerTexture(data,
-											 dimensions,
-											 samples,
-											 layer_id,
-											 layout_id,
-											 texture_id);
-			}
-		}
+		//String protocol = source.Substring(1, source.Find("::") - 1);
 
 		// If texture data was generated, great! Otherwise, fallback to the LoadTexture() code and
 		// hope the client knows what the hell to do with the question mark in their file name.

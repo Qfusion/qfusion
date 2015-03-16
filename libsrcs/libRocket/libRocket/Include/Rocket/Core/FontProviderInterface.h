@@ -14,7 +14,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,70 +25,65 @@
  *
  */
 
-#ifndef ROCKETCOREFONTFACEHANDLE_H
-#define ROCKETCOREFONTFACEHANDLE_H
+#ifndef ROCKETCOREFONTPROVIDERINTERFACE_H
+#define ROCKETCOREFONTPROVIDERINTERFACE_H
 
-// HACK: Include cstdint here, for some reasons it is enough for the
-// whole librocket code.
-#include <cstdint>
-
-#include <Rocket/Core/ReferenceCountable.h>
-#include <Rocket/Core/UnicodeRange.h>
-#include <Rocket/Core/Font.h>
-#include <Rocket/Core/FontEffect.h>
-#include <Rocket/Core/Geometry.h>
-#include <Rocket/Core/String.h>
-#include <Rocket/Core/Texture.h>
+#include "Font.h"
+#include "ReferenceCountable.h"
+#include "String.h"
+#include "Header.h"
+#include "Types.h"
+#include "WString.h"
+#include "Geometry.h"
 
 namespace Rocket {
 namespace Core {
 
-/**
-	@author Peter Curry
- */
-
-class FontFaceHandle : public ReferenceCountable
+class ROCKETCORE_API FontProviderInterface : public ReferenceCountable
 {
 public:
-	FontFaceHandle();
-	virtual ~FontFaceHandle();
+	FontProviderInterface();
+	virtual ~FontProviderInterface();
 
-	/// Initialises the handle so it is able to render text.
-	/// @param[in] ft_face The font provider that this handle is rendering.
-	/// @param[in] font_handle The handle coming from the font provider
-	/// @param[in] charset The comma-separated list of unicode ranges this handle must support.
-	/// @param[in] size The size, in points, of the face this handle should render at.
-	/// @return True if the handle initialised successfully and is ready for rendering, false if an error occured.
-	bool Initialise(FontProviderInterface *font_provider, FontHandle font_handle);
+	/// Returns a handle to a font face that can be used to position and render text. This will return the closest match
+	/// it can find, but in the event a font family is requested that does not exist, NULL will be returned instead of a
+	/// valid handle.
+	/// @param[in] family The family of the desired font handle.
+	/// @param[in] charset The set of characters required in the font face, as a comma-separated list of unicode ranges.
+	/// @param[in] style The style of the desired font handle.
+	/// @param[in] weight The weight of the desired font handle.
+	/// @param[in] size The size of desired handle, in points.
+	/// @return A valid handle if a matching (or closely matching) font face was found, NULL otherwise.
+	virtual FontHandle GetFontFaceHandle(const String& family, const String& charset, Font::Style style, Font::Weight weight, int size);
 
 	/// Returns the average advance of all glyphs in this font face.
 	/// @return An approximate width of the characters in this font face.
-	int GetCharacterWidth() const;
+	virtual int GetCharacterWidth(FontHandle) const;
 
 	/// Returns the point size of this font face.
 	/// @return The face's point size.
-	int GetSize() const;
+	virtual int GetSize(FontHandle) const;
 	/// Returns the pixel height of a lower-case x in this font face.
 	/// @return The height of a lower-case x.
-	int GetXHeight() const;
+	virtual int GetXHeight(FontHandle) const;
 	/// Returns the default height between this font face's baselines.
 	/// @return The default line height.
-	int GetLineHeight() const;
+	virtual int GetLineHeight(FontHandle) const;
 
 	/// Returns the font's baseline, as a pixel offset from the bottom of the font.
 	/// @return The font's baseline.
-	int GetBaseline() const;
+	virtual int GetBaseline(FontHandle) const;
+
+	/// Returns the font's underline, as a pixel offset from the bottom of the font.
+	/// @return The font's underline.
+	/// @return The font's underline thickness.
+	virtual int GetUnderline(FontHandle, int *thickness) const;
 
 	/// Returns the width a string will take up if rendered with this handle.
 	/// @param[in] string The string to measure.
 	/// @param[in] prior_character The optionally-specified character that immediately precedes the string. This may have an impact on the string width due to kerning.
 	/// @return The width, in pixels, this string will occupy if rendered with this handle.
-	int GetStringWidth(const WString& string, word prior_character = 0);
-
-	/// Generates, if required, the layer configuration for a given array of font effects.
-	/// @param[in] font_effects The list of font effects to generate the configuration for.
-	/// @return The index to use when generating geometry using this configuration.
-	int GenerateLayerConfiguration(FontEffectMap& font_effects);
+	virtual int GetStringWidth(FontHandle, const WString& string, word prior_character = 0);
 
 	/// Generates the geometry required to render a single line of text.
 	/// @param[out] geometry An array of geometries to generate the geometry into.
@@ -96,22 +91,13 @@ public:
 	/// @param[in] position The position of the baseline of the first character to render.
 	/// @param[in] colour The colour to render the text.
 	/// @return The width, in pixels, of the string geometry.
-	int GenerateString(GeometryList& geometry, const WString& string, const Vector2f& position, const Colourb& colour, int layer_configuration = 0) const;
-	/// Generates the geometry required to render a line above, below or through a line of text.
-	/// @param[out] geometry The geometry to append the newly created geometry into.
-	/// @param[in] position The position of the baseline of the lined text.
-	/// @param[in] width The width of the string to line.
-	/// @param[in] height The height to render the line at.
-	/// @param[in] colour The colour to draw the line in.
-	void GenerateLine(Geometry* geometry, const Vector2f& position, int width, Font::Line height, const Colourb& colour) const;
+	virtual int GenerateString(FontHandle, GeometryList& geometry, const WString& string, const Vector2f& position, const Colourb& colour) const;
+
+	/// Called when this interface is no longer required.
+	virtual void Release();
 
 protected:
-	/// Destroys the handle.
 	virtual void OnReferenceDeactivate();
-
-private:
-	FontHandle font_handle;
-	FontProviderInterface *font_provider;
 };
 
 }

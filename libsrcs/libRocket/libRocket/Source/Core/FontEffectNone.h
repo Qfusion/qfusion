@@ -44,13 +44,6 @@ class FontEffectNone : public FontEffect
 public:
 	FontEffectNone();
 	virtual ~FontEffectNone();
-
-	/// Returns false.
-	/// @return False.
-	virtual bool GetGlyphSize(Vector2i& origin, Vector2i& dimensions, const FontGlyph& glyph) const;
-
-	/// Ignores all calls.
-	virtual void GenerateGlyphTexture(byte* destination_data, const Vector2i& destination_dimensions, int destination_stride, const FontGlyph& glyph) const;
 };
 
 }
