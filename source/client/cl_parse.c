@@ -330,7 +330,10 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	int size, alloc_size;
 	unsigned checksum;
 	bool allow_localhttpdownload;
+	bool modules_download = false;
+	const char *baseurl;
 	download_list_t	*dl;
+
 	// ignore download commands coming from demo files
 	if( cls.demo.playing )		
 		return;
@@ -428,7 +431,9 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 			return;
 		}
 
-		if( !Q_strnicmp( COM_FileBase( filename ), "modules", strlen( "modules" ) ) )
+		modules_download = !Q_strnicmp( COM_FileBase( filename ), "modules", strlen( "modules" ) );
+
+		if( modules_download )
 		{
 			if( !CL_CanDownloadModules() )
 			{
@@ -499,9 +504,19 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		cls.download.list = dl;
 	}
 
-	if( cl_downloads_from_web->integer && allow_localhttpdownload && url && url[0] != 0 ) {
+	baseurl = cls.httpbaseurl;
+	if( modules_download ) {
+		baseurl = APP_UPDATE_URL APP_SERVER_UPDATE_DIRECTORY;
+		allow_localhttpdownload = false;
+	}
+
+	if( modules_download ) {
 		cls.download.web = true;
-		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, cls.httpbaseurl, url );
+		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, baseurl, filename );
+	}
+	else if( cl_downloads_from_web->integer && allow_localhttpdownload && url && url[0] != 0 ) {
+		cls.download.web = true;
+		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, baseurl, url );
 	}
 	else if( cl_downloads_from_web->integer && url && url[0] != 0 ) {
 		cls.download.web = true;
@@ -533,19 +548,24 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		const char *headers[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 		alloc_size = strlen( APP_URI_SCHEME ) + strlen( NET_AddressToString( &cls.serveraddress ) ) + 1;
-		referer = Mem_ZoneMalloc( alloc_size );
+		referer = alloca( alloc_size );
 		Q_snprintfz( referer, alloc_size, APP_URI_SCHEME "%s", NET_AddressToString( &cls.serveraddress ) );
 		Q_strlwr( referer );
 
-		if( allow_localhttpdownload ) {
-			alloc_size = strlen( cls.httpbaseurl ) + 1 + strlen( url ) + 1;
-			fullurl = Mem_ZoneMalloc( alloc_size );
-			Q_snprintfz( fullurl, alloc_size, "%s/%s", cls.httpbaseurl, url );
+		if( modules_download ) {
+			alloc_size = strlen( baseurl ) + 1 + strlen( filename ) + 1;
+			fullurl = alloca( alloc_size );
+			Q_snprintfz( fullurl, alloc_size, "%s/%s", baseurl, filename );
+		}
+		else if( allow_localhttpdownload ) {
+			alloc_size = strlen( baseurl ) + 1 + strlen( url ) + 1;
+			fullurl = alloca( alloc_size );
+			Q_snprintfz( fullurl, alloc_size, "%s/%s", baseurl, url );
 		}
 		else {
 			size_t url_len = strlen( url );
 			alloc_size = url_len + 1 + strlen( filename ) * 3 + 1;
-			fullurl = Mem_ZoneMalloc( alloc_size );
+			fullurl = alloca( alloc_size );
 			Q_snprintfz( fullurl, alloc_size, "%s/", url );
 			Q_urlencode_unsafechars( filename, fullurl + url_len + 1, alloc_size - url_len - 1 );
 		}
@@ -558,8 +578,6 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		CL_AsyncStreamRequest( fullurl, headers, cl_downloads_from_web_timeout->integer / 100, cls.download.offset, 
 			CL_WebDownloadReadCb, CL_WebDownloadDoneCb, NULL, NULL, false );
 
-		Mem_ZoneFree( fullurl );
-		Mem_ZoneFree( referer );
 		return;
 	}
 
