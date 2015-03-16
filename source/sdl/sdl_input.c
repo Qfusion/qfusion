@@ -228,7 +228,8 @@ static void HandleEvents( void )
 				wtext = (Uint16 *)SDL_iconv_string( UCS_2_INTERNAL, "UTF-8", event.text.text, SDL_strlen( event.text.text ) + 1 );
 				if( wtext ) {
 					wchar_t charkey = wtext[0];
-					Key_CharEvent( charkey, charkey );
+					int key = ( charkey <= 255 ) ? charkey : 0;
+					Key_CharEvent( key, charkey );
 					SDL_free( wtext );
 				}
 				break;
