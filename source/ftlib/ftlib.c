@@ -399,7 +399,7 @@ static const qfontface_funcs_t qft_face_funcs =
 static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 {
 	unsigned int i;
-	int fontHeight, baseLine;
+	int fontHeight;
 	float unitScale;
 	bool hasKerning;
 	qftfamily_t *qftfamily = ( qftfamily_t * )( family->familydata );
@@ -414,7 +414,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	// set the font size
 	FT_New_Size( ftface, &ftsize );
 	FT_Activate_Size( ftsize );
-	FT_Set_Pixel_Sizes( ftface, size, 0 );
+	FT_Set_Pixel_Sizes( ftface, 0, size );
 
 	hasKerning = FT_HAS_KERNING( ftface ) ? true : false;
 
@@ -424,8 +424,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 
 	// use scaled version of the original design text height (the vertical 
 	// distance from one baseline to the next) as font height
-	fontHeight = ( ftsize->metrics.height + ( 1 << 5 ) ) >> 6;
-	baseLine = ( ftsize->metrics.height - ftsize->metrics.ascender ) >> 6;
+	fontHeight = ftsize->metrics.height >> 6;
 	unitScale = ( float )fontHeight / ( float )ftface->units_per_EM;
 
 	// store font info
@@ -434,7 +433,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	qfont->size = size;
 	qfont->height = fontHeight;
 	qfont->advance = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + ( 1 << 5 ) ) >> 6 );
-	qfont->glyphYOffset = fontHeight - baseLine;
+	qfont->glyphYOffset = ftsize->metrics.ascender >> 6;
 	qfont->underlineThickness = ftface->underline_thickness * unitScale + 0.5f;
 	if( qfont->underlineThickness <= 0 ) {
 		qfont->underlineThickness = 1;
