@@ -5,6 +5,7 @@
 #include "kernel/ui_fileinterface.h"
 #include "kernel/ui_renderinterface.h"
 #include "kernel/ui_keyconverter.h"
+#include "kernel/ui_fontproviderinterface.h"
 
 namespace WSWUI
 {
@@ -16,7 +17,7 @@ namespace WSWUI
 		typedef Rocket::Core::Event Event;
 
 	public:
-		RocketModule( int vidWidth, int vidHeight, float pixelRatio, const String &fallbackFontFace );
+		RocketModule( int vidWidth, int vidHeight, float pixelRatio );
 		~RocketModule();
 
 		// post-initialization
@@ -57,8 +58,6 @@ namespace WSWUI
 		void touchAllCachedShaders( void );
 
 	private:
-		void preloadFonts( const char *ext );
-
 		void registerElement( const char *tag, Rocket::Core::ElementInstancer* );
 		void registerFontEffect( const char *name, Rocket::Core::FontEffectInstancer *);
 		void registerDecorator( const char *name, Rocket::Core::DecoratorInstancer *);
@@ -70,6 +69,7 @@ namespace WSWUI
 		UI_SystemInterface *systemInterface;
 		UI_FileInterface *fsInterface;
 		UI_RenderInterface *renderInterface;
+		UI_FontProviderInterface *fontProviderInterface;
 
 		Rocket::Core::Context *context;
 

@@ -70,7 +70,6 @@ void UI_RenderInterface::RenderCompiledGeometry(Rocket::Core::CompiledGeometryHa
 
 	poly_t *poly = ( poly_t * )geometry;
 
-	if( !trap::Cvar_Value("foo"))
 	trap::R_DrawStretchPoly( poly, translation.x, translation.y );
 }
 
@@ -80,7 +79,6 @@ void UI_RenderInterface::RenderGeometry(Rocket::Core::Vertex *vertices, int num_
 
 	poly = RocketGeometry2Poly( true, vertices, num_vertices, indices, num_indices, texture );
 
-	if( !trap::Cvar_Value("foo"))
 	trap::R_DrawStretchPoly( poly, translation.x, translation.y );
 }
 
@@ -133,16 +131,29 @@ bool UI_RenderInterface::GenerateTexture(Rocket::Core::TextureHandle & texture_h
 
 bool UI_RenderInterface::LoadTexture(Rocket::Core::TextureHandle & texture_handle, Rocket::Core::Vector2i & texture_dimensions, const Rocket::Core::String & source)
 {
-	shader_t *shader;
+	shader_t *shader = NULL;
 	Rocket::Core::String source2( source );
 
-	if( source2[0] == '/' )
+	if( source2[0] == '/' ) {
 		source2.Erase( 0, 1 );
+	}
+	else if( source2[0] == '?' ) {
+		String protocol = source2.Substring( 1, source2.Find( "::" ) - 1 );
+		if( protocol == "fonthandle" ) {
+			if( sscanf( source2.CString(), "?fonthandle::%p", &shader ) != 1 ) {
+				Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt load pic %s!\n", source.CString() );
+				return false;
+			}
+		}
+	}
 
-	shader = trap::R_RegisterPic( source2.CString() );
+	if( !shader ) {
+		shader = trap::R_RegisterPic( source2.CString() );
+	}
+
 	if( !shader )
 	{
-		Com_Printf(S_COLOR_RED"Warning: RenderInterface couldnt load pic %s!\n", source.CString() );
+		Com_Printf( S_COLOR_RED "Warning: RenderInterface couldnt load pic %s!\n", source.CString() );
 		return false;
 	}
 

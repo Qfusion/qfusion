@@ -200,7 +200,7 @@ namespace trap
 			return UI_IMPORT.SCR_FontHeight( font );
 		}
 
-		inline size_t SCR_FontUnderline( struct qfontface_s *font, int *thickness ) {
+		inline int SCR_FontUnderline( struct qfontface_s *font, int *thickness ) {
 			return UI_IMPORT.SCR_FontUnderline( font, thickness );
 		}
 
