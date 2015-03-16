@@ -4320,6 +4320,8 @@ static void CG_LoadStatusBarFile( char *path )
 		customNoGunWeaponPics[i] = NULL;
 	}
 	customWeaponSelectPic = NULL;
+
+	trap_Cvar_ForceSet( "con_chatCGame", "0" );
 }
 
 /*
