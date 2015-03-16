@@ -480,7 +480,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ARB, instanced_arrays, false, false, &gl_ext_instanced_arrays_ARB_funcs )
 	,GL_EXTENSION( ARB, half_float_vertex, false, false, NULL )
 	,GL_EXTENSION( ARB, get_program_binary, false, false, &gl_ext_get_program_binary_ARB_funcs )
-	,GL_EXTENSION_EXT( ARB, ES3_compatibility, 0, false, false, NULL, _extMarker )
+	,GL_EXTENSION( ARB, ES3_compatibility, false, false, NULL )
 	,GL_EXTENSION( EXT, blend_func_separate, true, true, &gl_ext_blend_func_separate_EXT_funcs )
 	,GL_EXTENSION( EXT, texture3D, false, false, &gl_ext_texture3D_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, texture_array, 1, false, false, NULL, texture3D )
