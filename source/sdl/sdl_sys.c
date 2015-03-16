@@ -113,6 +113,9 @@ int main( int argc, char **argv )
 #endif
 
 #if defined( __WIN32__ )
+#if defined( _DEBUG )
+	SDL_SetHint( SDL_HINT_ALLOW_TOPMOST, "0" );
+#endif
 	SDL_SetHint( SDL_HINT_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE, va( "%d", IDI_APPICON_VALUE ) );
 #endif
 
