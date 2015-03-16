@@ -414,6 +414,7 @@ void Sys_FS_AddFileToMedia( const char *filename )
 		jclass intentClass;
 		jmethodID ctor, setData;
 		jstring action;
+		jobject intentRef;
 
 		intentClass = (*env)->FindClass( env, "android/content/Intent" );
 
@@ -423,8 +424,9 @@ void Sys_FS_AddFileToMedia( const char *filename )
 		(*env)->DeleteLocalRef( env, action );
 
 		setData = (*env)->GetMethodID( env, intentClass, "setData", "(Landroid/net/Uri;)Landroid/content/Intent;" );
-		(*env)->CallObjectMethod( env, intent, setData, uri );
+		intentRef = (*env)->CallObjectMethod( env, intent, setData, uri );
 		(*env)->DeleteLocalRef( env, uri );
+		(*env)->DeleteLocalRef( env, intentRef );
 
 		(*env)->DeleteLocalRef( env, intentClass );
 	}
