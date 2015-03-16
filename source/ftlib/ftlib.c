@@ -432,7 +432,7 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 	qfont->family = family;
 	qfont->size = size;
 	qfont->height = fontHeight;
-	qfont->advance = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + ( 1 << 5 ) ) >> 6 );
+	qfont->advance = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) ) >> 6 );
 	qfont->glyphYOffset = ftsize->metrics.ascender >> 6;
 	qfont->underlineThickness = ftface->underline_thickness * unitScale + 0.5f;
 	if( qfont->underlineThickness <= 0 ) {
@@ -456,8 +456,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 		int numCols, numRows;
 
 		// calculate estimate on texture size
-		maxAdvanceX = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + ( 1 << 5 ) ) >> 6 ) + 2;
-		maxAdvanceY = ( (FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) + ( 1 << 5 ) ) >> 6) + 2;
+		maxAdvanceX = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) ) >> 6 ) + 2;
+		maxAdvanceY = ( (FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) ) >> 6) + 2;
 
 		numCols = maxShaderWidth / maxAdvanceX;
 		clamp( numCols, 1, ftface->num_glyphs );
