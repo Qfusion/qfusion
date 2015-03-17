@@ -129,7 +129,6 @@ endif(NOT IOS)
 
 option(BUILD_PYTHON_BINDINGS "Build python bindings" OFF)
 option(BUILD_LUA_BINDINGS "Build Lua bindings" OFF)
-option(BUILD_ROCKET_8BPP_FONTS "Upload fonts as 8bit images" OFF)
 
 if(APPLE)
 	option(BUILD_FRAMEWORK "Build Framework bundle for OSX" OFF)
@@ -165,10 +164,6 @@ endif(APPLE)
 
 if(NOT BUILD_SHARED_LIBS)
 	add_definitions(-DROCKET_STATIC_LIB)
-endif()
-
-if(BUILD_ROCKET_8BPP_FONTS)
-	add_definitions(-DROCKET_8BPP_FONTS)
 endif()
 
 #on windows, check for VC10 and fix the multiple compile target issue.
