@@ -10,10 +10,11 @@ include $(QFUSION_PATH)/source/android/jpeg.mk
 include $(QFUSION_PATH)/source/android/ogg.mk
 include $(QFUSION_PATH)/source/android/OpenAL-MOB.mk
 include $(QFUSION_PATH)/source/android/png.mk
-include $(QFUSION_PATH)/source/android/RocketControls.mk
-include $(QFUSION_PATH)/source/android/RocketCore.mk
 include $(QFUSION_PATH)/source/android/theora.mk
 include $(QFUSION_PATH)/source/android/vorbis.mk
+
+include $(QFUSION_PATH)/libsrcs/libRocket/libRocket/build/android/Controls.mk
+include $(QFUSION_PATH)/libsrcs/libRocket/libRocket/build/android/Core.mk
 
 include $(QFUSION_PATH)/source/angelwrap/Android.mk
 include $(QFUSION_PATH)/source/cin/Android.mk
