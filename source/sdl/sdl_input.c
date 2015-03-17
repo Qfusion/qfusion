@@ -362,15 +362,6 @@ bool IN_ShowUICursor( void )
 }
 
 /**
- * Stub for getting the current input language.
- */
-void IN_GetInputLanguage( char *dest, size_t size )
-{
-	if( size )
-		dest[0] = '\0';
-}
-
-/**
  * Stubs for the IME until it's implemented through SDL and/or Cocoa.
  */
 void IN_IME_Enable( bool enable )
