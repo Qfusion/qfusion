@@ -31,7 +31,7 @@ FontHandle UI_FontProviderInterface::GetFontFaceHandle(const String& family, con
 
 	switch (style) {
 		case Font::STYLE_ITALIC:
-			qstyle = qstyle | QFONT_STYLE_ITALIC;
+			qstyle |= QFONT_STYLE_ITALIC;
 			break;
 		default:
 			break;
@@ -91,7 +91,7 @@ void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, flo
 {
 	GeometryList& geometry = *instance->capture_geometry;
 	bool newgeom = geometry.empty();
-	Geometry *g = NULL;
+	Geometry *g = nullptr;
 
 	if (shader != instance->capture_shader_last) {
 		Texture *t;
@@ -116,21 +116,19 @@ void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, flo
 	Texture *texture = instance->capture_texture_last;
 
 	if (!geometry.empty()) {
-		if (geometry.back().GetTexture() != instance->capture_texture_last) {
+		g = &geometry.back();
+		if (g->GetTexture() != instance->capture_texture_last) {
+			g = nullptr;
 			for (auto it = geometry.begin(); it != geometry.end(); ++it) {
 				if (it->GetTexture() == texture) {
-					newgeom = false;
 					g = &(*it);
 					break;
 				}
 			}
 		}
-		else {
-			g = &geometry.back();
-		}
 	}
 
-	if (newgeom) {
+	if (newgeom || g == nullptr) {
 		geometry.resize(geometry.size()+1);
 		g = &geometry.back();
 	}
@@ -164,14 +162,14 @@ int UI_FontProviderInterface::GenerateString(FontHandle handle, GeometryList& ge
 
 	instance->capture_geometry = &geometry;
 
-	trap::SCR_SetDrawCharIntercept((fdrawchar_t)&UI_FontProviderInterface::DrawCharCallback);
+	fdrawchar_t pop = trap::SCR_SetDrawCharIntercept((fdrawchar_t)&UI_FontProviderInterface::DrawCharCallback);
 
 	// FIXME: this is terribly inefficient
 	int string_width = trap::SCR_strWidth(utf8str.CString(), (qfontface_s *)(handle), 0);
 
 	trap::SCR_DrawString(position.x, position.y, 0, utf8str.CString(), (qfontface_s *)(handle), colorf);
 
-	trap::SCR_SetDrawCharIntercept(NULL);
+	trap::SCR_SetDrawCharIntercept(pop);
 
 	return string_width;
 }
