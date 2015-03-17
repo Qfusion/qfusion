@@ -1,3 +1,5 @@
+#include "../client/client.h"
+
 /**
  * IN_GetInputLanguage
  */
