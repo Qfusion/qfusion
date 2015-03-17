@@ -116,6 +116,9 @@ public:
 	/// Returns the number of pixels per inch.
 	/// @returns The number of pixels per inch. The default implementation returns 100.
 	virtual float GetPixelsPerInch();
+	/// Returns the number of pixels per inch when 1dp equals to 1px.
+	/// @returns The number of pixels per inch. The default implementation returns 100.
+	virtual float GetBasePixelsPerInch();
 
 	/// Called when this render interface is released.
 	virtual void Release();

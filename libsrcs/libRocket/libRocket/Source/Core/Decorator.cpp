@@ -123,18 +123,21 @@ float Decorator::ResolveProperty(const PropertyDictionary& properties, const Str
     // Values based on pixels-per-inch.
 	if (property->unit & Property::PPI_UNIT)
 	{
-		float inch = property->value.Get< float >() * GetRenderInterface()->GetPixelsPerInch();
+		Rocket::Core::RenderInterface* renderInterface = GetRenderInterface();
+		float inch = property->value.Get< float >() * renderInterface->GetPixelsPerInch();
 
 		if (property->unit & Property::INCH) // inch
 			return inch;
 		if (property->unit & Property::CM) // centimeter
-			return inch / 2.54f;
+			return inch * (1.0f / 2.54f);
 		if (property->unit & Property::MM) // millimeter
-			return inch / 25.4f;
+			return inch * (1.0f / 25.4f);
 		if (property->unit & Property::PT) // point
-			return inch / 72.0f;
+			return inch * (1.0f / 72.0f);
 		if (property->unit & Property::PC) // pica
-			return inch / 6.0f;
+			return inch * (1.0f / 6.0f);
+		if (property->unit & Property::DP) // device-independent pixel
+			return (float)Math::RoundUp(inch / renderInterface->GetBasePixelsPerInch());
 	}
 
 	ROCKET_ERROR;

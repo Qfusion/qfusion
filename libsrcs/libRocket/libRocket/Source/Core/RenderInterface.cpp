@@ -112,6 +112,12 @@ float RenderInterface::GetPixelsPerInch()
 	return 100;
 }
 
+// Returns the number of pixels per inch when 1dp equals to 1px.
+float RenderInterface::GetBasePixelsPerInch()
+{
+	return 100;
+}
+
 // Called when this render interface is released.
 void RenderInterface::Release()
 {
