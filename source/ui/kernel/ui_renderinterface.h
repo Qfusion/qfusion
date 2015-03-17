@@ -49,6 +49,8 @@ public:
 
 	/// Returns the number of pixels per inch.
 	virtual float GetPixelsPerInch(void);
+	/// Returns the number of pixels per inch when 1dp equals to 1px.
+	virtual float GetBasePixelsPerInch(void);
 
 	//// Methods
 	int GetWidth( void );

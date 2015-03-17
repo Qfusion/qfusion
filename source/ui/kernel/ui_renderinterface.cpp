@@ -183,6 +183,11 @@ float UI_RenderInterface::GetPixelsPerInch( void )
 	return this->pixelsPerInch;
 }
 
+float UI_RenderInterface::GetBasePixelsPerInch( void )
+{
+	return 160.0f;
+}
+
 poly_t *UI_RenderInterface::RocketGeometry2Poly( bool temp, Rocket::Core::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rocket::Core::TextureHandle texture )
 {
 	poly_t *poly;
