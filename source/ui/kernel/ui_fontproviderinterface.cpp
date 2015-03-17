@@ -14,7 +14,7 @@ using namespace Rocket::Core;
 static UI_FontProviderInterface *instance = nullptr;
 
 UI_FontProviderInterface::UI_FontProviderInterface(RenderInterface *render_interface) : 
-	render_interface(render_interface), capture_geometry(nullptr), capture_shader_last(nullptr), capture_texture_last(nullptr)
+	render_interface(render_interface), capture_shader_last(nullptr), capture_geometry(nullptr), capture_texture_last(nullptr)
 {
 	if (instance == nullptr) {
 		instance = this;
