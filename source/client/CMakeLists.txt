@@ -118,6 +118,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../null/sys_vfs_null.c"
 
             "../sdl/sdl_input.c"
+            "../sdl/sdl_input_unix.c"
             "../sdl/sdl_vid.c"
             "../sdl/sdl_sys.c"
             "../sdl/sdl_clipboard.c"
