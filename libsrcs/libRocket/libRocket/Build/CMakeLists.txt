@@ -82,10 +82,6 @@ include(TestForSTDNamespace)
 # might be found                   =
 #===================================
 
-if(NOT DEFINED ENV{FREETYPE_DIR})
-	set(ENV{FREETYPE_DIR} "${PROJECT_SOURCE_DIR}/../Dependencies")
-endif()
-
 if(NOT DEFINED ENV{Boost_DIR})
 	set(ENV{Boost_DIR} "${PROJECT_SOURCE_DIR}/../Dependencies")
 endif()
@@ -189,22 +185,6 @@ ENDIF(WIN32)
 #===================================
 # Find dependencies ================
 #===================================
-
-# FreeType
-if(CMAKE_MAJOR_VERSION LESS 3)
-	# Freetype changed the layout of its header files, we  need to use 
-	# the FindFreetype module from cmake v3 at least, included here
-	find_package(Freetype-v2fix REQUIRED)	
-else()
-	find_package(Freetype REQUIRED)	
-endif()
-
-if(FREETYPE_FOUND)
-		include_directories(${FREETYPE_INCLUDE_DIRS})
-		link_directories(${FREETYPE_LINK_DIRS})
-		list(APPEND CORE_LINK_LIBS ${FREETYPE_LIBRARY})
-endif()
-mark_as_advanced(FREETYPE_INCLUDE_DIRS FREETYPE_LIBRARY FREETYPE_LINK_DIRECTORIES)
 
 # Boost and Python
 if(BUILD_PYTHON_BINDINGS)
