@@ -354,6 +354,10 @@ static asstring_t *Element_GetProperty( Element *elem, const asstring_t &a ) {
 	return ASSTR( elem->GetProperty<String>( ASSTR(a) ) );
 }
 
+static float Element_ResolveProperty( Element *elem, const asstring_t &a, float b ) {
+	return elem->ResolveProperty( ASSTR(a), b );
+}
+
 static void Element_RemoveProperty( Element *elem, const asstring_t &a ) {
 	elem->RemoveProperty( ASSTR(a) );
 }
@@ -939,6 +943,7 @@ void BindElement( ASInterface *as )
 		// css/style
 		.method( &Element_SetProperty, "setProp", true )
 		.method( &Element_GetProperty, "getProp", true )
+		.method( &Element_ResolveProperty, "resolveProp", true )
 		.method( &Element_RemoveProperty, "removeProp", true )
 		// jquery-like
 		.method( &Element_SetCSS, "css", true )		// css('prop', '') removes the property
