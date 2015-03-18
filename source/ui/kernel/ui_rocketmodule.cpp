@@ -168,16 +168,30 @@ void RocketModule::keyEvent( int key, bool pressed )
 			parameters.Set( "key", key );
 			element->DispatchEvent( "keyselect", parameters );
 		}
+		else if( key == K_JOY1 )
+		{
+			if( pressed )
+				context->ProcessMouseButtonDown( 0, mod );
+			else
+				context->ProcessMouseButtonUp( 0, mod );
+		}
 		else
 		{
 			int rkey = keyconv.toRocketKey( key );
 
+			if( key == K_JOY2 )
+			{
+				rkey = Rocket::Core::Input::KI_ESCAPE;
+				if( element )
+					element->Blur();
+			}
+
 			if( rkey != 0 )
 			{
 				if( pressed )
-					context->ProcessKeyDown( Rocket::Core::Input::KeyIdentifier( rkey ), keyconv.getModifiers() );
+					context->ProcessKeyDown( Rocket::Core::Input::KeyIdentifier( rkey ), mod );
 				else
-					context->ProcessKeyUp( Rocket::Core::Input::KeyIdentifier( rkey ), keyconv.getModifiers() );
+					context->ProcessKeyUp( Rocket::Core::Input::KeyIdentifier( rkey ), mod );
 			}
 		}
 	}
