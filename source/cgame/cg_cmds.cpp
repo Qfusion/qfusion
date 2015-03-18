@@ -659,7 +659,7 @@ static void CG_SC_MenuCustom( void )
 	for( i = 2, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ )
 	{
 		Q_strncatz( request, va( "btn%i \"%s\" ", c, trap_Cmd_Argv( i ) ), sizeof( request ) );
-		Q_strncatz( request, va( "cmd%i \"%s\" ", c, trap_Cmd_Argv( i + 1 ) ), sizeof( request ) );
+		Q_strncatz( request, va( "cmd%i \"cmd %s\" ", c, trap_Cmd_Argv( i + 1 ) ), sizeof( request ) );
 	}
 
 	trap_Cmd_ExecuteText( EXEC_APPEND, va( "%s\n", request ) );
