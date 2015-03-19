@@ -110,7 +110,7 @@ void DocumentCache::purgeAllDocuments()
 
 	// DEBUG
 	if( UI_Main::Get()->debugOn() ) {
-		if( documentSet.size() > 0 ) {
+		if( !documentSet.empty() ) {
 			Com_Printf("Warning: DocumentCache::purgeAllDocuments: still have %d documents in the cache\n", documentSet.size() );
 			for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it )
 				Com_Printf("    %s (refcount %d)\n", (*it)->getName().c_str(), (*it)->getReference() );
@@ -193,8 +193,8 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	// except stack doesnt have random access operations..
 
 	// grab the previous top
-	Document *top = documentStack.size() > 0 ? documentStack.back() : NULL;
-	if( top && top->getName() == documentRealname ) {
+	Document *top = !documentStack.empty() ? documentStack.back() : nullptr;
+	if( top != nullptr && top->getName() == documentRealname ) {
 		// same document, return
 		return top;
 	}
@@ -202,7 +202,7 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	// pop all unviewed documents off the stack
 	if( top && !top->IsViewed() ) {
 		_popDocument( false );
-		top = documentStack.size() > 0 ? documentStack.back() : NULL;
+		top = !documentStack.empty() ? documentStack.back() : nullptr;
 	}
 	else {
 		// if modal, dont hide previous, else hide it
@@ -212,14 +212,14 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 
 	// cache has reserved a ref for us
 	Document *doc = cache.getDocument( documentRealname );
-	if( !doc || !doc->getRocketDocument() )
+	if( doc == nullptr || !doc->getRocketDocument() )
 		return NULL;
 
 	doc->setStack( this );
 
 	// the loading document might have pushed another document onto the stack 
 	// in the onload event, pushing ourselves on top of it now is going to fuck up the order
-	Document *new_top = documentStack.size() > 0 ? documentStack.back() : 0;
+	Document *new_top = !documentStack.empty() ? documentStack.back() : nullptr;
 	if( top != new_top ) {
 		// the stack has changed in the cache.getDocument call
 		return NULL;
@@ -318,7 +318,7 @@ void NavigationStack::attachMainEventListenerToTop( Document *prev )
 	}
 
 	Document *top = documentStack.back();
-	if( !top ) {
+	if( top == nullptr ) {
 		return;
 	}
 
@@ -340,7 +340,7 @@ void NavigationStack::attachMainEventListenerToTop( Document *prev )
 
 void NavigationStack::markTopAsViewed(void)
 {
-	Document *modal = NULL;
+	Document *modal = nullptr;
 
 	// mark the top document as viewed
 	// if the top document is modal, temporarily pop if off the stack
@@ -351,7 +351,7 @@ void NavigationStack::markTopAsViewed(void)
 		modal = top;
 
 		documentStack.pop_back();
-		top = documentStack.size() > 0 ? documentStack.back() : NULL;
+		top = !documentStack.empty() ? documentStack.back() : nullptr;
 	}
 
 	if( top ) {
@@ -414,7 +414,7 @@ std::string NavigationStack::getFullpath( const std::string &name )
 		return name;
 
 	// prepend with stacks top if any and return
-	if( documentStack.size() ) {
+	if( !documentStack.empty() ) {
 		const std::string &s = documentStack.back()->getName();
 
 		// figure out if theres a path element here and prepend name with that
@@ -439,7 +439,7 @@ void NavigationStack::showStack(bool show)
 		// also show the one below the top
 		Document *top = documentStack.back();
 		documentStack.pop_back();
-		if( documentStack.size() )
+		if( !documentStack.empty() )
 			documentStack.back()->Show( show );
 		documentStack.push_back( top );
 	}
