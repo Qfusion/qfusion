@@ -23,7 +23,7 @@ DocumentCache::~DocumentCache()
 }
 
 // load or fetch document
-Document *DocumentCache::getDocument( const std::string &name )
+Document *DocumentCache::getDocument( const std::string &name, NavigationStack *stack )
 {
 	Document *document = 0;
 
@@ -36,7 +36,7 @@ Document *DocumentCache::getDocument( const std::string &name )
 		// load it up, and keep the reference for the stack
 		DocumentLoader loader;
 
-		document = loader.loadDocument(name.c_str());
+		document = loader.loadDocument(name.c_str(), stack);
 		if( !document )
 			return 0;
 
@@ -180,13 +180,13 @@ NavigationStack::~NavigationStack()
 Document *NavigationStack::pushDocument(const std::string &name, bool modal, bool show)
 {
 	if( modalTop || !name.length() ) {
-		return NULL;
+		return nullptr;
 	}
 	if( stackLocked ) {
-		return NULL;
+		return nullptr;
 	}
 
-	std::string documentRealname = name[0] == '/' ? name : ( defaultPath.c_str() + name );
+	std::string documentRealname = getFullpath( name );
 
 	// TODO: keep a max size for the stack.. or search the stack for
 	// previous version of the document and push that to top?
@@ -211,9 +211,9 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	}
 
 	// cache has reserved a ref for us
-	Document *doc = cache.getDocument( documentRealname );
+	Document *doc = cache.getDocument( documentRealname, this );
 	if( doc == nullptr || !doc->getRocketDocument() )
-		return NULL;
+		return nullptr;
 
 	doc->setStack( this );
 
@@ -222,7 +222,7 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	Document *new_top = !documentStack.empty() ? documentStack.back() : nullptr;
 	if( top != new_top ) {
 		// the stack has changed in the cache.getDocument call
-		return NULL;
+		return nullptr;
 	}
 
 	documentStack.push_back( doc );
@@ -247,14 +247,25 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	return doc;
 }
 
+Document *NavigationStack::preloadDocument(const std::string &name)
+{
+	std::string documentRealname = getFullpath( name );
+
+	Document *doc = cache.getDocument( documentRealname );
+	if( doc == nullptr || !doc->getRocketDocument() )
+		return nullptr;
+
+	return doc;
+}
+
 void NavigationStack::_popDocument(bool focusOnNext)
 {
 	modalTop = false;
 
 	Document *doc = documentStack.back();
 	documentStack.pop_back();
-	doc->setStack( NULL );
-	Document *top = hasDocuments() ? documentStack.back() : NULL;
+	doc->setStack( nullptr );
+	Document *top = hasDocuments() ? documentStack.back() : nullptr;
 
 	doc->Hide();
 
@@ -277,11 +288,11 @@ void NavigationStack::_popDocument(bool focusOnNext)
 		}
 
 		while( top && !top->IsViewed() ) {
-			top->setStack( NULL );
+			top->setStack( nullptr );
 			documentStack.pop_back();
 			top = documentStack.back();
 		}
-		if( !modalTop && top != NULL ) {
+		if( !modalTop && top != nullptr ) {
 			top->Show();
 		}
 	}
@@ -412,17 +423,6 @@ std::string NavigationStack::getFullpath( const std::string &name )
 	// if name is absolute, return name
 	if( !name.length() || name[0] == '/' )
 		return name;
-
-	// prepend with stacks top if any and return
-	if( !documentStack.empty() ) {
-		const std::string &s = documentStack.back()->getName();
-
-		// figure out if theres a path element here and prepend name with that
-		size_t slash = s.rfind( '/' );
-		if( slash != std::string::npos )
-			return s.substr( 0, slash ) + name;
-	}
-
 	// prepend with default path and return
 	return defaultPath + name;
 }

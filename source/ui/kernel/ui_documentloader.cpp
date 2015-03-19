@@ -92,13 +92,13 @@ DocumentLoader::~DocumentLoader()
 
 }
 
-Document *DocumentLoader::loadDocument(const char *path)
+Document *DocumentLoader::loadDocument(const char *path, NavigationStack *stack)
 {
 	UI_Main *ui = UI_Main::Get();
 	RocketModule *rm = ui->getRocket();
 	Document *loadedDocument;
 
-	loadedDocument = __new__( Document )( path );
+	loadedDocument = __new__( Document )( path, stack );
 
 	// load the .rml
 	Rocket::Core::ElementDocument *rocketDocument = rm->loadDocument( path, /* true */ false, loadedDocument );

@@ -93,7 +93,7 @@ namespace WSWUI {
 		~DocumentLoader();
 
 		// cached?
-		Document *loadDocument(const char *path);
+		Document *loadDocument(const char *path, NavigationStack *stack = NULL);
 		// TODO: redundant
 		void closeDocument(Document*);
 
