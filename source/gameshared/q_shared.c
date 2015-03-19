@@ -1010,7 +1010,7 @@ void *Q_memset32( void *dest, int c, size_t dwords )
 	assert( ( (size_t)dest & 0x03 ) == 0 );
 
 #if defined ( __GNUC__ ) && defined ( id386 )
-	asm (	"cld\n"
+	__asm__ (	"cld\n"
 			"rep; stosl\n"
 			:	// nada
 			: "c"(dwords), "D"(dest), "a"(c)
