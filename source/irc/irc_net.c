@@ -20,7 +20,8 @@ bool Irc_Net_Connect(const char *host, unsigned short port, irc_socket_t *sock) 
 	if (*sock >= 0) {
 		struct sockaddr_in addr;
 		memset(&addr, 0, sizeof(addr));
-		struct addrinfo hints = { 0 }, *hostInfo;
+		struct addrinfo hints, *hostInfo;
+		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_INET; // AF_INET6 for IPv6
 		if (getaddrinfo(host, NULL, &hints, &hostInfo) == 0 && hostInfo != NULL) {	// DNS lookup
 			int status;
