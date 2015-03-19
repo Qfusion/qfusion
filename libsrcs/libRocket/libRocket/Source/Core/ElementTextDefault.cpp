@@ -118,8 +118,8 @@ void ElementTextDefault::OnRender()
 			bool render_line = !(x > clip_right);
 			render_line = render_line && !(x + line.width < clip_left);
 
-			render_line = render_line && !(y - line_height > clip_bottom);
-			render_line = render_line && !(y < clip_top);
+			render_line = render_line && !(y > clip_bottom);
+			render_line = render_line && !(y + line_height < clip_top);
 
 			if (render_line)
 			{
