@@ -12,6 +12,8 @@
 
 unsigned sys_frame_time;
 
+void Sys_InitTime( void );
+
 void Sys_Sleep( unsigned int millis )
 {
 	SDL_Delay( millis );
