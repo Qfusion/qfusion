@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../qcommon/sys_fs.h"
 
+#define __USE_BSD
+
 #include <dirent.h>
 
 #ifdef __linux__
@@ -46,8 +48,24 @@ static const char *findpattern = NULL;
 static char *findpath = NULL;
 static size_t findpath_size = 0;
 static DIR *fdir = NULL;
-static int fdfd = -1;
 static int fdots = 0;
+
+/*
+* FS_DirentIsDir
+*/
+static bool FS_DirentIsDir( const struct dirent64 *d )
+{
+#if defined(_DIRENT_HAVE_D_TYPE) && defined(DT_DIR)
+	return ( d->d_type == DT_DIR );
+#else
+	bool isDir;
+	struct stat st;
+	if( stat( d->d_name, &st ) )
+		return false;
+	isDir = S_ISDIR( st.st_mode ) != 0;
+	return isDir;
+#endif
+}
 
 /*
 * CompareAttributes
@@ -55,10 +73,15 @@ static int fdots = 0;
 static bool CompareAttributes( const struct dirent64 *d, unsigned musthave, unsigned canthave )
 {
 	bool isDir;
+	bool checkDir;
 
 	assert( d );
 
-	isDir = ( d->d_type == DT_DIR /* || d->d_type == DT_LINK*/ );
+	isDir = false;
+	checkDir = ( canthave & SFF_SUBDIR ) || ( musthave & SFF_SUBDIR );
+	if( checkDir )
+		isDir = FS_DirentIsDir( d );
+
 	if( isDir && ( canthave & SFF_SUBDIR ) )
 		return false;
 	if( ( musthave & SFF_SUBDIR ) && !isDir )
@@ -84,7 +107,6 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned canh
 
 	assert( path );
 	assert( !fdir );
-	assert( fdfd == -1 );
 	assert( !findbase && !findpattern && !findpath && !findpath_size );
 
 	if( fdir )
@@ -112,12 +134,7 @@ const char *Sys_FS_FindFirst( const char *path, unsigned musthave, unsigned canh
 	if( !( fdir = opendir( findbase ) ) )
 		return NULL;
 
-	fdfd = dirfd( fdir );
-	if( fdfd == -1 )
-		return NULL;
-
 	fdots = 2; // . and ..
-
 	return Sys_FS_FindNext( musthave, canhave );
 }
 
@@ -139,7 +156,7 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canhave )
 		if( !CompareAttributes( d, musthave, canhave ) )
 			continue;
 
-		if( d->d_type == DT_DIR && fdots > 0 )
+		if( fdots > 0 )
 		{
 			// . and .. never match
 			const char *base = COM_FileBase( d->d_name );
@@ -164,7 +181,7 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canhave )
 			}
 
 			Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, dname,
-				( d->d_type == DT_DIR ) && dname[dname_len-1] != '/' ? "/" : "" );
+				dname[dname_len-1] != '/' && FS_DirentIsDir( d ) ? "/" : "" );
 			if( CompareAttributesForPath( d, findpath, musthave, canhave ) )
 				return findpath;
 		}
@@ -183,7 +200,6 @@ void Sys_FS_FindClose( void )
 		fdir = NULL;
 	}
 
-	fdfd = -1;
 	fdots = 0;
 
 	Mem_TempFree( findbase );

@@ -36,8 +36,6 @@ FIXME:  This will be remidied once a native Mac port is complete
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/wait.h>
@@ -128,7 +126,7 @@ void Sys_Quit( void )
 	nostdout_backup_val = (nostdout && nostdout->integer ? true : false);
 	nostdout = NULL;
 
-	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) & ~FNDELAY );
+	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) & ~O_NONBLOCK );
 
 	Qcommon_Shutdown();
 
@@ -159,7 +157,7 @@ void Sys_Error( const char *format, ... )
 	char string[1024];
 
 	// change stdin to non blocking
-	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) & ~FNDELAY );
+	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) & ~O_NONBLOCK );
 
 	va_start( argptr, format );
 	Q_vsnprintfz( string, sizeof( string ), format, argptr );
@@ -310,12 +308,12 @@ int main( int argc, char **argv )
 
 	Qcommon_Init( argc, argv );
 
-	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | FNDELAY );
+	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | O_NONBLOCK );
 
 	nostdout = Cvar_Get( "nostdout", "0", 0 );
 	if( !nostdout->integer )
 	{
-		fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | FNDELAY );
+		fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | O_NONBLOCK );
 	}
 
 	oldtime = Sys_Milliseconds();

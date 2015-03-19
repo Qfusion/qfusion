@@ -8,9 +8,8 @@ static unsigned long sys_secbase;
 uint64_t Sys_Microseconds( void )
 {
 	struct timeval tp;
-	struct timezone tzp;
 
-	gettimeofday( &tp, &tzp );
+	gettimeofday( &tp, NULL );
 
 	if( !sys_secbase )
 	{
