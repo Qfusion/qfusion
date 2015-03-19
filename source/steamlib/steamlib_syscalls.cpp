@@ -56,7 +56,7 @@ extern "C" STEAMDLL_EXPORT steamlib_export_t *GetSteamLibAPI( steamlib_import_t 
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( FTLIB_HARD_LINKED )
-int _stdcall DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
 {
 	return 1;
 }

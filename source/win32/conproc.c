@@ -46,7 +46,7 @@ HANDLE heventParentSend;
 HANDLE hStdout;
 HANDLE hStdin;
 
-static unsigned _stdcall RequestProc( void *arg );
+static unsigned WINAPI RequestProc( void *arg );
 static LPVOID GetMappedBuffer( HANDLE hfileBuffer );
 static void ReleaseMappedBuffer( LPVOID pBuffer );
 static BOOL GetScreenBufferLines( int *piLines );
@@ -160,7 +160,7 @@ void DeinitConProc( void )
 }
 
 
-static unsigned _stdcall RequestProc( void *arg )
+static unsigned WINAPI RequestProc( void *arg )
 {
 	int *pBuffer;
 	DWORD dwRet;

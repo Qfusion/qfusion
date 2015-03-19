@@ -605,7 +605,7 @@ void Com_Printf( const char *format, ... )
 }
 
 #if defined ( HAVE_DLLMAIN )
-int _stdcall DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
 {
 	return 1;
 }
