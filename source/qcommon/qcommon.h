@@ -758,12 +758,13 @@ void	FS_SetCompressionLevel( int file, int level );
 int		FS_GetCompressionLevel( int file );
 
 // file loading
-int	    FS_LoadFileExt( const char *path, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );
-int	    FS_LoadBaseFileExt( const char *path, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );
+int	    FS_LoadFileExt( const char *path, int flags, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );
+int	    FS_LoadBaseFileExt( const char *path, int flags, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline );
 void	FS_FreeFile( void *buffer );
 void	FS_FreeBaseFile( void *buffer );
-#define FS_LoadFile(path,buffer,stack,stacksize) FS_LoadFileExt(path,buffer,stack,stacksize,__FILE__,__LINE__)
-#define FS_LoadBaseFile(path,buffer,stack,stacksize) FS_LoadBaseFileExt(path,buffer,stack,stacksize,__FILE__,__LINE__)
+#define FS_LoadFile(path,buffer,stack,stacksize) FS_LoadFileExt(path,0,buffer,stack,stacksize,__FILE__,__LINE__)
+#define FS_LoadBaseFile(path,buffer,stack,stacksize) FS_LoadBaseFileExt(path,0,buffer,stack,stacksize,__FILE__,__LINE__)
+#define FS_LoadCacheFile(path,buffer,stack,stacksize) FS_LoadFileExt(path,FS_CACHE,buffer,stack,stacksize,__FILE__,__LINE__)
 
 int		FS_GetNotifications( void );
 int		FS_RemoveNotifications( int bitmask );

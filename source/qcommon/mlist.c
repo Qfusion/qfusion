@@ -23,14 +23,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qcommon.h"
 #include "../qalgo/q_trie.h"
 
-#define MLIST_CACHE "mapcache.txt"
+#define MLIST_CACHE "cache/mapcache.txt"
 #define MLIST_NULL  ""
 
 #define MLIST_TRIE_CASING TRIE_CASE_INSENSITIVE
 
 #define MLIST_UNKNOWN_MAPNAME	"@#$"
 
-#define MLIST_CACHE_EXISTS ( FS_FOpenFile( MLIST_CACHE, NULL, FS_READ ) != -1 )
+#define MLIST_CACHE_EXISTS ( FS_FOpenFile( MLIST_CACHE, NULL, FS_READ|FS_CACHE ) != -1 )
 
 typedef struct mapinfo_s
 {
@@ -112,7 +112,7 @@ static void ML_BuildCache( void )
 	if( !ml_initialized )
 		return;
 
-	if( FS_FOpenFile( MLIST_CACHE, &filenum, FS_WRITE ) != -1 )
+	if( FS_FOpenFile( MLIST_CACHE, &filenum, FS_WRITE|FS_CACHE ) != -1 )
 	{
 		unsigned int i;
 
@@ -182,7 +182,7 @@ static void ML_InitFromCache( void )
 		prev = curmap;
 	}
 
-	FS_LoadFile( MLIST_CACHE, (void **)&buffer, NULL, 0 );
+	FS_LoadCacheFile( MLIST_CACHE, (void **)&buffer, NULL, 0 );
 	if( !buffer )
 	{
 		Mem_TempFree( maps );
