@@ -159,6 +159,8 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_8:			charkey = '8';			break;
 		case SDL_SCANCODE_9:			charkey = '9';			break;
 		case SDL_SCANCODE_0:			charkey = '0';			break;
+
+		default: break;
 	}
 	return charkey;
 }
