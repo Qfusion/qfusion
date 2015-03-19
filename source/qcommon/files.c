@@ -1628,7 +1628,7 @@ int	FS_GetCompressionLevel( int file )
 * Filename are relative to the quake search path
 * a null buffer will just return the file length without loading
 */
-int FS_LoadFileExt( const char *path, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline )
+int FS_LoadFileExt( const char *path, int flags, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline )
 {
 	uint8_t *buf;
 	unsigned int len;
@@ -1637,7 +1637,7 @@ int FS_LoadFileExt( const char *path, void **buffer, void *stack, size_t stackSi
 	buf = NULL; // quiet compiler warning
 
 	// look for it in the filesystem or pack files
-	len = FS_FOpenFile( path, &fhandle, FS_READ );
+	len = FS_FOpenFile( path, &fhandle, FS_READ|flags );
 	if( !fhandle )
 	{
 		if( buffer )
@@ -1669,7 +1669,7 @@ int FS_LoadFileExt( const char *path, void **buffer, void *stack, size_t stackSi
 * 
 * a NULL buffer will just return the file length without loading
 */
-int FS_LoadBaseFileExt( const char *path, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline )
+int FS_LoadBaseFileExt( const char *path, int flags, void **buffer, void *stack, size_t stackSize, const char *filename, int fileline )
 {
 	uint8_t *buf;
 	unsigned int len;
@@ -1678,7 +1678,7 @@ int FS_LoadBaseFileExt( const char *path, void **buffer, void *stack, size_t sta
 	buf = NULL; // quiet compiler warning
 
 	// look for it in the filesystem or pack files
-	len = FS_FOpenBaseFile( path, &fhandle, FS_READ );
+	len = FS_FOpenBaseFile( path, &fhandle, FS_READ|flags );
 	if( !fhandle )
 	{
 		if( buffer )
