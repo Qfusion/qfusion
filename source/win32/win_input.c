@@ -1687,7 +1687,7 @@ size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size
 	WCHAR compStr[IN_WINIME_COMPSTR_LENGTH + 1];
 	size_t compStrLengths[IN_WINIME_COMPSTR_LENGTH];
 	char compAttr[IN_WINIME_COMPSTR_LENGTH + 1];
-	int len, attrLen, cursor, attr, start = -1;
+	int len, attrLen, i, cursor, attr, start = -1;
 	size_t cursorutf = 0, startutf = 0, convutflen = 0, utflen, ret = 0;
 
 	if( !strSize )
@@ -1710,7 +1710,7 @@ size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size
 		return 0;
 
 	// store the UTF-8 length of each character including escaped colors to calculate the offsets
-	for( int i = 0; i < len; i++ )
+	for( i = 0; i < len; i++ )
 	{
 		if( compStr[i] == Q_COLOR_ESCAPE )
 			compStrLengths[i] = 2;
@@ -1723,7 +1723,7 @@ size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size
 
 	if( str )
 	{
-		for( int i = 0; i < len; i++ )
+		for( i = 0; i < len; i++ )
 		{
 			utflen = compStrLengths[i];
 			if( ( ret + utflen ) >= strSize )
@@ -1741,7 +1741,7 @@ size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size
 	if( cursorPos )
 	{
 		cursor = LOWORD( qimmGetCompositionString( in_winime_context, GCS_CURSORPOS, NULL, 0 ) );
-		for( int i = 0; ( i < cursor ) && ( i < len ); i++ )
+		for( i = 0; ( i < cursor ) && ( i < len ); i++ )
 			cursorutf += compStrLengths[i];
 		clamp_high( cursorutf, ret );
 		*cursorPos = cursorutf;
@@ -1752,7 +1752,7 @@ size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size
 		attrLen = qimmGetCompositionString( in_winime_context, GCS_COMPATTR, compAttr, sizeof( compAttr ) );
 		if( attrLen == len )
 		{
-			for( int i = 0; i < attrLen; i++ )
+			for( i = 0; i < attrLen; i++ )
 			{
 				attr = compAttr[i];
 				if( ( attr == ATTR_TARGET_CONVERTED ) || ( attr == ATTR_TARGET_NOTCONVERTED ) )
