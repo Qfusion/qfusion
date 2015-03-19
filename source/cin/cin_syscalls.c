@@ -50,7 +50,7 @@ QF_DLL_EXPORT cin_export_t *GetCinematicsAPI( cin_import_t *import )
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( CIN_HARD_LINKED )
-int _stdcall DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
 {
 	return 1;
 }

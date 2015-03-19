@@ -208,7 +208,7 @@ void Com_Printf( const char *format, ... )
 #endif
 
 #if defined(HAVE_DLLMAIN) && !defined(UI_HARD_LINKED)
-int _stdcall DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
 {
 	return 1;
 }

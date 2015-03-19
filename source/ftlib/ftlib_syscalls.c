@@ -61,7 +61,7 @@ QF_DLL_EXPORT ftlib_export_t *GetFTLibAPI( ftlib_import_t *import )
 }
 
 #if defined ( HAVE_DLLMAIN ) && !defined ( FTLIB_HARD_LINKED )
-int _stdcall DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
+int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
 {
 	return 1;
 }
