@@ -36,7 +36,9 @@ extern "C" {
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#ifndef _MSC_VER
 #include <strings.h>
+#endif
 #include <stdlib.h>
 #include <time.h>
 #include <stdint.h>
