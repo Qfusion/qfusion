@@ -91,6 +91,7 @@ public:
 		int protocol, const char *demoExtension, const char *basePath );
 	static UI_Main *Get( void );
 	static void Destroy( void );
+	static bool preloadEnabled( void );
 
 	// Public methods
 	void showUI( bool show );
@@ -112,7 +113,7 @@ public:
 	std::string getServerName( void ) const { return serverName; }
 	std::string getRejectMessage( void ) const { return rejectMessage; }
 	const DownloadInfo *getDownloadInfo ( void ) const { return &downloadInfo; }
-	int getGameProtocol( void ) const;
+	static int getGameProtocol( void );
 
 	bool debugOn( void );
 
@@ -207,6 +208,7 @@ private:
 	cvar_t *ui_basepath;
 	cvar_t *ui_cursor;
 	cvar_t *ui_developer;
+	cvar_t *ui_preload;
 };
 
 }

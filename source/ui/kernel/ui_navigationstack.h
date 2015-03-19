@@ -19,7 +19,7 @@ namespace WSWUI {
 		~DocumentCache();
 
 		// load or fetch document
-		Document *getDocument( const std::string &name );
+		Document *getDocument( const std::string &name, NavigationStack *stack = NULL );
 		// release document
 		void purgeDocument( Document *doc );
 		// release all documents
@@ -71,6 +71,7 @@ namespace WSWUI {
 
 		// stack operations
 		Document *pushDocument(const std::string &name, bool modal=false, bool show = true);
+		Document *preloadDocument(const std::string &name);
 		void popDocument(void);
 		void popAllDocuments(void);
 		bool hasDocuments(void) const;

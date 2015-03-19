@@ -85,6 +85,19 @@ public:
 		return ui_document->getRocketDocument();
 	}
 
+	void preload( const asstring_t &location )
+	{
+		if( !UI_Main::preloadEnabled() ) {
+			return;
+		}
+
+		WSWUI::NavigationStack *stack = GetCurrentUIStack();
+		if( stack == NULL ) {
+			return;
+		}
+		stack->preloadDocument( location.buffer );
+	}
+
 	/// Loads modal document from the URL.
 	/// FIXME: move to window.
 	void modal( const asstring_t &location, int defaultCode = -1 )
@@ -435,6 +448,7 @@ void BindWindow( ASInterface *as )
 		.method2( &ASWindow::close, "void close( int code = 0 )" )
 		.method2( &ASWindow::modal, "void modal( const String &location, int defaultCode = -1 )" )
 		.method( &ASWindow::getModalValue, "getModalValue" )
+		.method( &ASWindow::preload, "preload" )
 
 		.method( &ASWindow::getDocument, "get_document" )
 

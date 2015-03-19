@@ -57,7 +57,8 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	mousex(0), mousey(0), gameProtocol(protocol),
 	menuVisible(false), forceMenu(false), showNavigationStack(false),
 	serverName(""), rejectMessage(""), demoExtension(demoExtension),
-	connectCount(0), invalidateAjaxCache(false)
+	connectCount(0), invalidateAjaxCache(false),
+	ui_basepath(nullptr), ui_cursor(nullptr), ui_developer(nullptr), ui_preload(nullptr)
 {
 	// instance
 	self = this;
@@ -66,6 +67,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	ui_basepath = trap::Cvar_Get( "ui_basepath", basePath, CVAR_ARCHIVE );
 	ui_cursor = trap::Cvar_Get( "ui_cursor", "cursors/default.rml", CVAR_DEVELOPER );
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
+	ui_preload = trap::Cvar_Get( "ui_preload", "1", CVAR_ARCHIVE );
 
 	// temp fix for missing background on start.. populate refreshState with some nice values
 	refreshState.clientState = CA_UNINITIALIZED;
@@ -204,6 +206,8 @@ void UI_Main::preloadUI( void )
 	// postpone displaying the document until the first valid refresh state
 	navigator->pushDocument( ui_index, false, false );
 	showNavigationStack = navigator->hasDocuments();
+
+	rocketModule->update();
 }
 
 void UI_Main::reloadUI( void )
@@ -421,14 +425,23 @@ void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessa
 	showUI( true );
 }
 
-int UI_Main::getGameProtocol( void ) const 
+int UI_Main::getGameProtocol( void ) 
 {
-	return gameProtocol;
+	return self != nullptr ? self->gameProtocol : 0;
 }
 
 void UI_Main::customRender( void )
 {
 	// NO-OP for now
+}
+
+bool UI_Main::preloadEnabled( void )
+{
+#if defined(NDEBUG)
+	return ( self != nullptr && self->ui_preload && self->ui_preload->integer != 0 );
+#else
+	return false;
+#endif
 }
 
 //===========================================
