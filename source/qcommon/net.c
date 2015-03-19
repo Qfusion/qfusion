@@ -101,7 +101,7 @@ static const char *GetLastErrorString( void )
 */
 static void GetLocalAddress( void )
 {
-	struct addrinfo hints = { 0 }, *hostInfo, *i;
+	struct addrinfo hints, *hostInfo, *i;
 	char hostname[256];
 	char *p;
 	int ip;
@@ -109,6 +109,7 @@ static void GetLocalAddress( void )
 	if( gethostname( hostname, 256 ) == SOCKET_ERROR )
 		return;
 
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET; // AF_INET6 for IPv6
 	if( getaddrinfo( hostname, NULL, &hints, &hostInfo ) != 0 ) {
 		return;
