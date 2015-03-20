@@ -292,9 +292,12 @@ void ElementStyle::RemoveProperty(const String& name)
 // Returns one of this element's properties.
 const Property* ElementStyle::GetProperty(const String& name)
 {
-	if (prop_counter.find(name) == prop_counter.end())
-		prop_counter[name] = 0;
-	prop_counter[name] = prop_counter[name] + 1;
+	PropCounter::iterator it = prop_counter.find(name);
+	if (it == prop_counter.end()) {
+		std::pair<PropCounter::iterator, bool> const &insert = prop_counter.insert(std::pair<const String &, int>(name, 0));
+		it = insert.first;
+	}
+	it->second = it->second + 1;
 
 	const Property* local_property = GetLocalProperty(name);
 	if (local_property != NULL)
