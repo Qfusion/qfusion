@@ -999,6 +999,16 @@ void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned
 		return;
 	}
 
+	// bring up the game menu after reconnecting
+	if( !cgs.tv && !cgs.demoPlaying ) {
+		if( ISREALSPECTATOR() && !cg.firstFrame ) {
+			if( !cgs.gameMenuRequested ) {
+				trap_Cmd_ExecuteText( EXEC_NOW, "gamemenu\n" );
+			}
+			cgs.gameMenuRequested = true;
+		}
+	}
+
 	if( !cg.viewFrameCount )
 		cg.firstViewRealTime = cg.realTime;
 

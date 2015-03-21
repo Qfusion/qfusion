@@ -979,7 +979,7 @@ void CG_Reset( void )
 void CG_Init( const char *serverName, unsigned int playerNum,
 			 int vidWidth, int vidHeight, float pixelRatio,
 			 bool demoplaying, const char *demoName, bool pure, 
-			 unsigned int snapFrameTime, int protocol, int sharedSeed )
+			 unsigned int snapFrameTime, int protocol, int sharedSeed, bool gameStart )
 {
 	CG_InitGameShared();
 
@@ -1020,6 +1020,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	cgs.snapFrameTime = snapFrameTime;
 
 	cgs.hasGametypeMenu = false; // this will update as soon as we receive configstrings
+	cgs.gameMenuRequested = !gameStart;
 
 	CG_RegisterVariables();
 	CG_InitTemporaryBoneposesCache();
