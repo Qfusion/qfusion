@@ -9,6 +9,8 @@ endif()
 file(GLOB CLIENT_HEADERS
     "*.h"
 	"../gameshared/q_*.h"
+	"../gameshared/anorms.h"
+	"../gameshared/config.h"
 	"../qcommon/*.h"
 	"../qalgo/*.h"
 	"../matchmaker/*.h"

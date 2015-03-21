@@ -9,10 +9,12 @@ endif()
 file(GLOB REF_GL_HEADERS
     "*.h"
 	"../gameshared/q_*.h"
+	"../gameshared/anorms.h"
+	"../gameshared/config.h"
 	"../qcommon/bsp.h"
 	"../qcommon/patch.h"
 	"../qcommon/iqm.h"
-	"../qcommon/config.h"
+	"../qcommon/qfiles.h"
 	"../qalgo/*.h"
 )
 
