@@ -826,6 +826,7 @@ static void CL_ParseServerData( msg_t *msg )
 
 	cl.servercount = MSG_ReadLong( msg );
 	cl.snapFrameTime = (unsigned int)MSG_ReadShort( msg );
+	cl.gamestart = true;
 
 	// set extrapolation time to half snapshot time
 	Cvar_ForceSet( "cl_extrapolationTime", va( "%i", (unsigned int)( cl.snapFrameTime * 0.5 ) ) );
