@@ -213,7 +213,7 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 			VectorAdd( pos, dcol, pos );
 			VectorCopy( norm, n );
 
-			v[3] = 1;
+			v[3] = 0; // set w-coordinate to 0 for infinite farclip
 			n[3] = 0;
 
 			v += 4;

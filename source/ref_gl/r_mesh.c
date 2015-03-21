@@ -157,6 +157,9 @@ bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t 
 	if( e->renderfx & RF_ALPHAHACK ) {
 		// force shader sort to additive
 		shaderSort = SHADER_SORT_ADDITIVE;
+	} else if( ( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) && ( shader->flags & SHADER_SKY ) ) {
+		// render skyportals before normal geometry
+		shaderSort = SHADER_SORT_PORTAL;
 	}
 
 	sds = &list->drawSurfs[list->numDrawSurfs++];
