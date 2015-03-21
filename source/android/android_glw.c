@@ -125,8 +125,11 @@ static void GLimp_Android_ChooseConfig( void )
 	const char *extensions = qglGetGLWExtensionsString();
 	int i, j, k;
 
-	if( extensions && strstr( extensions, "EGL_NV_depth_nonlinear" ) )
+	if( extensions && strstr( extensions, "EGL_NV_depth_nonlinear" ) &&
+		ri.Cvar_Get( "gl_ext_depth_nonlinear", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer )
+	{
 		depthEncodingSupported = true;
+	}
 
 	for( i = 0; i < sizeof( colorSizes ) / sizeof( colorSizes[0] ); i++ )
 	{

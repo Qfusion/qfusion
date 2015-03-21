@@ -498,7 +498,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, get_program_binary, false, false, &gl_ext_get_program_binary_OES_funcs )
 	,GL_EXTENSION( OES, depth24, true, false, NULL )
-	,GL_EXTENSION( NV, depth_nonlinear, true, false, NULL )
+	,GL_EXTENSION( NV, depth_nonlinear, false, false, NULL )
 	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
 	,GL_EXTENSION( OES, rgb8_rgba8, true, false, NULL )
