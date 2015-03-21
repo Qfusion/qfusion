@@ -226,6 +226,9 @@ void ElementDocument::Show(int focus_flags)
 
 	// Set to visible and switch focus if necessary
 	SetProperty(VISIBILITY, "visible");
+
+	DispatchEvent("show", Dictionary(), false);
+
 	if (focus_flags & FOCUS || focus_flags & MODAL)
 	{
 		// If no element could be focused, focus the window
@@ -234,8 +237,6 @@ void ElementDocument::Show(int focus_flags)
 			Focus();
 		}
 	}
-
-	DispatchEvent("show", Dictionary(), false);
 }
 
 void ElementDocument::Hide()
