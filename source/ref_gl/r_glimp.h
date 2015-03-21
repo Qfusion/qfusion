@@ -215,15 +215,17 @@ typedef struct
 	int				shadingLanguageVersion;
 
 	int				width, height;
-	bool		fullScreen;
-	bool		wideScreen;
+	bool			fullScreen;
+	bool			wideScreen;
 
-	bool		stereoEnabled;
+	bool			stereoEnabled;
 	int				stencilBits;
 
-	bool		hwGamma;
+	bool			hwGamma;
 	unsigned short	gammaRampSize;
 	unsigned short	originalGammaRamp[3*GAMMARAMP_STRIDE];
+
+	float			depthEpsilon;
 
 	int				maxTextureSize
 					,maxTextureUnits
@@ -252,19 +254,19 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 */
 
 bool	GLimp_ScreenEnabled( void );
-void		GLimp_BeginFrame( void );
-void		GLimp_EndFrame( void );
-int			GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd );
-void	    GLimp_Shutdown( void );
-rserr_t		GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
+void	GLimp_BeginFrame( void );
+void	GLimp_EndFrame( void );
+int		GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd );
+void	GLimp_Shutdown( void );
+rserr_t	GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
 				bool fullscreen, bool wideScreen );
 bool	GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
-void	    GLimp_AppActivate( bool active, bool destroy );
+void	GLimp_AppActivate( bool active, bool destroy );
 bool	GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp );
-void		GLimp_SetGammaRamp( size_t stride, unsigned short   size, unsigned short *ramp );
+void	GLimp_SetGammaRamp( size_t stride, unsigned short   size, unsigned short *ramp );
 
 bool	GLimp_SharedContext_Create( void **context, void **surface );
 bool	GLimp_SharedContext_MakeCurrent( void *context, void *surface );
-void		GLimp_SharedContext_Destroy( void *context, void *surface );
+void	GLimp_SharedContext_Destroy( void *context, void *surface );
 
 #endif // R_GLIMP_H

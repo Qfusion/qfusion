@@ -459,7 +459,7 @@ static void _R_DrawSurfaces( void )
 			if( infiniteProj != prevInfiniteProj ) {
 				if( infiniteProj ) {
 					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
-					Matrix4_PerspectiveProjectionToInfinity( Z_NEAR, projectionMatrix );
+					Matrix4_PerspectiveProjectionToInfinity( Z_NEAR, projectionMatrix, glConfig.depthEpsilon );
 					RB_LoadProjectionMatrix( projectionMatrix );
 				}
 				else {

@@ -957,6 +957,13 @@ static void R_FinalizeGLExtensions( void )
 	}
 #endif
 
+	if( glConfig.ext.depth24 ) {
+		glConfig.depthEpsilon = 1.0 / (1<<23);
+	}
+	else {
+		glConfig.depthEpsilon = 1.0 / (1<<15);
+	}
+
 	cvar = ri.Cvar_Get( "gl_ext_vertex_buffer_object_hack", "0", CVAR_ARCHIVE|CVAR_NOSET );
 	if( cvar && !cvar->integer ) 
 	{
