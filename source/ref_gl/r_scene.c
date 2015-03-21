@@ -228,11 +228,65 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	}
 
 	// blit + flip
-	R_DrawStretchQuick( x, y, 
-		w, h, 
-		(float)(x)/image->upload_width, 1.0 - (float)(y)/image->upload_height, 
-		(float)(x+w)/image->upload_width, 1.0 - (float)(y+h)/image->upload_height,
-		color, program_type, image, blendMask );
+	if( ( program_type == GLSL_PROGRAM_TYPE_NONE ) || ( program_type == GLSL_PROGRAM_TYPE_Q3A_SHADER ) )
+	{
+		R_DrawStretchQuick( x, y, 
+			w, h, 
+			(float)(x)/image->upload_width, 1.0 - (float)(y)/image->upload_height, 
+			(float)(x+w)/image->upload_width, 1.0 - (float)(y+h)/image->upload_height,
+			color, program_type, image, blendMask );
+	}
+	else {
+		// On Adreno, reusing the batch mesh for post processing effects drops FPS to 10-20.
+		static char *s_name = "$builtinpostprocessing";
+		static shaderpass_t p;
+		static shader_t s;
+		static tcmod_t tcmod;
+		mat4_t m;
+
+		assert( rsh.postProcessingVBO );
+		if( rsh.postProcessingVBO ) {
+			R_EndStretchBatch();
+
+			s.vattribs = VATTRIB_POSITION_BIT;
+			s.sort = SHADER_SORT_NEAREST;
+			s.numpasses = 1;
+			s.name = s_name;
+			s.passes = &p;
+
+			p.rgbgen.type = RGB_GEN_IDENTITY;
+			p.alphagen.type = ALPHA_GEN_IDENTITY;
+			p.tcgen = TC_GEN_NONE;
+			p.images[0] = image;
+			p.flags = blendMask;
+			p.program_type = program_type;
+
+			if( !dstFbo ) {
+				tcmod.type = TC_MOD_TRANSFORM;
+				tcmod.args[0] = (float)(w) / image->upload_width;
+				tcmod.args[1] = (float)(h) / image->upload_height;
+				tcmod.args[4] = (float)(x) / image->upload_width;
+				tcmod.args[5] = (float)(y) / image->upload_height;
+
+				p.numtcmods = 1;
+				p.tcmods = &tcmod;
+			}
+			else {
+				p.numtcmods = 0;
+			}
+
+			Matrix4_Identity( m );
+			Matrix4_Scale2D( m, w, h );
+			Matrix4_Translate2D( m, x, y );
+			RB_LoadObjectMatrix( m );
+
+			RB_BindShader( NULL, &s, NULL );	
+			RB_BindVBO( rsh.postProcessingVBO->index, GL_TRIANGLES );
+			RB_DrawElements( 0, 4, 0, 6, 0, 0, 0, 0 );
+
+			RB_LoadObjectMatrix( mat4x4_identity );
+		}
+	}
 
 	// restore 2D viewport and scissor
 	RB_Viewport( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );

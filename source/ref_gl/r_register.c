@@ -1427,6 +1427,13 @@ static void R_InitVolatileAssets( void )
 	else {
 		R_TouchMeshVBO( rsh.nullVBO );
 	}
+
+	if( !rsh.postProcessingVBO ) {
+		rsh.postProcessingVBO = R_InitPostProcessingVBO();
+	}
+	else {
+		R_TouchMeshVBO( rsh.postProcessingVBO );
+	}
 }
 
 /*
