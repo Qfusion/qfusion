@@ -382,7 +382,7 @@ void Matrix4_PerspectiveProjection( vec_t fov_x, vec_t fov_y,
 	m[15] = 0.0f;
 }
 
-#define INFINITE_PROJECTION_EPSILON		24e-8
+#define INFINITE_PROJECTION_EPSILON		 1.0 / (1<<23)
 
 /*
 * Matrix4_InfinitePerspectiveProjection
