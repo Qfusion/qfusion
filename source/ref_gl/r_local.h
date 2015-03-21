@@ -210,6 +210,7 @@ typedef struct
 	mbrushmodel_t	*worldBrushModel;
 
 	struct mesh_vbo_s *nullVBO;
+	struct mesh_vbo_s *postProcessingVBO;
 
 	vec3_t			wallColor, floorColor;
 
@@ -558,6 +559,8 @@ void		R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t
 
 struct mesh_vbo_s *R_InitNullModelVBO( void );
 bool	R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf );
+
+struct mesh_vbo_s *R_InitPostProcessingVBO( void );
 
 void		R_TransformForWorld( void );
 void		R_TransformForEntity( const entity_t *e );

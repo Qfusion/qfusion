@@ -1734,10 +1734,12 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 {
 	int program;
 	const image_t *image = pass->images[0];
-	mat4_t texMatrix = { 0 };
+	mat4_t texMatrix;
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
+
+	Matrix4_Identity( texMatrix );
 
 	RB_BindTexture( 0, image );
 
@@ -1788,7 +1790,7 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 {
 	int program;
 	const image_t *image;
-	mat4_t texMatrix = { 0 };
+	mat4_t texMatrix;
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
@@ -1797,6 +1799,8 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 		image = rsh.colorCorrectionOverrideLUT;
 	else
 		image = rsh.worldBrushModel->colorCorrectionLUT;
+
+	Matrix4_Identity( texMatrix );
 
 	RB_BindTexture( 0, pass->images[0] );
 	RB_BindTexture( 1, image );

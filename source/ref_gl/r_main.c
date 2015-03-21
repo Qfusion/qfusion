@@ -1013,6 +1013,34 @@ static void R_ApplyBrightness( void )
 	R_EndStretchBatch();
 }
 
+/*
+* R_InitPostProcessingVBO
+*/
+mesh_vbo_t *R_InitPostProcessingVBO( void )
+{
+	vec4_t xyz[4] = { {0,0,0,1}, {1,0,0,1}, {1,1,0,1}, {0,1,0,1} };
+	elem_t elems[6] = { 0, 1, 2, 0, 2, 3 };
+	mesh_t mesh;
+	vattribmask_t vattribs = VATTRIB_POSITION_BIT;
+	mesh_vbo_t *vbo;
+	
+	vbo = R_CreateMeshVBO( &rf, 4, 6, 0, vattribs, VBO_TAG_NONE, vattribs );
+	if( !vbo ) {
+		return NULL;
+	}
+
+	memset( &mesh, 0, sizeof( mesh ) );
+	mesh.numVerts = 4;
+	mesh.xyzArray = xyz;
+	mesh.numElems = 6;
+	mesh.elems = elems;
+
+	R_UploadVBOVertexData( vbo, 0, vattribs, &mesh, VBO_HINT_NONE );
+	R_UploadVBOElemData( vbo, 0, 0, &mesh, VBO_HINT_NONE );
+
+	return vbo;
+}
+
 //=======================================================================
 
 /*
