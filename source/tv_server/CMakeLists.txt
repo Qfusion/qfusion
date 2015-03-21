@@ -5,6 +5,8 @@ include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
 file(GLOB TV_SERVER_HEADERS
     "*.h"
 	"../gameshared/q_*.h"
+	"../gameshared/anorms.h"
+	"../gameshared/config.h"
 	"../qcommon/*.h"
 	"../qalgo/*.h"
 )
