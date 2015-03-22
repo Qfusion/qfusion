@@ -122,6 +122,15 @@ QGL_EXTERN	const char				*(*qglGetGLWExtensionsString)( void );
 #define GL_UNSIGNED_SHORT_5_6_5								0x8363
 #endif
 
+#ifndef GL_LOW_FLOAT
+#define GL_LOW_FLOAT										0x8DF0
+#define GL_MEDIUM_FLOAT										0x8DF1
+#define GL_HIGH_FLOAT										0x8DF2
+#define GL_LOW_INT											0x8DF3
+#define GL_MEDIUM_INT										0x8DF4
+#define GL_HIGH_INT											0x8DF5
+#endif
+
 #define GL_TEXTURE0_ARB										0x84C0
 #define GL_MAX_TEXTURE_IMAGE_UNITS_ARB						0x8872
 
@@ -626,6 +635,7 @@ QGL_FUNC(void, glPolygonMode, (GLenum face, GLenum mode));
 #else
 QGL_FUNC(void, glClearDepthf, (GLclampf depth));
 QGL_FUNC(void, glDepthRangef, (GLclampf zNear, GLclampf zFar));
+QGL_FUNC(void, glGetShaderPrecisionFormat, (GLenum shaderType, GLenum precisionType, GLint *range, GLint *precision));
 #ifndef qglClearDepth
 #define qglClearDepth qglClearDepthf
 #define qglDepthRange qglDepthRangef
