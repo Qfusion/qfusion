@@ -1051,7 +1051,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_fastsky = ri.Cvar_Get( "r_fastsky", "0", CVAR_ARCHIVE );
 	r_portalonly = ri.Cvar_Get( "r_portalonly", "0", 0 );
 	r_portalmaps = ri.Cvar_Get( "r_portalmaps", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	r_portalmaps_maxtexsize = ri.Cvar_Get( "r_portalmaps_maxtexsize", "256", CVAR_ARCHIVE );
+	r_portalmaps_maxtexsize = ri.Cvar_Get( "r_portalmaps_maxtexsize", "1024", CVAR_ARCHIVE );
 
 	r_lighting_bumpscale = ri.Cvar_Get( "r_lighting_bumpscale", "8", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_lighting_deluxemapping = ri.Cvar_Get( "r_lighting_deluxemapping", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
