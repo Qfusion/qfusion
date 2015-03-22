@@ -1829,9 +1829,11 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	if( rb.greyscale || pass->flags & SHADERPASS_GREYSCALE ) {
 		features |= GLSL_SHADER_COMMON_GREYSCALE;
 	}
-	if( r_fragment_highp->integer ) {
+#ifdef GL_ES_VERSION_2_0
+	if( glConfig.ext.fragment_precision_high ) {
 		features |= GLSL_SHADER_COMMON_FRAGMENT_HIGHP;
 	}
+#endif
 
 	features |= RB_BonesTransformsToProgramFeatures();
 	features |= RB_AutospriteProgramFeatures();

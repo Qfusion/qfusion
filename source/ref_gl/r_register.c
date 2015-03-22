@@ -111,7 +111,6 @@ cvar_t *r_screenshot_fmtstr;
 cvar_t *r_screenshot_jpeg;
 cvar_t *r_screenshot_jpeg_quality;
 cvar_t *r_swapinterval;
-cvar_t *r_fragment_highp;
 
 cvar_t *r_temp1;
 
@@ -505,6 +504,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, texture_3D, false, false, &gl_ext_texture_3D_OES_funcs )
 	,GL_EXTENSION( EXT, texture_array, false, false, &gl_ext_texture_3D_OES_funcs )
 	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
+	,GL_EXTENSION( OES, fragment_precision_high, false, false, NULL )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -767,6 +767,7 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.GLSL130 = true;
 		glConfig.ext.rgb8_rgba8 = true;
 		GL_OPTIONAL_CORE_EXTENSION(depth_texture);
+		GL_OPTIONAL_CORE_EXTENSION(fragment_precision_high);
 		GL_OPTIONAL_CORE_EXTENSION(get_program_binary);
 		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);
 		GL_OPTIONAL_CORE_EXTENSION(texture_3D);
@@ -779,6 +780,7 @@ static void R_FinalizeGLExtensions( void )
 	}
 #else // GL_ES_VERSION_2_0
 	glConfig.ext.depth24 = true;
+	glConfig.ext.fragment_precision_high = true;
 	glConfig.ext.rgb8_rgba8 = true;
 #endif
 
@@ -1118,8 +1120,6 @@ static void R_Register( const char *screenshotsPrefix )
 #endif
 	// make sure r_swapinterval is checked after vid_restart
 	r_swapinterval->modified = true;
-
-	r_fragment_highp = ri.Cvar_Get( "r_fragment_highp", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 
 	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
 
