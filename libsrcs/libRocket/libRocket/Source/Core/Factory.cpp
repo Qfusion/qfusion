@@ -56,15 +56,15 @@ namespace Rocket {
 namespace Core {
 
 // Element instancers.
-typedef std::map< String, ElementInstancer* > ElementInstancerMap;
+typedef std::unordered_map< String, ElementInstancer*, StringHash > ElementInstancerMap;
 static ElementInstancerMap element_instancers;
 
 // Decorator instancers.
-typedef std::map< String, DecoratorInstancer* > DecoratorInstancerMap;
+typedef std::unordered_map< String, DecoratorInstancer*, StringHash > DecoratorInstancerMap;
 static DecoratorInstancerMap decorator_instancers;
 
 // Font effect instancers.
-typedef std::map< String, FontEffectInstancer* > FontEffectInstancerMap;
+typedef std::unordered_map< String, FontEffectInstancer*, StringHash > FontEffectInstancerMap;
 static FontEffectInstancerMap font_effect_instancers;
 
 // The context instancer.
@@ -269,7 +269,8 @@ bool Factory::InstanceElementText(Element* parent, const String& text)
 
 		// Attempt to instance the element.
 		XMLAttributes attributes;
-		Element* element = Factory::InstanceElement(parent, "#text", "#text", attributes);
+		static String _text("#text");
+		Element* element = Factory::InstanceElement(parent, _text, _text, attributes);
 		if (!element)
 		{
 			Log::Message(Log::LT_ERROR, "Failed to instance text element '%s', instancer returned NULL.", translated_data.CString());
