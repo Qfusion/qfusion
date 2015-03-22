@@ -495,6 +495,7 @@ bool ElementDocument::SearchFocusSubtree(Element* element, bool forward)
 	if (element->GetProperty<int>(TAB_INDEX) == TAB_INDEX_AUTO)
 	{
 		element->Focus();
+		element->ScrollIntoView(false);
 		return true;
 	}
 
