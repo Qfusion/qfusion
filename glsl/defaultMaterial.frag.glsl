@@ -111,7 +111,6 @@ void main()
 	float diffuseProduct;
 
 #ifdef APPLY_CELSHADING
-	int lightcell;
 	float diffuseProductPositive;
 	float diffuseProductNegative;
 	float hardShadow;
@@ -158,20 +157,14 @@ void main()
 #endif // APPLY_HALFLAMBERT
 
 	// smooth the hard shadow edge
-	lightcell = int(max(diffuseProduct + 0.1, 0.0) * 2.0);
-	hardShadow += float(lightcell);
-
-	lightcell = int(max(diffuseProduct + 0.055, 0.0) * 2.0);
-	hardShadow += float(lightcell);
-
-	lightcell = int(diffuseProductPositive * 2.0);
-	hardShadow += float(lightcell);
+	hardShadow += floor(max(diffuseProduct + 0.1, 0.0) * 2.0);
+	hardShadow += floor(max(diffuseProduct + 0.055, 0.0) * 2.0);
+	hardShadow += floor(diffuseProductPositive * 2.0);
 
 	color.rgb += myhalf(0.6 + hardShadow * 0.3333333333 * 0.27 + diffuseProductPositive * 0.14);
 
 	// backlight
-	lightcell = int (diffuseProductNegative * 2.0);
-	color.rgb += myhalf (float(lightcell) * 0.085 + diffuseProductNegative * 0.085);
+	color.rgb += myhalf (ceil(diffuseProductNegative * 2.0) * 0.085 + diffuseProductNegative * 0.085);
 #else
 
 #ifdef APPLY_HALFLAMBERT
