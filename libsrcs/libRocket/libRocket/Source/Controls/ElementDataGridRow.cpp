@@ -35,7 +35,7 @@
 namespace Rocket {
 namespace Controls {
 
-const float MAX_UPDATE_TIME = 0.01f;
+const float MAX_UPDATE_TIME = 0.008f;
 
 ElementDataGridRow::ElementDataGridRow(const Rocket::Core::String& tag) : Core::Element(tag)
 {
@@ -500,19 +500,29 @@ void ElementDataGridRow::Load(const DataQuery& row_information)
 			// XML string, and parse that into the actual Core::Elements. If there is
 			// no formatter, then we just send through the raw text, in CVS form.
 			Rocket::Core::StringList raw_data;
+			size_t raw_data_total_len = 0;
 			for (size_t i = 0; i < column->fields.size(); i++)
 			{
 				if (column->fields[i] == DataSource::DEPTH)
 				{
-					raw_data.push_back(Rocket::Core::String(8, "%d", depth));
+					Rocket::Core::StringList::iterator it = raw_data.insert(raw_data.end(), Core::String());
+					Rocket::Core::String &r = *it;
+					r.FormatString(8, "%d", depth);
+					raw_data_total_len += r.Length();
 				}
 				else if (column->fields[i] == DataSource::NUM_CHILDREN)
 				{
-					raw_data.push_back(Rocket::Core::String(8, "%d", children.size()));
+					Rocket::Core::StringList::iterator it = raw_data.insert(raw_data.end(), Core::String());
+					Rocket::Core::String &r = *it;
+					r.FormatString(8, "%d", children.size());
+					raw_data_total_len += r.Length();
 				}
 				else
 				{
-					raw_data.push_back(row_information.Get< Rocket::Core::String >(column->fields[i], ""));
+					Rocket::Core::StringList::iterator it = raw_data.insert(raw_data.end(), Core::String());
+					Rocket::Core::String &r = *it;
+					row_information.GetInto< Rocket::Core::String >(column->fields[i], r);
+					raw_data_total_len += r.Length();
 				}
 			}
 
@@ -523,6 +533,7 @@ void ElementDataGridRow::Load(const DataQuery& row_information)
 			}
 			else
 			{
+				cell_string.Reserve(raw_data_total_len + raw_data.size() + 1);
 				for (size_t i = 0; i < raw_data.size(); i++)
 				{
 					if (i > 0)
