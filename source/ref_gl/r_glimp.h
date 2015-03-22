@@ -186,6 +186,7 @@ typedef struct
 				,ES3_compatibility
 				,blend_func_separate
 				,texture_array
+				,fragment_precision_high
 				;
 	union {
 		char	shadow, shadow_samplers;
