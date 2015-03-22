@@ -504,7 +504,6 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, texture_3D, false, false, &gl_ext_texture_3D_OES_funcs )
 	,GL_EXTENSION( EXT, texture_array, false, false, &gl_ext_texture_3D_OES_funcs )
 	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
-	,GL_EXTENSION( OES, fragment_precision_high, false, false, NULL )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -767,7 +766,6 @@ static void R_FinalizeGLExtensions( void )
 		glConfig.ext.GLSL130 = true;
 		glConfig.ext.rgb8_rgba8 = true;
 		GL_OPTIONAL_CORE_EXTENSION(depth_texture);
-		GL_OPTIONAL_CORE_EXTENSION(fragment_precision_high);
 		GL_OPTIONAL_CORE_EXTENSION(get_program_binary);
 		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);
 		GL_OPTIONAL_CORE_EXTENSION(texture_3D);
@@ -884,6 +882,19 @@ static void R_FinalizeGLExtensions( void )
 	{
 		qglTexImage3DEXT = qglTexImage3D;
 		qglTexSubImage3DEXT = qglTexSubImage3D;
+	}
+#endif
+
+	/* GL_OES_fragment_precision_high
+	 * This extension has been withdrawn and some drivers don't expose it anymore,
+	 * so it's not on the list and is activated here instead. */
+#ifdef GL_ES_VERSION_2_0
+	if( ri.Cvar_Get( "gl_ext_fragment_precision_high", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer )
+	{
+		int range[2] = { 0 }, precision = 0;
+		qglGetShaderPrecisionFormat( GL_FRAGMENT_SHADER_ARB, GL_HIGH_FLOAT, range, &precision );
+		if( range[0] && range[1] && precision )
+			glConfig.ext.fragment_precision_high = true;
 	}
 #endif
 
