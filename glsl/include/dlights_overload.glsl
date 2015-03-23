@@ -6,24 +6,41 @@ myhalf3 DynamicLightsSummaryColor(in vec3 Position)
 {
 	myhalf3 Color = myhalf3(0.0);
 
+#if NUM_DLIGHTS > 4 // prevent the compiler from possibly handling the NUM_DLIGHTS <= 4 case as a real loop
 #if !defined(GL_ES) && (QF_GLSL_VERSION >= 330)
-	for (int i = 0; i < u_NumDynamicLights; i++)
+	for (int dlight = 0; dlight < u_NumDynamicLights; dlight += 4)
 #else
-	for (int i = 0; i < NUM_DLIGHTS; i++)
+	for (int dlight = 0; dlight < NUM_DLIGHTS; dlight += 4)
+#endif
+#else
+#define dlight 0
 #endif
 	{
-		myhalf3 STR = myhalf3(u_DlightPosition[i] - Position);
-		myhalf distance = length(STR);
-		myhalf falloff = clamp(1.0 - distance * u_DlightDiffuseAndInvRadius[i].a, 0.0, 1.0);
+		myhalf3 STR0 = myhalf3(u_DlightPosition[dlight] - Position);
+		myhalf3 STR1 = myhalf3(u_DlightPosition[dlight + 1] - Position);
+		myhalf3 STR2 = myhalf3(u_DlightPosition[dlight + 2] - Position);
+		myhalf3 STR3 = myhalf3(u_DlightPosition[dlight + 3] - Position);
+		myhalf4 distance = myhalf4(length(STR0), length(STR1), length(STR2), length(STR3));
+		myhalf4 falloff = clamp(myhalf4(1.0) - distance * u_DlightDiffuseAndInvRadius[dlight + 3], 0.0, 1.0);
 
 		falloff *= falloff;
 
 		#ifdef DLIGHTS_SURFACE_NORMAL_IN
-		falloff *= myhalf(max(dot(normalize(STR), surfaceNormalModelspace), 0.0));
+		falloff *= max(myhalf4(
+			dot(normalize(STR0), surfaceNormalModelspace),
+			dot(normalize(STR1), surfaceNormalModelspace),
+			dot(normalize(STR2), surfaceNormalModelspace),
+			dot(normalize(STR3), surfaceNormalModelspace)), 0.0);
 		#endif
 
-		Color += falloff * u_DlightDiffuseAndInvRadius[i].rgb;
+		Color += myhalf3(
+			dot(u_DlightDiffuseAndInvRadius[dlight], falloff),
+			dot(u_DlightDiffuseAndInvRadius[dlight + 1], falloff),
+			dot(u_DlightDiffuseAndInvRadius[dlight + 2], falloff));
 	}
 
 	return Color;
+#ifdef dlight
+#undef dlight
+#endif
 }
