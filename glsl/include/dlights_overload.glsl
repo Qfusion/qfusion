@@ -26,11 +26,12 @@ myhalf3 DynamicLightsSummaryColor(in vec3 Position)
 		falloff *= falloff;
 
 		#ifdef DLIGHTS_SURFACE_NORMAL_IN
+		distance = myhalf4(1.0) / distance;
 		falloff *= max(myhalf4(
-			dot(normalize(STR0), surfaceNormalModelspace),
-			dot(normalize(STR1), surfaceNormalModelspace),
-			dot(normalize(STR2), surfaceNormalModelspace),
-			dot(normalize(STR3), surfaceNormalModelspace)), 0.0);
+			dot(STR0 * distance.xxx, surfaceNormalModelspace),
+			dot(STR1 * distance.yyy, surfaceNormalModelspace),
+			dot(STR2 * distance.zzz, surfaceNormalModelspace),
+			dot(STR3 * distance.www, surfaceNormalModelspace)), 0.0);
 		#endif
 
 		Color += myhalf3(
