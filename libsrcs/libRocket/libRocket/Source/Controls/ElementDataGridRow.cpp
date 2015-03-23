@@ -35,7 +35,7 @@
 namespace Rocket {
 namespace Controls {
 
-const float MAX_UPDATE_TIME = 0.008f;
+const float MAX_UPDATE_TIME = 0.001f;
 
 ElementDataGridRow::ElementDataGridRow(const Rocket::Core::String& tag) : Core::Element(tag)
 {
@@ -251,6 +251,7 @@ ElementDataGrid* ElementDataGridRow::GetParentGrid()
 
 void ElementDataGridRow::OnDataSourceDestroy(DataSource* ROCKET_UNUSED_PARAMETER(_data_source))
 {
+	ROCKET_UNUSED(_data_source);
 	if(data_source != NULL)
 	{
 		data_source->DetachListener(this);
@@ -335,6 +336,9 @@ void ElementDataGridRow::RefreshChildDependentCells()
 // Called whenever a row is added or removed above ours.
 void ElementDataGridRow::DirtyTableRelativeIndex()
 {
+	if (table_relative_index_dirty)
+		return;
+
 	for (size_t i = 0; i < children.size(); i++)
 	{
 		children[i]->DirtyTableRelativeIndex();
