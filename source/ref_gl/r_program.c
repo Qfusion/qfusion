@@ -102,7 +102,7 @@ typedef struct glsl_program_s
 					LightstyleColor[MAX_LIGHTMAPS],
 
 					DynamicLightsPosition[MAX_DLIGHTS],
-					DynamicLightsDiffuseAndInvRadius[MAX_DLIGHTS],
+					DynamicLightsDiffuseAndInvRadius[MAX_DLIGHTS >> 2],
 					NumDynamicLights,
 
 					AttrBonesIndices,
@@ -1989,12 +1989,13 @@ void RP_UpdateFogUniforms( int elem, byte_vec4_t color, float clearDist, float o
 unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *superLightStyle, 
 	const vec3_t entOrigin, const mat3_t entAxis, unsigned int dlightbits )
 {
-	int i, n;
+	int i, n, c;
 	dlight_t *dl;
 	float colorScale = mapConfig.mapLightColorScale;
 	vec3_t dlorigin, tvec, dlcolor;
 	glsl_program_t *program = r_glslprograms + elem - 1;
 	bool identityAxis = Matrix3_Compare( entAxis, axis_identity );
+	vec4_t shaderColor[4];
 
 	if( superLightStyle ) {
 		int i;
@@ -2017,6 +2018,8 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 	}
 
 	if( dlightbits ) {
+		memset( shaderColor, 0, sizeof( vec4_t ) * 3 );
+		Vector4Set( shaderColor[3], 1.0f, 1.0f, 1.0f, 1.0f );
 		n = 0;
 		for( i = 0; i < MAX_DLIGHTS; i++ ) {
 			dl = rsc.dlights + i;
@@ -2035,8 +2038,19 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			VectorScale( dl->color, colorScale, dlcolor );
 
 			qglUniform3fvARB( program->loc.DynamicLightsPosition[n], 1, dlorigin );
-			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndInvRadius[n],
-				dlcolor[0], dlcolor[1], dlcolor[2], 1.0f / dl->intensity );
+
+			c = n & 3;
+			shaderColor[0][c] = dlcolor[0];
+			shaderColor[1][c] = dlcolor[1];
+			shaderColor[2][c] = dlcolor[2];
+			shaderColor[3][c] = 1.0f / dl->intensity;
+
+			// DynamicLightsDiffuseAndInvRadius is transposed for SIMD, but it's still 4x4
+			if( c == 3 ) {
+				qglUniform4fvARB( program->loc.DynamicLightsDiffuseAndInvRadius[n >> 2], 4, shaderColor[0] );
+				memset( shaderColor, 0, sizeof( vec4_t ) * 3 );
+				Vector4Set( shaderColor[3], 1.0f, 1.0f, 1.0f, 1.0f );
+			}
 
 			n++;
 			dlightbits &= ~(1<<i);
@@ -2045,15 +2059,22 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 			}
 		}
 
-		if( program->loc.NumDynamicLights >= 0 ) {
-			qglUniform1iARB( program->loc.NumDynamicLights, n );
+		if( n & 3 ) {
+			qglUniform4fvARB( program->loc.DynamicLightsDiffuseAndInvRadius[n >> 2], 4, shaderColor[0] );
+			memset( shaderColor, 0, sizeof( vec4_t ) * 3 ); // to set to zero for the remaining lights
+			Vector4Set( shaderColor[3], 1.0f, 1.0f, 1.0f, 1.0f );
+			n = ALIGN( n, 4 );
 		}
 
-		for( ; n < MAX_DLIGHTS; n++ ) {
+		if( program->loc.NumDynamicLights >= 0 ) {
+			qglUniform1iARB( program->loc.NumDynamicLights, ALIGN( n, 4 ) );
+		}
+
+		for( ; n < MAX_DLIGHTS; n += 4 ) {
 			if( program->loc.DynamicLightsPosition[n] < 0 ) {
 				break;
 			}
-			qglUniform4fARB( program->loc.DynamicLightsDiffuseAndInvRadius[n], 0.0f, 0.0f, 0.0f, 1.0f );
+			qglUniform4fvARB( program->loc.DynamicLightsDiffuseAndInvRadius[n >> 2], 4, shaderColor[0] );
 		}
 	}
 	
@@ -2311,18 +2332,12 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 
 	// dynamic lights
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
-		int locP, locD;
-
-		locP = qglGetUniformLocationARB( program->object, va( "u_DlightPosition[%i]", i ) );
-		locD = qglGetUniformLocationARB( program->object, va( "u_DlightDiffuseAndInvRadius[%i]", i ) );
-
-		if( locP < 0 || locD < 0 ) {
-			program->loc.DynamicLightsPosition[i] = program->loc.DynamicLightsDiffuseAndInvRadius[i] = -1;
-			break;
+		program->loc.DynamicLightsPosition[i] = qglGetUniformLocationARB( program->object, va( "u_DlightPosition[%i]", i ) );
+		if( !( i & 3 ) ) {
+			// 4x4 transposed, so we can index it with `i`
+			program->loc.DynamicLightsDiffuseAndInvRadius[i >> 2] =
+				qglGetUniformLocationARB( program->object, va( "u_DlightDiffuseAndInvRadius[%i]", i ) );
 		}
-
-		program->loc.DynamicLightsPosition[i] = locP;
-		program->loc.DynamicLightsDiffuseAndInvRadius[i] = locD;
 	}
 	program->loc.NumDynamicLights = qglGetUniformLocationARB( program->object, "u_NumDynamicLights" );
 
