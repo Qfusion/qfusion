@@ -275,16 +275,18 @@ void main()
 #ifdef APPLY_DECAL_ADD
 	decal.rgb = myhalf3(qf_FrontColor.rgb) * myhalf3(qf_texture(u_DecalTexture, v_TexCoord));
 	color.rgb = decal.rgb + color.rgb;
-	color.a = color.a * myhalf(qf_FrontColor.a);
 #else
 	decal = myhalf4(qf_FrontColor) * myhalf4(qf_texture(u_DecalTexture, v_TexCoord));
 	color.rgb = mix(color.rgb, decal.rgb, decal.a);
 #endif // APPLY_DECAL_ADD
+	color.a *= myhalf(qf_FrontColor.a);
 
 #else
 
 #if !defined (APPLY_DIRECTIONAL_LIGHT) || !defined(APPLY_DIRECTIONAL_LIGHT_MIX)
-	color = color * myhalf4(qf_FrontColor);
+	color *= myhalf4(qf_FrontColor);
+#else
+	color.a *= myhalf(qf_FrontColor.a);
 #endif
 
 #endif // APPLY_DECAL
