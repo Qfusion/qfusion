@@ -30,7 +30,6 @@
 
 #include "Debug.h"
 #include <stdlib.h>
-#include <new>
 
 namespace Rocket {
 namespace Core {
