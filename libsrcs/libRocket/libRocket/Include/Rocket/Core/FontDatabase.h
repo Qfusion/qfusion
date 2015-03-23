@@ -79,7 +79,8 @@ private:
 	FontDatabase(void);
 	~FontDatabase(void);
 
-	typedef std::map< String, FontFaceHandle*, StringUtilities::StringComparei > FontFaceHandleMap;
+	typedef std::map< FontHandle, FontFaceHandle* > FontFaceHandleList;
+	typedef std::map< String, FontFaceHandleList, StringUtilities::StringComparei > FontFaceHandleMap;
 	FontFaceHandleMap font_handles;
 
 	static FontDatabase* instance;

@@ -65,8 +65,10 @@ void FontDatabase::Shutdown()
 	if (instance != NULL)
 	{
 		for (FontFaceHandleMap::iterator i = instance->font_handles.begin(); i != instance->font_handles.end(); ++i)
-			delete (*i).second;
-		delete instance;
+		{
+			for (FontFaceHandleList::iterator j = i->second.begin(); j != i->second.end(); ++j)
+				delete j->second;
+		}
 	}
 }
 
@@ -74,26 +76,29 @@ void FontDatabase::Shutdown()
 // Returns a handle to a font face that can be used to position and render text.
 FontFaceHandle* FontDatabase::GetFontFaceHandle(const String& family, const String& charset, Font::Style style, Font::Weight weight, int size)
 {
-	String key;
-	
-	key.FormatString(1024, "%s_%s_%i_%i_%i", family.CString(), charset.CString(), int(style), int(weight), int(size));
+	FontProviderInterface *fontprovider_interface = Core::GetFontProviderInterface();
+	FontHandle fonthandle = fontprovider_interface->GetFontFaceHandle(family, charset, style, weight, size);
+
+	FontFaceHandleMap::iterator it = instance->font_handles.find(family);
+	if (it == instance->font_handles.end()) {
+		std::pair<FontFaceHandleMap::iterator, bool> const &insert = 
+			instance->font_handles.insert(std::pair<const String &, FontFaceHandleList>(family, FontFaceHandleList()));
+		it = insert.first;
+	}
 
 	FontFaceHandle *handle;
-
-	FontFaceHandleMap::iterator iterator = instance->font_handles.find(key);
-	if (iterator != instance->font_handles.end()) {
-		handle = iterator->second;
-	}
-	else {
-		FontProviderInterface *fontprovider_interface = Core::GetFontProviderInterface();
-
+	FontFaceHandleList::iterator hit = it->second.find(fonthandle);
+	if (hit == it->second.end()) {
 		handle = new FontFaceHandle();
-		handle->Initialise(fontprovider_interface, 
-			fontprovider_interface->GetFontFaceHandle(family, charset, style, weight, size));
-		instance->font_handles[key] = handle;
+		handle->Initialise(fontprovider_interface, fonthandle);
 		handle->AddReference();
+
+		std::pair<FontFaceHandleList::iterator, bool> const &insert = 
+			it->second.insert(std::pair<FontHandle, FontFaceHandle *>(fonthandle, handle));
+		hit = insert.first;
 	}
 
+	handle = hit->second;
 	handle->AddReference();
 	return handle;
 }
