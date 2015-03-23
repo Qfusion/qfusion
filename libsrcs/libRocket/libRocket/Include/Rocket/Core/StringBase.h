@@ -207,7 +207,7 @@ protected:
 	size_type buffer_size;
 	size_type length;
 	mutable unsigned int hash;
-	static const size_type LOCAL_BUFFER_SIZE = 8;
+	static const size_type LOCAL_BUFFER_SIZE = 16;
 	char local_buffer[LOCAL_BUFFER_SIZE];
 
 	size_type GetLength(const T* string) const;
