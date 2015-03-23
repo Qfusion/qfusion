@@ -117,6 +117,11 @@ const PropertyNameList & StyleSheetSpecification::GetRegisteredInheritedProperti
 	return instance->properties.GetRegisteredInheritedProperties();
 }
 
+const PropertyNameList & StyleSheetSpecification::GetRegisteredEmProperties()
+{
+	return instance->properties.GetRegisteredEmProperties();
+}
+
 // Registers a shorthand property definition.
 bool StyleSheetSpecification::RegisterShorthand(const String& shorthand_name, const String& property_names, PropertySpecification::ShorthandType type)
 {

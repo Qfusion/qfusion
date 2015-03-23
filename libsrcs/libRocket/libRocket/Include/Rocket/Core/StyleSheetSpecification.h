@@ -80,6 +80,10 @@ public:
 	/// @return The list with stored property names.
 	static const PropertyNameList & GetRegisteredInheritedProperties();
 
+	/// Returns the list of the names of all registered property definitions expressed in EM units.
+	/// @return The list with stored property names.
+	static const PropertyNameList & GetRegisteredEmProperties();
+
 	/// Registers a shorthand property definition.
 	/// @param[in] shorthand_name The name to register the new shorthand property under.
 	/// @param[in] properties A comma-separated list of the properties this definition is shorthand for. The order in which they are specified here is the order in which the values will be processed.

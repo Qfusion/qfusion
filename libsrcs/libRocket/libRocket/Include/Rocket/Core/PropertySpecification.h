@@ -83,6 +83,10 @@ public:
 	/// @return The list with stored property names.
 	const PropertyNameList& GetRegisteredInheritedProperties() const;
 
+	/// Returns the list of the names of all registered property definitions expressed in EM units.
+	/// @return The list with stored property names.
+	const PropertyNameList& GetRegisteredEmProperties() const;
+
 	/// Registers a shorthand property definition.
 	/// @param[in] shorthand_name The name to register the new shorthand property under.
 	/// @param[in] properties A comma-separated list of the properties this definition is shorthand for. The order in which they are specified here is the order in which the values will be processed.
@@ -112,6 +116,7 @@ private:
 	ShorthandMap shorthands;
 	PropertyNameList property_names;
 	PropertyNameList inherited_property_names;
+	mutable PropertyNameList em_property_names;
 
 	bool ParsePropertyValues(StringList& values_list, const String& values, bool split_values) const;
 };

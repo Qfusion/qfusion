@@ -98,6 +98,11 @@ const PropertyNameList& PropertySpecification::GetRegisteredInheritedProperties(
 	return inherited_property_names;
 }
 
+const PropertyNameList& PropertySpecification::GetRegisteredEmProperties(void) const
+{
+	return em_property_names;
+}
+
 // Registers a shorthand property definition.
 bool PropertySpecification::RegisterShorthand(const String& shorthand_name, const String& property_names, ShorthandType type)
 {
@@ -172,6 +177,8 @@ bool PropertySpecification::ParsePropertyDeclaration(PropertyDictionary& diction
 		new_property.source_line_number = source_line_number;
 		if (property_definition->ParseValue(new_property, property_values[0]))
 		{
+			if (new_property.unit == Property::EM)
+				em_property_names.insert(lower_case_name);
 			dictionary.SetProperty(lower_case_name, new_property);
 			return true;
 		}
@@ -198,6 +205,8 @@ bool PropertySpecification::ParsePropertyDeclaration(PropertyDictionary& diction
 						Property new_property;
 						if (!shorthand_definition->properties[i].second->ParseValue(new_property, property_values[0]))
 							return false;
+						if (new_property.unit == Property::EM)
+							em_property_names.insert(lower_case_name);
 
 						new_property.source = source_file;
 						new_property.source_line_number = source_line_number;
@@ -217,19 +226,27 @@ bool PropertySpecification::ParsePropertyDeclaration(PropertyDictionary& diction
 
 					if (!shorthand_definition->properties[0].second->ParseValue(new_property, property_values[0]))
 						return false;
+					if (new_property.unit == Property::EM)
+						em_property_names.insert(shorthand_definition->properties[0].first);
 					dictionary.SetProperty(shorthand_definition->properties[0].first, new_property);
 
 					if (!shorthand_definition->properties[2].second->ParseValue(new_property, property_values[0]))
 						return false;
+					if (new_property.unit == Property::EM)
+						em_property_names.insert(shorthand_definition->properties[2].first);
 					dictionary.SetProperty(shorthand_definition->properties[2].first, new_property);
 
 					// Parse the second value into the left and right properties.
 					if (!shorthand_definition->properties[1].second->ParseValue(new_property, property_values[1]))
 						return false;
+					if (new_property.unit == Property::EM)
+						em_property_names.insert(shorthand_definition->properties[1].first);
 					dictionary.SetProperty(shorthand_definition->properties[1].first, new_property);
 
 					if (!shorthand_definition->properties[3].second->ParseValue(new_property, property_values[1]))
 						return false;
+					if (new_property.unit == Property::EM)
+						em_property_names.insert(shorthand_definition->properties[3].first);
 					dictionary.SetProperty(shorthand_definition->properties[3].first, new_property);
 				}
 				break;
@@ -245,20 +262,28 @@ bool PropertySpecification::ParsePropertyDeclaration(PropertyDictionary& diction
 
 					if (!shorthand_definition->properties[0].second->ParseValue(new_property, property_values[0]))
 						return false;
+					if (new_property.unit == Property::EM)
+						em_property_names.insert(shorthand_definition->properties[0].first);
 					dictionary.SetProperty(shorthand_definition->properties[0].first, new_property);
 
 					// Parse the second value into the left and right properties.
 					if (!shorthand_definition->properties[1].second->ParseValue(new_property, property_values[1]))
 						return false;
+					if (new_property.unit == Property::EM)
+						em_property_names.insert(shorthand_definition->properties[1].first);
 					dictionary.SetProperty(shorthand_definition->properties[1].first, new_property);
 
 					if (!shorthand_definition->properties[3].second->ParseValue(new_property, property_values[1]))
 						return false;
+					if (new_property.unit == Property::EM)
+						em_property_names.insert(shorthand_definition->properties[3].first);
 					dictionary.SetProperty(shorthand_definition->properties[3].first, new_property);
 
 					// Parse the third value into the bottom property.
 					if (!shorthand_definition->properties[2].second->ParseValue(new_property, property_values[2]))
 						return false;
+					if (new_property.unit == Property::EM)
+						em_property_names.insert(shorthand_definition->properties[2].first);
 					dictionary.SetProperty(shorthand_definition->properties[2].first, new_property);
 				}
 				break;
@@ -289,6 +314,8 @@ bool PropertySpecification::ParsePropertyDeclaration(PropertyDictionary& diction
 					return false;
 				}
 
+				if (new_property.unit == Property::EM)
+					em_property_names.insert(shorthand_definition->properties[property_index].first);
 				dictionary.SetProperty(shorthand_definition->properties[property_index].first, new_property);
 
 				// Increment the value index, unless we're replicating the last value and we're up to the last value.
