@@ -542,6 +542,8 @@ StyleSheet* ElementStyle::GetStyleSheet() const
 
 void ElementStyle::DirtyDefinition()
 {
+	if (definition_dirty)
+		return;
 	definition_dirty = true;
 	DirtyChildDefinitions();
 	
@@ -549,6 +551,8 @@ void ElementStyle::DirtyDefinition()
 	Element* parent = element->GetParentNode();
 	while (parent)
 	{
+		if (parent->GetStyle()->child_definition_dirty)
+			return;
 		parent->GetStyle()->child_definition_dirty = true;
 		parent = parent->GetParentNode();
 	}
@@ -567,10 +571,16 @@ void ElementStyle::DirtyProperties()
 	DirtyProperties(properties);
 }
 
+void ElementStyle::DirtyInheritedProperties()
+{
+	const PropertyNameList& properties = StyleSheetSpecification::GetRegisteredInheritedProperties();
+	DirtyProperties(properties);
+}
+
 // Dirties em-relative properties.
 void ElementStyle::DirtyEmProperties()
 {
-	const PropertyNameList &properties = StyleSheetSpecification::GetRegisteredProperties();
+	const PropertyNameList &properties = StyleSheetSpecification::GetRegisteredEmProperties();
 
 	if (!em_properties)
 	{
@@ -581,11 +591,7 @@ void ElementStyle::DirtyEmProperties()
 			// Skip font-size; this is relative to our parent's em, not ours.
 			if (*list_iterator == FONT_SIZE)
 				continue;
-
-			// Get this property from this element. If this is em-relative, then add it to the list to
-			// dirty.
-			if (element->GetProperty(*list_iterator)->unit == Property::EM)
-				em_properties->insert(*list_iterator);
+			em_properties->insert(*list_iterator);
 		}
 	}
 

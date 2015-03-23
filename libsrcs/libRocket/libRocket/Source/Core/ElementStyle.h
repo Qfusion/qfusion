@@ -136,6 +136,8 @@ public:
 
 	// Dirties every property.
 	void DirtyProperties();
+	// Dirties every inherited property.
+	void DirtyInheritedProperties();
 	// Dirties em-relative properties.
 	void DirtyEmProperties();
 	// Dirties font-size on child elements if appropriate.
