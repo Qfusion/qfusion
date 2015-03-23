@@ -274,9 +274,9 @@ void main()
 
 #ifdef APPLY_DECAL_ADD
 	decal.rgb = myhalf3(qf_FrontColor.rgb) * myhalf3(qf_texture(u_DecalTexture, v_TexCoord));
-	color.rgb = decal.rgb + color.rgb;
+	color.rgb += decal.rgb;
 #else
-	decal = myhalf4(qf_FrontColor) * myhalf4(qf_texture(u_DecalTexture, v_TexCoord));
+	decal = myhalf4(qf_FrontColor.rgb, 1.0) * myhalf4(qf_texture(u_DecalTexture, v_TexCoord));
 	color.rgb = mix(color.rgb, decal.rgb, decal.a);
 #endif // APPLY_DECAL_ADD
 	color.a *= myhalf(qf_FrontColor.a);
