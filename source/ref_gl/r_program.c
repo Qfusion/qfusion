@@ -143,7 +143,7 @@ static unsigned int r_numglslprograms;
 static glsl_program_t r_glslprograms[MAX_GLSL_PROGRAMS];
 static glsl_program_t *r_glslprograms_hash[GLSL_PROGRAM_TYPE_MAXTYPE][GLSL_PROGRAMS_HASH_SIZE];
 
-static int r_glslbincache_storemode = FS_WRITE;
+static int r_glslbincache_storemode;
 
 static void RP_GetUniformLocations( glsl_program_t *program );
 static void RP_BindAttrbibutesLocations( glsl_program_t *program );
@@ -218,6 +218,7 @@ static void RP_PrecachePrograms( void )
 
 	R_LoadCacheFile( GLSL_CACHE_FILE_NAME, ( void ** )&buffer );
 	if( !buffer ) {
+		r_glslbincache_storemode = FS_WRITE;
 		return;
 	}
 
