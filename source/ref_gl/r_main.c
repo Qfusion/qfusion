@@ -2020,7 +2020,7 @@ char *R_CopyString_( const char *in, const char *filename, int fileline )
 /*
 * R_LoadFile
 */
-int R_LoadFile_( const char *path, void **buffer, const char *filename, int fileline )
+int R_LoadFile_( const char *path, int flags, void **buffer, const char *filename, int fileline )
 {
 	uint8_t *buf;
 	unsigned int len;
@@ -2029,7 +2029,7 @@ int R_LoadFile_( const char *path, void **buffer, const char *filename, int file
 	buf = NULL; // quiet compiler warning
 
 	// look for it in the filesystem or pack files
-	len = ri.FS_FOpenFile( path, &fhandle, FS_READ );
+	len = ri.FS_FOpenFile( path, &fhandle, FS_READ|flags );
 
 	if( !fhandle )
 	{

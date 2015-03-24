@@ -533,10 +533,11 @@ extern mempool_t *r_mempool;
 char		*R_CopyString_( const char *in, const char *filename, int fileline );
 #define		R_CopyString(in) R_CopyString_(in,__FILE__,__LINE__)
 
-int			R_LoadFile_( const char *path, void **buffer, const char *filename, int fileline );
+int			R_LoadFile_( const char *path, int flags, void **buffer, const char *filename, int fileline );
 void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 
-#define		R_LoadFile(path,buffer) R_LoadFile_(path,buffer,__FILE__,__LINE__)
+#define		R_LoadFile(path,buffer) R_LoadFile_(path,0,buffer,__FILE__,__LINE__)
+#define		R_LoadCacheFile(path,buffer) R_LoadFile_(path,FS_CACHE,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
 bool	R_ScreenEnabled( void );
