@@ -53,24 +53,24 @@ static int fdots = 0;
 /*
 * FS_DirentIsDir
 */
-static bool FS_DirentIsDir( const struct dirent64 *d )
+static bool FS_DirentIsDir( const struct dirent64 *d, const char *base )
 {
-#if defined(_DIRENT_HAVE_D_TYPE) && defined(DT_DIR)
+#if ( defined( _DIRENT_HAVE_D_TYPE ) || defined( __ANDROID__ ) ) && defined( DT_DIR )
 	return ( d->d_type == DT_DIR );
 #else
-	bool isDir;
+	char path[PATH_MAX];
 	struct stat st;
-	if( stat( d->d_name, &st ) )
+	Q_snprintfz( path, sizeof( path ), "%s/%s", base, d->d_name );
+	if( stat( path, &st ) )
 		return false;
-	isDir = S_ISDIR( st.st_mode ) != 0;
-	return isDir;
+	return S_ISDIR( st.st_mode ) != 0;
 #endif
 }
 
 /*
 * CompareAttributes
 */
-static bool CompareAttributes( const struct dirent64 *d, unsigned musthave, unsigned canthave )
+static bool CompareAttributes( const struct dirent64 *d, const char *base, unsigned musthave, unsigned canthave )
 {
 	bool isDir;
 	bool checkDir;
@@ -80,7 +80,7 @@ static bool CompareAttributes( const struct dirent64 *d, unsigned musthave, unsi
 	isDir = false;
 	checkDir = ( canthave & SFF_SUBDIR ) || ( musthave & SFF_SUBDIR );
 	if( checkDir )
-		isDir = FS_DirentIsDir( d );
+		isDir = FS_DirentIsDir( d, base );
 
 	if( isDir && ( canthave & SFF_SUBDIR ) )
 		return false;
@@ -153,7 +153,7 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canhave )
 
 	while( ( d = readdir64( fdir ) ) != NULL )
 	{
-		if( !CompareAttributes( d, musthave, canhave ) )
+		if( !CompareAttributes( d, findbase, musthave, canhave ) )
 			continue;
 
 		if( fdots > 0 )
@@ -181,7 +181,7 @@ const char *Sys_FS_FindNext( unsigned musthave, unsigned canhave )
 			}
 
 			Q_snprintfz( findpath, findpath_size, "%s/%s%s", findbase, dname,
-				dname[dname_len-1] != '/' && FS_DirentIsDir( d ) ? "/" : "" );
+				dname[dname_len-1] != '/' && FS_DirentIsDir( d, findbase ) ? "/" : "" );
 			if( CompareAttributesForPath( d, findpath, musthave, canhave ) )
 				return findpath;
 		}
