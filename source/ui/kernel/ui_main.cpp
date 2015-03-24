@@ -581,11 +581,19 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 
 	// rocket update+render
 	rocketModule->update();
+
+	// load deferred documents after the update but before before the render
+	for( it = navigation.begin(); it != navigation.end(); ++it ) {
+		NavigationStack *stack = *it;
+		stack->loadDeferredDocument();
+	}
+
 	rocketModule->render();
 
 	// mark the top stack document as viwed for history tracking
 	for( it = navigation.begin(); it != navigation.end(); ++it ) {
-		(*it)->markTopAsViewed();
+		NavigationStack *stack = *it;
+		stack->markTopAsViewed();
 	}
 
 	// stuff we need to render without using rocket
