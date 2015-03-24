@@ -143,7 +143,7 @@ static unsigned int r_numglslprograms;
 static glsl_program_t r_glslprograms[MAX_GLSL_PROGRAMS];
 static glsl_program_t *r_glslprograms_hash[GLSL_PROGRAM_TYPE_MAXTYPE][GLSL_PROGRAMS_HASH_SIZE];
 
-static int r_glslbincache_storemode;
+static int r_glslbincache_storemode = FS_WRITE;
 
 static void RP_GetUniformLocations( glsl_program_t *program );
 static void RP_BindAttrbibutesLocations( glsl_program_t *program );
@@ -216,7 +216,7 @@ static void RP_PrecachePrograms( void )
 	const char *token;
 	int handleBin;
 
-	R_LoadFile( GLSL_CACHE_FILE_NAME, ( void ** )&buffer );
+	R_LoadCacheFile( GLSL_CACHE_FILE_NAME, ( void ** )&buffer );
 	if( !buffer ) {
 		return;
 	}
@@ -433,7 +433,7 @@ static void RP_StorePrecacheList( void )
 	ri.FS_FCloseFile( handle );
 	ri.FS_FCloseFile( handleBin );
 
-	if( handleBin && ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, FS_UPDATE ) != -1 ) {
+	if( handleBin && ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, FS_UPDATE|FS_CACHE ) != -1 ) {
 		dummy = GLSL_BITS_VERSION;
 		ri.FS_Write( &dummy, sizeof( dummy ), handleBin );
 		ri.FS_FCloseFile( handleBin );
