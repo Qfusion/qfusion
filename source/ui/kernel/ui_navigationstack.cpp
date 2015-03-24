@@ -196,6 +196,7 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	Document *top = !documentStack.empty() ? documentStack.back() : nullptr;
 	if( top != nullptr && top->getName() == documentRealname ) {
 		// same document, return
+		top->setStack( this );
 		return top;
 	}
 
@@ -256,6 +257,23 @@ Document *NavigationStack::preloadDocument(const std::string &name)
 		return nullptr;
 
 	return doc;
+}
+
+void NavigationStack::pushDeferredDocument(const std::string &name)
+{
+	deferredPush = name;
+}
+
+void NavigationStack::loadDeferredDocument(void)
+{
+	if (deferredPush.empty()) {
+		return;
+	}
+
+	std::string docName = deferredPush;
+	deferredPush.clear();
+
+	pushDocument(docName);
 }
 
 void NavigationStack::_popDocument(bool focusOnNext)
