@@ -71,10 +71,25 @@ static asstring_t *Event_GetType( Event *self ) {
 	return ASSTR( self->GetType() );
 }
 
-static asstring_t *Event_GetParameter( Event *self, const asstring_t &a, const asstring_t &b ) {
+static asstring_t *Event_GetParameterS( Event *self, const asstring_t &a, const asstring_t &b ) {
 	Rocket::Core::String name = ASSTR(a);
 	Rocket::Core::String default_value = ASSTR(b);
 	return ASSTR( self->GetParameter( name, default_value ) );
+}
+
+static int Event_GetParameterI( Event *self, const asstring_t &a, const int default_value ) {
+	Rocket::Core::String name = ASSTR(a);
+	return self->GetParameter( name, default_value );
+}
+
+static unsigned Event_GetParameterU( Event *self, const asstring_t &a, const unsigned default_value ) {
+	Rocket::Core::String name = ASSTR(a);
+	return self->GetParameter( name, default_value );
+}
+
+static float Event_GetParameterF( Event *self, const asstring_t &a, const float default_value ) {
+	Rocket::Core::String name = ASSTR(a);
+	return self->GetParameter( name, default_value );
 }
 
 static CScriptDictionaryInterface *Event_GetParameters( Event *self ) {
@@ -120,7 +135,10 @@ void BindEvent( ASInterface *as )
 
 		.method( &Event_GetType, "getType", true )
 		.method( &Event_GetTargetElement, "getTarget", true )
-		.method( &Event_GetParameter, "getParameter", true )
+		.method( &Event_GetParameterS, "getParameter", true )
+		.method( &Event_GetParameterI, "getParameter", true )
+		.method( &Event_GetParameterU, "getParameter", true )
+		.method( &Event_GetParameterF, "getParameter", true )
 		.method( &Event_GetParameters, "getParameters", true )
 		.method( &Event_GetPhase, "getPhase", true )
 		.method( &Event_StopPropagation, "stopPropagation", true )
@@ -386,13 +404,35 @@ static bool Element_IsPseudoClassSet( Element *elem, const asstring_t &a ) {
 	return elem->IsPseudoClassSet( ASSTR(a) );
 }
 
-static Element *Element_SetAttribute( Element *elem, const asstring_t &a, const asstring_t &b ) {
+static Element *Element_SetAttributeS( Element *elem, const asstring_t &a, const asstring_t &b ) {
 	elem->SetAttribute( ASSTR(a), ASSTR(b) );
 	_RETREF(elem);
 }
 
-static asstring_t *Element_GetAttribute( Element *elem, const asstring_t &a, const asstring_t &b ) {
+static Element *Element_SetAttributeI( Element *elem, const asstring_t &a, const int b ) {
+	elem->SetAttribute( ASSTR(a), b );
+	_RETREF(elem);
+}
+
+static Element *Element_SetAttributeF( Element *elem, const asstring_t &a, const float b ) {
+	elem->SetAttribute( ASSTR(a), b );
+	_RETREF(elem);
+}
+
+static asstring_t *Element_GetAttributeS( Element *elem, const asstring_t &a, const asstring_t &b ) {
 	return ASSTR( elem->GetAttribute<String>( ASSTR(a), ASSTR(b) ) );
+}
+
+static int Element_GetAttributeI( Element *elem, const asstring_t &a, const int b ) {
+	return elem->GetAttribute<int>( ASSTR(a), b );
+}
+
+static int Element_GetAttributeU( Element *elem, const asstring_t &a, const unsigned b ) {
+	return elem->GetAttribute<unsigned>( ASSTR(a), b );
+}
+
+static int Element_GetAttributeF( Element *elem, const asstring_t &a, const float b ) {
+	return elem->GetAttribute<float>( ASSTR(a), b );
 }
 
 static bool Element_HasAttribute( Element *elem, const asstring_t &a ) {
@@ -963,8 +1003,13 @@ void BindElement( ASInterface *as )
 		.method( &Element_IsPseudoClassSet, "hasPseudo", true )
 
 		// html attributes
-		.method( &Element_SetAttribute, "setAttr", true )
-		.method( &Element_GetAttribute, "getAttr", true )
+		.method( &Element_SetAttributeS, "setAttr", true )
+		.method( &Element_SetAttributeI, "setAttr", true )
+		.method( &Element_SetAttributeF, "setAttr", true )
+		.method( &Element_GetAttributeS, "getAttr", true )
+		.method( &Element_GetAttributeI, "getAttr", true )
+		.method( &Element_GetAttributeU, "getAttr", true )
+		.method( &Element_GetAttributeF, "getAttr", true )
 		.method( &Element_HasAttribute, "hasAttr", true )
 		.method( &Element_RemoveAttribute, "removeAttr", true )
 		.method( &Element::GetNumAttributes, "numAttr" )
