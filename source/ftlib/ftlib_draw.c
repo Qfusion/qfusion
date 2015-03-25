@@ -30,7 +30,7 @@ static fdrawchar_t drawCharIntercept = NULL;
 /*
 * FTLIB_GrabChar
 */
-static int FTLIB_GrabChar( const char **pstr, wchar_t *wc, int *colorindex, textdrawflag_t flags )
+static int FTLIB_GrabChar( const char **pstr, wchar_t *wc, int *colorindex, int flags )
 {
 	if( flags & TEXTDRAWFLAG_NO_COLORS ) {
 		wchar_t num = Q_GrabWCharFromUtf8String( pstr );
@@ -67,7 +67,7 @@ size_t FTLIB_FontHeight( qfontface_t *font )
 * FTLIB_strWidth
 * doesn't count invisible characters. Counts up to given length, if any.
 */
-size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, textdrawflag_t flags )
+size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int flags )
 {
 	const char *s = str, *olds;
 	size_t width = 0;
@@ -126,7 +126,7 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, textdr
 * FTLIB_StrlenForWidth
 * returns the len allowed for the string to fit inside a given width when using a given font.
 */
-size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth, textdrawflag_t flags )
+size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth, int flags )
 {
 	const char *s, *olds;
 	size_t width = 0;
@@ -360,7 +360,7 @@ void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xma
 /*
 * FTLIB_DrawClampString
 */
-void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color, textdrawflag_t flags )
+void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color, int flags )
 {
 	int xoffset = 0;
 	vec4_t scolor;
@@ -428,7 +428,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 * FTLIB_DrawRawString - Doesn't care about aligning. Returns drawn len.
 * It can stop when reaching maximum width when a value has been parsed.
 */
-size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color, textdrawflag_t flags )
+size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color, int flags )
 {
 	unsigned int xoffset = 0;
 	vec4_t scolor;

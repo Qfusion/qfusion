@@ -355,7 +355,7 @@ void Con_CheckResize( void )
 
 	if( cls.consoleFont )
 	{
-		charWidth = SCR_strWidth( "M", cls.consoleFont, 0 );
+		charWidth = SCR_strWidth( "M", cls.consoleFont, 0, 0 );
 		if( !charWidth )
 			charWidth = 1;
 
@@ -678,8 +678,8 @@ static void Con_DrawInput( int vislines )
 	float pixelRatio = VID_GetPixelRatio();
 	int smallCharHeight = SCR_FontHeight( cls.consoleFont );
 	int margin = 8 * pixelRatio;
-	int promptwidth = SCR_strWidth( "]", cls.consoleFont, 1 );
-	int input_width = viddef.width - margin * 2 - promptwidth - SCR_strWidth( "_", cls.consoleFont, 1 );
+	int promptwidth = SCR_strWidth( "]", cls.consoleFont, 1, 0 );
+	int input_width = viddef.width - margin * 2 - promptwidth - SCR_strWidth( "_", cls.consoleFont, 1, 0 );
 	int text_x = margin + promptwidth;
 	int text_y = vislines - (int)( 14 * pixelRatio ) - smallCharHeight;
 	int textwidth;
@@ -695,8 +695,8 @@ static void Con_DrawInput( int vislines )
 
 	text++;
 
-	textwidth = SCR_strWidth( text, cls.consoleFont, 0 );
-	prewidth = ( ( key_linepos > 1 ) ? SCR_strWidth( text, cls.consoleFont, key_linepos - 1 ) : 0 );
+	textwidth = SCR_strWidth( text, cls.consoleFont, 0, 0 );
+	prewidth = ( ( key_linepos > 1 ) ? SCR_strWidth( text, cls.consoleFont, key_linepos - 1, 0 ) : 0 );
 
 	if( textwidth > input_width )
 	{
@@ -717,7 +717,7 @@ static void Con_DrawInput( int vislines )
 	SCR_DrawRawChar( text_x - promptwidth, text_y, ']', cls.consoleFont, colorWhite );
 
 	SCR_DrawClampString( text_x - input_prestep, text_y, text, text_x, text_y,
-		text_x + input_width, viddef.height, cls.consoleFont, colorWhite );
+		text_x + input_width, viddef.height, cls.consoleFont, colorWhite, 0 );
 
 	if( (int)( cls.realtime>>8 )&1 )
 	{
@@ -757,7 +757,7 @@ void Con_DrawNotify( void )
 				continue;
 			text = con.text[i] ? con.text[i] : "";
 
-			SCR_DrawString( x, v, ALIGN_LEFT_TOP, text, cls.consoleFont, colorWhite );
+			SCR_DrawString( x, v, ALIGN_LEFT_TOP, text, cls.consoleFont, colorWhite, 0 );
 
 			v += SCR_FontHeight( cls.consoleFont );
 		}
@@ -815,9 +815,9 @@ void Con_DrawNotify( void )
 		translated = L10n_TranslateString( "common", say );
 		if( !translated )
 			translated = say;
-		SCR_DrawString( x, y, ALIGN_LEFT_TOP, translated, font, colorWhite );
-		spacewidth = SCR_strWidth( " ", font, 0 );
-		promptwidth = SCR_strWidth( translated, font, 0 ) + spacewidth;
+		SCR_DrawString( x, y, ALIGN_LEFT_TOP, translated, font, colorWhite, 0 );
+		spacewidth = SCR_strWidth( " ", font, 0, 0 );
+		promptwidth = SCR_strWidth( translated, font, 0, 0 ) + spacewidth;
 		x += promptwidth;
 		width -= promptwidth;
 		candwidth = width / 3 - spacewidth;
@@ -826,8 +826,8 @@ void Con_DrawNotify( void )
 		if( lang[0] && strcmp( lang, "EN" ) )
 		{
 			Q_snprintfz( langstr, sizeof( langstr ), " (%s)", lang );
-			width -= SCR_strWidth( langstr, font, 0 );
-			SCR_DrawString( x + width, y, ALIGN_LEFT_TOP, langstr, font, colorWhite );
+			width -= SCR_strWidth( langstr, font, 0, 0 );
+			SCR_DrawString( x + width, y, ALIGN_LEFT_TOP, langstr, font, colorWhite, 0 );
 		}
 
 		underlinePosition = SCR_FontUnderline( font, &underlineThickness );
@@ -835,15 +835,15 @@ void Con_DrawNotify( void )
 
 
 		s = chat_buffer;
-		swidth = SCR_strWidth( s, font, 0 );
+		swidth = SCR_strWidth( s, font, 0, 0 );
 
 		complen = IN_IME_GetComposition( comp, sizeof( comp ), &imecursor, &convstart, &convlen );		
 
 		if( complen )
 		{
-			compx = ( chat_linepos ? SCR_strWidth( s, font, chat_linepos ) : 0 );
-			compwidth = SCR_strWidth( comp, font, 0 );
-			totalwidth = compx + compwidth + SCR_strWidth( s + chat_linepos, font, 0 );
+			compx = ( chat_linepos ? SCR_strWidth( s, font, chat_linepos, 0 ) : 0 );
+			compwidth = SCR_strWidth( comp, font, 0, 0 );
+			totalwidth = compx + compwidth + SCR_strWidth( s + chat_linepos, font, 0, 0 );
 		}
 		else
 		{
@@ -856,14 +856,14 @@ void Con_DrawNotify( void )
 			if( chat_linepos == chat_bufferlen )
 				prewidth += swidth;
 			else
-				prewidth += SCR_strWidth( s, font, chat_linepos );
+				prewidth += SCR_strWidth( s, font, chat_linepos, 0 );
 		}
 		if( imecursor )
 		{
 			if( imecursor == complen )
 				prewidth += compwidth;
 			else
-				prewidth += SCR_strWidth( comp, font, imecursor );
+				prewidth += SCR_strWidth( comp, font, imecursor, 0 );
 		}
 
 		if( totalwidth > width )
@@ -890,16 +890,16 @@ void Con_DrawNotify( void )
 			oldchar = s[chat_linepos];
 			s[chat_linepos] = '\0';
 			SCR_DrawClampString( x - chat_prestep, y, s, x, y,
-				x + width, y + fontHeight, font, colorWhite );
+				x + width, y + fontHeight, font, colorWhite, 0 );
 			precompcolor = Q_ColorStrLastColor( ColorIndex( COLOR_WHITE ), s, -1 );
 			s[chat_linepos] = oldchar;
 			SCR_DrawClampString( x - chat_prestep + compx + compwidth, y, s + chat_linepos, x, y,
-				x + width, y + fontHeight, font, color_table[precompcolor] );
+				x + width, y + fontHeight, font, color_table[precompcolor], 0 );
 		}
 		else
 		{
 			SCR_DrawClampString( x - chat_prestep, y, s, x, y,
-				x + width, y + fontHeight, font, colorWhite );
+				x + width, y + fontHeight, font, colorWhite, 0 );
 			if( complen )
 				precompcolor = Q_ColorStrLastColor( ColorIndex( COLOR_WHITE ), s, -1 );
 		}
@@ -909,13 +909,13 @@ void Con_DrawNotify( void )
 			if( convlen )
 			{
 				SCR_DrawClampFillRect(
-					x - chat_prestep + compx + ( convstart ? SCR_strWidth( comp, font, convstart ) : 0 ), y,
-					SCR_strWidth( comp + convstart, font, convlen ), fontHeight,
+					x - chat_prestep + compx + ( convstart ? SCR_strWidth( comp, font, convstart, 0 ) : 0 ), y,
+					SCR_strWidth( comp + convstart, font, convlen, 0 ), fontHeight,
 					x, y, x + width, y + fontHeight, convcolor );
 			}
 
 			SCR_DrawClampString( x - chat_prestep + compx, y, comp, x, y,
-				x + width, y + fontHeight, font, color_table[precompcolor] );
+				x + width, y + fontHeight, font, color_table[precompcolor], 0 );
 
 			SCR_DrawClampFillRect(
 				x - chat_prestep + compx, y + underlinePosition,
@@ -934,13 +934,13 @@ void Con_DrawNotify( void )
 		if( numcands )
 		{
 			candspercol = ( firstcand ? 3 : 5 ); // 2-column if starts from 0 (5|5), 3-column if starts from 1 (3|3|3)
-			candnumwidth = SCR_strWidth( "0 ", font, 0 );
+			candnumwidth = SCR_strWidth( "0 ", font, 0, 0 );
 			if( selectedcand >= 0 )
 			{
 				candx = x + ( candwidth + spacewidth ) * ( selectedcand / candspercol );
 				candy = y + fontHeight * ( selectedcand % candspercol + 1 );
 				SCR_DrawClampFillRect( candx, candy,
-					candnumwidth + SCR_strWidth( cands[selectedcand], font, 0 ), fontHeight,
+					candnumwidth + SCR_strWidth( cands[selectedcand], font, 0, 0 ), fontHeight,
 					candx, candy, candx + candwidth, candy + fontHeight, convcolor );
 			}
 
@@ -951,10 +951,10 @@ void Con_DrawNotify( void )
 				candy += fontHeight;
 
 				SCR_DrawRawChar( candx, candy, '0' + firstcand + i, font, colorWhite );
-				candprewidth = SCR_strWidth( cands[i], font, 0 ) - ( candwidth - candnumwidth );
+				candprewidth = SCR_strWidth( cands[i], font, 0, 0 ) - ( candwidth - candnumwidth );
 				clamp_low( candprewidth, 0 );
 				SCR_DrawClampString( candnumwidth + candx - candprewidth, candy, cands[i],
-					candx + candnumwidth, candy, candx + candwidth, candy + fontHeight, font, colorWhite );
+					candx + candnumwidth, candy, candx + candwidth, candy + fontHeight, font, colorWhite, 0 );
 
 				candsincol++;
 				if( candsincol >= candspercol )
@@ -1068,9 +1068,9 @@ void Con_DrawConsole( void )
 #endif
 
 	scaled = ( ( pixelRatio >= 1.25f ) ? 4 * pixelRatio : 4 );
-	SCR_DrawString( viddef.width-SCR_strWidth( version, cls.consoleFont, 0 ) - scaled,
+	SCR_DrawString( viddef.width-SCR_strWidth( version, cls.consoleFont, 0, 0 ) - scaled,
 		lines - SCR_FontHeight( cls.consoleFont ) - scaled, 
-		ALIGN_LEFT_TOP, version, cls.consoleFont, colorRed );
+		ALIGN_LEFT_TOP, version, cls.consoleFont, colorRed, 0 );
 
 	// prepare to draw the text
 	scaled = 14 * pixelRatio;
@@ -1080,7 +1080,7 @@ void Con_DrawConsole( void )
 	row = con.display;	// first line to be drawn
 	if( con.display )
 	{
-		int width = SCR_strWidth( "^", cls.consoleFont, 0 );
+		int width = SCR_strWidth( "^", cls.consoleFont, 0, 0 );
 
 		// draw arrows to show the buffer is backscrolled
 		for( x = 0; x < con.linewidth; x += 4 )
@@ -1100,7 +1100,7 @@ void Con_DrawConsole( void )
 
 		text = con.text[row] ? con.text[row] : "";
 
-		SCR_DrawString( 8 * pixelRatio, y, ALIGN_LEFT_TOP, text, cls.consoleFont, colorWhite );
+		SCR_DrawString( 8 * pixelRatio, y, ALIGN_LEFT_TOP, text, cls.consoleFont, colorWhite, 0 );
 	}
 
 	// draw the input prompt, user text, and cursor if desired

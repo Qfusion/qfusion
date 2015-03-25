@@ -185,11 +185,11 @@ namespace trap
 		}
 
 		inline size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color ) {
-			return UI_IMPORT.SCR_DrawStringWidth( x, y, align, str, maxwidth, font, color );
+			return UI_IMPORT.SCR_DrawStringWidth( x, y, align, str, maxwidth, font, color, TEXTDRAWFLAG_NO_COLORS );
 		}
 
 		inline void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color ) {
-			UI_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color );
+			UI_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, TEXTDRAWFLAG_NO_COLORS );
 		}
 
 		inline size_t SCR_FontSize( struct qfontface_s *font ) {
@@ -213,7 +213,7 @@ namespace trap
 		}
 
 		inline size_t SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth ) {
-			return UI_IMPORT.SCR_StrlenForWidth( str, font, maxwidth );
+			return UI_IMPORT.SCR_StrlenForWidth( str, font, maxwidth, TEXTDRAWFLAG_NO_COLORS );
 		}
 
 		inline size_t SCR_FontAdvance( struct qfontface_s *font ) {
