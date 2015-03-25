@@ -2375,7 +2375,7 @@ static bool CG_LFuncDrawLocationName( struct cg_layoutnode_s *commandnode, struc
 
 	trap_GetConfigString( CS_LOCATIONS + loc_tag, string, sizeof( string ) );
 
-	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, string, CG_GetLayoutCursorFont(), layout_cursor_color );
+	trap_SCR_DrawString( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_TranslateString( string ), CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
