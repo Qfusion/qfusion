@@ -226,7 +226,6 @@ bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, const mfog_t *fog,
 	unsigned int clipFlags, unsigned int dlightBits, unsigned shadowBits, float dist )
 {
-	int order = 0;
 	shader_t *shader;
 	drawSurfaceBSP_t *drawSurf;
 
@@ -265,7 +264,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		}
 		drawSurf->visFrame = rf.frameCount;
 
-		if( !R_AddDSurfToDrawList( e, fog, shader, dist, order, portalSurface, drawSurf ) ) {
+		if( !R_AddDSurfToDrawList( e, fog, shader, dist, 0, portalSurface, drawSurf ) ) {
 			return;
 		}
 	}
