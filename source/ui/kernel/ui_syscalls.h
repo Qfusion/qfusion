@@ -180,8 +180,8 @@ namespace trap
 			return UI_IMPORT.SCR_RegisterFont( name, style, size );
 		}
 
-		inline void SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color ) {
-			UI_IMPORT.SCR_DrawString( x, y, align, str, font, color, TEXTDRAWFLAG_NO_COLORS );
+		inline int SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color ) {
+			return UI_IMPORT.SCR_DrawString( x, y, align, str, font, color, TEXTDRAWFLAG_NO_COLORS );
 		}
 
 		inline size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color ) {

@@ -308,32 +308,27 @@ void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int
 /*
 * SCR_DrawString
 */
-void SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color, int flags )
+int SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color, int flags )
 {
-	size_t width;
+	int width;
 	int fontHeight;
 
 	if( !str )
-		return;
+		return 0;
 
 	if( !font )
 		font = cls.consoleFont;
 	fontHeight = FTLIB_FontHeight( font );
 
 	width = FTLIB_StringWidth( str, font, 0, flags );
-	if( width )
-	{
-		x = SCR_HorizontalAlignForString( x, align, width );
-		y = SCR_VerticalAlignForString( y, align, fontHeight );
 
-		if( y <= -fontHeight || y >= (int)viddef.height )
-			return; // totally off screen
+	if( ( align % 3 ) != 0 ) // not left - don't precalculate the width if not needed
+		x = SCR_HorizontalAlignForString( x, align, FTLIB_StringWidth( str, font, 0, flags ) );
+	y = SCR_VerticalAlignForString( y, align, fontHeight );
 
-		if( x + width <= 0 || x >= (int)viddef.width )
-			return; // totally off screen
+	FTLIB_DrawRawString( x, y, str, 0, &width, font, color, flags );
 
-		FTLIB_DrawRawString( x, y, str, 0, font, color, flags );
-	}
+	return width;
 }
 
 /*
@@ -362,7 +357,7 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 		x = SCR_HorizontalAlignForString( x, align, width );
 		y = SCR_VerticalAlignForString( y, align, fontHeight );
 
-		return FTLIB_DrawRawString( x, y, str, maxwidth, font, color, flags );
+		return FTLIB_DrawRawString( x, y, str, maxwidth, NULL, font, color, flags );
 	}
 
 	return 0;
