@@ -22,11 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-extern cvar_t *cg_scoreboardStats;
-extern cvar_t *cg_scoreboardFontFamily;
-extern cvar_t *cg_scoreboardFontSize;
-extern cvar_t *cg_scoreboardWidthScale;
-
 #define SCB_BACKGROUND_ALPHA 0.25f
 
 #define SCB_TEAMNAME_PIXELWIDTH ( (int)( 260 * cg_scoreboardWidthScale->value ) * cgs.vidHeight / 600 )

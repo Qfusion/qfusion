@@ -80,6 +80,7 @@ cvar_t *cg_scoreboardTitleFontFamily;
 cvar_t *cg_scoreboardFontSize;
 cvar_t *cg_scoreboardTitleFontSize;
 cvar_t *cg_scoreboardWidthScale;
+cvar_t *cg_scoreboardStats;
 
 cvar_t *cg_showTeamLocations;
 cvar_t *cg_showViewBlends;
@@ -365,6 +366,7 @@ void CG_ScreenInit( void )
 	cg_scoreboardFontSize = trap_Cvar_Get( "cg_scoreboardFontSize", STR_TOSTR( DEFAULT_SCOREBOARD_FONT_SIZE ), CVAR_ARCHIVE );
 	cg_scoreboardTitleFontSize = trap_Cvar_Get( "cg_scoreboardTitleFontSize", STR_TOSTR( DEFAULT_SCOREBOARD_TITLE_FONT_SIZE ), CVAR_ARCHIVE );
 	cg_scoreboardWidthScale = trap_Cvar_Get( "cg_scoreboardWidthScale", "1.0", CVAR_ARCHIVE );
+	cg_scoreboardStats =	trap_Cvar_Get( "cg_scoreboardStats", "1", CVAR_ARCHIVE );
 
 	// wsw : hud debug prints
 	cg_debugHUD =		    trap_Cvar_Get( "cg_debugHUD", "0", 0 );

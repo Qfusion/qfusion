@@ -710,6 +710,8 @@ extern cvar_t *cg_scoreboardMonoFontFamily;
 extern cvar_t *cg_scoreboardTitleFontFamily;
 extern cvar_t *cg_scoreboardFontSize;
 extern cvar_t *cg_scoreboardTitleFontSize;
+extern cvar_t *cg_scoreboardStats;
+extern cvar_t *cg_scoreboardWidthScale;
 extern cvar_t *cg_showFPS;
 extern cvar_t *cg_showAwards;
 extern cvar_t *cg_showZoomEffect;

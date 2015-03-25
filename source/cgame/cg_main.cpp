@@ -105,7 +105,6 @@ cvar_t *cg_simpleItemsSize;
 cvar_t *cg_showObituaries;
 cvar_t *cg_particles;
 cvar_t *cg_showhelp;
-cvar_t *cg_scoreboardStats;
 cvar_t *cg_showClamp;
 
 cvar_t *cg_damage_indicator;
@@ -712,8 +711,6 @@ static void CG_RegisterVariables( void )
 	cg_chatBeep =		trap_Cvar_Get( "cg_chatBeep", "1", CVAR_ARCHIVE );
 	cg_chatFilter =		trap_Cvar_Get( "cg_chatFilter", "0", CVAR_ARCHIVE );
 	cg_chatFilterTV =	trap_Cvar_Get( "cg_chatFilterTV", "2", CVAR_ARCHIVE );
-
-	cg_scoreboardStats =	trap_Cvar_Get( "cg_scoreboardStats", "1", CVAR_ARCHIVE );
 
 	// developer cvars
 	developer =		trap_Cvar_Get( "developer", "0", CVAR_CHEAT );
