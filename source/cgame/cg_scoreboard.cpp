@@ -446,7 +446,7 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 /*
 * SCR_DrawTeamTab
 */
-static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int panelWidth, struct qfontface_s *font, int pass )
+static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int panelWidth, struct qfontface_s *font, struct qfontface_s *titleFont, int pass )
 {
 	const char *token;
 	const char *layout, *titles;
@@ -489,7 +489,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		xoffset = ( SCB_CENTERMARGIN * dir );
 
 		width = ( cgs.vidWidth * 0.5 ) - SCB_CENTERMARGIN;
-		height = trap_SCR_FontHeight( cgs.fontSystemBig ) + 2;
+		height = trap_SCR_FontHeight( titleFont ) + 2;
 
 		if( !pass ) {
 			CG_DrawAlignPic( x + xoffset, y + yoffset + SCB_SCORENUMBER_SIZE - height,
@@ -504,8 +504,8 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 
 			xoffset += ( ( SCB_SCORENUMBER_SIZE * strlen(va("%i", team_score)) + ( 16 * cgs.vidHeight / 600 ) ) * dir );
 			trap_SCR_DrawStringWidth( x + xoffset + ( ( SCB_TINYFIELD_PIXELWIDTH + ( 16 * cgs.vidHeight / 600 ) ) * dir ),
-				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_FontHeight( cgs.fontSystemBig ) + 1),
-				align, GS_TeamName( team ), SCB_TEAMNAME_PIXELWIDTH, cgs.fontSystemBig, colorWhite );
+				y + yoffset + SCB_SCORENUMBER_SIZE - (trap_SCR_FontHeight( titleFont ) + 1),
+				align, GS_TeamName( team ), SCB_TEAMNAME_PIXELWIDTH, titleFont, colorWhite );
 
 			CG_PingColor( team_ping, pingcolor );
 			trap_SCR_DrawStringWidth( x + xoffset,
@@ -786,21 +786,22 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 /*
 * CG_ScoreboardFont
 */
-struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar )
+struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar, cvar_t *sizeCvar )
 {
 	struct qfontface_s *font;
 
-	font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, ceilf( cg_scoreboardFontSize->integer * ( (float)cgs.vidHeight / 600.0f ) ) );
+	font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, ceilf( sizeCvar->integer * ( (float)cgs.vidHeight / 600.0f ) ) );
 	if( !font )
 	{
 		CG_Printf( "%sWarning: Invalid font in '%s'. Reseting to default\n", familyCvar->name, S_COLOR_YELLOW );
 		trap_Cvar_Set( familyCvar->name, familyCvar->dvalue );
-		trap_Cvar_Set( cg_scoreboardFontSize->name, cg_scoreboardFontSize->dvalue );
-		font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, cg_scoreboardFontSize->integer );
+		trap_Cvar_Set( sizeCvar->name, sizeCvar->dvalue );
+		font = trap_SCR_RegisterFont( familyCvar->string, QFONT_STYLE_NONE, sizeCvar->integer );
 
 		if( !font )
-			CG_Error( "Couldn't load default scoreboard font \"%s\"", familyCvar->value );
+			font = sizeCvar->integer > DEFAULT_SCOREBOARD_FONT_SIZE ? cgs.fontSystemBig : cgs.fontSystemSmall;
 	}
+
 	return font;
 }
 
@@ -816,6 +817,7 @@ void CG_DrawScoreboard( void )
 	int ypos, yoffset, maxyoffset;
 	struct qfontface_s *font;
 	struct qfontface_s *monofont;
+	struct qfontface_s *titlefont;
 	int width, panelWidth;
 	vec4_t whiteTransparent = { 1.0f, 1.0f, 1.0f, 0.5f };
 
@@ -826,8 +828,9 @@ void CG_DrawScoreboard( void )
 	if( scoreboardString[0] != '&' ) // nothing to draw
 		return;
 
-	font = CG_ScoreboardFont( cg_scoreboardFontFamily );
-	monofont = CG_ScoreboardFont( cg_scoreboardMonoFontFamily );
+	font = CG_ScoreboardFont( cg_scoreboardFontFamily, cg_scoreboardFontSize );
+	monofont = CG_ScoreboardFont( cg_scoreboardMonoFontFamily, cg_scoreboardFontSize );
+	titlefont = CG_ScoreboardFont( cg_scoreboardTitleFontFamily, cg_scoreboardTitleFontSize );
 
 	xpos = (int)( cgs.vidWidth * 0.5 );
 	ypos = (int)( cgs.vidHeight * 0.2 ) - 24 * cgs.vidHeight / 600;
@@ -836,10 +839,10 @@ void CG_DrawScoreboard( void )
 	Q_snprintfz( title, sizeof( title ), va( "%s %s", trap_Cvar_String( "gamename" ), gs.gametypeName ) );
 	Q_strupr( title );
 
-	trap_SCR_DrawString( xpos, ypos, ALIGN_CENTER_TOP, title, cgs.fontSystemBig, whiteTransparent );
-	ypos += trap_SCR_FontHeight( cgs.fontSystemBig );
-	trap_SCR_DrawStringWidth( xpos, ypos, ALIGN_CENTER_TOP, cgs.configStrings[CS_HOSTNAME], cgs.vidWidth*0.75, cgs.fontSystemSmall, whiteTransparent );
-	ypos += trap_SCR_FontHeight( cgs.fontSystemSmall );
+	trap_SCR_DrawString( xpos, ypos, ALIGN_CENTER_TOP, title, titlefont, whiteTransparent );
+	ypos += trap_SCR_FontHeight( titlefont );
+	trap_SCR_DrawStringWidth( xpos, ypos, ALIGN_CENTER_TOP, cgs.configStrings[CS_HOSTNAME], cgs.vidWidth*0.75, font, whiteTransparent );
+	ypos += trap_SCR_FontHeight( font );
 
 	// calculate the panel width from the layout
 	panelWidth = 0;
@@ -863,7 +866,7 @@ void CG_DrawScoreboard( void )
 			if ( !Q_stricmp( token, "&t" ) ) // team tab
 			{
 				yoffset = 0;
-				yoffset += SCR_DrawTeamTab( (const char **)&ptr, &team, xpos, ypos + yoffset, panelWidth, font, pass );
+				yoffset += SCR_DrawTeamTab( (const char **)&ptr, &team, xpos, ypos + yoffset, panelWidth, font, titlefont, pass );
 			}
 			else if ( !Q_stricmp( token, "&p" ) ) // player tab
 			{

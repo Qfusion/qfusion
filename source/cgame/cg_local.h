@@ -707,7 +707,9 @@ extern vrect_t scr_vrect;
 
 extern cvar_t *cg_scoreboardFontFamily;
 extern cvar_t *cg_scoreboardMonoFontFamily;
+extern cvar_t *cg_scoreboardTitleFontFamily;
 extern cvar_t *cg_scoreboardFontSize;
+extern cvar_t *cg_scoreboardTitleFontSize;
 extern cvar_t *cg_showFPS;
 extern cvar_t *cg_showAwards;
 extern cvar_t *cg_showZoomEffect;
