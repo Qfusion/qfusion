@@ -320,8 +320,6 @@ int SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font,
 		font = cls.consoleFont;
 	fontHeight = FTLIB_FontHeight( font );
 
-	width = FTLIB_StringWidth( str, font, 0, flags );
-
 	if( ( align % 3 ) != 0 ) // not left - don't precalculate the width if not needed
 		x = SCR_HorizontalAlignForString( x, align, FTLIB_StringWidth( str, font, 0, flags ) );
 	y = SCR_VerticalAlignForString( y, align, fontHeight );
