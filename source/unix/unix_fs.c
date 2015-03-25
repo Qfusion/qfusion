@@ -58,9 +58,13 @@ static bool FS_DirentIsDir( const struct dirent64 *d, const char *base )
 #if ( defined( _DIRENT_HAVE_D_TYPE ) || defined( __ANDROID__ ) ) && defined( DT_DIR )
 	return ( d->d_type == DT_DIR );
 #else
-	char path[PATH_MAX];
+	size_t pathSize;
+	char *path;
 	struct stat st;
-	Q_snprintfz( path, sizeof( path ), "%s/%s", base, d->d_name );
+
+	pathSize = strlen( base ) + 1 + strlen( d->d_name ) + 1;
+	path = alloca( pathSize );
+	Q_snprintfz( path, pathSize, "%s/%s", base, d->d_name );
 	if( stat( path, &st ) )
 		return false;
 	return S_ISDIR( st.st_mode ) != 0;
