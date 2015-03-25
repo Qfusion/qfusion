@@ -164,7 +164,6 @@ int UI_FontProviderInterface::GenerateString(FontHandle handle, GeometryList& ge
 
 	fdrawchar_t pop = trap::SCR_SetDrawCharIntercept((fdrawchar_t)&UI_FontProviderInterface::DrawCharCallback);
 
-	// FIXME: this is terribly inefficient
 	int string_width = trap::SCR_DrawString(position.x, position.y, 0, utf8str.CString(), (qfontface_s *)(handle), colorf);
 
 	trap::SCR_SetDrawCharIntercept(pop);
