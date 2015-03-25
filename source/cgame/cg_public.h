@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   75
+#define	CGAME_API_VERSION   76
 
 //
 // structs and variables shared with the main engine
@@ -230,9 +230,9 @@ typedef struct
 	// fonts
 	struct qfontface_s *( *SCR_RegisterFont )( const char *family, int style, unsigned int size );
 	struct qfontface_s *( *SCR_RegisterSpecialFont )( const char *family, int style, unsigned int size );
-	void ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color );
-	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color );
-	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
+	void ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color, int flags );
+	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, int flags );
+	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, int flags );
 	void ( *SCR_DrawRawChar )( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
 	void ( *SCR_DrawClampChar )( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
 	size_t ( *SCR_FontSize )( struct qfontface_s *font );
@@ -240,8 +240,8 @@ typedef struct
 	int ( *SCR_FontUnderline )( struct qfontface_s *font, int *thickness );
 	size_t ( *SCR_FontAdvance )( struct qfontface_s *font );
 	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
-	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen );
-	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth );
+	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
+	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
 	fdrawchar_t ( *SCR_SetDrawCharIntercept )( fdrawchar_t intercept );
 
 	// managed memory allocation

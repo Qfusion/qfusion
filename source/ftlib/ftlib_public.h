@@ -126,15 +126,15 @@ typedef struct
 	// drawing functions
 	size_t ( *FontSize )( struct qfontface_s *font );
 	size_t ( *FontHeight )( struct qfontface_s *font );
-	size_t ( *StringWidth )( const char *str, struct qfontface_s *font, size_t maxlen, textdrawflag_t flags );
-	size_t ( *StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, textdrawflag_t flags );
+	size_t ( *StringWidth )( const char *str, struct qfontface_s *font, size_t maxlen, int flags );
+	size_t ( *StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, int flags );
 	int ( *FontUnderline )( struct qfontface_s *font, int *thickness );
 	size_t ( *FontAdvance )( struct qfontface_s *font );
 	size_t ( *FontXHeight )( struct qfontface_s *font );
 	void ( *DrawClampChar )( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
 	void ( *DrawRawChar )( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
-	void ( *DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, textdrawflag_t flags );
-	size_t ( *DrawRawString )( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, textdrawflag_t flags );
+	void ( *DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, int flags );
+	size_t ( *DrawRawString )( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, int flags );
 	fdrawchar_t ( *SetDrawIntercept )( fdrawchar_t intercept );
 } ftlib_export_t;
 

@@ -277,7 +277,7 @@ void CL_UIModule_Init( void )
 	import.S_StopBackgroundTrack = CL_SoundModule_StopBackgroundTrack;
 
 	import.SCR_RegisterFont = SCR_RegisterFont;
-	import.SCR_DrawString = SCR_DrawStringFlags;
+	import.SCR_DrawString = SCR_DrawString;
 	import.SCR_DrawStringWidth = SCR_DrawStringWidth;
 	import.SCR_DrawClampString = SCR_DrawClampString;
 	import.SCR_FontSize = SCR_FontSize;
@@ -286,7 +286,7 @@ void CL_UIModule_Init( void )
 	import.SCR_FontAdvance = SCR_FontAdvance;
 	import.SCR_FontXHeight = SCR_FontXHeight;
 	import.SCR_SetDrawCharIntercept = SCR_SetDrawCharIntercept;
-	import.SCR_strWidth = SCR_strWidthFlags;
+	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
 
 	import.GetConfigString = CL_UIModule_GetConfigString;

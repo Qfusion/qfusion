@@ -565,17 +565,17 @@ static inline struct qfontface_s *trap_SCR_RegisterSpecialFont( const char *fami
 
 static inline void trap_SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color )
 {
-	CGAME_IMPORT.SCR_DrawString( x, y, align, str, font, color );
+	CGAME_IMPORT.SCR_DrawString( x, y, align, str, font, color, 0 );
 }
 
 static inline size_t trap_SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color )
 {
-	return CGAME_IMPORT.SCR_DrawStringWidth( x, y, align, str, maxwidth, font, color );
+	return CGAME_IMPORT.SCR_DrawStringWidth( x, y, align, str, maxwidth, font, color, 0 );
 }
 
 static inline void trap_SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color )
 {
-	CGAME_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color );
+	CGAME_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, 0 );
 }
 
 static inline void trap_SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color )
@@ -595,12 +595,12 @@ static inline int trap_SCR_FontHeight( struct qfontface_s *font )
 
 static inline size_t trap_SCR_strWidth( const char *str, struct qfontface_s *font, int maxlen )
 {
-	return CGAME_IMPORT.SCR_strWidth( str, font, maxlen );
+	return CGAME_IMPORT.SCR_strWidth( str, font, maxlen, 0 );
 }
 
 static inline size_t trap_SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth )
 {
-	return CGAME_IMPORT.SCR_StrlenForWidth( str, font, maxwidth );
+	return CGAME_IMPORT.SCR_StrlenForWidth( str, font, maxwidth, 0 );
 }
 
 static inline void *trap_MemAlloc( size_t size, const char *filename, int fileline )

@@ -256,19 +256,14 @@ size_t SCR_FontHeight( qfontface_t *font )
 	return FTLIB_FontHeight( font );
 }
 
-size_t SCR_strWidthFlags( const char *str, qfontface_t *font, size_t maxlen, textdrawflag_t flags )
+size_t SCR_strWidth( const char *str, qfontface_t *font, size_t maxlen, int flags )
 {
 	return FTLIB_StringWidth( str, font, maxlen, flags );
 }
 
-size_t SCR_strWidth( const char *str, qfontface_t *font, size_t maxlen )
+size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth, int flags )
 {
-	return FTLIB_StringWidth( str, font, maxlen, 0 );
-}
-
-size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth )
-{
-	return FTLIB_StrlenForWidth( str, font, maxwidth, 0 );
+	return FTLIB_StrlenForWidth( str, font, maxwidth, flags );
 }
 
 int SCR_FontUnderline( qfontface_t *font, int *thickness )
@@ -305,15 +300,15 @@ void SCR_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax,
 	FTLIB_DrawClampChar( x, y, num, xmin, ymin, xmax, ymax, font, color );
 }
 
-void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color )
+void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color, int flags )
 {
-	FTLIB_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, 0 );
+	FTLIB_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, flags );
 }
 
 /*
-* SCR_DrawStringFlags
+* SCR_DrawString
 */
-void SCR_DrawStringFlags( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color, textdrawflag_t flags )
+void SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color, int flags )
 {
 	size_t width;
 	int fontHeight;
@@ -341,21 +336,12 @@ void SCR_DrawStringFlags( int x, int y, int align, const char *str, qfontface_t 
 	}
 }
 
-
-/*
-* SCR_DrawString
-*/
-void SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color )
-{
-	SCR_DrawStringFlags( x, y, align, str, font, color, 0 );
-}
-
 /*
 * SCR_DrawStringWidth
 *
 * ClampS to width in pixels. Returns drawn len
 */
-size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color )
+size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color, int flags )
 {
 	size_t width;
 	int fontHeight;
@@ -367,7 +353,7 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 		font = cls.consoleFont;
 	fontHeight = FTLIB_FontHeight( font );
 
-	width = FTLIB_StringWidth( str, font, 0, 0 );
+	width = FTLIB_StringWidth( str, font, 0, flags );
 	if( width )
 	{
 		if( maxwidth && width > maxwidth )
@@ -376,7 +362,7 @@ size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t max
 		x = SCR_HorizontalAlignForString( x, align, width );
 		y = SCR_VerticalAlignForString( y, align, fontHeight );
 
-		return FTLIB_DrawRawString( x, y, str, maxwidth, font, color, 0 );
+		return FTLIB_DrawRawString( x, y, str, maxwidth, font, color, flags );
 	}
 
 	return 0;
