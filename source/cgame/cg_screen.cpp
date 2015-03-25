@@ -1060,7 +1060,7 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 			continue;
 
 		Q_snprintfz( string, sizeof( string ), "%s%s %s%s (%i/%i)%s", cgs.clientInfo[teammate].name, S_COLOR_WHITE,
-			cgs.configStrings[CS_LOCATIONS+locationTag], S_COLOR_WHITE,
+			CG_TranslateString( cgs.configStrings[CS_LOCATIONS+locationTag] ), S_COLOR_WHITE,
 			health, armor, S_COLOR_WHITE );
 
 		// draw the head-icon in the case this player has one
