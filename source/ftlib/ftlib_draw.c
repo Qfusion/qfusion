@@ -428,7 +428,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 * FTLIB_DrawRawString - Doesn't care about aligning. Returns drawn len.
 * It can stop when reaching maximum width when a value has been parsed.
 */
-size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color, int flags )
+size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int *width, qfontface_t *font, vec4_t color, int flags )
 {
 	unsigned int xoffset = 0;
 	vec4_t scolor;
@@ -466,6 +466,7 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 			if( !glyph->shader )
 				font->f->renderString( font, olds );
 
+			// ignore kerning at this point so the full width of the previous character will always be returned
 			if( maxwidth && ( ( xoffset + glyph->x_advance ) > maxwidth ) )
 			{
 				s = olds;
@@ -474,12 +475,13 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 
 			if( prev_num )
 			{
-				xoffset += prev_glyph->x_advance;
 				if( font->hasKerning )
 					xoffset += font->f->getKerning( font, prev_num, num );
 			}
 
 			FTLIB_DrawRawChar( x + xoffset, y, num, font, scolor );
+
+			xoffset += glyph->x_advance;
 
 			prev_num = num;
 			prev_glyph = glyph;
@@ -494,6 +496,9 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, qfon
 		else
 			assert( 0 );
 	}
+
+	if( width )
+		*width = xoffset;
 
 	return ( s - str );
 }

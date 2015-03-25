@@ -563,9 +563,9 @@ static inline struct qfontface_s *trap_SCR_RegisterSpecialFont( const char *fami
 	return CGAME_IMPORT.SCR_RegisterSpecialFont( family, style, size );
 }
 
-static inline void trap_SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color )
+static inline int trap_SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color )
 {
-	CGAME_IMPORT.SCR_DrawString( x, y, align, str, font, color, 0 );
+	return CGAME_IMPORT.SCR_DrawString( x, y, align, str, font, color, 0 );
 }
 
 static inline size_t trap_SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color )

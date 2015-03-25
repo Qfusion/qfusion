@@ -40,5 +40,5 @@ size_t FTLIB_FontXHeight( struct qfontface_s *font );
 void FTLIB_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
 void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
 void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, int flags );
-size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, int flags );
+size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int *width, struct qfontface_s *font, vec4_t color, int flags );
 fdrawchar_t FTLIB_SetDrawCharIntercept( fdrawchar_t intercept );

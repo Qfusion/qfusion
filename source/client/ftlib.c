@@ -393,8 +393,8 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 /*
 * FTLIB_DrawRawString
 */
-size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, int flags )
+size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int *width, struct qfontface_s *font, vec4_t color, int flags )
 {
-	return ftlib_export ? ftlib_export->DrawRawString( x, y, str, maxwidth, font, color, flags ) : 0;
+	return ftlib_export ? ftlib_export->DrawRawString( x, y, str, maxwidth, width, font, color, flags ) : 0;
 }
 
