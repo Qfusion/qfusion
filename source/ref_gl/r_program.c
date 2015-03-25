@@ -2068,7 +2068,7 @@ unsigned int RP_UpdateDynamicLightsUniforms( int elem, const superLightStyle_t *
 		}
 
 		if( program->loc.NumDynamicLights >= 0 ) {
-			qglUniform1iARB( program->loc.NumDynamicLights, ALIGN( n, 4 ) );
+			qglUniform1iARB( program->loc.NumDynamicLights, n );
 		}
 
 		for( ; n < MAX_DLIGHTS; n += 4 ) {
