@@ -256,7 +256,7 @@ size_t SCR_FontHeight( qfontface_t *font )
 	return FTLIB_FontHeight( font );
 }
 
-size_t SCR_strWidthFlags( const char *str, qfontface_t *font, size_t maxlen, ftlib_drawflags_t flags )
+size_t SCR_strWidthFlags( const char *str, qfontface_t *font, size_t maxlen, ftlib_drawflag_t flags )
 {
 	return FTLIB_StringWidth( str, font, maxlen, flags );
 }
@@ -313,7 +313,7 @@ void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int
 /*
 * SCR_DrawStringFlags
 */
-void SCR_DrawStringFlags( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color, ftlib_drawflags_t flags )
+void SCR_DrawStringFlags( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color, ftlib_drawflag_t flags )
 {
 	size_t width;
 	int fontHeight;

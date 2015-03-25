@@ -84,7 +84,7 @@ int UI_FontProviderInterface::GetStringWidth(FontHandle handle, const WString& s
 {
 	String utf8str("");
 	string.ToUTF8(utf8str);
-	return trap::SCR_strWidthFlags(utf8str.CString(), (qfontface_s *)(handle), 0, FTLIB_DRAW_NO_COLORS);
+	return trap::SCR_strWidth(utf8str.CString(), (qfontface_s *)(handle), 0);
 }
 
 void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader )
@@ -165,9 +165,9 @@ int UI_FontProviderInterface::GenerateString(FontHandle handle, GeometryList& ge
 	fdrawchar_t pop = trap::SCR_SetDrawCharIntercept((fdrawchar_t)&UI_FontProviderInterface::DrawCharCallback);
 
 	// FIXME: this is terribly inefficient
-	int string_width = trap::SCR_strWidthFlags(utf8str.CString(), (qfontface_s *)(handle), 0, FTLIB_DRAW_NO_COLORS);
+	int string_width = trap::SCR_strWidth(utf8str.CString(), (qfontface_s *)(handle), 0);
 
-	trap::SCR_DrawStringFlags(position.x, position.y, 0, utf8str.CString(), (qfontface_s *)(handle), colorf, FTLIB_DRAW_NO_COLORS);
+	trap::SCR_DrawString(position.x, position.y, 0, utf8str.CString(), (qfontface_s *)(handle), colorf);
 
 	trap::SCR_SetDrawCharIntercept(pop);
 

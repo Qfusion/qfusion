@@ -32,13 +32,13 @@ void FTLIB_FreeFonts( bool verbose );
 
 size_t FTLIB_FontSize( struct qfontface_s *font );
 size_t FTLIB_FontHeight( struct qfontface_s *font );
-size_t FTLIB_StringWidth( const char *str, struct qfontface_s *font, size_t maxlen, ftlib_drawflags_t flags );
-size_t FTLIB_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth, ftlib_drawflags_t flags );
+size_t FTLIB_StringWidth( const char *str, struct qfontface_s *font, size_t maxlen, ftlib_drawflag_t flags );
+size_t FTLIB_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth, ftlib_drawflag_t flags );
 int FTLIB_FontUnderline( struct qfontface_s *font, int *thickness );
 size_t FTLIB_FontAdvance( struct qfontface_s *font );
 size_t FTLIB_FontXHeight( struct qfontface_s *font );
 void FTLIB_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
 void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
-void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, ftlib_drawflags_t flags );
-size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, ftlib_drawflags_t flags );
+void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, ftlib_drawflag_t flags );
+size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, ftlib_drawflag_t flags );
 fdrawchar_t FTLIB_SetDrawCharIntercept( fdrawchar_t intercept );

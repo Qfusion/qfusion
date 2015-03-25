@@ -109,7 +109,7 @@ typedef struct
 
 	// fonts
 	struct qfontface_s *( *SCR_RegisterFont )( const char *name, int style, unsigned int size );
-	void ( *SCR_DrawStringFlags )( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color, ftlib_drawflags_t flags );
+	void ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color, ftlib_drawflag_t flags );
 	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color );
 	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
 	size_t ( *SCR_FontSize )( struct qfontface_s *font );
@@ -117,7 +117,7 @@ typedef struct
 	int ( *SCR_FontUnderline )( struct qfontface_s *font, int *thickness );
 	size_t ( *SCR_FontAdvance )( struct qfontface_s *font );
 	size_t ( *SCR_FontXHeight )( struct qfontface_s *font );
-	size_t ( *SCR_strWidthFlags )( const char *str, struct qfontface_s *font, size_t maxlen, ftlib_drawflags_t flags );
+	size_t ( *SCR_strWidth )( const char *str, struct qfontface_s *font, size_t maxlen, ftlib_drawflag_t flags );
 	size_t ( *SCR_StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth );
 	fdrawchar_t ( *SCR_SetDrawCharIntercept )( fdrawchar_t intercept );
 

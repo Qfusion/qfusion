@@ -180,8 +180,8 @@ namespace trap
 			return UI_IMPORT.SCR_RegisterFont( name, style, size );
 		}
 
-		inline void SCR_DrawStringFlags( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color, ftlib_drawflags_t flags ) {
-			UI_IMPORT.SCR_DrawStringFlags( x, y, align, str, font, color, flags );
+		inline void SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color ) {
+			UI_IMPORT.SCR_DrawString( x, y, align, str, font, color, FTLIB_DRAWFLAG_NO_COLORS );
 		}
 
 		inline size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color ) {
@@ -208,8 +208,8 @@ namespace trap
 			return UI_IMPORT.SCR_FontXHeight( font );
 		}
 
-		inline size_t SCR_strWidthFlags( const char *str, struct qfontface_s *font, size_t maxlen, ftlib_drawflags_t flags ) {
-			return UI_IMPORT.SCR_strWidthFlags( str, font, maxlen, flags );
+		inline size_t SCR_strWidth( const char *str, struct qfontface_s *font, size_t maxlen ) {
+			return UI_IMPORT.SCR_strWidth( str, font, maxlen, FTLIB_DRAWFLAG_NO_COLORS );
 		}
 
 		inline size_t SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth ) {
