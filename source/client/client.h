@@ -569,12 +569,14 @@ qfontface_t *SCR_RegisterSpecialFont( const char *family, int style, unsigned in
 size_t SCR_FontSize( qfontface_t *font );
 size_t SCR_FontHeight( qfontface_t *font );
 size_t SCR_strWidth( const char *str, qfontface_t *font, size_t maxlen );
+size_t SCR_strWidthFlags( const char *str, qfontface_t *font, size_t maxlen, ftlib_drawflags_t flags );
 size_t SCR_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth );
 int SCR_FontUnderline( qfontface_t *font, int *thickness );
 size_t SCR_FontAdvance( qfontface_t *font );
 size_t SCR_FontXHeight( qfontface_t *font );
 fdrawchar_t SCR_SetDrawCharIntercept( fdrawchar_t intercept );
 void SCR_DrawString( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color );
+void SCR_DrawStringFlags( int x, int y, int align, const char *str, qfontface_t *font, vec4_t color, ftlib_drawflags_t flags );
 size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, qfontface_t *font, vec4_t color );
 void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color );
 void SCR_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color );
