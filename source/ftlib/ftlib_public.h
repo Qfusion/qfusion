@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // ftlib_public.h - font provider subsystem
 
-#define	FTLIB_API_VERSION			7
+#define	FTLIB_API_VERSION			8
 
 //===============================================================
 
@@ -126,15 +126,15 @@ typedef struct
 	// drawing functions
 	size_t ( *FontSize )( struct qfontface_s *font );
 	size_t ( *FontHeight )( struct qfontface_s *font );
-	size_t ( *StringWidth )( const char *str, struct qfontface_s *font, size_t maxlen );
-	size_t ( *StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth );
+	size_t ( *StringWidth )( const char *str, struct qfontface_s *font, size_t maxlen, ftlib_drawflags_t flags );
+	size_t ( *StrlenForWidth )( const char *str, struct qfontface_s *font, size_t maxwidth, ftlib_drawflags_t flags );
 	int ( *FontUnderline )( struct qfontface_s *font, int *thickness );
 	size_t ( *FontAdvance )( struct qfontface_s *font );
 	size_t ( *FontXHeight )( struct qfontface_s *font );
 	void ( *DrawClampChar )( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
 	void ( *DrawRawChar )( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
-	void ( *DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
-	size_t ( *DrawRawString )( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color );
+	void ( *DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, ftlib_drawflags_t flags );
+	size_t ( *DrawRawString )( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, ftlib_drawflags_t flags );
 	fdrawchar_t ( *SetDrawIntercept )( fdrawchar_t intercept );
 } ftlib_export_t;
 

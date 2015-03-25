@@ -308,17 +308,17 @@ size_t FTLIB_FontHeight( struct qfontface_s *font )
 /*
 * FTLIB_StringWidth
 */
-size_t FTLIB_StringWidth( const char *str, struct qfontface_s *font, size_t maxlen )
+size_t FTLIB_StringWidth( const char *str, struct qfontface_s *font, size_t maxlen, ftlib_drawflags_t flags )
 {
-	return ftlib_export ? ftlib_export->StringWidth( str, font, maxlen ) : 0;
+	return ftlib_export ? ftlib_export->StringWidth( str, font, maxlen, flags ) : 0;
 }
 
 /*
 * FTLIB_StrlenForWidth
 */
-size_t FTLIB_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth )
+size_t FTLIB_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth, ftlib_drawflags_t flags )
 {
-	return ftlib_export ? ftlib_export->StrlenForWidth( str, font, maxwidth ) : 0;
+	return ftlib_export ? ftlib_export->StrlenForWidth( str, font, maxwidth, flags ) : 0;
 }
 
 /*
@@ -383,18 +383,18 @@ void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xma
 /*
 * FTLIB_DrawClampString
 */
-void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color )
+void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, ftlib_drawflags_t flags )
 {
 	if( ftlib_export ) {
-		ftlib_export->DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color );
+		ftlib_export->DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, flags );
 	}
 }
 
 /*
 * FTLIB_DrawRawString
 */
-size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color )
+size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, ftlib_drawflags_t flags )
 {
-	return ftlib_export ? ftlib_export->DrawRawString( x, y, str, maxwidth, font, color ) : 0;
+	return ftlib_export ? ftlib_export->DrawRawString( x, y, str, maxwidth, font, color, flags ) : 0;
 }
 

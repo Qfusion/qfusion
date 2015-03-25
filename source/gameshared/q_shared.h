@@ -420,6 +420,11 @@ typedef enum {
 	QFONT_STYLE_MASK			= (1<<2)-1
 } qfontstyle_t;
 
+// font drawing flags
+typedef enum {
+	FTLIB_DRAW_NO_COLORS	= 1 // draw color codes instead of applying them
+} ftlib_drawflags_t;
+
 typedef enum
 {
 	TOUCH_DOWN,
