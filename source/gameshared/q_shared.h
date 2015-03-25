@@ -422,8 +422,8 @@ typedef enum {
 
 // font drawing flags
 typedef enum {
-	FTLIB_DRAWFLAG_NO_COLORS	= 1 // draw color codes instead of applying them
-} ftlib_drawflag_t;
+	TEXTDRAWFLAG_NO_COLORS	= 1 // draw color codes instead of applying them
+} textdrawflag_t;
 
 typedef enum
 {
