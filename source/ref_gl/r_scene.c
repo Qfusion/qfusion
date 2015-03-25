@@ -476,6 +476,7 @@ typedef struct
 {
 	vec3_t mins;
 	vec3_t maxs;
+	byte_vec4_t color;
 } r_debug_bound_t;
 
 static int r_num_debug_bounds;
@@ -492,7 +493,7 @@ static void R_ClearDebugBounds( void )
 /*
 * R_AddDebugBounds
 */
-void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs )
+void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color )
 {
 	int i;
 
@@ -501,6 +502,7 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs )
 	{
 		VectorCopy( mins, r_debug_bounds[i].mins );
 		VectorCopy( maxs, r_debug_bounds[i].maxs );
+		Vector4Copy( color, r_debug_bounds[i].color );
 		r_num_debug_bounds++;
 	}
 }
@@ -511,43 +513,57 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs )
 static void R_RenderDebugBounds( void )
 {
 	int i, j;
-	vec3_t corner;
 	const vec_t *mins, *maxs;
-	mesh_t *rb_mesh;
-	elem_t elems[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+	const uint8_t *color;
+	mesh_t mesh;
+	vec4_t verts[8];
+	byte_vec4_t colors[8];
+	elem_t elems[24] =
+	{
+		0, 1, 1, 3, 3, 2, 2, 0,
+		0, 4, 1, 5, 2, 6, 3, 7,
+		4, 5, 5, 7, 7, 6, 6, 4
+	};
 
 	if( !r_num_debug_bounds )
 		return;
 
-	RB_EnableTriangleOutlines( true );
+	memset( &mesh, 0, sizeof( mesh ) );
+	mesh.numVerts = 8;
+	mesh.xyzArray = verts;
+	mesh.numElems = 24;
+	mesh.elems = elems;
+	mesh.colorsArray[0] = colors;
+
+	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
 	RB_BindShader( rsc.worldent, rsh.whiteShader, NULL );
 
-	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLE_STRIP );
+	RB_BindVBO( RB_VBO_STREAM, GL_LINES );
+
+	RB_BeginBatch();
 
 	for( i = 0; i < r_num_debug_bounds; i++ )
 	{
 		mins = r_debug_bounds[i].mins;
 		maxs = r_debug_bounds[i].maxs;
+		color = r_debug_bounds[i].color;
 
-		rb_mesh = RB_MapBatchMesh( 8, 8 );
 		for( j = 0; j < 8; j++ )
 		{
-			corner[0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
-			corner[1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
-			corner[2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
-			VectorCopy( corner, rb_mesh->xyzArray[j] );
+			verts[j][0] = ( ( j & 1 ) ? mins[0] : maxs[0] );
+			verts[j][1] = ( ( j & 2 ) ? mins[1] : maxs[1] );
+			verts[j][2] = ( ( j & 4 ) ? mins[2] : maxs[2] );
+			verts[j][3] = 1.0f;
+			Vector4Copy( color, colors[j] );
 		}
 
-		rb_mesh->numVerts = 8;
-		rb_mesh->numElems = 8;
-		rb_mesh->elems = elems;
-		RB_UploadMesh( rb_mesh );
-
-		RB_EndBatch();
+		RB_BatchMesh( &mesh );
 	}
 
-	RB_EnableTriangleOutlines( false );
+	RB_EndBatch();
+
+	RB_SetShaderStateMask( ~0, 0 );
 }
 
 //=======================================================================

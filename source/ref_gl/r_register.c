@@ -48,6 +48,7 @@ cvar_t *r_subdivisions;
 cvar_t *r_showtris;
 cvar_t *r_shownormals;
 cvar_t *r_draworder;
+cvar_t *r_leafvis;
 
 cvar_t *r_fastsky;
 cvar_t *r_portalonly;
@@ -1043,6 +1044,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_speeds = ri.Cvar_Get( "r_speeds", "0", 0 );
 	r_drawelements = ri.Cvar_Get( "r_drawelements", "1", 0 );
 	r_showtris = ri.Cvar_Get( "r_showtris", "0", CVAR_CHEAT );
+	r_leafvis = ri.Cvar_Get( "r_leafvis", "0", CVAR_CHEAT );
 	r_lockpvs = ri.Cvar_Get( "r_lockpvs", "0", CVAR_CHEAT );
 	r_clear = ri.Cvar_Get( "r_clear", "0", CVAR_ARCHIVE );
 	r_nobind = ri.Cvar_Get( "r_nobind", "0", 0 );

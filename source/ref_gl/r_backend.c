@@ -690,6 +690,8 @@ void RB_BindVBO( int id, int primitive )
 		}
 	}
 
+	rb.primitive = primitive;
+
 	if( rb.currentVBOId == id ) {
 		return;
 	}
@@ -706,7 +708,6 @@ void RB_BindVBO( int id, int primitive )
 		batch = NULL;
 	}
 
-	rb.primitive = primitive;
 	rb.currentVBOId = id;
 	rb.currentVBO = vbo;
 	rb.currentBatch = batch;

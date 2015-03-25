@@ -595,6 +595,12 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 
 	R_MarkLeafSurfaces( pleaf->firstVisSurface, clipFlags, dlightBits, shadowBits );
 	rf.stats.c_world_leafs++;
+
+	if( r_leafvis->integer )
+	{
+		const byte_vec4_t color = { 255, 0, 0, 255 };
+		R_AddDebugBounds( pleaf->mins, pleaf->maxs, color );
+	}
 }
 
 //==================================================================================
