@@ -839,13 +839,13 @@ void ServerBrowserDataSource::compileSuggestionsList( void )
 }
 
 // called to re-sort the data
-void ServerBrowserDataSource::sortByColumn( const char *_column )
+void ServerBrowserDataSource::sortByField( const char *field )
 {
 	// do a full re-sorting of the data by given column name (lookup from COLUMN_NAMES)
 	// (for visibleServers only)
 
 	// set the sorting function
-	std::string column( _column );
+	std::string column( field );
 	if( column == "address" )
 		sortCompare = ServerInfo::LessPtrBinary<std::string, &ServerInfo::address>;
 	else if( column == "hostname" )
@@ -878,7 +878,7 @@ void ServerBrowserDataSource::sortByColumn( const char *_column )
 		sortCompare = &ServerInfo::DefaultCompareBinary;
 	else
 	{
-		Com_Printf("Serverbrowser sort: unknown column %s\n", _column );
+		Com_Printf("Serverbrowser sort: unknown field %s\n", field );
 		return;
 	}
 

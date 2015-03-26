@@ -21,8 +21,11 @@ namespace ASUI {
 
 // dummy class since ASBIND only can only bind unique classes 
 // and AngelScript arrays are more like composite classes
-typedef CScriptArrayInterface ASElementsArray;
+class ASElementsArray : public CScriptArrayInterface {};
 static asIObjectType *elementsArrayType;
+
+class ASStringsArray : public CScriptArrayInterface {};
+static asIObjectType *stringsArrayType;
 
 typedef Rocket::Controls::ElementForm ElementForm;
 typedef Rocket::Controls::ElementFormControl ElementFormControl;
@@ -48,6 +51,7 @@ ASBIND_TYPE( Rocket::Controls::ElementTabSet, ElementTabSet );
 
 // array of Element handlers
 ASBIND_ARRAY_TYPE( ASUI::ASElementsArray, Element @ );
+ASBIND_ARRAY_TYPE( ASUI::ASStringsArray, String @ );
 
 //==============================================================
 
@@ -325,7 +329,10 @@ static ASElementsArray *Element_GetElementsByTagName( Element *elem, const asstr
 
 	elem->GetElementsByTagName( elements, ASSTR( tag ) );
 
-	ASElementsArray *arr = UI_Main::Get()->getAS()->createArray( elements.size(), elementsArrayType );
+	CScriptArrayInterface *arr = UI_Main::Get()->getAS()->createArray( elements.size(), elementsArrayType );
+	if( !arr ) {
+		return NULL;
+	}
 
 	unsigned int n = 0;
 	for( ElementList::iterator it = elements.begin(); it != elements.end(); ++it ) {
@@ -334,7 +341,7 @@ static ASElementsArray *Element_GetElementsByTagName( Element *elem, const asstr
 		*((Element **)arr->At(n++)) = child;
 	}
 
-	return arr;
+	return static_cast<ASElementsArray *>(arr);
 }
 
 static ASElementsArray *Element_GetElementsByClassName( Element *elem, const asstring_t &tag )
@@ -343,7 +350,10 @@ static ASElementsArray *Element_GetElementsByClassName( Element *elem, const ass
 
 	elem->GetElementsByClassName( elements, ASSTR( tag ) );
 
-	ASElementsArray *arr = UI_Main::Get()->getAS()->createArray( elements.size(), elementsArrayType );
+	CScriptArrayInterface *arr = UI_Main::Get()->getAS()->createArray( elements.size(), elementsArrayType );
+	if( !arr ) {
+		return NULL;
+	}
 
 	unsigned int n = 0;
 	for( ElementList::iterator it = elements.begin(); it != elements.end(); ++it ) {
@@ -352,7 +362,7 @@ static ASElementsArray *Element_GetElementsByClassName( Element *elem, const ass
 		*((Element **)arr->At(n++)) = child;
 	}
 
-	return arr;
+	return static_cast<ASElementsArray *>(arr);
 }
 
 static ElementDocument *Element_GetOwnerDocument( Element *elem ) {
@@ -881,19 +891,23 @@ static unsigned int DataGrid_GetNumRows( ElementDataGrid *self ) {
 	return self->GetNumRows();
 }
 
-static asstring_t *DataGrid_GetColumn( ElementDataGrid *self, int idx ) {
-	// Tricky SOB, build a string from column->fields
+static ASStringsArray *DataGrid_GetFields( ElementDataGrid *self, int idx ) {
 	const ElementDataGrid::Column *column = self->GetColumn( idx );
 
 	if( !column )
-		return ASSTR( "" );
+		return NULL;
 
-	String ret;
-	StringList::const_iterator begin = column->fields.begin(), end = column->fields.end();
-	for( StringList::const_iterator it = begin; it != end; ++it) {
-		ret += (it == begin ? "" : " ") + *it;
+	CScriptArrayInterface *arr = UI_Main::Get()->getAS()->createArray( column->fields.size(), stringsArrayType );
+	if( !arr ) {
+		return NULL;
 	}
-	return ASSTR( ret );
+
+	unsigned int n = 0;
+	for( StringList::const_iterator it = column->fields.begin(); it != column->fields.end(); ++it ) {
+		*((asstring_t **)arr->At(n++)) = ASSTR( *it );
+	}
+
+	return static_cast<ASStringsArray *>(arr);
 }
 
 static Element *DataGrid_GetColumnHeader( ElementDataGrid *self, int idx ) {
@@ -926,7 +940,7 @@ static void BindElementDataGrid( ASInterface *as )
 
 		.method( &DataGrid_GetRow, "getRow", true )
 		.constmethod( &DataGrid_GetNumRows, "getNumRows", true )
-		.constmethod( &DataGrid_GetColumn, "getColumn", true )
+		.constmethod( &DataGrid_GetFields, "getFields", true )
 		.method( &DataGrid_GetColumnHeader, "getColumnHeader", true )
 		.constmethod( &DataGrid_GetNumColumns, "getNumColumns", true )
 		.method( &DataGrid_SetDataSource, "setDataSource", true )
@@ -1070,6 +1084,8 @@ void BindElement( ASInterface *as )
 
 	// cache type id for array<Element @>
 	elementsArrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl(ASBind::typestr<ASElementsArray>()));
+	// cache type id for array<String @>
+	stringsArrayType = engine->GetObjectTypeById(engine->GetTypeIdByDecl(ASBind::typestr<ASStringsArray>()));
 
 	// ElementDocument
 	BindElementDocument( as );
