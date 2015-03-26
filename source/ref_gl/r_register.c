@@ -497,7 +497,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
 	,GL_EXTENSION( OES, vertex_half_float, false, false, NULL )
 	,GL_EXTENSION( OES, get_program_binary, false, false, &gl_ext_get_program_binary_OES_funcs )
-	,GL_EXTENSION( OES, depth24, true, false, NULL )
+	,GL_EXTENSION( OES, depth24, false, false, NULL )
 	,GL_EXTENSION( NV, depth_nonlinear, false, false, NULL )
 	,GL_EXTENSION( EXT, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_EXT_funcs )
 	,GL_EXTENSION( NV, multiview_draw_buffers, true, false, &gl_ext_multiview_draw_buffers_NV_funcs )
@@ -759,13 +759,13 @@ static void R_FinalizeGLExtensions( void )
 	( glConfig.ext.name = ( ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? true : false ) )
 #define GL_OPTIONAL_CORE_EXTENSION_DEP(name,dep) \
 	( glConfig.ext.name = ( ( glConfig.ext.dep && ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ) ? true : false ) )
-		glConfig.ext.depth24 = true;
 		glConfig.ext.draw_instanced = true;
 		glConfig.ext.draw_range_elements = true;
 		glConfig.ext.ES3_compatibility = true;
 		glConfig.ext.framebuffer_blit = true;
 		glConfig.ext.GLSL130 = true;
 		glConfig.ext.rgb8_rgba8 = true;
+		GL_OPTIONAL_CORE_EXTENSION(depth24);
 		GL_OPTIONAL_CORE_EXTENSION(depth_texture);
 		GL_OPTIONAL_CORE_EXTENSION(get_program_binary);
 		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);

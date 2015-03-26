@@ -117,13 +117,16 @@ static void GLimp_Android_ChooseVisual( int colorSize, int depthSize, int depthE
 static void GLimp_Android_ChooseConfig( void )
 {
 	int colorSizes[] = { 8, 4 }, colorSize;
-	int depthSizes[] = { 24, 16, 16 }, depthSize;
+	int depthSizes[] = { 24, 16, 16 }, depthSize, firstDepthSize = 0;
 	bool depthEncodingSupported = false;
 	int depthEncodings[] = { EGL_DONT_CARE, EGL_DEPTH_ENCODING_NONLINEAR_NV, EGL_DONT_CARE }, depthEncoding;
 	int maxStencilSize = ( ( r_stencilbits->integer >= 8 ) ? 8 : 0 ), stencilSize;
 	int minSwapIntervals[] = { 0, EGL_DONT_CARE }, minSwapInterval;
 	const char *extensions = qglGetGLWExtensionsString();
 	int i, j, k;
+
+	if( !( ri.Cvar_Get( "gl_ext_depth24", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ) )
+		firstDepthSize = 1;
 
 	if( extensions && strstr( extensions, "EGL_NV_depth_nonlinear" ) &&
 		ri.Cvar_Get( "gl_ext_depth_nonlinear", "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer )
@@ -135,7 +138,7 @@ static void GLimp_Android_ChooseConfig( void )
 	{
 		colorSize = colorSizes[i];
 
-		for( j = 0; j < sizeof( depthSizes ) / sizeof( depthSizes[0] ); j++ )
+		for( j = firstDepthSize; j < sizeof( depthSizes ) / sizeof( depthSizes[0] ); j++ )
 		{
 			depthEncoding = depthEncodings[j];
 			if( ( depthEncoding != EGL_DONT_CARE ) && !depthEncodingSupported )
