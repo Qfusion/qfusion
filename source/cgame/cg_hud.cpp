@@ -2445,7 +2445,7 @@ static bool CG_LFuncDrawChat( struct cg_layoutnode_s *commandnode, struct cg_lay
 	return true;
 }
 
-static void CG_MoveUpFunc( int id )
+static void CG_MoveUpFunc( int id, unsigned int time )
 {
 	CG_SetTouchpad( TOUCHPAD_MOVE, -1 );
 }
@@ -2461,7 +2461,7 @@ static bool CG_LFuncTouchMove( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static void CG_ViewUpFunc( int id )
+static void CG_ViewUpFunc( int id, unsigned int time )
 {
 	CG_SetTouchpad( TOUCHPAD_VIEW, -1 );
 }
@@ -2477,7 +2477,7 @@ static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_la
 	return true;
 }
 
-static void CG_UpmoveUpFunc( int id )
+static void CG_UpmoveUpFunc( int id, unsigned int time )
 {
 	cg_hud_touch_upmove = 0;
 }
@@ -2506,7 +2506,7 @@ static bool CG_LFuncTouchCrouch( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
-static void CG_AttackUpFunc( int id )
+static void CG_AttackUpFunc( int id, unsigned int time )
 {
 	cg_hud_touch_buttons &= ~BUTTON_ATTACK;
 }
@@ -2523,7 +2523,7 @@ static bool CG_LFuncTouchAttack( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
-static void CG_SpecialUpFunc( int id )
+static void CG_SpecialUpFunc( int id, unsigned int time )
 {
 	cg_hud_touch_buttons &= ~BUTTON_SPECIAL;
 }

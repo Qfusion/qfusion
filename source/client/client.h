@@ -416,7 +416,7 @@ bool CL_GameModule_NewSnapshot( int pendingSnapshot );
 void CL_GameModule_RenderView( float stereo_separation );
 void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t velocity );
 void CL_GameModule_AddMovement( usercmd_t *cmd, vec3_t viewangles, int frametime );
-void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y );
+void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 void CL_GameModule_TouchFrame( void );
 void CL_GameModule_CancelTouches( void );
 
