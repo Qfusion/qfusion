@@ -696,10 +696,10 @@ void CL_GameModule_AddMovement( usercmd_t *cmd, vec3_t viewangles, int frametime
 /*
 * CL_GameModule_TouchEvent
 */
-void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y )
+void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 {
 	if( cge )
-		cge->TouchEvent( id, type, x, y );
+		cge->TouchEvent( id, type, x, y, time );
 }
 
 /*

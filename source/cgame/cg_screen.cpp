@@ -613,7 +613,7 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 /*
 * CG_ClockUpFunc
 */
-void CG_ClockUpFunc( int id )
+void CG_ClockUpFunc( int id, unsigned int time )
 {
 	CG_ScoresOff_f();
 }
@@ -1484,9 +1484,10 @@ TOUCH INPUT
 typedef struct {
 	bool down; // is the finger currently down?
 	int x, y; // current x and y of the touch
+	unsigned int time; // system time when pressed
 	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
 	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
-	void ( *upfunc )( int id ); // function to call when the finger is released
+	void ( *upfunc )( int id, unsigned int time ); // function to call when the finger is released, time is 0 if cancelled
 } cg_touch_t;
 
 static cg_touch_t cg_touches[CG_MAX_TOUCHES];
@@ -1503,7 +1504,7 @@ static cg_touchpad_t cg_touchpads[TOUCHPAD_COUNT];
 *
 * Touches a rectangle. Returns touch id if it's a new touch.
 */
-int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id ) )
+int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, unsigned int time ) )
 {
 	if( ( w <= 0 ) || ( h <= 0 ) )
 		return -1;
@@ -1523,7 +1524,7 @@ int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id
 				( touch.x >= x ) && ( touch.y >= y ) && ( touch.x < x2 ) && ( touch.y < y2 ) )
 			{
 				if( touch.upfunc )
-					touch.upfunc( i );
+					touch.upfunc( i, 0 );
 				touch.area = area;
 				return i;
 			}
@@ -1552,7 +1553,7 @@ int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id
 /*
 * CG_TouchEvent
 */
-void CG_TouchEvent( int id, touchevent_t type, int x, int y )
+void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 {
 	if( id >= CG_MAX_TOUCHES )
 		return;
@@ -1568,6 +1569,7 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 		if( !touch.down )
 		{
 			touch.down = true;
+			touch.time = time;
 			touch.area = TOUCHAREA_NONE;
 		}
 		break;
@@ -1577,7 +1579,7 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y )
 		{
 			touch.down = false;
 			if( ( touch.area != TOUCHAREA_NONE ) && touch.upfunc )
-				touch.upfunc( id );
+				touch.upfunc( id, time );
 		}
 		break;
 	}
@@ -1616,7 +1618,7 @@ void CG_TouchFrame( void )
 			if( ( touch.area != TOUCHAREA_NONE ) && !touch.area_valid )
 			{
 				if( touch.upfunc )
-					touch.upfunc( i );
+					touch.upfunc( i, 0 );
 				touch.area = TOUCHAREA_NONE;
 			}
 		}
@@ -1718,7 +1720,7 @@ void CG_CancelTouches( void )
 			if( touch.area != TOUCHAREA_NONE )
 			{
 				if( touch.upfunc )
-					touch.upfunc( i );
+					touch.upfunc( i, 0 );
 				touch.area = TOUCHAREA_NONE;
 			}
 			touch.down = false;

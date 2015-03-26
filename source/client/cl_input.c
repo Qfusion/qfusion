@@ -506,7 +506,7 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 	switch( cls.key_dest )
 	{
 		case key_game:
-			CL_GameModule_TouchEvent( id, type, x, y );
+			CL_GameModule_TouchEvent( id, type, x, y, time );
 			break;
 
 		case key_console:

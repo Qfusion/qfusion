@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   76
+#define	CGAME_API_VERSION   77
 
 //
 // structs and variables shared with the main engine
@@ -297,7 +297,7 @@ typedef struct
 
 	void ( *AddMovement )( usercmd_t *cmd, vec3_t viewangles, int frametime );
 
-	void ( *TouchEvent )( int id, touchevent_t type, int x, int y );
+	void ( *TouchEvent )( int id, touchevent_t type, int x, int y, unsigned int time );
 
 	void ( *TouchFrame )( void );
 
