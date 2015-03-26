@@ -371,7 +371,7 @@ namespace WSWUI {
 		void stopUpdate( void );
 
 		// called to re-sort the data (on visibleServers) -> export to AS
-		void sortByColumn( const char *column );
+		void sortByField( const char *field );
 
 		// called to reform visibleServers and hiddenServers -> export to AS?
 		void filtersUpdated( void );
