@@ -148,19 +148,30 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 
 	if( var )
 	{
+		bool reset = false;
+
 		if( !var->dvalue || strcmp( var->dvalue, var_value ) )
 		{
 			if( var->dvalue )
 				Mem_ZoneFree( var->dvalue ); // free the old default value string
 			var->dvalue = ZoneCopyString( (char *) var_value );
 		}
+
+		if( Cvar_FlagIsSet( flags, CVAR_USERINFO ) || Cvar_FlagIsSet( flags, CVAR_SERVERINFO ) )
+		{
+			if( var->string && !Cvar_InfoValidate( var->string, true ) )
+			{
+				reset = true;
+			}
+		}
+
 #ifdef PUBLIC_BUILD
-		if( Cvar_FlagIsSet( flags, CVAR_READONLY ) || Cvar_FlagIsSet( flags, CVAR_DEVELOPER ) )
-		{
+		reset = reset || (Cvar_FlagIsSet( flags, CVAR_READONLY ) || Cvar_FlagIsSet( flags, CVAR_DEVELOPER ));
 #else
-		if( Cvar_FlagIsSet( flags, CVAR_READONLY ) )
-		{
+		reset = reset || (Cvar_FlagIsSet( flags, CVAR_READONLY ));
 #endif
+		if( reset )
+		{
 			if( !var->string || strcmp( var->string, var_value ) )
 			{
 				if( var->string )
