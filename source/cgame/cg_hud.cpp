@@ -2477,7 +2477,7 @@ static void CG_ViewUpFunc( int id, unsigned int time )
 	if( cg_hud_touch_zoomSeq )
 	{
 		float x, y;
-		if( !time || ( ( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
+		if( !time || ( (int)( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
 			!CG_GetTouchpadOffset( TOUCHPAD_VIEW, x, y, true ) ||
 			( fabsf( x ) > cg_touch_zoomThres->value ) ||
 			( fabsf( y ) > cg_touch_zoomThres->value ) )
@@ -2511,7 +2511,7 @@ static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_la
 		cg_touch_t &touch = cg_touches[touchID];
 		if( cg_hud_touch_zoomSeq )
 		{
-			if( ( touch.time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer )
+			if( (int)( touch.time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer )
 				cg_hud_touch_zoomSeq = 0;
 		}
 		if( !cg_hud_touch_zoomSeq || ( cg_hud_touch_zoomSeq == 2 ) )
