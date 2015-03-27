@@ -38,12 +38,6 @@ public:
 	/// @param[in] input String as received from XML.
 	/// @return Number of translations that occured.
 	virtual int TranslateString(Rocket::Core::String& translated, const Rocket::Core::String& input);
-
-	/// Activate keyboard (for touchscreen devices)
-	virtual void ActivateKeyboard();
-	
-	/// Deactivate keyboard (for touchscreen devices)
-	virtual void DeactivateKeyboard();
 };
 
 }
