@@ -36,8 +36,6 @@ namespace Core {
 
 class ElementStyleCache;
 
-typedef std::unordered_map<String, int, StringHash> PropCounter;
-
 /**
 	Manages an element's style and property information.
 	@author Lloyd Weehuizen
@@ -175,8 +173,6 @@ public:
 	int GetTextTransform();
 	/// Returns 'vertical-align' property value from element's style or local cache.
 	const Property *GetVerticalAlignProperty();
-
-	static PropCounter &GetPropCounter();
 
 private:
 	// Sets a single property as dirty.
