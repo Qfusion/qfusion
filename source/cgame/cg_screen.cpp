@@ -1481,20 +1481,12 @@ TOUCH INPUT
 ===============================================================================
 */
 
-typedef struct {
-	bool down; // is the finger currently down?
-	int x, y; // current x and y of the touch
-	unsigned int time; // system time when pressed
-	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
-	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
-	void ( *upfunc )( int id, unsigned int time ); // function to call when the finger is released, time is 0 if cancelled
-} cg_touch_t;
-
-static cg_touch_t cg_touches[CG_MAX_TOUCHES];
+cg_touch_t cg_touches[CG_MAX_TOUCHES];
 
 typedef struct {
 	int touch;
-	int x, y;
+	int x, y;			// center position, may be modified
+	int startx, starty;	// original center position
 } cg_touchpad_t;
 
 static cg_touchpad_t cg_touchpads[TOUCHPAD_COUNT];
@@ -1600,29 +1592,31 @@ void CG_TouchFrame( void )
 			touching = true;
 	}
 
-	if( !touching )
-		return;
-
-	if( cg_showHUD->integer )
+	if( touching )
 	{
-		CG_CheckHUDChanges();
-		CG_ExecuteLayoutProgram( cg.statusBar, true );
-	}
-
-	// cancel non-existent areas
-	for( i = 0; i < CG_MAX_TOUCHES; ++i )
-	{
-		cg_touch_t &touch = cg_touches[i];
-		if( touch.down )
+		if( cg_showHUD->integer )
 		{
-			if( ( touch.area != TOUCHAREA_NONE ) && !touch.area_valid )
+			CG_CheckHUDChanges();
+			CG_ExecuteLayoutProgram( cg.statusBar, true );
+		}
+
+		// cancel non-existent areas
+		for( i = 0; i < CG_MAX_TOUCHES; ++i )
+		{
+			cg_touch_t &touch = cg_touches[i];
+			if( touch.down )
 			{
-				if( touch.upfunc )
-					touch.upfunc( i, 0 );
-				touch.area = TOUCHAREA_NONE;
+				if( ( touch.area != TOUCHAREA_NONE ) && !touch.area_valid )
+				{
+					if( touch.upfunc )
+						touch.upfunc( i, 0 );
+					touch.area = TOUCHAREA_NONE;
+				}
 			}
 		}
 	}
+
+	CG_UpdateHUDPostTouch();
 }
 
 /*
@@ -1729,6 +1723,30 @@ void CG_CancelTouches( void )
 }
 
 /*
+* CG_GetTouchpadOffset
+*/
+bool CG_GetTouchpadOffset( int padID, float &x, float &y, bool fromStart )
+{
+	cg_touchpad_t &pad = cg_touchpads[padID];
+	if( pad.touch < 0 )
+		return false;
+
+	cg_touch_t &touch = cg_touches[pad.touch];
+	float scale = 600.0f / ( float )cgs.vidHeight;
+	if( fromStart )
+	{
+		x = ( touch.x - pad.startx ) * scale;
+		y = ( touch.y - pad.starty ) * scale;
+	}
+	else
+	{
+		x = ( touch.x - pad.x ) * scale;
+		y = ( touch.y - pad.y ) * scale;
+	}
+	return true;
+}
+
+/*
 * CG_SetTouchpad
 */
 void CG_SetTouchpad( int padID, int touchID )
@@ -1740,7 +1758,7 @@ void CG_SetTouchpad( int padID, int touchID )
 	if( touchID >= 0 )
 	{
 		cg_touch_t &touch = cg_touches[touchID];
-		pad.x = touch.x;
-		pad.y = touch.y;
+		pad.x = pad.startx = touch.x;
+		pad.y = pad.starty = touch.y;
 	}
 }

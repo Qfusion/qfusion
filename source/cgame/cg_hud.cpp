@@ -39,8 +39,11 @@ cvar_t *cg_placebo;
 cvar_t *cg_strafeHUD;
 cvar_t *cg_touch_flip;
 cvar_t *cg_touch_scale;
+cvar_t *cg_touch_zoomThres;
+cvar_t *cg_touch_zoomTime;
 
 static int cg_hud_touch_buttons, cg_hud_touch_upmove;
+static unsigned int cg_hud_touch_zoomSeq, cg_hud_touch_zoomLastTouch;
 
 enum
 {
@@ -327,6 +330,17 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter )
 	return result;
 }
 
+static int CG_IsControllingPlayer( const void *parameter )
+{
+	if( cgs.demoPlaying || ISREALSPECTATOR() )
+		return 0;
+
+	if( ( cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) || ( CG_GetPOVnum( NULL ) != STAT_NOTSET ) )
+		return 0;
+
+	return 1;
+}
+
 static int CG_DownloadInProgress( const void *parameter )
 {
 	const char *str;
@@ -590,6 +604,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "VIDHEIGHT", CG_GetVidHeight, NULL },
 	{ "STUNNED", CG_GetStunned, NULL },
 	{ "SCOREBOARD", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_SCOREBOARD },
+	{ "CONTROLLING", CG_IsControllingPlayer, NULL },
 
 	{ "POWERUP_QUAD_TIME", CG_GetPowerupTime, (void *)POWERUP_QUAD },
 	{ "POWERUP_WARSHELL_TIME", CG_GetPowerupTime, (void *)POWERUP_SHELL },
@@ -1279,12 +1294,8 @@ static void CG_CheckWeaponCross( void )
 	if( cg_hud_weaponcrosstime < 0.0f )
 		return;
 
-	if( ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) ||
-		( cg.predictedPlayerState.stats[STAT_TEAM] == TEAM_SPECTATOR ) |
-		( CG_GetPOVnum( NULL ) != STAT_NOTSET ) )
-	{
+	if( !CG_IsControllingPlayer( NULL ) || ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) )
 		cg_hud_weaponcrosstime = 0.0f;
-	}
 }
 
 void CG_ShowWeaponCross( void )
@@ -2463,17 +2474,53 @@ static bool CG_LFuncTouchMove( struct cg_layoutnode_s *commandnode, struct cg_la
 
 static void CG_ViewUpFunc( int id, unsigned int time )
 {
+	if( cg_hud_touch_zoomSeq )
+	{
+		float x, y;
+		if( !time || ( ( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
+			!CG_GetTouchpadOffset( TOUCHPAD_VIEW, x, y, true ) ||
+			( fabsf( x ) > cg_touch_zoomThres->value ) ||
+			( fabsf( y ) > cg_touch_zoomThres->value ) )
+		{
+			cg_hud_touch_zoomSeq = 0;
+		}
+
+		if( ( cg_hud_touch_zoomSeq == 1 ) || ( cg_hud_touch_zoomSeq == 3 ) )
+		{
+			cg_hud_touch_zoomSeq = ( cg_hud_touch_zoomSeq + 1 ) & 3;
+			if( !cg_hud_touch_zoomSeq ) // toggle zoom after a double tap
+				cg_hud_touch_buttons ^= BUTTON_ZOOM;
+
+			cg_hud_touch_zoomLastTouch = time;
+		}
+	}
+
 	CG_SetTouchpad( TOUCHPAD_VIEW, -1 );
 }
 
 static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	int touch = CG_TouchArea( TOUCHAREA_HUD_VIEW,
+	int touchID = CG_TouchArea( TOUCHAREA_HUD_VIEW,
 		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
 		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
 		layout_cursor_width, layout_cursor_height, CG_ViewUpFunc );
-	if( touch >= 0 )
-		CG_SetTouchpad( TOUCHPAD_VIEW, touch );
+	if( touchID >= 0 )
+	{
+		CG_SetTouchpad( TOUCHPAD_VIEW, touchID );
+
+		cg_touch_t &touch = cg_touches[touchID];
+		if( cg_hud_touch_zoomSeq )
+		{
+			if( ( touch.time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer )
+				cg_hud_touch_zoomSeq = 0;
+		}
+		if( !cg_hud_touch_zoomSeq || ( cg_hud_touch_zoomSeq == 2 ) )
+		{
+			cg_hud_touch_zoomSeq++;
+			cg_hud_touch_zoomLastTouch = touch.time;
+		}
+	}
+
 	return true;
 }
 
@@ -4302,6 +4349,12 @@ static void CG_LoadStatusBarFile( char *path )
 		CG_Printf( "HUD: failed to load %s file\n", path );
 		return;
 	}
+
+	CG_CancelTouches();
+	cg_hud_touch_buttons = 0;
+	cg_hud_touch_upmove = 0;
+	cg_hud_touch_zoomSeq = 0;
+
 	// load the new status bar program
 	CG_ParseLayoutScript( opt, cg.statusBar );
 	// Free the opt buffer!
@@ -4374,4 +4427,16 @@ void CG_UpdateHUDPostDraw( void )
 {
 	cg_hud_weaponcrosstime -= cg.frameTime;
 	CG_CheckWeaponCross();
+}
+
+/*
+* CG_UpdateHUDPostTouch
+*/
+void CG_UpdateHUDPostTouch( void )
+{
+	if( cg_hud_touch_buttons & BUTTON_ZOOM )
+	{
+		if( !CG_IsControllingPlayer( NULL ) || ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) )
+			cg_hud_touch_buttons &= ~BUTTON_ZOOM;
+	}
 }

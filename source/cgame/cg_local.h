@@ -758,6 +758,17 @@ enum
 #define TOUCHAREA_SUB_SHIFT 16
 #define TOUCHAREA_MASK ( ( 1 << TOUCHAREA_SUB_SHIFT ) - 1 )
 
+typedef struct {
+	bool down; // is the finger currently down?
+	int x, y; // current x and y of the touch
+	unsigned int time; // system time when pressed
+	int area; // hud area unique id (TOUCHAREA_NONE = not caught by hud)
+	bool area_valid; // was the area of this touch checked this frame, if not, the area doesn't exist anymore
+	void ( *upfunc )( int id, unsigned int time ); // function to call when the finger is released, time is 0 if cancelled
+} cg_touch_t;
+
+extern cg_touch_t cg_touches[];
+
 int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, unsigned int time ) );
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 void CG_TouchFrame( void );
@@ -772,6 +783,7 @@ enum
 	TOUCHPAD_COUNT
 };
 
+bool CG_GetTouchpadOffset( int padID, float &x, float &y, bool fromStart );
 void CG_SetTouchpad( int padID, int touchID );
 
 //
@@ -783,6 +795,8 @@ extern cvar_t *cg_placebo;
 extern cvar_t *cg_strafeHUD;
 extern cvar_t *cg_touch_flip;
 extern cvar_t *cg_touch_scale;
+extern cvar_t *cg_touch_zoomThres;
+extern cvar_t *cg_touch_zoomTime;
 
 void CG_SC_ResetObituaries( void );
 void CG_SC_Obituary( void );
@@ -790,6 +804,7 @@ void Cmd_CG_PrintHudHelp_f( void );
 void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch );
 void CG_GetHUDTouchButtons( int &buttons, int &upmove );
 void CG_UpdateHUDPostDraw( void );
+void CG_UpdateHUDPostTouch( void );
 void CG_ShowWeaponCross( void );
 
 //
