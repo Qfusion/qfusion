@@ -53,7 +53,7 @@ void Document::Show( bool show, bool modal )
 	if( rocketDocument ) {
 		if( show ) {
 			rocketDocument->Focus();
-			rocketDocument->Show( modal ? Rocket::Core::ElementDocument::MODAL : 0 );
+			rocketDocument->Show( modal ? Rocket::Core::ElementDocument::MODAL : Rocket::Core::ElementDocument::FOCUS );
 		}
 		else {
 			rocketDocument->Hide();
