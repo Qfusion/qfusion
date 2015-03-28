@@ -56,5 +56,5 @@ add_library(ui SHARED ${ROCKET_ROOT_HEADERS} ${ROCKET_CORE_HEADERS} ${ROCKET_CON
 target_link_libraries(ui PRIVATE)
 add_dependencies(ui angelwrap)
 set_target_properties(ui PROPERTIES COMPILE_DEFINITIONS "ROCKET_STATIC_LIB;_SECURE_SCL=0")
-qf_set_output_dir(ui ${QFUSION_GAME_DIR})
+qf_set_output_dir(ui libs)
 set_property(TARGET ui PROPERTY CXX_STANDARD 11)
