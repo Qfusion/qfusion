@@ -470,8 +470,6 @@ BOUNDING BOXES
 =============================================================================
 */
 
-#define MAX_DEBUG_BOUNDS	1024
-
 typedef struct
 {
 	vec3_t mins;
@@ -480,7 +478,8 @@ typedef struct
 } r_debug_bound_t;
 
 static int r_num_debug_bounds;
-static r_debug_bound_t r_debug_bounds[MAX_DEBUG_BOUNDS];
+static size_t r_debug_bounds_current_size;
+static r_debug_bound_t *r_debug_bounds;
 
 /*
 * R_ClearDebugBounds
@@ -498,12 +497,22 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t c
 	int i;
 
 	i = r_num_debug_bounds;
+	r_num_debug_bounds++;
+
+	if( r_num_debug_bounds > r_debug_bounds_current_size )
+	{
+		r_debug_bounds_current_size = ALIGN( r_num_debug_bounds, 256 );
+		if( r_debug_bounds )
+			r_debug_bounds = R_Realloc( r_debug_bounds, r_debug_bounds_current_size * sizeof( r_debug_bound_t ) );
+		else
+			r_debug_bounds = R_Malloc( r_debug_bounds_current_size * sizeof( r_debug_bound_t ) );
+	}
+
 	if( i < MAX_DEBUG_BOUNDS )
 	{
 		VectorCopy( mins, r_debug_bounds[i].mins );
 		VectorCopy( maxs, r_debug_bounds[i].maxs );
 		Vector4Copy( color, r_debug_bounds[i].color );
-		r_num_debug_bounds++;
 	}
 }
 
