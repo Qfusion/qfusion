@@ -223,6 +223,12 @@ static void RP_PrecachePrograms( void )
 		return;
 	}
 
+#define CLOSE_AND_DROP_BINARY_CACHE() do { \
+		ri.FS_FCloseFile( handleBin ); \
+		handleBin = 0; \
+		r_glslbincache_storemode = FS_WRITE; \
+	} while(0)
+
 	handleBin = 0;
 	if( glConfig.ext.get_program_binary ) {
 		r_glslbincache_storemode = FS_APPEND;
@@ -240,9 +246,7 @@ static void RP_PrecachePrograms( void )
 			ri.FS_Read( &hash, sizeof( hash ), handleBin );
 			
 			if( binaryCacheSize < 8 || version != GLSL_BITS_VERSION || hash != glConfig.versionHash ) {
-				ri.FS_FCloseFile( handleBin );
-				handleBin = 0;
-				r_glslbincache_storemode = FS_WRITE;
+				CLOSE_AND_DROP_BINARY_CACHE();
 			}
 		}
 	}
@@ -316,9 +320,7 @@ static void RP_PrecachePrograms( void )
 					err = !err && ri.FS_Read( &binaryLength, sizeof( binaryLength ), handleBin ) != sizeof( binaryLength );
 					if( err || binaryLength >= binaryCacheSize ) {
 						binaryLength = 0;
-						ri.FS_FCloseFile( handleBin );
-						handleBin = 0;
-						r_glslbincache_storemode = FS_WRITE;
+						CLOSE_AND_DROP_BINARY_CACHE();
 					}
 
 					if( binaryLength ) {
@@ -326,6 +328,7 @@ static void RP_PrecachePrograms( void )
 						if( binary != NULL && ri.FS_Read( binary, binaryLength, handleBin ) != (int)binaryLength ) {
 							R_Free( binary );
 							binary = NULL;
+							CLOSE_AND_DROP_BINARY_CACHE();
 						}
 					}
 				}
@@ -339,9 +342,14 @@ static void RP_PrecachePrograms( void )
 				elem = RP_RegisterProgramBinary( type, name, NULL, NULL, 0, features, 
 					binaryFormat, binaryLength, binary );
 
+				if( RP_GetProgramObject( elem ) == 0 ) {
+					// check whether the program actually exists
+					elem = 0;
+				}
+
 				if( !elem ) {
 					// rewrite this binary cache on exit
-					r_glslbincache_storemode = FS_WRITE;
+					CLOSE_AND_DROP_BINARY_CACHE();
 				}
 				else {
 					glsl_program_t *program = r_glslprograms + elem - 1;
@@ -349,7 +357,12 @@ static void RP_PrecachePrograms( void )
 				}
 
 				R_Free( binary );
-				continue;
+				binary = NULL;
+
+				if( elem ) {
+					continue;
+				}
+				// fallthrough to regular registration
 			}
 			
 			ri.Com_DPrintf( "Loading program %s...\n", name );
@@ -357,6 +370,8 @@ static void RP_PrecachePrograms( void )
 			RP_RegisterProgram( type, name, NULL, NULL, 0, features );
 		}
 	}
+
+#undef CLOSE_AND_DROP_BINARY_CACHE
 
 	R_FreeFile( buffer );
 
@@ -1499,9 +1514,10 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		linked = 0;
 		qglProgramBinary( program->object, binaryFormat, binary, binaryLength );
 		qglGetProgramiv( program->object, GL_OBJECT_LINK_STATUS_ARB, &linked );
-		if( linked ) {
-			goto done;
+		if( !linked ) {
+			error = 1;
 		}
+		goto done;
 	}
 
 	Q_strncpyz( fullName, name, sizeof( fullName ) );
