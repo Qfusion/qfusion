@@ -137,6 +137,9 @@ public:
 	/// Informs element that the other element has just become structurally dirty
 	virtual void InformDirty(Element *child);
 
+	// Find the next element to focus, starting at the current element
+	bool FocusFirstTabElement(void) { return FocusNextTabElement(this, true); }
+
 protected:
 	/// Refreshes the document layout if required.
 	virtual void OnUpdate();
