@@ -477,7 +477,7 @@ typedef struct
 	byte_vec4_t color;
 } r_debug_bound_t;
 
-static int r_num_debug_bounds;
+static unsigned r_num_debug_bounds;
 static size_t r_debug_bounds_current_size;
 static r_debug_bound_t *r_debug_bounds;
 
@@ -494,7 +494,7 @@ static void R_ClearDebugBounds( void )
 */
 void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color )
 {
-	int i;
+	unsigned i;
 
 	i = r_num_debug_bounds;
 	r_num_debug_bounds++;
@@ -518,7 +518,7 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t c
 */
 static void R_RenderDebugBounds( void )
 {
-	int i, j;
+	unsigned i, j;
 	const vec_t *mins, *maxs;
 	const uint8_t *color;
 	mesh_t mesh;
