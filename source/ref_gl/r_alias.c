@@ -549,7 +549,7 @@ bool R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel
 bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceAlias_t *drawSurf )
 {
 	int i;
-	int framenum, oldframenum;
+	int framenum = e->frame, oldframenum = e->oldframe;
 	float backv[3], frontv[3];
 	vec3_t normal, oldnormal;
 	bool calcVerts, calcNormals, calcSTVectors;
@@ -564,8 +564,15 @@ bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	// see what vertex attribs backend needs
 	vattribs = RB_GetVertexAttribs();
 
-	framenum = bound( e->frame, 0, model->numframes - 1 );
-	oldframenum = bound( e->oldframe, 0, model->numframes - 1 );
+	if( ( framenum >= model->numframes ) || ( framenum < 0 ) )
+	{
+		framenum = 0;
+	}
+
+	if( ( oldframenum >= model->numframes ) || ( oldframenum < 0 ) )
+	{
+		oldframenum = 0;
+	}
 
 	frame = model->frames + framenum;
 	oldframe = model->frames + oldframenum;
