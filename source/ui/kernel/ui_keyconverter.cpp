@@ -11,6 +11,9 @@
 #include "kernel/ui_keyconverter.h"
 #include <Rocket/Core/Input.h>
 
+/* Special punctuation characters */
+const char oem_keys[] = ";=,-./`";
+
 using namespace Rocket::Core::Input;
 
 KeyConverter::KeyConverter()
@@ -43,6 +46,12 @@ int KeyConverter::toRocketKey( int key )
 		return KI_0 + ( key - '0' );
 	if( key >= 'a' && key <= 'z' )
 		return KI_A + ( key - 'a' );
+
+        for (int i = 0; i < sizeof(oem_keys) - 1; ++i) {
+            if (key == oem_keys[i]) {
+                return KI_OEM_1 + i;
+            }
+        }
 
 	switch( key )
 	{
@@ -120,6 +129,8 @@ int KeyConverter::fromRocketKey( int key )
 		return '0' + ( key - KI_0 );
 	if( key >= KI_A && key <= KI_Z )
 		return 'a' + ( key - KI_A );
+        if( key >= KI_OEM_1 && key <= KI_OEM_3 )
+		return oem_keys[key - KI_OEM_1];
 
 	switch( key )
 	{
