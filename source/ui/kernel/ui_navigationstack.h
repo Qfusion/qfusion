@@ -72,8 +72,6 @@ namespace WSWUI {
 		// stack operations
 		Document *pushDocument(const std::string &name, bool modal=false, bool show = true);
 		Document *preloadDocument(const std::string &name);
-		void pushDeferredDocument(const std::string &name);
-		void loadDeferredDocument();
 		void popDocument(void);
 		void popAllDocuments(void);
 		bool hasDocuments(void) const;
@@ -117,7 +115,6 @@ namespace WSWUI {
 		// locking the stack prevents documents from being pushed into the stack
 		bool stackLocked;
 		std::string defaultPath;
-		std::string deferredPush;
 	};
 
 }

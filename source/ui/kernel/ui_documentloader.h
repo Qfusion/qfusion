@@ -69,6 +69,7 @@ namespace WSWUI {
 		void Show(bool show=true, bool modal=false);
 		void Hide();
 		void Focus();
+		void FocusFirstTabElement();
 		void SetViewed (void) { viewed = true; }
 		bool IsViewed (void) const { return viewed; }
 		bool IsModal(void);
