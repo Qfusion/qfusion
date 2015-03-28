@@ -30,9 +30,9 @@ APP_MODULES := \
   ref_gl \
   snd_openal \
   snd_qf \
+  ui \
   \
   qfusion \
   \
   cgame \
-  game \
-  ui
+  game

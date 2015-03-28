@@ -23,6 +23,7 @@ include $(QFUSION_PATH)/source/irc/Android.mk
 include $(QFUSION_PATH)/source/ref_gl/Android.mk
 include $(QFUSION_PATH)/source/snd_openal/Android.mk
 include $(QFUSION_PATH)/source/snd_qf/Android.mk
+include $(QFUSION_PATH)/source/ui/Android.mk
 
 include $(QFUSION_PATH)/source/client/Android.mk
 
@@ -32,4 +33,3 @@ include $(QFUSION_PATH)/source/client/Android.mk
 
 include $(QFUSION_PATH)/source/cgame/Android.mk
 include $(QFUSION_PATH)/source/game/Android.mk
-include $(QFUSION_PATH)/source/ui/Android.mk
