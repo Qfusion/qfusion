@@ -1,4 +1,6 @@
+#if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP)
 qf_varying vec3 v_Position;
+#endif
 
 #if defined(APPLY_TC_GEN_REFLECTION)
 #define APPLY_CUBEMAP

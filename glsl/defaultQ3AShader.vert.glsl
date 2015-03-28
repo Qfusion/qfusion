@@ -55,7 +55,9 @@ void main(void)
 	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
 #endif // defined(APPLY_TC_GEN_ENV)
 
+#if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP)
 	v_Position = Position.xyz;
+#endif
 
 #if defined(APPLY_CUBEMAP) || defined(APPLY_DRAWFLAT)
 	v_Normal = Normal;
