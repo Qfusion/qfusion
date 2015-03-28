@@ -214,7 +214,7 @@ public:
 		if( stack == NULL ) {
 			return;
 		}
-		stack->pushDeferredDocument( location.buffer );
+		stack->pushDocument( location.buffer );
 	}
 
 	unsigned int getTime( void ) const

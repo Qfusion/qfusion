@@ -223,7 +223,7 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 	Document *new_top = !documentStack.empty() ? documentStack.back() : nullptr;
 	if( top != new_top ) {
 		// the stack has changed in the cache.getDocument call
-		return nullptr;
+		return doc;
 	}
 
 	documentStack.push_back( doc );
@@ -238,7 +238,9 @@ Document *NavigationStack::pushDocument(const std::string &name, bool modal, boo
 
 	// now check whether we're still on top of stack after the 'show' event
 	// as we could have been popped off the stack
-	if( doc == new_top ) {
+	if( doc == documentStack.back() ) {
+		doc->FocusFirstTabElement();
+
 		if( UI_Main::Get()->debugOn() ) {
 			Com_Printf("NavigationStack::pushDocument returning %s with refcount %d\n",
 					documentRealname.c_str(), doc->getReference() );
@@ -257,23 +259,6 @@ Document *NavigationStack::preloadDocument(const std::string &name)
 		return nullptr;
 
 	return doc;
-}
-
-void NavigationStack::pushDeferredDocument(const std::string &name)
-{
-	deferredPush = name;
-}
-
-void NavigationStack::loadDeferredDocument(void)
-{
-	if (deferredPush.empty()) {
-		return;
-	}
-
-	std::string docName = deferredPush;
-	deferredPush.clear();
-
-	pushDocument(docName);
 }
 
 void NavigationStack::_popDocument(bool focusOnNext)
