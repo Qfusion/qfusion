@@ -215,6 +215,7 @@ static void RP_PrecachePrograms( void )
 	char *buffer = NULL, *data, **ptr;
 	const char *token;
 	int handleBin;
+	size_t binaryCacheSize;
 
 	R_LoadCacheFile( GLSL_CACHE_FILE_NAME, ( void ** )&buffer );
 	if( !buffer ) {
@@ -231,10 +232,14 @@ static void RP_PrecachePrograms( void )
 			version = 0;
 			hash = 0;
 
+			ri.FS_Seek( handleBin, 0, FS_SEEK_END );
+			binaryCacheSize = ri.FS_Tell( handleBin );
+			ri.FS_Seek( handleBin, 0, FS_SEEK_SET );
+
 			ri.FS_Read( &version, sizeof( version ), handleBin );
 			ri.FS_Read( &hash, sizeof( hash ), handleBin );
 			
-			if( version != GLSL_BITS_VERSION || hash != glConfig.versionHash ) {
+			if( binaryCacheSize < 8 || version != GLSL_BITS_VERSION || hash != glConfig.versionHash ) {
 				ri.FS_FCloseFile( handleBin );
 				handleBin = 0;
 				r_glslbincache_storemode = FS_WRITE;
@@ -304,12 +309,21 @@ static void RP_PrecachePrograms( void )
 			if( handleBin && token[0] ) {
 				binaryPos = atoi( token );
 				if( binaryPos ) {
-					ri.FS_Seek( handleBin, binaryPos, FS_SEEK_SET );
-					ri.FS_Read( &binaryFormat, sizeof( binaryFormat ), handleBin );
-					ri.FS_Read( &binaryLength, sizeof( binaryLength ), handleBin );
+					bool err = false;
+					
+					err = !err && ri.FS_Seek( handleBin, binaryPos, FS_SEEK_SET ) < 0;
+					err = !err && ri.FS_Read( &binaryFormat, sizeof( binaryFormat ), handleBin ) != sizeof( binaryFormat );
+					err = !err && ri.FS_Read( &binaryLength, sizeof( binaryLength ), handleBin ) != sizeof( binaryLength );
+					if( err || binaryLength >= binaryCacheSize ) {
+						binaryLength = 0;
+						ri.FS_FCloseFile( handleBin );
+						handleBin = 0;
+						r_glslbincache_storemode = FS_WRITE;
+					}
+
 					if( binaryLength ) {
 						binary = R_Malloc( binaryLength );
-						if( ri.FS_Read( binary, binaryLength, handleBin ) != (int)binaryLength ) {
+						if( binary != NULL && ri.FS_Read( binary, binaryLength, handleBin ) != (int)binaryLength ) {
 							R_Free( binary );
 							binary = NULL;
 						}
