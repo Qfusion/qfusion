@@ -1,11 +1,11 @@
-#if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP)
-qf_varying vec3 v_Position;
-#endif
-
 #if defined(APPLY_TC_GEN_REFLECTION)
 #define APPLY_CUBEMAP
 #elif defined(APPLY_TC_GEN_CELSHADE)
 #define APPLY_CUBEMAP_VERTEX
+#endif
+
+#if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP)
+qf_varying vec3 v_Position;
 #endif
 
 #if defined(APPLY_CUBEMAP) || defined(APPLY_DRAWFLAT)
