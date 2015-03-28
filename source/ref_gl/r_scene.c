@@ -508,12 +508,9 @@ void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t c
 			r_debug_bounds = R_Malloc( r_debug_bounds_current_size * sizeof( r_debug_bound_t ) );
 	}
 
-	if( i < MAX_DEBUG_BOUNDS )
-	{
-		VectorCopy( mins, r_debug_bounds[i].mins );
-		VectorCopy( maxs, r_debug_bounds[i].maxs );
-		Vector4Copy( color, r_debug_bounds[i].color );
-	}
+	VectorCopy( mins, r_debug_bounds[i].mins );
+	VectorCopy( maxs, r_debug_bounds[i].maxs );
+	Vector4Copy( color, r_debug_bounds[i].color );
 }
 
 /*
