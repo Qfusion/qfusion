@@ -89,13 +89,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a936ce6566af958bb75ba1c0945d8b03a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes a message to the message callback.  <a href="#a936ce6566af958bb75ba1c0945d8b03a">More...</a><br/></td></tr>
 <tr class="separator:a936ce6566af958bb75ba1c0945d8b03a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">JIT compiler</div></td></tr>
-<tr class="memitem:aee4f910163604203a27db1ffea3b1c9c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aee4f910163604203a27db1ffea3b1c9c"></a>
-virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_engine.html#aee4f910163604203a27db1ffea3b1c9c">SetJITCompiler</a> (<a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *compiler)=0</td></tr>
-<tr class="memdesc:aee4f910163604203a27db1ffea3b1c9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the JIT compiler. <br/></td></tr>
+<tr class="memitem:aee4f910163604203a27db1ffea3b1c9c"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_engine.html#aee4f910163604203a27db1ffea3b1c9c">SetJITCompiler</a> (<a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *compiler)=0</td></tr>
+<tr class="memdesc:aee4f910163604203a27db1ffea3b1c9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the JIT compiler.  <a href="#aee4f910163604203a27db1ffea3b1c9c">More...</a><br/></td></tr>
 <tr class="separator:aee4f910163604203a27db1ffea3b1c9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2fb6db9085df3c7d487c0d58de76bb83"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2fb6db9085df3c7d487c0d58de76bb83"></a>
-virtual <a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_engine.html#a2fb6db9085df3c7d487c0d58de76bb83">GetJITCompiler</a> () const =0</td></tr>
-<tr class="memdesc:a2fb6db9085df3c7d487c0d58de76bb83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the JIT compiler. <br/></td></tr>
+<tr class="memitem:a2fb6db9085df3c7d487c0d58de76bb83"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_engine.html#a2fb6db9085df3c7d487c0d58de76bb83">GetJITCompiler</a> () const =0</td></tr>
+<tr class="memdesc:a2fb6db9085df3c7d487c0d58de76bb83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the JIT compiler.  <a href="#a2fb6db9085df3c7d487c0d58de76bb83">More...</a><br/></td></tr>
 <tr class="separator:a2fb6db9085df3c7d487c0d58de76bb83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Global functions</div></td></tr>
 <tr class="memitem:a547f3c255fef3f7bb54dac1272d8b7c8"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_engine.html#a547f3c255fef3f7bb54dac1272d8b7c8">RegisterGlobalFunction</a> (const char *declaration, const <a class="el" href="structas_s_func_ptr.html">asSFuncPtr</a> &amp;funcPointer, <a class="el" href="angelscript_8h.html#a5428f0c940201e5f3bbb28304aeb81bc">asDWORD</a> callConv, void *objForThiscall=0)=0</td></tr>
@@ -1574,6 +1572,30 @@ virtual <a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *&
 
 </div>
 </div>
+<a class="anchor" id="a2fb6db9085df3c7d487c0d58de76bb83"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual <a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a>* asIScriptEngine::GetJITCompiler </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>Returns a pointer to the JIT compiler </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a9f7cdc52b59034e6e55eb8a56b427aa4"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2194,7 +2216,8 @@ virtual <a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *&
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The weak ref flag, if the object supports weak references.</dd></dl>
-<p>The method doesn't increase the reference to the returned shared boolean. </p>
+<p>As long as the weak ref flag is not set, the owning object is still alive. Once the weak ref flag is set, the object is dead and should no longer be accessed. Check if the flag is set with the <a class="el" href="classas_i_lockable_shared_bool.html#abab39fc60f00ae8941423258ffc2c3c6">asILockableSharedBool::Get</a> method.</p>
+<p>This method doesn't increase the reference to the returned shared boolean. </p>
 
 </div>
 </div>
@@ -3630,6 +3653,39 @@ virtual <a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *&
 
 </div>
 </div>
+<a class="anchor" id="aee4f910163604203a27db1ffea3b1c9c"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual int asIScriptEngine::SetJITCompiler </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *&#160;</td>
+          <td class="paramname"><em>compiler</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">compiler</td><td>A pointer to the JIT compiler </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A negative value on error.</dd></dl>
+<p>This method is used to set the JIT compiler. The engine will automatically invoke the JIT compiler when it is set after compiling scripts or loading pre-compiled byte code.</p>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_adv_jit.html">How to build a JIT compiler</a> </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a74192fe950808eb72a64e3e371f0ea02"></a>
 <div class="memitem">
 <div class="memproto">
@@ -3903,7 +3959,7 @@ virtual <a class="el" href="classas_i_j_i_t_compiler.html">asIJITCompiler</a> *&
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classas_i_script_engine.html">asIScriptEngine</a></li>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:17 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

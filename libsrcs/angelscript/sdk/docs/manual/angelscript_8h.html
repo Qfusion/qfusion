@@ -363,7 +363,9 @@ Enumerations</h2></td></tr>
 <br/>
 &#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa563bec877e91b0646c47197b2ae7ac0c">asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE</a> = 20, 
 <br/>
-&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa9c876445c7d138ad096705fc18f311d1">asEP_ALTER_SYNTAX_NAMED_ARGS</a> = 21
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa9c876445c7d138ad096705fc18f311d1">asEP_ALTER_SYNTAX_NAMED_ARGS</a> = 21, 
+<br/>
+&#160;&#160;<a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fae6af9c6963372e11c6da873868f594cd">asEP_DISABLE_INTEGER_DIVISION</a> = 22
 <br/>
  }</td></tr>
 <tr class="memdesc:a53c2e8a74ade77c928316396394ebe0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Engine properties.  <a href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0f">More...</a><br/></td></tr>
@@ -2135,6 +2137,9 @@ const <a class="el" href="structas_s_b_c_info.html">asSBCInfo</a>&#160;</td><td 
 <tr><td class="fieldname"><em><a class="anchor" id="a53c2e8a74ade77c928316396394ebe0fa9c876445c7d138ad096705fc18f311d1"></a>asEP_ALTER_SYNTAX_NAMED_ARGS</em>&nbsp;</td><td class="fielddoc">
 <p>Change the script syntax for named arguments: 0 - no change, 1 - accept = but warn, 2 - accept = without warning. Default: 0. </p>
 </td></tr>
+<tr><td class="fieldname"><em><a class="anchor" id="a53c2e8a74ade77c928316396394ebe0fae6af9c6963372e11c6da873868f594cd"></a>asEP_DISABLE_INTEGER_DIVISION</em>&nbsp;</td><td class="fielddoc">
+<p>When true, the / and /= operators will perform floating-point division (i.e. 1/2 = 0.5 instead of 0). Default: false. </p>
+</td></tr>
 </table>
 
 </div>
@@ -3038,7 +3043,7 @@ template&lt;typename T &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_b2f33c71d4aa5e7af42a1ca61ff5af1b.html">source</a></li><li class="navelem"><a class="el" href="angelscript_8h.html">angelscript.h</a></li>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:27 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:16 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

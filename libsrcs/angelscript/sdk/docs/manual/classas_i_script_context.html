@@ -179,17 +179,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4d1f481473df3f7aefccc5bb6904e405"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#a4d1f481473df3f7aefccc5bb6904e405">SetExceptionCallback</a> (<a class="el" href="structas_s_func_ptr.html">asSFuncPtr</a> callback, void *obj, int callConv)=0</td></tr>
 <tr class="memdesc:a4d1f481473df3f7aefccc5bb6904e405"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets an exception callback function. The function will be called if a script exception occurs.  <a href="#a4d1f481473df3f7aefccc5bb6904e405">More...</a><br/></td></tr>
 <tr class="separator:a4d1f481473df3f7aefccc5bb6904e405"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb5cfe5703031fd76672a57d8afae547"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acb5cfe5703031fd76672a57d8afae547"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#acb5cfe5703031fd76672a57d8afae547">ClearExceptionCallback</a> ()=0</td></tr>
-<tr class="memdesc:acb5cfe5703031fd76672a57d8afae547"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a previously registered callback. Removes a previously registered callback. <br/></td></tr>
+<tr class="memitem:acb5cfe5703031fd76672a57d8afae547"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#acb5cfe5703031fd76672a57d8afae547">ClearExceptionCallback</a> ()=0</td></tr>
 <tr class="separator:acb5cfe5703031fd76672a57d8afae547"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">Debugging</div></td></tr>
 <tr class="memitem:ae2747f643bf9a07364f922c460ef57dd"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#ae2747f643bf9a07364f922c460ef57dd">SetLineCallback</a> (<a class="el" href="structas_s_func_ptr.html">asSFuncPtr</a> callback, void *obj, int callConv)=0</td></tr>
 <tr class="memdesc:ae2747f643bf9a07364f922c460ef57dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets a line callback function. The function will be called for each executed script statement.  <a href="#ae2747f643bf9a07364f922c460ef57dd">More...</a><br/></td></tr>
 <tr class="separator:ae2747f643bf9a07364f922c460ef57dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3771cf314de339fa5d70edfbfcd88370"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3771cf314de339fa5d70edfbfcd88370"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#a3771cf314de339fa5d70edfbfcd88370">ClearLineCallback</a> ()=0</td></tr>
-<tr class="memdesc:a3771cf314de339fa5d70edfbfcd88370"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a previously registered callback. Removes a previously registered callback. <br/></td></tr>
+<tr class="memitem:a3771cf314de339fa5d70edfbfcd88370"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#a3771cf314de339fa5d70edfbfcd88370">ClearLineCallback</a> ()=0</td></tr>
 <tr class="separator:a3771cf314de339fa5d70edfbfcd88370"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab359abc4563a8439338bfd655824bd7"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="angelscript_8h.html#ac8186f029686800b7ce36bde4a55c815">asUINT</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_context.html#aab359abc4563a8439338bfd655824bd7">GetCallstackSize</a> () const =0</td></tr>
 <tr class="memdesc:aab359abc4563a8439338bfd655824bd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the size of the callstack, i.e. the number of functions that have yet to complete.  <a href="#aab359abc4563a8439338bfd655824bd7">More...</a><br/></td></tr>
@@ -294,6 +290,54 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>The number of references to this object.</dd></dl>
 <p>Call this method when storing an additional reference to the object. Remember that the first reference that is received from <a class="el" href="classas_i_script_engine.html#a2630e1cd03ffab0fee9b820bf0afe42a">asIScriptEngine::CreateContext</a> is already accounted for. </p>
+
+</div>
+</div>
+<a class="anchor" id="acb5cfe5703031fd76672a57d8afae547"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void asIScriptContext::ClearExceptionCallback </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Removes a previously registered callback. </p>
+
+</div>
+</div>
+<a class="anchor" id="a3771cf314de339fa5d70edfbfcd88370"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void asIScriptContext::ClearLineCallback </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Removes a previously registered callback. </p>
 
 </div>
 </div>
@@ -2103,7 +2147,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classas_i_script_context.html">asIScriptContext</a></li>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:17 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

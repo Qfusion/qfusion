@@ -151,7 +151,7 @@ static bool StringIsEmpty(const string &str)
 	return str.empty();
 }
 
-static string &AssignUIntToString(unsigned int i, string &dest)
+static string &AssignUInt64ToString(asQWORD i, string &dest)
 {
 	ostringstream stream;
 	stream << i;
@@ -159,7 +159,7 @@ static string &AssignUIntToString(unsigned int i, string &dest)
 	return dest;
 }
 
-static string &AddAssignUIntToString(unsigned int i, string &dest)
+static string &AddAssignUInt64ToString(asQWORD i, string &dest)
 {
 	ostringstream stream;
 	stream << i;
@@ -167,21 +167,21 @@ static string &AddAssignUIntToString(unsigned int i, string &dest)
 	return dest;
 }
 
-static string AddStringUInt(const string &str, unsigned int i)
+static string AddStringUInt64(const string &str, asQWORD i)
 {
 	ostringstream stream;
 	stream << i;
 	return str + stream.str();
 }
 
-static string AddIntString(int i, const string &str)
+static string AddInt64String(asINT64 i, const string &str)
 {
 	ostringstream stream;
 	stream << i;
 	return stream.str() + str;
 }
 
-static string &AssignIntToString(int i, string &dest)
+static string &AssignInt64ToString(asINT64 i, string &dest)
 {
 	ostringstream stream;
 	stream << i;
@@ -189,7 +189,7 @@ static string &AssignIntToString(int i, string &dest)
 	return dest;
 }
 
-static string &AddAssignIntToString(int i, string &dest)
+static string &AddAssignInt64ToString(asINT64 i, string &dest)
 {
 	ostringstream stream;
 	stream << i;
@@ -197,14 +197,14 @@ static string &AddAssignIntToString(int i, string &dest)
 	return dest;
 }
 
-static string AddStringInt(const string &str, int i)
+static string AddStringInt64(const string &str, asINT64 i)
 {
 	ostringstream stream;
 	stream << i;
 	return str + stream.str();
 }
 
-static string AddUIntString(unsigned int i, const string &str)
+static string AddUInt64String(asQWORD i, const string &str)
 {
 	ostringstream stream;
 	stream << i;
@@ -369,7 +369,7 @@ static string formatInt(asINT64 value, const string &options, asUINT width)
 	else fmt += "d";
 
 	string buf;
-	buf.resize(width+20);
+	buf.resize(width+30);
 #if _MSC_VER >= 1400 && !defined(__S3E__)
 	// MSVC 8.0 / 2005 or newer
 	sprintf_s(&buf[0], buf.size(), fmt.c_str(), width, value);
@@ -581,15 +581,15 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "string opAdd(double) const", asFUNCTION(AddStringDouble), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string opAdd_r(double) const", asFUNCTION(AddDoubleString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "string &opAssign(int)", asFUNCTION(AssignIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int)", asFUNCTION(AddAssignIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string opAdd(int) const", asFUNCTION(AddStringInt), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(int) const", asFUNCTION(AddIntString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(int64)", asFUNCTION(AssignInt64ToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int64)", asFUNCTION(AddAssignInt64ToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd(int64) const", asFUNCTION(AddStringInt64), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd_r(int64) const", asFUNCTION(AddInt64String), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "string &opAssign(uint)", asFUNCTION(AssignUIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(uint)", asFUNCTION(AddAssignUIntToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string opAdd(uint) const", asFUNCTION(AddStringUInt), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(uint) const", asFUNCTION(AddUIntString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(uint64)", asFUNCTION(AssignUInt64ToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(uint64)", asFUNCTION(AddAssignUInt64ToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd(uint64) const", asFUNCTION(AddStringUInt64), asCALL_CDECL_OBJFIRST); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd_r(uint64) const", asFUNCTION(AddUInt64String), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("string", "string &opAssign(bool)", asFUNCTION(AssignBoolToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string &opAddAssign(bool)", asFUNCTION(AddAssignBoolToString), asCALL_CDECL_OBJLAST); assert( r >= 0 );
@@ -795,7 +795,7 @@ static void StringCharAtGeneric(asIScriptGeneric * gen)
 
 static void AssignInt2StringGeneric(asIScriptGeneric *gen)
 {
-	int *a = static_cast<int*>(gen->GetAddressOfArg(0));
+	asINT64 *a = static_cast<asINT64*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
 	std::stringstream sstr;
 	sstr << *a;
@@ -805,7 +805,7 @@ static void AssignInt2StringGeneric(asIScriptGeneric *gen)
 
 static void AssignUInt2StringGeneric(asIScriptGeneric *gen)
 {
-	unsigned int *a = static_cast<unsigned int*>(gen->GetAddressOfArg(0));
+	asQWORD *a = static_cast<asQWORD*>(gen->GetAddressOfArg(0));
 	string *self = static_cast<string*>(gen->GetObject());
 	std::stringstream sstr;
 	sstr << *a;
@@ -845,7 +845,7 @@ static void AddAssignDouble2StringGeneric(asIScriptGeneric * gen)
 
 static void AddAssignInt2StringGeneric(asIScriptGeneric * gen)
 {
-  int * a = static_cast<int *>(gen->GetAddressOfArg(0));
+  asINT64 * a = static_cast<asINT64 *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a;
@@ -855,7 +855,7 @@ static void AddAssignInt2StringGeneric(asIScriptGeneric * gen)
 
 static void AddAssignUInt2StringGeneric(asIScriptGeneric * gen)
 {
-  unsigned int * a = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
+  asQWORD * a = static_cast<asQWORD *>(gen->GetAddressOfArg(0));
   string * self = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a;
@@ -886,7 +886,7 @@ static void AddString2DoubleGeneric(asIScriptGeneric * gen)
 static void AddString2IntGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
-  int * b = static_cast<int *>(gen->GetAddressOfArg(0));
+  asINT64 * b = static_cast<asINT64 *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
   sstr << *a << *b;
   std::string ret_val = sstr.str();
@@ -896,7 +896,7 @@ static void AddString2IntGeneric(asIScriptGeneric * gen)
 static void AddString2UIntGeneric(asIScriptGeneric * gen)
 {
   string * a = static_cast<string *>(gen->GetObject());
-  unsigned int * b = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
+  asQWORD * b = static_cast<asQWORD *>(gen->GetAddressOfArg(0));
   std::stringstream sstr;
   sstr << *a << *b;
   std::string ret_val = sstr.str();
@@ -925,7 +925,7 @@ static void AddDouble2StringGeneric(asIScriptGeneric * gen)
 
 static void AddInt2StringGeneric(asIScriptGeneric * gen)
 {
-  int* a = static_cast<int *>(gen->GetAddressOfArg(0));
+  asINT64* a = static_cast<asINT64 *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a << *b;
@@ -935,7 +935,7 @@ static void AddInt2StringGeneric(asIScriptGeneric * gen)
 
 static void AddUInt2StringGeneric(asIScriptGeneric * gen)
 {
-  unsigned int* a = static_cast<unsigned int *>(gen->GetAddressOfArg(0));
+  asQWORD* a = static_cast<asQWORD *>(gen->GetAddressOfArg(0));
   string * b = static_cast<string *>(gen->GetObject());
   std::stringstream sstr;
   sstr << *a << *b;
@@ -1010,15 +1010,15 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("string", "string opAdd(double) const", asFUNCTION(AddString2DoubleGeneric), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string opAdd_r(double) const", asFUNCTION(AddDouble2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "string &opAssign(int)", asFUNCTION(AssignInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int)", asFUNCTION(AddAssignInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string opAdd(int) const", asFUNCTION(AddString2IntGeneric), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(int) const", asFUNCTION(AddInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(int64)", asFUNCTION(AssignInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int64)", asFUNCTION(AddAssignInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd(int64) const", asFUNCTION(AddString2IntGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd_r(int64) const", asFUNCTION(AddInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 
-	r = engine->RegisterObjectMethod("string", "string &opAssign(uint)", asFUNCTION(AssignUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(uint)", asFUNCTION(AddAssignUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string opAdd(uint) const", asFUNCTION(AddString2UIntGeneric), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(uint) const", asFUNCTION(AddUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAssign(uint64)", asFUNCTION(AssignUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string &opAddAssign(uint64)", asFUNCTION(AddAssignUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd(uint64) const", asFUNCTION(AddString2UIntGeneric), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("string", "string opAdd_r(uint64) const", asFUNCTION(AddUInt2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 
 	r = engine->RegisterObjectMethod("string", "string &opAssign(bool)", asFUNCTION(AssignBool2StringGeneric), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("string", "string &opAddAssign(bool)", asFUNCTION(AddAssignBool2StringGeneric), asCALL_GENERIC); assert( r >= 0 );

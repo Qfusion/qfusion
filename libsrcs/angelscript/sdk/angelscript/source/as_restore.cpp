@@ -119,7 +119,7 @@ int asCReader::Error(const char *msg)
 		error = true;
 	}
 
-	return -1;
+	return asERROR;
 }
 
 int asCReader::ReadInner() 
@@ -153,9 +153,9 @@ int asCReader::ReadInner()
 		bool sharedExists = false;
 		if( ot->IsShared() )
 		{
-			for( asUINT n = 0; n < engine->classTypes.GetLength(); n++ )
+			for( asUINT n = 0; n < engine->scriptTypes.GetLength(); n++ )
 			{
-				asCObjectType *t = engine->classTypes[n];
+				asCObjectType *t = engine->scriptTypes[n];
 				if( t && 
 					t->IsShared() &&
 					t->name == ot->name &&
@@ -173,7 +173,12 @@ int asCReader::ReadInner()
 		if( sharedExists )
 			existingShared.Insert(ot, true);
 		else
-			engine->classTypes.PushLast(ot);
+		{
+			engine->scriptTypes.PushLast(ot);
+
+			// Set this module as the owner
+			ot->module = module;
+		}
 		module->enumTypes.PushLast(ot);
 		ot->AddRef();
 		ReadObjectTypeDeclaration(ot, 2);
@@ -200,9 +205,9 @@ int asCReader::ReadInner()
 		bool sharedExists = false;
 		if( ot->IsShared() )
 		{
-			for( asUINT n = 0; n < engine->classTypes.GetLength(); n++ )
+			for( asUINT n = 0; n < engine->scriptTypes.GetLength(); n++ )
 			{
-				asCObjectType *t = engine->classTypes[n];
+				asCObjectType *t = engine->scriptTypes[n];
 				if( t &&
 					t->IsShared() &&
 					t->name == ot->name &&
@@ -221,7 +226,7 @@ int asCReader::ReadInner()
 			existingShared.Insert(ot, true);
 		else
 		{
-			engine->classTypes.PushLast(ot);
+			engine->scriptTypes.PushLast(ot);
 
 			// Set this module as the owner
 			ot->module = module;
@@ -312,7 +317,8 @@ int asCReader::ReadInner()
 		}
 
 		ReadObjectTypeDeclaration(ot, 1);
-		engine->classTypes.PushLast(ot);
+		ot->module = module;
+		engine->scriptTypes.PushLast(ot);
 		module->typeDefs.PushLast(ot);
 		ot->AddRef();
 		ReadObjectTypeDeclaration(ot, 2);
@@ -589,17 +595,35 @@ void asCReader::ReadUsedFunctions()
 			// Find the correct function
 			if( c == 'm' )
 			{
-				for( asUINT i = 0; i < module->scriptFunctions.GetLength(); i++ )
+				if( func.funcType == asFUNC_IMPORTED )
 				{
-					asCScriptFunction *f = module->scriptFunctions[i];
-					if( !func.IsSignatureEqual(f) ||
-						func.objectType != f->objectType ||
-						func.funcType != f->funcType || 
-						func.nameSpace != f->nameSpace )
-						continue;
+					for( asUINT i = 0; i < module->bindInformations.GetLength(); i++ )
+					{
+						asCScriptFunction *f = module->bindInformations[i]->importedFunctionSignature;
+						if( !func.IsSignatureEqual(f) ||
+							func.objectType != f->objectType ||
+							func.funcType != f->funcType || 
+							func.nameSpace != f->nameSpace )
+							continue;
 
-					usedFunctions[n] = f;
-					break;
+						usedFunctions[n] = f;
+						break;
+					}
+				}
+				else
+				{
+					for( asUINT i = 0; i < module->scriptFunctions.GetLength(); i++ )
+					{
+						asCScriptFunction *f = module->scriptFunctions[i];
+						if( !func.IsSignatureEqual(f) ||
+							func.objectType != f->objectType ||
+							func.funcType != f->funcType || 
+							func.nameSpace != f->nameSpace )
+							continue;
+
+						usedFunctions[n] = f;
+						break;
+					}
 				}
 			}
 			else

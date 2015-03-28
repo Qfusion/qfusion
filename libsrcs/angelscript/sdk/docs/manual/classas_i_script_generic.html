@@ -197,7 +197,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>A pointer to the memory where the return values is to be placed.</dd></dl>
-<p>The memory is not initialized, so if you're going to return a complex type by value, you shouldn't use the assignment operator to initialize it. Instead use the placement new operator to call the type's copy constructor to perform the initialization.</p>
+<p>The memory is not initialized, so if you're going to return a complex type by value you shouldn't use the assignment operator to initialize it. Instead use the placement new operator to call the type's copy constructor to perform the initialization.</p>
 <div class="fragment"><div class="line"><span class="keyword">new</span>(gen-&gt;<a class="code" href="classas_i_script_generic.html#a103a91f081ec894a116cd3db06b0d8d1" title="Gets the address to the memory where the return value should be placed.">GetAddressOfReturnLocation</a>()) std::string(myRetValue);</div>
 </div><!-- fragment --><p>The placement new operator works for primitive types too, so this method is ideal for writing automatically generated functions that works the same way for all types. </p>
 
@@ -953,7 +953,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classas_i_script_generic.html">asIScriptGeneric</a></li>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:18 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

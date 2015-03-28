@@ -121,6 +121,9 @@ public:
 	int  GetSizeOnStackDWords()  const;
 	int  GetSizeInMemoryBytes()  const;
 	int  GetSizeInMemoryDWords() const;
+#ifdef WIP_16BYTE_ALIGN
+	int  GetAlignment()          const;
+#endif
 
 	void SetTokenType(eTokenType tt)         {tokenType = tt;}
 	void SetObjectType(asCObjectType *obj)   {objectType = obj;}

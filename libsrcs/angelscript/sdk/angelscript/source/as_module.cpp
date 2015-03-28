@@ -485,7 +485,8 @@ void asCModule::InternalReset()
 			engine->importedFunctions[id] = 0;
 			engine->freeImportedFunctionIdxs.PushLast(id);
 
-			asDELETE(bindInformations[n]->importedFunctionSignature, asCScriptFunction);
+			bindInformations[n]->importedFunctionSignature->Orphan(this);
+
 			asDELETE(bindInformations[n], sBindInfo);
 		}
 	}
@@ -497,7 +498,7 @@ void asCModule::InternalReset()
 		classTypes[n]->Orphan(this);
 	classTypes.SetLength(0);
 	for( n = 0; n < enumTypes.GetLength(); n++ )
-		enumTypes[n]->Release();
+		enumTypes[n]->Orphan(this);
 	enumTypes.SetLength(0);
 	for( n = 0; n < typeDefs.GetLength(); n++ )
 		typeDefs[n]->Release();

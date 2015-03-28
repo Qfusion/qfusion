@@ -373,14 +373,16 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 		CreateBuffer(&buffer, length);
 
 		// Copy the values of the primitive type into the internal buffer
-		memcpy(At(0), (((asUINT*)buf)+1), length * elementSize);
+		if( length > 0 )
+			memcpy(At(0), (((asUINT*)buf)+1), length * elementSize);
 	}
 	else if( ot->GetSubTypeId() & asTYPEID_OBJHANDLE )
 	{
 		CreateBuffer(&buffer, length);
 
 		// Copy the handles into the internal buffer
-		memcpy(At(0), (((asUINT*)buf)+1), length * elementSize);
+		if( length > 0 )
+			memcpy(At(0), (((asUINT*)buf)+1), length * elementSize);
 
 		// With object handles it is safe to clear the memory in the received buffer
 		// instead of increasing the ref count. It will save time both by avoiding the
@@ -396,7 +398,8 @@ CScriptArray::CScriptArray(asIObjectType *ot, void *buf)
 		subTypeId &= ~asTYPEID_OBJHANDLE;
 
 		// Copy the handles into the internal buffer
-		memcpy(buffer->data, (((asUINT*)buf)+1), length * elementSize);
+		if( length > 0 )
+			memcpy(buffer->data, (((asUINT*)buf)+1), length * elementSize);
 
 		// For ref types we can do the same as for handles, as they are
 		// implicitly stored as handles.

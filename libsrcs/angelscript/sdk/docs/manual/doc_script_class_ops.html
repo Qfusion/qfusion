@@ -70,7 +70,7 @@ Prefixed unary operators</h1>
 <tr>
 <td>++ </td><td>opPreInc </td></tr>
 <tr>
-<td>&ndash; </td><td>opPreDec </td></tr>
+<td>-- </td><td>opPreDec </td></tr>
 </table>
 <p>When the expression <code><em>op</em> a</code> is compiled, the compiler will rewrite it as <code>a.<em>opfunc</em>()</code> and compile that instead.</p>
 <h1><a class="anchor" id="doc_script_class_unary2_ops"></a>
@@ -81,7 +81,7 @@ Postfixed unary operators</h1>
 <tr>
 <td>++ </td><td>opPostInc </td></tr>
 <tr>
-<td>&ndash; </td><td>opPostDec </td></tr>
+<td>-- </td><td>opPostDec </td></tr>
 </table>
 <p>When the expression <code>a <em>op</em></code> is compiled, the compiler will rewrite it as <code>a.<em>opfunc</em>()</code> and compile that instead.</p>
 <h1><a class="anchor" id="doc_script_class_cmp_ops"></a>
@@ -202,13 +202,32 @@ Functor operator</h1>
 <tr>
 <td>() </td><td>opCall </td></tr>
 </table>
-<p>When the expression <code>expr(arglist)</code> is compiled and expr evaluates to an object, the compiler will rewrite it as <code>expr.opCall(arglist)</code> and compile that instead. </p>
+<p>When the expression <code>expr(arglist)</code> is compiled and expr evaluates to an object, the compiler will rewrite it as <code>expr.opCall(arglist)</code> and compile that instead.</p>
+<h1><a class="anchor" id="doc_script_class_conv"></a>
+Type conversion operators</h1>
+<table  cellspacing="0" cellpadding="0" border="0">
+<tr>
+<td width="80"><b>op</b></td><td width="200"><b>opfunc</b> </td></tr>
+<tr>
+<td><em>type</em>(<em>expr</em>)</td><td>opConv, opImplConv </td></tr>
+</table>
+<p>When the expression <code>type(expr)</code> is compiled and type doesn't have a constructor that take an argument with the type of the expression, the compiler will try to rewrite it as <code>expr.opConv()</code>. The compiler will then chose the opConv that returns the desired type.</p>
+<p>By implementing the opImplConv instead of opConv, the compiler will be able to use this for implicit conversions too, e.g. when compiling an assignment or a function argument.</p>
+<pre>
+  class MyObj
+  {
+    double myValue;
+    double opImplConv() const  { return myValue; }
+    int    opConv() const      { return int(myValue); }
+  }
+</pre><p>This should only be used for value conversions and not reference casts. That is, the methods are expected to return a new instance of the value with the new type.</p>
+<dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_expressions.html#conversion">Type conversions</a> </dd></dl>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:17 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

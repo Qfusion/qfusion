@@ -84,6 +84,8 @@ Language modifications</h1>
 <p><a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa9c876445c7d138ad096705fc18f311d1">asEP_ALTER_SYNTAX_NAMED_ARGS</a></p>
 <p>If this flag is set to 1 or 2 the compiler will accept the '=' instead of ':' for <a class="el" href="doc_expressions.html#function">naming arguments in function calls</a>. When option 1 is used the compiler will warn about it, so the script writer can update the script to the correct ':' token. When option 2 is used both '=' and ':' are accepted silently.</p>
 <p>Observe that the use of the '=' token for naming arguments may cause a bit of a confusion. Especially if there is a variable with the same name as the function argument as the script writer may think he's updating the value of the variable, but is just naming the function argument.</p>
+<p><a class="el" href="angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fae6af9c6963372e11c6da873868f594cd">asEP_DISABLE_INTEGER_DIVISION</a></p>
+<p>This option changes the default behaviour of the / and /= operators. When true, this option replaces integer division with floating-point division, e.g. 1/2 == 0.5 instead of 1/2 == 0</p>
 <h1><a class="anchor" id="doc_adv_custom_options_engine"></a>
 Engine behaviours</h1>
 <p>There are also several options in <a class="el" href="classas_i_script_engine.html#a1bce4e5f573a2ca0ff55163e28f761dd">SetEngineProperty</a> for modifying the way the engine behaves.</p>
@@ -114,7 +116,7 @@ Engine behaviours</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:27 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:16 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

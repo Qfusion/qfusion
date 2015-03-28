@@ -77,13 +77,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa29488ac2f1c38788d5e79545fdfc8c7"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_lockable_shared_bool.html#aa29488ac2f1c38788d5e79545fdfc8c7">Set</a> (bool val)=0</td></tr>
 <tr class="memdesc:aa29488ac2f1c38788d5e79545fdfc8c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the value of the shared boolean.  <a href="#aa29488ac2f1c38788d5e79545fdfc8c7">More...</a><br/></td></tr>
 <tr class="separator:aa29488ac2f1c38788d5e79545fdfc8c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aef12cc309395d682aa138da5eea9d82b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aef12cc309395d682aa138da5eea9d82b"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_lockable_shared_bool.html#aef12cc309395d682aa138da5eea9d82b">Lock</a> () const =0</td></tr>
-<tr class="memdesc:aef12cc309395d682aa138da5eea9d82b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Locks the shared boolean If the boolean is already locked, then this method will wait until it is unlocked before returning. <br/></td></tr>
+<tr class="memitem:aef12cc309395d682aa138da5eea9d82b"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_lockable_shared_bool.html#aef12cc309395d682aa138da5eea9d82b">Lock</a> () const =0</td></tr>
+<tr class="memdesc:aef12cc309395d682aa138da5eea9d82b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Locks the shared boolean.  <a href="#aef12cc309395d682aa138da5eea9d82b">More...</a><br/></td></tr>
 <tr class="separator:aef12cc309395d682aa138da5eea9d82b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a863984c1b271df84f71fb5ba978ce2b8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a863984c1b271df84f71fb5ba978ce2b8"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_lockable_shared_bool.html#a863984c1b271df84f71fb5ba978ce2b8">Unlock</a> () const =0</td></tr>
-<tr class="memdesc:a863984c1b271df84f71fb5ba978ce2b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unlocks the shared boolean. <br/></td></tr>
+<tr class="memitem:a863984c1b271df84f71fb5ba978ce2b8"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_lockable_shared_bool.html#a863984c1b271df84f71fb5ba978ce2b8">Unlock</a> () const =0</td></tr>
+<tr class="memdesc:a863984c1b271df84f71fb5ba978ce2b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unlocks the shared boolean.  <a href="#a863984c1b271df84f71fb5ba978ce2b8">More...</a><br/></td></tr>
 <tr class="separator:a863984c1b271df84f71fb5ba978ce2b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -134,6 +132,31 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 </table>
 </div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>The value of the shared boolean </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="aef12cc309395d682aa138da5eea9d82b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void asILockableSharedBool::Lock </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>If the boolean is already locked, then this method will wait until it is unlocked before returning.</p>
+<p>Unlock the shared boolean with a call to <a class="el" href="classas_i_lockable_shared_bool.html#a863984c1b271df84f71fb5ba978ce2b8">Unlock</a> </p>
 
 </div>
 </div>
@@ -191,6 +214,30 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 
 </div>
 </div>
+<a class="anchor" id="a863984c1b271df84f71fb5ba978ce2b8"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void asILockableSharedBool::Unlock </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Unlock the shared boolean after a call to <a class="el" href="classas_i_lockable_shared_bool.html#aef12cc309395d682aa138da5eea9d82b">Lock</a> </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="angelscript_8h.html">angelscript.h</a></li>
 </ul>
@@ -200,7 +247,7 @@ virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classas_i_lockable_shared_bool.html">asILockableSharedBool</a></li>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:17 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

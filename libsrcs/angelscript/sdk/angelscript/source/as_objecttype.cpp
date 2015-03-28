@@ -133,6 +133,9 @@ asCObjectType::asCObjectType()
 
 	accessMask = 0xFFFFFFFF;
 	nameSpace = 0;
+#ifdef WIP_16BYTE_ALIGN
+	alignment = 4;
+#endif
 }
 
 asCObjectType::asCObjectType(asCScriptEngine *engine) 
@@ -147,6 +150,9 @@ asCObjectType::asCObjectType(asCScriptEngine *engine)
 
 	accessMask = 0xFFFFFFFF;
 	nameSpace = engine->nameSpaces[0];
+#ifdef WIP_16BYTE_ALIGN
+	alignment = 4;
+#endif
 }
 
 int asCObjectType::AddRef() const
@@ -158,7 +164,16 @@ int asCObjectType::AddRef() const
 int asCObjectType::Release() const
 {
 	gcFlag = false;
-	return refCount.atomicDec();
+	int r = refCount.atomicDec();
+
+	if( r == 0 && engine == 0 )
+	{
+		// If the engine is no longer set, then it has already been 
+		// released and we must take care of the deletion ourselves
+		asDELETE(const_cast<asCObjectType*>(this), asCObjectType);
+	}
+
+	return r;
 }
 
 void asCObjectType::Orphan(asCModule *mod)
@@ -170,12 +185,12 @@ void asCObjectType::Orphan(asCModule *mod)
 		{
 			// Tell the GC that this type exists so it can resolve potential circular references
 			engine->gc.AddScriptObjectToGC(this, &engine->objectTypeBehaviours);
-
-			// It's necessary to orphan the template instance types that refer to this object type,
-			// otherwise the garbage collector cannot identify the circular references that involve 
-			// the type and the template type
-			engine->OrphanTemplateInstances(this);
 		}
+
+		// It's necessary to orphan the template instance types that refer to this object type,
+		// otherwise the garbage collector cannot identify the circular references that involve 
+		// the type and the template type
+		engine->OrphanTemplateInstances(this);
 	}
 
 	Release();
@@ -252,11 +267,26 @@ void asCObjectType::SetGCFlag()
 	gcFlag = true;
 }
 
-asCObjectType::~asCObjectType()
+void asCObjectType::DropFromEngine()
 {
+	DestroyInternal();
+
+	// If the ref counter reached zero while doing the above clean-up then we must delete the object now
+	if( refCount.get() == 0 )
+		asDELETE(this, asCObjectType);
+}
+
+void asCObjectType::DestroyInternal()
+{
+	if( engine == 0 ) return;
+
 	// Skip this for list patterns as they do not increase the references
 	if( flags & asOBJ_LIST_PATTERN )
+	{
+		// Clear the engine pointer to mark the object type as invalid
+		engine = 0;
 		return;
+	}
 
 	// Release the object types held by the templateSubTypes
 	for( asUINT subtypeIndex = 0; subtypeIndex < templateSubTypes.GetLength(); subtypeIndex++ )
@@ -264,9 +294,11 @@ asCObjectType::~asCObjectType()
 		if( templateSubTypes[subtypeIndex].GetObjectType() )
 			templateSubTypes[subtypeIndex].GetObjectType()->Release();
 	}
+	templateSubTypes.SetLength(0);
 
 	if( derivedFrom )
 		derivedFrom->Release();
+	derivedFrom = 0;
 
 	ReleaseAllProperties();
 
@@ -290,6 +322,15 @@ asCObjectType::~asCObjectType()
 					engine->cleanObjectTypeFuncs[c].cleanFunc(this);
 		}
 	}
+	userData.SetLength(0);
+
+	// Clear the engine pointer to mark the object type as invalid
+	engine = 0;
+}
+
+asCObjectType::~asCObjectType()
+{
+	DestroyInternal();
 }
 
 // interface
@@ -748,8 +789,19 @@ asCObjectProperty *asCObjectType::AddPropertyToClass(const asCString &name, cons
 		propSize = dt.GetSizeInMemoryBytes();
 
 	// Add extra bytes so that the property will be properly aligned
+#ifndef WIP_16BYTE_ALIGN
 	if( propSize == 2 && (size & 1) ) size += 1;
 	if( propSize > 2 && (size & 3) ) size += 4 - (size & 3);
+#else
+	asUINT alignment = dt.GetAlignment();
+	const asUINT propSizeAlignmentDifference = size & (alignment-1);
+	if( propSizeAlignmentDifference != 0 )
+	{
+		size += (alignment - propSizeAlignmentDifference);
+	}
+
+	asASSERT((size % alignment) == 0);
+#endif
 
 	prop->byteOffset = size;
 	size += propSize;
@@ -782,6 +834,13 @@ void asCObjectType::ReleaseAllProperties()
 				if( group != 0 ) group->Release();
 
 				// Release references to objects types
+				asCObjectType *type = properties[n]->type.GetObjectType();
+				if( type )
+					type->Release();
+			}
+			else
+			{
+				// Release template instance types (ref increased by RegisterObjectProperty)
 				asCObjectType *type = properties[n]->type.GetObjectType();
 				if( type )
 					type->Release();

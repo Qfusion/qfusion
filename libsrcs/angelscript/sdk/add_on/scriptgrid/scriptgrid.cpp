@@ -294,7 +294,8 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 			buf = (asUINT*)(buf)+1;
 
 			// Copy the line
-			memcpy(At(0,y), buf, width*elementSize);
+			if( width > 0 )
+				memcpy(At(0,y), buf, width*elementSize);
 
 			// Move to next line
 			buf = (char*)(buf) + width*elementSize;
@@ -315,7 +316,8 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 			buf = (asUINT*)(buf)+1;
 
 			// Copy the line
-			memcpy(At(0,y), buf, width*elementSize);
+			if( width > 0 )
+				memcpy(At(0,y), buf, width*elementSize);
 
 			// With object handles it is safe to clear the memory in the received buffer
 			// instead of increasing the ref count. It will save time both by avoiding the
@@ -345,7 +347,8 @@ CScriptGrid::CScriptGrid(asIObjectType *ot, void *buf)
 			buf = (asUINT*)(buf)+1;
 
 			// Copy the line
-			memcpy(At(0,y), buf, width*elementSize);
+			if( width > 0 )
+				memcpy(At(0,y), buf, width*elementSize);
 
 			// With object handles it is safe to clear the memory in the received buffer
 			// instead of increasing the ref count. It will save time both by avoiding the

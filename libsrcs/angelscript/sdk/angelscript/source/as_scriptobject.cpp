@@ -298,7 +298,13 @@ void asCScriptObject::Destruct()
 	this->~asCScriptObject();
 
 	// Free the memory
+#ifndef WIP_16BYTE_ALIGN
 	userFree(this);
+#else
+	// Script object memory is allocated through asCScriptEngine::CallAlloc()
+	// This free call must match the allocator used in CallAlloc().
+	userFreeAligned(this);
+#endif
 }
 
 asCScriptObject::~asCScriptObject()

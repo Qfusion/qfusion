@@ -15,6 +15,58 @@ BODY { FONT-SIZE: 12px; FONT-FAMILY: Arial; }
 
 <h1>AngelScript Change Log</h1>
 
+<h2>Version 2.29.2 - 2014/10/21</h2>
+
+<ul>
+<li>Bug fixes
+<ul>
+<li>Fixed bug when compiling expressions using opCall on objects returned by reference from previous call (Thanks Sir Ementaler)
+<li>Empty initialization lists are now properly working where a repeat pattern is expected (Thanks cvet)
+<li>Fixed bug when global variable expression had casts between script classes (Thanks cvet)
+<li>Fixed incorrect warning on literal -9223372036854775808 (Thanks iraxef)
+<li>Compiler was incorrectly accepting syntax as object@(expr) (Thanks iraxef)
+<li>Taking the address of an imported function now works as it should (Thanks Wipe)
+<li>Fixed crash in compiler when compiling initialization lists with 'null' as one of the elements (Thanks iraxef)
+<li>Identity comparison on handle received as parameter by reference wasn't working (Thanks iraxef)
+<li>Application no longer crashes if an asIObjectType is released after the engine has been released
+<li>Template instances now receive the member properties that were registered for the template (Thanks Samichama)
+<li>Template types can now use other template types as method arguments where the sub-types are shared (Thanks Samichama)
+<li>Fixed bug in compiler with use of implicit value conversion and temporary variables (Thanks Jason Goepel)
+</ul>
+<li>Library interface
+<ul>
+<li>Improved compiler compatibility of asGetTypeTraits to support Xcode/Clang (Thanks PhilCK)
+<li>Script interfaces now return the module that owns them with GetModule (Thanks cvet)
+</ul>
+<li>Library
+<ul>
+<li>Added asEP_DISABLE_INTEGER_DIVISION that makes all divisions with integer values result in doubles (Thanks Jason Goepel)
+<li>Improved performance of shutting down the engine (Thanks ThyReaper)
+<li>Compiler warns when variable in inner scope hides variable of same name in outer scope (Thanks carew)
+<li>Compiler warns when overloading inherited class method and default args in the methods cause conflicts (Thanks Aaron Baker)
+<li>Compiler automatically resolves ambiguous enum values on comparisons (Thanks Jason Goepel)
+</ul>
+<li>Script language
+<ul>
+<li>Script classes can now implement opConv and opImplConv to support type conversions
+<li>Passing a non-lvalue expression to a &amp;out argument will now yield compiler error instead of warning
+</ul>
+<li>Virtual machine
+<ul>
+<li>Updated asBC_CALLBND so that imported functions can now be bound to application registered functions too (Thanks gjl)
+</ul>
+<li>Add-ons
+<ul>
+<li>The array and grid add-ons no longer set a script exception if the initialization list is empty
+<li>Fixed problem with storing/retrieving enum values from the dictionary (Thanks iraxef)
+<li>Concatenation with integers and string now properly supports 64bit types (Thanks iraxef)
+<li>dictionary::get now supports retrieving stored handle by value if type is compatible (Thanks iraxef)
+<li>CScriptBuilder::AddSectionFromMemory now has an optional lineOffset argument (Thanks Boost113)
+<li>CScriptBuilder will report the correct path to the include files that fails to load (Thanks gjl)
+<li>Fixed bug in CScriptFile when reading ints for least significant byte first (Thanks gjl)
+</ul>
+</ul>
+
 <h2>Version 2.29.1 - 2014/07/20</h2>
 
 <ul>

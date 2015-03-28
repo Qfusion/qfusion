@@ -61,7 +61,6 @@ const int RESERVE_STACK = 2*AS_PTR_SIZE;
 // For each script function call we push 9 PTRs on the call stack
 const int CALLSTACK_FRAME_SIZE = 9;
 
-
 #if defined(AS_DEBUG)
 
 class asCDebugStats
@@ -254,7 +253,11 @@ void asCContext::DetachEngine()
 	{
 		if( m_stackBlocks[n] )
 		{
+#ifndef WIP_16BYTE_ALIGN
 			asDELETEARRAY(m_stackBlocks[n]);
+#else
+			asDELETEARRAYALIGNED(m_stackBlocks[n]);
+#endif
 		}
 	}
 	m_stackBlocks.SetLength(0);
@@ -1190,6 +1193,14 @@ int asCContext::Execute()
 					SetInternalException(TXT_NULL_POINTER_ACCESS);
 			}
 		}
+		else if( m_currentFunction->funcType == asFUNC_IMPORTED )
+		{
+			int funcId = m_engine->importedFunctions[m_currentFunction->id & ~FUNC_IMPORTED]->boundFunctionId;
+			if( funcId > 0 )
+				m_currentFunction = m_engine->scriptFunctions[funcId];
+			else
+				SetInternalException(TXT_UNBOUND_FUNCTION);
+		}
 
 		if( m_currentFunction->funcType == asFUNC_SCRIPT )
 		{
@@ -1500,22 +1511,46 @@ int asCContext::GetLineNumber(asUINT stackLevel, int *column, const char **secti
 // internal
 bool asCContext::ReserveStackSpace(asUINT size)
 {
+#ifdef WIP_16BYTE_ALIGN
+	// Pad size to a multiple of MAX_TYPE_ALIGNMENT.
+	const asUINT remainder = size % MAX_TYPE_ALIGNMENT;
+	if(remainder != 0)
+	{
+		size = size + (MAX_TYPE_ALIGNMENT - (size % MAX_TYPE_ALIGNMENT));
+	}
+#endif
+
 	// Make sure the first stack block is allocated
 	if( m_stackBlocks.GetLength() == 0 )
 	{
 		m_stackBlockSize = m_engine->initialContextStackSize;
 		asASSERT( m_stackBlockSize > 0 );
 
+#ifndef WIP_16BYTE_ALIGN
 		asDWORD *stack = asNEWARRAY(asDWORD,m_stackBlockSize);
+#else
+		asDWORD *stack = asNEWARRAYALIGNED(asDWORD, m_stackBlockSize, MAX_TYPE_ALIGNMENT);
+#endif
 		if( stack == 0 )
 		{
 			// Out of memory
 			return false;
 		}
 
+#ifdef WIP_16BYTE_ALIGN
+		asASSERT( isAligned(stack, MAX_TYPE_ALIGNMENT) );
+#endif
+
 		m_stackBlocks.PushLast(stack);
 		m_stackIndex = 0;
 		m_regs.stackPointer = m_stackBlocks[0] + m_stackBlockSize;
+
+#ifdef WIP_16BYTE_ALIGN
+		// Align the stack pointer. This is necessary as the m_stackBlockSize is not necessarily evenly divisable with the max alignment
+		((asPWORD&)m_regs.stackPointer) &= ~(MAX_TYPE_ALIGNMENT-1);
+
+		asASSERT( isAligned(m_regs.stackPointer, MAX_TYPE_ALIGNMENT) );
+#endif
 	}
 
 	// Check if there is enough space on the current stack block, otherwise move
@@ -1542,7 +1577,11 @@ bool asCContext::ReserveStackSpace(asUINT size)
 		if( m_stackBlocks.GetLength() == m_stackIndex )
 		{
 			// Allocate the new stack block, with twice the size of the previous
-			asDWORD *stack = asNEWARRAY(asDWORD,(m_stackBlockSize << m_stackIndex));
+#ifndef WIP_16BYTE_ALIGN
+			asDWORD *stack = asNEWARRAY(asDWORD, (m_stackBlockSize << m_stackIndex));
+#else
+			asDWORD *stack = asNEWARRAYALIGNED(asDWORD, (m_stackBlockSize << m_stackIndex), MAX_TYPE_ALIGNMENT);
+#endif
 			if( stack == 0 )
 			{
 				// Out of memory
@@ -1554,6 +1593,11 @@ bool asCContext::ReserveStackSpace(asUINT size)
 				SetInternalException(TXT_STACK_OVERFLOW);
 				return false;
 			}
+
+#ifdef WIP_16BYTE_ALIGN
+			asASSERT( isAligned(stack, MAX_TYPE_ALIGNMENT) );
+#endif
+
 			m_stackBlocks.PushLast(stack);
 		}
 
@@ -1564,6 +1608,13 @@ bool asCContext::ReserveStackSpace(asUINT size)
 			                  m_currentFunction->GetSpaceNeededForArguments() -
 			                  (m_currentFunction->objectType ? AS_PTR_SIZE : 0) -
 			                  (m_currentFunction->DoesReturnOnStack() ? AS_PTR_SIZE : 0);
+
+#ifdef WIP_16BYTE_ALIGN
+		// Align the stack pointer 
+		(asPWORD&)m_regs.stackPointer &= ~(MAX_TYPE_ALIGNMENT-1);
+
+		asASSERT( isAligned(m_regs.stackPointer, MAX_TYPE_ALIGNMENT) );
+#endif
 	}
 
 	return true;
@@ -2433,9 +2484,9 @@ void asCContext::ExecuteNext()
 
 	case asBC_CALLBND:
 		{
+			// TODO: Clean-up: This code is very similar to asBC_CallPtr. Create a shared method for them
 			// Get the function ID from the stack
 			int i = asBC_INTARG(l_bc);
-			l_bc += 2;
 
 			asASSERT( i >= 0 );
 			asASSERT( i & FUNC_IMPORTED );
@@ -2448,6 +2499,9 @@ void asCContext::ExecuteNext()
 			int funcId = m_engine->importedFunctions[i & ~FUNC_IMPORTED]->boundFunctionId;
 			if( funcId == -1 )
 			{
+				// Need to update the program pointer for the exception handler
+				m_regs.programPointer += 2;
+
 				// Tell the exception handler to clean up the arguments to this function
 				m_needToCleanupArgs = true;
 				SetInternalException(TXT_UNBOUND_FUNCTION);
@@ -2456,8 +2510,46 @@ void asCContext::ExecuteNext()
 			else
 			{
 				asCScriptFunction *func = m_engine->GetScriptFunction(funcId);
+				if( func->funcType == asFUNC_SCRIPT )
+				{
+					m_regs.programPointer += 2;
+					CallScriptFunction(func);
+				}
+				else if( func->funcType == asFUNC_DELEGATE )
+				{
+					// Push the object pointer on the stack. There is always a reserved space for this so
+					// we don't don't need to worry about overflowing the allocated memory buffer
+					asASSERT( m_regs.stackPointer - AS_PTR_SIZE >= m_stackBlocks[m_stackIndex] );
+					m_regs.stackPointer -= AS_PTR_SIZE;
+					*(asPWORD*)m_regs.stackPointer = asPWORD(func->objForDelegate);
 
-				CallScriptFunction(func);
+					// Call the delegated method
+					if( func->funcForDelegate->funcType == asFUNC_SYSTEM )
+					{
+						m_regs.stackPointer += CallSystemFunction(func->funcForDelegate->id, this, 0);
+
+						// Update program position after the call so the line number
+						// is correct in case the system function queries it
+						m_regs.programPointer += 2;
+					}
+					else
+					{
+						m_regs.programPointer += 2;
+
+						// TODO: run-time optimize: The true method could be figured out when creating the delegate
+						CallInterfaceMethod(func->funcForDelegate);
+					}
+				}
+				else
+				{
+					asASSERT( func->funcType == asFUNC_SYSTEM );
+
+					m_regs.stackPointer += CallSystemFunction(func->id, this, 0);
+
+					// Update program position after the call so the line number
+					// is correct in case the system function queries it
+					m_regs.programPointer += 2;
+				}
 			}
 
 			// Extract the values from the context again
@@ -3978,7 +4070,11 @@ void asCContext::ExecuteNext()
 
 			asUINT size = asBC_DWORDARG(l_bc);
 			asBYTE **var = (asBYTE**)(l_fp - asBC_SWORDARG0(l_bc));
+#ifndef WIP_16BYTE_ALIGN
 			*var = asNEWARRAY(asBYTE, size);
+#else
+			*var = asNEWARRAYALIGNED(asBYTE, size, MAX_TYPE_ALIGNMENT);
+#endif
 
 			// Clear the buffer for the pointers that will be placed in it
 			memset(*var, 0, size);

@@ -633,6 +633,19 @@ int asCDataType::GetSizeOnStackDWords() const
 	return GetSizeInMemoryDWords() + size;
 }
 
+#ifdef WIP_16BYTE_ALIGN
+int  asCDataType::GetAlignment() const
+{
+	if( objectType == NULL )
+	{
+		// TODO: Small primitives should not be aligned to 4 byte boundaries
+		return 4; //Default alignment
+	}
+
+	return objectType->alignment;
+}
+#endif
+
 asSTypeBehaviour *asCDataType::GetBehaviour() const
 { 
 	return objectType ? &objectType->beh : 0; 

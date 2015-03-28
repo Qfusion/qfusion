@@ -50,5 +50,6 @@ var doc_advanced =
       [ "Enumerating functions and methods", "doc_adv_reflection.html#doc_adv_reflection_funcs", null ],
       [ "Enumerating types", "doc_adv_reflection.html#doc_adv_reflection_types", null ]
     ] ],
+    [ "Inheriting from application registered class", "doc_adv_inheritappclass.html", null ],
     [ "JIT compilation", "doc_adv_jit_topic.html", "doc_adv_jit_topic" ]
 ];

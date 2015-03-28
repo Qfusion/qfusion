@@ -43,7 +43,7 @@
 
 #define TXT_s_ALREADY_DECLARED                    "'%s' is already declared"
 #define TXT_ABSTRACT_CLASS_s_CANNOT_BE_INSTANTIATED "Abstract class '%s' cannot be instantiated"
-#define TXT_ARG_NOT_LVALUE                        "Argument cannot be assigned. Output will be discarded."
+#define TXT_ARG_NOT_LVALUE                        "Output argument expression is not assignable"
 #define TXT_ATTR_s_INFORMED_MULTIPLE_TIMES        "Attribute '%s' informed multiple times"
 
 #define TXT_BOTH_MUST_BE_SAME                     "Both expressions must have the same type"
@@ -62,6 +62,7 @@
 #define TXT_CANNOT_INSTANTIATE_TEMPLATE_s_WITH_s   "Can't instantiate template '%s' with subtype '%s'"
 #define TXT_CANNOT_PASS_CLASS_METHOD_AS_ARG        "Can't pass class method as arg directly. Use a delegate object instead"
 #define TXT_CANNOT_RETURN_REF_TO_LOCAL             "Can't return reference to local value."
+#define TXT_CANT_CONSTRUCT_s_USE_REF_CAST          "Can't construct handle '%s'. Use ref cast instead"
 #define TXT_CANT_IMPLICITLY_CONVERT_s_TO_s         "Can't implicitly convert from '%s' to '%s'."
 #define TXT_CANT_RETURN_VALUE                      "Can't return value when return type is 'void'"
 #define TXT_CHANGE_SIGN                            "Implicit conversion changed sign of value"
@@ -116,6 +117,7 @@
 #define TXT_HANDLE_ASSIGN_ON_NON_HANDLE_PROP     "It is not allowed to perform a handle assignment on a non-handle property"
 #define TXT_HANDLE_COMPARISON                    "The operand is implicitly converted to handle in order to compare them"
 #define TXT_HANDLE_OF_HANDLE_IS_NOT_ALLOWED      "Handle to handle is not allowed"
+#define TXT_s_HIDES_VAR_IN_OUTER_SCOPE           "Variable '%s' hides another variable of same name in outer scope"
 
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE             "Identifier '%s' is not a data type"
 #define TXT_IDENTIFIER_s_NOT_DATA_TYPE_IN_GLOBAL_NS "Identifier '%s' is not a data type in global namespace"
@@ -196,13 +198,14 @@
 #define TXT_NOT_VALID_LVALUE                       "Not a valid lvalue"
 #define TXT_NOTHING_WAS_BUILT                      "Nothing was built in the module"
 
-#define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP "Type '%s' doesn't support the indexing operator"
-#define TXT_OBJECT_HANDLE_NOT_SUPPORTED    "Object handle is not supported for this type"
-#define TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT "Only object types that support object handles can use &inout. Use &in or &out instead"
-#define TXT_ONLY_ONE_ARGUMENT_IN_CAST      "A cast operator has one argument"
-#define TXT_ONLY_ONE_FUNCTION_ALLOWED      "The code must contain one and only one function"
-#define TXT_ONLY_ONE_VARIABLE_ALLOWED      "The code must contain one and only one global variable"
-#define TXT_OPERANDS_MUST_BE_HANDLES       "Both operands must be handles when comparing identity"
+#define TXT_OBJECT_DOESNT_SUPPORT_INDEX_OP          "Type '%s' doesn't support the indexing operator"
+#define TXT_OBJECT_HANDLE_NOT_SUPPORTED             "Object handle is not supported for this type"
+#define TXT_ONLY_OBJECTS_MAY_USE_REF_INOUT          "Only object types that support object handles can use &inout. Use &in or &out instead"
+#define TXT_ONLY_ONE_ARGUMENT_IN_CAST               "A cast operator has one argument"
+#define TXT_ONLY_ONE_FUNCTION_ALLOWED               "The code must contain one and only one function"
+#define TXT_ONLY_ONE_VARIABLE_ALLOWED               "The code must contain one and only one global variable"
+#define TXT_OPERANDS_MUST_BE_HANDLES                "Both operands must be handles when comparing identity"
+#define TXT_OVERLOAD_CONFLICTS_DUE_TO_DEFAULT_ARGS  "The overloaded functions are identical on initial parameters without default arguments"
 
 #define TXT_PARAMETER_ALREADY_DECLARED            "Parameter already declared"
 #define TXT_PARAMETER_CANT_BE_s                   "Parameter type can't be '%s', because the type cannot be instantiated."

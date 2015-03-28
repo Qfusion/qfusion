@@ -80,6 +80,13 @@ Public C++ interface</h1>
 <div class="line"><span class="comment">// The caller can optionally provide its own context, for example if a context should be reused.</span></div>
 <div class="line"><span class="keywordtype">int</span> ExecuteString(<a class="code" href="classas_i_script_engine.html" title="The engine interface.">asIScriptEngine</a> *engine, <span class="keyword">const</span> <span class="keywordtype">char</span> *code, <span class="keywordtype">void</span> *ret, <span class="keywordtype">int</span> retTypeId, <a class="code" href="classas_i_script_module.html" title="The interface to the script modules.">asIScriptModule</a> *mod = 0, <a class="code" href="classas_i_script_context.html" title="The interface to the virtual machine.">asIScriptContext</a> *ctx = 0);</div>
 <div class="line"></div>
+<div class="line"><span class="comment">// Format the details of the script exception into a human readable text.</span></div>
+<div class="line"><span class="comment">// Whenever the asIScriptContext::Execute method returns asEXECUTION_EXCEPTION, the application </span></div>
+<div class="line"><span class="comment">// can call this function to get more information about that exception in a human readable form.</span></div>
+<div class="line"><span class="comment">// The information obtained includes the current function, the script source section, </span></div>
+<div class="line"><span class="comment">// program position in the source section, and the exception description itself.</span></div>
+<div class="line">std::string GetExceptionInfo(<a class="code" href="classas_i_script_context.html" title="The interface to the virtual machine.">asIScriptContext</a> *ctx, <span class="keywordtype">bool</span> showStack = <span class="keyword">false</span>);</div>
+<div class="line"></div>
 <div class="line"><span class="comment">// Write registered application interface to file.</span></div>
 <div class="line"><span class="comment">// This function creates a file with the configuration for the offline compiler, asbuild, in the samples.</span></div>
 <div class="line"><span class="comment">// If you wish to use the offline compiler you should call this function from you application after the </span></div>
@@ -87,14 +94,14 @@ Public C++ interface</h1>
 <div class="line"><span class="comment">// file manually.</span></div>
 <div class="line"><span class="keywordtype">int</span> WriteConfigToFile(<a class="code" href="classas_i_script_engine.html" title="The engine interface.">asIScriptEngine</a> *engine, <span class="keyword">const</span> <span class="keywordtype">char</span> *filename);</div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Format the details of the script exception into a human readable text.</span></div>
-<div class="line"><span class="comment">// Whenever the asIScriptContext::Execute method returns asEXECUTION_EXCEPTION, the application </span></div>
-<div class="line"><span class="comment">// can call this function to get more information about that exception in a human readable form.</span></div>
-<div class="line"><span class="comment">// The information obtained includes the current function, the script source section, </span></div>
-<div class="line"><span class="comment">// program position in the source section, and the exception description itself.</span></div>
-<div class="line">std::string GetExceptionInfo(<a class="code" href="classas_i_script_context.html" title="The interface to the virtual machine.">asIScriptContext</a> *ctx, <span class="keywordtype">bool</span> showStack = <span class="keyword">false</span>);</div>
-</div><!-- fragment --><dl class="todo"><dt><b><a class="el" href="todo.html#_todo000001">Todo:</a></b></dt><dd>WriteConfigToStream, ConfigEngineFromStream</dd></dl>
-<h1><a class="anchor" id="doc_addon_helpers_2"></a>
+<div class="line"><span class="comment">// Write the registered application interface to a text stream. </span></div>
+<div class="line"><span class="keywordtype">int</span> WriteConfigToStream(<a class="code" href="classas_i_script_engine.html" title="The engine interface.">asIScriptEngine</a> *engine, std::ostream &amp;strm); </div>
+<div class="line"></div>
+<div class="line"><span class="comment">// Loads an interface from a text stream and configures the engine with it. This will not </span></div>
+<div class="line"><span class="comment">// set the correct function pointers, so it is not possible to use this engine to execute</span></div>
+<div class="line"><span class="comment">// scripts, but it can be used to compile scripts and save the byte code.</span></div>
+<div class="line"><span class="keywordtype">int</span> ConfigEngineFromStream(<a class="code" href="classas_i_script_engine.html" title="The engine interface.">asIScriptEngine</a> *engine, std::istream &amp;strm, <span class="keyword">const</span> <span class="keywordtype">char</span> *nameOfStream = <span class="stringliteral">&quot;config&quot;</span>);</div>
+</div><!-- fragment --><h1><a class="anchor" id="doc_addon_helpers_2"></a>
 Example</h1>
 <p>To compare two script objects the application can execute the following code:</p>
 <div class="fragment"><div class="line"><span class="keywordtype">void</span> Compare(<a class="code" href="classas_i_script_object.html" title="The interface for an instance of a script object.">asIScriptObject</a> *a, <a class="code" href="classas_i_script_object.html" title="The interface for an instance of a script object.">asIScriptObject</a> *b)</div>
@@ -123,7 +130,7 @@ Example</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:27 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:16 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

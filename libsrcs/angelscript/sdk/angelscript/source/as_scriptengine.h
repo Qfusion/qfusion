@@ -245,7 +245,7 @@ public:
 
 	int  ClearUnusedTypes();
 	void RemoveTemplateInstanceType(asCObjectType *t);
-	void RemoveTypeAndRelatedFromList(asCArray<asCObjectType*> &types, asCObjectType *ot);
+	void RemoveTypeAndRelatedFromList(asCMap<asCObjectType*,char> &types, asCObjectType *ot);
 
 	asCConfigGroup *FindConfigGroupForFunction(int funcId) const;
 	asCConfigGroup *FindConfigGroupForGlobalVar(int gvarId) const;
@@ -295,6 +295,8 @@ public:
 	bool               GenerateNewTemplateFunction(asCObjectType *templateType, asCObjectType *templateInstanceType, asCScriptFunction *templateFunc, asCScriptFunction **newFunc);
 	void               OrphanTemplateInstances(asCObjectType *subType);
 	asCDataType        DetermineTypeForTemplate(const asCDataType &orig, asCObjectType *tmpl, asCObjectType *ot);
+	bool               RequireTypeReplacement(asCDataType &type, asCObjectType *templateType);
+
 
 	// String constants
 	// TODO: Must free unused string constants, thus the ref count for each must be tracked
@@ -378,8 +380,8 @@ public:
 	// Tokenizer is instantiated once to share resources
 	asCTokenizer tok;
 
-	// Stores script declared object types
-	asCArray<asCObjectType *> classTypes;
+	// Stores script declared types (classes, interfaces, enums, typedefs)
+	asCArray<asCObjectType *> scriptTypes;
 	// This array stores the template instances types that have been automatically generated from template types
 	asCArray<asCObjectType *> generatedTemplateTypes;
 	// Stores the funcdefs
@@ -476,6 +478,7 @@ public:
 		int    compilerWarnings;
 		bool   disallowValueAssignForRefType;
 		int    alterSyntaxNamedArgs;
+		bool   disableIntegerDivision;
 	} ep;
 
 	// This flag is to allow a quicker shutdown when releasing the engine

@@ -65,8 +65,9 @@ $(document).ready(function(){initNavTree('doc_datatypes_dictionary.html','');});
   dictionary dict = {{'one', 1}, {'object', object}, {'handle', @handle}};</pre><pre>  // Examine and access the values through get or set methods ...
   if( dict.exists('one') )
   {
-    bool found = dict.get('handle', @handle);
-    if( found )
+    // get returns true if the stored type is compatible with the requested type
+    bool isValid = dict.get('handle', @handle);
+    if( isValid )
     {
       dict.delete('object');
       dict.set('value', 1);
@@ -110,7 +111,7 @@ Methods</h2>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:28 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:17 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

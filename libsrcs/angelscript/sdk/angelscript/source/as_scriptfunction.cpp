@@ -393,10 +393,8 @@ void asCScriptFunction::DeallocateScriptFunctionData()
 // internal
 asCScriptFunction::~asCScriptFunction()
 {
-	// Imported functions are not reference counted, nor are dummy
-	// functions that are allocated on the stack
+	// Dummy functions that are allocated on the stack are not reference counted
 	asASSERT( funcType == asFUNC_DUMMY    ||
-		      funcType == asFUNC_IMPORTED ||
 		      refCount.get() == 0         );
 
 	// If the engine pointer is 0, then DestroyInternal has already been called and there is nothing more to do
@@ -482,7 +480,6 @@ int asCScriptFunction::GetId() const
 int asCScriptFunction::AddRef() const
 {
 	gcFlag = false;
-	asASSERT( funcType != asFUNC_IMPORTED );
 	return refCount.atomicInc();
 }
 
@@ -490,7 +487,6 @@ int asCScriptFunction::AddRef() const
 int asCScriptFunction::Release() const
 {
 	gcFlag = false;
-	asASSERT( funcType != asFUNC_IMPORTED );
 	int r = refCount.atomicDec();
 	if( r == 0 &&
 		funcType != asFUNC_FUNCDEF && // Funcdefs are treated as object types and will be deleted by ClearUnusedTypes()
@@ -506,7 +502,7 @@ void asCScriptFunction::Orphan(asIScriptModule *mod)
 	if( mod && module == mod )
 	{
 		module = 0;
-		if( funcType == asFUNC_SCRIPT && refCount.get() > 1 )
+		if( (funcType == asFUNC_SCRIPT || funcType == asFUNC_IMPORTED) && refCount.get() > 1 )
 		{
 			// This function is being orphaned, so notify the GC so it can check for circular references
 			engine->gc.AddScriptObjectToGC(this, &engine->functionBehaviours);
@@ -1048,7 +1044,9 @@ void asCScriptFunction::AddReferences()
 			case asBC_RefCpyV:
 				{
 					asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&bc[n]);
-					objType->AddRef();
+					asASSERT( objType );
+					if( objType )
+						objType->AddRef();
 				}
 				break;
 
@@ -1056,11 +1054,13 @@ void asCScriptFunction::AddReferences()
 			case asBC_ALLOC:
 				{
 					asCObjectType *objType = (asCObjectType*)asBC_PTRARG(&bc[n]);
-					objType->AddRef();
+					asASSERT( objType );
+					if( objType )
+						objType->AddRef();
 
-					int func = asBC_INTARG(&bc[n]+AS_PTR_SIZE);
-					if( func )
-						engine->scriptFunctions[func]->AddRef();
+					int funcId = asBC_INTARG(&bc[n]+AS_PTR_SIZE);
+					if( funcId )
+						engine->scriptFunctions[funcId]->AddRef();
 				}
 				break;
 
@@ -1099,7 +1099,9 @@ void asCScriptFunction::AddReferences()
 					asCConfigGroup *group = engine->FindConfigGroupForFunction(funcId);
 					if( group != 0 ) group->AddRef();
 
-					engine->scriptFunctions[funcId]->AddRef();
+					asASSERT( funcId > 0 );
+					if( funcId > 0 )
+						engine->scriptFunctions[funcId]->AddRef();
 				}
 				break;
 
@@ -1107,8 +1109,10 @@ void asCScriptFunction::AddReferences()
 			case asBC_CALL:
 			case asBC_CALLINTF:
 				{
-					int func = asBC_INTARG(&bc[n]);
-					engine->scriptFunctions[func]->AddRef();
+					int funcId = asBC_INTARG(&bc[n]);
+					asASSERT( funcId > 0 );
+					if( funcId > 0 )
+						engine->scriptFunctions[funcId]->AddRef();
 				}
 				break;
 
@@ -1116,7 +1120,9 @@ void asCScriptFunction::AddReferences()
 			case asBC_FuncPtr:
 				{
 					asCScriptFunction *func = (asCScriptFunction*)asBC_PTRARG(&bc[n]);
-					func->AddRef();
+					asASSERT( func );
+					if( func )
+						func->AddRef();
 				}
 				break;
 			}
@@ -1168,10 +1174,10 @@ void asCScriptFunction::ReleaseReferences()
 					if( objType )
 						objType->Release();
 
-					int func = asBC_INTARG(&bc[n]+AS_PTR_SIZE);
-					if( func )
+					int funcId = asBC_INTARG(&bc[n]+AS_PTR_SIZE);
+					if( funcId > 0 )
 					{
-						asCScriptFunction *fptr = engine->scriptFunctions[func];
+						asCScriptFunction *fptr = engine->scriptFunctions[funcId];
 						if( fptr )
 							fptr->Release();
 
@@ -1228,10 +1234,10 @@ void asCScriptFunction::ReleaseReferences()
 			case asBC_CALL:
 			case asBC_CALLINTF:
 				{
-					int func = asBC_INTARG(&bc[n]);
-					if( func )
+					int funcId = asBC_INTARG(&bc[n]);
+					if( funcId )
 					{
-						asCScriptFunction *fptr = engine->scriptFunctions[func];
+						asCScriptFunction *fptr = engine->scriptFunctions[funcId];
 						if( fptr )
 							fptr->Release();
 

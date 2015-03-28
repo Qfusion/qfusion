@@ -59,6 +59,7 @@ BEGIN_AS_NAMESPACE
 struct asIFilter
 {
 	virtual bool operator()(const void*) const = 0;
+	virtual ~asIFilter() {};
 };
 
 

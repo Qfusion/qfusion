@@ -103,6 +103,7 @@ struct asSExprContext
 		property_handle = false;
 		property_ref    = false;
 		methodName      = "";
+		enumValue       = "";
 	}
 	bool IsClassMethod()
 	{

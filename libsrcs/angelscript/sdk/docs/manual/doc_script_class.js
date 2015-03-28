@@ -16,7 +16,8 @@ var doc_script_class =
       [ "Assignment operators", "doc_script_class_ops.html#doc_script_class_assign_ops", null ],
       [ "Binary operators", "doc_script_class_ops.html#doc_script_class_binary_ops", null ],
       [ "Index operators", "doc_script_class_ops.html#doc_script_class_index_op", null ],
-      [ "Functor operator", "doc_script_class_ops.html#doc_script_class_call", null ]
+      [ "Functor operator", "doc_script_class_ops.html#doc_script_class_call", null ],
+      [ "Type conversion operators", "doc_script_class_ops.html#doc_script_class_conv", null ]
     ] ],
     [ "Property accessors", "doc_script_class_prop.html", null ],
     [ "Initialization of class members", "doc_script_class_memberinit.html", null ]

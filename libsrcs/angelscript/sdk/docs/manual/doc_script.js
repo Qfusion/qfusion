@@ -31,6 +31,8 @@ var doc_script =
       [ "Anonymous objects", "doc_expressions.html#anonobj", null ]
     ] ],
     [ "Data types", "doc_datatypes.html", "doc_datatypes" ],
+    [ "Functions", "doc_script_func.html", "doc_script_func" ],
+    [ "Script classes", "doc_script_class.html", "doc_script_class" ],
     [ "Object handles", "doc_script_handle.html", [
       [ "General usage", "doc_script_handle.html#doc_script_handle_1", null ],
       [ "Object life times", "doc_script_handle.html#doc_script_handle_2", null ],

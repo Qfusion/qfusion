@@ -643,7 +643,9 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 	{
 		// Verify that the copy can be made
 		bool isCompatible = false;
-		if( m_typeId == typeId )
+
+		// Allow a handle to be value assigned if the wanted type is not a handle
+		if( (m_typeId & ~asTYPEID_OBJHANDLE) == typeId && m_valueObj != 0 )
 			isCompatible = true;
 
 		// Copy the object into the given reference
@@ -664,15 +666,55 @@ bool CScriptDictValue::Get(asIScriptEngine *engine, void *value, int typeId) con
 		}
 
 		// We know all numbers are stored as either int64 or double, since we register overloaded functions for those
-		if( m_typeId == asTYPEID_INT64 && typeId == asTYPEID_DOUBLE )
+		if( typeId == asTYPEID_DOUBLE )
 		{
-			*(double*)value = double(m_valueInt);
+			if( m_typeId == asTYPEID_INT64 )
+				*(double*)value = double(m_valueInt);
+			else if( m_typeId == asTYPEID_BOOL )
+				*(double*)value = char(m_valueInt) ? 1.0 : 0.0;
+			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
+				*(double*)value = double(int(m_valueInt)); // enums are 32bit
+			else
+			{
+				// The stored type is an object
+				// TODO: Check if the object has a conversion operator to a primitive value
+				*(double*)value = 0;
+			}
 			return true;
 		}
-		else if( m_typeId == asTYPEID_DOUBLE && typeId == asTYPEID_INT64 )
+		else if( typeId == asTYPEID_INT64 )
 		{
-			*(asINT64*)value = asINT64(m_valueFlt);
+			if( m_typeId == asTYPEID_DOUBLE )
+				*(asINT64*)value = asINT64(m_valueFlt);
+			else if( m_typeId == asTYPEID_BOOL )
+				*(asINT64*)value = char(m_valueInt) ? 1 : 0;
+			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
+				*(asINT64*)value = int(m_valueInt); // enums are 32bit
+			else
+			{
+				// The stored type is an object
+				// TODO: Check if the object has a conversion operator to a primitive value
+				*(asINT64*)value = 0;
+			}
 			return true;
+		}
+		else if( typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
+		{
+			// The desired type is an enum. These are always 32bit integers
+			if( m_typeId == asTYPEID_DOUBLE )
+				*(int*)value = int(m_valueFlt);
+			else if( m_typeId == asTYPEID_INT64 )
+				*(int*)value = int(m_valueInt);
+			else if( m_typeId == asTYPEID_BOOL )
+				*(int*)value = char(m_valueInt) ? 1 : 0;
+			else if( m_typeId > asTYPEID_DOUBLE && (m_typeId & asTYPEID_MASK_OBJECT) == 0 )
+				*(int*)value = int(m_valueInt);
+			else
+			{
+				// The stored type is an object
+				// TODO: Check if the object has a conversion operator to a primitive value
+				*(int*)value = 0;
+			}
 		}
 	}
 

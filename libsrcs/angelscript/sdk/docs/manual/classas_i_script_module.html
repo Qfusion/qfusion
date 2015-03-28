@@ -201,12 +201,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ab7b4c4b94190779028776fd1057a658f"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#ab7b4c4b94190779028776fd1057a658f">UnbindAllImportedFunctions</a> ()=0</td></tr>
 <tr class="memdesc:ab7b4c4b94190779028776fd1057a658f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unbinds all imported functions.  <a href="#ab7b4c4b94190779028776fd1057a658f">More...</a><br/></td></tr>
 <tr class="separator:ab7b4c4b94190779028776fd1057a658f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr><td colspan="2"><div class="groupHeader">Bytecode saving and loading</div></td></tr>
+<tr><td colspan="2"><div class="groupHeader">Byte code saving and loading</div></td></tr>
 <tr class="memitem:ac6cd95dd97cc6abf28ab4d82257f5aeb"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#ac6cd95dd97cc6abf28ab4d82257f5aeb">SaveByteCode</a> (<a class="el" href="classas_i_binary_stream.html">asIBinaryStream</a> *out, bool stripDebugInfo=false) const =0</td></tr>
-<tr class="memdesc:ac6cd95dd97cc6abf28ab4d82257f5aeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save compiled bytecode to a binary stream.  <a href="#ac6cd95dd97cc6abf28ab4d82257f5aeb">More...</a><br/></td></tr>
+<tr class="memdesc:ac6cd95dd97cc6abf28ab4d82257f5aeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Save compiled byte code to a binary stream.  <a href="#ac6cd95dd97cc6abf28ab4d82257f5aeb">More...</a><br/></td></tr>
 <tr class="separator:ac6cd95dd97cc6abf28ab4d82257f5aeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8b4a222e5309c6b367f136b6d2f664ba"><td class="memItemLeft" align="right" valign="top">virtual int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#a8b4a222e5309c6b367f136b6d2f664ba">LoadByteCode</a> (<a class="el" href="classas_i_binary_stream.html">asIBinaryStream</a> *in, bool *wasDebugInfoStripped=0)=0</td></tr>
-<tr class="memdesc:a8b4a222e5309c6b367f136b6d2f664ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load pre-compiled bytecode from a binary stream.  <a href="#a8b4a222e5309c6b367f136b6d2f664ba">More...</a><br/></td></tr>
+<tr class="memdesc:a8b4a222e5309c6b367f136b6d2f664ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load pre-compiled byte code from a binary stream.  <a href="#a8b4a222e5309c6b367f136b6d2f664ba">More...</a><br/></td></tr>
 <tr class="separator:a8b4a222e5309c6b367f136b6d2f664ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr><td colspan="2"><div class="groupHeader">User data</div></td></tr>
 <tr class="memitem:a06582e57e7101df4157ee36c81867c13"><td class="memItemLeft" align="right" valign="top">virtual void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classas_i_script_module.html#a06582e57e7101df4157ee36c81867c13">SetUserData</a> (void *data, <a class="el" href="angelscript_8h.html#a76fc6994aba7ff6c685a62c273c057e3">asPWORD</a> type=0)=0</td></tr>
@@ -1595,7 +1595,7 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">in</td><td>The input stream. </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">wasDebugInfoStripped</td><td>Set to true if the bytecode was saved without debug information. </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">wasDebugInfoStripped</td><td>Set to true if the byte code was saved without debug information. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1603,12 +1603,15 @@ Public Member Functions</h2></td></tr>
 <dl class="retval"><dt>Return values</dt><dd>
   <table class="retval">
     <tr><td class="paramname">asINVALID_ARG</td><td>The stream object wasn't specified. </td></tr>
-    <tr><td class="paramname">asBUILD_IN_PROGRESS</td><td>Another thread is currently building.</td></tr>
+    <tr><td class="paramname">asBUILD_IN_PROGRESS</td><td>Another thread is currently building. </td></tr>
+    <tr><td class="paramname">asOUT_OF_MEMORY</td><td>The engine ran out of memory while loading the byte code. </td></tr>
+    <tr><td class="paramname">asERROR</td><td>It was not possible to load the byte code.</td></tr>
   </table>
   </dd>
 </dl>
 <p>This method is used to load pre-compiled byte code from disk or memory. The application must implement an object that inherits from <a class="el" href="classas_i_binary_stream.html">asIBinaryStream</a> to provide the necessary stream operations.</p>
 <p>It is expected that the application performs the necessary validations to make sure the pre-compiled byte code is from a trusted source. The application should also make sure the pre-compiled byte code is compatible with the current engine configuration, i.e. that the engine has been configured in the same way as when the byte code was first compiled.</p>
+<p>If the method returns asERROR it is either because the byte code is incorrect, e.g. corrupted due to disk failure, or it has been compiled with a different engine configuration. If possible the engine provides information about the type of error that caused the failure while loading the byte code to the <a class="el" href="classas_i_script_engine.html#a74192fe950808eb72a64e3e371f0ea02">message stream</a>.</p>
 <dl class="section see"><dt>See Also</dt><dd><a class="el" href="doc_adv_precompile.html">Pre-compiled byte code</a> </dd></dl>
 
 </div>
@@ -2001,7 +2004,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="classas_i_script_module.html">asIScriptModule</a></li>
-    <li class="footer">Generated on Sun Jul 20 2014 13:56:29 for AngelScript by
+    <li class="footer">Generated on Tue Oct 21 2014 22:29:18 for AngelScript by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.3.1 </li>
   </ul>

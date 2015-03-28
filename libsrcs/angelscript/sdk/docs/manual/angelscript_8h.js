@@ -350,6 +350,7 @@ var angelscript_8h =
       [ "asEP_COMPILER_WARNINGS", "angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fadd96da828860b5de2352de07c2456633", null ],
       [ "asEP_DISALLOW_VALUE_ASSIGN_FOR_REF_TYPE", "angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa563bec877e91b0646c47197b2ae7ac0c", null ],
       [ "asEP_ALTER_SYNTAX_NAMED_ARGS", "angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa9c876445c7d138ad096705fc18f311d1", null ],
+      [ "asEP_DISABLE_INTEGER_DIVISION", "angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fae6af9c6963372e11c6da873868f594cd", null ],
       [ "asEP_LAST_PROPERTY", "angelscript_8h.html#a53c2e8a74ade77c928316396394ebe0fa14fb03eee4d87405994b9aef761eae3c", null ]
     ] ],
     [ "asEFuncType", "angelscript_8h.html#a06fb2a1ebf5d007e0d542abced1b648f", [
@@ -424,7 +425,8 @@ var angelscript_8h =
       [ "asOBJ_ENUM", "angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa018e73b8c343fe8f46fa7a7829643ff9", null ],
       [ "asOBJ_TEMPLATE_SUBTYPE", "angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa8e4f2ff9cea9a561be32711c91bf71e6", null ],
       [ "asOBJ_TYPEDEF", "angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aad9ec544ec0cca5ec329d19bceefadf0c", null ],
-      [ "asOBJ_ABSTRACT", "angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa7c3d513b69c810647dbb80d48da77ee5", null ]
+      [ "asOBJ_ABSTRACT", "angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aa7c3d513b69c810647dbb80d48da77ee5", null ],
+      [ "asOBJ_APP_ALIGN16", "angelscript_8h.html#a855d86fa9ee15b9f75e553ee376b5c7aacb0a87a6461924a892502c0e7a861d24", null ]
     ] ],
     [ "asERetCodes", "angelscript_8h.html#a6e2a1647f02f2c5da931bab09e860f54", [
       [ "asSUCCESS", "angelscript_8h.html#a6e2a1647f02f2c5da931bab09e860f54a0bf59062f03c90599e66a87275f37854", null ],
