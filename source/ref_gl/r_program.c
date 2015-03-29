@@ -215,7 +215,7 @@ static void RP_PrecachePrograms( void )
 	char *buffer = NULL, *data, **ptr;
 	const char *token;
 	int handleBin;
-	size_t binaryCacheSize;
+	size_t binaryCacheSize = 0;
 
 	R_LoadCacheFile( GLSL_CACHE_FILE_NAME, ( void ** )&buffer );
 	if( !buffer ) {
