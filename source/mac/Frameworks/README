@@ -19,3 +19,10 @@ Individual notes:
 
   Current libRocket was built using sources with 8bpp fonts support from GitHub/Warsow/qfusion,
   commit f2085356392388ff9a3e794bf7e585dbbbeee856
+
+2. angelscript. To build angelscript use cmake:
+  $ cd libsrcs/angelscript/sdk/angelscript/projects/cmake
+  $ cmake -G Xcode -DBUILD_FRAMEWORK=1 .
+  $ xcodebuild -target Angelscript -configuration Release ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO
+  $ rm -rf rm -rf ../../../../../../source/mac/Frameworks/Angelscript.framework/
+  $ mv ../../lib/Release/Angelscript.framework/ ../../../../../../source/mac/Frameworks/
