@@ -3,7 +3,8 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := qfusion
 
 LOCAL_LDLIBS := -landroid -llog -lz
-LOCAL_STATIC_LIBRARIES := android_native_app_glue curl
+LOCAL_STATIC_LIBRARIES := curl
+LOCAL_WHOLE_STATIC_LIBRARIES := android_native_app_glue
 
 LOCAL_SRC_FILES := \
   android/android_clipboard.c \
