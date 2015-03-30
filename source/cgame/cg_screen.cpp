@@ -371,8 +371,8 @@ void CG_ScreenInit( void )
 	// wsw : hud debug prints
 	cg_debugHUD =		    trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
-	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "4", CVAR_ARCHIVE );
-	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "8", CVAR_ARCHIVE );
+	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "6", CVAR_ARCHIVE );
+	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "12", CVAR_ARCHIVE );
 	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "4", CVAR_ARCHIVE );
 	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "3.25", CVAR_ARCHIVE );
 	cg_touch_lookInvert = trap_Cvar_Get( "cg_touch_lookInvert", "0", CVAR_ARCHIVE );
