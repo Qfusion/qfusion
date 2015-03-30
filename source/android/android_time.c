@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014 SiPlus, Chasseur de bots
+Copyright (C) 2015 SiPlus, Chasseur de bots
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,21 +18,39 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#ifndef ANDROID_SYS_H
-#define ANDROID_SYS_H
+#include <time.h>
+#include "android_sys.h"
 
-#include <android_native_app_glue.h>
-#include "../qcommon/qcommon.h"
-#include "../client/client.h"
+/*
+* Sys_Android_Microseconds
+*/
+uint64_t Sys_Android_Microseconds( void )
+{
+	struct timespec now;
+	clock_gettime( CLOCK_MONOTONIC, &now );
+	return now.tv_sec * ( ( uint64_t )1000000 ) + now.tv_nsec / ( ( uint64_t )1000 );
+}
 
-extern struct android_app *sys_android_app;
+/*
+* Sys_Microseconds
+*/
+uint64_t Sys_Microseconds( void )
+{
+	static uint64_t base;
+	uint64_t now;
 
-extern jclass sys_android_activityClass;
+	now = Sys_Android_Microseconds();
 
-extern char sys_android_packageName[];
+	if( !base )
+		base = now;
 
-JNIEnv *Sys_Android_GetJNIEnv( void );
+	return now - base;
+}
 
-uint64_t Sys_Android_Microseconds( void );
-
-#endif // ANDROID_SYS_H
+/*
+* Sys_Milliseconds
+*/
+unsigned int Sys_Milliseconds( void )
+{
+	return Sys_Microseconds() / ( ( uint64_t )1000 );
+}
