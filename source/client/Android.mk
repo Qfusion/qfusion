@@ -12,6 +12,7 @@ LOCAL_SRC_FILES := \
   android/android_input.c \
   android/android_lib.c \
   android/android_sys.c \
+  android/android_time.c \
   android/android_vfs.c \
   android/android_vid.c \
   $(addprefix client/,$(notdir $(wildcard $(LOCAL_PATH)/client/*.c))) \
@@ -27,7 +28,6 @@ LOCAL_SRC_FILES := \
   $(addprefix server/,$(notdir $(wildcard $(LOCAL_PATH)/server/*.c))) \
   unix/unix_fs.c \
   unix/unix_net.c \
-  unix/unix_threads.c \
-  unix/unix_time.c
+  unix/unix_threads.c
 
 include $(BUILD_SHARED_LIBRARY)
