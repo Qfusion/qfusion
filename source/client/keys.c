@@ -146,7 +146,7 @@ const keyname_t keynames[] =
 	{ "AUX4", K_AUX4 },
 	{ "L_SHOULDER", K_AUX5 },
 	{ "R_SHOULDER", K_AUX6 },
-	{ "BACK", K_AUX7 },
+	{ "SELECT", K_AUX7 },
 	{ "START", K_AUX8 },
 	{ "STICK1", K_AUX9 },
 	{ "STICK2", K_AUX10 },
