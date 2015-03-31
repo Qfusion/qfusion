@@ -11,6 +11,7 @@ endif()
 file(GLOB SND_QF_HEADERS
     "*.h"
 	"../gameshared/q_*.h"
+	"../client/snd_public.h"
 )
 
 file(GLOB SND_QF_SOURCES
