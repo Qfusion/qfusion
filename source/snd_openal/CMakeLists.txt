@@ -9,6 +9,7 @@ endif()
 file(GLOB SND_OPENAL_HEADERS
     "*.h"
 	"../gameshared/q_*.h"
+	"../client/snd_public.h"
 )
 
 file(GLOB SND_OPENAL_SOURCES
