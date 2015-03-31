@@ -684,32 +684,43 @@ error:
 
 #define JPEG_OUTPUT_BUFFER_SIZE		4096
 
-static void q_jpg_init_destination(j_compress_ptr cinfo)
+struct q_jpeg_destination_mgr {
+	struct jpeg_destination_mgr pub;
+
+	int outfile;
+	JOCTET *buffer;
+};
+
+static void q_jpg_init_destination( j_compress_ptr cinfo )
 {
+	struct q_jpeg_destination_mgr *dest = ( struct q_jpeg_destination_mgr * )( cinfo->dest );
+
+	dest->pub.next_output_byte = dest->buffer;
+	dest->pub.free_in_buffer = JPEG_OUTPUT_BUFFER_SIZE;
 }
 
-static boolean q_jpg_write_buf_to_disk(j_compress_ptr cinfo)
+static boolean q_jpg_empty_output_buffer( j_compress_ptr cinfo )
 {
-	int written = JPEG_OUTPUT_BUFFER_SIZE - cinfo->dest->free_in_buffer;
-	uint8_t *buffer = ( uint8_t * )cinfo->dest->next_output_byte - written;
-	int file = *((int *)(buffer + JPEG_OUTPUT_BUFFER_SIZE));
-	if( ri.FS_Write( buffer, JPEG_OUTPUT_BUFFER_SIZE, file ) == 0 ) {
+	struct q_jpeg_destination_mgr *dest = ( struct q_jpeg_destination_mgr * )( cinfo->dest );
+
+	if( ri.FS_Write( dest->buffer, JPEG_OUTPUT_BUFFER_SIZE, dest->outfile ) == 0 ) {
 		return FALSE;
 	}
+
+	dest->pub.next_output_byte = dest->buffer;
+	dest->pub.free_in_buffer = JPEG_OUTPUT_BUFFER_SIZE;
+
 	return TRUE;
 }
 
-static boolean q_jpg_empty_output_buffer(j_compress_ptr cinfo)
+static void q_jpg_term_destination( j_compress_ptr cinfo )
 {
-	boolean res = q_jpg_write_buf_to_disk( cinfo );
-	cinfo->dest->next_output_byte -= JPEG_OUTPUT_BUFFER_SIZE - cinfo->dest->free_in_buffer;
-	cinfo->dest->free_in_buffer = JPEG_OUTPUT_BUFFER_SIZE;
-	return res;
-}
+	struct q_jpeg_destination_mgr *dest = ( struct q_jpeg_destination_mgr * )( cinfo->dest );
+	size_t datacount = JPEG_OUTPUT_BUFFER_SIZE - dest->pub.free_in_buffer;
 
-static void q_jpg_term_destination(j_compress_ptr cinfo)
-{
-	q_jpg_write_buf_to_disk( cinfo );
+	if( datacount > 0 ) {
+		ri.FS_Write( dest->buffer, datacount, dest->outfile );
+	}
 }
 
 /*
@@ -719,8 +730,8 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
 {
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_error_mgr jerr;
-	struct jpeg_destination_mgr jdest;
-	char buf[JPEG_OUTPUT_BUFFER_SIZE + sizeof( int )];
+	struct q_jpeg_destination_mgr jdest;
+	JOCTET buffer[JPEG_OUTPUT_BUFFER_SIZE];
 	JSAMPROW s[1];
 	int offset, w3;
 	int file;
@@ -730,19 +741,16 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
 		return false;
 	}
 
-	// hack file handle into output buffer
-	*((int *)(buf + JPEG_OUTPUT_BUFFER_SIZE)) = file;
-
-	jdest.init_destination = q_jpg_init_destination;
-	jdest.empty_output_buffer = q_jpg_empty_output_buffer;
-	jdest.term_destination = q_jpg_term_destination;
-	jdest.next_output_byte = (JOCTET *)buf;
-	jdest.free_in_buffer = JPEG_OUTPUT_BUFFER_SIZE;
+	jdest.pub.init_destination = q_jpg_init_destination;
+	jdest.pub.empty_output_buffer = q_jpg_empty_output_buffer;
+	jdest.pub.term_destination = q_jpg_term_destination;
+	jdest.outfile = file;
+	jdest.buffer = buffer;
 
 	// initialize the JPEG compression object
 	jpeg_create_compress( &cinfo );
 	cinfo.err = jpeg_std_error( &jerr );
-	cinfo.dest = &jdest;
+	cinfo.dest = &( jdest.pub );
 
 	// setup JPEG parameters
 	cinfo.image_width = info->width;
