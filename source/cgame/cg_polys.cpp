@@ -288,12 +288,10 @@ void CG_KillPolyBeamsByTag( int tag )
 */
 void CG_QuickPolyBeam( vec3_t start, vec3_t end, int width, struct shader_s *shader )
 {
-	cpoly_t *cgpoly;
-
 	if( !shader )
 		shader = CG_MediaShader( cgs.media.shaderLaser );
 
-	cgpoly = CG_SpawnPolyBeam( start, end, NULL, width, 1, 0, shader, 64, 0 );
+	CG_SpawnPolyBeam( start, end, NULL, width, 1, 0, shader, 64, 0 );
 }
 
 /*
@@ -301,7 +299,6 @@ void CG_QuickPolyBeam( vec3_t start, vec3_t end, int width, struct shader_s *sha
 */
 void CG_LaserGunPolyBeam( vec3_t start, vec3_t end, vec4_t color, int tag )
 {
-	cpoly_t *cgpoly;
 	vec4_t tcolor = { 0, 0, 0, 0.35f };
 	vec_t total;
 	vec_t min;
@@ -320,9 +317,9 @@ void CG_LaserGunPolyBeam( vec3_t start, vec3_t end, vec4_t color, int tag )
 	}
 
 	if( cg_lgbeam_old->integer ) {
-		cgpoly = CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeamOld ), 64, tag );
+		CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeamOld ), 64, tag );
 	} else {
-		cgpoly = CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeam ), 64, tag );
+		CG_SpawnPolyBeam( start, end, color ? tcolor : NULL, 12, 1, 0, CG_MediaShader( cgs.media.shaderLaserGunBeam ), 64, tag );
 	}
 }
 
@@ -331,7 +328,6 @@ void CG_LaserGunPolyBeam( vec3_t start, vec3_t end, vec4_t color, int tag )
 */
 void CG_ElectroPolyBeam( vec3_t start, vec3_t end, int team )
 {
-	cpoly_t *cgpoly;
 	struct shader_s *shader;
 
 	if( cg_ebbeam_time->value <= 0.0f || cg_ebbeam_width->integer <= 0 )
@@ -351,7 +347,7 @@ void CG_ElectroPolyBeam( vec3_t start, vec3_t end, int team )
 			shader = CG_MediaShader( cgs.media.shaderElectroBeamOld );
 		}
 
-		cgpoly = CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
+		CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
 	}
 	else
 	{
@@ -367,7 +363,7 @@ void CG_ElectroPolyBeam( vec3_t start, vec3_t end, int team )
 			shader = CG_MediaShader( cgs.media.shaderElectroBeamA );
 		}
 
-		cgpoly = CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
+		CG_SpawnPolyBeam( start, end, NULL, cg_ebbeam_width->integer, cg_ebbeam_time->value * 1000, cg_ebbeam_time->value * 1000 * 0.4f, shader, 128, 0 );
 	}
 }
 
@@ -376,7 +372,6 @@ void CG_ElectroPolyBeam( vec3_t start, vec3_t end, int team )
 */
 void CG_InstaPolyBeam( vec3_t start, vec3_t end, int team )
 {
-	cpoly_t *cgpoly;
 	vec4_t tcolor = { 1, 1, 1, 0.35f };
 	vec_t total;
 	vec_t min;
@@ -405,7 +400,7 @@ void CG_InstaPolyBeam( vec3_t start, vec3_t end, int team )
 	if( !tcolor[3] )
 		return;
 
-	cgpoly = CG_SpawnPolyBeam( start, end, tcolor, cg_instabeam_width->integer, cg_instabeam_time->value * 1000, cg_instabeam_time->value * 1000 * 0.4f, CG_MediaShader( cgs.media.shaderInstaBeam ), 128, 0 );
+	CG_SpawnPolyBeam( start, end, tcolor, cg_instabeam_width->integer, cg_instabeam_time->value * 1000, cg_instabeam_time->value * 1000 * 0.4f, CG_MediaShader( cgs.media.shaderInstaBeam ), 128, 0 );
 }
 
 /*
