@@ -593,6 +593,7 @@ static void HandleEvents( void )
 					if( minimized != was_minimized )
 					{
 						// FIXME: find a better place for this?..
+						SCR_PauseCinematic( minimized );
 						CL_SoundModule_Activate( !minimized );
 					}
 				}

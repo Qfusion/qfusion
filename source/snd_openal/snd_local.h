@@ -126,7 +126,7 @@ unsigned int S_GetRawSamplesLength( void );
 unsigned int S_GetPositionedRawSamplesLength( int entnum );
 
 // music
-void S_StartBackgroundTrack( const char *intro, const char *loop );
+void S_StartBackgroundTrack( const char *intro, const char *loop, int mode );
 void S_StopBackgroundTrack( void );
 void S_PrevBackgroundTrack( void );
 void S_NextBackgroundTrack( void );
@@ -235,6 +235,7 @@ typedef struct bgTrack_s
 	bool ignore;
 	bool isUrl;
 	bool loop;
+	bool muteOnPause;
 	snd_stream_t *stream;
 
 	struct bgTrack_s *next; // the next track to be played, the looping part aways points to itself
@@ -266,7 +267,7 @@ void SF_Shutdown( bool verbose );
 void SF_EndRegistration( void );
 void SF_BeginRegistration( void );
 sfx_t *SF_RegisterSound( const char *name );
-void SF_StartBackgroundTrack( const char *intro, const char *loop );
+void SF_StartBackgroundTrack( const char *intro, const char *loop, int mode );
 void SF_StopBackgroundTrack( void );
 void SF_LockBackgroundTrack( bool lock );
 void SF_StopAllSounds( bool clear, bool stopMusic );

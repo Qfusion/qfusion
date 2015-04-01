@@ -247,13 +247,14 @@ void S_IssueStartRelativeSoundCmd( sndQueue_t *queue, int sfx, int entnum,
 * S_IssueStartBackgroundTrackCmd
 */
 void S_IssueStartBackgroundTrackCmd( sndQueue_t *queue, const char *intro,
-	const char *loop )
+	const char *loop, int mode )
 {
 	sndCmdStartBackgroundTrack_t cmd;
 	
 	cmd.id = SND_CMD_START_BACKGROUND_TRACK;
 	Q_strncpyz( cmd.intro, intro ? intro : "", sizeof( cmd.intro ) );
 	Q_strncpyz( cmd.loop, loop ? loop : "", sizeof( cmd.loop ) );
+	cmd.mode = mode;
 
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
 }

@@ -310,7 +310,7 @@ public:
 	void startBackgroundTrack( const asstring_t &intro, const asstring_t &loop, bool stopIfPlaying )
 	{
 		if( stopIfPlaying || !backgroundTrackPlaying ) {
-			trap::S_StartBackgroundTrack( intro.buffer, loop.buffer );
+			trap::S_StartBackgroundTrack( intro.buffer, loop.buffer, 3 );
 			backgroundTrackPlaying = true;
 		}
 	}

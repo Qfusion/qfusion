@@ -54,6 +54,7 @@ typedef struct
 	bool allowConsole;
 	bool redraw;
 	bool paused;
+	int pause_cnt;
 	bool yuv;
 	unsigned int startTime;
 	unsigned int pauseTime;
@@ -354,7 +355,7 @@ void SCR_RunCinematic( void );
 void SCR_StopCinematic( void );
 void SCR_FinishCinematic( void );
 bool SCR_AllowCinematicConsole( void );
-void SCR_PauseCinematic( void );
+void SCR_PauseCinematic( bool pause );
 void CL_InitCinematics( void );
 void CL_ShutdownCinematics( void );
 float SCR_CinematicFramerate( void );
@@ -445,8 +446,9 @@ void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuat
 	unsigned short width, unsigned short channels, const uint8_t *data );
 unsigned int CL_SoundModule_GetRawSamplesLength( void );
 unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum );
-void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop );
+void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, int mode );
 void CL_SoundModule_StopBackgroundTrack( void );
+void CL_SoundModule_LockBackgroundTrack( bool lock );
 void CL_SoundModule_BeginAviDemo( void );
 void CL_SoundModule_StopAviDemo( void );
 

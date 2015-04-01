@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 bgTrack_t *s_bgTrack;
 bgTrack_t *s_bgTrackHead;
 static bool s_bgTrackPaused = false;  // the track is manually paused
-static bool s_bgTrackLocked = false;  // the track is blocked by the game (e.g. the window's minimized)
+static int s_bgTrackLocked = 0;		  // the track is blocked by the game (e.g. the window's minimized)
 static bool s_bgTrackMuted = false;
 static volatile bool s_bgTrackBuffering = false;
 static volatile bool s_bgTrackLoading = false; // unset by s_bgOpenThread when finished loading
@@ -168,6 +168,7 @@ static bgTrack_t *S_AllocTrack( const char *filename )
 	track->filename = (char *)((uint8_t *)track + sizeof( *track ));
 	strcpy( track->filename, filename );
 	track->isUrl = trap_FS_IsUrl( track->filename );
+	track->muteOnPause = track->isUrl;
 	track->anext = s_bgTrackHead;
 	s_bgTrackHead = track;
 
@@ -485,7 +486,7 @@ static void S_CloseBackgroundTrackTask( void )
 /*
 * S_StartBackgroundTrack
 */
-void S_StartBackgroundTrack( const char *intro, const char *loop )
+void S_StartBackgroundTrack( const char *intro, const char *loop, int mode )
 {
 	const char *ext;
 	bgTrack_t *introTrack, *loopTrack;
@@ -502,13 +503,10 @@ void S_StartBackgroundTrack( const char *intro, const char *loop )
 	ext = COM_FileExtension( intro );
 	if( ext && !Q_stricmp( ext, ".m3u" ) )
 	{
-		int mode = 0;
-
 		// mode bits:
 		// 1 - shuffle
 		// 2 - loop the selected track
-		if( loop && loop[0] )
-			mode = atoi( loop );
+		// 4 - stream (even if muted)
 
 		firstTrack = S_ReadPlaylistFile( intro, 
 			mode & 1 ? true : false, mode & 2 ? true : false );
@@ -522,6 +520,7 @@ void S_StartBackgroundTrack( const char *intro, const char *loop )
 	introTrack = S_AllocTrack( intro );
 	introTrack->loop = true;
 	introTrack->next = introTrack->prev = introTrack;
+	introTrack->muteOnPause = introTrack->isUrl || mode & 4 ? true : false;
 
 	if( loop && loop[0] && Q_stricmp( intro, loop ) )
 	{
@@ -534,6 +533,7 @@ void S_StartBackgroundTrack( const char *intro, const char *loop )
 			introTrack->loop = false;
 
 			loopTrack->loop = true;
+			loopTrack->muteOnPause = loopTrack->isUrl || mode & 4 ? true : false;
 			loopTrack->next = loopTrack->prev = loopTrack;
 		}
 	}
@@ -625,9 +625,9 @@ void S_PauseBackgroundTrack( void )
 		return;
 	}
 
-	// in case of a streaming URL, just mute/unmute so
+	// in case of a streaming URL or video, just mute/unmute so
 	// the stream is not interrupted
-	if( s_bgTrack->isUrl ) {
+	if( s_bgTrack->muteOnPause ) {
 		s_bgTrackMuted = !s_bgTrackMuted;
 		return;
 	}
@@ -640,11 +640,15 @@ void S_PauseBackgroundTrack( void )
 */
 void S_LockBackgroundTrack( bool lock )
 {
-	if( !s_bgTrack || !s_bgTrack->isUrl ) {
-		s_bgTrackLocked = lock;
+	if( s_bgTrack && !s_bgTrack->isUrl ) {
+		s_bgTrackLocked += lock ? 1 : -1;
+		if( s_bgTrackLocked < 0 )
+			s_bgTrackLocked = 0;
 	} else {
-		s_bgTrackLocked = false;
+		s_bgTrackLocked = 0;
 	}
+
+	Com_Printf("%i %i\n", lock, s_bgTrackLocked );
 }
 
 //=============================================================================
@@ -682,9 +686,9 @@ void S_UpdateBackgroundTrack( void )
 
 	if( !s_bgTrack )
 		return;
-	if( !s_musicvolume->value && !s_bgTrack->isUrl )
+	if( !s_musicvolume->value && !s_bgTrack->muteOnPause )
 		return;
-	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked )
+	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked > 0 )
 		return;
 
 	if( !s_bgTrack->info.channels || ! s_bgTrack->info.width )

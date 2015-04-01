@@ -151,8 +151,9 @@ typedef struct
 	unsigned int ( *GetPositionedRawSamplesLength )( int entnum );
 
 	// music
-	void ( *StartBackgroundTrack )( const char *intro, const char *loop );
+	void ( *StartBackgroundTrack )( const char *intro, const char *loop, int mode );
 	void ( *StopBackgroundTrack )( void );
+	void ( *LockBackgroundTrack )( bool lock );
 
 	// avi dump
 	void ( *BeginAviDemo )( void );

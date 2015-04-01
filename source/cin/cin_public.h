@@ -24,7 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cin_public.h -- cinematics playback as a separate dll, making the engine
 // container- and format- agnostic
 
-#define	CIN_API_VERSION				5
+#define	CIN_API_VERSION				6
+
+#define CIN_LOOP					1
+#define CIN_NOAUDIO					2
 
 //===============================================================
 
@@ -142,7 +145,8 @@ typedef struct
 	bool ( *Init )( bool verbose );
 	void ( *Shutdown )( bool verbose );
 
-	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, bool loop, bool *yuv, float *framerate );
+	struct cinematics_s *( *Open )( const char *name, unsigned int start_time, int flags, bool *yuv, float *framerate );
+	bool ( *HasOggAudio )( struct cinematics_s *cin );
 	bool ( *NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
 	uint8_t *( *ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw );
 	cin_yuv_t *( *ReadNextFrameYUV )( struct cinematics_s *cin, int *width, int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw );

@@ -928,9 +928,9 @@ void CG_StartBackgroundTrack( void )
 	Q_strncpyz( loop, COM_Parse( &string ), sizeof( loop ) );
 
 	if( intro[0] )
-		trap_S_StartBackgroundTrack( intro, loop );
+		trap_S_StartBackgroundTrack( intro, loop, 0 );
 	else if( cg_playList->string[0] )
-		trap_S_StartBackgroundTrack( cg_playList->string, cg_playListShuffle->integer ? "1" : "0" );
+		trap_S_StartBackgroundTrack( cg_playList->string, NULL, cg_playListShuffle->integer ? 1 : 0 );
 }
 
 /*

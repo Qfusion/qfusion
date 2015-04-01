@@ -217,12 +217,20 @@ void CIN_UnloadLibrary( bool verbose )
 }
 
 struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
-	bool loop, bool *yuv, float *framerate )
+	int flags, bool *yuv, float *framerate )
 {
 	if( cin_export ) {
-		return cin_export->Open( name, start_time, loop, yuv, framerate );
+		return cin_export->Open( name, start_time, flags, yuv, framerate );
 	}
 	return NULL;
+}
+
+bool CIN_HasOggAudio( struct cinematics_s *cin )
+{
+	if( cin_export ) {
+		return cin_export->HasOggAudio( cin );
+	}
+	return false;
 }
 
 bool CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime )

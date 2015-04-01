@@ -36,7 +36,7 @@ static bgTrack_t *s_bgTrack;
 static bgTrack_t *s_bgTrackHead;
 
 static bool s_bgTrackPaused = false;  // the track is manually paused
-static bool s_bgTrackLocked = false;  // the track is blocked by the game (e.g. the window's minimized)
+static int s_bgTrackLocked = 0;		// the track is blocked by the game (e.g. the window's minimized)
 static bool s_bgTrackMuted = false;
 static volatile bool s_bgTrackBuffering = false;
 static volatile bool s_bgTrackLoading = false; // unset by s_bgOpenThread when finished loading
@@ -55,6 +55,7 @@ static bgTrack_t *S_AllocTrack( const char *filename )
 	track->filename = (char *)((uint8_t *)track + sizeof( *track ));
 	strcpy( track->filename, filename );
 	track->isUrl = trap_FS_IsUrl( filename );
+	track->muteOnPause = track->isUrl;
 	track->anext = s_bgTrackHead;
 	s_bgTrackHead = track;
 
@@ -432,9 +433,9 @@ void S_UpdateMusic( void )
 {
 	if( !s_bgTrack )
 		return;
-	if( !s_musicvolume->value && !s_bgTrack->isUrl )
+	if( !s_musicvolume->value && !s_bgTrack->muteOnPause )
 		return;
-	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked )
+	if( s_bgTrackLoading || s_bgTrackPaused || s_bgTrackLocked > 0 )
 		return;
 
 	if( !music_process() )
@@ -448,7 +449,7 @@ void S_UpdateMusic( void )
 /*
 * Global functions (sound.h)
 */
-void S_StartBackgroundTrack( const char *intro, const char *loop )
+void S_StartBackgroundTrack( const char *intro, const char *loop, int mode )
 {
 	const char *ext;
 	bgTrack_t *introTrack, *loopTrack;
@@ -466,11 +467,10 @@ void S_StartBackgroundTrack( const char *intro, const char *loop )
 	ext = COM_FileExtension( intro );
 	if( ext && !Q_stricmp( ext, ".m3u" ) )
 	{
-		int mode = 0;
-
 		// mode bits:
 		// 1 - shuffle
 		// 2 - loop the selected track
+		// 3 - stream (even if muted)
 		if( loop && loop[0] )
 			mode = atoi( loop );
 
@@ -483,6 +483,7 @@ void S_StartBackgroundTrack( const char *intro, const char *loop )
 	// the intro track loops unless another loop track has been specified
 	introTrack = S_AllocTrack( intro );
 	introTrack->next = introTrack->prev = introTrack;
+	introTrack->muteOnPause = introTrack->isUrl || mode & 4 ? true : false;
 
 	if( loop && loop[0] && Q_stricmp( intro, loop ) )
 	{
@@ -495,6 +496,7 @@ void S_StartBackgroundTrack( const char *intro, const char *loop )
 			introTrack->loop = false;
 
 			loopTrack->loop = true;
+			loopTrack->muteOnPause = loopTrack->isUrl || mode & 4 ? true : false;
 			loopTrack->next = loopTrack->prev = loopTrack;
 		}
 	}
@@ -564,8 +566,8 @@ void S_PauseBackgroundTrack( void )
 		return;
 	}
 
-	// in case of a streaming URL, reset the stream
-	if( s_bgTrack->isUrl ) {
+	// in case of a streaming URL or video, mute but keep streaming
+	if( s_bgTrack->muteOnPause ) {
 		s_bgTrackMuted = !s_bgTrackMuted;
 		return;
 	}
@@ -579,8 +581,8 @@ void S_PauseBackgroundTrack( void )
 void S_LockBackgroundTrack( bool lock )
 {
 	if( s_bgTrack && !s_bgTrack->isUrl ) {
-		s_bgTrackLocked = lock;
+		s_bgTrackLocked += lock ? 1 : -1;
 	} else {
-		s_bgTrackLocked = false;
+		s_bgTrackLocked = 0;
 	}
 }

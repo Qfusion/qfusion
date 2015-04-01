@@ -1532,7 +1532,7 @@ static unsigned S_HandleStartGlobalSoundCmd( const sndCmdStartGlobalSound_t *cmd
 static unsigned S_HandleStartBackgroundTrackCmd( const sndCmdStartBackgroundTrack_t *cmd )
 {
 	//Com_Printf("S_HandleStartBackgroundTrackCmd\n");
-	S_StartBackgroundTrack( cmd->intro, cmd->loop );
+	S_StartBackgroundTrack( cmd->intro, cmd->loop, cmd->mode );
 	return sizeof( *cmd );
 }
 
@@ -1600,6 +1600,7 @@ static unsigned S_HandleActivateCmd( const sndActivateCmd_t *cmd )
 	active = cmd->active ? true : false;
 	if( s_active != active ) {
 		s_active = active;
+		S_LockBackgroundTrack( !s_active );
 		S_Clear();
 		S_Activate( active );
 	}

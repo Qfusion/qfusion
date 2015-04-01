@@ -92,7 +92,7 @@ static void SF_Music_f( void )
 		return;
 	}
 
-	SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ) );
+	SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), 0 );
 }
 
 /*
@@ -364,17 +364,15 @@ void SF_Shutdown( bool verbose )
 */
 void SF_Activate( bool active )
 {
-	SF_LockBackgroundTrack( !active );
-
 	S_IssueActivateCmd( s_cmdQueue, active );
 }
 
 /*
 * SF_StartBackgroundTrack
 */
-void SF_StartBackgroundTrack( const char *intro, const char *loop )
+void SF_StartBackgroundTrack( const char *intro, const char *loop, int mode )
 {
-	S_IssueStartBackgroundTrackCmd( s_cmdQueue, intro, loop );
+	S_IssueStartBackgroundTrackCmd( s_cmdQueue, intro, loop, mode );
 }
 
 /*

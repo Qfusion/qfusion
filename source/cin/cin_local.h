@@ -35,8 +35,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CIN_FreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
 #define CIN_EmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
 
-#define CIN_LOOP						1
-
 #define CIN_MAX_RAW_SAMPLES_LISTENERS	8
 
 typedef struct
@@ -90,7 +88,9 @@ void CIN_Shutdown( bool verbose );
 char *CIN_CopyString( const char *in );
 
 struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
-	bool loop, bool *yuv, float *framerate );
+	int flags, bool *yuv, float *framerate );
+
+bool CIN_HasOggAudio( cinematics_t *cin );
 
 bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime );
 

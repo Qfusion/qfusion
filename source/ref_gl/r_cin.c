@@ -315,7 +315,7 @@ unsigned int R_StartCinematic( const char *arg )
 	}
 
 	// open the file, read header, etc
-	cin = ri.CIN_Open( arg, ri.Sys_Milliseconds(), true, &yuv, NULL );
+	cin = ri.CIN_Open( arg, ri.Sys_Milliseconds(), &yuv, NULL );
 
 	// take a free cinematic handle if possible
 	if( !r_free_cinematics || !cin )

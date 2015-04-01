@@ -168,8 +168,8 @@ namespace trap
 			UI_IMPORT.S_StartLocalSound( s );
 		}
 
-		inline void S_StartBackgroundTrack( const char *intro, const char *loop ) {
-			UI_IMPORT.S_StartBackgroundTrack( intro, loop );
+		inline void S_StartBackgroundTrack( const char *intro, const char *loop, int mode ) {
+			UI_IMPORT.S_StartBackgroundTrack( intro, loop, mode );
 		}
 
 		inline void S_StopBackgroundTrack( void ) {
