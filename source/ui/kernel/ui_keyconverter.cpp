@@ -129,7 +129,7 @@ int KeyConverter::fromRocketKey( int key )
 		return '0' + ( key - KI_0 );
 	if( key >= KI_A && key <= KI_Z )
 		return 'a' + ( key - KI_A );
-	if( key >= KI_OEM_1 && key <= KI_OEM_8 )
+	if( key >= KI_OEM_1 && key <= KI_OEM_7 )
 		return oem_keys[key - KI_OEM_1];
 
 	switch( key )
