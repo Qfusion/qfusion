@@ -315,6 +315,14 @@ void S_UpdateSources( void )
 		qalGetSourcei( srclist[i].source, AL_SOURCE_STATE, &state );
 		if( state == AL_STOPPED )
 		{
+			int queued;
+			qalGetSourcei( srclist[i].source, AL_BUFFERS_QUEUED, &queued );
+
+			if( queued > 0 ) {
+				qalSourcePlay( srclist[i].source );
+				continue;
+			}
+
 			source_kill( &srclist[i] );
 			if( entNum >= 0 && entNum < max_ents ) {
 				entlist[entNum].src = NULL;

@@ -520,9 +520,9 @@ static inline void trap_S_AddLoopSound( struct sfx_s *sfx, int entnum, float fvo
 	CGAME_IMPORT.S_AddLoopSound( sfx, entnum, fvol, attenuation );
 }
 
-static inline void trap_S_StartBackgroundTrack( const char *intro, const char *loop )
+static inline void trap_S_StartBackgroundTrack( const char *intro, const char *loop, int mode )
 {
-	CGAME_IMPORT.S_StartBackgroundTrack( intro, loop );
+	CGAME_IMPORT.S_StartBackgroundTrack( intro, loop, mode );
 }
 
 static inline void trap_S_StopBackgroundTrack( void )

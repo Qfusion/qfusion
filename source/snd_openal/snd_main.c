@@ -69,11 +69,11 @@ static void SF_Music_f( void )
 {
 	if( trap_Cmd_Argc() == 2 )
 	{
-		SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 1 ) );
+		SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 1 ), 0 );
 	}
 	else if( trap_Cmd_Argc() == 3 )
 	{
-		SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ) );
+		SF_StartBackgroundTrack( trap_Cmd_Argv( 1 ), trap_Cmd_Argv( 2 ), 0 );
 	}
 	else
 	{
@@ -282,9 +282,9 @@ void SF_Activate( bool active )
 /*
 * SF_StartBackgroundTrack
 */
-void SF_StartBackgroundTrack( const char *intro, const char *loop )
+void SF_StartBackgroundTrack( const char *intro, const char *loop, int mode )
 {
-	S_IssueStartBackgroundTrackCmd( s_cmdQueue, intro, loop );
+	S_IssueStartBackgroundTrackCmd( s_cmdQueue, intro, loop, mode );
 }
 
 /*

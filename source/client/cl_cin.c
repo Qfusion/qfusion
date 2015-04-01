@@ -131,7 +131,7 @@ void SCR_RunCinematic( void )
 		return;
 	}
 
-	if( cl.cin.paused ) {
+	if( cl.cin.pause_cnt > 0 ) {
 		return;
 	}
 
@@ -240,32 +240,54 @@ bool SCR_DrawCinematic( void )
 static void SCR_PlayCinematic( const char *arg, int flags )
 {
 	struct cinematics_s *cin;
+	bool has_ogg;
 	bool yuv;
 	float framerate;
+	size_t name_size = strlen( "video/" ) + strlen( arg ) + 1;
+	char *name = alloca( name_size );
 
-	CL_SoundModule_Clear();
+	if( strstr( arg, "/" ) == NULL && strstr( arg, "\\" ) == NULL ) {
+		Q_snprintfz( name, name_size, "video/%s", arg );
+	} else {
+		Q_snprintfz( name, name_size, "%s", arg );
+	}
 
-	cin = CIN_Open( arg, 0, false, &yuv, &framerate );
+	cin = CIN_Open( name, 0, 0, &yuv, &framerate );
 	if( !cin )
 	{
-		Com_Printf( "SCR_PlayCinematic: couldn't find %s\n", arg );
+		Com_Printf( "SCR_PlayCinematic: couldn't find %s\n", name );
 		return;
 	}
 
+	has_ogg = CIN_HasOggAudio( cin );
+
+	CIN_Close( cin );
+
 	CL_Disconnect( NULL );
+
+	CL_SoundModule_StopAllSounds( true, true );
+
+	if( has_ogg ) {
+		CL_SoundModule_StartBackgroundTrack( name, NULL, 4 );
+	}
+
+	cin = CIN_Open( name, 0, has_ogg ? CIN_NOAUDIO : 0, &yuv, &framerate );
+	if( !cin )
+	{
+		Com_Printf( "SCR_PlayCinematic: (FIXME) couldn't find %s\n", name );
+		return;
+	}
 
 	cl.cin.h = cin;
 	cl.cin.keepRatio = (flags & 1) ? false : true;
 	cl.cin.allowConsole = (flags & 2) ? false : true;
-	cl.cin.paused = false;
 	cl.cin.startTime = SCR_CinematicTime();
 	cl.cin.paused = false;
+	cl.cin.pause_cnt = 0;
 	cl.cin.yuv = yuv;
 	cl.cin.framerate = framerate;
 
 	CL_SetClientState( CA_CINEMATIC );
-
-	CL_SoundModule_StopAllSounds( true, true );
 
 	SCR_EndLoadingPlaque();
 
@@ -275,20 +297,22 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 /*
 * SCR_PauseCinematic
 */
-void SCR_PauseCinematic( void )
+void SCR_PauseCinematic( bool pause )
 {
 	if( cls.state != CA_CINEMATIC ) {
 		return;
 	}
 
-	cl.cin.paused = !cl.cin.paused;
-	if( cl.cin.paused ) {
+	cl.cin.pause_cnt += pause ? 1 : -1;
+	if( cl.cin.pause_cnt == 1 && pause ) {
 		cl.cin.pauseTime = SCR_CinematicTime();
+		CL_SoundModule_LockBackgroundTrack( true );
 		CL_SoundModule_Clear();
 	}
-	else {
+	else if( cl.cin.pause_cnt == 0 && !pause ) {
 		cl.cin.startTime += SCR_CinematicTime() - cl.cin.pauseTime;
 		cl.cin.pauseTime = 0;
+		CL_SoundModule_LockBackgroundTrack( false );
 	}
 }
 
@@ -327,7 +351,8 @@ void CL_PauseCinematic_f( void )
 		return;
 	}
 
-	SCR_PauseCinematic();
+	cl.cin.paused = !cl.cin.paused;
+	SCR_PauseCinematic( cl.cin.paused );
 }
 
 /*

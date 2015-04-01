@@ -769,7 +769,7 @@ bool Theora_Init_CIN( cinematics_t *cin )
 				memcpy( &qth->os_video, &test, sizeof( test ) );
 				theora_p = 1;
 			}
-			else if( !qth->a_stream && !vorbis_synthesis_headerin( &qth->vi, &qth->vc, &op ) )
+			else if( !qth->a_stream && !vorbis_synthesis_headerin( &qth->vi, &qth->vc, &op ) && !(cin->flags & CIN_NOAUDIO) )
 			{
 				// it is vorbis
 				qth->a_stream = true;
@@ -895,6 +895,15 @@ bool Theora_Init_CIN( cinematics_t *cin )
 	cin->yuv = true;
 
 	return true;
+}
+
+/*
+* Theora_HasOggAudio_CIN
+*/
+bool Theora_HasOggAudio_CIN( cinematics_t *cin )
+{
+	qtheora_info_t *qth = cin->fdata;
+	return qth->a_stream;
 }
 
 /*

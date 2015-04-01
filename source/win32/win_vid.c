@@ -273,6 +273,8 @@ int IN_MapKey( int key )
 
 static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy )
 {
+	int prevActiveApp;
+
 	Minimized = minimize;
 	if( destroy )
 		fActive = minimize = FALSE;
@@ -280,13 +282,19 @@ static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy )
 	Key_ClearStates();
 
 	// we don't want to act like we're active if we're minimized
+	prevActiveApp = ActiveApp;
 	if( fActive && !Minimized )
 		ActiveApp = true;
 	else
 		ActiveApp = false;
 
+	if( prevActiveApp == ActiveApp )
+		return;
+
 	// minimize/restore mouse-capture on demand
 	IN_Activate( ActiveApp );
+
+	SCR_PauseCinematic( !ActiveApp );
 
 	CL_SoundModule_Activate( ActiveApp );
 	if( win_noalttab->integer )

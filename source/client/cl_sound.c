@@ -561,7 +561,7 @@ unsigned int CL_SoundModule_GetPositionedRawSamplesLength( int entnum )
 /*
 * CL_SoundModule_StartBackgroundTrack
 */
-void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop )
+void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop, int mode )
 {
 	assert( intro );
 
@@ -578,7 +578,7 @@ void CL_SoundModule_StartBackgroundTrack( const char *intro, const char *loop )
 		{
 			finalloop = NULL;
 		}
-		se->StartBackgroundTrack( finalintro, finalloop );
+		se->StartBackgroundTrack( finalintro, finalloop, mode );
 		Mem_TempFree( finalintro );
 		if( finalloop )
 			Mem_TempFree( finalloop );
@@ -592,6 +592,15 @@ void CL_SoundModule_StopBackgroundTrack( void )
 {
 	if( se )
 		se->StopBackgroundTrack();
+}
+
+/*
+* CL_SoundModule_LockBackgroundTrack
+*/
+void CL_SoundModule_LockBackgroundTrack( bool lock )
+{
+	if( se )
+		se->LockBackgroundTrack( lock );
 }
 
 /*

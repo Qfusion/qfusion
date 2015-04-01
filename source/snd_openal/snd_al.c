@@ -550,7 +550,7 @@ static unsigned S_HandleStartGlobalSoundCmd( const sndCmdStartGlobalSound_t *cmd
 static unsigned S_HandleStartBackgroundTrackCmd( const sndCmdStartBackgroundTrack_t *cmd )
 {
 	//Com_Printf("S_HandleStartBackgroundTrackCmd\n");
-	S_StartBackgroundTrack( cmd->intro, cmd->loop );
+	S_StartBackgroundTrack( cmd->intro, cmd->loop, cmd->mode );
 	return sizeof( *cmd );
 }
 

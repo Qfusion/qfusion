@@ -87,7 +87,7 @@ typedef struct
 	const char * ( *FS_MediaDirectory )( fs_mediatype_t type );
 	void ( *FS_AddFileToMedia )( const char *filename );
 
-	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, bool loop, bool *yuv, float *framerate );
+	struct cinematics_s *( *CIN_Open )( const char *name, unsigned int start_time, bool *yuv, float *framerate );
 	bool ( *CIN_NeedNextFrame )( struct cinematics_s *cin, unsigned int curtime );
 	uint8_t *( *CIN_ReadNextFrame )( struct cinematics_s *cin, int *width, int *height, 
 		int *aspect_numerator, int *aspect_denominator, bool *redraw );

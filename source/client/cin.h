@@ -24,7 +24,9 @@ void CIN_LoadLibrary( bool verbose );
 void CIN_UnloadLibrary( bool verbose );
 
 struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
-	bool loop, bool *yuv, float *framerate );
+	int flags, bool *yuv, float *framerate );
+
+bool CIN_HasOggAudio( struct cinematics_s *cin );
 
 bool CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime );
 

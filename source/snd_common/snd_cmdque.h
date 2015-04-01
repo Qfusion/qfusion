@@ -158,6 +158,7 @@ typedef struct
 	int id;
 	char intro[64];
 	char loop[64];
+	int mode;
 } sndCmdStartBackgroundTrack_t;
 
 typedef struct
@@ -258,7 +259,7 @@ void S_IssueStartGlobalSoundCmd( sndQueue_t *queue, int sfx, int channel,
 void S_IssueStartRelativeSoundCmd( sndQueue_t *queue, int sfx, int entnum, 
 	int channel, float fvol, float attenuation );
 void S_IssueStartBackgroundTrackCmd( sndQueue_t *queue, const char *intro,
-	const char *loop );
+	const char *loop, int mode );
 void S_IssueStopBackgroundTrackCmd( sndQueue_t *queue );
 void S_IssueLockBackgroundTrackCmd( sndQueue_t *queue, bool lock );
 void S_IssueAddLoopSoundCmd( sndQueue_t *queue, int sfx, int entnum,

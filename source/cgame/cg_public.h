@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   77
+#define	CGAME_API_VERSION   78
 
 //
 // structs and variables shared with the main engine
@@ -219,7 +219,7 @@ typedef struct
 	void ( *S_StartGlobalSound )( struct sfx_s *sfx, int entchannel, float fvol );
 	void ( *S_Update )( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity );
 	void ( *S_AddLoopSound )( struct sfx_s *sfx, int entnum, float fvol, float attenuation );
-	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop );
+	void ( *S_StartBackgroundTrack )( const char *intro, const char *loop, int mode );
 	void ( *S_StopBackgroundTrack )( void );
 	void ( *S_RawSamples )( unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
 	void ( *S_PositionedRawSamples )( int entnum, float fvol, float attenuation, 

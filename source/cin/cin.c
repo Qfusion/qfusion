@@ -44,6 +44,7 @@ typedef struct
 {
 	const char * const extensions;
 	bool ( *init )( cinematics_t *cin );
+	bool ( *has_ogg_audio )( cinematics_t *cin );
 	void ( *shutdown )( cinematics_t *cin );
 	void ( *reset )( cinematics_t *cin );
 	bool ( *need_next_frame )( cinematics_t *cin );
@@ -57,6 +58,7 @@ static const cin_type_t cin_types[] =
 	{
 		THEORA_FILE_EXTENSIONS,
 		Theora_Init_CIN,
+		Theora_HasOggAudio_CIN,
 		Theora_Shutdown_CIN,
 		Theora_Reset_CIN,
 		Theora_NeedNextFrame_CIN,
@@ -72,6 +74,7 @@ static const cin_type_t cin_types[] =
 	{
 		ROQ_FILE_EXTENSIONS,
 		RoQ_Init_CIN,
+		RoQ_HasOggAudio_CIN,
 		RoQ_Shutdown_CIN,
 		RoQ_Reset_CIN,
 		RoQ_NeedNextFrame_CIN,
@@ -81,6 +84,7 @@ static const cin_type_t cin_types[] =
 
 	// NULL safe guard
 	{
+		NULL,
 		NULL,
 		NULL,
 		NULL,
@@ -97,7 +101,7 @@ static const cin_type_t cin_types[] =
 * CIN_Open
 */
 cinematics_t *CIN_Open( const char *name, unsigned int start_time, 
-	bool loop, bool *yuv, float *framerate )
+	int flags, bool *yuv, float *framerate )
 {
 	int i;
 	size_t name_size;
@@ -108,7 +112,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 	unsigned load_msec;
 
 	load_msec = trap_Milliseconds();
-	name_size = strlen( "video/" ) + strlen( name ) + /*strlen( ".roq" )*/10 + 1;
+	name_size = strlen( name ) + /*strlen( ".roq" )*/10 + 1;
 
 	mempool = CIN_AllocPool( name );
 	cin = CIN_Alloc( mempool, sizeof( *cin ) );
@@ -123,9 +127,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 	cin->aspect_numerator = cin->aspect_denominator = 0; // do not keep aspect ratio
 	cin->start_time = cin->cur_time = start_time;
 	cin->flags = 0;
-	if( loop ) {
-		cin->flags |= CIN_LOOP;
-	}
+	cin->flags = flags;
 
 	if( trap_FS_IsUrl( name ) )
 	{
@@ -136,7 +138,7 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 	else
 	{
 		cin->type = CIN_TYPE_NONE;
-		Q_snprintfz( cin->name, name_size, "video/%s", name );
+		Q_snprintfz( cin->name, name_size, "%s", name );
 	}
 
 	// loop through the list of supported formats
@@ -200,6 +202,20 @@ cinematics_t *CIN_Open( const char *name, unsigned int start_time,
 	cin->start_time = cin->cur_time = start_time + load_msec;
 
 	return cin;
+}
+
+/*
+* CIN_HasOggAudio
+*/
+bool CIN_HasOggAudio( cinematics_t *cin )
+{
+	const cin_type_t *type;
+
+	assert( cin );
+	assert( cin->type > CIN_TYPE_NONE && cin->type < CIN_NUM_TYPES );
+
+	type = &cin_types[cin->type];
+	return type->has_ogg_audio( cin );
 }
 
 /*
@@ -323,6 +339,9 @@ bool CIN_AddRawSamplesListener( cinematics_t *cin, void *listener,
 	if( cin->num_listeners >= CIN_MAX_RAW_SAMPLES_LISTENERS ) {
 		return false;
 	}
+	if( cin->flags & CIN_NOAUDIO ) {
+		return false;
+	}
 
 	for( i = 0; i < cin->num_listeners; i++ ) {
 		if( cin->listeners[i].listener == listener 
@@ -345,6 +364,10 @@ void CIN_RawSamplesToListeners( cinematics_t *cin, unsigned int samples, unsigne
 		unsigned short width, unsigned short channels, const uint8_t *data )
 {
 	int i;
+
+	if( cin->flags & CIN_NOAUDIO ) {
+		return;
+	}
 
 	for( i = 0; i < cin->num_listeners; i++ ) {
 		cin->listeners[i].raw_samples( cin->listeners[i].listener, samples, rate, width, channels, data );

@@ -554,8 +554,11 @@ cin_yuv_t *RoQ_ReadNextFrameYUV_CIN( cinematics_t *cin, bool *redraw )
 
 		if( chunk->id == RoQ_INFO )
 			RoQ_ReadInfo( cin );
-		else if( (chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO) && ( cin->num_listeners != 0 ) )
+		else if( (chunk->id == RoQ_SOUND_MONO || chunk->id == RoQ_SOUND_STEREO) )
+		{
+			assert( cin->num_listeners != 0 );
 			RoQ_ReadAudio( cin );
+		}
 		else if( chunk->id == RoQ_QUAD_VQ ) {
 			*redraw = true;
 			cyuv = RoQ_ReadVideo( cin );
@@ -617,6 +620,14 @@ bool RoQ_Init_CIN( cinematics_t *cin )
 	cin->headerlen = trap_FS_Tell( cin->file );
 
 	return true;
+}
+
+/*
+* RoQ_HasOggAudio_CIN
+*/
+bool RoQ_HasOggAudio_CIN( cinematics_t *cin )
+{
+	return false;
 }
 
 /*

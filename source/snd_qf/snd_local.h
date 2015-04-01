@@ -143,6 +143,7 @@ typedef struct bgTrack_s
 	wavinfo_t info;
 	bool isUrl;
 	bool loop;
+	bool muteOnPause;
 
 	void *vorbisFile;
 	bool ( *open )( struct bgTrack_s *track, bool *delay );
@@ -171,7 +172,7 @@ void S_ClearPaintBuffer( void );
 
 // music cinema
 
-void S_StartBackgroundTrack( const char *intro, const char *loop );
+void S_StartBackgroundTrack( const char *intro, const char *loop, int mode );
 void S_StopBackgroundTrack( void );
 void S_PauseBackgroundTrack( void );
 void S_LockBackgroundTrack( bool lock );
@@ -280,7 +281,7 @@ void SF_Shutdown( bool verbose );
 void SF_EndRegistration( void );
 void SF_BeginRegistration( void );
 sfx_t *SF_RegisterSound( const char *name );
-void SF_StartBackgroundTrack( const char *intro, const char *loop );
+void SF_StartBackgroundTrack( const char *intro, const char *loop, int mode );
 void SF_StopBackgroundTrack( void );
 void SF_LockBackgroundTrack( bool lock );
 void SF_StopAllSounds( bool clear, bool stopMusic );

@@ -262,9 +262,7 @@ static void S_RawSamples_( int entNum, float fvol, float attenuation,
 
 	qalGetSourcei( rs->source, AL_SOURCE_STATE, &state );
 	if( state != AL_PLAYING )
-	{
 		qalSourcePlay( rs->source );
-	}
 }
 
 /*
