@@ -842,7 +842,7 @@ void Con_DrawNotify( void )
 		if( complen )
 		{
 			compx = ( chat_linepos ? SCR_strWidth( s, font, chat_linepos, 0 ) : 0 );
-			compwidth = SCR_strWidth( comp, font, 0, 0 );
+			compwidth = SCR_strWidth( comp, font, 0, TEXTDRAWFLAG_NO_COLORS );
 			totalwidth = compx + compwidth + SCR_strWidth( s + chat_linepos, font, 0, 0 );
 		}
 		else
@@ -863,7 +863,7 @@ void Con_DrawNotify( void )
 			if( imecursor == complen )
 				prewidth += compwidth;
 			else
-				prewidth += SCR_strWidth( comp, font, imecursor, 0 );
+				prewidth += SCR_strWidth( comp, font, imecursor, TEXTDRAWFLAG_NO_COLORS );
 		}
 
 		if( totalwidth > width )
@@ -909,13 +909,13 @@ void Con_DrawNotify( void )
 			if( convlen )
 			{
 				SCR_DrawClampFillRect(
-					x - chat_prestep + compx + ( convstart ? SCR_strWidth( comp, font, convstart, 0 ) : 0 ), y,
-					SCR_strWidth( comp + convstart, font, convlen, 0 ), fontHeight,
+					x - chat_prestep + compx + ( convstart ? SCR_strWidth( comp, font, convstart, TEXTDRAWFLAG_NO_COLORS ) : 0 ), y,
+					SCR_strWidth( comp + convstart, font, convlen, TEXTDRAWFLAG_NO_COLORS ), fontHeight,
 					x, y, x + width, y + fontHeight, convcolor );
 			}
 
 			SCR_DrawClampString( x - chat_prestep + compx, y, comp, x, y,
-				x + width, y + fontHeight, font, color_table[precompcolor], 0 );
+				x + width, y + fontHeight, font, color_table[precompcolor], TEXTDRAWFLAG_NO_COLORS );
 
 			SCR_DrawClampFillRect(
 				x - chat_prestep + compx, y + underlinePosition,
@@ -940,7 +940,7 @@ void Con_DrawNotify( void )
 				candx = x + ( candwidth + spacewidth ) * ( selectedcand / candspercol );
 				candy = y + fontHeight * ( selectedcand % candspercol + 1 );
 				SCR_DrawClampFillRect( candx, candy,
-					candnumwidth + SCR_strWidth( cands[selectedcand], font, 0, 0 ), fontHeight,
+					candnumwidth + SCR_strWidth( cands[selectedcand], font, 0, TEXTDRAWFLAG_NO_COLORS ), fontHeight,
 					candx, candy, candx + candwidth, candy + fontHeight, convcolor );
 			}
 
@@ -951,10 +951,11 @@ void Con_DrawNotify( void )
 				candy += fontHeight;
 
 				SCR_DrawRawChar( candx, candy, '0' + firstcand + i, font, colorWhite );
-				candprewidth = SCR_strWidth( cands[i], font, 0, 0 ) - ( candwidth - candnumwidth );
+				candprewidth = SCR_strWidth( cands[i], font, 0, TEXTDRAWFLAG_NO_COLORS ) - ( candwidth - candnumwidth );
 				clamp_low( candprewidth, 0 );
 				SCR_DrawClampString( candnumwidth + candx - candprewidth, candy, cands[i],
-					candx + candnumwidth, candy, candx + candwidth, candy + fontHeight, font, colorWhite, 0 );
+					candx + candnumwidth, candy, candx + candwidth, candy + fontHeight,
+					font, colorWhite, TEXTDRAWFLAG_NO_COLORS );
 
 				candsincol++;
 				if( candsincol >= candspercol )

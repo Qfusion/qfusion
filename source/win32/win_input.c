@@ -1678,17 +1678,14 @@ void IN_IME_Enable( bool enable )
 
 /*
 * IN_IME_GetComposition
-*
-* The returned size_t values are UTF-8 bytes, not characters.　All colors will be escaped.
 */
 #define IN_WINIME_COMPSTR_LENGTH 100 // max length for the Japanese IME, but it's likely the same or less for Chinese
 size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size_t *convStart, size_t *convLen )
 {
 	WCHAR compStr[IN_WINIME_COMPSTR_LENGTH + 1];
-	size_t compStrLengths[IN_WINIME_COMPSTR_LENGTH];
 	char compAttr[IN_WINIME_COMPSTR_LENGTH + 1];
 	int len, attrLen, i, cursor, attr, start = -1;
-	size_t cursorutf = 0, startutf = 0, convutflen = 0, utflen, ret = 0;
+	size_t cursorutf = 0, startutf = 0, convutflen = 0, ret = 0;
 
 	if( !strSize )
 		str = NULL;
@@ -1709,40 +1706,22 @@ size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size
 	if( len <= 0 )
 		return 0;
 
-	// store the UTF-8 length of each character including escaped colors to calculate the offsets
-	for( i = 0; i < len; i++ )
-	{
-		if( compStr[i] == Q_COLOR_ESCAPE )
-			compStrLengths[i] = 2;
-		else
-			compStrLengths[i] = Q_WCharUtf8Length( compStr[i] );
-
-		if( !str )
-			ret += compStrLengths[i];
-	}
-
+	compStr[len] = 0;
 	if( str )
 	{
+		ret = Q_WCharToUtf8String( compStr, str, strSize );
+	}
+	else
+	{
 		for( i = 0; i < len; i++ )
-		{
-			utflen = compStrLengths[i];
-			if( ( ret + utflen ) >= strSize )
-				break;
-
-			if( compStr[i] == Q_COLOR_ESCAPE )
-				str[ret] = str[ret + 1] = Q_COLOR_ESCAPE;
-			else
-				Q_WCharToUtf8( compStr[i], str + ret, utflen + 1 );
-			ret += utflen;
-		}
-		str[ret] = '\0';
+			ret += Q_WCharUtf8Length( compStr[i] );
 	}
 
 	if( cursorPos )
 	{
 		cursor = LOWORD( qimmGetCompositionString( in_winime_context, GCS_CURSORPOS, NULL, 0 ) );
 		for( i = 0; ( i < cursor ) && ( i < len ); i++ )
-			cursorutf += compStrLengths[i];
+			cursorutf += Q_WCharUtf8Length( compStr[i] );
 		clamp_high( cursorutf, ret );
 		*cursorPos = cursorutf;
 	}
@@ -1759,13 +1738,13 @@ size_t IN_IME_GetComposition( char *str, size_t strSize, size_t *cursorPos, size
 				{
 					if( start < 0 )
 						start = startutf;
-					convutflen += compStrLengths[i];
+					convutflen += Q_WCharUtf8Length( compStr[i] );
 				}
 				else
 				{
 					if( start >= 0 )
 						break;
-					startutf += compStrLengths[i];
+					startutf += Q_WCharUtf8Length( compStr[i] );
 				}
 			}
 
@@ -1794,7 +1773,6 @@ unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigne
 	size_t candListSize;
 	CANDIDATELIST *candList = in_winime_candList;
 	unsigned int i;
-	char cand[MAX_STRING_CHARS];
 
 	if( selected )
 		*selected = -1;
@@ -1827,11 +1805,7 @@ unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigne
 	if( cands && candSize )
 	{
 		for( i = 0; i < maxCands; i++ )
-		{
-			Q_WCharToUtf8String( ( const WCHAR * )( ( const char * )candList + candList->dwOffset[candList->dwPageStart + i] ), cand, sizeof( cand ) );
-			Q_strncpyz( cands[i], COM_RemoveColorTokensExt( cand, true ), candSize );
-			Q_FixTruncatedUtf8( cands[i] );
-		}
+			Q_WCharToUtf8String( ( const WCHAR * )( ( const char * )candList + candList->dwOffset[candList->dwPageStart + i] ), cands[i], candSize );
 	}
 
 	if( selected && ( candList->dwSelection >= candList->dwPageStart ) && ( candList->dwSelection < ( candList->dwPageStart + maxCands ) ) )
