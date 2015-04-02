@@ -51,6 +51,7 @@ void SCR_StopCinematic( void )
 */
 void SCR_FinishCinematic( void )
 {
+	SCR_PauseCinematic( false );
 	CL_Disconnect( NULL );
 }
 
@@ -263,7 +264,7 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 
 	CIN_Close( cin );
 
-	CL_Disconnect( NULL );
+	SCR_FinishCinematic();
 
 	CL_SoundModule_StopAllSounds( true, true );
 
@@ -313,6 +314,9 @@ void SCR_PauseCinematic( bool pause )
 		cl.cin.startTime += SCR_CinematicTime() - cl.cin.pauseTime;
 		cl.cin.pauseTime = 0;
 		CL_SoundModule_LockBackgroundTrack( false );
+	}
+	if( cl.cin.pause_cnt < 0 ) {
+		cl.cin.pause_cnt = 0;
 	}
 }
 
