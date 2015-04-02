@@ -647,8 +647,6 @@ void S_LockBackgroundTrack( bool lock )
 	} else {
 		s_bgTrackLocked = 0;
 	}
-
-	Com_Printf("%i %i\n", lock, s_bgTrackLocked );
 }
 
 //=============================================================================
