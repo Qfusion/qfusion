@@ -435,7 +435,7 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 	const char *s, *olds;
 	int gc, colorindex;
 	wchar_t num, prev_num = 0;
-	qglyph_t *glyph, *prev_glyph = NULL;
+	qglyph_t *glyph;
 
 	if( !str || !font )
 		return 0;
@@ -484,7 +484,6 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 			xoffset += glyph->x_advance;
 
 			prev_num = num;
-			prev_glyph = glyph;
 		}
 		else if( gc == GRABCHAR_COLOR )
 		{
