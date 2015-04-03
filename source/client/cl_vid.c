@@ -463,6 +463,7 @@ static bool VID_LoadRefresh( const char *name )
 	import.BufQueue_Finish = QBufQueue_Finish;
 	import.BufQueue_EnqueueCmd = QBufQueue_EnqueueCmd;
 	import.BufQueue_ReadCmds = QBufQueue_ReadCmds;
+	import.BufQueue_Wait = QBufQueue_Wait;
 
 	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( name ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
 	file = Mem_TempMalloc( file_size );

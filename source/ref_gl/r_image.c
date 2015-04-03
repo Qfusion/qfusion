@@ -3152,6 +3152,14 @@ static unsigned R_HandleUnbindLoaderCmd( void *pcmd )
 }
 
 /*
+*R_ImageLoaderCmdsWaiter
+*/
+static int R_ImageLoaderCmdsWaiter( qbufQueue_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout )
+{
+	return ri.BufQueue_ReadCmds( queue, cmdHandlers );
+}
+
+/*
 * R_ImageLoaderThreadProc
 */
 static void *R_ImageLoaderThreadProc( void *param )
@@ -3165,16 +3173,7 @@ static void *R_ImageLoaderThreadProc( void *param )
 		(queueCmdHandler_t)R_HandleUnbindLoaderCmd
 	};
 
-	while ( 1 ){
-		int read = ri.BufQueue_ReadCmds( cmdQueue, cmdHandlers );
-		
-		if( read < 0 ) {
-			// shutdown
-			break;
-		}
-
-		ri.Sys_Sleep( 10 );
-	}
+	ri.BufQueue_Wait( cmdQueue, R_ImageLoaderCmdsWaiter, cmdHandlers, 0XFFFFFFFF );
  
 	return NULL;	
 }
