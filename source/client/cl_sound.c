@@ -288,6 +288,7 @@ void CL_SoundModule_Init( bool verbose )
 	import.BufQueue_Finish = QBufQueue_Finish;
 	import.BufQueue_EnqueueCmd = QBufQueue_EnqueueCmd;
 	import.BufQueue_ReadCmds = QBufQueue_ReadCmds;
+	import.BufQueue_Wait = QBufQueue_Wait;
 
 	if( !CL_SoundModule_Load( sound_modules[s_module->integer-1], &import, verbose ) )
 	{

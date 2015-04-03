@@ -24,6 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 ALCdevice *alDevice = NULL;
 ALCcontext *alContext = NULL;
 
+#define UPDATE_MSEC 10
+static unsigned s_last_update_time;
+
 int s_attenuation_model = 0;
 float s_attenuation_maxdistance = 0;
 float s_attenuation_refdistance = 0;
@@ -140,6 +143,8 @@ static bool S_Init( void *hwnd, int maxEntities, bool verbose )
 
 	alDevice = NULL;
 	alContext = NULL;
+
+	s_last_update_time = 0;
 
 	// get system default device identifier
 	defaultDevice = ( char * )qalcGetString( NULL, ALC_DEFAULT_DEVICE_SPECIFIER );
@@ -723,24 +728,34 @@ static queueCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 };
 
 /*
+* S_EnqueuedCmdsWaiter
+*/
+static int S_EnqueuedCmdsWaiter( sndQueue_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout )
+{
+	int read = S_ReadEnqueuedCmds( queue, cmdHandlers );
+	unsigned now = trap_Milliseconds();
+
+	if( read < 0 ) {
+		// shutdown
+		return read;
+	}
+
+	if( timeout || now >= s_last_update_time + UPDATE_MSEC ) {
+		s_last_update_time = now;
+		S_Update();
+	}
+
+	return read;
+}
+
+/*
 * S_BackgroundUpdateProc
 */
 void *S_BackgroundUpdateProc( void *param )
 {
 	sndQueue_t *s_cmdQueue = param;
 
-	while ( 1 ){
-		int read = S_ReadEnqueuedCmds( s_cmdQueue, sndCmdHandlers );
-		
-		if( read < 0 ) {
-			// shutdown
-			break;
-		}
+	S_WaitEnqueuedCmds( s_cmdQueue, S_EnqueuedCmdsWaiter, sndCmdHandlers, UPDATE_MSEC );
 
-		S_Update();
-
-		trap_Sleep( 5 );
-	}
- 
 	return NULL;
 }
