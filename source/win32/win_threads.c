@@ -28,6 +28,10 @@ struct qthread_s {
 	HANDLE h;
 };
 
+struct qcondvar_s {
+	CONDITION_VARIABLE c;
+};
+
 #ifdef QF_USE_CRITICAL_SECTIONS
 struct qmutex_s {
 	CRITICAL_SECTION h;
@@ -41,6 +45,9 @@ int Sys_Mutex_Create( qmutex_t **pmutex )
 	qmutex_t *mutex;
 
 	mutex = ( qmutex_t * )Q_malloc( sizeof( *mutex ) );
+	if( !mutex ) {
+		return -1;
+	}
 	InitializeCriticalSection( &mutex->h );
 
 	*pmutex = mutex;
@@ -92,6 +99,9 @@ int Sys_Mutex_Create( qmutex_t **pmutex )
 	}
 	
 	mutex = ( qmutex_t * )Q_malloc( sizeof( *mutex ) );
+	if( !mutex ) {
+		return -1;
+	}
 	mutex->h = h;
 	*pmutex = mutex;
 	return 0;
@@ -187,4 +197,55 @@ void Sys_Thread_Yield( void )
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 {
 	return InterlockedExchangeAdd( (volatile LONG*)value, add );
+}
+
+/*
+* Sys_CondVar_Create
+*/
+int Sys_CondVar_Create( qcondvar_t **pcond )
+{
+	qcondvar_t *cond;
+
+	cond = ( qcondvar_t * )Q_malloc( sizeof( *cond ) );
+	if( !pcond ) {
+		return -1;
+	}
+	InitializeConditionVariable( &cond->c );
+
+	*pcond = cond;
+	return 0;
+}
+
+/*
+* Sys_CondVar_Destroy
+*/
+void Sys_CondVar_Destroy( qcondvar_t *cond )
+{
+	Q_free( cond );
+}
+
+/*
+* Sys_CondVar_Wait
+*/
+bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec )
+{
+	if( !cond || !mutex ) {
+		return false;
+	}
+#ifdef QF_USE_CRITICAL_SECTIONS
+	return SleepConditionVariableCS( &cond->c, &mutex->h, timeout_msec ) != 0;
+#else
+	return false;
+#endif
+}
+
+/*
+* Sys_CondVar_Wake
+*/
+void Sys_CondVar_Wake( qcondvar_t *cond )
+{
+	if( !cond ) {
+		return;
+	}
+	WakeConditionVariable( &cond->c );
 }

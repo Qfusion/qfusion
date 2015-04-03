@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <pthread.h>
 #include <sched.h>
 #include <signal.h>
+#include <sys/time.h>
 
 struct qthread_s {
 	pthread_t t;
@@ -30,6 +31,10 @@ struct qthread_s {
 
 struct qmutex_s {
 	pthread_mutex_t m;
+};
+
+struct qcondvar_s {
+	pthread_cond_t c;
 };
 
 typedef struct {
@@ -181,4 +186,67 @@ int Sys_Thread_Cancel( qthread_t *thread )
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 {
 	return __sync_fetch_and_add( value, add ) + add;
+}
+
+/*
+* Sys_CondVar_Create
+*/
+int Sys_CondVar_Create( qcondvar_t **pcond )
+{
+	qcondvar_t *cond;
+
+	cond = ( qcondvar_t * )Q_malloc( sizeof( *cond ) );
+	if( !pcond ) {
+		return -1;
+	}
+	pthread_cond_init( &cond->c, NULL );
+
+	*pcond = cond;
+	return 0;
+}
+
+/*
+* Sys_CondVar_Destroy
+*/
+void Sys_CondVar_Destroy( qcondvar_t *cond )
+{
+	if( !cond ) {
+		return;
+	}
+	pthread_cond_destroy( &cond->c );
+	Q_free( cond );
+}
+
+/*
+* Sys_CondVar_Wait
+*/
+bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec )
+{
+	struct timespec   ts;
+	struct timeval    tp;
+  
+	if( !cond || !mutex ) {
+		return false;
+	}
+
+	gettimeofday( &tp, NULL );
+	
+	// convert from timeval to timespec
+	ts.tv_sec  = tp.tv_sec;
+	ts.tv_nsec = tp.tv_usec * 1000;
+	ts.tv_sec += timeout_msec / 1000;
+	ts.tv_nsec += (timeout_msec % 1000)*1000000;
+	
+	return pthread_cond_timedwait( &cond->c, &mutex->m, &ts ) == 0;
+}
+
+/*
+* Sys_CondVar_Wake
+*/
+void Sys_CondVar_Wake( qcondvar_t *cond )
+{
+	if( !cond ) {
+		return;
+	}
+	pthread_cond_signal( &cond->c );
 }

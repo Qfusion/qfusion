@@ -67,6 +67,49 @@ void QMutex_Unlock( qmutex_t *mutex )
 }
 
 /*
+* QCondVar_Create
+*/
+qcondvar_t *QCondVar_Create( void )
+{
+	int ret;
+	qcondvar_t *cond;
+
+	ret = Sys_CondVar_Create( &cond );
+	if( ret != 0 ) {
+		Sys_Error( "QCondVar_Create: failed with code %i", ret );
+	}
+	return cond;
+}
+
+/*
+* QCondVar_Destroy
+*/
+void QCondVar_Destroy( qcondvar_t **pcond )
+{
+	assert( pcond != NULL );
+	if( pcond && *pcond ) {
+		Sys_CondVar_Destroy( *pcond );
+		*pcond = NULL;
+	}
+}
+
+/*
+* QCondVar_Wait
+*/
+bool QCondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec )
+{
+	return Sys_CondVar_Wait( cond, mutex, timeout_msec );
+}
+
+/*
+* QCondVar_Wake
+*/
+void QCondVar_Wake( qcondvar_t *cond )
+{
+	Sys_CondVar_Wake( cond );
+}
+
+/*
 * QThread_Create
 */
 qthread_t *QThread_Create( void *(*routine) (void*), void *param )
@@ -129,6 +172,8 @@ typedef struct qbufQueue_s
 	volatile int cmdbuf_len;
 	qmutex_t *cmdbuf_mutex;
 	size_t bufSize;
+	qcondvar_t *nonempty_condvar;
+	qmutex_t *nonempty_mutex;
 	char *buf;
 } qbufQueue_t;
 
@@ -143,6 +188,8 @@ qbufQueue_t *QBufQueue_Create( size_t bufSize, int flags )
 	queue->buf = (char *)(queue + 1);
 	queue->bufSize = bufSize;
 	queue->cmdbuf_mutex = QMutex_Create();
+	queue->nonempty_condvar = QCondVar_Create();
+	queue->nonempty_mutex = QMutex_Create();
 	return queue;
 }
 
@@ -162,7 +209,21 @@ void QBufQueue_Destroy( qbufQueue_t **pqueue )
 	*pqueue = NULL;
 
 	QMutex_Destroy( &queue->cmdbuf_mutex );
+	QMutex_Destroy( &queue->nonempty_mutex );
+	QCondVar_Destroy( &queue->nonempty_condvar );
 	free( queue );
+}
+
+/*
+* QBufQueue_Wake
+*
+* Signals the waiting thread to wake up.
+*/
+static void QBufQueue_Wake( qbufQueue_t *queue )
+{
+	QMutex_Lock( queue->nonempty_mutex );
+	QCondVar_Wake( queue->nonempty_condvar );
+	QMutex_Unlock( queue->nonempty_mutex );
 }
 
 /*
@@ -174,6 +235,7 @@ void QBufQueue_Destroy( qbufQueue_t **pqueue )
 void QBufQueue_Finish( qbufQueue_t *queue )
 {
 	while( queue->cmdbuf_len > 0 && !queue->terminated ) {
+		QBufQueue_Wake( queue );
 		QThread_Yield();
 	}
 }
@@ -268,6 +330,9 @@ void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_siz
 	buf = QBufQueue_AllocCmd( queue, cmd_size );
 	memcpy( buf, cmd, cmd_size );
 	QBufQueue_BufLenAdd( queue, cmd_size ); // atomic
+
+	// wake the other thread waiting for signal
+	QBufQueue_Wake( queue );
 }
 
 /*
@@ -326,4 +391,28 @@ int QBufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void
 	}
 
 	return read;
+}
+
+/*
+* QBufQueue_Wait
+*/
+void QBufQueue_Wait( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( ** )(const void *), bool ), 
+	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec )
+{
+	QMutex_Lock( queue->nonempty_mutex );
+	while( 1 ) {
+		bool result;
+
+		result = QCondVar_Wait( queue->nonempty_condvar, queue->nonempty_mutex, timeout_msec );
+
+		QMutex_Unlock( queue->nonempty_mutex );
+
+		if( read( queue, cmdHandlers, result ) < 0 ) {
+			// done
+			return;
+		}
+
+		QMutex_Lock( queue->nonempty_mutex );
+	}
+	QMutex_Unlock( queue->nonempty_mutex );
 }
