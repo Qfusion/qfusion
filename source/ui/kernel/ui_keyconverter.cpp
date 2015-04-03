@@ -47,10 +47,9 @@ int KeyConverter::toRocketKey( int key )
 	if( key >= 'a' && key <= 'z' )
 		return KI_A + ( key - 'a' );
 
-	for (int i = 0; i < sizeof(oem_keys) - 1; ++i) {
-		if (key == oem_keys[i]) {
+	for( unsigned i = 0; i < sizeof(oem_keys) - 1; ++i ) {
+		if( key == oem_keys[i] )
 			return KI_OEM_1 + i;
-		}
 	}
 
 	switch( key )
