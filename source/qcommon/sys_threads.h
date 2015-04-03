@@ -32,4 +32,9 @@ void Sys_Mutex_Lock( qmutex_t *mutex );
 void Sys_Mutex_Unlock( qmutex_t *mutex );
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex );
 
+int Sys_CondVar_Create( qcondvar_t **pcond );
+void Sys_CondVar_Destroy( qcondvar_t *cond );
+bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec );
+void Sys_CondVar_Wake( qcondvar_t *cond );
+
 #endif // SYS_THREADS_H
