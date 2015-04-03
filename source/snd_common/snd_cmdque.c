@@ -394,3 +394,12 @@ int S_ReadEnqueuedCmds( sndQueue_t *queue, queueCmdHandler_t *cmdHandlers )
 {
 	return trap_BufQueue_ReadCmds( queue, cmdHandlers );
 }
+
+/*
+* S_WaitEnqueuedCmds
+*/
+void S_WaitEnqueuedCmds( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( ** )(const void *), bool ), 
+	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec )
+{
+	trap_BufQueue_Wait( queue, read, cmdHandlers, timeout_msec );
+}

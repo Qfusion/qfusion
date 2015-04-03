@@ -275,3 +275,9 @@ static inline int trap_BufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHan
 {
 	return SOUND_IMPORT.BufQueue_ReadCmds( queue, cmdHandlers );
 }
+
+static inline void trap_BufQueue_Wait( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( ** )(const void *), bool ), 
+	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec )
+{
+	SOUND_IMPORT.BufQueue_Wait( queue, read, cmdHandlers, timeout_msec );
+}

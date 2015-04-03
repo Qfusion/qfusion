@@ -237,6 +237,8 @@ typedef struct
 sndQueue_t *S_CreateSoundQueue( void );
 void S_DestroySoundQueue( sndQueue_t **pqueue );
 int S_ReadEnqueuedCmds( sndQueue_t *queue, queueCmdHandler_t *cmdHandlers );
+void S_WaitEnqueuedCmds( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( ** )(const void *), bool ), 
+	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec );
 void S_FinishSoundQueue( sndQueue_t *queue );
 
 void S_IssueInitCmd( sndQueue_t *queue, void *hwnd, int maxents, bool verbose );

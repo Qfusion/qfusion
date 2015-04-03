@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // snd_public.h -- sound dll information visible to engine
 
-#define	SOUND_API_VERSION   38
+#define	SOUND_API_VERSION   39
 
 #define	ATTN_NONE 0
 
@@ -108,6 +108,8 @@ typedef struct
 	void ( *BufQueue_Finish )( qbufQueue_t *queue );
 	void ( *BufQueue_EnqueueCmd )( qbufQueue_t *queue, const void *cmd, unsigned cmd_size );
 	int ( *BufQueue_ReadCmds )( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) );
+	void ( *BufQueue_Wait )( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( ** )(const void *), bool ), 
+		unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec );
 } sound_import_t;
 
 //
