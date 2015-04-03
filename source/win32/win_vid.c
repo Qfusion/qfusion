@@ -288,15 +288,14 @@ static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy )
 	else
 		ActiveApp = false;
 
-	if( prevActiveApp == ActiveApp )
-		return;
-
 	// minimize/restore mouse-capture on demand
 	IN_Activate( ActiveApp );
 
-	SCR_PauseCinematic( !ActiveApp );
+	if( prevActiveApp != ActiveApp ) {
+		SCR_PauseCinematic( !ActiveApp );
+		CL_SoundModule_Activate( ActiveApp );
+	}
 
-	CL_SoundModule_Activate( ActiveApp );
 	if( win_noalttab->integer )
 		VID_EnableAltTab( !ActiveApp );
 	if( win_nowinkeys->integer )
