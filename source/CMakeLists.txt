@@ -118,6 +118,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
     add_release_link_flags("-s")
     
     if (MINGW)
+		add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_VISTA)
+
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-pragmas")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
         add_common_link_flags("-static -static-libgcc -static-libstdc++")
