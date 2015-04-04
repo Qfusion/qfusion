@@ -19,27 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // winquake.h: Win32-specific Quake header file
 
-
-// can't handle anything less than WinXP in MinGW
-#if defined(__GNUC__)
-# if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x501
-#  undef _WIN32_WINNT
-# endif
-# ifndef _WIN32_WINNT
-#  define _WIN32_WINNT 0x0501
-# endif
-#endif
-
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
-// Windows 2000 needs an additional header for IPv6 support
-#if !defined( _WIN32_WINNT_WIN2K )
-#	define _WIN32_WINNT_WIN2K	0x0500
-#endif
-#if !defined( _WIN32_WINNT ) || ( _WIN32_WINNT <= _WIN32_WINNT_WIN2K )
-#	include <wspiapi.h>
-#endif
 
 #include <windows.h>
 #ifdef HAVE_MMSYSTEM
