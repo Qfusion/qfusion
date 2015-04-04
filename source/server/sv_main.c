@@ -756,7 +756,7 @@ void SV_Frame( int realmsec, int gamemsec )
 	}
 
 	// handle HTTP connections
-	SV_Web_Frame();
+	SV_Web_GameFrame( ge->WebRequest );
 
 	SV_CheckAutoUpdate();
 }

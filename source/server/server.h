@@ -121,6 +121,8 @@ typedef struct
 #define	LATENCY_COUNTS	16
 #define	RATE_MESSAGES	25  // wsw : jal : was 10: I think it must fit sv_pps, I have to calculate it
 
+#define HTTP_CLIENT_SESSION_SIZE 16
+
 typedef struct client_s
 {
 	sv_client_state_t state;
@@ -166,7 +168,7 @@ typedef struct client_s
 #endif
 	edict_t	*edict;                 // EDICT_NUM(clientnum+1)
 	char name[MAX_INFO_VALUE];      // extracted from userinfo, high bits masked
-	char session[16];               // session id for HTTP requests
+	char session[HTTP_CLIENT_SESSION_SIZE];  // session id for HTTP requests
 
 	client_snapshot_t snapShots[UPDATE_BACKUP]; // updates can be delta'd from here
 
@@ -467,7 +469,6 @@ bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t
 void SV_DropClient( client_t *drop, int type, const char *format, ... );
 void SV_ExecuteClientThinks( int clientNum );
 void SV_ClientResetCommandBuffers( client_t *client );
-bool SV_ClientAllowHttpRequest( int clientNum, const char *session );
 
 //
 // sv_mv.c
@@ -546,8 +547,12 @@ void SV_MM_GetMatchUUID( void (*callback_fn)( const char *uuid ) );
 // 
 // sv_web.c
 //
+typedef http_response_code_t ( *http_game_query_cb )( http_query_method_t method, const char *resource, 
+		const char *query_string, char **content, size_t *content_length );
+
 void SV_Web_Init( void );
-void SV_Web_Frame( void );
 void SV_Web_Shutdown( void );
 bool SV_Web_Running( void );
 const char *SV_Web_UpstreamBaseUrl( void );
+bool SV_Web_AddGameClient( const char *session, int clientNum, const netadr_t *netAdr );
+void SV_Web_RemoveGameClient( const char *session );
