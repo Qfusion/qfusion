@@ -29,7 +29,8 @@ struct qthread_s {
 };
 
 struct qcondvar_s {
-	HANDLE h;
+	CONDITION_VARIABLE c;
+	HANDLE e;
 };
 
 #ifdef QF_USE_CRITICAL_SECTIONS
@@ -199,21 +200,37 @@ int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 	return InterlockedExchangeAdd( (volatile LONG*)value, add );
 }
 
+static void ( WINAPI *pInitializeConditionVariable )( PCONDITION_VARIABLE ConditionVariable );
+static void ( WINAPI *pWakeConditionVariable )( PCONDITION_VARIABLE ConditionVariable );
+static BOOL ( WINAPI *pSleepConditionVariableCS )( PCONDITION_VARIABLE ConditionVariable,
+	PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds );
+
 /*
 * Sys_CondVar_Create
 */
 int Sys_CondVar_Create( qcondvar_t **pcond )
 {
 	qcondvar_t *cond;
+	HANDLE *e = NULL;
 
 	cond = ( qcondvar_t * )Q_malloc( sizeof( *cond ) );
 	if( !pcond ) {
 		return -1;
 	}
 
-	cond->h = CreateEvent( NULL, FALSE, FALSE, NULL );
+	if( pInitializeConditionVariable ) {
+		pInitializeConditionVariable( &( cond->c ) );
+	} else {
+		e = CreateEvent( NULL, FALSE, FALSE, NULL );
+		if( !e ) {
+			Q_free( cond );
+			return GetLastError();
+		}
+	}
 
+	cond->e = e;
 	*pcond = cond;
+
 	return 0;
 }
 
@@ -225,7 +242,11 @@ void Sys_CondVar_Destroy( qcondvar_t *cond )
 	if( !cond ) {
 		return;
 	}
-	CloseHandle( cond->h );
+
+	if( cond->e ) {
+		CloseHandle( cond->e );
+	}
+
 	Q_free( cond );
 }
 
@@ -235,16 +256,23 @@ void Sys_CondVar_Destroy( qcondvar_t *cond )
 bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec )
 {
 	bool ret;
+
 	if( !cond || !mutex ) {
 		return false;
 	}
+
+	if( cond->e ) {
+		QMutex_Unlock( mutex );
+		ret = ( WaitForSingleObject( cond->e, timeout_msec ) == WAIT_OBJECT_0 );
+		QMutex_Lock( mutex );
+	} else {
 #ifdef QF_USE_CRITICAL_SECTIONS
-	QMutex_Unlock( mutex );
-	ret = ( WaitForSingleObject( cond->h, timeout_msec ) == WAIT_OBJECT_0 );
+		ret = ( pSleepConditionVariableCS( &cond->c, &mutex->h, timeout_msec ) != 0 );
 #else
-	ret = ( SignalObjectAndWait( mutex->h, cond->h, timeout_msec, FALSE ) == WAIT_OBJECT_0 );
+		ret = false;
 #endif
-	QMutex_Lock( mutex );
+	}
+
 	return ret;
 }
 
@@ -256,5 +284,25 @@ void Sys_CondVar_Wake( qcondvar_t *cond )
 	if( !cond ) {
 		return;
 	}
-	SetEvent( cond->h );
+
+	if( cond->e ) {
+		SetEvent( cond->e );
+	} else {
+		pWakeConditionVariable( &cond->c );
+	}
+}
+
+/*
+* Sys_InitThreads
+*/
+void Sys_InitThreads( void )
+{
+#ifdef QF_USE_CRITICAL_SECTIONS
+	HINSTANCE kernel32Dll = LoadLibrary( "kernel32.dll" );
+	if( kernel32Dll ) {
+		pInitializeConditionVariable = ( void * )GetProcAddress( kernel32Dll, "InitializeConditionVariable" );
+		pWakeConditionVariable = ( void * )GetProcAddress( kernel32Dll, "WakeConditionVariable" );
+		pSleepConditionVariableCS = ( void * )GetProcAddress( kernel32Dll, "SleepConditionVariableCS" );
+	}
+#endif
 }
