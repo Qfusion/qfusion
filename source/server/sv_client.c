@@ -165,6 +165,8 @@ bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t
 	}
 	client->session[i] = '\0';
 
+	SV_Web_AddGameClient( client->session, client - svs.clients, &client->netchan.remoteAddress );
+
 	return true;
 }
 
@@ -229,6 +231,8 @@ void SV_DropClient( client_t *drop, int type, const char *format, ... )
 	SV_MM_ClientDisconnect( drop );
 
 	SNAP_FreeClientFrames( drop );
+
+	SV_Web_RemoveGameClient( drop->session );
 
 	if( drop->download.name )
 	{
@@ -833,21 +837,6 @@ local_download:
 		Mem_TempFree( url );
 		url = NULL;
 	}
-}
-
-
-/*
-* SV_ClientAllowHttpRequest
-*/
-bool SV_ClientAllowHttpRequest( int clientNum, const char *session )
-{
-	if( clientNum < 0 || clientNum >= sv_maxclients->integer ) {
-		return false;
-	}
-	if( !session || !*session ) {
-		return false;
-	}
-	return strcmp( svs.clients[clientNum].session, session ) == 0;
 }
 
 //============================================================================
