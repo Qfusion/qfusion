@@ -29,7 +29,7 @@ struct qthread_s {
 };
 
 struct qcondvar_s {
-	CONDITION_VARIABLE c;
+	HANDLE h;
 };
 
 #ifdef QF_USE_CRITICAL_SECTIONS
@@ -210,7 +210,8 @@ int Sys_CondVar_Create( qcondvar_t **pcond )
 	if( !pcond ) {
 		return -1;
 	}
-	InitializeConditionVariable( &cond->c );
+
+	cond->h = CreateEvent( NULL, FALSE, FALSE, NULL );
 
 	*pcond = cond;
 	return 0;
@@ -221,6 +222,10 @@ int Sys_CondVar_Create( qcondvar_t **pcond )
 */
 void Sys_CondVar_Destroy( qcondvar_t *cond )
 {
+	if( !cond ) {
+		return;
+	}
+	CloseHandle( cond->h );
 	Q_free( cond );
 }
 
@@ -229,14 +234,18 @@ void Sys_CondVar_Destroy( qcondvar_t *cond )
 */
 bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec )
 {
+	bool ret;
 	if( !cond || !mutex ) {
 		return false;
 	}
 #ifdef QF_USE_CRITICAL_SECTIONS
-	return SleepConditionVariableCS( &cond->c, &mutex->h, timeout_msec ) != 0;
+	QMutex_Unlock( mutex );
+	ret = ( WaitForSingleObject( cond->h, timeout_msec ) == WAIT_OBJECT_0 );
 #else
-	return false;
+	ret = ( SignalObjectAndWait( mutex->h, cond->h, timeout_msec, FALSE ) == WAIT_OBJECT_0 );
 #endif
+	QMutex_Lock( mutex );
+	return ret;
 }
 
 /*
@@ -247,5 +256,5 @@ void Sys_CondVar_Wake( qcondvar_t *cond )
 	if( !cond ) {
 		return;
 	}
-	WakeConditionVariable( &cond->c );
+	SetEvent( cond->h );
 }
