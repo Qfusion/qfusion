@@ -753,7 +753,7 @@ static char *cmd_null_string = "";
 static char cmd_args[MAX_STRING_CHARS];
 
 static trie_t *cmd_function_trie = NULL;
-static const trie_casing_t CMD_FUNCTION_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;;
+static const trie_casing_t CMD_FUNCTION_TRIE_CASING = CON_CASE_SENSITIVE ? TRIE_CASE_SENSITIVE : TRIE_CASE_INSENSITIVE;
 
 static int Cmd_PatternMatchesFunction( void *cmd, void *pattern )
 {
