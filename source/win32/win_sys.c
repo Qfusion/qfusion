@@ -58,6 +58,8 @@ static dynvar_set_status_t Sys_SetAffinity_f( void *affinity );
 void Sys_InitTimeDynvar( void );
 void Sys_InitTime( void );
 
+void Sys_InitThreads( void );
+
 /*
 ===============================================================================
 
@@ -142,6 +144,8 @@ void Sys_Init( void )
 	timeBeginPeriod( 1 );
 
 	Sys_InitTime();
+
+	Sys_InitThreads();
 
 	if( dedicated->integer )
 	{
