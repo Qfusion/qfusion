@@ -723,7 +723,7 @@ void	    FS_Shutdown( void );
 
 const char *FS_GameDirectory( void );
 const char *FS_BaseGameDirectory( void );
-bool    FS_SetGameDirectory( const char *dir, bool force );
+bool		FS_SetGameDirectory( const char *dir, bool force );
 int			FS_GetGameDirectoryList( char *buf, size_t bufsize );
 int			FS_GetExplicitPurePakList( char ***paknames );
 
@@ -752,7 +752,7 @@ int	    FS_Tell( int file );
 int	    FS_Seek( int file, int offset, int whence );
 int	    FS_Eof( int file );
 int	    FS_Flush( int file );
-bool FS_IsUrl( const char *url );
+bool	FS_IsUrl( const char *url );
 
 void	FS_SetCompressionLevel( int file, int level );
 int		FS_GetCompressionLevel( int file );
@@ -801,7 +801,7 @@ int			FS_GetFileListExt( const char *dir, const char *extension, char *buf, size
 // // only for base files
 bool    FS_IsPakValid( const char *filename, unsigned *checksum );
 bool    FS_AddPurePak( unsigned checksum );
-void	    FS_RemovePurePaks( void );
+void	FS_RemovePurePaks( void );
 
 void	FS_AddFileToMedia( const char *filename );
 
