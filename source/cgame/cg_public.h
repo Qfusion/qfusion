@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   78
+#define	CGAME_API_VERSION   79
 
 //
 // structs and variables shared with the main engine
@@ -226,6 +226,7 @@ typedef struct
 		unsigned int samples, unsigned int rate, unsigned short width, unsigned short channels, const uint8_t *data );
 	unsigned int ( *S_GetRawSamplesLength )( void );
 	unsigned int ( *S_GetPositionedRawSamplesLength )( int entnum );
+	void ( *S_SetEntitySpatilization )( int entNum, vec3_t origin, vec3_t velocity );
 
 	// fonts
 	struct qfontface_s *( *SCR_RegisterFont )( const char *family, int style, unsigned int size );

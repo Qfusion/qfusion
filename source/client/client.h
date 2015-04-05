@@ -430,6 +430,7 @@ void CL_SoundModule_BeginRegistration( void );
 void CL_SoundModule_EndRegistration( void );
 void CL_SoundModule_StopAllSounds( bool clear, bool stopMusic );
 void CL_SoundModule_Clear( void );
+void CL_SoundModule_SetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity );
 void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, const char *identity, bool avidump );
 void CL_SoundModule_Activate( bool activate );
 struct sfx_s *CL_SoundModule_RegisterSound( const char *sample );

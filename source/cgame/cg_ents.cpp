@@ -2087,8 +2087,13 @@ void CG_LerpEntities( void )
 
 	for( pnum = 0; pnum < cg.frame.numEntities; pnum++ )
 	{
+		int number;
+		bool spatialize;
+		
 		state = &cg.frame.parsedEntities[pnum & ( MAX_PARSE_ENTITIES-1 )];
-		cent = &cg_entities[state->number];
+		number = state->number;
+		cent = &cg_entities[number];
+		spatialize = true;
 
 		switch( cent->type )
 		{
@@ -2152,6 +2157,12 @@ void CG_LerpEntities( void )
 		default:
 			CG_Error( "CG_LerpEntities: unknown entity type" );
 			break;
+		}
+
+		if( spatialize ) {
+			vec3_t origin, velocity;
+			CG_GetEntitySpatilization( number, origin, velocity );
+			trap_S_SetEntitySpatilization( number, origin, velocity );
 		}
 	}
 }

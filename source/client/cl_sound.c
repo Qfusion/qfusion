@@ -28,8 +28,6 @@ static cvar_t *s_module = NULL;
 static cvar_t *s_module_fallback = NULL;
 static bool s_loaded = false;
 
-static int max_spatialization_num;
-
 static void CL_SoundModule_SetAttenuationModel( void );
 
 /*
@@ -196,8 +194,6 @@ void CL_SoundModule_Init( bool verbose )
 	// unload anything we have now
 	CL_SoundModule_Shutdown( verbose );
 
-	max_spatialization_num = 0;
-
 	if( verbose )
 		Com_Printf( "------- sound initialization -------\n" );
 
@@ -359,7 +355,6 @@ void CL_SoundModule_EndRegistration( void )
 */
 void CL_SoundModule_StopAllSounds( bool clear, bool stopMusic )
 {
-	max_spatialization_num = 0;
 	if( se )
 		se->StopAllSounds( clear, stopMusic );
 }
@@ -374,31 +369,23 @@ void CL_SoundModule_Clear( void )
 }
 
 /*
+* CL_SoundModule_SetEntitySpatilization
+*/
+void CL_SoundModule_SetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity )
+{
+	if( se )
+		se->SetEntitySpatialization( entNum, origin, velocity );
+}
+
+/*
 * CL_SoundModule_Update
 */
 void CL_SoundModule_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, 
 	const char *identity, bool avidump )
 {
 	if( se ) {
-		if( cls.state == CA_ACTIVE ) {
-			int i;
-			vec3_t origin, velocity;
-
-			if( max_spatialization_num >= MAX_EDICTS ) {
-				max_spatialization_num = MAX_EDICTS - 1;
-			}
-
-			for( i = 0; i <= max_spatialization_num; i++ ) {
-				VectorClear( origin );
-				VectorClear( velocity );
-				CL_GameModule_GetEntitySpatilization( i, origin, velocity );
-				se->SetEntitySpatialization( i, origin, velocity );
-			}
-		}
-
 		se->Update( origin, velocity, axis, avidump );
 	}
-
 	CL_Mumble_Update( origin, axis, identity );
 }
 
@@ -473,9 +460,6 @@ void CL_SoundModule_StartFixedSound( struct sfx_s *sfx, const vec3_t origin, int
 */
 void CL_SoundModule_StartRelativeSound( struct sfx_s *sfx, int entnum, int channel, float fvol, float attenuation )
 {
-	if( entnum > max_spatialization_num ) {
-		max_spatialization_num = entnum;
-	}
 	if( se )
 		se->StartRelativeSound( sfx, entnum, channel, fvol, attenuation );
 }
@@ -511,9 +495,6 @@ void CL_SoundModule_StartLocalSound( const char *name )
 */
 void CL_SoundModule_AddLoopSound( struct sfx_s *sfx, int entnum, float fvol, float attenuation )
 {
-	if( entnum > max_spatialization_num ) {
-		max_spatialization_num = entnum;
-	}
 	if( se )
 		se->AddLoopSound( sfx, entnum, fvol, attenuation );
 }
@@ -535,9 +516,6 @@ void CL_SoundModule_PositionedRawSamples( int entnum, float fvol, float attenuat
 		unsigned int samples, unsigned int rate, 
 		unsigned short width, unsigned short channels, const uint8_t *data )
 {
-	if( entnum > max_spatialization_num ) {
-		max_spatialization_num = entnum;
-	}
 	if( se )
 		se->PositionedRawSamples( entnum, fvol, attenuation,
 			samples, rate, width, channels, data );
