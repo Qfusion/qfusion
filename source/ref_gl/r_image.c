@@ -2106,6 +2106,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	image = R_LoadImage( pathname, empty_data, 1, 1, flags, 1 );
 
 	if( !( image->flags & IT_SYNC ) && ( gl_loader_context[0] != NULL ) ) {
+		RB_Flush(); // An NVIDIA bug makes textures fail to load without this sometimes.
 		R_LoadAsyncImageFromDisk( image );
 		return image;
 	}
