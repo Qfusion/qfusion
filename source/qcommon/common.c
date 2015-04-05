@@ -48,7 +48,6 @@ cvar_t *dedicated;
 cvar_t *versioncvar;
 cvar_t *revisioncvar;
 cvar_t *tv_server;
-cvar_t *mm_server;
 
 static cvar_t *fixedtime;
 static cvar_t *logconsole = NULL;
@@ -939,13 +938,6 @@ void Qcommon_Init( int argc, char **argv )
 	dedicated =	    Cvar_Get( "dedicated", "0", CVAR_NOSET );
 #endif
 
-#ifdef MATCHMAKER
-	mm_server =	    Cvar_Get( "mm_server", "1", CVAR_READONLY );
-	Cvar_ForceSet( "mm_server", "1" );
-#else
-	mm_server =	    Cvar_Get( "mm_server", "0", CVAR_READONLY );
-#endif
-
 	FS_Init();
 
 	Cbuf_AddText( "exec default.cfg\n" );
@@ -953,10 +945,6 @@ void Qcommon_Init( int argc, char **argv )
 	{
 		Cbuf_AddText( "exec config.cfg\n" );
 		Cbuf_AddText( "exec autoexec.cfg\n" );
-	}
-	else if( mm_server->integer )
-	{
-		Cbuf_AddText( "exec mmaker_autoexec.cfg\n" );
 	}
 	else if( tv_server->integer )
 	{
@@ -1026,10 +1014,6 @@ void Qcommon_Init( int argc, char **argv )
 	if( !dedicated->integer )
 	{
 		Cbuf_AddText( "exec stuffcmds.cfg\n" );
-	}
-	else if( mm_server->integer )
-	{
-		Cbuf_AddText( "exec mmaker_stuffcmds.cfg\n" );
 	}
 	else if( tv_server->integer )
 	{
