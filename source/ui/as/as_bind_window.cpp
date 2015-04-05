@@ -511,7 +511,8 @@ void RunWindowFrame( void )
 
 void UnbindWindow( void )
 {
-	__delete__( asWindow );
+	if( asWindow )
+		__delete__( asWindow );
 	asWindow = NULL;
 }
 
