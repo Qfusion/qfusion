@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MLIST_UNKNOWN_MAPNAME	"@#$"
 
-#define MLIST_CACHE_EXISTS ( FS_FOpenFile( MLIST_CACHE, NULL, FS_READ|FS_CACHE ) != -1 )
+#define MLIST_CACHE_EXISTS ( FS_FOpenFile( MLIST_CACHE, NULL, FS_READ|FS_CACHE ) > 0 )
 
 typedef struct mapinfo_s
 {
