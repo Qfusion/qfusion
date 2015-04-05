@@ -232,18 +232,10 @@ static void QBufQueue_Wake( qbufQueue_t *queue )
 */
 void QBufQueue_Finish( qbufQueue_t *queue )
 {
-	while( !queue->terminated ) {
-		bool empty;
-
+	while( queue->cmdbuf_len > 0 && !queue->terminated ) {
 		QMutex_Lock( queue->nonempty_mutex );
-		empty = queue->cmdbuf_len == 0;
-		if( !empty )
-			QBufQueue_Wake( queue );
+		QBufQueue_Wake( queue );
 		QMutex_Unlock( queue->nonempty_mutex );
-
-		if( empty )
-			break;
-
 		QThread_Yield();
 	}
 }
@@ -279,6 +271,7 @@ void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_siz
 {
 	void *buf;
 	unsigned write_remains;
+	bool was_empty;
 	
 	if( !queue ) {
 		return;
@@ -292,6 +285,7 @@ void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_siz
 		queue->write_pos = 0;
 	}
 
+	was_empty = queue->cmdbuf_len == 0;
 	write_remains = queue->bufSize - queue->write_pos;
 
 	if( sizeof( int ) > write_remains ) {
@@ -340,9 +334,11 @@ void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_siz
 	QBufQueue_BufLenAdd( queue, cmd_size ); // atomic
 
 	// wake the other thread waiting for signal
-	QMutex_Lock( queue->nonempty_mutex );
-	QBufQueue_Wake( queue );
-	QMutex_Unlock( queue->nonempty_mutex );
+	if( was_empty ) {
+		QMutex_Lock( queue->nonempty_mutex );
+		QBufQueue_Wake( queue );
+		QMutex_Unlock( queue->nonempty_mutex );
+	}
 }
 
 /*
