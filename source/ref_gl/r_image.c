@@ -3127,7 +3127,7 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 	if( !loaded ) {
 		image->missing = true;
 	} else {
-		qglFinish();
+		RB_Finish();
 		image->loaded = true;
 	}
 
