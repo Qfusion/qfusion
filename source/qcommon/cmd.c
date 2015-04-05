@@ -490,6 +490,13 @@ static void Cmd_Exec_f( void )
 
 	COM_DefaultExtension( name, ".cfg", name_size );
 
+	if( FS_PakNameForFile( name ) ) {
+		if( !silent )
+			Com_Printf( "Ignoring %s\n", name );
+		Mem_TempFree( name );
+		return;
+	}
+
 	len = FS_LoadFile( name, (void **)&f, NULL, 0 );
 	if( !f )
 	{
