@@ -553,6 +553,11 @@ static inline unsigned int trap_S_GetPositionedRawSamplesLength( int entnum )
 	return CGAME_IMPORT.S_GetPositionedRawSamplesLength( entnum );
 }
 
+static inline void trap_S_SetEntitySpatilization( int entNum, vec3_t origin, vec3_t velocity )
+{
+	return CGAME_IMPORT.S_SetEntitySpatilization( entNum, origin, velocity );
+}
+
 static inline struct qfontface_s *trap_SCR_RegisterFont( const char *family, int style, unsigned int size )
 {
 	return CGAME_IMPORT.SCR_RegisterFont( family, style, size );

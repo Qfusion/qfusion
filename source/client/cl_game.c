@@ -512,6 +512,7 @@ void CL_GameModule_Init( void )
 	import.S_PositionedRawSamples = CL_SoundModule_PositionedRawSamples;
 	import.S_GetRawSamplesLength = CL_SoundModule_GetRawSamplesLength;
 	import.S_GetPositionedRawSamplesLength = CL_SoundModule_GetPositionedRawSamplesLength;
+	import.S_SetEntitySpatilization = CL_SoundModule_SetEntitySpatilization;
 
 	import.SCR_RegisterFont = SCR_RegisterFont;
 	import.SCR_RegisterSpecialFont = SCR_RegisterSpecialFont;
