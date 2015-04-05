@@ -66,6 +66,7 @@ typedef struct {
 } sv_http_stream_t;
 
 typedef struct {
+	uint64_t id;
 	http_query_method_t method;
 	http_response_code_t error;
 	sv_http_stream_t stream;
@@ -87,6 +88,7 @@ typedef struct {
 } sv_http_request_t;
 
 typedef struct {
+	uint64_t request_id;
 	http_response_code_t code;
 	sv_http_stream_t stream;
 
@@ -130,6 +132,7 @@ typedef unsigned (*queueCmdHandler_t)( const void * );
 
 static bool sv_http_initialized = false;
 static bool sv_http_running = false;
+
 static sv_http_connection_t sv_http_connections[MAX_INCOMING_HTTP_CONNECTIONS];
 static sv_http_connection_t sv_http_connection_headnode, *sv_free_http_connections;
 
@@ -138,6 +141,8 @@ static socket_t sv_socket_http6;
 
 static netadr_t sv_web_upstream_addr;
 static bool sv_web_upstream_is_set;
+
+static uint64_t sv_http_request_autoicr;
 
 static trie_t *sv_http_clients = NULL;
 static qmutex_t *sv_http_clients_mutex = NULL;
@@ -201,11 +206,20 @@ static void SV_Web_ResetRequest( sv_http_request_t *request )
 	
 	NET_InitAddress( &request->realAddr, NA_NOTRANSMIT );
 
+	request->id = 0;
 	request->partial = false;
 	request->close_after_resp = false;
 	request->got_start_line = false;
 	request->error = HTTP_RESP_NONE;
 	request->clientNum = -1;
+}
+
+/*
+* SV_Web_GetNewRequestId
+*/
+static uint64_t SV_Web_GetNewRequestId( void )
+{
+	return sv_http_request_autoicr++;
 }
 
 /*
@@ -510,6 +524,7 @@ typedef struct
 {
 	int id;
 	void *response;
+	uint64_t request_id;
 	http_query_method_t method;
 	char *resource;
 	char *query_string;
@@ -519,6 +534,7 @@ typedef struct
 {
 	int id;
 	void *response;
+	uint64_t request_id;
 	http_response_code_t code;
 	char *content;
 	size_t content_length;
@@ -532,6 +548,7 @@ static void SV_Web_IssueQueryInCmd( sv_http_response_t *response, http_query_met
 	queryInCmd_t cmd;
 	cmd.id = CMD_QUERY_IN;
 	cmd.response = response;
+	cmd.request_id = response->request_id;
 	cmd.method = method;
 	cmd.resource = ( char * )resource;
 	cmd.query_string = ( char * )query_string;
@@ -541,11 +558,12 @@ static void SV_Web_IssueQueryInCmd( sv_http_response_t *response, http_query_met
 /*
 * SV_Web_IssueQueryOutCmd
 */
-static void SV_Web_IssueQueryOutCmd( void *response, http_response_code_t code, char *content, size_t content_length )
+static void SV_Web_IssueQueryOutCmd( void *response, uint64_t request_id, http_response_code_t code, char *content, size_t content_length )
 {
 	queryOutCmd_t cmd;
 	cmd.id = CMD_QUERY_OUT;
 	cmd.response = response;
+	cmd.request_id = request_id;
 	cmd.code = code;
 	cmd.content = content;
 	cmd.content_length = content_length;
@@ -568,7 +586,7 @@ unsigned SV_Web_HandleInQueryCmd( void *pcmd )
 		return 0;
 	}
 	code = sv_http_incoming_cb( cmd->method, cmd->resource, cmd->query_string, &content, &content_length );
-	SV_Web_IssueQueryOutCmd( cmd->response, code, content, content_length );
+	SV_Web_IssueQueryOutCmd( cmd->response, cmd->request_id, code, content, content_length );
 	return sizeof( *cmd );
 }
 
@@ -585,9 +603,8 @@ unsigned SV_Web_HandleOutQueryCmd( void *pcmd )
 		return sizeof( *cmd );
 	}
 
-	if( response->content_state != CONTENT_STATE_AWAITING ) {
+	if( response->content_state != CONTENT_STATE_AWAITING || response->request_id != cmd->request_id ) {
 		// outdated?
-		response->code = HTTP_RESP_SERVICE_UNAVAILABLE;
 		Mem_Free( cmd->content );
 		return sizeof( *cmd );
 	}
@@ -952,7 +969,7 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 	}
 
 	if( request->stream.header_done && !request->error && request->stream.content_length ) {
-		while( sv_http_running && request->stream.content_length > request->stream.content_p ) {
+		while( request->stream.content_length > request->stream.content_p && sv_http_running ) {
 			recvbuf = request->stream.content + request->stream.content_p;
 			recvbuf_size = request->stream.content_length - request->stream.content_p;
 
@@ -969,6 +986,8 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 			request->stream.content[request->stream.content_p] = '\0';
 		}
 	}
+
+	request->id = SV_Web_GetNewRequestId();
 
 	if( !sv_http_running ) {
 		return;
@@ -1025,6 +1044,7 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 	*content = NULL;
 	*content_length = 0;
 
+	response->request_id = request->id;
 	if( !resource ) {
 		response->code = HTTP_RESP_BAD_REQUEST;
 	}
@@ -1381,6 +1401,7 @@ void SV_Web_Init( void )
 {
 	sv_http_initialized = false;
 	sv_http_running = false;
+	sv_http_request_autoicr = 1;
 
 	SV_Web_InitConnections();
 
