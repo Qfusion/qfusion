@@ -819,7 +819,7 @@ qfontface_t *FTLIB_RegisterFont( const char *family, const char *fallback, int s
 		qface->hasKerning = false;
 	}
 
-	if( fallback && qface->f->setFallback ) {
+	if( fallback && *fallback && qface->f->setFallback ) {
 		qfamily = FTLIB_GetRegisterFontFamily( fallback, style, size, true );
 		if( qfamily ) {
 			qface->f->setFallback( qface, qfamily );
