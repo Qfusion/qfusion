@@ -456,8 +456,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 		int numCols, numRows;
 
 		// calculate estimate on texture size
-		maxAdvanceX = ( (FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) ) >> 6 ) + 2;
-		maxAdvanceY = ( (FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) ) >> 6) + 2;
+		maxAdvanceX = ( ( ( FT_MulFix( ftface->max_advance_width, ftsize->metrics.x_scale ) + 63 ) & ~63 ) >> 6 ) + 2;
+		maxAdvanceY = ( ( ( FT_MulFix( ftface->max_advance_height, ftsize->metrics.y_scale ) + 63 ) & ~63 ) >> 6 ) + 2;
 
 		numCols = maxShaderWidth / maxAdvanceX;
 		clamp( numCols, 1, ftface->num_glyphs );
