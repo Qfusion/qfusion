@@ -131,7 +131,7 @@ typedef struct
 typedef unsigned (*queueCmdHandler_t)( const void * );
 
 static bool sv_http_initialized = false;
-static bool sv_http_running = false;
+static volatile bool sv_http_running = false;
 
 static sv_http_connection_t sv_http_connections[MAX_INCOMING_HTTP_CONNECTIONS];
 static sv_http_connection_t sv_http_connection_headnode, *sv_free_http_connections;
