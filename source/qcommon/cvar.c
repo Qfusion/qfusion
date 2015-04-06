@@ -159,7 +159,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, cvar_flag_t flags
 
 		if( Cvar_FlagIsSet( flags, CVAR_USERINFO ) || Cvar_FlagIsSet( flags, CVAR_SERVERINFO ) )
 		{
-			if( var->string && !Cvar_InfoValidate( var->string, true ) )
+			if( var->string && !Cvar_InfoValidate( var->string, false ) )
 			{
 				reset = true;
 			}
