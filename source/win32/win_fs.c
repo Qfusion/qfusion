@@ -302,6 +302,14 @@ time_t Sys_FS_FileMTime( const char *filename )
 }
 
 /*
+* Sys_FS_FileNo
+*/
+int	Sys_FS_FileNo( FILE *fp )
+{
+	return _fileno( fp );
+}
+
+/*
 * Sys_FS_AddFileToMedia
 */
 void Sys_FS_AddFileToMedia( const char *filename )
