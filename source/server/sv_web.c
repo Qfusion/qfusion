@@ -97,6 +97,7 @@ typedef struct {
 	size_t content_length;
 
 	int file;
+	int fileno;
 	size_t file_send_pos;
 	size_t file_chunk_size;
 	char *filename;
@@ -235,6 +236,7 @@ static void SV_Web_ResetResponse( sv_http_response_t *response )
 		FS_FCloseFile( response->file );
 		response->file = 0;
 	}
+	response->fileno = -1;
 	response->file_send_pos = 0;
 	response->file_chunk_size = 0;
 
@@ -501,6 +503,21 @@ static int SV_Web_Send( sv_http_connection_t *con, void *sendbuf, size_t sendbuf
 	sent = NET_Send( &con->socket, sendbuf, sendbuf_size, &con->address );
 	if( sent < 0 ) {
 		Com_DPrintf( "HTTP transmission error to %s\n", NET_AddressToString( &con->address ) );
+		con->open = false;
+	}
+	return sent;
+}
+
+/*
+* SV_Web_SendFile
+*/
+static int64_t SV_Web_SendFile( sv_http_connection_t *con, int fileno, size_t *offset, size_t count )
+{
+	int sent;
+
+	sent = NET_SendFile( &con->socket, fileno, offset, count, &con->address );
+	if( sent < 0 ) {
+		Com_DPrintf( "HTTP file transmission error to %s\n", NET_AddressToString( &con->address ) );
 		con->open = false;
 	}
 	return sent;
@@ -1079,6 +1096,7 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 				*content_length = 0;
 			}
 			else {
+				response->fileno = FS_FileNo( response->file );
 				response->code = HTTP_RESP_OK;
 			}
 		}
@@ -1144,7 +1162,8 @@ static void SV_Web_RespondToQuery( sv_http_connection_t *con )
 			}
 
 			// Content-Range header values
-			response->stream.content_range.begin = FS_Tell( response->file );
+			response->file_send_pos = FS_Tell( response->file );
+			response->stream.content_range.begin = response->file_send_pos;
 			response->stream.content_range.end = min( (int)content_length, response->stream.content_range.end );
 			response->code = HTTP_RESP_PARTIAL_CONTENT;
 		}
@@ -1254,44 +1273,23 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 	if( stream->header_done && stream->content_length ) {
 		while( stream->content_p < stream->content_length && sv_http_running ) {
 			if( response->file ) {
-				if( response->file_send_pos >= response->file_chunk_size ) {
-					// read from file
-					int read_size;
-					
-					if( FS_Eof( response->file ) ){
-						Com_DPrintf( "HTTP file streaming error: premature EOF on %s to %s\n", 
-							response->filename, NET_AddressToString( &con->address ) );
-						con->open = false;
-						break;
-					}
-
-					read_size = min( sizeof( stream->header_buf ), stream->content_length - stream->content_p );
-					read_size = FS_Read( stream->header_buf, read_size, response->file );
-
-					response->file_chunk_size = read_size;
-					response->file_send_pos = 0;
-				}
-				sendbuf = stream->header_buf + response->file_send_pos;
-				sendbuf_size = response->file_chunk_size - response->file_send_pos;
-			}
-			else if( stream->content ) {
-				sendbuf = stream->content + stream->content_p;
-				sendbuf_size = stream->content_length - stream->content_p;
+				sent = SV_Web_SendFile( con, response->fileno, &response->file_send_pos, response->file_chunk_size ); 
 			}
 			else {
-				break;
+				if( !stream->content ) {
+					break;
+				}				
+				sendbuf = stream->content + stream->content_p;
+				sendbuf_size = stream->content_length - stream->content_p;
+				sent = SV_Web_Send( con, sendbuf, sendbuf_size );
 			}
 
-			sent = SV_Web_Send( con, sendbuf, sendbuf_size );
 			if( sent <= 0 ) {
 				break;
 			}
 
 			stream->content_p += sent;
 			total_sent += sent;
-			if( response->file ) {
-				response->file_send_pos += sent;
-			}
 		}
 	}
 
