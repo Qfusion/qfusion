@@ -954,7 +954,8 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 	int locationTag;
 	int health, armor;
 	centity_t *cent;
-	int icons[16][3], numIcons = 0, iconX = x, i;
+	int icons[16][3], iconX = x;
+	unsigned int icon, numIcons = 0;
 	int xalign = align % 3;
 
 	if( !( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_TEAMTAB ) )
@@ -1097,10 +1098,10 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 
 			if( numIcons >= ( sizeof( icons ) / sizeof( icons[0] ) ) )
 			{
-				for( i = 0; i < numIcons; i++ )
+				for( icon = 0; icon < numIcons; icon++ )
 				{
-					trap_R_DrawStretchPic( icons[i][0], icons[i][1], height, height, 0, 0, 1, 1, color,
-						CG_MediaShader( cgs.media.shaderVSayIcon[icons[i][2]] ) );
+					trap_R_DrawStretchPic( icons[icon][0], icons[icon][1], height, height, 0, 0, 1, 1, color,
+						CG_MediaShader( cgs.media.shaderVSayIcon[icons[icon][2]] ) );
 				}
 				numIcons = 0;
 			}
@@ -1111,10 +1112,10 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 		y += height;
 	}
 
-	for( i = 0; i < numIcons; i++ )
+	for( icon = 0; i < numIcons; icon++ )
 	{
-		trap_R_DrawStretchPic( icons[i][0], icons[i][1], height, height, 0, 0, 1, 1, color,
-			CG_MediaShader( cgs.media.shaderVSayIcon[icons[i][2]] ) );
+		trap_R_DrawStretchPic( icons[icon][0], icons[icon][1], height, height, 0, 0, 1, 1, color,
+			CG_MediaShader( cgs.media.shaderVSayIcon[icons[icon][2]] ) );
 	}
 }
 
