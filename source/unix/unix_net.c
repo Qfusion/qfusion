@@ -79,6 +79,9 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t *offset, si
 	off_t _offset = offset ? *offset : -1;
 	ssize_t result = sendfile( handle, fileno, offset ? &_offset : NULL, count );
 	if( result < 0 ) {
+		if( errno == EAGAIN || errno == EWOULDBLOCK ) {
+			return 0;
+		}
 		return result;
 	}
 	if( offset ) {
