@@ -99,7 +99,6 @@ typedef struct {
 	int file;
 	int fileno;
 	size_t file_send_pos;
-	size_t file_chunk_size;
 	char *filename;
 } sv_http_response_t;
 
@@ -238,7 +237,6 @@ static void SV_Web_ResetResponse( sv_http_response_t *response )
 	}
 	response->fileno = -1;
 	response->file_send_pos = 0;
-	response->file_chunk_size = 0;
 
 	response->content_state = CONTENT_STATE_DEFAULT;
 	if( response->content ) {
@@ -915,6 +913,10 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 	sv_http_request_t *request = &con->request;
 	size_t total_received = 0;
 
+	if( con->state != HTTP_CONN_STATE_RECV ) {
+		return;
+	}
+
 	while( !request->stream.header_done && sv_http_running ) {
 		char *end;
 		size_t rem;
@@ -1273,7 +1275,8 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 	if( stream->header_done && stream->content_length ) {
 		while( stream->content_p < stream->content_length && sv_http_running ) {
 			if( response->file ) {
-				sent = SV_Web_SendFile( con, response->fileno, &response->file_send_pos, response->file_chunk_size ); 
+				sendbuf_size = stream->content_length - stream->content_p;
+				sent = SV_Web_SendFile( con, response->fileno, &response->file_send_pos, sendbuf_size );
 			}
 			else {
 				if( !stream->content ) {
@@ -1305,6 +1308,44 @@ static size_t SV_Web_SendResponse( sv_http_connection_t *con )
 	}
 
 	return total_sent;
+}
+
+/*
+* SV_Web_WriteResponse
+*/
+static void SV_Web_WriteResponse( socket_t *socket, sv_http_connection_t *con )
+{
+	if( !sv_http_running ) {
+		return;
+	}
+
+	switch( con->state ) {
+		case HTTP_CONN_STATE_RECV:
+			break;
+		case HTTP_CONN_STATE_RESP:
+			SV_Web_RespondToQuery( con );
+			if( con->state != HTTP_CONN_STATE_SEND ) {
+				break;
+			}
+			// fallthrough
+		case HTTP_CONN_STATE_SEND:
+			SV_Web_SendResponse( con );
+
+			if( con->state == HTTP_CONN_STATE_RECV ) {
+				SV_Web_ResetResponse( &con->response );
+				if( con->close_after_resp ) {
+					con->open = false;
+				}
+				else {
+					SV_Web_ResetRequest( &con->request );
+				}
+			}
+			break;
+		default:
+			Com_DPrintf( "Bad connection state %i\n", con->state );
+			con->open = false;
+			break;
+	}
 }
 
 /*
@@ -1457,6 +1498,8 @@ static void SV_Web_Frame( void )
 		next = con->prev;
 		switch( con->state ) {
 			case HTTP_CONN_STATE_RECV:
+			case HTTP_CONN_STATE_RESP:
+			case HTTP_CONN_STATE_SEND:
 				sockets[num_sockets] = &con->socket;
 				connections[num_sockets] = con;
 				num_sockets++;
@@ -1470,43 +1513,10 @@ static void SV_Web_Frame( void )
 	// read query results from the game module
 	SV_Web_ReadOutgoingQueueCmds();
 
-	NET_Monitor( 50, sockets, (void (*)(socket_t *, void*))SV_Web_ReceiveRequest, NULL, connections );
-
-	for( con = hnode->prev; con != hnode; con = next )
-	{
-		next = con->prev;
-		if( !sv_http_running ) {
-			return;
-		}
-
-		switch( con->state ) {
-			case HTTP_CONN_STATE_RECV:
-				break;
-			case HTTP_CONN_STATE_RESP:
-				SV_Web_RespondToQuery( con );
-				if( con->state != HTTP_CONN_STATE_SEND ) {
-					break;
-				}
-				// fallthrough
-			case HTTP_CONN_STATE_SEND:
-				SV_Web_SendResponse( con );
-
-				if( con->state == HTTP_CONN_STATE_RECV ) {
-					SV_Web_ResetResponse( &con->response );
-					if( con->close_after_resp ) {
-						con->open = false;
-					}
-					else {
-						SV_Web_ResetRequest( &con->request );
-					}
-				}
-				break;
-			default:
-				Com_DPrintf( "Bad connection state %i\n", con->state );
-				con->open = false;
-				break;
-		}
-	}
+	NET_Monitor( 50, sockets,
+		(void (*)(socket_t *, void*))SV_Web_ReceiveRequest,
+		(void (*)(socket_t *, void*))SV_Web_WriteResponse,
+		NULL, connections );
 
 	// close dead connections
 	for( con = hnode->prev; con != hnode; con = next )
