@@ -43,13 +43,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 net_error_t Sys_NET_GetLastError( void )
 {
-	switch( errno )
+	int _errno = errno == EAGAIN ? EWOULDBLOCK : errno;
+
+	switch( _errno )
 	{
 	case 0:				return NET_ERR_NONE;
 	case ECONNREFUSED:	return NET_ERR_CONNRESET;
 	case EWOULDBLOCK:	return NET_ERR_WOULDBLOCK;
 	case EINPROGRESS:	return NET_ERR_INPROGRESS;
-	case EAGAIN:  		return NET_ERR_WOULDBLOCK;
 	default:			return NET_ERR_UNKNOWN;
 	}
 }
