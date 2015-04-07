@@ -33,6 +33,11 @@ struct qcondvar_s {
 	HANDLE e;
 };
 
+static void ( WINAPI *pInitializeConditionVariable )( PCONDITION_VARIABLE ConditionVariable );
+static void ( WINAPI *pWakeConditionVariable )( PCONDITION_VARIABLE ConditionVariable );
+static BOOL ( WINAPI *pSleepConditionVariableCS )( PCONDITION_VARIABLE ConditionVariable,
+	PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds );
+
 #ifdef QF_USE_CRITICAL_SECTIONS
 struct qmutex_s {
 	CRITICAL_SECTION h;
@@ -199,11 +204,6 @@ int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 {
 	return InterlockedExchangeAdd( (volatile LONG*)value, add );
 }
-
-static void ( WINAPI *pInitializeConditionVariable )( PCONDITION_VARIABLE ConditionVariable );
-static void ( WINAPI *pWakeConditionVariable )( PCONDITION_VARIABLE ConditionVariable );
-static BOOL ( WINAPI *pSleepConditionVariableCS )( PCONDITION_VARIABLE ConditionVariable,
-	PCRITICAL_SECTION CriticalSection, DWORD dwMilliseconds );
 
 /*
 * Sys_CondVar_Create
