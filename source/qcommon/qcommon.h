@@ -633,7 +633,9 @@ int64_t		NET_SendFile( const socket_t *socket, int file, size_t *offset, size_t 
 
 void	    NET_Sleep( int msec, socket_t *sockets[] );
 int         NET_Monitor( int msec, socket_t *sockets[], 
-				void (*read_cb)(socket_t *socket, void*), void (*exception_cb)(socket_t *socket, void*), void *privatep[] );
+				void (*read_cb)(socket_t *socket, void*), 
+				void (*write_cb)(socket_t *socket, void*), 
+				void (*exception_cb)(socket_t *socket, void*), void *privatep[] );
 const char *NET_ErrorString( void );
 void	    NET_SetErrorString( const char *format, ... );
 void		NET_SetErrorStringFromLastError( const char *function );
