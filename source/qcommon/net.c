@@ -1085,10 +1085,10 @@ int NET_Send( const socket_t *socket, const void *data, size_t length, const net
 	assert( socket->open );
 
 	if( !socket->open )
-		return false;
+		return -1;
 
 	if( address->type == NA_NOTRANSMIT )
-		return true;
+		return 0;
 
 	switch( socket->type )
 	{
@@ -1914,6 +1914,28 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 		}
 	}
 	return ret;
+}
+
+/*
+* NET_SendFile
+*/
+int64_t NET_SendFile( const socket_t *socket, int file, size_t *offset, size_t count, const netadr_t *address )
+{
+	assert( socket->open );
+
+	if( !socket->open )
+		return -1;
+
+	if( address->type == NA_NOTRANSMIT )
+		return -1;
+
+#ifndef TCP_SUPPORT
+	return -1;
+#else
+	if( socket->type != SOCKET_TCP )
+		return -1;
+	return Sys_NET_SendFile( socket->handle, file, offset, count );
+#endif
 }
 
 /*

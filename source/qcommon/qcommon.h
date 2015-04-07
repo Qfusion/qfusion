@@ -614,25 +614,26 @@ typedef enum
 void	    NET_Init( void );
 void	    NET_Shutdown( void );
 
-bool    NET_OpenSocket( socket_t *socket, socket_type_t type, const netadr_t *address, bool server );
+bool		NET_OpenSocket( socket_t *socket, socket_type_t type, const netadr_t *address, bool server );
 void	    NET_CloseSocket( socket_t *socket );
 
 #ifdef TCP_SUPPORT
 connection_status_t		NET_Connect( socket_t *socket, const netadr_t *address );
 connection_status_t		NET_CheckConnect( socket_t *socket );
-bool				NET_Listen( const socket_t *socket );
-int						NET_Accept( const socket_t *socket, socket_t *newsocket, netadr_t *address );
+bool		NET_Listen( const socket_t *socket );
+int			NET_Accept( const socket_t *socket, socket_t *newsocket, netadr_t *address );
 #endif
 
 int			NET_GetPacket( const socket_t *socket, netadr_t *address, msg_t *message );
-bool    NET_SendPacket( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
+bool		NET_SendPacket( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
 
 int			NET_Get( const socket_t *socket, netadr_t *address, void *data, size_t length );
 int         NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
+int64_t		NET_SendFile( const socket_t *socket, int file, size_t *offset, size_t count, const netadr_t *address );
 
 void	    NET_Sleep( int msec, socket_t *sockets[] );
 int         NET_Monitor( int msec, socket_t *sockets[], 
-	void (*read_cb)(socket_t *socket, void*), void (*exception_cb)(socket_t *socket, void*), void *privatep[] );
+				void (*read_cb)(socket_t *socket, void*), void (*exception_cb)(socket_t *socket, void*), void *privatep[] );
 const char *NET_ErrorString( void );
 void	    NET_SetErrorString( const char *format, ... );
 void		NET_SetErrorStringFromLastError( const char *function );
@@ -642,7 +643,7 @@ int			NET_SetSocketNoDelay( socket_t *socket, int nodelay );
 const char *NET_SocketTypeToString( socket_type_t type );
 const char *NET_SocketToString( const socket_t *socket );
 char	   *NET_AddressToString( const netadr_t *address );
-bool    NET_StringToAddress( const char *s, netadr_t *address );
+bool		NET_StringToAddress( const char *s, netadr_t *address );
 
 unsigned short	NET_GetAddressPort( const netadr_t *address );
 void			NET_SetAddressPort( netadr_t *address, unsigned short port );
@@ -652,8 +653,8 @@ bool    NET_CompareBaseAddress( const netadr_t *a, const netadr_t *b );
 bool    NET_IsLANAddress( const netadr_t *address );
 bool    NET_IsLocalAddress( const netadr_t *address );
 bool    NET_IsAnyAddress( const netadr_t *address );
-void		NET_InitAddress( netadr_t *address, netadrtype_t type );
-void	    NET_BroadcastAddress( netadr_t *address, int port );
+void	NET_InitAddress( netadr_t *address, netadrtype_t type );
+void	NET_BroadcastAddress( netadr_t *address, int port );
 
 //============================================================================
 
