@@ -950,10 +950,12 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 	int team;
 	int teammate;
 	char *ptr, *tok, *loc, *hp, *ap;
-	int height, pixheight;
+	int height;
 	int locationTag;
 	int health, armor;
 	centity_t *cent;
+	int icons[16][3], numIcons = 0, iconX = x, i;
+	int xalign = align % 3;
 
 	if( !( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_TEAMTAB ) )
 		return;
@@ -976,64 +978,81 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 
 	height = trap_SCR_FontHeight( font );
 
-	// find longest line
-	ptr = cg.teaminfo;
-	pixheight = 0;
-	while( ptr )
+	switch( xalign )
 	{
-		tok = COM_Parse( &ptr );
-		if( !tok[0] )
-			break;
-
-		teammate = atoi( tok );
-		if( teammate < 0 || teammate >= gs.maxclients )
-			break;
-
-		loc = COM_Parse( &ptr );
-		if( !loc[0] )
-			break;
-
-		locationTag = atoi( loc );
-		if( locationTag >= MAX_LOCATIONS )
-			locationTag = 0;
-
-		hp = COM_Parse( &ptr );
-		if( !hp[0] )
-			break;
-
-		health = atoi( hp );
-		if( health < 0 )
-			health = 0;
-
-		ap = COM_Parse( &ptr );
-		if( !ap[0] )
-			break;
-
-		armor = atoi( ap );
-		if( armor < 0 )
-			armor = 0;
-
-		// we don't display ourselves
-		if( !ISVIEWERENTITY( teammate+1 ) )
-			pixheight += height;
+	case 0:
+		x += height;
+		break;
+	case 1:
+		iconX -= height;
+		break;
+	case 2:
+		iconX -= height;
+		x -= height;
+		break;
 	}
 
-	y = CG_VerticalAlignForHeight( y, align, pixheight );
+	// vertically align the list
+	if( align / 3 )
+	{
+		int pixheight = 0;
+		ptr = cg.teaminfo;
+		while( ptr )
+		{
+			tok = COM_Parse( &ptr );
+			if( !tok[0] )
+				break;
+
+			teammate = atoi( tok );
+			if( teammate < 0 || teammate >= gs.maxclients )
+				break;
+
+			loc = COM_Parse( &ptr );
+			if( !loc[0] )
+				break;
+
+			locationTag = atoi( loc );
+			if( locationTag >= MAX_LOCATIONS )
+				locationTag = 0;
+
+			hp = COM_Parse( &ptr );
+			if( !hp[0] )
+				break;
+
+			health = atoi( hp );
+			if( health < 0 )
+				health = 0;
+
+			ap = COM_Parse( &ptr );
+			if( !ap[0] )
+				break;
+
+			armor = atoi( ap );
+			if( armor < 0 )
+				armor = 0;
+
+			// we don't display ourselves
+			if( !ISVIEWERENTITY( teammate+1 ) )
+				pixheight += height;
+		}
+
+		y = CG_VerticalAlignForHeight( y, align, pixheight );
+	}
 
 	ptr = cg.teaminfo;
 	while( ptr )
 	{
 		tok = COM_Parse( &ptr );
 		if( !tok[0] )
-			return;
+			break;
 
 		teammate = atoi( tok );
 		if( teammate < 0 || teammate >= gs.maxclients )
-			return;
+			break;
 
 		loc = COM_Parse( &ptr );
 		if( !loc[0] )
-			return;
+			break;
 
 		locationTag = atoi( loc );
 		if( locationTag >= MAX_LOCATIONS )
@@ -1049,7 +1068,7 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 
 		ap = COM_Parse( &ptr );
 		if( !ap[0] )
-			return;
+			break;
 
 		armor = atoi( ap );
 		if( armor < 0 )
@@ -1059,24 +1078,43 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 		if( ISVIEWERENTITY( teammate+1 ) )
 			continue;
 
-		Q_snprintfz( string, sizeof( string ), "%s%s %s%s (%i/%i)%s", cgs.clientInfo[teammate].name, S_COLOR_WHITE,
+		Q_snprintfz( string, sizeof( string ), "%s%s %s%s (%s%i%s/%i)%s", cgs.clientInfo[teammate].name, S_COLOR_WHITE,
 			CG_TranslateString( cgs.configStrings[CS_LOCATIONS+locationTag] ), S_COLOR_WHITE,
-			health, armor, S_COLOR_WHITE );
+			( health < 25 ) ? S_COLOR_RED : "", health, S_COLOR_WHITE, armor, S_COLOR_WHITE );
 
 		// draw the head-icon in the case this player has one
 		cent = &cg_entities[teammate+1];
 		if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time &&
 			cent->localEffects[LOCALEFFECT_VSAY_HEADICON] > 0 && cent->localEffects[LOCALEFFECT_VSAY_HEADICON] < VSAY_TOTAL )
 		{
-			trap_R_DrawStretchPic( CG_HorizontalAlignForWidth( x, align, height ),
-				CG_VerticalAlignForHeight( y, align, height ),
-				height, height, 0, 0, 1, 1,
-				color, CG_MediaShader( cgs.media.shaderVSayIcon[cent->localEffects[LOCALEFFECT_VSAY_HEADICON]] ) );
+			// draw the text in one batch
+			icons[numIcons][0] = iconX;
+			if( xalign == 1 )
+				icons[numIcons][0] -= ( trap_SCR_strWidth( string, font, 0 ) >> 1 );
+			icons[numIcons][1] = y;
+			icons[numIcons][2] = cent->localEffects[LOCALEFFECT_VSAY_HEADICON];
+			numIcons++;
+
+			if( numIcons >= ( sizeof( icons ) / sizeof( icons[0] ) ) )
+			{
+				for( i = 0; i < numIcons; i++ )
+				{
+					trap_R_DrawStretchPic( icons[i][0], icons[i][1], height, height, 0, 0, 1, 1, color,
+						CG_MediaShader( cgs.media.shaderVSayIcon[icons[i][2]] ) );
+				}
+				numIcons = 0;
+			}
 		}
 
-		trap_SCR_DrawString( x + height * ( align % 3 == 0 ), y, align, string, font, color );
+		trap_SCR_DrawString( x, y, xalign, string, font, color );
 
 		y += height;
+	}
+
+	for( i = 0; i < numIcons; i++ )
+	{
+		trap_R_DrawStretchPic( icons[i][0], icons[i][1], height, height, 0, 0, 1, 1, color,
+			CG_MediaShader( cgs.media.shaderVSayIcon[icons[i][2]] ) );
 	}
 }
 
