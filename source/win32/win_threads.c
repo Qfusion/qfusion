@@ -221,6 +221,8 @@ int Sys_CondVar_Create( qcondvar_t **pcond )
 	if( pInitializeConditionVariable ) {
 		pInitializeConditionVariable( &( cond->c ) );
 	} else {
+		// The event-based implementation here is very limited and supports only 1 waiter at once.
+		// If some day Qfusion needs broadcast, a waiter counter should be added.
 		e = CreateEvent( NULL, FALSE, FALSE, NULL );
 		if( !e ) {
 			Q_free( cond );
