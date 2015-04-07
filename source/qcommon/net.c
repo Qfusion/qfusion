@@ -1842,16 +1842,17 @@ void NET_Sleep( int msec, socket_t *sockets[] )
 * NET_Monitor
 * Monitors the given sockets with the given timeout in milliseconds
 * It ignores closed and loopback sockets.
-* Calls the callback function read_cb(socket_t *) with the socket as parameter the socket when incoming data was detected on it
+* Calls the callback function read_cb(socket_t *) with the socket as parameter when incoming data was detected on it
+* Calls the callback function write_cb(socket_t *) with the socket as parameter when the socket is ready to accept outgoing data
 * Calls the callback function exception_cb(socket_t *) with the socket as parameter when a socket exception was detected on that socket
 * For both callbacks, NULL can be passed. When NULL is passed for the exception_cb, no exception detection is performed
 * Incoming data is always detected, even if the 'read_cb' callback was NULL.
 */
-int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void*), void (*exception_cb)(socket_t *, void*), void *privatep[] )
+int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void*), void (*write_cb)(socket_t *, void*), void (*exception_cb)(socket_t *, void*), void *privatep[] )
 {
 	struct timeval timeout;
-	fd_set fdsetr, fdsete;
-	fd_set *p_fdsete = NULL;
+	fd_set fdsetr, fdsetw, fdsete;
+	fd_set *p_fdsetw = NULL, *p_fdsete = NULL;
 	int i, ret;
 	int fdmax = 0;
 
@@ -1859,7 +1860,11 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 		return 0;
 
 	FD_ZERO( &fdsetr );
-	if (exception_cb) {
+	if( write_cb ) {
+		FD_ZERO( &fdsetw );
+		p_fdsetw = &fdsetw;
+	}
+	if( exception_cb ) {
 		FD_ZERO( &fdsete );
 		p_fdsete = &fdsete;
 	}
@@ -1877,6 +1882,8 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 			assert( sockets[i]->handle > 0 );
 			fdmax = max( (int)sockets[i]->handle, fdmax );
 			FD_SET( sockets[i]->handle, &fdsetr ); // network socket
+			if( p_fdsetw )
+				FD_SET( sockets[i]->handle, p_fdsetw );
 			if( p_fdsete )
 				FD_SET( sockets[i]->handle, p_fdsete );
 			break;
@@ -1888,8 +1895,8 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 
 	timeout.tv_sec = msec / 1000;
 	timeout.tv_usec = ( msec % 1000 ) * 1000;
-	ret = select( fdmax+1, &fdsetr, NULL, p_fdsete, &timeout );
-	if ( ( ret > 0) && ( (read_cb) || (exception_cb)) ) {
+	ret = select( fdmax+1, &fdsetr, p_fdsetw, p_fdsete, &timeout );
+	if ( ( ret > 0) && ( read_cb || write_cb || exception_cb ) ) {
 		// Launch callbacks
 		for( i = 0; sockets[i]; i++ ) {
 			if (!sockets[i]->open)
@@ -1900,11 +1907,14 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 #ifdef TCP_SUPPORT
 			case SOCKET_TCP:
 #endif
-				if ( (exception_cb) && (p_fdsete) && (FD_ISSET(sockets[i]->handle, p_fdsete )) ) {
+				if ( (exception_cb) && (FD_ISSET(sockets[i]->handle, p_fdsete )) ) {
 					exception_cb(sockets[i], privatep ? privatep[i] : NULL);
 				}
 				if ( (read_cb) && (FD_ISSET(sockets[i]->handle, &fdsetr )) ) {
 					read_cb(sockets[i], privatep ? privatep[i] : NULL);
+				}
+				if ( (write_cb) && (FD_ISSET(sockets[i]->handle, p_fdsetw )) ) {
+					write_cb(sockets[i], privatep ? privatep[i] : NULL);
 				}
 				break;
 			case SOCKET_LOOPBACK:
