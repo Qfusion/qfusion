@@ -38,6 +38,8 @@ void	    Sys_FS_UnlockFile( void *handle );
 
 time_t		Sys_FS_FileMTime( const char *filename );
 
+int			Sys_FS_FileNo( FILE *fp );
+
 void		Sys_FS_AddFileToMedia( const char *filename );
 
 // virtual storage of pack files, such as .obb on Android
