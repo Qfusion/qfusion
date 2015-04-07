@@ -1112,7 +1112,7 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 		y += height;
 	}
 
-	for( icon = 0; i < numIcons; icon++ )
+	for( icon = 0; icon < numIcons; icon++ )
 	{
 		trap_R_DrawStretchPic( icons[icon][0], icons[icon][1], height, height, 0, 0, 1, 1, color,
 			CG_MediaShader( cgs.media.shaderVSayIcon[icons[icon][2]] ) );
