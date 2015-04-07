@@ -61,13 +61,9 @@ static int gl_filter_max = GL_LINEAR;
 static int gl_filter_depth = GL_LINEAR;
 
 static int gl_anisotropic_filter = 0;
-
-static void *gl_loader_context[NUM_LOADER_THREADS] = { NULL };
-static void *gl_loader_surface[NUM_LOADER_THREADS] = { NULL };
-
 static void R_InitImageLoader( int id );
 static void R_ShutdownImageLoader( int id );
-static void R_LoadAsyncImageFromDisk( image_t *image );
+static bool R_LoadAsyncImageFromDisk( image_t *image );
 
 typedef struct
 {
@@ -2105,10 +2101,10 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 
 	image = R_LoadImage( pathname, empty_data, 1, 1, flags, 1 );
 
-	if( !( image->flags & IT_SYNC ) && ( gl_loader_context[0] != NULL ) ) {
-		RB_Flush(); // An NVIDIA bug makes textures fail to load without this sometimes.
-		R_LoadAsyncImageFromDisk( image );
-		return image;
+	if( !( image->flags & IT_SYNC ) ) {
+		if( R_LoadAsyncImageFromDisk( image ) ) {
+			return image;
+		}
 	}
 
 	image->loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image, R_BindModifyTexture );
@@ -2964,6 +2960,9 @@ typedef unsigned (*queueCmdHandler_t)( const void * );
 static qbufQueue_t *loader_queue[NUM_LOADER_THREADS] = { NULL };
 static qthread_t *loader_thread[NUM_LOADER_THREADS] = { NULL };
 
+static void *loader_gl_context[NUM_LOADER_THREADS] = { NULL };
+static void *loader_gl_surface[NUM_LOADER_THREADS] = { NULL };
+
 static void *R_ImageLoaderThreadProc( void *param );
 
 /*
@@ -3014,12 +3013,12 @@ static void R_IssueUnbindLoaderCmd( int id )
 static void R_InitImageLoader( int id )
 {
 	if( !r_multithreading->integer ) {
-		gl_loader_context[id] = NULL;
-		gl_loader_surface[id] = NULL;
+		loader_gl_context[id] = NULL;
+		loader_gl_surface[id] = NULL;
 		return;
 	}
 
-	if( !GLimp_SharedContext_Create( &gl_loader_context[id], &gl_loader_surface[id] ) ) {
+	if( !GLimp_SharedContext_Create( &loader_gl_context[id], &loader_gl_surface[id] ) ) {
 		return;
 	}
 
@@ -3040,7 +3039,7 @@ void R_FinishLoadingImages( void )
 	int i;
 
 	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
-		if( gl_loader_context[i] ) {
+		if( loader_gl_context[i] ) {
 			R_IssueUnbindLoaderCmd( i );
 			ri.BufQueue_Finish( loader_queue[i] );
 		}
@@ -3050,17 +3049,26 @@ void R_FinishLoadingImages( void )
 /*
 * R_LoadAsyncImageFromDisk
 */
-static void R_LoadAsyncImageFromDisk( image_t *image )
+static bool R_LoadAsyncImageFromDisk( image_t *image )
 {
-	int id = (image - images) % NUM_LOADER_THREADS;
-	if ( !gl_loader_context[id] ) {
+	int id;
+
+	if( loader_gl_context[0] == NULL ) {
+		return false;
+	}
+
+	id = (image - images) % NUM_LOADER_THREADS;
+	if ( loader_gl_context[id] == NULL ) {
 		id = 0;
 	}
 
 	image->loaded = false;
 	image->missing = false;
 
+	RB_Flush(); // An NVIDIA bug makes textures fail to load without this sometimes.
+
 	R_IssueLoadPicLoaderCmd( id, image - images );
+	return true;
 }
 
 /*
@@ -3068,11 +3076,11 @@ static void R_LoadAsyncImageFromDisk( image_t *image )
 */
 static void R_ShutdownImageLoader( int id )
 {
-	void *context = gl_loader_context[id];
-	void *surface = gl_loader_surface[id];
+	void *context = loader_gl_context[id];
+	void *surface = loader_gl_surface[id];
 
-	gl_loader_context[id] = NULL;
-	gl_loader_surface[id] = NULL;
+	loader_gl_context[id] = NULL;
+	loader_gl_surface[id] = NULL;
 	if( !context ) {
 		return;
 	}
@@ -3098,7 +3106,7 @@ static unsigned R_HandleInitLoaderCmd( void *pcmd )
 {
 	loaderInitCmd_t *cmd = pcmd;
 
-	GLimp_SharedContext_MakeCurrent( gl_loader_context[cmd->self], gl_loader_surface[cmd->self] );
+	GLimp_SharedContext_MakeCurrent( loader_gl_context[cmd->self], loader_gl_surface[cmd->self] );
 	unpackAlignment[QGL_CONTEXT_LOADER + cmd->self] = 4;
 
 	return sizeof( *cmd );
