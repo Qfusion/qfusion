@@ -410,18 +410,22 @@ void QBufQueue_Wait( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( *
 		int res;
 		bool result = false;
 
-		QMutex_Lock( queue->nonempty_mutex );
-
 		while( queue->cmdbuf_len == 0 ) {
-			result = QCondVar_Wait( queue->nonempty_condvar, queue->nonempty_mutex, timeout_msec );
-		}
-		
-		QMutex_Unlock( queue->nonempty_mutex );
+			QMutex_Lock( queue->nonempty_mutex );
 
+			result = QCondVar_Wait( queue->nonempty_condvar, queue->nonempty_mutex, timeout_msec );
+
+			// don't hold the mutex, changes to cmdbuf_len are atomic anyway
+			QMutex_Unlock( queue->nonempty_mutex );
+			break;
+		}
+
+		// we're guaranteed at this point that either cmdbuf_len is > 0
+		// or that waiting on the condition variable has timed out
 		res = read( queue, cmdHandlers, result );
 		if( res < 0 ) {
 			// done
-			break;
+			return;
 		}
 	}
 }
