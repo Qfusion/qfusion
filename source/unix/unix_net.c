@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
+#include <sys/sendfile.h>
 #include <errno.h>
 #include <arpa/inet.h>
 
@@ -68,6 +69,22 @@ void Sys_NET_SocketClose( socket_handle_t handle )
 int Sys_NET_SocketIoctl( socket_handle_t handle, long request, ioctl_param_t* param )
 {
 	return ioctl( handle, request, param );
+}
+
+/*
+* Sys_NET_SendFile
+*/
+int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t *offset, size_t count )
+{
+	off_t _offset = offset ? *offset : -1;
+	ssize_t result = sendfile( handle, fileno, offset ? &_offset : NULL, count );
+	if( result < 0 ) {
+		return result;
+	}
+	if( offset ) {
+		*offset = _offset;
+	}
+	return result;
 }
 
 //===================================================================
