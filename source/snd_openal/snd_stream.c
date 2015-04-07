@@ -216,7 +216,7 @@ static void S_RawSamples_( int entNum, float fvol, float attenuation,
 	}
 
 	// Create the source if necessary
-	if( !rs->src )
+	if( !rs->src || !rs->src->isActive )
 	{
 		rs->src = S_AllocRawSource( entNum, fvol, attenuation, volumeVar );
 		if( !rs->src )
@@ -228,9 +228,6 @@ static void S_RawSamples_( int entNum, float fvol, float attenuation,
 		rs->source = S_GetALSource( rs->src );
 		rs->entNum = entNum;
 	}
-
-	if( !rs->src->isActive )
-		return;
 
 	qalGenBuffers( 1, &buffer );
 	if( ( error = qalGetError() ) != AL_NO_ERROR )
