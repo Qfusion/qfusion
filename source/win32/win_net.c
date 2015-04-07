@@ -47,6 +47,7 @@ net_error_t Sys_NET_GetLastError( void )
 	case WSAECONNRESET:		return NET_ERR_CONNRESET;
 	case WSAEWOULDBLOCK:	return NET_ERR_WOULDBLOCK;
 	case WSAEAFNOSUPPORT:	return NET_ERR_UNSUPPORTED;
+	case ERROR_IO_PENDING:	return NET_ERR_WOULDBLOCK;
 	default:				return NET_ERR_UNKNOWN;
 	}
 }
@@ -79,24 +80,25 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t *offset, si
 	DWORD sent;
 
 	if( pTransmitFile == NULL ) {
-		return -1;
+		return SOCKET_ERROR;
 	}
 	if( fhandle == INVALID_HANDLE_VALUE ) {
-		return -1;
+		return SOCKET_ERROR;
 	}
 
 	ol.Pointer = (PVOID)(*offset);
-	if( pTransmitFile( handle, fhandle, count, 0, &ol, NULL, TF_DISCONNECT ) == FALSE ) {
+	if( pTransmitFile( handle, fhandle, count, 0, &ol, NULL, 0 ) == FALSE ) {
 		if( WSAGetLastError() != ERROR_IO_PENDING )	{
 			// this blocks
 			GetOverlappedResult( (HANDLE)handle, &ol, &sent, TRUE );
-			return -1;
+			return SOCKET_ERROR;
 		}
+		return 0;
 	}
 
 	// this blocks
 	if( GetOverlappedResult( (HANDLE)handle, &ol, &sent, TRUE ) == FALSE ) {
-		return -1;
+		return SOCKET_ERROR;
 	}
 
 	if( offset ) {
