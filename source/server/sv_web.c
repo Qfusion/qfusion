@@ -33,6 +33,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define INCOMING_HTTP_CONNECTION_RECV_TIMEOUT	5 // seconds
 #define INCOMING_HTTP_CONNECTION_SEND_TIMEOUT	15 // seconds
 
+#define HTTP_SERVER_SLEEP_TIME					50 // milliseconds
+
 typedef enum
 {
 	HTTP_CONN_STATE_NONE = 0,
@@ -939,7 +941,10 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 
 		ret = SV_Web_Get( con, recvbuf, recvbuf_size - 1 );
 		if( ret <= 0 ) {
-			break;
+			// no data on the socket after select() call, 
+			// the connection has probably been closed on the other end
+			con->open = false;
+			return;
 		}
 
 		total_received += ret;
@@ -1483,6 +1488,7 @@ static void SV_Web_Frame( void )
 	socket_t *sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
 	void *connections[MAX_INCOMING_HTTP_CONNECTIONS];
 	int num_sockets = 0;
+	unsigned sleep_time;
 
 	if( !sv_http_initialized ) {
 		return;
@@ -1521,10 +1527,31 @@ static void SV_Web_Frame( void )
 	// read query results from the game module
 	SV_Web_ReadOutgoingQueueCmds();
 
-	NET_Monitor( 50, sockets,
+	sleep_time = Sys_Milliseconds();
+
+	NET_Monitor( HTTP_SERVER_SLEEP_TIME, sockets,
 		(void (*)(socket_t *, void*))SV_Web_ReceiveRequest,
 		(void (*)(socket_t *, void*))SV_Web_WriteResponse,
 		NULL, connections );
+
+	sleep_time = Sys_Milliseconds() - sleep_time;
+	if( sleep_time <= HTTP_SERVER_SLEEP_TIME ) {
+		sleep_time = HTTP_SERVER_SLEEP_TIME - sleep_time;
+	} else {
+		sleep_time = 0;
+	}
+
+	if( sleep_time > 0 ) {
+		// sleep on network sockets for the remainder of time
+		if( sv_socket_http.address.type == NA_IP ) {
+			sockets[num_sockets++] = &sv_socket_http;
+		}
+		if( sv_socket_http6.address.type == NA_IP6 ) {
+			sockets[num_sockets++] = &sv_socket_http6;
+		}
+		sockets[num_sockets] = NULL;
+		NET_Sleep( sleep_time, sockets );
+	}
 
 	// close dead connections
 	for( con = hnode->prev; con != hnode; con = next )
