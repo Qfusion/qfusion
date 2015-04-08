@@ -941,10 +941,13 @@ static void SV_Web_ReceiveRequest( socket_t *socket, sv_http_connection_t *con )
 
 		ret = SV_Web_Get( con, recvbuf, recvbuf_size - 1 );
 		if( ret <= 0 ) {
-			// no data on the socket after select() call, 
-			// the connection has probably been closed on the other end
-			con->open = false;
-			return;
+			if( total_received == 0 ) {
+				// no data on the socket after select() call, 
+				// the connection has probably been closed on the other end
+				con->open = false;
+				return;
+			}
+			break;
 		}
 
 		total_received += ret;
