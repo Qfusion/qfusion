@@ -513,10 +513,18 @@ static int64_t SV_Web_SendFile( sv_http_connection_t *con, int fileno, size_t *o
 {
 	int sent;
 
-	sent = NET_SendFile( &con->socket, fileno, offset, count, &con->address );
+	assert( offset != NULL );
+	if( !offset ) {
+		return -1;
+	}
+
+	sent = NET_SendFile( &con->socket, fileno, *offset, count, &con->address );
 	if( sent < 0 ) {
 		Com_DPrintf( "HTTP file transmission error to %s\n", NET_AddressToString( &con->address ) );
 		con->open = false;
+	}
+	else {
+		*offset += sent;
 	}
 	return sent;
 }

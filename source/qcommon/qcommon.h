@@ -629,7 +629,7 @@ bool		NET_SendPacket( const socket_t *socket, const void *data, size_t length, c
 
 int			NET_Get( const socket_t *socket, netadr_t *address, void *data, size_t length );
 int         NET_Send( const socket_t *socket, const void *data, size_t length, const netadr_t *address );
-int64_t		NET_SendFile( const socket_t *socket, int file, size_t *offset, size_t count, const netadr_t *address );
+int64_t		NET_SendFile( const socket_t *socket, int file, size_t offset, size_t count, const netadr_t *address );
 
 void	    NET_Sleep( int msec, socket_t *sockets[] );
 int         NET_Monitor( int msec, socket_t *sockets[], 
