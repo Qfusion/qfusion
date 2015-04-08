@@ -27,7 +27,7 @@
 // wsw : aiwa : global definition to activate case-sensitivity of console (1 == activated)
 #define	    CON_CASE_SENSITIVE 0
 
-extern bool con_initialized;
+extern volatile bool con_initialized;
 
 void Con_CheckResize( void );
 void Con_Init( void );
