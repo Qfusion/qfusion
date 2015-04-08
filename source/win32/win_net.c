@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "winquake.h"
 #include <io.h>
-#include <Mswsock.h>
+#include <mswsock.h>
 
 static int ( WINAPI *pTransmitFile )( SOCKET hSocket, 
 	HANDLE hFile, DWORD nNumberOfBytesToWrite, DWORD nNumberOfBytesPerSend, 
