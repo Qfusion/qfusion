@@ -1541,14 +1541,17 @@ static void SV_Web_Frame( void )
 		sleep_time = 0;
 	}
 
-	if( sleep_time > 0 ) {
+	if( sleep_time != 0 ) {
 		// sleep on network sockets for the remainder of time
+		num_sockets = 0;
+
 		if( sv_socket_http.address.type == NA_IP ) {
 			sockets[num_sockets++] = &sv_socket_http;
 		}
 		if( sv_socket_http6.address.type == NA_IP6 ) {
 			sockets[num_sockets++] = &sv_socket_http6;
 		}
+
 		sockets[num_sockets] = NULL;
 		NET_Sleep( sleep_time, sockets );
 	}
