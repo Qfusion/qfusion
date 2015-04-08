@@ -34,11 +34,13 @@ typedef struct
 
 	float times[NUM_CON_TIMES]; // cls.realtime time the line was generated
 	// for transparent notify lines
+
+	qmutex_t *mutex;
 } console_t;
 
 static console_t con;
 
-bool con_initialized;
+volatile bool con_initialized;
 
 static cvar_t *con_notifytime;
 static cvar_t *con_drawNotify;
@@ -184,6 +186,8 @@ void Con_Clear_f( void )
 {
 	int i;
 
+	QMutex_Lock( con.mutex );
+
 	for( i = 0; i < CON_MAXLINES; i++ )
 	{
 		Q_free( con.text[i] );
@@ -193,6 +197,8 @@ void Con_Clear_f( void )
 	con.display = 0;
 	con.x = 0;
 	con.linecolor = COLOR_WHITE;
+
+	QMutex_Unlock( con.mutex );
 }
 
 /*
@@ -275,10 +281,14 @@ static void Con_Dump_f( void )
 		return;
 	}
 
+	QMutex_Lock( con.mutex );
+
 	buffer_size = Con_BufferText( NULL, newline ) + 1;
 	buffer = Mem_TempMalloc( buffer_size );
 
 	Con_BufferText( buffer, newline );
+
+	QMutex_Unlock( con.mutex );
 
 	FS_Write( buffer, buffer_size - 1, file );
 
@@ -406,6 +416,7 @@ void Con_Init( void )
 	con.display = 0;
 	con.linewidth = 78;
 	con.linecolor = COLOR_WHITE;
+	con.mutex = QMutex_Create();
 
 	touch_x = touch_y = -1;
 
@@ -450,6 +461,8 @@ void Con_Shutdown( void )
 	Cmd_RemoveCommand( "messagemode2" );
 	Cmd_RemoveCommand( "clear" );
 	Cmd_RemoveCommand( "condump" );
+
+	QMutex_Destroy( &con.mutex );
 
 	con_initialized = false;
 }
@@ -515,6 +528,8 @@ static void Con_Print2( const char *txt, bool notify )
 
 	if( con_printText && con_printText->integer == 0 )
 		return;
+
+	QMutex_Lock( con.mutex );
 
 	while( *txt )
 	{
@@ -597,6 +612,8 @@ static void Con_Print2( const char *txt, bool notify )
 
 		txt += Q_Utf8SyncPos( txt, 1, UTF8SYNC_RIGHT );
 	}
+
+	QMutex_Unlock( con.mutex );
 }
 
 void Con_Print( const char *txt )
@@ -742,6 +759,8 @@ void Con_DrawNotify( void )
 	char *s;
 	float pixelRatio = VID_GetPixelRatio();
 
+	QMutex_Lock( con.mutex );
+
 	v = 0;
 	if( con_drawNotify->integer || developer->integer )
 	{
@@ -884,7 +903,6 @@ void Con_DrawNotify( void )
 			chat_prestep = 0;
 		}
 
-
 		if( complen && ( chat_linepos < chat_bufferlen ) )
 		{
 			oldchar = s[chat_linepos];
@@ -967,6 +985,8 @@ void Con_DrawNotify( void )
 			}
 		}
 	}
+
+	QMutex_Unlock( con.mutex );
 }
 
 /*
@@ -977,6 +997,8 @@ static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2 )
 	int x, y;
 	int width;
 	struct qfontface_s *font = NULL;
+
+	QMutex_Lock( con.mutex );
 
 	if( con_chatCGame->integer )
 	{
@@ -1021,6 +1043,8 @@ static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2 )
 	*y1 = y;
 	*x2 = x + width;
 	*y2 = y + SCR_FontHeight( font );
+
+	QMutex_Unlock( con.mutex );
 }
 
 /*
@@ -1047,6 +1071,8 @@ void Con_DrawConsole( void )
 		return;
 	if( !smallCharHeight )
 		return;
+
+	QMutex_Lock( con.mutex );
 
 	if( lines > viddef.height )
 		lines = viddef.height;
@@ -1106,6 +1132,8 @@ void Con_DrawConsole( void )
 
 	// draw the input prompt, user text, and cursor if desired
 	Con_DrawInput( lines );
+
+	QMutex_Unlock( con.mutex );
 }
 
 
@@ -1367,10 +1395,14 @@ static void Con_Key_Copy( void )
 		return;
 	}
 
+	QMutex_Lock( con.mutex );
+
 	buffer_size = Con_BufferText( NULL, newline ) + 1;
 	buffer = Mem_TempMalloc( buffer_size );
 
 	Con_BufferText( buffer, newline );
+
+	QMutex_Unlock( con.mutex );
 
 	CL_SetClipboardData( buffer );
 
