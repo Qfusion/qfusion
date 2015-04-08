@@ -30,6 +30,7 @@ void IN_JoyMove( usercmd_t *cmd, int frametime );
 void IN_Frame( void );
 void IN_Activate( bool active );
 
+bool IN_SoftKeyboardAvailable( void ); // whether the OS can open a soft keyboard
 void IN_ShowSoftKeyboard( bool show );
 
 bool IN_ShowUICursor( void );

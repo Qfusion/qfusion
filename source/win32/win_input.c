@@ -1514,6 +1514,14 @@ void IN_JoyMove( usercmd_t *cmd, int frametime )
 }
 
 /*
+* IN_SoftKeyboardAvailable
+*/
+bool IN_SoftKeyboardAvailable( void )
+{
+	return false;
+}
+
+/*
 * IN_ShowSoftKeyboard
 */
 void IN_ShowSoftKeyboard( bool show )

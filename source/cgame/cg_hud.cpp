@@ -402,6 +402,11 @@ static int CG_GetItemTimerTeam( const void *parameter )
 	return max( (int)cent->current.modelindex-1, 0 );
 }
 
+static int CG_SoftKeyboardAvailable( const void *parameter )
+{
+	return ( trap_IN_SoftKeyboardAvailable() ? 1 : 0 );
+}
+
 // ch : backport some of racesow hud elements
 /*********************************************************************************
 lm: edit for race mod,
@@ -646,6 +651,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "DOWNLOAD_PERCENT", CG_GetCvar, "cl_download_percent" },
 
 	{ "CHAT_MODE", CG_GetCvar, "con_messageMode" },
+	{ "SOFTKEYBOARD", CG_SoftKeyboardAvailable, NULL },
 
 	{ "TOUCH_FLIP", CG_GetCvar, "cg_touch_flip" },
 	{ "TOUCH_SCALE", CG_GetCvar, "cg_touch_scale" },
