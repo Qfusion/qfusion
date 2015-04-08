@@ -349,6 +349,14 @@ void IN_Frame()
 }
 
 /**
+ * Assume this backend will be used only with real keyboards.
+ */
+bool IN_SoftKeyboardAvailable( void )
+{
+	return false;
+}
+
+/**
  * Stub for showing an on-screen keyboard.
  */
 void IN_ShowSoftKeyboard( bool show )

@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   79
+#define	CGAME_API_VERSION   80
 
 //
 // structs and variables shared with the main engine
@@ -258,9 +258,10 @@ typedef struct
 	bool ( *CIN_AddRawSamplesListener )( struct cinematics_s *cin, void *listener, 
 		cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
 
-	// input method editor
+	// input
 	unsigned int ( *IN_IME_GetCandidates )( char * const *cands, size_t candSize, unsigned int maxCands,
 		int *selected, int *firstKey );
+	bool ( *IN_SoftKeyboardAvailable )( void );
 } cgame_import_t;
 
 //

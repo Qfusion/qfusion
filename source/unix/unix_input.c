@@ -741,6 +741,11 @@ void IN_Frame( void )
 	IN_Activate( m_active );
 }
 
+bool IN_SoftKeyboardAvailable( void )
+{
+	return false;
+}
+
 void IN_ShowSoftKeyboard( bool show )
 {
 }
