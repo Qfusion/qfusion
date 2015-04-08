@@ -1929,7 +1929,7 @@ int NET_Monitor( int msec, socket_t *sockets[], void (*read_cb)(socket_t *, void
 /*
 * NET_SendFile
 */
-int64_t NET_SendFile( const socket_t *socket, int file, size_t *offset, size_t count, const netadr_t *address )
+int64_t NET_SendFile( const socket_t *socket, int file, size_t offset, size_t count, const netadr_t *address )
 {
 	int ret, err;
 

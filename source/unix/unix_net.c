@@ -26,7 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
+#if !defined ( __APPLE__ )
 #include <sys/sendfile.h>
+#endif
 #include <errno.h>
 #include <arpa/inet.h>
 
@@ -76,17 +78,22 @@ int Sys_NET_SocketIoctl( socket_handle_t handle, long request, ioctl_param_t* pa
 /*
 * Sys_NET_SendFile
 */
-int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t *offset, size_t count )
+int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, size_t count )
 {
-	off_t _offset = offset ? *offset : -1;
-	ssize_t result = sendfile( handle, fileno, offset ? &_offset : NULL, count );
+	off_t len;
+	off_t _offset = offset;
+#if defined ( __APPLE__ )
+	len = count;
+	ssize_t result = sendfile( handle, fileno, _offset, &len, NULL, 0 );
+	result = len;
+#else
+	ssize_t result = sendfile( fileno, handle, &_offset, count );
+	len = result;
+#endif
 	if( result < 0 ) {
 		return result;
 	}
-	if( offset ) {
-		*offset = _offset;
-	}
-	return result;
+	return len;
 }
 
 //===================================================================

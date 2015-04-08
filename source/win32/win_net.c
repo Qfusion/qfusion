@@ -73,7 +73,7 @@ int Sys_NET_SocketIoctl( socket_handle_t handle, long request, ioctl_param_t* pa
 /*
 * Sys_NET_SendFile
 */
-int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t *offset, size_t count )
+int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, size_t count )
 {
 	OVERLAPPED ol = { 0 };
 	HANDLE fhandle = (HANDLE) _get_osfhandle( fileno );
@@ -86,9 +86,9 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t *offset, si
 		return SOCKET_ERROR;
 	}
 
-	ol.Pointer = (PVOID)(*offset);
+	ol.Pointer = (PVOID)(offset);
 	if( pTransmitFile( handle, fhandle, count, 0, &ol, NULL, 0 ) == FALSE ) {
-		if( WSAGetLastError() != ERROR_IO_PENDING )	{
+		if( WSAGetLastError() != ERROR_IO_PENDING ) {
 			// this blocks
 			GetOverlappedResult( (HANDLE)handle, &ol, &sent, TRUE );
 			return SOCKET_ERROR;
@@ -101,9 +101,6 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t *offset, si
 		return SOCKET_ERROR;
 	}
 
-	if( offset ) {
-		*offset += sent;
-	}
 	return sent;
 }
 
