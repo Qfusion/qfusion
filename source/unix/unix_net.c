@@ -84,10 +84,10 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, siz
 	off_t _offset = offset;
 #if defined ( __APPLE__ )
 	len = count;
-	ssize_t result = sendfile( handle, fileno, _offset, &len, NULL, 0 );
+	ssize_t result = sendfile( fileno, handle, _offset, &len, NULL, 0 );
 	result = len;
 #else
-	ssize_t result = sendfile( fileno, handle, &_offset, count );
+	ssize_t result = sendfile( handle, fileno, &_offset, count );
 	len = result;
 #endif
 	if( result < 0 ) {
