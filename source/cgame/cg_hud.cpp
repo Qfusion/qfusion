@@ -115,6 +115,13 @@ static const constant_numeric_t cg_numeric_constants[] = {
 	{ "NOGUN", 0 },
 	{ "GUN", 1 },
 
+	// player movement types
+	{ "PMOVE_TYPE_NORMAL", PM_NORMAL },
+	{ "PMOVE_TYPE_SPECTATOR", PM_SPECTATOR },
+	{ "PMOVE_TYPE_GIB", PM_GIB },
+	{ "PMOVE_TYPE_FREEZE", PM_FREEZE },
+	{ "PMOVE_TYPE_CHASECAM", PM_CHASECAM },
+
 	{ NULL, 0 }
 };
 
@@ -330,15 +337,15 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter )
 	return result;
 }
 
-static int CG_IsControllingPlayer( const void *parameter )
+static int CG_GetPmoveType( const void *parameter )
 {
-	if( cgs.demoPlaying || ISREALSPECTATOR() )
-		return 0;
+	// the real pmove type of the client, which is chasecam or spectator when playing a demo
+	return cg.frame.playerState.pmove.pm_type;
+}
 
-	if( ( cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) || ( CG_GetPOVnum( NULL ) != STAT_NOTSET ) )
-		return 0;
-
-	return 1;
+static int CG_IsDemoPlaying( const void *parameter )
+{
+	return ( cgs.demoPlaying ? 1 : 0 );
 }
 
 static int CG_DownloadInProgress( const void *parameter )
@@ -612,7 +619,8 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "VIDHEIGHT", CG_GetVidHeight, NULL },
 	{ "STUNNED", CG_GetStunned, NULL },
 	{ "SCOREBOARD", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_SCOREBOARD },
-	{ "CONTROLLING", CG_IsControllingPlayer, NULL },
+	{ "PMOVE_TYPE", CG_GetPmoveType, NULL },
+	{ "DEMOPLAYING", CG_IsDemoPlaying, NULL },
 
 	{ "POWERUP_QUAD_TIME", CG_GetPowerupTime, (void *)POWERUP_QUAD },
 	{ "POWERUP_WARSHELL_TIME", CG_GetPowerupTime, (void *)POWERUP_SHELL },
@@ -1300,10 +1308,7 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 
 static void CG_CheckWeaponCross( void )
 {
-	if( cg_hud_weaponcrosstime < 0.0f )
-		return;
-
-	if( !CG_IsControllingPlayer( NULL ) || ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) )
+	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL )
 		cg_hud_weaponcrosstime = 0.0f;
 }
 
@@ -4443,9 +4448,6 @@ void CG_UpdateHUDPostDraw( void )
 */
 void CG_UpdateHUDPostTouch( void )
 {
-	if( cg_hud_touch_buttons & BUTTON_ZOOM )
-	{
-		if( !CG_IsControllingPlayer( NULL ) || ( cg.predictedPlayerState.stats[STAT_HEALTH] <= 0 ) )
-			cg_hud_touch_buttons &= ~BUTTON_ZOOM;
-	}
+	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL )
+		cg_hud_touch_buttons &= ~BUTTON_ZOOM;
 }
