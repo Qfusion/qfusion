@@ -423,32 +423,28 @@ static bool SV_Web_FindGameClientBySession( const char *session, int clientNum )
 }
 
 /*
+* SV_Web_GameClientAddressMatch
+*/
+static int SV_Web_GameClientAddressMatch( http_game_client_t *client, netadr_t *netadr )
+{
+	return NET_CompareBaseAddress( netadr, &client->remoteAddress ) ? 1 : 0;
+}
+
+/*
 * SV_Web_FindGameClientByAddress
 *
 * Performs lookup for game client in trie by network address. Terribly inefficient.
 */
 static bool SV_Web_FindGameClientByAddress( const netadr_t *netadr )
 {
-	unsigned int i;
-	struct trie_dump_s *dump;
-	bool valid_address;
+	trie_error_t trie_error;
+	http_game_client_t *client;
 
 	QMutex_Lock( sv_http_clients_mutex );
-	Trie_Dump( sv_http_clients, "", TRIE_DUMP_VALUES, &dump );
+	trie_error = Trie_FindIf( sv_http_clients, "", TRIE_PREFIX_MATCH, SV_Web_GameClientAddressMatch, ( void * )netadr, &client );
 	QMutex_Unlock( sv_http_clients_mutex );
 
-	valid_address = false;
-	for( i = 0; i < dump->size; ++i )
-	{
-		http_game_client_t *const a = (http_game_client_t *) dump->key_value_vector[i].value;
-		if( NET_CompareBaseAddress( netadr, &a->remoteAddress ) ) {
-			valid_address = true;
-			break;
-		}
-	}
-	Trie_FreeDump( dump );
-
-	return valid_address;
+	return trie_error == TRIE_OK;
 }
 
 /*
