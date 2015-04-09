@@ -1491,7 +1491,6 @@ static void SV_Web_Frame( void )
 	socket_t *sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
 	void *connections[MAX_INCOMING_HTTP_CONNECTIONS];
 	int num_sockets = 0;
-	unsigned sleep_time;
 
 	if( !sv_http_initialized ) {
 		return;
@@ -1530,33 +1529,22 @@ static void SV_Web_Frame( void )
 	// read query results from the game module
 	SV_Web_ReadOutgoingQueueCmds();
 
-	sleep_time = Sys_Milliseconds();
-
-	NET_Monitor( HTTP_SERVER_SLEEP_TIME, sockets,
-		(void (*)(socket_t *, void*))SV_Web_ReceiveRequest,
-		(void (*)(socket_t *, void*))SV_Web_WriteResponse,
-		NULL, connections );
-
-	sleep_time = Sys_Milliseconds() - sleep_time;
-	if( sleep_time <= HTTP_SERVER_SLEEP_TIME ) {
-		sleep_time = HTTP_SERVER_SLEEP_TIME - sleep_time;
-	} else {
-		sleep_time = 0;
+	if( num_sockets != 0 ) {
+		NET_Monitor( HTTP_SERVER_SLEEP_TIME, sockets,
+			(void (*)(socket_t *, void*))SV_Web_ReceiveRequest,
+			(void (*)(socket_t *, void*))SV_Web_WriteResponse,
+			NULL, connections );
 	}
-
-	if( sleep_time != 0 ) {
-		// sleep on network sockets for the remainder of time
-		num_sockets = 0;
-
+	else {
+		// sleep on network sockets if got nothing else to do
 		if( sv_socket_http.address.type == NA_IP ) {
 			sockets[num_sockets++] = &sv_socket_http;
 		}
 		if( sv_socket_http6.address.type == NA_IP6 ) {
 			sockets[num_sockets++] = &sv_socket_http6;
 		}
-
 		sockets[num_sockets] = NULL;
-		NET_Sleep( sleep_time, sockets );
+		NET_Sleep( HTTP_SERVER_SLEEP_TIME, sockets );
 	}
 
 	// close dead connections
