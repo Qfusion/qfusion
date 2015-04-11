@@ -45,14 +45,13 @@ const char *Sys_Library_GetFullName( const char *name )
 */
 const char *Sys_Library_GetGameLibPath( const char *name, int64_t time, int randomizer )
 {
+	// no randomizer because only one instance can run at once
 	static char tempname[PATH_MAX];
-	Q_snprintfz( tempname, sizeof( tempname ),
+	Q_snprintfz( tempname, sizeof( tempname ), "/data/data/%s/cache/%d.%d/%s/tempmodules"
 #ifdef DEDICATED_ONLY
-		"/data/data/%s/cache/%s/tempmodules_server/%s",
-#else
-		"/data/data/%s/cache/%s/tempmodules/%s",
+		"_server"
 #endif
-		sys_android_packageName, FS_GameDirectory(), name ); // no randomizer because only one instance can run at once
+		"/%s", sys_android_packageName, APP_VERSION_MAJOR, APP_VERSION_MINOR, FS_GameDirectory(), name );
 	return tempname;
 }
 
