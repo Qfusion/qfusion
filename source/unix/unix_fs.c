@@ -256,7 +256,10 @@ const char *Sys_FS_GetCacheDirectory( void )
 #ifdef __ANDROID__
 	static char cache[PATH_MAX] = { '\0' };
 	if( !cache[0] )
-		Q_snprintfz( cache, sizeof( cache ), "/data/data/%s/cache", sys_android_packageName );
+	{
+		Q_snprintfz( cache, sizeof( cache ), "/data/data/%s/cache/%d.%d",
+			sys_android_packageName, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+	}
 	return cache;
 #else
 	return NULL;
@@ -269,7 +272,13 @@ const char *Sys_FS_GetCacheDirectory( void )
 const char *Sys_FS_GetSecureDirectory( void )
 {
 #ifdef __ANDROID__
-	return sys_android_app->activity->internalDataPath;
+	static char dir[PATH_MAX] = { '\0' };
+	if( !dir[0] )
+	{
+		Q_snprintfz( dir, sizeof( dir ), "%s/%d.%d", 
+			sys_android_app->activity->internalDataPath, APP_VERSION_MAJOR, APP_VERSION_MINOR );
+	}
+	return dir;
 #else
 	return NULL;
 #endif
