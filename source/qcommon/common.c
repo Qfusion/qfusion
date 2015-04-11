@@ -146,6 +146,9 @@ void Com_BeginRedirect( int target, char *buffer, int buffersize,
 {
 	if( !target || !buffer || !buffersize || !flush )
 		return;
+	
+	QMutex_Lock( com_print_mutex );
+
 	rd_target = target;
 	rd_buffer = buffer;
 	rd_buffersize = buffersize;
@@ -164,6 +167,8 @@ void Com_EndRedirect( void )
 	rd_buffersize = 0;
 	rd_flush = NULL;
 	rd_extra = NULL;
+
+	QMutex_Unlock( com_print_mutex );
 }
 
 /*
@@ -188,6 +193,8 @@ void Com_Printf( const char *format, ... )
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
 
+	QMutex_Lock( com_print_mutex );
+
 	if( rd_target )
 	{
 		if( (int)( strlen( msg ) + strlen( rd_buffer ) ) > ( rd_buffersize - 1 ) )
@@ -196,12 +203,17 @@ void Com_Printf( const char *format, ... )
 			*rd_buffer = 0;
 		}
 		strcat( rd_buffer, msg );
+
+		QMutex_Unlock( com_print_mutex );
 		return;
 	}
 
-	QMutex_Lock( com_print_mutex );
+	QMutex_Unlock( com_print_mutex );
 
+	// console is protected with its own mutex
 	Con_Print( msg );
+
+	QMutex_Lock( com_print_mutex );
 
 	// also echo to debugging console
 	Sys_ConsoleOutput( msg );
@@ -230,6 +242,8 @@ void Com_Printf( const char *format, ... )
 			if( FS_FOpenFile( name, &log_file, ( logconsole_append && logconsole_append->integer ? FS_APPEND : FS_WRITE ) ) == -1 )
 			{
 				log_file = 0;
+				// no dead lock here as both posix mutexes and critical sections 
+				// are reenterant for the thread, which owns the mutex/CS
 				Com_Printf( "Couldn't open: %s\n", name );
 			}
 
