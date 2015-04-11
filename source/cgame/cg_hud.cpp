@@ -2619,6 +2619,11 @@ static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnod
 	return (int)CG_GetNumericArg( &argumentnode ) != 0;
 }
 
+static bool CG_LFuncIfNot( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	return (int)CG_GetNumericArg( &argumentnode ) == 0;
+}
+
 
 typedef struct cg_layoutcommand_s
 {
@@ -3132,6 +3137,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncIf,
 		1,
 		"Conditional expression. Argument accepts operations >, <, ==, >=, <=, etc",
+		false
+	},
+
+	{
+		"ifnot",
+		CG_LFuncIfNot,
+		CG_LFuncIfNot,
+		1,
+		"Negative conditional expression. Argument accepts operations >, <, ==, >=, <=, etc",
 		false
 	},
 
@@ -3747,7 +3761,7 @@ static cg_layoutnode_t *CG_RecurseParseLayoutScript( char **ptr, int level )
 			}
 
 			// special case: last command was "if", we create a new sub-thread and ignore the new command
-			if( command && !Q_stricmp( command->string, "if" ) )
+			if( command && ( !Q_stricmp( command->string, "if" ) || !Q_stricmp( command->string, "ifnot" ) ) )
 			{
 				*ptr = s_tokenback; // step back one token
 				command->ifthread = CG_RecurseParseLayoutScript( ptr, level + 1 );
