@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qcommon/qcommon.h"
 #include "../qcommon/sys_threads.h"
 #include "winquake.h"
+#include <process.h>
 
 #define QF_USE_CRITICAL_SECTIONS
 
@@ -148,15 +149,10 @@ void Sys_Mutex_Unlock( qmutex_t *mutex )
 int Sys_Thread_Create( qthread_t **pthread, void *(*routine) (void*), void *param )
 {
 	qthread_t *thread;
-
-	HANDLE h = CreateThread(
-		NULL,
-		0,
-		(LPTHREAD_START_ROUTINE) routine,
-		(LPVOID) param,
-		0,
-        NULL
-	);
+	unsigned threadID;
+	HANDLE h;
+	
+	h = (HANDLE)_beginthreadex( NULL, 0, (unsigned (WINAPI *) (void *))routine, param, 0, &threadID );
 
 	if( h == NULL ) {
 		return GetLastError();
@@ -178,6 +174,7 @@ void Sys_Thread_Join( qthread_t *thread )
 		CloseHandle( thread->h );
 	}
 }
+
 /*
 * Sys_Thread_Cancel
 */
