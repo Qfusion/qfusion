@@ -1025,7 +1025,7 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 		}
 	}
 
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_MATERIAL, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -1128,7 +1128,7 @@ static void RB_RenderMeshGLSL_Distortion( const shaderpass_t *pass, r_glslfeat_t
 	RB_BindTexture( 3, portaltexture[1] );           // refraction
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_DISTORTION, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -1178,7 +1178,7 @@ static void RB_RenderMeshGLSL_ShadowmapArray( const shaderpass_t *pass, r_glslfe
 	}
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_SHADOWMAP, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, 
 		rb.currentShader->numdeforms, programFeatures );
 	if( !RB_BindProgram( program ) )
@@ -1227,7 +1227,7 @@ static void RB_RenderMeshGLSL_RGBShadow( const shaderpass_t *pass, r_glslfeat_t 
 	RB_SetShaderpassState( pass->flags );
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_RGB_SHADOW, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -1345,7 +1345,7 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( !RB_BindProgram( program ) )
 		return;
@@ -1560,7 +1560,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 	}
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_Q3A_SHADER, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -1674,7 +1674,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 #undef CELSHADE_BIND
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_CELSHADE, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -1710,7 +1710,7 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 	RB_SetShaderpassState( pass->flags );
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_FOG, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -1744,7 +1744,7 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 	RB_BindTexture( 0, image );
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, 
 		rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
@@ -1773,7 +1773,7 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 	RB_BindTexture( 2, pass->images[2] );
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_YUV, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -1809,7 +1809,7 @@ static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslf
 		programFeatures |= GLSL_SHADER_COLORCORRECTION_3D_LUT;
 
 	// update uniforms
-	program = RP_RegisterProgram( GLSL_PROGRAM_TYPE_COLORCORRECTION, NULL,
+	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_COLORCORRECTION, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( RB_BindProgram( program ) )
 	{
@@ -2088,6 +2088,29 @@ void RB_SetLightParams( float minLight, bool noWorldLight )
 }
 
 /*
+* RB_RegisterProgram
+*/
+int RB_RegisterProgram( int type, const char *name, const char *deformsKey, 
+	const deformv_t *deforms, int numDeforms, r_glslfeat_t features )
+{
+	int program;
+	bool noDeforms = !deformsKey || !*deformsKey;
+
+	if( rb.currentRegProgramType == type && noDeforms && rb.currentRegProgramFeatures == features ) {
+		return rb.currentRegProgram;
+	}
+
+	program = RP_RegisterProgram( type, name, deformsKey, deforms, numDeforms, features );
+	if( noDeforms ) {
+		rb.currentRegProgram = program;
+		rb.currentRegProgramType = type;
+		rb.currentRegProgramFeatures = features;
+	}
+
+	return program;
+}
+
+/*
 * RB_BindProgram
 */
 int RB_BindProgram( int program )
@@ -2111,6 +2134,7 @@ int RB_BindProgram( int program )
 	}
 	rb.currentProgramObject = object;
 	rb.dirtyUniformState = true;
+	rb.stats.c_totalPrograms++;
 	return object;
 }
 
