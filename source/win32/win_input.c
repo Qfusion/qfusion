@@ -1537,24 +1537,6 @@ bool IN_ShowUICursor( void )
 }
 
 /*
-* IN_GetInputLanguage
-*/
-void IN_GetInputLanguage( char *dest, size_t size )
-{
-	char lang[16];
-
-	lang[0] = '\0';
-
-	GetLocaleInfo(
-		MAKELCID( LOWORD( GetKeyboardLayout( 0 ) ), SORT_DEFAULT ),
-		LOCALE_SISO639LANGNAME,
-		lang, sizeof( lang ) );
-
-	Q_strupr( lang );
-	Q_strncpyz( dest, lang, size );
-}
-
-/*
 =========================================================================
 
 INPUT METHOD EDITORS
@@ -1577,6 +1559,7 @@ static HIMC ( WINAPI *qimmCreateContext )( void );
 static BOOL ( WINAPI *qimmDestroyContext )( HIMC hIMC );
 static DWORD ( WINAPI *qimmGetCandidateList )( HIMC hIMC, DWORD dwIndex, LPCANDIDATELIST lpCandList, DWORD dwBufLen );
 static LONG ( WINAPI *qimmGetCompositionString )( HIMC hIMC, DWORD dwIndex, LPVOID lpBuf, DWORD dwBufLen );
+static BOOL ( WINAPI *qimmGetConversionStatus )( HIMC hIMC, LPDWORD lpfdwConversion, LPDWORD lpfdwSentence );
 static DWORD ( WINAPI *qimmGetProperty )( HKL hKL, DWORD fdwIndex );
 static BOOL ( WINAPI *qimmNotifyIME )( HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue );
 
@@ -1614,6 +1597,7 @@ void IN_WinIME_Init( void )
 	qimmDestroyContext = In_WinIME_GPA( "ImmDestroyContext" );
 	qimmGetCandidateList = In_WinIME_GPA( "ImmGetCandidateListW" );
 	qimmGetCompositionString = In_WinIME_GPA( "ImmGetCompositionStringW" );
+	qimmGetConversionStatus = In_WinIME_GPA( "ImmGetConversionStatus" );
 	qimmGetProperty = In_WinIME_GPA( "ImmGetProperty" );
 	qimmNotifyIME = In_WinIME_GPA( "ImmNotifyIME" );
 	if( !in_winime_initialized )
@@ -1826,4 +1810,51 @@ unsigned int IN_IME_GetCandidates( char * const *cands, size_t candSize, unsigne
 	}
 
 	return maxCands;
+}
+
+/*
+* IN_GetInputLanguage
+*/
+void IN_GetInputLanguage( char *dest, size_t size )
+{
+	WORD langid = LOWORD( GetKeyboardLayout( 0 ) );
+	char lang[16];
+
+	lang[0] = '\0';
+
+	GetLocaleInfo(
+		MAKELCID( langid, SORT_DEFAULT ),
+		LOCALE_SISO639LANGNAME,
+		lang, sizeof( lang ) );
+	Q_strupr( lang );
+
+	if( ( ( langid & 0xff ) == LANG_JAPANESE ) && in_winime_enabled )
+	{
+		DWORD mode = IME_CMODE_ALPHANUMERIC;
+		const char *modeStr = " A";
+		qimmGetConversionStatus( in_winime_context, &mode, NULL );
+		if( mode & IME_CMODE_NATIVE )
+		{
+			if( mode & IME_CMODE_KATAKANA )
+			{
+				if( mode & IME_CMODE_FULLSHAPE )
+					modeStr = " \xe3\x82\xab";
+				else
+					modeStr = " \xef\xbd\xb6";
+			}
+			else
+			{
+				modeStr = " \xe3\x81\x82";
+			}
+		}
+		else if( mode & IME_CMODE_FULLSHAPE )
+		{
+			modeStr = " \xef\xbc\xa1";
+		}
+
+		if( ( strlen( lang ) + 4 ) < sizeof( lang ) )
+			strcat( lang, modeStr );
+	}
+
+	Q_strncpyz( dest, lang, size );
 }
