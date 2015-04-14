@@ -132,9 +132,9 @@ void RB_StatsMessage( char *msg, size_t size )
 {
 	Q_snprintfz( msg, size, 
 		"%4i verts %4i tris\n"
-		"%4i draws %4i binds",		
+		"%4i draws %4i binds %4i progs",		
 		rb.stats.c_totalVerts, rb.stats.c_totalTris,
-		rb.stats.c_totalDraws, rb.stats.c_totalBinds
+		rb.stats.c_totalDraws, rb.stats.c_totalBinds, rb.stats.c_totalPrograms
 	);
 }
 
