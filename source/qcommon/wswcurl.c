@@ -113,12 +113,13 @@ static time_t wswcurl_now( void );
 ///////////////////////
 // Local variables
 static wswcurl_req *http_requests = NULL; // Linked list of active requests
-static wswcurl_req *http_requests_hnode;   // The item node in the list
-static CURLM    *curlmulti = NULL;		// Curl MULTI handle
+static wswcurl_req *http_requests_hnode; // The item node in the list
+static qmutex_t *http_requests_mutex = NULL;
+static CURLM *curlmulti = NULL;		// Curl MULTI handle
 static int curlmulti_num_handles = 0;
 
 static struct mempool_s *wswcurl_mempool;
-static CURL		*curldummy = NULL;
+static CURL *curldummy = NULL;
 
 static cvar_t *http_proxy;
 static cvar_t *http_proxyuserpwd;
@@ -248,35 +249,18 @@ void wswcurl_start(wswcurl_req *req)
 		CURLSETOPT(req->curl, res, CURLOPT_HTTPPOST, req->post);
 		req->post_last = NULL;
 	}
-	// Initialize multi handle if needed
-	if (curlmulti == NULL)
-	{
-		curlmulti = curl_multi_init();
-		if (curlmulti == NULL) {
-			CURLDBG(("OOPS: CURL MULTI NULL!!!"));
-		}
-	}
 
 	req->status = WSTATUS_QUEUED; // queued
 }
 
 size_t wswcurl_getsize( wswcurl_req *req, size_t *rxreceived )
 {
-#if 0
-	while( !req->headers_done && req->status >= 0 && req->status != WSTATUS_FINISHED/* && req->status != WSTATUS_QUEUED*/ ) {
-		// blocking read until we finish reading all headers
-		CURLDBG(("   CURL BLOCKING GETSIZE LOOP\n"));
-		wswcurl_perform_single( req );
-	}
-#endif
-
 	if( rxreceived ) {
 		*rxreceived = req->rxreceived;
 	}
 	if( req->status < 0 ) {
 		return 0;
 	}
-
 	return req->rx_expsize;
 }
 
@@ -296,14 +280,6 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 
 	if( (req->rxreceived-req->rxreturned) < (size+WMINBUFFERING) && req->paused )
 		wswcurl_unpause(req);
-
-#if 0
-	// Make sure we have data in buffer
-	while ( req->status >= 0 && req->status != WSTATUS_FINISHED && req->status != WSTATUS_QUEUED && (req->rxreceived-req->rxreturned) < size ) {
-		CURLDBG(("   CURL BLOCKING READ LOOP\n"));
-		wswcurl_perform_single (req);
-	}
-#endif
 
 	// hmm, signal an error?
 	if( req->status < 0 )
@@ -352,20 +328,17 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 
 	req->rxreturned += written;
 
-#if 0
-	if( req->paused)
-		Com_Printf(S_COLOR_RED "%d - ", req->rxreturned - req->rxreceived);
-	else
-		Com_Printf(S_COLOR_CYAN "%d - ", req->rxreturned - req->rxreceived);
-#endif
-
 	return written;
 }
 
 void wswcurl_init( void )
 {
 	wswcurl_mempool = Mem_AllocPool( NULL, "Curl" );
+
 	curldummy = curl_easy_init();
+	curlmulti = curl_multi_init();
+
+	http_requests_mutex = QMutex_Create();
 
 	// HTTP proxy settings
 	http_proxy = Cvar_Get( "http_proxy", "", CVAR_ARCHIVE );
@@ -383,6 +356,11 @@ void wswcurl_cleanup( void )
 		curldummy = NULL;
 	}
 
+	curl_multi_cleanup( curlmulti );
+	curlmulti = NULL;
+
+	QMutex_Destroy( &http_requests_mutex );
+
 	Mem_FreePool( &wswcurl_mempool );
 }
 
@@ -392,6 +370,8 @@ int wswcurl_perform()
 	wswcurl_req *r, *next;
 
 	if (!curlmulti) return 0;
+
+	QMutex_Lock( http_requests_mutex );
 
 	// process requests in FIFO manner
 
@@ -449,43 +429,10 @@ int wswcurl_perform()
 	}
 	ret += wswcurl_checkmsg();
 	//CURLDBG(("CURL after checkmsg\n"));
+
+	QMutex_Unlock( http_requests_mutex );
+
 	return ret;
-}
-
-void wswcurl_perform_single (wswcurl_req *req)
-{
-#if 0
-	wswcurl_req *r;
-	// curl_easy_perform (req->curl);
-
-	// remove all other pending transfers
-	if( curlmulti )
-	{
-		r = http_requests;
-		while( r )
-		{
-			if( r != req && r->status )
-				curl_multi_remove_handle(curlmulti, r->curl);
-			r = r->next;
-		}
-	}
-
-	wswcurl_perform();
-
-	// put the transfers back in
-	if( curlmulti )
-	{
-		r = http_requests;
-		while( r )
-		{
-			if( r != req && r->status )
-				curl_multi_add_handle(curlmulti, r->curl);
-			r = r->next;
-		}
-	}
-#else
-	wswcurl_perform();
-#endif
 }
 
 int wswcurl_header( wswcurl_req *req, const char *key, const char *value, ...)
@@ -585,6 +532,8 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 	wswcurl_set_timeout( retreq, WTIMEOUT );
 
 	// link
+	QMutex_Lock( http_requests_mutex );
+
 	retreq->prev = NULL;
 	retreq->next = http_requests;
 	if( retreq->next ) {
@@ -596,6 +545,8 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 	http_requests = retreq;
 
 	CURLDBG((va("   CURL CREATE %s\n", url)));
+
+	QMutex_Unlock( http_requests_mutex );
 
 	return retreq;
 }
@@ -654,13 +605,6 @@ void wswcurl_delete(wswcurl_req *req)
 		req->curl = NULL;
 	}
 
-	if ( (req->next == NULL) && (req == http_requests) )
-	{
-		// Last item in list
-		curl_multi_cleanup(curlmulti);
-		curlmulti = NULL;
-	}
-
 	if (req->url)
 	{
 		WFREE(req->url);
@@ -680,10 +624,13 @@ void wswcurl_delete(wswcurl_req *req)
 	}
 
 	// remove from list
+	QMutex_Lock( http_requests_mutex );
 	if (http_requests_hnode == req) http_requests_hnode = req->prev;
 	if (http_requests == req) http_requests = req->next;
 	if (req->prev) req->prev->next = req->next;
 	if (req->next) req->next->prev = req->prev;
+	QMutex_Unlock( http_requests_mutex );
+
 	WFREE(req);
 }
 
