@@ -371,9 +371,9 @@ int wswcurl_perform()
 
 	if (!curlmulti) return 0;
 
-	QMutex_Lock( http_requests_mutex );
-
 	// process requests in FIFO manner
+
+	QMutex_Lock( http_requests_mutex );
 
 	// check for timed out requests and requests that need to be paused
 	r = http_requests_hnode;
@@ -423,14 +423,14 @@ int wswcurl_perform()
 		r = next;
 	}
 
+	QMutex_Unlock( http_requests_mutex );
+
 	//CURLDBG(("CURL BEFORE MULTI_PERFORM\n"));
 	while ( curl_multi_perform(curlmulti, &ret) == CURLM_CALL_MULTI_PERFORM) {
 		CURLDBG(("   CURL MULTI LOOP\n"));
 	}
 	ret += wswcurl_checkmsg();
 	//CURLDBG(("CURL after checkmsg\n"));
-
-	QMutex_Unlock( http_requests_mutex );
 
 	return ret;
 }
@@ -595,16 +595,6 @@ void wswcurl_delete(wswcurl_req *req)
 		req->post_last = NULL;
 	}
 
-	if (req->curl)
-	{
-		if (curlmulti && req->status && req->status != WSTATUS_QUEUED) {
-			curl_multi_remove_handle(curlmulti, req->curl);
-			curlmulti_num_handles--;
-		}
-		curl_easy_cleanup(req->curl);
-		req->curl = NULL;
-	}
-
 	if (req->url)
 	{
 		WFREE(req->url);
@@ -625,10 +615,22 @@ void wswcurl_delete(wswcurl_req *req)
 
 	// remove from list
 	QMutex_Lock( http_requests_mutex );
+
+	if (req->curl)
+	{
+		if (curlmulti && req->status && req->status != WSTATUS_QUEUED) {
+			curl_multi_remove_handle(curlmulti, req->curl);
+			curlmulti_num_handles--;
+		}
+		curl_easy_cleanup(req->curl);
+		req->curl = NULL;
+	}
+
 	if (http_requests_hnode == req) http_requests_hnode = req->prev;
 	if (http_requests == req) http_requests = req->next;
 	if (req->prev) req->prev->next = req->next;
 	if (req->next) req->next->prev = req->prev;
+
 	QMutex_Unlock( http_requests_mutex );
 
 	WFREE(req);
