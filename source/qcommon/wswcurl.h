@@ -49,10 +49,6 @@ size_t wswcurl_read (wswcurl_req *req, void *buffer, size_t size);
  */
 int wswcurl_perform( void );
 /**
- * Update single stream, blocks until whole stream is received
- */
-void wswcurl_perform_single (wswcurl_req *req);
-/**
  * Cancels and removes a http request
  */
 void wswcurl_delete(wswcurl_req *req);
