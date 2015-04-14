@@ -1830,30 +1830,32 @@ void IN_GetInputLanguage( char *dest, size_t size )
 
 	if( ( ( langid & 0xff ) == LANG_JAPANESE ) && in_winime_enabled )
 	{
-		DWORD mode = IME_CMODE_ALPHANUMERIC;
-		const char *modeStr = " A";
-		qimmGetConversionStatus( in_winime_context, &mode, NULL );
-		if( mode & IME_CMODE_NATIVE )
+		DWORD mode;
+		if( qimmGetConversionStatus( in_winime_context, &mode, NULL ) )
 		{
-			if( mode & IME_CMODE_KATAKANA )
+			const char *modeStr = " A";
+			if( mode & IME_CMODE_NATIVE )
 			{
-				if( mode & IME_CMODE_FULLSHAPE )
-					modeStr = " \xe3\x82\xab";
+				if( mode & IME_CMODE_KATAKANA )
+				{
+					if( mode & IME_CMODE_FULLSHAPE )
+						modeStr = " \xe3\x82\xab";
+					else
+						modeStr = " \xef\xbd\xb6";
+				}
 				else
-					modeStr = " \xef\xbd\xb6";
+				{
+					modeStr = " \xe3\x81\x82";
+				}
 			}
-			else
+			else if( mode & IME_CMODE_FULLSHAPE )
 			{
-				modeStr = " \xe3\x81\x82";
+				modeStr = " \xef\xbc\xa1";
 			}
-		}
-		else if( mode & IME_CMODE_FULLSHAPE )
-		{
-			modeStr = " \xef\xbc\xa1";
-		}
 
-		if( ( strlen( lang ) + 4 ) < sizeof( lang ) )
-			strcat( lang, modeStr );
+			if( ( strlen( lang ) + 4 ) < sizeof( lang ) )
+				strcat( lang, modeStr );
+		}
 	}
 
 	Q_strncpyz( dest, lang, size );
