@@ -46,6 +46,7 @@ void wswcurl_stream_callbacks (wswcurl_req *req, wswcurl_read_cb read_cb, wswcur
 size_t wswcurl_read (wswcurl_req *req, void *buffer, size_t size);
 /**
  * Lets curl handle all connection, treats all messages and returns how many connections are still active.
+ * NOT thread-safe.
  */
 int wswcurl_perform( void );
 /**
