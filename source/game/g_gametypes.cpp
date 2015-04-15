@@ -337,7 +337,7 @@ void G_Gametype_GENERIC_PlayerKilled( edict_t *targ, edict_t *attacker, edict_t 
 		}
 
 		// drop ammo pack (won't drop anything if player doesn't have any strong ammo)
-		Drop_Item( targ, GS_FindItemByTag( AMMO_PACK_WEAK ) );
+		Drop_Item( targ, GS_FindItemByTag( AMMO_PACK ) );
 	}
 }
 
