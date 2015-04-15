@@ -267,7 +267,7 @@ void IN_MouseMove( usercmd_t *cmd )
 	}
 }
 
-void IN_JoyMove( usercmd_t *cmd, int frametime )
+void IN_GetThumbsticks( vec4_t sticks )
 {
 }
 

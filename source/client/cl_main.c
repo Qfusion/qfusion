@@ -61,6 +61,15 @@ cvar_t *m_sensCap;
 cvar_t *m_pitch;
 cvar_t *m_yaw;
 
+cvar_t *joy_forwardthreshold;
+cvar_t *joy_sidethreshold;
+cvar_t *joy_pitchthreshold;
+cvar_t *joy_yawthreshold;
+cvar_t *joy_pitchspeed;
+cvar_t *joy_yawspeed;
+cvar_t *joy_inverty;
+cvar_t *joy_movement_stick;
+
 //
 // userinfo
 //
@@ -2091,6 +2100,15 @@ static void CL_InitLocal( void )
 	m_pitch =		Cvar_Get( "m_pitch", "0.022", CVAR_ARCHIVE );
 	m_yaw =			Cvar_Get( "m_yaw", "0.022", CVAR_ARCHIVE );
 	m_sensCap =		Cvar_Get( "m_sensCap", "0", CVAR_ARCHIVE );
+
+	joy_forwardthreshold = Cvar_Get( "joy_forwardthreshold", "0.239", CVAR_ARCHIVE );
+	joy_sidethreshold = Cvar_Get( "joy_sidethreshold", "0.239", CVAR_ARCHIVE );
+	joy_pitchthreshold = Cvar_Get( "joy_pitchthreshold", "0.265", CVAR_ARCHIVE );
+	joy_yawthreshold = Cvar_Get( "joy_yawthreshold", "0.265", CVAR_ARCHIVE );
+	joy_pitchspeed = Cvar_Get( "joy_pitchspeed", "300", CVAR_ARCHIVE );
+	joy_yawspeed = Cvar_Get( "joy_yawspeed", "280", CVAR_ARCHIVE );
+	joy_inverty = Cvar_Get( "joy_inverty", "0", CVAR_ARCHIVE );
+	joy_movement_stick = Cvar_Get( "joy_movement_stick", "0", CVAR_ARCHIVE );
 
 	cl_masterservers =	Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, 0 );
 
