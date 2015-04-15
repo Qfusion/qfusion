@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 static void SV_AddGravity( edict_t *ent )
 {
-	ent->velocity[2] -= ent->gravity * g_gravity->value * FRAMETIME;
+	ent->velocity[2] -= ent->gravity * level.gravity * FRAMETIME;
 }
 /*
 typedef struct

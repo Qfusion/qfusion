@@ -2166,7 +2166,7 @@ void SP_func_pendulum( edict_t *ent )
 		length = 8;
 	}
 
-	freq = 1 / ( M_PI * 2 ) *sqrt( g_gravity->value / ( 3 *length ) );
+	freq = 1 / ( M_PI * 2 ) *sqrt( level.gravity / ( 3 *length ) );
 
 	VectorCopy( ent->s.angles, ent->moveinfo.start_angles );
 	VectorClear( ent->moveinfo.dir );
