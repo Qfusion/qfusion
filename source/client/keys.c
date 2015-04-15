@@ -596,7 +596,7 @@ void Key_MouseEvent( int key, bool down, unsigned time )
 	{
 		if( down )
 		{
-			if( last_button1_click && ( (time - last_button1_click) < doubleclick_time ) )
+			if( time && last_button1_click && ( (time - last_button1_click) < doubleclick_time ) )
 			{
 				last_button1_click = 0;
 				Key_Event( key, down, time );
