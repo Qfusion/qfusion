@@ -1183,9 +1183,9 @@ static float IN_XInput_ThumbstickValue( int value )
 void IN_GetThumbsticks( vec4_t sticks )
 {
 	sticks[0] = IN_XInput_ThumbstickValue( in_xinput_gamepad.sThumbLX );
-	sticks[1] = IN_XInput_ThumbstickValue( in_xinput_gamepad.sThumbLY );
+	sticks[1] = -IN_XInput_ThumbstickValue( in_xinput_gamepad.sThumbLY );
 	sticks[2] = IN_XInput_ThumbstickValue( in_xinput_gamepad.sThumbRX );
-	sticks[3] = IN_XInput_ThumbstickValue( in_xinput_gamepad.sThumbRY );
+	sticks[3] = -IN_XInput_ThumbstickValue( in_xinput_gamepad.sThumbRY );
 }
 
 /*

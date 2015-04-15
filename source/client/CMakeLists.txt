@@ -2,7 +2,7 @@ project(${QFUSION_CLIENT_NAME})
 
 include_directories(${ZLIB_INCLUDE_DIR} ${CURL_INCLUDE_DIR})
 
-if (USE_SDL2)
+if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     include_directories(${SDL2_INCLUDE_DIRS})
 endif()
 
@@ -38,6 +38,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../null/sys_vfs_null.c"
 
             "../sdl/sdl_input.c"
+            "../sdl/sdl_input_joy.c"
             "../sdl/sdl_input_win.c"
             "../sdl/sdl_vid.c"
             "../sdl/sdl_sys.c"
@@ -87,6 +88,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../null/sys_vfs_null.c"
 
         "../sdl/sdl_input.c"
+        "../sdl/sdl_input_joy.c"
         "../sdl/sdl_input_osx.m"
         "../sdl/sdl_vid.c"
         "../sdl/sdl_sys.c"
@@ -120,6 +122,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../null/sys_vfs_null.c"
 
             "../sdl/sdl_input.c"
+            "../sdl/sdl_input_joy.c"
             "../sdl/sdl_input_unix.c"
             "../sdl/sdl_vid.c"
             "../sdl/sdl_sys.c"
@@ -144,9 +147,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../unix/keysym2ucs.c"
             "../unix/unix_input.c"
             "../unix/unix_vid.c"
+
+            "../sdl/sdl_input_joy.c"
         )
     
-        set(CLIENT_PLATFORM_LIBRARIES "pthread" "dl" "m" "X11" "Xi" "Xext" "Xrandr" "rt")
+        set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "dl" "m" "X11" "Xi" "Xext" "Xrandr" "rt")
     endif()
     set(CLIENT_BINARY_TYPE "")
 

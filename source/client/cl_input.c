@@ -678,7 +678,7 @@ static void CL_AddMovementFromJoystick( usercmd_t *cmd, int frametime )
 		cmd->sidemove += frametime * value;
 	value = sticks[1 ^ swap];
 	if( fabs( value ) > joy_forwardthreshold->value )
-		cmd->forwardmove += frametime * value;
+		cmd->forwardmove -= frametime * value;
 
 	value = sticks[2 ^ swap];
 	if( fabs( value ) > joy_yawthreshold->value )
@@ -690,7 +690,7 @@ static void CL_AddMovementFromJoystick( usercmd_t *cmd, int frametime )
 	value = sticks[3 ^ swap];
 	if( fabs( value ) > joy_pitchthreshold->value )
 	{
-		cl.viewangles[PITCH] += frametime * ( joy_inverty->integer ? 0.001f : -0.001f ) *
+		cl.viewangles[PITCH] += frametime * ( joy_inverty->integer ? -0.001f : 0.001f ) *
 			value * value * value * joy_pitchspeed->value *
 			CL_GameModule_GetSensitivityScale( joy_pitchspeed->value, 0.0f );
 	}
@@ -767,7 +767,7 @@ void CL_CursorMovementFromJoystick( void )
 
 	scale = ( float )( min( viddef.width, viddef.height ) );
 	x += sx * sx * sx * cls.frametime * scale * 1.5f;
-	y += sy * sy * sy * cls.frametime * scale * -1.5f;
+	y += sy * sy * sy * cls.frametime * scale * 1.5f;
 
 	mx = x;
 	my = y;

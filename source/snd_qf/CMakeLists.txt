@@ -2,7 +2,7 @@ project(snd_qf)
 
 include_directories(${VORBIS_INCLUDE_DIR} ${OGG_INCLUDE_DIR} "../snd_common" ".")
 
-if (USE_SDL2)
+if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     include_directories(${SDL2_INCLUDE_DIR})
 else()
     include_directories(${SDL_INCLUDE_DIR})
@@ -38,7 +38,11 @@ else()
             "../sdl/sdl_snd.c"
         )
 
-        set(SND_QF_PLATFORM_LIBRARIES ${SDL_LIBRARY})
+        if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+            set(SND_QF_PLATFORM_LIBRARIES ${SDL2_LIBRARY})
+        else()
+            set(SND_QF_PLATFORM_LIBRARIES ${SDL_LIBRARY})
+        endif()
     endif()
 endif()
 

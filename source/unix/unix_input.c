@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../client/client.h"
 #include "x11.h"
 #include "keysym2ucs.h"
+#include "../sdl/sdl_input_joy.h"
 
 // Vic: transplanted the XInput2 code from jquake
 
@@ -629,6 +630,7 @@ static void HandleEvents( void )
 
 void IN_Commands( void )
 {
+	IN_SDL_JoyCommands();
 }
 
 void IN_MouseMove( usercmd_t *cmd )
@@ -638,10 +640,6 @@ void IN_MouseMove( usercmd_t *cmd )
 		CL_MouseMove( cmd, mx, my );
 		mx = my = 0;
 	}
-}
-
-void IN_GetThumbsticks( vec4_t sticks )
-{
 }
 
 void IN_Activate( bool active )
@@ -663,6 +661,8 @@ void IN_Activate( bool active )
 		uninstall_grabs_mouse();
 		uninstall_grabs_keyboard();
 	}
+
+	IN_SDL_JoyActivate( active );
 }
 
 
@@ -695,6 +695,7 @@ void IN_Init( void )
 	input_inited = true;
 	install_grabs_keyboard();
 	install_grabs_mouse();
+	IN_SDL_JoyInit( mouse_active );
 
 	XA_TARGETS = XInternAtom( x11display.dpy, "TARGETS", 0 );
 	XA_text = XInternAtom( x11display.dpy, "TEXT", 0 );
@@ -708,6 +709,7 @@ void IN_Shutdown( void )
 
 	uninstall_grabs_keyboard();
 	uninstall_grabs_mouse();
+	IN_SDL_JoyShutdown();
 	input_inited = false;
 	focus = false;
 }
