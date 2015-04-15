@@ -487,7 +487,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 					continue;
 				if( surf2->fog != surf->fog )
 					continue;
-				if( vcount + surf2->mesh->numVerts > USHRT_MAX )
+				if( vcount + surf2->mesh->numVerts >= USHRT_MAX )
 					continue;
 
 				// unvised maps and submodels submodel can simply skip PVS checks
