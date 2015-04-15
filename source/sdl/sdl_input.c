@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include "../client/client.h"
+#include "sdl_input_joy.h"
 
 cvar_t *in_grabinconsole;
 
@@ -21,9 +22,11 @@ void IN_SetMouseScalingEnabled( bool isRestore )
 
 void IN_Commands( void )
 {
+	IN_SDL_JoyCommands();
 }
 void IN_Activate( bool active )
 {
+	IN_SDL_JoyActivate( active );
 }
 
 /**
@@ -267,10 +270,6 @@ void IN_MouseMove( usercmd_t *cmd )
 	}
 }
 
-void IN_GetThumbsticks( vec4_t sticks )
-{
-}
-
 void IN_Init()
 {
 	if( input_inited )
@@ -287,6 +286,8 @@ void IN_Init()
 	SDL_SetCursor( NULL );
 
 	IN_SetMouseScalingEnabled( false );
+
+	IN_SDL_JoyInit( true );
 
 	input_inited = true;
 	input_active = true; // will be activated by IN_Frame if necessary
@@ -306,6 +307,7 @@ void IN_Shutdown()
 	input_inited = false;
 	SDL_SetRelativeMouseMode( SDL_FALSE );
 	IN_SetMouseScalingEnabled( true );
+	IN_SDL_JoyShutdown();
 }
 
 /**
