@@ -636,7 +636,10 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 
 	if( GS_RaceGametype() )
 	{
-		clocktime = cg.predictedPlayerState.stats[STAT_TIME_SELF] * 100;
+		if( cg.predictedPlayerState.stats[STAT_TIME_SELF] != STAT_NOTSET )
+			clocktime = cg.predictedPlayerState.stats[STAT_TIME_SELF] * 100;
+		else
+			clocktime = 0;
 	}
 	else if( GS_MatchClockOverride() )
 	{
@@ -673,15 +676,8 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 
 	if( GS_RaceGametype() )
 	{
-		if( clocktime == ( STAT_NOTSET * 100 ) )
-		{
-			Q_strncpyz( string, "--:--.-", sizeof( string ) );
-		}
-		else
-		{
-			Q_snprintfz( string, sizeof( string ), "%02i:%02i.%i",
-				minutes, ( int )seconds, ( int )( seconds * 10.0 ) % 10 );
-		}
+		Q_snprintfz( string, sizeof( string ), "%02i:%02i.%i",
+			minutes, ( int )seconds, ( int )( seconds * 10.0 ) % 10 );
 	}
 	else if( cg.predictedPlayerState.stats[STAT_NEXT_RESPAWN] )
 	{
