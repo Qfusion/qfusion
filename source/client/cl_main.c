@@ -2713,6 +2713,8 @@ void CL_Frame( int realmsec, int gamemsec )
 
 	CL_NewUserCommand( allRealMsec );
 
+	CL_CursorMovementFromJoystick();
+
 	// update the screen
 	if( host_speeds->integer )
 		time_before_ref = Sys_Milliseconds();
