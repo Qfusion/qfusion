@@ -1131,7 +1131,7 @@ void IN_Commands( void )
 	{
 		const int keys[] =
 		{
-			K_UPARROW, K_DOWNARROW, K_LEFTARROW, K_RIGHTARROW, 0, 0,
+			K_AUX29, K_AUX31, K_AUX32, K_AUX30, 0, 0,
 			K_AUX9, K_AUX10, K_AUX5, K_AUX6, 0, 0,
 			K_JOY1, K_JOY2, K_JOY3, K_JOY4
 		};
