@@ -237,6 +237,7 @@ typedef struct
 	int numLocations;
 
 	timeout_t timeout;
+	float gravity;
 } level_locals_t;
 
 

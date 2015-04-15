@@ -410,7 +410,7 @@ static void trigger_push_setup( edict_t *self )
 	VectorScale( origin, 0.5, origin );
 
 	height = target->s.origin[2] - origin[2];
-	time = sqrt( height / ( 0.5 * g_gravity->value ) );
+	time = sqrt( height / ( 0.5 * level.gravity ) );
 	if( !time )
 	{
 		G_FreeEdict( self );
@@ -421,7 +421,7 @@ static void trigger_push_setup( edict_t *self )
 	velocity[2] = 0;
 	dist = VectorNormalize( velocity );
 	VectorScale( velocity, dist / time, velocity );
-	velocity[2] = time * g_gravity->value;
+	velocity[2] = time * level.gravity;
 	VectorCopy( velocity, self->s.origin2 );
 }
 

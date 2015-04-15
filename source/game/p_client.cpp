@@ -1637,7 +1637,7 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta )
 	VectorCopy( ent->velocity, client->ps.pmove.velocity );
 	VectorCopy( ent->s.angles, client->ps.viewangles );
 
-	client->ps.pmove.gravity = g_gravity->value;
+	client->ps.pmove.gravity = level.gravity;
 
 	if( GS_MatchState() >= MATCH_STATE_POSTMATCH || GS_MatchPaused() 
 		|| ( ent->movetype != MOVETYPE_PLAYER && ent->movetype != MOVETYPE_NOCLIP ) )
