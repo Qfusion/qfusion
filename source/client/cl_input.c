@@ -607,9 +607,6 @@ static void CL_AddAnglesFromKeys( int frametime )
 {
 	float speed;
 
-	if( !frametime )
-		return;
-
 	if( in_speed.state & 1 )
 		speed = ( (float)frametime * 0.001f ) * cl_anglespeedkey->value;
 	else
@@ -635,9 +632,6 @@ static void CL_AddAnglesFromKeys( int frametime )
 */
 static void CL_AddMovementFromKeys( short *forwardmove, short *sidemove, short *upmove, int frametime )
 {
-	if( !frametime )
-		return;
-
 	if( in_strafe.state & 1 )
 	{
 		*sidemove += frametime * CL_KeyState( &in_right );
@@ -654,6 +648,51 @@ static void CL_AddMovementFromKeys( short *forwardmove, short *sidemove, short *
 	{
 		*forwardmove += frametime * CL_KeyState( &in_forward );
 		*forwardmove -= frametime * CL_KeyState( &in_back );
+	}
+}
+
+extern cvar_t *joy_forwardthreshold;
+extern cvar_t *joy_sidethreshold;
+extern cvar_t *joy_pitchthreshold;
+extern cvar_t *joy_yawthreshold;
+extern cvar_t *joy_pitchspeed;
+extern cvar_t *joy_yawspeed;
+extern cvar_t *joy_inverty;
+extern cvar_t *joy_movement_stick;
+
+/*
+* CL_AddMovementFromJoystick
+*/
+static void CL_AddMovementFromJoystick( usercmd_t *cmd, int frametime )
+{
+	vec4_t sticks;
+	int swap;
+	float value;
+
+	IN_GetThumbsticks( sticks );
+
+	swap = ( joy_movement_stick->integer ? 2 : 0 );
+
+	value = sticks[swap];
+	if( fabs( value ) > joy_sidethreshold->value )
+		cmd->sidemove += frametime * value;
+	value = sticks[1 ^ swap];
+	if( fabs( value ) > joy_forwardthreshold->value )
+		cmd->forwardmove += frametime * value;
+
+	value = sticks[2 ^ swap];
+	if( fabs( value ) > joy_yawthreshold->value )
+	{
+		cl.viewangles[YAW] += frametime * -0.001f *
+			value * value * value * joy_yawspeed->value *
+			CL_GameModule_GetSensitivityScale( joy_yawspeed->value, 0.0f );
+	}
+	value = sticks[3 ^ swap];
+	if( fabs( value ) > joy_pitchthreshold->value )
+	{
+		cl.viewangles[PITCH] += frametime * ( joy_inverty->integer ? 0.001f : -0.001f ) *
+			value * value * value * joy_pitchspeed->value *
+			CL_GameModule_GetSensitivityScale( joy_pitchspeed->value, 0.0f );
 	}
 }
 
@@ -681,7 +720,7 @@ void CL_UpdateCommandInput( void )
 
 		CL_AddAnglesFromKeys( keys_frame_time );
 		CL_AddMovementFromKeys( &cmd->forwardmove, &cmd->sidemove, &cmd->upmove, keys_frame_time );
-		IN_JoyMove( cmd, keys_frame_time );
+		CL_AddMovementFromJoystick( cmd, keys_frame_time );
 		old_keys_frame_time = sys_frame_time;
 	}
 
