@@ -1692,7 +1692,7 @@ void BOT_DMclass_InitPersistant( edict_t *self )
 	self->ai->pers.inventoryWeights[HEALTH_SMALL] = /*self->ai->pers.cha.health_grabber **/ 0.6f;
 
 	// backpack
-	self->ai->pers.inventoryWeights[AMMO_PACK_WEAK] = 0.4f;
+	self->ai->pers.inventoryWeights[AMMO_PACK] = 0.4f;
 
 	self->ai->pers.inventoryWeights[POWERUP_QUAD] = self->ai->pers.cha.offensiveness * 2.0f;
 	self->ai->pers.inventoryWeights[POWERUP_SHELL] = self->ai->pers.cha.offensiveness * 2.0f;
