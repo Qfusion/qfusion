@@ -155,18 +155,13 @@ find_package(Freetype REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(PNG REQUIRED)
 
-# We need SDL only on non-Windows platforms
-if (USE_SDL2)
+# We need SDL only on non-Windows platforms or when with SDL2-backend
+if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     find_package(SDL2 REQUIRED)
+endif()
+
+if (USE_SDL2)
     add_definitions(-DUSE_SDL2)
-else()
-    if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-            find_package(SDL2 REQUIRED)
-        else()
-            find_package(SDL REQUIRED)
-        endif()
-    endif()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
