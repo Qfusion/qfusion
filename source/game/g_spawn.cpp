@@ -747,6 +747,7 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 
 	level.spawnedTimeStamp = game.realtime;
 	level.time = levelTime;
+	level.gravity = g_gravity->value;
 
 	// get the strings back
 	Q_strncpyz( level.mapname, name, sizeof( level.mapname ) );
@@ -976,5 +977,5 @@ static void SP_worldspawn( edict_t *ent )
 	}
 
 	if( st.gravity )
-		trap_Cvar_Set( "g_gravity", st.gravity );
+		level.gravity = atof( st.gravity );
 }
