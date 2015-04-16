@@ -168,7 +168,7 @@ void RocketModule::keyEvent( int key, bool pressed )
 			parameters.Set( "key", key );
 			element->DispatchEvent( "keyselect", parameters );
 		}
-		else if( key == K_JOY1 )
+		else if( key == K_A_BUTTON )
 		{
 			if( pressed )
 				context->ProcessMouseButtonDown( 0, mod );
@@ -179,7 +179,7 @@ void RocketModule::keyEvent( int key, bool pressed )
 		{
 			int rkey = keyconv.toRocketKey( key );
 
-			if( key == K_JOY2 )
+			if( key == K_B_BUTTON )
 			{
 				rkey = Rocket::Core::Input::KI_ESCAPE;
 				if( element )

@@ -61,10 +61,10 @@ void IN_SDL_JoyCommands( void )
 	int i, buttons = 0, buttonDiff;
 	const int keys[] =
 	{
-		K_JOY1, K_JOY2, K_JOY3, K_JOY4,
-		K_ESCAPE, 0, 0, K_AUX9, K_AUX10, K_AUX5, K_AUX6,
-		K_AUX29, K_AUX31, K_AUX32, K_AUX30,
-		K_AUX17, K_AUX16
+		K_A_BUTTON, K_B_BUTTON, K_X_BUTTON, K_Y_BUTTON, K_ESCAPE, 0, 0,
+		K_L_STICK, K_R_STICK, K_L_SHOULDER, K_R_SHOULDER,
+		K_DPAD_UP, K_DPAD_DOWN, K_DPAD_LEFT, K_DPAD_RIGHT,
+		K_L_TRIGGER, K_R_TRIGGER
 	};
 
 	if( in_sdl_joyInitialized )
