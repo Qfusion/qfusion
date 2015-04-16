@@ -24,7 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static bool in_sdl_joyInitialized, in_sdl_joyActive;
 static SDL_GameController *in_sdl_joyController;
-static int in_sdl_joyOldButtons;
 
 /*
 * IN_SDL_JoyInit
@@ -58,7 +57,8 @@ void IN_SDL_JoyActivate( bool active )
 */
 void IN_SDL_JoyCommands( void )
 {
-	int i, buttons = 0, buttonDiff;
+	int i, buttons = 0, buttonsDiff;
+	static int buttonsOld;
 	const int keys[] =
 	{
 		K_A_BUTTON, K_B_BUTTON, K_X_BUTTON, K_Y_BUTTON, K_ESCAPE, 0, 0,
@@ -110,18 +110,18 @@ void IN_SDL_JoyCommands( void )
 		}
 	}
 
-	buttonDiff = buttons ^ in_sdl_joyOldButtons;
-	if( buttonDiff )
+	buttonsDiff = buttons ^ buttonsOld;
+	if( buttonsDiff )
 	{
 		unsigned int time = Sys_Milliseconds();
 
 		for( i = 0; i < ( sizeof( keys ) / sizeof( keys[0] ) ); i++ )
 		{
-			if( buttonDiff & ( 1 << i ) )
+			if( buttonsDiff & ( 1 << i ) )
 				Key_Event( keys[i], ( buttons & ( 1 << i ) ) ? true : false, time );
 		}
 
-		in_sdl_joyOldButtons = buttons;
+		buttonsOld = buttons;
 	}
 }
 
