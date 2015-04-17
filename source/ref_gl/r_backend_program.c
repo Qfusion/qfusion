@@ -2094,7 +2094,17 @@ int RB_RegisterProgram( int type, const char *name, const char *deformsKey,
 	const deformv_t *deforms, int numDeforms, r_glslfeat_t features )
 {
 	int program;
-	bool noDeforms = !deformsKey || !*deformsKey;
+	bool noDeforms;
+	
+	if( (features & (GLSL_SHADER_COMMON_AUTOSPRITE|GLSL_SHADER_COMMON_AUTOSPRITE2)) && rb.currentShader->numdeforms == 1 ) {
+		// simple autosprites don't need deformvs key as they contribute to features
+		deformsKey = "";
+		noDeforms = true;
+	}
+	else {
+		// only programs with no real vertex deforms can use the quick cache
+		noDeforms = !deformsKey || !*deformsKey;
+	}
 
 	if( rb.currentRegProgramType == type && noDeforms && rb.currentRegProgramFeatures == features ) {
 		return rb.currentRegProgram;
