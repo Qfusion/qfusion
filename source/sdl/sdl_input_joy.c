@@ -42,8 +42,6 @@ void IN_SDL_JoyInit( bool active )
 
 /*
 * IN_SDL_JoyActivate
-*
-* SDL game controller code called in IN_JoyActivate.
 */
 void IN_SDL_JoyActivate( bool active )
 {
@@ -166,5 +164,3 @@ void IN_SDL_JoyShutdown( void )
 	SDL_QuitSubSystem( SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER );
 	in_sdl_joyInitialized = false;
 }
-
-
