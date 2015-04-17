@@ -2937,7 +2937,6 @@ enum
 	CMD_LOADER_INIT,
 	CMD_LOADER_SHUTDOWN,
 	CMD_LOADER_LOAD_PIC,
-	CMD_LOADER_UNBIND,
 
 	NUM_LOADER_CMDS
 };
@@ -2999,15 +2998,6 @@ static void R_IssueLoadPicLoaderCmd( int id, int pic )
 }
 
 /*
-* R_IssueUnbindLoaderCmd
-*/
-static void R_IssueUnbindLoaderCmd( int id )
-{
-	int cmd = CMD_LOADER_UNBIND;
-	ri.BufQueue_EnqueueCmd( loader_queue[id], &cmd, sizeof( cmd ) );
-}
-
-/*
 * R_InitImageLoader
 */
 static void R_InitImageLoader( int id )
@@ -3040,7 +3030,6 @@ void R_FinishLoadingImages( void )
 
 	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
 		if( loader_gl_context[i] ) {
-			R_IssueUnbindLoaderCmd( i );
 			ri.BufQueue_Finish( loader_queue[i] );
 		}
 	}
@@ -3139,25 +3128,10 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 		image->loaded = true;
 	}
 
+	// Make sure the image is updated on all contexts.
+	qglBindTexture( R_TextureTarget( image->flags, NULL ), 0 );
+
 	return sizeof( *cmd );
-}
-
-/*
-* R_HandleUnbindLoaderCmd
-*/
-static unsigned R_HandleUnbindLoaderCmd( void *pcmd )
-{
-	image_t tex;
-
-	memset( &tex, 0, sizeof( tex ) );
-
-	R_BindContextTexture( &tex );
-
-	tex.flags |= IT_CUBEMAP;
-
-	R_BindContextTexture( &tex );
-
-	return sizeof( int );
 }
 
 /*
@@ -3178,8 +3152,7 @@ static void *R_ImageLoaderThreadProc( void *param )
 	{
 		(queueCmdHandler_t)R_HandleInitLoaderCmd,
 		(queueCmdHandler_t)R_HandleShutdownLoaderCmd,
-		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd,
-		(queueCmdHandler_t)R_HandleUnbindLoaderCmd
+		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd
 	};
 
 	ri.BufQueue_Wait( cmdQueue, R_ImageLoaderCmdsWaiter, cmdHandlers, 0XFFFFFFFF );
