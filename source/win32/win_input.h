@@ -145,6 +145,8 @@ WINUSERAPI BOOL WINAPI RegisterRawInputDevices(PCRAWINPUTDEVICE,UINT,UINT);
 extern int mouse_buttons;
 extern int mouse_wheel_type;
 
+void IN_Activate( bool active );
+
 void IN_MouseEvent( int mstate );
 
 void IN_RawInput_MouseRead( HANDLE in_device_handle );
