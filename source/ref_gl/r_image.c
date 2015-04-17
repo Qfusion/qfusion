@@ -3124,12 +3124,11 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 	if( !loaded ) {
 		image->missing = true;
 	} else {
+		// Make sure the image is updated on all contexts.
+		qglBindTexture( R_TextureTarget( image->flags, NULL ), 0 );
 		RB_Finish();
 		image->loaded = true;
 	}
-
-	// Make sure the image is updated on all contexts.
-	qglBindTexture( R_TextureTarget( image->flags, NULL ), 0 );
 
 	return sizeof( *cmd );
 }
