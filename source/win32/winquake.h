@@ -31,8 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "win_input.h"
 
-#define UWM_APPACTIVE		(WM_APP+100)
-
 enum
 {
 	MWHEEL_UNKNOWN,
