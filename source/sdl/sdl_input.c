@@ -24,10 +24,6 @@ void IN_Commands( void )
 {
 	IN_SDL_JoyCommands();
 }
-void IN_Activate( bool active )
-{
-	IN_SDL_JoyActivate( active );
-}
 
 /**
  * Function which is called whenever the mouse is moved.
@@ -303,7 +299,6 @@ void IN_Shutdown()
 
 	Com_Printf( "Shutdown SDL Input\n" );
 
-	IN_Activate( false );
 	input_inited = false;
 	SDL_SetRelativeMouseMode( SDL_FALSE );
 	IN_SetMouseScalingEnabled( true );

@@ -642,7 +642,7 @@ void IN_MouseMove( usercmd_t *cmd )
 	}
 }
 
-void IN_Activate( bool active )
+static void IN_Activate( bool active )
 {
 	if( !input_inited )
 		return;

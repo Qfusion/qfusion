@@ -28,7 +28,6 @@ void IN_MouseMove( usercmd_t *cmd );
 void IN_GetThumbsticks( vec4_t sticks );
 
 void IN_Frame( void );
-void IN_Activate( bool active );
 
 bool IN_SoftKeyboardAvailable( void ); // whether the OS can open a soft keyboard
 void IN_ShowSoftKeyboard( bool show );
