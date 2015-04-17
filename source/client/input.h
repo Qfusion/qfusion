@@ -32,8 +32,6 @@ void IN_Frame( void );
 bool IN_SoftKeyboardAvailable( void ); // whether the OS can open a soft keyboard
 void IN_ShowSoftKeyboard( bool show );
 
-bool IN_ShowUICursor( void );
-
 void IN_GetInputLanguage( char *dest, size_t size );
 
 void IN_IME_Enable( bool enable );

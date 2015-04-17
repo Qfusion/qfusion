@@ -765,6 +765,8 @@ void CL_CursorMovementFromJoystick( void )
 	if( !sx && !sy )
 		return;
 
+	CL_UIModule_HideCursor( false );
+
 	scale = ( float )( min( viddef.width, viddef.height ) );
 	x += sx * sx * sx * cls.frametime * scale * 1.5f;
 	y += sy * sy * sy * cls.frametime * scale * 1.5f;
