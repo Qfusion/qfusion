@@ -30,7 +30,6 @@
 **
 */
 #include <assert.h>
-#include "winquake.h"
 #include "../ref_gl/r_local.h"
 #include "win_glw.h"
 #include "resource.h"
@@ -171,9 +170,6 @@ static bool VID_CreateWindow( void )
 		ri.Com_Printf( "VID_CreateWindow() - GLimp_InitGL failed\n" );
 		return false;
 	}
-
-	if( glw_state.parenthWnd )
-		PostMessage( glw_state.parenthWnd, UWM_APPACTIVE, WA_ACTIVE, 0 );
 
 	return true;
 }
@@ -357,9 +353,6 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 */
 void GLimp_Shutdown( void )
 {
-	if( glw_state.parenthWnd )
-		PostMessage( glw_state.parenthWnd, UWM_APPACTIVE, WA_INACTIVE, 0 );
-
 	if( qwglMakeCurrent && !qwglMakeCurrent( NULL, NULL ) )
 		ri.Com_Printf( "ref_gl::R_Shutdown() - wglMakeCurrent failed\n" );
 	if( glw_state.hGLRC )
