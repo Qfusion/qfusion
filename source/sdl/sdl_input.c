@@ -361,14 +361,6 @@ void IN_ShowSoftKeyboard( bool show )
 }
 
 /**
- * Display the mouse cursor in the UI.
- */
-bool IN_ShowUICursor( void )
-{
-	return true;
-}
-
-/**
  * Stubs for the IME until it's implemented through SDL and/or Cocoa.
  */
 void IN_IME_Enable( bool enable )

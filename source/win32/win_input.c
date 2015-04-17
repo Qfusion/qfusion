@@ -1204,14 +1204,6 @@ void IN_ShowSoftKeyboard( bool show )
 }
 
 /*
-* IN_ShowUICursor
-*/
-bool IN_ShowUICursor( void )
-{
-	return true;
-}
-
-/*
 =========================================================================
 
 INPUT METHOD EDITORS

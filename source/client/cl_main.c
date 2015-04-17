@@ -1857,7 +1857,7 @@ void CL_SetClientState( int state )
 	{
 	case CA_DISCONNECTED:
 		Con_Close();
-		CL_UIModule_Refresh( true, IN_ShowUICursor() );
+		CL_UIModule_Refresh( true, true );
 		CL_UIModule_ForceMenuOn();
 		//CL_UIModule_MenuMain ();
 		CL_SetKeyDest( key_menu );

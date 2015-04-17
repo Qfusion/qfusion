@@ -752,11 +752,6 @@ void IN_ShowSoftKeyboard( bool show )
 {
 }
 
-bool IN_ShowUICursor( void )
-{
-	return true;
-}
-
 void IN_GetInputLanguage( char *dest, size_t size )
 {
 	if( size )
