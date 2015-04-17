@@ -27,7 +27,12 @@ file(GLOB CLIENT_COMMON_SOURCES
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    include_directories("../win32/include/msvc")
+	file(GLOB CLIENT_PLATFORM_HEADERS
+		"../win32/resource.h"
+		"../win32/conproc.h"
+		"../win32/winquake.h"
+		"../win32/win_input.h"		
+	)
 
     if (USE_SDL2)
         file(GLOB CLIENT_PLATFORM_SOURCES
@@ -80,6 +85,8 @@ endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(GAME_DATA_DIR Warsow_1_5_1)
 
+	set(CLIENT_PLATFORM_HEADERS "")
+	
     file(GLOB CLIENT_PLATFORM_SOURCES
         "../unix/unix_fs.c"
         "../unix/unix_net.c"
@@ -113,6 +120,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	set(CLIENT_PLATFORM_HEADERS "")
+
     if (USE_SDL2)
         file(GLOB CLIENT_PLATFORM_SOURCES
             "../unix/unix_fs.c"
@@ -158,7 +167,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(BUNDLE_RESOURCES "")
 endif()
 
-add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
+add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${CLIENT_PLATFORM_HEADERS} ${CLIENT_COMMON_SOURCES} ${CLIENT_PLATFORM_SOURCES} ${BUNDLE_RESOURCES})
 add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame cin ftlib game irc ref_gl snd_openal snd_qf steamlib ui)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
