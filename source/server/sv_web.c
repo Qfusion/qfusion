@@ -425,9 +425,10 @@ static bool SV_Web_FindGameClientBySession( const char *session, int clientNum )
 /*
 * SV_Web_GameClientAddressMatch
 */
-static int SV_Web_GameClientAddressMatch( http_game_client_t *client, netadr_t *netadr )
+static int SV_Web_GameClientAddressMatch( void *client, void *netadr )
 {
-	return NET_CompareBaseAddress( netadr, &client->remoteAddress ) ? 1 : 0;
+	return NET_CompareBaseAddress( ( netadr_t * )netadr,
+		&( ( ( http_game_client_t * )client )->remoteAddress ) ) ? 1 : 0;
 }
 
 /*
@@ -441,7 +442,8 @@ static bool SV_Web_FindGameClientByAddress( const netadr_t *netadr )
 	http_game_client_t *client;
 
 	QMutex_Lock( sv_http_clients_mutex );
-	trie_error = Trie_FindIf( sv_http_clients, "", TRIE_PREFIX_MATCH, SV_Web_GameClientAddressMatch, ( void * )netadr, &client );
+	trie_error = Trie_FindIf( sv_http_clients, "", TRIE_PREFIX_MATCH,
+		SV_Web_GameClientAddressMatch, ( void * )netadr, ( void ** )( &client ) );
 	QMutex_Unlock( sv_http_clients_mutex );
 
 	return trie_error == TRIE_OK;
