@@ -159,7 +159,9 @@ bool UI_RenderInterface::LoadTexture(Rocket::Core::TextureHandle & texture_handl
 
 	trap::R_GetShaderDimensions( shader, &texture_dimensions.x, &texture_dimensions.y );
 
-	AddShaderToCache( source2 );
+	if( source2[0] != '?' ) {
+		AddShaderToCache( source2 );
+	}
 
 	texture_handle = TextureHandle( shader );
 
