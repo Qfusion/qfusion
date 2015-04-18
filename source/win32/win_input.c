@@ -1067,10 +1067,14 @@ JOYSTICK
 */
 static void IN_XInput_Init( void )
 {
-	in_xinput_dll = LoadLibrary( "xinput9_1_0.dll" );
+	in_xinput_dll = LoadLibrary( "xinput1_4.dll" );
+	if( !in_xinput_dll )
+		in_xinput_dll = LoadLibrary( "xinput1_3.dll" );
+	if( !in_xinput_dll )
+		in_xinput_dll = LoadLibrary( "xinput9_1_0.dll" );
 	if( !in_xinput_dll )
 	{
-		Com_Printf( "XInput: Couldn't load xinput9_1_0.dll\n" );
+		Com_Printf( "XInput: Couldn't load XInput DLL\n" );
 		return;
 	}
 
