@@ -1082,6 +1082,7 @@ static void IN_XInput_Init( void )
 	if( !pXInputGetState )
 	{
 		Com_Printf( "XInput: Couldn't load symbol XInputGetState\n" );
+		FreeLibrary( in_xinput_dll );
 		return;
 	}
 
