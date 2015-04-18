@@ -750,31 +750,40 @@ void G_TeleportPlayer( edict_t *player, edict_t *dest )
 */
 void ClientBegin( edict_t *ent )
 {
-	memset( &ent->r.client->ucmd, 0, sizeof( ent->r.client->ucmd ) );
-	memset( &ent->r.client->level, 0, sizeof( ent->r.client->level ) );
-	ent->r.client->level.timeStamp = level.time;
-	G_Client_UpdateActivity( ent->r.client ); // activity detected
+	gclient_t *client = ent->r.client;
+	const char *mm_login;
 
-	ent->r.client->team = TEAM_SPECTATOR;
+	memset( &client->ucmd, 0, sizeof( client->ucmd ) );
+	memset( &client->level, 0, sizeof( client->level ) );
+	client->level.timeStamp = level.time;
+	G_Client_UpdateActivity( client ); // activity detected
+
+	client->team = TEAM_SPECTATOR;
 	G_ClientRespawn( ent, true ); // respawn as ghost
 	ent->movetype = MOVETYPE_NOCLIP; // allow freefly
 
 	G_UpdatePlayerMatchMsg( ent );
 
-	G_PrintMsg( NULL, "%s%s entered the game\n", ent->r.client->netname, S_COLOR_WHITE );
+	mm_login = Info_ValueForKey( client->userinfo, "cl_mm_login" );
+	if( mm_login && *mm_login && client->mm_session > 0 ) {
+		G_PrintMsg( NULL, "%s" S_COLOR_WHITE "(" S_COLOR_YELLOW "%s" S_COLOR_WHITE ") entered the game\n", client->netname, mm_login );
+	}
+	else {
+		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " entered the game\n", client->netname );
+	}
 
-	ent->r.client->level.respawnCount = 0; // clear respawncount
-	ent->r.client->connecting = false;
+	client->level.respawnCount = 0; // clear respawncount
+	client->connecting = false;
 
 	// schedule the next scoreboard update
-	ent->r.client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime%scoreboardInterval );
+	client->level.scoreboard_time = game.realtime + scoreboardInterval - ( game.realtime%scoreboardInterval );
 
 	AI_EnemyAdded( ent );
 
 	G_ClientEndSnapFrame( ent ); // make sure all view stuff is valid
 
 	// let the gametype scripts now this client just entered the level
-	G_Gametype_ScoreEvent( ent->r.client, "enterGame", NULL );
+	G_Gametype_ScoreEvent( client, "enterGame", NULL );
 }
 
 /*
