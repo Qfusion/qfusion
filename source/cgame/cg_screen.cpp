@@ -1294,8 +1294,16 @@ void CG_LoadingString( const char *str )
 */
 void CG_LoadingItemName( const char *str )
 {
+	static unsigned int lastUpdateTime;
+
 	cg.precacheCount++;
-	trap_R_UpdateScreen();
+
+	unsigned int updateTime = trap_Milliseconds();
+	if( ( updateTime - lastUpdateTime ) > 66 )
+	{
+		trap_R_UpdateScreen();
+		lastUpdateTime = updateTime;
+	}
 }
 
 /*
