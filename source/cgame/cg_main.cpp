@@ -560,9 +560,8 @@ static void CG_RegisterSounds( void )
 		}
 	}
 
-	if( cgs.precacheSoundsStart != MAX_SOUNDS ) {
+	if( cgs.precacheSoundsStart != MAX_SOUNDS )
 		return;
-	}
 
 	CG_RegisterMediaSounds();
 }
@@ -600,9 +599,8 @@ static void CG_RegisterShaders( void )
 		cgs.imagePrecache[i] = trap_R_RegisterPic( name );
 	}
 
-	if( cgs.precacheShadersStart != MAX_IMAGES ) {
+	if( cgs.precacheShadersStart != MAX_IMAGES )
 		return;
-	}
 
 	CG_RegisterMediaShaders();
 }
@@ -732,7 +730,6 @@ static void CG_RegisterVariables( void )
 	cg_thirdPersonAngle =	trap_Cvar_Get( "cg_thirdPersonAngle", "0", 0 );
 	cg_thirdPersonRange =	trap_Cvar_Get( "cg_thirdPersonRange", "90", 0 );
 
-	//skelmod
 	cg_gun =		trap_Cvar_Get( "cg_gun", "1", CVAR_ARCHIVE );
 	cg_gunx =		trap_Cvar_Get( "cg_gunx", "0", CVAR_ARCHIVE );
 	cg_guny =		trap_Cvar_Get( "cg_guny", "0", CVAR_ARCHIVE );
@@ -910,7 +907,7 @@ void CG_OverrideWeapondef( int index, const char *cstring )
 		&firedef->speed,
 		&firedef->spread,
 		&firedef->v_spread
-		);
+	);
 
 	if( i != 10 )
 		CG_Error( "CG_OverrideWeapondef: Bad configstring: %s \"%s\" (%i)\n", weapondef->name, cstring, i );
@@ -940,9 +937,8 @@ static void CG_ValidateItemList( void )
 		}
 	}
 
-	if( cgs.precacheItemsStart < MAX_ITEMS ) {
+	if( cgs.precacheItemsStart < MAX_ITEMS )
 		cgs.precacheItemsStart = MAX_ITEMS;
-	}
 
 	for( i = cgs.precacheItemsStart - MAX_ITEMS; i < MAX_WEAPONDEFS; i++ )
 	{
