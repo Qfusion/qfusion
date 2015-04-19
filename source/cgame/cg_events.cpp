@@ -834,6 +834,8 @@ static void CG_StartVoiceTokenEffect( int entNum, int type, int vsay )
 
 	if( !cg_voiceChats->integer || cg_volume_voicechats->value <= 0.0f )
 		return;
+	if( vsay < 0 || vsay >= VSAY_TOTAL )
+		return;
 
 	cent = &cg_entities[entNum];
 
@@ -847,6 +849,8 @@ static void CG_StartVoiceTokenEffect( int entNum, int type, int vsay )
 
 	// play the sound
 	sound = cgs.media.sfxVSaySounds[vsay];
+	if( !sound )
+		return;
 
 	// played as it was made by the 1st person player
 	trap_S_StartGlobalSound( CG_MediaSfx( sound ), CHAN_AUTO, cg_volume_voicechats->value );
