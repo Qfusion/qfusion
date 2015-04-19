@@ -1299,7 +1299,7 @@ void CG_LoadingItemName( const char *str )
 	cg.precacheCount++;
 
 	unsigned int updateTime = trap_Milliseconds();
-	if( ( updateTime - lastUpdateTime ) > 66 )
+	if( ( updateTime - lastUpdateTime ) > 33 )
 	{
 		trap_R_UpdateScreen();
 		lastUpdateTime = updateTime;
