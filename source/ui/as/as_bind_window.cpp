@@ -156,7 +156,7 @@ public:
 		}
 		else {
 			// not really a modal window, clear the stack
-			stack->popAllDocuments();
+			UI_Main::Get()->showUI( false );
 		}
 	}
 
