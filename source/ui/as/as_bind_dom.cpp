@@ -96,6 +96,11 @@ static float Event_GetParameterF( Event *self, const asstring_t &a, const float 
 	return self->GetParameter( name, default_value );
 }
 
+static bool Event_GetParameterB( Event *self, const asstring_t &a, const bool default_value ) {
+	Rocket::Core::String name = ASSTR(a);
+	return self->GetParameter( name, default_value );
+}
+
 static CScriptDictionaryInterface *Event_GetParameters( Event *self ) {
 	CScriptDictionaryInterface *dict = UI_Main::Get()->getAS()->createDictionary();
 	int stringObjectTypeId = UI_Main::Get()->getAS()->getStringObjectType()->GetTypeId();
@@ -143,6 +148,7 @@ void BindEvent( ASInterface *as )
 		.method( &Event_GetParameterI, "getParameter", true )
 		.method( &Event_GetParameterU, "getParameter", true )
 		.method( &Event_GetParameterF, "getParameter", true )
+		.method( &Event_GetParameterB, "getParameter", true )
 		.method( &Event_GetParameters, "getParameters", true )
 		.method( &Event_GetPhase, "getPhase", true )
 		.method( &Event_StopPropagation, "stopPropagation", true )
