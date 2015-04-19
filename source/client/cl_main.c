@@ -1865,6 +1865,7 @@ void CL_SetClientState( int state )
 		break;
 	case CA_GETTING_TICKET:
 	case CA_CONNECTING:
+		cls.cgameActive = false;
 		Con_Close();
 		CL_UIModule_ForceMenuOff();
 		CL_SoundModule_StopBackgroundTrack();
@@ -1873,6 +1874,7 @@ void CL_SetClientState( int state )
 		//SCR_UpdateScreen();
 		break;
 	case CA_CONNECTED:
+		cls.cgameActive = false;
 		Con_Close();
 		Cvar_FixCheatVars();
 		//SCR_UpdateScreen();
