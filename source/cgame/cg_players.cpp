@@ -217,7 +217,4 @@ void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *info, int client )
 		Vector4Set( ci->color, COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ), 255 );
 	else
 		Vector4Set( ci->color, 255, 255, 255, 255 );
-
-	// wsw : jal : dunno why are we still keeping the icon
-	ci->icon = cgs.basePModelInfo[0].icon;
 }
