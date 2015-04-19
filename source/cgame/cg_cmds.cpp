@@ -1098,8 +1098,6 @@ void CG_RegisterCGameCommands( void )
 	char *name;
 	const cgcmd_t *cmd;
 
-	CG_LoadingString( "commands" );
-
 	if( !cgs.demoPlaying )
 	{
 		const svcmd_t *svcmd;
@@ -1110,8 +1108,6 @@ void CG_RegisterCGameCommands( void )
 			name = cgs.configStrings[CS_GAMECOMMANDS+i];
 			if( !name[0] )
 				continue;
-
-			CG_LoadingItemName( name );
 
 			// check for local command overrides
 			for( cmd = cgcmds; cmd->name; cmd++ )

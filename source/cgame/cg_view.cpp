@@ -932,6 +932,7 @@ void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned
 
 	if( !cgs.precacheDone || !cg.frame.valid )
 	{
+		CG_Precache();
 		CG_DrawLoading();
 		return;
 	}

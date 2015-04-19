@@ -872,7 +872,7 @@ void CL_Disconnect( const char *message )
 	if( cls.state == CA_DISCONNECTED )
 		goto done;
 
-	if( cls.state < CA_LOADING )
+	if( cls.state < CA_CONNECTED )
 		wasconnecting = true;
 	else
 		wasconnecting = false;

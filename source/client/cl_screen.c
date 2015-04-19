@@ -723,12 +723,6 @@ void SCR_UpdateScreen( void )
 	forcevsync = cinematic;
 	forceclear = cinematic || scr_forceclear->integer ? true : false;
 
-	if( cls.cgameActive && cls.state < CA_LOADING ) {
-		// this is when we've finished loading cgame media and are waiting
-		// for the first valid snapshot to arrive. keep the loading screen untouched
-		return;
-	}
-
 	for( i = 0; i < numframes; i++ )
 	{
 		re.BeginFrame( separation[i], forceclear, forcevsync );
@@ -751,14 +745,21 @@ void SCR_UpdateScreen( void )
 			CL_UIModule_Refresh( true, true );
 			SCR_DrawConsole();
 		}
-		else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING || cls.state == CA_CONNECTED || cls.state == CA_HANDSHAKE )
+		else if( cls.state == CA_GETTING_TICKET || cls.state == CA_CONNECTING  || cls.state == CA_HANDSHAKE )
 		{
 			CL_UIModule_UpdateConnectScreen( true );
 		}
-		else if( cls.state == CA_LOADING )
+		else if( cls.state == CA_CONNECTED )
 		{
-			CL_UIModule_UpdateConnectScreen( false );
-			SCR_RenderView( separation[i] );
+			if( cls.cgameActive )
+			{
+				CL_UIModule_UpdateConnectScreen( false );
+				SCR_RenderView( separation[i] );
+			}
+			else
+			{
+				CL_UIModule_UpdateConnectScreen( true );
+			}
 		}
 		else if( cls.state == CA_ACTIVE )
 		{

@@ -449,48 +449,69 @@ static void CG_RegisterModels( void )
 	int i;
 	char *name;
 
-	name = cgs.configStrings[CS_WORLDMODEL];
-	if( name[0] )
+	if( cgs.precacheModelsStart == MAX_MODELS )
+		return;
+
+	if( cgs.precacheModelsStart == 0 )
 	{
-		CG_LoadingItemName( name );
-		CG_LoadingString( name );
-		trap_R_RegisterWorldModel( name );
+		name = cgs.configStrings[CS_WORLDMODEL];
+		if( name[0] )
+		{
+			if( !CG_LoadingItemName( name ) )
+				return;
+			CG_LoadingString( name );
+			trap_R_RegisterWorldModel( name );
+		}
+
+		CG_LoadingString( "models" );
+
+		cgs.numWeaponModels = 1;
+		Q_strncpyz( cgs.weaponModels[0], "generic/generic.md3", sizeof( cgs.weaponModels[0] ) );
+
+		cgs.precacheModelsStart = 1;
 	}
 
-	CG_LoadingString( "models" );
-
-	cgs.numWeaponModels = 1;
-	Q_strncpyz( cgs.weaponModels[0], "generic/generic.md3", sizeof( cgs.weaponModels[0] ) );
-
-	for( i = 1; i < MAX_MODELS; i++ )
+	for( i = cgs.precacheModelsStart; i < MAX_MODELS; i++ )
 	{
 		name = cgs.configStrings[CS_MODELS+i];
-		if( !name[0] )
+
+		if( !name[0] ) {
+			cgs.precacheModelsStart = MAX_MODELS;
 			break;
+		}
+
+		cgs.precacheModelsStart = i;
 
 		if( name[0] == '#' )
 		{
 			// special player weapon model
-			if( cgs.numWeaponModels < WEAP_TOTAL )
-			{
-				Q_strncpyz( cgs.weaponModels[cgs.numWeaponModels], name+1, sizeof( cgs.weaponModels[cgs.numWeaponModels] ) );
-				cgs.numWeaponModels++;
-				CG_LoadingItemName( name );
-			}
+			if( cgs.numWeaponModels >= WEAP_TOTAL )
+				continue;
+
+			if( !CG_LoadingItemName( name ) )
+				return;
+
+			Q_strncpyz( cgs.weaponModels[cgs.numWeaponModels], name+1, sizeof( cgs.weaponModels[cgs.numWeaponModels] ) );
+			cgs.numWeaponModels++;
 		}
 		else if( name[0] == '$' )
 		{
+			if( !CG_LoadingItemName( name ) )
+				return;
 			// indexed pmodel
 			cgs.pModelsIndex[i] = CG_RegisterPlayerModel( name+1 );
-			CG_LoadingItemName( name );
 		}
 		else
 		{
-			CG_LoadingItemName( name );
+			if( !CG_LoadingItemName( name ) )
+				return;
 			cgs.modelDraw[i] = CG_RegisterModel( name );
 		}
 	}
 
+	if( cgs.precacheModelsStart != MAX_MODELS )
+		return;
+	
 	CG_RegisterMediaModels();
 	CG_RegisterBasePModel(); // never before registering the weapon models
 	CG_RegisterWeaponModels();
@@ -512,19 +533,35 @@ static void CG_RegisterSounds( void )
 	int i;
 	char *name;
 
-	CG_LoadingString( "sounds" );
+	if( cgs.precacheSoundsStart == MAX_SOUNDS )
+		return;
 
-	for( i = 1; i < MAX_SOUNDS; i++ )
+	if( !cgs.precacheSoundsStart ) {
+		CG_LoadingString( "sounds" );
+
+		cgs.precacheSoundsStart = 1;
+	}
+
+	for( i = cgs.precacheSoundsStart; i < MAX_SOUNDS; i++ )
 	{
 		name = cgs.configStrings[CS_SOUNDS+i];
-		if( !name[0] )
+		if( !name[0] ) {
+			cgs.precacheSoundsStart = MAX_SOUNDS;
 			break;
+		}
+		
+		cgs.precacheSoundsStart = i;
 
 		if( name[0] != '*' )
 		{
-			CG_LoadingItemName( name );
+			if( !CG_LoadingItemName( name ) )
+				return;
 			cgs.soundPrecache[i] = trap_S_RegisterSound( name );
 		}
+	}
+
+	if( cgs.precacheSoundsStart != MAX_SOUNDS ) {
+		return;
 	}
 
 	CG_RegisterMediaSounds();
@@ -538,16 +575,33 @@ static void CG_RegisterShaders( void )
 	int i;
 	char *name;
 
-	CG_LoadingString( "shaders" );
+	if( cgs.precacheShadersStart == MAX_IMAGES )
+		return;
 
-	for( i = 1; i < MAX_IMAGES; i++ )
+	if( !cgs.precacheShadersStart ) {
+		CG_LoadingString( "shaders" );
+
+		cgs.precacheShadersStart = 1;
+	}
+
+	for( i = cgs.precacheShadersStart; i < MAX_IMAGES; i++ )
 	{
 		name = cgs.configStrings[CS_IMAGES+i];
-		if( !name[0] )
+		if( !name[0] ) {
+			cgs.precacheShadersStart = MAX_IMAGES;
 			break;
+		}
 
-		CG_LoadingItemName( name );
+		cgs.precacheShadersStart = i;
+
+		if( !CG_LoadingItemName( name ) )
+			return;
+
 		cgs.imagePrecache[i] = trap_R_RegisterPic( name );
+	}
+
+	if( cgs.precacheShadersStart != MAX_IMAGES ) {
+		return;
 	}
 
 	CG_RegisterMediaShaders();
@@ -561,17 +615,32 @@ static void CG_RegisterSkinFiles( void )
 	int i;
 	char *name;
 
-	CG_LoadingString( "skins" );
+	if( cgs.precacheSkinsStart == MAX_SKINFILES )
+		return;
 
-	for( i = 1; i < MAX_SKINFILES; i++ )
+	if( !cgs.precacheSkinsStart ) {
+		CG_LoadingString( "skins" );
+
+		cgs.precacheSkinsStart = 1;
+	}
+
+	for( i = cgs.precacheSkinsStart; i < MAX_SKINFILES; i++ )
 	{
 		name = cgs.configStrings[CS_SKINFILES+i];
-		if( !name[0] )
+		if( !name[0] ) {
+			cgs.precacheSkinsStart = MAX_SKINFILES;
 			break;
+		}
 
-		CG_LoadingItemName( name );
+		cgs.precacheSkinsStart = i; 
+
+		if( !CG_LoadingItemName( name ) )
+			return;
+
 		cgs.skinPrecache[i] = trap_R_RegisterSkinFile( name );
 	}
+
+	cgs.precacheSkinsStart = MAX_SKINFILES;
 }
 
 /*
@@ -582,17 +651,26 @@ static void CG_RegisterClients( void )
 	int i;
 	char *name;
 
-	CG_LoadingString( "clients" );
+	if( cgs.precacheClientsStart == MAX_CLIENTS )
+		return;
 
-	for( i = 0; i < gs.maxclients; i++ )
+	if( !cgs.precacheClientsStart )
+		CG_LoadingString( "clients" );
+
+	for( i = cgs.precacheClientsStart; i < gs.maxclients; i++ )
 	{
 		name = cgs.configStrings[CS_PLAYERINFOS+i];
+		cgs.precacheClientsStart = i;
+
 		if( !name[0] )
 			continue;
+		if( !CG_LoadingItemName( name ) )
+			return;
 
-		CG_LoadingItemName( name );
 		CG_LoadClientInfo( &cgs.clientInfo[i], name, i );
 	}
+
+	cgs.precacheClientsStart = MAX_CLIENTS;
 }
 
 /*
@@ -603,17 +681,27 @@ static void CG_RegisterLightStyles( void )
 	int i;
 	char *name;
 
-	CG_LoadingString( "lightstyles" );
+	if( cgs.precacheLightstylesStart == MAX_CLIENTS )
+		return;
 
-	for( i = 0; i < MAX_LIGHTSTYLES; i++ )
+	if( !cgs.precacheLightstylesStart )
+		CG_LoadingString( "lightstyles" );
+
+	for( i = cgs.precacheLightstylesStart; i < MAX_LIGHTSTYLES; i++ )
 	{
 		name = cgs.configStrings[CS_LIGHTS+i];
+		cgs.precacheLightstylesStart = i;
+
 		if( !name[0] )
 			continue;
 
-		CG_LoadingItemName( name );
+		if( !CG_LoadingItemName( name ) )
+			return;
+
 		CG_SetLightStyle( i );
 	}
+
+	cgs.precacheLightstylesStart = MAX_LIGHTSTYLES;
 }
 
 /*
@@ -834,24 +922,84 @@ void CG_OverrideWeapondef( int index, const char *cstring )
 static void CG_ValidateItemList( void )
 {
 	int i;
+	int cs;
 
-	for( i = CS_ITEMS; i < CS_ITEMS+MAX_ITEMS; i++ )
+	if( cgs.precacheItemsStart == MAX_ITEMS+MAX_WEAPONDEFS )
+		return;
+
+	for( i = cgs.precacheItemsStart; i < MAX_ITEMS; i++ )
 	{
-		if( cgs.configStrings[i][0] )
+		cs = CS_ITEMS + i;
+		cgs.precacheItemsStart = i;
+
+		if( cgs.configStrings[cs][0] )
 		{
-			CG_LoadingItemName( cgs.configStrings[i] );
-			CG_ValidateItemDef( i - CS_ITEMS, cgs.configStrings[i] );
+			if( !CG_LoadingItemName( cgs.configStrings[cs] ) )
+				return;
+			CG_ValidateItemDef( i, cgs.configStrings[cs] );
 		}
 	}
 
-	for( i = CS_WEAPONDEFS; i < CS_WEAPONDEFS + MAX_WEAPONDEFS; i++ )
+	if( cgs.precacheItemsStart < MAX_ITEMS ) {
+		cgs.precacheItemsStart = MAX_ITEMS;
+	}
+
+	for( i = cgs.precacheItemsStart - MAX_ITEMS; i < MAX_WEAPONDEFS; i++ )
 	{
-		if( cgs.configStrings[i][0] )
+		cs = CS_WEAPONDEFS + i;
+		cgs.precacheItemsStart = MAX_ITEMS + i;
+
+		if( cgs.configStrings[cs][0] )
 		{
-			CG_LoadingItemName( cgs.configStrings[i] );
-			CG_OverrideWeapondef( i - CS_WEAPONDEFS, cgs.configStrings[i] );
+			if( !CG_LoadingItemName( cgs.configStrings[cs] ) )
+				return;
+			CG_OverrideWeapondef( i, cgs.configStrings[cs] );
 		}
 	}
+
+	cgs.precacheItemsStart = MAX_ITEMS+MAX_WEAPONDEFS;
+}
+
+/*
+* CG_Precache
+*/
+void CG_Precache( void )
+{
+	if( cgs.precacheDone )
+		return;
+
+	cgs.precacheStart = cgs.precacheCount;
+	cgs.precacheStartMsec = trap_Milliseconds();
+
+	CG_RegisterModels();
+	if( cgs.precacheModelsStart < MAX_MODELS )
+		return;
+
+	CG_RegisterSounds();
+	if( cgs.precacheSoundsStart < MAX_SOUNDS )
+		return;
+
+	CG_RegisterShaders();
+	if( cgs.precacheShadersStart < MAX_IMAGES )
+		return;
+
+	CG_RegisterSkinFiles();
+	if( cgs.precacheSkinsStart < MAX_SKINFILES )
+		return;
+
+	CG_RegisterClients();
+	if( cgs.precacheClientsStart < MAX_CLIENTS )
+		return;
+
+	CG_ValidateItemList();
+	if( cgs.precacheItemsStart < MAX_ITEMS+MAX_WEAPONDEFS )
+		return;
+
+	CG_RegisterLightStyles();
+	if( cgs.precacheLightstylesStart < MAX_LIGHTSTYLES )
+		return;
+
+	cgs.precacheDone = true;
 }
 
 /*
@@ -878,7 +1026,7 @@ static void CG_RegisterConfigStrings( void )
 	int i;
 	const char *cs;
 
-	cg.precacheCount = cg.precacheTotal = 0;
+	cgs.precacheCount = cgs.precacheTotal = 0;
 
 	for( i = 0; i < MAX_CONFIGSTRINGS; i++ )
 	{
@@ -891,17 +1039,19 @@ static void CG_RegisterConfigStrings( void )
 
 		if( i == CS_WORLDMODEL )
 		{
-			cg.precacheTotal++;
+			cgs.precacheTotal++;
 		}
 		else if( i >= CS_MODELS )
 		{
 			if( i >= CS_LOCATIONS && i < CS_LOCATIONS + MAX_LOCATIONS )
 				continue;
+			if( i >= CS_GAMECOMMANDS && i < CS_GAMECOMMANDS + MAX_GAMECOMMANDS )
+				continue;
 
 			if( ( i >= CS_SOUNDS && i < CS_SOUNDS + MAX_SOUNDS ) && ( cs[0] == '*' ) )
 				continue;
 
-			cg.precacheTotal++;
+			cgs.precacheTotal++;
 		}
 	}
 
@@ -1039,15 +1189,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_RegisterLevelMinimap();
 
-	CG_RegisterModels();
-	CG_RegisterSounds();
-	CG_RegisterShaders();
-	CG_RegisterSkinFiles();
-	CG_RegisterClients();
-
 	CG_RegisterCGameCommands();
-
-	CG_ValidateItemList();
 
 	CG_LoadStatusBar();
 
@@ -1060,12 +1202,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_InitChat( &cg.chat );
 
-	CG_RegisterLightStyles();
-
 	// start up announcer events queue from clean
 	CG_ClearAnnouncerEvents();
-
-	cgs.precacheDone = true;
 
 	cgs.demoTutorial = cgs.demoPlaying && (strstr( cgs.demoName, "tutorials/" ) != NULL);
 

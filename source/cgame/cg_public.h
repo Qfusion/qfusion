@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   80
+#define	CGAME_API_VERSION   81
 
 //
 // structs and variables shared with the main engine
@@ -295,7 +295,7 @@ typedef struct
 
 	void ( *RenderView )( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime );
 
-	void ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
+	bool ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
 
 	void ( *AddMovement )( usercmd_t *cmd, vec3_t viewangles, int frametime );
 

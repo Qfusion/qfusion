@@ -1262,12 +1262,12 @@ void CG_DrawLoading( void )
 	trap_R_DrawStretchPic( cgs.vidWidth / 2 - ( int )( 256 * scale ), cgs.vidHeight / 2 - ( int )( 64 * scale ),
 		512 * scale, 128 * scale, 0.0f, 0.0f, 1.0f, 1.0f, colorWhite, trap_R_RegisterPic( UI_SHADER_LOADINGLOGO ) );
 
-	if( cg.precacheCount && cg.precacheTotal )
+	if( cgs.precacheCount && cgs.precacheTotal )
 	{
 		struct shader_s *shader = trap_R_RegisterPic( UI_SHADER_LOADINGBAR );
 		int width = 480 * scale; 
 		int height = 32 * scale;
-		int barWidth = ( width - height ) * ( ( float )cg.precacheCount / ( float )cg.precacheTotal );
+		int barWidth = ( width - height ) * ( ( float )cgs.precacheCount / ( float )cgs.precacheTotal );
 		int x = ( cgs.vidWidth - width ) / 2;
 		int y = cgs.vidHeight / 2 + ( int )( 32 * scale );
 
@@ -1284,26 +1284,21 @@ void CG_DrawLoading( void )
 */
 void CG_LoadingString( const char *str )
 {
-	cg.checkname[0] = '\0';
-	Q_strncpyz( cg.loadingstring, str, sizeof( cg.loadingstring ) );
-	trap_R_UpdateScreen();
+	Q_strncpyz( cgs.loadingstring, str, sizeof( cgs.loadingstring ) );
 }
 
 /*
 * CG_LoadingItemName
+*
+* Allow at least one item per frame to be precached.
+* Stop accepting new precaches after the timelimit for this frame has been reached.
 */
-void CG_LoadingItemName( const char *str )
+bool CG_LoadingItemName( const char *str )
 {
-	static unsigned int lastUpdateTime;
-
-	cg.precacheCount++;
-
-	unsigned int updateTime = trap_Milliseconds();
-	if( ( updateTime - lastUpdateTime ) > 33 )
-	{
-		trap_R_UpdateScreen();
-		lastUpdateTime = updateTime;
-	}
+	if( cgs.precacheCount > cgs.precacheStart && ( trap_Milliseconds() > cgs.precacheStartMsec + 33 ) )
+		return false;
+	cgs.precacheCount++;
+	return true;
 }
 
 /*
