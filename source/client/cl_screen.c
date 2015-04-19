@@ -672,7 +672,8 @@ void SCR_UpdateScreen( void )
 	int numframes;
 	int i;
 	float separation[2];
-	bool cinematic, forceclear;
+	bool cinematic;
+	bool forcevsync, forceclear;
 
 	if( !updatescreen )
 		updatescreen = Dynvar_Create( "updatescreen", false, DYNVAR_WRITEONLY, DYNVAR_READONLY );
@@ -719,6 +720,7 @@ void SCR_UpdateScreen( void )
 	}
 
 	cinematic = cls.state == CA_CINEMATIC ? true : false;
+	forcevsync = cinematic;
 	forceclear = cinematic || scr_forceclear->integer ? true : false;
 
 	if( cls.cgameActive && cls.state < CA_LOADING ) {
@@ -729,7 +731,7 @@ void SCR_UpdateScreen( void )
 
 	for( i = 0; i < numframes; i++ )
 	{
-		re.BeginFrame( separation[i], forceclear, cinematic );
+		re.BeginFrame( separation[i], forceclear, forcevsync );
 
 		if( scr_draw_loading == 2 )
 		{ 
