@@ -5,9 +5,11 @@ void VertexDualQuatsTransform(inout vec4 Position, inout vec3 Normal)
 #endif
 {
 	ivec4 Indices = ivec4(a_BonesIndices * 2.0);
-	vec4 DQReal = u_DualQuats[Indices.x] * a_BonesWeights.x;
-	vec4 DQDual = u_DualQuats[Indices.x + 1] * a_BonesWeights.x;
+	vec4 DQReal = u_DualQuats[Indices.x];
+	vec4 DQDual = u_DualQuats[Indices.x + 1];
 #if NUM_BONE_INFLUENCES >= 2
+	DQReal *= a_BonesWeights.x;
+	DQDual *= a_BonesWeights.x;
 	vec4 DQReal1 = u_DualQuats[Indices.y];
 	vec4 DQDual1 = u_DualQuats[Indices.y + 1];
 	float Scale = mix(-1.0, 1.0, step(0.0, dot(DQReal1, DQReal))) * a_BonesWeights.y;
