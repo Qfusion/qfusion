@@ -977,10 +977,6 @@ void IN_Shutdown( void )
 
 	IN_XInput_Shutdown();
 
-	Cmd_RemoveCommand( "+jlook" );
-	Cmd_RemoveCommand( "-jlook" );
-	Cmd_RemoveCommand( "joy_advancedupdate" );
-
 	dinput_acquired = dinput_initialized = false;
 	rawinput_initialized = false;
 }
