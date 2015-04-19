@@ -670,7 +670,7 @@ bool CL_GameModule_NewSnapshot( int pendingSnapshot )
 */
 void CL_GameModule_RenderView( float stereo_separation )
 {
-	if( cge )
+	if( cge && cls.cgameActive )
 		cge->RenderView( cls.frametime, cls.realframetime, cls.realtime, cl.serverTime, stereo_separation, 
 		cl_extrapolate->integer && !cls.demo.playing ? cl_extrapolationTime->integer : 0 );
 }
