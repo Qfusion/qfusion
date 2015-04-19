@@ -1294,7 +1294,8 @@ void CG_LoadingString( const char *str )
 */
 void CG_LoadingItemName( const char *str )
 {
-	cg.precacheCount++;	
+	cg.precacheCount++;
+	trap_R_UpdateScreen();
 }
 
 /*
