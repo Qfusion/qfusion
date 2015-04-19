@@ -373,7 +373,6 @@ static bool CL_GameModule_AddRawSamplesListener( struct cinematics_s *cin,
 void CL_GameModule_Init( void )
 {
 	int apiversion;
-	connstate_t oldState;
 	unsigned int start;
 	cgame_import_t import;
 	void *( *builtinAPIfunc )(void *) = NULL;
@@ -567,9 +566,6 @@ void CL_GameModule_Init( void )
 		Com_Error( ERR_DROP, "Client game is version %i, not %i", apiversion, CGAME_API_VERSION );
 	}
 
-	oldState = cls.state;
-	cls.state = CA_LOADING;
-
 	CL_GameModule_AsyncStream_Init();
 
 	start = Sys_Milliseconds();
@@ -581,13 +577,7 @@ void CL_GameModule_Init( void )
 	Com_DPrintf( "CL_GameModule_Init: %.2f seconds\n", (float)( Sys_Milliseconds() - start ) * 0.001f );
 
 	cl.gamestart = false;
-	cls.state = oldState;
 	cls.cgameActive = true;
-
-	// check memory integrity
-	Mem_DebugCheckSentinelsGlobal();
-
-	Sys_SendKeyEvents(); // pump message loop
 }
 
 /*
@@ -669,8 +659,7 @@ bool CL_GameModule_NewSnapshot( int pendingSnapshot )
 	{
 		currentSnap = ( cl.currentSnapNum <= 0 ) ? NULL : &cl.snapShots[cl.currentSnapNum & UPDATE_MASK];
 		newSnap = &cl.snapShots[pendingSnapshot & UPDATE_MASK];
-		cge->NewFrameSnapshot( newSnap, currentSnap );
-		return true;
+		return cge->NewFrameSnapshot( newSnap, currentSnap );
 	}
 
 	return false;

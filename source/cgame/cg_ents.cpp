@@ -407,7 +407,7 @@ static void CG_UpdatePlayerState( void )
 * CG_NewFrameSnap
 * a new frame snap has been received from the server
 */
-void CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe )
+bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe )
 {
 	int i;
 
@@ -435,6 +435,10 @@ void CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe )
 		cg.oldAreabits = true;
 	else
 		cg.oldAreabits = false;
+	
+	if( !cgs.precacheDone || !cg.frame.valid ) {
+		return false;
+	}
 
 	// request TV-channels if we haven't done so already
 	if( cgs.tv && !cgs.tvRequested )
@@ -484,6 +488,7 @@ void CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe )
 	}
 
 	cg.firstFrame = false; // not the first frame anymore
+	return true;
 }
 
 

@@ -487,6 +487,19 @@ typedef struct
 	struct sfx_s *soundPrecache[MAX_SOUNDS];
 	struct shader_s	*imagePrecache[MAX_IMAGES];
 	struct skinfile_s *skinPrecache[MAX_SKINFILES];
+
+	int precacheModelsStart;
+	int precacheSoundsStart;
+	int precacheShadersStart;
+	int precacheSkinsStart;
+	int precacheClientsStart;
+	int precacheItemsStart;
+	int precacheLightstylesStart;
+
+	char checkname[MAX_QPATH];
+	char loadingstring[MAX_QPATH];
+	int precacheCount, precacheTotal, precacheStart;
+	unsigned precacheStartMsec;
 } cg_static_t;
 
 typedef struct
@@ -584,9 +597,6 @@ typedef struct
 	//
 	// transient data from server
 	//
-	char checkname[MAX_QPATH];
-	char loadingstring[MAX_QPATH];
-	int precacheCount, precacheTotal;
 	const char *matchmessage;
 	const char *helpmessage;
 	unsigned helpmessage_time;
@@ -626,7 +636,7 @@ extern centity_t cg_entities[MAX_EDICTS];
 extern cvar_t *cg_gun;
 extern cvar_t *cg_gun_alpha;
 
-void CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe );
+bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe );
 struct cmodel_s *CG_CModelForEntity( int entNum );
 void CG_SoundEntityNewState( centity_t *cent );
 void CG_AddEntities( void );
@@ -730,7 +740,7 @@ void CG_EscapeKey( void );
 void CG_LoadStatusBar( void );
 
 void CG_LoadingString( const char *str );
-void CG_LoadingItemName( const char *str );
+bool CG_LoadingItemName( const char *str );
 
 void CG_DrawCrosshair( int x, int y, int align );
 void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key );
@@ -917,6 +927,7 @@ void CG_ValidateItemDef( int tag, char *name );
 void CG_Printf( const char *format, ... );
 void CG_Error( const char *format, ... );
 void CG_Reset( void );
+void CG_Precache( void );
 char *_CG_CopyString( const char *in, const char *filename, int fileline );
 #define CG_CopyString( in ) _CG_CopyString( in, __FILE__, __LINE__ )
 
