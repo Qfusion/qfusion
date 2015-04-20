@@ -647,7 +647,7 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 	}
 	else
 	{
-		curtime = GS_MatchPaused() ? cg.frame.serverTime : cg.time;
+		curtime = ( GS_MatchWaiting() || GS_MatchPaused() ) ? cg.frame.serverTime : cg.time;
 		duration = GS_MatchDuration();
 		startTime = GS_MatchStartTime();
 
