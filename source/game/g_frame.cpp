@@ -769,6 +769,7 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 
 	game.localTime = time( NULL );
 
+	unsigned int serverTimeDelta = serverTime - game.serverTime;
 	game.serverTime = serverTime;
 	G_UpdateFrameTime( msec );
 
@@ -780,7 +781,7 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 	// "freeze" match clock
 	if( GS_MatchWaiting() || GS_MatchPaused() )
 	{
-		gs.gameState.longstats[GAMELONG_MATCHSTART] += msec;
+		gs.gameState.longstats[GAMELONG_MATCHSTART] += serverTimeDelta;
 	}
 
 	if( GS_MatchPaused() )
@@ -791,7 +792,7 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 		for( ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ )
 		{
 			if( ent->s.linearProjectile )
-				ent->s.linearProjectileTimeStamp += msec;
+				ent->s.linearProjectileTimeStamp += serverTimeDelta;
 		}
 
 		G_RunClients();
