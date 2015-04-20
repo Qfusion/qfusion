@@ -778,18 +778,11 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 
 	G_CallVotes_Think();
 
-	// "freeze" match clock
-	if( GS_MatchWaiting() || GS_MatchPaused() )
-	{
-		gs.gameState.longstats[GAMELONG_MATCHSTART] += serverTimeDelta;
-	}
-
 	if( GS_MatchPaused() )
 	{
-		edict_t *ent;
-
-		// "freeze" linear projectiles
-		for( ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ )
+		// freeze match clock and linear projectiles
+		gs.gameState.longstats[GAMELONG_MATCHSTART] += serverTimeDelta;
+		for( edict_t *ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ )
 		{
 			if( ent->s.linearProjectile )
 				ent->s.linearProjectileTimeStamp += serverTimeDelta;
@@ -800,6 +793,10 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 		G_LevelGarbageCollect();
 		return;
 	}
+
+	// reset warmup clock if not enough players
+	if( GS_MatchWaiting() )
+		gs.gameState.longstats[GAMELONG_MATCHSTART] = game.serverTime;
 
 	level.framenum++;
 	level.time += msec;
