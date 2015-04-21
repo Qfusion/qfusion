@@ -925,9 +925,9 @@ void R_InitSkeletalCache( void )
 }
 
 /*
-* R_SkeletalModelLerpBBox
+* R_GetSkeletalCache
 */
-static uint8_t *R_GetSketalCache( int entNum, int lodNum )
+static uint8_t *R_GetSkeletalCache( int entNum, int lodNum )
 {
 	skmcacheentry_t *cache;
 	
@@ -1233,7 +1233,7 @@ bool R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	bonePoseRelativeDQSize = sizeof( dualquat_t ) * skmodel->numbones;
 
 	// fetch bones tranforms from cache (both matrices and dual quaternions)
-	bonePoseRelativeDQ = ( dualquat_t * )R_GetSketalCache( R_ENT2NUM( e ), mod->lodnum );
+	bonePoseRelativeDQ = ( dualquat_t * )R_GetSkeletalCache( R_ENT2NUM( e ), mod->lodnum );
 	if( bonePoseRelativeDQ ) {
 		bonePoseRelativeMat = ( mat4_t * )(( uint8_t * )bonePoseRelativeDQ + bonePoseRelativeDQSize);
 	}
