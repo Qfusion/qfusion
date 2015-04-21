@@ -676,12 +676,31 @@ void CL_GameModule_RenderView( float stereo_separation )
 }
 
 /*
-* CL_GameModule_AddMovement
+* CL_GameModule_GetButtonBits
 */
-void CL_GameModule_AddMovement( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float realframetime )
+uint8_t CL_GameModule_GetButtonBits( void )
 {
 	if( cge )
-		cge->AddMovement( cmd, viewangles, keysframetime, realframetime );
+		return cge->GetButtonBits();
+	return 0;
+}
+
+/*
+* CL_GameModule_AddViewAngles
+*/
+void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime )
+{
+	if( cge )
+		cge->AddViewAngles( viewangles, frametime );
+}
+
+/*
+* CL_GameModule_AddMovement
+*/
+void CL_GameModule_AddMovement( vec3_t movement )
+{
+	if( cge )
+		cge->AddMovement( movement );
 }
 
 /*

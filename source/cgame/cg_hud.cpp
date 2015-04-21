@@ -4442,10 +4442,12 @@ void CG_LoadStatusBar( void )
 /*
 * CG_GetHUDTouchButtons
 */
-void CG_GetHUDTouchButtons( int &buttons, int &upmove )
+void CG_GetHUDTouchButtons( int *buttons, int *upmove )
 {
-	buttons = cg_hud_touch_buttons;
-	upmove = cg_hud_touch_upmove;
+	if( buttons )
+		*buttons = cg_hud_touch_buttons;
+	if( upmove )
+		*upmove = cg_hud_touch_upmove;
 }
 
 /*

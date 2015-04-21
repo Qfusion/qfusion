@@ -782,7 +782,6 @@ extern cg_touch_t cg_touches[];
 int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, unsigned int time ) );
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 void CG_TouchFrame( void );
-void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float realframetime );
 void CG_CancelTouches( void );
 
 enum
@@ -812,7 +811,7 @@ void CG_SC_ResetObituaries( void );
 void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );
 void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch );
-void CG_GetHUDTouchButtons( int &buttons, int &upmove );
+void CG_GetHUDTouchButtons( int *buttons, int *upmove );
 void CG_UpdateHUDPostDraw( void );
 void CG_UpdateHUDPostTouch( void );
 void CG_ShowWeaponCross( void );
@@ -947,7 +946,9 @@ int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const 
 
 const char *CG_TranslateString( const char *string );
 
-void CG_AddMovement( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float realframetime );
+uint8_t CG_GetTouchButtonBits( void );
+void CG_AddTouchViewAngles( vec3_t viewangles, float frametime );
+void CG_AddTouchMovement( vec3_t movement );
 
 //
 // cg_svcmds.c

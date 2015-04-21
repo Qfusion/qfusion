@@ -1080,14 +1080,6 @@ void CG_StartBackgroundTrack( void )
 }
 
 /*
-* CG_AddMovement
-*/
-void CG_AddMovement( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float realframetime )
-{
-	CG_TouchMove( cmd, viewangles, keysframetime, realframetime );
-}
-
-/*
 * CG_Reset
 */
 void CG_Reset( void )
