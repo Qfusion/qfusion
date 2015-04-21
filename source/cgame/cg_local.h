@@ -782,7 +782,7 @@ extern cg_touch_t cg_touches[];
 int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, unsigned int time ) );
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 void CG_TouchFrame( void );
-void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int frametime );
+void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float realframetime );
 void CG_CancelTouches( void );
 
 enum
@@ -947,7 +947,7 @@ int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const 
 
 const char *CG_TranslateString( const char *string );
 
-void CG_AddMovement( usercmd_t *cmd, vec3_t viewangles, int frametime );
+void CG_AddMovement( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float realframetime );
 
 //
 // cg_svcmds.c

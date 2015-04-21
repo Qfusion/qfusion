@@ -673,24 +673,27 @@ static void CL_AddMovementFromJoystick( usercmd_t *cmd, int frametime )
 
 	swap = ( joy_movement_stick->integer ? 2 : 0 );
 
-	value = sticks[swap];
-	if( fabs( value ) > joy_sidethreshold->value )
-		cmd->sidemove += frametime * value;
-	value = sticks[1 ^ swap];
-	if( fabs( value ) > joy_forwardthreshold->value )
-		cmd->forwardmove -= frametime * value;
+	if( frametime )
+	{
+		value = sticks[swap];
+		if( fabs( value ) > joy_sidethreshold->value )
+			cmd->sidemove += frametime * value;
+		value = sticks[1 ^ swap];
+		if( fabs( value ) > joy_forwardthreshold->value )
+			cmd->forwardmove -= frametime * value;
+	}
 
 	value = sticks[2 ^ swap];
 	if( fabs( value ) > joy_yawthreshold->value )
 	{
-		cl.viewangles[YAW] += frametime * -0.001f *
+		cl.viewangles[YAW] += -cls.realframetime *
 			value * value * value * joy_yawspeed->value *
 			CL_GameModule_GetSensitivityScale( joy_yawspeed->value, 0.0f );
 	}
 	value = sticks[3 ^ swap];
 	if( fabs( value ) > joy_pitchthreshold->value )
 	{
-		cl.viewangles[PITCH] += frametime * ( joy_inverty->integer ? -0.001f : 0.001f ) *
+		cl.viewangles[PITCH] += cls.realframetime * ( joy_inverty->integer ? -1.0f : 1.0f ) *
 			value * value * value * joy_pitchspeed->value *
 			CL_GameModule_GetSensitivityScale( joy_pitchspeed->value, 0.0f );
 	}
@@ -712,7 +715,11 @@ void CL_UpdateCommandInput( void )
 	// always let the mouse refresh cl.viewangles
 	IN_MouseMove( cmd );
 	CL_AddButtonBits( &cmd->buttons );
-	CL_GameModule_AddMovement( cmd, cl.viewangles, keys_frame_time );
+	if( cls.key_dest == key_game )
+	{
+		CL_AddMovementFromJoystick( cmd, keys_frame_time );
+		CL_GameModule_AddMovement( cmd, cl.viewangles, keys_frame_time, cls.realframetime );
+	}
 
 	if( keys_frame_time )
 	{
@@ -720,8 +727,6 @@ void CL_UpdateCommandInput( void )
 
 		CL_AddAnglesFromKeys( keys_frame_time );
 		CL_AddMovementFromKeys( &cmd->forwardmove, &cmd->sidemove, &cmd->upmove, keys_frame_time );
-		if( cls.key_dest == key_game )
-			CL_AddMovementFromJoystick( cmd, keys_frame_time );
 		old_keys_frame_time = sys_frame_time;
 	}
 
@@ -768,8 +773,8 @@ void CL_CursorMovementFromJoystick( void )
 	CL_UIModule_HideCursor( false );
 
 	scale = ( float )( min( viddef.width, viddef.height ) );
-	x += sx * sx * sx * cls.frametime * scale * 1.5f;
-	y += sy * sy * sy * cls.frametime * scale * 1.5f;
+	x += sx * sx * sx * cls.realframetime * scale * 1.5f;
+	y += sy * sy * sy * cls.realframetime * scale * 1.5f;
 
 	mx = x;
 	my = y;

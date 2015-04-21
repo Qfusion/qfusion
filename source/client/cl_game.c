@@ -678,10 +678,10 @@ void CL_GameModule_RenderView( float stereo_separation )
 /*
 * CL_GameModule_AddMovement
 */
-void CL_GameModule_AddMovement( usercmd_t *cmd, vec3_t viewangles, int frametime )
+void CL_GameModule_AddMovement( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float realframetime )
 {
 	if( cge )
-		cge->AddMovement( cmd, viewangles, frametime );
+		cge->AddMovement( cmd, viewangles, keysframetime, realframetime );
 }
 
 /*
