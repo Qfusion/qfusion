@@ -29,10 +29,10 @@ void VertexDualQuatsTransform(inout vec4 Position, inout vec3 Normal)
 	DQDual += DQDual1 * Scale;
 #endif // NUM_BONE_INFLUENCES >= 4
 #endif // NUM_BONE_INFLUENCES >= 3
-#endif // NUM_BONE_INFLUENCES >= 2
 	float Len = 1.0 / length(DQReal);
 	DQReal *= Len;
 	DQDual *= Len;
+#endif // NUM_BONE_INFLUENCES >= 2
 	Position.xyz += (cross(DQReal.xyz, cross(DQReal.xyz, Position.xyz) + Position.xyz * DQReal.w + DQDual.xyz) +
 		DQDual.xyz*DQReal.w - DQReal.xyz*DQDual.w) * 2.0;
 	Normal += cross(DQReal.xyz, cross(DQReal.xyz, Normal) + Normal * DQReal.w) * 2.0;
