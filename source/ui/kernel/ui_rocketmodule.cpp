@@ -168,7 +168,7 @@ void RocketModule::keyEvent( int key, bool pressed )
 			parameters.Set( "key", key );
 			element->DispatchEvent( "keyselect", parameters );
 		}
-		else if( key == K_A_BUTTON )
+		else if( ( key == K_A_BUTTON ) || ( key == K_DPAD_CENTER ) )
 		{
 			if( pressed )
 				context->ProcessMouseButtonDown( 0, mod );
