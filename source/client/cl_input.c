@@ -598,6 +598,9 @@ static void CL_AddButtonBits( uint8_t *buttons )
 	if( in_zoom.state & 3 )
 		*buttons |= BUTTON_ZOOM;
 	in_zoom.state &= ~2;
+
+	if( cls.key_dest == key_game )
+		*buttons |= CL_GameModule_GetButtonBits();
 }
 
 /*
@@ -630,24 +633,24 @@ static void CL_AddAnglesFromKeys( int frametime )
 /*
 * CL_AddMovementFromKeys
 */
-static void CL_AddMovementFromKeys( short *forwardmove, short *sidemove, short *upmove, int frametime )
+static void CL_AddMovementFromKeys( vec3_t movement )
 {
 	if( in_strafe.state & 1 )
 	{
-		*sidemove += frametime * CL_KeyState( &in_right );
-		*sidemove -= frametime * CL_KeyState( &in_left );
+		movement[0] += ( float )CL_KeyState( &in_right );
+		movement[0] -= ( float )CL_KeyState( &in_left );
 	}
 
-	*sidemove += frametime * CL_KeyState( &in_moveright );
-	*sidemove -= frametime * CL_KeyState( &in_moveleft );
+	movement[0] += ( float )CL_KeyState( &in_moveright );
+	movement[0] -= ( float )CL_KeyState( &in_moveleft );
 
-	*upmove += frametime * CL_KeyState( &in_up );
-	*upmove -= frametime * CL_KeyState( &in_down );
+	movement[2] += ( float )CL_KeyState( &in_up );
+	movement[2] -= ( float )CL_KeyState( &in_down );
 
 	if( !( in_klook.state & 1 ) )
 	{
-		*forwardmove += frametime * CL_KeyState( &in_forward );
-		*forwardmove -= frametime * CL_KeyState( &in_back );
+		movement[1] += ( float )CL_KeyState( &in_forward );
+		movement[1] -= ( float )CL_KeyState( &in_back );
 	}
 }
 
@@ -663,7 +666,7 @@ extern cvar_t *joy_movement_stick;
 /*
 * CL_AddMovementFromJoystick
 */
-static void CL_AddMovementFromJoystick( usercmd_t *cmd, int frametime )
+static void CL_AddMovementFromJoystick( vec3_t movement )
 {
 	vec4_t sticks;
 	int swap;
@@ -673,15 +676,12 @@ static void CL_AddMovementFromJoystick( usercmd_t *cmd, int frametime )
 
 	swap = ( joy_movement_stick->integer ? 2 : 0 );
 
-	if( frametime )
-	{
-		value = sticks[swap];
-		if( fabs( value ) > joy_sidethreshold->value )
-			cmd->sidemove += frametime * value;
-		value = sticks[1 ^ swap];
-		if( fabs( value ) > joy_forwardthreshold->value )
-			cmd->forwardmove -= frametime * value;
-	}
+	value = sticks[swap];
+	if( fabs( value ) > joy_sidethreshold->value )
+		movement[0] += value;
+	value = sticks[1 ^ swap];
+	if( fabs( value ) > joy_forwardthreshold->value )
+		movement[1] -= value;
 
 	value = sticks[2 ^ swap];
 	if( fabs( value ) > joy_yawthreshold->value )
@@ -706,19 +706,22 @@ void CL_UpdateCommandInput( void )
 {
 	static unsigned old_keys_frame_time;
 	usercmd_t *cmd = &cl.cmds[cls.ucmdHead & CMD_MASK];
+	vec3_t movement;
 
 	if( cl.inputRefreshed )
 		return;
 
 	keys_frame_time = ( sys_frame_time - old_keys_frame_time ) & 255;
 
+	VectorSet( movement, 0.0f, 0.0f, 0.0f );
+
 	// always let the mouse refresh cl.viewangles
 	IN_MouseMove( cmd );
 	CL_AddButtonBits( &cmd->buttons );
 	if( cls.key_dest == key_game )
 	{
-		CL_AddMovementFromJoystick( cmd, keys_frame_time );
-		CL_GameModule_AddMovement( cmd, cl.viewangles, keys_frame_time, cls.realframetime );
+		CL_AddMovementFromJoystick( movement );
+		CL_GameModule_AddViewAngles( cl.viewangles, cls.realframetime );
 	}
 
 	if( keys_frame_time )
@@ -726,7 +729,14 @@ void CL_UpdateCommandInput( void )
 		cmd->msec += keys_frame_time;
 
 		CL_AddAnglesFromKeys( keys_frame_time );
-		CL_AddMovementFromKeys( &cmd->forwardmove, &cmd->sidemove, &cmd->upmove, keys_frame_time );
+		CL_AddMovementFromKeys( movement );
+		if( cls.key_dest == key_game )
+			CL_GameModule_AddMovement( movement );
+
+		cmd->sidemove += keys_frame_time * bound( -1.0f, movement[0], 1.0f );
+		cmd->forwardmove += keys_frame_time * bound( -1.0f, movement[1], 1.0f );
+		cmd->upmove += keys_frame_time * bound( -1.0f, movement[2], 1.0f );
+
 		old_keys_frame_time = sys_frame_time;
 	}
 

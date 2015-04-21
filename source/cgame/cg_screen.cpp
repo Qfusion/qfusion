@@ -1676,48 +1676,17 @@ void CG_TouchFrame( void )
 }
 
 /*
-* CG_TouchMove
+* CG_GetTouchButtonBits
 */
-void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float realframetime )
+uint8_t CG_GetTouchButtonBits( void )
 {
-	int buttons, upmove;
-	CG_GetHUDTouchButtons( buttons, upmove );
-	cmd->buttons |= buttons;
+	int buttons;
+	CG_GetHUDTouchButtons( &buttons, NULL );
+	return buttons;
+}
 
-	float scale = 600.0f / ( float )cgs.vidHeight;
-
-	if( keysframetime )
-	{
-		cg_touchpad_t &movepad = cg_touchpads[TOUCHPAD_MOVE];
-		if( movepad.touch >= 0 )
-		{
-			if( cg_touch_moveThres->modified )
-			{
-				if( cg_touch_moveThres->value < 0.0f )
-					trap_Cvar_Set( cg_touch_moveThres->name, cg_touch_moveThres->dvalue );
-				cg_touch_moveThres->modified = false;
-			}
-			if( cg_touch_strafeThres->modified )
-			{
-				if( cg_touch_strafeThres->value < 0.0f )
-					trap_Cvar_Set( cg_touch_strafeThres->name, cg_touch_strafeThres->dvalue );
-				cg_touch_strafeThres->modified = false;
-			}
-
-			cg_touch_t &touch = cg_touches[movepad.touch];
-
-			float move = movepad.y - ( float )touch.y;
-			if( fabsf( move * scale ) > cg_touch_moveThres->value )
-				cmd->forwardmove += ( move < 0 ) ? -keysframetime : keysframetime;
-
-			move = ( float )touch.x - movepad.x;
-			if( fabsf( move * scale ) > cg_touch_strafeThres->value )
-				cmd->sidemove += ( move < 0 ) ? -keysframetime : keysframetime;
-		}
-
-		cmd->upmove += upmove * keysframetime;
-	}
-
+void CG_AddTouchViewAngles( vec3_t viewangles, float frametime )
+{
 	cg_touchpad_t &viewpad = cg_touchpads[TOUCHPAD_VIEW];
 	if( viewpad.touch >= 0 )
 	{
@@ -1730,11 +1699,12 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float r
 
 		cg_touch_t &touch = cg_touches[viewpad.touch];
 
-		float speed = cg_touch_lookSens->value * realframetime;
+		float speed = cg_touch_lookSens->value * frametime;
 		if( !cgs.demoPlaying && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) )
 			speed *= cg.predictedPlayerState.fov / cgs.clientInfo[cgs.playerNum].fov;
 
-		float decel = cg_touch_lookDecel->value * realframetime * 10.0f;
+		float scale = 600.0f / ( float )cgs.vidHeight;
+		float decel = cg_touch_lookDecel->value * frametime * 10.0f;
 
 		float angle = ( ( float )touch.y - viewpad.y ) * scale;
 		if( cg_touch_lookInvert->integer )
@@ -1752,6 +1722,42 @@ void CG_TouchMove( usercmd_t *cmd, vec3_t viewangles, int keysframetime, float r
 			viewangles[YAW] += angle * dir * speed;
 		viewpad.x += ( ( float )touch.x - viewpad.x ) * decel;
 	}
+}
+
+void CG_AddTouchMovement( vec3_t movement )
+{
+	cg_touchpad_t &movepad = cg_touchpads[TOUCHPAD_MOVE];
+	if( movepad.touch >= 0 )
+	{
+		if( cg_touch_moveThres->modified )
+		{
+			if( cg_touch_moveThres->value < 0.0f )
+				trap_Cvar_Set( cg_touch_moveThres->name, cg_touch_moveThres->dvalue );
+			cg_touch_moveThres->modified = false;
+		}
+		if( cg_touch_strafeThres->modified )
+		{
+			if( cg_touch_strafeThres->value < 0.0f )
+				trap_Cvar_Set( cg_touch_strafeThres->name, cg_touch_strafeThres->dvalue );
+			cg_touch_strafeThres->modified = false;
+		}
+
+		cg_touch_t &touch = cg_touches[movepad.touch];
+
+		float scale = 600.0f / ( float )cgs.vidHeight;
+
+		float move = ( float )touch.x - movepad.x;
+		if( fabsf( move * scale ) > cg_touch_strafeThres->value )
+			movement[0] += ( move < 0 ) ? -1.0f : 1.0f;
+
+		move = movepad.y - ( float )touch.y;
+		if( fabsf( move * scale ) > cg_touch_moveThres->value )
+			movement[1] += ( move < 0 ) ? -1.0f : 1.0f;
+	}
+
+	int upmove;
+	CG_GetHUDTouchButtons( NULL, &upmove );
+	movement[2] += ( float )upmove;
 }
 
 /*
