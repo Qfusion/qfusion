@@ -1476,7 +1476,7 @@ void G_MoveClientToTV( edict_t *ent )
 	port = isIPv6 ? best->tv.port6 : best->tv.port;
 
 	last_tv = best - game.clients;
-	trap_GameCmd( ent, va( "cmd connect %s:%hu#%i", ip, port, best->tv.channel ) );
+	trap_GameCmd( ent, va( "memo tv_moveto \"%s\" %s:%hu#%i", COM_RemoveColorTokens( best->netname ), ip, port, best->tv.channel ) );
 }
 
 //==============================================================

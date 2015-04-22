@@ -110,6 +110,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 
 	trap::Cmd_AddCommand( "menu_force", M_Menu_Force_f );
 	trap::Cmd_AddCommand( "menu_open", M_Menu_Open_f );
+	trap::Cmd_AddCommand( "menu_modal", M_Menu_Modal_f );
 	trap::Cmd_AddCommand( "menu_close", M_Menu_Close_f );
 
 	trap::Cmd_AddCommand( "menu_tvchannel_add", &M_Menu_AddTVChannel_f );
@@ -128,6 +129,7 @@ UI_Main::~UI_Main()
 
 	trap::Cmd_RemoveCommand( "menu_force" );
 	trap::Cmd_RemoveCommand( "menu_open" );
+	trap::Cmd_RemoveCommand( "menu_modal" );
 	trap::Cmd_RemoveCommand( "menu_close" );
 
 	unregisterRocketCustoms();
@@ -660,7 +662,7 @@ void UI_Main::M_Menu_Force_f( void )
 	self->showUI( true );
 }
 
-void UI_Main::M_Menu_Open_f( void )
+void UI_Main::M_Menu_Open_Cmd_f_( bool modal )
 {
 	int i;
 
@@ -685,8 +687,18 @@ void UI_Main::M_Menu_Open_f( void )
 	if( !nav )
 		return;
 
-	nav->pushDocument( urlString.CString() );
+	nav->pushDocument( urlString.CString(), modal );
 	self->showUI( true );
+}
+
+void UI_Main::M_Menu_Open_f( void )
+{
+	M_Menu_Open_Cmd_f_( false );
+}
+
+void UI_Main::M_Menu_Modal_f( void )
+{
+	M_Menu_Open_Cmd_f_( true );
 }
 
 void UI_Main::M_Menu_Close_f( void )
