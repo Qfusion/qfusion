@@ -666,6 +666,43 @@ static void CG_SC_MenuCustom( void )
 }
 
 /*
+* CG_SC_MenuOpen
+*/
+static void CG_SC_MenuOpen_( bool modal )
+{
+	char request[MAX_STRING_CHARS];
+	int i, c;
+
+	if( cgs.demoPlaying || cgs.tv )
+		return;
+
+	if( trap_Cmd_Argc() < 2 )
+		return;
+
+	Q_strncpyz( request, va( "%s \"%s\"", modal ? "menu_modal" : "menu_open", trap_Cmd_Argv( 1 ) ), sizeof( request ) );
+	for( i = 2, c = 1; i < trap_Cmd_Argc(); i++, c++ )
+		Q_strncatz( request, va( " param%i \"%s\"", c, trap_Cmd_Argv( i ) ), sizeof( request ) );
+
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "%s\n", request ) );
+}
+
+/*
+* CG_SC_MenuOpen
+*/
+static void CG_SC_MenuOpen( void )
+{
+	CG_SC_MenuOpen_( false );
+}
+
+/*
+* CG_SC_MenuModal
+*/
+static void CG_SC_MenuModal( void )
+{
+	CG_SC_MenuOpen_( true );
+}
+
+/*
 * CG_AddAward
 */
 void CG_AddAward( const char *str )
@@ -684,17 +721,6 @@ void CG_AddAward( const char *str )
 static void CG_SC_AddAward( void )
 {
 	CG_AddAward( trap_Cmd_Argv( 1 ) );
-}
-
-/*
-* CG_SC_ExecuteText
-*/
-static void CG_SC_ExecuteText( void )
-{
-	if( cgs.demoPlaying || cgs.tv )
-		return;
-
-	trap_Cmd_ExecuteText( EXEC_APPEND, trap_Cmd_Args() );
 }
 
 typedef struct
@@ -721,9 +747,10 @@ static const svcmd_t cg_svcmds[] =
 	{ "cha", CG_SC_ChannelAdd },
 	{ "chr", CG_SC_ChannelRemove },
 	{ "mecu", CG_SC_MenuCustom },
+	{ "meop", CG_SC_MenuOpen },
+	{ "memo", CG_SC_MenuModal },
 	{ "motd", CG_SC_MOTD },
 	{ "aw", CG_SC_AddAward },
-	{ "cmd", CG_SC_ExecuteText },
 
 	{ NULL }
 };

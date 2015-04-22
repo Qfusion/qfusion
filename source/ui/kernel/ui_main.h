@@ -75,8 +75,10 @@ public:
 	// Commands (these could be private)
 	static void ReloadUI_Cmd_f( void );
 	static void DumpAPI_f( void );
+	static void M_Menu_Open_Cmd_f_( bool modal );
 	static void M_Menu_Force_f( void );
 	static void M_Menu_Open_f( void );
+	static void M_Menu_Modal_f( void );
 	static void M_Menu_Tv_f( void );
 	static void M_Menu_DemoPlay_f( void );
 	static void M_Menu_Close_f( void );	
