@@ -1026,17 +1026,11 @@ void Qcommon_Init( int argc, char **argv )
 	SCR_EndLoadingPlaque();
 
 	if( !dedicated->integer )
-	{
-		Cbuf_AddText( "exec stuffcmds.cfg\n" );
-	}
+		Cbuf_AddText( "exec autoexec_postinit.cfg\n" );
 	else if( tv_server->integer )
-	{
-		Cbuf_AddText( "exec tvserver_stuffcmds.cfg\n" );
-	}
+		Cbuf_AddText( "exec tvserver_autoexec_postinit.cfg\n" );
 	else
-	{
-		Cbuf_AddText( "exec dedicated_stuffcmds.cfg\n" );
-	}
+		Cbuf_AddText( "exec dedicated_autoexec_postinit.cfg\n" );
 
 	// add + commands from command line
 	if( !Cbuf_AddLateCommands() )
