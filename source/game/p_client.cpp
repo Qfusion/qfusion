@@ -370,6 +370,9 @@ void G_Client_InactivityRemove( gclient_t *client )
 	if( trap_GetClientState( client - game.clients ) < CS_SPAWNED )
 		return;
 
+	if( client->ps.pmove.pm_type != PM_NORMAL )
+		return;
+
 	if( g_inactivity_maxtime->modified )
 	{
 		if( g_inactivity_maxtime->value <= 0.0f )
@@ -383,7 +386,7 @@ void G_Client_InactivityRemove( gclient_t *client )
 	if( g_inactivity_maxtime->value == 0.0f )
 		return;
 
-	if( GS_MatchState() != MATCH_STATE_PLAYTIME )
+	if( ( GS_MatchState() != MATCH_STATE_PLAYTIME ) || !level.gametype.removeInactivePlayers )
 		return;
 
 	// inactive for too long

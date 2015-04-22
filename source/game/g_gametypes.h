@@ -166,6 +166,7 @@ typedef struct
 	bool canShowMinimap;
 	bool teamOnlyMinimap;
 	bool customDeadBodyCam;
+	bool removeInactivePlayers;
 
 	int spawnpoint_radius;
 

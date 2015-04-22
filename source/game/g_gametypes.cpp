@@ -1884,6 +1884,7 @@ void G_Gametype_SetDefaults( void )
     level.gametype.canShowMinimap = false;
     level.gametype.teamOnlyMinimap = true;
 	level.gametype.customDeadBodyCam = false;
+	level.gametype.removeInactivePlayers = true;
 
     level.gametype.spawnpoint_radius = 64;
 
