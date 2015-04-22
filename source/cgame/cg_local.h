@@ -493,8 +493,6 @@ typedef struct
 	int precacheShadersStart;
 	int precacheSkinsStart;
 	int precacheClientsStart;
-	int precacheItemsStart;
-	int precacheLightstylesStart;
 
 	char checkname[MAX_QPATH];
 	char loadingstring[MAX_QPATH];

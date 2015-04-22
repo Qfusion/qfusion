@@ -447,7 +447,7 @@ static void CG_RegisterWeaponModels( void )
 static void CG_RegisterModels( void )
 {
 	int i;
-	char *name;
+	const char *name;
 
 	if( cgs.precacheModelsStart == MAX_MODELS )
 		return;
@@ -531,7 +531,7 @@ static void CG_RegisterModels( void )
 static void CG_RegisterSounds( void )
 {
 	int i;
-	char *name;
+	const char *name;
 
 	if( cgs.precacheSoundsStart == MAX_SOUNDS )
 		return;
@@ -572,7 +572,7 @@ static void CG_RegisterSounds( void )
 static void CG_RegisterShaders( void )
 {
 	int i;
-	char *name;
+	const char *name;
 
 	if( cgs.precacheShadersStart == MAX_IMAGES )
 		return;
@@ -611,7 +611,7 @@ static void CG_RegisterShaders( void )
 static void CG_RegisterSkinFiles( void )
 {
 	int i;
-	char *name;
+	const char *name;
 
 	if( cgs.precacheSkinsStart == MAX_SKINFILES )
 		return;
@@ -647,7 +647,7 @@ static void CG_RegisterSkinFiles( void )
 static void CG_RegisterClients( void )
 {
 	int i;
-	char *name;
+	const char *name;
 
 	if( cgs.precacheClientsStart == MAX_CLIENTS )
 		return;
@@ -677,29 +677,16 @@ static void CG_RegisterClients( void )
 static void CG_RegisterLightStyles( void )
 {
 	int i;
-	char *name;
+	const char *name;
 
-	if( cgs.precacheLightstylesStart == MAX_CLIENTS )
-		return;
-
-	if( !cgs.precacheLightstylesStart )
-		CG_LoadingString( "lightstyles" );
-
-	for( i = cgs.precacheLightstylesStart; i < MAX_LIGHTSTYLES; i++ )
+	for( i = 0; i < MAX_LIGHTSTYLES; i++ )
 	{
 		name = cgs.configStrings[CS_LIGHTS+i];
-		cgs.precacheLightstylesStart = i;
-
 		if( !name[0] )
 			continue;
 
-		if( !CG_LoadingItemName( name ) )
-			return;
-
 		CG_SetLightStyle( i );
 	}
-
-	cgs.precacheLightstylesStart = MAX_LIGHTSTYLES;
 }
 
 /*
@@ -921,39 +908,19 @@ static void CG_ValidateItemList( void )
 	int i;
 	int cs;
 
-	if( cgs.precacheItemsStart == MAX_ITEMS+MAX_WEAPONDEFS )
-		return;
-
-	for( i = cgs.precacheItemsStart; i < MAX_ITEMS; i++ )
+	for( i = 0; i < MAX_ITEMS; i++ )
 	{
 		cs = CS_ITEMS + i;
-		cgs.precacheItemsStart = i;
-
 		if( cgs.configStrings[cs][0] )
-		{
-			if( !CG_LoadingItemName( cgs.configStrings[cs] ) )
-				return;
 			CG_ValidateItemDef( i, cgs.configStrings[cs] );
-		}
 	}
 
-	if( cgs.precacheItemsStart < MAX_ITEMS )
-		cgs.precacheItemsStart = MAX_ITEMS;
-
-	for( i = cgs.precacheItemsStart - MAX_ITEMS; i < MAX_WEAPONDEFS; i++ )
+	for( i = 0; i < MAX_WEAPONDEFS; i++ )
 	{
 		cs = CS_WEAPONDEFS + i;
-		cgs.precacheItemsStart = MAX_ITEMS + i;
-
 		if( cgs.configStrings[cs][0] )
-		{
-			if( !CG_LoadingItemName( cgs.configStrings[cs] ) )
-				return;
 			CG_OverrideWeapondef( i, cgs.configStrings[cs] );
-		}
 	}
-
-	cgs.precacheItemsStart = MAX_ITEMS+MAX_WEAPONDEFS;
 }
 
 /*
@@ -985,14 +952,6 @@ void CG_Precache( void )
 
 	CG_RegisterClients();
 	if( cgs.precacheClientsStart < MAX_CLIENTS )
-		return;
-
-	CG_ValidateItemList();
-	if( cgs.precacheItemsStart < MAX_ITEMS+MAX_WEAPONDEFS )
-		return;
-
-	CG_RegisterLightStyles();
-	if( cgs.precacheLightstylesStart < MAX_LIGHTSTYLES )
 		return;
 
 	cgs.precacheDone = true;
@@ -1043,7 +1002,12 @@ static void CG_RegisterConfigStrings( void )
 				continue;
 			if( i >= CS_GAMECOMMANDS && i < CS_GAMECOMMANDS + MAX_GAMECOMMANDS )
 				continue;
-
+			if( i >= CS_LIGHTS && i < CS_LIGHTS + MAX_LIGHTSTYLES )
+				continue;
+			if( i >= CS_WEAPONDEFS && i < CS_WEAPONDEFS + MAX_WEAPONDEFS )
+				continue;
+			if( i >= CS_ITEMS && i < CS_ITEMS + MAX_ITEMS )
+				continue;
 			if( ( i >= CS_SOUNDS && i < CS_SOUNDS + MAX_SOUNDS ) && ( cs[0] == '*' ) )
 				continue;
 
@@ -1178,6 +1142,9 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	CG_RegisterLevelMinimap();
 
 	CG_RegisterCGameCommands();
+	CG_RegisterLightStyles();
+
+	CG_ValidateItemList();
 
 	CG_LoadStatusBar();
 
