@@ -157,6 +157,7 @@ find_package(PNG REQUIRED)
 
 # We need SDL only on non-Windows platforms or when with SDL2-backend
 if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
+	set(USE_SDL2 1)
     find_package(SDL2 REQUIRED)
 endif()
 
