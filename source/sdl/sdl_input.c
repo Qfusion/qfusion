@@ -165,6 +165,17 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_9:			charkey = '9';			break;
 		case SDL_SCANCODE_0:			charkey = '0';			break;
 
+		case SDL_SCANCODE_MINUS:		charkey = '-';			break;
+		case SDL_SCANCODE_EQUALS:		charkey = '=';			break;
+		case SDL_SCANCODE_BACKSLASH:	charkey = '\\';			break;
+		case SDL_SCANCODE_COMMA:		charkey = ',';			break;
+		case SDL_SCANCODE_PERIOD:		charkey = '.';			break;
+		case SDL_SCANCODE_SLASH:		charkey = '/';			break;
+		case SDL_SCANCODE_LEFTBRACKET:	charkey = '[';			break;
+		case SDL_SCANCODE_RIGHTBRACKET:	charkey = ']';			break;
+		case SDL_SCANCODE_SEMICOLON:	charkey = ';';			break;
+		case SDL_SCANCODE_APOSTROPHE:	charkey = '\'';			break;
+
 		default: break;
 	}
 	return charkey;
