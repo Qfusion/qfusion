@@ -73,7 +73,7 @@ static void mouse_wheel_event( SDL_MouseWheelEvent *event )
 
 static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 {
-	wchar_t charkey;
+	wchar_t charkey = 0;
 	
 	switch(scancode)
 	{
@@ -81,7 +81,7 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_RETURN:       charkey = K_ENTER;		break;
 		case SDL_SCANCODE_ESCAPE:       charkey = K_ESCAPE;		break;
 		case SDL_SCANCODE_SPACE:        charkey = K_SPACE;		break;
-		case SDL_SCANCODE_CAPSLOCK:		charkey = K_CAPSLOCK;	break;
+		case SDL_SCANCODE_CAPSLOCK:     charkey = K_CAPSLOCK;	break;
 		case SDL_SCANCODE_SCROLLLOCK:   charkey = K_SCROLLLOCK; break;
 		case SDL_SCANCODE_NUMLOCKCLEAR: charkey = K_NUMLOCK;    break;
 		case SDL_SCANCODE_BACKSPACE:    charkey = K_BACKSPACE;  break;
@@ -89,8 +89,13 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_DOWN:         charkey = K_DOWNARROW;  break;
 		case SDL_SCANCODE_LEFT:         charkey = K_LEFTARROW;  break;
 		case SDL_SCANCODE_RIGHT:        charkey = K_RIGHTARROW; break;
+#if defined( __APPLE__ )
 		case SDL_SCANCODE_LALT:
 		case SDL_SCANCODE_RALT:         charkey = K_OPTION;     break;
+#else
+		case SDL_SCANCODE_LALT:         charkey = K_LALT;       break;
+		case SDL_SCANCODE_RALT:         charkey = K_RALT;       break;
+#endif
 		case SDL_SCANCODE_LCTRL:        charkey = K_LCTRL;      break;
 		case SDL_SCANCODE_RCTRL:        charkey = K_RCTRL;      break;
 		case SDL_SCANCODE_LSHIFT:       charkey = K_LSHIFT;     break;
@@ -117,6 +122,7 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_HOME:         charkey = K_HOME;       break;
 		case SDL_SCANCODE_END:          charkey = K_END;        break;
 		case SDL_SCANCODE_GRAVE:        charkey = '~';          break;
+		case SDL_SCANCODE_NONUSBACKSLASH:charkey= '<';          break;
 		case SDL_SCANCODE_LGUI:
 		case SDL_SCANCODE_RGUI:         charkey = K_COMMAND;    break;
 			
