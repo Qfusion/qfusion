@@ -280,10 +280,10 @@ void IN_Init()
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
 
-	Com_Printf( "Initializing SDL Input\n" );
+	//Com_Printf( "Initializing SDL Input\n" );
 
 	// SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL ); // Not available in SDL2
-	Com_Printf( "SDL_ShowCursor = %i\n", SDL_ShowCursor( SDL_QUERY ) );
+	//Com_Printf( "SDL_ShowCursor = %i\n", SDL_ShowCursor( SDL_QUERY ) );
 	SDL_SetRelativeMouseMode( SDL_TRUE );
 	SDL_SetCursor( NULL );
 
@@ -303,7 +303,7 @@ void IN_Shutdown()
 	if( !input_inited )
 		return;
 
-	Com_Printf( "Shutdown SDL Input\n" );
+	//Com_Printf( "Shutdown SDL Input\n" );
 
 	input_inited = false;
 	SDL_SetRelativeMouseMode( SDL_FALSE );
