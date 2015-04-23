@@ -148,16 +148,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../unix/unix_net.c"
             "../unix/unix_sys.c"
             "../unix/unix_console.c"
-            "../unix/unix_clipboard.c"
             "../unix/unix_time.c"
             "../unix/unix_threads.c"
             "../null/sys_vfs_null.c"
 
-            "../unix/keysym2ucs.c"
-            "../unix/unix_input.c"
             "../unix/unix_vid.c"
 
+            "../sdl/sdl_input.c"
             "../sdl/sdl_input_joy.c"
+            "../sdl/sdl_input_unix.c"
+            "../sdl/sdl_clipboard.c"
         )
     
         set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "dl" "m" "X11" "Xi" "Xext" "Xrandr" "rt")
