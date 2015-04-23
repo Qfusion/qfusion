@@ -116,7 +116,7 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_F14:          charkey = K_F14;        break;
 		case SDL_SCANCODE_F15:          charkey = K_F15;        break;
 		case SDL_SCANCODE_INSERT:       charkey = K_INS;        break;
-		case SDL_SCANCODE_DELETE:       charkey = K_BACKSPACE;  break;
+		case SDL_SCANCODE_DELETE:       charkey = K_DEL;        break;
 		case SDL_SCANCODE_PAGEUP:       charkey = K_PGUP;       break;
 		case SDL_SCANCODE_PAGEDOWN:     charkey = K_PGDN;       break;
 		case SDL_SCANCODE_HOME:         charkey = K_HOME;       break;

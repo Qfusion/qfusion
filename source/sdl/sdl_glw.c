@@ -33,7 +33,7 @@ static void VID_SetWindowSize( void )
 {
 	SDL_SetWindowSize( glw_state.sdl_window, glConfig.width, glConfig.height );
 	if( glConfig.fullScreen ) {
-        // we need to use SDL_WINDOW_FULLSCREEN_DESKTOP instead of SDL_WINDOW_FULLSCREEN to support Alt+Tab from fullscreen on OS X
+		// we need to use SDL_WINDOW_FULLSCREEN_DESKTOP instead of SDL_WINDOW_FULLSCREEN to support Alt+Tab from fullscreen on OS X
 		glConfig.fullScreen = SDL_SetWindowFullscreen( glw_state.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP ) == 0;
 	}
 }
