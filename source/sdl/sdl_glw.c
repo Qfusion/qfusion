@@ -29,25 +29,22 @@ cvar_t *vid_fullscreen;
 
 static int GLimp_InitGL( void );
 
-static void VID_SetWindowSize( bool fullscreen )
+static void VID_SetWindowSize( void )
 {
-	if( fullscreen ) {
-		SDL_SetWindowFullscreen( glw_state.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP );
-	} else {
-		SDL_SetWindowSize( glw_state.sdl_window, glConfig.width, glConfig.height );
+	SDL_SetWindowSize( glw_state.sdl_window, glConfig.width, glConfig.height );
+	if( glConfig.fullScreen ) {
+		glConfig.fullScreen = SDL_SetWindowFullscreen( glw_state.sdl_window, SDL_WINDOW_FULLSCREEN ) == 0;
 	}
 }
 
 static bool VID_CreateWindow( void )
 {
-	bool fullscreen = glConfig.fullScreen;
-
 	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL );
 
 	if( !glw_state.sdl_window )
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
 
-	VID_SetWindowSize( fullscreen );
+	VID_SetWindowSize();
 
 	// init all the gl stuff for the window
 	if( !GLimp_InitGL() ) {
@@ -67,6 +64,12 @@ static bool VID_CreateWindow( void )
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool wideScreen )
 {
 	const char *win_fs[] = {"W", "FS"};
+
+	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen ) {
+		glConfig.fullScreen = fullscreen;
+		VID_SetWindowSize();
+		return ( fullscreen == glConfig.fullScreen ? rserr_ok : rserr_invalid_fullscreen );
+	}
 
 	ri.Com_Printf( "Initializing OpenGL display\n" );
 	ri.Com_Printf( "...setting mode:" );
