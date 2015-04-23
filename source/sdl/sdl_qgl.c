@@ -139,7 +139,8 @@ qgl_initerr_t QGL_Init( const char *dllname )
 		return qgl_initerr_invalid_driver;
 	} else {
 		glw_state.OpenGLLib = (void *)1;
-		Com_Printf( "Using %s for OpenGL...\n", dllname );
+		if( dllname )
+			Com_Printf( "Using %s for OpenGL...\n", dllname );
 	}
 
 #define QGL_FUNC( type, name, params )                                   \
