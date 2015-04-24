@@ -746,7 +746,7 @@ static const char *gs_keyicon_names[] = {
 
 // STAT_LAYOUTS flag bits meanings
 #define	STAT_LAYOUT_SPECDEAD		0x00000001
-#define	STAT_LAYOUT_UNUSED1			0x00000002
+#define	STAT_LAYOUT_INSTANTRESPAWN	0x00000002
 #define	STAT_LAYOUT_SCOREBOARD		0x00000004
 #define	STAT_LAYOUT_TEAMTAB			0x00000008
 #define	STAT_LAYOUT_CHALLENGER		0x00000010 // player is in challengers queue (used for ingame menu)

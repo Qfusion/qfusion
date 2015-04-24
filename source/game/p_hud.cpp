@@ -336,6 +336,8 @@ void G_SetClientStats( edict_t *ent )
 		client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_CHALLENGER;
 	if( GS_MatchState() <= MATCH_STATE_WARMUP && level.ready[PLAYERNUM( ent )] )
 		client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_READY;
+	if( G_SpawnQueue_GetSystem( ent->s.team ) == SPAWNSYSTEM_INSTANT )
+		client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_INSTANTRESPAWN;
 
 	//
 	// team
