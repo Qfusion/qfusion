@@ -36,6 +36,9 @@ static void VID_SetWindowSize( void )
 		// we need to use SDL_WINDOW_FULLSCREEN_DESKTOP instead of SDL_WINDOW_FULLSCREEN to support Alt+Tab from fullscreen on OS X
 		glConfig.fullScreen = SDL_SetWindowFullscreen( glw_state.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP ) == 0;
 	}
+	else {
+		SDL_SetWindowFullscreen( glw_state.sdl_window, 0 );
+	}
 }
 
 static bool VID_CreateWindow( void )
