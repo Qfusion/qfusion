@@ -167,14 +167,31 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 
 		case SDL_SCANCODE_MINUS:		charkey = '-';			break;
 		case SDL_SCANCODE_EQUALS:		charkey = '=';			break;
-		case SDL_SCANCODE_BACKSLASH:	charkey = '\\';			break;
+		case SDL_SCANCODE_BACKSLASH:		charkey = '\\';			break;
 		case SDL_SCANCODE_COMMA:		charkey = ',';			break;
 		case SDL_SCANCODE_PERIOD:		charkey = '.';			break;
 		case SDL_SCANCODE_SLASH:		charkey = '/';			break;
-		case SDL_SCANCODE_LEFTBRACKET:	charkey = '[';			break;
-		case SDL_SCANCODE_RIGHTBRACKET:	charkey = ']';			break;
-		case SDL_SCANCODE_SEMICOLON:	charkey = ';';			break;
-		case SDL_SCANCODE_APOSTROPHE:	charkey = '\'';			break;
+		case SDL_SCANCODE_LEFTBRACKET:		charkey = '[';			break;
+		case SDL_SCANCODE_RIGHTBRACKET:		charkey = ']';			break;
+		case SDL_SCANCODE_SEMICOLON:		charkey = ';';			break;
+		case SDL_SCANCODE_APOSTROPHE:		charkey = '\'';			break;
+
+		case SDL_SCANCODE_KP_0:			charkey = KP_INS;		break;
+		case SDL_SCANCODE_KP_1:			charkey = KP_END;		break;
+		case SDL_SCANCODE_KP_2:			charkey = KP_DOWNARROW;		break;
+		case SDL_SCANCODE_KP_3:			charkey = KP_PGDN;		break;
+		case SDL_SCANCODE_KP_4:			charkey = KP_LEFTARROW;		break;
+		case SDL_SCANCODE_KP_5:			charkey = KP_5;			break;
+		case SDL_SCANCODE_KP_6:			charkey = KP_RIGHTARROW;	break;
+		case SDL_SCANCODE_KP_7:			charkey = KP_HOME;		break;
+		case SDL_SCANCODE_KP_8:			charkey = KP_UPARROW;		break;
+		case SDL_SCANCODE_KP_9:			charkey = KP_PGUP;		break;
+		case SDL_SCANCODE_KP_ENTER:		charkey = KP_ENTER;		break;
+		case SDL_SCANCODE_KP_PERIOD:		charkey = KP_DEL;		break;
+		case SDL_SCANCODE_KP_PLUS:		charkey = KP_PLUS;		break;
+		case SDL_SCANCODE_KP_MINUS:		charkey = KP_MINUS;		break;
+		case SDL_SCANCODE_KP_DIVIDE:		charkey = KP_SLASH;		break;
+		case SDL_SCANCODE_KP_MULTIPLY:		charkey = KP_STAR;		break;
 
 		default: break;
 	}
