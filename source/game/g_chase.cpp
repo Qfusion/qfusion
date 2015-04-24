@@ -285,6 +285,7 @@ static void G_EndFrame_UpdateChaseCam( edict_t *ent )
 	ent->r.client->ps.stats[STAT_LAYOUTS] &= ~STAT_LAYOUT_CHALLENGER;
 	ent->r.client->ps.stats[STAT_LAYOUTS] &= ~STAT_LAYOUT_READY;
 	ent->r.client->ps.stats[STAT_LAYOUTS] &= ~STAT_LAYOUT_SPECTEAMONLY;
+	ent->r.client->ps.stats[STAT_LAYOUTS] &= ~STAT_LAYOUT_INSTANTRESPAWN;
 
 	if( ent->r.client->resp.chase.teamonly )
 	{
