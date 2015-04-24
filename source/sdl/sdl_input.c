@@ -192,6 +192,7 @@ static wchar_t TranslateSDLScancode(SDL_Scancode scancode)
 		case SDL_SCANCODE_KP_MINUS:		charkey = KP_MINUS;		break;
 		case SDL_SCANCODE_KP_DIVIDE:		charkey = KP_SLASH;		break;
 		case SDL_SCANCODE_KP_MULTIPLY:		charkey = KP_STAR;		break;
+		case SDL_SCANCODE_KP_EQUALS:		charkey = KP_EQUAL;		break;
 
 		default: break;
 	}
