@@ -275,7 +275,9 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 	*context = (void*)SDL_GL_CreateContext( glw_state.sdl_window );
 	*surface = NULL;
 	
-	return true;
+	// SDL_GL_CreateContext makes the newly created context current
+	// we don't want that, so revert to our main context
+	return SDL_GL_MakeCurrent( glw_state.sdl_window, glw_state.sdl_glcontext ) == 0;
 }
 
 /*
