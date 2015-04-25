@@ -7,6 +7,7 @@ cvar_t *in_grabinconsole;
 static bool input_inited = false;
 static bool mouse_active = false;
 static bool input_active = false;
+static bool mouse_relative = false;
 
 cvar_t *in_disablemacosxmouseaccel;
 
@@ -271,7 +272,9 @@ static void HandleEvents( void )
 				break;
 
 			case SDL_MOUSEMOTION:
-				mouse_motion_event( &event.motion );
+				if( !mouse_relative ) {
+					mouse_motion_event( &event.motion );
+				}
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:
@@ -295,28 +298,38 @@ static void HandleEvents( void )
 
 void IN_MouseMove( usercmd_t *cmd )
 {
-	if( ( mx || my ) && mouse_active ) {
-		CL_MouseMove( cmd, mx, my );
-		mx = my = 0;
+	if( mouse_active ) {
+		if( mouse_relative ) {
+			mx = my = 0;
+			SDL_GetRelativeMouseState( &mx, &my );
+		}
+
+		if( mx || my ) {
+			CL_MouseMove( cmd, mx, my );
+		}
 	}
+	mx = my = 0;
 }
 
 void IN_Init()
 {
+	const char *hint0 = "0";
+
 	if( input_inited )
 		return;
 
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
 
-	//Com_Printf( "Initializing SDL Input\n" );
-
-	// SDL_EnableKeyRepeat( SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL ); // Not available in SDL2
-	//Com_Printf( "SDL_ShowCursor = %i\n", SDL_ShowCursor( SDL_QUERY ) );
-	SDL_SetRelativeMouseMode( SDL_TRUE );
+	SDL_ShowCursor( SDL_QUERY );
 	SDL_SetCursor( NULL );
 
-	IN_SetMouseScalingEnabled( false );
+	SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, hint0 );
+
+	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
+	if( mouse_relative ) {
+		IN_SetMouseScalingEnabled( false );
+	}
 
 	IN_SDL_JoyInit( true );
 
@@ -331,8 +344,6 @@ void IN_Shutdown()
 {
 	if( !input_inited )
 		return;
-
-	//Com_Printf( "Shutdown SDL Input\n" );
 
 	input_inited = false;
 	SDL_SetRelativeMouseMode( SDL_FALSE );
@@ -361,16 +372,16 @@ void IN_Frame()
 	if( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer ) {
 		mouse_active = false;
 		input_active = true;
-		if( SDL_GetRelativeMouseMode() ) {
+		if( mouse_relative ) {
+			mouse_relative = !(SDL_SetRelativeMouseMode( SDL_FALSE ) == 0);
 			IN_SetMouseScalingEnabled( true );
-			SDL_SetRelativeMouseMode( SDL_FALSE );
 		}
 	} else {
 		mouse_active = true;
 		input_active = true;
-		if( !SDL_GetRelativeMouseMode() ) {
+		if( !mouse_relative ) {
+			mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
 			IN_SetMouseScalingEnabled( false );
-			SDL_SetRelativeMouseMode( SDL_TRUE );
 		}
 	}
 
