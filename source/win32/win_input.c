@@ -1190,11 +1190,11 @@ void IN_GetThumbsticks( vec4_t sticks )
 }
 
 /*
-* IN_SoftKeyboardAvailable
+* IN_SupportedDevices
 */
-bool IN_SoftKeyboardAvailable( void )
+unsigned int IN_SupportedDevices( void )
 {
-	return false;
+	return IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE | IN_DEVICE_JOYSTICK;
 }
 
 /*

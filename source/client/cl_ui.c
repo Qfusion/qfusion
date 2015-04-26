@@ -242,6 +242,7 @@ void CL_UIModule_Init( void )
 	import.Key_IsDown = Key_IsDown;
 
 	import.IN_ShowSoftKeyboard = IN_ShowSoftKeyboard;
+	import.IN_SupportedDevices = IN_SupportedDevices;
 
 	import.R_ClearScene = re.ClearScene;
 	import.R_AddEntityToScene = re.AddEntityToScene;

@@ -29,7 +29,8 @@ void IN_GetThumbsticks( vec4_t sticks );
 
 void IN_Frame( void );
 
-bool IN_SoftKeyboardAvailable( void ); // whether the OS can open a soft keyboard
+unsigned int IN_SupportedDevices( void );
+
 void IN_ShowSoftKeyboard( bool show );
 
 void IN_GetInputLanguage( char *dest, size_t size );

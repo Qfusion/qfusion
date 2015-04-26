@@ -544,7 +544,7 @@ void CL_GameModule_Init( void )
 	import.CIN_AddRawSamplesListener = &CL_GameModule_AddRawSamplesListener;
 
 	import.IN_IME_GetCandidates = &IN_IME_GetCandidates;
-	import.IN_SoftKeyboardAvailable = &IN_SoftKeyboardAvailable;
+	import.IN_SupportedDevices = &IN_SupportedDevices;
 
 	if( builtinAPIfunc ) {
 		cge = builtinAPIfunc( &import );

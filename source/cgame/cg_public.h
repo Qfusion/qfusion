@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   83
+#define	CGAME_API_VERSION   84
 
 //
 // structs and variables shared with the main engine
@@ -261,7 +261,7 @@ typedef struct
 	// input
 	unsigned int ( *IN_IME_GetCandidates )( char * const *cands, size_t candSize, unsigned int maxCands,
 		int *selected, int *firstKey );
-	bool ( *IN_SoftKeyboardAvailable )( void );
+	unsigned int ( *IN_SupportedDevices )( void );
 } cgame_import_t;
 
 //
