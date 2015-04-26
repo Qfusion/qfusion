@@ -392,11 +392,11 @@ void IN_Frame()
 }
 
 /**
- * Assume this backend will be used only with real keyboards.
+ * The input devices supported by the system.
  */
-bool IN_SoftKeyboardAvailable( void )
+unsigned int IN_SupportedDevices( void )
 {
-	return false;
+	return IN_DEVICE_KEYBOARD | IN_DEVICE_MOUSE | IN_DEVICE_JOYSTICK;
 }
 
 /**

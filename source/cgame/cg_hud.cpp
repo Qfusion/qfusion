@@ -409,9 +409,9 @@ static int CG_GetItemTimerTeam( const void *parameter )
 	return max( (int)cent->current.modelindex-1, 0 );
 }
 
-static int CG_SoftKeyboardAvailable( const void *parameter )
+static int CG_InputDeviceSupported( const void *parameter )
 {
-	return ( trap_IN_SoftKeyboardAvailable() ? 1 : 0 );
+	return ( trap_IN_SupportedDevices() & ( ( intptr_t )parameter ) ) ? 1 : 0;
 }
 
 // ch : backport some of racesow hud elements
@@ -660,7 +660,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "DOWNLOAD_PERCENT", CG_GetCvar, "cl_download_percent" },
 
 	{ "CHAT_MODE", CG_GetCvar, "con_messageMode" },
-	{ "SOFTKEYBOARD", CG_SoftKeyboardAvailable, NULL },
+	{ "SOFTKEYBOARD", CG_InputDeviceSupported, (void *)IN_DEVICE_SOFTKEYBOARD },
 
 	{ "TOUCH_FLIP", CG_GetCvar, "cg_touch_flip" },
 	{ "TOUCH_SCALE", CG_GetCvar, "cg_touch_scale" },
@@ -4412,32 +4412,38 @@ static void CG_LoadStatusBarFile( char *path )
 void CG_LoadStatusBar( void )
 {
 	cvar_t *hud = ISREALSPECTATOR() ? cg_specHUD : cg_clientHUD;
+	const char *default_hud = ( ( trap_IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) ? "default_touch" : "default" );
 	size_t filename_size;
 	char *filename;
 
-	assert( hud && hud->dvalue[0] );
+	assert( hud );
 
 	// buffer for filenames
-	filename_size = strlen( "huds/" ) + max( strlen( hud->dvalue ), strlen( hud->string ) ) + 4 + 1;
-	filename = ( char * )CG_Malloc( filename_size );
+	filename_size = strlen( "huds/" ) + max( strlen( default_hud ), strlen( hud->string ) ) + 4 + 1;
+	filename = ( char * )alloca( filename_size );
 
 	// always load default first. Custom second if needed
 	if( cg_debugHUD && cg_debugHUD->integer )
-		CG_Printf( "HUD: Loading default clientHUD huds/%s\n", hud->dvalue );
-	Q_snprintfz( filename, filename_size, "huds/%s", hud->dvalue );
+		CG_Printf( "HUD: Loading default clientHUD huds/%s\n", default_hud );
+	Q_snprintfz( filename, filename_size, "huds/%s", default_hud );
 	COM_DefaultExtension( filename, ".hud", filename_size );
 	CG_LoadStatusBarFile( filename );
 
-	if( hud->string[0] && Q_stricmp( hud->string, hud->dvalue ) )
+	if( hud->string[0] )
 	{
-		if( cg_debugHUD && cg_debugHUD->integer )
-			CG_Printf( "HUD: Loading custom clientHUD huds/%s\n", hud->string );
-		Q_snprintfz( filename, filename_size, "huds/%s", hud->string );
-		COM_DefaultExtension( filename, ".hud", filename_size );
-		CG_LoadStatusBarFile( filename );
+		if( Q_stricmp( hud->string, default_hud ) )
+		{
+			if( cg_debugHUD && cg_debugHUD->integer )
+				CG_Printf( "HUD: Loading custom clientHUD huds/%s\n", hud->string );
+			Q_snprintfz( filename, filename_size, "huds/%s", hud->string );
+			COM_DefaultExtension( filename, ".hud", filename_size );
+			CG_LoadStatusBarFile( filename );
+		}
 	}
-
-	CG_Free( filename );
+	else
+	{
+		trap_Cvar_Set( hud->name, default_hud );
+	}
 }
 
 /*

@@ -666,7 +666,7 @@ static inline unsigned int trap_IN_IME_GetCandidates( char * const *cands, size_
 	return CGAME_IMPORT.IN_IME_GetCandidates( cands, candSize, maxCands, selected, firstKey );
 }
 
-static inline bool trap_IN_SoftKeyboardAvailable( void )
+static inline unsigned int trap_IN_SupportedDevices( void )
 {
-	return CGAME_IMPORT.IN_SoftKeyboardAvailable();
+	return CGAME_IMPORT.IN_SupportedDevices();
 }
