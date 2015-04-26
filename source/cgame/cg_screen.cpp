@@ -371,12 +371,12 @@ void CG_ScreenInit( void )
 	// wsw : hud debug prints
 	cg_debugHUD =		    trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
-	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "6", CVAR_ARCHIVE );
-	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "12", CVAR_ARCHIVE );
-	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "4", CVAR_ARCHIVE );
-	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "3.25", CVAR_ARCHIVE );
+	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "10", CVAR_ARCHIVE );
+	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "20", CVAR_ARCHIVE );
+	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "8", CVAR_ARCHIVE );
+	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "4", CVAR_ARCHIVE );
 	cg_touch_lookInvert = trap_Cvar_Get( "cg_touch_lookInvert", "0", CVAR_ARCHIVE );
-	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "0.7", CVAR_ARCHIVE );
+	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "0.8", CVAR_ARCHIVE );
 
 	//
 	// register our commands
@@ -1541,8 +1541,7 @@ cg_touch_t cg_touches[CG_MAX_TOUCHES];
 
 typedef struct {
 	int touch;
-	int x, y;			// center position, may be modified
-	int startx, starty;	// original center position
+	int x, y;
 } cg_touchpad_t;
 
 static cg_touchpad_t cg_touchpads[TOUCHPAD_COUNT];
@@ -1607,13 +1606,13 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 		return;
 
 	cg_touch_t &touch = cg_touches[id];
+	touch.x = x;
+	touch.y = y;
 
 	switch( type )
 	{
 	case TOUCH_DOWN:
 	case TOUCH_MOVE:
-		touch.x = x;
-		touch.y = y;
 		if( !touch.down )
 		{
 			touch.down = true;
@@ -1784,30 +1783,6 @@ void CG_CancelTouches( void )
 }
 
 /*
-* CG_GetTouchpadOffset
-*/
-bool CG_GetTouchpadOffset( int padID, float &x, float &y, bool fromStart )
-{
-	cg_touchpad_t &pad = cg_touchpads[padID];
-	if( pad.touch < 0 )
-		return false;
-
-	cg_touch_t &touch = cg_touches[pad.touch];
-	float scale = 600.0f / ( float )cgs.vidHeight;
-	if( fromStart )
-	{
-		x = ( touch.x - pad.startx ) * scale;
-		y = ( touch.y - pad.starty ) * scale;
-	}
-	else
-	{
-		x = ( touch.x - pad.x ) * scale;
-		y = ( touch.y - pad.y ) * scale;
-	}
-	return true;
-}
-
-/*
 * CG_SetTouchpad
 */
 void CG_SetTouchpad( int padID, int touchID )
@@ -1819,7 +1794,7 @@ void CG_SetTouchpad( int padID, int touchID )
 	if( touchID >= 0 )
 	{
 		cg_touch_t &touch = cg_touches[touchID];
-		pad.x = pad.startx = touch.x;
-		pad.y = pad.starty = touch.y;
+		pad.x = touch.x;
+		pad.y = touch.y;
 	}
 }

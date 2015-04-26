@@ -790,7 +790,6 @@ enum
 	TOUCHPAD_COUNT
 };
 
-bool CG_GetTouchpadOffset( int padID, float &x, float &y, bool fromStart );
 void CG_SetTouchpad( int padID, int touchID );
 
 //
