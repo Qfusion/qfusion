@@ -313,18 +313,13 @@ void IN_MouseMove( usercmd_t *cmd )
 
 void IN_Init()
 {
-	const char *hint0 = "0";
-
 	if( input_inited )
 		return;
 
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
 
-	SDL_ShowCursor( SDL_QUERY );
 	SDL_SetCursor( NULL );
-
-	SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, hint0 );
 
 	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
 	if( mouse_relative ) {
