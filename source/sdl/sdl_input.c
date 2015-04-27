@@ -311,7 +311,6 @@ static void HandleEvents( void )
 						AppActivate( false );
 						break;
 					case SDL_WINDOWEVENT_CLOSE:
-						AppActivate( true );
 						Cbuf_ExecuteText( EXEC_NOW, "quit" );
 						break;
 				}

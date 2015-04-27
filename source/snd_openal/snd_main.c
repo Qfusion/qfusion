@@ -166,6 +166,9 @@ void SF_Shutdown( bool verbose )
 	
 	SF_StopAllSounds( true, true );
 
+	// wake up the mixer
+	SF_Activate( true );
+
 	// wait for the queue to be processed
 	S_FinishSoundQueue( s_cmdQueue );
 
