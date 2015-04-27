@@ -325,8 +325,13 @@ void SF_Shutdown( bool verbose )
 		return;
 	}
 
+	SF_StopAllSounds( true, true );
+
 	// free all sounds
 	SF_FreeSounds();
+	
+	// wake up the mixer
+	SF_Activate( true );
 
 	// shutdown backend
 	S_IssueShutdownCmd( s_cmdQueue, verbose );
