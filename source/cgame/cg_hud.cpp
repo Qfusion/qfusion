@@ -2496,9 +2496,10 @@ static void CG_ViewUpFunc( int id, unsigned int time )
 	{
 		cg_touch_t &touch = cg_touches[id];
 
+		float scale = 600.0f / ( float )cgs.vidHeight;
 		if( !time || ( (int)( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-			( abs( touch.x - cg_hud_touch_zoomX ) > cg_touch_zoomThres->integer ) ||
-			( abs( touch.y - cg_hud_touch_zoomY ) > cg_touch_zoomThres->integer ) )
+			( abs( touch.x - cg_hud_touch_zoomX ) * scale > cg_touch_zoomThres->value ) ||
+			( abs( touch.y - cg_hud_touch_zoomY ) * scale > cg_touch_zoomThres->value ) )
 		{
 			cg_hud_touch_zoomSeq = 0;
 		}
@@ -2531,9 +2532,10 @@ static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_la
 		cg_touch_t &touch = cg_touches[touchID];
 		if( cg_hud_touch_zoomSeq )
 		{
+			float scale = 600.0f / ( float )cgs.vidHeight;
 			if( ( ( int )( touch.time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-				( abs( touch.x - cg_hud_touch_zoomX ) > cg_touch_zoomThres->integer ) ||
-				( abs( touch.y - cg_hud_touch_zoomY ) > cg_touch_zoomThres->integer ) )
+				( abs( touch.x - cg_hud_touch_zoomX ) * scale > cg_touch_zoomThres->value ) ||
+				( abs( touch.y - cg_hud_touch_zoomY ) * scale > cg_touch_zoomThres->value ) )
 			{
 				cg_hud_touch_zoomSeq = 0;
 			}
