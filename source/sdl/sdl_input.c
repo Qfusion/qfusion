@@ -216,6 +216,13 @@ static void key_event( const SDL_KeyboardEvent *event, const bool state )
 
 /*****************************************************************************/
 
+static void AppActivate( bool active )
+{
+	SCR_PauseCinematic( !active );
+	CL_SoundModule_Activate( active );
+	VID_AppActivate( active, false );
+}
+
 static void HandleEvents( void )
 {
 	Uint16 *wtext = NULL;
@@ -290,7 +297,21 @@ static void HandleEvents( void )
 				break;
 
 			case SDL_QUIT:
-				Sys_Quit();
+				break;
+
+			case SDL_WINDOWEVENT:
+				switch( event.window.event ) {
+					case SDL_WINDOWEVENT_SHOWN:
+						AppActivate( true );
+						break;
+					case SDL_WINDOWEVENT_HIDDEN:
+						AppActivate( false );
+						break;
+					case SDL_WINDOWEVENT_CLOSE:
+						AppActivate( true );
+						Cbuf_ExecuteText( EXEC_NOW, "quit" );
+						break;
+				}
 				break;
 		}
 	}
