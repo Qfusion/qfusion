@@ -32,6 +32,9 @@ void IN_Commands( void )
  */
 static void mouse_motion_event( SDL_MouseMotionEvent *event )
 {
+	// See:
+	// https://bugzilla.libsdl.org/show_bug.cgi?id=2963
+	// https://bugs.freedesktop.org/show_bug.cgi?id=71609
 	mx += event->xrel;
 	my += event->yrel;
 }
