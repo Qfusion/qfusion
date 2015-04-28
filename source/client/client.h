@@ -476,7 +476,7 @@ void CL_UIModule_ForceMenuOn( void );
 void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
 void CL_UIModule_MouseMove( int dx, int dy );
-void CL_UIModule_MouseSet( int x, int y );
+void CL_UIModule_MouseSet( int mx, int my, bool showCursor );
 
 //
 // cl_serverlist.c
@@ -514,6 +514,7 @@ void CL_UserInputFrame( void );
 void CL_NewUserCommand( int msec );
 void CL_WriteUcmdsToMessage( msg_t *msg );
 void CL_MouseMove( usercmd_t *cmd, int mx, int my );
+void CL_MouseSet( int mx, int my, bool showCursor );
 void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 void CL_CancelTouches( void );
 void CL_UpdateCommandInput( void );
