@@ -32,8 +32,6 @@ static void *module_handle;
 
 static async_stream_module_t *ui_async_stream;
 
-static bool ui_hideCursor;
-
 //==============================================
 
 /*
@@ -403,7 +401,7 @@ void CL_UIModule_Refresh( bool backGround, bool showCursor )
 	if( uie )
 		uie->Refresh( cls.realtime, Com_ClientState(), Com_ServerState(), 
 			cls.demo.playing, cls.demo.name, cls.demo.paused, Q_rint(cls.demo.time/1000.0f), 
-			backGround, showCursor && !ui_hideCursor );
+			backGround, showCursor );
 }
 
 /*
@@ -552,16 +550,4 @@ void CL_UIModule_MouseSet( int x, int y )
 {
 	if( uie )
 		uie->MouseSet( x, y );
-}
-
-/*
-* CL_UIModule_HideCursor
-*
-* Lets the OS override the visibility of the cursor.
-* Should be called whenever the OS wants to hide the cursor because
-* client can show it again (for instance, for gamepad navigation).
-*/
-void CL_UIModule_HideCursor( bool hide )
-{
-	ui_hideCursor = hide;
 }

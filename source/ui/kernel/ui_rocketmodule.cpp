@@ -54,7 +54,7 @@ public:
 //==================================================
 
 RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
-	: rocketInitialized( false ),
+	: rocketInitialized( false ), hideCursorBits( 0 ),
 	// pointers
 	systemInterface(0), fsInterface(0), renderInterface(0), context(0)
 {
@@ -281,14 +281,10 @@ void RocketModule::loadCursor( const String& rmlCursor )
 		cursor->RemoveReference();
 }
 
-void RocketModule::showCursor( void )
+void RocketModule::hideCursor( unsigned int addBits, unsigned int clearBits )
 {
-	context->ShowMouseCursor( true );
-}
-
-void RocketModule::hideCursor( void )
-{
-	context->ShowMouseCursor( false );
+	hideCursorBits = ( hideCursorBits & ~clearBits ) | addBits;
+	context->ShowMouseCursor( hideCursorBits == 0 );
 }
 
 void RocketModule::update( void )

@@ -209,13 +209,13 @@ using namespace Rocket::Core;
 		if( event == "blur" )
 		{
 			focusMode = false;
-			GetRocketModule()->showCursor();
+			GetRocketModule()->hideCursor( 0, RocketModule::HIDECURSOR_ELEMENT );
 			WriteText();
 		}
 		else if( event == "focus" )
 		{
 			focusMode = true;
-			GetRocketModule()->hideCursor();
+			GetRocketModule()->hideCursor( RocketModule::HIDECURSOR_ELEMENT, 0 );
 			firstMousedown = true;
 
 			// old C ui functionality

@@ -477,7 +477,6 @@ void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
 void CL_UIModule_MouseMove( int dx, int dy );
 void CL_UIModule_MouseSet( int x, int y );
-void CL_UIModule_HideCursor( bool hide );
 
 //
 // cl_serverlist.c
