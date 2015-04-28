@@ -27,9 +27,14 @@ namespace WSWUI
 		void unregisterCustoms();
 
 		// cursor functions
+		enum HideCursorBits {
+			HIDECURSOR_REFRESH	= 1 << 0, // hidden by UI_Main::refreshScreen
+			HIDECURSOR_INPUT	= 1 << 1, // hidden by an input source such as touchscreen
+			HIDECURSOR_ELEMENT	= 1 << 2, // hidden by an element
+			HIDECURSOR_ALL		= ( 1 << 3 ) - 1
+		};
 		void loadCursor( const String& rmlCursor );
-		void showCursor( void );
-		void hideCursor( void );
+		void hideCursor( unsigned int addBits, unsigned int clearBits );
 
 		// system events
 		void mouseMove( int mousex, int mousey );
@@ -65,6 +70,7 @@ namespace WSWUI
 		void registerEventListener( Rocket::Core::EventListenerInstancer *);
 
 		bool rocketInitialized;
+		unsigned int hideCursorBits;
 
 		UI_SystemInterface *systemInterface;
 		UI_FileInterface *fsInterface;

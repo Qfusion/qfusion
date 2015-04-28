@@ -211,8 +211,10 @@ void UI_Main::preloadUI( void )
 
 	// initial cursor setup
 	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
+		rocketModule->hideCursor( RocketModule::HIDECURSOR_INPUT, RocketModule::HIDECURSOR_ALL );
 		mouseMove( 0, 0, true );
 	} else {
+		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_ALL );
 		mouseMove( refreshState.width >> 1, refreshState.height >> 1, true );
 	}
 
@@ -572,10 +574,10 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	}
 
 	if( showCursor ) { 
-		rocketModule->showCursor();
+		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_REFRESH );
 	}
 	else {
-		rocketModule->hideCursor();
+		rocketModule->hideCursor( RocketModule::HIDECURSOR_REFRESH, 0 );
 	}
 
 	if( !menuVisible ) {
