@@ -211,11 +211,9 @@ void UI_Main::preloadUI( void )
 
 	// initial cursor setup
 	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
-		rocketModule->hideCursor( RocketModule::HIDECURSOR_INPUT, RocketModule::HIDECURSOR_ALL );
-		mouseMove( 0, 0, true );
+		mouseMove( 0, 0, true, false );
 	} else {
-		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_ALL );
-		mouseMove( refreshState.width >> 1, refreshState.height >> 1, true );
+		mouseMove( refreshState.width >> 1, refreshState.height >> 1, true, true );
 	}
 
 	rocketModule->update();
@@ -459,7 +457,7 @@ bool UI_Main::preloadEnabled( void )
 
 // CALLBACKS FROM MAIN PROGRAM
 
-void UI_Main::mouseMove( int x, int y, bool absolute )
+void UI_Main::mouseMove( int x, int y, bool absolute, bool showCursor )
 {
 	// change the delta to window coordinates.
 	if( absolute ) {
@@ -480,6 +478,12 @@ void UI_Main::mouseMove( int x, int y, bool absolute )
 		mousey = refreshState.height;
 
 	rocketModule->mouseMove( mousex, mousey );
+
+	if( showCursor ) {
+		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_INPUT );
+	} else {
+		rocketModule->hideCursor( RocketModule::HIDECURSOR_INPUT, 0 );
+	}
 }
 
 void UI_Main::textInput( wchar_t c )

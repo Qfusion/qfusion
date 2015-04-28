@@ -68,7 +68,7 @@ public:
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
 
-	void mouseMove( int x, int y, bool absolute );
+	void mouseMove( int x, int y, bool absolute, bool showCursor );
 	void textInput( wchar_t c );
 	void keyEvent( int key, bool pressed );
 

@@ -316,6 +316,18 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 }
 
 /*
+* CL_MouseSet
+*
+* Mouse input for systems with basic mouse support (without centering
+* and possibly without toggleable cursor).
+*/
+void CL_MouseSet( int mx, int my, bool showCursor )
+{
+	if( cls.key_dest == key_menu )
+		CL_UIModule_MouseSet( mx, my, showCursor );
+}
+
+/*
 ===============================================================================
 
 KEY BUTTONS
@@ -519,7 +531,7 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 			if( id != 0 )
 				break;
 
-			CL_UIModule_MouseSet( x, y );
+			CL_UIModule_MouseSet( x, y, false );
 
 			switch( type )
 			{
@@ -528,7 +540,7 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 					break;
 				case TOUCH_UP:
 					Key_MouseEvent( K_MOUSE1, false, time );
-					CL_UIModule_MouseSet( 0, 0 );
+					CL_UIModule_MouseSet( 0, 0, false );
 					break;
 				default:
 					break;

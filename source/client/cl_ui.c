@@ -546,8 +546,8 @@ void CL_UIModule_MouseMove( int dx, int dy )
 /*
 * CL_UIModule_MouseSet
 */
-void CL_UIModule_MouseSet( int x, int y )
+void CL_UIModule_MouseSet( int mx, int my, bool showCursor )
 {
 	if( uie )
-		uie->MouseSet( x, y );
+		uie->MouseSet( mx, my, showCursor );
 }
