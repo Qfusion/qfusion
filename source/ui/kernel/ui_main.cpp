@@ -209,6 +209,13 @@ void UI_Main::preloadUI( void )
 	navigator->pushDocument( ui_index, false, false );
 	showNavigationStack = navigator->hasDocuments();
 
+	// initial cursor setup
+	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
+		mouseMove( 0, 0, true );
+	} else {
+		mouseMove( refreshState.width >> 1, refreshState.height >> 1, true );
+	}
+
 	rocketModule->update();
 }
 
