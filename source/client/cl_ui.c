@@ -239,6 +239,7 @@ void CL_UIModule_Init( void )
 	import.Key_SetBinding = Key_SetBinding;
 	import.Key_IsDown = Key_IsDown;
 
+	import.IN_GetThumbsticks = IN_GetThumbsticks;
 	import.IN_ShowSoftKeyboard = IN_ShowSoftKeyboard;
 	import.IN_SupportedDevices = IN_SupportedDevices;
 

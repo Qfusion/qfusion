@@ -767,44 +767,6 @@ void CL_UpdateCommandInput( void )
 }
 
 /*
-* CL_CursorMovementFromJoystick
-*/
-void CL_CursorMovementFromJoystick( void )
-{
-	vec4_t sticks;
-	float sx, sy;
-	static float x, y;
-	int mx, my;
-	float scale;
-
-	if( cls.key_dest != key_menu )
-		return;
-
-	IN_GetThumbsticks( sticks );
-
-	sx = sticks[0] * ( ( float )( fabsf( sticks[0] ) > joy_forwardthreshold->value ) );
-	sx += sticks[2] * ( ( float )( fabsf( sticks[2] ) > joy_forwardthreshold->value ) );
-	clamp( sx, -1.0f, 1.0f );
-	sy = sticks[1] * ( ( float )( fabsf( sticks[1] ) > joy_forwardthreshold->value ) );
-	sy += sticks[3] * ( ( float )( fabsf( sticks[3] ) > joy_forwardthreshold->value ) );
-	clamp( sy, -1.0f, 1.0f );
-
-	if( !sx && !sy )
-		return;
-
-	scale = ( float )( min( viddef.width, viddef.height ) );
-	x += sx * sx * sx * cls.realframetime * scale * 1.5f;
-	y += sy * sy * sy * cls.realframetime * scale * 1.5f;
-
-	mx = x;
-	my = y;
-	x -= ( float )mx;
-	y -= ( float )my;
-
-	CL_UIModule_MouseMove( mx, my );
-}
-
-/*
 * IN_CenterView
 */
 void IN_CenterView( void )

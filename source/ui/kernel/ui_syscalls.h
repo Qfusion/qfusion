@@ -280,6 +280,10 @@ namespace trap
 			return UI_IMPORT.Key_IsDown( keynum );
 		}
 
+		inline void IN_GetThumbsticks( vec4_t sticks ) {
+			UI_IMPORT.IN_GetThumbsticks( sticks );
+		}
+
 		inline void IN_ShowSoftKeyboard( bool show ) {
 			UI_IMPORT.IN_ShowSoftKeyboard( show );
 		}
