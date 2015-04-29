@@ -505,6 +505,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 					continue;
 				if( vcount + surf2->mesh->numVerts >= USHRT_MAX )
 					continue;
+				if( surf2->numInstances != 0 )
+					continue;
 
 				// unvised maps and submodels submodel can simply skip PVS checks
 				if( !visdata )
@@ -670,7 +672,7 @@ merge:
 		drawSurf = &loadbmodel->drawSurfaces[startDrawSurface + i];
 
 		// don't use half-floats for XYZ due to precision issues
-		vbo->owner = R_CreateMeshVBO( drawSurf, vbo->numVerts, vbo->numElems, vbo->instancesOffset, 
+		vbo->owner = R_CreateMeshVBO( drawSurf, vbo->numVerts, vbo->numElems, drawSurf->numInstances, 
 			vbo->vertexAttribs, VBO_TAG_WORLD, vbo->vertexAttribs & ~floatVattribs );
 		drawSurf->vbo = vbo->owner;
 
