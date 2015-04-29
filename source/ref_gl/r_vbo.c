@@ -284,9 +284,6 @@ error:
 	if( vbo )
 		R_ReleaseMeshVBO( vbo );
 
-	RB_BindArrayBuffer( 0 );
-	RB_BindElementArrayBuffer( 0 );
-
 	return NULL;
 }
 
@@ -317,6 +314,9 @@ void R_ReleaseMeshVBO( mesh_vbo_t *vbo )
 	GLuint vbo_id;
 
 	assert( vbo != NULL );
+
+	RB_BindArrayBuffer( 0 );
+	RB_BindElementArrayBuffer( 0 );
 
 	if( vbo->vertexId ) {
 		vbo_id = vbo->vertexId;
