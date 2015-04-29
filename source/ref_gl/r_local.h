@@ -758,6 +758,7 @@ typedef struct mesh_vbo_s
 	size_t				arrayBufferSize;
 	size_t				elemBufferSize;
 
+	vattribmask_t		vertexAttribs;
 	vattribmask_t		halfFloatAttribs;
 
 	size_t 				normalsOffset;

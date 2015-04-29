@@ -276,6 +276,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	vbo->owner = owner;
 	vbo->index = vboh->index + 1;
 	vbo->tag = tag;
+	vbo->vertexAttribs = vattribs;
 	vbo->halfFloatAttribs = halfFloatVattribs;
 
 	return vbo;

@@ -340,9 +340,14 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	msurface_t **surfmap;
 	msurface_t **surfaces;
 	unsigned numSurfaces;
+	unsigned numUnmappedSurfaces;
+	unsigned startDrawSurface;
 	drawSurfaceBSP_t *drawSurf;
 	int num_vbos;
 	vattribmask_t floatVattribs;
+	mesh_vbo_t *tempVBOs;
+	unsigned numTempVBOs, maxTempVBOs;
+	unsigned numUnmergedVBOs;
 
 	assert( mod );
 
@@ -359,6 +364,11 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	surfmap = ( msurface_t ** )Mod_Malloc( mod, bm->numfaces * sizeof( *surfmap ) );
 	surfaces = ( msurface_t ** )Mod_Malloc( mod, bm->numfaces * sizeof( *surfaces ) );
 	numSurfaces = 0;
+
+	numTempVBOs = 0;
+	maxTempVBOs = 1024;
+	tempVBOs = ( mesh_vbo_t * )Mod_Malloc( mod, maxTempVBOs * sizeof( *tempVBOs ) );
+	startDrawSurface = loadbmodel->numDrawSurfaces;
 
 	if( !modnum && loadbmodel->pvs )
 	{
@@ -445,6 +455,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 
 	num_vbos = 0;
 	*vbo_total_size = 0;
+	numUnmappedSurfaces = numSurfaces;
 	for( i = 0; i < numSurfaces; i++ )
 	{
 		mesh_vbo_t *vbo;
@@ -454,6 +465,11 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		int vcount, ecount;
 		vattribmask_t vattribs;
 		unsigned last_merged = i;
+
+		if( numUnmappedSurfaces == 0 ) {
+			// done
+			break;
+		}
 
 		// ignore faces already merged
 		if( surfmap[i] )
@@ -528,17 +544,26 @@ merge:
 			vattribs |= VATTRIB_INSTANCES_BITS;
 		}
 
-		// don't use half-floats for XYZ due to precision issues
-		vbo = R_CreateMeshVBO( ( void * )surf, vcount, ecount, surf->numInstances, vattribs, 
-			VBO_TAG_WORLD, vattribs & ~floatVattribs );
+		// create temp VBO to hold pre-batched info
+		if( numTempVBOs == maxTempVBOs ) {
+			maxTempVBOs += 1024;
+			tempVBOs = Mod_Realloc( tempVBOs, maxTempVBOs * sizeof( *tempVBOs ) );
+		}
+
+		vbo = &tempVBOs[numTempVBOs++];
+		vbo->numVerts = vcount;
+		vbo->numElems = ecount;
+		vbo->vertexAttribs = vattribs;
+		if( fcount == 1 ) {
+			// non-mergable
+			vbo->index = numTempVBOs;
+		}
+
 		if( vbo )
 		{
-			vattribmask_t errMask;
-
 			// allocate a drawsurf
 			drawSurf = &loadbmodel->drawSurfaces[loadbmodel->numDrawSurfaces++];
 			drawSurf->type = ST_BSP;
-			drawSurf->vbo = vbo;
 			drawSurf->superLightStyle = surf->superLightStyle;
 			drawSurf->instances = surf->instances;
 			drawSurf->numInstances = surf->numInstances;
@@ -547,13 +572,10 @@ merge:
 			surf->drawSurf = drawSurf;
 			surf->firstDrawSurfVert = 0;
 			surf->firstDrawSurfElem = 0;
-			errMask = R_UploadVBOVertexData( vbo, 0, vattribs, surf->mesh, VBO_HINT_NONE );
-			R_UploadVBOElemData( vbo, 0, 0, surf->mesh, VBO_HINT_NONE );
-
-			R_UploadVBOInstancesData( vbo, 0, surf->numInstances, surf->instances );
 
 			vcount = mesh->numVerts;
 			ecount = mesh->numElems;
+			numUnmappedSurfaces--;
 
 			// now if there are any merged faces upload them to the same VBO
 			if( fcount > 1 )
@@ -570,39 +592,127 @@ merge:
 					surf2->firstDrawSurfVert = vcount;
 					surf2->firstDrawSurfElem = ecount;
 
-					errMask |= R_UploadVBOVertexData( vbo, vcount, vattribs, mesh2, VBO_HINT_NONE );
-					R_UploadVBOElemData( vbo, vcount, ecount, mesh2, VBO_HINT_NONE );
-
 					vcount += mesh2->numVerts;
 					ecount += mesh2->numElems;
+					numUnmappedSurfaces--;
 				}
 			}
 
-			// now if we have detected any errors, let the developer know.. usually they indicate
-			// either an unintentionally missing lightmap
-			if( errMask )
-			{
-				VBO_Printf( S_COLOR_YELLOW "WARNING: Missing arrays for surface %s:", shader->name );
-				if( errMask & VATTRIB_NORMAL_BIT )
-					VBO_Printf( " norms" );
-				if( errMask & VATTRIB_SVECTOR_BIT )
-					VBO_Printf( " svecs" );
-				if( errMask & VATTRIB_TEXCOORDS_BIT )
-					VBO_Printf( " st" );
-				if( errMask & VATTRIB_LMCOORDS0_BIT )
-					VBO_Printf( " lmst" );
-				if( errMask & VATTRIB_LMLAYERS0123_BIT )
-					VBO_Printf( " lmlayers" );
-				if( errMask & VATTRIB_COLOR0_BIT )
-					VBO_Printf( " colors" );
-				VBO_Printf( "\n" );
-			}
-
-			num_vbos++;
 			*vbo_total_size += vbo->arrayBufferSize + vbo->elemBufferSize;
 		}
 	}
 
+	assert( numUnmappedSurfaces == 0 );
+
+	// merge vertex buffer objects with identical vertex attribs
+	numUnmergedVBOs = numTempVBOs;
+	for( i = 0; i < numTempVBOs; i++ ) {
+		mesh_vbo_t *vbo = &tempVBOs[i];
+
+		if( !numUnmergedVBOs ) {
+			break;
+		}
+
+		if( vbo->index == 0 ) {		
+			for( j = i + 1; j < numTempVBOs; j++ ) {
+				mesh_vbo_t *vbo2 = &tempVBOs[j];
+
+				if( vbo2->index != 0 ) {
+					// already merged
+					continue;
+				}
+				if( vbo2->vertexAttribs != vbo->vertexAttribs ) {
+					continue;
+				}
+				if( vbo->numVerts + vbo2->numVerts >= USHRT_MAX ) {
+					continue;
+				}
+
+				drawSurf = &loadbmodel->drawSurfaces[startDrawSurface + j];
+				drawSurf->firstVboVert = vbo->numVerts;
+				drawSurf->firstVboElem = vbo->numElems;
+
+				vbo->numVerts += vbo2->numVerts;
+				vbo->numElems += vbo2->numElems;
+
+				vbo2->index = i + 1;
+				numUnmergedVBOs--;
+			}
+
+			vbo->index = i + 1;
+		}
+
+		if( vbo->index == i + 1 ) {
+			numUnmergedVBOs--;
+		}
+	}
+
+	assert( numUnmergedVBOs == 0 );
+
+	// create real VBOs and assign owner pointers
+	numUnmergedVBOs = numTempVBOs;
+	for( i = 0; i < numTempVBOs; i++ ) {
+		mesh_vbo_t *vbo = &tempVBOs[i];
+
+		if( !numUnmergedVBOs ) {
+			break;
+		}
+
+		if( vbo->owner != NULL ) {
+			// already assigned to a real VBO
+			continue;
+		}
+		if( vbo->index != i + 1 ) {
+			// not owning self, meaning it's been merged to another VBO
+			continue;
+		}
+
+		drawSurf = &loadbmodel->drawSurfaces[startDrawSurface + i];
+
+		// don't use half-floats for XYZ due to precision issues
+		vbo->owner = R_CreateMeshVBO( drawSurf, vbo->numVerts, vbo->numElems, vbo->instancesOffset, 
+			vbo->vertexAttribs, VBO_TAG_WORLD, vbo->vertexAttribs & ~floatVattribs );
+		drawSurf->vbo = vbo->owner;
+
+		if( drawSurf->numInstances == 0 ) {
+			for( j = i + 1; j < numTempVBOs; j++ ) {
+				mesh_vbo_t *vbo2 = &tempVBOs[j];
+
+				if( vbo2->index != i + 1 ) {
+					continue;
+				}
+
+				vbo2->owner = vbo->owner;
+				drawSurf = &loadbmodel->drawSurfaces[startDrawSurface + j];
+				drawSurf->vbo = vbo->owner;
+				numUnmergedVBOs--;
+			}
+		}
+
+		num_vbos++;
+		numUnmergedVBOs--;
+	}
+
+	assert( numUnmergedVBOs == 0 );
+
+	// upload data to merged VBO's and assign offsets to drawSurfs
+	for( i = 0; i < numSurfaces; i++ ) {
+		mesh_vbo_t *vbo;
+		int vertsOffset, elemsOffset;
+
+		surf = surfaces[i];
+		drawSurf = surf->drawSurf;
+		vbo = drawSurf->vbo;
+		
+		vertsOffset = drawSurf->firstVboVert + surf->firstDrawSurfVert;
+		elemsOffset = drawSurf->firstVboElem + surf->firstDrawSurfElem;
+
+		R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, surf->mesh, VBO_HINT_NONE );
+		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, surf->mesh, VBO_HINT_NONE );
+		R_UploadVBOInstancesData( vbo, 0, surf->numInstances, surf->instances );
+	}
+
+	R_Free( tempVBOs );
 	R_Free( surfmap );
 	R_Free( surfaces );
 
