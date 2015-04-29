@@ -131,6 +131,20 @@ namespace WSWUI
 		}
 	}
 
+	void TouchEvent( int id, touchevent_t type, int x, int y )
+	{
+		if( ui_main ) {
+			ui_main->touchEvent( id, type, x, y );
+		}
+	}
+
+	void CancelTouches( void )
+	{
+		if( ui_main ) {
+			ui_main->cancelTouches();
+		}
+	}
+
 	void ForceMenuOff( void )
 	{
 		if( ui_main ) {
@@ -170,6 +184,8 @@ ui_export_t *GetUIAPI( ui_import_t *import )
 	globals.CharEvent = WSWUI::CharEvent;
 	globals.MouseMove = WSWUI::MouseMove;
 	globals.MouseSet = WSWUI::MouseSet;
+	globals.TouchEvent = WSWUI::TouchEvent;
+	globals.CancelTouches = WSWUI::CancelTouches;
 
 	globals.ForceMenuOff = WSWUI::ForceMenuOff;
 

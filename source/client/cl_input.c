@@ -528,24 +528,9 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 			break;
 		
 		case key_menu:
-			if( id != 0 )
-				break;
-
-			CL_UIModule_MouseSet( x, y, false );
-
-			switch( type )
-			{
-				case TOUCH_DOWN:
-					Key_MouseEvent( K_MOUSE1, true, time );
-					break;
-				case TOUCH_UP:
-					Key_MouseEvent( K_MOUSE1, false, time );
-					CL_UIModule_MouseSet( 0, 0, false );
-					break;
-				default:
-					break;
-			}
+			CL_UIModule_TouchEvent( id, type, x, y );
 			break;
+
 		default:
 			break;
 	}
@@ -565,6 +550,8 @@ void CL_CancelTouches( void )
 		case key_message:
 			Con_TouchEvent( false, -1, -1 );
 			break;
+		case key_menu:
+			CL_UIModule_CancelTouches();
 		default:
 			break;
 	}

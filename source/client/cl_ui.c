@@ -509,6 +509,24 @@ void CL_UIModule_CharEvent( wchar_t key )
 }
 
 /*
+* CL_UIModule_TouchEvent
+*/
+void CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y )
+{
+	if( uie )
+		uie->TouchEvent( id, type, x, y );
+}
+
+/*
+* CL_UIModule_CancelTouches
+*/
+void CL_UIModule_CancelTouches( void )
+{
+	if( uie )
+		uie->CancelTouches();
+}
+
+/*
 * CL_UIModule_ForceMenuOn
 */
 void CL_UIModule_ForceMenuOn( void )

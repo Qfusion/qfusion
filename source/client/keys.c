@@ -134,6 +134,7 @@ const keyname_t keynames[] =
 	{ "MOUSE6", K_MOUSE6 },
 	{ "MOUSE7", K_MOUSE7 },
 	{ "MOUSE8", K_MOUSE8 },
+	{ "MOUSE1DBLCLK", K_MOUSE1DBLCLK },
 
 	{ "A_BUTTON", K_A_BUTTON },
 	{ "B_BUTTON", K_B_BUTTON },

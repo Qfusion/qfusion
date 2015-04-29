@@ -40,7 +40,6 @@ using namespace Rocket::Core;
 		this->boundKey[1] = 0;
 		this->mouse_x = 0;
 		this->mouse_y = 0;
-		this->firstMousedown = true;
 		this->instancer = instancer;
 
 		InitializeBinds();
@@ -173,7 +172,7 @@ using namespace Rocket::Core;
 	{
 		int index;
 
-		if( key == K_ESCAPE )
+		if( !key || ( key == K_ESCAPE ) )
 			return;
 
 		// koochi: moved into the focus event
@@ -181,7 +180,7 @@ using namespace Rocket::Core;
 		//	ReleaseKeys();
 
 		// we don't need to rebind the same key
-		if( key && (key == boundKey[0] || key == boundKey[1]) )
+		if( ( key == boundKey[0] ) || ( key == boundKey[1] ) )
 		{
 			this->Blur();
 			return;
@@ -216,7 +215,6 @@ using namespace Rocket::Core;
 		{
 			focusMode = true;
 			GetRocketModule()->hideCursor( RocketModule::HIDECURSOR_ELEMENT, 0 );
-			firstMousedown = true;
 
 			// old C ui functionality
 			if( KeysAreBound() )
@@ -230,22 +228,11 @@ using namespace Rocket::Core;
 		{
 			int key = 0;
 
-			if( event == "keydown" )
-			{
-				key = GetKeyboardKey( event );
-				if( key != K_ESCAPE ) {
-					this->SetKeybind( key );
-					event.StopPropagation();
-				}
-				return;
-			}
-			else if( event == "keyselect" )
+			if( event == "keyselect" )
 			{
 				key = event.GetParameter< int >( "key", 0 );
-				if( key != K_ESCAPE ) {
-					this->SetKeybind( key );
-					event.StopPropagation();
-				}
+				this->SetKeybind( key );
+				event.StopPropagation();
 				return;
 			}
 			else if( event == "textinput" )
@@ -254,19 +241,9 @@ using namespace Rocket::Core;
 			}
 			else if( event == "mousedown" )
 			{
-				if( firstMousedown )
-				{
-					firstMousedown = false;
-
-					// fix mouse position inside the widget
-					mouse_x = event.GetParameter<int>( "mouse_x", 0 );
-					mouse_y = event.GetParameter<int>( "mouse_y", 0 );
-					return;
-				}
-
-				key = GetMouseKey( event );
-				this->SetKeybind( key );
-				event.StopPropagation();
+				// fix mouse position inside the widget
+				mouse_x = event.GetParameter<int>( "mouse_x", 0 );
+				mouse_y = event.GetParameter<int>( "mouse_y", 0 );
 				return;
 			}
 			else if( event == "mousescroll" )

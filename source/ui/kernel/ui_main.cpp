@@ -541,6 +541,16 @@ void UI_Main::keyEvent( int key, bool pressed )
 	rocketModule->keyEvent( key, pressed );
 }
 
+void UI_Main::touchEvent( int id, touchevent_t type, int x, int y )
+{
+	rocketModule->touchEvent( id, type, x, y );
+}
+
+void UI_Main::cancelTouches( void )
+{
+	rocketModule->cancelTouches();
+}
+
 void UI_Main::addToServerList(const char *adr, const char *info)
 {
 	if( !serverBrowser )
