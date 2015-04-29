@@ -150,6 +150,7 @@ private:
 	void destroyFormatters( void );
 
 	void loadCursor( void );
+	void joystickCursorMove( void );
 
 	void customRender( void );
 

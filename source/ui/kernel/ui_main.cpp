@@ -453,6 +453,49 @@ bool UI_Main::preloadEnabled( void )
 #endif
 }
 
+void UI_Main::joystickCursorMove( void )
+{
+	float threshold = trap::Cvar_Value( "joy_forwardthreshold" );
+	if( threshold <= 0.0f ) {
+		return;
+	}
+
+	static unsigned int lastTime;
+	unsigned int time = trap::Milliseconds();
+	if( !lastTime ) {
+		lastTime = time;
+		return;
+	}
+	float frameTime = ( time - lastTime ) * 0.001f;
+	clamp_high( frameTime, 0.1f );
+	lastTime = time;
+
+	vec4_t sticks;
+	trap::IN_GetThumbsticks( sticks );
+
+	float sx = sticks[0] * ( ( float )( fabsf( sticks[0] ) > threshold ) );
+	sx += sticks[2] * ( ( float )( fabsf( sticks[2] ) > threshold ) );
+	clamp( sx, -1.0f, 1.0f );
+	float sy = sticks[1] * ( ( float )( fabsf( sticks[1] ) > threshold ) );
+	sy += sticks[3] * ( ( float )( fabsf( sticks[3] ) > threshold ) );
+	clamp( sy, -1.0f, 1.0f );
+
+	static float x, y;
+	if( !sx && !sy ) {
+		x = 0.0f;
+		y = 0.0f;
+		return;
+	}
+
+	float scale = ( float )( std::min( refreshState.width, refreshState.height ) );
+	x += sx * sx * sx * frameTime * scale * 1.5f;
+	y += sy * sy * sy * frameTime * scale * 1.5f;
+	int mx = x, my = y;
+	x -= ( float )mx;
+	y -= ( float )my;
+	mouseMove( mx, my, false, true );
+}
+
 //===========================================
 
 // CALLBACKS FROM MAIN PROGRAM
@@ -577,13 +620,6 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 		}
 	}
 
-	if( showCursor ) { 
-		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_REFRESH );
-	}
-	else {
-		rocketModule->hideCursor( RocketModule::HIDECURSOR_REFRESH, 0 );
-	}
-
 	if( !menuVisible ) {
 		return;
 	}
@@ -592,6 +628,14 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 		// no documents on stack, release the key dest
 		showUI( false );
 		return;
+	}
+
+	if( showCursor ) { 
+		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_REFRESH );
+		joystickCursorMove();
+	}
+	else {
+		rocketModule->hideCursor( RocketModule::HIDECURSOR_REFRESH, 0 );
 	}
 
 	// rocket update+render

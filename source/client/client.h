@@ -518,7 +518,6 @@ void CL_MouseSet( int mx, int my, bool showCursor );
 void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 void CL_CancelTouches( void );
 void CL_UpdateCommandInput( void );
-void CL_CursorMovementFromJoystick( void );
 void IN_CenterView( void );
 
 
