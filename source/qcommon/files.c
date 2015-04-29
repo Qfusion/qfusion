@@ -3641,6 +3641,12 @@ bool FS_SetGameDirectory( const char *dir, bool force )
 		}
 	}
 
+	if( fs_initialized && ( !dedicated || !dedicated->integer ) )
+	{
+		Cbuf_AddText( "writeconfig config.cfg\n" );
+		Cbuf_Execute();
+	}
+
 	// free up any current game dir info
 	while( fs_searchpaths != fs_base_searchpaths )
 	{
