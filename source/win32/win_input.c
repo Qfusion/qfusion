@@ -1133,7 +1133,7 @@ void IN_Commands( void )
 		const int keys[] =
 		{
 			K_DPAD_UP, K_DPAD_DOWN, K_DPAD_LEFT, K_DPAD_RIGHT, 0, 0,
-			K_L_STICK, K_R_STICK, K_L_SHOULDER, K_R_SHOULDER, 0, 0,
+			K_LSTICK, K_RSTICK, K_LSHOULDER, K_RSHOULDER, 0, 0,
 			K_A_BUTTON, K_B_BUTTON, K_X_BUTTON, K_Y_BUTTON
 		};
 
@@ -1160,12 +1160,12 @@ void IN_Commands( void )
 	trigger = ( in_xinput_gamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD );
 	triggerOld = ( in_xinput_oldGamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD );
 	if( trigger != triggerOld )
-		Key_Event( K_L_TRIGGER, trigger, Sys_Milliseconds() );
+		Key_Event( K_LTRIGGER, trigger, Sys_Milliseconds() );
 
 	trigger = ( in_xinput_gamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD );
 	triggerOld = ( in_xinput_oldGamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD );
 	if( trigger != triggerOld )
-		Key_Event( K_R_TRIGGER, trigger, Sys_Milliseconds() );
+		Key_Event( K_RTRIGGER, trigger, Sys_Milliseconds() );
 
 	memcpy( &in_xinput_oldGamepad, &in_xinput_gamepad, sizeof( in_xinput_gamepad ) );
 }
