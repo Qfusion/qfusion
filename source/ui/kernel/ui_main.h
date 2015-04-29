@@ -71,6 +71,8 @@ public:
 	void mouseMove( int x, int y, bool absolute, bool showCursor );
 	void textInput( wchar_t c );
 	void keyEvent( int key, bool pressed );
+	void touchEvent( int id, touchevent_t type, int x, int y );
+	void cancelTouches( void );
 
 	// Commands (these could be private)
 	static void ReloadUI_Cmd_f( void );

@@ -40,6 +40,8 @@ namespace WSWUI
 		void mouseMove( int mousex, int mousey );
 		void textInput( wchar_t c );
 		void keyEvent( int key, bool pressed );
+		void touchEvent( int id, touchevent_t type, int x, int y );
+		void cancelTouches( void );
 
 		void update( void );
 		void render( void );
@@ -71,6 +73,7 @@ namespace WSWUI
 
 		bool rocketInitialized;
 		unsigned int hideCursorBits;
+		int lastTouch;
 
 		UI_SystemInterface *systemInterface;
 		UI_FileInterface *fsInterface;

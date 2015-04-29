@@ -470,6 +470,8 @@ void CL_UIModule_TouchAllAssets( void );
 void CL_UIModule_Keydown( int key );
 void CL_UIModule_Keyup( int key );
 void CL_UIModule_CharEvent( wchar_t key );
+void CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y );
+void CL_UIModule_CancelTouches( void );
 void CL_UIModule_Refresh( bool backGround, bool showCursor );
 void CL_UIModule_UpdateConnectScreen( bool backGround );
 void CL_UIModule_ForceMenuOn( void );

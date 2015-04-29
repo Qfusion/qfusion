@@ -54,7 +54,7 @@ public:
 //==================================================
 
 RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
-	: rocketInitialized( false ), hideCursorBits( 0 ),
+	: rocketInitialized( false ), hideCursorBits( 0 ), lastTouch( -1 ),
 	// pointers
 	systemInterface(0), fsInterface(0), renderInterface(0), context(0)
 {
@@ -124,7 +124,6 @@ void RocketModule::textInput( wchar_t c )
 void RocketModule::keyEvent( int key, bool pressed )
 {
 	KeyConverter keyconv;
-	int mod;
 
 	// DEBUG
 #if 0
@@ -134,15 +133,33 @@ void RocketModule::keyEvent( int key, bool pressed )
 		Com_Printf("**KEYEVENT KEY %d\n", key );
 #endif
 
-	mod = keyconv.getModifiers();
+	if( key == K_MOUSE1DBLCLK )
+		return; // Rocket handles double click internally
+
+	Element *element = context->GetFocusElement();
+
+	int mod = keyconv.getModifiers();
 
 	// warsow sends mousebuttons as keys
 	if( key >= K_MOUSE1 && key <= K_MOUSE8 )
 	{
 		if( pressed )
-			context->ProcessMouseButtonDown( key-K_MOUSE1, mod );
+		{
+			if( element && ( element->GetTagName() == "keyselect" ) )
+			{
+				Rocket::Core::Dictionary parameters;
+				parameters.Set( "key", key );
+				element->DispatchEvent( "keyselect", parameters );
+			}
+			else
+			{
+				context->ProcessMouseButtonDown( key-K_MOUSE1, mod );
+			}
+		}
 		else
+		{
 			context->ProcessMouseButtonUp( key-K_MOUSE1, mod );
+		}
 	}
 	// and ditto for wheel
 	else if( key == K_MWHEELDOWN )
@@ -155,8 +172,6 @@ void RocketModule::keyEvent( int key, bool pressed )
 	}
 	else
 	{
-		Element *element = context->GetFocusElement();
-
 		// send the blur event, to the current focused element,
 		// when ESC key is pressed
 		if( ( key == K_ESCAPE ) && element )
@@ -195,6 +210,39 @@ void RocketModule::keyEvent( int key, bool pressed )
 			}
 		}
 	}
+}
+
+void RocketModule::touchEvent( int id, touchevent_t type, int x, int y )
+{
+	if( ( type == TOUCH_DOWN ) && ( lastTouch < 0 ) ) {
+		lastTouch = id;
+	}
+
+	if( id != lastTouch ) {
+		return;
+	}
+
+	UI_Main::Get()->mouseMove( x, y, true, false );
+	if( type == TOUCH_UP ) {
+		cancelTouches();
+	} else {
+		if( type == TOUCH_DOWN ) {
+			KeyConverter keyconv;
+			context->ProcessMouseButtonDown( 0, keyconv.getModifiers() );
+		}
+	}
+}
+
+void RocketModule::cancelTouches( void )
+{
+	if( lastTouch < 0 ) {
+		return;
+	}
+
+	KeyConverter keyconv;
+	context->ProcessMouseButtonUp( 0, keyconv.getModifiers() );
+	UI_Main::Get()->mouseMove( 0, 0, true, false );
+	lastTouch = -1;
 }
 
 //==================================================
