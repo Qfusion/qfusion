@@ -70,6 +70,7 @@ typedef struct r_backend_s
 		int				scissor[4];
 
 		unsigned int	vertexAttribEnabled;
+		vattribmask_t	lastVAttribs, lastHalfFloatVAttribs;
 
 		int				fbWidth, fbHeight;
 

@@ -431,6 +431,7 @@ void RB_BindArrayBuffer( int buffer )
 	{
 		qglBindBufferARB( GL_ARRAY_BUFFER_ARB, buffer );
 		rb.gl.currentArrayVBO = buffer;
+		rb.gl.lastVAttribs = 0;
 	}
 }
 
@@ -991,6 +992,13 @@ static void RB_EnableVertexAttribs( void )
 	vattribmask_t hfa = vbo->halfFloatAttribs;
 
 	assert( vattribs & VATTRIB_POSITION_BIT );
+
+	if( ( vattribs == rb.gl.lastVAttribs ) && ( hfa == rb.gl.lastHalfFloatVAttribs ) ) {
+		return;
+	}
+
+	rb.gl.lastVAttribs = vattribs;
+	rb.gl.lastHalfFloatVAttribs = hfa;
 
 	// xyz position
 	GL_EnableVertexAttrib( VATTRIB_POSITION, true );
