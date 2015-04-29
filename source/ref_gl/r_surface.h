@@ -44,6 +44,8 @@ typedef struct
 	unsigned int visFrame;			// should be drawn when node is crossed
 
 	struct mesh_vbo_s *vbo;
+	unsigned int firstVboVert, firstVboElem;
+
 	struct superLightStyle_s *superLightStyle;
 
 	unsigned int shadowBits;
