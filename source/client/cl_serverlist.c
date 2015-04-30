@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "../qalgo/q_trie.h"
 
+//#define UNSAFE_EXIT
 #define MAX_MASTER_SERVERS					4
 
 #ifdef PUBLIC_BUILD
@@ -620,6 +621,7 @@ static void CL_MasterAddressCache_Shutdown( void )
 	if( resolverThreads ) {
 		QMutex_Lock( resolveLock );
 
+#if defined(UNSAFE_EXIT) && defined(Q_THREADS_HAVE_CANCEL)
 		for( i = 0; resolverThreads[i]; i++ ) {
 			QThread_Cancel( resolverThreads[i] );
 		}
@@ -630,11 +632,18 @@ static void CL_MasterAddressCache_Shutdown( void )
 			QThread_Join( resolverThreads[i] );
 		}
 		free( resolverThreads );
+
+		QMutex_Destroy( &resolveLock );
+#else
+		// here we leak the mutex and resources allocated for resolving threads,
+		// but at least we're not calling cancel on them, which is possibly dangerous
+		
+		// we're going to kill the main thread anyway, so keep the lock and let the threads die
+#endif
+
 		resolverThreads = NULL;
+		resolveLock = NULL;
 	}
-
-
-	QMutex_Destroy( &resolveLock );
 
 	// free allocated memory
 	if( serverlist_masters_trie ) {

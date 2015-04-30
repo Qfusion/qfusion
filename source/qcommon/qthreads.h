@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef Q_THREADS_H
 #define Q_THREADS_H
 
+//#define Q_THREADS_HAVE_CANCEL
+
 struct qmutex_s;
 typedef struct qmutex_s qmutex_t;
 
