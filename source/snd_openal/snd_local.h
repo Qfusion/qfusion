@@ -76,6 +76,8 @@ extern cvar_t *s_stereo2mono;
 extern cvar_t *s_doppler;
 extern cvar_t *s_sound_velocity;
 
+extern cvar_t *s_globalfocus;
+
 extern int s_attenuation_model;
 extern float s_attenuation_maxdistance;
 extern float s_attenuation_refdistance;

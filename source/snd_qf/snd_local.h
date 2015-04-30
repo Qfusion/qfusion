@@ -248,6 +248,7 @@ extern cvar_t *s_swapstereo;
 extern cvar_t *s_vorbis;
 extern cvar_t *s_pseudoAcoustics;
 extern cvar_t *s_separationDelay;
+extern cvar_t *s_globalfocus;
 
 extern struct mempool_s *soundpool;
 
