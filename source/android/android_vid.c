@@ -18,8 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
-#include <sys/system_properties.h>
 #include "android_sys.h"
+#include <sys/system_properties.h>
 
 void VID_EnableAltTab( bool enable )
 {
@@ -82,7 +82,7 @@ float VID_GetPixelRatio( void )
 		return 1.0f;
 
 	height /= density;
-	clamp_low( height, 480 );
+	clamp_low( height, 576 );
 
 	return viddef.height / ( float )height;
 }
