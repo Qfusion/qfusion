@@ -34,6 +34,7 @@ cvar_t *s_openAL_device;
 cvar_t *s_doppler;
 cvar_t *s_sound_velocity;
 cvar_t *s_stereo2mono;
+cvar_t *s_globalfocus;
 
 static int s_registration_sequence = 1;
 static bool s_registering;
@@ -123,6 +124,7 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 	s_doppler = trap_Cvar_Get( "s_doppler", "1.0", CVAR_ARCHIVE );
 	s_sound_velocity = trap_Cvar_Get( "s_sound_velocity", "10976", CVAR_DEVELOPER );
 	s_stereo2mono = trap_Cvar_Get ( "s_stereo2mono", "0", CVAR_ARCHIVE );
+	s_globalfocus = trap_Cvar_Get( "s_globalfocus", "0", CVAR_LATCH_SOUND|CVAR_ARCHIVE );
 
 #ifdef ENABLE_PLAY
 	trap_Cmd_AddCommand( "play", SF_Play_f );
@@ -277,6 +279,10 @@ static void SF_FreeSound( sfx_t *sfx )
 */
 void SF_Activate( bool active )
 {
+	if( !active && s_globalfocus->integer ) {
+		return;
+	}
+
 	SF_LockBackgroundTrack( !active );
 
 	S_IssueActivateCmd( s_cmdQueue, active );

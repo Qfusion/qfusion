@@ -42,6 +42,7 @@ cvar_t *s_swapstereo;
 cvar_t *s_vorbis;
 cvar_t *s_pseudoAcoustics;
 cvar_t *s_separationDelay;
+cvar_t *s_globalfocus;
 
 sfx_t known_sfx[MAX_SFX];
 int num_sfx;
@@ -277,6 +278,7 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 	s_vorbis = trap_Cvar_Get( "s_vorbis", "1", CVAR_ARCHIVE );
 	s_pseudoAcoustics = trap_Cvar_Get( "s_pseudoAcoustics", "0", CVAR_ARCHIVE );
 	s_separationDelay = trap_Cvar_Get( "s_separationDelay", "1.0", CVAR_ARCHIVE );
+	s_globalfocus = trap_Cvar_Get( "s_globalfocus", "0", CVAR_LATCH_SOUND|CVAR_ARCHIVE );
 
 #ifdef ENABLE_PLAY
 	trap_Cmd_AddCommand( "play", SF_Play_f );
@@ -369,6 +371,9 @@ void SF_Shutdown( bool verbose )
 */
 void SF_Activate( bool active )
 {
+	if( !active && s_globalfocus->integer ) {
+		return;
+	}
 	S_IssueActivateCmd( s_cmdQueue, active );
 }
 
