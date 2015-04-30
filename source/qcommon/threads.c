@@ -133,13 +133,6 @@ void QThread_Join( qthread_t *thread )
 }
 
 /*
-* QThread_Cancel
-*/
-int QThread_Cancel( qthread_t *thread )
-{
-	return Sys_Thread_Cancel( thread );
-}
-/*
 * QThread_Yield
 */
 void QThread_Yield( void )

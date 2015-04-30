@@ -166,21 +166,6 @@ void Sys_Thread_Yield( void )
 }
 
 /*
-* Sys_Thread_Cancel
-*/
-int Sys_Thread_Cancel( qthread_t *thread )
-{
-	if( thread ) {
-#ifdef __ANDROID__
-		return pthread_kill( thread->t, SIGINT );
-#else
-		return pthread_cancel( thread->t );
-#endif
-	}
-	return 1;
-}
-
-/*
 * Sys_Atomic_Add
 */
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )

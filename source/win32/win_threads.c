@@ -176,17 +176,6 @@ void Sys_Thread_Join( qthread_t *thread )
 }
 
 /*
-* Sys_Thread_Cancel
-*/
-int Sys_Thread_Cancel( qthread_t *thread )
-{
-	if( thread ) {
-		return TerminateThread( thread->h, 0 ) ? 0 : GetLastError();
-	}
-    return 1;
-}
-
-/*
 * Sys_Thread_Yield
 */
 void Sys_Thread_Yield( void )
