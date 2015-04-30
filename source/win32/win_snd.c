@@ -31,6 +31,7 @@ HRESULT ( WINAPI *pDirectSoundCreate )( GUID FAR *lpGUID, LPDIRECTSOUND FAR *lpl
 typedef enum { SIS_SUCCESS, SIS_FAILURE, SIS_NOTAVAIL } sndinitstat;
 
 cvar_t *s_wavonly;
+cvar_t *s_globalfocus;
 
 static bool	dsound_init;
 static bool	wav_init;
@@ -127,6 +128,10 @@ static bool DS_CreateBuffers( void )
 	dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCHARDWARE;
 	dsbuf.dwBufferBytes = SECONDARY_BUFFER_SIZE;
 	dsbuf.lpwfxFormat = &format;
+
+	if( s_globalfocus->integer ) {
+		dsbuf.dwFlags |= DSBCAPS_GLOBALFOCUS;
+	}
 
 	memset( &dsbcaps, 0, sizeof( dsbcaps ) );
 	dsbcaps.dwSize = sizeof( dsbcaps );
@@ -597,6 +602,7 @@ bool SNDDMA_Init( void *hwnd, bool verbose )
 	memset( (void *)&dma, 0, sizeof( dma ) );
 
 	s_wavonly = trap_Cvar_Get( "s_wavonly", "0", CVAR_LATCH_SOUND );
+	s_globalfocus = trap_Cvar_Get( "s_globalfocus", "0", CVAR_LATCH_SOUND );
 
 	dsound_init = wav_init = false;
 
@@ -792,7 +798,7 @@ void SNDDMA_Submit( void )
 		* waveOutWrite function returns immediately and waveform
 		* data is sent to the output device in the background.
 		*/
-		if( s_active )
+		if( s_active || s_globalfocus->integer )
 		{
 			wResult = waveOutWrite( hWaveOut, h, sizeof( WAVEHDR ) );
 
@@ -827,6 +833,8 @@ void SNDDMA_Shutdown( bool verbose )
 void S_Activate( bool active )
 {
 	if( !pDS )
+		return;
+	if( !active && s_globalfocus->integer )
 		return;
 
 	// just set the priority for directsound
