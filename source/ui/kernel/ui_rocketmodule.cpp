@@ -239,10 +239,11 @@ void RocketModule::cancelTouches( void )
 		return;
 	}
 
+	lastTouch = -1;
+
 	KeyConverter keyconv;
 	context->ProcessMouseButtonUp( 0, keyconv.getModifiers() );
 	UI_Main::Get()->mouseMove( 0, 0, true, false );
-	lastTouch = -1;
 }
 
 //==================================================
