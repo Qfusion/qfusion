@@ -1106,22 +1106,30 @@ void IN_Commands( void )
 	int i;
 	int buttons, buttonsOld, buttonsDiff;
 	bool trigger, triggerOld;
+	static bool notConnected;
+	static unsigned int lastConnectedCheck;
 
 	if( in_xinput_initialized && in_appactive )
 	{
 		XINPUT_STATE state;
 
-		for( i = 0; i < XUSER_MAX_COUNT; i++ )
+		if( notConnected && ( ( Sys_Milliseconds() - lastConnectedCheck ) < 2000 ) )
 		{
-			if( pXInputGetState( i, &state ) != ERROR_SUCCESS )
-				continue;
-
-			memcpy( &in_xinput_gamepad, &( state.Gamepad ), sizeof( in_xinput_gamepad ) );
-			break;
+			// gamepad not connected, and the previous null state has been applied already
+			return;
 		}
 
-		if( i == XUSER_MAX_COUNT )
+		if( pXInputGetState( 0, &state ) == ERROR_SUCCESS )
+		{
+			notConnected = false;
+			memcpy( &in_xinput_gamepad, &( state.Gamepad ), sizeof( in_xinput_gamepad ) );
+		}
+		else
+		{
+			notConnected = true;
+			lastConnectedCheck = Sys_Milliseconds();
 			memset( &in_xinput_gamepad, 0, sizeof( in_xinput_gamepad ) );
+		}
 	}
 
 	buttons = in_xinput_gamepad.wButtons;
