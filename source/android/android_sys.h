@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014 SiPlus, Chasseur de bots
+Copyright (C) 2015 SiPlus, Chasseur de bots
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -34,5 +34,20 @@ extern char sys_android_packageName[];
 JNIEnv *Sys_Android_GetJNIEnv( void );
 
 uint64_t Sys_Android_Microseconds( void );
+
+enum
+{
+	LOOPER_ID_QFUSION = LOOPER_ID_USER
+};
+
+enum
+{
+	SYS_ANDROID_EVENT_INPUT = 0x80,
+	SYS_ANDROID_EVENT_INPUT_CHAR = SYS_ANDROID_EVENT_INPUT
+};
+
+#ifndef DEDICATED_ONLY
+void IN_Android_OnQfusionEvent( uint8_t event, int readfd );
+#endif
 
 #endif // ANDROID_SYS_H
