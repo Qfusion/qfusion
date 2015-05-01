@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 HRESULT ( WINAPI *pDirectSoundCreate )( GUID FAR *lpGUID, LPDIRECTSOUND FAR *lplpDS, IUnknown FAR *pUnkOuter );
 
-// 128K is > 1 second at 16-bit, 44100 Hz
+// 64K is > 1 second at 16-bit, 22050 Hz
 #define	WAV_BUFFERS				64
 #define	WAV_MASK				0x3F
-#define	WAV_BUFFER_SIZE			0x0800
+#define	WAV_BUFFER_SIZE			0x0400
 
 #define SECONDARY_BUFFER_SIZE	0x10000
 
@@ -606,7 +606,7 @@ bool SNDDMA_Init( void *hwnd, bool verbose )
 
 	memset( (void *)&dma, 0, sizeof( dma ) );
 
-	s_wavonly = trap_Cvar_Get( "s_wavonly", "0", CVAR_LATCH_SOUND );
+	s_wavonly = trap_Cvar_Get( "s_wavonly", "0", CVAR_LATCH_SOUND|CVAR_ARCHIVE );
 
 	dsound_init = wav_init = false;
 
