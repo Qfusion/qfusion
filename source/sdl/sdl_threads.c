@@ -108,15 +108,6 @@ void Sys_Thread_Yield( void )
 }
 
 /*
-* Sys_Thread_Cancel
-*/
-int Sys_Thread_Cancel( qthread_t *thread )
-{
-	assert(false && "NOT IMPLEMENTED");
-	return -1;
-}
-
-/*
 * Sys_Atomic_Add
 */
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
