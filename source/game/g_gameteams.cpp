@@ -1307,8 +1307,8 @@ void G_Say_Team( edict_t *who, char *msg, bool checkflood )
 			G_PrintMsg( who, "%s", S_COLOR_YELLOW "You must authenticate to be able to chat with other players during the match.\n");
 			return;
 		}
-#endif
 	}
+#endif
 
 	Q_strncpyz( current_color, S_COLOR_WHITE, sizeof( current_color ) );
 
