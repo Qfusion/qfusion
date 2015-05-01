@@ -225,7 +225,7 @@ static void QBufQueue_Wake( qbufQueue_t *queue )
 */
 void QBufQueue_Finish( qbufQueue_t *queue )
 {
-	while( queue->cmdbuf_len > 0 && !queue->terminated ) {
+	while( Sys_Atomic_CAS( &queue->cmdbuf_len, 0, 0, queue->cmdbuf_mutex ) == false && !queue->terminated ) {
 		QMutex_Lock( queue->nonempty_mutex );
 		QBufQueue_Wake( queue );
 		QMutex_Unlock( queue->nonempty_mutex );
@@ -278,7 +278,7 @@ void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_siz
 		queue->write_pos = 0;
 	}
 
-	was_empty = queue->cmdbuf_len == 0;
+	was_empty = Sys_Atomic_CAS( &queue->cmdbuf_len, 0, 0, queue->cmdbuf_mutex ) == true;
 	write_remains = queue->bufSize - queue->write_pos;
 
 	if( sizeof( int ) > write_remains ) {
@@ -345,7 +345,7 @@ int QBufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void
 		return -1;
 	}
 
-	while( queue->cmdbuf_len > 0 && !queue->terminated ) {
+	while( Sys_Atomic_CAS( &queue->cmdbuf_len, 0, 0, queue->cmdbuf_mutex ) == false && !queue->terminated ) {
 		int cmd;
 		int cmd_size;
 		int read_remains;
@@ -403,7 +403,7 @@ void QBufQueue_Wait( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( *
 		int res;
 		bool result = false;
 
-		while( queue->cmdbuf_len == 0 ) {
+		while( Sys_Atomic_CAS( &queue->cmdbuf_len, 0, 0, queue->cmdbuf_mutex ) == true ) {
 			QMutex_Lock( queue->nonempty_mutex );
 
 			result = QCondVar_Wait( queue->nonempty_condvar, queue->nonempty_mutex, timeout_msec );
