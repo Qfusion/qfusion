@@ -192,6 +192,14 @@ int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 }
 
 /*
+* Sys_Atomic_CAS
+*/
+bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex )
+{
+	return InterlockedCompareExchange( (volatile LONG*)value, newval, oldval ) == oldval;
+}
+
+/*
 * Sys_CondVar_Create
 */
 int Sys_CondVar_Create( qcondvar_t **pcond )
