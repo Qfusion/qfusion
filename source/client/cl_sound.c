@@ -279,12 +279,12 @@ void CL_SoundModule_Init( bool verbose )
 	import.Mutex_Lock = QMutex_Lock;
 	import.Mutex_Unlock = QMutex_Unlock;
 
-	import.BufQueue_Create = QBufQueue_Create;
-	import.BufQueue_Destroy = QBufQueue_Destroy;
-	import.BufQueue_Finish = QBufQueue_Finish;
-	import.BufQueue_EnqueueCmd = QBufQueue_EnqueueCmd;
-	import.BufQueue_ReadCmds = QBufQueue_ReadCmds;
-	import.BufQueue_Wait = QBufQueue_Wait;
+	import.BufPipe_Create = QBufPipe_Create;
+	import.BufPipe_Destroy = QBufPipe_Destroy;
+	import.BufPipe_Finish = QBufPipe_Finish;
+	import.BufPipe_WriteCmd = QBufPipe_WriteCmd;
+	import.BufPipe_ReadCmds = QBufPipe_ReadCmds;
+	import.BufPipe_Wait = QBufPipe_Wait;
 
 	if( !CL_SoundModule_Load( sound_modules[s_module->integer-1], &import, verbose ) )
 	{

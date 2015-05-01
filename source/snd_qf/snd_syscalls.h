@@ -251,33 +251,33 @@ static inline void trap_Mutex_Unlock( struct qmutex_s *mutex )
 	SOUND_IMPORT.Mutex_Unlock( mutex );
 }
 
-static inline qbufQueue_t *trap_BufQueue_Create( size_t bufSize, int flags )
+static inline qbufPipe_t *trap_BufPipe_Create( size_t bufSize, int flags )
 {
-	return SOUND_IMPORT.BufQueue_Create( bufSize, flags );
+	return SOUND_IMPORT.BufPipe_Create( bufSize, flags );
 }
 
-static inline void trap_BufQueue_Destroy( qbufQueue_t **pqueue )
+static inline void trap_BufPipe_Destroy( qbufPipe_t **pqueue )
 {
-	SOUND_IMPORT.BufQueue_Destroy( pqueue );
+	SOUND_IMPORT.BufPipe_Destroy( pqueue );
 }
 
-static inline void trap_BufQueue_Finish( qbufQueue_t *queue )
+static inline void trap_BufPipe_Finish( qbufPipe_t *queue )
 {
-	SOUND_IMPORT.BufQueue_Finish( queue );
+	SOUND_IMPORT.BufPipe_Finish( queue );
 }
 
-static inline void trap_BufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_size )
+static inline void trap_BufPipe_WriteCmd( qbufPipe_t *queue, const void *cmd, unsigned cmd_size )
 {
-	SOUND_IMPORT.BufQueue_EnqueueCmd( queue, cmd, cmd_size );
+	SOUND_IMPORT.BufPipe_WriteCmd( queue, cmd, cmd_size );
 }
 
-static inline int trap_BufQueue_ReadCmds( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) )
+static inline int trap_BufPipe_ReadCmds( qbufPipe_t *queue, unsigned (**cmdHandlers)( const void * ) )
 {
-	return SOUND_IMPORT.BufQueue_ReadCmds( queue, cmdHandlers );
+	return SOUND_IMPORT.BufPipe_ReadCmds( queue, cmdHandlers );
 }
 
-static inline void trap_BufQueue_Wait( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( ** )(const void *), bool ), 
+static inline void trap_BufPipe_Wait( qbufPipe_t *queue, int (*read)( qbufPipe_t *, unsigned( ** )(const void *), bool ), 
 	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec )
 {
-	SOUND_IMPORT.BufQueue_Wait( queue, read, cmdHandlers, timeout_msec );
+	SOUND_IMPORT.BufPipe_Wait( queue, read, cmdHandlers, timeout_msec );
 }

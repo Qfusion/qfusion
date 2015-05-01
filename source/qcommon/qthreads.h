@@ -32,8 +32,8 @@ typedef struct qthread_s qthread_t;
 struct qcondvar_s;
 typedef struct qcondvar_s qcondvar_t;
 
-struct qbufQueue_s;
-typedef struct qbufQueue_s qbufQueue_t;
+struct qbufPipe_s;
+typedef struct qbufPipe_s qbufPipe_t;
 
 qmutex_t *QMutex_Create( void );
 void QMutex_Destroy( qmutex_t **pmutex );
@@ -53,12 +53,12 @@ void QThread_Yield( void );
 void QThreads_Init( void );
 void QThreads_Shutdown( void );
 
-qbufQueue_t *QBufQueue_Create( size_t bufSize, int flags );
-void QBufQueue_Destroy( qbufQueue_t **pqueue );
-void QBufQueue_Finish( qbufQueue_t *queue );
-void QBufQueue_EnqueueCmd( qbufQueue_t *queue, const void *cmd, unsigned cmd_size );
-int QBufQueue_ReadCmds( qbufQueue_t *queue, unsigned( **cmdHandlers )(const void *) );
-void QBufQueue_Wait( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( ** )(const void *), bool ), 
+qbufPipe_t *QBufPipe_Create( size_t bufSize, int flags );
+void QBufPipe_Destroy( qbufPipe_t **pqueue );
+void QBufPipe_Finish( qbufPipe_t *queue );
+void QBufPipe_WriteCmd( qbufPipe_t *queue, const void *cmd, unsigned cmd_size );
+int QBufPipe_ReadCmds( qbufPipe_t *queue, unsigned( **cmdHandlers )(const void *) );
+void QBufPipe_Wait( qbufPipe_t *queue, int (*read)( qbufPipe_t *, unsigned( ** )(const void *), bool ), 
 	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec );
 
 #endif // Q_THREADS_H
