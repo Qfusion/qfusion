@@ -50,6 +50,7 @@ class DurationFormatter;
 class FiletypeFormatter;
 class ColorCodeFormatter;
 class EmptyFormatter;
+class ServerFlagsFormatter;
 
 class UI_Main
 {
@@ -169,6 +170,7 @@ private:
 	FiletypeFormatter *filetype_fmt;
 	ColorCodeFormatter *colorcode_fmt;
 	EmptyFormatter *empty_fmt;
+	ServerFlagsFormatter *serverflags_fmt;
 
 	ServerBrowserDataSource *serverBrowser;
 	GameTypesDataSource *gameTypes;

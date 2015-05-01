@@ -35,6 +35,7 @@
 #include "formatters/ui_filetype_formatter.h"
 #include "formatters/ui_colorcode_formatter.h"
 #include "formatters/ui_empty_formatter.h"
+#include "formatters/ui_serverflags_formatter.h"
 
 namespace WSWUI
 {
@@ -48,7 +49,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	// pointers to zero
 	: asmodule(nullptr), rocketModule(nullptr),
 	levelshot_fmt(0), datetime_fmt(0), duration_fmt(0), filetype_fmt(0), colorcode_fmt(0), 
-	empty_fmt(0),
+	empty_fmt(0), serverflags_fmt(0),
 	serverBrowser(0), gameTypes(0), maps(0), vidProfiles(0), huds(0), videoModes(0), 
 	demos(0), mods(0), 
 	playerModels(0), tvchannels(0), ircchannels(0), gameajax(0),
@@ -380,6 +381,7 @@ void UI_Main::createFormatters( void )
 	filetype_fmt = __new__( FiletypeFormatter )();
 	colorcode_fmt = __new__( ColorCodeFormatter )();
 	empty_fmt = __new__( EmptyFormatter )();
+	serverflags_fmt = __new__( ServerFlagsFormatter )();
 }
 
 void UI_Main::destroyFormatters( void )
@@ -390,6 +392,7 @@ void UI_Main::destroyFormatters( void )
 	__SAFE_DELETE_NULLIFY( filetype_fmt );
 	__SAFE_DELETE_NULLIFY( colorcode_fmt );
 	__SAFE_DELETE_NULLIFY( empty_fmt );
+	__SAFE_DELETE_NULLIFY( serverflags_fmt );
 }
 
 //==============================================
