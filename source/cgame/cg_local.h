@@ -871,7 +871,7 @@ extern cvar_t *cg_outlinePlayers;
 
 extern cvar_t *cg_drawEntityBoxes;
 extern cvar_t *cg_fov;
-extern cvar_t *cg_oldMovement;
+extern cvar_t *cg_movementStyle;
 extern cvar_t *cg_noAutohop;
 extern cvar_t *cg_particles;
 extern cvar_t *cg_showhelp;
