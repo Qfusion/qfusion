@@ -150,8 +150,8 @@ static trie_t *sv_http_clients = NULL;
 static qmutex_t *sv_http_clients_mutex = NULL;
 
 static http_game_query_cb sv_http_incoming_cb;
-static qbufQueue_t *sv_http_incoming_queue;
-static qbufQueue_t *sv_http_outgoing_queue;
+static qbufPipe_t *sv_http_incoming_queue;
+static qbufPipe_t *sv_http_outgoing_queue;
 
 static qthread_t *sv_http_thread = NULL;
 static void *SV_Web_ThreadProc( void *param );
@@ -575,7 +575,7 @@ static void SV_Web_IssueQueryInCmd( sv_http_response_t *response, http_query_met
 	cmd.method = method;
 	cmd.resource = ( char * )resource;
 	cmd.query_string = ( char * )query_string;
-	QBufQueue_EnqueueCmd( sv_http_incoming_queue, &cmd, sizeof( cmd ) );
+	QBufPipe_WriteCmd( sv_http_incoming_queue, &cmd, sizeof( cmd ) );
 }
 
 /*
@@ -590,7 +590,7 @@ static void SV_Web_IssueQueryOutCmd( void *response, uint64_t request_id, http_r
 	cmd.code = code;
 	cmd.content = content;
 	cmd.content_length = content_length;
-	QBufQueue_EnqueueCmd( sv_http_outgoing_queue, &cmd, sizeof( cmd ) );
+	QBufPipe_WriteCmd( sv_http_outgoing_queue, &cmd, sizeof( cmd ) );
 }
 
 /*
@@ -651,7 +651,7 @@ static void SV_Web_ReadIncomingQueueCmds( http_game_query_cb cb )
 	};
 	sv_http_incoming_cb = cb;
 
-	if( QBufQueue_ReadCmds( sv_http_incoming_queue, cmdHandlers ) < 0 ) {
+	if( QBufPipe_ReadCmds( sv_http_incoming_queue, cmdHandlers ) < 0 ) {
 		// FIXME?
 		sv_http_running = false;
 	}
@@ -669,7 +669,7 @@ static void SV_Web_ReadOutgoingQueueCmds( void )
 		(queueCmdHandler_t)SV_Web_HandleOutQueryCmd
 	};
 
-	if( QBufQueue_ReadCmds( sv_http_outgoing_queue, cmdHandlers ) < 0 ) {
+	if( QBufPipe_ReadCmds( sv_http_outgoing_queue, cmdHandlers ) < 0 ) {
 		// FIXME?
 		sv_http_running = false;
 	}
@@ -680,8 +680,8 @@ static void SV_Web_ReadOutgoingQueueCmds( void )
 */
 static void SV_Web_InitQueues( void )
 {
-	sv_http_incoming_queue = QBufQueue_Create( 0x10000, 1 );
-	sv_http_outgoing_queue = QBufQueue_Create( 0x10000, 1 );
+	sv_http_incoming_queue = QBufPipe_Create( 0x10000, 1 );
+	sv_http_outgoing_queue = QBufPipe_Create( 0x10000, 1 );
 }
 
 /*
@@ -689,8 +689,8 @@ static void SV_Web_InitQueues( void )
 */
 static void SV_Web_DestroyQueues( void )
 {
-	QBufQueue_Destroy( &sv_http_incoming_queue );
-	QBufQueue_Destroy( &sv_http_outgoing_queue );
+	QBufPipe_Destroy( &sv_http_incoming_queue );
+	QBufPipe_Destroy( &sv_http_outgoing_queue );
 }
 
 // ============================================================================

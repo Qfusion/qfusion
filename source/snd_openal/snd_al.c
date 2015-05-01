@@ -675,62 +675,62 @@ static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd )
 	return sizeof( *cmd );
 }
 
-static queueCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
+static pipeCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 {
 	/* SND_CMD_INIT */
-	(queueCmdHandler_t)S_HandleInitCmd,
+	(pipeCmdHandler_t)S_HandleInitCmd,
 	/* SND_CMD_SHUTDOWN */
-	(queueCmdHandler_t)S_HandleShutdownCmd,
+	(pipeCmdHandler_t)S_HandleShutdownCmd,
 	/* SND_CMD_CLEAR */
-	(queueCmdHandler_t)S_HandleClearCmd,
+	(pipeCmdHandler_t)S_HandleClearCmd,
 	/* SND_CMD_STOP_ALL_SOUNDS */
-	(queueCmdHandler_t)S_HandleStopCmd,
+	(pipeCmdHandler_t)S_HandleStopCmd,
 	/* SND_CMD_FREE_SFX */
-	(queueCmdHandler_t)S_HandleFreeSfxCmd,
+	(pipeCmdHandler_t)S_HandleFreeSfxCmd,
 	/* SND_CMD_LOAD_SFX */
-	(queueCmdHandler_t)S_HandleLoadSfxCmd,
+	(pipeCmdHandler_t)S_HandleLoadSfxCmd,
 	/* SND_CMD_SET_ATTENUATION_MODEL */
-	(queueCmdHandler_t)S_HandleSetAttenuationModelCmd,
+	(pipeCmdHandler_t)S_HandleSetAttenuationModelCmd,
 	/* SND_CMD_SET_ENTITY_SPATIALIZATION */
-	(queueCmdHandler_t)S_HandleSetEntitySpatializationCmd,
+	(pipeCmdHandler_t)S_HandleSetEntitySpatializationCmd,
 	/* SND_CMD_SET_LISTENER */
-	(queueCmdHandler_t)S_HandleSetListernerCmd,
+	(pipeCmdHandler_t)S_HandleSetListernerCmd,
 	/* SND_CMD_START_LOCAL_SOUND */
-	(queueCmdHandler_t)S_HandleStartLocalSoundCmd,
+	(pipeCmdHandler_t)S_HandleStartLocalSoundCmd,
 	/* SND_CMD_START_FIXED_SOUND */
-	(queueCmdHandler_t)S_HandleStartFixedSoundCmd,
+	(pipeCmdHandler_t)S_HandleStartFixedSoundCmd,
 	/* SND_CMD_START_GLOBAL_SOUND */
-	(queueCmdHandler_t)S_HandleStartGlobalSoundCmd,
+	(pipeCmdHandler_t)S_HandleStartGlobalSoundCmd,
 	/* SND_CMD_START_RELATIVE_SOUND */
-	(queueCmdHandler_t)S_HandleStartRelativeSoundCmd,
+	(pipeCmdHandler_t)S_HandleStartRelativeSoundCmd,
 	/* SND_CMD_START_BACKGROUND_TRACK */
-	(queueCmdHandler_t)S_HandleStartBackgroundTrackCmd,
+	(pipeCmdHandler_t)S_HandleStartBackgroundTrackCmd,
 	/* SND_CMD_STOP_BACKGROUND_TRACK */
-	(queueCmdHandler_t)S_HandleStopBackgroundTrackCmd,
+	(pipeCmdHandler_t)S_HandleStopBackgroundTrackCmd,
 	/* SND_CMD_LOCK_BACKGROUND_TRACK */
-	(queueCmdHandler_t)S_HandleLockBackgroundTrackCmd,
+	(pipeCmdHandler_t)S_HandleLockBackgroundTrackCmd,
 	/* SND_CMD_ADD_LOOP_SOUND */
-	(queueCmdHandler_t)S_HandleAddLoopSoundCmd,
+	(pipeCmdHandler_t)S_HandleAddLoopSoundCmd,
 	/* SND_CMD_ADVANCE_BACKGROUND_TRACK */
-	(queueCmdHandler_t)S_HandleAdvanceBackgroundTrackCmd,
+	(pipeCmdHandler_t)S_HandleAdvanceBackgroundTrackCmd,
 	/* SND_CMD_PAUSE_BACKGROUND_TRACK */
-	(queueCmdHandler_t)S_HandlePauseBackgroundTrackCmd,
+	(pipeCmdHandler_t)S_HandlePauseBackgroundTrackCmd,
 	/* SND_CMD_ACTIVATE */
-	(queueCmdHandler_t)S_HandleActivateCmd,
+	(pipeCmdHandler_t)S_HandleActivateCmd,
 	/* SND_CMD_AVI_DEMO */
-	(queueCmdHandler_t)S_HandleAviDemoCmd,
+	(pipeCmdHandler_t)S_HandleAviDemoCmd,
 	/* SND_CMD_RAW_SAMPLES */
-	(queueCmdHandler_t)S_HandleRawSamplesCmd,
+	(pipeCmdHandler_t)S_HandleRawSamplesCmd,
 	/* SND_CMD_POSITIONED_RAW_SAMPLES */
-	(queueCmdHandler_t)S_HandlePositionedRawSamplesCmd,
+	(pipeCmdHandler_t)S_HandlePositionedRawSamplesCmd,
 	/* SND_CMD_STUFFCMD */
-	(queueCmdHandler_t)S_HandleStuffCmd
+	(pipeCmdHandler_t)S_HandleStuffCmd
 };
 
 /*
 * S_EnqueuedCmdsWaiter
 */
-static int S_EnqueuedCmdsWaiter( sndQueue_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout )
+static int S_EnqueuedCmdsWaiter( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandlers, bool timeout )
 {
 	int read = S_ReadEnqueuedCmds( queue, cmdHandlers );
 	unsigned now = trap_Milliseconds();
@@ -753,7 +753,7 @@ static int S_EnqueuedCmdsWaiter( sndQueue_t *queue, queueCmdHandler_t *cmdHandle
 */
 void *S_BackgroundUpdateProc( void *param )
 {
-	sndQueue_t *s_cmdQueue = param;
+	sndCmdPipe_t *s_cmdQueue = param;
 
 	S_WaitEnqueuedCmds( s_cmdQueue, S_EnqueuedCmdsWaiter, sndCmdHandlers, UPDATE_MSEC );
 

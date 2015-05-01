@@ -2956,7 +2956,7 @@ typedef struct
 
 typedef unsigned (*queueCmdHandler_t)( const void * );
 
-static qbufQueue_t *loader_queue[NUM_LOADER_THREADS] = { NULL };
+static qbufPipe_t *loader_queue[NUM_LOADER_THREADS] = { NULL };
 static qthread_t *loader_thread[NUM_LOADER_THREADS] = { NULL };
 
 static void *loader_gl_context[NUM_LOADER_THREADS] = { NULL };
@@ -2972,7 +2972,7 @@ static void R_IssueInitLoaderCmd( int id )
 	loaderInitCmd_t cmd;
 	cmd.id = CMD_LOADER_INIT;
 	cmd.self = id;
-	ri.BufQueue_EnqueueCmd( loader_queue[id], &cmd, sizeof( cmd ) );
+	ri.BufPipe_WriteCmd( loader_queue[id], &cmd, sizeof( cmd ) );
 }
 
 /*
@@ -2982,7 +2982,7 @@ static void R_IssueShutdownLoaderCmd( int id )
 {
 	int cmd;
 	cmd = CMD_LOADER_SHUTDOWN;
-	ri.BufQueue_EnqueueCmd( loader_queue[id], &cmd, sizeof( cmd ) );
+	ri.BufPipe_WriteCmd( loader_queue[id], &cmd, sizeof( cmd ) );
 }
 
 /*
@@ -2994,7 +2994,7 @@ static void R_IssueLoadPicLoaderCmd( int id, int pic )
 	cmd.id = CMD_LOADER_LOAD_PIC;
 	cmd.self = id;
 	cmd.pic = pic;
-	ri.BufQueue_EnqueueCmd( loader_queue[id], &cmd, sizeof( cmd ) );
+	ri.BufPipe_WriteCmd( loader_queue[id], &cmd, sizeof( cmd ) );
 }
 
 /*
@@ -3012,13 +3012,13 @@ static void R_InitImageLoader( int id )
 		return;
 	}
 
-	loader_queue[id] = ri.BufQueue_Create( 0x100000, 1 );
+	loader_queue[id] = ri.BufPipe_Create( 0x100000, 1 );
 	loader_thread[id] = ri.Thread_Create( R_ImageLoaderThreadProc, loader_queue[id] );
 
 	R_IssueInitLoaderCmd( id );
 
 	// wait for the thread to complete context setup
-	ri.BufQueue_Finish( loader_queue[id] );
+	ri.BufPipe_Finish( loader_queue[id] );
 }
 
 /*
@@ -3030,7 +3030,7 @@ void R_FinishLoadingImages( void )
 
 	for( i = 0; i < NUM_LOADER_THREADS; i++ ) {
 		if( loader_gl_context[i] ) {
-			ri.BufQueue_Finish( loader_queue[i] );
+			ri.BufPipe_Finish( loader_queue[i] );
 		}
 	}
 }
@@ -3076,12 +3076,12 @@ static void R_ShutdownImageLoader( int id )
 
 	R_IssueShutdownLoaderCmd( id );
 
-	ri.BufQueue_Finish( loader_queue[id] );
+	ri.BufPipe_Finish( loader_queue[id] );
 
 	ri.Thread_Join( loader_thread[id] );
 	loader_thread[id] = NULL;
 
-	ri.BufQueue_Destroy( &loader_queue[id] );
+	ri.BufPipe_Destroy( &loader_queue[id] );
 
 	GLimp_SharedContext_Destroy( context, surface );
 }
@@ -3136,9 +3136,9 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 /*
 *R_ImageLoaderCmdsWaiter
 */
-static int R_ImageLoaderCmdsWaiter( qbufQueue_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout )
+static int R_ImageLoaderCmdsWaiter( qbufPipe_t *queue, queueCmdHandler_t *cmdHandlers, bool timeout )
 {
-	return ri.BufQueue_ReadCmds( queue, cmdHandlers );
+	return ri.BufPipe_ReadCmds( queue, cmdHandlers );
 }
 
 /*
@@ -3146,7 +3146,7 @@ static int R_ImageLoaderCmdsWaiter( qbufQueue_t *queue, queueCmdHandler_t *cmdHa
 */
 static void *R_ImageLoaderThreadProc( void *param )
 {
-	qbufQueue_t *cmdQueue = param;
+	qbufPipe_t *cmdQueue = param;
 	queueCmdHandler_t cmdHandlers[NUM_LOADER_CMDS] = 
 	{
 		(queueCmdHandler_t)R_HandleInitLoaderCmd,
@@ -3154,7 +3154,7 @@ static void *R_ImageLoaderThreadProc( void *param )
 		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd
 	};
 
-	ri.BufQueue_Wait( cmdQueue, R_ImageLoaderCmdsWaiter, cmdHandlers, Q_THREADS_WAIT_INFINITE );
+	ri.BufPipe_Wait( cmdQueue, R_ImageLoaderCmdsWaiter, cmdHandlers, Q_THREADS_WAIT_INFINITE );
  
 	return NULL;	
 }

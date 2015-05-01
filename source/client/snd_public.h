@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct sfx_s sfx_t;
 typedef struct qthread_s qthread_t;
 typedef struct qmutex_s qmutex_t;
-typedef struct qbufQueue_s qbufQueue_t;
+typedef struct qbufPipe_s qbufPipe_t;
 
 //
 // functions provided by the main engine
@@ -103,12 +103,12 @@ typedef struct
 	void ( *Mutex_Lock )( struct qmutex_s *mutex );
 	void ( *Mutex_Unlock )( struct qmutex_s *mutex );
 
-	qbufQueue_t *( *BufQueue_Create )( size_t bufSize, int flags );
-	void ( *BufQueue_Destroy )( qbufQueue_t **pqueue );
-	void ( *BufQueue_Finish )( qbufQueue_t *queue );
-	void ( *BufQueue_EnqueueCmd )( qbufQueue_t *queue, const void *cmd, unsigned cmd_size );
-	int ( *BufQueue_ReadCmds )( qbufQueue_t *queue, unsigned (**cmdHandlers)( const void * ) );
-	void ( *BufQueue_Wait )( qbufQueue_t *queue, int (*read)( qbufQueue_t *, unsigned( ** )(const void *), bool ), 
+	qbufPipe_t *( *BufPipe_Create )( size_t bufSize, int flags );
+	void ( *BufPipe_Destroy )( qbufPipe_t **pqueue );
+	void ( *BufPipe_Finish )( qbufPipe_t *queue );
+	void ( *BufPipe_WriteCmd )( qbufPipe_t *queue, const void *cmd, unsigned cmd_size );
+	int ( *BufPipe_ReadCmds )( qbufPipe_t *queue, unsigned (**cmdHandlers)( const void * ) );
+	void ( *BufPipe_Wait )( qbufPipe_t *queue, int (*read)( qbufPipe_t *, unsigned( ** )(const void *), bool ), 
 		unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec );
 } sound_import_t;
 
