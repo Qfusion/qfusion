@@ -584,8 +584,11 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 	usercmd_t cmd;
 	vec4_t color;
 
-	if( !cg_showPressedKeys->integer && !cgs.demoTutorial && !GS_TutorialGametype() )
+	if( !cg_showPressedKeys->integer && !cgs.demoTutorial &&
+		( !GS_TutorialGametype() || ( trap_IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) ) )
+	{
 		return;
+	}
 
 	if( !key )
 		return;
