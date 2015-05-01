@@ -114,3 +114,11 @@ int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 {
 	return SDL_AtomicAdd( ( SDL_atomic_t * )value, add ) + add;
 }
+
+/*
+* Sys_Atomic_CAS
+*/
+bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex )
+{
+	return SDL_AtomicCAS( ( SDL_atomic_t * )value, newval, oldval ) == SDL_TRUE;
+}
