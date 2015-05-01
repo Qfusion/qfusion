@@ -23,9 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //#define Q_THREADS_HAVE_CANCEL
 
-// equals to INFINITE on Windows and SDL_MUTEX_MAXWAIT
-#define Q_THREADS_WAIT_INFINITE 0xFFFFFFFF
-
 struct qmutex_s;
 typedef struct qmutex_s qmutex_t;
 
