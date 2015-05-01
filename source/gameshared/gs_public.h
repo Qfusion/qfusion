@@ -263,8 +263,8 @@ bool GS_SnapInitialPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passen
 
 #define STEPSIZE 18
 enum {
-	GS_DEFAULTBUNNY,
 	GS_CLASSICBUNNY,
+	GS_NEWBUNNY,
 
 	GS_MAXBUNNIES
 };

@@ -1143,7 +1143,7 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 		}
 	}
 
-	s = Info_ValueForKey( userinfo, "cg_oldMovement" );
+	s = Info_ValueForKey( userinfo, "cg_movementStyle" );
 	if( s )
 	{
 		i = bound( atoi( s ), 0, GS_MAXBUNNIES - 1 );
