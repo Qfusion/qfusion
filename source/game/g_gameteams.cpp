@@ -1297,6 +1297,7 @@ void G_Say_Team( edict_t *who, char *msg, bool checkflood )
 		return;
 	}
 
+#ifdef AUTHED_SAY
 	if( sv_mm_enable->integer && who->r.client && who->r.client->mm_session <= 0 )
 	{
 		// unauthed players are only allowed to chat to public at non play-time
@@ -1306,6 +1307,7 @@ void G_Say_Team( edict_t *who, char *msg, bool checkflood )
 			G_PrintMsg( who, "%s", S_COLOR_YELLOW "You must authenticate to be able to chat with other players during the match.\n");
 			return;
 		}
+#endif
 	}
 
 	Q_strncpyz( current_color, S_COLOR_WHITE, sizeof( current_color ) );

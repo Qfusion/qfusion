@@ -37,6 +37,8 @@
 
 #define TCP_SUPPORT
 
+//#define AUTHED_SAY
+
 //#define TCP_ALLOW_CONNECT
 
 #if defined(TCP_ALLOW_CONNECT) && !defined(TCP_SUPPORT)

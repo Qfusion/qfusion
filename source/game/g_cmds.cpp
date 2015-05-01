@@ -673,6 +673,7 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood )
 	char text[2048];
 	size_t arg0len = 0;
 
+#ifdef AUTHED_SAY
 	if( sv_mm_enable->integer && ent->r.client && ent->r.client->mm_session <= 0 )
 	{
 		// unauthed players are only allowed to chat to public at non play-time
@@ -682,6 +683,7 @@ void Cmd_Say_f( edict_t *ent, bool arg0, bool checkflood )
 			return;
 		}
 	}
+#endif
 
 	if( checkflood )
 	{
