@@ -121,7 +121,5 @@ int Sys_Thread_Cancel( qthread_t *thread )
 */
 int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 {
-	assert(false && "NOT IMPLEMENTED");
-	//return __sync_fetch_and_add(value, add) + add;
-	return 0;
+	return SDL_AtomicAdd( ( SDL_atomic_t * )value, add ) + add;
 }
