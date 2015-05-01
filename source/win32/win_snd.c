@@ -22,10 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 HRESULT ( WINAPI *pDirectSoundCreate )( GUID FAR *lpGUID, LPDIRECTSOUND FAR *lplpDS, IUnknown FAR *pUnkOuter );
 
-// 64K is > 1 second at 16-bit, 22050 Hz
-#define	WAV_BUFFERS		64
-#define	WAV_MASK		0x3F
-#define	WAV_BUFFER_SIZE		0x0400
+// 128K is > 1 second at 16-bit, 44100 Hz
+#define	WAV_BUFFERS				64
+#define	WAV_MASK				0x3F
+#define	WAV_BUFFER_SIZE			0x0800
+
 #define SECONDARY_BUFFER_SIZE	0x10000
 
 typedef enum { SIS_SUCCESS, SIS_FAILURE, SIS_NOTAVAIL } sndinitstat;
