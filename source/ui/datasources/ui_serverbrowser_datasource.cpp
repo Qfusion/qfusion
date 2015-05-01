@@ -514,6 +514,12 @@ void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int 
 			row.push_back( info.tv ? "yes" : "no" );
 		else if( *it == "favorite" )
 			row.push_back( info.favorite ? "yes" : "no" );
+		else if( *it == "flags" ) {
+			char flags[3] = { 0 };
+			flags[0] = info.password ? 'P' : 'p';
+			flags[1] = info.favorite ? 'F' : 'f';
+			row.push_back( flags );
+		}
 		else if( *it == "mod" )
 			row.push_back( info.modname.c_str() );
 		else
