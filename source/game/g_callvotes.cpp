@@ -2550,6 +2550,7 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<player>" );
 	callvote->argument_type = G_LevelCopyString( "option" );
 	callvote->webRequest = G_PlayerlistWebRequest;
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Forces player back to spectator mode" );
 
 	callvote = G_RegisterCallvote( "kick" );
@@ -2632,6 +2633,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<number>" );
 	callvote->argument_type = G_LevelCopyString( "integer" );
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Sets the number of bots to play on the server" );
 
 	callvote = G_RegisterCallvote( "allow_teamdamage" );
@@ -2642,6 +2644,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
 	callvote->argument_type = G_LevelCopyString( "bool" );
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Toggles whether shooting teammates will do damage to them" );
 
 	callvote = G_RegisterCallvote( "instajump" );
@@ -2712,6 +2715,7 @@ void G_CallVotes_Init( void )
 	callvote->extraHelp = NULL;
 	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
 	callvote->argument_type = G_LevelCopyString( "bool" );
+	callvote->need_auth = true;
 	callvote->help = G_LevelCopyString( "Toggles whether uneven teams is allowed" );
 
 	// wsw : pb : server admin can now disable a specific callvote command (g_disable_vote_<callvote name>)
