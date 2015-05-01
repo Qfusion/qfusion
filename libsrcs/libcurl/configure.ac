@@ -3506,7 +3506,6 @@ AC_CONFIG_FILES([Makefile \
            tests/Makefile \
            tests/certs/Makefile \
            tests/certs/scripts/Makefile \
-           tests/data/Makefile \
            tests/server/Makefile \
            tests/libtest/Makefile \
            tests/unit/Makefile \
