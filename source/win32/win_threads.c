@@ -207,10 +207,11 @@ int Sys_CondVar_Create( qcondvar_t **pcond )
 	qcondvar_t *cond;
 	HANDLE *e = NULL;
 
-	cond = ( qcondvar_t * )Q_malloc( sizeof( *cond ) );
 	if( !pcond ) {
 		return -1;
 	}
+
+	cond = ( qcondvar_t * )Q_malloc( sizeof( *cond ) );
 
 	if( pInitializeConditionVariable ) {
 		pInitializeConditionVariable( &( cond->c ) );

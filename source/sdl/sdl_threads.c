@@ -23,11 +23,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <SDL.h>
 
 struct qthread_s {
-	SDL_Thread* t;
+	SDL_Thread *t;
 };
 
 struct qmutex_s {
-	SDL_mutex* m;
+	SDL_mutex *m;
+};
+
+struct qcondvar_s {
+	SDL_cond *c;
 };
 
 /*
@@ -121,4 +125,63 @@ int Sys_Atomic_Add( volatile int *value, int add, qmutex_t *mutex )
 bool Sys_Atomic_CAS( volatile int *value, int oldval, int newval, qmutex_t *mutex )
 {
 	return SDL_AtomicCAS( ( SDL_atomic_t * )value, newval, oldval ) == SDL_TRUE;
+}
+
+/*
+* Sys_CondVar_Create
+*/
+int Sys_CondVar_Create( qcondvar_t **pcond )
+{
+	qcondvar_t *cond;
+
+	if( !pcond ) {
+		return -1;
+	}
+
+	cond = ( qcondvar_t * )Q_malloc( sizeof( *cond ) );
+	cond->c = SDL_CreateCond();
+	if( !cond->c ) {
+		Q_free( cond );
+		return -1;
+	}
+
+	*pcond = cond;
+	return 0;
+}
+
+/*
+* Sys_CondVar_Destroy
+*/
+void Sys_CondVar_Destroy( qcondvar_t *cond )
+{
+	if( !cond ) {
+		return;
+	}
+
+	SDL_DestroyCond( cond->c );
+	Q_free( cond );
+}
+
+/*
+* Sys_CondVar_Wait
+*/
+bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_msec )
+{
+	if( !cond || !mutex ) {
+		return false;
+	}
+
+	return SDL_CondWaitTimeout( cond->c, mutex->m, timeout_msec ) == 0;
+}
+
+/*
+* Sys_CondVar_Wake
+*/
+void Sys_CondVar_Wake( qcondvar_t *cond )
+{
+	if( !cond ) {
+		return;
+	}
+
+	SDL_CondSignal( cond->c );
 }

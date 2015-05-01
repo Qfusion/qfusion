@@ -3154,7 +3154,7 @@ static void *R_ImageLoaderThreadProc( void *param )
 		(queueCmdHandler_t)R_HandleLoadPicLoaderCmd
 	};
 
-	ri.BufQueue_Wait( cmdQueue, R_ImageLoaderCmdsWaiter, cmdHandlers, 0XFFFFFFFF );
+	ri.BufQueue_Wait( cmdQueue, R_ImageLoaderCmdsWaiter, cmdHandlers, Q_THREADS_WAIT_INFINITE );
  
 	return NULL;	
 }

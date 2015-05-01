@@ -145,10 +145,11 @@ int Sys_CondVar_Create( qcondvar_t **pcond )
 {
 	qcondvar_t *cond;
 
-	cond = ( qcondvar_t * )Q_malloc( sizeof( *cond ) );
 	if( !pcond ) {
 		return -1;
 	}
+
+	cond = ( qcondvar_t * )Q_malloc( sizeof( *cond ) );
 	pthread_cond_init( &cond->c, NULL );
 
 	*pcond = cond;
@@ -177,6 +178,10 @@ bool Sys_CondVar_Wait( qcondvar_t *cond, qmutex_t *mutex, unsigned int timeout_m
   
 	if( !cond || !mutex ) {
 		return false;
+	}
+
+	if( timeout_msec == Q_THREADS_WAIT_INFINITE ) {
+		return pthread_cond_wait( &cond->c, &mutex->m ) == 0;
 	}
 
 	gettimeofday( &tp, NULL );
