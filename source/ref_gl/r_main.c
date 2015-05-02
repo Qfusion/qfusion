@@ -729,7 +729,7 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		int j;
 		float sint, cost;
 
-		angle = angle / 360.0f;
+		angle = DEG2RAD( angle );
 		sint = sin( angle );
 		cost = cos( angle );
 
