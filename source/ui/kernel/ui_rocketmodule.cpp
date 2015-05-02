@@ -225,11 +225,9 @@ void RocketModule::touchEvent( int id, touchevent_t type, int x, int y )
 	UI_Main::Get()->mouseMove( x, y, true, false );
 	if( type == TOUCH_UP ) {
 		cancelTouches();
-	} else {
-		if( type == TOUCH_DOWN ) {
-			KeyConverter keyconv;
-			context->ProcessMouseButtonDown( 0, keyconv.getModifiers() );
-		}
+	} else if( type == TOUCH_DOWN ) {
+		KeyConverter keyconv;
+		context->ProcessMouseButtonDown( 0, keyconv.getModifiers() );
 	}
 }
 
