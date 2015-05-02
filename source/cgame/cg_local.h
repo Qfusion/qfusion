@@ -779,7 +779,7 @@ extern cg_touch_t cg_touches[];
 
 int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id, unsigned int time ) );
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
-void CG_TouchFrame( void );
+void CG_TouchFrame( float frametime );
 void CG_CancelTouches( void );
 
 enum

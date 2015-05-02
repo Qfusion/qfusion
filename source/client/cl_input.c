@@ -927,7 +927,7 @@ void CL_UserInputFrame( void )
 
 	// let the game handle touch events
 	if( cls.key_dest == key_game )
-		CL_GameModule_TouchFrame();
+		CL_GameModule_TouchFrame( cls.realframetime );
 
 	// process console commands
 	Cbuf_Execute();

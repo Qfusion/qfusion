@@ -715,10 +715,10 @@ void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned
 /*
 * CL_GameModule_TouchFrame
 */
-void CL_GameModule_TouchFrame( void )
+void CL_GameModule_TouchFrame( float frametime )
 {
 	if( cge )
-		cge->TouchFrame();
+		cge->TouchFrame( frametime );
 }
 
 /*

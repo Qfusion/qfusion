@@ -420,7 +420,7 @@ uint8_t CL_GameModule_GetButtonBits( void );
 void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime );
 void CL_GameModule_AddMovement( vec3_t movement );
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
-void CL_GameModule_TouchFrame( void );
+void CL_GameModule_TouchFrame( float frametime );
 void CL_GameModule_CancelTouches( void );
 
 //
