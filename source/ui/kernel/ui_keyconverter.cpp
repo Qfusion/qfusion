@@ -36,6 +36,8 @@ int KeyConverter::getModifiers( void )
 		mod |= KM_CTRL;
 	if( trap::Key_IsDown( K_LSHIFT ) || trap::Key_IsDown( K_RSHIFT ) )
 		mod |= KM_SHIFT;
+	else
+		mod |= KM_NUMLOCK;
 
 	return mod;
 }
