@@ -45,6 +45,8 @@ void S_Activate( bool active )
 	}
 	else
 	{
+		if( s_globalfocus->integer )
+			return;
 		(*snddma_android_play)->SetPlayState( snddma_android_play, SL_PLAYSTATE_STOPPED );
 		(*snddma_android_bufferQueue)->Clear( snddma_android_bufferQueue );
 	}
