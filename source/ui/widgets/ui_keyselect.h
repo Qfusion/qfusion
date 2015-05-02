@@ -81,12 +81,12 @@ private:
 	static int GetKeyboardKey( Event &evt )
 	{
 		int rkey = evt.GetParameter<int>( "key_identifier", 0 );
-		return KeyConverter().fromRocketKey( rkey );
+		return KeyConverter::fromRocketKey( rkey );
 	}
 	static int GetWheelKey( Event &evt )
 	{
 		int rkey = evt.GetParameter<int>( "wheel_delta", 0 );
-		return KeyConverter().fromRocketWheel( rkey );
+		return KeyConverter::fromRocketWheel( rkey );
 	}
 
 	// generic utilization

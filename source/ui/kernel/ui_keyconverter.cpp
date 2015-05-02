@@ -11,23 +11,15 @@
 #include "kernel/ui_keyconverter.h"
 #include <Rocket/Core/Input.h>
 
-/* Special punctuation characters */
-const char oem_keys[] = ";=,-./`[\\]'";
+namespace WSWUI {
+namespace KeyConverter {
 
 using namespace Rocket::Core::Input;
 
-KeyConverter::KeyConverter()
-{
-	// TODO Auto-generated constructor stub
+/* Special punctuation characters */
+const char oem_keys[] = ";=,-./`[\\]'";
 
-}
-
-KeyConverter::~KeyConverter()
-{
-	// TODO Auto-generated destructor stub
-}
-
-int KeyConverter::getModifiers( void )
+int getModifiers( void )
 {
 	int mod = 0;
 	if( trap::Key_IsDown( K_LALT ) || trap::Key_IsDown( K_RALT ) )
@@ -42,7 +34,7 @@ int KeyConverter::getModifiers( void )
 	return mod;
 }
 
-int KeyConverter::toRocketKey( int key )
+int toRocketKey( int key )
 {
 	if( key >= '0' && key <= '9' )
 		return KI_0 + ( key - '0' );
@@ -124,7 +116,7 @@ int KeyConverter::toRocketKey( int key )
 	return 0;
 }
 
-int KeyConverter::fromRocketKey( int key )
+int fromRocketKey( int key )
 {
 	if( key >= KI_0 && key <= KI_9 )
 		return '0' + ( key - KI_0 );
@@ -198,7 +190,7 @@ int KeyConverter::fromRocketKey( int key )
 	return 0;
 }
 
-int KeyConverter::specialChar( int c )
+int specialChar( int c )
 {
 	// base this on ascii characters
 	// return 0 when not special char or the char when is
@@ -216,24 +208,15 @@ int KeyConverter::specialChar( int c )
 	return 0;
 }
 
-int KeyConverter::toRocketMouse( int btn )
+int toRocketWheel( int wheel )
 {
-	// Rocket uses 0-..
-	return btn - K_MOUSE1;
+	return ( wheel == K_MWHEELUP ? -1 : ( wheel == K_MWHEELDOWN ? 1 : 0 ) );
 }
 
-int KeyConverter::fromRocketMouse( int btn )
-{
-	// Rocket uses 0-...
-	return K_MOUSE1 + btn;
-}
-
-int  KeyConverter::toRocketWheel( int wheel )
-{
-	return ( wheel == K_MWHEELUP ? KI_MWHEELUP : ( wheel == K_MWHEELDOWN ? KI_MWHEELDOWN : 0 ) );
-}
-
-int  KeyConverter::fromRocketWheel( int wheel )
+int fromRocketWheel( int wheel )
 {
 	return ( wheel > 0 ? K_MWHEELDOWN : ( wheel < 0 ? K_MWHEELUP : 0 ) );
+}
+
+}
 }

@@ -111,8 +111,7 @@ RocketModule::~RocketModule()
 
 void RocketModule::mouseMove( int mousex, int mousey )
 {
-	KeyConverter keyconv;
-	context->ProcessMouseMove( mousex, mousey, keyconv.getModifiers() );
+	context->ProcessMouseMove( mousex, mousey, KeyConverter::getModifiers() );
 }
 
 void RocketModule::textInput( wchar_t c )
@@ -123,8 +122,6 @@ void RocketModule::textInput( wchar_t c )
 
 void RocketModule::keyEvent( int key, bool pressed )
 {
-	KeyConverter keyconv;
-
 	// DEBUG
 #if 0
 	if( key >= 32 && key <= 126 )
@@ -138,7 +135,7 @@ void RocketModule::keyEvent( int key, bool pressed )
 
 	Element *element = context->GetFocusElement();
 
-	int mod = keyconv.getModifiers();
+	int mod = KeyConverter::getModifiers();
 
 	// warsow sends mousebuttons as keys
 	if( key >= K_MOUSE1 && key <= K_MOUSE8 )
@@ -164,11 +161,11 @@ void RocketModule::keyEvent( int key, bool pressed )
 	// and ditto for wheel
 	else if( key == K_MWHEELDOWN )
 	{
-		context->ProcessMouseWheel( KI_MWHEELDOWN, mod );
+		context->ProcessMouseWheel( 1, mod );
 	}
 	else if( key == K_MWHEELUP )
 	{
-		context->ProcessMouseWheel( KI_MWHEELUP, mod );
+		context->ProcessMouseWheel( -1, mod );
 	}
 	else
 	{
@@ -192,7 +189,7 @@ void RocketModule::keyEvent( int key, bool pressed )
 		}
 		else
 		{
-			int rkey = keyconv.toRocketKey( key );
+			int rkey = KeyConverter::toRocketKey( key );
 
 			if( key == K_B_BUTTON )
 			{
@@ -226,8 +223,7 @@ void RocketModule::touchEvent( int id, touchevent_t type, int x, int y )
 	if( type == TOUCH_UP ) {
 		cancelTouches();
 	} else if( type == TOUCH_DOWN ) {
-		KeyConverter keyconv;
-		context->ProcessMouseButtonDown( 0, keyconv.getModifiers() );
+		context->ProcessMouseButtonDown( 0, KeyConverter::getModifiers() );
 	}
 }
 
@@ -238,9 +234,7 @@ void RocketModule::cancelTouches( void )
 	}
 
 	lastTouch = -1;
-
-	KeyConverter keyconv;
-	context->ProcessMouseButtonUp( 0, keyconv.getModifiers() );
+	context->ProcessMouseButtonUp( 0, KeyConverter::getModifiers() );
 	UI_Main::Get()->mouseMove( 0, 0, true, false );
 }
 
