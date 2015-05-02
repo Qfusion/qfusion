@@ -154,7 +154,7 @@ void StreamCache::StreamDone( int status, const char *contentType, void *private
 		bool moved = false;
 		if( status == HTTP_CODE_OK ) {
 			// verify that the move succeeds
-			moved = ( trap::FS_MoveFile( tmpFile.c_str(), realFile.c_str() ) == true );
+			moved = ( trap::FS_MoveCacheFile( tmpFile.c_str(), realFile.c_str() ) == true );
 		}
 		else {
 			Com_Printf( S_COLOR_YELLOW "StreamCache::StreamDone: error %i fetching '%s'\n", status, stream->url.c_str() );

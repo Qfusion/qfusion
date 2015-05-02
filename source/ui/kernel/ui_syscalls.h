@@ -368,6 +368,10 @@ namespace trap
 			return UI_IMPORT.FS_MoveFile( src, dst );
 		}
 
+		inline bool FS_MoveCacheFile( const char *src, const char *dst ) {
+			return UI_IMPORT.FS_MoveCacheFile( src, dst );
+		}
+
 		inline bool FS_IsUrl( const char *url ) {
 			return UI_IMPORT.FS_IsUrl( url );
 		}
