@@ -779,6 +779,7 @@ bool    FS_CopyBaseFile( const char *src, const char *dst );
 bool    FS_ExtractFile( const char *src, const char *dst );
 bool    FS_MoveFile( const char *src, const char *dst );
 bool    FS_MoveBaseFile( const char *src, const char *dst );
+bool    FS_MoveCacheFile( const char *src, const char *dst );
 bool    FS_RemoveFile( const char *filename );
 bool    FS_RemoveBaseFile( const char *filename );
 bool    FS_RemoveAbsoluteFile( const char *filename );

@@ -219,6 +219,7 @@ void CL_UIModule_Init( void )
 	import.FS_GetGameDirectoryList = FS_GetGameDirectoryList;
 	import.FS_FirstExtension = FS_FirstExtension;
 	import.FS_MoveFile = FS_MoveFile;
+	import.FS_MoveCacheFile = FS_MoveCacheFile;
 	import.FS_IsUrl = FS_IsUrl;
 	import.FS_FileMTime = FS_FileMTime;
 	import.FS_RemoveDirectory = FS_RemoveDirectory;

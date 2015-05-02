@@ -2014,7 +2014,7 @@ bool FS_ExtractFile( const char *src, const char *dst )
 /*
 * _FS_MoveFile
 */
-bool _FS_MoveFile( const char *src, const char *dst, bool base )
+bool _FS_MoveFile( const char *src, const char *dst, bool base, const char *dir )
 {
 	const char *fullname;
 
@@ -2026,15 +2026,15 @@ bool _FS_MoveFile( const char *src, const char *dst, bool base )
 	if( !fullname )
 		return false;
 
-	if( strncmp( fullname, FS_WriteDirectory(), strlen( FS_WriteDirectory() ) ) )
+	if( strncmp( fullname, dir, strlen( dir ) ) )
 		return false;
 
 	if( !COM_ValidateRelativeFilename( dst ) )
 		return false;
 
 	if( base )
-		return ( rename( fullname, va( "%s/%s", FS_WriteDirectory(), dst ) ) == 0 ? true : false );
-	return ( rename( fullname, va( "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), dst ) ) == 0 ? true : false );
+		return ( rename( fullname, va( "%s/%s", dir, dst ) ) == 0 ? true : false );
+	return ( rename( fullname, va( "%s/%s/%s", dir, FS_GameDirectory(), dst ) ) == 0 ? true : false );
 }
 
 /*
@@ -2042,7 +2042,7 @@ bool _FS_MoveFile( const char *src, const char *dst, bool base )
 */
 bool FS_MoveFile( const char *src, const char *dst )
 {
-	return _FS_MoveFile( src, dst, false );
+	return _FS_MoveFile( src, dst, false, FS_WriteDirectory() );
 }
 
 /*
@@ -2050,7 +2050,15 @@ bool FS_MoveFile( const char *src, const char *dst )
 */
 bool FS_MoveBaseFile( const char *src, const char *dst )
 {
-	return _FS_MoveFile( src, dst, true );
+	return _FS_MoveFile( src, dst, true, FS_WriteDirectory() );
+}
+
+/*
+* FS_MoveCacheFile
+*/
+bool FS_MoveCacheFile( const char *src, const char *dst )
+{
+	return _FS_MoveFile( src, dst, false, FS_CacheDirectory() );
 }
 
 /*

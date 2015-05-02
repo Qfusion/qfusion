@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    56
+#define	UI_API_VERSION	    57
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -169,6 +169,7 @@ typedef struct
 	int ( *FS_GetGameDirectoryList )( char *buf, size_t bufsize );
 	const char *( *FS_FirstExtension )( const char *filename, const char *extensions[], int num_extensions );
 	bool ( *FS_MoveFile )( const char *src, const char *dst );
+	bool ( *FS_MoveCacheFile )( const char *src, const char *dst );
 	bool ( *FS_IsUrl )( const char *url );
 	time_t ( *FS_FileMTime )( const char *filename );
 	bool ( *FS_RemoveDirectory )( const char *dirname );
