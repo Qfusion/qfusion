@@ -1638,10 +1638,27 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 /*
 * CG_TouchFrame
 */
-void CG_TouchFrame( void )
+void CG_TouchFrame( float frametime )
 {
 	int i;
 	bool touching = false;
+
+	cg_touchpad_t &viewpad = cg_touchpads[TOUCHPAD_VIEW];
+	if( viewpad.touch >= 0 )
+	{
+		if( cg_touch_lookDecel->modified )
+		{
+			if( cg_touch_lookDecel->value < 0.0f )
+				trap_Cvar_Set( cg_touch_lookDecel->name, cg_touch_lookDecel->dvalue );
+			cg_touch_lookDecel->modified = false;
+		}
+
+		cg_touch_t &touch = cg_touches[viewpad.touch];
+
+		float decel = cg_touch_lookDecel->value * ( float )frametime * 10.0f;
+		viewpad.x += ( ( float )touch.x - viewpad.x ) * decel;
+		viewpad.y += ( ( float )touch.y - viewpad.y ) * decel;
+	}
 
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
 	{
@@ -1706,7 +1723,6 @@ void CG_AddTouchViewAngles( vec3_t viewangles, float frametime )
 			speed *= cg.predictedPlayerState.fov / cgs.clientInfo[cgs.playerNum].fov;
 
 		float scale = 600.0f / ( float )cgs.vidHeight;
-		float decel = cg_touch_lookDecel->value * frametime * 10.0f;
 
 		float angle = ( ( float )touch.y - viewpad.y ) * scale;
 		if( cg_touch_lookInvert->integer )
@@ -1715,14 +1731,12 @@ void CG_AddTouchViewAngles( vec3_t viewangles, float frametime )
 		angle = fabsf( angle ) - cg_touch_lookThres->value;
 		if( angle > 0.0f )
 			viewangles[PITCH] += angle * dir * speed;
-		viewpad.y += ( ( float )touch.y - viewpad.y ) * decel;
 
 		angle = ( viewpad.x - ( float )touch.x ) * scale;
 		dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
 		angle = fabsf( angle ) - cg_touch_lookThres->value;
 		if( angle > 0.0f )
 			viewangles[YAW] += angle * dir * speed;
-		viewpad.x += ( ( float )touch.x - viewpad.x ) * decel;
 	}
 }
 
