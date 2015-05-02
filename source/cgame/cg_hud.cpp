@@ -541,6 +541,34 @@ static int CG_GetTouchUpmove( const void *parameter )
 	return cg_hud_touch_upmove;
 }
 
+static int CG_GetTouchMovementAngle( const void *parameter )
+{
+	vec3_t movement;
+
+	VectorSet( movement, 0.0f, 0.0f, 0.0f );
+	CG_AddTouchMovement( movement );
+	if( !movement[0] && !movement[1] )
+		return STAT_NOTSET;
+
+	int angle;
+	if( movement[0] > 0.0f )
+	{
+		if( !movement[1] )
+			return 0;
+		return ( movement[1] > 0.0f ) ? 45 : -45;
+	}
+	else if( movement[0] < 0.0f )
+	{
+		if( !movement[1] )
+			return 180;
+		return 180 - ( ( movement[1] > 0.0f ) ? 45 : -45 );
+	}
+	else
+	{
+		return ( movement[1] > 0.0f ) ? 90 : -90;
+	}
+}
+
 typedef struct
 {
 	const char *name;
@@ -702,6 +730,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "TOUCH_ATTACK", CG_GetTouchButtonPressed, (void *)BUTTON_ATTACK },
 	{ "TOUCH_SPECIAL", CG_GetTouchButtonPressed, (void *)BUTTON_SPECIAL },
 	{ "TOUCH_UPMOVE", CG_GetTouchUpmove, NULL },
+	{ "TOUCH_MOVEMENTANGLE", CG_GetTouchMovementAngle, NULL },
 
 	{ NULL, NULL, NULL }
 };
@@ -1712,6 +1741,23 @@ static bool CG_LFuncDrawSubPicByName( struct cg_layoutnode_s *commandnode, struc
 	t2 = CG_GetNumericArg( &argumentnode );
 
 	trap_R_DrawStretchPic( x, y, layout_cursor_width, layout_cursor_height, s1, t1, s2, t2, layout_cursor_color, shader );
+	return true;
+}
+
+static bool CG_LFuncDrawRotatedPicByName( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	int x, y;
+	struct shader_s *shader;
+	float angle;
+
+	x = CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width );
+	y = CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height );
+
+	shader = trap_R_RegisterPic( CG_GetStringArg( &argumentnode ) );
+
+	angle = CG_GetNumericArg( &argumentnode );
+
+	trap_R_DrawRotatedStretchPic( x, y, layout_cursor_width, layout_cursor_height, 0, 0, 1, 1, angle, layout_cursor_color, shader );
 	return true;
 }
 
@@ -3053,6 +3099,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		NULL,
 		5,
 		"Draws a part of a pic with arguments being the file path and the texture coordinates",
+		true
+	},
+
+	{
+		"drawRotatedPicByName",
+		CG_LFuncDrawRotatedPicByName,
+		NULL,
+		2,
+		"Draws a pic with arguments being the file path and the rotation",
 		true
 	},
 
