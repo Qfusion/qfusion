@@ -2678,7 +2678,7 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 */
 static void R_InitScreenTextures( void )
 {
-	if( glConfig.ext.depth_texture && glConfig.ext.framebuffer_blit )
+	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit )
 	{
 		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
 			&rsh.screenDepthTexture, true ); 

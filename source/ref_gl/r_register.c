@@ -989,7 +989,7 @@ static void R_FinalizeGLExtensions( void )
 	ri.Cvar_ForceSet( "r_texturefilter_max", va( "%i", glConfig.maxTextureFilterAnisotropic ) );
 
 	ri.Cvar_Get( "r_soft_particles_available", "0", CVAR_READONLY );
-	if( glConfig.ext.depth_texture && glConfig.ext.framebuffer_blit )
+	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit )
 		ri.Cvar_ForceSet( "r_soft_particles_available", "1" );
 
 	// don't allow too high values for lightmap block size as they negatively impact performance
