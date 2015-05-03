@@ -801,6 +801,7 @@ extern cvar_t *cg_placebo;
 extern cvar_t *cg_strafeHUD;
 extern cvar_t *cg_touch_flip;
 extern cvar_t *cg_touch_scale;
+extern cvar_t *cg_touch_showMoveDir;
 extern cvar_t *cg_touch_zoomThres;
 extern cvar_t *cg_touch_zoomTime;
 
