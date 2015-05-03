@@ -12,14 +12,13 @@
 #include <Rocket/Core/Input.h>
 
 namespace WSWUI {
-namespace KeyConverter {
 
 using namespace Rocket::Core::Input;
 
 /* Special punctuation characters */
-const char oem_keys[] = ";=,-./`[\\]'";
+const char * KeyConverter::oem_keys = ";=,-./`[\\]'";
 
-int getModifiers( void )
+int KeyConverter::getModifiers( void )
 {
 	int mod = 0;
 	if( trap::Key_IsDown( K_LALT ) || trap::Key_IsDown( K_RALT ) )
@@ -34,7 +33,7 @@ int getModifiers( void )
 	return mod;
 }
 
-int toRocketKey( int key )
+int KeyConverter::toRocketKey( int key )
 {
 	if( key >= '0' && key <= '9' )
 		return KI_0 + ( key - '0' );
@@ -116,7 +115,7 @@ int toRocketKey( int key )
 	return 0;
 }
 
-int fromRocketKey( int key )
+int KeyConverter::fromRocketKey( int key )
 {
 	if( key >= KI_0 && key <= KI_9 )
 		return '0' + ( key - KI_0 );
@@ -190,7 +189,7 @@ int fromRocketKey( int key )
 	return 0;
 }
 
-int specialChar( int c )
+int KeyConverter::specialChar( int c )
 {
 	// base this on ascii characters
 	// return 0 when not special char or the char when is
@@ -208,15 +207,14 @@ int specialChar( int c )
 	return 0;
 }
 
-int toRocketWheel( int wheel )
+int KeyConverter::toRocketWheel( int wheel )
 {
 	return ( wheel == K_MWHEELUP ? -1 : ( wheel == K_MWHEELDOWN ? 1 : 0 ) );
 }
 
-int fromRocketWheel( int wheel )
+int KeyConverter::fromRocketWheel( int wheel )
 {
 	return ( wheel > 0 ? K_MWHEELDOWN : ( wheel < 0 ? K_MWHEELUP : 0 ) );
 }
 
-}
 }

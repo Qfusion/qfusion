@@ -9,16 +9,22 @@
 #define KEY_CONVERTER_H_
 
 namespace WSWUI {
-namespace KeyConverter {
 
-	int getModifiers();
-	int toRocketKey( int key );
-	int fromRocketKey( int key );
-	int toRocketWheel( int wheel );
-	int fromRocketWheel( int wheel );
-	int specialChar( int c );
+class KeyConverter {
+public:
+	static int fromRocketKey( int key );
+	static int fromRocketWheel( int wheel );
+	static int getModifiers();
+	static int toRocketKey( int key );
+	static int toRocketWheel( int wheel );
 
-}
+private:
+	static int specialChar( int c );
+
+	/* Special punctuation characters */
+	static const char *oem_keys;
+};
+
 }
 
 #endif /* KEY_CONVERTER_H_ */
