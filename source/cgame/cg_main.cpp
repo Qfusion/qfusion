@@ -832,6 +832,7 @@ static void CG_RegisterVariables( void )
 	cg_strafeHUD = trap_Cvar_Get( "cg_strafeHUD", "0", CVAR_ARCHIVE );
 	cg_touch_flip = trap_Cvar_Get( "cg_touch_flip", "0", CVAR_ARCHIVE );
 	cg_touch_scale = trap_Cvar_Get( "cg_touch_scale", "100", CVAR_ARCHIVE );
+	cg_touch_showMoveDir = trap_Cvar_Get( "cg_touch_showMoveDir", "1", CVAR_ARCHIVE );
 	cg_touch_zoomThres = trap_Cvar_Get( "cg_touch_zoomThres", "20", CVAR_ARCHIVE );
 	cg_touch_zoomTime = trap_Cvar_Get( "cg_touch_zoomTime", "250", CVAR_ARCHIVE );
 
