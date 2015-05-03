@@ -24,28 +24,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // =====================================================================
 
 /*
-* S_CreateSoundPipe
+* S_CreateSoundCmdPipe
 */
-sndCmdPipe_t *S_CreateSoundPipe( void )
+sndCmdPipe_t *S_CreateSoundCmdPipe( void )
 {
 	return trap_BufPipe_Create( SND_COMMANDS_BUFSIZE, 0 );
 }
 
 /*
-* S_DestroySoundPipe
+* S_DestroySoundCmdPipe
 */
-void S_DestroySoundPipe( sndCmdPipe_t **pqueue )
+void S_DestroySoundCmdPipe( sndCmdPipe_t **pqueue )
 {
 	trap_BufPipe_Destroy( pqueue );
 }
 
 /*
-* S_FinishSoundPipe
+* S_FinishSoundCmdPipe
 *
 * Blocks until the reader thread handles all commands
 * or terminates with an error.
 */
-void S_FinishSoundPipe( sndCmdPipe_t *queue )
+void S_FinishSoundCmdPipe( sndCmdPipe_t *queue )
 {
 	trap_BufPipe_Finish( queue );
 }

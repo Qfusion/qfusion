@@ -182,7 +182,7 @@ void SF_BeginRegistration( void )
 	s_registering = true;
 
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 }
 
 /*
@@ -220,7 +220,7 @@ void SF_FreeSounds( void )
 	sfx_t *sfx;
 
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 
 	// free all sounds
 	for( i = 0, sfx = known_sfx; i < num_sfx; i++, sfx++ )
@@ -242,7 +242,7 @@ void SF_EndRegistration( void )
 	sfx_t *sfx;
 
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 
 	s_registering = false;
 
@@ -297,7 +297,7 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 	s_registration_sequence = 1;
 	s_registering = false;
 
-	s_cmdPipe = S_CreateSoundPipe();
+	s_cmdPipe = S_CreateSoundCmdPipe();
 	if( !s_cmdPipe ) {
 		return false;
 	}
@@ -306,7 +306,7 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 
 	S_IssueInitCmd( s_cmdPipe, hwnd, maxEntities, verbose );
 
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 
 	if( !dma.buffer )
 		return false;
@@ -339,13 +339,13 @@ void SF_Shutdown( bool verbose )
 	S_IssueShutdownCmd( s_cmdPipe, verbose );
 
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 	
 	// wait for the backend thread to die
 	trap_Thread_Join( s_backThread );
 	s_backThread = NULL;
 
-	S_DestroySoundPipe( &s_cmdPipe );
+	S_DestroySoundCmdPipe( &s_cmdPipe );
 
 #ifdef ENABLE_PLAY
 	trap_Cmd_RemoveCommand( "play" );
