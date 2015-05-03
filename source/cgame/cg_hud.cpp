@@ -39,6 +39,7 @@ cvar_t *cg_placebo;
 cvar_t *cg_strafeHUD;
 cvar_t *cg_touch_flip;
 cvar_t *cg_touch_scale;
+cvar_t *cg_touch_showMoveDir;
 cvar_t *cg_touch_zoomThres;
 cvar_t *cg_touch_zoomTime;
 
@@ -546,7 +547,7 @@ static int CG_GetTouchUpmove( const void *parameter )
 	return cg_hud_touch_upmove;
 }
 
-static int CG_GetTouchMovementAngle( const void *parameter )
+static int CG_GetTouchMovementDirection( const void *parameter )
 {
 	vec3_t movement;
 
@@ -688,6 +689,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "SHOW_R_SPEEDS", CG_GetCvar, "r_speeds" },
 	{ "SHOW_ITEM_TIMERS", CG_GetShowItemTimers, "cg_showItemTimers" },
 	{ "SHOW_STRAFE", CG_GetCvar, "cg_strafeHUD" },
+	{ "SHOW_TOUCH_MOVEDIR", CG_GetCvar, "cg_touch_showMoveDir" },
 
 	{ "DOWNLOAD_IN_PROGRESS", CG_DownloadInProgress, NULL },
 	{ "DOWNLOAD_PERCENT", CG_GetCvar, "cl_download_percent" },
@@ -734,7 +736,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "TOUCH_ATTACK", CG_GetTouchButtonPressed, (void *)BUTTON_ATTACK },
 	{ "TOUCH_SPECIAL", CG_GetTouchButtonPressed, (void *)BUTTON_SPECIAL },
 	{ "TOUCH_UPMOVE", CG_GetTouchUpmove, NULL },
-	{ "TOUCH_MOVEMENTANGLE", CG_GetTouchMovementAngle, NULL },
+	{ "TOUCH_MOVEDIR", CG_GetTouchMovementDirection, NULL },
 
 	{ NULL, NULL, NULL }
 };
