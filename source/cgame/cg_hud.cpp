@@ -531,6 +531,11 @@ static int CG_GetAccel( const void* parameter )
 	return (int)accel;
 }
 
+static int CG_GetTouchFlip( const void *parameter )
+{
+	return cg_touch_flip->integer ? -1 : 1;
+}
+
 static int CG_GetTouchButtonPressed( const void *parameter )
 {
 	return ( cg_hud_touch_buttons & ( intptr_t )parameter ) ? 1 : 0;
@@ -550,7 +555,6 @@ static int CG_GetTouchMovementAngle( const void *parameter )
 	if( !movement[0] && !movement[1] )
 		return STAT_NOTSET;
 
-	int angle;
 	if( movement[0] > 0.0f )
 	{
 		if( !movement[1] )
@@ -691,7 +695,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "CHAT_MODE", CG_GetCvar, "con_messageMode" },
 	{ "SOFTKEYBOARD", CG_InputDeviceSupported, (void *)IN_DEVICE_SOFTKEYBOARD },
 
-	{ "TOUCH_FLIP", CG_GetCvar, "cg_touch_flip" },
+	{ "TOUCH_FLIP", CG_GetTouchFlip, NULL },
 	{ "TOUCH_SCALE", CG_GetCvar, "cg_touch_scale" },
 
 	{ "ITEM_TIMER0", CG_GetItemTimer, (void *)0 },
