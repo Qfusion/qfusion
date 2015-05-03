@@ -608,6 +608,8 @@ bool SNDDMA_Init( void *hwnd, bool verbose )
 
 	s_wavonly = trap_Cvar_Get( "s_wavonly", "0", CVAR_LATCH_SOUND|CVAR_ARCHIVE );
 
+	s_globalfocus->modified = false;
+
 	dsound_init = wav_init = false;
 
 	stat = SIS_FAILURE; // assume DirectSound won't initialize
@@ -838,6 +840,12 @@ void S_Activate( bool active )
 {
 	if( !pDS )
 		return;
+
+	if( s_globalfocus->modified ) {
+		SNDDMA_Shutdown( false );
+		SNDDMA_InitDirect( false );
+		s_globalfocus->modified = false;
+	}
 
 	// just set the priority for directsound
 	if( pDS->lpVtbl->SetCooperativeLevel( pDS, cl_hwnd, DSSCL_PRIORITY ) != DS_OK )
