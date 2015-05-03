@@ -234,12 +234,12 @@ typedef struct
 	char text[80];
 } sndStuffCmd_t;
 
-sndCmdPipe_t *S_CreateSoundPipe( void );
-void S_DestroySoundPipe( sndCmdPipe_t **pqueue );
+sndCmdPipe_t *S_CreateSoundCmdPipe( void );
+void S_DestroySoundCmdPipe( sndCmdPipe_t **pqueue );
 int S_ReadEnqueuedCmds( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandlers );
 void S_WaitEnqueuedCmds( qbufPipe_t *queue, int (*read)( qbufPipe_t *, unsigned( ** )(const void *), bool ), 
 	unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec );
-void S_FinishSoundPipe( sndCmdPipe_t *queue );
+void S_FinishSoundCmdPipe( sndCmdPipe_t *queue );
 
 void S_IssueInitCmd( sndCmdPipe_t *queue, void *hwnd, int maxents, bool verbose );
 void S_IssueShutdownCmd( sndCmdPipe_t *queue, bool verbose );

@@ -137,7 +137,7 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 	trap_Cmd_AddCommand( "soundlist", SF_SoundList_f );
 	trap_Cmd_AddCommand( "s_devices", SF_ListDevices_f );
 
-	s_cmdPipe = S_CreateSoundPipe();
+	s_cmdPipe = S_CreateSoundCmdPipe();
 	if( !s_cmdPipe ) {
 		return false;
 	}
@@ -146,7 +146,7 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 
 	S_IssueInitCmd( s_cmdPipe, hwnd, maxEntities, verbose );
 
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 
 	if( !alContext ) {
 		return false;
@@ -172,7 +172,7 @@ void SF_Shutdown( bool verbose )
 	SF_Activate( true );
 
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 
 	S_ShutdownBuffers();
 
@@ -180,13 +180,13 @@ void SF_Shutdown( bool verbose )
 	S_IssueShutdownCmd( s_cmdPipe, verbose );
 
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 
 	// wait for the backend thread to die
 	trap_Thread_Join( s_backThread );
 	s_backThread = NULL;
 
-	S_DestroySoundPipe( &s_cmdPipe );
+	S_DestroySoundCmdPipe( &s_cmdPipe );
 
 #ifdef ENABLE_PLAY
 	trap_Cmd_RemoveCommand( "play" );
@@ -213,18 +213,18 @@ void SF_BeginRegistration( void )
 	s_registering = true;
 
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 }
 
 void SF_EndRegistration( void )
 {
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 
 	S_ForEachBuffer( SF_UnregisterSound );
 
 	// wait for the queue to be processed
-	S_FinishSoundPipe( s_cmdPipe );
+	S_FinishSoundCmdPipe( s_cmdPipe );
 
 	S_ForEachBuffer( SF_FreeSound );
 
