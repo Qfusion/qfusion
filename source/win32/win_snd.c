@@ -843,8 +843,13 @@ void S_Activate( bool active )
 
 	if( s_globalfocus->modified ) {
 		SNDDMA_Shutdown( false );
+
 		SNDDMA_InitDirect( false );
+
 		s_globalfocus->modified = false;
+
+		if( !pDS )
+			return;
 	}
 
 	// just set the priority for directsound
