@@ -69,7 +69,7 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-		VALUE "Comments", "For more information about " APPLICATION " visit: " APP_URL "  Made using the Qfusion engine: https://github.com/viciious/qfusion\0"
+		VALUE "Comments", "For more information about " APPLICATION " visit: " APP_URL "  Made using the Qfusion engine: https://qfusion.net/\0"
             VALUE "CompanyName", APP_COPYRIGHT_OWNER "\0"
             VALUE "FileDescription", APPLICATION "\0"
             VALUE "FileVersion", APP_FILEVERSION_RC_STR "\0"
