@@ -1509,12 +1509,14 @@ void CG_Draw2DView( void )
 
 	CG_CheckDamageCrosshair();
 
-	if( drawScoreboard )
-		CG_DrawScoreboard();
-
 	scr_centertime_off -= cg.frameTime;
-	if( !drawScoreboard && ( scr_centertime_off > 0 ) )
-		CG_DrawCenterString();
+	if( !( ( trap_IN_SupportedDevices() & IN_DEVICE_SOFTKEYBOARD ) && ( int )trap_Cvar_Value( "con_messageMode" ) ) )
+	{
+		if( drawScoreboard )
+			CG_DrawScoreboard();
+		else if( scr_centertime_off > 0 )
+			CG_DrawCenterString();
+	}
 
 	CG_DrawRSpeeds( cgs.vidWidth, cgs.vidHeight/2 + 8*cgs.vidHeight/600,
 		ALIGN_RIGHT_TOP, cgs.fontSystemSmall, colorWhite );
