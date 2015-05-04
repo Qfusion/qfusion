@@ -744,6 +744,29 @@ static void Con_DrawInput( int vislines )
 }
 
 /*
+* Con_ChatPrompt
+*
+* Returns the prompt for the chat input
+*/
+static const char *Con_ChatPrompt( void )
+{
+	const char *text, *translated;
+
+	if( chat_team )
+		text = "say (to team):";
+	else if( IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN )
+		text = "say (to all):";
+	else
+		text = "say:";
+
+	translated = L10n_TranslateString( "common", text );
+	if( !translated )
+		return text;
+
+	return translated;
+}
+
+/*
 * Con_DrawNotify
 * 
 * Draws the last few lines of output transparently over the game top
@@ -753,7 +776,6 @@ void Con_DrawNotify( void )
 	int v;
 	char *text;
 	const char *say;
-	const char *translated;
 	int i;
 	int time;
 	char *s;
@@ -826,17 +848,10 @@ void Con_DrawNotify( void )
 		// 48 is an arbitrary offset for not overlapping the FPS and clock prints
 		width -= 48 * viddef.height / 600;
 
-		if( chat_team )
-			say = "say to team:";
-		else
-			say = "say:";
-
-		translated = L10n_TranslateString( "common", say );
-		if( !translated )
-			translated = say;
-		SCR_DrawString( x, y, ALIGN_LEFT_TOP, translated, font, colorWhite, 0 );
+		say = Con_ChatPrompt();
+		SCR_DrawString( x, y, ALIGN_LEFT_TOP, say, font, colorWhite, 0 );
 		spacewidth = SCR_strWidth( " ", font, 0, 0 );
-		promptwidth = SCR_strWidth( translated, font, 0, 0 ) + spacewidth;
+		promptwidth = SCR_strWidth( say, font, 0, 0 ) + spacewidth;
 		x += promptwidth;
 		width -= promptwidth;
 		candwidth = width / 3 - spacewidth;
@@ -992,7 +1007,7 @@ void Con_DrawNotify( void )
 /*
 * Con_GetMessageArea
 */
-static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2 )
+static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2, int *promptwidth )
 {
 	int x, y;
 	int width;
@@ -1043,6 +1058,8 @@ static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2 )
 	*y1 = y;
 	*x2 = x + width;
 	*y2 = y + SCR_FontHeight( font );
+	if( promptwidth )
+		*promptwidth = SCR_strWidth( Con_ChatPrompt(), font, 0, 0 );
 
 	QMutex_Unlock( con.mutex );
 }
@@ -2327,10 +2344,15 @@ static void Con_TouchUp( int x, int y )
 	}
 	else if( cls.key_dest == key_message )
 	{
-		int x1, y1, x2, y2;
-		Con_GetMessageArea( &x1, &y1, &x2, &y2 );
+		int x1, y1, x2, y2, promptwidth;
+		Con_GetMessageArea( &x1, &y1, &x2, &y2, &promptwidth );
 		if( ( x >= x1 ) && ( y >= y1 ) && ( x < x2 ) && ( y < y2 ) )
-			IN_ShowSoftKeyboard( true );
+		{
+			if( x > x1 + promptwidth )
+				IN_ShowSoftKeyboard( true );
+			else
+				chat_team = !chat_team && Cmd_Exists( "say_team" );
+		}
 	}
 
 	touch_x = touch_y = -1;
