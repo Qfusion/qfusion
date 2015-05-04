@@ -155,6 +155,7 @@ typedef struct r_backend_s
 
 	bool greyscale;
 	bool alphaHack;
+	bool noDepthTest;
 	float hackedAlpha;
 
 	float minLight;

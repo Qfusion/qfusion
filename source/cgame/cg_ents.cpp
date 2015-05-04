@@ -211,7 +211,8 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 				( state->type == ET_GENERIC || state->type == ET_GIB
 				|| state->type == ET_GRENADE || state->type == ET_SPRITE
 				|| state->type == ET_ITEM || state->type == ET_FLAG_BASE
-				|| state->type == ET_DECAL || state->type == ET_PARTICLES ) )
+				|| state->type == ET_DECAL || state->type == ET_PARTICLES
+				|| state->type == ET_RADAR ) )
 			{
 				VectorCopy( state->old_origin, cent->prev.origin );
 			}
@@ -1195,7 +1196,7 @@ static void CG_AddPlayerEnt( centity_t *cent )
 }
 
 //==========================================================================
-//		ET_SPRITE
+//		ET_SPRITE, ET_RADAR
 //==========================================================================
 
 /*
@@ -1982,6 +1983,7 @@ void CG_AddEntities( void )
 			break;
 
 		case ET_SPRITE:
+		case ET_RADAR:
 			CG_AddSpriteEnt( cent );
 			CG_EntityLoopSound( state, ATTN_STATIC );
 			canLight = true;
@@ -2120,6 +2122,7 @@ void CG_LerpEntities( void )
 			break;
 
 		case ET_SPRITE:
+		case ET_RADAR:
 			CG_LerpSpriteEnt( cent );
 			break;
 
@@ -2226,6 +2229,8 @@ void CG_UpdateEntities( void )
 			CG_UpdateGenericEnt( cent );
 			break;
 
+		case ET_RADAR:
+			cent->renderfx |= RF_NODEPTHTEST;
 		case ET_SPRITE:
 			cent->renderfx |= ( RF_NOSHADOW|RF_FULLBRIGHT );
 			CG_UpdateSpriteEnt( cent );

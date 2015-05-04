@@ -789,11 +789,6 @@ static void Shader_GlossExponent( shader_t *shader, shaderpass_t *pass, const ch
 		shader->glossExponent = 0;
 }
 
-static void Shader_NoDepthTest( shader_t *shader, shaderpass_t *pass, const char **ptr )
-{
-	shader->flags |= SHADER_NO_DEPTH_TEST;
-}
-
 #define MAX_SHADER_TEMPLATE_ARGS	12
 static void Shader_Template( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
@@ -955,7 +950,6 @@ static const shaderkey_t shaderkeys[] =
 	{ "offsetmappingscale", Shader_OffsetMappingScale },
 	{ "glossexponent", Shader_GlossExponent },
 	{ "glossintensity", Shader_GlossIntensity },
-	{ "nodepthtest", Shader_NoDepthTest },
 	{ "template", Shader_Template },
 	{ "skip", Shader_Skip },
 	{ "softparticle", Shader_SoftParticle },

@@ -455,7 +455,7 @@ static void _R_DrawSurfaces( void )
 
 			// sky and things that don't use depth test use infinite projection matrix
 			// to not pollute the farclip
-			infiniteProj = shader->flags & (SHADER_NO_DEPTH_TEST|SHADER_SKY) ? true : false;
+			infiniteProj = entity->renderfx & RF_NODEPTHTEST ? true : (shader->flags & SHADER_SKY ? true : false);
 			if( infiniteProj != prevInfiniteProj ) {
 				if( infiniteProj ) {
 					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
