@@ -1765,7 +1765,7 @@ void Con_KeyDown( int key )
 		return;
 	}
 
-	if( key == K_ENTER || key == KP_ENTER )
+	if( ( key == K_ENTER ) || ( key == KP_ENTER ) || ( key == K_RSHOULDER ) || ( key == K_RTRIGGER ) )
 	{
 		Con_Key_Enter( false );
 		return;
@@ -1863,24 +1863,26 @@ void Con_KeyDown( int key )
 		return;
 	}
 	
-	if( key == K_MWHEELUP || key == K_MWHEELDOWN )
+	if( ( key == K_PGUP ) || ( key == KP_PGUP ) || ( key == K_MWHEELUP ) || ( key == K_DPAD_UP ) ) // wsw : pb : support mwheel in console
 	{
-		if( ctrl_is_down ) {
-			Con_ChangeFontSize( key == K_MWHEELUP ? 1 : -1 );
+		if( ( key == K_MWHEELUP ) && ctrl_is_down )
+		{
+			Con_ChangeFontSize( 1 );
 			return;
 		}
-	}
-
-	if( key == K_PGUP || key == KP_PGUP || key == K_MWHEELUP ) // wsw : pb : support mwheel in console
-	{
 		con.display += 2;
 		clamp_high( con.display, con.numlines - 1 );
 		clamp_low( con.display, 0 );	// in case con.numlines is 0
 		return;
 	}
 
-	if( key == K_PGDN || key == KP_PGDN || key == K_MWHEELDOWN ) // wsw : pb : support mwheel in console
+	if( ( key == K_PGDN ) || ( key == KP_PGDN ) || ( key == K_MWHEELDOWN ) || ( key == K_DPAD_DOWN ) ) // wsw : pb : support mwheel in console
 	{
+		if( ( key == K_MWHEELDOWN ) && ctrl_is_down )
+		{
+			Con_ChangeFontSize( -1 );
+			return;
+		}
 		con.display -= 2;
 		clamp_low( con.display, 0 );
 		return;
@@ -1910,6 +1912,12 @@ void Con_KeyDown( int key )
 		return;
 	}
 
+	if( key == K_A_BUTTON )
+	{
+		IN_ShowSoftKeyboard( true );
+		return;
+	}
+
 	if( key == '0' )
 	{
 		if( ctrl_is_down )
@@ -1917,6 +1925,12 @@ void Con_KeyDown( int key )
 			Con_ResetFontSize();
 			return;
 		}
+	}
+
+	if( key == K_B_BUTTON )
+	{
+		Con_ToggleConsole_f();
+		return;
 	}
 
 	// key is a normal printable key normal which wil be HANDLE later in response to WM_CHAR event
@@ -2114,7 +2128,7 @@ void Con_MessageKeyDown( int key )
 
 	key = Con_NumPadValue( key );
 
-	if( key == K_ENTER || key == KP_ENTER )
+	if( ( key == K_ENTER ) || ( key == KP_ENTER ) || ( key == K_RSHOULDER ) || ( key == K_RTRIGGER ) )
 	{
 		if( chat_bufferlen > 0 )
 		{
@@ -2218,7 +2232,19 @@ void Con_MessageKeyDown( int key )
 		return;
 	}
 
-	if( key == K_ESCAPE )
+	if( key == K_A_BUTTON )
+	{
+		IN_ShowSoftKeyboard( true );
+		return;
+	}
+
+	if( key == K_Y_BUTTON )
+	{
+		chat_team = !chat_team && Cmd_Exists( "say_team" );
+		return;
+	}
+
+	if( ( key == K_ESCAPE ) || ( key == K_B_BUTTON ) )
 	{
 		CL_SetKeyDest( key_game );
 		chat_bufferlen = 0;
