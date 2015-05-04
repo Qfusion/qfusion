@@ -436,6 +436,8 @@ void Key_Init( void )
 		consolekeys[i] = true;
 	consolekeys[K_ENTER] = true;
 	consolekeys[KP_ENTER] = true;
+	consolekeys[K_RSHOULDER] = true;
+	consolekeys[K_RTRIGGER] = true;
 	consolekeys[K_TAB] = true;
 	consolekeys[K_LEFTARROW] = true;
 	consolekeys[KP_LEFTARROW] = true;
@@ -452,8 +454,10 @@ void Key_Init( void )
 	consolekeys[KP_END] = true;
 	consolekeys[K_PGUP] = true;
 	consolekeys[KP_PGUP] = true;
+	consolekeys[K_DPAD_UP] = true;
 	consolekeys[K_PGDN] = true;
 	consolekeys[KP_PGDN] = true;
+	consolekeys[K_DPAD_DOWN] = true;
 	consolekeys[K_LSHIFT] = true;
 	consolekeys[K_RSHIFT] = true;
 	consolekeys[K_INS] = true;
@@ -464,6 +468,8 @@ void Key_Init( void )
 	consolekeys[KP_PLUS] = true;
 	consolekeys[KP_MINUS] = true;
 	consolekeys[KP_5] = true;
+	consolekeys[K_A_BUTTON] = true;
+	consolekeys[K_B_BUTTON] = true;
 
 	consolekeys[K_WIN] = true;
 	//	consolekeys[K_LWIN] = true;
