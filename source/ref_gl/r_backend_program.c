@@ -1936,7 +1936,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	rb.dirtyUniformState = true;
 
 	rb.currentEntity = e ? e : &rb.nullEnt;
-	rb.currentModelType = ( rb.currentEntity->rtype == RT_MODEL && rb.currentEntity->model ) ? rb.currentEntity->model->type : mod_bad;
+	rb.currentModelType = rb.currentEntity->rtype == RT_MODEL && rb.currentEntity->model ? rb.currentEntity->model->type : mod_bad;
 	rb.currentDlightBits = 0;
 	rb.currentShadowBits = 0;
 	rb.superLightStyle = NULL;
@@ -1953,6 +1953,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.currentShaderTime = rb.nullEnt.shaderTime * 0.001;
 		rb.alphaHack = false;
 		rb.greyscale = false;
+		rb.noDepthTest = false;
 	} else {
 		Vector4Copy( rb.currentEntity->shaderRGBA, rb.entityColor );
 		Vector4Copy( rb.currentEntity->outlineColor, rb.entityOutlineColor );
@@ -1963,6 +1964,7 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.alphaHack = e->renderfx & RF_ALPHAHACK ? true : false;
 		rb.hackedAlpha = e->shaderRGBA[3] / 255.0;
 		rb.greyscale = e->renderfx & RF_GREYSCALE ? true : false;
+		rb.noDepthTest = e->renderfx & RF_NODEPTHTEST && e->rtype == RT_SPRITE ? true : false;
 	}
 
 	RB_UpdateVertexAttribs();
@@ -2199,7 +2201,7 @@ static void RB_SetShaderState( void )
 	if( shaderFlags & SHADER_POLYGONOFFSET )
 		state |= GLSTATE_OFFSET_FILL;
 
-	if( shaderFlags & SHADER_NO_DEPTH_TEST )
+	if( rb.noDepthTest )
 		state |= GLSTATE_NO_DEPTH_TEST;
 
 	rb.currentShaderState = (state & rb.shaderStateANDmask) | rb.shaderStateORmask;
