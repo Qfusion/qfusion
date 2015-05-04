@@ -433,7 +433,8 @@ typedef enum {
 
 // font drawing flags
 typedef enum {
-	TEXTDRAWFLAG_NO_COLORS	= 1 // draw color codes instead of applying them
+	TEXTDRAWFLAG_NO_COLORS	= 1 << 0,	// draw color codes instead of applying them
+	TEXTDRAWFLAG_KERNING	= 1 << 1
 } textdrawflag_t;
 
 typedef enum
