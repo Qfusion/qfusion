@@ -100,7 +100,7 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int fl
 			if( !glyph->shader )
 				font->f->renderString( font, olds );
 
-			if( prev_num && font->hasKerning )
+			if( ( flags & TEXTDRAWFLAG_KERNING ) && prev_num && font->hasKerning )
 				width += font->f->getKerning( font, prev_num, num );
 
 			width += glyph->x_advance;
@@ -163,7 +163,7 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 				font->f->renderString( font, olds );
 
 			advance = glyph->x_advance;
-			if( prev_num && font->hasKerning ) {
+			if( ( flags & TEXTDRAWFLAG_KERNING ) && prev_num && font->hasKerning ) {
 				advance += font->f->getKerning( font, prev_num, num );
 			}
 
@@ -400,7 +400,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 			if( prev_num )
 			{
 				xoffset += prev_glyph->x_advance;
-				if( font->hasKerning )
+				if( ( flags & TEXTDRAWFLAG_KERNING ) && font->hasKerning )
 					xoffset += font->f->getKerning( font, prev_num, num );
 			}
 
@@ -473,11 +473,8 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 				break;
 			}
 
-			if( prev_num )
-			{
-				if( font->hasKerning )
-					xoffset += font->f->getKerning( font, prev_num, num );
-			}
+			if( ( flags & TEXTDRAWFLAG_KERNING ) && prev_num && font->hasKerning )
+				xoffset += font->f->getKerning( font, prev_num, num );
 
 			FTLIB_DrawRawChar( x + xoffset, y, num, font, scolor );
 
