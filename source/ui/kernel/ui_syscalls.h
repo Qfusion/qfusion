@@ -10,6 +10,8 @@ namespace WSWUI {
 	extern ui_import_t UI_IMPORT;
 }
 
+#define UI_IMPORT_TEXTDRAWFLAGS ( TEXTDRAWFLAG_NO_COLORS | TEXTDRAWFLAG_KERNING )
+
 namespace trap
 {
 		using WSWUI::UI_IMPORT;
@@ -181,15 +183,15 @@ namespace trap
 		}
 
 		inline int SCR_DrawString( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color ) {
-			return UI_IMPORT.SCR_DrawString( x, y, align, str, font, color, TEXTDRAWFLAG_NO_COLORS );
+			return UI_IMPORT.SCR_DrawString( x, y, align, str, font, color, UI_IMPORT_TEXTDRAWFLAGS );
 		}
 
 		inline size_t SCR_DrawStringWidth( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color ) {
-			return UI_IMPORT.SCR_DrawStringWidth( x, y, align, str, maxwidth, font, color, TEXTDRAWFLAG_NO_COLORS );
+			return UI_IMPORT.SCR_DrawStringWidth( x, y, align, str, maxwidth, font, color, UI_IMPORT_TEXTDRAWFLAGS );
 		}
 
 		inline void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color ) {
-			UI_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, TEXTDRAWFLAG_NO_COLORS );
+			UI_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, UI_IMPORT_TEXTDRAWFLAGS );
 		}
 
 		inline size_t SCR_FontSize( struct qfontface_s *font ) {
@@ -209,11 +211,11 @@ namespace trap
 		}
 
 		inline size_t SCR_strWidth( const char *str, struct qfontface_s *font, size_t maxlen ) {
-			return UI_IMPORT.SCR_strWidth( str, font, maxlen, TEXTDRAWFLAG_NO_COLORS );
+			return UI_IMPORT.SCR_strWidth( str, font, maxlen, UI_IMPORT_TEXTDRAWFLAGS );
 		}
 
 		inline size_t SCR_StrlenForWidth( const char *str, struct qfontface_s *font, size_t maxwidth ) {
-			return UI_IMPORT.SCR_StrlenForWidth( str, font, maxwidth, TEXTDRAWFLAG_NO_COLORS );
+			return UI_IMPORT.SCR_StrlenForWidth( str, font, maxwidth, UI_IMPORT_TEXTDRAWFLAGS );
 		}
 
 		inline size_t SCR_FontAdvance( struct qfontface_s *font ) {
