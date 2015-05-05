@@ -117,7 +117,11 @@ void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, flo
 
 	if (!geometry.empty()) {
 		g = &geometry.back();
-		if (g->GetTexture() != instance->capture_texture_last) {
+		if (g->GetVertices().size() >= 1024 || g->GetIndices().size() >= 1536) {
+			// keep geometry at reasonable size
+			g = nullptr;
+		}
+		else if (g->GetTexture() != instance->capture_texture_last) {
 			g = nullptr;
 			for (auto it = geometry.begin(); it != geometry.end(); ++it) {
 				if (it->GetTexture() == texture) {
