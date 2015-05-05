@@ -32,9 +32,7 @@ cvar_t *rcon_address;
 
 cvar_t *cl_timeout;
 cvar_t *cl_maxfps;
-#ifdef PUTCPU2SLEEP
 cvar_t *cl_sleep;
-#endif
 cvar_t *cl_pps;
 cvar_t *cl_compresspackets;
 cvar_t *cl_shownet;
@@ -2085,9 +2083,7 @@ static void CL_InitLocal( void )
 	cl_stereo =		Cvar_Get( "cl_stereo", "0", CVAR_ARCHIVE );
 
 	cl_maxfps =		Cvar_Get( "cl_maxfps", "125", CVAR_ARCHIVE );
-#ifdef PUTCPU2SLEEP
 	cl_sleep =		Cvar_Get( "cl_sleep", "0", CVAR_ARCHIVE );
-#endif
 	cl_pps =		Cvar_Get( "cl_pps", "40", CVAR_ARCHIVE );
 	cl_compresspackets =	Cvar_Get( "cl_compresspackets", "1", CVAR_ARCHIVE );
 
@@ -2688,11 +2684,15 @@ void CL_Frame( int realmsec, int gamemsec )
 
 	if( allRealMsec + extraMsec < minMsec )
 	{
-#ifdef PUTCPU2SLEEP
-		// let CPU sleep while playing fullscreen video or when explicitly told to do so by user
-		if( ( cl_sleep->integer || cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED || !VID_AppIsActive() ) && minMsec - extraMsec > 1 )
+		// let CPU sleep while playing fullscreen video, while minimized 
+		// or when cl_sleep is enabled
+		bool sleep = cl_sleep->integer != 0;
+
+		sleep = sleep || (cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED);
+		sleep = sleep || !VID_AppIsActive(); // FIXME: not sure about listen server here..
+
+		if( sleep && minMsec - extraMsec > 1 )
 			Sys_Sleep( 1 );
-#endif
 		return;
 	}
 
