@@ -66,6 +66,9 @@ typedef struct
 	float s1, t1, s2, t2;
 } qglyph_t;
 
+typedef void ( *renderString_f )( struct qfontface_s *qfont, const char *str );
+typedef int ( *getKerning_f )( struct qfontface_s *qfont,  qglyph_t *g1, qglyph_t *g2 );
+
 typedef struct qfontface_funcs_s
 {
 	// allocates an array of glyphs
@@ -75,10 +78,10 @@ typedef struct qfontface_funcs_s
 	qglyph_t *( *getGlyph )( struct qfontface_s *qfont, void *glyphArray, unsigned int numInArray, wchar_t num );
 
 	// renders the glyphs for a UTF-8 string
-	void ( *renderString )( struct qfontface_s *qfont, const char *str );
+	renderString_f renderString;
 
 	// offsets between adjacent characters
-	int ( *getKerning )( struct qfontface_s *qfont, wchar_t char1, wchar_t char2 );
+	getKerning_f getKerning;
 
 	// sets the fallback font family for the font
 	void ( *setFallback )( struct qfontface_s *qfont, struct qfontfamily_s *qfamily );

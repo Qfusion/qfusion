@@ -164,7 +164,7 @@ static qglyph_t *QFT_GetGlyph( qfontface_t *qfont, void *glyphArray, unsigned in
 /*
 * QFT_GetKerning
 */
-static int QFT_GetKerning( qfontface_t *qfont, wchar_t char1, wchar_t char2 )
+static int QFT_GetKerning( qfontface_t *qfont, qglyph_t *g1_, qglyph_t *g2_ )
 {
 	qftglyph_t *g1, *g2;
 	FT_UInt gi1, gi2;
@@ -172,15 +172,21 @@ static int QFT_GetKerning( qfontface_t *qfont, wchar_t char1, wchar_t char2 )
 	FT_Size ftsize;
 	FT_Vector kvec;
 
-	g1 = ( qftglyph_t * )( FTLIB_GetGlyph( qfont, char1 ) );
-	assert( g1 );
+	g1 = ( qftglyph_t * )g1_;
+	assert( g1 != NULL );
+	if( !g1 ) {
+		return 0;
+	}
 	gi1 = ( ( qftglyph_t * )g1 )->gindex;
 	if( !gi1 ) {
 		return 0;
 	}
 
-	g2 = ( qftglyph_t * )( FTLIB_GetGlyph( qfont, char2 ) );
-	assert( g2 );
+	g2 = ( qftglyph_t * )g2_;
+	assert( g2 != NULL );
+	if( !g2 ) {
+		return 0;
+	}
 	gi2 = ( ( qftglyph_t * )g2 )->gindex;
 	if( !gi2 ) {
 		return 0;

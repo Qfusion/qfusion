@@ -23,9 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static fdrawchar_t drawCharIntercept = NULL;
 
-typedef void ( *renderString_f )( struct qfontface_s *qfont, const char *str );
-typedef int ( *getKerning_f )( struct qfontface_s *qfont, wchar_t char1, wchar_t char2 );
-
 //===============================================================================
 //STRINGS HELPERS
 //===============================================================================
@@ -75,15 +72,17 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int fl
 	const char *s = str, *olds;
 	size_t width = 0;
 	wchar_t num, prev_num = 0;
-	qglyph_t *glyph;
+	qglyph_t *glyph, *prev_glyph = NULL;
 	renderString_f renderString;
 	getKerning_f getKerning;
+	bool hasKerning;
 
 	if( !str || !font )
 		return 0;
 
 	renderString = font->f->renderString;
 	getKerning = font->f->getKerning;
+	hasKerning = ( flags & TEXTDRAWFLAG_KERNING ) && font->hasKerning;
 
 	while( *s && *s != '\n' )
 	{
@@ -108,12 +107,13 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int fl
 			if( !glyph->shader )
 				renderString( font, olds );
 
-			if( ( flags & TEXTDRAWFLAG_KERNING ) && prev_num && font->hasKerning )
-				width += getKerning( font, prev_num, num );
+			if( prev_num && font->hasKerning )
+				width += getKerning( font, prev_glyph, glyph );
 
 			width += glyph->x_advance;
 
 			prev_num = num;
+			prev_glyph = glyph;
 			break;
 
 		case GRABCHAR_COLOR:
@@ -141,7 +141,7 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 	int gc;
 	int advance = 0;
 	wchar_t num, prev_num = 0;
-	qglyph_t *glyph;
+	qglyph_t *glyph, *prev_glyph = NULL;
 	renderString_f renderString;
 	getKerning_f getKerning;
 	bool hasKerning;
@@ -177,7 +177,7 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 
 			advance = glyph->x_advance;
 			if( hasKerning && prev_num ) {
-				advance += getKerning( font, prev_num, num );
+				advance += getKerning( font, prev_glyph, glyph );
 			}
 
 			if( maxwidth && ( ( width + advance ) > maxwidth ) )
@@ -189,6 +189,7 @@ size_t FTLIB_StrlenForWidth( const char *str, qfontface_t *font, size_t maxwidth
 			width += advance;
 
 			prev_num = num;
+			prev_glyph = glyph;
 		}
 		else if( gc == GRABCHAR_COLOR )
 			continue;
@@ -423,7 +424,7 @@ void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, i
 			{
 				xoffset += prev_glyph->x_advance;
 				if( hasKerning )
-					xoffset += getKerning( font, prev_num, num );
+					xoffset += getKerning( font, prev_glyph, glyph );
 			}
 
 			if( x + xoffset > xmax )
@@ -457,7 +458,7 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 	const char *s, *olds;
 	int gc, colorindex;
 	wchar_t num, prev_num = 0;
-	qglyph_t *glyph;
+	qglyph_t *glyph, *prev_glyph = NULL;
 	renderString_f renderString;
 	getKerning_f getKerning;
 	bool hasKerning;
@@ -501,13 +502,14 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 			}
 
 			if( hasKerning && prev_num )
-				xoffset += getKerning( font, prev_num, num );
+				xoffset += getKerning( font, prev_glyph, glyph );
 
 			FTLIB_DrawRawChar( x + xoffset, y, num, font, scolor );
 
 			xoffset += glyph->x_advance;
 
 			prev_num = num;
+			prev_glyph = glyph;
 		}
 		else if( gc == GRABCHAR_COLOR )
 		{
