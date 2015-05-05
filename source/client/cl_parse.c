@@ -335,7 +335,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	download_list_t	*dl;
 
 	// ignore download commands coming from demo files
-	if( cls.demo.playing )		
+	if( cls.demo.playing )
 		return;
 
 	// read the data
@@ -726,6 +726,12 @@ static void CL_ParseDownload( msg_t *msg )
 	svFilename = MSG_ReadString( msg );
 	offset = MSG_ReadLong( msg );
 	size = MSG_ReadLong( msg );
+
+	if( cls.demo.playing )
+	{
+		// ignore download commands coming from demo files
+		return;
+	}
 
 	if( msg->readcount + size > msg->cursize )
 	{
