@@ -34,7 +34,7 @@
 #include "win_glw.h"
 #include "resource.h"
 
-#define WINDOW_STYLE	( WS_OVERLAPPED|WS_BORDER|WS_CAPTION|WS_VISIBLE|WS_SYSMENU )
+#define WINDOW_STYLE	( WS_OVERLAPPED|WS_BORDER|WS_CAPTION|WS_VISIBLE|WS_SYSMENU|WS_MINIMIZEBOX )
 
 static int GLimp_InitGL( void );
 
