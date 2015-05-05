@@ -85,7 +85,6 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 	int utf_len;
 	int l, total_lines, lines;
 	int x_offset, y_offset;
-	int str_width;
 	int font_height;
 	int pass;
 	int lastcolor;
@@ -207,6 +206,8 @@ parse_string:
 		s = e = 0;
 		while( 1 )
 		{
+			size_t k, len;
+
 			memset( tstr, 0, sizeof( tstr ) );
 
 			// skip whitespaces at start
@@ -218,16 +219,16 @@ parse_string:
 
 			w = -1;
 			j = s; // start
-			for( ; text[j] != '\0'; j += utf_len )
+			len = trap_SCR_StrlenForWidth( text + s, font, width - padding_x );
+
+			for( k = 0; k <= len && text[j] != '\0'; j += utf_len, k++ )
 			{
 				utf_len = Q_Utf8SyncPos( text + j, 1, UTF8SYNC_RIGHT );
 				memcpy( tstr + j - s, text + j, utf_len );
-				str_width = trap_SCR_strWidth( tstr, font, 0 );
 
 				if( text[j] == '\n' || Q_IsBreakingSpace( text + j ) )
 					w = j; // last whitespace
-
-				if( text[j] == '\n' || str_width > width - padding_x )
+				if( text[j] == '\n' )
 					break;
 			}
 			e = j; // end
