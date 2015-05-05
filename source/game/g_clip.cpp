@@ -1087,7 +1087,7 @@ void GClip_TouchTriggers( edict_t *ent )
 	}
 }
 
-void G_PMoveTouchTriggers( pmove_t *pm )
+void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin )
 {
 	int i, num;
 	edict_t	*hit;
@@ -1124,8 +1124,20 @@ void G_PMoveTouchTriggers( pmove_t *pm )
 
 	GClip_LinkEntity( ent );
 
-	VectorAdd( pm->playerState->pmove.origin, pm->mins, mins );
-	VectorAdd( pm->playerState->pmove.origin, pm->maxs, maxs );
+	// expand the search bounds to include previous and current origin
+	for( i = 0; i < 3; i++ )
+	{
+		if( previous_origin[i] < pm->playerState->pmove.origin[i] )
+		{
+			mins[i] = previous_origin[i] + pm->mins[i];
+			maxs[i] = pm->playerState->pmove.origin[i] + pm->maxs[i];
+		}
+		else
+		{
+			mins[i] = pm->playerState->pmove.origin[i] + pm->mins[i];
+			maxs[i] = previous_origin[i] + pm->maxs[i];
+		}
+	}
 
 	num = GClip_AreaEdicts( mins, maxs, touch, MAX_EDICTS, AREA_TRIGGERS, 0 );
 

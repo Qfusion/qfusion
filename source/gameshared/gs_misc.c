@@ -33,7 +33,7 @@ void ( *module_Trace )( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3
 entity_state_t *( *module_GetEntityState )( int entNum, int deltaTime );
 int ( *module_PointContents )( vec3_t point, int timeDelta );
 void ( *module_PredictedEvent )( int entNum, int ev, int parm );
-void ( *module_PMoveTouchTriggers )( pmove_t *pm );
+void ( *module_PMoveTouchTriggers )( pmove_t *pm, vec3_t previous_origin );
 void ( *module_RoundUpToHullSize )( vec3_t mins, vec3_t maxs );
 const char *( *module_GetConfigString )( int index );
 

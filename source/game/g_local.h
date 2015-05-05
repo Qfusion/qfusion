@@ -743,7 +743,7 @@ void GClip_SetAreaPortalState( edict_t *ent, bool open );
 void GClip_LinkEntity( edict_t *ent );
 void GClip_UnlinkEntity( edict_t *ent );
 void GClip_TouchTriggers( edict_t *ent );
-void G_PMoveTouchTriggers( pmove_t *pm );
+void G_PMoveTouchTriggers( pmove_t *pm, vec3_t previous_origin );
 entity_state_t *G_GetEntityStateForDeltaTime( int entNum, int deltaTime );
 int GClip_FindRadius( vec3_t org, float rad, int *list, int maxcount );
 
