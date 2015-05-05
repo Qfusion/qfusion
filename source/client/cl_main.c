@@ -632,6 +632,14 @@ void CL_FreeClipboardData( char *data )
 }
 
 /*
+* CL_IsBrowserAvailable
+*/
+bool CL_IsBrowserAvailable( void )
+{
+	return Sys_IsBrowserAvailable();
+}
+
+/*
 * CL_OpenURLInBrowser
 */
 void CL_OpenURLInBrowser( const char *url )

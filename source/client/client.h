@@ -387,6 +387,7 @@ void CL_ReadPackets( void );
 void CL_Disconnect_f( void );
 void CL_S_Restart( bool noVideo );
 
+bool CL_IsBrowserAvailable( void );
 void CL_OpenURLInBrowser( const char *url );
 
 void CL_Reconnect_f( void );

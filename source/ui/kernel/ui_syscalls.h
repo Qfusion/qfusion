@@ -246,6 +246,10 @@ namespace trap
 			UI_IMPORT.CL_FreeClipboardData( data );
 		}
 
+		inline bool CL_IsBrowserAvailable( void ) {
+			return UI_IMPORT.CL_IsBrowserAvailable();
+		}
+
 		inline void CL_OpenURLInBrowser( const char *url ) {
 			UI_IMPORT.CL_OpenURLInBrowser( url );
 		}
