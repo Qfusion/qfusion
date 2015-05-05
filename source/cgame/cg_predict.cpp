@@ -189,7 +189,7 @@ static bool CG_ClipEntityContact( vec3_t origin, vec3_t mins, vec3_t maxs, int e
 /*
 * CG_Predict_TouchTriggers
 */
-void CG_Predict_TouchTriggers( pmove_t *pm )
+void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin )
 {
 	int i;
 	entity_state_t *state;

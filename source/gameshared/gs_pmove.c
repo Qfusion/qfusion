@@ -2019,7 +2019,7 @@ void Pmove( pmove_t *pmove )
 #define FALL_DAMAGE_SCALE 1.0
 
 	// check for falling damage
-	module_PMoveTouchTriggers( pm );
+	module_PMoveTouchTriggers( pm, pml.previous_origin );
 
 	PM_UpdateDeltaAngles(); // in case some trigger action has moved the view angles (like teleported).
 
