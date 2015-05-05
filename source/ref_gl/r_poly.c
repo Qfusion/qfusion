@@ -85,7 +85,7 @@ void R_DrawPolys( void )
 void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 {
 	mesh_t mesh;
-	vec4_t translated[1024];
+	vec4_t translated[256];
 
 	assert( sizeof( *poly->elems ) == sizeof( elem_t ) );
 
