@@ -229,6 +229,14 @@ void Sys_SendKeyEvents( void )
 #endif // !defined(USE_SDL2) || defined(DEDICATED_ONLY)
 
 /*
+* Sys_IsBrowserAvailable
+*/
+bool Sys_IsBrowserAvailable( void )
+{
+	return true;
+}
+
+/*
 * Sys_OpenURLInBrowser
 */
 void Sys_OpenURLInBrowser( const char *url )

@@ -232,6 +232,12 @@ void Sys_SendKeyEvents( void )
 * OSX systems have their own function defined
 * in mac_sys.m.
 */
+
+bool Sys_IsBrowserAvailable( void )
+{
+	return true;
+}
+
 void Sys_OpenURLInBrowser( const char *url )
 {
     int r;

@@ -341,6 +341,11 @@ public:
 		trap::IN_ShowSoftKeyboard( show ? true : false );
 	}
 
+	bool isBrowserAvailable( void )
+	{
+		return trap::CL_IsBrowserAvailable();
+	}
+
 private:
 	typedef std::map<ElementDocument *, FunctionCallScheduler *>  SchedulerMap;
 	SchedulerMap schedulers;
@@ -500,7 +505,9 @@ void BindWindow( ASInterface *as )
 
 		.method( &ASWindow::getSupportedInputDevices, "get_supportedInputDevices" )
 
-		.method( &ASWindow::showSoftKeyboard, "showSoftKeyboard" );
+		.method( &ASWindow::showSoftKeyboard, "showSoftKeyboard" )
+
+		.method( &ASWindow::isBrowserAvailable, "get_browserAvailable" );
 	;
 }
 

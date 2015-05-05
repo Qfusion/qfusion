@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    57
+#define	UI_API_VERSION	    58
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -126,6 +126,7 @@ typedef struct
 	void ( *CL_ResetServerCount )( void );
 	char *( *CL_GetClipboardData )( bool primary );
 	void ( *CL_FreeClipboardData )( char *data );
+	bool ( *CL_IsBrowserAvailable )( void );
 	void ( *CL_OpenURLInBrowser )( const char *url );
 	size_t ( *CL_ReadDemoMetaData )( const char *demopath, char *meta_data, size_t meta_data_size );
 	int ( *CL_PlayerNum )( void );

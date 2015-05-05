@@ -84,6 +84,11 @@ void Sys_FreeClipboardData( char *data )
 {
 }
 
+bool Sys_IsBrowserAvailable( void )
+{
+	return false;
+}
+
 void Sys_OpenURLInBrowser( const char *url )
 {
 }
