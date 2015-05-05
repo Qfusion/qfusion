@@ -57,6 +57,7 @@ static bool vid_ref_verbose;
 static bool vid_ref_sound_restart;
 static bool vid_ref_active;
 static bool vid_initialized;
+static bool vid_app_active;
 
 static void		*vid_ref_libhandle = NULL;
 static mempool_t *vid_ref_mempool = NULL;
@@ -221,13 +222,22 @@ static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFreq
 */
 void VID_AppActivate( bool active, bool destroy )
 {
+	vid_app_active = active;
 	re.AppActivate( active, destroy );
 }
 
 /*
-** VID_RefreshActive
+** VID_AppIsActive
 */
-bool VID_RefreshActive( void )
+bool VID_AppIsActive( void )
+{
+	return vid_app_active;
+}
+
+/*
+** VID_RefreshIsActive
+*/
+bool VID_RefreshIsActive( void )
 {
 	return vid_ref_active;
 }
