@@ -377,6 +377,7 @@ static void PM_StepSlideMove( void )
 	vec3_t down_o, down_v;
 	trace_t	trace;
 	float down_dist, up_dist;
+	float hspeed;
 	vec3_t up, down;
 	int blocked;
 
@@ -429,6 +430,14 @@ static void PM_StepSlideMove( void )
 	if( ( blocked & SLIDEMOVEFLAG_WALL_BLOCKED ) || trace.plane.normal[2] == 1.0f - SLIDEMOVE_PLANEINTERACT_EPSILON )
 	{
 		pm->step = ( pml.origin[2] - pml.previous_origin[2] );
+	}
+
+	// Preserve speed when sliding up ramps
+	hspeed = sqrt( start_v[0]*start_v[0] + start_v[1]*start_v[1] );
+	if( hspeed && ISWALKABLEPLANE( &trace.plane ) )
+	{
+		VectorNormalize2D( pml.velocity );
+		VectorScale2D( pml.velocity, hspeed, pml.velocity );
 	}
 
 	// wsw : jal : The following line is what produces the ramp sliding.
@@ -1043,6 +1052,10 @@ static void PM_CheckJump( void )
 
 	pm->groundentity = -1;
 
+	// clip against the ground when jumping if moving that direction
+	if( pml.groundplane.normal[2] > 0 && pml.velocity[2] < 0 && DotProduct2D( pml.groundplane.normal, pml.velocity ) > 0 )
+		GS_ClipVelocity( pml.velocity, pml.groundplane.normal, pml.velocity, PM_OVERBOUNCE );
+
 	//if( gs.module == GS_MODULE_GAME ) GS_Printf( "upvel %f\n", pml.velocity[2] );
 	if( pml.velocity[2] > 100 )
 	{
@@ -1099,6 +1112,10 @@ static void PM_CheckDash( void )
 		pm->playerState->pmove.pm_flags |= PMF_DASHING;
 		pm->playerState->pmove.pm_flags |= PMF_SPECIAL_HELD;
 		pm->groundentity = -1;
+
+		// clip against the ground when jumping if moving that direction
+		if( pml.groundplane.normal[2] > 0 && pml.velocity[2] < 0 && DotProduct2D( pml.groundplane.normal, pml.velocity ) > 0 )
+			GS_ClipVelocity( pml.velocity, pml.groundplane.normal, pml.velocity, PM_OVERBOUNCE );
 
 		if( pml.velocity[2] <= 0.0f )
 			upspeed = pm_dashupspeed;
