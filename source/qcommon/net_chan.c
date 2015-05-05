@@ -149,7 +149,6 @@ static uint8_t msg_process_data[MAX_MSGLEN];
 
 #include "zlib.h"
 
-#ifdef ALT_ZLIB_COMPRESSION
 /*
 http://www.zlib.net/manual.html#compress2
 int compress2 (Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen, int level);
@@ -238,87 +237,6 @@ static int Netchan_ZLibDecompressChunk( const uint8_t *source, unsigned long sou
 
 	return result;
 }
-#else // ALT_ZLIB_COMPRESSION
-
-int Netchan_ZLibDecompressChunk( uint8_t *in, int inlen, uint8_t *out, int outlen, int wbits )
-{
-	z_stream zs;
-	int result;
-
-	memset( &zs, 0, sizeof( zs ) );
-
-	zs.next_in = in;
-	zs.avail_in = 0;
-
-	zs.next_out = out;
-	zs.avail_out = outlen;
-
-	result = inflateInit2( &zs, wbits );
-	if( result != Z_OK )
-	{
-		Com_DPrintf( "ZLib data error! Error %d on inflateInit.\nMessage: %s", result, zs.msg );
-		return result;
-	}
-
-	zs.avail_in = inlen;
-
-	result = inflate( &zs, Z_FINISH );
-	if( result != Z_STREAM_END )
-	{
-		Com_DPrintf( "ZLib data error! Error %d on inflate.\nMessage: %s", result, zs.msg );
-		zs.total_out = 0;
-		return -1;
-	}
-
-	result = inflateEnd( &zs );
-	if( result != Z_OK )
-	{
-		Com_DPrintf( "ZLib data error! Error %d on inflateEnd.\nMessage: %s", result, zs.msg );
-		return -1;
-	}
-
-	return zs.total_out;
-}
-
-int Netchan_ZLibCompressChunk( uint8_t *in, int len_in, uint8_t *out, int max_len_out, int method, int wbits )
-{
-	z_stream zs;
-	int result;
-
-	zs.next_in = in;
-	zs.avail_in = len_in;
-	zs.total_in = 0;
-
-	zs.next_out = out;
-	zs.avail_out = max_len_out;
-	zs.total_out = 0;
-
-	zs.msg = NULL;
-	zs.state = NULL;
-	zs.zalloc = Z_NULL;
-	zs.zfree = Z_NULL;
-	zs.opaque = NULL;
-
-	zs.data_type = Z_BINARY;
-	zs.adler = 0;
-	zs.reserved = 0;
-
-	result = deflateInit2( &zs, method, Z_DEFLATED, wbits, Z_DEFAULT_COMPRESSION, Z_DEFAULT_STRATEGY );
-	if( result != Z_OK )
-		return -1;
-
-	result = deflate( &zs, Z_FINISH );
-	if( result != Z_STREAM_END )
-		return -1;
-
-	result = deflateEnd( &zs );
-	if( result != Z_OK )
-		return -1;
-
-	return zs.total_out;
-}
-
-#endif // ALT_ZLIB_COMPRESSION
 
 /*
 * Netchan_CompressMessage

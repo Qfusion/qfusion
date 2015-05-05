@@ -13,7 +13,6 @@
 
 // pretty solid
 #define MOREGRAVITY
-#define ALT_ZLIB_COMPRESSION
 
 // renderer config
 //#define CELSHADEDMATERIAL
@@ -29,8 +28,6 @@
 //#define PURE_CHEAT
 
 //#define ANTICHEAT_MODULE
-
-#define MATCHMAKER_SUPPORT
 
 //#define UCMDTIMENUDGE
 
