@@ -706,7 +706,7 @@ void CG_CheckPredictionError( void );
 void CG_BuildSolidList( void );
 void CG_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask );
 int CG_PointContents( vec3_t point );
-void CG_Predict_TouchTriggers( pmove_t *pm );
+void CG_Predict_TouchTriggers( pmove_t *pm, vec3_t previous_origin );
 
 //
 // cg_screen.c

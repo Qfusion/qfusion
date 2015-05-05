@@ -37,7 +37,7 @@ extern void ( *module_Trace )( trace_t *t, vec3_t start, vec3_t mins, vec3_t max
 extern entity_state_t *( *module_GetEntityState )( int entNum, int deltaTime );
 extern int ( *module_PointContents )( vec3_t point, int timeDelta );
 extern void ( *module_PredictedEvent )( int entNum, int ev, int parm );
-extern void ( *module_PMoveTouchTriggers )( pmove_t *pm );
+extern void ( *module_PMoveTouchTriggers )( pmove_t *pm, vec3_t previous_origin );
 extern void ( *module_RoundUpToHullSize )( vec3_t mins, vec3_t maxs );
 extern const char *( *module_GetConfigString )( int index );
 
