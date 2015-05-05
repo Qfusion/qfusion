@@ -523,9 +523,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 			time = newtime - oldtime; // no warp problem as unsigned
 			if( time > 0 )
 				break;
-#ifdef PUTCPU2SLEEP
 			Sys_Sleep( 0 );
-#endif
 		}
 		while( 1 );
 		//Com_Printf ("time:%5.2u - %5.2u = %5.2u\n", newtime, oldtime, time);
