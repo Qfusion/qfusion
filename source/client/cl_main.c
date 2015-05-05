@@ -1922,7 +1922,7 @@ void CL_InitMedia( void )
 		return;
 	if( cls.state == CA_UNINITIALIZED )
 		return;
-	if( !VID_RefreshActive() )
+	if( !VID_RefreshIsActive() )
 		return;
 
 	// random seed to be shared among game modules so pseudo-random stuff is in sync
@@ -1953,7 +1953,7 @@ void CL_ShutdownMedia( void )
 {
 	if( !cls.mediaInitialized )
 		return;
-	if( !VID_RefreshActive() )
+	if( !VID_RefreshIsActive() )
 		return;
 
 	cls.mediaInitialized = false;
@@ -1976,7 +1976,7 @@ void CL_ShutdownMedia( void )
 */
 void CL_RestartMedia( void )
 {
-	if( !VID_RefreshActive() )
+	if( !VID_RefreshIsActive() )
 		return;
 
 	if( cls.mediaInitialized )
@@ -2664,10 +2664,12 @@ void CL_Frame( int realmsec, int gamemsec )
 	else if( cl_maxfps->integer > 0 && !cl_timedemo->integer 
 		&& !( cls.demo.avi_video && cls.state == CA_ACTIVE ) )
 	{
+		const int absMinFps = 24;
+
 		// do not allow setting cl_maxfps to very low values to prevent cheating
-		if( cl_maxfps->integer < 24 )
-			Cvar_ForceSet( "cl_maxfps", "24" );
-		maxFps = cl_maxfps->value;
+		if( cl_maxfps->integer < absMinFps )
+			Cvar_ForceSet( "cl_maxfps", STR_TOSTR( absMinFps ) );
+		maxFps = VID_AppIsActive() ? cl_maxfps->value : absMinFps;
 		minMsec = max( ( 1000.0f / maxFps ), 1 );
 		roundingMsec += max( ( 1000.0f / maxFps ), 1.0f ) - minMsec;
 	}
@@ -2688,7 +2690,7 @@ void CL_Frame( int realmsec, int gamemsec )
 	{
 #ifdef PUTCPU2SLEEP
 		// let CPU sleep while playing fullscreen video or when explicitly told to do so by user
-		if( ( cl_sleep->integer || cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED ) && minMsec - extraMsec > 1 )
+		if( ( cl_sleep->integer || cls.state == CA_CINEMATIC || cls.state == CA_DISCONNECTED || !VID_AppIsActive() ) && minMsec - extraMsec > 1 )
 			Sys_Sleep( 1 );
 #endif
 		return;
