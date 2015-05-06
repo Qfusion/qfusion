@@ -390,7 +390,7 @@ static void R_BuildLightmap( int w, int h, bool deluxe, const uint8_t *data, uin
 	if( !data || (r_fullbright->integer && !deluxe) )
 	{
 		int val = deluxe ? 127 : 255;
-		for( y = 0; y < h; y++, dest )
+		for( y = 0; y < h; y++ )
 			memset( dest + y * blockWidth, val, w * LIGHTMAP_BYTES * sizeof( *dest ) );
 		return;
 	}
