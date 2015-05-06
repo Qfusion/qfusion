@@ -271,7 +271,7 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 	s_volume = trap_Cvar_Get( "s_volume", "0.8", CVAR_ARCHIVE );
 	s_musicvolume = trap_Cvar_Get( "s_musicvolume", "0.2", CVAR_ARCHIVE );
 	s_khz = trap_Cvar_Get( "s_khz", "44", CVAR_ARCHIVE|CVAR_LATCH_SOUND );
-	s_mixahead = trap_Cvar_Get( "s_mixahead", "0.2", CVAR_ARCHIVE );
+	s_mixahead = trap_Cvar_Get( "s_mixahead", "0.14", CVAR_ARCHIVE );
 	s_show = trap_Cvar_Get( "s_show", "0", CVAR_CHEAT );
 	s_testsound = trap_Cvar_Get( "s_testsound", "0", 0 );
 	s_swapstereo = trap_Cvar_Get( "s_swapstereo", "0", CVAR_ARCHIVE );
