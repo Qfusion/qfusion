@@ -107,7 +107,7 @@ size_t FTLIB_strWidth( const char *str, qfontface_t *font, size_t maxlen, int fl
 			if( !glyph->shader )
 				renderString( font, olds );
 
-			if( prev_num && font->hasKerning )
+			if( prev_num && hasKerning )
 				width += getKerning( font, prev_glyph, glyph );
 
 			width += glyph->x_advance;
