@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../client/client.h"
 #include "x11.h"
 #include "keysym2ucs.h"
+#include <sys/time.h>
+#include <unistd.h>
 #include "../sdl/sdl_input_joy.h"
 
 // Vic: transplanted the XInput2 code from jquake
@@ -33,8 +35,6 @@ static bool minimized = false;
 static bool input_inited = false;
 static bool mouse_active = false;
 static bool input_active = false;
-
-static int shift_level = 0;
 
 static int xi_opcode;
 
@@ -114,6 +114,61 @@ static Atom Sys_ClipboardProperty( XSelectionRequestEvent* request )
 	// Not supported
 	return None;
 }
+
+/**
+* XPending() actually performs a blocking read if no events available. From Fakk2, by way of
+* Heretic2, by way of SDL, original idea GGI project. The benefit of this approach over the quite
+* badly behaved XAutoRepeatOn/Off is that you get focus handling for free, which is a major win
+* with debug and windowed mode. It rests on the assumption that the X server will use the same
+* timestamp on press/release event pairs for key repeats.
+*/
+static bool X11_PendingInput( void )
+{
+	assert( x11display.dpy );
+
+	// Flush the display connection and look to see if events are queued
+	XFlush( x11display.dpy );
+	if( XEventsQueued( x11display.dpy, QueuedAlready ) )
+		return true;
+
+	{ // More drastic measures are required -- see if X is ready to talk
+		static struct timeval zero_time;
+		int x11_fd;
+		fd_set fdset;
+
+		x11_fd = ConnectionNumber( x11display.dpy );
+		FD_ZERO( &fdset );
+		FD_SET( x11_fd, &fdset );
+		if( select( x11_fd+1, &fdset, NULL, NULL, &zero_time ) == 1 )
+			return ( XPending( x11display.dpy ) );
+	}
+
+	// Oh well, nothing is ready ..
+	return false;
+}
+
+static bool repeated_press( XEvent *event )
+{
+	XEvent peekevent;
+	bool repeated = false;
+
+	assert( x11display.dpy );
+
+	if( X11_PendingInput() )
+	{
+		XPeekEvent( x11display.dpy, &peekevent );
+		if( ( peekevent.type == KeyPress ) &&
+			( peekevent.xkey.keycode == event->xkey.keycode ) &&
+			( peekevent.xkey.time == event->xkey.time ) )
+		{
+			repeated = true;
+			// we only skip the KeyRelease event, so we send many key down events, but no releases, while repeating
+			//XNextEvent(x11display.dpy, &peekevent);  // skip event.
+		}
+	}
+	return repeated;
+}
+
 
 /*****************************************************************************/
 
@@ -226,71 +281,47 @@ static void uninstall_grabs_mouse( void )
 
 static void install_grabs_keyboard( void )
 {
-	//int i;
-	int num_devices;
-	XIDeviceInfo *info;
-	XIEventMask mask;
+	int res;
+	int fevent;
 
 	assert( x11display.dpy && x11display.win );
 
 	if( input_active )
 		return;
 
-	XDefineCursor(x11display.dpy, x11display.win, CreateNullCursor(x11display.dpy, x11display.win));
-
-	mask.deviceid = XIAllMasterDevices;
-	mask.mask_len = XIMaskLen(XI_LASTEVENT);
-	mask.mask = calloc(mask.mask_len, sizeof(char));
-	XISetMask(mask.mask, XI_KeyPress);
-	XISetMask(mask.mask, XI_KeyRelease);
-	XISetMask(mask.mask, XI_ButtonPress);
-	XISetMask(mask.mask, XI_ButtonRelease);
-	XISelectEvents(x11display.dpy, x11display.win, &mask, 1);
-
-	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
-	
-	//Grabing the entire keyboard breaks all global hotkeys (Alt+Tab, volume keys, PrtSc, etc).
-	//There is no way to avoid this: 'active' grabs (= grab the entire keyboard) 
-	//always get priority over 'passive' grabs (= grab one key).
-	/* 
-	for(i = 0; i < num_devices; i++) {
-		int id = info[i].deviceid;
-		if(info[i].use == XIMasterKeyboard)
-		{
-			XIGrabDevice(x11display.dpy, id, x11display.win, CurrentTime, None, GrabModeAsync, GrabModeAsync, False, &mask);
+	if( !x11display.features.wmStateFullscreen ) {
+		res = XGrabKeyboard( x11display.dpy, x11display.win, False, GrabModeAsync, GrabModeAsync, CurrentTime );
+		if( res != GrabSuccess ) {
+			Com_Printf( "Warning: XGrabKeyboard failed\n" );
+			return;
 		}
 	}
-	*/
-	XIFreeDeviceInfo(info);
 
-	free(mask.mask);
+	// init X Input method, needed by Xutf8LookupString
+	x11display.im = XOpenIM( x11display.dpy, NULL, NULL, NULL );
+	x11display.ic = XCreateIC( x11display.im,
+		XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+		XNClientWindow, x11display.win,
+		NULL );
 
-	XSync(x11display.dpy, True);
+	if( x11display.ic ) {
+		XGetICValues( x11display.ic, XNFilterEvents, &fevent, NULL );
+		XSelectInput( x11display.dpy, x11display.win, fevent | x11display.wa.event_mask );
+	}
 
 	input_active = true;
 }
 
 static void uninstall_grabs_keyboard( void )
 {
-	//int i;
-	int num_devices;
-	XIDeviceInfo *info;
-
 	assert( x11display.dpy && x11display.win );
 
 	if( !input_active )
 		return;
 
-	info = XIQueryDevice(x11display.dpy, XIAllDevices, &num_devices);
+	XUngrabKeyboard( x11display.dpy, CurrentTime );
 
-	/*
-	for(i = 0; i < num_devices; i++) {
-		if(info[i].use == XIMasterKeyboard) {
-			XIUngrabDevice(x11display.dpy, info[i].deviceid, CurrentTime);
-		}
-	}
-	*/
-	XIFreeDeviceInfo(info);
+	x11display.ic = 0;
 
 	input_active = false;
 }
@@ -438,49 +469,43 @@ static void handle_button(XGenericEventCookie *cookie)
 	Key_Event(k_button, down, time);
 }
 
-static void handle_key(XGenericEventCookie *cookie)
+static void handle_key(XEvent *event)
 {
-	XIDeviceEvent *ev = (XIDeviceEvent *)cookie->data;
-	bool down = cookie->evtype == XI_KeyPress;
-	int keycode = ev->detail;
-	unsigned time = Sys_XTimeToSysTime(ev->time);
+	bool down = event->type == KeyPress;
+	XKeyEvent *kevent = &event->xkey;
+	unsigned time = Sys_XTimeToSysTime(event->xkey.time);
+	KeySym keysym;
+	int key;
+	int XLookupRet;
+	char buf[64];
 
-	// Ignore shift_level for game key press
-	KeySym keysym = XkbKeycodeToKeysym(x11display.dpy, keycode, 0, 0);
-	int key = XLateKey( keysym );
+	if( !down && repeated_press( event ) ) {
+		return; // don't send release events when repeating
+	}
 
-	// Set or clear 1 in the shift_level bitmask
-	if ( keysym == XK_Shift_L || keysym == XK_Shift_R )
-		shift_level ^=  (-down ^ shift_level) & 1;
+	memset( buf, 0, sizeof buf ); // XLookupString doesn't zero-terminate the buffer
+	XLookupRet = 0;
+#ifdef X_HAVE_UTF8_STRING
+	if( x11display.ic )
+		XLookupRet = Xutf8LookupString( x11display.ic, kevent, buf, sizeof buf, &keysym, 0 );
+#endif
+	if( !XLookupRet )
+		XLookupRet = XLookupString( kevent, buf, sizeof buf, &keysym, 0 );
 
-	// Set or clear 2 in the shift_level bitmask
-	else if( keysym == XK_ISO_Level3_Shift )
-		shift_level ^=  (-down ^ shift_level) & 2;
+	// get keysym without modifiers, so that movement works when e.g. a cyrillic layout is selected
+	kevent->state = 0;
+	keysym = XLookupKeysym( kevent, 0 );
+	key = XLateKey( keysym );
 
-	Key_Event(key, down, time);
+	Key_Event( key, down, time );
 
 	if( down )
 	{
-		// Use shift_level for chat and console input
-		wchar_t wc = keysym2ucs(XkbKeycodeToKeysym(x11display.dpy, keycode, 0, shift_level));
-		if( wc == -1 && key > K_NUMLOCK && key <= KP_EQUAL )
-			wc = ( wchar_t )key;
-
-		// Convert ctrl-c / ctrl-v combinations to the expected events
-		if( Key_IsDown(K_LCTRL) || Key_IsDown(K_RCTRL) )
-		{
-			if( key == 'v' )
-			{
-				key = KC_CTRLV;
-				wc = KC_CTRLV;
-			}
-			else if( key == 'c' )
-			{
-				key = KC_CTRLC;
-				wc = KC_CTRLC;
-			}
+		const char *p;
+		for( p = buf; *p; ) {
+			wchar_t wc = Q_GrabWCharFromUtf8String( (const char **)&p );
+			Key_CharEvent( key, wc );
 		}
-		Key_CharEvent( key, wc );
 	}
 }
 
@@ -514,10 +539,6 @@ static void handle_cookie(XGenericEventCookie *cookie)
 	case XI_ButtonRelease:
 		handle_button(cookie);
 		break;
-	case XI_KeyPress:
-	case XI_KeyRelease:
-		handle_key(cookie);
-		break;
 	default:
 		break;
 	}
@@ -544,6 +565,10 @@ static void HandleEvents( void )
 
 		switch( event.type )
 		{
+		case KeyPress:
+		case KeyRelease:
+			handle_key( &event );
+			break;
 		case FocusIn:
 			if( event.xfocus.mode == NotifyGrab || event.xfocus.mode == NotifyUngrab ) {
 				// Someone is handling a global hotkey, ignore it
@@ -569,7 +594,6 @@ static void HandleEvents( void )
 				uninstall_grabs_keyboard();
 				Key_ClearStates();
 				focus = false;
-				shift_level = 0;
 			}
 			break;
 
