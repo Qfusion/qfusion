@@ -40,4 +40,6 @@ extern glwstate_t glw_state;
 extern cvar_t *vid_fullscreen;
 extern cvar_t *vid_multiscreen_head;
 
+void GLimp_SetWindowIcon( void );
+
 #endif // __SDL_GLW_H_

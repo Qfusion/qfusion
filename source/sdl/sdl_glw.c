@@ -21,7 +21,6 @@
 #include <SDL.h>
 
 #include "../ref_gl/r_local.h"
-#include "../client/client.h"
 #include "sdl_glw.h"
 
 glwstate_t glw_state = {NULL, false};
@@ -29,7 +28,13 @@ cvar_t *vid_fullscreen;
 
 static int GLimp_InitGL( void );
 
-static void VID_SetWindowSize( void )
+#if defined( __APPLE__ )
+void GLimp_SetWindowIcon( void )
+{
+}
+#endif
+
+static void GLimp_SetWindowSize( void )
 {
 	SDL_SetWindowSize( glw_state.sdl_window, glConfig.width, glConfig.height );
 	if( glConfig.fullScreen ) {
@@ -41,14 +46,16 @@ static void VID_SetWindowSize( void )
 	}
 }
 
-static bool VID_CreateWindow( void )
+static bool GLimp_CreateWindow( void )
 {
 	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL );
 
 	if( !glw_state.sdl_window )
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
 
-	VID_SetWindowSize();
+	GLimp_SetWindowIcon();
+
+	GLimp_SetWindowSize();
 
 	// init all the gl stuff for the window
 	if( !GLimp_InitGL() ) {
@@ -71,7 +78,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 
 	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen ) {
 		glConfig.fullScreen = fullscreen;
-		VID_SetWindowSize();
+		GLimp_SetWindowSize();
 		return ( fullscreen == glConfig.fullScreen ? rserr_ok : rserr_invalid_fullscreen );
 	}
 
@@ -91,9 +98,9 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.height = height;
 	glConfig.wideScreen = wideScreen;
 	// TODO: SDL2
-	glConfig.fullScreen = fullscreen; // VID_SetFullscreenMode( displayFrequency, fullscreen );
+	glConfig.fullScreen = fullscreen; // GLimp_SetFullscreenMode( displayFrequency, fullscreen );
 
-	if( !VID_CreateWindow() ) {
+	if( !GLimp_CreateWindow() ) {
 		return rserr_invalid_mode;
 	}
 
