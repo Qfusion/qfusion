@@ -27,10 +27,11 @@ file(GLOB REF_GL_COMMON_SOURCES
 )
 
 if (USE_SDL2)
-    file(GLOB REF_GL_PLATFORM_SOURCES
-        "../sdl/sdl_glw.c"
-        "../sdl/sdl_qgl.c"
-    )
+   	file(GLOB REF_GL_PLATFORM_SOURCES
+       	"../sdl/sdl_glw.c"
+		"../sdl/sdl_glw_icon.c"
+       	"../sdl/sdl_qgl.c"
+   	)
 
     set(REF_GL_PLATFORM_LIBRARIES ${SDL2_LIBRARY})
 else()
