@@ -118,7 +118,6 @@ int main( int argc, char **argv )
 #if defined( _DEBUG )
 	SDL_SetHint( SDL_HINT_ALLOW_TOPMOST, "0" );
 #endif
-	SDL_SetHint( SDL_HINT_WINDOWS_WINDOW_HICON_MAKEINTRESOURCE, va( "%d", IDI_APPICON_VALUE ) );
 #endif
 
 	SDL_Init( SDL_INIT_VIDEO );
