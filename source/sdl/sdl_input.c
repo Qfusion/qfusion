@@ -344,6 +344,14 @@ void IN_Init()
 
 	SDL_SetCursor( NULL );
 
+#if SDL_VERSION_ATLEAST(2, 0, 2)
+	
+	{
+		cvar_t *m_raw = Cvar_Get( "m_raw", "1", CVAR_ARCHIVE );
+		SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, m_raw->integer ? "0" : "1" );
+	}
+#endif
+
 	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
 	if( mouse_relative ) {
 		IN_SetMouseScalingEnabled( false );
@@ -364,8 +372,10 @@ void IN_Shutdown()
 		return;
 
 	input_inited = false;
-	SDL_SetRelativeMouseMode( SDL_FALSE );
-	IN_SetMouseScalingEnabled( true );
+	if( mouse_relative ) {
+		SDL_SetRelativeMouseMode( SDL_FALSE );
+		IN_SetMouseScalingEnabled( true );
+	}
 	IN_SDL_JoyShutdown();
 }
 
