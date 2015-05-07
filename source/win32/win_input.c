@@ -59,7 +59,6 @@ pRegisterRawInputDevices	_RRID;
 // XInput
 static bool in_xinput_initialized;
 static HINSTANCE in_xinput_dll;
-static void ( WINAPI *pXInputEnable )( BOOL enable );
 static DWORD ( WINAPI *pXInputGetState )( DWORD dwUserIndex, XINPUT_STATE *pState );
 static XINPUT_GAMEPAD in_xinput_gamepad, in_xinput_oldGamepad;
 
@@ -86,32 +85,6 @@ static int		IN_RawInput_Register( void );
 static void		IN_RawInput_DeRegister( void );
 
 extern unsigned	sys_msg_time;
-
-// joystick defines and variables
-// where should defines be moved?
-#define JOY_ABSOLUTE_AXIS   0x00000000      // control like a joystick
-#define JOY_RELATIVE_AXIS   0x00000010      // control like a mouse, spinner, trackball
-#define	JOY_MAX_AXES	    6               // X, Y, Z, R, U, V
-#define JOY_AXIS_X	    0
-#define JOY_AXIS_Y	    1
-#define JOY_AXIS_Z	    2
-#define JOY_AXIS_R	    3
-#define JOY_AXIS_U	    4
-#define JOY_AXIS_V	    5
-
-enum _ControlList
-{
-	AxisNada = 0, AxisForward, AxisLook, AxisSide, AxisTurn, AxisUp
-};
-
-DWORD dwAxisFlags[JOY_MAX_AXES] =
-{
-	JOY_RETURNX, JOY_RETURNY, JOY_RETURNZ, JOY_RETURNR, JOY_RETURNU, JOY_RETURNV
-};
-
-DWORD dwAxisMap[JOY_MAX_AXES];
-DWORD dwControlMap[JOY_MAX_AXES];
-PDWORD pdwRawValue[JOY_MAX_AXES];
 
 cvar_t *in_mouse;
 cvar_t *in_grabinconsole;
