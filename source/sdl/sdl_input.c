@@ -7,6 +7,7 @@ cvar_t *in_grabinconsole;
 static bool input_inited = false;
 static bool mouse_active = false;
 static bool input_active = false;
+static bool input_focus = false;
 static bool mouse_relative = false;
 
 cvar_t *in_disablemacosxmouseaccel;
@@ -32,6 +33,10 @@ void IN_Commands( void )
  */
 static void mouse_motion_event( SDL_MouseMotionEvent *event )
 {
+	if( !mouse_active ) {
+		return;
+	}
+
 	// See:
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=2963
 	// https://bugs.freedesktop.org/show_bug.cgi?id=71609
@@ -47,6 +52,11 @@ static void mouse_motion_event( SDL_MouseMotionEvent *event )
 static void mouse_button_event( SDL_MouseButtonEvent *event, bool state )
 {
 	Uint8 button = event->button;
+
+	if( !mouse_active ) {
+		return;
+	}
+
 	if( button <= 5 ) {
 		switch( button ) {
 			case SDL_BUTTON_LEFT:
@@ -70,6 +80,10 @@ static void mouse_wheel_event( SDL_MouseWheelEvent *event )
 {
 	int key = event->y > 0 ? K_MWHEELUP : K_MWHEELDOWN;
 	unsigned sys_msg_time = Sys_Milliseconds();
+
+	if( !mouse_active ) {
+		return;
+	}
 
 	Key_Event( key, true, sys_msg_time );
 	Key_Event( key, false, sys_msg_time );
@@ -230,7 +244,6 @@ static void HandleEvents( void )
 {
 	Uint16 *wtext = NULL;
 	SDL_PumpEvents();
-
 	SDL_Event event;
 
 	while( SDL_PollEvent( &event ) ) {
@@ -313,6 +326,12 @@ static void HandleEvents( void )
 					case SDL_WINDOWEVENT_CLOSE:
 						Cbuf_ExecuteText( EXEC_NOW, "quit" );
 						break;
+					case SDL_WINDOWEVENT_FOCUS_GAINED:
+						input_focus = true;
+						break;
+					case SDL_WINDOWEVENT_FOCUS_LOST:
+						input_focus = false;
+						break;
 				}
 				break;
 		}
@@ -326,7 +345,6 @@ void IN_MouseMove( usercmd_t *cmd )
 			mx = my = 0;
 			SDL_GetRelativeMouseState( &mx, &my );
 		}
-
 		if( mx || my ) {
 			CL_MouseMove( cmd, mx, my );
 		}
@@ -343,14 +361,6 @@ void IN_Init()
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
 
 	SDL_SetCursor( NULL );
-
-#if SDL_VERSION_ATLEAST(2, 0, 2)
-	
-	{
-		cvar_t *m_raw = Cvar_Get( "m_raw", "1", CVAR_ARCHIVE );
-		SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, m_raw->integer ? "0" : "1" );
-	}
-#endif
 
 	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
 	if( mouse_relative ) {
@@ -372,10 +382,8 @@ void IN_Shutdown()
 		return;
 
 	input_inited = false;
-	if( mouse_relative ) {
-		SDL_SetRelativeMouseMode( SDL_FALSE );
-		IN_SetMouseScalingEnabled( true );
-	}
+	SDL_SetRelativeMouseMode( SDL_FALSE );
+	IN_SetMouseScalingEnabled( true );
 	IN_SDL_JoyShutdown();
 }
 
@@ -397,7 +405,7 @@ void IN_Frame()
 	if( !input_inited )
 		return;
 
-	if( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer ) {
+	if( !input_focus || ( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer ) ) {
 		mouse_active = false;
 		input_active = true;
 		if( mouse_relative ) {
@@ -412,9 +420,6 @@ void IN_Frame()
 			IN_SetMouseScalingEnabled( false );
 		}
 	}
-
-	mouse_active = true;
-	input_active = true;
 
 	HandleEvents();
 }
