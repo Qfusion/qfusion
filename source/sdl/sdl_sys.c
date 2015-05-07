@@ -133,9 +133,7 @@ int main( int argc, char **argv )
 			time = newtime - oldtime;
 			if( time > 0 )
 				break;
-#ifdef PUTCPU2SLEEP
 			Sys_Sleep( 0 );
-#endif
 		} while( 1 );
 		oldtime = newtime;
 
