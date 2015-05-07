@@ -116,10 +116,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
 
     # -s in release link flags
     add_release_link_flags("-s")
-    
-    if (MINGW)
-		add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_VISTA)
 
+    if (MINGW)
+        add_definitions(-D_WIN32_WINNT=_WIN32_WINNT_VISTA)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unknown-pragmas")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
         add_common_link_flags("-static -static-libgcc -static-libstdc++")
@@ -157,7 +156,7 @@ find_package(PNG REQUIRED)
 
 # We need SDL only on non-Windows platforms or when with SDL2-backend
 if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
-    #set(USE_SDL2 1)
+    set(USE_SDL2 1)
     find_package(SDL2 REQUIRED)
 endif()
 

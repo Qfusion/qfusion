@@ -620,7 +620,6 @@ static void HandleEvents( void )
 						// FIXME: find a better place for this?..
 						SCR_PauseCinematic( minimized );
 						CL_SoundModule_Activate( !minimized );
-						VID_AppActivate( !minimized, false );
 					}
 				}
 			}
