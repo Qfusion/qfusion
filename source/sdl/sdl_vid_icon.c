@@ -387,7 +387,11 @@ void VID_SetWindowIcon( void *wnd )
 		SDL_Surface *surface;
 
 		surface = SDL_CreateRGBSurfaceFrom( (void *)(xpm_icon+2), xpm_icon[0], xpm_icon[1], 32, xpm_icon[0]*4,
+#ifdef ENDIAN_LITTLE
+			0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff );
+#else
 			0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+#endif
 
 		SDL_SetWindowIcon( wnd, surface );
 
