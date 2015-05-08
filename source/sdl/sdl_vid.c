@@ -18,8 +18,8 @@
 
  */
 
-#include "../client/client.h"
 #include <SDL.h>
+#include "../client/client.h"
 
 static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 {
