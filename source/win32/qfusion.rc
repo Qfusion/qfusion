@@ -28,8 +28,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_APPICON_VALUE      ICON    DISCARDABLE     "qfusion.ico"
-IDI_APPICON_VALUE1     ICON    DISCARDABLE     "qfusion-demo.ico"
+IDI_APPICON_VALUE      ICON    DISCARDABLE     "../icons/qfusion.ico"
+IDI_APPICON_VALUE1     ICON    DISCARDABLE     "../icons/qfusion-demo.ico"
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 

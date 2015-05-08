@@ -33,6 +33,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../ref_gl/r_local.h"
 
+#include "../qcommon/version.h"
+
 #include "x11.h"
 
 #include "unix_glw.h"
@@ -630,7 +632,7 @@ int *parse_xpm_icon ( int num_xpm_elements, char *xpm_data[] );
 
 static void GLimp_SetApplicationIcon( void )
 {
-#include "qfusion128x128.xpm"
+#include APP_XPM_ICON
 	const int *xpm_icon;
 
 	xpm_icon = parse_xpm_icon( sizeof( app128x128_xpm ) / sizeof( app128x128_xpm[0] ), app128x128_xpm );

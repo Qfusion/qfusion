@@ -145,4 +145,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #endif // __GNUC__
 
+#ifndef APP_DEFAULT_LANGUAGE
 #define APP_DEFAULT_LANGUAGE			"en"
+#endif
+
+#ifndef APP_XPM_ICON
+#define APP_XPM_ICON 					"../icons/warsow128x128.xpm"
+#endif

@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <SDL.h>
 #include "../ref_gl/r_local.h"
+#include "../qcommon/version.h"
 #include "sdl_glw.h"
 
 /*
@@ -368,7 +369,7 @@ const int *parse_xpm_icon( int num_xpm_elems, char *xpm_data[] )
 
 void GLimp_SetWindowIcon( void )
 {
-#include "qfusion128x128.xpm"
+#include APP_XPM_ICON
 	const int *xpm_icon;
 
 	xpm_icon = parse_xpm_icon( sizeof( app128x128_xpm ) / sizeof( app128x128_xpm[0] ), app128x128_xpm );
@@ -377,11 +378,7 @@ void GLimp_SetWindowIcon( void )
 		SDL_Surface *surface;
 
 		surface = SDL_CreateRGBSurfaceFrom( (void *)(xpm_icon+2), xpm_icon[0], xpm_icon[1], 32, xpm_icon[0]*4,
-#ifdef ENDIAN_LITTLE
-			0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff );
-#else
 			0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
-#endif
 
 		SDL_SetWindowIcon( glw_state.sdl_window, surface );
 
