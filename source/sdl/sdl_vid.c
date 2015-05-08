@@ -21,8 +21,11 @@
 #include <SDL.h>
 #include "../client/client.h"
 
+void VID_SetWindowIcon( void *wnd );
+
 static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 {
+	VID_SetWindowIcon( wnd );
 	return 0;
 }
 

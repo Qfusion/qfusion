@@ -28,12 +28,6 @@ cvar_t *vid_fullscreen;
 
 static int GLimp_InitGL( void );
 
-#if defined( __APPLE__ )
-void GLimp_SetWindowIcon( void )
-{
-}
-#endif
-
 static void GLimp_SetWindowSize( void )
 {
 	SDL_SetWindowSize( glw_state.sdl_window, glConfig.width, glConfig.height );
@@ -53,7 +47,9 @@ static bool GLimp_CreateWindow( void )
 	if( !glw_state.sdl_window )
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
 
-	GLimp_SetWindowIcon();
+	if( glw_state.wndproc ) {
+		glw_state.wndproc( glw_state.sdl_window, 0, 0, 0 );
+	}
 
 	GLimp_SetWindowSize();
 
@@ -114,17 +110,12 @@ void GLimp_Shutdown()
 {
 	SDL_DestroyWindow( glw_state.sdl_window );
 
-	if( glConfig.fullScreen ) {
-		glConfig.fullScreen = false;
-	}
-
-	if( glw_state.applicationName ) {
-		free( glw_state.applicationName );
-		glw_state.applicationName = NULL;
-	}
+	free( glw_state.applicationName );
 
 	glw_state.win_x = 0;
 	glw_state.win_y = 0;
+
+	memset( &glw_state, 0, sizeof( glw_state ) );
 
 	glConfig.width = 0;
 	glConfig.height = 0;
@@ -138,7 +129,8 @@ void GLimp_Shutdown()
 
 int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
 {
-	glw_state.applicationName = ( char * )malloc( strlen( applicationName ) + 1 );
+	glw_state.wndproc = wndproc;
+	glw_state.applicationName = strdup( applicationName );
 	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );
 
 	return true;
