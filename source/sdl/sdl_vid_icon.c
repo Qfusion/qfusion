@@ -24,9 +24,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <assert.h>
 
 #include <SDL.h>
-#include "../ref_gl/r_local.h"
 #include "../qcommon/version.h"
-#include "sdl_glw.h"
+
+#if defined( __APPLE__ )
+
+void VID_SetWindowIcon( void *wnd )
+{
+}
+
+#else
 
 /*
 	Die Zustaende unseres Automaten.
@@ -367,10 +373,13 @@ const int *parse_xpm_icon( int num_xpm_elems, char *xpm_data[] )
 	return data;
 }
 
-void GLimp_SetWindowIcon( void )
+void VID_SetWindowIcon( void *wnd )
 {
 #include APP_XPM_ICON
 	const int *xpm_icon;
+
+	if( !wnd )
+		return;
 
 	xpm_icon = parse_xpm_icon( sizeof( app128x128_xpm ) / sizeof( app128x128_xpm[0] ), app128x128_xpm );
 	if( xpm_icon )
@@ -380,10 +389,12 @@ void GLimp_SetWindowIcon( void )
 		surface = SDL_CreateRGBSurfaceFrom( (void *)(xpm_icon+2), xpm_icon[0], xpm_icon[1], 32, xpm_icon[0]*4,
 			0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
 
-		SDL_SetWindowIcon( glw_state.sdl_window, surface );
+		SDL_SetWindowIcon( wnd, surface );
 
 		SDL_FreeSurface( surface );
 
 		free( ( void * )xpm_icon );
 	}
 }
+
+#endif // __APPLE__

@@ -23,6 +23,8 @@
 
 #include <SDL.h>
 
+typedef int (* wndproc_t)(void *, int, int, int);
+
 typedef struct
 {
 	char *applicationName;
@@ -31,6 +33,7 @@ typedef struct
 	SDL_GLContext sdl_glcontext;
 
 	void *OpenGLLib; // instance of OpenGL library
+	wndproc_t wndproc;
 
 	int win_x, win_y;
 } glwstate_t;
@@ -39,7 +42,5 @@ extern glwstate_t glw_state;
 
 extern cvar_t *vid_fullscreen;
 extern cvar_t *vid_multiscreen_head;
-
-void GLimp_SetWindowIcon( void );
 
 #endif // __SDL_GLW_H_
