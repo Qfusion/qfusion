@@ -501,8 +501,11 @@ void CG_DrawCrosshair( int x, int y, int align )
 
 	if( cg_crosshair_size->modified )
 	{
-		if( cg_crosshair_size->integer <= 0 || cg_crosshair_size->integer > 64 )
-			trap_Cvar_Set( cg_crosshair_size->name, cg_crosshair_size->dvalue );
+		if( cg_crosshair_size->integer <= 0 )
+			trap_Cvar_Set( cg_crosshair_size->name, "0" );
+		else
+			if( cg_crosshair_size->integer > 128 )
+				trap_Cvar_Set( cg_crosshair_size->name, "128" );
 		cg_crosshair_size->modified = false;
 	}
 
@@ -536,8 +539,11 @@ void CG_DrawCrosshair( int x, int y, int align )
 
 	if( cg_crosshair_strong_size->modified )
 	{
-		if( cg_crosshair_strong_size->integer <= 0 || cg_crosshair_strong_size->integer > 64 )
-			trap_Cvar_Set( cg_crosshair_strong_size->name, cg_crosshair_strong_size->dvalue );
+		if( cg_crosshair_strong_size->integer <= 0)
+			trap_Cvar_Set( cg_crosshair_strong_size->name, "0" );
+		else
+			if( cg_crosshair_strong_size->integer > 128 )
+				trap_Cvar_Set( cg_crosshair_strong_size->name, "128" );
 		cg_crosshair_strong_size->modified = false;
 	}
 
