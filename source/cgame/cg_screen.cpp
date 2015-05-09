@@ -501,11 +501,10 @@ void CG_DrawCrosshair( int x, int y, int align )
 
 	if( cg_crosshair_size->modified )
 	{
-		if( cg_crosshair_size->integer <= 0 )
+		if( cg_crosshair_size->integer < 0 )
 			trap_Cvar_Set( cg_crosshair_size->name, "0" );
-		else
-			if( cg_crosshair_size->integer > 128 )
-				trap_Cvar_Set( cg_crosshair_size->name, "128" );
+		else if( cg_crosshair_size->integer > 64 )
+			trap_Cvar_Set( cg_crosshair_size->name, "64" );
 		cg_crosshair_size->modified = false;
 	}
 
@@ -539,11 +538,10 @@ void CG_DrawCrosshair( int x, int y, int align )
 
 	if( cg_crosshair_strong_size->modified )
 	{
-		if( cg_crosshair_strong_size->integer <= 0)
+		if( cg_crosshair_strong_size->integer < 0 )
 			trap_Cvar_Set( cg_crosshair_strong_size->name, "0" );
-		else
-			if( cg_crosshair_strong_size->integer > 128 )
-				trap_Cvar_Set( cg_crosshair_strong_size->name, "128" );
+		else if( cg_crosshair_strong_size->integer > 64 )
+			trap_Cvar_Set( cg_crosshair_strong_size->name, "64" );
 		cg_crosshair_strong_size->modified = false;
 	}
 
@@ -566,7 +564,7 @@ void CG_DrawCrosshair( int x, int y, int align )
 		cg_crosshair_strong_color->modified = false;
 	}
 
-	if( cg_crosshair_strong->integer )
+	if( cg_crosshair_strong->integer && cg_crosshair_strong_size->integer )
 	{
 		firedef_t *firedef = GS_FiredefForPlayerState( &cg.predictedPlayerState, cg.predictedPlayerState.stats[STAT_WEAPON] );
 		if( firedef && firedef->fire_mode == FIRE_MODE_STRONG ) // strong
@@ -576,7 +574,7 @@ void CG_DrawCrosshair( int x, int y, int align )
 		}
 	}
 
-	if( cg_crosshair->integer && ( cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE ) )
+	if( cg_crosshair->integer && cg_crosshair_size->integer && ( cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_NONE ) )
 	{
 		size = CG_CrosshairDimensions( x, y, cg_crosshair_size->integer, align, &sx, &sy );
 		CG_DrawCrosshairChar( sx, sy, size, cg_crosshair->integer, chColor );
