@@ -285,12 +285,12 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 /*
 ** GLimp_SetWindow
 */
-bool GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
 	EGLDisplay dpy;
 
 	if( glw_state.window == ( ANativeWindow * )parenthWnd )
-		return true;
+		return rserr_ok;
 
 	glw_state.window = ( ANativeWindow * )parenthWnd;
 
@@ -302,14 +302,14 @@ bool GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 			glw_state.surface = EGL_NO_SURFACE;
 			qeglMakeCurrent( glw_state.display, glw_state.pbufferSurface, glw_state.pbufferSurface, glw_state.context );
 		}
-		return true;
+		return rserr_ok;
 	}
 
 	GLimp_Android_CreateWindowSurface();
 	if( glw_state.surface == EGL_NO_SURFACE )
 	{
 		ri.Com_Printf( "GLimp_SetWindow() - GLimp_Android_CreateWindowSurface failed\n" );
-		return false;
+		return rserr_no_surface;
 	}
 
 	if( !qeglMakeCurrent( glw_state.display, glw_state.surface, glw_state.surface, glw_state.context ) )
@@ -317,14 +317,14 @@ bool GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 		ri.Com_Printf( "GLimp_SetWindow() - eglMakeCurrent failed\n" );
 		qeglDestroySurface( glw_state.display, glw_state.surface );
 		glw_state.surface = EGL_NO_SURFACE;
-		return false;
+		return rserr_no_surface;
 	}
 
 	dpy = qeglGetCurrentDisplay();
 	if( dpy != EGL_NO_DISPLAY )
 		qeglSwapInterval( dpy, glw_state.swapInterval );
 
-	return true;
+	return rserr_ok;
 }
 
 /*
