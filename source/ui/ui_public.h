@@ -142,7 +142,7 @@ typedef struct
 	void ( *IN_ShowSoftKeyboard )( bool show );
 	unsigned int ( *IN_SupportedDevices )( void );
 
-	bool ( *VID_GetModeInfo )( int *width, int *height, int mode );
+	bool ( *VID_GetModeInfo )( int *width, int *height, unsigned mode );
 	void ( *VID_FlashWindow )( int count );
 
 	void ( *GetConfigString )( int i, char *str, int size );
