@@ -30,7 +30,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APPLICATION_UTF8				"Qfusion"
 #endif
 
+#ifndef DEFAULT_BASEGAME
 #define	DEFAULT_BASEGAME				"base"
+#endif
 
 #ifndef APP_VERSION_MAJOR
 #define APP_VERSION_MAJOR				0
@@ -48,16 +50,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_VERSION						APP_VERSION_MAJOR+APP_VERSION_MINOR*0.1+APP_VERSION_UPDATE*0.01
 #endif
 
+#ifndef APP_PROTOCOL_VERSION
 #ifdef PUBLIC_BUILD
 #define APP_PROTOCOL_VERSION			1
 #else
 #define APP_PROTOCOL_VERSION			1001	// we're using revision number as protocol version for internal builds
 #endif
+#endif
 
+#ifndef APP_DEMO_PROTOCOL_VERSION
 #ifdef PUBLIC_BUILD
 #define APP_DEMO_PROTOCOL_VERSION		1
 #else
 #define APP_DEMO_PROTOCOL_VERSION		1001
+#endif
 #endif
 
 #ifndef APP_URL
@@ -78,12 +84,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define STR_HELPER( s )					# s
 #define STR_TOSTR( x )					STR_HELPER( x )
 
+#ifndef APP_PROTOCOL_VERSION_STR
 #define APP_PROTOCOL_VERSION_STR		STR_TOSTR( APP_PROTOCOL_VERSION )
-#define APP_DEMO_PROTOCOL_VERSION_STR	STR_TOSTR( APP_DEMO_PROTOCOL_VERSION )
-#define APP_DEMO_EXTENSION_STR			".md" APP_DEMO_PROTOCOL_VERSION_STR
+#endif
 
+#ifndef APP_DEMO_PROTOCOL_VERSION_STR
+#define APP_DEMO_PROTOCOL_VERSION_STR	STR_TOSTR( APP_DEMO_PROTOCOL_VERSION )
+#endif
+
+#ifndef APP_DEMO_EXTENSION_STR
+#define APP_DEMO_EXTENSION_STR			".md" APP_DEMO_PROTOCOL_VERSION_STR
+#endif
+
+#ifndef APP_URI_SCHEME
 #define APP_URI_SCHEME					APPLICATION "://"
+#endif
+
+#ifndef APP_URI_PROTO_SCHEME
 #define APP_URI_PROTO_SCHEME			APPLICATION STR_TOSTR( APP_PROTOCOL_VERSION ) "://"
+#endif
 
 #ifndef APP_VERSION_STR
 #define APP_VERSION_STR					STR_TOSTR( APP_VERSION_MAJOR ) "." STR_TOSTR( APP_VERSION_MINOR ) STR_TOSTR( APP_VERSION_UPDATE )
@@ -100,12 +119,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_CLIENT_UPDATE_FILE			"qfusion_last_version.txt"
 #endif
 
+#ifndef APP_MATCHMAKER_URL
 #ifdef PUBLIC_BUILD
 #define APP_MATCHMAKER_URL				"http://www.e4m5.net:1337"
-#define APP_MATCHMAKER_WEB_URL			"http://www.e4m5.net/wmm/"
 #else
 #define APP_MATCHMAKER_URL				"http://www.e4m5.net:1337"
+#endif
+#endif
+
+#ifndef APP_MATCHMAKER_WEB_URL
+#ifdef PUBLIC_BUILD
 #define APP_MATCHMAKER_WEB_URL			"http://www.e4m5.net/wmm/"
+#else
+#define APP_MATCHMAKER_WEB_URL			"http://www.e4m5.net/wmm/"
+#endif
 #endif
 
 #ifndef APP_UI_BASEPATH
