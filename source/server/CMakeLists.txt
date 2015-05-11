@@ -42,7 +42,6 @@ file(GLOB SERVER_SOURCES
     "../qcommon/steam.c"
     "*.c"
     "../null/cl_null.c"
-    "../null/clipboard_null.c"
     "../gameshared/q_*.c"
     "../qalgo/*.c"
     "../matchmaker/mm_*.c"
