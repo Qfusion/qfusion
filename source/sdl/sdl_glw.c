@@ -39,10 +39,10 @@ void GLimp_SetWindowIcon( void )
 
 		surface = SDL_CreateRGBSurfaceFrom( (void *)(xpm_icon+2), xpm_icon[0], xpm_icon[1], 32, xpm_icon[0]*4,
 #ifdef ENDIAN_LITTLE
-			0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+			0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 );
 #else
-			0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff );
-#endif
+			0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+#endif 
 
 		SDL_SetWindowIcon( glw_state.sdl_window, surface );
 
@@ -50,21 +50,21 @@ void GLimp_SetWindowIcon( void )
 	}
 }
 
-static void GLimp_SetWindowSize( void )
+static bool GLimp_SetWindowFullscreen( bool fullscreen )
 {
-	SDL_SetWindowSize( glw_state.sdl_window, glConfig.width, glConfig.height );
-	if( glConfig.fullScreen ) {
+	if( fullscreen ) {
 		// we need to use SDL_WINDOW_FULLSCREEN_DESKTOP instead of SDL_WINDOW_FULLSCREEN to support Alt+Tab from fullscreen on OS X
-		glConfig.fullScreen = SDL_SetWindowFullscreen( glw_state.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP ) == 0;
+		return SDL_SetWindowFullscreen( glw_state.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP ) == 0;
 	}
 	else {
-		SDL_SetWindowFullscreen( glw_state.sdl_window, 0 );
+		return SDL_SetWindowFullscreen( glw_state.sdl_window, 0 ) == 0;
 	}
 }
 
-static bool GLimp_CreateWindow( void )
+static bool GLimp_CreateWindow( int x, int y, int width, int height )
 {
-	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 0, 0, SDL_WINDOW_OPENGL );
+	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, 
+		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL );
 
 	if( !glw_state.sdl_window )
 		Sys_Error( "Couldn't create window: \"%s\"", SDL_GetError() );
@@ -72,10 +72,10 @@ static bool GLimp_CreateWindow( void )
 	if( glw_state.wndproc ) {
 		glw_state.wndproc( glw_state.sdl_window, 0, 0, 0 );
 	}
-	
-	GLimp_SetWindowIcon();
 
-	GLimp_SetWindowSize();
+	SDL_SetWindowPosition( glw_state.sdl_window, x, y );
+
+	GLimp_SetWindowIcon();
 
 	// init all the gl stuff for the window
 	if( !GLimp_InitGL() ) {
@@ -97,9 +97,11 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	const char *win_fs[] = {"W", "FS"};
 
 	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen ) {
-		glConfig.fullScreen = fullscreen;
-		GLimp_SetWindowSize();
-		return ( fullscreen == glConfig.fullScreen ? rserr_ok : rserr_invalid_fullscreen );
+		if( GLimp_SetWindowFullscreen( fullscreen ) ) {
+			glConfig.fullScreen = fullscreen;
+			return rserr_ok;
+		}
+		return rserr_invalid_fullscreen;
 	}
 
 	ri.Com_Printf( "Initializing OpenGL display\n" );
@@ -111,19 +113,18 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		GLimp_Shutdown();
 	}
 
-	glw_state.win_x = x;
-	glw_state.win_y = y;
-
-	glConfig.width = width;
-	glConfig.height = height;
-	// TODO: SDL2
-	glConfig.fullScreen = fullscreen; // GLimp_SetFullscreenMode( displayFrequency, fullscreen );
-
-	if( !GLimp_CreateWindow() ) {
+	if( !GLimp_CreateWindow( x, y, width, height ) ) {
 		return rserr_invalid_mode;
 	}
 
-	return ( fullscreen == glConfig.fullScreen ? rserr_ok : rserr_invalid_fullscreen );
+	if( !GLimp_SetWindowFullscreen( fullscreen ) ) {
+		return rserr_invalid_fullscreen;
+	}
+
+	glConfig.width = width;
+	glConfig.height = height;
+	glConfig.fullScreen = fullscreen;
+	return rserr_ok;
 }
 
 /**
@@ -135,9 +136,6 @@ void GLimp_Shutdown()
 
 	free( glw_state.applicationName );
 	free( glw_state.applicationIcon );
-
-	glw_state.win_x = 0;
-	glw_state.win_y = 0;
 
 	memset( &glw_state, 0, sizeof( glw_state ) );
 
