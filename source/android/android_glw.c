@@ -46,7 +46,8 @@ void GLimp_EndFrame( void )
 ** of OpenGL.  Under Win32 this means dealing with the pixelformats and
 ** doing the wgl interface stuff.
 */
-int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
+int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
+	int iconResource, const int *iconXPM )
 {
 	glw_state.window = ( ANativeWindow * )parenthWnd;
 	return true;

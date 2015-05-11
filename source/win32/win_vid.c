@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <float.h>
 #include "../client/client.h"
 #include "winquake.h"
+#include "resource.h"
 
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL ( WM_MOUSELAST+1 ) // message that will be supported by the OS
@@ -540,10 +541,12 @@ void *VID_GetWindowHandle( void )
 /*
 ** VID_Sys_Init
 */
-rserr_t VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, bool fullScreen, bool verbose )
+rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor,
+	const int *iconXPM, int x, int y, int width, int height, int displayFrequency, void *parentWindow, 
+	bool fullScreen, bool verbose )
 {
-	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR,
+	return re.Init( applicationName, screenshotsPrefix, startupColor,
+		IDI_APPICON_VALUE, iconXPM, 
 		global_hInstance, MainWndProc, parentWindow, 
 		x, y, width, height, displayFrequency,
 		fullScreen, verbose );

@@ -1250,6 +1250,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 * R_Init
 */
 rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
+	int iconResource, const int *iconXPM,
 	void *hinstance, void *wndproc, void *parenthWnd, 
 	int x, int y, int width, int height, int displayFrequency,
 	bool fullScreen, bool verbose )
@@ -1295,7 +1296,7 @@ init_qgl:
 	}
 
 	// initialize OS-specific parts of OpenGL
-	if( !GLimp_Init( applicationName, hinstance, wndproc, parenthWnd ) )
+	if( !GLimp_Init( applicationName, hinstance, wndproc, parenthWnd, iconResource, iconXPM ) )
 	{
 		QGL_Shutdown();
 		return rserr_unknown;

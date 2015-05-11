@@ -610,6 +610,10 @@ static void GLimp_SetXPMIcon( const int *xpm_icon )
 	Atom NET_WM_ICON;
 	Atom CARDINAL;
 
+	if( !xpm_icon ) {
+		return;
+	}
+
 	// allocate memory for icon data: width + height + width * height pixels
 	// note: sizeof(long) shall be used according to XChangeProperty() man page
 	width = xpm_icon[0];
@@ -626,21 +630,6 @@ static void GLimp_SetXPMIcon( const int *xpm_icon )
 		PropModeReplace, (unsigned char *)cardinalData, cardinalSize );
 
 	free( cardinalData );
-}
-
-int *parse_xpm_icon ( int num_xpm_elements, char *xpm_data[] );
-
-static void GLimp_SetApplicationIcon( void )
-{
-#include APP_XPM_ICON
-	const int *xpm_icon;
-
-	xpm_icon = parse_xpm_icon( sizeof( app128x128_xpm ) / sizeof( app128x128_xpm[0] ), app128x128_xpm );
-	if( xpm_icon )
-	{
-		GLimp_SetXPMIcon( xpm_icon );
-		free( ( void * )xpm_icon );
-	}
 }
 
 /*****************************************************************************/
@@ -795,7 +784,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 
 	XSetStandardProperties( x11display.dpy, x11display.win, glw_state.applicationName, None, None, NULL, 0, NULL );
 
-	GLimp_SetApplicationIcon();
+	GLimp_SetXPMIcon( glw_state.applicationIcon );
 
 	XSetIconName( x11display.dpy, x11display.win, glw_state.applicationName );
 	XStoreName( x11display.dpy, x11display.win, glw_state.applicationName );
@@ -878,10 +867,11 @@ void GLimp_Shutdown( void )
 		x11wndproc( &x11display, 0, 0, 0 );
 	}
 
-	if( glw_state.applicationName ) {
-		free( glw_state.applicationName );
-		glw_state.applicationName = NULL;
-	}
+	free( glw_state.applicationName );
+	free( glw_state.applicationIcon );
+
+	glw_state.applicationName = NULL;
+	glw_state.applicationIcon = NULL;
 }
 
 static int gotstencil = 0; // evil hack!
@@ -924,15 +914,23 @@ static bool ChooseVisual( int colorbits, int stencilbits )
 /*
 ** GLimp_Init
 */
-int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
+int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
+	int iconResource, const int *iconXPM )
 {
 	int colorbits, stencilbits;
 	XSetWindowAttributes attr;
 	unsigned long mask;
 
-	glw_state.applicationName = malloc( strlen( applicationName ) + 1 );
-	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );
+	glw_state.applicationName = strdup( applicationName );
+	glw_state.applicationIcon = NULL;
 
+	if( iconXPM )
+	{
+		size_t icon_memsize = iconXPM[0] * iconXPM[1] * sizeof( int );
+		glw_state.applicationIcon = malloc( icon_memsize );
+		memcpy( glw_state.applicationIcon, iconXPM, icon_memsize );
+	}
+	
 	hinstance = NULL;
 	x11wndproc = (x11wndproc_t )wndproc;
 

@@ -28,6 +28,7 @@ typedef int (* wndproc_t)(void *, int, int, int);
 typedef struct
 {
 	char *applicationName;
+	int *applicationIcon;
 
 	SDL_Window *sdl_window;
 	SDL_GLContext sdl_glcontext;
