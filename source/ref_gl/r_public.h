@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 13
+#define REF_API_VERSION 14
 
 struct mempool_s;
 struct cinematics_s;
@@ -130,9 +130,8 @@ typedef struct
 	rserr_t		( *Init )( const char *applicationName, const char *screenshotsPrefix, int startupColor,
 					void *hinstance, void *wndproc, void *parenthWnd, 
 					int x, int y, int width, int height, int displayFrequency,
-					bool fullScreen, bool wideScreen, bool verbose );
-	rserr_t		( *SetMode )( int x, int y, int width, int height, int displayFrequency,
-					bool fullScreen, bool wideScreen );
+					bool fullScreen, bool verbose );
+	rserr_t		( *SetMode )( int x, int y, int width, int height, int displayFrequency, bool fullScreen );
 	bool	( *SetWindow )( void *hinstance, void *wndproc, void *parenthWnd );
 	void		( *Shutdown )( bool verbose );
 

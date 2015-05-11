@@ -265,15 +265,13 @@ static bool GLimp_InitGL( void )
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, 
-	bool fullscreen, bool wideScreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen )
 {
 	ri.Com_Printf( "Initializing OpenGL display\n" );
 	if( glw_state.context != EGL_NO_CONTEXT )
 		GLimp_Shutdown();
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.wideScreen = wideScreen;
 	glConfig.fullScreen = true;
 	if( !GLimp_InitGL() )
 	{

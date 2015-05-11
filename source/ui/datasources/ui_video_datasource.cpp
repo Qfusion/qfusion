@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define VIDEO_SOURCE "video"
 #define TABLE_NAME "list"
 #define RESOLUTION "resolution"
-#define MODE "mode"
 
 namespace WSWUI
 {
@@ -43,28 +42,27 @@ VideoDataSource::~VideoDataSource( void )
 
 void VideoDataSource::updateVideoModeList( void )
 {
-	bool qwideScreen;
 	char resolution[64];
 	int i, width, height;
+	int vidWidth = trap::Cvar_Value( "vid_width" ), vidHeight = trap::Cvar_Value( "vid_height" );
+	bool custom = true;
 
 	// lists must be clear before
 	modesList.clear();
 
-	// native desktop resolution
-	modesList.push_back( Mode( toString( -2 ), "desktop" ) );
-
-    for( i = 0; trap::VID_GetModeInfo( &width, &height, &qwideScreen, i ); i++ ) ;
-	for( i = 0; trap::VID_GetModeInfo( &width, &height, &qwideScreen, i ); i++ )
+	for( i = 0; trap::VID_GetModeInfo( &width, &height, i ); i++ )
     {
-		Q_snprintfz( resolution, sizeof( resolution ), "%s%i x %i", ( qwideScreen ? "W " : "" ), width, height );
-
-		// save resolution and index
-		Mode m( toString( i ), resolution );
-		modesList.push_back( m );
+		Q_snprintfz( resolution, sizeof( resolution ), "%i x %i", width, height );
+		modesList.push_back( resolution );
+		if( width == vidWidth && height == vidHeight )
+			custom = false;
     }
 
-	// custom resolution
-	modesList.push_back( Mode( toString( -1 ), "custom" ) );
+	if( custom )
+	{
+		Q_snprintfz( resolution, sizeof( resolution ), "%i x %i", vidWidth, vidHeight );
+		modesList.push_back( resolution );
+	}
 
 	// notify updates
 	int size = modesList.size();
@@ -83,9 +81,7 @@ void VideoDataSource::GetRow( StringList &row, const String &table, int row_inde
 		for( StringList::const_iterator it = columns.begin(); it != columns.end(); ++it )
 		{
 			if( *it == RESOLUTION )
-				row.push_back( modesList[row_index].second.c_str() );
-			else if( *it == MODE )
-				row.push_back( modesList[row_index].first.c_str() );
+				row.push_back( modesList[row_index].c_str() );
 		}
 	}
 }
