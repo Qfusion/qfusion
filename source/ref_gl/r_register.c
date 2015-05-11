@@ -1414,7 +1414,7 @@ rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bo
 /*
 * R_SetWindow
 */
-bool R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
 	return GLimp_SetWindow( hinstance, wndproc, parenthWnd );
 }

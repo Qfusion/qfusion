@@ -665,7 +665,7 @@ void		R_BeginRegistration( void );
 void		R_EndRegistration( void );
 void		R_Shutdown( bool verbose );
 rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen );
-bool	R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
+rserr_t		R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 
 //
 // r_scene.c
