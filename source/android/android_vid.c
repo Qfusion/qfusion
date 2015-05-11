@@ -87,11 +87,13 @@ float VID_GetPixelRatio( void )
 	return viddef.height / ( float )height;
 }
 
-rserr_t VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, bool fullScreen, bool wideScreen, bool verbose )
+rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, 
+	const int *iconXPM, int x, int y, int width, int height, int displayFrequency, void *parentWindow, 
+	bool fullScreen, bool verbose )
 {
-	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR,
+	return re.Init( applicationName, screenshotsPrefix, startupColor,
+		0, iconXPM,
 		sys_android_app->activity, NULL, sys_android_app->window,
 		x, y, width, height, displayFrequency,
-		fullScreen, wideScreen, verbose );
+		fullScreen, verbose );
 }

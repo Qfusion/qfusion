@@ -23,16 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <stdint.h>
 #include <assert.h>
 
-#include <SDL.h>
-#include "../qcommon/version.h"
-
-#if defined( __APPLE__ )
-
-void VID_SetWindowIcon( void *wnd )
-{
-}
-
-#else
+#include "xpm.h"
 
 /*
 	Die Zustaende unseres Automaten.
@@ -236,7 +227,7 @@ static void parse_xpm_color(const char *elem, xpm_state_t *xpm_state, int num_co
 	Parameter: Aktuelle Zeile aus warsow16x16_xpm,
 			Index von data in den wir als naechstes Schreiben
 */
-static void parse_xpm_data(const char *elem, xpm_state_t *xpm_state, int *data, int num_colors, int chars_per_color, char **color_symbols, int *color_values, int *data_pos) {
+static void parse_xpm_data(const char *elem, int *data, int num_colors, int chars_per_color, char **color_symbols, int *color_values, int *data_pos) {
 	/*
 		Laenge der aktuellen Zeile
 	*/
@@ -310,12 +301,12 @@ static void parse_xpm_elem(const char *elem, xpm_state_t *xpm_state, int **data,
 			/*
 				Wir parsen die Bild-Daten
 			*/
-			parse_xpm_data(elem, xpm_state, *data, *num_colors, *chars_per_color,  *color_symbols, *color_values, data_pos);
+			parse_xpm_data(elem, *data, *num_colors, *chars_per_color,  *color_symbols, *color_values, data_pos);
 			break;
 	}
 }
 
-const int *parse_xpm_icon( int num_xpm_elems, char *xpm_data[] )
+int *parse_xpm_icon( int num_xpm_elems, char *xpm_data[] )
 {
 	int i;
 	xpm_state_t xpm_state;
@@ -373,32 +364,7 @@ const int *parse_xpm_icon( int num_xpm_elems, char *xpm_data[] )
 	return data;
 }
 
-void VID_SetWindowIcon( void *wnd )
+int *XPM_ParseIcon( int num_xpm_elems, char *xpm_data[] )
 {
-#include APP_XPM_ICON
-	const int *xpm_icon;
-
-	if( !wnd )
-		return;
-
-	xpm_icon = parse_xpm_icon( sizeof( app128x128_xpm ) / sizeof( app128x128_xpm[0] ), app128x128_xpm );
-	if( xpm_icon )
-	{
-		SDL_Surface *surface;
-
-		surface = SDL_CreateRGBSurfaceFrom( (void *)(xpm_icon+2), xpm_icon[0], xpm_icon[1], 32, xpm_icon[0]*4,
-#ifdef ENDIAN_LITTLE
-			0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff );
-#else
-			0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
-#endif
-
-		SDL_SetWindowIcon( wnd, surface );
-
-		SDL_FreeSurface( surface );
-
-		free( ( void * )xpm_icon );
-	}
+	return parse_xpm_icon( num_xpm_elems, xpm_data );
 }
-
-#endif // __APPLE__

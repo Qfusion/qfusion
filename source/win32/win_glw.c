@@ -32,7 +32,6 @@
 #include <assert.h>
 #include "../ref_gl/r_local.h"
 #include "win_glw.h"
-#include "resource.h"
 
 #define WINDOW_STYLE	( WS_OVERLAPPED|WS_BORDER|WS_CAPTION|WS_VISIBLE|WS_SYSMENU|WS_MINIMIZEBOX )
 
@@ -135,7 +134,7 @@ static bool VID_CreateWindow( void )
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
 	wc.hInstance     = glw_state.hInstance;
-	wc.hIcon         = LoadIcon( glw_state.hInstance, MAKEINTRESOURCE( IDI_APPICON_VALUE ) );
+	wc.hIcon         = LoadIcon( glw_state.hInstance, MAKEINTRESOURCE( glw_state.applicationIconResourceID ) );
 	wc.hCursor       = LoadCursor( NULL, IDC_ARROW );
 	wc.hbrBackground = (HBRUSH)GetStockObject( BLACK_BRUSH );
 	wc.lpszMenuName  = 0;
@@ -389,6 +388,8 @@ void GLimp_Shutdown( void )
 		glw_state.applicationName = NULL;
 	}
 
+	glw_state.applicationIconResourceID = 0;
+
 	glw_state.win_x = 0;
 	glw_state.win_y = 0;
 
@@ -404,7 +405,8 @@ void GLimp_Shutdown( void )
 ** of OpenGL.  Under Win32 this means dealing with the pixelformats and
 ** doing the wgl interface stuff.
 */
-int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
+int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
+	int iconResource, const int *iconXPM )
 {
 	// save off hInstance and wndproc
 	glw_state.applicationName = malloc( strlen( applicationName ) + 1 );
@@ -412,6 +414,7 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	glw_state.hInstance = ( HINSTANCE ) hinstance;
 	glw_state.wndproc = wndproc;
 	glw_state.parenthWnd = ( HWND )parenthWnd;
+	glw_state.applicationIconResourceID = iconResource;
 
 	return true;
 }

@@ -36,6 +36,7 @@ typedef struct
 	HWND hWnd;                  // handle to window
 	HWND parenthWnd;			// handle to parent window
 	HGLRC hGLRC;                // handle to GL rendering context
+	int applicationIconResourceID;
 
 	char windowClassName[WINDOW_CLASSNAME_SIZE];
 	WCHAR windowClassNameW[WINDOW_CLASSNAME_SIZE];

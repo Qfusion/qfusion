@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "cin.h"
 #include "ftlib.h"
+#include "xpm.h"
 
 cvar_t *vid_ref;
 cvar_t *vid_width, *vid_height;
@@ -58,7 +59,8 @@ static mempool_t *vid_ref_mempool = NULL;
 
 // These are system specific functions
 // wrapper around R_Init
-rserr_t VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullscreen, bool verbose );
+rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, const int *iconXPM,
+	int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullscreen, bool verbose );
 static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen );
 void VID_Front_f( void );
 void VID_UpdateWindowPosAndSize( int x, int y );
@@ -123,7 +125,18 @@ static void VID_NewWindow( int width, int height )
 static rserr_t VID_Sys_Init_( int x, int y, int width, int height, int displayFrequency,
 	void *parentWindow, bool fullScreen )
 {
-	return VID_Sys_Init( x, y, width, height, displayFrequency, parentWindow, fullScreen, vid_ref_verbose );
+	rserr_t res;
+#include APP_XPM_ICON
+	int *xpm_icon;
+
+	xpm_icon = XPM_ParseIcon( sizeof( app128x128_xpm ) / sizeof( app128x128_xpm[0] ), app128x128_xpm );
+
+	res = VID_Sys_Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, xpm_icon,
+		x, y, width, height, displayFrequency, parentWindow, fullScreen, vid_ref_verbose );
+
+	free( xpm_icon );
+
+	return res;
 }
 
 /*

@@ -256,7 +256,8 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 bool	GLimp_ScreenEnabled( void );
 void	GLimp_BeginFrame( void );
 void	GLimp_EndFrame( void );
-int		GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd );
+int		GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
+			int iconResource, const int *iconXPM );
 void	GLimp_Shutdown( void );
 rserr_t	GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen );
 rserr_t	GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );

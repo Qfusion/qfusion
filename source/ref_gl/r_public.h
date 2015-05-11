@@ -128,6 +128,7 @@ typedef struct
 	int			( *API )( void );
 
 	rserr_t		( *Init )( const char *applicationName, const char *screenshotsPrefix, int startupColor,
+					int iconResource, const int *iconXPM,
 					void *hinstance, void *wndproc, void *parenthWnd, 
 					int x, int y, int width, int height, int displayFrequency,
 					bool fullScreen, bool verbose );

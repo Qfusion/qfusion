@@ -32,12 +32,13 @@ static int VID_WndProc( x11display_t *wnd, int ev, int p1, int p2 )
 /*
 * VID_Sys_Init
 */
-int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, bool fullScreen, bool verbose )
+rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, 
+	const int *iconXPM, int x, int y, int width, int height, int displayFrequency, void *parentWindow, 
+	bool fullScreen, bool verbose )
 {
 	x11display.dpy = NULL;
 
-	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR,
+	return re.Init( applicationName, screenshotsPrefix, startupColor, 0, iconXPM,
 		NULL, &VID_WndProc, parentWindow, 
 		x, y, width, height, displayFrequency,
 		fullScreen, verbose );

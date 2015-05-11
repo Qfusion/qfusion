@@ -28,6 +28,28 @@ cvar_t *vid_fullscreen;
 
 static int GLimp_InitGL( void );
 
+void GLimp_SetWindowIcon( void )
+{
+	const int *xpm_icon;
+
+	xpm_icon = glw_state.applicationIcon;
+	if( xpm_icon )
+	{
+		SDL_Surface *surface;
+
+		surface = SDL_CreateRGBSurfaceFrom( (void *)(xpm_icon+2), xpm_icon[0], xpm_icon[1], 32, xpm_icon[0]*4,
+#ifdef ENDIAN_LITTLE
+			0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff );
+#else
+			0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 );
+#endif
+
+		SDL_SetWindowIcon( glw_state.sdl_window, surface );
+
+		SDL_FreeSurface( surface );
+	}
+}
+
 static void GLimp_SetWindowSize( void )
 {
 	SDL_SetWindowSize( glw_state.sdl_window, glConfig.width, glConfig.height );
@@ -50,6 +72,8 @@ static bool GLimp_CreateWindow( void )
 	if( glw_state.wndproc ) {
 		glw_state.wndproc( glw_state.sdl_window, 0, 0, 0 );
 	}
+	
+	GLimp_SetWindowIcon();
 
 	GLimp_SetWindowSize();
 
@@ -110,6 +134,7 @@ void GLimp_Shutdown()
 	SDL_DestroyWindow( glw_state.sdl_window );
 
 	free( glw_state.applicationName );
+	free( glw_state.applicationIcon );
 
 	glw_state.win_x = 0;
 	glw_state.win_y = 0;
@@ -126,11 +151,20 @@ void GLimp_Shutdown()
  * @param wndproc
  */
 
-int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd )
+int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
+	int iconResource, const int *iconXPM )
 {
 	glw_state.wndproc = wndproc;
 	glw_state.applicationName = strdup( applicationName );
+	glw_state.applicationIcon = NULL;
 	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );
+	
+	if( iconXPM )
+	{
+		size_t icon_memsize = iconXPM[0] * iconXPM[1] * sizeof( int );
+		glw_state.applicationIcon = malloc( icon_memsize );
+		memcpy( glw_state.applicationIcon, iconXPM, icon_memsize );
+	}
 
 	return true;
 }
