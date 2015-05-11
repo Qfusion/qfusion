@@ -260,6 +260,7 @@ static char *SV_ShortInfoString( void )
 	char entry[20];
 	size_t len;
 	int i, count, bots;
+	int maxcount;
 	const char *password;
 
 	bots = 0;
@@ -270,9 +271,11 @@ static char *SV_ShortInfoString( void )
 		{
 			if( svs.clients[i].edict->r.svflags & SVF_FAKECLIENT || svs.clients[i].tvclient )
 				bots++;
-			count++;
+			else
+				count++;
 		}
 	}
+	maxcount = sv_maxclients->integer - bots;
 
 	//format:
 	//" \377\377\377\377info\\n\\server_name\\m\\map name\\u\\clients/maxclients\\g\\gametype\\s\\skill\\EOT "
@@ -283,7 +286,7 @@ static char *SV_ShortInfoString( void )
 		hostname,
 		sv.mapname,
 		count > 99 ? 99 : count,
-		sv_maxclients->integer > 99 ? 99 : sv_maxclients->integer
+		maxcount > 99 ? 99 : maxcount
 		);
 
 	len = strlen( string );
