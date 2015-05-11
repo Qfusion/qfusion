@@ -68,7 +68,7 @@ static bool GLimp_CreateWindow( void )
  * @param fullscreen <code>true</code> for a fullscreen mode,
  *     <code>false</code> otherwise
  */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool wideScreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen )
 {
 	const char *win_fs[] = {"W", "FS"};
 
@@ -92,7 +92,6 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.wideScreen = wideScreen;
 	// TODO: SDL2
 	glConfig.fullScreen = fullscreen; // GLimp_SetFullscreenMode( displayFrequency, fullscreen );
 

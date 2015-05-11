@@ -649,7 +649,7 @@ static void GLimp_SetApplicationIcon( void )
 ** GLimp_SetMode_Real
 * Hack to get rid of the prints when toggling fullscreen
 */
-static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, bool fullscreen, bool wideScreen, bool silent, bool force )
+static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, bool fullscreen, bool silent, bool force )
 {
 	int screen_x, screen_y, screen_width, screen_height, screen_mode;
 	float ratio;
@@ -823,7 +823,6 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.fullScreen = fullscreen;
-	glConfig.wideScreen = wideScreen;
 
 	_NETWM_CHECK_FULLSCREEN();
 
@@ -837,10 +836,9 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency,
-	bool fullscreen, bool wideScreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen )
 {
-	return GLimp_SetMode_Real( width, height, displayFrequency, fullscreen, wideScreen, false, false );
+	return GLimp_SetMode_Real( width, height, displayFrequency, fullscreen, false, false );
 }
 
 /*
@@ -1043,7 +1041,7 @@ void GLimp_EndFrame( void )
 		cvar_t *vid_multiscreen_head = ri.Cvar_Get( "vid_multiscreen_head", "0", CVAR_ARCHIVE );
 		
 		if( vid_multiscreen_head->modified ) {
-			GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, true, glConfig.wideScreen, true, true );
+			GLimp_SetMode_Real( glConfig.width, glConfig.height, _vid_display_refresh_rate, true, true, true );
 			vid_multiscreen_head->modified = false;
 		}
 	}
