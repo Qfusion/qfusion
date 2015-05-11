@@ -26,9 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ftlib.h"
 
 cvar_t *vid_ref;
-cvar_t *vid_mode;
-cvar_t *vid_customwidth;   // custom screen width
-cvar_t *vid_customheight;  // custom screen height
+cvar_t *vid_width, *vid_height;
 cvar_t *vid_xpos;          // X coordinate of window position
 cvar_t *vid_ypos;          // Y coordinate of window position
 cvar_t *vid_fullscreen;
@@ -44,14 +42,10 @@ viddef_t viddef;             // global video state; used by other modules
 ref_export_t re;
 
 #define VID_DEFAULTREF			"ref_gl"
-#define VID_DEFAULTMODE			"-2"
-#define VID_DEFAULTFALLBACKMODE	"4"
 
-#define VID_NUM_MODES (int)( sizeof( vid_modes ) / sizeof( vid_modes[0] ) )
+typedef rserr_t (*vid_init_t)( int, int, int, int, int, void *, bool );
 
-typedef rserr_t (*vid_init_t)( int, int, int, int, int, void *, bool, bool );
-
-static int      vid_ref_prevmode;
+static int vid_ref_prevwidth, vid_ref_prevheight;
 static bool vid_ref_modified;
 static bool vid_ref_verbose;
 static bool vid_ref_sound_restart;
@@ -63,10 +57,9 @@ static void		*vid_ref_libhandle = NULL;
 static mempool_t *vid_ref_mempool = NULL;
 
 // These are system specific functions
-rserr_t VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow,
-	bool fullscreen, bool wideScreen, bool verbose ); // wrapper around R_Init
-static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow,
-	bool fullScreen, bool wideScreen );
+// wrapper around R_Init
+rserr_t VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullscreen, bool verbose );
+static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen );
 void VID_Front_f( void );
 void VID_UpdateWindowPosAndSize( int x, int y );
 void VID_EnableAltTab( bool enable );
@@ -91,93 +84,20 @@ void VID_Restart_f( void )
 	VID_Restart( (Cmd_Argc() >= 2 ? true : false), false );
 }
 
-
-typedef struct vidmode_s
-{
-	int width, height;
-	bool wideScreen;
-} vidmode_t;
-
-vidmode_t vid_modes[] =
-{
-	{ 320, 240, false },
-	{ 400, 300, false },
-	{ 512, 384, false },
-	{ 640, 480, false },
-	{ 800, 600, false },
-	{ 960, 720, false },
-	{ 1024, 768, false },
-	{ 1152, 864, false },
-	{ 1280, 960, false },
-	{ 1280, 1024, false },
-	{ 1600, 1200, false },
-	{ 2048, 1536, false },
-
-	{ 800, 480, true },
-	{ 856, 480, true },
-	{ 1024,	576, true },
-	{ 1024, 600, true },
-	{ 1280, 720, true },
-	{ 1200, 800, true },
-	{ 1280, 800, true },
-	{ 1360, 768, true },
-	{ 1366, 768, true },
-	{ 1440,	900, true },
-	{ 1600,	900, true },
-	{ 1680,	1050, true },
-	{ 1920, 1080, true },
-	{ 1920,	1200, true },
-	{ 2560,	1600, true },
-
-	{ 2400, 600, false },
-	{ 3072, 768, false },
-	{ 3840, 720, false },
-	{ 3840, 1024, false },
-	{ 4800, 1200, false },
-	{ 6144, 1536, false }
-};
+unsigned int vid_num_modes;
+vidmode_t *vid_modes;
 
 /*
 ** VID_GetModeInfo
 */
-bool VID_GetModeInfo( int *width, int *height, bool *wideScreen, int mode )
+bool VID_GetModeInfo( int *width, int *height, unsigned int mode )
 {
-	if( mode < -1 || mode >= VID_NUM_MODES )
+	if( mode >= vid_num_modes )
 		return false;
 
-	if( mode == -1 )
-	{
-		*width = vid_customwidth->integer;
-		*height = vid_customheight->integer;
-		*wideScreen = false;
-	}
-	else
-	{
-		*width  = vid_modes[mode].width;
-		*height = vid_modes[mode].height;
-		*wideScreen = vid_modes[mode].wideScreen;
-	}
-
+	*width  = vid_modes[mode].width;
+	*height = vid_modes[mode].height;
 	return true;
-}
-
-/*
-** VID_GetModeNum
-*
-* Find exact match for given width/height
-*/
-static int VID_GetModeNum( int width, int height )
-{
-	int i;
-
-	for( i = 0; i < VID_NUM_MODES; i++ )
-	{
-		if( vid_modes[i].width == width && vid_modes[i].height == height ) {
-			return i;
-		}
-	}
-
-	return -1;
 }
 
 /*
@@ -185,11 +105,10 @@ static int VID_GetModeNum( int width, int height )
 */
 static void VID_ModeList_f( void )
 {
-	int i;
+	unsigned int i;
 
-	Com_Printf( "Mode -1: for custom width/height (use vid_customwidth and vid_customheight)\n" );
-	for( i = 0; i < VID_NUM_MODES; i++ )
-		Com_Printf( "Mode %i: %ix%i%s\n", i, vid_modes[i].width, vid_modes[i].height, ( vid_modes[i].wideScreen ? " (wide)" : "" ) );
+	for( i = 0; i < vid_num_modes; i++ )
+		Com_Printf( "* %ix%i\n", vid_modes[i].width, vid_modes[i].height );
 }
 
 /*
@@ -202,19 +121,17 @@ static void VID_NewWindow( int width, int height )
 }
 
 static rserr_t VID_Sys_Init_( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, bool fullScreen, bool wideScreen )
+	void *parentWindow, bool fullScreen )
 {
-	return VID_Sys_Init( x, y, width, height, displayFrequency, parentWindow, 
-		fullScreen, wideScreen, vid_ref_verbose );
+	return VID_Sys_Init( x, y, width, height, displayFrequency, parentWindow, fullScreen, vid_ref_verbose );
 }
 
 /*
 ** VID_SetMode
 */
-static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, bool fullScreen, bool wideScreen )
+static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen )
 {
-    return re.SetMode( x, y, width, height, displayFrequency, fullScreen, wideScreen );
+    return re.SetMode( x, y, width, height, displayFrequency, fullScreen );
 }
 
 /*
@@ -266,72 +183,55 @@ static rserr_t VID_ChangeMode( vid_init_t vid_init )
 	int x, y;
 	int w, h;
 	int disp_freq;
-	bool fs, ws;
-	bool r;
+	bool fs;
 	rserr_t err;
 	void *parent_win;
 
-#if 0
-	if( vid_ref_active && !Cvar_FlagIsSet( vid_mode->flags, CVAR_LATCH_VIDEO ) ) {
-		// try to change video mode without vid_restart
-		err = VID_ChangeMode( &VID_SetMode );
-
-		if( err == rserr_restart_required ) {
-			// didn't work, mark the cvar as CVAR_LATCH_VIDEO 
-			Cvar_Get( vid_mode->name, VID_DEFAULTMODE, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-			Com_Printf( "%s will be changed upon restarting video.\n", vid_mode->name );
-	}
-#endif
-
-	vid_mode->modified = false;
+	vid_width->modified = false;
+	vid_height->modified = false;
 	vid_fullscreen->modified = false;
 
 	x = vid_xpos->integer;
 	y = vid_ypos->integer;
+	w = vid_width->integer;
+	h = vid_height->integer;
 	fs = vid_fullscreen->integer ? true : false;
 	disp_freq = vid_displayfrequency->integer;
 	parent_win = STR_TO_POINTER( vid_parentwid->string );
-	r = VID_GetModeInfo( &w, &h, &ws, vid_mode->integer );
 
-	if( !r ) {
-		err = rserr_invalid_mode;
-	}
-	else {
-		err = vid_init( x, y, w, h, disp_freq, parent_win, fs, ws );
-	}
+	err = vid_init( x, y, w, h, disp_freq, parent_win, fs );
 
 	if( err == rserr_ok ) {
 		// store fallback mode
-		vid_ref_prevmode = vid_mode->integer;
+		vid_ref_prevwidth = w;
+		vid_ref_prevheight = h;
 	} else if( err == rserr_restart_required ) {
 		return err;
-	}
-	else {
-		Cvar_ForceSet( "vid_fullscreen", "0" );
+	} else {
+		Cvar_ForceSet( vid_fullscreen->name, "0" );
 		vid_fullscreen->modified = false;
 		fs = false;
 
 		if( err == rserr_invalid_fullscreen ) {
 			Com_Printf( "VID_ChangeMode() - fullscreen unavailable in this mode\n" );
 
-			if( ( err = vid_init( x, y, w, h, disp_freq, parent_win, false, ws ) ) == rserr_ok ) {
+			if( ( err = vid_init( x, y, w, h, disp_freq, parent_win, false ) ) == rserr_ok ) {
 				goto done_ok;
 			}
 		}
 		else if( err == rserr_invalid_mode ) {
-			Cvar_ForceSet( "vid_mode", va( "%i", vid_ref_prevmode ) );
-			vid_mode->modified = false;
-
 			Com_Printf( "VID_ChangeMode() - invalid mode\n" );
 
-			r = VID_GetModeInfo( &w, &h, &ws, vid_mode->integer );
-			if( !r ) {
-				return rserr_invalid_mode;
-			}
+			w = vid_ref_prevwidth;
+			h = vid_ref_prevheight;
+			Cvar_ForceSet( vid_width->name, va( "%i", w ) );
+			Cvar_ForceSet( vid_height->name, va( "%i", h ) );
+			vid_width->modified = false;
+			vid_height->modified = false;
 		}
 
 		// try setting it back to something safe
-		if( ( err = vid_init( x, y, w, h, disp_freq, parent_win, fs, ws ) ) != rserr_ok ) {
+		if( ( err = vid_init( x, y, w, h, disp_freq, parent_win, fs ) ) != rserr_ok ) {
 			Com_Printf( "VID_ChangeMode() - could not revert to safe mode\n" );
 			return err;
 		}
@@ -559,6 +459,7 @@ void VID_CheckChanges( void )
 
 	if( vid_ref_modified ) {
 		bool cgameActive;
+		char num[16];
 
 		cgameActive = cls.cgameActive;
 		cls.disable_screen = 1;
@@ -585,33 +486,58 @@ load_refresh:
 			goto load_refresh;
 		}
 
-		// handle vid_mode changes
-		if( vid_mode->integer == -2 ) {
+		// handle vid size changes
+		if( ( vid_width->integer <= 0 ) || ( vid_height->integer <= 0 ) ) {
+			// set the mode to the default
 			int w, h;
-
-			if( VID_GetDisplaySize( &w, &h ) ) {
-				int mode = VID_GetModeNum( w, h );
-
-				Com_Printf( "Mode %i detected\n", mode );
-
-				if( mode < 0 ) {
-					Cvar_ForceSet( "vid_mode", "-1" );
-					Cvar_ForceSet( "vid_customwidth", va( "%i", w ) );
-					Cvar_ForceSet( "vid_customheight", va( "%i", h ) );
-				}
-				else {
-					Cvar_ForceSet( "vid_mode", va( "%i", mode ) );
-				}
+			if( !VID_GetDefaultMode( &w, &h ) ) {
+				w = vid_modes[0].width;
+				h = vid_modes[0].height;
 			}
-			else {
-				Cvar_ForceSet( "vid_mode", va( "%i", vid_ref_prevmode ) );
+			Q_snprintfz( num, sizeof( num ), "%i", w );
+			Cvar_ForceSet( vid_width->name, num );
+			Q_snprintfz( num, sizeof( num ), "%i", h );
+			Cvar_ForceSet( vid_height->name, num );
+		}
+
+		if( vid_width->integer > vid_modes[vid_num_modes - 1].width ) { // modes are sorted by width
+			Q_snprintfz( num, sizeof( num ), "%i", vid_modes[vid_num_modes - 1].width );
+			Cvar_ForceSet( vid_width->name, num );
+		}
+
+		{
+			int maxh = 0;
+			unsigned int i;
+			for( i = 0; i < vid_num_modes; i++ ) {
+				clamp_low( maxh, vid_modes[i].height );
+			}
+			if( vid_height->integer > maxh ) {
+				Q_snprintfz( num, sizeof( num ), "%i", maxh );
+				Cvar_ForceSet( vid_height->name, num );
 			}
 		}
 
-		if( vid_mode->integer < -1 || vid_mode->integer >= VID_NUM_MODES ) {
-			Com_Printf( "Bad mode %i or custom resolution\n", vid_mode->integer );
-			Cvar_ForceSet( "vid_fullscreen", "0" );
-			Cvar_ForceSet( "vid_mode", VID_DEFAULTFALLBACKMODE );
+		if( vid_fullscreen->integer ) {
+			// snap to the largest supported fullscreen resolution
+			int w = vid_modes[0].width, h = vid_modes[0].height;
+			int tw = max( vid_width->integer, w ), th = max( vid_height->integer, h );
+			int mw, mh;
+			unsigned int i;
+			for( i = 1; i < vid_num_modes; i++ ) {
+				mw = vid_modes[i].width;
+				mh = vid_modes[i].height;
+				if( mw > tw ) {
+					break;
+				}
+				if( ( mh <= th ) && ( mw >= w ) && ( mh >= h ) ) {
+					w = vid_modes[i].width;
+					h = vid_modes[i].height;
+				}
+			}
+			Q_snprintfz( num, sizeof( num ), "%i", w );
+			Cvar_ForceSet( vid_width->name, num );
+			Q_snprintfz( num, sizeof( num ), "%i", h );
+			Cvar_ForceSet( vid_height->name, num );
 		}
 
 		err = VID_ChangeMode( &VID_Sys_Init_ );
@@ -672,6 +598,17 @@ load_refresh:
 }
 
 /*
+** VID_CompareModes
+*/
+static int VID_CompareModes( const vidmode_t *first, const vidmode_t *second )
+{
+	if( first->width == second->width )
+		return first->height - second->height;
+
+	return first->width - second->width;
+}
+
+/*
 ** VID_Init
 */
 void VID_Init( void )
@@ -679,11 +616,17 @@ void VID_Init( void )
 	if( vid_initialized )
 		return;
 
+	vid_num_modes = VID_GetSysModes( vid_modes );
+	if( !vid_num_modes )
+		Sys_Error( "Failed to get video modes" );
+	vid_modes = Mem_ZoneMalloc( vid_num_modes * sizeof( vidmode_t ) );
+	VID_GetSysModes( vid_modes );
+	qsort( vid_modes, vid_num_modes, sizeof( vidmode_t ), (int (*)(const void *, const void *))VID_CompareModes );
+
 	/* Create the video variables so we know how to start the graphics drivers */
 	vid_ref = Cvar_Get( "vid_ref", VID_DEFAULTREF, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	vid_mode = Cvar_Get( "vid_mode", VID_DEFAULTMODE, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	vid_customwidth = Cvar_Get( "vid_customwidth", "1024", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	vid_customheight = Cvar_Get( "vid_customheight", "768", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	vid_width = Cvar_Get( "vid_width", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
+	vid_height = Cvar_Get( "vid_height", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	vid_xpos = Cvar_Get( "vid_xpos", "0", CVAR_ARCHIVE );
 	vid_ypos = Cvar_Get( "vid_ypos", "0", CVAR_ARCHIVE );
 	vid_fullscreen = Cvar_Get( "vid_fullscreen", "1", CVAR_ARCHIVE );
@@ -706,7 +649,8 @@ void VID_Init( void )
 	vid_initialized = true;
 	vid_ref_sound_restart = false;
 	vid_fullscreen->modified = false;
-	vid_ref_prevmode = atoi( VID_DEFAULTFALLBACKMODE );
+	vid_ref_prevwidth = vid_modes[0].width; // the smallest mode is the "safe mode"
+	vid_ref_prevheight = vid_modes[0].height;
 
 	FTLIB_LoadLibrary( false );
 
@@ -728,6 +672,8 @@ void VID_Shutdown( void )
 	Cmd_RemoveCommand( "vid_restart" );
 	Cmd_RemoveCommand( "vid_front" );
 	Cmd_RemoveCommand( "vid_modelist" );
+
+	Mem_ZoneFree( vid_modes );
 
 	vid_initialized = false;
 }

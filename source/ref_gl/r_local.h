@@ -660,12 +660,11 @@ int			R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], 
 rserr_t		R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 				void *hinstance, void *wndproc, void *parenthWnd, 
 				int x, int y, int width, int height, int displayFrequency,
-				bool fullscreen, bool wideScreen, bool verbose );
+				bool fullscreen, bool verbose );
 void		R_BeginRegistration( void );
 void		R_EndRegistration( void );
 void		R_Shutdown( bool verbose );
-rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency,
-				bool fullScreen, bool wideScreen );
+rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen );
 rserr_t		R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 
 //

@@ -15,8 +15,7 @@ public:
 	int GetNumRows( const String& table );
 private:
 
-	typedef std::pair<std::string, std::string> Mode;
-	std::vector<Mode> modesList;
+	std::vector<std::string> modesList;
 
 	// populate the table
 	void updateVideoModeList( void );
