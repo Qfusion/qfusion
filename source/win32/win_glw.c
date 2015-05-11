@@ -284,8 +284,7 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, 
-	bool fullscreen, bool wideScreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen )
 {
 	const char *win_fs[] = { "W", "FS" };
 
@@ -312,7 +311,6 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		RECT parentWindowRect;
 
 		fullscreen = false;
-		wideScreen = false;
 
 		GetWindowRect( glw_state.parenthWnd, &parentWindowRect );
 		width = parentWindowRect.right - parentWindowRect.left;
@@ -332,7 +330,6 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.wideScreen = wideScreen;
 	glConfig.fullScreen = VID_SetFullscreenMode( displayFrequency, fullscreen );
 
 	if( !VID_CreateWindow() ) {

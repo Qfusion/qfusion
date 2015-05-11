@@ -541,12 +541,12 @@ void *VID_GetWindowHandle( void )
 ** VID_Sys_Init
 */
 rserr_t VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, bool fullScreen, bool wideScreen, bool verbose )
+	void *parentWindow, bool fullScreen, bool verbose )
 {
 	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR,
 		global_hInstance, MainWndProc, parentWindow, 
 		x, y, width, height, displayFrequency,
-		fullScreen, wideScreen, verbose );
+		fullScreen, verbose );
 }
 
 /*
@@ -582,9 +582,9 @@ void VID_Front_f( void )
 }
 
 /*
-** VID_GetDisplaySize
+** VID_GetDefaultMode
 */
-bool VID_GetDisplaySize( int *width, int *height )
+bool VID_GetDefaultMode( int *width, int *height )
 {
 	DEVMODE dm;
 		
@@ -593,11 +593,49 @@ bool VID_GetDisplaySize( int *width, int *height )
 
 	EnumDisplaySettings( NULL, ENUM_CURRENT_SETTINGS, &dm );
 
+	if( !dm.dmPelsWidth || !dm.dmPelsHeight )
+		return false;
+
 	*width = dm.dmPelsWidth;
 	*height = dm.dmPelsHeight;
 
 	return true;
 }
+
+/*
+** VID_GetSysModes
+*/
+unsigned int VID_GetSysModes( vidmode_t *modes )
+{
+	DEVMODE dm;
+	unsigned int i, count = 0, prevwidth = 0, prevheight = 0;
+
+	memset( &dm, 0, sizeof( dm ) );
+	dm.dmSize = sizeof( dm );
+
+	for( i = 0; EnumDisplaySettings( NULL, i, &dm ); i++ )
+	{
+		if( dm.dmBitsPerPel < 16 )
+			continue;
+
+		if( ( dm.dmPelsWidth == prevwidth ) && ( dm.dmPelsHeight == prevheight ) )
+			continue;
+
+		if( modes )
+		{
+			modes[count].width = dm.dmPelsWidth;
+			modes[count].height = dm.dmPelsHeight;
+		}
+
+		prevwidth = dm.dmPelsWidth;
+		prevheight = dm.dmPelsHeight;
+
+		count++;
+	}
+
+	return count;
+}
+
 
 /*
 ** VID_FlashWindow
