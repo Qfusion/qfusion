@@ -133,7 +133,7 @@ typedef struct
 					bool fullScreen, bool wideScreen, bool verbose );
 	rserr_t		( *SetMode )( int x, int y, int width, int height, int displayFrequency,
 					bool fullScreen, bool wideScreen );
-	bool	( *SetWindow )( void *hinstance, void *wndproc, void *parenthWnd );
+	rserr_t		( *SetWindow )( void *hinstance, void *wndproc, void *parenthWnd );
 	void		( *Shutdown )( bool verbose );
 
 	// All data that will be used in a level should be

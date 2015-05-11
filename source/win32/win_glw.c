@@ -653,9 +653,9 @@ void GLimp_AppActivate( bool active, bool destroy )
 /*
 ** GLimp_SetWindow
 */
-bool GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
-	return false; // surface cannot be lost
+	return rserr_ok; // surface cannot be lost
 }
 
 /*
