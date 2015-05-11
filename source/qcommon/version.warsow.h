@@ -33,11 +33,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_VERSION_MINOR
-#define APP_VERSION_MINOR				5
+#define APP_VERSION_MINOR				6
 #endif
 
 #ifndef APP_VERSION_UPDATE
-#define APP_VERSION_UPDATE				1
+#define APP_VERSION_UPDATE				0
 #endif
 
 #ifndef APP_VERSION
