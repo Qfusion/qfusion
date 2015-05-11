@@ -33,14 +33,14 @@ static int VID_WndProc( x11display_t *wnd, int ev, int p1, int p2 )
 * VID_Sys_Init
 */
 int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, bool fullScreen, bool wideScreen, bool verbose )
+	void *parentWindow, bool fullScreen, bool verbose )
 {
 	x11display.dpy = NULL;
 
 	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR,
 		NULL, &VID_WndProc, parentWindow, 
 		x, y, width, height, displayFrequency,
-		fullScreen, wideScreen, verbose );
+		fullScreen, verbose );
 }
 
 /*
@@ -122,9 +122,42 @@ void VID_FlashWindow( int count )
 }
 
 /*
-** VID_GetDisplaySize
+** VID_GetSysModes
 */
-bool VID_GetDisplaySize( int *width, int *height )
+unsigned int VID_GetSysModes( vidmode_t *modes )
+{
+	XRRScreenConfiguration *xrrConfig;
+	XRRScreenSize *xrrSizes;
+	Display *dpy;
+	Window root;
+	int num_sizes = 0, i;
+
+	dpy = XOpenDisplay( NULL );
+	if( dpy )
+	{
+		root = DefaultRootWindow( dpy );
+		xrrConfig = XRRGetScreenInfo( dpy, root );
+		xrrSizes = XRRConfigSizes( xrrConfig, &num_sizes );
+
+		if( modes )
+		{
+			for( i = 0; i < num_sizes; i++ )
+			{
+				modes[i].width = xrrSizes[i].width;
+				modes[i].height = xrrSizes[i].height;
+			}
+		}
+
+		XCloseDisplay( dpy );
+	}
+
+	return max( num_sizes, 0 );
+}
+
+/*
+** VID_GetDefaultMode
+*/
+bool VID_GetDefaultMode( int *width, int *height )
 {
 	XRRScreenConfiguration *xrrConfig;
 	XRRScreenSize *xrrSizes;

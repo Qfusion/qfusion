@@ -298,8 +298,8 @@ namespace trap
 			return UI_IMPORT.IN_SupportedDevices();
 		}
 
-		inline bool VID_GetModeInfo( int *width, int *height, bool *wideScreen, int mode ) {
-			return UI_IMPORT.VID_GetModeInfo( width, height, wideScreen, mode );
+		inline bool VID_GetModeInfo( int *width, int *height, int mode ) {
+			return UI_IMPORT.VID_GetModeInfo( width, height, mode );
 		}
 
 		inline void VID_FlashWindow( int count ) {

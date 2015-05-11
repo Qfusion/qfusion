@@ -1198,8 +1198,8 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "GL_MAX_FRAGMENT_UNIFORM_COMPONENTS: %i\n", glConfig.maxFragmentUniformComponents );
 	Com_Printf( "\n" );
 
-	Com_Printf( "mode: %ix%i%s%s\n", glConfig.width, glConfig.height,
-		glConfig.fullScreen ? ", fullscreen" : ", windowed", glConfig.wideScreen ? ", widescreen" : "" );
+	Com_Printf( "mode: %ix%i%s\n", glConfig.width, glConfig.height,
+		glConfig.fullScreen ? ", fullscreen" : ", windowed" );
 	Com_Printf( "picmip: %i\n", r_picmip->integer );
 	Com_Printf( "texturemode: %s\n", r_texturemode->string );
 	Com_Printf( "anisotropic filtering: %i\n", r_texturefilter->integer );
@@ -1252,7 +1252,7 @@ static unsigned R_GLVersionHash( const char *vendorString,
 rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 	void *hinstance, void *wndproc, void *parenthWnd, 
 	int x, int y, int width, int height, int displayFrequency,
-	bool fullScreen, bool wideScreen, bool verbose )
+	bool fullScreen, bool verbose )
 {
 	const qgl_driverinfo_t *driver;
 	const char *dllname = NULL;
@@ -1302,7 +1302,7 @@ init_qgl:
 	}
 
 	// create the window and set up the context
-	err = GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen, wideScreen );
+	err = GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen );
 	if( err != rserr_ok )
 	{
 		QGL_Shutdown();
@@ -1406,10 +1406,9 @@ init_qgl:
 /*
 * R_SetMode
 */
-rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, 
-	bool fullScreen, bool wideScreen )
+rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen )
 {
-	return GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen, wideScreen );
+	return GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen );
 }
 
 /*

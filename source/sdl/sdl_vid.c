@@ -32,9 +32,9 @@ static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 /*
  * VID_Sys_Init
  */
-int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen, bool wideScreen, bool verbose )
+int VID_Sys_Init( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen, bool verbose )
 {
-	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, NULL, VID_WndProc, parentWindow, x, y, width, height, displayFrequency, fullScreen, wideScreen, verbose );
+	return re.Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, NULL, VID_WndProc, parentWindow, x, y, width, height, displayFrequency, fullScreen, verbose );
 }
 
 /*
@@ -83,9 +83,49 @@ void VID_FlashWindow( int count )
 }
 
 /*
- * VID_GetDisplaySize
+ * VID_GetSysModes
  */
-bool VID_GetDisplaySize( int *width, int *height )
+unsigned int VID_GetSysModes( vidmode_t *modes )
+{
+	int num;
+	SDL_DisplayMode mode;
+	int prevwidth = 0, prevheight = 0;
+	unsigned int ret = 0;
+
+	num = SDL_GetNumDisplayModes( 0 );
+	if( num < 1 )
+		return 0;
+
+	while( num-- ) // reverse to help the sorting a little
+	{
+		if( SDL_GetDisplayMode( 0, num, &mode ) )
+			continue;
+
+		if( SDL_BITSPERPIXEL( mode.format ) < 16 )
+			continue;
+
+		if( ( mode.w == prevwidth ) && ( mode.h == prevheight ) )
+			continue;
+
+		if( modes )
+		{
+			modes[ret].width = mode.w;
+			modes[ret].height = mode.h;
+		}
+
+		prevwidth = mode.w;
+		prevheight = mode.h;
+
+		ret++;
+	}
+
+	return ret;
+}
+
+/*
+ * VID_GetDefaultMode
+ */
+bool VID_GetDefaultMode( int *width, int *height )
 {
 	SDL_DisplayMode mode;
 	SDL_GetDesktopDisplayMode( 0, &mode );
