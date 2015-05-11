@@ -35,8 +35,6 @@ typedef struct
 
 	void *OpenGLLib; // instance of OpenGL library
 	wndproc_t wndproc;
-
-	int win_x, win_y;
 } glwstate_t;
 
 extern glwstate_t glw_state;

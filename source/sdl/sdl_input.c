@@ -3,14 +3,16 @@
 #include "sdl_input_joy.h"
 
 cvar_t *in_grabinconsole;
+cvar_t *in_disablemacosxmouseaccel;
+
+extern cvar_t *vid_xpos;
+extern cvar_t *vid_ypos;
 
 static bool input_inited = false;
 static bool mouse_active = false;
 static bool input_active = false;
 static bool input_focus = false;
 static bool mouse_relative = false;
-
-cvar_t *in_disablemacosxmouseaccel;
 
 static int mx, my;
 
@@ -331,6 +333,13 @@ static void HandleEvents( void )
 						break;
 					case SDL_WINDOWEVENT_FOCUS_LOST:
 						input_focus = false;
+						break;
+					case SDL_WINDOWEVENT_MOVED:
+						// FIXME: move this somewhere else
+						Cvar_SetValue( "vid_xpos", event->window.data1 );
+						Cvar_SetValue( "vid_ypos", event->window.data2 );
+						vid_xpos->modified = false;
+						vid_ypos->modified = false;
 						break;
 				}
 				break;
