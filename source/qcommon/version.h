@@ -18,6 +18,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#ifdef APPLICATION_VERSION_HEADER
+#include APPLICATION_VERSION_HEADER
+#endif
+
 #ifndef APPLICATION
 #define APPLICATION						"Qfusion"
 #endif
@@ -147,6 +151,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef APP_DEFAULT_LANGUAGE
 #define APP_DEFAULT_LANGUAGE			"en"
+#endif
+
+#ifndef APP_ICO_ICON
+#define APP_ICO_ICON 					"../icons/qfusion.ico"
+#endif
+
+#ifndef APP_DEMO_ICO_ICON
+#define APP_DEMO_ICO_ICON 				"../icons/qfusion-demo.ico"
 #endif
 
 #ifndef APP_XPM_ICON

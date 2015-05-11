@@ -2,6 +2,8 @@
 //
 #include "resource.h"
 
+#include "../qcommon/version.h"
+
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -28,8 +30,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_APPICON_VALUE      ICON    DISCARDABLE     "../icons/qfusion.ico"
-IDI_APPICON_VALUE1     ICON    DISCARDABLE     "../icons/qfusion-demo.ico"
+IDI_APPICON_VALUE      ICON    DISCARDABLE     APP_ICO_ICON
+IDI_APPICON_VALUE1     ICON    DISCARDABLE     APP_DEMO_ICO_ICON
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -48,9 +50,6 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 // Version
 //
-
-#include "../qcommon/version.h"
-#include "../qcommon/svnrev.h"
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION APP_VERSION_MAJOR,APP_VERSION_MINOR,APP_VERSION_UPDATE,0
