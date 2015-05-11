@@ -25,6 +25,10 @@ if (NOT QFUSION_TVSERVER_NAME)
     set(QFUSION_TVSERVER_NAME qfusiontv_server)
 endif()
 
+if (QFUSION_APPLICATION_VERSION_HEADER)
+	add_definitions(-DAPPLICATION_VERSION_HEADER=${QFUSION_APPLICATION_VERSION_HEADER})
+endif()
+
 option(USE_SDL2 "Build using SDL2" OFF)
 
 # Windows specific settings
