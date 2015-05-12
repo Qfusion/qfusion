@@ -125,14 +125,36 @@ public:
 					DispatchEvent( "rowactivate", parameters );
 			}
 		}
+		else if( evt == "rowadd" )
+		{
+			if( lastSelectedRowIndex < 0 ) {
+				return;
+			}
+
+			int numRowsAdded = evt.GetParameter< int >( "num_rows_added", 0 );
+			if( !numRowsAdded ) {
+				return;
+			}
+
+			int firstRowAdded = evt.GetParameter< int >( "first_row_added", 0 );
+			if( lastSelectedRowIndex >= firstRowAdded ) {
+				lastSelectedRowIndex += numRowsAdded;
+				Rocket::Core::String indexStr( toString( lastSelectedRowIndex ).c_str() );
+				this->SetProperty( "selected-row", indexStr );
+			}
+		}
 		else if( evt == "rowremove" )
 		{
-			int numRowsRemoved = evt.GetParameter< int >("num_rows_removed", 0);
+			if( lastSelectedRowIndex < 0 ) {
+				return;
+			}
+
+			int numRowsRemoved = evt.GetParameter< int >( "num_rows_removed", 0 );
 			if( !numRowsRemoved ) {
 				return;
 			}
 
-			int firstRowRemoved = evt.GetParameter< int >("first_row_removed", 0);
+			int firstRowRemoved = evt.GetParameter< int >( "first_row_removed", 0 );
 			if( lastSelectedRowIndex >= firstRowRemoved && lastSelectedRowIndex < firstRowRemoved + numRowsRemoved ) {
 				lastSelectedRow->RemoveReference();
 				lastSelectedRow = NULL;
@@ -140,9 +162,6 @@ public:
 				lastSelectedRowIndex = -1;
 				this->SetProperty( "selected-row", "-1" );
 			}
-		}
-		else if( evt == "dblclick" )
-		{
 		}
 	}
 
