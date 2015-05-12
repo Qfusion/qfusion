@@ -130,6 +130,20 @@ using namespace Rocket::Core;
 		}
 	}
 
+	// Get the name of a keycode that is visible to the user.
+	std::string UI_KeySelect::KeynumToString( int keynum ) const
+	{
+		if( ( keynum >= 'a' ) && ( keynum <= 'z' ) )
+		{
+			char upper[2];
+			upper[0] = keynum - 'a' + 'A';
+			upper[1] = '\0';
+			return upper;
+		}
+
+		return trap::Key_KeynumToString( keynum );
+	}
+
 	// Initialize the text inside the widget
 	// i.e. if "r" and "b" keys are bound, the text inside the widget
 	//      will look like: "R OR B".
@@ -149,7 +163,7 @@ using namespace Rocket::Core;
 
 			if( FirstKeyIsBound() )
 			{
-				std::string b0 = trap::Key_KeynumToString( boundKey[0] );
+				std::string b0 = KeynumToString( boundKey[0] );
 				if( focusMode ) {
 					text = va( or_l10n, b0.c_str(), "???" );
 				}
@@ -159,8 +173,8 @@ using namespace Rocket::Core;
 			}
 			else if( KeysAreBound() )
 			{
-				std::string b0 = trap::Key_KeynumToString( boundKey[0] );
-				std::string b1 = trap::Key_KeynumToString( boundKey[1] );
+				std::string b0 = KeynumToString( boundKey[0] );
+				std::string b1 = KeynumToString( boundKey[1] );
 				text += va( or_l10n, b0.c_str(), b1.c_str() );
 			}
 		}
