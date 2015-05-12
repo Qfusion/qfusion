@@ -456,9 +456,7 @@ void VID_CheckChanges( void )
 			err = VID_ChangeMode( &VID_SetMode );
 
 			if( err == rserr_restart_required ) {
-				// didn't work, mark the cvar as CVAR_LATCH_VIDEO 
-				Com_Printf( "Changing vid_fullscreen requires restarting video.\n", vid_fullscreen->name );
-				Cvar_ForceSet( vid_fullscreen->name, va( "%i", !vid_fullscreen->integer ) );
+				vid_ref_modified = true;
 			}
 		}
 
