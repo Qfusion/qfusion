@@ -347,6 +347,19 @@ static void HandleEvents( void )
 	}
 }
 
+/**
+ * Skips relative mouse movement for this frame.
+ * We need to ignore movement events generated when
+ * mouse cursor is positined at screen centre.
+ */
+static void IN_SkipRelativeMouseMove( void )
+{
+	if( mouse_active && mouse_relative ) {
+		SDL_GetRelativeMouseState( &mx, &my );
+		mx = my = 0;
+	}
+}
+
 void IN_MouseMove( usercmd_t *cmd )
 {
 	if( mouse_active ) {
@@ -380,6 +393,9 @@ void IN_Init()
 
 	input_inited = true;
 	input_active = true; // will be activated by IN_Frame if necessary
+	mouse_active = true;
+
+	IN_SkipRelativeMouseMove();
 }
 
 /**
@@ -419,14 +435,19 @@ void IN_Frame()
 		input_active = true;
 		if( mouse_relative ) {
 			mouse_relative = !(SDL_SetRelativeMouseMode( SDL_FALSE ) == 0);
-			IN_SetMouseScalingEnabled( true );
+			if( !mouse_relative ) {
+				IN_SetMouseScalingEnabled( true );
+			}
 		}
 	} else {
 		mouse_active = true;
 		input_active = true;
 		if( !mouse_relative ) {
 			mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
-			IN_SetMouseScalingEnabled( false );
+			if( mouse_relative ) {
+				IN_SetMouseScalingEnabled( false );
+			}
+			IN_SkipRelativeMouseMove();
 		}
 	}
 
