@@ -169,26 +169,16 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 
 static int GLimp_InitGL( void )
 {
-	int colorBits, depthBits, stencilBits;
+	int colorBits, depthBits, stencilBits, stereo;
 
-	cvar_t *stereo;
-	stereo = ri.Cvar_Get( "cl_stereo", "0", 0 );
-
-	glConfig.stencilBits = r_stencilbits->integer;
-	// TODO: SDL2
-	//	if( max( 0, r_stencilbits->integer ) != 0 )
-	//		glConfig.stencilEnabled = true;
-	//	else
-	//		glConfig.stencilEnabled = false;
+	cvar_t *stereo_cv;
+	stereo_cv = ri.Cvar_Get( "cl_stereo", "0", 0 );
 
 	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, max( 0, r_stencilbits->integer ) );
 
-	if( stereo->integer != 0 ) {
+	if( stereo_cv->integer != 0 ) {
 		ri.Com_DPrintf( "...attempting to use stereo\n" );
 		SDL_GL_SetAttribute( SDL_GL_STEREO, 1 );
-		glConfig.stereoEnabled = true;
-	} else {
-		glConfig.stereoEnabled = false;
 	}
 
 	glw_state.sdl_glcontext = SDL_GL_CreateContext( glw_state.sdl_window );
@@ -208,6 +198,10 @@ static int GLimp_InitGL( void )
 	SDL_GL_GetAttribute( SDL_GL_BUFFER_SIZE, &colorBits );
 	SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &depthBits );
 	SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &stencilBits );
+	SDL_GL_GetAttribute( SDL_GL_STEREO, &stereo );
+
+	glConfig.stencilBits = stencilBits;
+	glConfig.stereoEnabled = stereo != 0;
 
 	ri.Com_Printf( "GL PFD: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", colorBits, depthBits, stencilBits );
 
