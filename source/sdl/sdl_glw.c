@@ -101,7 +101,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 			glConfig.fullScreen = fullscreen;
 			return rserr_ok;
 		}
-		return rserr_invalid_fullscreen;
+		return rserr_restart_required;
 	}
 
 	ri.Com_Printf( "Initializing OpenGL display\n" );
