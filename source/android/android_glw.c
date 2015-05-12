@@ -273,7 +273,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		GLimp_Shutdown();
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.fullScreen = true;
+	glConfig.fullScreen = fullscreen;
 	if( !GLimp_InitGL() )
 	{
 		ri.Com_Printf( "GLimp_SetMode() - GLimp_InitGL failed\n" );
