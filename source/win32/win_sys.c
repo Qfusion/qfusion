@@ -60,10 +60,6 @@ void Sys_InitTime( void );
 
 void Sys_InitThreads( void );
 
-#ifndef DEDICATED_ONLY
-void VID_SetProcessDPIAware( void );
-#endif
-
 /*
 ===============================================================================
 
@@ -88,10 +84,6 @@ void Sys_Error( const char *format, ... )
 	// shut down QHOST hooks if necessary
 	DeinitConProc();
 
-#ifndef DEDICATED_ONLY
-	IN_WinIME_Shutdown();
-#endif
-
 	Qcommon_Shutdown();
 
 	exit( 1 );
@@ -108,10 +100,6 @@ void Sys_Quit( void )
 
 	// shut down QHOST hooks if necessary
 	DeinitConProc();
-
-#ifndef DEDICATED_ONLY
-	IN_WinIME_Shutdown();
-#endif
 
 	Qcommon_Shutdown();
 
@@ -163,12 +151,6 @@ void Sys_Init( void )
 		// let QHOST hook in
 		InitConProc( argc, argv );
 	}
-
-#ifndef DEDICATED_ONLY
-	VID_SetProcessDPIAware();
-
-	IN_WinIME_Init();
-#endif
 }
 
 /*
