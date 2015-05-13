@@ -356,7 +356,7 @@ static void IN_HandleEvents( void )
  */
 static void IN_SkipRelativeMouseMove( void )
 {
-	if( mouse_active && mouse_relative ) {
+	if( mouse_relative ) {
 		SDL_GetRelativeMouseState( &mx, &my );
 		mx = my = 0;
 	}
