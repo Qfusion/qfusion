@@ -437,13 +437,12 @@ void IN_Init()
 
 	IN_SDL_JoyInit( true );
 
+	input_focus = true;
 	input_inited = true;
 	input_active = true; // will be activated by IN_Frame if necessary
 	mouse_active = true;
 
 	IN_SkipRelativeMouseMove();
-
-	IN_HandleEvents();
 }
 
 /**
