@@ -60,6 +60,10 @@ void Sys_InitTime( void );
 
 void Sys_InitThreads( void );
 
+#ifndef DEDICATED_ONLY
+void VID_SetProcessDPIAware( void );
+#endif
+
 /*
 ===============================================================================
 
@@ -161,6 +165,8 @@ void Sys_Init( void )
 	}
 
 #ifndef DEDICATED_ONLY
+	VID_SetProcessDPIAware();
+
 	IN_WinIME_Init();
 #endif
 }
