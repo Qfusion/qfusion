@@ -18,8 +18,34 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#undef STR_HELPER
+#undef STR_TOSTR
+
+#define STR_HELPER( s )					# s
+#define STR_TOSTR( x )					STR_HELPER( x )
+
+#ifndef APPLICATION_VERSION_HEADER_RC_STR
+
+#ifdef __GNUC__
+#define APPLICATION_VERSION_HEADER_RC_STR STR_TOSTR( APPLICATION_VERSION_HEADER )
+#else
+#define APPLICATION_VERSION_HEADER_RC_STR APPLICATION_VERSION_HEADER
+#endif
+
+#endif
+
+#ifdef RC_INVOKED
+
+#ifdef APPLICATION_VERSION_HEADER_RC_STR
+#include APPLICATION_VERSION_HEADER_RC_STR
+#endif
+
+#else
+
 #ifdef APPLICATION_VERSION_HEADER
 #include APPLICATION_VERSION_HEADER
+#endif
+
 #endif
 
 #ifndef APPLICATION
@@ -77,13 +103,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef APP_SCREENSHOTS_PREFIX
 #define APP_SCREENSHOTS_PREFIX			"qfusion_"
 #endif
-
-#undef STR_HELPER
-#undef STR_TOSTR
-
-#define STR_HELPER( s )					# s
-#define STR_TOSTR( x )					STR_HELPER( x )
-
 #ifndef APP_PROTOCOL_VERSION_STR
 #define APP_PROTOCOL_VERSION_STR		STR_TOSTR( APP_PROTOCOL_VERSION )
 #endif
