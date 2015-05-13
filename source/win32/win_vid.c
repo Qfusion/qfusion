@@ -82,6 +82,8 @@ static bool s_winkeys_hooked;
 static bool s_alttab_disabled;
 extern unsigned	sys_msg_time;
 
+static float vid_pixelRatio = 1.0f;
+
 /*
 ** WinKeys system hook (taken from ezQuake)
 */
@@ -666,9 +668,33 @@ void VID_FlashWindow( int count )
 }
 
 /*
+** VID_SetProcessDPIAware
+*
+* Disables the automatic DPI scaling and gets the pixel ratio.
+*/
+void VID_SetProcessDPIAware( void )
+{
+	HINSTANCE user32Dll = LoadLibrary( "user32.dll" );
+	if( user32Dll )
+	{
+		BOOL ( WINAPI *pSetProcessDPIAware )( void ) = ( void * )GetProcAddress( user32Dll, "SetProcessDPIAware" );
+		if( pSetProcessDPIAware && pSetProcessDPIAware() )
+		{
+			HDC hdc = GetDC( NULL );
+			if( hdc )
+			{
+				vid_pixelRatio = ( float )GetDeviceCaps( hdc, LOGPIXELSY ) / 96.0f;
+				ReleaseDC( NULL, hdc );
+			}
+		}
+		FreeLibrary( user32Dll );
+	}
+}
+
+/*
 ** VID_GetPixelRatio
 */
 float VID_GetPixelRatio( void )
 {
-	return 1.0f; // TODO: return real dpi/96?
+	return vid_pixelRatio;
 }
