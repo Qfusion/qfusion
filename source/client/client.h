@@ -623,3 +623,17 @@ int CL_MM_GetLoginState( void );
 size_t CL_MM_GetLastErrorMessage( char *buffer, size_t buffer_size );
 size_t CL_MM_GetProfileURL( char *buffer, size_t buffer_size, bool rml );
 size_t CL_MM_GetBaseWebURL( char *buffer, size_t buffer_size );
+
+//
+// sys import
+//
+
+/**
+* Does platform-dependent client initialization.
+*/
+void CL_Sys_Init( void );
+
+/**
+* Does platform-dependent client shutdown.
+*/
+void CL_Sys_Shutdown( void );

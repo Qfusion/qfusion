@@ -7,6 +7,7 @@ LOCAL_STATIC_LIBRARIES := curl
 LOCAL_WHOLE_STATIC_LIBRARIES := android_native_app_glue
 
 LOCAL_SRC_FILES := \
+  android/android_client.c \
   android/android_clipboard.c \
   android/android_console.c \
   android/android_input.c \
