@@ -348,9 +348,9 @@ static void HandleEvents( void )
 }
 
 /**
- * Skips relative mouse movement for this frame.
- * We need to ignore movement events generated when
- * mouse cursor is positined at screen centre.
+ * Skips relative mouse movement for current frame.
+ * We need to ignore the movement event generated when
+ * mouse cursor is warped to window centre for the first time.
  */
 static void IN_SkipRelativeMouseMove( void )
 {
