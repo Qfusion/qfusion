@@ -13,6 +13,16 @@ file(GLOB CLIENT_HEADERS
 	"../gameshared/config.h"
 	"../qcommon/*.h"
 	"../qalgo/*.h"
+	"../angelwrap/qas_public.h"
+	"../ref_gl/r_public.h"
+	"../cgame/cg_public.h"
+	"../cgame/ref.h"
+	"../game/g_public.h"
+	"../ui/ui_public.h"
+	"../ftlib/ftlib_public.h"
+	"../irc/irc_interface.h"
+	"../steamlib/steamlib_public.h"
+	"../cin/cin_public.h"
 	"../matchmaker/*.h"
 )
 
