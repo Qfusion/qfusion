@@ -62,7 +62,6 @@ static mempool_t *vid_ref_mempool = NULL;
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, const int *iconXPM,
 	int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullscreen, bool verbose );
 static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen );
-void VID_Front_f( void );
 void VID_UpdateWindowPosAndSize( int x, int y );
 void VID_EnableAltTab( bool enable );
 void VID_EnableWinKeys( bool enable );
@@ -681,7 +680,6 @@ void VID_Init( void )
 
 	/* Add some console commands that we want to handle */
 	Cmd_AddCommand( "vid_restart", VID_Restart_f );
-	Cmd_AddCommand( "vid_front", VID_Front_f );
 	Cmd_AddCommand( "vid_modelist", VID_ModeList_f );
 
 	/* Start the graphics mode and load refresh DLL */
@@ -712,7 +710,6 @@ void VID_Shutdown( void )
 	FTLIB_UnloadLibrary( false );
 
 	Cmd_RemoveCommand( "vid_restart" );
-	Cmd_RemoveCommand( "vid_front" );
 	Cmd_RemoveCommand( "vid_modelist" );
 
 	Mem_ZoneFree( vid_modes );
