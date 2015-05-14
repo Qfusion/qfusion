@@ -41,13 +41,6 @@ rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix
 }
 
 /*
- * VID_Front_f
- */
-void VID_Front_f( void )
-{
-}
-
-/*
  * VID_UpdateWindowPosAndSize
  */
 void VID_UpdateWindowPosAndSize( int x, int y )

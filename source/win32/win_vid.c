@@ -578,15 +578,6 @@ void VID_UpdateWindowPosAndSize( int x, int y )
 }
 
 /*
-** VID_Front_f
-*/
-void VID_Front_f( void )
-{
-	SetWindowLong( cl_hwnd, GWL_EXSTYLE, WS_EX_TOPMOST );
-	SetForegroundWindow( cl_hwnd );
-}
-
-/*
 ** VID_GetDefaultMode
 */
 bool VID_GetDefaultMode( int *width, int *height )

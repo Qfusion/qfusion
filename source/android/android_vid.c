@@ -33,10 +33,6 @@ void VID_FlashWindow( int count )
 {
 }
 
-void VID_Front_f( void )
-{
-}
-
 bool VID_GetDisplaySize( int *width, int *height )
 {
 	ANativeWindow *window = sys_android_app->window;
