@@ -10,6 +10,9 @@ file(GLOB SERVER_HEADERS
 	"../qcommon/*.h"
 	"../qalgo/*.h"
 	"../matchmaker/*.h"
+	"../angelwrap/qas_public.h"
+	"../game/g_public.h"
+	"../irc/irc_interface.h"
 )
 
 file(GLOB SERVER_SOURCES
