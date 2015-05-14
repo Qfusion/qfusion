@@ -21,7 +21,7 @@
 #include <SDL.h>
 #include "../client/client.h"
 
-static SDL_Window *sdl_window;
+SDL_Window *sdl_window;
 
 static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 {
