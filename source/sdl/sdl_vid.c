@@ -21,8 +21,11 @@
 #include <SDL.h>
 #include "../client/client.h"
 
+SDL_Window *sdl_window;
+
 static int VID_WndProc( void *wnd, int ev, int p1, int p2 )
 {
+	sdl_window = wnd;
 	return 0;
 }
 
@@ -38,17 +41,11 @@ rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix
 }
 
 /*
- * VID_Front_f
- */
-void VID_Front_f( void )
-{
-}
-
-/*
  * VID_UpdateWindowPosAndSize
  */
 void VID_UpdateWindowPosAndSize( int x, int y )
 {
+	SDL_SetWindowPosition( sdl_window, x, y );
 }
 
 /*

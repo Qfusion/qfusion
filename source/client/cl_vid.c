@@ -62,7 +62,6 @@ static mempool_t *vid_ref_mempool = NULL;
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, const int *iconXPM,
 	int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullscreen, bool verbose );
 static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen );
-void VID_Front_f( void );
 void VID_UpdateWindowPosAndSize( int x, int y );
 void VID_EnableAltTab( bool enable );
 void VID_EnableWinKeys( bool enable );
@@ -456,9 +455,7 @@ void VID_CheckChanges( void )
 			err = VID_ChangeMode( &VID_SetMode );
 
 			if( err == rserr_restart_required ) {
-				// didn't work, mark the cvar as CVAR_LATCH_VIDEO 
-				Com_Printf( "Changing vid_fullscreen requires restarting video.\n", vid_fullscreen->name );
-				Cvar_ForceSet( vid_fullscreen->name, va( "%i", !vid_fullscreen->integer ) );
+				vid_ref_modified = true;
 			}
 		}
 
@@ -531,26 +528,57 @@ load_refresh:
 		}
 
 		if( vid_fullscreen->integer ) {
-			// snap to the largest supported fullscreen resolution
-			int w = vid_modes[0].width, h = vid_modes[0].height;
-			int tw = max( vid_width->integer, w ), th = max( vid_height->integer, h );
-			int mw, mh;
-			unsigned int i;
-			for( i = 1; i < vid_num_modes; i++ ) {
-				mw = vid_modes[i].width;
-				mh = vid_modes[i].height;
-				if( mw > tw ) {
-					break;
-				}
-				if( ( mh <= th ) && ( mw >= w ) && ( mh >= h ) ) {
-					w = vid_modes[i].width;
-					h = vid_modes[i].height;
+			// snap to the closest fullscreen resolution, width has priority over height
+			int tw = vid_width->integer, th = vid_height->integer, w = vid_modes[0].width, h;
+			int minwdiff = abs( w - tw ), minhdiff;
+			unsigned int i, hfirst = 0;
+
+			if( minwdiff ) {
+				for( i = 1; i < vid_num_modes; i++ ) {
+					const vidmode_t *mode = &( vid_modes[i] );
+					int diff = abs( mode->width - tw );
+					// select the bigger mode if the diff from the smaller and the larger is equal - use < for the smaller one
+					if( diff <= minwdiff ) {
+						if( mode->width != w ) { // don't advance hfirst when searching for the larger mode
+							hfirst = i;
+							w = mode->width;
+						}
+						minwdiff = diff;
+					}
+					if( !diff || ( diff > minwdiff ) ) {
+						break;
+					}
 				}
 			}
-			Q_snprintfz( num, sizeof( num ), "%i", w );
-			Cvar_ForceSet( vid_width->name, num );
-			Q_snprintfz( num, sizeof( num ), "%i", h );
-			Cvar_ForceSet( vid_height->name, num );
+
+			h = vid_modes[hfirst].height;
+			minhdiff = abs( h - th );
+			if( minhdiff ) {
+				for( i = hfirst + 1; i < vid_num_modes; i++ ) {
+					const vidmode_t *mode = &( vid_modes[i] );
+					int diff;
+					if( mode->width != w ) {
+						break;
+					}
+					diff = abs( mode->height - th );
+					if( diff <= minhdiff ) {
+						h = mode->height;
+						minhdiff = diff;
+					}
+					if( !diff || ( diff > minhdiff ) ) {
+						break;
+					}
+				}
+			}
+
+			if( minwdiff ) {
+				Q_snprintfz( num, sizeof( num ), "%i", w );
+				Cvar_ForceSet( vid_width->name, num );
+			}
+			if( minhdiff ) {
+				Q_snprintfz( num, sizeof( num ), "%i", h );
+				Cvar_ForceSet( vid_height->name, num );
+			}
 		}
 
 		err = VID_ChangeMode( &VID_Sys_Init_ );
@@ -652,7 +680,6 @@ void VID_Init( void )
 
 	/* Add some console commands that we want to handle */
 	Cmd_AddCommand( "vid_restart", VID_Restart_f );
-	Cmd_AddCommand( "vid_front", VID_Front_f );
 	Cmd_AddCommand( "vid_modelist", VID_ModeList_f );
 
 	/* Start the graphics mode and load refresh DLL */
@@ -683,7 +710,6 @@ void VID_Shutdown( void )
 	FTLIB_UnloadLibrary( false );
 
 	Cmd_RemoveCommand( "vid_restart" );
-	Cmd_RemoveCommand( "vid_front" );
 	Cmd_RemoveCommand( "vid_modelist" );
 
 	Mem_ZoneFree( vid_modes );

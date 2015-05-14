@@ -46,11 +46,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../sdl/sdl_input_joy.c"
             "../sdl/sdl_input_win.c"
             "../sdl/sdl_vid.c"
-            "../sdl/sdl_vid_icon.c"
             "../sdl/sdl_sys.c"
             "../sdl/sdl_clipboard.c"
             "../sdl/sdl_time.c"
             "../sdl/sdl_lib.c"
+            "../sdl/sdl_client.c"
 
             "../win32/qfusion.rc"
         )
@@ -68,6 +68,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../win32/win_threads.c"
             "../null/sys_vfs_null.c"
 
+            "../win32/win_client.c"
             "../win32/win_input.c"
             "../win32/win_vid.c"
             "../win32/conproc.c"
@@ -99,11 +100,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../sdl/sdl_input_joy.c"
         "../sdl/sdl_input_osx.m"
         "../sdl/sdl_vid.c"
-        "../sdl/sdl_vid_icon.c"
         "../sdl/sdl_sys.c"
         "../sdl/sdl_clipboard.c"
         "../sdl/sdl_time.c"
         "../sdl/sdl_lib.c"
+        "../sdl/sdl_client.c"
 
         "../mac/mac_sys.m"
         "../mac/Warsow-Info.plist"
@@ -136,11 +137,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../sdl/sdl_input_joy.c"
             "../sdl/sdl_input_unix.c"
             "../sdl/sdl_vid.c"
-            "../sdl/sdl_vid_icon.c"
             "../sdl/sdl_sys.c"
             "../sdl/sdl_clipboard.c"
             "../sdl/sdl_time.c"
             "../sdl/sdl_lib.c"
+            "../sdl/sdl_client.c"
         )
 
         set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "pthread" "m" "dl" "rt")
@@ -157,6 +158,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "../null/sys_vfs_null.c"
 
             "../unix/keysym2ucs.c"
+            "../unix/unix_client.c"
             "../unix/unix_input.c"
             "../unix/unix_vid.c"
 
