@@ -593,7 +593,7 @@ static void CG_BulletImpact( trace_t *tr )
 
 	// throw particles on dust
 	if( tr->surfFlags & SURF_DUST )
-		CG_ParticleEffect( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 20 );
+		CG_ParticleEffect( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 1 );
 
 	// spawn decal
 	CG_SpawnDecal( tr->endpos, tr->plane.normal, random()*360, 8, 1, 1, 1, 1, 8, 1, false, CG_MediaShader( cgs.media.shaderBulletMark ) );
