@@ -8,6 +8,8 @@ cvar_t *in_disablemacosxmouseaccel;
 extern cvar_t *vid_xpos;
 extern cvar_t *vid_ypos;
 
+extern SDL_Window *sdl_window;
+
 static bool input_inited = false;
 static bool mouse_active = false;
 static bool input_active = false;
@@ -242,7 +244,7 @@ static void AppActivate( bool active )
 	VID_AppActivate( active, false );
 }
 
-static void HandleEvents( void )
+static void IN_HandleEvents( void )
 {
 	Uint16 *wtext = NULL;
 	SDL_PumpEvents();
@@ -336,14 +338,46 @@ static void HandleEvents( void )
 						break;
 					case SDL_WINDOWEVENT_MOVED:
 						// FIXME: move this somewhere else
-						Cvar_SetValue( "vid_xpos", event->window.data1 );
-						Cvar_SetValue( "vid_ypos", event->window.data2 );
+						Cvar_SetValue( "vid_xpos", event.window.data1 );
+						Cvar_SetValue( "vid_ypos", event.window.data2 );
 						vid_xpos->modified = false;
 						vid_ypos->modified = false;
 						break;
 				}
 				break;
 		}
+	}
+}
+
+/**
+ * Skips relative mouse movement for current frame.
+ * We need to ignore the movement event generated when
+ * mouse cursor is warped to window centre for the first time.
+ */
+static void IN_SkipRelativeMouseMove( void )
+{
+	if( mouse_relative ) {
+		SDL_GetRelativeMouseState( &mx, &my );
+		mx = my = 0;
+	}
+}
+
+static void IN_WarpMouseToCenter( int *pcenter_x, int *pcenter_y )
+{
+	int center_x, center_y;
+
+	SDL_GetWindowSize( sdl_window, &center_x, &center_y );
+
+	center_x /= 2;
+	center_y /= 2;
+
+	SDL_WarpMouseInWindow( sdl_window, center_x, center_y );
+
+	if( pcenter_x ) {
+		*pcenter_x = center_x;
+	}
+	if( pcenter_y ) {
+		*pcenter_y = center_y;
 	}
 }
 
@@ -354,10 +388,24 @@ void IN_MouseMove( usercmd_t *cmd )
 			mx = my = 0;
 			SDL_GetRelativeMouseState( &mx, &my );
 		}
+		else {
+			if( mx || my ) {
+				int center_x, center_y;
+
+				SDL_GetMouseState( &mx, &my );
+
+				IN_WarpMouseToCenter( &center_x, &center_y );
+
+				mx -= center_x;
+				my -= center_y;
+			}
+		}
+
 		if( mx || my ) {
 			CL_MouseMove( cmd, mx, my );
 		}
 	}
+
 	mx = my = 0;
 }
 
@@ -369,17 +417,32 @@ void IN_Init()
 	in_grabinconsole = Cvar_Get( "in_grabinconsole", "0", CVAR_ARCHIVE );
 	in_disablemacosxmouseaccel = Cvar_Get( "in_disablemacosxmouseaccel", "1", CVAR_ARCHIVE );
 
-	SDL_SetCursor( NULL );
+	SDL_ShowCursor( SDL_DISABLE );
+
+#if SDL_VERSION_ATLEAST(2, 0, 2)
+	
+	{
+		cvar_t *m_raw = Cvar_Get( "m_raw", "1", CVAR_ARCHIVE );
+		SDL_SetHint( SDL_HINT_MOUSE_RELATIVE_MODE_WARP, m_raw->integer ? "0" : "1" );
+	}
+#endif
 
 	mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
 	if( mouse_relative ) {
 		IN_SetMouseScalingEnabled( false );
 	}
+	else {
+		IN_WarpMouseToCenter( NULL, NULL );
+	}
 
 	IN_SDL_JoyInit( true );
 
+	input_focus = true;
 	input_inited = true;
 	input_active = true; // will be activated by IN_Frame if necessary
+	mouse_active = true;
+
+	IN_SkipRelativeMouseMove();
 }
 
 /**
@@ -415,22 +478,35 @@ void IN_Frame()
 		return;
 
 	if( !input_focus || ( !Cvar_Value( "vid_fullscreen" ) && cls.key_dest == key_console && !in_grabinconsole->integer ) ) {
+		if( mouse_active ) {
+			if( mouse_relative ) {
+				mouse_relative = !(SDL_SetRelativeMouseMode( SDL_FALSE ) == 0);
+				if( !mouse_relative ) {
+					IN_SetMouseScalingEnabled( true );
+				}
+			}
+			SDL_ShowCursor( SDL_ENABLE );
+		}
 		mouse_active = false;
 		input_active = true;
-		if( mouse_relative ) {
-			mouse_relative = !(SDL_SetRelativeMouseMode( SDL_FALSE ) == 0);
-			IN_SetMouseScalingEnabled( true );
-		}
 	} else {
+		if( !mouse_active ) {
+			SDL_ShowCursor( SDL_DISABLE );
+
+			mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
+			if( mouse_relative ) {
+				IN_SetMouseScalingEnabled( false );
+			}
+			else {
+				IN_WarpMouseToCenter( NULL, NULL );
+			}
+			IN_SkipRelativeMouseMove();
+		}
 		mouse_active = true;
 		input_active = true;
-		if( !mouse_relative ) {
-			mouse_relative = SDL_SetRelativeMouseMode( SDL_TRUE ) == 0;
-			IN_SetMouseScalingEnabled( false );
-		}
 	}
 
-	HandleEvents();
+	IN_HandleEvents();
 }
 
 /**

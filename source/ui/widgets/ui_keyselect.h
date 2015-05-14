@@ -97,6 +97,9 @@ private:
 	// resolve binds conflicts with the others keyselect using instancer.
 	void ResolveConflictsForKey( int key );
 
+	// Get the name of a keycode that is visible to the user.
+	std::string KeynumToString( int keynum ) const;
+
 	// Initialize the text inside the widget
 	// i.e. if "r" and "b" keys are bound, the text inside the widget
 	//      will look like: "R OR B".

@@ -18,8 +18,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#undef STR_HELPER
+#undef STR_TOSTR
+
+#define STR_HELPER( s )					# s
+#define STR_TOSTR( x )					STR_HELPER( x )
+
 #ifdef APPLICATION_VERSION_HEADER
+
+#if defined( RC_INVOKED ) && defined ( __GNUC__ )
+
+#define APPLICATION_VERSION_HEADER_RC_STR STR_TOSTR( APPLICATION_VERSION_HEADER )
+#include APPLICATION_VERSION_HEADER_RC_STR
+
+#else
+
 #include APPLICATION_VERSION_HEADER
+
+#endif
+
 #endif
 
 #ifndef APPLICATION
@@ -77,13 +94,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef APP_SCREENSHOTS_PREFIX
 #define APP_SCREENSHOTS_PREFIX			"qfusion_"
 #endif
-
-#undef STR_HELPER
-#undef STR_TOSTR
-
-#define STR_HELPER( s )					# s
-#define STR_TOSTR( x )					STR_HELPER( x )
-
 #ifndef APP_PROTOCOL_VERSION_STR
 #define APP_PROTOCOL_VERSION_STR		STR_TOSTR( APP_PROTOCOL_VERSION )
 #endif
@@ -136,7 +146,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_UI_BASEPATH
-#define APP_UI_BASEPATH					"/ui/baseui"
+#define APP_UI_BASEPATH					"baseui"
 #endif
 
 #ifndef APP_STARTUP_COLOR

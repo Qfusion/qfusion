@@ -593,7 +593,7 @@ static void CG_BulletImpact( trace_t *tr )
 
 	// throw particles on dust
 	if( tr->surfFlags & SURF_DUST )
-		CG_ParticleEffect( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 20 );
+		CG_ParticleEffect( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 1 );
 
 	// spawn decal
 	CG_SpawnDecal( tr->endpos, tr->plane.normal, random()*360, 8, 1, 1, 1, 1, 8, 1, false, CG_MediaShader( cgs.media.shaderBulletMark ) );
@@ -634,7 +634,10 @@ static void CG_Event_FireMachinegun( vec3_t origin, vec3_t dir, int weapon, int 
 				// flesh impact sound
 			}
 			else
+			{
+				CG_ImpactPuffParticles( trace.endpos, trace.plane.normal, 1, 0.7, 1, 0.7, 0.0, 1.0, NULL );
 				trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxRic[ rand()%2 ] ), trace.endpos, CHAN_AUTO, cg_volume_effects->value, ATTN_STATIC );
+			}
 		}
 	}
 
