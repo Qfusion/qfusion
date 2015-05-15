@@ -1735,6 +1735,9 @@ int RP_RegisterProgram( int type, const char *name, const char *deformsKey,
 */
 int RP_GetProgramObject( int elem )
 {
+	if( elem < 1 ) {
+		return 0;
+	}
 	return r_glslprograms[elem - 1].object;
 }
 
