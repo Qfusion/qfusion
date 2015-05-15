@@ -676,6 +676,15 @@ void CL_GameModule_RenderView( float stereo_separation )
 }
 
 /*
+* CL_GameModule_UpdateInput
+*/
+void CL_GameModule_UpdateInput( float frametime )
+{
+	if( cge )
+		cge->UpdateInput( frametime );
+}
+
+/*
 * CL_GameModule_GetButtonBits
 */
 uint8_t CL_GameModule_GetButtonBits( void )
@@ -710,15 +719,6 @@ void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned
 {
 	if( cge )
 		cge->TouchEvent( id, type, x, y, time );
-}
-
-/*
-* CL_GameModule_TouchFrame
-*/
-void CL_GameModule_TouchFrame( float frametime )
-{
-	if( cge )
-		cge->TouchFrame( frametime );
 }
 
 /*

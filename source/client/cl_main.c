@@ -2719,6 +2719,10 @@ void CL_Frame( int realmsec, int gamemsec )
 	// allow rendering DLL change
 	VID_CheckChanges();
 
+	// refresh input in cgame
+	if( cls.key_dest == key_game )
+		CL_GameModule_UpdateInput( cls.realframetime );
+
 	cl.inputRefreshed = false;
 	if( cls.state != CA_ACTIVE )
 		CL_UpdateCommandInput();
