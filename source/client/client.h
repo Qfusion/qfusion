@@ -629,11 +629,11 @@ size_t CL_MM_GetBaseWebURL( char *buffer, size_t buffer_size );
 //
 
 /**
-* Does platform-dependent client initialization.
-*/
+ * Initializes the parts of the platform module required to run the client.
+ */
 void CL_Sys_Init( void );
 
 /**
-* Does platform-dependent client shutdown.
-*/
+ * Shuts down the client parts of the platform module.
+ */
 void CL_Sys_Shutdown( void );
