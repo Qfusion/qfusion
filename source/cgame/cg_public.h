@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   85
+#define	CGAME_API_VERSION   86
 
 //
 // structs and variables shared with the main engine
@@ -297,14 +297,13 @@ typedef struct
 
 	bool ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
 
+	void ( *UpdateInput )( float frametime );
+
 	uint8_t ( *GetButtonBits )( void );
 	void ( *AddViewAngles )( vec3_t viewangles, float frametime );
 	void ( *AddMovement )( vec3_t movement );
 
 	void ( *TouchEvent )( int id, touchevent_t type, int x, int y, unsigned int time );
-
-	void ( *TouchFrame )( float frametime );
-
 	void ( *CancelTouches )( void );
 } cgame_export_t;
 

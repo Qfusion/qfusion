@@ -925,10 +925,6 @@ void CL_UserInputFrame( void )
 	// get new key events from mice or external controllers
 	IN_Commands();
 
-	// let the game handle touch events
-	if( cls.key_dest == key_game )
-		CL_GameModule_TouchFrame( cls.realframetime );
-
 	// process console commands
 	Cbuf_Execute();
 }
