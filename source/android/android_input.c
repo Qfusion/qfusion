@@ -298,35 +298,27 @@ static int32_t IN_Android_OnInputEvent( struct android_app *app, AInputEvent *ev
 }
 
 /*
-* IN_Android_OnQfusionEvent
+* IN_Android_CharEvent
 */
-void IN_Android_OnQfusionEvent( uint8_t event, int readfd )
+void IN_Android_CharEvent( int charkey )
 {
-	switch( event )
+	int key = 0;
+
+	if( !in_android_initialized )
+		return;
+
+	if( charkey == 8 )
+		key = K_BACKSPACE;
+	else if( charkey == 127 )
+		key = K_DEL;
+	else
+		Key_CharEvent( -1, charkey );
+
+	if( key )
 	{
-	case SYS_ANDROID_EVENT_INPUT_CHAR:
-		{
-			uint16_t charkey;
-			if( ( read( readfd, &charkey, sizeof( charkey ) ) == sizeof( charkey ) ) && in_android_initialized )
-			{
-				int key = 0;
-
-				if( charkey == 8 )
-					key = K_BACKSPACE;
-				else if( charkey == 127 )
-					key = K_DEL;
-				else
-					Key_CharEvent( -1, charkey );
-
-				if( key )
-				{
-					unsigned int time = Sys_Android_Microseconds() / ( ( uint64_t )1000 );
-					Key_Event( key, true, time );
-					Key_Event( key, false, time );
-				}
-			}
-		}
-		break;
+		unsigned int time = Sys_Android_Microseconds() / ( ( uint64_t )1000 );
+		Key_Event( key, true, time );
+		Key_Event( key, false, time );
 	}
 }
 
@@ -375,18 +367,16 @@ void IN_MouseMove( usercmd_t *cmd )
 static bool IN_Android_TouchscreenAvailable( void )
 {
 	JNIEnv *env = Sys_Android_GetJNIEnv();
-	jobject input;
+	jobject inputManager;
 	jmethodID getInputDeviceIds, getInputDevice, getSources;
 	jintArray idsJA;
 	jint *ids;
 	int i, num;
 
 	{
-		jmethodID getSystemService = (*env)->GetMethodID( env, sys_android_activityClass,
-			"getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;" );
-		jobject inputName = (*env)->NewStringUTF( env, "input" );
-		input = (*env)->CallObjectMethod( env, sys_android_app->activity->clazz, getSystemService, inputName );
-		(*env)->DeleteLocalRef( env, inputName );
+		jstring name = (*env)->NewStringUTF( env, "input" );
+		inputManager = (*env)->CallObjectMethod( env, sys_android_app->activity->clazz, sys_android_getSystemService, name );
+		(*env)->DeleteLocalRef( env, name );
 	}
 
 	{
@@ -400,12 +390,12 @@ static bool IN_Android_TouchscreenAvailable( void )
 		(*env)->DeleteLocalRef( env, c );		
 	}
 
-	idsJA = (*env)->CallObjectMethod( env, input, getInputDeviceIds );
+	idsJA = (*env)->CallObjectMethod( env, inputManager, getInputDeviceIds );
 	num = (*env)->GetArrayLength( env, idsJA );
 	ids = (*env)->GetIntArrayElements( env, idsJA, NULL );
 	for( i = 0; i < num; i++ )
 	{
-		jobject device = (*env)->CallObjectMethod( env, input, getInputDevice, ids[i] );
+		jobject device = (*env)->CallObjectMethod( env, inputManager, getInputDevice, ids[i] );
 		int sources;
 		if( !device )
 			continue;
@@ -417,7 +407,7 @@ static bool IN_Android_TouchscreenAvailable( void )
 	(*env)->ReleaseIntArrayElements( env, idsJA, ids, JNI_ABORT );
 	(*env)->DeleteLocalRef( env, idsJA );
 
-	(*env)->DeleteLocalRef( env, input );
+	(*env)->DeleteLocalRef( env, inputManager );
 
 	return i < num;
 }
