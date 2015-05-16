@@ -654,7 +654,9 @@ static void CL_AddMovementFromKeys( vec3_t movement )
 }
 
 extern cvar_t *joy_forwardthreshold;
+extern cvar_t *joy_forwardrunthreshold;
 extern cvar_t *joy_sidethreshold;
+extern cvar_t *joy_siderunthreshold;
 extern cvar_t *joy_pitchthreshold;
 extern cvar_t *joy_yawthreshold;
 extern cvar_t *joy_pitchspeed;
@@ -662,35 +664,39 @@ extern cvar_t *joy_yawspeed;
 extern cvar_t *joy_inverty;
 extern cvar_t *joy_movement_stick;
 
-/*
-* CL_AddMovementFromJoystick
-*/
+/**
+ * Adds the movement and the rotation from the gamepad.
+ *
+ * @param movement the target movement vector
+ */
 static void CL_AddMovementFromJoystick( vec3_t movement )
 {
 	vec4_t sticks;
 	int swap;
-	float value;
+	float value, absValue;
 
 	IN_GetThumbsticks( sticks );
 
 	swap = ( joy_movement_stick->integer ? 2 : 0 );
 
 	value = sticks[swap];
-	if( fabs( value ) > joy_sidethreshold->value )
-		movement[0] += value;
+	absValue = fabsf( value );
+	if( fabsf( value ) > joy_sidethreshold->value )
+		movement[0] += ( ( absValue > joy_siderunthreshold->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
 	value = sticks[1 ^ swap];
-	if( fabs( value ) > joy_forwardthreshold->value )
-		movement[1] -= value;
+	absValue = fabsf( value );
+	if( fabsf( value ) > joy_forwardthreshold->value )
+		movement[1] -= ( ( absValue > joy_forwardrunthreshold->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
 
 	value = sticks[2 ^ swap];
-	if( fabs( value ) > joy_yawthreshold->value )
+	if( fabsf( value ) > joy_yawthreshold->value )
 	{
 		cl.viewangles[YAW] += -cls.realframetime *
 			value * value * value * joy_yawspeed->value *
 			CL_GameModule_GetSensitivityScale( joy_yawspeed->value, 0.0f );
 	}
 	value = sticks[3 ^ swap];
-	if( fabs( value ) > joy_pitchthreshold->value )
+	if( fabsf( value ) > joy_pitchthreshold->value )
 	{
 		cl.viewangles[PITCH] += cls.realframetime * ( joy_inverty->integer ? -1.0f : 1.0f ) *
 			value * value * value * joy_pitchspeed->value *
