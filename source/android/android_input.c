@@ -307,12 +307,21 @@ void IN_Android_CharEvent( int charkey )
 	if( !in_android_initialized )
 		return;
 
-	if( charkey == 8 )
+	switch( charkey )
+	{
+	case 8:
 		key = K_BACKSPACE;
-	else if( charkey == 127 )
+		break;
+	case 13:
+		key = K_ENTER;
+		break;
+	case 127:
 		key = K_DEL;
-	else
+		break;
+	default:
 		Key_CharEvent( -1, charkey );
+		break;
+	}
 
 	if( key )
 	{
