@@ -400,7 +400,7 @@ static void Sys_Android_ProcessInput( struct android_app *app, struct android_po
 		// Instead of calling AInputQueue_preDispatchEvent which hangs the whole engine on API 17 and lower,
 		// let onInputEvent hide the IME using JNI.
 		handled = 0;
-        if( app->onInputEvent )
+		if( app->onInputEvent )
 			handled = app->onInputEvent( app, event );
 		if( ( AInputEvent_getType( event ) == AINPUT_EVENT_TYPE_KEY ) && ( AKeyEvent_getKeyCode( event ) == AKEYCODE_BACK ) )
 			handled = 1;
