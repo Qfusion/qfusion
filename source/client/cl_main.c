@@ -2110,7 +2110,7 @@ static void CL_InitLocal( void )
 	m_sensCap =		Cvar_Get( "m_sensCap", "0", CVAR_ARCHIVE );
 
 	joy_forwardthreshold = Cvar_Get( "joy_forwardthreshold", "0.239", CVAR_ARCHIVE );
-	joy_forwardrunthreshold = Cvar_Get( "joy_forwardrunthreshold", "0.4", CVAR_ARCHIVE );
+	joy_forwardrunthreshold = Cvar_Get( "joy_forwardrunthreshold", "0.6", CVAR_ARCHIVE );
 	joy_sidethreshold = Cvar_Get( "joy_sidethreshold", "0.239", CVAR_ARCHIVE );
 	joy_siderunthreshold = Cvar_Get( "joy_siderunthreshold", "0.4", CVAR_ARCHIVE );
 	joy_pitchthreshold = Cvar_Get( "joy_pitchthreshold", "0.265", CVAR_ARCHIVE );
