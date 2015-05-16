@@ -60,7 +60,9 @@ cvar_t *m_pitch;
 cvar_t *m_yaw;
 
 cvar_t *joy_forwardthreshold;
+cvar_t *joy_forwardrunthreshold;
 cvar_t *joy_sidethreshold;
+cvar_t *joy_siderunthreshold;
 cvar_t *joy_pitchthreshold;
 cvar_t *joy_yawthreshold;
 cvar_t *joy_pitchspeed;
@@ -2108,7 +2110,9 @@ static void CL_InitLocal( void )
 	m_sensCap =		Cvar_Get( "m_sensCap", "0", CVAR_ARCHIVE );
 
 	joy_forwardthreshold = Cvar_Get( "joy_forwardthreshold", "0.239", CVAR_ARCHIVE );
+	joy_forwardrunthreshold = Cvar_Get( "joy_forwardrunthreshold", "0.4", CVAR_ARCHIVE );
 	joy_sidethreshold = Cvar_Get( "joy_sidethreshold", "0.239", CVAR_ARCHIVE );
+	joy_siderunthreshold = Cvar_Get( "joy_siderunthreshold", "0.4", CVAR_ARCHIVE );
 	joy_pitchthreshold = Cvar_Get( "joy_pitchthreshold", "0.265", CVAR_ARCHIVE );
 	joy_yawthreshold = Cvar_Get( "joy_yawthreshold", "0.265", CVAR_ARCHIVE );
 	joy_pitchspeed = Cvar_Get( "joy_pitchspeed", "300", CVAR_ARCHIVE );
