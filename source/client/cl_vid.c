@@ -128,7 +128,7 @@ static rserr_t VID_Sys_Init_( int x, int y, int width, int height, int displayFr
 #include APP_XPM_ICON
 	int *xpm_icon;
 
-	xpm_icon = XPM_ParseIcon( sizeof( app128x128_xpm ) / sizeof( app128x128_xpm[0] ), app128x128_xpm );
+	xpm_icon = XPM_ParseIcon( sizeof( app256x256_xpm ) / sizeof( app256x256_xpm[0] ), app256x256_xpm );
 
 	res = VID_Sys_Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, xpm_icon,
 		x, y, width, height, displayFrequency, parentWindow, fullScreen, vid_ref_verbose );
