@@ -841,16 +841,16 @@ static void CG_RegisterVariables( void )
 
 	cg_flashWindowCount = trap_Cvar_Get( "cg_flashWindowCount", "4", CVAR_ARCHIVE );
 
-	joy_forwardthreshold = trap_Cvar_Get( "joy_forwardthreshold", "0.239", CVAR_ARCHIVE );
-	joy_forwardrunthreshold = trap_Cvar_Get( "joy_forwardrunthreshold", "0.6", CVAR_ARCHIVE );
-	joy_sidethreshold = trap_Cvar_Get( "joy_sidethreshold", "0.239", CVAR_ARCHIVE );
-	joy_siderunthreshold = trap_Cvar_Get( "joy_siderunthreshold", "0.4", CVAR_ARCHIVE );
-	joy_pitchthreshold = trap_Cvar_Get( "joy_pitchthreshold", "0.265", CVAR_ARCHIVE );
-	joy_yawthreshold = trap_Cvar_Get( "joy_yawthreshold", "0.265", CVAR_ARCHIVE );
-	joy_pitchspeed = trap_Cvar_Get( "joy_pitchspeed", "300", CVAR_ARCHIVE );
-	joy_yawspeed = trap_Cvar_Get( "joy_yawspeed", "280", CVAR_ARCHIVE );
-	joy_inverty = trap_Cvar_Get( "joy_inverty", "0", CVAR_ARCHIVE );
-	joy_movement_stick = trap_Cvar_Get( "joy_movement_stick", "0", CVAR_ARCHIVE );
+	cg_gamepad_moveThres = trap_Cvar_Get( "cg_gamepad_moveThres", "0.239", CVAR_ARCHIVE );
+	cg_gamepad_runThres = trap_Cvar_Get( "cg_gamepad_runThres", "0.6", CVAR_ARCHIVE );
+	cg_gamepad_strafeThres = trap_Cvar_Get( "cg_gamepad_strafeThres", "0.239", CVAR_ARCHIVE );
+	cg_gamepad_strafeRunThres = trap_Cvar_Get( "cg_gamepad_strafeRunThres", "0.4", CVAR_ARCHIVE );
+	cg_gamepad_pitchThres = trap_Cvar_Get( "cg_gamepad_pitchThres", "0.265", CVAR_ARCHIVE );
+	cg_gamepad_yawThres = trap_Cvar_Get( "cg_gamepad_yawThres", "0.265", CVAR_ARCHIVE );
+	cg_gamepad_pitchSpeed = trap_Cvar_Get( "cg_gamepad_pitchSpeed", "300", CVAR_ARCHIVE );
+	cg_gamepad_yawSpeed = trap_Cvar_Get( "cg_gamepad_yawSpeed", "280", CVAR_ARCHIVE );
+	cg_gamepad_pitchInvert = trap_Cvar_Get( "cg_gamepad_pitchInvert", "0", CVAR_ARCHIVE );
+	cg_gamepad_swapSticks = trap_Cvar_Get( "cg_gamepad_swapSticks", "0", CVAR_ARCHIVE );
 }
 
 /*

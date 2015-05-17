@@ -24,16 +24,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "cg_local.h"
 
-cvar_t *joy_forwardthreshold;
-cvar_t *joy_forwardrunthreshold;
-cvar_t *joy_sidethreshold;
-cvar_t *joy_siderunthreshold;
-cvar_t *joy_pitchthreshold;
-cvar_t *joy_yawthreshold;
-cvar_t *joy_pitchspeed;
-cvar_t *joy_yawspeed;
-cvar_t *joy_inverty;
-cvar_t *joy_movement_stick;
+cvar_t *cg_gamepad_moveThres;
+cvar_t *cg_gamepad_runThres;
+cvar_t *cg_gamepad_strafeThres;
+cvar_t *cg_gamepad_strafeRunThres;
+cvar_t *cg_gamepad_pitchThres;
+cvar_t *cg_gamepad_yawThres;
+cvar_t *cg_gamepad_pitchSpeed;
+cvar_t *cg_gamepad_yawSpeed;
+cvar_t *cg_gamepad_pitchInvert;
+cvar_t *cg_gamepad_swapSticks;
 
 /**
  * Adds the view rotation from the gamepad.
@@ -46,15 +46,15 @@ static void CG_AddGamepadViewAngles( vec3_t viewangles, float frametime )
 	vec4_t sticks;
 	trap_IN_GetThumbsticks( sticks );
 
-	int axes = ( joy_movement_stick->integer ? 0 : 2 );
+	int axes = ( cg_gamepad_swapSticks->integer ? 0 : 2 );
 
-	if( ( joy_yawthreshold->value <= 0.0f ) || ( joy_yawthreshold->value >= 1.0f ) )
-		trap_Cvar_Set( joy_yawthreshold->name, joy_yawthreshold->dvalue );
-	if( ( joy_pitchthreshold->value <= 0.0f ) || ( joy_pitchthreshold->value >= 1.0f ) )
-		trap_Cvar_Set( joy_pitchthreshold->name, joy_pitchthreshold->dvalue );
+	if( ( cg_gamepad_yawThres->value <= 0.0f ) || ( cg_gamepad_yawThres->value >= 1.0f ) )
+		trap_Cvar_Set( cg_gamepad_yawThres->name, cg_gamepad_yawThres->dvalue );
+	if( ( cg_gamepad_pitchThres->value <= 0.0f ) || ( cg_gamepad_pitchThres->value >= 1.0f ) )
+		trap_Cvar_Set( cg_gamepad_pitchThres->name, cg_gamepad_pitchThres->dvalue );
 
 	float value = sticks[axes];
-	float threshold = joy_yawthreshold->value;
+	float threshold = cg_gamepad_yawThres->value;
 	float absValue = fabs( value );
 	absValue = ( absValue - threshold ) / ( 1.0f - threshold ); // Smoothly apply the dead zone.
 	if( absValue > 0.0f )
@@ -62,18 +62,18 @@ static void CG_AddGamepadViewAngles( vec3_t viewangles, float frametime )
 		// Quadratic interpolation.
 		viewangles[YAW] -= frametime *
 			absValue * absValue * ( ( value < 0.0f ) ? -1.0f : 1.0f ) *
-			joy_yawspeed->value * CG_GetSensitivityScale( joy_yawspeed->value, 0.0f );
+			cg_gamepad_yawSpeed->value * CG_GetSensitivityScale( cg_gamepad_yawSpeed->value, 0.0f );
 	}
 
 	value = sticks[axes + 1];
-	threshold = joy_pitchthreshold->value;
+	threshold = cg_gamepad_pitchThres->value;
 	absValue = fabs( value );
 	absValue = ( absValue - threshold ) / ( 1.0f - threshold );
 	if( absValue > 0.0f )
 	{
-		viewangles[PITCH] += frametime * ( joy_inverty->integer ? -1.0f : 1.0f ) *
+		viewangles[PITCH] += frametime * ( cg_gamepad_pitchInvert->integer ? -1.0f : 1.0f ) *
 			absValue * absValue * ( ( value < 0.0f ) ? -1.0f : 1.0f ) *
-			joy_pitchspeed->value * CG_GetSensitivityScale( joy_pitchspeed->value, 0.0f );
+			cg_gamepad_pitchSpeed->value * CG_GetSensitivityScale( cg_gamepad_pitchSpeed->value, 0.0f );
 	}
 }
 
@@ -87,17 +87,17 @@ static void CG_AddGamepadMovement( vec3_t movement )
 	vec4_t sticks;
 	trap_IN_GetThumbsticks( sticks );
 
-	int axes = ( joy_movement_stick->integer ? 2 : 0 );
+	int axes = ( cg_gamepad_swapSticks->integer ? 2 : 0 );
 
 	float value = sticks[axes];
 	float absValue = fabs( value );
-	if( absValue > joy_sidethreshold->value )
-		movement[0] += ( ( absValue > joy_siderunthreshold->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
+	if( absValue > cg_gamepad_strafeThres->value )
+		movement[0] += ( ( absValue > cg_gamepad_strafeRunThres->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
 
 	value = sticks[axes + 1];
 	absValue = fabs( value );
-	if( absValue > joy_forwardthreshold->value )
-		movement[1] -= ( ( absValue > joy_forwardrunthreshold->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
+	if( absValue > cg_gamepad_moveThres->value )
+		movement[1] -= ( ( absValue > cg_gamepad_runThres->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
 }
 
 void CG_UpdateInput( float frametime )

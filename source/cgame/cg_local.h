@@ -1135,16 +1135,16 @@ void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfon
 //
 // cg_input.cpp
 //
-extern cvar_t *joy_forwardthreshold;
-extern cvar_t *joy_forwardrunthreshold;
-extern cvar_t *joy_sidethreshold;
-extern cvar_t *joy_siderunthreshold;
-extern cvar_t *joy_pitchthreshold;
-extern cvar_t *joy_yawthreshold;
-extern cvar_t *joy_pitchspeed;
-extern cvar_t *joy_yawspeed;
-extern cvar_t *joy_inverty;
-extern cvar_t *joy_movement_stick;
+extern cvar_t *cg_gamepad_moveThres;
+extern cvar_t *cg_gamepad_runThres;
+extern cvar_t *cg_gamepad_strafeThres;
+extern cvar_t *cg_gamepad_strafeRunThres;
+extern cvar_t *cg_gamepad_pitchThres;
+extern cvar_t *cg_gamepad_yawThres;
+extern cvar_t *cg_gamepad_pitchSpeed;
+extern cvar_t *cg_gamepad_yawSpeed;
+extern cvar_t *cg_gamepad_pitchInvert;
+extern cvar_t *cg_gamepad_swapSticks;
 
 void CG_UpdateInput( float frametime );
 
