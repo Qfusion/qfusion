@@ -11,4 +11,4 @@ USER buildbot
 RUN cd /home/buildbot && \
     git clone https://github.com/Warsow/qfusion.git && \
     cd qfusion/source && \
-    cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x64_64-mingw.cmake -DQFUSION_TAR_GZ_OUTPUT_DIRECTORY=/home/buildbot/tar_gz .
+    cmake -DCMAKE_TOOLCHAIN_FILE=cmake/x86_64-mingw.cmake -DQFUSION_TAR_GZ_OUTPUT_DIRECTORY=/home/buildbot/tar_gz .
