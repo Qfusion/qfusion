@@ -90,14 +90,38 @@ static void CG_AddGamepadMovement( vec3_t movement )
 	int axes = ( cg_gamepad_swapSticks->integer ? 2 : 0 );
 
 	float value = sticks[axes];
+	float threshold = cg_gamepad_strafeThres->value;
+	float runThreshold = cg_gamepad_strafeRunThres->value;
 	float absValue = fabs( value );
+	if( runThreshold > threshold )
+	{
+		absValue = ( absValue - threshold ) / ( runThreshold - threshold );
+		clamp( absValue, 0.0f, 1.0f );
+		absValue *= absValue;
+	}
+	else
+	{
+		absValue = ( float )( absValue > threshold );
+	}
 	if( absValue > cg_gamepad_strafeThres->value )
-		movement[0] += ( ( absValue > cg_gamepad_strafeRunThres->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
+		movement[0] += absValue * ( ( value < 0.0f ) ? -1.0f : 1.0f );
 
 	value = sticks[axes + 1];
+	threshold = cg_gamepad_moveThres->value;
+	runThreshold = cg_gamepad_runThres->value;
 	absValue = fabs( value );
+	if( runThreshold > threshold )
+	{
+		absValue = ( absValue - threshold ) / ( runThreshold - threshold );
+		clamp( absValue, 0.0f, 1.0f );
+		absValue *= absValue;
+	}
+	else
+	{
+		absValue = ( float )( absValue > threshold );
+	}
 	if( absValue > cg_gamepad_moveThres->value )
-		movement[1] -= ( ( absValue > cg_gamepad_runThres->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
+		movement[1] -= absValue * ( ( value < 0.0f ) ? -1.0f : 1.0f );
 }
 
 void CG_UpdateInput( float frametime )
