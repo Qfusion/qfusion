@@ -653,68 +653,6 @@ static void CL_AddMovementFromKeys( vec3_t movement )
 	}
 }
 
-extern cvar_t *joy_forwardthreshold;
-extern cvar_t *joy_forwardrunthreshold;
-extern cvar_t *joy_sidethreshold;
-extern cvar_t *joy_siderunthreshold;
-extern cvar_t *joy_pitchthreshold;
-extern cvar_t *joy_yawthreshold;
-extern cvar_t *joy_pitchspeed;
-extern cvar_t *joy_yawspeed;
-extern cvar_t *joy_inverty;
-extern cvar_t *joy_movement_stick;
-
-/**
- * Adds the movement and the rotation from the gamepad.
- *
- * @param movement the target movement vector
- */
-static void CL_AddMovementFromJoystick( vec3_t movement )
-{
-	vec4_t sticks;
-	int swap;
-	float value, threshold, absValue;
-
-	IN_GetThumbsticks( sticks );
-
-	swap = ( joy_movement_stick->integer ? 2 : 0 );
-
-	value = sticks[swap];
-	absValue = fabsf( value );
-	if( fabsf( value ) > joy_sidethreshold->value )
-		movement[0] += ( ( absValue > joy_siderunthreshold->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
-	value = sticks[1 ^ swap];
-	absValue = fabsf( value );
-	if( fabsf( value ) > joy_forwardthreshold->value )
-		movement[1] -= ( ( absValue > joy_forwardrunthreshold->value ) ? ( ( value < 0.0f ) ? -1.0f : 1.0f ) : value );
-
-	if( ( joy_yawthreshold->value <= 0.0f ) || ( joy_yawthreshold->value >= 1.0f ) )
-		Cvar_Set( joy_yawthreshold->name, joy_yawthreshold->dvalue );
-	if( ( joy_pitchthreshold->value <= 0.0f ) || ( joy_pitchthreshold->value >= 1.0f ) )
-		Cvar_Set( joy_pitchthreshold->name, joy_pitchthreshold->dvalue );
-
-	value = sticks[2 ^ swap];
-	threshold = joy_yawthreshold->value;
-	absValue = fabsf( value );
-	absValue = ( absValue - threshold ) / ( 1.0f - threshold );
-	if( absValue > 0.0f )
-	{
-		cl.viewangles[YAW] += -cls.realframetime *
-			absValue * absValue * ( ( value < 0.0f ) ? -1.0f : 1.0f ) * joy_yawspeed->value *
-			CL_GameModule_GetSensitivityScale( joy_yawspeed->value, 0.0f );
-	}
-	value = sticks[3 ^ swap];
-	threshold = joy_pitchthreshold->value;
-	absValue = fabsf( value );
-	absValue = ( absValue - threshold ) / ( 1.0f - threshold );
-	if( absValue > 0.0f )
-	{
-		cl.viewangles[PITCH] += cls.realframetime * ( joy_inverty->integer ? -1.0f : 1.0f ) *
-			absValue * absValue * ( ( value < 0.0f ) ? -1.0f : 1.0f ) * joy_pitchspeed->value *
-			CL_GameModule_GetSensitivityScale( joy_pitchspeed->value, 0.0f );
-	}
-}
-
 /*
 * CL_UpdateCommandInput
 */
@@ -735,10 +673,7 @@ void CL_UpdateCommandInput( void )
 	IN_MouseMove( cmd );
 	CL_AddButtonBits( &cmd->buttons );
 	if( cls.key_dest == key_game )
-	{
-		CL_AddMovementFromJoystick( movement );
 		CL_GameModule_AddViewAngles( cl.viewangles, cls.realframetime );
-	}
 
 	if( keys_frame_time )
 	{

@@ -543,8 +543,9 @@ void CL_GameModule_Init( void )
 
 	import.CIN_AddRawSamplesListener = &CL_GameModule_AddRawSamplesListener;
 
-	import.IN_IME_GetCandidates = &IN_IME_GetCandidates;
-	import.IN_SupportedDevices = &IN_SupportedDevices;
+	import.IN_GetThumbsticks = IN_GetThumbsticks;
+	import.IN_IME_GetCandidates = IN_IME_GetCandidates;
+	import.IN_SupportedDevices = IN_SupportedDevices;
 
 	if( builtinAPIfunc ) {
 		cge = builtinAPIfunc( &import );
