@@ -196,7 +196,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR MINGW)
 	else()
 		set(TAR_GZ_DIST "${QFUSION_TAR_GZ_OUTPUT_DIRECTORY}/${QFUSION_CLIENT_NAME}_${TAR_GZ_NAME}")
 	endif()
-	add_custom_target(tar_gz ALL COMMAND ${CMAKE_COMMAND} -E tar "cfvz" ${TAR_GZ_DIST} "${CMAKE_HOME_DIRECTORY}/build/")
+	add_custom_target(tar_gz COMMAND ${CMAKE_COMMAND} -E tar "cfvz" ${TAR_GZ_DIST} "${CMAKE_HOME_DIRECTORY}/build/")
 	add_dependencies(tar_gz ${QFUSION_CLIENT_NAME} game ${QFUSION_SERVER_NAME} ${QFUSION_TVSERVER_NAME})
 endif()
 
