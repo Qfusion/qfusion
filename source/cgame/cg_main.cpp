@@ -842,9 +842,9 @@ static void CG_RegisterVariables( void )
 	cg_flashWindowCount = trap_Cvar_Get( "cg_flashWindowCount", "4", CVAR_ARCHIVE );
 
 	cg_gamepad_moveThres = trap_Cvar_Get( "cg_gamepad_moveThres", "0.239", CVAR_ARCHIVE );
-	cg_gamepad_runThres = trap_Cvar_Get( "cg_gamepad_runThres", "0.6", CVAR_ARCHIVE );
+	cg_gamepad_runThres = trap_Cvar_Get( "cg_gamepad_runThres", "0.75", CVAR_ARCHIVE );
 	cg_gamepad_strafeThres = trap_Cvar_Get( "cg_gamepad_strafeThres", "0.239", CVAR_ARCHIVE );
-	cg_gamepad_strafeRunThres = trap_Cvar_Get( "cg_gamepad_strafeRunThres", "0.4", CVAR_ARCHIVE );
+	cg_gamepad_strafeRunThres = trap_Cvar_Get( "cg_gamepad_strafeRunThres", "0.45", CVAR_ARCHIVE );
 	cg_gamepad_pitchThres = trap_Cvar_Get( "cg_gamepad_pitchThres", "0.265", CVAR_ARCHIVE );
 	cg_gamepad_yawThres = trap_Cvar_Get( "cg_gamepad_yawThres", "0.265", CVAR_ARCHIVE );
 	cg_gamepad_pitchSpeed = trap_Cvar_Get( "cg_gamepad_pitchSpeed", "300", CVAR_ARCHIVE );
