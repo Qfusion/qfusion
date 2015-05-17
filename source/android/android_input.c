@@ -23,10 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static bool in_android_initialized;
 
-static vec4_t joy_android_thumbsticks;
+static vec4_t in_android_thumbsticks;
 
 cvar_t *in_grabinconsole;
-extern cvar_t *joy_forwardthreshold;
 
 static void IN_Android_ShowSoftKeyboard( void );
 static bool IN_Android_HideSoftKeyboard( void );
@@ -230,10 +229,10 @@ static int32_t IN_Android_OnInputEvent( struct android_app *app, AInputEvent *ev
 				bool leftTrigger, rightTrigger;
 				static bool oldLeftTrigger = false, oldRightTrigger = false;
 
-				joy_android_thumbsticks[0] = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_X, 0 );
-				joy_android_thumbsticks[1] = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_Y, 0 );
-				joy_android_thumbsticks[2] = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_Z, 0 );
-				joy_android_thumbsticks[3] = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_RZ, 0 );
+				in_android_thumbsticks[0] = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_X, 0 );
+				in_android_thumbsticks[1] = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_Y, 0 );
+				in_android_thumbsticks[2] = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_Z, 0 );
+				in_android_thumbsticks[3] = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_RZ, 0 );
 
 				hatX = ( hatXValue > 0.5f ) - ( hatXValue < -0.5f );
 				hatY = ( hatYValue > 0.5f ) - ( hatYValue < -0.5f );
@@ -360,7 +359,7 @@ void IN_Init( void )
 */
 void IN_GetThumbsticks( vec4_t sticks )
 {
-	Vector4Copy( joy_android_thumbsticks, sticks );
+	Vector4Copy( in_android_thumbsticks, sticks );
 }
 
 /*
@@ -469,7 +468,7 @@ void IN_Shutdown( void )
 
 	sys_android_app->onInputEvent = NULL;
 
-	Vector4Set( joy_android_thumbsticks, 0.0f, 0.0f, 0.0f, 0.0f );
+	Vector4Set( in_android_thumbsticks, 0.0f, 0.0f, 0.0f, 0.0f );
 
 	in_android_initialized = false;
 }

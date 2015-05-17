@@ -458,17 +458,16 @@ bool UI_Main::preloadEnabled( void )
 
 void UI_Main::joystickCursorMove( void )
 {
-	float threshold = trap::Cvar_Value( "joy_forwardthreshold" );
-	if( threshold <= 0.0f ) {
-		return;
-	}
+	const float threshold = 7849.0f / 32767.0f; // Xbox controller left stick dead zone.
+
+	unsigned int time = trap::Milliseconds();
 
 	static unsigned int lastTime;
-	unsigned int time = trap::Milliseconds();
 	if( !lastTime ) {
 		lastTime = time;
 		return;
 	}
+
 	float frameTime = ( time - lastTime ) * 0.001f;
 	clamp_high( frameTime, 0.1f );
 	lastTime = time;
@@ -493,9 +492,11 @@ void UI_Main::joystickCursorMove( void )
 	float scale = ( float )( std::min( refreshState.width, refreshState.height ) );
 	x += sx * sx * sx * frameTime * scale * 1.5f;
 	y += sy * sy * sy * frameTime * scale * 1.5f;
+
 	int mx = x, my = y;
 	x -= ( float )mx;
 	y -= ( float )my;
+
 	mouseMove( mx, my, false, true );
 }
 
