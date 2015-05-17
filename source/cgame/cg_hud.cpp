@@ -4523,7 +4523,7 @@ void CG_LoadStatusBar( void )
 /*
 * CG_GetHUDTouchButtons
 */
-void CG_GetHUDTouchButtons( int *buttons, int *upmove )
+void CG_GetHUDTouchButtons( unsigned int *buttons, int *upmove )
 {
 	if( buttons )
 		*buttons = cg_hud_touch_buttons;

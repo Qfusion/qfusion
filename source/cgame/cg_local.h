@@ -809,7 +809,7 @@ void CG_SC_ResetObituaries( void );
 void CG_SC_Obituary( void );
 void Cmd_CG_PrintHudHelp_f( void );
 void CG_ExecuteLayoutProgram( struct cg_layoutnode_s *rootnode, bool touch );
-void CG_GetHUDTouchButtons( int *buttons, int *upmove );
+void CG_GetHUDTouchButtons( unsigned int *buttons, int *upmove );
 void CG_UpdateHUDPostDraw( void );
 void CG_UpdateHUDPostTouch( void );
 void CG_ShowWeaponCross( void );
@@ -944,7 +944,7 @@ int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const 
 
 const char *CG_TranslateString( const char *string );
 
-uint8_t CG_GetTouchButtonBits( void );
+unsigned int CG_GetTouchButtonBits( void );
 void CG_AddTouchViewAngles( vec3_t viewangles, float frametime );
 void CG_AddTouchMovement( vec3_t movement );
 
@@ -1131,5 +1131,25 @@ void CG_InitChat( cg_gamechat_t *chat );
 void CG_StackChatString( cg_gamechat_t *chat, const char *str );
 void CG_DrawChat( cg_gamechat_t *chat, int x, int y, char *fontName, struct qfontface_s *font, int fontSize,
 				 int width, int height, int padding_x, int padding_y, vec4_t backColor, struct shader_s *backShader );
+
+//
+// cg_input.cpp
+//
+extern cvar_t *joy_forwardthreshold;
+extern cvar_t *joy_forwardrunthreshold;
+extern cvar_t *joy_sidethreshold;
+extern cvar_t *joy_siderunthreshold;
+extern cvar_t *joy_pitchthreshold;
+extern cvar_t *joy_yawthreshold;
+extern cvar_t *joy_pitchspeed;
+extern cvar_t *joy_yawspeed;
+extern cvar_t *joy_inverty;
+extern cvar_t *joy_movement_stick;
+
+void CG_UpdateInput( float frametime );
+
+unsigned int CG_GetButtonBits( void );
+void CG_AddViewAngles( vec3_t viewangles, float frametime );
+void CG_AddMovement( vec3_t movement );
 
 //=================================================

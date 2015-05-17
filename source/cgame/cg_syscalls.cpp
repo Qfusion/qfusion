@@ -52,11 +52,11 @@ extern "C" QF_DLL_EXPORT cgame_export_t *GetCGameAPI( cgame_import_t *import )
 
 	globals.NewFrameSnapshot = CG_NewFrameSnap;
 
-	globals.UpdateInput = CG_TouchFrame;
+	globals.UpdateInput = CG_UpdateInput;
 
-	globals.GetButtonBits = CG_GetTouchButtonBits;
-	globals.AddViewAngles = CG_AddTouchViewAngles;
-	globals.AddMovement = CG_AddTouchMovement;
+	globals.GetButtonBits = CG_GetButtonBits;
+	globals.AddViewAngles = CG_AddViewAngles;
+	globals.AddMovement = CG_AddMovement;
 
 	globals.TouchEvent = CG_TouchEvent;
 	globals.CancelTouches = CG_CancelTouches;

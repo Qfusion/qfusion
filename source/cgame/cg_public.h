@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   86
+#define	CGAME_API_VERSION   87
 
 //
 // structs and variables shared with the main engine
@@ -259,6 +259,7 @@ typedef struct
 		cg_raw_samples_cb_t rs, cg_get_raw_samples_cb_t grs );
 
 	// input
+	void ( *IN_GetThumbsticks )( vec4_t sticks );
 	unsigned int ( *IN_IME_GetCandidates )( char * const *cands, size_t candSize, unsigned int maxCands,
 		int *selected, int *firstKey );
 	unsigned int ( *IN_SupportedDevices )( void );
@@ -299,7 +300,7 @@ typedef struct
 
 	void ( *UpdateInput )( float frametime );
 
-	uint8_t ( *GetButtonBits )( void );
+	unsigned int ( *GetButtonBits )( void );
 	void ( *AddViewAngles )( vec3_t viewangles, float frametime );
 	void ( *AddMovement )( vec3_t movement );
 

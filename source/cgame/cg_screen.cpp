@@ -1703,9 +1703,9 @@ void CG_TouchFrame( float frametime )
 /*
 * CG_GetTouchButtonBits
 */
-uint8_t CG_GetTouchButtonBits( void )
+unsigned int CG_GetTouchButtonBits( void )
 {
-	int buttons;
+	unsigned int buttons;
 	CG_GetHUDTouchButtons( &buttons, NULL );
 	return buttons;
 }
