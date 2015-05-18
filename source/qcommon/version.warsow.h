@@ -105,7 +105,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_UI_BASEPATH
-#define APP_UI_BASEPATH					"porkui"
+#define APP_UI_BASEPATH					"ui/porkui"
 #endif
 
 #ifndef APP_STARTUP_COLOR
