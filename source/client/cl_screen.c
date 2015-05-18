@@ -91,7 +91,7 @@ static void SCR_RegisterSystemFonts( void )
 	const char *con_fontSystemFamilyName;
 	const int con_fontSystemStyle = DEFAULT_SYSTEM_FONT_STYLE;
 	int size;
-	float pixelRatio = VID_GetPixelRatio();
+	float pixelRatio = Con_GetPixelRatio();
 
 	// register system fonts
 	con_fontSystemFamilyName = con_fontSystemFamily->string;
@@ -118,9 +118,6 @@ static void SCR_RegisterSystemFonts( void )
 	} else if( con_fontSystemBigSize->integer < DEFAULT_SYSTEM_FONT_BIG_SIZE / 2 ) {
 		Cvar_SetValue( con_fontSystemBigSize->name, DEFAULT_SYSTEM_FONT_BIG_SIZE / 2 );
 	}
-
-	if( pixelRatio < 0.5f )
-		pixelRatio = 0.5f;
 
 	size = ceil( con_fontSystemSmallSize->integer * pixelRatio );
 	cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );

@@ -665,20 +665,23 @@ void VID_FlashWindow( int count )
 */
 void VID_SetProcessDPIAware( void )
 {
-	HINSTANCE user32Dll = LoadLibrary( "user32.dll" );
+	HINSTANCE user32Dll;
+	HDC hdc;
+
+	user32Dll = LoadLibrary( "user32.dll" );
 	if( user32Dll )
 	{
 		BOOL ( WINAPI *pSetProcessDPIAware )( void ) = ( void * )GetProcAddress( user32Dll, "SetProcessDPIAware" );
-		if( pSetProcessDPIAware && pSetProcessDPIAware() )
-		{
-			HDC hdc = GetDC( NULL );
-			if( hdc )
-			{
-				vid_pixelRatio = ( float )GetDeviceCaps( hdc, LOGPIXELSY ) / 96.0f;
-				ReleaseDC( NULL, hdc );
-			}
-		}
+		if( pSetProcessDPIAware )
+			pSetProcessDPIAware();
 		FreeLibrary( user32Dll );
+	}
+
+	hdc = GetDC( NULL );
+	if( hdc )
+	{
+		vid_pixelRatio = ( float )GetDeviceCaps( hdc, LOGPIXELSY ) / 96.0f;
+		ReleaseDC( NULL, hdc );
 	}
 }
 
