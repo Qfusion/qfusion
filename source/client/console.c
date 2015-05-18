@@ -395,6 +395,16 @@ void Con_ChangeFontSize( int ch )
 }
 
 /*
+* Con_GetPixelRatio
+*/
+float Con_GetPixelRatio( void )
+{
+	float pixelRatio = VID_GetPixelRatio();
+	clamp_low( pixelRatio, 0.5f );
+	return pixelRatio;
+}
+
+/*
 * Con_Init
 */
 void Con_Init( void )
@@ -692,7 +702,7 @@ static void Con_DrawInput( int vislines )
 {
 	char draw_search_text[MAXCMDLINE*2+4];
 	const char *text = key_lines[edit_line];
-	float pixelRatio = VID_GetPixelRatio();
+	float pixelRatio = Con_GetPixelRatio();
 	int smallCharHeight = SCR_FontHeight( cls.consoleFont );
 	int margin = 8 * pixelRatio;
 	int promptwidth = SCR_strWidth( "]", cls.consoleFont, 1, 0 );
@@ -779,7 +789,7 @@ void Con_DrawNotify( void )
 	int i;
 	int time;
 	char *s;
-	float pixelRatio = VID_GetPixelRatio();
+	float pixelRatio = Con_GetPixelRatio();
 
 	QMutex_Lock( con.mutex );
 
@@ -1034,7 +1044,7 @@ static void Con_GetMessageArea( int *x1, int *y1, int *x2, int *y2, int *promptw
 		int time;
 
 		width = viddef.width;
-		x = 8 * VID_GetPixelRatio();
+		x = 8 * Con_GetPixelRatio();
 		y = 0;
 		font = cls.consoleFont;
 
@@ -1080,7 +1090,7 @@ void Con_DrawConsole( void )
 	time_t long_time;
 	struct tm *newtime;
 	int smallCharHeight = SCR_FontHeight( cls.consoleFont );
-	float pixelRatio = VID_GetPixelRatio();
+	float pixelRatio = Con_GetPixelRatio();
 	int scaled;
 
 	lines = viddef.height * scr_con_current;
@@ -1096,7 +1106,7 @@ void Con_DrawConsole( void )
 
 	// draw the background
 	re.DrawStretchPic( 0, 0, viddef.width, lines, 0, 0, 1, 1, colorWhite, cls.consoleShader );
-	scaled = ( ( pixelRatio >= 1.0f ) ? 2 * pixelRatio : 1 );
+	scaled = 2 * pixelRatio;
 	SCR_DrawFillRect( 0, lines - scaled, viddef.width, scaled, colorRed );
 
 	// get date from system
@@ -1111,7 +1121,7 @@ void Con_DrawConsole( void )
 		APPLICATION, APP_VERSION, revisioncvar->string );
 #endif
 
-	scaled = ( ( pixelRatio >= 1.25f ) ? 4 * pixelRatio : 4 );
+	scaled = 4 * pixelRatio;
 	SCR_DrawString( viddef.width-SCR_strWidth( version, cls.consoleFont, 0, 0 ) - scaled,
 		lines - SCR_FontHeight( cls.consoleFont ) - scaled, 
 		ALIGN_LEFT_TOP, version, cls.consoleFont, colorRed, 0 );
@@ -1911,7 +1921,7 @@ void Con_KeyDown( int key )
 		{
 			int smallCharHeight = SCR_FontHeight( cls.consoleFont );
 			int vislines = (int)( viddef.height * bound( 0.0, scr_con_current, 1.0 ) );
-			int rows = ( vislines - smallCharHeight - (int)( 14 * VID_GetPixelRatio() ) ) / smallCharHeight;  // rows of text to draw
+			int rows = ( vislines - smallCharHeight - (int)( 14 * Con_GetPixelRatio() ) ) / smallCharHeight;  // rows of text to draw
 			con.display = con.numlines - rows + 1;
 			clamp_low( con.display, 0 );
 		}
@@ -2293,7 +2303,7 @@ static void Con_TouchDown( int x, int y )
 		}
 		else if( scr_con_current )
 		{
-			if( y < ( ( viddef.height * scr_con_current ) - (int)( 14 * VID_GetPixelRatio() ) - smallCharHeight ) )
+			if( y < ( ( viddef.height * scr_con_current ) - (int)( 14 * Con_GetPixelRatio() ) - smallCharHeight ) )
 			{
 				touch_x = -1;
 				touch_y = y;

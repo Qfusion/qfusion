@@ -70,6 +70,11 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	ui_developer = trap::Cvar_Get( "developer", "0", 0 );
 	ui_preload = trap::Cvar_Get( "ui_preload", "1", CVAR_ARCHIVE );
 
+	// make sure the UI isn't too small
+	int minHeight = 576.0f * pixelRatio;
+	if( vidHeight < minHeight )
+		pixelRatio = ( float )vidHeight / ( float )minHeight;
+
 	// temp fix for missing background on start.. populate refreshState with some nice values
 	refreshState.clientState = CA_UNINITIALIZED;
 	refreshState.width = vidWidth;

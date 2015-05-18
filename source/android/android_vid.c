@@ -158,9 +158,7 @@ float VID_GetPixelRatio( void )
 		invDensity = 1.0f / density;
 	}
 
-	height = ANativeWindow_getHeight( sys_android_app->window ) * invDensity;
-	clamp_low( height, 576 );
-	return viddef.height / ( float )height;
+	return ( float )viddef.height / ( ( float )ANativeWindow_getHeight( sys_android_app->window ) * invDensity );
 }
 
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, 

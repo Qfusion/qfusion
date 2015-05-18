@@ -46,6 +46,13 @@ void Con_SetMessageMode( void );
 void Con_ResetFontSize( void );
 void Con_ChangeFontSize( int ch );
 
+/**
+ * Returns pixel ratio that is suitable for use in the console.
+ *
+ * @return the pixel ratio
+ */
+float Con_GetPixelRatio( void );
+
 void Con_KeyDown( int key );
 void Con_CharEvent( wchar_t key );
 void Con_MessageKeyDown( int key );
