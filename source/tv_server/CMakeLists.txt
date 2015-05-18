@@ -39,7 +39,6 @@ file(GLOB TV_SERVER_SOURCES
     "../null/cl_null.c"
     "../null/ascript_null.c"
     "../null/mm_null.c"
-    "../null/clipboard_null.c"
     "../gameshared/q_*.c"
     "../qalgo/*.c"
     "tv_module/*.c"
