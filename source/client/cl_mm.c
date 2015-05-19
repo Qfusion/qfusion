@@ -637,7 +637,7 @@ static bool CL_MM_LoginReal( const char *user, const char *password )
 	// TODO: check clientstate, has to be unconnected
 	if( CL_GetClientState() > CA_DISCONNECTED )
 	{
-		CL_MM_ErrorMessage( true, "MM Login: Cant login to MM while connected to server" );
+		CL_MM_ErrorMessage( true, "MM Login: Can't login to MM while connected to server" );
 		return false;
 	}
 
