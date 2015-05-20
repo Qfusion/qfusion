@@ -137,29 +137,27 @@ void RocketModule::keyEvent( int key, bool pressed )
 
 	int mod = KeyConverter::getModifiers();
 
-	// warsow sends mousebuttons as keys
-	if( key >= K_MOUSE1 && key <= K_MOUSE8 )
+	// send the blur event, to the current focused element, when ESC key is pressed
+	if( ( key == K_ESCAPE ) && element )
+		element->Blur();
+
+	if( element && ( element->GetTagName() == "keyselect" ) )
 	{
 		if( pressed )
 		{
-			if( element && ( element->GetTagName() == "keyselect" ) )
-			{
-				Rocket::Core::Dictionary parameters;
-				parameters.Set( "key", key );
-				element->DispatchEvent( "keyselect", parameters );
-			}
-			else
-			{
-				context->ProcessMouseButtonDown( key-K_MOUSE1, mod );
-			}
-		}
-		else
-		{
-			context->ProcessMouseButtonUp( key-K_MOUSE1, mod );
+			Rocket::Core::Dictionary parameters;
+			parameters.Set( "key", key );
+			element->DispatchEvent( "keyselect", parameters );
 		}
 	}
-	// and ditto for wheel
-	else if( key == K_MWHEELDOWN )
+	else if( key >= K_MOUSE1 && key <= K_MOUSE8 ) // warsow sends mousebuttons as keys
+	{
+		if( pressed )
+			context->ProcessMouseButtonDown( key-K_MOUSE1, mod );
+		else
+			context->ProcessMouseButtonUp( key-K_MOUSE1, mod );
+	}
+	else if( key == K_MWHEELDOWN ) // and ditto for wheel
 	{
 		context->ProcessMouseWheel( 1, mod );
 	}
@@ -169,18 +167,7 @@ void RocketModule::keyEvent( int key, bool pressed )
 	}
 	else
 	{
-		// send the blur event, to the current focused element,
-		// when ESC key is pressed
-		if( ( key == K_ESCAPE ) && element )
-			element->Blur();
-
-		if( pressed && element && ( element->GetTagName() == "keyselect" ) )
-		{
-			Rocket::Core::Dictionary parameters;
-			parameters.Set( "key", key );
-			element->DispatchEvent( "keyselect", parameters );
-		}
-		else if( ( key == K_A_BUTTON ) || ( key == K_DPAD_CENTER ) )
+		if( ( key == K_A_BUTTON ) || ( key == K_DPAD_CENTER ) )
 		{
 			if( pressed )
 				context->ProcessMouseButtonDown( 0, mod );
