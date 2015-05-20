@@ -73,7 +73,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	// make sure the UI isn't too small
 	int minHeight = 576.0f * pixelRatio;
 	if( vidHeight < minHeight )
-		pixelRatio = ( float )vidHeight / ( float )minHeight;
+		pixelRatio *= ( float )vidHeight / ( float )minHeight;
 
 	// temp fix for missing background on start.. populate refreshState with some nice values
 	refreshState.clientState = CA_UNINITIALIZED;
