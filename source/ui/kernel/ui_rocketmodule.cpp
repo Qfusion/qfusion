@@ -54,7 +54,7 @@ public:
 //==================================================
 
 RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
-	: rocketInitialized( false ), hideCursorBits( 0 ), lastTouch( -1 ),
+	: rocketInitialized( false ), hideCursorBits( 0 ), touchID( -1 ),
 	// pointers
 	systemInterface(0), fsInterface(0), renderInterface(0), context(0)
 {
@@ -198,29 +198,70 @@ void RocketModule::keyEvent( int key, bool pressed )
 
 void RocketModule::touchEvent( int id, touchevent_t type, int x, int y )
 {
-	if( ( type == TOUCH_DOWN ) && ( lastTouch < 0 ) ) {
-		lastTouch = id;
+	if( ( type == TOUCH_DOWN ) && ( touchID < 0 ) ) {
+		touchID = id;
+		touchOrigin.x = x;
+		touchOrigin.y = y;
+		touchY = y;
+		touchScroll = false;
 	}
 
-	if( id != lastTouch ) {
+	if( id != touchID ) {
 		return;
 	}
 
 	UI_Main::Get()->mouseMove( x, y, true, false );
-	if( type == TOUCH_UP ) {
-		cancelTouches();
-	} else if( type == TOUCH_DOWN ) {
+
+	if( type == TOUCH_DOWN ) {
 		context->ProcessMouseButtonDown( 0, KeyConverter::getModifiers() );
+	} else {
+		int delta = touchY - y;
+		if( delta ) {
+			if( !touchScroll ) {
+				int threshold = 32 * ( renderInterface->GetPixelsPerInch() / renderInterface->GetBasePixelsPerInch() );
+				if( abs( delta ) > threshold ) {
+					touchScroll = true;
+					touchY += ( ( delta < 0 ) ? threshold : -threshold );
+					delta = touchY - y;
+				}
+			}
+
+			if( touchScroll ) {
+				Element *element;
+				for( element = context->GetElementAtPoint( touchOrigin ); element; element = element->GetParentNode() ) {
+					if( element->GetTagName() == "scrollbarvertical" ) {
+						break;
+					}
+
+					int overflow = element->GetProperty< int >( "overflow-y" );
+					if( ( overflow != Rocket::Core::OVERFLOW_AUTO ) && ( overflow != Rocket::Core::OVERFLOW_SCROLL ) ) {
+						continue;
+					}
+
+					int scrollTop = element->GetScrollTop();
+					if( ( ( delta < 0 ) && ( scrollTop > 0 ) ) ||
+						( ( delta > 0 ) && ( element->GetScrollHeight() > scrollTop + element->GetClientHeight() ) ) ) {
+						element->SetScrollTop( element->GetScrollTop() + delta );
+						break;
+					}
+				}
+				touchY = y;
+			}
+		}
+
+		if( type == TOUCH_UP ) {
+			cancelTouches();
+		}
 	}
 }
 
 void RocketModule::cancelTouches( void )
 {
-	if( lastTouch < 0 ) {
+	if( touchID < 0 ) {
 		return;
 	}
 
-	lastTouch = -1;
+	touchID = -1;
 	context->ProcessMouseButtonUp( 0, KeyConverter::getModifiers() );
 	UI_Main::Get()->mouseMove( 0, 0, true, false );
 }
