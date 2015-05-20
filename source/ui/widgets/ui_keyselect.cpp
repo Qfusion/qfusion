@@ -260,13 +260,6 @@ using namespace Rocket::Core;
 				mouse_y = event.GetParameter<int>( "mouse_y", 0 );
 				return;
 			}
-			else if( event == "mousescroll" )
-			{
-				key = GetWheelKey( event );
-				this->SetKeybind( key );
-				event.StopPropagation();
-				return;
-			}
 			else if( event == "mousemove" || event == "mouseout" )
 			{
 				GetRocketModule()->mouseMove( mouse_x, mouse_y );
