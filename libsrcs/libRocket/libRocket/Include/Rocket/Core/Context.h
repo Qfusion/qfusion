@@ -225,6 +225,13 @@ public:
 	/// @param[in] instancer The context's instancer.
 	void SetInstancer(ContextInstancer* instancer);
 
+	/// Returns the youngest descendent of the given element which is under the given point in screen coordinates.
+	/// @param[in] point The point to test.
+	/// @param[in] ignore_element If set, this element and its descendents will be ignored.
+	/// @param[in] element Used internally.
+	/// @return The element under the point, or NULL if nothing is.
+	Element* GetElementAtPoint(const Vector2f& point, const Element* ignore_element = NULL, Element* element = NULL);
+
 protected:
 	virtual void OnReferenceDeactivate();
 
@@ -302,12 +309,6 @@ private:
 
 	// Updates the current hover elements, sending required events.
 	void UpdateHoverChain(const Dictionary& parameters, const Dictionary& drag_parameters, const Vector2i& old_mouse_position);
-	// Returns the youngest descendent of the given element which is under the given point in screen coordinates.
-	// @param[in] point The point to test.
-	// @param[in] ignore_element If set, this element and its descendents will be ignored.
-	// @param[in] element Used internally.
-	// @return The element under the point, or NULL if nothing is.
-	Element* GetElementAtPoint(const Vector2f& point, const Element* ignore_element = NULL, Element* element = NULL);
 
 	// Creates the drag clone from the given element. The old drag clone will be released if
 	// necessary.
