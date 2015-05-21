@@ -544,14 +544,12 @@ void *VID_GetWindowHandle( void )
 ** VID_Sys_Init
 */
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor,
-	const int *iconXPM, int x, int y, int width, int height, int displayFrequency, void *parentWindow, 
-	bool fullScreen, bool verbose )
+	const int *iconXPM, void *parentWindow, bool verbose )
 {
 	return re.Init( applicationName, screenshotsPrefix, startupColor,
 		IDI_APPICON_VALUE, iconXPM, 
 		global_hInstance, MainWndProc, parentWindow, 
-		x, y, width, height, displayFrequency,
-		fullScreen, verbose );
+		verbose );
 }
 
 /*

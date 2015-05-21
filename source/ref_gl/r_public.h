@@ -130,9 +130,8 @@ typedef struct
 	rserr_t		( *Init )( const char *applicationName, const char *screenshotsPrefix, int startupColor,
 					int iconResource, const int *iconXPM,
 					void *hinstance, void *wndproc, void *parenthWnd, 
-					int x, int y, int width, int height, int displayFrequency,
-					bool fullScreen, bool verbose );
-	rserr_t		( *SetMode )( int x, int y, int width, int height, int displayFrequency, bool fullScreen );
+					bool verbose );
+	rserr_t		( *SetMode )( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
 	rserr_t		( *SetWindow )( void *hinstance, void *wndproc, void *parenthWnd );
 
 	void		( *Shutdown )( bool verbose );

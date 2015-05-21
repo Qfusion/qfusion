@@ -168,11 +168,6 @@ typedef struct entity_s
 	};
 } entity_t;
 
-typedef struct
-{
-	int x, y, width, height;
-} vrect_t;
-
 typedef struct refdef_s
 {
 	int x, y, width, height;			// viewport, in virtual screen coordinates

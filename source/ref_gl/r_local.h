@@ -193,13 +193,10 @@ typedef struct
 
 typedef struct
 {
-	const char		*applicationName;
-	const char		*screenshotPrefix;
-
 	// any asset (model, shader, texture, etc) with has not been registered
 	// or "touched" during the last registration sequence will be freed
 	int				registrationSequence;
-	bool		registrationOpen;
+	bool			registrationOpen;
 
 	// bumped each time R_RegisterWorldModel is called
 	int				worldModelSequence;
@@ -660,12 +657,11 @@ int			R_GetClippedFragments( const vec3_t origin, float radius, vec3_t axis[3], 
 rserr_t		R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 				int iconResource, const int *iconXPM,
 				void *hinstance, void *wndproc, void *parenthWnd, 
-				int x, int y, int width, int height, int displayFrequency,
-				bool fullscreen, bool verbose );
+				bool verbose );
 void		R_BeginRegistration( void );
 void		R_EndRegistration( void );
 void		R_Shutdown( bool verbose );
-rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen );
+rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
 rserr_t		R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 
 //

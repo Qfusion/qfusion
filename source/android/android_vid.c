@@ -162,8 +162,7 @@ float VID_GetPixelRatio( void )
 }
 
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, 
-	const int *iconXPM, int x, int y, int width, int height, int displayFrequency, void *parentWindow, 
-	bool fullScreen, bool verbose )
+	const int *iconXPM, void *parentWindow, bool verbose )
 {
 	ANativeWindow *window = sys_android_app->window;
 	rserr_t res;
@@ -171,8 +170,7 @@ rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix
 	res = re.Init( applicationName, screenshotsPrefix, startupColor,
 		0, iconXPM,
 		NULL, NULL, window,
-		x, y, width, height, displayFrequency,
-		fullScreen, verbose );
+		verbose );
 
 	if( res == rserr_ok )
 		VID_AppActivate( window != NULL, false );

@@ -212,6 +212,10 @@ typedef struct
 	const char		*shadingLanguageVersionString;
 	unsigned		versionHash;
 
+	const char		*applicationName;
+	const char		*screenshotPrefix;
+	int				startupColor;
+
 	int				version;
 	int				shadingLanguageVersion;
 
@@ -259,7 +263,7 @@ void	GLimp_EndFrame( void );
 int		GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
 			int iconResource, const int *iconXPM );
 void	GLimp_Shutdown( void );
-rserr_t	GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen );
+rserr_t	GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo );
 rserr_t	GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 void	GLimp_AppActivate( bool active, bool destroy );
 bool	GLimp_GetGammaRamp( size_t stride, unsigned short *psize, unsigned short *ramp );

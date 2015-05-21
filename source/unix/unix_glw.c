@@ -825,7 +825,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
 {
 	return GLimp_SetMode_Real( width, height, displayFrequency, fullscreen, false, false );
 }

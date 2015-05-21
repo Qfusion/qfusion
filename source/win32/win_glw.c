@@ -283,7 +283,7 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
 {
 	const char *win_fs[] = { "W", "FS" };
 
@@ -301,9 +301,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		}
 	}
 
-	ri.Com_Printf( "Initializing OpenGL display\n" );
-
-	ri.Com_Printf( "...setting mode:" );
+	ri.Com_Printf( "Setting video mode:" );
 
 	// disable fullscreen if rendering to a parent window
 	if( glw_state.parenthWnd ) {
@@ -330,6 +328,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.fullScreen = VID_SetFullscreenMode( displayFrequency, fullscreen );
+	glConfig.stereoEnabled = stereo;
 
 	if( !VID_CreateWindow() ) {
 		return rserr_invalid_mode;
@@ -443,9 +442,6 @@ static int GLimp_InitGL( void )
 		0, 0, 0                 // layer masks ignored
 	};
 	int pixelformat;
-	cvar_t *stereo;
-
-	stereo = ri.Cvar_Get( "cl_stereo", "0", 0 );
 
 	if( r_stencilbits->integer == 8 || r_stencilbits->integer == 16 )
 		pfd.cStencilBits = r_stencilbits->integer;
@@ -453,15 +449,10 @@ static int GLimp_InitGL( void )
 	/*
 	** set PFD_STEREO if necessary
 	*/
-	if( stereo->integer != 0 )
+	if( glConfig.stereoEnabled )
 	{
 		ri.Com_DPrintf( "...attempting to use stereo\n" );
 		pfd.dwFlags |= PFD_STEREO;
-		glConfig.stereoEnabled = true;
-	}
-	else
-	{
-		glConfig.stereoEnabled = false;
 	}
 
 	/*
@@ -493,10 +484,9 @@ static int GLimp_InitGL( void )
 	/*
 	** report if stereo is desired but unavailable
 	*/
-	if( !( pfd.dwFlags & PFD_STEREO ) && ( stereo->integer != 0 ) )
+	if( !( pfd.dwFlags & PFD_STEREO ) && glConfig.stereoEnabled )
 	{
 		ri.Com_Printf( "...failed to select stereo pixel format\n" );
-		ri.Cvar_SetValue( "cl_stereo", 0 );
 		glConfig.stereoEnabled = false;
 	}
 

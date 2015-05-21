@@ -128,6 +128,7 @@ cvar_t *gl_cull;
 cvar_t *r_multithreading;
 
 static bool	r_verbose;
+static bool	r_postinit;
 
 static void R_FinalizeGLExtensions( void );
 static void R_GfxInfo_f( void );
@@ -1252,24 +1253,20 @@ static unsigned R_GLVersionHash( const char *vendorString,
 rserr_t R_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 	int iconResource, const int *iconXPM,
 	void *hinstance, void *wndproc, void *parenthWnd, 
-	int x, int y, int width, int height, int displayFrequency,
-	bool fullScreen, bool verbose )
+	bool verbose )
 {
 	const qgl_driverinfo_t *driver;
 	const char *dllname = NULL;
 	qgl_initerr_t initerr;
-	int i;
-	rserr_t err;
-	GLenum glerr;
 
 	r_mempool = R_AllocPool( NULL, "Rendering Frontend" );
 
 	r_verbose = verbose;
 
+	r_postinit = true;
+
 	if( !applicationName ) applicationName = "Qfusion";
 	if( !screenshotPrefix ) screenshotPrefix = "";
-
-	Com_Printf( "\n----- R_Init -----\n" );
 
 	R_Register( screenshotPrefix );
 
@@ -1302,14 +1299,21 @@ init_qgl:
 		return rserr_unknown;
 	}
 
-	// create the window and set up the context
-	err = GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen );
-	if( err != rserr_ok )
-	{
-		QGL_Shutdown();
-		Com_Printf( "ref_gl::R_Init() - could not GLimp_SetMode()\n" );
-		return err;
-	}
+	// FIXME: move this elsewhere?
+	glConfig.applicationName = R_CopyString( applicationName );
+	glConfig.screenshotPrefix = R_CopyString( screenshotPrefix );
+	glConfig.startupColor = startupColor;
+
+	return rserr_ok;
+}
+
+/*
+* R_PostInit
+*/
+static rserr_t R_PostInit( void )
+{
+	int i;
+	GLenum glerr;
 
 	glConfig.hwGamma = GLimp_GetGammaRamp( GAMMARAMP_STRIDE, &glConfig.gammaRampSize, glConfig.originalGammaRamp );
 	if( glConfig.hwGamma )
@@ -1343,9 +1347,6 @@ init_qgl:
 
 	rsh.worldModelSequence = 1;
 
-	rsh.applicationName = R_CopyString( applicationName );
-	rsh.screenshotPrefix = R_CopyString( screenshotPrefix );
-
 	R_InitDrawLists();
 
 	if( !R_RegisterGLExtensions() ) {
@@ -1353,8 +1354,8 @@ init_qgl:
 		return rserr_unknown;
 	}
 
-	R_FillStartupBackgroundColor( COLOR_R( startupColor ) / 255.0f,
-		COLOR_G( startupColor ) / 255.0f, COLOR_B( startupColor ) / 255.0f );
+	R_FillStartupBackgroundColor( COLOR_R( glConfig.startupColor ) / 255.0f,
+		COLOR_G( glConfig.startupColor ) / 255.0f, COLOR_B( glConfig.startupColor ) / 255.0f );
 
 	R_TextureMode( r_texturemode->string );
 
@@ -1362,6 +1363,9 @@ init_qgl:
 
 	for( i = 0; i < 256; i++ )
 		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
+
+	if ( r_verbose )
+		R_GfxInfo_f( );
 
 	// load and compile GLSL programs
 	RP_Init();
@@ -1394,12 +1398,7 @@ init_qgl:
 
 	glerr = qglGetError();
 	if( glerr != GL_NO_ERROR )
-		Com_Printf( "glGetError() = 0x%x\n", err );
-
-	if ( r_verbose )
-		R_GfxInfo_f( );
-
-	Com_Printf( "----- finished R_Init -----\n" );
+		Com_Printf( "glGetError() = 0x%x\n", glerr );
 
 	return rserr_ok;
 }
@@ -1407,9 +1406,24 @@ init_qgl:
 /*
 * R_SetMode
 */
-rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen )
+rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo )
 {
-	return GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen );
+	rserr_t err;
+	
+	err = GLimp_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo );
+	if( err != rserr_ok )
+	{
+		Com_Printf( "Could not GLimp_SetMode()\n" );
+		return err;
+	}
+
+	if( r_postinit )
+	{
+		err = R_PostInit();
+		r_postinit = false;
+	}
+
+	return err;
 }
 
 /*

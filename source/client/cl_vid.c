@@ -60,8 +60,7 @@ static mempool_t *vid_ref_mempool = NULL;
 // These are system specific functions
 // wrapper around R_Init
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, const int *iconXPM,
-	int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullscreen, bool verbose );
-static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen );
+	void *parentWindow, bool verbose );
 void VID_UpdateWindowPosAndSize( int x, int y );
 void VID_EnableAltTab( bool enable );
 void VID_EnableWinKeys( bool enable );
@@ -121,8 +120,7 @@ static void VID_NewWindow( int width, int height )
 	viddef.height = height;
 }
 
-static rserr_t VID_Sys_Init_( int x, int y, int width, int height, int displayFrequency,
-	void *parentWindow, bool fullScreen )
+static rserr_t VID_Sys_Init_( void *parentWindow, bool verbose )
 {
 	rserr_t res;
 #include APP_XPM_ICON
@@ -131,19 +129,11 @@ static rserr_t VID_Sys_Init_( int x, int y, int width, int height, int displayFr
 	xpm_icon = XPM_ParseIcon( sizeof( app256x256_xpm ) / sizeof( app256x256_xpm[0] ), app256x256_xpm );
 
 	res = VID_Sys_Init( APPLICATION, APP_SCREENSHOTS_PREFIX, APP_STARTUP_COLOR, xpm_icon,
-		x, y, width, height, displayFrequency, parentWindow, fullScreen, vid_ref_verbose );
+		parentWindow, verbose );
 
 	free( xpm_icon );
 
 	return res;
-}
-
-/*
-** VID_SetMode
-*/
-static rserr_t VID_SetMode( int x, int y, int width, int height, int displayFrequency, void *parentWindow, bool fullScreen )
-{
-    return re.SetMode( x, y, width, height, displayFrequency, fullScreen );
 }
 
 /*
@@ -190,14 +180,14 @@ int VID_GetWindowHeight( void )
 /*
 ** VID_ChangeMode
 */
-static rserr_t VID_ChangeMode( vid_init_t vid_init )
+static rserr_t VID_ChangeMode( void )
 {
 	int x, y;
 	int w, h;
 	int disp_freq;
 	bool fs;
 	rserr_t err;
-	void *parent_win;
+	bool stereo;
 
 	vid_width->modified = false;
 	vid_height->modified = false;
@@ -209,9 +199,9 @@ static rserr_t VID_ChangeMode( vid_init_t vid_init )
 	h = vid_height->integer;
 	fs = vid_fullscreen->integer ? true : false;
 	disp_freq = vid_displayfrequency->integer;
-	parent_win = STR_TO_POINTER( vid_parentwid->string );
+	stereo = Cvar_Value( "cl_stereo" ) != 0;
 
-	err = vid_init( x, y, w, h, disp_freq, parent_win, fs );
+	err = re.SetMode( x, y, w, h, disp_freq, fs, stereo );
 
 	if( err == rserr_ok ) {
 		// store fallback mode
@@ -227,7 +217,7 @@ static rserr_t VID_ChangeMode( vid_init_t vid_init )
 		if( err == rserr_invalid_fullscreen ) {
 			Com_Printf( "VID_ChangeMode() - fullscreen unavailable in this mode\n" );
 
-			if( ( err = vid_init( x, y, w, h, disp_freq, parent_win, false ) ) == rserr_ok ) {
+			if( ( err = re.SetMode( x, y, w, h, disp_freq, false, stereo ) ) == rserr_ok ) {
 				goto done_ok;
 			}
 		}
@@ -243,7 +233,7 @@ static rserr_t VID_ChangeMode( vid_init_t vid_init )
 		}
 
 		// try setting it back to something safe
-		if( ( err = vid_init( x, y, w, h, disp_freq, parent_win, fs ) ) != rserr_ok ) {
+		if( ( err = re.SetMode( x, y, w, h, disp_freq, fs, stereo ) ) != rserr_ok ) {
 			Com_Printf( "VID_ChangeMode() - could not revert to safe mode\n" );
 			return err;
 		}
@@ -423,6 +413,7 @@ static bool VID_LoadRefresh( const char *name )
 		return false;
 	}
 
+	Com_Printf( "\n" );
 	return true;
 }
 
@@ -452,7 +443,7 @@ void VID_CheckChanges( void )
 	if( vid_fullscreen->modified ) {
 		if( vid_ref_active ) {
 			// try to change video mode without vid_restart
-			err = VID_ChangeMode( &VID_SetMode );
+			err = VID_ChangeMode();
 
 			if( err == rserr_restart_required ) {
 				vid_ref_modified = true;
@@ -581,10 +572,16 @@ load_refresh:
 			}
 		}
 
-		err = VID_ChangeMode( &VID_Sys_Init_ );
+		err = VID_Sys_Init_( STR_TO_POINTER( vid_parentwid->string ), vid_ref_verbose );
+		if( err != rserr_ok ) {
+			Sys_Error( "VID_Init() failed with code %i", err );
+		}
+
+		err = VID_ChangeMode();
 		if( err != rserr_ok ) {
 			Sys_Error( "VID_ChangeMode() failed with code %i", err );
 		}
+
 		vid_ref_active = true;
 
 		// stop and free all sounds

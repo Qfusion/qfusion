@@ -66,6 +66,11 @@ enum
 
 typedef struct
 {
+	int x, y, width, height;
+} vrect_t;
+
+typedef struct
+{
 	entity_state_t current;
 	entity_state_t prev;        // will always be valid, but might just be a copy of current
 

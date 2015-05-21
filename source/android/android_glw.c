@@ -177,11 +177,10 @@ static void GLimp_Android_ChooseConfig( void )
 static void GLimp_Android_CreateWindowSurface( void )
 {
 	const char *extensions = qglGetGLWExtensionsString();
-	cvar_t *stereo = ri.Cvar_Get( "cl_stereo", "0", 0 );
 
 	ANativeWindow_setBuffersGeometry( glw_state.window, glConfig.width, glConfig.height, glw_state.format );
 	glw_state.surface = EGL_NO_SURFACE;
-	if( stereo->integer && extensions && strstr( extensions, "EGL_EXT_multiview_window" ) )
+	if( glConfig.stereoEnabled && extensions && strstr( extensions, "EGL_EXT_multiview_window" ) )
 	{
 		int attribs[] = { EGL_MULTIVIEW_VIEW_COUNT_EXT, 2, EGL_NONE };
 		glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, glw_state.window, attribs );
@@ -266,7 +265,7 @@ static bool GLimp_InitGL( void )
 /*
 ** GLimp_SetMode
 */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
 {
 	ri.Com_Printf( "Initializing OpenGL display\n" );
 	if( glw_state.context != EGL_NO_CONTEXT )
@@ -274,6 +273,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.fullScreen = fullscreen;
+	glConfig.stereoEnabled = stereo;
 	if( !GLimp_InitGL() )
 	{
 		ri.Com_Printf( "GLimp_SetMode() - GLimp_InitGL failed\n" );
