@@ -1867,7 +1867,7 @@ static void R_InitShadersCache( void )
 		}
 	}
 
-	Com_Printf( "--------------------------------------\n\n" );
+	Com_Printf( "--------------------------------------\n" );
 }
 
 /*

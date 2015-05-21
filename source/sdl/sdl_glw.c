@@ -26,7 +26,7 @@
 glwstate_t glw_state = {NULL, false};
 cvar_t *vid_fullscreen;
 
-static int GLimp_InitGL( void );
+static int GLimp_InitGL( int stencilbits, bool stereo );
 
 void GLimp_SetWindowIcon( void )
 {
@@ -61,7 +61,7 @@ static bool GLimp_SetWindowFullscreen( bool fullscreen )
 	}
 }
 
-static bool GLimp_CreateWindow( int x, int y, int width, int height )
+static void GLimp_CreateWindow( int x, int y, int width, int height )
 {
 	glw_state.sdl_window = SDL_CreateWindow( glw_state.applicationName, 
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL );
@@ -76,14 +76,6 @@ static bool GLimp_CreateWindow( int x, int y, int width, int height )
 	SDL_SetWindowPosition( glw_state.sdl_window, x, y );
 
 	GLimp_SetWindowIcon();
-
-	// init all the gl stuff for the window
-	if( !GLimp_InitGL() ) {
-		ri.Com_Printf( "VID_CreateWindow() - GLimp_InitGL failed\n" );
-		return false;
-	}
-
-	return true;
 }
 
 /**
@@ -92,7 +84,7 @@ static bool GLimp_CreateWindow( int x, int y, int width, int height )
  * @param fullscreen <code>true</code> for a fullscreen mode,
  *     <code>false</code> otherwise
  */
-rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen )
+rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
 {
 	const char *win_fs[] = {"W", "FS"};
 
@@ -113,7 +105,11 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		GLimp_Shutdown();
 	}
 
-	if( !GLimp_CreateWindow( x, y, width, height ) ) {
+	GLimp_CreateWindow( x, y, width, height );
+
+	// init all the gl stuff for the window
+	if( !GLimp_InitGL( r_stencilbits->integer, stereo ) ) {
+		ri.Com_Printf( "VID_CreateWindow() - GLimp_InitGL failed\n" );
 		return rserr_invalid_mode;
 	}
 
@@ -167,16 +163,13 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 	return true;
 }
 
-static int GLimp_InitGL( void )
+static int GLimp_InitGL( int stencilbits, bool stereo )
 {
-	int colorBits, depthBits, stencilBits, stereo;
+	int colorBits, depthBits, stencilBits, stereo_;
 
-	cvar_t *stereo_cv;
-	stereo_cv = ri.Cvar_Get( "cl_stereo", "0", 0 );
+	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, max( 0, stencilbits ) );
 
-	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, max( 0, r_stencilbits->integer ) );
-
-	if( stereo_cv->integer != 0 ) {
+	if( stereo ) {
 		ri.Com_DPrintf( "...attempting to use stereo\n" );
 		SDL_GL_SetAttribute( SDL_GL_STEREO, 1 );
 	}
@@ -198,10 +191,10 @@ static int GLimp_InitGL( void )
 	SDL_GL_GetAttribute( SDL_GL_BUFFER_SIZE, &colorBits );
 	SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &depthBits );
 	SDL_GL_GetAttribute( SDL_GL_STENCIL_SIZE, &stencilBits );
-	SDL_GL_GetAttribute( SDL_GL_STEREO, &stereo );
+	SDL_GL_GetAttribute( SDL_GL_STEREO, &stereo_ );
 
 	glConfig.stencilBits = stencilBits;
-	glConfig.stereoEnabled = stereo != 0;
+	glConfig.stereoEnabled = stereo_ != 0;
 
 	ri.Com_Printf( "GL PFD: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", colorBits, depthBits, stencilBits );
 

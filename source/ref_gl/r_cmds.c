@@ -52,9 +52,9 @@ void R_ScreenShot_f( void )
 	mediadir = ri.FS_MediaDirectory( FS_MEDIA_IMAGES );
 	if( mediadir )
 	{
-		path_size = strlen( mediadir ) + 1 + strlen( rsh.applicationName ) + sizeof( " Screenshots/" );
+		path_size = strlen( mediadir ) + 1 + strlen( glConfig.applicationName ) + sizeof( " Screenshots/" );
 		path = alloca( path_size );
-		Q_snprintfz( path, path_size, "%s/%s Screenshots/", mediadir, rsh.applicationName );
+		Q_snprintfz( path, path_size, "%s/%s Screenshots/", mediadir, glConfig.applicationName );
 	}
 	else
 	{
@@ -106,8 +106,8 @@ void R_ScreenShot_f( void )
 		// hm... shouldn't really happen, but check anyway
 		if( i == 2 )
 		{
-			Q_strncpyz( timestamp_str, rsh.screenshotPrefix, sizeof( timestamp_str ) );
-			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, rsh.screenshotPrefix );
+			Q_strncpyz( timestamp_str, glConfig.screenshotPrefix, sizeof( timestamp_str ) );
+			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, glConfig.screenshotPrefix );
 		}
 
 		checkname_size = ( path_size - 1 ) + strlen( timestamp_str ) + 5 + 1 + strlen( extension );
