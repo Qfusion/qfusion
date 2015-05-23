@@ -39,6 +39,11 @@ cvar_t *s_globalfocus;
 static int s_registration_sequence = 1;
 static bool s_registering;
 
+// batch entity spatializations
+static unsigned s_num_ent_spats;
+static smdCmdSpatialization_t s_ent_spats[SND_SPATIALIZE_ENTS_MAX];
+static const unsigned s_max_ent_spats = sizeof( s_ent_spats ) / sizeof( s_ent_spats[0] );
+
 static void SF_UnregisterSound( sfx_t *sfx );
 static void SF_FreeSound( sfx_t *sfx );
 
@@ -105,6 +110,8 @@ static void SF_ListDevices_f( void )
 bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 {
 	soundpool = S_MemAllocPool( "OpenAL sound module" );
+	
+	s_num_ent_spats = 0;
 
 #ifdef OPENAL_RUNTIME
 	if( !QAL_Init( ALDRIVER, verbose ) )
@@ -373,7 +380,18 @@ void SF_SetAttenuationModel( int model, float maxdistance, float refdistance )
 */
 void SF_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t velocity )
 {
-	S_IssueSetEntitySpatializationCmd( s_cmdPipe, entnum, origin, velocity );
+	smdCmdSpatialization_t *spat;
+
+	if( s_num_ent_spats == s_max_ent_spats ) {
+		// flush all spatializations at once to free room
+		S_IssueSetMulEntitySpatializationCmd( s_cmdPipe, s_num_ent_spats, s_ent_spats );
+		s_num_ent_spats = 0;
+	}
+
+	spat = &s_ent_spats[s_num_ent_spats++];
+	spat->entnum = entnum;
+	VectorCopy( origin, spat->origin );
+	VectorCopy( velocity, spat->velocity );
 }
 
 /*
@@ -438,6 +456,11 @@ void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation )
 */
 void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump )
 {
+	if( s_num_ent_spats ) {
+		S_IssueSetMulEntitySpatializationCmd( s_cmdPipe, s_num_ent_spats, s_ent_spats );
+		s_num_ent_spats = 0;
+	}
+
 	S_IssueSetListenerCmd( s_cmdPipe, origin, velocity, axis, avidump );
 }
 

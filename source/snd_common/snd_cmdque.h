@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define SND_COMMANDS_BUFSIZE	0x100000
 
+#define SND_SPATIALIZE_ENTS_MAX 8
+
 typedef struct qbufPipe_s sndCmdPipe_t;
 typedef unsigned (*pipeCmdHandler_t)( const void * );
 
@@ -52,9 +54,17 @@ enum
 	SND_CMD_RAW_SAMPLES,
 	SND_CMD_POSITIONED_RAW_SAMPLES,
 	SND_CMD_STUFFCMD,
+	SND_CMD_SET_MUL_ENTITY_SPATIALIZATION,
 
 	SND_CMD_NUM_CMDS
 };
+
+typedef struct 
+{
+	int entnum;
+	float origin[3];
+	float velocity[3];
+} smdCmdSpatialization_t;
 
 typedef struct
 {
@@ -234,6 +244,15 @@ typedef struct
 	char text[80];
 } sndStuffCmd_t;
 
+typedef struct
+{
+	int id;
+	unsigned numents;
+	int entnum[SND_SPATIALIZE_ENTS_MAX];
+	float origin[SND_SPATIALIZE_ENTS_MAX][3];
+	float velocity[SND_SPATIALIZE_ENTS_MAX][3];
+} sndCmdSetMulEntitySpatialization_t;
+
 sndCmdPipe_t *S_CreateSoundCmdPipe( void );
 void S_DestroySoundCmdPipe( sndCmdPipe_t **pqueue );
 int S_ReadEnqueuedCmds( sndCmdPipe_t *queue, pipeCmdHandler_t *cmdHandlers );
@@ -249,8 +268,7 @@ void S_IssueFreeSfxCmd( sndCmdPipe_t *queue, int sfx );
 void S_IssueLoadSfxCmd( sndCmdPipe_t *queue, int sfx );
 void S_IssueSetAttenuationCmd( sndCmdPipe_t *queue, int model, 
 	float maxdistance, float refdistance );
-void S_IssueSetEntitySpatializationCmd( sndCmdPipe_t *queue, int entnum, 
-	const vec3_t origin, const vec3_t velocity );
+void S_IssueSetEntitySpatializationCmd( sndCmdPipe_t *queue, const smdCmdSpatialization_t *spat );
 void S_IssueSetListenerCmd( sndCmdPipe_t *queue, const vec3_t origin, 
 	const vec3_t velocity, const mat3_t axis, bool avidump );
 void S_IssueStartLocalSoundCmd( sndCmdPipe_t *queue, int sfx );
@@ -277,5 +295,7 @@ void S_IssuePositionedRawSamplesCmd( sndCmdPipe_t *queue, int entnum,
 	float fvol, float attenuation, unsigned int samples, unsigned int rate, 
 	unsigned short width, unsigned short channels, uint8_t *data );
 void S_IssueStuffCmd( sndCmdPipe_t *queue, const char *text );
+void S_IssueSetMulEntitySpatializationCmd( sndCmdPipe_t *queue, unsigned numEnts,
+	const smdCmdSpatialization_t *spat );
 
 #endif // SND_CMDQUEUE_H

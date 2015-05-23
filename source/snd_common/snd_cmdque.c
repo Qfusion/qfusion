@@ -143,17 +143,16 @@ void S_IssueSetAttenuationCmd( sndCmdPipe_t *queue, int model,
 /*
 * S_IssueSetEntitySpatializationCmd
 */
-void S_IssueSetEntitySpatializationCmd( sndCmdPipe_t *queue, int entnum, 
-	const vec3_t origin, const vec3_t velocity )
+void S_IssueSetEntitySpatializationCmd( sndCmdPipe_t *queue, const smdCmdSpatialization_t *spat )
 {
 	unsigned i;
 
 	sndCmdSetEntitySpatialization_t cmd;
 	cmd.id = SND_CMD_SET_ENTITY_SPATIALIZATION;
-	cmd.entnum = entnum;
+	cmd.entnum = spat->entnum;
 	for( i = 0; i < 3; i++ ) {
-		cmd.origin[i] = origin[i];
-		cmd.velocity[i] = velocity[i];
+		cmd.origin[i] = spat->origin[i];
+		cmd.velocity[i] = spat->velocity[i];
 	}
 
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
@@ -385,6 +384,37 @@ void S_IssueStuffCmd( sndCmdPipe_t *queue, const char *text )
 	cmd.id = SND_CMD_STUFFCMD;
 	Q_strncpyz( cmd.text, text, sizeof( cmd.text ) );
 	S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
+}
+
+/*
+* S_IssueSetMulEntitySpatializationCmd
+*/
+void S_IssueSetMulEntitySpatializationCmd( sndCmdPipe_t *queue, unsigned numEnts,
+	const smdCmdSpatialization_t *spat )
+{
+	unsigned i, j;
+
+	for( j = 0; j < numEnts;   )
+	{
+		unsigned n;
+		sndCmdSetMulEntitySpatialization_t cmd;
+
+		cmd.id = SND_CMD_SET_MUL_ENTITY_SPATIALIZATION;
+		cmd.numents = numEnts - j;
+		if( cmd.numents > SND_SPATIALIZE_ENTS_MAX ) cmd.numents = SND_SPATIALIZE_ENTS_MAX;
+
+		for( n = 0; n < cmd.numents; n++ ) {
+			cmd.entnum[n] = spat[n].entnum;
+			for( i = 0; i < 3; i++ ) {
+				cmd.origin[n][i] = spat[n].origin[i];
+				cmd.velocity[n][i] = spat[n].velocity[i];
+			}
+		}
+
+		S_EnqueueCmd( queue, &cmd, sizeof( cmd ) );
+
+		j += cmd.numents;
+	}
 }
 
 /*

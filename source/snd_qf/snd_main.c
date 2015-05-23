@@ -28,6 +28,11 @@ static struct qthread_s *s_backThread;
 static int s_registration_sequence;
 static bool	s_registering;
 
+// batch entity spatializations
+static unsigned s_num_ent_spats;
+static smdCmdSpatialization_t s_ent_spats[SND_SPATIALIZE_ENTS_MAX];
+static const unsigned s_max_ent_spats = sizeof( s_ent_spats ) / sizeof( s_ent_spats[0] );
+
 struct mempool_s *soundpool;
 
 cvar_t *developer;
@@ -293,6 +298,8 @@ bool SF_Init( void *hwnd, int maxEntities, bool verbose )
 	trap_Cmd_AddCommand( "soundinfo", SF_SoundInfo_f );
 
 	num_sfx = 0;
+	
+	s_num_ent_spats = 0;
 
 	s_registration_sequence = 1;
 	s_registering = false;
@@ -462,7 +469,18 @@ void SF_SetAttenuationModel( int model, float maxdistance, float refdistance )
 */
 void SF_SetEntitySpatialization( int entnum, const vec3_t origin, const vec3_t velocity )
 {
-	S_IssueSetEntitySpatializationCmd( s_cmdPipe, entnum, origin, velocity );
+	smdCmdSpatialization_t *spat;
+
+	if( s_num_ent_spats == s_max_ent_spats ) {
+		// flush all spatializations at once to free room
+		S_IssueSetMulEntitySpatializationCmd( s_cmdPipe, s_num_ent_spats, s_ent_spats );
+		s_num_ent_spats = 0;
+	}
+
+	spat = &s_ent_spats[s_num_ent_spats++];
+	spat->entnum = entnum;
+	VectorCopy( origin, spat->origin );
+	VectorCopy( velocity, spat->velocity );
 }
 
 /*
@@ -527,6 +545,11 @@ void SF_AddLoopSound( sfx_t *sfx, int entnum, float fvol, float attenuation )
 */
 void SF_Update( const vec3_t origin, const vec3_t velocity, const mat3_t axis, bool avidump )
 {
+	if( s_num_ent_spats ) {
+		S_IssueSetMulEntitySpatializationCmd( s_cmdPipe, s_num_ent_spats, s_ent_spats );
+		s_num_ent_spats = 0;
+	}
+
 	S_IssueSetListenerCmd( s_cmdPipe, origin, velocity, axis, avidump );
 }
 
