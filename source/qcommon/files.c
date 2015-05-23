@@ -59,6 +59,13 @@ enum
 	FS_SEARCH_ALL = (FS_SEARCH_PAKS|FS_SEARCH_DIRS)
 };
 
+typedef enum
+{
+	FS_PURE_NONE		= 0,
+	FS_PURE_IMPLICIT	= 1,
+	FS_PURE_EXPLICIT	= 2
+} fs_pure_t;
+
 static const char *pak_extensions[] = { "pk3", "pk2", NULL };
 
 static const char *forbidden_gamedirs[] = {
@@ -103,7 +110,7 @@ typedef struct pack_s
 	char *filename;     // full path
 	char *manifest;
 	unsigned checksum;
-	bool pure;
+	fs_pure_t pure;
 	int deferred_shard;
 	struct pack_s *deferred_pack;
 	void *sysHandle;
@@ -376,6 +383,7 @@ static int FS_FileLength( FILE *f, bool close )
 static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **pout, char *path, size_t path_size, int mode )
 {
 	searchpath_t *search;
+	searchpath_t *implicitpure;
 	bool purepass;
 
 	if( !COM_ValidateRelativeFilename( filename ) )
@@ -387,6 +395,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 	// search through the path, one element at a time
 	search = fs_searchpaths;
 	purepass = true;
+	implicitpure = NULL;
 	while( search )
 	{
 		// is the element a pak file?
@@ -394,10 +403,18 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 		{
 			if( mode & FS_SEARCH_PAKS )
 			{
-				if( search->pack->pure == purepass )
+				if( (search->pack->pure > FS_PURE_NONE) == purepass )
 				{
 					if( FS_SearchPakForFile( search->pack, filename, pout ) )
-						return search;
+					{
+						// if we find an explicitly pure pak, return immediately
+						if( !purepass || search->pack->pure == FS_PURE_EXPLICIT )
+							return search;
+
+						// otherwise store the pointer but keep searching for an explicit pak
+						else if( implicitpure == NULL )
+							implicitpure = search;
+					}
 				}
 			}
 		}
@@ -415,6 +432,11 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 
 		if( !search->next && purepass )
 		{
+			if( implicitpure )
+			{
+				// return file from an implicitly pure pak
+				return implicitpure;
+			}
 			search = fs_searchpaths;
 			purepass = false;
 		}
@@ -505,32 +527,58 @@ static void Cmd_PakFile_f( void )
 }
 
 /*
+* FS_IsExplicitPurePak
+*/
+static bool FS_IsExplicitPurePak( const char *pakname, bool *wrongver )
+{
+	bool pure;
+	const char *begin;
+	const char *pakbasename, *extension;
+	size_t pakbasename_len, extension_len;
+
+	pakbasename = COM_FileBase( pakname );
+	pakbasename_len = strlen( pakbasename );
+	extension = COM_FileExtension( pakbasename );
+	extension_len = strlen( extension );
+
+	// check for "pure" suffix
+	pure = false;
+	begin = pakbasename + pakbasename_len - strlen( "pure" ) - extension_len;
+	if( begin < pakbasename )
+		return false;
+
+	if( !Q_strnicmp( begin, "pure", strlen( "pure" ) ) )
+		pure = true;
+
+	// check version match
+	if( wrongver ) {
+		begin = pakbasename + pakbasename_len - strlen( APP_VERSION_STR_MAJORMINOR "pure" ) - extension_len;
+		*wrongver = begin < pakbasename || Q_strnicmp( begin,  APP_VERSION_STR_MAJORMINOR, strlen( APP_VERSION_STR_MAJORMINOR ) ) != 0;
+	}
+
+	return pure;
+}
+
+/*
 * FS_GetExplicitPurePakList
 */
 int FS_GetExplicitPurePakList( char ***paknames )
 {
 	searchpath_t *search;
 	int numpaks, i, e;
-	char pure_suffix[16];
-	size_t pure_suffix_len;
 
 	// count them
 	numpaks = 0;
 
 	for( e = 0; pak_extensions[e]; e++ )
 	{
-		Q_snprintfz( pure_suffix, sizeof( pure_suffix ), "pure.%s", pak_extensions[e] );
-		pure_suffix_len = strlen( pure_suffix );
-
 		for( search = fs_searchpaths; search; search = search->next )
 		{
 			if( !search->pack )
 				continue;
-			if( strlen( search->pack->filename ) <= pure_suffix_len )
+			if( search->pack->pure != FS_PURE_EXPLICIT )
 				continue;
-
-			if( !Q_stricmp( search->pack->filename + strlen( search->pack->filename ) - pure_suffix_len, pure_suffix ) )
-				numpaks++;
+			numpaks++;
 		}
 	}
 
@@ -542,22 +590,16 @@ int FS_GetExplicitPurePakList( char ***paknames )
 	i = 0;
 	for( e = 0; pak_extensions[e]; e++ )
 	{
-		Q_snprintfz( pure_suffix, sizeof( pure_suffix ), "pure.%s", pak_extensions[e] );
-		pure_suffix_len = strlen( pure_suffix );
-
 		for( search = fs_searchpaths; search; search = search->next )
 		{
 			if( !search->pack )
 				continue;
-			if( strlen( search->pack->filename ) <= pure_suffix_len )
+			if( search->pack->pure != FS_PURE_EXPLICIT )
 				continue;
 
-			if( !Q_stricmp( search->pack->filename + strlen( search->pack->filename ) - pure_suffix_len, pure_suffix ) )
-			{
-				assert( i < numpaks );
-				( *paknames )[i] = ZoneCopyString( FS_PakNameForPath( search->pack ) );
-				i++;
-			}
+			assert( i < numpaks );
+			( *paknames )[i] = ZoneCopyString( FS_PakNameForPath( search->pack ) );
+			i++;
 		}
 	}
 	assert( i == numpaks );
@@ -648,6 +690,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 	size_t max_extension_length;
 	searchpath_t *search;
 	bool purepass;
+	const char *implicitpure;
 
 	assert( filename && extensions );
 
@@ -686,19 +729,28 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 	// search through the path, one element at a time
 	search = fs_searchpaths;
 	purepass = true;
+	implicitpure = NULL;
 	while( search )
 	{
 		if( search->pack ) // is the element a pak file?
 		{
-			if( search->pack->pure == purepass )
+			if( (search->pack->pure > FS_PURE_NONE) == purepass )
 			{
 				for( i = 0; i < num_extensions; i++ )
 				{
 					if( FS_SearchPakForFile( search->pack, filenames[i], NULL ) )
 					{
-						Mem_TempFree( filenames[0] );
-						Mem_TempFree( filenames );
-						return extensions[i];
+						if( !purepass || search->pack->pure == FS_PURE_EXPLICIT )
+						{
+							Mem_TempFree( filenames[0] );
+							Mem_TempFree( filenames );
+							return extensions[i];
+						}
+						else if( implicitpure == NULL )
+						{
+							implicitpure = extensions[i];
+							break;
+						}
 					}
 				}
 			}
@@ -718,8 +770,15 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 				}
 			}
 		}
+
 		if( !search->next && purepass )
 		{
+			if( implicitpure )
+			{
+				Mem_TempFree( filenames[0] );
+				Mem_TempFree( filenames );
+				return implicitpure;
+			}
 			search = fs_searchpaths;
 			purepass = false;
 		}
@@ -1844,7 +1903,8 @@ bool FS_AddPurePak( unsigned checksum )
 	{
 		if( search->pack && search->pack->checksum == checksum )
 		{
-			search->pack->pure = true;
+			if( search->pack->pure < FS_PURE_IMPLICIT )
+				search->pack->pure = FS_PURE_IMPLICIT;
 			return true;
 		}
 	}
@@ -1861,8 +1921,8 @@ void FS_RemovePurePaks( void )
 
 	for( search = fs_searchpaths; search; search = search->next )
 	{
-		if( search->pack )
-			search->pack->pure = false;
+		if( search->pack && search->pack->pure == FS_PURE_IMPLICIT )
+			search->pack->pure = FS_PURE_NONE;
 	}
 }
 
@@ -2420,6 +2480,7 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent )
 	pack->sysHandle = handle;
 	pack->vfsHandle = vfsHandle;
 	pack->trie = NULL;
+	pack->pure = FS_IsExplicitPurePak( packfilename, NULL ) ? FS_PURE_EXPLICIT : FS_PURE_NONE;
 
 	Trie_Create( TRIE_CASE_INSENSITIVE, &pack->trie );
 
@@ -2862,7 +2923,6 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 	size_t len, alllen;
 	searchpath_t *search;
 	searchfile_t *files;
-	bool purepass;
 	static int maxFilesCache;
 	static char dircache[MAX_QPATH], extcache[MAX_QPATH];
 	bool useCache;
@@ -2901,43 +2961,30 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 	if( !useCache )
 	{
 		search = fs_searchpaths;
-		purepass = true;
 		while( search )
 		{
-			if( ( search->pack && search->pack->pure == purepass ) || ( !search->pack && !purepass ) )
-			{
-				limit = maxFiles ? min( fs_numsearchfiles, maxFiles ) : fs_numsearchfiles;
-				found = FS_PathGetFileListExt( search, dir, extension, files + allfound,
-					fs_numsearchfiles - allfound );
+			limit = maxFiles ? min( fs_numsearchfiles, maxFiles ) : fs_numsearchfiles;
+			found = FS_PathGetFileListExt( search, dir, extension, files + allfound,
+				fs_numsearchfiles - allfound );
 
-				if( allfound+found == fs_numsearchfiles )
+			if( allfound+found == fs_numsearchfiles )
+			{
+				if( limit == maxFiles || fs_numsearchfiles == FS_MAX_SEARCHFILES )
+					break; // we are done
+				fs_numsearchfiles *= 2;
+				if( fs_numsearchfiles > FS_MAX_SEARCHFILES )
+					fs_numsearchfiles = FS_MAX_SEARCHFILES;
+				fs_searchfiles = files = ( searchfile_t* )FS_Realloc( fs_searchfiles, sizeof( searchfile_t ) * fs_numsearchfiles );
+				if( !search->pack )
 				{
-					if( limit == maxFiles || fs_numsearchfiles == FS_MAX_SEARCHFILES )
-						break; // we are done
-					fs_numsearchfiles *= 2;
-					if( fs_numsearchfiles > FS_MAX_SEARCHFILES )
-						fs_numsearchfiles = FS_MAX_SEARCHFILES;
-					fs_searchfiles = files = ( searchfile_t* )FS_Realloc( fs_searchfiles, sizeof( searchfile_t ) * fs_numsearchfiles );
-					if( !search->pack )
-					{
-						for( i = 0; i < found; i++ )
-							Mem_ZoneFree( files[allfound+i].name );
-					}
-					continue;
+					for( i = 0; i < found; i++ )
+						Mem_ZoneFree( files[allfound+i].name );
 				}
-
-				allfound += found;
+				continue;
 			}
-
-			if( !search->next && purepass )
-			{
-				search = fs_searchpaths;
-				purepass = false;
-			}
-			else
-			{
-				search = search->next;
-			}
+			
+			allfound += found;
+			search = search->next;
 		}
 
 		qsort( files, allfound, sizeof( searchfile_t ), ( int ( * )( const void *, const void * ) )FS_SortFilesCmp );
@@ -3256,8 +3303,6 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 {
 	int i, e, numpakfiles;
 	char **paknames = NULL;
-	const char *pakbasename, *extension;
-	size_t pakname_len, extension_len;
 	char tempname[FS_MAX_PATH];
 
 	numpakfiles = 0;
@@ -3311,6 +3356,8 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 
 		for( i = 0; i < numpakfiles; )
 		{
+			bool wrongpure;
+
 			// ignore similarly named paks if they appear in both vfs and fs
 			if( i && !Q_stricmp( paknames[i], paknames[i-1] ) )
 			{
@@ -3318,22 +3365,12 @@ static char **FS_GamePathPaks( const char *basepath, const char *gamedir, int *n
 				memmove( &paknames[i], &paknames[i+1], (numpakfiles-- - i) * sizeof( *paknames ) );
 			}
 
-			pakbasename = COM_FileBase( paknames[i] );
-			pakname_len = strlen( pakbasename );
-			extension = COM_FileExtension( pakbasename );
-			extension_len = strlen( extension );
-
 			// ignore pure data and modules pk3 files from other versions
-			if( !Q_strnicmp( pakbasename + pakname_len - strlen( "pure" ) - extension_len, "pure", strlen ( "pure" ) ) &&
-				Q_strnicmp( pakbasename + pakname_len - strlen( APP_VERSION_STR_MAJORMINOR "pure" ) - extension_len, APP_VERSION_STR_MAJORMINOR, strlen( APP_VERSION_STR_MAJORMINOR ) ) )
-			{
-				if( !Q_strnicmp( pakbasename, "data", strlen( "data" ) ) || !Q_strnicmp( pakbasename, "modules", strlen( "modules" ) ) )
-				{
-					//Com_Printf( "Skipping %s\n", pakbasename );
-					Mem_Free( paknames[i] );
-					memmove( &paknames[i], &paknames[i+1], (numpakfiles-- - i) * sizeof( *paknames ) );
-					continue;
-				}
+			if( FS_IsExplicitPurePak( paknames[i], &wrongpure ) && wrongpure ) {
+				//Com_Printf( "Skipping %s\n", pakbasename );
+				Mem_Free( paknames[i] );
+				memmove( &paknames[i], &paknames[i+1], (numpakfiles-- - i) * sizeof( *paknames ) );
+				continue;
 			}
 
 			i++;
