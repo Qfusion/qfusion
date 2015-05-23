@@ -438,6 +438,23 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 	return token;
 }
 
+/**
+ * Checks if the scoreboard column of the specific type needs to be skipped.
+ *
+ * @param type the column type
+ * @return whether the column needs to be skipped
+ */
+static bool SCR_SkipColumn( char type )
+{
+	switch( type )
+	{
+	case 'r':
+		return GS_MatchState() != MATCH_STATE_WARMUP;
+	}
+
+	return false;
+}
+
 /*
 * SCR_DrawTeamTab
 */
@@ -445,6 +462,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 {
 	const char *token;
 	const char *layout, *titles;
+	char type;
 	int team, team_score, team_ping;
 	int yoffset = 0, xoffset = 0;
 	int dir = 0, align, width, height;
@@ -526,8 +544,11 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	xoffset = CG_HorizontalAlignForWidth( 0, align, panelWidth );
 	xoffset += ( SCB_CENTERMARGIN * dir );
 
-	while( ( token = SCR_GetNextColumnLayout( &layout, &titles, NULL, &width ) ) != NULL )
+	while( ( token = SCR_GetNextColumnLayout( &layout, &titles, &type, &width ) ) != NULL )
 	{
+		if( SCR_SkipColumn( type ) )
+			continue;
+
 		if( width )
 		{
 			if( pass ) {
@@ -609,7 +630,7 @@ static void SCR_AddPlayerIcon( struct shader_s *image, int x, int y, float alpha
 /*
 * SCR_DrawPlayerTab
 */
-static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, int x, int y, int panelWidth, struct qfontface_s *font, int pass )
+static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int panelWidth, struct qfontface_s *font, int pass )
 {
 	int dir, align, i, columncount;
 	char type, string[MAX_STRING_CHARS];
@@ -620,18 +641,6 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 	int iconnum;
 	struct shader_s *icon;
 	bool highlight = false, trans = false;
-	bool ready = false;
-
-	// parse the command flags
-	for( ; *flags; flags++ )
-	{
-		switch( *flags )
-		{
-		case 'r':
-			ready = true;
-			break;
-		}
-	}
 
 	if( GS_TeamBasedGametype() )
 	{
@@ -675,6 +684,9 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 		if( !token[0] )
 			break;
 
+		if( SCR_SkipColumn( type ) )
+			continue;
+
 		Vector4Copy( colorWhite, color ); // reset to white after each column
 		icon = NULL;
 		string[0] = 0;
@@ -706,9 +718,6 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 
 			if( ISVIEWERENTITY( i + 1 ) ) // highlight if it's our own player
 				highlight = true;
-
-			if( ready ) // add the ready check mark
-				icon = CG_MediaShader( cgs.media.shaderVSayIcon[VSAY_YES] );
 
 			break;
 		case 'i': // is a integer (negatives are colored in red)
@@ -756,6 +765,11 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 				}
 			}
 			break;
+
+		case 'r': // is a ready state tick that is hidden when not in warmup
+			if( atoi( token ) )
+				icon = CG_MediaShader( cgs.media.shaderVSayIcon[VSAY_YES] );
+			break;
 		}
 
 		if( !width )
@@ -782,13 +796,9 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 		// draw the column value
 		if( pass && string[0] )
 		{
-			int iconwidth = ( icon ? height : 0 );
-			if( string[0] )
-			{
-				trap_SCR_DrawClampString( x + xoffset + iconwidth, y + yoffset, string,
-					x + xoffset + iconwidth, y + yoffset,
-					x + xoffset + width - iconwidth, y + yoffset + height, font, color );
-			}
+			trap_SCR_DrawClampString( x + xoffset, y + yoffset, string,
+				x + xoffset, y + yoffset,
+				x + xoffset + width, y + yoffset + height, font, color );
 		}
 
 		columncount++;
@@ -828,7 +838,7 @@ struct qfontface_s *CG_ScoreboardFont( cvar_t *familyCvar, cvar_t *sizeCvar )
 void CG_DrawScoreboard( void )
 {
 	int pass;
-	char *ptr, *token, *layout, title[MAX_STRING_CHARS];
+	char *ptr, *token, *layout, title[MAX_STRING_CHARS], type;
 	int team = TEAM_PLAYERS;
 	int xpos;
 	int ypos, yoffset, maxyoffset;
@@ -864,8 +874,11 @@ void CG_DrawScoreboard( void )
 	// calculate the panel width from the layout
 	panelWidth = 0;
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
-	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, NULL, &width ) != NULL )
-		panelWidth += width;
+	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width ) != NULL )
+	{
+		if( !SCR_SkipColumn( type ) )
+			panelWidth += width;
+	}
 
 	// parse and draw the scoreboard message
 	for ( pass = 0; pass < 2; pass++ )
@@ -885,9 +898,9 @@ void CG_DrawScoreboard( void )
 				yoffset = 0;
 				yoffset += SCR_DrawTeamTab( (const char **)&ptr, &team, xpos, ypos + yoffset, panelWidth, font, titlefont, pass );
 			}
-			else if ( !Q_strnicmp( token, "&p", 2 ) ) // player tab
+			else if ( !Q_stricmp( token, "&p" ) ) // player tab
 			{
-				yoffset += SCR_DrawPlayerTab( (const char **)&ptr, team, token + 2, xpos, ypos + yoffset, panelWidth, font, pass );
+				yoffset += SCR_DrawPlayerTab( (const char **)&ptr, team, xpos, ypos + yoffset, panelWidth, font, pass );
 			}
 			else if ( !Q_stricmp( token, "&w" ) ) // list of challengers
 			{
