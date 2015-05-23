@@ -1656,6 +1656,18 @@ static unsigned S_HandleStuffCmd( const sndStuffCmd_t *cmd )
 	return sizeof( *cmd );
 }
 
+/*
+* S_HandleSetMulEntitySpatializationCmd
+*/
+static unsigned S_HandleSetMulEntitySpatializationCmd( const sndCmdSetMulEntitySpatialization_t *cmd )
+{
+	unsigned i;
+	//Com_Printf("S_HandleSetEntitySpatializationCmd\n");
+	for( i = 0; i < cmd->numents; i++ )
+		S_SetEntitySpatialization( cmd->entnum[i], cmd->origin[i], cmd->velocity[i] );
+	return sizeof( *cmd );
+}
+
 static pipeCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 {
 	/* SND_CMD_INIT */
@@ -1705,7 +1717,9 @@ static pipeCmdHandler_t sndCmdHandlers[SND_CMD_NUM_CMDS] =
 	/* SND_CMD_POSITIONED_RAW_SAMPLES */
 	(pipeCmdHandler_t)S_HandlePositionedRawSamplesCmd,
 	/* SND_CMD_STUFFCMD */
-	(pipeCmdHandler_t)S_HandleStuffCmd
+	(pipeCmdHandler_t)S_HandleStuffCmd,
+	/* SND_CMD_SET_MUL_ENTITY_SPATIALIZATION */
+	(pipeCmdHandler_t)S_HandleSetMulEntitySpatializationCmd,
 };
 
 /*
