@@ -425,8 +425,8 @@ int IN_RawInput_Register(void)
 	// register to get wm_input messages
 	Rid.usUsagePage = 0x01;
 	Rid.usUsage = 0x02;
-	Rid.dwFlags = RIDEV_NOLEGACY; // adds HID mouse and also ignores legacy mouse messages
-	Rid.hwndTarget = NULL;
+	Rid.dwFlags = RIDEV_CAPTUREMOUSE | RIDEV_NOLEGACY; // adds HID mouse and also ignores clicks out of the window and legacy mouse messages
+	Rid.hwndTarget = cl_hwnd;
 
 	// Register to receive the WM_INPUT message for any change in mouse (buttons, wheel, and movement will all generate the same message)
 	if( !(*_RRID)(&Rid, 1, sizeof( Rid ) ) )
