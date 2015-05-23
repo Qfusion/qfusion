@@ -529,7 +529,7 @@ static void Cmd_PakFile_f( void )
 /*
 * FS_IsExplicitPurePak
 */
-static bool FS_IsExplicitPurePak( const char *pakname, bool *wrongver )
+bool FS_IsExplicitPurePak( const char *pakname, bool *wrongver )
 {
 	bool pure;
 	const char *begin;

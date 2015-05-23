@@ -331,6 +331,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	unsigned checksum;
 	bool allow_localhttpdownload;
 	bool modules_download = false;
+	bool explicit_pure_download = false;
 	const char *baseurl;
 	download_list_t	*dl;
 
@@ -448,6 +449,8 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 			CL_DownloadDone();
 			return;
 		}
+
+		explicit_pure_download = FS_IsExplicitPurePak( filename, NULL );
 	}
 	else
 	{
@@ -505,12 +508,12 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	}
 
 	baseurl = cls.httpbaseurl;
-	if( modules_download ) {
+	if( modules_download || explicit_pure_download ) {
 		baseurl = APP_UPDATE_URL APP_SERVER_UPDATE_DIRECTORY;
 		allow_localhttpdownload = false;
 	}
 
-	if( modules_download ) {
+	if( modules_download || explicit_pure_download ) {
 		cls.download.web = true;
 		Com_Printf( "Web download: %s from %s/%s\n", cls.download.tempname, baseurl, filename );
 	}
@@ -552,7 +555,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		Q_snprintfz( referer, alloc_size, APP_URI_SCHEME "%s", NET_AddressToString( &cls.serveraddress ) );
 		Q_strlwr( referer );
 
-		if( modules_download ) {
+		if( modules_download || explicit_pure_download ) {
 			alloc_size = strlen( baseurl ) + 1 + strlen( filename ) + 1;
 			fullurl = alloca( alloc_size );
 			Q_snprintfz( fullurl, alloc_size, "%s/%s", baseurl, filename );
