@@ -526,10 +526,6 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	xoffset = CG_HorizontalAlignForWidth( 0, align, panelWidth );
 	xoffset += ( SCB_CENTERMARGIN * dir );
 
-	// offset for the warmup ready indicator
-	if( GS_MatchState() == MATCH_STATE_WARMUP )
-		xoffset += height;
-
 	while( ( token = SCR_GetNextColumnLayout( &layout, &titles, NULL, &width ) ) != NULL )
 	{
 		if( width )
@@ -542,7 +538,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 		}
 	}
 
-	yoffset += height;
+	yoffset += trap_SCR_FontHeight( font );
 
 	return yoffset;
 }
@@ -619,12 +615,12 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 	char type, string[MAX_STRING_CHARS];
 	const char *oldptr;
 	char *token, *layout;
-	int height, width, startxoffset, xoffset, yoffset;
+	int height, width, xoffset, yoffset;
 	vec4_t teamcolor, color;
 	int iconnum;
 	struct shader_s *icon;
-	bool highlight = false;
-	bool warmup = ( GS_MatchState() == MATCH_STATE_WARMUP ), ready = false;
+	bool highlight = false, trans = false;
+	bool ready = false;
 
 	// parse the command flags
 	for( ; *flags; flags++ )
@@ -657,15 +653,8 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 	xoffset = CG_HorizontalAlignForWidth( 0, align, panelWidth );
 	xoffset += ( SCB_CENTERMARGIN * dir );
 
-	// offset for the warmup ready indicator
-	if( warmup )
-		xoffset += height;
-
-	startxoffset = xoffset;
-
 	// draw the background
 	columncount = 0;
-	color[3] = 1.0f;
 	CG_TeamColor( team, teamcolor );
 
 	// draw the player tab column titles
@@ -686,7 +675,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 		if( !token[0] )
 			break;
 
-		VectorCopy( colorWhite, color ); // reset to white after each column
+		Vector4Copy( colorWhite, color ); // reset to white after each column
 		icon = NULL;
 		string[0] = 0;
 
@@ -706,12 +695,8 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 
 			if( i < 0 ) // negative numbers toggle transparency on
 			{
-				color[3] = 0.3f;
+				trans = true;
 				i = -1 - i;
-			}
-			else
-			{
-				color[3] = 1.0f;
 			}
 
 			if( i < 0 || i >= gs.maxclients )
@@ -721,6 +706,9 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 
 			if( ISVIEWERENTITY( i + 1 ) ) // highlight if it's our own player
 				highlight = true;
+
+			if( ready ) // add the ready check mark
+				icon = CG_MediaShader( cgs.media.shaderVSayIcon[VSAY_YES] );
 
 			break;
 		case 'i': // is a integer (negatives are colored in red)
@@ -773,15 +761,18 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 		if( !width )
 			continue;
 
-		if( !pass )
-		{
-			// draw the column background
-			teamcolor[3] = SCB_BACKGROUND_ALPHA;
-			if( columncount & 1 )
-				teamcolor[3] -= 0.15f;
-			if( highlight )
-				teamcolor[3] += 0.3f;
+		// draw the column background
+		teamcolor[3] = SCB_BACKGROUND_ALPHA;
+		if( columncount & 1 )
+			teamcolor[3] -= 0.15;
 
+		if( highlight )
+			teamcolor[3] += 0.3;
+
+		if( trans )
+			color[3] = 0.3;
+
+		if( !pass ) {
 			trap_R_DrawStretchPic( x + xoffset, y + yoffset, width, height, 0, 0, 1, 1, teamcolor, cgs.shaderWhite );
 
 			if( icon )
@@ -791,27 +782,18 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, const char *flags, 
 		// draw the column value
 		if( pass && string[0] )
 		{
-			trap_SCR_DrawClampString( x + xoffset, y + yoffset, string,
-				x + xoffset, y + yoffset, x + xoffset + width, y + yoffset + height, font, color );
+			int iconwidth = ( icon ? height : 0 );
+			if( string[0] )
+			{
+				trap_SCR_DrawClampString( x + xoffset + iconwidth, y + yoffset, string,
+					x + xoffset + iconwidth, y + yoffset,
+					x + xoffset + width - iconwidth, y + yoffset + height, font, color );
+			}
 		}
 
 		columncount++;
 
 		xoffset += width;
-	}
-
-	// draw the ready check mark
-	if( warmup && !pass )
-	{
-		xoffset = startxoffset - height;
-
-		teamcolor[3] = SCB_BACKGROUND_ALPHA - 0.15f;
-		if( highlight )
-			teamcolor[3] += 0.3f;
-		trap_R_DrawStretchPic( x + xoffset, y + yoffset, height, height, 0, 0, 1, 1, teamcolor, cgs.shaderWhite );
-
-		if( ready )
-			SCR_AddPlayerIcon( CG_MediaShader( cgs.media.shaderVSayIcon[VSAY_YES] ), x + xoffset, y + yoffset, color[3], font );
 	}
 
 	yoffset += height;
@@ -853,7 +835,6 @@ void CG_DrawScoreboard( void )
 	struct qfontface_s *font;
 	struct qfontface_s *monofont;
 	struct qfontface_s *titlefont;
-	int fontHeight;
 	int width, panelWidth;
 	vec4_t whiteTransparent = { 1.0f, 1.0f, 1.0f, 0.5f };
 
@@ -867,7 +848,6 @@ void CG_DrawScoreboard( void )
 	font = CG_ScoreboardFont( cg_scoreboardFontFamily, cg_scoreboardFontSize );
 	monofont = CG_ScoreboardFont( cg_scoreboardMonoFontFamily, cg_scoreboardFontSize );
 	titlefont = CG_ScoreboardFont( cg_scoreboardTitleFontFamily, cg_scoreboardTitleFontSize );
-	fontHeight = trap_SCR_FontHeight( font );
 
 	xpos = (int)( cgs.vidWidth * 0.5 );
 	ypos = (int)( cgs.vidHeight * 0.2 ) - 24 * cgs.vidHeight / 600;
@@ -879,12 +859,10 @@ void CG_DrawScoreboard( void )
 	trap_SCR_DrawString( xpos, ypos, ALIGN_CENTER_TOP, title, titlefont, whiteTransparent );
 	ypos += trap_SCR_FontHeight( titlefont );
 	trap_SCR_DrawStringWidth( xpos, ypos, ALIGN_CENTER_TOP, cgs.configStrings[CS_HOSTNAME], cgs.vidWidth*0.75, font, whiteTransparent );
-	ypos += fontHeight;
+	ypos += trap_SCR_FontHeight( font );
 
 	// calculate the panel width from the layout
 	panelWidth = 0;
-	if( GS_MatchState() == MATCH_STATE_WARMUP )
-		panelWidth += fontHeight;
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
 	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, NULL, &width ) != NULL )
 		panelWidth += width;
