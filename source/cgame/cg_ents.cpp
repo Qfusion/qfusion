@@ -483,7 +483,7 @@ bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe )
 
 	CG_FireEvents( true );
 
-	if( cg.firstFrame ) {
+	if( cg.firstFrame && !cgs.demoPlaying ) {
 		// request updates on our private state
 		trap_Cmd_ExecuteText( EXEC_NOW, "upstate" );
 	}
