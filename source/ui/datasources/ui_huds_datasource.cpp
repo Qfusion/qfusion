@@ -42,12 +42,32 @@ HudsDataSource::~HudsDataSource( void )
 
 void HudsDataSource::UpdateHudsList( void )
 {
+	int i;
+
 	hudsList.clear();
 
-	getFileList( hudsList, "huds", ".hud" );
-	int size = hudsList.size();
+	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN )
+	{
+		getFileList( hudsList, "huds", ".hud" );
+	}
+	else
+	{
+		HudList tempHudsList;
+		getFileList( tempHudsList, "huds", ".hud" );
+		int tempSize = tempHudsList.size();
+		for( i = 0; i < tempSize; i++ )
+		{
+			const std::string &tempName = tempHudsList[i];
+			size_t tempNameLength = tempName.length();
+			if( ( tempNameLength >= 6 ) && !Q_stricmp( tempName.c_str() + tempNameLength - 6, "_touch" ) )
+				continue;
 
-	for( int i = 0; i < size; i++ )
+			hudsList.push_back( tempName );
+		}
+	}
+
+	int size = hudsList.size();
+	for( i = 0; i < size; i++ )
 		NotifyRowAdd( TABLE_NAME, i, 1 );
 }
 
