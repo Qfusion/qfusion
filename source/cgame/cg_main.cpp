@@ -1141,6 +1141,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_ScreenInit();
 
+	CG_ClearLightStyles();
+
 	// get configstrings
 	CG_RegisterConfigStrings();
 

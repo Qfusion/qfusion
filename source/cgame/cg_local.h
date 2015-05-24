@@ -1072,6 +1072,7 @@ void CG_AddLightToScene( vec3_t org, float radius, float r, float g, float b );
 void CG_AddDlights( void );
 void CG_AllocShadeBox( int entNum, const vec3_t origin, const vec3_t mins, const vec3_t maxs, struct shader_s *shader );
 void CG_AddShadeBoxes( void );
+void CG_ClearLightStyles( void );
 void CG_RunLightStyles( void );
 void CG_SetLightStyle( int i );
 void CG_AddLightStyles( void );
