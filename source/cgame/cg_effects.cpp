@@ -41,7 +41,7 @@ cg_lightStyle_t	cg_lightStyle[MAX_LIGHTSTYLES];
 /*
 * CG_ClearLightStyles
 */
-static void CG_ClearLightStyles( void )
+void CG_ClearLightStyles( void )
 {
 	memset( cg_lightStyle, 0, sizeof( cg_lightStyle ) );
 }
@@ -1003,6 +1003,5 @@ void CG_ClearEffects( void )
 	CG_ClearFragmentedDecals();
 	CG_ClearParticles();
 	CG_ClearDlights();
-	CG_ClearLightStyles();
 	CG_ClearShadeBoxes();
 }
