@@ -453,6 +453,11 @@ LONG WINAPI MainWndProc(
 			Cbuf_ExecuteText( EXEC_APPEND, "toggle vid_fullscreen\n" );
 			return 0;
 		}
+		if( wParam == VK_F4 )
+		{
+			Cbuf_ExecuteText( EXEC_NOW, "quit\n" );
+			return 0;
+		}
 		if( wParam == VK_F10)
 		{
 			Key_Event( IN_MapKey( lParam ), true, sys_msg_time );
