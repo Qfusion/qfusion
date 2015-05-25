@@ -9,6 +9,7 @@
 #include <Rocket/Controls.h>
 #include <Rocket/Controls/ElementTabSet.h>
 #include <Rocket/Controls/ElementFormControlDataSelect.h>
+#include "widgets/ui_image.h"
 
 // macro to addref a return object (rocket element)
 #define _RETREF(a)	if( (a) ) { (a)->AddReference(); } return (a);
@@ -36,6 +37,8 @@ typedef Rocket::Controls::ElementDataGridRow ElementDataGridRow;
 
 typedef Rocket::Controls::ElementTabSet ElementTabSet;
 
+typedef WSWUI::ElementImage ElementImage;
+
 }
 
 //==========================================================
@@ -48,6 +51,8 @@ ASBIND_TYPE( Rocket::Controls::ElementDataGrid, ElementDataGrid );
 ASBIND_TYPE( Rocket::Controls::ElementDataGridRow, ElementDataGridRow );
 
 ASBIND_TYPE( Rocket::Controls::ElementTabSet, ElementTabSet );
+
+ASBIND_TYPE( WSWUI::ElementImage, ElementImage );
 
 // array of Element handlers
 ASBIND_ARRAY_TYPE( ASUI::ASElementsArray, Element @ );
@@ -962,6 +967,57 @@ static void BindElementDataGrid( ASInterface *as )
 //==============================================================
 
 //
+// IMAGE
+
+static ElementImage *Element_CastToElementImage( Element *self ) {
+	ElementImage *f = dynamic_cast<ElementImage *>( self );
+	_RETREF(f);
+}
+
+static Element *ElementImage_CastToElement( ElementImage *self ) {
+	Element *e = dynamic_cast<Element *>( self );
+	_RETREF(e);
+}
+
+static float ElementImage_GetWidth( ElementImage *self ) {
+	Rocket::Core::Vector2f dimensions;
+	self->GetIntrinsicDimensions( dimensions );
+	return dimensions.x;
+}
+
+static float ElementImage_GetHeight( ElementImage *self ) {
+	Rocket::Core::Vector2f dimensions;
+	self->GetIntrinsicDimensions( dimensions );
+	return dimensions.y;
+}
+
+static void PreBindElementImage( ASInterface *as )
+{
+	ASBind::Class<ElementImage, ASBind::class_ref>( as->getEngine() );
+}
+
+static void BindElementImage( ASInterface *as )
+{
+	asIScriptEngine *engine = as->getEngine();
+
+	ASBind::GetClass<ElementImage>( engine )
+		.refs( &ElementImage::AddReference, &ElementImage::RemoveReference )
+
+		.method( ElementImage_GetWidth, "get_width", true )
+		.method( ElementImage_GetHeight, "get_height", true )
+
+		.refcast( &ElementImage_CastToElement, true, true )
+		;
+
+	// Cast behavior for the Element class
+	ASBind::GetClass<Element>( engine )
+		.refcast( &Element_CastToElementImage, true, true )
+		;
+}
+
+//==============================================================
+
+//
 //
 // Bind
 
@@ -982,6 +1038,8 @@ void PrebindElement( ASInterface *as )
 	PreBindElementFormControlDataSelect( as );
 
 	PreBindElementTabSet( as );
+
+	PreBindElementImage( as );
 }
 
 void BindElement( ASInterface *as )
@@ -1113,6 +1171,9 @@ void BindElement( ASInterface *as )
 
 	// ElementTabSet
 	BindElementTabSet( as );
+
+	// ElementImage
+	BindElementImage( as );
 }
 
 }
