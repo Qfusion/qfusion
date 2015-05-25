@@ -503,43 +503,26 @@ void G_AwardRaceRecord( edict_t *self )
 	G_PlayerAward( self, S_COLOR_CYAN "New Record!" );
 }
 
-void G_PlayerAwardOfs( edict_t *ent, const char *awardMsg, int ofs, int limit, bool meta )
+void G_AwardFairPlay( edict_t *ent )
 {
-	if( ofs >= 0 ) {
-		gclient_t *client = ent->r.client;
-
-		if( ofs == AWOFS( goodgame_award ) ) {
-			// only count the "Good game award" during postmatch
-			if( gs.gameState.stats[GAMESTAT_MATCHSTATE] != MATCH_STATE_POSTMATCH ) {
-				return;
-			}
-			// don't get muted even once
-			if( client->level.stats.muted_count > 0 ) {
-				return;
-			}
-		}
-
-		int *award = (int *)((uint8_t *)&client->resp.awardInfo + ofs);
-		if( *award >= limit ) {
-			return;
-		}
-		
-		*award = *award + 1;
-		if( *award != limit ) {
-			return;
-		}
-
-		if( ofs == AWOFS( goodgame_award ) ) {
-			client->level.stats.fairplay_count++;
-			G_PlayerAward( ent, S_COLOR_CYAN FAIR_PLAY_AWARD );
-			return;
-		}
-	}
-
-	if( meta ) {
-		G_PlayerMetaAward( ent, awardMsg );
+	// only award during postmatch
+	if( GS_MatchState() != MATCH_STATE_POSTMATCH ) {
 		return;
 	}
 
-	G_PlayerAward( ent, va( S_COLOR_CYAN "%s ", awardMsg ) );
+	gclient_t *client = ent->r.client;
+
+	// already awarded
+	if( client->resp.awardInfo.fairplay_award ) {
+		return;
+	}
+
+	// the player must not be muted during the match
+	if( client->level.stats.muted_count > 0 ) {
+		return;
+	}
+
+	client->level.stats.fairplay_count++;
+	client->resp.awardInfo.fairplay_award = true;
+	G_PlayerAward( ent, S_COLOR_CYAN "Fair Play!" );
 }
