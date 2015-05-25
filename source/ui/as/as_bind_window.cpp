@@ -346,6 +346,11 @@ public:
 		return trap::CL_IsBrowserAvailable();
 	}
 
+	asstring_t *getOSName( void ) const
+	{
+		return ASSTR( OSNAME );
+	}
+
 private:
 	typedef std::map<ElementDocument *, FunctionCallScheduler *>  SchedulerMap;
 	SchedulerMap schedulers;
@@ -507,7 +512,9 @@ void BindWindow( ASInterface *as )
 
 		.method( &ASWindow::showSoftKeyboard, "showSoftKeyboard" )
 
-		.method( &ASWindow::isBrowserAvailable, "get_browserAvailable" );
+		.method( &ASWindow::isBrowserAvailable, "get_browserAvailable" )
+
+		.method( &ASWindow::getOSName, "get_osName" )
 	;
 }
 
