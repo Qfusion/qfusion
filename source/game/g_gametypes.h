@@ -96,6 +96,7 @@ typedef struct
 	int flags_capped;
 	int fairplay_count;
 	int muted_count;
+	bool had_playtime;
 
 	// loggedFrag_t
 	linear_allocator_t *fragAllocator;

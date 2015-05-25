@@ -169,8 +169,10 @@ typedef struct
 	unsigned int levelSpawnCount;	// the number of times G_InitLevel was called
 } game_locals_t;
 
-#define TIMEOUT_TIME	180000
-#define TIMEIN_TIME	5000
+#define TIMEOUT_TIME					180000
+#define TIMEIN_TIME						5000
+
+#define SIGNIFICANT_MATCH_DURATION		66*1000
 
 typedef struct
 {
