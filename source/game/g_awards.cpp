@@ -509,6 +509,9 @@ void G_AwardFairPlay( edict_t *ent )
 	if( GS_MatchState() != MATCH_STATE_POSTMATCH ) {
 		return;
 	}
+	if( level.finalMatchDuration <= SIGNIFICANT_MATCH_DURATION ) {
+		return;
+	}
 
 	gclient_t *client = ent->r.client;
 
@@ -519,6 +522,11 @@ void G_AwardFairPlay( edict_t *ent )
 
 	// the player must not be muted during the match
 	if( client->level.stats.muted_count > 0 ) {
+		return;
+	}
+
+	// has he actually played?
+	if( !client->level.stats.had_playtime ) {
 		return;
 	}
 

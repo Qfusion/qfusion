@@ -669,7 +669,7 @@ static stat_query_t *G_Match_GenerateReport( void )
 	score_stats_t *stats;
 
 	// Feature: do not report matches with duration less than 1 minute (actually 66 seconds)
-	if( level.finalMatchDuration <= 66 * 1000 )
+	if( level.finalMatchDuration <= SIGNIFICANT_MATCH_DURATION )
 		return 0;
 
 	query = sq_api->CreateQuery( NULL, "smr", false );

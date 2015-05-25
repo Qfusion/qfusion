@@ -1766,6 +1766,10 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta )
 		}
 	}	
 
+	// 
+	if( client->ps.pmove.pm_type == PM_NORMAL )
+		client->level.stats.had_playtime = true;
+
 	// generating plrkeys (optimized for net communication)
 	ClientMakePlrkeys( client, ucmd );
 }
