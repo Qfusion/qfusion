@@ -967,12 +967,8 @@ const char *G_GetEntitySpawnKey( const char *key, edict_t *self );
 //
 // g_awards.c
 //
-#define PLAYER_OF_THE_MATCH_AWARD "Player of the Match!"
-#define FAIR_PLAY_AWARD "Fair Play!"
-
 void G_PlayerAward( edict_t *ent, const char *awardMsg );
 void G_PlayerMetaAward( edict_t *ent, const char *awardMsg );
-void G_PlayerAwardOfs( edict_t *ent, const char *awardMsg, int ofs, int limit, bool meta );
 void G_AwardPlayerHit( edict_t *targ, edict_t *attacker, int mod );
 void G_AwardPlayerMissedElectrobolt( edict_t *self, int mod );
 void G_AwardPlayerMissedLasergun( edict_t *self, int mod );
@@ -980,6 +976,13 @@ void G_AwardPlayerKilled( edict_t *self, edict_t *inflictor, edict_t *attacker, 
 void G_AwardPlayerPickup( edict_t *self, edict_t *item );
 void G_AwardResetPlayerComboStats( edict_t *ent );
 void G_AwardRaceRecord( edict_t *self );
+
+/**
+ * Gives the player the Fair Play award if all conditions are met.
+ *
+ * @param ent the player entity
+ */
+void G_AwardFairPlay( edict_t *ent );
 
 //============================================================================
 
@@ -1064,7 +1067,7 @@ typedef struct
 	edict_t *lasthit;
 	unsigned int lasthit_time;
 
-	int goodgame_award;
+	bool fairplay_award;
 } award_info_t;
 
 #define MAX_CLIENT_EVENTS   16
