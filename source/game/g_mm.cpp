@@ -731,7 +731,7 @@ static stat_query_t *G_Match_GenerateReport( void )
 				continue;
 			}
 			if( ent->r.inuse ) {
-				G_PlayerAward( ent, S_COLOR_YELLOW PLAYER_OF_THE_MATCH_AWARD );
+				G_PlayerAward( ent, S_COLOR_YELLOW "Player of the Match!" );
 			}
 			break;
 		}
