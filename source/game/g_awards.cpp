@@ -514,6 +514,10 @@ void G_AwardFairPlay( edict_t *ent )
 	}
 
 	gclient_t *client = ent->r.client;
+	// don't try to give the award to the server console
+	if( !client ) {
+		return;
+	}
 
 	// already awarded
 	if( client->resp.awardInfo.fairplay_award ) {
