@@ -1189,9 +1189,11 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 */
 void CG_Shutdown( void )
 {
+	CG_FreeLocalEntities();
 	CG_DemocamShutdown();
 	CG_ScreenShutdown();
 	CG_UnregisterCGameCommands();
+	CG_FreeTemporaryBoneposesCache();
 }
 
 //======================================================================

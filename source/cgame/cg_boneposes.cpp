@@ -503,3 +503,13 @@ cgs_skeleton_t *CG_SetBoneposesForTemporaryEntity( entity_t *ent )
 
 	return skel;
 }
+
+/*
+* CG_FreeTemporaryBoneposesCache
+*/
+void CG_FreeTemporaryBoneposesCache( void )
+{
+	CG_Free( TBC );
+	TBC_Size = 0;
+	TBC_Count = 0;
+}

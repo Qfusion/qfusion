@@ -33,6 +33,7 @@ bonepose_t *CG_RegisterTemporaryExternalBoneposes( cgs_skeleton_t *skel );
 cgs_skeleton_t *CG_SetBoneposesForTemporaryEntity( entity_t *ent );
 void CG_InitTemporaryBoneposesCache( void );
 void CG_ResetTemporaryBoneposesCache( void );
+void CG_FreeTemporaryBoneposesCache( void );
 bonenode_t *CG_BoneNodeFromNum( cgs_skeleton_t *skel, int bonenum );
 void CG_RecurseBlendSkeletalBone( bonepose_t *inboneposes, bonepose_t *outboneposes, 
 	bonenode_t *bonenode, float frac );

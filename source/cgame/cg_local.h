@@ -996,6 +996,7 @@ void CG_ChaseStep( int step );
 //
 void CG_ClearLocalEntities( void );
 void CG_AddLocalEntities( void );
+void CG_FreeLocalEntities( void );
 
 void CG_AddLaser( vec3_t start, vec3_t end, float radius, int colors, struct shader_s *shader );
 void CG_BulletExplosion( vec3_t origin, vec_t *dir, trace_t *trace );
