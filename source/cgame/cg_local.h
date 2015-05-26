@@ -272,6 +272,7 @@ typedef struct
 	cgs_media_handle_t *shaderSelect;
 	cgs_media_handle_t *shaderChatBalloon;
 	cgs_media_handle_t *shaderDownArrow;
+	cgs_media_handle_t *shaderTeleportGfx;
 
 	//wsw
 	//----------------------------------------------

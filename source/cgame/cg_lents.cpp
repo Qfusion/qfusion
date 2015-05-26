@@ -1017,14 +1017,10 @@ void CG_CartoonHitEffect( vec3_t origin, vec3_t dir, int damage )
 */
 void CG_PModel_SpawnTeleportEffect( centity_t *cent )
 {
-	// the thing is, we must have a built skeleton, so we
-	// can run all bones and spawn a polygon at their origin
-	int i, j;
+	int j;
 	cgs_skeleton_t *skel;
-	orientation_t orient, ref;
-	float radius = 5;
 	lentity_t *le;
-	vec3_t vec, teleportOrigin;
+	vec3_t teleportOrigin;
 
 	skel = CG_SkeletonForModel( cent->ent.model );
 	if( !skel || !cent->ent.boneposes )
@@ -1041,28 +1037,16 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent )
 			else
 				VectorCopy( cent->ent.origin, teleportOrigin );
 
-			for( i = 0; i < skel->numBones; i++ )
-			{
-				DualQuat_ToMatrix3AndVector( cent->ent.boneposes[i].dualquat, orient.axis, orient.origin );
-
-				VectorCopy( vec3_origin, ref.origin );
-				Matrix3_Copy( axis_identity, ref.axis );
-				CG_MoveToTag( ref.origin, ref.axis,
-					teleportOrigin, cent->ent.axis,
-					orient.origin, orient.axis );
-
-				VectorSet( vec, 0.1f, 0.1f, 0.1f );
-
-				// spawn a sprite at each bone
-				le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, ref.origin, radius, 15 + crandom()*5,
-					1, 1, 1, 0.5f,
-					0, 0, 0, 0,
-					CG_MediaShader( cgs.media.shaderTeleporterSmokePuff ) );
-				VectorSet( le->velocity, -vec[0] * 5 + crandom()*5, -vec[1] * 5 + crandom()*5, -vec[2] * 5 + crandom()*5 + 3 );
-				le->ent.rotation = rand() % 360;
-
-				//				CG_ParticleEffect( ref.origin, ref.axis[2], 0.9f, 0.9f, 0.9f, 2 );
-			}
+			// spawn a dummy model
+			le = CG_AllocModel( LE_RGB_FADE, teleportOrigin, vec3_origin, 10, 0.5, 0.5, 0.5, 1, 0, 0, 0, 0, cent->ent.model, 
+				CG_MediaShader( cgs.media.shaderTeleportGfx ) );
+			le->ent.boneposes = CG_RegisterTemporaryExternalBoneposes( cent->skel );
+			memcpy( le->ent.boneposes, cent->ent.boneposes, sizeof( bonepose_t ) * cent->skel->numBones );
+			le->ent.oldboneposes = le->ent.oldboneposes;
+			le->ent.frame = cent->ent.frame;
+			le->ent.oldframe = cent->ent.oldframe;
+			le->ent.backlerp = 1.0f;
+			Matrix3_Copy( cent->ent.axis, le->ent.axis );
 		}
 	}
 }
