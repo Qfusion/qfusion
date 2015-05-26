@@ -112,6 +112,7 @@ cvar_t *r_screenshot_fmtstr;
 cvar_t *r_screenshot_jpeg;
 cvar_t *r_screenshot_jpeg_quality;
 cvar_t *r_swapinterval;
+cvar_t *r_swapinterval_min;
 
 cvar_t *r_temp1;
 
@@ -1134,6 +1135,7 @@ static void R_Register( const char *screenshotsPrefix )
 #endif
 	// make sure r_swapinterval is checked after vid_restart
 	r_swapinterval->modified = true;
+	r_swapinterval_min = ri.Cvar_Get( "r_swapinterval_min", "0", CVAR_READONLY ); // exposes vsync support to UI
 
 	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
 
@@ -1204,7 +1206,7 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "picmip: %i\n", r_picmip->integer );
 	Com_Printf( "texturemode: %s\n", r_texturemode->string );
 	Com_Printf( "anisotropic filtering: %i\n", r_texturefilter->integer );
-	Com_Printf( "vertical sync: %s\n", r_swapinterval->integer ? "enabled" : "disabled" );
+	Com_Printf( "vertical sync: %s\n", ( r_swapinterval->integer || r_swapinterval_min->integer ) ? "enabled" : "disabled" );
 
 	R_PrintGLExtensionsInfo();
 

@@ -161,8 +161,7 @@ static void GLimp_Android_ChooseConfig( void )
 							( depthEncoding == EGL_DEPTH_ENCODING_NONLINEAR_NV ) ? " (non-linear)" : "",
 							stencilSize, minSwapInterval );
 						glConfig.stencilBits = stencilSize;
-						if( minSwapInterval > 0 )
-							ri.Cvar_ForceSet( "r_swapinterval", "1" );
+						ri.Cvar_ForceSet( "r_swapinterval_min", ( minSwapInterval > 0 ) ? "1" : "0" );
 						return;
 					}
 				}
@@ -199,12 +198,7 @@ static bool GLimp_InitGL( void )
 	EGLConfig config;
 	const int pbufferAttribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
 	const int contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
-
-	if( !glw_state.window )
-	{
-		ri.Com_Printf( "GLimp_InitGL() - ANativeWindow not found\n" );
-		return false;
-	}
+	EGLSurface surface;
 
 	glw_state.display = qeglGetDisplay( EGL_DEFAULT_DISPLAY );
 	if( glw_state.display == EGL_NO_DISPLAY )
@@ -237,11 +231,20 @@ static bool GLimp_InitGL( void )
 		return false;
 	}
 
-	GLimp_Android_CreateWindowSurface();
-	if( glw_state.surface == EGL_NO_SURFACE )
+	if( glw_state.window )
 	{
-		ri.Com_Printf( "GLimp_InitGL() - GLimp_Android_CreateWindowSurface failed\n" );
-		return false;
+		GLimp_Android_CreateWindowSurface();
+		surface = glw_state.surface;
+		if( surface == EGL_NO_SURFACE )
+		{
+			ri.Com_Printf( "GLimp_InitGL() - GLimp_Android_CreateWindowSurface failed\n" );
+			return false;
+		}
+	}
+	else
+	{
+		glw_state.surface = EGL_NO_SURFACE;
+		surface = glw_state.pbufferSurface;
 	}
 
 	glw_state.context = qeglCreateContext( glw_state.display, glw_state.config, EGL_NO_CONTEXT, contextAttribs );
@@ -251,7 +254,7 @@ static bool GLimp_InitGL( void )
 		return false;
 	}
 
-	if( !qeglMakeCurrent( glw_state.display, glw_state.surface, glw_state.surface, glw_state.context ) )
+	if( !qeglMakeCurrent( glw_state.display, surface, surface, glw_state.context ) )
 	{
 		ri.Com_Printf( "GLimp_InitGL() - eglMakeCurrent failed\n" );
 		return false;

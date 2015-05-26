@@ -1526,13 +1526,8 @@ void R_PopRefInst( int clearBitMask )
 */
 static void R_SwapInterval( bool swapInterval )
 {
-	if( !glConfig.stereoEnabled )
-	{
-		if( qglSwapInterval )
-		{
-			qglSwapInterval( swapInterval );
-		}
-	}
+	if( qglSwapInterval && !glConfig.stereoEnabled && !r_swapinterval_min->integer )
+		qglSwapInterval( swapInterval );
 }
 
 /*
