@@ -330,7 +330,7 @@ void CG_RegisterMediaShaders( void )
 	cgs.media.shaderCartoonHit2 = CG_RegisterMediaShader( "gfx/misc/cartoonhit2", true );
 	cgs.media.shaderCartoonHit3 = CG_RegisterMediaShader( "gfx/misc/cartoonhit3", true );
 	cgs.media.shaderTeamMateIndicator = CG_RegisterMediaShader( "gfx/misc/teammate_indicator", true );
-	cgs.media.shaderTeleportGfx = CG_RegisterMediaShader( "gfx/misc/teleport", true );
+	cgs.media.shaderTeleportShellGfx = CG_RegisterMediaShader( "gfx/misc/teleportshell", true );
 
 	cgs.media.shaderAdditiveParticleShine = CG_RegisterMediaShader( "additiveParticleShine", true );
 
