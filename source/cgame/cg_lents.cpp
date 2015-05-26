@@ -66,6 +66,9 @@ typedef struct lentity_s
 	int bounce;     //is activator and bounceability value at once
 
 	int frames;
+
+	cgs_skeleton_t *skel;
+	bonepose_t *static_boneposes;
 } lentity_t;
 
 lentity_t cg_localents[MAX_LOCAL_ENTITIES];
@@ -165,6 +168,11 @@ static lentity_t *CG_AllocLocalEntity( letype_t type, float r, float g, float b,
 */
 static void CG_FreeLocalEntity( lentity_t *le )
 {
+	if( le->static_boneposes ) {
+		CG_Free( le->static_boneposes );
+		le->static_boneposes = NULL;
+	}
+
 	// remove from linked active list
 	le->prev->next = le->next;
 	le->next->prev = le->prev;
@@ -1040,9 +1048,16 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent )
 			// spawn a dummy model
 			le = CG_AllocModel( LE_RGB_FADE, teleportOrigin, vec3_origin, 10, 0.5, 0.5, 0.5, 1, 0, 0, 0, 0, cent->ent.model, 
 				CG_MediaShader( cgs.media.shaderTeleportShellGfx ) );
-			le->ent.boneposes = CG_RegisterTemporaryExternalBoneposes( cent->skel );
-			memcpy( le->ent.boneposes, cent->ent.boneposes, sizeof( bonepose_t ) * cent->skel->numBones );
-			le->ent.oldboneposes = le->ent.boneposes;
+
+			if( cent->skel ) {
+				// use static bone pose, no animation
+				le->skel = cent->skel;
+				le->static_boneposes = ( bonepose_t * )CG_Malloc( sizeof( bonepose_t ) * le->skel->numBones );
+				memcpy( le->static_boneposes, cent->ent.boneposes, sizeof( bonepose_t ) * le->skel->numBones );
+				le->ent.boneposes = le->static_boneposes;
+				le->ent.oldboneposes = le->ent.boneposes;
+			}
+
 			le->ent.frame = cent->ent.frame;
 			le->ent.oldframe = cent->ent.oldframe;
 			le->ent.backlerp = 1.0f;
@@ -1792,5 +1807,22 @@ void CG_AddLocalEntities( void )
 		VectorMA( le->velocity, time, le->accel, le->velocity );
 
 		CG_AddEntityToScene( ent );
+	}
+}
+
+/*
+* CG_FreeLocalEntities
+*/
+void CG_FreeLocalEntities( void )
+{
+	lentity_t *le, *next, *hnode;
+
+	hnode = &cg_localents_headnode;
+	for( le = hnode->next; le != hnode; le = next )
+	{
+		next = le->next;
+
+		le->type = LE_FREE;
+		CG_FreeLocalEntity( le );
 	}
 }
