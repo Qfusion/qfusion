@@ -1039,7 +1039,7 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent )
 
 			// spawn a dummy model
 			le = CG_AllocModel( LE_RGB_FADE, teleportOrigin, vec3_origin, 10, 0.5, 0.5, 0.5, 1, 0, 0, 0, 0, cent->ent.model, 
-				CG_MediaShader( cgs.media.shaderTeleportGfx ) );
+				CG_MediaShader( cgs.media.shaderTeleportShellGfx ) );
 			le->ent.boneposes = CG_RegisterTemporaryExternalBoneposes( cent->skel );
 			memcpy( le->ent.boneposes, cent->ent.boneposes, sizeof( bonepose_t ) * cent->skel->numBones );
 			le->ent.oldboneposes = le->ent.oldboneposes;
