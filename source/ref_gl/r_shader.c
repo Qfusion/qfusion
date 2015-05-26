@@ -750,6 +750,11 @@ static void Shader_PolygonOffset( shader_t *shader, shaderpass_t *pass, const ch
 	shader->flags |= SHADER_POLYGONOFFSET;
 }
 
+static void Shader_StencilTest( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	shader->flags |= SHADER_STENCILTEST;
+}
+
 static void Shader_EntityMergable( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
 	shader->flags |= SHADER_ENTITY_MERGABLE;
@@ -941,6 +946,7 @@ static const shaderkey_t shaderkeys[] =
 	{ "nocompress",	Shader_NoCompress },
 	{ "nofiltering", Shader_NoFiltering },
 	{ "polygonoffset", Shader_PolygonOffset },
+	{ "stenciltest", Shader_StencilTest },
 	{ "sort", Shader_Sort },
 	{ "deformvertexes", Shader_DeformVertexes },
 	{ "portal", Shader_Portal },
