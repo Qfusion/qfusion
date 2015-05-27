@@ -335,12 +335,29 @@ void R_PrintImageList( const char *mask, bool (*filter)( const char *mask, const
 		bpp = image->samples;
 		if( image->flags & IT_DEPTH )
 		{
-			bpp = ( glConfig.ext.depth24 ? 4 : 2 );
+			if( image->flags & IT_STENCIL )
+				bpp = 4;
+			else if( glConfig.ext.depth24 )
+				bpp = 3;
+			else
+				bpp = 2;
 		}
 		else if( image->flags & IT_FRAMEBUFFER )
 		{
 			if( !glConfig.ext.rgb8_rgba8 )
 				bpp = 2;
+
+			if( ( image->flags & ( IT_DEPTHRB|IT_STENCIL ) ) == ( IT_DEPTHRB|IT_STENCIL ) )
+			{
+				bpp += 4;
+			}
+			else
+			{
+				if( image->flags & IT_DEPTHRB )
+					bpp += ( glConfig.ext.depth24 ? 3 : 2 );
+				if( image->flags & IT_STENCIL )
+					bpp += 1;
+			}
 		}
 
 		bytes = add * bpp;
@@ -528,7 +545,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 	int mip = 0;
 	int clampedWidth, clampedHeight;
 
-	if( flags & IT_DEPTHRB )
+	if( flags & ( IT_FRAMEBUFFER|IT_DEPTH ) )
 		maxSize = glConfig.maxRenderbufferSize;
 	else if( flags & IT_CUBEMAP )
 		maxSize = glConfig.maxTextureCubemapSize;
@@ -877,16 +894,24 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 {
 	if( flags & IT_DEPTH )
 	{
-		*comp = *format = GL_DEPTH_COMPONENT;
-		if( glConfig.ext.depth24 )
+		if( flags & IT_STENCIL )
 		{
-			*type = GL_UNSIGNED_INT;
+			*comp = *format = GL_DEPTH_STENCIL_EXT;
+			*type = GL_UNSIGNED_INT_24_8_EXT;
 		}
 		else
 		{
-			*type = GL_UNSIGNED_SHORT;
-			if( glConfig.ext.depth_nonlinear )
-				*comp = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
+			*comp = *format = GL_DEPTH_COMPONENT;
+			if( glConfig.ext.depth24 )
+			{
+				*type = GL_UNSIGNED_INT;
+			}
+			else
+			{
+				*type = GL_UNSIGNED_SHORT;
+				if( glConfig.ext.depth_nonlinear )
+					*comp = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
+			}
 		}
 	}
 	else if( flags & IT_FRAMEBUFFER )
@@ -2400,7 +2425,7 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 
 	// limit the texture size to either screen resolution in case we can't use FBO
 	// or hardware limits and ensure it's a POW2-texture if we don't support such textures
-	limit = flags & IT_DEPTHRB ? glConfig.maxRenderbufferSize : glConfig.maxTextureSize;
+	limit = glConfig.maxRenderbufferSize;
 	if( size )
 		limit = min( limit, size );
 	if( limit < 1 )
@@ -2481,7 +2506,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 		}
 		if( t->flags & IT_FRAMEBUFFER ) {
 			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height,
-				( flags & IT_DEPTHRB ) ? true : false );
+				( flags & IT_DEPTHRB ) != 0, ( flags & IT_STENCIL ) != 0 );
 			RFB_AttachTextureToObject( t->fbo, t );
 		}
 	}
@@ -2537,6 +2562,9 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 	int flags, unsigned frameNum )
 {
 	int id;
+
+	if( glConfig.stencilBits )
+		flags |= IT_STENCIL;
 
 	id = R_GetPortalTextureId( viewportWidth, viewportHeight, flags, frameNum );
 	if( id < 0 || id >= MAX_PORTAL_TEXTURES ) {
@@ -2647,28 +2675,39 @@ static void R_InitStretchRawYUVTextures( void )
 * R_InitScreenTexturesPair
 */
 static void R_InitScreenTexturesPair( const char *name, image_t **color, 
-	image_t **depth, bool noFilter )
+	image_t **depth, bool noFilter, bool stencil )
 {
-	int flags;
+	int flags, colorFlags, depthFlags;
 
 	assert( !depth || glConfig.ext.depth_texture );
+
+	if( !glConfig.stencilBits )
+		stencil = false;
 
 	flags = IT_SPECIAL;
 	if( noFilter ) {
 		flags |= IT_NOFILTERING;
 	}
 
+	colorFlags = flags | IT_FRAMEBUFFER;
+	depthFlags = flags | IT_DEPTH;
+	if( !depth ) {
+		colorFlags |= IT_DEPTHRB;
+	}
+	if( stencil ) {
+		if( depth && glConfig.ext.packed_depth_stencil ) {
+			depthFlags |= IT_STENCIL;
+		} else {
+			colorFlags |= IT_STENCIL;
+		}
+	}
+
 	if( color ) {
 		// samples is 4 no matter whether alpha blending is used because RGB FBs are broken on some PowerVRs
-		R_InitViewportTexture( color, name, 0, 
-			glConfig.width, glConfig.height, 0, 
-			flags | IT_FRAMEBUFFER | ( depth ? 0 : IT_DEPTHRB ), 4 );
+		R_InitViewportTexture( color, name, 0, glConfig.width, glConfig.height, 0, colorFlags, 4 );
 	}
 	if( depth && *color ) {
-		R_InitViewportTexture( depth, va( "%s_depth", name ), 0,
-			glConfig.width, glConfig.height, 0, 
-			flags | IT_DEPTH, 1 );
-
+		R_InitViewportTexture( depth, va( "%s_depth", name ), 0, glConfig.width, glConfig.height, 0, depthFlags, 1 );
 		RFB_AttachTextureToObject( (*color)->fbo, *depth );
 	}
 }
@@ -2681,19 +2720,19 @@ static void R_InitScreenTextures( void )
 	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit )
 	{
 		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
-			&rsh.screenDepthTexture, true ); 
+			&rsh.screenDepthTexture, true, true ); 
 
 		R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
-			&rsh.screenDepthTextureCopy, true );
+			&rsh.screenDepthTextureCopy, true, false );
 	}
 
 	R_InitScreenTexturesPair( "rsh.screenPPCopy0", &rsh.screenPPCopies[0], 
-		NULL, false );
+		NULL, false, true );
 	R_InitScreenTexturesPair( "rsh.screenPPCopy1", &rsh.screenPPCopies[1], 
-		NULL, false );
+		NULL, false, false );
 
 	R_InitScreenTexturesPair( "rsh.screenWeaponTexture", &rsh.screenWeaponTexture, 
-		NULL, true );
+		NULL, true, false );
 }
 
 /*

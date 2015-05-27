@@ -534,6 +534,15 @@ typedef unsigned short GLhalfARB;
 #define GL_MAX_ARRAY_TEXTURE_LAYERS_EXT						0x88FF
 #endif
 
+/* GL_EXT_packed_depth_stencil */
+#ifndef GL_EXT_packed_depth_stencil
+#define GL_EXT_packed_depth_stencil
+
+#define GL_DEPTH_STENCIL_EXT								0x84F9
+#define GL_UNSIGNED_INT_24_8_EXT							0x84FA
+#define GL_DEPTH24_STENCIL8_EXT								0x88F0
+#endif
+
 /* EGL_EXT_multiview_window */
 #ifndef EGL_EXT_multiview_window
 #define EGL_EXT_multiview_window

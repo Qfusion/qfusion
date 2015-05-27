@@ -187,6 +187,7 @@ typedef struct
 				,blend_func_separate
 				,texture_array
 				,fragment_precision_high
+				,packed_depth_stencil
 				;
 	union {
 		char	shadow, shadow_samplers;

@@ -46,6 +46,7 @@ enum
 	,IT_ALPHA			= 1<<19		// alpha only
 	,IT_3D				= 1<<20
 	,IT_COLORLUT		= 1<<21
+	,IT_STENCIL			= 1<<22		// for IT_FRAMEBUFFER, whether there's stencil RB, for IT_DEPTH, whether there's packed stencil
 };
 
 #define IT_FILEFLAGS		( IT_LUMINANCE|IT_BGRA|IT_SYNC|IT_ALPHA )
