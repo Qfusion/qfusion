@@ -486,6 +486,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, blend_func_separate, true, true, &gl_ext_blend_func_separate_EXT_funcs )
 	,GL_EXTENSION( EXT, texture3D, false, false, &gl_ext_texture3D_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, texture_array, 1, false, false, NULL, texture3D )
+	,GL_EXTENSION( EXT, packed_depth_stencil, false, false, NULL )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
@@ -507,6 +508,8 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, texture_3D, false, false, &gl_ext_texture_3D_OES_funcs )
 	,GL_EXTENSION( EXT, texture_array, false, false, &gl_ext_texture_3D_OES_funcs )
 	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
+	// Require depth24 because Tegra 3 doesn't support non-linear packed depth.
+	,GL_EXTENSION_EXT( OES, packed_depth_stencil, 1, false, false, NULL, depth24 )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
@@ -775,6 +778,7 @@ static void R_FinalizeGLExtensions( void )
 		GL_OPTIONAL_CORE_EXTENSION(texture_array);
 		GL_OPTIONAL_CORE_EXTENSION(texture_npot);
 		GL_OPTIONAL_CORE_EXTENSION(vertex_half_float);
+		GL_OPTIONAL_CORE_EXTENSION_DEP(packed_depth_stencil, depth24);
 		GL_OPTIONAL_CORE_EXTENSION_DEP(shadow_samplers, depth_texture);
 #undef GL_OPTIONAL_CORE_EXTENSION_DEP
 #undef GL_OPTIONAL_CORE_EXTENSION
@@ -899,6 +903,13 @@ static void R_FinalizeGLExtensions( void )
 		if( range[0] && range[1] && precision )
 			glConfig.ext.fragment_precision_high = true;
 	}
+#endif
+
+	/* GL_EXT_packed_depth_stencil
+	 * Desktop OpenGL doesn't support separate depth and special renderbuffers. */
+#ifndef GL_ES_VERSION_2_0
+	if( !glConfig.ext.packed_depth_stencil )
+		glConfig.stencilBits = 0;
 #endif
 
 	versionMajor = versionMinor = 0;

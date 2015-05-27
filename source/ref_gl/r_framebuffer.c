@@ -27,8 +27,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct
 {
 	int registrationSequence;
-	int objectID;
-	int renderBufferAttachment;
+	unsigned int objectID;
+	unsigned int depthRenderBuffer;
+	unsigned int stencilRenderBuffer;
 	int width, height;
 	image_t *depthTexture;
 	image_t *colorTexture;
@@ -62,19 +63,21 @@ void RFB_Init( void )
 */
 static void RFB_DeleteObject( r_fbo_t *fbo )
 {
-	GLuint t;
-
-	if( fbo->renderBufferAttachment )
+	if( fbo->depthRenderBuffer )
 	{
-		t = fbo->renderBufferAttachment;
-		qglDeleteRenderbuffersEXT( 1, &t );
-		fbo->renderBufferAttachment = 0;
+		qglDeleteRenderbuffersEXT( 1, &( fbo->depthRenderBuffer ) );
+		fbo->depthRenderBuffer = 0;
+	}
+
+	if( fbo->stencilRenderBuffer )
+	{
+		qglDeleteRenderbuffersEXT( 1, &( fbo->stencilRenderBuffer ) );
+		fbo->stencilRenderBuffer = 0;
 	}
 
 	if( fbo->objectID )
 	{
-		t = fbo->objectID;
-		qglDeleteFramebuffersEXT( 1, &t );
+		qglDeleteFramebuffersEXT( 1, &( fbo->objectID ) );
 		fbo->objectID = 0;
 	}
 }
@@ -82,7 +85,7 @@ static void RFB_DeleteObject( r_fbo_t *fbo )
 /*
 * RFB_RegisterObject
 */
-int RFB_RegisterObject( int width, int height, bool depthRB )
+int RFB_RegisterObject( int width, int height, bool depthRB, bool stencilRB )
 {
 	int i;
 	GLuint fbID;
@@ -116,29 +119,45 @@ found:
 	fbo->width = width;
 	fbo->height = height;
 
-	if( depthRB )
+	if( depthRB || stencilRB )
 	{
-		int format;
+		bool packedDepthStencil = ( depthRB && stencilRB && glConfig.ext.packed_depth_stencil );
 
 		qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
 
-		qglGenRenderbuffersEXT( 1, &rbID );
-		fbo->renderBufferAttachment = rbID;
+		if( depthRB )
+		{
+			int format;
 
-		// setup 24bit depth buffer for render-to-texture
-		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, fbo->renderBufferAttachment );
-		if( glConfig.ext.depth24 )
-			format = GL_DEPTH_COMPONENT24;
-		else if( glConfig.ext.depth_nonlinear )
-			format = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
-		else
-			format = GL_DEPTH_COMPONENT16;
-		qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
-		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+			qglGenRenderbuffersEXT( 1, &rbID );
+			fbo->depthRenderBuffer = rbID;
+			qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rbID );
 
-		// attach depth renderbuffer
-		qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, 
-			GL_RENDERBUFFER_EXT, fbo->renderBufferAttachment );
+			if( packedDepthStencil )
+				format = GL_DEPTH24_STENCIL8_EXT;
+			else if( glConfig.ext.depth24 )
+				format = GL_DEPTH_COMPONENT24;
+			else if( glConfig.ext.depth_nonlinear )
+				format = GL_DEPTH_COMPONENT16_NONLINEAR_NV;
+			else
+				format = GL_DEPTH_COMPONENT16;
+			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, format, width, height );
+
+			qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rbID );
+			if( packedDepthStencil )
+				qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rbID );
+		}
+
+		if( stencilRB && !packedDepthStencil )
+		{
+			qglGenRenderbuffersEXT( 1, &rbID );
+			fbo->stencilRenderBuffer = rbID;
+			qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rbID );
+			qglRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, GL_STENCIL_INDEX8_EXT, width, height );
+			qglFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rbID );
+		}
+
+		qglBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );			
 
 		if( r_bound_framebuffer_objectID )
 			qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_object->objectID );
@@ -223,15 +242,13 @@ void RFB_BindObject( int object )
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_object->objectID );
 }
 
-#define FBO_ATTACHMENT(depth) (depth ? GL_DEPTH_ATTACHMENT_EXT : GL_COLOR_ATTACHMENT0_EXT)
-
 /*
 * RFB_AttachTextureToObject
 */
 void RFB_AttachTextureToObject( int object, image_t *texture )
 {
-	bool depth;
 	r_fbo_t *fbo;
+	int attachment;
 
 	assert( object > 0 && object <= r_num_framebuffer_objects );
 	if( object <= 0 || object > r_num_framebuffer_objects ) {
@@ -246,38 +263,21 @@ void RFB_AttachTextureToObject( int object, image_t *texture )
 	fbo = r_framebuffer_objects + object - 1;
 
 	if( texture->flags & IT_DEPTH ) {
-		depth = true;
+		attachment = GL_DEPTH_ATTACHMENT_EXT;
 		fbo->depthTexture = texture;
 	} else {
-		depth = false;
+		attachment = GL_COLOR_ATTACHMENT0_EXT;
 		fbo->colorTexture = texture;
 	}
 	texture->fbo = object;
 
 	// attach texture
 	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, fbo->objectID );
-	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, FBO_ATTACHMENT(depth), GL_TEXTURE_2D, texture->texnum, 0 );
-	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_objectID ? r_bound_framebuffer_object->objectID : 0 );
-}
-
-/*
-* RFB_DetachTextureFromObject
-*/
-void RFB_DetachTextureFromObject( bool depth )
-{
-	r_fbo_t *fbo = r_bound_framebuffer_object;
-
-	if( !r_bound_framebuffer_object )
-		return;
-
-	if( depth ) {
-		fbo->depthTexture = NULL;
-	} else {
-		fbo->colorTexture = NULL;
+	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, texture->texnum, 0 );
+	if( ( texture->flags & ( IT_DEPTH|IT_STENCIL ) ) == ( IT_DEPTH|IT_STENCIL ) ) {
+		qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_TEXTURE_2D, texture->texnum, 0 );
 	}
-
-	// attach texture
-	qglFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, FBO_ATTACHMENT(depth), GL_TEXTURE_2D, 0, 0 );
+	qglBindFramebufferEXT( GL_FRAMEBUFFER_EXT, r_bound_framebuffer_objectID ? r_bound_framebuffer_object->objectID : 0 );
 }
 
 /*

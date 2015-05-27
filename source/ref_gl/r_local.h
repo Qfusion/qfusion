@@ -477,13 +477,12 @@ enum
 };
 
 void		RFB_Init( void );
-int			RFB_RegisterObject( int width, int height, bool depthRB );
+int			RFB_RegisterObject( int width, int height, bool depthRB, bool stencilRB );
 void		RFB_UnregisterObject( int object );
 void		RFB_TouchObject( int object );
 void		RFB_BindObject( int object );
 int			RFB_BoundObject( void );
 void		RFB_AttachTextureToObject( int object, image_t *texture );
-void		RFB_DetachTextureFromObject( bool depth );
 image_t		*RFB_GetObjectTextureAttachment( int object, bool depth );
 void		RFB_DisableObjectDrawBuffer( void );
 void		RFB_BlitObject( int dest, int bitMask, int mode );
