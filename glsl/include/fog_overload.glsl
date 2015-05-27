@@ -1,3 +1,7 @@
+#ifndef FOG_DIST_NUDGE_FACTOR
+#define FOG_DIST_NUDGE_FACTOR 0.001
+#endif
+
 #if defined(FOG_GEN_OUTPUT_COLOR)
 void FogGen(in vec4 Position, inout myhalf4 outColor, in myhalf2 blendMix)
 #elif defined(FOG_GEN_OUTPUT_TEXCOORDS)
@@ -8,7 +12,15 @@ void FogGen(in vec4 Position, inout vec2 outTexCoord)
 	myhalf2 side = myhalf2(step(u_FogScaleAndEyeDist.y, 0.0), step(0.0, u_FogScaleAndEyeDist.y));
 	myhalf FDist = dot(Position.xyz, u_FogEyePlane.xyz) - u_FogEyePlane.w;
 	myhalf FVdist = dot(Position.xyz, u_FogPlane.xyz) - u_FogPlane.w;
-	myhalf FogDistScale = FVdist / (FVdist - u_FogScaleAndEyeDist.y);
+	myhalf VToEyeDist = FVdist - u_FogScaleAndEyeDist.y;
+
+	// all this mess is here to ensure we aren't dealing with infinities here
+	// ensure that always abs(NudgedVToEyeDist) >= FOG_DIST_NUDGE_FACTOR
+	myhalf NudgedVToEyeDist = step(FOG_DIST_NUDGE_FACTOR, VToEyeDist    ) * VToEyeDist +
+				step(FOG_DIST_NUDGE_FACTOR, VToEyeDist * -1.0) * VToEyeDist + 
+				(step(abs(VToEyeDist), FOG_DIST_NUDGE_FACTOR)) * FOG_DIST_NUDGE_FACTOR;
+
+	myhalf FogDistScale = FVdist / NudgedVToEyeDist;
 
 #if defined(FOG_GEN_OUTPUT_COLOR)
 	myhalf FogDist = FDist * dot(side, myhalf2(1.0, FogDistScale));
