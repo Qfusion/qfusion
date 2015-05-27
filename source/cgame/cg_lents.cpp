@@ -1029,6 +1029,7 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent )
 	cgs_skeleton_t *skel;
 	lentity_t *le;
 	vec3_t teleportOrigin;
+	vec3_t rgb;
 
 	skel = CG_SkeletonForModel( cent->ent.model );
 	if( !skel || !cent->ent.boneposes )
@@ -1040,13 +1041,22 @@ void CG_PModel_SpawnTeleportEffect( centity_t *cent )
 		{
 			cent->localEffects[j] = 0;
 
+			VectorSet( rgb, 0.5, 0.5, 0.5 );
 			if( j == LOCALEFFECT_EV_PLAYER_TELEPORT_OUT )
+			{
 				VectorCopy( cent->teleportedFrom, teleportOrigin );
+			}
 			else
-				VectorCopy( cent->ent.origin, teleportOrigin );
+			{
+				VectorCopy( cent->teleportedTo, teleportOrigin );
+				if( ISVIEWERENTITY( cent->current.number ) ) {
+					VectorSet( rgb, 0.1, 0.1, 0.1 );
+				}
+			}
 
 			// spawn a dummy model
-			le = CG_AllocModel( LE_RGB_FADE, teleportOrigin, vec3_origin, 10, 0.5, 0.5, 0.5, 1, 0, 0, 0, 0, cent->ent.model, 
+			le = CG_AllocModel( LE_RGB_FADE, teleportOrigin, vec3_origin, 10, 
+				rgb[0], rgb[1], rgb[2], 1, 0, 0, 0, 0, cent->ent.model, 
 				CG_MediaShader( cgs.media.shaderTeleportShellGfx ) );
 
 			if( cent->skel ) {

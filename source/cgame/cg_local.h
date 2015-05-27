@@ -115,6 +115,7 @@ typedef struct
 	vec3_t linearProjectileViewerSource;
 	vec3_t linearProjectileViewerVelocity;
 
+	vec3_t teleportedTo;
 	vec3_t teleportedFrom;
 	byte_vec4_t outlineColor;
 
