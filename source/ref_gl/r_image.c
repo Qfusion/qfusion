@@ -2722,8 +2722,9 @@ static void R_InitScreenTextures( void )
 		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
 			&rsh.screenDepthTexture, true, true ); 
 
+		// Stencil is required in the copy for depth/stencil formats to match when blitting.
 		R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
-			&rsh.screenDepthTextureCopy, true, false );
+			&rsh.screenDepthTextureCopy, true, true );
 	}
 
 	R_InitScreenTexturesPair( "rsh.screenPPCopy0", &rsh.screenPPCopies[0], 
