@@ -334,30 +334,18 @@ void R_PrintImageList( const char *mask, bool (*filter)( const char *mask, const
 
 		bpp = image->samples;
 		if( image->flags & IT_DEPTH )
+			bpp = 0; // added later
+		else if( ( image->flags & IT_FRAMEBUFFER ) && !glConfig.ext.rgb8_rgba8 )
+			bpp = 2;
+
+		if( image->flags & ( IT_DEPTH|IT_DEPTHRB ) )
 		{
 			if( image->flags & IT_STENCIL )
-				bpp = 4;
-			else if( glConfig.ext.depth24 )
-				bpp = 3;
-			else
-				bpp = 2;
-		}
-		else if( image->flags & IT_FRAMEBUFFER )
-		{
-			if( !glConfig.ext.rgb8_rgba8 )
-				bpp = 2;
-
-			if( ( image->flags & ( IT_DEPTHRB|IT_STENCIL ) ) == ( IT_DEPTHRB|IT_STENCIL ) )
-			{
 				bpp += 4;
-			}
+			else if( glConfig.ext.depth24 )
+				bpp += 3;
 			else
-			{
-				if( image->flags & IT_DEPTHRB )
-					bpp += ( glConfig.ext.depth24 ? 3 : 2 );
-				if( image->flags & IT_STENCIL )
-					bpp += 1;
-			}
+				bpp += 2;
 		}
 
 		bytes = add * bpp;
@@ -2695,7 +2683,7 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 		colorFlags |= IT_DEPTHRB;
 	}
 	if( stencil ) {
-		if( depth && glConfig.ext.packed_depth_stencil ) {
+		if( depth ) {
 			depthFlags |= IT_STENCIL;
 		} else {
 			colorFlags |= IT_STENCIL;
