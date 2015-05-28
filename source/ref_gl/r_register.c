@@ -906,11 +906,9 @@ static void R_FinalizeGLExtensions( void )
 #endif
 
 	/* GL_EXT_packed_depth_stencil
-	 * Desktop OpenGL doesn't support separate depth and special renderbuffers. */
-#ifndef GL_ES_VERSION_2_0
+	 * Many OpenGL implementation don't support separate depth and stencil renderbuffers. */
 	if( !glConfig.ext.packed_depth_stencil )
 		glConfig.stencilBits = 0;
-#endif
 
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
