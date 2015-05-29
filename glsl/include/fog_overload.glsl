@@ -14,8 +14,8 @@ void FogGen(in vec4 Position, inout vec2 outTexCoord)
 	myhalf FVdist = dot(Position.xyz, u_FogPlane.xyz) - u_FogPlane.w;
 	myhalf VToEyeDist = FVdist - u_FogScaleAndEyeDist.y;
 
-	// all this mess is here to ensure we aren't dealing with infinities here
-	// ensure that always abs(NudgedVToEyeDist) >= FOG_DIST_NUDGE_FACTOR
+	// prevent calculations that might result in infinities:
+	// always ensure that abs(NudgedVToEyeDist) >= FOG_DIST_NUDGE_FACTOR
 	myhalf NudgedVToEyeDist = step(FOG_DIST_NUDGE_FACTOR, VToEyeDist    ) * VToEyeDist +
 				step(FOG_DIST_NUDGE_FACTOR, VToEyeDist * -1.0) * VToEyeDist + 
 				(step(abs(VToEyeDist), FOG_DIST_NUDGE_FACTOR)) * FOG_DIST_NUDGE_FACTOR;
