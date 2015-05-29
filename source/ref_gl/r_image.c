@@ -1425,14 +1425,16 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Unsupported pixel format: %s\n", image->name );
 		goto error;
 	}
+	if( ( header->pixelWidth < 1 ) || ( header->pixelHeight < 0 ) )
+	{
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Zero texture size: %s\n", image->name );
+		goto error;
+	}
+	if( !header->pixelHeight )
+		header->pixelHeight = 1;
 	if( ( image->flags & IT_CUBEMAP ) && ( header->pixelWidth != header->pixelHeight ) )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Not square cubemap image: %s\n", image->name );
-		goto error;
-	}
-	if( ( header->pixelWidth < 1 ) || ( header->pixelHeight < 1 ) )
-	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Zero or negative texture size: %s\n", image->name );
 		goto error;
 	}
 	if( ( header->pixelDepth > 1 ) || ( header->numberOfArrayElements > 1 ) )
@@ -1497,6 +1499,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		else
 		{
 			int target;
+			int compressedFormat = glConfig.ext.ES3_compatibility ? GL_COMPRESSED_RGB8_ETC2 : GL_ETC1_RGB8_OES;
 			size_t faceSize;
 
 			R_TextureTarget( image->flags, &target );
@@ -1518,8 +1521,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 				data += sizeof( int );
 				for( j = 0; j < numFaces; ++j )
 				{
-					qglCompressedTexImage2DARB( target + j, i,
-						glConfig.ext.ES3_compatibility ? GL_COMPRESSED_RGB8_ETC2 : GL_ETC1_RGB8_OES,
+					qglCompressedTexImage2DARB( target + j, i, compressedFormat,
 						scaledWidth, scaledHeight, 0, faceSize, data );
 					data += faceSize;
 				}
