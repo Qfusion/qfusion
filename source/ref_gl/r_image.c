@@ -806,7 +806,7 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 	int outwidth, outheight, outpadding;
 	unsigned short *out = in;
 	unsigned short *next;
-	int p[4];
+	int col, p[4];
 
 	outwidth = width >> 1;
 	outheight = height >> 1;
@@ -821,12 +821,13 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 		next = ( ( ( i << 1 ) + 1 ) < height ) ? ( in + instride ) : in;
 		for( j = 0; j < outwidth; j++ )
 		{
-			p[0] = in[0];
-			p[1] = next[0];
-			if( ( ( j << 1 ) + 1 ) < width )
+			col = j << 1;
+			p[0] = in[col];
+			p[1] = next[col];
+			if( ( col + 1 ) < width )
 			{
-				p[2] = in[1];
-				p[3] = next[1];
+				p[2] = in[col + 1];
+				p[3] = next[col + 1];
 				*( out++ ) =	( ( ( ( p[0] & rMask ) + ( p[1] & rMask ) + ( p[2] & rMask ) + ( p[3] & rMask ) ) >> 2 ) & rMask ) |
 								( ( ( ( p[0] & gMask ) + ( p[1] & gMask ) + ( p[2] & gMask ) + ( p[3] & gMask ) ) >> 2 ) & gMask ) |
 								( ( ( ( p[0] & bMask ) + ( p[1] & bMask ) + ( p[2] & bMask ) + ( p[3] & bMask ) ) >> 2 ) & bMask ) |
