@@ -197,7 +197,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			false,							// smooth refire
 
 			//damages
-			6.75,							// damage
+			7,								// damage
 			0,								// selfdamage ratio
 			5,								// knockback
 			0,								// stun
@@ -341,8 +341,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			false,							// smooth refire
 
 			//damages
-			65,								// damage
-			0.85,							// selfdamage ratio
+			75,								// damage
+			1.00,							// selfdamage ratio
 			100,							// knockback
 			1250,							// stun
 			150,							// splash radius
@@ -413,11 +413,11 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			false,							// smooth refire
 
 			//damages
-			75,								// damage
-			0.85,							// selfdamage ratio
+			80,								// damage
+			1.00,							// selfdamage ratio
 			100,							// knockback
 			1250,							// stun
-			125,							// splash radius
+			150,							// splash radius
 			8,								// splash minimum damage
 			32,                             // splash minimum knockback
 
@@ -557,7 +557,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			true,							// smooth refire
 
 			//damages
-			6.75,							// damage
+			7,								// damage
 			0,								// selfdamage ratio (lg cant damage)
 			12,								// knockback
 			300,							// stun
