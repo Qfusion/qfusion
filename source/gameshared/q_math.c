@@ -1528,7 +1528,7 @@ vec_t NormalCDF( vec_t x )
 
 	if ( x < 0.0 )
 		sign = -1.0;
-	x = abs(x);
+	x = fabs(x);
 	if( x > 37.0 )
 		cumnorm = 0.0;
 	else
