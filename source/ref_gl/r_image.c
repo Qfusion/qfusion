@@ -1278,11 +1278,18 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 		mipLevels = 1;
 	}
 
-#ifdef GL_ES_VERSION_2_0
 	comp = format;
-#else
-	comp = R_TextureRGBFormat( ( type == GL_UNSIGNED_BYTE ) ? pixelSize : ( ( format == GL_RGB ) ? 3 : 4 ),
-		( flags & IT_NOCOMPRESS ) ? true : false );
+#ifndef GL_ES_VERSION_2_0
+	if( type == GL_UNSIGNED_BYTE )
+	{
+		int samples = 0;
+		if( ( format == GL_RGB ) || ( format == GL_BGR_EXT ) )
+			samples = 3;
+		else if( ( format == GL_RGBA ) || ( format == GL_BGRA_EXT ) )
+			samples = 4;
+		if( samples )
+			comp = R_TextureRGBFormat( samples, ( flags & IT_NOCOMPRESS ) ? true : false );
+	}
 #endif
 
 	R_SetupTexParameters( flags );
