@@ -863,15 +863,11 @@ static int R_TextureRGBFormat( int samples, bool noCompress )
 	{
 		if( bits == 16 )
 			return GL_RGB5;
-		else if( bits == 32 )
-			return GL_RGB8;
 		return GL_RGB;
 	}
 
 	if( bits == 16 )
 		return GL_RGBA4;
-	else if( bits == 32 )
-		return GL_RGBA8;
 	return GL_RGBA;
 }
 #endif
