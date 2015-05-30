@@ -245,7 +245,7 @@ void CG_AddKickAngles( vec3_t viewangles )
 
 		time = (float)( ( cg.kickangles[i].timestamp + cg.kickangles[i].kicktime ) - cg.time );
 		uptime = ( (float)cg.kickangles[i].kicktime ) * 0.5f;
-		delta = 1.0f - ( abs( time - uptime ) / uptime );
+		delta = 1.0f - ( fabs( time - uptime ) / uptime );
 		//CG_Printf("Kick Delta:%f\n", delta );
 		if( delta > 1.0f )
 			delta = 1.0f;
@@ -355,7 +355,7 @@ void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int
 	if( delta <= 0.0f )
 		return;
 
-	kick = abs( knockback ) * delta;
+	kick = fabs( knockback ) * delta;
 	if( kick ) // kick of 0 means no view adjust at all
 	{
 		//find first free kick spot, or the one closer to be finished
@@ -572,9 +572,9 @@ static void CG_InterpolatePlayerState( player_state_t *playerState )
 
 	teleported = ( ps->pmove.pm_flags & PMF_TIME_TELEPORT ) ? true : false;
 
-	if( abs( ops->pmove.origin[0] - ps->pmove.origin[0] ) > 256
-		|| abs( ops->pmove.origin[1] - ps->pmove.origin[1] ) > 256
-		|| abs( ops->pmove.origin[2] - ps->pmove.origin[2] ) > 256 )
+	if( abs( (int)(ops->pmove.origin[0] - ps->pmove.origin[0]) ) > 256
+		|| abs( (int)(ops->pmove.origin[1] - ps->pmove.origin[1]) ) > 256
+		|| abs( (int)(ops->pmove.origin[2] - ps->pmove.origin[2]) ) > 256 )
 		teleported = true;
 
 #ifdef EXTRAPOLATE_PLAYERSTATE // isn't smooth enough for the 1st person view

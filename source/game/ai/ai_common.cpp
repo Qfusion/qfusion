@@ -34,7 +34,7 @@ bool AI_DropNodeOriginToFloor( vec3_t origin, edict_t *passent )
 
 	origin[0] = trace.endpos[0];
 	origin[1] = trace.endpos[1];
-	origin[2] = trace.endpos[2] + 2 + abs( playerbox_stand_mins[2] );
+	origin[2] = trace.endpos[2] + 2.0f + fabs( playerbox_stand_mins[2] );
 
 	return true;
 }

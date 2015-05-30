@@ -1144,7 +1144,7 @@ static void PM_CheckDash( void )
 		pm->playerState->pmove.stats[PM_STAT_DASHTIME] = PM_DASHJUMP_TIMEDELAY;
 
 		// return sound events
-		if( abs( pml.sidePush ) > 10 && abs( pml.sidePush ) >= abs( pml.forwardPush ) )
+		if( fabs( pml.sidePush ) > 10 && fabs( pml.sidePush ) >= fabs( pml.forwardPush ) )
 		{
 			if( pml.sidePush > 0 )
 			{
