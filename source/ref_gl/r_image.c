@@ -1211,21 +1211,21 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 	switch( type )
 	{
 	case GL_UNSIGNED_SHORT_4_4_4_4:
-		rMask = 15;
-		gMask = 15 << 4;
-		bMask = 15 << 8;
-		aMask = 15 << 12;
+		rMask = 15 << 12;
+		gMask = 15 << 8;
+		bMask = 15 << 4;
+		aMask = 15;
 		break;
 	case GL_UNSIGNED_SHORT_5_5_5_1:
-		rMask = 31;
-		gMask = 31 << 5;
-		bMask = 31 << 10;
-		aMask = 1 << 15;
+		rMask = 31 << 11;
+		gMask = 31 << 6;
+		bMask = 31 << 1;
+		aMask = 1;
 		break;
 	case GL_UNSIGNED_SHORT_5_6_5:
-		rMask = 31;
+		rMask = 31 << 11;
 		gMask = 63 << 5;
-		bMask = 31 << 11;
+		bMask = 31;
 		break;
 	}
 
