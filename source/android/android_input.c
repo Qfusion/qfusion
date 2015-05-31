@@ -425,7 +425,7 @@ static bool IN_Android_TouchscreenAvailable( void )
 */
 unsigned int IN_SupportedDevices( void )
 {
-	static unsigned int devices = IN_DEVICE_KEYBOARD | IN_DEVICE_JOYSTICK | IN_DEVICE_SOFTKEYBOARD;
+	static unsigned int devices = IN_DEVICE_JOYSTICK | IN_DEVICE_SOFTKEYBOARD;
 	static bool touchscreenChecked;
 
 	if( !touchscreenChecked )
