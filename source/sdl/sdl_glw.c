@@ -30,9 +30,9 @@ static int GLimp_InitGL( int stencilbits, bool stereo );
 
 void GLimp_SetWindowIcon( void )
 {
-	const int *xpm_icon;
+#ifndef __APPLE__
+	const int *xpm_icon = glw_state.applicationIcon;
 
-	xpm_icon = glw_state.applicationIcon;
 	if( xpm_icon )
 	{
 		SDL_Surface *surface;
@@ -48,6 +48,7 @@ void GLimp_SetWindowIcon( void )
 
 		SDL_FreeSurface( surface );
 	}
+#endif
 }
 
 static bool GLimp_SetWindowFullscreen( bool fullscreen )
