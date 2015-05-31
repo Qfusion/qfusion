@@ -114,7 +114,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		return rserr_invalid_mode;
 	}
 
-	if( !GLimp_SetWindowFullscreen( fullscreen ) ) {
+	if( fullscreen && !GLimp_SetWindowFullscreen( fullscreen ) ) {
 		return rserr_invalid_fullscreen;
 	}
 

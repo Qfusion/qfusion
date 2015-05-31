@@ -676,7 +676,7 @@ static rserr_t GLimp_SetMode_Real( int width, int height, int displayFrequency, 
 			{
 				if( !silent )
 					ri.Com_Printf( " no mode found\n" );
-				return rserr_invalid_mode;
+				return rserr_invalid_fullscreen;
 			}
 		}
 
