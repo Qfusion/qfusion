@@ -9,6 +9,9 @@ endif()
 if (NOT QFUSION_MAC_ICON)
 	set(QFUSION_MAC_ICON ../icons/qfusion.icns)
 endif()
+if (NOT QFUSION_MAC_INFO_PLIST)
+	set(QFUSION_MAC_INFO_PLIST ../mac/Qfusion-Info.plist)
+endif()
 
 file(GLOB CLIENT_HEADERS
     "*.h"
@@ -121,7 +124,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "../sdl/sdl_client.c"
 
         "../mac/mac_sys.m"
-        "../mac/Warsow-Info.plist"
+        "${QFUSION_MAC_INFO_PLIST}"
     )
 
     set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "-framework IOKit" "-framework Cocoa")
@@ -190,7 +193,7 @@ add_executable(${QFUSION_CLIENT_NAME} ${CLIENT_BINARY_TYPE} ${CLIENT_HEADERS} ${
 add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame cin ftlib game irc ref_gl snd_openal snd_qf steamlib ui)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ../mac/Warsow-Info.plist)
+    set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${QFUSION_MAC_INFO_PLIST})
     set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/../Frameworks @executable_path/../Resources/base @executable_path/../Resources/libs")
     set_source_files_properties(${QFUSION_MAC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
