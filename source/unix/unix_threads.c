@@ -44,8 +44,10 @@ int Sys_Mutex_Create( qmutex_t **pmutex )
 	int res;
 	qmutex_t *mutex;
 	pthread_mutex_t m;
+	pthread_mutexattr_t mta;
 
-	res = pthread_mutex_init( &m, NULL );
+	pthread_mutexattr_settype( &mta, PTHREAD_MUTEX_RECURSIVE );
+	res = pthread_mutex_init( &m, &mta );
 	if( res != 0 ) {
 		return res;
 	}
