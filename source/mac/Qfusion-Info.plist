@@ -5,29 +5,29 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleIconFile</key>
-	<string>wsw_icon.icns</string>
+	<string>qfusion.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.chasseurdebots.Warsow</string>
+	<string>org.picmip.Qfusion</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleSignature</key>
-	<string>WaSW</string>
+	<string>QfSN</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>org.chasseurdebots.Warsow</string>
+			<string>org.picmip.Qfusion</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>warsow</string>
+				<string>qfusion</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Chasseur de bots</string>
+	<string>Picmip.org</string>
 </dict>
 </plist>
