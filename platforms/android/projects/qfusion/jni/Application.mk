@@ -5,7 +5,6 @@ APP_OPTIM := release
 APP_PLATFORM := android-16
 APP_STL := gnustl_shared
 NDK_APP_SHORT_COMMANDS := true
-NDK_TOOLCHAIN_VERSION := 4.9
 
 APP_MODULES := \
   android_native_app_glue \
