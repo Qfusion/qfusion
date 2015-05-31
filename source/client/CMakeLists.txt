@@ -6,6 +6,10 @@ if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
     include_directories(${SDL2_INCLUDE_DIRS})
 endif()
 
+if (NOT QFUSION_MAC_ICON)
+	set(QFUSION_MAC_ICON ../icons/qfusion.icns)
+endif()
+
 file(GLOB CLIENT_HEADERS
     "*.h"
 	"../gameshared/q_*.h"
@@ -41,7 +45,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 		"../win32/resource.h"
 		"../win32/conproc.h"
 		"../win32/winquake.h"
-		"../win32/win_input.h"		
+		"../win32/win_input.h"
 	)
 
     if (USE_SDL2)
@@ -128,7 +132,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         ../../../${GAME_DATA_DIR}/basewsw
         ../../../${GAME_DATA_DIR}/docs
         ../../glsl
-        ../mac/wsw_icon.icns
+        ${QFUSION_MAC_ICON}
     )
 endif()
 
@@ -188,7 +192,7 @@ add_dependencies(${QFUSION_CLIENT_NAME} angelwrap cgame cin ftlib game irc ref_g
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ../mac/Warsow-Info.plist)
     set_target_properties(${QFUSION_CLIENT_NAME} PROPERTIES XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/../Frameworks @executable_path/../Resources/base @executable_path/../Resources/libs")
-    set_source_files_properties(../mac/wsw_icon.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    set_source_files_properties(${QFUSION_MAC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
     set_source_files_properties(../mac/Frameworks                 PROPERTIES MACOSX_PACKAGE_LOCATION .)
     set_source_files_properties(../../../${GAME_DATA_DIR}/basewsw PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
