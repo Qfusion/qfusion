@@ -910,7 +910,7 @@ static void CG_Cmd_WeaponCross_f( void )
 	int w[2], count = 0, selected = -1, select;
 	gsitem_t *item;
 
-	if( !cg.frame.valid || cgs.demoPlaying )
+	if( !cg.frame.valid )
 		return;
 
 	if( trap_Cmd_Argc() )
@@ -919,6 +919,13 @@ static void CG_Cmd_WeaponCross_f( void )
 	if( ( quarter < 0 ) || ( quarter > 4 ) )
 	{
 		CG_Printf( "Usage: 'weaponcross 0-4 (0 - just show, 1 - GB/MG, 2 - RG/GL, 3 - RL/PG, 4 - LG/EB)\n" );
+		return;
+	}
+
+	if( cgs.demoPlaying || ( cg.predictedPlayerState.pmove.pm_type == PM_CHASECAM ) )
+	{
+		if( quarter )
+			CG_ChaseStep( ( quarter > 2 ) ? -1 : 1 );
 		return;
 	}
 
