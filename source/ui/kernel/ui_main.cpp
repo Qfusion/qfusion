@@ -461,21 +461,9 @@ bool UI_Main::preloadEnabled( void )
 #endif
 }
 
-void UI_Main::joystickCursorMove( void )
+void UI_Main::gamepadStickCursorMove( float frameTime )
 {
 	const float threshold = 7849.0f / 32767.0f; // Xbox controller left stick dead zone.
-
-	unsigned int time = trap::Milliseconds();
-
-	static unsigned int lastTime;
-	if( !lastTime ) {
-		lastTime = time;
-		return;
-	}
-
-	float frameTime = ( time - lastTime ) * 0.001f;
-	clamp_high( frameTime, 0.1f );
-	lastTime = time;
 
 	vec4_t sticks;
 	trap::IN_GetThumbsticks( sticks );
@@ -494,15 +482,76 @@ void UI_Main::joystickCursorMove( void )
 		return;
 	}
 
-	float scale = ( float )( std::min( refreshState.width, refreshState.height ) );
-	x += sx * sx * sx * frameTime * scale * 1.5f;
-	y += sy * sy * sy * frameTime * scale * 1.5f;
+	float speed = ( 576.0f * 1.5f ) * refreshState.pixelRatio * frameTime;
+	x += sx * sx * sx * speed;
+	y += sy * sy * sy * speed;
 
 	int mx = x, my = y;
 	x -= ( float )mx;
 	y -= ( float )my;
-
 	mouseMove( mx, my, false, true );
+}
+
+void UI_Main::gamepadDpadCursorMove( float frameTime )
+{
+	static float holdTime;
+	static float x, y;
+
+	int dx = trap::Key_IsDown( K_DPAD_RIGHT ) - trap::Key_IsDown( K_DPAD_LEFT );
+	int dy = trap::Key_IsDown( K_DPAD_DOWN ) - trap::Key_IsDown( K_DPAD_UP );
+	if( !dx && !dy ) {
+		holdTime = x = y = 0.0f;
+		return;
+	}
+
+	// Goes from half minimum screen height to double minimum screen height.
+	float speed = ( 576.0f * 0.5f ) + bound( 0.0f, holdTime - 0.25f, 1.5f ) * 576.0f;
+	if( dx && dy ) {
+		speed *= 0.707106f;
+	}
+	speed *= refreshState.pixelRatio * frameTime;
+
+	if( dx ) {
+		x += ( ( dx < 0 ) ? -1.0f : 1.0f ) * speed;
+	} else {
+		x = 0.0f;
+	}
+
+	if( dy ) {
+		y += ( ( dy < 0 ) ? -1.0f : 1.0f ) * speed;
+	} else {
+		y = 0.0f;
+	}
+
+	holdTime += frameTime;
+
+	int mx = x, my = y;
+	x -= ( float )mx;
+	y -= ( float )my;
+	mouseMove( mx, my, false, true );
+}
+
+void UI_Main::gamepadCursorMove( void )
+{
+	unsigned int time = trap::Milliseconds();
+
+	static unsigned int lastTime;
+	if( !lastTime ) {
+		lastTime = time;
+		return;
+	}
+
+	float frameTime = ( time - lastTime ) * 0.001f;
+	lastTime = time;
+
+	if( !frameTime ) {
+		return;
+	}
+
+	clamp_high( frameTime, 0.1f );
+
+	gamepadStickCursorMove( frameTime );
+	gamepadDpadCursorMove( frameTime );
 }
 
 //===========================================
@@ -651,7 +700,7 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 
 	if( showCursor ) { 
 		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_REFRESH );
-		joystickCursorMove();
+		gamepadCursorMove();
 	}
 	else {
 		rocketModule->hideCursor( RocketModule::HIDECURSOR_REFRESH, 0 );

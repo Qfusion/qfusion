@@ -153,7 +153,27 @@ private:
 	void destroyFormatters( void );
 
 	void loadCursor( void );
-	void joystickCursorMove( void );
+
+
+	/**
+	 * Adds cursor movement from the gamepad sticks.
+	 *
+	 * @param frametime time since last UI input update
+	 */
+	void gamepadStickCursorMove( float frameTime );
+
+	/**
+	 * Adds cursor movement from the directional pad.
+	 *
+	 * @param frametime time since last UI input update
+	 */
+	void gamepadDpadCursorMove( float frameTime );
+
+	/**
+	 * Adds cursor movement from the gamepad.
+	 */
+	void gamepadCursorMove( void );
+
 
 	void customRender( void );
 
