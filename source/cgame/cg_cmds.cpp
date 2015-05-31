@@ -487,6 +487,68 @@ static void CG_SC_ChannelRemove( void )
 	}
 }
 
+/**
+ * Returns the English match state message.
+ *
+ * @param mm match message ID
+ * @return match message text
+ */
+static const char *CG_MatchMessageString( matchmessage_t mm )
+{
+	if( ( trap_IN_SupportedDevices() & ( IN_DEVICE_KEYBOARD|IN_DEVICE_MOUSE ) ) != ( IN_DEVICE_KEYBOARD|IN_DEVICE_MOUSE ) )
+	{
+		switch( mm )
+		{
+		case MATCHMESSAGE_CHALLENGERS_QUEUE:
+			return "You are inside the challengers queue waiting for your turn to play.\n"
+				"Use the in-game menu to exit the queue.";
+
+		case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
+			return "Use the in-game menu to enter the challengers queue.\n"
+				"Only players in the queue will have a turn to play against the last winner.";
+
+		case MATCHMESSAGE_GET_READY:
+			return "Set yourself READY using the in-game menu to start the match!";
+
+		case MATCHMESSAGE_WAITING_FOR_PLAYERS:
+			return "Waiting for players.";
+		}
+
+		return "";
+	}
+
+	switch( mm )
+	{
+	case MATCHMESSAGE_CHALLENGERS_QUEUE:
+		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
+			"You are inside the challengers queue waiting for your turn to play.\n"
+			"Use the in-game menu to exit the queue.\n"
+			"--\nUse the mouse buttons for switching spectator modes.";
+
+	case MATCHMESSAGE_ENTER_CHALLENGERS_QUEUE:
+		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
+			"Use the in-game menu or press 'F3' to enter the challengers queue.\n"
+			"Only players in the queue will have a turn to play against the last winner.\n"
+			"--\nUse the mouse buttons for switching spectator modes.";
+
+	case MATCHMESSAGE_SPECTATOR_MODES:
+		return "'ESC' for in-game menu or 'ENTER' for in-game chat.\n"
+			"Mouse buttons for switching spectator modes.\n"
+			"This message can be hidden by disabling 'help' in player setup menu.";
+
+	case MATCHMESSAGE_GET_READY:
+		return "Set yourself READY to start the match!\n"
+			"You can use the in-game menu or simply press 'F4'.\n"
+			"'ESC' for in-game menu or 'ENTER' for in-game chat.";
+
+	case MATCHMESSAGE_WAITING_FOR_PLAYERS:
+		return "Waiting for players.\n"
+			"'ESC' for in-game menu.";
+	}
+
+	return "";
+}
+
 /*
 * CG_SC_MatchMessage
 */
@@ -498,7 +560,7 @@ static void CG_SC_MatchMessage( void )
 	cg.matchmessage = NULL;
 
 	mm = (matchmessage_t)atoi( trap_Cmd_Argv( 1 ) );
-	matchmessage = GS_MatchMessageString( mm );
+	matchmessage = CG_MatchMessageString( mm );
 	if( !matchmessage || !matchmessage[0] )
 		return;
 
