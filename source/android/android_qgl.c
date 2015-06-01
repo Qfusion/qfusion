@@ -172,9 +172,5 @@ static void _qglSwapInterval( int interval )
 	glw_state.swapInterval = interval;
 
 	if( glw_state.surface != EGL_NO_SURFACE )
-	{
-		EGLDisplay dpy = qeglGetCurrentDisplay();
-		if( dpy != EGL_NO_DISPLAY )
-			qeglSwapInterval( dpy, interval );
-	}
+		qeglSwapInterval( glw_state.display, interval );
 }
