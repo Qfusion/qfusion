@@ -170,23 +170,61 @@ static void GLimp_Android_ChooseConfig( void )
 	}
 }
 
-/*
-** GLimp_Android_CreateWindowSurface
-*/
-static void GLimp_Android_CreateWindowSurface( void )
+/**
+ * Recreates and selects the surface for the newly created window, or selects a dummy buffer when there's no window.
+ */
+static void GLimp_Android_UpdateWindowSurface( void )
 {
-	const char *extensions = qglGetGLWExtensionsString();
+	ANativeWindow *window = glw_state.window;
+	EGLDisplay dpy;
 
-	ANativeWindow_setBuffersGeometry( glw_state.window, glConfig.width, glConfig.height, glw_state.format );
-	glw_state.surface = EGL_NO_SURFACE;
-	if( glConfig.stereoEnabled && extensions && strstr( extensions, "EGL_EXT_multiview_window" ) )
+	if( glw_state.surface != EGL_NO_SURFACE )
 	{
-		int attribs[] = { EGL_MULTIVIEW_VIEW_COUNT_EXT, 2, EGL_NONE };
-		glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, glw_state.window, attribs );
-		glConfig.stereoEnabled = ( glw_state.surface != EGL_NO_SURFACE ) ? true : false;
+		qeglDestroySurface( glw_state.display, glw_state.surface );
+		glw_state.surface = EGL_NO_SURFACE;
 	}
-	if( glw_state.surface == EGL_NO_SURFACE )
+
+	if( !window )
+	{
+		qeglMakeCurrent( glw_state.display, glw_state.pbufferSurface, glw_state.pbufferSurface, glw_state.context );
+		return;
+	}
+
+	ANativeWindow_setBuffersGeometry( window, glConfig.width, glConfig.height, glw_state.format );
+
+	if( glConfig.stereoEnabled )
+	{
+		const char *extensions = qglGetGLWExtensionsString();
+		if( extensions && strstr( extensions, "EGL_EXT_multiview_window" ) )
+		{
+			int attribs[] = { EGL_MULTIVIEW_VIEW_COUNT_EXT, 2, EGL_NONE };
+			glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, glw_state.window, attribs );
+		}
+	}
+
+	if( glw_state.surface == EGL_NO_SURFACE ) // Try to create a non-stereo surface.
+	{
+		glConfig.stereoEnabled = false;
 		glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, glw_state.window, NULL );
+	}
+
+	if( glw_state.surface == EGL_NO_SURFACE )
+	{
+		ri.Com_Printf( "GLimp_Android_UpdateWindowSurface() - GLimp_Android_CreateWindowSurface failed\n" );
+		return;
+	}
+
+	if( !qeglMakeCurrent( glw_state.display, glw_state.surface, glw_state.surface, glw_state.context ) )
+	{
+		ri.Com_Printf( "GLimp_Android_UpdateWindowSurface() - eglMakeCurrent failed\n" );
+		qeglDestroySurface( glw_state.display, glw_state.surface );
+		glw_state.surface = EGL_NO_SURFACE;
+		return;
+	}
+
+	dpy = qeglGetCurrentDisplay();
+	if( dpy != EGL_NO_DISPLAY )
+		qeglSwapInterval( dpy, glw_state.swapInterval );
 }
 
 /*
@@ -231,22 +269,6 @@ static bool GLimp_InitGL( void )
 		return false;
 	}
 
-	if( glw_state.window )
-	{
-		GLimp_Android_CreateWindowSurface();
-		surface = glw_state.surface;
-		if( surface == EGL_NO_SURFACE )
-		{
-			ri.Com_Printf( "GLimp_InitGL() - GLimp_Android_CreateWindowSurface failed\n" );
-			return false;
-		}
-	}
-	else
-	{
-		glw_state.surface = EGL_NO_SURFACE;
-		surface = glw_state.pbufferSurface;
-	}
-
 	glw_state.context = qeglCreateContext( glw_state.display, glw_state.config, EGL_NO_CONTEXT, contextAttribs );
 	if( glw_state.context == EGL_NO_CONTEXT )
 	{
@@ -254,13 +276,9 @@ static bool GLimp_InitGL( void )
 		return false;
 	}
 
-	if( !qeglMakeCurrent( glw_state.display, surface, surface, glw_state.context ) )
-	{
-		ri.Com_Printf( "GLimp_InitGL() - eglMakeCurrent failed\n" );
-		return false;
-	}
-
 	glw_state.swapInterval = 1;
+
+	GLimp_Android_UpdateWindowSurface();
 
 	return true;
 }
@@ -271,8 +289,7 @@ static bool GLimp_InitGL( void )
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
 {
 	ri.Com_Printf( "Initializing OpenGL display\n" );
-	if( glw_state.context != EGL_NO_CONTEXT )
-		GLimp_Shutdown();
+	GLimp_Shutdown();
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.fullScreen = fullscreen;
@@ -281,7 +298,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	{
 		ri.Com_Printf( "GLimp_SetMode() - GLimp_InitGL failed\n" );
 		GLimp_Shutdown();
-		return rserr_invalid_mode;
+		return rserr_unknown;
 	}
 	return rserr_ok;
 }
@@ -291,43 +308,13 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 */
 rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
 {
-	EGLDisplay dpy;
+	ANativeWindow *window = ( ANativeWindow * )parenthWnd;
 
-	if( glw_state.window == ( ANativeWindow * )parenthWnd )
+	if( glw_state.window == window )
 		return rserr_ok;
 
-	glw_state.window = ( ANativeWindow * )parenthWnd;
-
-	if( !parenthWnd )
-	{
-		if( glw_state.surface != EGL_NO_SURFACE )
-		{
-			qeglDestroySurface( glw_state.display, glw_state.surface );
-			glw_state.surface = EGL_NO_SURFACE;
-			qeglMakeCurrent( glw_state.display, glw_state.pbufferSurface, glw_state.pbufferSurface, glw_state.context );
-		}
-		return rserr_ok;
-	}
-
-	GLimp_Android_CreateWindowSurface();
-	if( glw_state.surface == EGL_NO_SURFACE )
-	{
-		ri.Com_Printf( "GLimp_SetWindow() - GLimp_Android_CreateWindowSurface failed\n" );
-		return rserr_no_surface;
-	}
-
-	if( !qeglMakeCurrent( glw_state.display, glw_state.surface, glw_state.surface, glw_state.context ) )
-	{
-		ri.Com_Printf( "GLimp_SetWindow() - eglMakeCurrent failed\n" );
-		qeglDestroySurface( glw_state.display, glw_state.surface );
-		glw_state.surface = EGL_NO_SURFACE;
-		return rserr_no_surface;
-	}
-
-	dpy = qeglGetCurrentDisplay();
-	if( dpy != EGL_NO_DISPLAY )
-		qeglSwapInterval( dpy, glw_state.swapInterval );
-
+	glw_state.window = window;
+	GLimp_Android_UpdateWindowSurface();
 	return rserr_ok;
 }
 
