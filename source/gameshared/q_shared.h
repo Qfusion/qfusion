@@ -417,7 +417,6 @@ typedef enum
 	rserr_invalid_mode,
 	rserr_invalid_driver,
 	rserr_restart_required,
-	rserr_no_surface,
 
 	rserr_unknown
 } rserr_t;
