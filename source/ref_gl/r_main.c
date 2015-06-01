@@ -1583,6 +1583,9 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 	RB_BeginFrame();
 
+	if( !glConfig.stereoEnabled || !R_ScreenEnabled() )
+		cameraSeparation = 0;
+
 	if( rf.cameraSeparation != cameraSeparation )
 	{
 		rf.cameraSeparation = cameraSeparation;
@@ -1590,13 +1593,13 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		if( glConfig.ext.multiview_draw_buffers )
 		{
 			int location = GL_MULTIVIEW_EXT;
-			int index = ( cameraSeparation > 0 && glConfig.stereoEnabled ) ? 1 : 0;
+			int index = ( cameraSeparation > 0 ) ? 1 : 0;
 			qglDrawBuffersIndexedEXT( 1, &location, &index );
 		}
 #else
-		if( cameraSeparation < 0 && glConfig.stereoEnabled )
+		if( cameraSeparation < 0 )
 			qglDrawBuffer( GL_BACK_LEFT );
-		else if( cameraSeparation > 0 && glConfig.stereoEnabled )
+		else if( cameraSeparation > 0 )
 			qglDrawBuffer( GL_BACK_RIGHT );
 		else
 			qglDrawBuffer( GL_BACK );
