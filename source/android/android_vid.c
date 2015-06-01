@@ -98,6 +98,13 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 
 	windowWidth = ANativeWindow_getWidth( window );
 	windowHeight = ANativeWindow_getHeight( window );
+	if( windowHeight > windowWidth )
+	{
+		// The window may be created in portrait orientation sometimes, for example, when launching in sleep mode.
+		int tempWidth = windowWidth;
+		windowWidth = windowHeight;
+		windowHeight = tempWidth;
+	}
 
 	if( windowHeight <= 480 )
 	{
@@ -146,6 +153,7 @@ float VID_GetPixelRatio( void )
 {
 	static float invDensity;
 	int height;
+	int windowWidth, windowHeight;
 
 	if( !sys_android_app->window || !viddef.height )
 		return 1.0f;
@@ -158,7 +166,9 @@ float VID_GetPixelRatio( void )
 		invDensity = 1.0f / density;
 	}
 
-	return ( float )viddef.height / ( ( float )ANativeWindow_getHeight( sys_android_app->window ) * invDensity );
+	windowWidth = ANativeWindow_getWidth( sys_android_app->window );
+	windowHeight = ANativeWindow_getHeight( sys_android_app->window );
+	return ( float )viddef.height / ( ( float )( min( windowWidth, windowHeight ) ) * invDensity );
 }
 
 rserr_t VID_Sys_Init( const char *applicationName, const char *screenshotsPrefix, int startupColor, 
