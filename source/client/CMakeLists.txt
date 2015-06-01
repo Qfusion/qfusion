@@ -7,7 +7,7 @@ if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
 endif()
 
 if (NOT QFUSION_MAC_ICON)
-	set(QFUSION_MAC_ICON ../icons/qfusion.icns)
+	set(QFUSION_MAC_ICON ../../icons/qfusion.icns)
 endif()
 if (NOT QFUSION_MAC_INFO_PLIST)
 	set(QFUSION_MAC_INFO_PLIST ../mac/Qfusion-Info.plist)

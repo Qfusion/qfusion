@@ -191,13 +191,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifndef APP_ICO_ICON
-#define APP_ICO_ICON 					"../icons/qfusion.ico"
+#define APP_ICO_ICON 					"../../icons/qfusion.ico"
 #endif
 
 #ifndef APP_DEMO_ICO_ICON
-#define APP_DEMO_ICO_ICON 				"../icons/qfusion-demo.ico"
+#define APP_DEMO_ICO_ICON 				"../../icons/qfusion-demo.ico"
 #endif
 
 #ifndef APP_XPM_ICON
-#define APP_XPM_ICON 					"../icons/qfusion256x256.xpm"
+#define APP_XPM_ICON 					"../../icons/qfusion256x256.xpm"
 #endif
