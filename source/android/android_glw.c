@@ -122,7 +122,13 @@ static void GLimp_Android_ChooseConfig( void )
 	bool depthEncodingSupported = false;
 	int depthEncodings[] = { EGL_DONT_CARE, EGL_DEPTH_ENCODING_NONLINEAR_NV, EGL_DONT_CARE }, depthEncoding;
 	int maxStencilSize = ( ( r_stencilbits->integer >= 8 ) ? 8 : 0 ), stencilSize;
-	int minSwapIntervals[] = { 0, EGL_DONT_CARE }, minSwapInterval;
+	int minSwapIntervals[] = {
+#ifndef PUBLIC_BUILD // Vsync cannot be normally turned off on Android, so the setting must not be available to the user.
+		0,
+#endif
+		EGL_DONT_CARE
+	};
+	int minSwapInterval;
 	const char *extensions = qglGetGLWExtensionsString();
 	int i, j, k;
 
@@ -155,11 +161,23 @@ static void GLimp_Android_ChooseConfig( void )
 
 					if( glw_state.config )
 					{
+#ifdef PUBLIC_BUILD
+						minSwapInterval = 1;
+#else
 						qeglGetConfigAttrib( glw_state.display, glw_state.config, EGL_MIN_SWAP_INTERVAL, &minSwapInterval );
-						ri.Com_Printf( "Got colorbits %i, depthbits %i%s, stencilbits %i, min swap interval %i\n",
-							colorSize * 4, depthSize,
-							( depthEncoding == EGL_DEPTH_ENCODING_NONLINEAR_NV ) ? " (non-linear)" : "",
-							stencilSize, minSwapInterval );
+#endif
+						ri.Com_Printf( "Got colorbits %i, depthbits %i%s, stencilbits %i"
+#ifndef PUBLIC_BUILD
+							", min swap interval %i"
+#endif
+							"\n"
+							, colorSize * 4, depthSize
+							, ( depthEncoding == EGL_DEPTH_ENCODING_NONLINEAR_NV ) ? " (non-linear)" : ""
+							, stencilSize
+#ifndef PUBLIC_BUILD
+							, minSwapInterval
+#endif
+						);
 						glConfig.stencilBits = stencilSize;
 						ri.Cvar_ForceSet( "r_swapinterval_min", ( minSwapInterval > 0 ) ? "1" : "0" );
 						return;
@@ -176,7 +194,6 @@ static void GLimp_Android_ChooseConfig( void )
 static void GLimp_Android_UpdateWindowSurface( void )
 {
 	ANativeWindow *window = glw_state.window;
-	EGLDisplay dpy;
 
 	if( glw_state.surface != EGL_NO_SURFACE )
 	{
@@ -222,9 +239,7 @@ static void GLimp_Android_UpdateWindowSurface( void )
 		return;
 	}
 
-	dpy = qeglGetCurrentDisplay();
-	if( dpy != EGL_NO_DISPLAY )
-		qeglSwapInterval( dpy, glw_state.swapInterval );
+	qeglSwapInterval( glw_state.display, glw_state.swapInterval );
 }
 
 /*
