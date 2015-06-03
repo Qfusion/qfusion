@@ -654,7 +654,7 @@ void CL_SetKeyDest( int key_dest )
 
 	if( cls.key_dest != key_dest )
 	{
-		Key_ClearStates();
+		IN_ClearState();
 		cls.key_dest = key_dest;
 		Con_SetMessageMode();
 	}

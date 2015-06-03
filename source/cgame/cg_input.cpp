@@ -33,13 +33,64 @@ cvar_t *cg_gamepad_yawThres;
 cvar_t *cg_gamepad_pitchSpeed;
 cvar_t *cg_gamepad_yawSpeed;
 cvar_t *cg_gamepad_pitchInvert;
+cvar_t *cg_gamepad_accelMax;
+cvar_t *cg_gamepad_accelSpeed;
+cvar_t *cg_gamepad_accelThres;
 cvar_t *cg_gamepad_swapSticks;
 
+static float cg_gamepad_accelPitch = 1.0f, cg_gamepad_accelYaw = 1.0f;
+
 /**
- * Adds the view rotation from the gamepad.
+ * Updates time-dependent gamepad state.
  *
- * @param viewangles the target view angles
- * @param frametime  the length of the last frame
+ * @param frametime real frame time
+ */
+static void CG_GamepadFrame( float frametime )
+{
+	// Add acceleration to the gamepad look above the acceleration threshold.
+
+	vec4_t sticks;
+	trap_IN_GetThumbsticks( sticks );
+
+	int axes = ( cg_gamepad_swapSticks->integer ? 0 : 2 );
+
+	if( cg_gamepad_accelMax->value < 1.0f )
+		trap_Cvar_SetValue( cg_gamepad_accelMax->name, 1.0f );
+	if( cg_gamepad_accelSpeed->value < 0.0f )
+		trap_Cvar_SetValue( cg_gamepad_accelSpeed->name, 0.0f );
+
+	float accelMax = cg_gamepad_accelMax->value;
+	float accelSpeed = cg_gamepad_accelSpeed->value;
+	float accelThres = cg_gamepad_accelThres->value;
+
+	float value = fabs( sticks[axes] );
+	if( value > cg_gamepad_yawThres->value )
+	{
+		cg_gamepad_accelYaw += ( ( value > accelThres ) ? 1.0f : -1.0f ) * frametime * accelSpeed;
+		clamp( cg_gamepad_accelYaw, 1.0f, accelMax );
+	}
+	else
+	{
+		cg_gamepad_accelYaw = 1.0f;
+	}
+
+	value = fabs( sticks[axes + 1] );
+	if( value > cg_gamepad_pitchThres->value )
+	{
+		cg_gamepad_accelPitch += ( ( value > accelThres ) ? 1.0f : -1.0f ) * frametime * accelSpeed;
+		clamp( cg_gamepad_accelPitch, 1.0f, accelMax );
+	}
+	else
+	{
+		cg_gamepad_accelPitch = 1.0f;
+	}
+}
+
+/**
+ * Adds view rotation from the gamepad.
+ *
+ * @param viewangles view angles to modify
+ * @param frametime  length of the last frame
  */
 static void CG_AddGamepadViewAngles( vec3_t viewangles, float frametime )
 {
@@ -53,34 +104,32 @@ static void CG_AddGamepadViewAngles( vec3_t viewangles, float frametime )
 	if( ( cg_gamepad_pitchThres->value <= 0.0f ) || ( cg_gamepad_pitchThres->value >= 1.0f ) )
 		trap_Cvar_Set( cg_gamepad_pitchThres->name, cg_gamepad_pitchThres->dvalue );
 
-	float value = sticks[axes];
+	float axisValue = sticks[axes];
 	float threshold = cg_gamepad_yawThres->value;
-	float absValue = fabs( value );
-	absValue = ( absValue - threshold ) / ( 1.0f - threshold ); // Smoothly apply the dead zone.
-	if( absValue > 0.0f )
+	float value = ( fabs( axisValue ) - threshold ) / ( 1.0f - threshold ); // Smoothly apply the dead zone.
+	if( value > 0.0f )
 	{
 		// Quadratic interpolation.
 		viewangles[YAW] -= frametime *
-			absValue * absValue * ( ( value < 0.0f ) ? -1.0f : 1.0f ) *
+			value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepad_accelYaw *
 			cg_gamepad_yawSpeed->value * CG_GetSensitivityScale( cg_gamepad_yawSpeed->value, 0.0f );
 	}
 
-	value = sticks[axes + 1];
+	axisValue = sticks[axes + 1];
 	threshold = cg_gamepad_pitchThres->value;
-	absValue = fabs( value );
-	absValue = ( absValue - threshold ) / ( 1.0f - threshold );
-	if( absValue > 0.0f )
+	value = ( fabs( axisValue ) - threshold ) / ( 1.0f - threshold );
+	if( value > 0.0f )
 	{
 		viewangles[PITCH] += frametime * ( cg_gamepad_pitchInvert->integer ? -1.0f : 1.0f ) *
-			absValue * absValue * ( ( value < 0.0f ) ? -1.0f : 1.0f ) *
+			value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepad_accelPitch *
 			cg_gamepad_pitchSpeed->value * CG_GetSensitivityScale( cg_gamepad_pitchSpeed->value, 0.0f );
 	}
 }
 
 /**
- * Adds the movement from the gamepad.
+ * Adds movement from the gamepad.
  *
- * @param movement the target movement vector
+ * @param movement movement vector to modify
  */
 static void CG_AddGamepadMovement( vec3_t movement )
 {
@@ -126,7 +175,15 @@ static void CG_AddGamepadMovement( vec3_t movement )
 
 void CG_UpdateInput( float frametime )
 {
+	CG_GamepadFrame( frametime );
 	CG_TouchFrame( frametime );
+}
+
+void CG_ClearInputState( void )
+{
+	cg_gamepad_accelPitch = cg_gamepad_accelYaw = 1.0f;
+
+	CG_CancelTouches();
 }
 
 unsigned int CG_GetButtonBits( void )

@@ -536,27 +536,6 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 	}
 }
 
-/*
-* CL_CancelTouches
-*/
-void CL_CancelTouches( void )
-{
-	switch( cls.key_dest )
-	{
-		case key_game:
-			CL_GameModule_CancelTouches();
-			break;
-		case key_console:
-		case key_message:
-			Con_TouchEvent( false, -1, -1 );
-			break;
-		case key_menu:
-			CL_UIModule_CancelTouches();
-		default:
-			break;
-	}
-}
-
 //==========================================================================
 
 cvar_t *cl_yawspeed;
@@ -715,6 +694,31 @@ void IN_CenterView( void )
 		player_state_t *playerState;
 		playerState = &cl.snapShots[cl.currentSnapNum & UPDATE_MASK].playerState;
 		cl.viewangles[PITCH] = -SHORT2ANGLE( playerState->pmove.delta_angles[PITCH] );
+	}
+}
+
+/*
+* IN_ClearState
+*/
+void IN_ClearState( void )
+{
+	IN_ShowSoftKeyboard( false );
+
+	Key_ClearStates();
+
+	switch( cls.key_dest )
+	{
+		case key_game:
+			CL_GameModule_ClearInputState();
+			break;
+		case key_console:
+		case key_message:
+			Con_TouchEvent( false, -1, -1 );
+			break;
+		case key_menu:
+			CL_UIModule_CancelTouches();
+		default:
+			break;
 	}
 }
 
