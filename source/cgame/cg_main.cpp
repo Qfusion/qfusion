@@ -850,7 +850,7 @@ static void CG_RegisterVariables( void )
 	cg_gamepad_pitchSpeed = trap_Cvar_Get( "cg_gamepad_pitchSpeed", "300", CVAR_ARCHIVE );
 	cg_gamepad_yawSpeed = trap_Cvar_Get( "cg_gamepad_yawSpeed", "280", CVAR_ARCHIVE );
 	cg_gamepad_pitchInvert = trap_Cvar_Get( "cg_gamepad_pitchInvert", "0", CVAR_ARCHIVE );
-	cg_gamepad_accelMax = trap_Cvar_Get( "cg_gamepad_accelMax", "3", CVAR_ARCHIVE );
+	cg_gamepad_accelMax = trap_Cvar_Get( "cg_gamepad_accelMax", "2", CVAR_ARCHIVE );
 	cg_gamepad_accelSpeed = trap_Cvar_Get( "cg_gamepad_accelSpeed", "3", CVAR_ARCHIVE );
 	cg_gamepad_accelThres = trap_Cvar_Get( "cg_gamepad_accelThres", "0.9", CVAR_ARCHIVE );
 	cg_gamepad_swapSticks = trap_Cvar_Get( "cg_gamepad_swapSticks", "0", CVAR_ARCHIVE );
