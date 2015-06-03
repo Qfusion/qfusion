@@ -90,7 +90,7 @@ static void CG_GamepadFrame( float frametime )
  * Adds view rotation from the gamepad.
  *
  * @param viewangles view angles to modify
- * @param frametime  length of the last frame
+ * @param frametime  real frame time
  */
 static void CG_AddGamepadViewAngles( vec3_t viewangles, float frametime )
 {

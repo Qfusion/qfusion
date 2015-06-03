@@ -323,7 +323,7 @@ typedef struct
 	 * May be called multiple times in a frame.
 	 *
 	 * @param viewangles view angles to modify
-	 * @param frametime  length of the last frame
+	 * @param frametime  real frame time
 	 */
 	void ( *AddViewAngles )( vec3_t viewangles, float frametime );
 
