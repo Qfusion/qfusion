@@ -54,12 +54,12 @@ static void CG_GamepadFrame( float frametime )
 
 	int axes = ( cg_gamepad_swapSticks->integer ? 0 : 2 );
 
-	if( cg_gamepad_accelMax->value < 1.0f )
-		trap_Cvar_SetValue( cg_gamepad_accelMax->name, 1.0f );
+	if( cg_gamepad_accelMax->value < 0.0f )
+		trap_Cvar_SetValue( cg_gamepad_accelMax->name, 0.0f );
 	if( cg_gamepad_accelSpeed->value < 0.0f )
 		trap_Cvar_SetValue( cg_gamepad_accelSpeed->name, 0.0f );
 
-	float accelMax = cg_gamepad_accelMax->value;
+	float accelMax = cg_gamepad_accelMax->value + 1.0f;
 	float accelSpeed = cg_gamepad_accelSpeed->value;
 	float accelThres = cg_gamepad_accelThres->value;
 
