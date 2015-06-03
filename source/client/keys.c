@@ -791,8 +791,6 @@ void Key_ClearStates( void )
 {
 	int i;
 
-	IN_ShowSoftKeyboard( false );
-
 	anykeydown = false;
 
 	for( i = 0; i < 256; i++ )
@@ -802,8 +800,6 @@ void Key_ClearStates( void )
 		keydown[i] = 0;
 		key_repeats[i] = 0;
 	}
-
-	CL_CancelTouches();
 }
 
 

@@ -149,7 +149,7 @@ void Con_Close( void )
 
 	Con_ClearTyping();
 	Con_ClearNotify();
-	Key_ClearStates();
+	IN_ClearState();
 }
 
 /*

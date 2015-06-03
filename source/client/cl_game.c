@@ -686,6 +686,15 @@ void CL_GameModule_UpdateInput( float frametime )
 }
 
 /*
+* CL_GameModule_ClearInputState
+*/
+void CL_GameModule_ClearInputState( void )
+{
+	if( cge )
+		cge->ClearInputState();
+}
+
+/*
 * CL_GameModule_GetButtonBits
 */
 uint8_t CL_GameModule_GetButtonBits( void )
@@ -720,13 +729,4 @@ void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned
 {
 	if( cge )
 		cge->TouchEvent( id, type, x, y, time );
-}
-
-/*
-* CL_GameModule_CancelTouches
-*/
-void CL_GameModule_CancelTouches( void )
-{
-	if( cge )
-		cge->CancelTouches();
 }

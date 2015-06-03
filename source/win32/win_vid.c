@@ -282,7 +282,7 @@ static void AppActivate( BOOL fActive, BOOL minimize, BOOL destroy )
 	if( destroy )
 		fActive = minimize = FALSE;
 
-	Key_ClearStates();
+	IN_ClearState();
 
 	// we don't want to act like we're active if we're minimized
 	prevActiveApp = ActiveApp;
