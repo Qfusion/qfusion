@@ -1153,9 +1153,13 @@ extern cvar_t *cg_gamepad_yawThres;
 extern cvar_t *cg_gamepad_pitchSpeed;
 extern cvar_t *cg_gamepad_yawSpeed;
 extern cvar_t *cg_gamepad_pitchInvert;
+extern cvar_t *cg_gamepad_accelMax;
+extern cvar_t *cg_gamepad_accelSpeed;
+extern cvar_t *cg_gamepad_accelThres;
 extern cvar_t *cg_gamepad_swapSticks;
 
 void CG_UpdateInput( float frametime );
+void CG_ClearInputState( void );
 
 unsigned int CG_GetButtonBits( void );
 void CG_AddViewAngles( vec3_t viewangles, float frametime );

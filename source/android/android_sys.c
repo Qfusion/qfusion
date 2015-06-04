@@ -333,7 +333,7 @@ static void Sys_Android_Init( void )
 
 	// Initialize JNI.
 	if( pthread_key_create( &sys_android_jniEnvKey, Sys_Android_JNIEnvDestructor ) )
-		Sys_Error( "Failed to create JNIEnv destructor." );
+		Sys_Error( "Failed to create JNIEnv destructor" );
 	env = Sys_Android_GetJNIEnv();
 
 	// Activity class shortcut.

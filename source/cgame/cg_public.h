@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   87
+#define	CGAME_API_VERSION   88
 
 //
 // structs and variables shared with the main engine
@@ -298,14 +298,53 @@ typedef struct
 
 	bool ( *NewFrameSnapshot )( snapshot_t *newSnapshot, snapshot_t *currentSnapshot );
 
+	/**
+	 * Updates input-related parts of cgame every frame.
+	 *
+	 * @param frametime real frame time
+	 */
 	void ( *UpdateInput )( float frametime );
 
+	/**
+	 * Resets cgame input state.
+	 */
+	void ( *ClearInputState )( void );
+
+	/**
+	 * Gets input command buttons added by cgame.
+	 * May be called multiple times in a frame.
+	 *
+	 * @return BUTTON_ bitfield with the pressed or simulated actions
+	 */
 	unsigned int ( *GetButtonBits )( void );
+
+	/**
+	 * Adds input view rotation.
+	 * May be called multiple times in a frame.
+	 *
+	 * @param viewangles view angles to modify
+	 * @param frametime  real frame time
+	 */
 	void ( *AddViewAngles )( vec3_t viewangles, float frametime );
+
+	/**
+	 * Adds player movement.
+	 * May be called multiple times in a frame.
+	 *
+	 * @param movement movement vector to modify
+	 */
 	void ( *AddMovement )( vec3_t movement );
 
+	/**
+	 * Responds to a touch event.
+	 *
+	 * @param id   finger number
+	 * @param type event type
+	 * @param x    finger x position
+	 * @param y    finger y position
+	 * @param time when the event was fired
+	 */
 	void ( *TouchEvent )( int id, touchevent_t type, int x, int y, unsigned int time );
-	void ( *CancelTouches )( void );
 } cgame_export_t;
 
 #endif

@@ -49,7 +49,14 @@ enum
 	,IT_STENCIL			= 1<<22		// for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
 };
 
-#define IT_FILEFLAGS		( IT_LUMINANCE|IT_BGRA|IT_SYNC|IT_ALPHA )
+/**
+ * These flags don't effect the actual usage and purpose of the image.
+ * They are ignored when searching for an image.
+ * The loader threads may modify these flags (but no other flags),
+ * so they must not be used for anything that has a long-term effect.
+ */
+#define IT_LOADFLAGS		( IT_LUMINANCE|IT_BGRA|IT_SYNC|IT_ALPHA )
+
 #define IT_SPECIAL			( IT_CLAMP|IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS )
 #define IT_COLORCORRECTION	( ( glConfig.maxTexture3DSize >= 32 ) ? ( IT_SPECIAL|IT_COLORLUT|IT_3D ) : ( IT_SPECIAL|IT_COLORLUT ) )
 #define IT_GL_ES_NPOT		( IT_CLAMP|IT_NOMIPMAP )
