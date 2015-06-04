@@ -2117,10 +2117,10 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	// look for it
 	key = COM_SuperFastHash( ( const uint8_t *)pathname, len, len ) % IMAGES_HASH_SIZE;
 	hnode = &images_hash_headnode[key];
-	searchFlags = flags & ~IT_FILEFLAGS;
+	searchFlags = flags & ~IT_LOADFLAGS;
 	for( image = hnode->prev; image != hnode; image = image->prev )
 	{
-		if( ( ( image->flags & ~IT_FILEFLAGS ) == searchFlags ) && !strcmp( image->name, pathname ) ) {
+		if( ( ( image->flags & ~IT_LOADFLAGS ) == searchFlags ) && !strcmp( image->name, pathname ) ) {
 			R_TouchImage( image );
 			return image;
 		}

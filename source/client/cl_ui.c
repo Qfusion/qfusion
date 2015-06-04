@@ -234,7 +234,6 @@ void CL_UIModule_Init( void )
 	import.CL_ReadDemoMetaData = CL_ReadDemoMetaData;
 	import.CL_PlayerNum = CL_UIModule_PlayerNum;
 
-	import.Key_ClearStates = Key_ClearStates;
 	import.Key_GetBindingBuf = Key_GetBindingBuf;
 	import.Key_KeynumToString = Key_KeynumToString;
 	import.Key_StringToKeynum = Key_StringToKeynum;

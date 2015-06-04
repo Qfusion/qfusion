@@ -266,10 +266,6 @@ namespace trap
 			return UI_IMPORT.Key_GetBindingBuf( binding );
 		}
 
-		inline void Key_ClearStates( void ) {
-			UI_IMPORT.Key_ClearStates ();
-		}
-
 		inline const char *Key_KeynumToString( int keynum ) {
 			return UI_IMPORT.Key_KeynumToString( keynum );
 		}

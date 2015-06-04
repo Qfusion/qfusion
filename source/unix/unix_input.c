@@ -592,7 +592,7 @@ static void HandleEvents( void )
 					XIconifyWindow( x11display.dpy, x11display.win, x11display.scr );
 				}
 				uninstall_grabs_keyboard();
-				Key_ClearStates();
+				IN_ClearState();
 				focus = false;
 			}
 			break;

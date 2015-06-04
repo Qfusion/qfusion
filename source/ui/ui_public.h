@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __UI_PUBLIC_H__
 #define __UI_PUBLIC_H__
 
-#define	UI_API_VERSION	    59
+#define	UI_API_VERSION	    60
 
 typedef size_t (*ui_async_stream_read_cb_t)(const void *buf, size_t numb, float percentage, 
 	int status, const char *contentType, void *privatep);
@@ -132,7 +132,6 @@ typedef struct
 	int ( *CL_PlayerNum )( void );
 
 	const char *( *Key_GetBindingBuf )( int binding );
-	void ( *Key_ClearStates )( void );
 	const char *( *Key_KeynumToString )( int keynum );
 	int ( *Key_StringToKeynum )( const char* s );
 	void ( *Key_SetBinding )( int keynum, const char *binding );
