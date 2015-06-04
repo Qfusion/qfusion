@@ -2128,7 +2128,7 @@ static void CL_InitLocal( void )
 	info_password =		Cvar_Get( "password", "", CVAR_USERINFO );
 	rate =			Cvar_Get( "rate", "60000", CVAR_DEVELOPER ); // FIXME
 
-	Cvar_Get( "name", "player", CVAR_USERINFO | CVAR_ARCHIVE );
+	Cvar_Get( "name", "Player", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "model", DEFAULT_PLAYERMODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "skin", DEFAULT_PLAYERSKIN, CVAR_USERINFO | CVAR_ARCHIVE );
