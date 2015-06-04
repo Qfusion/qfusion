@@ -518,7 +518,10 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 		*height = imginfo.height;
 		samples = imginfo.samples;
 		if( flags )
-			*flags |= ( (imginfo.comp & ~1) == IMGCOMP_BGR ) ? IT_BGRA : 0;
+		{
+			*flags |= (imginfo.comp & ~1) == IMGCOMP_BGR ? IT_BGRA : 0;
+			*flags |= (imginfo.samples == 1) ? IT_LUMINANCE : 0;
+		}
 	}
 
 	return samples;
@@ -856,6 +859,10 @@ static int R_TextureRGBFormat( int samples, bool noCompress )
 	{
 		if( samples == 3 )
 			return GL_COMPRESSED_RGB_ARB;
+		if( samples == 2 )
+			return GL_COMPRESSED_LUMINANCE_ALPHA_ARB;
+		if( samples == 1 )
+			return GL_COMPRESSED_LUMINANCE_ARB;
 		return GL_COMPRESSED_RGBA_ARB;
 	}
 
@@ -864,6 +871,16 @@ static int R_TextureRGBFormat( int samples, bool noCompress )
 		if( bits == 16 )
 			return GL_RGB5;
 		return GL_RGB;
+	}
+
+	if( samples == 2 )
+	{
+		return GL_LUMINANCE_ALPHA;
+	}
+
+	if( samples == 1 )
+	{
+		return GL_LUMINANCE;
 	}
 
 	if( bits == 16 )

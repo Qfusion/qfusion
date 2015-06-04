@@ -105,12 +105,15 @@ typedef struct _TargaHeader
 			}							\
 		}
 
-#define WRITEPIXEL24(a)			\
+#define WRITEPIXEL8(a)				\
+		*a++ = blue;
+
+#define WRITEPIXEL24(a)				\
 		*a++ = blue;				\
 		*a++ = green;				\
 		*a++ = red;
 
-#define WRITEPIXEL32(a)			\
+#define WRITEPIXEL32(a)				\
 		WRITEPIXEL24(a);			\
 		*a++ = alpha;
 
@@ -264,14 +267,14 @@ static void tga_rgb32( uint8_t *pout, uint8_t *pin, int size )
 
 #undef READPIXEL
 #define READPIXEL(a)			\
-	blue = green = red = *a++;
+	blue = *a++;
 
 #undef WRITEPIXEL
-#define WRITEPIXEL	WRITEPIXEL24
+#define WRITEPIXEL	WRITEPIXEL8
 static void tga_comp_grey( uint8_t *pout, uint8_t *pin, int size )
 {
 	int header, pixelcount;
-	int blue, green, red;
+	int blue;
 	int i, j;
 
 	WRITELOOP_COMP_1;
@@ -279,15 +282,7 @@ static void tga_comp_grey( uint8_t *pout, uint8_t *pin, int size )
 
 static void tga_grey( uint8_t *pout, uint8_t *pin, int size )
 {
-	int i, a;
-
-	for( i = 0; i < size; i++ )
-	{
-		a = *pin++;
-		*pout++ = a;
-		*pout++ = a;
-		*pout++ = a;
-	}
+	memcpy( pout, pin, size );
 }
 
 /*
@@ -405,6 +400,8 @@ r_imginfo_t LoadTGA( const char *name, uint8_t *(*allocbuf)( void *, size_t, con
 			R_FreeFile( buffer );
 			return imginfo;
 		}
+
+		samples = 1;
 	}
 
 	columns = targa_header.width;
@@ -605,8 +602,8 @@ void q_jpeg_mem_src( j_decompress_ptr cinfo, unsigned char *mem, unsigned long l
 */
 r_imginfo_t LoadJPG( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr )
 {
-	unsigned int i, length, samples, widthXsamples;
-	uint8_t *img, *scan, *buffer, *line, *jpg_rgb;
+	unsigned int length, samples, widthXsamples;
+	uint8_t *img, *buffer, *jpg_rgb;
 	struct q_jpeg_error_mgr jerr;
 	struct jpeg_decompress_struct cinfo;
 	r_imginfo_t imginfo;
@@ -642,31 +639,19 @@ error:
 		return imginfo;
 	}
 
-	jpg_rgb = img = allocbuf( uptr, cinfo.output_width * cinfo.output_height * 3, __FILE__, __LINE__ );
+	jpg_rgb = img = allocbuf( uptr, cinfo.output_width * cinfo.output_height * samples, __FILE__, __LINE__ );
 	widthXsamples = cinfo.output_width * samples;
-	line = alloca( widthXsamples );
 
 	while( cinfo.output_scanline < cinfo.output_height )
 	{
-		scan = line;
-		if( !jpeg_read_scanlines( &cinfo, &scan, 1 ) )
+		if( !jpeg_read_scanlines( &cinfo, &img, 1 ) )
 		{
 			Com_Printf( S_COLOR_YELLOW "Bad jpeg file %s\n", name );
 			jpeg_destroy_decompress( &cinfo );
 			R_FreeFile( buffer );
 			return imginfo;
 		}
-
-		if( samples == 1 )
-		{
-			for( i = 0; i < cinfo.output_width; i++, img += 3 )
-				img[0] = img[1] = img[2] = *scan++;
-		}
-		else
-		{
-			memcpy( img, scan, widthXsamples );
-			img += widthXsamples;
-		}
+		img += widthXsamples;
 	}
 
 	jpeg_finish_decompress( &cinfo );
