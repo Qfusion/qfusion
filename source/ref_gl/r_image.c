@@ -504,7 +504,7 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 		else
 			return 0;
 
-		if( imginfo.samples )
+		if( imginfo.samples >= 3 )
 		{
 			if( ( (imginfo.comp & ~1) == IMGCOMP_BGR ) && ( !glConfig.ext.bgra || !flags ) )
 			{
@@ -519,8 +519,10 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 		samples = imginfo.samples;
 		if( flags )
 		{
-			*flags |= (imginfo.comp & ~1) == IMGCOMP_BGR ? IT_BGRA : 0;
-			*flags |= (imginfo.samples == 1) ? IT_LUMINANCE : 0;
+			if( imginfo.samples < 3 )
+				*flags |= IT_LUMINANCE;
+			else if( ( imginfo.comp & ~1 ) == IMGCOMP_BGR )
+				*flags |= IT_BGRA;
 		}
 	}
 
@@ -1662,6 +1664,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 	size_t pathsize = image->name_size;
 	size_t len = strlen( pathname );
 	int width = 1, height = 1, samples = 1;
+	bool loaded = false;
 	
 	Q_strncatz( pathname, ".ktx", pathsize );
 	if( R_LoadKTX( ctx, image, bind ) )
@@ -1748,7 +1751,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 
 			image->extension[0] = '.';
 			Q_strncpyz( &image->extension[1], &pathname[len+4], sizeof( image->extension )-1 );
-			return true;
+			loaded = true;
 		}
 		else
 		{
@@ -1776,7 +1779,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 
 			image->extension[0] = '.';
 			Q_strncpyz( &image->extension[1], &pathname[len+1], sizeof( image->extension )-1 );
-			return true;
+			loaded = true;
 		}
 		else
 		{
@@ -1784,7 +1787,13 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 		}
 	}
 
-	return false;
+	if( loaded )
+	{
+		// Update IT_LOADFLAGS that may be set by R_ReadImageFromDisk.
+		image->flags = flags;
+	}
+
+	return loaded;
 }
 
 /*
