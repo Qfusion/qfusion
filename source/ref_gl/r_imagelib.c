@@ -663,7 +663,7 @@ error:
 	imginfo.width = cinfo.output_width;
 	imginfo.height = cinfo.output_height;
 	imginfo.pixels = jpg_rgb;
-	imginfo.samples = 3;
+	imginfo.samples = samples;
 	return imginfo;
 }
 
