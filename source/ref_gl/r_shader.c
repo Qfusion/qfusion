@@ -2813,10 +2813,6 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *da
 	type = SHADER_TYPE_2D_RAW;
 	flags = IT_SPECIAL;
 
-	if( samples == 1 ) {
-		flags |= IT_ALPHA;
-	}
-
 	s = R_LoadShader( name, type, true );
 	if( s ) {
 		image_t *image;

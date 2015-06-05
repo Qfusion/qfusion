@@ -848,22 +848,26 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 }
 
 /*
-* R_TextureRGBFormat
+* R_TextureInternalFormat
 */
 #ifndef GL_ES_VERSION_2_0
-static int R_TextureRGBFormat( int samples, bool noCompress )
+static int R_TextureInternalFormat( int samples, int flags )
 {
 	int bits = r_texturebits->integer;
 
-	if( r_texturecompression->integer && glConfig.ext.texture_compression && !noCompress )
+	if( !( flags & IT_NOCOMPRESS ) && r_texturecompression->integer && glConfig.ext.texture_compression )
 	{
+		if( samples == 4 )
+			return GL_COMPRESSED_RGBA_ARB;
 		if( samples == 3 )
 			return GL_COMPRESSED_RGB_ARB;
-		if( samples == 2 )
-			return GL_COMPRESSED_LUMINANCE_ALPHA_ARB;
-		if( samples == 1 )
-			return GL_COMPRESSED_LUMINANCE_ARB;
-		return GL_COMPRESSED_RGBA_ARB;
+		if( flags & IT_LUMINANCE )
+		{
+			if( samples == 2 )
+				return GL_COMPRESSED_LUMINANCE_ALPHA_ARB;
+			if( samples == 1 )
+				return GL_COMPRESSED_LUMINANCE_ARB;
+		}
 	}
 
 	if( samples == 3 )
@@ -880,7 +884,7 @@ static int R_TextureRGBFormat( int samples, bool noCompress )
 
 	if( samples == 1 )
 	{
-		return GL_LUMINANCE;
+		return ( ( flags & IT_LUMINANCE ) ? GL_LUMINANCE : GL_ALPHA );
 	}
 
 	if( bits == 16 )
@@ -929,26 +933,22 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*type = glConfig.ext.rgb8_rgba8 ? GL_UNSIGNED_BYTE : GL_UNSIGNED_SHORT_5_6_5;
 		}
 	}
-	else if( flags & IT_LUMINANCE )
-	{
-		*comp = *format = ( ( samples == 2 ) ? GL_LUMINANCE_ALPHA : GL_LUMINANCE );
-		*type = GL_UNSIGNED_BYTE;
-	}
-	else if( flags & IT_ALPHA )
-	{
-		*comp = *format = GL_ALPHA;
-		*type = GL_UNSIGNED_BYTE;
-	}
 	else
 	{
 		if( samples == 4 )
 			*format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
-		else
+		else if( samples == 3 )
 			*format = ( flags & IT_BGRA ? GL_BGR_EXT : GL_RGB );
+		else if( samples == 2 )
+			*format = GL_LUMINANCE_ALPHA;
+		else if( flags & IT_LUMINANCE )
+			*format = GL_LUMINANCE;
+		else
+			*format = GL_ALPHA;
 #ifdef GL_ES_VERSION_2_0
 		*comp = *format;
 #else
-		*comp = R_TextureRGBFormat( samples, flags & IT_NOCOMPRESS ? true : false );
+		*comp = R_TextureInternalFormat( samples, flags );
 #endif
 		*type = GL_UNSIGNED_BYTE;
 	}
@@ -1298,15 +1298,7 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 	comp = format;
 #ifndef GL_ES_VERSION_2_0
 	if( type == GL_UNSIGNED_BYTE )
-	{
-		int samples = 0;
-		if( ( format == GL_RGB ) || ( format == GL_BGR_EXT ) )
-			samples = 3;
-		else if( ( format == GL_RGBA ) || ( format == GL_BGRA_EXT ) )
-			samples = 4;
-		if( samples )
-			comp = R_TextureRGBFormat( samples, ( flags & IT_NOCOMPRESS ) ? true : false );
-	}
+		comp = R_TextureInternalFormat( pixelSize, flags );
 #endif
 
 	R_SetupTexParameters( flags );
@@ -1586,13 +1578,12 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 			image->samples = 2;
 			image->flags |= IT_LUMINANCE;
 			break;
-		case GL_ALPHA:
-			image->samples = 1;
-			image->flags |= IT_ALPHA;
-			break;
 		case GL_LUMINANCE:
 			image->samples = 1;
 			image->flags |= IT_LUMINANCE;
+			break;
+		case GL_ALPHA:
+			image->samples = 1;
 			break;
 		}
 

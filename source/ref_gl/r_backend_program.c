@@ -1513,7 +1513,7 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 		}
 	}
 
-	if( image->flags & IT_ALPHA ) {
+	if( ( image->samples == 1 ) && !( image->flags & IT_LUMINANCE ) ) {
 		programFeatures |= GLSL_SHADER_Q3_ALPHA_MASK;
 	}
 
