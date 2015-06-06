@@ -412,14 +412,13 @@ static void Mod_LoadShaderrefs( const lump_t *l )
 	// free world textures from the previous map that are not used on the new map
 	if( r_prevworldmodel && ( r_prevworldmodel->registrationSequence != rsh.registrationSequence ) )
 	{
-		const shaderType_e types[] = { SHADER_TYPE_VERTEX, SHADER_TYPE_DELUXEMAP };
-		unsigned int numTypes = ( r_lighting_vertexlight->integer ? 1 : 2 );
+		const shaderType_e shaderTypes[] = { SHADER_TYPE_DELUXEMAP, SHADER_TYPE_VERTEX };
 
 		shaderref = loadmodel_shaderrefs;
 		for( i = 0; i < count; i++, shaderref++ )
-			R_TouchShadersByName( shaderref->name, types, numTypes );
+			R_TouchShadersByName( shaderref->name );
 
-		R_FreeUnusedShaders( types, numTypes );
+		R_FreeUnusedShadersByType( shaderTypes, sizeof( shaderTypes ) / sizeof( shaderTypes[0] ) );
 		R_FreeUnusedImagesByTags( IMAGE_TAG_WORLD );
 	}
 }

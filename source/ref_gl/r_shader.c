@@ -1987,9 +1987,9 @@ void R_TouchShader( shader_t *s )
 }
 
 /*
-* R_FreeUnusedShaders
+* R_FreeUnusedShadersByType
 */
-void R_FreeUnusedShaders( const shaderType_e *types, unsigned int numTypes )
+void R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes )
 {
 	int i;
 	unsigned int type;
@@ -2021,6 +2021,14 @@ void R_FreeUnusedShaders( const shaderType_e *types, unsigned int numTypes )
 
 		R_UnlinkShader( s );
 	}
+}
+
+/*
+* R_FreeUnusedShaders
+*/
+void R_FreeUnusedShaders( void )
+{
+	R_FreeUnusedShadersByType( NULL, 0 );
 }
 
 /*
@@ -2744,14 +2752,13 @@ shader_t *R_ShaderById( unsigned int id )
 /*
 * R_TouchShadersByName
 */
-void R_TouchShadersByName( const char *name, const shaderType_e *types, unsigned int numTypes )
+void R_TouchShadersByName( const char *name )
 {
 	unsigned int shortNameSize;
 	char *shortName;
 	unsigned int nameLength;
 	unsigned int key;
 	shader_t *hnode, *s;
-	unsigned int i, typesTouched = 0;
 
 	if( !name || !name[0] )
 		return;
@@ -2765,24 +2772,8 @@ void R_TouchShadersByName( const char *name, const shaderType_e *types, unsigned
 	key = COM_SuperFastHash( ( const uint8_t * )shortName, nameLength, nameLength ) % SHADERS_HASH_SIZE;
 	hnode = &r_shaders_hash_headnode[key];
 	for( s = hnode->next; s != hnode; s = s->next ) {
-		if( strcmp( s->name, shortName ) ) {
-			continue;
-		}
-
-		if( !numTypes ) {
-			// touch all shaders with the requested name, no matter what their type is
+		if( !strcmp( s->name, shortName ) ) {
 			R_TouchShader( s );
-			continue;
-		}
-
-		for( i = 0; i < numTypes; i++ ) {
-			if( s->type == types[i] ) {
-				R_TouchShader( s );
-				typesTouched++;
-			}
-		}
-		if( typesTouched == numTypes ) {
-			return;
 		}
 	}
 }
