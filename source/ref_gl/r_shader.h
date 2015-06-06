@@ -297,9 +297,9 @@ shader_t	*R_RegisterSkin( const char *name );
 shader_t	*R_RegisterVideo( const char *name );
 
 void		R_TouchShader( shader_t *s );
-// if types contains SHADER_TYPE_2D, it likely should contain SHADER_TYPE_2D_RAW too
-void		R_TouchShadersByName( const char *name, const shaderType_e *types, unsigned int numTypes );
-void		R_FreeUnusedShaders( const shaderType_e *types, unsigned int numTypes );
+void		R_TouchShadersByName( const char *name );
+void		R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes );
+void		R_FreeUnusedShaders( void );
 
 void		R_RemapShader( const char *from, const char *to, int timeOffset );
 
