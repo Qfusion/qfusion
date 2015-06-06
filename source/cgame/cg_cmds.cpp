@@ -512,6 +512,9 @@ static const char *CG_MatchMessageString( matchmessage_t mm )
 
 		case MATCHMESSAGE_WAITING_FOR_PLAYERS:
 			return "Waiting for players.";
+
+		default:
+			return "";
 		}
 
 		return "";
@@ -544,6 +547,9 @@ static const char *CG_MatchMessageString( matchmessage_t mm )
 	case MATCHMESSAGE_WAITING_FOR_PLAYERS:
 		return "Waiting for players.\n"
 			"'ESC' for in-game menu.";
+
+	default:
+		return "";
 	}
 
 	return "";
