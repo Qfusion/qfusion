@@ -452,7 +452,7 @@ static int R_UploadLightmap( const char *name, uint8_t *data, int w, int h )
 
 	Q_snprintfz( uploadName, sizeof( uploadName ), "%s%i", name, r_numUploadedLightmaps );
 
-	image = R_LoadImage( uploadName, (uint8_t **)( &data ), w, h, IT_SPECIAL, LIGHTMAP_BYTES );
+	image = R_LoadImage( uploadName, (uint8_t **)( &data ), w, h, IT_SPECIAL, IMAGE_TAG_GENERIC, LIGHTMAP_BYTES );
 	r_lightmapTextures[r_numUploadedLightmaps] = image;
 
 	return r_numUploadedLightmaps++;
@@ -676,7 +676,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 				lightmapNum = r_numUploadedLightmaps++;
 				image = R_Create3DImage( va( "*lm%i", lightmapNum ), layerWidth, h,
 					( ( i + numLayers ) <= numLightmaps ) ? numLayers : numLightmaps % numLayers,
-					IT_SPECIAL, LIGHTMAP_BYTES, true );
+					IT_SPECIAL, IMAGE_TAG_GENERIC, LIGHTMAP_BYTES, true );
 				r_lightmapTextures[lightmapNum] = image;
 			}
 
@@ -747,7 +747,7 @@ void R_TouchLightmapImages( model_t *mod )
 	loadbmodel = (( mbrushmodel_t * )mod->extradata);
 
 	for( i = 0; i < loadbmodel->numLightmapImages; i++ ) {
-		R_TouchImage( loadbmodel->lightmapImages[i] );
+		R_TouchImage( loadbmodel->lightmapImages[i], IMAGE_TAG_GENERIC );
 	}
 }
 

@@ -41,7 +41,7 @@ static int mod_numknown;
 static int modfilelen;
 static bool mod_isworldmodel;
 static const dvis_t *mod_worldvis;
-static model_t *r_prevworldmodel;
+model_t *r_prevworldmodel;
 static mapconfig_t *mod_mapConfigs;
 
 static mempool_t *mod_mempool;
@@ -845,7 +845,7 @@ static void Mod_TouchBrushModel( model_t *model )
 	R_TouchLightmapImages( model );
 
 	if( loadbmodel->colorCorrectionLUT ) {
-		R_TouchImage( loadbmodel->colorCorrectionLUT );
+		R_TouchImage( loadbmodel->colorCorrectionLUT, IMAGE_TAG_GENERIC );
 	}
 }
 
@@ -1260,7 +1260,7 @@ static void R_FinishMapConfig( const model_t *mod )
 	if( mapConfig.colorCorrection[0] )
 	{
 		( ( mbrushmodel_t * )( mod->extradata ) )->colorCorrectionLUT =
-			R_FindImage( mapConfig.colorCorrection, NULL, IT_COLORCORRECTION );
+			R_FindImage( mapConfig.colorCorrection, NULL, IT_COLORCORRECTION, IMAGE_TAG_GENERIC );
 	}
 
 	mod_mapConfigs[mod - mod_known] = mapConfig;

@@ -1521,7 +1521,7 @@ void R_EndRegistration( void )
 	R_FreeUnusedModels();
 	R_FreeUnusedVBOs();
 	R_FreeUnusedSkinFiles();
-	R_FreeUnusedShaders();
+	R_FreeUnusedShaders( NULL, 0 );
 	R_FreeUnusedCinematics();
 	R_FreeUnusedImages();
 	RFB_FreeUnusedObjects();

@@ -407,6 +407,8 @@ typedef struct model_s
 
 //============================================================================
 
+extern model_t *r_prevworldmodel;
+
 void		R_InitModels( void );
 void		R_ShutdownModels( void );
 void		R_FreeUnusedModels( void );
