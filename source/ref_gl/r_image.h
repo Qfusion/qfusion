@@ -60,6 +60,16 @@ enum
 #define IT_COLORCORRECTION	( ( glConfig.maxTexture3DSize >= 32 ) ? ( IT_SPECIAL|IT_COLORLUT|IT_3D ) : ( IT_SPECIAL|IT_COLORLUT ) )
 #define IT_GL_ES_NPOT		( IT_CLAMP|IT_NOMIPMAP )
 
+/**
+ * Image usage tags, to allow certain images to be freed separately.
+ */
+enum
+{
+	IMAGE_TAG_GENERIC	= 1<<0		// Images that don't fall into any other category.
+	,IMAGE_TAG_BUILTIN	= 1<<1		// Internal ref images that must not be released.
+	,IMAGE_TAG_WORLD	= 1<<2		// World textures.
+};
+
 typedef struct image_s
 {
 	char			*name;						// game path, not including extension
@@ -78,6 +88,7 @@ typedef struct image_s
 	int				samples;
 	int				fbo;						// frame buffer object texture is attached to
 	unsigned int	framenum;					// rf.frameCount texture was updated (rendered to)
+	int				tags;						// usage tags of the image
 	struct image_s	*next, *prev;
 } image_t;
 
@@ -85,11 +96,12 @@ void R_SelectTextureUnit( int tmu );
 bool R_BindTexture( int tmu, const image_t *tex );
 
 void R_InitImages( void );
-void R_TouchImage( image_t *image );
+void R_TouchImage( image_t *image, int tags );
+void R_FreeUnusedImagesByTags( int tags );
 void R_FreeUnusedImages( void );
 void R_ShutdownImages( void );
 void R_InitViewportTexture( image_t **texture, const char *name, int id, 
-	int viewportWidth, int viewportHeight, int size, int flags, int samples );
+	int viewportWidth, int viewportHeight, int size, int flags, int tags, int samples );
 image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight, int flags, unsigned frameNum );
 image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, int flags );
 void R_InitDrawFlatTexture( void );
@@ -102,9 +114,9 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 void R_TextureMode( char *string );
 void R_AnisotropicFilter( int value );
 
-image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int samples );
-image_t	*R_FindImage( const char *name, const char *suffix, int flags );
-image_t *R_Create3DImage( const char *name, int width, int height, int layers, int flags, int samples, bool array );
+image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int tags, int samples );
+image_t	*R_FindImage( const char *name, const char *suffix, int flags, int tags );
+image_t *R_Create3DImage( const char *name, int width, int height, int layers, int flags, int tags, int samples, bool array );
 void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int flags, int samples );
 void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, int width, int height );
 void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic );

@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct
 {
-	int registrationSequence;
+	int registrationSequence; // -1 if builtin
 	unsigned int objectID;
 	unsigned int depthRenderBuffer;
 	unsigned int stencilRenderBuffer;
@@ -85,7 +85,7 @@ static void RFB_DeleteObject( r_fbo_t *fbo )
 /*
 * RFB_RegisterObject
 */
-int RFB_RegisterObject( int width, int height, bool depthRB, bool stencilRB )
+int RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB )
 {
 	int i;
 	GLuint fbID;
@@ -115,7 +115,10 @@ found:
 	qglGenFramebuffersEXT( 1, &fbID );
 	memset( fbo, 0, sizeof( *fbo ) );
 	fbo->objectID = fbID;
-	fbo->registrationSequence = rsh.registrationSequence;
+	if( builtin )
+		fbo->registrationSequence = -1;
+	else
+		fbo->registrationSequence = rsh.registrationSequence;
 	fbo->width = width;
 	fbo->height = height;
 
@@ -414,15 +417,18 @@ void RFB_GetObjectSize( int object, int *width, int *height )
 void RFB_FreeUnusedObjects( void )
 {
 	int i;
+	r_fbo_t *fbo = r_framebuffer_objects;
+	int registrationSequence;
 
 	if( !r_frambuffer_objects_initialized )
 		return;
 
-	for( i = 0; i < r_num_framebuffer_objects; i++ ) {
-		if( r_framebuffer_objects[i].registrationSequence == rsh.registrationSequence ) {
+	for( i = 0; i < r_num_framebuffer_objects; i++, fbo++ ) {
+		registrationSequence = fbo->registrationSequence;
+		if( ( registrationSequence < 0 ) || ( registrationSequence == rsh.registrationSequence ) ) {
 			continue;
 		}
-		RFB_DeleteObject( r_framebuffer_objects + i );
+		RFB_DeleteObject( fbo );
 	}
 }
 
