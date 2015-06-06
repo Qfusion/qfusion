@@ -243,6 +243,10 @@ typedef struct shader_s
 	unsigned int		flags;
 	vattribmask_t		vattribs;
 	unsigned int		sort;
+	int					imagetags;					// usage tags of the images - currently only depend
+													// on type, but if one shader can be requesed with
+													// different tags, functions like R_TouchShader
+													// should merge the existing and the requested tags
 
 	unsigned int		numpasses;
 	shaderpass_t		*passes;
@@ -293,6 +297,8 @@ shader_t	*R_RegisterSkin( const char *name );
 shader_t	*R_RegisterVideo( const char *name );
 
 void		R_TouchShader( shader_t *s );
+void		R_TouchShadersByName( const char *name );
+void		R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes );
 void		R_FreeUnusedShaders( void );
 
 void		R_RemapShader( const char *from, const char *to, int timeOffset );

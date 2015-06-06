@@ -405,7 +405,7 @@ static bool Shader_SkipConditionBlock( const char **ptr )
 
 //===========================================================================
 
-static void Shader_ParseSkySides( const char **ptr, image_t **images, bool underscore )
+static void Shader_ParseSkySides( const char **ptr, image_t **images, bool underscore, int imagetags )
 {
 	int i, j;
 	char *token;
@@ -455,7 +455,7 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, bool under
 				Q_strncatz( suffix, cubemapSides[i][j].suf, sizeof( suffix ) );
 
 				images[j] = R_FindImage( token, suffix, 
-					IT_SKY|IT_NOMIPMAP|IT_CLAMP|IT_SYNC|cubemapSides[i][j].flags );
+					IT_SKY|IT_NOMIPMAP|IT_CLAMP|IT_SYNC|cubemapSides[i][j].flags, imagetags );
 				if( !images[j] )
 					break;
 			}
@@ -544,7 +544,7 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 		return rsh.whiteTexture;
 	}
 
-	image = R_FindImage( name, NULL, flags );
+	image = R_FindImage( name, NULL, flags, shader->imagetags );
 	if( !image )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with no image: %s\n", shader->name, name );
@@ -670,7 +670,7 @@ static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char
 {
 	float skyheight;
 
-	Shader_ParseSkySides( ptr, shader->skyboxImages, underscore );
+	Shader_ParseSkySides( ptr, shader->skyboxImages, underscore, shader->imagetags );
 
 	skyheight = Shader_ParseFloat( ptr );
 	if( !skyheight )
@@ -966,7 +966,7 @@ static const shaderkey_t shaderkeys[] =
 
 // ===============================================================
 
-static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, image_t **decalmap, const char *name, int addFlags )
+static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, image_t **decalmap, const char *name, int addFlags, int imagetags )
 {
 	image_t *images[3];
 
@@ -974,16 +974,16 @@ static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, im
 	images[0] = images[1] = images[2] = NULL;
 
 	// load normalmap image
-	images[0] = R_FindImage( name, "_norm", (addFlags|IT_NORMALMAP) );
+	images[0] = R_FindImage( name, "_norm", (addFlags|IT_NORMALMAP), imagetags );
 
 	// load glossmap image
 	if( r_lighting_specular->integer ) {
-		images[1] = R_FindImage( name, "_gloss", addFlags );
+		images[1] = R_FindImage( name, "_gloss", addFlags, imagetags );
 	}
 
-	images[2] = R_FindImage( name, "_decal", addFlags );
+	images[2] = R_FindImage( name, "_decal", addFlags, imagetags );
 	if( !images[2] ) {
-		images[2] = R_FindImage( name, "_add", addFlags );
+		images[2] = R_FindImage( name, "_add", addFlags, imagetags );
 	}
 
 	*normalmap = images[0];
@@ -1083,7 +1083,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 		return;
 	}
 
-	pass->images[0] = R_FindImage( token, NULL, flags|IT_CUBEMAP );
+	pass->images[0] = R_FindImage( token, NULL, flags|IT_CUBEMAP, shader->imagetags );
 	if( pass->images[0] )
 	{
 		pass->tcgen = tcgen;
@@ -1233,7 +1233,8 @@ static void Shaderpass_Material( shader_t *shader, shaderpass_t *pass, const cha
 
 	// load default images
 	pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-	Shaderpass_LoadMaterial( &pass->images[1], &pass->images[2], &pass->images[3], pass->images[0]->name, flags );
+	Shaderpass_LoadMaterial( &pass->images[1], &pass->images[2], &pass->images[3],
+		pass->images[0]->name, flags, shader->imagetags );
 }
 
 static void Shaderpass_Distortion( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -1945,12 +1946,15 @@ static void R_UnlinkShader( shader_t *shader )
 void R_TouchShader( shader_t *s )
 {
 	unsigned i, j;
+	unsigned imagetags;
 
 	if( s->registrationSequence == rsh.registrationSequence ) {
 		return;
 	}
 
 	s->registrationSequence = rsh.registrationSequence;
+
+	imagetags = s->imagetags;
 
 	// touch all images this shader references
 	for( i = 0; i < s->numpasses; i++ ) {
@@ -1959,7 +1963,7 @@ void R_TouchShader( shader_t *s )
 		for( j = 0; j < MAX_SHADER_IMAGES; j++ ) {
 			image_t *image = pass->images[j];
 			if( image ) {
-				R_TouchImage( image );
+				R_TouchImage( image, imagetags );
 			} else if( !pass->program_type ) {
 				// only programs can have gaps in images
 				break;
@@ -1976,18 +1980,19 @@ void R_TouchShader( shader_t *s )
 		for( i = 0; i < 6; i++ ) {
 			image_t *image = s->skyboxImages[i];
 			if( image ) {
-				R_TouchImage( image );
+				R_TouchImage( image, imagetags );
 			}
 		}
 	}
 }
 
 /*
-* R_FreeUnusedShaders
+* R_FreeUnusedShadersByType
 */
-void R_FreeUnusedShaders( void )
+void R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes )
 {
 	int i;
+	unsigned int type;
 	shader_t *s;
 
 	for( i = 0, s = r_shaders; i < MAX_SHADERS; i++, s++ ) {
@@ -2000,10 +2005,30 @@ void R_FreeUnusedShaders( void )
 			continue;
 		}
 
+		if( numTypes ) {
+			for( type = 0; type < numTypes; type++ ) {
+				if( s->type == types[type] ) {
+					break;
+				}
+			}
+			if( type >= numTypes ) {
+				// not in the type filter
+				continue;
+			}
+		}
+
 		R_FreeShader( s );
 
 		R_UnlinkShader( s );
 	}
+}
+
+/*
+* R_FreeUnusedShaders
+*/
+void R_FreeUnusedShaders( void )
+{
+	R_FreeUnusedShadersByType( NULL, 0 );
 }
 
 /*
@@ -2487,6 +2512,11 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 	s->name = ( char * )shortname; // HACK, will be copied over in Shader_Finish
 	s->type = type;
 
+	if( ( type == SHADER_TYPE_DELUXEMAP ) || ( type == SHADER_TYPE_VERTEX ) )
+		s->imagetags = IMAGE_TAG_WORLD;
+	else
+		s->imagetags = IMAGE_TAG_GENERIC;
+
 	// set defaults
 	s->flags = SHADER_CULL_FRONT;
 	s->vattribs = 0;
@@ -2565,7 +2595,7 @@ create_default:
 			break;
 		case SHADER_TYPE_DELUXEMAP:
 			// deluxemapping
-			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0 );
+			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, s->imagetags );
 
 			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT|SHADER_LIGHTMAP;
@@ -2605,7 +2635,7 @@ create_default:
 			break;
 		case SHADER_TYPE_DIFFUSE:
 			// load material images
-			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0 );
+			Shaderpass_LoadMaterial( &materialImages[0], &materialImages[1], &materialImages[2], shortname, 0, s->imagetags );
 
 			data = R_Malloc( shortname_length + 1 + sizeof( shaderpass_t ) );
 			s->flags = SHADER_DEPTHWRITE|SHADER_CULL_FRONT;
@@ -2720,6 +2750,35 @@ shader_t *R_ShaderById( unsigned int id )
 }
 
 /*
+* R_TouchShadersByName
+*/
+void R_TouchShadersByName( const char *name )
+{
+	unsigned int shortNameSize;
+	char *shortName;
+	unsigned int nameLength;
+	unsigned int key;
+	shader_t *hnode, *s;
+
+	if( !name || !name[0] )
+		return;
+
+	shortNameSize = strlen( name ) + 1;
+	shortName = alloca( shortNameSize );
+	nameLength = R_ShaderCleanName( name, shortName, shortNameSize );
+	if( !nameLength )
+		return;
+
+	key = COM_SuperFastHash( ( const uint8_t * )shortName, nameLength, nameLength ) % SHADERS_HASH_SIZE;
+	hnode = &r_shaders_hash_headnode[key];
+	for( s = hnode->next; s != hnode; s = s->next ) {
+		if( !strcmp( s->name, shortName ) ) {
+			R_TouchShader( s );
+		}
+	}
+}
+
+/*
 * R_LoadShader
 */
 shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault )
@@ -2754,12 +2813,15 @@ shader_t *R_LoadShader( const char *name, shaderType_e type, bool forceDefault )
 
 	// scan all instances of the same shader for exact match of the type
 	for( s = hnode->next; s != hnode; s = s->next ) {
-		if( ( s->type == type ) && !strcmp( s->name, shortname ) ) {
+		if( strcmp( s->name, shortname ) ) {
+			continue;
+		}
+		if( s->type == type ) {
 			// exact match found
 			R_TouchShader( s );
 			return s;
 		}
-		if( ( type == SHADER_TYPE_2D ) && ( s->type == SHADER_TYPE_2D_RAW ) && !strcmp( s->name, shortname ) ) {
+		if( ( type == SHADER_TYPE_2D ) && ( s->type == SHADER_TYPE_2D_RAW ) ) {
 			// almost exact match:
 			// alias SHADER_TYPE_2D_RAW to SHADER_TYPE_2D so the shader can be "touched" by name
 			R_TouchShader( s );
@@ -2821,7 +2883,7 @@ shader_t *R_RegisterRawPic( const char *name, int width, int height, uint8_t *da
 		image = s->passes[0].images[0];
 		if( !image || image == rsh.noTexture ) {
 			// try to load new image
-			image = R_LoadImage( name, &data, width, height, flags, samples );
+			image = R_LoadImage( name, &data, width, height, flags, IMAGE_TAG_GENERIC, samples );
 			s->passes[0].images[0] = image;
 		}
 		else {

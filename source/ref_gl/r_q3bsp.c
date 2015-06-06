@@ -392,21 +392,34 @@ static void Mod_LoadShaderrefs( const lump_t *l )
 {
 	int i, count;
 	dshaderref_t *in;
-	dshaderref_t *out;
+	dshaderref_t *shaderref;
 
 	in = ( void * )( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
 		ri.Com_Error( ERR_DROP, "Mod_LoadShaderrefs: funny lump size in %s", loadmodel->name );
 	count = l->filelen / sizeof( *in );
-	out = Mod_Malloc( loadmodel, count*sizeof( *out ) );
+	shaderref = Mod_Malloc( loadmodel, count*sizeof( *shaderref ) );
 
-	loadmodel_shaderrefs = out;
+	loadmodel_shaderrefs = shaderref;
 	loadmodel_numshaderrefs = count;
 
-	for( i = 0; i < count; i++, in++, out++ )
+	for( i = 0; i < count; i++, in++, shaderref++ )
 	{
-		Q_strncpyz( out->name, in->name, sizeof( out->name ) );
-		out->flags = LittleLong( in->flags );
+		Q_strncpyz( shaderref->name, in->name, sizeof( shaderref->name ) );
+		shaderref->flags = LittleLong( in->flags );
+	}
+
+	// free world textures from the previous map that are not used on the new map
+	if( r_prevworldmodel && ( r_prevworldmodel->registrationSequence != rsh.registrationSequence ) )
+	{
+		const shaderType_e shaderTypes[] = { SHADER_TYPE_DELUXEMAP, SHADER_TYPE_VERTEX };
+
+		shaderref = loadmodel_shaderrefs;
+		for( i = 0; i < count; i++, shaderref++ )
+			R_TouchShadersByName( shaderref->name );
+
+		R_FreeUnusedShadersByType( shaderTypes, sizeof( shaderTypes ) / sizeof( shaderTypes[0] ) );
+		R_FreeUnusedImagesByTags( IMAGE_TAG_WORLD );
 	}
 }
 

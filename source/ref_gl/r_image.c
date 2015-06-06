@@ -1836,7 +1836,7 @@ static void R_UnlinkPic( image_t *image )
 /*
 * R_AllocImage
 */
-static image_t *R_CreateImage( const char *name, int width, int height, int layers, int flags, int samples )
+static image_t *R_CreateImage( const char *name, int width, int height, int layers, int flags, int tags, int samples )
 {
 	image_t *image;
 	int name_len = strlen( name );
@@ -1860,6 +1860,7 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 	image->fbo = 0;
 	image->texnum = 0;
 	image->registrationSequence = rsh.registrationSequence;
+	image->tags = tags;
 	image->loaded = true;
 	image->missing = false;
 	image->extension[0] = '\0';
@@ -1872,11 +1873,11 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 /*
 * R_LoadImage
 */
-image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int samples )
+image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, int flags, int tags, int samples )
 {
 	image_t *image;
 
-	image = R_CreateImage( name, width, height, 1, flags, samples );
+	image = R_CreateImage( name, width, height, 1, flags, tags, samples );
 
 	R_BindModifyTexture( image );
 
@@ -1889,7 +1890,7 @@ image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, in
 /*
 * R_Create3DImage
 */
-image_t *R_Create3DImage( const char *name, int width, int height, int layers, int flags, int samples, bool array )
+image_t *R_Create3DImage( const char *name, int width, int height, int layers, int flags, int tags, int samples, bool array )
 {
 	image_t *image;
 	int scaledWidth, scaledHeight;
@@ -1899,7 +1900,7 @@ image_t *R_Create3DImage( const char *name, int width, int height, int layers, i
 
 	flags |= ( array ? IT_ARRAY : IT_3D );
 
-	image = R_CreateImage( name, width, height, layers, flags, samples );
+	image = R_CreateImage( name, width, height, layers, flags, tags, samples );
 	R_BindModifyTexture( image );
 	R_SetupTexParameters( flags );
 
@@ -2006,7 +2007,7 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic )
 /*
 * R_LoadColorLUT
 */
-static image_t *R_LoadColorLUT( const char *name, int flags )
+static image_t *R_LoadColorLUT( const char *name, int flags, int tags )
 {
 	char *filename;
 	uint8_t *buf, *buf2, *p, *px, *py;
@@ -2035,7 +2036,7 @@ static image_t *R_LoadColorLUT( const char *name, int flags )
 
 	if( flags & IT_3D )
 	{
-		image = R_Create3DImage( name, 32, 32, 32, flags, 3, false );
+		image = R_Create3DImage( name, 32, 32, 32, flags, tags, 3, false );
 		for( i = 0; i < 32; i++, p += 32 * 32 * 3 )
 			R_ReplaceImageLayer( image, i, &p );
 	}
@@ -2052,7 +2053,7 @@ static image_t *R_LoadColorLUT( const char *name, int flags )
 			for( j = 0, py = px; j < 32 * 4; j++, p += 32 * 3, py += 256 * 3 )
 				memcpy( py, p, 32 * 3 );
 		}
-		image = R_LoadImage( name, &buf2, 256, 128, flags, 3 );
+		image = R_LoadImage( name, &buf2, 256, 128, flags, tags, 3 );
 	}
 	Q_strncpyz( image->extension, ".raw", sizeof( image->extension ) );
 
@@ -2066,7 +2067,7 @@ static image_t *R_LoadColorLUT( const char *name, int flags )
 * Finds and loads the given image. IT_SYNC images are loaded synchronously.
 * For synchronous missing images, NULL is returned.
 */
-image_t	*R_FindImage( const char *name, const char *suffix, int flags )
+image_t	*R_FindImage( const char *name, const char *suffix, int flags, int tags )
 {
 	int i, lastDot, lastSlash, searchFlags;
 	unsigned int len, key;
@@ -2121,7 +2122,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	for( image = hnode->prev; image != hnode; image = image->prev )
 	{
 		if( ( ( image->flags & ~IT_LOADFLAGS ) == searchFlags ) && !strcmp( image->name, pathname ) ) {
-			R_TouchImage( image );
+			R_TouchImage( image, tags );
 			return image;
 		}
 	}
@@ -2132,10 +2133,10 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags )
 	// load the pic from disk
 	//
 	if( flags & IT_COLORLUT ) {
-		return R_LoadColorLUT( pathname, flags );
+		return R_LoadColorLUT( pathname, flags, tags );
 	}
 
-	image = R_LoadImage( pathname, empty_data, 1, 1, flags, 1 );
+	image = R_LoadImage( pathname, empty_data, 1, 1, flags, tags, 1 );
 
 	if( !( image->flags & IT_SYNC ) ) {
 		if( R_LoadAsyncImageFromDisk( image ) ) {
@@ -2481,7 +2482,7 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 * R_InitViewportTexture
 */
 void R_InitViewportTexture( image_t **texture, const char *name, int id, 
-	int viewportWidth, int viewportHeight, int size, int flags, int samples )
+	int viewportWidth, int viewportHeight, int size, int flags, int tags, int samples )
 {
 	int width, height;
 	image_t *t;
@@ -2497,7 +2498,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			char uploadName[128];
 
 			Q_snprintfz( uploadName, sizeof( uploadName ), "***%s_%i***", name, id );
-			t = *texture = R_LoadImage( uploadName, &data, width, height, flags, samples );
+			t = *texture = R_LoadImage( uploadName, &data, width, height, flags, tags, samples );
 		}
 		else { 
 			t = *texture;
@@ -2516,7 +2517,7 @@ void R_InitViewportTexture( image_t **texture, const char *name, int id,
 			t->fbo = 0;
 		}
 		if( t->flags & IT_FRAMEBUFFER ) {
-			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height,
+			t->fbo = RFB_RegisterObject( t->upload_width, t->upload_height, ( tags & IMAGE_TAG_BUILTIN ) != 0,
 				( flags & IT_DEPTHRB ) != 0, ( flags & IT_STENCIL ) != 0 );
 			RFB_AttachTextureToObject( t->fbo, t );
 		}
@@ -2584,7 +2585,7 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 
 	R_InitViewportTexture( &rsh.portalTextures[id], "r_portaltexture", id, 
 		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
-		IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags, 4 );
+		IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags, IMAGE_TAG_GENERIC, 4 );
 
 	if( rsh.portalTextures[id] ) {
 		rsh.portalTextures[id]->framenum = frameNum;
@@ -2615,7 +2616,7 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 
 	R_InitViewportTexture( &rsh.shadowmapTextures[id], "r_shadowmap", id, 
 		viewportWidth, viewportHeight, r_shadows_maxtexsize->integer, 
-		IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHCOMPARE|flags, samples );
+		IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHCOMPARE|flags, IMAGE_TAG_GENERIC, samples );
 
 	return rsh.shadowmapTextures[id];
 }
@@ -2641,6 +2642,7 @@ static void R_InitStretchRawTexture( void )
 
 	rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
 	rawtexture->flags = IT_SPECIAL;
+	rawtexture->tags = IMAGE_TAG_BUILTIN;
 	strcpy( rawtexture->name, name );
 	R_AllocTextureNum( rawtexture );
 	rawtexture->loaded = true;
@@ -2673,6 +2675,7 @@ static void R_InitStretchRawYUVTextures( void )
 
 		rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
 		rawtexture->flags = IT_SPECIAL|IT_LUMINANCE;
+		rawtexture->tags = IMAGE_TAG_BUILTIN;
 		strcpy( rawtexture->name, name[i] );
 		R_AllocTextureNum( rawtexture );
 		rawtexture->loaded = true;
@@ -2715,10 +2718,10 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 
 	if( color ) {
 		// samples is 4 no matter whether alpha blending is used because RGB FBs are broken on some PowerVRs
-		R_InitViewportTexture( color, name, 0, glConfig.width, glConfig.height, 0, colorFlags, 4 );
+		R_InitViewportTexture( color, name, 0, glConfig.width, glConfig.height, 0, colorFlags, IMAGE_TAG_BUILTIN, 4 );
 	}
 	if( depth && *color ) {
-		R_InitViewportTexture( depth, va( "%s_depth", name ), 0, glConfig.width, glConfig.height, 0, depthFlags, 1 );
+		R_InitViewportTexture( depth, va( "%s_depth", name ), 0, glConfig.width, glConfig.height, 0, depthFlags, IMAGE_TAG_BUILTIN, 1 );
 		RFB_AttachTextureToObject( (*color)->fbo, *depth );
 	}
 }
@@ -2778,38 +2781,11 @@ static void R_InitBuiltinTextures( void )
 	{
 		textures[i].init( &w, &h, &flags, &samples );
 
-		image = R_LoadImage( textures[i].name, r_imageBuffers[QGL_CONTEXT_MAIN], w, h, flags, samples );
+		image = R_LoadImage( textures[i].name, r_imageBuffers[QGL_CONTEXT_MAIN], w, h, flags, IMAGE_TAG_BUILTIN, samples );
 
 		if( textures[i].image )
 			*( textures[i].image ) = image;
 	}
-}
-
-/*
-* R_TouchBuiltinTextures
-*/
-static void R_TouchBuiltinTextures( void )
-{
-	R_TouchImage( rsh.rawTexture );
-	R_TouchImage( rsh.rawYUVTextures[0] );
-	R_TouchImage( rsh.rawYUVTextures[1] );
-	R_TouchImage( rsh.rawYUVTextures[2] );
-	R_TouchImage( rsh.noTexture );
-	R_TouchImage( rsh.whiteTexture );
-	R_TouchImage( rsh.whiteCubemapTexture );
-	R_TouchImage( rsh.blackTexture ); 
-	R_TouchImage( rsh.greyTexture );
-	R_TouchImage( rsh.blankBumpTexture ); 
-	R_TouchImage( rsh.particleTexture ); 
-	R_TouchImage( rsh.coronaTexture ); 
-	R_TouchImage( rsh.screenTexture ); 
-	R_TouchImage( rsh.screenDepthTexture );
-	R_TouchImage( rsh.screenTextureCopy ); 
-	R_TouchImage( rsh.screenDepthTextureCopy );
-	R_TouchImage( rsh.screenPPCopies[0] );
-	R_TouchImage( rsh.screenPPCopies[1] );
-	R_TouchImage( rsh.screenWeaponTexture );
-	R_TouchImage( rsh.colorCorrectionOverrideLUT );
 }
 
 /*
@@ -2879,11 +2855,14 @@ void R_InitImages( void )
 /*
 * R_TouchImage
 */
-void R_TouchImage( image_t *image )
+void R_TouchImage( image_t *image, int tags )
 {
 	if( !image ) {
 		return;
 	}
+
+	image->tags |= tags;
+
 	if( image->registrationSequence == rsh.registrationSequence ) {
 		return;
 	}
@@ -2895,14 +2874,13 @@ void R_TouchImage( image_t *image )
 }
 
 /*
-* R_FreeUnusedImages
+* R_FreeUnusedImagesByTags
 */
-void R_FreeUnusedImages( void )
+void R_FreeUnusedImagesByTags( int tags )
 {
 	int i;
 	image_t *image;
-
-	R_TouchBuiltinTextures();
+	int keeptags = ~tags;
 
 	for( i = 0, image = images; i < MAX_GLIMAGES; i++, image++ ) {
 		if( !image->name ) {
@@ -2913,8 +2891,25 @@ void R_FreeUnusedImages( void )
 			// we need this image
 			continue;
 		}
+
+		image->tags &= keeptags;
+		if( image->tags ) {
+			// still used for a different purpose
+			continue;
+		}
+
 		R_FreeImage( image );
 	}
+}
+
+/*
+* R_FreeUnusedImages
+*/
+void R_FreeUnusedImages( void )
+{
+	int i;
+
+	R_FreeUnusedImagesByTags( ~IMAGE_TAG_BUILTIN );
 
 	R_FinishLoadingImages();
 
