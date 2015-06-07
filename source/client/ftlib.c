@@ -70,6 +70,11 @@ static struct shader_s *CL_FTLibModule_RegisterRawPic( const char *name, int wid
 	return re.RegisterRawPic( name, width, height, data, samples );
 }
 
+static struct shader_s *CL_FTLibModule_RegisterRawAlphaMask( const char *name, int width, int height, uint8_t *data )
+{
+	return re.RegisterRawAlphaMask( name, width, height, data );
+}
+
 static void CL_FTLibModule_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader )
 {
 	re.DrawStretchPic( x, y, w, h, s1, t1, s2, t2, color, shader );
@@ -141,6 +146,7 @@ void FTLIB_LoadLibrary( bool verbose )
 
 	import.R_RegisterPic = &CL_FTLibModule_RegisterPic;
 	import.R_RegisterRawPic = &CL_FTLibModule_RegisterRawPic;
+	import.R_RegisterRawAlphaMask = &CL_FTLibModule_RegisterRawAlphaMask;
 	import.R_DrawStretchPic = &CL_FTLibModule_DrawStretchPic;
 	import.R_ReplaceRawSubPic = &CL_FTLibModule_ReplaceRawSubPic;
 	import.R_Scissor = &CL_FTLibModule_Scissor;
