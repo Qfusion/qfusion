@@ -379,7 +379,7 @@ void RB_ApplyTCMods( const shaderpass_t *pass, mat4_t result )
 void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 {
 	int c;
-	long rgba[4];
+	int rgba[4];
 	double temp;
 	float *table, a;
 	vec3_t v;
