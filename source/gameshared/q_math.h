@@ -332,29 +332,6 @@ vec_t LogisticPDF( vec_t x );
 vec_t NormalCDF( vec_t x );
 vec_t NormalPDF( vec_t x );
 
-//========================================
-
-#define _double2fixmagic (double)(68719476736.0*1.5);     //2^36 * 1.5,  (52-_shiftamt=36) uses limited precisicion to floor
-#define _shiftamt        16;                    //16.16 fixed point representation,
-
-static inline long _fast_ftol( double x )
-{
-#ifdef ENDIAN_LITTLE
-	x = x + _double2fixmagic;
-	return ((long*)&x)[0] >> _shiftamt;
-#elif defined ( ENDIAN_BIG )
-	x = x + _double2fixmagic;
-	return ((long*)&x)[1] >> _shiftamt;
-#else
-	return (long)x;
-#endif
-}
-
-static inline long fast_ftol( float x )
-{
-	return _fast_ftol( (double)x );
-}
-
 #ifdef __cplusplus
 };
 #endif
