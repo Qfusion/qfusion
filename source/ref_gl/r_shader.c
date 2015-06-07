@@ -697,9 +697,9 @@ static void Shader_FogParms( shader_t *shader, shaderpass_t *pass, const char **
 	Shader_ParseVector( ptr, color, 3 );
 	ColorNormalize( color, fcolor );
 
-	shader->fog_color[0] = fast_ftol( fcolor[0] * 255.0f );
-	shader->fog_color[1] = fast_ftol( fcolor[1] * 255.0f );
-	shader->fog_color[2] = fast_ftol( fcolor[2] * 255.0f );
+	shader->fog_color[0] = fcolor[0] * 255.0f;
+	shader->fog_color[1] = fcolor[1] * 255.0f;
+	shader->fog_color[2] = fcolor[2] * 255.0f;
 	shader->fog_color[3] = 255;
 	shader->fog_dist = Shader_ParseFloat( ptr );
 	if( shader->fog_dist <= 0.1f )

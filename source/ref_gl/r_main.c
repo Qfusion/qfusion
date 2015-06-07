@@ -702,10 +702,10 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 	Vector2Set( pic_xyz[0], x, y );
 	Vector2Set( pic_st[0], s1, t1 );
 	Vector4Set( pic_colors[0], 
-		fast_ftol( bound( 0, color[0] * 255, 255 ) ), 
-		fast_ftol( bound( 0, color[1] * 255, 255 ) ),
-		fast_ftol( bound( 0, color[2] * 255, 255 ) ), 
-		fast_ftol( bound( 0, color[3] * 255, 255 ) ) );
+		bound( 0, ( int )( color[0] * 255.0f ), 255 ), 
+		bound( 0, ( int )( color[1] * 255.0f ), 255 ),
+		bound( 0, ( int )( color[2] * 255.0f ), 255 ), 
+		bound( 0, ( int )( color[3] * 255.0f ), 255 ) );
 	bcolor = *(int *)pic_colors[0];
 
 	// lower-right
