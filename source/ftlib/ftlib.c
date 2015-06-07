@@ -326,8 +326,8 @@ static void QFT_RenderString( qfontface_t *qfont, const char *str )
 					qttf->imageCurX = 0;
 					qttf->imageCurY = 0;
 					shaderNum = ( qfont->numShaders )++;
-					shader = trap_R_RegisterRawPic( FTLIB_FontShaderName( qfont, shaderNum ),
-						qfont->shaderWidth, qfont->shaderHeight, NULL, 1 );
+					shader = trap_R_RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, shaderNum ),
+						qfont->shaderWidth, qfont->shaderHeight, NULL );
 					qfont->shaders = FTLIB_Realloc( qfont->shaders, qfont->numShaders * sizeof( struct shader_s * ) );
 					qfont->shaders[shaderNum] = shader;
 				}
@@ -488,8 +488,8 @@ static qfontface_t *QFT_LoadFace( qfontfamily_t *family, unsigned int size )
 
 	qfont->numShaders = 1;
 	qfont->shaders = FTLIB_Alloc( ftlibPool, sizeof( struct shader_s * ) );
-	qfont->shaders[0] = trap_R_RegisterRawPic( FTLIB_FontShaderName( qfont, 0 ),
-		qfont->shaderWidth, qfont->shaderHeight, NULL, 1 );
+	qfont->shaders[0] = trap_R_RegisterRawAlphaMask( FTLIB_FontShaderName( qfont, 0 ),
+		qfont->shaderWidth, qfont->shaderHeight, NULL );
 	qfont->hasKerning = hasKerning;
 	qfont->f = &qft_face_funcs;
 	qfont->facedata = ( void * )qttf;

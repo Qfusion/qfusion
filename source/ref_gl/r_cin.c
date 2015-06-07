@@ -98,7 +98,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 
 			for( i = 0; i < 3; i++ ) {
 				handle->yuv_images[i] = R_LoadImage( va( "%s_%s", handle->name, letters[i] ), 
-					fake_data, 1, 1, IT_SPECIAL|IT_LUMINANCE, IMAGE_TAG_GENERIC, 1 );
+					fake_data, 1, 1, IT_SPECIAL, IMAGE_TAG_GENERIC, 1 );
 			}
 			handle->new_frame = true;
 		}

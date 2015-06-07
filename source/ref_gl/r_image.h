@@ -38,7 +38,7 @@ enum
 	,IT_FRAMEBUFFER		= 1<<11
 	,IT_DEPTHRB			= 1<<12		// framebuffer has a depth renderbuffer
 	,IT_NOFILTERING		= 1<<13
-	,IT_LUMINANCE		= 1<<14
+	,IT_ALPHAMASK		= 1<<14		// image only contains an alpha mask
 	,IT_BGRA			= 1<<15
 	,IT_SYNC			= 1<<16		// load image synchronously
 	,IT_DEPTHCOMPARE	= 1<<17
@@ -54,7 +54,7 @@ enum
  * The loader threads may modify these flags (but no other flags),
  * so they must not be used for anything that has a long-term effect.
  */
-#define IT_LOADFLAGS		( IT_LUMINANCE|IT_BGRA|IT_SYNC )
+#define IT_LOADFLAGS		( IT_ALPHAMASK|IT_BGRA|IT_SYNC )
 
 #define IT_SPECIAL			( IT_CLAMP|IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS )
 #define IT_COLORCORRECTION	( ( glConfig.maxTexture3DSize >= 32 ) ? ( IT_SPECIAL|IT_COLORLUT|IT_3D ) : ( IT_SPECIAL|IT_COLORLUT ) )

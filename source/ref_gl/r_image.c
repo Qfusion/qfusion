@@ -519,9 +519,7 @@ static int R_ReadImageFromDisk( int ctx, char *pathname, size_t pathname_size,
 		samples = imginfo.samples;
 		if( flags )
 		{
-			if( imginfo.samples < 3 )
-				*flags |= IT_LUMINANCE;
-			else if( ( imginfo.comp & ~1 ) == IMGCOMP_BGR )
+			if( ( imginfo.samples >= 3 ) && ( ( imginfo.comp & ~1 ) == IMGCOMP_BGR ) )
 				*flags |= IT_BGRA;
 		}
 	}
@@ -863,13 +861,10 @@ static int R_TextureInternalFormat( int samples, int flags )
 			return GL_COMPRESSED_RGBA_ARB;
 		if( samples == 3 )
 			return GL_COMPRESSED_RGB_ARB;
-		if( flags & IT_LUMINANCE )
-		{
-			if( samples == 2 )
-				return GL_COMPRESSED_LUMINANCE_ALPHA_ARB;
-			if( samples == 1 )
-				return GL_COMPRESSED_LUMINANCE_ARB;
-		}
+		if( samples == 2 )
+			return GL_COMPRESSED_LUMINANCE_ALPHA_ARB;
+		if( ( samples == 1 ) && !( flags & IT_ALPHAMASK ) )
+			return GL_COMPRESSED_LUMINANCE_ARB;
 	}
 
 	if( samples == 3 )
@@ -886,7 +881,7 @@ static int R_TextureInternalFormat( int samples, int flags )
 
 	if( samples == 1 )
 	{
-		return ( ( flags & IT_LUMINANCE ) ? GL_LUMINANCE : GL_ALPHA );
+		return ( ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_LUMINANCE );
 	}
 
 	if( bits == 16 )
@@ -943,10 +938,10 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 			*format = ( flags & IT_BGRA ? GL_BGR_EXT : GL_RGB );
 		else if( samples == 2 )
 			*format = GL_LUMINANCE_ALPHA;
-		else if( flags & IT_LUMINANCE )
-			*format = GL_LUMINANCE;
-		else
+		else if( flags & IT_ALPHAMASK )
 			*format = GL_ALPHA;
+		else
+			*format = GL_LUMINANCE;
 #ifdef GL_ES_VERSION_2_0
 		*comp = *format;
 #else
@@ -1578,14 +1573,13 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 			break;
 		case GL_LUMINANCE_ALPHA:
 			image->samples = 2;
-			image->flags |= IT_LUMINANCE;
 			break;
 		case GL_LUMINANCE:
 			image->samples = 1;
-			image->flags |= IT_LUMINANCE;
 			break;
 		case GL_ALPHA:
 			image->samples = 1;
+			image->flags |= IT_ALPHAMASK;
 			break;
 		}
 
@@ -2674,7 +2668,7 @@ static void R_InitStretchRawYUVTextures( void )
 		}
 
 		rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-		rawtexture->flags = IT_SPECIAL|IT_LUMINANCE;
+		rawtexture->flags = IT_SPECIAL;
 		rawtexture->tags = IMAGE_TAG_BUILTIN;
 		strcpy( rawtexture->name, name[i] );
 		R_AllocTextureNum( rawtexture );
