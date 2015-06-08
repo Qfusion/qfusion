@@ -486,7 +486,7 @@ void UI_Main::gamepadStickCursorMove( float frameTime )
 	x += sx * sx * sx * speed;
 	y += sy * sy * sy * speed;
 
-	int mx = x, my = y;
+	int mx = ( int )x, my = ( int )y;
 	x -= ( float )mx;
 	y -= ( float )my;
 	mouseMove( mx, my, false, true );
@@ -525,7 +525,7 @@ void UI_Main::gamepadDpadCursorMove( float frameTime )
 
 	holdTime += frameTime;
 
-	int mx = x, my = y;
+	int mx = ( int )x, my = ( int )y;
 	x -= ( float )mx;
 	y -= ( float )my;
 	mouseMove( mx, my, false, true );
