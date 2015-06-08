@@ -26,8 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_GLSL_PROGRAMS			1024
 #define GLSL_PROGRAMS_HASH_SIZE		256
 
-#define GLSL_CACHE_FILE_NAME		"cache/glsl.cache"
-#define GLSL_BINARY_CACHE_FILE_NAME	"cache/glsl.cache.bin"
+#define GLSL_CACHE_FILE_NAME_DEFAULT	"cache/glsl.cache.default"
+#define GLSL_CACHE_FILE_NAME			"cache/glsl.cache"
+#define GLSL_BINARY_CACHE_FILE_NAME		"cache/glsl.cache.bin"
 
 typedef struct
 {
@@ -216,11 +217,18 @@ static void RP_PrecachePrograms( void )
 	const char *token;
 	int handleBin;
 	size_t binaryCacheSize = 0;
+	bool isDefaultCache = false;
 
 	R_LoadCacheFile( GLSL_CACHE_FILE_NAME, ( void ** )&buffer );
 	if( !buffer ) {
+		isDefaultCache = true;
 		r_glslbincache_storemode = FS_WRITE;
-		return;
+
+		// load default glsl cache list, supposedly shipped with the game
+		R_LoadFile( GLSL_CACHE_FILE_NAME_DEFAULT, ( void ** )&buffer );
+		if( !buffer ) {
+			return;
+		}
 	}
 
 #define CLOSE_AND_DROP_BINARY_CACHE() do { \
@@ -230,7 +238,7 @@ static void RP_PrecachePrograms( void )
 	} while(0)
 
 	handleBin = 0;
-	if( glConfig.ext.get_program_binary ) {
+	if( glConfig.ext.get_program_binary && !isDefaultCache ) {
 		r_glslbincache_storemode = FS_APPEND;
 		if( ri.FS_FOpenFile( GLSL_BINARY_CACHE_FILE_NAME, &handleBin, FS_READ|FS_CACHE ) != -1 ) {
 			unsigned hash;
@@ -265,7 +273,7 @@ static void RP_PrecachePrograms( void )
 	version = atoi( token );
 	if( version != GLSL_BITS_VERSION ) {
 		// ignore cache files with mismatching version number
-		ri.Com_DPrintf( "Ignoring %s: found version %i, expcted %i\n", version, GLSL_BITS_VERSION );
+		ri.Com_DPrintf( "Ignoring %s: found version %i, expected %i\n", version, GLSL_BITS_VERSION );
 	}
 	else {
 		while( 1 ) {
