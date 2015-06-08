@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_GLSL_PROGRAMS			1024
 #define GLSL_PROGRAMS_HASH_SIZE		256
 
-#define GLSL_CACHE_FILE_NAME_DEFAULT	"glsl/glsl.cache.default"
+#define GLSL_DEFAULT_CACHE_FILE_NAME	"glsl/glsl.cache.default"
 #define GLSL_CACHE_FILE_NAME			"cache/glsl.cache"
 #define GLSL_BINARY_CACHE_FILE_NAME		"cache/glsl.cache.bin"
 
@@ -225,7 +225,7 @@ static void RP_PrecachePrograms( void )
 		r_glslbincache_storemode = FS_WRITE;
 
 		// load default glsl cache list, supposedly shipped with the game
-		R_LoadFile( GLSL_CACHE_FILE_NAME_DEFAULT, ( void ** )&buffer );
+		R_LoadFile( GLSL_DEFAULT_CACHE_FILE_NAME, ( void ** )&buffer );
 		if( !buffer ) {
 			return;
 		}
