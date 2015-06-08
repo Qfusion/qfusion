@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_GLSL_PROGRAMS			1024
 #define GLSL_PROGRAMS_HASH_SIZE		256
 
-#define GLSL_CACHE_FILE_NAME_DEFAULT	"cache/glsl.cache.default"
+#define GLSL_CACHE_FILE_NAME_DEFAULT	"glsl/glsl.cache.default"
 #define GLSL_CACHE_FILE_NAME			"cache/glsl.cache"
 #define GLSL_BINARY_CACHE_FILE_NAME		"cache/glsl.cache.bin"
 
