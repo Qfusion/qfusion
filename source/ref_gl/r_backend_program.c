@@ -193,13 +193,13 @@ static float RB_BackendGetNoiseValue( float x, float y, float z, float t )
 	float front[4], back[4];
 	float fvalue, bvalue, value[2], finalvalue;
 
-	ix = floor( x );
+	ix = ( int )floor( x );
 	fx = x - ix;
-	iy = floor( y );
+	iy = ( int )floor( y );
 	fy = y - iy;
-	iz = floor( z );
+	iz = ( int )floor( z );
 	fz = z - iz;
-	it = floor( t );
+	it = ( int )floor( t );
 	ft = t - it;
 
 	for( i = 0; i < 2; i++ )
@@ -393,9 +393,9 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 	case RGB_GEN_IDENTITY:
 		break;
 	case RGB_GEN_CONST:
-		rgba[0] = pass->rgbgen.args[0] * 255.0f;
-		rgba[1] = pass->rgbgen.args[1] * 255.0f;
-		rgba[2] = pass->rgbgen.args[2] * 255.0f;
+		rgba[0] = ( int )( pass->rgbgen.args[0] * 255.0f );
+		rgba[1] = ( int )( pass->rgbgen.args[1] * 255.0f );
+		rgba[2] = ( int )( pass->rgbgen.args[2] * 255.0f );
 		break;
 	case RGB_GEN_ENTITYWAVE:
 	case RGB_GEN_WAVE:
@@ -448,9 +448,9 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 			VectorCopy( pass->rgbgen.args, v );
 		}
 
-		a = v[0] * temp; rgba[0] = a * 255.0f;
-		a = v[1] * temp; rgba[1] = a * 255.0f;
-		a = v[2] * temp; rgba[2] = a * 255.0f;
+		a = v[0] * temp; rgba[0] = ( int )( a * 255.0f );
+		a = v[1] * temp; rgba[1] = ( int )( a * 255.0f );
+		a = v[2] * temp; rgba[2] = ( int )( a * 255.0f );
 		break;
 	case RGB_GEN_OUTLINE:
 		rgba[0] = rb.entityOutlineColor[0];
@@ -481,7 +481,7 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 	case ALPHA_GEN_IDENTITY:
 		break;
 	case ALPHA_GEN_CONST:
-		rgba[3] = pass->alphagen.args[0] * 255.0f;
+		rgba[3] = ( int )( pass->alphagen.args[0] * 255.0f );
 		break;
 	case ALPHA_GEN_WAVE:
 		if( !alphagenfunc || alphagenfunc->type == SHADER_FUNC_NONE )
@@ -508,7 +508,7 @@ void RB_GetShaderpassColor( const shaderpass_t *pass, byte_vec4_t rgba_ )
 			a = a * alphagenfunc->args[1] + alphagenfunc->args[0];
 		}
 
-		rgba[3] = a * 255.0f;
+		rgba[3] = ( int )( a * 255.0f );
 		break;
 	case ALPHA_GEN_ENTITY:
 		rgba[3] = rb.entityColor[3];
