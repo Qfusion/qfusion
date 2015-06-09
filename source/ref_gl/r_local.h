@@ -228,7 +228,6 @@ typedef struct
 	image_t			*screenTextureCopy;
 	image_t			*screenDepthTextureCopy;
 	image_t			*screenPPCopies[2];
-	image_t			*screenWeaponTexture;
 	image_t			*colorCorrectionOverrideLUT;
 
 	shader_t		*envShader;

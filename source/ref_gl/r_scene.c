@@ -103,6 +103,14 @@ void R_AddEntityToScene( const entity_t *ent )
 		}
 
 		rsc.numEntities++;
+
+		// add invisible fake entity for depth write
+		if( (de->renderfx & (RF_WEAPONMODEL|RF_ALPHAHACK)) == (RF_WEAPONMODEL|RF_ALPHAHACK) ) {
+			entity_t tent = *ent;
+			tent.renderfx &= ~RF_ALPHAHACK;
+			tent.renderfx |= RF_NOCOLORWRITE|RF_NOSHADOW;
+			R_AddEntityToScene( &tent );
+		}
 	}
 }
 
@@ -316,9 +324,6 @@ void R_RenderScene( const refdef_t *fd )
 	if( !rn.refdef.minLight ) {
 		rn.refdef.minLight = 0.1f;
 	}
-	if( !rsh.screenWeaponTexture || rn.refdef.weaponAlpha == 1 ) {
-		rn.refdef.rdflags &= ~RDF_WEAPONALPHA;
-	}
 
 	fd = &rn.refdef;
 
@@ -343,9 +348,7 @@ void R_RenderScene( const refdef_t *fd )
 			rn.renderFlags |= RF_SOFT_PARTICLES;
 			fbFlags |= 1;
 		}
-		if( ( fd->rdflags & RDF_WEAPONALPHA ) && ( rsh.screenWeaponTexture != NULL ) ) {
-			fbFlags |= 2;
-		}
+
 		if( rsh.screenPPCopies[0] && rsh.screenPPCopies[1] ) {
 			int oldFlags = fbFlags;
 
@@ -393,14 +396,6 @@ void R_RenderScene( const refdef_t *fd )
 	if( gl_finish->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
 		RB_Finish();
 
-	if( fbFlags & 2 ) {
-		// clear the framebuffer we're going to render the weapon model to
-		// set the alpha to 0, visible parts of the model will overwrite that,
-		// creating proper alpha mask
-		R_BindFrameBufferObject( rsh.screenWeaponTexture->fbo );
-		RB_Clear( GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT, 0, 0, 0, 0 );
-	}
-
 	R_BindFrameBufferObject( 0 );
 
 	R_BuildShadowGroups();
@@ -424,18 +419,6 @@ void R_RenderScene( const refdef_t *fd )
 			firstPPFBO, 
 			GLSL_PROGRAM_TYPE_NONE, 
 			colorWhite, 0 );
-	}
-
-	if( fbFlags & 2 ) {
-		vec4_t color = { 1, 1, 1, 1 };
-		color[3] = fd->weaponAlpha;
-
-		fbFlags &= ~2;
-
-		R_BlitTextureToScrFbo( fd, rsh.screenWeaponTexture, 
-			firstPPFBO, 
-			GLSL_PROGRAM_TYPE_NONE, 
-			color, GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 	}
 
 	// apply FXAA

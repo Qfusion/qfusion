@@ -154,7 +154,15 @@ bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t 
 	}
 
 	shaderSort = shader->sort;
-	if( e->renderfx & RF_ALPHAHACK ) {
+	if( e->renderfx & RF_WEAPONMODEL ) {
+		if( e->renderfx & RF_NOCOLORWRITE ) {
+			shaderSort = SHADER_SORT_WEAPON;
+		}
+		else {
+			shaderSort = SHADER_SORT_WEAPON2;
+		}
+	}
+	else if( e->renderfx & RF_ALPHAHACK ) {
 		// force shader sort to additive
 		shaderSort = SHADER_SORT_ADDITIVE;
 	} else if( ( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) && ( shader->flags & SHADER_SKY ) ) {
@@ -360,13 +368,12 @@ static void _R_DrawSurfaces( void )
 	const portalSurface_t *portalSurface;
 	drawList_t *list = rn.meshlist;
 	float depthmin = 0.0f, depthmax = 0.0f;
-	bool weaponAlpha = false, depthHack = false, cullHack = false;
+	bool depthHack = false, cullHack = false;
 	bool infiniteProj = false, prevInfiniteProj = false;
 	bool depthWrite = false;
 	bool depthCopied = false;
 	int entityFX = 0, prevEntityFX = -1;
 	mat4_t projectionMatrix;
-	refdef_t *rd = &rn.refdef;
 	int riFBO = 0;
 
 	if( !list->numDrawSurfs ) {
@@ -403,28 +410,12 @@ static void _R_DrawSurfaces( void )
 
 			// hack the depth range to prevent view model from poking into walls
 			if( entity->flags & RF_WEAPONMODEL ) {
-				// render weapon to a different framebuffer we'll blend on top of screen
-				// at later stage
-				if( shader->flags & SHADER_DEPTHWRITE ) {
-					if( !weaponAlpha && ( rd->rdflags & RDF_WEAPONALPHA ) ) {
-						weaponAlpha = true;
-						R_BindFrameBufferObject( rsh.screenWeaponTexture->fbo );
-					}
-				} else if( weaponAlpha ) {
-					weaponAlpha = false;
-					R_BindFrameBufferObject( riFBO );
-				}
-
 				if( !depthHack ) {
 					depthHack = true;
 					RB_GetDepthRange( &depthmin, &depthmax );
 					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 				}
 			} else {
-				if( weaponAlpha ) {
-					weaponAlpha = false;
-					R_BindFrameBufferObject( riFBO );
-				}
 				if( depthHack ) {
 					depthHack = false;
 					RB_DepthRange( depthmin, depthmax );
