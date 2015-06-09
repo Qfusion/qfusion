@@ -2739,9 +2739,6 @@ static void R_InitScreenTextures( void )
 		NULL, false, true );
 	R_InitScreenTexturesPair( "rsh.screenPPCopy1", &rsh.screenPPCopies[1], 
 		NULL, false, false );
-
-	R_InitScreenTexturesPair( "rsh.screenWeaponTexture", &rsh.screenWeaponTexture, 
-		NULL, true, false );
 }
 
 /*
@@ -2799,7 +2796,6 @@ static void R_ReleaseBuiltinTextures( void )
 	rsh.screenTextureCopy = rsh.screenDepthTextureCopy = NULL;
 	rsh.screenPPCopies[0] = NULL;
 	rsh.screenPPCopies[1] = NULL;
-	rsh.screenWeaponTexture = NULL;
 }
 
 //=======================================================

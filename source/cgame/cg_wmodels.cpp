@@ -575,7 +575,7 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 
 	//weapon
 	memset( &weapon, 0, sizeof( weapon ) );
-	Vector4Set( weapon.shaderRGBA, 255, 255, 255, 255 );
+	Vector4Set( weapon.shaderRGBA, 255, 255, 255, ent->shaderRGBA[3] );
 	weapon.scale = ent->scale;
 	weapon.renderfx = ent->renderfx;
 	weapon.frame = 0;
@@ -612,7 +612,7 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 		{
 			entity_t expansion;
 			memset( &expansion, 0, sizeof( expansion ) );
-			Vector4Set( expansion.shaderRGBA, 255, 255, 255, 255 );
+			Vector4Set( expansion.shaderRGBA, 255, 255, 255, ent->shaderRGBA[3] );
 			expansion.model = weaponInfo->model[EXPANSION];
 			expansion.scale = ent->scale;
 			expansion.renderfx = ent->renderfx;
@@ -640,7 +640,7 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 
 			entity_t barrel;
 			memset( &barrel, 0, sizeof( barrel ) );
-			Vector4Set( barrel.shaderRGBA, 255, 255, 255, 255 );
+			Vector4Set( barrel.shaderRGBA, 255, 255, 255, ent->shaderRGBA[3] );
 			barrel.model = weaponInfo->model[BARREL];
 			barrel.scale = ent->scale;
 			barrel.renderfx = ent->renderfx;
@@ -664,7 +664,7 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 			// barrel requires special tagging
 			CG_PlaceRotatedModelOnTag( &barrel, &weapon, tag );
 
-			CG_AddColoredOutLineEffect( &barrel, effects, 0, 0, 0, 255 );
+			CG_AddColoredOutLineEffect( &barrel, effects, 0, 0, 0, ent->shaderRGBA[3] );
 
 			if( !( effects & EF_RACEGHOST ) )
 				CG_AddEntityToScene( &barrel ); // skelmod
@@ -688,12 +688,12 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 		if( weaponInfo->flashFade )
 		{
 			intensity = (float)( flash_time - cg.time )/(float)weaponInfo->flashTime;
-			c = ( uint8_t )( 255 * intensity );
+			c = ( uint8_t )( ent->shaderRGBA[3] * intensity );
 		}
 		else
 		{
 			intensity = 1.0f;
-			c = 255;
+			c = ent->shaderRGBA[3];
 		}
 
 		memset( &flash, 0, sizeof( flash ) );
