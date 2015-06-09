@@ -1,5 +1,5 @@
 #ifdef DUAL_QUAT_TRANSFORM_TANGENT
-void VertexDualQuatsTransform(inout vec4 Position, inout vec3 Normal, inout vec3 Tangent)
+void VertexDualQuatsTransform_Tangent(inout vec4 Position, inout vec3 Normal, inout vec3 Tangent)
 #else
 void VertexDualQuatsTransform(inout vec4 Position, inout vec3 Normal)
 #endif

@@ -27,7 +27,7 @@ void main(void)
 	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
 
 #ifdef APPLY_FOG
-	FogGen(Position, v_FogCoord);
+	FogGenCoord(Position, v_FogCoord);
 #endif
 
 	qf_FrontColor = vec4(outColor);

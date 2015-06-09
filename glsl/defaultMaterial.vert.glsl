@@ -18,15 +18,15 @@ void main()
 	vec3 Tangent = a_SVector.xyz;
 	float TangentDir = a_SVector.w;
 
-	TransformVerts(Position, Normal, Tangent, TexCoord);
+	TransformVerts_Tangent(Position, Normal, Tangent, TexCoord);
 
 	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
 
 #ifdef APPLY_FOG
 #if defined(APPLY_FOG_COLOR)
-	FogGen(Position, outColor, u_BlendMix);
+	FogGenColor(Position, outColor, u_BlendMix);
 #else
-	FogGen(Position, v_TexCoord_FogCoord.pq);
+	FogGenCoord(Position, v_TexCoord_FogCoord.pq);
 #endif
 #endif // APPLY_FOG
 

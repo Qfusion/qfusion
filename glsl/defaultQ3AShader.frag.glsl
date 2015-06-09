@@ -67,7 +67,7 @@ void main(void)
 #endif
 
 #if defined(NUM_DLIGHTS)
-	color.rgb += DynamicLightsSummaryColor(v_Position);
+	color.rgb += DynamicLightsColor(v_Position);
 #endif
 
 	myhalf4 diffuse;

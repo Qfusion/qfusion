@@ -1,7 +1,7 @@
 #ifdef DLIGHTS_SURFACE_NORMAL_IN
-myhalf3 DynamicLightsSummaryColor(in vec3 Position, in myhalf3 surfaceNormalModelspace)
+myhalf3 DynamicLightsSurfaceColor(in vec3 Position, in myhalf3 surfaceNormalModelspace)
 #else
-myhalf3 DynamicLightsSummaryColor(in vec3 Position)
+myhalf3 DynamicLightsColor(in vec3 Position)
 #endif
 {
 	myhalf3 Color = myhalf3(0.0);
