@@ -69,7 +69,6 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 	vec3_t v_left, v_up;
 	dlight_t *light = rsc.dlights + (drawSurf - r_coronaSurfs);
 	float radius = light->intensity, colorscale;
-	float up = radius, down = -radius, left = -radius, right = radius;
 	vec4_t xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
 	vec4_t normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 	byte_vec4_t colors[4];
@@ -84,13 +83,13 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 	if( rn.renderFlags & RF_MIRRORVIEW )
 		VectorInverse( v_left );
 
-	VectorMA( origin, down, v_up, point );
-	VectorMA( point, left, v_left, xyz[0] );
-	VectorMA( point, right, v_left, xyz[3] );
+	VectorMA( origin, -radius, v_up, point );
+	VectorMA( point, radius, v_left, xyz[0] );
+	VectorMA( point, -radius, v_left, xyz[3] );
 
-	VectorMA( origin, up, v_up, point );
-	VectorMA( point, left, v_left, xyz[1] );
-	VectorMA( point, right, v_left, xyz[2] );
+	VectorMA( origin, radius, v_up, point );
+	VectorMA( point, radius, v_left, xyz[1] );
+	VectorMA( point, -radius, v_left, xyz[2] );
 
 	colorscale = 255.0 * bound( 0, r_coronascale->value, 1.0 );
 	Vector4Set( colors[0],

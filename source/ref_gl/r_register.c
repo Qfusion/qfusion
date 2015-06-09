@@ -1069,7 +1069,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_detailtextures = ri.Cvar_Get( "r_detailtextures", "1", CVAR_ARCHIVE );
 
 	r_dynamiclight = ri.Cvar_Get( "r_dynamiclight", "1", CVAR_ARCHIVE );
-	r_coronascale = ri.Cvar_Get( "r_coronascale", "0.2", 0 );
+	r_coronascale = ri.Cvar_Get( "r_coronascale", "0.4", 0 );
 	r_subdivisions = ri.Cvar_Get( "r_subdivisions", STR_TOSTR( SUBDIVISIONS_DEFAULT ), CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_shownormals = ri.Cvar_Get( "r_shownormals", "0", CVAR_CHEAT );
 	r_draworder = ri.Cvar_Get( "r_draworder", "0", CVAR_CHEAT );

@@ -2624,6 +2624,7 @@ create_default:
 			s->numpasses = 1;
 			s->passes = ( shaderpass_t * )data;
 			s->name = ( char * )( s->passes + 1 );
+			s->flags = SHADER_SOFT_PARTICLE;
 			strcpy( s->name, shortname );
 
 			pass = &s->passes[0];
