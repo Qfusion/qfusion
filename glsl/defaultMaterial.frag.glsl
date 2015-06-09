@@ -228,7 +228,7 @@ void main()
 #endif // NUM_LIGHTMAPS
 
 #if defined(NUM_DLIGHTS)
-	color.rgb += DynamicLightsSummaryColor(v_Position, surfaceNormalModelspace);
+	color.rgb += DynamicLightsSurfaceColor(v_Position, surfaceNormalModelspace);
 #endif
 
 #ifdef APPLY_SPECULAR

@@ -14,7 +14,7 @@ void main(void)
 
 	TransformVerts(Position, Normal, TexCoord);
 
-	FogGen(Position, v_FogCoord);
+	FogGenCoord(Position, v_FogCoord);
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 }
