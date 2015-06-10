@@ -291,6 +291,10 @@ void CG_Event_LaserBeam( int entNum, int weapon, int fireMode )
 		}
 	}
 
+	// it appears that 64ms is that maximum allowed time interval between prediction events on localhost
+	if( timeout < 65 )
+		timeout = 65;
+
 	VectorCopy( cent->laserOrigin, cent->laserOriginOld );
 	VectorCopy( cent->laserPoint, cent->laserPointOld );
 	cent->localEffects[LOCALEFFECT_LASERBEAM] = cg.time + timeout;
