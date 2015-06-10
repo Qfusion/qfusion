@@ -998,6 +998,12 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "# else\n" \
 "   precision mediump float;\n" \
 "# endif\n" \
+"# ifdef GL_EXT_texture_array\n" \
+"   precision lowp sampler2DArray;\n" \
+"# endif\n" \
+"# ifdef GL_OES_texture_3D\n" \
+"   precision lowp sampler3D;\n" \
+"# endif\n" \
 "# define qf_FragColor gl_FragColor\n" \
 "#endif\n" \
 " qf_varying myhalf4 qf_FrontColor;\n" \
@@ -1020,6 +1026,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "# else\n" \
 "   precision mediump float;\n" \
 "# endif\n" \
+"  precision lowp sampler2DArray;\n" \
+"  precision lowp sampler3D;\n" \
 "  layout(location = 0) out vec4 qf_FragColor;\n" \
 "# define qf_varying in\n" \
 "#endif\n" \
