@@ -688,12 +688,12 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 		if( weaponInfo->flashFade )
 		{
 			intensity = (float)( flash_time - cg.time )/(float)weaponInfo->flashTime;
-			c = ( uint8_t )( ent->shaderRGBA[3] * intensity );
+			c = ( uint8_t )( 255 * intensity );
 		}
 		else
 		{
 			intensity = 1.0f;
-			c = ent->shaderRGBA[3];
+			c = 255;
 		}
 
 		memset( &flash, 0, sizeof( flash ) );
