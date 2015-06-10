@@ -129,16 +129,23 @@ bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t 
 	drawList_t *list;
 	sortedDrawSurf_t *sds;
 	int shaderSort;
+	bool depthWrite;
+	int renderFx;
 
 	if( !shader ) {
 		return false;
 	}
+
+	shaderSort = shader->sort;
+	depthWrite = (shader->flags & SHADER_DEPTHWRITE) ? true : false;
+	renderFx = e->renderfx;
 
 	if( shader->flags & SHADER_PORTAL ) {
 		if( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW ) ) {
 			return false;
 		}
 	}
+
 	if( shader->cin ) {
 		R_UploadCinematicShader( shader );
 	}
@@ -153,8 +160,26 @@ bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t 
 		R_ReserveDrawSurfaces( list, minMeshes );
 	}
 
-	shaderSort = shader->sort;
-	if( e->renderfx & RF_ALPHAHACK ) {
+	if( renderFx & RF_WEAPONMODEL ) {
+		if( renderFx & RF_NOCOLORWRITE ) {
+			// depth-pass for alpha-blended weapon:
+			// write to depth but do not write to color
+			if( !depthWrite ) {
+				return false;
+			}
+			// reorder the mesh to be drawn after everything else
+			// but before the blend-pass for the weapon
+			shaderSort = SHADER_SORT_WEAPON;
+		}
+		else if( renderFx & RF_ALPHAHACK ) {
+			// blend-pass for the weapon:
+			// meshes that do not write to depth, are rendered as additives,
+			// meshes that were previously added as SHADER_SORT_WEAPON (see above)
+			// are now added to the very end of the list
+			shaderSort = depthWrite ? SHADER_SORT_WEAPON2 : SHADER_SORT_ADDITIVE;
+		}
+	}
+	else if( renderFx & RF_ALPHAHACK ) {
 		// force shader sort to additive
 		shaderSort = SHADER_SORT_ADDITIVE;
 	} else if( ( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) && ( shader->flags & SHADER_SKY ) ) {
@@ -360,13 +385,12 @@ static void _R_DrawSurfaces( void )
 	const portalSurface_t *portalSurface;
 	drawList_t *list = rn.meshlist;
 	float depthmin = 0.0f, depthmax = 0.0f;
-	bool weaponAlpha = false, depthHack = false, cullHack = false;
+	bool depthHack = false, cullHack = false;
 	bool infiniteProj = false, prevInfiniteProj = false;
 	bool depthWrite = false;
 	bool depthCopied = false;
 	int entityFX = 0, prevEntityFX = -1;
 	mat4_t projectionMatrix;
-	refdef_t *rd = &rn.refdef;
 	int riFBO = 0;
 
 	if( !list->numDrawSurfs ) {
@@ -403,28 +427,12 @@ static void _R_DrawSurfaces( void )
 
 			// hack the depth range to prevent view model from poking into walls
 			if( entity->flags & RF_WEAPONMODEL ) {
-				// render weapon to a different framebuffer we'll blend on top of screen
-				// at later stage
-				if( shader->flags & SHADER_DEPTHWRITE ) {
-					if( !weaponAlpha && ( rd->rdflags & RDF_WEAPONALPHA ) ) {
-						weaponAlpha = true;
-						R_BindFrameBufferObject( rsh.screenWeaponTexture->fbo );
-					}
-				} else if( weaponAlpha ) {
-					weaponAlpha = false;
-					R_BindFrameBufferObject( riFBO );
-				}
-
 				if( !depthHack ) {
 					depthHack = true;
 					RB_GetDepthRange( &depthmin, &depthmax );
 					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 				}
 			} else {
-				if( weaponAlpha ) {
-					weaponAlpha = false;
-					R_BindFrameBufferObject( riFBO );
-				}
 				if( depthHack ) {
 					depthHack = false;
 					RB_DepthRange( depthmin, depthmax );

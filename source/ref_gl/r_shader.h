@@ -74,7 +74,9 @@ enum
 	SHADER_SORT_BANNER				= 6,
 	SHADER_SORT_UNDERWATER			= 8,
 	SHADER_SORT_ADDITIVE			= 9,
-	SHADER_SORT_NEAREST				= 16
+	SHADER_SORT_NEAREST				= 14,
+	SHADER_SORT_WEAPON				= 15, // optional phase: depth write but no color write
+	SHADER_SORT_WEAPON2				= 16,
 };
 
 // shaderpass flags

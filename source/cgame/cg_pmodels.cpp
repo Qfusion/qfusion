@@ -778,13 +778,13 @@ void CG_AddColoredOutLineEffect( entity_t *ent, int effects, uint8_t r, uint8_t 
 	}
 
 	if( effects & EF_GODMODE )
-		Vector4Set( RGBA, 255, 255, 255, 255 );
+		Vector4Set( RGBA, 255, 255, 255, a );
 	else if( effects & EF_QUAD )
-		Vector4Set( RGBA, 255, 255, 0, 255 );
+		Vector4Set( RGBA, 255, 255, 0, a );
 	else if( effects & EF_SHELL )
-		Vector4Set( RGBA, 125, 200, 255, 255 );
+		Vector4Set( RGBA, 125, 200, 255, a );
 	else if( effects & EF_REGEN )
-		Vector4Set( RGBA, 255, 0, 0, 255 );
+		Vector4Set( RGBA, 255, 0, 0, a );
 	else
 		Vector4Set( RGBA, ( uint8_t )r, ( uint8_t )g, ( uint8_t )b, ( uint8_t )a );
 }

@@ -1954,6 +1954,8 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.alphaHack = false;
 		rb.greyscale = false;
 		rb.noDepthTest = false;
+		rb.noColorWrite =  false;
+		rb.depthEqual = false;
 	} else {
 		Vector4Copy( rb.currentEntity->shaderRGBA, rb.entityColor );
 		Vector4Copy( rb.currentEntity->outlineColor, rb.entityOutlineColor );
@@ -1965,6 +1967,8 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.hackedAlpha = e->shaderRGBA[3] / 255.0;
 		rb.greyscale = e->renderfx & RF_GREYSCALE ? true : false;
 		rb.noDepthTest = e->renderfx & RF_NODEPTHTEST && e->rtype == RT_SPRITE ? true : false;
+		rb.noColorWrite = e->renderfx & RF_NOCOLORWRITE ? true : false;
+		rb.depthEqual = rb.alphaHack && (e->renderfx & RF_WEAPONMODEL);
 	}
 
 	RB_UpdateVertexAttribs();
@@ -2220,6 +2224,12 @@ static void RB_SetShaderpassState( int state )
 			// force alpha blending
 			state = (state & ~ GLSTATE_DEPTHWRITE)|GLSTATE_SRCBLEND_SRC_ALPHA|GLSTATE_DSTBLEND_ONE_MINUS_SRC_ALPHA;
 		}
+	}
+	if( rb.noColorWrite ) {
+		state |= GLSTATE_NO_COLORWRITE;
+	}
+	if( rb.depthEqual && (state & GLSTATE_DEPTHWRITE) ) {
+		state |= GLSTATE_DEPTHFUNC_EQ;
 	}
 	RB_SetState( state );
 }
