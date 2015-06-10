@@ -131,7 +131,22 @@ void CG_LaserBeamEffect( centity_t *cent )
 	int i, j;
 
 	if( cent->localEffects[LOCALEFFECT_LASERBEAM] <= cg.time )
+	{
+		if( cent->localEffects[LOCALEFFECT_LASERBEAM] )
+		{
+			if( !cent->laserCurved )
+				sound = CG_MediaSfx( cgs.media.sfxLasergunStrongStop );
+			else
+				sound = CG_MediaSfx( cgs.media.sfxLasergunWeakStop );
+
+			if( ISVIEWERENTITY( cent->current.number ) )
+				trap_S_StartGlobalSound( sound, CHAN_AUTO, cg_volume_effects->value );
+			else
+				trap_S_StartRelativeSound( sound, cent->current.number, CHAN_AUTO, cg_volume_effects->value, ATTN_NORM );
+		}
+		cent->localEffects[LOCALEFFECT_LASERBEAM] = 0;
 		return;
+	}
 
 	laserOwner = cent;
 
@@ -247,9 +262,9 @@ void CG_LaserBeamEffect( centity_t *cent )
 	if( sound )
 	{
 		if( ISVIEWERENTITY( cent->current.number ) )
-			trap_S_AddLoopSound( sound, cent->current.number, 1.0, ATTN_NONE );
+			trap_S_AddLoopSound( sound, cent->current.number, cg_volume_effects->value, ATTN_NONE );
 		else
-			trap_S_AddLoopSound( sound, cent->current.number, 1.0, ATTN_STATIC );
+			trap_S_AddLoopSound( sound, cent->current.number, cg_volume_effects->value, ATTN_STATIC );
 	}
 
 	laserOwner = NULL;

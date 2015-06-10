@@ -203,8 +203,10 @@ typedef struct
 	// Lasergun sounds
 	cgs_media_handle_t *sfxLasergunWeakHum;
 	cgs_media_handle_t *sfxLasergunWeakQuadHum;
+	cgs_media_handle_t *sfxLasergunWeakStop;
 	cgs_media_handle_t *sfxLasergunStrongHum;
 	cgs_media_handle_t *sfxLasergunStrongQuadHum;
+	cgs_media_handle_t *sfxLasergunStrongStop;
 	cgs_media_handle_t *sfxLasergunHit[3];
 	
 	cgs_media_handle_t *sfxElectroboltHit;
