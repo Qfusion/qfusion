@@ -1334,17 +1334,16 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	int faceCull;
 	int program;
 	mat4_t texMatrix;
-	const mfog_t *fog = rb.fog;
 
-	if( fog ) {
-		programFeatures |= GLSL_SHADER_COMMON_FOG;
-	}
 	if( rb.currentModelType == mod_brush ) {
 		programFeatures |= GLSL_SHADER_OUTLINE_OUTLINES_CUTOFF;
 	}
+
 	programFeatures |= RB_RGBAlphaGenToProgramFeatures( &pass->rgbgen, &pass->alphagen );
 
-	// update uniforms
+	programFeatures |= RB_FogProgramFeatures( pass, rb.fog );
+
+	// update uniforcms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_OUTLINE, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, rb.currentShader->numdeforms, programFeatures );
 	if( !RB_BindProgram( program ) )
@@ -1363,7 +1362,7 @@ static void RB_RenderMeshGLSL_Outline( const shaderpass_t *pass, r_glslfeat_t pr
 	RP_UpdateOutlineUniforms( program, rb.currentEntity->outlineHeight * r_outlines_scale->value );
 
 	if( programFeatures & GLSL_SHADER_COMMON_FOG ) {
-		RB_UpdateFogUniforms( program, fog );
+		RB_UpdateFogUniforms( program, rb.fog );
 	}
 
 	// submit animation data
@@ -1922,16 +1921,6 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	rb.fog = fog;
 	rb.texFog = rb.colorFog = NULL;
 
-	if( fog && fog->shader ) {
-		// should we fog the geometry with alpha texture or scale colors?
-		if( Shader_UseTextureFog( shader ) ) {
-			rb.texFog = fog;
-		} else {
-			// use scaling of colors
-			rb.colorFog = fog;
-		}
-	}
-
 	rb.doneDepthPass = false;
 	rb.dirtyUniformState = true;
 
@@ -1969,6 +1958,16 @@ void RB_BindShader( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		rb.noDepthTest = e->renderfx & RF_NODEPTHTEST && e->rtype == RT_SPRITE ? true : false;
 		rb.noColorWrite = e->renderfx & RF_NOCOLORWRITE ? true : false;
 		rb.depthEqual = rb.alphaHack && (e->renderfx & RF_WEAPONMODEL);
+	}
+
+	if( fog && fog->shader && !rb.noColorWrite ) {
+		// should we fog the geometry with alpha texture or scale colors?
+		if( !rb.alphaHack && Shader_UseTextureFog( shader ) ) {
+			rb.texFog = fog;
+		} else {
+			// use scaling of colors
+			rb.colorFog = fog;
+		}
 	}
 
 	RB_UpdateVertexAttribs();
