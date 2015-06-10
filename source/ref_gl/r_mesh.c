@@ -129,16 +129,23 @@ bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t 
 	drawList_t *list;
 	sortedDrawSurf_t *sds;
 	int shaderSort;
+	bool depthWrite;
+	int renderFx;
 
 	if( !shader ) {
 		return false;
 	}
+
+	shaderSort = shader->sort;
+	depthWrite = (shader->flags & SHADER_DEPTHWRITE) ? true : false;
+	renderFx = e->renderfx;
 
 	if( shader->flags & SHADER_PORTAL ) {
 		if( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW ) ) {
 			return false;
 		}
 	}
+
 	if( shader->cin ) {
 		R_UploadCinematicShader( shader );
 	}
@@ -153,16 +160,26 @@ bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t 
 		R_ReserveDrawSurfaces( list, minMeshes );
 	}
 
-	shaderSort = shader->sort;
-	if( e->renderfx & RF_WEAPONMODEL ) {
-		if( e->renderfx & RF_NOCOLORWRITE ) {
+	if( renderFx & RF_WEAPONMODEL ) {
+		if( renderFx & RF_NOCOLORWRITE ) {
+			// depth-pass for alpha-blended weapon:
+			// write to depth but do not write to color
+			if( !depthWrite ) {
+				return false;
+			}
+			// reorder the mesh to be drawn after everything else
+			// but before the blend-pass for the weapon
 			shaderSort = SHADER_SORT_WEAPON;
 		}
-		else {
-			shaderSort = SHADER_SORT_WEAPON2;
+		else if( renderFx & RF_ALPHAHACK ) {
+			// blend-pass for the weapon:
+			// meshes that do not write to depth, are rendered as additives,
+			// meshes that were previously added as SHADER_SORT_WEAPON (see above)
+			// are now added to the very end of the list
+			shaderSort = depthWrite ? SHADER_SORT_WEAPON2 : SHADER_SORT_ADDITIVE;
 		}
 	}
-	else if( e->renderfx & RF_ALPHAHACK ) {
+	else if( renderFx & RF_ALPHAHACK ) {
 		// force shader sort to additive
 		shaderSort = SHADER_SORT_ADDITIVE;
 	} else if( ( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) && ( shader->flags & SHADER_SKY ) ) {
