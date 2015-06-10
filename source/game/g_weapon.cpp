@@ -1393,18 +1393,9 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 */
 void G_HideLaser( edict_t *ent )
 {
-	int soundindex;
-
 	ent->s.modelindex = 0;
 	ent->s.sound = 0;
 	ent->r.svflags = SVF_NOCLIENT;
-
-	if( ent->s.type == ET_CURVELASERBEAM )
-		soundindex = trap_SoundIndex( S_WEAPON_LASERGUN_W_STOP );
-	else
-		soundindex = trap_SoundIndex( S_WEAPON_LASERGUN_S_STOP );
-
-	G_Sound( game.edicts + ent->s.ownerNum, CHAN_AUTO, soundindex, ATTN_NORM );
 
 	// give it 100 msecs before freeing itself, so we can relink it if we start firing again
 	ent->think = G_FreeEdict;

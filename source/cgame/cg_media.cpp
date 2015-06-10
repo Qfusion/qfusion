@@ -119,8 +119,10 @@ void CG_RegisterMediaSounds( void )
 	// Lasergun sounds
 	cgs.media.sfxLasergunWeakHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_W_HUM, true );
 	cgs.media.sfxLasergunWeakQuadHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_W_QUAD_HUM, true );
+	cgs.media.sfxLasergunWeakStop = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_W_STOP, true );
 	cgs.media.sfxLasergunStrongHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_S_HUM, true );
 	cgs.media.sfxLasergunStrongQuadHum = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_S_QUAD_HUM, true );
+	cgs.media.sfxLasergunStrongStop = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_S_STOP, true );
 	cgs.media.sfxLasergunHit[0] = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HIT_0, true );
 	cgs.media.sfxLasergunHit[1] = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HIT_1, true );
 	cgs.media.sfxLasergunHit[2] = CG_RegisterMediaSfx( S_WEAPON_LASERGUN_HIT_2, true );
