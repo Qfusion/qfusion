@@ -1,15 +1,9 @@
 #include "include/common.glsl"
 #include "include/lightmap.glsl"
 #include "include/uniforms.glsl"
-#if defined(NUM_DLIGHTS)
-#include "include/dlights.glsl"
-#endif
-#ifdef APPLY_FOG
-#include "include/fog.glsl"
-#endif
-#ifdef APPLY_GREYSCALE
-#include "include/greyscale.glsl"
-#endif
+#include_if(NUM_DLIGHTS) "include/dlights.glsl"
+#include_if(APPLY_FOG) "include/fog.glsl"
+#include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 
 #include "include/varying_q3a.glsl"
 

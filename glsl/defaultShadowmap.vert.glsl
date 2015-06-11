@@ -1,7 +1,6 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 #include "include/attributes.glsl"
-#include "include/vtransform.glsl"
 
 #ifndef NUM_SHADOWS
 #define NUM_SHADOWS 1
@@ -31,7 +30,7 @@ void main(void)
 	vec3 Normal = a_Normal.xyz;
 	vec2 TexCoord = a_TexCoord;
 
-	TransformVerts(Position, Normal, TexCoord);
+	QF_TransformVerts(Position, Normal, TexCoord);
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;
 

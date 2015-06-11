@@ -1,7 +1,6 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 #include "include/attributes.glsl"
-#include "include/vtransform.glsl"
 #include "include/rgbgen.glsl"
 
 qf_varying vec4 v_TexCoord;
@@ -23,7 +22,7 @@ void main(void)
 	float TangentDir = a_SVector.w;
 	myhalf4 inColor = myhalf4(a_Color);
 
-	TransformVerts(Position, Normal, TexCoord);
+	QF_TransformVerts(Position, Normal, TexCoord);
 
 	qf_FrontColor = vec4(VertexRGBGen(Position, Normal, inColor));
 

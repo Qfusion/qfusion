@@ -1,9 +1,8 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
+#include_if(APPLY_FOG) "include/fog.glsl"
 
 #ifdef APPLY_FOG
-#include "include/fog.glsl"
-
 qf_varying vec2 v_FogCoord;
 #endif
 

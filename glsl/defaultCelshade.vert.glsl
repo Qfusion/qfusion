@@ -1,12 +1,8 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 #include "include/attributes.glsl"
-#include "include/vtransform.glsl"
 #include "include/rgbgen.glsl"
-
-#ifdef APPLY_FOG
-#include "include/fog.glsl"
-#endif
+#include_if(APPLY_FOG) "include/fog.glsl"
 
 qf_varying vec2 v_TexCoord;
 qf_varying vec3 v_TexCoordCube;
@@ -24,7 +20,7 @@ void main(void)
 	vec2 TexCoord = a_TexCoord;
 	myhalf4 inColor = myhalf4(a_Color);
 
-	TransformVerts(Position, Normal, TexCoord);
+	QF_TransformVerts(Position, Normal, TexCoord);
 
 	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
 
