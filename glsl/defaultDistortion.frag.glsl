@@ -1,8 +1,6 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
-#ifdef APPLY_GREYSCALE
-#include "include/greyscale.glsl"
-#endif
+#include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 
 qf_varying vec4 v_TexCoord;
 qf_varying vec4 v_ProjVector;

@@ -1,11 +1,8 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
 #include "include/attributes.glsl"
-#include "include/vtransform.glsl"
 #include "include/rgbgen.glsl"
-#ifdef APPLY_FOG
-#include "include/fog.glsl"
-#endif
+#include_if(APPLY_FOG) "include/fog.glsl"
 
 #include "include/varying_material.glsl"
 
@@ -18,7 +15,7 @@ void main()
 	vec3 Tangent = a_SVector.xyz;
 	float TangentDir = a_SVector.w;
 
-	TransformVerts_Tangent(Position, Normal, Tangent, TexCoord);
+	QF_TransformVerts_Tangent(Position, Normal, Tangent, TexCoord);
 
 	myhalf4 outColor = VertexRGBGen(Position, Normal, inColor);
 

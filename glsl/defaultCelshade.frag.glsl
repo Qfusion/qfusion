@@ -1,11 +1,7 @@
 #include "include/common.glsl"
 #include "include/uniforms.glsl"
-#ifdef APPLY_FOG
-#include "include/fog.glsl"
-#endif
-#ifdef APPLY_GREYSCALE
-#include "include/greyscale.glsl"
-#endif
+#include_if(APPLY_FOG) "include/fog.glsl"
+#include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 
 qf_varying vec2 v_TexCoord;
 qf_varying vec3 v_TexCoordCube;

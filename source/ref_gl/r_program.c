@@ -1067,6 +1067,111 @@ QF_GLSL_PI \
 "uniform vec3 u_QF_EntityOrigin;\n" \
 "uniform float u_QF_ShaderTime;\n"
 
+#define QF_BUILTIN_GLSL_QUAT_TRANSFORM_OVERLOAD \
+"#ifdef QF_DUAL_QUAT_TRANSFORM_TANGENT\n" \
+"void QF_VertexDualQuatsTransform_Tangent(inout vec4 Position, inout vec3 Normal, inout vec3 Tangent)\n" \
+"#else\n" \
+"void QF_VertexDualQuatsTransform(inout vec4 Position, inout vec3 Normal)\n" \
+"#endif\n" \
+"{\n" \
+"	ivec4 Indices = ivec4(a_BonesIndices * 2.0);\n" \
+"	vec4 DQReal = u_DualQuats[Indices.x];\n" \
+"	vec4 DQDual = u_DualQuats[Indices.x + 1];\n" \
+"#if QF_NUM_BONE_INFLUENCES >= 2\n" \
+"	DQReal *= a_BonesWeights.x;\n" \
+"	DQDual *= a_BonesWeights.x;\n" \
+"	vec4 DQReal1 = u_DualQuats[Indices.y];\n" \
+"	vec4 DQDual1 = u_DualQuats[Indices.y + 1];\n" \
+"	float Scale = mix(-1.0, 1.0, step(0.0, dot(DQReal1, DQReal))) * a_BonesWeights.y;\n" \
+"	DQReal += DQReal1 * Scale;\n" \
+"	DQDual += DQDual1 * Scale;\n" \
+"#if QF_NUM_BONE_INFLUENCES >= 3\n" \
+"	DQReal1 = u_DualQuats[Indices.z];\n" \
+"	DQDual1 = u_DualQuats[Indices.z + 1];\n" \
+"	Scale = mix(-1.0, 1.0, step(0.0, dot(DQReal1, DQReal))) * a_BonesWeights.z;\n" \
+"	DQReal += DQReal1 * Scale;\n" \
+"	DQDual += DQDual1 * Scale;\n" \
+"#if QF_NUM_BONE_INFLUENCES >= 4\n" \
+"	DQReal1 = u_DualQuats[Indices.w];\n" \
+"	DQDual1 = u_DualQuats[Indices.w + 1];\n" \
+"	Scale = mix(-1.0, 1.0, step(0.0, dot(DQReal1, DQReal))) * a_BonesWeights.w;\n" \
+"	DQReal += DQReal1 * Scale;\n" \
+"	DQDual += DQDual1 * Scale;\n" \
+"#endif // QF_NUM_BONE_INFLUENCES >= 4\n" \
+"#endif // QF_NUM_BONE_INFLUENCES >= 3\n" \
+"	float Len = 1.0 / length(DQReal);\n" \
+"	DQReal *= Len;\n" \
+"	DQDual *= Len;\n" \
+"#endif // QF_NUM_BONE_INFLUENCES >= 2\n" \
+"	Position.xyz += (cross(DQReal.xyz, cross(DQReal.xyz, Position.xyz) + Position.xyz * DQReal.w + DQDual.xyz) +\n" \
+"		DQDual.xyz*DQReal.w - DQReal.xyz*DQDual.w) * 2.0;\n" \
+"	Normal += cross(DQReal.xyz, cross(DQReal.xyz, Normal) + Normal * DQReal.w) * 2.0;\n" \
+"#ifdef QF_DUAL_QUAT_TRANSFORM_TANGENT\n" \
+"	Tangent += cross(DQReal.xyz, cross(DQReal.xyz, Tangent) + Tangent * DQReal.w) * 2.0;\n" \
+"#endif\n" \
+"}\n" \
+"\n"
+
+#define QF_BUILTIN_GLSL_EMPTY_QUAT_TRANSFORM \
+"#define QF_VertexDualQuatsTransform_Tangent(P,N,T)\n" \
+"#define QF_VertexDualQuatsTransform(P,N)\n" \
+"\n"
+
+#define QF_BUILTIN_GLSL_QUAT_TRANSFORM \
+"qf_attribute vec4 a_BonesIndices, a_BonesWeights;\n" \
+"uniform vec4 u_DualQuats[MAX_UNIFORM_BONES*2];\n" \
+"\n" \
+QF_BUILTIN_GLSL_QUAT_TRANSFORM_OVERLOAD \
+"#define QF_DUAL_QUAT_TRANSFORM_TANGENT\n" \
+QF_BUILTIN_GLSL_QUAT_TRANSFORM_OVERLOAD \
+"#undef QF_DUAL_QUAT_TRANSFORM_TANGENT\n"
+
+#define QF_BUILTIN_GLSL_INSTANCED_TRANSFORMS \
+"#ifdef APPLY_INSTANCED_TRANSFORMS\n" \
+"\n" \
+"#if defined(APPLY_INSTANCED_ATTRIB_TRANSFORMS)\n" \
+"qf_attribute vec4 a_InstanceQuat, a_InstancePosAndScale;\n" \
+"#elif defined(GL_ARB_draw_instanced) || (defined(GL_ES) && (__VERSION__ >= 300))\n" \
+"uniform vec4 u_InstancePoints[MAX_UNIFORM_INSTANCES*2];\n" \
+"#define a_InstanceQuat u_InstancePoints[gl_InstanceID*2]\n" \
+"#define a_InstancePosAndScale u_InstancePoints[gl_InstanceID*2+1]\n" \
+"#else\n" \
+"uniform vec4 u_InstancePoints[2];\n" \
+"#define a_InstanceQuat u_InstancePoints[0]\n" \
+"#define a_InstancePosAndScale u_InstancePoints[1\n" \
+"#endif // APPLY_INSTANCED_ATTRIB_TRANSFORMS\n" \
+"\n" \
+"void QF_InstancedTransform(inout vec4 Position, inout vec3 Normal)\n" \
+"{\n" \
+"	Position.xyz = (cross(a_InstanceQuat.xyz,\n" \
+"		cross(a_InstanceQuat.xyz, Position.xyz) + Position.xyz*a_InstanceQuat.w)*2.0 +\n" \
+"		Position.xyz) * a_InstancePosAndScale.w + a_InstancePosAndScale.xyz;\n" \
+"	Normal = cross(a_InstanceQuat.xyz, cross(a_InstanceQuat.xyz, Normal) + Normal*a_InstanceQuat.w)*2.0 + Normal;\n" \
+"}\n" \
+"\n" \
+"#endif // APPLY_INSTANCED_TRANSFORMS\n" \
+"\n"
+
+#define QF_BUILTIN_GLSL_EMPTY_INSTANCED_TRANSFORMS \
+"#define QF_InstancedTransform(P,n)\n" \
+"\n"
+
+#define QF_BUILTIN_GLSL_TRANSFORM_VERTS \
+"void QF_TransformVerts(inout vec4 Position, inout vec3 Normal, inout vec2 TexCoord)\n" \
+"{\n" \
+"	QF_VertexDualQuatsTransform(Position, Normal);\n" \
+"	QF_DeformVerts(Position, Normal, TexCoord);\n" \
+"	QF_InstancedTransform(Position, Normal);\n" \
+"}\n" \
+"\n" \
+"void QF_TransformVerts_Tangent(inout vec4 Position, inout vec3 Normal, inout vec3 Tangent, inout vec2 TexCoord)\n" \
+"{\n" \
+"	QF_VertexDualQuatsTransform_Tangent(Position, Normal, Tangent);\n" \
+"	QF_DeformVerts(Position, Normal, TexCoord);\n" \
+"	QF_InstancedTransform(Position, Normal);\n" \
+"}\n" \
+"\n"
+
 #define QF_GLSL_WAVEFUNCS \
 "\n" \
 QF_GLSL_PI \
@@ -1125,13 +1230,11 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 	static const int numSupportedFuncs = sizeof( funcs ) / sizeof( funcs[0] ) - 1;
 
 	if( !numDeforms ) {
-		return NULL;
+		return "#define QF_DeformVerts(P,N,TC) \n";
 	}
 
 	program[0] = '\0';
 	Q_strncpyz( program, 
-		"#define APPLY_DEFORMVERTS\n"
-		"\n"
 		"#if defined(APPLY_AUTOSPRITE) || defined(APPLY_AUTOSPRITE2)\n"
 		"qf_attribute vec4 a_SpritePoint;\n"
 		"#else\n"
@@ -1262,7 +1365,7 @@ typedef struct
 * RF_LoadShaderFromFile_r
 */
 static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
-	int stackDepth )
+	int stackDepth, r_glslfeat_t features )
 {
 	char *fileContents;
 	char *token, *line;
@@ -1307,17 +1410,39 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 	startBuf = NULL;
 
 	while( 1 ) {
+		bool include, ignore_include;
+
 		prevPtr = ptr;
 		token = COM_ParseExt( &ptr, true );
 		if( !token[0] ) {
 			break;
 		}
 
-		line = token;
-		if( Q_stricmp( token, "#include" ) ) {
-			if( !startBuf ) {
-				startBuf = prevPtr;
+		include = false;
+		ignore_include = false;
+
+		if( !Q_stricmp( token, "#include" ) ) {
+			include = true;
+		}
+		else if( !Q_strnicmp( token, "#include_if(", 12 ) ) {
+			include = true;
+
+			ignore_include = true;
+			if( ( !Q_stricmp( token, "#include_if(APPLY_FOG)" ) && (features & GLSL_SHADER_COMMON_FOG) ) ||
+				( !Q_stricmp( token, "#include_if(NUM_DLIGHTS)" ) && (features & GLSL_SHADER_COMMON_DLIGHTS) ) ||
+				( !Q_stricmp( token, "#include_if(APPLY_GREYSCALE)" ) && (features & GLSL_SHADER_COMMON_GREYSCALE) ) ) {
+				ignore_include = false;
 			}
+		}
+
+		line = token;
+		if( !include || ignore_include ) { 
+			if( !ignore_include ) {
+				if( !startBuf ) {
+					startBuf = prevPtr;
+				}
+			}
+
 			// skip to the end of the line
 			token = strchr( ptr, '\n' );
 			if( !token ) {
@@ -1374,7 +1499,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 
 			Q_strncatz( tempFilename, va( "%s%s", *tempFilename ? "/" : "", token ), tempFilenameSize );
 
-			parser->error = RF_LoadShaderFromFile_r( parser, tempFilename, stackDepth+1 );
+			parser->error = RF_LoadShaderFromFile_r( parser, tempFilename, stackDepth+1, features );
 
 			R_Free( tempFilename );
 
@@ -1454,8 +1579,8 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	unsigned int i;
 	int hash;
 	int linked, error = 0;
-	int shaderTypeIdx, wavefuncsIdx, deformvIdx;
-	int instancedIdx, textureArrayIdx;
+	int shaderTypeIdx, wavefuncsIdx, deformvIdx, dualQuatsIdx, instancedIdx, vTransformsIdx;
+	int enableInstancedIdx, enableTextureArrayIdx;
 #ifdef GL_ES_VERSION_2_0
 	int shadowIdx, texture3DIdx;
 #endif
@@ -1569,7 +1694,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	}
 #endif
 
-	instancedIdx = i;
+	enableInstancedIdx = i;
 #ifndef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion < 400 && glConfig.ext.draw_instanced )
 		shaderStrings[i++] = QF_GLSL_ENABLE_ARB_DRAW_INSTANCED;
@@ -1583,7 +1708,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	texture3DIdx = i;
 	shaderStrings[i++] = "\n";
 #endif
-	textureArrayIdx = i;
+	enableTextureArrayIdx = i;
 	shaderStrings[i++] = "\n";
 
 	shaderStrings[i++] = shaderVersion;
@@ -1628,6 +1753,25 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	deformvIdx = i;
 	shaderStrings[i++] = R_GLSLBuildDeformv( deforms, numDeforms );
 
+	dualQuatsIdx = i;
+	if( features & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
+		shaderStrings[i++] = QF_BUILTIN_GLSL_QUAT_TRANSFORM;
+	}
+	else {
+		shaderStrings[i++] = QF_BUILTIN_GLSL_EMPTY_QUAT_TRANSFORM;
+	}
+
+	instancedIdx = i;
+	if( features & (GLSL_SHADER_COMMON_INSTANCED_TRANSFORMS|GLSL_SHADER_COMMON_INSTANCED_ATTRIB_TRANSFORMS) ) {
+		shaderStrings[i++] = QF_BUILTIN_GLSL_INSTANCED_TRANSFORMS;
+	}
+	else {
+		shaderStrings[i++] = QF_BUILTIN_GLSL_EMPTY_INSTANCED_TRANSFORMS;
+	}
+
+	vTransformsIdx = i;
+	shaderStrings[i++] = QF_BUILTIN_GLSL_TRANSFORM_VERTS;
+
 	// setup the parser
 	num_init_strings = i;
 	memset( &parser, 0, sizeof( parser ) );
@@ -1644,14 +1788,11 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 
 	// vertex shader
 	shaderStrings[shaderTypeIdx] = "#define VERTEX_SHADER\n";
-	if( shaderStrings[deformvIdx] == NULL ) {
-		shaderStrings[deformvIdx] = "\n";
-	}
 	Q_snprintfz( fileName, sizeof( fileName ), "glsl/%s.vert.glsl", name );
 	parser.error = false;
 	parser.numBuffers = 0;
 	parser.numStrings = 0;
-	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
+	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1, features );
 	program->vertexShader = RF_CompileShader( program->object, fullName, "vertex", GL_VERTEX_SHADER_ARB, 
 		shaderStrings, num_init_strings + parser.numStrings );
 	for( i = 0; i < parser.numBuffers; i++ )
@@ -1663,28 +1804,31 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	}
 
 	// fragment shader
-	shaderStrings[instancedIdx] = "\n";
+	shaderStrings[enableInstancedIdx] = "\n";
 #ifdef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion < 300 )
 #endif
 	{
 #ifdef GL_ES_VERSION_2_0
 		if( glConfig.ext.shadow )
-			shaderStrings[shadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
+			shaderStrings[shadowIdx]NUM_DLIGHTS = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
 		if( glConfig.ext.texture3D )
 			shaderStrings[texture3DIdx] = QF_GLSL_ENABLE_OES_TEXTURE_3D;
 #endif
 		if( glConfig.ext.texture_array )
-			shaderStrings[textureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;
+			shaderStrings[enableTextureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;
 	}
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
 	shaderStrings[wavefuncsIdx] = "\n";
 	shaderStrings[deformvIdx] = "\n";
+	shaderStrings[dualQuatsIdx] = "\n";
+	shaderStrings[instancedIdx] = "\n";
+	shaderStrings[vTransformsIdx] = "\n";
 	Q_snprintfz( fileName, sizeof( fileName ), "glsl/%s.frag.glsl", name );
 	parser.error = false;
 	parser.numBuffers = 0;
 	parser.numStrings = 0;
-	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1 );
+	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1, features );
 	program->fragmentShader = RF_CompileShader( program->object, fullName, "fragment", GL_FRAGMENT_SHADER_ARB, 
 		shaderStrings, num_init_strings + parser.numStrings );
 	for( i = 0; i < parser.numBuffers; i++ )
