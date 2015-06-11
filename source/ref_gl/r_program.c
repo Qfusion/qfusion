@@ -996,20 +996,17 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#ifdef FRAGMENT_SHADER\n" \
 "# if defined(GL_FRAGMENT_PRECISION_HIGH) && defined(QF_FRAGMENT_PRECISION_HIGH)\n" \
 "   precision highp float;\n" \
-"#  ifdef GL_EXT_shadow_samplers\n" \
-"    precision highp sampler2DShadow;\n" \
-"#  endif\n" \
 "# else\n" \
 "   precision mediump float;\n" \
-"#  ifdef GL_EXT_shadow_samplers\n" \
-"    precision mediump sampler2DShadow;\n" \
-"#  endif\n" \
 "# endif\n" \
 "# ifdef GL_EXT_texture_array\n" \
 "   precision lowp sampler2DArray;\n" \
 "# endif\n" \
 "# ifdef GL_OES_texture_3D\n" \
 "   precision lowp sampler3D;\n" \
+"# endif\n" \
+"# ifdef GL_EXT_shadow_samplers\n" \
+"   precision lowp sampler2DShadow;\n" \
 "# endif\n" \
 "# define qf_FragColor gl_FragColor\n" \
 "#endif\n" \
@@ -1030,13 +1027,12 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#ifdef FRAGMENT_SHADER\n" \
 "# ifdef QF_FRAGMENT_PRECISION_HIGH\n" \
 "   precision highp float;\n" \
-"   precision highp sampler2DShadow;\n" \
 "# else\n" \
 "   precision mediump float;\n" \
-"   precision mediump sampler2DShadow;\n" \
 "# endif\n" \
 "  precision lowp sampler2DArray;\n" \
 "  precision lowp sampler3D;\n" \
+"  precision lowp sampler2DShadow;\n" \
 "  layout(location = 0) out vec4 qf_FragColor;\n" \
 "# define qf_varying in\n" \
 "#endif\n" \
