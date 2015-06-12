@@ -4,6 +4,8 @@
 #include_if(NUM_DLIGHTS) "include/dlights.glsl"
 #include_if(APPLY_FOG) "include/fog.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
+#include_if(APPLY_OFFSETMAPPING) "include/offsetmapping.glsl"
+#include_if(APPLY_CELSHADING) "include/celshading.glsl"
 
 #include "include/varying_material.glsl"
 
@@ -43,57 +45,12 @@ uniform myhalf3 u_FloorColor;
 
 uniform myhalf2 u_GlossFactors; // gloss scaling and exponent factors
 
-#if defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
-// The following reliefmapping and offsetmapping routine was taken from DarkPlaces
-// The credit goes to LordHavoc (as always)
-vec2 OffsetMapping(vec2 TexCoord)
-{
-#ifdef APPLY_RELIEFMAPPING
-	// 14 sample relief mapping: linear search and then binary search
-	// this basically steps forward a small amount repeatedly until it finds
-	// itself inside solid, then jitters forward and back using decreasing
-	// amounts to find the impact
-	//vec3 OffsetVector = vec3(v_EyeVector.xy * ((1.0 / v_EyeVector.z) * u_OffsetMappingScale) * vec2(-1, 1), -1);
-	//vec3 OffsetVector = vec3(normalize(v_EyeVector.xy) * u_OffsetMappingScale * vec2(-1, 1), -1);
-	vec3 OffsetVector = vec3(normalize(v_EyeVector).xy * u_OffsetMappingScale * vec2(-1, 1), -1);
-	vec3 RT = vec3(TexCoord, 1);
-	OffsetVector *= 0.1;
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector *  step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z);
-	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z)          - 0.5);
-	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z) * 0.5    - 0.25);
-	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z) * 0.25   - 0.125);
-	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z) * 0.125  - 0.0625);
-	RT += OffsetVector * (step(qf_texture(u_NormalmapTexture, RT.xy).a, RT.z) * 0.0625 - 0.03125);
-	return RT.xy;
-#else
-	// 2 sample offset mapping (only 2 samples because of ATI Radeon 9500-9800/X300 limits)
-	// this basically moves forward the full distance, and then backs up based
-	// on height of samples
-	//vec2 OffsetVector = vec2(v_EyeVector.xy * ((1.0 / v_EyeVector.z) * u_OffsetMappingScale) * vec2(-1, 1));
-	//vec2 OffsetVector = vec2(normalize(v_EyeVector.xy) * u_OffsetMappingScale * vec2(-1, 1));
-	vec2 OffsetVector = vec2(normalize(v_EyeVector).xy * u_OffsetMappingScale * vec2(-1, 1));
-	TexCoord += OffsetVector;
-	OffsetVector *= 0.5;
-	TexCoord -= OffsetVector * qf_texture(u_NormalmapTexture, TexCoord).a;
-	TexCoord -= OffsetVector * qf_texture(u_NormalmapTexture, TexCoord).a;
-	return TexCoord;
-#endif // APPLY_RELIEFMAPPING
-}
-#endif // defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
 
 void main()
 {
 #if defined(APPLY_OFFSETMAPPING) || defined(APPLY_RELIEFMAPPING)
 	// apply offsetmapping
-	vec2 TexCoordOffset = OffsetMapping(v_TexCoord_FogCoord.st);
+	vec2 TexCoordOffset = OffsetMapping(u_NormalmapTexture, v_TexCoord_FogCoord.st, v_EyeVector, u_OffsetMappingScale);
 #define v_TexCoord TexCoordOffset
 #else
 #define v_TexCoord v_TexCoord_FogCoord.st
@@ -103,12 +60,6 @@ void main()
 	myhalf3 surfaceNormalModelspace;
 	myhalf3 diffuseNormalModelspace;
 	float diffuseProduct;
-
-#ifdef APPLY_CELSHADING
-	float diffuseProductPositive;
-	float diffuseProductNegative;
-	float hardShadow;
-#endif
 
 	myhalf3 weightedDiffuseNormalModelspace;
 
@@ -135,29 +86,9 @@ void main()
 	weightedDiffuseNormalModelspace = diffuseNormalModelspace;
 
 #ifdef APPLY_CELSHADING
-	hardShadow = 0.0;
-#ifdef APPLY_HALFLAMBERT
-	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
-	diffuseProductPositive = float ( clamp(diffuseProduct, 0.0, 1.0) * 0.5 + 0.5 );
-	diffuseProductPositive *= diffuseProductPositive;
-	diffuseProductNegative = float ( clamp(diffuseProduct, -1.0, 0.0) * 0.5 - 0.5 );
-	diffuseProductNegative = diffuseProductNegative * diffuseProductNegative - 0.25;
-	diffuseProduct = diffuseProductPositive;
-#else
-	diffuseProduct = float (dot (surfaceNormalModelspace, diffuseNormalModelspace));
-	diffuseProductPositive = max (diffuseProduct, 0.0);
-	diffuseProductNegative = (-min (diffuseProduct, 0.0) - 0.3);
-#endif // APPLY_HALFLAMBERT
-
-	// smooth the hard shadow edge
-	hardShadow += floor(max(diffuseProduct + 0.1, 0.0) * 2.0);
-	hardShadow += floor(max(diffuseProduct + 0.055, 0.0) * 2.0);
-	hardShadow += floor(diffuseProductPositive * 2.0);
-
-	color.rgb += myhalf(0.6 + hardShadow * 0.09 + diffuseProductPositive * 0.14);
-
-	// backlight
-	color.rgb += myhalf (ceil(diffuseProductNegative * 2.0) * 0.085 + diffuseProductNegative * 0.085);
+	
+	color.rgb += CelShading(surfaceNormalModelspace, diffuseNormalModelspace);
+	
 #else
 
 #ifdef APPLY_HALFLAMBERT
