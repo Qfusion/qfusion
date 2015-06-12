@@ -1365,7 +1365,7 @@ typedef struct
 * RF_LoadShaderFromFile_r
 */
 static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
-	int stackDepth, r_glslfeat_t features )
+	int stackDepth, int programType, r_glslfeat_t features )
 {
 	char *fileContents;
 	char *token, *line;
@@ -1426,11 +1426,28 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 		}
 		else if( !Q_strnicmp( token, "#include_if(", 12 ) ) {
 			include = true;
+			token += 12;
 
 			ignore_include = true;
-			if( ( !Q_stricmp( token, "#include_if(APPLY_FOG)" ) && (features & GLSL_SHADER_COMMON_FOG) ) ||
-				( !Q_stricmp( token, "#include_if(NUM_DLIGHTS)" ) && (features & GLSL_SHADER_COMMON_DLIGHTS) ) ||
-				( !Q_stricmp( token, "#include_if(APPLY_GREYSCALE)" ) && (features & GLSL_SHADER_COMMON_GREYSCALE) ) ) {
+			if( ( !Q_stricmp( token, "APPLY_FOG)" ) && (features & GLSL_SHADER_COMMON_FOG) ) ||
+
+				( !Q_stricmp( token, "NUM_DLIGHTS)" ) && (features & GLSL_SHADER_COMMON_DLIGHTS) ) ||
+
+				( !Q_stricmp( token, "APPLY_GREYSCALE)" ) && (features & GLSL_SHADER_COMMON_GREYSCALE) ) ||
+
+				( (programType == GLSL_PROGRAM_TYPE_Q3A_SHADER) && !Q_stricmp( token, "NUM_LIGHTMAPS)" )
+					&& (features & GLSL_SHADER_Q3_LIGHTSTYLE) ) ||
+
+				( (programType == GLSL_PROGRAM_TYPE_MATERIAL) && !Q_stricmp( token, "NUM_LIGHTMAPS)" )
+					&& (features & GLSL_SHADER_MATERIAL_LIGHTSTYLE) ) ||
+
+				( (programType == GLSL_PROGRAM_TYPE_MATERIAL) && !Q_stricmp( token, "APPLY_OFFSETMAPPING)" ) 
+					&& (features & (GLSL_SHADER_MATERIAL_OFFSETMAPPING|GLSL_SHADER_MATERIAL_RELIEFMAPPING)) ) ||
+
+				( (programType == GLSL_PROGRAM_TYPE_MATERIAL) && !Q_stricmp( token, "APPLY_CELSHADING)" )
+					&& (features & GLSL_SHADER_MATERIAL_CELSHADING) )
+
+				) {
 				ignore_include = false;
 			}
 		}
@@ -1499,7 +1516,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 
 			Q_strncatz( tempFilename, va( "%s%s", *tempFilename ? "/" : "", token ), tempFilenameSize );
 
-			parser->error = RF_LoadShaderFromFile_r( parser, tempFilename, stackDepth+1, features );
+			parser->error = RF_LoadShaderFromFile_r( parser, tempFilename, stackDepth+1, programType, features );
 
 			R_Free( tempFilename );
 
@@ -1792,7 +1809,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	parser.error = false;
 	parser.numBuffers = 0;
 	parser.numStrings = 0;
-	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1, features );
+	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1, type, features );
 	program->vertexShader = RF_CompileShader( program->object, fullName, "vertex", GL_VERTEX_SHADER_ARB, 
 		shaderStrings, num_init_strings + parser.numStrings );
 	for( i = 0; i < parser.numBuffers; i++ )
@@ -1828,7 +1845,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	parser.error = false;
 	parser.numBuffers = 0;
 	parser.numStrings = 0;
-	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1, features );
+	RF_LoadShaderFromFile_r( &parser, parser.topFile, 1, type, features );
 	program->fragmentShader = RF_CompileShader( program->object, fullName, "fragment", GL_FRAGMENT_SHADER_ARB, 
 		shaderStrings, num_init_strings + parser.numStrings );
 	for( i = 0; i < parser.numBuffers; i++ )
