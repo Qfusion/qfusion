@@ -5,7 +5,7 @@
 #include_if(APPLY_FOG) "include/fog.glsl"
 #include_if(APPLY_GREYSCALE) "include/greyscale.glsl"
 #include_if(APPLY_OFFSETMAPPING) "include/offsetmapping.glsl"
-#include_if(APPLY_CELSHADING) "include/celshading.glsl"
+#include_if(APPLY_CELSHADING) "include/celshading_material.glsl"
 
 #include "include/varying_material.glsl"
 
