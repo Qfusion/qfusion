@@ -131,7 +131,7 @@ void R_DrawCoronas( void )
 			rn.viewAxis[AXIS_FORWARD+0] * ( light->origin[0] - rn.viewOrigin[0] ) +
 			rn.viewAxis[AXIS_FORWARD+1] * ( light->origin[1] - rn.viewOrigin[1] ) +
 			rn.viewAxis[AXIS_FORWARD+2] * ( light->origin[2] - rn.viewOrigin[2] );
-		if( dist < 30.0f )
+		if( dist < light->intensity )
 			continue;
 		dist -= light->intensity;
 
