@@ -381,7 +381,7 @@ void CG_BulletExplosion( vec3_t pos, vec_t *dir, trace_t *trace )
 		if( ISVIEWERENTITY( tr->ent ) )
 			le->ent.renderfx |= RF_VIEWERMODEL;
 	}
-	else if( tr->surfFlags & SURF_DUST )
+	else if( cg_particles->integer && (tr->surfFlags & SURF_DUST) )
 	{
 		// throw particles on dust
 		CG_ImpactSmokePuff( tr->endpos, tr->plane.normal, 4, 0.6f, 6, 8 );
@@ -395,8 +395,10 @@ void CG_BulletExplosion( vec3_t pos, vec_t *dir, trace_t *trace )
 			NULL );
 		le->ent.rotation = rand() % 360;
 		le->ent.scale = 1.0f;
-
-		CG_ImpactSmokePuff( tr->endpos, tr->plane.normal, 2, 0.6f, 6, 8 );
+		if( cg_particles->integer )
+		{
+			CG_ImpactSmokePuff( tr->endpos, tr->plane.normal, 2, 0.6f, 6, 8 );
+		}
 
 		if( !( tr->surfFlags & SURF_NOMARKS ) )
 			CG_SpawnDecal( pos, dir, random()*360, 8, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderBulletMark ) );
