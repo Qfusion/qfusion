@@ -614,7 +614,7 @@ static void CG_BulletImpact( trace_t *tr )
 	CG_BulletExplosion( tr->endpos, NULL, tr );
 
 	// throw particles on dust
-	if( tr->surfFlags & SURF_DUST )
+	if( cg_particles->integer && (tr->surfFlags & SURF_DUST) )
 		CG_ParticleEffect( tr->endpos, tr->plane.normal, 0.30f, 0.30f, 0.25f, 1 );
 
 	// spawn decal
