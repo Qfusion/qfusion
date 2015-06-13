@@ -91,15 +91,18 @@ static void _LaserImpact( trace_t *trace, vec3_t dir )
 	if( !trace || trace->ent < 0 )
 		return;
 
-	if( cg_particles->integer && laserOwner )
+	if( laserOwner )
 	{
 #define TRAILTIME ( (int)( 1000.0f / 20.0f ) ) // density as quantity per second
 
 		if( laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] + TRAILTIME < cg.time )
 		{
 			laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] = cg.time;
-			CG_ImpactSmokePuff( trace->endpos, trace->plane.normal, 1, 1.0f, 8, 12 );
-			CG_ImpactPuffParticles( trace->endpos, trace->plane.normal, 2, 0.9f, 1.0f, 0.8f, 0.2f, 1.0f, NULL);
+			if( cg_particles->integer )
+			{
+				CG_ImpactSmokePuff( trace->endpos, trace->plane.normal, 1, 1.0f, 8, 12 );
+				CG_ImpactPuffParticles( trace->endpos, trace->plane.normal, 2, 0.9f, 1.0f, 0.8f, 0.2f, 1.0f, NULL);
+			}
 			trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxLasergunHit[rand()%3] ), trace->endpos, CHAN_AUTO,
 				cg_volume_effects->value, ATTN_STATIC );
 		}
