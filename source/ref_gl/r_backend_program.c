@@ -808,6 +808,19 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	decalmap = pass->images[3] && !pass->images[3]->missing ?  pass->images[3] : NULL;
 	entdecalmap = pass->images[4] && !pass->images[4]->missing ?  pass->images[4] : NULL;
 
+	if( normalmap && !normalmap->loaded ) {
+		normalmap = rsh.blankBumpTexture;
+	}
+	if( glossmap && !glossmap->loaded ) {
+		glossmap = NULL;
+	}
+	if( decalmap && !decalmap->loaded ) {
+		decalmap = NULL;
+	}
+	if( entdecalmap && !entdecalmap->loaded ) {
+		entdecalmap = NULL;
+	}
+
 	// use blank image if the normalmap is too tiny due to high picmip value
 	if( normalmap && ( normalmap->upload_width < 2 || normalmap->upload_height < 2 ) ) {
 		normalmap = rsh.blankBumpTexture;
@@ -1618,7 +1631,7 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 
 	Matrix4_Identity( texMatrix );
 
-	RB_BindTexture( 0, base );
+	RB_BindTexture( 0, base->loaded ? base : rsh.blackTexture );
 
 	RB_VertexTCCelshadeMatrix( reflectionMatrix );
 
