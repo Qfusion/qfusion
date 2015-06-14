@@ -1445,7 +1445,10 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 					&& (features & (GLSL_SHADER_MATERIAL_OFFSETMAPPING|GLSL_SHADER_MATERIAL_RELIEFMAPPING)) ) ||
 
 				( (programType == GLSL_PROGRAM_TYPE_MATERIAL) && !Q_stricmp( token, "APPLY_CELSHADING)" )
-					&& (features & GLSL_SHADER_MATERIAL_CELSHADING) )
+					&& (features & GLSL_SHADER_MATERIAL_CELSHADING) ) ||
+
+				( (programType == GLSL_PROGRAM_TYPE_MATERIAL) && !Q_stricmp( token, "APPLY_DIRECTIONAL_LIGHT)" )
+					&& (features & GLSL_SHADER_MATERIAL_DIRECTIONAL_LIGHT) )
 
 				) {
 				ignore_include = false;
