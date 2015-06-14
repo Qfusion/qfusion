@@ -1,8 +1,8 @@
-#ifdef APPLY_CELSHADING
-myhalf2 CelShading(in myhalf3 surfaceNormalModelspace, in myhalf3 diffuseNormalModelspace)
+myhalf3 CelShading(in myhalf3 surfaceNormalModelspace, in myhalf3 diffuseNormalModelspace)
 { 
 	myhalf diffuseProductPositive;
 	myhalf diffuseProductNegative;
+	myhalf diffuseProduct;
 	myhalf hardShadow = 0.0;
 
 #ifdef APPLY_HALFLAMBERT
@@ -23,11 +23,10 @@ myhalf2 CelShading(in myhalf3 surfaceNormalModelspace, in myhalf3 diffuseNormalM
 	hardShadow += floor(max(diffuseProduct + 0.055, 0.0) * 2.0);
 	hardShadow += floor(diffuseProductPositive * 2.0);
 
-	myhalf diffuseProduct = myhalf(0.6 + hardShadow * 0.09 + diffuseProductPositive * 0.14);
+	diffuseProduct = myhalf(0.6 + hardShadow * 0.09 + diffuseProductPositive * 0.14);
 
 	// backlight
 	diffuseProduct += myhalf (ceil(diffuseProductNegative * 2.0) * 0.085 + diffuseProductNegative * 0.085);
 
-	return diffuseProduct;
+	return myhalf3(diffuseProduct);
 }
-#endif // APPLY_CELSHADING
