@@ -772,7 +772,7 @@ static void Mod_CreateSkydome( model_t *mod )
 
 		for( j = 0, surf = loadbmodel->surfaces + bm->firstface; j < bm->numfaces; j++, surf++ )
 		{
-			if( surf->shader->flags & SHADER_SKY ) {
+			if( R_SurfPotentiallyVisible( surf ) && ( surf->shader->flags & SHADER_SKY ) ) {
 				loadbmodel->skydome = R_CreateSkydome( mod );
 				return;
 			}
