@@ -32,6 +32,7 @@ typedef struct
 	void *wndproc;
 
 	char *applicationName;
+	WCHAR *applicationNameW;
 	HDC hDC;                    // handle to device context
 	HWND hWnd;                  // handle to window
 	HWND parenthWnd;			// handle to parent window

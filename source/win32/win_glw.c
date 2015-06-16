@@ -124,7 +124,7 @@ static bool VID_CreateWindow( void )
 
 	Q_snprintfz( glw_state.windowClassName, sizeof( glw_state.windowClassName ), "%sWndClass", glw_state.applicationName );
 #ifdef WITH_UTF8
-	MultiByteToWideChar( CP_ACP, 0, glw_state.windowClassName, -1, glw_state.windowClassNameW, sizeof( glw_state.windowClassNameW ) );
+	MultiByteToWideChar( CP_UTF8, 0, glw_state.windowClassName, -1, glw_state.windowClassNameW, sizeof( glw_state.windowClassNameW ) );
 	glw_state.windowClassNameW[sizeof( glw_state.windowClassNameW )/sizeof( glw_state.windowClassNameW[0] ) - 1] = 0;
 #endif
 
@@ -147,10 +147,20 @@ static bool VID_CreateWindow( void )
 #endif
 		Sys_Error( "Couldn't register window class" );
 
-	glw_state.hWnd = CreateWindowEx(
+	glw_state.hWnd =
+#ifdef WITH_UTF8
+		CreateWindowExW(
+#else
+		CreateWindowEx(
+#endif
 	        0,
+#ifdef WITH_UTF8
+	        glw_state.windowClassNameW,
+	        glw_state.applicationNameW,
+#else
 	        glw_state.windowClassName,
 	        glw_state.applicationName,
+#endif
 			0,
 	        0, 0, 0, 0,
 	        parentHWND,
@@ -387,6 +397,12 @@ void GLimp_Shutdown( void )
 		glw_state.applicationName = NULL;
 	}
 
+	if( glw_state.applicationNameW )
+	{
+		free( glw_state.applicationNameW );
+		glw_state.applicationNameW = NULL;
+	}
+
 	glw_state.applicationIconResourceID = 0;
 
 	glw_state.win_x = 0;
@@ -407,9 +423,15 @@ void GLimp_Shutdown( void )
 int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
 	int iconResource, const int *iconXPM )
 {
+	size_t applicationNameSize = strlen( applicationName ) + 1;
 	// save off hInstance and wndproc
-	glw_state.applicationName = malloc( strlen( applicationName ) + 1 );
-	memcpy( glw_state.applicationName, applicationName, strlen( applicationName ) + 1 );
+	glw_state.applicationName = malloc( applicationNameSize );
+	memcpy( glw_state.applicationName, applicationName, applicationNameSize );
+#ifdef WITH_UTF8
+	glw_state.applicationNameW = malloc( applicationNameSize * sizeof( WCHAR ) ); // may be larger than needed, but not smaller
+	MultiByteToWideChar( CP_UTF8, 0, applicationName, -1, glw_state.applicationNameW, applicationNameSize * sizeof( WCHAR ) );
+	glw_state.applicationNameW[applicationNameSize - 1] = 0;
+#endif
 	glw_state.hInstance = ( HINSTANCE ) hinstance;
 	glw_state.wndproc = wndproc;
 	glw_state.parenthWnd = ( HWND )parenthWnd;
