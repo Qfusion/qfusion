@@ -885,7 +885,7 @@ static void R_FinalizeGLExtensions( void )
 	if( glConfig.ext.texture_array )
 		qglGetIntegerv( GL_MAX_ARRAY_TEXTURE_LAYERS_EXT, &glConfig.maxTextureLayers );
 #ifdef GL_ES_VERSION_2_0
-	if( qglTexImage3D )
+	if( glConfig.version >= 300 )
 	{
 		qglTexImage3DEXT = qglTexImage3D;
 		qglTexSubImage3DEXT = qglTexSubImage3D;
