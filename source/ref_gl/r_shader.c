@@ -2512,7 +2512,7 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 	s->name = ( char * )shortname; // HACK, will be copied over in Shader_Finish
 	s->type = type;
 
-	if( ( type == SHADER_TYPE_DELUXEMAP ) || ( type == SHADER_TYPE_VERTEX ) )
+	if( type >= SHADER_TYPE_BSP_MIN && type <= SHADER_TYPE_BSP_MAX )
 		s->imagetags = IMAGE_TAG_WORLD;
 	else
 		s->imagetags = IMAGE_TAG_GENERIC;

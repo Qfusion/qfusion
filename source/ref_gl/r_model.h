@@ -56,6 +56,14 @@ typedef struct mfog_s
 	vec3_t			mins, maxs;
 } mfog_t;
 
+typedef struct mshaderref_s
+{
+	char			name[MAX_QPATH];
+	int				flags;
+	int				contents;
+	shader_t		*shaders[NUM_SHADER_TYPES_BSP];
+} mshaderref_t;
+
 typedef struct msurface_s
 {
 	unsigned int	visFrame;			// should be drawn when node is crossed
