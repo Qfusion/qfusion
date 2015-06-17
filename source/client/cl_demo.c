@@ -308,7 +308,12 @@ static void CL_ReadDemoMessage( void )
 	read = SNAP_ReadDemoMessage( demofilehandle, &demomsg );
 	if( read == -1 )
 	{
-		CL_Disconnect( NULL );
+		if( cls.demo.pause_on_stop ) {
+			cls.demo.paused = true;
+		}
+		else {
+			CL_Disconnect( NULL );
+		}
 		return;
 	}
 
@@ -325,6 +330,9 @@ void CL_ReadDemoPackets( void )
 	while( cls.demo.playing && ( cl.receivedSnapNum <= 0 || !cl.snapShots[cl.receivedSnapNum&UPDATE_MASK].valid || cl.snapShots[cl.receivedSnapNum&UPDATE_MASK].serverTime < cl.serverTime ) )
 	{
 		CL_ReadDemoMessage();
+		if( cls.demo.paused ) {
+			return;
+		}
 	}
 
 	cls.demo.time = cls.gametime;
@@ -336,7 +344,7 @@ void CL_ReadDemoPackets( void )
 /*
 * CL_StartDemo
 */
-static void CL_StartDemo( const char *demoname )
+static void CL_StartDemo( const char *demoname, bool pause_on_stop )
 {
 	size_t name_size;
 	char *name, *servername;
@@ -395,6 +403,7 @@ static void CL_StartDemo( const char *demoname )
 	cls.demo.playing = true;
 	cls.demo.basetime = cls.demo.duration = cls.demo.time = 0;
 
+	cls.demo.pause_on_stop = pause_on_stop;
 	cls.demo.play_ignore_next_frametime = false;
 	cls.demo.play_jump = false;
 	cls.demo.filename = ZoneCopyString( name );
@@ -424,12 +433,12 @@ char **CL_DemoComplete( const char *partial )
 */
 void CL_PlayDemo_f( void )
 {
-	if( Cmd_Argc() != 2 )
+	if( Cmd_Argc() < 2 )
 	{
-		Com_Printf( "demo <demoname>\n" );
+		Com_Printf( "demo <demoname> [pause_on_stop]\n" );
 		return;
 	}
-	CL_StartDemo( Cmd_Argv( 1 ) );
+	CL_StartDemo( Cmd_Argv( 1 ), atoi( Cmd_Argv( 2 ) ) != 0 );
 }
 
 /*
@@ -546,7 +555,7 @@ void CL_PlayDemoToAvi_f( void )
 	{
 		char *tempname = TempCopyString( Cmd_Argv( 1 ) );
 
-		CL_StartDemo( tempname );
+		CL_StartDemo( tempname, false );
 
 		if( cls.demo.playing )
 			cls.demo.pending_avi = true;

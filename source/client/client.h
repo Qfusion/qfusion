@@ -190,6 +190,7 @@ typedef struct
 	bool avi;
 	bool avi_video, avi_audio;
 	bool pending_avi;
+	bool pause_on_stop;
 	int avi_frame;
 
 	char meta_data[SNAP_MAX_DEMO_META_DATA_SIZE];
