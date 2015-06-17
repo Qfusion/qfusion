@@ -1458,13 +1458,11 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 			le->ent.scale = 0.8f - ( random() * 0.25 );
 			le->ent.renderfx = RF_FULLBRIGHT|RF_NOSHADOW;
 
-			velocity[0] = crandom() * damage * 100;
-			velocity[1] = crandom() * damage * 100;
-			velocity[2] = random() * damage * 300;
-
-			clamp( velocity[0], -100, 100 );
-			clamp( velocity[1], -100, 100 );
-			clamp( velocity[2], 150, 300 );  // always have upwards
+			velocity[0] = crandom() * 0.5;
+			velocity[1] = crandom() * 0.5;
+			velocity[2] = 0.5 + random() * 0.5; // always have upwards
+			VectorNormalize( velocity );
+			VectorScale( velocity, min( damage * 10, 300 ), velocity );
 
 			velocity[0] += crandom() * bound( 0, damage, 150 );
 			velocity[1] += crandom() * bound( 0, damage, 150 );
