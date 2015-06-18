@@ -1031,7 +1031,7 @@ void CG_SpawnSprite( vec3_t origin, vec3_t velocity, vec3_t accel,
 					float radius, int time, int bounce, bool expandEffect, bool shrinkEffect,
 					float r, float g, float b, float a,
 					float light, float lr, float lg, float lb, struct shader_s *shader );
-void CG_LasertGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color );
+void CG_LaserGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color );
 
 void CG_Dash( entity_state_t *state );
 void CG_SpawnTracer( vec3_t origin, vec3_t dir, vec3_t dir_per1, vec3_t dir_per2 );

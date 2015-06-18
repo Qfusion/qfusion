@@ -677,7 +677,7 @@ void CG_BladeImpact( vec3_t pos, vec3_t dir )
 /*
 * CG_LasertGunImpact
 */
-void CG_LasertGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color )
+void CG_LaserGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color )
 {
 	entity_t ent;
 	vec3_t ndir;

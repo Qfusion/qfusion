@@ -119,7 +119,7 @@ static void _LaserImpact( trace_t *trace, vec3_t dir )
 	{
 		vec4_t color;
 
-		CG_LasertGunImpact( trace->endpos, trace->plane.normal, 15.0f, dir, _LaserColor( color ) );
+		CG_LaserGunImpact( trace->endpos, trace->plane.normal, 15.0f, dir, _LaserColor( color ) );
 
 		CG_AddLightToScene( trace->endpos, 100, 0.75f, 0.75f, 0.375f );
 		return;
