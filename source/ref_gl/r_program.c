@@ -1831,7 +1831,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	{
 #ifdef GL_ES_VERSION_2_0
 		if( glConfig.ext.shadow )
-			shaderStrings[shadowIdx]NUM_DLIGHTS = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
+			shaderStrings[shadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
 		if( glConfig.ext.texture3D )
 			shaderStrings[texture3DIdx] = QF_GLSL_ENABLE_OES_TEXTURE_3D;
 #endif
