@@ -423,20 +423,20 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, bool under
 			char *suf; int flags;
 		} cubemapSides[2][6] = {
 			{
-				{ "px", IT_FLIPDIAGONAL },
-				{ "py", IT_FLIPY },
-				{ "nx", IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL },
-				{ "ny", IT_FLIPX },
-				{ "pz", IT_FLIPDIAGONAL },
-				{ "nz", IT_FLIPDIAGONAL }
-			},
-			{
 				{ "rt", 0 },
 				{ "bk", 0 },
 				{ "lf", 0 },
 				{ "ft", 0 },
 				{ "up", 0 },
 				{ "dn", 0 }
+			},
+			{
+				{ "px", IT_FLIPDIAGONAL },
+				{ "py", IT_FLIPY },
+				{ "nx", IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL },
+				{ "ny", IT_FLIPX },
+				{ "pz", IT_FLIPDIAGONAL },
+				{ "nz", IT_FLIPDIAGONAL }
 			}
 		};
 
