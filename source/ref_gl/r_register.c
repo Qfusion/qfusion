@@ -467,9 +467,9 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION_EXT( \0, GLSL_core, 1, true, false, &gl_ext_GLSL_core_ARB_funcs, GLSL )
 	,GL_EXTENSION_EXT( \0, GLSL130, 1, false, false, &gl_ext_GLSL130_ARB_funcs, GLSL )
 
-	,GL_EXTENSION( EXT, draw_range_elements, true, false, &gl_ext_draw_range_elements_EXT_funcs )
+	,GL_EXTENSION( EXT, draw_range_elements, false, false, &gl_ext_draw_range_elements_EXT_funcs )
 	,GL_EXTENSION( EXT, framebuffer_object, true, true, &gl_ext_framebuffer_object_EXT_funcs )
-	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, true, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
+	,GL_EXTENSION_EXT( EXT, framebuffer_blit, 1, false, false, &gl_ext_framebuffer_blit_EXT_funcs, framebuffer_object )
 	,GL_EXTENSION( ARB, texture_compression, false, false, &gl_ext_texture_compression_ARB_funcs )
 	,GL_EXTENSION( EXT, texture_edge_clamp, true, true, NULL )
 	,GL_EXTENSION( SGIS, texture_edge_clamp, true, true, NULL )
@@ -478,7 +478,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( SGIX, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( ARB, shadow, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( ARB, texture_non_power_of_two, false, false, NULL )
-	,GL_EXTENSION( ARB, draw_instanced, true, false, &gl_ext_draw_instanced_ARB_funcs )
+	,GL_EXTENSION( ARB, draw_instanced, false, false, &gl_ext_draw_instanced_ARB_funcs )
 	,GL_EXTENSION( ARB, instanced_arrays, false, false, &gl_ext_instanced_arrays_ARB_funcs )
 	,GL_EXTENSION( ARB, half_float_vertex, false, false, NULL )
 	,GL_EXTENSION( ARB, get_program_binary, false, false, &gl_ext_get_program_binary_ARB_funcs )
@@ -493,8 +493,8 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( ATI, meminfo, true, false, NULL )
 
 #else
-	 GL_EXTENSION( NV, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_NV_funcs )
-	,GL_EXTENSION( ANGLE, framebuffer_blit, true, false, &gl_ext_framebuffer_blit_ANGLE_funcs )
+	 GL_EXTENSION( NV, framebuffer_blit, false, false, &gl_ext_framebuffer_blit_NV_funcs )
+	,GL_EXTENSION( ANGLE, framebuffer_blit, false, false, &gl_ext_framebuffer_blit_ANGLE_funcs )
 	,GL_EXTENSION( OES, depth_texture, false, false, NULL )
 	,GL_EXTENSION_EXT( EXT, shadow_samplers, 1, false, false, NULL, depth_texture )
 	,GL_EXTENSION( OES, texture_npot, false, false, NULL )
@@ -764,14 +764,14 @@ static void R_FinalizeGLExtensions( void )
 	( glConfig.ext.name = ( ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ? true : false ) )
 #define GL_OPTIONAL_CORE_EXTENSION_DEP(name,dep) \
 	( glConfig.ext.name = ( ( glConfig.ext.dep && ri.Cvar_Get( "gl_ext_" #name, "1", CVAR_ARCHIVE|CVAR_LATCH_VIDEO )->integer ) ? true : false ) )
-		glConfig.ext.draw_instanced = true;
-		glConfig.ext.draw_range_elements = true;
 		glConfig.ext.ES3_compatibility = true;
-		glConfig.ext.framebuffer_blit = true;
 		glConfig.ext.GLSL130 = true;
 		glConfig.ext.rgb8_rgba8 = true;
 		GL_OPTIONAL_CORE_EXTENSION(depth24);
 		GL_OPTIONAL_CORE_EXTENSION(depth_texture);
+		GL_OPTIONAL_CORE_EXTENSION(draw_instanced);
+		GL_OPTIONAL_CORE_EXTENSION(draw_range_elements);
+		GL_OPTIONAL_CORE_EXTENSION(framebuffer_blit);
 		GL_OPTIONAL_CORE_EXTENSION(get_program_binary);
 		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);
 		GL_OPTIONAL_CORE_EXTENSION(texture_3D);
