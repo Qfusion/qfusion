@@ -651,8 +651,7 @@ void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weaponid, int eff
 			if( barrel_time > cg.time )
 			{
 				intensity =  (float)( barrel_time - cg.time ) / (float)weaponInfo->barrelTime;
-				rotangles[2] = ( 360.0f * weaponInfo->barrelSpeed * intensity * intensity );
-				while( rotangles[2] > 360 ) rotangles[2] -= 360;
+				rotangles[2] = anglemod( 360.0f * weaponInfo->barrelSpeed * intensity * intensity );
 
 				// Check for tag_recoil
 				if( CG_GrabTag( &barrel_recoiled, &weapon, "tag_recoil" ) )

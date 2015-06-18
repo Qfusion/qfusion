@@ -675,6 +675,31 @@ void CG_BladeImpact( vec3_t pos, vec3_t dir )
 }
 
 /*
+* CG_LasertGunImpact
+*/
+void CG_LasertGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color )
+{
+	entity_t ent;
+	vec3_t ndir;
+	vec3_t angles;
+
+	memset( &ent, 0, sizeof( ent ) );
+	VectorCopy( pos, ent.origin );
+	VectorMA( ent.origin, 2, dir, ent.origin );
+	ent.renderfx = RF_FULLBRIGHT|RF_NOSHADOW;
+	ent.scale = 3.0f;
+	Vector4Set( ent.shaderRGBA, color[0] * 255, color[1] * 255, color[2] * 255, color[3] * 255 );
+	ent.model = CG_MediaModel( cgs.media.modLasergunWallExplo );
+	VectorNegate( laser_dir, ndir );
+	VecToAngles( ndir, angles );
+	angles[2] = anglemod( -30.0f * cg.time * 0.001f );
+
+	AnglesToAxis( angles, ent.axis );
+				
+	trap_R_AddEntityToScene( &ent );
+}
+
+/*
 * CG_GunBladeBlastImpact
 */
 void CG_GunBladeBlastImpact( vec3_t pos, vec3_t dir, float radius )

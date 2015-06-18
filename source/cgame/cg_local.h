@@ -238,6 +238,8 @@ typedef struct
 	cgs_media_handle_t *modElectroBoltWallHit;
 	cgs_media_handle_t *modInstagunWallHit;
 
+	cgs_media_handle_t *modLasergunWallExplo;
+
 	//no wsw
 
 	cgs_media_handle_t *shaderParticle;
@@ -295,7 +297,6 @@ typedef struct
 	cgs_media_handle_t *shaderElectroBeamBBeta;
 	cgs_media_handle_t *shaderInstaBeam;
 	cgs_media_handle_t *shaderLaserGunBeam;
-	cgs_media_handle_t *shaderLaserGunBeamOld;
 	cgs_media_handle_t *shaderElectroboltMark;
 	cgs_media_handle_t *shaderInstagunMark;
 
@@ -1030,6 +1031,7 @@ void CG_SpawnSprite( vec3_t origin, vec3_t velocity, vec3_t accel,
 					float radius, int time, int bounce, bool expandEffect, bool shrinkEffect,
 					float r, float g, float b, float a,
 					float light, float lr, float lg, float lb, struct shader_s *shader );
+void CG_LasertGunImpact( const vec3_t pos, const vec3_t dir, float radius, const vec3_t laser_dir, const vec4_t color );
 
 void CG_Dash( entity_state_t *state );
 void CG_SpawnTracer( vec3_t origin, vec3_t dir, vec3_t dir_per1, vec3_t dir_per2 );
@@ -1057,7 +1059,6 @@ extern cvar_t *cg_ebbeam_time;
 extern cvar_t *cg_instabeam_width;
 extern cvar_t *cg_instabeam_alpha;
 extern cvar_t *cg_instabeam_time;
-extern cvar_t *cg_lgbeam_old;
 
 void CG_ClearPolys( void );
 void CG_AddPolys( void );

@@ -224,6 +224,7 @@ extern "C" {
 #define PATH_GUNBLADEBLAST_EXPLOSION_MODEL  "models/weapon_hits/gunblade/hit_blastexp.md3"
 #define PATH_ELECTROBLAST_IMPACT_MODEL	    "models/weapon_hits/electrobolt/hit_electrobolt.md3"
 #define PATH_INSTABLAST_IMPACT_MODEL	    "models/weapon_hits/instagun/hit_instagun.md3"
+#define PATH_LASERGUN_IMPACT_MODEL      "models/weapon_hits/lasergun/hit_blastexp.md3"
 
 #define GRENADE_EXPLOSION_MODEL_RADIUS		30.0
 #define PLASMA_EXPLOSION_MODEL_RADIUS		10.0
