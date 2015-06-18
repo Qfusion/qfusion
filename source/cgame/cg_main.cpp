@@ -138,7 +138,6 @@ cvar_t *cg_ebbeam_time;
 cvar_t *cg_instabeam_width;
 cvar_t *cg_instabeam_alpha;
 cvar_t *cg_instabeam_time;
-cvar_t *cg_lgbeam_old;
 
 cvar_t *cg_playList;
 cvar_t *cg_playListShuffle;
@@ -820,7 +819,6 @@ static void CG_RegisterVariables( void )
 	cg_ebbeam_width = trap_Cvar_Get( "cg_ebbeam_width", "64", CVAR_ARCHIVE );
 	cg_ebbeam_alpha = trap_Cvar_Get( "cg_ebbeam_alpha", "0.4", CVAR_ARCHIVE );
 	cg_ebbeam_time = trap_Cvar_Get( "cg_ebbeam_time", "0.6", CVAR_ARCHIVE );
-	cg_lgbeam_old = trap_Cvar_Get( "cg_lgbeam_old", "0", CVAR_ARCHIVE );
 
 	cg_instabeam_width = trap_Cvar_Get( "cg_instabeam_width", "7", CVAR_ARCHIVE );
 	cg_instabeam_alpha = trap_Cvar_Get( "cg_instabeam_alpha", "0.4", CVAR_ARCHIVE );

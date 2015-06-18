@@ -86,6 +86,15 @@ void CG_WeaponBeamEffect( centity_t *cent )
 
 static centity_t *laserOwner = NULL;
 
+static vec_t *_LaserColor( vec4_t color )
+{
+	Vector4Set( color, 1, 1, 1, 1 );
+	if( cg_teamColoredBeams->integer && ( laserOwner != NULL ) && ( laserOwner->current.team == TEAM_ALPHA || laserOwner->current.team == TEAM_BETA ) ) {
+		CG_TeamColor( laserOwner->current.team, color );
+	}
+	return color;
+}
+
 static void _LaserImpact( trace_t *trace, vec3_t dir )
 {
 	if( !trace || trace->ent < 0 )
@@ -98,11 +107,7 @@ static void _LaserImpact( trace_t *trace, vec3_t dir )
 		if( laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] + TRAILTIME < cg.time )
 		{
 			laserOwner->localEffects[LOCALEFFECT_LASERBEAM_SMOKE_TRAIL] = cg.time;
-			if( cg_particles->integer )
-			{
-				CG_ImpactSmokePuff( trace->endpos, trace->plane.normal, 1, 1.0f, 8, 12 );
-				CG_ImpactPuffParticles( trace->endpos, trace->plane.normal, 2, 0.9f, 1.0f, 0.8f, 0.2f, 1.0f, NULL);
-			}
+			
 			trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxLasergunHit[rand()%3] ), trace->endpos, CHAN_AUTO,
 				cg_volume_effects->value, ATTN_STATIC );
 		}
@@ -112,9 +117,11 @@ static void _LaserImpact( trace_t *trace, vec3_t dir )
 	// it's a brush model
 	if( trace->ent == 0 || !( cg_entities[trace->ent].current.effects & EF_TAKEDAMAGE ) )
 	{
-		CG_AddLightToScene( trace->endpos, 100, 0.75f, 0.75f, 0.375f );
+		vec4_t color;
 
-		// TODO: add impact model
+		CG_LasertGunImpact( trace->endpos, trace->plane.normal, 15.0f, dir, _LaserColor( color ) );
+
+		CG_AddLightToScene( trace->endpos, 100, 0.75f, 0.75f, 0.375f );
 		return;
 	}
 
@@ -152,11 +159,7 @@ void CG_LaserBeamEffect( centity_t *cent )
 	}
 
 	laserOwner = cent;
-
-	if( cg_teamColoredBeams->integer && ( cent->current.team == TEAM_ALPHA || cent->current.team == TEAM_BETA ) )
-		CG_TeamColor( cent->current.team, color );
-	else
-		Vector4Set( color, 1, 1, 1, 1 );
+	_LaserColor( color );
 
 	// interpolate the positions
 
