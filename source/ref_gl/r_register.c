@@ -1115,7 +1115,7 @@ static void R_Register( const char *screenshotsPrefix )
 	r_outlines_cutoff = ri.Cvar_Get( "r_outlines_cutoff", "712", CVAR_ARCHIVE );
 
 	r_soft_particles = ri.Cvar_Get( "r_soft_particles", "1", CVAR_ARCHIVE );
-	r_soft_particles_scale = ri.Cvar_Get( "r_soft_particles_scale", "0.01", CVAR_ARCHIVE );
+	r_soft_particles_scale = ri.Cvar_Get( "r_soft_particles_scale", "0.02", CVAR_ARCHIVE );
 
 	r_fxaa = ri.Cvar_Get( "r_fxaa", "0", CVAR_ARCHIVE );
 
