@@ -1407,6 +1407,9 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 	uint8_t *data;
 	int numFaces = ( ( image->flags & IT_CUBEMAP ) ? 6 : 1 );
 
+	if( image->flags & ( IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL ) )
+		return false;
+
 	R_LoadFile( image->name, ( void ** )&buffer );
 	if( !buffer )
 		return false;
