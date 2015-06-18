@@ -31,7 +31,7 @@ enum
 	,IT_CUBEMAP			= 1<<4
 	,IT_FLIPX			= 1<<5
 	,IT_FLIPY			= 1<<6
-	,IT_FLIPDIAGONAL	= 1<<7
+	,IT_FLIPDIAGONAL	= 1<<7		// when used alone, equals to rotating 90 CW and flipping X; with FLIPX|Y, 90 CCW and flipping X
 	,IT_NOCOMPRESS		= 1<<8
 	,IT_DEPTH			= 1<<9
 	,IT_NORMALMAP		= 1<<10
