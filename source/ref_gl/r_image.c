@@ -851,7 +851,7 @@ static void R_MipMap16( unsigned short *in, int width, int height, int rMask, in
 * R_TextureInternalFormat
 */
 #ifndef GL_ES_VERSION_2_0
-static int R_TextureInternalFormat( int samples, int flags )
+static int R_TextureInternalFormat( int samples, int flags, int pixelType )
 {
 	int bits = r_texturebits->integer;
 
@@ -884,7 +884,7 @@ static int R_TextureInternalFormat( int samples, int flags )
 		return ( ( flags & IT_ALPHAMASK ) ? GL_ALPHA : GL_LUMINANCE );
 	}
 
-	if( bits == 16 )
+	if( ( bits == 16 ) && ( pixelType != GL_UNSIGNED_SHORT_5_5_5_1 ) )
 		return GL_RGBA4;
 	return GL_RGBA;
 }
@@ -932,6 +932,7 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 	}
 	else
 	{
+		*type = GL_UNSIGNED_BYTE;
 		if( samples == 4 )
 			*format = ( flags & IT_BGRA ? GL_BGRA_EXT : GL_RGBA );
 		else if( samples == 3 )
@@ -945,9 +946,8 @@ static void R_TextureFormat( int flags, int samples, int *comp, int *format, int
 #ifdef GL_ES_VERSION_2_0
 		*comp = *format;
 #else
-		*comp = R_TextureInternalFormat( samples, flags );
+		*comp = R_TextureInternalFormat( samples, flags, GL_UNSIGNED_BYTE );
 #endif
-		*type = GL_UNSIGNED_BYTE;
 	}
 }
 
@@ -1292,10 +1292,10 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 		mipLevels = 1;
 	}
 
+#ifdef GL_ES_VERSION_2_0
 	comp = format;
-#ifndef GL_ES_VERSION_2_0
-	if( type == GL_UNSIGNED_BYTE )
-		comp = R_TextureInternalFormat( pixelSize, flags );
+#else
+	comp = R_TextureInternalFormat( pixelSize, flags, type );
 #endif
 
 	R_SetupTexParameters( flags );
