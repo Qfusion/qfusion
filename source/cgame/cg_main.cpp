@@ -1078,6 +1078,8 @@ void CG_Reset( void )
 	// start up announcer events queue from clean
 	CG_ClearAnnouncerEvents();
 
+	CG_ClearInputState();
+
 	cg.time = 0;
 	cg.realTime = 0;
 
