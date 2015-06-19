@@ -687,12 +687,12 @@ void CG_LaserGunImpact( const vec3_t pos, const vec3_t dir, float radius, const 
 	VectorCopy( pos, ent.origin );
 	VectorMA( ent.origin, 2, dir, ent.origin );
 	ent.renderfx = RF_FULLBRIGHT|RF_NOSHADOW;
-	ent.scale = 3.0f;
+	ent.scale = 2.0f;
 	Vector4Set( ent.shaderRGBA, color[0] * 255, color[1] * 255, color[2] * 255, color[3] * 255 );
 	ent.model = CG_MediaModel( cgs.media.modLasergunWallExplo );
 	VectorNegate( laser_dir, ndir );
 	VecToAngles( ndir, angles );
-	angles[2] = anglemod( -30.0f * cg.time * 0.001f );
+	angles[2] = anglemod( -80.0f * cg.time * 0.001f );
 
 	AnglesToAxis( angles, ent.axis );
 				
