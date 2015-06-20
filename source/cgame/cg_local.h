@@ -140,11 +140,6 @@ typedef struct cgs_media_handle_s
 	struct cgs_media_handle_s *next;
 } cgs_media_handle_t;
 
-#define MAX_SMALL_TECHY_GIBS	4
-#define MAX_BIG_TECHY_GIBS		2
-#define MAX_TECHY_GIBS			( MAX_SMALL_TECHY_GIBS + MAX_BIG_TECHY_GIBS )
-#define MAX_MEATY_GIBS			4
-
 #define STAT_MINUS				10  // num frame for '-' stats digit
 
 typedef struct
@@ -224,8 +219,6 @@ typedef struct
 	cgs_media_handle_t *modHeadStun;
 
 	cgs_media_handle_t *modIlluminatiGibs;
-	cgs_media_handle_t *modTechyGibs[MAX_TECHY_GIBS];
-	cgs_media_handle_t *modMeatyGibs[MAX_MEATY_GIBS];
 
 	//wsw weapon sfx
 	cgs_media_handle_t *modRocketExplosion;
