@@ -2208,14 +2208,7 @@ void CG_UpdateEntities( void )
 				CG_UpdateGenericEnt( cent );
 
 				// set the gib model ignoring the modelindex one
-				if( cg_gibs->integer == 1 )
-				{
-					cent->ent.model = CG_MediaModel( cgs.media.modTechyGibs[ 0 ] );
-				}
-				else
-				{
-					cent->ent.model = CG_MediaModel( cgs.media.modIlluminatiGibs );
-				}
+				cent->ent.model = CG_MediaModel( cgs.media.modIlluminatiGibs );
 			}
 			break;
 

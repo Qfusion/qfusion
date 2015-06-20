@@ -246,13 +246,7 @@ void CG_RegisterMediaModels( void )
 	cgs.media.modInstagunWallHit = CG_RegisterMediaModel( PATH_INSTABLAST_IMPACT_MODEL, true );
 	cgs.media.modLasergunWallExplo = CG_RegisterMediaModel( PATH_LASERGUN_IMPACT_MODEL, true );
 
-	// gibs models
-	for( i = 0; i < MAX_TECHY_GIBS; i++ )
-		cgs.media.modTechyGibs[i] = CG_RegisterMediaModel( va( "models/objects/gibs/gib%i/gib%i.md3", i+1, i+1 ), true );
-
-	for( i = 0; i < MAX_MEATY_GIBS; i++ )
-		cgs.media.modMeatyGibs[i] = CG_RegisterMediaModel( va( "models/objects/oldgibs/gib%i/gib%i.md3", i+1, i+1 ), true );
-
+	// gibs model
 	cgs.media.modIlluminatiGibs = CG_RegisterMediaModel( "models/objects/gibs/illuminati/illuminati1.md3", true );	
 }
 
