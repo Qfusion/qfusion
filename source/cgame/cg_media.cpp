@@ -226,7 +226,6 @@ struct model_s *CG_MediaModel( cgs_media_handle_t *mediamodel )
 */
 void CG_RegisterMediaModels( void )
 {
-	int i;
 	model_headnode = NULL;
 
 	//	cgs.media.modGrenadeExplosion = CG_RegisterMediaModel( PATH_GRENADE_EXPLOSION_MODEL, true );
