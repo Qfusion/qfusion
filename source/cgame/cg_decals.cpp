@@ -19,8 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "cg_local.h"
 
-#define MAX_DECALS		256
-#define MAX_DECAL_VERTS		128
+#define MAX_DECALS			512
+#define MAX_DECAL_VERTS		64
 #define MAX_DECAL_FRAGMENTS	64
 
 typedef struct cdecal_s
