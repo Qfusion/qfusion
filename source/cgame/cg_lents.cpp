@@ -1441,115 +1441,72 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 	if( !cg_gibs->integer )
 		return;
 
-	if( cg_gibs->integer > 1 )
+	time = 50;
+	count = 13 + cg_gibs->integer; // 30 models minimum
+	clamp( count, 14, 128 );
+
+	for( i = 0; i < count; i++ )
 	{
-		time = 50;
-		count = 13 + cg_gibs->integer; // 30 models minimum
-		clamp( count, 14, 128 );
+		vec4_t color;
 
-		for( i = 0; i < count; i++ )
-		{
-			vec4_t color;
-
-			// coloring
-			switch ( rand( ) % 3 ) {
-			case 0:
-				// orange
-				Vector4Set( color, 1, 0.5, 0, 1 );
-				break;
-			case 1:
-				// purple
-				Vector4Set( color, 1, 0, 1, 1 );
-				break;
-			case 2:
-			default:
-				// team
-				CG_TeamColor( team, color );
-				for( j = 0; j < 3; j++ ) {
-					color[j] = bound( 60.0f / 255.0f, color[j], 1.0f );
-				}
-				break;
+		// coloring
+		switch ( rand( ) % 3 ) {
+		case 0:
+			// orange
+			Vector4Set( color, 1, 0.5, 0, 1 );
+			break;
+		case 1:
+			// purple
+			Vector4Set( color, 1, 0, 1, 1 );
+			break;
+		case 2:
+		default:
+			// team
+			CG_TeamColor( team, color );
+			for( j = 0; j < 3; j++ ) {
+				color[j] = bound( 60.0f / 255.0f, color[j], 1.0f );
 			}
-
-			le = CG_AllocModel( LE_ALPHA_FADE, origin, vec3_origin, time + time * random( ),
-				color[0], color[1], color[2], color[3],
-				0, 0, 0, 0,
-				CG_MediaModel( cgs.media.modIlluminatiGibs ),
-				NULL );
-
-			// random rotation and scale variations
-			VectorSet( angles, crandom() * 360, crandom() * 360, crandom() * 360 );
-			AnglesToAxis( angles, le->ent.axis );
-			le->ent.scale = 0.8f - ( random() * 0.25 );
-			le->ent.renderfx = RF_FULLBRIGHT|RF_NOSHADOW;
-
-			velocity[0] = crandom() * 0.5;
-			velocity[1] = crandom() * 0.5;
-			velocity[2] = 0.5 + random() * 0.5; // always have upwards
-			VectorNormalize( velocity );
-			VectorScale( velocity, min( damage * 10, 300 ), velocity );
-
-			velocity[0] += crandom() * bound( 0, damage, 150 );
-			velocity[1] += crandom() * bound( 0, damage, 150 );
-			velocity[2] += random() * bound( 0, damage, 250 );
-
-			VectorAdd( initialVelocity, velocity, le->velocity );
-
-			le->avelocity[0] = random() * 1200;
-			le->avelocity[1] = random() * 1200;
-			le->avelocity[2] = random() * 1200;
-
-			//friction and gravity
-			VectorSet( le->accel, -0.2f, -0.2f, -900 );
-
-			le->bounce = 75;
+			break;
 		}
 
-		CG_ImpactPuffParticles( origin, vec3_origin, 16, 2.5f, 1, 1, 0.6, 1, NULL );
-		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxGibsExplosion ), origin, CHAN_AUTO,
-			cg_volume_effects->value, ATTN_STATIC );
+		le = CG_AllocModel( LE_ALPHA_FADE, origin, vec3_origin, time + time * random( ),
+			color[0], color[1], color[2], color[3],
+			0, 0, 0, 0,
+			CG_MediaModel( cgs.media.modIlluminatiGibs ),
+			NULL );
 
+		// random rotation and scale variations
+		VectorSet( angles, crandom() * 360, crandom() * 360, crandom() * 360 );
+		AnglesToAxis( angles, le->ent.axis );
+		le->ent.scale = 0.8f - ( random() * 0.25 );
+		le->ent.renderfx = RF_FULLBRIGHT|RF_NOSHADOW;
+
+		velocity[0] = crandom() * 0.5;
+		velocity[1] = crandom() * 0.5;
+		velocity[2] = 0.5 + random() * 0.5; // always have upwards
+		VectorNormalize( velocity );
+		VectorScale( velocity, min( damage * 10, 300 ), velocity );
+
+		velocity[0] += crandom() * bound( 0, damage, 150 );
+		velocity[1] += crandom() * bound( 0, damage, 150 );
+		velocity[2] += random() * bound( 0, damage, 250 );
+
+		VectorAdd( initialVelocity, velocity, le->velocity );
+
+		le->avelocity[0] = random() * 1200;
+		le->avelocity[1] = random() * 1200;
+		le->avelocity[2] = random() * 1200;
+
+		//friction and gravity
+		VectorSet( le->accel, -0.2f, -0.2f, -900 );
+
+		le->bounce = 75;
 	}
-	else
-	{
-		float baseangle = random() * 2 * M_PI;
-		float radialspeed = 5.0f * damage;
 
-		clamp( radialspeed, 50.0f, 100.0f );
+	CG_ImpactPuffParticles( origin, vec3_origin, 16, 2.5f, 1, 1, 0.6, 1, NULL );
+	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxGibsExplosion ), origin, CHAN_AUTO,
+		cg_volume_effects->value, ATTN_STATIC );
 
-		time = 15;
-		count = 10;
-
-		VectorCopy( initialVelocity, velocity );
-
-		// clip gib velocity
-		clamp( velocity[0], -100, 100 );
-		clamp( velocity[1], -100, 100 );
-		clamp( velocity[2], 100, 500 );  // always some upwards
-
-		for( i = 0; i < count; i++ )
-		{
-			le = CG_AllocModel( LE_NO_FADE, origin, vec3_origin, time + time * random(),
-				1, 1, 1, 1,
-				0, 0, 0, 0,
-				CG_MediaModel( cgs.media.modTechyGibs[MAX_BIG_TECHY_GIBS + (((int)brandom( 0, MAX_SMALL_TECHY_GIBS )) % MAX_SMALL_TECHY_GIBS)] ),
-				NULL );
-
-			VectorSet( angles, crandom() * 360, crandom() * 360, crandom() * 360 );
-			AnglesToAxis( angles, le->ent.axis );
-			le->ent.scale = 1.0 + ( random() * 0.5f );
-			le->ent.renderfx = RF_FULLBRIGHT|RF_NOSHADOW;
-
-			le->velocity[0] = velocity[0] + ( cos( baseangle + M_PI * 2 * (float)(i) / (float)(count) ) * radialspeed ) + crandom() * radialspeed * 0.5f;
-			le->velocity[1] = velocity[1] + ( sin( baseangle + M_PI * 2 * (float)(i) / (float)(count) ) * radialspeed ) + crandom() * radialspeed * 0.5f;
-			le->velocity[2] = velocity[2] + 125 + crandom() * radialspeed;
-
-			VectorSet( le->accel, -0.2f, -0.2f, -900 );
-			le->bounce = 50;
-		}
-
-		CG_ImpactPuffParticles( origin, vec3_origin, 16, 2.5f, 1, 0.5, 0, 1, NULL );
-	}
 }
 
 /*
