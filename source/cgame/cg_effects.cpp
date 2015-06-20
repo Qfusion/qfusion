@@ -730,7 +730,7 @@ void CG_ElectroWeakTrail( vec3_t start, vec3_t end, vec4_t color )
 }
 
 /*
-* CG_ImpactPufParticles
+* CG_ImpactPuffParticles
 * Wall impact puffs
 */
 void CG_ImpactPuffParticles( vec3_t org, vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader )
@@ -758,6 +758,38 @@ void CG_ImpactPuffParticles( vec3_t org, vec3_t dir, int count, float scale, flo
 		p->accel[0] = p->accel[1] = 0;
 		p->accel[2] = -PARTICLE_GRAVITY;
 		p->alphavel = -1.0 / ( 0.5 + random() * 0.3 );
+	}
+}
+
+/*
+* CG_HighVelImpactPuffParticles
+* High velocity wall impact puffs
+*/
+void CG_HighVelImpactPuffParticles( vec3_t org, vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader )
+{
+	int j;
+	float d;
+	cparticle_t *p;
+
+	if( !cg_particles->integer )
+		return;
+
+	if( cg_numparticles + count > MAX_PARTICLES )
+		count = MAX_PARTICLES - cg_numparticles;
+	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ )
+	{
+		CG_InitParticle( p, scale, a, r, g, b, shader );
+
+		d = rand() & 15;
+		for( j = 0; j < 3; j++ )
+		{
+			p->org[j] = org[j] + ( ( rand()&7 ) - 4 ) + d * dir[j];
+			p->vel[j] = dir[j] * 850 + crandom() * 150;
+		}
+
+		p->accel[0] = p->accel[1] = 0;
+		p->accel[2] = -PARTICLE_GRAVITY;
+		p->alphavel = -12.0 / ( 0.5 + random() * 0.3 );
 	}
 }
 
