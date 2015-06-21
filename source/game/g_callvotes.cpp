@@ -2212,11 +2212,12 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 
 	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_CALLVOTE_CALLED_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
 
-	G_PrintMsg( NULL, "%s%s requested to vote %s%s%s\n", ent->r.client->netname, S_COLOR_WHITE, S_COLOR_YELLOW,
-		G_CallVotes_String( &callvoteState.vote ), S_COLOR_WHITE );
+	G_PrintMsg( NULL, "%s" S_COLOR_WHITE " requested to vote " S_COLOR_YELLOW "%s\n",
+		ent->r.client->netname, G_CallVotes_String( &callvoteState.vote ) );
 
-	G_PrintMsg( NULL, "%sPress %sF1 (\\vote yes)%s or %sF2 (\\vote no)%s\n", S_COLOR_WHITE, S_COLOR_YELLOW,
-		S_COLOR_WHITE, S_COLOR_YELLOW, S_COLOR_WHITE );
+	G_PrintMsg( NULL, "Press " S_COLOR_YELLOW "F1" S_COLOR_WHITE " to " S_COLOR_YELLOW "vote yes"
+		S_COLOR_WHITE " or " S_COLOR_YELLOW "F2" S_COLOR_WHITE " to " S_COLOR_YELLOW "vote no"
+		S_COLOR_WHITE ", or cast your vote using the " S_COLOR_YELLOW "in-game menu\n" );
 
 	G_CallVotes_Think(); // make the first think
 }
