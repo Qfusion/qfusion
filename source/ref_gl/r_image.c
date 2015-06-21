@@ -2210,9 +2210,10 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	{
 		while( ( size_t )( rgb - buffer ) < size )
 		{
-			*( rgb++ ) = rgba[2];
-			*( rgb++ ) = rgba[1];
-			*( rgb++ ) = rgba[0];
+			rgb[0] = rgba[2];
+			rgb[1] = rgba[1];
+			rgb[2] = rgba[0];
+			rgb += 3;
 			rgba += 4;
 		}
 	}
