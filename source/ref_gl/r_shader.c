@@ -2653,7 +2653,7 @@ create_default:
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
 			pass->program_type = GLSL_PROGRAM_TYPE_MATERIAL;
-			pass->images[0] = Shader_FindImage( s, shortname, 0 );
+			pass->images[0] = Shader_FindImage( s, longname, 0 );
 			pass->images[1] = materialImages[0]; // normalmap
 			pass->images[2] = materialImages[1]; // glossmap
 			pass->images[3] = materialImages[2]; // decalmap
