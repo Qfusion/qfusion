@@ -319,7 +319,17 @@ static void RP_PrecachePrograms( void )
 			}
 
 			Q_strncpyz( name, token, sizeof( name ) );
-			features = (hb << 32) | lb; 
+			features = (hb << 32) | lb;
+#ifdef GL_ES_VERSION_2_0
+			if( isDefaultCache ) {
+				if( glConfig.ext.fragment_precision_high ) {
+					features |= GLSL_SHADER_COMMON_FRAGMENT_HIGHP;
+				}
+				else {
+					features &= ~GLSL_SHADER_COMMON_FRAGMENT_HIGHP;
+				}
+			}
+#endif
 
 			// read optional binary cache
 			token = COM_ParseExt( ptr, false );
