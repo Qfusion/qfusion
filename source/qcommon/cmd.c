@@ -211,20 +211,22 @@ void Cbuf_EnsureSpace( size_t size )
 */
 void Cbuf_AddText( const char *text )
 {
-	Cbuf_EnsureSpace( strlen( text ) + 1 );
+	size_t textlen = strlen( text );
 
-	if( cbuf_text_size - cbuf_text_head < strlen( text ) )
+	Cbuf_EnsureSpace( textlen + 1 );
+
+	if( cbuf_text_size - cbuf_text_head < textlen )
 	{
 		size_t endsize = cbuf_text_size - cbuf_text_head;
 
 		memcpy( cbuf_text + cbuf_text_head, text, endsize );
-		memcpy( cbuf_text, text + endsize, strlen( text ) - endsize );
-		cbuf_text_head = strlen( text ) - endsize;
+		memcpy( cbuf_text, text + endsize, textlen - endsize );
+		cbuf_text_head = textlen - endsize;
 	}
 	else
 	{
-		memcpy( cbuf_text + cbuf_text_head, text, strlen( text ) );
-		cbuf_text_head += strlen( text );
+		memcpy( cbuf_text + cbuf_text_head, text, textlen );
+		cbuf_text_head += textlen;
 		if( cbuf_text_head == cbuf_text_size )
 			cbuf_text_head = 0;
 	}
@@ -240,18 +242,20 @@ void Cbuf_AddText( const char *text )
 */
 void Cbuf_InsertText( const char *text )
 {
-	Cbuf_EnsureSpace( strlen( text ) + 1 );
+	size_t textlen = strlen( text );
 
-	if( cbuf_text_tail < strlen( text ) )
+	Cbuf_EnsureSpace( textlen + 1 );
+
+	if( cbuf_text_tail < textlen )
 	{
-		memcpy( cbuf_text + cbuf_text_size - ( strlen( text ) - cbuf_text_tail ), text, strlen( text ) - cbuf_text_tail );
-		memcpy( cbuf_text, text + strlen( text ) - cbuf_text_tail, cbuf_text_tail );
-		cbuf_text_tail = cbuf_text_size - ( strlen( text ) - cbuf_text_tail );
+		memcpy( cbuf_text + cbuf_text_size - ( textlen - cbuf_text_tail ), text, textlen - cbuf_text_tail );
+		memcpy( cbuf_text, text + textlen - cbuf_text_tail, cbuf_text_tail );
+		cbuf_text_tail = cbuf_text_size - ( textlen - cbuf_text_tail );
 	}
 	else
 	{
-		memcpy( cbuf_text + cbuf_text_tail - strlen( text ), text, strlen( text ) );
-		cbuf_text_tail -= strlen( text );
+		memcpy( cbuf_text + cbuf_text_tail - textlen, text, textlen );
+		cbuf_text_tail -= textlen;
 	}
 }
 
