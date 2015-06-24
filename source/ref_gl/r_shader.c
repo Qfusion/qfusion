@@ -454,7 +454,7 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, int imaget
 					suffix[0] = '\0';
 				Q_strncatz( suffix, cubemapSides[i][j].suf, sizeof( suffix ) );
 
-				images[j] = R_FindImage( token, suffix, ITC_SKY|cubemapSides[i][j].flags, imagetags );
+				images[j] = R_FindImage( token, suffix, IT_SKYFLAGS|cubemapSides[i][j].flags, imagetags );
 				if( !images[j] )
 					break;
 			}
@@ -509,7 +509,7 @@ static void Shader_ParseCustomSkySides( const char **ptr, image_t **images, int 
 		}
 
 		if( !refs[i] )
-			images[i] = R_FindImage( token, NULL, ITC_SKY, imagetags );
+			images[i] = R_FindImage( token, NULL, IT_SKYFLAGS, imagetags );
 	}
 
 	for( i = 0; i < 6; i++ )
@@ -2694,7 +2694,7 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
-			pass->images[0] = Shader_FindImage( s, longname, ITC_SPECIAL );
+			pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL );
 			break;
 		case SHADER_TYPE_DIFFUSE:
 			// load material images
@@ -2749,7 +2749,7 @@ create_default:
 				s->cin = pass->cin;
 				pass->images[0] = rsh.noTexture;
 			} else if( type != SHADER_TYPE_2D_RAW ) {
-				pass->images[0] = Shader_FindImage( s, longname, ITC_SPECIAL|IT_SYNC );
+				pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL|IT_SYNC );
 			}
 			break;
 		case SHADER_TYPE_OPAQUE_ENV:
@@ -2935,7 +2935,7 @@ shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *d
 	int type;
 
 	type = SHADER_TYPE_2D_RAW;
-	flags |= ITC_SPECIAL;
+	flags |= IT_SPECIAL;
 
 	s = R_LoadShader( name, type, true );
 	if( s ) {
