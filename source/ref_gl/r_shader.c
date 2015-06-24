@@ -405,7 +405,7 @@ static bool Shader_SkipConditionBlock( const char **ptr )
 
 //===========================================================================
 
-static void Shader_ParseSkySides( const char **ptr, image_t **images, bool underscore, int imagetags )
+static void Shader_ParseSkySides( const char **ptr, image_t **images, int imagetags, bool underscore )
 {
 	int i, j;
 	char *token;
@@ -454,8 +454,7 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, bool under
 					suffix[0] = '\0';
 				Q_strncatz( suffix, cubemapSides[i][j].suf, sizeof( suffix ) );
 
-				images[j] = R_FindImage( token, suffix, 
-					IT_SKY|IT_NOMIPMAP|IT_CLAMP|IT_SYNC|cubemapSides[i][j].flags, imagetags );
+				images[j] = R_FindImage( token, suffix, ITC_SKY|cubemapSides[i][j].flags, imagetags );
 				if( !images[j] )
 					break;
 			}
@@ -470,6 +469,60 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, bool under
 
 	if( noskybox )
 		memset( images, 0, sizeof( *images ) * 6 );
+}
+
+/**
+ * Parses sky sides with their names specified in the shader itself.
+ * To reuse already specified images without writing their name multiple times,
+ * rt, bk, lf, ft, up and dn shortcuts can be used.
+ *
+ * @param ptr       parameters to parse
+ * @param images    array to write the images to
+ * @param imagetags image usage tags
+ */
+static void Shader_ParseCustomSkySides( const char **ptr, image_t **images, int imagetags )
+{
+	int i, j;
+	char *token;
+	int refs[6] = { 0 };
+	const char *refnames[] = {
+		"rt",
+		"bk",
+		"lf",
+		"ft",
+		"up",
+		"dn"
+	};
+
+	memset( images, 0, sizeof( *images ) * 6 );
+
+	for( i = 0; i < 6; i++ )
+	{
+		token = Shader_ParseString( ptr );
+		for( j = 0; j < 6; j++ )
+		{
+			if( !Q_stricmp( token, refnames[j] ) )
+			{
+				refs[i] = j + 1;
+				break;
+			}
+		}
+
+		if( !refs[i] )
+			images[i] = R_FindImage( token, NULL, ITC_SKY, imagetags );
+	}
+
+	for( i = 0; i < 6; i++ )
+	{
+		if( refs[i] )
+			images[i] = images[refs[i] - 1];
+
+		if( !images[i] )
+		{
+			memset( images, 0, sizeof( *images ) * 6 );
+			break;
+		}
+	}
 }
 
 static void Shader_ParseFunc( const char **ptr, shaderfunc_t *func )
@@ -666,11 +719,14 @@ static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const c
 	shader->numdeforms++;
 }
 
-static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char **ptr, bool underscore )
+static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char **ptr, bool custom, bool underscore )
 {
 	float skyheight;
 
-	Shader_ParseSkySides( ptr, shader->skyboxImages, underscore, shader->imagetags );
+	if( custom )
+		Shader_ParseCustomSkySides( ptr, shader->skyboxImages, shader->imagetags );
+	else
+		Shader_ParseSkySides( ptr, shader->skyboxImages, shader->imagetags, underscore );
 
 	skyheight = Shader_ParseFloat( ptr );
 	if( !skyheight )
@@ -682,12 +738,17 @@ static void Shader_SkyParmsExt( shader_t *shader, shaderpass_t *pass, const char
 
 static void Shader_SkyParms( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
-	Shader_SkyParmsExt( shader, pass, ptr, true );
+	Shader_SkyParmsExt( shader, pass, ptr, false, true );
 }
 
 static void Shader_SkyParms2( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
-	Shader_SkyParmsExt( shader, pass, ptr, false );
+	Shader_SkyParmsExt( shader, pass, ptr, false, false );
+}
+
+static void Shader_SkyParmsSides( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	Shader_SkyParmsExt( shader, pass, ptr, true, false );
 }
 
 static void Shader_FogParms( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -940,6 +1001,7 @@ static const shaderkey_t shaderkeys[] =
 	{ "cull", Shader_Cull },
 	{ "skyparms", Shader_SkyParms },
 	{ "skyparms2", Shader_SkyParms2 },
+	{ "skyparmssides", Shader_SkyParmsSides },
 	{ "fogparms", Shader_FogParms },
 	{ "nomipmaps", Shader_NoMipMaps },
 	{ "nopicmip", Shader_NoPicMip },
@@ -2632,7 +2694,7 @@ create_default:
 			pass->rgbgen.type = RGB_GEN_VERTEX;
 			pass->alphagen.type = ALPHA_GEN_IDENTITY;
 			pass->tcgen = TC_GEN_BASE;
-			pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL );
+			pass->images[0] = Shader_FindImage( s, longname, ITC_SPECIAL );
 			break;
 		case SHADER_TYPE_DIFFUSE:
 			// load material images
@@ -2687,7 +2749,7 @@ create_default:
 				s->cin = pass->cin;
 				pass->images[0] = rsh.noTexture;
 			} else if( type != SHADER_TYPE_2D_RAW ) {
-				pass->images[0] = Shader_FindImage( s, longname, IT_SPECIAL|IT_SYNC );
+				pass->images[0] = Shader_FindImage( s, longname, ITC_SPECIAL|IT_SYNC );
 			}
 			break;
 		case SHADER_TYPE_OPAQUE_ENV:
@@ -2873,7 +2935,7 @@ shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *d
 	int type;
 
 	type = SHADER_TYPE_2D_RAW;
-	flags |= IT_SPECIAL;
+	flags |= ITC_SPECIAL;
 
 	s = R_LoadShader( name, type, true );
 	if( s ) {
