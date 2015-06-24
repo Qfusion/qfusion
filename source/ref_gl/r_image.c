@@ -546,7 +546,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 		maxSize = glConfig.maxTextureSize;
 
 #ifdef GL_ES_VERSION_2_0
-	if( !glConfig.ext.texture_non_power_of_two && ( ( flags & IT_GL_ES_NPOT ) != IT_GL_ES_NPOT ) && !forceNPOT )
+	if( !glConfig.ext.texture_non_power_of_two && ( ( flags & ITC_GL_ES_NPOT ) != ITC_GL_ES_NPOT ) && !forceNPOT )
 #else
 	if( !glConfig.ext.texture_non_power_of_two && !forceNPOT )
 #endif
@@ -1786,7 +1786,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 
 	if( loaded )
 	{
-		// Update IT_LOADFLAGS that may be set by R_ReadImageFromDisk.
+		// Update ITC_LOADFLAGS that may be set by R_ReadImageFromDisk.
 		image->flags = flags;
 	}
 
@@ -2115,10 +2115,10 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, int tags 
 	// look for it
 	key = COM_SuperFastHash( ( const uint8_t *)pathname, len, len ) % IMAGES_HASH_SIZE;
 	hnode = &images_hash_headnode[key];
-	searchFlags = flags & ~IT_LOADFLAGS;
+	searchFlags = flags & ~ITC_LOADFLAGS;
 	for( image = hnode->prev; image != hnode; image = image->prev )
 	{
-		if( ( ( image->flags & ~IT_LOADFLAGS ) == searchFlags ) && !strcmp( image->name, pathname ) ) {
+		if( ( ( image->flags & ~ITC_LOADFLAGS ) == searchFlags ) && !strcmp( image->name, pathname ) ) {
 			R_TouchImage( image, tags );
 			return image;
 		}
@@ -2408,7 +2408,7 @@ static void R_InitCoronaTexture( int *w, int *h, int *flags, int *samples )
 	// light corona texture
 	//
 	*w = *h = 32;
-	*flags = IT_SPECIAL;
+	*flags = ITC_SPECIAL;
 	*samples = 4;
 
 	data = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 32 * 32 * 4 );
@@ -2444,7 +2444,7 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 	width_ = height_ = limit;
 
 #ifdef GL_ES_VERSION_2_0
-	if( glConfig.ext.texture_non_power_of_two || ( ( flags & IT_GL_ES_NPOT ) == IT_GL_ES_NPOT ) )
+	if( glConfig.ext.texture_non_power_of_two || ( ( flags & ITC_GL_ES_NPOT ) == ITC_GL_ES_NPOT ) )
 #else
 	if( glConfig.ext.texture_non_power_of_two )
 #endif
@@ -2532,7 +2532,7 @@ static int R_GetPortalTextureId( const int viewportWidth, const int viewportHeig
 	int i;
 	int best = -1;
 	int realwidth, realheight;
-	int realflags = IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags;
+	int realflags = ITC_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags;
 	image_t *image;
 
 	R_GetViewportTextureSize( viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
@@ -2584,7 +2584,7 @@ image_t *R_GetPortalTexture( int viewportWidth, int viewportHeight,
 
 	R_InitViewportTexture( &rsh.portalTextures[id], "r_portaltexture", id, 
 		viewportWidth, viewportHeight, r_portalmaps_maxtexsize->integer, 
-		IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags, IMAGE_TAG_GENERIC, 4 );
+		ITC_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHRB|flags, IMAGE_TAG_GENERIC, 4 );
 
 	if( rsh.portalTextures[id] ) {
 		rsh.portalTextures[id]->framenum = frameNum;
@@ -2615,7 +2615,7 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 
 	R_InitViewportTexture( &rsh.shadowmapTextures[id], "r_shadowmap", id, 
 		viewportWidth, viewportHeight, r_shadows_maxtexsize->integer, 
-		IT_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHCOMPARE|flags, IMAGE_TAG_GENERIC, samples );
+		ITC_SPECIAL|IT_FRAMEBUFFER|IT_DEPTHCOMPARE|flags, IMAGE_TAG_GENERIC, samples );
 
 	return rsh.shadowmapTextures[id];
 }
@@ -2640,7 +2640,7 @@ static void R_InitStretchRawTexture( void )
 	}
 
 	rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-	rawtexture->flags = IT_SPECIAL;
+	rawtexture->flags = ITC_SPECIAL;
 	rawtexture->tags = IMAGE_TAG_BUILTIN;
 	strcpy( rawtexture->name, name );
 	R_AllocTextureNum( rawtexture );
@@ -2673,7 +2673,7 @@ static void R_InitStretchRawYUVTextures( void )
 		}
 
 		rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-		rawtexture->flags = IT_SPECIAL;
+		rawtexture->flags = ITC_SPECIAL;
 		rawtexture->tags = IMAGE_TAG_BUILTIN;
 		strcpy( rawtexture->name, name[i] );
 		R_AllocTextureNum( rawtexture );
@@ -2697,7 +2697,7 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 	if( !glConfig.stencilBits )
 		stencil = false;
 
-	flags = IT_SPECIAL;
+	flags = ITC_SPECIAL;
 	if( noFilter ) {
 		flags |= IT_NOFILTERING;
 	}

@@ -54,11 +54,12 @@ enum
  * The loader threads may modify these flags (but no other flags),
  * so they must not be used for anything that has a long-term effect.
  */
-#define IT_LOADFLAGS		( IT_ALPHAMASK|IT_BGRA|IT_SYNC )
+#define ITC_LOADFLAGS		( IT_ALPHAMASK|IT_BGRA|IT_SYNC )
+#define ITC_GL_ES_NPOT		( IT_CLAMP|IT_NOMIPMAP )
 
-#define IT_SPECIAL			( IT_CLAMP|IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS )
-#define IT_COLORCORRECTION	( ( glConfig.maxTexture3DSize >= 32 ) ? ( IT_SPECIAL|IT_COLORLUT|IT_3D ) : ( IT_SPECIAL|IT_COLORLUT ) )
-#define IT_GL_ES_NPOT		( IT_CLAMP|IT_NOMIPMAP )
+#define ITC_SPECIAL			( IT_CLAMP|IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS )
+#define ITC_COLORCORRECTION	( ( glConfig.maxTexture3DSize >= 32 ) ? ( ITC_SPECIAL|IT_COLORLUT|IT_3D ) : ( ITC_SPECIAL|IT_COLORLUT ) )
+#define ITC_SKY				( IT_SKY|IT_NOMIPMAP|IT_CLAMP|IT_SYNC )
 
 /**
  * Image usage tags, to allow certain images to be freed separately.
