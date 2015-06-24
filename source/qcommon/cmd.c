@@ -292,6 +292,7 @@ void Cbuf_ExecuteText( int exec_when, const char *text )
 void Cbuf_Execute( void )
 {
 	size_t i;
+	int c;
 	char line[MAX_STRING_CHARS];
 	bool quotes, quoteskip;
 
@@ -305,31 +306,23 @@ void Cbuf_Execute( void )
 		quoteskip = false;
 		while( cbuf_text_tail != cbuf_text_head && i < sizeof( line )-1 )
 		{
-			if( !quoteskip && cbuf_text[cbuf_text_tail] == '"' )
+			c = cbuf_text[cbuf_text_tail];
+
+			if( !quoteskip && c == '"' )
 				quotes = !quotes;
-			if( !quoteskip && cbuf_text[cbuf_text_tail] == '\\' )
-			{
+
+			if( !quoteskip && c == '\\' )
 				quoteskip = true;
-			}
 			else
-			{
 				quoteskip = false;
-			}
 
-			line[i] = cbuf_text[cbuf_text_tail];
-
-			if( !quotes && cbuf_text[cbuf_text_tail] == ';' )
-			{
-				cbuf_text_tail = ( cbuf_text_tail + 1 ) % cbuf_text_size;
-				break;
-			}
-			if( cbuf_text[cbuf_text_tail] == '\n' )
-			{
-				cbuf_text_tail = ( cbuf_text_tail + 1 ) % cbuf_text_size;
-				break;
-			}
+			line[i] = c;
 
 			cbuf_text_tail = ( cbuf_text_tail + 1 ) % cbuf_text_size;
+
+			if( ( c == '\n' ) || ( !quotes && c == ';' ) )
+				break;
+
 			i++;
 		}
 		line[i] = 0;
