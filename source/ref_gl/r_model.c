@@ -1260,7 +1260,7 @@ static void R_FinishMapConfig( const model_t *mod )
 	if( mapConfig.colorCorrection[0] )
 	{
 		( ( mbrushmodel_t * )( mod->extradata ) )->colorCorrectionLUT =
-			R_FindImage( mapConfig.colorCorrection, NULL, ITC_COLORCORRECTION, IMAGE_TAG_GENERIC );
+			R_FindImage( mapConfig.colorCorrection, NULL, IT_COLORCORRECTION, IMAGE_TAG_GENERIC );
 	}
 
 	mod_mapConfigs[mod - mod_known] = mapConfig;

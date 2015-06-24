@@ -364,7 +364,7 @@ void R_RenderScene( const refdef_t *fd )
 						r_colorcorrection_override->modified = false;
 						rsh.colorCorrectionOverrideLUT = R_FindImage(
 							r_colorcorrection_override->string,
-							NULL, ITC_COLORCORRECTION, IMAGE_TAG_BUILTIN );
+							NULL, IT_COLORCORRECTION, IMAGE_TAG_BUILTIN );
 					}
 					colorCorrectionLUT = rsh.colorCorrectionOverrideLUT;
 				}
