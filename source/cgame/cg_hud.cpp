@@ -56,6 +56,7 @@ enum
 	TOUCHAREA_HUD_ATTACK,
 	TOUCHAREA_HUD_SPECIAL,
 	TOUCHAREA_HUD_CLASSACTION,
+	TOUCHAREA_HUD_SCORES,
 	TOUCHAREA_HUD_WEAPON
 };
 
@@ -2076,13 +2077,7 @@ static bool CG_LFuncDrawAwards( struct cg_layoutnode_s *commandnode, struct cg_l
 
 static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color, false );
-	return true;
-}
-
-static bool CG_LFuncTouchClock( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
-{
-	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color, true );
+	CG_DrawClock( layout_cursor_x, layout_cursor_y, layout_cursor_align, CG_GetLayoutCursorFont(), layout_cursor_color );
 	return true;
 }
 
@@ -2679,6 +2674,23 @@ static bool CG_LFuncTouchClassAction( struct cg_layoutnode_s *commandnode, struc
 	return true;
 }
 
+static void CG_ScoresUpFunc( int id, unsigned int time )
+{
+	CG_ScoresOff_f();
+}
+
+static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	if( CG_TouchArea( TOUCHAREA_HUD_SCORES,
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, CG_ScoresUpFunc ) >= 0 )
+	{
+		CG_ScoresOn_f();
+	}
+	return true;
+}
+
 
 static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
@@ -2904,7 +2916,7 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 	{
 		"drawClock",
 		CG_LFuncDrawClock,
-		CG_LFuncTouchClock,
+		NULL,
 		0,
 		"Draws clock",
 		false
@@ -3319,6 +3331,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncTouchClassAction,
 		1,
 		"Places class action button",
+		false
+	},
+
+	{
+		"touchScores",
+		NULL,
+		CG_LFuncTouchScores,
+		0,
+		"Places scoreboard button",
 		false
 	},
 

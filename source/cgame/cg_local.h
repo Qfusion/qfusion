@@ -750,7 +750,7 @@ void CG_ScreenCrosshairDamageUpdate( void );
 
 int CG_ParseValue( const char **s );
 
-void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color, bool touch );
+void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color );
 void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color );
 void CG_DrawTeamMates( void );
 void CG_DrawHUDNumeric( int x, int y, int align, float *color, int charwidth, int charheight, int value );
@@ -759,11 +759,14 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color );
 
 void CG_GameMenu_f( void );
 
+/**
+ * Touch area ID namespaces.
+ */
 enum
 {
 	TOUCHAREA_NONE,
-	TOUCHAREA_SCREEN,
-	TOUCHAREA_HUD = 0x101
+	TOUCHAREA_HUD
+	// next would be 0x101, 0x201... until 0xf01
 };
 
 #define TOUCHAREA_SUB_SHIFT 16
