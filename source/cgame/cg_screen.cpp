@@ -308,12 +308,6 @@ static void CG_SizeDown_f( void )
 
 //============================================================================
 
-enum
-{
-	TOUCHAREA_SCREEN_CROSSHAIR = TOUCHAREA_SCREEN,
-	TOUCHAREA_SCREEN_TIMER
-};
-
 /*
 * CG_ScreenInit
 */
@@ -618,17 +612,9 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 }
 
 /*
-* CG_ClockUpFunc
-*/
-void CG_ClockUpFunc( int id, unsigned int time )
-{
-	CG_ScoresOff_f();
-}
-
-/*
 * CG_DrawClock
 */
-void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color, bool touch )
+void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t color )
 {
 	unsigned int clocktime, startTime, duration, curtime;
 	double seconds;
@@ -696,21 +682,7 @@ void CG_DrawClock( int x, int y, int align, struct qfontface_s *font, vec4_t col
 		Q_snprintfz( string, sizeof( string ), "%02i:%02i", minutes, (int)seconds );
 	}
 
-	if( touch )
-	{
-		int w = trap_SCR_strWidth( string, font, 0 );
-		int h = trap_SCR_FontHeight( font );
-		if( CG_TouchArea( TOUCHAREA_SCREEN_TIMER,
-			CG_HorizontalAlignForWidth( x, align, w ), CG_VerticalAlignForHeight( y, align, h ),
-			w, h, CG_ClockUpFunc ) >= 0 )
-		{
-			CG_ScoresOn_f();
-		}
-	}
-	else
-	{
-		trap_SCR_DrawString( x, y, align, string, font, color );
-	}
+	trap_SCR_DrawString( x, y, align, string, font, color );
 }
 
 static unsigned int point_remove_time;
