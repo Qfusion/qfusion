@@ -5,7 +5,7 @@
 #if defined(FOG_GEN_OUTPUT_COLOR)
 void FogGenColor(in vec4 Position, inout myhalf4 outColor, in myhalf2 blendMix)
 #elif defined(FOG_GEN_OUTPUT_TEXCOORDS)
-void FogGenCoord(in vec4 Position, inout vec2 outTexCoord)
+void FogGenCoord(in vec4 Position, out vec2 outTexCoord)
 #endif
 {
 	// side = vec2(inside, outside)
