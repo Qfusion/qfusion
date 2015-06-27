@@ -1127,11 +1127,6 @@ QF_GLSL_PI \
 "}\n" \
 "\n"
 
-#define QF_BUILTIN_GLSL_EMPTY_QUAT_TRANSFORM \
-"#define QF_VertexDualQuatsTransform_Tangent(P,N,T)\n" \
-"#define QF_VertexDualQuatsTransform(P,N)\n" \
-"\n"
-
 #define QF_BUILTIN_GLSL_QUAT_TRANSFORM \
 "qf_attribute vec4 a_BonesIndices, a_BonesWeights;\n" \
 "uniform vec4 u_DualQuats[MAX_UNIFORM_BONES*2];\n" \
@@ -1142,8 +1137,6 @@ QF_BUILTIN_GLSL_QUAT_TRANSFORM_OVERLOAD \
 "#undef QF_DUAL_QUAT_TRANSFORM_TANGENT\n"
 
 #define QF_BUILTIN_GLSL_INSTANCED_TRANSFORMS \
-"#ifdef APPLY_INSTANCED_TRANSFORMS\n" \
-"\n" \
 "#if defined(APPLY_INSTANCED_ATTRIB_TRANSFORMS)\n" \
 "qf_attribute vec4 a_InstanceQuat, a_InstancePosAndScale;\n" \
 "#elif defined(GL_ARB_draw_instanced) || (defined(GL_ES) && (__VERSION__ >= 300))\n" \
@@ -1163,27 +1156,35 @@ QF_BUILTIN_GLSL_QUAT_TRANSFORM_OVERLOAD \
 "		Position.xyz) * a_InstancePosAndScale.w + a_InstancePosAndScale.xyz;\n" \
 "	Normal = cross(a_InstanceQuat.xyz, cross(a_InstanceQuat.xyz, Normal) + Normal*a_InstanceQuat.w)*2.0 + Normal;\n" \
 "}\n" \
-"\n" \
-"#endif // APPLY_INSTANCED_TRANSFORMS\n" \
 "\n"
 
-#define QF_BUILTIN_GLSL_EMPTY_INSTANCED_TRANSFORMS \
-"#define QF_InstancedTransform(P,n)\n" \
-"\n"
-
+// We have to use these #ifdefs here because #defining prototypes
+// of these functions to nothing results in a crash on Intel GPUs.
 #define QF_BUILTIN_GLSL_TRANSFORM_VERTS \
 "void QF_TransformVerts(inout vec4 Position, inout vec3 Normal, inout vec2 TexCoord)\n" \
 "{\n" \
-"	QF_VertexDualQuatsTransform(Position, Normal);\n" \
-"	QF_DeformVerts(Position, Normal, TexCoord);\n" \
-"	QF_InstancedTransform(Position, Normal);\n" \
+"#	ifdef QF_NUM_BONE_INFLUENCES\n" \
+"		QF_VertexDualQuatsTransform(Position, Normal);\n" \
+"#	endif\n" \
+"#	ifdef QF_APPLY_DEFORMVERTS\n" \
+"		QF_DeformVerts(Position, Normal, TexCoord);\n" \
+"#	endif\n" \
+"#	ifdef APPLY_INSTANCED_TRANSFORMS\n" \
+"		QF_InstancedTransform(Position, Normal);\n" \
+"#	endif\n" \
 "}\n" \
 "\n" \
 "void QF_TransformVerts_Tangent(inout vec4 Position, inout vec3 Normal, inout vec3 Tangent, inout vec2 TexCoord)\n" \
 "{\n" \
-"	QF_VertexDualQuatsTransform_Tangent(Position, Normal, Tangent);\n" \
-"	QF_DeformVerts(Position, Normal, TexCoord);\n" \
-"	QF_InstancedTransform(Position, Normal);\n" \
+"#	ifdef QF_NUM_BONE_INFLUENCES\n" \
+"		QF_VertexDualQuatsTransform_Tangent(Position, Normal, Tangent);\n" \
+"#	endif\n" \
+"#	ifdef QF_APPLY_DEFORMVERTS\n" \
+"		QF_DeformVerts(Position, Normal, TexCoord);\n" \
+"#	endif\n" \
+"#	ifdef APPLY_INSTANCED_TRANSFORMS\n" \
+"		QF_InstancedTransform(Position, Normal);\n" \
+"#	endif\n" \
 "}\n" \
 "\n"
 
@@ -1245,11 +1246,12 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 	static const int numSupportedFuncs = sizeof( funcs ) / sizeof( funcs[0] ) - 1;
 
 	if( !numDeforms ) {
-		return "#define QF_DeformVerts(P,N,TC) \n";
+		return "\n";
 	}
 
 	program[0] = '\0';
-	Q_strncpyz( program, 
+	Q_strncpyz( program,
+		"#define QF_APPLY_DEFORMVERTS\n"
 		"#if defined(APPLY_AUTOSPRITE) || defined(APPLY_AUTOSPRITE2)\n"
 		"qf_attribute vec4 a_SpritePoint;\n"
 		"#else\n"
@@ -1793,7 +1795,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		shaderStrings[i++] = QF_BUILTIN_GLSL_QUAT_TRANSFORM;
 	}
 	else {
-		shaderStrings[i++] = QF_BUILTIN_GLSL_EMPTY_QUAT_TRANSFORM;
+		shaderStrings[i++] = "\n";
 	}
 
 	instancedIdx = i;
@@ -1801,7 +1803,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		shaderStrings[i++] = QF_BUILTIN_GLSL_INSTANCED_TRANSFORMS;
 	}
 	else {
-		shaderStrings[i++] = QF_BUILTIN_GLSL_EMPTY_INSTANCED_TRANSFORMS;
+		shaderStrings[i++] = "\n";
 	}
 
 	vTransformsIdx = i;
