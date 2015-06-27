@@ -1153,7 +1153,7 @@ QF_BUILTIN_GLSL_QUAT_TRANSFORM_OVERLOAD \
 "#else\n" \
 "uniform vec4 u_InstancePoints[2];\n" \
 "#define a_InstanceQuat u_InstancePoints[0]\n" \
-"#define a_InstancePosAndScale u_InstancePoints[1\n" \
+"#define a_InstancePosAndScale u_InstancePoints[1]\n" \
 "#endif // APPLY_INSTANCED_ATTRIB_TRANSFORMS\n" \
 "\n" \
 "void QF_InstancedTransform(inout vec4 Position, inout vec3 Normal)\n" \
