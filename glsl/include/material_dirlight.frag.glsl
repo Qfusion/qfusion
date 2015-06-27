@@ -1,6 +1,6 @@
 #include_if(APPLY_CELSHADING) "material_celshading.frag.glsl"
 
-myhalf3 DirectionalLightColor(in myhalf3 surfaceNormalModelspace, inout myhalf3 weightedDiffuseNormalModelspace)
+myhalf3 DirectionalLightColor(in myhalf3 surfaceNormalModelspace, out myhalf3 weightedDiffuseNormalModelspace)
 {
 	myhalf3 diffuseNormalModelspace;
 	myhalf diffuseProduct;
