@@ -191,24 +191,24 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,				// weapon up frametime
 			WEAPONDOWN_FRAMETIME,			// weapon down frametime
-			75,								// reload frametime
+			100,							// reload frametime
 			0,								// cooldown frametime
 			6000,							// projectile timeout
 			false,							// smooth refire
 
 			//damages
-			7,								// damage
+			10,								// damage
 			0,								// selfdamage ratio
-			5,								// knockback
-			0,								// stun
+			10,								// knockback
+			50,								// stun
 			0,								// splash radius
 			0,								// splash minimum damage
 			0,                              // splash minimum knockback
 
 			//projectile def
 			INSTANT,						// speed
-			175,							// spread
-			175,                            // v_spread
+			10,								// spread
+			10, 	                        // v_spread
 
 			//ammo
 			50,                             // weapon pickup amount
