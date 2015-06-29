@@ -2023,6 +2023,8 @@ static bool CG_LFuncFontSize( struct cg_layoutnode_s *commandnode, struct cg_lay
 	else
 		layout_cursor_font_size = (int)ceilf( CG_GetNumericArg( &argumentnode ) );
 
+	clamp_low( layout_cursor_font_size, 1 );
+
 	layout_cursor_font_dirty = true;
 
 	return true;
