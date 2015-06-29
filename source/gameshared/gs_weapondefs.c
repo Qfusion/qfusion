@@ -485,7 +485,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			false,							// smooth refire
 
 			//damages
-			14,								// damage
+			15,								// damage
 			0.5,							// selfdamage ratio
 			18,								// knockback
 			200,							// stun
