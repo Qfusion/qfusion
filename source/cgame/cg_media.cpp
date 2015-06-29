@@ -460,19 +460,17 @@ void CG_RegisterFonts( void )
 
 	// register system fonts
 	Q_strncpyz( cgs.fontSystemFamily, con_fontSystemFamily->string, sizeof( cgs.fontSystemFamily ) );
-	if( !con_fontSystemSmallSize->integer ) {
+	if( con_fontSystemSmallSize->integer <= 0 ) {
 		trap_Cvar_Set( con_fontSystemSmallSize->name, con_fontSystemSmallSize->dvalue );
 	}
-	if( !con_fontSystemMediumSize->integer ) {
+	if( con_fontSystemMediumSize->integer <= 0 ) {
 		trap_Cvar_Set( con_fontSystemMediumSize->name, con_fontSystemMediumSize->dvalue );
 	}
-	if( !con_fontSystemBigSize->integer ) {
+	if( con_fontSystemBigSize->integer <= 0 ) {
 		trap_Cvar_Set( con_fontSystemBigSize->name, con_fontSystemBigSize->dvalue );
 	}
 
-	float scale = cgs.vidHeight / 600.0f;
-	if( scale < 0.4f )
-		scale = 0.4f;
+	float scale = ( float )( cgs.vidHeight ) / 600.0f;
 
 	cgs.fontSystemSmallSize = ceilf( con_fontSystemSmallSize->integer * scale );
 	cgs.fontSystemSmall = trap_SCR_RegisterFont( cgs.fontSystemFamily, QFONT_STYLE_NONE, cgs.fontSystemSmallSize );

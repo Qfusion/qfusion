@@ -383,7 +383,7 @@ void Con_CheckResize( void )
 */
 void Con_ResetFontSize()
 {
-	SCR_ResetSystemFontSmallSize();
+	SCR_ResetSystemFontConsoleSize();
 }
 
 /*
@@ -391,7 +391,7 @@ void Con_ResetFontSize()
 */
 void Con_ChangeFontSize( int ch )
 {
-	SCR_ChangeSystemFontSmallSize( ch );
+	SCR_ChangeSystemFontConsoleSize( ch );
 }
 
 /*

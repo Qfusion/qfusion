@@ -55,9 +55,7 @@ static cvar_t *scr_forceclear;
 
 static cvar_t *con_fontSystemFamily;
 static cvar_t *con_fontSystemFallbackFamily;
-static cvar_t *con_fontSystemSmallSize;
-static cvar_t *con_fontSystemMediumSize;
-static cvar_t *con_fontSystemBigSize;
+static cvar_t *con_fontSystemConsoleSize;
 
 //
 //	Variable width (proportional) fonts
@@ -84,9 +82,9 @@ qfontface_t *SCR_RegisterSpecialFont( const char *family, int style, unsigned in
 }
 
 /*
-* SCR_RegisterSystemFonts
+* SCR_RegisterConsoleFont
 */
-static void SCR_RegisterSystemFonts( void )
+static void SCR_RegisterConsoleFont( void )
 {
 	const char *con_fontSystemFamilyName;
 	const int con_fontSystemStyle = DEFAULT_SYSTEM_FONT_STYLE;
@@ -95,31 +93,15 @@ static void SCR_RegisterSystemFonts( void )
 
 	// register system fonts
 	con_fontSystemFamilyName = con_fontSystemFamily->string;
-	if( !con_fontSystemSmallSize->integer ) {
-		Cvar_SetValue( con_fontSystemSmallSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE );
-	} else if( con_fontSystemSmallSize->integer > DEFAULT_SYSTEM_FONT_SMALL_SIZE * 2 ) {
-		Cvar_SetValue( con_fontSystemSmallSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE * 2 );
-	} else if( con_fontSystemSmallSize->integer < DEFAULT_SYSTEM_FONT_SMALL_SIZE / 2 ) {
-		Cvar_SetValue( con_fontSystemSmallSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE / 2 );
+	if( !con_fontSystemConsoleSize->integer ) {
+		Cvar_SetValue( con_fontSystemConsoleSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE );
+	} else if( con_fontSystemConsoleSize->integer > DEFAULT_SYSTEM_FONT_SMALL_SIZE * 2 ) {
+		Cvar_SetValue( con_fontSystemConsoleSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE * 2 );
+	} else if( con_fontSystemConsoleSize->integer < DEFAULT_SYSTEM_FONT_SMALL_SIZE / 2 ) {
+		Cvar_SetValue( con_fontSystemConsoleSize->name, DEFAULT_SYSTEM_FONT_SMALL_SIZE / 2 );
 	}
 
-	if( !con_fontSystemMediumSize->integer ) {
-		Cvar_SetValue( con_fontSystemMediumSize->name, DEFAULT_SYSTEM_FONT_MEDIUM_SIZE );
-	} else if( con_fontSystemMediumSize->integer > DEFAULT_SYSTEM_FONT_MEDIUM_SIZE * 2 ) {
-		Cvar_SetValue( con_fontSystemMediumSize->name, DEFAULT_SYSTEM_FONT_MEDIUM_SIZE * 2 );
-	} else if( con_fontSystemMediumSize->integer < DEFAULT_SYSTEM_FONT_MEDIUM_SIZE / 2 ) {
-		Cvar_SetValue( con_fontSystemMediumSize->name, DEFAULT_SYSTEM_FONT_MEDIUM_SIZE / 2 );
-	}
-
-	if( !con_fontSystemBigSize->integer ) {
-		Cvar_SetValue( con_fontSystemBigSize->name, DEFAULT_SYSTEM_FONT_BIG_SIZE );
-	} else if( con_fontSystemBigSize->integer > DEFAULT_SYSTEM_FONT_BIG_SIZE * 2 ) {
-		Cvar_SetValue( con_fontSystemBigSize->name, DEFAULT_SYSTEM_FONT_BIG_SIZE * 2 );
-	} else if( con_fontSystemBigSize->integer < DEFAULT_SYSTEM_FONT_BIG_SIZE / 2 ) {
-		Cvar_SetValue( con_fontSystemBigSize->name, DEFAULT_SYSTEM_FONT_BIG_SIZE / 2 );
-	}
-
-	size = ceil( con_fontSystemSmallSize->integer * pixelRatio );
+	size = ceil( con_fontSystemConsoleSize->integer * pixelRatio );
 	cls.consoleFont = SCR_RegisterFont( con_fontSystemFamilyName, con_fontSystemStyle, size );
 	if( !cls.consoleFont )
 	{
@@ -143,11 +125,9 @@ static void SCR_InitFonts( void )
 {
 	con_fontSystemFamily = Cvar_Get( "con_fontSystemFamily", DEFAULT_SYSTEM_FONT_FAMILY, CVAR_ARCHIVE );
 	con_fontSystemFallbackFamily = Cvar_Get( "con_fontSystemFallbackFamily", DEFAULT_SYSTEM_FONT_FAMILY_FALLBACK, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
-	con_fontSystemSmallSize = Cvar_Get( "con_fontSystemSmallSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_SMALL_SIZE ), CVAR_ARCHIVE );
-	con_fontSystemMediumSize = Cvar_Get( "con_fontSystemMediumSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_MEDIUM_SIZE ), CVAR_ARCHIVE );
-	con_fontSystemBigSize = Cvar_Get( "con_fontSystemBigSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_BIG_SIZE ), CVAR_ARCHIVE );
+	con_fontSystemConsoleSize = Cvar_Get( "con_fontSystemConsoleSize", STR_TOSTR( DEFAULT_SYSTEM_FONT_SMALL_SIZE ), CVAR_ARCHIVE );
 
-	SCR_RegisterSystemFonts();
+	SCR_RegisterConsoleFont();
 }
 
 /*
@@ -158,7 +138,7 @@ static void SCR_ShutdownFonts( void )
 	cls.consoleFont = NULL;
 
 	con_fontSystemFamily = NULL;
-	con_fontSystemSmallSize = con_fontSystemMediumSize = con_fontSystemBigSize = NULL;
+	con_fontSystemConsoleSize = NULL;
 }
 
 /*
@@ -173,39 +153,34 @@ static void SCR_CheckSystemFontsModified( void )
 	}
 
 	if( con_fontSystemFamily->modified 
-		|| con_fontSystemSmallSize->modified 
-		|| con_fontSystemMediumSize->modified 
-		|| con_fontSystemBigSize->modified 
+		|| con_fontSystemConsoleSize->modified 
 		) {
-		SCR_RegisterSystemFonts();
-		con_fontSystemFamily->modified = false;
-		con_fontSystemSmallSize->modified = false;
-		con_fontSystemMediumSize->modified = false;
-		con_fontSystemBigSize->modified = false;
+		SCR_RegisterConsoleFont();
+		con_fontSystemConsoleSize->modified = false;
 	}
 }
 
 /*
-* SCR_ResetSystemFontSmallSize
+* SCR_ResetSystemFontConsoleSize
 */
-void SCR_ResetSystemFontSmallSize( void )
+void SCR_ResetSystemFontConsoleSize( void )
 {
-	if( !con_fontSystemSmallSize ) {
+	if( !con_fontSystemConsoleSize ) {
 		return;
 	}
-	Cvar_ForceSet( con_fontSystemSmallSize->name, con_fontSystemSmallSize->dvalue );
+	Cvar_ForceSet( con_fontSystemConsoleSize->name, con_fontSystemConsoleSize->dvalue );
 	SCR_CheckSystemFontsModified();
 }
 
 /*
-* SCR_ChangeSystemFontSmallSize
+* SCR_ChangeSystemFontConsoleSize
 */
-void SCR_ChangeSystemFontSmallSize( int ch )
+void SCR_ChangeSystemFontConsoleSize( int ch )
 {
-	if( !con_fontSystemSmallSize ) {
+	if( !con_fontSystemConsoleSize ) {
 		return;
 	}
-	Cvar_ForceSet( con_fontSystemSmallSize->name, va( "%i", con_fontSystemSmallSize->integer + ch ) );
+	Cvar_ForceSet( con_fontSystemConsoleSize->name, va( "%i", con_fontSystemConsoleSize->integer + ch ) );
 	SCR_CheckSystemFontsModified();
 }
 
