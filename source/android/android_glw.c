@@ -90,26 +90,44 @@ void GLimp_Shutdown( void )
 /*
 ** GLimp_Android_ChooseVisual
 */
-static void GLimp_Android_ChooseVisual( int colorSize, int depthSize, int depthEncoding, int stencilSize, int minSwapInterval )
+static EGLConfig GLimp_Android_ChooseVisual( int colorSize, int depthSize, int depthEncoding, int stencilSize, int minSwapInterval )
 {
 	int attribs[] =
 	{
-		EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-		EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
-		EGL_RED_SIZE, colorSize,
-		EGL_GREEN_SIZE, colorSize,
-		EGL_BLUE_SIZE, colorSize,
-		EGL_ALPHA_SIZE, colorSize,
-		EGL_DEPTH_SIZE, depthSize,
-		EGL_STENCIL_SIZE, stencilSize,
-		EGL_MIN_SWAP_INTERVAL, minSwapInterval,
-		EGL_SAMPLES, 0,
-		EGL_SAMPLE_BUFFERS, 0,
-		( depthEncoding != EGL_DONT_CARE ) ? EGL_DEPTH_ENCODING_NV : EGL_NONE, depthEncoding,
-		EGL_NONE
+		/*  0 */	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+		/*  2 */	EGL_SURFACE_TYPE, EGL_WINDOW_BIT | EGL_PBUFFER_BIT,
+		/*  4 */	EGL_RED_SIZE, colorSize,
+		/*  6 */	EGL_GREEN_SIZE, colorSize,
+		/*  8 */	EGL_BLUE_SIZE, colorSize,
+		/* 10 */	EGL_ALPHA_SIZE, colorSize,
+		/* 12 */	EGL_DEPTH_SIZE, depthSize,
+		/* 14 */	EGL_STENCIL_SIZE, stencilSize,
+		/* 16 */	EGL_SAMPLES, 0,
+		/* 18 */	EGL_SAMPLE_BUFFERS, 0,
+		/* 20 */	EGL_NONE, EGL_DONT_CARE,
+					EGL_NONE, EGL_DONT_CARE,
+					EGL_NONE
 	};
+	int addAttrib = 20;
 	int numConfigs = 0;
-	qeglChooseConfig( glw_state.display, attribs, &glw_state.config, 1, &numConfigs );
+	EGLConfig config = NULL;
+
+	if( minSwapInterval != EGL_DONT_CARE )
+	{
+		attribs[addAttrib++] = EGL_MIN_SWAP_INTERVAL;
+		attribs[addAttrib++] = minSwapInterval;
+	}
+
+	if( depthEncoding != EGL_DONT_CARE )
+	{
+		attribs[addAttrib++] = EGL_DEPTH_ENCODING_NV;
+		attribs[addAttrib++] = depthEncoding;
+	}
+
+	if( qeglChooseConfig( glw_state.display, attribs, &config, 1, &numConfigs ) )
+		return numConfigs ? config : 0;
+
+	return NULL;
 }
 
 /*
@@ -157,10 +175,12 @@ static void GLimp_Android_ChooseConfig( void )
 			{
 				for( k = 0; k < sizeof( minSwapIntervals ) / sizeof( minSwapIntervals[0] ); k++ )
 				{
-					GLimp_Android_ChooseVisual( colorSize, depthSize, depthEncoding, stencilSize, minSwapIntervals[k] );
+					EGLConfig config = GLimp_Android_ChooseVisual( colorSize, depthSize, depthEncoding, stencilSize, minSwapIntervals[k] );
 
-					if( glw_state.config )
+					if( config )
 					{
+						glw_state.config = config;
+
 #ifdef PUBLIC_BUILD
 						minSwapInterval = 1;
 #else
