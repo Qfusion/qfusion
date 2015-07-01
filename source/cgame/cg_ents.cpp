@@ -134,7 +134,8 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 	}
 	else if( state->linearMovement )
 	{
-		if( ( cent->serverFrame != cg.oldFrame.serverFrame ) || state->teleported || state->linearMovement != cent->current.linearMovement )
+		if( cent->serverFrame != cg.oldFrame.serverFrame || state->teleported || 
+			state->linearMovement != cent->current.linearMovement || state->linearMovementTimeStamp != cent->current.linearMovementTimeStamp )
 			cent->prev = *state;
 		else
 			cent->prev = cent->current;

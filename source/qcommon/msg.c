@@ -380,7 +380,7 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	if( updateOtherOrigin )
 	{
 		if( to->origin2[0] != from->origin2[0] || to->origin2[1] != from->origin2[1] || to->origin2[2] != from->origin2[2] 
-			|| to->teleported || to->linearMovement != from->linearMovement )
+			|| to->teleported || to->linearMovement != from->linearMovement || to->linearMovementTimeStamp != from->linearMovementTimeStamp )
 			bits |= U_OTHERORIGIN;
 	}
 
