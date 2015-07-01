@@ -680,16 +680,6 @@ static void W_Touch_Grenade( edict_t *ent, edict_t *other, cplane_t *plane, int 
 	// don't explode on doors and plats that take damage
 	if( !other->takedamage || ISBRUSHMODEL( other->s.modelindex ) )
 	{
-		// kill some velocity on each bounce
-		float fric;
-		static cvar_t *g_grenade_friction = NULL;
-
-		if( !g_grenade_friction )
-			g_grenade_friction = trap_Cvar_Get( "g_grenade_friction", "0.85", CVAR_DEVELOPER );
-
-		fric = bound( 0, g_grenade_friction->value, 1 );
-		VectorScale( ent->velocity, fric, ent->velocity );
-
 		G_AddEvent( ent, EV_GRENADE_BOUNCE, ( ent->s.effects & EF_STRONG_WEAPON ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK, true );
 		return;
 	}
@@ -732,13 +722,9 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t angles, int speed, 
 						int timeout, int mod, int timeDelta, bool aim_up )
 {
 	edict_t	*grenade;
-	static cvar_t *g_grenade_gravity = NULL;
 
 	if( GS_Instagib() )
 		damage = 9999;
-
-	if( !g_grenade_gravity )
-		g_grenade_gravity = trap_Cvar_Get( "g_grenade_gravity", "1.3", CVAR_DEVELOPER );
 
 	if( aim_up )
 	{
@@ -761,7 +747,6 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t angles, int speed, 
 	grenade->use = NULL;
 	grenade->think = W_Grenade_Explode;
 	grenade->classname = "grenade";
-	grenade->gravity = g_grenade_gravity->value;
 	grenade->enemy = NULL;
 
 	if( mod == MOD_GRENADE_S )
