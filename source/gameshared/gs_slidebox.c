@@ -191,6 +191,51 @@ void GS_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce )
 }
 
 //==================================================
+
+/*
+* GS_LinearMovement
+*/
+int GS_LinearMovement( const entity_state_t *ent, unsigned time, vec3_t dest )
+{
+	vec3_t dist;
+	int moveTime;
+	float moveFrac;
+
+	moveTime = time - ent->linearMovementTimeStamp;
+	if( moveTime < 0 ) {
+		moveTime = 0;
+	}
+
+	if( ent->linearMovementDuration ) {
+		if( moveTime > (int)ent->linearMovementDuration ) {
+			moveTime = ent->linearMovementDuration;
+		}
+
+		VectorSubtract( ent->linearMovementEnd, ent->linearMovementBegin, dist );
+		moveFrac = (float)moveTime / (float)ent->linearMovementDuration;
+		clamp( moveFrac, 0, 1 );
+		VectorMA( ent->linearMovementBegin, moveFrac, dist, dest );
+	}
+	else {
+		moveFrac = moveTime * 0.001f;
+		VectorMA( ent->linearMovementBegin, moveFrac, ent->linearMovementVelocity, dest );
+	}
+
+	return moveTime;
+}
+
+/* 
+* GS_LinearMovementDelta
+*/
+void GS_LinearMovementDelta( const entity_state_t *ent, unsigned oldTime, unsigned curTime, vec3_t dest )
+{
+	vec3_t p1, p2;
+	GS_LinearMovement( ent, oldTime, p1 );
+	GS_LinearMovement( ent, curTime, p2 );
+	VectorSubtract( p2, p1, dest );
+}
+
+//==================================================
 // SLIDE MOVE
 //
 // Note: groundentity info should be up to date when calling any slide move function

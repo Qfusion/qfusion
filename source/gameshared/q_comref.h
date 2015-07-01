@@ -282,8 +282,11 @@ typedef struct entity_state_s
 	unsigned int svflags;
 
 	int type;							// ET_GENERIC, ET_BEAM, etc
-	bool linearProjectile;			// is sent inside "type" as ET_INVERSE flag
-	vec3_t linearProjectileVelocity;	// this is transmitted instead of origin when linearProjectile is true
+	bool linearMovement;				// is sent inside "type" as ET_INVERSE flag
+	union {
+		vec3_t linearMovementVelocity;		// this is transmitted instead of origin when linearProjectile is true
+		vec3_t linearMovementEnd;			// the end movement point for brush models
+	};
 
 	vec3_t origin;
 	vec3_t angles;
@@ -292,6 +295,7 @@ typedef struct entity_state_s
 	{
 		vec3_t old_origin;				// for lerping
 		vec3_t origin2;					// ET_BEAM, ET_PORTALSURFACE, ET_EVENT specific
+		vec3_t linearMovementBegin;		// the starting movement point for brush models
 	};
 
 	unsigned int modelindex;
@@ -318,6 +322,7 @@ typedef struct entity_state_s
 		int targetNum;					// ET_EVENT specific
 		int colorRGBA;					// ET_BEAM, ET_EVENT specific
 		int range;						// ET_LASERBEAM, ET_CURVELASERBEAM specific
+		unsigned int linearMovementDuration;
 	};
 
 	float attenuation;					// should be <= 255/16.0 as this is sent as byte
@@ -327,7 +332,7 @@ typedef struct entity_state_s
 										// PVS culling)
 
 	int weapon;							// WEAP_ for players
-	bool teleported;				// the entity was teleported this snap (sent inside "weapon" as ET_INVERSE flag)
+	bool teleported;					// the entity was teleported this snap (sent inside "weapon" as ET_INVERSE flag)
 
 	unsigned int effects;
 
@@ -350,7 +355,7 @@ typedef struct entity_state_s
 
 	union
 	{
-		unsigned int linearProjectileTimeStamp;
+		unsigned int linearMovementTimeStamp;
 		int light;						// constant light glow
 	};
 

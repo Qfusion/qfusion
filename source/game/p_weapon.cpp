@@ -241,7 +241,7 @@ static void G_ProjectileTimePrestep( edict_t *projectile, int timeOffset )
 		return;
 	}
 
-	projectile->s.linearProjectileTimeStamp -= timeOffset;
+	projectile->s.linearMovementTimeStamp -= timeOffset;
 	SV_Physics_LinearProjectile( projectile );
 }
 
@@ -814,7 +814,7 @@ void G_FireWeapon( edict_t *ent, int parm )
 
 		timeOffset = -projectile->timeDelta;
 		projectile->timeDelta = 0;
-		if( projectile->s.linearProjectile )
+		if( projectile->s.linearMovement )
 			projectile->s.modelindex2 = 0;
 
 		G_ProjectileTimePrestep( projectile, timeOffset );

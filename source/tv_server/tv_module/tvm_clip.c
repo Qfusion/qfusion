@@ -44,19 +44,19 @@ void GClip_UnlinkEntity( tvm_relay_t *relay, edict_t *ent )
 }
 
 /*
-* GClip_MoveLinearProjectile
+* GClip_LinearMovement
 */
-void GClip_MoveLinearProjectile( tvm_relay_t *relay, edict_t *ent )
+void GClip_LinearMovement( tvm_relay_t *relay, edict_t *ent )
 {
 	unsigned int snapFrametime;
 
-	assert( ent->s.linearProjectile && ent->r.inuse );
+	assert( ent->s.linearMovement && ent->r.inuse );
 
 	snapFrametime = relay->snapFrameTime;
-	if( relay->serverTime > ent->s.linearProjectileTimeStamp + snapFrametime )
+	if( relay->serverTime > ent->s.linearMovementTimeStamp + snapFrametime )
 	{
-		float flyTime = (float)( relay->serverTime - ( ent->s.linearProjectileTimeStamp + snapFrametime ) ) * 0.001f;
-		VectorMA( ent->s.origin2, flyTime, ent->s.linearProjectileVelocity, ent->s.origin );
+		float moveTime = (float)( relay->serverTime - ( ent->s.linearMovementTimeStamp + snapFrametime ) ) * 0.001f;
+		VectorMA( ent->s.origin2, moveTime, ent->s.linearMovementVelocity, ent->s.origin );
 	}
 	else
 		VectorCopy( ent->s.origin2, ent->s.origin );

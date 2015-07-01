@@ -303,13 +303,13 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	if( to->number & 0xFF00 )
 		bits |= U_NUMBER16; // number8 is implicit otherwise
 
-	if( to->linearProjectile )
+	if( to->linearMovement )
 	{
-		if( to->linearProjectileVelocity[0] != from->linearProjectileVelocity[0] )
+		if( to->linearMovementVelocity[0] != from->linearMovementVelocity[0] || to->linearMovement != from->linearMovement )
 			bits |= U_ORIGIN1;
-		if( to->linearProjectileVelocity[1] != from->linearProjectileVelocity[1] )
+		if( to->linearMovementVelocity[1] != from->linearMovementVelocity[1] || to->linearMovement != from->linearMovement )
 			bits |= U_ORIGIN2;
-		if( to->linearProjectileVelocity[2] != from->linearProjectileVelocity[2] )
+		if( to->linearMovementVelocity[2] != from->linearMovementVelocity[2] || to->linearMovement != from->linearMovement )
 			bits |= U_ORIGIN3;
 	}
 	else
@@ -371,7 +371,7 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	if( to->modelindex2 != from->modelindex2 )
 		bits |= U_MODEL2;
 
-	if( ( to->type != from->type ) || ( to->linearProjectile != from->linearProjectile ) )
+	if( ( to->type != from->type ) || ( to->linearMovement != from->linearMovement ) )
 		bits |= U_TYPE;
 
 	if( to->sound != from->sound )
@@ -379,7 +379,8 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 
 	if( updateOtherOrigin )
 	{
-		if( to->origin2[0] != from->origin2[0] || to->origin2[1] != from->origin2[1] || to->origin2[2] != from->origin2[2] )
+		if( to->origin2[0] != from->origin2[0] || to->origin2[1] != from->origin2[1] || to->origin2[2] != from->origin2[2] 
+			|| to->teleported || to->linearMovement != from->linearMovement )
 			bits |= U_OTHERORIGIN;
 	}
 
@@ -442,7 +443,7 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	{
 		uint8_t ttype = 0;
 		ttype = to->type & ~ET_INVERSE;
-		if( to->linearProjectile )
+		if( to->linearMovement )
 			ttype |= ET_INVERSE;
 		MSG_WriteByte( msg, ttype );
 	}
@@ -475,14 +476,14 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	else if( bits & U_EFFECTS16 )
 		MSG_WriteShort( msg, to->effects );
 
-	if( to->linearProjectile )
+	if( to->linearMovement )
 	{
 		if( bits & U_ORIGIN1 )
-			MSG_WriteCoord( msg, to->linearProjectileVelocity[0] );
+			MSG_WriteCoord( msg, to->linearMovementVelocity[0] );
 		if( bits & U_ORIGIN2 )
-			MSG_WriteCoord( msg, to->linearProjectileVelocity[1] );
+			MSG_WriteCoord( msg, to->linearMovementVelocity[1] );
 		if( bits & U_ORIGIN3 )
-			MSG_WriteCoord( msg, to->linearProjectileVelocity[2] );
+			MSG_WriteCoord( msg, to->linearMovementVelocity[2] );
 	}
 	else
 	{
@@ -626,7 +627,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 		uint8_t ttype;
 		ttype = (uint8_t)MSG_ReadByte( msg );
 		to->type = ttype & ~ET_INVERSE;
-		to->linearProjectile = ( ttype & ET_INVERSE ) ? true : false;
+		to->linearMovement = ( ttype & ET_INVERSE ) ? true : false;
 	}
 
 	if( bits & U_SOLID )
@@ -656,14 +657,14 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 	else if( bits & U_EFFECTS16 )
 		to->effects = MSG_ReadShort( msg );
 
-	if( to->linearProjectile )
+	if( to->linearMovement )
 	{
 		if( bits & U_ORIGIN1 )
-			to->linearProjectileVelocity[0] = MSG_ReadCoord( msg );
+			to->linearMovementVelocity[0] = MSG_ReadCoord( msg );
 		if( bits & U_ORIGIN2 )
-			to->linearProjectileVelocity[1] = MSG_ReadCoord( msg );
+			to->linearMovementVelocity[1] = MSG_ReadCoord( msg );
 		if( bits & U_ORIGIN3 )
-			to->linearProjectileVelocity[2] = MSG_ReadCoord( msg );
+			to->linearMovementVelocity[2] = MSG_ReadCoord( msg );
 	}
 	else
 	{
@@ -745,8 +746,8 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 
 	if( bits & U_LIGHT )
 	{
-		if( to->linearProjectile )
-			to->linearProjectileTimeStamp = (unsigned int)MSG_ReadLong( msg );
+		if( to->linearMovement )
+			to->linearMovementTimeStamp = (unsigned int)MSG_ReadLong( msg );
 		else
 			to->light = MSG_ReadLong( msg );
 	}

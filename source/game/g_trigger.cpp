@@ -355,9 +355,6 @@ static void trigger_push_touch( edict_t *self, edict_t *other, cplane_t *plane, 
 	// add an event
 	if( other->r.client )
 	{
-		if( other->r.client->ps.pmove.pm_type != PM_NORMAL )
-			return;
-
 		GS_TouchPushTrigger( &other->r.client->ps, &self->s );
 	}
 	else
