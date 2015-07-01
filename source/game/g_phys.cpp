@@ -800,12 +800,7 @@ static void SV_Physics_Toss( edict_t *ent )
 		if( ent->movetype == MOVETYPE_BOUNCE )
 			backoff = 1.5;
 		else if( ent->movetype == MOVETYPE_BOUNCEGRENADE )
-		{
-			static cvar_t *g_grenade_backoff = NULL;
-			if( !g_grenade_backoff )
-				g_grenade_backoff = trap_Cvar_Get( "g_grenade_backoff", "1.5", CVAR_DEVELOPER );
-			backoff = g_grenade_backoff->value;
-		}
+			backoff = 1.5;
 		else
 			backoff = 1;
 
