@@ -121,7 +121,7 @@ static void Move_Done( edict_t *ent )
 	VectorClear( ent->velocity );
 	ent->moveinfo.endfunc( ent );
 	G_CallStop( ent );
-	Move_UpdateLinearVelocity( ent, 0, 0 );
+	//Move_UpdateLinearVelocity( ent, 0, 0 );
 }
 
 static void Move_Watch( edict_t *ent )
