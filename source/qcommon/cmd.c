@@ -135,7 +135,7 @@ void Cbuf_Shutdown( void )
 * 
 * Frees some space, if we have too big buffer in use
 */
-void Cbuf_FreeSpace( void )
+static void Cbuf_FreeSpace( void )
 {
 	char *old;
 	size_t used, old_size;
@@ -176,21 +176,21 @@ void Cbuf_FreeSpace( void )
 /*
 * Cbuf_EnsureSpace
 */
-void Cbuf_EnsureSpace( size_t size )
+static void Cbuf_EnsureSpace( size_t size )
 {
 	size_t free;
 	size_t diff;
 
 	if( cbuf_text_head >= cbuf_text_tail )
 	{
-		free = cbuf_text_size - cbuf_text_head + cbuf_text_tail - 1;
+		free = cbuf_text_size - cbuf_text_head + cbuf_text_tail;
 	}
 	else
 	{
-		free = cbuf_text_tail - cbuf_text_head - 1;
+		free = cbuf_text_tail - cbuf_text_head;
 	}
 
-	if( free > size )
+	if( free >= size )
 		return;
 
 	diff = ( size - free ) + MIN_CMD_TEXT_SIZE;
@@ -199,7 +199,7 @@ void Cbuf_EnsureSpace( size_t size )
 
 	if( cbuf_text_head < cbuf_text_tail )
 	{
-		memmove( cbuf_text + cbuf_text_tail + diff, cbuf_text + cbuf_text_tail, diff );
+		memmove( cbuf_text + cbuf_text_tail + diff, cbuf_text + cbuf_text_tail, cbuf_text_size - diff - cbuf_text_tail );
 		cbuf_text_tail += diff;
 	}
 }
@@ -213,7 +213,7 @@ void Cbuf_AddText( const char *text )
 {
 	size_t textlen = strlen( text );
 
-	Cbuf_EnsureSpace( textlen + 1 );
+	Cbuf_EnsureSpace( textlen );
 
 	if( cbuf_text_size - cbuf_text_head < textlen )
 	{
@@ -244,7 +244,7 @@ void Cbuf_InsertText( const char *text )
 {
 	size_t textlen = strlen( text );
 
-	Cbuf_EnsureSpace( textlen + 1 );
+	Cbuf_EnsureSpace( textlen );
 
 	if( cbuf_text_tail < textlen )
 	{
