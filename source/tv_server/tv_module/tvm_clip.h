@@ -37,6 +37,6 @@ void	GClip_SetAreaPortalState( tvm_relay_t *relay, edict_t *ent, bool open );
 void	GClip_LinkEntity( tvm_relay_t *relay, edict_t *ent );
 void	GClip_UnlinkEntity( tvm_relay_t *relay, edict_t *ent );
 void	GClip_TouchTriggers( tvm_relay_t *relay, edict_t *ent );
-void	GClip_MoveLinearProjectile( tvm_relay_t *relay, edict_t *ent );
+void	GClip_LinearMovement( tvm_relay_t *relay, edict_t *ent );
 
 #endif // __TVM_CLIP_H

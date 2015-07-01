@@ -68,11 +68,11 @@ void TVM_RunLinearProjectiles( tvm_relay_t *relay )
 	for( i = relay->maxclients + 1; i < relay->numentities; i++ )
 	{
 		ent = relay->edicts + i;
-		if( !ent->s.linearProjectile || !ent->r.inuse )
+		if( !ent->s.linearMovement || !ent->r.inuse )
 			continue;
 
 		VectorCopy( ent->s.origin, old_origin );
-		GClip_MoveLinearProjectile( relay, ent );
+		GClip_LinearMovement( relay, ent );
 
 		// check if projectile has moved since TVM_NewPacketEntityState
 		// before calling GClip_LinkEntity to save CPU time

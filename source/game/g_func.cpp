@@ -91,79 +91,66 @@ void G_AssignMoverSounds( edict_t *ent, const char *start, const char *move, con
 // Support routines for movement (changes in origin using velocity)
 //
 
+static void Move_UpdateLinearVelocity( edict_t *ent, float dist, int speed )
+{
+	int duration = 0;
+
+	if( speed ) {
+		duration = (float)dist * 1000.0f / speed;
+		if( !duration ) {
+			duration = 1;
+		}
+	}
+
+	ent->s.linearMovement = speed != 0;
+	if( !ent->s.linearMovement ) {
+		ent->r.svflags &= ~SVF_TRANSMITORIGIN2;
+		VectorCopy( ent->s.origin, ent->s.old_origin );
+		return;
+	}
+
+	VectorCopy( ent->moveinfo.dest, ent->s.linearMovementEnd );
+	VectorCopy( ent->s.origin, ent->s.linearMovementBegin );
+	ent->r.svflags |= SVF_TRANSMITORIGIN2;
+	ent->s.linearMovementTimeStamp = game.serverTime - game.frametime;
+	ent->s.linearMovementDuration = duration;
+}
+
 static void Move_Done( edict_t *ent )
 {
 	VectorClear( ent->velocity );
 	ent->moveinfo.endfunc( ent );
 	G_CallStop( ent );
-}
-
-static bool Move_AdjustFinalStep( edict_t *ent )
-{
-	float movedist, remainingdist;
-	vec3_t dir;
-
-	VectorSubtract( ent->moveinfo.dest, ent->s.origin, dir );
-	remainingdist = VectorNormalize( dir );
-
-	movedist = ent->moveinfo.speed * ( game.frametime * 0.001f );
-	if( remainingdist <= movedist )
-	{                             // final move: will be reached this frame
-		VectorScale( dir, remainingdist / FRAMETIME, ent->velocity );
-		return true;
-	}
-
-	return false;
+	Move_UpdateLinearVelocity( ent, 0, 0 );
 }
 
 static void Move_Watch( edict_t *ent )
 {
-	vec3_t dir;
-	float remainingdist;
+	int moveTime;
 
-	// find remaining distance
-	VectorSubtract( ent->moveinfo.dest, ent->s.origin, dir );
-	remainingdist = VectorNormalize( dir );
-
-	// reached?
-	if( remainingdist == 0.0f )
-	{
-		Move_Done( ent );
-		return;
-	}
-
-	if( Move_AdjustFinalStep( ent ) )
-	{
+	moveTime = game.serverTime - ent->s.linearMovementTimeStamp;
+	if( moveTime >= (int)ent->s.linearMovementDuration ) {
 		ent->think = Move_Done;
 		ent->nextThink = level.time + 1;
 		return;
 	}
-	else
-	{
-		VectorScale( dir, ent->moveinfo.speed, ent->velocity );
-	}
 
-	ent->think =  Move_Watch;
+	ent->think = Move_Watch;
 	ent->nextThink = level.time + 1;
 }
 
 static void Move_Begin( edict_t *ent )
 {
 	vec3_t dir;
-
-	if( Move_AdjustFinalStep( ent ) )
-	{
-		ent->think = Move_Done;
-		ent->nextThink = level.time + 1;
-		return;
-	}
+	float dist;
 
 	// set up velocity vector
 	VectorSubtract( ent->moveinfo.dest, ent->s.origin, dir );
-	VectorNormalize( dir );
+	dist = VectorNormalize( dir );
 	VectorScale( dir, ent->moveinfo.speed, ent->velocity );
 	ent->nextThink = level.time + 1;
 	ent->think = Move_Watch;
+	Move_UpdateLinearVelocity( ent, dist, ent->moveinfo.speed );
 }
 
 static void Move_Calc( edict_t *ent, vec3_t dest, void ( *func )(edict_t *) )
@@ -171,6 +158,7 @@ static void Move_Calc( edict_t *ent, vec3_t dest, void ( *func )(edict_t *) )
 	VectorClear( ent->velocity );
 	VectorCopy( dest, ent->moveinfo.dest );
 	ent->moveinfo.endfunc = func;
+	Move_UpdateLinearVelocity( ent, 0, 0 );
 
 	if( level.current_entity == ( ( ent->flags & FL_TEAMSLAVE ) ? ent->teammaster : ent ) )
 	{
@@ -325,6 +313,7 @@ void plat_go_down( edict_t *ent )
 			G_AddEvent( ent, EV_PLAT_START_MOVING, ent->moveinfo.sound_start, true );
 		ent->s.sound = ent->moveinfo.sound_middle;
 	}
+
 	ent->moveinfo.state = STATE_DOWN;
 	Move_Calc( ent, ent->moveinfo.end_origin, plat_hit_bottom );
 }

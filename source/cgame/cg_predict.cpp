@@ -70,6 +70,7 @@ void CG_CheckPredictionError( void )
 {
 	int delta[3];
 	int frame;
+	vec3_t origin;
 
 	if( !cg.view.playerPrediction )
 		return;
@@ -78,7 +79,20 @@ void CG_CheckPredictionError( void )
 	frame = cg.frame.ucmdExecuted & CMD_MASK;
 
 	// compare what the server returned with what we had predicted it to be
-	VectorSubtract( cg.frame.playerState.pmove.origin, cg.predictedOrigins[frame], delta );
+	VectorCopy( cg.predictedOrigins[frame], origin );
+
+	if( cg.predictedGroundEntity != -1 ) {
+		entity_state_t *ent = &cg_entities[cg.predictedGroundEntity].current;
+		if( ent->solid == SOLID_BMODEL ) {
+			if( ent->linearMovement ) {
+				vec3_t move;
+				GS_LinearMovementDelta( ent, cg.oldFrame.serverTime, cg.frame.serverTime, move );
+				VectorAdd( cg.predictedOrigins[frame], move, origin );
+			}
+		}
+	}
+
+	VectorSubtract( cg.frame.playerState.pmove.origin, origin, delta );
 
 	// save the prediction error for interpolation
 	if( abs( delta[0] ) > 128 || abs( delta[1] ) > 128 || abs( delta[2] ) > 128 )
@@ -154,6 +168,7 @@ static bool CG_ClipEntityContact( vec3_t origin, vec3_t mins, vec3_t maxs, int e
 	trace_t	tr;
 	vec3_t absmins, absmaxs;
 	vec3_t entorigin, entangles;
+	unsigned serverTime = cg.frame.serverTime;
 
 	if( !mins )
 		mins = vec3_origin;
@@ -170,7 +185,10 @@ static bool CG_ClipEntityContact( vec3_t origin, vec3_t mins, vec3_t maxs, int e
 	// find the origin
 	if( cent->current.solid == SOLID_BMODEL ) // special value for bmodel
 	{
-		VectorCopy( cent->current.origin, entorigin );
+		if( cent->current.linearMovement )
+			GS_LinearMovement( &cent->current, serverTime, entorigin );
+		else
+			VectorCopy( cent->current.origin, entorigin );
 		VectorCopy( cent->current.angles, entangles );
 	}
 	else // encoded bbox
@@ -229,6 +247,7 @@ static void CG_ClipMoveToEntities( vec3_t start, vec3_t mins, vec3_t maxs, vec3_
 	entity_state_t *ent;
 	struct cmodel_s	*cmodel;
 	vec3_t bmins, bmaxs;
+	unsigned serverTime = cg.frame.serverTime;
 
 	for( i = 0; i < cg_numSolids; i++ )
 	{
@@ -245,7 +264,11 @@ static void CG_ClipMoveToEntities( vec3_t start, vec3_t mins, vec3_t maxs, vec3_
 			if( !cmodel )
 				continue;
 
-			VectorCopy( ent->origin, origin );
+			if( ent->linearMovement )
+				GS_LinearMovement( ent, serverTime, origin );
+			else
+				VectorCopy( ent->origin, origin );
+
 			VectorCopy( ent->angles, angles );
 		}
 		else // encoded bbox
@@ -484,6 +507,24 @@ void CG_PredictMovement( void )
 				cg.predictFrom = ucmdExecuted;
 				cg.predictFromPlayerState = cg.predictedPlayerState;
 				cg.predictFromEntityState = cg_entities[cg.frame.playerState.POVnum].current;
+			}
+		}
+	}
+
+	cg.predictedGroundEntity = pm.groundentity;
+
+	// compensate for ground entity movement
+	if( pm.groundentity != -1 ) {
+		entity_state_t *ent = &cg_entities[pm.groundentity].current;
+
+		if( ent->solid == SOLID_BMODEL ) {
+			if( ent->linearMovement ) {
+				vec3_t move;
+				unsigned serverTime;
+
+				serverTime = GS_MatchPaused() ? cg.frame.serverTime : cg.time + cgs.extrapolationTime;
+				GS_LinearMovementDelta( ent, cg.frame.serverTime, serverTime, move );
+				VectorAdd( cg.predictedPlayerState.pmove.origin, move, cg.predictedPlayerState.pmove.origin );
 			}
 		}
 	}

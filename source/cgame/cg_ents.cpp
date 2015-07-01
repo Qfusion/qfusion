@@ -61,47 +61,38 @@ static void CG_FixVolumeCvars( void )
 
 static bool CG_UpdateLinearProjectilePosition( centity_t *cent )
 {
+	vec3_t origin;
 	entity_state_t *state;
-	float flyTime;
+	int moveTime;
 	unsigned int serverTime;
 #define MIN_DRAWDISTANCE_FIRSTPERSON 86
 #define MIN_DRAWDISTANCE_THIRDPERSON 52
 
 	state = &cent->current;
 
-	if( !state->linearProjectile )
+	if( !state->linearMovement )
 		return -1;
 
 	if( GS_MatchPaused() )
 		serverTime = cg.frame.serverTime;
 	else
-		serverTime = cg.time;
+		serverTime = cg.time + cgs.extrapolationTime;
 
-	// add a time offset to counter antilag visualization
-	if( !cgs.demoPlaying && cg_projectileAntilagOffset->value > 0.0f &&
-		!ISVIEWERENTITY( state->ownerNum ) && ( cgs.playerNum + 1 != cg.predictedPlayerState.POVnum ) )
-	{
-		serverTime += state->modelindex2 * cg_projectileAntilagOffset->value;
+	if( state->solid != SOLID_BMODEL ) {
+		// add a time offset to counter antilag visualization
+		if( !cgs.demoPlaying && cg_projectileAntilagOffset->value > 0.0f &&
+			!ISVIEWERENTITY( state->ownerNum ) && ( cgs.playerNum + 1 != cg.predictedPlayerState.POVnum ) )
+		{
+			serverTime += state->modelindex2 * cg_projectileAntilagOffset->value;
+		}
 	}
 
-	if( serverTime > state->linearProjectileTimeStamp )
-		flyTime = (float)( serverTime - state->linearProjectileTimeStamp ) * 0.001f;
-	else if( serverTime < state->linearProjectileTimeStamp )
-		flyTime = (float)( state->linearProjectileTimeStamp - serverTime ) * -0.001f;
-	else
-		flyTime = 0;
+	moveTime = GS_LinearMovement( state, serverTime, origin );
+	VectorCopy( origin, state->origin );
 
-	VectorMA( state->origin2, flyTime, state->linearProjectileVelocity, state->origin );
-#ifdef DRAWFROMWEAPON
-	if( ISVIEWERENTITY( state->ownerNum ) ) // experimental. Draw linear projectiles as if coming from the weapon
-	{
-		VectorMA( cent->linearProjectileViewerSource, flyTime, cent->linearProjectileViewerVelocity, state->origin );
-	}
-#endif
-
-	// when flyTime is negative don't offset it backwards more than PROJECTILE_PRESTEP value
-	if( flyTime < 0 )
-	{
+	if( ( moveTime < 0 ) && ( state->solid != SOLID_BMODEL ) ) {
+		// when flyTime is negative don't offset it backwards more than PROJECTILE_PRESTEP value
+		// FIXME: is this still valid?
 		float maxBackOffset;
 
 		if( ISVIEWERENTITY( state->ownerNum ) )
@@ -141,9 +132,9 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 		VectorClear( cent->velocity );
 		cent->canExtrapolate = false;
 	}
-	else if( state->linearProjectile )
+	else if( state->linearMovement )
 	{
-		if( ( cent->serverFrame != cg.oldFrame.serverFrame ) || state->teleported )
+		if( ( cent->serverFrame != cg.oldFrame.serverFrame ) || state->teleported || state->linearMovement != cent->current.linearMovement )
 			cent->prev = *state;
 		else
 			cent->prev = cent->current;
@@ -155,7 +146,7 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 		cent->canExtrapolate = false;
 
 #ifdef DRAWFROMWEAPON
-		if( firstTime && ISVIEWERENTITY( state->ownerNum ) ) // experimental. Draw linear projectiles as if coming from the weapon
+		if( firstTime && ISVIEWERENTITY( state->ownerNum ) && ( state->solid != SOLID_BMODEL ) ) // experimental. Draw linear projectiles as if coming from the weapon
 		{
 			orientation_t projection;
 			vec3_t dir, end;
@@ -181,7 +172,7 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 #endif
 		cent->linearProjectileCanDraw = CG_UpdateLinearProjectilePosition( cent );
 
-		VectorCopy( cent->current.linearProjectileVelocity, cent->velocity );
+		VectorCopy( cent->current.linearMovementVelocity, cent->velocity );
 		VectorCopy( cent->current.origin, cent->trailOrigin );
 	}
 	else
@@ -195,7 +186,7 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 		}
 
 		// some data changes will force no lerping
-		if( ( state->modelindex != cent->current.modelindex ) || state->teleported )
+		if( ( state->modelindex != cent->current.modelindex ) || state->teleported || state->linearMovement != cent->current.linearMovement )
 			cent->serverFrame = -99;
 
 		if( cent->serverFrame != cg.oldFrame.serverFrame )
@@ -244,7 +235,12 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 		cent->serverFrame = cg.frame.serverFrame;
 		VectorCopy( state->origin, cent->trailOrigin );
 
-		VectorCopy( cent->velocity, cent->prevVelocity );
+		if( cent->serverFrame != cg.oldFrame.serverFrame ) {
+			VectorClear( cent->prevVelocity );
+		}
+		else {
+			VectorCopy( cent->velocity, cent->prevVelocity );
+		}
 		//VectorCopy( cent->extrapolatedOrigin, cent->prevExtrapolatedOrigin );
 		cent->canExtrapolatePrev = cent->canExtrapolate;
 		cent->canExtrapolate = false;
@@ -632,7 +628,7 @@ static void CG_AddLinkedModel( centity_t *cent )
 	struct model_s *model;
 
 	// linear projectiles can never have a linked model. Modelindex2 is used for a different purpose
-	if( cent->current.linearProjectile )
+	if( cent->current.linearMovement )
 		return;
 
 	model = cgs.modelDraw[cent->current.modelindex2];
@@ -1927,13 +1923,13 @@ void CG_AddEntities( void )
 		state = &cg.frame.parsedEntities[pnum & ( MAX_PARSE_ENTITIES-1 )];
 		cent = &cg_entities[state->number];
 
-		if( cent->current.linearProjectile )
+		if( cent->current.linearMovement )
 		{
 			if( !cent->linearProjectileCanDraw )
 				continue;
 		}
 
-		canLight = !state->linearProjectile;
+		canLight = !state->linearMovement;
 
 		switch( cent->type )
 		{
@@ -2115,7 +2111,7 @@ void CG_LerpEntities( void )
 		case ET_PLAYER:
 		case ET_CORPSE:
 		case ET_FLAG_BASE:
-			if( state->linearProjectile )
+			if( state->linearMovement )
 				CG_ExtrapolateLinearProjectile( cent );
 			else
 				CG_LerpGenericEnt( cent );

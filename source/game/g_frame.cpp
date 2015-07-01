@@ -784,8 +784,8 @@ void G_RunFrame( unsigned int msec, unsigned int serverTime )
 		gs.gameState.longstats[GAMELONG_MATCHSTART] += serverTimeDelta;
 		for( edict_t *ent = game.edicts + gs.maxclients; ENTNUM( ent ) < game.numentities; ent++ )
 		{
-			if( ent->s.linearProjectile )
-				ent->s.linearProjectileTimeStamp += serverTimeDelta;
+			if( ent->s.linearMovement )
+				ent->s.linearMovementTimeStamp += serverTimeDelta;
 		}
 
 		G_RunClients();

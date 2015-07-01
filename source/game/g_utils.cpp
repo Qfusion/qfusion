@@ -823,7 +823,7 @@ void G_InitEdict( edict_t *e )
 
 	e->s.teleported = false;
 	e->timeStamp = 0;
-	e->s.linearProjectile = false;
+	e->s.linearMovement = false;
 	e->scriptSpawned = false;
 
 	G_asResetEntityBehaviors( e );
@@ -965,7 +965,7 @@ void G_TurnEntityIntoEvent( edict_t *ent, int event, int parm )
 	ent->s.type = ET_EVENT;
 	ent->r.solid = SOLID_NOT;
 	ent->r.svflags &= ~SVF_PROJECTILE; // FIXME: Medar: should be remove all or remove this one elsewhere?
-	ent->s.linearProjectile = false;
+	ent->s.linearMovement = false;
 	G_AddEvent( ent, event, parm, true );
 
 	GClip_LinkEntity( ent );

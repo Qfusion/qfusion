@@ -270,7 +270,7 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	GS_SnapVelocity( projectile->velocity );
 
 	projectile->movetype = MOVETYPE_LINEARPROJECTILE;
-	projectile->s.linearProjectile = true;
+	projectile->s.linearMovement = true;
 
 	projectile->r.solid = SOLID_YES;
 	projectile->r.clipmask = ( !GS_RaceGametype() ) ? MASK_SHOT : MASK_SOLID;
@@ -290,7 +290,7 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	projectile->style = 0;
 	projectile->s.sound = 0;
 	projectile->timeStamp = level.time;
-	projectile->s.linearProjectileTimeStamp = game.serverTime;
+	projectile->s.linearMovementTimeStamp = game.serverTime;
 	projectile->timeDelta = timeDelta;
 
 	projectile->projectileInfo.minDamage = min( minDamage, damage );
@@ -303,7 +303,7 @@ static edict_t *W_Fire_LinearProjectile( edict_t *self, vec3_t start, vec3_t ang
 	GClip_LinkEntity( projectile );
 
 	// update some data required for the transmission
-	VectorCopy( projectile->velocity, projectile->s.linearProjectileVelocity );
+	VectorCopy( projectile->velocity, projectile->s.linearMovementVelocity );
 	projectile->s.team = self->s.team;
 	projectile->s.modelindex2 = ( abs( timeDelta ) > 255 ) ? 255 : (unsigned int)abs( timeDelta );
 	return projectile;

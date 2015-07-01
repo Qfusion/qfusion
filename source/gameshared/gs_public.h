@@ -252,6 +252,8 @@ void GS_SnapVelocity( vec3_t velocity );
 bool GS_SnapPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int contentmask );
 bool GS_SnapInitialPosition( vec3_t origin, vec3_t mins, vec3_t maxs, int passent, int contentmask );
 
+int GS_LinearMovement( const entity_state_t *ent, unsigned time, vec3_t dest );
+void GS_LinearMovementDelta( const entity_state_t *ent, unsigned oldTime, unsigned curTime, vec3_t dest );
 
 //==============================================================
 //

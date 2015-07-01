@@ -550,6 +550,7 @@ typedef struct
 	vec3_t predictionError;
 	player_state_t predictedPlayerState;     // current in use, predicted or interpolated
 	int predictedWeaponSwitch;				// inhibit shooting prediction while a weapon change is expected
+	int predictedGroundEntity;
 	gs_laserbeamtrail_t weaklaserTrail;
 
 	// prediction optimization (don't run all ucmds in not needed)
