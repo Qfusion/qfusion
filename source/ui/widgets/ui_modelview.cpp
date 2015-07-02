@@ -51,7 +51,7 @@ public:
 		memset( &refdef, 0, sizeof( refdef ) );
 		entity.renderfx = RF_NOSHADOW | RF_FORCENOLOD | RF_MINLIGHT;
 		entity.frame = entity.oldframe = 1;
-		refdef.rdflags = RDF_NOWORLDMODEL | RDF_NOFOVADJUSTMENT;
+		refdef.rdflags = RDF_NOWORLDMODEL;
 		refdef.areabits = 0;
 		refdef.minLight = 0.7;
 		Matrix3_Copy( axis_identity, refdef.viewaxis );
