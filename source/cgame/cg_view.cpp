@@ -892,6 +892,9 @@ void CG_SetupViewDef( cg_viewdef_t *view, int type )
 	view->refdef.scissor_height = scr_vrect.height;
 
 	view->refdef.fov_y = CalcFov( view->refdef.fov_x, view->refdef.width, view->refdef.height );
+
+	AdjustFov( &view->refdef.fov_x, &view->refdef.fov_y, view->refdef.width, view->refdef.height, false );
+
 	view->fracDistFOV = tan( view->refdef.fov_x * ( M_PI/180 ) * 0.5f );
 
 	view->refdef.minLight = 0.3f;

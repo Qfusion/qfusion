@@ -369,8 +369,13 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 
 	if( cg_gun_fov->integer && !cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] )
 	{
-		float gun_fov = bound( 20, cg_gun_fov->value, 160 );
-		float fracWeapFOV = ( 1.0f / cg.view.fracDistFOV ) * tan( gun_fov * ( M_PI/180 ) * 0.5f );
+		float fracWeapFOV;
+		float gun_fov_x = bound( 20, cg_gun_fov->value, 160 );
+		float gun_fov_y = CalcFov( gun_fov_x, cg.view.refdef.width, cg.view.refdef.height );
+
+		AdjustFov( &gun_fov_x, &gun_fov_y, cgs.vidWidth, cgs.vidHeight, false );
+		fracWeapFOV = tan( gun_fov_x * ( M_PI/180 ) * 0.5f ) / cg.view.fracDistFOV;
+
 		VectorScale( &viewweapon->ent.axis[AXIS_FORWARD], fracWeapFOV, &viewweapon->ent.axis[AXIS_FORWARD] );
 	}
 
