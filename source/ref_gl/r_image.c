@@ -2621,67 +2621,14 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 }
 
 /*
-* R_InitStretchRawTexture
+* R_InitStretchRawTextures
 */
-static void R_InitStretchRawTexture( void )
+static void R_InitStretchRawTextures( void )
 {
-	const char * const name = "*** raw ***";
-	int name_len = strlen( name );
-	image_t *rawtexture;
-	unsigned hash;
-
-	// reserve a dummy texture slot
-	hash = COM_SuperFastHash( ( const uint8_t *)name, name_len, name_len );
-	rawtexture = R_LinkPic( hash );
-
-	assert( rawtexture );
-	if( !rawtexture ) {
-		ri.Com_Error( ERR_FATAL, "Failed to register cinematic texture" );
-	}
-
-	rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-	rawtexture->flags = IT_SPECIAL;
-	rawtexture->tags = IMAGE_TAG_BUILTIN;
-	strcpy( rawtexture->name, name );
-	R_AllocTextureNum( rawtexture );
-	rawtexture->loaded = true;
-	rawtexture->missing = false;
-
-	rsh.rawTexture = rawtexture;
-}
-
-/*
-* R_InitStretchRawYUVTextures
-*/
-static void R_InitStretchRawYUVTextures( void )
-{
-	int i;
-	image_t *rawtexture;
-	const char * const name[3] = { "*** rawyuv0 ***", "*** rawyuv1 ***", "*** rawyuv2 ***" };
-
-	for( i = 0; i < 3; i++ ) {
-		// reserve a dummy texture slot
-		int name_len = strlen( name[i] );
-		unsigned hash;
-
-		hash = COM_SuperFastHash( ( const uint8_t *)name, name_len, name_len );
-		rawtexture = R_LinkPic( hash );
-
-		assert( rawtexture );
-		if( !rawtexture ) {
-			ri.Com_Error( ERR_FATAL, "Failed to register cinematic texture" );
-		}
-
-		rawtexture->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
-		rawtexture->flags = IT_SPECIAL;
-		rawtexture->tags = IMAGE_TAG_BUILTIN;
-		strcpy( rawtexture->name, name[i] );
-		R_AllocTextureNum( rawtexture );
-		rawtexture->loaded = true;
-		rawtexture->missing = false;
-
-		rsh.rawYUVTextures[i] = rawtexture;
-	}
+	rsh.rawTexture = R_CreateImage( "*** raw ***", 0, 0, 1, IT_SPECIAL, IMAGE_TAG_BUILTIN, 3 );
+	rsh.rawYUVTextures[0] = R_CreateImage( "*** rawyuv0 ***", 0, 0, 1, IT_SPECIAL, IMAGE_TAG_BUILTIN, 1 );
+	rsh.rawYUVTextures[1] = R_CreateImage( "*** rawyuv1 ***", 0, 0, 1, IT_SPECIAL, IMAGE_TAG_BUILTIN, 1 );
+	rsh.rawYUVTextures[2] = R_CreateImage( "*** rawyuv2 ***", 0, 0, 1, IT_SPECIAL, IMAGE_TAG_BUILTIN, 1 );
 }
 
 /*
@@ -2838,8 +2785,7 @@ void R_InitImages( void )
 		R_InitImageLoader( i );
 	}
 
-	R_InitStretchRawTexture();
-	R_InitStretchRawYUVTextures();
+	R_InitStretchRawTextures();
 	R_InitBuiltinTextures();
 	R_InitScreenTextures();
 
