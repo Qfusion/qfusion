@@ -451,7 +451,7 @@ static int R_UploadLightmap( const char *name, uint8_t *data, int w, int h )
 
 	Q_snprintfz( uploadName, sizeof( uploadName ), "%s%i", name, r_numUploadedLightmaps );
 
-	image = R_LoadImage( uploadName, (uint8_t **)( &data ), w, h, IT_SPECIAL, IMAGE_TAG_GENERIC, LIGHTMAP_BYTES );
+	image = R_LoadImage( uploadName, (uint8_t **)( &data ), w, h, IT_SPECIAL, 1, IMAGE_TAG_GENERIC, LIGHTMAP_BYTES );
 	r_lightmapTextures[r_numUploadedLightmaps] = image;
 
 	return r_numUploadedLightmaps++;

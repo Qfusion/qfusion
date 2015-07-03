@@ -771,7 +771,7 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 	if( data ) {
 		if( rsh.rawTexture->width != cols || rsh.rawTexture->height != rows ) {
 			uint8_t *nodata[1] = { NULL };
-			R_ReplaceImage( rsh.rawTexture, nodata, cols, rows, rsh.rawTexture->flags, 3 );
+			R_ReplaceImage( rsh.rawTexture, nodata, cols, rows, rsh.rawTexture->flags, 1, 3 );
 		}
 		R_ReplaceSubImage( rsh.rawTexture, 0, 0, 0, &data, cols, rows );
 	}
@@ -836,7 +836,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 
 			if( yuvTextures[i]->width != stride || yuvTextures[i]->height != height ) {
 				uint8_t *nodata[1] = { NULL };
-				R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1 );
+				R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1, 1 );
 			}
 			R_ReplaceSubImage( yuvTextures[i], 0, 0, 0, &data, stride, height );
 		}
@@ -1878,27 +1878,33 @@ void R_StopAviDemo( void )
 */
 void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )
 {
+	refdef_t trd;
 	mat4_t p, m;
 	vec4_t temp, temp2;
 
 	if( !rd || !in || !out )
 		return;
 
+	trd = *rd;
+	if( !( trd.rdflags & RDF_NOFOVADJUSTMENT ) ) {
+		AdjustFov( &trd.fov_x, &trd.fov_y, glConfig.width, glConfig.height, false );
+	}
+
 	temp[0] = in[0];
 	temp[1] = in[1];
 	temp[2] = in[2];
 	temp[3] = 1.0f;
 	
-	if( rd->rdflags & RDF_USEORTHO ) {
-		Matrix4_OrthogonalProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y, 
+	if( trd.rdflags & RDF_USEORTHO ) {
+		Matrix4_OrthogonalProjection( trd.ortho_x, trd.ortho_x, trd.ortho_y, trd.ortho_y, 
 			-4096.0f, 4096.0f, p );
 	}
 	else {
-		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rn.farClip, 
+		Matrix4_PerspectiveProjection( trd.fov_x, trd.fov_y, Z_NEAR, rn.farClip, 
 			rf.cameraSeparation, p );
 	}
 
-	Matrix4_Modelview( rd->vieworg, rd->viewaxis, m );
+	Matrix4_Modelview( trd.vieworg, trd.viewaxis, m );
 
 	Matrix4_Multiply_Vector( m, temp, temp2 );
 	Matrix4_Multiply_Vector( p, temp2, temp );
@@ -1906,8 +1912,8 @@ void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out 
 	if( !temp[3] )
 		return;
 
-	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
-	out[1] = glConfig.height - (rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f);
+	out[0] = trd.x + ( temp[0] / temp[3] + 1.0f ) * trd.width * 0.5f;
+	out[1] = glConfig.height - (trd.y + ( temp[1] / temp[3] + 1.0f ) * trd.height * 0.5f);
 }
 
 /*

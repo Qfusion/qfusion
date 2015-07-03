@@ -57,6 +57,7 @@ static bool	r_shaderNoMipMaps;
 static bool	r_shaderNoPicMip;
 static bool r_shaderNoFiltering;
 static bool	r_shaderNoCompress;
+static int r_shaderMinMipSize;
 static bool r_shaderHasLightmapPass;
 static bool r_shaderHasAutosprite;
 static int		r_shaderAllDetail;
@@ -97,6 +98,16 @@ static float Shader_ParseFloat( const char **ptr )
 		return 0;
 
 	return atof( COM_ParseExt( ptr, false ) );
+}
+
+static float Shader_ParseInt( const char **ptr )
+{
+	if( !ptr || !( *ptr ) )
+		return 0;
+	if( !**ptr || **ptr == '}' )
+		return 0;
+
+	return atoi( COM_ParseExt( ptr, false ) );
 }
 
 static void Shader_ParseVector( const char **ptr, float *v, unsigned int size )
@@ -454,7 +465,7 @@ static void Shader_ParseSkySides( const char **ptr, image_t **images, int imaget
 					suffix[0] = '\0';
 				Q_strncatz( suffix, cubemapSides[i][j].suf, sizeof( suffix ) );
 
-				images[j] = R_FindImage( token, suffix, IT_SKYFLAGS|cubemapSides[i][j].flags, imagetags );
+				images[j] = R_FindImage( token, suffix, IT_SKYFLAGS|cubemapSides[i][j].flags, 1, imagetags );
 				if( !images[j] )
 					break;
 			}
@@ -509,7 +520,7 @@ static void Shader_ParseCustomSkySides( const char **ptr, image_t **images, int 
 		}
 
 		if( !refs[i] )
-			images[i] = R_FindImage( token, NULL, IT_SKYFLAGS, imagetags );
+			images[i] = R_FindImage( token, NULL, IT_SKYFLAGS, 1, imagetags );
 	}
 
 	for( i = 0; i < 6; i++ )
@@ -597,7 +608,7 @@ static image_t *Shader_FindImage( shader_t *shader, const char *name, int flags 
 		return rsh.whiteTexture;
 	}
 
-	image = R_FindImage( name, NULL, flags, shader->imagetags );
+	image = R_FindImage( name, NULL, flags, r_shaderMinMipSize, shader->imagetags );
 	if( !image )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "WARNING: shader %s has a stage with no image: %s\n", shader->name, name );
@@ -627,6 +638,7 @@ static void Shader_Cull( shader_t *shader, shaderpass_t *pass, const char **ptr 
 static void Shader_NoMipMaps( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
 	r_shaderNoMipMaps = r_shaderNoPicMip = true;
+	r_shaderMinMipSize = 1;
 }
 
 static void Shader_NoPicMip( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -643,6 +655,13 @@ static void Shader_NoFiltering( shader_t *shader, shaderpass_t *pass, const char
 {
 	r_shaderNoFiltering = true;
 	shader->flags |= SHADER_NO_TEX_FILTERING;
+}
+
+static void Shader_SmallestMipMapSize( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	int size = Shader_ParseInt( ptr );
+	if( glConfig.ext.texture_lod && !r_shaderNoMipMaps )
+		r_shaderMinMipSize = max( size, 1 );
 }
 
 static void Shader_DeformVertexes( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -1007,6 +1026,7 @@ static const shaderkey_t shaderkeys[] =
 	{ "nopicmip", Shader_NoPicMip },
 	{ "nocompress",	Shader_NoCompress },
 	{ "nofiltering", Shader_NoFiltering },
+	{ "smallestmipmapsize", Shader_SmallestMipMapSize },
 	{ "polygonoffset", Shader_PolygonOffset },
 	{ "stenciltest", Shader_StencilTest },
 	{ "sort", Shader_Sort },
@@ -1036,16 +1056,16 @@ static void Shaderpass_LoadMaterial( image_t **normalmap, image_t **glossmap, im
 	images[0] = images[1] = images[2] = NULL;
 
 	// load normalmap image
-	images[0] = R_FindImage( name, "_norm", (addFlags|IT_NORMALMAP), imagetags );
+	images[0] = R_FindImage( name, "_norm", (addFlags|IT_NORMALMAP), r_shaderMinMipSize, imagetags );
 
 	// load glossmap image
 	if( r_lighting_specular->integer ) {
-		images[1] = R_FindImage( name, "_gloss", addFlags, imagetags );
+		images[1] = R_FindImage( name, "_gloss", addFlags, r_shaderMinMipSize, imagetags );
 	}
 
-	images[2] = R_FindImage( name, "_decal", addFlags, imagetags );
+	images[2] = R_FindImage( name, "_decal", addFlags, r_shaderMinMipSize, imagetags );
 	if( !images[2] ) {
-		images[2] = R_FindImage( name, "_add", addFlags, imagetags );
+		images[2] = R_FindImage( name, "_add", addFlags, r_shaderMinMipSize, imagetags );
 	}
 
 	*normalmap = images[0];
@@ -1145,7 +1165,7 @@ static void Shaderpass_CubeMapExt( shader_t *shader, shaderpass_t *pass, int add
 		return;
 	}
 
-	pass->images[0] = R_FindImage( token, NULL, flags|IT_CUBEMAP, shader->imagetags );
+	pass->images[0] = R_FindImage( token, NULL, flags|IT_CUBEMAP, r_shaderMinMipSize, shader->imagetags );
 	if( pass->images[0] )
 	{
 		pass->tcgen = tcgen;
@@ -2590,6 +2610,7 @@ static void R_LoadShaderReal( shader_t *s, const char *shortname,
 	r_shaderNoPicMip = false;
 	r_shaderNoCompress = false;
 	r_shaderNoFiltering = false;
+	r_shaderMinMipSize = 1;
 	r_shaderHasLightmapPass = false;
 	r_shaderHasAutosprite = false;
 	r_shaderAllDetail = SHADERPASS_DETAIL;
@@ -2945,12 +2966,12 @@ shader_t *R_RegisterRawPic_( const char *name, int width, int height, uint8_t *d
 		image = s->passes[0].images[0];
 		if( !image || image == rsh.noTexture ) {
 			// try to load new image
-			image = R_LoadImage( name, &data, width, height, flags, IMAGE_TAG_GENERIC, samples );
+			image = R_LoadImage( name, &data, width, height, flags, 1, IMAGE_TAG_GENERIC, samples );
 			s->passes[0].images[0] = image;
 		}
 		else {
 			// replace current texture data
-			R_ReplaceImage( image, &data, width, height, image->flags, image->samples );
+			R_ReplaceImage( image, &data, width, height, image->flags, 1, image->samples );
 		}
 	}
 	return s;
