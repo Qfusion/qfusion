@@ -487,6 +487,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, texture3D, false, false, &gl_ext_texture3D_EXT_funcs )
 	,GL_EXTENSION_EXT( EXT, texture_array, 1, false, false, NULL, texture3D )
 	,GL_EXTENSION( EXT, packed_depth_stencil, false, false, NULL )
+	,GL_EXTENSION( SGIS, texture_lod, false, false, NULL )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )
@@ -776,6 +777,7 @@ static void R_FinalizeGLExtensions( void )
 		GL_OPTIONAL_CORE_EXTENSION(instanced_arrays);
 		GL_OPTIONAL_CORE_EXTENSION(texture_3D);
 		GL_OPTIONAL_CORE_EXTENSION(texture_array);
+		GL_OPTIONAL_CORE_EXTENSION(texture_lod);
 		GL_OPTIONAL_CORE_EXTENSION(texture_npot);
 		GL_OPTIONAL_CORE_EXTENSION(vertex_half_float);
 		GL_OPTIONAL_CORE_EXTENSION_DEP(packed_depth_stencil, depth24);

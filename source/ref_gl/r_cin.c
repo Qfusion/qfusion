@@ -98,7 +98,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 
 			for( i = 0; i < 3; i++ ) {
 				handle->yuv_images[i] = R_LoadImage( va( "%s_%s", handle->name, letters[i] ), 
-					fake_data, 1, 1, IT_SPECIAL, IMAGE_TAG_GENERIC, 1 );
+					fake_data, 1, 1, IT_SPECIAL, 1, IMAGE_TAG_GENERIC, 1 );
 			}
 			handle->new_frame = true;
 		}
@@ -151,11 +151,11 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 	else {
 		if( !handle->image ) {
 			handle->image = R_LoadImage( handle->name, &handle->pic, handle->width, handle->height, 
-				IT_SPECIAL, IMAGE_TAG_GENERIC, samples );
+				IT_SPECIAL, 1, IMAGE_TAG_GENERIC, samples );
 			handle->new_frame = false;
 		} else if( handle->new_frame ) {
 			R_ReplaceImage( handle->image, &handle->pic, handle->width, handle->height, 
-				handle->image->flags, samples );
+				handle->image->flags, 1, samples );
 			handle->new_frame = false;
 		}
 	}

@@ -188,19 +188,12 @@ typedef struct
 				,texture_array
 				,fragment_precision_high
 				,packed_depth_stencil
+				,texture_lod
 				;
-	union {
-		char	shadow, shadow_samplers;
-	};
-	union {
-		char	texture3D, texture_3D;
-	};
-	union {
-		char	texture_non_power_of_two, texture_npot;
-	};
-	union {
-		char	half_float_vertex, vertex_half_float;
-	};
+	union { char shadow, shadow_samplers; };
+	union { char texture3D, texture_3D; };
+	union { char texture_non_power_of_two, texture_npot; };
+	union { char half_float_vertex, vertex_half_float; };
 } glextinfo_t;
 
 typedef struct

@@ -543,6 +543,16 @@ typedef unsigned short GLhalfARB;
 #define GL_DEPTH24_STENCIL8_EXT								0x88F0
 #endif
 
+/* GL_SGIS_texture_lod */
+#ifndef GL_SGIS_texture_lod
+#define GL_SGIS_texture_lod
+
+#define GL_TEXTURE_MIN_LOD_SGIS								0x813A
+#define GL_TEXTURE_MAX_LOD_SGIS								0x813B
+#define GL_TEXTURE_BASE_LEVEL_SGIS							0x813C
+#define GL_TEXTURE_MAX_LEVEL_SGIS							0x813D
+#endif
+
 /* EGL_EXT_multiview_window */
 #ifndef EGL_EXT_multiview_window
 #define EGL_EXT_multiview_window

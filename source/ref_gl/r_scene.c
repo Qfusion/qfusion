@@ -364,7 +364,7 @@ void R_RenderScene( const refdef_t *fd )
 						r_colorcorrection_override->modified = false;
 						rsh.colorCorrectionOverrideLUT = R_FindImage(
 							r_colorcorrection_override->string,
-							NULL, IT_COLORCORRECTION, IMAGE_TAG_BUILTIN );
+							NULL, IT_COLORCORRECTION, 1, IMAGE_TAG_BUILTIN );
 					}
 					colorCorrectionLUT = rsh.colorCorrectionOverrideLUT;
 				}
@@ -382,6 +382,10 @@ void R_RenderScene( const refdef_t *fd )
 			}
 		}
 	}
+
+	// adjust field of view for widescreen
+	if( !( fd->rdflags & RDF_NOFOVADJUSTMENT ) )
+		AdjustFov( &rn.refdef.fov_x, &rn.refdef.fov_y, glConfig.width, glConfig.height, false );
 
 	// clip new scissor region to the one currently set
 	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
