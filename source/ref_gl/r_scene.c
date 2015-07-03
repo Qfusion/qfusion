@@ -583,6 +583,9 @@ static void R_RenderDebugSurface( const refdef_t *fd )
 			return;
 		}
 
+		if( rn.refdef.rdflags & RDF_FLIPPED )
+			RB_FlipFrontFace();
+
 		rsc.debugSurface = surf;
 
 		if( r_speeds->integer == 5 ) {
@@ -599,5 +602,8 @@ static void R_RenderDebugSurface( const refdef_t *fd )
 		}
 
 		R_DrawOutlinedSurfaces();
+
+		if( rn.refdef.rdflags & RDF_FLIPPED )
+			RB_FlipFrontFace();
 	}
 }

@@ -311,7 +311,7 @@ void CL_MouseMove( usercmd_t *cmd, int mx, int my )
 		return;
 
 	// add mouse X/Y movement to cmd
-	cl.viewangles[YAW] -= ( m_yaw->value * mouse_x );
+	cl.viewangles[YAW] -= ( m_yaw->value * mouse_x ) * (cl_flip->integer ? -1.0 : 1.0);
 	cl.viewangles[PITCH] += ( m_pitch->value * mouse_y );
 }
 
@@ -663,7 +663,7 @@ void CL_UpdateCommandInput( void )
 		if( cls.key_dest == key_game )
 			CL_GameModule_AddMovement( movement );
 
-		cmd->sidemove += keys_frame_time * bound( -1.0f, movement[0], 1.0f );
+		cmd->sidemove += keys_frame_time * bound( -1.0f, movement[0], 1.0f ) * (cl_flip->integer ? -1.0 : 1.0);
 		cmd->forwardmove += keys_frame_time * bound( -1.0f, movement[1], 1.0f );
 		cmd->upmove += keys_frame_time * bound( -1.0f, movement[2], 1.0f );
 

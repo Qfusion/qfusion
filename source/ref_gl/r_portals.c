@@ -167,6 +167,7 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	image_t *captureTexture;
 	int captureTextureId = -1;
 	int prevRenderFlags = 0;
+	bool prevFlipped;
 	bool doReflection, doRefraction;
 	image_t *portalTexures[2] = { NULL, NULL };
 
@@ -257,11 +258,15 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	}
 
 	prevRenderFlags = rn.renderFlags;
+	prevFlipped = ( rn.refdef.rdflags & RDF_FLIPPED ) != 0;
 	if( !R_PushRefInst() ) {
 		return;
 	}
 
 	VectorCopy( rn.viewOrigin, viewerOrigin );
+	if( prevFlipped ) {
+		VectorInverse( &rn.viewAxis[AXIS_RIGHT] );
+	}
 
 setup_and_render:
 
@@ -277,6 +282,8 @@ setup_and_render:
 		rn.renderFlags = RF_PORTALVIEW;
 		if( !mirror )
 			rn.renderFlags |= RF_PVSCULL;
+		if( prevFlipped )
+			rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
 	else if( mirror )
 	{
@@ -290,7 +297,7 @@ setup_and_render:
 
 		VectorCopy( viewerOrigin, rn.pvsOrigin );
 
-		rn.renderFlags = RF_MIRRORVIEW|RF_FLIPFRONTFACE;
+		rn.renderFlags = (prevRenderFlags ^ RF_FLIPFRONTFACE) | RF_MIRRORVIEW;
 	}
 	else
 	{
@@ -335,10 +342,12 @@ setup_and_render:
 		// ignore entities, if asked politely
 		if( best->renderfx & RF_NOPORTALENTS )
 			rn.renderFlags |= RF_NOENTS;
+		if( prevFlipped )
+			rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
 
 	rn.renderFlags |= (prevRenderFlags & RF_SOFT_PARTICLES);
-	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER );
+	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER|RDF_FLIPPED );
 
 	rn.shadowGroup = NULL;
 	rn.meshlist = &r_portallist;

@@ -415,7 +415,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 		VectorCopy( &rn.viewAxis[AXIS_UP], v_up );
 	}
 
-	if( rn.renderFlags & RF_MIRRORVIEW )
+	if( rn.renderFlags & (RF_MIRRORVIEW|RF_FLIPFRONTFACE) )
 		VectorInverse( v_left );
 
 	VectorMA( e->origin, -radius, v_up, point );
@@ -1168,6 +1168,11 @@ static void R_SetupViewMatrices( void )
 			Z_NEAR, rn.farClip, rf.cameraSeparation, rn.projectionMatrix );
 	}
 
+	if( rd->rdflags & RDF_FLIPPED ) {
+		rn.projectionMatrix[0] = -rn.projectionMatrix[0];
+		rn.renderFlags |= RF_FLIPFRONTFACE;
+	}
+
 	Matrix4_Multiply( rn.projectionMatrix, rn.cameraMatrix, rn.cameraProjectionMatrix );
 }
 
@@ -1896,6 +1901,10 @@ void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out 
 	else {
 		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rn.farClip, 
 			rf.cameraSeparation, p );
+	}
+
+	if( rd->rdflags & RDF_FLIPPED ) {
+		p[0] = -p[0];
 	}
 
 	Matrix4_Modelview( rd->vieworg, rd->viewaxis, m );

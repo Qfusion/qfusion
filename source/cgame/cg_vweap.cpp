@@ -287,6 +287,7 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 	vec3_t gunAngles;
 	vec3_t gunOffset;
 	float fallfrac, fallkick;
+	float handOffset;
 
 	CG_ViewWeapon_RefreshAnimation( viewweapon );
 
@@ -321,20 +322,25 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 	gunOffset[UP] = cg_guny->value + weaponInfo->handpositionOrigin[UP];
 
 	// hand cvar offset
+	handOffset = 0.0f;
 	if( cgs.demoPlaying )
 	{
 		if( hand->integer == 0 )
-			gunOffset[RIGHT] += cg_handOffset->value;
+			handOffset = cg_handOffset->value;
 		else if( hand->integer == 1 )
-			gunOffset[RIGHT] -= cg_handOffset->value;
+			handOffset = -cg_handOffset->value;
 	}
 	else
 	{
 		if( cgs.clientInfo[cg.view.POVent-1].hand == 0 )
-			gunOffset[RIGHT] += cg_handOffset->value;
+			handOffset = cg_handOffset->value;
 		else if( cgs.clientInfo[cg.view.POVent-1].hand == 1 )
-			gunOffset[RIGHT] -= cg_handOffset->value;
+			handOffset = -cg_handOffset->value;
 	}
+
+	if( cg.view.flipped )
+		handOffset *= -1.0f;
+	gunOffset[RIGHT] += handOffset;
 
 	// fallkick offset
 	if( cg.weapon.fallEff_Time > cg.time )
