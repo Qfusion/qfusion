@@ -242,7 +242,6 @@ void R_RunAllCinematics( void )
 */
 static r_cinhandle_t *R_GetCinematicHandleById( unsigned int id )
 {
-	assert( id > 0 && id <= MAX_CINEMATICS );
 	if( id == 0 || id > MAX_CINEMATICS ) {
 		return NULL;
 	}
@@ -298,9 +297,19 @@ unsigned int R_StartCinematic( const char *arg )
 {
 	char uploadName[128];
 	size_t name_size;
+	char *name;
 	r_cinhandle_t *handle, *hnode, *next;
 	struct cinematics_s *cin;
 	bool yuv;
+
+	name_size = strlen( "video/" ) + strlen( arg ) + 1;
+	name = alloca( name_size );
+
+	if( strstr( arg, "/" ) == NULL && strstr( arg, "\\" ) == NULL ) {
+		Q_snprintfz( name, name_size, "video/%s", arg );
+	} else {
+		Q_snprintfz( name, name_size, "%s", arg );
+	}
 
 	// find cinematics with the same name
 	hnode = &r_cinematics_headnode;
@@ -310,12 +319,12 @@ unsigned int R_StartCinematic( const char *arg )
 		assert( handle->cin );
 
 		// reuse
-		if( !Q_stricmp( handle->name, arg ) )
+		if( !Q_stricmp( handle->name, name ) )
 			return handle->id;
 	}
 
 	// open the file, read header, etc
-	cin = ri.CIN_Open( arg, ri.Sys_Milliseconds(), &yuv, NULL );
+	cin = ri.CIN_Open( name, ri.Sys_Milliseconds(), &yuv, NULL );
 
 	// take a free cinematic handle if possible
 	if( !r_free_cinematics || !cin )
@@ -325,9 +334,7 @@ unsigned int R_StartCinematic( const char *arg )
 	r_free_cinematics = handle->next;
 
 	// copy name
-	name_size = strlen( arg ) + 1;
-	handle->name = R_Malloc( name_size );
-	memcpy( handle->name, arg, name_size );
+	handle->name = R_CopyString( name );
 
 	// copy upload name
 	Q_snprintfz( uploadName, sizeof( uploadName ), "***r_cinematic%i***", handle->id-1 );
