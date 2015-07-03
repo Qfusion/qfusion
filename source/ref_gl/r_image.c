@@ -567,7 +567,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 	{
 		// let people sample down the sky textures for speed
 		int picmip = ( flags & IT_SKY ) ? r_skymip->integer : r_picmip->integer;
-		while( ( mip < picmip ) && ( ( width > minmipsize ) || ( height > minmipsize ) ) ) // loop since picmip can be out of range
+		while( ( mip < picmip ) && ( ( width > minmipsize ) || ( height > minmipsize ) ) )
 		{
 			++mip;
 			width >>= 1;
@@ -983,7 +983,7 @@ static void R_SetupTexParameters( int flags, int upload_width, int upload_height
 		if( minmipsize > 1 )
 		{
 			int mipwidth = upload_width, mipheight = upload_height, mip = 0;
-			while( ( mipwidth > minmipsize ) || ( mipheight > minmipsize ) ) // loop since picmip can be out of range
+			while( ( mipwidth > minmipsize ) || ( mipheight > minmipsize ) )
 			{
 				++mip;
 				mipwidth >>= 1;
