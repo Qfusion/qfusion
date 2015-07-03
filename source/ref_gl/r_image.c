@@ -1462,6 +1462,12 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 	}
 	if( !header->pixelHeight )
 		header->pixelHeight = 1;
+	if( !header->type && ( ( header->pixelWidth & ( header->pixelWidth - 1 ) ) || ( header->pixelHeight & ( header->pixelHeight - 1 ) ) ) )
+	{
+		// NPOT compressed textures may crash on certain drivers/GPUs
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Compressed image must be power-of-two: %s\n", image->name );
+		goto error;
+	}
 	if( ( image->flags & IT_CUBEMAP ) && ( header->pixelWidth != header->pixelHeight ) )
 	{
 		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Not square cubemap image: %s\n", image->name );
