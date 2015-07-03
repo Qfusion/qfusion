@@ -547,6 +547,9 @@ static int CG_RenderFlags( void )
 	if( cg_outlineWorld->integer )
 		rdflags |= RDF_WORLDOUTLINES;
 
+	if( cg.view.flipped )
+		rdflags |= RDF_FLIPPED;
+
 	rdflags |= CG_SkyPortal();
 
 	return rdflags;
@@ -774,7 +777,7 @@ static void CG_ChaseCamButtons( void )
 /*
 * CG_SetupViewDef
 */
-void CG_SetupViewDef( cg_viewdef_t *view, int type )
+static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 {
 	memset( view, 0, sizeof( cg_viewdef_t ) );
 
@@ -783,6 +786,7 @@ void CG_SetupViewDef( cg_viewdef_t *view, int type )
 	//
 
 	view->type = type;
+	view->flipped = flipped;
 
 	if( view->type == VIEWDEF_PLAYERVIEW )
 	{
@@ -917,7 +921,7 @@ void CG_SetupViewDef( cg_viewdef_t *view, int type )
 */
 #define	WAVE_AMPLITUDE	0.015   // [0..1]
 #define	WAVE_FREQUENCY	0.6     // [0..1]
-void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime )
+void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped )
 {
 	refdef_t *rd = &cg.view.refdef;
 
@@ -1025,9 +1029,9 @@ void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned
 	trap_R_ClearScene();
 
 	if( CG_DemoCam_Update() )
-		CG_SetupViewDef( &cg.view, CG_DemoCam_GetViewType() );
+		CG_SetupViewDef( &cg.view, CG_DemoCam_GetViewType(), flipped );
 	else
-		CG_SetupViewDef( &cg.view, VIEWDEF_PLAYERVIEW );
+		CG_SetupViewDef( &cg.view, VIEWDEF_PLAYERVIEW, flipped );
 
 	CG_LerpEntities();  // interpolate packet entities positions
 

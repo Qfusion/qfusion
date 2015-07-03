@@ -419,6 +419,7 @@ typedef struct
 	vec3_t angles;
 	mat3_t axis;
 	vec3_t velocity;
+	bool flipped;
 } cg_viewdef_t;
 
 #include "cg_democams.h"
@@ -988,7 +989,7 @@ void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int
 void CG_StartColorBlendEffect( float r, float g, float b, float a, int time );
 float CG_GetSensitivityScale( float sens, float zoomSens );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
-void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime );
+void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped );
 void CG_AddKickAngles( vec3_t viewangles );
 void CG_ChaseStep( int step );
 

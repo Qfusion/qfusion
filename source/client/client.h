@@ -321,6 +321,8 @@ extern cvar_t *cl_shownet;
 extern cvar_t *cl_extrapolationTime;
 extern cvar_t *cl_extrapolate;
 
+extern cvar_t *cl_flip;
+
 extern cvar_t *sensitivity;
 extern cvar_t *zoomsens;
 extern cvar_t *m_pitch;
