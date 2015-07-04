@@ -726,15 +726,21 @@ void SP_target_location( edict_t *self )
 //SAMETEAM : &1 only players in activator's team will see the message.
 //OTHERTEAM : &2 only players in other than activator's team will see the message.
 //PRIVATE : &4 only the player that activates the target will see the message.
+//CLEAR : &8 Clears the helpmessage and exits.
 
 static void SP_target_print_print( edict_t *self, edict_t *activator )
 {
-	if( self->helpmessage && self->mapmessage_index <= MAX_HELPMESSAGES ) {
-		G_SetPlayerHelpMessage( activator, self->mapmessage_index );
+	if( self->spawnflags & 8 ) {
+		G_SetPlayerHelpMessage( activator, 0 );
 		return;
 	}
 
-	G_CenterPrintMsg( activator, self->message );
+	if( self->mapmessage_index && self->mapmessage_index <= MAX_HELPMESSAGES ) {
+		G_SetPlayerHelpMessage( activator, self->mapmessage_index );
+	}
+	else if( self->message && self->message[0] ) {
+		G_CenterPrintMsg( activator, self->message );
+	}
 }
 
 static void SP_target_print_use( edict_t *self, edict_t *other, edict_t *activator )
