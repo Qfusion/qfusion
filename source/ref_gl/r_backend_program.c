@@ -1801,24 +1801,15 @@ static void RB_RenderMeshGLSL_YUV( const shaderpass_t *pass, r_glslfeat_t progra
 static void RB_RenderMeshGLSL_ColorCorrection( const shaderpass_t *pass, r_glslfeat_t programFeatures )
 {
 	int program;
-	const image_t *image;
 	mat4_t texMatrix;
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	if( r_colorcorrection_override->string[0] )
-		image = rsh.colorCorrectionOverrideLUT;
-	else
-		image = rsh.worldBrushModel->colorCorrectionLUT;
-
 	Matrix4_Identity( texMatrix );
 
 	RB_BindTexture( 0, pass->images[0] );
-	RB_BindTexture( 1, image );
-
-	if( image->flags & IT_3D )
-		programFeatures |= GLSL_SHADER_COLORCORRECTION_3D_LUT;
+	RB_BindTexture( 1, pass->images[1] );
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_COLORCORRECTION, NULL,

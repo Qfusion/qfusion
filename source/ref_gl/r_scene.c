@@ -205,7 +205,7 @@ void R_AddLightStyleToScene( int style, float r, float g, float b )
 * R_BlitTextureToScrFbo
 */
 static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFbo, 
-	int program_type, const vec4_t color, int blendMask )
+	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages )
 {
 	int x, y;
 	int w, h;
@@ -249,6 +249,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		static char *s_name = "$builtinpostprocessing";
 		static shaderpass_t p;
 		static shader_t s;
+		int i;
 		static tcmod_t tcmod;
 		mat4_t m;
 
@@ -266,6 +267,8 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 			p.alphagen.type = ALPHA_GEN_IDENTITY;
 			p.tcgen = TC_GEN_NONE;
 			p.images[0] = image;
+			for( i = 0; i < numShaderImages; i++ )
+				p.images[i + 1] = shaderImages[i];
 			p.flags = blendMask;
 			p.program_type = program_type;
 
@@ -356,22 +359,8 @@ void R_RenderScene( const refdef_t *fd )
 				fbFlags |= 4;
 			}
 
-			if( r_colorcorrection->integer && rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
-				image_t *colorCorrectionLUT = rsh.worldBrushModel->colorCorrectionLUT;
-
-				if( r_colorcorrection_override->string[0] ) {
-					if( r_colorcorrection_override->modified ) {
-						r_colorcorrection_override->modified = false;
-						rsh.colorCorrectionOverrideLUT = R_FindImage(
-							r_colorcorrection_override->string,
-							NULL, IT_COLORCORRECTION, 1, IMAGE_TAG_BUILTIN );
-					}
-					colorCorrectionLUT = rsh.colorCorrectionOverrideLUT;
-				}
-
-				if( colorCorrectionLUT ) {
-					fbFlags |= 8;
-				}
+			if( rn.refdef.colorCorrection && rn.refdef.colorCorrection->passes[0].images[0] ) {
+				fbFlags |= 8;
 			}
 
 			if( fbFlags != oldFlags ) {
@@ -413,8 +402,9 @@ void R_RenderScene( const refdef_t *fd )
 
 		R_BlitTextureToScrFbo( fd, rn.fbColorAttachment, 
 			firstPPFBO, 
-			GLSL_PROGRAM_TYPE_NONE, 
-			colorWhite, 0 );
+			GLSL_PROGRAM_TYPE_NONE,
+			colorWhite, 0,
+			0, NULL );
 	}
 
 	// apply FXAA
@@ -424,7 +414,8 @@ void R_RenderScene( const refdef_t *fd )
 		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
 			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
 			GLSL_PROGRAM_TYPE_FXAA,
-			colorWhite, 0 );
+			colorWhite, 0,
+			0, NULL );
 
 		ppFBO ^= 1;
 	}
@@ -436,7 +427,8 @@ void R_RenderScene( const refdef_t *fd )
 		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
 			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
 			GLSL_PROGRAM_TYPE_COLORCORRECTION,
-			colorWhite, 0 );
+			colorWhite, 0,
+			1, &( rn.refdef.colorCorrection->passes[0].images[0] ) );
 
 		ppFBO ^= 1;
 	}

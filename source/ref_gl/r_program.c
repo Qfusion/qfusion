@@ -893,13 +893,6 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_colorcorrection[] =
-{
-	{ GLSL_SHADER_COLORCORRECTION_3D_LUT, "#define APPLY_3D_LUT\n", "_3dtex" },
-
-	{ 0, NULL, NULL }
-};
-
 static const glsl_feature_t * const glsl_programtypes_features[] =
 {
 	// GLSL_PROGRAM_TYPE_NONE
@@ -927,7 +920,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	// GLSL_PROGRAM_TYPE_YUV
 	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_COLORCORRECTION
-	glsl_features_colorcorrection
+	glsl_features_empty
 };
 
 // ======================================================================================

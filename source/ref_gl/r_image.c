@@ -2029,63 +2029,6 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic )
 }
 
 /*
-* R_LoadColorLUT
-*/
-static image_t *R_LoadColorLUT( const char *name, int flags, int tags )
-{
-	char *filename;
-	uint8_t *buf, *buf2, *p, *px, *py;
-	size_t filelen;
-	image_t *image;
-	int i, j;
-
-	filename = alloca( strlen( name ) + sizeof( ".raw" ) );
-	strcpy( filename, name );
-	strcat( filename, ".raw" );
-	filelen = R_LoadFile( filename, ( void ** )( &buf ) );
-	if( !buf )
-	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "Missing color LUT: %s\n", filename );
-		return NULL;
-	}
-
-	if( filelen < ( 32 * 32 * 32 * 3 ) )
-	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "Color LUT %s is too small, must be 32x32x32\n", filename );
-		R_FreeFile( buf );
-		return NULL;
-	}
-
-	p = buf;
-
-	if( flags & IT_3D )
-	{
-		image = R_Create3DImage( name, 32, 32, 32, flags, tags, 3, false );
-		for( i = 0; i < 32; i++, p += 32 * 32 * 3 )
-			R_ReplaceImageLayer( image, i, &p );
-	}
-	else
-	{
-		/*
-		* Pack the 32x32 blocks into a 256x128 image.
-		* Width is greater than height because red needs less precision than green.
-		* For the same reason, for blue, Y is least significant and X is most significant.
-		*/
-		buf2 = R_PrepareImageBuffer( QGL_CONTEXT_MAIN, TEXTURE_LOADING_BUF0, 256 * 128 * 3 );
-		for( i = 0, px = buf2; i < 8; i++, px += 32 * 3 )
-		{
-			for( j = 0, py = px; j < 32 * 4; j++, p += 32 * 3, py += 256 * 3 )
-				memcpy( py, p, 32 * 3 );
-		}
-		image = R_LoadImage( name, &buf2, 256, 128, flags, 1, tags, 3 );
-	}
-	Q_strncpyz( image->extension, ".raw", sizeof( image->extension ) );
-
-	R_FreeFile( buf );
-	return image;
-}
-
-/*
 * R_FindImage
 * 
 * Finds and loads the given image. IT_SYNC images are loaded synchronously.
@@ -2157,10 +2100,6 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, int minmi
 	//
 	// load the pic from disk
 	//
-	if( flags & IT_COLORLUT ) {
-		return R_LoadColorLUT( pathname, flags, tags );
-	}
-
 	image = R_LoadImage( pathname, empty_data, 1, 1, flags, minmipsize, tags, 1 );
 
 	if( !( image->flags & IT_SYNC ) ) {
@@ -2816,9 +2755,6 @@ void R_InitImages( void )
 	R_InitStretchRawTextures();
 	R_InitBuiltinTextures();
 	R_InitScreenTextures();
-
-	if( r_colorcorrection_override->string[0] )
-		r_colorcorrection_override->modified = true;
 }
 
 /*

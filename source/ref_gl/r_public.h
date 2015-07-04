@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 16
+#define REF_API_VERSION 17
 
 struct mempool_s;
 struct cinematics_s;
