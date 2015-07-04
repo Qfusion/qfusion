@@ -1500,6 +1500,7 @@ static void BOT_DMclass_VSAYmessages( edict_t *self )
 static void BOT_DMClass_BlockedTimeout( edict_t *self )
 {
 	if( bot_dummy->integer ) {
+		self->ai->blocked_timeout = level.time + 15000;
 		return;
 	}
 	self->health = 0;
