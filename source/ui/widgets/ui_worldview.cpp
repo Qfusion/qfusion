@@ -84,6 +84,7 @@ public:
 		refdef.height = box.y;
 		refdef.fov_x = 100;
 		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
+		AdjustFov( &refdef.fov_x, &refdef.fov_y, refdef.width, refdef.height, false );
 		refdef.time = UI_Main::Get()->getRefreshState().time;
 		refdef.rdflags = RDF_OLDAREABITS;
 
