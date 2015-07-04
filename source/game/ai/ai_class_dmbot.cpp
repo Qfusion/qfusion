@@ -1399,6 +1399,8 @@ static void BOT_DMclass_VSAYmessages( edict_t *self )
 {
 	if( GS_MatchState() != MATCH_STATE_PLAYTIME )
 		return;
+	if( bot_dummy->integer )
+		return;
 
 	if( self->snap.damageteam_given > 25 )
 	{
