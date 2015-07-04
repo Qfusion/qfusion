@@ -843,10 +843,6 @@ static void Mod_TouchBrushModel( model_t *model )
 	}
 
 	R_TouchLightmapImages( model );
-
-	if( loadbmodel->colorCorrectionLUT ) {
-		R_TouchImage( loadbmodel->colorCorrectionLUT, IMAGE_TAG_GENERIC );
-	}
 }
 
 //===============================================================================
@@ -1201,7 +1197,6 @@ static void R_InitMapConfig( const char *model )
 	mapConfig.depthWritingSky = true;
 	mapConfig.forceClear = false;
 	mapConfig.lightingIntensity = 0;
-	mapConfig.colorCorrection[0] = '\0';
 
 	VectorClear( mapConfig.ambient );
 	VectorClear( mapConfig.outlineColor );
@@ -1255,12 +1250,6 @@ static void R_FinishMapConfig( const model_t *mod )
 			for( i = 0; i < 3; i++ )
 				mapConfig.ambient[i] = bound( 0, mapConfig.ambient[i] * scale, 1 );
 		}
-	}
-
-	if( mapConfig.colorCorrection[0] )
-	{
-		( ( mbrushmodel_t * )( mod->extradata ) )->colorCorrectionLUT =
-			R_FindImage( mapConfig.colorCorrection, NULL, IT_COLORCORRECTION, 1, IMAGE_TAG_GENERIC );
 	}
 
 	mod_mapConfigs[mod - mod_known] = mapConfig;

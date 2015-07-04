@@ -44,8 +44,7 @@ enum
 	,IT_DEPTHCOMPARE	= 1<<17
 	,IT_ARRAY			= 1<<18
 	,IT_3D				= 1<<19
-	,IT_COLORLUT		= 1<<20
-	,IT_STENCIL			= 1<<21		// for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
+	,IT_STENCIL			= 1<<20		// for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
 };
 
 /**
@@ -58,7 +57,6 @@ enum
 #define IT_GL_ES_NPOT		( IT_CLAMP|IT_NOMIPMAP )
 
 #define IT_SPECIAL			( IT_CLAMP|IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS )
-#define IT_COLORCORRECTION	( ( glConfig.maxTexture3DSize >= 32 ) ? ( IT_SPECIAL|IT_COLORLUT|IT_3D ) : ( IT_SPECIAL|IT_COLORLUT ) )
 #define IT_SKYFLAGS			( IT_SKY|IT_NOMIPMAP|IT_CLAMP|IT_SYNC )
 
 /**
