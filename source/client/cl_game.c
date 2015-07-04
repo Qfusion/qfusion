@@ -707,10 +707,10 @@ uint8_t CL_GameModule_GetButtonBits( void )
 /*
 * CL_GameModule_AddViewAngles
 */
-void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime )
+void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime, bool flipped )
 {
 	if( cge )
-		cge->AddViewAngles( viewangles, frametime );
+		cge->AddViewAngles( viewangles, frametime, flipped );
 }
 
 /*
