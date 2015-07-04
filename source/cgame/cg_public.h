@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   89
+#define	CGAME_API_VERSION   90
 
 //
 // structs and variables shared with the main engine
@@ -324,8 +324,9 @@ typedef struct
 	 *
 	 * @param viewangles view angles to modify
 	 * @param frametime  real frame time
+	 * @param flipped    whether horizontal input is flipped
 	 */
-	void ( *AddViewAngles )( vec3_t viewangles, float frametime );
+	void ( *AddViewAngles )( vec3_t viewangles, float frametime, bool flipped );
 
 	/**
 	 * Adds player movement.

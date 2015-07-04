@@ -1682,7 +1682,7 @@ unsigned int CG_GetTouchButtonBits( void )
 	return buttons;
 }
 
-void CG_AddTouchViewAngles( vec3_t viewangles, float frametime )
+void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip )
 {
 	cg_touchpad_t &viewpad = cg_touchpads[TOUCHPAD_VIEW];
 	if( viewpad.touch >= 0 )
@@ -1711,7 +1711,7 @@ void CG_AddTouchViewAngles( vec3_t viewangles, float frametime )
 			viewangles[PITCH] += angle * dir * speed;
 
 		angle = ( viewpad.x - ( float )touch.x ) * scale;
-		dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
+		dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f ) * flip;
 		angle = fabsf( angle ) - cg_touch_lookThres->value;
 		if( angle > 0.0f )
 			viewangles[YAW] += angle * dir * speed;

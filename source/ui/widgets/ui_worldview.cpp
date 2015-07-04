@@ -41,6 +41,7 @@ private:
 	vec3_t aWaveAmplitude;
 	vec3_t aWavePhase;
 	vec3_t aWaveFrequency;
+	float fovX;
 	String mapName;
 	bool Initialized;
 
@@ -59,7 +60,7 @@ public:
 
 		// Some default values
 		Matrix3_Copy( axis_identity, refdef.viewaxis );
-		refdef.fov_x = 100.0f;
+		fovX = 100.0f;
 	}
 
 	virtual void OnRender()
@@ -82,8 +83,9 @@ public:
 		Rocket::Core::Vector2f box = GetBox().GetSize(Rocket::Core::Box::CONTENT);
 		refdef.width = box.x;
 		refdef.height = box.y;
-		refdef.fov_x = 100;
+		refdef.fov_x = fovX;
 		refdef.fov_y = CalcFov( refdef.fov_x, refdef.width, refdef.height );
+		AdjustFov( &refdef.fov_x, &refdef.fov_y, refdef.width, refdef.height, false );
 		refdef.time = UI_Main::Get()->getRefreshState().time;
 		refdef.rdflags = RDF_OLDAREABITS;
 
@@ -187,7 +189,7 @@ public:
 
 			else if (*it == "fov")
 			{
-				refdef.fov_x = atof( GetProperty(*it)->Get<String>().CString() );
+				fovX = atof( GetProperty(*it)->Get<String>().CString() );
 			}
 		}
 	}

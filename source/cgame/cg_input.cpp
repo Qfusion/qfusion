@@ -91,8 +91,9 @@ static void CG_GamepadFrame( float frametime )
  *
  * @param viewangles view angles to modify
  * @param frametime  real frame time
+ * @param flip       horizontal flipping direction
  */
-static void CG_AddGamepadViewAngles( vec3_t viewangles, float frametime )
+static void CG_AddGamepadViewAngles( vec3_t viewangles, float frametime, float flip )
 {
 	vec4_t sticks;
 	trap_IN_GetThumbsticks( sticks );
@@ -110,7 +111,7 @@ static void CG_AddGamepadViewAngles( vec3_t viewangles, float frametime )
 	if( value > 0.0f )
 	{
 		// Quadratic interpolation.
-		viewangles[YAW] -= frametime *
+		viewangles[YAW] -= frametime * flip *
 			value * value * ( ( axisValue < 0.0f ) ? -1.0f : 1.0f ) * cg_gamepad_accelYaw *
 			cg_gamepad_yawSpeed->value * CG_GetSensitivityScale( cg_gamepad_yawSpeed->value, 0.0f );
 	}
@@ -191,10 +192,11 @@ unsigned int CG_GetButtonBits( void )
 	return CG_GetTouchButtonBits();
 }
 
-void CG_AddViewAngles( vec3_t viewangles, float frametime )
+void CG_AddViewAngles( vec3_t viewangles, float frametime, bool flipped )
 {
-	CG_AddGamepadViewAngles( viewangles, frametime );
-	CG_AddTouchViewAngles( viewangles, frametime );
+	float flip = ( flipped ? -1.0f : 1.0f );
+	CG_AddGamepadViewAngles( viewangles, frametime, flip );
+	CG_AddTouchViewAngles( viewangles, frametime, flip );
 }
 
 void CG_AddMovement( vec3_t movement )

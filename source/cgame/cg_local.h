@@ -953,7 +953,7 @@ int CG_AsyncGetRequest( const char *resource, void (*done_cb)(int status, const 
 const char *CG_TranslateString( const char *string );
 
 unsigned int CG_GetTouchButtonBits( void );
-void CG_AddTouchViewAngles( vec3_t viewangles, float frametime );
+void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip );
 void CG_AddTouchMovement( vec3_t movement );
 
 //
@@ -1163,7 +1163,7 @@ void CG_UpdateInput( float frametime );
 void CG_ClearInputState( void );
 
 unsigned int CG_GetButtonBits( void );
-void CG_AddViewAngles( vec3_t viewangles, float frametime );
+void CG_AddViewAngles( vec3_t viewangles, float frametime, bool flipped );
 void CG_AddMovement( vec3_t movement );
 
 //=================================================
