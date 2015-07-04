@@ -423,7 +423,7 @@ void CL_GameModule_GetEntitySpatilization( int entnum, vec3_t origin, vec3_t vel
 void CL_GameModule_UpdateInput( float frametime );
 void CL_GameModule_ClearInputState( void );
 uint8_t CL_GameModule_GetButtonBits( void );
-void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime );
+void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime, bool flipped );
 void CL_GameModule_AddMovement( vec3_t movement );
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
 

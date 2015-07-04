@@ -652,7 +652,7 @@ void CL_UpdateCommandInput( void )
 	IN_MouseMove( cmd );
 	CL_AddButtonBits( &cmd->buttons );
 	if( cls.key_dest == key_game )
-		CL_GameModule_AddViewAngles( cl.viewangles, cls.realframetime );
+		CL_GameModule_AddViewAngles( cl.viewangles, cls.realframetime, cl_flip->integer != 0 );
 
 	if( keys_frame_time )
 	{
