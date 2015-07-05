@@ -330,7 +330,7 @@ void CG_RegisterMediaShaders( void )
 
 	cgs.media.shaderAdditiveParticleShine = CG_RegisterMediaShader( "additiveParticleShine", true );
 
-	//	cgs.media.shaderBladeMark = CG_RegisterMediaShader( "gfx/decals/d_blade_hit" );
+	cgs.media.shaderBladeMark = CG_RegisterMediaShader( "gfx/decals/d_blade_hit", true );
 	cgs.media.shaderBulletMark = CG_RegisterMediaShader( "gfx/decals/d_bullet_hit", true );
 	cgs.media.shaderExplosionMark = CG_RegisterMediaShader( "gfx/decals/d_explode_hit", true );
 	cgs.media.shaderPlasmaMark = CG_RegisterMediaShader( "gfx/decals/d_plasma_hit", true );
