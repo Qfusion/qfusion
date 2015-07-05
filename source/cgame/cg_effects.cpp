@@ -509,7 +509,7 @@ typedef struct particle_s
 	struct shader_s	*shader;
 } cparticle_t;
 
-#define	PARTICLE_GRAVITY    250
+#define	PARTICLE_GRAVITY    500
 
 #define MAX_PARTICLES	    2048
 
@@ -568,7 +568,7 @@ void CG_ParticleEffect( vec3_t org, vec3_t dir, float r, float g, float b, int c
 		count = MAX_PARTICLES - cg_numparticles;
 	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ )
 	{
-		CG_InitParticle( p, 1, 1, r + random()*0.1, g + random()*0.1, b + random()*0.1, NULL );
+		CG_InitParticle( p, 0.75, 1, r + random()*0.1, g + random()*0.1, b + random()*0.1, NULL );
 
 		d = rand() & 31;
 		for( j = 0; j < 3; j++ )
@@ -599,7 +599,7 @@ void CG_ParticleEffect2( vec3_t org, vec3_t dir, float r, float g, float b, int 
 		count = MAX_PARTICLES - cg_numparticles;
 	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ )
 	{
-		CG_InitParticle( p, 1, 1, r, g, b, NULL );
+		CG_InitParticle( p, 0.75, 1, r, g, b, NULL );
 
 		d = rand()&7;
 		for( j = 0; j < 3; j++ )
@@ -630,13 +630,13 @@ void CG_ParticleExplosionEffect( vec3_t org, vec3_t dir, float r, float g, float
 		count = MAX_PARTICLES - cg_numparticles;
 	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ )
 	{
-		CG_InitParticle( p, 1, 1, r + random()*0.1, g + random()*0.1, b + random()*0.1, NULL );
+		CG_InitParticle( p, 0.75, 1, r + random()*0.1, g + random()*0.1, b + random()*0.1, NULL );
 
 		d = rand() & 31;
 		for( j = 0; j < 3; j++ )
 		{
 			p->org[j] = org[j] + ( ( rand()&7 ) - 4 ) + d * dir[j];
-			p->vel[j] = crandom() * 200;
+			p->vel[j] = crandom() * 400;
 		}
 
 		//p->accel[0] = p->accel[1] = 0;
