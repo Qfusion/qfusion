@@ -670,7 +670,7 @@ void CG_BladeImpact( vec3_t pos, vec3_t dir )
 		trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxBladeWallHit[(int)( random()*2 )] ), pos, CHAN_AUTO,
 			cg_volume_effects->value, ATTN_NORM );
 		if( !( trace.surfFlags & SURF_NOMARKS ) )
-			CG_SpawnDecal( pos, dir, random()*360, 8, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderBulletMark ) );
+			CG_SpawnDecal( pos, dir, random()*10, 8, 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderBladeMark ) );
 	}
 }
 

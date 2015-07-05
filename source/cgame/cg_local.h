@@ -261,6 +261,7 @@ typedef struct
 	cgs_media_handle_t *shaderCartoonHit3;
 	cgs_media_handle_t *shaderTeamMateIndicator;
 	cgs_media_handle_t *shaderTeleporterSmokePuff;
+	cgs_media_handle_t *shaderBladeMark;
 	cgs_media_handle_t *shaderBulletMark;
 	cgs_media_handle_t *shaderExplosionMark;
 	cgs_media_handle_t *shaderEnergyMark;
