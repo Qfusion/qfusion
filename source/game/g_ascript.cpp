@@ -3207,6 +3207,16 @@ static unsigned asFunc_G_RegisterHelpMessage( asstring_t *str )
 	return G_RegisterHelpMessage( str->buffer );
 }
 
+static void asFunc_G_SetColorCorrection( int index )
+{
+	gs.gameState.stats[GAMESTAT_COLORCORRECTION] = index;
+}
+
+static int asFunc_G_GetDefaultColorCorrection( void )
+{
+	return level.colorCorrection;
+}
+
 static const asglobfuncs_t asGlobFuncs[] =
 {
 	{ "Entity @G_SpawnEntity( const String &in )", asFUNCTION(asFunc_G_Spawn), NULL },
@@ -3290,6 +3300,10 @@ static const asglobfuncs_t asGlobFuncs[] =
 	{ "const String @ML_GetMapByNum( int num )", asFUNCTION(asFunc_ML_GetMapByNum), NULL },
 
 	{ "uint G_RegisterHelpMessage( const String &in )", asFUNCTION(asFunc_G_RegisterHelpMessage), NULL },
+
+	// color correction
+	{ "void G_SetColorCorrection( int index )", asFUNCTION(asFunc_G_SetColorCorrection), NULL },
+	{ "int G_GetDefaultColorCorrection()", asFUNCTION(asFunc_G_GetDefaultColorCorrection), NULL },
 
 	{ NULL }
 };

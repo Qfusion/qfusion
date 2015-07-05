@@ -81,6 +81,7 @@ const field_t fields[] = {
 	{ "debris2", STOFS( debris2 ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "shaderName", STOFS( shaderName ), F_LSTRING, FFL_SPAWNTEMP },
 	{ "size", STOFS( size ), F_INT, FFL_SPAWNTEMP },
+	{ "colorCorrection", STOFS( colorCorrection ), F_LSTRING, FFL_SPAWNTEMP },
 
 	{ NULL, 0, F_INT, 0 }
 };
@@ -978,4 +979,10 @@ static void SP_worldspawn( edict_t *ent )
 
 	if( st.gravity )
 		level.gravity = atof( st.gravity );
+
+	if( st.colorCorrection )
+	{
+		level.colorCorrection = trap_ImageIndex( st.colorCorrection );
+		gs.gameState.stats[GAMESTAT_COLORCORRECTION] = level.colorCorrection;
+	}
 }
