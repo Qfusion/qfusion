@@ -914,6 +914,14 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 	VectorCopy( cg.view.origin, view->refdef.vieworg );
 	Matrix3_Copy( cg.view.axis, view->refdef.viewaxis );
 	VectorInverse( &view->refdef.viewaxis[AXIS_RIGHT] );
+
+	view->refdef.colorCorrection = NULL;
+	if( cg_colorCorrection->integer )
+	{
+		int colorCorrection = GS_ColorCorrection();
+		if( ( colorCorrection > 0 ) && ( colorCorrection < MAX_IMAGES ) )
+			view->refdef.colorCorrection = cgs.imagePrecache[colorCorrection];
+	}
 }
 
 /*
