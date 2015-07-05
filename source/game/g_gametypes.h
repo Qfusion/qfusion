@@ -169,9 +169,12 @@ typedef struct
 	bool customDeadBodyCam;
 	bool removeInactivePlayers;
 
-	int spawnpoint_radius;
+	int spawnpointRadius;
 
 	bool mmCompatible;
+
+	int numBots;
+	bool dummyBots;
 } gametype_descriptor_t;
 
 typedef struct

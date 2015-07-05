@@ -418,7 +418,7 @@ static void G_Gametype_GENERIC_Init( void )
 	level.gametype.canForceModels = true;
 	level.gametype.canShowMinimap = false;
 	level.gametype.teamOnlyMinimap = true;
-	level.gametype.spawnpoint_radius = 256;
+	level.gametype.spawnpointRadius = 256;
 
 	level.gametype.canShowMinimap = false;
 	level.gametype.teamOnlyMinimap = true;
@@ -426,7 +426,7 @@ static void G_Gametype_GENERIC_Init( void )
 	level.gametype.mmCompatible = false;
 
 	if( GS_Instagib() )
-		level.gametype.spawnpoint_radius *= 2;
+		level.gametype.spawnpointRadius *= 2;
 
 	trap_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 164 %i 64 %l 48 %p 18 %p 18" );
 	trap_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Score Ping C R" );
@@ -1617,6 +1617,7 @@ static bool G_EachNewSecond( void )
 static void G_CheckNumBots( void )
 {
 	edict_t	*ent;
+	int desiredNumBots;
 
 	if( level.spawnedTimeStamp + 5000 > game.realtime )
 		return;
@@ -1628,8 +1629,14 @@ static void G_CheckNumBots( void )
 	if( g_numbots->integer > gs.maxclients )
 		trap_Cvar_Set( "g_numbots", va( "%i", gs.maxclients ) );
 
-	if( g_numbots->integer < game.numBots )
-	{   // kick one bot
+	if( level.gametype.numBots > gs.maxclients )
+		level.gametype.numBots = gs.maxclients;
+
+	desiredNumBots = level.gametype.numBots ? level.gametype.numBots : g_numbots->integer;
+
+	if( desiredNumBots < game.numBots )
+	{
+		// kick one bot
 		for( ent = game.edicts + gs.maxclients; PLAYERNUM( ent ) >= 0; ent-- )
 		{
 			if( !ent->r.inuse || !( ent->r.svflags & SVF_FAKECLIENT ) )
@@ -1643,9 +1650,9 @@ static void G_CheckNumBots( void )
 		return;
 	}
 
-	if( g_numbots->integer > game.numBots )
+	if( desiredNumBots > game.numBots )
 	{                                     // add a bot if there is room
-		for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients && game.numBots < g_numbots->integer; ent++ )
+		for( ent = game.edicts + 1; PLAYERNUM( ent ) < gs.maxclients && game.numBots < desiredNumBots; ent++ )
 		{
 			if( !ent->r.inuse && trap_GetClientState( PLAYERNUM( ent ) ) == CS_FREE )
 				BOT_SpawnBot( NULL );
@@ -1886,7 +1893,10 @@ void G_Gametype_SetDefaults( void )
 	level.gametype.customDeadBodyCam = false;
 	level.gametype.removeInactivePlayers = true;
 
-    level.gametype.spawnpoint_radius = 64;
+    level.gametype.spawnpointRadius = 64;
+
+	level.gametype.numBots = 0;
+	level.gametype.dummyBots = false;
 
     level.gametype.mmCompatible = false;
 }
