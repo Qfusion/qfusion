@@ -374,8 +374,8 @@ void SelectSpawnPoint( edict_t *ent, edict_t **spawnpoint, vec3_t origin, vec3_t
 	}
 
 	// SPAWN TELEFRAGGING PROTECTION.
-	if( ent->r.solid == SOLID_YES && ( level.gametype.spawnpoint_radius > ( playerbox_stand_maxs[0] - playerbox_stand_mins[0] ) ) )
-		G_OffsetSpawnPoint( origin, playerbox_stand_mins, playerbox_stand_maxs, level.gametype.spawnpoint_radius, 
+	if( ent->r.solid == SOLID_YES && ( level.gametype.spawnpointRadius > ( playerbox_stand_maxs[0] - playerbox_stand_mins[0] ) ) )
+		G_OffsetSpawnPoint( origin, playerbox_stand_mins, playerbox_stand_maxs, level.gametype.spawnpointRadius, 
 			!( spot->spawnflags & 1 ) ? true : false );
 }
 

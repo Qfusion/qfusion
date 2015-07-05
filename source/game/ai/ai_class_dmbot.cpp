@@ -1399,7 +1399,7 @@ static void BOT_DMclass_VSAYmessages( edict_t *self )
 {
 	if( GS_MatchState() != MATCH_STATE_PLAYTIME )
 		return;
-	if( bot_dummy->integer )
+	if( level.gametype.dummyBots || bot_dummy->integer )
 		return;
 
 	if( self->snap.damageteam_given > 25 )
@@ -1499,7 +1499,7 @@ static void BOT_DMclass_VSAYmessages( edict_t *self )
 //==========================================
 static void BOT_DMClass_BlockedTimeout( edict_t *self )
 {
-	if( bot_dummy->integer ) {
+	if( level.gametype.dummyBots || bot_dummy->integer ) {
 		self->ai->blocked_timeout = level.time + 15000;
 		return;
 	}
@@ -1580,7 +1580,11 @@ static void BOT_DMclass_RunFrame( edict_t *self )
 	&& self->r.client->teamstate.timeStamp + 4000 < level.time )
 		G_Match_Ready( self );
 
-	if( !bot_dummy->integer )
+	if( level.gametype.dummyBots || bot_dummy->integer )
+	{
+		self->r.client->level.last_activity = level.time;
+	}
+	else
 	{
 		BOT_DMclass_FindEnemy( self );
 
@@ -1611,9 +1615,6 @@ static void BOT_DMclass_RunFrame( edict_t *self )
 			ucmd.angles[i] = ANGLE2SHORT( self->s.angles[i] ) - self->r.client->ps.pmove.delta_angles[i];
 
 		VectorSet( self->r.client->ps.pmove.delta_angles, 0, 0, 0 );
-	}
-	else {
-	    self->r.client->level.last_activity = level.time;
 	}
 
 	// set approximate ping and show values
