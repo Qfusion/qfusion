@@ -449,7 +449,10 @@ static void _R_DrawSurfaces( void )
 					RB_FlipFrontFace();
 				}
 
-				R_TransformForEntity( entity );
+				if( shader->flags & SHADER_AUTOSPRITE ) 
+					R_TranslateForEntity( entity );
+				else
+					R_TransformForEntity( entity );
 			}
 
 			depthWrite = shader->flags & SHADER_DEPTHWRITE ? true : false;

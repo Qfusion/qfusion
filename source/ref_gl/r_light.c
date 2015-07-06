@@ -477,7 +477,7 @@ static int R_PackLightmaps( int num, int w, int h, int size, int stride, bool de
 
 	ri.Com_DPrintf( "Packing %i lightmap(s) -> ", num );
 
-	if( !max || num == 1 || !mapConfig.lightmapsPacking /* || !r_lighting_packlightmaps->integer*/ )
+	if( !max || num == 1 || !mapConfig.lightmapsPacking )
 	{
 		// process as it is
 		R_BuildLightmap( w, h, deluxe, data, r_lightmapBuffer, w * LIGHTMAP_BYTES );
@@ -611,7 +611,8 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 	layerWidth = w * ( 1 + ( int )mapConfig.deluxeMappingEnabled );
 
 	mapConfig.maxLightmapSize = 0;
-	mapConfig.lightmapArrays = glConfig.ext.texture_array
+	mapConfig.lightmapArrays = mapConfig.lightmapsPacking
+		&& glConfig.ext.texture_array
 		&& ( glConfig.maxVertexAttribs > VATTRIB_LMLAYERS0123 )
 		&& ( glConfig.maxVaryingFloats >= ( 9 * 4 ) ) // 9th varying is required by material shaders
 		&& ( layerWidth <= glConfig.maxTextureSize ) && ( h <= glConfig.maxTextureSize );

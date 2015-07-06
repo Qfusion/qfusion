@@ -148,7 +148,7 @@ void R_TransformForWorld( void )
 /*
 * R_TranslateForEntity
 */
-static void R_TranslateForEntity( const entity_t *e )
+void R_TranslateForEntity( const entity_t *e )
 {
 	Matrix4_Identity( rn.objectMatrix );
 

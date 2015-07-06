@@ -27,7 +27,46 @@ static int snd_scaletable[32][256];
 static int *snd_p, snd_linear_count, snd_vol, music_vol;
 static short *snd_out;
 
-#if !defined ( id386 ) || defined ( __MACOSX__ )
+#if defined ( __arm__ ) && defined ( __GNUC__ )
+// 40-50% faster than the C version.
+// Uses signed saturation instruction (available since ARMv6 or Thumb2) instead of comparisons,
+// with the right shift being a part of the saturation instruction.
+
+static void S_WriteLinearBlastStereo16( void )
+{
+	int i;
+	int val;
+
+	for( i = 0; i < snd_linear_count; i += 2 )
+	{
+		val = snd_p[i];
+		__asm__( "ssat %0, #16, %0, asr #8\n" : "+r"( val ) );
+		snd_out[i] = val;
+
+		val = snd_p[i+1];
+		__asm__( "ssat %0, #16, %0, asr #8\n" : "+r"( val ) );
+		snd_out[i+1] = val;
+	}
+}
+
+static void S_WriteSwappedLinearBlastStereo16( void )
+{
+	int i;
+	int val;
+
+	for( i = 0; i < snd_linear_count; i += 2 )
+	{
+		val = snd_p[i+1];
+		__asm__( "ssat %0, #16, %0, asr #8\n" : "+r"( val ) );
+		snd_out[i] = val;
+
+		val = snd_p[i];
+		__asm__( "ssat %0, #16, %0, asr #8\n" : "+r"( val ) );
+		snd_out[i+1] = val;
+	}
+}
+
+#elif !defined ( id386 ) || defined ( __MACOSX__ )
 #ifdef _WIN32
 #pragma warning( push )
 #pragma warning( disable : 4310 )       // cast truncates constant value
