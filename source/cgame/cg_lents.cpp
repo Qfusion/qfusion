@@ -1503,7 +1503,6 @@ void CG_SmallPileOfGibs( vec3_t origin, int damage, const vec3_t initialVelocity
 		le->bounce = 75;
 	}
 
-	CG_ImpactPuffParticles( origin, vec3_origin, 16, 2.5f, 1, 1, 0.6, 1, NULL );
 	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxGibsExplosion ), origin, CHAN_AUTO,
 		cg_volume_effects->value, ATTN_STATIC );
 
