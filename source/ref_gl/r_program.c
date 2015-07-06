@@ -2016,7 +2016,7 @@ void RP_UpdateShaderUniforms( int elem,
 	GLfloat m[9];
 	glsl_program_t *program = r_glslprograms + elem - 1;
 
-	if( entDist ) {
+	if( entOrigin ) {
 		if( program->loc.EntityOrigin >= 0 )
 			qglUniform3fvARB( program->loc.EntityOrigin, 1, entOrigin );
 		if( program->loc.builtin.EntityOrigin >= 0 )
