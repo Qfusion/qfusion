@@ -28,6 +28,10 @@ static int *snd_p, snd_linear_count, snd_vol, music_vol;
 static short *snd_out;
 
 #if defined ( __arm__ ) && defined ( __GNUC__ )
+// 40-50% faster than the C version.
+// Uses signed saturation instruction (available since ARMv6 or Thumb2) instead of comparisons,
+// with the right shift being a part of the saturation instruction.
+
 static void S_WriteLinearBlastStereo16( void )
 {
 	int i;
