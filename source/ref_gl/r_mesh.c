@@ -535,7 +535,7 @@ static void R_DrawSkyportalDepthMask( void )
 
 	RB_ClearDepth( 0.0 );
 	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
-	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE|GLSTATE_DEPTHFUNC_GT );
+	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE|GLSTATE_DEPTHFUNC_GT|GLSTATE_NO_COLORWRITE );
 	RB_DepthRange( 1.0, 1.0 );
 
 	_R_DrawSurfaces( rn.skylist );
