@@ -1665,7 +1665,7 @@ static void Mod_ApplySuperStylesToFace( const rdface_t *in, msurface_t *out )
 	{
 		lightmaps[j] = LittleLong( in->lm_texnum[j] );
 
-		if( in->lightmapStyles[j] == 255 || lightmaps[j] >= loadmodel_numlightmaps )
+		if( in->lightmapStyles[j] == 255 || lightmaps[j] >= loadmodel_numlightmaps || !mesh )
 		{
 			lmRects[j] = NULL;
 			lightmaps[j] = -1;
