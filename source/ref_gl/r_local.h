@@ -144,6 +144,7 @@ typedef struct
 	int				scissor[4];
 	int				viewport[4];
 	drawList_t		*meshlist;				// meshes to be rendered
+	drawList_t		*skylist;				// sky BSP surfaces are kept separately
 
 	unsigned int	dlightBits;
 
@@ -606,13 +607,14 @@ struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
 // r_mesh.c
 //
 void R_InitDrawList( drawList_t *list );
-void R_InitDrawLists( void );
-void R_ClearDrawList( void );
-bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t *shader, 
+void R_ClearDrawList( drawList_t *list );
+bool R_AddDSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader, 
 	float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
 void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems, 
 	unsigned int firstVert, unsigned int firstElem );
 vboSlice_t *R_GetVBOSlice( unsigned int index );
+
+void R_InitDrawLists( void );
 
 void R_SortDrawList( void );
 void R_DrawSurfaces( void );
@@ -663,7 +665,7 @@ rserr_t		R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 //
 // r_scene.c
 //
-extern drawList_t r_worldlist;
+extern drawList_t r_worldlist, r_skylist;
 
 void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color );
 void R_ClearScene( void );

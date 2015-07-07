@@ -808,14 +808,14 @@ bool R_AddAliasModelToDrawList( const entity_t *e )
 			for( j = 0; j < mesh->numskins; j++ ) {
 				shader = mesh->skins[j].shader;
 				if( shader ) {
-					R_AddDSurfToDrawList( e, fog, shader, distance, 0, NULL, aliasmodel->drawSurfs + i );
+					R_AddDSurfToDrawList( rn.meshlist, e, fog, shader, distance, 0, NULL, aliasmodel->drawSurfs + i );
 				}
 			}
 			continue;
 		}
 
 		if( shader ) {
-			R_AddDSurfToDrawList( e, fog, shader, distance, 0, NULL, aliasmodel->drawSurfs + i );
+			R_AddDSurfToDrawList( rn.meshlist, e, fog, shader, distance, 0, NULL, aliasmodel->drawSurfs + i );
 		}
 	}
 

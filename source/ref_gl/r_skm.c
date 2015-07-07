@@ -1471,7 +1471,7 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e )
 		}
 
 		if( shader ) {
-			R_AddDSurfToDrawList( e, fog, shader, distance, 0, NULL, skmodel->drawSurfs + i );
+			R_AddDSurfToDrawList( rn.meshlist, e, fog, shader, distance, 0, NULL, skmodel->drawSurfs + i );
 		}
 	}
 

@@ -650,7 +650,14 @@ void R_AddSkyToDrawList( const msurface_t *fa )
 		// there should be only one sky drawSurf in the list
 		if( !rn.skyShader ) {
 			rn.skyShader = fa->shader;
-			R_AddDSurfToDrawList( rsc.worldent, NULL, fa->shader, 0, r_warpFaceAxis, NULL, &r_skySurf );
+			R_AddDSurfToDrawList( rn.meshlist, rsc.worldent, NULL, fa->shader, 0, r_warpFaceAxis, NULL, &r_skySurf );
+		}
+
+		if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
+			R_AddDSurfToDrawList( rn.skylist, rsc.worldent, NULL, rsh.skyShader, 0, r_warpFaceAxis, NULL, fa->drawSurf );
+			R_AddVBOSlice( fa->drawSurf - rsh.worldBrushModel->drawSurfaces, 
+				fa->mesh->numVerts, fa->mesh->numElems,
+				fa->firstDrawSurfVert, fa->firstDrawSurfElem );
 		}
 	}
 }

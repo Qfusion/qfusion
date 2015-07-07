@@ -271,7 +271,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		}
 		drawSurf->visFrame = rf.frameCount;
 
-		if( !R_AddDSurfToDrawList( e, fog, shader, dist, 0, portalSurface, drawSurf ) ) {
+		if( !R_AddDSurfToDrawList( rn.meshlist, e, fog, shader, dist, 0, portalSurface, drawSurf ) ) {
 			return;
 		}
 	}
