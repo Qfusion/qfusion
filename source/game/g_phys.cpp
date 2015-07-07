@@ -814,7 +814,7 @@ static void SV_Physics_Toss( edict_t *ent )
 		if( ent->movetype == MOVETYPE_BOUNCE )
 			backoff = 1.5;
 		else if( ent->movetype == MOVETYPE_BOUNCEGRENADE )
-			backoff = 1.5;
+			backoff = 1.4;
 		else
 			backoff = 1;
 
