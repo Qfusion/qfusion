@@ -69,6 +69,7 @@ int G_ModToAmmo( int mod )
 /*
 * G_CanSplashDamage
 */
+#define SPLASH_DAMAGE_TRACE_FRAC_EPSILON 1.0/32.0f
 static bool G_CanSplashDamage( edict_t *targ, edict_t *inflictor, cplane_t *plane )
 {
 	vec3_t dest, origin;
@@ -81,11 +82,6 @@ static bool G_CanSplashDamage( edict_t *targ, edict_t *inflictor, cplane_t *plan
 	{
 		VectorCopy( inflictor->s.origin, origin );
 	}
-	else
-	{
-		// up by 9 units to account for stairs
-		VectorMA( inflictor->s.origin, 9, plane->normal, origin );
-	}
 
 	// bmodels need special checking because their origin is 0,0,0
 	if( targ->movetype == MOVETYPE_PUSH )
@@ -94,49 +90,55 @@ static bool G_CanSplashDamage( edict_t *targ, edict_t *inflictor, cplane_t *plan
 		VectorAdd( targ->r.absmin, targ->r.absmax, dest );
 		VectorScale( dest, 0.5, dest );
 		G_Trace4D( &trace, origin, vec3_origin, vec3_origin, dest, inflictor, solidmask, inflictor->timeDelta );
-		if( trace.fraction == 1.0 || trace.ent == ENTNUM( targ ) )
+		if( trace.fraction >= 1.0-SPLASH_DAMAGE_TRACE_FRAC_EPSILON || trace.ent == ENTNUM( targ ) )
 			return true;
 
 		return false;
 	}
 
+	if( plane )
+	{
+		// up by 9 units to account for stairs
+		VectorMA( inflictor->s.origin, 9, plane->normal, origin );
+	}
+
 	// This is for players
 	G_Trace4D( &trace, origin, vec3_origin, vec3_origin, targ->s.origin, inflictor, solidmask, inflictor->timeDelta );
-	if( trace.fraction == 1.0 || trace.ent == ENTNUM( targ ) )
+	if( trace.fraction >= 1.0-SPLASH_DAMAGE_TRACE_FRAC_EPSILON || trace.ent == ENTNUM( targ ) )
 		return true;
 
 	VectorCopy( targ->s.origin, dest );
 	dest[0] += 15.0;
 	dest[1] += 15.0;
 	G_Trace4D( &trace, origin, vec3_origin, vec3_origin, dest, inflictor, solidmask, inflictor->timeDelta );
-	if( trace.fraction == 1.0 || trace.ent == ENTNUM( targ ) )
+	if( trace.fraction >= 1.0-SPLASH_DAMAGE_TRACE_FRAC_EPSILON || trace.ent == ENTNUM( targ ) )
 		return true;
 
 	VectorCopy( targ->s.origin, dest );
 	dest[0] += 15.0;
 	dest[1] -= 15.0;
 	G_Trace4D( &trace, origin, vec3_origin, vec3_origin, dest, inflictor, solidmask, inflictor->timeDelta );
-	if( trace.fraction == 1.0 || trace.ent == ENTNUM( targ ) )
+	if( trace.fraction >= 1.0-SPLASH_DAMAGE_TRACE_FRAC_EPSILON || trace.ent == ENTNUM( targ ) )
 		return true;
 
 	VectorCopy( targ->s.origin, dest );
 	dest[0] -= 15.0;
 	dest[1] += 15.0;
 	G_Trace4D( &trace, origin, vec3_origin, vec3_origin, dest, inflictor, solidmask, inflictor->timeDelta );
-	if( trace.fraction == 1.0 || trace.ent == ENTNUM( targ ) )
+	if( trace.fraction >= 1.0-SPLASH_DAMAGE_TRACE_FRAC_EPSILON || trace.ent == ENTNUM( targ ) )
 		return true;
 
 	VectorCopy( targ->s.origin, dest );
 	dest[0] -= 15.0;
 	dest[1] -= 15.0;
 	G_Trace4D( &trace, origin, vec3_origin, vec3_origin, dest, inflictor, solidmask, inflictor->timeDelta );
-	if( trace.fraction == 1.0 || trace.ent == ENTNUM( targ ) )
+	if( trace.fraction >= 1.0-SPLASH_DAMAGE_TRACE_FRAC_EPSILON || trace.ent == ENTNUM( targ ) )
 		return true;
 /*
 	VectorCopy( targ->s.origin, dest );
 	origin[2] += 9;
 	G_Trace4D( &trace, origin, vec3_origin, vec3_origin, targ->s.origin, inflictor, solidmask, inflictor->timeDelta );
-	if( trace.fraction == 1.0 || trace.ent == ENTNUM( targ ) )
+	if( trace.fraction >= 1.0-SPLASH_DAMAGE_TRACE_FRAC_EPSILON || trace.ent == ENTNUM( targ ) )
 		return true;
 */
 
