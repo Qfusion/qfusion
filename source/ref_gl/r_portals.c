@@ -351,6 +351,7 @@ setup_and_render:
 
 	rn.shadowGroup = NULL;
 	rn.meshlist = &r_portallist;
+	rn.skylist = NULL;
 
 	rn.renderFlags |= RF_CLIPPLANE;
 	rn.clipPlane = *portal_plane;
@@ -460,6 +461,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	rn.clipFlags = 15;
 	rn.shadowGroup = NULL;
 	rn.meshlist = &r_skyportallist;
+	rn.skylist = NULL;
 	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 
 	if( skyportal->noEnts ) {

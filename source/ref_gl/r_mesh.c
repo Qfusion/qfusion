@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 drawList_t r_worldlist;
 drawList_t r_shadowlist;
+drawList_t r_skylist;
 drawList_t r_portallist, r_skyportallist;
 
 /*
@@ -40,6 +41,7 @@ void R_InitDrawList( drawList_t *list )
 void R_InitDrawLists( void )
 {
 	R_InitDrawList( &r_worldlist );
+	R_InitDrawList( &r_skylist );
 	R_InitDrawList( &r_portallist );
 	R_InitDrawList( &r_skyportallist );
 	R_InitDrawList( &r_shadowlist );
@@ -48,9 +50,11 @@ void R_InitDrawLists( void )
 /*
 * R_ClearDrawList
 */
-void R_ClearDrawList( void )
+void R_ClearDrawList( drawList_t *list )
 {
-	drawList_t *list = rn.meshlist;
+	if( !list ) {
+		return;
+	}
 
 	// clear counters
 	list->numDrawSurfs = 0;
@@ -123,16 +127,15 @@ static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int 
 * Calculate sortkey and store info used for batching and sorting.
 * All 3D-geometry passes this function.
 */
-bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t *shader, 
+bool R_AddDSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader, 
 	float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf )
 {
-	drawList_t *list;
 	sortedDrawSurf_t *sds;
 	int shaderSort;
 	bool depthWrite;
 	int renderFx;
 
-	if( !shader ) {
+	if( !list || !shader ) {
 		return false;
 	}
 
@@ -150,7 +153,6 @@ bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t 
 		R_UploadCinematicShader( shader );
 	}
 
-	list = rn.meshlist;
 	// reallocate if numDrawSurfs
 	if( list->numDrawSurfs >= list->maxDrawSurfs ) {
 		int minMeshes = MIN_RENDER_MESHES;
@@ -368,7 +370,7 @@ static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
 /*
 * R_DrawSurfaces
 */
-static void _R_DrawSurfaces( void )
+static void _R_DrawSurfaces( drawList_t *list )
 {
 	unsigned int i;
 	unsigned int sortKey;
@@ -383,7 +385,6 @@ static void _R_DrawSurfaces( void )
 	const entity_t *entity;
 	const mfog_t *fog;
 	const portalSurface_t *portalSurface;
-	drawList_t *list = rn.meshlist;
 	float depthmin = 0.0f, depthmax = 0.0f;
 	bool depthHack = false, cullHack = false;
 	bool infiniteProj = false, prevInfiniteProj = false;
@@ -519,6 +520,32 @@ static void _R_DrawSurfaces( void )
 }
 
 /*
+* R_DrawSkyportalDepthMask
+*
+* Renders sky surfaces from the BSP tree to depth buffer. Each rendered pixel
+* receives the depth value of 1.0, everything else is cleared to 0.0.
+*
+* The depth buffer is then preserved for skyportal render stage to minimize overdraw.
+*/
+static void R_DrawSkyportalDepthMask( void )
+{
+	if( !rn.skylist || !rn.skylist->numDrawSurfs ) {
+		return;
+	}
+
+	RB_ClearDepth( 0.0 );
+	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
+	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE|GLSTATE_DEPTHFUNC_GT );
+	RB_DepthRange( 1.0, 1.0 );
+
+	_R_DrawSurfaces( rn.skylist );
+
+	RB_DepthRange( 0.0, 1.0 );
+	RB_ClearDepth( 1.0 );
+	RB_SetShaderStateMask( ~0, 0 );
+}
+
+/*
 * R_DrawSurfaces
 */
 void R_DrawSurfaces( void )
@@ -527,8 +554,12 @@ void R_DrawSurfaces( void )
 	
 	triOutlines = RB_EnableTriangleOutlines( false );
 	if( !triOutlines ) {
+		if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
+			R_DrawSkyportalDepthMask();
+		}
+
 		// do not recurse into normal mode when rendering triangle outlines
-		_R_DrawSurfaces();
+		_R_DrawSurfaces( rn.meshlist );
 	}
 	RB_EnableTriangleOutlines( triOutlines );
 }
@@ -546,7 +577,7 @@ void R_DrawOutlinedSurfaces( void )
 	// properly store and restore the state, as the 
 	// R_DrawOutlinedSurfaces calls can be nested
 	triOutlines = RB_EnableTriangleOutlines( true );
-	_R_DrawSurfaces();
+	_R_DrawSurfaces( rn.meshlist );
 	RB_EnableTriangleOutlines( triOutlines );
 }
 
