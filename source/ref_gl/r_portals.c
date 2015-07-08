@@ -415,10 +415,10 @@ done:
 /*
 * R_DrawPortalsDepthMask
 *
-* Renders sky surfaces from the BSP tree to depth buffer. Each rendered pixel
+* Renders portal or sky surfaces from the BSP tree to depth buffer. Each rendered pixel
 * receives the depth value of 1.0, everything else is cleared to 0.0.
 *
-* The depth buffer is then preserved for skyportal render stage to minimize overdraw.
+* The depth buffer is then preserved for portal render stage to minimize overdraw.
 */
 static void R_DrawPortalsDepthMask( void )
 {
