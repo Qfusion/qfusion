@@ -228,13 +228,24 @@ bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 }
 
 /*
+* R_AddSurfaceVBOSlice
+*/
+static void R_AddSurfaceVBOSlice( const msurface_t *surf, int offset )
+{
+	drawSurfaceBSP_t *drawSurf = surf->drawSurf;
+	R_AddVBOSlice( offset + drawSurf - rsh.worldBrushModel->drawSurfaces, 
+		surf->mesh->numVerts, surf->mesh->numElems,
+		surf->firstDrawSurfVert, surf->firstDrawSurfElem );
+}
+
+/*
 * R_AddSurfaceToDrawList
 */
 static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, const mfog_t *fog,
 	unsigned int clipFlags, unsigned int dlightBits, unsigned shadowBits, float dist )
 {
 	shader_t *shader;
-	drawSurfaceBSP_t *drawSurf;
+	drawSurfaceBSP_t *drawSurf = surf->drawSurf;
 
 	if( R_CullSurface( e, surf, clipFlags ) ) {
 		return;
@@ -247,14 +258,20 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 
 		if( shader->flags & SHADER_SKY ) {
 			if( !R_FASTSKY() ) {
-				R_AddSkyToDrawList( surf );
+				if( R_AddSkyToDrawList( surf ) ) {
+					if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
+						if( R_AddSurfToDrawList( rn.portalmasklist, e, NULL, rsh.skyShader, 0, 0, NULL, drawSurf ) ) {
+							R_AddSurfaceVBOSlice( surf, 0 );
+						}
+					}
+				}
 				rn.numVisSurfaces++;
 			}
 			return;
 		}
 	}
-
-	drawSurf = surf->drawSurf;
+	
+	
 	if( drawSurf->visFrame != rf.frameCount ) {
 		portalSurface_t *portalSurface = NULL;
 
@@ -271,15 +288,16 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		}
 		drawSurf->visFrame = rf.frameCount;
 
-		if( !R_AddDSurfToDrawList( e, fog, shader, dist, 0, portalSurface, drawSurf ) ) {
+		if( !R_AddSurfToDrawList( rn.meshlist, e, fog, shader, dist, 0, portalSurface, drawSurf ) ) {
 			return;
+		}
+		if( portalSurface ) {
+			R_AddSurfToDrawList( rn.portalmasklist, e, NULL, rsh.skyShader, 0, 0, NULL, drawSurf );
 		}
 	}
 
 	// keep track of the actual vbo chunk we need to render
-	R_AddVBOSlice( drawSurf - rsh.worldBrushModel->drawSurfaces, 
-		surf->mesh->numVerts, surf->mesh->numElems,
-		surf->firstDrawSurfVert, surf->firstDrawSurfElem );
+	R_AddSurfaceVBOSlice( surf, 0 );
 
 	// dynamic lights that affect the surface
 	if( dlightBits ) {
@@ -294,9 +312,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 
 	// shadows that are projected onto the surface
 	if( shadowBits ) {
-		R_AddVBOSlice( rsh.worldBrushModel->numDrawSurfaces + (drawSurf - rsh.worldBrushModel->drawSurfaces),
-			surf->mesh->numVerts, surf->mesh->numElems,
-			surf->firstDrawSurfVert, surf->firstDrawSurfElem );
+		R_AddSurfaceVBOSlice( surf, rsh.worldBrushModel->numDrawSurfaces );
 
 		// ignore shadows that have already been marked as affectors
 		if( drawSurf->shadowFrame == rsc.frameCount ) {

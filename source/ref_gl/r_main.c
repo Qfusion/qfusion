@@ -466,7 +466,7 @@ static bool R_AddSpriteToDrawList( const entity_t *e )
 	if( dist <= 0 )
 		return false; // cull it because we don't want to sort unneeded things
 
-	if( !R_AddDSurfToDrawList( e, R_FogForSphere( e->origin, e->radius ), 
+	if( !R_AddSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, e->radius ), 
 		e->customShader, dist, 0, NULL, &spriteDrawSurf ) ) {
 		return false;
 	}
@@ -550,7 +550,7 @@ bool R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fo
 */
 static bool R_AddNullSurfToDrawList( const entity_t *e )
 {
-	if( !R_AddDSurfToDrawList( e, R_FogForSphere( e->origin, 0.1f ), 
+	if( !R_AddSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, 0.1f ), 
 		rsh.whiteShader, 0, 0, NULL, &nullDrawSurf ) ) {
 		return false;
 	}
@@ -1185,8 +1185,11 @@ static void R_Clear( int bitMask )
 	uint8_t *envColor = rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ?
 		rsh.worldBrushModel->globalfog->shader->fog_color : mapConfig.environmentColor;
 	bool rgbShadow = ( rn.renderFlags & RF_SHADOWMAPVIEW ) && rn.fbColorAttachment != NULL ? true : false;
+	bool depthPortal = ( rn.renderFlags & (RF_MIRRORVIEW|RF_PORTALVIEW) ) && rn.fbDepthAttachment == NULL ? true : false;
 
-	bits = GL_DEPTH_BUFFER_BIT;
+	bits = 0;
+	if( !(rn.renderFlags & RF_SKYPORTALVIEW) && !depthPortal )
+		bits |= GL_DEPTH_BUFFER_BIT;
 
 	if( ( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() ) || rgbShadow )
 		bits |= GL_COLOR_BUFFER_BIT;
@@ -1206,7 +1209,7 @@ static void R_Clear( int bitMask )
 /*
 * R_SetupGL
 */
-static void R_SetupGL( int clearBitMask )
+static void R_SetupGL( void )
 {
 	RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
 	RB_Viewport( rn.viewport[0], rn.viewport[1], rn.viewport[2], rn.viewport[3] );
@@ -1236,8 +1239,6 @@ static void R_SetupGL( int clearBitMask )
 
 	if( ( rn.renderFlags & RF_SHADOWMAPVIEW ) && glConfig.ext.shadow )
 		RB_SetShaderStateMask( ~0, GLSTATE_NO_COLORWRITE );
-
-	R_Clear( clearBitMask );
 }
 
 /*
@@ -1398,7 +1399,9 @@ void R_RenderView( const refdef_t *fd )
 		rn.renderFlags |= RF_DRAWFLAT;
 	}
 
-	R_ClearDrawList();
+	R_ClearDrawList( rn.meshlist );
+
+	R_ClearDrawList( rn.portalmasklist );
 
 	if( !rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		ri.Com_Error( ERR_DROP, "R_RenderView: NULL worldmodel" );
@@ -1453,20 +1456,22 @@ void R_RenderView( const refdef_t *fd )
 		R_DrawShadowmaps();
 	}
 
-	R_SortDrawList();
+	R_SortDrawList( rn.meshlist );
 
 	R_BindRefInstFBO();
 
-	R_SetupGL( ~0 );
+	R_SetupGL();
 
 	R_DrawPortals();
 
-	if( r_portalonly->integer && !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW ) ) )
+	if( r_portalonly->integer && !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW|RF_SKYPORTALVIEW ) ) )
 		return;
+
+	R_Clear( ~0 );
 
 	if( r_speeds->integer )
 		msec = ri.Sys_Milliseconds();
-	R_DrawSurfaces();
+	R_DrawSurfaces( rn.meshlist );
 	if( r_speeds->integer )
 		rf.stats.t_draw_meshes += ( ri.Sys_Milliseconds() - msec );
 
@@ -1477,7 +1482,7 @@ void R_RenderView( const refdef_t *fd )
 	rf.stats.c_slices_elems_real += rn.meshlist->numSliceElemsReal;
 
 	if( r_showtris->integer )
-		R_DrawOutlinedSurfaces();
+		R_DrawOutlinedSurfaces( rn.meshlist );
 
 	R_TransformForWorld();
 
@@ -1521,7 +1526,8 @@ void R_PopRefInst( int clearBitMask )
 	rn = riStack[--riStackSize];
 	R_BindRefInstFBO();
 
-	R_SetupGL( clearBitMask );
+	R_SetupGL();
+	R_Clear( clearBitMask );
 }
 
 //=======================================================================

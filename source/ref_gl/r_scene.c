@@ -337,6 +337,7 @@ void R_RenderScene( const refdef_t *fd )
 	if( rsh.worldModel && !( fd->rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog )
 		rn.clipFlags |= 16;
 	rn.meshlist = &r_worldlist;
+	rn.portalmasklist = &r_portalmasklist;
 	rn.shadowBits = 0;
 	rn.dlightBits = 0;
 	rn.shadowGroup = NULL;
@@ -569,9 +570,11 @@ static void R_RenderDebugSurface( const refdef_t *fd )
 	surf = R_TraceLine( &tr, start, end, 0 );
 	if( surf && surf->drawSurf && !r_showtris->integer )
 	{
-		R_ClearDrawList();
+		R_ClearDrawList( rn.meshlist );
 
-		if( !R_AddDSurfToDrawList( R_NUM2ENT(tr.ent), NULL, surf->shader, 0, 0, NULL, surf->drawSurf ) ) {
+		R_ClearDrawList( rn.portalmasklist );
+
+		if( !R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT(tr.ent), NULL, surf->shader, 0, 0, NULL, surf->drawSurf ) ) {
 			return;
 		}
 
@@ -593,7 +596,7 @@ static void R_RenderDebugSurface( const refdef_t *fd )
 				surf->firstDrawSurfVert, surf->firstDrawSurfElem );
 		}
 
-		R_DrawOutlinedSurfaces();
+		R_DrawOutlinedSurfaces( rn.meshlist );
 
 		if( rn.refdef.rdflags & RDF_FLIPPED )
 			RB_FlipFrontFace();

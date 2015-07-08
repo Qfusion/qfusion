@@ -212,6 +212,14 @@ void RB_DepthOffset( bool enable )
 }
 
 /*
+* RB_ClearDepth
+*/
+void RB_ClearDepth( float depth )
+{
+	qglClearDepth( depth );
+}
+
+/*
 * RB_LoadCameraMatrix
 */
 void RB_LoadCameraMatrix( const mat4_t m )
@@ -353,10 +361,12 @@ void RB_SetState( int state )
 			qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	}
 
-	if( diff & GLSTATE_DEPTHFUNC_EQ )
+	if( diff & (GLSTATE_DEPTHFUNC_EQ|GLSTATE_DEPTHFUNC_GT) )
 	{
 		if( state & GLSTATE_DEPTHFUNC_EQ )
 			qglDepthFunc( GL_EQUAL );
+		else if( state & GLSTATE_DEPTHFUNC_GT )
+			qglDepthFunc( GL_GREATER );
 		else
 			qglDepthFunc( GL_LEQUAL );
 	}
