@@ -144,6 +144,8 @@ typedef struct
 	int				scissor[4];
 	int				viewport[4];
 	drawList_t		*meshlist;				// meshes to be rendered
+	drawList_t		*portalmasklist;		// sky and portal BSP surfaces are rendered before (sky-)portals
+											// to create depth mask
 
 	unsigned int	dlightBits;
 
@@ -606,17 +608,18 @@ struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
 // r_mesh.c
 //
 void R_InitDrawList( drawList_t *list );
-void R_InitDrawLists( void );
-void R_ClearDrawList( void );
-bool R_AddDSurfToDrawList( const entity_t *e, const mfog_t *fog, const shader_t *shader, 
+void R_ClearDrawList( drawList_t *list );
+bool R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader, 
 	float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
 void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems, 
 	unsigned int firstVert, unsigned int firstElem );
 vboSlice_t *R_GetVBOSlice( unsigned int index );
 
-void R_SortDrawList( void );
-void R_DrawSurfaces( void );
-void R_DrawOutlinedSurfaces( void );
+void R_InitDrawLists( void );
+
+void R_SortDrawList( drawList_t *list );
+void R_DrawSurfaces( drawList_t *list );
+void R_DrawOutlinedSurfaces( drawList_t *list );
 
 void R_CopyOffsetElements( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
 void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
@@ -663,7 +666,7 @@ rserr_t		R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 //
 // r_scene.c
 //
-extern drawList_t r_worldlist;
+extern drawList_t r_worldlist, r_portalmasklist;
 
 void R_AddDebugBounds( const vec3_t mins, const vec3_t maxs, const byte_vec4_t color );
 void R_ClearScene( void );
@@ -801,9 +804,9 @@ enum
 
 struct skydome_s *R_CreateSkydome( model_t *model );
 void		R_TouchSkydome( struct skydome_s *skydome );
-bool	R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf );
+bool		R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf );
 void		R_ClearSky( void );
-void		R_AddSkyToDrawList( const msurface_t *fa );
+bool		R_AddSkyToDrawList( const msurface_t *fa );
 
 //====================================================================
 

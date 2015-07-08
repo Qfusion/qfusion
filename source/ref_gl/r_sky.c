@@ -617,7 +617,7 @@ loc1:
 /*
 * R_AddSkyToDrawList
 */
-void R_AddSkyToDrawList( const msurface_t *fa )
+bool R_AddSkyToDrawList( const msurface_t *fa )
 {
 	int i;
 	vec4_t *vert;
@@ -650,9 +650,13 @@ void R_AddSkyToDrawList( const msurface_t *fa )
 		// there should be only one sky drawSurf in the list
 		if( !rn.skyShader ) {
 			rn.skyShader = fa->shader;
-			R_AddDSurfToDrawList( rsc.worldent, NULL, fa->shader, 0, r_warpFaceAxis, NULL, &r_skySurf );
+			R_AddSurfToDrawList( rn.meshlist, rsc.worldent, NULL, fa->shader, 0, r_warpFaceAxis, NULL, &r_skySurf );
 		}
+
+		return true;
 	}
+
+	return false;
 }
 
 /*

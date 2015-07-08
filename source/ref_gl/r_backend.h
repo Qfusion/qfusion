@@ -53,6 +53,7 @@ void RB_LoadProjectionMatrix( const mat4_t m );
 void RB_DepthRange( float depthmin, float depthmax );
 void RB_GetDepthRange( float* depthmin, float *depthmax );
 void RB_DepthOffset( bool enable );
+void RB_ClearDepth( float depth );
 void RB_Cull( int cull );
 void RB_SetState( int state );
 void RB_FrontFace( bool front );
