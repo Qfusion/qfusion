@@ -422,19 +422,23 @@ done:
 */
 static void R_DrawPortalsDepthMask( void )
 {
+	float depthmin, depthmax;
+
 	if( !rn.portalmasklist || !rn.portalmasklist->numDrawSurfs ) {
 		return;
 	}
 
-	RB_ClearDepth( 0.0 );
+	RB_GetDepthRange( &depthmin, &depthmax );
+
+	RB_ClearDepth( depthmin );
 	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
 	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE|GLSTATE_DEPTHFUNC_GT|GLSTATE_NO_COLORWRITE );
-	RB_DepthRange( 1.0, 1.0 );
+	RB_DepthRange( depthmax, depthmax );
 
 	R_DrawSurfaces( rn.portalmasklist );
 
-	RB_DepthRange( 0.0, 1.0 );
-	RB_ClearDepth( 1.0 );
+	RB_DepthRange( depthmin, depthmax );
+	RB_ClearDepth( depthmax );
 	RB_SetShaderStateMask( ~0, 0 );
 }
 

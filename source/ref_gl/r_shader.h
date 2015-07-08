@@ -84,7 +84,7 @@ enum
 };
 
 // shaderpass flags
-#define SHADERPASS_MARK_BEGIN		0x4000 // same as GLSTATE_MARK_END
+#define SHADERPASS_MARK_BEGIN		0x8000 // same as GLSTATE_MARK_END
 enum
 {
 	SHADERPASS_LIGHTMAP				= SHADERPASS_MARK_BEGIN,
