@@ -442,7 +442,7 @@ void R_DrawShadowmaps( void )
 		rn.renderFlags = RF_SHADOWMAPVIEW|RF_FLIPFRONTFACE;
 		rn.clipFlags |= 16; // clip by far plane too
 		rn.meshlist = &r_shadowlist;
-		rn.skylist = NULL;
+		rn.portalmasklist = NULL;
 		rn.shadowGroup = group;
 		rn.lod_dist_scale_for_fov = lodScale;
 		VectorCopy( viewerOrigin, rn.pvsOrigin );

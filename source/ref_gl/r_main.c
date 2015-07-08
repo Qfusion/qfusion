@@ -466,7 +466,7 @@ static bool R_AddSpriteToDrawList( const entity_t *e )
 	if( dist <= 0 )
 		return false; // cull it because we don't want to sort unneeded things
 
-	if( !R_AddDSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, e->radius ), 
+	if( !R_AddSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, e->radius ), 
 		e->customShader, dist, 0, NULL, &spriteDrawSurf ) ) {
 		return false;
 	}
@@ -550,7 +550,7 @@ bool R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fo
 */
 static bool R_AddNullSurfToDrawList( const entity_t *e )
 {
-	if( !R_AddDSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, 0.1f ), 
+	if( !R_AddSurfToDrawList( rn.meshlist, e, R_FogForSphere( e->origin, 0.1f ), 
 		rsh.whiteShader, 0, 0, NULL, &nullDrawSurf ) ) {
 		return false;
 	}
@@ -1185,9 +1185,10 @@ static void R_Clear( int bitMask )
 	uint8_t *envColor = rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ?
 		rsh.worldBrushModel->globalfog->shader->fog_color : mapConfig.environmentColor;
 	bool rgbShadow = ( rn.renderFlags & RF_SHADOWMAPVIEW ) && rn.fbColorAttachment != NULL ? true : false;
+	bool depthPortal = ( rn.renderFlags & (RF_MIRRORVIEW|RF_PORTALVIEW) ) && rn.fbDepthAttachment == NULL ? true : false;
 
 	bits = 0;
-	if( !(rn.renderFlags & RF_SKYPORTALVIEW) )
+	if( !(rn.renderFlags & RF_SKYPORTALVIEW) && !depthPortal )
 		bits |= GL_DEPTH_BUFFER_BIT;
 
 	if( ( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() ) || rgbShadow )
@@ -1400,7 +1401,7 @@ void R_RenderView( const refdef_t *fd )
 
 	R_ClearDrawList( rn.meshlist );
 
-	R_ClearDrawList( rn.skylist );
+	R_ClearDrawList( rn.portalmasklist );
 
 	if( !rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
 		ri.Com_Error( ERR_DROP, "R_RenderView: NULL worldmodel" );
@@ -1455,7 +1456,7 @@ void R_RenderView( const refdef_t *fd )
 		R_DrawShadowmaps();
 	}
 
-	R_SortDrawList();
+	R_SortDrawList( rn.meshlist );
 
 	R_BindRefInstFBO();
 
@@ -1470,7 +1471,7 @@ void R_RenderView( const refdef_t *fd )
 
 	if( r_speeds->integer )
 		msec = ri.Sys_Milliseconds();
-	R_DrawSurfaces();
+	R_DrawSurfaces( rn.meshlist );
 	if( r_speeds->integer )
 		rf.stats.t_draw_meshes += ( ri.Sys_Milliseconds() - msec );
 
@@ -1481,7 +1482,7 @@ void R_RenderView( const refdef_t *fd )
 	rf.stats.c_slices_elems_real += rn.meshlist->numSliceElemsReal;
 
 	if( r_showtris->integer )
-		R_DrawOutlinedSurfaces();
+		R_DrawOutlinedSurfaces( rn.meshlist );
 
 	R_TransformForWorld();
 

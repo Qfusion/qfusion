@@ -158,10 +158,8 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 	vec3_t origin;
 	mat3_t axis;
 	entity_t *ent, *best;
-	const entity_t *portal_ent = portalSurface->entity;
 	cplane_t *portal_plane = &portalSurface->plane, *untransformed_plane = &portalSurface->untransformed_plane;
 	const shader_t *shader = portalSurface->shader;
-	vec_t *portal_mins = portalSurface->mins, *portal_maxs = portalSurface->maxs;
 	vec_t *portal_centre = portalSurface->centre;
 	bool mirror, refraction = false;
 	image_t *captureTexture;
@@ -218,9 +216,6 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 			portal_plane->dist = -portal_plane->dist;
 		}
 	}
-
-	if( !(rn.renderFlags & RF_NOVIS) && !R_ScissorForEntity( portal_ent, portal_mins, portal_maxs, &x, &y, &w, &h ) )
-		return;
 
 	mirror = true; // default to mirror view
 	// it is stupid IMO that mirrors require a RT_PORTALSURFACE entity
@@ -351,7 +346,7 @@ setup_and_render:
 
 	rn.shadowGroup = NULL;
 	rn.meshlist = &r_portallist;
-	rn.skylist = NULL;
+	rn.portalmasklist = NULL;
 
 	rn.renderFlags |= RF_CLIPPLANE;
 	rn.clipPlane = *portal_plane;
@@ -395,7 +390,6 @@ setup_and_render:
 		// no point in capturing the depth buffer due to oblique frustum messing up
 		// the far plane and depth values
 		rn.fbDepthAttachment = NULL;
-		Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 	}
 
 	VectorCopy( origin, rn.refdef.vieworg );
@@ -419,6 +413,32 @@ done:
 }
 
 /*
+* R_DrawPortalsDepthMask
+*
+* Renders sky surfaces from the BSP tree to depth buffer. Each rendered pixel
+* receives the depth value of 1.0, everything else is cleared to 0.0.
+*
+* The depth buffer is then preserved for skyportal render stage to minimize overdraw.
+*/
+static void R_DrawPortalsDepthMask( void )
+{
+	if( !rn.portalmasklist || !rn.portalmasklist->numDrawSurfs ) {
+		return;
+	}
+
+	RB_ClearDepth( 0.0 );
+	RB_Clear( GL_DEPTH_BUFFER_BIT, 0, 0, 0, 0 );
+	RB_SetShaderStateMask( ~0, GLSTATE_DEPTHWRITE|GLSTATE_DEPTHFUNC_GT|GLSTATE_NO_COLORWRITE );
+	RB_DepthRange( 1.0, 1.0 );
+
+	R_DrawSurfaces( rn.portalmasklist );
+
+	RB_DepthRange( 0.0, 1.0 );
+	RB_ClearDepth( 1.0 );
+	RB_SetShaderStateMask( ~0, 0 );
+}
+
+/*
 * R_DrawPortals
 */
 void R_DrawPortals( void )
@@ -429,8 +449,9 @@ void R_DrawPortals( void )
 		return;
 	}
 
-	if( !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW|RF_SHADOWMAPVIEW ) ) )
-	{
+	if( !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW|RF_SHADOWMAPVIEW ) ) ) {
+		R_DrawPortalsDepthMask();
+
 		for( i = 0; i < rn.numPortalSurfaces; i++ ) {
 			portalSurface_t portalSurface = rn.portalSurfaces[i]; 
 			R_DrawPortalSurface( &portalSurface );
@@ -444,11 +465,6 @@ void R_DrawPortals( void )
 */
 void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, vec3_t maxs )
 {
-	int x, y, w, h;
-
-	if( !R_ScissorForEntity( e, mins, maxs, &x, &y, &w, &h ) ) {
-		return;
-	}
 	if( !R_PushRefInst() ) {
 		return;
 	}
@@ -461,7 +477,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	rn.clipFlags = 15;
 	rn.shadowGroup = NULL;
 	rn.meshlist = &r_skyportallist;
-	rn.skylist = NULL;
+	rn.portalmasklist = NULL;
 	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 
 	if( skyportal->noEnts ) {
