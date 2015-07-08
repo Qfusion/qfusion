@@ -310,17 +310,22 @@ void ElementDocument::UpdateStructure()
 	if (dirty_structures.empty())
 		return;
 
+	ElementSet dirty_structures_ = dirty_structures;
+	dirty_structures.clear();
+
 	this->structure_update_id++;
 
 	DirtyLayout();
 
-	for (ElementSet::iterator it = dirty_structures.begin(); it != dirty_structures.end(); ++it) {
+	LockLayout(true);
+
+	for (ElementSet::iterator it = dirty_structures_.begin(); it != dirty_structures_.end(); ++it) {
 		Element *element = *it;
 		element->UpdateStructure(this->structure_update_id);
 		element->RemoveReference();
 	}
 
-	dirty_structures.clear();
+	LockLayout(false);
 }
 
 // Updates the layout if necessary.
@@ -394,7 +399,6 @@ bool ElementDocument::IsLayoutDirty()
 // Refreshes the document layout if required.
 void ElementDocument::OnUpdate()
 {
-	UpdateStructure();
 	UpdateLayout();
 }
 
