@@ -663,6 +663,36 @@ static int VID_CompareModes( const vidmode_t *first, const vidmode_t *second )
 	return first->width - second->width;
 }
 
+/**
+ * Initializes the list of video modes
+ */
+void VID_InitModes( void )
+{
+	unsigned int numModes, i;
+	int prevWidth = 0, prevHeight = 0;
+
+	numModes = VID_GetSysModes( vid_modes );
+	if( !numModes )
+		Sys_Error( "Failed to get video modes" );
+
+	vid_modes = Mem_ZoneMalloc( numModes * sizeof( vidmode_t ) );
+	VID_GetSysModes( vid_modes );
+	qsort( vid_modes, numModes, sizeof( vidmode_t ), (int (*)(const void *, const void *))VID_CompareModes );
+
+	// Remove duplicate modes in case the sys code failed to do so.
+	vid_num_modes = 0;
+	for( i = 0; i < numModes; i++ )
+	{
+		int width = vid_modes[i].width, height = vid_modes[i].height;
+		if( ( width == prevWidth ) && ( height == prevHeight ) )
+			continue;
+
+		vid_modes[vid_num_modes++] = vid_modes[i];
+		prevWidth = width;
+		prevHeight = height;
+	}
+}
+
 /*
 ** VID_Init
 */
@@ -671,12 +701,7 @@ void VID_Init( void )
 	if( vid_initialized )
 		return;
 
-	vid_num_modes = VID_GetSysModes( vid_modes );
-	if( !vid_num_modes )
-		Sys_Error( "Failed to get video modes" );
-	vid_modes = Mem_ZoneMalloc( vid_num_modes * sizeof( vidmode_t ) );
-	VID_GetSysModes( vid_modes );
-	qsort( vid_modes, vid_num_modes, sizeof( vidmode_t ), (int (*)(const void *, const void *))VID_CompareModes );
+	VID_InitModes();
 
 	/* Create the video variables so we know how to start the graphics drivers */
 	vid_ref = Cvar_Get( "vid_ref", VID_DEFAULTREF, CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
