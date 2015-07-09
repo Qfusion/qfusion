@@ -784,12 +784,12 @@ void CG_HighVelImpactPuffParticles( vec3_t org, vec3_t dir, int count, float sca
 		for( j = 0; j < 3; j++ )
 		{
 			p->org[j] = org[j] + ( ( rand()&7 ) - 4 ) + d * dir[j];
-			p->vel[j] = dir[j] * 850 + crandom() * 150;
+			p->vel[j] = dir[j] * 180 + crandom() * 40;
 		}
 
 		p->accel[0] = p->accel[1] = 0;
-		p->accel[2] = -PARTICLE_GRAVITY;
-		p->alphavel = -12.0 / ( 0.5 + random() * 0.3 );
+		p->accel[2] = -PARTICLE_GRAVITY * 2;
+		p->alphavel = -5.0 / ( 0.5 + random() * 0.3 );
 	}
 }
 
