@@ -562,8 +562,6 @@ void		R_TransformForEntity( const entity_t *e );
 void		R_TranslateForEntity( const entity_t *e );
 void		R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
 void		R_TransformBounds( const vec3_t origin, const mat3_t axis, vec3_t mins, vec3_t maxs, vec3_t bbox[8] );
-bool	R_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
-bool	R_ScissorForEntity( const entity_t *ent, vec3_t mins, vec3_t maxs, int *x, int *y, int *w, int *h );
 
 void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset, bool quad );
 void		R_EndStretchBatch( void );
