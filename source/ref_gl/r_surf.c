@@ -291,7 +291,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		if( !R_AddSurfToDrawList( rn.meshlist, e, fog, shader, dist, 0, portalSurface, drawSurf ) ) {
 			return;
 		}
-		if( portalSurface ) {
+		if( portalSurface && !( shader->flags & (SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2) ) ) {
 			R_AddSurfToDrawList( rn.portalmasklist, e, NULL, rsh.skyShader, 0, 0, NULL, drawSurf );
 		}
 	}

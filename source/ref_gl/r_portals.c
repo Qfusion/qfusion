@@ -32,7 +32,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 	vec3_t v[3];
 	portalSurface_t *portalSurface;
 
-	if( !mesh ) {
+	if( !mesh || !shader ) {
 		return NULL;
 	}
 
