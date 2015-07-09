@@ -696,6 +696,25 @@ void CG_ViewSmoothPredictedSteps( vec3_t vieworg )
 }
 
 /*
+* CG_ViewSmoothFall
+*/
+void CG_ViewSmoothFall( vec3_t vieworg )
+{
+	float fallfrac, fallkick;
+
+	if( !cg_viewportBob->integer )
+		return;
+
+	// fallkick offset
+	if( cg.weapon.fallEff_Time > cg.time )
+	{
+		fallfrac = (float)( cg.time - cg.weapon.fallEff_rebTime ) / (float)( cg.weapon.fallEff_Time - cg.weapon.fallEff_rebTime );
+		fallkick = sin( DEG2RAD( fallfrac*180 ) ) * ( ( cg.weapon.fallEff_Time - cg.weapon.fallEff_rebTime ) * 0.01f );
+		vieworg[2] -= fallkick * 8.0f;
+	}
+}
+
+/*
 * CG_ChaseCamButtons
 */
 static void CG_ChaseCamButtons( void )
@@ -857,6 +876,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 			}
 
 			CG_ViewSmoothPredictedSteps( view->origin ); // smooth out stair climbing
+			CG_ViewSmoothFall( view->origin );
 		}
 		else
 		{

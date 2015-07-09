@@ -122,7 +122,7 @@ void CG_ViewWeapon_StartFallKickEff( int parms )
 	if( cg.weapon.fallEff_Time > cg.time )
 		cg.weapon.fallEff_rebTime = 0;
 
-	bouncetime = ( ( parms + 5 )*10 )+150;
+	bouncetime = ( ( parms + 5 )*10 )+250;
 	cg.weapon.fallEff_Time = cg.time + bouncetime;
 	if( cg.weapon.fallEff_rebTime )
 		cg.weapon.fallEff_rebTime = cg.time - ( ( cg.time - cg.weapon.fallEff_rebTime ) * 0.5 );

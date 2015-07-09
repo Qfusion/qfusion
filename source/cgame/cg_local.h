@@ -640,6 +640,9 @@ extern centity_t cg_entities[MAX_EDICTS];
 extern cvar_t *cg_gun;
 extern cvar_t *cg_gun_alpha;
 
+// Viewport bobbing on fall/high jumps
+extern cvar_t *cg_viewportBob;
+
 bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe );
 struct cmodel_s *CG_CModelForEntity( int entNum );
 void CG_SoundEntityNewState( centity_t *cent );
@@ -992,6 +995,7 @@ void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int
 void CG_StartColorBlendEffect( float r, float g, float b, float a, int time );
 float CG_GetSensitivityScale( float sens, float zoomSens );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
+void CG_ViewSmoothFall( vec3_t vieworg );
 void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped );
 void CG_AddKickAngles( vec3_t viewangles );
 void CG_ChaseStep( int step );
