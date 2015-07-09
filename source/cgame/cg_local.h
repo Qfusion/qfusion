@@ -1101,6 +1101,7 @@ void CG_FlyEffect( centity_t *ent, vec3_t origin );
 void CG_ElectroIonsTrail( vec3_t start, vec3_t end );
 void CG_ElectroWeakTrail( vec3_t start, vec3_t end, vec4_t color );
 void CG_ImpactPuffParticles( vec3_t org, vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
+void CG_HighVelImpactPuffParticles( vec3_t org, vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
 
 //
 // cg_test.c - debug only
