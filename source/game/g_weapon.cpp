@@ -1116,8 +1116,6 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 		hit = &game.edicts[tr.ent];
 		if( hit == world )  // stop dead if hit the world
 			break;
-		if( hit->movetype == MOVETYPE_NONE || hit->movetype == MOVETYPE_PUSH )
-			break;
 
 		// allow trail to go through BBOX entities (players, gibs, etc)
 		if( !ISBRUSHMODEL( hit->s.modelindex ) )
@@ -1142,6 +1140,12 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 				missed = false;
 
 			damaged = hit;
+		}
+
+		if( hit->movetype == MOVETYPE_NONE || hit->movetype == MOVETYPE_PUSH )
+		{
+			damaged = NULL;
+			break;
 		}
 	}
 
@@ -1169,7 +1173,7 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 {
 	vec3_t from, end, dir;
 	trace_t	tr;
-	edict_t	*ignore, *event, *hit, *damaged;
+	edict_t	*ignore, *event, *hit;
 	int mask;
 	bool missed = true;
 	int dmgflags = 0;
@@ -1184,7 +1188,7 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 	VectorCopy( start, from );
 
 	ignore = self;
-	hit = damaged = NULL;
+	hit = NULL;
 
 	mask = MASK_SHOT;
 	if( GS_RaceGametype() )
@@ -1215,8 +1219,6 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 		hit = &game.edicts[tr.ent];
 		if( hit == world )  // stop dead if hit the world
 			break;
-		if( hit->movetype == MOVETYPE_NONE || hit->movetype == MOVETYPE_PUSH )
-			break;
 
 		// allow trail to go through BBOX entities (players, gibs, etc)
 		if( !ISBRUSHMODEL( hit->s.modelindex ) )
@@ -1238,8 +1240,6 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 			damage = maxdamage - ( ( maxdamage - mindamage ) * frac );
 			knockback = maxknockback - ( ( maxknockback - minknockback ) * frac );
 
-			//G_Printf( "mindamagerange %i frac %.1f damage %i\n", minDamageRange, 1.0f - frac, (int)damage );
-
 			G_Damage( hit, self, self, dir, dir, tr.endpos, damage, knockback, stun, dmgflags, mod );
 			
 			// spawn a impact event on each damaged ent
@@ -1247,9 +1247,10 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 			event->s.firemode = FIRE_MODE_STRONG;
 			if( hit->r.client )
 				missed = false;
-
-			damaged = hit;
 		}
+
+		if( hit->movetype == MOVETYPE_NONE || hit->movetype == MOVETYPE_PUSH )
+			break;
 	}
 
 	if( missed && self->r.client )
@@ -1319,6 +1320,21 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 		if( tr.ent == -1 )
 			break;
 
+		// allow trail to go through SOLID_BBOX entities (players, gibs, etc)
+		if( !ISBRUSHMODEL( game.edicts[tr.ent].s.modelindex ) )
+			ignore = &game.edicts[tr.ent];
+
+		if( ( &game.edicts[tr.ent] != self ) && ( game.edicts[tr.ent].takedamage ) )
+		{
+			G_Damage( &game.edicts[tr.ent], self, self, dir, dir, tr.endpos, damage, knockback, stun, dmgflags, mod );
+			// spawn a impact event on each damaged ent
+			event = G_SpawnEvent( EV_INSTA_EXPLOSION, DirToByte( tr.plane.normal ), tr.endpos );
+			event->s.ownerNum = ENTNUM( self );
+			event->s.firemode = FIRE_MODE_STRONG;
+			if( game.edicts[tr.ent].r.client )
+				missed = false;
+		}
+
 		// some entity was touched
 		if( tr.ent == world->s.number 
 			|| game.edicts[tr.ent].movetype == MOVETYPE_NONE 
@@ -1346,21 +1362,6 @@ void W_Fire_Instagun( edict_t *self, vec3_t start, vec3_t angles, float damage, 
 				G_FreeEdict( inflictor );
 			}
 			break;
-		}
-
-		// allow trail to go through SOLID_BBOX entities (players, gibs, etc)
-		if( !ISBRUSHMODEL( game.edicts[tr.ent].s.modelindex ) )
-			ignore = &game.edicts[tr.ent];
-
-		if( ( &game.edicts[tr.ent] != self ) && ( game.edicts[tr.ent].takedamage ) )
-		{
-			G_Damage( &game.edicts[tr.ent], self, self, dir, dir, tr.endpos, damage, knockback, stun, dmgflags, mod );
-			// spawn a impact event on each damaged ent
-			event = G_SpawnEvent( EV_INSTA_EXPLOSION, DirToByte( tr.plane.normal ), tr.endpos );
-			event->s.ownerNum = ENTNUM( self );
-			event->s.firemode = FIRE_MODE_STRONG;
-			if( game.edicts[tr.ent].r.client )
-				missed = false;
 		}
 	}
 
