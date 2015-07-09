@@ -499,7 +499,7 @@ void CG_BoltExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags 
 	le->ent.rotation = rand() % 360;
 	le->ent.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
 	// add white energy particles on the impact
-	CG_ImpactPuffParticles( pos, dir, 15, 1.25f, 1, 1, 1, 1, NULL );
+	CG_ImpactPuffParticles( pos, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
 	
 	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), pos, CHAN_AUTO, 
 		cg_volume_effects->value, ATTN_STATIC );
@@ -543,7 +543,7 @@ void CG_InstaExplosionMode( vec3_t pos, vec3_t dir, int fire_mode, int surfFlags
 	le->ent.rotation = rand() % 360;
 	le->ent.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
 	// add white energy particles on the impact
-	CG_ImpactPuffParticles( pos, dir, 15, 1.25f, 1, 1, 1, 1, NULL );
+	CG_ImpactPuffParticles( pos, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
 	
 	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxElectroboltHit ), pos, CHAN_AUTO, 
 		cg_volume_effects->value, ATTN_STATIC );
