@@ -1107,7 +1107,7 @@ static void R_Clear( int bitMask )
 	uint8_t *envColor = rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ?
 		rsh.worldBrushModel->globalfog->shader->fog_color : mapConfig.environmentColor;
 	bool rgbShadow = ( rn.renderFlags & RF_SHADOWMAPVIEW ) && rn.fbColorAttachment != NULL ? true : false;
-	bool depthPortal = ( rn.renderFlags & (RF_MIRRORVIEW|RF_PORTALVIEW) ) && rn.fbDepthAttachment == NULL ? true : false;
+	bool depthPortal = ( rn.renderFlags & (RF_MIRRORVIEW|RF_PORTALVIEW) ) != 0 && ( rn.renderFlags & RF_PORTAL_CAPTURE ) == 0;
 
 	bits = 0;
 	if( !(rn.renderFlags & RF_SKYPORTALVIEW) && !depthPortal )

@@ -380,6 +380,7 @@ setup_and_render:
 		rn.refdef.x = 0;
 		rn.refdef.y = 0;
 		rn.fbColorAttachment = captureTexture;
+		rn.renderFlags |= RF_PORTAL_CAPTURE;
 		// no point in capturing the depth buffer due to oblique frustum messing up
 		// the far plane and depth values
 		rn.fbDepthAttachment = NULL;
@@ -390,6 +391,7 @@ setup_and_render:
 		// no point in capturing the depth buffer due to oblique frustum messing up
 		// the far plane and depth values
 		rn.fbDepthAttachment = NULL;
+		rn.renderFlags &= ~RF_PORTAL_CAPTURE;
 	}
 
 	VectorCopy( origin, rn.refdef.vieworg );
