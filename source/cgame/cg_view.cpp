@@ -702,7 +702,9 @@ void CG_ViewSmoothFall( vec3_t vieworg )
 {
 	float fallfrac, fallkick;
 
-	if( !cg_viewportBob->integer )
+	if( !cg_viewBob->integer )
+		return;
+	if( cg_thirdPerson->integer )
 		return;
 
 	// fallkick offset
@@ -710,7 +712,7 @@ void CG_ViewSmoothFall( vec3_t vieworg )
 	{
 		fallfrac = (float)( cg.time - cg.weapon.fallEff_rebTime ) / (float)( cg.weapon.fallEff_Time - cg.weapon.fallEff_rebTime );
 		fallkick = sin( DEG2RAD( fallfrac*180 ) ) * ( ( cg.weapon.fallEff_Time - cg.weapon.fallEff_rebTime ) * 0.01f );
-		vieworg[2] -= fallkick * 8.0f;
+		vieworg[2] -= fallkick * 6.5f;
 	}
 }
 

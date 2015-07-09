@@ -640,9 +640,6 @@ extern centity_t cg_entities[MAX_EDICTS];
 extern cvar_t *cg_gun;
 extern cvar_t *cg_gun_alpha;
 
-// Viewport bobbing on fall/high jumps
-extern cvar_t *cg_viewportBob;
-
 bool CG_NewFrameSnap( snapshot_t *frame, snapshot_t *lerpframe );
 struct cmodel_s *CG_CModelForEntity( int entNum );
 void CG_SoundEntityNewState( centity_t *cent );
@@ -987,6 +984,9 @@ extern cvar_t *cg_thirdPersonAngle;
 extern cvar_t *cg_thirdPersonRange;
 
 extern cvar_t *cg_colorCorrection;
+
+// Viewport bobbing on fall/high jumps
+extern cvar_t *cg_viewBob;
 
 void CG_ResetKickAngles( void );
 void CG_ResetColorBlend( void );
