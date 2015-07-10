@@ -234,16 +234,11 @@ void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize )
 			break;
 	}
 
-	switch( numKeys )
-	{
-	case 1:
-		Q_strncpyz( keys, keyNames[0], keysSize );
-		break;
-	case 2:
+	if( !numKeys )
+		keyNames[0] = CG_TranslateString( "UNBOUND" );
+
+	if( numKeys == 2 )
 		Q_snprintfz( keys, keysSize, CG_TranslateString( "%s or %s" ), keyNames[0], keyNames[1] );
-		break;
-	default:
-		Q_snprintfz( keys, keysSize, "%s (%s)", CG_TranslateString( "UNBOUND" ), cmd );
-		break;
-	}
+	else
+		Q_strncpyz( keys, keyNames[0], keysSize );
 }
