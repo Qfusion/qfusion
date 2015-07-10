@@ -129,8 +129,7 @@ static void CG_FreePoly( cpoly_t *dl )
 * CG_SpawnPolygon
 */
 static cpoly_t *CG_SpawnPolygon( float r, float g, float b, float a,
-								unsigned int die, unsigned int fadetime,
-struct shader_s *shader, int tag )
+	unsigned int die, unsigned int fadetime, struct shader_s *shader, int tag )
 {
 	cpoly_t *pl;
 
@@ -158,7 +157,7 @@ struct shader_s *shader, int tag )
 /*
 * CG_OrientPolygon
 */
-static void CG_OrientPolygon( vec3_t origin, vec3_t angles, poly_t *poly )
+static void CG_OrientPolygon( const vec3_t origin, const vec3_t angles, poly_t *poly )
 {
 	int i;
 	vec3_t perp;
@@ -179,7 +178,7 @@ static void CG_OrientPolygon( vec3_t origin, vec3_t angles, poly_t *poly )
 * Spawns a polygon from start to end points length and given width.
 * shaderlenght makes reference to size of the texture it will draw, so it can be tiled.
 */
-static cpoly_t *CG_SpawnPolyBeam( vec3_t start, vec3_t end, vec4_t color, int width, unsigned int dietime, unsigned int fadetime, struct shader_s *shader, int shaderlength, int tag )
+static cpoly_t *CG_SpawnPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int width, unsigned int dietime, unsigned int fadetime, struct shader_s *shader, int shaderlength, int tag )
 {
 	cpoly_t *cgpoly;
 	poly_t *poly;
@@ -286,7 +285,7 @@ void CG_KillPolyBeamsByTag( int tag )
 /*
 * CG_QuickPolyBeam
 */
-void CG_QuickPolyBeam( vec3_t start, vec3_t end, int width, struct shader_s *shader )
+void CG_QuickPolyBeam( const vec3_t start, const vec3_t end, int width, struct shader_s *shader )
 {
 	if( !shader )
 		shader = CG_MediaShader( cgs.media.shaderLaser );
@@ -297,7 +296,7 @@ void CG_QuickPolyBeam( vec3_t start, vec3_t end, int width, struct shader_s *sha
 /*
 * CG_LaserGunPolyBeam
 */
-void CG_LaserGunPolyBeam( vec3_t start, vec3_t end, vec4_t color, int tag )
+void CG_LaserGunPolyBeam( const vec3_t start, const vec3_t end, const vec4_t color, int tag )
 {
 	vec4_t tcolor = { 0, 0, 0, 0.35f };
 	vec_t total;
@@ -322,7 +321,7 @@ void CG_LaserGunPolyBeam( vec3_t start, vec3_t end, vec4_t color, int tag )
 /*
 * CG_ElectroPolyBeam
 */
-void CG_ElectroPolyBeam( vec3_t start, vec3_t end, int team )
+void CG_ElectroPolyBeam( const vec3_t start, const vec3_t end, int team )
 {
 	struct shader_s *shader;
 
@@ -366,7 +365,7 @@ void CG_ElectroPolyBeam( vec3_t start, vec3_t end, int team )
 /*
 * CG_InstaPolyBeam
 */
-void CG_InstaPolyBeam( vec3_t start, vec3_t end, int team )
+void CG_InstaPolyBeam( const vec3_t start, const vec3_t end, int team )
 {
 	vec4_t tcolor = { 1, 1, 1, 0.35f };
 	vec_t total;
@@ -402,7 +401,7 @@ void CG_InstaPolyBeam( vec3_t start, vec3_t end, int team )
 /*
 * CG_PLink
 */
-void CG_PLink( vec3_t start, vec3_t end, vec4_t color, int flags )
+void CG_PLink( const vec3_t start, const vec3_t end, const vec4_t color, int flags )
 {
 	CG_SpawnPolyBeam( start, end, color, 4, 2000.0f, 0.0f, CG_MediaShader( cgs.media.shaderLaser ), 64, 0 );
 }
