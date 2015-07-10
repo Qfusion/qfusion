@@ -580,8 +580,10 @@ static void CG_SC_HelpMessage( void )
 {
 	unsigned index;
 	const char *helpmessage;
+	unsigned outlen = 0;
+	int c;
 
-	cg.helpmessage = NULL;
+	cg.helpmessage[0] = '\0';
 
 	index = atoi( trap_Cmd_Argv( 1 ) );
 	if( !index || index > MAX_HELPMESSAGES ) {
@@ -589,10 +591,46 @@ static void CG_SC_HelpMessage( void )
 	}
 
 	helpmessage = cgs.configStrings[CS_HELPMESSAGES + index - 1];
-	if( !helpmessage[0] )
+	if( !helpmessage[0] ) {
 		return;
+	}
 
-	cg.helpmessage = CG_TranslateString( helpmessage );
+	helpmessage = CG_TranslateString( helpmessage );
+	while( ( c = helpmessage[0] ) && ( outlen < MAX_HELPMESSAGE_CHARS - 1 ) ) {
+		helpmessage++;
+
+		if( c == '{' ) { // template
+			int t = *( helpmessage++ );
+			switch( t ) {
+			case 'B': // key binding
+				{
+					char cmd[MAX_STRING_CHARS];
+					unsigned cmdlen = 0;
+					while( ( c = helpmessage[0] ) != '\0' ) {
+						helpmessage++;
+						if( c == '}' ) {
+							break;
+						}
+						if( cmdlen < MAX_STRING_CHARS - 1 ) {
+							cmd[cmdlen++] = c;
+						}
+					}
+					cmd[cmdlen] = '\0';
+					CG_GetBoundKeysString( cmd, cg.helpmessage + outlen, MAX_HELPMESSAGE_CHARS - outlen );
+					outlen += strlen( cg.helpmessage + outlen );
+				}
+				continue;
+			default:
+				helpmessage--;
+				break;
+			}
+		}
+
+		cg.helpmessage[outlen++] = c;
+	}
+	cg.helpmessage[outlen] = '\0';
+	Q_FixTruncatedUtf8( cg.helpmessage );
+
 	cg.helpmessage_time = cg.time;
 }
 
