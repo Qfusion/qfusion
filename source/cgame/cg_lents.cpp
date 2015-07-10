@@ -301,6 +301,10 @@ struct shader_s *shader )
 */
 void CG_ElectroTrail2( vec3_t start, vec3_t end, int team )
 {
+	if( cg_ebbeam_time->value < 0.05f ) {
+		return;
+	}
+
 	if( cg_ebbeam_old->integer )
 	{
 		CG_ElectroPolyBeam( start, end, team );
@@ -308,7 +312,9 @@ void CG_ElectroTrail2( vec3_t start, vec3_t end, int team )
 	else
 	{
 		vec3_t dir, origin;
-		float l, len;
+		int i, numrings;
+		float len;
+		float timeFrac;
 		float space = 15.0f;
 		lentity_t *le;
 		struct shader_s *s = CG_MediaShader( cgs.media.shaderElectroBeamRing );
@@ -318,11 +324,17 @@ void CG_ElectroTrail2( vec3_t start, vec3_t end, int team )
 		if( !len )
 			return;
 
-		for( l = 0.0f; l <= len; l += space ) {
+		numrings = len / space + 1;
+		timeFrac = 0.6f / (float)numrings;
+		for( i = 0; i < numrings; i++ ) {
+			float t = (float)i * timeFrac;
+			float l = i * space;
+
 			VectorMA( start, l, dir, origin );
-			le = CG_AllocSprite( LE_ALPHA_FADE, origin, 5.0f, 3 + ( l + 10.0f ) * random() * 0.01f,
+			le = CG_AllocSprite( LE_ALPHA_FADE, origin, 5.0f, t + 3 + random() * 3,
 				1.0f, 1.0f, 1.0f, 1.0f,	0, 0, 0, 0,
 				s );
+			le->ent.rotation = rand() % 360;
 		}
 	}
 
