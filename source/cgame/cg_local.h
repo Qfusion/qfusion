@@ -521,6 +521,8 @@ typedef struct
 	cg_gamemessage_t messages[GAMECHAT_STACK_SIZE];
 } cg_gamechat_t;
 
+#define MAX_HELPMESSAGE_CHARS 4096
+
 typedef struct
 {
 	unsigned int time;
@@ -602,7 +604,7 @@ typedef struct
 	// transient data from server
 	//
 	const char *matchmessage;
-	const char *helpmessage;
+	char helpmessage[MAX_HELPMESSAGE_CHARS];
 	unsigned helpmessage_time;
 	char *teaminfo;
 	size_t teaminfo_size;
@@ -1173,5 +1175,14 @@ void CG_ClearInputState( void );
 unsigned int CG_GetButtonBits( void );
 void CG_AddViewAngles( vec3_t viewangles, float frametime, bool flipped );
 void CG_AddMovement( vec3_t movement );
+
+/**
+ * Gets up to two bound keys for a command.
+ *
+ * @param cmd      console command to get binds for
+ * @param keys     output string
+ * @param keysSize output string buffer size
+ */
+void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize );
 
 //=================================================
