@@ -122,7 +122,7 @@ static void CG_FreeDecal( cdecal_t *dl )
 /*
 * CG_SpawnDecal
 */
-int CG_SpawnDecal( vec3_t origin, vec3_t dir, float orient, float radius,
+int CG_SpawnDecal( const vec3_t origin, const vec3_t dir, float orient, float radius,
 				   float r, float g, float b, float a, float die, float fadetime, bool fadealpha, struct shader_s *shader )
 {
 	int i, j;

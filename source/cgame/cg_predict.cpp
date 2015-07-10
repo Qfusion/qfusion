@@ -161,7 +161,7 @@ void CG_BuildSolidList( void )
 /*
 * CG_ClipEntityContact
 */
-static bool CG_ClipEntityContact( vec3_t origin, vec3_t mins, vec3_t maxs, int entNum )
+static bool CG_ClipEntityContact( const vec3_t origin, const vec3_t mins, const vec3_t maxs, int entNum )
 {
 	centity_t *cent;
 	struct cmodel_s	*cmodel;
@@ -239,7 +239,7 @@ void CG_Predict_TouchTriggers( pmove_t *pm )
 /*
 * CG_ClipMoveToEntities
 */
-static void CG_ClipMoveToEntities( vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int ignore, int contentmask, trace_t *tr )
+static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int ignore, int contentmask, trace_t *tr )
 {
 	int i, x, zd, zu;
 	trace_t	trace;
@@ -291,7 +291,7 @@ static void CG_ClipMoveToEntities( vec3_t start, vec3_t mins, vec3_t maxs, vec3_
 				cmodel = trap_CM_ModelForBBox( bmins, bmaxs );
 		}
 
-		trap_CM_TransformedBoxTrace( &trace, start, end, mins, maxs, cmodel, contentmask, origin, angles );
+		trap_CM_TransformedBoxTrace( &trace, (vec_t *)start, (vec_t *)end, (vec_t *)mins, (vec_t *)maxs, cmodel, contentmask, origin, angles );
 		if( trace.allsolid || trace.fraction < tr->fraction )
 		{
 			trace.ent = ent->number;
@@ -325,14 +325,14 @@ void CG_Trace( trace_t *t, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, i
 /*
 * CG_PointContents
 */
-int CG_PointContents( vec3_t point )
+int CG_PointContents( const vec3_t point )
 {
 	int i;
 	entity_state_t *ent;
 	struct cmodel_s	*cmodel;
 	int contents;
 
-	contents = trap_CM_TransformedPointContents( point, NULL, NULL, NULL );
+	contents = trap_CM_TransformedPointContents( (vec_t *)point, NULL, NULL, NULL );
 
 	for( i = 0; i < cg_numSolids; i++ )
 	{
@@ -342,7 +342,7 @@ int CG_PointContents( vec3_t point )
 
 		cmodel = trap_CM_InlineModel( ent->modelindex );
 		if( cmodel )
-			contents |= trap_CM_TransformedPointContents( point, cmodel, ent->origin, ent->angles );
+			contents |= trap_CM_TransformedPointContents( (vec_t *)point, cmodel, ent->origin, ent->angles );
 	}
 
 	return contents;

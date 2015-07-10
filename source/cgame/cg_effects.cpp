@@ -555,7 +555,7 @@ static void CG_ClearParticles( void )
 * 
 * Wall impact puffs
 */
-void CG_ParticleEffect( vec3_t org, vec3_t dir, float r, float g, float b, int count )
+void CG_ParticleEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count )
 {
 	int j;
 	cparticle_t *p;
@@ -586,7 +586,7 @@ void CG_ParticleEffect( vec3_t org, vec3_t dir, float r, float g, float b, int c
 /*
 * CG_ParticleEffect2
 */
-void CG_ParticleEffect2( vec3_t org, vec3_t dir, float r, float g, float b, int count )
+void CG_ParticleEffect2( const vec3_t org, const vec3_t dir, float r, float g, float b, int count )
 {
 	int j;
 	float d;
@@ -617,7 +617,7 @@ void CG_ParticleEffect2( vec3_t org, vec3_t dir, float r, float g, float b, int 
 /*
 * CG_ParticleExplosionEffect
 */
-void CG_ParticleExplosionEffect( vec3_t org, vec3_t dir, float r, float g, float b, int count )
+void CG_ParticleExplosionEffect( const vec3_t org, const vec3_t dir, float r, float g, float b, int count )
 {
 	int j;
 	cparticle_t *p;
@@ -649,7 +649,7 @@ void CG_ParticleExplosionEffect( vec3_t org, vec3_t dir, float r, float g, float
 /*
 * CG_BlasterTrail
 */
-void CG_BlasterTrail( vec3_t start, vec3_t end )
+void CG_BlasterTrail( const vec3_t start, const vec3_t end )
 {
 	int j, count;
 	vec3_t move, vec;
@@ -688,7 +688,7 @@ void CG_BlasterTrail( vec3_t start, vec3_t end )
 /*
 * CG_ElectroWeakTrail
 */
-void CG_ElectroWeakTrail( vec3_t start, vec3_t end, vec4_t color )
+void CG_ElectroWeakTrail( const vec3_t start, const vec3_t end, const vec4_t color )
 {
 	int j, count;
 	vec3_t move, vec;
@@ -733,7 +733,7 @@ void CG_ElectroWeakTrail( vec3_t start, vec3_t end, vec4_t color )
 * CG_ImpactPuffParticles
 * Wall impact puffs
 */
-void CG_ImpactPuffParticles( vec3_t org, vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader )
+void CG_ImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader )
 {
 	int j;
 	float d;
@@ -765,7 +765,7 @@ void CG_ImpactPuffParticles( vec3_t org, vec3_t dir, int count, float scale, flo
 * CG_HighVelImpactPuffParticles
 * High velocity wall impact puffs
 */
-void CG_HighVelImpactPuffParticles( vec3_t org, vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader )
+void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader )
 {
 	int j;
 	float d;
@@ -796,7 +796,7 @@ void CG_HighVelImpactPuffParticles( vec3_t org, vec3_t dir, int count, float sca
 /*
 * CG_ElectroIonsTrail
 */
-void CG_ElectroIonsTrail( vec3_t start, vec3_t end )
+void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color )
 {
 #define MAX_BOLT_IONS 48
 	int i, count;
@@ -824,7 +824,7 @@ void CG_ElectroIonsTrail( vec3_t start, vec3_t end )
 		count = MAX_PARTICLES - cg_numparticles;
 	for( p = &particles[cg_numparticles], cg_numparticles += count; count > 0; count--, p++ )
 	{
-		CG_InitParticle( p, 1.2f, 1, 0.8f + crandom()*0.1, 0.8f + crandom()*0.1, 0.8f + crandom()*0.1, NULL );
+		CG_InitParticle( p, 1.2f, color[3], color[0] + crandom()*0.1, color[1] + crandom()*0.1, color[2] + crandom()*0.1, NULL );
 
 		for( i = 0; i < 3; i++ )
 		{
@@ -842,7 +842,7 @@ void CG_ElectroIonsTrail( vec3_t start, vec3_t end )
 /*
 * CG_FlyParticles
 */
-static void CG_FlyParticles( vec3_t origin, int count )
+static void CG_FlyParticles( const vec3_t origin, int count )
 {
 	int i, j;
 	float angle, sp, sy, cp, cy;
@@ -901,7 +901,7 @@ static void CG_FlyParticles( vec3_t origin, int count )
 /*
 * CG_FlyEffect
 */
-void CG_FlyEffect( centity_t *ent, vec3_t origin )
+void CG_FlyEffect( centity_t *ent, const vec3_t origin )
 {
 	int n;
 	int count;
@@ -936,9 +936,6 @@ void CG_FlyEffect( centity_t *ent, vec3_t origin )
 
 	CG_FlyParticles( origin, count );
 }
-
-// wsw specific particle effects below here
-//============================================================
 
 /*
 * CG_AddParticles
