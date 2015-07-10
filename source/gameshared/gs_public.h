@@ -70,7 +70,7 @@ extern vec3_t item_box_maxs;
 #define DEFAULT_PLAYERSPEED_INSTAGIB 320.0f
 #define DEFAULT_PLAYERSPEED_RACE 320.0f
 #define DEFAULT_JUMPSPEED 280.0f
-#define DEFAULT_DASHSPEED 475.0f
+#define DEFAULT_DASHSPEED 450.0f
 #define PROJECTILE_PRESTEP 100
 #define ELECTROBOLT_RANGE 9001
 
@@ -357,7 +357,7 @@ enum
 	, TORSO_DROP
 
 	, TORSO_SWIM
-	
+
 	, TORSO_PAIN1
 	, TORSO_PAIN2
 	, TORSO_PAIN3
@@ -600,7 +600,7 @@ typedef struct
 
 } gs_animationbuffer_t;
 
-typedef struct  
+typedef struct
 {
 	int anim;
 	int frame;
@@ -1035,7 +1035,7 @@ enum
 	ET_ITEM_TIMER,	// for specs only
 	ET_PARTICLES,
 	ET_SPAWN_INDICATOR,
-	
+
 	ET_VIDEO_SPEAKER,
 	ET_RADAR,		// same as ET_SPRITE but sets NO_DEPTH_TEST bit
 
@@ -1156,7 +1156,7 @@ void GS_TraceCurveLaserBeam( trace_t *trace, vec3_t origin, vec3_t angles, vec3_
 #define	LASERGUN_WEAK_TRAIL_BACKUP  32 // 0.5 second backup at 62 fps, which is the ucmd fps ratio
 #define	LASERGUN_WEAK_TRAIL_MASK	( LASERGUN_WEAK_TRAIL_BACKUP-1 )
 
-typedef struct  
+typedef struct
 {
 	vec3_t origins[LASERGUN_WEAK_TRAIL_BACKUP];
 	unsigned int timeStamps[LASERGUN_WEAK_TRAIL_BACKUP];
