@@ -301,7 +301,31 @@ struct shader_s *shader )
 */
 void CG_ElectroTrail2( vec3_t start, vec3_t end, int team )
 {
-	CG_ElectroPolyBeam( start, end, team );
+	if( cg_ebbeam_old->integer )
+	{
+		CG_ElectroPolyBeam( start, end, team );
+	}
+	else
+	{
+		vec3_t dir, origin;
+		float l, len;
+		float space = 15.0f;
+		lentity_t *le;
+		struct shader_s *s = CG_MediaShader( cgs.media.shaderElectroBeamRing );
+
+		VectorSubtract( end, start, dir );
+		len = VectorNormalize( dir );
+		if( !len )
+			return;
+
+		for( l = 0.0f; l <= len; l += space ) {
+			VectorMA( start, l, dir, origin );
+			le = CG_AllocSprite( LE_ALPHA_FADE, origin, 5.0f, 3 + ( l + 10.0f ) * random() * 0.01f,
+				1.0f, 1.0f, 1.0f, 1.0f,	0, 0, 0, 0,
+				s );
+		}
+	}
+
 	CG_ElectroIonsTrail( start, end );
 }
 

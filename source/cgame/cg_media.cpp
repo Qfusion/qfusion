@@ -346,6 +346,7 @@ void CG_RegisterMediaShaders( void )
 	cgs.media.shaderElectroBeamB = CG_RegisterMediaShader( "gfx/misc/electro2b", true );
 	cgs.media.shaderElectroBeamBAlpha = CG_RegisterMediaShader( "gfx/misc/electro2b_alpha", true );
 	cgs.media.shaderElectroBeamBBeta = CG_RegisterMediaShader( "gfx/misc/electro2b_beta", true );
+	cgs.media.shaderElectroBeamRing = CG_RegisterMediaShader( "gfx/misc/beamring.tga", true );
 	cgs.media.shaderInstaBeam = CG_RegisterMediaShader( "gfx/misc/instagun", true );
 	cgs.media.shaderLaserGunBeam = CG_RegisterMediaShader( "gfx/misc/laserbeam", true );
 	cgs.media.shaderRocketExplosion = CG_RegisterMediaShader( PATH_ROCKET_EXPLOSION_SPRITE, true );

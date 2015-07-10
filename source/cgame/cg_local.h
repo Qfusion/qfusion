@@ -289,6 +289,7 @@ typedef struct
 	cgs_media_handle_t *shaderElectroBeamB;
 	cgs_media_handle_t *shaderElectroBeamBAlpha;
 	cgs_media_handle_t *shaderElectroBeamBBeta;
+	cgs_media_handle_t *shaderElectroBeamRing;
 	cgs_media_handle_t *shaderInstaBeam;
 	cgs_media_handle_t *shaderLaserGunBeam;
 	cgs_media_handle_t *shaderElectroboltMark;
