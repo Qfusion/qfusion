@@ -204,3 +204,46 @@ void CG_AddMovement( vec3_t movement )
 	CG_AddGamepadMovement( movement );
 	CG_AddTouchMovement( movement );
 }
+
+void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize )
+{
+	int key;
+	const char *bind;
+	int numKeys = 0;
+	const char *keyNames[2];
+	char charKeys[2][2] = { 0 };
+
+	for( key = 0; key < 256; key++ )
+	{
+		bind = trap_Key_GetBindingBuf( key );
+		if( !bind || Q_stricmp( bind, cmd ) )
+			continue;
+
+		if( ( key >= 'a' ) && ( key <= 'z' ) )
+		{
+			charKeys[numKeys][0] = key - ( 'a' - 'A' );
+			keyNames[numKeys] = charKeys[numKeys];
+		}
+		else
+		{
+			keyNames[numKeys] = trap_Key_KeynumToString( key );
+		}
+
+		numKeys++;
+		if( numKeys == 2 )
+			break;
+	}
+
+	switch( numKeys )
+	{
+	case 1:
+		Q_strncpyz( keys, keyNames[0], keysSize );
+		break;
+	case 2:
+		Q_snprintfz( keys, keysSize, CG_TranslateString( "%s or %s" ), keyNames[0], keyNames[1] );
+		break;
+	default:
+		Q_snprintfz( keys, keysSize, "%s (%s)", CG_TranslateString( "UNBOUND" ), cmd );
+		break;
+	}
+}
