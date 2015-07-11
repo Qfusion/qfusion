@@ -1534,10 +1534,15 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 			break;
 		case 2:
 		default:
-			// team
-			CG_TeamColor( team, color );
-			for( j = 0; j < 3; j++ ) {
-				color[j] = bound( 60.0f / 255.0f, color[j], 1.0f );
+			if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ) {
+				// team
+				CG_TeamColor( team, color );
+				for( j = 0; j < 3; j++ ) {
+					color[j] = bound( 60.0f / 255.0f, color[j], 1.0f );
+				}
+			} else {
+				// white
+				Vector4Set( color, 1, 1, 1, 1 );
 			}
 			break;
 		}
