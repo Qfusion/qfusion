@@ -1541,8 +1541,8 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 					color[j] = bound( 60.0f / 255.0f, color[j], 1.0f );
 				}
 			} else {
-				// white
-				Vector4Set( color, 1, 1, 1, 1 );
+				// grey
+				Vector4Set( color, 60.0f / 255.0f, 60.0f / 255.0f, 60.0f / 255.0f, 1.0f );
 			}
 			break;
 		}
