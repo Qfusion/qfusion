@@ -466,7 +466,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	int team, team_score, team_ping;
 	int yoffset = 0, xoffset = 0;
 	int dir = 0, align, width, height;
-	vec4_t teamcolor, pingcolor;
+	vec4_t teamcolor = { 0.0f, 0.0f, 0.0f, 1.0f }, pingcolor;
 
 	// team tab is always the same. Sets the current team and draws its score
 
@@ -489,7 +489,8 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 
 	team_ping = CG_ParseValue( ptrptr );
 
-	CG_TeamColor( team, teamcolor );
+	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) )
+		CG_TeamColor( team, teamcolor );
 	teamcolor[3] = SCB_BACKGROUND_ALPHA; // make transparent
 
 	if( GS_TeamBasedGametype() ) // we only draw the team tabs in team based gametypes
@@ -637,7 +638,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 	const char *oldptr;
 	char *token, *layout;
 	int height, width, xoffset, yoffset;
-	vec4_t teamcolor, color;
+	vec4_t teamcolor = { 0.0f, 0.0f, 0.0f, 1.0f }, color;
 	int iconnum;
 	struct shader_s *icon;
 	bool highlight = false, trans = false;
@@ -664,7 +665,8 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 
 	// draw the background
 	columncount = 0;
-	CG_TeamColor( team, teamcolor );
+	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) )
+		CG_TeamColor( team, teamcolor );
 
 	// draw the player tab column titles
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
