@@ -233,19 +233,13 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 			cent->microSmooth = 0;
 
 		cent->current = *state;
-		cent->serverFrame = cg.frame.serverFrame;
 		VectorCopy( state->origin, cent->trailOrigin );
-
-		if( cent->serverFrame != cg.oldFrame.serverFrame ) {
-			VectorClear( cent->prevVelocity );
-		}
-		else {
-			VectorCopy( cent->velocity, cent->prevVelocity );
-		}
+		VectorCopy( cent->velocity, cent->prevVelocity );
 		//VectorCopy( cent->extrapolatedOrigin, cent->prevExtrapolatedOrigin );
 		cent->canExtrapolatePrev = cent->canExtrapolate;
 		cent->canExtrapolate = false;
 		VectorClear( cent->velocity );
+		cent->serverFrame = cg.frame.serverFrame;
 
 		// set up velocities for this entity
 		if( cgs.extrapolationTime && ( state->svflags & SVF_TRANSMITORIGIN2 ) &&
