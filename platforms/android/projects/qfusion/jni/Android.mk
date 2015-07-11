@@ -1,5 +1,8 @@
 QFUSION_PATH := $(call my-dir)
 
+# Set this to the name of your game version header.
+# QFUSION_APPLICATION_VERSION_HEADER := version.warsow.h
+
 include $(NDK_ROOT)/sources/android/native_app_glue/Android.mk
 
 include $(QFUSION_PATH)/source/android/angelscript.mk
