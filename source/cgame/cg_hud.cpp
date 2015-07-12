@@ -1024,7 +1024,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 
 		if( obr->type != OBITUARY_ACCIDENT )
 		{
-			if( GS_TeamBasedGametype() )
+			if( ( obr->attacker_team == TEAM_ALPHA ) || ( obr->attacker_team == TEAM_BETA ) )
 			{
 				CG_TeamColor( obr->attacker_team, teamcolor );
 			}
@@ -1040,7 +1040,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 		trap_R_DrawStretchPic( x + xoffset, y + yoffset + ( line_height - icon_size ) / 2, icon_size,
 		                       icon_size, 0, 0, 1, 1, colorWhite, pic );
 		xoffset += icon_size;
-		if( GS_TeamBasedGametype() )
+		if( ( obr->victim_team == TEAM_ALPHA ) || ( obr->victim_team == TEAM_BETA ) )
 		{
 			CG_TeamColor( obr->victim_team, teamcolor );
 		}
