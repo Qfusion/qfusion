@@ -325,9 +325,9 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 	handOffset = 0.0f;
 	if( cgs.demoPlaying )
 	{
-		if( hand->integer == 0 )
+		if( cg_hand->integer == 0 )
 			handOffset = cg_handOffset->value;
-		else if( hand->integer == 1 )
+		else if( cg_hand->integer == 1 )
 			handOffset = -cg_handOffset->value;
 	}
 	else
