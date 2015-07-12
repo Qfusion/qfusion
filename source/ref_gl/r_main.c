@@ -995,11 +995,11 @@ static float R_SetVisFarClip( void )
 	vec3_t tmp;
 	float farclip_dist;
 
-	rn.visFarClip = 0;
-
 	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
-		return 0.0f;
+		return rn.visFarClip;
 	}
+
+	rn.visFarClip = 0;
 
 	farclip_dist = 0;
 	for( i = 0; i < 8; i++ )
@@ -1022,6 +1022,11 @@ static float R_SetVisFarClip( void )
 static void R_SetFarClip( void )
 {
 	float farclip;
+
+	if( rn.refdef.rdflags & RDF_NOWORLDMODEL ) {
+		rn.farClip = R_DefaultFarClip();
+		return;
+	}
 
 	farclip = R_SetVisFarClip();
 
