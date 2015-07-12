@@ -175,7 +175,7 @@ static unsigned int R_SurfaceShadowBits( const msurface_t *surf, unsigned int ch
 /*
 * R_DrawBSPSurf
 */
-bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf )
+bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf )
 {
 	const vboSlice_t *slice;
 	const vboSlice_t *shadowSlice;
@@ -246,6 +246,7 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 {
 	shader_t *shader;
 	drawSurfaceBSP_t *drawSurf = surf->drawSurf;
+	portalSurface_t *portalSurface = NULL;
 
 	if( R_CullSurface( e, surf, clipFlags ) ) {
 		return;
@@ -257,30 +258,43 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		shader = surf->shader;
 
 		if( shader->flags & SHADER_SKY ) {
-			if( !R_FASTSKY() ) {
-				if( R_AddSkyToDrawList( surf ) ) {
-					if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
-						if( R_AddSurfToDrawList( rn.portalmasklist, e, NULL, rsh.skyShader, 0, 0, NULL, drawSurf ) ) {
-							R_AddSurfaceVBOSlice( surf, 0 );
-						}
-					}
-				}
-				rn.numVisSurfaces++;
+			bool addSurf = true, addSlice = false;
+
+			if( R_FASTSKY() ) {
+				return;
 			}
+
+			if( R_ClipSkySurface( surf ) ) {
+				if( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) {
+					// for skyportals, generate portal surface and
+					// also add BSP surface to skybox if it's fogged to render
+					// the fog hull later
+					portalSurface = R_AddSkyportalSurface( e, shader, drawSurf );
+					addSurf = portalSurface != NULL && surf->fog != NULL;
+					addSlice = portalSurface != NULL;
+				}
+
+				if( addSurf ) {
+					addSlice = R_AddSkySurfToDrawList( surf, portalSurface );
+				}
+				if( addSlice ) {
+					R_AddSurfaceVBOSlice( surf, 0 );
+				}
+			}
+
+			rn.numVisSurfaces++;
 			return;
 		}
 	}
 	
 	
 	if( drawSurf->visFrame != rf.frameCount ) {
-		portalSurface_t *portalSurface = NULL;
-
 		if( shader->flags & SHADER_PORTAL ) {
 			// draw portals in front-to-back order
 			dist = 1024 - dist / 100.0f; 
 			if( dist < 1 ) dist = 1;
 
-			portalSurface = R_AddPortalSurface( e, surf->mesh, surf->mins, surf->maxs, shader );
+			portalSurface = R_AddPortalSurface( e, surf->mesh, surf->mins, surf->maxs, shader, drawSurf );
 		}
 		else {
 			// just ignore the distance since we're drawing batched geometry anyway

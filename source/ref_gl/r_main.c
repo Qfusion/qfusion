@@ -299,12 +299,12 @@ SPRITE MODELS
 =============================================================
 */
 
-drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
+static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 
 /*
 * R_BeginSpriteSurf
 */
-bool R_BeginSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf )
+bool R_BeginSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
 {
 	RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
 	return true;
@@ -313,7 +313,7 @@ bool R_BeginSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 /*
 * R_BatchSpriteSurf
 */
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf )
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
 {
 	int i;
 	vec3_t point;
@@ -398,7 +398,7 @@ static bool R_AddSpriteToDrawList( const entity_t *e )
 
 //==================================================================================
 
-drawSurfaceType_t nullDrawSurf = ST_NULLMODEL;
+static drawSurfaceType_t nullDrawSurf = ST_NULLMODEL;
 
 /*
 * R_InitNullModelVBO
@@ -453,7 +453,7 @@ mesh_vbo_t *R_InitNullModelVBO( void )
 /*
 * R_DrawNullSurf
 */
-bool R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceType_t *drawSurf )
+bool R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
 {
 	assert( rsh.nullVBO != NULL );
 	if( !rsh.nullVBO ) {
@@ -988,15 +988,17 @@ float R_DefaultFarClip( void )
 /*
 * R_SetVisFarClip
 */
-static void R_SetVisFarClip( void )
+static float R_SetVisFarClip( void )
 {
 	int i;
 	float dist;
 	vec3_t tmp;
 	float farclip_dist;
 
+	rn.visFarClip = 0;
+
 	if( !rsh.worldModel || ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
-		return;
+		return 0.0f;
 	}
 
 	farclip_dist = 0;
@@ -1010,18 +1012,29 @@ static void R_SetVisFarClip( void )
 		farclip_dist = max( farclip_dist, dist );
 	}
 
-	farclip_dist = sqrt( farclip_dist );
+	rn.visFarClip = sqrt( farclip_dist );
+	return rn.visFarClip;
+}
+
+/*
+* R_SetFarClip
+*/
+static void R_SetFarClip( void )
+{
+	float farclip;
+
+	farclip = R_SetVisFarClip();
 
 	if( rsh.worldBrushModel->globalfog )
 	{
 		float fogdist = rsh.worldBrushModel->globalfog->shader->fog_dist;
-		if( farclip_dist > fogdist )
-			farclip_dist = fogdist;
+		if( farclip > fogdist )
+			farclip = fogdist;
 		else
 			rn.clipFlags &= ~16;
 	}
 
-	rn.farClip = max( Z_NEAR, farclip_dist ) + Z_BIAS;
+	rn.farClip = max( Z_NEAR, farclip ) + Z_BIAS;
 }
 
 /*
@@ -1104,28 +1117,33 @@ static void R_SetupViewMatrices( void )
 static void R_Clear( int bitMask )
 {
 	int bits;
-	uint8_t *envColor = rsh.worldModel && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && rsh.worldBrushModel->globalfog ?
-		rsh.worldBrushModel->globalfog->shader->fog_color : mapConfig.environmentColor;
+	vec4_t envColor;
+	bool clearColor = false;
 	bool rgbShadow = ( rn.renderFlags & RF_SHADOWMAPVIEW ) && rn.fbColorAttachment != NULL ? true : false;
 	bool depthPortal = ( rn.renderFlags & (RF_MIRRORVIEW|RF_PORTALVIEW) ) != 0 && ( rn.renderFlags & RF_PORTAL_CAPTURE ) == 0;
 
-	bits = 0;
-	if( !(rn.renderFlags & RF_SKYPORTALVIEW) && !depthPortal )
-		bits |= GL_DEPTH_BUFFER_BIT;
+	if( ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) || rgbShadow ) {
+		clearColor = rgbShadow;
+		Vector4Set( envColor, 1, 1, 1, 1 );
+	} else if( rsh.worldBrushModel && rsh.worldBrushModel->globalfog ) {
+		clearColor = rsh.worldBrushModel->globalfog->shader->fog_dist < rn.visFarClip;
+		Vector4Scale( rsh.worldBrushModel->globalfog->shader->fog_color, 1.0/255.0, envColor );
+	} else {
+		clearColor = r_clear->integer && !rn.numDepthPortalSurfaces || R_FASTSKY();
+		Vector4Scale( mapConfig.environmentColor, 1.0/255.0, envColor );
+	}
 
-	if( ( !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) && R_FASTSKY() ) || rgbShadow )
+	bits = 0;
+	if( !depthPortal )
+		bits |= GL_DEPTH_BUFFER_BIT;
+	if( clearColor )
 		bits |= GL_COLOR_BUFFER_BIT;
 	if( glConfig.stencilBits )
 		bits |= GL_STENCIL_BUFFER_BIT;
 
 	bits &= bitMask;
 
-	if( !( rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
-		RB_Clear( bits, envColor[0] / 255.0, envColor[1] / 255.0, envColor[2] / 255.0, 1 );
-	}
-	else {
-		RB_Clear( bits, 1, 1, 1, 1 );
-	}
+	RB_Clear( bits, envColor[0], envColor[1], envColor[2], 1 );
 }
 
 /*
@@ -1184,9 +1202,6 @@ static void R_DrawEntities( void )
 	entity_t *e;
 	bool shadowmap = ( ( rn.renderFlags & RF_SHADOWMAPVIEW ) != 0 );
 	bool culled = true;
-
-	if( rn.renderFlags & RF_NOENTS )
-		return;
 
 	if( rn.renderFlags & RF_ENVVIEW )
 	{
@@ -1298,6 +1313,8 @@ void R_RenderView( const refdef_t *fd )
 	rn.dlightBits = 0;
 	
 	rn.numPortalSurfaces = 0;
+	rn.numDepthPortalSurfaces = 0;
+	rn.skyportalSurface = NULL;
 
 	ClearBounds( rn.visMins, rn.visMaxs );
 
@@ -1370,7 +1387,7 @@ void R_RenderView( const refdef_t *fd )
 
 	if( !shadowMap ) {
 		// now set  the real far clip value and reload view matrices
-		R_SetVisFarClip();
+		R_SetFarClip();
 
 		R_SetupViewMatrices();
 
@@ -1386,7 +1403,7 @@ void R_RenderView( const refdef_t *fd )
 
 	R_DrawPortals();
 
-	if( r_portalonly->integer && !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW|RF_SKYPORTALVIEW ) ) )
+	if( r_portalonly->integer && !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW ) ) )
 		return;
 
 	R_Clear( ~0 );
@@ -1439,7 +1456,7 @@ bool R_PushRefInst( void )
 /*
 * R_PopRefInst
 */
-void R_PopRefInst( int clearBitMask )
+void R_PopRefInst( void )
 {
 	if( !riStackSize ) {
 		return;
@@ -1449,7 +1466,6 @@ void R_PopRefInst( int clearBitMask )
 	R_BindRefInstFBO();
 
 	R_SetupGL();
-	R_Clear( clearBitMask );
 }
 
 //=======================================================================
@@ -1537,16 +1553,6 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		else
 			qglDrawBuffer( GL_BACK );
 #endif
-	}
-
-	if( mapConfig.forceClear )
-		forceClear = true;
-
-	if( r_clear->integer || forceClear )
-	{
-		const uint8_t *color = mapConfig.environmentColor;
-		RB_Clear( GL_COLOR_BUFFER_BIT, 
-			color[0]*( 1.0/255.0 ), color[1]*( 1.0/255.0 ), color[2]*( 1.0/255.0 ), 1 );
 	}
 
 	// update gamma

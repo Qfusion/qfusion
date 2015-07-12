@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 struct shader_s;
 struct mfog_s;
+struct portalSurface_s;
 
 #define MIN_RENDER_MESHES			2048
 
@@ -68,7 +69,7 @@ typedef struct
 	unsigned			numSliceElems, numSliceElemsReal;
 } drawList_t;
 
-typedef bool (*beginDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, void * );
-typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, void * );
+typedef bool (*beginDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, const struct portalSurface_s *, void * );
+typedef void (*batchDrawSurf_cb)( const entity_t *, const struct shader_s *, const struct mfog_s *, const struct portalSurface_s *, void * );
 
 #endif // R_MESH_H

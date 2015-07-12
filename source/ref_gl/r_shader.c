@@ -2813,6 +2813,16 @@ create_default:
 			// the actual image will be picked at rendering time based on skyside number
 			pass->images[0] = rsh.whiteTexture;
 			break;
+		case SHADER_TYPE_FOG:
+			data = R_Malloc( shortname_length + 1 );
+
+			s->vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
+			s->sort = SHADER_SORT_FOG;
+			s->flags = SHADER_CULL_FRONT;
+			s->numpasses = 0;
+			s->name = ( char * )data;
+			strcpy( s->name, shortname );
+			break;
 		default:
 			break;
 		}

@@ -546,7 +546,7 @@ bool R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel
 * 
 * Interpolates between two frames and origins
 */
-bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceAlias_t *drawSurf )
+bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf )
 {
 	int i;
 	int framenum = e->frame, oldframenum = e->oldframe;

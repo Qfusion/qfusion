@@ -40,6 +40,7 @@ typedef enum
 	SHADER_TYPE_OPAQUE_ENV		= 6,
 	SHADER_TYPE_VIDEO			= 7,
 	SHADER_TYPE_SKYBOX			= 8,
+	SHADER_TYPE_FOG				= 9,
 } shaderType_e;
 
 #define NUM_SHADER_TYPES_BSP (SHADER_TYPE_BSP_MAX-SHADER_TYPE_BSP_MIN+1)
@@ -76,6 +77,7 @@ enum
 	SHADER_SORT_DECAL				= 4,
 	SHADER_SORT_ALPHATEST			= 5,
 	SHADER_SORT_BANNER				= 6,
+	SHADER_SORT_FOG					= 7,
 	SHADER_SORT_UNDERWATER			= 8,
 	SHADER_SORT_ADDITIVE			= 9,
 	SHADER_SORT_NEAREST				= 14,
@@ -278,8 +280,8 @@ typedef struct shader_s
 	struct shader_s		*prev, *next;
 } shader_t;
 
-#define 	Shader_UseTextureFog(s) ( ( (s)->sort <= SHADER_SORT_ALPHATEST && \
-				( (s)->flags & ( SHADER_DEPTHWRITE|SHADER_SKY ) ) ) || (s)->fog_dist )
+#define 	Shader_UseTextureFog(s) ( ( (s)->sort <= SHADER_SORT_FOG && \
+				( (s)->flags & SHADER_DEPTHWRITE ) ) || (s)->fog_dist || (s)->type == SHADER_TYPE_FOG )
 
 #define		Shader_ReadDepth(s) ((s)->flags & SHADER_SOFT_PARTICLE)
 
