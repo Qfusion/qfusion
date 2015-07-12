@@ -659,10 +659,6 @@ bool R_AddSkySurfToDrawList( const msurface_t *surf, const portalSurface_t *port
 		// if sky is too low to become fogged, ignore passed fog reference
 		fog = NULL;
 	}
-	else if( fog && fog->shader->fog_dist <= shader->skyHeight ) {
-		// the sky is completely fogged
-		return false;
-	}
 
 	if( r_skySurf.visFrame != rf.frameCount ) {
 		r_skySurf.visFrame = rf.frameCount;
