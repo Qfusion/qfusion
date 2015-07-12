@@ -692,9 +692,9 @@ struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader );
 //
 // cg_players.c
 //
-extern cvar_t *model;
-extern cvar_t *skin;
-extern cvar_t *hand;
+extern cvar_t *cg_model;
+extern cvar_t *cg_skin;
+extern cvar_t *cg_hand;
 
 void CG_LoadClientInfo( cg_clientInfo_t *ci, const char *s, int client );
 void CG_UpdateSexedSoundsRegistration( pmodelinfo_t *pmodelinfo );
