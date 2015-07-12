@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
 * R_BeginPolySurf
 */
-bool R_BeginPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfacePoly_t *drawSurf )
+bool R_BeginPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfacePoly_t *drawSurf )
 {
 	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
 	return true;
@@ -34,7 +34,7 @@ bool R_BeginPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 /*
 * R_BatchPolySurf
 */
-void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfacePoly_t *poly )
+void R_BatchPolySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfacePoly_t *poly )
 {
 	mesh_t mesh;
 
@@ -62,7 +62,7 @@ void R_DrawPolys( void )
 	drawSurfacePoly_t *p;
 	mfog_t *fog;
 
-	if( rn.renderFlags & RF_NOENTS )
+	if( rn.renderFlags & RF_ENVVIEW )
 		return;
 
 	for( i = 0; i < rsc.numPolys; i++ )
