@@ -458,7 +458,7 @@ typedef struct
 	edict_t	*ent;
 	vec3_t origin;
 	vec3_t angles;
-	float deltayaw;
+	float yaw;
 	vec3_t pmove_origin;
 } pushed_t;
 pushed_t pushed[MAX_EDICTS], *pushed_p;
@@ -503,7 +503,7 @@ static bool SV_Push( edict_t *pusher, vec3_t move, vec3_t amove )
 	if( pusher->r.client )
 	{
 		VectorCopy( pusher->r.client->ps.pmove.velocity, pushed_p->pmove_origin );
-		pushed_p->deltayaw = pusher->r.client->ps.pmove.delta_angles[YAW];
+		pushed_p->yaw = pusher->r.client->ps.viewangles[YAW];
 	}
 	pushed_p++;
 
@@ -558,7 +558,7 @@ static bool SV_Push( edict_t *pusher, vec3_t move, vec3_t amove )
 			{
 				// FIXME: doesn't rotate monsters?
 				VectorAdd( check->r.client->ps.pmove.origin, move, check->r.client->ps.pmove.origin );
-				check->r.client->ps.pmove.delta_angles[YAW] += amove[YAW];
+				check->r.client->ps.viewangles[YAW] += amove[YAW];
 			}
 
 			// figure movement due to the pusher's amove
@@ -611,7 +611,7 @@ static bool SV_Push( edict_t *pusher, vec3_t move, vec3_t amove )
 			if( p->ent->r.client )
 			{
 				VectorCopy( p->pmove_origin, p->ent->r.client->ps.pmove.origin );
-				p->ent->r.client->ps.pmove.delta_angles[YAW] = p->deltayaw;
+				p->ent->r.client->ps.viewangles[YAW] = p->yaw;
 			}
 			GClip_LinkEntity( p->ent );
 		}
