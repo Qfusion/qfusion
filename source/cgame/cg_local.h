@@ -1102,6 +1102,7 @@ void CG_ParticleExplosionEffect( const vec3_t org, const vec3_t dir, float r, fl
 void CG_BlasterTrail( const vec3_t start, const vec3_t end );
 void CG_FlyEffect( centity_t *ent, const vec3_t origin );
 void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t color );
+void CG_ElectroIonsTrail2( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_ElectroWeakTrail( const vec3_t start, const vec3_t end, const vec4_t color );
 void CG_ImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
 void CG_HighVelImpactPuffParticles( const vec3_t org, const vec3_t dir, int count, float scale, float r, float g, float b, float a, struct shader_s *shader );
