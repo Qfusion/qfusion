@@ -840,7 +840,7 @@ void CG_ElectroIonsTrail( const vec3_t start, const vec3_t end, const vec4_t col
 void CG_ElectroIonsTrail2( const vec3_t start, const vec3_t end, const vec4_t color )
 {
 #define MAX_RING_IONS 96
-	int i, count;
+	int count;
 	vec3_t move, vec;
 	float len;
 	float dec2 = 8.0f;
@@ -865,13 +865,11 @@ void CG_ElectroIonsTrail2( const vec3_t start, const vec3_t end, const vec4_t co
 	{
 		CG_InitParticle( p, 0.65f, color[3], color[0] + crandom()*0.1, color[1] + crandom()*0.1, color[2] + crandom()*0.1, NULL );
 
-		for( i = 0; i < 3; i++ )
-		{
-			p->org[i] = move[i];
-		}
+		VectorCopy( move, p->org);
 
 		p->alphavel = -1.0 / ( 0.6 + random()*0.6 );
 		VectorClear( p->accel );
+		VectorClear( p->vel );
 		VectorAdd( move, vec, move );
 	}
 }
