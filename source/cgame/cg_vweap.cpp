@@ -338,8 +338,6 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 			handOffset = -cg_handOffset->value;
 	}
 
-	if( cg.view.flipped )
-		handOffset *= -1.0f;
 	gunOffset[RIGHT] += handOffset;
 
 	// fallkick offset
