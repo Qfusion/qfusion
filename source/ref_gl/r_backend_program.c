@@ -233,7 +233,7 @@ static float RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal,
 	cplane_t *fogPlane;
 	shader_t *fogShader;
 	vec3_t viewtofog;
-	float dist;
+	float dist, scale;
 	const entity_t *e = rb.currentEntity;
 
 	assert( fog );
@@ -245,6 +245,7 @@ static float RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal,
 
 	// distance to fog
 	dist = PlaneDiff( rb.cameraOrigin, fog->visibleplane );
+	scale = e->scale;
 
 	if( rb.currentShader->flags & SHADER_SKY )
 	{
@@ -269,11 +270,11 @@ static float RB_TransformFogPlanes( const mfog_t *fog, vec3_t fogNormal,
 	// (M*v + t)*n - d = (M*n)*v - ((d - t*n))
 	// (M*v + t - r)*n = (M*n)*v - ((r - t)*n)
 	Matrix3_TransformVector( e->axis, fogPlane->normal, fogNormal );
-	VectorScale( fogNormal, e->scale, fogNormal );
+	VectorScale( fogNormal, scale, fogNormal );
 	*fogDist = ( fogPlane->dist - DotProduct( viewtofog, fogPlane->normal ) );
 
 	Matrix3_TransformVector( e->axis, rb.cameraAxis, vpnNormal );
-	VectorScale( vpnNormal, e->scale, vpnNormal );
+	VectorScale( vpnNormal, scale, vpnNormal );
 	*vpnDist = ( ( rb.cameraOrigin[0] - viewtofog[0] ) * rb.cameraAxis[AXIS_FORWARD+0] + 
 		( rb.cameraOrigin[1] - viewtofog[1] ) * rb.cameraAxis[AXIS_FORWARD+1] + 
 		( rb.cameraOrigin[2] - viewtofog[2] ) * rb.cameraAxis[AXIS_FORWARD+2] ) + 

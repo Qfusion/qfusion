@@ -28,11 +28,11 @@ cvar_t *cg_predict;
 cvar_t *cg_predict_optimize;
 cvar_t *cg_showMiss;
 
-cvar_t *model;
-cvar_t *skin;
-cvar_t *hand;
-cvar_t *clan;
-cvar_t *handicap;
+cvar_t *cg_model;
+cvar_t *cg_skin;
+cvar_t *cg_hand;
+cvar_t *cg_clan;
+cvar_t *cg_handicap;
 
 cvar_t *cg_addDecals;
 
@@ -704,11 +704,11 @@ static void CG_RegisterVariables( void )
 	cg_debugPlayerModels =	trap_Cvar_Get( "cg_debugPlayerModels", "0", CVAR_CHEAT|CVAR_ARCHIVE );
 	cg_debugWeaponModels =	trap_Cvar_Get( "cg_debugWeaponModels", "0", CVAR_CHEAT|CVAR_ARCHIVE );
 
-	model =		    trap_Cvar_Get( "model", DEFAULT_PLAYERMODEL, CVAR_USERINFO | CVAR_ARCHIVE );
-	skin =		    trap_Cvar_Get( "skin", DEFAULT_PLAYERSKIN, CVAR_USERINFO | CVAR_ARCHIVE );
-	hand =		    trap_Cvar_Get( "hand", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	handicap =		trap_Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	clan =		    trap_Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_model =		    trap_Cvar_Get( "model", DEFAULT_PLAYERMODEL, CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_skin =		    trap_Cvar_Get( "skin", DEFAULT_PLAYERSKIN, CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_hand =		    trap_Cvar_Get( "hand", "0", CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_handicap =		trap_Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
+	cg_clan =		    trap_Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_movementStyle =	trap_Cvar_Get( "cg_movementStyle", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_noAutohop =	trap_Cvar_Get( "cg_noAutohop", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	cg_fov =	    trap_Cvar_Get( "fov", "100", CVAR_USERINFO | CVAR_ARCHIVE );

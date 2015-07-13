@@ -143,12 +143,6 @@ bool R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog
 	depthWrite = (shader->flags & SHADER_DEPTHWRITE) ? true : false;
 	renderFx = e->renderfx;
 
-	if( shader->flags & SHADER_PORTAL ) {
-		if( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW ) ) {
-			return false;
-		}
-	}
-
 	if( shader->cin ) {
 		R_UploadCinematicShader( shader );
 	}
@@ -184,9 +178,6 @@ bool R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog
 	else if( renderFx & RF_ALPHAHACK ) {
 		// force shader sort to additive
 		shaderSort = SHADER_SORT_ADDITIVE;
-	} else if( ( rn.refdef.rdflags & RDF_SKYPORTALINVIEW ) && ( shader->flags & SHADER_SKY ) ) {
-		// render skyportals before normal geometry
-		shaderSort = SHADER_SORT_PORTAL;
 	}
 
 	sds = &list->drawSurfs[list->numDrawSurfs++];
@@ -483,7 +474,7 @@ static void _R_DrawSurfaces( drawList_t *list )
 
 			RB_SetPortalSurface( portalSurface );
 
-			batchDrawSurf = r_beginDrawSurfCb[drawSurfType]( entity, shader, fog, sds->drawSurf );
+			batchDrawSurf = r_beginDrawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, sds->drawSurf );
 
 			prevShaderNum = shaderNum;
 			prevEntNum = entNum;
@@ -500,7 +491,7 @@ static void _R_DrawSurfaces( drawList_t *list )
 
 		if( batchDrawSurf ) {
 			assert( r_batchDrawSurfCb[drawSurfType] != NULL );
-			r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, sds->drawSurf );
+			r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, sds->drawSurf );
 		}
 	}
 

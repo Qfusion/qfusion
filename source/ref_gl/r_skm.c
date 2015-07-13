@@ -1155,7 +1155,7 @@ static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int
 /*
 * R_DrawSkeletalSurf
 */
-bool R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceSkeletal_t *drawSurf )
+bool R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fogportalSurface, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf )
 {
 	unsigned int i, j;
 	int framenum = e->frame;

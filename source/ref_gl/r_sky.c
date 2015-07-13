@@ -60,7 +60,13 @@ static void Gen_Box( skydome_t *skydome );
 
 static void MakeSkyVec( float x, float y, float z, int axis, vec3_t v );
 
-static drawSurfaceType_t r_skySurf = ST_SKY;
+typedef struct
+{
+	drawSurfaceType_t type;
+	unsigned int visFrame;			// should be drawn when node is crossed
+} drawSurfaceSky_t;
+
+static drawSurfaceSky_t r_skySurf = { ST_SKY, 0 };
 
 /*
 * R_CreateSkydome
@@ -255,8 +261,8 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 /*
 * R_DrawSkyBoxSide
 */
-static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visSide, const shader_t *shader, 
-	int imageIndex )
+static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visSide, const shader_t *skyShader, 
+	const shader_t *skyboxShader, const mfog_t *fog, int imageIndex )
 {
 	int side = visSide->index;
 
@@ -264,11 +270,11 @@ static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visS
 		rn.skyMins[1][side] >= rn.skyMaxs[1][side] )
 		return;
 
-	RB_BindShader( rsc.worldent, rsh.skyShader, rn.skyFog );
+	RB_BindShader( rsc.skyent, skyShader, fog );
 
 	RB_BindVBO( skydome->linearVbos[side]->index, GL_TRIANGLES );
 
-	RB_SetSkyboxShader( shader );
+	RB_SetSkyboxShader( skyboxShader );
 
 	RB_SetSkyboxSide( imageIndex );
 
@@ -278,13 +284,14 @@ static void R_DrawSkyBoxSide( const skydome_t *skydome, const visSkySide_t *visS
 /*
 * R_DrawSkyBox
 */
-static void R_DrawSkyBox( const skydome_t *skydome, const visSkySide_t *visSides, const shader_t *shader )
+static void R_DrawSkyBox( const skydome_t *skydome, const visSkySide_t *visSides, const shader_t *skyShader, 
+	const shader_t *skyboxShader, const mfog_t *fog )
 {
 	int i;
 	const int skytexorder[6] = { SKYBOX_RIGHT, SKYBOX_FRONT, SKYBOX_LEFT, SKYBOX_BACK, SKYBOX_TOP, SKYBOX_BOTTOM };
 
 	for( i = 0; i < 6; i++ )
-		R_DrawSkyBoxSide( skydome, visSides + i, shader, skytexorder[i] );
+		R_DrawSkyBoxSide( skydome, visSides + i, skyShader, skyboxShader, fog, skytexorder[i] );
 }
 
 /*
@@ -292,7 +299,7 @@ static void R_DrawSkyBox( const skydome_t *skydome, const visSkySide_t *visSides
 * 
 * Draw dummy skybox side to prevent the HOM effect
 */
-static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *visSides )
+static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *visSides, const mfog_t *fog )
 {
 	int side = 5;
 	const visSkySide_t *visSide = visSides + side;
@@ -301,7 +308,7 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 		rn.skyMins[1][side] >= rn.skyMaxs[1][side] )
 		return;
 
-	RB_BindShader( rsc.worldent, rsh.envShader, rn.skyFog );
+	RB_BindShader( rsc.skyent, rsh.envShader, fog );
 
 	RB_BindVBO( skydome->linearVbos[side]->index, GL_TRIANGLES );
 
@@ -311,18 +318,19 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 /*
 * R_DrawSkySurf
 */
-bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, drawSurfaceBSP_t *drawSurf )
+bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf )
 {
 	int i;
 	int numVisSides;
 	visSkySide_t visSkySides[6];
 	vec3_t mins, maxs;
 	int umin, umax, vmin, vmax;
-	entity_t skyent;
-	refdef_t *rd = &rn.refdef;
+	bool skyportal = portalSurface != NULL && portalSurface->skyPortal;
 	skydome_t *skydome = rsh.worldBrushModel->skydome;
 
 	if( !skydome )
+		return false;
+	if( skyportal && !fog )
 		return false;
 
 	numVisSides = 0;
@@ -361,9 +369,6 @@ bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		clamp( visSkySides[i].firstElem, 0, ELEM_LEN-1 );
 		clamp( visSkySides[i].numElems, 0, ELEM_LEN );
 
-		AddPointToBounds( skydome->meshes[i].xyzArray[vmin*SIDE_SIZE+umin], mins, maxs );
-		AddPointToBounds( skydome->meshes[i].xyzArray[vmax*SIDE_SIZE+umax], mins, maxs );
-
 		skydome->meshes[i].numElems = visSkySides[i].numElems;
 	}
 
@@ -371,40 +376,39 @@ bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	if( !numVisSides )
 		return false;
 
-	VectorAdd( mins, rn.viewOrigin, mins );
-	VectorAdd( maxs, rn.viewOrigin, maxs );
-
-	if( rd->rdflags & RDF_SKYPORTALINVIEW ) {
-		R_DrawSkyPortal( e, &rd->skyportal, mins, maxs );
-		return false;
-	}
-
 	// center skydome on camera to give the illusion of a larger space
-	skyent = *rsc.worldent;
-	skyent.scale = shader->skyHeight;
-	VectorCopy( rn.viewOrigin, skyent.origin );
-	R_TransformForEntity( &skyent );
+	rsc.skyent->scale = shader->skyHeight;
+	VectorCopy( rn.viewOrigin, rsc.skyent->origin );
+	R_TransformForEntity( rsc.skyent );
 
-	if( shader->skyboxImages[0] )
-		R_DrawSkyBox( skydome, visSkySides, shader );
-	else
-		R_DrawBlackBottom( skydome, visSkySides );
-
-	if( shader->numpasses )
+	if( skyportal )
 	{
-		for( i = 0; i < 5; i++ )
+		// render fake fogged skybox
+		R_DrawSkyBox( skydome, visSkySides, rsh.emptyFogShader, shader, fog );
+	}
+	else
+	{
+		if( shader->skyboxImages[0] )
+			R_DrawSkyBox( skydome, visSkySides, rsh.skyShader, shader, fog );
+		else
+			R_DrawBlackBottom( skydome, visSkySides, fog );
+
+		if( shader->numpasses )
 		{
-			const visSkySide_t *visSide = visSkySides + i;
+			for( i = 0; i < 5; i++ )
+			{
+				const visSkySide_t *visSide = visSkySides + i;
 
-			if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
-				rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
-				continue;
+				if( rn.skyMins[0][i] >= rn.skyMaxs[0][i] ||
+					rn.skyMins[1][i] >= rn.skyMaxs[1][i] )
+					continue;
 
-			RB_BindShader( rsc.worldent, shader, rn.skyFog ); // must be called for every side to reset backend state
+				RB_BindShader( rsc.skyent, shader, NULL ); // must be called for every side to reset backend state
 
-			RB_BindVBO( skydome->sphereVbos[i]->index, GL_TRIANGLES );
+				RB_BindVBO( skydome->sphereVbos[i]->index, GL_TRIANGLES );
 
-			RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems, 0, 0, 0, 0 );
+				RB_DrawElements( visSide->firstVert, visSide->numVerts, visSide->firstElem, visSide->numElems, 0, 0, 0, 0 );
+			}
 		}
 	}
 
@@ -615,9 +619,9 @@ loc1:
 }
 
 /*
-* R_AddSkyToDrawList
+* R_ClipSkySurface
 */
-bool R_AddSkyToDrawList( const msurface_t *fa )
+bool R_ClipSkySurface( const msurface_t *surf )
 {
 	int i;
 	vec4_t *vert;
@@ -626,10 +630,10 @@ bool R_AddSkyToDrawList( const msurface_t *fa )
 	vec3_t verts[4];
 
 	// calculate vertex values for sky box
-	r_warpFace = fa;
+	r_warpFace = surf;
 	r_warpFaceVis = false;
 
-	mesh = fa->mesh;
+	mesh = surf->mesh;
 	elem = mesh->elems;
 	vert = mesh->xyzArray;
 	for( i = 0; i < mesh->numElems; i += 3, elem += 3 )
@@ -640,23 +644,28 @@ bool R_AddSkyToDrawList( const msurface_t *fa )
 		ClipSkyPolygon( 3, verts[0], 0 );
 	}
 
-	if( r_warpFaceVis ) {
-		if( fa->fog ) {
-			rn.skyFog = fa->fog;
-		} else if( rsh.worldBrushModel->globalfog ) {
-			rn.skyFog = rsh.worldBrushModel->globalfog;
-		}
+	return r_warpFaceVis;
+}
 
-		// there should be only one sky drawSurf in the list
-		if( !rn.skyShader ) {
-			rn.skyShader = fa->shader;
-			R_AddSurfToDrawList( rn.meshlist, rsc.worldent, NULL, fa->shader, 0, r_warpFaceAxis, NULL, &r_skySurf );
-		}
+/*
+* R_AddSkySurfToDrawList
+*/
+bool R_AddSkySurfToDrawList( const msurface_t *surf, const portalSurface_t *portalSurf )
+{
+	mfog_t *fog = surf->fog;
+	shader_t *shader = surf->shader;
 
-		return true;
+	if( fog && fog->shader->fog_clearDist >= shader->skyHeight ) {
+		// if sky is too low to become fogged, ignore passed fog reference
+		fog = NULL;
 	}
 
-	return false;
+	if( r_skySurf.visFrame != rf.frameCount ) {
+		r_skySurf.visFrame = rf.frameCount;
+		R_AddSurfToDrawList( rn.meshlist, rsc.skyent, fog, shader, 0, r_warpFaceAxis, portalSurf, &r_skySurf );
+	}
+
+	return true;
 }
 
 /*
@@ -666,8 +675,6 @@ void R_ClearSky( void )
 {
 	int i;
 
-	rn.skyFog = NULL;
-	rn.skyShader = NULL;
 	for( i = 0; i < 6; i++ )
 	{
 		rn.skyMins[0][i] = rn.skyMins[1][i] = 9999999;
