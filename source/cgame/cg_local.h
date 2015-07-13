@@ -902,19 +902,22 @@ extern cvar_t *cg_chatFilterTV;
 
 //force models
 extern cvar_t *cg_teamPLAYERSmodel;
+extern cvar_t *cg_teamPLAYERSmodelForce;
 extern cvar_t *cg_teamALPHAmodel;
+extern cvar_t *cg_teamALPHAmodelForce;
 extern cvar_t *cg_teamBETAmodel;
+extern cvar_t *cg_teamBETAmodelForce;
 
 extern cvar_t *cg_teamPLAYERSskin;
 extern cvar_t *cg_teamALPHAskin;
 extern cvar_t *cg_teamBETAskin;
 
 extern cvar_t *cg_teamPLAYERScolor;
+extern cvar_t *cg_teamPLAYERScolorForce;
 extern cvar_t *cg_teamALPHAcolor;
 extern cvar_t *cg_teamBETAcolor;
 
 extern cvar_t *cg_forceMyTeamAlpha;
-extern cvar_t *cg_forceTeamPlayersTeamBeta;
 
 extern cvar_t *cg_teamColoredBeams;
 
