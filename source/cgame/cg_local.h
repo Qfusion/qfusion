@@ -600,6 +600,8 @@ typedef struct
 	cg_kickangles_t	kickangles[MAX_ANGLES_KICKS];
 	cg_viewblend_t colorblends[MAX_COLORBLENDS];
 	unsigned int damageBlends[4];
+	unsigned int fallEffectTime;
+	unsigned int fallEffectRebounceTime;
 
 	//
 	// transient data from server
@@ -999,9 +1001,10 @@ void CG_ResetColorBlend( void );
 
 void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int time );
 void CG_StartColorBlendEffect( float r, float g, float b, float a, int time );
+void CG_StartFallKickEffect( int bounceTime );
 float CG_GetSensitivityScale( float sens, float zoomSens );
 void CG_ViewSmoothPredictedSteps( vec3_t vieworg );
-void CG_ViewSmoothFall( vec3_t vieworg );
+float CG_ViewSmoothFallKick( void );
 void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned int serverTime, float stereo_separation, unsigned int extrapolationTime, bool flipped );
 void CG_AddKickAngles( vec3_t viewangles );
 void CG_ChaseStep( int step );

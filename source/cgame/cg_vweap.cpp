@@ -110,27 +110,6 @@ static void CG_ViewWeapon_AddAngleEffects( vec3_t angles )
 }
 
 /*
-* CG_ViewWeapon_StartFallKickEff
-*/
-void CG_ViewWeapon_StartFallKickEff( int parms )
-{
-	int bouncetime;
-
-	if( !cg_gun->integer || !cg_gunbob->integer )
-		return;
-
-	if( cg.weapon.fallEff_Time > cg.time )
-		cg.weapon.fallEff_rebTime = 0;
-
-	bouncetime = ( ( parms + 5 )*10 )+250;
-	cg.weapon.fallEff_Time = cg.time + bouncetime;
-	if( cg.weapon.fallEff_rebTime )
-		cg.weapon.fallEff_rebTime = cg.time - ( ( cg.time - cg.weapon.fallEff_rebTime ) * 0.5 );
-	else
-		cg.weapon.fallEff_rebTime = cg.time;
-}
-
-/*
 * CG_ViewWeapon_baseanimFromWeaponState
 */
 static int CG_ViewWeapon_baseanimFromWeaponState( int weaponState )
@@ -286,7 +265,6 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 	weaponinfo_t *weaponInfo;
 	vec3_t gunAngles;
 	vec3_t gunOffset;
-	float fallfrac, fallkick;
 	float handOffset;
 
 	CG_ViewWeapon_RefreshAnimation( viewweapon );
@@ -339,20 +317,6 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 	}
 
 	gunOffset[RIGHT] += handOffset;
-
-	// fallkick offset
-	if( cg.weapon.fallEff_Time > cg.time )
-	{
-		fallfrac = (float)( cg.time - cg.weapon.fallEff_rebTime ) / (float)( cg.weapon.fallEff_Time - cg.weapon.fallEff_rebTime );
-		fallkick = sin( DEG2RAD( fallfrac*180 ) ) * ( ( cg.weapon.fallEff_Time - cg.weapon.fallEff_rebTime ) * 0.01f );
-	}
-	else
-	{
-		cg.weapon.fallEff_Time = cg.weapon.fallEff_rebTime = 0;
-		fallkick = fallfrac = 0;
-	}
-
-	gunOffset[UP] -= fallkick;
 
 	// apply the offsets
 #if 1

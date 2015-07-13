@@ -407,6 +407,31 @@ void CG_StartKickAnglesEffect( vec3_t source, float knockback, float radius, int
 }
 
 /*
+* CG_StartFallKickEffect
+*/
+void CG_StartFallKickEffect( int bounceTime )
+{
+	if( !cg_viewBob->integer )
+	{
+		cg.fallEffectTime = 0;
+		cg.fallEffectRebounceTime = 0;
+		return;
+	}
+
+	if( cg.fallEffectTime > cg.time )
+		cg.fallEffectRebounceTime = 0;
+
+	bounceTime += 200;
+	clamp_high( bounceTime, 400 );
+
+	cg.fallEffectTime = cg.time + bounceTime;
+	if( cg.fallEffectRebounceTime )
+		cg.fallEffectRebounceTime = cg.time - ( ( cg.time - cg.fallEffectRebounceTime ) * 0.5 );
+	else
+		cg.fallEffectRebounceTime = cg.time;
+}
+
+/*
 * CG_ResetColorBlend
 */
 void CG_ResetColorBlend( void )
@@ -696,24 +721,27 @@ void CG_ViewSmoothPredictedSteps( vec3_t vieworg )
 }
 
 /*
-* CG_ViewSmoothFall
+* CG_ViewSmoothFallKick
 */
-void CG_ViewSmoothFall( vec3_t vieworg )
+float CG_ViewSmoothFallKick( void )
 {
-	float fallfrac, fallkick;
-
 	if( !cg_viewBob->integer )
-		return;
+		return 0.0f;
 	if( cg_thirdPerson->integer )
-		return;
+		return 0.0f;
 
 	// fallkick offset
-	if( cg.weapon.fallEff_Time > cg.time )
+	if( cg.fallEffectTime > cg.time )
 	{
-		fallfrac = (float)( cg.time - cg.weapon.fallEff_rebTime ) / (float)( cg.weapon.fallEff_Time - cg.weapon.fallEff_rebTime );
-		fallkick = sin( DEG2RAD( fallfrac*180 ) ) * ( ( cg.weapon.fallEff_Time - cg.weapon.fallEff_rebTime ) * 0.01f );
-		vieworg[2] -= fallkick * 6.5f;
+		float fallfrac = (float)( cg.time - cg.fallEffectRebounceTime ) / (float)( cg.fallEffectTime - cg.fallEffectRebounceTime );
+		float fallkick = -6.5f * sin( DEG2RAD( fallfrac*180 ) ) * ( ( cg.fallEffectTime - cg.fallEffectRebounceTime ) * 0.01f );
+		return fallkick;
 	}
+	else
+	{
+		cg.fallEffectTime = cg.fallEffectRebounceTime = 0;
+	}
+	return 0.0f;
 }
 
 /*
@@ -878,7 +906,8 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 			}
 
 			CG_ViewSmoothPredictedSteps( view->origin ); // smooth out stair climbing
-			CG_ViewSmoothFall( view->origin );
+
+			view->origin[2] += CG_ViewSmoothFallKick();
 		}
 		else
 		{

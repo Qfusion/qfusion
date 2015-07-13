@@ -168,7 +168,6 @@ struct weaponinfo_s *CG_CreateWeaponZeroModel( char *cgs_name );
 struct weaponinfo_s *CG_RegisterWeaponModel( char *cgs_name, int weaponTag );
 void CG_AddWeaponOnTag( entity_t *ent, orientation_t *tag, int weapon, int effects, orientation_t *projectionSource, unsigned int flash_time, unsigned int barrel_time );
 struct weaponinfo_s *CG_GetWeaponInfo( int currentweapon );
-void CG_ViewWeapon_StartFallKickEff( int parms );
 
 //=================================================
 //				VIEW WEAPON
@@ -207,7 +206,5 @@ typedef struct
 
 	// other effects
 	orientation_t projectionSource;
-	unsigned int fallEff_Time;
-	int fallEff_rebTime;
 } cg_viewweapon_t;
 
