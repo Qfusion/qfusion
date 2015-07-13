@@ -905,6 +905,10 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 		view->refdef.fov_x = CG_DemoCam_GetOrientation( view->origin, view->angles, view->velocity );
 	}
 
+	Matrix3_FromAngles( view->angles, view->axis );
+	if( view->flipped )
+		VectorInverse( &view->axis[AXIS_RIGHT] );
+
 	// view rectangle size
 	view->refdef.x = scr_vrect.x;
 	view->refdef.y = scr_vrect.y;
@@ -924,8 +928,6 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 	view->fracDistFOV = tan( view->refdef.fov_x * ( M_PI/180 ) * 0.5f );
 
 	view->refdef.minLight = 0.3f;
-
-	Matrix3_FromAngles( view->angles, view->axis );
 
 	if( view->thirdperson )
 		CG_ThirdPersonOffsetView( view );
