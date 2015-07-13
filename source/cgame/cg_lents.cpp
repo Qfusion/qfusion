@@ -317,11 +317,11 @@ static void CG_ElectroRings( const vec3_t start, const vec3_t end, const vec4_t 
 	numrings = len / space + 1;
 	timeFrac = 0.6f / (float)numrings;
 	for (i = 0; i < numrings; i++) {
-		float t = (float)i * timeFrac;
+		float t = ( (float)i * timeFrac + 10 ) * (float) cg_ebbeam_time->value;
 		float l = i * space;
 
 		VectorMA(start, l, dir, origin);
-		le = CG_AllocSprite(LE_ALPHA_FADE, origin, 5.0f, t + 3 + random() * 3,
+		le = CG_AllocSprite(LE_ALPHA_FADE, origin, 5.0f, t,
 			color[0], color[1], color[2], color[3], 0, 0, 0, 0,
 			s);
 		le->ent.rotation = rand() % 360;
