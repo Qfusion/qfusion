@@ -317,7 +317,7 @@ static void CG_ElectroRings( const vec3_t start, const vec3_t end, const vec4_t 
 	numrings = len / space + 1;
 	timeFrac = 0.6f / (float)numrings;
 	for (i = 0; i < numrings; i++) {
-		float t = ( (float)i * timeFrac + 10 ) * (float) cg_ebbeam_time->value;
+		float t = ( (float)i * timeFrac + 7.5f + (i * 0.20f) ) * (float)cg_ebbeam_time->value;
 		float l = i * space;
 
 		VectorMA(start, l, dir, origin);
