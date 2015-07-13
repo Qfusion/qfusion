@@ -903,7 +903,7 @@ void CG_Event_Fall( entity_state_t *state, int parm )
 			return;
 		}
 
-		CG_ViewWeapon_StartFallKickEff( parm );
+		CG_StartFallKickEffect( ( parm + 5 ) * 10 );
 
 		if( parm > 0 )
 			CG_DamageIndicatorAdd( parm, tv( 0, 0, 1 ) );
