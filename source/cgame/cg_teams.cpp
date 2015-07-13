@@ -26,35 +26,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 static int CG_ForceTeam( int entNum, int team )
 {
-	if( !GS_TeamBasedGametype() )
-	{
-		if( ISVIEWERENTITY( entNum ) )
-		{
-			if( cg_forceMyTeamAlpha->integer )
-				return TEAM_ALPHA;
-		}
-		else
-		{
-			if( cg_forceTeamPlayersTeamBeta->integer )
-				return TEAM_BETA;
-		}
-
-		return team;
-	}
-	else
+	if( cg_forceMyTeamAlpha->integer )
 	{
 		int myteam = cg.predictedPlayerState.stats[STAT_TEAM];
-
-		if( cg_forceMyTeamAlpha->integer && myteam != TEAM_SPECTATOR )
+		if( myteam == TEAM_BETA )
 		{
-			if( team == myteam )
-				return TEAM_ALPHA;
 			if( team == TEAM_ALPHA )
-				return myteam;
+				return TEAM_BETA;
+			if( team == TEAM_BETA )
+				return TEAM_ALPHA;
 		}
-
-		return team;
 	}
+	return team;
 }
 
 /*
@@ -78,13 +61,16 @@ void CG_SetSceneTeamColors( void )
 /*
 * CG_RegisterForceModel
 */
-static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceSkin, pmodelinfo_t **ppmodelinfo, struct skinfile_s **pskin )
+static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceModelToggle, cvar_t *teamForceSkin, pmodelinfo_t **ppmodelinfo, struct skinfile_s **pskin )
 {
 	pmodelinfo_t *pmodelinfo;
 	struct skinfile_s *skin = NULL;
 
 	if( teamForceModel )
 		teamForceModel->modified = false;
+
+	if( teamForceModelToggle )
+		teamForceModelToggle->modified = false;
 
 	if( teamForceSkin )
 		teamForceSkin->modified = false;
@@ -96,7 +82,7 @@ static void CG_RegisterForceModel( cvar_t *teamForceModel, cvar_t *teamForceSkin
 	*pskin = NULL;
 
 	// register new ones if possible
-	if( teamForceModel->string[0] )
+	if( teamForceModelToggle->integer && teamForceModel->string[0] )
 	{
 		pmodelinfo = CG_RegisterPlayerModel( va( "models/players/%s", teamForceModel->string ) );
 		// if it failed, it will be NULL, so also disabled
@@ -126,21 +112,21 @@ static void CG_CheckUpdateTeamModelRegistration( int team )
 	switch( team )
 	{
 	case TEAM_ALPHA:
-		if( cg_teamALPHAmodel->modified || cg_teamALPHAskin->modified )
+		if( cg_teamALPHAmodel->modified || cg_teamALPHAmodelForce->modified || cg_teamALPHAskin->modified )
 		{
-			CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAskin, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
+			CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAmodelForce, cg_teamALPHAskin, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
 		}
 		break;
 	case TEAM_BETA:
-		if( cg_teamBETAmodel->modified || cg_teamBETAskin->modified )
+		if( cg_teamBETAmodel->modified || cg_teamBETAmodelForce->modified || cg_teamBETAskin->modified )
 		{
-			CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAskin, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
+			CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAmodelForce, cg_teamBETAskin, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
 		}
 		break;
 	case TEAM_PLAYERS:
-		if( cg_teamPLAYERSmodel->modified || cg_teamPLAYERSskin->modified )
+		if( cg_teamPLAYERSmodel->modified || cg_teamPLAYERSmodelForce->modified || cg_teamPLAYERSskin->modified )
 		{
-			CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSskin, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
+			CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSmodelForce, cg_teamPLAYERSskin, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
 		}
 		break;
 	case TEAM_SPECTATOR:
@@ -213,7 +199,7 @@ struct skinfile_s *CG_SkinForCentity( centity_t *cent )
 */
 void CG_RegisterTeamColor( int team )
 {
-	cvar_t *teamForceColor = NULL;
+	cvar_t *teamForceColor = NULL, *teamForceColorToggle = NULL;
 	int rgbcolor;
 	int *forceColor;
 
@@ -236,12 +222,13 @@ void CG_RegisterTeamColor( int team )
 	default:
 		{
 			teamForceColor = cg_teamPLAYERScolor;
+			teamForceColorToggle = cg_teamPLAYERScolorForce;
 			forceColor = &cgs.teamColor[TEAM_PLAYERS];
 		}
 		break;
 	}
 
-	if( teamForceColor->modified )
+	if( teamForceColor->modified || ( teamForceColorToggle && teamForceColorToggle->modified ) )
 	{
 		// load default one if in team based gametype
 		if( team >= TEAM_ALPHA )
@@ -254,7 +241,7 @@ void CG_RegisterTeamColor( int team )
 		}
 
 		// if there is a force color, update with it
-		if( teamForceColor->string[0] )
+		if( teamForceColor->string[0] && ( !teamForceColorToggle || teamForceColorToggle->integer ) )
 		{
 			rgbcolor = COM_ReadColorRGBString( teamForceColor->string );
 			if( rgbcolor != -1 )
@@ -263,11 +250,16 @@ void CG_RegisterTeamColor( int team )
 			}
 			else
 			{
-				trap_Cvar_ForceSet( teamForceColor->name, "" ); // didn't work, disable force color
+				// didn't work, disable force color
+				trap_Cvar_ForceSet( teamForceColor->name, "" );
+				if( teamForceColorToggle )
+					trap_Cvar_ForceSet( teamForceColorToggle->name, "" );
 			}
 		}
 
 		teamForceColor->modified = false;
+		if( teamForceColorToggle )
+			teamForceColorToggle->modified = false;
 	}
 }
 
@@ -276,7 +268,7 @@ void CG_RegisterTeamColor( int team )
 */
 vec_t *CG_TeamColor( int team, vec4_t color )
 {
-	cvar_t *teamForceColor = NULL;
+	cvar_t *teamForceColor = NULL, *teamForceColorToggle = NULL;
 	int forcedteam;
 
 	forcedteam = CG_ForceTeam( cg.view.POVent, team ); // check all teams against the client
@@ -294,10 +286,11 @@ vec_t *CG_TeamColor( int team, vec4_t color )
 	case TEAM_PLAYERS:
 	default:
 		teamForceColor = cg_teamPLAYERScolor;
+		teamForceColorToggle = cg_teamPLAYERScolorForce;
 		break;
 	}
 
-	if( teamForceColor->modified )
+	if( teamForceColor->modified || ( teamForceColorToggle && teamForceColorToggle->modified ) )
 		CG_RegisterTeamColor( forcedteam );
 
 	color[0] = COLOR_R( cgs.teamColor[forcedteam] ) * ( 1.0/255.0 );
@@ -316,7 +309,7 @@ uint8_t *_ColorForEntity( int entNum, byte_vec4_t color, bool player )
 	centity_t *cent;
 	int team;
 	centity_t *owner;
-	cvar_t *teamForceColor = NULL;
+	cvar_t *teamForceColor = NULL, *teamForceColorToggle = NULL;
 	int rgbcolor;
 	int *forceColor;
 
@@ -351,18 +344,31 @@ uint8_t *_ColorForEntity( int entNum, byte_vec4_t color, bool player )
 	default:
 		{
 			teamForceColor = cg_teamPLAYERScolor;
+			teamForceColorToggle = cg_teamPLAYERScolorForce;
 			forceColor = &cgs.teamColor[TEAM_PLAYERS];
 		}
 		break;
 	}
 
-	if( teamForceColor->modified )
+	if( teamForceColor->modified || ( teamForceColorToggle && teamForceColorToggle->modified ) )
 	{
 		CG_RegisterTeamColor( team );
 	}
 
+	bool useForceColor;
+	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) )
+	{
+		useForceColor = true;
+	}
+	else
+	{
+		useForceColor = ( teamForceColor->string[0] != '\0' );
+		if( teamForceColorToggle && !( teamForceColorToggle->integer ) )
+			useForceColor = false;
+	}
+
 	//if forced models is enabled or it is color forced team we do,
-	if( (teamForceColor->string[0] || team >= TEAM_ALPHA) && cent->current.type != ET_CORPSE )
+	if( useForceColor && cent->current.type != ET_CORPSE )
 	{
 		// skin color to team color
 		rgbcolor = *forceColor;
@@ -409,9 +415,9 @@ uint8_t *CG_PlayerColorForEntity( int entNum, byte_vec4_t color )
 void CG_RegisterForceModels( void )
 {
 	int team;
-	CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSskin, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
-	CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAskin, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
-	CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAskin, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
+	CG_RegisterForceModel( cg_teamPLAYERSmodel, cg_teamPLAYERSmodelForce, cg_teamPLAYERSskin, &cgs.teamModelInfo[TEAM_PLAYERS], &cgs.teamCustomSkin[TEAM_PLAYERS] );
+	CG_RegisterForceModel( cg_teamALPHAmodel, cg_teamALPHAmodelForce, cg_teamALPHAskin, &cgs.teamModelInfo[TEAM_ALPHA], &cgs.teamCustomSkin[TEAM_ALPHA] );
+	CG_RegisterForceModel( cg_teamBETAmodel, cg_teamBETAmodelForce, cg_teamBETAskin, &cgs.teamModelInfo[TEAM_BETA], &cgs.teamCustomSkin[TEAM_BETA] );
 
 	for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
 	{
