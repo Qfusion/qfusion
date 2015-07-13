@@ -865,9 +865,9 @@ void CG_ElectroIonsTrail2( const vec3_t start, const vec3_t end, const vec4_t co
 	{
 		CG_InitParticle( p, 0.65f, color[3], color[0] + crandom()*0.1, color[1] + crandom()*0.1, color[2] + crandom()*0.1, NULL );
 
-		VectorCopy( move, p->org);
-
 		p->alphavel = -1.0 / ( 0.6 + random()*0.6 );
+
+		VectorCopy( move, p->org );
 		VectorClear( p->accel );
 		VectorClear( p->vel );
 		VectorAdd( move, vec, move );
