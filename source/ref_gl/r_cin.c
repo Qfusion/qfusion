@@ -139,7 +139,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 				handle->cyuv->yuv, handle->yuv_images, 2 );
 
 			if( !in2D ) {
-				R_PopRefInst( 0 );
+				R_PopRefInst();
 			}
 			R_BindFrameBufferObject( fbo );
 

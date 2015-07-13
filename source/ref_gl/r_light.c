@@ -52,7 +52,7 @@ void R_InitCoronas( void )
 * R_BeginCoronaSurf
 */
 bool R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, 
-	const mfog_t *fog, drawSurfaceType_t *drawSurf )
+	const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
 {
 	RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
 	return true;
@@ -62,7 +62,7 @@ bool R_BeginCoronaSurf( const entity_t *e, const shader_t *shader,
 * R_BatchCoronaSurf
 */
 void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, 
-	const mfog_t *fog, drawSurfaceType_t *drawSurf )
+	const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
 {
 	int i;
 	vec3_t origin, point;

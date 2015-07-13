@@ -20,24 +20,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
+static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal );
+
 /*
 * R_AddPortalSurface
 */
 portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh, 
-	const vec3_t mins, const vec3_t maxs, const shader_t *shader )
+	const vec3_t mins, const vec3_t maxs, const shader_t *shader, void *drawSurf )
 {
 	unsigned int i;
 	float dist;
 	cplane_t plane, untransformed_plane;
 	vec3_t v[3];
 	portalSurface_t *portalSurface;
+	bool depthPortal = !( shader->flags & (SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2) );
 
 	if( !mesh || !shader ) {
 		return NULL;
 	}
 
-	if( R_FASTSKY() && !( shader->flags & (SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2) ) ) {
-		// r_fastsky doesn't affect portalmaps
+	if( R_FASTSKY() && depthPortal ) {
 		return NULL;
 	}
 
@@ -130,8 +132,13 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 	portalSurface->plane = plane;
 	portalSurface->shader = shader;
 	portalSurface->untransformed_plane = untransformed_plane;
+	portalSurface->skyPortal = NULL;
 	ClearBounds( portalSurface->mins, portalSurface->maxs );
 	memset( portalSurface->texures, 0, sizeof( portalSurface->texures ) );
+	
+	if( depthPortal ) {
+		rn.numDepthPortalSurfaces++;
+	}
 
 addsurface:
 	AddPointToBounds( mins, portalSurface->mins, portalSurface->maxs );
@@ -336,7 +343,7 @@ setup_and_render:
 
 		// ignore entities, if asked politely
 		if( best->renderfx & RF_NOPORTALENTS )
-			rn.renderFlags |= RF_NOENTS;
+			rn.renderFlags |= RF_ENVVIEW;
 		if( prevFlipped )
 			rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
@@ -411,7 +418,7 @@ done:
 	portalSurface->texures[0] = portalTexures[0];
 	portalSurface->texures[1] = portalTexures[1];
 
-	R_PopRefInst( rn.fbDepthAttachment != NULL ? 0 : GL_DEPTH_BUFFER_BIT );
+	R_PopRefInst();
 }
 
 /*
@@ -458,24 +465,62 @@ void R_DrawPortals( void )
 	if( !( rn.renderFlags & ( RF_MIRRORVIEW|RF_PORTALVIEW|RF_SHADOWMAPVIEW ) ) ) {
 		R_DrawPortalsDepthMask();
 
+		// render skyportal
+		if( rn.skyportalSurface ) {
+			portalSurface_t *ps = rn.skyportalSurface;
+			R_DrawSkyportal( ps->entity, ps->skyPortal );
+		}
+		
+		// render regular portals
 		for( i = 0; i < rn.numPortalSurfaces; i++ ) {
-			portalSurface_t portalSurface = rn.portalSurfaces[i]; 
-			R_DrawPortalSurface( &portalSurface );
-			rn.portalSurfaces[i] = portalSurface;
+			portalSurface_t ps = rn.portalSurfaces[i];
+			if( !ps.skyPortal ) {
+				R_DrawPortalSurface( &ps );
+				rn.portalSurfaces[i] = ps;
+			}
 		}
 	}
 }
 
 /*
-* R_DrawSkyPortal
+* R_AddSkyportalSurface
 */
-void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, vec3_t maxs )
+portalSurface_t *R_AddSkyportalSurface( const entity_t *ent, const shader_t *shader, void *drawSurf )
+{
+	portalSurface_t *portalSurface;
+
+	if( rn.skyportalSurface ) {
+		portalSurface = rn.skyportalSurface;
+	}
+	else if( rn.numPortalSurfaces == MAX_PORTAL_SURFACES ) {
+		// not enough space
+		return NULL;
+	}
+	else {
+		portalSurface = &rn.portalSurfaces[rn.numPortalSurfaces++];
+		memset( portalSurface, 0, sizeof( *portalSurface ) );
+		rn.skyportalSurface = portalSurface;
+		rn.numDepthPortalSurfaces++;
+	}
+
+	R_AddSurfToDrawList( rn.portalmasklist, ent, NULL, rsh.skyShader, 0, 0, NULL, drawSurf );
+	
+	portalSurface->entity = ent;
+	portalSurface->shader = shader;
+	portalSurface->skyPortal = &rn.refdef.skyportal;
+	return rn.skyportalSurface;
+}
+
+/*
+* R_DrawSkyportal
+*/
+static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal )
 {
 	if( !R_PushRefInst() ) {
 		return;
 	}
 
-	rn.renderFlags = ( rn.renderFlags|RF_SKYPORTALVIEW|RF_SOFT_PARTICLES );
+	rn.renderFlags = ( rn.renderFlags|RF_PORTALVIEW|RF_SOFT_PARTICLES );
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
 	rn.farClip = R_DefaultFarClip();
@@ -487,7 +532,7 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	//Vector4Set( rn.scissor, rn.refdef.x + x, rn.refdef.y + y, w, h );
 
 	if( skyportal->noEnts ) {
-		rn.renderFlags |= RF_NOENTS;
+		rn.renderFlags |= RF_ENVVIEW;
 	}
 
 	if( skyportal->scale )
@@ -530,5 +575,5 @@ void R_DrawSkyPortal( const entity_t *e, skyportal_t *skyportal, vec3_t mins, ve
 	R_RenderView( &rn.refdef );
 
 	// restore modelview and projection matrices, scissoring, etc for the main view
-	R_PopRefInst( ~GL_COLOR_BUFFER_BIT );
+	R_PopRefInst();
 }

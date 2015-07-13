@@ -48,6 +48,10 @@ void R_ClearScene( void )
 	Matrix3_Identity( rsc.polyent->axis );
 	rsc.numLocalEntities++;
 
+	rsc.skyent = R_NUM2ENT( rsc.numLocalEntities );
+	*rsc.skyent = *rsc.worldent;
+	rsc.numLocalEntities++;
+
 	rsc.numEntities = rsc.numLocalEntities;
 
 	rsc.numBmodelEntities = 0;
