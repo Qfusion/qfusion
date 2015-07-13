@@ -351,7 +351,6 @@ void CG_ElectroTrail2( const vec3_t start, const vec3_t end, int team )
 	else
 	{
 		CG_ElectroRings( start, end, color );
-		CG_ElectroIonsTrail( start, end, color ); // fixme: replace this with spiral ring
 		CG_ElectroIonsTrail2( start, end, color );
 	}
 }
