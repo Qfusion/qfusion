@@ -386,10 +386,10 @@ void G_Gametype_GENERIC_ScoreEvent( gclient_t *client, const char *score_event, 
 
 static void G_Gametype_GENERIC_Init( void )
 {
-	trap_ConfigString( CS_GAMETYPETITLE, "Gametype failed to load" );
-	trap_ConfigString( CS_GAMETYPEVERSION, "0.0" );
-	trap_ConfigString( CS_GAMETYPEAUTHOR, "Picmip Studios" );
-	trap_Cvar_ForceSet( "g_gametype", "error" );
+	trap_ConfigString( CS_GAMETYPETITLE, "Generic Deathmatch" );
+	trap_ConfigString( CS_GAMETYPEVERSION, "1.0" );
+	trap_ConfigString( CS_GAMETYPEAUTHOR, "Warsow Development Team" );
+	trap_Cvar_ForceSet( "g_gametype", "generic" );
 
 	level.gametype.spawnableItemsMask = ( IT_WEAPON|IT_AMMO|IT_ARMOR|IT_POWERUP|IT_HEALTH );
 	level.gametype.respawnableItemsMask = ( IT_WEAPON|IT_AMMO|IT_ARMOR|IT_POWERUP|IT_HEALTH );
@@ -1907,6 +1907,7 @@ void G_Gametype_SetDefaults( void )
 void G_Gametype_Init( void )
 {
 	bool changed = false;
+	const char *mapGametype;
 
 	g_gametypes_list = trap_Cvar_Get( "g_gametypes_list", "", CVAR_NOSET|CVAR_ARCHIVE );
 	G_Gametype_GenerateGametypesList(); // fill the g_gametypes_list cvar
@@ -1932,6 +1933,11 @@ void G_Gametype_Init( void )
 	g_allow_selfdamage = trap_Cvar_Get( "g_allow_selfdamage", "1", CVAR_ARCHIVE );
 	g_allow_teamdamage = trap_Cvar_Get( "g_allow_teamdamage", "1", CVAR_ARCHIVE );
 	g_allow_bunny = trap_Cvar_Get( "g_allow_bunny", "1", CVAR_ARCHIVE|CVAR_READONLY );
+
+	// map-specific gametype
+	mapGametype = G_asCallMapGametype();
+	if( mapGametype[0] && G_Gametype_Exists( mapGametype ) )
+		trap_Cvar_Set( g_gametype->name, mapGametype );
 
 	// update latched gametype change
 	if( g_gametype->latched_string )
@@ -1975,8 +1981,6 @@ void G_Gametype_Init( void )
 		trap_Cbuf_Execute();
 	}
 
-	GS_SetGametypeName( g_gametype->string );
-
 	// fixme: we are doing this twice because the gametype may check for GS_Instagib
 	G_CheckCvars(); // update GS_Instagib, GS_FallDamage, etc
 
@@ -1986,7 +1990,9 @@ void G_Gametype_Init( void )
 	if( !GT_asLoadScript( g_gametype->string ) )
 		G_Gametype_GENERIC_Init();
 
-	trap_ConfigString( CS_GAMETYPENAME, gs.gametypeName );
+	GS_SetGametypeName( g_gametype->string );
+
+	trap_ConfigString( CS_GAMETYPENAME, g_gametype->string );
 
 	G_CheckCvars(); // update GS_Instagib, GS_FallDamage, etc
 

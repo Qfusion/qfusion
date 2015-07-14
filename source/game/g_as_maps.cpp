@@ -68,6 +68,14 @@ static bool G_asInitializeMapScript( asIScriptModule *asModule )
 			G_Printf( "* The function '%s' was not present in the map script.\n", fdeclstr );
 	}
 
+	fdeclstr = "const String @MAP_Gametype( const String &gt )";
+	level.mapscript.gametypeFunc = asModule->GetFunctionByDecl( fdeclstr );
+	if( !level.mapscript.gametypeFunc )
+	{
+		if( developer->integer || sv_cheats->integer )
+			G_Printf( "* The function '%s' was not present in the map script.\n", fdeclstr );
+	}
+
 	return true;
 }
 
@@ -123,6 +131,43 @@ void G_asCallMapPostThink( void )
 void G_asCallMapExit( void )
 {
 	G_asCallMapFunction( level.mapscript.exitFunc );
+}
+
+/*
+* G_asCallMapGametype
+*/
+const char *G_asCallMapGametype( void )
+{
+	asstring_t *string;
+	int error;
+	asIScriptContext *ctx;
+	static char gametypeName[MAX_CONFIGSTRING_CHARS];
+	asstring_t *s;
+
+	if( !level.mapscript.gametypeFunc )
+		return "";
+
+	ctx = angelExport->asAcquireContext( GAME_AS_ENGINE() );
+
+	error = ctx->Prepare( static_cast<asIScriptFunction *>(level.mapscript.gametypeFunc) );
+	if( error < 0 ) 
+		return "";
+
+	s = angelExport->asStringFactoryBuffer( g_gametype->string, strlen( g_gametype->string ) );
+
+	ctx->SetArgObject( 0, s );
+
+	error = ctx->Execute();
+	if( G_ExecutionErrorReport( error ) )
+		GT_asShutdownScript();
+
+	string = ( asstring_t * )ctx->GetReturnObject( );
+	if( !string || !string->len || !string->buffer )
+		return "";
+
+	Q_strncpyz( gametypeName, string->buffer, sizeof( gametypeName ) );
+
+	return gametypeName;
 }
 
 /*

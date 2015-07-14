@@ -807,15 +807,14 @@ void G_InitLevel( char *mapname, char *entities, int entstrlen, unsigned int lev
 	G_CallVotes_Init();
 	G_SpawnQueue_Init();
 	G_Teams_Init();
+	// load map script
+	G_asLoadMapScript( level.mapname );
 	G_Gametype_Init();
 	// ch : this would be the location to "transfer ratings"
 	G_PrecacheItems(); // set configstrings for items (gametype must be initialized)
 	G_PrecacheMedia();
 	G_PrecacheGameCommands(); // adding commands after this point won't update them to the client
 	AI_InitLevel(); // load navigation file of the current map
-
-	// load map script
-	G_asLoadMapScript( level.mapname );
 
 	// start spawning entities
 

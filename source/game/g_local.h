@@ -222,6 +222,7 @@ typedef struct
 		void *preThinkFunc;
 		void *postThinkFunc;
 		void *exitFunc;
+		void *gametypeFunc;
 	} mapscript;
 
 	bool teamlock;
@@ -506,6 +507,7 @@ void G_asCallMapInit( void );
 void G_asCallMapPreThink( void );
 void G_asCallMapPostThink( void );
 void G_asCallMapExit( void );
+const char *G_asCallMapGametype( void );
 
 bool G_asCallMapEntitySpawnScript( const char *classname, edict_t *ent );
 
