@@ -211,7 +211,9 @@ void CG_GetBoundKeysString( const char *cmd, char *keys, size_t keysSize )
 	const char *bind;
 	int numKeys = 0;
 	const char *keyNames[2];
-	char charKeys[2][2] = { 0 };
+	char charKeys[2][2];
+
+	memset( charKeys, 0, sizeof( charKeys ) );
 
 	for( key = 0; key < 256; key++ )
 	{
