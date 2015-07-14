@@ -317,6 +317,9 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 	}
 
 	gunOffset[RIGHT] += handOffset;
+	if( cg_gun->integer && cg_gunbob->integer ) {
+		gunOffset[UP] += CG_ViewSmoothFallKick();
+	}
 
 	// apply the offsets
 #if 1
