@@ -725,16 +725,11 @@ void CG_ViewSmoothPredictedSteps( vec3_t vieworg )
 */
 float CG_ViewSmoothFallKick( void )
 {
-	if( !cg_viewBob->integer )
-		return 0.0f;
-	if( cg_thirdPerson->integer )
-		return 0.0f;
-
 	// fallkick offset
 	if( cg.fallEffectTime > cg.time )
 	{
 		float fallfrac = (float)( cg.time - cg.fallEffectRebounceTime ) / (float)( cg.fallEffectTime - cg.fallEffectRebounceTime );
-		float fallkick = -6.5f * sin( DEG2RAD( fallfrac*180 ) ) * ( ( cg.fallEffectTime - cg.fallEffectRebounceTime ) * 0.01f );
+		float fallkick = -1.0f * sin( DEG2RAD( fallfrac*180 ) ) * ( ( cg.fallEffectTime - cg.fallEffectRebounceTime ) * 0.01f );
 		return fallkick;
 	}
 	else
@@ -907,7 +902,9 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 
 			CG_ViewSmoothPredictedSteps( view->origin ); // smooth out stair climbing
 
-			view->origin[2] += CG_ViewSmoothFallKick();
+			if( cg_viewBob->integer && !cg_thirdPerson->integer ) {
+				view->origin[2] += CG_ViewSmoothFallKick() * 6.5f;
+			}
 		}
 		else
 		{
