@@ -1239,7 +1239,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 	static const int numSupportedFuncs = sizeof( funcs ) / sizeof( funcs[0] ) - 1;
 
 	if( !numDeforms ) {
-		return "\n";
+		return NULL;
 	}
 
 	program[0] = '\0';
@@ -1623,6 +1623,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	const char *shaderStrings[MAX_DEFINES_FEATURES+100];
 	char shaderVersion[100];
 	char maxBones[100];
+	const char *deformv;
 	glslParser_t parser;
 
 	if( type <= GLSL_PROGRAM_TYPE_NONE || type >= GLSL_PROGRAM_TYPE_MAXTYPE )
@@ -1781,7 +1782,11 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 
 	// forward declare QF_DeformVerts
 	deformvIdx = i;
-	shaderStrings[i++] = R_GLSLBuildDeformv( deforms, numDeforms );
+	deformv = R_GLSLBuildDeformv( deforms, numDeforms );
+	if( !deformv ) {
+		deformv = "\n";
+	}
+	shaderStrings[i++] = deformv;
 
 	dualQuatsIdx = i;
 	if( features & GLSL_SHADER_COMMON_BONE_TRANSFORMS ) {
