@@ -1000,7 +1000,7 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage )
 {
 	lentity_t *le;
 	int count, i;
-	float radius = 3.0f, alpha = cg_bloodTrailAlpha->value;
+	float radius = 5.0f, alpha = cg_bloodTrailAlpha->value;
 	int time = 8;
 	struct shader_s *shader = CG_MediaShader( cgs.media.shaderBloodImpactPuff );
 	vec3_t local_dir;
@@ -1032,7 +1032,7 @@ void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage )
 
 	for( i = 0; i < count; i++ )
 	{
-		le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, origin, radius + crandom(), time,
+		le = CG_AllocSprite( LE_PUFF_SHRINK, origin, radius + crandom(), time,
 			1, 1, 1, alpha, 0, 0, 0, 0, shader );
 
 		le->ent.rotation = rand() % 360;
