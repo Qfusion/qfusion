@@ -211,6 +211,7 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 {
 	vec3_t v1, v2;
 	vec3_t out;
+	int closest_node;
 
 	if( nav.num_nodes + 1 > MAX_NODES )
 		return NODE_INVALID;
@@ -226,13 +227,19 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 	VectorCopy( ent->r.mins, v2 );
 	nodes[nav.num_nodes].origin[0] = ( v1[0] - v2[0] ) / 2 + v2[0];
 	nodes[nav.num_nodes].origin[1] = ( v1[1] - v2[1] ) / 2 + v2[1];
-	nodes[nav.num_nodes].origin[2] = ent->r.maxs[2] + 16; // raise it up a bit
+	nodes[nav.num_nodes].origin[2] = ent->r.maxs[2]/* + 16*/; // raise it up a bit
 
 	nodes[nav.num_nodes].flags |= AI_FlagsForNode( nodes[nav.num_nodes].origin, NULL );
+
+	closest_node = AI_FindClosestReachableNode( nodes[nav.num_nodes].origin, ent, 64, NODE_ALL );
 
 	//put into ents table
 	AI_AddNavigatableEntity( ent, nav.num_nodes );
 	nav.num_nodes++;
+
+	// link jumppad to closest walkable node
+	if( closest_node != -1 )
+		AI_AddLink( closest_node, nav.num_nodes-1, LINK_JUMPPAD );
 
 	// Destiny node
 	nodes[nav.num_nodes].flags = ( NODEFLAGS_JUMPPAD_LAND|NODEFLAGS_SERVERLINK );
@@ -249,7 +256,13 @@ static int AI_AddNode_JumpPad( edict_t *ent )
 	// link jumpad to dest
 	AI_AddLink( nav.num_nodes-1, nav.num_nodes, LINK_JUMPPAD );
 
+	closest_node = AI_FindClosestReachableNode( nodes[nav.num_nodes].origin, ent, 64, NODE_ALL );
+
 	nav.num_nodes++;
+
+	// link jumppad destination to closest walkable node
+	AI_AddLink( closest_node, nav.num_nodes-1, LINK_JUMPPAD );
+
 	return nav.num_nodes -1;
 }
 
