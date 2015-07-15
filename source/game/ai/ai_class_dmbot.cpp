@@ -326,6 +326,15 @@ void BOT_DMclass_Move( edict_t *self, usercmd_t *ucmd )
 
 		nodeReached = AI_NodeReached_Generic( self );
 	}
+	else if( linkType & LINK_JUMPPAD )
+	{
+		VectorCopy( nodes[self->ai->next_node].origin, v2 );
+		v1[2] = v2[2] = 0;
+		if( DistanceFast( v1, v2 ) > 32 && lookDot > BOT_FORWARD_EPSILON ) {
+			ucmd->forwardmove = 1; // push towards destination
+			ucmd->buttons |= BUTTON_WALK;
+		}
+	}
 	// Platform riding - No move, riding elevator
 	else if( linkType & LINK_PLATFORM )
 	{
