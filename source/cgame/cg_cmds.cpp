@@ -579,7 +579,8 @@ static void CG_SC_MatchMessage( void )
 static void CG_SC_HelpMessage( void )
 {
 	unsigned index;
-	const char *helpmessage;
+	const char *id;
+	const char *helpmessage = NULL;
 	unsigned outlen = 0;
 	int c;
 
@@ -590,12 +591,21 @@ static void CG_SC_HelpMessage( void )
 		return;
 	}
 
-	helpmessage = cgs.configStrings[CS_HELPMESSAGES + index - 1];
-	if( !helpmessage[0] ) {
+	id = cgs.configStrings[CS_HELPMESSAGES + index - 1];
+	if( !id[0] ) {
 		return;
 	}
 
-	helpmessage = CG_TranslateString( helpmessage );
+	if( !( trap_IN_SupportedDevices() & IN_DEVICE_KEYBOARD ) ) {
+		char nokeyboard[MAX_CONFIGSTRING_CHARS + 16];
+		Q_snprintfz( nokeyboard, sizeof( nokeyboard ), "%s_nokeyboard", id );
+		helpmessage = trap_L10n_TranslateString( nokeyboard );
+	}
+
+	if( !helpmessage ) {
+		helpmessage = CG_TranslateString( id );
+	}
+
 	while( ( c = helpmessage[0] ) && ( outlen < MAX_HELPMESSAGE_CHARS - 1 ) ) {
 		helpmessage++;
 
