@@ -551,13 +551,14 @@ void CG_BoltExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, in
 
 	VecToAngles( dir, angles );
 
-	le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 6, // 6 is time
+	le = CG_AllocModel( LE_INVERSESCALE_ALPHA_FADE, pos, angles, 6, // 6 is time
 		1, 1, 1, 1, //full white no inducted alpha
 		250, 0.75, 0.75, 0.75, //white dlight
 		CG_MediaModel( cgs.media.modElectroBoltWallHit ), NULL );
 
 	le->ent.rotation = rand() % 360;
 	le->ent.scale = ( fire_mode == FIRE_MODE_STRONG ) ? 1.5f : 1.0f;
+	
 	// add white energy particles on the impact
 	CG_ImpactPuffParticles( pos, dir, 15, 0.75f, 1, 1, 1, 1, NULL );
 	
