@@ -1359,7 +1359,7 @@ static void BOT_DMclass_UpdateStatus( edict_t *self )
 					ai->status.entityWeights[i] = self->ai->pers.inventoryWeights[ent->item->tag];
 				else
 				{
-					if( self->health == self->max_health )
+					if( self->health >= self->max_health )
 						ai->status.entityWeights[i] = 0;
 					else
 					{
