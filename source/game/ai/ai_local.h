@@ -38,8 +38,8 @@ extern cvar_t *sv_botpersonality;
 //----------------------------------------------------------
 
 #define AI_STATUS_TIMEOUT	150
-#define AI_LONG_RANGE_GOAL_DELAY 1000
-#define AI_SHORT_RANGE_GOAL_DELAY 75
+#define AI_LONG_RANGE_GOAL_DELAY 2000
+#define AI_SHORT_RANGE_GOAL_DELAY 250
 
 #define AI_DEFAULT_YAW_SPEED	( self->ai->pers.cha.default_yaw_speed )
 #define AI_REACTION_TIME	( self->ai->pers.cha.reaction_time )
@@ -81,7 +81,7 @@ extern cvar_t *sv_botpersonality;
 #define AI_WATERJUMP_HEIGHT 24
 #define AI_MIN_RJ_HEIGHT 128
 #define AI_MAX_RJ_HEIGHT 512
-#define AI_GOAL_SR_RADIUS	200
+#define AI_GOAL_SR_RADIUS	400
 
 #define MASK_NODESOLID      ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_MONSTERCLIP )
 #define MASK_AISOLID        ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP )
