@@ -40,6 +40,7 @@ extern cvar_t *sv_botpersonality;
 #define AI_STATUS_TIMEOUT	150
 #define AI_LONG_RANGE_GOAL_DELAY 2000
 #define AI_SHORT_RANGE_GOAL_DELAY 250
+#define AI_SHORT_RANGE_GOAL_DELAY_IDLE 25
 
 #define AI_DEFAULT_YAW_SPEED	( self->ai->pers.cha.default_yaw_speed )
 #define AI_REACTION_TIME	( self->ai->pers.cha.reaction_time )
@@ -76,12 +77,13 @@ extern cvar_t *sv_botpersonality;
 #define NAV_FILE_FOLDER "navigation"
 
 #define	AI_STEPSIZE	STEPSIZE    // 18
-#define AI_JUMPABLE_HEIGHT 50
-#define AI_JUMPABLE_DISTANCE 360
-#define AI_WATERJUMP_HEIGHT 24
-#define AI_MIN_RJ_HEIGHT 128
-#define AI_MAX_RJ_HEIGHT 512
-#define AI_GOAL_SR_RADIUS	400
+#define AI_JUMPABLE_HEIGHT		50
+#define AI_JUMPABLE_DISTANCE	360
+#define AI_WATERJUMP_HEIGHT		24
+#define AI_MIN_RJ_HEIGHT		128
+#define AI_MAX_RJ_HEIGHT		512
+#define AI_GOAL_SR_RADIUS		200
+#define AI_GOAL_SR_LR_RADIUS	600
 
 #define MASK_NODESOLID      ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_MONSTERCLIP )
 #define MASK_AISOLID        ( CONTENTS_SOLID|CONTENTS_PLAYERCLIP|CONTENTS_BODY|CONTENTS_MONSTERCLIP )

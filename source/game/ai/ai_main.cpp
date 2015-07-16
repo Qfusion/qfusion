@@ -453,6 +453,8 @@ static void AI_PickShortRangeGoal( edict_t *self )
 
 	FOREACH_GOALENT( goalEnt )
 	{
+		float dist;
+
 		i = goalEnt->id;
 		if( !goalEnt->ent->r.inuse || goalEnt->ent->r.solid == SOLID_NOT )
 			continue;
@@ -470,22 +472,35 @@ static void AI_PickShortRangeGoal( edict_t *self )
 			}
 		}
 
-		if( DistanceFast( self->s.origin, goalEnt->ent->s.origin ) > AI_GOAL_SR_RADIUS )
-			continue;
+		dist = DistanceFast( self->s.origin, goalEnt->ent->s.origin );
+		if( goalEnt == self->ai->goalEnt ) {
+			if( dist > AI_GOAL_SR_LR_RADIUS )
+				continue;			
+		}
+		else {
+			if( dist > AI_GOAL_SR_RADIUS )
+				continue;
+		}		
 
-		if( AI_ShortRangeReachable( self, goalEnt->ent->s.origin ) && G_InFront( self, goalEnt->ent ) )
+		clamp_low( dist, 0.01f );
+
+		if( AI_ShortRangeReachable( self, goalEnt->ent->s.origin ) )
 		{
+			float weight;
+			bool in_front = G_InFront( self, goalEnt->ent );
+
 			// Long range goal gets top priority
-			if( goalEnt == self->ai->goalEnt ) 
+			if( in_front && goalEnt == self->ai->goalEnt ) 
 			{
 				bestGoal = goalEnt->ent;
 				break;
 			}
 
 			// get the one with the best weight
-			if( self->ai->status.entityWeights[i] > bestWeight )
+			weight = self->ai->status.entityWeights[i] / dist * (in_front ? 1.0f : 0.5f);
+			if( weight > bestWeight )
 			{
-				bestWeight = self->ai->status.entityWeights[i];
+				bestWeight = weight;
 				bestGoal = goalEnt->ent;
 			}
 		}
@@ -495,7 +510,12 @@ static void AI_PickShortRangeGoal( edict_t *self )
 	{
 		self->movetarget = bestGoal;
 		if( nav.debugMode && bot_showsrgoal->integer )
-			G_PrintChasersf( self, "%s: selected a %s for SR goal.\n", self->ai->pers.netname, self->movetarget->classname );
+			G_PrintChasersf( self, "%i %s: selected a %s for SR goal.\n", level.framenum, self->ai->pers.netname, self->movetarget->classname );
+	}
+	else
+	{
+		// got nothing else to do so keep scanning
+		self->ai->shortRangeGoalTimeout = level.time + AI_SHORT_RANGE_GOAL_DELAY_IDLE;
 	}
 }
 
@@ -583,9 +603,8 @@ void AI_Think( edict_t *self )
 	if( self->ai->goal_node == NODE_INVALID )
 		AI_PickLongRangeGoal( self );
 
-	// only pick short term goals for bots once per frame
-	if( self == level.think_client_entity )
-		AI_PickShortRangeGoal( self );
+	//if( self == level.think_client_entity )
+	AI_PickShortRangeGoal( self );
 
 	self->ai->pers.RunFrame( self );
 

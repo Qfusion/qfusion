@@ -217,7 +217,7 @@ void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, use
 
 	if( nextMoveType &(LINK_LADDER|LINK_PLATFORM|LINK_FALL|LINK_CROUCH) )
 		bunnyhop = false;
-
+#if 0
 	if( VectorLengthFast( self->velocity ) < AI_JUMP_SPEED )
 	{
 		if( dash && self->groundentity ) // attempt dash
@@ -236,6 +236,8 @@ void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, use
 			}
 		}
 	}
+#endif
+#if 0
 	else if( bunnyhop )
 	{
 		if( self->groundentity )
@@ -248,6 +250,7 @@ void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, use
 #endif
 		self->ai->is_bunnyhop = true;
 	}
+#endif
 
 	if( wallJump )
 	{
@@ -553,65 +556,65 @@ void BOT_DMclass_MoveWander( edict_t *self, usercmd_t *ucmd )
 	}
 
 	// Move To Goal (Short Range Goal, not following paths)
-	if( AI_MoveToShortRangeGoalEntity( self, ucmd ) )
-		return;
-
-	// Swimming?
-	VectorCopy( self->s.origin, temp );
-	temp[2] += 24;
-
-	if( G_PointContents( temp ) & MASK_WATER )
+	if( !AI_MoveToShortRangeGoalEntity( self, ucmd ) )
 	{
-		// If drowning and no node, move up
-		if( self->r.client && self->r.client->resp.next_drown_time > 0 )
+		// Swimming?
+		VectorCopy( self->s.origin, temp );
+		temp[2] += 24;
+
+		if( G_PointContents( temp ) & MASK_WATER )
 		{
-			ucmd->upmove = 1;
-			self->s.angles[PITCH] = -45;
-		}
-		else
-			ucmd->upmove = 1;
+			// If drowning and no node, move up
+			if( self->r.client && self->r.client->resp.next_drown_time > 0 )
+			{
+				ucmd->upmove = 1;
+				self->s.angles[PITCH] = -45;
+			}
+			else
+				ucmd->upmove = 1;
 
-		ucmd->forwardmove = 1;
-	}
-	// else self->r.client->next_drown_time = 0; // probably shound not be messing with this, but
-
-
-	// Lava?
-	temp[2] -= 48;
-	if( G_PointContents( temp ) & ( CONTENTS_LAVA|CONTENTS_SLIME ) )
-	{
-		self->s.angles[YAW] += random() * 360 - 180;
-		ucmd->forwardmove = 1;
-		if( self->groundentity )
-			ucmd->upmove = 1;
-		else
-			ucmd->upmove = 0;
-		return;
-	}
-
-
-	// Check for special movement
-	if( VectorLengthFast( self->velocity ) < 37 )
-	{
-		if( random() > 0.1 && AI_SpecialMove( self, ucmd ) )  //jumps, crouches, turns...
-			return;
-
-		self->s.angles[YAW] += random() * 180 - 90;
-
-		if( !self->is_step )  // if there is ground continue otherwise wait for next move
-			ucmd->forwardmove = 0; //0
-		else if( AI_CanMove( self, BOT_MOVE_FORWARD ) )
-		{
 			ucmd->forwardmove = 1;
-			ucmd->buttons |= BUTTON_WALK;
+		}
+		// else self->r.client->next_drown_time = 0; // probably shound not be messing with this, but
+
+
+		// Lava?
+		temp[2] -= 48;
+		if( G_PointContents( temp ) & ( CONTENTS_LAVA|CONTENTS_SLIME ) )
+		{
+			self->s.angles[YAW] += random() * 360 - 180;
+			ucmd->forwardmove = 1;
+			if( self->groundentity )
+				ucmd->upmove = 1;
+			else
+				ucmd->upmove = 0;
+			return;
 		}
 
-		return;
+
+		// Check for special movement
+		if( VectorLengthFast( self->velocity ) < 37 )
+		{
+			if( random() > 0.1 && AI_SpecialMove( self, ucmd ) )  //jumps, crouches, turns...
+				return;
+
+			self->s.angles[YAW] += random() * 180 - 90;
+
+			if( !self->is_step )  // if there is ground continue otherwise wait for next move
+				ucmd->forwardmove = 0; //0
+			else if( AI_CanMove( self, BOT_MOVE_FORWARD ) )
+			{
+				ucmd->forwardmove = 1;
+				ucmd->buttons |= BUTTON_WALK;
+			}
+
+			return;
+		}
+
+		// Otherwise move slowly, walking wondering what's going on
+		ucmd->buttons |= BUTTON_WALK;
 	}
 
-
-	// Otherwise move slowly, walking wondering what's going on
-	ucmd->buttons |= BUTTON_WALK;
 	if( AI_CanMove( self, BOT_MOVE_FORWARD ) )
 		ucmd->forwardmove = 1;
 	else
@@ -1318,7 +1321,21 @@ static void BOT_DMclass_UpdateStatus( edict_t *self )
 			{
 				if( client->ps.inventory[ent->item->tag] )
 				{
-					ai->status.entityWeights[i] *= LowNeedFactor;
+					if( client->ps.inventory[ent->item->ammo_tag] )
+					{
+						// find ammo item for this weapon
+						gsitem_t *ammoItem = GS_FindItemByTag( ent->item->ammo_tag );
+						if( ammoItem->inventory_max )
+						{
+							ai->status.entityWeights[i] *= (1.0 - (float)client->ps.inventory[ent->item->ammo_tag] / ammoItem->inventory_max);
+						}
+						ai->status.entityWeights[i] *= LowNeedFactor;
+					}
+					else
+					{
+						// we need some ammo
+						ai->status.entityWeights[i] *= LowNeedFactor;
+					}
 					onlyGotGB = false;
 				}
 			}
@@ -1364,7 +1381,7 @@ static void BOT_DMclass_UpdateStatus( edict_t *self )
 			}
 			else if( ent->item->type & IT_HEALTH )
 			{
-				if( ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA )
+				if( ent->item->tag == HEALTH_MEGA || ent->item->tag == HEALTH_ULTRA || ent->item->tag == HEALTH_SMALL )
 					ai->status.entityWeights[i] = self->ai->pers.inventoryWeights[ent->item->tag];
 				else
 				{
@@ -1683,26 +1700,26 @@ void BOT_DMclass_InitPersistant( edict_t *self )
 
 	// ammo
 	self->ai->pers.inventoryWeights[AMMO_WEAK_GUNBLADE] = 0.0f;
-	self->ai->pers.inventoryWeights[AMMO_BULLETS] = 0.6f;
-	self->ai->pers.inventoryWeights[AMMO_SHELLS] = 0.6f;
-	self->ai->pers.inventoryWeights[AMMO_GRENADES] = 0.6f;
-	self->ai->pers.inventoryWeights[AMMO_ROCKETS] = 0.6f;
-	self->ai->pers.inventoryWeights[AMMO_PLASMA] = 0.6f;
-	self->ai->pers.inventoryWeights[AMMO_BOLTS] = 0.6f;
-	self->ai->pers.inventoryWeights[AMMO_LASERS] = 0.6f;
+	self->ai->pers.inventoryWeights[AMMO_BULLETS] = 0.7f;
+	self->ai->pers.inventoryWeights[AMMO_SHELLS] = 0.7f;
+	self->ai->pers.inventoryWeights[AMMO_GRENADES] = 0.7f;
+	self->ai->pers.inventoryWeights[AMMO_ROCKETS] = 0.7f;
+	self->ai->pers.inventoryWeights[AMMO_PLASMA] = 0.7f;
+	self->ai->pers.inventoryWeights[AMMO_BOLTS] = 0.7f;
+	self->ai->pers.inventoryWeights[AMMO_LASERS] = 0.7f;
 
 	// armor
 	self->ai->pers.inventoryWeights[ARMOR_RA] = self->ai->pers.cha.armor_grabber * 2.0f;
 	self->ai->pers.inventoryWeights[ARMOR_YA] = self->ai->pers.cha.armor_grabber * 1.0f;
 	self->ai->pers.inventoryWeights[ARMOR_GA] = self->ai->pers.cha.armor_grabber * 0.75f;
-	self->ai->pers.inventoryWeights[ARMOR_SHARD] = self->ai->pers.cha.armor_grabber * 0.6f;
+	self->ai->pers.inventoryWeights[ARMOR_SHARD] = self->ai->pers.cha.armor_grabber * 0.5f;
 
 	// health
 	self->ai->pers.inventoryWeights[HEALTH_MEGA] = /*self->ai->pers.cha.health_grabber **/ 2.0f;
 	self->ai->pers.inventoryWeights[HEALTH_ULTRA] = /*self->ai->pers.cha.health_grabber **/ 2.0f;
 	self->ai->pers.inventoryWeights[HEALTH_LARGE] = /*self->ai->pers.cha.health_grabber **/ 1.0f;
 	self->ai->pers.inventoryWeights[HEALTH_MEDIUM] = /*self->ai->pers.cha.health_grabber **/ 0.9f;
-	self->ai->pers.inventoryWeights[HEALTH_SMALL] = /*self->ai->pers.cha.health_grabber **/ 0.6f;
+	self->ai->pers.inventoryWeights[HEALTH_SMALL] = /*self->ai->pers.cha.health_grabber **/ 0.4f;
 
 	// backpack
 	self->ai->pers.inventoryWeights[AMMO_PACK] = 0.4f;
