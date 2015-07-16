@@ -321,7 +321,7 @@ static void CG_ElectroRings( const vec3_t start, const vec3_t end, const vec4_t 
 		float l = i * space;
 
 		VectorMA(start, l, dir, origin);
-		le = CG_AllocSprite(LE_ALPHA_FADE, origin, 5.0f, t,
+		le = CG_AllocSprite(LE_ALPHA_FADE, origin, 4.25f, t,
 			color[0], color[1], color[2], color[3], 0, 0, 0, 0,
 			s);
 		le->ent.rotation = rand() % 360;
@@ -805,7 +805,7 @@ void CG_NewGrenadeTrail( centity_t *cent )
 	vec3_t vec;
 	int contents;
 	int trailTime;
-	float radius = 1.75, alpha = cg_grenadeTrailAlpha->value;
+	float radius = 8, alpha = cg_grenadeTrailAlpha->value;
 	struct shader_s *shader = CG_MediaShader( cgs.media.shaderGrenadeTrailSmokePuff );
 
 	if( !cg_grenadeTrail->integer )
@@ -836,7 +836,7 @@ void CG_NewGrenadeTrail( centity_t *cent )
 		}
 
 		clamp( alpha, 0.0f, 1.0f );
-		le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, cent->trailOrigin, radius, 10,
+		le = CG_AllocSprite( LE_PUFF_SHRINK, cent->trailOrigin, radius, 10,
 			1.0f, 1.0f, 1.0f, alpha,
 			0, 0, 0, 0,
 			shader );
