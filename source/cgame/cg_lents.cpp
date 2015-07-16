@@ -321,7 +321,7 @@ static void CG_ElectroRings( const vec3_t start, const vec3_t end, const vec4_t 
 		float l = i * space;
 
 		VectorMA(start, l, dir, origin);
-		le = CG_AllocSprite(LE_ALPHA_FADE, origin, 5.0f, t,
+		le = CG_AllocSprite(LE_ALPHA_FADE, origin, 4.25f, t,
 			color[0], color[1], color[2], color[3], 0, 0, 0, 0,
 			s);
 		le->ent.rotation = rand() % 360;
