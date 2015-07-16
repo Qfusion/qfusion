@@ -370,6 +370,11 @@ void G_SnapClients( void )
 		G_Client_InactivityRemove( ent->r.client );
 
 		G_ClientEndSnapFrame( ent );
+
+		if( ent->s.effects & EF_BUSYICON )
+			ent->flags |= FL_BUSY;
+		else
+			ent->flags &= ~FL_BUSY;
 	}
 
 	G_EndServerFrames_UpdateChaseCam();
