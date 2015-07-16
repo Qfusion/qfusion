@@ -1044,12 +1044,21 @@ void G_CallThink( edict_t *ent )
 */
 void G_CallTouch( edict_t *self, edict_t *other, cplane_t *plane, int surfFlags )
 {
-	if( self->touch )
-		self->touch( self, other, plane, surfFlags );
-	else if( self->scriptSpawned && self->asTouchFunc )
-		G_asCallMapEntityTouch( self, other, plane, surfFlags );
+	bool touched = false;
 
-	if( other->ai )
+	if( self == other )
+		return;
+
+	if( self->touch ) {
+		touched = true;
+		self->touch( self, other, plane, surfFlags );
+	}
+	else if( self->scriptSpawned && self->asTouchFunc ) {
+		touched = true;
+		G_asCallMapEntityTouch( self, other, plane, surfFlags );
+	}
+
+	if( touched && other->ai )
 		AI_TouchedEntity( other, self );
 }
 
