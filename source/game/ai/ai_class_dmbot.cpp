@@ -895,7 +895,7 @@ void BOT_DMclass_FindEnemy( edict_t *self )
 		if( G_ISGHOSTING( goalEnt->ent ) )
 			continue;
 
-		if( self->ai->status.entityWeights[i] <= 0 || goalEnt->ent->flags & FL_NOTARGET )
+		if( self->ai->status.entityWeights[i] <= 0 || goalEnt->ent->flags & (FL_NOTARGET|FL_BUSY) )
 			continue;
 
 		if( GS_TeamBasedGametype() && goalEnt->ent->s.team == self->s.team )
@@ -914,7 +914,7 @@ void BOT_DMclass_FindEnemy( edict_t *self )
 		{
 			weight = dist / self->ai->status.entityWeights[i];
 
-			if( ( dist < 350 ) || G_InFront( self, goalEnt->ent ) )
+			if( ( dist < 700 ) || G_InFront( self, goalEnt->ent ) )
 			{
 				if( weight < bestWeight )
 				{
@@ -1251,7 +1251,7 @@ float BOT_DMclass_PlayerWeight( edict_t *self, edict_t *enemy )
 	if( !enemy || enemy == self )
 		return 0;
 
-	if( G_ISGHOSTING( enemy ) || enemy->flags & FL_NOTARGET )
+	if( G_ISGHOSTING( enemy ) || enemy->flags & (FL_NOTARGET|FL_BUSY) )
 		return 0;
 
 	if( self->r.client->ps.inventory[POWERUP_QUAD] || self->r.client->ps.inventory[POWERUP_SHELL] )

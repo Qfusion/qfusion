@@ -60,6 +60,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	FL_WATERJUMP		0x00000200  // player jumping out of water
 #define	FL_TEAMSLAVE		0x00000400  // not the first on the team
 #define FL_NO_KNOCKBACK		0x00000800
+#define FL_BUSY				0x00001000
 
 #define FRAMETIME ( (float)game.frametime * 0.001f )
 
