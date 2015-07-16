@@ -805,7 +805,7 @@ void CG_NewGrenadeTrail( centity_t *cent )
 	vec3_t vec;
 	int contents;
 	int trailTime;
-	float radius = 1.75, alpha = cg_grenadeTrailAlpha->value;
+	float radius = 8, alpha = cg_grenadeTrailAlpha->value;
 	struct shader_s *shader = CG_MediaShader( cgs.media.shaderGrenadeTrailSmokePuff );
 
 	if( !cg_grenadeTrail->integer )
@@ -836,7 +836,7 @@ void CG_NewGrenadeTrail( centity_t *cent )
 		}
 
 		clamp( alpha, 0.0f, 1.0f );
-		le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, cent->trailOrigin, radius, 10,
+		le = CG_AllocSprite( LE_PUFF_SHRINK, cent->trailOrigin, radius, 10,
 			1.0f, 1.0f, 1.0f, alpha,
 			0, 0, 0, 0,
 			shader );
