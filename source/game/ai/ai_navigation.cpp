@@ -113,6 +113,8 @@ void AI_ClearGoal( edict_t *self )
 	self->ai->next_node = NODE_INVALID;
 	self->ai->goalEnt = NULL;
 	self->ai->vsay_goalent = NULL;
+	self->ai->longRangeGoalTimeout = level.time; // pick a long range goal now
+	self->ai->shortRangeGoalTimeout = level.time; // pick a short range goal now
 
 	VectorSet( self->ai->move_vector, 0, 0, 0 );
 }
@@ -259,11 +261,18 @@ void AI_TouchedEntity( edict_t *self, edict_t *ent )
 	nav_ents_t *goalEnt;
 
 	// right now we only support this on a few trigger entities (jumpads, teleporters)
-	if( ent->r.solid != SOLID_TRIGGER )
+	if( ent->r.solid != SOLID_TRIGGER && ent->item == NULL )
 		return;
 
+	// clear short range goal, pick a new goal ASAP
+	if( ent == self->movetarget )
+	{
+		self->movetarget = NULL;
+		self->ai->shortRangeGoalTimeout = level.time;
+	}
+
 	if( self->ai->next_node != NODE_INVALID &&
-		( nodes[self->ai->next_node].flags & NODEFLAGS_REACHATTOUCH ) )
+		( nodes[self->ai->next_node].flags & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) ) )
 	{
 		for( i = 0; i < nav.num_navigableEnts; i++ )
 		{

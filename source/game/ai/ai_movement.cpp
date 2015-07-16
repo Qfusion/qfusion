@@ -245,7 +245,7 @@ int AI_ChangeAngle( edict_t *ent )
 	float ideal_pitch;
 	float current_yaw;
 	float current_pitch;
-	float move, yawmove = 0;
+	float pitch_move = 0, yaw_move = 0;
 	float speed;
 	float speed_yaw, speed_pitch;
 	vec3_t ideal_angle;
@@ -277,23 +277,23 @@ int AI_ChangeAngle( edict_t *ent )
 
 	if( current_yaw != ideal_yaw )
 	{
-		yawmove = ideal_yaw - current_yaw;
+		yaw_move = ideal_yaw - current_yaw;
 		speed = ent->yaw_speed * FRAMETIME;
 		if( ideal_yaw > current_yaw )
 		{
-			if( yawmove >= 180 )
-				yawmove = yawmove - 360;
+			if( yaw_move >= 180 )
+				yaw_move = yaw_move - 360;
 		}
 		else
 		{
-			if( yawmove <= -180 )
-				yawmove = yawmove + 360;
+			if( yaw_move <= -180 )
+				yaw_move = yaw_move + 360;
 		}
-		if( yawmove > 0 )
+		if( yaw_move > 0 )
 		{
 			if( speed_yaw > speed )
 				speed_yaw = speed;
-			if( yawmove < 3 )
+			if( yaw_move < 3 )
 				speed_yaw += AI_YAW_ACCEL/4.0;
 			else
 				speed_yaw += AI_YAW_ACCEL;
@@ -302,39 +302,45 @@ int AI_ChangeAngle( edict_t *ent )
 		{
 			if( speed_yaw < -speed )
 				speed_yaw = -speed;
-
-			if( yawmove > -3 )
+			if( yaw_move > -3 )
 				speed_yaw -= AI_YAW_ACCEL/4.0;
 			else
 				speed_yaw -= AI_YAW_ACCEL;
 		}
 
-		yawmove = speed_yaw;
+		yaw_move = speed_yaw;
+		ent->s.angles[YAW] = anglemod( current_yaw + yaw_move );
 
-		ent->s.angles[YAW] = anglemod( current_yaw + yawmove );
+		if( yaw_move > 0 && ent->s.angles[YAW] > ideal_yaw ) {
+			ent->s.angles[YAW] = ideal_yaw;
+			speed_yaw = 0.0f;
+		} else if( yaw_move < 0 && ent->s.angles[YAW] < ideal_yaw ) {
+			ent->s.angles[YAW] = ideal_yaw;
+			speed_yaw = 0.0f;
+		}
 	}
 
 
 	// Pitch
 	if( current_pitch != ideal_pitch )
 	{
-		move = ideal_pitch - current_pitch;
+		pitch_move = ideal_pitch - current_pitch;
 		speed = ent->yaw_speed * FRAMETIME;
 		if( ideal_pitch > current_pitch )
 		{
-			if( move >= 180 )
-				move = move - 360;
+			if( pitch_move >= 180 )
+				pitch_move = pitch_move - 360;
 		}
 		else
 		{
-			if( move <= -180 )
-				move = move + 360;
+			if( pitch_move <= -180 )
+				pitch_move = pitch_move + 360;
 		}
-		if( move > 0 )
+		if( pitch_move > 0 )
 		{
 			if( speed_pitch > speed )
 				speed_pitch = speed;
-			if( move < 3 )
+			if( pitch_move < 3 )
 				speed_pitch += AI_YAW_ACCEL/4.0;
 			else
 				speed_pitch += AI_YAW_ACCEL;
@@ -343,17 +349,28 @@ int AI_ChangeAngle( edict_t *ent )
 		{
 			if( speed_pitch < -speed )
 				speed_pitch = -speed;
-			if( move > -3 )
+			if( pitch_move > -3 )
 				speed_pitch -= AI_YAW_ACCEL/4.0;
 			else
 				speed_pitch -= AI_YAW_ACCEL;
 		}
-		move = speed_pitch;
-		ent->s.angles[PITCH] = anglemod( current_pitch + move );
+
+		pitch_move = speed_pitch;
+		ent->s.angles[PITCH] = anglemod( current_pitch + pitch_move );
+
+		if( pitch_move > 0 && ent->s.angles[PITCH] > ideal_pitch ) {
+			ent->s.angles[PITCH] = ideal_pitch;
+			speed_pitch = 0.0f;
+		} else if( pitch_move < 0 && ent->s.angles[PITCH] < ideal_pitch ) {
+			ent->s.angles[PITCH] = ideal_pitch;
+			speed_pitch = 0.0f;
+		}
 	}
+
 	ent->ai->speed_yaw = speed_yaw;
 	ent->ai->speed_pitch = speed_pitch;
-	return yawmove > 0 ? 1 : -1;
+
+	return yaw_move > 0 ? 1 : -1;
 }
 
 /*
@@ -368,12 +385,21 @@ bool AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd )
 	if( self->ai->goalEnt && ( self->ai->goalEnt->ent == self->movetarget )
 		&& ( AI_GetNodeFlags( self->ai->goal_node ) & NODEFLAGS_ENTITYREACH ) )
 	{
+		bool close, infront;
+
 		// wait
 		VectorSubtract( self->movetarget->s.origin, self->s.origin, self->ai->move_vector );
-		if( VectorLength( self->ai->move_vector ) < 72 )
+		if( self->movetarget->item && self->ai->move_vector[2] < 0.0f ) {
+			// we probably gonna touch this item anyway, no need to bend over
+			self->ai->move_vector[2] = 0.0f;
+		}
+
+		close = VectorLength( self->ai->move_vector ) < 72;
+		infront = G_InFront( self, self->movetarget );
+		if( close && infront )
 			ucmd->buttons |= BUTTON_WALK;
 
-		if( BoundsIntersect( self->movetarget->r.absmin, self->movetarget->r.absmax, self->r.absmin, self->r.absmax ) )
+		if( !infront || BoundsIntersect( self->movetarget->r.absmin, self->movetarget->r.absmax, self->r.absmin, self->r.absmax ) )
 		{
 			ucmd->forwardmove = 0;
 			ucmd->sidemove = 0;
@@ -392,6 +418,18 @@ bool AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd )
 
 	// Force movement direction to reach the goal entity
 	VectorSubtract( self->movetarget->s.origin, self->s.origin, self->ai->move_vector );
+	if( self->movetarget->item && self->ai->move_vector[2] < 0.0f ) {
+		// we probably gonna touch this item anyway, no need to bend over
+		self->ai->move_vector[2] = 0.0f;
+	}
+
+	if( !G_InFront( self, self->movetarget ) )
+	{
+		// keep turning in place
+		ucmd->forwardmove = 0;
+		ucmd->sidemove = 0;
+		ucmd->upmove = 0;
+	}
 
 	return true;
 }
