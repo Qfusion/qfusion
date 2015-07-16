@@ -331,6 +331,7 @@ void BOT_DMclass_Move( edict_t *self, usercmd_t *ucmd )
 	}
 	else if( linkType & LINK_JUMPPAD )
 	{
+		VectorCopy( self->s.origin, v1 );
 		VectorCopy( nodes[self->ai->next_node].origin, v2 );
 		v1[2] = v2[2] = 0;
 		if( DistanceFast( v1, v2 ) > 32 && lookDot > BOT_FORWARD_EPSILON ) {
