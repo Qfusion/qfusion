@@ -236,9 +236,9 @@ void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, use
 			}
 		}
 	}
+	else 
 #endif
-#if 0
-	else if( bunnyhop )
+	if( bunnyhop && ( (nextMoveType &LINK_JUMP) || level.gametype.spawnableItemsMask == 0 ) )
 	{
 		if( self->groundentity )
 			ucmd->upmove = 1;
@@ -250,7 +250,6 @@ void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, use
 #endif
 		self->ai->is_bunnyhop = true;
 	}
-#endif
 
 	if( wallJump )
 	{
