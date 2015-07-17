@@ -924,6 +924,149 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
 	Com_EndRedirect();
 }
 
+#define MAX_STEAMQUERY_PACKETLEN 1256 // 1260 total (matches X360 size) minus -1 header
+
+/**
+ * Responds to a Steam server query.
+ *
+ * @param s       query string
+ * @param socket  response socket
+ * @param address response address
+ * @return whether the request is a Steam query
+ */
+bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t *address )
+{
+	if( !strcmp( s, "i" ) )
+	{
+		// ping
+		const char pingResponse[] = "j00000000000000";
+
+		if( !svs.clients )
+			return true;
+
+		Netchan_OutOfBand( socket, address, sizeof( pingResponse ), ( const uint8_t * )pingResponse );
+		return true;
+	}
+
+	if( !strcmp( s, "W" ) || !strcmp( s, "U\xFF\xFF\xFF\xFF" ) )
+	{
+		// challenge - security feature, but since we don't send multiple packets always return 0
+		const uint8_t challengeResponse[] = { 'A', 0, 0, 0, 0 };
+
+		if( !svs.clients )
+			return true;
+
+		Netchan_OutOfBand( socket, address, sizeof( challengeResponse ), ( const uint8_t * )challengeResponse );
+		return true;
+	}
+
+	if( !strcmp( s, "TSource Engine Query" ) )
+	{
+		// server info
+		char hostname[64];
+		char gamedir[MAX_QPATH];
+		char version[64];
+		int i, players = 0, bots = 0;
+		int flags = 0x80; // port
+		client_t *cl;
+		msg_t msg;
+		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN];
+
+		if( !svs.clients )
+			return true;
+
+		Q_strncpyz( hostname, sv_hostname->string, sizeof( hostname ) );
+		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( hostname ) );
+
+		for( i = 0; i < sv_maxclients->integer; i++ )
+		{
+			cl = &svs.clients[i];
+			if( cl->state >= CS_CONNECTED )
+			{
+				if( cl->edict->r.svflags & SVF_FAKECLIENT || cl->tvclient )
+					bots++;
+				players++;
+			}
+		}
+
+		Q_snprintfz( version, sizeof( version ), "%i.%i.%i.0",
+			APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_UPDATE );
+
+		if( APP_STEAMID > USHRT_MAX )
+			flags |= 0x1;
+
+		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
+		MSG_WriteByte( &msg, 'I' );
+		MSG_WriteByte( &msg, APP_PROTOCOL_VERSION );
+		MSG_WriteString( &msg, hostname );
+		MSG_WriteString( &msg, sv.mapname );
+		MSG_WriteString( &msg, gamedir );
+		MSG_WriteString( &msg, APPLICATION );
+		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
+		MSG_WriteByte( &msg, min( players, 255 ) );
+		MSG_WriteByte( &msg, bound( 0, sv_maxclients->integer, 255 ) );
+		MSG_WriteByte( &msg, min( bots, 255 ) );
+		MSG_WriteByte( &msg, ( dedicated && dedicated->integer ) ? 'd' : 'l' );
+		MSG_WriteByte( &msg, STEAMQUERY_OS );
+		MSG_WriteByte( &msg, Cvar_String( "password" )[0] ? 1 : 0 );
+		MSG_WriteByte( &msg, 0 ); // VAC insecure
+		MSG_WriteString( &msg, version );
+		MSG_WriteByte( &msg, flags );
+		MSG_WriteShort( &msg, sv_port->integer );
+		if( flags & 0x1 )
+		{
+			// long AppID - we don't use the full 64-bit GameID since dedicated servers don't have Steam integration
+			MSG_WriteLong( &msg, APP_STEAMID & 0xffffff );
+			MSG_WriteLong( &msg, 0 );
+		}
+		Netchan_OutOfBand( socket, address, msg.cursize, msg.data );
+		return true;
+	}
+
+	if( s[0] == 'U' )
+	{
+		// players
+		msg_t msg;
+		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN];
+		int i, players = 0;
+		client_t *cl;
+		char name[MAX_NAME_BYTES];
+
+		if( !svs.clients )
+			return true;
+
+		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
+		MSG_WriteByte( &msg, 'D' );
+		MSG_WriteByte( &msg, 0 );
+
+		for( i = 0; i < sv_maxclients->integer; i++ )
+		{
+			cl = &svs.clients[i];
+			if( cl->state < CS_CONNECTED )
+				continue;
+
+			Q_strncpyz( name, COM_RemoveColorTokens( cl->name ), sizeof( name ) );
+			if( ( msg.cursize + 10 + strlen( name ) ) > sizeof( msgbuf ) )
+				break;
+
+			MSG_WriteByte( &msg, i );
+			MSG_WriteString( &msg, name );
+			MSG_WriteLong( &msg, cl->edict->r.client->r.frags );
+			MSG_WriteFloat( &msg, ( float )( svs.realtime - cl->lastconnect ) * 0.001f );
+
+			players++;
+			if( players == 255 )
+				break;
+		}
+
+		msgbuf[1] = players;
+		Netchan_OutOfBand( socket, address, msg.cursize, msg.data );
+		return true;
+	}
+
+	return false;
+}
+
 typedef struct
 {
 	char *name;
@@ -962,6 +1105,9 @@ void SV_ConnectionlessPacket( const socket_t *socket, const netadr_t *address, m
 	MSG_ReadLong( msg );    // skip the -1 marker
 
 	s = MSG_ReadStringLine( msg );
+
+	if( SV_SteamServerQuery( s, socket, address ) )
+		return;
 
 	Cmd_TokenizeString( s );
 

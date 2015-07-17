@@ -134,6 +134,8 @@ extern "C" {
 
 #define OSNAME "Windows"
 
+#define STEAMQUERY_OS 'w'
+
 #ifdef _M_IX86
 #define CPUSTRING "x86"
 #define ARCH "x86"
@@ -202,6 +204,8 @@ typedef UINT_PTR socket_handle_t;
 #define BUILDSTRING "Linux"
 #define OSNAME "Linux"
 #endif
+
+#define STEAMQUERY_OS 'l'
 
 #ifdef __i386__
 #if defined ( __FreeBSD__ )
@@ -288,6 +292,7 @@ typedef int socket_handle_t;
 //Mac OSX has universal binaries, no need for cpu dependency
 #define BUILDSTRING "MacOSX"
 #define OSNAME "MacOSX"
+#define STEAMQUERY_OS 'o'
 #define CPUSTRING "universal"
 #define ARCH "mac"
 
