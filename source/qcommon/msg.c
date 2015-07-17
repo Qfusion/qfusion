@@ -93,8 +93,9 @@ void MSG_WriteByte( msg_t *msg, int c )
 
 void MSG_WriteShort( msg_t *msg, int c )
 {
-	unsigned short *sp = (unsigned short *)MSG_GetSpace( msg, 2 );
-	*sp = LittleShort( c );
+	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 2 );
+	buf[0] = ( uint8_t )( c&0xff );
+	buf[1] = ( uint8_t )( ( c>>8 )&0xff );
 }
 
 void MSG_WriteInt3( msg_t *msg, int c )
@@ -107,8 +108,11 @@ void MSG_WriteInt3( msg_t *msg, int c )
 
 void MSG_WriteLong( msg_t *msg, int c )
 {
-	unsigned int *ip = (unsigned int *)MSG_GetSpace( msg, 4 );
-	*ip = LittleLong( c );
+	uint8_t *buf = ( uint8_t* )MSG_GetSpace( msg, 4 );
+	buf[0] = ( uint8_t )( c&0xff );
+	buf[1] = ( uint8_t )( ( c>>8 )&0xff );
+	buf[2] = ( uint8_t )( ( c>>16 )&0xff );
+	buf[3] = ( uint8_t )( c>>24 );
 }
 
 void MSG_WriteFloat( msg_t *msg, float f )
