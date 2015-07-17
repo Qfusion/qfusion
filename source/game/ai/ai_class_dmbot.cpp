@@ -1327,7 +1327,7 @@ static void BOT_DMclass_UpdateStatus( edict_t *self )
 						gsitem_t *ammoItem = GS_FindItemByTag( ent->item->ammo_tag );
 						if( ammoItem->inventory_max )
 						{
-							ai->status.entityWeights[i] *= (1.0 - (float)client->ps.inventory[ent->item->ammo_tag] / ammoItem->inventory_max);
+							ai->status.entityWeights[i] *= (0.5 + 0.5 * (1.0 - (float)client->ps.inventory[ent->item->ammo_tag] / ammoItem->inventory_max));
 						}
 						ai->status.entityWeights[i] *= LowNeedFactor;
 					}
@@ -1347,6 +1347,7 @@ static void BOT_DMclass_UpdateStatus( edict_t *self )
 				}
 				else
 				{
+#if 0
 					// find weapon item for this ammo
 					gsitem_t *weaponItem;
 					int weapon;
@@ -1360,6 +1361,7 @@ static void BOT_DMclass_UpdateStatus( edict_t *self )
 								self->ai->status.entityWeights[i] *= LowNeedFactor;
 						}
 					}
+#endif
 				}
 			}
 			else if( ent->item->type & IT_ARMOR )
