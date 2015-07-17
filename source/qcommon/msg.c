@@ -178,9 +178,7 @@ int MSG_ReadByte( msg_t *msg )
 
 int MSG_ReadShort( msg_t *msg )
 {
-	int i;
-	short *sp = (short *)&msg->data[msg->readcount];
-	i = LittleShort( *sp );
+	int i = ( short )( msg->data[msg->readcount] | ( msg->data[msg->readcount+1]<<8 ) );
 	msg->readcount += 2;
 	if( msg->readcount > msg->cursize )
 		i = -1;
@@ -190,7 +188,7 @@ int MSG_ReadShort( msg_t *msg )
 int MSG_ReadInt3( msg_t *msg )
 {
 	int i = msg->data[msg->readcount]
-	| ( msg->data[msg->readcount+1]<<8 )
+		| ( msg->data[msg->readcount+1]<<8 )
 		| ( msg->data[msg->readcount+2]<<16 )
 		| ( ( msg->data[msg->readcount+2] & 0x80 ) ? ~0xFFFFFF : 0 );
 	msg->readcount += 3;
@@ -201,9 +199,10 @@ int MSG_ReadInt3( msg_t *msg )
 
 int MSG_ReadLong( msg_t *msg )
 {
-	int i;
-	unsigned int *ip = (unsigned int *)&msg->data[msg->readcount];
-	i = LittleLong( *ip );
+	int i = msg->data[msg->readcount]
+		| ( msg->data[msg->readcount+1]<<8 )
+		| ( msg->data[msg->readcount+2]<<16 )
+		| ( msg->data[msg->readcount+3]<<24 );
 	msg->readcount += 4;
 	if( msg->readcount > msg->cursize )
 		i = -1;
