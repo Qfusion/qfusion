@@ -1137,9 +1137,7 @@ void Element::AppendChild(Element* child, bool dom_element)
 	}
 
 	child->GetStyle()->DirtyDefinition();
-	// local properties should have already been dirtied at this point
-	// so only dirty inherited properites now
-	child->GetStyle()->DirtyInheritedProperties();
+	child->GetStyle()->DirtyProperties();
 
 	child->OnChildAdd(child);
 	DirtyStackingContext();
@@ -1187,9 +1185,7 @@ void Element::InsertBefore(Element* child, Element* adjacent_element)
 		children.insert(children.begin() + child_index, child);
 
 		child->GetStyle()->DirtyDefinition();
-		// local properties should have already been dirtied at this point
-		// so only dirty inherited properites now
-		child->GetStyle()->DirtyInheritedProperties();
+		child->GetStyle()->DirtyProperties();
 
 		child->OnChildAdd(child);
 		DirtyStackingContext();
@@ -1227,9 +1223,7 @@ bool Element::ReplaceChild(Element* inserted_element, Element* replaced_element)
 	RemoveChild(replaced_element);
 
 	inserted_element->GetStyle()->DirtyDefinition();
-	// local properties should have already been dirtied at this point
-	// so only dirty inherited properites now
-	inserted_element->GetStyle()->DirtyInheritedProperties();
+	inserted_element->GetStyle()->DirtyProperties();
 	inserted_element->OnChildAdd(inserted_element);
 
 	LockLayout(false);
