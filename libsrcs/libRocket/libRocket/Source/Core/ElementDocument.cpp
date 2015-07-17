@@ -50,7 +50,6 @@ ElementDocument::ElementDocument(const String& tag) : Element(tag)
 	modal = false;
 	layout_dirty = true;
 	lock_layout = 0;
-	structure_update_id = 0;
 
 	user_data = NULL;
 
@@ -297,32 +296,6 @@ void ElementDocument::LoadScript(Stream* ROCKET_UNUSED_PARAMETER(stream), const 
 	ROCKET_UNUSED(source_name);
 }
 
-void ElementDocument::InformDirty(Element *child)
-{
-	if (child == this)
-		return;
-	dirty_structures.insert(child);
-	child->AddReference();
-}
-
-void ElementDocument::UpdateStructure()
-{
-	if (dirty_structures.empty())
-		return;
-
-	this->structure_update_id++;
-
-	DirtyLayout();
-
-	for (ElementSet::iterator it = dirty_structures.begin(); it != dirty_structures.end(); ++it) {
-		Element *element = *it;
-		element->UpdateStructure(this->structure_update_id);
-		element->RemoveReference();
-	}
-
-	dirty_structures.clear();
-}
-
 // Updates the layout if necessary.
 void ElementDocument::_UpdateLayout()
 {
@@ -394,7 +367,6 @@ bool ElementDocument::IsLayoutDirty()
 // Refreshes the document layout if required.
 void ElementDocument::OnUpdate()
 {
-	UpdateStructure();
 	UpdateLayout();
 }
 

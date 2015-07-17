@@ -134,8 +134,10 @@ public:
 	/// Increment/Decrement the layout lock
 	void LockLayout(bool lock);
 
-	/// Informs element that the other element has just become structurally dirty
-	virtual void InformDirty(Element *child);
+	/// Sets internal pointer to user supplied data, which can be later retrieved by calling GetUserData
+	void SetUserData(void *data) { user_data = data; }
+	/// 
+	void *GetUserData() const { return user_data; }
 
 	// Find the next element to focus, starting at the current element
 	bool FocusFirstTabElement(void) { return FocusNextTabElement(this, true); }
@@ -162,9 +164,6 @@ private:
 	/// Searches forwards or backwards for a focusable element in the given substree
 	bool SearchFocusSubtree(Element* element, bool forward);
 
-	typedef std::set<Element *> ElementSet;
-	ElementSet dirty_structures;
-
 	// Title of the document
 	String title;
 
@@ -189,7 +188,6 @@ private:
 	friend class Factory;
 	
 	void _UpdateLayout();
-	void UpdateStructure();
 };
 
 }

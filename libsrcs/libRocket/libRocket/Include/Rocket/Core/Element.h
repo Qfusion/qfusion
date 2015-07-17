@@ -578,10 +578,6 @@ public:
 	/// Update the element's layout if required.
 	void UpdateLayout();
 
-	/// Informs element that the other element has just become structurally dirty
-	virtual void InformDirty(Element *child);
-	virtual void UpdateStructure(unsigned structure_update_id);
-
 protected:
 	/// Forces the element to generate a local stacking context, regardless of the value of its z-index
 	/// property.
@@ -626,7 +622,6 @@ protected:
 	virtual void GetRML(String& content);
 
 	virtual void OnReferenceDeactivate();
-	unsigned structure_update_id;
 
 private:
 	void SetParent(Element* parent);
