@@ -186,6 +186,8 @@ typedef struct
 	unsigned int duration, basetime;
 
 	bool play_jump;
+	bool play_jump_latched;
+	unsigned int play_jump_time;
 	bool play_ignore_next_frametime;
 
 	bool avi;

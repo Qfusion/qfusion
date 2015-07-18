@@ -2623,8 +2623,12 @@ void CL_Frame( int realmsec, int gamemsec )
 		}
 	}
 
-	if( cls.demo.playing && cls.demo.paused )
-		gamemsec = 0;
+	if( cls.demo.playing ) {
+		if( cls.demo.paused )
+			gamemsec = 0;
+		else
+			CL_LatchedDemoJump();
+	}
 
 	cls.gametime += gamemsec;
 
