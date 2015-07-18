@@ -947,17 +947,16 @@ void BOT_DMclass_FindEnemy( edict_t *self )
 		if( dist > 500 && self->ai->status.entityWeights[i] <= 0.1f )
 			continue;
 
-		if( dist > 700 && dist > WEIGHT_MAXDISTANCE_FACTOR * self->ai->status.entityWeights[i] )
-			continue;
+		//if( dist > 700 && dist > WEIGHT_MAXDISTANCE_FACTOR * self->ai->status.entityWeights[i] )
+		//	continue;
 
-		if( trap_inPVS( self->s.origin, goalEnt->ent->s.origin ) && G_Visible( self, goalEnt->ent ) )
+		weight = dist / self->ai->status.entityWeights[i];
+
+		if( weight < bestWeight )
 		{
-
-			weight = dist / self->ai->status.entityWeights[i];
-
-			if( weight < bestWeight )
+			if( trap_inPVS( self->s.origin, goalEnt->ent->s.origin ) && G_Visible( self, goalEnt->ent ) )
 			{
-				bool close = dist < 700;
+				bool close = dist < 2000 || goalEnt->ent == self->ai->last_attacker;
 
 				if( !close )
 				{
@@ -1307,7 +1306,7 @@ float BOT_DMclass_PlayerWeight( edict_t *self, edict_t *enemy )
 
 	// don't fight against powerups.
 	if( enemy->r.client && ( enemy->r.client->ps.inventory[POWERUP_QUAD] || enemy->r.client->ps.inventory[POWERUP_SHELL] ) )
-		return 0.05;
+		return 0.2;
 
 	//if not team based give some weight to every one
 	if( GS_TeamBasedGametype() && ( enemy->s.team == self->s.team ) )
@@ -1316,6 +1315,9 @@ float BOT_DMclass_PlayerWeight( edict_t *self, edict_t *enemy )
 	// if having EF_CARRIER we can assume it's someone important
 	if( enemy->s.effects & EF_CARRIER )
 		return 2.0f;
+
+	if( enemy == self->ai->last_attacker )
+		return rage_mode ? 4.0f : 1.0f;
 
 	return rage_mode ? 4.0f : 0.3f;
 }

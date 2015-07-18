@@ -327,6 +327,12 @@ static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size, int bot_pe
 	Info_SetValueForKey( userinfo, "color", va( "%i %i %i", (uint8_t)( random()*255 ), (uint8_t)( random()*255 ), (uint8_t)( random()*255 ) ) );
 }
 
+static void BOT_pain( edict_t *self, edict_t *other, float kick, int damage )
+{
+	if( !self->enemy && other->r.client ) {
+		self->ai->last_attacker = other;
+	}
+}
 
 //==========================================
 // BOT_Respawn
@@ -339,12 +345,14 @@ void BOT_Respawn( edict_t *self )
 
 	self->enemy = NULL;
 	self->movetarget = NULL;
+	self->pain = BOT_pain;
 
 	self->ai->statusUpdateTimeout = 0;
 	self->ai->changeweapon_timeout = 0;
 	self->ai->combatmovepush_timeout = 0;
 	self->ai->state_combat_timeout = 0;
 	self->ai->enemyReactionDelay = 0;
+	self->ai->last_attacker = NULL;
 
 	VectorClear( self->r.client->ps.pmove.delta_angles );
 	self->r.client->level.last_activity = level.time;
