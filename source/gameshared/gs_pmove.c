@@ -436,8 +436,15 @@ static void PM_StepSlideMove( void )
 	hspeed = sqrt( start_v[0]*start_v[0] + start_v[1]*start_v[1] );
 	if( hspeed && ISWALKABLEPLANE( &trace.plane ) )
 	{
-		VectorNormalize2D( pml.velocity );
-		VectorScale2D( pml.velocity, hspeed, pml.velocity );
+		if( trace.plane.normal[2] >= 1.0f - SLIDEMOVE_PLANEINTERACT_EPSILON )
+		{
+			VectorCopy( start_v, pml.velocity );
+		}
+		else
+		{
+			VectorNormalize2D( pml.velocity );
+			VectorScale2D( pml.velocity, hspeed, pml.velocity );
+		}
 	}
 
 	// wsw : jal : The following line is what produces the ramp sliding.
