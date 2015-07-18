@@ -39,6 +39,9 @@ typedef struct
 	// console messages
 	void ( *Com_Printf )( const char *format, ... );
 	void ( *Com_DPrintf )( const char *format, ... );
+
+	// console commands
+	void ( *Cbuf_ExecuteText )( int exec_when, const char *text );
 } steamlib_import_t;
 
 //
