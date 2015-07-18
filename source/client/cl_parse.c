@@ -951,6 +951,9 @@ static void CL_ParseServerData( msg_t *msg )
 
 	cls.wakelock = Sys_AcquireWakeLock();
 
+	if( !cls.sv_tv && cls.serveraddress.type == NA_IP )
+		Steam_AdvertiseGame( cls.serveraddress.address.ipv4.ip, NET_GetAddressPort( &cls.serveraddress ) );
+
 	// separate the printfs so the server message can have a color
 	Com_Printf( S_COLOR_WHITE "\n" "=====================================\n" );
 	Com_Printf( S_COLOR_WHITE "%s\n\n", cl.servermessage );

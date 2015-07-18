@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "ftlib.h"
 #include "../qcommon/asyncstream.h"
-#include "../qcommon/steam.h"
 
 cvar_t *cl_stereo_separation;
 cvar_t *cl_stereo;
@@ -387,6 +386,7 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 	cls.serveraddress = *address;
 	if( NET_GetAddressPort( &cls.serveraddress ) == 0 )
 		NET_SetAddressPort( &cls.serveraddress, PORT_SERVER );
+	Com_Printf( "PORT %u\n", NET_GetAddressPort( &cls.serveraddress ) );
 
 	if( cls.servername )
 		Mem_ZoneFree( cls.servername );
@@ -1851,6 +1851,9 @@ void CL_SetClientState( int state )
 {
 	cls.state = state;
 	Com_SetClientState( state );
+
+	if( state <= CA_DISCONNECTED )
+		Steam_AdvertiseGame( NULL, 0 );
 
 	switch( state )
 	{

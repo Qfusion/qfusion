@@ -127,3 +127,13 @@ void Steam_Shutdown( void )
 		steamlib_export->Shutdown();
 	}
 }
+
+/*
+* Steam_AdvertiseGame
+*/
+void Steam_AdvertiseGame( const uint8_t *ip, unsigned short port )
+{
+	if( steamlib_initialized ) {
+		steamlib_export->AdvertiseGame( ip, port );
+	}
+}

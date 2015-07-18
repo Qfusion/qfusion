@@ -26,5 +26,6 @@ void Steam_UnloadLibrary( void );
 void Steam_Init( void );
 void Steam_RunFrame( void );
 void Steam_Shutdown( void );
+void Steam_AdvertiseGame( const uint8_t *ip, unsigned short port );
 
 #endif // _STEAM_LIB_H_
