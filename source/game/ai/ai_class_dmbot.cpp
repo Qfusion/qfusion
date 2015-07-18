@@ -193,9 +193,12 @@ static bool AI_AttemptWalljump( edict_t *self )
 {
 	if( self->ai->path.numNodes >= 1 )
 	{
-		int n1 = self->ai->path.nodes[self->ai->path.numNodes];
-		int n2 = self->ai->path.nodes[self->ai->path.numNodes-1];
+		int n1 = self->ai->current_node;
+		int n2 = self->ai->next_node;
 		vec3_t n1origin, n2origin, origin;
+
+		if( n1 == n2 )
+			return false;
 
 		// we use a wider radius in 2D, and a height range enough so they can't be jumped over
 		AI_GetNodeOrigin( n1, n1origin );
@@ -204,7 +207,15 @@ static bool AI_AttemptWalljump( edict_t *self )
 
 		if( fabs( n1origin[2] - n2origin[2] ) < 32.0f && origin[2] >= n1origin[2] - 4.0f ) {
 			float dist = DistanceFast( n1origin, n2origin );
-			if( dist >= 150.0f && DistanceFast( n1origin, origin ) >= dist*0.5f ) {
+			float n1d, n2d;
+
+			n1d = DistanceFast( n1origin, origin );
+			n2d = DistanceFast( n2origin, origin );
+
+			if( dist >= 150.0f && 
+				n1d >= dist*0.5f &&
+				n2d < dist &&
+				AI_ReachabilityVisible( self, n2origin ) ) {
 				return true;
 			}
 		}
@@ -215,7 +226,7 @@ static bool AI_AttemptWalljump( edict_t *self )
 
 void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd )
 {
-	bool wallJump = true;
+	bool wallJump = false;
 	bool dash = true;
 	bool bunnyhop = true;
 	trace_t trace;
@@ -1729,16 +1740,19 @@ void BOT_DMclass_InitPersistant( edict_t *self )
 	memset( self->ai->pers.inventoryWeights, 0, sizeof( self->ai->pers.inventoryWeights ) );
 
 	// weapons
+	/*
 	self->ai->pers.inventoryWeights[WEAP_GUNBLADE] = 0.0f;
 	self->ai->pers.inventoryWeights[WEAP_MACHINEGUN] = 0.75f;
 	self->ai->pers.inventoryWeights[WEAP_RIOTGUN] = 0.75f;
 	self->ai->pers.inventoryWeights[WEAP_GRENADELAUNCHER] = 0.7f;
 	self->ai->pers.inventoryWeights[WEAP_ROCKETLAUNCHER] = 0.8f;
 	self->ai->pers.inventoryWeights[WEAP_PLASMAGUN] = 0.75f;
+	*/
 	self->ai->pers.inventoryWeights[WEAP_ELECTROBOLT] = 0.8f;
 	self->ai->pers.inventoryWeights[WEAP_LASERGUN] = 0.8f;
 
 	// ammo
+	/*
 	self->ai->pers.inventoryWeights[AMMO_WEAK_GUNBLADE] = 0.0f;
 	self->ai->pers.inventoryWeights[AMMO_BULLETS] = 0.7f;
 	self->ai->pers.inventoryWeights[AMMO_SHELLS] = 0.7f;
@@ -1753,6 +1767,7 @@ void BOT_DMclass_InitPersistant( edict_t *self )
 	self->ai->pers.inventoryWeights[ARMOR_YA] = self->ai->pers.cha.armor_grabber * 1.0f;
 	self->ai->pers.inventoryWeights[ARMOR_GA] = self->ai->pers.cha.armor_grabber * 0.75f;
 	self->ai->pers.inventoryWeights[ARMOR_SHARD] = self->ai->pers.cha.armor_grabber * 0.5f;
+	*/
 
 	// health
 	self->ai->pers.inventoryWeights[HEALTH_MEGA] = /*self->ai->pers.cha.health_grabber **/ 2.0f;
