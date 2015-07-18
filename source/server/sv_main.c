@@ -965,7 +965,7 @@ void SV_Init( void )
 	// wsw : jal : cap client's exceding server rules
 	sv_maxrate =		    Cvar_Get( "sv_maxrate", "0", CVAR_DEVELOPER );
 	sv_compresspackets =	    Cvar_Get( "sv_compresspackets", "1", CVAR_DEVELOPER );
-	sv_skilllevel =		    Cvar_Get( "sv_skilllevel", "1", CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_LATCH );
+	sv_skilllevel =		    Cvar_Get( "sv_skilllevel", "2", CVAR_SERVERINFO|CVAR_ARCHIVE|CVAR_LATCH );
 
 	if( sv_skilllevel->integer > 2 )
 		Cvar_ForceSet( "sv_skilllevel", "2" );
