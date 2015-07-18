@@ -1726,7 +1726,7 @@ bool G_InFront( edict_t *self, edict_t *other )
 	VectorNormalize( vec );
 	dot = DotProduct( vec, forward );
 
-	if( dot > 0.3 )
+	if( dot > 0.7 )
 		return true;
 	return false;
 }

@@ -275,7 +275,7 @@ int AI_ChangeAngle( edict_t *ent )
 		speed_pitch *= 0.5;
 	}
 
-	if( current_yaw != ideal_yaw )
+	if( fabs( current_yaw - ideal_yaw ) > 1 )
 	{
 		yaw_move = ideal_yaw - current_yaw;
 		speed = ent->yaw_speed * FRAMETIME;
@@ -311,6 +311,7 @@ int AI_ChangeAngle( edict_t *ent )
 		yaw_move = speed_yaw;
 		ent->s.angles[YAW] = anglemod( current_yaw + yaw_move );
 
+#if 0
 		if( yaw_move > 0 && ent->s.angles[YAW] > ideal_yaw ) {
 			ent->s.angles[YAW] = ideal_yaw;
 			speed_yaw = 0.0f;
@@ -318,11 +319,12 @@ int AI_ChangeAngle( edict_t *ent )
 			ent->s.angles[YAW] = ideal_yaw;
 			speed_yaw = 0.0f;
 		}
+#endif
 	}
 
 
 	// Pitch
-	if( current_pitch != ideal_pitch )
+	if( fabs( current_pitch - ideal_pitch ) > 1 )
 	{
 		pitch_move = ideal_pitch - current_pitch;
 		speed = ent->yaw_speed * FRAMETIME;
@@ -357,7 +359,7 @@ int AI_ChangeAngle( edict_t *ent )
 
 		pitch_move = speed_pitch;
 		ent->s.angles[PITCH] = anglemod( current_pitch + pitch_move );
-
+#if 0
 		if( pitch_move > 0 && ent->s.angles[PITCH] > ideal_pitch ) {
 			ent->s.angles[PITCH] = ideal_pitch;
 			speed_pitch = 0.0f;
@@ -365,6 +367,7 @@ int AI_ChangeAngle( edict_t *ent )
 			ent->s.angles[PITCH] = ideal_pitch;
 			speed_pitch = 0.0f;
 		}
+#endif
 	}
 
 	ent->ai->speed_yaw = speed_yaw;
@@ -404,6 +407,7 @@ bool AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd )
 			ucmd->forwardmove = 0;
 			ucmd->sidemove = 0;
 			ucmd->upmove = 0;
+			ucmd->buttons &= ~BUTTON_WALK;
 			self->ai->node_timeout = 0;
 			return true;
 		}
@@ -429,6 +433,7 @@ bool AI_MoveToShortRangeGoalEntity( edict_t *self, usercmd_t *ucmd )
 		ucmd->forwardmove = 0;
 		ucmd->sidemove = 0;
 		ucmd->upmove = 0;
+		ucmd->buttons &= ~BUTTON_WALK;
 	}
 
 	return true;

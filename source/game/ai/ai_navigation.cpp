@@ -271,6 +271,14 @@ void AI_TouchedEntity( edict_t *self, edict_t *ent )
 		self->ai->shortRangeGoalTimeout = level.time;
 	}
 
+	if( self->ai->goalEnt && ent == self->ai->goalEnt->ent )
+	{
+		if( nav.debugMode && bot_showlrgoal->integer > 1 )
+			G_PrintChasersf( self, "REACHED entity %s\n", ent->classname ? ent->classname : "no classname" );
+		AI_ClearGoal( self );
+		return;
+	}
+
 	if( self->ai->next_node != NODE_INVALID &&
 		( nodes[self->ai->next_node].flags & (NODEFLAGS_REACHATTOUCH|NODEFLAGS_ENTITYREACH) ) )
 	{

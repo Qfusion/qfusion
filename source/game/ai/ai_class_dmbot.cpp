@@ -121,17 +121,18 @@ bool AI_NodeReached_Generic( edict_t *self )
 
 			// see if reached the second
 			if( n2 != NODE_INVALID &&
-				( DistanceFast( n2origin, origin ) < RADIUS ) && 
 				( ( nodes[n2].origin[2] - 16 ) < self->s.origin[2] ) &&
-				( nodes[n2].origin[2] + RADIUS > self->s.origin[2] ) )
+				( nodes[n2].origin[2] + RADIUS > self->s.origin[2] ) &&
+				( DistanceFast( n2origin, origin ) < RADIUS )
+				)
 			{
 				AI_NodeReached( self ); // advance the first
 				reached = true;		// return the second as reached
 			}
 			// see if reached the first
-			else if( ( DistanceFast( n1origin, origin ) < RADIUS ) && 
-				( ( nodes[n1].origin[2] - 16 ) < self->s.origin[2] ) &&
-				( nodes[n1].origin[2] + RADIUS > self->s.origin[2] ) )
+			else if( ( ( nodes[n1].origin[2] - 16 ) < self->s.origin[2] ) &&
+				( nodes[n1].origin[2] + RADIUS > self->s.origin[2] ) &&
+				( DistanceFast( n1origin, origin ) < RADIUS ) )
 			{
 				reached = true; // return the first as reached
 			}
@@ -164,18 +165,18 @@ bool AI_NodeReached_Special( edict_t *self )
 			n1origin[2] = n2origin[2] = origin[2] = 0;
 
 			// see if reached the second
-			if( ( DistanceFast( n2origin, origin ) < NODE_WIDE_REACH_RADIUS ) && 
-				( ( nodes[n2].origin[2] - 16 ) < self->s.origin[2] ) &&
+			if( ( ( nodes[n2].origin[2] - 16 ) < self->s.origin[2] ) &&
 				( nodes[n2].origin[2] + NODE_WIDE_REACH_RADIUS > self->s.origin[2] ) &&
+				( DistanceFast( n2origin, origin ) < NODE_WIDE_REACH_RADIUS ) && 
 				AI_ReachabilityVisible( self, nodes[n2].origin ) )
 			{
 				AI_NodeReached( self ); // advance the first
 				reached = true;		// return the second as reached
 			}
 			// see if reached the first
-			else if( ( DistanceFast( n1origin, origin ) < NODE_WIDE_REACH_RADIUS ) && 
-				( ( nodes[n1].origin[2] - 16 ) < self->s.origin[2] ) &&
+			else if( ( ( nodes[n1].origin[2] - 16 ) < self->s.origin[2] ) &&
 				( nodes[n1].origin[2] + NODE_WIDE_REACH_RADIUS > self->s.origin[2] ) &&
+				( DistanceFast( n1origin, origin ) < NODE_WIDE_REACH_RADIUS ) && 
 				AI_ReachabilityVisible( self, nodes[n1].origin ) )
 			{
 				reached = true; // return the first as reached
@@ -186,6 +187,30 @@ bool AI_NodeReached_Special( edict_t *self )
 	}
 
 	return reached;
+}
+
+static bool AI_AttemptWalljump( edict_t *self )
+{
+	if( self->ai->path.numNodes >= 1 )
+	{
+		int n1 = self->ai->path.nodes[self->ai->path.numNodes];
+		int n2 = self->ai->path.nodes[self->ai->path.numNodes-1];
+		vec3_t n1origin, n2origin, origin;
+
+		// we use a wider radius in 2D, and a height range enough so they can't be jumped over
+		AI_GetNodeOrigin( n1, n1origin );
+		AI_GetNodeOrigin( n2, n2origin );
+		VectorCopy( self->s.origin, origin );
+
+		if( fabs( n1origin[2] - n2origin[2] ) < 32.0f && origin[2] >= n1origin[2] - 4.0f ) {
+			float dist = DistanceFast( n1origin, n2origin );
+			if( dist >= 150.0f && DistanceFast( n1origin, origin ) >= dist*0.5f ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd )
@@ -337,6 +362,7 @@ void BOT_DMclass_Move( edict_t *self, usercmd_t *ucmd )
 			ucmd->forwardmove = 1; // push towards destination
 			ucmd->buttons |= BUTTON_WALK;
 		}
+		nodeReached = self->groundentity != NULL && AI_NodeReached_Generic( self );
 	}
 	// Platform riding - No move, riding elevator
 	else if( linkType & LINK_PLATFORM )
@@ -413,6 +439,9 @@ void BOT_DMclass_Move( edict_t *self, usercmd_t *ucmd )
 			{
 				if( linkType & LINK_JUMP )
 				{
+					if( AI_AttemptWalljump( self ) ) {
+						ucmd->buttons |= BUTTON_SPECIAL;
+					}
 					if( VectorLengthFast( tv( self->velocity[0], self->velocity[1], 0 ) ) < 600 )
 						VectorMA( self->velocity, 6.0f, lookdir, self->velocity );
 				}
