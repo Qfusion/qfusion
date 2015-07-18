@@ -52,10 +52,12 @@ extern "C" STEAMDLL_EXPORT steamlib_export_t *GetSteamLibAPI( steamlib_import_t 
 	globals.GetSteamID = &WSWSTEAM::SteamLib_GetSteamID;
 	globals.GetAuthSessionTicket = &WSWSTEAM::SteamLib_GetAuthSessionTicket;
 
+	globals.AdvertiseGame = &WSWSTEAM::SteamLib_AdvertiseGame;
+
 	return &globals;
 }
 
-#if defined ( HAVE_DLLMAIN ) && !defined ( FTLIB_HARD_LINKED )
+#if defined ( HAVE_DLLMAIN ) && !defined ( STEAMLIB_HARD_LINKED )
 int WINAPI DLLMain( void *hinstDll, unsigned long dwReason, void *reserved )
 {
 	return 1;

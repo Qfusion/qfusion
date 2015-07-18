@@ -24,6 +24,7 @@
 #include "../cgame/cg_public.h"
 #include "../matchmaker/mm_rating.h"
 #include "snd_public.h"
+#include "../qcommon/steam.h"
 
 #include "vid.h"
 #include "input.h"

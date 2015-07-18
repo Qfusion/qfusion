@@ -967,7 +967,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		char gamedir[MAX_QPATH];
 		char version[64];
 		int i, players = 0, bots = 0;
-		int flags = 0x80; // port
+		int flags = 0x80; // port - required when any extra data flags are used
 		client_t *cl;
 		msg_t msg;
 		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN];
@@ -975,7 +975,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		if( !svs.clients )
 			return true;
 
-		Q_strncpyz( hostname, sv_hostname->string, sizeof( hostname ) );
+		Q_strncpyz( hostname, COM_RemoveColorTokens( sv_hostname->string ), sizeof( hostname ) );
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( hostname ) );
 
 		for( i = 0; i < sv_maxclients->integer; i++ )
