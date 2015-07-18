@@ -50,7 +50,9 @@ void ThrowSmallPileOfGibs( edict_t *self, int damage )
 		return;
 
 	for( i = 0; i < 3; i++ )
-		origin[i] = self->s.origin[i] + ( 0.5f * ( self->r.maxs[i] + self->r.mins[i] ) ) + 24;
+		origin[i] = self->s.origin[i];
+
+	self->s.origin[2] += 4;
 
 	// clamp the damage value since events do bitwise & 0xFF on the passed param
 	damage = bound( 0, damage, 255 );
