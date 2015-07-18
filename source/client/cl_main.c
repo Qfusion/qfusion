@@ -386,7 +386,6 @@ static void CL_Connect( const char *servername, socket_type_t type, netadr_t *ad
 	cls.serveraddress = *address;
 	if( NET_GetAddressPort( &cls.serveraddress ) == 0 )
 		NET_SetAddressPort( &cls.serveraddress, PORT_SERVER );
-	Com_Printf( "PORT %u\n", NET_GetAddressPort( &cls.serveraddress ) );
 
 	if( cls.servername )
 		Mem_ZoneFree( cls.servername );
