@@ -829,7 +829,7 @@ static void CG_RegisterVariables( void )
 	cg_forceMyTeamAlpha = trap_Cvar_Get( "cg_forceMyTeamAlpha", "0", CVAR_ARCHIVE );
 
 	// dmh - learn0more's team colored beams
-	cg_teamColoredBeams = trap_Cvar_Get( "cg_teamColoredBeams", "1", CVAR_ARCHIVE );
+	cg_teamColoredBeams = trap_Cvar_Get( "cg_teamColoredBeams", "0", CVAR_ARCHIVE );
 
 	cg_ebbeam_old = trap_Cvar_Get( "cg_ebbeam_old", "0", CVAR_ARCHIVE );
 	cg_ebbeam_width = trap_Cvar_Get( "cg_ebbeam_width", "64", CVAR_ARCHIVE );
