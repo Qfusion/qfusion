@@ -359,12 +359,13 @@ void R_RenderScene( const refdef_t *fd )
 
 		if( rsh.screenPPCopies[0] && rsh.screenPPCopies[1] ) {
 			int oldFlags = fbFlags;
+			shader_t *cc = rn.refdef.colorCorrection;
 
 			if( r_fxaa->integer ) {
 				fbFlags |= 4;
 			}
 
-			if( rn.refdef.colorCorrection && rn.refdef.colorCorrection->passes[0].images[0] ) {
+			if( cc && cc->numpasses > 0 && cc->passes[0].images[0] && cc->passes[0].images[0] != rsh.noTexture ) {
 				fbFlags |= 8;
 			}
 
