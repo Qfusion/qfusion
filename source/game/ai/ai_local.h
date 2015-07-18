@@ -269,6 +269,7 @@ typedef struct ai_handle_s
 	unsigned int blocked_timeout;
 	unsigned int changeweapon_timeout;
 	unsigned int statusUpdateTimeout;
+	edict_t *last_attacker;
 
 	unsigned int combatmovepush_timeout;
 	int combatmovepushes[3];
