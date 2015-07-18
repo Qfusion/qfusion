@@ -327,6 +327,10 @@ static void CL_ReadDemoMessage( void )
 */
 void CL_ReadDemoPackets( void )
 {
+	if( cls.demo.paused ) {
+		return;
+	}
+
 	while( cls.demo.playing && ( cl.receivedSnapNum <= 0 || !cl.snapShots[cl.receivedSnapNum&UPDATE_MASK].valid || cl.snapShots[cl.receivedSnapNum&UPDATE_MASK].serverTime < cl.serverTime ) )
 	{
 		CL_ReadDemoMessage();
@@ -336,9 +340,36 @@ void CL_ReadDemoPackets( void )
 	}
 
 	cls.demo.time = cls.gametime;
-	if( cls.demo.play_jump ) {
-		cls.demo.play_jump = false;
+	cls.demo.play_jump = false;
+}
+
+/*
+* CL_LatchedDemoJump
+* 
+* See if it's time to read a new demo packet
+*/
+void CL_LatchedDemoJump( void )
+{
+	if( cls.demo.paused || ! cls.demo.play_jump_latched ) {
+		return;
 	}
+
+	cls.gametime = cls.demo.play_jump_time;
+
+	if( cl.serverTime < cl.snapShots[cl.receivedSnapNum&UPDATE_MASK].serverTime )
+		cl.pendingSnapNum = 0;
+
+	CL_AdjustServerTime( 1 );
+
+	if( cl.serverTime < cl.snapShots[cl.receivedSnapNum&UPDATE_MASK].serverTime )
+	{
+		demofilelen = demofilelentotal;
+		FS_Seek( demofilehandle, 0, FS_SEEK_SET );
+		cl.currentSnapNum = cl.receivedSnapNum = 0;
+	}
+
+	cls.demo.play_jump = true;
+	cls.demo.play_jump_latched = false;
 }
 
 /*
@@ -515,26 +546,11 @@ void CL_DemoJump_f( void )
 	if( Cmd_Argv( 1 )[0] == '-' )
 		time = -time;
 
-	//CL_SoundModule_Clear();
-
 	if( relative )
-		cls.gametime += time;
+		cls.demo.play_jump_time = cls.gametime + time;
 	else
-		cls.gametime = time; // gametime always starts from 0
-
-	if( cl.serverTime < cl.snapShots[cl.receivedSnapNum&UPDATE_MASK].serverTime )
-		cl.pendingSnapNum = 0;
-
-	CL_AdjustServerTime( 1 );
-
-	if( cl.serverTime < cl.snapShots[cl.receivedSnapNum&UPDATE_MASK].serverTime )
-	{
-		demofilelen = demofilelentotal;
-		FS_Seek( demofilehandle, 0, FS_SEEK_SET );
-		cl.currentSnapNum = cl.receivedSnapNum = 0;
-	}
-
-	cls.demo.play_jump = true;
+		cls.demo.play_jump_time = time; // gametime always starts from 0
+	cls.demo.play_jump_latched = true;
 }
 
 /*
