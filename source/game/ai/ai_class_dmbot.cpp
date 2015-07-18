@@ -891,6 +891,7 @@ void BOT_DMclass_FindEnemy( edict_t *self )
 	nav_ents_t *goalEnt;
 	edict_t *bestTarget = NULL;
 	float dist, weight, bestWeight = 9999999;
+	vec3_t forward, vec;
 	int i;
 
 	if( G_ISGHOSTING( self ) 
@@ -941,11 +942,21 @@ void BOT_DMclass_FindEnemy( edict_t *self )
 
 		if( trap_inPVS( self->s.origin, goalEnt->ent->s.origin ) && G_Visible( self, goalEnt->ent ) )
 		{
+
 			weight = dist / self->ai->status.entityWeights[i];
 
-			if( ( dist < 700 ) || G_InFront( self, goalEnt->ent ) )
+			if( weight < bestWeight )
 			{
-				if( weight < bestWeight )
+				bool close = dist < 700;
+
+				if( !close )
+				{
+					VectorSubtract( goalEnt->ent->s.origin, self->s.origin, vec );
+					VectorNormalize( vec );
+					close = DotProduct( vec, forward ) > 0.3;
+				}
+
+				if( close )				
 				{
 					bestWeight = weight;
 					bestTarget = goalEnt->ent;
@@ -1138,11 +1149,9 @@ static bool BOT_DMclass_FireWeapon( edict_t *self, usercmd_t *ucmd )
 #define WFAC_GENERIC_INSTANT 150.0
 	float firedelay;
 	vec3_t target;
-	vec3_t angles;
 	int weapon, i;
 	float wfac;
 	vec3_t fire_origin;
-	vec3_t dir;
 	trace_t	trace;
 	bool continuous_fire = false;
 	firedef_t *firedef = GS_FiredefForPlayerState( &self->r.client->ps, self->r.client->ps.stats[STAT_WEAPON] );
@@ -1242,7 +1251,9 @@ static bool BOT_DMclass_FireWeapon( edict_t *self, usercmd_t *ucmd )
 
 		if( firedelay > 0.0f )
 		{
-			ucmd->buttons |= BUTTON_ATTACK;; // could fire, but wants to?
+			if( G_InFront( self, self->enemy ) ) {
+				ucmd->buttons |= BUTTON_ATTACK; // could fire, but wants to?
+			}
 			// mess up angles only in the attacking frames
 			if( self->r.client->ps.weaponState == WEAPON_STATE_READY ||
 				self->r.client->ps.weaponState == WEAPON_STATE_REFIRE ||
@@ -1262,10 +1273,8 @@ static bool BOT_DMclass_FireWeapon( edict_t *self, usercmd_t *ucmd )
 	}
 
 	//update angles
-	VectorSubtract( target, fire_origin, dir );
-	VecToAngles( dir, angles );
-	VectorCopy( angles, self->s.angles );
-	VectorCopy( angles, self->r.client->ps.viewangles );
+	VectorSubtract( target, fire_origin, self->ai->move_vector );
+	AI_ChangeAngle( self );
 
 	if( nav.debugMode && bot_showcombat->integer )
 		G_PrintChasersf( self, "%s: attacking %s\n", self->ai->pers.netname, self->enemy->r.client ? self->enemy->r.client->netname : self->classname );
