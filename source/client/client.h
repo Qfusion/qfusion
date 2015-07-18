@@ -544,6 +544,7 @@ void CL_DemoCompleted( void );
 void CL_PlayDemo_f( void );
 void CL_PlayDemoToAvi_f( void );
 void CL_ReadDemoPackets( void );
+void CL_LatchedDemoJump( void );
 void CL_Stop_f( void );
 void CL_Record_f( void );
 void CL_PauseDemo_f( void );
