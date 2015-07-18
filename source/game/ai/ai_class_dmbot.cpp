@@ -214,8 +214,7 @@ static bool AI_AttemptWalljump( edict_t *self )
 
 			if( dist >= 150.0f && 
 				n1d >= dist*0.5f &&
-				n2d < dist &&
-				AI_ReachabilityVisible( self, n2origin ) ) {
+				n2d < dist ) {
 				return true;
 			}
 		}
