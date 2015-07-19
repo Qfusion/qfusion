@@ -1162,7 +1162,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			"\\players\\%i\\max\\%i\\bots\\%i"
 			"\\gamedir\\%s\\map\\%s"
 			"\\password\\%i\\os\\%c"
-			"\\lan\\%i\\region\\%i"
+			"\\lan\\%i\\region\\255"
 			"%s%s"
 			"\\type\\%c\\secure\\0"
 			"\\version\\%i.%i.%i.0"
@@ -1171,7 +1171,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			players, sv_maxclients->integer, bots,
 			gamedir, sv.mapname,
 			Cvar_String( "password" )[0] ? 1 : 0, STEAMQUERY_OS,
-			sv_public->integer ? 0 : 1, sv_region->integer,
+			sv_public->integer ? 0 : 1,
 			gametype[0] ? "\\gametype\\" : "", gametype,
 			( dedicated && dedicated->integer ) ? 'd' : 'l',
 			APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_UPDATE,

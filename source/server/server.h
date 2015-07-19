@@ -372,8 +372,6 @@ extern cvar_t *sv_mm_authkey;
 extern cvar_t *sv_mm_loginonly;
 extern cvar_t *sv_mm_debug_reportbots;
 
-extern cvar_t *sv_region;
-
 //===========================================================
 
 //
