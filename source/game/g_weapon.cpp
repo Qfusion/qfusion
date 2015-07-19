@@ -728,7 +728,7 @@ edict_t *W_Fire_Grenade( edict_t *self, vec3_t start, vec3_t angles, int speed, 
 
 	if( aim_up )
 	{
-		angles[PITCH] -= 10; // aim some degrees upwards from view dir
+		angles[PITCH] -= 5; // aim some degrees upwards from view dir
 
 		// clamp to front side of the player
 		angles[PITCH] += -90; // rotate to make easier the check
