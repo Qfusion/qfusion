@@ -1958,14 +1958,14 @@ void CG_AddEntities( void )
 			break;
 		case ET_ROCKET:
 			CG_AddGenericEnt( cent );
-			CG_NewRocketTrail( cent );
+			CG_ProjectileTrail( cent );
 			CG_EntityLoopSound( state, ATTN_NORM );
 			CG_AddLightToScene( cent->ent.origin, 300, 1, 1, 0 );
 			break;
 		case ET_GRENADE:
 			CG_AddGenericEnt( cent );
 			CG_EntityLoopSound( state, ATTN_STATIC );
-			CG_NewGrenadeTrail( cent );
+			CG_ProjectileTrail( cent );
 			canLight = true;
 			break;
 		case ET_PLASMA:
