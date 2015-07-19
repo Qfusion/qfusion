@@ -170,43 +170,44 @@ int MSG_ReadChar( msg_t *msg )
 
 int MSG_ReadByte( msg_t *msg )
 {
-	int i = (unsigned char)msg->data[msg->readcount++];
+	msg->readcount++;
 	if( msg->readcount > msg->cursize )
-		i = -1;
-	return i;
+		return -1;
+
+	return ( unsigned char )( msg->data[msg->readcount - 1] );
 }
 
 int MSG_ReadShort( msg_t *msg )
 {
-	int i = ( short )( msg->data[msg->readcount] | ( msg->data[msg->readcount+1]<<8 ) );
 	msg->readcount += 2;
 	if( msg->readcount > msg->cursize )
-		i = -1;
-	return i;
+		return -1;
+
+	return ( short )( msg->data[msg->readcount - 2] | ( msg->data[msg->readcount - 1] << 8 ) );
 }
 
 int MSG_ReadInt3( msg_t *msg )
 {
-	int i = msg->data[msg->readcount]
-		| ( msg->data[msg->readcount+1]<<8 )
-		| ( msg->data[msg->readcount+2]<<16 )
-		| ( ( msg->data[msg->readcount+2] & 0x80 ) ? ~0xFFFFFF : 0 );
 	msg->readcount += 3;
 	if( msg->readcount > msg->cursize )
-		i = -1;
-	return i;
+		return -1;
+
+	return msg->data[msg->readcount - 3]
+		| ( msg->data[msg->readcount - 2] << 8 )
+		| ( msg->data[msg->readcount - 1] << 16 )
+		| ( ( msg->data[msg->readcount - 1] & 0x80 ) ? ~0xFFFFFF : 0 );
 }
 
 int MSG_ReadLong( msg_t *msg )
 {
-	int i = msg->data[msg->readcount]
-		| ( msg->data[msg->readcount+1]<<8 )
-		| ( msg->data[msg->readcount+2]<<16 )
-		| ( msg->data[msg->readcount+3]<<24 );
 	msg->readcount += 4;
 	if( msg->readcount > msg->cursize )
-		i = -1;
-	return i;
+		return -1;
+
+	return msg->data[msg->readcount - 4]
+		| ( msg->data[msg->readcount - 3] << 8 )
+		| ( msg->data[msg->readcount - 2] << 16 )
+		| ( msg->data[msg->readcount - 1] << 24 );
 }
 
 float MSG_ReadFloat( msg_t *msg )
