@@ -226,11 +226,12 @@ typedef struct
 //==============================================
 
 // masterservers cvar is shared by client and server. This ensures both have the same default string
-#define	DEFAULT_MASTER_SERVERS_IPS		"dpmaster.deathmask.net ghdigital.com excalibur.nvg.ntnu.no eu.master.warsow.net"
-#define SERVER_PINGING_TIMEOUT			50
-#define LAN_SERVER_PINGING_TIMEOUT		20
-#define DEFAULT_PLAYERMODEL				"bigvic"
-#define DEFAULT_PLAYERSKIN				"default"
+#define	DEFAULT_MASTER_SERVERS_IPS			"dpmaster.deathmask.net ghdigital.com excalibur.nvg.ntnu.no eu.master.warsow.net"
+#define DEFAULT_MASTER_SERVERS_STEAM_IPS	"hl2master.steampowered.com"
+#define SERVER_PINGING_TIMEOUT				50
+#define LAN_SERVER_PINGING_TIMEOUT			20
+#define DEFAULT_PLAYERMODEL					"bigvic"
+#define DEFAULT_PLAYERSKIN					"default"
 
 #ifdef UCMDTIMENUDGE
 # define MAX_UCMD_TIMENUDGE 50
