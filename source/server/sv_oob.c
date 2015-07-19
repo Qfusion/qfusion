@@ -936,6 +936,7 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
  */
 bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t *address )
 {
+#if APP_STEAMID
 	if( !strcmp( s, "i" ) )
 	{
 		// ping
@@ -1063,6 +1064,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		Netchan_OutOfBand( socket, address, msg.cursize, msg.data );
 		return true;
 	}
+#endif
 
 	return false;
 }

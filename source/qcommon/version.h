@@ -202,6 +202,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define APP_XPM_ICON 					"../../icons/qfusion256x256.xpm"
 #endif
 
+/**
+ * The Steam App ID of the game.
+ * 0 disables integration.
+ * 480 can be used for testing with Spacewar.
+ */
 #ifndef APP_STEAMID
-#define APP_STEAMID						480
+#define APP_STEAMID						0
 #endif
