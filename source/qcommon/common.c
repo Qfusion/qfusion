@@ -1014,7 +1014,9 @@ void Qcommon_Init( int argc, char **argv )
 
 	CM_Init();
 
+#if APP_STEAMID
 	Steam_LoadLibrary();
+#endif
 
 	Com_ScriptModule_Init();
 
