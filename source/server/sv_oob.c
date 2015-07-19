@@ -937,7 +937,7 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
 bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t *address )
 {
 #if APP_STEAMID
-	if( !svs.clients )
+	if( sv.state < ss_loading || sv.state > ss_game )
 		return false; // server not running
 
 	if( !sv_public->integer && !NET_IsLANAddress( address ) )
