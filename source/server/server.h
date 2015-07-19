@@ -372,6 +372,8 @@ extern cvar_t *sv_mm_authkey;
 extern cvar_t *sv_mm_loginonly;
 extern cvar_t *sv_mm_debug_reportbots;
 
+extern cvar_t *sv_region;
+
 //===========================================================
 
 //
@@ -391,7 +393,8 @@ void SV_ShutdownOperatorCommands( void );
 void SV_SendServerinfo( client_t *client );
 void SV_UserinfoChanged( client_t *cl );
 
-void SV_MasterHeartbeat( void );
+void SV_MasterHeartbeat( bool force );
+void SV_MasterSendQuit( void );
 
 void SVC_MasterInfoResponse( const socket_t *socket, const netadr_t *address );
 int SVC_FakeConnect( char *fakeUserinfo, char *fakeSocketType, const char *fakeIP );
