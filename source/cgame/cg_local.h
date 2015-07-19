@@ -864,14 +864,11 @@ extern cvar_t *cg_volume_players; // players sound volume
 extern cvar_t *cg_volume_effects; // world sound volume
 extern cvar_t *cg_volume_announcer; // announcer sounds volume
 extern cvar_t *cg_volume_voicechats; //vsays volume
-extern cvar_t *cg_rocketTrail;
+extern cvar_t *cg_projectileTrail;
 extern cvar_t *cg_rocketFireTrail;
-extern cvar_t *cg_grenadeTrail;
 extern cvar_t *cg_bloodTrail;
 extern cvar_t *cg_showBloodTrail;
-extern cvar_t *cg_rocketTrailAlpha;
 extern cvar_t *cg_rocketFireTrailAlpha;
-extern cvar_t *cg_grenadeTrailAlpha;
 extern cvar_t *cg_bloodTrailAlpha;
 
 extern cvar_t *cg_cartoonEffects;
@@ -1021,8 +1018,7 @@ void CG_BulletExplosion( const vec3_t origin, const vec_t *dir, const trace_t *t
 void CG_BubbleTrail( const vec3_t start, const vec3_t end, int dist );
 void CG_Explosion1( const vec3_t pos );
 void CG_Explosion2( const vec3_t pos );
-void CG_NewRocketTrail( centity_t *cent );
-void CG_NewGrenadeTrail( centity_t *cent );
+void CG_ProjectileTrail( centity_t *cent );
 void CG_NewBloodTrail( centity_t *cent );
 void CG_BloodDamageEffect( const vec3_t origin, const vec3_t dir, int damage );
 void CG_CartoonHitEffect( const vec3_t origin, const vec3_t dir, int damage );

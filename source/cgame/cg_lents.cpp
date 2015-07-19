@@ -796,56 +796,6 @@ void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius )
 	CG_SpawnDecal( pos, dir, random()*360, 3+( radius*0.5f ), 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
 }
 
-/*
-* CG_NewGrenadeTrail
-*/
-void CG_NewGrenadeTrail( centity_t *cent )
-{
-	lentity_t *le;
-	float len;
-	vec3_t vec;
-	int contents;
-	int trailTime;
-	float radius = 8, alpha = cg_grenadeTrailAlpha->value;
-	struct shader_s *shader = CG_MediaShader( cgs.media.shaderGrenadeTrailSmokePuff );
-
-	if( !cg_grenadeTrail->integer )
-		return;
-
-	// didn't move
-	VectorSubtract( cent->ent.origin, cent->trailOrigin, vec );
-	len = VectorNormalize( vec );
-	if( !len )
-		return;
-
-	// density is found by quantity per second
-	trailTime = (int)( 1000.0f / cg_grenadeTrail->value );
-	if( trailTime < 1 ) trailTime = 1;
-
-	// we don't add more than one sprite each frame. If frame
-	// ratio is too slow, people will prefer having less sprites on screen
-	if( cent->localEffects[LOCALEFFECT_GRENADETRAIL_LAST_DROP] + trailTime < cg.time )
-	{
-		cent->localEffects[LOCALEFFECT_GRENADETRAIL_LAST_DROP] = cg.time;
-
-		contents = ( CG_PointContents( cent->trailOrigin ) & CG_PointContents( cent->ent.origin ) );
-		if( contents & MASK_WATER )
-		{
-			shader = CG_MediaShader( cgs.media.shaderWaterBubble );
-			radius = 3 + crandom();
-			alpha = 1.0f;
-		}
-
-		clamp( alpha, 0.0f, 1.0f );
-		le = CG_AllocSprite( LE_PUFF_SHRINK, cent->trailOrigin, radius, 10,
-			1.0f, 1.0f, 1.0f, alpha,
-			0, 0, 0, 0,
-			shader );
-		VectorSet( le->velocity, -vec[0] * 5 + crandom()*5, -vec[1] * 5 + crandom()*5, -vec[2] * 5 + crandom()*5 + 3 );
-		le->ent.rotation = rand() % 360;
-	}
-}
-
 static void CG_RocketFireTrail( centity_t *cent )
 {
 	lentity_t *le;
@@ -890,16 +840,16 @@ static void CG_RocketFireTrail( centity_t *cent )
 }
 
 /*
-* CG_NewRocketTrail
+* CG_ProjectileTrail
 */
-void CG_NewRocketTrail( centity_t *cent )
+void CG_ProjectileTrail( centity_t *cent )
 {
 	lentity_t	*le;
 	float		len;
 	vec3_t		vec;
 	int			contents;
 	int			trailTime;
-	float		radius = 4, alpha = cg_rocketTrailAlpha->value;
+	float		radius = 6.5f, alpha = 0.35f;
 #if 0
 	struct shader_s *shader = CG_MediaShader( cgs.media.shaderRocketTrailSmokePuff );
 #else
@@ -907,7 +857,7 @@ void CG_NewRocketTrail( centity_t *cent )
 #endif
 	CG_RocketFireTrail( cent ); // add fire trail
 
-	if( !cg_rocketTrail->integer )
+	if( !cg_projectileTrail->integer )
 		return;
 
 	// didn't move
@@ -917,7 +867,7 @@ void CG_NewRocketTrail( centity_t *cent )
 		return;
 
 	// density is found by quantity per second
-	trailTime = (int)(1000.0f / cg_rocketTrail->value );
+	trailTime = (int)(1000.0f / cg_projectileTrail->value );
 	if( trailTime < 1 ) trailTime = 1;
 
 	// we don't add more than one sprite each frame. If frame
@@ -933,7 +883,7 @@ void CG_NewRocketTrail( centity_t *cent )
 		}
 
 		clamp( alpha, 0.0f, 1.0f );
-		le = CG_AllocSprite( LE_SCALE_ALPHA_FADE, cent->trailOrigin, radius, 10, 
+		le = CG_AllocSprite( LE_PUFF_SHRINK, cent->trailOrigin, radius, 20, 
 			1.0f, 1.0f, 1.0f, alpha,
 			0, 0, 0, 0, 
 			shader );
