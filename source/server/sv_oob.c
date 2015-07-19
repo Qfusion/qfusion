@@ -932,18 +932,21 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
  * @param s       query string
  * @param socket  response socket
  * @param address response address
- * @return whether the request is a Steam query
+ * @return whether the request was handled as a Steam query
  */
 bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t *address )
 {
+#if APP_STEAMID
+	if( sv.state < ss_loading || sv.state > ss_game )
+		return false; // server not running
+
+	if( !sv_public->integer && !NET_IsLANAddress( address ) )
+		return false;
+
 	if( !strcmp( s, "i" ) )
 	{
 		// ping
 		const char pingResponse[] = "j00000000000000";
-
-		if( !svs.clients )
-			return true;
-
 		Netchan_OutOfBand( socket, address, sizeof( pingResponse ), ( const uint8_t * )pingResponse );
 		return true;
 	}
@@ -952,10 +955,6 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 	{
 		// challenge - security feature, but since we don't send multiple packets always return 0
 		const uint8_t challengeResponse[] = { 'A', 0, 0, 0, 0 };
-
-		if( !svs.clients )
-			return true;
-
 		Netchan_OutOfBand( socket, address, sizeof( challengeResponse ), ( const uint8_t * )challengeResponse );
 		return true;
 	}
@@ -971,9 +970,6 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		client_t *cl;
 		msg_t msg;
 		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN];
-
-		if( !svs.clients )
-			return true;
 
 		Q_strncpyz( hostname, COM_RemoveColorTokens( sv_hostname->string ), sizeof( hostname ) );
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( hostname ) );
@@ -1032,9 +1028,6 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		client_t *cl;
 		char name[MAX_NAME_BYTES];
 
-		if( !svs.clients )
-			return true;
-
 		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
 		MSG_WriteByte( &msg, 'D' );
 		MSG_WriteByte( &msg, 0 );
@@ -1063,6 +1056,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		Netchan_OutOfBand( socket, address, msg.cursize, msg.data );
 		return true;
 	}
+#endif
 
 	return false;
 }
