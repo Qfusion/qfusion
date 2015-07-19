@@ -1043,6 +1043,9 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		msg_t msg;
 		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN];
 
+		if( sv_showInfoQueries->integer )
+			Com_Printf( "Steam Info Packet %s\n", NET_AddressToString( address ) );
+
 		Q_strncpyz( hostname, COM_RemoveColorTokens( sv_hostname->string ), sizeof( hostname ) );
 		if( !hostname[0] )
 			Q_strncpyz( hostname, sv_hostname->dvalue, sizeof( hostname ) );
@@ -1102,6 +1105,9 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		client_t *cl;
 		char name[MAX_NAME_BYTES];
 
+		if( sv_showInfoQueries->integer )
+			Com_Printf( "Steam Players Packet %s\n", NET_AddressToString( address ) );
+
 		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
 		MSG_WriteByte( &msg, 'D' );
 		MSG_WriteByte( &msg, 0 );
@@ -1139,6 +1145,9 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		char gametype[MAX_INFO_VALUE];
 		int i, players = 0, bots = 0;
 		client_t *cl;
+
+		if( sv_showInfoQueries->integer )
+			Com_Printf( "Steam Master Server Info Packet %s\n", NET_AddressToString( address ) );
 
 		challenge = MSG_ReadLong( inmsg );
 
