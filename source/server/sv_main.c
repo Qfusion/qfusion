@@ -97,8 +97,6 @@ cvar_t *sv_lastAutoUpdate;
 
 cvar_t *sv_demodir;
 
-cvar_t *sv_region;
-
 //============================================================================
 
 /*
@@ -977,8 +975,6 @@ void SV_Init( void )
 
 	sv_masterservers =			Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, CVAR_LATCH );
 	sv_masterservers_steam =	Cvar_Get( "masterservers_steam", DEFAULT_MASTER_SERVERS_STEAM_IPS, CVAR_LATCH );
-
-	sv_region = Cvar_Get( "sv_region", "255", CVAR_ARCHIVE );
 
 	sv_debug_serverCmd =	    Cvar_Get( "sv_debug_serverCmd", "0", CVAR_ARCHIVE );
 
