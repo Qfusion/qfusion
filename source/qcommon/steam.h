@@ -27,5 +27,6 @@ void Steam_Init( void );
 void Steam_RunFrame( void );
 void Steam_Shutdown( void );
 void Steam_AdvertiseGame( const uint8_t *ip, unsigned short port );
+void Steam_GetPersonaName( char *name, size_t namesize );
 
 #endif // _STEAM_LIB_H_

@@ -54,6 +54,8 @@ extern "C" STEAMDLL_EXPORT steamlib_export_t *GetSteamLibAPI( steamlib_import_t 
 
 	globals.AdvertiseGame = &WSWSTEAM::SteamLib_AdvertiseGame;
 
+	globals.GetPersonaName = &WSWSTEAM::SteamLib_GetPersonaName;
+
 	return &globals;
 }
 

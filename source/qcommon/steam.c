@@ -138,3 +138,19 @@ void Steam_AdvertiseGame( const uint8_t *ip, unsigned short port )
 		steamlib_export->AdvertiseGame( ip, port );
 	}
 }
+
+/*
+* Steam_GetPersonaName
+*/
+void Steam_GetPersonaName( char *name, size_t namesize )
+{
+	if( !namesize ) {
+		return;
+	}
+
+	if( steamlib_initialized ) {
+		steamlib_export->GetPersonaName( name, namesize );
+	} else {
+		name[0] = '\0';
+	}
+}

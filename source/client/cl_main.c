@@ -2066,7 +2066,7 @@ static void CL_ShowServerIP_f( void )
 */
 static void CL_InitLocal( void )
 {
-	cvar_t *color;
+	cvar_t *name, *color;
 
 	cls.state = CA_DISCONNECTED;
 	Com_SetClientState( CA_DISCONNECTED );
@@ -2134,7 +2134,28 @@ static void CL_InitLocal( void )
 	info_password =		Cvar_Get( "password", "", CVAR_USERINFO );
 	rate =			Cvar_Get( "rate", "60000", CVAR_DEVELOPER ); // FIXME
 
-	Cvar_Get( "name", "Player", CVAR_USERINFO | CVAR_ARCHIVE );
+	name = Cvar_Get( "name", "", CVAR_USERINFO | CVAR_ARCHIVE );
+	if( !name->string[0] )
+	{
+		char steamname[MAX_NAME_BYTES * 4], *steamnameIn = steamname, *steamnameOut = steamname, c;
+		steamname[0] = '\0';
+		Steam_GetPersonaName( steamname, sizeof( steamname ) );
+		while( ( c = *steamnameIn ) != '\0' )
+		{
+			steamnameIn++;
+			if( ( c <= 32 ) || ( c >= 127 ) || ( c == '\\' ) || ( c == ';' ) || ( c == '"' ) )
+				continue;
+
+			*( steamnameOut++ ) = c;
+		}
+		*steamnameOut = '\0';
+
+		if( !( COM_RemoveColorTokens( steamname )[0] ) )
+			Q_strncpyz( steamname, "Player", sizeof( steamname ) );
+
+		Cvar_Set( name->name, steamname );
+	}
+
 	Cvar_Get( "clan", "", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "model", DEFAULT_PLAYERMODEL, CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "skin", DEFAULT_PLAYERSKIN, CVAR_USERINFO | CVAR_ARCHIVE );
@@ -2156,7 +2177,7 @@ static void CL_InitLocal( void )
 		newtime = localtime( &long_time );
 		long_time *= newtime->tm_sec * newtime->tm_min * newtime->tm_wday;
 		rgbcolor = COM_ValidatePlayerColor( COLOR_RGB( long_time&0xff, ( long_time>>8 )&0xff, ( long_time>>16 )&0xff ) );
-		Cvar_Set( "color", va( "%i %i %i", COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ) ) );
+		Cvar_Set( color->name, va( "%i %i %i", COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ) ) );
 	}
 
 	//

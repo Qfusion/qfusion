@@ -24,7 +24,7 @@ License along with this library.
 
 // steamlib_public.h - steam integration subsystem
 
-#define	STEAMLIB_API_VERSION 2
+#define	STEAMLIB_API_VERSION 3
 
 //===============================================================
 
@@ -60,6 +60,8 @@ typedef struct
 	int ( *GetAuthSessionTicket )( void (*callback)( void *, size_t ) );
 
 	void ( *AdvertiseGame )( const uint8_t *ip, unsigned short port );
+
+	void ( *GetPersonaName )( char *name, size_t namesize );
 } steamlib_export_t;
 
 #endif
