@@ -1167,7 +1167,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		}
 
 		Netchan_OutOfBandPrint( socket, address,
-			"0\n\\protocol\\%i\\challenge\\%i"
+			"0\n\\protocol\\7\\challenge\\%i"
 			"\\players\\%i\\max\\%i\\bots\\%i"
 			"\\gamedir\\%s\\map\\%s"
 			"\\password\\%i\\os\\%c"
@@ -1176,7 +1176,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			"\\type\\%c\\secure\\0"
 			"\\version\\%i.%i.%i.0"
 			"\\product\\%s\n",
-			APP_PROTOCOL_VERSION, challenge,
+			challenge,
 			players, sv_maxclients->integer, bots,
 			gamedir, sv.mapname,
 			Cvar_String( "password" )[0] ? 1 : 0, STEAMQUERY_OS,
