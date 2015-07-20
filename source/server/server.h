@@ -24,9 +24,11 @@
 
 //=============================================================================
 
-#define	MAX_MASTERS			8               // max recipients for heartbeat packets
-#define	HEARTBEAT_SECONDS   300
-#define TTL_MASTERS			24*60*60
+#define	MAX_MASTERS						8               // max recipients for heartbeat packets
+#define	HEARTBEAT_SECONDS				300
+#define TTL_MASTERS						24*60*60
+
+#define USERINFO_UPDATE_COOLDOWN_MSEC	2000
 
 typedef enum
 {
@@ -128,6 +130,7 @@ typedef struct client_s
 	sv_client_state_t state;
 
 	char userinfo[MAX_INFO_STRING];     // name, etc
+	unsigned int userinfoUpTimeout;
 
 	bool reliable;                  // no need for acks, connection is reliable
 	bool mv;                        // send multiview data to the client
