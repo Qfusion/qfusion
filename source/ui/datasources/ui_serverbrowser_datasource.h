@@ -72,7 +72,7 @@ namespace WSWUI {
 		void fromOther( const ServerInfo &other );
 
 		// TODO: move this up as utility func
-		void htmlEncode( std::string &s );
+		void fixString( std::string &s );
 		void fixStrings();
 
 		bool isChanged() const { return has_changed; }
