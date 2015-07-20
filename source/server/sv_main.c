@@ -82,6 +82,7 @@ cvar_t *sv_reconnectlimit; // minimum seconds between connect messages
 cvar_t *sv_maxrate;
 cvar_t *sv_compresspackets;
 cvar_t *sv_masterservers;
+cvar_t *sv_masterservers_steam;
 cvar_t *sv_skilllevel;
 
 // wsw : debug netcode
@@ -749,7 +750,7 @@ void SV_Frame( int realmsec, int gamemsec )
 		SV_MM_Frame();
 
 		// send a heartbeat to the master if needed
-		SV_MasterHeartbeat();
+		SV_MasterHeartbeat( false );
 
 		// clear teleport flags, etc for next frame
 		ge->ClearSnap();
@@ -972,7 +973,8 @@ void SV_Init( void )
 	if( sv_skilllevel->integer < 0 )
 		Cvar_ForceSet( "sv_skilllevel", "0" );
 
-	sv_masterservers =	    Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, CVAR_LATCH );
+	sv_masterservers =			Cvar_Get( "masterservers", DEFAULT_MASTER_SERVERS_IPS, CVAR_LATCH );
+	sv_masterservers_steam =	Cvar_Get( "masterservers_steam", DEFAULT_MASTER_SERVERS_STEAM_IPS, CVAR_LATCH );
 
 	sv_debug_serverCmd =	    Cvar_Get( "sv_debug_serverCmd", "0", CVAR_ARCHIVE );
 
