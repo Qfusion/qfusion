@@ -278,32 +278,34 @@ void ServerInfo::tokenizeInfo( const char *info, __stl_vector(__stl_string) &tok
 
 // TODO: do this as a DataFormatter
 // html encode single string inplace
-void ServerInfo::htmlEncode( std::string &s )
+void ServerInfo::fixString( std::string &s )
 {
 	// &<>"
 	std::string::size_type pos = s.find( '&' );
 	while( pos != std::string::npos ) {
 		s.replace( pos, 1, "&amp;" );
-		pos = s.find( '&', pos+1 );
+		pos = s.find( '&', pos+5 );
 	}
 	pos = s.find( '<' );
 	while( pos != std::string::npos ) {
 		s.replace( pos, 1, "&lt;" );
-		pos = s.find( '<', pos+1 );
+		pos = s.find( '<', pos+4 );
 	}
 	pos = s.find( '>' );
 	while( pos != std::string::npos ) {
 		s.replace( pos, 1, "&gt;" );
-		pos = s.find( '>', pos+1 );
+		pos = s.find( '>', pos+4 );
 	}
-	// rocket knows no &quot;
-	/*
 	pos = s.find( '"' );
 	while( pos != std::string::npos ) {
 		s.replace( pos, 1, "&quot;" );
-		pos = s.find( '"', pos+1 );
+		pos = s.find( '"', pos+6 );
 	}
-	*/
+	pos = s.find( '\n' );
+	while( pos != std::string::npos ) {
+		s.erase( pos, 1 );
+		pos = s.find( '\n', pos );
+	}
 }
 
 // html encode all string fields, fix color tags and
@@ -311,23 +313,23 @@ void ServerInfo::htmlEncode( std::string &s )
 // with libFocket
 void ServerInfo::fixStrings()
 {
-	htmlEncode( hostname );
+	fixString( hostname );
 	if( !hostname.length() )
 		hostname = "&nbsp;";
 
-	htmlEncode( cleanname );
+	fixString( cleanname );
 	if( !cleanname.length() )
 		cleanname = "&nbsp;";
 
-	htmlEncode( map );
+	fixString( map );
 	if( !map.length() )
 		map = "&nbsp;";
 
-	htmlEncode( gametype );
+	fixString( gametype );
 	if( !gametype.length() )
 		gametype = "&nbsp;";
 
-	htmlEncode( modname );
+	fixString( modname );
 	if( !modname.length() )
 		modname = "&nbsp;";
 }
