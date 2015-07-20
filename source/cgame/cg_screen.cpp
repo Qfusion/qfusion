@@ -276,14 +276,23 @@ void CG_CalcVrect( void )
 
 	size = cg_viewSize->integer;
 
-	scr_vrect.width = cgs.vidWidth*size/100;
-	scr_vrect.width &= ~1;
+	if( size == 100 )
+	{
+		scr_vrect.width = cgs.vidWidth;
+		scr_vrect.height = cgs.vidHeight;
+		scr_vrect.x = scr_vrect.y = 0;
+	}
+	else
+	{
+		scr_vrect.width = cgs.vidWidth*size/100;
+		scr_vrect.width &= ~1;
 
-	scr_vrect.height = cgs.vidHeight*size/100;
-	scr_vrect.height &= ~1;
+		scr_vrect.height = cgs.vidHeight*size/100;
+		scr_vrect.height &= ~1;
 
-	scr_vrect.x = ( cgs.vidWidth - scr_vrect.width )/2;
-	scr_vrect.y = ( cgs.vidHeight - scr_vrect.height )/2;
+		scr_vrect.x = ( cgs.vidWidth - scr_vrect.width )/2;
+		scr_vrect.y = ( cgs.vidHeight - scr_vrect.height )/2;
+	}
 }
 
 /*
