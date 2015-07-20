@@ -2143,7 +2143,7 @@ static void CL_InitLocal( void )
 		while( ( c = *steamnameIn ) != '\0' )
 		{
 			steamnameIn++;
-			if( ( c <= 32 ) || ( c >= 127 ) || ( c == '\\' ) || ( c == ';' ) || ( c == '"' ) )
+			if( ( c < 32 ) || ( c >= 127 ) || ( c == '\\' ) || ( c == ';' ) || ( c == '"' ) )
 				continue;
 
 			*( steamnameOut++ ) = c;
