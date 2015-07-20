@@ -127,7 +127,7 @@ void G_Gametype_GENERIC_SetUpMatch( void )
 	G_Match_FreeBodyQueue();
 
 	G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_COUNTDOWN_FIGHT_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, false, NULL );
-	G_CenterPrintMsg( NULL, "FIGHT!\n" );
+	G_CenterPrintMsg( NULL, "FIGHT!" );
 }
 
 void G_Gametype_GENERIC_SetUpEndMatch( void )
@@ -530,7 +530,7 @@ bool G_Match_CheckExtendPlayTime( void )
 			{
 				G_AnnouncerSound( NULL, trap_SoundIndex( va( S_ANNOUNCER_OVERTIME_SUDDENDEATH_1_to_2, ( rand()&1 )+1 ) ), GS_MAX_TEAMS, true, NULL );
 				G_PrintMsg( NULL, "Match tied. Sudden death!\n" );
-				G_CenterPrintMsg( NULL, "SUDDEN DEATH\n" );
+				G_CenterPrintMsg( NULL, "SUDDEN DEATH" );
 				gs.gameState.longstats[GAMELONG_MATCHDURATION] = 0;
 			}
 
@@ -727,7 +727,7 @@ static void G_Match_CheckStateAbort( void )
 	{
 		if( any ) {
 			G_PrintMsg( NULL, "Not enough players left. Countdown aborted.\n" );
-			G_CenterPrintMsg( NULL, "COUNTDOWN ABORTED\n" );
+			G_CenterPrintMsg( NULL, "COUNTDOWN ABORTED" );
 		}
 		G_Match_Autorecord_Cancel();
 		G_Match_LaunchState( MATCH_STATE_WARMUP );
@@ -739,7 +739,7 @@ static void G_Match_CheckStateAbort( void )
 	{
 		if( any ) {
 			G_PrintMsg( NULL, "Not enough players left. Match aborted.\n" );
-			G_CenterPrintMsg( NULL, "MATCH ABORTED\n" );
+			G_CenterPrintMsg( NULL, "MATCH ABORTED" );
 		}
 		G_EndMatch();
 	}
@@ -1273,7 +1273,7 @@ void G_Match_CheckReadys( void )
 	else if( allready == false && GS_MatchState() == MATCH_STATE_COUNTDOWN )
 	{
 		G_PrintMsg( NULL, "Countdown aborted.\n" );
-		G_CenterPrintMsg( NULL, "COUNTDOWN ABORTED\n" );
+		G_CenterPrintMsg( NULL, "COUNTDOWN ABORTED" );
 		G_Match_Autorecord_Cancel();
 		G_Match_LaunchState( MATCH_STATE_WARMUP );
 	}
@@ -1758,7 +1758,7 @@ static void G_CheckEvenTeam( void )
 			edict_t	*e = game.edicts + teamlist[uneven_team].playerIndices[i];
 			if( !e->r.inuse )
 				continue;
-			G_CenterPrintMsg( e, "Teams are uneven. Please switch into another team.\n" ); // FIXME: need more suitable message :P
+			G_CenterPrintMsg( e, "Teams are uneven. Please switch into another team." ); // FIXME: need more suitable message :P
 			G_PrintMsg( e, "%sTeams are uneven. Please switch into another team.\n", S_COLOR_CYAN ); // FIXME: need more suitable message :P
 		}
 		// FIXME: switch team forcibly?
