@@ -306,6 +306,8 @@ static void SV_SpawnServer( const char *server, bool devmap )
 	sv.state = ss_game;
 	Com_SetServerState( sv.state );
 
+	SV_MasterHeartbeat( true );
+
 	Com_Printf( "-------------------------------------\n" );
 }
 
@@ -521,6 +523,8 @@ void SV_ShutdownGame( const char *finalmsg, bool reconnect )
 	SV_ShutdownGameProgs();
 
 	// SV_MM_Shutdown();
+
+	SV_MasterSendQuit();
 
 	NET_CloseSocket( &svs.socket_loopback );
 	NET_CloseSocket( &svs.socket_udp );
