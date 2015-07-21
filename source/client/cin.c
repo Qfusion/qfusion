@@ -233,6 +233,14 @@ bool CIN_HasOggAudio( struct cinematics_s *cin )
 	return false;
 }
 
+const char *CIN_FileName( struct cinematics_s *cin )
+{
+	if( cin_export ) {
+		return cin_export->FileName( cin );
+	}
+	return NULL;
+}
+
 bool CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime )
 {
 	if( cin_export ) {
