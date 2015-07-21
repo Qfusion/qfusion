@@ -219,6 +219,14 @@ bool CIN_HasOggAudio( cinematics_t *cin )
 }
 
 /*
+* CIN_Filename
+*/
+const char *CIN_FileName( cinematics_t *cin )
+{
+	return cin->name;
+}
+
+/*
 * CIN_NeedNextFrame
 */
 bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime )

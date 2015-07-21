@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cin_public.h -- cinematics playback as a separate dll, making the engine
 // container- and format- agnostic
 
-#define	CIN_API_VERSION				6
+#define	CIN_API_VERSION				7
 
 #define CIN_LOOP					1
 #define CIN_NOAUDIO					2
@@ -153,6 +153,7 @@ typedef struct
 	bool ( *AddRawSamplesListener )( struct cinematics_s *cin, void *listener, cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs );
 	void ( *Reset )( struct cinematics_s *cin, unsigned int cur_time );
 	void ( *Close )( struct cinematics_s *cin );
+	const char *( *FileName )( struct cinematics_s *cin );
 } cin_export_t;
 
 #endif

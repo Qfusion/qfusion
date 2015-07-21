@@ -46,6 +46,7 @@ QF_DLL_EXPORT cin_export_t *GetCinematicsAPI( cin_import_t *import )
 	globals.AddRawSamplesListener = &CIN_AddRawSamplesListener;
 	globals.Reset = &CIN_Reset;
 	globals.Close = &CIN_Close;
+	globals.FileName = &CIN_FileName;
 
 	return &globals;
 }

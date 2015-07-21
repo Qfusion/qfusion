@@ -92,6 +92,8 @@ struct cinematics_s *CIN_Open( const char *name, unsigned int start_time,
 
 bool CIN_HasOggAudio( cinematics_t *cin );
 
+const char *CIN_FileName( cinematics_t *cin );
+
 bool CIN_NeedNextFrame( cinematics_t *cin, unsigned int curtime );
 
 uint8_t *CIN_ReadNextFrame( cinematics_t *cin, int *width, int *height, 

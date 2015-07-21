@@ -268,15 +268,15 @@ static void SCR_PlayCinematic( const char *arg, int flags )
 
 	CL_SoundModule_StopAllSounds( true, true );
 
-	if( has_ogg ) {
-		CL_SoundModule_StartBackgroundTrack( name, NULL, 4 );
-	}
-
 	cin = CIN_Open( name, 0, has_ogg ? CIN_NOAUDIO : 0, &yuv, &framerate );
 	if( !cin )
 	{
 		Com_Printf( "SCR_PlayCinematic: (FIXME) couldn't find %s\n", name );
 		return;
+	}
+
+	if( has_ogg ) {
+		CL_SoundModule_StartBackgroundTrack( CIN_FileName( cin ), NULL, 4 );
 	}
 
 	cl.cin.h = cin;
