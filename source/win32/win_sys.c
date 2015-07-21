@@ -73,11 +73,12 @@ void Sys_Error( const char *format, ... )
 	va_list	argptr;
 	char msg[1024];
 
-	CL_Shutdown();
-
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
+
+	SV_Shutdown( msg );
+	CL_Shutdown();
 
 	MessageBox( NULL, msg, "Error", 0 /* MB_OK */ );
 
@@ -93,6 +94,7 @@ void Sys_Quit( void )
 {
 	timeEndPeriod( 1 );
 
+	SV_Shutdown( "Server quit\n" );
 	CL_Shutdown();
 
 	if( dedicated && dedicated->integer )
