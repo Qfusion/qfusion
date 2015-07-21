@@ -2870,7 +2870,7 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 		Q_snprintfz( tempname, sizeof( tempname ), "%s%s*%s", 
 			dirlen ? dir : "", 
 			dirlen ? "/" : "",
-			extension );
+			extension ? extension : "" );
 
 		pattern = tempname;
 		trie_err = Trie_DumpIf( search->pack->trie, dirlen ? dir : "", TRIE_DUMP_VALUES, 
@@ -2884,6 +2884,9 @@ static int FS_PathGetFileListExt( searchpath_t *search, const char *dir, const c
 			for( t = 0; t < trie_dump->size; t++ ) {
 				pakfile = ( (packfile_t *) ( trie_dump->key_value_vector[t].value ) );
 				name = dirlen ? pakfile->name + dirlen + 1 : pakfile->name;
+
+				if( !name[0] )
+					continue;
 
 				// ignore subdirectories
 				p = strchr( name, '/' );
