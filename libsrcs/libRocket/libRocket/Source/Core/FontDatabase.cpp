@@ -76,6 +76,10 @@ void FontDatabase::Shutdown()
 // Returns a handle to a font face that can be used to position and render text.
 FontFaceHandle* FontDatabase::GetFontFaceHandle(const String& family, const String& charset, Font::Style style, Font::Weight weight, int size)
 {
+	if( family.Empty() ) {
+		return NULL;
+	}
+
 	FontProviderInterface *fontprovider_interface = Core::GetFontProviderInterface();
 	FontHandle fonthandle = fontprovider_interface->GetFontFaceHandle(family, charset, style, weight, size);
 
