@@ -902,8 +902,12 @@ bool Theora_Init_CIN( cinematics_t *cin )
 */
 bool Theora_HasOggAudio_CIN( cinematics_t *cin )
 {
+#if 0
 	qtheora_info_t *qth = cin->fdata;
 	return qth->a_stream;
+#else
+	return false;
+#endif
 }
 
 /*
