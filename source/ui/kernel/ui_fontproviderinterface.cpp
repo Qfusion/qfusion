@@ -90,8 +90,13 @@ int UI_FontProviderInterface::GetStringWidth(FontHandle handle, const WString& s
 void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader )
 {
 	GeometryList& geometry = *instance->capture_geometry;
+	auto *render_interface = instance->GetRenderInterface();
 	bool newgeom = geometry.empty();
 	Geometry *g = nullptr;
+
+	if (render_interface == nullptr) {
+		return;
+	}
 
 	if (shader != instance->capture_shader_last) {
 		Texture *t;
@@ -106,7 +111,7 @@ void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, flo
 
 			t = new Texture();
 			t->Load(texture_name);
-			t->GetDimensions(instance->GetRenderInterface());
+			t->GetDimensions(render_interface);
 			instance->textures[key] = t;
 		}
 		instance->capture_shader_last = shader;	
