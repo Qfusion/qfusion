@@ -17,6 +17,11 @@ namespace WSWUI
 			{
 				gametype gt(*it);
 
+				if( gt.name == "tutorial" ) {
+					// HACK
+					continue;
+				}
+
 				std::string filepath = std::string("progs/gametypes") + "/" + gt.name + ".gtd";
 				int filenum, filelen;
 
