@@ -441,9 +441,9 @@ void TV_Rename_f( void )
 /*
 * TV_Heartbeat_f
 */
-static void SV_Heartbeat_f( void )
+static void TV_Heartbeat_f( void )
 {
-	tvs.lobby.last_heartbeat = 0;
+	tvs.lobby.next_heartbeat = tvs.realtime;
 }
 
 /*
@@ -498,7 +498,7 @@ static cmd_function_t cmdlist[] =
 
 	{ "rename", TV_Rename_f },
 
-	{ "heartbeat", SV_Heartbeat_f },
+	{ "heartbeat", TV_Heartbeat_f },
 
 	{ "music", TV_Music_f },
 

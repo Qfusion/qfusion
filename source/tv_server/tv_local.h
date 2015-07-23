@@ -197,7 +197,7 @@ typedef struct client_s
 typedef struct
 {
 	int spawncount;
-	int last_heartbeat;
+	unsigned int next_heartbeat;
 	unsigned int framenum;
 	unsigned int lastrun;
 	unsigned int snapFrameTime;
@@ -256,10 +256,13 @@ extern cvar_t *tv_autorecord;
 extern cvar_t *tv_lobbymusic;
 
 extern cvar_t *tv_masterservers;
+extern cvar_t *tv_masterservers_steam;
 
 extern cvar_t *tv_floodprotection_messages;
 extern cvar_t *tv_floodprotection_seconds;
 extern cvar_t *tv_floodprotection_penalty;
+
+extern cvar_t *tv_port;
 
 extern tv_t tvs;
 
