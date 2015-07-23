@@ -166,16 +166,13 @@ void SV_UpdateMaster( void )
 * Send a message to the master every few minutes to
 * let it know we are alive, and log information
 */
-void SV_MasterHeartbeat( bool force )
+void SV_MasterHeartbeat( void )
 {
 	int i;
 
-	if( !force )
-	{
-		svc.lastHeartbeat -= svc.snapFrameTime;
-		if( svc.lastHeartbeat > 0 )
-			return;
-	}
+	svc.lastHeartbeat -= svc.snapFrameTime;
+	if( svc.lastHeartbeat > 0 )
+		return;
 
 	svc.lastHeartbeat = HEARTBEAT_SECONDS * 1000;
 
@@ -1004,6 +1001,7 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
  * @param s       query string
  * @param socket  response socket
  * @param address response address
+ * @param inmsg   message for arguments
  * @return whether the request was handled as a Steam query
  */
 bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t *address, msg_t *inmsg )
@@ -1049,7 +1047,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		Q_strncpyz( hostname, COM_RemoveColorTokens( sv_hostname->string ), sizeof( hostname ) );
 		if( !hostname[0] )
 			Q_strncpyz( hostname, sv_hostname->dvalue, sizeof( hostname ) );
-		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( hostname ) );
+		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
 
 		for( i = 0; i < sv_maxclients->integer; i++ )
 		{

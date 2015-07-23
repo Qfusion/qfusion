@@ -306,8 +306,6 @@ static void SV_SpawnServer( const char *server, bool devmap )
 	sv.state = ss_game;
 	Com_SetServerState( sv.state );
 
-	SV_MasterHeartbeat( true );
-
 	Com_Printf( "-------------------------------------\n" );
 }
 
