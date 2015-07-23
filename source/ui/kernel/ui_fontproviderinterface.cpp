@@ -23,6 +23,9 @@ UI_FontProviderInterface::UI_FontProviderInterface(RenderInterface *render_inter
 
 UI_FontProviderInterface::~UI_FontProviderInterface()
 {
+	if (instance == this) {
+		instance = nullptr;
+	}
 }
 
 FontHandle UI_FontProviderInterface::GetFontFaceHandle(const String& family, const String& charset, Font::Style style, Font::Weight weight, int size)
