@@ -179,7 +179,7 @@ void SV_MasterHeartbeat( bool force )
 
 	svc.lastHeartbeat = HEARTBEAT_SECONDS * 1000;
 
-	if( !sv_public->integer )
+	if( !sv_public->integer || ( sv_maxclients->integer == 1 ) )
 		return;
 
 	// never go public when not acting as a game server
@@ -223,7 +223,7 @@ void SV_MasterSendQuit( void )
 	int i;
 	const char quitMessage[] = "b\n";
 
-	if( !sv_public->integer )
+	if( !sv_public->integer || ( sv_maxclients->integer == 1 ) )
 		return;
 
 	// never go public when not acting as a game server
@@ -1012,7 +1012,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 	if( sv.state < ss_loading || sv.state > ss_game )
 		return false; // server not running
 
-	if( !sv_public->integer && !NET_IsLANAddress( address ) )
+	if( ( !sv_public->integer && !NET_IsLANAddress( address ) ) || ( sv_maxclients->integer == 1 ) )
 		return false;
 
 	if( !strcmp( s, "i" ) )
@@ -1075,9 +1075,9 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		MSG_WriteString( &msg, gamedir );
 		MSG_WriteString( &msg, APPLICATION );
 		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
-		MSG_WriteByte( &msg, min( players, 255 ) );
-		MSG_WriteByte( &msg, min( sv_maxclients->integer, 255 ) );
-		MSG_WriteByte( &msg, min( bots, 255 ) );
+		MSG_WriteByte( &msg, min( players, 99 ) );
+		MSG_WriteByte( &msg, min( sv_maxclients->integer, 99 ) );
+		MSG_WriteByte( &msg, min( bots, 99 ) );
 		MSG_WriteByte( &msg, ( dedicated && dedicated->integer ) ? 'd' : 'l' );
 		MSG_WriteByte( &msg, STEAMQUERY_OS );
 		MSG_WriteByte( &msg, Cvar_String( "password" )[0] ? 1 : 0 );
@@ -1127,7 +1127,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			MSG_WriteFloat( &msg, ( float )( svs.realtime - cl->lastconnect ) * 0.001f );
 
 			players++;
-			if( players == 255 )
+			if( players == 99 )
 				break;
 		}
 
@@ -1190,7 +1190,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			"\\version\\%i.%i.0.0"
 			"\\product\\%s\n",
 			challenge,
-			players, sv_maxclients->integer, bots,
+			min( players, 99 ), min( sv_maxclients->integer, 99 ), min( bots, 99 ),
 			gamedir, sv.mapname,
 			Cvar_String( "password" )[0] ? 1 : 0, STEAMQUERY_OS,
 			sv_public->integer ? 0 : 1,
