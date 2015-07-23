@@ -57,6 +57,7 @@ cvar_t *tv_name;
 cvar_t *tv_reconnectlimit; // minimum seconds between connect messages
 
 cvar_t *tv_masterservers;
+cvar_t *tv_masterservers_steam;
 
 cvar_t *tv_floodprotection_messages;
 cvar_t *tv_floodprotection_seconds;
@@ -108,6 +109,7 @@ void TV_Init( void )
 	tv_lobbymusic = Cvar_Get( "tv_lobbymusic", "", CVAR_ARCHIVE );
 
 	tv_masterservers = Cvar_Get( "tv_masterservers", DEFAULT_MASTER_SERVERS_IPS, CVAR_LATCH );
+	tv_masterservers_steam = Cvar_Get( "tv_masterservers_steam", DEFAULT_MASTER_SERVERS_STEAM_IPS, CVAR_LATCH );
 
 	// flood control
 	tv_floodprotection_messages = Cvar_Get( "tv_floodprotection_messages", "10", 0 );
@@ -250,6 +252,8 @@ void TV_Frame( int realmsec, int gamemsec )
 void TV_Shutdown( const char *finalmsg )
 {
 	int i;
+
+	TV_Downstream_MasterSendQuit();
 
 	for( i = 0; i < tvs.numupstreams; i++ )
 	{

@@ -622,6 +622,153 @@ static void TV_Downstream_RemoteCommand( const socket_t *socket, const netadr_t 
 	Com_EndRedirect();
 }
 
+#define MAX_STEAMQUERY_PACKETLEN 1260
+
+/**
+ * Responds to a Steam server query.
+ *
+ * @param s       query string
+ * @param socket  response socket
+ * @param address response address
+ * @param inmsg   message for arguments
+ * @return whether the request was handled as a Steam query
+ */
+bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t *address, msg_t *inmsg )
+{
+#if APP_STEAMID
+	if( ( !tv_public->integer && !NET_IsLANAddress( address ) ) || ( tv_maxclients->integer == 1 ) )
+		return false;
+
+	if( !strcmp( s, "i" ) )
+	{
+		// ping
+		const char pingResponse[] = "j00000000000000";
+		Netchan_OutOfBand( socket, address, sizeof( pingResponse ), ( const uint8_t * )pingResponse );
+		return true;
+	}
+
+	if( !strcmp( s, "TSource Engine Query" ) )
+	{
+		// server info
+		char hostname[MAX_INFO_VALUE];
+		char gamedir[MAX_QPATH];
+		char version[32];
+		int i, count = 0;
+		int flags = 0x40; // spectator data
+		msg_t msg;
+		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN - sizeof( int32_t )];
+
+		Q_strncpyz( hostname, COM_RemoveColorTokens( tv_name->string ), sizeof( hostname ) );
+		if( !hostname[0] )
+			Q_strncpyz( hostname, tv_name->dvalue, sizeof( hostname ) );
+		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
+
+		for( i = 0; i < tv_maxclients->integer; i++ )
+		{
+			if( tvs.clients[i].state >= CS_CONNECTED )
+			{
+				count++;
+				if( count == 99 )
+					break;
+			}
+		}
+
+		Q_snprintfz( version, sizeof( version ), "%i.%i.0.0", APP_VERSION_MAJOR, APP_VERSION_MINOR );
+
+		if( APP_STEAMID > USHRT_MAX )
+			flags |= 0x1;
+
+		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
+		MSG_WriteByte( &msg, 'I' );
+		MSG_WriteByte( &msg, APP_PROTOCOL_VERSION );
+		MSG_WriteString( &msg, hostname );
+		MSG_WriteString( &msg, "" ); // no map
+		MSG_WriteString( &msg, gamedir );
+		MSG_WriteString( &msg, APPLICATION );
+		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
+		MSG_WriteByte( &msg, count );
+		MSG_WriteByte( &msg, min( tv_maxclients->integer, 99 ) );
+		MSG_WriteByte( &msg, 0 ); // no bots
+		MSG_WriteByte( &msg, 'p' );
+		MSG_WriteByte( &msg, STEAMQUERY_OS );
+		MSG_WriteByte( &msg, tv_password->string[0] ? 1 : 0 );
+		MSG_WriteByte( &msg, 0 ); // VAC insecure
+		MSG_WriteString( &msg, version );
+		MSG_WriteByte( &msg, flags );
+		// spectator data
+		MSG_WriteShort( &msg, tv_port->integer );
+		MSG_WriteString( &msg, hostname );
+		if( flags & 0x1 )
+		{
+			// long AppID - we don't use the full 64-bit GameID since dedicated servers don't have Steam integration
+			MSG_WriteLong( &msg, APP_STEAMID & 0xffffff );
+			MSG_WriteLong( &msg, 0 );
+		}
+		Netchan_OutOfBand( socket, address, msg.cursize, msg.data );
+		return true;
+	}
+
+	if( !strcmp( s, "s" ) )
+	{
+		// master server query, terminated by \n, followed by the challenge
+		bool isSteamMaster = false;
+		int challenge;
+		char gamedir[MAX_QPATH], basedir[MAX_QPATH];
+		int i, count = 0;
+		char msg[MAX_STEAMQUERY_PACKETLEN];
+
+		if( !TV_Downstream_IsMaster( address, &isSteamMaster ) || !isSteamMaster )
+			return true;
+
+		challenge = MSG_ReadLong( inmsg );
+
+		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
+		Q_strncpyz( basedir, FS_BaseGameDirectory(), sizeof( basedir ) );
+
+		for( i = 0; i < tv_maxclients->integer; i++ )
+		{
+			if( tvs.clients[i].state >= CS_CONNECTED )
+			{
+				count++;
+				if( count == 99 )
+					break;
+			}
+		}
+
+		Q_snprintfz( msg, sizeof( msg ),
+			"0\n\\protocol\\7\\challenge\\%i" // protocol must be 7 to match Source
+			"\\players\\%i\\max\\%i\\bots\\0"
+			"\\gamedir\\%s"
+			"\\password\\%i\\os\\%c"
+			"\\lan\\%i\\region\\255"
+			"\\type\\p\\secure\\0"
+			"\\version\\%i.%i.0.0"
+			"\\product\\%s\n",
+			challenge, 
+			count, min( tv_maxclients->integer, 99 ),
+			gamedir,
+			tv_password->string[0] ? 1 : 0, STEAMQUERY_OS,
+			tv_public->integer ? 0 : 1,
+			APP_VERSION_MAJOR, APP_VERSION_MINOR,
+			basedir );
+		NET_SendPacket( socket, ( const uint8_t * )msg, strlen( msg ), address );
+
+		return true;
+	}
+
+	if( s[0] == 'O' )
+	{
+		// out of date message
+		bool isSteamMaster = false;
+		if( TV_Downstream_IsMaster( address, &isSteamMaster ) && isSteamMaster )
+			Com_Printf( "Server is out of date and cannot be added to the Steam master servers.\n" );
+		return true;
+	}
+#endif
+
+	return false;
+}
+
 // ---
 
 typedef struct
@@ -656,6 +803,10 @@ void TV_Downstream_UpstreamlessPacket( const socket_t *socket, const netadr_t *a
 	MSG_ReadLong( msg );    // skip the -1 marker
 
 	s = MSG_ReadStringLine( msg );
+
+	if( TV_Downstream_SteamServerQuery( s, socket, address, msg ) )
+		return;
+
 	Cmd_TokenizeString( s );
 	c = Cmd_Argv( 0 );
 
