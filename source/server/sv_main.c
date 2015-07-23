@@ -750,7 +750,7 @@ void SV_Frame( int realmsec, int gamemsec )
 		SV_MM_Frame();
 
 		// send a heartbeat to the master if needed
-		SV_MasterHeartbeat( false );
+		SV_MasterHeartbeat();
 
 		// clear teleport flags, etc for next frame
 		ge->ClearSnap();
