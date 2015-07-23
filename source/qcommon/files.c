@@ -383,12 +383,16 @@ static int FS_FileLength( FILE *f, bool close )
 static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **pout, char *path, size_t path_size, int mode )
 {
 	searchpath_t *search;
+	packfile_t *search_pak;
 	searchpath_t *implicitpure;
+	packfile_t *implicitpure_pak;
 	bool purepass;
 
 	if( !COM_ValidateRelativeFilename( filename ) )
 		return NULL;
 
+	if( pout )
+		*pout = NULL;
 	if( path && path_size )
 		path[0] = '\0';
 
@@ -396,6 +400,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 	search = fs_searchpaths;
 	purepass = true;
 	implicitpure = NULL;
+	implicitpure_pak = NULL;
 	while( search )
 	{
 		// is the element a pak file?
@@ -405,15 +410,19 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 			{
 				if( (search->pack->pure > FS_PURE_NONE) == purepass )
 				{
-					if( FS_SearchPakForFile( search->pack, filename, pout ) )
+					if( FS_SearchPakForFile( search->pack, filename, &search_pak ) )
 					{
 						// if we find an explicitly pure pak, return immediately
-						if( !purepass || search->pack->pure == FS_PURE_EXPLICIT )
+						if( !purepass || search->pack->pure == FS_PURE_EXPLICIT ) {
+							if( pout ) *pout = search_pak;
 							return search;
-
+						}
 						// otherwise store the pointer but keep searching for an explicit pak
 						else if( implicitpure == NULL )
+						{
 							implicitpure = search;
+							implicitpure_pak = search_pak;
+						}
 					}
 				}
 			}
@@ -435,6 +444,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 			if( implicitpure )
 			{
 				// return file from an implicitly pure pak
+				if( pout ) *pout = implicitpure_pak;
 				return implicitpure;
 			}
 			search = fs_searchpaths;
