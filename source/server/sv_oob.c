@@ -1070,7 +1070,16 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		MSG_WriteString( &msg, hostname );
 		MSG_WriteString( &msg, sv.mapname );
 		MSG_WriteString( &msg, gamedir );
-		MSG_WriteString( &msg, APPLICATION );
+		if( sv.configstrings[CS_GAMETYPETITLE][0] )
+		{
+			char gamename[MAX_INFO_VALUE * 2];
+			Q_snprintfz( gamename, sizeof( gamename ), APPLICATION " %s", sv.configstrings[CS_GAMETYPETITLE] );
+			MSG_WriteString( &msg, gamename );
+		}
+		else
+		{
+			MSG_WriteString( &msg, APPLICATION );
+		}
 		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
 		MSG_WriteByte( &msg, min( players, 99 ) );
 		MSG_WriteByte( &msg, min( sv_maxclients->integer, 99 ) );
