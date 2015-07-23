@@ -147,7 +147,7 @@ void SV_InitMaster( void )
 {
 	SV_ResolveMaster();
 
-	svc.lastHeartbeat = HEARTBEAT_SECONDS * 1000; // wait a while before sending first heartbeat
+	svc.nextHeartbeat = svs.realtime + HEARTBEAT_SECONDS * 1000; // wait a while before sending first heartbeat
 }
 
 /*
@@ -170,11 +170,10 @@ void SV_MasterHeartbeat( void )
 {
 	int i;
 
-	svc.lastHeartbeat -= svc.snapFrameTime;
-	if( svc.lastHeartbeat > 0 )
+	if( svc.nextHeartbeat > svs.realtime )
 		return;
 
-	svc.lastHeartbeat = HEARTBEAT_SECONDS * 1000;
+	svc.nextHeartbeat = svs.realtime + HEARTBEAT_SECONDS * 1000;
 
 	if( !sv_public->integer || ( sv_maxclients->integer == 1 ) )
 		return;
