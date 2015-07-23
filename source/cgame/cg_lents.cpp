@@ -796,16 +796,16 @@ void CG_GunBladeBlastImpact( const vec3_t pos, const vec3_t dir, float radius )
 	CG_SpawnDecal( pos, dir, random()*360, 3+( radius*0.5f ), 1, 1, 1, 1, 10, 1, false, CG_MediaShader( cgs.media.shaderExplosionMark ) );
 }
 
-static void CG_RocketFireTrail( centity_t *cent )
+static void CG_ProjectileFireTrail( centity_t *cent )
 {
 	lentity_t *le;
 	float len;
 	vec3_t vec;
 	int trailTime;
-	float radius = 8, alpha = cg_rocketFireTrailAlpha->value;
+	float radius = 8, alpha = cg_projectileFireTrailAlpha->value;
 	struct shader_s *shader;
 
-	if( !cg_rocketFireTrail->integer )
+	if( !cg_projectileFireTrail->integer )
 		return;
 
 	// didn't move
@@ -820,7 +820,7 @@ static void CG_RocketFireTrail( centity_t *cent )
 		shader = CG_MediaShader( cgs.media.shaderWeakRocketFireTrailPuff );
 
 	// density is found by quantity per second
-	trailTime = (int)( 1000.0f / cg_rocketFireTrail->value );
+	trailTime = (int)( 1000.0f / cg_projectileFireTrail->value );
 	if( trailTime < 1 ) trailTime = 1;
 
 	// we don't add more than one sprite each frame. If frame
@@ -855,7 +855,7 @@ void CG_ProjectileTrail( centity_t *cent )
 #else
 	struct shader_s *shader = CG_MediaShader( cgs.media.shaderSmokePuff );
 #endif
-	CG_RocketFireTrail( cent ); // add fire trail
+	CG_ProjectileFireTrail( cent ); // add fire trail
 
 	if( !cg_projectileTrail->integer )
 		return;
