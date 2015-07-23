@@ -203,7 +203,7 @@ void SV_MasterHeartbeat( bool force )
 			if( master->steam )
 			{
 				uint8_t steamHeartbeat = 'q';
-				Netchan_OutOfBand( socket, &master->address, sizeof( steamHeartbeat ), &steamHeartbeat );
+				NET_SendPacket( socket, &steamHeartbeat, sizeof( steamHeartbeat ), &master->address );
 			}
 			else
 			{
@@ -242,7 +242,7 @@ void SV_MasterSendQuit( void )
 			if( dedicated && dedicated->integer )
 				Com_Printf( "Sending quit to %s\n", NET_AddressToString( &master->address ) );
 
-			Netchan_OutOfBand( socket, &master->address, sizeof( quitMessage ), ( const uint8_t * )quitMessage );
+			NET_SendPacket( socket, ( const uint8_t * )quitMessage, sizeof( quitMessage ), &master->address );
 		}
 	}
 }
@@ -996,7 +996,7 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
 	Com_EndRedirect();
 }
 
-#define MAX_STEAMQUERY_PACKETLEN 1256 // 1260 total (matches X360 size) minus -1 header
+#define MAX_STEAMQUERY_PACKETLEN 1260
 
 /**
  * Responds to a Steam server query.
@@ -1041,7 +1041,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		client_t *cl;
 		int flags = 0x80; // port - required when any extra data flags are used
 		msg_t msg;
-		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN];
+		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN - sizeof( int32_t )];
 
 		if( sv_showInfoQueries->integer )
 			Com_Printf( "Steam Info Packet %s\n", NET_AddressToString( address ) );
@@ -1062,8 +1062,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			}
 		}
 
-		Q_snprintfz( version, sizeof( version ), "%i.%i.%i.0",
-			APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_UPDATE );
+		Q_snprintfz( version, sizeof( version ), "%i.%i.0.0", APP_VERSION_MAJOR, APP_VERSION_MINOR );
 
 		if( APP_STEAMID > USHRT_MAX )
 			flags |= 0x1;
@@ -1100,7 +1099,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 	{
 		// players
 		msg_t msg;
-		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN];
+		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN - sizeof( int32_t )];
 		int i, players = 0;
 		client_t *cl;
 		char name[MAX_NAME_BYTES];
@@ -1140,11 +1139,25 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 	if( !strcmp( s, "s" ) )
 	{
 		// master server query, terminated by \n, followed by the challenge
+		int i;
+		bool fromMaster = false;
 		int challenge;
 		char gamedir[MAX_QPATH], basedir[MAX_QPATH];
 		char gametype[MAX_INFO_VALUE];
-		int i, players = 0, bots = 0;
+		int players = 0, bots = 0;
 		client_t *cl;
+		char msg[MAX_STEAMQUERY_PACKETLEN];
+
+		for( i = 0; i < MAX_MASTERS; i++ )
+		{
+			if( sv_masters[i].steam && NET_CompareAddress( address, &sv_masters[i].address ) )
+			{
+				fromMaster = true;
+				break;
+			}
+		}
+		if( !fromMaster )
+			return true;
 
 		if( sv_showInfoQueries->integer )
 			Com_Printf( "Steam Master Server Info Packet %s\n", NET_AddressToString( address ) );
@@ -1166,15 +1179,15 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			}
 		}
 
-		Netchan_OutOfBandPrint( socket, address,
-			"0\n\\protocol\\7\\challenge\\%i"
+		Q_snprintfz( msg, sizeof( msg ),
+			"0\n\\protocol\\7\\challenge\\%i" // protocol must be 7 to match Source
 			"\\players\\%i\\max\\%i\\bots\\%i"
 			"\\gamedir\\%s\\map\\%s"
 			"\\password\\%i\\os\\%c"
 			"\\lan\\%i\\region\\255"
 			"%s%s"
 			"\\type\\%c\\secure\\0"
-			"\\version\\%i.%i.%i.0"
+			"\\version\\%i.%i.0.0"
 			"\\product\\%s\n",
 			challenge,
 			players, sv_maxclients->integer, bots,
@@ -1183,9 +1196,25 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			sv_public->integer ? 0 : 1,
 			gametype[0] ? "\\gametype\\" : "", gametype,
 			( dedicated && dedicated->integer ) ? 'd' : 'l',
-			APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_UPDATE,
+			APP_VERSION_MAJOR, APP_VERSION_MINOR,
 			basedir );
+		NET_SendPacket( socket, ( const uint8_t * )msg, strlen( msg ), address );
 
+		return true;
+	}
+
+	if( s[0] == 'O' )
+	{
+		// out of date message
+		int i;
+		for( i = 0; i < MAX_MASTERS; i++ )
+		{
+			if( sv_masters[i].steam && NET_CompareAddress( address, &sv_masters[i].address ) )
+			{
+				Com_Printf( "Server is out of date and cannot be added to the Steam master servers.\n" );
+				return true;
+			}
+		}
 		return true;
 	}
 #endif
