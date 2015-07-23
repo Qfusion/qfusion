@@ -296,7 +296,7 @@ typedef struct
 
 typedef struct
 {
-	int	lastHeartbeat;
+	unsigned int nextHeartbeat;
 	unsigned int lastActivity;
 	unsigned int snapFrameTime;		// msecs between server packets
 	unsigned int gameFrameTime;		// msecs between game code executions
