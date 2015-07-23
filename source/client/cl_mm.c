@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../matchmaker/mm_common.h"
 #include "../matchmaker/mm_query.h"
 
+#include "../qalgo/base64.h"
+
 #include <errno.h>
 
 /*
@@ -50,6 +52,10 @@ static bool cl_mm_initialized = false;
 static bool cl_mm_enabled = false;
 // flag set when logout process is finished
 static bool cl_mm_logout_semaphore = false;
+// flags set when steam authentication completes
+static bool cl_mm_login_steam_complete = false;
+// flags set when steam authentication completes
+static bool cl_mm_login_steam_ok = false;
 // heartbeat counter
 static unsigned int cl_mm_last_heartbeat;
 
@@ -58,6 +64,8 @@ static unsigned int cl_mm_last_heartbeat;
 // 	2 - step 2 (waiting for validation from handle)
 
 // #define MM_LOGIN2_INTERVAL		(1*1000)	// milliseconds
+
+#define MM_STEAM_TICKET_AUTH_TIMEOUT	10*1000
 
 static unsigned int cl_mm_loginHandle = 0;
 static unsigned int cl_mm_loginState = 0;
@@ -69,6 +77,10 @@ static size_t cl_mm_errmsg_size = 0;
 
 static char *cl_mm_profie_url = NULL;
 static char *cl_mm_profie_url_rml = NULL;
+
+static uint64_t cl_mm_steam_id = 0;
+static qbyte *cl_mm_steam_token = NULL;
+static size_t cl_mm_steam_token_len = 0;
 
 // TODO: translate the cl_mm_url into netadr_t
 
@@ -529,7 +541,7 @@ static void cl_mm_login_done( stat_query_t *query, bool success, void *customp )
 			if( rstatus == LOGIN_RESPONSE_HANDLE )
 			{
 				// we can move to step 2
-				cl_mm_loginHandle = (unsigned int)sq_api->GetNumber( root, "handle" );;
+				cl_mm_loginHandle = (unsigned int)sq_api->GetNumber( root, "handle" );
 				cl_mm_loginState = LOGIN_STATE_READY;
 				cl_mm_loginTime = Sys_Milliseconds() /* - MM_LOGIN2_INTERVAL */;
 			}
@@ -641,15 +653,39 @@ static bool CL_MM_LoginReal( const char *user, const char *password )
 		return false;
 	}
 
-	// TODO: validate the parameters
-	query = sq_api->CreateQuery( NULL, "clogin", false );
-	if( query == NULL )
-		return false;
+	if( cl_mm_login_steam_ok )
+	{
+		char id[1024];
+		char *ticketb64;
 
-	Com_DPrintf( "Logging in with %s %s\n", user, password );
+		// TODO: validate the parameters
+		query = sq_api->CreateQuery( NULL, "steamlogin", false );
+		if( query == NULL )
+			return qfalse;
 
-	sq_api->SetField( query, "login", user );
-	sq_api->SetField( query, "passwd", password );
+		Q_snprintfz( id, sizeof( id ), "%llu", cl_mm_steam_id );
+		ticketb64 = ( char * )base64_encode( cl_mm_steam_token, cl_mm_steam_token_len, NULL );
+
+		Com_DPrintf( "Logging in with %s %s\n", id, ticketb64 );
+
+		sq_api->SetField( query, "id", id );
+		sq_api->SetField( query, "ticket", ticketb64 );
+
+		free( ticketb64 );
+	}
+	else
+	{
+		// TODO: validate the parameters
+		query = sq_api->CreateQuery( NULL, "clogin", false );
+		if( query == NULL )
+			return qfalse;
+
+		Com_DPrintf( "Logging in with %s %s\n", user, password );
+
+		sq_api->SetField( query, "login", user );
+		sq_api->SetField( query, "passwd", password );
+	}
+
 	sq_api->SetCallback( query, cl_mm_login_done, NULL );
 	sq_api->Send( query );
 
@@ -664,10 +700,74 @@ static bool CL_MM_LoginReal( const char *user, const char *password )
 }
 
 /*
+* CL_MM_LoginSteamCb
+*/
+static void CL_MM_LoginSteamCb( void *data, size_t len )
+{
+	if( cl_mm_loginState >= LOGIN_STATE_WAITING || cl_mm_enabled ) {
+		// already authed or in process
+		return;
+	}
+
+	cl_mm_steam_token = MM_Alloc( len+1 );
+	memcpy( cl_mm_steam_token, data, len );
+	cl_mm_steam_token[len] = '\0';
+	cl_mm_steam_token_len = len;
+
+	cl_mm_login_steam_complete = qtrue;
+	if( len > 0 ) {
+		cl_mm_login_steam_ok = qtrue;
+	}
+}
+
+/*
+* CL_MM_LoginSteam
+*/
+static qboolean CL_MM_LoginSteam( void )
+{
+	unsigned start_time;
+
+	if( cl_mm_loginState >= LOGIN_STATE_WAITING || cl_mm_enabled ) {
+		// already authed or in process
+		return qfalse;
+	}
+
+	cl_mm_login_steam_complete = qfalse;
+	cl_mm_login_steam_ok = qfalse;
+
+	if( cl_mm_steam_token != NULL ) {
+		Mem_Free( cl_mm_steam_token );
+		cl_mm_steam_token = NULL;
+	}
+
+	if( Steam_GetAuthSessionTicket( &CL_MM_LoginSteamCb ) == 0 ) {
+		return qfalse;
+	}
+
+	// wait for GetAuthSessionTicket callback but not for too long
+	start_time = Sys_Milliseconds();
+	while( !cl_mm_login_steam_complete ) { 
+		if( Sys_Milliseconds() > start_time + MM_STEAM_TICKET_AUTH_TIMEOUT ) {
+			break;
+		}
+		Steam_RunFrame(); 
+	}
+	
+	return cl_mm_login_steam_ok;
+}
+
+/*
 * CL_MM_Login
 */
 bool CL_MM_Login( const char *user, const char *password )
 {
+	if( cl_mm_steam_id != 0 ) {
+		if( CL_MM_LoginSteam() ) {
+			CL_MM_LoginReal( NULL, NULL );
+			return qtrue;
+		}
+	}
+
 	// first figure out the user
 	if( !user || user[0] == '\0' )
 		user = cl_mm_user->string;
@@ -801,6 +901,7 @@ void CL_MM_Init( void )
 		return;
 
 	cl_mm_enabled = false;
+	cl_mm_loginState = LOGIN_STATE_NONE;
 
 	cls.mm_session = 0;
 
@@ -838,10 +939,16 @@ void CL_MM_Init( void )
 	Cvar_ForceSet( cl_mm_session->name, "0" );
 
 	/*
+	* steam
+	*/
+	cl_mm_steam_id = Steam_GetSteamID();
+
+	/*
 	* login
 	*/
-	if( cl_mm_autologin->integer )
+	if( cl_mm_autologin->integer || cl_mm_steam_id != 0 ) {
 		CL_MM_Login( NULL, NULL );
+	}
 
 	cl_mm_initialized = true;
 }
@@ -878,6 +985,8 @@ void CL_MM_Shutdown( bool logout )
 
 	cl_mm_profie_url = NULL;
 	cl_mm_profie_url_rml = NULL;
+
+	cl_mm_steam_token = NULL;
 
 	StatQuery_Shutdown();
 	sq_api = NULL;

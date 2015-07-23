@@ -130,6 +130,28 @@ void Steam_Shutdown( void )
 }
 
 /*
+* Steam_GetSteamID
+*/
+uint64_t Steam_GetSteamID( void )
+{
+	if( steamlib_initialized ) {
+		return steamlib_export->GetSteamID();
+	}
+	return 0;
+}
+
+/*
+* Steam_GetAuthSessionTicket
+*/
+int Steam_GetAuthSessionTicket( void (*callback)( void *, size_t ) )
+{
+	if( steamlib_initialized ) {
+		return steamlib_export->GetAuthSessionTicket( callback );
+	}
+	return 0;
+}
+
+/*
 * Steam_AdvertiseGame
 */
 void Steam_AdvertiseGame( const uint8_t *ip, unsigned short port )
