@@ -1036,7 +1036,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		// server info
 		char hostname[MAX_INFO_VALUE];
 		char gamedir[MAX_QPATH];
-		char version[64];
+		char version[32];
 		int i, players = 0, bots = 0;
 		client_t *cl;
 		int flags = 0x80; // port - required when any extra data flags are used
@@ -1166,7 +1166,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
 		Q_strncpyz( basedir, FS_BaseGameDirectory(), sizeof( basedir ) );
-		Info_CleanValue( Cvar_String( "g_gametype" ), gametype, sizeof( gametype ) );
+		Q_strncpyz( gametype, Cvar_String( "g_gametype" ), sizeof( gametype ) );
 
 		for( i = 0; i < sv_maxclients->integer; i++ )
 		{
