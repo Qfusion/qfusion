@@ -87,6 +87,7 @@ static void signal_handler( int sig )
 	case 1:
 #ifndef DEDICATED_ONLY
 		printf( "Received signal %d, exiting...\n", sig );
+		SV_Shutdown( "Received signal, exiting...\n" );
 		CL_Shutdown();
 		_exit( 1 );
 		break;
@@ -173,6 +174,7 @@ void Sys_Error( const char *format, ... )
 
 	fprintf( stderr, "Error: %s\n", string );
 
+	SV_Shutdown( string );
 	CL_Shutdown();
 	Qcommon_Shutdown();
 
