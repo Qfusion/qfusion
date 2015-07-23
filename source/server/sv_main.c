@@ -1034,6 +1034,7 @@ void SV_Shutdown( const char *finalmsg )
 {
 	if( !sv_initialized )
 		return;
+	sv_initialized = false;
 
 	SV_Web_Shutdown();
 	ML_Shutdown();
@@ -1043,6 +1044,4 @@ void SV_Shutdown( const char *finalmsg )
 	SV_ShutdownOperatorCommands();
 
 	Mem_FreePool( &sv_mempool );
-
-	sv_initialized = false;
 }
