@@ -710,7 +710,7 @@ void SV_Status_f( void )
 */
 static void SV_Heartbeat_f( void )
 {
-	svc.nextHeartbeat = svs.realtime;
+	svc.nextHeartbeat = Sys_Milliseconds();
 }
 
 /*
