@@ -147,7 +147,7 @@ void SV_InitMaster( void )
 {
 	SV_ResolveMaster();
 
-	svc.nextHeartbeat = svs.realtime + HEARTBEAT_SECONDS * 1000; // wait a while before sending first heartbeat
+	svc.nextHeartbeat = Sys_Milliseconds() + HEARTBEAT_SECONDS * 1000; // wait a while before sending first heartbeat
 }
 
 /*
@@ -168,12 +168,13 @@ void SV_UpdateMaster( void )
 */
 void SV_MasterHeartbeat( void )
 {
+	unsigned int time = Sys_Milliseconds();
 	int i;
 
-	if( svc.nextHeartbeat > svs.realtime )
+	if( svc.nextHeartbeat > time )
 		return;
 
-	svc.nextHeartbeat = svs.realtime + HEARTBEAT_SECONDS * 1000;
+	svc.nextHeartbeat = time + HEARTBEAT_SECONDS * 1000;
 
 	if( !sv_public->integer || ( sv_maxclients->integer == 1 ) )
 		return;
@@ -647,6 +648,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	char *session_id_str;
 	unsigned int ticket_id;
 	bool tv_client;
+	unsigned int time;
 
 	Com_DPrintf( "SVC_DirectConnect (%s)\n", Cmd_Args() );
 
@@ -788,6 +790,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 	newcl = NULL;
 
 	// if there is already a slot for this ip, reuse it
+	time = Sys_Milliseconds();
 	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
 	{
 		if( cl->state == CS_FREE )
@@ -796,7 +799,7 @@ static void SVC_DirectConnect( const socket_t *socket, const netadr_t *address )
 			( NET_CompareBaseAddress( address, &cl->netchan.remoteAddress ) && cl->netchan.game_port == game_port ) )
 		{
 			if( !NET_IsLocalAddress( address ) &&
-				( svs.realtime - cl->lastconnect ) < (unsigned)( sv_reconnectlimit->integer * 1000 ) )
+				( time - cl->lastconnect ) < (unsigned)( sv_reconnectlimit->integer * 1000 ) )
 			{
 				Com_DPrintf( "%s:reconnect rejected : too soon\n", NET_AddressToString( address ) );
 				return;
@@ -1110,6 +1113,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		int i, players = 0;
 		client_t *cl;
 		char name[MAX_NAME_BYTES];
+		unsigned int time = Sys_Milliseconds();
 
 		if( sv_showInfoQueries->integer )
 			Com_Printf( "Steam Players Packet %s\n", NET_AddressToString( address ) );
@@ -1131,7 +1135,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			MSG_WriteByte( &msg, i );
 			MSG_WriteString( &msg, name );
 			MSG_WriteLong( &msg, cl->edict->r.client->r.frags );
-			MSG_WriteFloat( &msg, ( float )( svs.realtime - cl->lastconnect ) * 0.001f );
+			MSG_WriteFloat( &msg, ( float )( time - cl->lastconnect ) * 0.001f );
 
 			players++;
 			if( players == 99 )
