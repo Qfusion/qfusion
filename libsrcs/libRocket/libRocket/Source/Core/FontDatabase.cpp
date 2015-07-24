@@ -66,9 +66,12 @@ void FontDatabase::Shutdown()
 	{
 		for (FontFaceHandleMap::iterator i = instance->font_handles.begin(); i != instance->font_handles.end(); ++i)
 		{
-			for (FontFaceHandleList::iterator j = i->second.begin(); j != i->second.end(); ++j)
-				delete j->second;
+			for (FontFaceHandleList::iterator j = i->second.begin(); j != i->second.end(); ++j) {
+				if (j->second) 
+					delete j->second;
+			}
 		}
+		instance = NULL;
 	}
 }
 

@@ -684,7 +684,7 @@ bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, cons
 		MSG_WriteString( &msg, hostname );
 		MSG_WriteString( &msg, "" ); // no map
 		MSG_WriteString( &msg, gamedir );
-		MSG_WriteString( &msg, APPLICATION );
+		MSG_WriteString( &msg, APPLICATION " TV" );
 		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
 		MSG_WriteByte( &msg, count );
 		MSG_WriteByte( &msg, min( tv_maxclients->integer, 99 ) );
