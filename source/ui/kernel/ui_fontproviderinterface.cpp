@@ -16,9 +16,7 @@ static UI_FontProviderInterface *instance = nullptr;
 UI_FontProviderInterface::UI_FontProviderInterface(RenderInterface *render_interface) : 
 	render_interface(render_interface), capture_shader_last(nullptr), capture_geometry(nullptr), capture_texture_last(nullptr)
 {
-	if (instance == nullptr) {
-		instance = this;
-	}
+	instance = this;
 }
 
 UI_FontProviderInterface::~UI_FontProviderInterface()
@@ -92,6 +90,10 @@ int UI_FontProviderInterface::GetStringWidth(FontHandle handle, const WString& s
 
 void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader )
 {
+	if (instance == nullptr) {
+		return;
+	}
+
 	GeometryList& geometry = *instance->capture_geometry;
 	auto *render_interface = instance->GetRenderInterface();
 	bool newgeom = geometry.empty();
@@ -164,6 +166,10 @@ void UI_FontProviderInterface::DrawCharCallback( int x, int y, int w, int h, flo
 int UI_FontProviderInterface::GenerateString(FontHandle handle, GeometryList& geometry, const WString& string, const Vector2f& position, const Colourb& colour) const 
 {
 	vec4_t colorf;
+
+	if (instance == nullptr) {
+		return 0;
+	}
 
 	for (int i = 0; i < 4; i++) {
 		colorf[i] = colour[i] * (1.0/255.0);
