@@ -1120,7 +1120,7 @@ void TV_Downstream_InitMaster( void )
 	}
 #endif
 
-	tvs.lobby.next_heartbeat = Sys_Milliseconds() + HEARTBEAT_SECONDS * 1000; // wait a while before sending first heartbeat
+	tvs.lobby.next_heartbeat = tvs.realtime + HEARTBEAT_SECONDS * 1000; // wait a while before sending first heartbeat
 }
 
 /*
@@ -1130,14 +1130,13 @@ void TV_Downstream_InitMaster( void )
 */
 void TV_Downstream_MasterHeartbeat( void )
 {
-	unsigned int time = Sys_Milliseconds();
 	int i;
 	const socket_t *socket;
 
-	if( tvs.lobby.next_heartbeat > time )
+	if( tvs.lobby.next_heartbeat > tvs.realtime )
 		return;
 
-	tvs.lobby.next_heartbeat = time + HEARTBEAT_SECONDS * 1000;
+	tvs.lobby.next_heartbeat = tvs.realtime + HEARTBEAT_SECONDS * 1000;
 
 	if( !tv_public->integer )
 		return;
