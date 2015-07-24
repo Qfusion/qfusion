@@ -443,7 +443,7 @@ void TV_Rename_f( void )
 */
 static void TV_Heartbeat_f( void )
 {
-	tvs.lobby.next_heartbeat = tvs.realtime;
+	tvs.lobby.next_heartbeat = Sys_Milliseconds();
 }
 
 /*
