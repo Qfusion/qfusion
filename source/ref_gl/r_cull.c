@@ -280,7 +280,7 @@ bool R_VisCullSphere( const vec3_t origin, float radius )
 /*
 * R_CullModelEntity
 */
-int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull )
+int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull, bool pvsCull )
 {
 	if( e->flags & RF_NOSHADOW )
 	{
@@ -317,15 +317,18 @@ int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius
 			return 1;
 	}
 
-	if( sphereCull )
+	if( pvsCull )
 	{
-		if( R_VisCullSphere( e->origin, radius ) )
-			return 2;
-	}
-	else
-	{
-		if( R_VisCullBox( mins, maxs ) )
-			return 2;
+		if( sphereCull )
+		{
+			if( R_VisCullSphere( e->origin, radius ) )
+				return 2;
+		}
+		else
+		{
+			if( R_VisCullBox( mins, maxs ) )
+				return 2;
+		}
 	}
 
 	return 0;

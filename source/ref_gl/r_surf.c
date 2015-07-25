@@ -409,7 +409,7 @@ bool R_AddBrushModelToDrawList( const entity_t *e )
 
 	radius = R_BrushModelBBox( e, bmins, bmaxs, &rotated );
 
-	if( R_CullModelEntity( e, bmins, bmaxs, radius, rotated ) ) {
+	if( R_CullModelEntity( e, bmins, bmaxs, radius, rotated, false ) ) {
 		return false;
 	}
 

@@ -184,6 +184,8 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 	poutmodel->numtags = LittleLong( pinmodel->num_tags );
 	poutmodel->nummeshes = LittleLong( pinmodel->num_meshes );
 	poutmodel->numskins = 0;
+	poutmodel->numverts = 0;
+	poutmodel->numtris = 0;
 
 	if( poutmodel->numframes <= 0 )
 		ri.Com_Error( ERR_DROP, "model %s has no frames", mod->name );
@@ -287,6 +289,9 @@ void Mod_LoadAliasMD3Model( model_t *mod, model_t *parent, void *buffer, bspForm
 		poutmesh->numtris = LittleLong( inmesh.num_tris );
 		poutmesh->numskins = LittleLong( inmesh.num_skins );
 		poutmesh->numverts = numverts = LittleLong( inmesh.num_verts );
+
+		poutmodel->numverts += poutmesh->numverts;
+		poutmodel->numtris += poutmesh->numtris;
 
 		/*		if( poutmesh->numskins <= 0 )
 		ri.Com_Error( ERR_DROP, "mesh %i in model %s has no skins", i, mod->name );
@@ -764,7 +769,7 @@ bool R_AddAliasModelToDrawList( const entity_t *e )
 		return false;
 
 	radius = R_AliasModelLerpBBox( e, mod, mins, maxs );
-	clipped = R_CullModelEntity( e, mins, maxs, radius, true );
+	clipped = R_CullModelEntity( e, mins, maxs, radius, true, aliasmodel->numtris > 100 );
 	if( clipped )
 		return false;
 

@@ -110,11 +110,10 @@ typedef struct superLightStyle_s
 #define RF_FLIPFRONTFACE		RF_BIT(4)
 #define RF_DRAWFLAT				RF_BIT(5)
 #define RF_CLIPPLANE			RF_BIT(6)
-#define RF_PVSCULL				RF_BIT(7)
-#define RF_NOVIS				RF_BIT(8)
-#define RF_LIGHTMAP				RF_BIT(9)
-#define RF_SOFT_PARTICLES		RF_BIT(10)
-#define RF_PORTAL_CAPTURE		RF_BIT(11)
+#define RF_NOVIS				RF_BIT(7)
+#define RF_LIGHTMAP				RF_BIT(8)
+#define RF_SOFT_PARTICLES		RF_BIT(9)
+#define RF_PORTAL_CAPTURE		RF_BIT(10)
 
 #define RF_CUBEMAPVIEW			( RF_ENVVIEW )
 #define RF_NONVIEWERREF			( RF_PORTALVIEW|RF_MIRRORVIEW|RF_ENVVIEW|RF_SHADOWMAPVIEW )
@@ -463,7 +462,7 @@ bool	R_CullBox( const vec3_t mins, const vec3_t maxs, const unsigned int clipfla
 bool	R_CullSphere( const vec3_t centre, const float radius, const unsigned int clipflags );
 bool	R_VisCullBox( const vec3_t mins, const vec3_t maxs );
 bool	R_VisCullSphere( const vec3_t origin, float radius );
-int			R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull );
+int			R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius, bool sphereCull, bool pvsCull );
 bool	R_CullSpriteEntity( const entity_t *e );
 
 //

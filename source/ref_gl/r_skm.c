@@ -1427,7 +1427,7 @@ bool R_AddSkeletalModelToDrawList( const entity_t *e )
 		return false;
 
 	radius = R_SkeletalModelLerpBBox( e, mod, mins, maxs );
-	clipped = R_CullModelEntity( e, mins, maxs, radius, true );
+	clipped = R_CullModelEntity( e, mins, maxs, radius, true, true );
 	if( clipped )
 		return false;
 
