@@ -1036,6 +1036,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		// server info
 		char hostname[MAX_INFO_VALUE];
 		char gamedir[MAX_QPATH];
+		char gamename[128];
 		char version[32];
 		int i, players = 0, bots = 0;
 		client_t *cl;
@@ -1050,6 +1051,17 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		if( !hostname[0] )
 			Q_strncpyz( hostname, sv_hostname->dvalue, sizeof( hostname ) );
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
+
+		Q_strncpyz( gamename, APPLICATION, sizeof( gamename ) );
+		if( Cvar_Value( "g_instagib" ) )
+			Q_strncatz( gamename, " IG", sizeof( gamename ) );
+		if( sv.configstrings[CS_GAMETYPETITLE][0] || sv.configstrings[CS_GAMETYPENAME][0] )
+		{
+			Q_strncatz( gamename, " ", sizeof( gamename ) );
+			Q_strncatz( gamename,
+				sv.configstrings[sv.configstrings[CS_GAMETYPETITLE][0] ? CS_GAMETYPETITLE : CS_GAMETYPENAME],
+				sizeof( gamename ) );
+		}
 
 		for( i = 0; i < sv_maxclients->integer; i++ )
 		{
@@ -1073,17 +1085,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		MSG_WriteString( &msg, hostname );
 		MSG_WriteString( &msg, sv.mapname );
 		MSG_WriteString( &msg, gamedir );
-		if( sv.configstrings[CS_GAMETYPETITLE][0] || sv.configstrings[CS_GAMETYPENAME][0] )
-		{
-			char gamename[MAX_INFO_VALUE * 2];
-			Q_snprintfz( gamename, sizeof( gamename ), APPLICATION " %s",
-				sv.configstrings[sv.configstrings[CS_GAMETYPETITLE][0] ? CS_GAMETYPETITLE : CS_GAMETYPENAME] );
-			MSG_WriteString( &msg, gamename );
-		}
-		else
-		{
-			MSG_WriteString( &msg, APPLICATION );
-		}
+		MSG_WriteString( &msg, gamename );
 		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
 		MSG_WriteByte( &msg, min( players, 99 ) );
 		MSG_WriteByte( &msg, min( sv_maxclients->integer, 99 ) );
