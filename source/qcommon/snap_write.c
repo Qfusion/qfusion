@@ -921,6 +921,9 @@ static bool SNAP_SnapCullEntity( cmodel_state_t *cms, edict_t *ent, edict_t *cle
 	if( ent->r.svflags & SVF_BROADCAST )  // send to everyone
 		return false;
 
+	if( ( ent->r.svflags & SVF_FORCETEAM ) && ( clent && ent->s.team == clent->s.team ) )
+		return false;
+
 	if( ent->r.areanum < 0 )
 		return true;
 	if( frame->clientarea >= 0 )
