@@ -163,7 +163,6 @@ typedef struct
 	cgs_media_handle_t *sfxWeaponHit[4];
 	cgs_media_handle_t *sfxWeaponKill;
 	cgs_media_handle_t *sfxWeaponHitTeam;
-	cgs_media_handle_t *sfxGibsExplosion;
 
 	cgs_media_handle_t *sfxItemRespawn;
 	cgs_media_handle_t *sfxTeleportIn;

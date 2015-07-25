@@ -80,7 +80,6 @@ void CG_RegisterMediaSounds( void )
 	cgs.media.sfxWeaponHitTeam = CG_RegisterMediaSfx( S_WEAPON_HIT_TEAM, true );
 	cgs.media.sfxWeaponUp = CG_RegisterMediaSfx( S_WEAPON_SWITCH, true );
 	cgs.media.sfxWeaponUpNoAmmo = CG_RegisterMediaSfx( S_WEAPON_NOAMMO, true );
-	cgs.media.sfxGibsExplosion = CG_RegisterMediaSfx( S_GIBS_EXPLOSION, true );
 
 	cgs.media.sfxWalljumpFailed = CG_RegisterMediaSfx( "sounds/world/ft_walljump_failed", true );
 

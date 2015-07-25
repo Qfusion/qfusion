@@ -1532,10 +1532,6 @@ void CG_SmallPileOfGibs( const vec3_t origin, int damage, const vec3_t initialVe
 
 		le->bounce = 75;
 	}
-
-	trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxGibsExplosion ), origin, CHAN_AUTO,
-		cg_volume_effects->value, ATTN_STATIC );
-
 }
 
 /*
