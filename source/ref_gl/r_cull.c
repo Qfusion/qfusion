@@ -317,18 +317,15 @@ int R_CullModelEntity( const entity_t *e, vec3_t mins, vec3_t maxs, float radius
 			return 1;
 	}
 
-	if( rn.renderFlags & RF_PVSCULL )
+	if( sphereCull )
 	{
-		if( sphereCull )
-		{
-			if( R_VisCullSphere( e->origin, radius ) )
-				return 2;
-		}
-		else
-		{
-			if( R_VisCullBox( mins, maxs ) )
-				return 2;
-		}
+		if( R_VisCullSphere( e->origin, radius ) )
+			return 2;
+	}
+	else
+	{
+		if( R_VisCullBox( mins, maxs ) )
+			return 2;
 	}
 
 	return 0;

@@ -282,8 +282,6 @@ setup_and_render:
 		VectorCopy( viewerOrigin, rn.pvsOrigin );
 
 		rn.renderFlags = RF_PORTALVIEW;
-		if( !mirror )
-			rn.renderFlags |= RF_PVSCULL;
 		if( prevFlipped )
 			rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
@@ -337,7 +335,6 @@ setup_and_render:
 		// for portals, vis data is taken from portal origin, not
 		// view origin, because the view point moves around and
 		// might fly into (or behind) a wall
-		rn.renderFlags = RF_PORTALVIEW|RF_PVSCULL;
 		VectorCopy( best->origin2, rn.pvsOrigin );
 		VectorCopy( best->origin2, rn.lodOrigin );
 

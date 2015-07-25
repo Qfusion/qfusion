@@ -1325,12 +1325,6 @@ void R_RenderView( const refdef_t *fd )
 
 	R_ClearSky();
 
-	// enable PVS culling for some rendering instances
-	if( rn.refdef.rdflags & RDF_PORTALINVIEW
-		|| ((rn.refdef.rdflags & RDF_SKYPORTALINVIEW) && !rn.refdef.skyportal.noEnts) ) {
-		rn.renderFlags |= RF_PVSCULL;
-	}
-
 	if( r_novis->integer ) {
 		rn.renderFlags |= RF_NOVIS;
 	}
