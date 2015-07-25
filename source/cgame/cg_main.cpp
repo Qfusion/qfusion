@@ -658,7 +658,7 @@ static void CG_RegisterClients( void )
 	if( !cgs.precacheClientsStart )
 		CG_LoadingString( "clients" );
 
-	for( i = cgs.precacheClientsStart; i < gs.maxclients; i++ )
+	for( i = cgs.precacheClientsStart; i < MAX_CLIENTS; i++ )
 	{
 		name = cgs.configStrings[CS_PLAYERINFOS+i];
 		cgs.precacheClientsStart = i;
@@ -1018,26 +1018,17 @@ static void CG_RegisterConfigStrings( void )
 		}
 
 		if( i == CS_WORLDMODEL )
-		{
 			cgs.precacheTotal++;
-		}
-		else if( i >= CS_MODELS )
-		{
-			if( i >= CS_LOCATIONS && i < CS_LOCATIONS + MAX_LOCATIONS )
-				continue;
-			if( i >= CS_GAMECOMMANDS && i < CS_GAMECOMMANDS + MAX_GAMECOMMANDS )
-				continue;
-			if( i >= CS_LIGHTS && i < CS_LIGHTS + MAX_LIGHTSTYLES )
-				continue;
-			if( i >= CS_WEAPONDEFS && i < CS_WEAPONDEFS + MAX_WEAPONDEFS )
-				continue;
-			if( i >= CS_ITEMS && i < CS_ITEMS + MAX_ITEMS )
-				continue;
-			if( ( i >= CS_SOUNDS && i < CS_SOUNDS + MAX_SOUNDS ) && ( cs[0] == '*' ) )
-				continue;
-
+		else if( i >= CS_MODELS && i < CS_MODELS + MAX_MODELS )
 			cgs.precacheTotal++;
-		}
+		else if( i >= CS_SOUNDS && i < CS_SOUNDS + MAX_SOUNDS )
+			cgs.precacheTotal++;
+		else if( i >= CS_IMAGES && i < CS_IMAGES + MAX_IMAGES )
+			cgs.precacheTotal++;
+		else if( i >= CS_SKINFILES && i < CS_SKINFILES + MAX_SKINFILES )
+			cgs.precacheTotal++;
+		else if( i >= CS_PLAYERINFOS && i < CS_PLAYERINFOS + MAX_CLIENTS )
+			cgs.precacheTotal++;
 	}
 
 	// if we got the server settings configstring, update our local copy of the data
