@@ -274,6 +274,9 @@ typedef struct maliasmodel_s
 
 	int				numskins;
 	maliasskin_t	*skins;
+
+	int				numverts; // sum of numverts for all meshes
+	int				numtris; // sum of numtris for all meshes
 } maliasmodel_t;
 
 /*
