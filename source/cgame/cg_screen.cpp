@@ -1255,7 +1255,8 @@ void CG_DrawLoading( void )
 		struct shader_s *shader = trap_R_RegisterPic( UI_SHADER_LOADINGBAR );
 		int width = 480 * scale; 
 		int height = 32 * scale;
-		int barWidth = ( width - height ) * ( ( float )cgs.precacheCount / ( float )cgs.precacheTotal );
+		float percent = ( ( float )cgs.precacheCount / ( float )cgs.precacheTotal );
+		int barWidth = ( width - height ) * bound( 0.0f, percent, 1.0f );
 		int x = ( cgs.vidWidth - width ) / 2;
 		int y = cgs.vidHeight / 2 + ( int )( 32 * scale );
 
