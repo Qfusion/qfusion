@@ -254,7 +254,7 @@ int Netchan_CompressMessage( msg_t *msg )
 
 	//compress the message
 	length = Netchan_ZLibCompressChunk( msg->data, msg->cursize, 
-		msg_process_data, sizeof( msg_process_data ), Z_DEFAULT_COMPRESSION, -MAX_WBITS );
+		msg_process_data, sizeof( msg_process_data ), Z_BEST_COMPRESSION, -MAX_WBITS );
 	if( length < 0 )  // failed to compress, return the error
 		return length;
 
