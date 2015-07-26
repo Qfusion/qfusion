@@ -164,11 +164,9 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 			// short name
 			Q_snprintfz( string, sizeof( string ), "%s%2s", it->color, it->shortname );
 			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset, ALIGN_LEFT_TOP, string, SCB_TINYFIELD_PIXELWIDTH, font, colorWhite );
-			xoffset += SCB_TINYFIELD_PIXELWIDTH;
 
 			Q_snprintfz( string, sizeof( string ), "%2d%c", scb_player_stats[2*( i+j )+1], '%' );
-			trap_SCR_DrawStringWidth( x + xoffset + SCB_SMALLFIELD_PIXELWIDTH, y + yoffset, ALIGN_CENTER_TOP, string, 2*SCB_SMALLFIELD_PIXELWIDTH, font, colorWhite );
-			xoffset += 2*SCB_SMALLFIELD_PIXELWIDTH;
+			trap_SCR_DrawStringWidth( x + xoffset + 2 * SCB_TINYFIELD_PIXELWIDTH, y + yoffset, ALIGN_CENTER_TOP, string, 2*SCB_SMALLFIELD_PIXELWIDTH, font, colorWhite );
 
 			// separator
 			xoffset = 0;
