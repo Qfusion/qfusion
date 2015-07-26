@@ -137,7 +137,7 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 
 	width = ( SCB_TINYFIELD_PIXELWIDTH + 2 * SCB_SMALLFIELD_PIXELWIDTH ) * 2 + SCB_SMALLFIELD_PIXELWIDTH;
 
-	xpos = -8 * SCB_TINYFIELD_PIXELWIDTH/2;
+	xpos = -width / 2;
 
 	// Center the box
 	xoffset = xpos;
@@ -164,14 +164,12 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 			// short name
 			Q_snprintfz( string, sizeof( string ), "%s%2s", it->color, it->shortname );
 			trap_SCR_DrawStringWidth( x + xoffset, y + yoffset, ALIGN_LEFT_TOP, string, SCB_TINYFIELD_PIXELWIDTH, font, colorWhite );
-			xoffset += SCB_TINYFIELD_PIXELWIDTH;
 
 			Q_snprintfz( string, sizeof( string ), "%2d%c", scb_player_stats[2*( i+j )+1], '%' );
-			trap_SCR_DrawStringWidth( x + xoffset + SCB_SMALLFIELD_PIXELWIDTH, y + yoffset, ALIGN_CENTER_TOP, string, 2*SCB_SMALLFIELD_PIXELWIDTH, font, colorWhite );
-			xoffset += 2*SCB_SMALLFIELD_PIXELWIDTH;
+			trap_SCR_DrawStringWidth( x + xoffset + 2 * SCB_TINYFIELD_PIXELWIDTH, y + yoffset, ALIGN_CENTER_TOP, string, 2*SCB_SMALLFIELD_PIXELWIDTH, font, colorWhite );
 
 			// separator
-			xoffset += SCB_SMALLFIELD_PIXELWIDTH;
+			xoffset = 0;
 			done++;
 		}
 
@@ -392,7 +390,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 /*
 * SCR_GetNextColumnLayout
 */
-static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle, char *type, int *width )
+static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle, char *type, int *width, struct qfontface_s *font )
 {
 	static const char *empty = "";
 	const char *token;
@@ -417,7 +415,17 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 
 	if( width )
 	{
-		*width = (int)( atoi( token ) * cg_scoreboardWidthScale->value ) * cgs.vidHeight / 600;
+		float widthScale = cg_scoreboardWidthScale->value;
+		bool relative = true;
+		if( token[0] == 'l' ) // line heights
+		{
+			widthScale *= trap_SCR_FontHeight( font );
+			relative = false;
+			token++;
+		}
+		*width = (int)( atof( token ) * widthScale );
+		if( relative )
+			*width = *width * cgs.vidHeight / 600;
 
 		if( *width < 0 )
 			*width = 0;
@@ -545,7 +553,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	xoffset = CG_HorizontalAlignForWidth( 0, align, panelWidth );
 	xoffset += ( SCB_CENTERMARGIN * dir );
 
-	while( ( token = SCR_GetNextColumnLayout( &layout, &titles, &type, &width ) ) != NULL )
+	while( ( token = SCR_GetNextColumnLayout( &layout, &titles, &type, &width, font ) ) != NULL )
 	{
 		if( SCR_SkipColumn( type ) )
 			continue;
@@ -671,7 +679,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 	// draw the player tab column titles
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
 
-	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width ) != NULL )
+	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width, font ) != NULL )
 	{
 		// grab the actual scoreboard data
 
@@ -876,7 +884,7 @@ void CG_DrawScoreboard( void )
 	// calculate the panel width from the layout
 	panelWidth = 0;
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
-	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width ) != NULL )
+	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width, font ) != NULL )
 	{
 		if( !SCR_SkipColumn( type ) )
 			panelWidth += width;
