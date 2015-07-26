@@ -653,8 +653,8 @@ void G_Obituary( edict_t *victim, edict_t *attacker, int mod );
 unsigned G_RegisterHelpMessage( const char *str );
 void G_SetPlayerHelpMessage( edict_t *ent, unsigned index, bool force = false );
 
-void G_Sound( edict_t *owner, int channel, int soundindex, float attenuation );
-void G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenuation );
+edict_t *G_Sound( edict_t *owner, int channel, int soundindex, float attenuation );
+edict_t *G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenuation );
 void G_GlobalSound( int channel, int soundindex );
 void G_LocalSound( edict_t *owner, int channel, int soundindex );
 
