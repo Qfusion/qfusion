@@ -154,7 +154,7 @@ bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t
 	ge->AddDefaultRating( ent, NULL );
 
 	// parse some info from the info strings
-	client->userinfoUpTimeout = svs.realtime + USERINFO_UPDATE_COOLDOWN_MSEC;
+	client->userinfoUpTimeout = Sys_Milliseconds() + USERINFO_UPDATE_COOLDOWN_MSEC;
 	Q_strncpyz( client->userinfo, userinfo, sizeof( client->userinfo ) );
 	SV_UserinfoChanged( client );
 
@@ -870,9 +870,9 @@ static void SV_UserinfoCommand_f( client_t *client )
 	char *info;
 
 	// prevent userinfo cmd flood
-	if( client->userinfoUpTimeout > svs.realtime )
+	if( client->userinfoUpTimeout > Sys_Milliseconds() )
 		return;
-	client->userinfoUpTimeout = svs.realtime + USERINFO_UPDATE_COOLDOWN_MSEC;
+	client->userinfoUpTimeout = Sys_Milliseconds() + USERINFO_UPDATE_COOLDOWN_MSEC;
 
 	info = Cmd_Argv( 1 );
 
