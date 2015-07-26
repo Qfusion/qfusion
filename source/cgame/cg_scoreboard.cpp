@@ -425,7 +425,9 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 			relative = false;
 			token++;
 		}
-		*width = (int)( atof( token ) * widthScale ) * ( relative ? ( cgs.vidHeight / 600 ) : 1 );
+		*width = (int)( atof( token ) * widthScale );
+		if( relative )
+			*width = *width * cgs.vidHeight / 600;
 
 		if( *width < 0 )
 			*width = 0;
