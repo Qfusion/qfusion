@@ -225,24 +225,24 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,				// weapon up frametime
 			WEAPONDOWN_FRAMETIME,			// weapon down frametime
-			75,								// reload frametime
+			100,							// reload frametime
 			0,								// cooldown frametime
 			6000,							// projectile timeout
 			false,							// smooth refire
 
 			//damages
-			6.75,							// damage
+			10,								// damage
 			0,								// selfdamage ratio
-			5,								// knockback
-			0,								// stun
+			10,								// knockback
+			50,								// stun
 			0,								// splash radius
 			0,								// splash minimum damage
 			0,                              // splash minimum knockback
 
 			//projectile def
 			INSTANT,						// speed
-			175,							// spread
-			175,                            // v_spread
+			10,								// spread
+			10, 	                        // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -280,7 +280,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//projectile def
 			INSTANT,						// speed
 			180,							// spread
-			90,                            // v_spread
+			90,                             // v_spread
 
 			//ammo
 			10,                             // weapon pickup amount
@@ -313,8 +313,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//projectile def
 			INSTANT,						// speed
-			1200,							// spread
-			500,                            // v_spread
+			180,							// spread
+			90,                             // v_spread
 
 			//ammo
 			0,                              // weapon pickup amount
@@ -369,22 +369,22 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,				// weapon up frametime
 			WEAPONDOWN_FRAMETIME,			// weapon down frametime
-			725,							// reload frametime
+			800,							// reload frametime
 			0,								// cooldown frametime
 			1250,							// projectile timeout
 			false,							// smooth refire
 
 			//damages
-			60,								// damage
+			80,								// damage
 			1.00,							// selfdamage ratio
 			90,								// knockback
 			1250,							// stun
 			130,							// splash radius
 			15,								// splash minimum damage
-			8,                              // splash minimum knockback
+			35,                             // splash minimum knockback
 
 			//projectile def
-			900,							// speed
+			1000,							// speed
 			0,								// spread
 			0,                              // v_spread
 
@@ -441,22 +441,22 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,             // weapon up frametime
 			WEAPONDOWN_FRAMETIME,           // weapon down frametime
-			900,							// reload frametime
+			950,							// reload frametime
 			0,								// cooldown frametime
 			10000,							// projectile timeout
 			false,							// smooth refire
 
 			//damages
-			70,								// damage
+			80,								// damage
 			1.00,							// selfdamage ratio
 			90,								// knockback
 			1250,							// stun
 			130,							// splash radius
-			6,								// splash minimum damage
-			8,                              // splash minimum knockback
+			15,								// splash minimum damage
+			35,                             // splash minimum knockback
 
 			//projectile def
-			1100,							// speed
+			1200,							// speed
 			0,								// spread
 			0,                              // v_spread
 
@@ -519,17 +519,17 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			false,							// smooth refire
 
 			//damages
-			12,								// damage
+			15,								// damage
 			0.5,							// selfdamage ratio
-			14,								// knockback
+			18,								// knockback
 			200,							// stun
 			45,								// splash radius
-			0,								// splash minimum damage
+			5,								// splash minimum damage
 			1,                              // splash minimum knockback
 
 			//projectile def
-			2600,							// speed
-			90,								// spread
+			2400,							// speed
+			0,								// spread
 			0,                              // v_spread
 
 			//ammo
@@ -583,15 +583,15 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			1,								// projectiles fired each shot
 
 			//timings (in msecs)
-			WEAPONUP_FRAMETIME,				// weapon up frametime
-			WEAPONDOWN_FRAMETIME,			// weapon down frametime
+			WEAPONUP_FRAMETIME,             // weapon up frametime
+			WEAPONDOWN_FRAMETIME,           // weapon down frametime
 			50,								// reload frametime
 			0,								// cooldown frametime
 			850,							// projectile timeout / projectile range for instant weapons
 			true,							// smooth refire
 
 			//damages
-			6.5,							// damage
+			7,								// damage
 			0,								// selfdamage ratio (lg cant damage)
 			12,								// knockback
 			300,							// stun
@@ -659,20 +659,20 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			WEAPONDOWN_FRAMETIME,			// weapon down frametime
 			1250,							// reload frametime
 			0,								// cooldown frametime
-			1024,							// min damage range
+			900,							// min damage range
 			false,							// smooth refire
 
 			//damages
-			60,								// damage
-			0,  							// selfdamage ratio (eb cant selfdamage)
+			75,								// damage
+			0,  							// selfdamage ratio
 			40,								// knockback
 			1000,							// stun
 			0,								// splash radius
-			60,								// minimum damage
+			75,								// minimum damage
 			35,								// minimum knockback
 
 			//projectile def
-			6000,							// speed
+			INSTANT,						// speed
 			0,								// spread
 			0,                              // v_spread
 
@@ -729,13 +729,13 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,				// weapon up frametime
 			WEAPONDOWN_FRAMETIME,			// weapon down frametime
-			1300,							// reload frametime
+			1250,							// reload frametime
 			0,								// cooldown frametime
 			8024,							// range
 			false,							// smooth refire
 
 			//damages
-			125,							// damage
+			200,							// damage
 			0.1,							// selfdamage ratio (ig cant damage)
 			95,								// knockback
 			1000,							// stun
