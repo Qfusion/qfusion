@@ -137,7 +137,7 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 
 	width = ( SCB_TINYFIELD_PIXELWIDTH + 2 * SCB_SMALLFIELD_PIXELWIDTH ) * 2 + SCB_SMALLFIELD_PIXELWIDTH;
 
-	xpos = -8 * SCB_TINYFIELD_PIXELWIDTH/2;
+	xpos = -width / 2;
 
 	// Center the box
 	xoffset = xpos;
@@ -171,7 +171,7 @@ static int SCB_DrawPlayerStats( int x, int y, struct qfontface_s *font )
 			xoffset += 2*SCB_SMALLFIELD_PIXELWIDTH;
 
 			// separator
-			xoffset += SCB_SMALLFIELD_PIXELWIDTH;
+			xoffset = 0;
 			done++;
 		}
 
