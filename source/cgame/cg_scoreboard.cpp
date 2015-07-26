@@ -392,7 +392,7 @@ static int SCR_DrawSpectators( const char **ptrptr, int x, int y, int panelWidth
 /*
 * SCR_GetNextColumnLayout
 */
-static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle, char *type, int *width )
+static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **ptrtitle, char *type, int *width, struct qfontface_s *font )
 {
 	static const char *empty = "";
 	const char *token;
@@ -417,7 +417,15 @@ static const char *SCR_GetNextColumnLayout( const char **ptrlay, const char **pt
 
 	if( width )
 	{
-		*width = (int)( atoi( token ) * cg_scoreboardWidthScale->value ) * cgs.vidHeight / 600;
+		float widthScale = cg_scoreboardWidthScale->value;
+		bool relative = true;
+		if( token[0] == 'l' ) // line heights
+		{
+			widthScale *= trap_SCR_FontHeight( font );
+			relative = false;
+			token++;
+		}
+		*width = (int)( atof( token ) * widthScale ) * ( relative ? ( cgs.vidHeight / 600 ) : 1 );
 
 		if( *width < 0 )
 			*width = 0;
@@ -545,7 +553,7 @@ static int SCR_DrawTeamTab( const char **ptrptr, int *curteam, int x, int y, int
 	xoffset = CG_HorizontalAlignForWidth( 0, align, panelWidth );
 	xoffset += ( SCB_CENTERMARGIN * dir );
 
-	while( ( token = SCR_GetNextColumnLayout( &layout, &titles, &type, &width ) ) != NULL )
+	while( ( token = SCR_GetNextColumnLayout( &layout, &titles, &type, &width, font ) ) != NULL )
 	{
 		if( SCR_SkipColumn( type ) )
 			continue;
@@ -671,7 +679,7 @@ static int SCR_DrawPlayerTab( const char **ptrptr, int team, int x, int y, int p
 	// draw the player tab column titles
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
 
-	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width ) != NULL )
+	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width, font ) != NULL )
 	{
 		// grab the actual scoreboard data
 
@@ -876,7 +884,7 @@ void CG_DrawScoreboard( void )
 	// calculate the panel width from the layout
 	panelWidth = 0;
 	layout = cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT];
-	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width ) != NULL )
+	while( SCR_GetNextColumnLayout( (const char **)&layout, NULL, &type, &width, font ) != NULL )
 	{
 		if( !SCR_SkipColumn( type ) )
 			panelWidth += width;
