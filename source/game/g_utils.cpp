@@ -1487,17 +1487,17 @@ static edict_t *_G_SpawnSound( int channel, int soundindex, float attenuation )
 /*
 * G_Sound
 */
-void G_Sound( edict_t *owner, int channel, int soundindex, float attenuation )
+edict_t *G_Sound( edict_t *owner, int channel, int soundindex, float attenuation )
 {
 	edict_t *ent;
 
 	if( !soundindex )
-		return;
+		return NULL;
 
 	if( owner == NULL || owner == world )
 		attenuation = ATTN_NONE;
 	else if( ISEVENTENTITY( &owner->s ) )
-		return; // event entities can't be owner of sound entities
+		return NULL; // event entities can't be owner of sound entities
 
 	ent = _G_SpawnSound( channel, soundindex, attenuation );
 	if( attenuation != ATTN_NONE )
@@ -1519,17 +1519,18 @@ void G_Sound( edict_t *owner, int channel, int soundindex, float attenuation )
 	}
 
 	GClip_LinkEntity( ent );
+	return ent;
 }
 
 /*
 * G_PositionedSound
 */
-void G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenuation )
+edict_t *G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenuation )
 {
 	edict_t *ent;
 
 	if( !soundindex )
-		return;
+		return NULL;
 
 	if( origin == NULL )
 		attenuation = ATTN_NONE;
@@ -1547,6 +1548,7 @@ void G_PositionedSound( vec3_t origin, int channel, int soundindex, float attenu
 	}
 
 	GClip_LinkEntity( ent );
+	return ent;
 }
 
 /*

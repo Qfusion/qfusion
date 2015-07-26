@@ -327,6 +327,7 @@ void SP_trigger_always( edict_t *ent )
 static void G_JumpPadSound( edict_t *ent )
 {
 	vec3_t org;
+	edict_t *sound;
 
 	if( !ent->s.modelindex )
 		return;
@@ -338,7 +339,12 @@ static void G_JumpPadSound( edict_t *ent )
 	org[1] = ent->s.origin[1] + 0.5 * ( ent->r.mins[1] + ent->r.maxs[1] );
 	org[2] = ent->s.origin[2] + 0.5 * ( ent->r.mins[2] + ent->r.maxs[2] );
 
-	G_PositionedSound( org, CHAN_AUTO, ent->moveinfo.sound_start, ATTN_NORM );
+	sound = G_PositionedSound( org, CHAN_AUTO, ent->moveinfo.sound_start, ATTN_NORM );
+	if( sound && sound->r.areanum < 0 ) {
+		// HACK: jumppad sounds may get trapped inside solid or go outside level bounds and get culled
+		// so forcefully place them into legal space
+		sound->r.areanum = ent->r.areanum < 0 ? ent->r.areanum2 : ent->r.areanum;
+	}
 }
 
 #define PUSH_ONCE	1
