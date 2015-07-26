@@ -555,9 +555,9 @@ void MSG_WriteDeltaEntity( entity_state_t *from, entity_state_t *to, msg_t *msg,
 	if( bits & U_WEAPON )
 	{
 		uint8_t tweapon = 0;
-		tweapon = to->weapon & ~ET_INVERSE;
+		tweapon = to->weapon & ~0x80;
 		if( to->teleported )
-			tweapon |= ET_INVERSE;
+			tweapon |= 0x80;
 		MSG_WriteByte( msg, tweapon );
 	}
 
@@ -741,8 +741,8 @@ void MSG_ReadDeltaEntity( msg_t *msg, entity_state_t *from, entity_state_t *to, 
 	{
 		uint8_t tweapon;
 		tweapon = (uint8_t)MSG_ReadByte( msg );
-		to->weapon = tweapon & ~ET_INVERSE;
-		to->teleported = ( tweapon & ET_INVERSE ) ? true : false;
+		to->weapon = tweapon & ~0x80;
+		to->teleported = ( tweapon & 0x80 ) ? true : false;
 	}
 
 	if( bits & U_SVFLAGS )

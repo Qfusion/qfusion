@@ -1290,19 +1290,17 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 		break;
 
 	case EV_FIRE_RIOTGUN:
-	case EV_FIRE_BULLET:
-		{
-			// check the owner for predicted case
-			if( ISVIEWERENTITY( ent->ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) )
-				return;
+		// check the owner for predicted case
+		if( ISVIEWERENTITY( ent->ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) )
+			return;
+		CG_Event_FireRiotgun( ent->origin, ent->origin2, ent->weapon, ent->firemode, parm, ent->ownerNum );
+		break;
 
-			if( ev == EV_FIRE_RIOTGUN )
-				CG_Event_FireRiotgun( ent->origin, ent->origin2, ( ent->weapon & ~EV_INVERSE ),
-					( ent->weapon & EV_INVERSE ), parm, ent->ownerNum );
-			else
-				CG_Event_FireMachinegun( ent->origin, ent->origin2, ( ent->weapon & ~EV_INVERSE ), 
-					( ent->weapon & EV_INVERSE ), parm, ent->ownerNum );
-		}
+	case EV_FIRE_BULLET:
+		// check the owner for predicted case
+		if( ISVIEWERENTITY( ent->ownerNum ) && ( ev < PREDICTABLE_EVENTS_MAX ) && ( predicted != cg.view.playerPrediction ) )
+			return;
+		CG_Event_FireMachinegun( ent->origin, ent->origin2, ent->weapon, ent->firemode, parm, ent->ownerNum );
 		break;
 
 	case EV_NOAMMOCLICK:
@@ -1505,12 +1503,14 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 
 	case EV_GRENADE_EXPLOSION:
 		if( parm )
-		{    // we have a direction
+		{
+			// we have a direction
 			ByteToDir( parm, dir );
 			CG_GrenadeExplosionMode( ent->origin, dir, ent->firemode, (float)ent->weapon*8.0f );
 		}
 		else
-		{ // no direction
+		{
+			// no direction
 			CG_GrenadeExplosionMode( ent->origin, vec3_origin, ent->firemode, (float)ent->weapon*8.0f );
 		}
 

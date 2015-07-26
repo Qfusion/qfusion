@@ -509,8 +509,7 @@ void W_Fire_Bullet( edict_t *self, vec3_t start, vec3_t angles, int seed, int ra
 	event->r.svflags = SVF_TRANSMITORIGIN2;
 	VectorScale( dir, 4096, event->s.origin2 ); // DirToByte is too inaccurate
 	event->s.weapon = WEAP_MACHINEGUN;
-	if( mod == MOD_MACHINEGUN_S )
-		event->s.weapon |= EV_INVERSE;
+	event->s.firemode = ( mod == MOD_MACHINEGUN_S ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 
 	// circle shape
 	alpha = M_PI * Q_crandom( &seed ); // [-PI ..+PI]
@@ -617,8 +616,7 @@ void W_Fire_Riotgun( edict_t *self, vec3_t start, vec3_t angles, int seed, int r
 	event->r.svflags = SVF_TRANSMITORIGIN2;
 	VectorScale( dir, 4096, event->s.origin2 ); // DirToByte is too inaccurate
 	event->s.weapon = WEAP_RIOTGUN;
-	if( mod == MOD_RIOTGUN_S )
-		event->s.weapon |= EV_INVERSE;
+	event->s.firemode = ( mod == MOD_RIOTGUN_S ) ? FIRE_MODE_STRONG : FIRE_MODE_WEAK;
 
 	G_Fire_SunflowerPattern( self, start, dir, &seed, count, hspread, vspread,
 		range, damage, knockback, stun, dmgflags, mod, timeDelta );
