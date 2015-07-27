@@ -99,7 +99,8 @@ void Sys_Thread_Join( qthread_t *thread )
 	int status = 0;
 
 	if (thread) {
-		SDL_WaitThread(thread->t, &status);
+		SDL_WaitThread( thread->t, &status );
+		free( thread );
 	}
 }
 
