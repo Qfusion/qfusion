@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "client.h"
 #include "ftlib.h"
 #include "../qcommon/asyncstream.h"
+#include "../qalgo/hash.h"
 
 cvar_t *cl_stereo_separation;
 cvar_t *cl_stereo;
@@ -2171,12 +2172,11 @@ static void CL_InitLocal( void )
 	if( COM_ReadColorRGBString( color->string ) == -1 )
 	{
 		time_t long_time; // random isn't working fine at this point.
-		struct tm *newtime; // so we get the user local time and use some values from there
+		unsigned int hash; // so we get the user local time and use its hash
 		int rgbcolor;
 		time( &long_time );
-		newtime = localtime( &long_time );
-		long_time *= newtime->tm_sec * newtime->tm_min * newtime->tm_wday;
-		rgbcolor = COM_ValidatePlayerColor( COLOR_RGB( long_time&0xff, ( long_time>>8 )&0xff, ( long_time>>16 )&0xff ) );
+		hash = COM_SuperFastHash64BitInt( ( uint64_t )long_time );
+		rgbcolor = COM_ValidatePlayerColor( COLOR_RGB( hash&0xff, ( hash>>8 )&0xff, ( hash>>16 )&0xff ) );
 		Cvar_Set( color->name, va( "%i %i %i", COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ) ) );
 	}
 
