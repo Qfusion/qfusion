@@ -641,6 +641,7 @@ static void CL_MasterAddressCache_Shutdown( void )
 		// we're going to kill the main thread anyway, so keep the lock and let the threads die
 #endif
 
+		free( resolverThreads );
 		resolverThreads = NULL;
 		resolveLock = NULL;
 	}
@@ -651,6 +652,7 @@ static void CL_MasterAddressCache_Shutdown( void )
 		for( i = 0; i < dump->size; ++i ) {
 			free( dump->key_value_vector[i].value );
 		}
+		Trie_FreeDump( dump );
 		Trie_Destroy( serverlist_masters_trie );
 		serverlist_masters_trie = NULL;
 	}

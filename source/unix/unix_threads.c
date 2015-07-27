@@ -115,6 +115,7 @@ void Sys_Thread_Join( qthread_t *thread )
 {
 	if( thread ) {
 		pthread_join( thread->t, NULL );
+		free( thread );
 	}
 }
 
