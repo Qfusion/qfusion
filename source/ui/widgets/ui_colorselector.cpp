@@ -90,7 +90,7 @@ namespace WSWUI
 			}
 		}
 
-		~ColorBlock();
+		virtual ~ColorBlock();
 
 		// Element methods
 		virtual void ProcessEvent( Event &event );
@@ -143,7 +143,7 @@ namespace WSWUI
 				cvar = trap::Cvar_Get( cvarName.CString(), "", 0 );
 		}
 
-		~ColorSelector()
+		virtual ~ColorSelector()
 		{
 			// for 'color' children, unset parent
 			ElementList colors;
