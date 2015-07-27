@@ -559,7 +559,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			7,								// damage
 			0,								// selfdamage ratio (lg cant damage)
-			12,								// knockback
+			14,								// knockback
 			300,							// stun
 			0,								// splash radius
 			0,								// splash minimum damage
@@ -593,7 +593,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			7,								// damage
 			0,								// selfdamage ratio (lg cant damage)
-			12,								// knockback
+			14,								// knockback
 			300,							// stun
 			0,								// splash radius
 			0,								// splash minimum damage
