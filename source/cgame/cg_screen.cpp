@@ -154,67 +154,13 @@ void CG_CenterPrint( const char *str )
 			scr_center_lines++;
 }
 
-void CG_CenterPrintToUpper( const char *format, ... )
-{
-	char c, *s;
-	int colorindex = -1;
-	va_list	argptr;
-	const char *tmp;
-	const char *new_format = format;
-	char l10n_format[sizeof(scr_centerstring)];
-	const char *l10n = NULL;
-
-	tmp = format;
-	if( Q_GrabCharFromColorString( &tmp, &c, &colorindex ) == GRABCHAR_COLOR ) {
-		// attempt to translate the remaining string
-		l10n = trap_L10n_TranslateString( tmp );
-	} else {
-		l10n = trap_L10n_TranslateString( format );
-	}
-
-	if( l10n ) {
-		if( colorindex > 0 ) {
-			l10n_format[0] = '^';
-			l10n_format[1] = '0' + colorindex;
-			Q_strncpyz( &l10n_format[2], l10n, sizeof( l10n_format ) - 2 );
-		}
-		else {
-			Q_strncpyz( l10n_format, l10n, sizeof( l10n_format ) );
-		}
-		new_format = l10n_format;
-	}
-
-	va_start( argptr, format );
-	Q_vsnprintfz( scr_centerstring, sizeof( scr_centerstring ), new_format, argptr );
-	va_end( argptr );
-
-	scr_centertime_off = cg_centerTime->value;
-	scr_centertime_start = cg.time;
-
-	// count the number of lines for centering
-	scr_center_lines = 1;
-	s = scr_centerstring;
-	while( *s )
-	{
-		if( *s == '\n' )
-		{
-			scr_center_lines++;
-		}
-		else
-		{
-			*s = toupper( *s );
-		}
-		s++;
-	}
-}
-
 static void CG_DrawCenterString( void )
 {
 	int y;
 	struct qfontface_s *font = cgs.fontSystemMedium;
 	char *helpmessage = scr_centerstring;
 	int x = cgs.vidWidth / 2;
-	int width = cgs.vidWidth / 2;
+	int width = cgs.vidWidth;
 	size_t len;
 
 	if( scr_center_lines <= 4 )
@@ -222,15 +168,9 @@ static void CG_DrawCenterString( void )
 	else
 		y = 48 * cgs.vidHeight / 600;
 
-	if( width < 320 * cgs.vidHeight / 600 )
-		width = 320 * cgs.vidHeight / 600;
-
 	while( ( len = trap_SCR_DrawStringWidth( x, y, ALIGN_CENTER_TOP, helpmessage, width, font, colorWhite ) ) )
 	{
-		if( len && helpmessage[len-1] == '\n' )
-		{
-			y += trap_SCR_FontHeight( font );
-		}
+		y += trap_SCR_FontHeight( font );
 		helpmessage += len;
 	}
 }

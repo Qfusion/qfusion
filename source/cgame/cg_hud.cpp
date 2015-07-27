@@ -854,7 +854,11 @@ void CG_SC_Obituary( void )
 
 				if( ISVIEWERENTITY( attackerNum ) && ( cg_showObituaries->integer & CG_OBITUARY_CENTER ) )
 				{
-					CG_CenterPrintToUpper( S_COLOR_RED "YOU TEAMFRAGGED %s", victim->name );
+					char name[MAX_NAME_BYTES + 2];
+					Q_strncpyz( name, victim->name, sizeof( name ) );
+					Q_strupr( name );
+					Q_strncatz( name, S_COLOR_WHITE, sizeof( name ) );
+					CG_CenterPrint( va( CG_TranslateString( "YOU TEAMFRAGGED %s" ), name ) );
 				}
 			}
 			else // good kill
@@ -866,7 +870,11 @@ void CG_SC_Obituary( void )
 
 				if( ISVIEWERENTITY( attackerNum ) && ( cg_showObituaries->integer & CG_OBITUARY_CENTER ) )
 				{
-					CG_CenterPrintToUpper( "YOU FRAGGED %s", victim->name );
+					char name[MAX_NAME_BYTES + 2];
+					Q_strncpyz( name, victim->name, sizeof( name ) );
+					Q_strupr( name );
+					Q_strncatz( name, S_COLOR_WHITE, sizeof( name ) );
+					CG_CenterPrint( va( CG_TranslateString( "YOU FRAGGED %s" ), name ) );
 				}
 			}
 		}
