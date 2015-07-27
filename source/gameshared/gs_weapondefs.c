@@ -139,8 +139,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			0,                              // v_spread
 
 			//ammo
-			2,                              // weapon pickup amount
-			2,								// pickup amount
+			1,                              // weapon pickup amount
+			1,								// pickup amount
 			10								// max amount
 		},
 
