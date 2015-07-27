@@ -534,6 +534,7 @@ static bool SV_MM_Login( void )
 	if( sv_login_query != NULL || sv_mm_initialized )
 		return false;
 	if( sv_mm_authkey->string[0] == '\0' ) {
+		Cvar_ForceSet( sv_mm_enable->name, "0" );
 		return false;
 	}
 
