@@ -511,7 +511,9 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 	CURLSETOPT( curl, res, CURLOPT_WRITEDATA, ( void * )retreq );
 	CURLSETOPT( curl, res, CURLOPT_WRITEHEADER, ( void * )retreq );
 	CURLSETOPT( curl, res, CURLOPT_PRIVATE, ( void * )retreq );
-	CURLSETOPT( curl, res, CURLOPT_INTERFACE, ( void * )iface );
+	if( iface && *iface ) {
+		CURLSETOPT( curl, res, CURLOPT_INTERFACE, ( void * )iface );
+	}
 
 	if( developer->integer ) {
 		CURLSETOPT( curl, res, CURLOPT_DEBUGFUNCTION, &wswcurl_debug_callback );
