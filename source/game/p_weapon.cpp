@@ -334,7 +334,7 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	// hackish : scale by power fraction
 	if( owner && owner->r.client )
 	{
-		power = (float)owner->r.client->ps.inventory[firedef->ammo_id] /(float)firedef->ammo_max;
+		power = (float)owner->r.client->ps.inventory[firedef->ammo_id] / (float)firedef->ammo_max;
 		damage *= power;
 		knockback *= power;
 		radius *= power;
@@ -355,7 +355,7 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	// hackish : every shot wastes all player power
 	if( owner && owner->r.client && firedef->ammo_id )
 	{
-		owner->r.client->ps.inventory[firedef->ammo_id] = min( firedef->ammo_pickup * 2, firedef->ammo_max );
+		owner->r.client->ps.inventory[firedef->ammo_id] = firedef->ammo_pickup + firedef->usage_count;
 		owner->r.client->resp.gunbladeChargeTimeStamp = level.time;
 	}
 
