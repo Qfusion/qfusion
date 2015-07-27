@@ -41,6 +41,7 @@ typedef struct serverlist_s
 	unsigned int lastValidPing;
 	unsigned int lastUpdatedByMasterServer;
 	unsigned int masterServerUpdateSeq;
+	bool isLocal;
 	struct serverlist_s *pnext;
 } serverlist_t;
 
@@ -131,6 +132,7 @@ static bool CL_AddServerToList( serverlist_t **serversList, char *adr, unsigned 
 	newserv->lastUpdatedByMasterServer = Sys_Milliseconds();
 	newserv->masterServerUpdateSeq = masterServerUpdateSeq;
 	newserv->pnext = *serversList;
+	newserv->isLocal = NET_IsLocalAddress( &nadr );
 	*serversList = newserv;
 
 	return true;
@@ -160,7 +162,7 @@ void CL_WriteServerCache( void )
 	server = masterList;
 	while( server )
 	{
-		if( server->lastValidPing + 7 > Com_DaysSince1900() )
+		if( !server->isLocal && server->lastValidPing + 7 > Com_DaysSince1900() )
 		{
 			if( NET_StringToAddress( server->address, &adr ) )
 			{
@@ -176,7 +178,7 @@ void CL_WriteServerCache( void )
 	server = favoritesList;
 	while( server )
 	{
-		if( server->lastValidPing + 7 > Com_DaysSince1900() )
+		if( !server->isLocal && server->lastValidPing + 7 > Com_DaysSince1900() )
 		{
 			if( NET_StringToAddress( server->address, &adr ) )
 			{
@@ -506,6 +508,7 @@ void CL_ParseGetServersResponse( const socket_t *socket, const netadr_t *address
 	while( server )
 	{
 		if( server->masterServerUpdateSeq == masterServerUpdateSeq 
+			&& !(server->isLocal && Com_ServerState())
 			&& NET_StringToAddress( server->address, &adr ) )
 			CL_UIModule_AddToServerList( server->address, "\\\\EOT" );
 
