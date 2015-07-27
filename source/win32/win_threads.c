@@ -172,6 +172,7 @@ void Sys_Thread_Join( qthread_t *thread )
 	if( thread ) {
 		WaitForSingleObject( thread->h, INFINITE );
 		CloseHandle( thread->h );
+		free( thread );
 	}
 }
 
