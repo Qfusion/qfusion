@@ -72,7 +72,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../win32/qfusion.rc"
         )
 
-        set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARIES} "ws2_32.lib" "winmm.lib" "dxguid.lib")
+        set(CLIENT_PLATFORM_LIBRARIES ${SDL2_LIBRARIES} "ws2_32.lib" "winmm.lib")
     else()
         file(GLOB CLIENT_PLATFORM_SOURCES
             "../win32/win_fs.c"
@@ -93,7 +93,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             "../win32/qfusion.rc"
         )
 
-        set(CLIENT_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib" "dxguid.lib")
+        set(CLIENT_PLATFORM_LIBRARIES "ws2_32.lib" "winmm.lib")
     endif()
 
     set(CLIENT_BINARY_TYPE WIN32)

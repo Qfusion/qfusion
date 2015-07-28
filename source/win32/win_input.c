@@ -128,6 +128,12 @@ static HINSTANCE hInstDI;
 static bool	dinput_initialized;
 static bool	dinput_acquired;
 
+// replacement for dxguid.lib which is not available in latest Windows SDKs for XP
+static const GUID qGUID_XAxis =		{ 0xa36d02e0, 0xc9f3, 0x11cf, { 0xbf, 0xc7, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00 } };
+static const GUID qGUID_YAxis =		{ 0xa36d02e1, 0xc9f3, 0x11cf, { 0xbf, 0xc7, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00 } };
+static const GUID qGUID_ZAxis =		{ 0xa36d02e2, 0xc9f3, 0x11cf, { 0xbf, 0xc7, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00 } };
+static const GUID qGUID_SysMouse =	{ 0x6f1d2b60, 0xd5a0, 0x11cf, { 0xbf, 0xc7, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00 } };
+
 typedef struct MYDATA
 {
 	LONG lX;                // X axis goes here
@@ -147,9 +153,9 @@ typedef struct MYDATA
 // 0x80000000 is something undocumented but must be there, otherwise
 // IDirectInputDevice_SetDataFormat may fail.
 static DIOBJECTDATAFORMAT rgodf[] = {
-	{ &GUID_XAxis, FIELD_OFFSET( MYDATA, lX ), DIDFT_AXIS | DIDFT_ANYINSTANCE, 0, },
-	{ &GUID_YAxis, FIELD_OFFSET( MYDATA, lY ), DIDFT_AXIS | DIDFT_ANYINSTANCE, 0, },
-	{ &GUID_ZAxis, FIELD_OFFSET( MYDATA, lZ ), 0x80000000 | DIDFT_AXIS | DIDFT_ANYINSTANCE, 0, },
+	{ &qGUID_XAxis, FIELD_OFFSET( MYDATA, lX ), DIDFT_AXIS | DIDFT_ANYINSTANCE, 0, },
+	{ &qGUID_YAxis, FIELD_OFFSET( MYDATA, lY ), DIDFT_AXIS | DIDFT_ANYINSTANCE, 0, },
+	{ &qGUID_ZAxis, FIELD_OFFSET( MYDATA, lZ ), 0x80000000 | DIDFT_AXIS | DIDFT_ANYINSTANCE, 0, },
 	{ 0, FIELD_OFFSET( MYDATA, bButtonA ), DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0, },
 	{ 0, FIELD_OFFSET( MYDATA, bButtonB ), DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0, },
 	{ 0, FIELD_OFFSET( MYDATA, bButtonC ), 0x80000000 | DIDFT_BUTTON | DIDFT_ANYINSTANCE, 0, },
@@ -343,7 +349,7 @@ static bool IN_InitDInput( void )
 	}
 
 	// obtain an interface to the system mouse device
-	hr = IDirectInput_CreateDevice( g_pdi, &GUID_SysMouse, &g_pMouse, NULL );
+	hr = IDirectInput_CreateDevice( g_pdi, &qGUID_SysMouse, &g_pMouse, NULL );
 
 	if( FAILED( hr ) )
 	{
