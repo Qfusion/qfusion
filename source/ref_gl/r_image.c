@@ -1415,7 +1415,7 @@ typedef struct ktx_header_s
 /*
 * R_LoadKTX
 */
-static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * ) )
+static bool R_LoadKTX( int ctx, image_t *image, const char *pathname, void ( *bind )( const image_t * ) )
 {
 	int i, j;
 	uint8_t *buffer;
@@ -1427,14 +1427,14 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 	if( image->flags & ( IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL ) )
 		return false;
 
-	R_LoadFile( image->name, ( void ** )&buffer );
+	R_LoadFile( pathname, ( void ** )&buffer );
 	if( !buffer )
 		return false;
 
 	header = ( ktx_header_t * )buffer;
 	if( memcmp( header->identifier, "\xABKTX 11\xBB\r\n\x1A\n", 12 ) )
 	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Bad file identifier: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Bad file identifier: %s\n", pathname );
 		goto error;
 	}
 
@@ -1447,17 +1447,17 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 
 	if( header->format && ( header->format != header->baseInternalFormat ) )
 	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Pixel format doesn't match internal format: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Pixel format doesn't match internal format: %s\n", pathname );
 		goto error;
 	}
 	if( !R_IsKTXFormatValid( header->format ? header->baseInternalFormat : header->internalFormat, header->type ) )
 	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Unsupported pixel format: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Unsupported pixel format: %s\n", pathname );
 		goto error;
 	}
 	if( ( header->pixelWidth < 1 ) || ( header->pixelHeight < 0 ) )
 	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Zero texture size: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Zero texture size: %s\n", pathname );
 		goto error;
 	}
 	if( !header->pixelHeight )
@@ -1465,22 +1465,22 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 	if( !header->type && ( ( header->pixelWidth & ( header->pixelWidth - 1 ) ) || ( header->pixelHeight & ( header->pixelHeight - 1 ) ) ) )
 	{
 		// NPOT compressed textures may crash on certain drivers/GPUs
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Compressed image must be power-of-two: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Compressed image must be power-of-two: %s\n", pathname );
 		goto error;
 	}
 	if( ( image->flags & IT_CUBEMAP ) && ( header->pixelWidth != header->pixelHeight ) )
 	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Not square cubemap image: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Not square cubemap image: %s\n", pathname );
 		goto error;
 	}
 	if( ( header->pixelDepth > 1 ) || ( header->numberOfArrayElements > 1 ) )
 	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: 3D textures and texture arrays are not supported: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: 3D textures and texture arrays are not supported: %s\n", pathname );
 		goto error;
 	}
 	if( header->numberOfFaces != numFaces )
 	{
-		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Bad number of cubemap faces: %s\n", image->name );
+		ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Bad number of cubemap faces: %s\n", pathname );
 		goto error;
 	}
 	if( header->numberOfMipmapLevels < 1 )
@@ -1504,7 +1504,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		}
 		else if( header->numberOfMipmapLevels < mips )
 		{
-			ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Compressed image has too few mip levels: %s\n", image->name );
+			ri.Com_DPrintf( S_COLOR_YELLOW "R_LoadKTX: Compressed image has too few mip levels: %s\n", pathname );
 			goto error;
 		}
 
@@ -1661,8 +1661,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 		R_UploadMipmapped( ctx, images, header->pixelWidth, header->pixelHeight, mips, image->flags, image->minmipsize,
 			&image->upload_width, &image->upload_height, header->baseInternalFormat, header->type );
 	}
-	
-	COM_StripExtension( image->name );
+
 	Q_strncpyz( image->extension, ".ktx", sizeof( image->extension ) );
 	image->width = header->pixelWidth;
 	image->height = header->pixelHeight;
@@ -1670,7 +1669,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 	R_FreeFile( buffer );
 	return true;
 
-error:
+error: // must not be reached after actually starting uploading the texture
 	R_FreeFile( buffer );
 	return false;
 }
@@ -1681,14 +1680,16 @@ error:
 static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const image_t *) )
 {
 	int flags = image->flags;
-	char *pathname = image->name;
-	size_t pathsize = image->name_size;
-	size_t len = strlen( pathname );
+	size_t len = strlen( image->name );
+	size_t pathsize = len + 3 /* cubemap face */ + sizeof( image->extension ) /* extension and null */;
+	char *pathname = alloca( pathsize );
 	int width = 1, height = 1, samples = 1;
 	bool loaded = false;
+
+	memcpy( pathname, image->name, len + 1 );
 	
 	Q_strncatz( pathname, ".ktx", pathsize );
-	if( R_LoadKTX( ctx, image, bind ) )
+	if( R_LoadKTX( ctx, image, pathname, bind ) )
 		return true;
 	pathname[len] = 0;
 
@@ -1760,7 +1761,6 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 
 		if( i != 2 )
 		{
-			pathname[len] = 0;
 			image->width = width;
 			image->height = height;
 			image->samples = samples;
@@ -1770,8 +1770,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 			R_Upload32( ctx, pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width, 
 				&image->upload_height, samples, false, false );
 
-			image->extension[0] = '.';
-			Q_strncpyz( &image->extension[1], &pathname[len+4], sizeof( image->extension )-1 );
+			Q_strncpyz( image->extension, &pathname[len+3], sizeof( image->extension ) );
 			loaded = true;
 		}
 		else
@@ -1788,7 +1787,6 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 
 		if( pic )
 		{
-			pathname[len] = 0;
 			image->width = width;
 			image->height = height;
 			image->samples = samples;
@@ -1798,8 +1796,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 			R_Upload32( ctx, &pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width, 
 				&image->upload_height, samples, false, false );
 
-			image->extension[0] = '.';
-			Q_strncpyz( &image->extension[1], &pathname[len+1], sizeof( image->extension )-1 );
+			Q_strncpyz( image->extension, &pathname[len], sizeof( image->extension ) );
 			loaded = true;
 		}
 		else
@@ -1870,8 +1867,7 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 		ri.Com_Error( ERR_DROP, "R_LoadImage: r_numImages == MAX_GLIMAGES" );
 	}
 
-	image->name_size = name_len + 15;
-	image->name = R_MallocExt( r_imagesPool, image->name_size, 0, 1 );
+	image->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
 	strcpy( image->name, name );
 	image->width = width;
 	image->height = height;
