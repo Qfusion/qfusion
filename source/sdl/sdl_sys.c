@@ -32,8 +32,6 @@ void Sys_Error( const char *format, ... )
 
 	SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, APPLICATION, msg, NULL );
 
-	Qcommon_Shutdown();
-
 	exit( 1 );
 }
 
