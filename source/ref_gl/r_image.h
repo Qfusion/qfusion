@@ -72,7 +72,6 @@ enum
 typedef struct image_s
 {
 	char			*name;						// game path, not including extension
-	size_t			name_size;
 	int				registrationSequence;
 	volatile bool loaded;
 	volatile bool missing;

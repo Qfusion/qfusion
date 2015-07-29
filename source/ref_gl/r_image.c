@@ -1661,8 +1661,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname, void ( *bi
 		R_UploadMipmapped( ctx, images, header->pixelWidth, header->pixelHeight, mips, image->flags, image->minmipsize,
 			&image->upload_width, &image->upload_height, header->baseInternalFormat, header->type );
 	}
-	
-	COM_StripExtension( image->name );
+
 	Q_strncpyz( image->extension, ".ktx", sizeof( image->extension ) );
 	image->width = header->pixelWidth;
 	image->height = header->pixelHeight;
@@ -1681,13 +1680,13 @@ error:
 static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const image_t *) )
 {
 	int flags = image->flags;
-	size_t pathsize = image->name_size;
-	char *pathname = alloca( pathsize );
 	size_t len = strlen( image->name );
+	size_t pathsize = len + 3 /* cubemap face */ + sizeof( image->extension ) /* extension and null */;
+	char *pathname = alloca( pathsize );
 	int width = 1, height = 1, samples = 1;
 	bool loaded = false;
 
-	memcpy( pathname, image->name, pathsize );
+	memcpy( pathname, image->name, len + 1 );
 	
 	Q_strncatz( pathname, ".ktx", pathsize );
 	if( R_LoadKTX( ctx, image, pathname, bind ) )
@@ -1762,7 +1761,6 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 
 		if( i != 2 )
 		{
-			pathname[len] = 0;
 			image->width = width;
 			image->height = height;
 			image->samples = samples;
@@ -1772,8 +1770,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 			R_Upload32( ctx, pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width, 
 				&image->upload_height, samples, false, false );
 
-			image->extension[0] = '.';
-			Q_strncpyz( &image->extension[1], &pathname[len+4], sizeof( image->extension )-1 );
+			Q_strncpyz( image->extension, &pathname[len+3], sizeof( image->extension ) );
 			loaded = true;
 		}
 		else
@@ -1790,7 +1787,6 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 
 		if( pic )
 		{
-			pathname[len] = 0;
 			image->width = width;
 			image->height = height;
 			image->samples = samples;
@@ -1800,8 +1796,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 			R_Upload32( ctx, &pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width, 
 				&image->upload_height, samples, false, false );
 
-			image->extension[0] = '.';
-			Q_strncpyz( &image->extension[1], &pathname[len+1], sizeof( image->extension )-1 );
+			Q_strncpyz( image->extension, &pathname[len], sizeof( image->extension ) );
 			loaded = true;
 		}
 		else
@@ -1872,8 +1867,7 @@ static image_t *R_CreateImage( const char *name, int width, int height, int laye
 		ri.Com_Error( ERR_DROP, "R_LoadImage: r_numImages == MAX_GLIMAGES" );
 	}
 
-	image->name_size = name_len + 15;
-	image->name = R_MallocExt( r_imagesPool, image->name_size, 0, 1 );
+	image->name = R_MallocExt( r_imagesPool, name_len + 1, 0, 1 );
 	strcpy( image->name, name );
 	image->width = width;
 	image->height = height;
