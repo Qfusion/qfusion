@@ -166,12 +166,12 @@ static cvar_t *fs_game;
 
 static searchpath_t *fs_basepaths = NULL;       // directories without gamedirs
 static searchpath_t *fs_searchpaths = NULL;     // game search directories, plus paks
+static qmutex_t *fs_searchpaths_mutex;
+
 static searchpath_t *fs_base_searchpaths;       // same as above, but without extra gamedirs
 static searchpath_t *fs_write_searchpath;       // write directory
 
 static mempool_t *fs_mempool;
-
-static qmutex_t *fs_mutex;
 
 #define FS_Malloc( size ) Mem_Alloc( fs_mempool, size )
 #define FS_Realloc( data, size ) Mem_Realloc( data, size )
@@ -182,6 +182,7 @@ static qmutex_t *fs_mutex;
 
 static filehandle_t fs_filehandles[FS_MAX_HANDLES];
 static filehandle_t fs_filehandles_headnode, *fs_free_filehandles;
+static qmutex_t *fs_fh_mutex;
 
 static int fs_notifications = 0;
 
@@ -387,6 +388,7 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 	searchpath_t *implicitpure;
 	packfile_t *implicitpure_pak;
 	bool purepass;
+	searchpath_t *result;
 
 	if( !COM_ValidateRelativeFilename( filename ) )
 		return NULL;
@@ -396,11 +398,14 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 	if( path && path_size )
 		path[0] = '\0';
 
-	// search through the path, one element at a time
-	search = fs_searchpaths;
+	result = NULL;
 	purepass = true;
 	implicitpure = NULL;
 	implicitpure_pak = NULL;
+
+	// search through the path, one element at a time
+	QMutex_Lock( fs_searchpaths_mutex );
+	search = fs_searchpaths;
 	while( search )
 	{
 		// is the element a pak file?
@@ -415,7 +420,8 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 						// if we find an explicitly pure pak, return immediately
 						if( !purepass || search->pack->pure == FS_PURE_EXPLICIT ) {
 							if( pout ) *pout = search_pak;
-							return search;
+							result = search;
+							goto return_result;
 						}
 						// otherwise store the pointer but keep searching for an explicit pak
 						else if( implicitpure == NULL )
@@ -433,8 +439,10 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 			{
 				if( !purepass )
 				{
-					if( FS_SearchDirectoryForFile( search, filename, path, path_size ) )
-						return search;
+					if( FS_SearchDirectoryForFile( search, filename, path, path_size ) ) {
+						result = search;
+						goto return_result;
+					}
 				}
 			}
 		}
@@ -445,7 +453,8 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 			{
 				// return file from an implicitly pure pak
 				if( pout ) *pout = implicitpure_pak;
-				return implicitpure;
+				result = implicitpure;
+				goto return_result;
 			}
 			search = fs_searchpaths;
 			purepass = false;
@@ -456,7 +465,9 @@ static searchpath_t *FS_SearchPathForFile( const char *filename, packfile_t **po
 		}
 	}
 
-	return NULL;
+return_result:
+	QMutex_Unlock( fs_searchpaths_mutex );
+	return result;
 }
 
 /*
@@ -580,6 +591,8 @@ int FS_GetExplicitPurePakList( char ***paknames )
 	// count them
 	numpaks = 0;
 
+	QMutex_Lock( fs_searchpaths_mutex );
+
 	for( e = 0; pak_extensions[e]; e++ )
 	{
 		for( search = fs_searchpaths; search; search = search->next )
@@ -592,27 +605,29 @@ int FS_GetExplicitPurePakList( char ***paknames )
 		}
 	}
 
-	if( !numpaks )
-		return 0;
-
-	*paknames = ( char** )Mem_ZoneMalloc( sizeof( char * ) * numpaks );
-
-	i = 0;
-	for( e = 0; pak_extensions[e]; e++ )
+	if( numpaks )
 	{
-		for( search = fs_searchpaths; search; search = search->next )
-		{
-			if( !search->pack )
-				continue;
-			if( search->pack->pure != FS_PURE_EXPLICIT )
-				continue;
+		*paknames = ( char** )Mem_ZoneMalloc( sizeof( char * ) * numpaks );
 
-			assert( i < numpaks );
-			( *paknames )[i] = ZoneCopyString( FS_PakNameForPath( search->pack ) );
-			i++;
+		i = 0;
+		for( e = 0; pak_extensions[e]; e++ )
+		{
+			for( search = fs_searchpaths; search; search = search->next )
+			{
+				if( !search->pack )
+					continue;
+				if( search->pack->pure != FS_PURE_EXPLICIT )
+					continue;
+
+				assert( i < numpaks );
+				( *paknames )[i] = ZoneCopyString( FS_PakNameForPath( search->pack ) );
+				i++;
+			}
 		}
+		assert( i == numpaks );
 	}
-	assert( i == numpaks );
+
+	QMutex_Unlock( fs_searchpaths_mutex );
 
 	return numpaks;
 }
@@ -624,10 +639,10 @@ static int FS_OpenFileHandle( void )
 {
 	filehandle_t *fh;
 
-	QMutex_Lock( fs_mutex );
+	QMutex_Lock( fs_fh_mutex );
 
 	if( !fs_free_filehandles ) {
-		QMutex_Unlock( fs_mutex );
+		QMutex_Unlock( fs_fh_mutex );
 		Sys_Error( "FS_OpenFileHandle: no free file handles" );
 	}
 
@@ -640,7 +655,7 @@ static int FS_OpenFileHandle( void )
 	fh->next->prev = fh;
 	fh->prev->next = fh;
 
-	QMutex_Unlock( fs_mutex );
+	QMutex_Unlock( fs_fh_mutex );
 
 	return ( fh - fs_filehandles ) + 1;
 }
@@ -673,7 +688,7 @@ static inline int FS_FileNumForHandle( filehandle_t *fh )
 */
 static void FS_CloseFileHandle( filehandle_t *fh )
 {
-	QMutex_Lock( fs_mutex );
+	QMutex_Lock( fs_fh_mutex );
 
 	// remove from linked open list
 	fh->prev->next = fh->next;
@@ -683,7 +698,7 @@ static void FS_CloseFileHandle( filehandle_t *fh )
 	fh->next = fs_free_filehandles;
 	fs_free_filehandles = fh;
 
-	QMutex_Unlock( fs_mutex );
+	QMutex_Unlock( fs_fh_mutex );
 }
 
 /*
@@ -701,6 +716,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 	searchpath_t *search;
 	bool purepass;
 	const char *implicitpure;
+	const char *result;
 
 	assert( filename && extensions );
 
@@ -723,7 +739,7 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 	}
 
 	// set the filenames to be tested
-	filenames = ( char** )Mem_TempMalloc( sizeof( char * ) * num_extensions );
+	filenames = ( char** )alloca( sizeof( char * ) * num_extensions );
 	filename_size = sizeof( char ) * ( strlen( filename ) + max_extension_length + 1 );
 
 	for( i = 0; i < num_extensions; i++ )
@@ -731,15 +747,18 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 		if( i )
 			filenames[i] = ( char * )( ( uint8_t * )filenames[0] + filename_size * i );
 		else
-			filenames[i] = ( char* )Mem_TempMalloc( filename_size * num_extensions );
+			filenames[i] = ( char* )alloca( filename_size * num_extensions );
 		Q_strncpyz( filenames[i], filename, filename_size );
 		COM_ReplaceExtension( filenames[i], extensions[i], filename_size );
 	}
 
-	// search through the path, one element at a time
-	search = fs_searchpaths;
+	result = NULL;
 	purepass = true;
 	implicitpure = NULL;
+
+	// search through the path, one element at a time
+	QMutex_Lock( fs_searchpaths_mutex );
+	search = fs_searchpaths;
 	while( search )
 	{
 		if( search->pack ) // is the element a pak file?
@@ -752,9 +771,8 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 					{
 						if( !purepass || search->pack->pure == FS_PURE_EXPLICIT )
 						{
-							Mem_TempFree( filenames[0] );
-							Mem_TempFree( filenames );
-							return extensions[i];
+							result = extensions[i];
+							goto return_result;
 						}
 						else if( implicitpure == NULL )
 						{
@@ -773,9 +791,8 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 				{
 					if( FS_SearchDirectoryForFile( search, filenames[i], NULL, 0 ) )
 					{
-						Mem_TempFree( filenames[0] );
-						Mem_TempFree( filenames );
-						return extensions[i];
+						result = extensions[i];
+						goto return_result;
 					}
 				}
 			}
@@ -785,9 +802,8 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 		{
 			if( implicitpure )
 			{
-				Mem_TempFree( filenames[0] );
-				Mem_TempFree( filenames );
-				return implicitpure;
+				result = implicitpure;
+				goto return_result;
 			}
 			search = fs_searchpaths;
 			purepass = false;
@@ -797,11 +813,11 @@ const char *FS_FirstExtension( const char *filename, const char *extensions[], i
 			search = search->next;
 		}
 	}
+	
+return_result:
+	QMutex_Unlock( fs_searchpaths_mutex );
 
-	Mem_TempFree( filenames[0] );
-	Mem_TempFree( filenames );
-
-	return NULL;
+	return result;
 }
 
 /*
@@ -1870,6 +1886,9 @@ static unsigned FS_PakChecksum( const char *filename )
 {
 	int diff;
 	searchpath_t *search;
+	unsigned checksum = 0;
+
+	QMutex_Lock( fs_searchpaths_mutex );
 
 	for( search = fs_searchpaths; search; search = search->next )
 	{
@@ -1877,12 +1896,16 @@ static unsigned FS_PakChecksum( const char *filename )
 		{
 			// filename is a basename, so we only compare the end of the names
 			diff = strlen( search->pack->filename ) - strlen( filename );
-			if( diff >= 0 && !strcmp( search->pack->filename+diff, filename ) )
-				return search->pack->checksum;
+			if( diff >= 0 && !strcmp( search->pack->filename+diff, filename ) ) {
+				checksum = search->pack->checksum;
+				break;
+			}
 		}
 	}
 
-	return 0;
+	QMutex_Unlock( fs_searchpaths_mutex );
+
+	return checksum;
 }
 
 /*
@@ -1908,6 +1931,9 @@ unsigned FS_ChecksumBaseFile( const char *filename )
 bool FS_AddPurePak( unsigned checksum )
 {
 	searchpath_t *search;
+	bool result = false;
+
+	QMutex_Lock( fs_searchpaths_mutex );
 
 	for( search = fs_searchpaths; search; search = search->next )
 	{
@@ -1915,11 +1941,14 @@ bool FS_AddPurePak( unsigned checksum )
 		{
 			if( search->pack->pure < FS_PURE_IMPLICIT )
 				search->pack->pure = FS_PURE_IMPLICIT;
-			return true;
+			result = true;
+			break;
 		}
 	}
 
-	return false;
+	QMutex_Unlock( fs_searchpaths_mutex );
+
+	return result;
 }
 
 /*
@@ -1929,11 +1958,15 @@ void FS_RemovePurePaks( void )
 {
 	searchpath_t *search;
 
+	QMutex_Lock( fs_searchpaths_mutex );
+
 	for( search = fs_searchpaths; search; search = search->next )
 	{
 		if( search->pack && search->pack->pure == FS_PURE_IMPLICIT )
 			search->pack->pure = FS_PURE_NONE;
 	}
+
+	QMutex_Unlock( fs_searchpaths_mutex );
 }
 
 /*
@@ -2626,6 +2659,7 @@ static bool FS_FindPackFilePos( const char *filename, searchpath_t **psearch, se
 	searchpath_t *search, *compare, *prev;
 	size_t path_size;
 	bool founddir;
+	bool result = true;
 
 	fullname = filename;
 	path_size = sizeof( char ) * ( COM_FilePathLength( fullname ) + 1 );
@@ -2641,6 +2675,8 @@ static bool FS_FindPackFilePos( const char *filename, searchpath_t **psearch, se
 	if( pnext )
 		*pnext = NULL;
 
+	QMutex_Lock( fs_searchpaths_mutex );
+
 	prev = NULL;
 	compare = fs_searchpaths;
 
@@ -2655,8 +2691,8 @@ static bool FS_FindPackFilePos( const char *filename, searchpath_t **psearch, se
 			cmp = Q_stricmp( COM_FileBase( compare->pack->filename ), COM_FileBase( filename ) );
 			if( !cmp )
 			{
-				Mem_Free( search );
-				return false;
+				result = false;
+				goto return_result;
 			}
 		}
 
@@ -2686,7 +2722,10 @@ static bool FS_FindPackFilePos( const char *filename, searchpath_t **psearch, se
 	if( pnext )
 		*pnext = compare;
 
-	return true;
+return_result:
+	QMutex_Unlock( fs_searchpaths_mutex );
+
+	return result;
 }
 
 /*
@@ -2973,6 +3012,8 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 	files = fs_searchfiles;
 	if( !useCache )
 	{
+		QMutex_Lock( fs_searchpaths_mutex );
+
 		search = fs_searchpaths;
 		while( search )
 		{
@@ -2999,6 +3040,8 @@ static int FS_GetFileListExt_( const char *dir, const char *extension, char *buf
 			allfound += found;
 			search = search->next;
 		}
+
+		QMutex_Unlock( fs_searchpaths_mutex );
 
 		qsort( files, allfound, sizeof( searchfile_t ), ( int ( * )( const void *, const void * ) )FS_SortFilesCmp );
 
@@ -3153,6 +3196,8 @@ static void FS_Path_f( void )
 
 	Com_Printf( "Current search path:\n" );
 
+	QMutex_Lock( fs_searchpaths_mutex );
+
 	if( fs_searchpaths != fs_base_searchpaths )
 		Com_Printf( "Mod files:\n" );
 	for( s = fs_searchpaths; s; s = s->next )
@@ -3164,6 +3209,8 @@ static void FS_Path_f( void )
 		else
 			Com_Printf( "%s\n", s->path );
 	}
+
+	QMutex_Unlock( fs_searchpaths_mutex );
 }
 
 /*
@@ -3407,6 +3454,8 @@ static int FS_TouchGamePath( const char *basepath, const char *gamedir, bool ini
 
 	Sys_VFS_TouchGamePath( gamedir, initial );
 
+	QMutex_Lock( fs_searchpaths_mutex );
+
 	// add directory to the list of search paths so pak files can stack properly
 	if( initial )
 	{
@@ -3477,6 +3526,8 @@ freename:
 		Mem_ZoneFree( paknames );
 	}
 
+	QMutex_Unlock( fs_searchpaths_mutex );
+
 	return newpaks;
 }
 
@@ -3504,6 +3555,8 @@ static void FS_ReplaceDeferredPaks( void )
 	searchpath_t *search;
 	searchpath_t *prev;
 
+	QMutex_Lock( fs_searchpaths_mutex );
+
 	// scan for deferred paks with matching shard id
 	prev = NULL;
 	for( search = fs_searchpaths; search != NULL;  ) {
@@ -3511,7 +3564,7 @@ static void FS_ReplaceDeferredPaks( void )
 		
 		if( pak && pak->deferred_shard ) {
 			if( !pak->deferred_pack ) {
-			// failed to load this one, remove
+				// failed to load this one, remove
 				if( prev ) {
 					prev->next = search->next;
 				}
@@ -3528,6 +3581,8 @@ static void FS_ReplaceDeferredPaks( void )
 		prev = search;
 		search = search->next;
 	}
+
+	QMutex_Unlock( fs_searchpaths_mutex );
 }
 
 /*
@@ -3580,6 +3635,8 @@ static void FS_RemoveExtraPaks( searchpath_t *old )
 {
 	searchpath_t *compare, *search, *prev;
 
+	QMutex_Lock( fs_searchpaths_mutex );
+
 	// scan for many paks with same name, but different base directory, and remove extra ones
 	compare = fs_searchpaths;
 	while( compare && compare != old )
@@ -3606,6 +3663,8 @@ static void FS_RemoveExtraPaks( searchpath_t *old )
 		}
 		compare = compare->next;
 	}
+
+	QMutex_Unlock( fs_searchpaths_mutex );
 }
 
 /*
@@ -3617,6 +3676,8 @@ static int FS_TouchGameDirectory( const char *gamedir, bool initial )
 	searchpath_t *old, *prev, *basepath;
 
 	// add for every basepath, in reverse order
+	QMutex_Lock( fs_searchpaths_mutex );
+	
 	old = fs_searchpaths;
 	prev = NULL;
 	newpaks = 0;
@@ -3640,6 +3701,8 @@ static int FS_TouchGameDirectory( const char *gamedir, bool initial )
 	// not sure whether removing pak files on the fly is such a good idea
 	if( initial && newpaks )
 		FS_RemoveExtraPaks( old );
+
+	QMutex_Unlock( fs_searchpaths_mutex );
 
 	return newpaks;
 }
@@ -3705,6 +3768,7 @@ bool FS_SetGameDirectory( const char *dir, bool force )
 	}
 
 	// free up any current game dir info
+	QMutex_Lock( fs_searchpaths_mutex );
 	while( fs_searchpaths != fs_base_searchpaths )
 	{
 		if( fs_searchpaths->pack )
@@ -3714,6 +3778,7 @@ bool FS_SetGameDirectory( const char *dir, bool force )
 		FS_Free( fs_searchpaths );
 		fs_searchpaths = next;
 	}
+	QMutex_Unlock( fs_searchpaths_mutex );
 
 	if( !strcmp( dir, fs_basegame->string ) || ( *dir == 0 ) )
 	{
@@ -3832,6 +3897,8 @@ static void Cmd_FS_Search_f( void )
 	total = 0;
 	pattern = Cmd_Argv( 1 );
 
+	QMutex_Lock( fs_searchpaths_mutex );
+
 	for( search = fs_searchpaths; search; search = search->next )
 	{
 		unsigned int i;
@@ -3865,6 +3932,8 @@ static void Cmd_FS_Search_f( void )
 		}
 		Trie_FreeDump( trie_dump );
 	}
+
+	QMutex_Unlock( fs_searchpaths_mutex );
 
 	Com_Printf( "\nFound " S_COLOR_YELLOW "%i" S_COLOR_WHITE " files matching the pattern.\n", total );
 }
@@ -3958,7 +4027,8 @@ void FS_Init( void )
 
 	assert( !fs_initialized );
 
-	fs_mutex = QMutex_Create();
+	fs_fh_mutex = QMutex_Create();
+	fs_searchpaths_mutex = QMutex_Create();
 
 	fs_mempool = Mem_AllocPool( NULL, "Filesystem" );
 	
@@ -4080,6 +4150,8 @@ void FS_Shutdown( void )
 	FS_Free( fs_searchfiles );
 	fs_numsearchfiles = 0;
 
+	QMutex_Lock( fs_searchpaths_mutex );
+	
 	while( fs_searchpaths )
 	{
 		search = fs_searchpaths;
@@ -4090,6 +4162,8 @@ void FS_Shutdown( void )
 		FS_Free( search->path );
 		FS_Free( search );
 	}
+
+	QMutex_Unlock( fs_searchpaths_mutex );
 
 	while( fs_basepaths )
 	{
@@ -4104,7 +4178,8 @@ void FS_Shutdown( void )
 
 	Mem_FreePool( &fs_mempool );
 
-	QMutex_Destroy( &fs_mutex );
+	QMutex_Destroy( &fs_fh_mutex );
+	QMutex_Destroy( &fs_searchpaths_mutex );
 
 	fs_initialized = false;
 }
