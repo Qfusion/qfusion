@@ -1681,11 +1681,13 @@ error:
 static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const image_t *) )
 {
 	int flags = image->flags;
-	char *pathname = image->name;
 	size_t pathsize = image->name_size;
+	char *pathname = alloca( pathsize );
 	size_t len = strlen( pathname );
 	int width = 1, height = 1, samples = 1;
 	bool loaded = false;
+
+	memcpy( pathname, image->name, pathsize );
 	
 	Q_strncatz( pathname, ".ktx", pathsize );
 	if( R_LoadKTX( ctx, image, bind ) )
