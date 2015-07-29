@@ -1415,7 +1415,7 @@ typedef struct ktx_header_s
 /*
 * R_LoadKTX
 */
-static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * ) )
+static bool R_LoadKTX( int ctx, image_t *image, const char *pathname, void ( *bind )( const image_t * ) )
 {
 	int i, j;
 	uint8_t *buffer;
@@ -1427,7 +1427,7 @@ static bool R_LoadKTX( int ctx, image_t *image, void ( *bind )( const image_t * 
 	if( image->flags & ( IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL ) )
 		return false;
 
-	R_LoadFile( image->name, ( void ** )&buffer );
+	R_LoadFile( pathname, ( void ** )&buffer );
 	if( !buffer )
 		return false;
 
@@ -1683,14 +1683,14 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 	int flags = image->flags;
 	size_t pathsize = image->name_size;
 	char *pathname = alloca( pathsize );
-	size_t len = strlen( pathname );
+	size_t len = strlen( image->name );
 	int width = 1, height = 1, samples = 1;
 	bool loaded = false;
 
 	memcpy( pathname, image->name, pathsize );
 	
 	Q_strncatz( pathname, ".ktx", pathsize );
-	if( R_LoadKTX( ctx, image, bind ) )
+	if( R_LoadKTX( ctx, image, pathname, bind ) )
 		return true;
 	pathname[len] = 0;
 
