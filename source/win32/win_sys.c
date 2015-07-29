@@ -77,15 +77,10 @@ void Sys_Error( const char *format, ... )
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
 
-	SV_Shutdown( msg );
-	CL_Shutdown();
-
 	MessageBox( NULL, msg, "Error", 0 /* MB_OK */ );
 
 	// shut down QHOST hooks if necessary
 	DeinitConProc();
-
-	Qcommon_Shutdown();
 
 	exit( 1 );
 }
