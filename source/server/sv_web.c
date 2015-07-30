@@ -1100,7 +1100,7 @@ static void SV_Web_RouteRequest( const sv_http_request_t *request, sv_http_respo
 
 			// only serve GET requests for pack and demo files
 			extension = COM_FileExtension( filename );
-			if( !extension || !*extension || 
+			if( !extension || 
 				!(FS_CheckPakExtension( filename ) || !Q_stricmp( extension, APP_DEMO_EXTENSION_STR ) ) ) {
 				response->code = HTTP_RESP_FORBIDDEN;
 				return;

@@ -570,7 +570,7 @@ bool SV_IsDemoDownloadRequest( const char *request )
 	}
 
 	ext = COM_FileExtension( request );
-	if( !ext || !*ext || Q_stricmp( ext, APP_DEMO_EXTENSION_STR ) ) {
+	if( !ext || Q_stricmp( ext, APP_DEMO_EXTENSION_STR ) ) {
 		// wrong extension
 		return false;
 	}
