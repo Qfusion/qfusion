@@ -627,17 +627,20 @@ static void ML_GetFullnameFromMap( const char *filename, char *fullname, size_t 
 */
 bool ML_ValidateFilename( const char *filename )
 {
+	const char *extension;
+
 	if( !filename || !*filename )
 		return false;
 
-	if( !COM_FileExtension( filename ) )
+	extension = COM_FileExtension( filename );
+	if( !extension )
 	{
 		if( strlen( "maps/" ) + strlen( filename ) + strlen( ".bsp" ) >= MAX_CONFIGSTRING_CHARS )
 			return false;
 	}
 	else
 	{
-		if( Q_stricmp( COM_FileExtension( filename ), ".bsp" ) )
+		if( Q_stricmp( extension, ".bsp" ) )
 			return false;
 		if( strlen( "maps/" ) + strlen( filename ) >= MAX_CONFIGSTRING_CHARS )
 			return false;

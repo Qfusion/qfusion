@@ -126,7 +126,7 @@ bool CL_CheckOrDownloadFile( const char *filename )
 		return true;
 
 	ext = COM_FileExtension( filename );
-	if( !ext || !*ext )
+	if( !ext )
 		return true;
 
 	if( FS_CheckPakExtension( filename ) )
@@ -197,9 +197,15 @@ static void CL_DownloadComplete( void )
 	}
 
 	if( FS_CheckPakExtension( cls.download.name ) )
+	{
 		updateMapList = true;
-	else if( !Q_stricmp( COM_FileExtension( cls.download.name ), ".bsp" ) )
-		updateMapList = true;
+	}
+	else
+	{
+		const char *extension = COM_FileExtension( cls.download.name );
+		if( extension && !Q_stricmp( extension, ".bsp" ) )
+			updateMapList = true;
+	}
 
 	// Maplist hook so we also know when a new map is added
 	if( updateMapList )
