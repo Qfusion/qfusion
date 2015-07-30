@@ -1681,8 +1681,8 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 {
 	int flags = image->flags;
 	size_t len = strlen( image->name );
-	size_t pathsize = len + 3 /* cubemap face */ + sizeof( image->extension ) /* extension and null */;
-	char *pathname = alloca( pathsize );
+	char pathname[1024];
+	size_t pathsize = sizeof( pathname );
 	int width = 1, height = 1, samples = 1;
 	bool loaded = false;
 
