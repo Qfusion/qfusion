@@ -41,6 +41,7 @@ cvar_t *rcon_password;         // password for remote server commands
 
 cvar_t *sv_uploads_http;
 cvar_t *sv_uploads_baseurl;
+cvar_t *sv_uploads_demos;
 cvar_t *sv_uploads_demos_baseurl;
 
 cvar_t *sv_pure;
@@ -916,6 +917,7 @@ void SV_Init( void )
 
 	sv_uploads_http	=       Cvar_Get( "sv_uploads_http", "1", CVAR_READONLY );
 	sv_uploads_baseurl =	Cvar_Get( "sv_uploads_baseurl", "", CVAR_ARCHIVE );
+	sv_uploads_demos =	    Cvar_Get( "sv_uploads_demos", "1", CVAR_ARCHIVE );
 	sv_uploads_demos_baseurl =	Cvar_Get( "sv_uploads_demos_baseurl", "", CVAR_ARCHIVE );
 	if( dedicated->integer )
 	{

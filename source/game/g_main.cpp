@@ -102,8 +102,6 @@ cvar_t *g_instashield;
 
 cvar_t *g_disable_vote_gametype;
 
-cvar_t *g_uploads_demos;
-
 cvar_t *g_allow_spectator_voting;
 
 cvar_t *g_asGC_stats;
@@ -349,9 +347,6 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol )
 	// define this one here so we can see when it's modified
 	g_disable_vote_gametype = trap_Cvar_Get( "g_disable_vote_gametype", "0", CVAR_ARCHIVE );
 
-	// uploads
-	g_uploads_demos = trap_Cvar_Get( "g_uploads_demos", "1", CVAR_ARCHIVE );
-
 	g_asGC_stats = trap_Cvar_Get( "g_asGC_stats", "0", CVAR_ARCHIVE );
 	g_asGC_interval = trap_Cvar_Get( "g_asGC_interval", "10", CVAR_ARCHIVE );
 
@@ -432,33 +427,8 @@ void G_Shutdown( void )
 */
 bool G_AllowDownload( edict_t *ent, const char *requestname, const char *uploadname )
 {
-	// allow downloading demos
-	if( g_uploads_demos->integer )
-	{
-		const char *extension = COM_FileExtension( uploadname );
-		const char *protocol = va( "%i", game.protocol );
-		size_t extension_len, protocol_len;
-
-		if( !extension )
-			return false;
-
-		extension_len = strlen( extension );
-		protocol_len = strlen( protocol );
-
-		if( extension_len > protocol_len
-			&& !Q_stricmp( extension + extension_len - protocol_len, protocol ) )
-		{
-			const char *p;
-
-			p = strchr( uploadname, '/' );
-			if( p && !Q_strnicmp( p + 1, "demos/server/", strlen( "demos/server/" ) ) )
-				return true;
-		}
-	}
-
 	return false;
 }
-
 
 //======================================================================
 
