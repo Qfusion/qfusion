@@ -2439,7 +2439,7 @@ static pack_t *FS_LoadPK3File( const char *packfilename, bool silent )
 	void *handle = NULL;
 	void *vfsHandle = NULL;
 
-	// if( FS_FileExists( packfilename, true ) == -1 )
+	if( FS_FileExists( packfilename, true ) == -1 )
 		vfsHandle = Sys_VFS_FindFile( packfilename );
 
 	if( !vfsHandle )
