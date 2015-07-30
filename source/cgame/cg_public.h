@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   90
+#define	CGAME_API_VERSION   91
 
 //
 // structs and variables shared with the main engine
@@ -277,7 +277,7 @@ typedef struct
 	void ( *Init )( const char *serverName, unsigned int playerNum,
 		int vidWidth, int vidHeight, float pixelRatio,
 		bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime, 
-		int protocol, int sharedSeed, bool gameStart );
+		int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
 
 	// "soft restarts" at demo jumps
 	void ( *Reset )( void );

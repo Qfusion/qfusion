@@ -701,6 +701,8 @@ static void CG_Cmd_DemoGet_f( void )
 */
 static void CG_SC_DemoGet( void )
 {
+	const char *filename, *extension;
+
 	if( cgs.demoPlaying )
 	{
 		// ignore download commands coming from demo files
@@ -721,13 +723,16 @@ static void CG_SC_DemoGet( void )
 		return;
 	}
 
-	if( !COM_ValidateRelativeFilename( trap_Cmd_Argv( 1 ) ) )
+	filename = trap_Cmd_Argv( 1 );
+	extension = COM_FileExtension( filename );
+	if( !COM_ValidateRelativeFilename( filename ) ||
+		!extension || Q_stricmp( extension, cgs.demoExtension ) )
 	{
 		CG_Printf( "Warning: demoget: Invalid filename, ignored\n" );
 		return;
 	}
 
-	trap_DownloadRequest( trap_Cmd_Argv( 1 ), false );
+	trap_DownloadRequest( filename, false );
 }
 
 /*
