@@ -270,7 +270,7 @@ sfxcache_t *S_LoadSound( sfx_t *s );
 
 void S_IssuePlaysound( playsound_t *ps );
 
-int S_PaintChannels( unsigned int endtime, int dumpfile );
+int S_PaintChannels( unsigned int endtime, int dumpfile, float gain );
 
 //====================================================================
 

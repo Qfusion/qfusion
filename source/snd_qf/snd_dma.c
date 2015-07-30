@@ -1183,6 +1183,7 @@ static void S_Update_()
 {
 	unsigned endtime;
 	unsigned samps;
+	float gain = s_active ? 1.0 : 0.0f;
 
 	SNDDMA_BeginPainting();
 
@@ -1209,9 +1210,9 @@ static void S_Update_()
 		endtime = soundtime + samps;
 
 	if( s_aviDump && s_aviDumpFile )
-		s_aviNumSamples += S_PaintChannels( endtime, s_aviDumpFile );
+		s_aviNumSamples += S_PaintChannels( endtime, s_aviDumpFile, gain );
 	else
-		S_PaintChannels( endtime, 0 );
+		S_PaintChannels( endtime, 0, gain );
 
 	SNDDMA_Submit();
 }
@@ -1605,8 +1606,14 @@ static unsigned S_HandleActivateCmd( const sndActivateCmd_t *cmd )
 	if( s_active != active ) {
 		s_active = active;
 		S_LockBackgroundTrack( !s_active );
-		S_Clear();
-		S_Activate( active );
+		if( active ) {
+			S_Activate( true );
+			S_Clear();
+		}
+		else {
+			S_Clear();
+			S_Activate( true );
+		}
 	}
 	return sizeof( *cmd );
 }

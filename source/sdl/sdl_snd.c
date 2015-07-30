@@ -69,12 +69,6 @@ static cvar_t *s_channels = NULL;
 
 void S_Activate( bool active )
 {
-	if( active )
-		SNDDMA_Submit();
-	else
-		SNDDMA_BeginPainting();
-
-	S_ClearPaintBuffer();
 }
 
 /* The audio callback. All the magic happens here. */

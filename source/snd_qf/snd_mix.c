@@ -462,7 +462,7 @@ static void S_PaintChannelFrom16( channel_t *ch, sfxcache_t *sc, unsigned int en
 static void S_PaintChannelFrom8HQ( channel_t *ch, sfxcache_t *sc, unsigned int endtime, int offset );
 static void S_PaintChannelFrom16HQ( channel_t *ch, sfxcache_t *sc, unsigned int endtime, int offset );
 
-int S_PaintChannels( unsigned int endtime, int dumpfile )
+int S_PaintChannels( unsigned int endtime, int dumpfile, float gain )
 {
 	unsigned int i;
 	unsigned int end;
@@ -473,8 +473,8 @@ int S_PaintChannels( unsigned int endtime, int dumpfile )
 	playsound_t *ps;
 
 	total = 0;
-	snd_vol = s_volume->value*256;
-	music_vol = s_musicvolume->value*256;
+	snd_vol = s_volume->value*gain*256;
+	music_vol = s_musicvolume->value*gain*256;
 
 	while( paintedtime < endtime )
 	{
