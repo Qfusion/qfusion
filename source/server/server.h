@@ -354,6 +354,7 @@ extern cvar_t *sv_debug_serverCmd;
 
 extern cvar_t *sv_uploads_http;
 extern cvar_t *sv_uploads_baseurl;
+extern cvar_t *sv_uploads_demos;
 extern cvar_t *sv_uploads_demos_baseurl;
 
 extern cvar_t *sv_pure;

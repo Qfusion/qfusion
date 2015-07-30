@@ -622,7 +622,11 @@ static bool SV_GameAllowDownload( client_t *client, const char *requestname, con
 	if( client->state < CS_SPAWNED )
 		return false;
 
-	return ge->AllowDownload( client->edict, requestname, uploadname );
+	// allow downloading demos
+	if( SV_IsDemoDownloadRequest( uploadname ) )
+		return sv_uploads_demos->integer != 0;
+
+	return false;
 }
 
 /*
