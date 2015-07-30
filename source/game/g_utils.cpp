@@ -1194,6 +1194,10 @@ void G_ChatMsg( edict_t *ent, edict_t *who, bool teamonly, const char *format, .
 
 	s = va( "%s %i \"%s\"", (who && teamonly ? "tch" : "ch"), (who ? ENTNUM(who) : 0), msg );
 
+	// send score_event to gametype script
+	if (who)
+		G_Gametype_ScoreEvent(who->r.client, "chat", va("%s", s));
+	
 	if( !ent )
 	{
 		// mirror at server console

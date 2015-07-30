@@ -820,5 +820,8 @@ void G_FireWeapon( edict_t *ent, int parm )
 		G_ProjectileTimePrestep( projectile, timeOffset );
 	}
 #endif
+	
+	// send score_event to gametype script
+	G_Gametype_ScoreEvent(ent->r.client, "shot", va("%i", weapondef->weapon_id));
 }
 
