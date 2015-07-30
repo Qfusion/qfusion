@@ -109,9 +109,6 @@ const char *COM_FileExtension( const char *filename )
 {
 	const char *src, *last;
 
-	if( !*filename )
-		return filename;
-
 	last = strrchr( filename, '/' );
 	src = strrchr( last ? last : filename, '.' );
 	if( src && *( src+1 ) )

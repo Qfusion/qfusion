@@ -332,7 +332,7 @@ char **Sys_VFS_Zip_ListFiles( const char *basepath, const char *gamedir, const c
 			if( strncmp( name, gamedir, dirlen ) || ( name[dirlen] != '/' ) )
 				continue;
 			e = COM_FileExtension( name );
-			if( !e || !e[0] ||  Q_stricmp( e + 1, extension ) )
+			if( !e || Q_stricmp( e + 1, extension ) )
 				continue;
 			list[nfiles++] = ZoneCopyString( va( "%s/%s", basepath, file->name ) );
 		}

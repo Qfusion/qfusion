@@ -2631,14 +2631,14 @@ static pack_t *FS_LoadPackFile( const char *packfilename, bool silent )
 	Q_strncpyz( tempname, packfilename, sizeof( tempname ) );
 
 	ext = COM_FileExtension( tempname );
-	if( !ext || !*ext )
+	if( !ext )
 		return NULL;
 
 	if( !Q_stricmp( ext, ".tmp" ) )
 	{
 		COM_StripExtension( tempname );
 		ext = COM_FileExtension( tempname );
-		if( !ext || !*ext )
+		if( !ext )
 			return NULL;
 	}
 
@@ -2772,7 +2772,7 @@ bool FS_CheckPakExtension( const char *filename )
 	const char *ext;
 
 	ext = COM_FileExtension( filename );
-	if( !ext || *ext != '.' )
+	if( !ext )
 		return false;
 	ext++;
 
