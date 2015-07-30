@@ -459,6 +459,7 @@ typedef struct
 	bool tv, tvRequested;
 	bool gameMenuRequested;
 	int gameProtocol;
+	char demoExtension[MAX_QPATH];
 	unsigned int snapFrameTime;
 	unsigned int extrapolationTime;
 
@@ -930,7 +931,7 @@ int CG_API( void );
 void CG_Init(	const char *serverName, unsigned int playerNum,
 				int vidWidth, int vidHeight, float pixelRatio,
 				bool demoplaying, const char *demoName, bool pure, unsigned int snapFrameTime,
-				int protocol, int sharedSeed, bool gameStart );
+				int protocol, const char *demoExtension, int sharedSeed, bool gameStart );
 void CG_Shutdown( void );
 void CG_ValidateItemDef( int tag, char *name );
 void CG_Printf( const char *format, ... );
