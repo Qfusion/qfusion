@@ -55,6 +55,9 @@ static void VID_SetWindowSize( bool fullscreen )
 	int width = glConfig.width, height = glConfig.height;
 	HWND parentHWND = glw_state.parenthWnd;
 
+	if( !glw_state.hWnd )
+		return;
+
 	if( fullscreen )
 	{
 		exstyle = WS_EX_TOPMOST;
@@ -193,8 +196,6 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 	{
 		int a;
 		DEVMODE dm;
-		HDC hdc;
-		int bitspixel;
 
 		ri.Com_DPrintf( "...attempting fullscreen\n" );
 
@@ -205,13 +206,6 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 		dm.dmPelsWidth  = glConfig.width;
 		dm.dmPelsHeight = glConfig.height;
 		dm.dmFields     = DM_PELSWIDTH | DM_PELSHEIGHT;
-
-		hdc = GetDC( NULL );
-		bitspixel = GetDeviceCaps( hdc, BITSPIXEL );
-
-		ri.Com_DPrintf( "...using desktop display depth of %d\n", bitspixel );
-
-		ReleaseDC( 0, hdc );
 
 		if( displayFrequency > 0 )
 		{
@@ -225,67 +219,16 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 		if( a == DISP_CHANGE_SUCCESSFUL )
 		{
 			ri.Com_DPrintf( "ok\n" );
-
-			if( glw_state.hWnd ) {
-				VID_SetWindowSize( true );
-			}
+			VID_SetWindowSize( true );
 			return true;
 		}
-		else
-		{
-			ri.Com_DPrintf( "failed: %i\n", a );
 
-			ri.Com_DPrintf( "...calling CDS assuming dual monitors:" );
-
-			dm.dmPelsWidth = glConfig.width * 2;
-			dm.dmPelsHeight = glConfig.height;
-			dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT;
-
-			if( displayFrequency > 0 )
-			{
-				dm.dmFields |= DM_DISPLAYFREQUENCY;
-				dm.dmDisplayFrequency = displayFrequency;
-				ri.Com_DPrintf( "...using display frequency %i\n", dm.dmDisplayFrequency );
-			}
-
-			/*
-			** our first CDS failed, so maybe we're running on some weird dual monitor
-			** system
-			*/
-			if( ChangeDisplaySettings( &dm, CDS_FULLSCREEN ) != DISP_CHANGE_SUCCESSFUL )
-			{
-				ri.Com_DPrintf( " failed\n" );
-
-				ri.Com_DPrintf( "...setting windowed mode\n" );
-
-				ChangeDisplaySettings( 0, 0 );
-
-				if( glw_state.hWnd ) {
-					VID_SetWindowSize( false );
-				}
-				return false;
-			}
-			else
-			{
-				ri.Com_DPrintf( " ok\n" );
-
-				if( glw_state.hWnd ) {
-					VID_SetWindowSize( true );
-				}
-				return true;
-			}
-		}
+		ri.Com_DPrintf( "failed: %i\n", a );
 	}
-	else
-	{
-		ri.Com_DPrintf( "...setting windowed mode\n" );
 
-		ChangeDisplaySettings( 0, 0 );
-
-		if( glw_state.hWnd ) {
-			VID_SetWindowSize( false );
-		}
-	}
+	ri.Com_DPrintf( "...setting windowed mode\n" );
+	ChangeDisplaySettings( 0, 0 );
+	VID_SetWindowSize( false );
 
 	return false;
 }
@@ -301,13 +244,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	if( glw_state.hWnd ) {
 		if( glConfig.width == width && glConfig.height == height && fullscreen != glConfig.fullScreen ) {
 			glConfig.fullScreen = VID_SetFullscreenMode( displayFrequency, fullscreen );
-
-			if( glConfig.fullScreen == fullscreen ) {
-				VID_SetWindowSize( fullscreen );
-				return rserr_ok;
-			}
-
-			return rserr_restart_required;
+			return ( ( glConfig.fullScreen == fullscreen ) ? rserr_ok : rserr_restart_required );
 		}
 	}
 
@@ -337,7 +274,7 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.fullScreen = VID_SetFullscreenMode( displayFrequency, fullscreen );
+	glConfig.fullScreen = ( fullscreen ? VID_SetFullscreenMode( displayFrequency, fullscreen ) : false );
 	glConfig.stereoEnabled = stereo;
 
 	if( !VID_CreateWindow() ) {
