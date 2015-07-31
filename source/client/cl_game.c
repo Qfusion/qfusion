@@ -73,6 +73,11 @@ static inline struct cmodel_s *CL_GameModule_CM_ModelForBBox( vec3_t mins, vec3_
 static inline struct cmodel_s *CL_GameModule_CM_OctagonModelForBBox( vec3_t mins, vec3_t maxs ) {
 	return CM_OctagonModelForBBox( cl.cms, mins, maxs );
 }
+
+static inline bool CL_GameModule_CM_InPVS( const vec3_t p1, const vec3_t p2 ) {
+	return CM_InPVS( cl.cms, p1, p2 );
+}
+
 //======================================================================
 
 /*
@@ -498,6 +503,7 @@ void CL_GameModule_Init( void )
 	import.CM_ModelForBBox = CL_GameModule_CM_ModelForBBox;
 	import.CM_OctagonModelForBBox = CL_GameModule_CM_OctagonModelForBBox;
 	import.CM_InlineModelBounds = CL_GameModule_CM_InlineModelBounds;
+	import.CM_InPVS = CL_GameModule_CM_InPVS;
 
 	import.S_RegisterSound = CL_SoundModule_RegisterSound;
 	import.S_StartFixedSound = CL_SoundModule_StartFixedSound;

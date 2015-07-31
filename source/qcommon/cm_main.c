@@ -464,7 +464,7 @@ int CM_ClusterRowSize( cmodel_state_t *cms )
 /*
 * CM_ClusterRowLongs
 */
-int CM_ClusterRowLongs( cmodel_state_t *cms )
+static int CM_ClusterRowLongs( cmodel_state_t *cms )
 {
 	return cms->map_pvs ? (cms->map_pvs->rowsize + 3) / 4 : MAX_CM_LEAFS / 32;
 }
@@ -498,7 +498,7 @@ static inline uint8_t *CM_ClusterVS( int cluster, dvis_t *vis, uint8_t *nullrow 
 /*
 * CM_ClusterPVS
 */
-uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster )
+static inline uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster )
 {
 	return CM_ClusterVS( cluster, cms->map_pvs, cms->nullrow );
 }
@@ -823,6 +823,36 @@ int CM_MergeVisSets( cmodel_state_t *cms, vec3_t org, uint8_t *pvs, uint8_t *are
 		CM_MergeAreaBits( cms, areabits, area );
 
 	return CM_AreaRowSize( cms ); // areabytes
+}
+
+/*
+* CM_InPVS
+*
+* Also checks portalareas so that doors block sight
+*/
+bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 )
+{
+	int leafnum;
+	int cluster;
+	int area1, area2;
+	uint8_t *mask;
+
+	leafnum = CM_PointLeafnum( cms, p1 );
+	cluster = CM_LeafCluster( cms, leafnum );
+	area1 = CM_LeafArea( cms, leafnum );
+	mask = CM_ClusterPVS( cms, cluster );
+
+	leafnum = CM_PointLeafnum( cms, p2 );
+	cluster = CM_LeafCluster( cms, leafnum );
+	area2 = CM_LeafArea( cms, leafnum );
+
+	if( ( !( mask[cluster>>3] & ( 1<<( cluster&7 ) ) ) ) )
+		return false;
+
+	if( !CM_AreasConnected( cms, area1, area2 ) )
+		return false; // a door blocks sight
+
+	return true;
 }
 
 /*

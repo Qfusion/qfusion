@@ -490,6 +490,11 @@ static inline void trap_CM_InlineModelBounds( struct cmodel_s *cmodel, vec3_t mi
 	CGAME_IMPORT.CM_InlineModelBounds( cmodel, mins, maxs );
 }
 
+static inline bool trap_CM_InPVS( const vec3_t p1, const vec3_t p2 )
+{
+	return CGAME_IMPORT.CM_InPVS( p1, p2 );
+}
+
 static inline struct sfx_s *trap_S_RegisterSound( const char *name )
 {
 	return CGAME_IMPORT.S_RegisterSound( name );

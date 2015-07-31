@@ -367,40 +367,10 @@ static void PF_PureModel( const char *name )
 }
 
 /*
-* PF_inVisSet
-*
-* Also checks portalareas so that doors block sight
-*/
-static bool PF_inVisSet( const vec3_t p1, const vec3_t p2, uint8_t *( *vis )( cmodel_state_t *, int ) )
-{
-	int leafnum;
-	int cluster;
-	int area1, area2;
-	uint8_t *mask;
-
-	leafnum = CM_PointLeafnum( svs.cms, p1 );
-	cluster = CM_LeafCluster( svs.cms, leafnum );
-	area1 = CM_LeafArea( svs.cms, leafnum );
-	mask = vis( svs.cms, cluster );
-
-	leafnum = CM_PointLeafnum( svs.cms, p2 );
-	cluster = CM_LeafCluster( svs.cms, leafnum );
-	area2 = CM_LeafArea( svs.cms, leafnum );
-
-	if( ( !( mask[cluster>>3] & ( 1<<( cluster&7 ) ) ) ) )
-		return false;
-
-	if( !CM_AreasConnected( svs.cms, area1, area2 ) )
-		return false; // a door blocks sight
-
-	return true;
-}
-
-/*
 * PF_inPVS
 */
 static bool PF_inPVS( const vec3_t p1, const vec3_t p2 ) {
-	return PF_inVisSet( p1, p2, CM_ClusterPVS );
+	return CM_InPVS( svs.cms, p1, p2 );
 }
 
 /*
