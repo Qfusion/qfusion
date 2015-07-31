@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   91
+#define	CGAME_API_VERSION   92
 
 //
 // structs and variables shared with the main engine
@@ -211,6 +211,7 @@ typedef struct
 	int ( *CM_TransformedPointContents )( vec3_t p, struct cmodel_s *cmodel, vec3_t origin, vec3_t angles );
 	void ( *CM_RoundUpToHullSize )( vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 	void ( *CM_InlineModelBounds )( struct cmodel_s *cmodel, vec3_t mins, vec3_t maxs );
+	bool ( *CM_InPVS )( const vec3_t p1, const vec3_t p2 );
 
 	// sound system
 	struct sfx_s *( *S_RegisterSound )( const char *name );

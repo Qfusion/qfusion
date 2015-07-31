@@ -357,6 +357,9 @@ void CG_DrawMiniMap( int x, int y, int iw, int ih, bool draw_playernames, bool d
 			}
 			else
 			{
+				// players might be SVF_FORCETEAM'ed for teammates, prevent ugly flickering for specs
+				if( cg.predictedPlayerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR && !trap_CM_InPVS( cg.view.origin, cent->ent.origin ) )
+					continue;
 				CG_TeamColor( cent->current.team, tmp_col );
 			}
 

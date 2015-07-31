@@ -866,6 +866,10 @@ void CG_DrawTeamMates( void )
 		if( cg_showTeamMates->integer == 1 && trace.fraction == 1.0f )
 			continue;
 
+		// players might be SVF_FORCETEAM'ed for teammates, prevent ugly flickering for specs
+		if( cg.predictedPlayerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR && !trap_CM_InPVS( cg.view.origin, cent->ent.origin ) )
+			continue;
+
 		VectorSet( drawOrigin, cent->ent.origin[0], cent->ent.origin[1], cent->ent.origin[2] + playerbox_stand_maxs[2] + 16 );
 
 		// find the 3d point in 2d screen

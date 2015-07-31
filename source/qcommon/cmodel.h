@@ -52,10 +52,7 @@ void CM_TransformedBoxTrace( cmodel_state_t *cms, trace_t *tr, vec3_t start, vec
 
 void CM_RoundUpToHullSize( cmodel_state_t *cms, vec3_t mins, vec3_t maxs, struct cmodel_s *cmodel );
 
-uint8_t *CM_ClusterPVS( cmodel_state_t *cms, int cluster );
-uint8_t *CM_ClusterPHS( cmodel_state_t *cms, int cluster );
 int CM_ClusterRowSize( cmodel_state_t *cms );
-int CM_ClusterRowLongs( cmodel_state_t *cms );
 int CM_AreaRowSize( cmodel_state_t *cms );
 int CM_PointLeafnum( cmodel_state_t *cms, const vec3_t p );
 
@@ -79,6 +76,8 @@ void CM_ReadPortalState( cmodel_state_t *cms, int file );
 void CM_MergePVS( cmodel_state_t *cms, vec3_t org, uint8_t *out );
 void CM_MergePHS( cmodel_state_t *cms, int cluster, uint8_t *out );
 int CM_MergeVisSets( cmodel_state_t *cms, vec3_t org, uint8_t *pvs, uint8_t *areabits );
+
+bool CM_InPVS( cmodel_state_t *cms, const vec3_t p1, const vec3_t p2 );
 
 //
 cmodel_state_t *CM_New( void *mempool );
