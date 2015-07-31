@@ -392,16 +392,11 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		return;
 	}
 
-	if( FS_CheckPakExtension( filename ) && !cls.download.requestpak )
+	if( FS_CheckPakExtension( filename ) != cls.download.requestpak )
 	{
-		Com_Printf( "Got a pak file when requesting normal one, not downloading\n" );
-		CL_DownloadDone();
-		return;
-	}
-
-	if( !FS_CheckPakExtension( filename ) && cls.download.requestpak )
-	{
-		Com_Printf( "Got a non pak file when requesting pak, not downloading\n" );
+		const char *requested = cls.download.requestpak ? "pak" : "normal";
+		const char *got = cls.download.requestpak ? "normal" : "pak";
+		Com_Printf( "Got a %s file when requesting a % file, not downloading\n", got, requested );
 		CL_DownloadDone();
 		return;
 	}
