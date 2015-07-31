@@ -84,9 +84,19 @@ bool CL_DownloadRequest( const char *filename, bool requestpak )
 	}
 	else
 	{
+		const char *extension;
+
 		if( FS_FOpenFile( filename, NULL, FS_READ ) != -1 )
 		{
 			Com_Printf( "Can't download: %s. File already exists.\n", filename );
+			return false;
+		}
+
+		// only allow demo downloads
+		extension = COM_FileExtension( filename );
+		if( !extension || Q_stricmp( extension, APP_DEMO_EXTENSION_STR ) )
+		{
+			Com_Printf( "Can't download, got arbitrary file type: %s\n", filename );
 			return false;
 		}
 	}
@@ -157,7 +167,6 @@ static void CL_DownloadComplete( void )
 {
 	unsigned checksum = 0;
 	int length;
-	bool updateMapList = false;
 
 	FS_FCloseFile( cls.download.filenum );
 	cls.download.filenum = 0;
@@ -196,20 +205,10 @@ static void CL_DownloadComplete( void )
 		return;
 	}
 
-	if( FS_CheckPakExtension( cls.download.name ) )
-	{
-		updateMapList = true;
-	}
-	else
-	{
-		const char *extension = COM_FileExtension( cls.download.name );
-		if( extension && !Q_stricmp( extension, ".bsp" ) )
-			updateMapList = true;
-	}
-
 	// Maplist hook so we also know when a new map is added
-	if( updateMapList )
+	if( FS_CheckPakExtension( cls.download.name ) ) {
 		ML_Update ();
+	}
 
 	cls.download.successCount++;
 	cls.download.timeout = 0;
@@ -220,7 +219,7 @@ static void CL_DownloadComplete( void )
 */
 void CL_FreeDownloadList( void )
 {
-	download_list_t	*next;
+	download_list_t *next;
 
 	while( cls.download.list )
 	{
@@ -339,7 +338,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 	bool modules_download = false;
 	bool explicit_pure_download = false;
 	const char *baseurl;
-	download_list_t	*dl;
+	download_list_t *dl;
 
 	// ignore download commands coming from demo files
 	if( cls.demo.playing )
