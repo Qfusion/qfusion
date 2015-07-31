@@ -1686,6 +1686,10 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 	int width = 1, height = 1, samples = 1;
 	bool loaded = false;
 
+	if( len >= pathsize ) {
+		return false;
+	}
+
 	memcpy( pathname, image->name, len + 1 );
 	
 	Q_strncatz( pathname, ".ktx", pathsize );
