@@ -392,26 +392,18 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		return;
 	}
 
-	if( cls.download.requestpak )
+	if( FS_CheckPakExtension( filename ) && !cls.download.requestpak )
 	{
-		if( !FS_CheckPakExtension( filename ) )
-		{
-			Com_Printf( "Got a non pak file when requesting pak, not downloading\n" );
-			CL_DownloadDone();
-			return;
-		}
+		Com_Printf( "Got a pak file when requesting normal one, not downloading\n" );
+		CL_DownloadDone();
+		return;
 	}
-	else
+
+	if( !FS_CheckPakExtension( filename ) && cls.download.requestpak )
 	{
-		// only allow downloading files with safe extensions
-		const char *extension = COM_FileExtension( filename );
-		if( !extension || Q_stricmp( extension, APP_DEMO_EXTENSION_STR ) )
-		{
-			Com_Printf( "Not downloading, disallowed extension: %s\n",
-				extension ? extension : "(null)" );
-			CL_DownloadDone();
-			return;
-		}
+		Com_Printf( "Got a non pak file when requesting pak, not downloading\n" );
+		CL_DownloadDone();
+		return;
 	}
 
 	if( !strchr( filename, '/' ) )
