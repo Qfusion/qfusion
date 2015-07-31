@@ -1699,6 +1699,87 @@ static const char *G_VoteAllowUnevenCurrent( void )
 		return "0";
 }
 
+/*
+* Shuffle
+*/
+typedef struct rand_player_s 
+{
+	int ent;
+	int weight;
+} rand_player_t;
+
+static int G_VoteShuffleComparePlayers( const void *a, const void *b )
+{
+	const rand_player_t *pa = ( const rand_player_t * )a;
+	const rand_player_t *pb = ( const rand_player_t * )b;
+	return pa - pb;
+}
+
+static void G_VoteAllowShufflePassed( callvotedata_t *vote )
+{
+	int i;
+	int p1, p2, inc;
+	int team;
+	int numplayers;
+	rand_player_t players[MAX_CLIENTS];
+
+	numplayers = 0;
+	for( team = TEAM_ALPHA; team < GS_MAX_TEAMS; team++ )
+	{
+		if( !teamlist[team].numplayers )
+			continue;		
+		for( i = 0; i < teamlist[team].numplayers; i++ )
+		{
+			players[numplayers].ent = teamlist[team].playerIndices[i];
+			players[numplayers].weight = rand();
+			numplayers++;
+		}
+	}
+
+	if( !numplayers )
+		return;
+
+	qsort( players, numplayers, sizeof( rand_player_t ), ( int ( * )( const void *, const void * ) )G_VoteShuffleComparePlayers );
+
+	if( rand() & 1 )
+	{
+		p1 = 0;
+		p2 = numplayers - 1;
+		inc = 1;
+	}
+	else
+	{
+		p1 = numplayers - 1;
+		p2 = 0;
+		inc = -1;
+	}
+
+	// put players into teams
+	team = rand() % numplayers;
+	for( i = p1; ; i += inc )
+	{
+		edict_t *e = game.edicts + players[i].ent;
+		int newteam = TEAM_ALPHA + team++ % (GS_MAX_TEAMS - TEAM_ALPHA);
+
+		if( e->s.team != newteam )
+			G_Teams_SetTeam( e, newteam );
+
+		if( i == p2 )
+			break;
+	}
+}
+
+static bool G_VoteAllowShuffleValidate( callvotedata_t *vote, bool first )
+{
+	if( GS_MatchState() >= MATCH_STATE_COUNTDOWN )
+	{
+		if( first ) G_PrintMsg( vote->caller, "%sThe game is not in warmup mode\n", S_COLOR_RED );
+		return false;
+	}
+
+	return true;
+}
+
 //================================================
 //
 //================================================
@@ -2717,7 +2798,16 @@ void G_CallVotes_Init( void )
 	callvote->argument_format = G_LevelCopyString( "<1 or 0>" );
 	callvote->argument_type = G_LevelCopyString( "bool" );
 	callvote->need_auth = true;
-	callvote->help = G_LevelCopyString( "Toggles whether uneven teams is allowed" );
+
+	callvote = G_RegisterCallvote( "shuffle" );
+	callvote->expectedargs = 0;
+	callvote->validate = G_VoteAllowShuffleValidate;
+	callvote->execute = G_VoteAllowShufflePassed;
+	callvote->current = NULL;
+	callvote->extraHelp = NULL;
+	callvote->argument_format = NULL;
+	callvote->argument_type = NULL;
+	callvote->help = G_LevelCopyString( "Shuffles teams" );
 
 	// wsw : pb : server admin can now disable a specific callvote command (g_disable_vote_<callvote name>)
 	for( callvote = callvotesHeadNode; callvote != NULL; callvote = callvote->next )
