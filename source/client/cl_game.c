@@ -573,7 +573,8 @@ void CL_GameModule_Init( void )
 	cge->Init( cls.servername, cl.playernum,
 		viddef.width, viddef.height, VID_GetPixelRatio(),
 		cls.demo.playing, cls.demo.playing ? cls.demo.filename : "",
-		cls.sv_pure, cl.snapFrameTime, APP_PROTOCOL_VERSION, cls.mediaRandomSeed, cl.gamestart );
+		cls.sv_pure, cl.snapFrameTime, APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR,
+		cls.mediaRandomSeed, cl.gamestart );
 
 	Com_DPrintf( "CL_GameModule_Init: %.2f seconds\n", (float)( Sys_Milliseconds() - start ) * 0.001f );
 

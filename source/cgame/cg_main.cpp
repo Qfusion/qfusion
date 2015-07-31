@@ -1098,7 +1098,8 @@ void CG_Reset( void )
 void CG_Init( const char *serverName, unsigned int playerNum,
 			 int vidWidth, int vidHeight, float pixelRatio,
 			 bool demoplaying, const char *demoName, bool pure, 
-			 unsigned int snapFrameTime, int protocol, int sharedSeed, bool gameStart )
+			 unsigned int snapFrameTime, int protocol, const char *demoExtension,
+			 int sharedSeed, bool gameStart )
 {
 	CG_InitGameShared();
 
@@ -1126,6 +1127,7 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	// demo
 	cgs.demoPlaying = demoplaying == true;
 	cgs.demoName = demoName;
+	Q_strncpyz( cgs.demoExtension, demoExtension, sizeof( cgs.demoExtension ) );
 
 	// whether to only allow pure files
 	cgs.pure = pure == true;
