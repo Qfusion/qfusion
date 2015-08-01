@@ -620,6 +620,9 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 		if( ( dm.dmPelsWidth == prevwidth ) && ( dm.dmPelsHeight == prevheight ) )
 			continue;
 
+		if( ChangeDisplaySettings( &dm, CDS_TEST|CDS_FULLSCREEN ) != DISP_CHANGE_SUCCESSFUL )
+			continue;
+
 		if( modes )
 		{
 			modes[count].width = dm.dmPelsWidth;
