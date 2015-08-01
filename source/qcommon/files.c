@@ -124,6 +124,7 @@ typedef struct pack_s
 typedef struct filehandle_s
 {
 	FILE *fstream;
+	packfile_t *pakFile;
 	unsigned pakOffset;
 	unsigned uncompressedSize;		// uncompressed size
 	unsigned offset;				// current read/write pos
@@ -956,6 +957,7 @@ int FS_FOpenAbsoluteFile( const char *filename, int *filenum, int mode )
 	*filenum = FS_OpenFileHandle();
 	file = &fs_filehandles[*filenum - 1];
 	file->fstream = f;
+	file->pakFile = NULL;
 	file->pakOffset = 0;
 	file->zipEntry = NULL;
 	file->uncompressedSize = end;
@@ -1015,6 +1017,7 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum )
 	file->uncompressedSize = pakFile->uncompressedSize;
 	file->offset = 0;
 	file->zipEntry = NULL;
+	file->pakFile = pakFile;
 
 	if( !( pakFile->flags & FS_PACKFILE_COHERENT ) )
 	{
@@ -1188,6 +1191,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		file = &fs_filehandles[*filenum - 1];
 		file->fstream = f;
 		file->pakOffset = 0;
+		file->pakFile = NULL;
 		file->zipEntry = NULL;
 		file->uncompressedSize = end;
 		file->offset = 0;
@@ -1248,6 +1252,7 @@ static int _FS_FOpenFile( const char *filename, int *filenum, int mode, bool bas
 		*filenum = FS_OpenFileHandle();
 		file = &fs_filehandles[*filenum - 1];
 		file->pakOffset = 0;
+		file->pakFile = NULL;
 		file->zipEntry = NULL;
 		file->fstream = f;
 		file->uncompressedSize = end;
@@ -1424,6 +1429,9 @@ int FS_Read( void *buffer, size_t len, int file )
 		return 0;
 
 	fh = FS_FileHandleForNum( file );
+
+	if( fh->fstream && fh->pakFile && len + fh->offset > fh->uncompressedSize )
+		len = fh->uncompressedSize - fh->offset;
 
 	if( fh->zipEntry )
 		total = FS_ReadPK3File( ( uint8_t * )buffer, len, fh );
@@ -1663,7 +1671,7 @@ int FS_Eof( int file )
 	if( fh->gzstream )
 		return gzeof( fh->gzstream );
 	if( fh->fstream )
-		return feof( fh->fstream );
+		return fh->pakFile ? fh->offset >= fh->uncompressedSize : feof( fh->fstream );
 	return 1;
 }
 
