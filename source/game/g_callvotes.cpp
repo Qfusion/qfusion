@@ -1771,6 +1771,12 @@ static void G_VoteAllowShufflePassed( callvotedata_t *vote )
 
 static bool G_VoteAllowShuffleValidate( callvotedata_t *vote, bool first )
 {
+	if( !GS_TeamBasedGametype() || level.gametype.maxPlayersPerTeam < 2 )
+	{
+		if( first ) G_PrintMsg( vote->caller, "%sShuffle only works in team-based game modes\n", S_COLOR_RED );
+		return false;
+	}
+
 	if( GS_MatchState() >= MATCH_STATE_COUNTDOWN )
 	{
 		if( first ) G_PrintMsg( vote->caller, "%sThe game is not in warmup mode\n", S_COLOR_RED );
