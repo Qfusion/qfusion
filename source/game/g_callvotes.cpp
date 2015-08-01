@@ -1777,9 +1777,8 @@ static bool G_VoteAllowShuffleValidate( callvotedata_t *vote, bool first )
 		return false;
 	}
 
-	if( GS_MatchState() >= MATCH_STATE_COUNTDOWN )
+	if( GS_MatchState() >= MATCH_STATE_POSTMATCH )
 	{
-		if( first ) G_PrintMsg( vote->caller, "%sThe game is not in warmup mode\n", S_COLOR_RED );
 		return false;
 	}
 
