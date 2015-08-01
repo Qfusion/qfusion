@@ -197,7 +197,7 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 		int a;
 		DEVMODE dm;
 
-		ri.Com_DPrintf( "...attempting fullscreen\n" );
+		ri.Com_Printf( "...attempting fullscreen\n" );
 
 		memset( &dm, 0, sizeof( dm ) );
 
@@ -211,22 +211,21 @@ static bool VID_SetFullscreenMode( int displayFrequency, bool fullscreen )
 		{
 			dm.dmFields |= DM_DISPLAYFREQUENCY;
 			dm.dmDisplayFrequency = displayFrequency;
-			ri.Com_DPrintf( "...using display frequency %i\n", dm.dmDisplayFrequency );
+			ri.Com_Printf( "...using display frequency %i\n", dm.dmDisplayFrequency );
 		}
 
-		ri.Com_DPrintf( "...calling CDS: " );
+		ri.Com_Printf( "...calling CDS: " );
 		a = ChangeDisplaySettings( &dm, CDS_FULLSCREEN );
 		if( a == DISP_CHANGE_SUCCESSFUL )
 		{
-			ri.Com_DPrintf( "ok\n" );
+			ri.Com_Printf( "ok\n" );
 			VID_SetWindowSize( true );
 			return true;
 		}
 
-		ri.Com_DPrintf( "failed: %i\n", a );
+		ri.Com_Printf( "failed: %x\n", a );
 	}
 
-	ri.Com_DPrintf( "...setting windowed mode\n" );
 	ChangeDisplaySettings( 0, 0 );
 	VID_SetWindowSize( false );
 
