@@ -378,20 +378,6 @@ static void CG_UpdatePlayerState( void )
 	else
 		CG_SetFramePlayerState( &cg.oldFrame, index );
 
-	if( cg.frame.playerState.pmove.pm_type == PM_SPECTATOR || // force clear if spectator
-		cg.frame.playerState.pmove.pm_type == PM_CHASECAM )
-	{
-		if( !( cg.oldFrame.playerState.pmove.pm_type == PM_SPECTATOR || cg.oldFrame.playerState.pmove.pm_type == PM_CHASECAM )
-			|| cg.oldFrame.serverFrame == cg.frame.serverFrame )
-			trap_Cvar_ForceSet( "scr_forceclear", "1" );
-	}
-	else
-	{
-		if( ( cg.oldFrame.playerState.pmove.pm_type == PM_SPECTATOR || cg.oldFrame.playerState.pmove.pm_type == PM_CHASECAM )
-			|| cg.oldFrame.serverFrame == cg.frame.serverFrame )
-			trap_Cvar_ForceSet( "scr_forceclear", "0" );
-	}
-
 	cg.predictedPlayerState = cg.frame.playerState;
 }
 
