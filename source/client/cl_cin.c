@@ -65,7 +65,7 @@ static void SCR_CinematicRawSamples( void *unused, unsigned int samples,
 {
 	(void)unused;
 	
-	CL_SoundModule_RawSamples( samples, rate, width, channels, data, false );
+	CL_SoundModule_RawSamples( samples, rate, width, channels, data, true );
 }
 
 /*
