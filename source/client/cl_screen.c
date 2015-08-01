@@ -51,7 +51,6 @@ static cvar_t *scr_debuggraph;
 static cvar_t *scr_graphheight;
 static cvar_t *scr_graphscale;
 static cvar_t *scr_graphshift;
-static cvar_t *scr_forceclear;
 
 static cvar_t *con_fontSystemFamily;
 static cvar_t *con_fontSystemFallbackFamily;
@@ -494,7 +493,6 @@ void SCR_InitScreen( void )
 	scr_graphheight = Cvar_Get( "graphheight", "32", 0 );
 	scr_graphscale = Cvar_Get( "graphscale", "1", 0 );
 	scr_graphshift = Cvar_Get( "graphshift", "0", 0 );
-	scr_forceclear = Cvar_Get( "scr_forceclear", "0", CVAR_READONLY );
 
 	scr_initialized = true;
 }
@@ -693,7 +691,7 @@ void SCR_UpdateScreen( void )
 
 	cinematic = cls.state == CA_CINEMATIC ? true : false;
 	forcevsync = cinematic;
-	forceclear = cinematic || scr_forceclear->integer ? true : false;
+	forceclear = cinematic;
 
 	for( i = 0; i < numframes; i++ )
 	{

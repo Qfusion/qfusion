@@ -1594,6 +1594,11 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 #endif
 	}
 
+	if( forceClear )
+	{
+		RB_Clear( GL_COLOR_BUFFER_BIT, 0, 0, 0, 1 );
+	}
+
 	// texturemode stuff
 	if( r_texturemode->modified )
 	{
