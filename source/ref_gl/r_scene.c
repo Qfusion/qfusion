@@ -254,6 +254,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		static shaderpass_t p;
 		static shader_t s;
 		int i;
+		int fw = w, fh = h;
 		static tcmod_t tcmod;
 		mat4_t m;
 
@@ -287,11 +288,16 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 				p.tcmods = &tcmod;
 			}
 			else {
+				image_t *cb = RFB_GetObjectTextureAttachment( dstFbo, false );
+				if( cb ) {
+					fw = cb->upload_width;
+					fh = cb->upload_height;
+				}
 				p.numtcmods = 0;
 			}
 
 			Matrix4_Identity( m );
-			Matrix4_Scale2D( m, w, h );
+			Matrix4_Scale2D( m, fw, fh );
 			Matrix4_Translate2D( m, x, y );
 			RB_LoadObjectMatrix( m );
 
