@@ -1425,13 +1425,15 @@ int FS_Read( void *buffer, size_t len, int file )
 	int total;
 
 	// read in chunks for progress bar
-	if( !len || !buffer )
+	if( !buffer )
 		return 0;
 
 	fh = FS_FileHandleForNum( file );
 
 	if( fh->fstream && fh->pakFile && len + fh->offset > fh->uncompressedSize )
 		len = fh->uncompressedSize - fh->offset;
+	if( !len )
+		return 0;
 
 	if( fh->zipEntry )
 		total = FS_ReadPK3File( ( uint8_t * )buffer, len, fh );
