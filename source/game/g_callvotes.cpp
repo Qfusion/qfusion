@@ -1771,7 +1771,7 @@ static void G_VoteAllowShufflePassed( callvotedata_t *vote )
 
 static bool G_VoteAllowShuffleValidate( callvotedata_t *vote, bool first )
 {
-	if( !GS_TeamBasedGametype() || level.gametype.maxPlayersPerTeam < 2 )
+	if( !GS_TeamBasedGametype() || level.gametype.maxPlayersPerTeam == 1 )
 	{
 		if( first ) G_PrintMsg( vote->caller, "%sShuffle only works in team-based game modes\n", S_COLOR_RED );
 		return false;
