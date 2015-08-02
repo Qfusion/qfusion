@@ -759,9 +759,16 @@ bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, cons
 	if( s[0] == 'O' )
 	{
 		// out of date message
-		bool isSteamMaster = false;
-		if( TV_Downstream_IsMaster( address, &isSteamMaster ) && isSteamMaster )
-			Com_Printf( "Server is out of date and cannot be added to the Steam master servers.\n" );
+		static bool printed = false;
+		if( !printed )
+		{
+			bool isSteamMaster = false;
+			if( TV_Downstream_IsMaster( address, &isSteamMaster ) && isSteamMaster )
+			{
+				Com_Printf( "Server is out of date and cannot be added to the Steam master servers.\n" );
+				printed = true;
+			}
+		}
 		return true;
 	}
 #endif
