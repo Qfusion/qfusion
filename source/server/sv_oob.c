@@ -1219,13 +1219,18 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 	if( s[0] == 'O' )
 	{
 		// out of date message
-		int i;
-		for( i = 0; i < MAX_MASTERS; i++ )
+		static bool printed = false;
+		if( !printed )
 		{
-			if( sv_masters[i].steam && NET_CompareAddress( address, &sv_masters[i].address ) )
+			int i;
+			for( i = 0; i < MAX_MASTERS; i++ )
 			{
-				Com_Printf( "Server is out of date and cannot be added to the Steam master servers.\n" );
-				return true;
+				if( sv_masters[i].steam && NET_CompareAddress( address, &sv_masters[i].address ) )
+				{
+					Com_Printf( "Server is out of date and cannot be added to the Steam master servers.\n" );
+					printed = true;
+					return true;
+				}
 			}
 		}
 		return true;
