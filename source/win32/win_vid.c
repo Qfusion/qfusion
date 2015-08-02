@@ -614,7 +614,7 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 
 	for( i = 0; EnumDisplaySettings( NULL, i, &dm ); i++ )
 	{
-		if( dm.dmBitsPerPel < 24 )
+		if( dm.dmBitsPerPel < 15 )
 			continue;
 
 		if( ( dm.dmPelsWidth == prevwidth ) && ( dm.dmPelsHeight == prevheight ) )
