@@ -609,7 +609,7 @@ static void RB_UploadStaticQuadIndices( int id )
 	mesh_t mesh;
 	mesh_vbo_t *vbo = rb.streamVBOs[-id - 1];
 
-	assert( MAX_BATCH_VERTS < MAX_STREAM_VBO_VERTS );
+	assert( MAX_BATCH_VERTS <= MAX_STREAM_VBO_VERTS );
 
 	vertsOffset = 0;
 	elemsOffset = 0;
