@@ -103,7 +103,7 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 		if( SDL_GetDisplayMode( 0, num, &mode ) )
 			continue;
 
-		if( SDL_BITSPERPIXEL( mode.format ) < 16 )
+		if( SDL_BITSPERPIXEL( mode.format ) < 15 )
 			continue;
 
 		if( ( mode.w == prevwidth ) && ( mode.h == prevheight ) )
