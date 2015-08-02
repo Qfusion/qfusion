@@ -53,13 +53,18 @@ void GLimp_SetWindowIcon( void )
 
 static bool GLimp_SetWindowFullscreen( bool fullscreen )
 {
+	Uint32 flags = 0;
+
 	if( fullscreen ) {
-		// we need to use SDL_WINDOW_FULLSCREEN_DESKTOP instead of SDL_WINDOW_FULLSCREEN to support Alt+Tab from fullscreen on OS X
-		return SDL_SetWindowFullscreen( glw_state.sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP ) == 0;
+#ifdef __APPLE__
+		// we need to use SDL_WINDOW_FULLSCREEN_DESKTOP to support Alt+Tab from fullscreen on OS X
+		flags = SDL_WINDOW_FULLSCREEN_DESKTOP;
+#else
+		flags = SDL_WINDOW_FULLSCREEN;
+#endif
 	}
-	else {
-		return SDL_SetWindowFullscreen( glw_state.sdl_window, 0 ) == 0;
-	}
+
+	return SDL_SetWindowFullscreen( glw_state.sdl_window, flags ) == 0;
 }
 
 static void GLimp_CreateWindow( int x, int y, int width, int height )
