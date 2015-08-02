@@ -83,6 +83,12 @@ void VID_FlashWindow( int count )
  */
 unsigned int VID_GetSysModes( vidmode_t *modes )
 {
+#ifdef __APPLE__
+	// only support borderless fullscreen because Alt+Tab doesn't work in fullscreen
+	if( modes )
+		VID_GetDefaultMode( &modes[0].width, &modes[0].height );
+	return 1;
+#else
 	int num;
 	SDL_DisplayMode mode;
 	int prevwidth = 0, prevheight = 0;
@@ -116,6 +122,7 @@ unsigned int VID_GetSysModes( vidmode_t *modes )
 	}
 
 	return ret;
+#endif
 }
 
 /*
