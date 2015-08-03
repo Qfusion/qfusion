@@ -905,7 +905,7 @@ void CG_Event_Fall( entity_state_t *state, int parm )
 
 		CG_StartFallKickEffect( ( parm + 5 ) * 10 );
 
-		if( parm >= 5 )
+		if( parm >= 15 )
 			CG_DamageIndicatorAdd( parm, tv( 0, 0, 1 ) );
 	}
 
