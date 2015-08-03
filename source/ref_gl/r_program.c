@@ -613,8 +613,8 @@ static const glsl_feature_t glsl_features_material[] =
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
-	{ GLSL_SHADER_COMMON_DLIGHTS_32, "#define NUM_DLIGHTS 32\n", "_dl32" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#define NUM_DLIGHTS 16\n", "_dl16" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_12, "#define NUM_DLIGHTS 12\n", "_dl12" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_8, "#define NUM_DLIGHTS 8\n", "_dl8" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_4, "#define NUM_DLIGHTS 4\n", "_dl4" },
 
@@ -756,8 +756,8 @@ static const glsl_feature_t glsl_features_outline[] =
 
 static const glsl_feature_t glsl_features_dynamiclights[] =
 {
-	{ GLSL_SHADER_COMMON_DLIGHTS_32, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 32\n", "_dl32" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 16\n", "_dl16" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_12, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 12\n", "_dl12" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_8, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 8\n", "_dl8" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_4, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 4\n", "_dl4" },
 
@@ -786,8 +786,8 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_FOG, "#define APPLY_FOG\n#define APPLY_FOG_IN 1\n", "_fog" },
 	{ GLSL_SHADER_COMMON_FOG_RGB, "#define APPLY_FOG_COLOR\n", "_rgb" },
 
-	{ GLSL_SHADER_COMMON_DLIGHTS_32, "#define NUM_DLIGHTS 32\n", "_dl32" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#define NUM_DLIGHTS 16\n", "_dl16" },
+	{ GLSL_SHADER_COMMON_DLIGHTS_12, "#define NUM_DLIGHTS 12\n", "_dl12" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_8, "#define NUM_DLIGHTS 8\n", "_dl8" },
 	{ GLSL_SHADER_COMMON_DLIGHTS_4, "#define NUM_DLIGHTS 4\n", "_dl4" },
 
