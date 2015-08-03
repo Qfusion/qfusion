@@ -642,10 +642,10 @@ static r_glslfeat_t RB_DlightbitsToProgramFeatures( unsigned int dlightBits )
 	if( numDlights <= 8 ) {
 		return GLSL_SHADER_COMMON_DLIGHTS_8;
 	}
-	if( numDlights <= 16 ) {
-		return GLSL_SHADER_COMMON_DLIGHTS_16;
+	if( numDlights <= 12 ) {
+		return GLSL_SHADER_COMMON_DLIGHTS_12;
 	}
-	return GLSL_SHADER_COMMON_DLIGHTS_32;
+	return GLSL_SHADER_COMMON_DLIGHTS_16;
 }
 
 /*
