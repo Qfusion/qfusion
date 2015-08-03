@@ -1069,8 +1069,9 @@ static void W_Touch_Bolt( edict_t *self, edict_t *other, cplane_t *plane, int su
 void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, float maxdamage, float mindamage, float maxknockback, float minknockback, int stun, int range, int mod, int timeDelta )
 {
 	vec3_t from, end, dir;
-	trace_t	tr;
-	edict_t	*ignore, *event, *hit, *damaged;
+	trace_t tr;
+	edict_t *ignore, *event, *hit, *damaged;
+	int hit_movetype;
 	int mask;
 	bool missed = true;
 	int dmgflags = 0;
@@ -1112,6 +1113,7 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 
 		// some entity was touched
 		hit = &game.edicts[tr.ent];
+		hit_movetype = hit->movetype; // backup the original movetype as the entity may "die"
 		if( hit == world )  // stop dead if hit the world
 			break;
 
@@ -1140,7 +1142,7 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 			damaged = hit;
 		}
 
-		if( hit->movetype == MOVETYPE_NONE || hit->movetype == MOVETYPE_PUSH )
+		if( hit_movetype == MOVETYPE_NONE || hit_movetype == MOVETYPE_PUSH )
 		{
 			damaged = NULL;
 			break;
@@ -1170,8 +1172,9 @@ void W_Fire_Electrobolt_Combined( edict_t *self, vec3_t start, vec3_t angles, fl
 void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles, float maxdamage, float mindamage, int maxknockback, int minknockback, int stun, int range, int minDamageRange, int mod, int timeDelta )
 {
 	vec3_t from, end, dir;
-	trace_t	tr;
-	edict_t	*ignore, *event, *hit;
+	trace_t tr;
+	edict_t *ignore, *event, *hit;
+	int hit_movetype;
 	int mask;
 	bool missed = true;
 	int dmgflags = 0;
@@ -1215,6 +1218,7 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 
 		// some entity was touched
 		hit = &game.edicts[tr.ent];
+		hit_movetype = hit->movetype; // backup the original movetype as the entity may "die"
 		if( hit == world )  // stop dead if hit the world
 			break;
 
@@ -1247,7 +1251,7 @@ void W_Fire_Electrobolt_FullInstant( edict_t *self, vec3_t start, vec3_t angles,
 				missed = false;
 		}
 
-		if( hit->movetype == MOVETYPE_NONE || hit->movetype == MOVETYPE_PUSH )
+		if( hit_movetype == MOVETYPE_NONE || hit_movetype == MOVETYPE_PUSH )
 			break;
 	}
 
