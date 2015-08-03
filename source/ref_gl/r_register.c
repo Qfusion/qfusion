@@ -954,8 +954,8 @@ static void R_FinalizeGLExtensions( void )
 #ifdef GL_ES_VERSION_2_0
 	glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
 #else
-	// require GLSL 1.30+ for GPU skinning
-	if( glConfig.shadingLanguageVersion >= 130 ) {
+	// require GLSL 1.20+ for GPU skinning
+	if( glConfig.shadingLanguageVersion >= 120 ) {
 		// the maximum amount of bones we can handle in a vertex shader (2 vec4 uniforms per vertex)
 		glConfig.maxGLSLBones = bound( 0, glConfig.maxVertexUniformComponents / 8 - 19, r_maxglslbones->integer );
 	}
