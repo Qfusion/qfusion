@@ -303,7 +303,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol )
 	if( dedicated->integer )
 	{
 		g_autorecord = trap_Cvar_Get( "g_autorecord", "1", CVAR_ARCHIVE );
-		g_autorecord_maxdemos = trap_Cvar_Get( "g_autorecord_maxdemos", "20", CVAR_ARCHIVE );
+		g_autorecord_maxdemos = trap_Cvar_Get( "g_autorecord_maxdemos", "200", CVAR_ARCHIVE );
 	}
 	else
 	{
