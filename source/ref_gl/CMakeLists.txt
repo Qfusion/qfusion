@@ -51,7 +51,7 @@ else()
             "../unix/unix_xpm.c"
         )
 
-        set(REF_GL_PLATFORM_LIBRARIES "X11" "Xext" "Xinerama" "Xrandr" "Xxf86vm")
+        set(REF_GL_PLATFORM_LIBRARIES "X11" "Xext" "Xinerama" "Xrandr" "Xxf86vm" "m")
     endif()
 endif()
 
