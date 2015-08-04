@@ -66,6 +66,7 @@ public:
 	virtual void OnRender()
 	{
 		bool firstRender = false;
+		Rocket::Core::Dictionary parameters;
 
 		Element::OnRender();
 
@@ -77,6 +78,8 @@ public:
 			firstRender = true;
 			Initialized = true;
 			trap::R_RegisterWorldModel( mapName.CString() );
+
+			this->DispatchEvent( "registerworldmodel", parameters, false );
 		}
 
 		// refdef setup
@@ -114,9 +117,8 @@ public:
 
 		trap::R_Scissor( scissor_x, scissor_y, scissor_w, scissor_h );
 
-		if( firstRender ) {
-			Rocket::Core::Dictionary parameters;		
-			this->DispatchEvent( "firstrender", parameters, true );
+		if( firstRender ) {			
+			this->DispatchEvent( "firstrender", parameters, false );
 		}
 	}
 
