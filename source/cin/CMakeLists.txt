@@ -12,6 +12,12 @@ file(GLOB CIN_SOURCES
     "../gameshared/q_*.c"
 )
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set(CLIENT_PLATFORM_LIBRARIES "m")
+else ()
+        set(CLIENT_PLATFORM_LIBRARIES "")
+endif()
+
 add_library(cin SHARED ${CIN_SOURCES} ${CIN_HEADERS})
-target_link_libraries(cin PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${THEORA_LIBRARY})
+target_link_libraries(cin PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${THEORA_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(cin libs)
