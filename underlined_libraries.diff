@@ -1,0 +1,96 @@
+diff --git a/source/cin/CMakeLists.txt b/source/cin/CMakeLists.txt
+index fd6f114..3645ac6 100644
+--- a/source/cin/CMakeLists.txt
++++ b/source/cin/CMakeLists.txt
+@@ -12,6 +12,12 @@ file(GLOB CIN_SOURCES
+     "../gameshared/q_*.c"
+ )
+ 
++if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
++        set(CLIENT_PLATFORM_LIBRARIES "m")
++else ()
++        set(CLIENT_PLATFORM_LIBRARIES "")
++endif()
++
+ add_library(cin SHARED ${CIN_SOURCES} ${CIN_HEADERS})
+-target_link_libraries(cin PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${THEORA_LIBRARY})
+-qf_set_output_dir(cin libs)
+\ No newline at end of file
++target_link_libraries(cin PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${THEORA_LIBRARY} ${CLIENT_PLATFORM_LIBRARIES})
++qf_set_output_dir(cin libs)
+diff --git a/source/ftlib/CMakeLists.txt b/source/ftlib/CMakeLists.txt
+index e8f455c..f5dc7f1 100644
+--- a/source/ftlib/CMakeLists.txt
++++ b/source/ftlib/CMakeLists.txt
+@@ -12,6 +12,12 @@ file(GLOB FTLIB_SOURCES
+     "../gameshared/q_*.c"
+ )
+ 
++if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
++        set(CLIENT_PLATFORM_LIBRARIES "m")
++else ()
++        set(CLIENT_PLATFORM_LIBRARIES "")
++endif()
++
+ add_library(ftlib SHARED ${FTLIB_SOURCES} ${FTLIB_HEADERS})
+-target_link_libraries(ftlib PRIVATE ${FREETYPE_LIBRARIES})
+-qf_set_output_dir(ftlib libs)
+\ No newline at end of file
++target_link_libraries(ftlib PRIVATE ${FREETYPE_LIBRARIES} ${CLIENT_PLATFORM_LIBRARIES})
++qf_set_output_dir(ftlib libs)
+diff --git a/source/ref_gl/CMakeLists.txt b/source/ref_gl/CMakeLists.txt
+index 9c5c470..820b25b 100644
+--- a/source/ref_gl/CMakeLists.txt
++++ b/source/ref_gl/CMakeLists.txt
+@@ -51,10 +51,10 @@ else()
+             "../unix/unix_xpm.c"
+         )
+ 
+-        set(REF_GL_PLATFORM_LIBRARIES "X11" "Xext" "Xinerama" "Xrandr" "Xxf86vm")
++        set(REF_GL_PLATFORM_LIBRARIES "X11" "Xext" "Xinerama" "Xrandr" "Xxf86vm" "m")
+     endif()
+ endif()
+ 
+ add_library(ref_gl SHARED ${REF_GL_HEADERS} ${REF_GL_COMMON_SOURCES} ${REF_GL_PLATFORM_SOURCES})
+ target_link_libraries(ref_gl PRIVATE ${JPEG_LIBRARIES} ${PNG_LIBRARIES} ${REF_GL_PLATFORM_LIBRARIES})
+-qf_set_output_dir(ref_gl libs)
+\ No newline at end of file
++qf_set_output_dir(ref_gl libs)
+diff --git a/source/snd_openal/CMakeLists.txt b/source/snd_openal/CMakeLists.txt
+index bdc6d7b..3943f69 100644
+--- a/source/snd_openal/CMakeLists.txt
++++ b/source/snd_openal/CMakeLists.txt
+@@ -18,6 +18,12 @@ file(GLOB SND_OPENAL_SOURCES
+     "../gameshared/q_*.c"
+ )
+ 
++if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
++        set(CLIENT_PLATFORM_LIBRARIES "m")
++else ()
++        set(CLIENT_PLATFORM_LIBRARIES "")
++endif()
++
+ add_library(snd_openal SHARED ${SND_OPENAL_HEADERS} ${SND_OPENAL_SOURCES})
+-target_link_libraries(snd_openal PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES})
+-qf_set_output_dir(snd_openal libs)
+\ No newline at end of file
++target_link_libraries(snd_openal PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${CLIENT_PLATFORM_LIBRARIES})
++qf_set_output_dir(snd_openal libs)
+diff --git a/source/snd_qf/CMakeLists.txt b/source/snd_qf/CMakeLists.txt
+index e4208dd..2588a25 100644
+--- a/source/snd_qf/CMakeLists.txt
++++ b/source/snd_qf/CMakeLists.txt
+@@ -32,6 +32,12 @@ else()
+     set(SND_QF_PLATFORM_LIBRARIES "winmm.lib")
+ endif()
+ 
++if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
++        set(CLIENT_PLATFORM_LIBRARIES "m")
++else ()
++        set(CLIENT_PLATFORM_LIBRARIES "")
++endif()
++
+ add_library(snd_qf SHARED ${SND_QF_HEADERS} ${SND_QF_SOURCES} ${SND_QF_PLATFORM_SOURCES})
+-target_link_libraries(snd_qf PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${SND_QF_PLATFORM_LIBRARIES})
++target_link_libraries(snd_qf PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${SND_QF_PLATFORM_LIBRARIES} ${CLIENT_PLATFORM_LIBRARIES})
+ qf_set_output_dir(snd_qf libs)
