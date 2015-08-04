@@ -23,7 +23,11 @@ if (USE_SDL2 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
         "../sdl/sdl_snd.c"
     )
 
-    set(SND_QF_PLATFORM_LIBRARIES ${SDL2_LIBRARY})
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	set(SND_QF_PLATFORM_LIBRARIES ${SDL2_LIBRARY} "m")
+    else()
+	set(SND_QF_PLATFORM_LIBRARIES ${SDL2_LIBRARY})
+    endif()
 else()
     file(GLOB SND_QF_PLATFORM_SOURCES
         "../win32/win_snd.c"
