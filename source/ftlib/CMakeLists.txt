@@ -12,6 +12,12 @@ file(GLOB FTLIB_SOURCES
     "../gameshared/q_*.c"
 )
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set(CLIENT_PLATFORM_LIBRARIES "m")
+else ()
+        set(CLIENT_PLATFORM_LIBRARIES "")
+endif()
+
 add_library(ftlib SHARED ${FTLIB_SOURCES} ${FTLIB_HEADERS})
-target_link_libraries(ftlib PRIVATE ${FREETYPE_LIBRARIES})
+target_link_libraries(ftlib PRIVATE ${FREETYPE_LIBRARIES} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(ftlib libs)

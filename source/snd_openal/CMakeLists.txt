@@ -18,6 +18,12 @@ file(GLOB SND_OPENAL_SOURCES
     "../gameshared/q_*.c"
 )
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set(CLIENT_PLATFORM_LIBRARIES "m")
+else ()
+        set(CLIENT_PLATFORM_LIBRARIES "")
+endif()
+
 add_library(snd_openal SHARED ${SND_OPENAL_HEADERS} ${SND_OPENAL_SOURCES})
-target_link_libraries(snd_openal PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES})
+target_link_libraries(snd_openal PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(snd_openal libs)

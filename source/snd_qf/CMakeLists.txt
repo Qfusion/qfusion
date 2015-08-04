@@ -32,6 +32,12 @@ else()
     set(SND_QF_PLATFORM_LIBRARIES "winmm.lib")
 endif()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set(CLIENT_PLATFORM_LIBRARIES "m")
+else ()
+        set(CLIENT_PLATFORM_LIBRARIES "")
+endif()
+
 add_library(snd_qf SHARED ${SND_QF_HEADERS} ${SND_QF_SOURCES} ${SND_QF_PLATFORM_SOURCES})
-target_link_libraries(snd_qf PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${SND_QF_PLATFORM_LIBRARIES})
+target_link_libraries(snd_qf PRIVATE ${OGG_LIBRARY} ${VORBIS_LIBRARIES} ${SND_QF_PLATFORM_LIBRARIES} ${CLIENT_PLATFORM_LIBRARIES})
 qf_set_output_dir(snd_qf libs)
