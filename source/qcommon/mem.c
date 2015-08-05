@@ -217,6 +217,7 @@ void *_Mem_Realloc( void *data, size_t size, const char *filename, int fileline 
 
 	newdata = Mem_AllocExt( mem->pool, size, 0 );
 	memcpy( newdata, data, mem->size );
+	memset( (uint8_t *)newdata + mem->size, 0, size - mem->size );
 	Mem_Free( data );
 
 	return newdata;
