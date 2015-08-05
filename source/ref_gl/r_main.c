@@ -1134,7 +1134,7 @@ static void R_Clear( int bitMask )
 		clearColor = rsh.worldBrushModel->globalfog->shader->fog_dist < rn.visFarClip;
 		Vector4Scale( rsh.worldBrushModel->globalfog->shader->fog_color, 1.0/255.0, envColor );
 	} else {
-		clearColor = ( r_clear->integer && !rn.numDepthPortalSurfaces ) || R_FASTSKY();
+		clearColor = !rn.numDepthPortalSurfaces || R_FASTSKY();
 		Vector4Scale( mapConfig.environmentColor, 1.0/255.0, envColor );
 	}
 

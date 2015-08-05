@@ -101,7 +101,6 @@ cvar_t *r_texturecompression;
 cvar_t *r_picmip;
 cvar_t *r_skymip;
 cvar_t *r_nobind;
-cvar_t *r_clear;
 cvar_t *r_polyblend;
 cvar_t *r_lockpvs;
 cvar_t *r_screenshot_fmtstr;
@@ -1055,7 +1054,6 @@ static void R_Register( const char *screenshotsPrefix )
 	r_showtris = ri.Cvar_Get( "r_showtris", "0", CVAR_CHEAT );
 	r_leafvis = ri.Cvar_Get( "r_leafvis", "0", CVAR_CHEAT );
 	r_lockpvs = ri.Cvar_Get( "r_lockpvs", "0", CVAR_CHEAT );
-	r_clear = ri.Cvar_Get( "r_clear", "0", CVAR_ARCHIVE );
 	r_nobind = ri.Cvar_Get( "r_nobind", "0", 0 );
 	r_picmip = ri.Cvar_Get( "r_picmip", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
 	r_skymip = ri.Cvar_Get( "r_skymip", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );
