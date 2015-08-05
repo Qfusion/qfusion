@@ -99,7 +99,7 @@ void Sys_Error( const char *format, ... )
 	Q_vsnprintfz( string, sizeof( string ), format, argptr );
 	va_end( argptr );
 
-	__android_log_print( ANDROID_LOG_ERROR, APPLICATION, "Error: %s", string );
+	__android_log_write( ANDROID_LOG_ERROR, APPLICATION, string );
 
 	_exit( 1 );
 }
