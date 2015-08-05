@@ -1130,12 +1130,13 @@ static void R_Clear( int bitMask )
 	if( ( rn.refdef.rdflags & RDF_NOWORLDMODEL ) || rgbShadow ) {
 		clearColor = rgbShadow;
 		Vector4Set( envColor, 1, 1, 1, 1 );
-	} else if( rsh.worldBrushModel && rsh.worldBrushModel->globalfog ) {
-		clearColor = rsh.worldBrushModel->globalfog->shader->fog_dist < rn.visFarClip;
-		Vector4Scale( rsh.worldBrushModel->globalfog->shader->fog_color, 1.0/255.0, envColor );
 	} else {
 		clearColor = !rn.numDepthPortalSurfaces || R_FASTSKY();
-		Vector4Scale( mapConfig.environmentColor, 1.0/255.0, envColor );
+		if( rsh.worldBrushModel && rsh.worldBrushModel->globalfog && rsh.worldBrushModel->globalfog->shader ) {
+			Vector4Scale( rsh.worldBrushModel->globalfog->shader->fog_color, 1.0/255.0, envColor );
+		} else {
+			Vector4Scale( mapConfig.environmentColor, 1.0/255.0, envColor );
+		}
 	}
 
 	bits = 0;
