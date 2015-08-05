@@ -153,8 +153,7 @@ void Sys_InitDynvars( void )
 */
 void Sys_Error( const char *format, ... )
 {
-	static bool	recursive = false;
-	va_list	argptr;
+	va_list argptr;
 	char string[1024];
 
 	// change stdin to non blocking
@@ -164,19 +163,7 @@ void Sys_Error( const char *format, ... )
 	Q_vsnprintfz( string, sizeof( string ), format, argptr );
 	va_end( argptr );
 
-	if( recursive )
-	{
-		fprintf( stderr, "Recursive Sys_Error: %s\n", string );
-		_exit( 1 );
-	}
-
-	recursive = true;
-
 	fprintf( stderr, "Error: %s\n", string );
-
-	SV_Shutdown( string );
-	CL_Shutdown();
-	Qcommon_Shutdown();
 
 	_exit( 1 );
 }
