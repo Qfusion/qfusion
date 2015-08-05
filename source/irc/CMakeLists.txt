@@ -17,3 +17,7 @@ qf_set_output_dir(irc libs)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(irc PRIVATE "ws2_32.lib")
 endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    target_link_libraries(irc PRIVATE "m")
+endif()

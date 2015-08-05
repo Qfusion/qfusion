@@ -19,7 +19,7 @@ file(GLOB SND_OPENAL_SOURCES
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        set(SND_OPENAL_PLATFORM_LIBRARIES "m")
+        set(SND_OPENAL_PLATFORM_LIBRARIES "m" "dl")
 else ()
         set(SND_OPENAL_PLATFORM_LIBRARIES "")
 endif()
