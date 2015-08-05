@@ -92,25 +92,15 @@ void Sys_AppActivate( void )
 
 void Sys_Error( const char *format, ... )
 {
-	static bool	recursive = false;
-	va_list	argptr;
+	va_list argptr;
 	char string[1024];
 
 	va_start( argptr, format );
 	Q_vsnprintfz( string, sizeof( string ), format, argptr );
 	va_end( argptr );
 
-	if( recursive )
-	{
-		__android_log_print( ANDROID_LOG_ERROR, APPLICATION, "Recursive Sys_Error: %s", string );
-		_exit( 1 );
-	}
-
-	recursive = true;
 	__android_log_print( ANDROID_LOG_ERROR, APPLICATION, "Error: %s", string );
 
-	CL_Shutdown();
-	Qcommon_Shutdown();
 	_exit( 1 );
 }
 
