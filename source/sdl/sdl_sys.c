@@ -24,8 +24,6 @@ void Sys_Error( const char *format, ... )
 	va_list argptr;
 	char msg[1024];
 
-	CL_Shutdown();
-
 	va_start( argptr, format );
 	Q_vsnprintfz( msg, sizeof( msg ), format, argptr );
 	va_end( argptr );
