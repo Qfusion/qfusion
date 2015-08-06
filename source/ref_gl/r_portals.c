@@ -345,7 +345,6 @@ setup_and_render:
 			rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
 
-	rn.renderFlags |= (prevRenderFlags & RF_SOFT_PARTICLES);
 	rn.refdef.rdflags &= ~( RDF_UNDERWATER|RDF_CROSSINGWATER|RDF_FLIPPED );
 
 	rn.shadowGroup = NULL;
@@ -353,6 +352,7 @@ setup_and_render:
 	rn.portalmasklist = NULL;
 
 	rn.renderFlags |= RF_CLIPPLANE;
+	rn.renderFlags &= ~RF_SOFT_PARTICLES;
 	rn.clipPlane = *portal_plane;
 
 	rn.farClip = R_DefaultFarClip();
@@ -517,7 +517,8 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal )
 		return;
 	}
 
-	rn.renderFlags = ( rn.renderFlags|RF_PORTALVIEW|RF_SOFT_PARTICLES );
+	rn.renderFlags = ( rn.renderFlags|RF_PORTALVIEW );
+	rn.renderFlags &= ~RF_SOFT_PARTICLES;
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
 	rn.farClip = R_DefaultFarClip();
