@@ -138,6 +138,9 @@ bool R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog
 	if( !list || !shader ) {
 		return false;
 	}
+	if( Shader_ReadDepth( shader ) && ( rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
+		return false;
+	}
 
 	shaderSort = shader->sort;
 	depthWrite = (shader->flags & SHADER_DEPTHWRITE) ? true : false;
