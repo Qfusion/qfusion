@@ -597,7 +597,7 @@ static void R_RenderDebugSurface( const refdef_t *fd )
 		if( r_speeds->integer == 5 ) {
 			// VBO debug mode
 			R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces, 
-				surf->drawSurf->vbo->numVerts, surf->drawSurf->vbo->numElems,
+				surf->drawSurf->numVerts, surf->drawSurf->numElems,
 				0, 0 );
 		}
 		else {
