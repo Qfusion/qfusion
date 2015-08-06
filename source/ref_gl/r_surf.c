@@ -208,17 +208,20 @@ bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		shadowBits = 0;
 	}
 
+	// shadowBits are shared for all rendering instances (normal view, portals, etc)
+	// if either shadow slice is empty or shadowBits is 0, then we must pass the surface unshadowed
 	numVerts = slice->numVerts;
 	numElems = slice->numElems;
 	firstVert = drawSurf->firstVboVert + slice->firstVert;
 	firstElem = drawSurf->firstVboElem + slice->firstElem;
-	if( shadowBits ) {
+	if( shadowBits && shadowSlice->numElems ) {
 		numShadowVerts = shadowSlice->numVerts;
 		numShadowElems = shadowSlice->numElems;
 		firstShadowVert = drawSurf->firstVboVert + shadowSlice->firstVert;
 		firstShadowElem = drawSurf->firstVboElem + shadowSlice->firstElem;
 	}
 	else {
+		shadowBits = 0;
 		numShadowVerts = 0;
 		numShadowElems = 0;
 		firstShadowVert = 0;
