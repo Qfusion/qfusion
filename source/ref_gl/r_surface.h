@@ -56,6 +56,9 @@ typedef struct
 
 	unsigned int numInstances;
 	instancePoint_t *instances;
+
+	unsigned int numVerts;
+	unsigned int numElems;
 } drawSurfaceBSP_t;
 
 typedef struct

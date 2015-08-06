@@ -600,6 +600,9 @@ merge:
 				}
 			}
 
+			drawSurf->numVerts = vcount;
+			drawSurf->numElems = ecount;
+
 			*vbo_total_size += vbo->arrayBufferSize + vbo->elemBufferSize;
 		}
 	}
