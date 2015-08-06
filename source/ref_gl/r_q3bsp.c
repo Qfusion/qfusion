@@ -821,6 +821,7 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 			{
 				size_t normalsPos, sVectorsPos, stPos;
 				size_t lmstPos[MAX_LIGHTMAPS], lmlayersPos[( MAX_LIGHTMAPS + 3 ) / 4], colorsPos[MAX_LIGHTMAPS];
+				uint8_t *oldBuffer = buffer;
 
 				mesh->numVerts = numVerts;
 				mesh->numElems = numElems;
@@ -881,7 +882,9 @@ static mesh_t *Mod_CreateMeshForSurface( const rdface_t *in, msurface_t *out, in
 				}
 
 				bufSize = ALIGN( bufPos, sizeof( elem_t ) ) + numElems * sizeof( elem_t );
-				buffer = R_Realloc( buffer, bufSize );
+				buffer = ( uint8_t * )Mod_Malloc( loadmodel, bufSize );
+				memcpy( buffer, oldBuffer, bufSize );
+				R_Free( oldBuffer );
 
 				mesh = ( mesh_t * )buffer;
 				mesh->xyzArray = ( vec4_t * )( buffer + MESH_T_SIZE_ALIGNED );
