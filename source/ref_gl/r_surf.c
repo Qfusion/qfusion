@@ -181,7 +181,10 @@ bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	const vboSlice_t *shadowSlice;
 	static const vboSlice_t nullSlice = { 0 };
 	int firstVert, firstElem;
+	int numVerts, numElems;
 	int firstShadowVert, firstShadowElem;
+	int numShadowVerts, numShadowElems;
+	unsigned shadowBits, dlightBits;
 
 	slice = R_GetVBOSlice( drawSurf - rsh.worldBrushModel->drawSurfaces );
 	shadowSlice = R_GetVBOSlice( rsh.worldBrushModel->numDrawSurfaces + ( drawSurf - rsh.worldBrushModel->drawSurfaces ) );
@@ -191,37 +194,53 @@ bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	assert( slice != NULL );
 
-	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
-
 	if( drawSurf->dlightFrame == rsc.frameCount ) {
-		RB_SetDlightBits( drawSurf->dlightBits & rn.dlightBits );
+		dlightBits = drawSurf->dlightBits & rn.dlightBits;
 	}
 	else {
-		RB_SetDlightBits( 0 );
+		dlightBits = 0;
 	}
 
 	if( drawSurf->shadowFrame == rsc.frameCount ) {
-		RB_SetShadowBits( (drawSurf->shadowBits & rn.shadowBits) & rsc.renderedShadowBits );
+		shadowBits = (drawSurf->shadowBits & rn.shadowBits) & rsc.renderedShadowBits;
 	}
 	else {
-		RB_SetShadowBits( 0 );
+		shadowBits = 0;
 	}
+
+	numVerts = slice->numVerts;
+	numElems = slice->numElems;
+	firstVert = drawSurf->firstVboVert + slice->firstVert;
+	firstElem = drawSurf->firstVboElem + slice->firstElem;
+	if( shadowBits ) {
+		numShadowVerts = shadowSlice->numVerts;
+		numShadowElems = shadowSlice->numElems;
+		firstShadowVert = drawSurf->firstVboVert + shadowSlice->firstVert;
+		firstShadowElem = drawSurf->firstVboElem + shadowSlice->firstElem;
+	}
+	else {
+		numShadowVerts = 0;
+		numShadowElems = 0;
+		firstShadowVert = 0;
+		firstShadowElem = 0;
+	}
+
+	RB_BindVBO( drawSurf->vbo->index, GL_TRIANGLES );
+
+	RB_SetDlightBits( dlightBits );
+
+	RB_SetShadowBits( shadowBits );
 
 	RB_SetLightstyle( drawSurf->superLightStyle );
 
-	firstVert = drawSurf->firstVboVert + slice->firstVert;
-	firstElem = drawSurf->firstVboElem + slice->firstElem;
-	firstShadowVert = drawSurf->firstVboVert + shadowSlice->firstVert;
-	firstShadowElem = drawSurf->firstVboElem + shadowSlice->firstElem;
-
 	if( drawSurf->numInstances ) {
-		RB_DrawElementsInstanced( firstVert, slice->numVerts, firstElem, slice->numElems, 
-			firstShadowVert, shadowSlice->numVerts, firstShadowElem, shadowSlice->numElems,
+		RB_DrawElementsInstanced( firstVert, numVerts, firstElem, numElems, 
+			firstShadowVert, numShadowVerts, firstShadowElem, numShadowElems,
 			drawSurf->numInstances, drawSurf->instances );
 	}
 	else {
-		RB_DrawElements( firstVert, slice->numVerts,firstElem, slice->numElems,
-			firstShadowVert, shadowSlice->numVerts, firstShadowElem, shadowSlice->numElems );
+		RB_DrawElements( firstVert, numVerts, firstElem, numElems, 
+			firstShadowVert, numShadowVerts, firstShadowElem, numShadowElems );
 	}
 
 	return false;
