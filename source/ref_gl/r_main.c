@@ -377,6 +377,12 @@ static bool R_AddSpriteToDrawList( const entity_t *e )
 {
 	float dist;
 
+	if( e->flags & RF_NOSHADOW )
+	{
+		if( rn.renderFlags & RF_SHADOWMAPVIEW )
+			return false;
+	}
+
 	if( e->radius <= 0 || e->customShader == NULL || e->scale <= 0 ) {
 		return false;
 	}
