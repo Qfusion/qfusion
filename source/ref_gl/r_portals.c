@@ -281,7 +281,7 @@ setup_and_render:
 		Matrix3_Copy( rn.refdef.viewaxis, axis );
 		VectorCopy( viewerOrigin, rn.pvsOrigin );
 
-		rn.renderFlags = RF_PORTALVIEW;
+		rn.renderFlags |= RF_PORTALVIEW;
 		if( prevFlipped )
 			rn.renderFlags |= RF_FLIPFRONTFACE;
 	}
@@ -337,6 +337,8 @@ setup_and_render:
 		// might fly into (or behind) a wall
 		VectorCopy( best->origin2, rn.pvsOrigin );
 		VectorCopy( best->origin2, rn.lodOrigin );
+
+		rn.renderFlags |= RF_PORTALVIEW;
 
 		// ignore entities, if asked politely
 		if( best->renderfx & RF_NOPORTALENTS )
