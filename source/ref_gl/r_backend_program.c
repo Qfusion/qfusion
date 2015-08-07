@@ -558,7 +558,9 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass )
 static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colorgen_t *alphagen )
 {
 	r_glslfeat_t programFeatures;
+	int identity;
 
+	identity = 0;
 	programFeatures = 0;
 
 	switch( rgbgen->type )
@@ -577,6 +579,8 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 				programFeatures |= GLSL_SHADER_COMMON_RGB_DISTANCERAMP;
 			}
 			break;
+		case RGB_GEN_IDENTITY:
+			identity++;
 		default:
 			programFeatures |= GLSL_SHADER_COMMON_RGB_GEN_CONST;
 			break;
@@ -596,9 +600,15 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 				programFeatures |= GLSL_SHADER_COMMON_ALPHA_DISTANCERAMP;
 			}
 			break;
+		case ALPHA_GEN_IDENTITY:
+			identity++;
 		default:
 			programFeatures |= GLSL_SHADER_COMMON_ALPHA_GEN_CONST;
 			break;
+	}
+
+	if( identity == 2 ) {
+		return 0;
 	}
 
 	return programFeatures;
