@@ -914,7 +914,7 @@ gsitem_t	itemdefs[] =
 		AMMO_NONE,
 		NULL,
 		NULL,
-		S_QUAD_FIRE S_ITEM_QUAD_RESPAWN,
+		S_QUAD_FIRE " " S_ITEM_QUAD_RESPAWN,
 		// S_QUAD_USE " " S_QUAD_FIRE,
 		NULL
 	},
