@@ -580,7 +580,7 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 		// reset
 		word_chars = space_chars = 0;
 		word_width = space_width = 0;
-		in_space = true; // assume starting from a whitespace so the color of the word can be grabbed correctly
+		in_space = true; // assume starting from a whitespace so preceding whitespaces can be skipped
 		line_chars = 0;
 		line_width = 0;
 		VectorCopy( line_next_color, line_color );
