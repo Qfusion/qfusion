@@ -524,6 +524,7 @@ void CL_GameModule_Init( void )
 	import.SCR_DrawString = SCR_DrawString;
 	import.SCR_DrawStringWidth = SCR_DrawStringWidth;
 	import.SCR_DrawClampString = SCR_DrawClampString;
+	import.SCR_DrawMultilineString = SCR_DrawMultilineString;
 	import.SCR_DrawRawChar = SCR_DrawRawChar;
 	import.SCR_DrawClampChar = SCR_DrawClampChar;
 	import.SCR_FontSize = SCR_FontSize;

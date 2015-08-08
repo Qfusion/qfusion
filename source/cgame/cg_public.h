@@ -43,7 +43,7 @@ typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, f
 
 // cg_public.h -- client game dll information visible to engine
 
-#define	CGAME_API_VERSION   92
+#define	CGAME_API_VERSION   93
 
 //
 // structs and variables shared with the main engine
@@ -235,6 +235,7 @@ typedef struct
 	int ( *SCR_DrawString )( int x, int y, int align, const char *str, struct qfontface_s *font, vec4_t color, int flags );
 	size_t ( *SCR_DrawStringWidth )( int x, int y, int align, const char *str, size_t maxwidth, struct qfontface_s *font, vec4_t color, int flags );
 	void ( *SCR_DrawClampString )( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color, int flags );
+	int ( *SCR_DrawMultilineString )( int x, int y, const char *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, vec4_t color, int flags );
 	void ( *SCR_DrawRawChar )( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color );
 	void ( *SCR_DrawClampChar )( int x, int y, wchar_t num, int xmin, int ymin, int xmax, int ymax, struct qfontface_s *font, vec4_t color );
 	size_t ( *SCR_FontSize )( struct qfontface_s *font );

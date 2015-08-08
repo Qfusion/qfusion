@@ -55,6 +55,7 @@ QF_DLL_EXPORT ftlib_export_t *GetFTLibAPI( ftlib_import_t *import )
 	globals.DrawRawChar = &FTLIB_DrawRawChar;
 	globals.DrawClampString = &FTLIB_DrawClampString;
 	globals.DrawRawString = &FTLIB_DrawRawString;
+	globals.DrawMultilineString = &FTLIB_DrawMultilineString;
 	globals.SetDrawIntercept = &FTLIB_SetDrawIntercept;
 
 	return &globals;

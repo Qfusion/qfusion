@@ -588,6 +588,11 @@ static inline void trap_SCR_DrawClampString( int x, int y, const char *str, int 
 	CGAME_IMPORT.SCR_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, 0 );
 }
 
+static inline int trap_SCR_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, vec4_t color )
+{
+	return CGAME_IMPORT.SCR_DrawMultilineString( x, y, str, halign, maxwidth, maxlines, font, color, 0 );
+}
+
 static inline void trap_SCR_DrawRawChar( int x, int y, wchar_t num, struct qfontface_s *font, vec4_t color )
 {
 	CGAME_IMPORT.SCR_DrawRawChar( x, y, num, font, color );

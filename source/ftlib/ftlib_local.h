@@ -181,6 +181,7 @@ void FTLIB_DrawClampChar( int x, int y, wchar_t num, int xmin, int ymin, int xma
 void FTLIB_DrawRawChar( int x, int y, wchar_t num, qfontface_t *font, vec4_t color );
 void FTLIB_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int xmax, int ymax, qfontface_t *font, vec4_t color, int flags );
 size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int *width, qfontface_t *font, vec4_t color, int flags );
+int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, qfontface_t *font, vec4_t color, int flags );
 fdrawchar_t FTLIB_SetDrawIntercept( fdrawchar_t intercept );
 
 #endif
