@@ -84,20 +84,22 @@ bool CL_DownloadRequest( const char *filename, bool requestpak )
 	}
 	else
 	{
-		const char *extension;
-
 		if( FS_FOpenFile( filename, NULL, FS_READ ) != -1 )
 		{
 			Com_Printf( "Can't download: %s. File already exists.\n", filename );
 			return false;
 		}
 
-		// only allow demo downloads
-		extension = COM_FileExtension( filename );
-		if( !extension || Q_stricmp( extension, APP_DEMO_EXTENSION_STR ) )
-		{
-			Com_Printf( "Can't download, got arbitrary file type: %s\n", filename );
-			return false;
+		if( !requestpak ) {
+			const char *extension;
+
+			// only allow demo downloads
+			extension = COM_FileExtension( filename );
+			if( !extension || Q_stricmp( extension, APP_DEMO_EXTENSION_STR ) )
+			{
+				Com_Printf( "Can't download, got arbitrary file type: %s\n", filename );
+				return false;
+			}
 		}
 	}
 
