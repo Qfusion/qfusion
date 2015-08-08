@@ -48,8 +48,10 @@ void main(void)
 	v_TexCoord = u_ReflectionTexMatrix * reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz);
 #elif defined(APPLY_TC_GEN_PROJECTION)
 	v_TexCoord = vec2(normalize(u_ModelViewProjectionMatrix * Position) * 0.5 + vec4(0.5));
-#else
+#elif defined(APPLY_TC_MOD)
 	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
+#else
+	v_TexCoord = TexCoord;
 #endif // defined(APPLY_TC_GEN_ENV)
 
 #if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP)

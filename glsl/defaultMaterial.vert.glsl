@@ -29,7 +29,11 @@ void main()
 
 	qf_FrontColor = vec4(outColor);
 
+#if defined(APPLY_TC_MOD)
 	v_TexCoord_FogCoord.st = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
+#else
+	v_TexCoord_FogCoord.st = TexCoord;
+#endif
 
 #ifdef NUM_LIGHTMAPS
 	v_LightmapTexCoord01 = a_LightmapCoord01;

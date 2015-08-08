@@ -335,14 +335,11 @@ void RB_ApplyTCMods( const shaderpass_t *pass, mat4_t result )
 			Matrix4_Scale2D( result, tcmod->args[0], tcmod->args[1] );
 			break;
 		case TC_MOD_TURB:
-			if( pass->program_type != GLSL_PROGRAM_TYPE_TURBULENCE )
-			{
-				t1 = ( 1.0 / 4.0 );
-				t2 = tcmod->args[2] + rb.currentShaderTime * tcmod->args[3];
-				Matrix4_Scale2D( result, 
-					1 + ( tcmod->args[1] * RB_FastSin( t2 ) + tcmod->args[0] ) * t1, 
-					1 + ( tcmod->args[1] * RB_FastSin( t2 + 0.25 ) + tcmod->args[0] ) * t1 );
-			}
+			t1 = ( 1.0 / 4.0 );
+			t2 = tcmod->args[2] + rb.currentShaderTime * tcmod->args[3];
+			Matrix4_Scale2D( result, 
+				1 + ( tcmod->args[1] * RB_FastSin( t2 ) + tcmod->args[0] ) * t1, 
+				1 + ( tcmod->args[1] * RB_FastSin( t2 + 0.25 ) + tcmod->args[0] ) * t1 );
 			break;
 		case TC_MOD_STRETCH:
 			table = RB_TableForFunc( tcmod->args[0] );
@@ -715,6 +712,17 @@ static r_glslfeat_t RB_AlphatestProgramFeatures( const shaderpass_t *pass )
 		return GLSL_SHADER_COMMON_AFUNC_LT128;
 	case SHADERPASS_AFUNC_GE128:
 		return GLSL_SHADER_COMMON_AFUNC_GE128;
+	}
+	return 0;
+}
+
+/*
+* RB_TcModsProgramFeatures
+*/
+static r_glslfeat_t RB_TcModsProgramFeatures( const shaderpass_t *pass )
+{
+	if( pass->numtcmods ) {
+		return GLSL_SHADER_COMMON_TC_MOD;
 	}
 	return 0;
 }
@@ -1853,6 +1861,7 @@ void RB_RenderMeshGLSLProgrammed( const shaderpass_t *pass, int programType )
 	features |= RB_AutospriteProgramFeatures();
 	features |= RB_InstancedArraysProgramFeatures();
 	features |= RB_AlphatestProgramFeatures( pass );
+	features |= RB_TcModsProgramFeatures( pass );
 	
 	if( ( rb.currentShader->flags & SHADER_SOFT_PARTICLE ) 
 		&& rsh.screenDepthTextureCopy
