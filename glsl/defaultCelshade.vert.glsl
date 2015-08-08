@@ -34,7 +34,11 @@ void main(void)
 
 	qf_FrontColor = vec4(outColor);
 
+#if defined(APPLY_TC_MOD)
 	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
+#else
+	v_TexCoord = TexCoord;
+#endif
 	v_TexCoordCube = u_ReflectionTexMatrix * reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz);
 
 	gl_Position = u_ModelViewProjectionMatrix * Position;

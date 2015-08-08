@@ -634,6 +634,8 @@ static const glsl_feature_t glsl_features_material[] =
 
 	{ GLSL_SHADER_COMMON_BLEND, "#define APPLY_BLEND\n", "_blend" },
 
+	{ GLSL_SHADER_COMMON_TC_MOD, "#define APPLY_TC_MOD\n", "_tc_mod" },
+
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE3, "#define NUM_LIGHTMAPS 4\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec4\n", "_ls3" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE2, "#define NUM_LIGHTMAPS 3\n#define qf_lmvec01 vec4\n#define qf_lmvec23 vec2\n", "_ls2" },
 	{ GLSL_SHADER_MATERIAL_LIGHTSTYLE1, "#define NUM_LIGHTMAPS 2\n#define qf_lmvec01 vec4\n", "_ls1" },
@@ -754,16 +756,6 @@ static const glsl_feature_t glsl_features_outline[] =
 	{ 0, NULL, NULL }
 };
 
-static const glsl_feature_t glsl_features_dynamiclights[] =
-{
-	{ GLSL_SHADER_COMMON_DLIGHTS_16, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 16\n", "_dl16" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_12, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 12\n", "_dl12" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_8, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 8\n", "_dl8" },
-	{ GLSL_SHADER_COMMON_DLIGHTS_4, "#undef NUM_DLIGHTS\n#define NUM_DLIGHTS 4\n", "_dl4" },
-
-	{ 0, NULL, NULL }
-};
-
 static const glsl_feature_t glsl_features_q3a[] =
 {
 	{ GLSL_SHADER_COMMON_GREYSCALE, "#define APPLY_GREYSCALE\n", "_grey" },
@@ -807,6 +799,8 @@ static const glsl_feature_t glsl_features_q3a[] =
 	{ GLSL_SHADER_COMMON_AFUNC_GT0, "#define QF_ALPHATEST(a) { if ((a) <= 0.0) discard; }\n", "_afunc_gt0" },
 
 	{ GLSL_SHADER_COMMON_BLEND, "#define APPLY_BLEND\n", "_blend" },
+
+	{ GLSL_SHADER_COMMON_TC_MOD, "#define APPLY_TC_MOD\n", "_tc_mod" },
 
 	{ GLSL_SHADER_Q3_TC_GEN_CELSHADE, "#define APPLY_TC_GEN_CELSHADE\n", "_tc_cel" },
 	{ GLSL_SHADER_Q3_TC_GEN_PROJECTION, "#define APPLY_TC_GEN_PROJECTION\n", "_tc_proj" },
@@ -860,6 +854,8 @@ static const glsl_feature_t glsl_features_celshade[] =
 
 	{ GLSL_SHADER_COMMON_BLEND, "#define APPLY_BLEND\n", "_blend" },
 
+	{ GLSL_SHADER_COMMON_TC_MOD, "#define APPLY_TC_MOD\n", "_tc_mod" },
+
 	{ GLSL_SHADER_CELSHADE_DIFFUSE, "#define APPLY_DIFFUSE\n", "_diff" },
 	{ GLSL_SHADER_CELSHADE_DECAL, "#define APPLY_DECAL\n", "_decal" },
 	{ GLSL_SHADER_CELSHADE_DECAL_ADD, "#define APPLY_DECAL_ADD\n", "_decal" },
@@ -907,8 +903,8 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	glsl_features_shadowmap,
 	// GLSL_PROGRAM_TYPE_OUTLINE
 	glsl_features_outline,
-	// GLSL_PROGRAM_TYPE_DYNAMIC_LIGHTS
-	glsl_features_dynamiclights,
+	// GLSL_PROGRAM_TYPE_UNUSED
+	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_Q3A_SHADER
 	glsl_features_q3a,
 	// GLSL_PROGRAM_TYPE_CELSHADE
