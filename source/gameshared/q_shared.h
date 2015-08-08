@@ -242,6 +242,7 @@ int Q_GrabWCharFromColorString( const char **pstr, wchar_t *wc, int *colorindex 
 int Q_Utf8SyncPos( const char *str, int pos, int dir );
 void Q_FixTruncatedUtf8( char *str );
 bool Q_IsBreakingSpace( const char *str );
+bool Q_IsBreakingSpaceChar( wchar_t c );
 
 float *tv( float x, float y, float z );
 char *vtos( float v[3] );

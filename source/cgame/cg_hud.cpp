@@ -2114,7 +2114,6 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 
 			for( i = 0; i < 3; i++ )
 			{
-				size_t len;
 				int x = layout_cursor_x;
 
 				switch( i )
@@ -2155,26 +2154,8 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 
 				if( helpmessage[0] )
 				{
-					do
-					{
-						len = trap_SCR_DrawStringWidth( x, y, layout_cursor_align, 
-							helpmessage, layout_cursor_width, CG_GetLayoutCursorFont(), color );
-						if( !len )
-						{
-							if( *helpmessage == '\r' || *helpmessage == '\n' )
-								len = 1;
-							else
-								break;
-						}
-						if( helpmessage[len-1] == '\n' )
-						{
-							y += font_height;
-						}
-						helpmessage += len;
-					}
-					while( helpmessage[0] );
-
-					y += font_height;
+					trap_SCR_DrawMultilineString( x, y, helpmessage, layout_cursor_align,
+						layout_cursor_width, 0, CG_GetLayoutCursorFont(), color );
 				}
 			}
 		}

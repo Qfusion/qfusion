@@ -528,3 +528,236 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 	return ( s - str );
 }
 
+/* FTLIB_DrawMultilineString
+ *
+ * Draws a string with word wrap.
+ */
+int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, qfontface_t *font, vec4_t color, int flags )
+{
+	bool ended = false; // whether to stop drawing lines
+
+	// characters and glyphs
+	const char *oldstr;
+	int gc, colorindex;
+	wchar_t num, prev_num;
+	qglyph_t *glyph, *prev_glyph;
+	int glyph_width;
+	renderString_f renderString;
+	getKerning_f getKerning;
+	bool hasKerning;
+
+	// words
+	const char *word; // beginning of the current word
+	int word_chars, space_chars; // length of the current word and number of spaces before it
+	int word_width, space_width; // width of the current word and the spaces before it
+	vec4_t word_color; // starting color of the current word
+	bool in_space; // whether currently in a sequence of spaces
+
+	// line drawing
+	const char *line; // beginning of the line
+	int line_chars; // number of characters to draw in this line
+	int line_width; // width of the current line
+	int line_x; // x position of the current character in line
+	vec4_t line_color, line_next_color; // first color in the line
+	int line_height; // height of a single line
+	int lines = 0; // number of lines drawn - the return value
+
+	if( !str || !font || ( maxwidth <= 0 ) )
+		return 0;
+
+	halign = halign % 3; // ignore vertical alignment
+
+	renderString = font->f->renderString;
+	getKerning = font->f->getKerning;
+	hasKerning = ( flags & TEXTDRAWFLAG_KERNING ) && font->hasKerning;
+
+	VectorCopy( color, line_next_color );
+	line_color[3] = color[3];
+	line_height = FTLIB_FontHeight( font );
+
+	do
+	{
+		// reset
+		word_chars = space_chars = 0;
+		word_width = space_width = 0;
+		in_space = true; // assume starting from a whitespace so the color of the word can be grabbed correctly
+		line_chars = 0;
+		line_width = 0;
+		VectorCopy( line_next_color, line_color );
+
+		// find where to wrap
+		prev_num = 0;
+		prev_glyph = NULL;
+		while( str )
+		{
+			oldstr = str;
+			gc = FTLIB_GrabChar( &str, &num, &colorindex, flags );
+			if( gc == GRABCHAR_CHAR )
+			{
+				if( num == '\n' )
+				{
+					if( !word_chars )
+						space_chars = space_width = 0;
+					VectorCopy( color, line_next_color );
+					break;
+				}
+
+				if( num < ' ' )
+					continue;
+
+				glyph = FTLIB_GetGlyph( font, num );
+				if( !glyph )
+				{
+					num = FTLIB_REPLACEMENT_GLYPH;
+					glyph = FTLIB_GetGlyph( font, num );
+				}
+
+				if( !glyph->shader )
+					renderString( font, oldstr );
+
+				if( Q_IsBreakingSpaceChar( num ) )
+				{
+					if( in_space )
+					{
+						if( !line_chars )
+							continue; // skip preceding whitespaces in a line
+					}
+					else
+					{
+						in_space = true;
+
+						// reached the space without wrapping - send the current word to the line
+						line_chars += space_chars + word_chars;
+						word_chars = space_chars = 0;
+						line_width += space_width + word_width;
+						word_width = space_width = 0;
+					}
+					space_chars++;
+					if( hasKerning && prev_num )
+						space_width += getKerning( font, prev_glyph, glyph );
+					space_width += glyph->x_advance;
+				}
+				else
+				{
+					in_space = false;
+
+					glyph_width = glyph->x_advance;
+					if( hasKerning && prev_num )
+						glyph_width += getKerning( font, prev_glyph, glyph );
+
+					if( !word_chars )
+					{
+						word = oldstr;
+						VectorCopy( line_next_color, word_color );
+					}
+
+					if( line_chars )
+					{
+						// wrap after the previous word, ignoring spaces between the words
+						if( ( line_width + space_width + word_width + glyph_width ) > maxwidth )
+						{
+							str = word;
+							VectorCopy( word_color, line_next_color );
+							word_chars = space_chars = 0;
+							word_width = space_width = 0;
+							break;
+						}
+					}
+					else
+					{
+						line = word;
+						if( word_chars ) // always draw at least 1 character in a line
+						{
+							if( ( word_width + glyph_width ) > maxwidth )
+							{
+								str = oldstr;
+								break;
+							}
+						}
+					}
+
+					word_chars++;
+					word_width += glyph_width;
+				}
+
+				prev_num = num;
+				prev_glyph = glyph;
+			}
+			else if( gc == GRABCHAR_COLOR )
+			{
+				assert( ( unsigned )colorindex < MAX_S_COLORS );
+				VectorCopy( color_table[colorindex], line_next_color );
+				if( !line_chars && !word_chars )
+					VectorCopy( line_next_color, line_color );
+			}
+			else if( gc == GRABCHAR_END )
+			{
+				ended = true;
+				break;
+			}
+			else
+				assert( 0 );
+		}
+		// add the remaining part of the word
+		line_chars += space_chars + word_chars;
+		line_width += space_width + word_width;
+
+		// draw the line
+		if( line_chars > 0 )
+		{
+			line_x = x;
+			if( halign == ALIGN_CENTER_TOP )
+				line_x -= line_width >> 1;
+			else if( halign == ALIGN_RIGHT_TOP )
+				line_x -= line_width;
+
+			prev_num = 0;
+			prev_glyph = NULL;
+			while( ( line_chars > 0 ) && line )
+			{
+				gc = FTLIB_GrabChar( &line, &num, &colorindex, flags );
+				if( gc == GRABCHAR_CHAR )
+				{
+					if( num < ' ' )
+						continue;
+
+					line_chars--;
+
+					glyph = FTLIB_GetGlyph( font, num );
+					if( !glyph )
+					{
+						num = FTLIB_REPLACEMENT_GLYPH;
+						glyph = FTLIB_GetGlyph( font, num );
+					}
+
+					if( hasKerning && prev_num )
+						line_x += getKerning( font, prev_glyph, glyph );
+
+					FTLIB_DrawRawChar( line_x, y, num, font, line_color );
+
+					line_x += glyph->x_advance;
+
+					prev_num = num;
+					prev_glyph = glyph;
+				}
+				else if( gc == GRABCHAR_COLOR )
+				{
+					assert( ( unsigned )colorindex < MAX_S_COLORS );
+					VectorCopy( color_table[colorindex], line_color );
+				}
+				else if( gc == GRABCHAR_END )
+					break;
+				else
+					assert( 0 );
+			}
+		}
+
+		lines++;
+		if( ( maxlines > 0 ) && ( lines >= maxlines ) )
+			break;
+		y += line_height;
+
+	} while( !ended );
+
+	return lines;
+}

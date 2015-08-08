@@ -1473,6 +1473,16 @@ bool Q_IsBreakingSpace( const char *str )
 }
 
 /*
+* Q_IsBreakingSpaceChar
+*
+* Same as IsBreakingSpace, but for a single character.
+*/
+bool Q_IsBreakingSpaceChar( wchar_t c )
+{
+	return ( c == ' ' ) || ( c == '\t' ) || ( c == 0x3000 ) || ( ( c >= 0x2000 ) && ( c <= 0x200b ) );
+}
+
+/*
 * Q_isdigit
 */
 bool Q_isdigit( const char *str )
