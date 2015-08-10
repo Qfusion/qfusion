@@ -404,3 +404,11 @@ size_t FTLIB_DrawRawString( int x, int y, const char *str, size_t maxwidth, int 
 	return ftlib_export ? ftlib_export->DrawRawString( x, y, str, maxwidth, width, font, color, flags ) : 0;
 }
 
+/*
+* FTLIB_DrawMultilineString
+*/
+int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, struct qfontface_s *font, vec4_t color, int flags )
+{
+	return ftlib_export ? ftlib_export->DrawMultilineString( x, y, str, halign, maxwidth, maxlines, font, color, flags ) : 0;
+}
+
