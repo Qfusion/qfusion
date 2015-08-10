@@ -1026,8 +1026,7 @@ void CG_UpdatePlayerModelEnt( centity_t *cent )
 	cent->ent.renderfx = cent->renderfx;
 
 	pmodel = &cg_entPModels[cent->current.number];
-	pmodel->pmodelinfo = CG_PModelForCentity( cent );
-	pmodel->skin = CG_SkinForCentity( cent );
+	CG_PModelForCentity( cent, &pmodel->pmodelinfo, &pmodel->skin );
 
 	CG_PlayerColorForEntity( cent->current.number, cent->ent.shaderRGBA );
 
