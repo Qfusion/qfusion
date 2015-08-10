@@ -292,8 +292,6 @@ struct shader_s *CG_MediaShader( cgs_media_handle_t *mediashader )
 */
 void CG_RegisterMediaShaders( void )
 {
-	int i;
-
 	shader_headnode = NULL;
 
 	cgs.media.shaderParticle = CG_RegisterMediaShader( "particle", true );
@@ -355,8 +353,6 @@ void CG_RegisterMediaShaders( void )
 
 	// ctf
 	cgs.media.shaderFlagFlare = CG_RegisterMediaShader( PATH_FLAG_FLARE_SHADER, false );
-	for( i = 0; i < 10; i++ )
-		cgs.media.shaderFlagNums[i] = CG_RegisterMediaShader( va( "gfx/hud/%i", i ), false );
 
 	cgs.media.shaderRaceGhostEffect = CG_RegisterMediaShader( "gfx/raceghost", false );
 
