@@ -297,7 +297,6 @@ typedef struct
 	//wsw
 	cgs_media_handle_t *shaderPlayerShadow;
 	cgs_media_handle_t *shaderFlagFlare;
-	cgs_media_handle_t *shaderFlagNums[10];
 
 	// hud icons
 	cgs_media_handle_t *shaderWeaponIcon[WEAP_TOTAL];
