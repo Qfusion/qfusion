@@ -1119,20 +1119,6 @@ static void CG_AddFlagBaseEnt( centity_t *cent )
 
 		CG_AddFlagModelOnTag( cent, CG_TeamColorForEntity( cent->current.number, teamcolor ), "tag_flag1" );
 	}
-	// modelindex2 can add a number from 0 to 9
-	else if( cent->current.modelindex2 > 0 && cent->current.modelindex2 <= 10 )
-	{
-		static entity_t number;
-		number = cent->ent;
-		Vector4Set( number.shaderRGBA, 255, 255, 255, 255 );
-		number.rtype = RT_SPRITE;
-		number.origin[2] += 24;
-		number.origin2[2] += 24;
-		number.model = NULL;
-		number.radius = 12;
-		number.customShader = CG_MediaShader( cgs.media.shaderFlagNums[cent->current.modelindex2 - 1] );
-		CG_AddEntityToScene( &number );
-	}
 }
 
 //==========================================================================
