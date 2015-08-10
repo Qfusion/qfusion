@@ -138,60 +138,51 @@ static void CG_CheckUpdateTeamModelRegistration( int team )
 /*
 * CG_PModelForCentity
 */
-pmodelinfo_t *CG_PModelForCentity( centity_t *cent )
+bool CG_PModelForCentity( centity_t *cent, pmodelinfo_t **pmodelinfo, struct skinfile_s **skin )
 {
 	int team;
 	centity_t *owner;
+	unsigned int ownerNum;
 
 	owner = cent;
 	if( cent->current.type == ET_CORPSE && cent->current.bodyOwner )  // it's a body
 		owner = &cg_entities[cent->current.bodyOwner];
+	ownerNum = owner->current.number;
 
 	team = CG_ForceTeam( owner->current.number, owner->current.team );
 
 	CG_CheckUpdateTeamModelRegistration( team ); // check for cvar changes
 
-	if( GS_CanForceModels() && ( owner->current.number < gs.maxclients + 1 ) )
+	// use the player defined one if not forcing
+	if( pmodelinfo )
+		*pmodelinfo = cgs.pModelsIndex[cent->current.modelindex];
+	if( skin )
+		*skin = cgs.skinPrecache[cent->current.skinnum];
+
+	if( GS_CanForceModels() && ( ownerNum < ( unsigned )( gs.maxclients + 1 ) ) )
 	{
-		if( team >= TEAM_PLAYERS && team < GS_MAX_TEAMS )
+		if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) ||
+			// Don't force the model for the local player in non-team modes to distinguish the sounds from enemies'
+			( ( team == TEAM_PLAYERS ) && ( cgs.tv || ( ownerNum != cgs.playerNum + 1 ) ) ) )
 		{
 			if( cgs.teamModelInfo[team] )
 			{
 				// There is a force model for this team
-				return cgs.teamModelInfo[team];
+				if( pmodelinfo )
+					*pmodelinfo = cgs.teamModelInfo[team];
+
+				if( skin && cgs.teamCustomSkin[team] )
+				{
+					// There is a force skin for this team
+					*skin = cgs.teamCustomSkin[team];
+				}
+
+				return true;
 			}
 		}
 	}
 
-	// return player defined one
-	return cgs.pModelsIndex[cent->current.modelindex];
-}
-
-/*
-* CG_SkinForCentity
-*/
-struct skinfile_s *CG_SkinForCentity( centity_t *cent )
-{
-	int team;
-	centity_t *owner;
-
-	owner = cent;
-	if( cent->current.type == ET_CORPSE && cent->current.bodyOwner )  // it's a body
-		owner = &cg_entities[cent->current.bodyOwner];
-
-	team = CG_ForceTeam( owner->current.number, owner->current.team );
-
-	if( GS_CanForceModels() && ( owner->current.number < gs.maxclients + 1 ) )
-	{
-		if( team >= TEAM_PLAYERS && team < GS_MAX_TEAMS )
-		{
-			if( cgs.teamCustomSkin[team] ) // There is a force model for this team
-				return cgs.teamCustomSkin[team];
-		}
-	}
-
-	// return player defined one
-	return cgs.skinPrecache[cent->current.skinnum];
+	return false;
 }
 
 /*
