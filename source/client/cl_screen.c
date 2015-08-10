@@ -276,6 +276,11 @@ void SCR_DrawClampString( int x, int y, const char *str, int xmin, int ymin, int
 	FTLIB_DrawClampString( x, y, str, xmin, ymin, xmax, ymax, font, color, flags );
 }
 
+int SCR_DrawMultilineString( int x, int y, const char *str, int halign, int maxwidth, int maxlines, qfontface_t *font, vec4_t color, int flags )
+{
+	return FTLIB_DrawMultilineString( x, y, str, halign, maxwidth, maxlines, font, color, flags );
+}
+
 /*
 * SCR_DrawString
 */

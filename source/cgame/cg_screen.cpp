@@ -159,20 +159,13 @@ static void CG_DrawCenterString( void )
 	int y;
 	struct qfontface_s *font = cgs.fontSystemMedium;
 	char *helpmessage = scr_centerstring;
-	int x = cgs.vidWidth / 2;
-	int width = cgs.vidWidth;
-	size_t len;
 
 	if( scr_center_lines <= 4 )
-		y = cgs.vidHeight*0.35;
+		y = cgs.vidHeight*0.35f;
 	else
 		y = 48 * cgs.vidHeight / 600;
 
-	while( ( len = trap_SCR_DrawStringWidth( x, y, ALIGN_CENTER_TOP, helpmessage, width, font, colorWhite ) ) )
-	{
-		y += trap_SCR_FontHeight( font );
-		helpmessage += len;
-	}
+	trap_SCR_DrawMultilineString( cgs.vidWidth / 2, y, helpmessage, ALIGN_CENTER_TOP, cgs.vidWidth, 0, font, colorWhite );
 }
 
 //=============================================================================
