@@ -557,13 +557,7 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 
 	if( bits & GL_COLOR_BUFFER_BIT )
 	{
-		int fboID = RB_BoundFrameBufferObject();
-		image_t *fboTex = RFB_GetObjectTextureAttachment( fboID, false );
-
-		state &= ~GLSTATE_NO_COLORWRITE;
-		if( ( !fboID && glConfig.forceRGBAFramebuffers ) || ( fboTex && ( fboTex->samples == 4 ) ) )
-			state |= GLSTATE_ALPHAWRITE;
-
+		state = ( state & ~GLSTATE_NO_COLORWRITE ) | GLSTATE_ALPHAWRITE;
 		qglClearColor( r, g, b, a );
 	}
 
