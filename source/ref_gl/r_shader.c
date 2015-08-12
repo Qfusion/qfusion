@@ -2832,6 +2832,42 @@ create_default:
 }
 
 /*
+* R_PackShaderOrder
+*
+* Sort opaque shaders by this value for better caching of GL/program state.
+*/
+unsigned R_PackShaderOrder( const shader_t *shader )
+{
+	int order;
+	int program_type;
+	const shaderpass_t *pass;
+
+	if( !shader->numpasses )
+		return 0;
+
+	pass = &shader->passes[0];
+	program_type = pass->program_type;
+
+	if( program_type == GLSL_PROGRAM_TYPE_MATERIAL ) {
+		// this is not a material shader in case all images are missing except for the defuse
+		if( ( !pass->images[1] || pass->images[1]->missing || pass->images[1] == rsh.blankBumpTexture ) &&
+			( !pass->images[2] || pass->images[2]->missing ) &&
+			( !pass->images[3] || pass->images[3]->missing ) &&
+			( !pass->images[4] || pass->images[4]->missing ) )
+			program_type = GLSL_PROGRAM_TYPE_Q3A_SHADER;
+	}
+
+	// sort by base program type
+	order = program_type & 0x1F;
+
+	// check presence of gloss for materials
+	if( program_type == GLSL_PROGRAM_TYPE_MATERIAL && pass->images[2] != NULL && !pass->images[2]->missing )
+		order |= 0x20;
+
+	return order;
+}
+
+/*
 * R_ShaderById
 */
 shader_t *R_ShaderById( unsigned int id )
