@@ -120,17 +120,18 @@ enum
 	GLSTATE_DSTBLEND_ONE_MINUS_DST_ALPHA	= 128,
 
 	GLSTATE_NO_COLORWRITE					= 0x100,
+	GLSTATE_ALPHAWRITE						= 0x200,
 
-	GLSTATE_DEPTHWRITE						= 0x200,
-	GLSTATE_DEPTHFUNC_EQ					= 0x400,
-	GLSTATE_DEPTHFUNC_GT					= 0x800,
+	GLSTATE_DEPTHWRITE						= 0x400,
+	GLSTATE_DEPTHFUNC_EQ					= 0x800,
+	GLSTATE_DEPTHFUNC_GT					= 0x1000,
 
-	GLSTATE_OFFSET_FILL						= 0x1000,
-	GLSTATE_NO_DEPTH_TEST					= 0x2000,
+	GLSTATE_OFFSET_FILL						= 0x2000,
+	GLSTATE_NO_DEPTH_TEST					= 0x4000,
 
-	GLSTATE_STENCIL_TEST					= 0x4000,
+	GLSTATE_STENCIL_TEST					= 0x8000,
 
-	GLSTATE_MARK_END						= 0x8000 // SHADERPASS_MARK_BEGIN
+	GLSTATE_MARK_END						= 0x10000 // SHADERPASS_MARK_BEGIN
 };
 
 #define GLSTATE_MASK		( GLSTATE_MARK_END-1 )
@@ -239,6 +240,9 @@ typedef struct
 					,maxFragmentUniformComponents
 					;
 	unsigned int	maxGLSLBones;	// the maximum amount of bones we can handle in a vertex shader
+
+	bool			forceRGBAFramebuffers;	// PowerVR hack - its blending interprets alpha in RGB FBs as 0, not 1
+
 	glextinfo_t		ext;
 } glconfig_t;
 
