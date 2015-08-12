@@ -144,9 +144,5 @@ void main()
 	color.rgb = mix(color.rgb, u_FogColor, fogDensity);
 #endif
 
-#ifdef APPLY_BLEND
 	qf_FragColor = vec4(color);
-#else
-	qf_FragColor = vec4(vec3(color), 1.0);
-#endif
 }
