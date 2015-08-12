@@ -2229,8 +2229,6 @@ static void RB_SetShaderState( void )
 */
 static void RB_SetShaderpassState( int state )
 {
-	image_t *fboTex = RFB_GetObjectTextureAttachment( RB_BoundFrameBufferObject(), false );
-
 	state |= rb.currentShaderState;
 	if( rb.alphaHack ) {
 		if( !( state & GLSTATE_BLEND_MASK ) ) {
@@ -2240,9 +2238,6 @@ static void RB_SetShaderpassState( int state )
 	}
 	if( rb.noColorWrite ) {
 		state |= GLSTATE_NO_COLORWRITE;
-	}
-	if( fboTex && ( fboTex->samples == 4 ) ) {
-		state |= GLSTATE_ALPHAWRITE;
 	}
 	if( rb.depthEqual && (state & GLSTATE_DEPTHWRITE) ) {
 		state |= GLSTATE_DEPTHFUNC_EQ;
