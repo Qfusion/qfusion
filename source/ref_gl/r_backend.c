@@ -357,12 +357,12 @@ void RB_SetState( int state )
 		}
 	}
 
-	if( diff & GLSTATE_NO_COLORWRITE )
+	if( diff & (GLSTATE_NO_COLORWRITE|GLSTATE_ALPHAWRITE) )
 	{
 		if( state & GLSTATE_NO_COLORWRITE )
 			qglColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
 		else
-			qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+			qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, ( state & GLSTATE_ALPHAWRITE ) ? GL_TRUE : GL_FALSE );
 	}
 
 	if( diff & (GLSTATE_DEPTHFUNC_EQ|GLSTATE_DEPTHFUNC_GT) )
@@ -557,7 +557,7 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 
 	if( bits & GL_COLOR_BUFFER_BIT )
 	{
-		state &= ~GLSTATE_NO_COLORWRITE;
+		state = ( state & ~GLSTATE_NO_COLORWRITE ) | GLSTATE_ALPHAWRITE;
 		qglClearColor( r, g, b, a );
 	}
 

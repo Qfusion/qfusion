@@ -920,10 +920,6 @@ static void RB_RenderMeshGLSL_Material( const shaderpass_t *pass, r_glslfeat_t p
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
 
-	if( rb.gl.state & GLSTATE_BLEND_MASK ) {
-		programFeatures |= GLSL_SHADER_COMMON_BLEND;
-	}
-
 	// we only send S-vectors to GPU and recalc T-vectors as cross product
 	// in vertex shader
 	RB_BindTexture( 1, normalmap );         // normalmap
@@ -1571,10 +1567,6 @@ static void RB_RenderMeshGLSL_Q3AShader( const shaderpass_t *pass, r_glslfeat_t 
 
 	RB_SetShaderpassState( state );
 
-	if( rb.gl.state & GLSTATE_BLEND_MASK ) {
-		programFeatures |= GLSL_SHADER_COMMON_BLEND;
-	}
-
 	if( programFeatures & GLSL_SHADER_COMMON_SOFT_PARTICLE ) {
 		RB_BindTexture( 3, rsh.screenDepthTextureCopy );
 	}
@@ -1670,10 +1662,6 @@ static void RB_RenderMeshGLSL_Celshade( const shaderpass_t *pass, r_glslfeat_t p
 
 	// set shaderpass state (blending, depthwrite, etc)
 	RB_SetShaderpassState( pass->flags );
-
-	if( rb.gl.state & GLSTATE_BLEND_MASK ) {
-		programFeatures |= GLSL_SHADER_COMMON_BLEND;
-	}
 
 	// replacement images are there to ensure that the entity is still
 	// properly colored despite real images still being loaded in a separate thread
@@ -2241,6 +2229,8 @@ static void RB_SetShaderState( void )
 */
 static void RB_SetShaderpassState( int state )
 {
+	image_t *fboTex = RFB_GetObjectTextureAttachment( RB_BoundFrameBufferObject(), false );
+
 	state |= rb.currentShaderState;
 	if( rb.alphaHack ) {
 		if( !( state & GLSTATE_BLEND_MASK ) ) {
@@ -2250,6 +2240,9 @@ static void RB_SetShaderpassState( int state )
 	}
 	if( rb.noColorWrite ) {
 		state |= GLSTATE_NO_COLORWRITE;
+	}
+	if( fboTex && ( fboTex->samples == 4 ) ) {
+		state |= GLSTATE_ALPHAWRITE;
 	}
 	if( rb.depthEqual && (state & GLSTATE_DEPTHWRITE) ) {
 		state |= GLSTATE_DEPTHFUNC_EQ;
