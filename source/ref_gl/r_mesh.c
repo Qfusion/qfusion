@@ -122,12 +122,37 @@ static void R_UnpackSortKey( unsigned int sortKey, unsigned int *shaderNum, int 
 }
 
 /*
+* R_PackOpaqueOrder
+*
+* Returns sort order for opaque objects.
+*/
+unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool lightmap, bool dlight )
+{
+	int order;
+
+	// shader order
+	order = R_PackShaderOrder( shader );
+
+	// group by lightmap
+	if( lightmap )
+		order |= 0x40;
+	// group by dlight
+	if( dlight )
+		order |= 0x80;
+	// draw game objects after the world
+	if( e != rsc.worldent )
+		order |= 0x100;
+
+	return order;
+}
+
+/*
 * R_AddSurfToDrawList
 * 
 * Calculate sortkey and store info used for batching and sorting.
 * All 3D-geometry passes this function.
 */
-bool R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader, 
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader, 
 	float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf )
 {
 	sortedDrawSurf_t *sds;
@@ -136,10 +161,10 @@ bool R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog
 	int renderFx;
 
 	if( !list || !shader ) {
-		return false;
+		return NULL;
 	}
 	if( Shader_ReadDepth( shader ) && ( rn.renderFlags & RF_SHADOWMAPVIEW ) ) {
-		return false;
+		return NULL;
 	}
 
 	shaderSort = shader->sort;
@@ -189,7 +214,19 @@ bool R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog
 		portalSurf ? portalSurf - rn.portalSurfaces : -1, R_ENT2NUM(e) );
 	sds->drawSurf = ( drawSurfaceType_t * )drawSurf;
 
-	return true;
+	return sds;
+}
+
+/*
+* R_UpdateDrawListSurf
+*
+* Updates sorting order for pre-added draw surface. Does nothing after R_SortDrawList is called.
+* Theoretically, should only update the dlightbit.
+*/
+void R_UpdateDrawListSurf( void *psds, unsigned order )
+{
+	sortedDrawSurf_t *sds = psds;
+	sds->distKey |= (order & 0x7FF);
 }
 
 /*

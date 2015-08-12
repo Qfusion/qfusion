@@ -305,6 +305,8 @@ shader_t	*R_RegisterLevelshot( const char *name, shader_t *defaultShader, bool *
 shader_t	*R_RegisterSkin( const char *name );
 shader_t	*R_RegisterVideo( const char *name );
 
+unsigned	R_PackShaderOrder( const shader_t *shader );
+
 void		R_TouchShader( shader_t *s );
 void		R_TouchShadersByName( const char *name );
 void		R_FreeUnusedShadersByType( const shaderType_e *types, unsigned int numTypes );

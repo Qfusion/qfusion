@@ -42,6 +42,7 @@ typedef struct
 	drawSurfaceType_t type;
 
 	unsigned int visFrame;			// should be drawn when node is crossed
+	void *listSurf;					// only valid if visFrame == rf.frameCount
 
 	struct mesh_vbo_s *vbo;
 	unsigned int firstVboVert, firstVboElem;

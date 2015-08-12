@@ -607,8 +607,10 @@ struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
 //
 void R_InitDrawList( drawList_t *list );
 void R_ClearDrawList( drawList_t *list );
-bool R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader, 
+unsigned R_PackOpaqueOrder( const entity_t *e, const shader_t *shader, bool lightmap, bool dlight );
+void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fog, const shader_t *shader, 
 	float dist, unsigned int order, const portalSurface_t *portalSurf, void *drawSurf );
+void R_UpdateDrawListSurf( void *psds, unsigned order );
 void R_AddVBOSlice( unsigned int index, unsigned int numVerts, unsigned int numElems, 
 	unsigned int firstVert, unsigned int firstElem );
 vboSlice_t *R_GetVBOSlice( unsigned int index );

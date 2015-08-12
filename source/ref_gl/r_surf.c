@@ -262,6 +262,9 @@ static void R_AddSurfaceVBOSlice( const msurface_t *surf, int offset )
 
 /*
 * R_AddSurfaceToDrawList
+*
+* Note that dlit may be true even if dlightBits is 0, indicating there's at least potentially one
+* dynamically light surface for the drawSurf.
 */
 static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, const mfog_t *fog,
 	unsigned int clipFlags, unsigned int dlightBits, unsigned shadowBits, float dist )
@@ -269,6 +272,8 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 	shader_t *shader;
 	drawSurfaceBSP_t *drawSurf = surf->drawSurf;
 	portalSurface_t *portalSurface = NULL;
+	bool lightmapped;
+	unsigned drawOrder;
 
 	if( R_CullSurface( e, surf, clipFlags ) ) {
 		return;
@@ -309,7 +314,9 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 		}
 	}
 	
-	
+	lightmapped = surf->superLightStyle != NULL && surf->superLightStyle->lightmapNum[0] >= 0;
+	drawOrder = R_PackOpaqueOrder( e, shader, lightmapped, dlightBits != 0 );
+
 	if( drawSurf->visFrame != rf.frameCount ) {
 		if( shader->flags & SHADER_PORTAL ) {
 			// draw portals in front-to-back order
@@ -322,14 +329,24 @@ static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, c
 			// just ignore the distance since we're drawing batched geometry anyway
 			dist = 0;
 		}
-		drawSurf->visFrame = rf.frameCount;
 
-		if( !R_AddSurfToDrawList( rn.meshlist, e, fog, shader, dist, 0, portalSurface, drawSurf ) ) {
+		drawSurf->visFrame = rf.frameCount;
+		drawSurf->listSurf = R_AddSurfToDrawList( rn.meshlist, e, fog, shader, dist, drawOrder, portalSurface, drawSurf );
+		if( !drawSurf->listSurf ) {
 			return;
 		}
+
 		if( portalSurface && !( shader->flags & (SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2) ) ) {
 			R_AddSurfToDrawList( rn.portalmasklist, e, NULL, rsh.skyShader, 0, 0, NULL, drawSurf );
 		}
+	}
+	else {
+		if( !drawSurf->listSurf ) {
+			return;
+		}
+
+		// update (OR) the dlightbit
+		R_UpdateDrawListSurf( drawSurf->listSurf, drawOrder );
 	}
 
 	// keep track of the actual vbo chunk we need to render
