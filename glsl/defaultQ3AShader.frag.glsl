@@ -107,9 +107,5 @@ void main(void)
 	QF_ALPHATEST(color.a);
 #endif
 
-#ifdef APPLY_BLEND
 	qf_FragColor = vec4(color);
-#else
-	qf_FragColor = vec4(vec3(color), 1.0);
-#endif
 }

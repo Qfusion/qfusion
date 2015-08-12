@@ -2630,8 +2630,8 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 	}
 
 	if( color ) {
-		// samples is 4 no matter whether alpha blending is used because RGB FBs are broken on some PowerVRs
-		R_InitViewportTexture( color, name, 0, glConfig.width, glConfig.height, 0, colorFlags, IMAGE_TAG_BUILTIN, 4 );
+		R_InitViewportTexture( color, name, 0, glConfig.width, glConfig.height, 0, colorFlags, IMAGE_TAG_BUILTIN,
+			glConfig.forceRGBAFramebuffers ? 4 : 3 );
 	}
 	if( depth && *color ) {
 		R_InitViewportTexture( depth, va( "%s_depth", name ), 0, glConfig.width, glConfig.height, 0, depthFlags, IMAGE_TAG_BUILTIN, 1 );

@@ -993,6 +993,13 @@ static void R_FinalizeGLExtensions( void )
 		ri.Cvar_ForceSet( "gl_ext_vertex_buffer_object", "1" );
 	}
 
+#ifdef GL_ES_VERSION_2_0
+	// Use 32-bit framebuffers on PowerVR instead of 24-bit with the alpha cleared to 1
+	// because blending incorrectly assumes alpha 0 when an RGB FB is used there, not 1.
+	if( !strcmp( glConfig.vendorString, "Imagination Technologies" ) )
+		glConfig.forceRGBAFramebuffers = true;
+#endif
+
 	ri.Cvar_Get( "r_texturefilter_max", "0", CVAR_READONLY );
 	ri.Cvar_ForceSet( "r_texturefilter_max", va( "%i", glConfig.maxTextureFilterAnisotropic ) );
 
