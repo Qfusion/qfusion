@@ -36,7 +36,7 @@ bool R_SurfPotentiallyVisible( const msurface_t *surf )
 		return false;
 	if( !surf->mesh )
 		return false;
-	if( !shader || (!shader->numpasses && !(shader->flags & SHADER_SKY) && !surf->fog) )
+	if( !shader )
 		return false;
 	return true;
 }
@@ -256,7 +256,7 @@ static void R_AddSurfaceVBOSlice( const msurface_t *surf, int offset )
 {
 	drawSurfaceBSP_t *drawSurf = surf->drawSurf;
 	R_AddVBOSlice( offset + drawSurf - rsh.worldBrushModel->drawSurfaces, 
-		surf->mesh->numVerts, surf->mesh->numElems,
+		surf->numVerts, surf->numElems,
 		surf->firstDrawSurfVert, surf->firstDrawSurfElem );
 }
 
@@ -267,17 +267,13 @@ static void R_AddSurfaceVBOSlice( const msurface_t *surf, int offset )
 * dynamically light surface for the drawSurf.
 */
 static void R_AddSurfaceToDrawList( const entity_t *e, const msurface_t *surf, const mfog_t *fog,
-	unsigned int clipFlags, unsigned int dlightBits, unsigned shadowBits, float dist )
+	unsigned int dlightBits, unsigned shadowBits, float dist )
 {
 	shader_t *shader;
 	drawSurfaceBSP_t *drawSurf = surf->drawSurf;
 	portalSurface_t *portalSurface = NULL;
 	bool lightmapped;
 	unsigned drawOrder;
-
-	if( R_CullSurface( e, surf, clipFlags ) ) {
-		return;
-	}
 
 	if( r_drawworld->integer == 2 ) {
 		shader = rsh.envShader;
@@ -502,10 +498,14 @@ bool R_AddBrushModelToDrawList( const entity_t *e )
 		if( surf->visFrame != rf.frameCount ) {
 			surf->visFrame = rf.frameCount;
 
+			if( R_CullSurface( e, surf, 0 ) ) {
+				continue;
+			}
+
 			surfDlightBits = R_SurfPotentiallyLit( surf ) ? dlightBits : 0;
 			surfShadowBits = R_SurfPotentiallyShadowed( surf ) ? shadowBits : 0;
 
-			R_AddSurfaceToDrawList( e, surf, fog, 0, surfDlightBits, surfShadowBits, distance );
+			R_AddSurfaceToDrawList( e, surf, fog, surfDlightBits, surfShadowBits, distance );
 		}
 	}
 
@@ -538,6 +538,10 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 		surf = *mark++;
 		drawSurf = surf->drawSurf;
 
+		if( R_CullSurface( rsc.worldent, surf, clipFlags ) ) {
+			continue;
+		}
+
 		// avoid double-checking dlights that have already been added to drawSurf
 		newDlightBits = dlightBits;
 		if( drawSurf->dlightFrame == rsc.frameCount ) {
@@ -554,7 +558,7 @@ static void R_MarkLeafSurfaces( msurface_t **mark, unsigned int clipFlags,
 			VectorScale( centre, 0.5, centre );
 			distance = Distance( rn.refdef.vieworg, centre );
 
-			R_AddSurfaceToDrawList( rsc.worldent, surf, surf->fog, clipFlags, 
+			R_AddSurfaceToDrawList( rsc.worldent, surf, surf->fog, 
 				newDlightBits, newShadowBits, distance );
 		}
 
@@ -685,6 +689,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int clipFlags,
 */
 void R_DrawWorld( void )
 {
+	unsigned int i;
 	int clipFlags, msec = 0;
 	unsigned int dlightBits;
 	unsigned int shadowBits;
@@ -707,25 +712,38 @@ void R_DrawWorld( void )
 		rsc.worldent->outlineHeight = 0;
 	Vector4Copy( mapConfig.outlineColor, rsc.worldent->outlineColor );
 
+	clipFlags = rn.clipFlags;
+	dlightBits = 0;
+	shadowBits = 0;
+
 	if( r_nocull->integer )
 		clipFlags = 0;
-	else
-		clipFlags = rn.clipFlags;
 
-	// dynamic lights
-	if( r_dynamiclight->integer != 1 || r_fullbright->integer || rn.renderFlags & RF_ENVVIEW ) {
-		dlightBits = 0;
-	} else {
-		dlightBits = rsc.numDlights < 32 ? ( 1 << rsc.numDlights ) - 1 : ~0;
+	// cull dynamic lights
+	if( !( rn.renderFlags & RF_ENVVIEW ) ) {
+		if( r_dynamiclight->integer == 1 && !r_fullbright->integer ) {
+			for( i = 0; i < rsc.numDlights; i++ ) {
+				if( R_CullSphere( rsc.dlights[i].origin, rsc.dlights[i].intensity, clipFlags ) ) {
+					continue;
+				}
+				dlightBits |= 1<<i;
+			}
+		}
 	}
 
-	// shadowmaps
-	if( rn.renderFlags & RF_ENVVIEW ) {
-		shadowBits = 0;
+	// cull shadowmaps
+	if( !( rn.renderFlags & RF_ENVVIEW ) ) {
+		for( i = 0; i < rsc.numShadowGroups; i++ ) {
+			shadowGroup_t *grp = rsc.shadowGroups + i;
+			if( R_CullBox( grp->visMins, grp->visMaxs, clipFlags ) ) {
+				continue;
+			}
+			shadowBits |= grp->bit;
+		}
 	}
-	else {
-		shadowBits = rsc.numShadowGroups < 32 ? ( 1 << rsc.numShadowGroups ) - 1 : ~0;
-	}
+
+	rn.dlightBits = dlightBits;
+	rn.shadowBits = shadowBits;
 
 	if( r_speeds->integer )
 		msec = ri.Sys_Milliseconds();
