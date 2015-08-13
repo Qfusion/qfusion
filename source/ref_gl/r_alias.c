@@ -809,7 +809,7 @@ bool R_AddAliasModelToDrawList( const entity_t *e )
 			shader = R_FindShaderForSkinFile( e->customSkin, mesh->name );
 		} else if( e->customShader ) {
 			shader = e->customShader;
-		} else if( mesh->numskins ) 	{
+		} else if( mesh->numskins ) {
 			for( j = 0; j < mesh->numskins; j++ ) {
 				shader = mesh->skins[j].shader;
 				if( shader ) {
