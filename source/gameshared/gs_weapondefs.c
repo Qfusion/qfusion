@@ -345,7 +345,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			1.00,							// selfdamage ratio
 			90,								// knockback
 			1250,							// stun
-			135,							// splash radius
+			125,							// splash radius
 			15,								// splash minimum damage
 			35,                             // splash minimum knockback
 
@@ -417,7 +417,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			1.00,							// selfdamage ratio
 			90,								// knockback
 			1250,							// stun
-			135,							// splash radius
+			125,							// splash radius
 			15,								// splash minimum damage
 			35,                             // splash minimum knockback
 
