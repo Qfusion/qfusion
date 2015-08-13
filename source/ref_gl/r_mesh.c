@@ -208,6 +208,11 @@ void *R_AddSurfToDrawList( drawList_t *list, const entity_t *e, const mfog_t *fo
 		shaderSort = SHADER_SORT_ADDITIVE;
 	}
 
+	if( shaderSort == SHADER_SORT_OPAQUE ) {
+		// do not sort opaque meshes by distance
+		dist = 0;
+	}
+
 	sds = &list->drawSurfs[list->numDrawSurfs++];
 	sds->distKey = R_PackDistKey( shaderSort, (int)dist, order );
 	sds->sortKey = R_PackSortKey( shader->id, fog ? fog - rsh.worldBrushModel->fogs : -1,
