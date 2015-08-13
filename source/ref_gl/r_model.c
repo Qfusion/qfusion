@@ -459,7 +459,6 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 	for( i = 0; i < numSurfaces; i++ )
 	{
 		mesh_vbo_t *vbo;
-		mesh_t *mesh, *mesh2;
 		shader_t *shader;
 		int fcount;
 		int vcount, ecount;
@@ -481,9 +480,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 		arearow = areadata + i * areabytes;
 
 		fcount = 1;
-		mesh = surf->mesh;
-		vcount = mesh->numVerts;
-		ecount = mesh->numElems;
+		vcount = surf->numVerts;
+		ecount = surf->numElems;
 
 		// portal or foliage surfaces can not be batched
 		if( !(shader->flags & (SHADER_PORTAL_CAPTURE|SHADER_PORTAL_CAPTURE2)) && !surf->numInstances )
@@ -503,7 +501,7 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 					continue;
 				if( surf2->fog != surf->fog )
 					continue;
-				if( vcount + surf2->mesh->numVerts >= USHRT_MAX )
+				if( vcount + surf2->numVerts >= USHRT_MAX )
 					continue;
 				if( surf2->numInstances != 0 )
 					continue;
@@ -531,9 +529,8 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 						longrow[k] |= longrow2[k];
 merge:
 					fcount++;
-					mesh2 = surf2->mesh;
-					vcount += mesh2->numVerts;
-					ecount += mesh2->numElems;
+					vcount += surf2->numVerts;
+					ecount += surf2->numElems;
 					surfmap[j] = surf;
 					last_merged = j;
 				}
@@ -575,8 +572,8 @@ merge:
 			surf->firstDrawSurfVert = 0;
 			surf->firstDrawSurfElem = 0;
 
-			vcount = mesh->numVerts;
-			ecount = mesh->numElems;
+			vcount = surf->numVerts;
+			ecount = surf->numElems;
 			numUnmappedSurfaces--;
 
 			// now if there are any merged faces upload them to the same VBO
@@ -588,14 +585,12 @@ merge:
 						continue;
 
 					surf2 = surfaces[j];
-					mesh2 = surf2->mesh;
-
 					surf2->drawSurf = drawSurf;
 					surf2->firstDrawSurfVert = vcount;
 					surf2->firstDrawSurfElem = ecount;
 
-					vcount += mesh2->numVerts;
-					ecount += mesh2->numElems;
+					vcount += surf2->numVerts;
+					ecount += surf2->numElems;
 					numUnmappedSurfaces--;
 				}
 			}

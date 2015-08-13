@@ -1770,6 +1770,10 @@ static void Mod_Finish( const lump_t *faces, const lump_t *light, vec3_t gridSiz
 	surf = loadbmodel->surfaces;
 	for( i = 0; i < loadbmodel->numsurfaces; i++, in++, surf++ ) {
 		surf->mesh = Mod_CreateMeshForSurface( in, surf, loadmodel_patchgrouprefs[i] );
+		if( surf->mesh ) {
+			surf->numVerts = surf->mesh->numVerts;
+			surf->numElems = surf->mesh->numElems;
+		}
 
 		Mod_ApplySuperStylesToFace( in, surf );
 

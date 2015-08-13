@@ -70,6 +70,7 @@ typedef struct msurface_s
 	unsigned int	facetype, flags;
 
 	drawSurfaceBSP_t *drawSurf;
+	unsigned int	numVerts, numElems; // cached from mesh
 	unsigned int	firstDrawSurfVert, firstDrawSurfElem;
 
 	shader_t		*shader;
