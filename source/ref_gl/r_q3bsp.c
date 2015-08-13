@@ -1853,11 +1853,11 @@ void Mod_LoadQ3BrushModel( model_t *mod, model_t *parent, void *buffer, bspForma
 		( (int *)header )[i] = LittleLong( ( (int *)header )[i] );
 
 	// load into heap
-	Mod_LoadShaderrefs( &header->lumps[LUMP_SHADERREFS] );
-	Mod_PreloadFaces( &header->lumps[LUMP_FACES] );
 	Mod_LoadSubmodels( &header->lumps[LUMP_MODELS] );
 	Mod_LoadEntities( &header->lumps[LUMP_ENTITIES], gridSize, ambient, outline );
 	Mod_LoadLighting( &header->lumps[LUMP_LIGHTING], &header->lumps[LUMP_FACES] );
+	Mod_LoadShaderrefs( &header->lumps[LUMP_SHADERREFS] );
+	Mod_PreloadFaces( &header->lumps[LUMP_FACES] );
 	Mod_LoadPlanes( &header->lumps[LUMP_PLANES] );
 	Mod_LoadFogs( &header->lumps[LUMP_FOGS], &header->lumps[LUMP_BRUSHES], &header->lumps[LUMP_BRUSHSIDES] );
 	Mod_LoadFaces( &header->lumps[LUMP_FACES] );
