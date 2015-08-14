@@ -219,9 +219,9 @@ parse_string:
 
 			w = -1;
 			j = s; // start
-			len = trap_SCR_StrlenForWidth( text + s, font, width - padding_x );
+			len = trap_SCR_StrlenForWidth( text + s, font, width - padding_x * 2 );
 
-			for( k = 0; k <= len && text[j] != '\0'; j += utf_len, k++ )
+			for( k = 0; k < len && text[j] != '\0'; j += utf_len, k++ )
 			{
 				utf_len = Q_Utf8SyncPos( text + j, 1, UTF8SYNC_RIGHT );
 				memcpy( tstr + j - s, text + j, utf_len );
