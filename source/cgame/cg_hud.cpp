@@ -340,6 +340,17 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter )
 	return result;
 }
 
+static int CG_GetWeaponCount( const void *parameter )
+{
+	int i, n = 0;
+	for( i = 0; i < WEAP_TOTAL-1; i++ )
+	{
+		if( ( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE+i] ) )
+			n++;
+	}
+	return n;
+}
+
 static int CG_GetPmoveType( const void *parameter )
 {
 	// the real pmove type of the client, which is chasecam or spectator when playing a demo
@@ -632,6 +643,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "AMMO_ITEM", CG_GetCurrentWeaponInventoryData, (void *)0 },
 	{ "AMMO", CG_GetCurrentWeaponInventoryData, (void *)1 },
 	{ "WEAK_AMMO", CG_GetCurrentWeaponInventoryData, (void *)2 },
+	{ "WEAPON_COUNT", CG_GetWeaponCount, NULL },
 
 	// other
 	{ "CHASING", CG_GetPOVnum, NULL },
