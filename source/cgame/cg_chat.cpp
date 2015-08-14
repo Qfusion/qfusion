@@ -220,6 +220,7 @@ parse_string:
 			w = -1;
 			j = s; // start
 			len = trap_SCR_StrlenForWidth( text + s, font, width - padding_x * 2 );
+			clamp_low( len, 1 );
 
 			for( k = 0; k < len && text[j] != '\0'; j += utf_len, k++ )
 			{
