@@ -206,7 +206,7 @@ parse_string:
 		s = e = 0;
 		while( 1 )
 		{
-			size_t k, len;
+			int len;
 
 			memset( tstr, 0, sizeof( tstr ) );
 
@@ -218,11 +218,10 @@ parse_string:
 				break;
 
 			w = -1;
-			j = s; // start
 			len = trap_SCR_StrlenForWidth( text + s, font, width - padding_x * 2 );
 			clamp_low( len, 1 );
 
-			for( k = 0; k < len && text[j] != '\0'; j += utf_len, k++ )
+			for( j = s; ( j < ( s + len ) ) && text[j] != '\0'; j += utf_len )
 			{
 				utf_len = Q_Utf8SyncPos( text + j, 1, UTF8SYNC_RIGHT );
 				memcpy( tstr + j - s, text + j, utf_len );
