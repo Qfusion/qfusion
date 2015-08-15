@@ -424,6 +424,7 @@ void CG_RegisterMediaShaders( void )
 
 void CG_RegisterLevelMinimap( void )
 {
+	size_t i;
 	int file;
 	char *name, minimap[MAX_QPATH];
 
@@ -431,17 +432,16 @@ void CG_RegisterLevelMinimap( void )
 
 	name = cgs.configStrings[CS_MAPNAME];
 
-	Q_snprintfz( minimap, sizeof( minimap ), "minimaps/%s.tga", name );
-	file = trap_FS_FOpenFile( minimap, NULL, FS_READ );
-
-	if( file == -1 )
+	for( i = 0; i < NUM_IMAGE_EXTENSIONS; i++ )
 	{
-		Q_snprintfz( minimap, sizeof( minimap ), "minimaps/%s.jpg", name );
+		Q_snprintfz( minimap, sizeof( minimap ), "minimaps/%s%s", name, IMAGE_EXTENSIONS[i] );
 		file = trap_FS_FOpenFile( minimap, NULL, FS_READ );
+		if( file != -1 )
+		{
+			cgs.shaderMiniMap = trap_R_RegisterPic( minimap );
+			break;
+		}
 	}
-
-	if( file != -1 )
-		cgs.shaderMiniMap = trap_R_RegisterPic( minimap );
 }
 
 /*
