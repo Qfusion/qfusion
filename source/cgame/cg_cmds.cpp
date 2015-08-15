@@ -1064,7 +1064,8 @@ static void CG_Cmd_WeaponCross_f( void )
 		{
 			continue;
 		}
-		if( !cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
+		if( ( first + i ) /* show uncharged gunblade */ &&
+			!cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
 			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] )
 		{
 			continue;
