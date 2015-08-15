@@ -1307,7 +1307,8 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 		{
 			continue;
 		}
-		if( !cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
+		if( ( first + i ) /* show uncharged gunblade */ &&
+			!cg.predictedPlayerState.inventory[AMMO_GUNBLADE + first + i] &&
 			!cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE + first + i] )
 		{
 			continue;
@@ -1352,7 +1353,7 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, CG_MediaShader( cgs.media.shaderWeaponIcon[w[i]] ) );
 		}
 
-		if( ammopass )
+		if( ammopass && cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] )
 		{
 			CG_DrawHUDNumeric( x + ( iw >> 1 ), y + ( ih >> 1 ) + ammoofs, ALIGN_CENTER_MIDDLE,
 				CG_IsWeaponSelected( WEAP_GUNBLADE + w[i] ) ? color : colorTrans, ammosize, ammosize,
