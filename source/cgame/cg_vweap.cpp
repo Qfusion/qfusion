@@ -299,8 +299,8 @@ void CG_CalcViewWeapon( cg_viewweapon_t *viewweapon )
 	gunOffset[RIGHT] = cg_gunx->value + weaponInfo->handpositionOrigin[RIGHT];
 	gunOffset[UP] = cg_guny->value + weaponInfo->handpositionOrigin[UP];
 	
-	// scale forward gun offset depending on fov
-	gunOffset[FORWARD] /= cg.view.fracDistFOV;
+	// scale forward gun offset depending on fov and aspect ratio
+	gunOffset[FORWARD] = gunOffset[FORWARD] * cgs.vidWidth / ( cgs.vidHeight * cg.view.fracDistFOV ) ;
 
 	// hand cvar offset
 	handOffset = 0.0f;
