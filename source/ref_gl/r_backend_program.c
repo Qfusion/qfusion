@@ -604,7 +604,7 @@ static int RB_RGBAlphaGenToProgramFeatures( const colorgen_t *rgbgen, const colo
 			break;
 	}
 
-	if( identity == 2 ) {
+	if( identity == 2 && !rb.alphaHack ) {
 		return 0;
 	}
 
