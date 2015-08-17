@@ -1145,6 +1145,59 @@ static bool CG_IsWeaponSelected( int weapon )
 	return ( weapon == cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] );
 }
 
+static int cg_touch_dropWeapon;
+static float cg_touch_dropWeaponTime;
+
+/**
+ * Offset for the weapon icon when dropping the weapon on the touch HUD.
+ */
+static float cg_touch_dropWeaponX, cg_touch_dropWeaponY;
+
+/**
+ * Resets touch weapon dropping if needed.
+ */
+static void CG_CheckTouchWeaponDrop( void )
+{
+	if( !cg_touch_dropWeapon ||
+		!GS_CanDropWeapon() ||
+		( cg.frame.playerState.pmove.pm_type != PM_NORMAL ) ||
+		!( cg.predictedPlayerState.inventory[cg_touch_dropWeapon] ) )
+	{
+		cg_touch_dropWeapon = 0;
+		cg_touch_dropWeaponTime = 0.0f;
+		return;
+	}
+
+	if( cg_touch_dropWeaponTime > 1.0f )
+	{
+		gsitem_t *item = GS_FindItemByTag( cg_touch_dropWeapon );
+		if( item )
+			trap_Cmd_ExecuteText( EXEC_NOW, va( "drop \"%s\"", item->name ) );
+		cg_touch_dropWeapon = 0;
+		cg_touch_dropWeaponTime = 0.0f;
+	}
+}
+
+/**
+ * Sets the weapon to drop by holding its icon on the touch HUD.
+ *
+ * @param weaponTag tag of the weapon item to drop
+ */
+static void CG_SetTouchWeaponDrop( int weaponTag )
+{
+	cg_touch_dropWeapon = weaponTag;
+	cg_touch_dropWeaponTime = 0.0f;
+	CG_CheckTouchWeaponDrop();
+}
+
+/**
+ * Touch release handler for the weapon icons.
+ */
+static void CG_WeaponUpFunc( int id, unsigned int time )
+{
+	CG_SetTouchWeaponDrop( 0 );
+}
+
 /*
 * CG_DrawWeaponIcons
 */
@@ -1191,13 +1244,18 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 
 		if( touch )
 		{
-			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] && !selected_weapon )
+			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] )
 			{
-				if( CG_TouchArea( TOUCHAREA_HUD_WEAPON | ( i << TOUCHAREA_SUB_SHIFT ), curx, cury, curw, curh, NULL ) >= 0 )
+				if( CG_TouchArea( TOUCHAREA_HUD_WEAPON | ( i << TOUCHAREA_SUB_SHIFT ), curx, cury, curw, curh, CG_WeaponUpFunc ) >= 0 )
 				{
-					gsitem_t *item = GS_FindItemByTag( WEAP_GUNBLADE+i );
-					if( item )
-						trap_Cmd_ExecuteText( EXEC_NOW, va( "use %s", item->name ) );
+					if( !selected_weapon )
+					{
+						gsitem_t *item = GS_FindItemByTag( WEAP_GUNBLADE+i );
+						if( item )
+							trap_Cmd_ExecuteText( EXEC_NOW, va( "use %s", item->name ) ); // without quotes!
+					}
+					if( i ) // don't drop gunblade
+						CG_SetTouchWeaponDrop( WEAP_GUNBLADE+i );
 					break;
 				}
 			}
@@ -1206,6 +1264,14 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 		{
 			if( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] )
 			{
+				// swipe the weapon icon
+				if( cg_touch_dropWeapon == WEAP_GUNBLADE+i )
+				{
+					float dropOffset = ( bound( 0.75f, cg_touch_dropWeaponTime, 1.0f ) - 0.75f ) * 4.0f;
+					curx += cg_touch_dropWeaponX * dropOffset;
+					cury += cg_touch_dropWeaponY * dropOffset;
+				}
+
 				// wsw : pb : display a little box around selected weapon in weaponlist
 				if( selected_weapon )
 				{
@@ -1279,6 +1345,13 @@ static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, 
 		fn = (float)n;
 		curx = x + (int)( offx * ( fj - fn / 2.0f ) );
 		cury = y + (int)( offy * ( fj - fn / 2.0f ) );
+
+		if( cg_touch_dropWeapon == WEAP_GUNBLADE+i )
+		{
+			float dropOffset = ( bound( 0.75f, cg_touch_dropWeaponTime, 1.0f ) - 0.75f ) * 4.0f;
+			curx += cg_touch_dropWeaponX * dropOffset;
+			cury += cg_touch_dropWeaponY * dropOffset;
+		}
 
 		if( cg.predictedPlayerState.inventory[i+startammo] )
 			CG_DrawHUDNumeric( curx, cury, align, color, curwh, curwh, cg.predictedPlayerState.inventory[i+startammo] );
@@ -2404,6 +2477,20 @@ static bool CG_LFuncTouchWeaponIcons( struct cg_layoutnode_s *commandnode, struc
 	return true;
 }
 
+static bool CG_LFuncSetTouchWeaponDropOffset( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	float x, y;
+
+	x = CG_GetNumericArg( &argumentnode );
+	x = SCALE_X( x );
+	y = CG_GetNumericArg( &argumentnode );
+	y = SCALE_Y( y );
+
+	cg_touch_dropWeaponX = Q_rint( x );
+	cg_touch_dropWeaponY = Q_rint( y );
+	return true;
+}
+
 static bool CG_LFuncDrawWeaponCross( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int ammoofs = (int)( CG_GetNumericArg( &argumentnode ) * cgs.vidHeight/600 );
@@ -3167,6 +3254,14 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		4,
 		"Draws the icons of weapon/ammo owned by the player, arguments are offset x, offset y, size x, size y",
 		false
+	},
+
+	{
+		"setTouchWeaponDropOffset",
+		CG_LFuncSetTouchWeaponDropOffset,
+		CG_LFuncSetTouchWeaponDropOffset,
+		2,
+		"Sets the movement of weapon icons when dropping weapons on touch HUDs"
 	},
 
 	{
@@ -4502,6 +4597,8 @@ static void CG_LoadStatusBarFile( char *path )
 	}
 	customWeaponSelectPic = NULL;
 
+	cg_touch_dropWeaponX = cg_touch_dropWeaponY = 0.0f;
+
 	trap_Cvar_ForceSet( "con_chatCGame", "0" );
 }
 
@@ -4563,6 +4660,9 @@ void CG_UpdateHUDPostDraw( void )
 {
 	cg_hud_weaponcrosstime -= cg.frameTime;
 	CG_CheckWeaponCross();
+
+	cg_touch_dropWeaponTime += cg.frameTime;
+	CG_CheckTouchWeaponDrop();
 }
 
 /*
