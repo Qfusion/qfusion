@@ -915,7 +915,7 @@ static void R_FinalizeGLExtensions( void )
 #else
 	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
 #endif
-	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor * 10;
+	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor;
 #ifndef GL_ES_VERSION_2_0
 	if( !glConfig.ext.GLSL130 ) {
 		glConfig.shadingLanguageVersion = 120;
