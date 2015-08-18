@@ -729,17 +729,16 @@ static void R_PrintMemoryInfo( void )
 static void R_FinalizeGLExtensions( void )
 {
 	int versionMajor, versionMinor;
-	char versionUpdate = '0';
 	int val;
 	cvar_t *cvar;
 
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
-	sscanf( glConfig.versionString, "OpenGL ES %d.%d.%c", &versionMajor, &versionMinor, &versionUpdate );
+	sscanf( glConfig.versionString, "OpenGL ES %d.%d", &versionMajor, &versionMinor );
 #else
-	sscanf( glConfig.versionString, "%d.%d.%c", &versionMajor, &versionMinor, &versionUpdate );
+	sscanf( glConfig.versionString, "%d.%d", &versionMajor, &versionMinor );
 #endif
-	glConfig.version = versionMajor * 100 + versionMinor * 10 + versionUpdate - '0';
+	glConfig.version = versionMajor * 100 + versionMinor * 10;
 
 #ifdef GL_ES_VERSION_2_0
 	glConfig.ext.multitexture = true;
@@ -916,7 +915,7 @@ static void R_FinalizeGLExtensions( void )
 #else
 	sscanf( glConfig.shadingLanguageVersionString, "%d.%d", &versionMajor, &versionMinor );
 #endif
-	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor;
+	glConfig.shadingLanguageVersion = versionMajor * 100 + versionMinor * 10;
 #ifndef GL_ES_VERSION_2_0
 	if( !glConfig.ext.GLSL130 ) {
 		glConfig.shadingLanguageVersion = 120;
