@@ -309,8 +309,8 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 void R_RenderScene( const refdef_t *fd )
 {
 	int fbFlags = 0;
-	int ppFBO = 0;
-	int firstPPFBO = 0;
+	int ppFrontBuffer = 0;
+	image_t *ppSource;
 
 	if( r_norefresh->integer )
 		return;
@@ -367,11 +367,13 @@ void R_RenderScene( const refdef_t *fd )
 			if( fbFlags != oldFlags ) {
 				if( !rn.fbColorAttachment ) {
 					rn.fbColorAttachment = rsh.screenPPCopies[0];
+					ppFrontBuffer = 1;
 				}
-				firstPPFBO = rsh.screenPPCopies[0]->fbo;
 			}
 		}
 	}
+
+	ppSource = rn.fbColorAttachment;
 
 	// clip new scissor region to the one currently set
 	Vector4Set( rn.scissor, fd->scissor_x, fd->scissor_y, fd->scissor_width, fd->scissor_height );
@@ -398,40 +400,47 @@ void R_RenderScene( const refdef_t *fd )
 
 	// blit and blend framebuffers in proper order
 
-	if( fbFlags & 1 ) {
-		fbFlags &= ~1;
-
-		R_BlitTextureToScrFbo( fd, rn.fbColorAttachment, 
-			firstPPFBO, 
+	if( fbFlags == 1 ) {
+		// only blit soft particles directly when we don't have any other post processing
+		// otherwise use the soft particles FBO as the base texture on the next layer
+		// to avoid wasting time on resolves and the fragment shader to blit to a temp texture
+		R_BlitTextureToScrFbo( fd,
+			ppSource, 0,
 			GLSL_PROGRAM_TYPE_NONE,
 			colorWhite, 0,
 			0, NULL );
 	}
+	fbFlags &= ~1;
 
 	// apply FXAA
 	if( fbFlags & 2 ) {
-		fbFlags &= ~2;
+		image_t *dest;
 
-		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
-			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
+		fbFlags &= ~2;
+		dest = fbFlags ? rsh.screenPPCopies[ppFrontBuffer] : NULL;
+
+		R_BlitTextureToScrFbo( fd,
+			ppSource, dest ? dest->fbo : 0,
 			GLSL_PROGRAM_TYPE_FXAA,
 			colorWhite, 0,
 			0, NULL );
 
-		ppFBO ^= 1;
+		ppFrontBuffer ^= 1;
+		ppSource = dest;
 	}
 
 	// apply color correction
 	if( fbFlags & 4 ) {
-		fbFlags &= ~4;
+		image_t *dest;
 
-		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
-			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
+		fbFlags &= ~4;
+		dest = fbFlags ? rsh.screenPPCopies[ppFrontBuffer] : NULL;
+
+		R_BlitTextureToScrFbo( fd,
+			ppSource, dest ? dest->fbo : 0,
 			GLSL_PROGRAM_TYPE_COLORCORRECTION,
 			colorWhite, 0,
 			1, &( rn.refdef.colorCorrection->passes[0].images[0] ) );
-
-		ppFBO ^= 1;
 	}
 }
 
