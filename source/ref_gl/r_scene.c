@@ -212,7 +212,21 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	int program_type, const vec4_t color, int blendMask, int numShaderImages, image_t **shaderImages )
 {
 	int x, y;
-	int w, h;
+	int w, h, fw, fh;
+	static char s_name[] = "$builtinpostprocessing";
+	static shaderpass_t p;
+	static shader_t s;
+	int i;
+	static tcmod_t tcmod;
+	mat4_t m;
+
+	assert( rsh.postProcessingVBO );
+
+	// blit + flip using a static mesh to avoid redundant buffer uploads
+	// (also using custom PP effects like FXAA with the stream VBO causes
+	// Adreno to mark the VBO as "slow" (due to some weird bug)
+	// for the rest of the frame and drop FPS to 10-20).
+	R_EndStretchBatch();
 
 	RB_BindFrameBufferObject( dstFbo );
 
@@ -222,92 +236,67 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 		// but keep the scissoring region
 		x = fd->x;
 		y = fd->y;
-		w = fd->width;
-		h = fd->height;
+		w = fw = fd->width;
+		h = fh = fd->height;
 		RB_Viewport( 0, 0, glConfig.width, glConfig.height );
 		RB_Scissor( rn.scissor[0], rn.scissor[1], rn.scissor[2], rn.scissor[3] );
 	}
 	else {
 		// aux framebuffer
-		// set the viewport to full resolution of the framebuffer
+		// set the viewport to full resolution of the framebuffer (without the NPOT padding if there's one)
+		// draw quad on the whole framebuffer texture
 		// set scissor to default framebuffer resolution
+		image_t *cb = RFB_GetObjectTextureAttachment( dstFbo, false );
 		x = 0;
 		y = 0;
-		w = rf.frameBufferWidth;
-		h = rf.frameBufferHeight;
+		w = fw = rf.frameBufferWidth;
+		h = fh = rf.frameBufferHeight;
+		if( cb ) {
+			fw = cb->upload_width;
+			fh = cb->upload_height;
+		}
 		RB_Viewport( 0, 0, w, h );
 		RB_Scissor( 0, 0, glConfig.width, glConfig.height );
 	}
 
-	// blit + flip
-	if( ( program_type == GLSL_PROGRAM_TYPE_NONE ) || ( program_type == GLSL_PROGRAM_TYPE_Q3A_SHADER ) )
-	{
-		R_DrawStretchQuick( x, y, 
-			w, h, 
-			(float)(x)/image->upload_width, 1.0 - (float)(y)/image->upload_height, 
-			(float)(x+w)/image->upload_width, 1.0 - (float)(y+h)/image->upload_height,
-			color, program_type, image, blendMask );
+	s.vattribs = VATTRIB_POSITION_BIT|VATTRIB_TEXCOORDS_BIT;
+	s.sort = SHADER_SORT_NEAREST;
+	s.numpasses = 1;
+	s.name = s_name;
+	s.passes = &p;
+
+	p.rgbgen.type = RGB_GEN_IDENTITY;
+	p.alphagen.type = ALPHA_GEN_IDENTITY;
+	p.tcgen = TC_GEN_NONE;
+	p.images[0] = image;
+	for( i = 0; i < numShaderImages; i++ )
+		p.images[i + 1] = shaderImages[i];
+	p.flags = blendMask;
+	p.program_type = program_type;
+
+	if( !dstFbo ) {
+		tcmod.type = TC_MOD_TRANSFORM;
+		tcmod.args[0] = ( float )( w ) / ( float )( image->upload_width );
+		tcmod.args[1] = ( float )( h ) / ( float )( image->upload_height );
+		tcmod.args[4] = ( float )( x ) / ( float )( image->upload_width );
+		tcmod.args[5] = ( float )( image->upload_height - h - y ) / ( float )( image->upload_height );
+		p.numtcmods = 1;
+		p.tcmods = &tcmod;
 	}
 	else {
-		// On Adreno, reusing the batch mesh for post processing effects drops FPS to 10-20.
-		static char *s_name = "$builtinpostprocessing";
-		static shaderpass_t p;
-		static shader_t s;
-		int i;
-		int fw = w, fh = h;
-		static tcmod_t tcmod;
-		mat4_t m;
-
-		assert( rsh.postProcessingVBO );
-		if( rsh.postProcessingVBO ) {
-			R_EndStretchBatch();
-
-			s.vattribs = VATTRIB_POSITION_BIT;
-			s.sort = SHADER_SORT_NEAREST;
-			s.numpasses = 1;
-			s.name = s_name;
-			s.passes = &p;
-
-			p.rgbgen.type = RGB_GEN_IDENTITY;
-			p.alphagen.type = ALPHA_GEN_IDENTITY;
-			p.tcgen = TC_GEN_NONE;
-			p.images[0] = image;
-			for( i = 0; i < numShaderImages; i++ )
-				p.images[i + 1] = shaderImages[i];
-			p.flags = blendMask;
-			p.program_type = program_type;
-
-			if( !dstFbo ) {
-				tcmod.type = TC_MOD_TRANSFORM;
-				tcmod.args[0] = (float)(w) / image->upload_width;
-				tcmod.args[1] = (float)(h) / image->upload_height;
-				tcmod.args[4] = (float)(x) / image->upload_width;
-				tcmod.args[5] = (float)(y) / image->upload_height;
-
-				p.numtcmods = 1;
-				p.tcmods = &tcmod;
-			}
-			else {
-				image_t *cb = RFB_GetObjectTextureAttachment( dstFbo, false );
-				if( cb ) {
-					fw = cb->upload_width;
-					fh = cb->upload_height;
-				}
-				p.numtcmods = 0;
-			}
-
-			Matrix4_Identity( m );
-			Matrix4_Scale2D( m, fw, fh );
-			Matrix4_Translate2D( m, x, y );
-			RB_LoadObjectMatrix( m );
-
-			RB_BindShader( NULL, &s, NULL );	
-			RB_BindVBO( rsh.postProcessingVBO->index, GL_TRIANGLES );
-			RB_DrawElements( 0, 4, 0, 6, 0, 0, 0, 0 );
-
-			RB_LoadObjectMatrix( mat4x4_identity );
-		}
+		p.numtcmods = 0;
 	}
+
+	Matrix4_Identity( m );
+	Matrix4_Scale2D( m, fw, fh );
+	Matrix4_Translate2D( m, x, y );
+	RB_LoadObjectMatrix( m );
+
+	RB_BindShader( NULL, &s, NULL );
+	RB_BindVBO( rsh.postProcessingVBO->index, GL_TRIANGLES );
+	RB_DrawElements( 0, 4, 0, 6, 0, 0, 0, 0 );
+
+	RB_LoadObjectMatrix( mat4x4_identity );
 
 	// restore 2D viewport and scissor
 	RB_Viewport( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
@@ -368,11 +357,11 @@ void R_RenderScene( const refdef_t *fd )
 			shader_t *cc = rn.refdef.colorCorrection;
 
 			if( r_fxaa->integer ) {
-				fbFlags |= 4;
+				fbFlags |= 2;
 			}
 
 			if( cc && cc->numpasses > 0 && cc->passes[0].images[0] && cc->passes[0].images[0] != rsh.noTexture ) {
-				fbFlags |= 8;
+				fbFlags |= 4;
 			}
 
 			if( fbFlags != oldFlags ) {
@@ -420,8 +409,8 @@ void R_RenderScene( const refdef_t *fd )
 	}
 
 	// apply FXAA
-	if( fbFlags & 4 ) {
-		fbFlags &= ~4;
+	if( fbFlags & 2 ) {
+		fbFlags &= ~2;
 
 		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
 			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
@@ -433,8 +422,8 @@ void R_RenderScene( const refdef_t *fd )
 	}
 
 	// apply color correction
-	if( fbFlags & 8 ) {
-		fbFlags &= ~8;
+	if( fbFlags & 4 ) {
+		fbFlags &= ~4;
 
 		R_BlitTextureToScrFbo( fd, rsh.screenPPCopies[ppFBO],
 			fbFlags ? rsh.screenPPCopies[ppFBO ^ 1]->fbo : 0,
