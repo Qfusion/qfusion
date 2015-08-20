@@ -2601,8 +2601,7 @@ static void R_InitStretchRawTextures( void )
 /*
 * R_InitScreenTexturesPair
 */
-static void R_InitScreenTexturesPair( const char *name, image_t **color, 
-	image_t **depth, bool noFilter, bool stencil )
+static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t **depth, bool stencil )
 {
 	int flags, colorFlags, depthFlags;
 
@@ -2612,12 +2611,9 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color,
 		stencil = false;
 
 	flags = IT_SPECIAL;
-	if( noFilter ) {
-		flags |= IT_NOFILTERING;
-	}
 
 	colorFlags = flags | IT_FRAMEBUFFER;
-	depthFlags = flags | IT_DEPTH;
+	depthFlags = flags | ( IT_DEPTH|IT_NOFILTERING );
 	if( !depth ) {
 		colorFlags |= IT_DEPTHRB;
 	}
@@ -2646,18 +2642,14 @@ static void R_InitScreenTextures( void )
 {
 	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit )
 	{
-		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, 
-			&rsh.screenDepthTexture, true, true ); 
+		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, &rsh.screenDepthTexture, true );
 
 		// Stencil is required in the copy for depth/stencil formats to match when blitting.
-		R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, 
-			&rsh.screenDepthTextureCopy, true, true );
+		R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, &rsh.screenDepthTextureCopy, true );
 	}
 
-	R_InitScreenTexturesPair( "rsh.screenPPCopy0", &rsh.screenPPCopies[0], 
-		NULL, false, true );
-	R_InitScreenTexturesPair( "rsh.screenPPCopy1", &rsh.screenPPCopies[1], 
-		NULL, false, false );
+	R_InitScreenTexturesPair( "rsh.screenPPCopy0", &rsh.screenPPCopies[0], NULL, true );
+	R_InitScreenTexturesPair( "rsh.screenPPCopy1", &rsh.screenPPCopies[1], NULL, false );
 }
 
 /*
