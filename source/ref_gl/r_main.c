@@ -1300,11 +1300,6 @@ static void R_BindRefInstFBO( void )
 	}
 
 	R_BindFrameBufferObject( fbo );
-
-	if( fbo && !rn.fbColorAttachment ) {
-		// inform the driver we do not wish to render to the color buffer
-		RFB_DisableObjectDrawBuffer();
-	}
 }
 
 /*
