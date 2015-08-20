@@ -491,10 +491,11 @@ static void _R_DrawSurfaces( drawList_t *list )
 			}
 
 			depthWrite = shader->flags & SHADER_DEPTHWRITE ? true : false;
-			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) &&
-				( rn.renderFlags & RF_SOFT_PARTICLES ) && rn.fbDepthAttachment && rsh.screenTextureCopy ) {
+			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
 				depthCopied = true;
-				RB_BlitFrameBufferObject( rsh.screenTextureCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
+				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && rn.fbDepthAttachment && rsh.screenTextureCopy ) {
+					RB_BlitFrameBufferObject( rsh.screenTextureCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
+				}
 			}
 
 			// sky and things that don't use depth test use infinite projection matrix
