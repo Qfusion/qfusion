@@ -481,7 +481,6 @@ void		RFB_BindObject( int object );
 int			RFB_BoundObject( void );
 void		RFB_AttachTextureToObject( int object, image_t *texture );
 image_t		*RFB_GetObjectTextureAttachment( int object, bool depth );
-void		RFB_DisableObjectDrawBuffer( void );
 void		RFB_BlitObject( int dest, int bitMask, int mode );
 bool	RFB_CheckObjectStatus( void );
 void		RFB_GetObjectSize( int object, int *width, int *height );
