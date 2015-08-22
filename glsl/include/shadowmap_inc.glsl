@@ -64,19 +64,31 @@
 		// NOTE: we're using emulation of texture_gather now
 
 		# ifdef APPLY_PCF
-		# define texval(off) dshadow2D(SHADOW_TEXTURE, vec3(off,shadowmaptc.z))
-		
+		#  define texval(off) dshadow2D(SHADOW_TEXTURE, vec3(off,shadowmaptc.z))
+
+		#  ifdef APPLY_SHADOW_SAMPLERS
 		vec2 offset = fract(shadowmaptc.xy - 0.5);
 		vec4 size = vec4(offset + 1.0, 2.0 - offset), weight = (vec4(2.0 - 1.0 / size.xy, 1.0 / size.zw - 1.0) + (shadowmaptc.xy - offset).xyxy)*ShadowMap_TextureScale.xyxy;
 		f = (1.0/9.0)*dot(size.zxzx*size.wwyy, vec4(texval(weight.zw), texval(weight.xw), texval(weight.zy), texval(weight.xy)));
 
-		# undef texval
+		#  else
+		vec2 origin = floor(shadowmaptc.xy) * ShadowMap_TextureScale;
+		vec4 offsets = ShadowMap_TextureScale.xyxy * vec4(-0.5, -0.5, 0.5, 0.5);
+		float texNN = texval(origin + offsets.xy);
+		float texPN = texval(origin + offsets.zy);
+		float texNP = texval(origin + offsets.xw);
+		float texPP = texval(origin + offsets.zw);
+		vec2 mixFactors = fract(shadowmaptc.xy);
+		f = mix(mix(texNN, texPN, mixFactors.x), mix(texNP, texPP, mixFactors.x), mixFactors.y);
+		#  endif // APPLY_SHADOW_SAMPLERS
+
+		#  undef texval
 		
-		#else
+		# else
 		
 		f = dshadow2D(SHADOW_TEXTURE, vec3(shadowmaptc.xy * ShadowMap_TextureScale, shadowmaptc.z));
 		
-		#endif // APPLY_PCF
+		# endif // APPLY_PCF
 		
 		#endif // APPLY_DITHER
 
