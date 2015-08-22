@@ -56,6 +56,7 @@ enum
 	TOUCHAREA_HUD_ATTACK,
 	TOUCHAREA_HUD_SPECIAL,
 	TOUCHAREA_HUD_CLASSACTION,
+	TOUCHAREA_HUD_DROPITEM,
 	TOUCHAREA_HUD_SCORES,
 	TOUCHAREA_HUD_WEAPON
 };
@@ -638,6 +639,7 @@ static const reference_numeric_t cg_numeric_references[] =
 
 	{ "IMAGE_CLASSACTION1", CG_GetStatValue, (void *)STAT_IMAGE_CLASSACTION1 },
 	{ "IMAGE_CLASSACTION2", CG_GetStatValue, (void *)STAT_IMAGE_CLASSACTION2 },
+	{ "IMAGE_DROP_ITEM", CG_GetStatValue, (void *)STAT_IMAGE_DROP_ITEM },
 
 	// inventory grabs
 	{ "AMMO_ITEM", CG_GetCurrentWeaponInventoryData, (void *)0 },
@@ -2765,6 +2767,18 @@ static bool CG_LFuncTouchClassAction( struct cg_layoutnode_s *commandnode, struc
 	return true;
 }
 
+static bool CG_LFuncTouchDropItem( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	if( CG_TouchArea( TOUCHAREA_HUD_DROPITEM,
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, NULL ) >= 0 )
+	{
+		trap_Cmd_ExecuteText( EXEC_NOW, va( "drop \"%s\"", CG_GetStringArg( &argumentnode ) ) );
+	}
+	return true;
+}
+
 static void CG_ScoresUpFunc( int id, unsigned int time )
 {
 	CG_ScoresOff_f();
@@ -3430,6 +3444,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncTouchClassAction,
 		1,
 		"Places class action button",
+		false
+	},
+
+	{
+		"touchDropItem",
+		NULL,
+		CG_LFuncTouchDropItem,
+		1,
+		"Places item drop button",
 		false
 	},
 
