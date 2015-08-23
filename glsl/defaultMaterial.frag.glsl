@@ -124,7 +124,9 @@ void main()
 #else
 
 #if !defined (APPLY_DIRECTIONAL_LIGHT) || !defined(APPLY_DIRECTIONAL_LIGHT_MIX)
+# if defined(APPLY_ENV_MODULATE_COLOR)
 	color *= myhalf4(qf_FrontColor);
+# endif
 #else
 	color.a *= myhalf(qf_FrontColor.a);
 #endif
