@@ -1267,7 +1267,7 @@ void G_Match_CheckReadys( void )
 
 	if( allready == true && GS_MatchState() != MATCH_STATE_COUNTDOWN )
 	{
-		G_PrintMsg( NULL, "All players are ready.  Match starting!\n" );
+		G_PrintMsg( NULL, "All players are ready. Match starting!\n" );
 		G_Match_LaunchState( MATCH_STATE_COUNTDOWN );
 	}
 	else if( allready == false && GS_MatchState() == MATCH_STATE_COUNTDOWN )

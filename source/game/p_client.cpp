@@ -771,7 +771,7 @@ void ClientBegin( edict_t *ent )
 
 	mm_login = Info_ValueForKey( client->userinfo, "cl_mm_login" );
 	if( mm_login && *mm_login && client->mm_session > 0 ) {
-		G_PrintMsg( NULL, "%s" S_COLOR_WHITE "(" S_COLOR_YELLOW "%s" S_COLOR_WHITE ") entered the game\n", client->netname, mm_login );
+		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " (" S_COLOR_YELLOW "%s" S_COLOR_WHITE ") entered the game\n", client->netname, mm_login );
 	}
 	else {
 		G_PrintMsg( NULL, "%s" S_COLOR_WHITE " entered the game\n", client->netname );
