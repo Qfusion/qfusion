@@ -947,15 +947,15 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#endif\n" \
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL120 "" \
+"#define qf_varying varying\n" \
+"#define qf_flat_varying varying\n" \
 "#ifdef VERTEX_SHADER\n" \
 "# define qf_FrontColor gl_FrontColor\n" \
-"# define qf_varying varying\n" \
 "# define qf_attribute attribute\n" \
 "#endif\n" \
 "#ifdef FRAGMENT_SHADER\n" \
 "# define qf_FrontColor gl_Color\n" \
 "# define qf_FragColor gl_FragColor\n" \
-"# define qf_varying varying\n" \
 "#endif\n" \
 "#define qf_texture texture2D\n" \
 "#define qf_textureLod texture2DLod\n" \
@@ -971,12 +971,14 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "#ifdef VERTEX_SHADER\n" \
 "  out myhalf4 qf_FrontColor;\n" \
 "# define qf_varying out\n" \
+"# define qf_flat_varying flat out\n" \
 "# define qf_attribute in\n" \
 "#endif\n" \
 "#ifdef FRAGMENT_SHADER\n" \
 "  in myhalf4 qf_FrontColor;\n" \
 "  out myhalf4 qf_FragColor;\n" \
 "# define qf_varying in\n" \
+"# define qf_flat_varying flat in\n" \
 "#endif\n" \
 "#define qf_texture texture\n" \
 "#define qf_textureCube texture\n" \
@@ -989,6 +991,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 
 #define QF_BUILTIN_GLSL_MACROS_GLSL100ES "" \
 "#define qf_varying varying\n" \
+"#define qf_flat_varying varying\n" \
 "#ifdef VERTEX_SHADER\n" \
 "# define qf_attribute attribute\n" \
 "#endif\n" \
@@ -1021,6 +1024,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_BUILTIN_GLSL_MACROS_GLSL300ES "" \
 "#ifdef VERTEX_SHADER\n" \
 "# define qf_varying out\n" \
+"# define qf_flat_varying flat out\n" \
 "# define qf_attribute in\n" \
 "#endif\n" \
 "#ifdef FRAGMENT_SHADER\n" \
@@ -1034,6 +1038,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 "  precision lowp sampler2DShadow;\n" \
 "  layout(location = 0) out vec4 qf_FragColor;\n" \
 "# define qf_varying in\n" \
+"# define qf_flat_varying flat in\n" \
 "#endif\n" \
 " qf_varying myhalf4 qf_FrontColor;\n" \
 "#define qf_texture texture\n" \
