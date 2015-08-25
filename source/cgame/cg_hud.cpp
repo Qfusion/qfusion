@@ -1059,9 +1059,7 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 			                          font, teamcolor );
 			xoffset += min( trap_SCR_strWidth( obr->attacker, font, 0 ), ( width - icon_size ) / 2 );
 		}
-		trap_R_DrawStretchPic( x + xoffset, y + yoffset + ( line_height - icon_size ) / 2, icon_size,
-		                       icon_size, 0, 0, 1, 1, colorWhite, pic );
-		xoffset += icon_size;
+
 		if( ( obr->victim_team == TEAM_ALPHA ) || ( obr->victim_team == TEAM_BETA ) )
 		{
 			CG_TeamColor( obr->victim_team, teamcolor );
@@ -1070,9 +1068,11 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 		{
 			Vector4Set( teamcolor, 255, 255, 255, 255 );
 		}
-		trap_SCR_DrawStringWidth( x + xoffset, y + yoffset + line_height / 2, ALIGN_LEFT_MIDDLE,
+		trap_SCR_DrawStringWidth( x + xoffset + icon_size, y + yoffset + line_height / 2, ALIGN_LEFT_MIDDLE,
 		                          COM_RemoveColorTokensExt( obr->victim, true ), ( width - icon_size ) / 2, font, teamcolor );
-		xoffset += min( trap_SCR_strWidth( obr->victim, font, 0 ), ( width - icon_size ) / 2 );
+
+		trap_R_DrawStretchPic( x + xoffset, y + yoffset + ( line_height - icon_size ) / 2, icon_size,
+		                       icon_size, 0, 0, 1, 1, colorWhite, pic );
 
 		yoffset += line_height;
 	}
