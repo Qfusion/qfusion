@@ -289,6 +289,14 @@ bool GLimp_ScreenEnabled( void )
 }
 
 /*
+** GLimp_SetSwapInterval
+*/
+void GLimp_SetSwapInterval( int swapInterval )
+{
+	SDL_GL_SetSwapInterval( swapInterval );
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )

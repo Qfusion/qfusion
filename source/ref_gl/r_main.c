@@ -1476,10 +1476,10 @@ void R_PopRefInst( void )
 /*
 * R_SwapInterval
 */
-static void R_SwapInterval( bool swapInterval )
+static void R_SwapInterval( int swapInterval )
 {
-	if( qglSwapInterval && !glConfig.stereoEnabled && !r_swapinterval_min->integer )
-		qglSwapInterval( swapInterval );
+	if( !glConfig.stereoEnabled && !r_swapinterval_min->integer )
+		GLimp_SetSwapInterval( swapInterval );
 }
 
 /*
@@ -1490,7 +1490,7 @@ static void R_UpdateSwapInterval( void )
 	if( r_swapinterval->modified )
 	{
 		r_swapinterval->modified = false;
-		R_SwapInterval( r_swapinterval->integer ? true : false );
+		R_SwapInterval( r_swapinterval->integer ? 1 : 0 );
 	}
 }
 
@@ -1629,7 +1629,7 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 	// swapinterval stuff (vertical synchronization)
 	if( forceVsync ) {
-		R_SwapInterval( true );
+		R_SwapInterval( 1 );
 	}
 	else {
 		r_swapinterval->modified = true;

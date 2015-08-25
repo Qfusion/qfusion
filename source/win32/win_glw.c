@@ -615,6 +615,15 @@ bool GLimp_ScreenEnabled( void )
 }
 
 /*
+** GLimp_SetSwapInterval
+*/
+void GLimp_SetSwapInterval( int swapInterval )
+{
+	if( qwglSwapIntervalEXT )
+		qwglSwapIntervalEXT( swapInterval );
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )
