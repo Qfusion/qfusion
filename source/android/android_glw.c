@@ -388,11 +388,7 @@ bool GLimp_ScreenEnabled( void )
 */
 void GLimp_SetSwapInterval( int swapInterval )
 {
-	if( glw_state.swapInterval == swapInterval )
-		return;
-
 	glw_state.swapInterval = swapInterval;
-
 	if( glw_state.surface != EGL_NO_SURFACE )
 		qeglSwapInterval( glw_state.display, swapInterval );
 }
