@@ -409,6 +409,8 @@ static const gl_extension_func_t gl_ext_texture_3D_OES_funcs[] =
 
 #endif // GL_ES_VERSION_2_0
 
+#ifndef USE_SDL2
+
 #ifdef _WIN32
 
 /* WGL_EXT_swap_interval */
@@ -432,6 +434,8 @@ static const gl_extension_func_t glx_ext_swap_control_SGI_funcs[] =
 };
 
 #endif
+
+#endif // USE_SDL2
 
 #undef GL_EXTENSION_FUNC
 #undef GL_EXTENSION_FUNC_EXT
@@ -511,12 +515,13 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )
 	,GL_EXTENSION( EXT, bgra, true, false, NULL )
 
+#ifndef USE_SDL2
 #ifdef GLX_VERSION
 	,GL_EXTENSION( GLX_SGI, swap_control, true, false, &glx_ext_swap_control_SGI_funcs )
 #endif
-
 #ifdef _WIN32
 	,GL_EXTENSION( WGL_EXT, swap_control, true, false, &wgl_ext_swap_interval_EXT_funcs )
+#endif
 #endif
 };
 
