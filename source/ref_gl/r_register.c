@@ -1145,8 +1145,6 @@ static void R_Register( const char *screenshotsPrefix )
 #else
 	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE );
 #endif
-	// make sure r_swapinterval is checked after vid_restart
-	r_swapinterval->modified = true;
 	r_swapinterval_min = ri.Cvar_Get( "r_swapinterval_min", "0", CVAR_READONLY ); // exposes vsync support to UI
 
 	r_temp1 = ri.Cvar_Get( "r_temp1", "0", 0 );
@@ -1372,6 +1370,9 @@ static rserr_t R_PostInit( void )
 		QGL_Shutdown();
 		return rserr_unknown;
 	}
+
+	// make sure vsync is disabled by default if possible - it is assumed by R_SwapInterval
+	GLimp_SetSwapInterval( r_swapinterval_min->integer );
 
 	R_FillStartupBackgroundColor( COLOR_R( glConfig.startupColor ) / 255.0f,
 		COLOR_G( glConfig.startupColor ) / 255.0f, COLOR_B( glConfig.startupColor ) / 255.0f );
