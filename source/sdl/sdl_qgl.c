@@ -76,6 +76,7 @@ and Zephaniah E. Hull. Adapted by Victor Luchits for qfusion project.
 
 static const char *_qglGetGLWExtensionsString( void );
 static const char *_qglGetGLWExtensionsStringInit( void );
+static void _qglSwapInterval( int interval );
 
 /*
 ** QGL_Shutdown
@@ -173,6 +174,7 @@ qgl_initerr_t QGL_Init( const char *dllname )
 #undef QGL_FUNC
 
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsString;
+	qglSwapInterval = _qglSwapInterval;
 
 	return qgl_initerr_ok;
 }
@@ -203,4 +205,12 @@ void *qglGetProcAddress( const GLubyte *procName )
 static const char *_qglGetGLWExtensionsString( void )
 {
 	return NULL;
+}
+
+/*
+** qglSwapInterval
+*/
+static void _qglSwapInterval( int interval )
+{
+	SDL_GL_SetSwapInterval( interval );
 }
