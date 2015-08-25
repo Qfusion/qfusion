@@ -47,7 +47,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #undef QGL_FUNC
 
 static const char *_qglGetGLWExtensionsString( void );
-static void _qglSwapInterval( int interval );
 
 /*
 ** QGL_Shutdown
@@ -121,7 +120,6 @@ qgl_initerr_t QGL_Init( const char *dllname )
 #undef QGL_FUNC
 
 	qglGetGLWExtensionsString = _qglGetGLWExtensionsString;
-	qglSwapInterval = _qglSwapInterval;
 
 	return qgl_initerr_ok;
 }
@@ -159,18 +157,4 @@ static const char *_qglGetGLWExtensionsString( void )
 	if( dpy == EGL_NO_DISPLAY )
 		return NULL;
 	return qeglQueryString( dpy, EGL_EXTENSIONS );
-}
-
-/*
-** _qglSwapInterval
-*/
-static void _qglSwapInterval( int interval )
-{
-	if( glw_state.swapInterval == interval )
-		return;
-
-	glw_state.swapInterval = interval;
-
-	if( glw_state.surface != EGL_NO_SURFACE )
-		qeglSwapInterval( glw_state.display, interval );
 }

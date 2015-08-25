@@ -924,8 +924,6 @@ QGL_EXT(void, glReadBufferIndexedEXT, (GLenum, GLint));
 QGL_EXT(void, glDrawBuffersIndexedEXT, (GLint, const GLenum *, const GLint *));
 #endif
 
-QGL_EXT(void, glSwapInterval, (int interval));
-
 #ifndef GL_ES_VERSION_2_0
 QGL_EXT(void, glProgramParameteri, (GLuint program, GLenum pname, GLint value));
 QGL_EXT(void, glGetProgramBinary, (GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary));
@@ -977,5 +975,7 @@ QGL_FUNC_OPT(void, glTexSubImage3D, (GLenum target, GLint level, GLint xoffset, 
 QGL_WGL_EXT(const char *, wglGetExtensionsStringEXT, (void));
 QGL_WGL_EXT(BOOL, wglGetDeviceGammaRamp3DFX, (HDC, WORD *));
 QGL_WGL_EXT(BOOL, wglSetDeviceGammaRamp3DFX, (HDC, WORD *));
+QGL_WGL_EXT(BOOL, wglSwapIntervalEXT, (int interval));
 
 // GLX_EXT Functions
+QGL_GLX_EXT(int, glXSwapIntervalSGI, (int interval));
