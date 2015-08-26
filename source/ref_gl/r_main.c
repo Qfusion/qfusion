@@ -897,14 +897,6 @@ void R_ResetScissor( void )
 }
 
 /*
-* R_EnableScissor
-*/
-void R_EnableScissor( bool enable )
-{
-	RB_EnableScissor( enable );
-}
-
-/*
 * R_PolyBlend
 */
 static void R_PolyBlend( void )

@@ -326,6 +326,8 @@ void RFB_BlitObject( int dest, int bitMask, int mode )
 		return;
 	}
 
+	RB_ApplyScissor();
+
 	switch( mode ) {
 		case FBO_COPY_CENTREPOS:
 			dx = (destfbo->width - fbo->width) / 2;

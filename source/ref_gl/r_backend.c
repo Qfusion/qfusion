@@ -52,6 +52,8 @@ void RB_Init( void )
 
 	// set default OpenGL state
 	RB_SetGLDefaults();
+	rb.gl.scissor[2] = glConfig.width;
+	rb.gl.scissor[3] = glConfig.height;
 
 	// initialize shading
 	RB_InitShading();
@@ -163,6 +165,7 @@ static void RB_SetGLDefaults( void )
 	qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 #endif
 	qglFrontFace( GL_CCW );
+	qglEnable( GL_SCISSOR_TEST );
 }
 
 /*
@@ -490,12 +493,16 @@ static void GL_EnableVertexAttrib( int index, bool enable )
 */
 void RB_Scissor( int x, int y, int w, int h )
 {
-	qglScissor( x, rb.gl.fbHeight - h - y, w, h );
+	if( ( rb.gl.scissor[0] == x ) && ( rb.gl.scissor[1] == y ) &&
+		( rb.gl.scissor[2] == w ) && ( rb.gl.scissor[3] == h ) ) {
+		return;
+	}
 
 	rb.gl.scissor[0] = x;
 	rb.gl.scissor[1] = y;
 	rb.gl.scissor[2] = w;
 	rb.gl.scissor[3] = h;
+	rb.gl.scissorChanged = true;
 }
 
 /*
@@ -518,15 +525,14 @@ void RB_GetScissor( int *x, int *y, int *w, int *h )
 }
 
 /*
-* RB_EnableScissor
+* RB_ApplyScissor
 */
-void RB_EnableScissor( bool enable )
+void RB_ApplyScissor( void )
 {
-	if( enable ) {
-		qglEnable( GL_SCISSOR_TEST );
-	}
-	else {
-		qglDisable( GL_SCISSOR_TEST );
+	int h = rb.gl.scissor[3];
+	if( rb.gl.scissorChanged ) {
+		rb.gl.scissorChanged = false;
+		qglScissor( rb.gl.scissor[0], rb.gl.fbHeight - h - rb.gl.scissor[1], rb.gl.scissor[2], h );
 	}
 }
 
@@ -563,6 +569,8 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 
 	RB_SetState( state );
 
+	RB_ApplyScissor();
+
 	qglClear( bits );
 
 	RB_DepthRange( 0.0f, 1.0f );
@@ -578,6 +586,9 @@ void RB_BindFrameBufferObject( int object )
 	RFB_BindObject( object );
 
 	RFB_GetObjectSize( object, &width, &height );
+
+	if( rb.gl.fbHeight != height )
+		rb.gl.scissorChanged = true;
 
 	rb.gl.fbWidth = width;
 	rb.gl.fbHeight = height;
@@ -1148,6 +1159,8 @@ void RB_DrawElementsReal( rbDrawElements_t *de )
 
 	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt ) || !de )
 		return;
+
+	RB_ApplyScissor();
 
 	numVerts = de->numVerts;
 	numElems = de->numElems;
