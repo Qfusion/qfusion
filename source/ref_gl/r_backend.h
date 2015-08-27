@@ -22,12 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 enum
 {
-	RB_VBO_STREAM_QUAD_COMPACT	= -4, // bind RB_VBO_STREAM_QUAD instead
-	RB_VBO_STREAM_QUAD			= -3,
 	RB_VBO_STREAM_COMPACT		= -2, // bind RB_VBO_STREAM instead
 	RB_VBO_STREAM				= -1,
 	RB_VBO_NONE					= 0,
-	RB_VBO_NUM_STREAMS			= -RB_VBO_STREAM_QUAD_COMPACT
+	RB_VBO_NUM_STREAMS			= -RB_VBO_STREAM_COMPACT
 };
 
 //===================================================================

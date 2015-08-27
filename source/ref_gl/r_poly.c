@@ -120,7 +120,7 @@ void R_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 		mesh.xyzArray = translated;
 	}
 
-	R_BeginStretchBatch( poly->shader, x_offset, y_offset, !poly->elems ? true : false );
+	R_BeginStretchBatch( poly->shader, x_offset, y_offset );
 
 	RB_BatchMesh( &mesh );
 }
