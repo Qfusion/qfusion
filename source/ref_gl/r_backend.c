@@ -22,8 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_backend_local.h"
 
 #define COMPACT_STREAM_VATTRIBS ( VATTRIB_POSITION_BIT | VATTRIB_COLOR0_BIT | VATTRIB_TEXCOORDS_BIT )
-#define CURRENT_VBO_IS_GENERIC_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM ) || ( rb.currentVBOId == RB_VBO_STREAM_COMPACT ) )
-#define CURRENT_VBO_IS_QUAD_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM_QUAD ) || ( rb.currentVBOId == RB_VBO_STREAM_QUAD_COMPACT ) )
 
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
 ATTRIBUTE_ALIGNED( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
@@ -39,7 +37,6 @@ rbackend_t rb;
 static void RB_InitBatchMesh( void );
 static void RB_SetGLDefaults( void );
 static void RB_RegisterStreamVBOs( void );
-static void RB_UploadStaticQuadIndices( int id );
 
 /*
 * RB_Init
@@ -63,10 +60,6 @@ void RB_Init( void )
 
 	// create VBO's we're going to use for streamed data
 	RB_RegisterStreamVBOs();
-
-	// upload persistent quad indices
-	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD );
-	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD_COMPACT );
 }
 
 /*
@@ -611,36 +604,6 @@ void RB_BlitFrameBufferObject( int dest, int bitMask, int mode )
 }
 
 /*
-* RB_UploadStaticQuadIndices
-*/
-static void RB_UploadStaticQuadIndices( int id )
-{
-	int leftVerts, numVerts, numElems;
-	int vertsOffset, elemsOffset;
-	mesh_t mesh;
-	mesh_vbo_t *vbo = rb.streamVBOs[-id - 1];
-
-	assert( MAX_BATCH_VERTS <= MAX_STREAM_VBO_VERTS );
-
-	vertsOffset = 0;
-	elemsOffset = 0;
-	
-	memset( &mesh, 0, sizeof( mesh ) );
-
-	for( leftVerts = MAX_STREAM_VBO_VERTS; leftVerts > 0; leftVerts -= numVerts ) {
-		numVerts = min( MAX_BATCH_VERTS, leftVerts );
-		numElems = numVerts/4*6;
-
-		mesh.numElems = numElems;
-		mesh.numVerts = numVerts;
-
-		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, &mesh, VBO_HINT_ELEMS_QUAD );
-		vertsOffset += numVerts;
-		elemsOffset += numElems;
-	}
-}
-
-/*
 * RB_RegisterStreamVBOs
 *
 * Allocate/keep alive dynamic vertex buffers object 
@@ -650,15 +613,7 @@ void RB_RegisterStreamVBOs( void )
 {
 	int i;
 	mesh_vbo_t *vbo;
-	vbo_tag_t tags[RB_VBO_NUM_STREAMS] = {
-		VBO_TAG_STREAM,
-		VBO_TAG_STREAM,
-		VBO_TAG_STREAM_STATIC_ELEMS,
-		VBO_TAG_STREAM_STATIC_ELEMS
-	};
 	vattribmask_t vattribs[RB_VBO_NUM_STREAMS] = {
-		VATTRIBS_MASK,
-		COMPACT_STREAM_VATTRIBS,
 		VATTRIBS_MASK,
 		COMPACT_STREAM_VATTRIBS
 	};
@@ -672,7 +627,7 @@ void RB_RegisterStreamVBOs( void )
 		}
 		rb.streamVBOs[i] = R_CreateMeshVBO( &rb, 
 			MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, MAX_STREAM_VBO_INSTANCES,
-			vattribs[i], tags[i], VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT );
+			vattribs[i], VBO_TAG_STREAM, VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT );
 	}
 }
 
@@ -711,8 +666,6 @@ void RB_BindVBO( int id, int primitive )
 	if( !( rb.currentVAttribs & ~COMPACT_STREAM_VATTRIBS ) ) {
 		if( id == RB_VBO_STREAM ) {
 			id = RB_VBO_STREAM_COMPACT;
-		} else if( id == RB_VBO_STREAM_QUAD ) {
-			id = RB_VBO_STREAM_QUAD_COMPACT;
 		}
 	}
 
@@ -757,19 +710,13 @@ void RB_UploadMesh( const mesh_t *mesh )
 	rbDrawElements_t *offset;
 	vbo_hint_t vbo_hint = VBO_HINT_NONE;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
-	bool isQuadStream, isGenericStream;
 
 	assert( rb.currentVBOId < RB_VBO_NONE );
 	if( rb.currentVBOId >= RB_VBO_NONE ) {
 		return;
 	}
-	
-	isQuadStream = CURRENT_VBO_IS_QUAD_STREAM();
-	isGenericStream = CURRENT_VBO_IS_GENERIC_STREAM( );
 
-	if( isQuadStream ) {
-		numElems = numVerts/4*6;
-	} else if( !numElems && isGenericStream ) {
+	if( !numElems ) {
 		numElems = (max(numVerts, 2) - 2) * 3;
 	}
 
@@ -788,9 +735,7 @@ void RB_UploadMesh( const mesh_t *mesh )
 			offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems );
 
 		R_DiscardVBOVertexData( vbo );
-		if( !isQuadStream ) {
-			R_DiscardVBOElemData( vbo );
-		}
+		R_DiscardVBOElemData( vbo );
 
 		offset->firstVert = 0;
 		offset->firstElem = 0;
@@ -804,22 +749,13 @@ void RB_UploadMesh( const mesh_t *mesh )
 		return;
 	}
 
-	if( isQuadStream ) {
-		vbo_hint = VBO_HINT_ELEMS_QUAD;
-
-		// quad indices are stored in a static vbo, don't call R_UploadVBOElemData
+	if( mesh->elems ) {
+		vbo_hint = VBO_HINT_NONE;
 	} else {
-		if( mesh->elems ) {
-			vbo_hint = VBO_HINT_NONE;
-		} else if( isGenericStream ) {
-			vbo_hint = VBO_HINT_ELEMS_TRIFAN;
-		} else {
-			assert( 0 );
-		}
-		R_UploadVBOElemData( vbo, offset->firstVert + offset->numVerts, 
-			offset->firstElem + offset->numElems, mesh, vbo_hint );
+		vbo_hint = VBO_HINT_ELEMS_TRIFAN;
 	}
-
+	R_UploadVBOElemData( vbo, offset->firstVert + offset->numVerts, 
+		offset->firstElem + offset->numElems, mesh, vbo_hint );
 	R_UploadVBOVertexData( vbo, offset->firstVert + offset->numVerts, 
 		rb.currentVAttribs, mesh, vbo_hint );
 
@@ -886,14 +822,8 @@ void RB_BatchMesh( const mesh_t *mesh )
 	int stream;
 	rbDrawElements_t *batch;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
-	bool isQuadStream, isGenericStream;
 
-	isQuadStream = CURRENT_VBO_IS_QUAD_STREAM();
-	isGenericStream = CURRENT_VBO_IS_GENERIC_STREAM( );
-
-	if( isQuadStream ) {
-		numElems = numVerts/4*6;
-	} else if( !numElems && isGenericStream ) {
+	if( !numElems ) {
 		numElems = (max(numVerts, 2) - 2) * 3;
 	}
 
@@ -923,19 +853,15 @@ void RB_BatchMesh( const mesh_t *mesh )
 		vattribmask_t vattribs = rb.currentVAttribs;
 
 		memcpy( rb.batchMesh.xyzArray + batch->numVerts, mesh->xyzArray, numVerts * sizeof( vec4_t ) );
-		if( isQuadStream ) {
-			// quad indices are stored in a static vbo
-		} else if( mesh->elems ) {
+		if( mesh->elems ) {
 			if( rb.primitive == GL_TRIANGLES ) {
 				R_CopyOffsetTriangles( mesh->elems, numElems, batch->numVerts, rb.batchMesh.elems + batch->numElems );
 			}
 			else {
 				R_CopyOffsetElements( mesh->elems, numElems, batch->numVerts, rb.batchMesh.elems + batch->numElems );
 			}
-		} else if( isGenericStream ) {
-			R_BuildTrifanElements( batch->numVerts, numElems, rb.batchMesh.elems + batch->numElems );
 		} else {
-			assert( 0 );
+			R_BuildTrifanElements( batch->numVerts, numElems, rb.batchMesh.elems + batch->numElems );
 		}
 		if( mesh->normalsArray && (vattribs & VATTRIB_NORMAL_BIT) ) {
 			memcpy( rb.batchMesh.normalsArray + batch->numVerts, mesh->normalsArray, numVerts * sizeof( vec4_t ) );

@@ -612,24 +612,6 @@ void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset
 }
 
 /*
-* R_BuildQuadElements
-*/
-void R_BuildQuadElements( int vertsOffset, int numVerts, elem_t *elems )
-{
-	int i;
-
-	for( i = 0; i < numVerts; i += 4, vertsOffset += 4, elems += 6 ) {
-		elems[0] = vertsOffset;
-		elems[1] = vertsOffset + 2 - 1;
-		elems[2] = vertsOffset + 2;
-
-		elems[3] = vertsOffset;
-		elems[4] = vertsOffset + 3 - 1;
-		elems[5] = vertsOffset + 3;
-	}
-}
-
-/*
 * R_BuildTrifanElements
 */
 void R_BuildTrifanElements( int vertsOffset, int numVerts, elem_t *elems )

@@ -306,7 +306,7 @@ static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 */
 bool R_BeginSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
 {
-	RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
+	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
 	return true;
 }
 
@@ -318,6 +318,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	int i;
 	vec3_t point;
 	vec3_t v_left, v_up;
+	elem_t elems[6] = { 0, 1, 2, 0, 2, 3 };
 	vec4_t xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
 	vec4_t normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 	byte_vec4_t colors[4];
@@ -355,8 +356,8 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	}
 
 	// backend knows how to count elements for quads
-	mesh.elems = NULL;
-	mesh.numElems = 0;
+	mesh.elems = elems;
+	mesh.numElems = 6;
 	mesh.numVerts = 4;
 	mesh.xyzArray = xyz;
 	mesh.normalsArray = normals;
@@ -492,7 +493,8 @@ static vec4_t pic_xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
 static vec4_t pic_normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 static vec2_t pic_st[4];
 static byte_vec4_t pic_colors[4];
-static mesh_t pic_mesh = { 4, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, 0, NULL };
+static elem_t pic_elems[6] = { 0, 1, 2, 0, 2, 3 };
+static mesh_t pic_mesh = { 4, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, NULL, NULL, 6, pic_elems };
 static const shader_t *pic_mbuffer_shader;
 static float pic_x_offset, pic_y_offset;
 
@@ -508,7 +510,7 @@ static void R_ResetStretchPic( void )
 /*
 * R_BeginStretchBatch
 */
-void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset, bool quad )
+void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset )
 {
 	if( pic_mbuffer_shader != shader
 		|| x_offset != pic_x_offset || y_offset != pic_y_offset ) {
@@ -529,7 +531,7 @@ void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset
 
 		RB_BindShader( NULL, shader, NULL );
 
-		RB_BindVBO( quad ? RB_VBO_STREAM_QUAD : RB_VBO_STREAM, GL_TRIANGLES );
+		RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
 
 		RB_BeginBatch();
 	}
@@ -624,7 +626,7 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		return;
 	}
 
-	R_BeginStretchBatch( shader, 0, 0, true );
+	R_BeginStretchBatch( shader, 0, 0 );
 
 	// lower-left
 	Vector2Set( pic_xyz[0], x, y );

@@ -562,7 +562,7 @@ void		R_TranslateForEntity( const entity_t *e );
 void		R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
 void		R_TransformBounds( const vec3_t origin, const mat3_t axis, vec3_t mins, vec3_t maxs, vec3_t bbox[8] );
 
-void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset, bool quad );
+void		R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset );
 void		R_EndStretchBatch( void );
 void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, const shader_t *shader );
@@ -621,7 +621,6 @@ void R_DrawOutlinedSurfaces( drawList_t *list );
 
 void R_CopyOffsetElements( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
 void R_CopyOffsetTriangles( const elem_t *inelems, int numElems, int vertsOffset, elem_t *outelems );
-void R_BuildQuadElements( int vertsOffset, int numVerts, elem_t *elems );
 void R_BuildTrifanElements( int vertsOffset, int numVerts, elem_t *elems );
 void R_BuildTangentVectors( int numVertexes, vec4_t *xyzArray, vec4_t *normalsArray, vec2_t *stArray,
 	int numTris, elem_t *elems, vec4_t *sVectorsArray );
@@ -722,15 +721,13 @@ typedef enum
 	VBO_TAG_NONE,
 	VBO_TAG_WORLD,
 	VBO_TAG_MODEL,
-	VBO_TAG_STREAM,
-	VBO_TAG_STREAM_STATIC_ELEMS
+	VBO_TAG_STREAM
 } vbo_tag_t;
 
 typedef enum
 {
 	VBO_HINT_NONE			= 0,
-	VBO_HINT_ELEMS_QUAD		= 1<<0,
-	VBO_HINT_ELEMS_TRIFAN	= 1<<1
+	VBO_HINT_ELEMS_TRIFAN	= 1<<0
 } vbo_hint_t;
 
 typedef struct mesh_vbo_s
