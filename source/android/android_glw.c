@@ -384,6 +384,16 @@ bool GLimp_ScreenEnabled( void )
 }
 
 /*
+** GLimp_SetSwapInterval
+*/
+void GLimp_SetSwapInterval( int swapInterval )
+{
+	glw_state.swapInterval = swapInterval;
+	if( glw_state.surface != EGL_NO_SURFACE )
+		qeglSwapInterval( glw_state.display, swapInterval );
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )
