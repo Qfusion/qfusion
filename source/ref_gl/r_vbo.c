@@ -385,29 +385,28 @@ R_FillVertexBuffer_f(int, int, );
 	} while( 0 )
 
 /*
-* R_UploadVBOVertexData
+* R_FillVBOVertexDataBuffer
 *
-* Uploads required vertex data to the buffer.
+* Generates required vertex data to be uploaded to the buffer.
 *
 * Vertex attributes masked by halfFloatVattribs will use half-precision floats
 * to save memory, if GL_ARB_half_float_vertex is available. Note that if
 * VATTRIB_POSITION_BIT is not set, it will also reset bits for other positional 
 * attributes such as autosprite pos and instance pos.
 */
-vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, 
-	vattribmask_t vattribs, const mesh_t *mesh, vbo_hint_t hint )
+vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs, const mesh_t *mesh, void *outData )
 {
 	int i, j;
 	unsigned numVerts;
 	size_t vertSize;
 	vattribmask_t errMask;
 	vattribmask_t hfa;
-	uint8_t *data;
+	uint8_t *data = outData;
 
 	assert( vbo != NULL );
 	assert( mesh != NULL );
 
-	if( !vbo || !vbo->vertexId ) {
+	if( !vbo ) {
 		return 0;
 	}
 
@@ -416,9 +415,6 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 	vertSize = vbo->vertexSize;
 
 	hfa = vbo->halfFloatAttribs;
-	data = R_VBOVertBuffer( numVerts, vertSize );
-
-	RB_BindArrayBuffer( vbo->vertexId );
 
 	// upload vertex xyz data
 	if( vattribs & VATTRIB_POSITION_BIT ) {
@@ -550,19 +546,23 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 		vec4_t centre[4];
 		vec4_t axes[4];
 		vec4_t *verts = mesh->xyzArray;
-		elem_t *elems;
+		const elem_t *elems = mesh->elems, trifanElems[6] = { 0, 1, 2, 0, 2, 3 };
 		int numQuads;
 		size_t bufferOffset0 = vbo->spritePointsOffset;
 		size_t bufferOffset1 = vbo->sVectorsOffset;
 
-		assert( mesh->elems != NULL );
-		if( !mesh->elems ) {
-			numQuads = 0;
-		} else {
+		assert( ( mesh->elems && mesh->numElems ) || ( numVerts == 4 ) );
+		if( mesh->elems && mesh->numElems ) {
 			numQuads = mesh->numElems / 6;
+		} else if( numVerts == 4 ) {
+			// single quad as triangle fan
+			numQuads = 1;
+			elems = trifanElems;
+		} else {
+			numQuads = 0;
 		}
 
-		for( i = 0, elems = mesh->elems; i < numQuads; i++, elems += 6 ) {
+		for( i = 0; i < numQuads; i++, elems += 6 ) {
 			// find the longest edge, the long edge and the short edge
 			longest_edge = longer_edge = -1;
 			longest_dist = longer_dist = 0;
@@ -670,8 +670,40 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset,
 		}
 	}
 
-	qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vertsOffset * vertSize, numVerts * vertSize, data );
+	return errMask;
+}
 
+/*
+* R_UploadVBOVertexRawData
+*/
+void R_UploadVBOVertexRawData( mesh_vbo_t *vbo, int vertsOffset, int numVerts, const void *data )
+{
+	assert( vbo != NULL );
+	if( !vbo || !vbo->vertexId ) {
+		return;
+	}
+
+	RB_BindArrayBuffer( vbo->vertexId );
+	qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vertsOffset * vbo->vertexSize, numVerts * vbo->vertexSize, data );
+}
+
+/*
+* R_UploadVBOVertexData
+*/
+vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, vattribmask_t vattribs, const mesh_t *mesh )
+{
+	void *data;
+	vattribmask_t errMask;
+
+	assert( vbo != NULL );
+	assert( mesh != NULL );
+	if( !vbo || !vbo->vertexId ) {
+		return 0;
+	}
+
+	data = R_VBOVertBuffer( mesh->numVerts, vbo->vertexSize );
+	errMask = R_FillVBOVertexDataBuffer( vbo, vattribs, mesh, data );
+	R_UploadVBOVertexRawData( vbo, vertsOffset, mesh->numVerts, data );
 	return errMask;
 }
 
@@ -729,69 +761,36 @@ void R_DiscardVBOElemData( mesh_vbo_t *vbo )
 }
 
 /*
-* R_UploadVBOElemTrifanData
-*
-* Builds and uploads indexes in trifan order, properly offsetting them for batching
-*/
-static int R_UploadVBOElemTrifanData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, int numVerts )
-{
-	int numElems;
-	elem_t *ielems;
-
-	assert( vbo != NULL );
-
-	if( !vbo->elemId )
-		return 0;
-
-	numElems = (numVerts - 2) * 3;
-	ielems = R_VBOElemBuffer( numElems );
-
-	R_BuildTrifanElements( vertsOffset, numVerts, ielems );
-
-	RB_BindElementArrayBuffer( vbo->elemId );
-	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ), 
-		numElems * sizeof( elem_t ), ielems );
-
-	return numElems;
-}
-
-/*
 * R_UploadVBOElemData
 *
 * Upload elements into the buffer, properly offsetting them (batching)
 */
-void R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, 
-	const mesh_t *mesh, vbo_hint_t hint )
+void R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, const mesh_t *mesh )
 {
 	int i;
-	elem_t *ielems;
+	elem_t *ielems = mesh->elems;
 
 	assert( vbo != NULL );
 
 	if( !vbo->elemId )
 		return;
 
-	if( hint == VBO_HINT_ELEMS_TRIFAN ) {
-		R_UploadVBOElemTrifanData( vbo, vertsOffset, elemsOffset, mesh->numVerts );
-		return;
-	}
-
-
-	ielems = R_VBOElemBuffer( mesh->numElems );
-	for( i = 0; i < mesh->numElems; i++ ) {
-		ielems[i] = vertsOffset + mesh->elems[i];
+	if( vertsOffset ) {
+		ielems = R_VBOElemBuffer( mesh->numElems );
+		for( i = 0; i < mesh->numElems; i++ ) {
+			ielems[i] = vertsOffset + mesh->elems[i];
+		}
 	}
 
 	RB_BindElementArrayBuffer( vbo->elemId );
-	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ), 
+	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ),
 		mesh->numElems * sizeof( elem_t ), ielems );
 }
 
 /*
 * R_UploadVBOInstancesData
 */
-vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset,
-	int numInstances, instancePoint_t *instances )
+vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset, int numInstances, instancePoint_t *instances )
 {
 	vattribmask_t errMask = 0;
 

@@ -357,26 +357,26 @@ vboSlice_t *R_GetVBOSlice( unsigned int index )
 	return &list->vboSlices[index];
 }
 
-static const beginDrawSurf_cb r_beginDrawSurfCb[ST_MAX_TYPES] =
+static const drawSurf_cb r_drawSurfCb[ST_MAX_TYPES] =
 {
 	/* ST_NONE */
 	NULL,
 	/* ST_BSP */
-	(beginDrawSurf_cb)&R_DrawBSPSurf,
+	(drawSurf_cb)&R_DrawBSPSurf,
 	/* ST_SKY */
-	(beginDrawSurf_cb)&R_DrawSkySurf,
+	(drawSurf_cb)&R_DrawSkySurf,
 	/* ST_ALIAS */
-	(beginDrawSurf_cb)&R_DrawAliasSurf,
+	(drawSurf_cb)&R_DrawAliasSurf,
 	/* ST_SKELETAL */
-	(beginDrawSurf_cb)&R_DrawSkeletalSurf,
+	(drawSurf_cb)&R_DrawSkeletalSurf,
 	/* ST_SPRITE */
-	(beginDrawSurf_cb)&R_BeginSpriteSurf,
+	NULL,
 	/* ST_POLY */
-	(beginDrawSurf_cb)&R_BeginPolySurf,
+	NULL,
 	/* ST_CORONA */
-	(beginDrawSurf_cb)&R_BeginCoronaSurf,
+	NULL,
 	/* ST_NULLMODEL */
-	(beginDrawSurf_cb)&R_DrawNullSurf,
+	(drawSurf_cb)&R_DrawNullSurf,
 };
 
 static const batchDrawSurf_cb r_batchDrawSurfCb[ST_MAX_TYPES] =
@@ -424,8 +424,10 @@ static void _R_DrawSurfaces( drawList_t *list )
 	bool infiniteProj = false, prevInfiniteProj = false;
 	bool depthWrite = false;
 	bool depthCopied = false;
+	bool batchFlushed = true, batchOpaque = false;
 	int entityFX = 0, prevEntityFX = -1;
 	mat4_t projectionMatrix;
+	unsigned int shadowBits;
 	int riFBO = 0;
 
 	if( !list->numDrawSurfs ) {
@@ -441,6 +443,8 @@ static void _R_DrawSurfaces( drawList_t *list )
 
 		assert( drawSurfType > ST_NONE && drawSurfType < ST_MAX_TYPES );
 
+		batchDrawSurf = ( r_batchDrawSurfCb[drawSurfType] ? true : false );
+
 		// decode draw surface properties
 		R_UnpackSortKey( sortKey, &shaderNum, &fogNum, &portalNum, &entNum );
 
@@ -449,6 +453,7 @@ static void _R_DrawSurfaces( drawList_t *list )
 		fog = fogNum >= 0 ? rsh.worldBrushModel->fogs + fogNum : NULL;
 		portalSurface = portalNum >= 0 ? rn.portalSurfaces + portalNum : NULL;
 		entityFX = entity->renderfx;
+		depthWrite = shader->flags & SHADER_DEPTHWRITE ? true : false;
 
 		// see if we need to reset mesh properties in the backend
 		if( !prevBatchDrawSurf || shaderNum != prevShaderNum || fogNum != prevFogNum || 
@@ -456,19 +461,24 @@ static void _R_DrawSurfaces( drawList_t *list )
 			( entNum != prevEntNum && !(shader->flags & SHADER_ENTITY_MERGABLE) ) || 
 			entityFX != prevEntityFX ) {
 
-			if( prevBatchDrawSurf ) {
-				RB_EndBatch();
+			if( prevBatchDrawSurf && !batchDrawSurf ) {
+				RB_FlushDynamicMeshes();
+				batchFlushed = true;
 			}
 
 			// hack the depth range to prevent view model from poking into walls
 			if( entity->flags & RF_WEAPONMODEL ) {
 				if( !depthHack ) {
+					RB_FlushDynamicMeshes();
+					batchFlushed = true;
 					depthHack = true;
 					RB_GetDepthRange( &depthmin, &depthmax );
 					RB_DepthRange( depthmin, depthmin + 0.3 * ( depthmax - depthmin ) );
 				}
 			} else {
 				if( depthHack ) {
+					RB_FlushDynamicMeshes();
+					batchFlushed = true;
 					depthHack = false;
 					RB_DepthRange( depthmin, depthmax );
 				}
@@ -476,32 +486,20 @@ static void _R_DrawSurfaces( drawList_t *list )
 
 			if( entNum != prevEntNum ) {
 				// backface culling for left-handed weapons
-				if( entity->flags & RF_CULLHACK ) {
-					cullHack = true;
+				bool oldCullHack = cullHack;
+				cullHack = ( ( entity->flags & RF_CULLHACK ) ? true : false );
+				if( cullHack != oldCullHack ) {
+					RB_FlushDynamicMeshes();
+					batchFlushed = true;
 					RB_FlipFrontFace();
-				} else if( cullHack ) {
-					cullHack = false;
-					RB_FlipFrontFace();
-				}
-
-				if( shader->flags & SHADER_AUTOSPRITE ) 
-					R_TranslateForEntity( entity );
-				else
-					R_TransformForEntity( entity );
-			}
-
-			depthWrite = shader->flags & SHADER_DEPTHWRITE ? true : false;
-			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
-				depthCopied = true;
-				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && rn.fbDepthAttachment && rsh.screenTextureCopy ) {
-					RB_BlitFrameBufferObject( rsh.screenTextureCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
 				}
 			}
 
-			// sky and things that don't use depth test use infinite projection matrix
-			// to not pollute the farclip
+			// sky uses infinite projection matrix to not pollute the farclip
 			infiniteProj = entity->renderfx & RF_NODEPTHTEST ? true : (shader->flags & SHADER_SKY ? true : false);
 			if( infiniteProj != prevInfiniteProj ) {
+				RB_FlushDynamicMeshes();
+				batchFlushed = true;
 				if( infiniteProj ) {
 					Matrix4_Copy( rn.projectionMatrix, projectionMatrix );
 					Matrix4_PerspectiveProjectionToInfinity( Z_NEAR, projectionMatrix, glConfig.depthEpsilon );
@@ -512,13 +510,49 @@ static void _R_DrawSurfaces( drawList_t *list )
 				}
 			}
 
-			RB_BindShader( entity, shader, fog );
+			if( batchFlushed ) {
+				batchOpaque = false;
+			}
 
-			RB_SetShadowBits( (rsc.entShadowBits[entNum] & rn.shadowBits) & rsc.renderedShadowBits );
+			if( !depthWrite && !depthCopied && Shader_ReadDepth( shader ) ) {
+				depthCopied = true;
+				if( ( rn.renderFlags & RF_SOFT_PARTICLES ) && rn.fbDepthAttachment && rsh.screenTextureCopy ) {
+					// draw all dynamic surfaces that write depth before copying
+					if( batchOpaque ) {
+						batchOpaque = false;
+						RB_FlushDynamicMeshes();
+						batchFlushed = true;
+					}
+					RB_BlitFrameBufferObject( rsh.screenTextureCopy->fbo, GL_DEPTH_BUFFER_BIT, FBO_COPY_NORMAL );
+				}
+			}
 
-			RB_SetPortalSurface( portalSurface );
+			if( batchDrawSurf ) {
+				// don't transform batched surfaces
+				if( !prevBatchDrawSurf ) {
+					RB_LoadObjectMatrix( mat4x4_identity );
+				}
+			}
+			else {
+				if( ( entNum != prevEntNum ) || prevBatchDrawSurf ) {
+					if( shader->flags & SHADER_AUTOSPRITE ) 
+						R_TranslateForEntity( entity );
+					else
+						R_TransformForEntity( entity );
+				}
+			}
 
-			batchDrawSurf = r_beginDrawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, sds->drawSurf );
+			shadowBits = ( rsc.entShadowBits[entNum] & rn.shadowBits ) & rsc.renderedShadowBits;
+
+			if( !batchDrawSurf ) {
+				assert( r_drawSurfCb[drawSurfType] );
+
+				RB_BindShader( entity, shader, fog );
+				RB_SetPortalSurface( portalSurface );
+				RB_SetShadowBits( shadowBits );
+
+				r_drawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, shadowBits, sds->drawSurf );
+			}
 
 			prevShaderNum = shaderNum;
 			prevEntNum = entNum;
@@ -527,20 +561,19 @@ static void _R_DrawSurfaces( drawList_t *list )
 			prevPortalNum = portalNum;
 			prevInfiniteProj = infiniteProj;
 			prevEntityFX = entityFX;
-
-			if( batchDrawSurf ) {
-				RB_BeginBatch();
-			}
 		}
 
 		if( batchDrawSurf ) {
-			assert( r_batchDrawSurfCb[drawSurfType] != NULL );
-			r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, sds->drawSurf );
+			r_batchDrawSurfCb[drawSurfType]( entity, shader, fog, portalSurface, shadowBits, sds->drawSurf );
+			batchFlushed = false;
+			if( depthWrite ) {
+				batchOpaque = true;
+			}
 		}
 	}
 
 	if( batchDrawSurf ) {
-		RB_EndBatch();
+		RB_FlushDynamicMeshes();
 	}
 	if( depthHack ) {
 		RB_DepthRange( depthmin, depthmax );

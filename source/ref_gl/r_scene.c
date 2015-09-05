@@ -226,7 +226,7 @@ static void R_BlitTextureToScrFbo( const refdef_t *fd, image_t *image, int dstFb
 	// (also using custom PP effects like FXAA with the stream VBO causes
 	// Adreno to mark the VBO as "slow" (due to some weird bug)
 	// for the rest of the frame and drop FPS to 10-20).
-	R_EndStretchBatch();
+	RB_FlushDynamicMeshes();
 
 	RB_BindFrameBufferObject( dstFbo );
 
@@ -525,12 +525,6 @@ static void R_RenderDebugBounds( void )
 
 	RB_SetShaderStateMask( ~0, GLSTATE_NO_DEPTH_TEST );
 
-	RB_BindShader( rsc.worldent, rsh.whiteShader, NULL );
-
-	RB_BindVBO( RB_VBO_STREAM, GL_LINES );
-
-	RB_BeginBatch();
-
 	for( i = 0; i < r_num_debug_bounds; i++ )
 	{
 		mins = r_debug_bounds[i].mins;
@@ -546,10 +540,10 @@ static void R_RenderDebugBounds( void )
 			Vector4Copy( color, colors[j] );
 		}
 
-		RB_BatchMesh( &mesh );
+		RB_AddDynamicMesh( rsc.worldent, rsh.whiteShader, NULL, NULL, 0, &mesh, GL_LINES, 0.0f, 0.0f );
 	}
 
-	RB_EndBatch();
+	RB_FlushDynamicMeshes();
 
 	RB_SetShaderStateMask( ~0, 0 );
 }
