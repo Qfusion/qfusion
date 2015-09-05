@@ -1476,21 +1476,14 @@ void R_PopRefInst( void )
 /*
 * R_SwapInterval
 */
-static void R_SwapInterval( bool swapInterval )
+static void R_SwapInterval( int swapInterval )
 {
-	if( qglSwapInterval && !glConfig.stereoEnabled && !r_swapinterval_min->integer )
-		qglSwapInterval( swapInterval );
-}
+	static int currentSwapInterval = 0;
 
-/*
-* R_UpdateSwapInterval
-*/
-static void R_UpdateSwapInterval( void )
-{
-	if( r_swapinterval->modified )
+	if( ( swapInterval != currentSwapInterval ) && !r_swapinterval_min->integer && !glConfig.stereoEnabled )
 	{
-		r_swapinterval->modified = false;
-		R_SwapInterval( r_swapinterval->integer ? true : false );
+		GLimp_SetSwapInterval( swapInterval );
+		currentSwapInterval = swapInterval;
 	}
 }
 
@@ -1627,14 +1620,8 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		r_outlines_scale->modified = false;
 	}
 
-	// swapinterval stuff (vertical synchronization)
-	if( forceVsync ) {
-		R_SwapInterval( true );
-	}
-	else {
-		r_swapinterval->modified = true;
-		R_UpdateSwapInterval();
-	}
+	// set swap interval (vertical synchronization)
+	R_SwapInterval( ( r_swapinterval->integer || forceVsync ) ? 1 : 0 );
 
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
 
