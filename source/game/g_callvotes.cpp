@@ -1832,6 +1832,8 @@ static void G_VoteRebalancePassed( callvotedata_t *vote )
 
 		if( e->s.team != newteam )
 			G_Teams_SetTeam( e, newteam );
+		else
+			memset( &e->r.client->level.stats, 0, sizeof( e->r.client->level.stats ) ); // clear scores
 
 		if( i % 2 == 0 )
 			team++;
