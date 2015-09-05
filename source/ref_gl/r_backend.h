@@ -70,11 +70,11 @@ int RB_BoundFrameBufferObject( void );
 void RB_BlitFrameBufferObject( int dest, int bitMask, int mode );
 
 void RB_BindVBO( int id, int primitive );
-mesh_t *RB_MapBatchMesh( int numVerts, int numElems );
-void RB_BeginBatch( void );
-void RB_UploadMesh( const mesh_t *mesh );
-void RB_BatchMesh( const mesh_t *mesh );
-void RB_EndBatch( void );
+
+void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
+	const struct mfog_s *fog, const struct portalSurface_s *portalSurface, unsigned int shadowBits,
+	const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
+void RB_FlushDynamicMeshes( void );
 
 void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
 	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems );

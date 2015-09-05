@@ -302,18 +302,9 @@ SPRITE MODELS
 static drawSurfaceType_t spriteDrawSurf = ST_SPRITE;
 
 /*
-* R_BeginSpriteSurf
-*/
-bool R_BeginSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
-{
-	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
-	return true;
-}
-
-/*
 * R_BatchSpriteSurf
 */
-void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
+void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf )
 {
 	int i;
 	vec3_t point;
@@ -368,7 +359,7 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 	mesh.colorsArray[1] = NULL;
 	mesh.sVectorsArray = NULL;
 
-	RB_BatchMesh( &mesh );
+	RB_AddDynamicMesh( e, shader, fog, portalSurface, 0, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -451,8 +442,8 @@ mesh_vbo_t *R_InitNullModelVBO( void )
 	mesh.numElems = 6;
 	mesh.elems = elems;
 
-	R_UploadVBOVertexData( vbo, 0, vattribs, &mesh, VBO_HINT_NONE );
-	R_UploadVBOElemData( vbo, 0, 0, &mesh, VBO_HINT_NONE );
+	R_UploadVBOVertexData( vbo, 0, vattribs, &mesh );
+	R_UploadVBOElemData( vbo, 0, 0, &mesh );
 
 	return vbo;
 }
@@ -460,18 +451,16 @@ mesh_vbo_t *R_InitNullModelVBO( void )
 /*
 * R_DrawNullSurf
 */
-bool R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
+void R_DrawNullSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf )
 {
 	assert( rsh.nullVBO != NULL );
 	if( !rsh.nullVBO ) {
-		return false;
+		return;
 	}
 
 	RB_BindVBO( rsh.nullVBO->index, GL_LINES );
 
 	RB_DrawElements( 0, 6, 0, 6, 0, 0, 0, 0 );
-
-	return false;
 }
 
 /*
@@ -495,71 +484,6 @@ static vec2_t pic_st[4];
 static byte_vec4_t pic_colors[4];
 static elem_t pic_elems[6] = { 0, 1, 2, 0, 2, 3 };
 static mesh_t pic_mesh = { 4, pic_xyz, pic_normals, NULL, pic_st, { 0, 0, 0, 0 }, { 0 }, { pic_colors, pic_colors, pic_colors, pic_colors }, NULL, NULL, 6, pic_elems };
-static const shader_t *pic_mbuffer_shader;
-static float pic_x_offset, pic_y_offset;
-
-/*
-* R_ResetStretchPic
-*/
-static void R_ResetStretchPic( void )
-{
-	pic_mbuffer_shader = NULL;
-	pic_x_offset = pic_y_offset = 0;
-}
-
-/*
-* R_BeginStretchBatch
-*/
-void R_BeginStretchBatch( const shader_t *shader, float x_offset, float y_offset )
-{
-	if( pic_mbuffer_shader != shader
-		|| x_offset != pic_x_offset || y_offset != pic_y_offset ) {
-		R_EndStretchBatch();
-
-		pic_mbuffer_shader = shader;
-		pic_x_offset = x_offset;
-		pic_y_offset = y_offset;
-
-		if( pic_x_offset != 0 || pic_y_offset != 0 ) {
-			mat4_t translation;
-
-			Matrix4_Identity( translation );
-			Matrix4_Translate2D( translation, pic_x_offset, pic_y_offset );
-
-			RB_LoadObjectMatrix( translation );
-		}
-
-		RB_BindShader( NULL, shader, NULL );
-
-		RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
-
-		RB_BeginBatch();
-	}
-}
-
-/*
-* R_EndStretchBatch
-*/
-void R_EndStretchBatch( void )
-{
-	if( !pic_mbuffer_shader ) {
-		return;
-	}
-
-	// upload video right before rendering
-	if( pic_mbuffer_shader->cin ) {
-		R_UploadCinematicShader( pic_mbuffer_shader );
-	}
-
-	RB_EndBatch();
-
-	// reset matrix
-	if( pic_x_offset != 0 || pic_y_offset != 0 ) {
-		RB_LoadObjectMatrix( mat4x4_identity );
-	}
-
-	R_ResetStretchPic();
-}
 
 /*
 * R_Set2DMode
@@ -586,9 +510,6 @@ void R_Set2DMode( bool enable )
 		rf.width2D = width;
 		rf.height2D = height;
 
-		// reset 2D batching
-		R_ResetStretchPic();
-
 		Matrix4_OrthogonalProjection( 0, width, height, 0, -99999, 99999, rn.projectionMatrix );
 		Matrix4_Copy( mat4x4_identity, rn.modelviewMatrix );
 		Matrix4_Copy( rn.projectionMatrix, rn.cameraProjectionMatrix );
@@ -608,7 +529,7 @@ void R_Set2DMode( bool enable )
 	else
 	{
 		// render previously batched 2D geometry, if any
-		R_EndStretchBatch();
+		RB_FlushDynamicMeshes();
 
 		RB_SetShaderStateMask( ~0, 0 );
 	}
@@ -626,7 +547,9 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		return;
 	}
 
-	R_BeginStretchBatch( shader, 0, 0 );
+	if( shader->cin ) {
+		R_UploadCinematicShader( shader );
+	}
 
 	// lower-left
 	Vector2Set( pic_xyz[0], x, y );
@@ -672,7 +595,7 @@ void R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, fl
 		}
 	}
 
-	RB_BatchMesh( &pic_mesh );
+	RB_AddDynamicMesh( NULL, shader, NULL, NULL, 0, &pic_mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*
@@ -805,7 +728,7 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, colorWhite, &s );
 
-	R_EndStretchBatch();
+	RB_FlushDynamicMeshes();
 }
 
 /*
@@ -848,7 +771,7 @@ void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s
 
 	R_DrawRotatedStretchPic( x, y, w, h, s1, t1, s2, t2, 0, color, &s );
 
-	R_EndStretchBatch();
+	RB_FlushDynamicMeshes();
 }
 
 /*
@@ -877,7 +800,6 @@ void R_BindFrameBufferObject( int object )
 */
 void R_Scissor( int x, int y, int w, int h )
 {
-	R_EndStretchBatch(); // flush batched 2D geometry
 	RB_Scissor( x, y, w, h );
 }
 
@@ -894,7 +816,6 @@ void R_GetScissor( int *x, int *y, int *w, int *h )
 */
 void R_ResetScissor( void )
 {
-	R_EndStretchBatch(); // flush batched 2D geometry
 	RB_Scissor( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight );
 }
 
@@ -910,7 +831,7 @@ static void R_PolyBlend( void )
 
 	R_Set2DMode( true );
 	R_DrawStretchPic( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1, rsc.refdef.blend, rsh.whiteShader );
-	R_EndStretchBatch();
+	RB_FlushDynamicMeshes();
 }
 
 /*
@@ -932,7 +853,6 @@ static void R_ApplyBrightness( void )
 	R_Set2DMode( true );
 	R_DrawStretchQuick( 0, 0, rf.frameBufferWidth, rf.frameBufferHeight, 0, 0, 1, 1,
 		color, GLSL_PROGRAM_TYPE_NONE, rsh.whiteTexture, GLSTATE_SRCBLEND_ONE|GLSTATE_DSTBLEND_ONE );
-	R_EndStretchBatch();
 }
 
 /*
@@ -959,8 +879,8 @@ mesh_vbo_t *R_InitPostProcessingVBO( void )
 	mesh.numElems = 6;
 	mesh.elems = elems;
 
-	R_UploadVBOVertexData( vbo, 0, vattribs, &mesh, VBO_HINT_NONE );
-	R_UploadVBOElemData( vbo, 0, 0, &mesh, VBO_HINT_NONE );
+	R_UploadVBOVertexData( vbo, 0, vattribs, &mesh );
+	R_UploadVBOElemData( vbo, 0, 0, &mesh );
 
 	return vbo;
 }
@@ -1628,7 +1548,7 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 void R_EndFrame( void )
 {
 	// render previously batched 2D geometry, if any
-	R_EndStretchBatch();
+	RB_FlushDynamicMeshes();
 
 	R_PolyBlend();
 	

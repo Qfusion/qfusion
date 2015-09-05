@@ -175,7 +175,7 @@ static unsigned int R_SurfaceShadowBits( const msurface_t *surf, unsigned int ch
 /*
 * R_DrawBSPSurf
 */
-bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf )
+void R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int entShadowBits, drawSurfaceBSP_t *drawSurf )
 {
 	const vboSlice_t *slice;
 	const vboSlice_t *shadowSlice;
@@ -245,8 +245,6 @@ bool R_DrawBSPSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 		RB_DrawElements( firstVert, numVerts, firstElem, numElems, 
 			firstShadowVert, numShadowVerts, firstShadowElem, numShadowElems );
 	}
-
-	return false;
 }
 
 /*

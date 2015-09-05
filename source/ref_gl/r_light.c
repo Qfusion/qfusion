@@ -49,20 +49,10 @@ void R_InitCoronas( void )
 }
 
 /*
-* R_BeginCoronaSurf
-*/
-bool R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, 
-	const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
-{
-	RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
-	return true;
-}
-
-/*
 * R_BatchCoronaSurf
 */
 void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, 
-	const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
+	const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf )
 {
 	int i;
 	vec3_t origin, point;
@@ -110,7 +100,7 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 	mesh.stArray = texcoords;
 	mesh.colorsArray[0] = colors;
 
-	RB_BatchMesh( &mesh );
+	RB_AddDynamicMesh( e, shader, fog, portalSurface, 0, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*

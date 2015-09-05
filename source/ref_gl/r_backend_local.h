@@ -29,6 +29,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MAX_BATCH_ELEMENTS			MAX_BATCH_VERTS*6
 #define MAX_BATCH_TRIANGLES			MAX_BATCH_ELEMENTS/3
 
+#define MAX_DYNAMIC_DRAWS			2048
+
 typedef struct r_backend_stats_s
 {
 	unsigned int numVerts, numElems;
@@ -51,6 +53,28 @@ typedef struct
 	unsigned int numElems;
 	unsigned int numInstances;
 } rbDrawElements_t;
+
+typedef struct
+{
+	mesh_vbo_t *vbo;
+	uint8_t *vertexData;
+	rbDrawElements_t drawElements;
+} rbDynamicStream_t;
+
+typedef struct
+{
+	const entity_t *entity;
+	const shader_t *shader;
+	const mfog_t *fog;
+	const portalSurface_t *portalSurface;
+	unsigned int shadowBits;
+	vattribmask_t vattribs; // based on the fields above - cached to avoid rebinding
+	int streamId;
+	int primitive;
+	vec2_t offset;
+	int scissor[4];
+	rbDrawElements_t drawElements;
+} rbDynamicDraw_t;
 
 typedef struct r_backend_s
 {
@@ -90,7 +114,7 @@ typedef struct r_backend_s
 	mat4_t projectionMatrix;
 	mat4_t modelviewProjectionMatrix;
 	float zNear, zFar;
-	
+
 	int renderFlags;
 
 	vec3_t cameraOrigin;
@@ -111,10 +135,9 @@ typedef struct r_backend_s
 	int currentRegProgramType;
 	r_glslfeat_t currentRegProgramFeatures;
 
-	mesh_t batchMesh;
-	rbDrawElements_t batches[RB_VBO_NUM_STREAMS];
-	rbDrawElements_t streamOffset[RB_VBO_NUM_STREAMS];
-	mesh_vbo_t *streamVBOs[RB_VBO_NUM_STREAMS];
+	rbDynamicStream_t dynamicStreams[RB_VBO_NUM_STREAMS];
+	rbDynamicDraw_t dynamicDraws[MAX_DYNAMIC_DRAWS];
+	int numDynamicDraws;
 
 	instancePoint_t *drawInstances;
 	int maxDrawInstances;
@@ -127,7 +150,6 @@ typedef struct r_backend_s
 	int primitive;
 	int currentVBOId;
 	mesh_vbo_t *currentVBO;
-	rbDrawElements_t *currentBatch;
 
 	unsigned int currentDlightBits;
 	unsigned int currentShadowBits;

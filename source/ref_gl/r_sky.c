@@ -163,6 +163,7 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 	int r, c;
 	float t, d, d2, b, b2, q[2], s;
 	elem_t *elem;
+	mesh_t *mesh = &( skydome->meshes[side] );
 
 	s = 1.0 / ( SIDE_SIZE-1 );
 	d = EYE_RAD; // sphere center to camera distance
@@ -172,8 +173,8 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 	q[0] = 1.0 / ( 2.0 * SCALE_S );
 	q[1] = 1.0 / ( 2.0 * SCALE_T );
 
-	v = skydome->meshes[side].xyzArray[0];
-	n = skydome->meshes[side].normalsArray[0];
+	v = mesh->xyzArray[0];
+	n = mesh->normalsArray[0];
 	if( side != 5 )
 		st = skydome->sphereStCoords[side][0];
 	st2 = skydome->linearStCoords[side][0];
@@ -232,7 +233,7 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 	}
 
 	// elements in tristrip order
-	elem = skydome->meshes[side].elems;
+	elem = mesh->elems;
 	for( r = 0; r < SIDE_SIZE - 1; r++ )
 	{
 		for( c = 0; c < SIDE_SIZE - 1; c++ )
@@ -248,14 +249,14 @@ static void Gen_BoxSide( skydome_t *skydome, int side, vec3_t orig, vec3_t drow,
 	// upload two static VBO's for each side except for the bottom one
 	// which only has 1 side for skybox
 	if( side != 5 ) {
-		skydome->meshes[side].stArray = skydome->sphereStCoords[side];
-		R_UploadVBOVertexData( skydome->sphereVbos[side], 0, SKYDOME_VATTRIBS, &skydome->meshes[side], VBO_HINT_NONE );
-		R_UploadVBOElemData( skydome->sphereVbos[side], 0, 0, &skydome->meshes[side], VBO_HINT_NONE );
+		mesh->stArray = skydome->sphereStCoords[side];
+		R_UploadVBOVertexData( skydome->sphereVbos[side], 0, SKYDOME_VATTRIBS, mesh );
+		R_UploadVBOElemData( skydome->sphereVbos[side], 0, 0, mesh );
 	}
 
 	skydome->meshes[side].stArray = skydome->linearStCoords[side];
-	R_UploadVBOVertexData( skydome->linearVbos[side], 0, SKYDOME_VATTRIBS, &skydome->meshes[side], VBO_HINT_NONE );
-	R_UploadVBOElemData( skydome->linearVbos[side], 0, 0, &skydome->meshes[side], VBO_HINT_NONE );
+	R_UploadVBOVertexData( skydome->linearVbos[side], 0, SKYDOME_VATTRIBS, mesh );
+	R_UploadVBOElemData( skydome->linearVbos[side], 0, 0, mesh );
 }
 
 /*
@@ -318,7 +319,7 @@ static void R_DrawBlackBottom( const skydome_t *skydome, const visSkySide_t *vis
 /*
 * R_DrawSkySurf
 */
-bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceBSP_t *drawSurf )
+void R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceBSP_t *drawSurf )
 {
 	int i;
 	int numVisSides;
@@ -329,9 +330,9 @@ bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	skydome_t *skydome = rsh.worldBrushModel->skydome;
 
 	if( !skydome )
-		return false;
+		return;
 	if( skyportal && !fog )
-		return false;
+		return;
 
 	numVisSides = 0;
 	ClearBounds( mins, maxs );
@@ -374,7 +375,7 @@ bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 
 	// no sides are truly visible, ignore
 	if( !numVisSides )
-		return false;
+		return;
 
 	// center skydome on camera to give the illusion of a larger space
 	rsc.skyent->scale = shader->skyHeight;
@@ -413,8 +414,6 @@ bool R_DrawSkySurf( const entity_t *e, const shader_t *shader, const mfog_t *fog
 	}
 
 	R_TransformForEntity( e );
-
-	return false;
 }
 
 //===================================================================
