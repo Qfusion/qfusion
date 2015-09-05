@@ -322,7 +322,7 @@ void G_Teams_SetTeam( edict_t *ent, int team )
 		// trap_MR_SendPartialReport();
 	}
 
-	//clean scores at changing team
+	// clear scores at changing team
 	memset( &ent->r.client->level.stats, 0, sizeof( ent->r.client->level.stats ) );
 
 	memset( &ent->r.client->teamstate, 0, sizeof( ent->r.client->teamstate ) );
