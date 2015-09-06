@@ -22,12 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 enum
 {
-	RB_VBO_STREAM_QUAD_COMPACT	= -4, // bind RB_VBO_STREAM_QUAD instead
-	RB_VBO_STREAM_QUAD			= -3,
 	RB_VBO_STREAM_COMPACT		= -2, // bind RB_VBO_STREAM instead
 	RB_VBO_STREAM				= -1,
 	RB_VBO_NONE					= 0,
-	RB_VBO_NUM_STREAMS			= -RB_VBO_STREAM_QUAD_COMPACT
+	RB_VBO_NUM_STREAMS			= -RB_VBO_STREAM_COMPACT
 };
 
 //===================================================================
@@ -60,9 +58,9 @@ void RB_FrontFace( bool front );
 void RB_FlipFrontFace( void );
 void RB_BindArrayBuffer( int buffer );
 void RB_BindElementArrayBuffer( int buffer );
-void RB_EnableScissor( bool enable );
 void RB_Scissor( int x, int y, int w, int h );
 void RB_GetScissor( int *x, int *y, int *w, int *h );
+void RB_ApplyScissor( void );
 void RB_Viewport( int x, int y, int w, int h );
 void RB_Clear( int bits, float r, float g, float b, float a );
 void RB_SetZClip( float zNear, float zFar );
@@ -72,11 +70,11 @@ int RB_BoundFrameBufferObject( void );
 void RB_BlitFrameBufferObject( int dest, int bitMask, int mode );
 
 void RB_BindVBO( int id, int primitive );
-mesh_t *RB_MapBatchMesh( int numVerts, int numElems );
-void RB_BeginBatch( void );
-void RB_UploadMesh( const mesh_t *mesh );
-void RB_BatchMesh( const mesh_t *mesh );
-void RB_EndBatch( void );
+
+void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
+	const struct mfog_s *fog, const struct portalSurface_s *portalSurface, unsigned int shadowBits,
+	const struct mesh_s *mesh, int primitive, float x_offset, float y_offset );
+void RB_FlushDynamicMeshes( void );
 
 void RB_DrawElements( int firstVert, int numVerts, int firstElem, int numElems,
 	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems );

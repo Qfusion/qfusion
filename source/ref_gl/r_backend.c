@@ -21,25 +21,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_backend_local.h"
 
+// Smaller buffer for 2D polygons. Also a workaround for some instances of a hardly explainable bug on Adreno
+// that caused dynamic draws to slow everything down in some cases when normals are used with dynamic VBOs.
 #define COMPACT_STREAM_VATTRIBS ( VATTRIB_POSITION_BIT | VATTRIB_COLOR0_BIT | VATTRIB_TEXCOORDS_BIT )
-#define CURRENT_VBO_IS_GENERIC_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM ) || ( rb.currentVBOId == RB_VBO_STREAM_COMPACT ) )
-#define CURRENT_VBO_IS_QUAD_STREAM() ( ( rb.currentVBOId == RB_VBO_STREAM_QUAD ) || ( rb.currentVBOId == RB_VBO_STREAM_QUAD_COMPACT ) )
-
-ATTRIBUTE_ALIGNED( 16 ) vec4_t batchVertsArray[MAX_BATCH_VERTS];
-ATTRIBUTE_ALIGNED( 16 ) vec4_t batchNormalsArray[MAX_BATCH_VERTS];
-ATTRIBUTE_ALIGNED( 16 ) vec4_t batchSVectorsArray[MAX_BATCH_VERTS];
-ATTRIBUTE_ALIGNED( 16 ) vec2_t batchSTCoordsArray[MAX_BATCH_VERTS];
-ATTRIBUTE_ALIGNED( 16 ) vec2_t batchLMCoordsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
-ATTRIBUTE_ALIGNED( 16 ) byte_vec4_t batchLMLayersArray[( MAX_LIGHTMAPS + 3 ) / 4][MAX_BATCH_VERTS];
-ATTRIBUTE_ALIGNED( 16 ) byte_vec4_t batchColorsArray[MAX_LIGHTMAPS][MAX_BATCH_VERTS];
-ATTRIBUTE_ALIGNED( 16 ) elem_t batchElements[MAX_BATCH_ELEMENTS];
+static elem_t dynamicStreamElems[RB_VBO_NUM_STREAMS][MAX_STREAM_VBO_ELEMENTS];
 
 rbackend_t rb;
 
-static void RB_InitBatchMesh( void );
 static void RB_SetGLDefaults( void );
 static void RB_RegisterStreamVBOs( void );
-static void RB_UploadStaticQuadIndices( int id );
 
 /*
 * RB_Init
@@ -52,19 +42,14 @@ void RB_Init( void )
 
 	// set default OpenGL state
 	RB_SetGLDefaults();
+	rb.gl.scissor[2] = glConfig.width;
+	rb.gl.scissor[3] = glConfig.height;
 
 	// initialize shading
 	RB_InitShading();
 
-	// intialize batching
-	RB_InitBatchMesh();
-
 	// create VBO's we're going to use for streamed data
 	RB_RegisterStreamVBOs();
-
-	// upload persistent quad indices
-	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD );
-	RB_UploadStaticQuadIndices( RB_VBO_STREAM_QUAD_COMPACT );
 }
 
 /*
@@ -163,6 +148,7 @@ static void RB_SetGLDefaults( void )
 	qglPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 #endif
 	qglFrontFace( GL_CCW );
+	qglEnable( GL_SCISSOR_TEST );
 }
 
 /*
@@ -490,12 +476,16 @@ static void GL_EnableVertexAttrib( int index, bool enable )
 */
 void RB_Scissor( int x, int y, int w, int h )
 {
-	qglScissor( x, rb.gl.fbHeight - h - y, w, h );
+	if( ( rb.gl.scissor[0] == x ) && ( rb.gl.scissor[1] == y ) &&
+		( rb.gl.scissor[2] == w ) && ( rb.gl.scissor[3] == h ) ) {
+		return;
+	}
 
 	rb.gl.scissor[0] = x;
 	rb.gl.scissor[1] = y;
 	rb.gl.scissor[2] = w;
 	rb.gl.scissor[3] = h;
+	rb.gl.scissorChanged = true;
 }
 
 /*
@@ -518,15 +508,14 @@ void RB_GetScissor( int *x, int *y, int *w, int *h )
 }
 
 /*
-* RB_EnableScissor
+* RB_ApplyScissor
 */
-void RB_EnableScissor( bool enable )
+void RB_ApplyScissor( void )
 {
-	if( enable ) {
-		qglEnable( GL_SCISSOR_TEST );
-	}
-	else {
-		qglDisable( GL_SCISSOR_TEST );
+	int h = rb.gl.scissor[3];
+	if( rb.gl.scissorChanged ) {
+		rb.gl.scissorChanged = false;
+		qglScissor( rb.gl.scissor[0], rb.gl.fbHeight - h - rb.gl.scissor[1], rb.gl.scissor[2], h );
 	}
 }
 
@@ -563,6 +552,8 @@ void RB_Clear( int bits, float r, float g, float b, float a )
 
 	RB_SetState( state );
 
+	RB_ApplyScissor();
+
 	qglClear( bits );
 
 	RB_DepthRange( 0.0f, 1.0f );
@@ -578,6 +569,9 @@ void RB_BindFrameBufferObject( int object )
 	RFB_BindObject( object );
 
 	RFB_GetObjectSize( object, &width, &height );
+
+	if( rb.gl.fbHeight != height )
+		rb.gl.scissorChanged = true;
 
 	rb.gl.fbWidth = width;
 	rb.gl.fbHeight = height;
@@ -600,36 +594,6 @@ void RB_BlitFrameBufferObject( int dest, int bitMask, int mode )
 }
 
 /*
-* RB_UploadStaticQuadIndices
-*/
-static void RB_UploadStaticQuadIndices( int id )
-{
-	int leftVerts, numVerts, numElems;
-	int vertsOffset, elemsOffset;
-	mesh_t mesh;
-	mesh_vbo_t *vbo = rb.streamVBOs[-id - 1];
-
-	assert( MAX_BATCH_VERTS <= MAX_STREAM_VBO_VERTS );
-
-	vertsOffset = 0;
-	elemsOffset = 0;
-	
-	memset( &mesh, 0, sizeof( mesh ) );
-
-	for( leftVerts = MAX_STREAM_VBO_VERTS; leftVerts > 0; leftVerts -= numVerts ) {
-		numVerts = min( MAX_BATCH_VERTS, leftVerts );
-		numElems = numVerts/4*6;
-
-		mesh.numElems = numElems;
-		mesh.numVerts = numVerts;
-
-		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, &mesh, VBO_HINT_ELEMS_QUAD );
-		vertsOffset += numVerts;
-		elemsOffset += numElems;
-	}
-}
-
-/*
 * RB_RegisterStreamVBOs
 *
 * Allocate/keep alive dynamic vertex buffers object 
@@ -638,55 +602,24 @@ static void RB_UploadStaticQuadIndices( int id )
 void RB_RegisterStreamVBOs( void )
 {
 	int i;
-	mesh_vbo_t *vbo;
-	vbo_tag_t tags[RB_VBO_NUM_STREAMS] = {
-		VBO_TAG_STREAM,
-		VBO_TAG_STREAM,
-		VBO_TAG_STREAM_STATIC_ELEMS,
-		VBO_TAG_STREAM_STATIC_ELEMS
-	};
+	rbDynamicStream_t *stream;
 	vattribmask_t vattribs[RB_VBO_NUM_STREAMS] = {
-		VATTRIBS_MASK,
-		COMPACT_STREAM_VATTRIBS,
-		VATTRIBS_MASK,
+		VATTRIBS_MASK & ~VATTRIB_INSTANCES_BITS,
 		COMPACT_STREAM_VATTRIBS
 	};
 
 	// allocate stream VBO's
 	for( i = 0; i < RB_VBO_NUM_STREAMS; i++ ) {
-		vbo = rb.streamVBOs[i];
-		if( vbo ) {
-			R_TouchMeshVBO( vbo );
+		stream = &rb.dynamicStreams[i];
+		if( stream->vbo ) {
+			R_TouchMeshVBO( stream->vbo );
 			continue;
 		}
-		rb.streamVBOs[i] = R_CreateMeshVBO( &rb, 
-			MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, MAX_STREAM_VBO_INSTANCES,
-			vattribs[i], tags[i], VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT );
+		stream->vbo = R_CreateMeshVBO( &rb,
+			MAX_STREAM_VBO_VERTS, MAX_STREAM_VBO_ELEMENTS, 0,
+			vattribs[i], VBO_TAG_STREAM, VATTRIB_TEXCOORDS_BIT|VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT );
+		stream->vertexData = RB_Alloc( MAX_STREAM_VBO_VERTS * stream->vbo->vertexSize );
 	}
-}
-
-/*
-* RB_InitBatchMesh
-*/
-static void RB_InitBatchMesh( void )
-{
-	int i;
-	mesh_t *mesh = &rb.batchMesh;
-
-	mesh->numVerts = 0;
-	mesh->numElems = 0;
-	mesh->xyzArray = batchVertsArray;
-	mesh->normalsArray = batchNormalsArray;
-	mesh->sVectorsArray = batchSVectorsArray;
-	mesh->stArray = batchSTCoordsArray;
-	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
-		mesh->lmstArray[i] = batchLMCoordsArray[i];
-		mesh->colorsArray[i] = batchColorsArray[i];
-		if( !( i & 3 ) ) {
-			mesh->lmlayersArray[i >> 2] = batchLMLayersArray[i >> 2];
-		}
-	}
-	mesh->elems = batchElements;
 }
 
 /*
@@ -695,37 +628,21 @@ static void RB_InitBatchMesh( void )
 void RB_BindVBO( int id, int primitive )
 {
 	mesh_vbo_t *vbo;
-	rbDrawElements_t *batch;
-
-	if( !( rb.currentVAttribs & ~COMPACT_STREAM_VATTRIBS ) ) {
-		if( id == RB_VBO_STREAM ) {
-			id = RB_VBO_STREAM_COMPACT;
-		} else if( id == RB_VBO_STREAM_QUAD ) {
-			id = RB_VBO_STREAM_QUAD_COMPACT;
-		}
-	}
 
 	rb.primitive = primitive;
 
-	if( rb.currentVBOId == id ) {
-		return;
-	}
-
 	if( id < RB_VBO_NONE ) {
-		vbo = rb.streamVBOs[-id - 1];
-		batch = &rb.batches[-id - 1];
-	} else if( id == RB_VBO_NONE ) {
+		vbo = rb.dynamicStreams[-id - 1].vbo;
+	}
+	else if( id == RB_VBO_NONE ) {
 		vbo = NULL;
-		batch = NULL;
 	}
 	else {
 		vbo = R_GetVBOByIndex( id );
-		batch = NULL;
 	}
 
 	rb.currentVBOId = id;
 	rb.currentVBO = vbo;
-	rb.currentBatch = batch;
 	if( !vbo ) {
 		RB_BindArrayBuffer( 0 );
 		RB_BindElementArrayBuffer( 0 );
@@ -737,263 +654,214 @@ void RB_BindVBO( int id, int primitive )
 }
 
 /*
-* RB_UploadMesh
+* RB_AddDynamicMesh
 */
-void RB_UploadMesh( const mesh_t *mesh )
+void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
+	const struct mfog_s *fog, const struct portalSurface_s *portalSurface, unsigned int shadowBits,
+	const struct mesh_s *mesh, int primitive, float x_offset, float y_offset )
 {
-	int stream;
-	mesh_vbo_t *vbo;
-	rbDrawElements_t *offset;
-	vbo_hint_t vbo_hint = VBO_HINT_NONE;
 	int numVerts = mesh->numVerts, numElems = mesh->numElems;
-	bool isQuadStream, isGenericStream;
+	bool trifan = false;
+	int scissor[4];
+	rbDynamicDraw_t *prev = NULL, *draw;
+	bool merge = false;
+	vattribmask_t vattribs;
+	int streamId = RB_VBO_NONE;
+	rbDynamicStream_t *stream;
+	int destVertOffset;
+	elem_t *destElems;
 
-	assert( rb.currentVBOId < RB_VBO_NONE );
-	if( rb.currentVBOId >= RB_VBO_NONE ) {
+	// can't (and shouldn't because that would break batching) merge strip draw calls
+	// (consider simply disabling merge later in this case if models with tristrips are added in the future, but that's slow)
+	assert( ( primitive == GL_TRIANGLES ) || ( primitive == GL_LINES ) );
+
+	if( !numElems ) {
+		numElems = ( max( numVerts, 2 ) - 2 ) * 3;
+		trifan = true;
+	}
+	if( !numVerts || !numElems || ( numVerts > MAX_STREAM_VBO_VERTS ) || ( numElems > MAX_STREAM_VBO_ELEMENTS ) ) {
 		return;
 	}
-	
-	isQuadStream = CURRENT_VBO_IS_QUAD_STREAM();
-	isGenericStream = CURRENT_VBO_IS_GENERIC_STREAM( );
 
-	if( isQuadStream ) {
-		numElems = numVerts/4*6;
-	} else if( !numElems && isGenericStream ) {
-		numElems = (max(numVerts, 2) - 2) * 3;
+	RB_GetScissor( &scissor[0], &scissor[1], &scissor[2], &scissor[3] );
+
+	if( rb.numDynamicDraws ) {
+		prev = &rb.dynamicDraws[rb.numDynamicDraws - 1];
 	}
 
-	if( !numVerts || !numElems ) {
-		return;
-	}
-
-	vbo = rb.currentVBO;
-	stream = -rb.currentVBOId - 1;
-	offset = &rb.streamOffset[stream];
-
-	if( offset->firstVert+offset->numVerts+numVerts > MAX_STREAM_VBO_VERTS || 
-		offset->firstElem+offset->numVerts+numElems > MAX_STREAM_VBO_ELEMENTS ) {
-
-		RB_DrawElements( offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems, 
-			offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems );
-
-		R_DiscardVBOVertexData( vbo );
-		if( !isQuadStream ) {
-			R_DiscardVBOElemData( vbo );
+	if( prev ) {
+		int prevRenderFX = 0, renderFX = 0;
+		if( prev->entity ) {
+			prevRenderFX = prev->entity->renderfx;
 		}
-
-		offset->firstVert = 0;
-		offset->firstElem = 0;
-		offset->numVerts = 0;
-		offset->numElems = 0;
-	}
-
-	if( numVerts > MAX_STREAM_VBO_VERTS ||
-		numElems > MAX_STREAM_VBO_ELEMENTS ) {
-		// FIXME: do something about this?
-		return;
-	}
-
-	if( isQuadStream ) {
-		vbo_hint = VBO_HINT_ELEMS_QUAD;
-
-		// quad indices are stored in a static vbo, don't call R_UploadVBOElemData
-	} else {
-		if( mesh->elems ) {
-			vbo_hint = VBO_HINT_NONE;
-		} else if( isGenericStream ) {
-			vbo_hint = VBO_HINT_ELEMS_TRIFAN;
-		} else {
-			assert( 0 );
+		if( entity ) {
+			renderFX = entity->renderfx;
 		}
-		R_UploadVBOElemData( vbo, offset->firstVert + offset->numVerts, 
-			offset->firstElem + offset->numElems, mesh, vbo_hint );
+		if( ( ( shader->flags & SHADER_ENTITY_MERGABLE ) || ( prev->entity == entity ) ) && ( prevRenderFX == renderFX ) &&
+			( prev->shader == shader ) && ( prev->fog == fog ) && ( prev->portalSurface == portalSurface ) &&
+			( ( prev->shadowBits && shadowBits ) || ( !prev->shadowBits && !shadowBits ) ) ) {
+			// don't rebind the shader to get the VBO in this case
+			streamId = prev->streamId;
+			if( ( prev->shadowBits == shadowBits ) && ( prev->primitive == primitive ) &&
+				( prev->offset[0] == x_offset ) && ( prev->offset[1] == y_offset ) &&
+				!memcmp( prev->scissor, scissor, sizeof( scissor ) ) ) {
+				merge = true;
+			}
+		}
 	}
 
-	R_UploadVBOVertexData( vbo, offset->firstVert + offset->numVerts, 
-		rb.currentVAttribs, mesh, vbo_hint );
-
-	offset->numElems += numElems;
-	offset->numVerts += numVerts;
-}
-
-/*
-* RB_UploadBatchMesh
-*/
-static void RB_UploadBatchMesh( rbDrawElements_t *batch )
-{
-	rb.batchMesh.numVerts = batch->numVerts;
-	rb.batchMesh.numElems = batch->numElems;
-
-	RB_UploadMesh( &rb.batchMesh );
-
-	batch->numElems = batch->numVerts = 0;
-	batch->firstElem = batch->firstVert = 0;
-}
-
-/*
-* RB_MapBatchMesh
-*/
-mesh_t *RB_MapBatchMesh( int numVerts, int numElems )
-{
-	int stream;
-	rbDrawElements_t *batch;
-
-	assert( rb.currentVBOId < RB_VBO_NONE );
-	if( rb.currentVBOId >= RB_VBO_NONE ) {
-		return NULL;
-	}
-
-	if( numVerts > MAX_BATCH_VERTS || 
-		numElems > MAX_BATCH_ELEMENTS ) {
-		return NULL;
-	}
-
-	stream = -rb.currentVBOId - 1;
-	batch = &rb.batches[stream];
-
-	batch->numElems = batch->numVerts = 0;
-	batch->firstElem = batch->firstVert = 0;
-
-	RB_InitBatchMesh();
-
-	return &rb.batchMesh;
-}
-
-/*
-* RB_BeginBatch
-*/
-void RB_BeginBatch( void )
-{
-	RB_MapBatchMesh( 0, 0 );
-}
-
-/*
-* RB_BatchMesh
-*/
-void RB_BatchMesh( const mesh_t *mesh )
-{
-	int stream;
-	rbDrawElements_t *batch;
-	int numVerts = mesh->numVerts, numElems = mesh->numElems;
-	bool isQuadStream, isGenericStream;
-
-	isQuadStream = CURRENT_VBO_IS_QUAD_STREAM();
-	isGenericStream = CURRENT_VBO_IS_GENERIC_STREAM( );
-
-	if( isQuadStream ) {
-		numElems = numVerts/4*6;
-	} else if( !numElems && isGenericStream ) {
-		numElems = (max(numVerts, 2) - 2) * 3;
-	}
-
-	if( !numVerts || !numElems ) {
-		return;
-	}
-
-	assert( rb.currentVBOId < RB_VBO_NONE );
-	if( rb.currentVBOId >= RB_VBO_NONE ) {
-		return;
-	}
-
-	stream = -rb.currentVBOId - 1;
-	batch = &rb.batches[stream];
-
-	if( numVerts+batch->numVerts > MAX_BATCH_VERTS || 
-		numElems+batch->numElems > MAX_BATCH_ELEMENTS ) {
-		RB_UploadBatchMesh( batch );
-	}
-
-	if( numVerts > MAX_BATCH_VERTS || 
-		numElems > MAX_BATCH_ELEMENTS ) {
-		RB_UploadMesh( mesh );
+	if( streamId == RB_VBO_NONE ) {
+		RB_BindShader( entity, shader, fog );
+		vattribs = rb.currentVAttribs;
+		streamId = ( ( vattribs & ~COMPACT_STREAM_VATTRIBS ) ? RB_VBO_STREAM : RB_VBO_STREAM_COMPACT );
 	}
 	else {
-		int i;
-		vattribmask_t vattribs = rb.currentVAttribs;
-
-		memcpy( rb.batchMesh.xyzArray + batch->numVerts, mesh->xyzArray, numVerts * sizeof( vec4_t ) );
-		if( isQuadStream ) {
-			// quad indices are stored in a static vbo
-		} else if( mesh->elems ) {
-			if( rb.primitive == GL_TRIANGLES ) {
-				R_CopyOffsetTriangles( mesh->elems, numElems, batch->numVerts, rb.batchMesh.elems + batch->numElems );
-			}
-			else {
-				R_CopyOffsetElements( mesh->elems, numElems, batch->numVerts, rb.batchMesh.elems + batch->numElems );
-			}
-		} else if( isGenericStream ) {
-			R_BuildTrifanElements( batch->numVerts, numElems, rb.batchMesh.elems + batch->numElems );
-		} else {
-			assert( 0 );
-		}
-		if( mesh->normalsArray && (vattribs & VATTRIB_NORMAL_BIT) ) {
-			memcpy( rb.batchMesh.normalsArray + batch->numVerts, mesh->normalsArray, numVerts * sizeof( vec4_t ) );
-		}
-		if( mesh->sVectorsArray && ( ( vattribs & (VATTRIB_SVECTOR_BIT|VATTRIB_AUTOSPRITE2_BIT) ) == VATTRIB_SVECTOR_BIT ) ) {
-			memcpy( rb.batchMesh.sVectorsArray + batch->numVerts, mesh->sVectorsArray, numVerts * sizeof( vec4_t ) );
-		}
-		if( mesh->stArray && (vattribs & VATTRIB_TEXCOORDS_BIT) ) {
-			memcpy( rb.batchMesh.stArray + batch->numVerts, mesh->stArray, numVerts * sizeof( vec2_t ) );
-		}
-		
-		if( mesh->lmstArray[0] && (vattribs & VATTRIB_LMCOORDS0_BIT) ) {
-			memcpy( rb.batchMesh.lmstArray[0] + batch->numVerts, mesh->lmstArray[0], numVerts * sizeof( vec2_t ) );
-			if( mesh->lmlayersArray[0] && ( vattribs & VATTRIB_LMLAYERS0123_BIT ) ) {
-				memcpy( rb.batchMesh.lmlayersArray[0] + batch->numVerts, mesh->lmlayersArray[0], numVerts * sizeof( byte_vec4_t ) );
-			}
-
-			for( i = 1; i < MAX_LIGHTMAPS; i++ ) {
-				if( !mesh->lmstArray[i] || !(vattribs & (VATTRIB_LMCOORDS1_BIT<<(i-1))) ) {
-					break;
-				}
-				memcpy( rb.batchMesh.lmstArray[i] + batch->numVerts, mesh->lmstArray[i], numVerts * sizeof( vec2_t ) );
-				if( !( i & 3 ) && mesh->lmlayersArray[i >> 2] && ( vattribs & ( VATTRIB_LMLAYERS0123_BIT << ( i >> 2 ) ) ) ) {
-					memcpy( rb.batchMesh.lmlayersArray[i >> 2] + batch->numVerts,
-						mesh->lmlayersArray[i >> 2], numVerts * sizeof( byte_vec4_t ) );
-				}
-			}
-		}
-
-		if( mesh->colorsArray[0] && (vattribs & VATTRIB_COLOR0_BIT) ) {
-			memcpy( rb.batchMesh.colorsArray[0] + batch->numVerts, mesh->colorsArray[0], numVerts * sizeof( byte_vec4_t ) );
-		}
-
-		batch->numVerts += numVerts;
-		batch->numElems += numElems;
+		vattribs = prev->vattribs;
 	}
+
+	stream = &rb.dynamicStreams[-streamId - 1];
+
+	if( ( !merge && ( ( rb.numDynamicDraws + 1 ) > MAX_DYNAMIC_DRAWS ) ) ||
+		( ( stream->drawElements.firstVert + stream->drawElements.numVerts + numVerts ) > MAX_STREAM_VBO_VERTS ) ||
+		( ( stream->drawElements.firstElem + stream->drawElements.numElems + numElems ) > MAX_STREAM_VBO_ELEMENTS ) ) {
+		// wrap if overflows
+		RB_FlushDynamicMeshes();
+
+		R_DiscardVBOVertexData( stream->vbo );
+		R_DiscardVBOElemData( stream->vbo );
+
+		stream->drawElements.firstVert = 0;
+		stream->drawElements.numVerts = 0;
+		stream->drawElements.firstElem = 0;
+		stream->drawElements.numElems = 0;
+
+		merge = false;
+	}
+
+	if( merge ) {
+		// merge continuous draw calls
+		draw = prev;
+		draw->drawElements.numVerts += numVerts;
+		draw->drawElements.numElems += numElems;
+	}
+	else {
+		draw = &rb.dynamicDraws[rb.numDynamicDraws++];
+		draw->entity = entity;
+		draw->shader = shader;
+		draw->fog = fog;
+		draw->portalSurface = portalSurface;
+		draw->shadowBits = shadowBits;
+		draw->vattribs = vattribs;
+		draw->streamId = streamId;
+		draw->primitive = primitive;
+		draw->offset[0] = x_offset;
+		draw->offset[1] = y_offset;
+		memcpy( draw->scissor, scissor, sizeof( scissor ) );
+		draw->drawElements.firstVert = stream->drawElements.firstVert + stream->drawElements.numVerts;
+		draw->drawElements.numVerts = numVerts;
+		draw->drawElements.firstElem = stream->drawElements.firstElem + stream->drawElements.numElems;
+		draw->drawElements.numElems = numElems;
+		draw->drawElements.numInstances = 0;
+	}
+
+	destVertOffset = stream->drawElements.firstVert + stream->drawElements.numVerts;
+	R_FillVBOVertexDataBuffer( stream->vbo, vattribs, mesh,
+		stream->vertexData + destVertOffset * stream->vbo->vertexSize );
+
+	destElems = dynamicStreamElems[-streamId - 1] + stream->drawElements.firstElem + stream->drawElements.numElems;
+	if( trifan ) {
+		R_BuildTrifanElements( destVertOffset, numElems, destElems );
+	}
+	else {
+		if( primitive == GL_TRIANGLES ) {
+			R_CopyOffsetTriangles( mesh->elems, numElems, destVertOffset, destElems );
+		}
+		else {
+			R_CopyOffsetElements( mesh->elems, numElems, destVertOffset, destElems );
+		}
+	}
+
+	stream->drawElements.numVerts += numVerts;
+	stream->drawElements.numElems += numElems;
 }
 
 /*
-* RB_EndBatch
+* RB_FlushDynamicMeshes
 */
-void RB_EndBatch( void )
+void RB_FlushDynamicMeshes( void )
 {
-	int stream;
-	rbDrawElements_t *batch;
-	rbDrawElements_t *offset;
+	int i, numDraws = rb.numDynamicDraws;
+	rbDynamicStream_t *stream;
+	rbDynamicDraw_t *draw;
+	int sx, sy, sw, sh;
+	float offsetx = 0.0f, offsety = 0.0f, transx, transy;
+	mat4_t m;
 
-	if( rb.currentVBOId >= RB_VBO_NONE ) {
+	if( !numDraws ) {
 		return;
 	}
 
-	stream = -rb.currentVBOId - 1;
-	offset = &rb.streamOffset[stream];
-	batch = &rb.batches[stream];
+	for( i = 0; i < RB_VBO_NUM_STREAMS; i++ ) {
+		stream = &rb.dynamicStreams[i];
 
-	if( batch->numVerts ) {
-		RB_UploadBatchMesh( batch );
+		// because of firstVert, upload elems first
+		if( stream->drawElements.numElems ) {
+			mesh_t elemMesh;
+			memset( &elemMesh, 0, sizeof( elemMesh ) );
+			elemMesh.elems = dynamicStreamElems[i] + stream->drawElements.firstElem;
+			elemMesh.numElems = stream->drawElements.numElems;
+			R_UploadVBOElemData( stream->vbo, 0, stream->drawElements.firstElem, &elemMesh );
+			stream->drawElements.firstElem += stream->drawElements.numElems;
+			stream->drawElements.numElems = 0;
+		}
+
+		if( stream->drawElements.numVerts ) {
+			R_UploadVBOVertexRawData( stream->vbo, stream->drawElements.firstVert, stream->drawElements.numVerts,
+				stream->vertexData + stream->drawElements.firstVert * stream->vbo->vertexSize );
+			stream->drawElements.firstVert += stream->drawElements.numVerts;
+			stream->drawElements.numVerts = 0;
+		}
 	}
 
-	if( !offset->numVerts || !offset->numElems ) {
-		return;
+	RB_GetScissor( &sx, &sy, &sw, &sh );
+
+	Matrix4_Copy( rb.objectMatrix, m );
+	transx = m[12];
+	transy = m[13];
+
+	for( i = 0, draw = rb.dynamicDraws; i < numDraws; i++, draw++ ) {
+		RB_BindShader( draw->entity, draw->shader, draw->fog );
+		RB_BindVBO( draw->streamId, draw->primitive );
+		RB_SetPortalSurface( draw->portalSurface );
+		RB_SetShadowBits( draw->shadowBits );
+		RB_Scissor( draw->scissor[0], draw->scissor[1], draw->scissor[2], draw->scissor[3] );
+
+		// translate the mesh in 2D
+		if( ( offsetx != draw->offset[0] ) || ( offsety != draw->offset[1] ) ) {
+			offsetx = draw->offset[0];
+			offsety = draw->offset[1];
+			m[12] = transx + offsetx;
+			m[13] = transy + offsety;
+			RB_LoadObjectMatrix( m );
+		}
+
+		RB_DrawElements(
+			draw->drawElements.firstVert, draw->drawElements.numVerts,
+			draw->drawElements.firstElem, draw->drawElements.numElems,
+			draw->drawElements.firstVert, draw->drawElements.numVerts,
+			draw->drawElements.firstElem, draw->drawElements.numElems );
 	}
 
-	RB_DrawElements( offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems,
-		offset->firstVert, offset->numVerts, offset->firstElem, offset->numElems );
+	rb.numDynamicDraws = 0;
 
-	offset->firstVert += offset->numVerts;
-	offset->firstElem += offset->numElems;
-	offset->numVerts = offset->numElems = 0;
+	RB_Scissor( sx, sy, sw, sh );
+
+	// restore the original translation in the object matrix if it has been changed
+	if( offsetx || offsety ) {
+		m[12] = transx;
+		m[13] = transy;
+		RB_LoadObjectMatrix( m );
+	}
 }
 
 /*
@@ -1149,6 +1017,8 @@ void RB_DrawElementsReal( rbDrawElements_t *de )
 	if( ! ( r_drawelements->integer || rb.currentEntity == &rb.nullEnt ) || !de )
 		return;
 
+	RB_ApplyScissor();
+
 	numVerts = de->numVerts;
 	numElems = de->numElems;
 	firstVert = de->firstVert;
@@ -1283,6 +1153,14 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 		return;
 	}
 
+	// currently not supporting dynamic instances
+	// they will need a separate stream so they can be used with both static and dynamic geometry
+	// (dynamic geometry will need changes to rbDynamicDraw_t)
+	assert( rb.currentVBOId > RB_VBO_NONE );
+	if( rb.currentVBOId <= RB_VBO_NONE ) {
+		return;
+	}
+
 	rb.drawElements.numVerts = numVerts;
 	rb.drawElements.numElems = numElems;
 	rb.drawElements.firstVert = firstVert;
@@ -1297,28 +1175,7 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 
 	// check for vertex-attrib-divisor style instancing
 	if( glConfig.ext.instanced_arrays ) {
-		// upload instances
-		if( rb.currentVBOId < RB_VBO_NONE ) {
-			rb.currentVAttribs |= VATTRIB_INSTANCES_BITS;
-
-			// FIXME: this is nasty!
-			while( numInstances > MAX_STREAM_VBO_INSTANCES ) {
-				R_UploadVBOInstancesData( rb.currentVBO, 0, MAX_STREAM_VBO_INSTANCES, instances );
-
-				rb.drawElements.numInstances = MAX_STREAM_VBO_INSTANCES;
-				rb.drawShadowElements.numInstances = MAX_STREAM_VBO_INSTANCES;
-				RB_DrawElements_();
-
-				instances += MAX_STREAM_VBO_INSTANCES;
-				numInstances -= MAX_STREAM_VBO_INSTANCES;
-			}
-
-			if( !numInstances ) {
-				return;
-			}
-
-			R_UploadVBOInstancesData( rb.currentVBO, 0, numInstances, instances );
-		} else if( rb.currentVBO->instancesOffset ) {
+		if( rb.currentVBO->instancesOffset ) {
 			// static VBO's must come with their own set of instance data
 			rb.currentVAttribs |= VATTRIB_INSTANCES_BITS;
 		}

@@ -428,6 +428,8 @@ void		R_ModelFrameBounds( const struct model_s *model, int frame, vec3_t mins, v
 void		R_RegisterWorldModel( const char *model, const dvis_t *pvsData );
 struct model_s *R_RegisterModel( const char *name );
 
+void R_GetTransformBufferForMesh( mesh_t *mesh, bool positions, bool normals, bool sVectors );
+
 void		Mod_ClearAll( void );
 model_t		*Mod_ForName( const char *name, bool crash );
 mleaf_t		*Mod_PointInLeaf( float *p, model_t *model );

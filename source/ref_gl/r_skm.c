@@ -78,8 +78,8 @@ static void Mod_SkeletalBuildStaticVBOForMesh( mskmesh_t *mesh )
 	skmmesh.blendIndices = mesh->blendIndices;
 	skmmesh.blendWeights = mesh->blendWeights;
 
-	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &skmmesh, VBO_HINT_NONE ); 
-	R_UploadVBOElemData( mesh->vbo, 0, 0, &skmmesh, VBO_HINT_NONE );
+	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &skmmesh ); 
+	R_UploadVBOElemData( mesh->vbo, 0, 0, &skmmesh );
 }
 
 /*
@@ -1155,7 +1155,7 @@ static void R_SkeletalTransformNormalsAndSVecs( int numverts, const unsigned int
 /*
 * R_DrawSkeletalSurf
 */
-bool R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fogportalSurface, const portalSurface_t *portalSurface, drawSurfaceSkeletal_t *drawSurf )
+void R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceSkeletal_t *drawSurf )
 {
 	unsigned int i, j;
 	int framenum = e->frame;
@@ -1222,7 +1222,7 @@ bool R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 		RB_DrawElements( 0, skmesh->numverts, 0, skmesh->numtris * 3, 
 			0, skmesh->numverts, 0, skmesh->numtris * 3 );
 
-		return false;
+		return;
 	}
 
 	// see what vertex attribs backend needs
@@ -1329,39 +1329,36 @@ bool R_DrawSkeletalSurf( const entity_t *e, const shader_t *shader, const mfog_t
 	}
 	else
 	{
-		mesh_t *rb_mesh;
+		mesh_t dynamicMesh;
 
-		RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
+		memset( &dynamicMesh, 0, sizeof( dynamicMesh ) );
 
-		rb_mesh = RB_MapBatchMesh( skmesh->numverts, skmesh->numtris * 3 );
-		if( !rb_mesh ) {
-			ri.Com_DPrintf( S_COLOR_YELLOW "R_DrawAliasSurf: RB_MapBatchMesh returned NULL for (%s)(%s)", 
-				drawSurf->model->name, skmesh->name );
-			return false;
-		}
+		dynamicMesh.elems = skmesh->elems;
+		dynamicMesh.numElems = skmesh->numtris * 3;
+		dynamicMesh.numVerts = skmesh->numverts;
+
+		R_GetTransformBufferForMesh( &dynamicMesh, true,
+			( vattribs & ( VATTRIB_NORMAL_BIT|VATTRIB_SVECTOR_BIT ) ) ? true : false,
+			( vattribs & VATTRIB_SVECTOR_BIT ) ? true : false );
 
 		R_SkeletalTransformVerts( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-			( vec_t * )skmesh->xyzArray[0], ( vec_t * )rb_mesh->xyzArray );
+			( vec_t * )skmesh->xyzArray[0], ( vec_t * )( dynamicMesh.xyzArray ) );
 
 		if( vattribs & VATTRIB_SVECTOR_BIT ) {
 			R_SkeletalTransformNormalsAndSVecs( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-			( vec_t * )skmesh->normalsArray[0], ( vec_t * )rb_mesh->normalsArray,
-			( vec_t * )skmesh->sVectorsArray[0], ( vec_t * )rb_mesh->sVectorsArray );
+				( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ),
+				( vec_t * )skmesh->sVectorsArray[0], ( vec_t * )( dynamicMesh.sVectorsArray ) );
 		} else if( vattribs & VATTRIB_NORMAL_BIT ) {
 			R_SkeletalTransformNormals( skmesh->numverts, skmesh->vertexBlends, bonePoseRelativeMat,
-			( vec_t * )skmesh->normalsArray[0], ( vec_t * )rb_mesh->normalsArray );
+				( vec_t * )skmesh->normalsArray[0], ( vec_t * )( dynamicMesh.normalsArray ) );
 		}
 
-		rb_mesh->elems = skmesh->elems;
-		rb_mesh->numElems = skmesh->numtris * 3;
-		rb_mesh->numVerts = skmesh->numverts;
-		rb_mesh->stArray = skmesh->stArray;
+		dynamicMesh.stArray = skmesh->stArray;
 
-		RB_UploadMesh( rb_mesh );
-		RB_EndBatch();
+		RB_AddDynamicMesh( e, shader, fog, portalSurface, shadowBits, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
+
+		RB_FlushDynamicMeshes();
 	}
-
-	return false;
 }
 
 /*
