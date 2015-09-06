@@ -346,7 +346,6 @@ void R_BatchSpriteSurf( const entity_t *e, const shader_t *shader, const mfog_t 
 		Vector4Copy( e->color, colors[i] );
 	}
 
-	// backend knows how to count elements for quads
 	mesh.elems = elems;
 	mesh.numElems = 6;
 	mesh.numVerts = 4;
