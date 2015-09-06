@@ -610,7 +610,7 @@ void RB_RegisterStreamVBOs( void )
 
 	// allocate stream VBO's
 	for( i = 0; i < RB_VBO_NUM_STREAMS; i++ ) {
-		stream = &( rb.dynamicStreams[i] );
+		stream = &rb.dynamicStreams[i];
 		if( stream->vbo ) {
 			R_TouchMeshVBO( stream->vbo );
 			continue;
@@ -683,10 +683,10 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 		return;
 	}
 
-	RB_GetScissor( &( scissor[0] ), &( scissor[1] ), &( scissor[2] ), &( scissor[3] ) );
+	RB_GetScissor( &scissor[0], &scissor[1], &scissor[2], &scissor[3] );
 
 	if( rb.numDynamicDraws ) {
-		prev = &( rb.dynamicDraws[rb.numDynamicDraws - 1] );
+		prev = &rb.dynamicDraws[rb.numDynamicDraws - 1];
 	}
 
 	if( prev ) {
@@ -719,7 +719,7 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 		vattribs = prev->vattribs;
 	}
 
-	stream = &( rb.dynamicStreams[-streamId - 1] );
+	stream = &rb.dynamicStreams[-streamId - 1];
 
 	if( ( !merge && ( ( rb.numDynamicDraws + 1 ) > MAX_DYNAMIC_DRAWS ) ) ||
 		( ( stream->drawElements.firstVert + stream->drawElements.numVerts + numVerts ) > MAX_STREAM_VBO_VERTS ) ||
@@ -745,7 +745,7 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 		draw->drawElements.numElems += numElems;
 	}
 	else {
-		draw = &( rb.dynamicDraws[rb.numDynamicDraws++] );
+		draw = &rb.dynamicDraws[rb.numDynamicDraws++];
 		draw->entity = entity;
 		draw->shader = shader;
 		draw->fog = fog;
@@ -802,7 +802,7 @@ void RB_FlushDynamicMeshes( void )
 	}
 
 	for( i = 0; i < RB_VBO_NUM_STREAMS; i++ ) {
-		stream = &( rb.dynamicStreams[i] );
+		stream = &rb.dynamicStreams[i];
 
 		// because of firstVert, upload elems first
 		if( stream->drawElements.numElems ) {
