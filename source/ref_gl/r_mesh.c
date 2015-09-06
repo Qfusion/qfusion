@@ -495,7 +495,8 @@ static void _R_DrawSurfaces( drawList_t *list )
 				}
 			}
 
-			// sky uses infinite projection matrix to not pollute the farclip
+			// sky and things that don't use depth test use infinite projection matrix
+			// to not pollute the farclip
 			infiniteProj = entity->renderfx & RF_NODEPTHTEST ? true : (shader->flags & SHADER_SKY ? true : false);
 			if( infiniteProj != prevInfiniteProj ) {
 				RB_FlushDynamicMeshes();
