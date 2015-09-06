@@ -1770,6 +1770,8 @@ static void G_VoteShufflePassed( callvotedata_t *vote )
 		if( i == p2 )
 			break;
 	}
+
+	G_Gametype_ScoreEvent( NULL, "shuffle", "" );
 }
 
 static bool G_VoteShuffleValidate( callvotedata_t *vote, bool first )
@@ -1838,6 +1840,8 @@ static void G_VoteRebalancePassed( callvotedata_t *vote )
 		if( i % 2 == 0 )
 			team++;
 	}
+
+	G_Gametype_ScoreEvent( NULL, "rebalance", "" );
 }
 
 static bool G_VoteRebalanceValidate( callvotedata_t *vote, bool first )
