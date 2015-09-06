@@ -707,8 +707,8 @@ merge:
 		vertsOffset = drawSurf->firstVboVert + surf->firstDrawSurfVert;
 		elemsOffset = drawSurf->firstVboElem + surf->firstDrawSurfElem;
 
-		R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, surf->mesh, VBO_HINT_NONE );
-		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, surf->mesh, VBO_HINT_NONE );
+		R_UploadVBOVertexData( vbo, vertsOffset, vbo->vertexAttribs, surf->mesh );
+		R_UploadVBOElemData( vbo, vertsOffset, elemsOffset, surf->mesh );
 		R_UploadVBOInstancesData( vbo, 0, surf->numInstances, surf->instances );
 	}
 
@@ -1337,3 +1337,51 @@ void R_ModelFrameBounds( const struct model_s *model, int frame, vec3_t mins, ve
 	}
 }
 
+static vec4_t *r_modelTransformBuf;
+static size_t r_modelTransformBufSize;
+
+/*
+* R_GetTransformBufferForMesh
+*/
+void R_GetTransformBufferForMesh( mesh_t *mesh, bool positions, bool normals, bool sVectors )
+{
+	size_t bufSize = 0;
+	int numVerts = mesh->numVerts;
+	vec4_t *bufPtr;
+
+	assert( numVerts );
+
+	if( !numVerts || ( !positions && !normals && !sVectors ) ) {
+		return;
+	}
+
+	if( positions ) {
+		bufSize += numVerts;
+	}
+	if( normals ) {
+		bufSize += numVerts;
+	}
+	if( sVectors ) {
+		bufSize += numVerts;
+	}
+	bufSize *= sizeof( vec4_t );
+	if( bufSize > r_modelTransformBufSize ) {
+		r_modelTransformBufSize = bufSize;
+		if( r_modelTransformBuf )
+			R_Free( r_modelTransformBuf );
+		r_modelTransformBuf = R_Malloc( bufSize );
+	}
+
+	bufPtr = r_modelTransformBuf;
+	if( positions ) {
+		mesh->xyzArray = bufPtr;
+		bufPtr += numVerts;
+	}
+	if( normals ) {
+		mesh->normalsArray = bufPtr;
+		bufPtr += numVerts;
+	}
+	if( sVectors ) {
+		mesh->sVectorsArray = bufPtr;
+	}
+}

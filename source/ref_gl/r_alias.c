@@ -58,8 +58,8 @@ static void Mod_AliasBuildStaticVBOForMesh( maliasmesh_t *mesh )
 	aliasmesh.normalsArray = mesh->normalsArray;
 	aliasmesh.sVectorsArray = mesh->sVectorsArray;
 
-	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &aliasmesh, VBO_HINT_NONE );
-	R_UploadVBOElemData( mesh->vbo, 0, 0, &aliasmesh, VBO_HINT_NONE );
+	R_UploadVBOVertexData( mesh->vbo, 0, vattribs, &aliasmesh );
+	R_UploadVBOElemData( mesh->vbo, 0, 0, &aliasmesh );
 }
 
 /*
@@ -551,7 +551,7 @@ bool R_AliasModelLerpTag( orientation_t *orient, const maliasmodel_t *aliasmodel
 * 
 * Interpolates between two frames and origins
 */
-bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceAlias_t *drawSurf )
+void R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceAlias_t *drawSurf )
 {
 	int i;
 	int framenum = e->frame, oldframenum = e->oldframe;
@@ -584,10 +584,6 @@ bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	for( i = 0; i < 3; i++ )
 		move[i] = frame->translate[i] + ( oldframe->translate[i] - frame->translate[i] ) * backlerp;
 
-	// based on backend's needs
-	calcNormals = ( ( ( vattribs & VATTRIB_NORMAL_BIT ) != 0 ) && ( ( framenum != 0 ) || ( oldframenum != 0 ) ) ) ? true : false;
-	calcSTVectors = ( ( ( vattribs & VATTRIB_SVECTOR_BIT ) != 0 ) && calcNormals ) ? true : false;
-
 	if( aliasmesh->vbo != NULL && !framenum && !oldframenum )
 	{
 		RB_BindVBO( aliasmesh->vbo->index, GL_TRIANGLES );
@@ -597,28 +593,30 @@ bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 	}
 	else
 	{
-		mesh_t *rb_mesh;
+		mesh_t dynamicMesh;
 		vec4_t *inVertsArray;
 		vec4_t *inNormalsArray;
 		vec4_t *inSVectorsArray;
 
-		RB_BindVBO( RB_VBO_STREAM, GL_TRIANGLES );
+		// based on backend's needs
+		calcVerts = ( framenum || oldframenum ) ? true : false;
+		calcNormals = ( ( ( vattribs & VATTRIB_NORMAL_BIT ) != 0 ) && ( ( framenum != 0 ) || ( oldframenum != 0 ) ) ) ? true : false;
+		calcSTVectors = ( ( ( vattribs & VATTRIB_SVECTOR_BIT ) != 0 ) && calcNormals ) ? true : false;
 
-		rb_mesh = RB_MapBatchMesh( aliasmesh->numverts, aliasmesh->numtris * 3 );
-		if( !rb_mesh ) {
-			ri.Com_DPrintf( S_COLOR_YELLOW "R_DrawAliasSurf: RB_MapBatchMesh returned NULL for (%s)(%s)", 
-				drawSurf->model->name, aliasmesh->name );
-			return false;
-		}
+		memset( &dynamicMesh, 0, sizeof( dynamicMesh ) );
 
-		inVertsArray = rb_mesh->xyzArray;
-		inNormalsArray = rb_mesh->normalsArray;
-		inSVectorsArray = rb_mesh->sVectorsArray;
+		dynamicMesh.elems = aliasmesh->elems;
+		dynamicMesh.numElems = aliasmesh->numtris * 3;
+		dynamicMesh.numVerts = aliasmesh->numverts;
+
+		R_GetTransformBufferForMesh( &dynamicMesh, calcVerts, calcNormals, calcSTVectors );
+
+		inVertsArray = dynamicMesh.xyzArray;
+		inNormalsArray = dynamicMesh.normalsArray;
+		inSVectorsArray = dynamicMesh.sVectorsArray;
 
 		if( !framenum && !oldframenum )
 		{
-			calcVerts = false;
-
 			if( calcNormals )
 			{
 				v = aliasmesh->vertexes;
@@ -628,8 +626,6 @@ bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 		}
 		else if( framenum == oldframenum )
 		{
-			calcVerts = true;
-
 			for( i = 0; i < 3; i++ )
 				frontv[i] = frame->scale[i];
 
@@ -648,8 +644,6 @@ bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 		}
 		else
 		{
-			calcVerts = true;
-
 			for( i = 0; i < 3; i++ )
 			{
 				backv[i] = backlerp * oldframe->scale[i];
@@ -681,27 +675,18 @@ bool R_DrawAliasSurf( const entity_t *e, const shader_t *shader, const mfog_t *f
 		if( calcSTVectors )
 			R_BuildTangentVectors( aliasmesh->numverts, inVertsArray, inNormalsArray, aliasmesh->stArray, aliasmesh->numtris, aliasmesh->elems, inSVectorsArray );
 
-		if( !calcVerts ) {
-			rb_mesh->xyzArray = aliasmesh->xyzArray;
-		}
-		rb_mesh->elems = aliasmesh->elems;
-		rb_mesh->numElems = aliasmesh->numtris * 3;
-		rb_mesh->numVerts = aliasmesh->numverts;
+		if( !calcVerts )
+			dynamicMesh.xyzArray = aliasmesh->xyzArray;
+		dynamicMesh.stArray = aliasmesh->stArray;
+		if( !calcNormals )
+			dynamicMesh.normalsArray = aliasmesh->normalsArray;
+		if( !calcSTVectors )
+			dynamicMesh.sVectorsArray = aliasmesh->sVectorsArray;
 
-		rb_mesh->stArray = aliasmesh->stArray;
-		if( !calcNormals ) {
-			rb_mesh->normalsArray = aliasmesh->normalsArray;
-		}
-		if( !calcSTVectors ) {
-			rb_mesh->sVectorsArray = aliasmesh->sVectorsArray;
-		}
+		RB_AddDynamicMesh( e, shader, fog, portalSurface, shadowBits, &dynamicMesh, GL_TRIANGLES, 0.0f, 0.0f );
 
-		RB_UploadMesh( rb_mesh );
-
-		RB_EndBatch();
+		RB_FlushDynamicMeshes();
 	}
-
-	return false;
 }
 
 /*

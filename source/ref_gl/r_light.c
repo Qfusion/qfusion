@@ -49,26 +49,17 @@ void R_InitCoronas( void )
 }
 
 /*
-* R_BeginCoronaSurf
-*/
-bool R_BeginCoronaSurf( const entity_t *e, const shader_t *shader, 
-	const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
-{
-	RB_BindVBO( RB_VBO_STREAM_QUAD, GL_TRIANGLES );
-	return true;
-}
-
-/*
 * R_BatchCoronaSurf
 */
 void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader, 
-	const mfog_t *fog, const portalSurface_t *portalSurface, drawSurfaceType_t *drawSurf )
+	const mfog_t *fog, const portalSurface_t *portalSurface, unsigned int shadowBits, drawSurfaceType_t *drawSurf )
 {
 	int i;
 	vec3_t origin, point;
 	vec3_t v_left, v_up;
 	dlight_t *light = rsc.dlights + (drawSurf - r_coronaSurfs);
 	float radius = light->intensity, colorscale;
+	elem_t elems[6] = { 0, 1, 2, 0, 2, 3 };
 	vec4_t xyz[4] = { {0,0,0,1}, {0,0,0,1}, {0,0,0,1}, {0,0,0,1} };
 	vec4_t normals[4] = { {0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0} };
 	byte_vec4_t colors[4];
@@ -100,15 +91,16 @@ void R_BatchCoronaSurf( const entity_t *e, const shader_t *shader,
 	for( i = 1; i < 4; i++ )
 		Vector4Copy( colors[0], colors[i] );
 
-	// backend knows how to count elements for quads
 	memset( &mesh, 0, sizeof( mesh ) );
+	mesh.numElems = 6;
+	mesh.elems = elems;
 	mesh.numVerts = 4;
 	mesh.xyzArray = xyz;
 	mesh.normalsArray = normals;
 	mesh.stArray = texcoords;
 	mesh.colorsArray[0] = colors;
 
-	RB_BatchMesh( &mesh );
+	RB_AddDynamicMesh( e, shader, fog, portalSurface, 0, &mesh, GL_TRIANGLES, 0.0f, 0.0f );
 }
 
 /*

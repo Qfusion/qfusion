@@ -1398,8 +1398,6 @@ static rserr_t R_PostInit( void )
 
 	RB_Init();
 
-	RB_EnableScissor( true );
-
 	R_InitShaders();
 
 	R_InitCinematics();
