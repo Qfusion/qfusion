@@ -521,7 +521,6 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 {
 	int i;
 	uint8_t on = 0;
-	usercmd_t cmd;
 	vec4_t color;
 
 	if( !cg_showPressedKeys->integer && !cgs.demoTutorial &&
@@ -539,9 +538,6 @@ void CG_DrawKeyState( int x, int y, int w, int h, int align, const char *key )
 
 	if( i == KEYICON_TOTAL )
 		return;
-
-	// now we have a valid key name so we draw it
-	trap_NET_GetUserCmd( trap_NET_GetCurrentUserCmdNum() - 1, &cmd );
 
 	if( cg.predictedPlayerState.plrkeys & ( 1 << i ) )
 		on = 1;
