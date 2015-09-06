@@ -1038,7 +1038,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		char gamedir[MAX_QPATH];
 		char gamename[128];
 		char version[32];
-		int i, players = 0, bots = 0;
+		int i, players = 0, bots = 0, maxclients = 0;
 		client_t *cl;
 		int flags = 0x80; // port - required when any extra data flags are used
 		msg_t msg;
@@ -1068,10 +1068,13 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			cl = &svs.clients[i];
 			if( cl->state >= CS_CONNECTED )
 			{
-				if( cl->edict->r.svflags & SVF_FAKECLIENT || cl->tvclient )
+				if( cl->tvclient ) // exclude TV from the max players count
+					continue;
+				if( cl->edict->r.svflags & SVF_FAKECLIENT )
 					bots++;
 				players++;
 			}
+			maxclients++;
 		}
 
 		Q_snprintfz( version, sizeof( version ), "%i.%i.0.0", APP_VERSION_MAJOR, APP_VERSION_MINOR );
@@ -1088,7 +1091,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		MSG_WriteString( &msg, gamename );
 		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
 		MSG_WriteByte( &msg, min( players, 99 ) );
-		MSG_WriteByte( &msg, min( sv_maxclients->integer, 99 ) );
+		MSG_WriteByte( &msg, min( maxclients, 99 ) );
 		MSG_WriteByte( &msg, min( bots, 99 ) );
 		MSG_WriteByte( &msg, ( dedicated && dedicated->integer ) ? 'd' : 'l' );
 		MSG_WriteByte( &msg, STEAMQUERY_OS );
@@ -1127,7 +1130,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		for( i = 0; i < sv_maxclients->integer; i++ )
 		{
 			cl = &svs.clients[i];
-			if( cl->state < CS_CONNECTED )
+			if( ( cl->state < CS_CONNECTED ) || cl->tvclient )
 				continue;
 
 			Q_strncpyz( name, COM_RemoveColorTokens( cl->name ), sizeof( name ) );
@@ -1157,7 +1160,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		int challenge;
 		char gamedir[MAX_QPATH], basedir[MAX_QPATH];
 		char gametype[MAX_INFO_VALUE];
-		int players = 0, bots = 0;
+		int players = 0, bots = 0, maxclients = 0;
 		client_t *cl;
 		char msg[MAX_STEAMQUERY_PACKETLEN];
 
@@ -1186,10 +1189,13 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			cl = &svs.clients[i];
 			if( cl->state >= CS_CONNECTED )
 			{
-				if( cl->edict->r.svflags & SVF_FAKECLIENT || cl->tvclient )
+				if( cl->tvclient ) // exclude TV from the max players count
+					continue;
+				if( cl->edict->r.svflags & SVF_FAKECLIENT )
 					bots++;
 				players++;
 			}
+			maxclients++;
 		}
 
 		Q_snprintfz( msg, sizeof( msg ),
@@ -1203,7 +1209,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			"\\version\\%i.%i.0.0"
 			"\\product\\%s\n",
 			challenge,
-			min( players, 99 ), min( sv_maxclients->integer, 99 ), min( bots, 99 ),
+			min( players, 99 ), min( maxclients, 99 ), min( bots, 99 ),
 			gamedir, sv.mapname,
 			Cvar_String( "password" )[0] ? 1 : 0, STEAMQUERY_OS,
 			sv_public->integer ? 0 : 1,
