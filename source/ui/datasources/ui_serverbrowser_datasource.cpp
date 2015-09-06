@@ -245,11 +245,6 @@ void ServerInfo::fromInfo( const char *info )
 			it--;
 		}
 	}
-
-	// subtract bots from users
-	if( has_changed ) {
-		curuser = std::max( 0, curuser - bots );
-	}
 }
 
 // TODO: remove, redundant cause we have tokenize
