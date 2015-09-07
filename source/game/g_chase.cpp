@@ -303,10 +303,6 @@ static void G_EndFrame_UpdateChaseCam( edict_t *ent )
 	if( GS_MatchState() <= MATCH_STATE_WARMUP && level.ready[PLAYERNUM( ent )] )
 		ent->r.client->ps.stats[STAT_LAYOUTS] |= STAT_LAYOUT_READY;
 
-
-	// cgame will override the fov if not zooming
-	ent->r.client->ps.fov = targ->r.client->zoomfov;
-
 	// chasecam uses PM_CHASECAM
 	ent->r.client->ps.pmove.pm_type = PM_CHASECAM;
 	ent->r.client->ps.pmove.pm_flags |= PMF_NO_PREDICTION;

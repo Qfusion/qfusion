@@ -420,7 +420,6 @@ void CG_PredictMovement( void )
 	int ucmdExecuted, ucmdHead;
 	int frame;
 	pmove_t	pm;
-	float frac;
 	cg_clientInfo_t *cInfo;
 
 	cInfo = &cgs.clientInfo[cgs.playerNum];
@@ -489,15 +488,6 @@ void CG_PredictMovement( void )
 
 		// save for debug checking
 		VectorCopy( cg.predictedPlayerState.pmove.origin, cg.predictedOrigins[frame] ); // store for prediction error checks
-
-		// set fov
-		if( !cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] )
-			cg.predictedPlayerState.fov = cInfo->fov;
-		else
-		{
-			frac = (float)cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] / (float)ZOOMTIME;
-			cg.predictedPlayerState.fov = cInfo->fov - ( (float)( cInfo->fov - cInfo->zoomfov ) * frac );
-		}
 
 		// backup the last predicted ucmd which has a timestamp (it's closed)
 		if( cg_predict_optimize->integer && ucmdExecuted == ucmdHead - 1 )

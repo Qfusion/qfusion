@@ -87,10 +87,6 @@ void TVM_ClientEndSnapFrame( edict_t *ent )
 		ent->r.client->ps.POVnum = 255; // FIXME
 	else
 		ent->r.client->ps.POVnum = relay->playernum + 1;
-	if( TVM_ClientIsZoom( ent ) )
-		ent->r.client->ps.fov = ent->r.client->pers.zoomfov;
-	else
-		ent->r.client->ps.fov = ent->r.client->pers.fov;
 }
 
 /*
@@ -188,7 +184,6 @@ void TVM_ClientBegin( tvm_relay_t *relay, edict_t *ent )
 void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo )
 {
 	gclient_t *cl;
-	char *s;
 
 	assert( ent && ent->local && ent->r.client );
 
@@ -209,29 +204,6 @@ void TVM_ClientUserinfoChanged( tvm_relay_t *relay, edict_t *ent, char *userinfo
 
 	// set name, it's validated and possibly changed first
 	Q_strncpyz( cl->pers.netname, Info_ValueForKey( userinfo, "name" ), sizeof( cl->pers.netname ) );
-
-	// fov
-	s = Info_ValueForKey( userinfo, "fov" );
-	if( !s )
-	{
-		cl->pers.fov = 100;
-	}
-	else
-	{
-		cl->pers.fov = atoi( s );
-		clamp( cl->pers.fov, 1, 140 );
-	}
-
-	s = Info_ValueForKey( userinfo, "zoomfov" );
-	if( !s )
-	{
-		cl->pers.zoomfov = 30;
-	}
-	else
-	{
-		cl->pers.zoomfov = atoi( s );
-		clamp( cl->pers.zoomfov, 1, 60 );
-	}
 
 	// save off the userinfo in case we want to check something later
 	Q_strncpyz( cl->pers.userinfo, userinfo, sizeof( cl->pers.userinfo ) );

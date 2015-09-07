@@ -2162,8 +2162,6 @@ static void CL_InitLocal( void )
 	Cvar_Get( "skin", DEFAULT_PLAYERSKIN, CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "hand", "0", CVAR_USERINFO | CVAR_ARCHIVE );
 	Cvar_Get( "handicap", "0", CVAR_USERINFO | CVAR_ARCHIVE );
-	Cvar_Get( "fov", "100", CVAR_USERINFO | CVAR_ARCHIVE );
-	Cvar_Get( "zoomfov", "30", CVAR_USERINFO | CVAR_ARCHIVE );
 
 	Cvar_Get( "cl_download_name", "", CVAR_READONLY );
 	Cvar_Get( "cl_download_percent", "0", CVAR_READONLY );

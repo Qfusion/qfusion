@@ -477,7 +477,7 @@ typedef struct
 	unsigned int POVnum;		// entity number of the player in POV
 	unsigned int playerNum;		// client number
 	float viewheight;
-	float fov;					// horizontal field of view
+	float fov;					// horizontal field of view (unused)
 
 	uint8_t weaponState;
 

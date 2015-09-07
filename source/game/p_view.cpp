@@ -457,15 +457,6 @@ void G_ClientEndSnapFrame( edict_t *ent )
 
 	client = ent->r.client;
 
-	// set fov
-	if( !client->ps.pmove.stats[PM_STAT_ZOOMTIME] )
-		client->ps.fov = ent->r.client->fov;
-	else
-	{
-		float frac = (float)client->ps.pmove.stats[PM_STAT_ZOOMTIME] / (float)ZOOMTIME;
-		client->ps.fov = client->fov - ( (float)( client->fov - client->zoomfov ) * frac );
-	}
-
 	// If the end of unit layout is displayed, don't give
 	// the player any normal movement attributes
 	if( GS_MatchState() >= MATCH_STATE_POSTMATCH )
