@@ -33,9 +33,6 @@ typedef struct
 	bool connected;     // a loadgame will leave valid entities that just don't have a connection yet
 	bool connecting;    // so whe know when a player is in the process of connecting for scoreboard prints
 
-	int fov;
-	int zoomfov;
-
 	bool multiview;
 
 	short cmd_angles[3];            // angles sent over in the last command

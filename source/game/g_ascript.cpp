@@ -1958,8 +1958,6 @@ static const asProperty_t gameclient_Properties[] =
 	{ ASLIB_PROPERTY_DECL(const bool, tv), ASLIB_FOFFSET(gclient_t, isTV) },
 	{ ASLIB_PROPERTY_DECL(int, team), ASLIB_FOFFSET(gclient_t, team) },
 	{ ASLIB_PROPERTY_DECL(const int, hand), ASLIB_FOFFSET(gclient_t, hand) },
-	{ ASLIB_PROPERTY_DECL(const int, fov), ASLIB_FOFFSET(gclient_t, fov) },
-	{ ASLIB_PROPERTY_DECL(const int, zoomFov), ASLIB_FOFFSET(gclient_t, zoomfov) },
 	{ ASLIB_PROPERTY_DECL(const bool, isOperator), ASLIB_FOFFSET(gclient_t, isoperator) },
 	{ ASLIB_PROPERTY_DECL(const uint, queueTimeStamp), ASLIB_FOFFSET(gclient_t, queueTimeStamp) },
 	{ ASLIB_PROPERTY_DECL(const int, muted), ASLIB_FOFFSET(gclient_t, muted) },

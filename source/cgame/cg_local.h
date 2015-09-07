@@ -369,7 +369,6 @@ typedef struct
 	char name[MAX_QPATH];
 	char cleanname[MAX_QPATH];
 	int hand;
-	int fov, zoomfov;
 	byte_vec4_t color;
 	struct shader_s *icon;
 } cg_clientInfo_t;
@@ -881,6 +880,7 @@ extern cvar_t *cg_outlinePlayers;
 
 extern cvar_t *cg_drawEntityBoxes;
 extern cvar_t *cg_fov;
+extern cvar_t *cg_zoomfov;
 extern cvar_t *cg_movementStyle;
 extern cvar_t *cg_noAutohop;
 extern cvar_t *cg_particles;

@@ -1035,7 +1035,6 @@ static void G_UpdatePlayerInfoString( int playerNum )
 
 	Info_SetValueForKey( playerString, "name", client->netname );
 	Info_SetValueForKey( playerString, "hand", va( "%i", client->hand ) );
-	Info_SetValueForKey( playerString, "fov", va( "%i %i", client->fov, client->zoomfov ) );
 	Info_SetValueForKey( playerString, "color",
 		va( "%i %i %i", client->color[0], client->color[1], client->color[2] ) );
 
@@ -1190,29 +1189,6 @@ void ClientUserinfoChanged( edict_t *ent, char *userinfo )
 			cl->ps.pmove.stats[PM_STAT_FEATURES] &= ~PMFEAT_CONTINOUSJUMP;
 		else
 			cl->ps.pmove.stats[PM_STAT_FEATURES] |= PMFEAT_CONTINOUSJUMP;
-	}
-
-	// fov
-	s = Info_ValueForKey( userinfo, "fov" );
-	if( !s )
-	{
-		cl->fov = DEFAULT_FOV;
-	}
-	else
-	{
-		cl->fov = atoi( s );
-		clamp( cl->fov, MIN_FOV, MAX_FOV );
-	}
-
-	s = Info_ValueForKey( userinfo, "zoomfov" );
-	if( !s )
-	{
-		cl->zoomfov = DEFAULT_ZOOMFOV;
-	}
-	else
-	{
-		cl->zoomfov = atoi( s );
-		clamp( cl->zoomfov, MIN_ZOOMFOV, MAX_ZOOMFOV );
 	}
 
 #ifdef UCMDTIMENUDGE
@@ -1738,15 +1714,6 @@ void ClientThink( edict_t *ent, usercmd_t *ucmd, int timeDelta )
 	}
 
 	ent->s.weapon = GS_ThinkPlayerWeapon( &client->ps, ucmd->buttons, ucmd->msec, client->timeDelta );
-
-	// set fov
-	if( !client->ps.pmove.stats[PM_STAT_ZOOMTIME] )
-		client->ps.fov = client->fov;
-	else
-	{
-		float frac = (float)client->ps.pmove.stats[PM_STAT_ZOOMTIME] / (float)ZOOMTIME;
-		client->ps.fov = client->fov - ( (float)( client->fov - client->zoomfov ) * frac );
-	}
 
 	if( G_IsDead( ent ) )
 	{

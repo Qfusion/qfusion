@@ -1221,10 +1221,8 @@ struct gclient_s
 	int team;
 	int hand;
 	int handicap;
-	int fov;
 	int movestyle;
 	int movestyle_latched;
-	int zoomfov;
 	bool isoperator;
 	unsigned int queueTimeStamp;
 	int muted;     // & 1 = chat disabled, & 2 = vsay disabled

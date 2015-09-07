@@ -955,7 +955,7 @@ float CG_DemoCam_GetOrientation( vec3_t origin, vec3_t angles, vec3_t velocity )
 	VectorCopy( cam_velocity, velocity );
 
 	if( !currentcam || !currentcam->fov )
-		return cg.frame.playerState.fov;
+		return bound( MIN_FOV, cg_fov->value, MAX_FOV );
 
 	return cam_fov;
 }
@@ -1026,7 +1026,7 @@ static void CG_Democam_SetCameraPositionFromView( void )
 		VectorCopy( cg.view.origin, cam_origin );
 		VectorCopy( cg.view.angles, cam_angles );
 		VectorCopy( cg.view.velocity, cam_velocity );
-		cam_fov = cg.predictedPlayerState.fov;
+		cam_fov = cg.view.refdef.fov_x;
 		cam_orbital_radius = 0;
 	}
 
@@ -1047,7 +1047,7 @@ static void CG_Democam_SetCameraPositionFromView( void )
 /*
 * CG_Democam_CalcView
 */
-int CG_Democam_CalcView( void )
+static int CG_Democam_CalcView( void )
 {
 	int i, viewType;
 	float lerpfrac;
@@ -1069,14 +1069,14 @@ int CG_Democam_CalcView( void )
 			VectorCopy( cg.view.origin, cam_origin );
 			VectorCopy( cg.view.angles, cam_angles );
 			VectorCopy( cg.view.velocity, cam_velocity );
-			cam_fov = cg.predictedPlayerState.fov;
+			cam_fov = cg.view.refdef.fov_x;
 			break;
 
 		case DEMOCAM_THIRDPERSON:
 			VectorCopy( cg.view.origin, cam_origin );
 			VectorCopy( cg.view.angles, cam_angles );
 			VectorCopy( cg.view.velocity, cam_velocity );
-			cam_fov = cg.predictedPlayerState.fov;
+			cam_fov = cg.view.refdef.fov_x;
 			cam_3dPerson = true;
 			break;
 

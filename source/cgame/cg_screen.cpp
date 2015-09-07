@@ -1640,9 +1640,6 @@ void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip )
 		cg_touch_t &touch = cg_touches[viewpad.touch];
 
 		float speed = cg_touch_lookSens->value * frametime;
-		if( !cgs.demoPlaying && ( cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] > 0 ) )
-			speed *= cg.predictedPlayerState.fov / cgs.clientInfo[cgs.playerNum].fov;
-
 		float scale = 600.0f / ( float )cgs.vidHeight;
 
 		float angle = ( ( float )touch.y - viewpad.y ) * scale;

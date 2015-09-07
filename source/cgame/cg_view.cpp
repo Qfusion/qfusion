@@ -222,7 +222,7 @@ float CG_GetSensitivityScale( float sens, float zoomSens )
 		if( zoomSens )
 			return zoomSens/sens;
 
-		return ( cg.predictedPlayerState.fov / cgs.clientInfo[cgs.playerNum].fov );
+		return 1.0f;
 	}
 
 	return sensScale;
@@ -255,6 +255,24 @@ void CG_AddKickAngles( vec3_t viewangles )
 		viewangles[PITCH] += cg.kickangles[i].v_pitch * delta;
 		viewangles[ROLL] += cg.kickangles[i].v_roll * delta;
 	}
+}
+
+/*
+* CG_CalcViewFov
+*/
+static float CG_CalcViewFov( void )
+{
+	float frac;
+	float fov, zoomfov;
+
+	fov = bound( MIN_FOV, cg_fov->value, MAX_FOV );
+	zoomfov = bound( MIN_ZOOMFOV, cg_zoomfov->value, MAX_ZOOMFOV );
+
+	if( !cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] )
+		return fov;
+
+	frac = (float)cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] / (float)ZOOMTIME;
+	return fov - ( fov - zoomfov ) * frac;
 }
 
 /*
@@ -648,8 +666,8 @@ static void CG_InterpolatePlayerState( player_state_t *playerState )
 	// interpolate fov and viewheight
 	if( !teleported )
 	{
-		playerState->fov = ops->fov + cg.lerpfrac * ( ps->fov - ops->fov );
 		playerState->viewheight = ops->viewheight + cg.lerpfrac * ( ps->viewheight - ops->viewheight );
+		playerState->pmove.stats[PM_STAT_ZOOMTIME] = ops->pmove.stats[PM_STAT_ZOOMTIME] + cg.lerpfrac * ( ps->pmove.stats[PM_STAT_ZOOMTIME] - ops->pmove.stats[PM_STAT_ZOOMTIME] );
 	}
 }
 
@@ -920,7 +938,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 			VectorCopy( cg.predictedPlayerState.viewangles, view->angles );
 		}
 
-		view->refdef.fov_x = cg.predictedPlayerState.fov;
+		view->refdef.fov_x = CG_CalcViewFov();
 
 		CG_CalcViewBob();
 

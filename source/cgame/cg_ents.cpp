@@ -313,13 +313,6 @@ static void CG_SetFramePlayerState( snapshot_t *frame, int index )
 			frame->playerState.pmove.pm_type = PM_CHASECAM;
 	}
 
-	if( ( cgs.tv || frame->playerState.POVnum != cgs.playerNum + 1 ) &&
-		!frame->playerState.pmove.stats[PM_STAT_ZOOMTIME] )
-	{
-		frame->playerState.fov = cg_fov->integer;
-		clamp( frame->playerState.fov, MIN_FOV, MAX_FOV );
-	}
-
 	if( cgs.tv )
 		frame->playerState.stats[STAT_REALTEAM] = TEAM_SPECTATOR;
 }
