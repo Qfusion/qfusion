@@ -419,10 +419,7 @@ void CG_PredictMovement( void )
 {
 	int ucmdExecuted, ucmdHead;
 	int frame;
-	pmove_t	pm;
-	cg_clientInfo_t *cInfo;
-
-	cInfo = &cgs.clientInfo[cgs.playerNum];
+	pmove_t pm;
 
 	trap_NET_GetCurrentState( NULL, &ucmdHead, NULL );
 	ucmdExecuted = cg.frame.ucmdExecuted;

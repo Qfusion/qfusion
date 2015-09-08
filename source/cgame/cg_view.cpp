@@ -222,7 +222,7 @@ float CG_GetSensitivityScale( float sens, float zoomSens )
 		if( zoomSens )
 			return zoomSens/sens;
 
-		return 1.0f;
+		return cg_zoomfov->value/cg_fov->value;
 	}
 
 	return sensScale;
@@ -265,8 +265,8 @@ static float CG_CalcViewFov( void )
 	float frac;
 	float fov, zoomfov;
 
-	fov = bound( MIN_FOV, cg_fov->value, MAX_FOV );
-	zoomfov = bound( MIN_ZOOMFOV, cg_zoomfov->value, MAX_ZOOMFOV );
+	fov = cg_fov->value;
+	zoomfov = cg_zoomfov->value;
 
 	if( !cg.predictedPlayerState.pmove.stats[PM_STAT_ZOOMTIME] )
 		return fov;
@@ -1090,6 +1090,26 @@ void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned
 
 	if( !cg.viewFrameCount )
 		cg.firstViewRealTime = cg.realTime;
+
+	if( cg_fov->modified ) {
+		if( cg_fov->value < MIN_FOV ) {
+			trap_Cvar_ForceSet( cg_fov->name, STR_TOSTR( MIN_FOV ) );
+		}
+		else if( cg_fov->value > MAX_FOV ) {
+			trap_Cvar_ForceSet( cg_fov->name, STR_TOSTR( MAX_FOV ) );
+		}
+		cg_fov->modified = false;
+	}
+
+	if( cg_zoomfov->modified ) {
+		if( cg_zoomfov->value < MIN_ZOOMFOV ) {
+			trap_Cvar_ForceSet( cg_zoomfov->name, STR_TOSTR( MIN_ZOOMFOV ) );
+		}
+		else if( cg_zoomfov->value > MAX_ZOOMFOV ) {
+			trap_Cvar_ForceSet( cg_zoomfov->name, STR_TOSTR( MAX_ZOOMFOV ) );
+		}
+		cg_zoomfov->modified = false;
+	}
 
 	CG_FlashGameWindow(); // notify player of important game events
 
