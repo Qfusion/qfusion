@@ -1639,7 +1639,7 @@ void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip )
 
 		cg_touch_t &touch = cg_touches[viewpad.touch];
 
-		float speed = cg_touch_lookSens->value * frametime * CG_GetSensitivityScale( 1.0f, 1.0f );
+		float speed = cg_touch_lookSens->value * frametime * CG_GetSensitivityScale( 1.0f, 0.0f );
 		float scale = 600.0f / ( float )cgs.vidHeight;
 
 		float angle = ( ( float )touch.y - viewpad.y ) * scale;
