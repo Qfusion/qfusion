@@ -258,7 +258,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			FIRE_MODE_STRONG,
 			AMMO_SHELLS,
 			1,								// ammo usage per shot
-			25,								// projectiles fired each shot
+			20,								// projectiles fired each shot
 
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,				// weapon up frametime
@@ -269,9 +269,9 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			false,							// smooth refire
 
 			//damages
-			4,								// damage
+			5,								// damage
 			0,								// selfdamage ratio (rg cant selfdamage)
-			5,								// knockback
+			7,								// knockback
 			85,								// stun
 			0,								// splash radius
 			0,								// splash minimum damage
