@@ -144,5 +144,13 @@ bool VID_GetDefaultMode( int *width, int *height )
  */
 float VID_GetPixelRatio( void )
 {
+#if SDL_VERSION_ATLEAST(2,0,4)
+	float vdpi;
+
+	if( SDL_GetDisplayDPI( 0, NULL, NULL, &vdpi ) == 0 ) {
+		return vdpi / 96.0f;
+	}
+#endif
+
 	return 1.0f; // TODO: check if retina?
 }
