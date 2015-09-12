@@ -71,7 +71,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	ui_preload = trap::Cvar_Get( "ui_preload", "1", CVAR_ARCHIVE );
 
 	// make sure the UI isn't too small
-	int minHeight = 576.0f * pixelRatio;
+	int minHeight = 600.0f * pixelRatio;
 	if( vidHeight < minHeight )
 		pixelRatio *= ( float )vidHeight / ( float )minHeight;
 
@@ -482,7 +482,7 @@ void UI_Main::gamepadStickCursorMove( float frameTime )
 		return;
 	}
 
-	float speed = ( 576.0f * 1.5f ) * refreshState.pixelRatio * frameTime;
+	float speed = ( 600.0f * 1.5f ) * refreshState.pixelRatio * frameTime;
 	x += sx * sx * sx * speed;
 	y += sy * sy * sy * speed;
 
@@ -505,7 +505,7 @@ void UI_Main::gamepadDpadCursorMove( float frameTime )
 	}
 
 	// Goes from half minimum screen height to double minimum screen height.
-	float speed = ( 576.0f * 0.5f ) + bound( 0.0f, holdTime - 0.25f, 1.5f ) * 576.0f;
+	float speed = ( 600.0f * 0.5f ) + bound( 0.0f, holdTime - 0.25f, 1.5f ) * 600.0f;
 	if( dx && dy ) {
 		speed *= 0.707106f;
 	}
