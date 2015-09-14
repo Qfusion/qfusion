@@ -197,8 +197,7 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point, 
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up )
 {
 	float angle;
-	static float sr, sp, sy, cr, cp, cy, t;
-	// static to help MS compiler fp bugs
+	float sr, sp, sy, cr, cp, cy, t;
 
 	angle = DEG2RAD( angles[YAW] );
 	sy = sin( angle );
