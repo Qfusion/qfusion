@@ -279,7 +279,7 @@ static void TV_Connect_f( void )
 /*
 * TV_TCPConnect_f
 */
-#ifdef TCP_ALLOW_CONNECT
+#ifdef TCP_ALLOW_TVCONNECT
 static void TV_TCPConnect_f( void )
 {
 	TV_GenericConnect_f( SOCKET_TCP );
@@ -484,7 +484,7 @@ typedef struct
 static cmd_function_t cmdlist[] =
 {
 	{ "connect", TV_Connect_f },
-#if defined(TCP_ALLOW_CONNECT)
+#if defined(TCP_ALLOW_TVCONNECT)
 	{ "tcpconnect", TV_TCPConnect_f },
 #endif
 	{ "disconnect", TV_Disconnect_f },

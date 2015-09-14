@@ -40,7 +40,7 @@ cvar_t *tv_port;
 cvar_t *tv_udp;
 cvar_t *tv_ip6;
 cvar_t *tv_port6;
-#ifdef TCP_ALLOW_CONNECT
+#ifdef TCP_ALLOW_TVCONNECT
 cvar_t *tv_tcp;
 #endif
 cvar_t *tv_public;
@@ -85,14 +85,14 @@ void TV_Init( void )
 	tv_port = Cvar_Get( "tv_port", va( "%i", PORT_TV_SERVER ), CVAR_ARCHIVE | CVAR_NOSET );
 	tv_ip6 = Cvar_Get( "tv_ip6", "::", CVAR_ARCHIVE | CVAR_NOSET );
 	tv_port6 = Cvar_Get( "tv_port6", va( "%i", PORT_TV_SERVER ), CVAR_ARCHIVE | CVAR_NOSET );
-#ifdef TCP_ALLOW_CONNECT
+#ifdef TCP_ALLOW_TVCONNECT
 	tv_udp = Cvar_Get( "tv_udp", "1", CVAR_SERVERINFO | CVAR_NOSET );
 	tv_tcp = Cvar_Get( "tv_tcp", "1", CVAR_SERVERINFO | CVAR_NOSET );
 #else
 	tv_udp = Cvar_Get( "tv_udp", "1", CVAR_NOSET );
 #endif
 
-#ifndef TCP_ALLOW_CONNECT
+#ifndef TCP_ALLOW_TVCONNECT
 	Cvar_FullSet( "tv_tcp", "0", CVAR_READONLY, true );
 #endif
 
@@ -160,7 +160,7 @@ void TV_Init( void )
 		}
 	}
 
-#ifdef TCP_ALLOW_CONNECT
+#ifdef TCP_ALLOW_TVCONNECT
 	if( tv_tcp->integer )
 	{
 		bool err = true;
