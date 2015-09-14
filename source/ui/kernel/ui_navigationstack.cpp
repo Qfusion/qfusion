@@ -140,6 +140,7 @@ void DocumentCache::clearCaches()
 
 	// here we also do this
 	Rocket::Core::Factory::ClearStyleSheetCache();
+	Rocket::Core::Factory::ClearTemplateCache();
 	// and if in the future Rocket offers more cache-cleaning functions, call 'em
 }
 
