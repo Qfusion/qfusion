@@ -547,14 +547,14 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 	bool hasKerning;
 
 	// words
-	const char *word; // beginning of the current word
+	const char *word = NULL; // beginning of the current word
 	int word_chars, space_chars; // length of the current word and number of spaces before it
 	int word_width, space_width; // width of the current word and the spaces before it
 	vec4_t word_color; // starting color of the current word
 	bool in_space; // whether currently in a sequence of spaces
 
 	// line drawing
-	const char *line; // beginning of the line
+	const char *line = NULL; // beginning of the line
 	int line_chars; // number of characters to draw in this line
 	int line_width; // width of the current line
 	int line_x; // x position of the current character in line
