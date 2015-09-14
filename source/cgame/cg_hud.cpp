@@ -2231,7 +2231,6 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 					if( !cg.motd )
 						return true;
 					helpmessage = CG_TranslateString( "Message of the day:" );
-					y += font_height;
 					break;
 				case 2:
 					helpmessage = cg.motd;
@@ -2242,8 +2241,8 @@ static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct
 
 				if( helpmessage[0] )
 				{
-					trap_SCR_DrawMultilineString( x, y, helpmessage, layout_cursor_align,
-						layout_cursor_width, 0, CG_GetLayoutCursorFont(), color );
+					y += trap_SCR_DrawMultilineString( x, y, helpmessage, layout_cursor_align,
+						layout_cursor_width, 0, CG_GetLayoutCursorFont(), color ) * font_height;
 				}
 			}
 		}
