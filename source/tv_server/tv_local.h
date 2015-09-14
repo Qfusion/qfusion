@@ -54,7 +54,7 @@ struct edict_s
 	entity_shared_t	r;
 };
 
-#ifdef TCP_ALLOW_CONNECT
+#ifdef TCP_ALLOW_TVCONNECT
 #define MAX_INCOMING_CONNECTIONS 256
 typedef struct
 {
@@ -213,7 +213,7 @@ typedef struct
 	netadr_t addressIPv6;
 
 	// downstream
-#ifdef TCP_ALLOW_CONNECT
+#ifdef TCP_ALLOW_TVCONNECT
 	socket_t socket_tcp;
 	socket_t socket_tcp6;
 #endif
@@ -221,7 +221,7 @@ typedef struct
 	socket_t socket_udp6;
 
 	challenge_t challenges[MAX_CHALLENGES];
-#ifdef TCP_ALLOW_CONNECT
+#ifdef TCP_ALLOW_TVCONNECT
 	incoming_t incoming[MAX_INCOMING_CONNECTIONS];
 #endif
 
