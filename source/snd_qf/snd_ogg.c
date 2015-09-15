@@ -90,11 +90,11 @@ void SNDOGG_Init( bool verbose )
 
 	if( s_vorbis->integer )
 	{
-		vorbisLibrary = trap_LoadLibrary( VORBISFILE_LIBNAME, oggvorbisfuncs );
+		vorbisLibrary = trap_LoadLibrary( LIBVORBISFILE_LIBNAME, oggvorbisfuncs );
 		if( vorbisLibrary )
 		{
 			if( verbose )
-				Com_Printf( "Loaded %s\n", VORBISFILE_LIBNAME );
+				Com_Printf( "Loaded %s\n", LIBVORBISFILE_LIBNAME );
 		}
 	}
 #endif

@@ -86,16 +86,16 @@ bool SNDOGG_Init( bool verbose )
 	if( vorbisLibrary )
 		SNDOGG_Shutdown();
 
-	vorbisLibrary = trap_LoadLibrary( VORBISFILE_LIBNAME, oggvorbisfuncs );
+	vorbisLibrary = trap_LoadLibrary( LIBVORBISFILE_LIBNAME, oggvorbisfuncs );
 	if( !vorbisLibrary )
 	{
 		if( verbose )
-			Com_Printf( "Couldn't load %s\n", VORBISFILE_LIBNAME );
+			Com_Printf( "Couldn't load %s\n", LIBVORBISFILE_LIBNAME );
 		return false;
 	}
 
 	if( verbose )
-		Com_Printf( "Loaded %s\n", VORBISFILE_LIBNAME );
+		Com_Printf( "Loaded %s\n", LIBVORBISFILE_LIBNAME );
 #endif
 	return true;
 }

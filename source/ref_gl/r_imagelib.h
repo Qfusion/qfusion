@@ -39,6 +39,9 @@ typedef struct
 	uint8_t *pixels;
 } r_imginfo_t;
 
+void R_Imagelib_Init( void );
+void R_Imagelib_Shutdown( void );
+
 r_imginfo_t LoadTGA( const char *name, uint8_t *(*allocbuf)( void *, size_t, const char *, int ), void *uptr );
 bool WriteTGA( const char *name, r_imginfo_t *info, int quality );
 
