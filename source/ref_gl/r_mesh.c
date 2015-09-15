@@ -427,7 +427,7 @@ static void _R_DrawSurfaces( drawList_t *list )
 	bool batchFlushed = true, batchOpaque = false;
 	int entityFX = 0, prevEntityFX = -1;
 	mat4_t projectionMatrix;
-	unsigned int shadowBits;
+	unsigned int shadowBits = 0;
 	int riFBO = 0;
 
 	if( !list->numDrawSurfs ) {
