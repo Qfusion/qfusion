@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 17
+#define REF_API_VERSION 18
 
 struct mempool_s;
 struct cinematics_s;
@@ -120,6 +120,9 @@ typedef struct
 	int ( *BufPipe_ReadCmds )( qbufPipe_t *queue, unsigned (**cmdHandlers)( const void * ) );
 	void ( *BufPipe_Wait )( qbufPipe_t *queue, int (*read)( qbufPipe_t *, unsigned( ** )(const void *), bool ), 
 		unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec );
+
+	void *( *LoadLibrary )( const char *name, dllfunc_t *funcs );
+	void ( *UnloadLibrary )( void **lib );
 } ref_import_t;
 
 typedef struct

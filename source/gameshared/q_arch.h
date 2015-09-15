@@ -124,7 +124,10 @@ extern "C" {
 
 #define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
-#define VORBISFILE_LIBNAME "libvorbisfile.dll"
+
+#define LIBPNG_LIBNAME "libpng.dll"
+#define LIBJPEG_LIBNAME "libjpeg.dll"
+#define LIBVORBISFILE_LIBNAME "libvorbisfile.dll"
 
 #ifdef NDEBUG
 #define BUILDSTRING "Win32 RELEASE"
@@ -192,7 +195,10 @@ typedef UINT_PTR socket_handle_t;
 #define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 #endif
-#define VORBISFILE_LIBNAME "libvorbisfile.so"
+
+#define LIBPNG_LIBNAME "libpng.so"
+#define LIBJPEG_LIBNAME "libjpeg.so"
+#define LIBVORBISFILE_LIBNAME "libvorbisfile.so"
 
 #if defined ( __FreeBSD__ )
 #define BUILDSTRING "FreeBSD"
@@ -287,7 +293,10 @@ typedef int socket_handle_t;
 
 #define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
-#define VORBISFILE_LIBNAME "libvorbisfile.dylib"
+
+#define LIBPNG_LIBNAME "libpng.dylib"
+#define LIBJPEG_LIBNAME "libjpeg.dylib"
+#define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
 
 //Mac OSX has universal binaries, no need for cpu dependency
 #define BUILDSTRING "MacOSX"

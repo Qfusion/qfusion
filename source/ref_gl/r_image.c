@@ -2718,10 +2718,15 @@ void R_InitImages( void )
 {
 	int i;
 
-	unpackAlignment[QGL_CONTEXT_MAIN] = 4;
-	qglPixelStorei( GL_PACK_ALIGNMENT, 1 );
+	if( r_imagesPool )
+		return;
+
+	R_Imagelib_Init();
 
 	r_imagesPool = R_AllocPool( r_mempool, "Images" );
+
+	unpackAlignment[QGL_CONTEXT_MAIN] = 4;
+	qglPixelStorei( GL_PACK_ALIGNMENT, 1 );
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;
@@ -2871,6 +2876,8 @@ void R_ShutdownImages( void )
 
 	r_imagePathBuf = r_imagePathBuf2 = NULL;
 	r_sizeof_imagePathBuf = r_sizeof_imagePathBuf2 = 0;
+
+	R_Imagelib_Shutdown();
 }
 
 // ============================================================================
