@@ -268,7 +268,7 @@ void CL_SoundModule_Init( bool verbose )
 
 	import.GetEntitySpatilization = CL_GameModule_GetEntitySpatilization;
 
-	import.LoadLibrary = Com_LoadLibrary;
+	import.LoadLibrary = Com_LoadSysLibrary;
 	import.UnloadLibrary = Com_UnloadLibrary;
 
 	import.Thread_Create = QThread_Create;
