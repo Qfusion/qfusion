@@ -36,6 +36,9 @@ int ( *qov_raw_seek )( OggVorbis_File *vf, ogg_int64_t pos );
 ogg_int64_t ( *qov_raw_tell )( OggVorbis_File *vf );
 vorbis_info *( *qov_info )( OggVorbis_File *vf, int link );
 long ( *qov_read )( OggVorbis_File *vf, char *buffer, int length, int bigendianp, int word, int sgned, int *bitstream );
+long ( *qov_streams )( OggVorbis_File *vf );
+long ( *qov_seekable )( OggVorbis_File *vf );
+int ( *qov_pcm_seek )( OggVorbis_File *vf, ogg_int64_t pos );
 
 dllfunc_t oggvorbisfuncs[] =
 {
@@ -46,7 +49,7 @@ dllfunc_t oggvorbisfuncs[] =
 	{ "ov_raw_tell", ( void ** )&qov_raw_tell },
 	{ "ov_info", ( void ** )&qov_info },
 	{ "ov_read", ( void ** )&qov_read },
-	{ "ov_streams",	( void ** )&qov_streams },
+	{ "ov_streams", ( void ** )&qov_streams },
 	{ "ov_seekable", ( void ** )&qov_seekable },
 	{ "ov_pcm_seek", ( void ** )&qov_pcm_seek },
 
@@ -86,7 +89,7 @@ void SNDOGG_Init( bool verbose )
 {
 #ifdef VORBISLIB_RUNTIME
 	if( vorbisLibrary )
-		SNDOGG_Shutdown();
+		SNDOGG_Shutdown( verbose );
 
 	if( s_vorbis->integer )
 	{

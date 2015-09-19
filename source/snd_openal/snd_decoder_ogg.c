@@ -46,7 +46,7 @@ dllfunc_t oggvorbisfuncs[] =
 	{ "ov_pcm_total", ( void ** )&qov_pcm_total },
 	{ "ov_info", ( void ** )&qov_info },
 	{ "ov_read", ( void ** )&qov_read },
-	{ "ov_streams",	( void ** )&qov_streams },
+	{ "ov_streams", ( void ** )&qov_streams },
 	{ "ov_seekable", ( void ** )&qov_seekable },
 	{ "ov_pcm_seek", ( void ** )&qov_pcm_seek },
 
@@ -84,7 +84,7 @@ bool SNDOGG_Init( bool verbose )
 {
 #ifdef VORBISLIB_RUNTIME
 	if( vorbisLibrary )
-		SNDOGG_Shutdown();
+		SNDOGG_Shutdown( verbose );
 
 	vorbisLibrary = trap_LoadLibrary( LIBVORBISFILE_LIBNAME, oggvorbisfuncs );
 	if( !vorbisLibrary )
