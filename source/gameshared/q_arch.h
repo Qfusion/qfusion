@@ -132,6 +132,7 @@ extern "C" {
 #define LIBVORBIS_LIBNAME "libvorbis.dll"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.dll"
 #define LIBTHEORA_LIBNAME "libtheora.dll"
+#define LIBFREETYPE_LIBNAME "libfreetype.dll"
 
 #ifdef NDEBUG
 #define BUILDSTRING "Win32 RELEASE"
@@ -207,6 +208,7 @@ typedef UINT_PTR socket_handle_t;
 #define LIBVORBIS_LIBNAME "libvorbis.so"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.so"
 #define LIBTHEORA_LIBNAME "libtheora.so"
+#define LIBFREETYPE_LIBNAME "libfreetype.so"
 
 #if defined ( __FreeBSD__ )
 #define BUILDSTRING "FreeBSD"
@@ -308,7 +310,8 @@ typedef int socket_handle_t;
 #define LIBOGG_LIBNAME "libogg.dylib"
 #define LIBVORBIS_LIBNAME "libvorbis.dylib"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
-#define LIBTHEORA_LIBNAME "libtheora.dll"
+#define LIBTHEORA_LIBNAME "libtheora.dylib"
+#define LIBFREETYPE_LIBNAME "libfreetype.dylib"
 
 //Mac OSX has universal binaries, no need for cpu dependency
 #define BUILDSTRING "MacOSX"

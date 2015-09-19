@@ -163,6 +163,9 @@ void FTLIB_LoadLibrary( bool verbose )
 	import.Mem_FreePool = &CL_FTLibModule_MemFreePool;
 	import.Mem_EmptyPool = &CL_FTLibModule_MemEmptyPool;
 
+	import.LoadLibrary = &Com_LoadSysLibrary;
+	import.UnloadLibrary = Com_UnloadLibrary;
+
 	// load dynamic library
 	ftlib_export = NULL;
 	if( verbose ) {
