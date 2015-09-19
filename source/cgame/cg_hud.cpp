@@ -587,6 +587,11 @@ static int CG_GetTouchMovementDirection( const void *parameter )
 	}
 }
 
+static int CG_GetScoreboardShown( const void *parameter )
+{
+	return CG_IsScoreboardShown() ? 1 : 0;
+}
+
 typedef struct
 {
 	const char *name;
@@ -667,7 +672,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "VIDWIDTH", CG_GetVidWidth, NULL },
 	{ "VIDHEIGHT", CG_GetVidHeight, NULL },
 	{ "STUNNED", CG_GetStunned, NULL },
-	{ "SCOREBOARD", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_SCOREBOARD },
+	{ "SCOREBOARD", CG_GetScoreboardShown, NULL },
 	{ "PMOVE_TYPE", CG_GetPmoveType, NULL },
 	{ "DEMOPLAYING", CG_IsDemoPlaying, NULL },
 	{ "INSTANTRESPAWN", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_INSTANTRESPAWN },
@@ -2186,7 +2191,7 @@ static bool CG_LFuncDrawClock( struct cg_layoutnode_s *commandnode, struct cg_la
 static bool CG_LFuncDrawHelpMessage( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	// hide this one when scoreboard is up
-	if( !( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD ) )
+	if( !CG_IsScoreboardShown() )
 	{
 		if( !cgs.demoPlaying )
 		{

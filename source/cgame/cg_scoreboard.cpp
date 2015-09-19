@@ -989,3 +989,20 @@ void CG_ScoresOff_f( void )
 	else
 		trap_Cmd_ExecuteText( EXEC_NOW, "svscore 0" );
 }
+
+/*
+* CG_IsScoreboardShown
+*/
+bool CG_IsScoreboardShown( void )
+{
+	if( !cgs.configStrings[CS_SCB_PLAYERTAB_LAYOUT][0] ) // no layout defined
+		return false;
+
+	if( scoreboardString[0] != '&' ) // nothing to draw
+		return false;
+
+	if( cgs.demoPlaying || cg.frame.multipov || cgs.tv )
+		return cg.showScoreboard || ( GS_MatchState() > MATCH_STATE_PLAYTIME );
+
+	return ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD ) ? true : false;
+}
