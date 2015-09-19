@@ -2794,7 +2794,7 @@ static void CL_CheckForUpdateDoneCb( int status, const char *contentType, void *
 {
 	float local_version, net_version;
 
-	if( status == 200 )
+	if( status != 200 )
 		goto done;
 
 	// got the file
@@ -2816,7 +2816,8 @@ static void CL_CheckForUpdateDoneCb( int status, const char *contentType, void *
 
 		// you should update
 		Com_Printf( APPLICATION " version %s is available.\nVisit " APP_URL " for more information\n", net_version_str );
-		Q_snprintfz( cmd, sizeof( cmd ), "menu_msgbox \"Version %s of " APPLICATION " is available\" \"Visit " APP_URL " for more information\"", net_version_str );
+		Q_snprintfz( cmd, sizeof( cmd ), "menu_modal modal_update version \"%s\" app \"" APPLICATION "\""
+			" url " "\"" APP_URL "\"", net_version_str );
 		Cbuf_ExecuteText( EXEC_APPEND, cmd );
 	}
 	else if( net_version == local_version )
@@ -2923,6 +2924,8 @@ static void CL_CheckForUpdate( void )
 		NULL };
 
 	if( !cl_checkForUpdate->integer )
+		return;
+	if( Steam_GetSteamID() )
 		return;
 
 	if( updateRemoteData )
