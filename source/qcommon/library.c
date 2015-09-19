@@ -35,9 +35,9 @@ void Com_UnloadLibrary( void **lib )
 }
 
 /*
-* Com_LoadLibrary
+* Com_LoadLibraryExt
 */
-void *Com_LoadLibrary( const char *name, dllfunc_t *funcs )
+void *Com_LoadLibraryExt( const char *name, dllfunc_t *funcs, bool sys )
 {
 	void *lib;
 	dllfunc_t *func;
@@ -48,7 +48,10 @@ void *Com_LoadLibrary( const char *name, dllfunc_t *funcs )
 
 	Com_DPrintf( "LoadLibrary (%s)\n", name );
 
-	fullname = Sys_Library_GetFullName( name );
+	if( sys )
+		fullname = name;
+	else
+		fullname = Sys_Library_GetFullName( name );
 	if( !fullname )
 	{
 		Com_DPrintf( "LoadLibrary (%s):(Not found)\n", name );
@@ -69,11 +72,29 @@ void *Com_LoadLibrary( const char *name, dllfunc_t *funcs )
 		if( !( *( func->funcPointer ) ) )
 		{
 			Com_UnloadLibrary( &lib );
+			if( sys )
+				return NULL;
 			Com_Error( ERR_FATAL, "%s: Sys_GetProcAddress failed for %s", fullname, func->name );
 		}
 	}
 
 	return lib;
+}
+
+/*
+* Com_LoadSysLibrary
+*/
+void *Com_LoadSysLibrary( const char *name, dllfunc_t *funcs )
+{
+	return Com_LoadLibraryExt( name, funcs, true );
+}
+
+/*
+* Com_LoadLibrary
+*/
+void *Com_LoadLibrary( const char *name, dllfunc_t *funcs )
+{
+	return Com_LoadLibraryExt( name, funcs, false );
 }
 
 //==============================================
