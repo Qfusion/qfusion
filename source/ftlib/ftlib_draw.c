@@ -571,9 +571,10 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 	getKerning = font->f->getKerning;
 	hasKerning = ( flags & TEXTDRAWFLAG_KERNING ) && font->hasKerning;
 
-	VectorCopy( color, line_next_color );
-	line_color[3] = color[3];
+	Vector4Copy( color, line_next_color );
 	line_height = FTLIB_FontHeight( font );
+
+	Vector4Copy( color, word_color );
 
 	do
 	{
@@ -583,7 +584,7 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 		in_space = true; // assume starting from a whitespace so preceding whitespaces can be skipped
 		line_chars = 0;
 		line_width = 0;
-		VectorCopy( line_next_color, line_color );
+		Vector4Copy( line_next_color, line_color );
 
 		// find where to wrap
 		prev_num = 0;
@@ -598,7 +599,7 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 				{
 					if( !word_chars )
 						space_chars = space_width = 0;
-					VectorCopy( color, line_next_color );
+					Vector4Copy( color, line_next_color );
 					break;
 				}
 
@@ -648,7 +649,7 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 					if( !word_chars )
 					{
 						word = oldstr;
-						VectorCopy( line_next_color, word_color );
+						Vector4Copy( line_next_color, word_color );
 					}
 
 					if( line_chars )
@@ -657,7 +658,7 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 						if( ( line_width + space_width + word_width + glyph_width ) > maxwidth )
 						{
 							str = word;
-							VectorCopy( word_color, line_next_color );
+							Vector4Copy( word_color, line_next_color );
 							word_chars = space_chars = 0;
 							word_width = space_width = 0;
 							break;
@@ -688,7 +689,7 @@ int FTLIB_DrawMultilineString( int x, int y, const char *str, int halign, int ma
 				assert( ( unsigned )colorindex < MAX_S_COLORS );
 				VectorCopy( color_table[colorindex], line_next_color );
 				if( !line_chars && !word_chars )
-					VectorCopy( line_next_color, line_color );
+					Vector4Copy( line_next_color, line_color );
 			}
 			else if( gc == GRABCHAR_END )
 			{
