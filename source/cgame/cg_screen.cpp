@@ -423,8 +423,8 @@ static void CG_DrawCrosshairChar( int x, int y, int size, int num, vec_t *color 
 */
 void CG_DrawCrosshair( int x, int y, int align )
 {
-	static vec4_t chColor = { 255, 255, 255, 255 };
-	static vec4_t chColorStrong = { 255, 255, 255, 255 };
+	static vec4_t chColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+	static vec4_t chColorStrong = { 1.0f, 1.0f, 1.0f, 1.0f };
 	int rgbcolor;
 	int sx, sy, size;
 
@@ -456,11 +456,14 @@ void CG_DrawCrosshair( int x, int y, int align )
 		}
 		if( rgbcolor != -1 )
 		{
-			Vector4Set( chColor, COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ), 255 );
+			Vector4Set( chColor,
+				COLOR_R( rgbcolor ) * ( 1.0f / 255.0f ),
+				COLOR_G( rgbcolor ) * ( 1.0f / 255.0f ),
+				COLOR_B( rgbcolor ) * ( 1.0f / 255.0f ), 1.0f );
 		}
 		else
 		{
-			Vector4Set( chColor, 255, 255, 255, 255 );
+			Vector4Set( chColor, 1.0f, 1.0f, 1.0f, 1.0f );
 		}
 		cg_crosshair_color->modified = false;
 	}
@@ -491,11 +494,14 @@ void CG_DrawCrosshair( int x, int y, int align )
 		}
 		if( rgbcolor != -1 )
 		{
-			Vector4Set( chColorStrong, COLOR_R( rgbcolor ), COLOR_G( rgbcolor ), COLOR_B( rgbcolor ), 255 );
+			Vector4Set( chColorStrong,
+				COLOR_R( rgbcolor ) * ( 1.0f / 255.0f ),
+				COLOR_G( rgbcolor ) * ( 1.0f / 255.0f ),
+				COLOR_B( rgbcolor ) * ( 1.0f / 255.0f ), 1.0f );
 		}
 		else
 		{
-			Vector4Set( chColorStrong, 255, 255, 255, 255 );
+			Vector4Set( chColorStrong, 1.0f, 1.0f, 1.0f, 1.0f );
 		}
 		cg_crosshair_strong_color->modified = false;
 	}
