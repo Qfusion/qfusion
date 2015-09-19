@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#define THEORA_SOFTWARE_YUV2RGB
 #define THEORA_FILE_EXTENSIONS ".ogg .ogv"
 
+void Theora_UnloadTheoraLibraries( void );
+void Theora_LoadTheoraLibraries( void );
+
 bool Theora_Init_CIN( cinematics_t *cin );
 bool Theora_HasOggAudio_CIN( cinematics_t *cin );
 void Theora_Shutdown_CIN( cinematics_t *cin );

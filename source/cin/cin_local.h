@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../gameshared/q_shared.h"
 #include "../gameshared/q_cvar.h"
 
+typedef struct { char *name; void **funcPointer; } dllfunc_t;
+
 #include "cin_public.h"
 #include "cin_syscalls.h"
 
@@ -35,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CIN_FreePool( pool ) trap_MemFreePool( pool, __FILE__, __LINE__ )
 #define CIN_EmptyPool( pool ) trap_MemEmptyPool( pool, __FILE__, __LINE__ )
 
-#define CIN_MAX_RAW_SAMPLES_LISTENERS	8
+#define CIN_MAX_RAW_SAMPLES_LISTENERS 8
 
 typedef struct
 {

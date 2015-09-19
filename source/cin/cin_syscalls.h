@@ -196,3 +196,13 @@ static inline void trap_MemEmptyPool( struct mempool_s *pool, const char *filena
 {
 	CIN_IMPORT.Mem_EmptyPool( pool, filename, fileline );
 }
+
+static inline void *trap_LoadLibrary( char *name, dllfunc_t *funcs )
+{
+	return CIN_IMPORT.LoadLibrary( name, funcs );
+}
+
+static inline void trap_UnloadLibrary( void **lib )
+{
+	CIN_IMPORT.UnloadLibrary( lib );
+}
