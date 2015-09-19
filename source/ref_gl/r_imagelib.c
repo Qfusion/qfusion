@@ -100,6 +100,8 @@ static void R_Imagelib_UnloadLibjpeg( void )
 */
 static void R_Imagelib_LoadLibjpeg( void )
 {
+	R_Imagelib_UnloadLibjpeg();
+
 #ifdef LIBJPEG_RUNTIME
 	jpegLibrary = ri.LoadLibrary( LIBJPEG_LIBNAME, libjpegfuncs );
 	if( jpegLibrary )
@@ -137,6 +139,7 @@ static void (*qpng_set_read_fn)(png_structp, png_voidp, png_rw_ptr);
 static void (*qpng_set_sig_bytes)(png_structp, int);
 static void (*qpng_read_info)(png_structp, png_infop);
 static png_uint_32 (*qpng_get_IHDR)(png_structp, png_infop, png_uint_32 *, png_uint_32 *, int *, int *, int *, int *, int *);
+static png_uint_32 (*qpng_get_valid)(png_structp, png_infop, png_uint_32);
 static void (*qpng_set_palette_to_rgb)(png_structp);
 static void (*qpng_set_gray_to_rgb)(png_structp);
 static void (*qpng_set_tRNS_to_alpha)(png_structp);
@@ -146,6 +149,8 @@ static png_uint_32 (*qpng_get_rowbytes)(png_structp, png_infop);
 static void (*qpng_read_image)(png_structp, png_bytepp);
 static void (*qpng_read_end)(png_structp, png_infop);
 static void (*qpng_destroy_read_struct)(png_structpp, png_infopp, png_infopp);
+static void (*qpng_destroy_write_struct)(png_structpp, png_infopp);
+static png_voidp (*qpng_get_io_ptr)(png_structp);
 
 static dllfunc_t libpngfuncs[] =
 {
@@ -156,14 +161,18 @@ static dllfunc_t libpngfuncs[] =
 	{ "png_set_sig_bytes", ( void ** )&qpng_set_sig_bytes },
 	{ "png_read_info", ( void ** )&qpng_read_info },
 	{ "png_get_IHDR", ( void ** )&qpng_get_IHDR },
+	{ "png_get_valid", ( void ** )&qpng_get_valid },
 	{ "png_set_palette_to_rgb", ( void ** )&qpng_set_palette_to_rgb },
 	{ "png_set_gray_to_rgb", ( void ** )&qpng_set_gray_to_rgb },
 	{ "png_set_tRNS_to_alpha", ( void ** )&qpng_set_tRNS_to_alpha },
 	{ "png_set_expand", ( void ** )&qpng_set_expand },
 	{ "png_read_update_info", ( void ** )&qpng_read_update_info },
+	{ "png_get_rowbytes", ( void ** )&qpng_get_rowbytes },
 	{ "png_read_image", ( void ** )&qpng_read_image },
 	{ "png_read_end", ( void ** )&qpng_read_end },
 	{ "png_destroy_read_struct", ( void ** )&qpng_destroy_read_struct },
+	{ "png_destroy_write_struct", ( void ** )&qpng_destroy_write_struct },
+	{ "png_get_io_ptr", ( void ** )&qpng_get_io_ptr },
 	{ NULL, NULL }
 };
 
@@ -185,6 +194,8 @@ static void R_Imagelib_UnloadLibpng( void )
 */
 static void R_Imagelib_LoadLibpng( void )
 {
+	R_Imagelib_UnloadLibpng();
+
 #ifdef LIBPNG_RUNTIME
 	pngLibrary = ri.LoadLibrary( LIBPNG_LIBNAME, libpngfuncs );
 	if( pngLibrary )
@@ -198,6 +209,7 @@ static void R_Imagelib_LoadLibpng( void )
 	qpng_set_sig_bytes = png_set_sig_bytes;
 	qpng_read_info = png_read_info;
 	qpng_get_IHDR = png_get_IHDR;
+	qpng_get_valid = png_get_valid;
 	qpng_set_palette_to_rgb = png_set_palette_to_rgb;
 	qpng_set_gray_to_rgb = png_set_gray_to_rgb;
 	qpng_set_tRNS_to_alpha = png_set_tRNS_to_alpha;
@@ -207,6 +219,8 @@ static void R_Imagelib_LoadLibpng( void )
 	qpng_read_image = png_read_image;
 	qpng_read_end = png_read_end;
 	qpng_destroy_read_struct = png_destroy_read_struct;
+	qpng_destroy_write_struct = png_destroy_write_struct;
+	qpnt_get_io_ptr = png_get_io_ptr;
 #endif
 }
 
@@ -809,6 +823,9 @@ r_imginfo_t LoadJPG( const char *name, uint8_t *(*allocbuf)( void *, size_t, con
 
 	memset( &imginfo, 0, sizeof( imginfo ) );
 
+	if( !jpegLibrary )
+		return imginfo;
+
 	// load the file
 	length = R_LoadFile( name, (void **)&buffer );
 	if( !buffer )
@@ -920,6 +937,9 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
 	int offset, w3;
 	int file;
 
+	if( !jpegLibrary )
+		return false;
+
 	if( ri.FS_FOpenAbsoluteFile( name, &file, FS_WRITE ) == -1 ) {
 		Com_Printf( "WriteJPG: Couldn't create %s\n", name );
 		return false;
@@ -1004,20 +1024,20 @@ static void q_png_warning_fn( png_structp png_ptr, const char *message )
 //LordHavoc: removed __cdecl prefix, added overrun protection, and rewrote this to be more efficient
 static void q_png_user_read_fn( png_structp png_ptr, unsigned char *data, size_t length )
 {
-	q_png_iobuf_t *io = (q_png_iobuf_t *)png_get_io_ptr( png_ptr );
+	q_png_iobuf_t *io = (q_png_iobuf_t *)qpng_get_io_ptr( png_ptr );
 	size_t rem = io->size - io->curptr;
 
 	if( length > rem ) {
-        ri.Com_DPrintf( "q_png_user_read_fn: overrun by %i bytes\n", (int)(length - rem) );
+		ri.Com_DPrintf( "q_png_user_read_fn: overrun by %i bytes\n", (int)(length - rem) );
 
-        // a read going past the end of the file, fill in the remaining bytes
-        // with 0 just to be consistent
-        memset( data + rem, 0, length - rem );
-        length = rem;
-    }
+		// a read going past the end of the file, fill in the remaining bytes
+		// with 0 just to be consistent
+		memset( data + rem, 0, length - rem );
+		length = rem;
+	}
 
 	memcpy( data, io->data + io->curptr, length );
-    io->curptr += length;
+	io->curptr += length;
 }
 
 /*
@@ -1040,6 +1060,9 @@ r_imginfo_t LoadPNG( const char *name, uint8_t *(*allocbuf)( void *, size_t, con
 
 	memset( &imginfo, 0, sizeof( imginfo ) );
 
+	if( !pngLibrary )
+		return imginfo;
+
 	// load the file
 	png_datasize = R_LoadFile( name, (void **)&png_data );
 	if( !png_data )
@@ -1050,7 +1073,7 @@ error:
 		ri.Com_DPrintf( S_COLOR_YELLOW "Bad png file %s\n", name );
 
 		if( png_ptr != NULL ) {
-			png_destroy_write_struct( &png_ptr, NULL );
+			qpng_destroy_write_struct( &png_ptr, NULL );
 		}
 		R_FreeFile( png_data );
         return imginfo;
@@ -1066,7 +1089,7 @@ error:
 	}
 
 	// allocate/initialize the image information data. REQUIRED
-	info_ptr = png_create_info_struct( png_ptr );
+	info_ptr = qpng_create_info_struct( png_ptr );
 	if( info_ptr == NULL ) {
 		goto error;
 	}
@@ -1117,7 +1140,7 @@ error:
 
 	// expand paletted or RGB images with transparency to full alpha channels
 	// so the data will be available as RGBA quartets.
-	if( png_get_valid( png_ptr, info_ptr, PNG_INFO_tRNS ) ) {
+	if( qpng_get_valid( png_ptr, info_ptr, PNG_INFO_tRNS ) ) {
         qpng_set_tRNS_to_alpha( png_ptr );
 	}
 
