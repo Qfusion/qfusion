@@ -128,7 +128,10 @@ extern "C" {
 #define LIBCURL_LIBNAME "libcurl.dll"
 #define LIBPNG_LIBNAME "libpng.dll"
 #define LIBJPEG_LIBNAME "libjpeg.dll"
+#define LIBOGG_LIBNAME "libogg.dll"
+#define LIBVORBIS_LIBNAME "libvorbis.dll"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.dll"
+#define LIBTHEORA_LIBNAME "libtheora.dll"
 
 #ifdef NDEBUG
 #define BUILDSTRING "Win32 RELEASE"
@@ -200,7 +203,10 @@ typedef UINT_PTR socket_handle_t;
 #define LIBCURL_LIBNAME "libcurl.so"
 #define LIBPNG_LIBNAME "libpng.so"
 #define LIBJPEG_LIBNAME "libjpeg.so"
+#define LIBOGG_LIBNAME "libogg.so"
+#define LIBVORBIS_LIBNAME "libvorbis.so"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.so"
+#define LIBTHEORA_LIBNAME "libtheora.so"
 
 #if defined ( __FreeBSD__ )
 #define BUILDSTRING "FreeBSD"
@@ -299,7 +305,10 @@ typedef int socket_handle_t;
 #define LIBCURL_LIBNAME "libcurl.dylib"
 #define LIBPNG_LIBNAME "libpng.dylib"
 #define LIBJPEG_LIBNAME "libjpeg.dylib"
+#define LIBOGG_LIBNAME "libogg.dylib"
+#define LIBVORBIS_LIBNAME "libvorbis.dylib"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
+#define LIBTHEORA_LIBNAME "libtheora.dll"
 
 //Mac OSX has universal binaries, no need for cpu dependency
 #define BUILDSTRING "MacOSX"

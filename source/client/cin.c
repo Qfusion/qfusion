@@ -134,6 +134,9 @@ void CIN_LoadLibrary( bool verbose )
 	import.Mem_FreePool = &CL_CinModule_MemFreePool;
 	import.Mem_EmptyPool = &CL_CinModule_MemEmptyPool;
 
+	import.LoadLibrary = Com_LoadSysLibrary;
+	import.UnloadLibrary = Com_UnloadLibrary;
+
 	// load dynamic library
 	cin_export = NULL;
 	if( verbose ) {
