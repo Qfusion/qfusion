@@ -394,6 +394,9 @@ static bool VID_LoadRefresh( const char *name )
 	import.BufPipe_ReadCmds = QBufPipe_ReadCmds;
 	import.BufPipe_Wait = QBufPipe_Wait;
 
+	import.LoadLibrary = Com_LoadSysLibrary;
+	import.UnloadLibrary = Com_UnloadLibrary;
+
 	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( name ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
 	file = Mem_TempMalloc( file_size );
 	Q_snprintfz( file, file_size, LIB_DIRECTORY "/" LIB_PREFIX "%s_" ARCH LIB_SUFFIX, name );
