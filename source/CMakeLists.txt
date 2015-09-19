@@ -220,6 +220,19 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux") # Do not add 'OR MINGW' here - we need to use suffix-prefix settings from Windows
+    set(CURL_LIBRARY "")
+    add_definitions(-DLIBCURL_RUNTIME)
+
+    set(JPEG_LIBRARIES "")
+    add_definitions(-DLIBJPEG_RUNTIME)
+
+    set(PNG_LIBRARIES "")
+    add_definitions(-DLIBPNG_RUNTIME)
+
+    #set(OGG_LIBRARY "")
+    #set(VORBIS_LIBRARIES "")
+    #add_definitions(-DVORBISLIB_RUNTIME)
+
     set(CMAKE_EXECUTABLE_SUFFIX ".${CMAKE_SYSTEM_PROCESSOR}${CMAKE_EXECUTABLE_SUFFIX}")
     set(CMAKE_SHARED_LIBRARY_SUFFIX "_${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
