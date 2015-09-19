@@ -586,7 +586,6 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 		return;
 	}
 
-	// have to use Sys_Milliseconds because cls.realtime might be old from Web_Get
 	cls.download.timeout = Sys_Milliseconds() + 3000;
 	cls.download.retries = 0;
 

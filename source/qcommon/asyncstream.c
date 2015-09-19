@@ -109,11 +109,6 @@ static void AsyncStream_DoneCallback( wswcurl_req *req, int status, void *privat
 		return;
 	}
 
-	if( handler->done_cb ) {
-		const char *contentType = wswcurl_get_content_type( req );
-		handler->done_cb( status, contentType, handler->privatep );
-	}
-
 	// unlink from the list
 	if( module->root_handler == handler ) {
 		module->root_handler = handler->next;
@@ -123,6 +118,11 @@ static void AsyncStream_DoneCallback( wswcurl_req *req, int status, void *privat
 	}
 	if( handler->next ) {
 		handler->next->prev = handler->prev;
+	}
+
+	if( handler->done_cb ) {
+		const char *contentType = wswcurl_get_content_type( req );
+		handler->done_cb( status, contentType, handler->privatep );
 	}
 
 	module->free_f( handler, __FILE__, __LINE__ );
