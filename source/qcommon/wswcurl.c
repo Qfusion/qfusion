@@ -124,6 +124,97 @@ static CURL *curldummy = NULL;
 static cvar_t *http_proxy;
 static cvar_t *http_proxyuserpwd;
 
+///////////////////////
+// Symbols
+static void *curlLibrary = NULL;
+
+static CURLFORMcode (*qcurl_formadd)(struct curl_httppost **, struct curl_httppost **, ...);
+static CURLcode (*qcurl_easy_setopt)(CURL *, CURLoption, ...);
+static CURL *(*qcurl_easy_init)(void);
+static char *(*qcurl_easy_escape)(CURL *, const char *, int );
+static char *(*qcurl_easy_unescape)(CURL *, const char *, int , int *);
+static void (*qcurl_free)(void *);
+static CURLM *(*qcurl_multi_init)(void);
+static CURLMcode (*qcurl_multi_cleanup)(CURLM *);
+static CURLMcode (*qcurl_multi_perform)(CURLM *, int *);
+static struct curl_slist *(*qcurl_slist_append)(struct curl_slist *, const char *);
+static void (*qcurl_slist_free_all)(struct curl_slist *);
+static void (*qcurl_formfree)(struct curl_httppost *);
+static CURLMcode (*qcurl_multi_remove_handle)(CURLM *, CURL *);
+static void (*qcurl_easy_cleanup)(CURL *);
+static CURLcode (*qcurl_easy_getinfo)(CURL *, CURLINFO , ...);
+static const char *(*qcurl_easy_strerror)(CURLcode);
+static CURLMsg *(*qcurl_multi_info_read)(CURLM *, int *);
+static CURLcode (*qcurl_easy_pause)(CURL *, int );
+
+static dllfunc_t libcurlfuncs[] =
+{
+	{ "curl_formadd", ( void ** )&qcurl_formadd },
+	{ "curl_easy_setopt", ( void ** )&qcurl_easy_setopt },
+	{ "curl_easy_init", ( void ** )&qcurl_easy_init },
+	{ "curl_easy_escape", ( void ** )&qcurl_easy_escape },
+	{ "curl_easy_unescape", ( void ** )&qcurl_easy_unescape },
+	{ "curl_free", ( void ** )&qcurl_free },
+	{ "curl_multi_init", ( void ** )&qcurl_multi_init },
+	{ "curl_multi_cleanup", ( void ** )&qcurl_multi_cleanup },
+	{ "curl_multi_perform", ( void ** )&qcurl_multi_perform },
+	{ "curl_slist_append", ( void ** )&qcurl_slist_append },
+	{ "curl_slist_free_all", ( void ** )&qcurl_slist_free_all },
+	{ "curl_formfree", ( void ** )&qcurl_formfree },
+	{ "curl_multi_remove_handle", ( void ** )&qcurl_multi_remove_handle },
+	{ "curl_easy_cleanup", ( void ** )&qcurl_easy_cleanup },
+	{ "curl_easy_getinfo", ( void ** )&qcurl_easy_getinfo },
+	{ "curl_easy_strerror", ( void ** )&qcurl_easy_strerror },
+	{ "curl_multi_info_read", ( void ** )&qcurl_multi_info_read },
+	{ "curl_easy_pause", ( void ** )&qcurl_easy_pause },
+	{ NULL, NULL }
+};
+
+/*
+* wswcurl_unloadlib
+*/
+static void wswcurl_unloadlib( void )
+{
+#ifdef LIBCURL_RUNTIME
+	if( curlLibrary )
+		Com_UnloadLibrary( &curlLibrary );
+#else
+	curlLibrary = NULL;
+#endif
+}
+
+/*
+* wswcurl_loadlib
+*/
+static void wswcurl_loadlib( void )
+{
+#ifdef LIBCURL_RUNTIME
+	curlLibrary = Com_LoadLibrary( LIBCURL_LIBNAME, libcurlfuncs );
+	if( curlLibrary )
+		Com_Printf( "Loaded %s\n", LIBCURL_LIBNAME );
+#else
+	curlLibrary =  (void *)1;
+	qcurl_formadd = curl_formadd;
+	qcurl_easy_setopt = curl_easy_setopt;
+	qcurl_easy_init = curl_easy_init;
+	qcurl_easy_escape = curl_easy_escape;
+	qcurl_easy_unescape = curl_easy_unescape;
+	qcurl_free = curl_free;
+	qcurl_multi_init = curl_multi_init;
+	qcurl_multi_cleanup = curl_multi_cleanup;
+	qcurl_multi_perform = curl_multi_perform;
+	qcurl_slist_append = curl_slist_append;
+	qcurl_slist_free_all = curl_slist_free_all;
+	qcurl_formfree = curl_formfree;
+	qcurl_multi_remove_handle = curl_multi_remove_handle;
+	qcurl_easy_cleanup = curl_easy_cleanup;
+	qcurl_easy_getinfo = curl_easy_getinfo;
+	qcurl_easy_strerror = curl_easy_strerror;
+	qcurl_multi_info_read = curl_multi_info_read;
+	qcurl_easy_pause = curl_easy_pause;
+#endif
+}
+
 int wswcurl_formadd(wswcurl_req *req, const char *field, const char *value, ...)
 {
 	va_list arg;
@@ -135,7 +226,7 @@ int wswcurl_formadd(wswcurl_req *req, const char *field, const char *value, ...)
 	va_start(arg, value);
 	Q_vsnprintfz(buf, sizeof(buf), value, arg);
 	va_end(arg);
-	curl_formadd(&req->post, &req->post_last, CURLFORM_COPYNAME, field, CURLFORM_COPYCONTENTS, buf, CURLFORM_END);
+	qcurl_formadd(&req->post, &req->post_last, CURLFORM_COPYNAME, field, CURLFORM_COPYCONTENTS, buf, CURLFORM_END);
 	return 0;
 }
 
@@ -146,7 +237,7 @@ int wswcurl_formadd_raw(wswcurl_req *req, const char *field, void *data, size_t 
 	if (!size) return -3;
 
 	// TODO: set the Content-type: to some other or just accept base64(URL) encoding here?
-	curl_formadd(&req->post, &req->post_last,
+	qcurl_formadd(&req->post, &req->post_last,
 					CURLFORM_COPYNAME, field,
 					CURLFORM_COPYCONTENTS, data,
 					CURLFORM_CONTENTSLENGTH, size,
@@ -167,13 +258,13 @@ int wswcurl_set_postfields( wswcurl_req *req, const char *fields, size_t size )
 	}
 
 	// Specify we want to POST data
-	curl_easy_setopt( req->curl, CURLOPT_POST, 1 );
+	qcurl_easy_setopt( req->curl, CURLOPT_POST, 1 );
 
 	// Set the expected POST size
-	curl_easy_setopt( req->curl, CURLOPT_POSTFIELDSIZE, (long)size );
+	qcurl_easy_setopt( req->curl, CURLOPT_POSTFIELDSIZE, (long)size );
 
 	// Set the POST data
-	curl_easy_setopt( req->curl, CURLOPT_POSTFIELDS, fields );
+	qcurl_easy_setopt( req->curl, CURLOPT_POSTFIELDS, fields );
 
 	return 0;
 }
@@ -191,13 +282,15 @@ void wswcurl_urlencode( const char *src, char *dst, size_t size )
 
 	// libcurl needs a curl pointer to be passed to a function that
 	// should clearly be "static", how inconvenient...
+	QMutex_Lock( http_requests_mutex );
 	if( !curldummy ) {
-		curldummy = curl_easy_init();
+		curldummy = qcurl_easy_init();
 	}
+	QMutex_Unlock( http_requests_mutex );
 
-	curl_esc = curl_easy_escape( curldummy, src, 0 );
+	curl_esc = qcurl_easy_escape( curldummy, src, 0 );
 	Q_strncpyz( dst, curl_esc, size );
-	curl_free( curl_esc );
+	qcurl_free( curl_esc );
 }
 
 size_t wswcurl_urldecode( const char *src, char *dst, size_t size )
@@ -214,13 +307,15 @@ size_t wswcurl_urldecode( const char *src, char *dst, size_t size )
 
 	// libcurl needs a curl pointer to be passed to a function that
 	// should clearly be "static", how inconvenient...
+	QMutex_Lock( http_requests_mutex );
 	if( !curldummy ) {
-		curldummy = curl_easy_init();
+		curldummy = qcurl_easy_init();
 	}
+	QMutex_Unlock( http_requests_mutex );
 
-	curl_unesc = curl_easy_unescape( curldummy, src, 0, &unesc_len );
+	curl_unesc = qcurl_easy_unescape( curldummy, src, 0, &unesc_len );
 	Q_strncpyz( dst, curl_unesc, size );
-	curl_free( curl_unesc );
+	qcurl_free( curl_unesc );
 
 	return (size_t)unesc_len;
 }
@@ -333,10 +428,15 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 
 void wswcurl_init( void )
 {
+	if( wswcurl_mempool )
+		return;
+
 	wswcurl_mempool = Mem_AllocPool( NULL, "Curl" );
 
-	curldummy = curl_easy_init();
-	curlmulti = curl_multi_init();
+	wswcurl_loadlib();
+
+	curldummy = qcurl_easy_init();
+	curlmulti = qcurl_multi_init();
 
 	http_requests_mutex = QMutex_Create();
 
@@ -347,19 +447,24 @@ void wswcurl_init( void )
 
 void wswcurl_cleanup( void )
 {
+	if( !wswcurl_mempool )
+		return;
+
 	while( http_requests ) {
 		wswcurl_delete( http_requests );
 	}
 
 	if( curldummy ) {
-		curl_easy_cleanup( curldummy );
+		qcurl_easy_cleanup( curldummy );
 		curldummy = NULL;
 	}
 
-	curl_multi_cleanup( curlmulti );
+	qcurl_multi_cleanup( curlmulti );
 	curlmulti = NULL;
 
 	QMutex_Destroy( &http_requests_mutex );
+
+	wswcurl_unloadlib();
 
 	Mem_FreePool( &wswcurl_mempool );
 }
@@ -426,7 +531,7 @@ int wswcurl_perform()
 	QMutex_Unlock( http_requests_mutex );
 
 	//CURLDBG(("CURL BEFORE MULTI_PERFORM\n"));
-	while ( curl_multi_perform(curlmulti, &ret) == CURLM_CALL_MULTI_PERFORM) {
+	while ( qcurl_multi_perform(curlmulti, &ret) == CURLM_CALL_MULTI_PERFORM) {
 		CURLDBG(("   CURL MULTI LOOP\n"));
 	}
 	ret += wswcurl_checkmsg();
@@ -449,7 +554,7 @@ int wswcurl_header( wswcurl_req *req, const char *key, const char *value, ...)
 	Q_vsnprintfz(ptr, (sizeof(buf) - (ptr - buf)), value, arg);
 	va_end(arg);
 
-	req->txhead = curl_slist_append(req->txhead, buf);
+	req->txhead = qcurl_slist_append(req->txhead, buf);
 	return (req->txhead == NULL);
 }
 
@@ -487,7 +592,7 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 	va_end( arg );
 
 	// Initialize structure
-	if( !(curl = curl_easy_init()) ) {
+	if( !(curl = qcurl_easy_init()) ) {
 		return NULL;
 	}
 
@@ -568,7 +673,7 @@ void wswcurl_set_resume_from( wswcurl_req *req, long resume )
 		return;
 	}
 
-	code = curl_easy_setopt( req->curl, CURLOPT_RESUME_FROM, resume );
+	code = qcurl_easy_setopt( req->curl, CURLOPT_RESUME_FROM, resume );
 	if( code != CURLE_OK ) {
 		Com_Printf( "Failed to set file resume from length\n" );
 	}
@@ -586,13 +691,13 @@ void wswcurl_delete(wswcurl_req *req)
 
 	if (req->txhead)
 	{
-		curl_slist_free_all(req->txhead);
+		qcurl_slist_free_all(req->txhead);
 		req->txhead = NULL;
 	}
 
 	if (req->post)
 	{
-		curl_formfree(req->post);
+		qcurl_formfree(req->post);
 		req->post      = NULL;
 		req->post_last = NULL;
 	}
@@ -621,10 +726,10 @@ void wswcurl_delete(wswcurl_req *req)
 	if (req->curl)
 	{
 		if (curlmulti && req->status && req->status != WSTATUS_QUEUED) {
-			curl_multi_remove_handle(curlmulti, req->curl);
+			qcurl_multi_remove_handle(curlmulti, req->curl);
 			curlmulti_num_handles--;
 		}
-		curl_easy_cleanup(req->curl);
+		qcurl_easy_cleanup(req->curl);
 		req->curl = NULL;
 	}
 
@@ -656,20 +761,20 @@ int wswcurl_isvalidhandle(wswcurl_req *req)
 const char *wswcurl_get_content_type( wswcurl_req *req )
 {
 	char *content_type = NULL;
-	curl_easy_getinfo( req->curl, CURLINFO_CONTENT_TYPE, &content_type );
+	qcurl_easy_getinfo( req->curl, CURLINFO_CONTENT_TYPE, &content_type );
 	return content_type;
 }
 
 const char *wswcurl_getip(wswcurl_req *req)
 {
 	char *ipstr = NULL;
-	curl_easy_getinfo( req->curl, CURLINFO_PRIMARY_IP, &ipstr );
+	qcurl_easy_getinfo( req->curl, CURLINFO_PRIMARY_IP, &ipstr );
 	return ipstr;
 }
 
 const char *wswcurl_errorstr(int status)
 {
-	return curl_easy_strerror( ( CURLcode )-status );
+	return qcurl_easy_strerror( ( CURLcode )-status );
 }
 
 const char *wswcurl_get_url(const wswcurl_req *req)
@@ -680,7 +785,7 @@ const char *wswcurl_get_url(const wswcurl_req *req)
 const char *wswcurl_get_effective_url(wswcurl_req *req)
 {
 	char *last_url = NULL;
-	curl_easy_getinfo( req->curl, CURLINFO_EFFECTIVE_URL, &last_url );
+	qcurl_easy_getinfo( req->curl, CURLINFO_EFFECTIVE_URL, &last_url );
 	return last_url;
 }
 
@@ -734,7 +839,7 @@ static size_t wswcurl_readheader(void *ptr, size_t size, size_t nmemb, void *str
 		req->rx_expsize = 0;
 	}
 
-	curl_easy_getinfo( req->curl, CURLINFO_RESPONSE_CODE, &(req->respcode) );
+	qcurl_easy_getinfo( req->curl, CURLINFO_RESPONSE_CODE, &(req->respcode) );
 
 	// call header callback function
 	if( req->callback_header ) {
@@ -798,13 +903,13 @@ static int wswcurl_checkmsg( void )
 	char *info;
 
 	do {
-		msg = curl_multi_info_read( curlmulti, &cnt );
+		msg = qcurl_multi_info_read( curlmulti, &cnt );
 		if( !msg || !msg->easy_handle ) {
 			continue;
 		}
 
 		// Treat received message.
-		curl_easy_getinfo( msg->easy_handle, CURLINFO_PRIVATE, &info );
+		qcurl_easy_getinfo( msg->easy_handle, CURLINFO_PRIVATE, &info );
 		r = ( wswcurl_req * )(( void * )info);
 
 		if( !r ) {
@@ -822,7 +927,7 @@ static int wswcurl_checkmsg( void )
 		if( msg->data.result == CURLE_OK ) {
 			// Done!
 			r->status = WSTATUS_FINISHED;
-			curl_easy_getinfo( r->curl, CURLINFO_RESPONSE_CODE, &(r->respcode) );
+			qcurl_easy_getinfo( r->curl, CURLINFO_RESPONSE_CODE, &(r->respcode) );
 
 			if( r->callback_done ) {
 				r->callback_done( r, r->respcode, r->customp );
@@ -848,7 +953,7 @@ static void wswcurl_pause( wswcurl_req *req )
 		return;
 	}
 
-	curl_easy_pause( req->curl, CURLPAUSE_RECV );
+	qcurl_easy_pause( req->curl, CURLPAUSE_RECV );
 	req->paused = 1;
 }
 
@@ -858,7 +963,7 @@ static void wswcurl_unpause( wswcurl_req *req )
 		return;
 	}
 
-	curl_easy_pause( req->curl, CURLPAUSE_CONT );
+	qcurl_easy_pause( req->curl, CURLPAUSE_CONT );
 	req->paused = 0;
 }
 
