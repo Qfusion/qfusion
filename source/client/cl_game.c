@@ -198,7 +198,7 @@ static void CL_GameModule_SoundUpdate( const vec3_t origin, const vec3_t velocit
 */
 static void CL_GameModule_AsyncStream_Init( void )
 {
-	cg_async_stream = AsyncStream_InitModule( "UI", CL_GameModule_MemAlloc, CL_GameModule_MemFree );
+	cg_async_stream = AsyncStream_InitModule( "CGame", CL_GameModule_MemAlloc, CL_GameModule_MemFree );
 }
 
 /*
