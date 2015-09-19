@@ -633,8 +633,7 @@ static int pointed_armor;
 void CG_UpdatePointedNum( void )
 {
 	// disable cases
-	if( ( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD )
-		|| cg.view.thirdperson || cg.view.type != VIEWDEF_PLAYERVIEW || !cg_showPointedPlayer->integer )
+	if( CG_IsScoreboardShown() || cg.view.thirdperson || cg.view.type != VIEWDEF_PLAYERVIEW || !cg_showPointedPlayer->integer )
 	{
 		cg.pointedNum = 0;
 		return;
@@ -688,7 +687,7 @@ void CG_DrawPlayerNames( struct qfontface_s *font, vec4_t color )
 	CG_UpdatePointedNum();
 
 	// don't draw when scoreboard is up
-	if( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD )
+	if( CG_IsScoreboardShown() )
 		return;
 
 	for( i = 0; i < gs.maxclients; i++ )
@@ -825,9 +824,9 @@ void CG_DrawTeamMates( void )
 		return;
 
 	// don't draw when scoreboard is up
-	if( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD )
+	if( CG_IsScoreboardShown() )
 		return;
-	if(  cg.predictedPlayerState.stats[STAT_TEAM] < TEAM_ALPHA )
+	if( cg.predictedPlayerState.stats[STAT_TEAM] < TEAM_ALPHA )
 		return;
 
 	for( i = 0; i < gs.maxclients; i++ )
@@ -896,7 +895,7 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 		return;
 
 	// don't draw when scoreboard is up
-	if( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD )
+	if( CG_IsScoreboardShown() )
 		return;
 
 	if( cg.view.type != VIEWDEF_PLAYERVIEW || !cg_showTeamLocations->integer )
@@ -1152,7 +1151,7 @@ void CG_GameMenu_f( void )
 	}
 
 	// if the menu is up, close it
-	if( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD )
+	if( CG_IsScoreboardShown() )
 		trap_Cmd_ExecuteText( EXEC_NOW, "cmd putaway\n" );
 
 	CG_InGameMenu();
@@ -1385,8 +1384,6 @@ static void CG_CheckHUDChanges( void )
 */
 void CG_Draw2DView( void )
 {
-	bool drawScoreboard;
-
 	if( !cg.view.draw2D )
 		return;
 
@@ -1406,18 +1403,6 @@ void CG_Draw2DView( void )
 		cg.motd = NULL;
 	}
 
-	drawScoreboard = false;
-	if( cgs.demoPlaying || cg.frame.multipov || cgs.tv )
-	{
-		if( cg.showScoreboard || GS_MatchState() > MATCH_STATE_PLAYTIME )
-			drawScoreboard = true;
-	}
-	else
-	{
-		if( cg.frame.playerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SCOREBOARD )
-			drawScoreboard = true;
-	}
-
 	if( cg_showHUD->integer )
 	{
 		CG_CheckHUDChanges();
@@ -1431,7 +1416,7 @@ void CG_Draw2DView( void )
 	scr_centertime_off -= cg.frameTime;
 	if( !( ( trap_IN_SupportedDevices() & IN_DEVICE_SOFTKEYBOARD ) && ( int )trap_Cvar_Value( "con_messageMode" ) ) )
 	{
-		if( drawScoreboard )
+		if( CG_IsScoreboardShown() )
 			CG_DrawScoreboard();
 		else if( scr_centertime_off > 0 )
 			CG_DrawCenterString();
