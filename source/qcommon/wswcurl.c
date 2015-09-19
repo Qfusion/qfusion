@@ -25,7 +25,7 @@
 #define WFREE(x)		Mem_Free(x)
 
 // Curl setopt wrapper
-#define CURLSETOPT(c,r,o,v) { if (c) { r = curl_easy_setopt(c,o,v); if (r) { printf("\nCURL ERROR: %d: %s\n", r, curl_easy_strerror(r)); curl_easy_cleanup(c) ; c = NULL; } } }
+#define CURLSETOPT(c,r,o,v) { if (c) { r = qcurl_easy_setopt(c,o,v); if (r) { printf("\nCURL ERROR: %d: %s\n", r, qcurl_easy_strerror(r)); qcurl_easy_cleanup(c) ; c = NULL; } } }
 #define CURLDBG(x)			
 
 #define WCONNECTTIMEOUT		0
@@ -137,10 +137,11 @@ static void (*qcurl_free)(void *);
 static CURLM *(*qcurl_multi_init)(void);
 static CURLMcode (*qcurl_multi_cleanup)(CURLM *);
 static CURLMcode (*qcurl_multi_perform)(CURLM *, int *);
+static CURLMcode (*qcurl_multi_add_handle)(CURLM *, CURL *);
+static CURLMcode (*qcurl_multi_remove_handle)(CURLM *, CURL *);
 static struct curl_slist *(*qcurl_slist_append)(struct curl_slist *, const char *);
 static void (*qcurl_slist_free_all)(struct curl_slist *);
 static void (*qcurl_formfree)(struct curl_httppost *);
-static CURLMcode (*qcurl_multi_remove_handle)(CURLM *, CURL *);
 static void (*qcurl_easy_cleanup)(CURL *);
 static CURLcode (*qcurl_easy_getinfo)(CURL *, CURLINFO , ...);
 static const char *(*qcurl_easy_strerror)(CURLcode);
@@ -158,10 +159,11 @@ static dllfunc_t libcurlfuncs[] =
 	{ "curl_multi_init", ( void ** )&qcurl_multi_init },
 	{ "curl_multi_cleanup", ( void ** )&qcurl_multi_cleanup },
 	{ "curl_multi_perform", ( void ** )&qcurl_multi_perform },
+	{ "curl_multi_add_handle", ( void ** )&qcurl_multi_add_handle },
+	{ "curl_multi_remove_handle", ( void ** )&qcurl_multi_remove_handle },
 	{ "curl_slist_append", ( void ** )&qcurl_slist_append },
 	{ "curl_slist_free_all", ( void ** )&qcurl_slist_free_all },
 	{ "curl_formfree", ( void ** )&qcurl_formfree },
-	{ "curl_multi_remove_handle", ( void ** )&qcurl_multi_remove_handle },
 	{ "curl_easy_cleanup", ( void ** )&qcurl_easy_cleanup },
 	{ "curl_easy_getinfo", ( void ** )&qcurl_easy_getinfo },
 	{ "curl_easy_strerror", ( void ** )&qcurl_easy_strerror },
@@ -188,8 +190,10 @@ static void wswcurl_unloadlib( void )
 */
 static void wswcurl_loadlib( void )
 {
+	wswcurl_unloadlib();
+
 #ifdef LIBCURL_RUNTIME
-	curlLibrary = Com_LoadLibrary( LIBCURL_LIBNAME, libcurlfuncs );
+	curlLibrary = Com_LoadSysLibrary( LIBCURL_LIBNAME, libcurlfuncs );
 	if( curlLibrary )
 		Com_Printf( "Loaded %s\n", LIBCURL_LIBNAME );
 #else
@@ -203,10 +207,11 @@ static void wswcurl_loadlib( void )
 	qcurl_multi_init = curl_multi_init;
 	qcurl_multi_cleanup = curl_multi_cleanup;
 	qcurl_multi_perform = curl_multi_perform;
+	qcurl_multi_add_handle = curl_multi_add_handle;
+	qcurl_multi_remove_handle = curl_multi_remove_handle;
 	qcurl_slist_append = curl_slist_append;
 	qcurl_slist_free_all = curl_slist_free_all;
 	qcurl_formfree = curl_formfree;
-	qcurl_multi_remove_handle = curl_multi_remove_handle;
 	qcurl_easy_cleanup = curl_easy_cleanup;
 	qcurl_easy_getinfo = curl_easy_getinfo;
 	qcurl_easy_strerror = curl_easy_strerror;
@@ -433,16 +438,18 @@ void wswcurl_init( void )
 
 	wswcurl_mempool = Mem_AllocPool( NULL, "Curl" );
 
-	wswcurl_loadlib();
-
-	curldummy = qcurl_easy_init();
-	curlmulti = qcurl_multi_init();
-
-	http_requests_mutex = QMutex_Create();
-
 	// HTTP proxy settings
 	http_proxy = Cvar_Get( "http_proxy", "", CVAR_ARCHIVE );
 	http_proxyuserpwd = Cvar_Get( "http_proxyuserpwd", "", CVAR_ARCHIVE );
+
+	wswcurl_loadlib();
+
+	if( curlLibrary ) {
+		curldummy = qcurl_easy_init();
+		curlmulti = qcurl_multi_init();
+	}
+
+	http_requests_mutex = QMutex_Create();
 }
 
 void wswcurl_cleanup( void )
@@ -459,8 +466,10 @@ void wswcurl_cleanup( void )
 		curldummy = NULL;
 	}
 
-	qcurl_multi_cleanup( curlmulti );
-	curlmulti = NULL;
+	if( curlmulti ) {
+		qcurl_multi_cleanup( curlmulti );
+		curlmulti = NULL;
+	}
 
 	QMutex_Destroy( &http_requests_mutex );
 
@@ -489,7 +498,7 @@ int wswcurl_perform()
 		if (r->status == WSTATUS_QUEUED) {
 			// queued
 			if (curlmulti_num_handles < WMAXMULTIHANDLES) {
-				if (curl_multi_add_handle(curlmulti, r->curl)) {
+				if (qcurl_multi_add_handle(curlmulti, r->curl)) {
 					CURLDBG(("OOPS: CURL MULTI ADD HANDLE FAIL!!!"));
 				}
 				r->status = WSTATUS_STARTED;
@@ -585,6 +594,10 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 	va_list arg;
 	const char *proxy = http_proxy->string;
 	const char *proxy_userpwd = http_proxyuserpwd->string;
+
+	if( !curlLibrary ) {
+		return NULL;
+	}
 
 	// Prepare url formatting with variable arguments
 	va_start( arg, furl );

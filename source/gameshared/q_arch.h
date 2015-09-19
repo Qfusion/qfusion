@@ -125,6 +125,7 @@ extern "C" {
 #define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 
+#define LIBCURL_LIBNAME "libcurl.dll"
 #define LIBPNG_LIBNAME "libpng.dll"
 #define LIBJPEG_LIBNAME "libjpeg.dll"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.dll"
@@ -196,6 +197,7 @@ typedef UINT_PTR socket_handle_t;
 #define OPENAL_RUNTIME
 #endif
 
+#define LIBCURL_LIBNAME "libcurl.so"
 #define LIBPNG_LIBNAME "libpng.so"
 #define LIBJPEG_LIBNAME "libjpeg.so"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.so"
@@ -294,6 +296,7 @@ typedef int socket_handle_t;
 #define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 
+#define LIBCURL_LIBNAME "libcurl.dylib"
 #define LIBPNG_LIBNAME "libpng.dylib"
 #define LIBJPEG_LIBNAME "libjpeg.dylib"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
