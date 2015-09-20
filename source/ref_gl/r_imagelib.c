@@ -220,7 +220,7 @@ static void R_Imagelib_LoadLibpng( void )
 	qpng_read_end = png_read_end;
 	qpng_destroy_read_struct = png_destroy_read_struct;
 	qpng_destroy_write_struct = png_destroy_write_struct;
-	qpnt_get_io_ptr = png_get_io_ptr;
+	qpng_get_io_ptr = png_get_io_ptr;
 #endif
 }
 
