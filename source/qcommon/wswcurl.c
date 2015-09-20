@@ -120,6 +120,7 @@ static int curlmulti_num_handles = 0;
 
 static struct mempool_s *wswcurl_mempool;
 static CURL *curldummy = NULL;
+static qmutex_t *curldummy_mutex = NULL;
 
 static cvar_t *http_proxy;
 static cvar_t *http_proxyuserpwd;
@@ -284,16 +285,14 @@ void wswcurl_urlencode( const char *src, char *dst, size_t size )
 	if( !src || !dst ) {
 		return;
 	}
-
-	// libcurl needs a curl pointer to be passed to a function that
-	// should clearly be "static", how inconvenient...
-	QMutex_Lock( http_requests_mutex );
 	if( !curldummy ) {
-		curldummy = qcurl_easy_init();
+		return;
 	}
-	QMutex_Unlock( http_requests_mutex );
 
+	QMutex_Lock( curldummy_mutex );
 	curl_esc = qcurl_easy_escape( curldummy, src, 0 );
+	QMutex_Unlock( curldummy_mutex );
+
 	Q_strncpyz( dst, curl_esc, size );
 	qcurl_free( curl_esc );
 }
@@ -309,16 +308,14 @@ size_t wswcurl_urldecode( const char *src, char *dst, size_t size )
 	if( !src || !dst ) {
 		return 0;
 	}
-
-	// libcurl needs a curl pointer to be passed to a function that
-	// should clearly be "static", how inconvenient...
-	QMutex_Lock( http_requests_mutex );
 	if( !curldummy ) {
-		curldummy = qcurl_easy_init();
+		return 0;
 	}
-	QMutex_Unlock( http_requests_mutex );
 
+	QMutex_Lock( curldummy_mutex );
 	curl_unesc = qcurl_easy_unescape( curldummy, src, 0, &unesc_len );
+	QMutex_Lock( curldummy_mutex );
+
 	Q_strncpyz( dst, curl_unesc, size );
 	qcurl_free( curl_unesc );
 
@@ -449,6 +446,8 @@ void wswcurl_init( void )
 		curlmulti = qcurl_multi_init();
 	}
 
+	curldummy_mutex = QMutex_Create();
+
 	http_requests_mutex = QMutex_Create();
 }
 
@@ -470,6 +469,8 @@ void wswcurl_cleanup( void )
 		qcurl_multi_cleanup( curlmulti );
 		curlmulti = NULL;
 	}
+
+	QMutex_Destroy( &curldummy_mutex );
 
 	QMutex_Destroy( &http_requests_mutex );
 
