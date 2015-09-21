@@ -46,6 +46,8 @@ LIBS LOADING
 
 void *jpegLibrary = NULL;
 
+#ifdef LIBJPEG_RUNTIME
+
 static boolean (*qjpeg_resync_to_restart)(j_decompress_ptr, int);
 static void (*qjpeg_CreateCompress)(j_compress_ptr, int, size_t);
 static void (*qjpeg_CreateDecompress)(j_decompress_ptr, int, size_t);
@@ -82,6 +84,26 @@ static dllfunc_t libjpegfuncs[] =
 	{ NULL, NULL }
 };
 
+#else
+
+#define qjpeg_resync_to_restart jpeg_resync_to_restart
+#define qjpeg_CreateCompress jpeg_CreateCompress
+#define qjpeg_CreateDecompress jpeg_CreateDecompress
+#define qjpeg_read_header jpeg_read_header
+#define qjpeg_start_decompress jpeg_start_decompress
+#define qjpeg_read_scanlines jpeg_read_scanlines
+#define qjpeg_std_error jpeg_std_error
+#define qjpeg_finish_decompress jpeg_finish_decompress
+#define qjpeg_destroy_decompress jpeg_destroy_decompress
+#define qjpeg_start_compress jpeg_start_compress
+#define qjpeg_set_defaults jpeg_set_defaults
+#define qjpeg_set_quality jpeg_set_quality
+#define qjpeg_write_scanlines jpeg_write_scanlines
+#define qjpeg_finish_compress jpeg_finish_compress
+#define qjpeg_destroy_compress jpeg_destroy_compress
+
+#endif
+
 /*
 * R_Imagelib_UnloadLibjpeg
 */
@@ -90,9 +112,8 @@ static void R_Imagelib_UnloadLibjpeg( void )
 #ifdef LIBJPEG_RUNTIME
 	if( jpegLibrary )
 		ri.UnloadLibrary( &jpegLibrary );
-#else
-	jpegLibrary = NULL;
 #endif
+	jpegLibrary = NULL;
 }
 
 /*
@@ -108,28 +129,14 @@ static void R_Imagelib_LoadLibjpeg( void )
 		Com_Printf( "Loaded %s\n", LIBJPEG_LIBNAME );
 #else
 	jpegLibrary = (void *)1;
-
-	qjpeg_resync_to_restart = jpeg_resync_to_restart;
-	qjpeg_CreateCompress = jpeg_CreateCompress;
-	qjpeg_CreateDecompress = jpeg_CreateDecompress;
-	qjpeg_read_header = jpeg_read_header;
-	qjpeg_start_decompress = jpeg_start_decompress;
-	qjpeg_read_scanlines = jpeg_read_scanlines;
-	qjpeg_std_error = jpeg_std_error;
-	qjpeg_finish_decompress = jpeg_finish_decompress;
-	qjpeg_destroy_decompress = jpeg_destroy_decompress;
-	qjpeg_start_compress = jpeg_start_compress;
-	qjpeg_set_defaults = jpeg_set_defaults;
-	qjpeg_set_quality = jpeg_set_quality;
-	qjpeg_write_scanlines = jpeg_write_scanlines;
-	qjpeg_finish_compress = jpeg_finish_compress;
-	qjpeg_destroy_compress = jpeg_destroy_compress;
 #endif
 }
 
 // ======================================================
 
 void *pngLibrary = NULL;
+
+#ifdef LIBPNG_RUNTIME
 
 static int (*qpng_sig_cmp)(png_bytep, png_size_t, png_size_t);
 static png_structp (*qpng_create_read_struct)(png_const_charp, png_voidp, png_error_ptr, png_error_ptr);
@@ -176,6 +183,31 @@ static dllfunc_t libpngfuncs[] =
 	{ NULL, NULL }
 };
 
+#else
+
+#define qpng_sig_cmp png_sig_cmp
+#define qpng_create_read_struct png_create_read_struct
+#define qpng_create_info_struct png_create_info_struct
+#define qpng_jmpbuf png_jmpbuf
+#define qpng_set_read_fn png_set_read_fn
+#define qpng_set_sig_bytes png_set_sig_bytes
+#define qpng_read_info png_read_info
+#define qpng_get_IHDR png_get_IHDR
+#define qpng_get_valid png_get_valid
+#define qpng_set_palette_to_rgb png_set_palette_to_rgb
+#define qpng_set_gray_to_rgb png_set_gray_to_rgb
+#define qpng_set_tRNS_to_alpha png_set_tRNS_to_alpha
+#define qpng_set_expand png_set_expand
+#define qpng_read_update_info png_read_update_info
+#define qpng_get_rowbytes png_get_rowbytes
+#define qpng_read_image png_read_image
+#define qpng_read_end png_read_end
+#define qpng_destroy_read_struct png_destroy_read_struct
+#define qpng_destroy_write_struct png_destroy_write_struct
+#define qpng_get_io_ptr png_get_io_ptr
+
+#endif
+
 /*
 * R_Imagelib_UnloadLibpng
 */
@@ -184,9 +216,8 @@ static void R_Imagelib_UnloadLibpng( void )
 #ifdef LIBPNG_RUNTIME
 	if( pngLibrary )
 		ri.UnloadLibrary( &pngLibrary );
-#else
-	pngLibrary = NULL;
 #endif
+	pngLibrary = NULL;
 }
 
 /*
@@ -202,25 +233,6 @@ static void R_Imagelib_LoadLibpng( void )
 		Com_Printf( "Loaded %s\n", LIBPNG_LIBNAME );
 #else
 	pngLibrary =  (void *)1;
-	qpng_sig_cmp = png_sig_cmp;
-	qpng_create_read_struct = png_create_read_struct;
-	qpng_create_info_struct = png_create_info_struct;
-	qpng_set_read_fn = png_set_read_fn;
-	qpng_set_sig_bytes = png_set_sig_bytes;
-	qpng_read_info = png_read_info;
-	qpng_get_IHDR = png_get_IHDR;
-	qpng_get_valid = png_get_valid;
-	qpng_set_palette_to_rgb = png_set_palette_to_rgb;
-	qpng_set_gray_to_rgb = png_set_gray_to_rgb;
-	qpng_set_tRNS_to_alpha = png_set_tRNS_to_alpha;
-	qpng_set_expand = png_set_expand;
-	qpng_read_update_info = png_read_update_info;
-	qpng_get_rowbytes = png_get_rowbytes;
-	qpng_read_image = png_read_image;
-	qpng_read_end = png_read_end;
-	qpng_destroy_read_struct = png_destroy_read_struct;
-	qpng_destroy_write_struct = png_destroy_write_struct;
-	qpng_get_io_ptr = png_get_io_ptr;
 #endif
 }
 

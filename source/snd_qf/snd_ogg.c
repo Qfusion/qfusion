@@ -58,16 +58,16 @@ dllfunc_t oggvorbisfuncs[] =
 
 #else // VORBISLIB_RUNTIME
 
-int ( *qov_clear )( OggVorbis_File *vf ) = ov_clear;
-int ( *qov_open_callbacks )( void *datasource, OggVorbis_File *vf, const char *initial, long ibytes, ov_callbacks callbacks ) = ov_open_callbacks;
-ogg_int64_t ( *qov_pcm_total )( OggVorbis_File *vf, int i ) = ov_pcm_total;
-int ( *qov_raw_seek )( OggVorbis_File *vf, ogg_int64_t pos ) = ov_raw_seek;
-ogg_int64_t ( *qov_raw_tell )( OggVorbis_File *vf ) = ov_raw_tell;
-vorbis_info *( *qov_info )( OggVorbis_File *vf, int link ) = ov_info;
-long ( *qov_read )( OggVorbis_File *vf, char *buffer, int length, int bigendianp, int word, int sgned, int *bitstream ) = ov_read;
-long ( *qov_streams )( OggVorbis_File *vf ) = ov_streams;
-long ( *qov_seekable )( OggVorbis_File *vf ) = ov_seekable;
-int ( *qov_pcm_seek )( OggVorbis_File *vf, ogg_int64_t pos ) = ov_pcm_seek;
+#define qov_clear ov_clear
+#define qov_open_callbacks ov_open_callbacks
+#define qov_pcm_total ov_pcm_total;
+#define qov_raw_seek ov_raw_seek
+#define qov_raw_tell ov_raw_tell
+#define qov_info ov_info
+#define qov_read ov_read
+#define qov_streams ov_streams
+#define qov_seekable ov_seekable
+#define qov_pcm_seek ov_pcm_seek
 
 #endif // VORBISLIB_RUNTIME
 
@@ -363,7 +363,7 @@ bool SNDOGG_OpenTrack( bgTrack_t *track, bool *delay )
 	track->info.rate = vi->rate;
 	track->info.width = 2;
 	track->info.dataofs = 0;
-	track->info.samples = qov_pcm_total( vf, -1 );
+	track->info.samples = (int)qov_pcm_total( vf, -1 );
 	track->info.loopstart = track->info.samples;
 
 	return true;
