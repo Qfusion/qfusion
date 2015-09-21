@@ -145,8 +145,8 @@ static void Irc_LoadLibrary( void )
 	import.SCR_GetScreenHeight = SCR_GetScreenHeight;
 	import.R_RegisterPic = SCR_RegisterPic;
 	import.R_DrawStretchPic = SCR_DrawStretchPic;
-	import.Milliseconds = Sys_Milliseconds;
-	import.Microseconds = Sys_Microseconds;
+	import.Sys_Milliseconds = Sys_Milliseconds;
+	import.Sys_Microseconds = Sys_Microseconds;
 	import.Mem_AllocPool = Irc_MemAllocPool;
 	import.Mem_Alloc = Irc_MemAlloc;
 	import.Mem_Free = Irc_MemFree;

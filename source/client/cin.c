@@ -125,17 +125,17 @@ void CIN_LoadLibrary( bool verbose )
 	import.FS_GetFileList = &FS_GetFileList;
 	import.FS_IsUrl = &FS_IsUrl;
 
-	import.Milliseconds = &Sys_Milliseconds;
-	import.Microseconds = &Sys_Microseconds;
+	import.Sys_Milliseconds = &Sys_Milliseconds;
+	import.Sys_Microseconds = &Sys_Microseconds;
+
+	import.Sys_LoadLibrary = Com_LoadSysLibrary;
+	import.Sys_UnloadLibrary = Com_UnloadLibrary;
 
 	import.Mem_AllocPool = &CL_CinModule_MemAllocPool;
 	import.Mem_Alloc = &CL_CinModule_MemAlloc;
 	import.Mem_Free = &CL_CinModule_MemFree;
 	import.Mem_FreePool = &CL_CinModule_MemFreePool;
 	import.Mem_EmptyPool = &CL_CinModule_MemEmptyPool;
-
-	import.LoadLibrary = Com_LoadSysLibrary;
-	import.UnloadLibrary = Com_UnloadLibrary;
 
 	// load dynamic library
 	cin_export = NULL;

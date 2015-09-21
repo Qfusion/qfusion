@@ -325,6 +325,9 @@ static bool VID_LoadRefresh( const char *name )
 	import.Sys_Microseconds = &Sys_Microseconds;
 	import.Sys_Sleep = &Sys_Sleep;
 
+	import.Sys_LoadLibrary = Com_LoadSysLibrary;
+	import.Sys_UnloadLibrary = Com_UnloadLibrary;
+
 	import.Cvar_Get = &Cvar_Get;
 	import.Cvar_Set = &Cvar_Set;
 	import.Cvar_ForceSet = &Cvar_ForceSet;
@@ -393,9 +396,6 @@ static bool VID_LoadRefresh( const char *name )
 	import.BufPipe_WriteCmd = QBufPipe_WriteCmd;
 	import.BufPipe_ReadCmds = QBufPipe_ReadCmds;
 	import.BufPipe_Wait = QBufPipe_Wait;
-
-	import.LoadLibrary = Com_LoadSysLibrary;
-	import.UnloadLibrary = Com_UnloadLibrary;
 
 	file_size = strlen( LIB_DIRECTORY "/" LIB_PREFIX ) + strlen( name ) + 1 + strlen( ARCH ) + strlen( LIB_SUFFIX ) + 1;
 	file = Mem_TempMalloc( file_size );

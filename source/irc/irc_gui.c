@@ -57,7 +57,7 @@ void Irc_Client_DrawNotify(const char *target, const char *chat_buffer, size_t c
 	IRC_IMPORT.SCR_DrawString(hskip, vskip, ALIGN_LEFT_TOP, s, font, IRC_TXT_COLOR_WHITE);
 	hskip += (int) IRC_IMPORT.SCR_strWidth(s, font, 0);
 	// print blinking '_'
-	IRC_IMPORT.SCR_DrawRawChar(hskip, vskip, ((IRC_IMPORT.Milliseconds()>>8)&1)?'_':' ', font, IRC_TXT_COLOR_WHITE);
+	IRC_IMPORT.SCR_DrawRawChar(hskip, vskip, ((IRC_IMPORT.Sys_Milliseconds()>>8)&1)?'_':' ', font, IRC_TXT_COLOR_WHITE);
 
 }
 

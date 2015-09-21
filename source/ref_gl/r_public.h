@@ -64,6 +64,9 @@ typedef struct
 	uint64_t ( *Sys_Microseconds )( void );
 	void ( *Sys_Sleep )( unsigned int milliseconds );
 
+	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t *funcs );
+	void ( *Sys_UnloadLibrary )( void **lib );
+
 	int ( *FS_FOpenFile )( const char *filename, int *filenum, int mode );
 	int ( *FS_FOpenAbsoluteFile )( const char *filename, int *filenum, int mode );
 	int ( *FS_Read )( void *buffer, size_t len, int file );
@@ -120,9 +123,6 @@ typedef struct
 	int ( *BufPipe_ReadCmds )( qbufPipe_t *queue, unsigned (**cmdHandlers)( const void * ) );
 	void ( *BufPipe_Wait )( qbufPipe_t *queue, int (*read)( qbufPipe_t *, unsigned( ** )(const void *), bool ), 
 		unsigned (**cmdHandlers)( const void * ), unsigned timeout_msec );
-
-	void *( *LoadLibrary )( const char *name, dllfunc_t *funcs );
-	void ( *UnloadLibrary )( void **lib );
 } ref_import_t;
 
 typedef struct

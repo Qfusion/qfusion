@@ -256,9 +256,11 @@ void CL_SoundModule_Init( bool verbose )
 	import.FS_GetFileList = FS_GetFileList;
 	import.FS_IsUrl = FS_IsUrl;
 
-	import.Milliseconds = Sys_Milliseconds;
-	import.PageInMemory = Com_PageInMemory;
-	import.Sleep = Sys_Sleep;
+	import.Sys_Milliseconds = Sys_Milliseconds;
+	import.Sys_Sleep = Sys_Sleep;
+
+	import.Sys_LoadLibrary = Com_LoadSysLibrary;
+	import.Sys_UnloadLibrary = Com_UnloadLibrary;
 
 	import.Mem_Alloc = CL_SoundModule_MemAlloc;
 	import.Mem_Free = CL_SoundModule_MemFree;
@@ -267,9 +269,6 @@ void CL_SoundModule_Init( bool verbose )
 	import.Mem_EmptyPool = CL_SoundModule_MemEmptyPool;
 
 	import.GetEntitySpatilization = CL_GameModule_GetEntitySpatilization;
-
-	import.LoadLibrary = Com_LoadSysLibrary;
-	import.UnloadLibrary = Com_UnloadLibrary;
 
 	import.Thread_Create = QThread_Create;
 	import.Thread_Join = QThread_Join;
