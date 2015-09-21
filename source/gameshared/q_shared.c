@@ -960,7 +960,7 @@ const char *COM_RemoveJunkChars( const char *in )
 */
 int COM_ReadColorRGBString( const char *in )
 {
-	static int playerColor[3];
+	int playerColor[3];
 	if( in && in[0] )
 	{
 		if( sscanf( in, "%3i %3i %3i", &playerColor[0], &playerColor[1], &playerColor[2] ) == 3 )
