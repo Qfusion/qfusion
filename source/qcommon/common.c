@@ -567,21 +567,6 @@ void Info_Print( char *s )
 //============================================================================
 
 /*
-* Com_PageInMemory
-*/
-int paged_total;
-
-void Com_PageInMemory( uint8_t *buffer, int size )
-{
-	int i;
-
-	for( i = size-1; i > 0; i -= 4096 )
-		paged_total += buffer[i];
-}
-
-//============================================================================
-
-/*
 * Com_AddPurePakFile
 */
 void Com_AddPakToPureList( purelist_t **purelist, const char *pakname, const unsigned checksum, mempool_t *mempool )

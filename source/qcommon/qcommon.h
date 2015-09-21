@@ -842,8 +842,6 @@ void	    Com_SetServerState( int state );
 struct cmodel_state_s *Com_ServerCM( unsigned *checksum );
 void		Com_SetServerCM( struct cmodel_state_s *cms, unsigned checksum );
 
-void	    Com_PageInMemory( uint8_t *buffer, int size );
-
 unsigned int Com_DaysSince1900( void );
 
 extern cvar_t *developer;

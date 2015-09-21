@@ -163,17 +163,12 @@ static inline bool trap_FS_IsUrl( const char *url )
 // misc
 static inline unsigned int trap_Milliseconds( void )
 {
-	return SOUND_IMPORT.Milliseconds();
+	return SOUND_IMPORT.Sys_Milliseconds();
 }
 
 static inline void trap_Sleep( unsigned int milliseconds )
 {
-	SOUND_IMPORT.Sleep( milliseconds );
-}
-
-static inline void trap_PageInMemory( uint8_t *buffer, int size )
-{
-	SOUND_IMPORT.PageInMemory( buffer, size );
+	SOUND_IMPORT.Sys_Sleep( milliseconds );
 }
 
 static inline struct mempool_s *trap_MemAllocPool( const char *name, const char *filename, int fileline )
@@ -208,12 +203,12 @@ static inline void trap_GetEntitySpatilization( int entnum, vec3_t origin, vec3_
 
 static inline void *trap_LoadLibrary( char *name, dllfunc_t *funcs )
 {
-	return SOUND_IMPORT.LoadLibrary( name, funcs );
+	return SOUND_IMPORT.Sys_LoadLibrary( name, funcs );
 }
 
 static inline void trap_UnloadLibrary( void **lib )
 {
-	SOUND_IMPORT.UnloadLibrary( lib );
+	SOUND_IMPORT.Sys_UnloadLibrary( lib );
 }
 
 static inline struct qthread_s *trap_Thread_Create( void *(*routine) (void*), void *param )

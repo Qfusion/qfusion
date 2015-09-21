@@ -163,12 +163,12 @@ static inline bool trap_FS_IsUrl( const char *url )
 // clock
 static inline unsigned int trap_Milliseconds( void )
 {
-	return FTLIB_IMPORT.Milliseconds();
+	return FTLIB_IMPORT.Sys_Milliseconds();
 }
 
 static inline uint64_t trap_Microseconds( void )
 {
-	return FTLIB_IMPORT.Microseconds();
+	return FTLIB_IMPORT.Sys_Microseconds();
 }
 
 // renderer
@@ -242,12 +242,12 @@ static inline void trap_MemEmptyPool( struct mempool_s *pool, const char *filena
 	FTLIB_IMPORT.Mem_EmptyPool( pool, filename, fileline );
 }
 
-static inline void *trap_LoadLibrary( char *name, dllfunc_t *funcs )
+static inline void *trap_Sys_LoadLibrary( char *name, dllfunc_t *funcs )
 {
-	return FTLIB_IMPORT.LoadLibrary( name, funcs );
+	return FTLIB_IMPORT.Sys_LoadLibrary( name, funcs );
 }
 
 static inline void trap_UnloadLibrary( void **lib )
 {
-	FTLIB_IMPORT.UnloadLibrary( lib );
+	FTLIB_IMPORT.Sys_UnloadLibrary( lib );
 }

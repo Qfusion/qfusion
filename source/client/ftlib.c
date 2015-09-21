@@ -153,8 +153,11 @@ void FTLIB_LoadLibrary( bool verbose )
 	import.R_GetScissor = &CL_FTLibModule_GetScissor;
 	import.R_ResetScissor = &CL_FTLibModule_ResetScissor;
 
-	import.Milliseconds = &Sys_Milliseconds;
-	import.Microseconds = &Sys_Microseconds;
+	import.Sys_Milliseconds = &Sys_Milliseconds;
+	import.Sys_Microseconds = &Sys_Microseconds;
+
+	import.Sys_LoadLibrary = &Com_LoadSysLibrary;
+	import.Sys_UnloadLibrary = Com_UnloadLibrary;
 
 	import.Mem_AllocPool = &CL_FTLibModule_MemAllocPool;
 	import.Mem_Alloc = &CL_FTLibModule_MemAlloc;
@@ -162,9 +165,6 @@ void FTLIB_LoadLibrary( bool verbose )
 	import.Mem_Free = &CL_FTLibModule_MemFree;
 	import.Mem_FreePool = &CL_FTLibModule_MemFreePool;
 	import.Mem_EmptyPool = &CL_FTLibModule_MemEmptyPool;
-
-	import.LoadLibrary = &Com_LoadSysLibrary;
-	import.UnloadLibrary = Com_UnloadLibrary;
 
 	// load dynamic library
 	ftlib_export = NULL;

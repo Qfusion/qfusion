@@ -53,7 +53,7 @@ bool Irc_Proto_Connect(const char *host, unsigned short port) {
 		irc_bucket.first_msg = NULL;
 		irc_bucket.message_size = 0;
 		irc_bucket.character_size = 0;
-		irc_bucket.last_refill = IRC_IMPORT.Microseconds();
+		irc_bucket.last_refill = IRC_IMPORT.Sys_Microseconds();
 		irc_bucket.message_token = Cvar_GetFloatValue(irc_messageBucketBurst);
 		irc_bucket.character_token = Cvar_GetFloatValue(irc_characterBucketBurst);
 	}
@@ -375,7 +375,7 @@ static void Irc_Proto_RefillBucket(void) {
 	const double characterBucketSize = Cvar_GetFloatValue(irc_characterBucketSize);
 	const double messageBucketRate = Cvar_GetFloatValue(irc_messageBucketRate);
 	const double characterBucketRate = Cvar_GetFloatValue(irc_characterBucketRate);
-	const uint64_t micros = IRC_IMPORT.Microseconds();
+	const uint64_t micros = IRC_IMPORT.Sys_Microseconds();
 	const uint64_t micros_delta = micros - irc_bucket.last_refill;
 	const double msg_delta = (micros_delta * messageBucketRate) / 1000000;
 	const double msg_new = irc_bucket.message_token + msg_delta;

@@ -78,9 +78,11 @@ typedef struct
 	int ( *FS_GetFileList )( const char *dir, const char *extension, char *buf, size_t bufsize, int start, int end );
 	bool ( *FS_IsUrl )( const char *url );
 
-	unsigned int ( *Milliseconds )( void );
-	void ( *PageInMemory )( uint8_t *buffer, int size );
-	void ( *Sleep )( unsigned int milliseconds );
+	unsigned int ( *Sys_Milliseconds )( void );
+	void ( *Sys_Sleep )( unsigned int milliseconds );
+
+	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t *funcs );
+	void ( *Sys_UnloadLibrary )( void **lib );
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
@@ -90,9 +92,6 @@ typedef struct
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
 
 	void ( *GetEntitySpatilization )( int entnum, vec3_t origin, vec3_t velocity );
-
-	void *( *LoadLibrary )( const char *name, dllfunc_t *funcs );
-	void ( *UnloadLibrary )( void **lib );
 
 	// multithreading
 	struct qthread_s *( *Thread_Create )( void *(*routine) (void*), void *param );

@@ -122,8 +122,11 @@ typedef struct
 	bool ( *FS_IsUrl )( const char *url );
 
 	// clock
-	unsigned int	( *Milliseconds )( void );
-	uint64_t			( *Microseconds )( void );
+	unsigned int ( *Sys_Milliseconds )( void );
+	uint64_t ( *Sys_Microseconds )( void );
+
+	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t *funcs );
+	void ( *Sys_UnloadLibrary )( void **lib );
 
 	// managed memory allocation
 	struct mempool_s *( *Mem_AllocPool )( const char *name, const char *filename, int fileline );
@@ -131,9 +134,6 @@ typedef struct
 	void ( *Mem_Free )( void *data, const char *filename, int fileline );
 	void ( *Mem_FreePool )( struct mempool_s **pool, const char *filename, int fileline );
 	void ( *Mem_EmptyPool )( struct mempool_s *pool, const char *filename, int fileline );
-
-	void *( *LoadLibrary )( const char *name, dllfunc_t *funcs );
-	void ( *UnloadLibrary )( void **lib );
 } cin_import_t;
 
 //

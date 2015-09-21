@@ -111,7 +111,7 @@ static void R_Imagelib_UnloadLibjpeg( void )
 {
 #ifdef LIBJPEG_RUNTIME
 	if( jpegLibrary )
-		ri.UnloadLibrary( &jpegLibrary );
+		ri.Sys_UnloadLibrary( &jpegLibrary );
 #endif
 	jpegLibrary = NULL;
 }
@@ -124,7 +124,7 @@ static void R_Imagelib_LoadLibjpeg( void )
 	R_Imagelib_UnloadLibjpeg();
 
 #ifdef LIBJPEG_RUNTIME
-	jpegLibrary = ri.LoadLibrary( LIBJPEG_LIBNAME, libjpegfuncs );
+	jpegLibrary = ri.Sys_LoadLibrary( LIBJPEG_LIBNAME, libjpegfuncs );
 	if( jpegLibrary )
 		Com_Printf( "Loaded %s\n", LIBJPEG_LIBNAME );
 #else
@@ -219,7 +219,7 @@ static void R_Imagelib_UnloadLibpng( void )
 {
 #ifdef LIBPNG_RUNTIME
 	if( pngLibrary )
-		ri.UnloadLibrary( &pngLibrary );
+		ri.Sys_UnloadLibrary( &pngLibrary );
 #endif
 	pngLibrary = NULL;
 }
@@ -232,7 +232,7 @@ static void R_Imagelib_LoadLibpng( void )
 	R_Imagelib_UnloadLibpng();
 
 #ifdef LIBPNG_RUNTIME
-	pngLibrary = ri.LoadLibrary( LIBPNG_LIBNAME, libpngfuncs );
+	pngLibrary = ri.Sys_LoadLibrary( LIBPNG_LIBNAME, libpngfuncs );
 	if( pngLibrary )
 		Com_Printf( "Loaded %s\n", LIBPNG_LIBNAME );
 #else

@@ -6,7 +6,7 @@
 #include "../qcommon/cvar.h"
 #include "../qalgo/q_trie.h"
 
-#define IRC_API_VERSION 3
+#define IRC_API_VERSION 4
 
 // numeric commands as specified by RFC 1459 - Internet Relay Chat Protocol
 typedef enum irc_numeric_e {
@@ -205,8 +205,8 @@ typedef struct
 	unsigned int	(*SCR_GetScreenWidth)( void );
 	unsigned int	(*SCR_GetScreenHeight)( void );
 	// clock
-	unsigned int	(*Milliseconds)(void);
-	uint64_t			(*Microseconds)(void);
+	unsigned int	(*Sys_Milliseconds)(void);
+	uint64_t			(*Sys_Microseconds)(void);
 	// managed memory allocation
 	struct mempool_s *(*Mem_AllocPool)(const char *name, const char *filename, int fileline);	
 	void		*(*Mem_Alloc)(int size, const char *filename, int fileline);

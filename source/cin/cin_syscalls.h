@@ -163,12 +163,12 @@ static inline bool trap_FS_IsUrl( const char *url )
 // clock
 static inline unsigned int trap_Milliseconds( void )
 {
-	return CIN_IMPORT.Milliseconds();
+	return CIN_IMPORT.Sys_Milliseconds();
 }
 
 static inline uint64_t trap_Microseconds( void )
 {
-	return CIN_IMPORT.Microseconds();
+	return CIN_IMPORT.Sys_Microseconds();
 }
 
 // memory
@@ -199,10 +199,10 @@ static inline void trap_MemEmptyPool( struct mempool_s *pool, const char *filena
 
 static inline void *trap_LoadLibrary( char *name, dllfunc_t *funcs )
 {
-	return CIN_IMPORT.LoadLibrary( name, funcs );
+	return CIN_IMPORT.Sys_LoadLibrary( name, funcs );
 }
 
 static inline void trap_UnloadLibrary( void **lib )
 {
-	CIN_IMPORT.UnloadLibrary( lib );
+	CIN_IMPORT.Sys_UnloadLibrary( lib );
 }
