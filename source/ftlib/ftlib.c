@@ -79,6 +79,9 @@ typedef struct
 } qftglyph_t;
 
 static void *q_freetypeLibrary;
+
+#ifdef FREETYPELIB_RUNTIME
+
 static FT_Error (*q_FT_New_Size)( FT_Face face, FT_Size* size );
 static FT_Error (*q_FT_Activate_Size)( FT_Size size );
 static FT_Error (*q_FT_Set_Pixel_Sizes)( FT_Face face, FT_UInt pixel_width, FT_UInt pixel_height );
@@ -115,6 +118,23 @@ static dllfunc_t freetypefuncs[] =
 	{ NULL, NULL },
 };
 
+#else
+
+#define q_FT_New_Size FT_New_Size
+#define q_FT_Activate_Size FT_Activate_Size
+#define q_FT_Set_Pixel_Sizes FT_Set_Pixel_Sizes
+#define q_FT_Done_Size FT_Done_Size
+#define q_FT_Get_Char_Index FT_Get_Char_Index
+#define q_FT_Get_Kerning FT_Get_Kerning
+#define q_FT_Load_Glyph FT_Load_Glyph
+#define q_FT_New_Memory_Face FT_New_Memory_Face
+#define q_FT_Done_Face FT_Done_Face
+#define q_FT_Init_FreeType FT_Init_FreeType
+#define q_FT_Done_FreeType FT_Done_FreeType
+#define q_FT_MulFix FT_MulFix
+
+#endif
+
 /*
 * QFT_UnloadFreetypeLibrary
 */
@@ -140,20 +160,6 @@ static void QFT_LoadFreetypeLibrary( void )
 		Com_Printf( "Loaded %s\n", LIBFREETYPE_LIBNAME );
 #else
 	q_freetypeLibrary = (void *)1;
-	q_FT_New_Size = FT_New_Size;
-	q_FT_Activate_Size = FT_Activate_Size;
-	q_FT_Set_Pixel_Sizes = FT_Set_Pixel_Sizes;
-	q_FT_Done_Size = FT_Done_Size;
-	q_FT_Get_Char_Index = FT_Get_Char_Index;
-	q_FT_Get_Kerning = FT_Get_Kerning;
-	q_FT_Load_Glyph = FT_Load_Glyph;
-	q_FT_New_Memory_Face = FT_New_Memory_Face;
-	q_FT_Done_Face = FT_Done_Face;
-	q_FT_Init_FreeType = FT_Init_FreeType;
-	q_FT_Done_FreeType = FT_Done_FreeType;
-#ifndef FT_MULFIX_INLINED
-	q_FT_MulFix = FT_MulFix;
-#endif
 #endif
 }
 

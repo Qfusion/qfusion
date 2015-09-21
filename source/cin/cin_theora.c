@@ -66,6 +66,10 @@ typedef struct
 	unsigned int	th_max_keyframe_interval;	/* maximum time between keyframes in msecs */
 } qtheora_info_t;
 
+static void *oggLibrary;
+
+#ifdef OGGLIB_RUNTIME
+
 static int (*qogg_sync_init)(ogg_sync_state *);
 static int (*qogg_sync_clear)(ogg_sync_state *);
 static char *(*qogg_sync_buffer)(ogg_sync_state *, long);
@@ -93,6 +97,26 @@ static dllfunc_t oggfuncs[] =
 	{ "ogg_page_serialno", ( void **)&qogg_page_serialno },
 	{ NULL, NULL },
 };
+
+#else
+
+#define qogg_sync_init ogg_sync_init
+#define qogg_sync_clear ogg_sync_clear
+#define qogg_sync_buffer ogg_sync_buffer
+#define qogg_sync_wrote ogg_sync_wrote
+#define qogg_sync_pageout ogg_sync_pageout
+#define qogg_stream_init ogg_stream_init
+#define qogg_stream_clear ogg_stream_clear
+#define qogg_stream_pagein ogg_stream_pagein
+#define qogg_stream_packetout ogg_stream_packetout
+#define qogg_page_bos ogg_page_bos
+#define qogg_page_serialno ogg_page_serialno
+
+#endif
+
+static void *vorbisLibrary;
+
+#ifdef VORBISLIB_RUNTIME
 
 static int  (*qvorbis_block_init)(vorbis_dsp_state *v, vorbis_block *vb);
 static int  (*qvorbis_block_clear)(vorbis_block *vb);
@@ -125,6 +149,28 @@ static dllfunc_t vorbisfuncs[] =
 	{ "vorbis_synthesis_read", ( void **)&qvorbis_synthesis_read },
 	{ NULL, NULL },
 };
+
+#else
+
+#define qvorbis_block_init vorbis_block_init
+#define qvorbis_block_clear vorbis_block_clear
+#define qvorbis_info_init vorbis_info_init
+#define qvorbis_info_clear vorbis_info_clear
+#define qvorbis_comment_init vorbis_comment_init
+#define qvorbis_comment_clear vorbis_comment_clear
+#define qvorbis_dsp_clear vorbis_dsp_clear
+#define qvorbis_synthesis_init vorbis_synthesis_init
+#define qvorbis_synthesis vorbis_synthesis
+#define qvorbis_synthesis_blockin vorbis_synthesis_blockin
+#define qvorbis_synthesis_pcmout vorbis_synthesis_pcmout
+#define qvorbis_synthesis_headerin vorbis_synthesis_headerin
+#define qvorbis_synthesis_read vorbis_synthesis_read
+
+#endif
+
+static void *theoraLibrary;
+
+#ifdef THEORALIB_RUNTIME
 
 static double (*qth_granule_time)(void *_encdec, ogg_int64_t _granpos);
 static int (*qth_decode_ctl)(th_dec_ctx *_dec, int _req,void *_buf,size_t _buf_sz);
@@ -162,9 +208,25 @@ static dllfunc_t theorafuncs[] =
 	{ NULL, NULL },
 };
 
-static void *oggLibrary;
-static void *vorbisLibrary;
-static void *theoraLibrary;
+#else
+
+#define qth_granule_time th_granule_time
+#define qth_decode_ctl th_decode_ctl
+#define qth_packet_iskeyframe th_packet_iskeyframe
+#define qth_decode_headerin th_decode_headerin
+#define qth_decode_packetin th_decode_packetin
+#define qth_packet_isheader th_packet_isheader
+#define qth_decode_ycbcr_out th_decode_ycbcr_out
+#define qth_granule_frame th_granule_frame
+#define qth_comment_init th_comment_init
+#define qth_comment_clear th_comment_clear
+#define qth_info_init th_info_init
+#define qth_info_clear th_info_clear
+#define qth_setup_free th_setup_free
+#define qth_decode_alloc th_decode_alloc
+#define qth_decode_free th_decode_free
+
+#endif
 
 // =============================================================================
 
@@ -193,17 +255,6 @@ void Theora_LoadOggLibrary( void )
 		Com_Printf( "Loaded %s\n", LIBOGG_LIBNAME );
 #else
 	oggLibrary = (void *)1;
-	qogg_sync_init = ogg_sync_init;
-	qogg_sync_clear = ogg_sync_clear;
-	qogg_sync_buffer = ogg_sync_buffer;
-	qogg_sync_wrote = ogg_sync_wrote;
-	qogg_sync_pageout = ogg_sync_pageout;
-	qogg_stream_init = ogg_stream_init;
-	qogg_stream_clear = ogg_stream_clear;
-	qogg_stream_pagein = ogg_stream_pagein;
-	qogg_stream_packetout = ogg_stream_packetout;
-	qogg_page_bos = ogg_page_bos;
-	qogg_page_serialno = ogg_page_serialno;
 #endif
 }
 
@@ -226,26 +277,12 @@ void Theora_LoadVorbisLibrary( void )
 {
 	Theora_UnloadVorbisLibrary();
 
-#undef LIB
 #ifdef VORBISLIB_RUNTIME
 	vorbisLibrary = trap_LoadLibrary( LIBVORBIS_LIBNAME, vorbisfuncs );
 	if( vorbisLibrary )
 		Com_Printf( "Loaded %s\n", LIBVORBIS_LIBNAME );
 #else
 	vorbisLibrary = (void *)1;
-	qvorbis_block_init = vorbis_block_init;
-	qvorbis_block_clear = vorbis_block_clear;
-	qvorbis_info_init = vorbis_info_init;
-	qvorbis_info_clear = vorbis_info_clear;
-	qvorbis_comment_init = vorbis_comment_init;
-	qvorbis_comment_clear = vorbis_comment_clear;
-	qvorbis_dsp_clear = vorbis_dsp_clear;
-	qvorbis_synthesis_init = vorbis_synthesis_init;
-	qvorbis_synthesis = vorbis_synthesis;
-	qvorbis_synthesis_blockin = vorbis_synthesis_blockin;
-	qvorbis_synthesis_pcmout = vorbis_synthesis_pcmout;
-	qvorbis_synthesis_headerin = vorbis_synthesis_headerin;
-	qvorbis_synthesis_read = vorbis_synthesis_read;
 #endif
 }
 
@@ -272,21 +309,6 @@ static void Theora_LoadTheoraLibrary( void )
 		Com_Printf( "Loaded %s\n", LIBTHEORA_LIBNAME );
 #else
 	theoraLibrary = (void *)1;
-	qth_granule_time = th_granule_time;
-	qth_decode_ctl = th_decode_ctl;
-	qth_packet_iskeyframe = th_packet_iskeyframe;
-	qth_decode_headerin = th_decode_headerin;
-	qth_decode_packetin = th_decode_packetin;
-	qth_packet_isheader = th_packet_isheader;
-	qth_decode_ycbcr_out = th_decode_ycbcr_out;
-	qth_granule_frame = th_granule_frame;
-	qth_comment_init = th_comment_init;
-	qth_comment_clear = th_comment_clear;
-	qth_info_init = th_info_init;
-	qth_info_clear = th_info_clear;
-	qth_setup_free = th_setup_free;
-	qth_decode_alloc = th_decode_alloc;
-	qth_decode_free = th_decode_free;
 #endif
 }
 
