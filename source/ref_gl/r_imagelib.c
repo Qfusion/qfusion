@@ -138,26 +138,30 @@ void *pngLibrary = NULL;
 
 #ifdef LIBPNG_RUNTIME
 
-static int (*qpng_sig_cmp)(png_bytep, png_size_t, png_size_t);
-static png_structp (*qpng_create_read_struct)(png_const_charp, png_voidp, png_error_ptr, png_error_ptr);
-static png_infop (*qpng_create_info_struct)(png_structp png_ptr);
+#ifndef PNGAPI
+#define PNGAPI
+#endif
+
+static int (PNGAPI *qpng_sig_cmp)(png_bytep, png_size_t, png_size_t);
+static png_structp (PNGAPI *qpng_create_read_struct)(png_const_charp, png_voidp, png_error_ptr, png_error_ptr);
+static png_infop (PNGAPI *qpng_create_info_struct)(png_structp png_ptr);
 #define qpng_jmpbuf png_jmpbuf
-static void (*qpng_set_read_fn)(png_structp, png_voidp, png_rw_ptr);
-static void (*qpng_set_sig_bytes)(png_structp, int);
-static void (*qpng_read_info)(png_structp, png_infop);
-static png_uint_32 (*qpng_get_IHDR)(png_structp, png_infop, png_uint_32 *, png_uint_32 *, int *, int *, int *, int *, int *);
-static png_uint_32 (*qpng_get_valid)(png_structp, png_infop, png_uint_32);
-static void (*qpng_set_palette_to_rgb)(png_structp);
-static void (*qpng_set_gray_to_rgb)(png_structp);
-static void (*qpng_set_tRNS_to_alpha)(png_structp);
-static void (*qpng_set_expand)(png_structp);
-static void (*qpng_read_update_info)(png_structp, png_infop);
-static png_uint_32 (*qpng_get_rowbytes)(png_structp, png_infop);
-static void (*qpng_read_image)(png_structp, png_bytepp);
-static void (*qpng_read_end)(png_structp, png_infop);
-static void (*qpng_destroy_read_struct)(png_structpp, png_infopp, png_infopp);
-static void (*qpng_destroy_write_struct)(png_structpp, png_infopp);
-static png_voidp (*qpng_get_io_ptr)(png_structp);
+static void (PNGAPI *qpng_set_read_fn)(png_structp, png_voidp, png_rw_ptr);
+static void (PNGAPI *qpng_set_sig_bytes)(png_structp, int);
+static void (PNGAPI *qpng_read_info)(png_structp, png_infop);
+static png_uint_32 (PNGAPI *qpng_get_IHDR)(png_structp, png_infop, png_uint_32 *, png_uint_32 *, int *, int *, int *, int *, int *);
+static png_uint_32 (PNGAPI *qpng_get_valid)(png_structp, png_infop, png_uint_32);
+static void (PNGAPI *qpng_set_palette_to_rgb)(png_structp);
+static void (PNGAPI *qpng_set_gray_to_rgb)(png_structp);
+static void (PNGAPI *qpng_set_tRNS_to_alpha)(png_structp);
+static void (PNGAPI *qpng_set_expand)(png_structp);
+static void (PNGAPI *qpng_read_update_info)(png_structp, png_infop);
+static png_uint_32 (PNGAPI *qpng_get_rowbytes)(png_structp, png_infop);
+static void (PNGAPI *qpng_read_image)(png_structp, png_bytepp);
+static void (PNGAPI *qpng_read_end)(png_structp, png_infop);
+static void (PNGAPI *qpng_destroy_read_struct)(png_structpp, png_infopp, png_infopp);
+static void (PNGAPI *qpng_destroy_write_struct)(png_structpp, png_infopp);
+static png_voidp (PNGAPI *qpng_get_io_ptr)(png_structp);
 
 static dllfunc_t libpngfuncs[] =
 {
