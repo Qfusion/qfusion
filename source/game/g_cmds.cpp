@@ -486,11 +486,13 @@ static void Cmd_PlayersExt_f( edict_t *ent, bool onlyspecs )
 				continue;
 
 			cl = ent->r.client;
-			if( cl->mm_session <= 0 ) {
-				login = "";
-			}
-			else {
+
+			login = NULL;
+			if( cl->mm_session > 0 ) {
 				login = Info_ValueForKey( cl->userinfo, "cl_mm_login" );
+			}
+			if( !login ) {
+				login = "";
 			}
 
 			Q_snprintfz( line, sizeof( line ), "%3i %s" S_COLOR_WHITE "%s%s%s%s\n", i, cl->netname,
@@ -1213,7 +1215,7 @@ static void Cmd_Whois_f( edict_t *ent )
 
 	login = Info_ValueForKey( cl->userinfo, "cl_mm_login" );
 
-	G_PrintMsg( ent, "%s%s is %s\n", cl->netname, S_COLOR_WHITE, login );
+	G_PrintMsg( ent, "%s%s is %s\n", cl->netname, S_COLOR_WHITE, login ? login : "unknown" );
 }
 
 /*
