@@ -32,6 +32,7 @@ extern int (ZEXPORT *qzuncompress)(Bytef *dest, uLongf *destLen, const Bytef *so
 extern int (ZEXPORT *qzinflateInit2_)(z_streamp strm, int  windowBits, const char *version, int stream_size);
 extern int (ZEXPORT *qzinflate)(z_streamp strm, int flush);
 extern int (ZEXPORT *qzinflateEnd)(z_streamp strm);
+extern int (ZEXPORT *qzinflateReset)(z_streamp strm);
 extern gzFile (ZEXPORT *qgzopen)(const char *file, const char *mode);
 extern z_off_t (ZEXPORT *qgzseek)(gzFile, z_off_t, int);
 extern z_off_t (ZEXPORT *qgztell)(gzFile);
@@ -51,6 +52,7 @@ extern int (ZEXPORT *qgzbuffer)(gzFile file, unsigned size);
 #define qzinflateInit2 inflateInit2
 #define qzinflate inflate
 #define qzinflateEnd inflateEnd
+#define qzinflateReset inflateReset
 #define qgzopen gzopen
 #define qgzseek gzseek
 #define qgztell gztell

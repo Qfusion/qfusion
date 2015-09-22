@@ -1636,7 +1636,7 @@ int FS_Seek( int file, int offset, int whence )
 
 		zipEntry->zstream.next_in = zipEntry->readBuffer;
 		zipEntry->zstream.avail_in = 0;
-		error = inflateReset( &zipEntry->zstream );
+		error = qzinflateReset( &zipEntry->zstream );
 		if( error != Z_OK )
 			Sys_Error( "FS_Seek: can't inflateReset file" );
 
