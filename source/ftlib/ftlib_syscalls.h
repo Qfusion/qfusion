@@ -242,7 +242,7 @@ static inline void trap_MemEmptyPool( struct mempool_s *pool, const char *filena
 	FTLIB_IMPORT.Mem_EmptyPool( pool, filename, fileline );
 }
 
-static inline void *trap_Sys_LoadLibrary( char *name, dllfunc_t *funcs )
+static inline void *trap_LoadLibrary( char *name, dllfunc_t *funcs )
 {
 	return FTLIB_IMPORT.Sys_LoadLibrary( name, funcs );
 }
