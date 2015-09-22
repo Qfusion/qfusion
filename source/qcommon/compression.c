@@ -31,6 +31,7 @@ int (ZEXPORT *qzuncompress)(Bytef *dest, uLongf *destLen, const Bytef *source, u
 int (ZEXPORT *qzinflateInit2_)(z_streamp strm, int  windowBits, const char *version, int stream_size);
 int (ZEXPORT *qzinflate)(z_streamp strm, int flush);
 int (ZEXPORT *qzinflateEnd)(z_streamp strm);
+int (ZEXPORT *qzinflateReset)(z_streamp strm);
 gzFile (ZEXPORT *qgzopen)(const char *, const char *);
 z_off_t (ZEXPORT *qgzseek)(gzFile, z_off_t, int);
 z_off_t (ZEXPORT *qgztell)(gzFile);
@@ -50,6 +51,7 @@ static dllfunc_t zlibfuncs[] =
 	{ "inflateInit2_", ( void **)&qzinflateInit2_ },
 	{ "inflate", ( void **)&qzinflate },
 	{ "inflateEnd", ( void **)&qzinflateEnd },
+	{ "inflateReset", ( void **)&qzinflateReset },
 	{ "gzopen", ( void **)&qgzopen },
 	{ "gzseek", ( void **)&qgzseek },
 	{ "gztell", ( void **)&qgztell },
