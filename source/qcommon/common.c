@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qalgo/glob.h"
 #include "../qalgo/md5.h"
 #include "../matchmaker/mm_common.h"
+#include "compression.h"
 
 #define MAX_NUM_ARGVS	50
 
@@ -937,6 +938,8 @@ void Qcommon_Init( int argc, char **argv )
 	dedicated =	    Cvar_Get( "dedicated", "0", CVAR_NOSET );
 #endif
 
+	Com_LoadCompressionLibraries();
+
 	FS_Init();
 
 	Cbuf_AddText( "exec default.cfg\n" );
@@ -1208,6 +1211,8 @@ void Qcommon_Shutdown( void )
 	}
 	logconsole = NULL;
 	FS_Shutdown();
+
+	Com_UnloadCompressionLibraries();
 
 	wswcurl_cleanup();
 

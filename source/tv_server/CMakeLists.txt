@@ -17,6 +17,7 @@ file(GLOB TV_SERVER_SOURCES
     "../qcommon/cm_main.c"
     "../qcommon/cm_q3bsp.c"
     "../qcommon/cm_trace.c"
+	"../qcommon/compression.c"
     "../qcommon/bsp.c"
     "../qcommon/patch.c"
     "../qcommon/common.c"

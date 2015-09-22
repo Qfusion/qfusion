@@ -147,25 +147,14 @@ static uint8_t msg_process_data[MAX_MSGLEN];
 // Zlib compression
 //=============================================================
 
-#include "zlib.h"
+#include "compression.h"
 
-/*
-http://www.zlib.net/manual.html#compress2
-int compress2 (Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen, int level);
-Compresses the source buffer into the destination buffer. The level parameter has the same meaning
-as in deflateInit. sourceLen is the byte length of the source buffer. Upon entry, destLen is the
-total size of the destination buffer, which must be at least 0.1% larger than sourceLen plus 12 bytes.
-Upon exit, destLen is the actual size of the compressed buffer.
-
-compress2 returns Z_OK if success, Z_MEM_ERROR if there was not enough memory, Z_BUF_ERROR if there
-was not enough room in the output buffer, Z_STREAM_ERROR if the level parameter is invalid.
-*/
 static int Netchan_ZLibCompressChunk( const uint8_t *source, unsigned long sourceLen, uint8_t *dest, unsigned long destLen,
 									 int level, int wbits )
 {
 	int result, zlerror;
 
-	zlerror = compress2( dest, &destLen, source, sourceLen, level );
+	zlerror = qzcompress2( dest, &destLen, source, sourceLen, level );
 	switch( zlerror )
 	{
 	case Z_OK:
@@ -191,27 +180,13 @@ static int Netchan_ZLibCompressChunk( const uint8_t *source, unsigned long sourc
 
 	return result;
 }
-/*
-http://www.zlib.net/manual.html#uncompress
-int uncompress (Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen);
-Decompresses the source buffer into the destination buffer. sourceLen is the byte length
-of the source buffer. Upon entry, destLen is the total size of the destination buffer,
-which must be large enough to hold the entire uncompressed data. (The size of the uncompressed
-data must have been saved previously by the compressor and transmitted to the decompressor
-by some mechanism outside the scope of this compression library.) Upon exit, destLen is the
-actual size of the compressed buffer.
 
-This function can be used to decompress a whole file at once if the input file is mmap'ed.
-
-uncompress returns Z_OK if success, Z_MEM_ERROR if there was not enough memory, Z_BUF_ERROR if
-there was not enough room in the output buffer, or Z_DATA_ERROR if the input data was corrupted.
-*/
 static int Netchan_ZLibDecompressChunk( const uint8_t *source, unsigned long sourceLen, uint8_t *dest, unsigned long destLen,
 									   int wbits )
 {
 	int result, zlerror;
 
-	zlerror = uncompress( dest, &destLen, source, sourceLen );
+	zlerror = qzuncompress( dest, &destLen, source, sourceLen );
 	switch( zlerror )
 	{
 	case Z_OK:
