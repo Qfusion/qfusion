@@ -129,6 +129,8 @@ static cvar_t *http_proxyuserpwd;
 // Symbols
 static void *curlLibrary = NULL;
 
+#ifdef LIBCURL_RUNTIME
+
 static CURLFORMcode (*qcurl_formadd)(struct curl_httppost **, struct curl_httppost **, ...);
 static CURLcode (*qcurl_easy_setopt)(CURL *, CURLoption, ...);
 static CURL *(*qcurl_easy_init)(void);
@@ -173,6 +175,30 @@ static dllfunc_t libcurlfuncs[] =
 	{ NULL, NULL }
 };
 
+#else
+
+#define qcurl_formadd curl_formadd
+#define qcurl_easy_setopt curl_easy_setopt
+#define qcurl_easy_init curl_easy_init
+#define qcurl_easy_escape curl_easy_escape
+#define qcurl_easy_unescape curl_easy_unescape
+#define qcurl_free curl_free
+#define qcurl_multi_init curl_multi_init
+#define qcurl_multi_cleanup curl_multi_cleanup
+#define qcurl_multi_perform curl_multi_perform
+#define qcurl_multi_add_handle curl_multi_add_handle
+#define qcurl_multi_remove_handle curl_multi_remove_handle
+#define qcurl_slist_append curl_slist_append
+#define qcurl_slist_free_all curl_slist_free_all
+#define qcurl_formfree curl_formfree
+#define qcurl_easy_cleanup curl_easy_cleanup
+#define qcurl_easy_getinfo curl_easy_getinfo
+#define qcurl_easy_strerror curl_easy_strerror
+#define qcurl_multi_info_read curl_multi_info_read
+#define qcurl_easy_pause curl_easy_pause
+
+#endif
+
 /*
 * wswcurl_unloadlib
 */
@@ -181,9 +207,8 @@ static void wswcurl_unloadlib( void )
 #ifdef LIBCURL_RUNTIME
 	if( curlLibrary )
 		Com_UnloadLibrary( &curlLibrary );
-#else
-	curlLibrary = NULL;
 #endif
+	curlLibrary = NULL;
 }
 
 /*
@@ -199,25 +224,6 @@ static void wswcurl_loadlib( void )
 		Com_Printf( "Loaded %s\n", LIBCURL_LIBNAME );
 #else
 	curlLibrary =  (void *)1;
-	qcurl_formadd = curl_formadd;
-	qcurl_easy_setopt = curl_easy_setopt;
-	qcurl_easy_init = curl_easy_init;
-	qcurl_easy_escape = curl_easy_escape;
-	qcurl_easy_unescape = curl_easy_unescape;
-	qcurl_free = curl_free;
-	qcurl_multi_init = curl_multi_init;
-	qcurl_multi_cleanup = curl_multi_cleanup;
-	qcurl_multi_perform = curl_multi_perform;
-	qcurl_multi_add_handle = curl_multi_add_handle;
-	qcurl_multi_remove_handle = curl_multi_remove_handle;
-	qcurl_slist_append = curl_slist_append;
-	qcurl_slist_free_all = curl_slist_free_all;
-	qcurl_formfree = curl_formfree;
-	qcurl_easy_cleanup = curl_easy_cleanup;
-	qcurl_easy_getinfo = curl_easy_getinfo;
-	qcurl_easy_strerror = curl_easy_strerror;
-	qcurl_multi_info_read = curl_multi_info_read;
-	qcurl_easy_pause = curl_easy_pause;
 #endif
 }
 
