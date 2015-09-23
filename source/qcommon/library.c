@@ -89,19 +89,19 @@ void *Com_LoadSysLibrary( const char *name, dllfunc_t *funcs )
 {
 	char *names;
 	size_t names_size;
-	char *s;
+	char *s, *saveptr;
 	void *lib = NULL;
 
 	names_size = strlen( name ) + 1;
 	names = Q_malloc( names_size );
 	memcpy( names, name, names_size );
 
-	s = strtok( names, "|" );
+	s = strtok_r( names, "|", &saveptr );
 	while( s != NULL ) {
 		lib = Com_LoadLibraryExt( s, funcs, true );
 		if( lib )
 			break;
-		s = strtok( NULL, "|" );
+		s = strtok_r( NULL, "|", &saveptr );
 	}
 
 	free( names );

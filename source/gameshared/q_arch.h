@@ -105,6 +105,8 @@ extern "C" {
 
 #define HAVE__STRICMP
 
+#define HAVE_STRTOK_S
+
 #ifdef LCC_WIN32
 #ifndef C_ONLY
 #define C_ONLY
@@ -391,6 +393,10 @@ typedef int socket_handle_t;
 #ifndef Q_strnicmp
 #define Q_strnicmp( s1, s2, n ) strncasecmp( ( s1 ), ( s2 ), ( n ) )
 #endif
+#endif
+
+#ifdef HAVE_STRTOK_S
+#define strtok_r strtok_s
 #endif
 
 #ifdef HAVE__ALLOCA
