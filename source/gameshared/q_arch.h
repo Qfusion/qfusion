@@ -209,7 +209,7 @@ typedef UINT_PTR socket_handle_t;
 #define LIBZ_LIBNAME "libz.so.1|libz.so"
 #define LIBCURL_LIBNAME "libcurl.so.4|libcurl.so.3|libcurl.so"
 #define LIBPNG_LIBNAME "libpng16.so.16|libpng15.so.15|libpng14.so.14|libpng12.so.0|libpng.so"
-#define LIBJPEG_LIBNAME "libjpeg.so.62|libjpeg.so"
+#define LIBJPEG_LIBNAME "libjpeg.so.8|libjpeg.so.62|libjpeg.so"
 #define LIBOGG_LIBNAME "libogg.so.0|libogg.so"
 #define LIBVORBIS_LIBNAME "libvorbis.so.0|libvorbis.so"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.so.3|libvorbisfile.so"
