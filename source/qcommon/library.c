@@ -61,7 +61,8 @@ void *Com_LoadLibraryExt( const char *name, dllfunc_t *funcs, bool sys )
 	lib = Sys_Library_Open( fullname );
 	if( !lib )
 	{
-		Com_Printf( "LoadLibrary (%s):(%s)\n", fullname, Sys_Library_ErrorString() );
+		if( !sys )
+			Com_Printf( "LoadLibrary (%s):(%s)\n", fullname, Sys_Library_ErrorString() );
 		return NULL;
 	}
 
@@ -86,7 +87,25 @@ void *Com_LoadLibraryExt( const char *name, dllfunc_t *funcs, bool sys )
 */
 void *Com_LoadSysLibrary( const char *name, dllfunc_t *funcs )
 {
-	return Com_LoadLibraryExt( name, funcs, true );
+	char *names;
+	size_t names_size;
+	char *s;
+	void *lib = NULL;
+
+	names_size = strlen( name ) + 1;
+	names = Q_malloc( names_size );
+	memcpy( names, name, names_size );
+
+	s = strtok( names, "|" );
+	while( s != NULL ) {
+		lib = Com_LoadLibraryExt( s, funcs, true );
+		if( lib )
+			break;
+		s = strtok( NULL, "|" );
+	}
+
+	free( names );
+	return lib;
 }
 
 /*
