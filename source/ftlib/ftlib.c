@@ -156,8 +156,6 @@ static void QFT_LoadFreetypeLibrary( void )
 
 #ifdef FREETYPELIB_RUNTIME
 	q_freetypeLibrary = trap_LoadLibrary( LIBFREETYPE_LIBNAME, freetypefuncs );
-	if( q_freetypeLibrary )
-		Com_Printf( "Loaded %s\n", LIBFREETYPE_LIBNAME );
 #else
 	q_freetypeLibrary = (void *)1;
 #endif

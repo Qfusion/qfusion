@@ -140,7 +140,7 @@ void CIN_LoadLibrary( bool verbose )
 	// load dynamic library
 	cin_export = NULL;
 	if( verbose ) {
-		Com_Printf( "Loading CIN module... " );
+		Com_Printf( "Loading CIN module...\n" );
 	}
 
 	funcs[0].name = "GetCinematicsAPI";
@@ -163,7 +163,7 @@ void CIN_LoadLibrary( bool verbose )
 			if( cin_export->Init( verbose ) )
 			{
 				if( verbose ) {
-					Com_Printf( "Success.\n" );
+					Com_Printf( "...Success.\n" );
 				}
 			}
 			else
@@ -171,7 +171,7 @@ void CIN_LoadLibrary( bool verbose )
 				// initialization failed
 				Mem_FreePool( &cin_mempool );
 				if( verbose ) {
-					Com_Printf( "Initialization failed.\n" );
+					Com_Printf( "...Initialization failed.\n" );
 				}
 				CIN_UnloadLibrary( verbose );
 			}
@@ -180,14 +180,16 @@ void CIN_LoadLibrary( bool verbose )
 		{
 			// wrong version
 			Mem_FreePool( &cin_mempool );
-			Com_Printf( "CIN_LoadLibrary: wrong version: %i, not %i.\n", api_version, CIN_API_VERSION );
+			if( verbose ) {
+				Com_Printf( "...Wrong version: %i, not %i.\n", api_version, CIN_API_VERSION );
+			}
 			CIN_UnloadLibrary( verbose );
 		}
 	}
 	else
 	{
 		if( verbose ) {
-			Com_Printf( "Not found.\n" );
+			Com_Printf( "...Not found.\n" );
 		}
 	}
 

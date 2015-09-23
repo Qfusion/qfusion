@@ -93,9 +93,6 @@ bool SNDOGG_Init( bool verbose )
 			Com_Printf( "Couldn't load %s\n", LIBVORBISFILE_LIBNAME );
 		return false;
 	}
-
-	if( verbose )
-		Com_Printf( "Loaded %s\n", LIBVORBISFILE_LIBNAME );
 #endif
 	return true;
 }
