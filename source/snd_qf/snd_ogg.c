@@ -60,7 +60,7 @@ dllfunc_t oggvorbisfuncs[] =
 
 #define qov_clear ov_clear
 #define qov_open_callbacks ov_open_callbacks
-#define qov_pcm_total ov_pcm_total;
+#define qov_pcm_total ov_pcm_total
 #define qov_raw_seek ov_raw_seek
 #define qov_raw_tell ov_raw_tell
 #define qov_info ov_info
