@@ -251,8 +251,6 @@ void Theora_LoadOggLibrary( void )
 
 #ifdef OGGLIB_RUNTIME
 	oggLibrary = trap_LoadLibrary( LIBOGG_LIBNAME, oggfuncs );
-	if( oggLibrary )
-		Com_Printf( "Loaded %s\n", LIBOGG_LIBNAME );
 #else
 	oggLibrary = (void *)1;
 #endif
@@ -279,8 +277,6 @@ void Theora_LoadVorbisLibrary( void )
 
 #ifdef VORBISLIB_RUNTIME
 	vorbisLibrary = trap_LoadLibrary( LIBVORBIS_LIBNAME, vorbisfuncs );
-	if( vorbisLibrary )
-		Com_Printf( "Loaded %s\n", LIBVORBIS_LIBNAME );
 #else
 	vorbisLibrary = (void *)1;
 #endif
@@ -305,8 +301,6 @@ static void Theora_LoadTheoraLibrary( void )
 {
 #ifdef THEORALIB_RUNTIME
 	theoraLibrary = trap_LoadLibrary( LIBTHEORA_LIBNAME, theorafuncs );
-	if( theoraLibrary )
-		Com_Printf( "Loaded %s\n", LIBTHEORA_LIBNAME );
 #else
 	theoraLibrary = (void *)1;
 #endif

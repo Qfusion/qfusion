@@ -220,8 +220,6 @@ static void wswcurl_loadlib( void )
 
 #ifdef LIBCURL_RUNTIME
 	curlLibrary = Com_LoadSysLibrary( LIBCURL_LIBNAME, libcurlfuncs );
-	if( curlLibrary )
-		Com_Printf( "Loaded %s\n", LIBCURL_LIBNAME );
 #else
 	curlLibrary =  (void *)1;
 #endif

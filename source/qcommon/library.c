@@ -99,8 +99,10 @@ void *Com_LoadSysLibrary( const char *name, dllfunc_t *funcs )
 	s = strtok_r( names, "|", &saveptr );
 	while( s != NULL ) {
 		lib = Com_LoadLibraryExt( s, funcs, true );
-		if( lib )
+		if( lib ) {
+			Com_Printf( "Loaded %s\n", s );
 			break;
+		}
 		s = strtok_r( NULL, "|", &saveptr );
 	}
 

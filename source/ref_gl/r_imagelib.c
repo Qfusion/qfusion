@@ -125,8 +125,6 @@ static void R_Imagelib_LoadLibjpeg( void )
 
 #ifdef LIBJPEG_RUNTIME
 	jpegLibrary = ri.Sys_LoadLibrary( LIBJPEG_LIBNAME, libjpegfuncs );
-	if( jpegLibrary )
-		Com_Printf( "Loaded %s\n", LIBJPEG_LIBNAME );
 #else
 	jpegLibrary = (void *)1;
 #endif
@@ -233,8 +231,6 @@ static void R_Imagelib_LoadLibpng( void )
 
 #ifdef LIBPNG_RUNTIME
 	pngLibrary = ri.Sys_LoadLibrary( LIBPNG_LIBNAME, libpngfuncs );
-	if( pngLibrary )
-		Com_Printf( "Loaded %s\n", LIBPNG_LIBNAME );
 #else
 	pngLibrary =  (void *)1;
 #endif
