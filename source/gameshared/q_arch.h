@@ -125,15 +125,16 @@ extern "C" {
 #define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 
+// FIXME: move these to CMakeLists.txt
 #define LIBZ_LIBNAME "zlib1.dll"
-#define LIBCURL_LIBNAME "libcurl.dll"
-#define LIBPNG_LIBNAME "libpng.dll"
+#define LIBCURL_LIBNAME "libcurl-4.dll|libcurl-3.dll"
+#define LIBPNG_LIBNAME "libpng16.dll|libpng16-16.dll|libpng15-15.dll|libpng15.dll|libpng14-14.dll|libpng14.dll|libpng12.dll"
 #define LIBJPEG_LIBNAME "libjpeg.dll"
-#define LIBOGG_LIBNAME "libogg.dll"
-#define LIBVORBIS_LIBNAME "libvorbis.dll"
-#define LIBVORBISFILE_LIBNAME "libvorbisfile.dll"
-#define LIBTHEORA_LIBNAME "libtheora.dll"
-#define LIBFREETYPE_LIBNAME "libfreetype.dll"
+#define LIBOGG_LIBNAME "libogg-0.dll|libogg.dll"
+#define LIBVORBIS_LIBNAME "libvorbis-0.dll|libvorbis.dll|vorbis.dll"
+#define LIBVORBISFILE_LIBNAME "libvorbisfile-3.dll|libvorbisfile.dll|vorbisfile.dll"
+#define LIBTHEORA_LIBNAME "libtheora-0.dll|libtheora.dll"
+#define LIBFREETYPE_LIBNAME "libfreetype-6.dll|freetype6.dll"
 
 #ifdef NDEBUG
 #define BUILDSTRING "Win32 RELEASE"
@@ -202,15 +203,16 @@ typedef UINT_PTR socket_handle_t;
 #define OPENAL_RUNTIME
 #endif
 
-#define LIBZ_LIBNAME "libz.so"
-#define LIBCURL_LIBNAME "libcurl.so"
-#define LIBPNG_LIBNAME "libpng.so"
-#define LIBJPEG_LIBNAME "libjpeg.so"
-#define LIBOGG_LIBNAME "libogg.so"
-#define LIBVORBIS_LIBNAME "libvorbis.so"
-#define LIBVORBISFILE_LIBNAME "libvorbisfile.so"
-#define LIBTHEORA_LIBNAME "libtheora.so"
-#define LIBFREETYPE_LIBNAME "libfreetype.so"
+// FIXME: move these to CMakeLists.txt
+#define LIBZ_LIBNAME "libz.so.1|libz.so"
+#define LIBCURL_LIBNAME "libcurl.so.4|libcurl.so.3|libcurl.so"
+#define LIBPNG_LIBNAME "libpng16.so.16|libpng15.so.15|libpng14.so.14|libpng12.so.0|libpng.so"
+#define LIBJPEG_LIBNAME "libjpeg.so.62|libjpeg.so"
+#define LIBOGG_LIBNAME "libogg.so.0|libogg.so"
+#define LIBVORBIS_LIBNAME "libvorbis.so.0|libvorbis.so"
+#define LIBVORBISFILE_LIBNAME "libvorbisfile.so.3|libvorbisfile.so"
+#define LIBTHEORA_LIBNAME "libtheora.so.0|libtheora.so"
+#define LIBFREETYPE_LIBNAME "libfreetype.so.6|libfreetype.so"
 
 #if defined ( __FreeBSD__ )
 #define BUILDSTRING "FreeBSD"
@@ -306,15 +308,16 @@ typedef int socket_handle_t;
 #define MUMBLE_SUPPORT
 #define OPENAL_RUNTIME
 
+// FIXME: move these to CMakeLists.txt
 #define LIBZ_LIBNAME "libz.dylib"
-#define LIBCURL_LIBNAME "libcurl.dylib"
-#define LIBPNG_LIBNAME "libpng.dylib"
-#define LIBJPEG_LIBNAME "libjpeg.dylib"
-#define LIBOGG_LIBNAME "libogg.dylib"
+#define LIBCURL_LIBNAME "libcurl.4.dylib|libcurl.3.dylib|libcurl.2.dylib"
+#define LIBPNG_LIBNAME "libpng16.16.dylib|libpng15.15.dylib|libpng14.14.dylib|libpng12.0.dylib"
+#define LIBJPEG_LIBNAME "libjpeg.62.dylib"
+#define LIBOGG_LIBNAME "libogg.0.dylib|libogg.dylib"
 #define LIBVORBIS_LIBNAME "libvorbis.dylib"
 #define LIBVORBISFILE_LIBNAME "libvorbisfile.dylib"
-#define LIBTHEORA_LIBNAME "libtheora.dylib"
-#define LIBFREETYPE_LIBNAME "libfreetype.dylib"
+#define LIBTHEORA_LIBNAME "libtheora.0.dylib|libtheora.dylib"
+#define LIBFREETYPE_LIBNAME "libfreetype.6.dylib|libfreetype.dylib"
 
 //Mac OSX has universal binaries, no need for cpu dependency
 #define BUILDSTRING "MacOSX"
