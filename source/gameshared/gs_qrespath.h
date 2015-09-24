@@ -48,7 +48,6 @@ extern "C" {
 
 // weapon
 #define PATH_GUNBLADE_ICON	    "gfx/hud/icons/weapon/gunblade"
-#define PATH_SHOCKWAVE_ICON	    "gfx/hud/icons/weapon/shockwave"
 #define PATH_MACHINEGUN_ICON	"gfx/hud/icons/weapon/machinegun"
 #define PATH_RIOTGUN_ICON	    "gfx/hud/icons/weapon/riot"
 #define PATH_GRENADELAUNCHER_ICON   "gfx/hud/icons/weapon/grenade"
@@ -60,7 +59,6 @@ extern "C" {
 
 // ammo
 #define PATH_GUNBLADE_AMMO_ICON		"gfx/hud/icons/ammo/gunbladeammo"
-#define PATH_SHOCKWAVE_AMMO_ICON	"gfx/hud/icons/ammo/shockwaveammo"
 #define PATH_MACHINEGUN_AMMO_ICON	"gfx/hud/icons/ammo/bulletsammo"
 #define PATH_RIOTGUN_AMMO_ICON		"gfx/hud/icons/ammo/riotammo"
 #define PATH_GRENADELAUNCHER_AMMO_ICON	"gfx/hud/icons/ammo/grenadeammo"
@@ -74,7 +72,6 @@ extern "C" {
 
 // nogun weap
 #define PATH_NG_GUNBLADE_ICON		"gfx/hud/icons/weapon/nogun_gunblade"
-#define PATH_NG_SHOCKWAVE_ICON		"gfx/hud/icons/weapon/nogun_shockwave"
 #define PATH_NG_MACHINEGUN_ICON		"gfx/hud/icons/weapon/nogun_machinegun"
 #define PATH_NG_RIOTGUN_ICON		"gfx/hud/icons/weapon/nogun_riot"
 #define PATH_NG_GRENADELAUNCHER_ICON	"gfx/hud/icons/weapon/nogun_grenade"
@@ -114,7 +111,6 @@ extern "C" {
 
 // simpleitems
 
-#define PATH_SHOCKWAVE_SIMPLEITEM		"gfx/simpleitems/weapon/shockwave"
 #define PATH_MACHINEGUN_SIMPLEITEM		"gfx/simpleitems/weapon/machinegun"
 #define PATH_RIOTGUN_SIMPLEITEM			"gfx/simpleitems/weapon/riot"
 #define PATH_GRENADELAUNCHER_SIMPLEITEM		"gfx/simpleitems/weapon/grenade"
@@ -165,7 +161,6 @@ extern "C" {
 
 // weapons
 #define PATH_GUNBLADE_MODEL		"models/weapons/gunblade/gunblade.md3"
-#define PATH_SHOCKWAVE_MODEL		"models/weapons/shockwave/shockwave.md3"
 #define PATH_MACHINEGUN_MODEL		"models/weapons/machinegun/machinegun.md3"
 #define PATH_RIOTGUN_MODEL		"models/weapons/riotgun/riotgun.md3"
 #define PATH_GRENADELAUNCHER_MODEL	"models/weapons/glauncher/glauncher.md3"
