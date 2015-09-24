@@ -90,11 +90,7 @@ void SNDOGG_Init( bool verbose )
 #ifdef VORBISLIB_RUNTIME
 	if( vorbisLibrary )
 		SNDOGG_Shutdown( verbose );
-
-	if( s_vorbis->integer )
-	{
-		vorbisLibrary = trap_LoadLibrary( LIBVORBISFILE_LIBNAME, oggvorbisfuncs );
-	}
+	vorbisLibrary = trap_LoadLibrary( LIBVORBISFILE_LIBNAME, oggvorbisfuncs );
 #endif
 }
 
