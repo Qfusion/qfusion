@@ -981,6 +981,8 @@ bool FS_IsUrl( const char *url )
 {
 	if( !strncmp( url, "http://", 7) )
 		return true;
+	if( !strncmp( url, "https://", 8) )
+		return true;
 	return false;
 }
 
