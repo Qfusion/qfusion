@@ -12,6 +12,11 @@ fi
 OS="$1"
 ARCH="$2"
 
+if [ "$OS" = "lin" ]; then
+	echo "Dynamic linking is used for $OS, skipping"
+	exit 0
+fi
+
 set -e
 
 . `pwd`/inc/common.inc.sh
@@ -43,6 +48,9 @@ echo "$COMMAND" && eval $COMMAND
 
 # libcurl
 COMMAND="${COMMAND_PREF}"
+if [ "$OS" = "win32" ]; then
+	COMMAND="${COMMAND} ENABLE_WINSSL=YES"
+fi
 COMMAND="${COMMAND} ./libs/curl.sh"
 echo "$COMMAND" && eval $COMMAND
 

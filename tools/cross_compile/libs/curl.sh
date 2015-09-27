@@ -5,12 +5,13 @@ MORE_OPTS=""
 [ ! -z "$DATA_DIR" ] && MORE_OPTS="${MORE_OPTS} --datadir=${DATA_DIR}"
 [ "$ENABLE_SHARED" = "YES" ] && MORE_OPTS="${MORE_OPTS} --enable-shared"
 [ "$ENABLE_SHARED" != "YES" ] && MORE_OPTS="${MORE_OPTS} --disable-shared"
+[ "$ENABLE_WINSSL" = "YES" ] && MORE_OPTS="${MORE_OPTS} --with-winssl"
 
 cd ${SOURCE_DIR}libsrcs/libcurl && \
 MORE_OPTS="${MORE_OPTS} --build=`./config.guess`" \
 ./configure --with-zlib=`pwd`/../zlib/ \
  --enable-static --enable-threaded-resolver --disable-ldap --disable-ldaps --disable-dict --disable-telet \
- --disable-ftp --disable-tftp --disable-manual --disable-file --without-ssl --without-libidn --enable-ipv6 \
+ --disable-ftp --disable-tftp --disable-manual --disable-file --without-libidn --enable-ipv6 \
  --disable-gopher --disable-imap --disable-pop3 --disable-smtp --disable-rtsp --disable-telnet \
  --without-libssh2 \
  ${MORE_OPTS} && \
