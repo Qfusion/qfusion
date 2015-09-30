@@ -383,8 +383,8 @@ void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color )
 */
 static int CG_CrosshairDimensions( int x, int y, int size, int align, int *sx, int *sy )
 {
-	size = ceilf( size * (float)( cgs.vidHeight / 600.0f ) );
-	size += size & 1; // crosshairs are symmetric, so make their size even
+	// odd sizes look sharper
+	size = ( int )ceilf( size * (float)( cgs.vidHeight / 600.0f ) ) | 1;
 	*sx = CG_HorizontalAlignForWidth( x, align, size );
 	*sy = CG_VerticalAlignForHeight( y, align, size );
 	return size;
