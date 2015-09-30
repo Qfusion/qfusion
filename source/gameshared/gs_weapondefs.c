@@ -422,7 +422,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			35,                             // splash minimum knockback
 
 			//projectile def
-			1200,							// speed
+			1100,							// speed
 			0,								// spread
 			0,                              // v_spread
 
