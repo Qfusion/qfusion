@@ -1925,6 +1925,9 @@ void G_CallVotes_Reset( void )
 {
 	int i;
 
+	if( callvoteState.vote.caller && callvoteState.vote.caller->r.client )
+		callvoteState.vote.caller->r.client->level.callvote_when = game.realtime;
+
 	callvoteState.vote.callvote = NULL;
 	for( i = 0; i < gs.maxclients; i++ )
 		G_CallVotes_ResetClient( i );
