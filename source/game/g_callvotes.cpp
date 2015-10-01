@@ -30,6 +30,7 @@ cvar_t *g_callvote_electpercentage;
 cvar_t *g_callvote_electtime;          // in seconds
 cvar_t *g_callvote_enabled;
 cvar_t *g_callvote_maxchanges;
+cvar_t *g_callvote_cooldowntime;
 
 enum
 {
@@ -2327,6 +2328,12 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 		return;
 	}
 
+	if( !isopcall && ent->r.client->level.callvote_when && 
+		(ent->r.client->level.callvote_when + g_callvote_cooldowntime->integer * 1000 > game.realtime) ) {
+		G_PrintMsg( ent, "%sYou can not call a vote right now\n", S_COLOR_RED, callvote->name );
+		return;
+	}
+
 	//we got a valid type. Get the parameters if any
 	if( callvote->expectedargs != trap_Cmd_Argc()-2 )
 	{
@@ -2363,6 +2370,8 @@ static void G_CallVote( edict_t *ent, bool isopcall )
 	//caller is assumed to vote YES
 	clientVoted[PLAYERNUM( ent )] = VOTED_YES;
 	clientVoteChanges[PLAYERNUM( ent )]--;
+
+	ent->r.client->level.callvote_when = callvoteState.timeout;
 
 	trap_ConfigString( CS_ACTIVE_CALLVOTE, G_CallVotes_String( &callvoteState.vote ) );
 
@@ -2573,6 +2582,7 @@ void G_CallVotes_Init( void )
 	g_callvote_electtime =		trap_Cvar_Get( "g_vote_electtime", "40", CVAR_ARCHIVE );
 	g_callvote_enabled =		trap_Cvar_Get( "g_vote_allowed", "1", CVAR_ARCHIVE );
 	g_callvote_maxchanges =		trap_Cvar_Get( "g_vote_maxchanges", "3", CVAR_ARCHIVE );
+	g_callvote_cooldowntime =	trap_Cvar_Get( "g_vote_cooldowntime", "5", CVAR_ARCHIVE );
 
 	// register all callvotes
 

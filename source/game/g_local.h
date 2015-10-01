@@ -1145,6 +1145,8 @@ typedef struct
 	// team only
 	unsigned int flood_team_when[MAX_FLOOD_MESSAGES];	// when messages were said
 	int flood_team_whenhead;		// head pointer for when said
+
+	unsigned int callvote_when;
 } client_levelreset_t;
 
 typedef struct
