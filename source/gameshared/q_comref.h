@@ -63,8 +63,7 @@ typedef struct usercmd_s
 	uint8_t msec;
 	uint8_t buttons;
 	short angles[3];
-	float forwardfrac, sidefrac, upfrac;
-	short forwardmove, sidemove, upmove;
+	float forwardmove, sidemove, upmove;
 	unsigned int serverTimeStamp;
 } usercmd_t;
 

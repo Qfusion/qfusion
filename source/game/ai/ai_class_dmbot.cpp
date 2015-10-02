@@ -1699,13 +1699,6 @@ static void BOT_DMclass_RunFrame( edict_t *self )
 	ucmd.msec = game.frametime;
 	ucmd.serverTimeStamp = game.serverTime;
 
-	ucmd.forwardfrac = ucmd.forwardmove;
-	clamp( ucmd.forwardfrac, -1, 1 );
-	ucmd.sidefrac = ucmd.sidemove;
-	clamp( ucmd.sidefrac, -1, 1 );
-	ucmd.upfrac = ucmd.upmove;
-	clamp( ucmd.upfrac, -1, 1 );
-
 	ClientThink( self, &ucmd, 0 );
 	self->nextThink = level.time + 1;
 

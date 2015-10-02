@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // g_public.h -- game dll information visible to server
 
-#define	GAME_API_VERSION    48
+#define	GAME_API_VERSION    49
 
 //===============================================================
 
