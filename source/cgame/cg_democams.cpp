@@ -981,9 +981,6 @@ int CG_DemoCam_FreeFly( void )
 		// run frame
 		trap_NET_GetUserCmd( trap_NET_GetCurrentUserCmdNum() - 1, &cmd );
 		cmd.msec = cg.realFrameTime * 1000;
-		cmd.forwardfrac = ( (float)cmd.forwardmove/(float)cmd.msec );
-		cmd.sidefrac = ( (float)cmd.sidemove/(float)cmd.msec );
-		cmd.upfrac = ( (float)cmd.upmove/(float)cmd.msec );
 
 		for( i = 0; i < 3; i++ )
 			moveangles[i] = SHORT2ANGLE( cmd.angles[i] ) + SHORT2ANGLE( freecam_delta_angles[i] );
@@ -991,9 +988,9 @@ int CG_DemoCam_FreeFly( void )
 		AngleVectors( moveangles, forward, right, up );
 		VectorCopy( moveangles, cam_angles );
 
-		fmove = cmd.forwardfrac * SPEED;
-		smove = cmd.sidefrac * SPEED;
-		upmove = cmd.upfrac * SPEED;
+		fmove = cmd.forwardmove * SPEED;
+		smove = cmd.sidemove * SPEED;
+		upmove = cmd.upmove * SPEED;
 		if( cmd.buttons & BUTTON_SPECIAL )
 			maxspeed *= 2;
 
