@@ -45,9 +45,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef PUBLIC_BUILD
-#define APP_PROTOCOL_VERSION			21
+#define APP_PROTOCOL_VERSION			6073
 #else
-#define APP_PROTOCOL_VERSION			6096	// we're using revision number as protocol version for internal builds
+#define APP_PROTOCOL_VERSION			6073
 #endif
 
 #ifdef PUBLIC_BUILD
@@ -98,8 +98,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #ifdef PUBLIC_BUILD
-#define APP_MATCHMAKER_URL				"http://mm.warsow.net:1337"
-#define APP_MATCHMAKER_WEB_URL			"http://www.warsow.net/wmm/"
+#define APP_MATCHMAKER_URL				"https://mm.warsow.net:1337"
+#define APP_MATCHMAKER_WEB_URL			"https://www.warsow.net/wmm/"
 #else
 #define APP_MATCHMAKER_URL				"http://mm-dev.warsow.net:1337"
 #define APP_MATCHMAKER_WEB_URL			"http://www-dev.warsow.net/wmm/"
