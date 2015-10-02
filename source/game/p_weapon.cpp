@@ -335,7 +335,6 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	if( owner && owner->r.client )
 	{
 		power = (float)owner->r.client->ps.inventory[firedef->ammo_id] / (float)firedef->ammo_max;
-		damage *= power;
 		knockback *= power;
 		radius *= power;
 	}
