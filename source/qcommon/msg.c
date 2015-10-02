@@ -775,11 +775,11 @@ void MSG_WriteDeltaUsercmd( msg_t *buf, usercmd_t *from, usercmd_t *cmd )
 	if( cmd->angles[2] != from->angles[2] )
 		bits |= CM_ANGLE3;
 
-	if( cmd->forwardfrac != from->forwardfrac )
+	if( cmd->forwardmove != from->forwardmove )
 		bits |= CM_FORWARD;
-	if( cmd->sidefrac != from->sidefrac )
+	if( cmd->sidemove != from->sidemove )
 		bits |= CM_SIDE;
-	if( cmd->upfrac != from->upfrac )
+	if( cmd->upmove != from->upmove )
 		bits |= CM_UP;
 
 	if( cmd->buttons != from->buttons )
@@ -795,11 +795,11 @@ void MSG_WriteDeltaUsercmd( msg_t *buf, usercmd_t *from, usercmd_t *cmd )
 		MSG_WriteShort( buf, cmd->angles[2] );
 
 	if( bits & CM_FORWARD )
-		MSG_WriteChar( buf, (int)( cmd->forwardfrac * UCMD_PUSHFRAC_SNAPSIZE ) );
+		MSG_WriteChar( buf, (int)( cmd->forwardmove * UCMD_PUSHFRAC_SNAPSIZE ) );
 	if( bits & CM_SIDE )
-		MSG_WriteChar( buf, (int)( cmd->sidefrac * UCMD_PUSHFRAC_SNAPSIZE ) );
+		MSG_WriteChar( buf, (int)( cmd->sidemove * UCMD_PUSHFRAC_SNAPSIZE ) );
 	if( bits & CM_UP )
-		MSG_WriteChar( buf, (int)( cmd->upfrac * UCMD_PUSHFRAC_SNAPSIZE ) );
+		MSG_WriteChar( buf, (int)( cmd->upmove * UCMD_PUSHFRAC_SNAPSIZE ) );
 
 	if( bits & CM_BUTTONS )
 		MSG_WriteByte( buf, cmd->buttons );
@@ -826,11 +826,11 @@ void MSG_ReadDeltaUsercmd( msg_t *msg_read, usercmd_t *from, usercmd_t *move )
 
 	// read movement
 	if( bits & CM_FORWARD )
-		move->forwardfrac = (float)MSG_ReadChar( msg_read )/UCMD_PUSHFRAC_SNAPSIZE;
+		move->forwardmove = (float)MSG_ReadChar( msg_read )/UCMD_PUSHFRAC_SNAPSIZE;
 	if( bits & CM_SIDE )
-		move->sidefrac = (float)MSG_ReadChar( msg_read )/UCMD_PUSHFRAC_SNAPSIZE;
+		move->sidemove = (float)MSG_ReadChar( msg_read )/UCMD_PUSHFRAC_SNAPSIZE;
 	if( bits & CM_UP )
-		move->upfrac = (float)MSG_ReadChar( msg_read )/UCMD_PUSHFRAC_SNAPSIZE;
+		move->upmove = (float)MSG_ReadChar( msg_read )/UCMD_PUSHFRAC_SNAPSIZE;
 
 	// read buttons
 	if( bits & CM_BUTTONS )

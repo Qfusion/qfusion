@@ -1065,10 +1065,6 @@ void SV_ExecuteClientThinks( int clientNum )
 		msec = ucmd->serverTimeStamp - client->UcmdTime;
 		clamp( msec, 1, 200 );
 		ucmd->msec = msec;
-		// convert push fractions to push times
-		ucmd->forwardmove = ucmd->forwardfrac * msec;
-		ucmd->sidemove = ucmd->sidefrac * msec;
-		ucmd->upmove = ucmd->upfrac * msec;
 		timeDelta = 0;
 		if( client->lastframe > 0 )
 			timeDelta = -(int)( svs.gametime - ucmd->serverTimeStamp );

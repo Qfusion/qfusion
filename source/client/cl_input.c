@@ -31,7 +31,7 @@ cvar_t *cl_ucmdTimeNudge;
 extern cvar_t *cl_maxfps;
 
 extern unsigned	sys_frame_time;
-static unsigned keys_frame_time;
+static unsigned ucmd_frame_time;
 
 /*
 ===============================================================================
@@ -497,7 +497,7 @@ static float CL_KeyState( kbutton_t *key )
 		key->downtime = sys_frame_time;
 	}
 
-	val = (float) msec / (float)keys_frame_time;
+	val = (float) msec / (float)ucmd_frame_time;
 
 	return bound( 0, val, 1 );
 }
@@ -637,16 +637,13 @@ static void CL_AddMovementFromKeys( vec3_t movement )
 */
 void CL_UpdateCommandInput( void )
 {
-	static unsigned old_keys_frame_time;
+	static unsigned old_ucmd_frame_time;
 	usercmd_t *cmd = &cl.cmds[cls.ucmdHead & CMD_MASK];
-	vec3_t movement;
 
 	if( cl.inputRefreshed )
 		return;
 
-	keys_frame_time = ( sys_frame_time - old_keys_frame_time ) & 255;
-
-	VectorSet( movement, 0.0f, 0.0f, 0.0f );
+	ucmd_frame_time = sys_frame_time - old_ucmd_frame_time;
 
 	// always let the mouse refresh cl.viewangles
 	IN_MouseMove( cmd );
@@ -654,27 +651,27 @@ void CL_UpdateCommandInput( void )
 	if( cls.key_dest == key_game )
 		CL_GameModule_AddViewAngles( cl.viewangles, cls.realframetime, cl_flip->integer != 0 );
 
-	if( keys_frame_time )
+	if( ucmd_frame_time )
 	{
-		cmd->msec += keys_frame_time;
-
-		CL_AddAnglesFromKeys( keys_frame_time );
-		CL_AddMovementFromKeys( movement );
-		if( cls.key_dest == key_game )
-			CL_GameModule_AddMovement( movement );
-
-		cmd->sidemove += keys_frame_time * bound( -1.0f, movement[0], 1.0f ) * (cl_flip->integer ? -1.0 : 1.0);
-		cmd->forwardmove += keys_frame_time * bound( -1.0f, movement[1], 1.0f );
-		cmd->upmove += keys_frame_time * bound( -1.0f, movement[2], 1.0f );
-
-		old_keys_frame_time = sys_frame_time;
+		cmd->msec += ucmd_frame_time;
+		CL_AddAnglesFromKeys( ucmd_frame_time );
+		old_ucmd_frame_time = sys_frame_time;
 	}
 
 	if( cmd->msec )
 	{
-		cmd->forwardfrac = ( (float)cmd->forwardmove/(float)cmd->msec );
-		cmd->sidefrac = ( (float)cmd->sidemove/(float)cmd->msec );
-		cmd->upfrac = ( (float)cmd->upmove/(float)cmd->msec );
+		vec3_t movement;
+
+		VectorSet( movement, 0.0f, 0.0f, 0.0f );
+
+		if( ucmd_frame_time )
+			CL_AddMovementFromKeys( movement );
+		if( cls.key_dest == key_game )
+			CL_GameModule_AddMovement( movement );
+
+		cmd->sidemove = bound( -1.0f, movement[0], 1.0f ) * ( cl_flip->integer ? -1.0f : 1.0f );
+		cmd->forwardmove = bound( -1.0f, movement[1], 1.0f );
+		cmd->upmove = bound( -1.0f, movement[2], 1.0f );
 	}
 
 	cmd->angles[0] = ANGLE2SHORT( cl.viewangles[0] );
@@ -1040,9 +1037,9 @@ void CL_NewUserCommand( int realmsec )
 	cl.cmd_time[cl.cmdNum & CMD_MASK] = cls.realtime;
 
 	// snap push fracs so client and server version match
-	ucmd->forwardfrac = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->forwardfrac ) ) / UCMD_PUSHFRAC_SNAPSIZE;
-	ucmd->sidefrac = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->sidefrac ) ) / UCMD_PUSHFRAC_SNAPSIZE;
-	ucmd->upfrac = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->upfrac ) ) / UCMD_PUSHFRAC_SNAPSIZE;
+	ucmd->forwardmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->forwardmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
+	ucmd->sidemove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->sidemove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
+	ucmd->upmove = ( (int)( UCMD_PUSHFRAC_SNAPSIZE * ucmd->upmove ) ) / UCMD_PUSHFRAC_SNAPSIZE;
 
 	if( cl.cmdNum > 0 )
 		ucmd->msec = ucmd->serverTimeStamp - cl.cmds[( cl.cmdNum-1 ) & CMD_MASK].serverTimeStamp;

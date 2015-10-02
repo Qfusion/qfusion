@@ -1899,9 +1899,9 @@ void Pmove( pmove_t *pmove )
 			pm->playerState->pmove.stats[PM_STAT_FWDTIME] = 0;
 	}
 
-	pml.forwardPush = pm->cmd.forwardfrac * SPEEDKEY;
-	pml.sidePush = pm->cmd.sidefrac * SPEEDKEY;
-	pml.upPush = pm->cmd.upfrac * SPEEDKEY;
+	pml.forwardPush = pm->cmd.forwardmove * SPEEDKEY;
+	pml.sidePush = pm->cmd.sidemove * SPEEDKEY;
+	pml.upPush = pm->cmd.upmove * SPEEDKEY;
 
 	if( pm->playerState->pmove.stats[PM_STAT_NOUSERCONTROL] > 0 )
 	{
