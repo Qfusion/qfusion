@@ -125,11 +125,11 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			false,							// smooth refire
 
 			//damages
-			50,								// damage
-			0.8,							// selfdamage ratio
+			40,								// damage
+			1.0,							// selfdamage ratio
 			80,							// knockback
 			0,								// stun
-			90,								// splash radius
+			80,								// splash radius
 			8,								// splash minimum damage
 			10,                             // splash minimum knockback
 
