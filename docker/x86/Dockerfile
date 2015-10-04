@@ -1,11 +1,11 @@
 FROM 32bit/debian:jessie
 MAINTAINER Victor Luchits <vluchits@gmail.com>
-COPY qfusion-dev_0.2_all.deb /opt/
+COPY qfusion-dev_0.3_all.deb /opt/
 RUN apt-get update && apt-get install -y \
     gdebi-core \
     git \
     sudo && \
-    gdebi -n /opt/qfusion-dev_0.2_all.deb
+    gdebi -n /opt/qfusion-dev_0.3_all.deb
 RUN groupadd -g 1066 buildbot && useradd -u 1066 -g 1066 -r -m buildbot
 VOLUME /home/buildbot/tar_gz
 USER buildbot
