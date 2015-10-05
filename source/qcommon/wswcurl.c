@@ -638,6 +638,7 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 		CURLSETOPT( curl, res, CURLOPT_INTERFACE, ( void * )iface );
 	}
 	CURLSETOPT( curl, res, CURLOPT_SSL_VERIFYPEER, 0 );
+	CURLSETOPT( curl, res, CURLOPT_SSL_VERIFYHOST, 0 );
 
 	if( developer->integer ) {
 		CURLSETOPT( curl, res, CURLOPT_DEBUGFUNCTION, &wswcurl_debug_callback );
