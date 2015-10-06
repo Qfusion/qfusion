@@ -354,14 +354,6 @@ bool ServerInfo::DefaultCompareBinary( const ServerInfo *lhs, const ServerInfo *
 // add a query to the waiting line
 void ServerInfoFetcher::addQuery( const char *adr )
 {
-//	Com_Printf("addQuery %s\n", adr );
-//	if( numQueries() < MAX_QUERIES )
-//	{
-//		startQuery( adr );
-//		return;
-//	}
-
-	// else
 	serverQueue.push( adr );
 }
 
@@ -374,9 +366,6 @@ void ServerInfoFetcher::queryDone( const char *adr )
 
 	if( it != activeQueries.end() )
 		activeQueries.erase( it );
-
-	// this slot will be filled in update
-	// Com_Printf("queryDone %s\n", adr );
 }
 
 // stop the whole process
@@ -428,8 +417,6 @@ void ServerInfoFetcher::startQuery( const std::string &adr )
 
 	// execute command to initiate the query
 	trap::Cmd_ExecuteText( EXEC_APPEND, va( "pingserver %s\n", adr.c_str() ) );
-
-//	Com_Printf("startQuery: %s\n", adr.c_str() );
 }
 
 //=====================================
@@ -461,9 +448,6 @@ ServerBrowserDataSource::~ServerBrowserDataSource()
 // override rocket methods
 void ServerBrowserDataSource::GetRow( StringList &row, const String &table, int row_index, const StringList &columns )
 {
-	// DEBUG
-	// Com_Printf("ServerBrowserDataSource::GetRow %s %d ..\n", table.CString(), row_index );
-
 	if( referenceListMap.find( table ) == referenceListMap.end() ) 
 		return;
 
@@ -626,15 +610,12 @@ void ServerBrowserDataSource::updateFrame()
 			}
 		}
 		lastUpdateTime = trap::Milliseconds();
-	}
 
-	//if( numNotifies )
-	//	Com_Printf("ServerBrowser::updateFrame %d notifies\n", numNotifies );
-
-	if( active && fetcher.numActive() == 0 && fetcher.numWaiting() == 0 && fetcher.numIssued() > 0 && !referenceListMap.empty() ) {
-		active = false;
-		lastActiveTime = trap::Milliseconds();
-		compileSuggestionsList();
+		if( active && fetcher.numActive() == 0 && fetcher.numWaiting() == 0 && fetcher.numIssued() > 0 ) {
+			active = false;
+			lastActiveTime = trap::Milliseconds();
+			compileSuggestionsList();
+		}
 	}
 }
 
@@ -652,8 +633,19 @@ void ServerBrowserDataSource::startFullUpdate( void )
 	// 		requestservers global dpmaster.deathmask.net Warsow full empty
 	// TODO: implement proper use of filters...
 	
-	// might not want to do this?
+
+	for( ReferenceListMap::iterator it = referenceListMap.begin(); it != referenceListMap.end(); ++it ) {
+		ReferenceList &referenceList = it->second;
+
+		size_t size = referenceList.size();
+		if( size > 0 ) {
+			referenceList.clear();
+			NotifyRowRemove( it->first, 0, size );
+		}
+	}
+
 	serverList.clear();
+	referenceQueue.clear();
 
 	std::vector<std::string> masterServers;
 	tokenize( trap::Cvar_String("masterservers"), ' ', masterServers );
@@ -666,17 +658,6 @@ void ServerBrowserDataSource::startFullUpdate( void )
 
 	// query for LAN servers too
 	trap::Cmd_ExecuteText( EXEC_APPEND, "requestservers local full empty\n" );
-
-	ReferenceListMap referenceListMapCopy = referenceListMap;
-	referenceListMap.clear();
-
-	for( ReferenceListMap::iterator it = referenceListMapCopy.begin(); it != referenceListMapCopy.end(); ++it ) {
-		size_t size = it->second.size();
-		if( size > 0 ) {
-			it->second.clear();
-			NotifyRowRemove( it->first, 0, size );
-		}
-	}	
 }
 
 // callback from client propagates to here
@@ -685,7 +666,7 @@ void ServerBrowserDataSource::addToServerList( const char *adr, const char *info
 	// check if user has canceled the update
 	if( !active ) {
 		return;
-	}	
+	}
 
 	// TODO: hint for the address. If previous address matches this address
 	// use that previous iterator as a hint for the insert function!
@@ -720,8 +701,6 @@ void ServerBrowserDataSource::addToServerList( const char *adr, const char *info
 				removeServerFromTable( serverInfo, TABLE_NAME_FAVORITES );
 			}
 
-			// and finally from the main list
-			serverList.erase( it_inserted.first );
 			return;
 		}
 		else
@@ -743,9 +722,6 @@ void ServerBrowserDataSource::addToServerList( const char *adr, const char *info
 
 		// process the string fields
 		serverInfo.fixStrings();
-
-		// Com_Printf( it_inserted.second ? "Inserting " : "Changing " );
-		// DEBUG_PRINT_SERVERINFO( serverInfo );
 
 		FavoritesList::const_iterator it = favorites.find( serverInfo.iaddress );
 		if( it != favorites.end() ) {
@@ -808,6 +784,9 @@ void ServerBrowserDataSource::compileSuggestionsList( void )
 			if( info->ping > 120 ) {
 				continue;
 			}
+			if( info->ping_retries >= MAX_RETRIES ) {
+				continue;
+			}
 
 			bool insertInfo = false;
 			ReferenceListMap::iterator gtBest = gtServers.find( gametype );
@@ -833,11 +812,17 @@ void ServerBrowserDataSource::compileSuggestionsList( void )
 	// compile the final list sorted by player count in descending order
 	for( std::map<String, ReferenceListMap>::iterator it = suggestedServers.begin(); it != suggestedServers.end(); ++it ) {
 		ReferenceListMap &gtServers = it->second;
+
+		if( gtServers.empty() ) {
+			continue;
+		}
+
 		for( ReferenceListMap::iterator it_ = gtServers.begin(); it_ != gtServers.end(); ++it_ ) {
 			ServerInfo *gtBestInfo = *(it_->second).begin();
 			ReferenceList &referenceList = referenceListMap[it->first];
 			referenceList.insert( lower_bound( referenceList, gtBestInfo, ServerInfo::DefaultCompareBinary ), gtBestInfo );
 		}
+
 		NotifyRowChange( it->first );
 	}
 }
