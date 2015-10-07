@@ -837,6 +837,8 @@ void CG_DrawTeamMates( void )
 
 	for( i = 0; i < gs.maxclients; i++ )
 	{
+		cgs_media_handle_t *media;
+
 		if( !cgs.clientInfo[i].name[0] || ISVIEWERENTITY( i + 1 ) )
 			continue;
 
@@ -873,10 +875,15 @@ void CG_DrawTeamMates( void )
 		
 		CG_TeamColor( cg.predictedPlayerState.stats[STAT_TEAM], color );
 
+		if( cent->current.effects & EF_CARRIER )
+			media = cgs.media.shaderTeamCarrierIndicator;
+		else
+			media = cgs.media.shaderTeamMateIndicator;
+
 		trap_R_DrawStretchPic( coords[0],
 			coords[1],
 			16, 16, 0, 0, 1, 1,
-			color, CG_MediaShader( cgs.media.shaderTeamMateIndicator ) );
+			color, CG_MediaShader( media ) );
 	}
 }
 
