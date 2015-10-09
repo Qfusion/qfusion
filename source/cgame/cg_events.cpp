@@ -1437,7 +1437,25 @@ void CG_EntityEvent( entity_state_t *ent, int ev, int parm, bool predicted )
 			CG_ResetColorBlend();
 			CG_ResetDamageIndicator();
 		}
-		// fallthrough
+
+		if( ISVIEWERENTITY( ent->ownerNum ) )
+		{
+			trap_S_StartGlobalSound( CG_MediaSfx( cgs.media.sfxPlayerRespawn ), CHAN_AUTO,
+				cg_volume_effects->value );
+		}
+		else
+		{
+			trap_S_StartFixedSound( CG_MediaSfx( cgs.media.sfxPlayerRespawn ), ent->origin, CHAN_AUTO,
+				cg_volume_effects->value, ATTN_NORM );
+		}
+
+		if( ent->ownerNum && ent->ownerNum < gs.maxclients + 1 )
+		{
+			cg_entities[ent->ownerNum].localEffects[LOCALEFFECT_EV_PLAYER_TELEPORT_IN] = cg.time;
+			VectorCopy( ent->origin, cg_entities[ent->ownerNum].teleportedTo );
+		}
+		break;
+
 	case EV_PLAYER_TELEPORT_IN:
 		if( ISVIEWERENTITY( ent->ownerNum ) )
 		{
