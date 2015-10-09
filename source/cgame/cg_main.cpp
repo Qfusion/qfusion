@@ -1145,6 +1145,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	cgs.hasGametypeMenu = false; // this will update as soon as we receive configstrings
 	cgs.gameMenuRequested = !gameStart;
 
+	trap_Cmd_ExecuteText( EXEC_APPEND, "menu_quick 0\n" );
+
 	CG_RegisterVariables();
 	CG_InitTemporaryBoneposesCache();
 	CG_PModelsInit();

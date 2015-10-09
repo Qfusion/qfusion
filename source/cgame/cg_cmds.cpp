@@ -787,6 +787,33 @@ static void CG_SC_MenuCustom( void )
 }
 
 /*
+* CG_SC_MenuQuick
+*/
+static void CG_SC_MenuQuick( void )
+{
+	char request[MAX_STRING_CHARS];
+	int i, c;
+
+	if( cgs.demoPlaying || cgs.tv )
+		return;
+
+	if( trap_Cmd_Argc() < 2 ) {
+		trap_Cmd_ExecuteText( EXEC_APPEND, "menu_quick 0\n" );
+		return;
+	}
+
+	Q_strncpyz( request, "menu_quick game_quick ", sizeof( request ) );
+	
+	for( i = 1, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ )
+	{
+		Q_strncatz( request, va( "btn%i \"%s\" ", c, trap_Cmd_Argv( i ) ), sizeof( request ) );
+		Q_strncatz( request, va( "cmd%i \"cmd %s\" ", c, trap_Cmd_Argv( i + 1 ) ), sizeof( request ) );
+	}
+
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "%s\n", request ) );
+}
+
+/*
 * CG_SC_MenuOpen
 */
 static void CG_SC_MenuOpen_( bool modal )
@@ -872,6 +899,7 @@ static const svcmd_t cg_svcmds[] =
 	{ "memo", CG_SC_MenuModal },
 	{ "motd", CG_SC_MOTD },
 	{ "aw", CG_SC_AddAward },
+	{ "qm", CG_SC_MenuQuick },
 
 	{ NULL }
 };

@@ -606,6 +606,40 @@ void Key_MouseEvent( int key, bool down, unsigned time )
 }
 
 /*
+* Key_NumPadKeyValue
+*
+* Translates numpad keys into 0-9, if possible.
+*/
+static int Key_NumPadKeyValue( int key )
+{
+	switch( key ) {
+		case KP_HOME:
+			return '7';
+		case KP_UPARROW:
+			return '8';
+		case KP_PGUP:
+			return '9';
+		case KP_LEFTARROW:
+			return '4';
+		case KP_5:
+			return '5';
+		case KP_RIGHTARROW:
+			return '6';
+		case KP_END:
+			return '1';
+		case KP_DOWNARROW:
+			return '2';
+		case KP_PGDN:
+			return '3';
+		case KP_INS:
+			return '0';
+		default:
+			break;
+	}
+	return key;
+}
+
+/*
 * Key_Event
 * 
 * Called by the system between frames for both key up and key down events
@@ -616,6 +650,8 @@ void Key_Event( int key, bool down, unsigned time )
 	char *kb;
 	char cmd[1024];
 	bool handled = false;
+	int numkey = Key_NumPadKeyValue( key );
+	bool numeric = numkey >= '0' && numkey <='9';
 
 	// update auto-repeat status
 	if( down )
@@ -708,7 +744,7 @@ void Key_Event( int key, bool down, unsigned time )
 	//
 	if( ( cls.key_dest == key_menu && menubound[key] )
 		|| ( cls.key_dest == key_console && !consolekeys[key] )
-		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) )
+		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) && (!cls.quickmenu || !numeric) )
 		|| ( cls.key_dest == key_message && ( key >= K_F1 && key <= K_F15 ) ) )
 	{
 		kb = keybindings[key];
@@ -773,6 +809,15 @@ void Key_Event( int key, bool down, unsigned time )
 		Con_MessageKeyDown( key );
 		break;
 	case key_game:
+		if( cls.quickmenu && numeric ) {
+			if( cls.quickmenu == 1 || key != numkey ) {
+				if( down )
+					CL_UIModule_KeydownQuick( numkey );
+				else
+					CL_UIModule_KeyupQuick( numkey );
+				break;
+			}
+		}
 	case key_console:
 		Con_KeyDown( key );
 		break;

@@ -104,7 +104,7 @@ public:
 						// pop the top document
 						stack->popDocument();
 					}
-					else {
+					else if( stack->getContextId() == UI_CONTEXT_MAIN ) {
 						// hide all documents
 						UI_Main::Get()->showUI( false );
 					}

@@ -1147,6 +1147,8 @@ typedef struct
 	int flood_team_whenhead;		// head pointer for when said
 
 	unsigned int callvote_when;
+
+	char quickMenuItems[1024];
 } client_levelreset_t;
 
 typedef struct

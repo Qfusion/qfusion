@@ -141,6 +141,16 @@ void BindEvent( ASInterface *as )
 
 	ASBind::Enum( as->getEngine(), "eInputKey" )
 		( "KI_ESCAPE", Input::KI_ESCAPE )
+		( "KI_0", Input::KI_0 )
+		( "KI_1", Input::KI_1 )
+		( "KI_2", Input::KI_2 )
+		( "KI_3", Input::KI_3 )
+		( "KI_4", Input::KI_4 )
+		( "KI_5", Input::KI_5 )
+		( "KI_6", Input::KI_6 )
+		( "KI_7", Input::KI_7 )
+		( "KI_8", Input::KI_8 )
+		( "KI_9", Input::KI_9 )
 	;
 
 	// reference (without factory)

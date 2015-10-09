@@ -55,6 +55,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	playerModels(0), tvchannels(0), ircchannels(0), gameajax(0),
 
 	// other members
+	quickMenuURL(""),
 	mousex(0), mousey(0), gameProtocol(protocol),
 	menuVisible(false), forceMenu(false), showNavigationStack(false),
 	serverName(""), rejectMessage(""), demoExtension(demoExtension),
@@ -91,7 +92,8 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 
 	createDataSources();
 	createFormatters();
-	createStack();
+	createStack( UI_CONTEXT_MAIN );
+	createStack( UI_CONTEXT_QUICK );
 
 	streamCache = __new__( StreamCache )();
 
@@ -118,6 +120,7 @@ UI_Main::UI_Main( int vidWidth, int vidHeight, float pixelRatio,
 	trap::Cmd_AddCommand( "menu_open", M_Menu_Open_f );
 	trap::Cmd_AddCommand( "menu_modal", M_Menu_Modal_f );
 	trap::Cmd_AddCommand( "menu_close", M_Menu_Close_f );
+	trap::Cmd_AddCommand( "menu_quick", M_Menu_Quick_f );
 
 	trap::Cmd_AddCommand( "menu_tvchannel_add", &M_Menu_AddTVChannel_f );
 	trap::Cmd_AddCommand( "menu_tvchannel_remove", &M_Menu_RemoveTVChannel_f );
@@ -172,27 +175,31 @@ void UI_Main::shutdownAS( void )
 	asmodule = NULL;
 }
 
-Rocket::Core::Context *UI_Main::getRocketContext( void )
-{
-	return rocketModule->getContext();
-}
 
 void UI_Main::preloadUI( void )
 {
-	NavigationStack *navigator = navigation.front();
+	int i;
+	NavigationStack *navigator;
 
-	while( !navigation.empty() ) {
-		NavigationStack *stack = navigation.front();
-		navigation.pop_front();
+	for( i = 0; i < UI_NUM_CONTEXTS; i++ ) {
+		UI_Navigation &navigation = navigations[i];
+		navigator = navigation.front();
 
-		// clear the navigation stack
-		stack->popAllDocuments();
-		if( stack != navigator ) {
-			__delete__( stack );
+		while( !navigation.empty() ) {
+			NavigationStack *stack = navigation.front();
+			navigation.pop_front();
+
+			// clear the navigation stack
+			stack->popAllDocuments();
+			if( stack != navigator ) {
+				__delete__( stack );
+			}
 		}
-	}
 
-	navigation.push_front(navigator);
+		navigation.push_front( navigator );
+
+		navigator->setDefaultPath( ui_basepath->string );
+	}
 
 	// load translation strings
 
@@ -204,7 +211,8 @@ void UI_Main::preloadUI( void )
 	// load strings provided by the theme: e.g. ui/l10n/porkui
 
 	// initialize with default document
-	navigator->setDefaultPath( ui_basepath->string );
+
+	navigator = navigations[UI_CONTEXT_MAIN].front();
 
 	String l10nLocalPath( navigator->getDefaultPath().c_str() );
 	l10nLocalPath += "l10n";
@@ -217,9 +225,14 @@ void UI_Main::preloadUI( void )
 
 	// initial cursor setup
 	if( trap::IN_SupportedDevices() & IN_DEVICE_TOUCHSCREEN ) {
-		mouseMove( 0, 0, true, false );
+		mouseMove( UI_CONTEXT_MAIN, 0, 0, true, false );
 	} else {
-		mouseMove( refreshState.width >> 1, refreshState.height >> 1, true, true );
+		mouseMove( UI_CONTEXT_MAIN, refreshState.width >> 1, refreshState.height >> 1, true, true );
+	}
+
+	if( !quickMenuURL.Empty() ) {
+		navigator = navigations[UI_CONTEXT_QUICK].front();
+		navigator->pushDocument( quickMenuURL.CString(), false );
 	}
 
 	rocketModule->update();
@@ -227,21 +240,26 @@ void UI_Main::preloadUI( void )
 
 void UI_Main::reloadUI( void )
 {
-	NavigationStack *navigator = navigation.front();
+	int i;
 
-	while( !navigation.empty() ) {
-		NavigationStack *stack = navigation.front();
-		navigation.pop_front();
+	for( i = 0; i < UI_NUM_CONTEXTS; i++ ) {
+		UI_Navigation &navigation = navigations[i];
+		NavigationStack *navigator = navigation.front();
 
-		// clear the navigation stack
-		stack->popAllDocuments();
-		stack->getCache()->clearCaches();
-		if( stack != navigator ) {
-			__delete__( stack );
+		while( !navigation.empty() ) {
+			NavigationStack *stack = navigation.front();
+			navigation.pop_front();
+
+			// clear the navigation stack
+			stack->popAllDocuments();
+			stack->getCache()->clearCaches();
+			if( stack != navigator ) {
+				__delete__( stack );
+			}
 		}
-	}
 
-	navigation.push_front(navigator);
+		navigation.push_front( navigator );
+	}
 
 	if( serverBrowser ) {
 		serverBrowser->stopUpdate();
@@ -269,7 +287,8 @@ void UI_Main::loadCursor( void )
 	basecursor += "/";
 	basecursor += ui_cursor->string;
 
-	rocketModule->loadCursor( basecursor.c_str() );
+	rocketModule->loadCursor( UI_CONTEXT_MAIN, basecursor.c_str() );
+	//rocketModule->loadCursor( UI_CONTEXT_QUICK, basecursor.c_str() );
 }
 
 bool UI_Main::initRocket( void )
@@ -291,10 +310,15 @@ void UI_Main::unregisterRocketCustoms( void )
 
 void UI_Main::shutdownRocket( void )
 {
-	for (UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it) {
-		// clear the navigation stack
-		(*it)->popAllDocuments();
-		(*it)->getCache()->clearCaches();
+	int i;
+
+	for( i = 0; i < UI_NUM_CONTEXTS; i++ ) {
+		UI_Navigation &navigation = navigations[i];
+		for( UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it ) {
+			// clear the navigation stack
+			(*it)->popAllDocuments();
+			(*it)->getCache()->clearCaches();
+		}
 	}
 
 	// forget about all previously registed shaders
@@ -303,10 +327,13 @@ void UI_Main::shutdownRocket( void )
 	destroyDataSources();
 	destroyFormatters();
 
-	while( !navigation.empty() ) {
-		NavigationStack *stack = navigation.front();
-		__SAFE_DELETE_NULLIFY( stack );
-		navigation.pop_front();
+	for( i = 0; i < UI_NUM_CONTEXTS; i++ ) {
+		UI_Navigation &navigation = navigations[i];
+		while( !navigation.empty() ) {
+			NavigationStack *stack = navigation.front();
+			__SAFE_DELETE_NULLIFY( stack );
+			navigation.pop_front();
+		}
 	}
 
 	__SAFE_DELETE_NULLIFY( rocketModule );
@@ -322,11 +349,16 @@ void UI_Main::clearShaderCache( void )
 
 void UI_Main::touchAllCachedShaders( void )
 {
+	int i;
 	if( rocketModule != NULL ) {
 		rocketModule->touchAllCachedShaders();
 	}
-	for (UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it) {
-		(*it)->invalidateAssets();
+
+	for( i = 0; i < UI_NUM_CONTEXTS; i++ ) {
+		UI_Navigation &navigation = navigations[i];
+		for( UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it ) {
+			(*it)->invalidateAssets();
+		}
 	}
 }
 
@@ -335,14 +367,17 @@ void UI_Main::flushAjaxCache( void )
 	this->invalidateAjaxCache = true;
 }
 
-NavigationStack *UI_Main::createStack( void )
+NavigationStack *UI_Main::createStack( int contextId )
 {
-	NavigationStack *stack = __new__( NavigationStack )();
+	NavigationStack *stack = __new__( NavigationStack )( contextId );
 	if( !stack ) {
 		return NULL;
 	}
+	if( contextId < 0 || contextId >= UI_NUM_CONTEXTS ) {
+		return NULL;
+	}
 	stack->setDefaultPath( ui_basepath->string );
-	navigation.push_back( stack );
+	navigations[contextId].push_back( stack );
 	return stack;
 }
 
@@ -417,9 +452,17 @@ void UI_Main::showUI( bool show )
 	trap::CL_SetKeyDest( show ? key_menu : key_game );
 
 	if( !show ) {
+		UI_Navigation &navigation = navigations[UI_CONTEXT_MAIN];
 		NavigationStack *navigator = navigation.front();
 		navigator->popAllDocuments();
+
+		rocketModule->hideCursor( UI_CONTEXT_MAIN, RocketModule::HIDECURSOR_REFRESH, 0 );
 	}
+}
+
+void UI_Main::showQuickMenu( bool show )
+{
+	quickMenuVisible = show;
 }
 
 void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessage, 
@@ -435,6 +478,7 @@ void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessa
 	this->rejectMessage = rejectMessage ? rejectMessage : "";
 	this->downloadInfo = dlinfo;
 
+	UI_Navigation &navigation = navigations[UI_CONTEXT_MAIN];
 	NavigationStack *navigator = navigation.front();
 	navigator->pushDocument( ui_connectscreen, false, true );
 
@@ -489,7 +533,7 @@ void UI_Main::gamepadStickCursorMove( float frameTime )
 	int mx = ( int )x, my = ( int )y;
 	x -= ( float )mx;
 	y -= ( float )my;
-	mouseMove( mx, my, false, true );
+	mouseMove( UI_CONTEXT_MAIN, mx, my, false, true );
 }
 
 void UI_Main::gamepadDpadCursorMove( float frameTime )
@@ -528,7 +572,7 @@ void UI_Main::gamepadDpadCursorMove( float frameTime )
 	int mx = ( int )x, my = ( int )y;
 	x -= ( float )mx;
 	y -= ( float )my;
-	mouseMove( mx, my, false, true );
+	mouseMove( UI_CONTEXT_MAIN, mx, my, false, true );
 }
 
 void UI_Main::gamepadCursorMove( void )
@@ -558,7 +602,7 @@ void UI_Main::gamepadCursorMove( void )
 
 // CALLBACKS FROM MAIN PROGRAM
 
-void UI_Main::mouseMove( int x, int y, bool absolute, bool showCursor )
+void UI_Main::mouseMove( int contextId, int x, int y, bool absolute, bool showCursor )
 {
 	// change the delta to window coordinates.
 	if( absolute ) {
@@ -578,35 +622,34 @@ void UI_Main::mouseMove( int x, int y, bool absolute, bool showCursor )
 	else if( mousey > refreshState.height )
 		mousey = refreshState.height;
 
-	rocketModule->mouseMove( mousex, mousey );
+	rocketModule->mouseMove( contextId, mousex, mousey );
 
 	if( showCursor ) {
-		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_INPUT );
+		rocketModule->hideCursor( contextId, 0, RocketModule::HIDECURSOR_INPUT );
 	} else {
-		rocketModule->hideCursor( RocketModule::HIDECURSOR_INPUT, 0 );
+		rocketModule->hideCursor( contextId, RocketModule::HIDECURSOR_INPUT, 0 );
 	}
 }
 
-void UI_Main::textInput( wchar_t c )
+void UI_Main::textInput( int contextId, wchar_t c )
 {
-	// context->ProcessTextInput( c );
-	rocketModule->textInput( c );
+	rocketModule->textInput( contextId, c );
 }
 
-void UI_Main::keyEvent( int key, bool pressed )
+void UI_Main::keyEvent( int contextId, int key, bool pressed )
 {
 	// TODO: handle some special keys here?
-	rocketModule->keyEvent( key, pressed );
+	rocketModule->keyEvent( contextId, key, pressed );
 }
 
-void UI_Main::touchEvent( int id, touchevent_t type, int x, int y )
+void UI_Main::touchEvent( int contextId, int id, touchevent_t type, int x, int y )
 {
-	rocketModule->touchEvent( id, type, x, y );
+	rocketModule->touchEvent( contextId, id, type, x, y );
 }
 
-void UI_Main::cancelTouches( void )
+void UI_Main::cancelTouches( int contextId )
 {
-	rocketModule->cancelTouches();
+	rocketModule->cancelTouches( contextId );
 }
 
 void UI_Main::addToServerList(const char *adr, const char *info)
@@ -617,7 +660,7 @@ void UI_Main::addToServerList(const char *adr, const char *info)
 	serverBrowser->addToServerList( adr, info );
 }
 
-void UI_Main::forceMenuOff(void)
+void UI_Main::forceMenuOff( void )
 {
 	forceUI( false );
 	showUI( false );
@@ -632,6 +675,7 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	bool demoPlaying, const char *demoName, bool demoPaused, unsigned int demoTime, 
 	bool backGround, bool showCursor )
 {
+	int i;
 	UI_Navigation::iterator it, it_next;
 
 	refreshState.time = time;
@@ -648,6 +692,7 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 
 	// postponed showing of the stacked document, we need to set the refresh state first
 	if( showNavigationStack ) {
+		UI_Navigation &navigation = navigations[UI_CONTEXT_MAIN];
 		NavigationStack *navigator = navigation.front();
 		navigator->showStack( true );
 		showNavigationStack = false;
@@ -674,45 +719,57 @@ void UI_Main::refreshScreen( unsigned int time, int clientState, int serverState
 	// run incremental garbage collection
 	asmodule->garbageCollectOneStep();
 
-	NavigationStack *navigator = navigation.front();
+	for( i = 0; i < UI_NUM_CONTEXTS; i++ ) {
+		UI_Navigation &navigation = navigations[i];
+		NavigationStack *navigator = navigation.front();
 
-	// free empty navigation stacks
-	for( it = navigation.begin(); it != navigation.end(); it = it_next ) {
-		it_next = it;
-		it_next++;
+		// free empty navigation stacks
+		for( it = navigation.begin(); it != navigation.end(); it = it_next ) {
+			it_next = it;
+			it_next++;
 
-		NavigationStack *stack = *it;
-		if( stack != navigator && stack->empty() ) {
-			__delete__( stack );
-			navigation.erase( it );
+			NavigationStack *stack = *it;
+			if( stack != navigator && stack->empty() ) {
+				__delete__( stack );
+				navigation.erase( it );
+			}
 		}
 	}
 
-	if( !menuVisible ) {
-		return;
-	}
-
-	if( !navigator->hasDocuments() ) {
-		// no documents on stack, release the key dest
-		showUI( false );
-		return;
-	}
-
-	if( showCursor ) { 
-		rocketModule->hideCursor( 0, RocketModule::HIDECURSOR_REFRESH );
-		gamepadCursorMove();
-	}
-	else {
-		rocketModule->hideCursor( RocketModule::HIDECURSOR_REFRESH, 0 );
+	// handle main menu context
+	if( menuVisible ) {
+		NavigationStack *navigator = navigations[UI_CONTEXT_MAIN].front();
+		if( !navigator->hasDocuments() ) {
+			// no documents on stack, release the key dest
+			showUI( false );
+		}
+		else {
+			if( showCursor ) { 
+				rocketModule->hideCursor( UI_CONTEXT_MAIN, 0, RocketModule::HIDECURSOR_REFRESH );
+				gamepadCursorMove();
+			}
+			else {
+				rocketModule->hideCursor( UI_CONTEXT_MAIN, RocketModule::HIDECURSOR_REFRESH, 0 );
+			}
+		}
 	}
 
 	// rocket update+render
 	rocketModule->update();
-	rocketModule->render();
+
+	if( quickMenuVisible ) {
+		rocketModule->render( UI_CONTEXT_QUICK );
+	}
+	if( menuVisible ) {
+		rocketModule->render( UI_CONTEXT_MAIN );
+	}
 
 	// mark the top stack document as viwed for history tracking
-	for( it = navigation.begin(); it != navigation.end(); ++it ) {
-		(*it)->markTopAsViewed();
+	for( i = 0; i < UI_NUM_CONTEXTS; i++ ) {
+		UI_Navigation &navigation = navigations[i];
+		for( it = navigation.begin(); it != navigation.end(); ++it ) {
+			(*it)->markTopAsViewed();
+		}
 	}
 
 	// stuff we need to render without using rocket
@@ -769,7 +826,7 @@ void UI_Main::M_Menu_Force_f( void )
 
 	//Com_Printf("UI_Main::M_Menu_Force_F..\n");
 
-	NavigationStack *nav = self->navigation.front();
+	NavigationStack *nav = self->navigations[UI_CONTEXT_MAIN].front();
 	if( !nav )
 		return;
 
@@ -808,7 +865,7 @@ void UI_Main::M_Menu_Open_Cmd_f_( bool modal )
 	Rocket::Core::String urlString = url.GetURL();
 	//Com_Printf( "UI_Main::M_Menu_Open_f %s\n", urlString.CString() );
 
-	NavigationStack *nav = self->navigation.front();
+	NavigationStack *nav = self->navigations[UI_CONTEXT_MAIN].front();
 	if( !nav )
 		return;
 
@@ -824,6 +881,45 @@ void UI_Main::M_Menu_Open_f( void )
 void UI_Main::M_Menu_Modal_f( void )
 {
 	M_Menu_Open_Cmd_f_( true );
+}
+
+void UI_Main::M_Menu_Quick_f( void )
+{
+	int i;
+
+	if( !self )
+		return;
+
+	NavigationStack *nav = self->navigations[UI_CONTEXT_QUICK].front();
+	if( !nav )
+		return;
+
+	if( trap::Cmd_Argc() <= 2 ) {
+		self->quickMenuURL = "";
+		nav->popAllDocuments();
+		return;
+	}
+
+	Rocket::Core::URL url;
+
+	url.SetFileName( trap::Cmd_Argv( 1 ) );
+	url.SetExtension( "rml" );
+
+	for( i = 2; i < trap::Cmd_Argc() - 1; i += 2 ) {
+		url.SetParameter( trap::Cmd_Argv( i ), trap::Cmd_Argv( i+1 ) );
+	}
+
+	Rocket::Core::String urlString = url.GetURL();
+	if( urlString == self->quickMenuURL )
+		return;
+
+	if( nav->hasDocuments() ) {
+		nav->popAllDocuments();
+	}
+
+	nav->pushDocument( urlString.CString(), false );
+
+	self->quickMenuURL = urlString;
 }
 
 void UI_Main::M_Menu_Close_f( void )
@@ -888,23 +984,28 @@ void UI_Main::M_Menu_RemoveTVChannel_f( void )
 // DEBUG
 void UI_Main::PrintDocuments_Cmd( void )
 {
+	int i;
+
 	if( !self )
 		return;
 
-	Com_Printf("Navigation stack:\n");
+	for( i = 0; i < UI_NUM_CONTEXTS; i++ ) {
+		UI_Navigation &navigation = self->navigations[i];
 
-	for( UI_Navigation::iterator it = self->navigation.begin(); it != self->navigation.end(); ++it ) {
-		NavigationStack *nav = *it;
+		Com_Printf("Context %i navigation stack:\n", i);
+		for( UI_Navigation::iterator it = navigation.begin(); it != navigation.end(); ++it ) {
+			NavigationStack *nav = *it;
 
-		nav->printStack();
+			nav->printStack();
 
-		DocumentCache *cache = nav->getCache();
-		if( cache ) {
-			Com_Printf("Document cache:\n");
-			cache->printCache();
+			DocumentCache *cache = nav->getCache();
+			if( cache ) {
+				Com_Printf("Document cache:\n");
+				cache->printCache();
+			}
+
+			Com_Printf("\n");
 		}
-
-		Com_Printf("\n");
 	}
 }
 

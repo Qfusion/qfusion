@@ -15,7 +15,7 @@ namespace WSWUI {
 	class DocumentCache
 	{
 	public:
-		DocumentCache();
+		DocumentCache(int contextId);
 		~DocumentCache();
 
 		// load or fetch document
@@ -31,6 +31,8 @@ namespace WSWUI {
 
 		// touch or reset shaders, models, etc
 		void invalidateAssets(void);
+
+		int getContextId(void) const { return contextId; };
 
 		// DEBUG
 		void printCache();
@@ -49,6 +51,9 @@ namespace WSWUI {
 			}
 		};
 
+		int contextId;
+		DocumentLoader loader;
+
 		// type for the actual storage element
 		// we have to use pointers because Document's are explicitly
 		// passed around as documents
@@ -66,7 +71,7 @@ namespace WSWUI {
 	class NavigationStack
 	{
 	public:
-		NavigationStack();
+		NavigationStack(int contextId);
 		~NavigationStack();
 
 		// stack operations
@@ -75,7 +80,6 @@ namespace WSWUI {
 		void popDocument(void);
 		void popAllDocuments(void);
 		bool hasDocuments(void) const;
-		bool hasOneDocument(void) const;
 		bool empty(void) const { return !hasDocuments(); }
 		bool hasAtLeastTwoDocuments(void) const;
 		bool isTopModal(void) const { return modalTop; }
@@ -92,6 +96,7 @@ namespace WSWUI {
 		size_t getStackSize(void) const;
 
 		void invalidateAssets(void);
+		int getContextId(void) const { return cache.getContextId(); };
 
 		// DEBUG
 		void printStack();

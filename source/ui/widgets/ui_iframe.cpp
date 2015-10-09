@@ -107,7 +107,11 @@ private:
 			return;
 		}
 
-		stack = UI_Main::Get()->createStack();
+		RocketModule* rocketModule = UI_Main::Get()->getRocket();
+		stack = UI_Main::Get()->createStack( rocketModule->idForContext( GetContext() ) );
+		if( stack == NULL ) {
+			return;
+		}
 
 		framed_document = stack->pushDocument( source.CString() );
 		if( !framed_document ) {
