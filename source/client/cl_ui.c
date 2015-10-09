@@ -355,6 +355,8 @@ void CL_UIModule_Init( void )
 
 		uie->Init( viddef.width, viddef.height, VID_GetPixelRatio(),
 			APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
+
+		uie->ShowQuickMenu( cls.quickmenu != 0 );
 	}
 	else
 	{
@@ -488,7 +490,7 @@ void CL_UIModule_UpdateConnectScreen( bool backGround )
 void CL_UIModule_Keydown( int key )
 {
 	if( uie )
-		uie->Keydown( key );
+		uie->Keydown( UI_CONTEXT_MAIN, key );
 }
 
 /*
@@ -497,7 +499,25 @@ void CL_UIModule_Keydown( int key )
 void CL_UIModule_Keyup( int key )
 {
 	if( uie )
-		uie->Keyup( key );
+		uie->Keyup( UI_CONTEXT_MAIN, key );
+}
+
+/*
+* CL_UIModule_KeydownQuick
+*/
+void CL_UIModule_KeydownQuick( int key )
+{
+	if( uie )
+		uie->Keydown( UI_CONTEXT_QUICK, key );
+}
+
+/*
+* CL_UIModule_KeyupQuick
+*/
+void CL_UIModule_KeyupQuick( int key )
+{
+	if( uie )
+		uie->Keyup( UI_CONTEXT_QUICK, key );
 }
 
 /*
@@ -506,7 +526,7 @@ void CL_UIModule_Keyup( int key )
 void CL_UIModule_CharEvent( wchar_t key )
 {
 	if( uie )
-		uie->CharEvent( key );
+		uie->CharEvent( UI_CONTEXT_MAIN, key );
 }
 
 /*
@@ -514,8 +534,13 @@ void CL_UIModule_CharEvent( wchar_t key )
 */
 void CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y )
 {
-	if( uie )
-		uie->TouchEvent( id, type, x, y );
+	if( uie ) {
+		if( cls.quickmenu ) {
+			// FIXME?
+			uie->TouchEvent( UI_CONTEXT_QUICK, id, type, x, y );
+		}
+		uie->TouchEvent( UI_CONTEXT_MAIN, id, type, x, y );
+	}
 }
 
 /*
@@ -523,8 +548,10 @@ void CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y )
 */
 void CL_UIModule_CancelTouches( void )
 {
-	if( uie )
-		uie->CancelTouches();
+	if( uie ) {
+		uie->CancelTouches( UI_CONTEXT_QUICK );
+		uie->CancelTouches( UI_CONTEXT_MAIN );
+	}
 }
 
 /*
@@ -546,6 +573,15 @@ void CL_UIModule_ForceMenuOff( void )
 }
 
 /*
+* CL_UIModule_ShowQuickMenu
+*/
+void CL_UIModule_ShowQuickMenu( bool show )
+{
+	if( uie )
+		uie->ShowQuickMenu( show );
+}
+
+/*
 * CL_UIModule_AddToServerList
 */
 void CL_UIModule_AddToServerList( const char *adr, const char *info )
@@ -560,7 +596,7 @@ void CL_UIModule_AddToServerList( const char *adr, const char *info )
 void CL_UIModule_MouseMove( int dx, int dy )
 {
 	if( uie )
-		uie->MouseMove( dx, dy );
+		uie->MouseMove( UI_CONTEXT_MAIN, dx, dy );
 }
 
 /*
@@ -569,5 +605,5 @@ void CL_UIModule_MouseMove( int dx, int dy )
 void CL_UIModule_MouseSet( int mx, int my, bool showCursor )
 {
 	if( uie )
-		uie->MouseSet( mx, my, showCursor );
+		uie->MouseSet( UI_CONTEXT_MAIN, mx, my, showCursor );
 }

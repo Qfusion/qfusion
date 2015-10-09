@@ -29,7 +29,7 @@ cvar_t *g_teams_maxplayers;
 cvar_t *g_teams_allow_uneven;
 
 /*
-* G_Teams_InitLevel
+* G_Teams_Init
 */
 void G_Teams_Init( void )
 {
@@ -58,6 +58,7 @@ void G_Teams_Init( void )
 			ent->movetype = MOVETYPE_NOCLIP; // allow freefly
 			ent->r.client->teamstate.timeStamp = level.time;
 			ent->r.client->resp.timeStamp = level.time;
+			trap_GameCmd( ent, va( "qm %s", ent->r.client->level.quickMenuItems ) );
 		}
 	}
 

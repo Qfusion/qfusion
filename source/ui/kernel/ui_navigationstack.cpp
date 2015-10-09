@@ -12,7 +12,7 @@ namespace Core = Rocket::Core;
 
 // DocumentCache
 
-DocumentCache::DocumentCache()
+DocumentCache::DocumentCache(int contextId) : contextId(contextId), loader(contextId)
 {
 
 }
@@ -34,8 +34,6 @@ Document *DocumentCache::getDocument( const std::string &name, NavigationStack *
 	if( it == documentSet.end() )
 	{
 		// load it up, and keep the reference for the stack
-		DocumentLoader loader;
-
 		document = loader.loadDocument(name.c_str(), stack);
 		if( !document )
 			return 0;
@@ -71,7 +69,6 @@ DocumentCache::DocumentSet::iterator DocumentCache::purgeDocument( DocumentSet::
 	// from other librocket documents until it is unloaded or "shown" without
 	// the modal flag set
 	if( doc->IsModal() ) {
-		DocumentLoader loader;
 		loader.closeDocument( doc );
 		documentSet.erase( it );
 		doc->removeReference();
@@ -128,7 +125,6 @@ void DocumentCache::clearCaches()
 	// force destroy all documents
 	purgeAllDocuments();
 
-	DocumentLoader loader;
 	for( DocumentSet::iterator it = documentSet.begin(); it != documentSet.end(); ++it ) {
 		if( (*it)->getRocketDocument() ) {
 			(*it)->removeReference();
@@ -167,7 +163,7 @@ void DocumentCache::invalidateAssets(void)
 
 // NavigationStack
 
-NavigationStack::NavigationStack() : modalTop( false ), stackLocked( false )
+NavigationStack::NavigationStack( int contextId ) : modalTop( false ), stackLocked( false ), cache( contextId )
 {
 	documentStack.clear();
 }
@@ -361,6 +357,10 @@ void NavigationStack::markTopAsViewed(void)
 	// if the top document is modal, temporarily pop if off the stack
 	// and then push back
 
+	if( documentStack.empty() ) {
+		return;
+	}
+
 	Document *top = documentStack.back();
 	if( modalTop ) {
 		modal = top;
@@ -381,11 +381,6 @@ void NavigationStack::markTopAsViewed(void)
 bool NavigationStack::hasDocuments(void) const
 {
 	return !documentStack.empty();
-}
-
-bool NavigationStack::hasOneDocument(void) const
-{
-	return documentStack.size() == 1;
 }
 
 bool NavigationStack::hasAtLeastTwoDocuments(void) const

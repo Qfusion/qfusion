@@ -92,56 +92,56 @@ namespace WSWUI
 				downloadPercent, downloadSpeed, connectCount, (backGround == true) );
 	}
 
-	void Keydown( int key )
+	void Keydown( int context, int key )
 	{
 		if( ui_main ) {
-			ui_main->keyEvent( key, true );
+			ui_main->keyEvent( context, key, true );
 		}
 	}
 
-	void Keyup( int key )
+	void Keyup( int context, int key )
 	{
 		if( ui_main ) {
-			ui_main->keyEvent( key, false );
+			ui_main->keyEvent( context, key, false );
 		}
 	}
 
-	void CharEvent( wchar_t key )
+	void CharEvent( int context, wchar_t key )
 	{
 		// Check if the character is printable.
 		// Emitting textinput events for non-printable chars might cause 
 		// surprising behavior (e.g. backspace key not working in librocket's
 		// text input fields).
 		if( ui_main ) {
-			if(isprint(key)) ui_main->textInput( key );
+			if(isprint(key)) ui_main->textInput( context, key );
 		}
 	}
 
-	void MouseMove( int dx, int dy )
+	void MouseMove( int context, int dx, int dy )
 	{
 		if( ui_main ) {
-			ui_main->mouseMove( dx, dy, false, true );
+			ui_main->mouseMove( context, dx, dy, false, true );
 		}
 	}
 
-	void MouseSet( int mx, int my, bool showCursor )
+	void MouseSet( int context, int mx, int my, bool showCursor )
 	{
 		if( ui_main ) {
-			ui_main->mouseMove( mx, my, true, showCursor );
+			ui_main->mouseMove( context, mx, my, true, showCursor );
 		}
 	}
 
-	void TouchEvent( int id, touchevent_t type, int x, int y )
+	void TouchEvent( int context, int id, touchevent_t type, int x, int y )
 	{
 		if( ui_main ) {
-			ui_main->touchEvent( id, type, x, y );
+			ui_main->touchEvent( context, id, type, x, y );
 		}
 	}
 
-	void CancelTouches( void )
+	void CancelTouches( int context )
 	{
 		if( ui_main ) {
-			ui_main->cancelTouches();
+			ui_main->cancelTouches( context );
 		}
 	}
 
@@ -149,6 +149,13 @@ namespace WSWUI
 	{
 		if( ui_main ) {
 			ui_main->forceMenuOff();
+		}
+	}
+
+	void ShowQuickMenu( bool show )
+	{
+		if( ui_main ) {
+			ui_main->showQuickMenu( show );
 		}
 	}
 
@@ -188,6 +195,7 @@ ui_export_t *GetUIAPI( ui_import_t *import )
 	globals.CancelTouches = WSWUI::CancelTouches;
 
 	globals.ForceMenuOff = WSWUI::ForceMenuOff;
+	globals.ShowQuickMenu = WSWUI::ShowQuickMenu;
 
 	globals.AddToServerList = WSWUI::AddToServerList;
 

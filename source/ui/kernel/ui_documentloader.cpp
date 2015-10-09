@@ -89,7 +89,7 @@ bool Document::IsModal()
 
 //==========================================
 
-DocumentLoader::DocumentLoader()
+DocumentLoader::DocumentLoader(int contextId) : contextId(contextId)
 {
 	// register itself to UI_Main
 }
@@ -108,7 +108,7 @@ Document *DocumentLoader::loadDocument(const char *path, NavigationStack *stack)
 	loadedDocument = __new__( Document )( path, stack );
 
 	// load the .rml
-	Rocket::Core::ElementDocument *rocketDocument = rm->loadDocument( path, /* true */ false, loadedDocument );
+	Rocket::Core::ElementDocument *rocketDocument = rm->loadDocument( contextId, path, /* true */ false, loadedDocument );
 	loadedDocument->setRocketDocument( rocketDocument );
 
 	if( !rocketDocument ) {

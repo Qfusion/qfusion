@@ -33,20 +33,20 @@ namespace WSWUI
 			HIDECURSOR_ELEMENT	= 1 << 2, // hidden by an element
 			HIDECURSOR_ALL		= ( 1 << 3 ) - 1
 		};
-		void loadCursor( const String& rmlCursor );
-		void hideCursor( unsigned int addBits, unsigned int clearBits );
+		void loadCursor( int contextId, const String& rmlCursor );
+		void hideCursor( int contextId, unsigned int addBits, unsigned int clearBits );
 
 		// system events
-		void mouseMove( int mousex, int mousey );
-		void textInput( wchar_t c );
-		void keyEvent( int key, bool pressed );
-		void touchEvent( int id, touchevent_t type, int x, int y );
-		void cancelTouches( void );
+		void mouseMove( int contextId, int mousex, int mousey );
+		void textInput( int contextId, wchar_t c );
+		void keyEvent( int contextId, int key, bool pressed );
+		void touchEvent( int contextId, int id, touchevent_t type, int x, int y );
+		void cancelTouches( int contextId );
 
 		void update( void );
-		void render( void );
+		void render( int contextId );
 
-		Rocket::Core::ElementDocument *loadDocument( const char *filename, bool show=false, void *user_data = NULL );
+		Rocket::Core::ElementDocument *loadDocument( int contextId, const char *filename, bool show=false, void *user_data = NULL );
 		void closeDocument( Rocket::Core::ElementDocument *doc );
 
 		// called from ElementInstancer after it instances an element, set up default
@@ -58,11 +58,10 @@ namespace WSWUI
 		UI_FileInterface *getFileInterface() { return fsInterface; }
 		UI_RenderInterface *getRenderInterface() { return renderInterface; }
 
-		// you shouldnt need to use this
-		Rocket::Core::Context *getContext() { return context; }
-
 		void clearShaderCache( void );
 		void touchAllCachedShaders( void );
+
+		int idForContext( Rocket::Core::Context *context );
 
 	private:
 		void registerElement( const char *tag, Rocket::Core::ElementInstancer* );
@@ -70,6 +69,9 @@ namespace WSWUI
 		void registerDecorator( const char *name, Rocket::Core::DecoratorInstancer *);
 		void registerEventInstancer( Rocket::Core::EventInstancer *);
 		void registerEventListener( Rocket::Core::EventListenerInstancer *);
+
+		// translates UI_CONTEXT_ constants to rocket contexts and vise versa
+		Rocket::Core::Context *contextForId( int contextId );
 
 		bool rocketInitialized;
 		unsigned int hideCursorBits;
@@ -84,7 +86,8 @@ namespace WSWUI
 		UI_RenderInterface *renderInterface;
 		UI_FontProviderInterface *fontProviderInterface;
 
-		Rocket::Core::Context *context;
+		Rocket::Core::Context *contextMain;
+		Rocket::Core::Context *contextQuick;
 
 		// hold this so we can unref these in the end
 		std::list<Rocket::Core::ElementInstancer*> elementInstancers;

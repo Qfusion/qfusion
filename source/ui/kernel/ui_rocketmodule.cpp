@@ -56,8 +56,10 @@ public:
 RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	: rocketInitialized( false ), hideCursorBits( 0 ), touchID( -1 ),
 	// pointers
-	systemInterface(0), fsInterface(0), renderInterface(0), context(0)
+	systemInterface(0), fsInterface(0), renderInterface(0), 
+	contextMain(0), contextQuick(0)
 {
+	Rocket::Core::String contextName = trap::Cvar_String( "gamename" );
 
 	renderInterface = __new__( UI_RenderInterface )( vidWidth, vidHeight, pixelRatio );
 	Rocket::Core::SetRenderInterface( renderInterface );
@@ -79,8 +81,12 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	// initialize the controls plugin
 	Rocket::Controls::Initialise();
 
-	// Create our context
-	context = Rocket::Core::CreateContext( trap::Cvar_String( "gamename" ), Vector2i( vidWidth, vidHeight ) );
+	// Create our contexts
+	contextMain = Rocket::Core::CreateContext( contextName, Vector2i( vidWidth, vidHeight ) );
+
+	contextQuick = Rocket::Core::CreateContext( contextName + "_quick", Vector2i( vidWidth, vidHeight ) );
+	if( contextQuick )
+		contextQuick->ShowMouseCursor( false );
 }
 
 // here for hax0rz, TODO: move to "common" area
@@ -93,9 +99,14 @@ RocketModule::~RocketModule()
 {
 	if( fontProviderInterface )
 		fontProviderInterface->RemoveReference();
-	if( context )
-		context->RemoveReference();
-	context = 0;
+	
+	if( contextMain )
+		contextMain->RemoveReference();
+	contextMain = 0;
+
+	if( contextQuick )
+		contextQuick->RemoveReference();
+	contextQuick = 0;
 
 	if( rocketInitialized )
 		Rocket::Core::Shutdown();
@@ -109,18 +120,20 @@ RocketModule::~RocketModule()
 
 //==================================================
 
-void RocketModule::mouseMove( int mousex, int mousey )
+void RocketModule::mouseMove( int contextId, int mousex, int mousey )
 {
+	auto *context = contextForId( contextId );
 	context->ProcessMouseMove( mousex, mousey, KeyConverter::getModifiers() );
 }
 
-void RocketModule::textInput( wchar_t c )
+void RocketModule::textInput( int contextId, wchar_t c )
 {
+	auto *context = contextForId( contextId );
 	if( c >= ' ' )
 		context->ProcessTextInput( c );
 }
 
-void RocketModule::keyEvent( int key, bool pressed )
+void RocketModule::keyEvent( int contextId, int key, bool pressed )
 {
 	// DEBUG
 #if 0
@@ -133,6 +146,7 @@ void RocketModule::keyEvent( int key, bool pressed )
 	if( key == K_MOUSE1DBLCLK )
 		return; // Rocket handles double click internally
 
+	auto *context = contextForId( contextId );
 	Element *element = context->GetFocusElement();
 
 	int mod = KeyConverter::getModifiers();
@@ -196,7 +210,7 @@ void RocketModule::keyEvent( int key, bool pressed )
 	}
 }
 
-void RocketModule::touchEvent( int id, touchevent_t type, int x, int y )
+void RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, int y )
 {
 	if( ( type == TOUCH_DOWN ) && ( touchID < 0 ) ) {
 		touchID = id;
@@ -210,7 +224,9 @@ void RocketModule::touchEvent( int id, touchevent_t type, int x, int y )
 		return;
 	}
 
-	UI_Main::Get()->mouseMove( x, y, true, false );
+	auto *context = contextForId( contextId );
+
+	UI_Main::Get()->mouseMove( contextId, x, y, true, false );
 
 	if( type == TOUCH_DOWN ) {
 		context->ProcessMouseButtonDown( 0, KeyConverter::getModifiers() );
@@ -250,26 +266,29 @@ void RocketModule::touchEvent( int id, touchevent_t type, int x, int y )
 		}
 
 		if( type == TOUCH_UP ) {
-			cancelTouches();
+			cancelTouches( contextId );
 		}
 	}
 }
 
-void RocketModule::cancelTouches( void )
+void RocketModule::cancelTouches( int contextId )
 {
 	if( touchID < 0 ) {
 		return;
 	}
 
+	auto *context = contextForId( contextId );
+
 	touchID = -1;
 	context->ProcessMouseButtonUp( 0, KeyConverter::getModifiers() );
-	UI_Main::Get()->mouseMove( 0, 0, true, false );
+	UI_Main::Get()->mouseMove( contextId, 0, 0, true, false );
 }
 
 //==================================================
 
-Rocket::Core::ElementDocument *RocketModule::loadDocument( const char *filename, bool show, void *user_data )
+Rocket::Core::ElementDocument *RocketModule::loadDocument( int contextId, const char *filename, bool show, void *user_data )
 {
+	auto *context = contextForId( contextId );
 	ASUI::UI_ScriptDocument *document = dynamic_cast<ASUI::UI_ScriptDocument *>(context->LoadDocument( filename ));
 	if( !document ) {
 		return NULL;
@@ -340,32 +359,60 @@ void RocketModule::registerEventListener( Rocket::Core::EventListenerInstancer *
 	instancer->RemoveReference();
 }
 
+Rocket::Core::Context *RocketModule::contextForId( int contextId )
+{
+	switch( contextId ) {
+		case UI_CONTEXT_MAIN:
+			return contextMain;
+		case UI_CONTEXT_QUICK:
+			return contextQuick;
+		default:
+			assert( contextId != UI_CONTEXT_MAIN && contextId != UI_CONTEXT_QUICK );
+			return NULL;
+	}
+}
+
+int RocketModule::idForContext( Rocket::Core::Context *context )
+{
+	if( context == contextMain )
+		return UI_CONTEXT_MAIN;
+	if( context == contextQuick )
+		return UI_CONTEXT_QUICK;
+	return UI_NUM_CONTEXTS;
+}
+
 // Load the mouse cursor and release the caller's reference:
 // NOTE: be sure to use it before initRocket( .. ) function
-void RocketModule::loadCursor( const String& rmlCursor )
+void RocketModule::loadCursor( int contextId, const String& rmlCursor )
 {
-	Rocket::Core::ElementDocument* cursor = context->LoadMouseCursor( rmlCursor );
+	Rocket::Core::ElementDocument* cursor = contextForId( contextId )->LoadMouseCursor( rmlCursor );
 
 	if( cursor )
 		cursor->RemoveReference();
 }
 
-void RocketModule::hideCursor( unsigned int addBits, unsigned int clearBits )
+void RocketModule::hideCursor( int contextId, unsigned int addBits, unsigned int clearBits )
 {
+	if( contextId == UI_CONTEXT_QUICK ) {
+		contextQuick->ShowMouseCursor( false );
+		return;
+	}
+
 	hideCursorBits = ( hideCursorBits & ~clearBits ) | addBits;
-	context->ShowMouseCursor( hideCursorBits == 0 );
+	contextForId( contextId )->ShowMouseCursor( hideCursorBits == 0 );
 }
 
 void RocketModule::update( void )
 {
 	ASUI::GarbageCollectEventListenersFunctions( scriptEventListenerInstancer );
 
-	context->Update();
+	contextQuick->Update();
+	contextMain->Update();
 }
 
-void RocketModule::render( void )
+void RocketModule::render( int contextId )
 {
-	context->Render();
+	contextForId( contextId )->Render();
 }
 
 void RocketModule::registerCustoms()

@@ -219,16 +219,19 @@ using namespace Rocket::Core;
 	/// @param[in] event The event to process.
 	void UI_KeySelect::ProcessEvent( Event& event )
 	{
+		RocketModule *rocketModule = GetRocketModule();
+		int contextId = rocketModule->idForContext( GetContext() );
+
 		if( event == "blur" )
 		{
 			focusMode = false;
-			GetRocketModule()->hideCursor( 0, RocketModule::HIDECURSOR_ELEMENT );
+			rocketModule->hideCursor( contextId, 0, RocketModule::HIDECURSOR_ELEMENT );
 			WriteText();
 		}
 		else if( event == "focus" )
 		{
 			focusMode = true;
-			GetRocketModule()->hideCursor( RocketModule::HIDECURSOR_ELEMENT, 0 );
+			rocketModule->hideCursor( contextId, RocketModule::HIDECURSOR_ELEMENT, 0 );
 
 			// old C ui functionality
 			if( KeysAreBound() )
@@ -262,7 +265,7 @@ using namespace Rocket::Core;
 			}
 			else if( event == "mousemove" || event == "mouseout" )
 			{
-				GetRocketModule()->mouseMove( mouse_x, mouse_y );
+				rocketModule->mouseMove( contextId, mouse_x, mouse_y );
 				event.StopPropagation();
 				return;
 			}

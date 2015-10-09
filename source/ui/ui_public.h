@@ -29,6 +29,13 @@ typedef void (*ui_async_stream_done_cb_t)(int status, const char *contentType, v
 
 typedef void ( *fdrawchar_t )( int x, int y, int w, int h, float s1, float t1, float s2, float t2, const vec4_t color, const struct shader_s *shader );
 
+enum {
+	UI_CONTEXT_QUICK,
+	UI_CONTEXT_MAIN,
+
+	UI_NUM_CONTEXTS
+};
+
 #include "../cgame/ref.h"
 
 struct irc_chat_history_node_s;
@@ -234,17 +241,18 @@ typedef struct
 		int downloadType, const char *downloadfilename, float downloadPercent, int downloadSpeed, 
 		int connectCount, bool backGround );
 
-	void ( *Keydown )( int key );
-	void ( *Keyup )( int key );
-	void ( *CharEvent )( wchar_t key );
+	void ( *Keydown )( int context, int key );
+	void ( *Keyup )( int context, int key );
+	void ( *CharEvent )( int context, wchar_t key );
 
-	void ( *MouseMove )( int dx, int dy );
-	void ( *MouseSet )( int mx, int my, bool showCursor );
+	void ( *MouseMove )( int context, int dx, int dy );
+	void ( *MouseSet )( int context, int mx, int my, bool showCursor );
 
-	void ( *TouchEvent )( int id, touchevent_t type, int x, int y );
-	void ( *CancelTouches )( void );
+	void ( *TouchEvent )( int context, int id, touchevent_t type, int x, int y );
+	void ( *CancelTouches )( int context );
 
 	void ( *ForceMenuOff )( void );
+	void ( *ShowQuickMenu )( bool show );
 	void ( *AddToServerList )( const char *adr, const char *info );
 } ui_export_t;
 

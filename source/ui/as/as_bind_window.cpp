@@ -73,13 +73,21 @@ public:
 	/// Loads document from the passed URL.
 	ElementDocument *open( const asstring_t &location )
 	{
-		WSWUI::NavigationStack *stack = UI_Main::Get()->createStack();
+		WSWUI::NavigationStack *stack = GetCurrentUIStack();
 		if( stack == NULL ) {
 			return NULL;
 		}
-		WSWUI::Document *ui_document = stack->pushDocument( location.buffer );
+
+		// create new stack in the same context
+		WSWUI::NavigationStack *new_stack = UI_Main::Get()->createStack( stack->getContextId() );
+		if( new_stack == NULL ) {
+			return NULL;
+		}
+
+		WSWUI::Document *ui_document = new_stack->pushDocument( location.buffer );
 		if( !ui_document ) {
 			return NULL;
+		
 		}
 		ui_document->addReference();
 		return ui_document->getRocketDocument();
@@ -154,7 +162,7 @@ public:
 			modalValue = code;
 			stack->popDocument();
 		}
-		else {
+		else if( stack->getContextId() == UI_CONTEXT_MAIN ) {
 			// not really a modal window, clear the stack
 			UI_Main::Get()->showUI( false );
 		}

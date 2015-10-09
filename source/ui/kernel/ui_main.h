@@ -69,11 +69,11 @@ public:
 	void forceMenuOff( void );
 	void addToServerList( const char *adr, const char *info );
 
-	void mouseMove( int x, int y, bool absolute, bool showCursor );
-	void textInput( wchar_t c );
-	void keyEvent( int key, bool pressed );
-	void touchEvent( int id, touchevent_t type, int x, int y );
-	void cancelTouches( void );
+	void mouseMove( int contextId, int x, int y, bool absolute, bool showCursor );
+	void textInput( int contextId, wchar_t c );
+	void keyEvent( int contextId, int key, bool pressed );
+	void touchEvent( int contextId, int id, touchevent_t type, int x, int y );
+	void cancelTouches( int contextId );
 
 	// Commands (these could be private)
 	static void ReloadUI_Cmd_f( void );
@@ -88,6 +88,9 @@ public:
 	static void M_Menu_AddTVChannel_f( void );
 	static void M_Menu_RemoveTVChannel_f( void );
 
+	// pops all documents from stack and inserts a new one _if_ the quickMenuURL is different
+	static void M_Menu_Quick_f( void );
+
 	// DEBUG
 	static void PrintDocuments_Cmd( void );
 	
@@ -99,17 +102,15 @@ public:
 	static bool preloadEnabled( void );
 
 	// Public methods
-	void showUI( bool show );
 	void forceUI( bool force );
+	void showUI( bool show );
+	void showQuickMenu( bool show );
 
 	ASUI::ASInterface *getAS( void ) { return asmodule; };
 	RocketModule *getRocket( void ) { return rocketModule; }
 	//NavigationStack *getNavigator( void ) { return navigator; }
 	ServerBrowserDataSource *getServerBrowser( void ) { return serverBrowser; }
 	DemoInfo *getDemoInfo( void ) { return &demoInfo; }
-
-	// TODO: eliminate this, either way DONT USE THIS!
-	Rocket::Core::Context *getRocketContext( void );
 
 	StreamCache *getStreamCache( void ) { return streamCache; }
 
@@ -128,7 +129,7 @@ public:
 
 	unsigned int getConnectCount( void ) const { return connectCount; }
 
-	NavigationStack *createStack( void );
+	NavigationStack *createStack( int contextId );
 
 private:
 	UI_Main( int vidWidth, int vidHeight, float pixelRatio,
@@ -205,7 +206,8 @@ private:
 	IrcChannelsDataSource *ircchannels;
 	GameAjaxDataSource *gameajax;
 
-	UI_Navigation navigation;
+	UI_Navigation navigations[UI_NUM_CONTEXTS];
+	Rocket::Core::String quickMenuURL;
 
 	StreamCache *streamCache;
 
@@ -214,6 +216,7 @@ private:
 	int mousex, mousey;
 	int gameProtocol;
 	bool menuVisible;
+	bool quickMenuVisible;
 	bool forceMenu;
 	bool showNavigationStack;
 

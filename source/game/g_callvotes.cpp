@@ -580,7 +580,7 @@ static void G_VoteGametypePassed( callvotedata_t *vote )
 	if( GS_MatchState() == MATCH_STATE_COUNTDOWN ||
 		GS_MatchState() == MATCH_STATE_PLAYTIME || !G_RespawnLevel() )
 	{
-		// go thought scoreboard if in game
+		// go to scoreboard if in game
 		Q_strncpyz( level.forcemap, level.mapname, sizeof( level.forcemap ) );
 		G_EndMatch();
 	}

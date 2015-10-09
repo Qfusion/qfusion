@@ -90,7 +90,7 @@ namespace WSWUI {
 	class DocumentLoader
 	{
 	public:
-		DocumentLoader();
+		DocumentLoader(int contextId);
 		~DocumentLoader();
 
 		// cached?
@@ -99,6 +99,7 @@ namespace WSWUI {
 		void closeDocument(Document*);
 
 	private:
+		int contextId;
 
 		// TODO: proper PostponedEvent that handles reference counting and event instancing!
 

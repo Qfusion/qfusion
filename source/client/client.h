@@ -207,6 +207,7 @@ typedef struct
 	connstate_t state;          // only set through CL_SetClientState
 	keydest_t key_dest;
 	keydest_t old_key_dest;
+	int quickmenu;					// 0 - off, 1 - normal, 2 - numpad only
 
 	int framecount;
 	unsigned int realtime;          // always increasing, no clamping, etc
@@ -476,6 +477,8 @@ void CL_UIModule_Shutdown( void );
 void CL_UIModule_TouchAllAssets( void );
 void CL_UIModule_Keydown( int key );
 void CL_UIModule_Keyup( int key );
+void CL_UIModule_KeydownQuick( int key );
+void CL_UIModule_KeyupQuick( int key );
 void CL_UIModule_CharEvent( wchar_t key );
 void CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y );
 void CL_UIModule_CancelTouches( void );
@@ -483,6 +486,7 @@ void CL_UIModule_Refresh( bool backGround, bool showCursor );
 void CL_UIModule_UpdateConnectScreen( bool backGround );
 void CL_UIModule_ForceMenuOn( void );
 void CL_UIModule_ForceMenuOff( void );
+void CL_UIModule_ShowQuickMenu( bool show );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
 void CL_UIModule_MouseMove( int dx, int dy );
 void CL_UIModule_MouseSet( int mx, int my, bool showCursor );
