@@ -651,6 +651,7 @@ void Key_Event( int key, bool down, unsigned time )
 	char cmd[1024];
 	bool handled = false;
 	int numkey = Key_NumPadKeyValue( key );
+	bool have_quickmenu = cls.quickmenu && CL_UIModule_HaveQuickMenu();
 	bool numeric = numkey >= '0' && numkey <='9';
 
 	// update auto-repeat status
@@ -744,7 +745,7 @@ void Key_Event( int key, bool down, unsigned time )
 	//
 	if( ( cls.key_dest == key_menu && menubound[key] )
 		|| ( cls.key_dest == key_console && !consolekeys[key] )
-		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) && (!cls.quickmenu || !numeric) )
+		|| ( cls.key_dest == key_game && ( cls.state == CA_ACTIVE || !consolekeys[key] ) && (!have_quickmenu || !numeric) )
 		|| ( cls.key_dest == key_message && ( key >= K_F1 && key <= K_F15 ) ) )
 	{
 		kb = keybindings[key];
@@ -809,14 +810,12 @@ void Key_Event( int key, bool down, unsigned time )
 		Con_MessageKeyDown( key );
 		break;
 	case key_game:
-		if( cls.quickmenu && numeric ) {
-			if( cls.quickmenu == 1 || key != numkey ) {
-				if( down )
-					CL_UIModule_KeydownQuick( numkey );
-				else
-					CL_UIModule_KeyupQuick( numkey );
-				break;
-			}
+		if( have_quickmenu && numeric ) {
+			if( down )
+				CL_UIModule_KeydownQuick( numkey );
+			else
+				CL_UIModule_KeyupQuick( numkey );
+			break;
 		}
 	case key_console:
 		Con_KeyDown( key );

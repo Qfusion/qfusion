@@ -356,7 +356,7 @@ void CL_UIModule_Init( void )
 		uie->Init( viddef.width, viddef.height, VID_GetPixelRatio(),
 			APP_PROTOCOL_VERSION, APP_DEMO_EXTENSION_STR, APP_UI_BASEPATH );
 
-		uie->ShowQuickMenu( cls.quickmenu != 0 );
+		uie->ShowQuickMenu( cls.quickmenu );
 	}
 	else
 	{
@@ -579,6 +579,16 @@ void CL_UIModule_ShowQuickMenu( bool show )
 {
 	if( uie )
 		uie->ShowQuickMenu( show );
+}
+
+/*
+* CL_UIModule_HaveQuickMenu
+*/
+bool CL_UIModule_HaveQuickMenu( void )
+{
+	if( uie )
+		return uie->HaveQuickMenu();
+	return false;
 }
 
 /*

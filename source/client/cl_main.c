@@ -79,7 +79,6 @@ cvar_t *cl_downloads_from_web_timeout;
 cvar_t *cl_download_allow_modules;
 cvar_t *cl_checkForUpdate;
 
-cvar_t *cl_showQuickMenu;
 
 static char cl_nextString[MAX_STRING_CHARS];
 static char cl_connectChain[MAX_STRING_CHARS];
@@ -2131,9 +2130,6 @@ static void CL_InitLocal( void )
 	cl_download_allow_modules = Cvar_Get( "cl_download_allow_modules", "1", CVAR_ARCHIVE );
 	cl_checkForUpdate =	Cvar_Get( "cl_checkForUpdate", "1", CVAR_ARCHIVE );
 
-	cl_showQuickMenu =	Cvar_Get( "cl_showQuickMenu", "1", CVAR_ARCHIVE );
-	cl_showQuickMenu->modified = true;
-
 	//
 	// userinfo
 	//
@@ -2652,12 +2648,6 @@ void CL_Frame( int realmsec, int gamemsec )
 			gamemsec = 0;
 		else
 			CL_LatchedDemoJump();
-	}
-
-	if( cl_showQuickMenu->modified ) {
-		cls.quickmenu = bound( 0, cl_showQuickMenu->integer, 2 );
-		cl_showQuickMenu->modified = false;
-		CL_UIModule_ShowQuickMenu( cls.quickmenu != 0 );
 	}
 
 	cls.gametime += gamemsec;
@@ -3209,6 +3199,8 @@ void CL_Shutdown( void )
 	CL_ShutdownAsyncStream();
 
 	CL_ShutdownLocal();
+
+	SCR_ShutdownScreen();
 
 	Steam_Shutdown();
 

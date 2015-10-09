@@ -105,6 +105,7 @@ public:
 	void forceUI( bool force );
 	void showUI( bool show );
 	void showQuickMenu( bool show );
+	bool haveQuickMenu( void );
 
 	ASUI::ASInterface *getAS( void ) { return asmodule; };
 	RocketModule *getRocket( void ) { return rocketModule; }

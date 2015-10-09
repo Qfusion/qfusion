@@ -486,6 +486,31 @@ static void SCR_DrawDebugGraph( void )
 //============================================================================
 
 /*
+* SCR_EnableQuickMenu
+*/
+static void SCR_EnableQuickMenu( bool enable )
+{
+	cls.quickmenu = enable;
+	CL_UIModule_ShowQuickMenu( cls.quickmenu );
+}
+
+/*
+* SCR_QuickMenuOn_f
+*/
+static void SCR_QuickMenuOn_f( void )
+{
+	SCR_EnableQuickMenu( true );
+}
+
+/*
+* SCR_QuickMenuOff_f
+*/
+static void SCR_QuickMenuOff_f( void )
+{
+	SCR_EnableQuickMenu( false );
+}
+
+/*
 * SCR_InitScreen
 */
 void SCR_InitScreen( void )
@@ -498,6 +523,9 @@ void SCR_InitScreen( void )
 	scr_graphheight = Cvar_Get( "graphheight", "32", 0 );
 	scr_graphscale = Cvar_Get( "graphscale", "1", 0 );
 	scr_graphshift = Cvar_Get( "graphshift", "0", 0 );
+
+	Cmd_AddCommand( "+quickmenu", &SCR_QuickMenuOn_f );
+	Cmd_AddCommand( "-quickmenu", &SCR_QuickMenuOff_f );
 
 	scr_initialized = true;
 }
@@ -516,6 +544,15 @@ unsigned int SCR_GetScreenWidth( void )
 unsigned int SCR_GetScreenHeight( void )
 {
 	return VID_GetWindowHeight();
+}
+
+/*
+* SCR_ShutdownScreen
+*/
+void SCR_ShutdownScreen( void )
+{
+	Cmd_RemoveCommand( "+quickmenu" );
+	Cmd_RemoveCommand( "-quickmenu" );
 }
 
 //=============================================================================

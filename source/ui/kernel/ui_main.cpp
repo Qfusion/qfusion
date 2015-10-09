@@ -465,6 +465,14 @@ void UI_Main::showQuickMenu( bool show )
 	quickMenuVisible = show;
 }
 
+bool UI_Main::haveQuickMenu( void )
+{
+	NavigationStack *nav = self->navigations[UI_CONTEXT_QUICK].front();
+	if( !nav )
+		return false;
+	return nav->hasDocuments();
+}
+
 void UI_Main::drawConnectScreen( const char *serverName, const char *rejectMessage, 
 	int downloadType, const char *downloadFilename, float downloadPercent, int downloadSpeed, 
 	int connectCount, bool backGround )
