@@ -159,6 +159,14 @@ namespace WSWUI
 		}
 	}
 
+	bool HaveQuickMenu( void )
+	{
+		if( ui_main ) {
+			return ui_main->haveQuickMenu();
+		}
+		return false;
+	}
+
 	void AddToServerList( const char *adr, const char *info )
 	{
 		if( ui_main ) {
@@ -196,6 +204,7 @@ ui_export_t *GetUIAPI( ui_import_t *import )
 
 	globals.ForceMenuOff = WSWUI::ForceMenuOff;
 	globals.ShowQuickMenu = WSWUI::ShowQuickMenu;
+	globals.HaveQuickMenu = WSWUI::HaveQuickMenu;
 
 	globals.AddToServerList = WSWUI::AddToServerList;
 

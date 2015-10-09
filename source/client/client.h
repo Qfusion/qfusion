@@ -207,7 +207,7 @@ typedef struct
 	connstate_t state;          // only set through CL_SetClientState
 	keydest_t key_dest;
 	keydest_t old_key_dest;
-	int quickmenu;					// 0 - off, 1 - normal, 2 - numpad only
+	bool quickmenu;
 
 	int framecount;
 	unsigned int realtime;          // always increasing, no clamping, etc
@@ -487,6 +487,7 @@ void CL_UIModule_UpdateConnectScreen( bool backGround );
 void CL_UIModule_ForceMenuOn( void );
 void CL_UIModule_ForceMenuOff( void );
 void CL_UIModule_ShowQuickMenu( bool show );
+bool CL_UIModule_HaveQuickMenu( void );
 void CL_UIModule_AddToServerList( const char *adr, const char *info );
 void CL_UIModule_MouseMove( int dx, int dy );
 void CL_UIModule_MouseSet( int mx, int my, bool showCursor );
@@ -580,6 +581,7 @@ void CL_CheckDownloadTimeout( void );
 // cl_screen.c
 //
 void SCR_InitScreen( void );
+void SCR_ShutdownScreen( void );
 void SCR_UpdateScreen( void );
 void SCR_BeginLoadingPlaque( void );
 void SCR_EndLoadingPlaque( void );
