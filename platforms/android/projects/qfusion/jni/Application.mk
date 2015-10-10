@@ -10,7 +10,7 @@ APP_MODULES := \
   android_native_app_glue \
   \
   angelscript \
-  cares \
+  crypto \
   curl \
   freetype \
   jpeg \
@@ -19,6 +19,7 @@ APP_MODULES := \
   png \
   RocketCore \
   RocketControls \
+  ssl \
   theora \
   vorbis \
   \
