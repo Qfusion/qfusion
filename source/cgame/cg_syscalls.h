@@ -618,6 +618,11 @@ static inline size_t trap_SCR_StrlenForWidth( const char *str, struct qfontface_
 	return CGAME_IMPORT.SCR_StrlenForWidth( str, font, maxwidth, 0 );
 }
 
+static inline void trap_SCR_EnableQuickMenu( bool enable )
+{
+	CGAME_IMPORT.SCR_EnableQuickMenu( enable );
+}
+
 static inline void *trap_MemAlloc( size_t size, const char *filename, int fileline )
 {
 	return CGAME_IMPORT.Mem_Alloc( size, filename, fileline );

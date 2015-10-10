@@ -248,6 +248,22 @@ static void CG_SizeDown_f( void )
 	trap_Cvar_SetValue( cg_viewSize->name, cg_viewSize->integer - 10 );
 }
 
+/*
+* CG_QuickMenuOn_f
+*/
+static void SCR_QuickMenuOn_f( void )
+{
+	trap_SCR_EnableQuickMenu( true );
+}
+
+/*
+* CG_QuickMenuOff_f
+*/
+static void SCR_QuickMenuOff_f( void )
+{
+	trap_SCR_EnableQuickMenu( false );
+}
+
 //============================================================================
 
 /*
@@ -322,6 +338,9 @@ void CG_ScreenInit( void )
 	trap_Cmd_AddCommand( "help_hud", Cmd_CG_PrintHudHelp_f );
 	trap_Cmd_AddCommand( "gamemenu", CG_GameMenu_f );
 
+	trap_Cmd_AddCommand( "+quickmenu", &SCR_QuickMenuOn_f );
+	trap_Cmd_AddCommand( "-quickmenu", &SCR_QuickMenuOff_f );
+
 	int i;
 	for( i = 0; i < TOUCHPAD_COUNT; ++i )
 		CG_SetTouchpad( i, -1 );
@@ -336,6 +355,9 @@ void CG_ScreenShutdown( void )
 	trap_Cmd_RemoveCommand( "sizeup" );
 	trap_Cmd_RemoveCommand( "sizedown" );
 	trap_Cmd_RemoveCommand( "help_hud" );
+
+	trap_Cmd_RemoveCommand( "+quickmenu" );
+	trap_Cmd_RemoveCommand( "-quickmenu" );
 }
 
 
