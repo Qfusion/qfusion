@@ -161,10 +161,6 @@ static void CG_AddLocalSounds( void )
 			CG_StartBackgroundTrack();
 			background = true;
 		}
-
-		// notice: these 2 sound files aren't used anymore
-		//cgs.media.sfxTimerBipBip
-		//cgs.media.sfxTimerPloink
 	}
 }
 
