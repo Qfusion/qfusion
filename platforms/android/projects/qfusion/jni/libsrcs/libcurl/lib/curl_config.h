@@ -1,19 +1,17 @@
+/* lib/curl_config.h.  Hand crafted config file for Qfusion for Android.  */
 /* lib/curl_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* when building libcurl itself */
-#define BUILDING_LIBCURL 1
-
 /* Location of default ca bundle */
-#define CURL_CA_BUNDLE "/etc/ssl/certs/ca-certificates.crt"
+/* #undef CURL_CA_BUNDLE */
 
 /* Location of default ca path */
-/* #undef CURL_CA_PATH */
+#define CURL_CA_PATH "/system/etc/security/cacerts"
 
 /* to disable cookies support */
 /* #undef CURL_DISABLE_COOKIES */
 
 /* to disable cryptographic authentication */
-#define CURL_DISABLE_CRYPTO_AUTH 1
+/* #undef CURL_DISABLE_CRYPTO_AUTH */
 
 /* to disable DICT */
 #define CURL_DISABLE_DICT 1
@@ -39,6 +37,9 @@
 /* to disable LDAPS */
 #define CURL_DISABLE_LDAPS 1
 
+/* to disable --libcurl C code generation option */
+/* #undef CURL_DISABLE_LIBCURL_OPTION */
+
 /* to disable POP3 */
 #define CURL_DISABLE_POP3 1
 
@@ -58,28 +59,25 @@
 #define CURL_DISABLE_TFTP 1
 
 /* to disable TLS-SRP authentication */
-#define CURL_DISABLE_TLS_SRP 1
+/* #undef CURL_DISABLE_TLS_SRP */
 
 /* to disable verbose strings */
 /* #undef CURL_DISABLE_VERBOSE_STRINGS */
 
-/* to make a symbol visible */
-/* #undef CURL_EXTERN_SYMBOL */
-
-/* to enable hidden symbols */
-/* #undef CURL_HIDDEN_SYMBOLS */
+/* Definition to make a library symbol externally visible. */
+#define CURL_EXTERN_SYMBOL __attribute__ ((__visibility__ ("default")))
 
 /* Use Windows LDAP implementation */
 /* #undef CURL_LDAP_WIN */
-
-/* when not building a shared library */
-#define CURL_STATICLIB 1
 
 /* your Entropy Gathering Daemon socket pathname */
 /* #undef EGD_SOCKET */
 
 /* Define if you want to enable IPv6 support */
 #define ENABLE_IPV6 1
+
+/* Define to the type of arg 2 for gethostname. */
+#define GETHOSTNAME_TYPE_ARG2 unsigned int
 
 /* Define to the type qualifier of arg 1 for getnameinfo. */
 #define GETNAMEINFO_QUAL_ARG1 const
@@ -91,16 +89,16 @@
 #define GETNAMEINFO_TYPE_ARG2 socklen_t
 
 /* Define to the type of args 4 and 6 for getnameinfo. */
-#define GETNAMEINFO_TYPE_ARG46 socklen_t
+#define GETNAMEINFO_TYPE_ARG46 size_t
 
 /* Define to the type of arg 7 for getnameinfo. */
-#define GETNAMEINFO_TYPE_ARG7 unsigned int
+#define GETNAMEINFO_TYPE_ARG7 int
 
 /* Specifies the number of arguments to getservbyport_r */
-#define GETSERVBYPORT_R_ARGS 6
+/* #undef GETSERVBYPORT_R_ARGS */
 
 /* Specifies the size of the buffer to pass to getservbyport_r */
-#define GETSERVBYPORT_R_BUFSIZE 4096
+/* #undef GETSERVBYPORT_R_BUFSIZE */
 
 /* Define to 1 if you have the alarm function. */
 #define HAVE_ALARM 1
@@ -112,7 +110,7 @@
 #define HAVE_ARPA_INET_H 1
 
 /* Define to 1 if you have the <arpa/tftp.h> header file. */
-#define HAVE_ARPA_TFTP_H 1
+/* #undef HAVE_ARPA_TFTP_H */
 
 /* Define to 1 if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
@@ -181,10 +179,10 @@
 /* #undef HAVE_FREEIFADDRS */
 
 /* Define to 1 if you have the fsetxattr function. */
-/* #undef HAVE_FSETXATTR */
+#define HAVE_FSETXATTR 1
 
 /* fsetxattr() takes 5 args */
-/* #undef HAVE_FSETXATTR_5 */
+#define HAVE_FSETXATTR_5 1
 
 /* fsetxattr() takes 6 args */
 /* #undef HAVE_FSETXATTR_6 */
@@ -382,9 +380,6 @@
 /* Define to 1 if you have the `ldap_url_parse' function. */
 /* #undef HAVE_LDAP_URL_PARSE */
 
-/* Define to 1 if you have the `gcrypt' library (-lgcrypt). */
-/* #undef HAVE_LIBGCRYPT */
-
 /* Define to 1 if you have the <libgen.h> header file. */
 #define HAVE_LIBGEN_H 1
 
@@ -422,7 +417,7 @@
 /* #undef HAVE_LIBSSH2_VERSION */
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
-/* #undef HAVE_LIBSSL */
+#define HAVE_LIBSSL 1
 
 /* if zlib is available */
 #define HAVE_LIBZ 1
@@ -446,10 +441,10 @@
 #define HAVE_MALLOC_H 1
 
 /* Define to 1 if you have the memory.h header file. */
-/* #undef HAVE_MEMORY_H */
+#define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the memrchr function or macro. */
-/* #undef HAVE_MEMRCHR */
+#define HAVE_MEMRCHR 1
 
 /* Define to 1 if you have the MSG_NOSIGNAL flag. */
 #define HAVE_MSG_NOSIGNAL 1
@@ -469,33 +464,36 @@
 /* Define to 1 if NI_WITHSCOPEID exists and works. */
 /* #undef HAVE_NI_WITHSCOPEID */
 
+/* if you have the NSS_InitContext function */
+/* #undef HAVE_NSS_INITCONTEXT */
+
 /* if you have an old MIT gssapi library, lacking GSS_C_NT_HOSTBASED_SERVICE
    */
 /* #undef HAVE_OLD_GSSMIT */
 
 /* Define to 1 if you have the <openssl/crypto.h> header file. */
-/* #undef HAVE_OPENSSL_CRYPTO_H */
+#define HAVE_OPENSSL_CRYPTO_H 1
 
 /* Define to 1 if you have the <openssl/engine.h> header file. */
 /* #undef HAVE_OPENSSL_ENGINE_H */
 
 /* Define to 1 if you have the <openssl/err.h> header file. */
-/* #undef HAVE_OPENSSL_ERR_H */
+#define HAVE_OPENSSL_ERR_H 1
 
 /* Define to 1 if you have the <openssl/pem.h> header file. */
-/* #undef HAVE_OPENSSL_PEM_H */
+#define HAVE_OPENSSL_PEM_H 1
 
 /* Define to 1 if you have the <openssl/pkcs12.h> header file. */
-/* #undef HAVE_OPENSSL_PKCS12_H */
+#define HAVE_OPENSSL_PKCS12_H 1
 
 /* Define to 1 if you have the <openssl/rsa.h> header file. */
-/* #undef HAVE_OPENSSL_RSA_H */
+#define HAVE_OPENSSL_RSA_H 1
 
 /* Define to 1 if you have the <openssl/ssl.h> header file. */
-/* #undef HAVE_OPENSSL_SSL_H */
+#define HAVE_OPENSSL_SSL_H 1
 
 /* Define to 1 if you have the <openssl/x509.h> header file. */
-/* #undef HAVE_OPENSSL_X509_H */
+#define HAVE_OPENSSL_X509_H 1
 
 /* Define to 1 if you have the <pem.h> header file. */
 /* #undef HAVE_PEM_H */
@@ -505,9 +503,6 @@
 
 /* Define to 1 if you have the `pipe' function. */
 #define HAVE_PIPE 1
-
-/* if you have the function PK11_CreateGenericObject */
-/* #undef HAVE_PK11_CREATEGENERICOBJECT */
 
 /* Define to 1 if you have a working poll function. */
 #define HAVE_POLL 1
@@ -528,7 +523,7 @@
 #define HAVE_PWD_H 1
 
 /* Define to 1 if you have the `RAND_egd' function. */
-#define HAVE_RAND_EGD 1
+/* #undef HAVE_RAND_EGD */
 
 /* Define to 1 if you have the `RAND_screen' function. */
 /* #undef HAVE_RAND_SCREEN */
@@ -538,9 +533,6 @@
 
 /* Define to 1 if you have the recv function. */
 #define HAVE_RECV 1
-
-/* Define to 1 if you have the recvfrom function. */
-#define HAVE_RECVFROM 1
 
 /* Define to 1 if you have the <rsa.h> header file. */
 /* #undef HAVE_RSA_H */
@@ -611,8 +603,11 @@
 /* if you have the function SRP_Calc_client_key */
 /* #undef HAVE_SSLEAY_SRP */
 
+/* Define to 1 if you have the `SSLv2_client_method' function. */
+#define HAVE_SSLV2_CLIENT_METHOD 1
+
 /* Define to 1 if you have the `SSL_get_shutdown' function. */
-/* #undef HAVE_SSL_GET_SHUTDOWN */
+#define HAVE_SSL_GET_SHUTDOWN 1
 
 /* Define to 1 if you have the <ssl.h> header file. */
 /* #undef HAVE_SSL_H */
@@ -632,9 +627,6 @@
 /* Define to 1 if you have the strcasecmp function. */
 #define HAVE_STRCASECMP 1
 
-/* Define to 1 if you have the strcasestr function. */
-/* #undef HAVE_STRCASESTR */
-
 /* Define to 1 if you have the strcmpi function. */
 /* #undef HAVE_STRCMPI */
 
@@ -653,11 +645,8 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
-/* Define to 1 if you have the strlcat function. */
-/* #undef HAVE_STRLCAT */
-
 /* Define to 1 if you have the `strlcpy' function. */
-/* #undef HAVE_STRLCPY */
+#define HAVE_STRLCPY 1
 
 /* Define to 1 if you have the strncasecmp function. */
 #define HAVE_STRNCASECMP 1
@@ -726,13 +715,13 @@
 #define HAVE_SYS_UN_H 1
 
 /* Define to 1 if you have the <sys/utime.h> header file. */
-/* #undef HAVE_SYS_UTIME_H */
+#define HAVE_SYS_UTIME_H 1
 
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #define HAVE_SYS_WAIT_H 1
 
 /* Define to 1 if you have the <sys/xattr.h> header file. */
-/* #undef HAVE_SYS_XATTR_H */
+#define HAVE_SYS_XATTR_H 1
 
 /* Define to 1 if you have the <termios.h> header file. */
 #define HAVE_TERMIOS_H 1
@@ -783,7 +772,7 @@
 /* #undef HAVE_WINSOCK_H */
 
 /* Define this symbol if your OS supports changing the contents of argv */
-#define HAVE_WRITABLE_ARGV 1
+/* #undef HAVE_WRITABLE_ARGV */
 
 /* Define to 1 if you have the writev function. */
 #define HAVE_WRITEV 1
@@ -801,9 +790,6 @@
    */
 #define LT_OBJDIR ".libs/"
 
-/* Define to 1 if you are building a native Windows target. */
-/* #undef NATIVE_WINDOWS */
-
 /* Define to 1 if you need the lber.h header file even with ldap.h */
 /* #undef NEED_LBER_H */
 
@@ -819,6 +805,9 @@
 /* Define to 1 if _THREAD_SAFE preprocessor symbol must be defined. */
 /* #undef NEED_THREAD_SAFE */
 
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+/* #undef NO_MINUS_C_MINUS_O */
+
 /* Define to enable NTLM delegation to winbind's ntlm_auth helper. */
 /* #undef NTLM_WB_ENABLED */
 
@@ -826,19 +815,27 @@
 /* #undef NTLM_WB_FILE */
 
 /* cpu-machine-OS */
-#define OS "arm-unknown-eabi"
+#if defined(__arm__)
+#define OS "arm-unknown-android"
+#elif defined(__i386__)
+#define OS "i386-unknown-android"
+#elif defined(__mips__)
+#define OS "mips-unknown-android"
+#else
+#define OS "unknown-unknown-android"
+#endif
 
 /* Name of package */
 #define PACKAGE "curl"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "a suitable curl mailing list => http://curl.haxx.se/mail/"
+#define PACKAGE_BUGREPORT "a suitable curl mailing list: http://curl.haxx.se/mail/"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "curl"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "curl 7.22.0"
+#define PACKAGE_STRING "curl -"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "curl"
@@ -847,43 +844,10 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "7.22.0"
+#define PACKAGE_VERSION "-"
 
 /* a suitable file to read random data from */
-#define RANDOM_FILE "/dev/urandom"
-
-/* Define to the type qualifier pointed by arg 5 for recvfrom. */
-#define RECVFROM_QUAL_ARG5
-
-/* Define to the type of arg 1 for recvfrom. */
-#define RECVFROM_TYPE_ARG1 int
-
-/* Define to the type pointed by arg 2 for recvfrom. */
-#define RECVFROM_TYPE_ARG2 void
-
-/* Define to 1 if the type pointed by arg 2 for recvfrom is void. */
-#define RECVFROM_TYPE_ARG2_IS_VOID 1
-
-/* Define to the type of arg 3 for recvfrom. */
-#define RECVFROM_TYPE_ARG3 size_t
-
-/* Define to the type of arg 4 for recvfrom. */
-#define RECVFROM_TYPE_ARG4 int
-
-/* Define to the type pointed by arg 5 for recvfrom. */
-#define RECVFROM_TYPE_ARG5 struct sockaddr
-
-/* Define to 1 if the type pointed by arg 5 for recvfrom is void. */
-/* #undef RECVFROM_TYPE_ARG5_IS_VOID */
-
-/* Define to the type pointed by arg 6 for recvfrom. */
-#define RECVFROM_TYPE_ARG6 socklen_t
-
-/* Define to 1 if the type pointed by arg 6 for recvfrom is void. */
-/* #undef RECVFROM_TYPE_ARG6_IS_VOID */
-
-/* Define to the function return type for recvfrom. */
-#define RECVFROM_TYPE_RETV ssize_t
+/* #undef RANDOM_FILE */
 
 /* Define to the type of arg 1 for recv. */
 #define RECV_TYPE_ARG1 int
@@ -898,13 +862,13 @@
 #define RECV_TYPE_ARG4 int
 
 /* Define to the function return type for recv. */
-#define RECV_TYPE_RETV ssize_t
+#define RECV_TYPE_RETV int
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
 
 /* Define to the type qualifier of arg 5 for select. */
-#define SELECT_QUAL_ARG5
+#define SELECT_QUAL_ARG5 
 
 /* Define to the type of arg 1 for select. */
 #define SELECT_TYPE_ARG1 int
@@ -934,7 +898,7 @@
 #define SEND_TYPE_ARG4 int
 
 /* Define to the function return type for send. */
-#define SEND_TYPE_RETV ssize_t
+#define SEND_TYPE_RETV int
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
@@ -949,10 +913,10 @@
 #define SIZEOF_SHORT 2
 
 /* The size of `size_t', as computed by sizeof. */
-#define SIZEOF_SIZE_T 4
+#define SIZEOF_SIZE_T 2
 
 /* The size of `time_t', as computed by sizeof. */
-#define SIZEOF_TIME_T 8
+#define SIZEOF_TIME_T 4 
 
 /* The size of `void*', as computed by sizeof. */
 #define SIZEOF_VOIDP 4
@@ -967,19 +931,22 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Define to enable c-ares support */
-#define USE_ARES 1
+/* #undef USE_ARES */
 
 /* if axTLS is enabled */
 /* #undef USE_AXTLS */
 
-/* Define to disable non-blocking sockets. */
-/* #undef USE_BLOCKING_SOCKETS */
-
 /* if CyaSSL is enabled */
 /* #undef USE_CYASSL */
 
+/* to enable iOS/Mac OS X native SSL/TLS support */
+/* #undef USE_DARWINSSL */
+
 /* if GnuTLS is enabled */
 /* #undef USE_GNUTLS */
+
+/* if GnuTLS uses nettle as crypto backend */
+/* #undef USE_GNUTLS_NETTLE */
 
 /* if librtmp is in use */
 /* #undef USE_LIBRTMP */
@@ -990,6 +957,9 @@
 /* If you want to build curl with the built-in manual */
 /* #undef USE_MANUAL */
 
+/* Define to enable metalink support */
+/* #undef USE_METALINK */
+
 /* if NSS is enabled */
 /* #undef USE_NSS */
 
@@ -997,19 +967,25 @@
 /* #undef USE_OPENLDAP */
 
 /* if OpenSSL is in use */
-/* #undef USE_OPENSSL */
+#define USE_OPENSSL 1
 
 /* if PolarSSL is enabled */
 /* #undef USE_POLARSSL */
 
+/* to enable Windows native SSL/TLS support */
+/* #undef USE_SCHANNEL */
+
 /* if SSL is enabled */
-/* #undef USE_SSLEAY */
+#define USE_SSLEAY 1
 
 /* if you want POSIX threaded DNS lookup */
-/* #undef USE_THREADS_POSIX */
+#define USE_THREADS_POSIX 1
 
 /* Use TLS-SRP authentication */
 /* #undef USE_TLS_SRP */
+
+/* Define to 1 if you have the `normaliz' (WinIDN) library (-lnormaliz). */
+/* #undef USE_WIN32_IDN */
 
 /* Define to 1 if you are building a Windows target with large file support.
    */
@@ -1026,18 +1002,26 @@
 /* #undef USE_YASSLEMUL */
 
 /* Version number of package */
-#define VERSION "7.22.0"
+#define VERSION "-"
+
+/* Define to 1 to provide own prototypes. */
+/* #undef WANT_IDN_PROTOTYPES */
 
 /* Define to avoid automatic inclusion of winsock.h */
 /* #undef WIN32_LEAN_AND_MEAN */
 
 /* Define to 1 if OS is AIX. */
 #ifndef _ALL_SOURCE
-#  undef _ALL_SOURCE
+/* #  undef _ALL_SOURCE */
+#endif
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
 #endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
-/* #undef _FILE_OFFSET_BITS */
+#define _FILE_OFFSET_BITS 64
 
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */

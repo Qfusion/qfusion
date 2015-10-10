@@ -68,7 +68,7 @@ static void CL_Sys_Android_ProcessUserEvent( struct android_app *app, struct and
  * @param obj     the activity Java object
  * @param charkey the character code
  */
-QF_DLL_EXPORT void Java_net_qfusion_engine_QfusionActivity_dispatchCharEvent( JNIEnv *env, jobject obj, jchar charkey )
+JNIEXPORT void JNICALL Java_net_qfusion_engine_QfusionActivity_dispatchCharEvent( JNIEnv *env, jobject obj, jchar charkey )
 {
 	uint8_t event[1 + sizeof( uint16_t )];
 

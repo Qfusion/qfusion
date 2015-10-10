@@ -16,6 +16,9 @@
 #include <string.h>
 #include <time.h>
 #include <curl/curl.h>
+#ifdef USE_OPENSSL
+#include <openssl/crypto.h>
+#endif
 #include "wswcurl.h"
 #include "qcommon.h"
 
@@ -125,9 +128,15 @@ static qmutex_t *curldummy_mutex = NULL;
 static cvar_t *http_proxy;
 static cvar_t *http_proxyuserpwd;
 
+static qmutex_t **crypto_mutexes = NULL;
+static int crypto_num_mutexes = 0;
+
 ///////////////////////
 // Symbols
 static void *curlLibrary = NULL;
+#ifdef USE_OPENSSL
+static void *cryptoLibrary = NULL;
+#endif
 
 #ifdef LIBCURL_RUNTIME
 
@@ -199,11 +208,41 @@ static dllfunc_t libcurlfuncs[] =
 
 #endif
 
+#ifdef USE_OPENSSL
+
+#ifdef LIBCRYPTO_RUNTIME
+
+static int ( *qCRYPTO_num_locks )( void );
+static void ( *qCRYPTO_set_locking_callback )( void ( *func )( int mode, int type, const char *file, int line ) );
+static dllfunc_t libcryptofuncs[] =
+{
+	{ "CRYPTO_num_locks", ( void ** )&qCRYPTO_num_locks },
+	{ "CRYPTO_set_locking_callback", ( void ** )&qCRYPTO_set_locking_callback },
+	{ NULL, NULL }
+};
+
+#else
+
+#define qCRYPTO_num_locks CRYPTO_num_locks
+#define qCRYPTO_set_locking_callback CRYPTO_set_locking_callback
+
+#endif
+
+#endif
+
 /*
 * wswcurl_unloadlib
 */
 static void wswcurl_unloadlib( void )
 {
+#ifdef USE_OPENSSL
+#ifdef LIBCRYPTO_RUNTIME
+	if( cryptoLibrary )
+		Com_UnloadLibrary( &cryptoLibrary );
+#endif
+	cryptoLibrary = NULL;
+#endif
+
 #ifdef LIBCURL_RUNTIME
 	if( curlLibrary )
 		Com_UnloadLibrary( &curlLibrary );
@@ -221,7 +260,15 @@ static void wswcurl_loadlib( void )
 #ifdef LIBCURL_RUNTIME
 	curlLibrary = Com_LoadSysLibrary( LIBCURL_LIBNAME, libcurlfuncs );
 #else
-	curlLibrary =  (void *)1;
+	curlLibrary = (void *)1;
+#endif
+
+#ifdef USE_OPENSSL
+#ifdef LIBCRYPTO_RUNTIME
+	cryptoLibrary = Com_LoadSysLibrary( LIBCRYPTO_LIBNAME, libcryptofuncs );
+#else
+	cryptoLibrary = (void *)1;
+#endif
 #endif
 }
 
@@ -432,6 +479,18 @@ size_t wswcurl_read(wswcurl_req *req, void *buffer, size_t size)
 	return written;
 }
 
+#ifdef USE_OPENSSL
+static void wswcurl_crypto_lockcallback( int mode, int type, const char *file, int line )
+{
+	( void )file;
+	( void )line;
+	if( mode & CRYPTO_LOCK )
+		QMutex_Lock( crypto_mutexes[type] );
+	else
+		QMutex_Unlock( crypto_mutexes[type] );
+}
+#endif
+
 void wswcurl_init( void )
 {
 	if( wswcurl_mempool )
@@ -453,6 +512,18 @@ void wswcurl_init( void )
 	curldummy_mutex = QMutex_Create();
 
 	http_requests_mutex = QMutex_Create();
+
+#ifdef USE_OPENSSL
+	if( cryptoLibrary )
+	{
+		int mutex_num;
+		crypto_num_mutexes = qCRYPTO_num_locks();
+		crypto_mutexes = WMALLOC( crypto_num_mutexes * sizeof( *crypto_mutexes ) );
+		for( mutex_num = 0; mutex_num < crypto_num_mutexes; mutex_num++ )
+			crypto_mutexes[mutex_num] = QMutex_Create();
+		qCRYPTO_set_locking_callback( wswcurl_crypto_lockcallback );
+	}
+#endif
 }
 
 void wswcurl_cleanup( void )
@@ -477,6 +548,22 @@ void wswcurl_cleanup( void )
 	QMutex_Destroy( &curldummy_mutex );
 
 	QMutex_Destroy( &http_requests_mutex );
+
+#ifdef USE_OPENSSL
+	if( cryptoLibrary )
+	{
+		qCRYPTO_set_locking_callback( NULL );
+		if( crypto_num_mutexes && crypto_mutexes )
+		{
+			int mutex_num;
+			for( mutex_num = 0; mutex_num < crypto_num_mutexes; mutex_num++ )
+				QMutex_Destroy( &crypto_mutexes[mutex_num] );
+			WFREE( crypto_mutexes );
+			crypto_mutexes = NULL;
+		}
+		crypto_num_mutexes = 0;
+	}
+#endif
 
 	wswcurl_unloadlib();
 

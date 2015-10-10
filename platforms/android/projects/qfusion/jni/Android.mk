@@ -6,12 +6,13 @@ QFUSION_PATH := $(call my-dir)
 include $(NDK_ROOT)/sources/android/native_app_glue/Android.mk
 
 include $(QFUSION_PATH)/source/android/angelscript.mk
-include $(QFUSION_PATH)/source/android/cares.mk
 include $(QFUSION_PATH)/source/android/curl.mk
 include $(QFUSION_PATH)/source/android/freetype.mk
 include $(QFUSION_PATH)/source/android/jpeg.mk
 include $(QFUSION_PATH)/source/android/ogg.mk
 include $(QFUSION_PATH)/source/android/OpenAL-MOB.mk
+include $(QFUSION_PATH)/source/android/openssl-crypto.mk
+include $(QFUSION_PATH)/source/android/openssl-ssl.mk
 include $(QFUSION_PATH)/source/android/png.mk
 include $(QFUSION_PATH)/source/android/theora.mk
 include $(QFUSION_PATH)/source/android/vorbis.mk

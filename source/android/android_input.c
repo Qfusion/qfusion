@@ -275,15 +275,40 @@ static int32_t IN_Android_OnInputEvent( struct android_app *app, AInputEvent *ev
 				switch( action )
 				{
 				case AMOTION_EVENT_ACTION_DOWN:
-					Key_MouseEvent( K_MOUSE1, true, time );
-					break;
 				case AMOTION_EVENT_ACTION_UP:
-					Key_MouseEvent( K_MOUSE1, false, time );
+					{
+						static int32_t oldButtonState = 0;
+						int32_t buttonState = AMotionEvent_getButtonState( event );
+						int32_t buttonsDown = buttonState & ~oldButtonState, buttonsUp = oldButtonState & ~buttonState;
+						int32_t buttonsChanged = buttonsDown | buttonsUp;
+						int button;
+						oldButtonState = buttonState;
+						for( button = 0; buttonsChanged >> button; button++ )
+						{
+							if( buttonsChanged & ( 1 << button ) )
+								Key_MouseEvent( K_MOUSE1 + button, ( buttonsDown & ( 1 << button ) ) ? true : false, time );
+						}
+					}
 					break;
 				case AMOTION_EVENT_ACTION_HOVER_MOVE:
 				case AMOTION_EVENT_ACTION_MOVE:
 					if( IN_Android_EventToWindowCoordinates( event, 0, &x, &y ) )
 						CL_MouseSet( x, y, false );
+					break;
+				case AMOTION_EVENT_ACTION_SCROLL:
+					{
+						float scroll = AMotionEvent_getAxisValue( event, AMOTION_EVENT_AXIS_VSCROLL, 0 );
+						if( scroll > 0.0f )
+						{
+							Key_Event( K_MWHEELUP, true, time );
+							Key_Event( K_MWHEELUP, false, time );
+						}
+						else if( scroll < 0.0f )
+						{
+							Key_Event( K_MWHEELDOWN, true, time );
+							Key_Event( K_MWHEELDOWN, false, time );
+						}
+					}
 					break;
 				}
 			}
