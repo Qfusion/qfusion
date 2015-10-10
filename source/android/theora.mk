@@ -4,7 +4,7 @@ LOCAL_MODULE := theora
 
 LOCAL_CFLAGS := -DLIBTHEORA_EXPORTS -Wno-aggressive-loop-optimizations
 ifeq ($(TARGET_ARCH_ABI),x86)
-  QF_CFLAGS += -DOC_X86_ASM
+  LOCAL_CFLAGS += -DOC_X86_ASM
 endif
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES := $(LOCAL_EXPORT_C_INCLUDES) $(LOCAL_PATH)/lib
@@ -44,6 +44,7 @@ LOCAL_SRC_FILES := \
   lib/x86/mmxidct.c \
   lib/x86/mmxstate.c \
   lib/x86/sse2fdct.c \
-  lib/x86/x86enc.c
+  lib/x86/x86enc.c \
+  lib/x86/x86state.c
 
 include $(BUILD_STATIC_LIBRARY)
