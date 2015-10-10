@@ -99,7 +99,7 @@ void Sys_Error( const char *format, ... )
 	Q_vsnprintfz( string, sizeof( string ), format, argptr );
 	va_end( argptr );
 
-	__android_log_write( ANDROID_LOG_ERROR, APPLICATION, string );
+	__android_log_write( ANDROID_LOG_ERROR, "Qfusion", string );
 
 	_exit( 1 );
 }
@@ -365,7 +365,7 @@ static void Sys_Android_Init( void )
 		newWakeLock = (*env)->GetMethodID( env, powerClass, "newWakeLock",
 			"(ILjava/lang/String;)Landroid/os/PowerManager$WakeLock;" );
 		(*env)->DeleteLocalRef( env, powerClass );
-		tag = (*env)->NewStringUTF( env, APPLICATION );
+		tag = (*env)->NewStringUTF( env, "Qfusion" );
 		wl = (*env)->CallObjectMethod( env, power, newWakeLock, 1, tag );
 		(*env)->DeleteLocalRef( env, tag );
 		(*env)->DeleteLocalRef( env, power );
