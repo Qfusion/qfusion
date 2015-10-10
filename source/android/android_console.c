@@ -28,5 +28,5 @@ char *Sys_ConsoleInput( void )
 
 void Sys_ConsoleOutput( char *string )
 {
-	__android_log_write( ANDROID_LOG_INFO, APPLICATION, string );
+	__android_log_write( ANDROID_LOG_INFO, "Qfusion", string );
 }
