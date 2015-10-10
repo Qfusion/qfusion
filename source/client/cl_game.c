@@ -535,6 +535,7 @@ void CL_GameModule_Init( void )
 	import.SCR_SetDrawCharIntercept = SCR_SetDrawCharIntercept;
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
+	import.SCR_EnableQuickMenu = SCR_EnableQuickMenu;
 
 	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
 	import.AsyncStream_UrlDecode = AsyncStream_UrlDecode;
@@ -575,6 +576,8 @@ void CL_GameModule_Init( void )
 	}
 
 	CL_GameModule_AsyncStream_Init();
+
+	SCR_EnableQuickMenu( false );
 
 	start = Sys_Milliseconds();
 	cge->Init( cls.servername, cl.playernum,

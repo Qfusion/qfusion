@@ -582,6 +582,7 @@ void CL_CheckDownloadTimeout( void );
 //
 void SCR_InitScreen( void );
 void SCR_ShutdownScreen( void );
+void SCR_EnableQuickMenu( bool enable );
 void SCR_UpdateScreen( void );
 void SCR_BeginLoadingPlaque( void );
 void SCR_EndLoadingPlaque( void );
