@@ -3766,7 +3766,7 @@ static asIScriptModule *G_BuildGameScript( const char *moduleName, const char *d
 	
 	asEngine = GAME_AS_ENGINE();
 	if( asEngine == NULL ) {
-		G_Printf( "G_BuildGameScript: Angelscript API unavailable\n" );
+		G_Printf( S_COLOR_RED "G_BuildGameScript: Angelscript API unavailable\n" );
 		return NULL;
 	}
 
@@ -3776,7 +3776,7 @@ static asIScriptModule *G_BuildGameScript( const char *moduleName, const char *d
 	for( numSections = 0; ( section = G_ListNameForPosition( script, numSections, SECTIONS_SEPARATOR ) ) != NULL; numSections++ );
 
 	if( !numSections ) {
-		G_Printf( "* Error: script '%s' has no sections\n", scriptName );
+		G_Printf( S_COLOR_RED "* Error: script '%s' has no sections\n", scriptName );
 		return NULL;
 	}
 
@@ -3784,7 +3784,7 @@ static asIScriptModule *G_BuildGameScript( const char *moduleName, const char *d
 
 	asModule = asEngine->GetModule( moduleName, asGM_CREATE_IF_NOT_EXISTS );
 	if( asModule == NULL ) {
-		G_Printf( "G_BuildGameScript: GetModule '%s' failed\n", moduleName );
+		G_Printf( S_COLOR_RED "G_BuildGameScript: GetModule '%s' failed\n", moduleName );
 		return NULL;
 	}
 
@@ -3795,21 +3795,21 @@ static asIScriptModule *G_BuildGameScript( const char *moduleName, const char *d
 		G_Free( section );
 
 		if( error ) {
-			G_Printf( "* Failed to add the script section %s with error %i\n", sectionName, error );
+			G_Printf( S_COLOR_RED "* Failed to add the script section %s with error %i\n", sectionName, error );
 			asEngine->DiscardModule( moduleName );
 			return NULL;
 		}
 	}
 
 	if( sectionNum != numSections ) {
-		G_Printf( "* Error: couldn't load all script sections.\n" );
+		G_Printf( S_COLOR_RED "* Error: couldn't load all script sections.\n" );
 		asEngine->DiscardModule( moduleName );
 		return NULL;
 	}
 
 	error = asModule->Build();
 	if( error ) {
-		G_Printf( "* Failed to build the script '%s'\n", scriptName );
+		G_Printf( S_COLOR_RED "* Failed to build the script '%s'\n", scriptName );
 		asEngine->DiscardModule( moduleName );
 		return NULL;
 	}
