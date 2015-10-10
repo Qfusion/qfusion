@@ -54,7 +54,7 @@ public:
 //==================================================
 
 RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
-	: rocketInitialized( false ), hideCursorBits( 0 ), touchID( -1 ),
+	: rocketInitialized( false ), hideCursorBits( 0 ),
 	// pointers
 	systemInterface(0), fsInterface(0), renderInterface(0), 
 	contextMain(0), contextQuick(0)
@@ -87,6 +87,9 @@ RocketModule::RocketModule( int vidWidth, int vidHeight, float pixelRatio )
 	contextQuick = Rocket::Core::CreateContext( contextName + "_quick", Vector2i( vidWidth, vidHeight ) );
 	if( contextQuick )
 		contextQuick->ShowMouseCursor( false );
+
+	contextsTouch[UI_CONTEXT_MAIN].id = -1;
+	contextsTouch[UI_CONTEXT_QUICK].id = -1;
 }
 
 // here for hax0rz, TODO: move to "common" area
@@ -212,15 +215,17 @@ void RocketModule::keyEvent( int contextId, int key, bool pressed )
 
 void RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, int y )
 {
-	if( ( type == TOUCH_DOWN ) && ( touchID < 0 ) ) {
-		touchID = id;
-		touchOrigin.x = x;
-		touchOrigin.y = y;
-		touchY = y;
-		touchScroll = false;
+	auto &contextTouch = contextsTouch[contextId];
+
+	if( ( type == TOUCH_DOWN ) && ( contextTouch.id < 0 ) ) {
+		contextTouch.id = id;
+		contextTouch.origin.x = x;
+		contextTouch.origin.y = y;
+		contextTouch.y = y;
+		contextTouch.scroll = false;
 	}
 
-	if( id != touchID ) {
+	if( id != contextTouch.id ) {
 		return;
 	}
 
@@ -231,20 +236,20 @@ void RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 	if( type == TOUCH_DOWN ) {
 		context->ProcessMouseButtonDown( 0, KeyConverter::getModifiers() );
 	} else {
-		int delta = touchY - y;
+		int delta = contextTouch.y - y;
 		if( delta ) {
-			if( !touchScroll ) {
+			if( !contextTouch.scroll ) {
 				int threshold = 32 * ( renderInterface->GetPixelsPerInch() / renderInterface->GetBasePixelsPerInch() );
 				if( abs( delta ) > threshold ) {
-					touchScroll = true;
-					touchY += ( ( delta < 0 ) ? threshold : -threshold );
-					delta = touchY - y;
+					contextTouch.scroll = true;
+					contextTouch.y += ( ( delta < 0 ) ? threshold : -threshold );
+					delta = contextTouch.y - y;
 				}
 			}
 
-			if( touchScroll ) {
+			if( contextTouch.scroll ) {
 				Element *element;
-				for( element = context->GetElementAtPoint( touchOrigin ); element; element = element->GetParentNode() ) {
+				for( element = context->GetElementAtPoint( contextTouch.origin ); element; element = element->GetParentNode() ) {
 					if( element->GetTagName() == "scrollbarvertical" ) {
 						break;
 					}
@@ -261,7 +266,7 @@ void RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 						break;
 					}
 				}
-				touchY = y;
+				contextTouch.y = y;
 			}
 		}
 
@@ -273,13 +278,15 @@ void RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 
 void RocketModule::cancelTouches( int contextId )
 {
-	if( touchID < 0 ) {
+	auto &contextTouch = contextsTouch[contextId];
+
+	if( contextTouch.id < 0 ) {
 		return;
 	}
 
 	auto *context = contextForId( contextId );
 
-	touchID = -1;
+	contextTouch.id = -1;
 	context->ProcessMouseButtonUp( 0, KeyConverter::getModifiers() );
 	UI_Main::Get()->mouseMove( contextId, 0, 0, true, false );
 }
