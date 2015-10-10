@@ -452,6 +452,8 @@ void UI_Main::showUI( bool show )
 	trap::CL_SetKeyDest( show ? key_menu : key_game );
 
 	if( !show ) {
+		cancelTouches( UI_CONTEXT_MAIN );
+
 		UI_Navigation &navigation = navigations[UI_CONTEXT_MAIN];
 		NavigationStack *navigator = navigation.front();
 		navigator->popAllDocuments();
@@ -463,6 +465,10 @@ void UI_Main::showUI( bool show )
 void UI_Main::showQuickMenu( bool show )
 {
 	quickMenuVisible = show;
+
+	if( !show ) {
+		cancelTouches( UI_CONTEXT_QUICK );
+	}
 }
 
 bool UI_Main::haveQuickMenu( void )

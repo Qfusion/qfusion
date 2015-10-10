@@ -76,10 +76,13 @@ namespace WSWUI
 		bool rocketInitialized;
 		unsigned int hideCursorBits;
 
-		int touchID;
-		Rocket::Core::Vector2f touchOrigin;
-		int touchY;
-		bool touchScroll;
+		struct contextTouch {
+			int id;
+			Rocket::Core::Vector2f origin;
+			int y;
+			bool scroll;
+		};
+		contextTouch contextsTouch[UI_NUM_CONTEXTS];
 
 		UI_SystemInterface *systemInterface;
 		UI_FileInterface *fsInterface;
