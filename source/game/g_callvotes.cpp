@@ -2029,10 +2029,13 @@ static const char *G_CallVotes_Arguments( const callvotedata_t *vote )
 static const char *G_CallVotes_String( const callvotedata_t *vote )
 {
 	const char *arguments;
+	static char string[MAX_CONFIGSTRING_CHARS];
 
 	arguments = G_CallVotes_Arguments( vote );
-	if( arguments[0] )
-		return va( "%s %s", vote->callvote->name, arguments );
+	if( arguments[0] ) {
+		Q_snprintfz( string, sizeof( string ), "%s %s", vote->callvote->name, arguments );
+		return string;
+	}
 	return vote->callvote->name;
 }
 
