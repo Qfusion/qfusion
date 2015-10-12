@@ -393,7 +393,7 @@ enum
 
 #define	ARMOR_DEGRADATION 0.66 // how much armor is lost per damage point taken
 #define ARMOR_PROTECTION 0.66 // how much damage is removed per damage point taken
-#define ARMOR_DECAY_MAX_ARMOR 0 // decay to this value ( 0 disabled )
+#define ARMOR_DECAY_MAX_ARMOR 150 // decay to this value ( 0 disabled )
 
 #define INSTA_SHIELD_MAX	100.0f
 
