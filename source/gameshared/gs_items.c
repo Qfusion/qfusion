@@ -34,13 +34,13 @@ vec3_t item_box_mins = { -16.0f, -16.0f, -16.0f };
 vec3_t item_box_maxs = { 16.0f, 16.0f, 40.0f };
 
 #define ARMOR_SHARD_PICKUP 5
-#define ARMOR_SHARD_MAX 200
+#define ARMOR_SHARD_MAX 100
 #define ARMOR_GA_PICKUP 50
 #define ARMOR_GA_MAX 100
 #define ARMOR_YA_PICKUP 75
-#define ARMOR_YA_MAX 125
+#define ARMOR_YA_MAX 150
 #define ARMOR_RA_PICKUP 100
-#define ARMOR_RA_MAX 150
+#define ARMOR_RA_MAX 200
 
 #define SHELL_TIME	30
 #define QUAD_TIME	30
