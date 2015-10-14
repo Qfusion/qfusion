@@ -1113,7 +1113,6 @@ typedef struct
 	float armor;
 	float instashieldCharge;
 
-	unsigned int gunbladeChargeTimeStamp;
 	unsigned int next_drown_time;
 	int drowningDamage;
 	int old_waterlevel;

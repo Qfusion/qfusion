@@ -341,12 +341,31 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter )
 	return result;
 }
 
+/**
+ * Returns whether the weapon should be displayed in the weapon list on the HUD
+ * (if the player either has the weapon ammo for it).
+ *
+ * @param weapon weapon item ID
+ * @return whether to display the weapon
+ */
+static bool CG_IsWeaponInList( int weapon )
+{
+	bool hasWeapon = ( cg.predictedPlayerState.inventory[weapon] != 0 );
+	bool hasAmmo = ( cg.predictedPlayerState.inventory[weapon - WEAP_GUNBLADE + AMMO_GUNBLADE] ||
+		cg.predictedPlayerState.inventory[weapon - WEAP_GUNBLADE + AMMO_WEAK_GUNBLADE] );
+
+	if( weapon == WEAP_GUNBLADE ) // gunblade always has 1 ammo when it's strong, but the player doesn't necessarily have it
+		return hasWeapon;
+
+	return hasWeapon || hasAmmo;
+}
+
 static int CG_GetWeaponCount( const void *parameter )
 {
 	int i, n = 0;
 	for( i = 0; i < WEAP_TOTAL-1; i++ )
 	{
-		if( ( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE+i] ) )
+		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
 			n++;
 	}
 	return n;
@@ -981,8 +1000,10 @@ static void CG_DrawObituaries( int x, int y, int align, struct qfontface_s *font
 		switch( obr->mod )
 		{
 		case MOD_GUNBLADE_W:
-		case MOD_GUNBLADE_S:
 			pic = CG_MediaShader( cgs.media.shaderWeaponIcon[WEAP_GUNBLADE-1] );
+			break;
+		case MOD_GUNBLADE_S:
+			pic = CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
 			break;
 		case MOD_MACHINEGUN_W:
 		case MOD_MACHINEGUN_S:
@@ -1152,6 +1173,17 @@ static bool CG_IsWeaponSelected( int weapon )
 	return ( weapon == cg.predictedPlayerState.stats[STAT_PENDING_WEAPON] );
 }
 
+static struct shader_s *CG_GetWeaponIcon( int weapon )
+{
+	if( weapon == WEAP_GUNBLADE && cg.predictedPlayerState.inventory[AMMO_GUNBLADE] )
+	{
+		if( cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_GUNBLADE || cg.predictedPlayerState.weaponState != WEAPON_STATE_REFIRESTRONG )
+			return CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
+	}
+
+	return CG_MediaShader( cgs.media.shaderWeaponIcon[weapon - WEAP_GUNBLADE] );
+}
+
 static int cg_touch_dropWeapon;
 static float cg_touch_dropWeaponTime;
 
@@ -1232,14 +1264,14 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 
 	for( i = 0; i < WEAP_TOTAL-1; i++ )
 	{
-		if( ( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE+i] ) )
+		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
 			n++;
 	}
 
 	for( i = j = 0; i < WEAP_TOTAL-1; i++ )
 	{
 		// if player doesnt have this weapon, skip it
-		if( !( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE+i] ) )
+		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
 			continue;
 
 		selected_weapon = CG_IsWeaponSelected( WEAP_GUNBLADE+i );
@@ -1290,7 +1322,7 @@ static void CG_DrawWeaponIcons( int x, int y, int offx, int offy, int iw, int ih
 				if( customWeaponPics[i] )
 					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, trap_R_RegisterPic( customWeaponPics[i] ) );
 				else
-					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_MediaShader( cgs.media.shaderWeaponIcon[i] ) );
+					trap_R_DrawStretchPic( curx, cury, curw, curh, 0, 0, 1, 1, colorWhite, CG_GetWeaponIcon( WEAP_GUNBLADE + i ) );
 			}
 			else
 				if( customNoGunWeaponPics[i] )
@@ -1331,7 +1363,7 @@ static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, 
 
 	for( i = 0; i < WEAP_TOTAL-1; i++ )
 	{
-		if( ( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE+i] ) )
+		if( CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
 			n++;
 	}
 
@@ -1340,28 +1372,31 @@ static void CG_DrawWeaponAmmos( int x, int y, int offx, int offy, int fontsize, 
 	for( i = j = 0; i < WEAP_TOTAL-1; i++ )
 	{
 		// if player doesn't have this weapon, skip it
-		if( !( cg.predictedPlayerState.inventory[WEAP_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_GUNBLADE+i] || cg.predictedPlayerState.inventory[AMMO_WEAK_GUNBLADE+i] ) )
+		if( !CG_IsWeaponInList( WEAP_GUNBLADE + i ) )
 			continue;
 
-		if( CG_IsWeaponSelected( WEAP_GUNBLADE+i ) )
-			color[3] = 1.0;
-		else
-			color[3] = 0.5;
-
-		fj = (float)j;
-		fn = (float)n;
-		curx = x + (int)( offx * ( fj - fn / 2.0f ) );
-		cury = y + (int)( offy * ( fj - fn / 2.0f ) );
-
-		if( cg_touch_dropWeapon == WEAP_GUNBLADE+i )
+		if( i ) // skip gunblade because it uses a different icon instead of the ammo count
 		{
-			float dropOffset = ( bound( 0.75f, cg_touch_dropWeaponTime, 1.0f ) - 0.75f ) * 4.0f;
-			curx += cg_touch_dropWeaponX * dropOffset;
-			cury += cg_touch_dropWeaponY * dropOffset;
-		}
+			if( CG_IsWeaponSelected( WEAP_GUNBLADE+i ) )
+				color[3] = 1.0;
+			else
+				color[3] = 0.5;
 
-		if( cg.predictedPlayerState.inventory[i+startammo] )
-			CG_DrawHUDNumeric( curx, cury, align, color, curwh, curwh, cg.predictedPlayerState.inventory[i+startammo] );
+			fj = (float)j;
+			fn = (float)n;
+			curx = x + (int)( offx * ( fj - fn / 2.0f ) );
+			cury = y + (int)( offy * ( fj - fn / 2.0f ) );
+
+			if( cg_touch_dropWeapon == WEAP_GUNBLADE+i )
+			{
+				float dropOffset = ( bound( 0.75f, cg_touch_dropWeaponTime, 1.0f ) - 0.75f ) * 4.0f;
+				curx += cg_touch_dropWeaponX * dropOffset;
+				cury += cg_touch_dropWeaponY * dropOffset;
+			}
+
+			if( cg.predictedPlayerState.inventory[i+startammo] )
+				CG_DrawHUDNumeric( curx, cury, align, color, curwh, curwh, cg.predictedPlayerState.inventory[i+startammo] );
+		}
 		j++;
 	}
 }
@@ -1430,10 +1465,10 @@ static void CG_DrawWeaponCrossQuarter( int ammopass, int quarter, int x, int y, 
 			if( customWeaponPics[w[i]] )
 				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, trap_R_RegisterPic( customWeaponPics[w[i]] ) );
 			else
-				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, CG_MediaShader( cgs.media.shaderWeaponIcon[w[i]] ) );
+				trap_R_DrawStretchPic( x, y, iw, ih, 0.0f, 0.0f, 1.0f, 1.0f, color, CG_GetWeaponIcon( WEAP_GUNBLADE + w[i] ) );
 		}
 
-		if( ammopass && cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] )
+		if( ammopass && w[i] /* don't show 1 for charged gunblade */ && cg.predictedPlayerState.inventory[AMMO_GUNBLADE + w[i]] )
 		{
 			CG_DrawHUDNumeric( x + ( iw >> 1 ), y + ( ih >> 1 ) + ammoofs, ALIGN_CENTER_MIDDLE,
 				CG_IsWeaponSelected( WEAP_GUNBLADE + w[i] ) ? color : colorTrans, ammosize, ammosize,
@@ -2425,6 +2460,20 @@ static bool CG_LFuncDrawPicBar( struct cg_layoutnode_s *commandnode, struct cg_l
 	return true;
 }
 
+static bool CG_LFuncDrawWeaponIcon( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	int weapon = cg.predictedPlayerState.stats[STAT_WEAPON];
+	int x, y;
+
+	if( weapon < WEAP_GUNBLADE || weapon >= WEAP_TOTAL )
+		return false;
+
+	x = CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width );
+	y = CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height );
+	trap_R_DrawStretchPic( x, y, layout_cursor_width, layout_cursor_height, 0, 0, 1, 1, layout_cursor_color, CG_GetWeaponIcon( weapon ) );
+	return true;
+}
+
 static bool CG_LFuncCustomWeaponIcons( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
 	int weapon = (int)CG_GetNumericArg( &argumentnode );
@@ -3317,12 +3366,22 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		"Draws the amount of weak ammo owned by the player, arguments are offset x, offset y, fontsize",
 		false
 	},
+
 	{
 		"drawWeaponStrongAmmo",
 		CG_LFuncDrawWeaponStrongAmmo,
 		NULL,
 		3,
 		"Draws the amount of strong ammo owned by the player,  arguments are offset x, offset y, fontsize",
+		false
+	},
+
+	{
+		"drawWeaponIcon",
+		CG_LFuncDrawWeaponIcon,
+		NULL,
+		0,
+		"Draws the icon of the current weapon",
 		false
 	},
 

@@ -375,6 +375,8 @@ void CG_RegisterMediaShaders( void )
 	cgs.media.shaderNoGunWeaponIcon[WEAP_ELECTROBOLT-1] = CG_RegisterMediaShader( PATH_NG_ELECTROBOLT_ICON, true );
 	cgs.media.shaderNoGunWeaponIcon[WEAP_INSTAGUN-1] = CG_RegisterMediaShader( PATH_NG_INSTAGUN_ICON, true );
 
+	cgs.media.shaderGunbladeBlastIcon = CG_RegisterMediaShader( PATH_GUNBLADE_BLAST_ICON, true );
+
 	// Kurim : keyicons
 	cgs.media.shaderKeyIcon[KEYICON_FORWARD] = CG_RegisterMediaShader( PATH_KEYICON_FORWARD, true );
 	cgs.media.shaderKeyIcon[KEYICON_BACKWARD] = CG_RegisterMediaShader( PATH_KEYICON_BACKWARD, true );
