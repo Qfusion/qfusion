@@ -108,7 +108,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 	},
 
 	{
-		"gunblade",
+		"Gunblade",
 		WEAP_GUNBLADE,
 		{
 			FIRE_MODE_STRONG,
@@ -139,8 +139,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			0,                              // v_spread
 
 			//ammo
-			1,                              // weapon pickup amount
-			1,								// pickup amount
+			0,                              // weapon pickup amount
+			0,								// pickup amount
 			1								// max amount
 		},
 

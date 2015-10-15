@@ -523,7 +523,6 @@ void G_ClientRespawn( edict_t *self, bool ghost )
 	memset( &client->resp, 0, sizeof( client->resp ) );
 	memset( &client->ps, 0, sizeof( client->ps ) );
 	client->resp.timeStamp = level.time;
-	client->resp.gunbladeChargeTimeStamp = level.time;
 	client->ps.playerNum = PLAYERNUM( self );
 
 	// clear entity values

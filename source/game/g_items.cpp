@@ -205,7 +205,7 @@ static bool Pickup_AmmoPack( edict_t *other, const int *invpack )
 	if( !invpack )
 		return false;
 
-	for( i = AMMO_GUNBLADE; i < AMMO_TOTAL; i++ )
+	for( i = AMMO_GUNBLADE + 1; i < AMMO_TOTAL; i++ )
 	{
 		item = GS_FindItemByTag( i );
 		if( item )
