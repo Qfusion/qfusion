@@ -377,6 +377,10 @@ void CG_RegisterMediaShaders( void )
 
 	cgs.media.shaderGunbladeBlastIcon = CG_RegisterMediaShader( PATH_GUNBLADE_BLAST_ICON, true );
 
+	cgs.media.shaderInstagunChargeIcon[0] = CG_RegisterMediaShader( "gfx/hud/icons/weapon/instagun_0", true );
+	cgs.media.shaderInstagunChargeIcon[1] = CG_RegisterMediaShader( "gfx/hud/icons/weapon/instagun_1", true );
+	cgs.media.shaderInstagunChargeIcon[2] = CG_RegisterMediaShader( "gfx/hud/icons/weapon/instagun_2", true );
+
 	// Kurim : keyicons
 	cgs.media.shaderKeyIcon[KEYICON_FORWARD] = CG_RegisterMediaShader( PATH_KEYICON_FORWARD, true );
 	cgs.media.shaderKeyIcon[KEYICON_BACKWARD] = CG_RegisterMediaShader( PATH_KEYICON_BACKWARD, true );
