@@ -1181,6 +1181,21 @@ static struct shader_s *CG_GetWeaponIcon( int weapon )
 			return CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
 	}
 
+	if( weapon == WEAP_INSTAGUN )
+	{
+		if( cg.predictedPlayerState.stats[STAT_WEAPON] == WEAP_INSTAGUN && cg.predictedPlayerState.weaponState == WEAPON_STATE_REFIRESTRONG )
+		{
+			int chargeTime = GS_GetWeaponDef( WEAP_INSTAGUN )->firedef.reload_time;
+			int chargeTimeStep = chargeTime / 3;
+			if( chargeTimeStep > 0 )
+			{
+				int charge = ( chargeTime - cg.predictedPlayerState.stats[STAT_WEAPON_TIME] ) / chargeTimeStep;
+				clamp( charge, 0, 2 );
+				return CG_MediaShader( cgs.media.shaderInstagunChargeIcon[charge] );
+			}
+		}
+	}
+
 	return CG_MediaShader( cgs.media.shaderWeaponIcon[weapon - WEAP_GUNBLADE] );
 }
 
