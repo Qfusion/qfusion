@@ -1981,7 +1981,6 @@ static const asProperty_t gameclient_Properties[] =
 	{ ASLIB_PROPERTY_DECL(const uint, queueTimeStamp), ASLIB_FOFFSET(gclient_t, queueTimeStamp) },
 	{ ASLIB_PROPERTY_DECL(const int, muted), ASLIB_FOFFSET(gclient_t, muted) },
 	{ ASLIB_PROPERTY_DECL(float, armor), ASLIB_FOFFSET(gclient_t, resp.armor) },
-	{ ASLIB_PROPERTY_DECL(uint, gunbladeChargeTimeStamp), ASLIB_FOFFSET(gclient_t, resp.gunbladeChargeTimeStamp) },
 	{ ASLIB_PROPERTY_DECL(const bool, chaseActive), ASLIB_FOFFSET(gclient_t, resp.chase.active) },
 	{ ASLIB_PROPERTY_DECL(int, chaseTarget), ASLIB_FOFFSET(gclient_t, resp.chase.target) },
 	{ ASLIB_PROPERTY_DECL(bool, chaseTeamonly), ASLIB_FOFFSET(gclient_t, resp.chase.teamonly) },

@@ -284,7 +284,7 @@ void G_Gametype_GENERIC_ClientRespawn( edict_t *self, int old_team, int new_team
 			{
 				weapondef = GS_GetWeaponDef( WEAP_GUNBLADE );
 				client->ps.inventory[WEAP_GUNBLADE] = 1;
-				client->ps.inventory[AMMO_GUNBLADE] = weapondef->firedef.ammo_max;;
+				client->ps.inventory[AMMO_GUNBLADE] = 1;
 				client->ps.inventory[AMMO_WEAK_GUNBLADE] = 0;
 			}
 		}

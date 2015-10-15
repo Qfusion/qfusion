@@ -48,6 +48,7 @@ extern "C" {
 
 // weapon
 #define PATH_GUNBLADE_ICON	    "gfx/hud/icons/weapon/gunblade"
+#define PATH_GUNBLADE_BLAST_ICON	    "gfx/hud/icons/weapon/gunblade_blast"
 #define PATH_MACHINEGUN_ICON	"gfx/hud/icons/weapon/machinegun"
 #define PATH_RIOTGUN_ICON	    "gfx/hud/icons/weapon/riot"
 #define PATH_GRENADELAUNCHER_ICON   "gfx/hud/icons/weapon/grenade"
