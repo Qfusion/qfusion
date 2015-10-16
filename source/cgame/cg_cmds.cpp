@@ -1062,12 +1062,12 @@ static void CG_Cmd_WeaponCross_f( void )
 	if( !cg.frame.valid )
 		return;
 
-	if( trap_Cmd_Argc() )
+	if( trap_Cmd_Argc() > 1 )
 		quarter = atoi( trap_Cmd_Argv( 1 ) );
 
 	if( ( quarter < 0 ) || ( quarter > 4 ) )
 	{
-		CG_Printf( "Usage: 'weaponcross 0-4 (0 - just show, 1 - GB/MG, 2 - RG/GL, 3 - RL/PG, 4 - LG/EB)\n" );
+		CG_Printf( "Usage: '%s <0-4>' (0 - just show, 1 - GB/MG, 2 - RG/GL, 3 - RL/PG, 4 - LG/EB)\n", trap_Cmd_Argv( 0 ) );
 		return;
 	}
 
