@@ -336,6 +336,9 @@ static int CG_GetCurrentWeaponInventoryData( const void *parameter )
 	case 2: // WEAK AMMO COUNT
 		result = cg.predictedPlayerState.inventory[weapondef->firedef_weak.ammo_id];
 		break;
+	case 3: // LOW AMMO THRESHOLD
+		result = weapondef->firedef.ammo_low;
+		break;
 	}
 
 	return result;
@@ -669,6 +672,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "AMMO_ITEM", CG_GetCurrentWeaponInventoryData, (void *)0 },
 	{ "AMMO", CG_GetCurrentWeaponInventoryData, (void *)1 },
 	{ "WEAK_AMMO", CG_GetCurrentWeaponInventoryData, (void *)2 },
+	{ "LOW_AMMO", CG_GetCurrentWeaponInventoryData, (void *)3 },
 	{ "WEAPON_COUNT", CG_GetWeaponCount, NULL },
 
 	// other
