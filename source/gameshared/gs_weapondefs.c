@@ -46,7 +46,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,             // weapon up frametime
-			WEAPONDOWN_FRAMETIME,                            // weapon down frametime
+			WEAPONDOWN_FRAMETIME,           // weapon down frametime
 			0,                              // reload frametime
 			0,                              // cooldown frametime
 			0,                              // projectile timeout
@@ -69,7 +69,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,                              // pickup amount
-			0                               // max amount
+			0,                              // max amount
+			0                               // low ammo threshold
 		},
 
 		{
@@ -80,7 +81,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,             // weapon up frametime
-			WEAPONDOWN_FRAMETIME,                            // weapon down frametime
+			WEAPONDOWN_FRAMETIME,           // weapon down frametime
 			0,                              // reload frametime
 			0,                              // cooldown frametime
 			0,                              // projectile timeout
@@ -103,7 +104,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,                              // pickup amount
-			0                               // max amount
+			0,                              // max amount
+			0                               // low ammo threshold
 		},
 	},
 
@@ -141,7 +143,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			1								// max amount
+			1,								// max amount
+			0								// low ammo threshold
 		},
 
 		{
@@ -161,7 +164,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			60,								// damage
 			0,								// selfdamage ratio
-			100,								// knockback
+			100,							// knockback
 			0,								// stun
 			0,								// splash radius
 			0,								// splash minimum damage
@@ -175,7 +178,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			0								// max amount
+			0,								// max amount
+			0								// low ammo threshold
 		},
 	},
 
@@ -213,7 +217,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			50,                             // weapon pickup amount
 			50,								// pickup amount
-			100								// max amount
+			100,							// max amount
+			20								// low ammo threshold
 		},
 
 		{
@@ -247,7 +252,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			0								// max amount
+			0,								// max amount
+			0								// low ammo threshold
 		},
 	},
 
@@ -279,13 +285,14 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//projectile def
 			INSTANT,						// speed
-			64,							// spread
+			64,								// spread
 			64,                             // v_spread
 
 			//ammo
 			5,                             // weapon pickup amount
 			10,								// pickup amount
-			10								// max amount
+			10,								// max amount
+			3								// low ammo threshold
 		},
 
 		{
@@ -319,7 +326,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			0								// max amount
+			0,								// max amount
+			0								// low ammo threshold
 		},
 	},
 
@@ -357,7 +365,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			10,                             // weapon pickup amount
 			10,								// pickup amount
-			20								// max amount
+			20,								// max amount
+			3								// low ammo threshold
 		},
 
 		{
@@ -391,7 +400,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			0								// max amount
+			0,								// max amount
+			0								// low ammo threshold
 		},
 	},
 
@@ -415,7 +425,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			80,								// damage
 			1.00,							// selfdamage ratio
-			115,								// knockback
+			115,							// knockback
 			1250,							// stun
 			105,							// splash radius
 			15,								// splash minimum damage
@@ -429,7 +439,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			5,                              // weapon pickup amount
 			10,								// pickup amount
-			20								// max amount
+			20,								// max amount
+			3								// low ammo threshold
 		},
 
 		{
@@ -463,7 +474,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			0								// max amount
+			0,								// max amount
+			0								// low ammo threshold
 		},
 	},
 			
@@ -486,7 +498,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 
 			//damages
 			16,								// damage
-			1,							// selfdamage ratio
+			1,								// selfdamage ratio
 			24,								// knockback
 			200,							// stun
 			40,								// splash radius
@@ -501,7 +513,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			50,                             // weapon pickup amount
 			100,							// pickup amount
-			150								// max amount
+			150,							// max amount
+			20								// low ammo threshold
 		},
 
 		{
@@ -535,7 +548,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			0								// max amount
+			0,								// max amount
+			0								// low ammo threshold
 		},
 	},
 
@@ -573,7 +587,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			50,                             // weapon pickup amount
 			100,							// pickup amount
-			150								// max amount
+			150,							// max amount
+			20								// low ammo threshold
 		},
 
 		{
@@ -607,7 +622,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			0								// max amount
+			0,								// max amount
+			0								// low ammo threshold
 		},
 	},
 
@@ -645,7 +661,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			5,                              // weapon pickup amount
 			10,								// pickup amount
-			10								// max amount
+			10,								// max amount
+			3								// low ammo threshold
 		},
 
 		{
@@ -679,7 +696,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			0,                              // weapon pickup amount
 			0,								// pickup amount
-			0								// max amount
+			0,								// max amount
+			0								// low ammo threshold
 		},
 	},
 
@@ -717,7 +735,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			5,                              // weapon pickup amount
 			5,								// pickup amount
-			5								// max amount
+			5,								// max amount
+			0								// low ammo threshold
 		},
 
 		{
@@ -751,7 +770,8 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//ammo
 			5,                              // weapon pickup amount
 			5,								// pickup amount
-			15								// max amount
+			15,								// max amount
+			0								// low ammo threshold
 		},
 	},
 };
