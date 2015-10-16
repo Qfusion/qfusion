@@ -2223,7 +2223,7 @@ void G_PrecacheWeapondef( int weapon, firedef_t *firedef )
 
 #ifdef WEAPONDEFS_FROM_DISK
 
-#define WEAPONDEF_NUMPARMS 19
+#define WEAPONDEF_NUMPARMS 20
 static bool G_ParseFiredefFile( uint8_t *buf, int weapon, firedef_t *firedef )
 {
 	char *ptr, *token;
@@ -2310,6 +2310,7 @@ static bool G_ParseFiredefFile( uint8_t *buf, int weapon, firedef_t *firedef )
 
 	firedef->ammo_pickup = (int)parm[count++];
 	firedef->ammo_max = (int)parm[count++];
+	firedef->ammo_low = (int)parm[count++];
 
 	if( firedef->weaponup_time < 50 )
 		firedef->weaponup_time = 50;

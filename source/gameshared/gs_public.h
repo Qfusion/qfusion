@@ -1131,6 +1131,7 @@ typedef struct firedef_s
 	int weapon_pickup;
 	int ammo_pickup;
 	int ammo_max;
+	int ammo_low;
 
 } firedef_t;
 
