@@ -159,6 +159,8 @@ static CURLcode (*qcurl_easy_getinfo)(CURL *, CURLINFO , ...);
 static const char *(*qcurl_easy_strerror)(CURLcode);
 static CURLMsg *(*qcurl_multi_info_read)(CURLM *, int *);
 static CURLcode (*qcurl_easy_pause)(CURL *, int );
+static CURLcode (*qcurl_global_init)(long flags);
+static void (*qcurl_global_cleanup)(void);
 
 static dllfunc_t libcurlfuncs[] =
 {
@@ -181,6 +183,9 @@ static dllfunc_t libcurlfuncs[] =
 	{ "curl_easy_strerror", ( void ** )&qcurl_easy_strerror },
 	{ "curl_multi_info_read", ( void ** )&qcurl_multi_info_read },
 	{ "curl_easy_pause", ( void ** )&qcurl_easy_pause },
+	{ "curl_global_init", ( void ** )&qcurl_global_init },
+	{ "curl_global_cleanup", ( void ** )&qcurl_global_cleanup },
+
 	{ NULL, NULL }
 };
 
@@ -205,6 +210,8 @@ static dllfunc_t libcurlfuncs[] =
 #define qcurl_easy_strerror curl_easy_strerror
 #define qcurl_multi_info_read curl_multi_info_read
 #define qcurl_easy_pause curl_easy_pause
+#define qcurl_global_init curl_global_init
+#define qcurl_global_cleanup curl_global_cleanup
 
 #endif
 
@@ -505,6 +512,8 @@ void wswcurl_init( void )
 	wswcurl_loadlib();
 
 	if( curlLibrary ) {
+		qcurl_global_init( CURL_GLOBAL_ALL );
+
 		curldummy = qcurl_easy_init();
 		curlmulti = qcurl_multi_init();
 	}
@@ -564,6 +573,10 @@ void wswcurl_cleanup( void )
 		crypto_num_mutexes = 0;
 	}
 #endif
+
+	if( curlLibrary ) {
+		qcurl_global_cleanup();
+	}
 
 	wswcurl_unloadlib();
 
@@ -726,6 +739,7 @@ wswcurl_req *wswcurl_create( const char *iface, const char *furl, ... )
 	}
 	CURLSETOPT( curl, res, CURLOPT_SSL_VERIFYPEER, 0 );
 	CURLSETOPT( curl, res, CURLOPT_SSL_VERIFYHOST, 0 );
+	CURLSETOPT( curl, res, CURLOPT_NOSIGNAL, 1 );
 
 	if( developer->integer ) {
 		CURLSETOPT( curl, res, CURLOPT_DEBUGFUNCTION, &wswcurl_debug_callback );
