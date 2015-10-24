@@ -518,7 +518,22 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 	switch( cls.key_dest )
 	{
 		case key_game:
-			CL_GameModule_TouchEvent( id, type, x, y, time );
+			{
+				bool haveQuickMenu = cls.quickmenu && CL_UIModule_HaveQuickMenu();
+				bool toQuickMenu = false;
+
+				if( haveQuickMenu && !CL_GameModule_IsTouchDown( id ) )
+				{
+					if( CL_UIModule_IsTouchDownQuick( id ) )
+						toQuickMenu = true;
+
+					// if the quick menu has consumed the touch event, don't send the event to the game
+					toQuickMenu |= CL_UIModule_TouchEventQuick( id, type, x, y );
+				}
+
+				if( !toQuickMenu )
+					CL_GameModule_TouchEvent( id, type, x, y, time );
+			}
 			break;
 
 		case key_console:

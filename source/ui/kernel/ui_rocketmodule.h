@@ -40,7 +40,8 @@ namespace WSWUI
 		void mouseMove( int contextId, int mousex, int mousey );
 		void textInput( int contextId, wchar_t c );
 		void keyEvent( int contextId, int key, bool pressed );
-		void touchEvent( int contextId, int id, touchevent_t type, int x, int y );
+		bool touchEvent( int contextId, int id, touchevent_t type, int x, int y );
+		bool isTouchDown( int contextId, int id );
 		void cancelTouches( int contextId );
 
 		void update( void );

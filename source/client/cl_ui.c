@@ -532,15 +532,45 @@ void CL_UIModule_CharEvent( wchar_t key )
 /*
 * CL_UIModule_TouchEvent
 */
-void CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y )
+bool CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y )
 {
-	if( uie ) {
-		if( cls.quickmenu ) {
-			// FIXME?
-			uie->TouchEvent( UI_CONTEXT_QUICK, id, type, x, y );
-		}
-		uie->TouchEvent( UI_CONTEXT_MAIN, id, type, x, y );
-	}
+	if( uie )
+		return uie->TouchEvent( UI_CONTEXT_MAIN, id, type, x, y );
+
+	return false;
+}
+
+/*
+* CL_UIModule_TouchEventQuick
+*/
+bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y )
+{
+	if( uie )
+		return uie->TouchEvent( UI_CONTEXT_QUICK, id, type, x, y );
+
+	return false;
+}
+
+/*
+* CL_UIModule_IsTouchDown
+*/
+bool CL_UIModule_IsTouchDown( int id )
+{
+	if( uie )
+		return uie->IsTouchDown( UI_CONTEXT_MAIN, id );
+
+	return false;
+}
+
+/*
+* CL_UIModule_IsTouchDownQuick
+*/
+bool CL_UIModule_IsTouchDownQuick( int id )
+{
+	if( uie )
+		return uie->IsTouchDown( UI_CONTEXT_QUICK, id );
+
+	return false;
 }
 
 /*

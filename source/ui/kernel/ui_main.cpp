@@ -656,9 +656,14 @@ void UI_Main::keyEvent( int contextId, int key, bool pressed )
 	rocketModule->keyEvent( contextId, key, pressed );
 }
 
-void UI_Main::touchEvent( int contextId, int id, touchevent_t type, int x, int y )
+bool UI_Main::touchEvent( int contextId, int id, touchevent_t type, int x, int y )
 {
-	rocketModule->touchEvent( contextId, id, type, x, y );
+	return rocketModule->touchEvent( contextId, id, type, x, y );
+}
+
+bool UI_Main::isTouchDown( int contextId, int id )
+{
+	return rocketModule->isTouchDown( contextId, id );
 }
 
 void UI_Main::cancelTouches( int contextId )
