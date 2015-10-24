@@ -213,11 +213,20 @@ void RocketModule::keyEvent( int contextId, int key, bool pressed )
 	}
 }
 
-void RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, int y )
+bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, int y )
 {
 	auto &contextTouch = contextsTouch[contextId];
+	auto *context = contextForId( contextId );
 
 	if( ( type == TOUCH_DOWN ) && ( contextTouch.id < 0 ) ) {
+		if( contextId == UI_CONTEXT_QUICK ) {
+			Rocket::Core::Vector2f position( (float)x, (float)y );
+			Element *element = context->GetElementAtPoint( position );
+			if( !element || element->GetTagName() == "body" ) {
+				return false;
+			}
+		}
+
 		contextTouch.id = id;
 		contextTouch.origin.x = x;
 		contextTouch.origin.y = y;
@@ -226,10 +235,8 @@ void RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 	}
 
 	if( id != contextTouch.id ) {
-		return;
+		return false;
 	}
-
-	auto *context = contextForId( contextId );
 
 	UI_Main::Get()->mouseMove( contextId, x, y, true, false );
 
@@ -274,6 +281,13 @@ void RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 			cancelTouches( contextId );
 		}
 	}
+
+	return true;
+}
+
+bool RocketModule::isTouchDown( int contextId, int id )
+{
+	return contextsTouch[contextId].id == id;
 }
 
 void RocketModule::cancelTouches( int contextId )

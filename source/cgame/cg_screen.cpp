@@ -1549,7 +1549,7 @@ int CG_TouchArea( int area, int x, int y, int w, int h, void ( *upfunc )( int id
 */
 void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 {
-	if( id >= CG_MAX_TOUCHES )
+	if( id < 0 || id >= CG_MAX_TOUCHES )
 		return;
 
 	cg_touch_t &touch = cg_touches[id];
@@ -1577,6 +1577,17 @@ void CG_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 		}
 		break;
 	}
+}
+
+/*
+* CG_IsTouchDown
+*/
+bool CG_IsTouchDown( int id )
+{
+	if( id < 0 || id >= CG_MAX_TOUCHES )
+		return false;
+
+	return cg_touches[id].down;
 }
 
 /*

@@ -430,6 +430,7 @@ uint8_t CL_GameModule_GetButtonBits( void );
 void CL_GameModule_AddViewAngles( vec3_t viewangles, float frametime, bool flipped );
 void CL_GameModule_AddMovement( vec3_t movement );
 void CL_GameModule_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time );
+bool CL_GameModule_IsTouchDown( int id );
 
 //
 // cl_sound.c
@@ -480,7 +481,10 @@ void CL_UIModule_Keyup( int key );
 void CL_UIModule_KeydownQuick( int key );
 void CL_UIModule_KeyupQuick( int key );
 void CL_UIModule_CharEvent( wchar_t key );
-void CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y );
+bool CL_UIModule_TouchEvent( int id, touchevent_t type, int x, int y );
+bool CL_UIModule_TouchEventQuick( int id, touchevent_t type, int x, int y );
+bool CL_UIModule_IsTouchDown( int id );
+bool CL_UIModule_IsTouchDownQuick( int id );
 void CL_UIModule_CancelTouches( void );
 void CL_UIModule_Refresh( bool backGround, bool showCursor );
 void CL_UIModule_UpdateConnectScreen( bool backGround );
