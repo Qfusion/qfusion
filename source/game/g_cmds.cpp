@@ -796,6 +796,11 @@ static const g_vsays_t g_vsays[] = {
 	{ "gotopowerup", VSAY_GOTOPOWERUP, "Go to main powerup!" },
 	{ "gotoquad", VSAY_GOTOQUAD, "Go to quad!" },
 	{ "ok", VSAY_OK, "Ok!" },
+	{ "defend_a", VSAY_DEFEND_A, "Defend A!" },
+	{ "attack_a", VSAY_ATTACK_A, "Attack A!" },
+	{ "defend_b", VSAY_DEFEND_B, "Defend B!" },
+	{ "attack_b", VSAY_ATTACK_B, "Attack B!" },
+
 	{ NULL, 0 }
 };
 

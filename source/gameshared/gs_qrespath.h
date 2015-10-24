@@ -487,6 +487,10 @@ extern "C" {
 #define PATH_VSAY_GOTOPOWERUP_ICON  "gfx/hud/icons/vsay/gotopowerup"
 #define PATH_VSAY_GOTOQUAD_ICON	    "gfx/hud/icons/vsay/gotoquad"
 #define PATH_VSAY_OK_ICON	    "gfx/hud/icons/vsay/ok"
+#define PATH_VSAY_DEFEND_A_ICON	    "gfx/hud/icons/vsay/defend"
+#define PATH_VSAY_ATTACK_A_ICON	    "gfx/hud/icons/vsay/attack"
+#define PATH_VSAY_DEFEND_B_ICON	    "gfx/hud/icons/vsay/defend"
+#define PATH_VSAY_ATTACK_B_ICON	    "gfx/hud/icons/vsay/attack"
 
 // vsay sounds
 #define S_VSAY_NEEDHEALTH			"sounds/vsay/needhealth"
@@ -518,6 +522,10 @@ extern "C" {
 #define S_VSAY_GOTOPOWERUP			"sounds/vsay/gotopowerup"
 #define S_VSAY_GOTOQUAD				"sounds/vsay/gotoquad"
 #define S_VSAY_OK				"sounds/vsay/ok"
+#define S_VSAY_DEFEND_A				"sounds/vsay/defend_a"
+#define S_VSAY_ATTACK_A				"sounds/vsay/attack_a"
+#define S_VSAY_DEFEND_B				"sounds/vsay/defend_b"
+#define S_VSAY_ATTACK_B				"sounds/vsay/attack_b"
 
 #ifdef __cplusplus
 };
