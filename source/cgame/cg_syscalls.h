@@ -623,6 +623,16 @@ static inline void trap_SCR_EnableQuickMenu( bool enable )
 	CGAME_IMPORT.SCR_EnableQuickMenu( enable );
 }
 
+static inline bool trap_SCR_HaveQuickMenu( void )
+{
+	return CGAME_IMPORT.SCR_HaveQuickMenu();
+}
+
+static inline bool trap_SCR_IsQuickMenuShown( void )
+{
+	return CGAME_IMPORT.SCR_IsQuickMenuShown();
+}
+
 static inline void *trap_MemAlloc( size_t size, const char *filename, int fileline )
 {
 	return CGAME_IMPORT.Mem_Alloc( size, filename, fileline );

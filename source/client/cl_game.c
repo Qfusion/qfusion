@@ -536,6 +536,8 @@ void CL_GameModule_Init( void )
 	import.SCR_strWidth = SCR_strWidth;
 	import.SCR_StrlenForWidth = SCR_StrlenForWidth;
 	import.SCR_EnableQuickMenu = SCR_EnableQuickMenu;
+	import.SCR_HaveQuickMenu = CL_UIModule_HaveQuickMenu;
+	import.SCR_IsQuickMenuShown = SCR_IsQuickMenuShown;
 
 	import.AsyncStream_UrlEncode = AsyncStream_UrlEncode;
 	import.AsyncStream_UrlDecode = AsyncStream_UrlDecode;
