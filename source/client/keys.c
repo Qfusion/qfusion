@@ -651,7 +651,7 @@ void Key_Event( int key, bool down, unsigned time )
 	char cmd[1024];
 	bool handled = false;
 	int numkey = Key_NumPadKeyValue( key );
-	bool have_quickmenu = cls.quickmenu && CL_UIModule_HaveQuickMenu();
+	bool have_quickmenu = SCR_IsQuickMenuShown();
 	bool numeric = numkey >= '0' && numkey <='9';
 
 	// update auto-repeat status

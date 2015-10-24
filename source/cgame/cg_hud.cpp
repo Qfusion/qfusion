@@ -58,7 +58,8 @@ enum
 	TOUCHAREA_HUD_CLASSACTION,
 	TOUCHAREA_HUD_DROPITEM,
 	TOUCHAREA_HUD_SCORES,
-	TOUCHAREA_HUD_WEAPON
+	TOUCHAREA_HUD_WEAPON,
+	TOUCHAREA_HUD_QUICKMENU
 };
 
 //=============================================================================
@@ -614,6 +615,17 @@ static int CG_GetScoreboardShown( const void *parameter )
 	return CG_IsScoreboardShown() ? 1 : 0;
 }
 
+static int CG_GetQuickMenuState( const void *parameter )
+{
+	if( trap_SCR_IsQuickMenuShown() )
+		return 2;
+
+	if( trap_SCR_HaveQuickMenu() )
+		return 1;
+
+	return 0;
+}
+
 typedef struct
 {
 	const char *name;
@@ -699,6 +711,7 @@ static const reference_numeric_t cg_numeric_references[] =
 	{ "PMOVE_TYPE", CG_GetPmoveType, NULL },
 	{ "DEMOPLAYING", CG_IsDemoPlaying, NULL },
 	{ "INSTANTRESPAWN", CG_GetLayoutStatFlag, (void *)STAT_LAYOUT_INSTANTRESPAWN },
+	{ "QUICKMENU", CG_GetQuickMenuState, NULL },
 
 	{ "POWERUP_QUAD_TIME", CG_GetPowerupTime, (void *)POWERUP_QUAD },
 	{ "POWERUP_WARSHELL_TIME", CG_GetPowerupTime, (void *)POWERUP_SHELL },
@@ -2868,6 +2881,23 @@ static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_
 	return true;
 }
 
+static void CG_QuickMenuUpFunc( int id, unsigned int time )
+{
+	trap_SCR_EnableQuickMenu( false );
+}
+
+static bool CG_LFuncTouchQuickMenu( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
+{
+	if( CG_TouchArea( TOUCHAREA_HUD_QUICKMENU,
+		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+		layout_cursor_width, layout_cursor_height, CG_QuickMenuUpFunc ) >= 0 )
+	{
+		trap_SCR_EnableQuickMenu( true );
+	}
+	return true;
+}
+
 
 static bool CG_LFuncIf( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
@@ -3544,6 +3574,15 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		CG_LFuncTouchScores,
 		0,
 		"Places scoreboard button",
+		false
+	},
+
+	{
+		"touchQuickMenu",
+		NULL,
+		CG_LFuncTouchQuickMenu,
+		0,
+		"Places quick menu button",
 		false
 	},
 

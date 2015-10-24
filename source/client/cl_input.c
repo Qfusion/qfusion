@@ -519,10 +519,9 @@ void CL_TouchEvent( int id, touchevent_t type, int x, int y, unsigned int time )
 	{
 		case key_game:
 			{
-				bool haveQuickMenu = cls.quickmenu && CL_UIModule_HaveQuickMenu();
 				bool toQuickMenu = false;
 
-				if( haveQuickMenu && !CL_GameModule_IsTouchDown( id ) )
+				if( SCR_IsQuickMenuShown() && !CL_GameModule_IsTouchDown( id ) )
 				{
 					if( CL_UIModule_IsTouchDownQuick( id ) )
 						toQuickMenu = true;

@@ -535,6 +535,14 @@ void SCR_EnableQuickMenu( bool enable )
 	CL_UIModule_ShowQuickMenu( cls.quickmenu );
 }
 
+/*
+* SCR_IsQuickMenuShown
+*/
+bool SCR_IsQuickMenuShown( void )
+{
+	return cls.quickmenu && CL_UIModule_HaveQuickMenu();
+}
+
 //=============================================================================
 
 /*
