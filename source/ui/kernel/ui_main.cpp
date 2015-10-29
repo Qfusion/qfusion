@@ -909,6 +909,9 @@ void UI_Main::M_Menu_Quick_f( void )
 	if( !self )
 		return;
 
+	if( !( trap::IN_SupportedDevices() & ( IN_DEVICE_KEYBOARD|IN_DEVICE_TOUCHSCREEN ) ) )
+		return;
+
 	NavigationStack *nav = self->navigations[UI_CONTEXT_QUICK].front();
 	if( !nav )
 		return;
