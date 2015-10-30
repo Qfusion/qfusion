@@ -1192,15 +1192,20 @@ static bool CG_IsWeaponSelected( int weapon )
 
 static struct shader_s *CG_GetWeaponIcon( int weapon )
 {
+	int currentWeapon = cg.predictedPlayerState.stats[STAT_WEAPON];
+	int weaponState = cg.predictedPlayerState.weaponState;
+
 	if( weapon == WEAP_GUNBLADE && cg.predictedPlayerState.inventory[AMMO_GUNBLADE] )
 	{
-		if( cg.predictedPlayerState.stats[STAT_WEAPON] != WEAP_GUNBLADE || cg.predictedPlayerState.weaponState != WEAPON_STATE_REFIRESTRONG )
+		if( currentWeapon != WEAP_GUNBLADE || ( weaponState != WEAPON_STATE_REFIRESTRONG && weaponState != WEAPON_STATE_REFIRE ) )
+		{
 			return CG_MediaShader( cgs.media.shaderGunbladeBlastIcon );
+		}
 	}
 
 	if( weapon == WEAP_INSTAGUN )
 	{
-		if( cg.predictedPlayerState.stats[STAT_WEAPON] == WEAP_INSTAGUN && cg.predictedPlayerState.weaponState == WEAPON_STATE_REFIRESTRONG )
+		if( currentWeapon == WEAP_INSTAGUN && weaponState == WEAPON_STATE_REFIRESTRONG )
 		{
 			int chargeTime = GS_GetWeaponDef( WEAP_INSTAGUN )->firedef.reload_time;
 			int chargeTimeStep = chargeTime / 3;
