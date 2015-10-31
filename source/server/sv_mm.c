@@ -274,6 +274,9 @@ static void sv_mm_clientconnect_done( stat_query_t *query, bool success, void *c
 				ratings_section = sq_api->GetSection( root, "ratings" );
 
 				Q_strncpyz( cl->mm_login, login, sizeof( cl->mm_login ) );
+				if( !Info_SetValueForKey( cl->userinfo, "cl_mm_login", login ) ) {
+					Com_Printf( "Failed to set infokey cl_mm_login for player %s\n", login );
+				}
 				userinfo_changed = true;
 
 				if( ge != NULL && ratings_section != NULL )
