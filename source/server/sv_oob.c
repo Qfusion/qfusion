@@ -996,6 +996,31 @@ static void SVC_RemoteCommand( const socket_t *socket, const netadr_t *address )
 }
 
 #define MAX_STEAMQUERY_PACKETLEN 1260
+#define MAX_STEAMQUERY_TAG_STRING 128
+
+/**
+ * Writes the tags of the server for filtering in the Steam server browser.
+ *
+ * @param tags string where to write the tags (at least MAX_STEAMQUERY_TAG_STRING bytes)
+ */
+static void SV_GetSteamTags( char *tags )
+{
+	// Currently there is no way to filter by tag in the game itself,
+	// so this is mostly to make sure the tags aren't empty on old servers if they are added.
+
+	Q_strncpyz( tags, Cvar_String( "g_gametype" ), MAX_STEAMQUERY_TAG_STRING );
+
+	if( Cvar_Value( "g_instagib" ) )
+	{
+		if( tags[0] )
+			Q_strncatz( tags, ",", MAX_STEAMQUERY_TAG_STRING );
+		Q_strncatz( tags, "instagib", MAX_STEAMQUERY_TAG_STRING );
+	}
+
+	// If sv_tags cvar is added, every comma-separated tag from the cvar must be added separately
+	// (so the last tag exceeding MAX_STEAMQUERY_TAG_STRING isn't cut off)
+	// and validated not to contain any characters disallowed in userinfo (CVAR_SERVERINFO).
+}
 
 /**
  * Responds to a Steam server query.
@@ -1038,7 +1063,9 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		char gamedir[MAX_QPATH];
 		char gamename[128];
 		char version[32];
+		char tags[MAX_STEAMQUERY_TAG_STRING];
 		int i, players = 0, bots = 0, maxclients = 0;
+		int flags = 0x80 | 0x01; // game port | game ID containing app ID
 		client_t *cl;
 		msg_t msg;
 		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN - sizeof( int32_t )];
@@ -1078,6 +1105,10 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 
 		Q_snprintfz( version, sizeof( version ), "%i.%i.0.0", APP_VERSION_MAJOR, APP_VERSION_MINOR );
 
+		SV_GetSteamTags( tags );
+		if( tags[0] )
+			flags |= 0x20;
+
 		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
 		MSG_WriteByte( &msg, 'I' );
 		MSG_WriteByte( &msg, APP_PROTOCOL_VERSION );
@@ -1094,9 +1125,12 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		MSG_WriteByte( &msg, Cvar_String( "password" )[0] ? 1 : 0 );
 		MSG_WriteByte( &msg, 0 ); // VAC insecure
 		MSG_WriteString( &msg, version );
-		MSG_WriteByte( &msg, 0x80 | 0x1 ); // game port | game ID containing app ID
+		MSG_WriteByte( &msg, flags );
 		// port
 		MSG_WriteShort( &msg, sv_port->integer );
+		// tags
+		if( flags & 0x20 )
+			MSG_WriteString( &msg, tags );
 		// 64-bit game ID - needed to specify app ID
 		MSG_WriteLong( &msg, APP_STEAMID & 0xffffff );
 		MSG_WriteLong( &msg, 0 );
@@ -1152,8 +1186,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		int i;
 		bool fromMaster = false;
 		int challenge;
-		char gamedir[MAX_QPATH], basedir[MAX_QPATH];
-		char gametype[MAX_INFO_VALUE * 2];
+		char gamedir[MAX_QPATH], basedir[MAX_QPATH], tags[MAX_STEAMQUERY_TAG_STRING];
 		int players = 0, bots = 0, maxclients = 0;
 		client_t *cl;
 		char msg[MAX_STEAMQUERY_PACKETLEN];
@@ -1176,13 +1209,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
 		Q_strncpyz( basedir, FS_BaseGameDirectory(), sizeof( basedir ) );
-		Q_strncpyz( gametype, Cvar_String( "g_gametype" ), sizeof( gametype ) );
-		if( Cvar_Value( "g_instagib" ) )
-		{
-			if( gametype[0] )
-				Q_strncatz( gametype, ",", sizeof( gametype ) );
-			Q_strncatz( gametype, "instagib", sizeof( gametype ) );
-		}
+		SV_GetSteamTags( tags );
 
 		for( i = 0; i < sv_maxclients->integer; i++ )
 		{
@@ -1213,7 +1240,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 			gamedir, sv.mapname,
 			Cvar_String( "password" )[0] ? 1 : 0, STEAMQUERY_OS,
 			sv_public->integer ? 0 : 1,
-			gametype[0] ? "\\gametype\\" : "", gametype,
+			tags[0] ? "\\gametype\\" /* legacy - "gametype", not "tags" */ : "", tags,
 			( dedicated && dedicated->integer ) ? 'd' : 'l',
 			APP_VERSION_MAJOR, APP_VERSION_MINOR,
 			basedir );
