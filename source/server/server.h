@@ -129,8 +129,9 @@ typedef struct client_s
 {
 	sv_client_state_t state;
 
-	char userinfo[MAX_INFO_STRING];     // name, etc
-	unsigned int userinfoUpTimeout;
+	char userinfo[MAX_INFO_STRING];			// name, etc
+	char userinfoLatched[MAX_INFO_STRING];	// flood prevention - actual userinfo updates are delayed
+	unsigned int userinfoLatchTimeout;
 
 	bool reliable;                  // no need for acks, connection is reliable
 	bool mv;                        // send multiview data to the client

@@ -154,7 +154,7 @@ bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t
 	ge->AddDefaultRating( ent, NULL );
 
 	// parse some info from the info strings
-	client->userinfoUpTimeout = Sys_Milliseconds() + USERINFO_UPDATE_COOLDOWN_MSEC;
+	client->userinfoLatchTimeout = Sys_Milliseconds() + USERINFO_UPDATE_COOLDOWN_MSEC;
 	Q_strncpyz( client->userinfo, userinfo, sizeof( client->userinfo ) );
 	SV_UserinfoChanged( client );
 
@@ -872,22 +872,29 @@ static void SV_ShowServerinfo_f( client_t *client )
 static void SV_UserinfoCommand_f( client_t *client )
 {
 	char *info;
-
-	// prevent userinfo cmd flood
-	if( client->userinfoUpTimeout > Sys_Milliseconds() )
-		return;
-	client->userinfoUpTimeout = Sys_Milliseconds() + USERINFO_UPDATE_COOLDOWN_MSEC;
+	unsigned int time;
 
 	info = Cmd_Argv( 1 );
-
 	if( !Info_Validate( info ) )
 	{
 		SV_DropClient( client, DROP_TYPE_GENERAL, "%s", "Error: Invalid userinfo" );
 		return;
 	}
 
-	Q_strncpyz( client->userinfo, info, sizeof( client->userinfo ) );
-	SV_UserinfoChanged( client );
+	time = Sys_Milliseconds();
+	if( client->userinfoLatchTimeout > time )
+	{
+		Q_strncpyz( client->userinfoLatched, info, sizeof( client->userinfo ) );
+	}
+	else
+	{
+		Q_strncpyz( client->userinfo, info, sizeof( client->userinfo ) );
+
+		client->userinfoLatched[0] = '\0';
+		client->userinfoLatchTimeout = time + USERINFO_UPDATE_COOLDOWN_MSEC;
+
+		SV_UserinfoChanged( client );
+	}
 }
 
 /*
