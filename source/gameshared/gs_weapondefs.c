@@ -713,7 +713,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,				// weapon up frametime
 			WEAPONDOWN_FRAMETIME,			// weapon down frametime
-			1250,							// reload frametime
+			1300,							// reload frametime
 			0,								// cooldown frametime
 			8024,							// range
 			false,							// smooth refire
@@ -748,7 +748,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//timings (in msecs)
 			WEAPONUP_FRAMETIME,				// weapon up frametime
 			WEAPONDOWN_FRAMETIME,			// weapon down frametime
-			1250,							// reload frametime
+			1300,							// reload frametime
 			0,								// cooldown frametime
 			8024,							// range
 			false,							// smooth refire
