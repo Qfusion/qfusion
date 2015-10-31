@@ -449,6 +449,35 @@ static void SV_CheckTimeouts( void )
 	}
 }
 
+/*
+* SV_CheckLatchedUserinfoChanges
+*
+* To prevent flooding other players, consecutive userinfo updates are delayed,
+* and only the last one is applied.
+* Applies latched userinfo updates if the timeout is over.
+*/
+static void SV_CheckLatchedUserinfoChanges( void )
+{
+	client_t *cl;
+	int i;
+	unsigned int time = Sys_Milliseconds();
+
+	for( i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++ )
+	{
+		if( cl->state == CS_FREE || cl->state == CS_ZOMBIE )
+			continue;
+
+		if( cl->userinfoLatched[0] && cl->userinfoLatchTimeout <= time )
+		{
+			Q_strncpyz( cl->userinfo, cl->userinfoLatched, sizeof( cl->userinfo ) );
+
+			cl->userinfoLatched[0] = '\0';
+
+			SV_UserinfoChanged( cl );
+		}
+	}
+}
+
 //#define WORLDFRAMETIME 25 // 40fps
 //#define WORLDFRAMETIME 20 // 50fps
 #define WORLDFRAMETIME 16 // 62.5fps
@@ -735,6 +764,9 @@ void SV_Frame( int realmsec, int gamemsec )
 
 	// get packets from clients
 	SV_ReadPackets();
+
+	// apply latched userinfo changes
+	SV_CheckLatchedUserinfoChanges();
 
 	// let everything in the world think and move
 	if( SV_RunGameFrame( gamemsec ) )
