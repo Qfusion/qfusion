@@ -1040,7 +1040,6 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		char version[32];
 		int i, players = 0, bots = 0, maxclients = 0;
 		client_t *cl;
-		int flags = 0x80; // port - required when any extra data flags are used
 		msg_t msg;
 		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN - sizeof( int32_t )];
 
@@ -1079,9 +1078,6 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 
 		Q_snprintfz( version, sizeof( version ), "%i.%i.0.0", APP_VERSION_MAJOR, APP_VERSION_MINOR );
 
-		if( APP_STEAMID > USHRT_MAX )
-			flags |= 0x1;
-
 		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
 		MSG_WriteByte( &msg, 'I' );
 		MSG_WriteByte( &msg, APP_PROTOCOL_VERSION );
@@ -1089,7 +1085,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		MSG_WriteString( &msg, sv.mapname );
 		MSG_WriteString( &msg, gamedir );
 		MSG_WriteString( &msg, gamename );
-		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
+		MSG_WriteShort( &msg, 0 ); // app ID specified later
 		MSG_WriteByte( &msg, min( players, 99 ) );
 		MSG_WriteByte( &msg, min( maxclients, 99 ) );
 		MSG_WriteByte( &msg, min( bots, 99 ) );
@@ -1098,14 +1094,12 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		MSG_WriteByte( &msg, Cvar_String( "password" )[0] ? 1 : 0 );
 		MSG_WriteByte( &msg, 0 ); // VAC insecure
 		MSG_WriteString( &msg, version );
-		MSG_WriteByte( &msg, flags );
+		MSG_WriteByte( &msg, 0x80 | 0x1 ); // game port | game ID containing app ID
+		// port
 		MSG_WriteShort( &msg, sv_port->integer );
-		if( flags & 0x1 )
-		{
-			// long AppID - we don't use the full 64-bit GameID since dedicated servers don't have Steam integration
-			MSG_WriteLong( &msg, APP_STEAMID & 0xffffff );
-			MSG_WriteLong( &msg, 0 );
-		}
+		// 64-bit game ID - needed to specify app ID
+		MSG_WriteLong( &msg, APP_STEAMID & 0xffffff );
+		MSG_WriteLong( &msg, 0 );
 		Netchan_OutOfBand( socket, address, msg.cursize, msg.data );
 		return true;
 	}
@@ -1159,7 +1153,7 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		bool fromMaster = false;
 		int challenge;
 		char gamedir[MAX_QPATH], basedir[MAX_QPATH];
-		char gametype[MAX_INFO_VALUE];
+		char gametype[MAX_INFO_VALUE * 2];
 		int players = 0, bots = 0, maxclients = 0;
 		client_t *cl;
 		char msg[MAX_STEAMQUERY_PACKETLEN];
@@ -1183,6 +1177,12 @@ bool SV_SteamServerQuery( const char *s, const socket_t *socket, const netadr_t 
 		Q_strncpyz( gamedir, FS_GameDirectory(), sizeof( gamedir ) );
 		Q_strncpyz( basedir, FS_BaseGameDirectory(), sizeof( basedir ) );
 		Q_strncpyz( gametype, Cvar_String( "g_gametype" ), sizeof( gametype ) );
+		if( Cvar_Value( "g_instagib" ) )
+		{
+			if( gametype[0] )
+				Q_strncatz( gametype, ",", sizeof( gametype ) );
+			Q_strncatz( gametype, "instagib", sizeof( gametype ) );
+		}
 
 		for( i = 0; i < sv_maxclients->integer; i++ )
 		{
