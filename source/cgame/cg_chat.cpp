@@ -250,7 +250,7 @@ parse_string:
 				// now actually render the line
 				x_offset = padding_x;
 				y_offset = height - padding_y - font_height - (total_lines + lines - l) * (font_height + 2);
-				if( y_offset <= -font_height )
+				if( y_offset < padding_y )
 					break;
 
 				trap_SCR_DrawClampString( x + x_offset, y + y_offset, tstr,
@@ -271,7 +271,7 @@ parse_string:
 				{
 					x_offset = padding_x;
 					y_offset = height - font_height - total_lines * (font_height + 2);
-					if( y_offset <= -font_height )
+					if( y_offset < padding_y )
 						break;
 
 					trap_SCR_DrawClampString( x + x_offset, y + y_offset, tstr,
