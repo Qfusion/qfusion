@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // g_public.h -- game dll information visible to server
 
-#define	GAME_API_VERSION    49
+#define	GAME_API_VERSION    50
 
 //===============================================================
 
@@ -207,7 +207,7 @@ typedef struct
 	// the init function will only be called when a game starts,
 	// not each time a level is loaded.  Persistant data for clients
 	// and the server can be allocated in init
-	void ( *Init )( unsigned int seed, unsigned int framemsec, int protocol );
+	void ( *Init )( unsigned int seed, unsigned int framemsec, int protocol, const char *demoExtension );
 	void ( *Shutdown )( void );
 
 	// each new level entered will cause a call to SpawnEntities
