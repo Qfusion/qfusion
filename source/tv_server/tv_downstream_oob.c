@@ -654,7 +654,6 @@ bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, cons
 		char gamedir[MAX_QPATH];
 		char version[32];
 		int i, count = 0;
-		int flags = 0x40; // spectator data
 		msg_t msg;
 		uint8_t msgbuf[MAX_STEAMQUERY_PACKETLEN - sizeof( int32_t )];
 
@@ -675,9 +674,6 @@ bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, cons
 
 		Q_snprintfz( version, sizeof( version ), "%i.%i.0.0", APP_VERSION_MAJOR, APP_VERSION_MINOR );
 
-		if( APP_STEAMID > USHRT_MAX )
-			flags |= 0x1;
-
 		MSG_Init( &msg, msgbuf, sizeof( msgbuf ) );
 		MSG_WriteByte( &msg, 'I' );
 		MSG_WriteByte( &msg, APP_PROTOCOL_VERSION );
@@ -685,7 +681,7 @@ bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, cons
 		MSG_WriteString( &msg, "" ); // no map
 		MSG_WriteString( &msg, gamedir );
 		MSG_WriteString( &msg, APPLICATION " TV" );
-		MSG_WriteShort( &msg, ( APP_STEAMID <= USHRT_MAX ) ? APP_STEAMID : 0 );
+		MSG_WriteShort( &msg, 0 ); // app ID specified later
 		MSG_WriteByte( &msg, count );
 		MSG_WriteByte( &msg, min( tv_maxclients->integer, 99 ) );
 		MSG_WriteByte( &msg, 0 ); // no bots
@@ -694,16 +690,13 @@ bool TV_Downstream_SteamServerQuery( const char *s, const socket_t *socket, cons
 		MSG_WriteByte( &msg, tv_password->string[0] ? 1 : 0 );
 		MSG_WriteByte( &msg, 0 ); // VAC insecure
 		MSG_WriteString( &msg, version );
-		MSG_WriteByte( &msg, flags );
+		MSG_WriteByte( &msg, 0x40 | 0x1 ); // spectator data | game ID containing app ID
 		// spectator data
 		MSG_WriteShort( &msg, tv_port->integer );
 		MSG_WriteString( &msg, hostname );
-		if( flags & 0x1 )
-		{
-			// long AppID - we don't use the full 64-bit GameID since dedicated servers don't have Steam integration
-			MSG_WriteLong( &msg, APP_STEAMID & 0xffffff );
-			MSG_WriteLong( &msg, 0 );
-		}
+		// 64-bit game ID - needed to specify app ID
+		MSG_WriteLong( &msg, APP_STEAMID & 0xffffff );
+		MSG_WriteLong( &msg, 0 );
 		Netchan_OutOfBand( socket, address, msg.cursize, msg.data );
 		return true;
 	}
