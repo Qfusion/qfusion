@@ -577,7 +577,7 @@ void CG_InstaExplosionMode( const vec3_t pos, const vec3_t dir, int fire_mode, i
 	lentity_t *le;
 	vec3_t angles;
 
-	if( cg_teamColoredBeams->integer && owner && ( owner < gs.maxclients + 1 ) )
+	if( cg_teamColoredInstaBeams->integer && owner && ( owner < gs.maxclients + 1 ) )
 		team = cg_entities[owner].current.team;
 	if( ( team == TEAM_ALPHA ) || ( team == TEAM_BETA ) )
 	{
