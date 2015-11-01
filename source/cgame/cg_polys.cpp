@@ -375,7 +375,7 @@ void CG_InstaPolyBeam( const vec3_t start, const vec3_t end, int team )
 	if( cg_instabeam_time->value <= 0.0f || cg_instabeam_width->integer <= 0 )
 		return;
 
-	if( cg_teamColoredBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) )
+	if( cg_teamColoredInstaBeams->integer && ( team == TEAM_ALPHA || team == TEAM_BETA ) )
 	{
 		CG_TeamColor( team, tcolor );
 		min = 90 * ( 1.0f/255.0f );

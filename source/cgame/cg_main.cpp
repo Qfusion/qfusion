@@ -132,6 +132,7 @@ cvar_t *cg_teamBETAcolor;
 
 cvar_t *cg_forceMyTeamAlpha;
 cvar_t *cg_teamColoredBeams;
+cvar_t *cg_teamColoredInstaBeams;
 //cvar_t *cg_teamColorBeamMinimum;
 
 cvar_t *cg_ebbeam_old;
@@ -826,6 +827,7 @@ static void CG_RegisterVariables( void )
 
 	// dmh - learn0more's team colored beams
 	cg_teamColoredBeams = trap_Cvar_Get( "cg_teamColoredBeams", "0", CVAR_ARCHIVE );
+	cg_teamColoredInstaBeams = trap_Cvar_Get( "cg_teamColoredInstaBeams", "1", CVAR_ARCHIVE );
 
 	cg_ebbeam_old = trap_Cvar_Get( "cg_ebbeam_old", "0", CVAR_ARCHIVE );
 	cg_ebbeam_width = trap_Cvar_Get( "cg_ebbeam_width", "64", CVAR_ARCHIVE );

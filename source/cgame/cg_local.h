@@ -923,6 +923,7 @@ extern cvar_t *cg_teamBETAcolor;
 extern cvar_t *cg_forceMyTeamAlpha;
 
 extern cvar_t *cg_teamColoredBeams;
+extern cvar_t *cg_teamColoredInstaBeams;
 
 extern cvar_t *cg_playList;
 extern cvar_t *cg_playListShuffle;
