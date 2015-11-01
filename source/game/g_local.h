@@ -1243,7 +1243,7 @@ struct gclient_s
 // quit or teamchange data for clients (stats)
 struct gclient_quit_s
 {
-	char netname[MAX_NAME_CHARS];
+	char netname[MAX_NAME_BYTES];
 	int team;
 	int mm_session;
 
