@@ -1741,8 +1741,8 @@ void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out 
 			-4096.0f, 4096.0f, p );
 	}
 	else {
-		Matrix4_PerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rn.farClip, 
-			rf.cameraSeparation, p );
+		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rf.cameraSeparation, 
+			p, glConfig.depthEpsilon );
 	}
 
 	if( rd->rdflags & RDF_FLIPPED ) {
