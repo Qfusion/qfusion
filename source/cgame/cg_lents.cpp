@@ -1833,4 +1833,6 @@ void CG_FreeLocalEntities( void )
 		le->type = LE_FREE;
 		CG_FreeLocalEntity( le );
 	}
+
+	CG_ClearLocalEntities();
 }
