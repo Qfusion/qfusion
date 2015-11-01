@@ -146,6 +146,7 @@ typedef struct
 	linear_allocator_t *raceruns;	// raceRun_t <-- MM
 
 	int protocol;
+	char demoExtension[MAX_QPATH];
 
 	// store latched cvars here that we want to get at often
 	int maxentities;
@@ -946,7 +947,7 @@ int G_BoxSlideMove( edict_t *ent, int contentmask, float slideBounce, float fric
 int	G_API( void );
 void	G_Error( const char *format, ... );
 void	G_Printf( const char *format, ... );
-void	G_Init( unsigned int seed, unsigned int framemsec, int protocol );
+void	G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char *demoExtension );
 void	G_Shutdown( void );
 void	G_ExitLevel( void );
 void G_RestartLevel( void );
@@ -1243,7 +1244,7 @@ struct gclient_s
 // quit or teamchange data for clients (stats)
 struct gclient_quit_s
 {
-	char netname[MAX_NAME_CHARS];
+	char netname[MAX_NAME_BYTES];
 	int team;
 	int mm_session;
 

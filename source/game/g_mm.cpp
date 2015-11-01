@@ -654,7 +654,7 @@ static void g_mm_writeHeader( stat_query_t *query, int teamGame )
 	sq_api->SetString( matchsection, "gamedir", trap_Cvar_String( "fs_game" ) );
 	sq_api->SetNumber( matchsection, "timestamp", trap_Milliseconds() );
 	if( g_autorecord->integer ) {
-		sq_api->SetString( matchsection, "demo_filename", va( "%s.wd%i", level.autorecord_name, game.protocol ) );
+		sq_api->SetString( matchsection, "demo_filename", va( "%s%s", level.autorecord_name, game.demoExtension ) );
 	}
 }
 
