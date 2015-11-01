@@ -249,8 +249,13 @@ static void R_DrawPortalSurface( portalSurface_t *portalSurface )
 
 	if( best == NULL )
 	{
-		if( captureTextureId < 0 )
+		if( captureTextureId < 0 ) {
+			// still do a push&pop because to ensure the clean state
+			if( R_PushRefInst() ) {
+				R_PopRefInst();
+			}
 			return;
+		}
 	}
 	else
 	{
