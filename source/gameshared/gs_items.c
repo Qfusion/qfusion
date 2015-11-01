@@ -284,7 +284,7 @@ gsitem_t	itemdefs[] =
 	// AMMO ITEMS
 	//-----------------------------------------------------------
 
-	// AMMO_BLAST = WEAP_TOTAL
+	// AMMO_CELLS = WEAP_TOTAL
 
 	//QUAKED ammo_gunblade (.3 .3 1) (-16 -16 -16) (16 16 16)
 	{
@@ -299,7 +299,7 @@ gsitem_t	itemdefs[] =
 		S_PICKUP_AMMO,
 		EF_ROTATE_AND_BOB|EF_OUTLINE|EF_AMMOBOX,
 
-		"Blast", "blast", S_COLOR_YELLOW,
+		"Cells", "cells", S_COLOR_YELLOW,
 		0, // actual value comes from weapondefs instead
 		0, // actual value comes from weapondefs instead
 		AMMO_NONE,
