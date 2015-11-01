@@ -204,6 +204,7 @@ static void sv_mm_clientconnect_done( stat_query_t *query, bool success, void *c
 	int session_id, isession_id;
 	client_t *cl;
 	edict_t *ent;
+	bool userinfo_changed = false;
 
 	/*
 	 * ch : JSON API
@@ -273,10 +274,10 @@ static void sv_mm_clientconnect_done( stat_query_t *query, bool success, void *c
 				ratings_section = sq_api->GetSection( root, "ratings" );
 
 				Q_strncpyz( cl->mm_login, login, sizeof( cl->mm_login ) );
-
 				if( !Info_SetValueForKey( cl->userinfo, "cl_mm_login", login ) ) {
 					Com_Printf( "Failed to set infokey cl_mm_login for player %s\n", login );
 				}
+				userinfo_changed = true;
 
 				if( ge != NULL && ratings_section != NULL )
 				{
@@ -291,7 +292,6 @@ static void sv_mm_clientconnect_done( stat_query_t *query, bool success, void *c
 						element = sq_api->GetArraySection( ratings_section, idx++ );
 					}
 				}
-				SV_UserinfoChanged( cl );
 			}
 		}
 	}
@@ -309,8 +309,7 @@ static void sv_mm_clientconnect_done( stat_query_t *query, bool success, void *c
 		isession_id = SV_MM_GenerateLocalSession();
 		Com_Printf("SV_MM_ClientConnect: Forcing local_session %d on client %s\n", isession_id, cl->name );
 		cl->mm_session = isession_id;
-		// TODO: reflect this to the userinfo
-		Info_SetValueForKey( cl->userinfo, "cl_mm_session", va("%d", isession_id ) );
+		userinfo_changed = true;
 
 		// We should also notify MM about the new local session id?
 		// Or another option would be that MM doesnt track local sessions at all,
@@ -319,6 +318,9 @@ static void sv_mm_clientconnect_done( stat_query_t *query, bool success, void *c
 		// resend scc query
 		// cl->socket->address
 	}
+
+	if( userinfo_changed )
+		SV_UserinfoChanged( cl );
 
 	Com_Printf("SV_MM_ClientConnect: %s with session id %d\n", cl->name, cl->mm_session );
 }
