@@ -1155,6 +1155,8 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 
 	CG_ClearLightStyles();
 
+	CG_ClearLocalEntities();
+
 	// get configstrings
 	CG_RegisterConfigStrings();
 
@@ -1179,7 +1181,6 @@ void CG_Init( const char *serverName, unsigned int playerNum,
 	CG_ClearDecals();
 	CG_ClearPolys();
 	CG_ClearEffects();
-	CG_ClearLocalEntities();
 
 	CG_InitChat( &cg.chat );
 
