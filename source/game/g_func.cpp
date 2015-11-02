@@ -243,6 +243,8 @@ static void AngleMove_Begin( edict_t *ent )
 
 	// set up velocity vector
 	VectorSubtract( ent->moveinfo.destangles, ent->s.angles, destdelta );
+	VectorNormalize( destdelta );
+
 	VectorScale( destdelta, ent->moveinfo.speed, ent->avelocity );
 	ent->nextThink = level.time + 1;
 	ent->think = AngleMove_Watch;
