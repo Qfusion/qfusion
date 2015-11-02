@@ -848,7 +848,7 @@ void CG_DrawTeamMates( void )
 	trace_t trace;
 	vec4_t color;
 	int i;
-	const int pic_w = 24, pic_h = 24;
+	int pic_size = 18 * cgs.vidHeight / 600;
 
 	if( !cg_showTeamMates->integer )
 		return;
@@ -893,8 +893,10 @@ void CG_DrawTeamMates( void )
 		if( DotProduct( dir, &cg.view.axis[AXIS_FORWARD] ) < 0 ) {
 			coords[1] = drawOrigin[2] > cg.view.origin[2] ? 0 : cgs.vidHeight;
 		}
-		clamp( coords[0], 0, cgs.vidWidth - pic_w );
-		clamp( coords[1], 0, cgs.vidHeight - pic_h );
+		coords[0] -= pic_size / 2;
+		coords[1] -= pic_size / 2;
+		clamp( coords[0], 0, cgs.vidWidth - pic_size );
+		clamp( coords[1], 0, cgs.vidHeight - pic_size );
 		
 		CG_TeamColor( cg.predictedPlayerState.stats[STAT_TEAM], color );
 
@@ -906,7 +908,7 @@ void CG_DrawTeamMates( void )
 		if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time && cent->localEffects[LOCALEFFECT_VSAY_HEADICON] < VSAY_TOTAL )
 			media = cgs.media.shaderVSayIcon[cent->localEffects[LOCALEFFECT_VSAY_HEADICON]];
 
-		trap_R_DrawStretchPic( coords[0], coords[1], pic_w, pic_h, 0, 0, 1, 1, color, CG_MediaShader( media ) );
+		trap_R_DrawStretchPic( coords[0], coords[1], pic_size, pic_size, 0, 0, 1, 1, color, CG_MediaShader( media ) );
 	}
 }
 
