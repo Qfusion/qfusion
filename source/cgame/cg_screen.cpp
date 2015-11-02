@@ -848,6 +848,7 @@ void CG_DrawTeamMates( void )
 	trace_t trace;
 	vec4_t color;
 	int i;
+	const int pic_w = 24, pic_h = 24;
 
 	if( !cg_showTeamMates->integer )
 		return;
@@ -875,11 +876,6 @@ void CG_DrawTeamMates( void )
 		if( !cent->current.modelindex || !cent->current.solid ||
 			cent->current.solid == SOLID_BMODEL || cent->current.team == TEAM_SPECTATOR )
 			continue;
-
-		// Kill if in the view
-		VectorSubtract( cent->ent.origin, cg.view.origin, dir );
-		if( DotProduct( dir, &cg.view.axis[AXIS_FORWARD] ) < 0 )
-			continue;
 			
 		CG_Trace( &trace, cg.view.origin, vec3_origin, vec3_origin, cent->ent.origin, cg.predictedPlayerState.POVnum, MASK_OPAQUE );
 		if( cg_showTeamMates->integer == 1 && trace.fraction == 1.0f )
@@ -890,11 +886,15 @@ void CG_DrawTeamMates( void )
 			continue;
 
 		VectorSet( drawOrigin, cent->ent.origin[0], cent->ent.origin[1], cent->ent.origin[2] + playerbox_stand_maxs[2] + 16 );
+		VectorSubtract( drawOrigin, cg.view.origin, dir );
 
 		// find the 3d point in 2d screen
 		trap_R_TransformVectorToScreen( &cg.view.refdef, drawOrigin, coords );
-		if( ( coords[0] < 0 || coords[0] > cgs.vidWidth ) || ( coords[1] < 0 || coords[1] > cgs.vidHeight ) )
-			continue;
+		if( DotProduct( dir, &cg.view.axis[AXIS_FORWARD] ) < 0 ) {
+			coords[1] = drawOrigin[2] > cg.view.origin[2] ? 0 : cgs.vidHeight;
+		}
+		clamp( coords[0], 0, cgs.vidWidth - pic_w );
+		clamp( coords[1], 0, cgs.vidHeight - pic_h );
 		
 		CG_TeamColor( cg.predictedPlayerState.stats[STAT_TEAM], color );
 
@@ -906,10 +906,7 @@ void CG_DrawTeamMates( void )
 		if( cent->localEffects[LOCALEFFECT_VSAY_HEADICON_TIMEOUT] > cg.time && cent->localEffects[LOCALEFFECT_VSAY_HEADICON] < VSAY_TOTAL )
 			media = cgs.media.shaderVSayIcon[cent->localEffects[LOCALEFFECT_VSAY_HEADICON]];
 
-		trap_R_DrawStretchPic( coords[0],
-			coords[1],
-			24, 24, 0, 0, 1, 1,
-			color, CG_MediaShader( media ) );
+		trap_R_DrawStretchPic( coords[0], coords[1], pic_w, pic_h, 0, 0, 1, 1, color, CG_MediaShader( media ) );
 	}
 }
 
