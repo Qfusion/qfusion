@@ -282,7 +282,7 @@ void G_Init( unsigned int seed, unsigned int framemsec, int protocol, const char
 	g_select_empty = trap_Cvar_Get( "g_select_empty", "0", CVAR_DEVELOPER );
 	g_projectile_touch_owner = trap_Cvar_Get( "g_projectile_touch_owner", "0", CVAR_DEVELOPER );
 	g_projectile_prestep = trap_Cvar_Get( "g_projectile_prestep", va( "%i", PROJECTILE_PRESTEP ), CVAR_DEVELOPER );
-	g_self_knockback = trap_Cvar_Get( "g_self_knockback", "1.15", CVAR_DEVELOPER );
+	g_self_knockback = trap_Cvar_Get( "g_self_knockback", "1.18", CVAR_DEVELOPER );
 	g_knockback_scale = trap_Cvar_Get( "g_knockback_scale", "1.0", CVAR_ARCHIVE );
 	g_allow_stun = trap_Cvar_Get( "g_allow_stun", "1", CVAR_ARCHIVE );
 	g_armor_degradation = trap_Cvar_Get( "g_armor_degradation", va( "%.2f", ARMOR_DEGRADATION ), CVAR_DEVELOPER );
