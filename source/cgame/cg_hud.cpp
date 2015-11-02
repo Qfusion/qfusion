@@ -2888,7 +2888,8 @@ static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_
 
 static void CG_QuickMenuUpFunc( int id, unsigned int time )
 {
-	trap_SCR_EnableQuickMenu( false );
+	if( GS_MatchState() < MATCH_STATE_POSTMATCH )
+		trap_SCR_EnableQuickMenu( false );
 }
 
 static bool CG_LFuncTouchQuickMenu( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )

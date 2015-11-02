@@ -261,7 +261,8 @@ static void SCR_QuickMenuOn_f( void )
 */
 static void SCR_QuickMenuOff_f( void )
 {
-	trap_SCR_EnableQuickMenu( false );
+	if( GS_MatchState() < MATCH_STATE_POSTMATCH )
+		trap_SCR_EnableQuickMenu( false );
 }
 
 //============================================================================
