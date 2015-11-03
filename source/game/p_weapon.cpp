@@ -313,7 +313,6 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	int speed, knockback, stun, minDamage, minKnockback, radius, mod;
 	float damage;
 	int timeDelta;
-	float power;
 
 	timeDelta = 0;
 	if( owner && owner->r.client )
@@ -331,26 +330,11 @@ static edict_t *G_Fire_Gunblade_Blast( vec3_t origin, vec3_t angles, firedef_t *
 	minKnockback = firedef->minknockback;
 	radius = firedef->splash_radius;
 
-	// hackish : scale by power fraction
-	if( owner && owner->r.client )
-	{
-		power = (float)owner->r.client->ps.inventory[firedef->ammo_id] / (float)firedef->ammo_max;
-		damage *= power;
-		knockback *= power;
-		radius *= power;
-	}
-
 	if( is_quad )
 	{
 		damage *= QUAD_DAMAGE_SCALE;
 		knockback *= QUAD_KNOCKBACK_SCALE;
 	}
-
-	// scale by power fraction
-	if( damage < firedef->mindamage )
-		damage = firedef->mindamage;
-	if( minDamage < firedef->mindamage )
-		minDamage = firedef->mindamage;
 
 	return W_Fire_GunbladeBlast( owner, origin, angles, damage, minKnockback, knockback, stun, minDamage,
 		radius, speed, firedef->timeout, mod, timeDelta );
