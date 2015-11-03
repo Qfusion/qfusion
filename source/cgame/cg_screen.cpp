@@ -845,7 +845,6 @@ void CG_DrawTeamMates( void )
 	centity_t *cent;
 	vec3_t dir, drawOrigin;
 	vec2_t coords;
-	trace_t trace;
 	vec4_t color;
 	int i;
 	int pic_size = 18 * cgs.vidHeight / 600;
@@ -876,11 +875,6 @@ void CG_DrawTeamMates( void )
 		if( !cent->current.modelindex || !cent->current.solid ||
 			cent->current.solid == SOLID_BMODEL || cent->current.team == TEAM_SPECTATOR )
 			continue;
-			
-		CG_Trace( &trace, cg.view.origin, vec3_origin, vec3_origin, cent->ent.origin, cg.predictedPlayerState.POVnum, MASK_OPAQUE );
-		if( cg_showTeamMates->integer == 1 && trace.fraction == 1.0f )
-			continue;
-
 		// players might be SVF_FORCETEAM'ed for teammates, prevent ugly flickering for specs
 		if( cg.predictedPlayerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR && !trap_CM_InPVS( cg.view.origin, cent->ent.origin ) )
 			continue;
@@ -893,6 +887,13 @@ void CG_DrawTeamMates( void )
 		if( DotProduct( dir, &cg.view.axis[AXIS_FORWARD] ) < 0 ) {
 			coords[1] = drawOrigin[2] > cg.view.origin[2] ? 0 : cgs.vidHeight;
 		}
+		else {
+			trace_t trace;
+			CG_Trace( &trace, cg.view.origin, vec3_origin, vec3_origin, cent->ent.origin, cg.predictedPlayerState.POVnum, MASK_OPAQUE );
+			if( cg_showTeamMates->integer == 1 && trace.fraction == 1.0f )
+				continue;
+		}
+
 		coords[0] -= pic_size / 2;
 		coords[1] -= pic_size / 2;
 		clamp( coords[0], 0, cgs.vidWidth - pic_size );
