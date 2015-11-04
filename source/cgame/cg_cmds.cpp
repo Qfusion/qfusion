@@ -794,29 +794,26 @@ static void CG_SC_MenuCustom( void )
 */
 static void CG_SC_MenuQuick( void )
 {
-	char request[MAX_STRING_CHARS];
 	int i, c;
 
 	if( cgs.demoPlaying || cgs.tv )
 		return;
 
-	if( trap_Cmd_Argc() < 2 ) {
-		trap_Cmd_ExecuteText( EXEC_APPEND, "menu_quick 0\n" );
-		return;
-	}
+	cg.quickmenu[0] = '\0';
 
-	Q_strncpyz( request, "menu_quick game_quick ", sizeof( request ) );
-	
-	for( i = 1, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ )
+	if( trap_Cmd_Argc() >= 2 )
 	{
-		const char *label = trap_Cmd_Argv( i );
-		const char *cmd = trap_Cmd_Argv( i + 1 );
+		for( i = 1, c = 1; i < trap_Cmd_Argc() - 1; i += 2, c++ )
+		{
+			const char *label = trap_Cmd_Argv( i );
+			const char *cmd = trap_Cmd_Argv( i + 1 );
 
-		Q_strncatz( request, va( "btn%i \"%s\" ", c, label ), sizeof( request ) );
-		Q_strncatz( request, va( "cmd%i \"%s%s\" ", c, *cmd ? "cmd " : "", cmd ), sizeof( request ) );
+			Q_strncatz( cg.quickmenu, va( "btn%i \"%s\" ", c, label ), sizeof( cg.quickmenu ) );
+			Q_strncatz( cg.quickmenu, va( "cmd%i \"%s%s\" ", c, *cmd ? "cmd " : "", cmd ), sizeof( cg.quickmenu ) );
+		}
 	}
 
-	trap_Cmd_ExecuteText( EXEC_APPEND, va( "%s\n", request ) );
+	CG_RefreshQuickMenu();
 }
 
 /*
