@@ -323,18 +323,28 @@ static bool GLimp_InitGL( void )
 */
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
 {
+	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen )
+	{
+		// fullscreen does nothing on Android
+		return rserr_ok;
+	}
+
 	ri.Com_Printf( "Initializing OpenGL display\n" );
+
 	GLimp_Shutdown();
+
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.fullScreen = fullscreen;
 	glConfig.stereoEnabled = stereo;
+
 	if( !GLimp_InitGL() )
 	{
 		ri.Com_Printf( "GLimp_SetMode() - GLimp_InitGL failed\n" );
 		GLimp_Shutdown();
 		return rserr_unknown;
 	}
+
 	return rserr_ok;
 }
 
