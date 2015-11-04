@@ -752,6 +752,7 @@ static const reference_numeric_t cg_numeric_references[] =
 
 	{ "CHAT_MODE", CG_GetCvar, "con_messageMode" },
 	{ "SOFTKEYBOARD", CG_InputDeviceSupported, (void *)IN_DEVICE_SOFTKEYBOARD },
+	{ "TOUCHSCREEN", CG_InputDeviceSupported, (void *)IN_DEVICE_TOUCHSCREEN },
 
 	{ "TOUCH_FLIP", CG_GetTouchFlip, NULL },
 	{ "TOUCH_SCALE", CG_GetCvar, "cg_touch_scale" },
