@@ -698,10 +698,6 @@ static void SV_CheckAutoUpdate( void )
 	if( !sv_autoUpdate->integer || !dedicated->integer )
 		return;
 
-	// do not if there has been any activity in the last 2 hours
-	if( ( svc.lastActivity + 1800000 ) > Sys_Milliseconds() )
-		return;
-
 	days = (unsigned int)sv_lastAutoUpdate->integer;
 
 	// daily check
