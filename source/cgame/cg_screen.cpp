@@ -860,6 +860,7 @@ void CG_DrawTeamMates( void )
 
 	for( i = 0; i < gs.maxclients; i++ )
 	{
+		trace_t trace;
 		cgs_media_handle_t *media;
 
 		if( !cgs.clientInfo[i].name[0] || ISVIEWERENTITY( i + 1 ) )
@@ -870,6 +871,10 @@ void CG_DrawTeamMates( void )
 			continue;
 
 		if( cent->current.team != cg.predictedPlayerState.stats[STAT_TEAM] )
+			continue;
+
+		// ignore, if not in view
+		if( DotProduct( dir, &cg.view.axis[AXIS_FORWARD] ) < 0 )
 			continue;
 
 		if( !cent->current.modelindex || !cent->current.solid ||
@@ -884,15 +889,12 @@ void CG_DrawTeamMates( void )
 
 		// find the 3d point in 2d screen
 		trap_R_TransformVectorToScreen( &cg.view.refdef, drawOrigin, coords );
-		if( DotProduct( dir, &cg.view.axis[AXIS_FORWARD] ) < 0 ) {
-			coords[1] = drawOrigin[2] > cg.view.origin[2] ? 0 : cgs.vidHeight;
-		}
-		else {
-			trace_t trace;
-			CG_Trace( &trace, cg.view.origin, vec3_origin, vec3_origin, cent->ent.origin, cg.predictedPlayerState.POVnum, MASK_OPAQUE );
-			if( cg_showTeamMates->integer == 1 && trace.fraction == 1.0f )
-				continue;
-		}
+		if( ( coords[0] < 0 || coords[0] > cgs.vidWidth ) || ( coords[1] < 0 || coords[1] > cgs.vidHeight ) )
+			continue;
+
+		CG_Trace( &trace, cg.view.origin, vec3_origin, vec3_origin, cent->ent.origin, cg.predictedPlayerState.POVnum, MASK_OPAQUE );
+		if( cg_showTeamMates->integer == 1 && trace.fraction == 1.0f )
+			continue;
 
 		coords[0] -= pic_size / 2;
 		coords[1] -= pic_size / 2;
