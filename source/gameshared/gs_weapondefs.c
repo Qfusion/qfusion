@@ -129,7 +129,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			40,								// damage
 			1.0,							// selfdamage ratio
-			85,								// knockback
+			90,								// knockback
 			0,								// stun
 			60,								// splash radius
 			8,								// splash minimum damage
@@ -351,7 +351,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			80,								// damage
 			1.00,							// selfdamage ratio
-			90,								// knockback
+			100,								// knockback
 			1250,							// stun
 			125,							// splash radius
 			15,								// splash minimum damage
@@ -386,7 +386,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			80,								// damage
 			1.00,							// selfdamage ratio
-			90,								// knockback
+			100,								// knockback
 			1250,							// stun
 			135,							// splash radius
 			15,								// splash minimum damage
@@ -425,7 +425,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			80,								// damage
 			1.00,							// selfdamage ratio
-			90,								// knockback
+			100,								// knockback
 			1250,							// stun
 			125,							// splash radius
 			15,								// splash minimum damage
@@ -460,7 +460,7 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			80,								// damage
 			1.00,							// selfdamage ratio
-			90,								// knockback
+			100,								// knockback
 			1250,							// stun
 			135,							// splash radius
 			15,								// splash minimum damage
