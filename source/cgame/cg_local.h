@@ -615,6 +615,8 @@ typedef struct
 	size_t teaminfo_size;
 	char *motd;
 	unsigned int motd_time;
+	char quickmenu[MAX_STRING_CHARS];
+	bool quickmenu_left;
 
 	// awards
 	char award_lines[MAX_AWARD_LINES][MAX_CONFIGSTRING_CHARS];
@@ -767,6 +769,18 @@ void CG_DrawTeamInfo( int x, int y, int align, struct qfontface_s *font, vec4_t 
 void CG_DrawNet( int x, int y, int w, int h, int align, vec4_t color );
 
 void CG_GameMenu_f( void );
+
+/**
+ * Sends current quick menu string to the UI.
+ */
+void CG_RefreshQuickMenu( void );
+
+/**
+ * Toggles the visibility of the quick menu.
+ *
+ * @param state quick menu visibility (0 = hidden, 1 = on the right, -1 = on the left)
+ */
+void CG_ShowQuickMenu( int state );
 
 /**
  * Touch area ID namespaces.

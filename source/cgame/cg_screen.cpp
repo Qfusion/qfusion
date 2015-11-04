@@ -193,6 +193,43 @@ void CG_ScreenCrosshairDamageUpdate( void )
 //=============================================================================
 
 /*
+* CG_RefreshQuickMenu
+*/
+void CG_RefreshQuickMenu( void )
+{
+	if( !cg.quickmenu[0] )
+	{
+		trap_Cmd_ExecuteText( EXEC_APPEND, "menu_quick 0\n" );
+		return;
+	}
+
+	trap_Cmd_ExecuteText( EXEC_APPEND, va( "menu_quick game_quick left %d %s\n", cg.quickmenu_left ? 1 : 0, cg.quickmenu ) );
+}
+
+/*
+* CG_ShowQuickMenu
+*/
+void CG_ShowQuickMenu( int state )
+{
+	if( !state )
+	{
+		trap_SCR_EnableQuickMenu( false );
+		return;
+	}
+
+	bool left = ( state < 0 );
+	if( cg.quickmenu_left != left )
+	{
+		cg.quickmenu_left = left;
+		CG_RefreshQuickMenu();
+	}
+
+	trap_SCR_EnableQuickMenu( true );
+}
+
+//=============================================================================
+
+/*
 * CG_CalcVrect
 * 
 * Sets scr_vrect, the coordinates of the rendered window
@@ -251,18 +288,19 @@ static void CG_SizeDown_f( void )
 /*
 * CG_QuickMenuOn_f
 */
-static void SCR_QuickMenuOn_f( void )
+static void CG_QuickMenuOn_f( void )
 {
-	trap_SCR_EnableQuickMenu( true );
+	if( GS_MatchState() < MATCH_STATE_POSTMATCH )
+		CG_ShowQuickMenu( 1 );
 }
 
 /*
 * CG_QuickMenuOff_f
 */
-static void SCR_QuickMenuOff_f( void )
+static void CG_QuickMenuOff_f( void )
 {
 	if( GS_MatchState() < MATCH_STATE_POSTMATCH )
-		trap_SCR_EnableQuickMenu( false );
+		CG_ShowQuickMenu( 0 );
 }
 
 //============================================================================
@@ -339,8 +377,8 @@ void CG_ScreenInit( void )
 	trap_Cmd_AddCommand( "help_hud", Cmd_CG_PrintHudHelp_f );
 	trap_Cmd_AddCommand( "gamemenu", CG_GameMenu_f );
 
-	trap_Cmd_AddCommand( "+quickmenu", &SCR_QuickMenuOn_f );
-	trap_Cmd_AddCommand( "-quickmenu", &SCR_QuickMenuOff_f );
+	trap_Cmd_AddCommand( "+quickmenu", &CG_QuickMenuOn_f );
+	trap_Cmd_AddCommand( "-quickmenu", &CG_QuickMenuOff_f );
 
 	int i;
 	for( i = 0; i < TOUCHPAD_COUNT; ++i )
