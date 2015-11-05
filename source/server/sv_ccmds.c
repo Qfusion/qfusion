@@ -463,7 +463,6 @@ void SV_ShutdownOperatorCommands( void )
 
 	if( dedicated->integer )
 	{
-		Cmd_RemoveCommand( "download" );
 		Cmd_RemoveCommand( "autoupdate" );
 		Cmd_RemoveCommand( "autoupdatecheck" );
 	}
