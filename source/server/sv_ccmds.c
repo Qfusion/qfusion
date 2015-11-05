@@ -91,17 +91,10 @@ static void SV_AutoUpdateComplete_f( void )
 	// update the map list, which also does a filesystem rescan
 	ML_Update();
 
-	// if there are any new filesystem entries, restart
 	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS )
 	{
-		if( sv.state != ss_dead )
-		{
-			// restart the current map, SV_Map also rescans the filesystem
-			Com_Printf( "The server will now restart...\n\n" );
-
-			// start the default map if current map isn't available
-			Cbuf_ExecuteText( EXEC_APPEND, va( "map %s\n", svs.mapcmd[0] ? svs.mapcmd : sv_defaultmap->string ) );
-		}
+		// force restart
+		svc.lastActivity = 0;
 	}
 }
 
@@ -110,10 +103,13 @@ static void SV_AutoUpdateComplete_f( void )
 */
 void SV_AutoUpdateFromWeb( bool checkOnly )
 {
-	if( !checkOnly ) {
-		Cvar_ForceSet( "sv_lastAutoUpdate", va( "%i", (int)Com_DaysSince1900() ) );
+	if( checkOnly ) {
+		Com_Autoupdate_Run( true, NULL );
+		return;
 	}
-	Com_Autoupdate_Run( checkOnly, &SV_AutoUpdateComplete_f );
+
+	Cvar_ForceSet( "sv_lastAutoUpdate", va( "%i", (int)Com_DaysSince1900() ) );
+	Com_Autoupdate_Run( false, &SV_AutoUpdateComplete_f );
 }
 
 /*

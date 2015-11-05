@@ -706,6 +706,29 @@ static void SV_CheckAutoUpdate( void )
 }
 
 /*
+* SV_CheckPostUpdateRestart
+*/
+static void SV_CheckPostUpdateRestart( void )
+{
+	// do not if there has been any activity in last 5 minutes
+	if( ( svc.lastActivity + 300000 ) > Sys_Milliseconds() )
+		return;
+
+	// if there are any new filesystem entries, restart
+	if( FS_GetNotifications() & FS_NOTIFY_NEWPAKS )
+	{
+		if( sv.state != ss_dead )
+		{
+			// restart the current map, SV_Map also rescans the filesystem
+			Com_Printf( "The server will now restart...\n\n" );
+
+			// start the default map if current map isn't available
+			Cbuf_ExecuteText( EXEC_APPEND, va( "map %s\n", svs.mapcmd[0] ? svs.mapcmd : sv_defaultmap->string ) );
+		}
+	}
+}
+
+/*
 * SV_CheckMatchUUID_Callback
 */
 static void SV_CheckMatchUUID_Callback( const char *uuid )
@@ -789,6 +812,8 @@ void SV_Frame( int realmsec, int gamemsec )
 	SV_Web_GameFrame( ge->WebRequest );
 
 	SV_CheckAutoUpdate();
+
+	SV_CheckPostUpdateRestart();
 }
 
 //============================================================================
