@@ -132,7 +132,7 @@ static void CG_AddLocalSounds( void )
 	{
 		if( !postmatchsound_set && !demostream )
 		{
-			trap_SCR_EnableQuickMenu( true );
+			CG_ShowQuickMenu( 1 );
 
 			trap_S_StartBackgroundTrack( S_PLAYLIST_POSTMATCH, NULL, 3 ); // loop random track from the playlist
 			postmatchsound_set = true;
@@ -149,7 +149,7 @@ static void CG_AddLocalSounds( void )
 
 		if( postmatchsound_set )
 		{
-			trap_SCR_EnableQuickMenu( false );
+			CG_ShowQuickMenu( 0 );
 
 			trap_S_StopBackgroundTrack();
 			postmatchsound_set = false;
