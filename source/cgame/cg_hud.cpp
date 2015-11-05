@@ -2890,17 +2890,22 @@ static bool CG_LFuncTouchScores( struct cg_layoutnode_s *commandnode, struct cg_
 static void CG_QuickMenuUpFunc( int id, unsigned int time )
 {
 	if( GS_MatchState() < MATCH_STATE_POSTMATCH )
-		trap_SCR_EnableQuickMenu( false );
+		CG_ShowQuickMenu( 0 );
 }
 
 static bool CG_LFuncTouchQuickMenu( struct cg_layoutnode_s *commandnode, struct cg_layoutnode_s *argumentnode, int numArguments )
 {
-	if( CG_TouchArea( TOUCHAREA_HUD_QUICKMENU,
-		CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
-		CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
-		layout_cursor_width, layout_cursor_height, CG_QuickMenuUpFunc ) >= 0 )
+	int side = ( int )CG_GetNumericArg( &argumentnode );
+
+	if( GS_MatchState() < MATCH_STATE_POSTMATCH )
 	{
-		trap_SCR_EnableQuickMenu( true );
+		if( CG_TouchArea( TOUCHAREA_HUD_QUICKMENU,
+			CG_HorizontalAlignForWidth( layout_cursor_x, layout_cursor_align, layout_cursor_width ),
+			CG_VerticalAlignForHeight( layout_cursor_y, layout_cursor_align, layout_cursor_height ),
+			layout_cursor_width, layout_cursor_height, CG_QuickMenuUpFunc ) >= 0 )
+		{
+			CG_ShowQuickMenu( ( side < 0 ) ? -1 : 1 );
+		}
 	}
 	return true;
 }
@@ -3588,8 +3593,8 @@ static const cg_layoutcommand_t cg_LayoutCommands[] =
 		"touchQuickMenu",
 		NULL,
 		CG_LFuncTouchQuickMenu,
-		0,
-		"Places quick menu button",
+		1,
+		"Places quick menu button, 1 to show the menu on the right, -1 to show it on the left",
 		false
 	},
 
