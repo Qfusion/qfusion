@@ -911,6 +911,9 @@ void CG_DrawTeamMates( void )
 		if( cent->current.team != cg.predictedPlayerState.stats[STAT_TEAM] )
 			continue;
 
+		VectorSet( drawOrigin, cent->ent.origin[0], cent->ent.origin[1], cent->ent.origin[2] + playerbox_stand_maxs[2] + 16 );
+		VectorSubtract( drawOrigin, cg.view.origin, dir );
+
 		// ignore, if not in view
 		if( DotProduct( dir, &cg.view.axis[AXIS_FORWARD] ) < 0 )
 			continue;
@@ -921,9 +924,6 @@ void CG_DrawTeamMates( void )
 		// players might be SVF_FORCETEAM'ed for teammates, prevent ugly flickering for specs
 		if( cg.predictedPlayerState.stats[STAT_REALTEAM] == TEAM_SPECTATOR && !trap_CM_InPVS( cg.view.origin, cent->ent.origin ) )
 			continue;
-
-		VectorSet( drawOrigin, cent->ent.origin[0], cent->ent.origin[1], cent->ent.origin[2] + playerbox_stand_maxs[2] + 16 );
-		VectorSubtract( drawOrigin, cg.view.origin, dir );
 
 		// find the 3d point in 2d screen
 		trap_R_TransformVectorToScreen( &cg.view.refdef, drawOrigin, coords );
