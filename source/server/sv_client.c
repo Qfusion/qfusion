@@ -1159,7 +1159,9 @@ void SV_ParseClientMessage( client_t *client, msg_t *msg )
 	if( !msg )
 		return;
 
-	SV_UpdateActivity();
+	if (!client->tvclient) {
+		SV_UpdateActivity();
+	}
 
 	// only allow one move command
 	move_issued = false;
