@@ -44,22 +44,45 @@ void GClip_UnlinkEntity( tvm_relay_t *relay, edict_t *ent )
 }
 
 /*
+* GClip_LinearMovement_
+*/
+static int GClip_LinearMovement_( const entity_state_t *ent, unsigned time, vec3_t dest )
+{
+    vec3_t dist;
+    int moveTime;
+    float moveFrac;
+
+    moveTime = time - ent->linearMovementTimeStamp;
+    if( moveTime < 0 ) {
+        moveTime = 0;
+    }
+
+    if( ent->linearMovementDuration ) {
+        if( moveTime > (int)ent->linearMovementDuration ) {
+            moveTime = ent->linearMovementDuration;
+        }
+
+        VectorSubtract( ent->linearMovementEnd, ent->linearMovementBegin, dist );
+        moveFrac = (float)moveTime / (float)ent->linearMovementDuration;
+        clamp( moveFrac, 0, 1 );
+        VectorMA( ent->linearMovementBegin, moveFrac, dist, dest );
+    }
+    else {
+        moveFrac = moveTime * 0.001f;
+        VectorMA( ent->linearMovementBegin, moveFrac, ent->linearMovementVelocity, dest );
+    }
+
+    return moveTime;
+}
+
+/*
 * GClip_LinearMovement
 */
 void GClip_LinearMovement( tvm_relay_t *relay, edict_t *ent )
 {
-	unsigned int snapFrametime;
-
-	assert( ent->s.linearMovement && ent->r.inuse );
-
-	snapFrametime = relay->snapFrameTime;
-	if( relay->serverTime > ent->s.linearMovementTimeStamp + snapFrametime )
-	{
-		float moveTime = (float)( relay->serverTime - ( ent->s.linearMovementTimeStamp + snapFrametime ) ) * 0.001f;
-		VectorMA( ent->s.origin2, moveTime, ent->s.linearMovementVelocity, ent->s.origin );
-	}
-	else
-		VectorCopy( ent->s.origin2, ent->s.origin );
+	vec3_t origin;
+	GClip_LinearMovement_( &ent->s, relay->serverTime - relay->snapFrameTime, origin );
+	VectorCopy( origin, ent->s.origin );
 }
 
 /*
