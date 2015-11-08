@@ -70,8 +70,10 @@ static void TVM_NewPacketEntityState( edict_t *ent, entity_state_t *state )
 		ent->r.maxs[2] = zu;
 	}
 
-	if( ent->s.linearMovement )
+	if( ent->s.linearMovement ) {
+		ent->s.linearMovementTimeStamp -= ent->relay->snapFrameTime;
 		GClip_LinearMovement( ent->relay, ent );
+	}
 
 	GClip_LinkEntity( ent->relay, ent );
 }
