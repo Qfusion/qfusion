@@ -45,6 +45,8 @@ void GClip_UnlinkEntity( tvm_relay_t *relay, edict_t *ent )
 
 /*
 * GClip_LinearMovement_
+*
+* FIXME: this is a copy&paste of GS_LinearMovement
 */
 static int GClip_LinearMovement_( const entity_state_t *ent, unsigned time, vec3_t dest )
 {
@@ -81,7 +83,7 @@ static int GClip_LinearMovement_( const entity_state_t *ent, unsigned time, vec3
 void GClip_LinearMovement( tvm_relay_t *relay, edict_t *ent )
 {
 	vec3_t origin;
-	GClip_LinearMovement_( &ent->s, relay->serverTime - relay->snapFrameTime, origin );
+	GClip_LinearMovement_( &ent->s, relay->serverTime, origin );
 	VectorCopy( origin, ent->s.origin );
 }
 
