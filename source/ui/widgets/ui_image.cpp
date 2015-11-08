@@ -238,6 +238,7 @@ bool ElementImage::LoadCachedTexture()
 
 	// Set the texture onto our geometry object.
 	geometry.SetTexture( &texture );
+	DispatchEvent( "imageload", Dictionary(), false );
 
 	DirtyLayout();
 	return true;
@@ -265,6 +266,7 @@ bool ElementImage::LoadDiskTexture()
 
 	// Set the texture onto our geometry object.
 	geometry.SetTexture(&texture);
+	DispatchEvent( "imageload", Dictionary(), false );
 	return true;
 }
 
