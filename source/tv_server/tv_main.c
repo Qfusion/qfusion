@@ -101,7 +101,7 @@ void TV_Init( void )
 	tv_zombietime = Cvar_Get( "tv_zombietime", "2", 0 );
 	tv_name = Cvar_Get( "tv_name", APPLICATION "[TV]", CVAR_SERVERINFO | CVAR_ARCHIVE );
 	tv_compresspackets = Cvar_Get( "tv_compresspackets", "1", 0 );
-	tv_maxclients = Cvar_Get( "tv_maxclients", "32", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_NOSET );
+	tv_maxclients = Cvar_Get( "tv_maxclients", "64", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_NOSET );
 	tv_maxmvclients = Cvar_Get( "tv_maxmvclients", "4", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_NOSET );
 	tv_public = Cvar_Get( "tv_public", "1", CVAR_ARCHIVE | CVAR_SERVERINFO );
 	tv_rcon_password = Cvar_Get( "tv_rcon_password", "", 0 );
