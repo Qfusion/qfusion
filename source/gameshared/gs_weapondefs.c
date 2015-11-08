@@ -499,14 +499,14 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			15,								// damage
 			0.5,							// selfdamage ratio
-			18,								// knockback
+			20,								// knockback
 			200,							// stun
 			45,								// splash radius
 			5,								// splash minimum damage
 			1,                              // splash minimum knockback
 
 			//projectile def
-			2400,							// speed
+			2500,							// speed
 			0,								// spread
 			0,                              // v_spread
 
@@ -534,14 +534,14 @@ gs_weapon_definition_t gs_weaponDefs[] =
 			//damages
 			15,								// damage
 			0.5,							// selfdamage ratio
-			18,								// knockback
+			20,								// knockback
 			200,							// stun
 			45,								// splash radius
 			5,								// splash minimum damage
 			1,                              // splash minimum knockback
 
 			//projectile def
-			2400,							// speed
+			2500,							// speed
 			0,								// spread
 			0,                              // v_spread
 
