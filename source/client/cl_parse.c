@@ -70,7 +70,7 @@ bool CL_DownloadRequest( const char *filename, bool requestpak )
 
 	if( FS_CheckPakExtension( filename ) )
 	{
-		if( FS_FOpenBaseFile( filename, NULL, FS_READ ) != -1 )
+		if( FS_PakFileExists( filename ) )
 		{
 			Com_Printf( "Can't download: %s. File already exists.\n", filename );
 			return false;
@@ -143,7 +143,7 @@ bool CL_CheckOrDownloadFile( const char *filename )
 
 	if( FS_CheckPakExtension( filename ) )
 	{
-		if( FS_FOpenBaseFile( filename, NULL, FS_READ ) != -1 )
+		if( FS_PakFileExists( filename ) )
 			return true;
 	}
 	else
@@ -445,7 +445,7 @@ static size_t CL_WebDownloadReadCb( const void *buf, size_t numb, float percenta
 			}
 		}
 
-		if( FS_FOpenBaseFile( filename, NULL, FS_READ ) != -1 )
+		if( FS_PakFileExists( filename ) )
 		{
 			Com_Printf( "Can't download, file already exists: %s\n", filename );
 			CL_DownloadDone();

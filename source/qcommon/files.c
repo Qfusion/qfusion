@@ -884,6 +884,14 @@ static int FS_AbsoluteFileExists( const char *filename )
 }
 
 /*
+* FS_PakFileExists
+*/
+bool FS_PakFileExists( const char *packfilename )
+{
+	return FS_FileExists( packfilename, true ) != -1 || Sys_VFS_FindFile( packfilename );
+}
+
+/*
 * FS_FileModeStr
 */
 static void FS_FileModeStr( int mode, char *modestr, size_t size )
