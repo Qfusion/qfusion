@@ -792,6 +792,7 @@ bool    FS_RemoveAbsoluteDirectory( const char *dirname );
 unsigned    FS_ChecksumAbsoluteFile( const char *filename );
 unsigned    FS_ChecksumBaseFile( const char *filename );
 bool	FS_CheckPakExtension( const char *filename );
+bool	FS_PakFileExists( const char *packfilename );
 
 time_t		FS_FileMTime( const char *filename );
 time_t		FS_BaseFileMTime( const char *filename );
