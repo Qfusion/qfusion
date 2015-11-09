@@ -460,10 +460,11 @@ SCRIPT COMMANDS
 */
 static void Cmd_Exec_f( void )
 {
-	char *f, *name;
+	char *f = NULL, *name;
 	const char *arg = Cmd_Argv( 1 );
 	bool silent = Cmd_Argc() >= 3 && !Q_stricmp( Cmd_Argv( 2 ), "silent" );
-	int len, name_size;
+	int len = -1, name_size;
+	const char *basename;
 
 	if( Cmd_Argc() < 2 || !arg[0] )
 	{
@@ -487,14 +488,10 @@ static void Cmd_Exec_f( void )
 
 	COM_DefaultExtension( name, ".cfg", name_size );
 
-	if( FS_PakNameForFile( name ) ) {
-		if( !silent )
-			Com_Printf( "Ignoring %s\n", name );
-		Mem_TempFree( name );
-		return;
-	}
+	basename = FS_BaseNameForFile( name );
+	if( basename )
+		len = FS_LoadBaseFile( basename, (void **)&f, NULL, 0 );
 
-	len = FS_LoadFile( name, (void **)&f, NULL, 0 );
 	if( !f )
 	{
 		if( !silent )
