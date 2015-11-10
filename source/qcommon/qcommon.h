@@ -779,7 +779,7 @@ void	FS_FreeBaseFile( void *buffer );
 *
 * @return mapped pointer to data on disk or NULL if mapping failed or passed size is 0.
 */
-void	*FS_MMapBaseFile( int file, size_t size );
+void	*FS_MMapBaseFile( int file, size_t size, size_t offset );
 void	FS_UnMMapBaseFile( int file, void *data );
 
 int		FS_GetNotifications( void );

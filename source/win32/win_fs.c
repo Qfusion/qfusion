@@ -312,28 +312,49 @@ int Sys_FS_FileNo( FILE *fp )
 /*
 * Sys_FS_MMapFile
 */
-void *Sys_FS_MMapFile( int fileno, void **mapping, size_t size )
+void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset )
 {
 	HANDLE h;
+	SYSTEM_INFO sysInfo;
+	static DWORD granularity = 0;
+	DWORD granules;
+	size_t padded_offset;
+	void *data;
+	int error;
 
 	assert( mapping != NULL );
 
-	h = CreateFileMapping( (HANDLE) _get_osfhandle( fileno ), 0, PAGE_READONLY, 0, size, 0 );
-	if( h == 0 ) {
+	h = CreateFileMapping( (HANDLE) _get_osfhandle( fileno ), 0, PAGE_READONLY, 0, 0, 0 );
+	if( h == 0 )
+		return NULL;
+	
+	if( granularity == 0 ) {
+		GetSystemInfo( &sysInfo );
+		granularity = sysInfo.dwAllocationGranularity;
+	}
+
+	granules = offset / granularity;
+	padded_offset = granules * granularity;
+
+	data = MapViewOfFile( h, FILE_MAP_READ, 0, padded_offset, size + offset - padded_offset );
+	error = GetLastError();
+	if( !data ) {
+		CloseHandle( h );
 		return NULL;
 	}
 
 	*mapping = h;
-	return MapViewOfFile( h, FILE_MAP_READ, 0, 0, 0 );
+	*mapping_offset = offset - padded_offset;
+	return (char *)data + offset - padded_offset;
 }
 
 /*
 * Sys_FS_UnMMapFile
 */
-void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size )
+void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size, size_t mapping_offset )
 {
 	if( data )
-		UnmapViewOfFile( (HANDLE)data );
+		UnmapViewOfFile( (HANDLE)((char *)data - mapping_offset) );
 	if( mapping )
 		CloseHandle( (HANDLE)mapping );
 }

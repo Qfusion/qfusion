@@ -581,7 +581,7 @@ static void SV_NextDownload_f( client_t *client )
 
 		if( client->download.size != 0 )
 		{
-			client->download.data = FS_MMapBaseFile( client->download.file, client->download.size );
+			client->download.data = FS_MMapBaseFile( client->download.file, client->download.size, 0 );
 			if( !client->download.data )
 			{
 				Com_Printf( "Error loading %s for uploading\n", client->download.name );
