@@ -404,6 +404,27 @@ int	Sys_FS_FileNo( FILE *fp )
 }
 
 /*
+* Sys_FS_MMapFile
+*/
+void *Sys_FS_MMapFile( int fileno, void **mapping, size_t size )
+{
+	void *data = mmap( NULL, size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fileno, 0 );
+	if( !data ) {
+		return NULL;
+	}
+	*mapping = (void *)1;
+	return data;
+}
+
+/*
+* Sys_FS_UnMMapFile
+*/
+void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size )
+{
+	munmap( data, size );
+}
+
+/*
 * Sys_FS_AddFileToMedia
 */
 void Sys_FS_AddFileToMedia( const char *filename )

@@ -139,6 +139,9 @@ typedef struct filehandle_s
 	fs_done_cb done_cb;
 	void *customp;
 
+	void *mapping;
+	size_t mapping_size;
+
 	struct filehandle_s *prev, *next;
 } filehandle_t;
 
@@ -1822,6 +1825,41 @@ int FS_LoadBaseFileExt( const char *path, int flags, void **buffer, void *stack,
 	FS_FCloseFile( fhandle );
 
 	return len;
+}
+
+/*
+* FS_MMapBaseFile
+*/
+void *FS_MMapBaseFile( int file, size_t size )
+{
+	void *data;
+	filehandle_t *fh;
+	
+	if( !size )
+		return NULL;
+
+	fh = FS_FileHandleForNum( file );
+	if( !fh->fstream || fh->mapping )
+		return NULL;
+
+	data = Sys_FS_MMapFile( Sys_FS_FileNo( fh->fstream ), &fh->mapping, size );
+	fh->mapping_size = size;
+	return data;
+}
+
+/*
+* FS_UnMMapBaseFile
+*/
+void FS_UnMMapBaseFile( int file, void *data )
+{
+	filehandle_t *fh;
+	
+	fh = FS_FileHandleForNum( file );
+	if( !fh->mapping )
+		return;
+
+	Sys_FS_UnMMapFile( fh->mapping, data, fh->mapping_size );
+	fh->mapping = NULL;
 }
 
 /*
