@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 
 #ifdef __ANDROID__
 #include "../android/android_sys.h"
@@ -408,7 +409,7 @@ int	Sys_FS_FileNo( FILE *fp )
 */
 void *Sys_FS_MMapFile( int fileno, void **mapping, size_t size )
 {
-	void *data = mmap( NULL, size, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fileno, 0 );
+	void *data = mmap( NULL, size, PROT_READ, MAP_PRIVATE, fileno, 0 );
 	if( !data ) {
 		return NULL;
 	}
