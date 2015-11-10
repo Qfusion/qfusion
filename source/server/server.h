@@ -108,7 +108,8 @@ typedef struct
 typedef struct
 {
 	char *name;
-	uint8_t *data;            // file being downloaded
+	int file;
+	uint8_t *data;          // file being downloaded
 	int size;               // total bytes (can't use EOF because of paks)
 	unsigned int timeout;   // so we can free the file being downloaded
 	                        // if client omits sending success or failure message
