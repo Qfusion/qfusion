@@ -304,9 +304,38 @@ time_t Sys_FS_FileMTime( const char *filename )
 /*
 * Sys_FS_FileNo
 */
-int	Sys_FS_FileNo( FILE *fp )
+int Sys_FS_FileNo( FILE *fp )
 {
 	return _fileno( fp );
+}
+
+/*
+* Sys_FS_MMapFile
+*/
+void *Sys_FS_MMapFile( int fileno, void **mapping, size_t size )
+{
+	HANDLE h;
+
+	assert( mapping != NULL );
+
+	h = CreateFileMapping( (HANDLE) _get_osfhandle( fileno ), 0, PAGE_READONLY, 0, size, 0 );
+	if( h == 0 ) {
+		return NULL;
+	}
+
+	*mapping = h;
+	return MapViewOfFile( h, FILE_MAP_READ, 0, 0, 0 );
+}
+
+/*
+* Sys_FS_UnMMapFile
+*/
+void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size )
+{
+	if( data )
+		UnmapViewOfFile( (HANDLE)data );
+	if( mapping )
+		CloseHandle( (HANDLE)mapping );
 }
 
 /*

@@ -40,6 +40,9 @@ time_t		Sys_FS_FileMTime( const char *filename );
 
 int			Sys_FS_FileNo( FILE *fp );
 
+void		*Sys_FS_MMapFile( int fileno, void **mapping, size_t size );
+void		Sys_FS_UnMMapFile( void *mapping, void *data, size_t size );
+
 void		Sys_FS_AddFileToMedia( const char *filename );
 
 // virtual storage of pack files, such as .obb on Android
