@@ -407,22 +407,32 @@ int	Sys_FS_FileNo( FILE *fp )
 /*
 * Sys_FS_MMapFile
 */
-void *Sys_FS_MMapFile( int fileno, void **mapping, size_t size )
+void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset )
 {
-	void *data = mmap( NULL, size, PROT_READ, MAP_PRIVATE, fileno, 0 );
-	if( !data ) {
+	static unsigned offsetmask = 0;
+	size_t offsetpad;
+
+	if( !offsetmask )
+		offsetmask = ~(sysconf(_SC_PAGESIZE) - 1);
+	offsetpad = offset - (offset & offsetmask);
+
+	void *data = mmap( NULL, size + offsetpad, PROT_READ, MAP_PRIVATE, fileno, offset - offsetpad );
+	if( !data )
 		return NULL;
-	}
+
 	*mapping = (void *)1;
-	return data;
+	*mapping_offset = offsetpad;
+	return data + offsetpad;
 }
 
 /*
 * Sys_FS_UnMMapFile
 */
-void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size )
+void Sys_FS_UnMMapFile( void *mapping, void *data, size_t size, size_t mapping_offset )
 {
-	munmap( data, size );
+	if( !data )
+		return;
+	munmap( (char *)data - mapping_offset, size + mapping_offset );
 }
 
 /*

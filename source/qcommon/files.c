@@ -78,8 +78,9 @@ static const char *forbidden_gamedirs[] = {
 
 typedef struct
 {
-	unsigned char readBuffer[FS_ZIP_BUFSIZE]; // internal buffer for compressed data
-	z_stream zstream;                       // zLib stream structure for inflate
+	void *mapping;
+	void *mmappedData;
+	z_stream zstream;                     // zLib stream structure for inflate
 	size_t compressedSize;
 	size_t restReadCompressed;            // number of bytes to be decompressed
 } zipEntry_t;
@@ -141,6 +142,7 @@ typedef struct filehandle_s
 
 	void *mapping;
 	size_t mapping_size;
+	size_t mapping_offset;
 
 	struct filehandle_s *prev, *next;
 } filehandle_t;
@@ -1063,10 +1065,18 @@ static int _FS_FOpenPakFile( packfile_t *pakFile, int *filenum )
 		}
 	}
 
-	if( fseek( file->fstream, file->pakOffset, SEEK_SET ) != 0 )
+	if( file->zipEntry )
 	{
-		Com_DPrintf( "_FS_FOpenPakFile: can't inflate %s\n", pakFile->name );
-		return -1;
+		if( pakFile->compressedSize )
+			file->zipEntry->mmappedData = FS_MMapBaseFile( *filenum, pakFile->compressedSize, file->pakOffset );
+	}
+	else
+	{
+		if( fseek( file->fstream, file->pakOffset, SEEK_SET ) != 0 )
+		{
+			Com_DPrintf( "_FS_FOpenPakFile: can't inflate %s\n", pakFile->name );
+			return -1;
+		}
 	}
 
 	return pakFile->uncompressedSize;
@@ -1319,6 +1329,8 @@ void FS_FCloseFile( int file )
 
 	if( fh->zipEntry )
 	{
+		if( fh->zipEntry->mmappedData )
+			FS_UnMMapBaseFile( file, fh->zipEntry->mmappedData );
 		qzinflateEnd( &fh->zipEntry->zstream );
 		Mem_Free( fh->zipEntry );
 		fh->zipEntry = NULL;
@@ -1375,46 +1387,31 @@ static int FS_ReadStream( uint8_t *buf, size_t len, filehandle_t *fh )
 static int FS_ReadPK3File( uint8_t *buf, size_t len, filehandle_t *fh )
 {
 	zipEntry_t *zipEntry;
-	int error, flush;
-	size_t read, block;
-	uLong totalOutBefore;
+	int error;
+	int read_c, read_uc;
 
 	zipEntry = fh->zipEntry;
+
+	if( !zipEntry->restReadCompressed || !zipEntry->mmappedData )
+		return 0;
+
+	zipEntry->zstream.total_out = 0;
 	zipEntry->zstream.next_out = buf;
 	zipEntry->zstream.avail_out = (uInt)len;
+	zipEntry->zstream.next_in = (Bytef *)zipEntry->mmappedData + zipEntry->compressedSize - zipEntry->restReadCompressed;
+	zipEntry->zstream.avail_in = (uInt)zipEntry->restReadCompressed;
 
-	totalOutBefore = zipEntry->zstream.total_out;
-	flush = ((len == fh->uncompressedSize) 
-		&& (zipEntry->restReadCompressed <= FS_ZIP_BUFSIZE) && !zipEntry->zstream.avail_in ? Z_FINISH : Z_SYNC_FLUSH);
-
-	do
-	{
-		// read in chunks but attempt to read the whole file first
-		if( !zipEntry->zstream.avail_in && zipEntry->restReadCompressed )
-		{
-			block = min( zipEntry->restReadCompressed, FS_ZIP_BUFSIZE );
-
-			read = fread( zipEntry->readBuffer, 1, block, fh->fstream );
-			if( read != block )		// we might have been trying to read from a CD
-				read = fread( zipEntry->readBuffer + read, 1, block - read, fh->fstream );
-
-			if( read != block )
-				Sys_Error( "FS_Read: can't read %i bytes", block );
-
-			zipEntry->restReadCompressed -= block;
-			zipEntry->zstream.next_in = (Bytef *)zipEntry->readBuffer;
-			zipEntry->zstream.avail_in = (uInt)block;
-		}
-
-		error = qzinflate( &zipEntry->zstream, flush );
-
-		if( error == Z_STREAM_END )
-			break;
+	error = qzinflate( &zipEntry->zstream, Z_SYNC_FLUSH );
+	if( error != Z_STREAM_END ) {
 		if( error != Z_OK )
-			Sys_Error( "FS_ReadPK3File: can't inflate file" );
-	} while( zipEntry->zstream.avail_out > 0 );
+				Sys_Error( "FS_ReadPK3File: can't inflate file" );
+	}
 
-	return (int)( zipEntry->zstream.total_out - totalOutBefore );
+	read_c = zipEntry->restReadCompressed - zipEntry->zstream.avail_in;
+	read_uc = zipEntry->zstream.total_out;
+
+	zipEntry->restReadCompressed -= read_c;
+	return read_uc;
 }
 
 /*
@@ -1644,10 +1641,6 @@ int FS_Seek( int file, int offset, int whence )
 	}
 	else
 	{
-		if( fseek( fh->fstream, fh->pakOffset, SEEK_SET ) != 0 )
-			return -1;
-
-		zipEntry->zstream.next_in = zipEntry->readBuffer;
 		zipEntry->zstream.avail_in = 0;
 		error = qzinflateReset( &zipEntry->zstream );
 		if( error != Z_OK )
@@ -1830,7 +1823,7 @@ int FS_LoadBaseFileExt( const char *path, int flags, void **buffer, void *stack,
 /*
 * FS_MMapBaseFile
 */
-void *FS_MMapBaseFile( int file, size_t size )
+void *FS_MMapBaseFile( int file, size_t size, size_t offset )
 {
 	void *data;
 	filehandle_t *fh;
@@ -1842,7 +1835,7 @@ void *FS_MMapBaseFile( int file, size_t size )
 	if( !fh->fstream || fh->mapping )
 		return NULL;
 
-	data = Sys_FS_MMapFile( Sys_FS_FileNo( fh->fstream ), &fh->mapping, size );
+	data = Sys_FS_MMapFile( Sys_FS_FileNo( fh->fstream ), size, offset, &fh->mapping, &fh->mapping_offset );
 	fh->mapping_size = size;
 	return data;
 }
@@ -1858,7 +1851,7 @@ void FS_UnMMapBaseFile( int file, void *data )
 	if( !fh->mapping )
 		return;
 
-	Sys_FS_UnMMapFile( fh->mapping, data, fh->mapping_size );
+	Sys_FS_UnMMapFile( fh->mapping, data, fh->mapping_size, fh->mapping_offset );
 	fh->mapping = NULL;
 }
 
