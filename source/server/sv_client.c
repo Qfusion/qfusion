@@ -48,6 +48,24 @@ void SV_ClientResetCommandBuffers( client_t *client )
 	client->lastSentFrameNum = 0;
 }
 
+static void SV_CloseClientDownload( client_t *client )
+{
+	if( client->download.data )
+	{
+		FS_UnMMapBaseFile( client->download.file, client->download.data );
+		client->download.data = NULL;
+	}
+	if( client->download.file )
+	{
+		FS_FCloseFile( client->download.file );
+		client->download.file = 0;
+	}
+	if( client->download.name )
+		Mem_ZoneFree( client->download.name );
+	client->download.name = NULL;
+	client->download.size = 0;
+	client->download.timeout = 0;
+}
 
 /*
 * SV_ClientConnect
@@ -236,19 +254,7 @@ void SV_DropClient( client_t *drop, int type, const char *format, ... )
 	SV_Web_RemoveGameClient( drop->session );
 
 	if( drop->download.name )
-	{
-		if( drop->download.data )
-		{
-			FS_FreeBaseFile( drop->download.data );
-			drop->download.data = NULL;
-		}
-
-		Mem_ZoneFree( drop->download.name );
-		drop->download.name = NULL;
-
-		drop->download.size = 0;
-		drop->download.timeout = 0;
-	}
+		SV_CloseClientDownload( drop );
 
 	if( drop->individual_socket )
 		NET_CloseSocket( &drop->socket );
@@ -550,30 +556,14 @@ static void SV_NextDownload_f( client_t *client )
 	if( offset == -1 )
 	{
 		Com_Printf( "Upload of %s to %s%s completed\n", client->download.name, client->name, S_COLOR_WHITE );
-		if( client->download.data )
-		{
-			FS_FreeBaseFile( client->download.data );
-			client->download.data = NULL;
-		}
-		Mem_ZoneFree( client->download.name );
-		client->download.name = NULL;
-		client->download.size = 0;
-		client->download.timeout = 0;
+		SV_CloseClientDownload( client );
 		return;
 	}
 
 	if( offset < 0 )
 	{
 		Com_Printf( "Upload of %s to %s%s failed\n", client->download.name, client->name, S_COLOR_WHITE );
-		if( client->download.data )
-		{
-			FS_FreeBaseFile( client->download.data );
-			client->download.data = NULL;
-		}
-		Mem_ZoneFree( client->download.name );
-		client->download.name = NULL;
-		client->download.size = 0;
-		client->download.timeout = 0;
+		SV_CloseClientDownload( client );
 		return;
 	}
 
@@ -581,15 +571,23 @@ static void SV_NextDownload_f( client_t *client )
 	{
 		Com_Printf( "Starting server upload of %s to %s\n", client->download.name, client->name );
 
-		FS_LoadBaseFile( client->download.name, (void **)&client->download.data, NULL, 0 );
-		if( !client->download.data )
+		client->download.size = FS_FOpenBaseFile( client->download.name, &client->download.file, FS_READ );
+		if( !client->download.file || client->download.size < 0 )
 		{
-			Com_Printf( "Error loading %s for uploading\n", client->download.name );
-			Mem_ZoneFree( client->download.name );
-			client->download.name = NULL;
-			client->download.size = 0;
-			client->download.timeout = 0;
+			Com_Printf( "Error opening %s for uploading\n", client->download.name );
+			SV_CloseClientDownload( client );
 			return;
+		}
+
+		if( client->download.size != 0 )
+		{
+			client->download.data = FS_MMapBaseFile( client->download.file, client->download.size );
+			if( !client->download.data )
+			{
+				Com_Printf( "Error loading %s for uploading\n", client->download.name );
+				SV_CloseClientDownload( client );
+				return;
+			}
 		}
 	}
 
@@ -602,12 +600,15 @@ static void SV_NextDownload_f( client_t *client )
 		blocksize = FRAGMENT_SIZE * 2;
 	if( offset + blocksize > client->download.size )
 		blocksize = client->download.size - offset;
+	if( blocksize < 0 )
+		blocksize = 0;
 
 	MSG_WriteByte( &tmpMessage, svc_download );
 	MSG_WriteString( &tmpMessage, client->download.name );
 	MSG_WriteLong( &tmpMessage, offset );
 	MSG_WriteLong( &tmpMessage, blocksize );
-	MSG_CopyData( &tmpMessage, client->download.data + offset, blocksize );
+	if( blocksize > 0 )
+		MSG_CopyData( &tmpMessage, client->download.data + offset, blocksize );
 	SV_SendMessageToClient( client, &tmpMessage );
 
 	client->download.timeout = svs.realtime + 10000;
@@ -761,19 +762,7 @@ static void SV_BeginDownload_f( client_t *client )
 
 	// we will just overwrite old download, if any
 	if( client->download.name )
-	{
-		if( client->download.data )
-		{
-			FS_FreeBaseFile( client->download.data );
-			client->download.data = NULL;
-		}
-
-		Mem_ZoneFree( client->download.name );
-		client->download.name = NULL;
-
-		client->download.size = 0;
-		client->download.timeout = 0;
-	}
+		SV_CloseClientDownload( client );
 
 	client->download.size = FS_LoadBaseFile( uploadname, NULL, NULL, 0 );
 	if( client->download.size == -1 )
