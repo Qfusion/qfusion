@@ -43,7 +43,6 @@ cvar_t *cg_showPointedPlayer;
 cvar_t *cg_showHUD;
 cvar_t *cg_draw2D;
 cvar_t *cg_weaponlist;
-cvar_t *cg_debugLoading;
 
 cvar_t *cg_crosshair;
 cvar_t *cg_crosshair_size;
@@ -315,7 +314,6 @@ void CG_ScreenInit( void )
 	cg_showHUD =		trap_Cvar_Get( "cg_showHUD", "1", CVAR_ARCHIVE );
 	cg_draw2D =		trap_Cvar_Get( "cg_draw2D", "1", 0 );
 	cg_centerTime =		trap_Cvar_Get( "cg_centerTime", "2.5", 0 );
-	cg_debugLoading =	trap_Cvar_Get( "cg_debugLoading", "0", CVAR_ARCHIVE );
 	cg_weaponlist =		trap_Cvar_Get( "cg_weaponlist", "1", CVAR_ARCHIVE );
 
 	cg_crosshair =		trap_Cvar_Get( "cg_crosshair", "1", CVAR_ARCHIVE );
