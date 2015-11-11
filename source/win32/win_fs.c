@@ -315,12 +315,9 @@ int Sys_FS_FileNo( FILE *fp )
 void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, size_t *mapping_offset )
 {
 	HANDLE h;
-	SYSTEM_INFO sysInfo;
-	static DWORD granularity = 0;
-	DWORD granules;
-	size_t padded_offset;
+	size_t offsetpad;
 	void *data;
-	int error;
+	static DWORD granularitymask = 0;
 
 	assert( mapping != NULL );
 
@@ -328,24 +325,23 @@ void *Sys_FS_MMapFile( int fileno, size_t size, size_t offset, void **mapping, s
 	if( h == 0 )
 		return NULL;
 	
-	if( granularity == 0 ) {
+	if( granularitymask == 0 ) {
+		SYSTEM_INFO sysInfo;
 		GetSystemInfo( &sysInfo );
-		granularity = sysInfo.dwAllocationGranularity;
+		granularitymask = ~(sysInfo.dwAllocationGranularity - 1);
 	}
 
-	granules = offset / granularity;
-	padded_offset = granules * granularity;
+	offsetpad = offset - (offset & granularitymask);
 
-	data = MapViewOfFile( h, FILE_MAP_READ, 0, padded_offset, size + offset - padded_offset );
-	error = GetLastError();
+	data = MapViewOfFile( h, FILE_MAP_READ, 0, offset - offsetpad, size + offsetpad );
 	if( !data ) {
 		CloseHandle( h );
 		return NULL;
 	}
 
 	*mapping = h;
-	*mapping_offset = offset - padded_offset;
-	return (char *)data + offset - padded_offset;
+	*mapping_offset = offsetpad;
+	return (char *)data + offsetpad;
 }
 
 /*
