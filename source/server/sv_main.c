@@ -433,18 +433,7 @@ static void SV_CheckTimeouts( void )
 			( cl->download.name && cl->download.timeout < svs.realtime ) )
 		{
 			Com_Printf( "Download of %s to %s%s timed out\n", cl->download.name, cl->name, S_COLOR_WHITE );
-
-			if( cl->download.data )
-			{
-				FS_FreeBaseFile( cl->download.data );
-				cl->download.data = NULL;
-			}
-
-			Mem_ZoneFree( cl->download.name );
-			cl->download.name = NULL;
-
-			cl->download.size = 0;
-			cl->download.timeout = 0;
+			SV_ClientCloseDownload( cl );
 		}
 	}
 }

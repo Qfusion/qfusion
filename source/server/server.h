@@ -109,7 +109,6 @@ typedef struct
 {
 	char *name;
 	int file;
-	uint8_t *data;          // file being downloaded
 	int size;               // total bytes (can't use EOF because of paks)
 	unsigned int timeout;   // so we can free the file being downloaded
 	                        // if client omits sending success or failure message
@@ -476,6 +475,7 @@ bool SV_ClientConnect( const socket_t *socket, const netadr_t *address, client_t
 void SV_DropClient( client_t *drop, int type, const char *format, ... );
 void SV_ExecuteClientThinks( int clientNum );
 void SV_ClientResetCommandBuffers( client_t *client );
+void SV_ClientCloseDownload( client_t *client );
 
 //
 // sv_mv.c
