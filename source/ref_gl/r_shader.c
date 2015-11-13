@@ -1208,6 +1208,11 @@ static void Shaderpass_ShadeCubeMap( shader_t *shader, shaderpass_t *pass, const
 	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_REFLECTION_CELSHADE, ptr );
 }
 
+static void Shaderpass_SurroundMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
+{
+	Shaderpass_CubeMapExt( shader, pass, IT_CLAMP, TC_GEN_SURROUND, ptr );
+}
+
 static void Shaderpass_VideoMap( shader_t *shader, shaderpass_t *pass, const char **ptr )
 {
 	char *token;
@@ -1701,6 +1706,8 @@ static void Shaderpass_TcGen( shader_t *shader, shaderpass_t *pass, const char *
 		pass->tcgen = TC_GEN_REFLECTION;
 	else if( !strcmp( token, "celshade" ) )
 		pass->tcgen = TC_GEN_REFLECTION_CELSHADE;
+	else if( !strcmp( token, "surround" ) )
+		pass->tcgen = TC_GEN_SURROUND;
 }
 
 static void Shaderpass_Detail( shader_t *shader, shaderpass_t *pass, const char **ptr )
@@ -1730,6 +1737,7 @@ static const shaderkey_t shaderpasskeys[] =
 	{ "animmap", Shaderpass_AnimMap },
 	{ "cubemap", Shaderpass_CubeMap },
 	{ "shadecubemap", Shaderpass_ShadeCubeMap },
+	{ "surroundmap", Shaderpass_SurroundMap },
 	{ "videomap", Shaderpass_VideoMap },
 	{ "clampmap", Shaderpass_ClampMap },
 	{ "animclampmap", Shaderpass_AnimClampMap },

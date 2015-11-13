@@ -43,18 +43,17 @@ void main(void)
 	v_TexCoord = 0.5 + (Normal.yz * Depth - Projection.yz) * vec2(0.5, -0.5);
 #elif defined(APPLY_TC_GEN_VECTOR)
 	v_TexCoord = vec2(u_VectorTexMatrix * Position);
-#elif defined(APPLY_TC_GEN_REFLECTION)
 #elif defined(APPLY_TC_GEN_CELSHADE)
 	v_TexCoord = u_ReflectionTexMatrix * reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz);
 #elif defined(APPLY_TC_GEN_PROJECTION)
 	v_TexCoord = vec2(normalize(u_ModelViewProjectionMatrix * Position) * 0.5 + vec4(0.5));
 #elif defined(APPLY_TC_MOD)
 	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
-#else
+#elif !defined(APPLY_CUBEMAP) && !defined(APPLY_SURROUNDMAP)
 	v_TexCoord = TexCoord;
-#endif // defined(APPLY_TC_GEN_ENV)
+#endif // defined(APPLY_TC_GEN)
 
-#if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP)
+#if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP) || defined(APPLY_SURROUNDMAP)
 	v_Position = Position.xyz;
 #endif
 

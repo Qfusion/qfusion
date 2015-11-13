@@ -7,7 +7,7 @@
 
 #include "include/varying_q3a.glsl"
 
-#if defined(APPLY_CUBEMAP) || defined(APPLY_CUBEMAP_VERTEX)
+#if defined(APPLY_CUBEMAP) || defined(APPLY_CUBEMAP_VERTEX) || defined(APPLY_SURROUNDMAP)
 uniform samplerCube u_BaseTexture;
 #else
 uniform sampler2D u_BaseTexture;
@@ -70,6 +70,8 @@ void main(void)
 	diffuse = myhalf4(qf_textureCube(u_BaseTexture, reflect(v_Position - u_EntityDist, normalize(v_Normal))));
 #elif defined(APPLY_CUBEMAP_VERTEX)
 	diffuse = myhalf4(qf_textureCube(u_BaseTexture, v_TexCoord));
+#elif defined(APPLY_SURROUNDMAP)
+	diffuse = myhalf4(qf_textureCube(u_BaseTexture, v_Position - u_EntityDist));
 #else
 	diffuse = myhalf4(qf_texture(u_BaseTexture, v_TexCoord));
 #endif

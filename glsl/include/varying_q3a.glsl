@@ -2,9 +2,11 @@
 #define APPLY_CUBEMAP
 #elif defined(APPLY_TC_GEN_CELSHADE)
 #define APPLY_CUBEMAP_VERTEX
+#elif defined(APPLY_TC_GEN_SURROUND)
+#define APPLY_SURROUNDMAP
 #endif
 
-#if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP)
+#if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP) || defined(APPLY_SURROUNDMAP)
 qf_varying vec3 v_Position;
 #endif
 
@@ -14,7 +16,7 @@ qf_varying myhalf3 v_Normal;
 
 #if defined(APPLY_CUBEMAP_VERTEX)
 qf_varying vec3 v_TexCoord;
-#elif !defined(APPLY_CUBEMAP)
+#elif !defined(APPLY_CUBEMAP) && !defined(APPLY_SURROUNDMAP)
 qf_varying vec2 v_TexCoord;
 #endif
 
