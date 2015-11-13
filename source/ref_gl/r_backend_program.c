@@ -1433,6 +1433,9 @@ r_glslfeat_t RB_TcGenToProgramFeatures( int tcgen, vec_t *tcgenVec, mat4_t texMa
 	case TC_GEN_REFLECTION:
 		programFeatures |= GLSL_SHADER_Q3_TC_GEN_REFLECTION;
 		break;
+	case TC_GEN_SURROUND:
+		programFeatures |= GLSL_SHADER_Q3_TC_GEN_SURROUND;
+		break;
 	default:
 		break;
 	}
