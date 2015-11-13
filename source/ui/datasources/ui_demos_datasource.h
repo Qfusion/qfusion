@@ -107,6 +107,7 @@ public:
 private:
 	typedef std::map<String, DemosDataSourceHelper> DemoPathList;
 	DemoPathList demoPaths;
+	String lastQueryTable;
 
 	const std::string demoExtension;
 };

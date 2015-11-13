@@ -162,7 +162,7 @@ int DemosDataSourceHelper::GetUpdateIndex( void ) const
 // ===================================================================================
 
 DemosDataSource::DemosDataSource( const std::string &demoExtension ) :
-	DataSource( "demos" ), demoExtension( demoExtension )
+	DataSource( "demos" ), lastQueryTable( "" ), demoExtension( demoExtension )
 {
 }
 
@@ -237,6 +237,15 @@ int DemosDataSource::GetNumRows( const String& table )
 		demoPaths[table] = DemosDataSourceHelper( pathStr, demoExtension );
 	}
 
+	if( !lastQueryTable.Empty() ) {
+		// reset cache on directory change
+		if( lastQueryTable != table ) {
+			demoPaths.erase( demoPaths.find( lastQueryTable ) );
+			NotifyRowChange( lastQueryTable );
+		}
+	}
+
+	lastQueryTable = table;
 	const DemosDataSourceHelper &demoPath = demoPaths[table];
 	return demoPath.GetUpdateIndex();
 }
