@@ -325,21 +325,21 @@ void G_CheckCvars( void )
 	GS_GamestatSetFlag( GAMESTAT_FLAG_INSTAGIB, ( g_instagib->integer != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_FALLDAMAGE, ( g_allow_falldamage->integer != 0 ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_SELFDAMAGE, ( g_allow_selfdamage->integer != 0 ) );
-	GS_GamestatSetFlag( GAMESTAT_FLAG_HASCHALLENGERS, ( level.gametype.hasChallengersQueue != 0 ) );
+	GS_GamestatSetFlag( GAMESTAT_FLAG_HASCHALLENGERS, level.gametype.hasChallengersQueue );
 
-	GS_GamestatSetFlag( GAMESTAT_FLAG_ISTEAMBASED, ( level.gametype.isTeamBased != 0 ) );
-	GS_GamestatSetFlag( GAMESTAT_FLAG_ISRACE, ( level.gametype.isRace != 0 ) );
+	GS_GamestatSetFlag( GAMESTAT_FLAG_ISTEAMBASED, level.gametype.isTeamBased );
+	GS_GamestatSetFlag( GAMESTAT_FLAG_ISRACE, level.gametype.isRace );
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_COUNTDOWN, level.gametype.countdownEnabled );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_INHIBITSHOOTING, level.gametype.shootingDisabled );
-	GS_GamestatSetFlag( GAMESTAT_FLAG_INFINITEAMMO, ( level.gametype.infiniteAmmo || GS_Instagib() ) != 0 );
+	GS_GamestatSetFlag( GAMESTAT_FLAG_INFINITEAMMO, ( level.gametype.infiniteAmmo || GS_Instagib() ) );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_CANFORCEMODELS, level.gametype.canForceModels );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_CANSHOWMINIMAP, level.gametype.canShowMinimap );
 	GS_GamestatSetFlag( GAMESTAT_FLAG_TEAMONLYMINIMAP, level.gametype.teamOnlyMinimap );
 
 	GS_GamestatSetFlag( GAMESTAT_FLAG_MMCOMPATIBLE, level.gametype.mmCompatible );
 
-	GS_GamestatSetLongFlag( GAMELONG_FLAG_ISTUTORIAL, ( level.gametype.isTutorial != 0 ) );
+	GS_GamestatSetLongFlag( GAMELONG_FLAG_ISTUTORIAL, level.gametype.isTutorial );
 	GS_GamestatSetLongFlag( GAMELONG_FLAG_CANDROPWEAPON, ( level.gametype.dropableItemsMask & IT_WEAPON ) != 0 );
 
 	gs.gameState.stats[GAMESTAT_MAXPLAYERSINTEAM] = level.gametype.maxPlayersPerTeam;
