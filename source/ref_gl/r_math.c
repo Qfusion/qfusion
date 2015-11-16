@@ -99,7 +99,7 @@ void Matrix4_MultiplyFast( const mat4_t m1, const mat4_t m2, mat4_t out )
 // added helper for common subexpression elimination by eihrul, and other optimizations by div0
 bool Matrix4_Invert( const mat4_t in, mat4_t out )
 {
-	float det;
+	vec_t det;
 
 	// note: orientation does not matter, as transpose(invert(transpose(m))) == invert(m), proof:
 	//   transpose(invert(transpose(m))) * m
@@ -109,7 +109,7 @@ bool Matrix4_Invert( const mat4_t in, mat4_t out )
 	// = identity
 
 	// this seems to help gcc's common subexpression elimination, and also makes the code look nicer
-	float   m00 = in[0], m01 = in[1], m02 = in[2], m03 = in[3],
+	vec_t m00 = in[0], m01 = in[1], m02 = in[2], m03 = in[3],
 		m10 = in[4], m11 = in[5], m12 = in[6], m13 = in[7],
 		m20 = in[8], m21 = in[9], m22 = in[10], m23 = in[11],
 		m30 = in[12], m31 = in[13], m32 = in[14], m33 = in[15];
