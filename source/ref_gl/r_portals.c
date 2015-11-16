@@ -49,6 +49,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 
 	PlaneFromPoints( v, &untransformed_plane );
 	untransformed_plane.dist += DotProduct( ent->origin, untransformed_plane.normal );
+	untransformed_plane.dist += 1; // nudge along the normal a bit
 	CategorizePlane( &untransformed_plane );
 
 	if( shader->flags & SHADER_AUTOSPRITE )
@@ -135,7 +136,7 @@ portalSurface_t *R_AddPortalSurface( const entity_t *ent, const mesh_t *mesh,
 	portalSurface->skyPortal = NULL;
 	ClearBounds( portalSurface->mins, portalSurface->maxs );
 	memset( portalSurface->texures, 0, sizeof( portalSurface->texures ) );
-	
+
 	if( depthPortal ) {
 		rn.numDepthPortalSurfaces++;
 	}
@@ -280,7 +281,7 @@ setup_and_render:
 	if( refraction )
 	{
 		VectorInverse( portal_plane->normal );
-		portal_plane->dist = -portal_plane->dist - 1;
+		portal_plane->dist = -portal_plane->dist;
 		CategorizePlane( portal_plane );
 		VectorCopy( rn.viewOrigin, origin );
 		Matrix3_Copy( rn.refdef.viewaxis, axis );
@@ -412,6 +413,7 @@ setup_and_render:
 
 	if( doRefraction && !refraction && ( shader->flags & SHADER_PORTAL_CAPTURE2 ) )
 	{
+		rn.renderFlags = prevRenderFlags;
 		refraction = true;
 		captureTexture = NULL;
 		captureTextureId = 1;
