@@ -33,25 +33,33 @@ void main(void)
 
 	qf_FrontColor = vec4(outColor);
 
-#if defined(APPLY_TC_GEN_ENV)
-	vec3 Projection;
+#if defined(APPLY_CUBEMAP_VERTEX)
 
-	Projection = u_EntityDist - Position.xyz;
-	Projection = normalize(Projection);
-
-	float Depth = dot(Normal.xyz, Projection) * 2.0;
-	v_TexCoord = 0.5 + (Normal.yz * Depth - Projection.yz) * vec2(0.5, -0.5);
-#elif defined(APPLY_TC_GEN_VECTOR)
-	v_TexCoord = vec2(u_VectorTexMatrix * Position);
-#elif defined(APPLY_TC_GEN_CELSHADE)
+#if defined(APPLY_TC_GEN_CELSHADE)
 	v_TexCoord = u_ReflectionTexMatrix * reflect(normalize(Position.xyz - u_EntityDist), Normal.xyz);
-#elif defined(APPLY_TC_GEN_PROJECTION)
-	v_TexCoord = vec2(normalize(u_ModelViewProjectionMatrix * Position) * 0.5 + vec4(0.5));
-#elif defined(APPLY_TC_MOD)
-	v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
+#endif // defined(APPLY_TC_GEN_CELSHADE)
+
 #elif !defined(APPLY_CUBEMAP) && !defined(APPLY_SURROUNDMAP)
-	v_TexCoord = TexCoord;
+
+#if defined(APPLY_TC_GEN_ENV)
+		vec3 Projection;
+
+		Projection = u_EntityDist - Position.xyz;
+		Projection = normalize(Projection);
+
+		float Depth = dot(Normal.xyz, Projection) * 2.0;
+		v_TexCoord = 0.5 + (Normal.yz * Depth - Projection.yz) * vec2(0.5, -0.5);
+#elif defined(APPLY_TC_GEN_VECTOR)
+		v_TexCoord = vec2(u_VectorTexMatrix * Position);
+#elif defined(APPLY_TC_GEN_PROJECTION)
+		v_TexCoord = vec2(normalize(u_ModelViewProjectionMatrix * Position) * 0.5 + vec4(0.5));
+#elif defined(APPLY_TC_MOD)
+		v_TexCoord = TextureMatrix2x3Mul(u_TextureMatrix, TexCoord);
+#else
+		v_TexCoord = TexCoord;
 #endif // defined(APPLY_TC_GEN)
+
+#endif // !defined(APPLY_CUBEMAP) && !defined(APPLY_SURROUNDMAP)
 
 #if defined(NUM_DLIGHTS) || defined(APPLY_CUBEMAP) || defined(APPLY_SURROUNDMAP)
 	v_Position = Position.xyz;
