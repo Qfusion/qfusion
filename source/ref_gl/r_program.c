@@ -885,6 +885,13 @@ static const glsl_feature_t glsl_features_fog[] =
 	{ 0, NULL, NULL }
 };
 
+static const glsl_feature_t glsl_features_fxaa[] =
+{
+	{ GLSL_SHADER_FXAA_FXAA3, "#define APPLY_FXAA3\n", "_fxaa3" },
+
+	{ 0, NULL, NULL }
+};
+
 static const glsl_feature_t * const glsl_programtypes_features[] =
 {
 	// GLSL_PROGRAM_TYPE_NONE
@@ -908,7 +915,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 	// GLSL_PROGRAM_TYPE_FOG
 	glsl_features_fog,
 	// GLSL_PROGRAM_TYPE_FXAA
-	glsl_features_empty,
+	glsl_features_fxaa,
 	// GLSL_PROGRAM_TYPE_YUV
 	glsl_features_empty,
 	// GLSL_PROGRAM_TYPE_COLORCORRECTION
@@ -927,6 +934,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_GLSL_VERSION140 "#version 140\n"
 #define QF_GLSL_VERSION300ES "#version 300 es\n"
 
+#define QF_GLSL_ENABLE_ARB_GPU_SHADER5 "#extension GL_ARB_gpu_shader5 : enable\n"
 #define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "#extension GL_ARB_draw_instanced : enable\n"
 #define QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS "#extension GL_EXT_shadow_samplers : enable\n"
 #define QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY "#extension GL_EXT_texture_array : enable\n"
@@ -1609,7 +1617,7 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	int shaderTypeIdx, wavefuncsIdx, deformvIdx, dualQuatsIdx, instancedIdx, vTransformsIdx;
 	int enableInstancedIdx, enableTextureArrayIdx;
 #ifdef GL_ES_VERSION_2_0
-	int shadowIdx, texture3DIdx;
+	int enableShadowIdx, enableTexture3DIdx;
 #endif
 	int body_start, num_init_strings;
 	glsl_program_t *program;
@@ -1722,6 +1730,11 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	}
 #endif
 
+#ifndef GL_ES_VERSION_2_0
+	if( glConfig.ext.gpu_shader5 )
+		shaderStrings[i++] = QF_GLSL_ENABLE_ARB_GPU_SHADER5;
+#endif
+
 	enableInstancedIdx = i;
 #ifndef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion < 400 && glConfig.ext.draw_instanced )
@@ -1731,9 +1744,9 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 		shaderStrings[i++] = "\n";
 
 #ifdef GL_ES_VERSION_2_0
-	shadowIdx = i;
+	enableShadowIdx = i;
 	shaderStrings[i++] = "\n";
-	texture3DIdx = i;
+	enableTexture3DIdx = i;
 	shaderStrings[i++] = "\n";
 #endif
 	enableTextureArrayIdx = i;
@@ -1843,9 +1856,9 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	{
 #ifdef GL_ES_VERSION_2_0
 		if( glConfig.ext.shadow )
-			shaderStrings[shadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
+			shaderStrings[enableShadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
 		if( glConfig.ext.texture3D )
-			shaderStrings[texture3DIdx] = QF_GLSL_ENABLE_OES_TEXTURE_3D;
+			shaderStrings[enableTexture3DIdx] = QF_GLSL_ENABLE_OES_TEXTURE_3D;
 #endif
 		if( glConfig.ext.texture_array )
 			shaderStrings[enableTextureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;

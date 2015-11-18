@@ -184,6 +184,9 @@ enum
 #define GLSL_SHADER_CELSHADE_CEL_LIGHT			GLSL_BIT(39)
 #define GLSL_SHADER_CELSHADE_CEL_LIGHT_ADD		GLSL_BIT(40)
 
+// fxaa
+#define GLSL_SHADER_FXAA_FXAA3					GLSL_BIT(32)
+
 void RP_Init( void );
 void RP_Shutdown( void );
 
