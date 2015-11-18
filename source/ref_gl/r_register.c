@@ -487,6 +487,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION_EXT( EXT, texture_array, 1, false, false, NULL, texture3D )
 	,GL_EXTENSION( EXT, packed_depth_stencil, false, false, NULL )
 	,GL_EXTENSION( SGIS, texture_lod, false, false, NULL )
+	,GL_EXTENSION( ARB, gpu_shader5, false, false, NULL )
 
 	// memory info
 	,GL_EXTENSION( NVX, gpu_memory_info, true, false, NULL )

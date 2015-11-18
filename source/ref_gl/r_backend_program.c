@@ -1765,6 +1765,9 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 
 	RB_BindTexture( 0, image );
 
+	if( glConfig.ext.gpu_shader5 )
+		programFeatures |= GLSL_SHADER_FXAA_FXAA3;
+
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
 		rb.currentShader->deformsKey, rb.currentShader->deforms, 

@@ -3,22 +3,18 @@
 
 qf_varying vec2 v_TexCoord;
 
+uniform sampler2D u_BaseTexture;
+
+#ifdef APPLY_FXAA3
+
 #define FXAA_PC 1
 #if (!defined(GL_ES) && (QF_GLSL_VERSION >= 130)) || (defined(GL_ES) && (QF_GLSL_VERSION >= 300))
 # define FXAA_GLSL_130 1
 #else
 # define FXAA_GLSL_120 1
 #endif
-# ifdef GL_ARB_gpu_shader5
-#  extension GL_ARB_gpu_shader5 : enable
-# endif
 #define FXAA_GREEN_AS_LUMA 1
 #define FXAA_QUALITY_X_PRESET 23
-
-uniform sampler2D u_BaseTexture;
-
-#ifdef GL_ARB_gpu_shader5
-
 #include "include/Fxaa3_11.h"
 
 #else
