@@ -163,7 +163,7 @@ void DocumentCache::invalidateAssets(void)
 
 // NavigationStack
 
-NavigationStack::NavigationStack( int contextId ) : modalTop( false ), stackLocked( false ), cache( contextId )
+NavigationStack::NavigationStack( int contextId ) : cache( contextId ), modalTop( false ), stackLocked( false )
 {
 	documentStack.clear();
 }
