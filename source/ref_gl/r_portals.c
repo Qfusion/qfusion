@@ -527,7 +527,7 @@ static void R_DrawSkyportal( const entity_t *e, skyportal_t *skyportal )
 	}
 
 	rn.renderFlags = ( rn.renderFlags|RF_PORTALVIEW );
-	rn.renderFlags &= ~RF_SOFT_PARTICLES;
+	//rn.renderFlags &= ~RF_SOFT_PARTICLES;
 	VectorCopy( skyportal->vieworg, rn.pvsOrigin );
 
 	rn.farClip = R_DefaultFarClip();
