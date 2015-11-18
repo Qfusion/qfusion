@@ -226,7 +226,9 @@ static bool AI_AttemptWalljump( edict_t *self )
 void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, usercmd_t *ucmd )
 {
 	bool wallJump = false;
+#if 0
 	bool dash = true;
+#endif
 	bool bunnyhop = true;
 	trace_t trace;
 	vec3_t end;
@@ -247,8 +249,10 @@ void BOT_DMclass_SpecialMove( edict_t *self, vec3_t lookdir, vec3_t pathdir, use
 	// do not dash if the next link will be a fall, jump or 
 	// any other kind of special link
 	nextMoveType = AI_PlinkMoveType( n1, n2 );
+#if 0
 	if( nextMoveType & (LINK_LADDER|LINK_PLATFORM|LINK_ROCKETJUMP|LINK_FALL|LINK_JUMP|LINK_CROUCH) )
 		dash = false;
+#endif
 
 	if( nextMoveType &(LINK_LADDER|LINK_PLATFORM|LINK_FALL|LINK_CROUCH) )
 		bunnyhop = false;

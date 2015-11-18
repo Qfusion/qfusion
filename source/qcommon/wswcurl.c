@@ -128,8 +128,10 @@ static qmutex_t *curldummy_mutex = NULL;
 static cvar_t *http_proxy;
 static cvar_t *http_proxyuserpwd;
 
+#ifdef USE_OPENSSL
 static qmutex_t **crypto_mutexes = NULL;
 static int crypto_num_mutexes = 0;
+#endif
 
 ///////////////////////
 // Symbols
