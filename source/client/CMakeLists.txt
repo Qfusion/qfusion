@@ -102,7 +102,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(GAME_DATA_DIR Warsow_1_5_1)
+    set(GAME_DATA_DIR Warsow_20)
 
 	set(CLIENT_PLATFORM_HEADERS "")
 	
