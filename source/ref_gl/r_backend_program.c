@@ -1754,6 +1754,7 @@ static void RB_RenderMeshGLSL_Fog( const shaderpass_t *pass, r_glslfeat_t progra
 */
 static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t programFeatures )
 {
+	bool fxaa3 = false;
 	int program;
 	const image_t *image = pass->images[0];
 	mat4_t texMatrix;
@@ -1765,13 +1766,14 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 
 	RB_BindTexture( 0, image );
 
-#ifndef GL_ES_VERSION_2_0
 	if( glConfig.ext.gpu_shader5 )
-		programFeatures |= GLSL_SHADER_FXAA_FXAA3;
-#else
+		fxaa3 = true;
+#ifdef GL_ES_VERSION_2_0
 	if( glConfig.shadingLanguageVersion >= 310 )
-		programFeatures |= GLSL_SHADER_FXAA_FXAA3;
+		fxaa3 = true;
 #endif
+	if( fxaa3 )
+		programFeatures |= GLSL_SHADER_FXAA_FXAA3;
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,
