@@ -933,6 +933,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_GLSL_VERSION130 "#version 130\n"
 #define QF_GLSL_VERSION140 "#version 140\n"
 #define QF_GLSL_VERSION300ES "#version 300 es\n"
+#define QF_GLSL_VERSION310ES "#version 310 es\n"
 
 #define QF_GLSL_ENABLE_ARB_GPU_SHADER5 "#extension GL_ARB_gpu_shader5 : enable\n"
 #define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "#extension GL_ARB_draw_instanced : enable\n"
@@ -1715,7 +1716,10 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 
 	i = 0;
 #ifdef GL_ES_VERSION_2_0
-	if( glConfig.shadingLanguageVersion >= 300 ) {
+	if( glConfig.shadingLanguageVersion >= 310 ) {
+		shaderStrings[i++] = QF_GLSL_VERSION310ES;
+	}
+	else if( glConfig.shadingLanguageVersion >= 300 ) {
 		shaderStrings[i++] = QF_GLSL_VERSION300ES;
 	}
 #else

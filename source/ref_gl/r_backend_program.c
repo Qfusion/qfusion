@@ -1765,8 +1765,13 @@ static void RB_RenderMeshGLSL_FXAA( const shaderpass_t *pass, r_glslfeat_t progr
 
 	RB_BindTexture( 0, image );
 
+#ifndef GL_ES_VERSION_2_0
 	if( glConfig.ext.gpu_shader5 )
 		programFeatures |= GLSL_SHADER_FXAA_FXAA3;
+#else
+	if( glConfig.shadingLanguageVersion >= 310 )
+		programFeatures |= GLSL_SHADER_FXAA_FXAA3;
+#endif
 
 	// update uniforms
 	program = RB_RegisterProgram( GLSL_PROGRAM_TYPE_FXAA, NULL,

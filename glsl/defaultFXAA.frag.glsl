@@ -15,6 +15,7 @@ uniform sampler2D u_BaseTexture;
 #endif
 #define FXAA_GREEN_AS_LUMA 1
 #define FXAA_QUALITY_X_PRESET 23
+#define FXAA_GATHER4_ALPHA 1
 #include "include/Fxaa3_11.h"
 
 #else
