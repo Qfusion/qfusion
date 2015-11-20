@@ -511,6 +511,7 @@ static const gl_extension_t gl_extensions_decl[] =
 	,GL_EXTENSION( OES, compressed_ETC1_RGB8_texture, false, false, NULL )
 	// Require depth24 because Tegra 3 doesn't support non-linear packed depth.
 	,GL_EXTENSION_EXT( OES, packed_depth_stencil, 1, false, false, NULL, depth24 )
+	,GL_EXTENSION( EXT, gpu_shader5, false, false, NULL )
 #endif
 
 	,GL_EXTENSION( EXT, texture_filter_anisotropic, true, false, NULL )

@@ -936,6 +936,7 @@ static const glsl_feature_t * const glsl_programtypes_features[] =
 #define QF_GLSL_VERSION310ES "#version 310 es\n"
 
 #define QF_GLSL_ENABLE_ARB_GPU_SHADER5 "#extension GL_ARB_gpu_shader5 : enable\n"
+#define QF_GLSL_ENABLE_EXT_GPU_SHADER5 "#extension GL_EXT_gpu_shader5 : enable\n"
 #define QF_GLSL_ENABLE_ARB_DRAW_INSTANCED "#extension GL_ARB_draw_instanced : enable\n"
 #define QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS "#extension GL_EXT_shadow_samplers : enable\n"
 #define QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY "#extension GL_EXT_texture_array : enable\n"
@@ -1734,10 +1735,13 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	}
 #endif
 
+	if( glConfig.ext.gpu_shader5 ) {
 #ifndef GL_ES_VERSION_2_0
-	if( glConfig.ext.gpu_shader5 )
 		shaderStrings[i++] = QF_GLSL_ENABLE_ARB_GPU_SHADER5;
+#else
+		shaderStrings[i++] = QF_GLSL_ENABLE_EXT_GPU_SHADER5;
 #endif
+	}
 
 	enableInstancedIdx = i;
 #ifndef GL_ES_VERSION_2_0
