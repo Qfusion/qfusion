@@ -783,9 +783,9 @@ static void q_jpg_error_exit(j_common_ptr cinfo)
 	// cinfo->err really points to a my_error_mgr struct, so coerce pointer
 	struct q_jpeg_error_mgr *qerr = (struct q_jpeg_error_mgr *) cinfo->err;
 
-    // create the message
+	// create the message
 	qerr->pub.format_message( cinfo, buffer );
-	ri.Com_DPrintf( "q_jpg_error_exit: %s\n", buffer );
+	ri.Com_Printf( S_COLOR_YELLOW "LibJPEG error: %s\n", buffer );
 
 	// Return control to the setjmp point
 	longjmp(qerr->setjmp_buffer, 1);
@@ -942,18 +942,20 @@ static void q_jpg_term_destination( j_compress_ptr cinfo )
 bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
 {
 	struct jpeg_compress_struct cinfo;
-	struct jpeg_error_mgr jerr;
+	struct q_jpeg_error_mgr jerr;
 	struct q_jpeg_destination_mgr jdest;
 	JOCTET buffer[JPEG_OUTPUT_BUFFER_SIZE];
 	JSAMPROW s[1];
 	int offset, w3;
 	int file;
 
-	if( !jpegLibrary )
+	if( !jpegLibrary ) {
+		Com_Printf( S_COLOR_YELLOW "WriteJPG: libjpeg is not loaded.\n" );
 		return false;
+	}
 
 	if( ri.FS_FOpenAbsoluteFile( name, &file, FS_WRITE ) == -1 ) {
-		Com_Printf( "WriteJPG: Couldn't create %s\n", name );
+		Com_Printf( S_COLOR_YELLOW "WriteJPG: Couldn't create %s\n", name );
 		return false;
 	}
 
@@ -964,8 +966,16 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
 	jdest.buffer = buffer;
 
 	// initialize the JPEG compression object
+	cinfo.err = qjpeg_std_error( &jerr.pub );
+	jerr.pub.error_exit = q_jpg_error_exit;
+
+	// establish the setjmp return context for q_jpg_error_exit to use.
+	if( setjmp( jerr.setjmp_buffer ) ) {
+		// if we get here, the JPEG code has signaled an error
+		goto error;
+	}
+
 	qjpeg_create_compress( &cinfo );
-	cinfo.err = qjpeg_std_error( &jerr );
 	cinfo.dest = &( jdest.pub );
 
 	// setup JPEG parameters
@@ -1007,6 +1017,11 @@ bool WriteJPG( const char *name, r_imginfo_t *info, int quality )
 	ri.FS_FCloseFile( file );
 
 	return true;
+
+error:
+	qjpeg_destroy_compress( &cinfo );
+	ri.FS_FCloseFile( file );
+	return false;
 }
 
 /*
@@ -1088,7 +1103,7 @@ error:
 			qpng_destroy_write_struct( &png_ptr, NULL );
 		}
 		R_FreeFile( png_data );
-        return imginfo;
+		return imginfo;
 	}
 	
 	// create and initialize the png_struct with the desired error handler
