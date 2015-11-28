@@ -118,6 +118,14 @@ void *Com_LoadLibrary( const char *name, dllfunc_t *funcs )
 	return Com_LoadLibraryExt( name, funcs, false );
 }
 
+/*
+* Com_LibraryProcAddress
+*/
+void *Com_LibraryProcAddress( void *lib, const char *name )
+{
+	return Sys_Library_ProcAddress( lib, name );
+}
+
 //==============================================
 
 typedef struct gamelib_s gamelib_t;

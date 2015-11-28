@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../cgame/ref.h"
 
-#define REF_API_VERSION 18
+#define REF_API_VERSION 19
 
 struct mempool_s;
 struct cinematics_s;
@@ -64,8 +64,9 @@ typedef struct
 	uint64_t ( *Sys_Microseconds )( void );
 	void ( *Sys_Sleep )( unsigned int milliseconds );
 
-	void *( *Sys_LoadLibrary )( const char *name, dllfunc_t *funcs );
-	void ( *Sys_UnloadLibrary )( void **lib );
+	void *( *Com_LoadSysLibrary )( const char *name, dllfunc_t *funcs );
+	void ( *Com_UnloadLibrary )( void **lib );
+	void *( *Com_LibraryProcAddress )( void *lib, const char *name );
 
 	int ( *FS_FOpenFile )( const char *filename, int *filenum, int mode );
 	int ( *FS_FOpenAbsoluteFile )( const char *filename, int *filenum, int mode );
