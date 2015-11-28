@@ -111,7 +111,7 @@ static void R_Imagelib_UnloadLibjpeg( void )
 {
 #ifdef LIBJPEG_RUNTIME
 	if( jpegLibrary )
-		ri.Sys_UnloadLibrary( &jpegLibrary );
+		ri.Com_UnloadLibrary( &jpegLibrary );
 #endif
 	jpegLibrary = NULL;
 }
@@ -124,7 +124,7 @@ static void R_Imagelib_LoadLibjpeg( void )
 	R_Imagelib_UnloadLibjpeg();
 
 #ifdef LIBJPEG_RUNTIME
-	jpegLibrary = ri.Sys_LoadLibrary( LIBJPEG_LIBNAME, libjpegfuncs );
+	jpegLibrary = ri.Com_LoadSysLibrary( LIBJPEG_LIBNAME, libjpegfuncs );
 #else
 	jpegLibrary = (void *)1;
 #endif
@@ -141,9 +141,9 @@ void *pngLibrary = NULL;
 #endif
 
 static int (PNGAPI *qpng_sig_cmp)(png_bytep, png_size_t, png_size_t);
+static png_uint_32 (PNGAPI *qpng_access_version_number)(void);
 static png_structp (PNGAPI *qpng_create_read_struct)(png_const_charp, png_voidp, png_error_ptr, png_error_ptr);
 static png_infop (PNGAPI *qpng_create_info_struct)(png_structp png_ptr);
-#define qpng_jmpbuf png_jmpbuf
 static void (PNGAPI *qpng_set_read_fn)(png_structp, png_voidp, png_rw_ptr);
 static void (PNGAPI *qpng_set_sig_bytes)(png_structp, int);
 static void (PNGAPI *qpng_read_info)(png_structp, png_infop);
@@ -158,12 +158,21 @@ static png_uint_32 (PNGAPI *qpng_get_rowbytes)(png_structp, png_infop);
 static void (PNGAPI *qpng_read_image)(png_structp, png_bytepp);
 static void (PNGAPI *qpng_read_end)(png_structp, png_infop);
 static void (PNGAPI *qpng_destroy_read_struct)(png_structpp, png_infopp, png_infopp);
-static void (PNGAPI *qpng_destroy_write_struct)(png_structpp, png_infopp);
 static png_voidp (PNGAPI *qpng_get_io_ptr)(png_structp);
+
+// Error handling in libpng pre-1.4 and 1.4+.
+// In older versions, the jmp_buf is in the only public field of the struct, which is the first field.
+// In 1.4 and newer, it is configured using png_set_longjmp_fn.
+typedef void (*qpng_longjmp_ptr)(jmp_buf, int);
+static jmp_buf *(PNGAPI *qpng_set_longjmp_fn)(png_structp, qpng_longjmp_ptr, size_t);
+#define qpng_jmpbuf( png_ptr ) ( qpng_set_longjmp_fn ? \
+	 *qpng_set_longjmp_fn( ( png_ptr ), longjmp, sizeof( jmp_buf ) ) : \
+	 *( ( jmp_buf * )png_ptr ) )
 
 static dllfunc_t libpngfuncs[] =
 {
 	{ "png_sig_cmp", ( void ** )&qpng_sig_cmp },
+	{ "png_access_version_number", ( void ** )&qpng_access_version_number },
 	{ "png_create_read_struct", ( void ** )&qpng_create_read_struct },
 	{ "png_create_info_struct", ( void ** )&qpng_create_info_struct },
 	{ "png_set_read_fn", ( void ** )&qpng_set_read_fn },
@@ -180,7 +189,6 @@ static dllfunc_t libpngfuncs[] =
 	{ "png_read_image", ( void ** )&qpng_read_image },
 	{ "png_read_end", ( void ** )&qpng_read_end },
 	{ "png_destroy_read_struct", ( void ** )&qpng_destroy_read_struct },
-	{ "png_destroy_write_struct", ( void ** )&qpng_destroy_write_struct },
 	{ "png_get_io_ptr", ( void ** )&qpng_get_io_ptr },
 	{ NULL, NULL }
 };
@@ -188,6 +196,7 @@ static dllfunc_t libpngfuncs[] =
 #else
 
 #define qpng_sig_cmp png_sig_cmp
+#define qpng_access_version_number png_access_version_number
 #define qpng_create_read_struct png_create_read_struct
 #define qpng_create_info_struct png_create_info_struct
 #define qpng_jmpbuf png_jmpbuf
@@ -205,7 +214,6 @@ static dllfunc_t libpngfuncs[] =
 #define qpng_read_image png_read_image
 #define qpng_read_end png_read_end
 #define qpng_destroy_read_struct png_destroy_read_struct
-#define qpng_destroy_write_struct png_destroy_write_struct
 #define qpng_get_io_ptr png_get_io_ptr
 
 #endif
@@ -217,7 +225,7 @@ static void R_Imagelib_UnloadLibpng( void )
 {
 #ifdef LIBPNG_RUNTIME
 	if( pngLibrary )
-		ri.Sys_UnloadLibrary( &pngLibrary );
+		ri.Com_UnloadLibrary( &pngLibrary );
 #endif
 	pngLibrary = NULL;
 }
@@ -230,7 +238,9 @@ static void R_Imagelib_LoadLibpng( void )
 	R_Imagelib_UnloadLibpng();
 
 #ifdef LIBPNG_RUNTIME
-	pngLibrary = ri.Sys_LoadLibrary( LIBPNG_LIBNAME, libpngfuncs );
+	pngLibrary = ri.Com_LoadSysLibrary( LIBPNG_LIBNAME, libpngfuncs );
+	if( pngLibrary )
+		qpng_set_longjmp_fn = ri.Com_LibraryProcAddress( pngLibrary, "png_set_longjmp_fn" );
 #else
 	pngLibrary =  (void *)1;
 #endif
@@ -1076,6 +1086,8 @@ r_imginfo_t LoadPNG( const char *name, uint8_t *(*allocbuf)( void *, size_t, con
 	uint8_t *png_data;
 	size_t png_datasize;
 	q_png_iobuf_t io;
+	png_uint_32 ver;
+	char ver_string[16];
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
 	png_uint_32 p_width, p_height;
@@ -1100,7 +1112,7 @@ error:
 		ri.Com_DPrintf( S_COLOR_YELLOW "Bad png file %s\n", name );
 
 		if( png_ptr != NULL ) {
-			qpng_destroy_write_struct( &png_ptr, NULL );
+			qpng_destroy_read_struct( &png_ptr, &info_ptr, NULL );
 		}
 		R_FreeFile( png_data );
 		return imginfo;
@@ -1110,7 +1122,9 @@ error:
 	// functions. We also supply the  the compiler header file version, so 
 	// that we know if the application was compiled with a compatible 
 	// version of the library. REQUIRED
-	png_ptr = qpng_create_read_struct( PNG_LIBPNG_VER_STRING, 0, q_png_error_fn, q_png_warning_fn );
+	ver = qpng_access_version_number();
+	Q_snprintfz( ver_string, sizeof( ver_string ), "%u.%u.%u", ver / 10000, ( ver / 100 ) % 100, ver % 100 );
+	png_ptr = qpng_create_read_struct( ver_string, 0, q_png_error_fn, q_png_warning_fn );
 	if( png_ptr == NULL ) {
 		goto error;
 	}
@@ -1146,23 +1160,19 @@ error:
 	qpng_get_IHDR( png_ptr, info_ptr, &p_width, &p_height, &p_bit_depth, &p_color_type,
 		&p_interlace_type, NULL, NULL );
 
-	if( p_color_type & PNG_COLOR_MASK_ALPHA ) {
-		samples = 4;
+	if( ( p_color_type & ~PNG_COLOR_MASK_ALPHA ) == PNG_COLOR_TYPE_GRAY ) {
+		samples = 1;
 	}
 	else {
 		samples = 3;
-		// add filler (or alpha) byte (before/after each RGB triplet)
-		// png_set_filler( png_ptr, 255, 1 );
+	}
+	if( p_color_type & PNG_COLOR_MASK_ALPHA ) {
+		samples++;
 	}
 
 	// expand paletted colors into true RGB triplets
 	if( p_color_type == PNG_COLOR_TYPE_PALETTE ) {
 		qpng_set_palette_to_rgb( png_ptr );
-	}
-
-	// expand grayscale images to RGB triplets
-	if( p_color_type == PNG_COLOR_TYPE_GRAY || p_color_type == PNG_COLOR_TYPE_GRAY_ALPHA ) {
-		qpng_set_gray_to_rgb( png_ptr );
 	}
 
 	// expand paletted or RGB images with transparency to full alpha channels
@@ -1199,11 +1209,11 @@ error:
 	qpng_read_end( png_ptr, info_ptr );
 
 	// clean up after the read, and free any memory allocated - REQUIRED
-	qpng_destroy_read_struct( &png_ptr, &info_ptr, 0 );
+	qpng_destroy_read_struct( &png_ptr, &info_ptr, NULL );
 
 	R_FreeFile( png_data );
 
-	imginfo.comp = (samples == 4 ? IMGCOMP_RGBA : IMGCOMP_RGB);
+	imginfo.comp = (samples & 1 ? IMGCOMP_RGB : IMGCOMP_RGBA);
 	imginfo.width = p_width;
 	imginfo.height = p_height;
 	imginfo.samples = samples;
