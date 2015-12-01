@@ -407,6 +407,14 @@ static void StatQuery_Send( stat_query_t *query )
 {
 	StatQuery_Prepare( query );
 
+	// check whether our curl request is valid (might have been delayed-allocated in StatQuery_Prepare)
+	if( !query->req ) {
+		if( query->callback_fn )
+			query->callback_fn( query, false, query->customp );
+		StatQuery_DestroyQuery( query );
+		return;
+	}
+	
 	wswcurl_stream_callbacks ( query->req, NULL, StatQuery_CallbackGeneric, NULL, (void*)query );
 	wswcurl_start( query->req );
 }
