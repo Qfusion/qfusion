@@ -424,6 +424,9 @@ size_t wswcurl_getsize( wswcurl_req *req, size_t *rxreceived )
 void wswcurl_stream_callbacks(wswcurl_req *req, wswcurl_read_cb read_cb, wswcurl_done_cb done_cb, 
 							  wswcurl_header_cb header_cb, void *customp)
 {
+	if( !req ) {
+		return;
+	}
 	req->callback_read = read_cb;
 	req->callback_done = done_cb;
 	req->callback_header = header_cb;
