@@ -423,7 +423,7 @@ static void StatQuery_SetField( stat_query_t *query, const char *name, const cha
 {
 	if( query->req )
 		wswcurl_formadd( query->req, name, "%s", value );
-	else
+	else if( query->url )
 	{
 		// GET request, store parameters
 		// add in '=', '&' and '\0' = 3
