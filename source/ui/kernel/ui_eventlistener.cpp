@@ -73,7 +73,11 @@ void BaseEventListener::StartTargetPropertySound( Element *target, const String 
 
 Rocket::Core::EventListener * GetBaseEventListener( void )
 {
-	return __new__(BaseEventListener)();
+	static BaseEventListener *listener = nullptr;
+	if( listener == nullptr ) {
+		listener = __new__(BaseEventListener)();
+	}
+	return listener;
 }
 
 //===================================================
