@@ -2815,6 +2815,7 @@ static void CL_CheckForUpdateDoneCb( int status, const char *contentType, void *
 		Q_snprintfz( net_version_str, sizeof( net_version_str ), "%4.3f", net_version );
 		s = net_version_str + strlen( net_version_str ) - 1;
 		while( *s == '0' ) s--;
+		if( *s == '.' && *( s+1 ) == '0' ) s++; // for whole version numbers
 		net_version_str[s-net_version_str+1] = '\0';
 
 		// you should update
