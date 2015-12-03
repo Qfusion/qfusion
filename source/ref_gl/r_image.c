@@ -2953,7 +2953,7 @@ static void R_IssueLoadPicLoaderCmd( int id, int pic )
 */
 static void R_InitImageLoader( int id )
 {
-	if( !r_multithreading->integer ) {
+	if( !glConfig.multithreading ) {
 		loader_gl_context[id] = NULL;
 		loader_gl_surface[id] = NULL;
 		return;
