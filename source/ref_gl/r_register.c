@@ -1219,6 +1219,7 @@ static void R_GfxInfo_f( void )
 	Com_Printf( "texturemode: %s\n", r_texturemode->string );
 	Com_Printf( "anisotropic filtering: %i\n", r_texturefilter->integer );
 	Com_Printf( "vertical sync: %s\n", ( r_swapinterval->integer || r_swapinterval_min->integer ) ? "enabled" : "disabled" );
+	Com_Printf( "multithreading: %s\n", glConfig.multithreading ? "enabled" : "disabled" );
 
 	R_PrintGLExtensionsInfo();
 
@@ -1357,6 +1358,7 @@ static rserr_t R_PostInit( void )
 
 	glConfig.versionHash = R_GLVersionHash( glConfig.vendorString, glConfig.rendererString,
 		glConfig.versionString );
+	glConfig.multithreading = r_multithreading->integer != 0 && !strstr( glConfig.vendorString, "nouveau" );
 
 	memset( &rsh, 0, sizeof( rsh ) );
 	memset( &rf, 0, sizeof( rf ) );
