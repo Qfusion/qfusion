@@ -421,6 +421,7 @@ typedef struct
 	vec3_t origin;
 	vec3_t angles;
 	mat3_t axis;
+	mat3_t listenerAxis;
 	vec3_t velocity;
 	bool flipped;
 } cg_viewdef_t;
