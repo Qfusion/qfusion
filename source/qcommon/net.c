@@ -112,6 +112,7 @@ static void GetLocalAddress( void )
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET; // AF_INET6 for IPv6
+	hints.ai_flags = AI_NUMERICHOST;
 	if( getaddrinfo( hostname, NULL, &hints, &hostInfo ) != 0 ) {
 		return;
 	}
@@ -1399,6 +1400,7 @@ static bool StringToSockaddress( const char *s, struct sockaddr_storage *sadr )
 		memset( &hints, 0, sizeof ( hints ) );
 		hints.ai_family = addr_family;
 		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_flags = AI_NUMERICHOST;
 
 		err = getaddrinfo( addr_copy, port_copy, &hints, &addrinf );
 		if ( err == 0 && addrinf != NULL )
