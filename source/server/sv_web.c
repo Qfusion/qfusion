@@ -19,7 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // sv_web.c -- builtin HTTP server
-
 #include "server.h"
 #include "../qalgo/q_trie.h"
 
@@ -423,30 +422,32 @@ static bool SV_Web_FindGameClientBySession( const char *session, int clientNum )
 }
 
 /*
-* SV_Web_GameClientAddressMatch
-*/
-static int SV_Web_GameClientAddressMatch( void *client, void *netadr )
-{
-	return NET_CompareBaseAddress( ( netadr_t * )netadr,
-		&( ( ( http_game_client_t * )client )->remoteAddress ) ) ? 1 : 0;
-}
-
-/*
 * SV_Web_FindGameClientByAddress
 *
 * Performs lookup for game client in trie by network address. Terribly inefficient.
 */
 static bool SV_Web_FindGameClientByAddress( const netadr_t *netadr )
 {
-	trie_error_t trie_error;
-	http_game_client_t *client;
+	unsigned int i;
+	struct trie_dump_s *dump;
+	bool valid_address;
 
 	QMutex_Lock( sv_http_clients_mutex );
-	trie_error = Trie_FindIf( sv_http_clients, "", TRIE_PREFIX_MATCH,
-		SV_Web_GameClientAddressMatch, ( void * )netadr, ( void ** )( &client ) );
+	Trie_Dump( sv_http_clients, "", TRIE_DUMP_VALUES, &dump );
 	QMutex_Unlock( sv_http_clients_mutex );
 
-	return trie_error == TRIE_OK;
+	valid_address = false;
+	for( i = 0; i < dump->size; i++ ) {
+		http_game_client_t *const a = (http_game_client_t *) dump->key_value_vector[i].value;
+		if( NET_CompareBaseAddress( netadr, &a->remoteAddress ) ) {
+			valid_address = true;
+			break;
+		}
+	}
+
+	Trie_FreeDump( dump );
+
+	return valid_address;
 }
 
 /*
