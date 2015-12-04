@@ -115,6 +115,7 @@ static void InitSig( void )
 	signal( SIGSEGV, signal_handler );
 	signal( SIGTERM, signal_handler );
 	signal( SIGINT, signal_handler );
+	signal( SIGPIPE, SIG_IGN );
 }
 
 /*
