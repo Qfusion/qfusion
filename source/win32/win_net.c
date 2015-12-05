@@ -87,14 +87,7 @@ int64_t Sys_NET_SendFile( socket_handle_t handle, int fileno, size_t offset, siz
 	}
 
 	ol.Pointer = (PVOID)(offset);
-	if( pTransmitFile( handle, fhandle, count, 0, &ol, NULL, 0 ) == FALSE ) {
-		if( WSAGetLastError() != ERROR_IO_PENDING ) {
-			// this blocks
-			GetOverlappedResult( (HANDLE)handle, &ol, &sent, TRUE );
-			return SOCKET_ERROR;
-		}
-		return 0;
-	}
+	pTransmitFile( handle, fhandle, count, 0, &ol, NULL, TF_USE_KERNEL_APC );
 
 	// this blocks
 	if( GetOverlappedResult( (HANDLE)handle, &ol, &sent, TRUE ) == FALSE ) {
