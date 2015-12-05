@@ -768,9 +768,9 @@ static int NET_TCP_Accept( const socket_t *socket, socket_t *newsocket, netadr_t
 	handle = accept( socket->handle, (struct sockaddr *)&sockaddress, &sockaddress_size );
 	if( handle == SOCKET_ERROR )
 	{
-		NET_SetErrorStringFromLastError( "accept" );
 		if( Sys_NET_GetLastError() == NET_ERR_WOULDBLOCK )  // would block
 			return 0;
+		NET_SetErrorStringFromLastError( "accept" );
 		return -1;
 	}
 
