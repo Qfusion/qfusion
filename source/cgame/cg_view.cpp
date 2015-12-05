@@ -951,19 +951,7 @@ static void CG_SetupViewDef( cg_viewdef_t *view, int type, bool flipped )
 
 	Matrix3_FromAngles( view->angles, view->axis );
 	if( view->flipped )
-	{
-		vec3_t angles;
-
 		VectorInverse( &view->axis[AXIS_RIGHT] );
-
-		VectorCopy( view->angles, angles );
-		angles[YAW] = anglemod( angles[YAW] + 180 );
-		Matrix3_FromAngles( angles, view->listenerAxis );
-	}
-	else
-	{
-		Matrix3_Copy( view->axis, view->listenerAxis );
-	}
 
 	// view rectangle size
 	view->refdef.x = scr_vrect.x;
@@ -1191,7 +1179,7 @@ void CG_RenderView( float frameTime, float realFrameTime, int realTime, unsigned
 
 	cg.oldAreabits = true;
 
-	trap_S_Update( cg.view.origin, cg.view.velocity, cg.view.listenerAxis, cgs.clientInfo[cgs.playerNum].name );
+	trap_S_Update( cg.view.origin, cg.view.velocity, cg.view.axis, cgs.clientInfo[cgs.playerNum].name );
 
 	CG_Draw2D();
 
