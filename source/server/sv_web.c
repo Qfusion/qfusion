@@ -141,7 +141,6 @@ static socket_t sv_socket_http;
 static socket_t sv_socket_http6;
 
 static netadr_t sv_web_upstream_addr;
-static bool sv_web_upstream_is_set;
 
 static uint64_t sv_http_request_autoicr;
 
@@ -1414,7 +1413,7 @@ static void SV_Web_Listen( socket_t *socket )
 			continue;
 		}
 
-		is_upstream = sv_web_upstream_is_set 
+		is_upstream = sv_web_upstream_addr.type != NA_NOTRANSMIT 
 			&& NET_CompareBaseAddress( &newaddress, &sv_web_upstream_addr );
 		block = false;
 
@@ -1489,13 +1488,26 @@ static void SV_Web_Frame( void )
 	socket_t *sockets[MAX_INCOMING_HTTP_CONNECTIONS+1];
 	void *connections[MAX_INCOMING_HTTP_CONNECTIONS];
 	int num_sockets = 0;
+	bool upstream_is_set;
 
 	if( !sv_http_initialized ) {
 		return;
 	}
 
-	sv_web_upstream_is_set = sv_http_upstream_ip->string[0] != '\0' && sv_http_upstream_baseurl->string[0] != '\0';
-	NET_StringToAddress( sv_http_upstream_ip->string, &sv_web_upstream_addr );
+	upstream_is_set = sv_http_upstream_ip->string[0] != '\0' && sv_http_upstream_baseurl->string[0] != '\0';
+	if( upstream_is_set )
+	{
+		if( sv_http_upstream_ip->modified )
+		{
+			NET_StringToAddress( sv_http_upstream_ip->string, &sv_web_upstream_addr );
+			sv_http_upstream_ip->modified = false;
+		}
+	}
+	else
+	{
+		if( sv_web_upstream_addr.type != NA_NOTRANSMIT )
+			NET_InitAddress( &sv_web_upstream_addr, NA_NOTRANSMIT );
+	}
 
 	// accept new connections
 	if( sv_socket_http.address.type == NA_IP ) {
