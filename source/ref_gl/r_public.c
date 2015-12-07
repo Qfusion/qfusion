@@ -37,8 +37,10 @@ static int GetRefAPIVersion( void )
 * Returns a pointer to the structure with all entry points
 */
 #ifdef __cplusplus
-extern "C" 
+extern "C"
+{
 #endif
+
 QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 {
 	static ref_export_t globals;
@@ -118,6 +120,15 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	return &globals;
 }
+
+#ifdef _WIN32
+QF_DLL_EXPORT DWORD NvOptimusEnablement = 0x00000001;
+QF_DLL_EXPORT int AmdPowerXpressRequestHighPerformance = 1;
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifndef REF_HARD_LINKED
 
