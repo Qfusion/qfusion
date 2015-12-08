@@ -98,37 +98,6 @@ static dynvar_get_status_t Com_Sys_Uptime_f( void **val )
 }
 
 /*
-==============================================================
-
-Commands
-
-==============================================================
-*/
-
-#ifdef SYS_SYMBOL
-static void Com_Sys_Symbol_f( void )
-{
-	const int argc = Cmd_Argc();
-	if( argc == 2 || argc == 3 )
-	{
-		const char *const symbolName = Cmd_Argv( 1 );
-		const char *const moduleName = Cmd_Argc() == 3
-			? Cmd_Argv( 2 )
-			: NULL;
-		void *symbolAddr = Sys_GetSymbol( moduleName, symbolName );
-		if( symbolAddr )
-		{
-			Com_Printf( "\"%s\" is \"0x%p\"\n", symbolName, symbolAddr );
-		}
-		else
-			Com_Printf( "Error: Symbol not found\n" );
-	}
-	else
-		Com_Printf( "usage: sys_symbol <symbolName> [moduleName]\n" );
-}
-#endif // SYS_SYMBOL
-
-/*
 ============================================================================
 
 CLIENT / SERVER interactions
@@ -830,9 +799,6 @@ void Qcommon_InitCommands( void )
 {
 	assert( !commands_intialized );
 
-#ifdef SYS_SYMBOL
-	Cmd_AddCommand( "sys_symbol", Com_Sys_Symbol_f );
-#endif
 #ifndef PUBLIC_BUILD
 	Cmd_AddCommand( "error", Com_Error_f );
 	Cmd_AddCommand( "lag", Com_Lag_f );
@@ -855,9 +821,6 @@ void Qcommon_ShutdownCommands( void )
 	if( !commands_intialized )
 		return;
 
-#ifdef SYS_SYMBOL
-	Cmd_RemoveCommand( "sys_symbol" );
-#endif
 #ifndef PUBLIC_BUILD
 	Cmd_RemoveCommand( "error" );
 	Cmd_RemoveCommand( "lag" );

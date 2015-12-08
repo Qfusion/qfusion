@@ -991,11 +991,6 @@ void	Sys_ReleaseWakeLock( void *wl );
 
 int 	Sys_GetCurrentProcessId( void );
 
-// wsw : aiwa : get symbol address in executable
-#ifdef SYS_SYMBOL
-void *Sys_GetSymbol( const char *moduleName, const char *symbolName );
-#endif
-
 /*
 ==============================================================
 
