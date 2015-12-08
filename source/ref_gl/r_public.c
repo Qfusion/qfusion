@@ -121,11 +121,6 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	return &globals;
 }
 
-#ifdef _WIN32
-QF_DLL_EXPORT DWORD NvOptimusEnablement = 0x00000001;
-QF_DLL_EXPORT int AmdPowerXpressRequestHighPerformance = 1;
-#endif
-
 #ifdef __cplusplus
 }
 #endif
