@@ -112,19 +112,6 @@ void Sys_Sleep( unsigned int millis )
 	Sleep( millis );
 }
 
-/*
-* Sys_GetSymbol
-*/
-#ifdef SYS_SYMBOL
-void *Sys_GetSymbol( const char *moduleName, const char *symbolName )
-{
-	HMODULE module = GetModuleHandle( moduleName );
-	return module
-		? (void *) GetProcAddress( module, symbolName )
-		: NULL;
-}
-#endif // SYS_SYMBOL
-
 //===============================================================================
 
 /*

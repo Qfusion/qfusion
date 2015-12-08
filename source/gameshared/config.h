@@ -66,7 +66,3 @@
 
 // collaborations
 //==============================================
-
-// symbol address retrieval
-//==============================================
-// #define SYS_SYMBOL		// adds "sys_symbol" command and symbol exports to binary release
