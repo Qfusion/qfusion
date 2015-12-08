@@ -32,8 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "../win32/conproc.h"
 
-#define MINIMUM_WIN_MEMORY  0x0a00000
-#define MAXIMUM_WIN_MEMORY  0x1000000
+#if !defined(DEDICATED_ONLY)
+QF_DLL_EXPORT DWORD NvOptimusEnablement = 0x00000001;
+QF_DLL_EXPORT int AmdPowerXpressRequestHighPerformance = 1;
+#endif
 
 #if !defined(USE_SDL2) || defined(DEDICATED_ONLY)
 
@@ -301,14 +303,6 @@ void *Sys_AcquireWakeLock( void )
 void Sys_ReleaseWakeLock( void *wl )
 {
 }
-
-/*
-==============================================================================
-
-WINDOWS CRAP
-
-==============================================================================
-*/
 
 /*
 * Sys_AppActivate
