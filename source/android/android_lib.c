@@ -79,19 +79,3 @@ const char *Sys_Library_ErrorString( void )
 	return dlerror();
 }
 
-#ifdef SYS_SYMBOL
-/*
-* Sys_GetSymbol
-*/
-void *Sys_GetSymbol( const char *moduleName, const char *symbolName )
-{
-	void *module = dlopen( moduleName, RTLD_NOW );
-	if( module )
-	{
-		void *symbol = dlsym( module, symbolName );
-		dlclose( module );
-		return symbol;
-	}
-	return NULL;
-}
-#endif // SYS_SYMBOL
