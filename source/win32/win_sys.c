@@ -232,6 +232,14 @@ void Sys_OpenURLInBrowser( const char *url )
 }
 
 /*
+* Sys_GetCurrentProcessId
+*/
+int Sys_GetCurrentProcessId( void )
+{
+	return GetCurrentProcessId();
+}
+
+/*
 * Sys_GetPreferredLanguage
 * Get the preferred language through the MUI API. Works on Vista and newer.
 */
