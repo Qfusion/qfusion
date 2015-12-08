@@ -242,6 +242,14 @@ void Sys_OpenURLInBrowser( const char *url )
 #endif
 
 /*
+* Sys_GetCurrentProcessId
+*/
+int Sys_GetCurrentProcessId( void )
+{
+	return getpid();
+}
+
+/*
 * Sys_GetPreferredLanguage
 */
 const char *Sys_GetPreferredLanguage( void )
