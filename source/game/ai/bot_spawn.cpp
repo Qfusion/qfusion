@@ -150,6 +150,54 @@ typedef struct
 } localbotskin_t;
 
 //==========================================
+// BOT_QueryBotName
+// Query botname from cvar
+//==========================================
+bool BOT_QueryBotName( char* out )
+{
+	if ( !out )
+		return false;
+	
+	if ( !g_botnames->string[0] )
+		return false;
+	
+	int tokenCount = 0;
+	int i;
+	
+	for ( i = 0; i < strlen( g_botnames->string ) + 1; i++ )
+	{
+		if ( g_botnames->string[i] == ',' || g_botnames->string[i] == ';' || !g_botnames->string[i] )
+			tokenCount++;
+	}
+	
+	if ( !tokenCount )
+		return false;
+	
+	char* token = strtok( g_botnames->string, " ,;" );
+	if ( !token )
+		return false;
+	
+	int randomToken = rand() % tokenCount;
+	int currentToken = 0;
+	
+	while ( token )
+	{
+		if ( currentToken == randomToken )
+		{
+			Info_CleanValue( token, out, strlen(token) + 1 );
+			
+			break;
+		}
+		
+		token = strtok( NULL, " ,;" );
+		
+		currentToken++;
+	}
+	
+	return true;
+}
+
+//==========================================
 // BOT_AssignBotNames
 // Assign botnames from file
 //==========================================
