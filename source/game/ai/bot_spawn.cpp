@@ -70,7 +70,7 @@ static const char * const LocalBotSkins[] =
 	NULL
 };
 
-static const char * const LocalBotNames[] =
+static char LocalBotNames[][MAX_QPATH + 1] =
 {
 	"Viciious",
 	"Sid",
@@ -100,10 +100,9 @@ static const char * const LocalBotNames[] =
 	"01011001",
 	"Sector",
 	"%APPDATA%",
-	"P.E.#1",
-
-	NULL
+	"P.E.#1"
 };
+
 /*
 typedef struct
 {
@@ -150,6 +149,92 @@ typedef struct
 	char bot_name[MAX_NAME_BYTES];
 } localbotskin_t;
 
+//==========================================
+// BOT_AssignBotNames
+// Assign botnames from file
+//==========================================
+bool BOT_AssignBotNames( const char* filename )
+{
+	if ( !filename || !filename[0] )
+		return false;
+	
+	int textFile;
+	int length;
+	char fileName[MAX_QPATH];
+	qbyte* fileContent;
+	
+	Q_snprintfz( fileName, sizeof(fileName), "%s/%s", BOT_NAMEFILE_DIR, filename);
+	
+	length = FS_FOpenFile( fileName, &textFile, FS_READ );
+	if ( length == -1 )
+		return false;
+	
+	fileContent = (qbyte*)G_Malloc( length + 1 );
+	if ( !fileContent )
+	{
+		trap_FS_FCloseFile( textFile );
+		
+		return false;
+	}
+	
+	if ( !trap_FS_Read( fileContent, length, textFile ) )
+	{
+		trap_FS_FCloseFile( textFile );
+		
+		return false;
+	}
+	
+	fileContent[length] = 0;
+	
+	trap_FS_FCloseFile( textFile );
+	
+	char* charPtr;
+	char currentName[MAX_QPATH] = {0};
+	size_t charCounter = 0;
+	size_t nameCounter = 0; 
+	
+	charPtr = (char*)fileContent;
+	
+	while( *charPtr++ )
+	{
+		currentName[charCounter] = *charPtr;
+		
+		if ( charCounter >= sizeof(currentName) )
+		{
+			G_Free( fileContent );
+			
+			return false;
+		}
+		
+		if ( *(charPtr + 1) == '\n' )
+		{
+			if ( currentName[0] != '#' )
+			{
+				Q_strncpy( LocalBotNames[nameCounter], currentName, strlen(currentName) + 1 );
+
+				nameCounter++;
+			}
+			
+			charCounter = 0;
+			
+			Q_memset32( currentName, 0, sizeof(currentName) );
+			
+			if ( nameCounter >= _countof(LocalBotNames) )
+				break;
+			
+			charPtr += 2;
+
+			continue;
+		}
+		
+		charPtr++;
+		charCounter++;
+	}
+	
+	G_Free( fileContent );
+	
+	return true;
+}
 
 //==========================================
 // BOT_GetUnusedSkin
