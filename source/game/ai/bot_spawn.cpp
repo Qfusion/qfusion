@@ -70,7 +70,7 @@ static const char * const LocalBotSkins[] =
 	NULL
 };
 
-static char LocalBotNames[][MAX_NAME_BYTES + 1] =
+static char LocalBotNames[][MAX_NAME_BYTES] =
 {
 	"Viciious",
 	"Sid",
@@ -215,9 +215,9 @@ bool BOT_AssignBotNames( const char* filename )
 			
 			charCounter = 0;
 			
-			Q_memset32( currentName, 0, sizeof(currentName) );
+			memset( currentName, 0, sizeof(currentName) );
 			
-			if ( nameCounter >= sizeof(LocalBotNames) / (MAX_NAME_BYTES + 1) )
+			if ( nameCounter >= sizeof(LocalBotNames) / MAX_NAME_BYTES )
 				break;
 			
 			charPtr++;
