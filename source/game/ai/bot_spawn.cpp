@@ -197,7 +197,7 @@ bool BOT_AssignBotNames( const char* filename )
 	{
 		currentName[charCounter] = *charPtr;
 		
-		if ( charCounter >= sizeof(currentName) )
+		if ( charCounter >= sizeof(currentName) - 1 )
 		{
 			G_Free( fileContent );
 			
