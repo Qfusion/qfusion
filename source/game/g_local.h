@@ -342,7 +342,7 @@ extern cvar_t *g_timelimit;
 extern cvar_t *g_projectile_touch_owner;
 extern cvar_t *g_projectile_prestep;
 extern cvar_t *g_numbots;
-extern cvar_t *g_numbots;
+extern cvar_t *g_botnames;
 extern cvar_t *g_maxtimeouts;
 
 extern cvar_t *g_self_knockback;
