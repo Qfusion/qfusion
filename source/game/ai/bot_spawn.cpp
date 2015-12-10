@@ -70,38 +70,6 @@ static const char * const LocalBotSkins[] =
 	NULL
 };
 
-static char LocalBotNames[][MAX_QPATH + 1] =
-{
-	"Viciious",
-	"Sid",
-	"Pervert",
-	"Sick",
-	"Punk",
-
-	"Black Sis",
-	"Monada",
-	"Afrodita",
-	"Goddess",
-	"Athena",
-
-	"Silver",
-	"Cathy",
-	"MishiMishi",
-	"Lobita",
-	"SisterClaw",
-
-	"Padpork",
-	"Jason",
-	"Lord Hog",
-	"Porkalator",
-	"Babe",
-
-	"YYZ2112",
-	"01011001",
-	"Sector",
-	"%APPDATA%",
-	"P.E.#1"
-};
 
 /*
 typedef struct
@@ -146,101 +114,63 @@ typedef struct
 {
 	char bot_model[MAX_INFO_STRING];
 	char bot_skin[MAX_INFO_STRING];
-	char bot_name[MAX_NAME_BYTES];
 } localbotskin_t;
 
 //==========================================
-// BOT_AssignBotNames
-// Assign botnames from file
+// BOT_QueryBotName
+// Query botname from cvar
 //==========================================
-bool BOT_AssignBotNames( const char* filename )
+static bool BOT_QueryBotName( char* out )
 {
-	if ( !filename || !filename[0] )
+	if ( !out )
 		return false;
 	
-	int textFile;
-	int length;
-	char fileName[MAX_QPATH];
-	qbyte* fileContent;
-	
-	Q_snprintfz( fileName, sizeof(fileName), "%s/%s", BOT_NAMEFILE_DIR, filename);
-	
-	length = FS_FOpenFile( fileName, &textFile, FS_READ );
-	if ( length == -1 )
+	if ( !g_botnames->string[0] )
 		return false;
 	
-	fileContent = (qbyte*)G_Malloc( length + 1 );
-	if ( !fileContent )
+	int tokenCount = 0;
+	size_t i;
+	
+	//count tokens of botname list
+	for ( i = 0; i < strlen( g_botnames->string ) + 1; i++ )
 	{
-		trap_FS_FCloseFile( textFile );
-		
-		return false;
+		if ( g_botnames->string[i] == ',' || g_botnames->string[i] == ';' || !g_botnames->string[i] )
+			tokenCount++;
 	}
 	
-	if ( !trap_FS_Read( fileContent, length, textFile ) )
-	{
-		trap_FS_FCloseFile( textFile );
-		
+	if ( !tokenCount )
 		return false;
-	}
 	
-	fileContent[length] = 0;
+	char* token = strtok( g_botnames->string, ",;" );
+	if ( !token )
+		return false;
 	
-	trap_FS_FCloseFile( textFile );
+	int randomToken = rand() % tokenCount;
+	int currentToken = 0;
 	
-	char* charPtr;
-	char currentName[MAX_QPATH] = {0};
-	size_t charCounter = 0;
-	size_t nameCounter = 0; 
-	
-	charPtr = (char*)fileContent;
-	
-	while( *charPtr++ )
+	//find pseudo-randomly selected botname from list
+	while ( token )
 	{
-		currentName[charCounter] = *charPtr;
-		
-		if ( charCounter >= sizeof(currentName) )
+		if ( currentToken == randomToken )
 		{
-			G_Free( fileContent );
+			Info_CleanValue( token, out, strlen(token) + 1 );
 			
-			return false;
+			break;
 		}
 		
-		if ( *(charPtr + 1) == '\n' )
-		{
-			if ( currentName[0] != '#' )
-			{
-				Q_strncpy( LocalBotNames[nameCounter], currentName, strlen(currentName) + 1 );
-
-				nameCounter++;
-			}
-			
-			charCounter = 0;
-			
-			Q_memset32( currentName, 0, sizeof(currentName) );
-			
-			if ( nameCounter >= _countof(LocalBotNames) )
-				break;
-			
-			charPtr += 2;
-
-			continue;
-		}
+		token = strtok( NULL, ",;" );
 		
-		charPtr++;
-		charCounter++;
+		currentToken++;
 	}
-	
-	G_Free( fileContent );
 	
 	return true;
 }
 
 //==========================================
 // BOT_GetUnusedSkin
-// Retrieve a random unused skin & name
+// Retrieve a random unused skin
 //==========================================
-static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin, char *bot_name )
+static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin )
 {
 	bool inuse;
 	int skinnumber;
@@ -325,10 +255,9 @@ static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin, char *bot_name )
 
 			Q_strncpyz( localbotskin->bot_model, LocalBotSkins[skinnumber], strlen( LocalBotSkins[skinnumber] ) - strlen( p ) );
 			Q_strncpyz( localbotskin->bot_skin, p, sizeof( localbotskin->bot_skin ) );
-			Q_strncpyz( localbotskin->bot_name, LocalBotNames[skinnumber], sizeof( localbotskin->bot_name ) );
 
 			if( nav.debugMode )
-				Com_Printf( "Free skin: %i: %s %s\n", freeskins, localbotskin->bot_skin, localbotskin->bot_name );
+				Com_Printf( "Free skin: %i: %s\n", freeskins, localbotskin->bot_skin );
 
 			freeskins++;
 		}
@@ -341,10 +270,9 @@ static bool BOT_GetUnusedSkin( char *bot_model, char *bot_skin, char *bot_name )
 	localbotskin = botskins + skinnumber;
 	Q_strncpyz( bot_model, localbotskin->bot_model, sizeof( localbotskin->bot_model ) );
 	Q_strncpyz( bot_skin, localbotskin->bot_skin, sizeof( localbotskin->bot_skin ) );
-	Q_strncpyz( bot_name, localbotskin->bot_name, sizeof( localbotskin->bot_name ) );
 
 	if( nav.debugMode )
-		Com_Printf( "Assigned bot character: %i: %s %s %s\n", skinnumber, bot_model, bot_skin, bot_name );
+		Com_Printf( "Assigned bot character: %i: %s %s\n", skinnumber, bot_model, bot_skin );
 
 	G_Free( botskins );
 
@@ -364,10 +292,9 @@ static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size, int bot_pe
 
 	//jalfixme: we have only one skin yet
 
-	//GetUnusedSkin doesn't repeat already used skins/names
-	if( !BOT_GetUnusedSkin( bot_model, bot_skin, bot_name ) )
+	//query bot name
+	if ( !BOT_QueryBotName( bot_name ) )
 	{
-		float r;
 		int i, botcount = 0;
 		edict_t	*ent;
 
@@ -381,7 +308,13 @@ static void BOT_CreateUserinfo( char *userinfo, size_t userinfo_size, int bot_pe
 
 		// Set the name for the bot.
 		Q_snprintfz( bot_name, sizeof( bot_name ), "Bot%d", botcount+1 );
+	}
 
+	//GetUnusedSkin doesn't repeat already used skins/names
+	if( !BOT_GetUnusedSkin( bot_model, bot_skin ) )
+	{
+		float r;
+		
 		// randomly choose skin
 		r = random();
 		if( r > 0.8f )
