@@ -193,9 +193,7 @@ bool BOT_AssignBotNames( const char* filename )
 	size_t charCounter = 0;
 	size_t nameCounter = 0; 
 	
-	charPtr = (char*)fileContent;
-	
-	while( *charPtr++ )
+	for ( charPtr = (char*)fileContent; *charPtr; charPtr++ )
 	{
 		currentName[charCounter] = *charPtr;
 		
@@ -222,12 +220,11 @@ bool BOT_AssignBotNames( const char* filename )
 			if ( nameCounter >= _countof(LocalBotNames) )
 				break;
 			
-			charPtr += 2;
+			charPtr++;
 
 			continue;
 		}
 		
-		charPtr++;
 		charCounter++;
 	}
 	
