@@ -189,7 +189,7 @@ bool BOT_AssignBotNames( const char* filename )
 	trap_FS_FCloseFile( textFile );
 	
 	char* charPtr;
-	char currentName[MAX_QPATH] = {0};
+	char currentName[MAX_NAME_BYTES] = {0};
 	size_t charCounter = 0;
 	size_t nameCounter = 0; 
 	
