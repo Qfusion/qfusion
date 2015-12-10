@@ -173,7 +173,7 @@ bool BOT_QueryBotName( char* out )
 	if ( !tokenCount )
 		return false;
 	
-	char* token = strtok( g_botnames->string, " ,;" );
+	char* token = strtok( g_botnames->string, ",;" );
 	if ( !token )
 		return false;
 	
@@ -189,7 +189,7 @@ bool BOT_QueryBotName( char* out )
 			break;
 		}
 		
-		token = strtok( NULL, " ,;" );
+		token = strtok( NULL, ",;" );
 		
 		currentToken++;
 	}
