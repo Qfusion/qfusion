@@ -208,7 +208,7 @@ bool BOT_AssignBotNames( const char* filename )
 		{
 			if ( currentName[0] != '#' )
 			{
-				Q_strncpy( LocalBotNames[nameCounter], currentName, strlen(currentName) + 1 );
+				Info_CleanValue(currentName, LocalBotNames[nameCounter], MAX_NAME_BYTES);
 
 				nameCounter++;
 			}
