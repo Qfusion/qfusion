@@ -49,8 +49,6 @@ extern cvar_t *sv_botpersonality;
 #define AI_CHAR_OFFENSIVNESS ( self->ai->pers.cha.offensiveness )
 #define AI_CHAR_CAMPINESS ( self->ai->pers.cha.campiness )
 
-#define BOT_NAMEFILE_DIR "bot"
-
 // Platform states:
 #define	STATE_TOP	    0
 #define	STATE_BOTTOM	    1
