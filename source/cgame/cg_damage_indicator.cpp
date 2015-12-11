@@ -55,7 +55,7 @@ void CG_DamageIndicatorAdd( int damage, const vec3_t dir )
 	damageTime = damage * cg_damage_indicator_time->value;
 
 	// up and down go distributed equally to all blends and assumed when no dir is given
-	if( !dir || VectorCompare( dir, vec3_origin ) || cg_damage_indicator->integer == 2 ||
+	if( !dir || VectorCompare( dir, vec3_origin ) || cg_damage_indicator->integer == 2 || GS_Instagib() ||
 		( fabs( DotProduct( dir, &playerAxis[AXIS_UP] ) ) > INDICATOR_EPSILON_UP ) )
 	{
 		blends[RIGHT_BLEND] += damageTime;
