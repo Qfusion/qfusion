@@ -54,7 +54,6 @@ enum
  * so they must not be used for anything that has a long-term effect.
  */
 #define IT_LOADFLAGS		( IT_ALPHAMASK|IT_BGRA|IT_SYNC )
-#define IT_GL_ES_NPOT		( IT_CLAMP|IT_NOMIPMAP )
 
 #define IT_SPECIAL			( IT_CLAMP|IT_NOMIPMAP|IT_NOPICMIP|IT_NOCOMPRESS )
 #define IT_SKYFLAGS			( IT_SKY|IT_NOMIPMAP|IT_CLAMP|IT_SYNC )

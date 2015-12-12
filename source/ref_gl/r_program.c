@@ -1617,8 +1617,10 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	int hash;
 	int linked, error = 0;
 	int shaderTypeIdx, wavefuncsIdx, deformvIdx, dualQuatsIdx, instancedIdx, vTransformsIdx;
-	int enableInstancedIdx, enableTextureArrayIdx;
-#ifdef GL_ES_VERSION_2_0
+	int enableTextureArrayIdx;
+#ifndef GL_ES_VERSION_2_0
+	int enableInstancedIdx;
+#else
 	int enableShadowIdx, enableTexture3DIdx;
 #endif
 	int body_start, num_init_strings;
@@ -1743,22 +1745,20 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 #endif
 	}
 
-	enableInstancedIdx = i;
+	enableTextureArrayIdx = i;
+	shaderStrings[i++] = "\n";
 #ifndef GL_ES_VERSION_2_0
+	enableInstancedIdx = i;
 	if( glConfig.shadingLanguageVersion < 400 && glConfig.ext.draw_instanced )
 		shaderStrings[i++] = QF_GLSL_ENABLE_ARB_DRAW_INSTANCED;
 	else
-#endif
 		shaderStrings[i++] = "\n";
-
-#ifdef GL_ES_VERSION_2_0
+#else
 	enableShadowIdx = i;
 	shaderStrings[i++] = "\n";
 	enableTexture3DIdx = i;
 	shaderStrings[i++] = "\n";
 #endif
-	enableTextureArrayIdx = i;
-	shaderStrings[i++] = "\n";
 
 	shaderStrings[i++] = shaderVersion;
 	shaderTypeIdx = i;
@@ -1857,20 +1857,22 @@ static int RP_RegisterProgramBinary( int type, const char *name, const char *def
 	}
 
 	// fragment shader
+#ifndef GL_ES_VERSION_2_0
+	if( glConfig.ext.texture_array )
+		shaderStrings[enableTextureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;
 	shaderStrings[enableInstancedIdx] = "\n";
-#ifdef GL_ES_VERSION_2_0
+#else
 	if( glConfig.shadingLanguageVersion < 300 )
-#endif
 	{
-#ifdef GL_ES_VERSION_2_0
+		if( glConfig.ext.texture_array )
+			shaderStrings[enableTextureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;
 		if( glConfig.ext.shadow )
 			shaderStrings[enableShadowIdx] = QF_GLSL_ENABLE_EXT_SHADOW_SAMPLERS;
 		if( glConfig.ext.texture3D )
 			shaderStrings[enableTexture3DIdx] = QF_GLSL_ENABLE_OES_TEXTURE_3D;
-#endif
-		if( glConfig.ext.texture_array )
-			shaderStrings[enableTextureArrayIdx] = QF_GLSL_ENABLE_EXT_TEXTURE_ARRAY;
 	}
+#endif
+
 	shaderStrings[shaderTypeIdx] = "#define FRAGMENT_SHADER\n";
 	shaderStrings[wavefuncsIdx] = "\n";
 	shaderStrings[deformvIdx] = "\n";
