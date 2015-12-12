@@ -535,6 +535,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 	int maxSize;
 	int mip = 0;
 	int clampedWidth, clampedHeight;
+	int test;
 
 	if( flags & ( IT_FRAMEBUFFER|IT_DEPTH ) )
 		maxSize = glConfig.maxRenderbufferSize;
@@ -546,10 +547,11 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 		maxSize = glConfig.maxTextureSize;
 
 #ifdef GL_ES_VERSION_2_0
-	if( !glConfig.ext.texture_non_power_of_two && ( ( flags & IT_GL_ES_NPOT ) != IT_GL_ES_NPOT ) && !forceNPOT )
+	test = !glConfig.ext.texture_non_power_of_two && ( ( flags & IT_GL_ES_NPOT ) != IT_GL_ES_NPOT ) && !forceNPOT;
 #else
-	if( !glConfig.ext.texture_non_power_of_two && !forceNPOT )
+	test = !glConfig.ext.texture_non_power_of_two && !forceNPOT;
 #endif
+	if (test)
 	{
 		int potWidth, potHeight;
 
