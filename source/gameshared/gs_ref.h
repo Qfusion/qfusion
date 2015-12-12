@@ -31,7 +31,7 @@ extern "C" {
 #define DEFAULT_TEAMBETA_COLOR	    "0 255 70"
 
 #define MAX_CLANNAME_BYTES 16
-#define MAX_CLANNAME_CHARS 6
+#define MAX_CLANNAME_CHARS 8
 
 #define NUM_CROSSHAIRS	14
 
