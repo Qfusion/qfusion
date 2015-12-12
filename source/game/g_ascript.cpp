@@ -1559,7 +1559,7 @@ static void objectGameClient_ClearPlayerStateEvents( gclient_t *self )
 
 static asstring_t *objectGameClient_getName( gclient_t *self )
 {
-	char temp[MAX_NAME_BYTES*2];
+	char temp[MAX_NAME_BYTES+2];
 
 	Q_strncpyz( temp, self->netname, sizeof( temp ) );
 	Q_strncatz( temp, S_COLOR_WHITE, sizeof( temp ) );
@@ -1569,7 +1569,7 @@ static asstring_t *objectGameClient_getName( gclient_t *self )
 
 static asstring_t *objectGameClient_getClanName( gclient_t *self )
 {
-	char temp[MAX_CLANNAME_CHARS*2];
+	char temp[MAX_CLANNAME_BYTES+2];
 
 	Q_strncpyz( temp, self->clanname, sizeof( temp ) );
 	Q_strncatz( temp, S_COLOR_WHITE, sizeof( temp ) );
