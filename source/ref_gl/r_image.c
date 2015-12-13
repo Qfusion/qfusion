@@ -535,6 +535,7 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 	int maxSize;
 	int mip = 0;
 	int clampedWidth, clampedHeight;
+	bool makePOT;
 
 	if( flags & ( IT_FRAMEBUFFER|IT_DEPTH ) )
 		maxSize = glConfig.maxRenderbufferSize;
@@ -545,11 +546,11 @@ static int R_ScaledImageSize( int width, int height, int *scaledWidth, int *scal
 	else
 		maxSize = glConfig.maxTextureSize;
 
+	makePOT = !glConfig.ext.texture_non_power_of_two && !forceNPOT;
 #ifdef GL_ES_VERSION_2_0
-	if( !glConfig.ext.texture_non_power_of_two && ( ( flags & IT_GL_ES_NPOT ) != IT_GL_ES_NPOT ) && !forceNPOT )
-#else
-	if( !glConfig.ext.texture_non_power_of_two && !forceNPOT )
+	makePOT = makePOT && ( ( flags & ( IT_CLAMP|IT_NOMIPMAP ) ) != ( IT_CLAMP|IT_NOMIPMAP ) );
 #endif
+	if( makePOT )
 	{
 		int potWidth, potHeight;
 
@@ -2400,6 +2401,7 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 {
 	int limit;
 	int width_, height_;
+	bool npot;
 
 	// limit the texture size to either screen resolution in case we can't use FBO
 	// or hardware limits and ensure it's a POW2-texture if we don't support such textures
@@ -2410,11 +2412,11 @@ static void R_GetViewportTextureSize( const int viewportWidth, const int viewpor
 		limit = 1;
 	width_ = height_ = limit;
 
+	npot = glConfig.ext.texture_non_power_of_two;
 #ifdef GL_ES_VERSION_2_0
-	if( glConfig.ext.texture_non_power_of_two || ( ( flags & IT_GL_ES_NPOT ) == IT_GL_ES_NPOT ) )
-#else
-	if( glConfig.ext.texture_non_power_of_two )
+	npot = npot || ( ( flags & ( IT_CLAMP|IT_NOMIPMAP ) ) == ( IT_CLAMP|IT_NOMIPMAP ) );
 #endif
+	if( npot )
 	{
 		width_ = min( viewportWidth, limit );
 		height_ = min( viewportHeight, limit );
