@@ -120,7 +120,11 @@ typedef struct
 // BOT_QueryBotName
 // Query botname from cvar
 //==========================================
+<<<<<<< HEAD
 static bool BOT_QueryBotName( char* out )
+=======
+bool BOT_QueryBotName( char* out )
+>>>>>>> origin/patch-1
 {
 	if ( !out )
 		return false;
