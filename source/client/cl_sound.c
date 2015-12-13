@@ -172,7 +172,7 @@ static bool CL_SoundModule_Load( const char *name, sound_import_t *import, bool 
 	}
 
 	if( verbose )
-		Com_Printf( "Initialization of %s succesful\n", name );
+		Com_Printf( "Initialization of %s successful\n", name );
 
 	return true;
 }
