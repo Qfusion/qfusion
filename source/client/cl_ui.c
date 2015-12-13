@@ -174,7 +174,7 @@ void CL_UIModule_Init( void )
 
 	Com_Printf( "------- UI initialization -------\n" );
 
-	ui_mempool = _Mem_AllocPool( NULL, "User Iterface", MEMPOOL_USERINTERFACE, __FILE__, __LINE__ );
+	ui_mempool = _Mem_AllocPool( NULL, "User Interface", MEMPOOL_USERINTERFACE, __FILE__, __LINE__ );
 
 	import.Error = CL_UIModule_Error;
 	import.Print = CL_UIModule_Print;
