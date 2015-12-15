@@ -401,6 +401,8 @@ extern cvar_t *r_drawflat;
 extern cvar_t *r_wallcolor;
 extern cvar_t *r_floorcolor;
 
+extern cvar_t *r_usenotexture;
+
 extern cvar_t *r_maxglslbones;
 
 extern cvar_t *r_multithreading;
