@@ -115,6 +115,8 @@ cvar_t *r_drawflat;
 cvar_t *r_wallcolor;
 cvar_t *r_floorcolor;
 
+cvar_t *r_usenotexture;
+
 cvar_t *r_maxglslbones;
 
 cvar_t *gl_drawbuffer;
@@ -1157,6 +1159,9 @@ static void R_Register( const char *screenshotsPrefix )
 
 	// make sure we rebuild our 3D texture after vid_restart
 	r_wallcolor->modified = r_floorcolor->modified = true;
+
+	// set to 1 to enable use of the checkerboard texture for missing world and model images
+	r_usenotexture = ri.Cvar_Get( "r_usenotexture", "0", CVAR_ARCHIVE );
 
 	r_maxglslbones = ri.Cvar_Get( "r_maxglslbones", STR_TOSTR( MAX_GLSL_UNIFORM_BONES ), CVAR_LATCH_VIDEO );
 

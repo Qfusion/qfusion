@@ -544,7 +544,11 @@ static inline const image_t *RB_ShaderpassTex( const shaderpass_t *pass )
 		return R_GetCinematicImage( pass->cin );
 	}
 
-	return ( pass->images[0] ? pass->images[0] : rsh.noTexture );
+	if( !pass->images[0] )
+		return rsh.noTexture;
+	if( !pass->images[0]->missing )
+		return pass->images[0];
+	return r_usenotexture->integer == 0 ? rsh.greyTexture : rsh.noTexture;
 }
 
 //==================================================================================
