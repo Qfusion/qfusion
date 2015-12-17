@@ -1090,6 +1090,8 @@ void CG_Reset( void )
 	cg.time = 0;
 	cg.realTime = 0;
 
+	chaseCam.cmd_mode_delay = 0; // cg.time
+
 	// reset prediction optimization
 	cg.predictFrom = 0;
 

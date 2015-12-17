@@ -1002,6 +1002,21 @@ uint8_t *CG_PlayerColorForEntity( int entNum, byte_vec4_t color );
 //
 // cg_view.c
 //
+enum
+{
+	CAM_INEYES,
+	CAM_THIRDPERSON,
+	CAM_MODES
+};
+
+typedef struct
+{
+	int mode;
+	unsigned int cmd_mode_delay;
+} cg_chasecam_t;
+
+extern cg_chasecam_t chaseCam;
+
 extern cvar_t *cg_thirdPerson;
 extern cvar_t *cg_thirdPersonAngle;
 extern cvar_t *cg_thirdPersonRange;

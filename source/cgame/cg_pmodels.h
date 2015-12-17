@@ -173,24 +173,6 @@ struct weaponinfo_s *CG_GetWeaponInfo( int currentweapon );
 //				VIEW WEAPON
 //=================================================
 
-enum
-{
-	CAM_INEYES,
-	CAM_THIRDPERSON,
-
-	CAM_MODES
-};
-
-typedef struct
-{
-
-	int mode;
-	unsigned int cmd_mode_delay;
-
-} cg_chasecam_t;
-
-extern cg_chasecam_t chaseCam;
-
 typedef struct
 {
 	entity_t ent;
