@@ -363,7 +363,7 @@ void CG_ScreenInit( void )
 	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "15", CVAR_ARCHIVE );
 	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "25", CVAR_ARCHIVE );
 	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "8", CVAR_ARCHIVE );
-	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "5.5", CVAR_ARCHIVE );
+	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "6", CVAR_ARCHIVE );
 	cg_touch_lookInvert = trap_Cvar_Get( "cg_touch_lookInvert", "0", CVAR_ARCHIVE );
 	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "0.8", CVAR_ARCHIVE );
 
