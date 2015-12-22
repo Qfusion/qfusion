@@ -197,7 +197,7 @@ void G_Killed( edict_t *targ, edict_t *inflictor, edict_t *attacker, int damage,
 		}
 	}
 
-	G_Gametype_ScoreEvent( attacker ? attacker->r.client : NULL, "kill", va( "%i %i %i", targ->s.number, ( inflictor == world ) ? -1 : ENTNUM( inflictor ), ENTNUM( attacker ) ) );
+	G_Gametype_ScoreEvent( attacker ? attacker->r.client : NULL, "kill", va( "%i %i %i %i", targ->s.number, ( inflictor == world ) ? -1 : ENTNUM( inflictor ), ENTNUM( attacker ), mod ) );
 
 	G_CallDie( targ, inflictor, attacker, damage, point );
 }
