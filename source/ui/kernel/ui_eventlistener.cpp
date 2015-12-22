@@ -22,13 +22,10 @@ using namespace Rocket::Core;
 
 BaseEventListener::BaseEventListener()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 BaseEventListener::~BaseEventListener()
 {
-	// TODO Auto-generated destructor stub
 }
 
 void BaseEventListener::ProcessEvent( Event &event )
@@ -71,13 +68,11 @@ void BaseEventListener::StartTargetPropertySound( Element *target, const String 
 	trap::S_StartLocalSound( sound.CString()+1 );
 }
 
+static BaseEventListener ui_baseEventListener;
+
 Rocket::Core::EventListener * GetBaseEventListener( void )
 {
-	static BaseEventListener *listener = nullptr;
-	if( listener == nullptr ) {
-		listener = __new__(BaseEventListener)();
-	}
-	return listener;
+	return &ui_baseEventListener;
 }
 
 //===================================================
