@@ -270,7 +270,7 @@ gsitem_t	itemdefs[] =
 		S_PICKUP_WEAPON,
 		EF_ROTATE_AND_BOB|EF_OUTLINE,
 
-		"Instagun", "IG", S_COLOR_BLUE,
+		"Instagun", "IG", S_COLOR_MAGENTA,
 		1,
 		1,
 		AMMO_INSTAS,
