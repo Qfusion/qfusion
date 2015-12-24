@@ -54,4 +54,4 @@ LOCAL_SRC_FILES := \
   ssl/t1_srvr.c \
   ssl/tls_srp.c
 
-include $(QFUSION_PATH)/source/android/openssl-build.mk
+include $(QFUSION_PATH)/source/android/libs/openssl-build.mk
