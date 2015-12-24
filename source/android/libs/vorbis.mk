@@ -3,7 +3,10 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := vorbis
 
 LOCAL_EXPORT_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_C_INCLUDES := $(LOCAL_EXPORT_C_INCLUDES) $(LOCAL_PATH)/lib
+LOCAL_C_INCLUDES := \
+  $(LOCAL_EXPORT_C_INCLUDES) \
+  $(LOCAL_PATH)/lib \
+  $(QFUSION_PATH)/source/android/libs/libvorbis/lib
 
 LOCAL_STATIC_LIBRARIES := ogg
 

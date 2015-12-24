@@ -62,3 +62,8 @@ libogg/win32/VS2008/libogg_static.vcproj
 ~ compiling libvorbis ~
 libvorbis/win32/VS2008/libvorbis/libvorbis_static.vcproj
 libvorbis/win32/VS2008/libvorbisfile/libvorbisfile_static.vcproj
+
+~ notes about openssl ~
+Some libcrypto assembly files were pre-converted to make OpenSSL buildable without Perl.
+Also the symlink paths in `include` were changed to real `#include` directives.
+The build scripts for Android depend on these changes, make sure the above is applied when updating OpenSSL.

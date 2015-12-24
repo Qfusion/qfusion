@@ -616,4 +616,4 @@ else ifeq ($(TARGET_ARCH_ABI),mips)
     crypto/sha/asm/sha1-mips.S
 endif
 
-include $(QFUSION_PATH)/source/android/openssl-build.mk
+include $(QFUSION_PATH)/source/android/libs/openssl-build.mk
