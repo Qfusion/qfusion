@@ -843,6 +843,7 @@ void CG_GetHUDTouchButtons( unsigned int *buttons, int *upmove );
 void CG_UpdateHUDPostDraw( void );
 void CG_UpdateHUDPostTouch( void );
 void CG_ShowWeaponCross( void );
+void CG_ClearHUDInputState( void );
 
 //
 // cg_damage_indicator.c
