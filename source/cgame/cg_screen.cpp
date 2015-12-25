@@ -1470,8 +1470,9 @@ void CG_Draw2DView( void )
 	if( cg.predictedPlayerState.stats[STAT_LAYOUTS] & STAT_LAYOUT_SPECDEAD )
 	{
 		int barheight = cgs.vidHeight * 0.08;
-		trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, barheight, 0, 0, 1, 1, colorBlack, cgs.shaderWhite );
-		trap_R_DrawStretchPic( 0, cgs.vidHeight - barheight, cgs.vidWidth, barheight, 0, 0, 1, 1, colorBlack, cgs.shaderWhite );
+		const vec4_t barcolor = { 0.0f, 0.0f, 0.0f, 0.6f };
+		trap_R_DrawStretchPic( 0, 0, cgs.vidWidth, barheight, 0, 0, 1, 1, barcolor, cgs.shaderWhite );
+		trap_R_DrawStretchPic( 0, cgs.vidHeight - barheight, cgs.vidWidth, barheight, 0, 0, 1, 1, barcolor, cgs.shaderWhite );
 	}
 
 	if( cg.motd && ( cg.time > cg.motd_time ) )
