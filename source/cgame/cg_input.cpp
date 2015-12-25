@@ -184,7 +184,7 @@ void CG_ClearInputState( void )
 {
 	cg_gamepad_accelPitch = cg_gamepad_accelYaw = 1.0f;
 
-	CG_CancelTouches();
+	CG_ClearHUDInputState();
 }
 
 unsigned int CG_GetButtonBits( void )

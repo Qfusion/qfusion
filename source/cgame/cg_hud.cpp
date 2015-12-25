@@ -2727,10 +2727,10 @@ static void CG_ViewUpFunc( int id, unsigned int time )
 	{
 		cg_touch_t &touch = cg_touches[id];
 
-		float scale = 600.0f / ( float )cgs.vidHeight;
+		float threshold = cg_touch_zoomThres->value * cgs.pixelRatio;
 		if( !time || ( (int)( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-			( abs( touch.x - cg_hud_touch_zoomX ) * scale > cg_touch_zoomThres->value ) ||
-			( abs( touch.y - cg_hud_touch_zoomY ) * scale > cg_touch_zoomThres->value ) )
+			( fabs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
+			( fabs( touch.y - cg_hud_touch_zoomY ) > threshold ) )
 		{
 			cg_hud_touch_zoomSeq = 0;
 		}
@@ -2763,10 +2763,10 @@ static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_la
 		cg_touch_t &touch = cg_touches[touchID];
 		if( cg_hud_touch_zoomSeq )
 		{
-			float scale = 600.0f / ( float )cgs.vidHeight;
+			float threshold = cg_touch_zoomThres->value * cgs.pixelRatio;
 			if( ( ( int )( touch.time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-				( abs( touch.x - cg_hud_touch_zoomX ) * scale > cg_touch_zoomThres->value ) ||
-				( abs( touch.y - cg_hud_touch_zoomY ) * scale > cg_touch_zoomThres->value ) )
+				( fabs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
+				( fabs( touch.y - cg_hud_touch_zoomY ) > threshold ) )
 			{
 				cg_hud_touch_zoomSeq = 0;
 			}
@@ -4729,10 +4729,7 @@ static void CG_LoadStatusBarFile( char *path )
 		return;
 	}
 
-	CG_CancelTouches();
-	cg_hud_touch_buttons = 0;
-	cg_hud_touch_upmove = 0;
-	cg_hud_touch_zoomSeq = 0;
+	CG_ClearHUDInputState();
 
 	// load the new status bar program
 	CG_ParseLayoutScript( opt, cg.statusBar );
@@ -4828,4 +4825,15 @@ void CG_UpdateHUDPostTouch( void )
 {
 	if( cg.frame.playerState.pmove.pm_type != PM_NORMAL )
 		cg_hud_touch_buttons &= ~BUTTON_ZOOM;
+}
+
+/*
+* CG_ClearHUDInputState
+*/
+void CG_ClearHUDInputState( void )
+{
+	CG_CancelTouches();
+
+	cg_hud_touch_zoomSeq = 0;
+	cg_hud_touch_buttons &= ~BUTTON_ZOOM;
 }

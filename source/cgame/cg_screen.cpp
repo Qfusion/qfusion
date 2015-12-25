@@ -360,10 +360,10 @@ void CG_ScreenInit( void )
 	// wsw : hud debug prints
 	cg_debugHUD =		    trap_Cvar_Get( "cg_debugHUD", "0", 0 );
 
-	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "15", CVAR_ARCHIVE );
-	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "25", CVAR_ARCHIVE );
-	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "8", CVAR_ARCHIVE );
-	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "6", CVAR_ARCHIVE );
+	cg_touch_moveThres = trap_Cvar_Get( "cg_touch_moveThres", "24", CVAR_ARCHIVE );
+	cg_touch_strafeThres = trap_Cvar_Get( "cg_touch_strafeThres", "32", CVAR_ARCHIVE );
+	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "5", CVAR_ARCHIVE );
+	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "10", CVAR_ARCHIVE );
 	cg_touch_lookInvert = trap_Cvar_Get( "cg_touch_lookInvert", "0", CVAR_ARCHIVE );
 	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "0.8", CVAR_ARCHIVE );
 
@@ -1713,19 +1713,19 @@ void CG_AddTouchViewAngles( vec3_t viewangles, float frametime, float flip )
 		cg_touch_t &touch = cg_touches[viewpad.touch];
 
 		float speed = cg_touch_lookSens->value * frametime * CG_GetSensitivityScale( 1.0f, 0.0f );
-		float scale = 600.0f / ( float )cgs.vidHeight;
+		float scale = 1.0f / cgs.pixelRatio;
 
 		float angle = ( ( float )touch.y - viewpad.y ) * scale;
 		if( cg_touch_lookInvert->integer )
 			angle = -angle;
 		float dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f );
-		angle = fabsf( angle ) - cg_touch_lookThres->value;
+		angle = fabs( angle ) - cg_touch_lookThres->value;
 		if( angle > 0.0f )
 			viewangles[PITCH] += angle * dir * speed;
 
 		angle = ( viewpad.x - ( float )touch.x ) * scale;
 		dir = ( ( angle < 0.0f ) ? -1.0f : 1.0f ) * flip;
-		angle = fabsf( angle ) - cg_touch_lookThres->value;
+		angle = fabs( angle ) - cg_touch_lookThres->value;
 		if( angle > 0.0f )
 			viewangles[YAW] += angle * dir * speed;
 	}
@@ -1751,14 +1751,12 @@ void CG_AddTouchMovement( vec3_t movement )
 
 		cg_touch_t &touch = cg_touches[movepad.touch];
 
-		float scale = 600.0f / ( float )cgs.vidHeight;
-
 		float move = ( float )touch.x - movepad.x;
-		if( fabsf( move * scale ) > cg_touch_strafeThres->value )
+		if( fabs( move ) > cg_touch_strafeThres->value * cgs.pixelRatio )
 			movement[0] += ( move < 0 ) ? -1.0f : 1.0f;
 
 		move = movepad.y - ( float )touch.y;
-		if( fabsf( move * scale ) > cg_touch_moveThres->value )
+		if( fabs( move ) > cg_touch_moveThres->value * cgs.pixelRatio )
 			movement[1] += ( move < 0 ) ? -1.0f : 1.0f;
 	}
 
