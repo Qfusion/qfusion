@@ -365,7 +365,7 @@ void CG_ScreenInit( void )
 	cg_touch_lookThres = trap_Cvar_Get( "cg_touch_lookThres", "5", CVAR_ARCHIVE );
 	cg_touch_lookSens = trap_Cvar_Get( "cg_touch_lookSens", "10", CVAR_ARCHIVE );
 	cg_touch_lookInvert = trap_Cvar_Get( "cg_touch_lookInvert", "0", CVAR_ARCHIVE );
-	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "0.8", CVAR_ARCHIVE );
+	cg_touch_lookDecel = trap_Cvar_Get( "cg_touch_lookDecel", "8.5", CVAR_ARCHIVE );
 
 	//
 	// register our commands
@@ -1649,9 +1649,16 @@ void CG_TouchFrame( float frametime )
 
 		cg_touch_t &touch = cg_touches[viewpad.touch];
 
-		float decel = cg_touch_lookDecel->value * ( float )frametime * 10.0f;
-		viewpad.x += ( ( float )touch.x - viewpad.x ) * decel;
-		viewpad.y += ( ( float )touch.y - viewpad.y ) * decel;
+		float decel = cg_touch_lookDecel->value * ( float )frametime;
+		float xdist = ( float )touch.x - viewpad.x;
+		float ydist = ( float )touch.y - viewpad.y;
+		viewpad.x += xdist * decel;
+		viewpad.y += ydist * decel;
+		// Check if decelerated too much (to the opposite direction)
+		if( ( ( ( float )touch.x - viewpad.x ) * xdist ) < 0.0f )
+			viewpad.x = touch.x;
+		if( ( ( ( float )touch.y - viewpad.y ) * ydist ) < 0.0f )
+			viewpad.y = touch.y;
 	}
 
 	for( i = 0; i < CG_MAX_TOUCHES; ++i )
