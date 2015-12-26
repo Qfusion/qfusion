@@ -2727,10 +2727,10 @@ static void CG_ViewUpFunc( int id, unsigned int time )
 	{
 		cg_touch_t &touch = cg_touches[id];
 
-		float threshold = cg_touch_zoomThres->value * cgs.pixelRatio;
+		int threshold = ( int )( cg_touch_zoomThres->value * cgs.pixelRatio );
 		if( !time || ( (int)( time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-			( fabs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
-			( fabs( touch.y - cg_hud_touch_zoomY ) > threshold ) )
+			( abs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
+			( abs( touch.y - cg_hud_touch_zoomY ) > threshold ) )
 		{
 			cg_hud_touch_zoomSeq = 0;
 		}
@@ -2763,10 +2763,10 @@ static bool CG_LFuncTouchView( struct cg_layoutnode_s *commandnode, struct cg_la
 		cg_touch_t &touch = cg_touches[touchID];
 		if( cg_hud_touch_zoomSeq )
 		{
-			float threshold = cg_touch_zoomThres->value * cgs.pixelRatio;
+			int threshold = ( int )( cg_touch_zoomThres->value * cgs.pixelRatio );
 			if( ( ( int )( touch.time - cg_hud_touch_zoomLastTouch ) > cg_touch_zoomTime->integer ) ||
-				( fabs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
-				( fabs( touch.y - cg_hud_touch_zoomY ) > threshold ) )
+				( abs( touch.x - cg_hud_touch_zoomX ) > threshold ) ||
+				( abs( touch.y - cg_hud_touch_zoomY ) > threshold ) )
 			{
 				cg_hud_touch_zoomSeq = 0;
 			}
