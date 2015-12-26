@@ -255,22 +255,25 @@ bool RocketModule::touchEvent( int contextId, int id, touchevent_t type, int x, 
 			}
 
 			if( contextTouch.scroll ) {
-				Element *element;
-				for( element = context->GetElementAtPoint( contextTouch.origin ); element; element = element->GetParentNode() ) {
-					if( element->GetTagName() == "scrollbarvertical" ) {
-						break;
-					}
+				Element *focusElement = context->GetFocusElement();
+				if( !focusElement || ( focusElement->GetTagName() != "keyselect" ) ) {
+					Element *element;
+					for( element = context->GetElementAtPoint( contextTouch.origin ); element; element = element->GetParentNode() ) {
+						if( element->GetTagName() == "scrollbarvertical" ) {
+							break;
+						}
 
-					int overflow = element->GetProperty< int >( "overflow-y" );
-					if( ( overflow != Rocket::Core::OVERFLOW_AUTO ) && ( overflow != Rocket::Core::OVERFLOW_SCROLL ) ) {
-						continue;
-					}
+						int overflow = element->GetProperty< int >( "overflow-y" );
+						if( ( overflow != Rocket::Core::OVERFLOW_AUTO ) && ( overflow != Rocket::Core::OVERFLOW_SCROLL ) ) {
+							continue;
+						}
 
-					int scrollTop = element->GetScrollTop();
-					if( ( ( delta < 0 ) && ( scrollTop > 0 ) ) ||
-						( ( delta > 0 ) && ( element->GetScrollHeight() > scrollTop + element->GetClientHeight() ) ) ) {
-						element->SetScrollTop( element->GetScrollTop() + delta );
-						break;
+						int scrollTop = element->GetScrollTop();
+						if( ( ( delta < 0 ) && ( scrollTop > 0 ) ) ||
+							( ( delta > 0 ) && ( element->GetScrollHeight() > scrollTop + element->GetClientHeight() ) ) ) {
+							element->SetScrollTop( element->GetScrollTop() + delta );
+							break;
+						}
 					}
 				}
 				contextTouch.y = y;
