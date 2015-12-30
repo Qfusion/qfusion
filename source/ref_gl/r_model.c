@@ -391,11 +391,15 @@ static int Mod_CreateSubmodelBufferObjects( model_t *mod, unsigned int modnum, s
 			mark = leaf->firstVisSurface;
 			do
 			{
-				int surfnum;
+				unsigned surfnum;
 
 				surf = *mark++;
 				surfnum = surf - loadbmodel->surfaces;
 
+				if( surfnum >= bm->numfaces ) {
+					// some buggy maps such as aeroq2 contain visleafs that address faces from submodels...
+					continue;
+				}
 				if( surfmap[surfnum] ) {
 					continue;
 				}

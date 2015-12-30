@@ -48,9 +48,8 @@ bool R_SurfPotentiallyShadowed( const msurface_t *surf )
 {
 	if( surf->flags & ( SURF_SKY|SURF_NODLIGHT|SURF_NODRAW ) )
 		return false;
-	if( ( surf->shader->sort >= SHADER_SORT_OPAQUE ) && ( surf->shader->sort <= SHADER_SORT_ALPHATEST ) ) {
+	if( ( surf->shader->sort >= SHADER_SORT_OPAQUE ) && ( surf->shader->sort <= SHADER_SORT_ALPHATEST ) )
 		return true;
-	}
 	return false;
 }
 
