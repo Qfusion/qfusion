@@ -766,16 +766,31 @@ void R_MarkLeaves( void )
 	uint8_t *areabits;
 	int cluster;
 	uint8_t fatpvs[MAX_MAP_LEAFS/8];
+	int arearowbytes, areabytes;
+	bool haveareabits;
 
 	rdflags = rn.refdef.rdflags;
 	if( rdflags & RDF_NOWORLDMODEL )
 		return;
-	if( rf.oldviewcluster == rf.viewcluster && ( rdflags & RDF_OLDAREABITS ) 
-		&& !(rn.renderFlags & RF_NOVIS) && rf.viewcluster != -1 && rf.oldviewcluster != -1 )
-		return;
-	if( rn.renderFlags & RF_SHADOWMAPVIEW )
-		return;
 	if( !rsh.worldModel )
+		return;
+
+	haveareabits = rn.refdef.areabits != NULL;
+	arearowbytes = ((rsh.worldBrushModel->numareas+7)/8);
+	areabytes = arearowbytes;
+#ifdef AREAPORTALS_MATRIX
+	areabytes *= rsh.worldBrushModel->numareas;
+#endif
+
+	if( rf.oldviewcluster == rf.viewcluster && !(rn.renderFlags & RF_NOVIS) && rf.viewcluster != -1 && rf.oldviewcluster != -1 ) {
+		// compare area bits from previous frame
+		if( !haveareabits && rf.haveOldAreabits == false )
+			return;
+		if( haveareabits && rf.haveOldAreabits == true && memcmp( rf.oldAreabits, rn.refdef.areabits, areabytes ) == 0 )
+			return;
+	}
+
+	if( rn.renderFlags & RF_SHADOWMAPVIEW )
 		return;
 
 	// development aid to let you run around and see exactly where
@@ -785,6 +800,9 @@ void R_MarkLeaves( void )
 
 	rf.pvsframecount++;
 	rf.oldviewcluster = rf.viewcluster;
+	rf.haveOldAreabits = haveareabits;
+	if( haveareabits )
+		memcpy( rf.oldAreabits, rn.refdef.areabits, areabytes );
 
 	if( rn.renderFlags & RF_NOVIS || rf.viewcluster == -1 || !rsh.worldBrushModel->pvs )
 	{
@@ -799,7 +817,7 @@ void R_MarkLeaves( void )
 	pvs = Mod_ClusterPVS( rf.viewcluster, rsh.worldModel );
 	if( rf.viewarea > -1 && rn.refdef.areabits )
 #ifdef AREAPORTALS_MATRIX
-		areabits = rn.refdef.areabits + rf.viewarea * ((rsh.worldBrushModel->numareas+7)/8);
+		areabits = rn.refdef.areabits + rf.viewarea * arearowbytes;
 #else
 		areabits = rn.refdef.areabits;
 #endif
