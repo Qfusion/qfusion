@@ -52,13 +52,13 @@ void R_ScreenShot_f( void )
 	mediadir = ri.FS_MediaDirectory( FS_MEDIA_IMAGES );
 	if( mediadir )
 	{
-		path_size = strlen( mediadir ) + 1 + strlen( glConfig.applicationName ) + sizeof( " Screenshots/" );
+		path_size = strlen( mediadir ) + 1 /* '/' */ + strlen( glConfig.applicationName ) + strlen( " Screenshots/" ) + 1;
 		path = alloca( path_size );
 		Q_snprintfz( path, path_size, "%s/%s Screenshots/", mediadir, glConfig.applicationName );
 	}
 	else
 	{
-		path_size = strlen( ri.FS_WriteDirectory() ) + 1 + strlen( ri.FS_GameDirectory() ) + sizeof( "/screenshots/" );
+		path_size = strlen( ri.FS_WriteDirectory() ) + 1 /* '/' */ + strlen( ri.FS_GameDirectory() ) + strlen( "/screenshots/" ) + 1;
 		path = alloca( path_size );
 		Q_snprintfz( path, path_size, "%s/%s/screenshots/", ri.FS_WriteDirectory(), ri.FS_GameDirectory() );
 	}
