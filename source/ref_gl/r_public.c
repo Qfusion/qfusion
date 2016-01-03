@@ -49,12 +49,12 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.API = GetRefAPIVersion;
 
-	globals.Init = R_Init;
-	globals.SetMode = R_SetMode;
+	globals.Init = RF_Init;
+	globals.SetMode = RF_SetMode;
 	globals.SetWindow = R_SetWindow;
 	globals.BeginRegistration = R_BeginRegistration;
 	globals.EndRegistration = R_EndRegistration;
-	globals.Shutdown = R_Shutdown;
+	globals.Shutdown = RF_Shutdown;
 
 	globals.ModelBounds = R_ModelBounds;
 	globals.ModelFrameBounds = R_ModelFrameBounds;
@@ -74,24 +74,24 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.ReplaceRawSubPic = R_ReplaceRawSubPic;
 
-	globals.ClearScene = R_ClearScene;
-	globals.AddEntityToScene = R_AddEntityToScene;
-	globals.AddLightToScene = R_AddLightToScene;
-	globals.AddPolyToScene = R_AddPolyToScene;
-	globals.AddLightStyleToScene = R_AddLightStyleToScene;
-	globals.RenderScene = R_RenderScene;
+	globals.BeginFrame = RF_BeginFrame;
+	globals.EndFrame = RF_EndFrame;
+	globals.ClearScene = RF_ClearScene;
+	globals.AddEntityToScene = RF_AddEntityToScene;
+	globals.AddLightToScene = RF_AddLightToScene;
+	globals.AddPolyToScene = RF_AddPolyToScene;
+	globals.AddLightStyleToScene = RF_AddLightStyleToScene;
+	globals.RenderScene = RF_RenderScene;
+	globals.DrawStretchPic = RF_DrawStretchPic;
+	globals.DrawRotatedStretchPic = RF_DrawRotatedStretchPic;
+	globals.DrawStretchRaw = RF_DrawStretchRaw;
+	globals.DrawStretchRawYUV = RF_DrawStretchRawYUV;
+	globals.DrawStretchPoly = RF_DrawStretchPoly;
+	globals.Scissor = RF_SetScissor;
+	globals.GetScissor = RF_GetScissor;
+	globals.ResetScissor = RF_ResetScissor;
+	globals.SetCustomColor = RF_SetCustomColor;
 
-	globals.DrawStretchPic = R_DrawStretchPic;
-	globals.DrawRotatedStretchPic = R_DrawRotatedStretchPic;
-	globals.DrawStretchRaw = R_DrawStretchRaw;
-	globals.DrawStretchRawYUV = R_DrawStretchRawYUV;
-	globals.DrawStretchPoly = R_DrawStretchPoly;
-	
-	globals.Scissor = R_Scissor;
-	globals.GetScissor = R_GetScissor;
-	globals.ResetScissor = R_ResetScissor;
-
-	globals.SetCustomColor = R_SetCustomColor;
 	globals.LightForOrigin = R_LightForOrigin2;
 
 	globals.LerpTag = R_LerpTag;
@@ -107,10 +107,8 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.TransformVectorToScreen = R_TransformVectorToScreen;
 
-	globals.ScreenEnabled = R_ScreenEnabled;
-	globals.BeginFrame = R_BeginFrame;
-	globals.EndFrame = R_EndFrame;
-	globals.SpeedsMessage = R_SpeedsMessage;
+	globals.ScreenEnabled = RF_ScreenEnabled;
+	globals.SpeedsMessage = RF_SpeedsMessage;
 
 	globals.BeginAviDemo = R_BeginAviDemo;
 	globals.WriteAviFrame = R_WriteAviFrame;

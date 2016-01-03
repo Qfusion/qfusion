@@ -2025,7 +2025,7 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic )
 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, 0, 0, image->width, image->height, image->flags, image->minmipsize,
 		NULL, NULL, image->samples, true, false );
-
+    
 	image->registrationSequence = rsh.registrationSequence;
 }
 

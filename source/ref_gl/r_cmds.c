@@ -23,145 +23,235 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../qalgo/glob.h"
 
 /*
+ * R_TakeScreenShot
+ */
+void R_TakeScreenShot( const char *path, const char *name, bool silent )
+{
+    const char *extension;
+    size_t path_size = strlen( path ) + 1;
+    char *checkname = NULL;
+    size_t checkname_size = 0;
+    int quality;
+    
+    if( !R_ScreenEnabled() )
+        return;
+    
+    if( r_screenshot_jpeg->integer ) {
+        extension = ".jpg";
+        quality = r_screenshot_jpeg_quality->integer;
+    }
+    else {
+        extension = ".tga";
+        quality = 100;
+    }
+    
+    if( name && name[0] && Q_stricmp(name, "*") )
+    {
+        if( !COM_ValidateRelativeFilename( name ) )
+        {
+            Com_Printf( "Invalid filename\n" );
+            return;
+        }
+        
+        checkname_size = ( path_size - 1 ) + strlen( name ) + strlen( extension ) + 1;
+        checkname = alloca( checkname_size );
+        Q_snprintfz( checkname, checkname_size, "%s%s", path, name );
+        COM_DefaultExtension( checkname, extension, checkname_size );
+    }
+    
+    //
+    // find a file name to save it to
+    //
+    if( !checkname )
+    {
+        int i;
+        const int maxFiles = 100000;
+        static int lastIndex = 0;
+        bool addIndex = false;
+        time_t timestamp;
+        char timestamp_str[MAX_QPATH];
+        struct tm newtime;
+        
+        timestamp = time( NULL );
+#ifdef _MSC_VER
+		localtime_s( &newtime, &timestamp );
+#else
+        localtime_r( &timestamp, &newtime );
+#endif
+
+	   // validate timestamp string
+        for( i = 0; i < 2; i++ )
+        {
+            strftime( timestamp_str, sizeof( timestamp_str ), r_screenshot_fmtstr->string, &newtime );
+            if( !COM_ValidateRelativeFilename( timestamp_str ) )
+                ri.Cvar_ForceSet( r_screenshot_fmtstr->name, r_screenshot_fmtstr->dvalue );
+            else
+                break;
+        }
+        
+        // hm... shouldn't really happen, but check anyway
+        if( i == 2 )
+        {
+            Q_strncpyz( timestamp_str, glConfig.screenshotPrefix, sizeof( timestamp_str ) );
+            ri.Cvar_ForceSet( r_screenshot_fmtstr->name, glConfig.screenshotPrefix );
+        }
+        
+        checkname_size = ( path_size - 1 ) + strlen( timestamp_str ) + 5 + 1 + strlen( extension );
+        checkname = alloca( checkname_size );
+        
+        // if the string format is a constant or file already exists then iterate
+        if( !*timestamp_str || !strcmp( timestamp_str, r_screenshot_fmtstr->string ) )
+        {
+            addIndex = true;
+            
+            // force a rescan in case some vars have changed..
+            if( r_screenshot_fmtstr->modified )
+            {
+                lastIndex = 0;
+                r_screenshot_fmtstr->modified = true;
+            }
+            if( r_screenshot_jpeg->modified )
+            {
+                lastIndex = 0;
+                r_screenshot_jpeg->modified = false;
+            }
+        }
+        else
+        {
+            Q_snprintfz( checkname, checkname_size, "%s%s%s", path, timestamp_str, extension );
+            if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) != -1 )
+            {
+                lastIndex = 0;
+                addIndex = true;
+            }
+        }
+        
+        for( ; addIndex && lastIndex < maxFiles; lastIndex++ )
+        {
+            Q_snprintfz( checkname, checkname_size, "%s%s%05i%s", path, timestamp_str, lastIndex, extension );
+            if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) == -1 )
+                break; // file doesn't exist
+        }
+        
+        if( lastIndex == maxFiles )
+        {
+            Com_Printf( "Couldn't create a file\n" );
+            return;
+        }
+        
+        lastIndex++;
+    }
+    
+    R_ScreenShot( checkname, 
+                 0, 0, glConfig.width, glConfig.height, quality, 
+                 false, false, false, silent );
+    
+    ri.FS_AddFileToMedia( checkname );
+}
+
+/*
 * R_ScreenShot_f
 */
 void R_ScreenShot_f( void )
 {
 	const char *name;
-	const char *extension;
 	const char *mediadir;
 	size_t path_size;
 	char *path;
-	char *checkname = NULL;
-	size_t checkname_size = 0;
-	int quality;
 
-	if( !R_ScreenEnabled() )
+    if( !R_ScreenEnabled() )
 		return;
 
 	name = ri.Cmd_Argv( 1 );
-	if( r_screenshot_jpeg->integer ) {
-		extension = ".jpg";
-		quality = r_screenshot_jpeg_quality->integer;
-	}
-	else {
-		extension = ".tga";
-		quality = 100;
-	}
 
 	mediadir = ri.FS_MediaDirectory( FS_MEDIA_IMAGES );
 	if( mediadir )
 	{
-		path_size = strlen( mediadir ) + 1 /* '/' */ + strlen( glConfig.applicationName ) + strlen( " Screenshots/" ) + 1;
+		path_size = strlen( mediadir ) + 1/* '/' */ + strlen( glConfig.applicationName ) + strlen( " Screenshots/" ) + 1;
 		path = alloca( path_size );
 		Q_snprintfz( path, path_size, "%s/%s Screenshots/", mediadir, glConfig.applicationName );
 	}
 	else
 	{
-		path_size = strlen( ri.FS_WriteDirectory() ) + 1 /* '/' */ + strlen( ri.FS_GameDirectory() ) + strlen( "/screenshots/" ) + 1;
+		path_size = strlen( ri.FS_WriteDirectory() ) + 1/* '/' */ + strlen( ri.FS_GameDirectory() ) + strlen( "/screenshots/" ) + 1;
 		path = alloca( path_size );
 		Q_snprintfz( path, path_size, "%s/%s/screenshots/", ri.FS_WriteDirectory(), ri.FS_GameDirectory() );
 	}
 
-	if( name && name[0] && Q_stricmp(name, "*") )
-	{
-		if( !COM_ValidateRelativeFilename( name ) )
-		{
-			Com_Printf( "Invalid filename\n" );
-			return;
-		}
+    RF_ScreenShot( path, name, ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? true : false );
+}
 
-		checkname_size = ( path_size - 1 ) + strlen( name ) + strlen( extension ) + 1;
-		checkname = alloca( checkname_size );
-		Q_snprintfz( checkname, checkname_size, "%s%s", path, name );
-		COM_DefaultExtension( checkname, extension, checkname_size );
-	}
-
-	//
-	// find a file name to save it to
-	//
-	if( !checkname )
-	{
-		int i;
-		const int maxFiles = 100000;
-		static int lastIndex = 0;
-		bool addIndex = false;
-		time_t timestamp;
-		char timestamp_str[MAX_QPATH];
-		struct tm *timestampptr;
-
-		timestamp = time( NULL );
-		timestampptr = localtime( &timestamp );
-
-		// validate timestamp string
-		for( i = 0; i < 2; i++ )
-		{
-			strftime( timestamp_str, sizeof( timestamp_str ), r_screenshot_fmtstr->string, timestampptr );
-			if( !COM_ValidateRelativeFilename( timestamp_str ) )
-				ri.Cvar_ForceSet( r_screenshot_fmtstr->name, r_screenshot_fmtstr->dvalue );
-			else
-				break;
-		}
-
-		// hm... shouldn't really happen, but check anyway
-		if( i == 2 )
-		{
-			Q_strncpyz( timestamp_str, glConfig.screenshotPrefix, sizeof( timestamp_str ) );
-			ri.Cvar_ForceSet( r_screenshot_fmtstr->name, glConfig.screenshotPrefix );
-		}
-
-		checkname_size = ( path_size - 1 ) + strlen( timestamp_str ) + 5 + 1 + strlen( extension );
-		checkname = alloca( checkname_size );
-
-		// if the string format is a constant or file already exists then iterate
-		if( !*timestamp_str || !strcmp( timestamp_str, r_screenshot_fmtstr->string ) )
-		{
-			addIndex = true;
-
-			// force a rescan in case some vars have changed..
-			if( r_screenshot_fmtstr->modified )
-			{
-				lastIndex = 0;
-				r_screenshot_fmtstr->modified = true;
-			}
-			if( r_screenshot_jpeg->modified )
-			{
-				lastIndex = 0;
-				r_screenshot_jpeg->modified = false;
-			}
-		}
-		else
-		{
-			Q_snprintfz( checkname, checkname_size, "%s%s%s", path, timestamp_str, extension );
-			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) != -1 )
-			{
-				lastIndex = 0;
-				addIndex = true;
-			}
-		}
-
-		for( ; addIndex && lastIndex < maxFiles; lastIndex++ )
-		{
-			Q_snprintfz( checkname, checkname_size, "%s%s%05i%s", path, timestamp_str, lastIndex, extension );
-			if( ri.FS_FOpenAbsoluteFile( checkname, NULL, FS_READ ) == -1 )
-				break; // file doesn't exist
-		}
-
-		if( lastIndex == maxFiles )
-		{
-			Com_Printf( "Couldn't create a file\n" );
-			return;
-		}
-
-		lastIndex++;
-	}
-
-	R_ScreenShot( checkname, 
-		0, 0, glConfig.width, glConfig.height, quality, 
-		false, false, false, 
-		ri.Cmd_Argc() >= 3 && !Q_stricmp( ri.Cmd_Argv( 2 ), "silent" ) ? true : false );
-
-	ri.FS_AddFileToMedia( checkname );
+/*
+ * R_TakeEnvShot
+ */
+void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels )
+{
+    int i;
+    unsigned size, maxSize;
+    int checkname_size;
+    char *checkname;
+    refdef_t fd;
+    struct	cubemapSufAndFlip
+    {
+        char *suf; vec3_t angles; int flags;
+    } cubemapShots[6] = {
+        { "px", { 0, 0, 0 }, IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL },
+        { "nx", { 0, 180, 0 }, IT_FLIPDIAGONAL },
+        { "py", { 0, 90, 0 }, IT_FLIPY },
+        { "ny", { 0, 270, 0 }, IT_FLIPX },
+        { "pz", { -90, 180, 0 }, IT_FLIPDIAGONAL },
+        { "nz", { 90, 180, 0 }, IT_FLIPDIAGONAL }
+    };
+    
+    if( !R_ScreenEnabled() || !rsh.worldModel )
+        return;
+    
+    maxSize = min( min( glConfig.width, glConfig.height ), glConfig.maxTextureSize );
+    if( maxSize > maxPixels )
+        maxSize = maxPixels;
+    
+    for( size = 1; size < maxSize; size <<= 1 ) ;
+    if( size > maxSize )
+        size >>= 1;
+    
+    checkname_size = strlen( path ) + strlen( name ) + 1 + strlen( cubemapShots[0].suf ) + 4 + 1;
+    checkname = alloca( checkname_size );
+    
+    fd = rsc.refdef;
+    fd.time = 0;
+    //fd.x = fd.y = 0;
+    fd.width = fd.height = size;
+    fd.fov_x = fd.fov_y = 90;
+    
+    rn.farClip = R_DefaultFarClip();
+    
+    // do not render non-bmodel entities
+    rn.renderFlags |= RF_CUBEMAPVIEW;
+    rn.clipFlags = 15;
+    rn.shadowGroup = NULL;
+    rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
+    
+    Vector4Set( rn.viewport, fd.x, glConfig.height - size - fd.y, size, size );
+    Vector4Set( rn.scissor, fd.x, glConfig.height - size - fd.y, size, size );
+    
+    for( i = 0; i < 6; i++ )
+    {
+        AnglesToAxis( cubemapShots[i].angles, fd.viewaxis );
+        
+        R_RenderView( &fd );
+        
+        Q_snprintfz( checkname, checkname_size, "%s%s_%s", path, name, cubemapShots[i].suf );
+        COM_DefaultExtension( checkname, ".tga", checkname_size );
+        
+        R_ScreenShot( checkname, 0, 0, size, size, 100,
+                     ( cubemapShots[i].flags & IT_FLIPX ) ? true : false, 
+                     ( cubemapShots[i].flags & IT_FLIPY ) ? true : false, 
+                     ( cubemapShots[i].flags & IT_FLIPDIAGONAL ) ? true : false,
+                     false );
+    }
+    
+    // render non-bmodel entities again
+    rn.renderFlags &= ~RF_CUBEMAPVIEW;
 }
 
 /*
@@ -169,23 +259,9 @@ void R_ScreenShot_f( void )
 */
 void R_EnvShot_f( void )
 {
-	int i;
-	int size, maxSize;
 	const char *writedir, *gamedir;
-	int checkname_size;
-	char *checkname;
-	refdef_t fd;
-	struct	cubemapSufAndFlip
-	{
-		char *suf; vec3_t angles; int flags;
-	} cubemapShots[6] = {
-		{ "px", { 0, 0, 0 }, IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL },
-		{ "nx", { 0, 180, 0 }, IT_FLIPDIAGONAL },
-		{ "py", { 0, 90, 0 }, IT_FLIPY },
-		{ "ny", { 0, 270, 0 }, IT_FLIPX },
-		{ "pz", { -90, 180, 0 }, IT_FLIPDIAGONAL },
-		{ "nz", { 90, 180, 0 }, IT_FLIPDIAGONAL }
-	};
+	int path_size;
+	char *path;
 
 	if( !R_ScreenEnabled() || !rsh.worldModel )
 		return;
@@ -196,55 +272,13 @@ void R_EnvShot_f( void )
 		return;
 	}
 
-	maxSize = min( min( glConfig.width, glConfig.height ), glConfig.maxTextureSize );
-	if( maxSize > atoi( ri.Cmd_Argv( 2 ) ) )
-		maxSize = atoi( ri.Cmd_Argv( 2 ) );
-
-	for( size = 1; size < maxSize; size <<= 1 ) ;
-	if( size > maxSize )
-		size >>= 1;
-
 	writedir = ri.FS_WriteDirectory();
 	gamedir = ri.FS_GameDirectory();
-	checkname_size = strlen( writedir ) + 1 + strlen( gamedir ) + strlen( "/env/" ) + 
-		strlen( ri.Cmd_Argv( 1 ) ) + 1 + strlen( cubemapShots[0].suf ) + 4 + 1;
-	checkname = alloca( checkname_size );
+	path_size = strlen( writedir ) + 1 + strlen( gamedir ) + 1 + strlen( "env/" ) + 1;
+	path = alloca( path_size );
+    Q_snprintfz( path, path_size, "%s/%s/env/", writedir, gamedir );
 
-	fd = rsc.refdef;
-	fd.time = 0;
-	//fd.x = fd.y = 0;
-	fd.width = fd.height = size;
-	fd.fov_x = fd.fov_y = 90;
-
-	rn.farClip = R_DefaultFarClip();
-
-	// do not render non-bmodel entities
-	rn.renderFlags |= RF_CUBEMAPVIEW;
-	rn.clipFlags = 15;
-	rn.shadowGroup = NULL;
-	rn.fbColorAttachment = rn.fbDepthAttachment = NULL;
-
-	Vector4Set( rn.viewport, fd.x, glConfig.height - size - fd.y, size, size );
-	Vector4Set( rn.scissor, fd.x, glConfig.height - size - fd.y, size, size );
-
-	for( i = 0; i < 6; i++ )
-	{
-		AnglesToAxis( cubemapShots[i].angles, fd.viewaxis );
-
-		R_RenderView( &fd );
-
-		Q_snprintfz( checkname, checkname_size, "%s/%s/env/%s_%s", writedir, gamedir, ri.Cmd_Argv( 1 ), cubemapShots[i].suf );
-		COM_DefaultExtension( checkname, ".tga", checkname_size );
-
-		R_ScreenShot( checkname, 0, 0, size, size, 100, 
-			( cubemapShots[i].flags & IT_FLIPX ) ? true : false, 
-			( cubemapShots[i].flags & IT_FLIPY ) ? true : false, 
-			( cubemapShots[i].flags & IT_FLIPDIAGONAL ) ? true : false,
-			false );
-	}
-
-	// render non-bmodel entities again
-	rn.renderFlags &= ~RF_CUBEMAPVIEW;
+    RF_EnvShot( path, ri.Cmd_Argv( 1 ), atoi( ri.Cmd_Argv( 2 ) ) );
 }
 
 /*

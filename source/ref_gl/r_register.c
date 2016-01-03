@@ -28,6 +28,7 @@ r_shared_t rsh;
 
 mempool_t *r_mempool;
 
+cvar_t *r_maxfps;
 cvar_t *r_norefresh;
 cvar_t *r_drawentities;
 cvar_t *r_drawworld;
@@ -1057,6 +1058,7 @@ static void R_Register( const char *screenshotsPrefix )
 {
 	const qgl_driverinfo_t *driver;
 
+    r_maxfps = ri.Cvar_Get( "r_maxfps", "250", CVAR_ARCHIVE );
 	r_norefresh = ri.Cvar_Get( "r_norefresh", "0", 0 );
 	r_fullbright = ri.Cvar_Get( "r_fullbright", "0", CVAR_LATCH_VIDEO );
 	r_lightmap = ri.Cvar_Get( "r_lightmap", "0", 0 );
@@ -1373,6 +1375,8 @@ static rserr_t R_PostInit( void )
 
 	rsh.worldModelSequence = 1;
 
+    rf.speedsMsgMutex = ri.Mutex_Create();
+
 	R_InitDrawLists();
 
 	if( !R_RegisterGLExtensions() ) {
@@ -1422,6 +1426,8 @@ static rserr_t R_PostInit( void )
 	R_ClearRefInstStack();
 
 	R_BindFrameBufferObject( 0 );
+
+    RB_Finish();
 
 	glerr = qglGetError();
 	if( glerr != GL_NO_ERROR )
@@ -1591,6 +1597,8 @@ void R_Shutdown( bool verbose )
 	// restore original gamma
 	if( glConfig.hwGamma )
 		GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, glConfig.originalGammaRamp );
+
+    ri.Mutex_Destroy( &rf.speedsMsgMutex );
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
 	GLimp_Shutdown();

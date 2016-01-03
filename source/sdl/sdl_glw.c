@@ -51,7 +51,7 @@ void GLimp_SetWindowIcon( void )
 #endif
 }
 
-static bool GLimp_SetWindowFullscreen( bool fullscreen )
+rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
 {
 	Uint32 flags = 0;
 
@@ -64,7 +64,12 @@ static bool GLimp_SetWindowFullscreen( bool fullscreen )
 #endif
 	}
 
-	return SDL_SetWindowFullscreen( glw_state.sdl_window, flags ) == 0;
+    if( SDL_SetWindowFullscreen( glw_state.sdl_window, flags ) == 0 ) {
+        glConfig.fullScreen = fullscreen;
+        return rserr_ok;
+    }
+
+    return rserr_invalid_fullscreen;
 }
 
 static void GLimp_CreateWindow( int x, int y, int width, int height )
@@ -94,14 +99,6 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 {
 	const char *win_fs[] = {"W", "FS"};
 
-	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen ) {
-		if( GLimp_SetWindowFullscreen( fullscreen ) ) {
-			glConfig.fullScreen = fullscreen;
-			return rserr_ok;
-		}
-		return rserr_restart_required;
-	}
-
 	ri.Com_Printf( "Initializing OpenGL display\n" );
 	ri.Com_Printf( "...setting mode:" );
 	ri.Com_Printf( " %d %d %s\n", width, height, win_fs[fullscreen] );
@@ -119,14 +116,11 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 		return rserr_invalid_mode;
 	}
 
-	if( fullscreen && !GLimp_SetWindowFullscreen( fullscreen ) ) {
-		return rserr_invalid_fullscreen;
-	}
-
+    glConfig.fullScreen = fullscreen ? GLimp_SetFullscreenMode( displayFrequency, fullscreen ) == rserr_ok : false;
 	glConfig.width = width;
 	glConfig.height = height;
-	glConfig.fullScreen = fullscreen;
-	return rserr_ok;
+
+    return glConfig.fullScreen == fullscreen ? rserr_ok : rserr_invalid_fullscreen;
 }
 
 /**

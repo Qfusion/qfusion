@@ -1433,10 +1433,108 @@ bool R_ScreenEnabled( void )
 }
 
 /*
+ * R_SpeedsMessage
+ */
+static const char *R_SpeedsMessage( char *out, size_t size )
+{
+    char backend_msg[1024];
+    
+    if( !out || !size ) {
+        return out;
+    }
+    
+    out[0] = '\0';
+    if( r_speeds->integer && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
+    {
+        switch( r_speeds->integer )
+        {
+            case 1:
+            default:
+                RB_StatsMessage( backend_msg, sizeof( backend_msg ) );
+                
+                Q_snprintfz( out, size,
+                            "%4u wpoly %4u leafs\n"
+                            "sverts: %5u\\%5u  stris: %5u\\%5u\n"
+                            "framerate: %u\n"
+                            "%s",
+                            rf.stats.c_brush_polys, rf.stats.c_world_leafs,
+                            rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems/3, rf.stats.c_slices_elems_real/3,
+                            rf.fps.average,
+                            backend_msg
+                            );
+                break;
+            case 2:
+            case 3:
+                Q_snprintfz( out, size,
+                            "lvs: %5u  node: %5u\n"
+                            "polys\\ents: %5u\\%5i  draw: %5u\n",
+                            rf.stats.t_mark_leaves, rf.stats.t_world_node,
+                            rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
+                            );
+                break;
+            case 4:
+            case 5:
+                if( rsc.debugSurface )
+                {
+                    int numVerts = 0, numTris = 0;
+                    
+                    Q_snprintfz( out, size,
+                                "%s type:%i sort:%i",
+                                rsc.debugSurface->shader->name, rsc.debugSurface->facetype, rsc.debugSurface->shader->sort );
+                    
+                    Q_strncatz( out, "\n", size );
+                    
+                    if( r_speeds->integer == 5 && rsc.debugSurface->drawSurf->vbo ) {
+                        numVerts = rsc.debugSurface->drawSurf->vbo->numVerts;
+                        numTris = rsc.debugSurface->drawSurf->vbo->numElems / 3;
+                    }
+                    else if( rsc.debugSurface->mesh ) {
+                        numVerts = rsc.debugSurface->mesh->numVerts;
+                        numTris = rsc.debugSurface->mesh->numElems;
+                    }
+                    
+                    if( numVerts ) {
+                        Q_snprintfz( out + strlen( out ), size - strlen( out ),
+                                    "verts: %5i tris: %5i", numVerts, numTris );
+                    }
+                    
+                    Q_strncatz( out, "\n", size );
+                    
+                    if( rsc.debugSurface->fog && rsc.debugSurface->fog->shader
+                       && rsc.debugSurface->fog->shader != rsc.debugSurface->shader )
+                        Q_strncatz( out, rsc.debugSurface->fog->shader->name, size );
+                }
+                break;
+            case 6:
+                Q_snprintfz( out, size,
+                            "%.1f %.1f %.1f",
+                            rn.refdef.vieworg[0], rn.refdef.vieworg[1], rn.refdef.vieworg[2]
+                            );
+                break;
+        }
+    }
+    
+    out[size-1] = '\0';
+    return out;
+}
+
+/*
+* R_UpdateSpeedsMessage
+*/
+static void R_UpdateSpeedsMessage( void )
+{
+    ri.Mutex_Lock( rf.speedsMsgMutex );
+    R_SpeedsMessage( rf.speedsMsg, sizeof( rf.speedsMsg ) );
+    ri.Mutex_Unlock( rf.speedsMsgMutex );
+}
+
+/*
 * R_BeginFrame
 */
 void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 {
+    unsigned int time = ri.Sys_Milliseconds();
+
 	GLimp_BeginFrame();
 
 	RB_BeginFrame();
@@ -1538,6 +1636,16 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
 
+    // update fps meter
+    rf.fps.count++;
+    rf.fps.time = time;
+    if( rf.fps.time - rf.fps.oldTime >= 250 ) {
+        rf.fps.average = time - rf.fps.oldTime;
+        rf.fps.average = 1000.0f * (rf.fps.count - rf.fps.oldCount) / (float)rf.fps.average + 0.5f;
+        rf.fps.oldTime = time;
+        rf.fps.oldCount = rf.fps.count;
+    }
+
 	R_Set2DMode( true );
 }
 
@@ -1546,6 +1654,8 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 */
 void R_EndFrame( void )
 {
+    int error;
+
 	// render previously batched 2D geometry, if any
 	RB_FlushDynamicMeshes();
 
@@ -1560,6 +1670,11 @@ void R_EndFrame( void )
 	RB_EndFrame();
 
 	GLimp_EndFrame();
+    
+    error = qglGetError();
+    assert( error == GL_NO_ERROR );
+    
+    R_UpdateSpeedsMessage();
 }
 
 /*
@@ -1569,90 +1684,6 @@ void R_AppActivate( bool active, bool destroy )
 {
 	qglFlush();
 	GLimp_AppActivate( active, destroy );
-}
-
-/*
-* R_SpeedsMessage
-*/
-const char *R_SpeedsMessage( char *out, size_t size )
-{
-	char backend_msg[1024];
-
-	if( !out || !size ) {
-		return out;
-	}
-
-	out[0] = '\0';
-	if( r_speeds->integer && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
-	{
-		switch( r_speeds->integer )
-		{
-		case 1:
-		default:
-			RB_StatsMessage( backend_msg, sizeof( backend_msg ) );
-
-			Q_snprintfz( out, size,
-				"%4u wpoly %4u leafs\n"
-				"sverts: %5u\\%5u  stris: %5u\\%5u\n"
-				"%s",
-				rf.stats.c_brush_polys, rf.stats.c_world_leafs,
-				rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems/3, rf.stats.c_slices_elems_real/3,
-				backend_msg
-			);
-			break;
-		case 2:
-		case 3:
-			Q_snprintfz( out, size,
-				"lvs: %5u  node: %5u\n"
-				"polys\\ents: %5u\\%5i  draw: %5u\n",
-				rf.stats.t_mark_leaves, rf.stats.t_world_node,
-				rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
-			);
-			break;
-		case 4:
-		case 5:
-			if( rsc.debugSurface )
-			{
-				int numVerts = 0, numTris = 0;
-
-				Q_snprintfz( out, size,
-					"%s type:%i sort:%i", 
-					rsc.debugSurface->shader->name, rsc.debugSurface->facetype, rsc.debugSurface->shader->sort );
-
-				Q_strncatz( out, "\n", size );
-
-				if( r_speeds->integer == 5 && rsc.debugSurface->drawSurf->vbo ) {
-					numVerts = rsc.debugSurface->drawSurf->vbo->numVerts;
-					numTris = rsc.debugSurface->drawSurf->vbo->numElems / 3;
-				}
-				else if( rsc.debugSurface->mesh ) {
-					numVerts = rsc.debugSurface->mesh->numVerts;
-					numTris = rsc.debugSurface->mesh->numElems;
-				}
-
-				if( numVerts ) {
-					Q_snprintfz( out + strlen( out ), size - strlen( out ),
-						"verts: %5i tris: %5i", numVerts, numTris );
-				}
-
-				Q_strncatz( out, "\n", size );
-
-				if( rsc.debugSurface->fog && rsc.debugSurface->fog->shader
-					&& rsc.debugSurface->fog->shader != rsc.debugSurface->shader )
-					Q_strncatz( out, rsc.debugSurface->fog->shader->name, size );
-			}
-			break;
-		case 6:
-			Q_snprintfz( out, size,
-				"%.1f %.1f %.1f",
-				rn.refdef.vieworg[0], rn.refdef.vieworg[1], rn.refdef.vieworg[2]
-				);
-			break;
-		}
-	}
-
-	out[size-1] = '\0';
-	return out;
 }
 
 //==================================================================================

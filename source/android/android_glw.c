@@ -319,6 +319,15 @@ static bool GLimp_InitGL( void )
 }
 
 /*
+** GLimp_SetFullscreenMode
+*/
+rserr_t GLimp_SetFullscreenMode( int displayFrequency, bool fullscreen )
+{
+	glConfig.fullScreen = fullscreen;
+	return rserr_ok;
+}
+
+/*
 ** GLimp_SetMode
 */
 rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullscreen, bool stereo )
