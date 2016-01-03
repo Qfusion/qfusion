@@ -727,9 +727,6 @@ void RB_AddDynamicMesh( const entity_t *entity, const shader_t *shader,
 		// wrap if overflows
 		RB_FlushDynamicMeshes();
 
-		R_DiscardVBOVertexData( stream->vbo );
-		R_DiscardVBOElemData( stream->vbo );
-
 		stream->drawElements.firstVert = 0;
 		stream->drawElements.numVerts = 0;
 		stream->drawElements.firstElem = 0;

@@ -764,8 +764,6 @@ void		R_ReleaseMeshVBO( mesh_vbo_t *vbo );
 void		R_TouchMeshVBO( mesh_vbo_t *vbo );
 mesh_vbo_t *R_GetVBOByIndex( int index );
 int			R_GetNumberOfActiveVBOs( void );
-void		R_DiscardVBOVertexData( mesh_vbo_t *vbo );
-void		R_DiscardVBOElemData( mesh_vbo_t *vbo );
 vattribmask_t R_FillVBOVertexDataBuffer( mesh_vbo_t *vbo, vattribmask_t vattribs, const mesh_t *mesh, void *outData );
 void		R_UploadVBOVertexRawData( mesh_vbo_t *vbo, int vertsOffset, int numVerts, const void *data );
 vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, vattribmask_t vattribs, const mesh_t *mesh );
