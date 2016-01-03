@@ -52,8 +52,8 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.Init = RF_Init;
 	globals.SetMode = RF_SetMode;
 	globals.SetWindow = R_SetWindow;
-	globals.BeginRegistration = R_BeginRegistration;
-	globals.EndRegistration = R_EndRegistration;
+	globals.BeginRegistration = RF_BeginRegistration;
+	globals.EndRegistration = RF_EndRegistration;
 	globals.Shutdown = RF_Shutdown;
 
 	globals.ModelBounds = R_ModelBounds;
