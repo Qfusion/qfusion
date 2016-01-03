@@ -297,6 +297,8 @@ typedef struct
 	unsigned int	pvsframecount;
 
 	int				viewcluster, oldviewcluster, viewarea;
+	uint8_t			oldAreabits[MAX_MAP_AREAS*(MAX_MAP_AREAS+7)/8];
+	bool			haveOldAreabits;
 
 	struct {
 		unsigned int	c_brush_polys, c_world_leafs;
