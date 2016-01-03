@@ -275,6 +275,7 @@ typedef struct
 
 	refdef_t		refdef;
 
+	// TODO: not thread-safe, move elsewhere, protect with a mutex!!!
 	msurface_t		*debugSurface;
 } r_scene_t;
 
