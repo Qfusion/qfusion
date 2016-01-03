@@ -992,6 +992,7 @@ static void R_SetupFrame( void )
 		if( rf.worldModelSequence != rsh.worldModelSequence ) {
 			rf.frameCount = 0;
 			rf.viewcluster = -1; // force R_MarkLeaves
+			rf.haveOldAreabits = false;
 			rf.worldModelSequence = rsh.worldModelSequence;
 
 			// load all world images if not yet
