@@ -320,12 +320,12 @@ typedef struct
 typedef struct
 {
 	uint8_t			buf[0x1000000];
-	size_t 			len;
+	volatile size_t len;
+	volatile size_t read;
 } ref_cmdbuf_t;
 
 typedef struct
 {
-	struct qmutex_s *mutex;
 	unsigned		frameNum;
 	unsigned		lastFrameNum;
 	unsigned		backendFrameNum;
@@ -333,14 +333,16 @@ typedef struct
     int             scissor[4];
 
 	ref_cmdbuf_t	frames[3];			// triple-buffered
-	ref_cmdbuf_t	*frame;             // current frame
+	ref_cmdbuf_t	*frame;             // current frontend frame
     
     void            *backendContext;
     void            *backendSurface;
     
     qthread_t       *backendThread;
+	struct qmutex_s *backendFrameLock;
+	struct qmutex_s *backendReadLock;
 
-    qbufPipe_t      *reliable;
+    qbufPipe_t      *cmdPipe;
 } ref_realfrontend_t;
 
 rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
@@ -349,6 +351,8 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 void RF_Shutdown( bool verbose );
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_EndFrame( void );
+void RF_BeginRegistration( void );
+void RF_EndRegistration( void );
 ref_cmdbuf_t *RF_GetNewBackendFrame( void );
 void RF_ClearScene( void );
 void RF_AddEntityToScene( const entity_t *ent );

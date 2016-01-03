@@ -28,28 +28,35 @@ ref_realfrontend_t rrf;
  */
 static void RF_BackendCmdsProc( ref_cmdbuf_t *frame )
 {
-    ri.BufPipe_ReadCmds( rrf.reliable, refReliableCmdHandlers );
+    ri.BufPipe_ReadCmds( rrf.cmdPipe, refReliableCmdHandlers );
 
     if( frame ) {
         size_t t;
+
+		ri.Mutex_Lock( rrf.backendReadLock );
 
         for( t = 0; t < frame->len; ) {
             uint8_t *cmd = frame->buf + t;
             int id = *(int *)cmd;
         
             if( id < 0 || id >= NUM_REF_CMDS )
-                return;
+                break;
         
             size_t len = refCmdHandlers[id]( cmd );
 
             if( len == 0 )
-                return;
+                break;
         
             if( rrf.shutdown )
-                return;
+                break;
         
             t += len;
+			frame->read += len;
         }
+
+		frame->read = frame->len;
+
+		ri.Mutex_Unlock( rrf.backendReadLock );
     }
 }
 
@@ -118,11 +125,12 @@ static void *RF_BackendThreadProc( void *param )
 static void RF_BackendThreadShutdown( void )
 {
     if( rrf.backendThread ) {
-        ri.BufPipe_Finish( rrf.reliable );
+        ri.BufPipe_Finish( rrf.cmdPipe );
         rrf.shutdown = true;
         ri.Thread_Join( rrf.backendThread );
-        ri.Mutex_Destroy( &rrf.mutex );
-        ri.BufPipe_Destroy( &rrf.reliable );
+        ri.Mutex_Destroy( &rrf.backendFrameLock );
+		ri.Mutex_Destroy( &rrf.backendReadLock );
+        ri.BufPipe_Destroy( &rrf.cmdPipe );
     }
 
     if( rrf.backendContext ) {
@@ -139,10 +147,39 @@ static bool RF_BackendThreadInit( void )
         return false;
     }
     
-    rrf.reliable = ri.BufPipe_Create( 0x100000, 1 );
-    rrf.mutex = ri.Mutex_Create();
+    rrf.cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
+    rrf.backendFrameLock = ri.Mutex_Create();
+	rrf.backendReadLock = ri.Mutex_Create();
     rrf.backendThread = ri.Thread_Create( RF_BackendThreadProc, NULL );
     return true;
+}
+
+/*
+* RF_BackendThreadFinish
+*/
+static void RF_BackendThreadFinish( void )
+{
+	bool finished = false;
+
+	while( true ) {
+		ri.Mutex_Lock( rrf.backendFrameLock );
+		finished = rrf.backendFrameNum == rrf.lastFrameNum;
+		ri.Mutex_Unlock( rrf.backendFrameLock );
+
+		if( finished ) {
+			ri.Mutex_Lock( rrf.backendReadLock );
+			finished = rrf.frames[rrf.backendFrameNum].len == rrf.frames[rrf.backendFrameNum].read;
+			ri.Mutex_Unlock( rrf.backendReadLock );
+		}
+
+		if( finished ) {
+			break;
+		}
+
+		ri.Sys_Sleep( 0 );
+	}
+
+	ri.BufPipe_Finish( rrf.cmdPipe );
 }
 
 rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
@@ -189,7 +226,7 @@ void RF_Shutdown( bool verbose )
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 {
 	// take the frame the backend is not busy processing
-	ri.Mutex_Lock( rrf.mutex );
+	ri.Mutex_Lock( rrf.backendFrameLock );
     if( rrf.lastFrameNum == rrf.backendFrameNum )
         rrf.frameNum = (rrf.backendFrameNum + 1) % 3;
     else
@@ -198,9 +235,10 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		rrf.frameNum = 1;
 	}
 	rrf.frame = &rrf.frames[rrf.frameNum];
-	ri.Mutex_Unlock( rrf.mutex );
+	ri.Mutex_Unlock( rrf.backendFrameLock );
 
     rrf.frame->len = 0;
+	rrf.frame->read = 0;
 
     RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
 }
@@ -211,9 +249,9 @@ void RF_EndFrame( void )
 
 	RF_IssueEndFrameCmd( rrf.frame );
 
-	ri.Mutex_Lock( rrf.mutex );
+	ri.Mutex_Lock( rrf.backendFrameLock );
 	rrf.lastFrameNum = rrf.frameNum;
-	ri.Mutex_Unlock( rrf.mutex );
+	ri.Mutex_Unlock( rrf.backendFrameLock );
    
 #if 0
     RF_BackendCmdsProc( RF_GetNewBackendFrame() );
@@ -224,14 +262,27 @@ ref_cmdbuf_t *RF_GetNewBackendFrame( void )
 {
 	ref_cmdbuf_t *result = NULL;
 
-	ri.Mutex_Lock( rrf.mutex );
+	ri.Mutex_Lock( rrf.backendFrameLock );
 	if( rrf.backendFrameNum != rrf.lastFrameNum ) {
 		rrf.backendFrameNum = rrf.lastFrameNum;
 		result = &rrf.frames[rrf.backendFrameNum];
 	}
-	ri.Mutex_Unlock( rrf.mutex );
+	ri.Mutex_Unlock( rrf.backendFrameLock );
 
 	return result;
+}
+
+void RF_BeginRegistration( void )
+{
+	R_BeginRegistration();
+}
+
+void RF_EndRegistration( void )
+{
+	// sync to the backend thread to ensure it's not using old assets for drawing
+	RF_BackendThreadFinish();
+
+	R_EndRegistration();
 }
 
 void RF_ClearScene( void )
@@ -279,12 +330,13 @@ void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, f
 void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
 	float s1, float t1, float s2, float t2, uint8_t *data )
 {
+	// TODO
 }
 
 void RF_DrawStretchRawYUV( int x, int y, int w, int h, 
 	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv )
 {
-
+	// TODO
 }
 
 void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
@@ -323,12 +375,12 @@ void RF_SetCustomColor( int num, int r, int g, int b )
 
 void RF_ScreenShot( const char *path, const char *name, bool silent )
 {
-    RF_IssueScreenShotReliableCmd( rrf.reliable, path, name, silent );
+    RF_IssueScreenShotReliableCmd( rrf.cmdPipe, path, name, silent );
 }
 
 void RF_EnvShot( const char *path, const char *name, unsigned pixels )
 {
-    RF_IssueEnvShotReliableCmd( rrf.reliable, path, name, pixels );
+    RF_IssueEnvShotReliableCmd( rrf.cmdPipe, path, name, pixels );
 }
 
 bool RF_ScreenEnabled( void )
