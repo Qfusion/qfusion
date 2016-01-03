@@ -738,29 +738,6 @@ static void *R_VBOVertBuffer( unsigned numVerts, size_t vertSize )
 }
 
 /*
-* R_DiscardVBOVertexData
-*/
-void R_DiscardVBOVertexData( mesh_vbo_t *vbo )
-{
-	if( vbo->vertexId ) {
-		RB_BindArrayBuffer( vbo->vertexId );
-		qglBufferDataARB( GL_ARRAY_BUFFER_ARB, vbo->arrayBufferSize, NULL, VBO_USAGE_FOR_TAG( vbo->tag ) );
-	}
-
-}
-
-/*
-* R_DiscardVBOElemData
-*/
-void R_DiscardVBOElemData( mesh_vbo_t *vbo )
-{
-	if( vbo->elemId ) {
-		RB_BindElementArrayBuffer( vbo->elemId );
-		qglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, vbo->elemBufferSize, NULL, VBO_USAGE_FOR_TAG( vbo->tag ) );
-	}
-}
-
-/*
 * R_UploadVBOElemData
 *
 * Upload elements into the buffer, properly offsetting them (batching)
