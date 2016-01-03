@@ -276,6 +276,8 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	vbo->vertexAttribs = vattribs;
 	vbo->halfFloatAttribs = halfFloatVattribs;
 
+    RB_Flush();
+
 	return vbo;
 
 error:

@@ -44,8 +44,8 @@ static shadowGroup_t *r_shadowGroups_hash[SHADOWGROUPS_HASH_SIZE];
 void R_ClearShadowGroups( void )
 {
 	rsc.numShadowGroups = 0;
-	memset( rsc.entShadowGroups, 0, sizeof( rsc.entShadowGroups ) );
-	memset( rsc.entShadowBits, 0, sizeof( rsc.entShadowBits ) );
+	memset( rsc.entShadowGroups, 0, sizeof( *rsc.entShadowGroups ) * MAX_REF_ENTITIES );
+	memset( rsc.entShadowBits, 0, sizeof( *rsc.entShadowBits ) * MAX_REF_ENTITIES );
 	memset( r_shadowGroups_hash, 0, sizeof( r_shadowGroups_hash ) );
 }
 
