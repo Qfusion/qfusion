@@ -120,6 +120,7 @@ typedef struct superLightStyle_s
 #define RF_CUBEMAPVIEW			( RF_ENVVIEW )
 #define RF_NONVIEWERREF			( RF_PORTALVIEW|RF_MIRRORVIEW|RF_ENVVIEW|RF_SHADOWMAPVIEW )
 
+#define MAX_REF_SCENES			32 // max scenes rendered per frame
 #define MAX_REF_ENTITIES		( MAX_ENTITIES + 48 ) // must not exceed 2048 because of sort key packing
 
 //===================================================================
@@ -255,15 +256,16 @@ typedef struct
 	dlight_t		dlights[MAX_DLIGHTS];
 
 	unsigned int	numPolys;
-	drawSurfacePoly_t polys[MAX_POLYS];
+    drawSurfacePoly_t polys[MAX_POLYS];
 
 	lightstyle_t	lightStyles[MAX_LIGHTSTYLES];
 
 	unsigned int	numBmodelEntities;
-	entity_t		*bmodelEntities[MAX_REF_ENTITIES];
+    entity_t		*bmodelEntities[MAX_REF_ENTITIES];
 
+	unsigned int	maxShadowGroups;
 	unsigned int	numShadowGroups;
-	shadowGroup_t	shadowGroups[MAX_SHADOWGROUPS];
+	shadowGroup_t	shadowGroups[MAX_REF_ENTITIES];
 	unsigned int	entShadowGroups[MAX_REF_ENTITIES];
 	unsigned int	entShadowBits[MAX_REF_ENTITIES];
 
@@ -278,7 +280,7 @@ typedef struct
 
 typedef struct
 {
-	bool		in2D;
+	bool            in2D;
 	int				width2D, height2D;
 
 	int				frameBufferWidth, frameBufferHeight;
@@ -303,7 +305,73 @@ typedef struct
 		unsigned int	t_add_polys, t_add_entities;
 		unsigned int	t_draw_meshes;
 	} stats;
+
+    struct {
+        unsigned    average; // updates 4 times per second
+        unsigned    time, oldTime;
+        unsigned    count, oldCount;
+    } fps;
+
+    char            speedsMsg[2048];
+    struct qmutex_s *speedsMsgMutex;
 } r_frontend_t;
+
+typedef struct
+{
+	uint8_t			buf[0x1000000];
+	size_t 			len;
+} ref_cmdbuf_t;
+
+typedef struct
+{
+	struct qmutex_s *mutex;
+	unsigned		frameNum;
+	unsigned		lastFrameNum;
+	unsigned		backendFrameNum;
+	volatile bool 	shutdown;
+    int             scissor[4];
+
+	ref_cmdbuf_t	frames[3];			// triple-buffered
+	ref_cmdbuf_t	*frame;             // current frame
+    
+    void            *backendContext;
+    void            *backendSurface;
+    
+    qthread_t       *backendThread;
+
+    qbufPipe_t      *reliable;
+} ref_realfrontend_t;
+
+rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
+	int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
+rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
+void RF_Shutdown( bool verbose );
+void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
+void RF_EndFrame( void );
+ref_cmdbuf_t *RF_GetNewBackendFrame( void );
+void RF_ClearScene( void );
+void RF_AddEntityToScene( const entity_t *ent );
+void RF_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
+void RF_AddPolyToScene( const poly_t *poly );
+void RF_AddLightStyleToScene( int style, float r, float g, float b );
+void RF_RenderScene( const refdef_t *fd );
+void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
+	const vec4_t color, const shader_t *shader );
+void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, 
+	const vec4_t color, const shader_t *shader );
+void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
+	float s1, float t1, float s2, float t2, uint8_t *data );
+void RF_DrawStretchRawYUV( int x, int y, int w, int h, 
+	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
+void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
+void RF_SetScissor( int x, int y, int w, int h );
+void RF_GetScissor( int *x, int *y, int *w, int *h );
+void RF_ResetScissor( void );
+void RF_SetCustomColor( int num, int r, int g, int b );
+void RF_ScreenShot( const char *path, const char *name, bool silent );
+void RF_EnvShot( const char *path, const char *name, unsigned pixels );
+bool RF_ScreenEnabled( void );
+const char *RF_SpeedsMessage( char *out, size_t size );
 
 extern ref_import_t ri;
 
@@ -311,9 +379,12 @@ extern r_shared_t rsh;
 extern r_scene_t rsc;
 extern r_frontend_t rf;
 
+extern ref_realfrontend_t rrf;
+
 #define R_ENT2NUM(ent) ((ent)-rsc.entities)
 #define R_NUM2ENT(num) (rsc.entities+(num))
 
+extern cvar_t *r_maxfps;
 extern cvar_t *r_norefresh;
 extern cvar_t *r_drawentities;
 extern cvar_t *r_drawworld;
@@ -450,7 +521,9 @@ void		R_RestartCinematics( void );
 //
 // r_cmds.c
 //
+void        R_TakeScreenShot( const char *path, const char *name, bool silent );
 void		R_ScreenShot_f( void );
+void        R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
 void		R_EnvShot_f( void );
 void		R_ImageList_f( void );
 void		R_ShaderList_f( void );
@@ -542,7 +615,6 @@ void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
-const char *R_SpeedsMessage( char *out, size_t size );
 void		R_AppActivate( bool active, bool destroy );
 
 mfog_t		*R_FogForBounds( const vec3_t mins, const vec3_t maxs );

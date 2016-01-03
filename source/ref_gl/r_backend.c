@@ -50,6 +50,9 @@ void RB_Init( void )
 
 	// create VBO's we're going to use for streamed data
 	RB_RegisterStreamVBOs();
+    
+    // sync CPU to GPU
+    RB_Finish();
 }
 
 /*
@@ -57,7 +60,10 @@ void RB_Init( void )
 */
 void RB_Shutdown( void )
 {
-	R_FreePool( &rb.mempool );
+    // sync CPU to GPU
+    RB_Finish();
+
+    R_FreePool( &rb.mempool );
 }
 
 /*
@@ -65,6 +71,8 @@ void RB_Shutdown( void )
 */
 void RB_BeginRegistration( void )
 {
+ 	RB_Finish();
+
 	RB_RegisterStreamVBOs();
 	RB_BindVBO( 0, 0 );
 }
@@ -74,6 +82,8 @@ void RB_BeginRegistration( void )
 */
 void RB_EndRegistration( void )
 {
+ 	RB_Finish();
+
 	RB_BindVBO( 0, 0 );
 }
 
