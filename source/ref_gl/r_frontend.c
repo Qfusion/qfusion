@@ -162,10 +162,19 @@ static void RF_BackendThreadFinish( void )
 	bool finished = false;
 
 	while( true ) {
+		// wait for the backend to advance to the latest frame
 		ri.Mutex_Lock( rrf.backendFrameLock );
 		finished = rrf.backendFrameNum == rrf.lastFrameNum;
+
+		// prevent deadlocks
+		if( rrf.backendFrameNum == rrf.frameNum ) {
+			// happens when commands are issued without calling Begin/EndFrame
+			ri.Mutex_Unlock( rrf.backendFrameLock );
+			break;
+		}
 		ri.Mutex_Unlock( rrf.backendFrameLock );
 
+		// let it read until the end
 		if( finished ) {
 			ri.Mutex_Lock( rrf.backendReadLock );
 			finished = rrf.frames[rrf.backendFrameNum].len == rrf.frames[rrf.backendFrameNum].read;
@@ -202,7 +211,7 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
     RF_BackendThreadShutdown();
 
 	memset( &rrf, 0, sizeof( rrf ) );
-	rrf.frame = &rrf.frame[0];
+	rrf.frame = &rrf.frames[0];
 
 	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo );
 	if( err != rserr_ok ) {
