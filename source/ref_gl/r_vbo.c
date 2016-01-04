@@ -234,7 +234,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 		goto error;
 	vbo->vertexId = vbo_id;
 
-	RB_BindArrayBuffer( vbo->vertexId );
+	qglBindBufferARB( GL_ARRAY_BUFFER_ARB, vbo_id );
 	qglBufferDataARB( GL_ARRAY_BUFFER_ARB, size, NULL, usage );
 	if( qglGetError () == GL_OUT_OF_MEMORY )
 		goto error;
@@ -249,7 +249,7 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	vbo->elemId = vbo_id;
 
 	size = numElems * sizeof( elem_t );
-	RB_BindElementArrayBuffer( vbo->elemId );
+	qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, vbo_id );
 	qglBufferDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, size, NULL, usage );
 	if( qglGetError () == GL_OUT_OF_MEMORY )
 		goto error;
@@ -315,8 +315,8 @@ void R_ReleaseMeshVBO( mesh_vbo_t *vbo )
 
 	assert( vbo != NULL );
 
-	RB_BindArrayBuffer( 0 );
-	RB_BindElementArrayBuffer( 0 );
+	qglBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
+	qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, 0 );
 
 	if( vbo->vertexId ) {
 		vbo_id = vbo->vertexId;
@@ -685,7 +685,7 @@ void R_UploadVBOVertexRawData( mesh_vbo_t *vbo, int vertsOffset, int numVerts, c
 		return;
 	}
 
-	RB_BindArrayBuffer( vbo->vertexId );
+	qglBindBufferARB( GL_ARRAY_BUFFER_ARB, vbo->vertexId );
 	qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vertsOffset * vbo->vertexSize, numVerts * vbo->vertexSize, data );
 }
 
@@ -761,7 +761,7 @@ void R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, con
 		}
 	}
 
-	RB_BindElementArrayBuffer( vbo->elemId );
+	qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, vbo->elemId );
 	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ),
 		mesh->numElems * sizeof( elem_t ), ielems );
 }

@@ -497,8 +497,6 @@ static unsigned R_HandleInitReliableCmd( void *pcmd )
 
 	RB_Init();
 
-	RP_PrecachePrograms();
-
 	return sizeof( *cmd );
 }
 
@@ -507,8 +505,6 @@ static unsigned R_HandleShutdownReliableCmd( void *pcmd )
 	refReliableCmdInitShutdown_t *cmd = pcmd;
 
 	RB_Shutdown();
-
-	RP_StorePrecacheList();
 
 	return sizeof( *cmd );
 }
