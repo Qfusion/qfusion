@@ -336,9 +336,12 @@ typedef struct
 
 	ref_cmdbuf_t	frames[3];			// triple-buffered
 	ref_cmdbuf_t	*frame;             // current frontend frame
-    
-    void            *backendContext;
-    void            *backendSurface;
+
+	void            *mainGLContext;
+    void            *mainGLSurface;
+
+    void            *auxGLContext;
+    void            *auxGLSurface;
     
     qthread_t       *backendThread;
 	struct qmutex_s *backendFrameLock;
@@ -379,6 +382,7 @@ void RF_ScreenShot( const char *path, const char *name, bool silent );
 void RF_EnvShot( const char *path, const char *name, unsigned pixels );
 bool RF_ScreenEnabled( void );
 const char *RF_SpeedsMessage( char *out, size_t size );
+void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
 
 extern ref_import_t ri;
 

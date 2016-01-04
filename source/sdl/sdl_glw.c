@@ -291,6 +291,25 @@ void GLimp_SetSwapInterval( int swapInterval )
 }
 
 /*
+** GLimp_GetMainContext
+*/
+void GLimp_GetMainContext( void **context, void **surface )
+{
+	if( context )
+		*context = glw_state.sdl_glcontext;
+	if( surface )
+		*surface = NULL;
+}
+
+/*
+** GLimp_MakeCurrent
+*/
+bool GLimp_MakeCurrent( void *context, void *surface )
+{
+	return SDL_GL_MakeCurrent( glw_state.sdl_window, (SDL_GLContext)context ) == 0;
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )
@@ -303,14 +322,6 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 	// SDL_GL_CreateContext makes the newly created context current
 	// we don't want that, so revert to our main context
 	return SDL_GL_MakeCurrent( glw_state.sdl_window, glw_state.sdl_glcontext ) == 0;
-}
-
-/*
-** GLimp_SharedContext_MakeCurrent
-*/
-bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
-{
-	return SDL_GL_MakeCurrent( glw_state.sdl_window, (SDL_GLContext)context ) == 0;
 }
 
 /*

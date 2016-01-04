@@ -108,13 +108,13 @@ static void RF_BackendFrame( void )
 */
 static void *RF_BackendThreadProc( void *param )
 {
-    GLimp_SharedContext_MakeCurrent( rrf.backendContext, rrf.backendSurface );
+    GLimp_MakeCurrent( rrf.mainGLContext, rrf.mainGLSurface );
 
     while( !rrf.shutdown ) {
         RF_BackendFrame();
     }
 
-    GLimp_SharedContext_MakeCurrent( NULL, NULL );
+    GLimp_MakeCurrent( NULL, NULL );
 
 	return NULL;
 }
@@ -133,9 +133,11 @@ static void RF_BackendThreadShutdown( void )
         ri.BufPipe_Destroy( &rrf.cmdPipe );
     }
 
-    if( rrf.backendContext ) {
-        GLimp_SharedContext_Destroy( rrf.backendContext, rrf.backendSurface );
+    if( rrf.auxGLContext ) {
+        GLimp_SharedContext_Destroy( rrf.auxGLContext, rrf.auxGLSurface );
     }
+
+    GLimp_MakeCurrent( rrf.mainGLContext, rrf.mainGLSurface );
 }
 
 /*
@@ -143,9 +145,13 @@ static void RF_BackendThreadShutdown( void )
  */
 static bool RF_BackendThreadInit( void )
 {
-    if( !GLimp_SharedContext_Create( &rrf.backendContext, &rrf.backendSurface ) ) {
+ 	RB_Flush();
+
+    if( !GLimp_SharedContext_Create( &rrf.auxGLContext, &rrf.auxGLSurface ) ) {
         return false;
     }
+
+	GLimp_MakeCurrent( rrf.auxGLContext, rrf.auxGLSurface );
     
     rrf.cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
     rrf.backendFrameLock = ri.Mutex_Create();
@@ -156,6 +162,8 @@ static bool RF_BackendThreadInit( void )
 
 /*
 * RF_BackendThreadFinish
+*
+* Blocks the current thread until the backend is finished processing input commands.
 */
 static void RF_BackendThreadFinish( void )
 {
@@ -222,6 +230,8 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 		return err;
 	}
 
+	GLimp_GetMainContext( &rrf.mainGLContext, &rrf.mainGLSurface );
+
 	if( RF_BackendThreadInit() != true ) {
         return rserr_unknown;
     }
@@ -287,6 +297,8 @@ ref_cmdbuf_t *RF_GetNewBackendFrame( void )
 
 void RF_BeginRegistration( void )
 {
+	// sync to the backend thread to ensure it's not using old assets for drawing
+	RF_BackendThreadFinish();
 	R_BeginRegistration();
 }
 
@@ -294,7 +306,6 @@ void RF_EndRegistration( void )
 {
 	// sync to the backend thread to ensure it's not using old assets for drawing
 	RF_BackendThreadFinish();
-
 	R_EndRegistration();
 }
 
@@ -409,3 +420,7 @@ const char *RF_SpeedsMessage( char *out, size_t size )
     return out;
 }
 
+void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
+{
+	R_ReplaceRawSubPic( shader, x, y, width, height, data );
+}
