@@ -51,8 +51,7 @@ void RB_Init( void )
 	// create VBO's we're going to use for streamed data
 	RB_RegisterStreamVBOs();
     
-    // sync CPU to GPU
-    RB_Finish();
+	RP_PrecachePrograms();
 }
 
 /*
@@ -60,8 +59,7 @@ void RB_Init( void )
 */
 void RB_Shutdown( void )
 {
-    // sync CPU to GPU
-    RB_Finish();
+	RP_StorePrecacheList();
 
     R_FreePool( &rb.mempool );
 }
