@@ -205,6 +205,8 @@ int RB_RegisterProgram( int type, const char *name, const char *deformsKey,
 	const deformv_t *deforms, int numDeforms, r_glslfeat_t features );
 int RB_BindProgram( int program );
 void RB_BindImage( int tmu, const image_t *tex );
+void RB_BindArrayBuffer( int buffer );
+void RB_BindElementArrayBuffer( int buffer );
 void RB_SetInstanceData( int numInstances, instancePoint_t *instances );
 bool RB_ScissorForBounds( vec3_t bbox[8], int *x, int *y, int *w, int *h );
 

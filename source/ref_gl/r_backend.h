@@ -56,8 +56,6 @@ void RB_Cull( int cull );
 void RB_SetState( int state );
 void RB_FrontFace( bool front );
 void RB_FlipFrontFace( void );
-void RB_BindArrayBuffer( int buffer );
-void RB_BindElementArrayBuffer( int buffer );
 void RB_Scissor( int x, int y, int w, int h );
 void RB_GetScissor( int *x, int *y, int *w, int *h );
 void RB_ApplyScissor( void );
