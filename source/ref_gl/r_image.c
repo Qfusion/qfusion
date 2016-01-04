@@ -3048,7 +3048,7 @@ static unsigned R_HandleInitLoaderCmd( void *pcmd )
 {
 	loaderInitCmd_t *cmd = pcmd;
 
-	GLimp_SharedContext_MakeCurrent( loader_gl_context[cmd->self], loader_gl_surface[cmd->self] );
+	GLimp_MakeCurrent( loader_gl_context[cmd->self], loader_gl_surface[cmd->self] );
 	unpackAlignment[QGL_CONTEXT_LOADER + cmd->self] = 4;
 
 	return sizeof( *cmd );
@@ -3059,7 +3059,7 @@ static unsigned R_HandleInitLoaderCmd( void *pcmd )
 */
 static unsigned R_HandleShutdownLoaderCmd( void *pcmd )
 {
-	GLimp_SharedContext_MakeCurrent( NULL, NULL );
+	GLimp_MakeCurrent( NULL, NULL );
 
 	return 0;
 }
