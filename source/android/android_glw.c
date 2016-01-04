@@ -78,7 +78,7 @@ void GLimp_Shutdown( void )
 	if( glw_state.pbufferSurface != EGL_NO_SURFACE )
 	{
 		qeglDestroySurface( glw_state.display, glw_state.pbufferSurface );
-		glw_state.surface = EGL_NO_SURFACE;
+		glw_state.pbufferSurface = EGL_NO_SURFACE;
 	}
 	if( glw_state.display != EGL_NO_DISPLAY )
 	{
