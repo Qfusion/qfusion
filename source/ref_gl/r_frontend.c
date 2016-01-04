@@ -289,6 +289,7 @@ void RF_EndFrame( void )
 {
     if( glConfig.multithreading ) {
         // synchronize data we might have uploaded this frame between the threads
+		// FIXME: only call this when absolutely necessary
         RB_Finish();
     }
     
