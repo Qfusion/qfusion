@@ -69,8 +69,6 @@ void RB_Shutdown( void )
 */
 void RB_BeginRegistration( void )
 {
- 	RB_Finish();
-
 	RB_RegisterStreamVBOs();
 	RB_BindVBO( 0, 0 );
 }
@@ -80,8 +78,6 @@ void RB_BeginRegistration( void )
 */
 void RB_EndRegistration( void )
 {
- 	RB_Finish();
-
 	RB_BindVBO( 0, 0 );
 }
 
