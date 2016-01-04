@@ -34,6 +34,7 @@ static unsigned R_HandleRenderSceneCmd( uint8_t *cmdbuf );
 static unsigned R_HandleSetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleResetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleSetCustomColorCmd( uint8_t *cmdbuf );
+static unsigned R_HandleSyncCmd( uint8_t *cmdbuf );
 
 refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 {
@@ -50,6 +51,7 @@ refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
     (refCmdHandler_t)R_HandleSetScissorCmd,
     (refCmdHandler_t)R_HandleResetScissorCmd,
     (refCmdHandler_t)R_HandleSetCustomColorCmd,
+	(refCmdHandler_t)R_HandleSyncCmd,
 };
 
 static unsigned R_HandleBeginFrameCmd( uint8_t *cmdbuf )
@@ -142,6 +144,13 @@ static unsigned R_HandleSetCustomColorCmd( uint8_t *cmdbuf )
     refCmdSetCustomColor_t *cmd = (void *)cmdbuf;
     R_SetCustomColor( cmd->num, cmd->r, cmd->g, cmd->b );
     return sizeof( *cmd );
+}
+
+static unsigned R_HandleSyncCmd( uint8_t *cmdbuf )
+{
+	refCmdSync_t *cmd = (void *)cmdbuf;
+	RB_Finish();
+	return sizeof( *cmd );
 }
 
 // ============================================================================
@@ -451,6 +460,20 @@ void RF_IssueSetCustomColorCmd( ref_cmdbuf_t *frame, int num, int r, int g, int 
         return;
     memcpy( frame->buf + frame->len, &cmd, sizeof( cmd ) );
     frame->len += cmd_len;
+}
+
+void RF_IssueSyncCmd( ref_cmdbuf_t *frame )
+{
+    refCmdSync_t cmd;
+    size_t cmd_len = sizeof( cmd );
+    
+    cmd.id = REF_CMD_SYNC;
+    
+    if( frame->len + cmd_len > sizeof( frame->buf ) )
+        return;
+    memcpy( frame->buf + frame->len, &cmd, sizeof( cmd ) );
+    frame->len += cmd_len;
+
 }
 
 // ============================================================================

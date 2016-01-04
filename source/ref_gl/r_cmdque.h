@@ -43,6 +43,8 @@ enum
     
     REF_CMD_SET_CUSTOM_COLOR,
     
+	REF_CMD_SYNC,
+
     NUM_REF_CMDS
 };
 
@@ -136,6 +138,11 @@ typedef struct
     int             r, g, b;
 } refCmdSetCustomColor_t;
 
+typedef struct
+{
+	int				id;
+} refCmdSync_t;
+
 void RF_IssueBeginFrameCmd( ref_cmdbuf_t *frame, float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_IssueEndFrameCmd( ref_cmdbuf_t *frame );
 void RF_IssueDrawRotatedStretchPicCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h,
@@ -150,6 +157,7 @@ void RF_IssueRenderSceneCmd( ref_cmdbuf_t *frame, const refdef_t *fd );
 void RF_IssueSetScissorCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h );
 void RF_IssueResetScissorCmd( ref_cmdbuf_t *frame );
 void RF_IssueSetCustomColorCmd( ref_cmdbuf_t *frame, int num, int r, int g, int b );
+void RF_IssueSyncCmd( ref_cmdbuf_t *frame );
 
 // ==========
 

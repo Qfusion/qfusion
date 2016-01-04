@@ -72,7 +72,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.RemapShader = R_RemapShader;
 	globals.GetShaderDimensions = R_GetShaderDimensions;
 
-	globals.ReplaceRawSubPic = R_ReplaceRawSubPic;
+	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
 
 	globals.BeginFrame = RF_BeginFrame;
 	globals.EndFrame = RF_EndFrame;
