@@ -413,6 +413,25 @@ void GLimp_SetSwapInterval( int swapInterval )
 }
 
 /*
+** GLimp_GetMainContext
+*/
+void GLimp_GetMainContext( void **context, void **surface )
+{
+	if( context )
+		*context = glw_state.context;
+	if( surface )
+		*surface = glw_state.surface;
+}
+
+/*
+** GLimp_MakeCurrent
+*/
+bool GLimp_MakeCurrent( void *context, void *surface )
+{
+	return qeglMakeCurrent( glw_state.display, surface, surface, context ) ? true : false;
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )
@@ -436,14 +455,6 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 	*context = ctx;
 	*surface = pbuffer;
 	return true;
-}
-
-/*
-** GLimp_SharedContext_MakeCurrent
-*/
-bool GLimp_SharedContext_MakeCurrent( void *context, void *surface )
-{
-	return qeglMakeCurrent( glw_state.display, surface, surface, context ) ? true : false;
 }
 
 /*
