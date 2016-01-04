@@ -478,15 +478,40 @@ void RF_IssueSyncCmd( ref_cmdbuf_t *frame )
 
 // ============================================================================
 
+static unsigned R_HandleInitReliableCmd( void *pcmd );
+static unsigned R_HandleShutdownReliableCmd( void *pcmd );
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd );
 static unsigned R_HandleEnvShotReliableCmd( void *pcmd );
 
 refReliableCmdHandler_t refReliableCmdHandlers[NUM_REF_RELIABLE_CMDS] =
 {
-    (refReliableCmdHandler_t)R_HandleScreenShotReliableCmd,
+	(refReliableCmdHandler_t)R_HandleInitReliableCmd,
+    (refReliableCmdHandler_t)R_HandleShutdownReliableCmd,
     (refReliableCmdHandler_t)R_HandleEnvShotReliableCmd,
+	(refReliableCmdHandler_t)R_HandleScreenShotReliableCmd,
 };
 
+static unsigned R_HandleInitReliableCmd( void *pcmd )
+{
+	refReliableCmdInitShutdown_t *cmd = pcmd;
+
+	RB_Init();
+
+	RP_PrecachePrograms();
+
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleShutdownReliableCmd( void *pcmd )
+{
+	refReliableCmdInitShutdown_t *cmd = pcmd;
+
+	RB_Shutdown();
+
+	RP_StorePrecacheList();
+
+	return sizeof( *cmd );
+}
 
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd )
 {
@@ -507,6 +532,18 @@ static unsigned R_HandleEnvShotReliableCmd( void *pcmd )
 }
 
 // ============================================================================
+
+void RF_IssueInitReliableCmd( qbufPipe_t *pipe )
+{
+	refReliableCmdInitShutdown_t cmd = { REF_RELIABLE_CMD_INIT };
+	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
+}
+
+void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe )
+{
+	refReliableCmdInitShutdown_t cmd = { REF_RELIABLE_CMD_SHUTDOWN };
+	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
+}
 
 static void RF_IssueEnvScreenShotReliableCmd( qbufPipe_t *pipe, int id, const char *path, const char *name, unsigned pixels, bool silent )
 {

@@ -154,8 +154,6 @@ static int r_glslbincache_storemode;
 static void RP_GetUniformLocations( glsl_program_t *program );
 static void RP_BindAttrbibutesLocations( glsl_program_t *program );
 
-static void RP_PrecachePrograms( void );
-static void RP_StorePrecacheList( void );
 static void *RP_GetProgramBinary( int elem, int *format, unsigned *length );
 static int RP_RegisterProgramBinary( int type, const char *name, const char *deformsKey, 
 	const deformv_t *deforms, int numDeforms, r_glslfeat_t features, 
@@ -198,8 +196,6 @@ void RP_Init( void )
 		}
 	}
 
-	RP_PrecachePrograms();
-
 	r_glslprograms_initialized = true;
 }
 
@@ -215,7 +211,7 @@ void RP_Init( void )
 * ..
 * program_typeN features_lower_bitsN features_higher_bitsN program_nameN binary_offset
 */
-static void RP_PrecachePrograms( void )
+void RP_PrecachePrograms( void )
 {
 	int version;
 	char *buffer = NULL, *data, **ptr;
@@ -410,12 +406,16 @@ static void RP_PrecachePrograms( void )
 * Stores the list of known GLSL program permutations to file on the disk.
 * File format matches that expected by RP_PrecachePrograms.
 */
-static void RP_StorePrecacheList( void )
+void RP_StorePrecacheList( void )
 {
 	unsigned int i;
 	int handle, handleBin;
 	glsl_program_t *program;
 	unsigned dummy;
+	
+	if( !r_glslprograms_initialized ) {
+		return;
+	}
 
 	handle = 0;
 	if( ri.FS_FOpenFile( GLSL_CACHE_FILE_NAME, &handle, FS_WRITE|FS_CACHE ) == -1 ) {
@@ -2727,10 +2727,6 @@ void RP_Shutdown( void )
 	glsl_program_t *program;
 
 	qglUseProgram( 0 );
-
-	if( r_glslprograms_initialized ) {
-		RP_StorePrecacheList();
-	}
 
 	for( i = 0, program = r_glslprograms; i < r_numglslprograms; i++, program++ ) {
 		RF_DeleteProgram( program );

@@ -108,7 +108,7 @@ static void RF_BackendFrame( void )
 */
 static void *RF_BackendThreadProc( void *param )
 {
-    GLimp_MakeCurrent( rrf.mainGLContext, rrf.mainGLSurface );
+	GLimp_MakeCurrent( rrf.auxGLContext, rrf.auxGLSurface );
 
     while( !rrf.shutdown ) {
         RF_BackendFrame();
@@ -124,9 +124,11 @@ static void *RF_BackendThreadProc( void *param )
 */
 static void RF_BackendThreadShutdown( void )
 {
+	RF_IssueShutdownReliableCmd( rrf.cmdPipe );
+
     if( rrf.backendThread ) {
-        ri.BufPipe_Finish( rrf.cmdPipe );
-        rrf.shutdown = true;
+		ri.BufPipe_Finish( rrf.cmdPipe );
+		rrf.shutdown = true;
         ri.Thread_Join( rrf.backendThread );
         ri.Mutex_Destroy( &rrf.backendFrameLock );
 		ri.Mutex_Destroy( &rrf.backendReadLock );
@@ -136,8 +138,6 @@ static void RF_BackendThreadShutdown( void )
     if( rrf.auxGLContext ) {
         GLimp_SharedContext_Destroy( rrf.auxGLContext, rrf.auxGLSurface );
     }
-
-    GLimp_MakeCurrent( rrf.mainGLContext, rrf.mainGLSurface );
 }
 
 /*
@@ -145,18 +145,20 @@ static void RF_BackendThreadShutdown( void )
  */
 static bool RF_BackendThreadInit( void )
 {
- 	RB_Flush();
-
     if( !GLimp_SharedContext_Create( &rrf.auxGLContext, &rrf.auxGLSurface ) ) {
         return false;
     }
-
-	GLimp_MakeCurrent( rrf.auxGLContext, rrf.auxGLSurface );
     
-    rrf.cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
-    rrf.backendFrameLock = ri.Mutex_Create();
-	rrf.backendReadLock = ri.Mutex_Create();
+	rrf.shutdown = false;
     rrf.backendThread = ri.Thread_Create( RF_BackendThreadProc, NULL );
+	if( rrf.backendThread ) {
+		rrf.cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
+		rrf.backendFrameLock = ri.Mutex_Create();
+		rrf.backendReadLock = ri.Mutex_Create();
+	}
+
+	RF_IssueInitReliableCmd( rrf.cmdPipe );
+
     return true;
 }
 
@@ -423,4 +425,6 @@ const char *RF_SpeedsMessage( char *out, size_t size )
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
 {
 	R_ReplaceRawSubPic( shader, x, y, width, height, data );
+
+	RF_IssueSyncCmd( rrf.frame );
 }
