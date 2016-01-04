@@ -124,20 +124,28 @@ static void *RF_BackendThreadProc( void *param )
 */
 static void RF_BackendThreadShutdown( void )
 {
+	if( !rrf.cmdPipe ) {
+		return;
+	}
+
 	RF_IssueShutdownReliableCmd( rrf.cmdPipe );
 
-    if( rrf.backendThread ) {
+	if( rrf.backendThread ) {
 		ri.BufPipe_Finish( rrf.cmdPipe );
 		rrf.shutdown = true;
-        ri.Thread_Join( rrf.backendThread );
-        ri.Mutex_Destroy( &rrf.backendFrameLock );
-		ri.Mutex_Destroy( &rrf.backendReadLock );
-        ri.BufPipe_Destroy( &rrf.cmdPipe );
-    }
+		ri.Thread_Join( rrf.backendThread );
+	}
+	else {
+		RF_BackendCmdsProc( NULL );
+	}
 
-    if( rrf.auxGLContext ) {
-        GLimp_SharedContext_Destroy( rrf.auxGLContext, rrf.auxGLSurface );
-    }
+    ri.BufPipe_Destroy( &rrf.cmdPipe );
+	ri.Mutex_Destroy( &rrf.backendFrameLock );
+	ri.Mutex_Destroy( &rrf.backendReadLock );
+
+	if( rrf.auxGLContext ) {
+		GLimp_SharedContext_Destroy( rrf.auxGLContext, rrf.auxGLSurface );
+	}
 }
 
 /*
@@ -145,33 +153,42 @@ static void RF_BackendThreadShutdown( void )
  */
 static bool RF_BackendThreadInit( void )
 {
-    if( !GLimp_SharedContext_Create( &rrf.auxGLContext, &rrf.auxGLSurface ) ) {
-        return false;
-    }
-    
-	rrf.shutdown = false;
-    rrf.backendThread = ri.Thread_Create( RF_BackendThreadProc, NULL );
-	if( rrf.backendThread ) {
-		rrf.cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
-		rrf.backendFrameLock = ri.Mutex_Create();
-		rrf.backendReadLock = ri.Mutex_Create();
+	rrf.cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
+	rrf.backendFrameLock = ri.Mutex_Create();
+	rrf.backendReadLock = ri.Mutex_Create();
+
+	if( glConfig.multithreading ) {
+		if( !GLimp_SharedContext_Create( &rrf.auxGLContext, &rrf.auxGLSurface ) ) {
+			return false;
+		}
+
+		rrf.shutdown = false;
+		rrf.backendThread = ri.Thread_Create( RF_BackendThreadProc, NULL );
+		if( !rrf.backendThread ) {
+			return false;
+		}
 	}
 
 	RF_IssueInitReliableCmd( rrf.cmdPipe );
+
+	if( !glConfig.multithreading ) {
+		RF_BackendCmdsProc( NULL );
+	}
 
     return true;
 }
 
 /*
-* RF_BackendThreadFinish
+* RF_BackendThreadWait
 *
 * Blocks the current thread until the backend is finished processing input commands.
 */
-static void RF_BackendThreadFinish( void )
+static void RF_BackendThreadWait( void )
 {
 	bool finished = false;
 
 	if( rrf.backendThread == NULL ) {
+		RF_BackendCmdsProc( NULL );
 		return;
 	}
 
@@ -270,17 +287,15 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 void RF_EndFrame( void )
 {
- 	RB_Flush();
-
 	RF_IssueEndFrameCmd( rrf.frame );
 
 	ri.Mutex_Lock( rrf.backendFrameLock );
 	rrf.lastFrameNum = rrf.frameNum;
 	ri.Mutex_Unlock( rrf.backendFrameLock );
    
-#if 0
-    RF_BackendCmdsProc( RF_GetNewBackendFrame() );
-#endif
+	if( !glConfig.multithreading ) {
+		RF_BackendCmdsProc( RF_GetNewBackendFrame() );
+	}
 }
 
 ref_cmdbuf_t *RF_GetNewBackendFrame( void )
@@ -300,14 +315,14 @@ ref_cmdbuf_t *RF_GetNewBackendFrame( void )
 void RF_BeginRegistration( void )
 {
 	// sync to the backend thread to ensure it's not using old assets for drawing
-	RF_BackendThreadFinish();
+	RF_BackendThreadWait();
 	R_BeginRegistration();
 }
 
 void RF_EndRegistration( void )
 {
 	// sync to the backend thread to ensure it's not using old assets for drawing
-	RF_BackendThreadFinish();
+	RF_BackendThreadWait();
 	R_EndRegistration();
 }
 
