@@ -84,6 +84,7 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 
 void RB_Finish( void );
 void RB_Flush( void );
+void RB_FlushTextures( void );
 
 // shader
 void RB_BindShader( const entity_t *e, const struct shader_s *shader, const struct mfog_s *fog );

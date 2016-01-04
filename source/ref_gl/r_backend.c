@@ -162,13 +162,64 @@ static void RB_SetGLDefaults( void )
 }
 
 /*
-* RB_BindTexture
+* RB_SelectTextureUnit
 */
-void RB_BindTexture( int tmu, const image_t *tex )
+void RB_SelectTextureUnit( int tmu )
 {
-	if( R_BindTexture( tmu, tex ) ) {
-		rb.stats.c_totalBinds++;
+	if( tmu == rb.gl.currentTMU )
+		return;
+
+	rb.gl.currentTMU = tmu;
+	qglActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#ifndef GL_ES_VERSION_2_0
+	qglClientActiveTextureARB( tmu + GL_TEXTURE0_ARB );
+#endif
+}
+
+/*
+* RB_FlushTextures
+*/
+void RB_FlushTextures( void )
+{
+	rb.gl.flushTextures = true;
+}
+
+/*
+* RB_BindImage
+*/
+void RB_BindImage( int tmu, const image_t *tex )
+{
+	GLuint texnum;
+
+	assert( tex != NULL );
+	assert( tex->texnum != 0 );
+
+	if( tex->missing ) {
+		tex = rsh.noTexture;
+	} else if( !tex->loaded ) {
+		// not yet loaded from disk
+		tex = tex->flags & IT_CUBEMAP ? rsh.whiteCubemapTexture : rsh.whiteTexture;
+	} else if( rsh.noTexture && ( r_nobind->integer && tex->texnum != 0 ) ) {
+		// performance evaluation option
+		tex = rsh.noTexture;
 	}
+
+	if( rb.gl.flushTextures ) {
+		rb.gl.flushTextures = false;
+		memset( rb.gl.currentTextures, 0, sizeof( rb.gl.currentTextures ) );
+	}
+
+	texnum = tex->texnum;
+	if( rb.gl.currentTextures[tmu] == texnum )
+		return;
+
+	rb.gl.currentTextures[tmu] = texnum;
+
+	RB_SelectTextureUnit( tmu );
+
+	R_BindImage( tex );
+
+	rb.stats.c_totalBinds++;
 }
 
 /*

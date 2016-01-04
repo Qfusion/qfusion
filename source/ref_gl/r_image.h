@@ -90,10 +90,8 @@ typedef struct image_s
 	struct image_s	*next, *prev;
 } image_t;
 
-void R_SelectTextureUnit( int tmu );
-bool R_BindTexture( int tmu, const image_t *tex );
-
 void R_InitImages( void );
+void R_BindImage( const image_t *tex );
 void R_TouchImage( image_t *image, int tags );
 void R_FreeUnusedImagesByTags( int tags );
 void R_FreeUnusedImages( void );

@@ -163,6 +163,8 @@ void RF_IssueSyncCmd( ref_cmdbuf_t *frame );
 
 enum
 {
+	REF_RELIABLE_CMD_INIT,
+	REF_RELIABLE_CMD_SHUTDOWN,
     REF_RELIABLE_CMD_SCREEN_SHOT,
     REF_RELIABLE_CMD_ENV_SHOT,
 
@@ -174,6 +176,11 @@ extern refReliableCmdHandler_t refReliableCmdHandlers[];
 
 typedef struct
 {
+	int				id;
+} refReliableCmdInitShutdown_t;
+
+typedef struct
+{
     int             id;
     unsigned        pixels;
     bool            silent;
@@ -181,6 +188,8 @@ typedef struct
     char            name[1024];
 } refReliableCmdScreenShot_t;
 
+void RF_IssueInitReliableCmd( qbufPipe_t *pipe );
+void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe );
 void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, bool silent );
 void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, unsigned pixels );
 
