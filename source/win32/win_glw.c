@@ -551,11 +551,6 @@ void GLimp_BeginFrame( void )
 */
 void GLimp_EndFrame( void )
 {
-	int err;
-
-	err = qglGetError();
-	//assert( err == GL_NO_ERROR );
-
 	if( Q_stricmp( gl_drawbuffer->string, "GL_BACK" ) == 0 )
 	{
 		if( !qwglSwapBuffers( glw_state.hDC ) )
