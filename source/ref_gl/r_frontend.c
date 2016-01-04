@@ -287,6 +287,11 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 void RF_EndFrame( void )
 {
+    if( glConfig.multithreading ) {
+        // synchronize data we might have uploaded this frame between the threads
+        RB_Finish();
+    }
+    
 	RF_IssueEndFrameCmd( rrf.frame );
 
 	ri.Mutex_Lock( rrf.backendFrameLock );
