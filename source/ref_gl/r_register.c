@@ -1409,8 +1409,6 @@ static rserr_t R_PostInit( void )
 
 	R_InitImages();
 
-	RB_Init();
-
 	R_InitShaders();
 
 	R_InitCinematics();
@@ -1587,9 +1585,6 @@ void R_Shutdown( bool verbose )
 	R_ShutdownImages();
 
 	RFB_Shutdown();
-
-	// shutdown rendering backend
-	RB_Shutdown();
 
 	// destroy compiled GLSL programs
 	RP_Shutdown();
