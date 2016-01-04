@@ -161,6 +161,10 @@ static void RF_BackendThreadFinish( void )
 {
 	bool finished = false;
 
+	if( rrf.backendThread == NULL ) {
+		return;
+	}
+
 	while( true ) {
 		// wait for the backend to advance to the latest frame
 		ri.Mutex_Lock( rrf.backendFrameLock );
