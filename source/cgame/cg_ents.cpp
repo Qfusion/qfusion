@@ -203,8 +203,7 @@ static void CG_NewPacketEntityState( entity_state_t *state )
 				( state->type == ET_GENERIC || state->type == ET_GIB
 				|| state->type == ET_GRENADE || state->type == ET_SPRITE
 				|| state->type == ET_ITEM || state->type == ET_FLAG_BASE
-				|| state->type == ET_DECAL || state->type == ET_PARTICLES
-				|| state->type == ET_RADAR ) )
+				|| state->type == ET_PARTICLES || state->type == ET_RADAR ) )
 			{
 				VectorCopy( state->old_origin, cent->prev.origin );
 			}
