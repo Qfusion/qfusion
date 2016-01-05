@@ -505,6 +505,8 @@ static unsigned R_HandleInitReliableCmd( void *pcmd )
 
 	RB_Init();
 
+	R_BindFrameBufferObject( 0 );
+
 	return sizeof( *cmd );
 }
 
