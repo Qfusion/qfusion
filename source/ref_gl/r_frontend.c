@@ -186,23 +186,20 @@ static bool RF_BackendThreadInit( void )
 static void RF_BackendThreadWait( void )
 {
 	bool finished = false;
+    
+    if( rrf.backendThread == NULL ) {
+        RF_BackendCmdsProc( NULL );
+        return;
+    }
 
-	if( rrf.backendThread == NULL ) {
-		RF_BackendCmdsProc( NULL );
-		return;
-	}
+    ri.Mutex_Lock( rrf.backendFrameLock );
+    finished = rrf.frameCount == rrf.backendFrameCount;
+    ri.Mutex_Unlock( rrf.backendFrameLock );
 
-	while( true ) {
+	while( !finished ) {
 		// wait for the backend to advance to the latest frame
 		ri.Mutex_Lock( rrf.backendFrameLock );
 		finished = rrf.backendFrameNum == rrf.lastFrameNum;
-
-		// prevent deadlocks
-		if( rrf.backendFrameNum == rrf.frameNum ) {
-			// happens when commands are issued without calling Begin/EndFrame
-			ri.Mutex_Unlock( rrf.backendFrameLock );
-			break;
-		}
 		ri.Mutex_Unlock( rrf.backendFrameLock );
 
 		// let it read until the end
@@ -218,7 +215,7 @@ static void RF_BackendThreadWait( void )
 
 		ri.Sys_Sleep( 0 );
 	}
-
+    
 	ri.BufPipe_Finish( rrf.cmdPipe );
 }
 
@@ -297,6 +294,7 @@ void RF_EndFrame( void )
 
 	ri.Mutex_Lock( rrf.backendFrameLock );
 	rrf.lastFrameNum = rrf.frameNum;
+    rrf.frameCount++;
 	ri.Mutex_Unlock( rrf.backendFrameLock );
    
 	if( !glConfig.multithreading ) {
@@ -310,6 +308,7 @@ ref_cmdbuf_t *RF_GetNewBackendFrame( void )
 
 	ri.Mutex_Lock( rrf.backendFrameLock );
 	if( rrf.backendFrameNum != rrf.lastFrameNum ) {
+        rrf.backendFrameCount = rrf.frameCount;
 		rrf.backendFrameNum = rrf.lastFrameNum;
 		result = &rrf.frames[rrf.backendFrameNum];
 	}
@@ -331,6 +330,12 @@ void RF_EndRegistration( void )
 	RF_BackendThreadWait();
 	R_EndRegistration();
     RB_Finish();
+}
+
+void RF_RegisterWorldModel( const char *model, const dvis_t *pvsData )
+{
+    RF_BackendThreadWait();
+    R_RegisterWorldModel( model, pvsData );
 }
 
 void RF_ClearScene( void )
