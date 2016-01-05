@@ -386,7 +386,6 @@ void RF_ScreenShot( const char *path, const char *name, bool silent );
 void RF_EnvShot( const char *path, const char *name, unsigned pixels );
 bool RF_ScreenEnabled( void );
 const char *RF_SpeedsMessage( char *out, size_t size );
-void R_UpdateSpeedsMessage( void );
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
 
 extern ref_import_t ri;
@@ -626,12 +625,13 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define		R_LoadCacheFile(path,buffer) R_LoadFile_(path,FS_CACHE,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
-bool	R_ScreenEnabled( void );
+bool		R_ScreenEnabled( void );
 void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_AppActivate( bool active, bool destroy );
+void		R_UpdateSpeedsMessage( void );
 
 mfog_t		*R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t		*R_FogForSphere( const vec3_t centre, const float radius );

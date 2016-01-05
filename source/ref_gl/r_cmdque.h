@@ -116,7 +116,7 @@ typedef struct
 {
     int             id;
     unsigned        length;
-    unsigned        worldModelSequence;
+    int             worldModelSequence;
     refdef_t        refdef;
     uint8_t         *areabits;
 } refCmdRenderScene_t;
