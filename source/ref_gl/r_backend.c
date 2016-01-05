@@ -856,6 +856,10 @@ void RB_FlushDynamicMeshes( void )
 	for( i = 0; i < RB_VBO_NUM_STREAMS; i++ ) {
 		stream = &rb.dynamicStreams[i];
 
+		// R_UploadVBO* are going to rebind buffer arrays for upload
+		// so update our local VBO state cache by calling RB_BindVBO
+		RB_BindVBO( -i - 1, GL_TRIANGLES ); // dummy value for primitive here
+
 		// because of firstVert, upload elems first
 		if( stream->drawElements.numElems ) {
 			mesh_t elemMesh;
