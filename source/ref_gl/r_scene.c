@@ -397,6 +397,9 @@ void R_RenderScene( const refdef_t *fd )
 	R_BindFrameBufferObject( 0 );
 
 	R_Set2DMode( true );
+    
+	if( !( fd->rdflags & RDF_NOWORLDMODEL ) )
+		R_UpdateSpeedsMessage();
 
 	// blit and blend framebuffers in proper order
 
