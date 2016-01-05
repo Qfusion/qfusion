@@ -788,6 +788,7 @@ vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset, int num
 	}
 
 	if( vbo->instancesOffset ) {
+		qglBindBufferARB( GL_ARRAY_BUFFER_ARB, vbo->vertexId );
 		qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 
 			vbo->instancesOffset + instOffset * sizeof( instancePoint_t ), 
 			numInstances * sizeof( instancePoint_t ), instances );
