@@ -1436,7 +1436,7 @@ bool R_ScreenEnabled( void )
 /*
  * R_SpeedsMessage
  */
-static const char *R_SpeedsMessage( char *out, size_t size )
+const char *R_SpeedsMessage( char *out, size_t size )
 {
     char backend_msg[1024];
     
@@ -1522,7 +1522,7 @@ static const char *R_SpeedsMessage( char *out, size_t size )
 /*
 * R_UpdateSpeedsMessage
 */
-static void R_UpdateSpeedsMessage( void )
+void R_UpdateSpeedsMessage( void )
 {
     ri.Mutex_Lock( rf.speedsMsgMutex );
     R_SpeedsMessage( rf.speedsMsg, sizeof( rf.speedsMsg ) );
@@ -1674,8 +1674,6 @@ void R_EndFrame( void )
     
     error = qglGetError();
     assert( error == GL_NO_ERROR );
-    
-    R_UpdateSpeedsMessage();
 }
 
 /*

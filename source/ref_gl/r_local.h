@@ -382,6 +382,7 @@ void RF_ScreenShot( const char *path, const char *name, bool silent );
 void RF_EnvShot( const char *path, const char *name, unsigned pixels );
 bool RF_ScreenEnabled( void );
 const char *RF_SpeedsMessage( char *out, size_t size );
+void R_UpdateSpeedsMessage( void );
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
 
 extern ref_import_t ri;
