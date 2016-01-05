@@ -59,7 +59,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.ModelBounds = R_ModelBounds;
 	globals.ModelFrameBounds = R_ModelFrameBounds;
 
-	globals.RegisterWorldModel = R_RegisterWorldModel;
+	globals.RegisterWorldModel = RF_RegisterWorldModel;
 	globals.RegisterModel = R_RegisterModel;
 	globals.RegisterPic = R_RegisterPic;
 	globals.RegisterRawPic = R_RegisterRawPic;
