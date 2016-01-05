@@ -121,6 +121,13 @@ static unsigned R_HandleAddLightStyleToSceneCmd( uint8_t *cmdbuf )
 static unsigned R_HandleRenderSceneCmd( uint8_t *cmdbuf )
 {
     refCmdRenderScene_t *cmd = (void *)cmdbuf;
+    
+    if( !(cmd->refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+        if( cmd->worldModelSequence != rsh.worldModelSequence ) {
+            return cmd->length;
+        }
+    }
+    
     R_RenderScene( &cmd->refdef );
     return cmd->length;
 }
@@ -388,6 +395,7 @@ void RF_IssueRenderSceneCmd( ref_cmdbuf_t *frame, const refdef_t *fd )
     
     cmd.id = REF_CMD_RENDER_SCENE;
     cmd.refdef = *fd;
+    cmd.worldModelSequence = rsh.worldModelSequence;
     
     if( fd->areabits && rsh.worldBrushModel ) {
         areabytes = ((rsh.worldBrushModel->numareas+7)/8);

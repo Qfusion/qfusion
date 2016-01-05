@@ -328,10 +328,13 @@ typedef struct
 
 typedef struct
 {
-	unsigned		frameNum;
+	unsigned		frameNum;           // wrapped
 	unsigned		lastFrameNum;
 	unsigned		backendFrameNum;
+    uint64_t        frameCount;
+    uint64_t        backendFrameCount;
 	volatile bool 	shutdown;
+
     int             scissor[4];
 
 	ref_cmdbuf_t	frames[3];			// triple-buffered
@@ -358,6 +361,7 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );
 void RF_EndRegistration( void );
+void RF_RegisterWorldModel( const char *model, const dvis_t *pvsData );
 ref_cmdbuf_t *RF_GetNewBackendFrame( void );
 void RF_ClearScene( void );
 void RF_AddEntityToScene( const entity_t *ent );
