@@ -495,8 +495,8 @@ refReliableCmdHandler_t refReliableCmdHandlers[NUM_REF_RELIABLE_CMDS] =
 {
 	(refReliableCmdHandler_t)R_HandleInitReliableCmd,
     (refReliableCmdHandler_t)R_HandleShutdownReliableCmd,
-    (refReliableCmdHandler_t)R_HandleEnvShotReliableCmd,
-	(refReliableCmdHandler_t)R_HandleScreenShotReliableCmd,
+    (refReliableCmdHandler_t)R_HandleScreenShotReliableCmd,
+	(refReliableCmdHandler_t)R_HandleEnvShotReliableCmd,
 };
 
 static unsigned R_HandleInitReliableCmd( void *pcmd )
