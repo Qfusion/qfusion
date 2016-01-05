@@ -330,6 +330,7 @@ void RF_EndRegistration( void )
 	// sync to the backend thread to ensure it's not using old assets for drawing
 	RF_BackendThreadWait();
 	R_EndRegistration();
+    RB_Finish();
 }
 
 void RF_ClearScene( void )
