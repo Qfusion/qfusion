@@ -602,6 +602,7 @@ QGL_EGL(EGLSurface, eglCreateWindowSurface, (EGLDisplay dpy, EGLConfig config, E
 QGL_EGL(EGLBoolean, eglDestroyContext, (EGLDisplay dpy, EGLContext ctx));
 QGL_EGL(EGLBoolean, eglDestroySurface, (EGLDisplay dpy, EGLSurface surface));
 QGL_EGL(EGLBoolean, eglGetConfigAttrib, (EGLDisplay dpy, EGLConfig config, EGLint attribute, EGLint *value));
+QGL_EGL(EGLContext, eglGetCurrentContext, (void));
 QGL_EGL(EGLDisplay, eglGetCurrentDisplay, (void));
 QGL_EGL(EGLDisplay, eglGetDisplay, (EGLNativeDisplayType display_id));
 QGL_EGL(EGLint, eglGetError, (void));

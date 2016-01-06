@@ -341,11 +341,7 @@ typedef struct
 	ref_cmdbuf_t	frames[3];			// triple-buffered
 	ref_cmdbuf_t	*frame;             // current frontend frame
 
-	void            *mainGLContext;
-    void            *mainGLSurface;
-
     void            *auxGLContext;
-    void            *auxGLSurface;
     
     qthread_t       *backendThread;
 	struct qmutex_s *backendFrameLock;
@@ -358,6 +354,8 @@ rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int 
 	int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
 rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
 void RF_Shutdown( bool verbose );
+void RF_SurfaceChangePending( void );
+void RF_UpdateBackendSurface( void );
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );

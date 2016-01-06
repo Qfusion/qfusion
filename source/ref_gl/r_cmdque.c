@@ -488,6 +488,7 @@ void RF_IssueSyncCmd( ref_cmdbuf_t *frame )
 
 static unsigned R_HandleInitReliableCmd( void *pcmd );
 static unsigned R_HandleShutdownReliableCmd( void *pcmd );
+static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd );
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd );
 static unsigned R_HandleEnvShotReliableCmd( void *pcmd );
 
@@ -495,6 +496,7 @@ refReliableCmdHandler_t refReliableCmdHandlers[NUM_REF_RELIABLE_CMDS] =
 {
 	(refReliableCmdHandler_t)R_HandleInitReliableCmd,
     (refReliableCmdHandler_t)R_HandleShutdownReliableCmd,
+    (refReliableCmdHandler_t)R_HandleSurfaceChangeReliableCmd,
     (refReliableCmdHandler_t)R_HandleScreenShotReliableCmd,
 	(refReliableCmdHandler_t)R_HandleEnvShotReliableCmd,
 };
@@ -515,6 +517,15 @@ static unsigned R_HandleShutdownReliableCmd( void *pcmd )
 	refReliableCmdInitShutdown_t *cmd = pcmd;
 
 	RB_Shutdown();
+
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd )
+{
+	refReliableCmdSurfaceChange_t *cmd = pcmd;
+
+	RF_UpdateBackendSurface();
 
 	return sizeof( *cmd );
 }
@@ -548,6 +559,12 @@ void RF_IssueInitReliableCmd( qbufPipe_t *pipe )
 void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe )
 {
 	refReliableCmdInitShutdown_t cmd = { REF_RELIABLE_CMD_SHUTDOWN };
+	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
+}
+
+void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe )
+{
+	refReliableCmdSurfaceChange_t cmd = { REF_RELIABLE_CMD_SURFACE_CHANGE };
 	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
 }
 
