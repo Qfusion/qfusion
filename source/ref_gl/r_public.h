@@ -210,7 +210,9 @@ typedef struct
 
 	void		( *TransformVectorToScreen )( const refdef_t *rd, const vec3_t in, vec2_t out );
 
-	bool		( *ScreenEnabled )( void );
+	// Should only be used as a hint - the renderer may keep drawing or not drawing to the window for a few frames when this changes
+	bool		( *RenderingEnabled )( void );
+
 	void		( *BeginFrame )( float cameraSeparation, bool forceClear, bool forceVsync );
 	void		( *EndFrame )( void );
 	const char *( *SpeedsMessage )( char *out, size_t size );

@@ -1442,11 +1442,11 @@ static void R_UpdateHWGamma( void )
 }
 
 /*
-* R_ScreenDisabled
+* R_RenderingEnabled
 */
-bool R_ScreenEnabled( void )
+bool R_RenderingEnabled( void )
 {
-	return GLimp_ScreenEnabled();
+	return GLimp_RenderingEnabled();
 }
 
 /*
@@ -1557,7 +1557,7 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	RB_BeginFrame();
 
 #ifndef GL_ES_VERSION_2_0
-	if( !glConfig.stereoEnabled || !R_ScreenEnabled() )
+	if( !glConfig.stereoEnabled || !R_RenderingEnabled() )
 		cameraSeparation = 0;
 
 	if( rf.cameraSeparation != cameraSeparation )
@@ -1715,7 +1715,7 @@ void R_WriteAviFrame( int frame, bool scissor )
 	char *checkname;
 	const char *extension;
 
-	if( !R_ScreenEnabled() )
+	if( !R_RenderingEnabled() )
 		return;
 
 	if( scissor )

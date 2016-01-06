@@ -257,7 +257,7 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 ====================================================================
 */
 
-bool	GLimp_ScreenEnabled( void );
+bool	GLimp_RenderingEnabled( void );
 void	GLimp_BeginFrame( void );
 void	GLimp_EndFrame( void );
 int		GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd, 
