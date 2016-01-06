@@ -1556,28 +1556,21 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 	RB_BeginFrame();
 
+#ifndef GL_ES_VERSION_2_0
 	if( !glConfig.stereoEnabled || !R_ScreenEnabled() )
 		cameraSeparation = 0;
 
 	if( rf.cameraSeparation != cameraSeparation )
 	{
 		rf.cameraSeparation = cameraSeparation;
-#ifdef GL_ES_VERSION_2_0
-		if( glConfig.ext.multiview_draw_buffers )
-		{
-			int location = GL_MULTIVIEW_EXT;
-			int index = ( cameraSeparation > 0 ) ? 1 : 0;
-			qglDrawBuffersIndexedEXT( 1, &location, &index );
-		}
-#else
 		if( cameraSeparation < 0 )
 			qglDrawBuffer( GL_BACK_LEFT );
 		else if( cameraSeparation > 0 )
 			qglDrawBuffer( GL_BACK_RIGHT );
 		else
 			qglDrawBuffer( GL_BACK );
-#endif
 	}
+#endif
 
 	// update gamma
 	if( r_gamma->modified )

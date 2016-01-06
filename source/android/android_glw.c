@@ -246,26 +246,7 @@ static void GLimp_Android_UpdateWindowSurface( void )
 
 	ANativeWindow_setBuffersGeometry( window, glConfig.width, glConfig.height, glw_state.format );
 
-#if 0
-	if( glConfig.stereoEnabled )
-	{
-		const char *extensions = qglGetGLWExtensionsString();
-		if( extensions && strstr( extensions, "EGL_EXT_multiview_window" ) )
-		{
-			int attribs[] = { EGL_MULTIVIEW_VIEW_COUNT_EXT, 2, EGL_NONE };
-			glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, window, attribs );
-		}
-	}
-#endif
-
-	if( glw_state.surface == EGL_NO_SURFACE ) // Try to create a non-stereo surface.
-	{
-#if 0
-		glConfig.stereoEnabled = false;
-#endif
-		glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, window, NULL );
-	}
-
+	glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, window, NULL );
 	if( glw_state.surface == EGL_NO_SURFACE )
 	{
 		ri.Com_Printf( "GLimp_Android_UpdateWindowSurface() - GLimp_Android_CreateWindowSurface failed\n" );
@@ -367,7 +348,6 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 	glConfig.width = width;
 	glConfig.height = height;
 	glConfig.fullScreen = fullscreen;
-	glConfig.stereoEnabled = stereo;
 
 	if( !GLimp_InitGL() )
 	{
