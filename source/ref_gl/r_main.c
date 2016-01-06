@@ -1388,6 +1388,22 @@ void R_PopRefInst( void )
 //=======================================================================
 
 /*
+* R_Finish
+*/
+void R_Finish( void )
+{
+    qglFinish();
+}
+
+/*
+* R_FrameSync
+*/
+void R_FrameSync( void )
+{
+    rrf.frameSync = true;
+}
+
+/*
 * R_SwapInterval
 */
 static void R_SwapInterval( int swapInterval )

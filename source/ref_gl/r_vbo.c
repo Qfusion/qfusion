@@ -276,8 +276,6 @@ mesh_vbo_t *R_CreateMeshVBO( void *owner, int numVerts, int numElems, int numIns
 	vbo->vertexAttribs = vattribs;
 	vbo->halfFloatAttribs = halfFloatVattribs;
 
-    RB_Flush();
-
 	return vbo;
 
 error:
@@ -684,6 +682,10 @@ void R_UploadVBOVertexRawData( mesh_vbo_t *vbo, int vertsOffset, int numVerts, c
 	if( !vbo || !vbo->vertexId ) {
 		return;
 	}
+    
+    if( vbo->tag != VBO_TAG_STREAM ) {
+        R_FrameSync();
+    }
 
 	qglBindBufferARB( GL_ARRAY_BUFFER_ARB, vbo->vertexId );
 	qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vertsOffset * vbo->vertexSize, numVerts * vbo->vertexSize, data );
@@ -702,6 +704,10 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, vattribma
 	if( !vbo || !vbo->vertexId ) {
 		return 0;
 	}
+
+    if( vbo->tag != VBO_TAG_STREAM ) {
+        R_FrameSync();
+    }
 
 	data = R_VBOVertBuffer( mesh->numVerts, vbo->vertexSize );
 	errMask = R_FillVBOVertexDataBuffer( vbo, vattribs, mesh, data );
@@ -761,6 +767,10 @@ void R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, con
 		}
 	}
 
+    if( vbo->tag != VBO_TAG_STREAM ) {
+        R_FrameSync();
+    }
+
 	qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, vbo->elemId );
 	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ),
 		mesh->numElems * sizeof( elem_t ), ielems );
@@ -787,7 +797,12 @@ vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset, int num
 		return errMask;
 	}
 
+    if( vbo->tag != VBO_TAG_STREAM ) {
+        R_FrameSync();
+    }
+
 	if( vbo->instancesOffset ) {
+        qglBindBufferARB( GL_ARRAY_BUFFER_ARB, vbo->vertexId );
 		qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 
 			vbo->instancesOffset + instOffset * sizeof( instancePoint_t ), 
 			numInstances * sizeof( instancePoint_t ), instances );
@@ -819,6 +834,8 @@ void R_FreeVBOsByTag( vbo_tag_t tag )
 			R_ReleaseMeshVBO( vbo );
 		}
 	}
+    
+    R_FrameSync();
 }
 
 /*
@@ -842,6 +859,8 @@ void R_FreeUnusedVBOs( void )
 			R_ReleaseMeshVBO( vbo );
 		}
 	}
+    
+    R_FrameSync();
 }
 
 /*
