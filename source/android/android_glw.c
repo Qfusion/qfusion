@@ -422,11 +422,11 @@ void GLimp_SetGammaRamp( size_t stride, unsigned short size, unsigned short *ram
 }
 
 /*
-** GLimp_ScreenEnabled
+** GLimp_RenderingEnabled
 */
-bool GLimp_ScreenEnabled( void )
+bool GLimp_RenderingEnabled( void )
 {
-	return ( glw_state.surface != EGL_NO_SURFACE ) ? true : false;
+	return glw_state.window != NULL;
 }
 
 /*

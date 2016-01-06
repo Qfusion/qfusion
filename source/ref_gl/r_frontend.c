@@ -464,7 +464,7 @@ void RF_EnvShot( const char *path, const char *name, unsigned pixels )
 
 bool RF_ScreenEnabled( void )
 {
-    return GLimp_ScreenEnabled();
+    return GLimp_RenderingEnabled();
 }
 
 const char *RF_SpeedsMessage( char *out, size_t size )
