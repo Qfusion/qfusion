@@ -156,7 +156,7 @@ static unsigned R_HandleSetCustomColorCmd( uint8_t *cmdbuf )
 static unsigned R_HandleSyncCmd( uint8_t *cmdbuf )
 {
 	refCmdSync_t *cmd = (void *)cmdbuf;
-	RB_Finish();
+	R_Finish();
 	return sizeof( *cmd );
 }
 
