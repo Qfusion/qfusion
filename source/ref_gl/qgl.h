@@ -467,17 +467,6 @@ typedef unsigned short GLhalfARB;
 #endif
 #endif /* GL_ARB_half_float_vertex */
 
-/* GL_EXT_multiview_draw_buffers */
-#ifndef GL_EXT_multiview_draw_buffers
-#define GL_EXT_multiview_draw_buffers
-
-#define GL_COLOR_ATTACHMENT_EXT								0x90F0
-#define GL_MULTIVIEW_EXT									0x90F1
-#define GL_DRAW_BUFFER_EXT									0x0C01
-#define GL_READ_BUFFER_EXT									0x0C02
-#define GL_MAX_MULTIVIEW_BUFFERS_EXT						0x90F2
-#endif /* GL_EXT_multiview_draw_buffers */
-
 /* GL_ARB_get_program_binary */
 #ifndef GL_ARB_get_program_binary
 #define GL_PROGRAM_BINARY_RETRIEVABLE_HINT					0x8257
@@ -551,13 +540,6 @@ typedef unsigned short GLhalfARB;
 #define GL_TEXTURE_MAX_LOD_SGIS								0x813B
 #define GL_TEXTURE_BASE_LEVEL_SGIS							0x813C
 #define GL_TEXTURE_MAX_LEVEL_SGIS							0x813D
-#endif
-
-/* EGL_EXT_multiview_window */
-#ifndef EGL_EXT_multiview_window
-#define EGL_EXT_multiview_window
-
-#define EGL_MULTIVIEW_VIEW_COUNT_EXT						0x3134
 #endif
 
 #endif // QGL_H
