@@ -334,6 +334,7 @@ typedef struct
     uint64_t        frameCount;
     uint64_t        backendFrameCount;
 	volatile bool 	shutdown;
+    volatile bool   frameSync;
 
     int             scissor[4];
 
@@ -493,7 +494,6 @@ extern cvar_t *r_maxglslbones;
 
 extern cvar_t *r_multithreading;
 
-extern cvar_t *gl_finish;
 extern cvar_t *gl_cull;
 
 extern cvar_t *vid_displayfrequency;
@@ -632,6 +632,8 @@ void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_AppActivate( bool active, bool destroy );
 void		R_UpdateSpeedsMessage( void );
+void        R_Finish( void );
+void        R_FrameSync( void );
 
 mfog_t		*R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t		*R_FogForSphere( const vec3_t centre, const float radius );

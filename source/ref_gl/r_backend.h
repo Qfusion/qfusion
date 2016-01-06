@@ -80,8 +80,6 @@ void RB_DrawElementsInstanced( int firstVert, int numVerts, int firstElem, int n
 	int firstShadowVert, int numShadowVerts, int firstShadowElem, int numShadowElems,
 	int numInstances, instancePoint_t *instances );
 
-void RB_Finish( void );
-void RB_Flush( void );
 void RB_FlushTextures( void );
 
 // shader

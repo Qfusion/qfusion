@@ -1084,6 +1084,8 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 			}
 		}
 	}
+    
+    R_FrameSync();
 }
 
 /*
@@ -1292,6 +1294,8 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 		if( !scaledHeight )
 			scaledHeight = 1;
 	}
+    
+    R_FrameSync();
 }
 
 /*
@@ -1837,7 +1841,6 @@ image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, in
 	R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, minmipsize,
 		&image->upload_width, &image->upload_height, image->samples, false, false );
 
-	RB_Finish();
 	RB_FlushTextures();
 
 	return image;
@@ -2940,7 +2943,7 @@ static bool R_LoadAsyncImageFromDisk( image_t *image )
 	image->loaded = false;
 	image->missing = false;
 
-	RB_Flush(); // An NVIDIA bug makes textures fail to load without this sometimes.
+	qglFlush(); // An NVIDIA bug makes textures fail to load without this sometimes.
 
 	R_IssueLoadPicLoaderCmd( id, image - images );
 	return true;
@@ -3012,7 +3015,7 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 	} else {
 		// Make sure the image is updated on all contexts.
 		qglBindTexture( R_TextureTarget( image->flags, NULL ), 0 );
-		RB_Finish();
+		qglFinish();
 		image->loaded = true;
 	}
 
