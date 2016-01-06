@@ -635,6 +635,30 @@ bool GLimp_MakeCurrent( void *context, void *surface )
 }
 
 /*
+** GLimp_EnableMultithreadedRendering
+*/
+void GLimp_EnableMultithreadedRendering( bool enable )
+{
+}
+
+/*
+** GLimp_GetWindowSurface
+*/
+void *GLimp_GetWindowSurface( bool *renderable )
+{
+	if( renderable )
+		*renderable = true;
+	return NULL;
+}
+
+/*
+** GLimp_UpdatePendingWindowSurface
+*/
+void GLimp_UpdatePendingWindowSurface( void )
+{
+}
+
+/*
 ** GLimp_SharedContext_Create
 */
 bool GLimp_SharedContext_Create( void **context, void **surface )
@@ -646,7 +670,8 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 
 	qwglShareLists( glw_state.hGLRC, ctx );
 	*context = ctx;
-	*surface = ( void * )1;
+	if( surface )
+		*surface = NULL;
 	return true;
 }
 
