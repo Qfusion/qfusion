@@ -269,8 +269,11 @@ void GLimp_AppActivate( bool active, bool destroy )
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending )
 {
+	if( surfaceChangePending )
+		*surfaceChangePending = false;
+
 	return rserr_ok; // surface cannot be lost
 }
 

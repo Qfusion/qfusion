@@ -166,6 +166,7 @@ enum
 {
 	REF_RELIABLE_CMD_INIT,
 	REF_RELIABLE_CMD_SHUTDOWN,
+	REF_RELIABLE_CMD_SURFACE_CHANGE,
     REF_RELIABLE_CMD_SCREEN_SHOT,
     REF_RELIABLE_CMD_ENV_SHOT,
 
@@ -182,6 +183,11 @@ typedef struct
 
 typedef struct
 {
+	int				id;
+} refReliableCmdSurfaceChange_t;
+
+typedef struct
+{
     int             id;
     unsigned        pixels;
     bool            silent;
@@ -191,6 +197,7 @@ typedef struct
 
 void RF_IssueInitReliableCmd( qbufPipe_t *pipe );
 void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe );
+void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe );
 void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, bool silent );
 void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, unsigned pixels );
 
