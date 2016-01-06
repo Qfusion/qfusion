@@ -381,9 +381,6 @@ void R_RenderScene( const refdef_t *fd )
 	VectorCopy( fd->vieworg, rn.pvsOrigin );
 	VectorCopy( fd->vieworg, rn.lodOrigin );
 
-	if( gl_finish->integer && !( fd->rdflags & RDF_NOWORLDMODEL ) )
-		RB_Finish();
-
 	R_BindFrameBufferObject( 0 );
 
 	R_BuildShadowGroups();
