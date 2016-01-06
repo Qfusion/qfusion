@@ -243,6 +243,7 @@ static void RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( ref_cmdbuf_t *frame, int
         cmd_len += numverts * sizeof( byte_vec4_t );
     if( poly->elems )
         cmd_len += poly->numelems * sizeof( elem_t );
+	cmd_len = ALIGN( cmd_len, sizeof( float ) );
     
     cmd.length = cmd_len;
     
@@ -402,7 +403,7 @@ void RF_IssueRenderSceneCmd( ref_cmdbuf_t *frame, const refdef_t *fd )
 #ifdef AREAPORTALS_MATRIX
         areabytes *= rsh.worldBrushModel->numareas;
 #endif
-        cmd_len += areabytes;
+		cmd_len = ALIGN( cmd_len + areabytes, sizeof( float ) );
     }
     
     cmd.length = cmd_len;
