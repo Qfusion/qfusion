@@ -1085,8 +1085,8 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 			}
 		}
 	}
-    
-    R_FrameSync();
+
+	R_DeferDataSync();
 }
 
 /*
@@ -1295,8 +1295,8 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 		if( !scaledHeight )
 			scaledHeight = 1;
 	}
-    
-    R_FrameSync();
+
+	R_DeferDataSync();
 }
 
 /*
@@ -1919,6 +1919,8 @@ static void R_FreeImage( image_t *image )
 
 /*
 * R_ReplaceImage
+*
+* FIXME: not thread-safe!
 */
 void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int flags, int minmipsize, int samples )
 {

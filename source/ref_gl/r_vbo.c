@@ -682,10 +682,10 @@ void R_UploadVBOVertexRawData( mesh_vbo_t *vbo, int vertsOffset, int numVerts, c
 	if( !vbo || !vbo->vertexId ) {
 		return;
 	}
-    
-    if( vbo->tag != VBO_TAG_STREAM ) {
-        R_FrameSync();
-    }
+
+	if( vbo->tag != VBO_TAG_STREAM ) {
+		R_DeferDataSync();
+	}
 
 	qglBindBufferARB( GL_ARRAY_BUFFER_ARB, vbo->vertexId );
 	qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vertsOffset * vbo->vertexSize, numVerts * vbo->vertexSize, data );
@@ -705,9 +705,9 @@ vattribmask_t R_UploadVBOVertexData( mesh_vbo_t *vbo, int vertsOffset, vattribma
 		return 0;
 	}
 
-    if( vbo->tag != VBO_TAG_STREAM ) {
-        R_FrameSync();
-    }
+	if( vbo->tag != VBO_TAG_STREAM ) {
+		R_DeferDataSync();
+	}
 
 	data = R_VBOVertBuffer( mesh->numVerts, vbo->vertexSize );
 	errMask = R_FillVBOVertexDataBuffer( vbo, vattribs, mesh, data );
@@ -767,9 +767,9 @@ void R_UploadVBOElemData( mesh_vbo_t *vbo, int vertsOffset, int elemsOffset, con
 		}
 	}
 
-    if( vbo->tag != VBO_TAG_STREAM ) {
-        R_FrameSync();
-    }
+	if( vbo->tag != VBO_TAG_STREAM ) {
+		R_DeferDataSync();
+	}
 
 	qglBindBufferARB( GL_ELEMENT_ARRAY_BUFFER_ARB, vbo->elemId );
 	qglBufferSubDataARB( GL_ELEMENT_ARRAY_BUFFER_ARB, elemsOffset * sizeof( elem_t ),
@@ -797,12 +797,12 @@ vattribmask_t R_UploadVBOInstancesData( mesh_vbo_t *vbo, int instOffset, int num
 		return errMask;
 	}
 
-    if( vbo->tag != VBO_TAG_STREAM ) {
-        R_FrameSync();
-    }
+	if( vbo->tag != VBO_TAG_STREAM ) {
+		R_DeferDataSync();
+	}
 
 	if( vbo->instancesOffset ) {
-        qglBindBufferARB( GL_ARRAY_BUFFER_ARB, vbo->vertexId );
+		qglBindBufferARB( GL_ARRAY_BUFFER_ARB, vbo->vertexId );
 		qglBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 
 			vbo->instancesOffset + instOffset * sizeof( instancePoint_t ), 
 			numInstances * sizeof( instancePoint_t ), instances );
@@ -834,8 +834,8 @@ void R_FreeVBOsByTag( vbo_tag_t tag )
 			R_ReleaseMeshVBO( vbo );
 		}
 	}
-    
-    R_FrameSync();
+
+	R_DeferDataSync();
 }
 
 /*
@@ -859,8 +859,8 @@ void R_FreeUnusedVBOs( void )
 			R_ReleaseMeshVBO( vbo );
 		}
 	}
-    
-    R_FrameSync();
+
+	R_DeferDataSync();
 }
 
 /*
