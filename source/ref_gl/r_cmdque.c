@@ -35,6 +35,8 @@ static unsigned R_HandleSetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleResetScissorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleSetCustomColorCmd( uint8_t *cmdbuf );
 static unsigned R_HandleSyncCmd( uint8_t *cmdbuf );
+static unsigned R_HandleDrawStretchRawCmd( uint8_t *cmdbuf );
+static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *cmdbuf );
 
 refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 {
@@ -52,6 +54,8 @@ refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
     (refCmdHandler_t)R_HandleResetScissorCmd,
     (refCmdHandler_t)R_HandleSetCustomColorCmd,
 	(refCmdHandler_t)R_HandleSyncCmd,
+	(refCmdHandler_t)R_HandleDrawStretchRawCmd,
+	(refCmdHandler_t)R_HandleDrawStretchRawYUVCmd,
 };
 
 static unsigned R_HandleBeginFrameCmd( uint8_t *cmdbuf )
@@ -157,6 +161,20 @@ static unsigned R_HandleSyncCmd( uint8_t *cmdbuf )
 {
 	refCmdSync_t *cmd = (void *)cmdbuf;
 	R_Finish();
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleDrawStretchRawCmd( uint8_t *cmdbuf )
+{
+	refCmdDrawStretchRaw_t *cmd = (void *)cmdbuf;
+	R_DrawStretchRaw( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *cmdbuf )
+{
+	refCmdDrawStretchRaw_t *cmd = (void *)cmdbuf;
+	R_DrawStretchRawYUV( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
 	return sizeof( *cmd );
 }
 
@@ -482,6 +500,37 @@ void RF_IssueSyncCmd( ref_cmdbuf_t *frame )
     memcpy( frame->buf + frame->len, &cmd, sizeof( cmd ) );
     frame->len += cmd_len;
 
+}
+
+static void RF_IssueDrawStretchRawOrRawYUVCmd( ref_cmdbuf_t *frame, int id, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
+{
+	refCmdDrawStretchRaw_t cmd;
+	size_t cmd_len = sizeof( cmd );
+
+	cmd.id = id;
+	cmd.x = x;
+	cmd.y = y;
+	cmd.w = w;
+	cmd.h = h;
+	cmd.s1 = s1;
+	cmd.t1 = t1;
+	cmd.s2 = s2;
+	cmd.t2 = t2;
+
+	if( frame->len + cmd_len > sizeof( frame->buf ) )
+		return;
+	memcpy( frame->buf + frame->len, &cmd, sizeof( cmd ) );
+	frame->len += cmd_len;
+}
+
+void RF_IssueDrawStretchRawCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
+{
+	RF_IssueDrawStretchRawOrRawYUVCmd( frame, REF_CMD_DRAW_STRETCH_RAW, x, y, w, h, s1, t1, s2, t2 );
+}
+
+void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
+{
+	RF_IssueDrawStretchRawOrRawYUVCmd( frame, REF_CMD_DRAW_STRETCH_RAW_YUV, x, y, w, h, s1, t1, s2, t2 );
 }
 
 // ============================================================================

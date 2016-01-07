@@ -381,13 +381,20 @@ void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, f
 void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
 	float s1, float t1, float s2, float t2, uint8_t *data )
 {
-	// TODO
+	if( !cols || !rows )
+		return;
+
+	if( data )
+		R_UploadRawPic( rsh.rawTexture, cols, rows, data );
+	RF_IssueDrawStretchRawCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
 void RF_DrawStretchRawYUV( int x, int y, int w, int h, 
 	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv )
 {
-	// TODO
+	if( yuv )
+		R_UploadRawYUVPic( rsh.rawYUVTextures, yuv );
+	RF_IssueDrawStretchRawYUVCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
 void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )

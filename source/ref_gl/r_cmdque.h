@@ -45,6 +45,9 @@ enum
     
 	REF_CMD_SYNC,
 
+	REF_CMD_DRAW_STRETCH_RAW,
+	REF_CMD_DRAW_STRETCH_RAW_YUV,
+
     NUM_REF_CMDS
 };
 
@@ -144,6 +147,13 @@ typedef struct
 	int				id;
 } refCmdSync_t;
 
+typedef struct
+{
+	int				id;
+	int				x, y, w, h;
+	float			s1, t1, s2, t2;
+} refCmdDrawStretchRaw_t;
+
 void RF_IssueBeginFrameCmd( ref_cmdbuf_t *frame, float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_IssueEndFrameCmd( ref_cmdbuf_t *frame );
 void RF_IssueDrawRotatedStretchPicCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h,
@@ -159,6 +169,8 @@ void RF_IssueSetScissorCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h );
 void RF_IssueResetScissorCmd( ref_cmdbuf_t *frame );
 void RF_IssueSetCustomColorCmd( ref_cmdbuf_t *frame, int num, int r, int g, int b );
 void RF_IssueSyncCmd( ref_cmdbuf_t *frame );
+void RF_IssueDrawStretchRawCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
+void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
 
 // ==========
 
