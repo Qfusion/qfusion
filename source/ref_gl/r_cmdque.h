@@ -119,6 +119,7 @@ typedef struct
 {
     int             id;
     unsigned        length;
+	int				registrationSequence;
     int             worldModelSequence;
     refdef_t        refdef;
     uint8_t         *areabits;
