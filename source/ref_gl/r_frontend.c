@@ -33,8 +33,6 @@ static void RF_BackendCmdsProc( ref_cmdbuf_t *frame )
     if( frame ) {
         size_t t;
 
-		ri.Mutex_Lock( rrf.backendReadLock );
-
         for( t = 0; t < frame->len; ) {
             uint8_t *cmd = frame->buf + t;
             int id = *(int *)cmd;
@@ -56,7 +54,7 @@ static void RF_BackendCmdsProc( ref_cmdbuf_t *frame )
 
 		frame->read = frame->len;
 
-		ri.Mutex_Unlock( rrf.backendReadLock );
+		rrf.backendReadFrameId = frame->frameId;
     }
 }
 
@@ -141,7 +139,6 @@ static void RF_BackendThreadShutdown( void )
 
     ri.BufPipe_Destroy( &rrf.cmdPipe );
 	ri.Mutex_Destroy( &rrf.backendFrameLock );
-	ri.Mutex_Destroy( &rrf.backendReadLock );
 
 	if( rrf.auxGLContext ) {
 		GLimp_SharedContext_Destroy( rrf.auxGLContext, NULL );
@@ -157,7 +154,6 @@ static bool RF_BackendThreadInit( void )
 {
 	rrf.cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
 	rrf.backendFrameLock = ri.Mutex_Create();
-	rrf.backendReadLock = ri.Mutex_Create();
 
 	if( glConfig.multithreading ) {
 		GLimp_EnableMultithreadedRendering( true );
@@ -190,37 +186,15 @@ static bool RF_BackendThreadInit( void )
 */
 static void RF_BackendThreadWait( void )
 {
-	bool finished = false;
-    
     if( rrf.backendThread == NULL ) {
         RF_BackendCmdsProc( NULL );
         return;
     }
 
-    ri.Mutex_Lock( rrf.backendFrameLock );
-    finished = rrf.frameCount == rrf.backendFrameCount;
-    ri.Mutex_Unlock( rrf.backendFrameLock );
-
-	while( !finished ) {
-		// wait for the backend to advance to the latest frame
-		ri.Mutex_Lock( rrf.backendFrameLock );
-		finished = rrf.backendFrameNum == rrf.lastFrameNum;
-		ri.Mutex_Unlock( rrf.backendFrameLock );
-
-		// let it read until the end
-		if( finished ) {
-			ri.Mutex_Lock( rrf.backendReadLock );
-			finished = rrf.frames[rrf.backendFrameNum].len == rrf.frames[rrf.backendFrameNum].read;
-			ri.Mutex_Unlock( rrf.backendReadLock );
-		}
-
-		if( finished ) {
-			break;
-		}
-
+	while( rrf.backendFrameId != rrf.backendReadFrameId ) {
 		ri.Sys_Sleep( 0 );
 	}
-    
+   
 	ri.BufPipe_Finish( rrf.cmdPipe );
 }
 
@@ -296,25 +270,25 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	rrf.frame = &rrf.frames[rrf.frameNum];
 	ri.Mutex_Unlock( rrf.backendFrameLock );
 
-    rrf.frame->len = 0;
+	rrf.frame->len = 0;
 	rrf.frame->read = 0;
 
-    RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
-    
-    RF_FrameSync();
+	R_DataSync();
+
+	RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
 }
 
 void RF_EndFrame( void )
 {
-	RF_IssueEndFrameCmd( rrf.frame );
+	R_DataSync();
 
-    RF_FrameSync();
-    
+	RF_IssueEndFrameCmd( rrf.frame );
+	
 	ri.Mutex_Lock( rrf.backendFrameLock );
 	rrf.lastFrameNum = rrf.frameNum;
-    rrf.frameCount++;
+	rrf.frameId++;
 	ri.Mutex_Unlock( rrf.backendFrameLock );
-   
+
 	if( !glConfig.multithreading ) {
 		RF_BackendCmdsProc( RF_GetNewBackendFrame() );
 	}
@@ -326,9 +300,11 @@ ref_cmdbuf_t *RF_GetNewBackendFrame( void )
 
 	ri.Mutex_Lock( rrf.backendFrameLock );
 	if( rrf.backendFrameNum != rrf.lastFrameNum ) {
-        rrf.backendFrameCount = rrf.frameCount;
+        rrf.backendFrameId = rrf.frameId;
 		rrf.backendFrameNum = rrf.lastFrameNum;
+
 		result = &rrf.frames[rrf.backendFrameNum];
+		result->frameId = rrf.frameId;
 	}
 	ri.Mutex_Unlock( rrf.backendFrameLock );
 
@@ -401,13 +377,22 @@ void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, f
 void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
 	float s1, float t1, float s2, float t2, uint8_t *data )
 {
-	// TODO
+	if( !cols || !rows )
+		return;
+
+	if( data )
+		R_UploadRawPic( rsh.rawTexture, cols, rows, data );
+
+	RF_IssueDrawStretchRawCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
 void RF_DrawStretchRawYUV( int x, int y, int w, int h, 
 	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv )
 {
-	// TODO
+	if( yuv )
+		R_UploadRawYUVPic( rsh.rawYUVTextures, yuv );
+
+	RF_IssueDrawStretchRawYUVCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
 void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
@@ -472,6 +457,8 @@ const char *RF_SpeedsMessage( char *out, size_t size )
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
 {
 	R_ReplaceRawSubPic( shader, x, y, width, height, data );
+
+	qglFlush();
 
 	RF_IssueSyncCmd( rrf.frame );
 }

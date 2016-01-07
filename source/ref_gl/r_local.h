@@ -315,39 +315,41 @@ typedef struct
 		unsigned    count, oldCount;
 	} fps;
 
-	char            speedsMsg[2048];
+	volatile bool   dataSync; // call R_Finish
+
+	char 			speedsMsg[2048];
 	qmutex_t		*speedsMsgLock;
 } r_frontend_t;
 
 typedef struct
 {
 	uint8_t			buf[0x1000000];
+	uint64_t		frameId;
 	volatile size_t len;
 	volatile size_t read;
 } ref_cmdbuf_t;
 
 typedef struct
 {
-	unsigned		frameNum;           // wrapped
+	unsigned		frameNum; 			// wrapped
 	unsigned		lastFrameNum;
 	unsigned		backendFrameNum;
-    uint64_t        frameCount;
-    uint64_t        backendFrameCount;
+	uint64_t 		frameId;
+	uint64_t 		backendFrameId;
+	volatile uint64_t backendReadFrameId;
 	volatile bool 	shutdown;
-    volatile bool   frameSync;
 
-    int             scissor[4];
+	int 			scissor[4];
 
 	ref_cmdbuf_t	frames[3];			// triple-buffered
-	ref_cmdbuf_t	*frame;             // current frontend frame
+	ref_cmdbuf_t	*frame; 			// current frontend frame
 
     void            *auxGLContext;
     
-    qthread_t       *backendThread;
+    qthread_t		*backendThread;
 	qmutex_t		*backendFrameLock;
-	qmutex_t		*backendReadLock;
 
-    qbufPipe_t      *cmdPipe;
+	qbufPipe_t 		*cmdPipe;
 } ref_realfrontend_t;
 
 rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
@@ -630,8 +632,17 @@ void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_AppActivate( bool active, bool destroy );
 void		R_UpdateSpeedsMessage( void );
-void        R_Finish( void );
-void        R_FrameSync( void );
+void 		R_Finish( void );
+
+/**
+ * Calls R_Finish if data sync was previously deferred.
+ */
+void 		R_DataSync( void );
+
+/**
+ * Defer R_DataSync call at the start/end of the next frame.
+ */
+void 		R_DeferDataSync( void );
 
 mfog_t		*R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t		*R_FogForSphere( const vec3_t centre, const float radius );
@@ -656,12 +667,12 @@ void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2
 	const vec4_t color, const shader_t *shader );
 void		R_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	float angle, const vec4_t color, const shader_t *shader );
-void		R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
-	float s1, float t1, float s2, float t2, uint8_t *data );
+void		R_UploadRawPic( image_t *texture, int cols, int rows, uint8_t *data );
+void		R_UploadRawYUVPic( image_t **yuvTextures, ref_img_plane_t *yuv );
 void		R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
-	ref_img_plane_t *yuv, image_t **yuvTextures, int flip );
-void		R_DrawStretchRawYUV( int x, int y, int w, int h, 
-	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
+	image_t **yuvTextures, int flip );
+void		R_DrawStretchRaw( int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
+void		R_DrawStretchRawYUV( int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
 void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, int program_type, image_t *image, int blendMask );
 
