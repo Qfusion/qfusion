@@ -1393,6 +1393,7 @@ void R_Finish( void )
 void R_DeferDataSync( void )
 {
 	rf.dataSync = true;
+	qglFlush();
 }
 
 void R_DataSync( void )
