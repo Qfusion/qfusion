@@ -49,10 +49,7 @@ static void RF_BackendCmdsProc( ref_cmdbuf_t *frame )
                 break;
         
             t += len;
-			frame->read += len;
         }
-
-		frame->read = frame->len;
 
 		rrf.backendReadFrameId = frame->frameId;
     }
@@ -259,7 +256,6 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	ri.Mutex_Unlock( rrf.backendFrameLock );
 
 	rrf.frame->len = 0;
-	rrf.frame->read = 0;
 
 	R_DataSync();
 
