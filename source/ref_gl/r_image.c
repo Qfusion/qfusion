@@ -2085,7 +2085,7 @@ void R_ScreenShot( const char *filename, int x, int y, int width, int height, in
 	r_imginfo_t imginfo;
 	const char *extension;
 
-	if( !R_ScreenEnabled() )
+	if( !R_IsRenderingToScreen() )
 		return;
 
 	extension = COM_FileExtension( filename );

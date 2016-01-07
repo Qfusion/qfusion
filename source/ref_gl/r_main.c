@@ -1409,13 +1409,17 @@ void R_DataSync( void )
 }
 
 /*
-* R_SwapInterval
+* R_SetSwapInterval
 */
-static void R_SwapInterval( int swapInterval )
+void R_SetSwapInterval( int swapInterval, bool force )
 {
-	static int currentSwapInterval = 0;
+	static int currentSwapInterval = -1;
 
-	if( ( swapInterval != currentSwapInterval ) && !r_swapinterval_min->integer && !glConfig.stereoEnabled )
+	if( glConfig.stereoEnabled )
+		return;
+
+	clamp_low( swapInterval, r_swapinterval_min->integer );
+	if( force || swapInterval != currentSwapInterval )
 	{
 		GLimp_SetSwapInterval( swapInterval );
 		currentSwapInterval = swapInterval;
@@ -1447,11 +1451,13 @@ static void R_UpdateHWGamma( void )
 }
 
 /*
-* R_ScreenDisabled
+* R_IsRenderingToScreen
 */
-bool R_ScreenEnabled( void )
+bool R_IsRenderingToScreen( void )
 {
-	return GLimp_ScreenEnabled();
+	bool surfaceRenderable = true;
+	GLimp_GetWindowSurface( &surfaceRenderable );
+	return surfaceRenderable;
 }
 
 /*
@@ -1561,28 +1567,22 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 	RB_BeginFrame();
 
-	if( !glConfig.stereoEnabled || !R_ScreenEnabled() )
+#ifndef GL_ES_VERSION_2_0
+	if( cameraSeparation && !glConfig.stereoEnabled || !R_IsRenderingToScreen() )
 		cameraSeparation = 0;
+	}
 
 	if( rf.cameraSeparation != cameraSeparation )
 	{
 		rf.cameraSeparation = cameraSeparation;
-#ifdef GL_ES_VERSION_2_0
-		if( glConfig.ext.multiview_draw_buffers )
-		{
-			int location = GL_MULTIVIEW_EXT;
-			int index = ( cameraSeparation > 0 ) ? 1 : 0;
-			qglDrawBuffersIndexedEXT( 1, &location, &index );
-		}
-#else
 		if( cameraSeparation < 0 )
 			qglDrawBuffer( GL_BACK_LEFT );
 		else if( cameraSeparation > 0 )
 			qglDrawBuffer( GL_BACK_RIGHT );
 		else
 			qglDrawBuffer( GL_BACK );
-#endif
 	}
+#endif
 
 	// update gamma
 	if( r_gamma->modified )
@@ -1654,7 +1654,7 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	}
 
 	// set swap interval (vertical synchronization)
-	R_SwapInterval( ( r_swapinterval->integer || forceVsync ) ? 1 : 0 );
+	R_SetSwapInterval( ( r_swapinterval->integer || forceVsync ) ? 1 : 0, false );
 
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
 
@@ -1727,7 +1727,7 @@ void R_WriteAviFrame( int frame, bool scissor )
 	char *checkname;
 	const char *extension;
 
-	if( !R_ScreenEnabled() )
+	if( !R_IsRenderingToScreen() )
 		return;
 
 	if( scissor )

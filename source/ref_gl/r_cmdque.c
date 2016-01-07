@@ -261,6 +261,7 @@ static void RF_IssueDrawStretchPolyOrAddPolyToSceneCmd( ref_cmdbuf_t *frame, int
         cmd_len += numverts * sizeof( byte_vec4_t );
     if( poly->elems )
         cmd_len += poly->numelems * sizeof( elem_t );
+	cmd_len = ALIGN( cmd_len, sizeof( float ) );
     
     cmd.length = cmd_len;
     
@@ -420,7 +421,7 @@ void RF_IssueRenderSceneCmd( ref_cmdbuf_t *frame, const refdef_t *fd )
 #ifdef AREAPORTALS_MATRIX
         areabytes *= rsh.worldBrushModel->numareas;
 #endif
-        cmd_len += areabytes;
+		cmd_len = ALIGN( cmd_len + areabytes, sizeof( float ) );
     }
     
     cmd.length = cmd_len;
@@ -537,6 +538,7 @@ void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *frame, int x, int y, int w, int
 
 static unsigned R_HandleInitReliableCmd( void *pcmd );
 static unsigned R_HandleShutdownReliableCmd( void *pcmd );
+static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd );
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd );
 static unsigned R_HandleEnvShotReliableCmd( void *pcmd );
 
@@ -544,6 +546,7 @@ refReliableCmdHandler_t refReliableCmdHandlers[NUM_REF_RELIABLE_CMDS] =
 {
 	(refReliableCmdHandler_t)R_HandleInitReliableCmd,
     (refReliableCmdHandler_t)R_HandleShutdownReliableCmd,
+    (refReliableCmdHandler_t)R_HandleSurfaceChangeReliableCmd,
     (refReliableCmdHandler_t)R_HandleScreenShotReliableCmd,
 	(refReliableCmdHandler_t)R_HandleEnvShotReliableCmd,
 };
@@ -564,6 +567,15 @@ static unsigned R_HandleShutdownReliableCmd( void *pcmd )
 	refReliableCmdInitShutdown_t *cmd = pcmd;
 
 	RB_Shutdown();
+
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd )
+{
+	refReliableCmdSurfaceChange_t *cmd = pcmd;
+
+	GLimp_UpdatePendingWindowSurface();
 
 	return sizeof( *cmd );
 }
@@ -597,6 +609,12 @@ void RF_IssueInitReliableCmd( qbufPipe_t *pipe )
 void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe )
 {
 	refReliableCmdInitShutdown_t cmd = { REF_RELIABLE_CMD_SHUTDOWN };
+	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
+}
+
+void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe )
+{
+	refReliableCmdSurfaceChange_t cmd = { REF_RELIABLE_CMD_SURFACE_CHANGE };
 	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
 }
 

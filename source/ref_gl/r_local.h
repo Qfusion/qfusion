@@ -344,13 +344,9 @@ typedef struct
 	ref_cmdbuf_t	frames[3];			// triple-buffered
 	ref_cmdbuf_t	*frame; 			// current frontend frame
 
-	void 			*mainGLContext;
-	void 			*mainGLSurface;
-
-	void 			*auxGLContext;
-	void 			*auxGLSurface;
-
-	qthread_t 		*backendThread;
+    void            *auxGLContext;
+    
+    qthread_t		*backendThread;
 	qmutex_t		*backendFrameLock;
 
 	qbufPipe_t 		*cmdPipe;
@@ -360,6 +356,7 @@ rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int 
 	int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
 rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
 void RF_Shutdown( bool verbose );
+void RF_SurfaceChangePending( void );
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );
@@ -387,7 +384,7 @@ void RF_ResetScissor( void );
 void RF_SetCustomColor( int num, int r, int g, int b );
 void RF_ScreenShot( const char *path, const char *name, bool silent );
 void RF_EnvShot( const char *path, const char *name, unsigned pixels );
-bool RF_ScreenEnabled( void );
+bool RF_RenderingEnabled( void );
 const char *RF_SpeedsMessage( char *out, size_t size );
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
 
@@ -627,9 +624,10 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define		R_LoadCacheFile(path,buffer) R_LoadFile_(path,FS_CACHE,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
-bool		R_ScreenEnabled( void );
+bool		R_IsRenderingToScreen( void );
 void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
+void		R_SetSwapInterval( int swapInterval, bool force );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_AppActivate( bool active, bool destroy );
