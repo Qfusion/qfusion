@@ -287,6 +287,7 @@ typedef struct
 	int				frameBufferWidth, frameBufferHeight;
 
 	float			cameraSeparation;
+    int             swapInterval;
 
 	int				worldModelSequence;
 
@@ -340,6 +341,7 @@ typedef struct
 	volatile bool 	shutdown;
 
 	int 			scissor[4];
+    int             swapInterval;
 
 	ref_cmdbuf_t	frames[3];			// triple-buffered
 	ref_cmdbuf_t	*frame; 			// current frontend frame
@@ -627,7 +629,7 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 bool		R_IsRenderingToScreen( void );
 void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
-void		R_SetSwapInterval( int swapInterval, bool force );
+int 		R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_AppActivate( bool active, bool destroy );
