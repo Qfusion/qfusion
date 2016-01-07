@@ -1568,9 +1568,8 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	RB_BeginFrame();
 
 #ifndef GL_ES_VERSION_2_0
-	if( cameraSeparation && !glConfig.stereoEnabled || !R_IsRenderingToScreen() )
+	if( cameraSeparation && ( !glConfig.stereoEnabled || !R_IsRenderingToScreen() ) )
 		cameraSeparation = 0;
-	}
 
 	if( rf.cameraSeparation != cameraSeparation )
 	{
