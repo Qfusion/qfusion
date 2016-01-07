@@ -2102,7 +2102,7 @@ static void CL_InitLocal( void )
 	m_accelStyle =	Cvar_Get( "m_accelStyle", "0", CVAR_ARCHIVE );
 	m_accelOffset =	Cvar_Get( "m_accelOffset", "0", CVAR_ARCHIVE );
 	m_accelPow =	Cvar_Get( "m_accelPow", "2", CVAR_ARCHIVE );
-	m_filter =		Cvar_Get( "m_filter", "1", CVAR_ARCHIVE );
+	m_filter =		Cvar_Get( "m_filter", "0", CVAR_ARCHIVE );
 	m_filterStrength =	Cvar_Get( "m_filterStrength", "0.5", CVAR_ARCHIVE );
 	m_pitch =		Cvar_Get( "m_pitch", "0.022", CVAR_ARCHIVE );
 	m_yaw =			Cvar_Get( "m_yaw", "0.022", CVAR_ARCHIVE );
