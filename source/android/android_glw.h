@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2014 SiPlus, Chasseur de bots
+Copyright (C) 2016 SiPlus, Warsow Development Team
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -30,16 +30,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct
 {
-	ANativeWindow *window;
-
 	EGLDisplay display;
 	EGLConfig config;
 	int format;
-	EGLSurface surface;
-	EGLSurface pbufferSurface;
-	EGLContext context;
 
+	bool multithreadedRendering;
+
+	EGLContext context; // Main thread context
+
+	EGLSurface mainThreadPbuffer; // Bound to the main thread when the rendering thread is active
+
+	// Window surface and fake minimized surface - used on the thread that is currently rendering
+	EGLSurface surface;
 	int swapInterval;
+	EGLSurface noWindowPbuffer;
+
+	// Window replacement in the rendering thread
+	qmutex_t *windowMutex;
+	ANativeWindow *window; // Only main can change
+	bool windowChanged;
 
 	void *EGLLib, *OpenGLLib;
 } glwstate_t;

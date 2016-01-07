@@ -587,15 +587,18 @@ void GLimp_AppActivate( bool active, bool destroy )
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending )
 {
+	if( surfaceChangePending )
+		*surfaceChangePending = false;
+
 	return rserr_ok; // surface cannot be lost
 }
 
 /*
-** GLimp_ScreenEnabled
+** GLimp_RenderingEnabled
 */
-bool GLimp_ScreenEnabled( void )
+bool GLimp_RenderingEnabled( void )
 {
 	return true;
 }
@@ -610,17 +613,6 @@ void GLimp_SetSwapInterval( int swapInterval )
 }
 
 /*
-** GLimp_GetMainContext
-*/
-void GLimp_GetMainContext( void **context, void **surface )
-{
-	if( context )
-		*context = glw_state.hGLRC;
-	if( surface )
-		*surface = NULL;
-}
-
-/*
 ** GLimp_MakeCurrent
 */
 bool GLimp_MakeCurrent( void *context, void *surface )
@@ -629,6 +621,30 @@ bool GLimp_MakeCurrent( void *context, void *surface )
 		return false;
 	}
 	return true;
+}
+
+/*
+** GLimp_EnableMultithreadedRendering
+*/
+void GLimp_EnableMultithreadedRendering( bool enable )
+{
+}
+
+/*
+** GLimp_GetWindowSurface
+*/
+void *GLimp_GetWindowSurface( bool *renderable )
+{
+	if( renderable )
+		*renderable = true;
+	return NULL;
+}
+
+/*
+** GLimp_UpdatePendingWindowSurface
+*/
+void GLimp_UpdatePendingWindowSurface( void )
+{
 }
 
 /*
@@ -643,7 +659,8 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 
 	qwglShareLists( glw_state.hGLRC, ctx );
 	*context = ctx;
-	*surface = ( void * )1;
+	if( surface )
+		*surface = NULL;
 	return true;
 }
 

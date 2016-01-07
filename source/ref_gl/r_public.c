@@ -107,7 +107,8 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.TransformVectorToScreen = R_TransformVectorToScreen;
 
-	globals.ScreenEnabled = RF_ScreenEnabled;
+	globals.RenderingEnabled = RF_RenderingEnabled;
+
 	globals.SpeedsMessage = RF_SpeedsMessage;
 
 	globals.BeginAviDemo = R_BeginAviDemo;

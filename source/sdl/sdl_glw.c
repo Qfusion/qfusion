@@ -269,15 +269,18 @@ void GLimp_AppActivate( bool active, bool destroy )
 /*
 ** GLimp_SetWindow
 */
-rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
+rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending )
 {
+	if( surfaceChangePending )
+		*surfaceChangePending = false;
+
 	return rserr_ok; // surface cannot be lost
 }
 
 /*
-** GLimp_ScreenEnabled
+** GLimp_RenderingEnabled
 */
-bool GLimp_ScreenEnabled( void )
+bool GLimp_RenderingEnabled( void )
 {
 	return true;
 }
@@ -291,22 +294,35 @@ void GLimp_SetSwapInterval( int swapInterval )
 }
 
 /*
-** GLimp_GetMainContext
-*/
-void GLimp_GetMainContext( void **context, void **surface )
-{
-	if( context )
-		*context = glw_state.sdl_glcontext;
-	if( surface )
-		*surface = NULL;
-}
-
-/*
 ** GLimp_MakeCurrent
 */
 bool GLimp_MakeCurrent( void *context, void *surface )
 {
 	return SDL_GL_MakeCurrent( glw_state.sdl_window, (SDL_GLContext)context ) == 0;
+}
+
+/*
+** GLimp_EnableMultithreadedRendering
+*/
+void GLimp_EnableMultithreadedRendering( bool enable )
+{
+}
+
+/*
+** GLimp_GetWindowSurface
+*/
+void *GLimp_GetWindowSurface( bool *renderable )
+{
+	if( renderable )
+		*renderable = true;
+	return NULL;
+}
+
+/*
+** GLimp_UpdatePendingWindowSurface
+*/
+void GLimp_UpdatePendingWindowSurface( void )
+{
 }
 
 /*
@@ -317,7 +333,8 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 	SDL_GL_SetAttribute( SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1 );
 	
 	*context = (void*)SDL_GL_CreateContext( glw_state.sdl_window );
-	*surface = NULL;
+	if( surface )
+		*surface = NULL;
 	
 	// SDL_GL_CreateContext makes the newly created context current
 	// we don't want that, so revert to our main context

@@ -106,7 +106,7 @@ static void RF_BackendFrame( void )
 */
 static void *RF_BackendThreadProc( void *param )
 {
-	GLimp_MakeCurrent( rrf.auxGLContext, rrf.auxGLSurface );
+	GLimp_MakeCurrent( rrf.auxGLContext, GLimp_GetWindowSurface( NULL ) );
 
     while( !rrf.shutdown ) {
         RF_BackendFrame();
@@ -141,8 +141,10 @@ static void RF_BackendThreadShutdown( void )
 	ri.Mutex_Destroy( &rrf.backendFrameLock );
 
 	if( rrf.auxGLContext ) {
-		GLimp_SharedContext_Destroy( rrf.auxGLContext, rrf.auxGLSurface );
+		GLimp_SharedContext_Destroy( rrf.auxGLContext, NULL );
 	}
+
+	GLimp_EnableMultithreadedRendering( false );
 }
 
 /*
@@ -154,13 +156,16 @@ static bool RF_BackendThreadInit( void )
 	rrf.backendFrameLock = ri.Mutex_Create();
 
 	if( glConfig.multithreading ) {
-		if( !GLimp_SharedContext_Create( &rrf.auxGLContext, &rrf.auxGLSurface ) ) {
+		GLimp_EnableMultithreadedRendering( true );
+
+		if( !GLimp_SharedContext_Create( &rrf.auxGLContext, NULL ) ) {
 			return false;
 		}
 
 		rrf.shutdown = false;
 		rrf.backendThread = ri.Thread_Create( RF_BackendThreadProc, NULL );
 		if( !rrf.backendThread ) {
+			GLimp_EnableMultithreadedRendering( false );
 			return false;
 		}
 	}
@@ -220,8 +225,6 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 		return err;
 	}
 
-	GLimp_GetMainContext( &rrf.mainGLContext, &rrf.mainGLSurface );
-
 	if( RF_BackendThreadInit() != true ) {
         return rserr_unknown;
     }
@@ -234,6 +237,11 @@ void RF_Shutdown( bool verbose )
     RF_BackendThreadShutdown();
 
 	R_Shutdown( verbose );
+}
+
+void RF_SurfaceChangePending( void )
+{
+	RF_IssueSurfaceChangeReliableCmd( rrf.cmdPipe );
 }
 
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
@@ -411,17 +419,19 @@ void RF_SetCustomColor( int num, int r, int g, int b )
 
 void RF_ScreenShot( const char *path, const char *name, bool silent )
 {
-    RF_IssueScreenShotReliableCmd( rrf.cmdPipe, path, name, silent );
+	if( RF_RenderingEnabled() )
+		RF_IssueScreenShotReliableCmd( rrf.cmdPipe, path, name, silent );
 }
 
 void RF_EnvShot( const char *path, const char *name, unsigned pixels )
 {
-    RF_IssueEnvShotReliableCmd( rrf.cmdPipe, path, name, pixels );
+	if( RF_RenderingEnabled() )
+		RF_IssueEnvShotReliableCmd( rrf.cmdPipe, path, name, pixels );
 }
 
-bool RF_ScreenEnabled( void )
+bool RF_RenderingEnabled( void )
 {
-    return GLimp_ScreenEnabled();
+	return GLimp_RenderingEnabled();
 }
 
 const char *RF_SpeedsMessage( char *out, size_t size )
