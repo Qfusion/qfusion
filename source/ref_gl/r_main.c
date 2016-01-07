@@ -607,26 +607,51 @@ void R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2,
 }
 
 /*
-* R_DrawStretchRaw
-*
-* Passing NULL for data redraws last uploaded frame
+* R_UploadRawPic
 */
-void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
-	float s1, float t1, float s2, float t2, uint8_t *data )
+void R_UploadRawPic( image_t *texture, int cols, int rows, uint8_t *data )
+{
+	if( texture->width != cols || texture->height != rows ) {
+		uint8_t *nodata[1] = { NULL };
+		R_ReplaceImage( texture, nodata, cols, rows, texture->flags, 1, 3 );
+	}
+	R_ReplaceSubImage( texture, 0, 0, 0, &data, cols, rows );
+}
+
+/*
+* R_UploadRawYUVPic
+*/
+void R_UploadRawYUVPic( image_t **yuvTextures, ref_img_plane_t *yuv )
+{
+	int i;
+
+	for( i = 0; i < 3; i++ ) {
+		uint8_t *data = yuv[i].data;
+		int flags = yuvTextures[i]->flags;
+		int stride = yuv[i].stride;
+		int height = yuv[i].height;
+
+		if( stride < 0 ) {
+			// negative stride flips the image vertically
+			data = data + stride * height;
+			flags = (flags & ~(IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL)) | IT_FLIPY;
+			stride = -stride;
+		}
+
+		if( yuvTextures[i]->width != stride || yuvTextures[i]->height != height ) {
+			uint8_t *nodata[1] = { NULL };
+			R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1, 1 );
+		}
+		R_ReplaceSubImage( yuvTextures[i], 0, 0, 0, &data, stride, height );		
+	}
+}
+
+/*
+* R_DrawStretchRaw
+*/
+void R_DrawStretchRaw( int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
 {
 	float h_scale, v_scale;
-
-	if( !rows || !cols ) {
-		return;
-	}
-
-	if( data ) {
-		if( rsh.rawTexture->width != cols || rsh.rawTexture->height != rows ) {
-			uint8_t *nodata[1] = { NULL };
-			R_ReplaceImage( rsh.rawTexture, nodata, cols, rows, rsh.rawTexture->flags, 1, 3 );
-		}
-		R_ReplaceSubImage( rsh.rawTexture, 0, 0, 0, &data, cols, rows );
-	}
 
 	h_scale = (float)rsh.rawTexture->width / rsh.rawTexture->upload_width;
 	v_scale = (float)rsh.rawTexture->height / rsh.rawTexture->upload_height;
@@ -645,8 +670,7 @@ void R_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 * Set bit 1 in 'flip' to flip the image vertically
 */
 void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h, 
-	float s1, float t1, float s2, float t2, 
-	ref_img_plane_t *yuv, image_t **yuvTextures, int flip )
+	float s1, float t1, float s2, float t2, image_t **yuvTextures, int flip )
 {
 	static char *s_name = "$builtinyuv";
 	static shaderpass_t p;
@@ -669,30 +693,6 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 	p.images[2] = yuvTextures[2];
 	p.flags = 0;
 	p.program_type = GLSL_PROGRAM_TYPE_YUV;
-
-	if( yuv ) {
-		int i;
-
-		for( i = 0; i < 3; i++ ) {
-			uint8_t *data = yuv[i].data;
-			int flags = yuvTextures[i]->flags;
-			int stride = yuv[i].stride;
-			int height = yuv[i].height;
-
-			if( stride < 0 ) {
-				// negative stride flips the image vertically
-				data = data + stride * height;
-				flags = (flags & ~(IT_FLIPX|IT_FLIPY|IT_FLIPDIAGONAL)) | IT_FLIPY;
-				stride = -stride;
-			}
-
-			if( yuvTextures[i]->width != stride || yuvTextures[i]->height != height ) {
-				uint8_t *nodata[1] = { NULL };
-				R_ReplaceImage( yuvTextures[i], nodata, stride, height, flags, 1, 1 );
-			}
-			R_ReplaceSubImage( yuvTextures[i], 0, 0, 0, &data, stride, height );
-		}
-	}
 
 	h_scale = (float)yuvTextures[0]->width / yuvTextures[0]->upload_width;
 	v_scale = (float)yuvTextures[0]->height / yuvTextures[0]->upload_height;
@@ -732,17 +732,14 @@ void R_DrawStretchRawYUVBuiltin( int x, int y, int w, int h,
 
 /*
 * R_DrawStretchRawYUV
-*
-* Passing NULL for data redraws last uploaded frame
 */
-void R_DrawStretchRawYUV( int x, int y, int w, int h, 
-	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv )
+void R_DrawStretchRawYUV( int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
 {
-	R_DrawStretchRawYUVBuiltin( x, y, w, h, s1, t1, s2, t2, yuv, rsh.rawYUVTextures, 0 );
+	R_DrawStretchRawYUVBuiltin( x, y, w, h, s1, t1, s2, t2, rsh.rawYUVTextures, 0 );
 }
 
 /*
-* R_DrawStretchImage
+* R_DrawStretchQuick
 */
 void R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, int program_type, image_t *image, int blendMask )

@@ -1919,6 +1919,8 @@ static void R_FreeImage( image_t *image )
 
 /*
 * R_ReplaceImage
+*
+* FIXME: not thread-safe!
 */
 void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int flags, int minmipsize, int samples )
 {

@@ -128,6 +128,8 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 
 			RB_Viewport( 0, 0, handle->image->upload_width, handle->image->upload_height );
 
+			R_UploadRawYUVPic( handle->yuv_images, handle->cyuv->yuv );
+
 			// flip the image vertically because we're rendering to a FBO
 			R_DrawStretchRawYUVBuiltin( 
 				0, 0, 
@@ -136,7 +138,7 @@ static image_t *R_ResampleCinematicFrame( r_cinhandle_t *handle )
 				(float)handle->cyuv->y_offset / handle->cyuv->image_height, 
 				(float)(handle->cyuv->x_offset + handle->cyuv->width) / handle->cyuv->image_width, 
 				(float)(handle->cyuv->y_offset + handle->cyuv->height) / handle->cyuv->image_height, 
-				handle->cyuv->yuv, handle->yuv_images, 2 );
+				handle->yuv_images, 2 );
 
 			if( !in2D ) {
 				R_PopRefInst();
