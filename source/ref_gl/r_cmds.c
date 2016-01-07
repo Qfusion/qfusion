@@ -33,7 +33,7 @@ void R_TakeScreenShot( const char *path, const char *name, bool silent )
     size_t checkname_size = 0;
     int quality;
     
-    if( !R_RenderingEnabled() )
+    if( !RF_RenderingEnabled() )
         return;
     
     if( r_screenshot_jpeg->integer ) {
@@ -203,7 +203,7 @@ void R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels )
         { "nz", { 90, 180, 0 }, IT_FLIPDIAGONAL }
     };
     
-    if( !R_RenderingEnabled() || !rsh.worldModel )
+    if( !RF_RenderingEnabled() || !rsh.worldModel )
         return;
     
     maxSize = min( min( glConfig.width, glConfig.height ), glConfig.maxTextureSize );
@@ -263,7 +263,7 @@ void R_EnvShot_f( void )
 	int path_size;
 	char *path;
 
-	if( !R_RenderingEnabled() || !rsh.worldModel )
+	if( !RF_RenderingEnabled() || !rsh.worldModel )
 		return;
 
 	if( ri.Cmd_Argc() != 3 )
