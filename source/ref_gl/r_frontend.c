@@ -219,6 +219,7 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 
 	memset( &rrf, 0, sizeof( rrf ) );
 	rrf.frame = &rrf.frames[0];
+    rrf.swapInterval = -1;
 
 	err = R_SetMode( x, y, width, height, displayFrequency, fullScreen, stereo );
 	if( err != rserr_ok ) {
@@ -262,6 +263,8 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	rrf.frame->read = 0;
 
 	R_DataSync();
+    
+    rrf.swapInterval = R_SetSwapInterval( r_swapinterval->integer, rrf.swapInterval );
 
 	RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
 }

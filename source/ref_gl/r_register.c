@@ -1338,6 +1338,7 @@ static rserr_t R_PostInit( void )
 	for( i = 0; i < 256; i++ )
 		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
 
+    rf.swapInterval = -1;
     rf.speedsMsgLock = ri.Mutex_Create();
 
 	R_InitDrawLists();
@@ -1347,9 +1348,9 @@ static rserr_t R_PostInit( void )
 		return rserr_unknown;
 	}
 
-	R_SetSwapInterval( 0, true ); // initialize and flush swap interval
+	R_SetSwapInterval( 0, -1 );
 
-	R_FillStartupBackgroundColor( COLOR_R( glConfig.startupColor ) / 255.0f,
+    R_FillStartupBackgroundColor( COLOR_R( glConfig.startupColor ) / 255.0f,
 		COLOR_G( glConfig.startupColor ) / 255.0f, COLOR_B( glConfig.startupColor ) / 255.0f );
 
 	R_TextureMode( r_texturemode->string );
