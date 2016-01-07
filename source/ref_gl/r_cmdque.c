@@ -526,7 +526,7 @@ static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd )
 {
 	refReliableCmdSurfaceChange_t *cmd = pcmd;
 
-	RF_UpdateBackendSurface();
+	GLimp_UpdatePendingWindowSurface();
 
 	return sizeof( *cmd );
 }
