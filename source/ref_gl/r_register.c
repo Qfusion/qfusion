@@ -1347,8 +1347,7 @@ static rserr_t R_PostInit( void )
 		return rserr_unknown;
 	}
 
-	// make sure vsync is disabled by default if possible - it is assumed by R_SwapInterval
-	GLimp_SetSwapInterval( r_swapinterval_min->integer );
+	R_SetSwapInterval( 0, true ); // initialize and flush swap interval
 
 	R_FillStartupBackgroundColor( COLOR_R( glConfig.startupColor ) / 255.0f,
 		COLOR_G( glConfig.startupColor ) / 255.0f, COLOR_B( glConfig.startupColor ) / 255.0f );

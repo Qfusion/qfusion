@@ -42,6 +42,7 @@ typedef struct
 
 	// Window surface and fake minimized surface - used on the thread that is currently rendering
 	EGLSurface surface;
+	int swapInterval;
 	EGLSurface noWindowPbuffer;
 
 	// Window replacement in the rendering thread

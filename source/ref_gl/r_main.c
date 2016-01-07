@@ -1404,13 +1404,17 @@ void R_FrameSync( void )
 }
 
 /*
-* R_SwapInterval
+* R_SetSwapInterval
 */
-static void R_SwapInterval( int swapInterval )
+void R_SetSwapInterval( int swapInterval, bool force )
 {
-	static int currentSwapInterval = 0;
+	static int currentSwapInterval = -1;
 
-	if( ( swapInterval != currentSwapInterval ) && !r_swapinterval_min->integer && !glConfig.stereoEnabled )
+	if( glConfig.stereoEnabled )
+		return;
+
+	clamp_low( swapInterval, r_swapinterval_min->integer );
+	if( force || swapInterval != currentSwapInterval )
 	{
 		GLimp_SetSwapInterval( swapInterval );
 		currentSwapInterval = swapInterval;
@@ -1645,7 +1649,7 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	}
 
 	// set swap interval (vertical synchronization)
-	R_SwapInterval( ( r_swapinterval->integer || forceVsync ) ? 1 : 0 );
+	R_SetSwapInterval( ( r_swapinterval->integer || forceVsync ) ? 1 : 0, false );
 
 	memset( &rf.stats, 0, sizeof( rf.stats ) );
 

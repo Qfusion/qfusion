@@ -233,10 +233,12 @@ static void GLimp_Android_UpdateWindowSurface( void )
 	ANativeWindow *window = glw_state.window;
 	EGLContext context = qeglGetCurrentContext();
 
+	if( context == EGL_NO_CONTEXT )
+		return;
+
 	if( glw_state.surface != EGL_NO_SURFACE )
 	{
-		if( context != EGL_NO_CONTEXT )
-			qeglMakeCurrent( glw_state.display, glw_state.noWindowPbuffer, glw_state.noWindowPbuffer, context );
+		qeglMakeCurrent( glw_state.display, glw_state.noWindowPbuffer, glw_state.noWindowPbuffer, context );
 		qeglDestroySurface( glw_state.display, glw_state.surface );
 		glw_state.surface = EGL_NO_SURFACE;
 	}
@@ -253,8 +255,8 @@ static void GLimp_Android_UpdateWindowSurface( void )
 		return;
 	}
 
-	if( context != EGL_NO_CONTEXT )
-		qeglMakeCurrent( glw_state.display, glw_state.surface, glw_state.surface, context );
+	qeglMakeCurrent( glw_state.display, glw_state.surface, glw_state.surface, context );
+	qeglSwapInterval( glw_state.display, glw_state.swapInterval );
 }
 
 /*
@@ -313,6 +315,8 @@ static bool GLimp_InitGL( void )
 	}
 
 	glw_state.windowMutex = ri.Mutex_Create();
+
+	glw_state.swapInterval = 1; // Default swap interval for new surfaces
 
 	// GLimp_Android_UpdateWindowSurface attaches the surface to the current context, so make one current to initialize
 	qeglMakeCurrent( glw_state.display, glw_state.noWindowPbuffer, glw_state.noWindowPbuffer, glw_state.context );
@@ -434,7 +438,11 @@ bool GLimp_RenderingEnabled( void )
 */
 void GLimp_SetSwapInterval( int swapInterval )
 {
-	qeglSwapInterval( glw_state.display, swapInterval );
+	if( glw_state.swapInterval != swapInterval )
+	{
+		glw_state.swapInterval = swapInterval;
+		qeglSwapInterval( glw_state.display, swapInterval );
+	}
 }
 
 /*

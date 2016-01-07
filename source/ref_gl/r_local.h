@@ -625,6 +625,7 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 bool		R_IsRenderingToScreen( void );
 void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
+void		R_SetSwapInterval( int swapInterval, bool force );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_AppActivate( bool active, bool destroy );
