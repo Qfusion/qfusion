@@ -341,7 +341,6 @@ typedef struct
 	volatile bool 	shutdown;
 
 	int 			scissor[4];
-    int             swapInterval;
 
 	ref_cmdbuf_t	frames[3];			// triple-buffered
 	ref_cmdbuf_t	*frame; 			// current frontend frame
