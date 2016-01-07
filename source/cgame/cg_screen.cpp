@@ -1528,7 +1528,7 @@ cg_touch_t cg_touches[CG_MAX_TOUCHES];
 
 typedef struct {
 	int touch;
-	int x, y;
+	float x, y;
 } cg_touchpad_t;
 
 static cg_touchpad_t cg_touchpads[TOUCHPAD_COUNT];
@@ -1808,7 +1808,7 @@ void CG_SetTouchpad( int padID, int touchID )
 	if( touchID >= 0 )
 	{
 		cg_touch_t &touch = cg_touches[touchID];
-		pad.x = touch.x;
-		pad.y = touch.y;
+		pad.x = ( float )touch.x;
+		pad.y = ( float )touch.y;
 	}
 }
