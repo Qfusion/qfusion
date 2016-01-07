@@ -311,15 +311,20 @@ void R_ShaderList_f( void )
 void R_ShaderDump_f( void )
 {
 	const char *name;
+	msurface_t *debugSurface;
+	
+	ri.Mutex_Lock( rf.debugSurfaceLock );
+	debugSurface = rf.debugSurface;
+	ri.Mutex_Unlock( rf.debugSurfaceLock );
 
-	if( (ri.Cmd_Argc() < 2) && !rsc.debugSurface )
+	if( (ri.Cmd_Argc() < 2) && !debugSurface )
 	{
 		Com_Printf( "Usage: %s [name]\n", ri.Cmd_Argv(0) );
 		return;
 	}
 
 	if( ri.Cmd_Argc() < 2 )
-		name = rsc.debugSurface->shader->name;
+		name = debugSurface->shader->name;
 	else
 		name = ri.Cmd_Argv( 1 );
 

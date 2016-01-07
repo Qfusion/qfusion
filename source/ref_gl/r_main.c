@@ -1499,23 +1499,24 @@ const char *R_SpeedsMessage( char *out, size_t size )
                 break;
             case 4:
             case 5:
-                if( rsc.debugSurface )
+                if( rf.debugSurface )
                 {
                     int numVerts = 0, numTris = 0;
+					msurface_t *debugSurface = rf.debugSurface;
                     
                     Q_snprintfz( out, size,
                                 "%s type:%i sort:%i",
-                                rsc.debugSurface->shader->name, rsc.debugSurface->facetype, rsc.debugSurface->shader->sort );
+                                debugSurface->shader->name, debugSurface->facetype, debugSurface->shader->sort );
                     
                     Q_strncatz( out, "\n", size );
                     
-                    if( r_speeds->integer == 5 && rsc.debugSurface->drawSurf->vbo ) {
-                        numVerts = rsc.debugSurface->drawSurf->vbo->numVerts;
-                        numTris = rsc.debugSurface->drawSurf->vbo->numElems / 3;
+                    if( r_speeds->integer == 5 && debugSurface->drawSurf->vbo ) {
+                        numVerts = debugSurface->drawSurf->vbo->numVerts;
+                        numTris = debugSurface->drawSurf->vbo->numElems / 3;
                     }
-                    else if( rsc.debugSurface->mesh ) {
-                        numVerts = rsc.debugSurface->mesh->numVerts;
-                        numTris = rsc.debugSurface->mesh->numElems;
+                    else if( debugSurface->mesh ) {
+                        numVerts = debugSurface->mesh->numVerts;
+                        numTris = debugSurface->mesh->numElems;
                     }
                     
                     if( numVerts ) {
@@ -1525,9 +1526,9 @@ const char *R_SpeedsMessage( char *out, size_t size )
                     
                     Q_strncatz( out, "\n", size );
                     
-                    if( rsc.debugSurface->fog && rsc.debugSurface->fog->shader
-                       && rsc.debugSurface->fog->shader != rsc.debugSurface->shader )
-                        Q_strncatz( out, rsc.debugSurface->fog->shader->name, size );
+                    if( debugSurface->fog && debugSurface->fog->shader
+                       && debugSurface->fog->shader != debugSurface->shader )
+                        Q_strncatz( out, debugSurface->fog->shader->name, size );
                 }
                 break;
             case 6:
@@ -1551,6 +1552,66 @@ void R_UpdateSpeedsMessage( void )
     ri.Mutex_Lock( rf.speedsMsgLock );
     R_SpeedsMessage( rf.speedsMsg, sizeof( rf.speedsMsg ) );
     ri.Mutex_Unlock( rf.speedsMsgLock );
+}
+
+/*
+ * R_RenderDebugSurface
+ */
+void R_RenderDebugSurface( const refdef_t *fd )
+{
+	rtrace_t tr;
+	vec3_t forward;
+	vec3_t start, end;
+	msurface_t *debugSurf = NULL;
+	
+	if( fd->rdflags & RDF_NOWORLDMODEL )
+		return;
+	
+	if( r_speeds->integer == 4 || r_speeds->integer == 5 )
+	{
+		msurface_t *surf = NULL;
+
+		VectorCopy( &fd->viewaxis[AXIS_FORWARD], forward );
+		VectorCopy( fd->vieworg, start );
+		VectorMA( start, 4096, forward, end );
+		
+		surf = R_TraceLine( &tr, start, end, 0 );
+		if( surf && surf->drawSurf && !r_showtris->integer )
+		{
+			R_ClearDrawList( rn.meshlist );
+			
+			R_ClearDrawList( rn.portalmasklist );
+			
+			if( R_AddSurfToDrawList( rn.meshlist, R_NUM2ENT(tr.ent), NULL, surf->shader, 0, 0, NULL, surf->drawSurf ) ) {
+				if( rn.refdef.rdflags & RDF_FLIPPED )
+					RB_FlipFrontFace();
+				
+				if( r_speeds->integer == 5 ) {
+					// VBO debug mode
+					R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces,
+								  surf->drawSurf->numVerts, surf->drawSurf->numElems,
+								  0, 0 );
+				}
+				else {
+					// classic mode (showtris for individual surface)
+					R_AddVBOSlice( surf->drawSurf - rsh.worldBrushModel->drawSurfaces,
+								  surf->mesh->numVerts, surf->mesh->numElems,
+								  surf->firstDrawSurfVert, surf->firstDrawSurfElem );
+				}
+				
+				R_DrawOutlinedSurfaces( rn.meshlist );
+				
+				if( rn.refdef.rdflags & RDF_FLIPPED )
+					RB_FlipFrontFace();
+				
+				debugSurf = surf;
+			}
+		}
+	}
+	
+	ri.Mutex_Lock( rf.debugSurfaceLock );
+	rf.debugSurface = debugSurf;
+	ri.Mutex_Unlock( rf.debugSurfaceLock );
 }
 
 /*
