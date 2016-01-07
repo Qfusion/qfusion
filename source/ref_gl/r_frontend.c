@@ -451,19 +451,19 @@ void RF_SetCustomColor( int num, int r, int g, int b )
 
 void RF_ScreenShot( const char *path, const char *name, bool silent )
 {
-    RF_IssueScreenShotReliableCmd( rrf.cmdPipe, path, name, silent );
+	if( RF_RenderingEnabled() )
+		RF_IssueScreenShotReliableCmd( rrf.cmdPipe, path, name, silent );
 }
 
 void RF_EnvShot( const char *path, const char *name, unsigned pixels )
 {
-    RF_IssueEnvShotReliableCmd( rrf.cmdPipe, path, name, pixels );
+	if( RF_RenderingEnabled() )
+		RF_IssueEnvShotReliableCmd( rrf.cmdPipe, path, name, pixels );
 }
 
 bool RF_RenderingEnabled( void )
 {
-	bool surfaceRenderable = true;
-	GLimp_GetWindowSurface( &surfaceRenderable );
-	return surfaceRenderable;
+	return GLimp_RenderingEnabled();
 }
 
 const char *RF_SpeedsMessage( char *out, size_t size )

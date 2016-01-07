@@ -623,7 +623,7 @@ void		R_FreeFile_( void *buffer, const char *filename, int fileline );
 #define		R_LoadCacheFile(path,buffer) R_LoadFile_(path,FS_CACHE,buffer,__FILE__,__LINE__)
 #define		R_FreeFile(buffer) R_FreeFile_(buffer,__FILE__,__LINE__)
 
-bool		R_RenderingEnabled( void );
+bool		R_IsRenderingToScreen( void );
 void		R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void		R_EndFrame( void );
 void		R_Set2DMode( bool enable );
