@@ -458,5 +458,7 @@ void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height,
 {
 	R_ReplaceRawSubPic( shader, x, y, width, height, data );
 
+	qglFlush();
+
 	RF_IssueSyncCmd( rrf.frame );
 }
