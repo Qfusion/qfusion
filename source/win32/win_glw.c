@@ -613,17 +613,6 @@ void GLimp_SetSwapInterval( int swapInterval )
 }
 
 /*
-** GLimp_GetMainContext
-*/
-void GLimp_GetMainContext( void **context, void **surface )
-{
-	if( context )
-		*context = glw_state.hGLRC;
-	if( surface )
-		*surface = NULL;
-}
-
-/*
 ** GLimp_MakeCurrent
 */
 bool GLimp_MakeCurrent( void *context, void *surface )
