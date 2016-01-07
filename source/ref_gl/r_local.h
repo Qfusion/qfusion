@@ -324,10 +324,9 @@ typedef struct
 
 typedef struct
 {
-	uint8_t			buf[0x1000000];
+	uint8_t			buf[0x400000];
 	uint64_t		frameId;
-	volatile size_t len;
-	volatile size_t read;
+	size_t			len;
 } ref_cmdbuf_t;
 
 typedef struct
