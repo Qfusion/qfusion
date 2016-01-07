@@ -1540,9 +1540,9 @@ const char *R_SpeedsMessage( char *out, size_t size )
 */
 void R_UpdateSpeedsMessage( void )
 {
-    ri.Mutex_Lock( rf.speedsMsgMutex );
+    ri.Mutex_Lock( rf.speedsMsgLock );
     R_SpeedsMessage( rf.speedsMsg, sizeof( rf.speedsMsg ) );
-    ri.Mutex_Unlock( rf.speedsMsgMutex );
+    ri.Mutex_Unlock( rf.speedsMsgLock );
 }
 
 /*
