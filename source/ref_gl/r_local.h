@@ -355,7 +355,6 @@ rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int 
 rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
 void RF_Shutdown( bool verbose );
 void RF_SurfaceChangePending( void );
-void RF_UpdateBackendSurface( void );
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_EndFrame( void );
 void RF_BeginRegistration( void );

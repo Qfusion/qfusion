@@ -270,11 +270,6 @@ void RF_SurfaceChangePending( void )
 	RF_IssueSurfaceChangeReliableCmd( rrf.cmdPipe );
 }
 
-void RF_UpdateBackendSurface( void )
-{
-	GLimp_UpdatePendingWindowSurface();
-}
-
 static void RF_FrameSync( void )
 {
     if( rrf.frameSync ) {
