@@ -467,17 +467,6 @@ void GLimp_EnableMultithreadedRendering( bool enable )
 }
 
 /*
-** GLimp_GetMainContext
-*/
-void GLimp_GetMainContext( void **context, void **surface )
-{
-	if( context )
-		*context = glw_state.context;
-	if( surface )
-		*surface = glw_state.surface;
-}
-
-/*
 ** GLimp_GetWindowSurface
 */
 void *GLimp_GetWindowSurface( bool *renderable )
