@@ -1557,12 +1557,8 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	RB_BeginFrame();
 
 #ifndef GL_ES_VERSION_2_0
-	if( cameraSeparation )
-	{
-		bool surfaceRenderable = true;
-		GLimp_GetWindowSurface( &surfaceRenderable );
-		if( !glConfig.stereoEnabled || !surfaceRenderable )
-			cameraSeparation = 0;
+	if( cameraSeparation && !glConfig.stereoEnabled || !RF_RenderingEnabled() )
+		cameraSeparation = 0;
 	}
 
 	if( rf.cameraSeparation != cameraSeparation )
@@ -1720,7 +1716,7 @@ void R_WriteAviFrame( int frame, bool scissor )
 	char *checkname;
 	const char *extension;
 
-	if( !R_RenderingEnabled() )
+	if( !RF_RenderingEnabled() )
 		return;
 
 	if( scissor )

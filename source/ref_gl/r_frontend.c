@@ -108,10 +108,7 @@ static void RF_BackendFrame( void )
 */
 static void *RF_BackendThreadProc( void *param )
 {
-	void *surface;
-
-	surface = GLimp_GetWindowSurface( NULL );
-	GLimp_MakeCurrent( rrf.auxGLContext, surface );
+	GLimp_MakeCurrent( rrf.auxGLContext, GLimp_GetWindowSurface( NULL ) );
 
     while( !rrf.shutdown ) {
         RF_BackendFrame();
@@ -462,9 +459,11 @@ void RF_EnvShot( const char *path, const char *name, unsigned pixels )
     RF_IssueEnvShotReliableCmd( rrf.cmdPipe, path, name, pixels );
 }
 
-bool RF_ScreenEnabled( void )
+bool RF_RenderingEnabled( void )
 {
-    return GLimp_RenderingEnabled();
+	bool surfaceRenderable = true;
+	GLimp_GetWindowSurface( &surfaceRenderable );
+	return surfaceRenderable;
 }
 
 const char *RF_SpeedsMessage( char *out, size_t size )

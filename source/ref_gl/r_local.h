@@ -383,7 +383,7 @@ void RF_ResetScissor( void );
 void RF_SetCustomColor( int num, int r, int g, int b );
 void RF_ScreenShot( const char *path, const char *name, bool silent );
 void RF_EnvShot( const char *path, const char *name, unsigned pixels );
-bool RF_ScreenEnabled( void );
+bool RF_RenderingEnabled( void );
 const char *RF_SpeedsMessage( char *out, size_t size );
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
 
