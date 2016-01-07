@@ -125,15 +125,17 @@ static unsigned R_HandleAddLightStyleToSceneCmd( uint8_t *cmdbuf )
 static unsigned R_HandleRenderSceneCmd( uint8_t *cmdbuf )
 {
     refCmdRenderScene_t *cmd = (void *)cmdbuf;
-    
-    if( !(cmd->refdef.rdflags & RDF_NOWORLDMODEL ) ) {
-        if( cmd->worldModelSequence != rsh.worldModelSequence ) {
-            return cmd->length;
-        }
-    }
-    
-    R_RenderScene( &cmd->refdef );
-    return cmd->length;
+
+	// ignore scene render calls issued during registration
+	if( cmd->registrationSequence != rsh.registrationSequence ) {
+		return cmd->length;
+	}
+	if( !( cmd->refdef.rdflags & RDF_NOWORLDMODEL ) && ( cmd->worldModelSequence != rsh.worldModelSequence ) ) {
+		return cmd->length;
+	}
+
+	R_RenderScene( &cmd->refdef );
+	return cmd->length;
 }
 
 static unsigned R_HandleSetScissorCmd( uint8_t *cmdbuf )
@@ -414,6 +416,7 @@ void RF_IssueRenderSceneCmd( ref_cmdbuf_t *frame, const refdef_t *fd )
     
     cmd.id = REF_CMD_RENDER_SCENE;
     cmd.refdef = *fd;
+	cmd.registrationSequence = rsh.registrationSequence;
     cmd.worldModelSequence = rsh.worldModelSequence;
     
     if( fd->areabits && rsh.worldBrushModel ) {
