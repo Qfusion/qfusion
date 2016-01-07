@@ -33,8 +33,6 @@ static void RF_BackendCmdsProc( ref_cmdbuf_t *frame )
     if( frame ) {
         size_t t;
 
-		ri.Mutex_Lock( rrf.backendReadLock );
-
         for( t = 0; t < frame->len; ) {
             uint8_t *cmd = frame->buf + t;
             int id = *(int *)cmd;
@@ -56,7 +54,7 @@ static void RF_BackendCmdsProc( ref_cmdbuf_t *frame )
 
 		frame->read = frame->len;
 
-		ri.Mutex_Unlock( rrf.backendReadLock );
+		rrf.backendReadFrameId = frame->frameId;
     }
 }
 
@@ -141,7 +139,6 @@ static void RF_BackendThreadShutdown( void )
 
     ri.BufPipe_Destroy( &rrf.cmdPipe );
 	ri.Mutex_Destroy( &rrf.backendFrameLock );
-	ri.Mutex_Destroy( &rrf.backendReadLock );
 
 	if( rrf.auxGLContext ) {
 		GLimp_SharedContext_Destroy( rrf.auxGLContext, rrf.auxGLSurface );
@@ -155,7 +152,6 @@ static bool RF_BackendThreadInit( void )
 {
 	rrf.cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
 	rrf.backendFrameLock = ri.Mutex_Create();
-	rrf.backendReadLock = ri.Mutex_Create();
 
 	if( glConfig.multithreading ) {
 		if( !GLimp_SharedContext_Create( &rrf.auxGLContext, &rrf.auxGLSurface ) ) {
@@ -185,37 +181,15 @@ static bool RF_BackendThreadInit( void )
 */
 static void RF_BackendThreadWait( void )
 {
-	bool finished = false;
-    
     if( rrf.backendThread == NULL ) {
         RF_BackendCmdsProc( NULL );
         return;
     }
 
-    ri.Mutex_Lock( rrf.backendFrameLock );
-    finished = rrf.frameCount == rrf.backendFrameCount;
-    ri.Mutex_Unlock( rrf.backendFrameLock );
-
-	while( !finished ) {
-		// wait for the backend to advance to the latest frame
-		ri.Mutex_Lock( rrf.backendFrameLock );
-		finished = rrf.backendFrameNum == rrf.lastFrameNum;
-		ri.Mutex_Unlock( rrf.backendFrameLock );
-
-		// let it read until the end
-		if( finished ) {
-			ri.Mutex_Lock( rrf.backendReadLock );
-			finished = rrf.frames[rrf.backendFrameNum].len == rrf.frames[rrf.backendFrameNum].read;
-			ri.Mutex_Unlock( rrf.backendReadLock );
-		}
-
-		if( finished ) {
-			break;
-		}
-
+	while( rrf.backendFrameId != rrf.backendReadFrameId ) {
 		ri.Sys_Sleep( 0 );
 	}
-    
+   
 	ri.BufPipe_Finish( rrf.cmdPipe );
 }
 
@@ -292,7 +266,7 @@ void RF_EndFrame( void )
 	
 	ri.Mutex_Lock( rrf.backendFrameLock );
 	rrf.lastFrameNum = rrf.frameNum;
-	rrf.frameCount++;
+	rrf.frameId++;
 	ri.Mutex_Unlock( rrf.backendFrameLock );
 
 	if( !glConfig.multithreading ) {
@@ -306,9 +280,11 @@ ref_cmdbuf_t *RF_GetNewBackendFrame( void )
 
 	ri.Mutex_Lock( rrf.backendFrameLock );
 	if( rrf.backendFrameNum != rrf.lastFrameNum ) {
-        rrf.backendFrameCount = rrf.frameCount;
+        rrf.backendFrameId = rrf.frameId;
 		rrf.backendFrameNum = rrf.lastFrameNum;
+
 		result = &rrf.frames[rrf.backendFrameNum];
+		result->frameId = rrf.frameId;
 	}
 	ri.Mutex_Unlock( rrf.backendFrameLock );
 
@@ -386,6 +362,7 @@ void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows,
 
 	if( data )
 		R_UploadRawPic( rsh.rawTexture, cols, rows, data );
+
 	RF_IssueDrawStretchRawCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
@@ -394,6 +371,7 @@ void RF_DrawStretchRawYUV( int x, int y, int w, int h,
 {
 	if( yuv )
 		R_UploadRawYUVPic( rsh.rawYUVTextures, yuv );
+
 	RF_IssueDrawStretchRawYUVCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2 );
 }
 
