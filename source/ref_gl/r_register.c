@@ -1340,6 +1340,7 @@ static rserr_t R_PostInit( void )
 
     rf.swapInterval = -1;
     rf.speedsMsgLock = ri.Mutex_Create();
+	rf.debugSurfaceLock = ri.Mutex_Create();
 
 	R_InitDrawLists();
 
@@ -1558,6 +1559,7 @@ void R_Shutdown( bool verbose )
 		GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, glConfig.originalGammaRamp );
 
     ri.Mutex_Destroy( &rf.speedsMsgLock );
+	ri.Mutex_Destroy( &rf.debugSurfaceLock );
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
 	GLimp_Shutdown();

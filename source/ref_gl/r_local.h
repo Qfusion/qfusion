@@ -274,9 +274,6 @@ typedef struct
 	unsigned int	renderedShadowBits;
 
 	refdef_t		refdef;
-
-	// TODO: not thread-safe, move elsewhere, protect with a mutex!!!
-	msurface_t		*debugSurface;
 } r_scene_t;
 
 typedef struct
@@ -320,6 +317,9 @@ typedef struct
 
 	char 			speedsMsg[2048];
 	qmutex_t		*speedsMsgLock;
+	
+	msurface_t		*debugSurface;
+	qmutex_t		*debugSurfaceLock;
 } r_frontend_t;
 
 typedef struct
@@ -631,6 +631,7 @@ void		R_EndFrame( void );
 int 		R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
+void		R_RenderDebugSurface( const refdef_t *fd );
 void		R_AppActivate( bool active, bool destroy );
 void		R_UpdateSpeedsMessage( void );
 void 		R_Finish( void );
