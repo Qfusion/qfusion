@@ -244,18 +244,6 @@ void RF_SurfaceChangePending( void )
 	RF_IssueSurfaceChangeReliableCmd( rrf.cmdPipe );
 }
 
-static void RF_FrameSync( void )
-{
-    if( rrf.frameSync ) {
-        if( glConfig.multithreading ) {
-            // synchronize data we might have uploaded this frame between the threads
-            // FIXME: only call this when absolutely necessary
-            R_Finish();
-        }
-        rrf.frameSync = false;
-    }
-}
-
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 {
 	// take the frame the backend is not busy processing
