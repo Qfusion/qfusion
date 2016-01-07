@@ -309,14 +309,14 @@ typedef struct
 		unsigned int	t_draw_meshes;
 	} stats;
 
-    struct {
-        unsigned    average; // updates 4 times per second
-        unsigned    time, oldTime;
-        unsigned    count, oldCount;
-    } fps;
+	struct {
+		unsigned    average; // updates 4 times per second
+		unsigned    time, oldTime;
+		unsigned    count, oldCount;
+	} fps;
 
-    char            speedsMsg[2048];
-    struct qmutex_s *speedsMsgMutex;
+	char            speedsMsg[2048];
+	qmutex_t		*speedsMsgLock;
 } r_frontend_t;
 
 typedef struct
@@ -344,8 +344,8 @@ typedef struct
     void            *auxGLContext;
     
     qthread_t       *backendThread;
-	struct qmutex_s *backendFrameLock;
-	struct qmutex_s *backendReadLock;
+	qmutex_t		*backendFrameLock;
+	qmutex_t		*backendReadLock;
 
     qbufPipe_t      *cmdPipe;
 } ref_realfrontend_t;

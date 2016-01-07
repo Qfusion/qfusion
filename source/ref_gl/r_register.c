@@ -1335,7 +1335,10 @@ static rserr_t R_PostInit( void )
 
 	rsh.worldModelSequence = 1;
 
-    rf.speedsMsgMutex = ri.Mutex_Create();
+	for( i = 0; i < 256; i++ )
+		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
+
+    rf.speedsMsgLock = ri.Mutex_Create();
 
 	R_InitDrawLists();
 
@@ -1354,11 +1357,8 @@ static rserr_t R_PostInit( void )
 
 	R_AnisotropicFilter( r_texturefilter->integer );
 
-	for( i = 0; i < 256; i++ )
-		rsh.sinTableByte[i] = sin( (float)i / 255.0 * M_TWOPI );
-
 	if ( r_verbose )
-		R_GfxInfo_f( );
+		R_GfxInfo_f();
 
 	// load and compile GLSL programs
 	RP_Init();
@@ -1557,7 +1557,7 @@ void R_Shutdown( bool verbose )
 	if( glConfig.hwGamma )
 		GLimp_SetGammaRamp( GAMMARAMP_STRIDE, glConfig.gammaRampSize, glConfig.originalGammaRamp );
 
-    ri.Mutex_Destroy( &rf.speedsMsgMutex );
+    ri.Mutex_Destroy( &rf.speedsMsgLock );
 
 	// shut down OS specific OpenGL stuff like contexts, etc.
 	GLimp_Shutdown();
