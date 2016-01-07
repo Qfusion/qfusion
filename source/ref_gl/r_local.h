@@ -315,7 +315,9 @@ typedef struct
 		unsigned    count, oldCount;
 	} fps;
 
-	char            speedsMsg[2048];
+	volatile bool   dataSync; // call R_Finish
+
+	char 			speedsMsg[2048];
 	qmutex_t		*speedsMsgLock;
 } r_frontend_t;
 
@@ -328,30 +330,29 @@ typedef struct
 
 typedef struct
 {
-	unsigned		frameNum;           // wrapped
+	unsigned		frameNum; 			// wrapped
 	unsigned		lastFrameNum;
 	unsigned		backendFrameNum;
-    uint64_t        frameCount;
-    uint64_t        backendFrameCount;
+	uint64_t 		frameCount;
+	uint64_t 		backendFrameCount;
 	volatile bool 	shutdown;
-    volatile bool   frameSync;
 
-    int             scissor[4];
+	int 			scissor[4];
 
 	ref_cmdbuf_t	frames[3];			// triple-buffered
-	ref_cmdbuf_t	*frame;             // current frontend frame
+	ref_cmdbuf_t	*frame; 			// current frontend frame
 
-	void            *mainGLContext;
-    void            *mainGLSurface;
+	void 			*mainGLContext;
+	void 			*mainGLSurface;
 
-    void            *auxGLContext;
-    void            *auxGLSurface;
-    
-    qthread_t       *backendThread;
+	void 			*auxGLContext;
+	void 			*auxGLSurface;
+
+	qthread_t 		*backendThread;
 	qmutex_t		*backendFrameLock;
 	qmutex_t		*backendReadLock;
 
-    qbufPipe_t      *cmdPipe;
+	qbufPipe_t 		*cmdPipe;
 } ref_realfrontend_t;
 
 rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
@@ -632,8 +633,17 @@ void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_AppActivate( bool active, bool destroy );
 void		R_UpdateSpeedsMessage( void );
-void        R_Finish( void );
-void        R_FrameSync( void );
+void 		R_Finish( void );
+
+/**
+ * Calls R_Finish if data sync was previously deferred.
+ */
+void 		R_DataSync( void );
+
+/**
+ * Defer R_DataSync call at the start/end of the next frame.
+ */
+void 		R_DeferDataSync( void );
 
 mfog_t		*R_FogForBounds( const vec3_t mins, const vec3_t maxs );
 mfog_t		*R_FogForSphere( const vec3_t centre, const float radius );

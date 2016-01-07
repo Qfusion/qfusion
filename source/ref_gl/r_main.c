@@ -1387,20 +1387,27 @@ void R_PopRefInst( void )
 
 //=======================================================================
 
-/*
-* R_Finish
-*/
+
 void R_Finish( void )
 {
     qglFinish();
 }
 
-/*
-* R_FrameSync
-*/
-void R_FrameSync( void )
+void R_DeferDataSync( void )
 {
-    rrf.frameSync = true;
+	rf.dataSync = true;
+}
+
+void R_DataSync( void )
+{
+	if( rf.dataSync ) {
+		if( glConfig.multithreading ) {
+			// synchronize data we might have uploaded this frame between the threads
+			// FIXME: only call this when absolutely necessary
+			R_Finish();
+		}
+		 rf.dataSync = false;
+	}
 }
 
 /*

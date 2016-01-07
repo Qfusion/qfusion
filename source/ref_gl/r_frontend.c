@@ -262,18 +262,6 @@ void RF_Shutdown( bool verbose )
 	R_Shutdown( verbose );
 }
 
-static void RF_FrameSync( void )
-{
-    if( rrf.frameSync ) {
-        if( glConfig.multithreading ) {
-            // synchronize data we might have uploaded this frame between the threads
-            // FIXME: only call this when absolutely necessary
-            R_Finish();
-        }
-        rrf.frameSync = false;
-    }
-}
-
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 {
 	// take the frame the backend is not busy processing
@@ -288,25 +276,25 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	rrf.frame = &rrf.frames[rrf.frameNum];
 	ri.Mutex_Unlock( rrf.backendFrameLock );
 
-    rrf.frame->len = 0;
+	rrf.frame->len = 0;
 	rrf.frame->read = 0;
 
-    RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
-    
-    RF_FrameSync();
+	R_DataSync();
+
+	RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
 }
 
 void RF_EndFrame( void )
 {
-	RF_IssueEndFrameCmd( rrf.frame );
+	R_DataSync();
 
-    RF_FrameSync();
-    
+	RF_IssueEndFrameCmd( rrf.frame );
+	
 	ri.Mutex_Lock( rrf.backendFrameLock );
 	rrf.lastFrameNum = rrf.frameNum;
-    rrf.frameCount++;
+	rrf.frameCount++;
 	ri.Mutex_Unlock( rrf.backendFrameLock );
-   
+
 	if( !glConfig.multithreading ) {
 		RF_BackendCmdsProc( RF_GetNewBackendFrame() );
 	}
