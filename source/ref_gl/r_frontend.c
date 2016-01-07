@@ -468,9 +468,9 @@ bool RF_RenderingEnabled( void )
 
 const char *RF_SpeedsMessage( char *out, size_t size )
 {
-    ri.Mutex_Lock( rf.speedsMsgMutex );
+    ri.Mutex_Lock( rf.speedsMsgLock );
     Q_strncpyz( out, rf.speedsMsg, size );
-    ri.Mutex_Unlock( rf.speedsMsgMutex );
+    ri.Mutex_Unlock( rf.speedsMsgLock );
     return out;
 }
 

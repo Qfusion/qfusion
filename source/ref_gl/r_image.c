@@ -32,6 +32,7 @@ typedef struct
 
 static image_t images[MAX_GLIMAGES];
 static image_t images_hash_headnode[IMAGES_HASH_SIZE], *free_images;
+static qmutex_t *r_imagesLock;
 
 static int unpackAlignment[NUM_QGL_CONTEXTS];
 
@@ -1764,6 +1765,8 @@ static image_t *R_LinkPic( unsigned int hash )
 		return NULL;
 	}
 
+	ri.Mutex_Lock( r_imagesLock );
+
 	hash = hash % IMAGES_HASH_SIZE;
 	image = free_images;
 	free_images = image->next;
@@ -1773,6 +1776,9 @@ static image_t *R_LinkPic( unsigned int hash )
 	image->next = images_hash_headnode[hash].next;
 	image->next->prev = image;
 	image->prev->next = image;
+
+	ri.Mutex_Unlock( r_imagesLock );
+
 	return image;
 }
 
@@ -1781,6 +1787,8 @@ static image_t *R_LinkPic( unsigned int hash )
 */
 static void R_UnlinkPic( image_t *image )
 {
+	ri.Mutex_Lock( r_imagesLock );
+
 	// remove from linked active list
 	image->prev->next = image->next;
 	image->next->prev = image->prev;
@@ -1788,6 +1796,8 @@ static void R_UnlinkPic( image_t *image )
 	// insert into linked free list
 	image->next = free_images;
 	free_images = image;
+
+	ri.Mutex_Unlock( r_imagesLock );
 }
 
 /*
@@ -2663,6 +2673,7 @@ void R_InitImages( void )
 	R_Imagelib_Init();
 
 	r_imagesPool = R_AllocPool( r_mempool, "Images" );
+	r_imagesLock = ri.Mutex_Create();
 
 	unpackAlignment[QGL_CONTEXT_MAIN] = 4;
 	qglPixelStorei( GL_PACK_ALIGNMENT, 1 );
@@ -2804,6 +2815,8 @@ void R_ShutdownImages( void )
 		R_Free( r_8to24table );
 		r_8to24table = NULL;
 	}
+
+	ri.Mutex_Destroy( &r_imagesLock );
 
 	R_FreePool( &r_imagesPool );
 
