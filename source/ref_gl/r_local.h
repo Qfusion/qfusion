@@ -324,6 +324,7 @@ typedef struct
 typedef struct
 {
 	uint8_t			buf[0x1000000];
+	uint64_t		frameId;
 	volatile size_t len;
 	volatile size_t read;
 } ref_cmdbuf_t;
@@ -333,8 +334,9 @@ typedef struct
 	unsigned		frameNum; 			// wrapped
 	unsigned		lastFrameNum;
 	unsigned		backendFrameNum;
-	uint64_t 		frameCount;
-	uint64_t 		backendFrameCount;
+	uint64_t 		frameId;
+	uint64_t 		backendFrameId;
+	volatile uint64_t backendReadFrameId;
 	volatile bool 	shutdown;
 
 	int 			scissor[4];
@@ -350,7 +352,6 @@ typedef struct
 
 	qthread_t 		*backendThread;
 	qmutex_t		*backendFrameLock;
-	qmutex_t		*backendReadLock;
 
 	qbufPipe_t 		*cmdPipe;
 } ref_realfrontend_t;
