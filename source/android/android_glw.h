@@ -45,7 +45,7 @@ typedef struct
 	EGLSurface noWindowPbuffer;
 
 	// Window replacement in the rendering thread
-	struct qmutex_s *windowMutex;
+	qmutex_t *windowMutex;
 	ANativeWindow *window; // Only main can change
 	bool windowChanged;
 
