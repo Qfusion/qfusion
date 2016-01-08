@@ -503,7 +503,6 @@ void RF_IssueSyncCmd( ref_cmdbuf_t *frame )
         return;
     memcpy( frame->buf + frame->len, &cmd, sizeof( cmd ) );
     frame->len += cmd_len;
-
 }
 
 static void RF_IssueDrawStretchRawOrRawYUVCmd( ref_cmdbuf_t *frame, int id, int x, int y, int w, int h, float s1, float t1, float s2, float t2 )
@@ -587,7 +586,7 @@ static unsigned R_HandleScreenShotReliableCmd( void *pcmd )
 {
     refReliableCmdScreenShot_t *cmd = pcmd;
     
-    R_TakeScreenShot( cmd->path, cmd->name, cmd->silent );
+    R_TakeScreenShot( cmd->path, cmd->name, cmd->x, cmd->y, cmd->w, cmd->h, cmd->silent, cmd->media );
 
     return sizeof( *cmd );
 }
@@ -621,13 +620,19 @@ void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe )
 	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
 }
 
-static void RF_IssueEnvScreenShotReliableCmd( qbufPipe_t *pipe, int id, const char *path, const char *name, unsigned pixels, bool silent )
+static void RF_IssueEnvScreenShotReliableCmd( qbufPipe_t *pipe, int id, const char *path, const char *name,
+											 int x, int y, int w, int h, unsigned pixels, bool silent, bool media )
 {
     refReliableCmdScreenShot_t cmd = { 0 };
     
     cmd.id = id;
+	cmd.x = x;
+	cmd.y = y;
+	cmd.w = w;
+	cmd.h = h;
     cmd.pixels = pixels;
     cmd.silent = silent;
+	cmd.media = media;
     Q_strncpyz( cmd.path, path, sizeof( cmd.path ) );
     Q_strncpyz( cmd.name, name, sizeof( cmd.name ) );
 
@@ -636,10 +641,15 @@ static void RF_IssueEnvScreenShotReliableCmd( qbufPipe_t *pipe, int id, const ch
 
 void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, bool silent )
 {
-    RF_IssueEnvScreenShotReliableCmd( pipe, REF_RELIABLE_CMD_SCREEN_SHOT, path, name, 0, silent );
+    RF_IssueEnvScreenShotReliableCmd( pipe, REF_RELIABLE_CMD_SCREEN_SHOT, path, name, 0, 0, glConfig.width, glConfig.height, 0, silent, true );
 }
 
 void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, unsigned pixels )
 {
-    RF_IssueEnvScreenShotReliableCmd( pipe, REF_RELIABLE_CMD_ENV_SHOT, path, name, pixels, false );
+    RF_IssueEnvScreenShotReliableCmd( pipe, REF_RELIABLE_CMD_ENV_SHOT, path, name, 0, 0, glConfig.width, glConfig.height, pixels, false, false );
+}
+
+void RF_IssueAviShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, int x, int y, int w, int h )
+{
+	RF_IssueEnvScreenShotReliableCmd( pipe, REF_RELIABLE_CMD_SCREEN_SHOT, path, name, x, y, w, h, 0, true, false );
 }

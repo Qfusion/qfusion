@@ -1531,8 +1531,6 @@ void R_Shutdown( bool verbose )
 	ri.Cmd_RemoveCommand( "shaderlist" );
 	ri.Cmd_RemoveCommand( "glslprogramlist" );
 
-	R_StopAviDemo();
-
 	// free shaders, models, etc.
 
 	R_DestroyVolatileAssets();

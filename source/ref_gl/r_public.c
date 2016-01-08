@@ -111,9 +111,9 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.SpeedsMessage = RF_SpeedsMessage;
 
-	globals.BeginAviDemo = R_BeginAviDemo;
-	globals.WriteAviFrame = R_WriteAviFrame;
-	globals.StopAviDemo = R_StopAviDemo;
+	globals.BeginAviDemo = RF_BeginAviDemo;
+	globals.WriteAviFrame = RF_WriteAviFrame;
+	globals.StopAviDemo = RF_StopAviDemo;
 
 	globals.AppActivate = R_AppActivate;
 

@@ -325,7 +325,7 @@ typedef struct
 typedef struct
 {
 	uint8_t			buf[0x400000];
-	uint64_t		frameId;
+	uint32_t		frameId;
 	size_t			len;
 } ref_cmdbuf_t;
 
@@ -334,9 +334,9 @@ typedef struct
 	unsigned		frameNum; 			// wrapped
 	unsigned		lastFrameNum;
 	unsigned		backendFrameNum;
-	uint64_t 		frameId;
-	uint64_t 		backendFrameId;
-	volatile uint64_t backendReadFrameId;
+	uint32_t 		frameId;
+	uint32_t 		backendFrameId;
+	volatile uint32_t backendReadFrameId;
 	volatile bool 	shutdown;
 
 	int 			scissor[4];
@@ -387,6 +387,9 @@ void RF_EnvShot( const char *path, const char *name, unsigned pixels );
 bool RF_RenderingEnabled( void );
 const char *RF_SpeedsMessage( char *out, size_t size );
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
+void RF_BeginAviDemo( void );
+void RF_WriteAviFrame( int frame, bool scissor );
+void RF_StopAviDemo( void );
 
 extern ref_import_t ri;
 
@@ -535,7 +538,7 @@ void		R_RestartCinematics( void );
 //
 // r_cmds.c
 //
-void        R_TakeScreenShot( const char *path, const char *name, bool silent );
+void        R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, int h, bool silent, bool media );
 void		R_ScreenShot_f( void );
 void        R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
 void		R_EnvShot_f( void );
