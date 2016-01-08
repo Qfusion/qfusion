@@ -429,11 +429,22 @@ void CG_BulletExplosion( const vec3_t pos, const vec_t *dir, const trace_t *trac
 	VecToAngles( local_dir, angles );
 
 	if( tr->surfFlags & SURF_FLESH ||
-		( tr->ent > 0 && cg_entities[tr->ent].current.type == ET_PLAYER ) ||
-		( tr->ent > 0 && cg_entities[tr->ent].current.type == ET_CORPSE ) )
+		( tr->ent > 0 && cg_entities[tr->ent].current.type == ET_PLAYER ) )
 	{
 		return;
 	}
+	else if ( tr->ent > 0 && cg_entities[tr->ent].current.type == ET_CORPSE )
+        {
+		le = CG_AllocModel( LE_ALPHA_FADE, pos, angles, 3, //3 frames for weak 
+                        1, 0, 0, 1, //full white no inducted alpha
+                        0, 0, 0, 0, //dlight
+                        CG_MediaModel( cgs.media.modBulletExplode ),
+                        NULL );
+		le->ent.rotation = rand() % 360;
+		le->ent.scale = 1.0f;
+		if( ISVIEWERENTITY( tr->ent ) )
+			le->ent.renderfx |= RF_VIEWERMODEL;
+        }
 	else if( cg_particles->integer && (tr->surfFlags & SURF_DUST) )
 	{
 		// throw particles on dust
