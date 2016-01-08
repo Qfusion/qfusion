@@ -1766,69 +1766,6 @@ void R_AppActivate( bool active, bool destroy )
 //==================================================================================
 
 /*
-* R_BeginAviDemo
-*/
-void R_BeginAviDemo( void )
-{
-}
-
-/*
-* R_WriteAviFrame
-*/
-void R_WriteAviFrame( int frame, bool scissor )
-{
-	int x, y, w, h;
-	int quality;
-	const char *writedir, *gamedir;
-	size_t checkname_size;
-	char *checkname;
-	const char *extension;
-
-	if( !R_IsRenderingToScreen() )
-		return;
-
-	if( scissor )
-	{
-		x = rsc.refdef.x;
-		y = glConfig.height - rsc.refdef.height - rsc.refdef.y;
-		w = rsc.refdef.width;
-		h = rsc.refdef.height;
-	}
-	else
-	{
-		x = 0;
-		y = 0;
-		w = glConfig.width;
-		h = glConfig.height;
-	}
-
-	if( r_screenshot_jpeg->integer ) {
-		extension = ".jpg";
-		quality = r_screenshot_jpeg_quality->integer;
-	}
-	else {
-		extension = ".tga";
-		quality = 100;
-	}
-
-	writedir = ri.FS_WriteDirectory();
-	gamedir = ri.FS_GameDirectory();
-	checkname_size = strlen( writedir ) + 1 + strlen( gamedir ) + strlen( "/avi/avi" ) + 6 + strlen( extension ) + 1;
-	checkname = alloca( checkname_size );
-	Q_snprintfz( checkname, checkname_size, "%s/%s/avi/avi%06i", writedir, gamedir, frame );
-	COM_DefaultExtension( checkname, extension, checkname_size );
-
-	R_ScreenShot( checkname, x, y, w, h, quality, false, false, false, true );
-}
-
-/*
-* R_StopAviDemo
-*/
-void R_StopAviDemo( void )
-{
-}
-
-/*
 * R_TransformVectorToScreen
 */
 void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )

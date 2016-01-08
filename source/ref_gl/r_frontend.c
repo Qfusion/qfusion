@@ -446,3 +446,72 @@ void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height,
 
 	RF_IssueSyncCmd( rrf.frame );
 }
+
+
+/*
+ * RF_BeginAviDemo
+ */
+void RF_BeginAviDemo( void )
+{
+	RF_BackendThreadWait();
+}
+
+/*
+ * R_WriteAviFrame
+ */
+void RF_WriteAviFrame( int frame, bool scissor )
+{
+	int x, y, w, h;
+	int quality;
+	const char *writedir, *gamedir;
+	size_t path_size;
+	char *path;
+	char name[32];
+	const char *extension;
+	
+	if( !R_IsRenderingToScreen() )
+		return;
+
+	if( scissor )
+	{
+		x = rsc.refdef.x;
+		y = glConfig.height - rsc.refdef.height - rsc.refdef.y;
+		w = rsc.refdef.width;
+		h = rsc.refdef.height;
+	}
+	else
+	{
+		x = 0;
+		y = 0;
+		w = glConfig.width;
+		h = glConfig.height;
+	}
+	
+	if( r_screenshot_jpeg->integer ) {
+		extension = ".jpg";
+		quality = r_screenshot_jpeg_quality->integer;
+	}
+	else {
+		extension = ".tga";
+		quality = 100;
+	}
+	
+	writedir = ri.FS_WriteDirectory();
+	gamedir = ri.FS_GameDirectory();
+	path_size = strlen( writedir ) + 1 + strlen( gamedir ) + strlen( "/avi/" ) + 1;
+	path = alloca( path_size );
+	Q_snprintfz( path, path_size, "%s/%s/avi/", writedir, gamedir );
+	Q_snprintfz( name, sizeof( name ), "%06i", frame );
+	
+	RF_BackendThreadWait();
+	
+	RF_IssueAviShotReliableCmd( rrf.cmdPipe, path, name, x, y, w, h );
+}
+
+/*
+ * RF_StopAviDemo
+ */
+void RF_StopAviDemo( void )
+{
+	RF_BackendThreadWait();
+}

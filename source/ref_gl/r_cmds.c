@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 /*
  * R_TakeScreenShot
  */
-void R_TakeScreenShot( const char *path, const char *name, bool silent )
+void R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, int h, bool silent, bool media )
 {
     const char *extension;
     size_t path_size = strlen( path ) + 1;
@@ -143,10 +143,12 @@ void R_TakeScreenShot( const char *path, const char *name, bool silent )
     }
     
     R_ScreenShot( checkname, 
-                 0, 0, glConfig.width, glConfig.height, quality, 
+                 x, y, w, h, quality,
                  false, false, false, silent );
-    
-    ri.FS_AddFileToMedia( checkname );
+	
+	if( media ) {
+		ri.FS_AddFileToMedia( checkname );
+	}
 }
 
 /*

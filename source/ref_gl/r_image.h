@@ -117,8 +117,4 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, int width, int height );
 void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic );
 
-void R_BeginAviDemo( void );
-void R_WriteAviFrame( int frame, bool scissor );
-void R_StopAviDemo( void );
-
 #endif // R_IMAGE_H

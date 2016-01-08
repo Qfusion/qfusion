@@ -204,6 +204,8 @@ typedef struct
     int             id;
     unsigned        pixels;
     bool            silent;
+	bool			media;
+	int				x, y, w, h;
     char            path[1024];
     char            name[1024];
 } refReliableCmdScreenShot_t;
@@ -213,5 +215,6 @@ void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe );
 void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe );
 void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, bool silent );
 void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, unsigned pixels );
+void RF_IssueAviShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, int x, int y, int w, int h );
 
 #endif // R_CMDQUEUE_H
