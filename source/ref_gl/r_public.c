@@ -55,24 +55,8 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.BeginRegistration = RF_BeginRegistration;
 	globals.EndRegistration = RF_EndRegistration;
 	globals.Shutdown = RF_Shutdown;
-
-	globals.ModelBounds = R_ModelBounds;
-	globals.ModelFrameBounds = R_ModelFrameBounds;
-
-	globals.RegisterWorldModel = RF_RegisterWorldModel;
-	globals.RegisterModel = R_RegisterModel;
-	globals.RegisterPic = R_RegisterPic;
-	globals.RegisterRawPic = R_RegisterRawPic;
-	globals.RegisterRawAlphaMask = R_RegisterRawAlphaMask;
-	globals.RegisterLevelshot = R_RegisterLevelshot;
-	globals.RegisterSkin = R_RegisterSkin;
-	globals.RegisterSkinFile = R_RegisterSkinFile;
-	globals.RegisterVideo = R_RegisterVideo;
-
-	globals.RemapShader = R_RemapShader;
-	globals.GetShaderDimensions = R_GetShaderDimensions;
-
-	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
+	globals.RenderingEnabled = RF_RenderingEnabled;
+	globals.AppActivate = RF_AppActivate;
 
 	globals.BeginFrame = RF_BeginFrame;
 	globals.EndFrame = RF_EndFrame;
@@ -91,31 +75,42 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.GetScissor = RF_GetScissor;
 	globals.ResetScissor = RF_ResetScissor;
 	globals.SetCustomColor = RF_SetCustomColor;
+	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
 
-	globals.LightForOrigin = R_LightForOrigin2;
-
-	globals.LerpTag = R_LerpTag;
-
-	globals.SkeletalGetBoneInfo = R_SkeletalGetBoneInfo;
-	globals.SkeletalGetBonePose = R_SkeletalGetBonePose;
-	globals.SkeletalGetNumBones = R_SkeletalGetNumBones;
-
-	globals.GetClippedFragments = R_GetClippedFragments;
-
-	globals.GetShaderForOrigin = R_GetShaderForOrigin;
-	globals.GetShaderCinematic = R_GetShaderCinematic;
-
-	globals.TransformVectorToScreen = R_TransformVectorToScreen;
-
-	globals.RenderingEnabled = RF_RenderingEnabled;
+	globals.LightForOrigin = RF_LightForOrigin;
+	globals.LerpTag = RF_LerpTag;
+	globals.TransformVectorToScreen = RF_TransformVectorToScreen;
 
 	globals.SpeedsMessage = RF_SpeedsMessage;
 
 	globals.BeginAviDemo = RF_BeginAviDemo;
 	globals.WriteAviFrame = RF_WriteAviFrame;
 	globals.StopAviDemo = RF_StopAviDemo;
-
-	globals.AppActivate = R_AppActivate;
+	
+	globals.RegisterWorldModel = RF_RegisterWorldModel;
+	globals.RegisterModel = R_RegisterModel;
+	globals.RegisterPic = R_RegisterPic;
+	globals.RegisterRawPic = R_RegisterRawPic;
+	globals.RegisterRawAlphaMask = R_RegisterRawAlphaMask;
+	globals.RegisterLevelshot = R_RegisterLevelshot;
+	globals.RegisterSkin = R_RegisterSkin;
+	globals.RegisterSkinFile = R_RegisterSkinFile;
+	globals.RegisterVideo = R_RegisterVideo;
+	
+	globals.RemapShader = R_RemapShader;
+	globals.GetShaderDimensions = R_GetShaderDimensions;
+	
+	globals.SkeletalGetBoneInfo = R_SkeletalGetBoneInfo;
+	globals.SkeletalGetBonePose = R_SkeletalGetBonePose;
+	globals.SkeletalGetNumBones = R_SkeletalGetNumBones;
+	
+	globals.GetClippedFragments = R_GetClippedFragments;
+	
+	globals.ModelBounds = R_ModelBounds;
+	globals.ModelFrameBounds = R_ModelFrameBounds;
+	
+	globals.GetShaderForOrigin = R_GetShaderForOrigin;
+	globals.GetShaderCinematic = R_GetShaderCinematic;
 
 	return &globals;
 }

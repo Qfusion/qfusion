@@ -196,6 +196,8 @@ typedef struct
 
 //====================================================
 
+// globals shared by the frontend and the backend
+// the backend should never attempt modifying any of these
 typedef struct
 {
 	// any asset (model, shader, texture, etc) with has not been registered
@@ -276,6 +278,8 @@ typedef struct
 	refdef_t		refdef;
 } r_scene_t;
 
+// global frontend variables are stored here
+// the backend should never attempt reading or modifying them
 typedef struct
 {
 	bool            in2D;
@@ -329,6 +333,8 @@ typedef struct
 	size_t			len;
 } ref_cmdbuf_t;
 
+// sync to async frontend adapter
+// FIXME: give this a better name and move elsewhere!
 typedef struct
 {
 	unsigned		frameNum; 			// wrapped
@@ -340,6 +346,7 @@ typedef struct
 	volatile bool 	shutdown;
 
 	int 			scissor[4];
+	float			cameraSeparation;
 
 	ref_cmdbuf_t	frames[3];			// triple-buffered
 	ref_cmdbuf_t	*frame; 			// current frontend frame
@@ -355,6 +362,7 @@ typedef struct
 rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
 	int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
 rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
+void RF_AppActivate( bool active, bool destroy );
 void RF_Shutdown( bool verbose );
 void RF_SurfaceChangePending( void );
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
@@ -390,6 +398,9 @@ void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height,
 void RF_BeginAviDemo( void );
 void RF_WriteAviFrame( int frame, bool scissor );
 void RF_StopAviDemo( void );
+void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
+bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
+void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
 
 extern ref_import_t ri;
 
@@ -590,7 +601,6 @@ void		RFB_Shutdown( void );
 unsigned int R_AddSurfaceDlighbits( const msurface_t *surf, unsigned int checkDlightBits );
 void		R_AddDynamicLights( unsigned int dlightbits, int state );
 void		R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius, bool noWorldLight );
-void		R_LightForOrigin2( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
 void		R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8_t *data, mlightmapRect_t *rects );
 void		R_InitLightStyles( model_t *mod );
 superLightStyle_t	*R_AddSuperLightStyle( model_t *mod, const int *lightmaps, 
@@ -634,9 +644,9 @@ int 		R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
 void		R_RenderDebugSurface( const refdef_t *fd );
-void		R_AppActivate( bool active, bool destroy );
 void		R_UpdateSpeedsMessage( void );
 void 		R_Finish( void );
+void		R_Flush( void );
 
 /**
  * Calls R_Finish if data sync was previously deferred.
@@ -664,7 +674,6 @@ struct mesh_vbo_s *R_InitPostProcessingVBO( void );
 void		R_TransformForWorld( void );
 void		R_TransformForEntity( const entity_t *e );
 void		R_TranslateForEntity( const entity_t *e );
-void		R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
 void		R_TransformBounds( const vec3_t origin, const mat3_t axis, vec3_t mins, vec3_t maxs, vec3_t bbox[8] );
 
 void		R_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
@@ -691,8 +700,6 @@ void		R_ShutdownCustomColors( void );
 void		R_ClearRefInstStack( void );
 bool		R_PushRefInst( void );
 void		R_PopRefInst( void );
-
-bool		R_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
 
 void		R_BindFrameBufferObject( int object );
 

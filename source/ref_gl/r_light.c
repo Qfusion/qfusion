@@ -346,14 +346,6 @@ dynamic:
 }
 
 /*
-* R_LightForOrigin2
-*/
-void R_LightForOrigin2( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
-{
-	R_LightForOrigin( origin, dir, ambient, diffuse, radius, rn.refdef.rdflags & RDF_NOWORLDMODEL ? true : false );
-}
-
-/*
 =============================================================================
 
 LIGHTMAP ALLOCATION
