@@ -28,8 +28,6 @@ ref_realfrontend_t rrf;
  */
 static void RF_BackendCmdsProc( ref_cmdbuf_t *frame )
 {
-    ri.BufPipe_ReadCmds( rrf.cmdPipe, refReliableCmdHandlers );
-
     if( frame ) {
         size_t t;
 
@@ -53,6 +51,8 @@ static void RF_BackendCmdsProc( ref_cmdbuf_t *frame )
 
 		rrf.backendReadFrameId = frame->frameId;
     }
+
+	ri.BufPipe_ReadCmds( rrf.cmdPipe, refReliableCmdHandlers );
 }
 
 /*
