@@ -56,6 +56,13 @@ enum
     NUM_REF_CMDS
 };
 
+typedef struct
+{
+	uint8_t			buf[0x400000];
+	uint32_t		frameId;
+	size_t			len;
+} ref_cmdbuf_t;
+
 typedef unsigned (*refCmdHandler_t)( const void * );
 extern refCmdHandler_t refCmdHandlers[];
 

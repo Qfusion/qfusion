@@ -324,91 +324,13 @@ typedef struct
 	
 	msurface_t		*debugSurface;
 	qmutex_t		*debugSurfaceLock;
-} r_frontend_t;
-
-typedef struct
-{
-	uint8_t			buf[0x400000];
-	uint32_t		frameId;
-	size_t			len;
-} ref_cmdbuf_t;
-
-// sync to async frontend adapter
-// FIXME: give this a better name and move elsewhere!
-typedef struct
-{
-	unsigned		frameNum; 			// wrapped
-	unsigned		lastFrameNum;
-	unsigned		backendFrameNum;
-	uint32_t 		frameId;
-	uint32_t 		backendFrameId;
-	volatile uint32_t backendReadFrameId;
-	volatile bool 	shutdown;
-
-	int 			scissor[4];
-	float			cameraSeparation;
-
-	ref_cmdbuf_t	frames[3];			// triple-buffered
-	ref_cmdbuf_t	*frame; 			// current frontend frame
-
-    void            *auxGLContext;
-    
-    qthread_t		*backendThread;
-	qmutex_t		*backendFrameLock;
-
-	qbufPipe_t 		*cmdPipe;
-} ref_realfrontend_t;
-
-rserr_t RF_Init( const char *applicationName, const char *screenshotPrefix, int startupColor,
-	int iconResource, const int *iconXPM, void *hinstance, void *wndproc, void *parenthWnd,  bool verbose );
-rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
-void RF_AppActivate( bool active, bool destroy );
-void RF_Shutdown( bool verbose );
-void RF_SurfaceChangePending( void );
-void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync );
-void RF_EndFrame( void );
-void RF_BeginRegistration( void );
-void RF_EndRegistration( void );
-void RF_RegisterWorldModel( const char *model, const dvis_t *pvsData );
-ref_cmdbuf_t *RF_GetNewBackendFrame( void );
-void RF_ClearScene( void );
-void RF_AddEntityToScene( const entity_t *ent );
-void RF_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
-void RF_AddPolyToScene( const poly_t *poly );
-void RF_AddLightStyleToScene( int style, float r, float g, float b );
-void RF_RenderScene( const refdef_t *fd );
-void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
-	const vec4_t color, const shader_t *shader );
-void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, 
-	const vec4_t color, const shader_t *shader );
-void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
-	float s1, float t1, float s2, float t2, uint8_t *data );
-void RF_DrawStretchRawYUV( int x, int y, int w, int h, 
-	float s1, float t1, float s2, float t2, ref_img_plane_t *yuv );
-void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset );
-void RF_SetScissor( int x, int y, int w, int h );
-void RF_GetScissor( int *x, int *y, int *w, int *h );
-void RF_ResetScissor( void );
-void RF_SetCustomColor( int num, int r, int g, int b );
-void RF_ScreenShot( const char *path, const char *name, bool silent );
-void RF_EnvShot( const char *path, const char *name, unsigned pixels );
-bool RF_RenderingEnabled( void );
-const char *RF_SpeedsMessage( char *out, size_t size );
-void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data );
-void RF_BeginAviDemo( void );
-void RF_WriteAviFrame( int frame, bool scissor );
-void RF_StopAviDemo( void );
-void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out );
-bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name );
-void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius );
+} r_globals_t;
 
 extern ref_import_t ri;
 
 extern r_shared_t rsh;
 extern r_scene_t rsc;
-extern r_frontend_t rf;
-
-extern ref_realfrontend_t rrf;
+extern r_globals_t rf;
 
 #define R_ENT2NUM(ent) ((ent)-rsc.entities)
 #define R_NUM2ENT(num) (rsc.entities+(num))
@@ -643,8 +565,9 @@ void		R_EndFrame( void );
 int 		R_SetSwapInterval( int swapInterval, int oldSwapInterval );
 void		R_Set2DMode( bool enable );
 void		R_RenderView( const refdef_t *fd );
+const msurface_t *R_GetDebugSurface( void );
+const char *R_WriteSpeedsMessage( char *out, size_t size );
 void		R_RenderDebugSurface( const refdef_t *fd );
-void		R_UpdateSpeedsMessage( void );
 void 		R_Finish( void );
 void		R_Flush( void );
 
@@ -707,9 +630,6 @@ void		R_Scissor( int x, int y, int w, int h );
 void		R_GetScissor( int *x, int *y, int *w, int *h );
 void		R_ResetScissor( void );
 
-shader_t	*R_GetShaderForOrigin( const vec3_t origin );
-struct cinematics_s *R_GetShaderCinematic( shader_t *shader );
-
 //
 // r_mesh.c
 //
@@ -767,7 +687,6 @@ void		R_BeginRegistration( void );
 void		R_EndRegistration( void );
 void		R_Shutdown( bool verbose );
 rserr_t		R_SetMode( int x, int y, int width, int height, int displayFrequency, bool fullScreen, bool stereo );
-rserr_t		R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd );
 
 //
 // r_scene.c

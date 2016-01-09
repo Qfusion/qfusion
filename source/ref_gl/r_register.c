@@ -1415,22 +1415,6 @@ rserr_t R_SetMode( int x, int y, int width, int height, int displayFrequency, bo
 }
 
 /*
-* R_SetWindow
-*/
-rserr_t R_SetWindow( void *hinstance, void *wndproc, void *parenthWnd )
-{
-	rserr_t err;
-	bool surfaceChangePending = false;
-
-	err = GLimp_SetWindow( hinstance, wndproc, parenthWnd, &surfaceChangePending );
-
-	if( err == rserr_ok && surfaceChangePending )
-		RF_SurfaceChangePending();
-
-	return err;
-}
-
-/*
 * R_InitVolatileAssets
 */
 static void R_InitVolatileAssets( void )

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // r_cmds.c
 #include "r_local.h"
+#include "r_frontend.h"
 #include "../qalgo/glob.h"
 
 /*
@@ -313,11 +314,9 @@ void R_ShaderList_f( void )
 void R_ShaderDump_f( void )
 {
 	const char *name;
-	msurface_t *debugSurface;
+	const msurface_t *debugSurface;
 	
-	ri.Mutex_Lock( rf.debugSurfaceLock );
-	debugSurface = rf.debugSurface;
-	ri.Mutex_Unlock( rf.debugSurfaceLock );
+	debugSurface = R_GetDebugSurface();
 
 	if( (ri.Cmd_Argc() < 2) && !debugSurface )
 	{

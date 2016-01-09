@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // r_public.c
 #include "r_local.h"
+#include "r_frontend.h"
 
 ref_import_t ri;
 
@@ -51,7 +52,7 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 
 	globals.Init = RF_Init;
 	globals.SetMode = RF_SetMode;
-	globals.SetWindow = R_SetWindow;
+	globals.SetWindow = RF_SetWindow;
 	globals.BeginRegistration = RF_BeginRegistration;
 	globals.EndRegistration = RF_EndRegistration;
 	globals.Shutdown = RF_Shutdown;
@@ -76,6 +77,9 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	globals.ResetScissor = RF_ResetScissor;
 	globals.SetCustomColor = RF_SetCustomColor;
 	globals.ReplaceRawSubPic = RF_ReplaceRawSubPic;
+	
+	globals.GetShaderForOrigin = RF_GetShaderForOrigin;
+	globals.GetShaderCinematic = RF_GetShaderCinematic;
 
 	globals.LightForOrigin = RF_LightForOrigin;
 	globals.LerpTag = RF_LerpTag;
@@ -108,9 +112,6 @@ QF_DLL_EXPORT ref_export_t *GetRefAPI( ref_import_t *import )
 	
 	globals.ModelBounds = R_ModelBounds;
 	globals.ModelFrameBounds = R_ModelFrameBounds;
-	
-	globals.GetShaderForOrigin = R_GetShaderForOrigin;
-	globals.GetShaderCinematic = R_GetShaderCinematic;
 
 	return &globals;
 }
