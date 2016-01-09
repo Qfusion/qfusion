@@ -1463,13 +1463,13 @@ const char *R_WriteSpeedsMessage( char *out, size_t size )
                 RB_StatsMessage( backend_msg, sizeof( backend_msg ) );
                 
                 Q_snprintfz( out, size,
+                            "%u fps\n"
                             "%4u wpoly %4u leafs\n"
-                            "sverts: %5u\\%5u  stris: %5u\\%5u\n"
-                            "framerate: %u\n"
+                            "%5u\\%5u sverts %5u\\%5u stris\n"
                             "%s",
+                            rf.fps.average,
                             rf.stats.c_brush_polys, rf.stats.c_world_leafs,
                             rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems/3, rf.stats.c_slices_elems_real/3,
-                            rf.fps.average,
                             backend_msg
                             );
                 break;
