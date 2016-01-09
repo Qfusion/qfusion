@@ -23,6 +23,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
+// public frontend -> frontend/backend commands
+
+// frame commands
+// a valid frame should begin and end with REF_CMD_BEGIN_FRAME and REF_CMD_END_FRAME cmds
+
 enum
 {
     REF_CMD_BEGIN_FRAME,
@@ -54,107 +59,6 @@ enum
 typedef unsigned (*refCmdHandler_t)( const void * );
 extern refCmdHandler_t refCmdHandlers[];
 
-typedef struct
-{
-	int 			id;
-	float			cameraSeparation;
-	bool			forceClear;
-	bool			forceVsync;
-} refCmdBeginFrame_t;
-
-typedef struct
-{
-	int 			id;
-} refCmdEndFrame_t;
-
-typedef struct
-{
-	int 			id;
-	int 			x, y, w, h;
-	float 			s1, t1, s2, t2;
-    float           angle;
-	vec4_t 			color;
-    void 			*shader;
-} refCmdDrawStretchPic_t;
-
-typedef struct
-{
-	int 			id;
-    unsigned        length;
-    float 			x_offset, y_offset;
-	poly_t 			poly;
-} refCmdDrawStretchOrScenePoly_t;
-
-typedef struct
-{
-    int             id;
-} refCmdClearScene_t;
-
-typedef struct
-{
-    int             id;
-    unsigned        length;
-    entity_t        entity;
-    int             numBoneposes;
-	bonepose_t		*boneposes;
-	bonepose_t		*oldboneposes;
-} refCmdAddEntityToScene_t;
-
-typedef struct
-{
-    int             id;
-    vec3_t          origin;
-    float           intensity;
-    float           r, g, b;
-} refCmdAddLightToScene_t;
-
-typedef struct
-{
-    int             id;
-    int             style;
-    float           r, g, b;
-} refCmdAddLightStyleToScene_t;
-
-typedef struct
-{
-    int             id;
-    unsigned        length;
-	int				registrationSequence;
-    int             worldModelSequence;
-    refdef_t        refdef;
-    uint8_t         *areabits;
-} refCmdRenderScene_t;
-
-typedef struct
-{
-    int             id;
-    int             x, y, w, h;
-} refCmdSetScissor_t;
-
-typedef struct
-{
-    int             id;
-} refCmdResetScissor_t;
-
-typedef struct
-{
-    int             id;
-    int             num;
-    int             r, g, b;
-} refCmdSetCustomColor_t;
-
-typedef struct
-{
-	int				id;
-} refCmdSync_t;
-
-typedef struct
-{
-	int				id;
-	int				x, y, w, h;
-	float			s1, t1, s2, t2;
-} refCmdDrawStretchRaw_t;
-
 void RF_IssueBeginFrameCmd( ref_cmdbuf_t *frame, float cameraSeparation, bool forceClear, bool forceVsync );
 void RF_IssueEndFrameCmd( ref_cmdbuf_t *frame );
 void RF_IssueDrawRotatedStretchPicCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h,
@@ -175,40 +79,22 @@ void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *frame, int x, int y, int w, int
 
 // ==========
 
+// inter-frame thread-safe pipe for commands
+// we need it to process commands that may not be dropped along with respective frames
+
 enum
 {
-	REF_RELIABLE_CMD_INIT,
-	REF_RELIABLE_CMD_SHUTDOWN,
-	REF_RELIABLE_CMD_SURFACE_CHANGE,
-    REF_RELIABLE_CMD_SCREEN_SHOT,
-    REF_RELIABLE_CMD_ENV_SHOT,
+	REF_PIPE_CMD_INIT,
+	REF_PIPE_CMD_SHUTDOWN,
+	REF_PIPE_CMD_SURFACE_CHANGE,
+    REF_PIPE_CMD_SCREEN_SHOT,
+    REF_PIPE_CMD_ENV_SHOT,
 
-    NUM_REF_RELIABLE_CMDS
+    NUM_REF_PIPE_CMDS
 };
 
-typedef unsigned (*refReliableCmdHandler_t)( const void * );
-extern refReliableCmdHandler_t refReliableCmdHandlers[];
-
-typedef struct
-{
-	int				id;
-} refReliableCmdInitShutdown_t;
-
-typedef struct
-{
-	int				id;
-} refReliableCmdSurfaceChange_t;
-
-typedef struct
-{
-    int             id;
-    unsigned        pixels;
-    bool            silent;
-	bool			media;
-	int				x, y, w, h;
-    char            path[1024];
-    char            name[1024];
-} refReliableCmdScreenShot_t;
+typedef unsigned (*refPipeCmdHandler_t)( const void * );
+extern refPipeCmdHandler_t refPipeCmdHandlers[];
 
 void RF_IssueInitReliableCmd( qbufPipe_t *pipe );
 void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe );

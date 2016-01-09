@@ -21,6 +21,118 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_cmdque.h"
 
+// producers and handlers for
+// frame commands buffer and reliable inter-frame commands queue
+
+/*
+=============================================================
+ 
+FRAME COMMANDS BUFFER
+ 
+=============================================================
+*/
+
+typedef struct
+{
+	int 			id;
+	float			cameraSeparation;
+	bool			forceClear;
+	bool			forceVsync;
+} refCmdBeginFrame_t;
+
+typedef struct
+{
+	int 			id;
+} refCmdEndFrame_t;
+
+typedef struct
+{
+	int 			id;
+	int 			x, y, w, h;
+	float 			s1, t1, s2, t2;
+	float           angle;
+	vec4_t 			color;
+	void 			*shader;
+} refCmdDrawStretchPic_t;
+
+typedef struct
+{
+	int 			id;
+	unsigned        length;
+	float 			x_offset, y_offset;
+	poly_t 			poly;
+} refCmdDrawStretchOrScenePoly_t;
+
+typedef struct
+{
+	int             id;
+} refCmdClearScene_t;
+
+typedef struct
+{
+	int             id;
+	unsigned        length;
+	entity_t        entity;
+	int             numBoneposes;
+	bonepose_t		*boneposes;
+	bonepose_t		*oldboneposes;
+} refCmdAddEntityToScene_t;
+
+typedef struct
+{
+	int             id;
+	vec3_t          origin;
+	float           intensity;
+	float           r, g, b;
+} refCmdAddLightToScene_t;
+
+typedef struct
+{
+	int             id;
+	int             style;
+	float           r, g, b;
+} refCmdAddLightStyleToScene_t;
+
+typedef struct
+{
+	int             id;
+	unsigned        length;
+	int				registrationSequence;
+	int             worldModelSequence;
+	refdef_t        refdef;
+	uint8_t         *areabits;
+} refCmdRenderScene_t;
+
+typedef struct
+{
+	int             id;
+	int             x, y, w, h;
+} refCmdSetScissor_t;
+
+typedef struct
+{
+	int             id;
+} refCmdResetScissor_t;
+
+typedef struct
+{
+	int             id;
+	int             num;
+	int             r, g, b;
+} refCmdSetCustomColor_t;
+
+typedef struct
+{
+	int				id;
+} refCmdSync_t;
+
+typedef struct
+{
+	int				id;
+	int				x, y, w, h;
+	float			s1, t1, s2, t2;
+} refCmdDrawStretchRaw_t;
+
 static unsigned R_HandleBeginFrameCmd( uint8_t *cmdbuf );
 static unsigned R_HandleEndFrameCmd( uint8_t *cmdbuf );
 static unsigned R_HandleDrawStretchPicCmd( uint8_t *cmdbuf );
@@ -38,6 +150,7 @@ static unsigned R_HandleSyncCmd( uint8_t *cmdbuf );
 static unsigned R_HandleDrawStretchRawCmd( uint8_t *cmdbuf );
 static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *cmdbuf );
 
+// must match the corresponding REF_CMD_ enums!
 refCmdHandler_t refCmdHandlers[NUM_REF_CMDS] =
 {
     (refCmdHandler_t)R_HandleBeginFrameCmd,
@@ -178,6 +291,17 @@ static unsigned R_HandleDrawStretchRawYUVCmd( uint8_t *cmdbuf )
 	refCmdDrawStretchRaw_t *cmd = (void *)cmdbuf;
 	R_DrawStretchRawYUV( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2 );
 	return sizeof( *cmd );
+}
+
+// public handler
+unsigned R_HandleFrameCmd( const ref_cmdbuf_t *frame, unsigned pos )
+{
+	const uint8_t *cmd = frame->buf + pos;
+	int id = *(int *)cmd;
+
+	if( id < 0 || id >= NUM_REF_CMDS )
+		return 0;
+	return refCmdHandlers[id]( cmd );
 }
 
 // ============================================================================
@@ -538,19 +662,40 @@ void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *frame, int x, int y, int w, int
 
 // ============================================================================
 
+typedef struct
+{
+	int				id;
+} refReliableCmdInitShutdown_t;
+
+typedef struct
+{
+	int				id;
+} refReliableCmdSurfaceChange_t;
+
+typedef struct
+{
+	int             id;
+	unsigned        pixels;
+	bool            silent;
+	bool			media;
+	int				x, y, w, h;
+	char            path[1024];
+	char            name[1024];
+} refReliableCmdScreenShot_t;
+
 static unsigned R_HandleInitReliableCmd( void *pcmd );
 static unsigned R_HandleShutdownReliableCmd( void *pcmd );
 static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd );
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd );
 static unsigned R_HandleEnvShotReliableCmd( void *pcmd );
 
-refReliableCmdHandler_t refReliableCmdHandlers[NUM_REF_RELIABLE_CMDS] =
+refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 {
-	(refReliableCmdHandler_t)R_HandleInitReliableCmd,
-    (refReliableCmdHandler_t)R_HandleShutdownReliableCmd,
-    (refReliableCmdHandler_t)R_HandleSurfaceChangeReliableCmd,
-    (refReliableCmdHandler_t)R_HandleScreenShotReliableCmd,
-	(refReliableCmdHandler_t)R_HandleEnvShotReliableCmd,
+	(refPipeCmdHandler_t)R_HandleInitReliableCmd,
+    (refPipeCmdHandler_t)R_HandleShutdownReliableCmd,
+    (refPipeCmdHandler_t)R_HandleSurfaceChangeReliableCmd,
+    (refPipeCmdHandler_t)R_HandleScreenShotReliableCmd,
+	(refPipeCmdHandler_t)R_HandleEnvShotReliableCmd,
 };
 
 static unsigned R_HandleInitReliableCmd( void *pcmd )
@@ -604,19 +749,19 @@ static unsigned R_HandleEnvShotReliableCmd( void *pcmd )
 
 void RF_IssueInitReliableCmd( qbufPipe_t *pipe )
 {
-	refReliableCmdInitShutdown_t cmd = { REF_RELIABLE_CMD_INIT };
+	refReliableCmdInitShutdown_t cmd = { REF_PIPE_CMD_INIT };
 	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
 }
 
 void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe )
 {
-	refReliableCmdInitShutdown_t cmd = { REF_RELIABLE_CMD_SHUTDOWN };
+	refReliableCmdInitShutdown_t cmd = { REF_PIPE_CMD_SHUTDOWN };
 	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
 }
 
 void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe )
 {
-	refReliableCmdSurfaceChange_t cmd = { REF_RELIABLE_CMD_SURFACE_CHANGE };
+	refReliableCmdSurfaceChange_t cmd = { REF_PIPE_CMD_SURFACE_CHANGE };
 	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
 }
 
@@ -641,15 +786,15 @@ static void RF_IssueEnvScreenShotReliableCmd( qbufPipe_t *pipe, int id, const ch
 
 void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, bool silent )
 {
-    RF_IssueEnvScreenShotReliableCmd( pipe, REF_RELIABLE_CMD_SCREEN_SHOT, path, name, 0, 0, glConfig.width, glConfig.height, 0, silent, true );
+    RF_IssueEnvScreenShotReliableCmd( pipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, 0, 0, glConfig.width, glConfig.height, 0, silent, true );
 }
 
 void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, unsigned pixels )
 {
-    RF_IssueEnvScreenShotReliableCmd( pipe, REF_RELIABLE_CMD_ENV_SHOT, path, name, 0, 0, glConfig.width, glConfig.height, pixels, false, false );
+    RF_IssueEnvScreenShotReliableCmd( pipe, REF_PIPE_CMD_ENV_SHOT, path, name, 0, 0, glConfig.width, glConfig.height, pixels, false, false );
 }
 
 void RF_IssueAviShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, int x, int y, int w, int h )
 {
-	RF_IssueEnvScreenShotReliableCmd( pipe, REF_RELIABLE_CMD_SCREEN_SHOT, path, name, x, y, w, h, 0, true, false );
+	RF_IssueEnvScreenShotReliableCmd( pipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, x, y, w, h, 0, true, false );
 }

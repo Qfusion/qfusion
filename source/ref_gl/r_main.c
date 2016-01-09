@@ -134,26 +134,6 @@ void R_TransformForEntity( const entity_t *e )
 }
 
 /*
-* R_LerpTag
-*/
-bool R_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name )
-{
-	if( !orient )
-		return false;
-
-	VectorClear( orient->origin );
-	Matrix3_Identity( orient->axis );
-
-	if( !name )
-		return false;
-
-	if( mod->type == mod_alias )
-		return R_AliasModelLerpTag( orient, (const maliasmodel_t *)mod->extradata, oldframe, frame, lerpfrac, name );
-
-	return false;
-}
-
-/*
 * R_FogForBounds
 */
 mfog_t *R_FogForBounds( const vec3_t mins, const vec3_t maxs )
@@ -1390,6 +1370,11 @@ void R_Finish( void )
     qglFinish();
 }
 
+void R_Flush( void )
+{
+	qglFlush();
+}
+
 void R_DeferDataSync( void )
 {
 	rf.dataSync = true;
@@ -1754,57 +1739,7 @@ void R_EndFrame( void )
     assert( error == GL_NO_ERROR );
 }
 
-/*
-* R_AppActivate
-*/
-void R_AppActivate( bool active, bool destroy )
-{
-	qglFlush();
-	GLimp_AppActivate( active, destroy );
-}
-
 //==================================================================================
-
-/*
-* R_TransformVectorToScreen
-*/
-void R_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )
-{
-	mat4_t p, m;
-	vec4_t temp, temp2;
-
-	if( !rd || !in || !out )
-		return;
-
-	temp[0] = in[0];
-	temp[1] = in[1];
-	temp[2] = in[2];
-	temp[3] = 1.0f;
-	
-	if( rd->rdflags & RDF_USEORTHO ) {
-		Matrix4_OrthogonalProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y, 
-			-4096.0f, 4096.0f, p );
-	}
-	else {
-		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rf.cameraSeparation, 
-			p, glConfig.depthEpsilon );
-	}
-
-	if( rd->rdflags & RDF_FLIPPED ) {
-		p[0] = -p[0];
-	}
-
-	Matrix4_Modelview( rd->vieworg, rd->viewaxis, m );
-
-	Matrix4_Multiply_Vector( m, temp, temp2 );
-	Matrix4_Multiply_Vector( p, temp2, temp );
-
-	if( !temp[3] )
-		return;
-
-	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
-	out[1] = glConfig.height - (rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f);
-}
 
 /*
 * R_GetShaderForOrigin
