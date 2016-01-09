@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "r_local.h"
 
-r_frontend_t rf;
+r_globals_t rf;
 
 mapconfig_t mapConfig;
 
@@ -1443,9 +1443,9 @@ bool R_IsRenderingToScreen( void )
 }
 
 /*
- * R_SpeedsMessage
- */
-const char *R_SpeedsMessage( char *out, size_t size )
+* R_WriteSpeedsMessage
+*/
+const char *R_WriteSpeedsMessage( char *out, size_t size )
 {
     char backend_msg[1024];
     
@@ -1530,18 +1530,22 @@ const char *R_SpeedsMessage( char *out, size_t size )
 }
 
 /*
-* R_UpdateSpeedsMessage
+* R_GetDebugSurface
 */
-void R_UpdateSpeedsMessage( void )
+const msurface_t *R_GetDebugSurface( void )
 {
-    ri.Mutex_Lock( rf.speedsMsgLock );
-    R_SpeedsMessage( rf.speedsMsg, sizeof( rf.speedsMsg ) );
-    ri.Mutex_Unlock( rf.speedsMsgLock );
+	msurface_t *debugSurface;
+
+	ri.Mutex_Lock( rf.debugSurfaceLock );
+	debugSurface = rf.debugSurface;
+	ri.Mutex_Unlock( rf.debugSurfaceLock );
+
+	return debugSurface;
 }
 
 /*
- * R_RenderDebugSurface
- */
+* R_RenderDebugSurface
+*/
 void R_RenderDebugSurface( const refdef_t *fd )
 {
 	rtrace_t tr;
@@ -1737,54 +1741,6 @@ void R_EndFrame( void )
     
     error = qglGetError();
     assert( error == GL_NO_ERROR );
-}
-
-//==================================================================================
-
-/*
-* R_GetShaderForOrigin
-*
-* Trace 64 units in all axial directions to find the closest surface
-*/
-shader_t *R_GetShaderForOrigin( const vec3_t origin )
-{
-	int i, j;
-	vec3_t dir, end;
-	rtrace_t tr;
-	shader_t *best = NULL;
-	float best_frac = 1000.0f;
-
-	for( i = 0; i < 3; i++ ) {
-		VectorClear( dir );
-
-		for( j = -1; j <= 1; j += 2 ) {
-			dir[i] = j;
-			VectorMA( origin, 64, dir, end );
-
-			R_TraceLine( &tr, origin, end, 0 );
-			if( !tr.shader ) {
-				continue;
-			}
-
-			if( tr.fraction < best_frac ) {
-				best = tr.shader;
-				best_frac = tr.fraction;
-			}
-		}
-	}
-
-	return best;
-}
-
-/*
-* R_GetShaderCinematic
-*/
-struct cinematics_s *R_GetShaderCinematic( shader_t *shader )
-{
-	if( !shader ) {
-		return NULL;
-	}
-	return R_GetCinematicById( shader->cin );
 }
 
 //===================================================================

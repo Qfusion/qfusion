@@ -390,9 +390,12 @@ void R_RenderScene( const refdef_t *fd )
 	R_BindFrameBufferObject( 0 );
 
 	R_Set2DMode( true );
-    
-	if( !( fd->rdflags & RDF_NOWORLDMODEL ) )
-		R_UpdateSpeedsMessage();
+
+	if( !( fd->rdflags & RDF_NOWORLDMODEL ) ) {
+		ri.Mutex_Lock( rf.speedsMsgLock );
+		R_WriteSpeedsMessage( rf.speedsMsg, sizeof( rf.speedsMsg ) );
+		ri.Mutex_Unlock( rf.speedsMsgLock );
+	}
 
 	// blit and blend framebuffers in proper order
 
