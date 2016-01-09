@@ -300,6 +300,14 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 
 	R_DataSync();
 
+	// disallow bogus r_maxfps values, reset to default value instead
+	if( r_maxfps->modified ) {
+		if( r_maxfps->integer <= 0 ) {
+			ri.Cvar_ForceSet( r_maxfps->name, r_maxfps->dvalue );
+		}
+		r_maxfps->modified = false;
+	}
+
 	RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
 }
 
