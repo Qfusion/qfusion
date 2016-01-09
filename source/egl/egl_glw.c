@@ -19,7 +19,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "../ref_gl/r_local.h"
-#include "android_glw.h"
+#include "egl_glw.h"
+
+#if defined( __ANDROID__ ) && defined( PUBLIC_BUILD )
+// Vsync cannot be normally turned off on Android, so the setting must not be available to the user
+#define GLIMP_EGL_FORCE_VSYNC
+#endif
 
 glwstate_t glw_state;
 
@@ -48,7 +53,7 @@ void GLimp_EndFrame( void )
 int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, void *parenthWnd,
 	int iconResource, const int *iconXPM )
 {
-	glw_state.window = ( ANativeWindow * )parenthWnd;
+	glw_state.window = ( EGLNativeWindowType )parenthWnd;
 	return true;
 }
 
@@ -56,9 +61,7 @@ int GLimp_Init( const char *applicationName, void *hinstance, void *wndproc, voi
 ** GLimp_Shutdown
 **
 ** This routine does all OS specific shutdown procedures for the OpenGL
-** subsystem.  Under OpenGL this means NULLing out the current DC and
-** HGLRC, deleting the rendering context, and releasing the DC acquired
-** for the window.  The state structure is also nulled out.
+** subsystem. The state structure is also nulled out.
 **
 */
 void GLimp_Shutdown( void )
@@ -94,9 +97,9 @@ void GLimp_Shutdown( void )
 }
 
 /*
-** GLimp_Android_ChooseVisual
+** GLimp_EGL_ChooseVisual
 */
-static EGLConfig GLimp_Android_ChooseVisual( int colorSize, int depthSize, int depthEncoding, int stencilSize, int minSwapInterval )
+static EGLConfig GLimp_EGL_ChooseVisual( int colorSize, int depthSize, int depthEncoding, int stencilSize, int minSwapInterval )
 {
 	int attribs[] =
 	{
@@ -137,9 +140,9 @@ static EGLConfig GLimp_Android_ChooseVisual( int colorSize, int depthSize, int d
 }
 
 /*
-** GLimp_Android_ChooseConfig
+** GLimp_EGL_ChooseConfig
 */
-static void GLimp_Android_ChooseConfig( void )
+static void GLimp_EGL_ChooseConfig( void )
 {
 	int colorSizes[] = { 8, 4 }, colorSize;
 	int depthSizes[] = { 24, 16, 16 }, depthSize, firstDepthSize = 0;
@@ -147,7 +150,7 @@ static void GLimp_Android_ChooseConfig( void )
 	int depthEncodings[] = { EGL_DONT_CARE, EGL_DEPTH_ENCODING_NONLINEAR_NV, EGL_DONT_CARE }, depthEncoding;
 	int maxStencilSize = ( ( r_stencilbits->integer >= 8 ) ? 8 : 0 ), stencilSize;
 	int minSwapIntervals[] = {
-#ifndef PUBLIC_BUILD // Vsync cannot be normally turned off on Android, so the setting must not be available to the user.
+#ifndef GLIMP_EGL_FORCE_VSYNC
 		0,
 #endif
 		EGL_DONT_CARE
@@ -181,26 +184,26 @@ static void GLimp_Android_ChooseConfig( void )
 			{
 				for( k = 0; k < sizeof( minSwapIntervals ) / sizeof( minSwapIntervals[0] ); k++ )
 				{
-					EGLConfig config = GLimp_Android_ChooseVisual( colorSize, depthSize, depthEncoding, stencilSize, minSwapIntervals[k] );
+					EGLConfig config = GLimp_EGL_ChooseVisual( colorSize, depthSize, depthEncoding, stencilSize, minSwapIntervals[k] );
 
 					if( config )
 					{
 						glw_state.config = config;
 
-#ifdef PUBLIC_BUILD
+#ifdef GLIMP_EGL_FORCE_VSYNC
 						minSwapInterval = 1;
 #else
 						qeglGetConfigAttrib( glw_state.display, glw_state.config, EGL_MIN_SWAP_INTERVAL, &minSwapInterval );
 #endif
 						ri.Com_Printf( "Got colorbits %i, depthbits %i%s, stencilbits %i"
-#ifndef PUBLIC_BUILD
+#ifndef GLIMP_EGL_FORCE_VSYNC
 							", min swap interval %i"
 #endif
 							"\n"
 							, colorSize * 4, depthSize
 							, ( depthEncoding == EGL_DEPTH_ENCODING_NONLINEAR_NV ) ? " (non-linear)" : ""
 							, stencilSize
-#ifndef PUBLIC_BUILD
+#ifndef GLIMP_EGL_FORCE_VSYNC
 							, minSwapInterval
 #endif
 						);
@@ -219,7 +222,7 @@ static void GLimp_Android_ChooseConfig( void )
  *
  * @return 1x1 pbuffer surface
  */
-static EGLSurface GLimp_Android_CreatePbufferSurface( void )
+static EGLSurface GLimp_EGL_CreatePbufferSurface( void )
 {
 	const int pbufferAttribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
 	return qeglCreatePbufferSurface( glw_state.display, glw_state.config, pbufferAttribs );
@@ -228,9 +231,9 @@ static EGLSurface GLimp_Android_CreatePbufferSurface( void )
 /**
  * Recreates and selects the surface for the newly created window, or selects a dummy buffer when there's no window.
  */
-static void GLimp_Android_UpdateWindowSurface( void )
+static void GLimp_EGL_UpdateWindowSurface( void )
 {
-	ANativeWindow *window = glw_state.window;
+	EGLNativeWindowType window = glw_state.window;
 	EGLContext context = qeglGetCurrentContext();
 
 	if( context == EGL_NO_CONTEXT )
@@ -246,12 +249,14 @@ static void GLimp_Android_UpdateWindowSurface( void )
 	if( !window )
 		return;
 
+#ifdef __ANDROID__
 	ANativeWindow_setBuffersGeometry( window, glConfig.width, glConfig.height, glw_state.format );
+#endif
 
 	glw_state.surface = qeglCreateWindowSurface( glw_state.display, glw_state.config, window, NULL );
 	if( glw_state.surface == EGL_NO_SURFACE )
 	{
-		ri.Com_Printf( "GLimp_Android_UpdateWindowSurface() - GLimp_Android_CreateWindowSurface failed\n" );
+		ri.Com_Printf( "GLimp_EGL_UpdateWindowSurface() - GLimp_EGL_CreateWindowSurface failed\n" );
 		return;
 	}
 
@@ -281,10 +286,10 @@ static bool GLimp_InitGL( void )
 		return false;
 	}
 
-	GLimp_Android_ChooseConfig();
+	GLimp_EGL_ChooseConfig();
 	if( !glw_state.config )
 	{
-		ri.Com_Printf( "GLimp_InitGL() - GLimp_Android_ChooseConfig failed\n" );
+		ri.Com_Printf( "GLimp_InitGL() - GLimp_EGL_ChooseConfig failed\n" );
 		return false;
 	}
 	if ( !qeglGetConfigAttrib( glw_state.display, glw_state.config, EGL_NATIVE_VISUAL_ID, &glw_state.format ) )
@@ -293,17 +298,17 @@ static bool GLimp_InitGL( void )
 		return false;
 	}
 
-	glw_state.mainThreadPbuffer = GLimp_Android_CreatePbufferSurface();
+	glw_state.mainThreadPbuffer = GLimp_EGL_CreatePbufferSurface();
 	if( glw_state.mainThreadPbuffer == EGL_NO_SURFACE )
 	{
-		ri.Com_Printf( "GLimp_InitGL() - GLimp_Android_CreatePbufferSurface for mainThreadPbuffer failed\n" );
+		ri.Com_Printf( "GLimp_InitGL() - GLimp_EGL_CreatePbufferSurface for mainThreadPbuffer failed\n" );
 		return false;
 	}
 
-	glw_state.noWindowPbuffer = GLimp_Android_CreatePbufferSurface();
+	glw_state.noWindowPbuffer = GLimp_EGL_CreatePbufferSurface();
 	if( glw_state.noWindowPbuffer == EGL_NO_SURFACE )
 	{
-		ri.Com_Printf( "GLimp_InitGL() - GLimp_Android_CreatePbufferSurface for noWindowPbuffer failed\n" );
+		ri.Com_Printf( "GLimp_InitGL() - GLimp_EGL_CreatePbufferSurface for noWindowPbuffer failed\n" );
 		return false;
 	}
 
@@ -318,9 +323,9 @@ static bool GLimp_InitGL( void )
 
 	glw_state.swapInterval = 1; // Default swap interval for new surfaces
 
-	// GLimp_Android_UpdateWindowSurface attaches the surface to the current context, so make one current to initialize
+	// GLimp_EGL_UpdateWindowSurface attaches the surface to the current context, so make one current to initialize
 	qeglMakeCurrent( glw_state.display, glw_state.noWindowPbuffer, glw_state.noWindowPbuffer, glw_state.context );
-	GLimp_Android_UpdateWindowSurface();
+	GLimp_EGL_UpdateWindowSurface();
 
 	return true;
 }
@@ -341,8 +346,9 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 {
 	if( width == glConfig.width && height == glConfig.height && glConfig.fullScreen != fullscreen )
 	{
-		// fullscreen does nothing on Android
-		return rserr_ok;
+#ifdef __ANDROID__
+		return rserr_ok; // The window is always fullscreen on Android
+#endif
 	}
 
 	ri.Com_Printf( "Initializing OpenGL display\n" );
@@ -368,12 +374,12 @@ rserr_t GLimp_SetMode( int x, int y, int width, int height, int displayFrequency
 */
 rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool *surfaceChangePending )
 {
-	ANativeWindow *window = ( ANativeWindow * )parenthWnd;
+	EGLNativeWindowType window = ( EGLNativeWindowType )parenthWnd;
 
 	if( surfaceChangePending )
 		*surfaceChangePending = false;
 
-	if( glw_state.context == EGL_NO_CONTEXT ) // not initialized yet
+	if( glw_state.context == EGL_NO_CONTEXT ) // Not initialized yet
 	{
 		glw_state.window = window;
 		return rserr_ok;
@@ -393,7 +399,7 @@ rserr_t GLimp_SetWindow( void *hinstance, void *wndproc, void *parenthWnd, bool 
 		}
 		else
 		{
-			GLimp_Android_UpdateWindowSurface();
+			GLimp_EGL_UpdateWindowSurface();
 		}
 	}
 
@@ -466,7 +472,7 @@ void GLimp_EnableMultithreadedRendering( bool enable )
 		if( glw_state.windowChanged )
 		{
 			glw_state.windowChanged = false;
-			GLimp_Android_UpdateWindowSurface();
+			GLimp_EGL_UpdateWindowSurface();
 		}
 		surface = ( glw_state.surface != EGL_NO_SURFACE ? glw_state.surface : glw_state.noWindowPbuffer );
 	}
@@ -494,7 +500,7 @@ void GLimp_UpdatePendingWindowSurface( void )
 	if( glw_state.windowChanged )
 	{
 		glw_state.windowChanged = false;
-		GLimp_Android_UpdateWindowSurface();
+		GLimp_EGL_UpdateWindowSurface();
 	}
 
 	ri.Mutex_Unlock( glw_state.windowMutex );
@@ -519,7 +525,7 @@ bool GLimp_SharedContext_Create( void **context, void **surface )
 
 	if( surface )
 	{
-		pbuffer = GLimp_Android_CreatePbufferSurface();
+		pbuffer = GLimp_EGL_CreatePbufferSurface();
 		if( pbuffer == EGL_NO_SURFACE )
 			return false;
 	}

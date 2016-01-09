@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <dlfcn.h>
 #include "../qcommon/qcommon.h"
-#include "android_glw.h"
+#include "egl_glw.h"
 
 #define QGL_EXTERN
 
@@ -45,6 +45,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #undef QGL_EXT
 #undef QGL_FUNC_OPT
 #undef QGL_FUNC
+
+#ifdef __ANDROID__
+#define QGL_EGL_LIBNAME "libEGL.so"
+#endif
 
 static const char *_qglGetGLWExtensionsString( void );
 
@@ -79,7 +83,7 @@ void QGL_Shutdown( void )
 */
 qgl_initerr_t QGL_Init( const char *dllname )
 {
-	if( !( glw_state.EGLLib = dlopen( "libEGL.so", RTLD_LAZY | RTLD_GLOBAL ) ) )
+	if( !( glw_state.EGLLib = dlopen( QGL_EGL_LIBNAME, RTLD_LAZY | RTLD_GLOBAL ) ) )
 	{
 		Com_Printf( "%s\n", dlerror() );
 		return qgl_initerr_unknown;
@@ -131,10 +135,13 @@ qgl_initerr_t QGL_Init( const char *dllname )
 */
 const qgl_driverinfo_t *QGL_GetDriverInfo( void )
 {
+	// libGLESv2 exposes GLES2 and above, libGLESv3 is a symlink to it
 	static const qgl_driverinfo_t driver =
 	{
+#ifdef __ANDROID__
 		"libGLESv2.so",
 		"gl_driver_android"
+#endif
 	};
 	return &driver;
 }

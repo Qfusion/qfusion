@@ -22,10 +22,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #error You should not be including this file on this platform
 #endif
 
-#ifndef ANDROID_GLW_H
-#define ANDROID_GLW_H
+#ifndef GLW_EGL_H
+#define GLW_EGL_H
 
-#include <android/native_window.h>
 #include <EGL/egl.h>
 
 typedef struct
@@ -47,7 +46,7 @@ typedef struct
 
 	// Window replacement in the rendering thread
 	qmutex_t *windowMutex;
-	ANativeWindow *window; // Only main can change
+	EGLNativeWindowType window; // Only main can change
 	bool windowChanged;
 
 	void *EGLLib, *OpenGLLib;
@@ -55,4 +54,4 @@ typedef struct
 
 extern glwstate_t glw_state;
 
-#endif // ANDROID_GLW_H
+#endif // GLW_EGL_H
