@@ -149,36 +149,36 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter )
 }
 
 /*
- * RF_AdapterInit
- */
- static bool RF_AdapterInit( ref_frontendAdapter_t *adapter )
- {
- 	adapter->cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
- 	adapter->frameLock = ri.Mutex_Create();
+* RF_AdapterInit
+*/
+static bool RF_AdapterInit( ref_frontendAdapter_t *adapter )
+{
+	adapter->cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
+	adapter->frameLock = ri.Mutex_Create();
 
- 	if( glConfig.multithreading ) {
- 		GLimp_EnableMultithreadedRendering( true );
+	if( glConfig.multithreading ) {
+		GLimp_EnableMultithreadedRendering( true );
 
- 		if( !GLimp_SharedContext_Create( &adapter->GLcontext, NULL ) ) {
- 			return false;
- 		}
+		if( !GLimp_SharedContext_Create( &adapter->GLcontext, NULL ) ) {
+			return false;
+		}
+		
+		adapter->shutdown = false;
+		adapter->thread = ri.Thread_Create( RF_AdapterThreadProc, adapter );
+		if( !adapter->thread ) {
+			GLimp_EnableMultithreadedRendering( false );
+			return false;
+		}
+	}
 
- 		adapter->shutdown = false;
- 		adapter->thread = ri.Thread_Create( RF_AdapterThreadProc, adapter );
- 		if( !adapter->thread ) {
- 			GLimp_EnableMultithreadedRendering( false );
- 			return false;
- 		}
- 	}
+	RF_IssueInitReliableCmd( adapter->cmdPipe );
 
- 	RF_IssueInitReliableCmd( adapter->cmdPipe );
+	if( !glConfig.multithreading ) {
+		RF_AdapterCmdsProc( adapter, NULL );
+	}
 
- 	if( !glConfig.multithreading ) {
- 		RF_AdapterCmdsProc( adapter, NULL );
- 	}
-
- 	return true;
- }
+	return true;
+}
 
 /*
 * RF_AdapterWait
@@ -479,14 +479,13 @@ void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height,
 	RF_IssueSyncCmd( rrf.frame );
 }
 
-
 /*
- * RF_BeginAviDemo
- */
- void RF_BeginAviDemo( void )
- {
- 	RF_AdapterWait( &rrf.adapter );
- }
+* RF_BeginAviDemo
+*/
+void RF_BeginAviDemo( void )
+{
+	RF_AdapterWait( &rrf.adapter );
+}
 
 /*
 * R_WriteAviFrame
@@ -541,75 +540,75 @@ void RF_WriteAviFrame( int frame, bool scissor )
 }
 
 /*
- * RF_StopAviDemo
- */
- void RF_StopAviDemo( void )
- {
- 	RF_AdapterWait( &rrf.adapter );
- }
+* RF_StopAviDemo
+*/
+void RF_StopAviDemo( void )
+{
+	RF_AdapterWait( &rrf.adapter );
+}
 
 /*
- * RF_TransformVectorToScreen
- */
- void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )
- {
- 	mat4_t p, m;
- 	vec4_t temp, temp2;
+* RF_TransformVectorToScreen
+*/
+void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )
+{
+	mat4_t p, m;
+	vec4_t temp, temp2;
  	
- 	if( !rd || !in || !out )
+	if( !rd || !in || !out )
+		return;
+ 	
+	temp[0] = in[0];
+	temp[1] = in[1];
+	temp[2] = in[2];
+	temp[3] = 1.0f;
+ 	
+	if( rd->rdflags & RDF_USEORTHO ) {
+		Matrix4_OrthogonalProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y,
+			-4096.0f, 4096.0f, p );
+	}
+	else {
+		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rrf.cameraSeparation,
+			p, glConfig.depthEpsilon );
+	}
+ 	
+	if( rd->rdflags & RDF_FLIPPED ) {
+		p[0] = -p[0];
+	}
+ 	
+	Matrix4_Modelview( rd->vieworg, rd->viewaxis, m );
+ 	
+	Matrix4_Multiply_Vector( m, temp, temp2 );
+	Matrix4_Multiply_Vector( p, temp2, temp );
+ 	
+	if( !temp[3] )
  		return;
  	
- 	temp[0] = in[0];
- 	temp[1] = in[1];
- 	temp[2] = in[2];
- 	temp[3] = 1.0f;
- 	
- 	if( rd->rdflags & RDF_USEORTHO ) {
- 		Matrix4_OrthogonalProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y,
- 			-4096.0f, 4096.0f, p );
- 	}
- 	else {
- 		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rrf.cameraSeparation,
- 			p, glConfig.depthEpsilon );
- 	}
- 	
- 	if( rd->rdflags & RDF_FLIPPED ) {
- 		p[0] = -p[0];
- 	}
- 	
- 	Matrix4_Modelview( rd->vieworg, rd->viewaxis, m );
- 	
- 	Matrix4_Multiply_Vector( m, temp, temp2 );
- 	Matrix4_Multiply_Vector( p, temp2, temp );
- 	
- 	if( !temp[3] )
- 		return;
- 	
- 	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
- 	out[1] = glConfig.height - (rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f);
- }
+	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
+	out[1] = glConfig.height - (rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f);
+}
 
- bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name )
- {
- 	if( !orient )
- 		return false;
+bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name )
+{
+	if( !orient )
+		return false;
  	
- 	VectorClear( orient->origin );
- 	Matrix3_Identity( orient->axis );
+	VectorClear( orient->origin );
+	Matrix3_Identity( orient->axis );
  	
- 	if( !name )
- 		return false;
+	if( !name )
+		return false;
  	
- 	if( mod->type == mod_alias )
- 		return R_AliasModelLerpTag( orient, (const maliasmodel_t *)mod->extradata, oldframe, frame, lerpfrac, name );
+	if( mod->type == mod_alias )
+		return R_AliasModelLerpTag( orient, (const maliasmodel_t *)mod->extradata, oldframe, frame, lerpfrac, name );
  	
- 	return false;
- }
+	return false;
+}
 
- void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
- {
- 	R_LightForOrigin( origin, dir, ambient, diffuse, radius, false );
- }
+void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
+{
+	R_LightForOrigin( origin, dir, ambient, diffuse, radius, false );
+}
 
 /*
 * RF_GetShaderForOrigin
