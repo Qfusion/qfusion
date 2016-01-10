@@ -258,12 +258,12 @@ typedef struct
 	dlight_t		dlights[MAX_DLIGHTS];
 
 	unsigned int	numPolys;
-    drawSurfacePoly_t polys[MAX_POLYS];
+	drawSurfacePoly_t polys[MAX_POLYS];
 
 	lightstyle_t	lightStyles[MAX_LIGHTSTYLES];
 
 	unsigned int	numBmodelEntities;
-    entity_t		*bmodelEntities[MAX_REF_ENTITIES];
+	entity_t		*bmodelEntities[MAX_REF_ENTITIES];
 
 	unsigned int	maxShadowGroups;
 	unsigned int	numShadowGroups;
@@ -282,13 +282,13 @@ typedef struct
 // the backend should never attempt reading or modifying them
 typedef struct
 {
-	bool            in2D;
+	bool 			in2D;
 	int				width2D, height2D;
 
 	int				frameBufferWidth, frameBufferHeight;
 
 	float			cameraSeparation;
-    int             swapInterval;
+	int 			swapInterval;
 
 	int				worldModelSequence;
 
@@ -312,12 +312,12 @@ typedef struct
 	} stats;
 
 	struct {
-		unsigned    average; // updates 4 times per second
-		unsigned    time, oldTime;
-		unsigned    count, oldCount;
+		unsigned 		average; // updates 4 times per second
+		unsigned 		time, oldTime;
+		unsigned 		count, oldCount;
 	} fps;
 
-	volatile bool   dataSync; // call R_Finish
+	volatile bool 	dataSync; // call R_Finish
 
 	char 			speedsMsg[2048];
 	qmutex_t		*speedsMsgLock;
@@ -471,9 +471,9 @@ void		R_RestartCinematics( void );
 //
 // r_cmds.c
 //
-void        R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, int h, bool silent, bool media );
+void 		R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, int h, bool silent, bool media );
 void		R_ScreenShot_f( void );
-void        R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
+void 		R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
 void		R_EnvShot_f( void );
 void		R_ImageList_f( void );
 void		R_ShaderList_f( void );
