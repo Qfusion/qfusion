@@ -1445,88 +1445,93 @@ bool R_IsRenderingToScreen( void )
 /*
 * R_WriteSpeedsMessage
 */
-const char *R_WriteSpeedsMessage( char *out, size_t size )
+const char *R_WriteSpeedsMessage(char *out, size_t size)
 {
-    char backend_msg[1024];
-    
-    if( !out || !size ) {
-        return out;
-    }
-    
-    out[0] = '\0';
-    if( r_speeds->integer && !( rn.refdef.rdflags & RDF_NOWORLDMODEL ) )
-    {
-        switch( r_speeds->integer )
-        {
-            case 1:
-            default:
-                RB_StatsMessage( backend_msg, sizeof( backend_msg ) );
-                
-                Q_snprintfz( out, size,
-                            "%u fps\n"
-                            "%4u wpoly %4u leafs\n"
-                            "%5u\\%5u sverts %5u\\%5u stris\n"
-                            "%s",
-                            rf.fps.average,
-                            rf.stats.c_brush_polys, rf.stats.c_world_leafs,
-                            rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems/3, rf.stats.c_slices_elems_real/3,
-                            backend_msg
-                            );
-                break;
-            case 2:
-            case 3:
-                Q_snprintfz( out, size,
-                            "lvs: %5u  node: %5u\n"
-                            "polys\\ents: %5u\\%5i  draw: %5u\n",
-                            rf.stats.t_mark_leaves, rf.stats.t_world_node,
-                            rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
-                            );
-                break;
-            case 4:
-            case 5:
-                if( rf.debugSurface )
-                {
-                    int numVerts = 0, numTris = 0;
+	char backend_msg[1024];
+
+	if (!out || !size) {
+		return out;
+	}
+
+	out[0] = '\0';
+	if (r_speeds->integer && !(rn.refdef.rdflags & RDF_NOWORLDMODEL))
+	{
+		switch (r_speeds->integer)
+		{
+			case 1:
+				RB_StatsMessage(backend_msg, sizeof(backend_msg));
+
+				Q_snprintfz(out, size,
+					"%u fps\n"
+					"%4u wpoly %4u leafs\n"
+					"%5u\\%5u sverts %5u\\%5u stris\n"
+					"%s",
+					rf.fps.average,
+					rf.stats.c_brush_polys, rf.stats.c_world_leafs,
+					rf.stats.c_slices_verts, rf.stats.c_slices_verts_real, rf.stats.c_slices_elems / 3, rf.stats.c_slices_elems_real / 3,
+					backend_msg
+				);
+				break;
+			case 2:
+			case 3:
+				Q_snprintfz(out, size,
+					"lvs: %5u  node: %5u\n"
+					"polys\\ents: %5u\\%5i  draw: %5u\n",
+					rf.stats.t_mark_leaves, rf.stats.t_world_node,
+					rf.stats.t_add_polys, rf.stats.t_add_entities, rf.stats.t_draw_meshes
+				);
+				break;
+			case 4:
+			case 5:
+				if (rf.debugSurface)
+				{
+					int numVerts = 0, numTris = 0;
 					msurface_t *debugSurface = rf.debugSurface;
-                    
-                    Q_snprintfz( out, size,
-                                "%s type:%i sort:%i",
-                                debugSurface->shader->name, debugSurface->facetype, debugSurface->shader->sort );
-                    
-                    Q_strncatz( out, "\n", size );
-                    
-                    if( r_speeds->integer == 5 && debugSurface->drawSurf->vbo ) {
-                        numVerts = debugSurface->drawSurf->vbo->numVerts;
-                        numTris = debugSurface->drawSurf->vbo->numElems / 3;
-                    }
-                    else if( debugSurface->mesh ) {
-                        numVerts = debugSurface->mesh->numVerts;
-                        numTris = debugSurface->mesh->numElems;
-                    }
-                    
-                    if( numVerts ) {
-                        Q_snprintfz( out + strlen( out ), size - strlen( out ),
-                                    "verts: %5i tris: %5i", numVerts, numTris );
-                    }
-                    
-                    Q_strncatz( out, "\n", size );
-                    
-                    if( debugSurface->fog && debugSurface->fog->shader
-                       && debugSurface->fog->shader != debugSurface->shader )
-                        Q_strncatz( out, debugSurface->fog->shader->name, size );
-                }
-                break;
-            case 6:
-                Q_snprintfz( out, size,
-                            "%.1f %.1f %.1f",
-                            rn.refdef.vieworg[0], rn.refdef.vieworg[1], rn.refdef.vieworg[2]
-                            );
-                break;
-        }
-    }
-    
-    out[size-1] = '\0';
-    return out;
+
+					Q_snprintfz(out, size,
+						"%s type:%i sort:%i",
+						debugSurface->shader->name, debugSurface->facetype, debugSurface->shader->sort);
+
+					Q_strncatz(out, "\n", size);
+
+					if (r_speeds->integer == 5 && debugSurface->drawSurf->vbo) {
+						numVerts = debugSurface->drawSurf->vbo->numVerts;
+						numTris = debugSurface->drawSurf->vbo->numElems / 3;
+					}
+					else if (debugSurface->mesh) {
+						numVerts = debugSurface->mesh->numVerts;
+						numTris = debugSurface->mesh->numElems;
+					}
+
+					if (numVerts) {
+						Q_snprintfz(out + strlen(out), size - strlen(out),
+							"verts: %5i tris: %5i", numVerts, numTris);
+					}
+
+					Q_strncatz(out, "\n", size);
+
+					if (debugSurface->fog && debugSurface->fog->shader
+						&& debugSurface->fog->shader != debugSurface->shader)
+						Q_strncatz(out, debugSurface->fog->shader->name, size);
+				}
+				break;
+			case 6:
+				Q_snprintfz(out, size,
+					"%.1f %.1f %.1f",
+					rn.refdef.vieworg[0], rn.refdef.vieworg[1], rn.refdef.vieworg[2]
+				);
+				break;
+			default:
+				Q_snprintfz(out, size,
+					"%u fps",
+					rf.fps.average
+				);
+				break;
+		}
+	}
+
+	out[size - 1] = '\0';
+	return out;
 }
 
 /*
@@ -1722,7 +1727,7 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 */
 void R_EndFrame( void )
 {
-    int error;
+	int error;
 
 	// render previously batched 2D geometry, if any
 	RB_FlushDynamicMeshes();
@@ -1738,9 +1743,9 @@ void R_EndFrame( void )
 	RB_EndFrame();
 
 	GLimp_EndFrame();
-    
-    error = qglGetError();
-    assert( error == GL_NO_ERROR );
+
+	error = qglGetError();
+	assert( error == GL_NO_ERROR );
 }
 
 //===================================================================
