@@ -30,29 +30,29 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter );
 */
 static void RF_AdapterCmdsProc( ref_frontendAdapter_t *adapter, ref_cmdbuf_t *frame )
 {
-    if( frame ) {
-        size_t t;
+	if( frame ) {
+		size_t t;
 
-        for( t = 0; t < frame->len; ) {
-            uint8_t *cmd = frame->buf + t;
-            int id = *(int *)cmd;
-        
-            if( id < 0 || id >= NUM_REF_CMDS )
-                break;
-        
-            size_t len = refCmdHandlers[id]( cmd );
+		for( t = 0; t < frame->len; ) {
+			uint8_t *cmd = frame->buf + t;
+			int id = *(int *)cmd;
+			
+			if( id < 0 || id >= NUM_REF_CMDS )
+				break;
+			
+			size_t len = refCmdHandlers[id]( cmd );
 
-            if( len == 0 )
-                break;
-        
-            if( adapter->shutdown )
-                break;
-        
-            t += len;
-        }
+			if( len == 0 )
+				break;
+			
+			if( adapter->shutdown )
+				break;
+			
+			t += len;
+		}
 
 		adapter->readFrameId = frame->frameId;
-    }
+	}
 
 	ri.BufPipe_ReadCmds( adapter->cmdPipe, refPipeCmdHandlers );
 }
@@ -62,42 +62,42 @@ static void RF_AdapterCmdsProc( ref_frontendAdapter_t *adapter, ref_cmdbuf_t *fr
 */
 static void RF_AdapterFrame( ref_frontendAdapter_t *adapter )
 {
-    static unsigned lastTime = 0;
-    static int bias = 0;
-    unsigned time = ri.Sys_Milliseconds();
-    unsigned wait, frameTime;
-    unsigned minMsec;
+	static unsigned lastTime = 0;
+	static int bias = 0;
+	unsigned time = ri.Sys_Milliseconds();
+	unsigned wait, frameTime;
+	unsigned minMsec;
 
-    if( r_maxfps->integer > 0 )
-        minMsec = 1000 / r_maxfps->integer;
-    else
-        minMsec = 1;
-    frameTime = (int)(time - lastTime);
-        
-    bias += frameTime - minMsec;
-    if( bias > (int)minMsec )
-        bias = (int)minMsec;
+	if( r_maxfps->integer > 0 )
+		minMsec = 1000 / r_maxfps->integer;
+	else
+		minMsec = 1;
+	frameTime = (int)(time - lastTime);
+	
+	bias += frameTime - minMsec;
+	if( bias > (int)minMsec )
+		bias = (int)minMsec;
 
     // Adjust minMsec if previous frame took too long to render so
     // that framerate is stable at the requested value.
-    bias -= minMsec;
+	bias -= minMsec;
 
-    wait = frameTime;
-    do {
-        if( wait >= minMsec )
-            wait = 0;
-        else
-            wait = minMsec - wait;
-        if( wait < 1 )
-            ri.Sys_Sleep( 0 );
-        else
-            ri.Sys_Sleep( wait - 1 );
-        wait = ri.Sys_Milliseconds() - lastTime;
-    } while( wait < minMsec );
-        
-    lastTime = ri.Sys_Milliseconds();
+	wait = frameTime;
+	do {
+		if( wait >= minMsec )
+			wait = 0;
+		else
+			wait = minMsec - wait;
+		if( wait < 1 )
+			ri.Sys_Sleep( 0 );
+		else
+			ri.Sys_Sleep( wait - 1 );
+		wait = ri.Sys_Milliseconds() - lastTime;
+	} while( wait < minMsec );
+	
+	lastTime = ri.Sys_Milliseconds();
 
-    RF_AdapterCmdsProc( adapter, RF_GetNextAdapterFrame( adapter ) );
+	RF_AdapterCmdsProc( adapter, RF_GetNextAdapterFrame( adapter ) );
 }
 
 /*
@@ -109,11 +109,11 @@ static void *RF_AdapterThreadProc( void *param )
 
 	GLimp_MakeCurrent( adapter->GLcontext, GLimp_GetWindowSurface( NULL ) );
 
-    while( !adapter->shutdown ) {
-        RF_AdapterFrame( adapter );
-    }
+	while( !adapter->shutdown ) {
+		RF_AdapterFrame( adapter );
+	}
 
-    GLimp_MakeCurrent( NULL, NULL );
+	GLimp_MakeCurrent( NULL, NULL );
 
 	return NULL;
 }
@@ -138,7 +138,7 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter )
 		RF_AdapterCmdsProc( adapter, NULL );
 	}
 
-    ri.BufPipe_Destroy( &adapter->cmdPipe );
+	ri.BufPipe_Destroy( &adapter->cmdPipe );
 	ri.Mutex_Destroy( &adapter->frameLock );
 
 	if( adapter->GLcontext ) {
@@ -151,34 +151,34 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter )
 /*
  * RF_AdapterInit
  */
-static bool RF_AdapterInit( ref_frontendAdapter_t *adapter )
-{
-	adapter->cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
-	adapter->frameLock = ri.Mutex_Create();
+ static bool RF_AdapterInit( ref_frontendAdapter_t *adapter )
+ {
+ 	adapter->cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
+ 	adapter->frameLock = ri.Mutex_Create();
 
-	if( glConfig.multithreading ) {
-		GLimp_EnableMultithreadedRendering( true );
+ 	if( glConfig.multithreading ) {
+ 		GLimp_EnableMultithreadedRendering( true );
 
-		if( !GLimp_SharedContext_Create( &adapter->GLcontext, NULL ) ) {
-			return false;
-		}
+ 		if( !GLimp_SharedContext_Create( &adapter->GLcontext, NULL ) ) {
+ 			return false;
+ 		}
 
-		adapter->shutdown = false;
-		adapter->thread = ri.Thread_Create( RF_AdapterThreadProc, adapter );
-		if( !adapter->thread ) {
-			GLimp_EnableMultithreadedRendering( false );
-			return false;
-		}
-	}
+ 		adapter->shutdown = false;
+ 		adapter->thread = ri.Thread_Create( RF_AdapterThreadProc, adapter );
+ 		if( !adapter->thread ) {
+ 			GLimp_EnableMultithreadedRendering( false );
+ 			return false;
+ 		}
+ 	}
 
-	RF_IssueInitReliableCmd( adapter->cmdPipe );
+ 	RF_IssueInitReliableCmd( adapter->cmdPipe );
 
-	if( !glConfig.multithreading ) {
-		RF_AdapterCmdsProc( adapter, NULL );
-	}
+ 	if( !glConfig.multithreading ) {
+ 		RF_AdapterCmdsProc( adapter, NULL );
+ 	}
 
-    return true;
-}
+ 	return true;
+ }
 
 /*
 * RF_AdapterWait
@@ -187,15 +187,15 @@ static bool RF_AdapterInit( ref_frontendAdapter_t *adapter )
 */
 static void RF_AdapterWait( ref_frontendAdapter_t *adapter )
 {
-    if( adapter->thread == NULL ) {
-        RF_AdapterCmdsProc( adapter, NULL );
-        return;
-    }
+	if( adapter->thread == NULL ) {
+		RF_AdapterCmdsProc( adapter, NULL );
+		return;
+	}
 
 	while( adapter->frameId != adapter->readFrameId ) {
 		ri.Sys_Sleep( 0 );
 	}
-   
+	
 	ri.BufPipe_Finish( adapter->cmdPipe );
 }
 
@@ -206,7 +206,7 @@ static ref_cmdbuf_t *RF_GetNextAdapterFrame( ref_frontendAdapter_t *adapter )
 
 	ri.Mutex_Lock( adapter->frameLock );
 	if( adapter->frameNum != fe->lastFrameNum ) {
-        adapter->frameId = fe->frameId;
+		adapter->frameId = fe->frameId;
 		adapter->frameNum = fe->lastFrameNum;
 
 		result = &fe->frames[adapter->frameNum];
@@ -230,11 +230,11 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 {
 	rserr_t err;
 
-    if( glConfig.width == width && glConfig.height == height && glConfig.fullScreen != fullScreen ) {
-        return GLimp_SetFullscreenMode( displayFrequency, fullScreen );
-    }
+	if( glConfig.width == width && glConfig.height == height && glConfig.fullScreen != fullScreen ) {
+		return GLimp_SetFullscreenMode( displayFrequency, fullScreen );
+	}
 
-    RF_AdapterShutdown( &rrf.adapter );
+	RF_AdapterShutdown( &rrf.adapter );
 
 	memset( &rrf, 0, sizeof( rrf ) );
 	rrf.frame = &rrf.frames[0];
@@ -246,8 +246,8 @@ rserr_t RF_SetMode( int x, int y, int width, int height, int displayFrequency, b
 
 	rrf.adapter.owner = (void *)&rrf;
 	if( RF_AdapterInit( &rrf.adapter ) != true ) {
-        return rserr_unknown;
-    }
+		return rserr_unknown;
+	}
 
 	return rserr_ok;	
 }
@@ -276,7 +276,7 @@ void RF_AppActivate( bool active, bool destroy )
 
 void RF_Shutdown( bool verbose )
 {
-    RF_AdapterShutdown( &rrf.adapter );
+	RF_AdapterShutdown( &rrf.adapter );
 
 	R_Shutdown( verbose );
 }
@@ -285,10 +285,10 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 {
 	// take the frame the backend is not busy processing
 	ri.Mutex_Lock( rrf.adapter.frameLock );
-    if( rrf.lastFrameNum == rrf.adapter.frameNum )
-        rrf.frameNum = (rrf.adapter.frameNum + 1) % 3;
-    else
-        rrf.frameNum = 3 - (rrf.adapter.frameNum + rrf.lastFrameNum);
+	if( rrf.lastFrameNum == rrf.adapter.frameNum )
+		rrf.frameNum = (rrf.adapter.frameNum + 1) % 3;
+	else
+		rrf.frameNum = 3 - (rrf.adapter.frameNum + rrf.lastFrameNum);
 	if( rrf.frameNum == 3 ) {
 		rrf.frameNum = 1;
 	}
@@ -339,55 +339,55 @@ void RF_EndRegistration( void )
 	// sync to the backend thread to ensure it's not using old assets for drawing
 	RF_AdapterWait( &rrf.adapter );
 	R_EndRegistration();
-    R_Finish();
+	R_Finish();
 }
 
 void RF_RegisterWorldModel( const char *model, const dvis_t *pvsData )
 {
-    RF_AdapterWait( &rrf.adapter );
-    R_RegisterWorldModel( model, pvsData );
+	RF_AdapterWait( &rrf.adapter );
+	R_RegisterWorldModel( model, pvsData );
 }
 
 void RF_ClearScene( void )
 {
-    RF_IssueClearSceneCmd( rrf.frame );
+	RF_IssueClearSceneCmd( rrf.frame );
 }
 
 void RF_AddEntityToScene( const entity_t *ent )
 {
-    RF_IssueAddEntityToSceneCmd( rrf.frame, ent );
+	RF_IssueAddEntityToSceneCmd( rrf.frame, ent );
 }
 
 void RF_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b )
 {
-    RF_IssueAddLightToSceneCmd( rrf.frame, org, intensity, r, g, b );
+	RF_IssueAddLightToSceneCmd( rrf.frame, org, intensity, r, g, b );
 }
 
 void RF_AddPolyToScene( const poly_t *poly )
 {
-    RF_IssueAddPolyToSceneCmd( rrf.frame, poly );
+	RF_IssueAddPolyToSceneCmd( rrf.frame, poly );
 }
 
 void RF_AddLightStyleToScene( int style, float r, float g, float b )
 {
-    RF_IssueAddLightStyleToSceneCmd( rrf.frame, style, r, g, b );
+	RF_IssueAddLightStyleToSceneCmd( rrf.frame, style, r, g, b );
 }
 
 void RF_RenderScene( const refdef_t *fd )
 {
-    RF_IssueRenderSceneCmd( rrf.frame, fd );
+	RF_IssueRenderSceneCmd( rrf.frame, fd );
 }
 
 void RF_DrawStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, const shader_t *shader )
 {
-    RF_IssueDrawRotatedStretchPicCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2, 0, color, shader );
+	RF_IssueDrawRotatedStretchPicCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2, 0, color, shader );
 }
 
 void RF_DrawRotatedStretchPic( int x, int y, int w, int h, float s1, float t1, float s2, float t2, float angle, 
 	const vec4_t color, const shader_t *shader )
 {
-    RF_IssueDrawRotatedStretchPicCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2, angle, color, shader );
+	RF_IssueDrawRotatedStretchPicCmd( rrf.frame, x, y, w, h, s1, t1, s2, t2, angle, color, shader );
 }
 
 void RF_DrawStretchRaw( int x, int y, int w, int h, int cols, int rows, 
@@ -418,31 +418,31 @@ void RF_DrawStretchPoly( const poly_t *poly, float x_offset, float y_offset )
 
 void RF_SetScissor( int x, int y, int w, int h )
 {
-    RF_IssueSetScissorCmd( rrf.frame, x, y, w, h );
-    Vector4Set( rrf.scissor, x, y, w, h );
+	RF_IssueSetScissorCmd( rrf.frame, x, y, w, h );
+	Vector4Set( rrf.scissor, x, y, w, h );
 }
 
 void RF_GetScissor( int *x, int *y, int *w, int *h )
 {
-    if( x )
-        *x = rrf.scissor[0];
-    if( y )
-        *y = rrf.scissor[1];
-    if( w )
-        *w = rrf.scissor[2];
-    if( h )
-        *h = rrf.scissor[3];
+	if( x )
+		*x = rrf.scissor[0];
+	if( y )
+		*y = rrf.scissor[1];
+	if( w )
+		*w = rrf.scissor[2];
+	if( h )
+		*h = rrf.scissor[3];
 }
 
 void RF_ResetScissor( void )
 {
-    RF_IssueResetScissorCmd( rrf.frame );
-    Vector4Set( rrf.scissor, 0, 0, glConfig.width, glConfig.height );
+	RF_IssueResetScissorCmd( rrf.frame );
+	Vector4Set( rrf.scissor, 0, 0, glConfig.width, glConfig.height );
 }
 
 void RF_SetCustomColor( int num, int r, int g, int b )
 {
-    RF_IssueSetCustomColorCmd( rrf.frame, num, r, g, b );
+	RF_IssueSetCustomColorCmd( rrf.frame, num, r, g, b );
 }
 
 void RF_ScreenShot( const char *path, const char *name, bool silent )
@@ -464,10 +464,10 @@ bool RF_RenderingEnabled( void )
 
 const char *RF_SpeedsMessage( char *out, size_t size )
 {
-    ri.Mutex_Lock( rf.speedsMsgLock );
-    Q_strncpyz( out, rf.speedsMsg, size );
-    ri.Mutex_Unlock( rf.speedsMsgLock );
-    return out;
+	ri.Mutex_Lock( rf.speedsMsgLock );
+	Q_strncpyz( out, rf.speedsMsg, size );
+	ri.Mutex_Unlock( rf.speedsMsgLock );
+	return out;
 }
 
 void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height, uint8_t *data )
@@ -483,10 +483,10 @@ void RF_ReplaceRawSubPic( shader_t *shader, int x, int y, int width, int height,
 /*
  * RF_BeginAviDemo
  */
-void RF_BeginAviDemo( void )
-{
-	RF_AdapterWait( &rrf.adapter );
-}
+ void RF_BeginAviDemo( void )
+ {
+ 	RF_AdapterWait( &rrf.adapter );
+ }
 
 /*
 * R_WriteAviFrame
@@ -543,73 +543,73 @@ void RF_WriteAviFrame( int frame, bool scissor )
 /*
  * RF_StopAviDemo
  */
-void RF_StopAviDemo( void )
-{
-	RF_AdapterWait( &rrf.adapter );
-}
+ void RF_StopAviDemo( void )
+ {
+ 	RF_AdapterWait( &rrf.adapter );
+ }
 
 /*
  * RF_TransformVectorToScreen
  */
-void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )
-{
-	mat4_t p, m;
-	vec4_t temp, temp2;
-	
-	if( !rd || !in || !out )
-		return;
-	
-	temp[0] = in[0];
-	temp[1] = in[1];
-	temp[2] = in[2];
-	temp[3] = 1.0f;
-	
-	if( rd->rdflags & RDF_USEORTHO ) {
-		Matrix4_OrthogonalProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y,
-									 -4096.0f, 4096.0f, p );
-	}
-	else {
-		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rrf.cameraSeparation,
-											  p, glConfig.depthEpsilon );
-	}
-	
-	if( rd->rdflags & RDF_FLIPPED ) {
-		p[0] = -p[0];
-	}
-	
-	Matrix4_Modelview( rd->vieworg, rd->viewaxis, m );
-	
-	Matrix4_Multiply_Vector( m, temp, temp2 );
-	Matrix4_Multiply_Vector( p, temp2, temp );
-	
-	if( !temp[3] )
-		return;
-	
-	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
-	out[1] = glConfig.height - (rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f);
-}
+ void RF_TransformVectorToScreen( const refdef_t *rd, const vec3_t in, vec2_t out )
+ {
+ 	mat4_t p, m;
+ 	vec4_t temp, temp2;
+ 	
+ 	if( !rd || !in || !out )
+ 		return;
+ 	
+ 	temp[0] = in[0];
+ 	temp[1] = in[1];
+ 	temp[2] = in[2];
+ 	temp[3] = 1.0f;
+ 	
+ 	if( rd->rdflags & RDF_USEORTHO ) {
+ 		Matrix4_OrthogonalProjection( rd->ortho_x, rd->ortho_x, rd->ortho_y, rd->ortho_y,
+ 			-4096.0f, 4096.0f, p );
+ 	}
+ 	else {
+ 		Matrix4_InfinitePerspectiveProjection( rd->fov_x, rd->fov_y, Z_NEAR, rrf.cameraSeparation,
+ 			p, glConfig.depthEpsilon );
+ 	}
+ 	
+ 	if( rd->rdflags & RDF_FLIPPED ) {
+ 		p[0] = -p[0];
+ 	}
+ 	
+ 	Matrix4_Modelview( rd->vieworg, rd->viewaxis, m );
+ 	
+ 	Matrix4_Multiply_Vector( m, temp, temp2 );
+ 	Matrix4_Multiply_Vector( p, temp2, temp );
+ 	
+ 	if( !temp[3] )
+ 		return;
+ 	
+ 	out[0] = rd->x + ( temp[0] / temp[3] + 1.0f ) * rd->width * 0.5f;
+ 	out[1] = glConfig.height - (rd->y + ( temp[1] / temp[3] + 1.0f ) * rd->height * 0.5f);
+ }
 
-bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name )
-{
-	if( !orient )
-		return false;
-	
-	VectorClear( orient->origin );
-	Matrix3_Identity( orient->axis );
-	
-	if( !name )
-		return false;
-	
-	if( mod->type == mod_alias )
-		return R_AliasModelLerpTag( orient, (const maliasmodel_t *)mod->extradata, oldframe, frame, lerpfrac, name );
-	
-	return false;
-}
+ bool RF_LerpTag( orientation_t *orient, const model_t *mod, int oldframe, int frame, float lerpfrac, const char *name )
+ {
+ 	if( !orient )
+ 		return false;
+ 	
+ 	VectorClear( orient->origin );
+ 	Matrix3_Identity( orient->axis );
+ 	
+ 	if( !name )
+ 		return false;
+ 	
+ 	if( mod->type == mod_alias )
+ 		return R_AliasModelLerpTag( orient, (const maliasmodel_t *)mod->extradata, oldframe, frame, lerpfrac, name );
+ 	
+ 	return false;
+ }
 
-void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
-{
-	R_LightForOrigin( origin, dir, ambient, diffuse, radius, false );
-}
+ void RF_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t diffuse, float radius )
+ {
+ 	R_LightForOrigin( origin, dir, ambient, diffuse, radius, false );
+ }
 
 /*
 * RF_GetShaderForOrigin
