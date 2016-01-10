@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static cin_export_t *cin_export;
 static void *cin_libhandle = NULL;
 static mempool_t *cin_mempool;
+static qmutex_t *cin_mutex;
 
 /*
 * CL_CinModule_Error
@@ -162,6 +163,8 @@ void CIN_LoadLibrary( bool verbose )
 		{
 			if( cin_export->Init( verbose ) )
 			{
+				cin_mutex = QMutex_Create();
+
 				if( verbose ) {
 					Com_Printf( "...Success.\n" );
 				}
@@ -206,6 +209,10 @@ void CIN_UnloadLibrary( bool verbose )
 		cin_export = NULL;
 	}
 
+	if( cin_mutex ) {
+		QMutex_Destroy( &cin_mutex );
+	}
+
 	if( !cin_libhandle ) {
 		return;
 	}
@@ -224,75 +231,132 @@ void CIN_UnloadLibrary( bool verbose )
 struct cinematics_s *CIN_Open( const char *name, unsigned int start_time, 
 	int flags, bool *yuv, float *framerate )
 {
+	struct cinematics_s *result = NULL;
+
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
-		return cin_export->Open( name, start_time, flags, yuv, framerate );
+		result = cin_export->Open( name, start_time, flags, yuv, framerate );
 	}
-	return NULL;
+
+	QMutex_Unlock( cin_mutex );
+
+	return result;
 }
 
 bool CIN_HasOggAudio( struct cinematics_s *cin )
 {
+	bool result = false;
+
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
-		return cin_export->HasOggAudio( cin );
+		result = cin_export->HasOggAudio( cin );
 	}
-	return false;
+
+	QMutex_Unlock( cin_mutex );
+
+	return result;
 }
 
 const char *CIN_FileName( struct cinematics_s *cin )
 {
+	const char *result = NULL;
+
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
-		return cin_export->FileName( cin );
+		result = cin_export->FileName( cin );
 	}
-	return NULL;
+
+	QMutex_Unlock( cin_mutex );
+
+	return result;
 }
 
 bool CIN_NeedNextFrame( struct cinematics_s *cin, unsigned int curtime )
 {
+	bool result = false;
+
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
-		return cin_export->NeedNextFrame( cin, curtime );
+		result = cin_export->NeedNextFrame( cin, curtime );
 	}
-	return false;
+
+	QMutex_Unlock( cin_mutex );
+
+	return result;
 }
 
 uint8_t *CIN_ReadNextFrame( struct cinematics_s *cin, int *width, 
 	int *height, int *aspect_numerator, int *aspect_denominator, bool *redraw )
 {
+	uint8_t *result = NULL;
+
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
-		return cin_export->ReadNextFrame( cin, width, height, 
+		result = cin_export->ReadNextFrame( cin, width, height, 
 			aspect_numerator, aspect_denominator, redraw );
 	}
-	return NULL;
+
+	QMutex_Unlock( cin_mutex );
+
+	return result;
 }
 
 ref_yuv_t *CIN_ReadNextFrameYUV( struct cinematics_s *cin, 
 	int *width, int *height, int *aspect_numerator, int *aspect_denominator, 
 	bool *redraw )
 {
+	ref_yuv_t *result = NULL;
+
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
-		return ( ref_yuv_t * )cin_export->ReadNextFrameYUV( cin, width, height, 
+		result = ( ref_yuv_t * )cin_export->ReadNextFrameYUV( cin, width, height, 
 			aspect_numerator, aspect_denominator, redraw );
 	}
-	return NULL;
+
+	QMutex_Unlock( cin_mutex );
+
+	return result;
 }
 
 bool CIN_AddRawSamplesListener( struct cinematics_s *cin, void *listener, 
 	cin_raw_samples_cb_t rs, cin_get_raw_samples_cb_t grs ) {
+	bool result = false;
+
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
-		return cin_export->AddRawSamplesListener( cin, listener, rs, grs );
+		result = cin_export->AddRawSamplesListener( cin, listener, rs, grs );
 	}
+
+	QMutex_Unlock( cin_mutex );
+
 	return false;
 }
 
 void CIN_Reset( struct cinematics_s *cin, unsigned int cur_time )
 {
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
 		cin_export->Reset( cin, cur_time );
 	}
+
+	QMutex_Unlock( cin_mutex );
 }
 
 void CIN_Close( struct cinematics_s *cin )
 {
+	QMutex_Lock( cin_mutex );
+
 	if( cin_export ) {
 		cin_export->Close( cin );
 	}
+
+	QMutex_Unlock( cin_mutex );
 }
