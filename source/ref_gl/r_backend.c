@@ -105,6 +105,7 @@ void RB_BeginFrame( void )
 	// start fresh each frame
 	RB_SetShaderStateMask( ~0, 0 );
 	RB_BindVBO( 0, 0 );
+	RB_FlushTextures();
 }
 
 /*
