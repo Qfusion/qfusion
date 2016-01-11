@@ -45,6 +45,7 @@ enum
 	,IT_ARRAY			= 1<<18
 	,IT_3D				= 1<<19
 	,IT_STENCIL			= 1<<20		// for IT_DEPTH or IT_DEPTHRB textures, whether there's stencil
+	,IT_NO_DATA_SYNC	= 1<<21		// owned by the drawing thread, do not sync in the frontend thread
 };
 
 /**

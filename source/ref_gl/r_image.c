@@ -1085,8 +1085,6 @@ static void R_Upload32( int ctx, uint8_t **data, int layer,
 			}
 		}
 	}
-
-	R_DeferDataSync();
 }
 
 /*
@@ -1295,8 +1293,6 @@ static void R_UploadMipmapped( int ctx, uint8_t **data,
 		if( !scaledHeight )
 			scaledHeight = 1;
 	}
-
-	R_DeferDataSync();
 }
 
 /*
@@ -1749,6 +1745,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 	{
 		// Update IT_LOADFLAGS that may be set by R_ReadImageFromDisk.
 		image->flags = flags;
+		R_DeferDataSync();
 	}
 
 	return loaded;
@@ -1851,8 +1848,6 @@ image_t *R_LoadImage( const char *name, uint8_t **pic, int width, int height, in
 	R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, minmipsize,
 		&image->upload_width, &image->upload_height, image->samples, false, false );
 
-	RB_FlushTextures();
-
 	return image;
 }
 
@@ -1936,6 +1931,9 @@ void R_ReplaceImage( image_t *image, uint8_t **pic, int width, int height, int f
 		R_Upload32( QGL_CONTEXT_MAIN, pic, 0, 0, 0, width, height, flags, minmipsize,
 		&(image->upload_width), &(image->upload_height), samples, true, false );
 
+	if( !(image->flags & IT_NO_DATA_SYNC) )
+		R_DeferDataSync();
+
 	image->flags = flags;
 	image->width = width;
 	image->height = height;
@@ -1958,6 +1956,9 @@ void R_ReplaceSubImage( image_t *image, int layer, int x, int y, uint8_t **pic, 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, x, y, width, height, image->flags, image->minmipsize,
 		NULL, NULL, image->samples, true, true );
 
+	if( !(image->flags & IT_NO_DATA_SYNC) )
+		R_DeferDataSync();
+
 	image->registrationSequence = rsh.registrationSequence;
 }
 
@@ -1973,6 +1974,9 @@ void R_ReplaceImageLayer( image_t *image, int layer, uint8_t **pic )
 
 	R_Upload32( QGL_CONTEXT_MAIN, pic, layer, 0, 0, image->width, image->height, image->flags, image->minmipsize,
 		NULL, NULL, image->samples, true, false );
+
+	if( !(image->flags & IT_NO_DATA_SYNC) )
+		R_DeferDataSync();
 
 	image->registrationSequence = rsh.registrationSequence;
 }
