@@ -982,8 +982,6 @@ void S_RawSamples( unsigned int samples, unsigned int rate, unsigned short width
 		snd_vol = s_volume->value * 255;
 		entnum = S_RAW_SOUND_OTHER;
 	}
-	if( snd_vol < 0 )
-		snd_vol = 0;
 
 	S_RawEntSamples( entnum, samples, rate, width, channels, data, snd_vol );
 }
@@ -1005,7 +1003,7 @@ static void S_PositionedRawSamples( int entnum, float fvol, float attenuation,
 		return;
 	}
 
-	rawsound->volume = fvol * 255;
+	rawsound->volume = s_volume->value * fvol * 255;
 	rawsound->attenuation = attenuation;
 	rawsound->rawend = S_RawSamplesStereo( rawsound->rawsamples, rawsound->rawend, 
 		samples, rate, width, channels, data );

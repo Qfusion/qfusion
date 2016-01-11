@@ -988,6 +988,9 @@ bool Theora_Init_CIN( cinematics_t *cin )
 	qth = CIN_Alloc( cin->mempool, sizeof( *qth ) );
 	memset( qth, 0, sizeof( *qth ) );
 	cin->fdata = ( void * )qth;
+	CIN_Free( cin->vid_buffer );
+	cin->vid_buffer = NULL;
+	cin->width = cin->height = 0;
 
 	if( !theoraLibrary )
 		return false;

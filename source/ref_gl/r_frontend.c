@@ -298,6 +298,9 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	rrf.frame->len = 0;
 	rrf.cameraSeparation = cameraSeparation;
 
+	// run cinematic passes on shaders
+	R_RunAllCinematics();
+
 	R_DataSync();
 
 	// disallow bogus r_maxfps values, reset to default value instead
