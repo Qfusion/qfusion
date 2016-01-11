@@ -1656,9 +1656,6 @@ void R_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 		r_wallcolor->modified = r_floorcolor->modified = false;
 	}
 
-	// run cinematic passes on shaders
-	R_RunAllCinematics();
-
 	// draw buffer stuff
 	if( gl_drawbuffer->modified )
 	{
