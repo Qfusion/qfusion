@@ -163,7 +163,7 @@ static void R_UploadCinematicFrame( r_cinhandle_t *handle )
 	else {
 		if( !handle->image ) {
 			handle->image = R_LoadImage( handle->name, (uint8_t **)&handle->pic, handle->width, handle->height, 
-				IT_SPECIAL, 1, IMAGE_TAG_GENERIC, samples );
+				IT_SPECIAL|IT_NO_DATA_SYNC, 1, IMAGE_TAG_GENERIC, samples );
 		}
 		
 		if( handle->new_frame ) {
