@@ -1366,8 +1366,6 @@ static rserr_t R_PostInit( void )
 
 	R_InitVBO();
 
-	RFB_Init();
-
 	R_InitImages();
 
 	R_InitShaders();
@@ -1472,8 +1470,6 @@ void R_BeginRegistration( void )
 	}
 	rsh.registrationOpen = true;
 
-	RB_BeginRegistration();
-
 	R_InitVolatileAssets();
 }
 
@@ -1494,9 +1490,6 @@ void R_EndRegistration( void )
 	R_FreeUnusedShaders();
 	R_FreeUnusedCinematics();
 	R_FreeUnusedImages();
-	RFB_FreeUnusedObjects();
-
-	RB_EndRegistration();
 
 	R_RestartCinematics();
 }
@@ -1530,8 +1523,6 @@ void R_Shutdown( bool verbose )
 	R_ShutdownCinematics();
 
 	R_ShutdownImages();
-
-	RFB_Shutdown();
 
 	// destroy compiled GLSL programs
 	RP_Shutdown();

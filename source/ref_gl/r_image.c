@@ -2543,9 +2543,9 @@ image_t *R_GetShadowmapTexture( int id, int viewportWidth, int viewportHeight, i
 }
 
 /*
-* R_InitStretchRawTextures
+* R_InitStretchRawImages
 */
-static void R_InitStretchRawTextures( void )
+static void R_InitStretchRawImages( void )
 {
 	rsh.rawTexture = R_CreateImage( "*** raw ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 3 );
 	rsh.rawYUVTextures[0] = R_CreateImage( "*** rawyuv0 ***", 0, 0, 1, IT_SPECIAL, 1, IMAGE_TAG_BUILTIN, 1 );
@@ -2554,9 +2554,9 @@ static void R_InitStretchRawTextures( void )
 }
 
 /*
-* R_InitScreenTexturesPair
+* R_InitScreenImagePair
 */
-static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t **depth, bool stencil )
+static void R_InitScreenImagePair( const char *name, image_t **color, image_t **depth, bool stencil )
 {
 	int flags, colorFlags, depthFlags;
 
@@ -2591,26 +2591,60 @@ static void R_InitScreenTexturesPair( const char *name, image_t **color, image_t
 }
 
 /*
-* R_InitScreenTextures
+* R_InitBuiltinScreenImages
+*
+ * Screen textures may only be used in or referenced from the rendering context/thread.
 */
-static void R_InitScreenTextures( void )
+void R_InitBuiltinScreenImages( void )
 {
 	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit )
 	{
-		R_InitScreenTexturesPair( "r_screentex", &rsh.screenTexture, &rsh.screenDepthTexture, true );
+		R_InitScreenImagePair( "r_screentex", &rsh.screenTexture, &rsh.screenDepthTexture, true );
 
 		// Stencil is required in the copy for depth/stencil formats to match when blitting.
-		R_InitScreenTexturesPair( "r_screentexcopy", &rsh.screenTextureCopy, &rsh.screenDepthTextureCopy, true );
+		R_InitScreenImagePair( "r_screentexcopy", &rsh.screenTextureCopy, &rsh.screenDepthTextureCopy, true );
 	}
 
-	R_InitScreenTexturesPair( "rsh.screenPPCopy0", &rsh.screenPPCopies[0], NULL, true );
-	R_InitScreenTexturesPair( "rsh.screenPPCopy1", &rsh.screenPPCopies[1], NULL, false );
+	R_InitScreenImagePair( "rsh.screenPPCopy0", &rsh.screenPPCopies[0], NULL, true );
+	R_InitScreenImagePair( "rsh.screenPPCopy1", &rsh.screenPPCopies[1], NULL, false );
 }
 
 /*
-* R_InitBuiltinTextures
+* R_ReleaseBuiltinScreenImages
 */
-static void R_InitBuiltinTextures( void )
+void R_ReleaseBuiltinScreenImages( void )
+{
+	if( rsh.screenTexture ) {
+		R_FreeImage( rsh.screenTexture );
+	}
+	if( rsh.screenDepthTexture ) {
+		R_FreeImage( rsh.screenDepthTexture );
+	}
+
+	if( rsh.screenTextureCopy ) {
+		R_FreeImage( rsh.screenTextureCopy );
+	}
+	if( rsh.screenDepthTextureCopy ) {
+		R_FreeImage( rsh.screenDepthTextureCopy );
+	}
+
+	if( rsh.screenPPCopies[0] ) {
+		R_FreeImage( rsh.screenPPCopies[0] );
+	}
+	if( rsh.screenPPCopies[1] ) {
+		R_FreeImage( rsh.screenPPCopies[1] );
+	}
+
+	rsh.screenTexture = rsh.screenDepthTexture = NULL;
+	rsh.screenTextureCopy = rsh.screenDepthTextureCopy = NULL;
+	rsh.screenPPCopies[0] = NULL;
+	rsh.screenPPCopies[1] = NULL;
+}
+
+/*
+* R_InitBuiltinImages
+*/
+static void R_InitBuiltinImages( void )
 {
 	int w, h, flags, samples;
 	image_t *image;
@@ -2646,9 +2680,9 @@ static void R_InitBuiltinTextures( void )
 }
 
 /*
-* R_ReleaseBuiltinTextures
+* R_ReleaseBuiltinImages
 */
-static void R_ReleaseBuiltinTextures( void )
+static void R_ReleaseBuiltinImages( void )
 {
 	rsh.rawTexture = NULL;
 	rsh.rawYUVTextures[0] = rsh.rawYUVTextures[1] = rsh.rawYUVTextures[2] = NULL;
@@ -2658,10 +2692,6 @@ static void R_ReleaseBuiltinTextures( void )
 	rsh.blankBumpTexture = NULL;
 	rsh.particleTexture = NULL;
 	rsh.coronaTexture = NULL;
-	rsh.screenTexture = rsh.screenDepthTexture = NULL;
-	rsh.screenTextureCopy = rsh.screenDepthTextureCopy = NULL;
-	rsh.screenPPCopies[0] = NULL;
-	rsh.screenPPCopies[1] = NULL;
 }
 
 //=======================================================
@@ -2705,9 +2735,8 @@ void R_InitImages( void )
 		R_InitImageLoader( i );
 	}
 
-	R_InitStretchRawTextures();
-	R_InitBuiltinTextures();
-	R_InitScreenTextures();
+	R_InitStretchRawImages();
+	R_InitBuiltinImages();
 }
 
 /*
@@ -2765,23 +2794,12 @@ void R_FreeUnusedImagesByTags( int tags )
 */
 void R_FreeUnusedImages( void )
 {
-	int i;
-
 	R_FreeUnusedImagesByTags( ~IMAGE_TAG_BUILTIN );
 
 	R_FinishLoadingImages();
 
-	for( i = 0; i < MAX_PORTAL_TEXTURES; i++ ) {
-		if( rsh.portalTextures[i] && rsh.portalTextures[i]->registrationSequence != rsh.registrationSequence ) {
-			rsh.portalTextures[i] = NULL;
-		}
-	}
-
-	for( i = 0; i < MAX_SHADOWGROUPS; i++ ) {
-		if( rsh.shadowmapTextures[i] && rsh.shadowmapTextures[i]->registrationSequence != rsh.registrationSequence ) {
-			rsh.shadowmapTextures[i] = NULL;
-		}
-	}
+	memset( rsh.portalTextures, 0, sizeof( image_t * ) * MAX_PORTAL_TEXTURES );
+	memset( rsh.shadowmapTextures, 0, sizeof( image_t * ) * MAX_SHADOWGROUPS );
 }
 
 /*
@@ -2799,7 +2817,7 @@ void R_ShutdownImages( void )
 		R_ShutdownImageLoader( i );
 	}
 
-	R_ReleaseBuiltinTextures();
+	R_ReleaseBuiltinImages();
 
 	for( i = 0, image = images; i < MAX_GLIMAGES; i++, image++ ) {
 		if( !image->name ) {

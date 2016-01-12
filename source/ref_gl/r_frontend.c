@@ -335,6 +335,9 @@ void RF_BeginRegistration( void )
 	// sync to the backend thread to ensure it's not using old assets for drawing
 	RF_AdapterWait( &rrf.adapter );
 	R_BeginRegistration();
+	R_Finish();
+	RF_IssueBeginRegistrationReliableCmd( rrf.adapter.cmdPipe );
+	RF_AdapterWait( &rrf.adapter );
 }
 
 void RF_EndRegistration( void )
@@ -343,6 +346,8 @@ void RF_EndRegistration( void )
 	RF_AdapterWait( &rrf.adapter );
 	R_EndRegistration();
 	R_Finish();
+	RF_IssueEndRegistrationReliableCmd( rrf.adapter.cmdPipe );
+	RF_AdapterWait( &rrf.adapter );
 }
 
 void RF_RegisterWorldModel( const char *model, const dvis_t *pvsData )
