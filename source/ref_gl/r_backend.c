@@ -52,6 +52,9 @@ void RB_Init( void )
 	RB_RegisterStreamVBOs();
 	
 	RP_PrecachePrograms();
+
+	// enable the usage of framebuffer objects
+	RFB_InitRendering();
 }
 
 /*
@@ -59,6 +62,8 @@ void RB_Init( void )
 */
 void RB_Shutdown( void )
 {
+	RFB_ShutdownRendering();
+
 	RP_StorePrecacheList();
 
 	R_FreePool( &rb.mempool );

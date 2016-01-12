@@ -501,6 +501,7 @@ enum
 };
 
 void		RFB_Init( void );
+void		RFB_InitRendering( void );
 int			RFB_RegisterObject( int width, int height, bool builtin, bool depthRB, bool stencilRB );
 void		RFB_UnregisterObject( int object );
 void		RFB_TouchObject( int object );
@@ -512,6 +513,7 @@ void		RFB_BlitObject( int dest, int bitMask, int mode );
 bool	RFB_CheckObjectStatus( void );
 void		RFB_GetObjectSize( int object, int *width, int *height );
 void		RFB_FreeUnusedObjects( void );
+void		RFB_ShutdownRendering( void );
 void		RFB_Shutdown( void );
 
 //
