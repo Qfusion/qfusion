@@ -231,8 +231,6 @@ void R_InitCinematics( void )
 			r_cinematics[i].next = &r_cinematics[i+1];
 		r_cinematics[i].id = i + 1;
 	}
-
-	ri.Cmd_AddCommand( "cinlist", R_CinList_f );
 }
 
 /*
@@ -503,6 +501,4 @@ void R_ShutdownCinematics( void )
 	}
 
 	R_Free( r_cinematics );
-
-	ri.Cmd_RemoveCommand( "cinlist" );
 }
