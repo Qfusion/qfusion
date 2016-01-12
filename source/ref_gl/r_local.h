@@ -467,6 +467,7 @@ void		R_UploadCinematic( unsigned int id );
 image_t		*R_GetCinematicImage( unsigned int id );
 struct cinematics_s *R_GetCinematicById( unsigned int id );
 void		R_RestartCinematics( void );
+void		R_CinList_f( void );
 
 //
 // r_cmds.c

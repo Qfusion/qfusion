@@ -1147,6 +1147,7 @@ static void R_Register( const char *screenshotsPrefix )
 	ri.Cmd_AddCommand( "modellist", Mod_Modellist_f );
 	ri.Cmd_AddCommand( "gfxinfo", R_GfxInfo_f );
 	ri.Cmd_AddCommand( "glslprogramlist", RP_ProgramList_f );
+	ri.Cmd_AddCommand( "cinlist", R_CinList_f );
 }
 
 /*
@@ -1507,6 +1508,7 @@ void R_Shutdown( bool verbose )
 	ri.Cmd_RemoveCommand( "shaderdump" );
 	ri.Cmd_RemoveCommand( "shaderlist" );
 	ri.Cmd_RemoveCommand( "glslprogramlist" );
+	ri.Cmd_RemoveCommand( "cinlist" );
 
 	// free shaders, models, etc.
 
