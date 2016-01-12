@@ -26,10 +26,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // public frontend -> frontend/backend commands
 
 // frame commands
-// a valid frame should begin and end with REF_CMD_BEGIN_FRAME and REF_CMD_END_FRAME cmds
 
 enum
 {
+	// a valid frame should begin and end with REF_CMD_BEGIN_FRAME and REF_CMD_END_FRAME cmds
 	REF_CMD_BEGIN_FRAME,
 	REF_CMD_END_FRAME,
 	
@@ -86,9 +86,6 @@ void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *frame, int x, int y, int w, int
 
 // ==========
 
-// inter-frame thread-safe pipe for commands
-// we need it to process commands that may not be dropped along with respective frames
-
 enum
 {
 	REF_PIPE_CMD_INIT,
@@ -97,8 +94,14 @@ enum
 	REF_PIPE_CMD_SCREEN_SHOT,
 	REF_PIPE_CMD_ENV_SHOT,
 
+	REF_PIPE_CMD_BEGIN_REGISTRATION,
+	REF_PIPE_CMD_END_REGISTRATION,
+
 	NUM_REF_PIPE_CMDS
 };
+
+// inter-frame thread-safe pipe for commands
+// we need it to process commands that may not be dropped along with respective frames
 
 typedef unsigned (*refPipeCmdHandler_t)( const void * );
 extern refPipeCmdHandler_t refPipeCmdHandlers[];
@@ -109,5 +112,7 @@ void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe );
 void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, bool silent );
 void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, unsigned pixels );
 void RF_IssueAviShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, int x, int y, int w, int h );
+void RF_IssueBeginRegistrationReliableCmd( qbufPipe_t *pipe );
+void RF_IssueEndRegistrationReliableCmd( qbufPipe_t *pipe );
 
 #endif // R_CMDQUEUE_H

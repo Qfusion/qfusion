@@ -689,11 +689,18 @@ typedef struct
 	char            name[1024];
 } refReliableCmdScreenShot_t;
 
+typedef struct
+{
+	int             id;
+} refReliableCmdBeginEndRegistration_t;
+
 static unsigned R_HandleInitReliableCmd( void *pcmd );
 static unsigned R_HandleShutdownReliableCmd( void *pcmd );
 static unsigned R_HandleSurfaceChangeReliableCmd( void *pcmd );
 static unsigned R_HandleScreenShotReliableCmd( void *pcmd );
 static unsigned R_HandleEnvShotReliableCmd( void *pcmd );
+static unsigned R_HandleBeginRegistrationReliableCmd( void *pcmd );
+static unsigned R_HandleEndRegistrationReliableCmd( void *pcmd );
 
 refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 {
@@ -702,6 +709,8 @@ refPipeCmdHandler_t refPipeCmdHandlers[NUM_REF_PIPE_CMDS] =
 	(refPipeCmdHandler_t)R_HandleSurfaceChangeReliableCmd,
 	(refPipeCmdHandler_t)R_HandleScreenShotReliableCmd,
 	(refPipeCmdHandler_t)R_HandleEnvShotReliableCmd,
+	(refPipeCmdHandler_t)R_HandleBeginRegistrationReliableCmd,
+	(refPipeCmdHandler_t)R_HandleEndRegistrationReliableCmd
 };
 
 static unsigned R_HandleInitReliableCmd( void *pcmd )
@@ -709,6 +718,10 @@ static unsigned R_HandleInitReliableCmd( void *pcmd )
 	refReliableCmdInitShutdown_t *cmd = pcmd;
 
 	RB_Init();
+
+	RFB_Init();
+
+	R_InitBuiltinScreenImages();
 
 	R_BindFrameBufferObject( 0 );
 
@@ -719,7 +732,11 @@ static unsigned R_HandleShutdownReliableCmd( void *pcmd )
 {
 	refReliableCmdInitShutdown_t *cmd = pcmd;
 
+	R_ReleaseBuiltinScreenImages();
+
 	RB_Shutdown();
+
+	RFB_Shutdown();
 
 	return sizeof( *cmd );
 }
@@ -747,6 +764,26 @@ static unsigned R_HandleEnvShotReliableCmd( void *pcmd )
 	refReliableCmdScreenShot_t *cmd = pcmd;
 
 	R_TakeEnvShot( cmd->path, cmd->name, cmd->pixels );
+
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleBeginRegistrationReliableCmd( void *pcmd )
+{
+	refReliableCmdBeginEndRegistration_t *cmd = pcmd;
+
+	RB_BeginRegistration();
+
+	return sizeof( *cmd );
+}
+
+static unsigned R_HandleEndRegistrationReliableCmd( void *pcmd )
+{
+	refReliableCmdBeginEndRegistration_t *cmd = pcmd;
+
+	RB_EndRegistration();
+
+	RFB_FreeUnusedObjects();
 
 	return sizeof( *cmd );
 }
@@ -803,4 +840,16 @@ void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char 
 void RF_IssueAviShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, int x, int y, int w, int h )
 {
 	RF_IssueEnvScreenShotReliableCmd( pipe, REF_PIPE_CMD_SCREEN_SHOT, path, name, x, y, w, h, 0, true, false );
+}
+
+void RF_IssueBeginRegistrationReliableCmd( qbufPipe_t *pipe )
+{
+	refReliableCmdBeginEndRegistration_t cmd = { REF_PIPE_CMD_BEGIN_REGISTRATION };
+	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
+}
+
+void RF_IssueEndRegistrationReliableCmd( qbufPipe_t *pipe )
+{
+	refReliableCmdBeginEndRegistration_t cmd = { REF_PIPE_CMD_END_REGISTRATION };
+	ri.BufPipe_WriteCmd( pipe, &cmd, sizeof( cmd ) );
 }
