@@ -71,6 +71,7 @@ void RB_BeginRegistration( void )
 {
 	RB_RegisterStreamVBOs();
 	RB_BindVBO( 0, 0 );
+	RB_FlushTextureCache();
 }
 
 /*
@@ -105,7 +106,7 @@ void RB_BeginFrame( void )
 	// start fresh each frame
 	RB_SetShaderStateMask( ~0, 0 );
 	RB_BindVBO( 0, 0 );
-	RB_FlushTextures();
+	RB_FlushTextureCache();
 }
 
 /*
@@ -172,9 +173,9 @@ void RB_SelectTextureUnit( int tmu )
 }
 
 /*
-* RB_FlushTextures
+* RB_FlushTextureCache
 */
-void RB_FlushTextures( void )
+void RB_FlushTextureCache( void )
 {
 	rb.gl.flushTextures = true;
 }
@@ -212,7 +213,7 @@ void RB_BindImage( int tmu, const image_t *tex )
 
 	RB_SelectTextureUnit( tmu );
 
-	R_BindImage( tex );
+	qglBindTexture( R_TextureTarget( tex->flags, NULL ), tex->texnum );
 
 	rb.stats.c_totalBinds++;
 }

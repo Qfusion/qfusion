@@ -92,7 +92,7 @@ typedef struct image_s
 } image_t;
 
 void R_InitImages( void );
-void R_BindImage( const image_t *tex );
+int R_TextureTarget( int flags, int *uploadTarget );
 void R_TouchImage( image_t *image, int tags );
 void R_FreeUnusedImagesByTags( int tags );
 void R_FreeUnusedImages( void );
