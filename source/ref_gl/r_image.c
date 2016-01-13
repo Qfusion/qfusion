@@ -99,13 +99,13 @@ static void R_FreeTextureNum( image_t *tex )
 	qglDeleteTextures( 1, &tex->texnum );
 	tex->texnum = 0;
 
-	RB_FlushTextures();
+	RB_FlushTextureCache();
 }
 
 /*
 * R_TextureTarget
 */
-static int R_TextureTarget( int flags, int *uploadTarget )
+int R_TextureTarget( int flags, int *uploadTarget )
 {
 	int target, target2;
 
@@ -128,9 +128,10 @@ static int R_TextureTarget( int flags, int *uploadTarget )
 /*
 * R_BindImage
 */
-void R_BindImage( const image_t *tex )
+static void R_BindImage( const image_t *tex )
 {
 	qglBindTexture( R_TextureTarget( tex->flags, NULL ), tex->texnum );
+	RB_FlushTextureCache();
 }
 
 /*
@@ -1347,7 +1348,7 @@ typedef struct ktx_header_s
 /*
 * R_LoadKTX
 */
-static bool R_LoadKTX( int ctx, image_t *image, const char *pathname, void ( *bind )( const image_t * ) )
+static bool R_LoadKTX( int ctx, image_t *image, const char *pathname )
 {
 	int i, j;
 	uint8_t *buffer;
@@ -1422,7 +1423,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname, void ( *bi
 
 	data = buffer + sizeof( ktx_header_t ) + header->bytesOfKeyValueData;
 	
-	bind( image );
+	R_BindImage( image );
 
 	if( header->type == 0 )
 	{
@@ -1609,7 +1610,7 @@ error: // must not be reached after actually starting uploading the texture
 /*
 * R_LoadImageFromDisk
 */
-static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const image_t *) )
+static bool R_LoadImageFromDisk( int ctx, image_t *image )
 {
 	int flags = image->flags;
 	size_t len = strlen( image->name );
@@ -1625,7 +1626,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 	memcpy( pathname, image->name, len + 1 );
 	
 	Q_strncatz( pathname, ".ktx", pathsize );
-	if( R_LoadKTX( ctx, image, pathname, bind ) )
+	if( R_LoadKTX( ctx, image, pathname ) )
 		return true;
 	pathname[len] = 0;
 
@@ -1701,7 +1702,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 			image->height = height;
 			image->samples = samples;
 
-			bind( image );
+			R_BindImage( image );
 
 			R_Upload32( ctx, pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width, 
 				&image->upload_height, samples, false, false );
@@ -1727,7 +1728,7 @@ static bool R_LoadImageFromDisk( int ctx, image_t *image, void (*bind)(const ima
 			image->height = height;
 			image->samples = samples;
 
-			bind( image );
+			R_BindImage( image );
 
 			R_Upload32( ctx, &pic, 0, 0, 0, width, height, flags, image->minmipsize, &image->upload_width, 
 				&image->upload_height, samples, false, false );
@@ -2061,7 +2062,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, int minmi
 		}
 	}
 
-	image->loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image, R_BindImage );
+	image->loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image );
 	if( !image->loaded ) {
 		R_FreeImage( image );
 		image = NULL;
@@ -3046,7 +3047,7 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 	image_t *image = images + cmd->pic;
 	bool loaded;
 
-	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER + cmd->self, image, R_BindImage );
+	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER + cmd->self, image );
 	if( !loaded ) {
 		image->missing = true;
 	} else {
