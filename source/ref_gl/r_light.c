@@ -161,7 +161,7 @@ void R_LightForOrigin( const vec3_t origin, vec3_t dir, vec4_t ambient, vec4_t d
 	vec3_t ambientLocal, diffuseLocal;
 	vec_t *gridSize, *gridMins;
 	int *gridBounds;
-	static mgridlight_t lightarray[8];
+	mgridlight_t lightarray[8];
 	lightstyle_t *lightStyles = rsc.lightStyles;
 
 	VectorSet( ambientLocal, 0, 0, 0 );
