@@ -1377,8 +1377,12 @@ void R_Flush( void )
 
 void R_DeferDataSync( void )
 {
+	if( rsh.registrationOpen )
+		return;
+
 	rf.dataSync = true;
 	qglFlush();
+	RB_FlushTextureCache();
 }
 
 void R_DataSync( void )
