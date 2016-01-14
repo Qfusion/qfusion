@@ -175,11 +175,6 @@ sfxcache_t *SNDOGG_Load( sfx_t *s )
 	if( !filenum )
 		return NULL;
 
-	if( s->isUrl ) {
-		callbacks.seek_func = NULL;
-		callbacks.tell_func = NULL;
-	}
-
 	if( qov_open_callbacks( (void *)(intptr_t)filenum, &vorbisfile, NULL, 0, callbacks ) < 0 )
 	{
 		Com_Printf( "Couldn't open %s for reading: %s\n", s->name );
