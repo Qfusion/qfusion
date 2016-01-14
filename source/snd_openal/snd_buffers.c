@@ -161,6 +161,8 @@ bool S_LoadBuffer( sfx_t *sfx )
 	}
 	if( sfx->filename[0] == '\0' || sfx->inMemory )
 		return false;
+	if( trap_FS_IsUrl( sfx->filename ) )
+		return false;
 
 	data = S_LoadSound( sfx->filename, &info );
 	if( !data )

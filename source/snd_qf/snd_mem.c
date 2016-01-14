@@ -273,6 +273,8 @@ sfxcache_t *S_LoadSound( sfx_t *s )
 
 	if( !s->name[0] )
 		return NULL;
+	if( s->isUrl )
+		return NULL;
 
 	// see if still in memory
 	if( s->cache )
