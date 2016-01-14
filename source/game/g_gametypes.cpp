@@ -1986,11 +1986,12 @@ void G_Gametype_Init( void )
 
 	G_Gametype_SetDefaults();
 
+	// most GT_InitGametype implementations rely on gs.gametypeName being set for checking their default config file
+	GS_SetGametypeName( g_gametype->string );
+
 	// Init the current gametype
 	if( !GT_asLoadScript( g_gametype->string ) )
 		G_Gametype_GENERIC_Init();
-
-	GS_SetGametypeName( g_gametype->string );
 
 	trap_ConfigString( CS_GAMETYPENAME, g_gametype->string );
 
