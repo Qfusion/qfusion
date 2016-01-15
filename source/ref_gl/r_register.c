@@ -720,6 +720,7 @@ static void R_FinalizeGLExtensions( void )
 	int versionMajor, versionMinor;
 	int val;
 	cvar_t *cvar;
+	char tmp[128];
 
 	versionMajor = versionMinor = 0;
 #ifdef GL_ES_VERSION_2_0
@@ -782,7 +783,7 @@ static void R_FinalizeGLExtensions( void )
 	glConfig.maxTextureSize = 1 << Q_log2( glConfig.maxTextureSize );
 
 	ri.Cvar_Get( "gl_max_texture_size", "0", CVAR_READONLY );
-	ri.Cvar_ForceSet( "gl_max_texture_size", va( "%i", glConfig.maxTextureSize ) );
+	ri.Cvar_ForceSet( "gl_max_texture_size", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureSize ) );
 
 	/* GL_ARB_GLSL_core (meta extension) */
 #ifndef GL_ES_VERSION_2_0
@@ -979,7 +980,7 @@ static void R_FinalizeGLExtensions( void )
 #endif
 
 	ri.Cvar_Get( "r_texturefilter_max", "0", CVAR_READONLY );
-	ri.Cvar_ForceSet( "r_texturefilter_max", va( "%i", glConfig.maxTextureFilterAnisotropic ) );
+	ri.Cvar_ForceSet( "r_texturefilter_max", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureFilterAnisotropic ) );
 
 	ri.Cvar_Get( "r_soft_particles_available", "0", CVAR_READONLY );
 	if( glConfig.ext.depth_texture && glConfig.ext.fragment_precision_high && glConfig.ext.framebuffer_blit )
@@ -988,7 +989,7 @@ static void R_FinalizeGLExtensions( void )
 	// don't allow too high values for lightmap block size as they negatively impact performance
 	if( r_lighting_maxlmblocksize->integer > glConfig.maxTextureSize / 4 &&
 		!(glConfig.maxTextureSize / 4 < min(QF_LIGHTMAP_WIDTH,QF_LIGHTMAP_HEIGHT)*2) )
-		ri.Cvar_ForceSet( "r_lighting_maxlmblocksize", va( "%i", glConfig.maxTextureSize / 4 ) );
+		ri.Cvar_ForceSet( "r_lighting_maxlmblocksize", va_r( tmp, sizeof( tmp ), "%i", glConfig.maxTextureSize / 4 ) );
 }
 
 /*
@@ -1017,6 +1018,7 @@ static void R_FillStartupBackgroundColor( float r, float g, float b )
 
 static void R_Register( const char *screenshotsPrefix )
 {
+	char tmp[128];
 	const qgl_driverinfo_t *driver;
 
     r_maxfps = ri.Cvar_Get( "r_maxfps", "250", CVAR_ARCHIVE );
@@ -1105,7 +1107,7 @@ static void R_Register( const char *screenshotsPrefix )
 
 	r_screenshot_jpeg = ri.Cvar_Get( "r_screenshot_jpeg", "1", CVAR_ARCHIVE );
 	r_screenshot_jpeg_quality = ri.Cvar_Get( "r_screenshot_jpeg_quality", "90", CVAR_ARCHIVE );
-	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va( "%s%y%%m%%d_%H%M%%S", screenshotsPrefix ), CVAR_ARCHIVE );
+	r_screenshot_fmtstr = ri.Cvar_Get( "r_screenshot_fmtstr", va_r( tmp, sizeof( tmp ), "%s%y%%m%%d_%H%M%%S", screenshotsPrefix ), CVAR_ARCHIVE );
 
 #if defined(GLX_VERSION) && !defined(USE_SDL2)
 	r_swapinterval = ri.Cvar_Get( "r_swapinterval", "0", CVAR_ARCHIVE|CVAR_LATCH_VIDEO );

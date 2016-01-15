@@ -103,11 +103,13 @@ static void R_UploadCinematicFrame( r_cinhandle_t *handle )
 		int i;
 
 		if( !handle->yuv_images[0] ) {
+			char tn[256];
 			uint8_t *fake_data[1] = { NULL };
 			const char *letters[3] = { "y", "u", "v" };
 
 			for( i = 0; i < 3; i++ ) {
-				handle->yuv_images[i] = R_LoadImage( va( "%s_%s", handle->name, letters[i] ), 
+				handle->yuv_images[i] = R_LoadImage( 
+					va_r( tn, sizeof( tn ), "%s_%s", handle->name, letters[i] ), 
 					fake_data, 1, 1, IT_SPECIAL|IT_NO_DATA_SYNC, 1, IMAGE_TAG_GENERIC, 1 );
 			}
 			handle->new_frame = true;

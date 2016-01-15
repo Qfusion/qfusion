@@ -1239,6 +1239,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 {
 	int i;
 	int funcType;
+	char tmp[256];
 	static char program[40*1024];
 	static const char * const funcs[] = {
 		NULL, "WAVE_SIN", "WAVE_TRIANGLE", "WAVE_SQUARE", "WAVE_SAWTOOTH", "WAVE_INVERSESAWTOOTH", NULL
@@ -1281,7 +1282,7 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 					return NULL;
 				}
 
-				Q_strncatz( program, va( "Position.xyz += %s(u_QF_ShaderTime,%f,%f,%f+%f*(Position.x+Position.y+Position.z),%f) * Normal.xyz;\n", 
+				Q_strncatz( program, va_r( tmp, sizeof( tmp ), "Position.xyz += %s(u_QF_ShaderTime,%f,%f,%f+%f*(Position.x+Position.y+Position.z),%f) * Normal.xyz;\n", 
 					funcs[funcType], deformv->func.args[0], deformv->func.args[1], deformv->func.args[2], deformv->func.args[3] ? deformv->args[0] : 0.0, deformv->func.args[3] ), 
 					sizeof( program ) );
 				break;
@@ -1291,13 +1292,13 @@ static const char *R_GLSLBuildDeformv( const deformv_t *deformv, int numDeforms 
 					return NULL;
 				}
 
-				Q_strncatz( program, va( "Position.xyz += %s(u_QF_ShaderTime,%f,%f,%f,%f) * vec3(%f, %f, %f);\n", 
+				Q_strncatz( program, va_r( tmp, sizeof( tmp ), "Position.xyz += %s(u_QF_ShaderTime,%f,%f,%f,%f) * vec3(%f, %f, %f);\n", 
 					funcs[funcType], deformv->func.args[0], deformv->func.args[1], deformv->func.args[2], deformv->func.args[3],
 						deformv->args[0], deformv->args[1], deformv->args[2] ), 
 					sizeof( program ) );
 				break;
 			case DEFORMV_BULGE:
-				Q_strncatz( program, va( 
+				Q_strncatz( program, va_r( tmp, sizeof( tmp ), 
 						"t = sin(TexCoord.s * %f + u_QF_ShaderTime * %f);\n"
 						"Position.xyz += max (-1.0 + %f, t) * %f * Normal.xyz;\n", 
 						deformv->args[0], deformv->args[2], deformv->args[3], deformv->args[1] ), 
@@ -1514,6 +1515,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 		}
 
 		if( !parser->error ) {
+			char tmp[MAX_TOKEN_CHARS+2];
 			char *tempFilename;
 			size_t tempFilenameSize;
 
@@ -1534,7 +1536,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 				COM_StripFilename( tempFilename );
 			}
 
-			Q_strncatz( tempFilename, va( "%s%s", *tempFilename ? "/" : "", token ), tempFilenameSize );
+			Q_strncatz( tempFilename, va_r( tmp, sizeof( tmp ), "%s%s", *tempFilename ? "/" : "", token ), tempFilenameSize );
 
 			parser->error = RF_LoadShaderFromFile_r( parser, tempFilename, stackDepth+1, programType, features );
 
@@ -2469,6 +2471,7 @@ void RP_UpdateDrawFlatUniforms( int elem, const vec3_t wallColor, const vec3_t f
 */
 static void RP_GetUniformLocations( glsl_program_t *program )
 {
+	char tmp[1024];
 	unsigned int i;
 	int		locBaseTexture,
 			locNormalmapTexture,
@@ -2544,10 +2547,14 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 
 	for( i = 0; i < MAX_LIGHTMAPS; i++ ) {
 		// arrays of samplers are broken on ARM Mali so get u_LightmapTexture%i instead of u_LightmapTexture[%i]
-		locLightmapTexture[i] = qglGetUniformLocationARB( program->object, va( "u_LightmapTexture%i", i ) );
+		locLightmapTexture[i] = qglGetUniformLocationARB( program->object, 
+			va_r( tmp, sizeof( tmp ), "u_LightmapTexture%i", i ) );
+
 		if( locLightmapTexture[i] < 0 )
 			break;
-		program->loc.LightstyleColor[i] = qglGetUniformLocationARB( program->object, va( "u_LightstyleColor[%i]", i ) );
+
+		program->loc.LightstyleColor[i] = qglGetUniformLocationARB( program->object, 
+			va_r( tmp, sizeof( tmp ), "u_LightstyleColor[%i]", i ) );
 	}
 
 	program->loc.GlossFactors = qglGetUniformLocationARB( program->object, "u_GlossFactors" );
@@ -2586,11 +2593,13 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 
 	// dynamic lights
 	for( i = 0; i < MAX_DLIGHTS; i++ ) {
-		program->loc.DynamicLightsPosition[i] = qglGetUniformLocationARB( program->object, va( "u_DlightPosition[%i]", i ) );
+		program->loc.DynamicLightsPosition[i] = qglGetUniformLocationARB( program->object, 
+			va_r( tmp, sizeof( tmp ), "u_DlightPosition[%i]", i ) );
+
 		if( !( i & 3 ) ) {
 			// 4x4 transposed, so we can index it with `i`
 			program->loc.DynamicLightsDiffuseAndInvRadius[i >> 2] =
-				qglGetUniformLocationARB( program->object, va( "u_DlightDiffuseAndInvRadius[%i]", i ) );
+				qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_DlightDiffuseAndInvRadius[%i]", i ) );
 		}
 	}
 	program->loc.NumDynamicLights = qglGetUniformLocationARB( program->object, "u_NumDynamicLights" );
@@ -2598,22 +2607,22 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	// shadowmaps
 	for( i = 0; i < GLSL_SHADOWMAP_LIMIT; i++ ) {
 		program->loc.ShadowmapTextureParams[i] = 
-			qglGetUniformLocationARB( program->object, va( "u_ShadowmapTextureParams[%i]", i ) );
+			qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_ShadowmapTextureParams[%i]", i ) );
 		if( program->loc.ShadowmapTextureParams[i] < 0 )
 			break;
 
 		program->loc.ShadowmapMatrix[i] = 
-			qglGetUniformLocationARB( program->object, va( "u_ShadowmapMatrix%i", i ) );
+			qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_ShadowmapMatrix%i", i ) );
 
 		program->loc.ShadowDir[i] =
-			qglGetUniformLocationARB( program->object, va( "u_ShadowDir[%i]", i ) );
+			qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_ShadowDir[%i]", i ) );
 
 		program->loc.ShadowEntityDist[i] =
-			qglGetUniformLocationARB( program->object, va( "u_ShadowEntityDist[%i]", i ) );
+			qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_ShadowEntityDist[%i]", i ) );
 
 		if( !( i & 3 ) ) {
 			program->loc.ShadowAlpha[i >> 2] =
-				qglGetUniformLocationARB( program->object, va( "u_ShadowAlpha[%i]", i >> 2 ) );
+				qglGetUniformLocationARB( program->object, va_r( tmp, sizeof( tmp ), "u_ShadowAlpha[%i]", i >> 2 ) );
 		}
 	}
 
