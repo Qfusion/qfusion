@@ -2179,7 +2179,8 @@ bool FS_ExtractFile( const char *src, const char *dst )
 */
 bool _FS_MoveFile( const char *src, const char *dst, bool base, const char *dir )
 {
-	const char *fullname;
+	char temp[FS_MAX_PATH];
+	const char *fullname, *fulldestname;
 
 	if( base )
 		fullname = FS_AbsoluteNameForBaseFile( src );
@@ -2196,8 +2197,10 @@ bool _FS_MoveFile( const char *src, const char *dst, bool base, const char *dir 
 		return false;
 
 	if( base )
-		return ( rename( fullname, va( "%s/%s", dir, dst ) ) == 0 ? true : false );
-	return ( rename( fullname, va( "%s/%s/%s", dir, FS_GameDirectory(), dst ) ) == 0 ? true : false );
+		fulldestname = va_r( temp, sizeof( temp ), "%s/%s", dir, dst );
+	else
+		fulldestname = va_r( temp, sizeof( temp ), "%s/%s/%s", dir, FS_GameDirectory(), dst );
+	return rename( fullname, fulldestname ) == 0 ? true : false;
 }
 
 /*
@@ -2286,10 +2289,12 @@ bool FS_RemoveAbsoluteDirectory( const char *dirname )
 */
 bool FS_RemoveBaseDirectory( const char *dirname )
 {
+	char temp[FS_MAX_PATH];
+
 	if( !COM_ValidateRelativeFilename( dirname ) )
 		return false;
 
-	return ( FS_RemoveAbsoluteDirectory( va( "%s/%s", FS_WriteDirectory(), dirname ) ) );
+	return ( FS_RemoveAbsoluteDirectory( va_r( temp, sizeof( temp ), "%s/%s", FS_WriteDirectory(), dirname ) ) );
 }
 
 /*
@@ -2297,10 +2302,12 @@ bool FS_RemoveBaseDirectory( const char *dirname )
 */
 bool FS_RemoveDirectory( const char *dirname )
 {
+	char temp[FS_MAX_PATH];
+
 	if( !COM_ValidateRelativeFilename( dirname ) )
 		return false;
 
-	return ( FS_RemoveAbsoluteDirectory( va( "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), dirname ) ) );
+	return ( FS_RemoveAbsoluteDirectory( va_r( temp, sizeof( temp ), "%s/%s/%s", FS_WriteDirectory(), FS_GameDirectory(), dirname ) ) );
 }
 
 /*
@@ -3302,7 +3309,7 @@ void FS_CreateAbsolutePath( const char *path )
 */
 const char *FS_AbsoluteNameForFile( const char *filename )
 {
-	static char absolutename[1024]; // fixme
+	static char absolutename[FS_MAX_PATH];
 	searchpath_t *search = FS_SearchPathForFile( filename, NULL, NULL, 0, FS_SEARCH_DIRS );
 
 	if( !search || search->pack )
@@ -3320,7 +3327,7 @@ const char *FS_AbsoluteNameForFile( const char *filename )
 */
 const char *FS_AbsoluteNameForBaseFile( const char *filename )
 {
-	static char absolutename[1024]; // fixme
+	static char absolutename[FS_MAX_PATH];
 	searchpath_t *search = FS_SearchPathForBaseFile( filename, NULL, 0 );
 
 	if( !search )
@@ -3359,6 +3366,7 @@ int FS_GetGameDirectoryList( char *buf, size_t bufsize )
 	size_t len, alllen;
 	const char *basename, *s;
 	searchpath_t *basepath;
+	char temp[FS_MAX_PATH+2];
 
 	if( !buf )
 		return 0;
@@ -3370,7 +3378,7 @@ int FS_GetGameDirectoryList( char *buf, size_t bufsize )
 	basepath = fs_basepaths;
 	while( basepath )
 	{
-		if( ( modnames = FS_ListFiles( va( "%s/*", basepath->path ), &nummods, SFF_SUBDIR, SFF_HIDDEN | SFF_SYSTEM ) ) )
+		if( ( modnames = FS_ListFiles( va_r( temp, sizeof( temp ), "%s/*", basepath->path ), &nummods, SFF_SUBDIR, SFF_HIDDEN | SFF_SYSTEM ) ) )
 		{
 			for( i = 0; i < nummods; i++ )
 			{
