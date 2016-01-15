@@ -1598,7 +1598,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname )
 	Q_strncpyz( image->extension, ".ktx", sizeof( image->extension ) );
 	image->width = header->pixelWidth;
 	image->height = header->pixelHeight;
-	image->loaded = true;
+
 	R_FreeFile( buffer );
 	R_DeferDataSync();
 	return true;
@@ -2984,8 +2984,6 @@ static bool R_LoadAsyncImageFromDisk( image_t *image )
 
 	image->loaded = false;
 	image->missing = false;
-
-	qglFlush(); // An NVIDIA bug makes textures fail to load without this sometimes.
 
 	R_IssueLoadPicLoaderCmd( id, image - images );
 	return true;
