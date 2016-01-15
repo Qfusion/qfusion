@@ -35,6 +35,7 @@ typedef struct {
 	qmutex_t		*frameLock;
 	qbufPipe_t 		*cmdPipe;
 	volatile bool 	shutdown;
+	volatile int 	maxfps;
 } ref_frontendAdapter_t;
 
 typedef struct
