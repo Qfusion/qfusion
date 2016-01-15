@@ -1600,6 +1600,7 @@ static bool R_LoadKTX( int ctx, image_t *image, const char *pathname )
 	image->height = header->pixelHeight;
 	image->loaded = true;
 	R_FreeFile( buffer );
+	R_DeferDataSync();
 	return true;
 
 error: // must not be reached after actually starting uploading the texture
