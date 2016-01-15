@@ -247,6 +247,7 @@ bool Q_IsBreakingSpaceChar( wchar_t c );
 float *tv( float x, float y, float z );
 char *vtos( float v[3] );
 char *va( const char *format, ... );
+char *va_r( char *dst, size_t size, const char *format, ... );
 
 //
 // key / value info strings

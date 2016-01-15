@@ -367,6 +367,21 @@ char *vtos( float v[3] )
 }
 
 /*
+* va_r
+* 
+* does a varargs printf into a temp buffer, so I don't need to have
+* varargs versions of all text functions.
+*/
+char *va_r( char *dest, size_t size, const char *format, ... )
+{
+	va_list	argptr;
+	va_start( argptr, format );
+	Q_vsnprintfz( dest, size, format, argptr );
+	va_end( argptr );
+	return dest;
+}
+
+/*
 * va
 * 
 * does a varargs printf into a temp buffer, so I don't need to have
@@ -380,7 +395,7 @@ char *va( const char *format, ... )
 
 	str_index = ( str_index+1 ) & 7;
 	va_start( argptr, format );
-	Q_vsnprintfz( string[str_index], sizeof( string[str_index] ), format, argptr );
+	Q_vsnprintfz( string[str_index], sizeof( string[0] ), format, argptr );
 	va_end( argptr );
 
 	return string[str_index];
