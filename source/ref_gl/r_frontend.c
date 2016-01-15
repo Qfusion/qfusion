@@ -68,8 +68,8 @@ static void RF_AdapterFrame( ref_frontendAdapter_t *adapter )
 	unsigned wait, frameTime;
 	unsigned minMsec;
 
-	if( r_maxfps->integer > 0 )
-		minMsec = 1000 / r_maxfps->integer;
+	if( adapter->maxfps > 0 )
+		minMsec = 1000 / adapter->maxfps;
 	else
 		minMsec = 1;
 	frameTime = (int)(time - lastTime);
@@ -153,6 +153,7 @@ static void RF_AdapterShutdown( ref_frontendAdapter_t *adapter )
 */
 static bool RF_AdapterInit( ref_frontendAdapter_t *adapter )
 {
+	adapter->maxfps = 0;
 	adapter->cmdPipe = ri.BufPipe_Create( 0x100000, 1 );
 	adapter->frameLock = ri.Mutex_Create();
 
@@ -283,6 +284,15 @@ void RF_Shutdown( bool verbose )
 
 void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 {
+	// disallow bogus r_maxfps values, reset to default value instead
+	if( r_maxfps->modified ) {
+		if( r_maxfps->integer <= 0 ) {
+			ri.Cvar_ForceSet( r_maxfps->name, r_maxfps->dvalue );
+		}
+		r_maxfps->modified = false;
+	}
+	rrf.adapter.maxfps = r_maxfps->integer;
+
 	// take the frame the backend is not busy processing
 	ri.Mutex_Lock( rrf.adapter.frameLock );
 	if( rrf.lastFrameNum == rrf.adapter.frameNum )
@@ -302,14 +312,6 @@ void RF_BeginFrame( float cameraSeparation, bool forceClear, bool forceVsync )
 	R_RunAllCinematics();
 
 	R_DataSync();
-
-	// disallow bogus r_maxfps values, reset to default value instead
-	if( r_maxfps->modified ) {
-		if( r_maxfps->integer <= 0 ) {
-			ri.Cvar_ForceSet( r_maxfps->name, r_maxfps->dvalue );
-		}
-		r_maxfps->modified = false;
-	}
 
 	RF_IssueBeginFrameCmd( rrf.frame, cameraSeparation, forceClear, forceVsync );
 }

@@ -1123,6 +1123,8 @@ static void R_Register( const char *screenshotsPrefix )
 	// make sure we rebuild our 3D texture after vid_restart
 	r_wallcolor->modified = r_floorcolor->modified = true;
 
+	r_maxfps->modified = true;
+
 	// set to 1 to enable use of the checkerboard texture for missing world and model images
 	r_usenotexture = ri.Cvar_Get( "r_usenotexture", "0", CVAR_ARCHIVE );
 
