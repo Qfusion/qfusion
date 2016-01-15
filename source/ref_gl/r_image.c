@@ -2560,6 +2560,7 @@ static void R_InitStretchRawImages( void )
 */
 static void R_InitScreenImagePair( const char *name, image_t **color, image_t **depth, bool stencil )
 {
+	char tn[128];
 	int flags, colorFlags, depthFlags;
 
 	assert( !depth || glConfig.ext.depth_texture );
@@ -2583,11 +2584,13 @@ static void R_InitScreenImagePair( const char *name, image_t **color, image_t **
 	}
 
 	if( color ) {
-		R_InitViewportTexture( color, name, 0, glConfig.width, glConfig.height, 0, colorFlags, IMAGE_TAG_BUILTIN,
+		R_InitViewportTexture( color, name, 
+			0, glConfig.width, glConfig.height, 0, colorFlags, IMAGE_TAG_BUILTIN,
 			glConfig.forceRGBAFramebuffers ? 4 : 3 );
 	}
 	if( depth && *color ) {
-		R_InitViewportTexture( depth, va( "%s_depth", name ), 0, glConfig.width, glConfig.height, 0, depthFlags, IMAGE_TAG_BUILTIN, 1 );
+		R_InitViewportTexture( depth, va_r( tn, sizeof( tn ), "%s_depth", name ), 
+			0, glConfig.width, glConfig.height, 0, depthFlags, IMAGE_TAG_BUILTIN, 1 );
 		RFB_AttachTextureToObject( (*color)->fbo, *depth );
 	}
 }
