@@ -202,11 +202,11 @@ typedef struct
 {
 	// any asset (model, shader, texture, etc) with has not been registered
 	// or "touched" during the last registration sequence will be freed
-	int				registrationSequence;
-	bool			registrationOpen;
+	volatile int 	registrationSequence;
+	volatile bool 	registrationOpen;
 
 	// bumped each time R_RegisterWorldModel is called
-	int				worldModelSequence;
+	volatile int 	worldModelSequence;
 
 	float			sinTableByte[256];
 
