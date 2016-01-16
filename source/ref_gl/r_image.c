@@ -135,6 +135,15 @@ static void R_BindImage( const image_t *tex )
 }
 
 /*
+* R_UnbindImage
+*/
+static void R_UnbindImage( const image_t *tex )
+{
+	qglBindTexture( R_TextureTarget( tex->flags, NULL ), 0 );
+	RB_FlushTextureCache();
+}
+
+/*
 * R_TextureMode
 */
 void R_TextureMode( char *string )
@@ -1996,6 +2005,7 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, int minmi
 	image_t	*image, *hnode;
 	char *pathname;
 	uint8_t *empty_data[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
+	bool loaded;
 
 	if( !name || !name[0] )
 		return NULL; //	ri.Com_Error (ERR_DROP, "R_FindImage: NULL name");
@@ -2063,10 +2073,17 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, int minmi
 		}
 	}
 
-	image->loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image );
-	if( !image->loaded ) {
+	loaded = R_LoadImageFromDisk( QGL_CONTEXT_MAIN, image );
+	R_UnbindImage( image );
+
+	if( !loaded ) {
 		R_FreeImage( image );
 		image = NULL;
+	}
+	else {
+		// Make sure the image is updated on all contexts.
+		qglFinish();
+		image->loaded = true;
 	}
 
 	return image;
@@ -3050,11 +3067,12 @@ static unsigned R_HandleLoadPicLoaderCmd( void *pcmd )
 	bool loaded;
 
 	loaded = R_LoadImageFromDisk( QGL_CONTEXT_LOADER + cmd->self, image );
+	R_UnbindImage( image );
+
 	if( !loaded ) {
 		image->missing = true;
 	} else {
 		// Make sure the image is updated on all contexts.
-		qglBindTexture( R_TextureTarget( image->flags, NULL ), 0 );
 		qglFinish();
 		image->loaded = true;
 	}
