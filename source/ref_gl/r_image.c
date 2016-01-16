@@ -1912,6 +1912,8 @@ image_t *R_Create3DImage( const char *name, int width, int height, int layers, i
 */
 static void R_FreeImage( image_t *image )
 {
+	R_UnbindImage( image );
+
 	R_FreeTextureNum( image );
 
 	R_Free( image->name );
@@ -3004,6 +3006,7 @@ static bool R_LoadAsyncImageFromDisk( image_t *image )
 	image->loaded = false;
 	image->missing = false;
 	
+	// unbind and flush so that the image resource becomes available in the loader's context
 	R_UnbindImage( image );
 	qglFlush();
 
