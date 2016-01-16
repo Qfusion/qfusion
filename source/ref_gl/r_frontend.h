@@ -44,15 +44,17 @@ typedef struct
 	unsigned		lastFrameNum;
 	uint32_t 		frameId;
 
-	int 			scissor[4];
-	float			cameraSeparation;
-
 	ref_cmdbuf_t	frames[3];			// triple-buffered
 	ref_cmdbuf_t	*frame; 			// current frontend frame
 
 	void            *auxGLContext;
 
 	ref_frontendAdapter_t adapter;
+
+	// these fields serve as the frontend cache which can also queried by the public API
+	int 			scissor[4];
+	float			cameraSeparation;
+	byte_vec4_t		customColors[NUM_CUSTOMCOLORS];
 } ref_frontend_t;
 
 // public API
@@ -87,7 +89,7 @@ void RF_SetScissor( int x, int y, int w, int h );
 void RF_GetScissor( int *x, int *y, int *w, int *h );
 void RF_ResetScissor( void );
 void RF_SetCustomColor( int num, int r, int g, int b );
-void RF_ScreenShot( const char *path, const char *name, bool silent );
+void RF_ScreenShot( const char *path, const char *name, const char *fmtstring, bool silent );
 void RF_EnvShot( const char *path, const char *name, unsigned pixels );
 bool RF_RenderingEnabled( void );
 const char *RF_SpeedsMessage( char *out, size_t size );

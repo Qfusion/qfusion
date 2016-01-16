@@ -46,8 +46,6 @@ enum
 	REF_CMD_SET_SCISSOR,
 	REF_CMD_RESET_SCISSOR,
 	
-	REF_CMD_SET_CUSTOM_COLOR,
-	
 	REF_CMD_SYNC,
 
 	REF_CMD_DRAW_STRETCH_RAW,
@@ -79,7 +77,6 @@ void RF_IssueAddLightStyleToSceneCmd( ref_cmdbuf_t *frame, int style, float r, f
 void RF_IssueRenderSceneCmd( ref_cmdbuf_t *frame, const refdef_t *fd );
 void RF_IssueSetScissorCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h );
 void RF_IssueResetScissorCmd( ref_cmdbuf_t *frame );
-void RF_IssueSetCustomColorCmd( ref_cmdbuf_t *frame, int num, int r, int g, int b );
 void RF_IssueSyncCmd( ref_cmdbuf_t *frame );
 void RF_IssueDrawStretchRawCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
 void RF_IssueDrawStretchRawYUVCmd( ref_cmdbuf_t *frame, int x, int y, int w, int h, float s1, float t1, float s2, float t2 );
@@ -96,6 +93,12 @@ enum
 
 	REF_PIPE_CMD_BEGIN_REGISTRATION,
 	REF_PIPE_CMD_END_REGISTRATION,
+	
+	REF_PIPE_CMD_SET_CUSTOM_COLOR,
+	REF_PIPE_CMD_SET_WALL_FLOOR_COLORS,
+	
+	REF_PIPE_CMD_SET_DRAWBUFFER,
+	REF_PIPE_CMD_SET_TEXTURE_MODE,
 
 	NUM_REF_PIPE_CMDS
 };
@@ -109,10 +112,14 @@ extern refPipeCmdHandler_t refPipeCmdHandlers[];
 void RF_IssueInitReliableCmd( qbufPipe_t *pipe );
 void RF_IssueShutdownReliableCmd( qbufPipe_t *pipe );
 void RF_IssueSurfaceChangeReliableCmd( qbufPipe_t *pipe );
-void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, bool silent );
+void RF_IssueScreenShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, const char *fmtstring, bool silent );
 void RF_IssueEnvShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, unsigned pixels );
 void RF_IssueAviShotReliableCmd( qbufPipe_t *pipe, const char *path, const char *name, int x, int y, int w, int h );
 void RF_IssueBeginRegistrationReliableCmd( qbufPipe_t *pipe );
 void RF_IssueEndRegistrationReliableCmd( qbufPipe_t *pipe );
+void RF_IssueSetCustomColorReliableCmd( qbufPipe_t *pipe, int num, int r, int g, int b );
+void RF_IssueSetWallFloorColorsReliableCmd( qbufPipe_t *pipe, const vec3_t wallColor, const vec3_t floorColor );
+void RF_IssueSetDrawBufferReliableCmd( qbufPipe_t *pipe, const char *drawbuffer );
+void RF_IssueSetTextureModeReliableCmd( qbufPipe_t *pipe, const char *texturemode );
 
 #endif // R_CMDQUEUE_H

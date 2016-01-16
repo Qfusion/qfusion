@@ -38,6 +38,8 @@ typedef unsigned short elem_t;
 
 typedef vec_t instancePoint_t[8]; // quaternion for rotation + xyz pos + uniform scale
 
+#define NUM_CUSTOMCOLORS		16
+
 #define NUM_LOADER_THREADS		2
 
 enum
@@ -240,6 +242,8 @@ typedef struct
 	shader_t		*skyShader;
 	shader_t		*whiteShader;
 	shader_t		*emptyFogShader;
+	
+	byte_vec4_t		customColors[NUM_CUSTOMCOLORS];
 } r_shared_t;
 
 typedef struct
@@ -324,6 +328,9 @@ typedef struct
 	
 	msurface_t		*debugSurface;
 	qmutex_t		*debugSurfaceLock;
+	
+	char			drawBuffer[32];
+	bool			newDrawBuffer;
 } r_globals_t;
 
 extern ref_import_t ri;
@@ -472,7 +479,7 @@ void		R_CinList_f( void );
 //
 // r_cmds.c
 //
-void 		R_TakeScreenShot( const char *path, const char *name, int x, int y, int w, int h, bool silent, bool media );
+void 		R_TakeScreenShot( const char *path, const char *name, const char *fmtString, int x, int y, int w, int h, bool silent, bool media );
 void		R_ScreenShot_f( void );
 void 		R_TakeEnvShot( const char *path, const char *name, unsigned maxPixels );
 void		R_EnvShot_f( void );
@@ -613,7 +620,6 @@ void		R_DrawStretchRawYUV( int x, int y, int w, int h, float s1, float t1, float
 void		R_DrawStretchQuick( int x, int y, int w, int h, float s1, float t1, float s2, float t2, 
 	const vec4_t color, int program_type, image_t *image, int blendMask );
 
-#define NUM_CUSTOMCOLORS	16
 void		R_InitCustomColors( void );
 void		R_SetCustomColor( int num, int r, int g, int b );
 int			R_GetCustomColor( int num );
@@ -630,6 +636,9 @@ void		R_BindFrameBufferObject( int object );
 void		R_Scissor( int x, int y, int w, int h );
 void		R_GetScissor( int *x, int *y, int *w, int *h );
 void		R_ResetScissor( void );
+
+void		R_SetWallFloorColors( const vec3_t wallColor, const vec3_t floorColor );
+void		R_SetDrawBuffer( const char *drawbuffer );
 
 //
 // r_mesh.c
