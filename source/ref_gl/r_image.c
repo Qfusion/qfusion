@@ -2082,7 +2082,9 @@ image_t	*R_FindImage( const char *name, const char *suffix, int flags, int minmi
 	}
 	else {
 		// Make sure the image is updated on all contexts.
-		qglFinish();
+		if( glConfig.multithreading ) {
+			qglFinish();
+		}
 		image->loaded = true;
 	}
 
