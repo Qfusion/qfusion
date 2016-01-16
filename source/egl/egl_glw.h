@@ -46,8 +46,8 @@ typedef struct
 
 	// Window replacement in the rendering thread
 	qmutex_t *windowMutex;
-	EGLNativeWindowType window; // Only main can change
-	bool windowChanged;
+	volatile EGLNativeWindowType window; // Only main can change
+	volatile bool windowChanged;
 
 	void *EGLLib, *OpenGLLib;
 } glwstate_t;
