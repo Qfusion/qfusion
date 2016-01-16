@@ -640,6 +640,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 		mlightmapRect_t *rect = rects;
 		int blockSize = w * h * LIGHTMAP_BYTES;
 		float texScale = 1.0f;
+		char tempbuf[16];
 
 		if( mapConfig.deluxeMaps )
 			numLightmaps /= 2;
@@ -658,7 +659,7 @@ void R_BuildLightmaps( model_t *mod, int numLightmaps, int w, int h, const uint8
 					break;
 				}
 				lightmapNum = r_numUploadedLightmaps++;
-				image = R_Create3DImage( va( "*lm%i", lightmapNum ), layerWidth, h,
+				image = R_Create3DImage( va_r( tempbuf, sizeof( tempbuf ), "*lm%i", lightmapNum ), layerWidth, h,
 					( ( i + numLayers ) <= numLightmaps ) ? numLayers : numLightmaps % numLayers,
 					IT_SPECIAL, IMAGE_TAG_GENERIC, LIGHTMAP_BYTES, true );
 				r_lightmapTextures[lightmapNum] = image;

@@ -219,6 +219,7 @@ void RP_PrecachePrograms( void )
 	int handleBin;
 	size_t binaryCacheSize = 0;
 	bool isDefaultCache = false;
+	char tempbuf[MAX_TOKEN_CHARS];
 
 	R_LoadCacheFile( GLSL_CACHE_FILE_NAME, ( void ** )&buffer );
 	if( !buffer ) {
@@ -263,14 +264,14 @@ void RP_PrecachePrograms( void )
 	data = buffer;
 	ptr = &data;
 
-	token = COM_Parse( ptr );
+	token = COM_Parse_r( tempbuf, sizeof( tempbuf ), ptr );
 	if( strcmp( token, glConfig.applicationName ) ) {
 		ri.Com_DPrintf( "Ignoring %s: unknown application name \"%s\", expected \"%s\"\n", 
 			token, glConfig.applicationName );
 		return;
 	}
 
-	token = COM_Parse( ptr );
+	token = COM_Parse_r( tempbuf, sizeof( tempbuf ), ptr );
 	version = atoi( token );
 	if( version != GLSL_BITS_VERSION ) {
 		// ignore cache files with mismatching version number
@@ -288,28 +289,28 @@ void RP_PrecachePrograms( void )
 			int binaryPos = 0;
 
 			// read program type
-			token = COM_Parse( ptr );
+			token = COM_Parse_r( tempbuf, sizeof( tempbuf ), ptr );
 			if( !token[0] ) {
 				break;
 			}
 			type = atoi( token );
 
 			// read lower bits
-			token = COM_ParseExt( ptr, false );
+			token = COM_ParseExt_r( tempbuf, sizeof( tempbuf ), ptr, false );
 			if( !token[0] ) {
 				break;
 			}
 			lb = atoi( token );
 
 			// read higher bits
-			token = COM_ParseExt( ptr, false );
+			token = COM_ParseExt_r( tempbuf, sizeof( tempbuf ), ptr, false );
 			if( !token[0] ) {
 				break;
 			}
 			hb = atoi( token );
 
 			// read program full name
-			token = COM_ParseExt( ptr, false );
+			token = COM_ParseExt_r( tempbuf, sizeof( tempbuf ), ptr, false );
 			if( !token[0] ) {
 				break;
 			}
@@ -328,7 +329,7 @@ void RP_PrecachePrograms( void )
 #endif
 
 			// read optional binary cache
-			token = COM_ParseExt( ptr, false );
+			token = COM_ParseExt_r( tempbuf, sizeof( tempbuf ), ptr, false );
 			if( handleBin && token[0] ) {
 				binaryPos = atoi( token );
 				if( binaryPos ) {
@@ -1391,6 +1392,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 	char *startBuf;
 	char *trieCache;
 	trie_error_t trie_error;
+	char tempbuf[MAX_TOKEN_CHARS];
 
 	trie_error = Trie_Find( glsl_cache_trie, fileName, TRIE_EXACT_MATCH, ( void ** )&trieCache );
 	if( trie_error != TRIE_OK ) {
@@ -1431,7 +1433,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 		bool include, ignore_include;
 
 		prevPtr = ptr;
-		token = COM_ParseExt( &ptr, true );
+		token = COM_ParseExt_r( tempbuf, sizeof( tempbuf ), &ptr, true );
 		if( !token[0] ) {
 			break;
 		}
@@ -1503,7 +1505,7 @@ static bool RF_LoadShaderFromFile_r( glslParser_t *parser, const char *fileName,
 		}
 
 		// parse #include argument
-		token = COM_Parse( &ptr );
+		token = COM_Parse_r( tempbuf, sizeof( tempbuf ), &ptr );
 		if( !token[0] ) {
 			Com_Printf( S_COLOR_YELLOW "Syntax error in '%s' around '%s'\n", fileName, line );
 			return true;
@@ -2525,7 +2527,8 @@ static void RP_GetUniformLocations( glsl_program_t *program )
 	locRefractionTexture = qglGetUniformLocationARB( program->object, "u_RefractionTexture" );
 
 	for( i = 0; i < GLSL_SHADOWMAP_LIMIT; i++ ) {
-		locShadowmapTexture[i] = qglGetUniformLocationARB( program->object, va( "u_ShadowmapTexture%i", i ) );
+		locShadowmapTexture[i] = qglGetUniformLocationARB( program->object, 
+			va_r( tmp, sizeof( tmp ), "u_ShadowmapTexture%i", i ) );
 		if( locShadowmapTexture[i] < 0 )
 			break;
 	}
